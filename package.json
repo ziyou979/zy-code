@@ -8,7 +8,8 @@
     "build": "bun run build.ts",
     "build:cli": "bun run build.ts --target cli",
     "build:sdk": "bun run build.ts --target sdk",
-    "start": "bun dist/cli.js"
+    "start": "bun dist/cli.js",
+    "dev": "bun --preload ./src/entrypoints/dev-preload.ts src/entrypoints/cli.tsx"
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.1.3",

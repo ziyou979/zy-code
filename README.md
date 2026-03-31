@@ -38,12 +38,13 @@ bun run build:sdk
 
 构建产物输出到 `dist/`。
 
-### 直接运行源码
+### 直接运行源码（开发模式）
 
-开发时可以跳过构建，直接用 Bun 运行入口文件：
+开发时可以跳过构建，直接运行源码：
 
 ```bash
-bun src/entrypoints/cli.tsx
+bun run dev
+# 基本等价于：bun src/entrypoints/cli.tsx
 ```
 
 ### 类型检查

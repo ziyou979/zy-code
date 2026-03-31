@@ -14,7 +14,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "src/*": ["./src/*"]
+      "src/*": ["./src/*"],
+      "color-diff-napi": ["./src/native-ts/color-diff/index.ts"]
     },
     "types": ["bun-types", "node"]
   },
