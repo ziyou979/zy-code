@@ -7,7 +7,8 @@
   "scripts": {
     "build": "bun run build.ts",
     "build:cli": "bun run build.ts --target cli",
-    "build:sdk": "bun run build.ts --target sdk"
+    "build:sdk": "bun run build.ts --target sdk",
+    "start": "bun dist/cli.js"
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.1.3",
