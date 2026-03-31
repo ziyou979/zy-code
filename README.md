@@ -105,7 +105,3 @@ TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目
 
 **运行时找不到原生模块**
 `@ant/computer-use-input`、`@ant/computer-use-swift` 等包需要平台对应的预编译二进制文件，仅限 macOS。
-
-## 反馈 & Issues
-
-请到 [anthropics/claude-code](https://github.com/anthropics/claude-code/issues) 提交 issue。
