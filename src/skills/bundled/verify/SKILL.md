@@ -1,0 +1,1 @@
+Verify skill content placeholder.
