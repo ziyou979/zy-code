@@ -144,7 +144,8 @@ export async function initReplBridge(
   // 2. Check OAuth — must be signed in with claude.ai. Runs before the
   // policy check so console-auth users get the actionable "/login" hint
   // instead of a misleading policy error from a stale/wrong-org cache.
-  if (!getBridgeAccessToken()) {
+  // 支持百炼 DashScope API Key - 跳过 OAuth 检查
+  if (!getBridgeAccessToken() && !process.env.DASHSCOPE_API_KEY) {
     logBridgeSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
     onStateChange?.('failed', '/login')
     return null

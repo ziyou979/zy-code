@@ -272,9 +272,10 @@ export async function* withRetry<T>(
       ) {
         // If the 429 is specifically because extra usage (overage) is not
         // available, permanently disable fast mode with a specific message.
-        const overageReason = error.headers?.get(
-          'anthropic-ratelimit-unified-overage-disabled-reason',
-        )
+        // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
+        const overageReason = typeof error.headers?.get === 'function'
+          ? error.headers.get('anthropic-ratelimit-unified-overage-disabled-reason')
+          : (error.headers as Record<string, string>)?.['anthropic-ratelimit-unified-overage-disabled-reason']
         if (overageReason !== null && overageReason !== undefined) {
           handleFastModeOverageRejection(overageReason)
           retryContext.fastMode = false
@@ -729,7 +730,10 @@ function shouldRetry(error: APIError): boolean {
   }
 
   // Note this is not a standard header.
-  const shouldRetryHeader = error.headers?.get('x-should-retry')
+  // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
+  const shouldRetryHeader = typeof error.headers?.get === 'function'
+    ? error.headers.get('x-should-retry')
+    : (error.headers as Record<string, string>)?.['x-should-retry']
 
   // If the server explicitly says whether or not to retry, obey.
   // For Max and Pro users, should-retry is true, but in several hours, so we shouldn't.
@@ -812,7 +816,10 @@ function getRetryAfterMs(error: APIError): number | null {
 }
 
 function getRateLimitResetDelayMs(error: APIError): number | null {
-  const resetHeader = error.headers?.get?.('anthropic-ratelimit-unified-reset')
+  // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
+  const resetHeader = typeof error.headers?.get === 'function'
+    ? error.headers.get?.('anthropic-ratelimit-unified-reset')
+    : (error.headers as Record<string, string>)?.['anthropic-ratelimit-unified-reset']
   if (!resetHeader) return null
   const resetUnixSec = Number(resetHeader)
   if (!Number.isFinite(resetUnixSec)) return null

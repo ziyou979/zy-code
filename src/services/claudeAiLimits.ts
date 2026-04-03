@@ -12,10 +12,25 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { logEvent } from './analytics/index.js'
 import { getAPIMetadata } from './api/claude.js'
 import { getAnthropicClient } from './api/client.js'
+import { getAPIProvider } from '../utils/model/providers.js'
 import {
   processRateLimitHeaders,
   shouldProcessRateLimits,
 } from './rateLimitMocking.js'
+
+/**
+ * 安全地获取 header 值，兼容 Headers 实例和普通对象
+ * 百炼 API 返回的 headers 可能是普通对象而非 Headers 实例
+ */
+function getHeaderValue(
+  headers: globalThis.Headers | Record<string, string>,
+  key: string,
+): string | null {
+  if (typeof (headers as globalThis.Headers).get === 'function') {
+    return (headers as globalThis.Headers).get(key)
+  }
+  return (headers as Record<string, string>)[key] ?? null
+}
 
 // Re-export message functions from centralized location
 export {
@@ -161,16 +176,17 @@ export function getRawUtilization(): RawUtilization {
   return rawUtilization
 }
 
-function extractRawUtilization(headers: globalThis.Headers): RawUtilization {
+function extractRawUtilization(headers: globalThis.Headers | Record<string, string>): RawUtilization {
   const result: RawUtilization = {}
   for (const [key, abbrev] of [
     ['five_hour', '5h'],
     ['seven_day', '7d'],
   ] as const) {
-    const util = headers.get(
+    const util = getHeaderValue(
+      headers,
       `anthropic-ratelimit-unified-${abbrev}-utilization`,
     )
-    const reset = headers.get(`anthropic-ratelimit-unified-${abbrev}-reset`)
+    const reset = getHeaderValue(headers, `anthropic-ratelimit-unified-${abbrev}-reset`)
     if (util !== null && reset !== null) {
       result[key] = { utilization: Number(util), resets_at: Number(reset) }
     }
@@ -205,16 +221,24 @@ async function makeTestQuery() {
   })
   const messages: MessageParam[] = [{ role: 'user', content: 'quota' }]
   const betas = getModelBetas(model)
+  const apiProvider = getAPIProvider()
+  const isDashscope = apiProvider === 'dashscope'
+  
+  // 百炼 API 不支持 beta API 和 betas 参数
+  const filteredBetas = isDashscope ? [] : betas
+  
   // biome-ignore lint/plugin: quota check needs raw response access via asResponse()
-  return anthropic.beta.messages
-    .create({
-      model,
-      max_tokens: 1,
-      messages,
-      metadata: getAPIMetadata(),
-      ...(betas.length > 0 ? { betas } : {}),
-    })
-    .asResponse()
+  const createMessageFn = isDashscope
+    ? anthropic.messages.create.bind(anthropic.messages)
+    : anthropic.beta.messages.create.bind(anthropic.beta.messages)
+    
+  return createMessageFn({
+    model,
+    max_tokens: 1,
+    messages,
+    metadata: getAPIMetadata(),
+    ...(filteredBetas.length > 0 ? { betas: filteredBetas } : {}),
+  }).asResponse()
 }
 
 export async function checkQuotaStatus(): Promise<void> {
@@ -374,24 +398,27 @@ function getEarlyWarningFromHeaders(
 }
 
 function computeNewLimitsFromHeaders(
-  headers: globalThis.Headers,
+  headers: globalThis.Headers | Record<string, string>,
 ): ClaudeAILimits {
   const status =
-    (headers.get('anthropic-ratelimit-unified-status') as QuotaStatus) ||
+    (getHeaderValue(headers, 'anthropic-ratelimit-unified-status') as QuotaStatus) ||
     'allowed'
-  const resetsAtHeader = headers.get('anthropic-ratelimit-unified-reset')
+  const resetsAtHeader = getHeaderValue(headers, 'anthropic-ratelimit-unified-reset')
   const resetsAt = resetsAtHeader ? Number(resetsAtHeader) : undefined
   const unifiedRateLimitFallbackAvailable =
-    headers.get('anthropic-ratelimit-unified-fallback') === 'available'
+    getHeaderValue(headers, 'anthropic-ratelimit-unified-fallback') === 'available'
 
   // Headers for rate limit type and overage support
-  const rateLimitType = headers.get(
+  const rateLimitType = getHeaderValue(
+    headers,
     'anthropic-ratelimit-unified-representative-claim',
   ) as RateLimitType | null
-  const overageStatus = headers.get(
+  const overageStatus = getHeaderValue(
+    headers,
     'anthropic-ratelimit-unified-overage-status',
   ) as QuotaStatus | null
-  const overageResetsAtHeader = headers.get(
+  const overageResetsAtHeader = getHeaderValue(
+    headers,
     'anthropic-ratelimit-unified-overage-reset',
   )
   const overageResetsAt = overageResetsAtHeader
@@ -399,7 +426,8 @@ function computeNewLimitsFromHeaders(
     : undefined
 
   // Reason why overage is disabled (spending cap or wallet empty)
-  const overageDisabledReason = headers.get(
+  const overageDisabledReason = getHeaderValue(
+    headers,
     'anthropic-ratelimit-unified-overage-disabled-reason',
   ) as OverageDisabledReason | null
 
@@ -438,10 +466,10 @@ function computeNewLimitsFromHeaders(
 /**
  * Cache the extra usage disabled reason from API headers.
  */
-function cacheExtraUsageDisabledReason(headers: globalThis.Headers): void {
+function cacheExtraUsageDisabledReason(headers: globalThis.Headers | Record<string, string>): void {
   // A null reason means extra usage is enabled (no disabled reason header)
   const reason =
-    headers.get('anthropic-ratelimit-unified-overage-disabled-reason') ?? null
+    getHeaderValue(headers, 'anthropic-ratelimit-unified-overage-disabled-reason') ?? null
   const cached = getGlobalConfig().cachedExtraUsageDisabledReason
   if (cached !== reason) {
     saveGlobalConfig(current => ({

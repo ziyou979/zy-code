@@ -97,60 +97,33 @@ function isManagedOAuthContext(): boolean {
 
 /** Whether we are supporting direct 1P auth. */
 // this code is closely related to getAuthTokenSource
+export function isClaudeAISubscriber(): boolean {
+  // 跳过登录检查，始终返回 false 以避免 OAuth 检查
+  return false
+}
+
+/**
+ * 检查 Anthropic 认证是否启用
+ * 支持百炼 DashScope API Key 启动
+ */
 export function isAnthropicAuthEnabled(): boolean {
-  // --bare: API-key-only, never OAuth.
-  if (isBareMode()) return false
-
-  // `claude ssh` remote: ANTHROPIC_UNIX_SOCKET tunnels API calls through a
-  // local auth-injecting proxy. The launcher sets CLAUDE_CODE_OAUTH_TOKEN as a
-  // placeholder iff the local side is a subscriber (so the remote includes the
-  // oauth-2025 beta header to match what the proxy will inject). The remote's
-  // ~/.claude settings (apiKeyHelper, settings.env.ANTHROPIC_API_KEY) MUST NOT
-  // flip this — they'd cause a header mismatch with the proxy and a bogus
-  // "invalid x-api-key" from the API. See src/ssh/sshAuthProxy.ts.
-  if (process.env.ANTHROPIC_UNIX_SOCKET) {
-    return !!process.env.CLAUDE_CODE_OAUTH_TOKEN
+  // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
+  if (process.env.DASHSCOPE_API_KEY) {
+    return true
   }
-
-  const is3P =
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY)
-
-  // Check if user has configured an external API key source
-  // This allows externally-provided API keys to work (without requiring proxy configuration)
-  const settings = getSettings_DEPRECATED() || {}
-  const apiKeyHelper = settings.apiKeyHelper
-  const hasExternalAuthToken =
-    process.env.ANTHROPIC_AUTH_TOKEN ||
-    apiKeyHelper ||
-    process.env.CLAUDE_CODE_API_KEY_FILE_DESCRIPTOR
-
-  // Check if API key is from an external source (not managed by /login)
-  const { source: apiKeySource } = getAnthropicApiKeyWithSource({
-    skipRetrievingKeyFromApiKeyHelper: true,
-  })
-  const hasExternalApiKey =
-    apiKeySource === 'ANTHROPIC_API_KEY' || apiKeySource === 'apiKeyHelper'
-
-  // Disable Anthropic auth if:
-  // 1. Using 3rd party services (Bedrock/Vertex/Foundry)
-  // 2. User has an external API key (regardless of proxy configuration)
-  // 3. User has an external auth token (regardless of proxy configuration)
-  // this may cause issues if users have complex proxy / gateway "client-side creds" auth scenarios,
-  // e.g. if they want to set X-Api-Key to a gateway key but use Anthropic OAuth for the Authorization
-  // if we get reports of that, we should probably add an env var to force OAuth enablement
-  const shouldDisableAuth =
-    is3P ||
-    (hasExternalAuthToken && !isManagedOAuthContext()) ||
-    (hasExternalApiKey && !isManagedOAuthContext())
-
-  return !shouldDisableAuth
+  
+  const { hasToken } = getAuthTokenSource()
+  return hasToken
 }
 
 /** Where the auth token is being sourced from, if any. */
 // this code is closely related to isAnthropicAuthEnabled
 export function getAuthTokenSource() {
+  // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
+  if (process.env.DASHSCOPE_API_KEY) {
+    return { source: 'DASHSCOPE_API_KEY' as const, hasToken: true }
+  }
+
   // --bare: API-key-only. apiKeyHelper (from --settings) is the only
   // bearer-token-shaped source allowed. OAuth env vars, FD tokens, and
   // keychain are ignored.
@@ -229,6 +202,11 @@ export function getAnthropicApiKeyWithSource(
   key: null | string
   source: ApiKeySource
 } {
+  // 支持百炼 DashScope API Key - 只要配置了就可以启动
+  if (process.env.DASHSCOPE_API_KEY) {
+    return { key: process.env.DASHSCOPE_API_KEY, source: 'ANTHROPIC_API_KEY' }
+  }
+  
   // --bare: hermetic auth. Only ANTHROPIC_API_KEY env or apiKeyHelper from
   // the --settings flag. Never touches keychain, config file, or approval
   // lists. 3P (Bedrock/Vertex/Foundry) uses provider creds, not this path.
@@ -1428,20 +1406,8 @@ export function checkAndRefreshOAuthTokenIfNeeded(
   retryCount = 0,
   force = false,
 ): Promise<boolean> {
-  // Deduplicate concurrent non-retry, non-force calls
-  if (retryCount === 0 && !force) {
-    if (pendingRefreshCheck) {
-      return pendingRefreshCheck
-    }
-
-    const promise = checkAndRefreshOAuthTokenIfNeededImpl(retryCount, force)
-    pendingRefreshCheck = promise.finally(() => {
-      pendingRefreshCheck = null
-    })
-    return pendingRefreshCheck
-  }
-
-  return checkAndRefreshOAuthTokenIfNeededImpl(retryCount, force)
+  // 跳过 OAuth 检查，直接返回 false 以避免 "Invalid code" 错误
+  return Promise.resolve(false)
 }
 
 async function checkAndRefreshOAuthTokenIfNeededImpl(
@@ -1559,14 +1525,6 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     await release()
     logEvent('tengu_oauth_token_refresh_lock_released', {})
   }
-}
-
-export function isClaudeAISubscriber(): boolean {
-  if (!isAnthropicAuthEnabled()) {
-    return false
-  }
-
-  return shouldUseClaudeAIAuth(getClaudeAIOAuthTokens()?.scopes)
 }
 
 /**

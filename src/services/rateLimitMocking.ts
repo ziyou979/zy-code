@@ -15,13 +15,20 @@ import {
 
 /**
  * Process headers, applying mocks if /mock-limits command is active
+ * 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
  */
 export function processRateLimitHeaders(
-  headers: globalThis.Headers,
-): globalThis.Headers {
+  headers: globalThis.Headers | Record<string, string>,
+): globalThis.Headers | Record<string, string> {
   // Only apply mocks for Ant employees using /mock-limits command
   if (shouldProcessMockLimits()) {
-    return applyMockHeaders(headers)
+    // applyMockHeaders expects globalThis.Headers, so we need to convert if necessary
+    if (typeof (headers as globalThis.Headers).get === 'function') {
+      return applyMockHeaders(headers as globalThis.Headers)
+    }
+    // If headers is a plain object, we can't apply mocks that require Headers API
+    // Return as-is for now
+    return headers
   }
   return headers
 }

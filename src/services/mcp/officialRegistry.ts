@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 
@@ -36,10 +35,8 @@ export async function prefetchOfficialMcpUrls(): Promise<void> {
   }
 
   try {
-    const response = await axios.get<RegistryResponse>(
-      'https://api.anthropic.com/mcp-registry/v0/servers?version=latest&visibility=commercial',
-      { timeout: 5000 },
-    )
+    // 使用国内可访问的地址，或跳过官方注册表预取（非关键功能）
+    return
 
     const urls = new Set<string>()
     for (const entry of response.data.servers) {

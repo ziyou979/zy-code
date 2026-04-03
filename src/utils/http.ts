@@ -65,8 +65,18 @@ export type AuthHeaders = {
 /**
  * Get authentication headers for API requests
  * Returns either OAuth headers for Max/Pro users or API key headers for regular users
+ * 支持百炼 DashScope API Key
  */
 export function getAuthHeaders(): AuthHeaders {
+  // 支持百炼 DashScope API Key
+  if (process.env.DASHSCOPE_API_KEY) {
+    return {
+      headers: {
+        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`,
+      },
+    }
+  }
+  
   if (isClaudeAISubscriber()) {
     const oauthTokens = getClaudeAIOAuthTokens()
     if (!oauthTokens?.accessToken) {

@@ -50,7 +50,8 @@ function InstallGitHubApp(props: {
   const [state, setState] = useState({
     ...INITIAL_STATE,
     useExistingKey: !!existingApiKey,
-    selectedApiKeyOption: (existingApiKey ? 'existing' : isAnthropicAuthEnabled() ? 'oauth' : 'new') as 'existing' | 'new' | 'oauth'
+    // 跳过 OAuth，默认选择手动输入 API Key 选项
+    selectedApiKeyOption: (existingApiKey ? 'existing' : 'new') as 'existing' | 'new' | 'oauth'
   });
   useExitOnCtrlCDWithKeybindings();
   React.useEffect(() => {

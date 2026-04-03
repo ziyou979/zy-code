@@ -73,6 +73,11 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
   id: 'api-key-conflict',
   type: 'warning',
   isActive: () => {
+    // 百炼 API 模式下忽略 ANTHROPIC_API_KEY 的冲突检查
+    if (process.env.DASHSCOPE_API_KEY) {
+      return false;
+    }
+    
     const {
       source: apiKeySource
     } = getAnthropicApiKeyWithSource({
@@ -99,6 +104,11 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
   id: 'both-auth-methods',
   type: 'warning',
   isActive: () => {
+    // 百炼 API 模式下忽略 ANTHROPIC_API_KEY 的冲突检查
+    if (process.env.DASHSCOPE_API_KEY) {
+      return false;
+    }
+    
     const {
       source: apiKeySource
     } = getAnthropicApiKeyWithSource({

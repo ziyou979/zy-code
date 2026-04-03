@@ -296,6 +296,46 @@ export async function getAnthropicClient({
     // we have always been lying about the return type - this doesn't support batching or models
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic
   }
+  if (process.env.DASHSCOPE_API_KEY || isEnvTruthy(process.env.CLAUDE_CODE_USE_DASHSCOPE)) {
+    // 百炼 API 兼容 Anthropic 格式，只需要设置 baseURL 和 API Key
+    // 当设置了 DASHSCOPE_API_KEY 时自动启用，无需额外设置 CLAUDE_CODE_USE_DASHSCOPE
+    const dashscopeApiKey = process.env.DASHSCOPE_API_KEY || getAnthropicApiKey()
+    // 使用 Anthropic 兼容端点，而非 OpenAI 兼容端点
+    const dashscopeBaseURL = process.env.DASHSCOPE_BASE_URL || 'https://dashscope.aliyuncs.com/apps/anthropic/'
+    
+    console.error(`[API:dashscope] ===== 百炼 API 配置 =====`)
+    console.error(`[API:dashscope] 请求地址 (baseURL): ${dashscopeBaseURL}`)
+    console.error(`[API:dashscope] API Key 长度: ${dashscopeApiKey?.length || 0}`)
+    console.error(`[API:dashscope] ========================`)
+    
+    // 百炼 API 使用 OpenAI 兼容格式，需要清理不兼容的 headers
+    // 创建百炼专用的 headers，移除 Anthropic 特定的 headers
+    const dashscopeHeaders: Record<string, string> = {}
+    
+    // 只保留必要的 headers，移除 Anthropic 特定的 headers
+    if (defaultHeaders['User-Agent']) {
+      dashscopeHeaders['User-Agent'] = defaultHeaders['User-Agent']
+    }
+    // 移除可能导致不兼容的 headers
+    // - X-Claude-Code-Session-Id: Anthropic 特定
+    // - x-app: Anthropic 特定
+    // - x-claude-*: Anthropic 特定
+    // - x-client-app: Anthropic 特定
+    // - x-anthropic-*: Anthropic 特定
+    
+    const dashscopeConfig: ConstructorParameters<typeof Anthropic>[0] = {
+      apiKey: dashscopeApiKey,
+      baseURL: dashscopeBaseURL,
+      defaultHeaders: dashscopeHeaders,
+      maxRetries: ARGS.maxRetries,
+      timeout: ARGS.timeout,
+      dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
+      ...(ARGS.fetch && { fetch: ARGS.fetch }),
+      ...(isDebugToStdErr() && { logger: createStderrLogger() }),
+    }
+    
+    return new Anthropic(dashscopeConfig)
+  }
 
   // Determine authentication method based on available tokens
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
@@ -319,6 +359,12 @@ async function configureApiKeyHeaders(
   headers: Record<string, string>,
   isNonInteractiveSession: boolean,
 ): Promise<void> {
+  // 支持百炼 DashScope API Key
+  if (process.env.DASHSCOPE_API_KEY) {
+    headers['Authorization'] = `Bearer ${process.env.DASHSCOPE_API_KEY}`
+    return
+  }
+  
   const token =
     process.env.ANTHROPIC_AUTH_TOKEN ||
     (await getApiKeyFromApiKeyHelper(isNonInteractiveSession))

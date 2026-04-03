@@ -30,17 +30,8 @@ export function isVoiceGrowthBookEnabled(): boolean {
  * cold spawn per refresh is expected. Cheap enough for usage-time checks.
  */
 export function hasVoiceAuth(): boolean {
-  // Voice mode requires Anthropic OAuth — it uses the voice_stream
-  // endpoint on claude.ai which is not available with API keys,
-  // Bedrock, Vertex, or Foundry.
-  if (!isAnthropicAuthEnabled()) {
-    return false
-  }
-  // isAnthropicAuthEnabled only checks the auth *provider*, not whether
-  // a token exists. Without this check, the voice UI renders but
-  // connectVoiceStream fails silently when the user isn't logged in.
-  const tokens = getClaudeAIOAuthTokens()
-  return Boolean(tokens?.accessToken)
+  // 国内不可用语音模式，始终返回 false
+  return false
 }
 
 /**

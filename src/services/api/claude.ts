@@ -531,6 +531,11 @@ export async function verifyApiKey(
   apiKey: string,
   isNonInteractiveSession: boolean,
 ): Promise<boolean> {
+  // 支持百炼 DashScope API Key - 跳过验证
+  if (process.env.DASHSCOPE_API_KEY) {
+    return true
+  }
+  
   // Skip API verification if running in print mode (isNonInteractiveSession)
   if (isNonInteractiveSession) {
     return true
@@ -551,13 +556,23 @@ export async function verifyApiKey(
           }),
         async anthropic => {
           const messages: MessageParam[] = [{ role: 'user', content: 'test' }]
+          const apiProvider = getAPIProvider()
+          const isDashscope = apiProvider === 'dashscope'
+          
+          // 百炼 API 不支持 beta API 和 betas 参数
+          const filteredBetas = isDashscope ? [] : betas
+          
+          const createMessageFn = isDashscope
+            ? anthropic.messages.create.bind(anthropic.messages)
+            : anthropic.beta.messages.create.bind(anthropic.beta.messages)
+          
           // biome-ignore lint/plugin: API key verification is intentionally a minimal direct call
-          await anthropic.beta.messages.create({
+          await createMessageFn({
             model,
             max_tokens: 1,
             messages,
             temperature: 1,
-            ...(betas.length > 0 && { betas }),
+            ...(filteredBetas.length > 0 && { betas: filteredBetas }),
             metadata: getAPIMetadata(),
             ...getExtraBodyParams(),
           })
@@ -861,11 +876,29 @@ export async function* executeNonStreamingRequest(
 
       try {
         // biome-ignore lint/plugin: non-streaming API call
-        return await anthropic.beta.messages.create(
-          {
-            ...adjustedParams,
-            model: normalizeModelStringForAPI(adjustedParams.model),
-          },
+        const apiProvider = getAPIProvider()
+        const isDashscope = apiProvider === 'dashscope'
+        
+        // 百炼 API 不支持 beta API
+        const createMessageFn = isDashscope
+          ? anthropic.messages.create.bind(anthropic.messages)
+          : anthropic.beta.messages.create.bind(anthropic.beta.messages)
+        
+        // 过滤掉百炼 API 不支持的参数
+        const filteredParams = isDashscope
+          ? {
+              ...adjustedParams,
+              model: normalizeModelStringForAPI(adjustedParams.model),
+              betas: undefined,
+              thinking: undefined,
+            }
+          : {
+              ...adjustedParams,
+              model: normalizeModelStringForAPI(adjustedParams.model),
+            }
+        
+        return await createMessageFn(
+          filteredParams,
           {
             signal: retryOptions.signal,
             timeout: fallbackTimeoutMs,
@@ -1819,17 +1852,36 @@ async function* queryModel(
         // BetaMessageStream calls partialParse() on every input_json_delta, which we don't need
         // since we handle tool input accumulation ourselves
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
-        const result = await anthropic.beta.messages
-          .create(
-            { ...params, stream: true },
-            {
-              signal,
-              ...(clientRequestId && {
-                headers: { [CLIENT_REQUEST_ID_HEADER]: clientRequestId },
-              }),
-            },
-          )
-          .withResponse()
+        
+        // 百炼 API 不支持 beta API，需要使用标准的 messages.create
+        const apiProvider = getAPIProvider()
+        const useBetaAPI = apiProvider !== 'dashscope'
+        
+        // 过滤掉百炼 API 不支持的参数
+        const filteredParams = apiProvider === 'dashscope' 
+          ? {
+              ...params,
+              stream: true,
+              // 移除百炼 API 不支持的参数
+              betas: undefined,
+              thinking: undefined,
+              context_management: undefined,
+            }
+          : { ...params, stream: true }
+        
+        const createMessage = useBetaAPI 
+          ? anthropic.beta.messages.create.bind(anthropic.beta.messages)
+          : anthropic.messages.create.bind(anthropic.messages)
+        
+        const result = await createMessage(
+          filteredParams,
+          {
+            signal,
+            ...(clientRequestId && {
+              headers: { [CLIENT_REQUEST_ID_HEADER]: clientRequestId },
+            }),
+          },
+        ).withResponse()
         queryCheckpoint('query_response_headers_received')
         streamRequestId = result.request_id
         streamResponse = result.response

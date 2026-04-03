@@ -14,6 +14,7 @@ import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
 import { getAPIMetadata } from '../services/api/claude.js'
 import { getAnthropicClient } from '../services/api/client.js'
+import { getAPIProvider } from './model/providers.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
@@ -178,8 +179,18 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
 
   const normalizedModel = normalizeModelStringForAPI(model)
   const start = Date.now()
+  
+  // 百炼 API 不支持 beta API，使用标准 API
+  const apiProvider = getAPIProvider()
+  const isDashscope = apiProvider === 'dashscope'
+  const filteredBetas = isDashscope ? [] : betas
+  
+  const createMessageFn = isDashscope
+    ? client.messages.create.bind(client.messages)
+    : client.beta.messages.create.bind(client.beta.messages)
+  
   // biome-ignore lint/plugin: this IS the wrapper that handles OAuth attribution
-  const response = await client.beta.messages.create(
+  const response = await createMessageFn(
     {
       model: normalizedModel,
       max_tokens,
@@ -187,12 +198,15 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
       messages,
       ...(tools && { tools }),
       ...(tool_choice && { tool_choice }),
-      ...(output_format && { output_config: { format: output_format } }),
+      // 百炼 API 不支持 output_config 参数
+      ...(!isDashscope && output_format && { output_config: { format: output_format } }),
       ...(temperature !== undefined && { temperature }),
       ...(stop_sequences && { stop_sequences }),
-      ...(thinkingConfig && { thinking: thinkingConfig }),
-      ...(betas.length > 0 && { betas }),
-      metadata: getAPIMetadata(),
+      // 百炼 API 不支持 thinking 参数
+      ...(!isDashscope && thinkingConfig && { thinking: thinkingConfig }),
+      ...(filteredBetas.length > 0 && { betas: filteredBetas }),
+      // 百炼 API 不支持 metadata 参数
+      ...(!isDashscope && { metadata: getAPIMetadata() }),
     },
     { signal },
   )

@@ -11,6 +11,7 @@ export const CLAUDE_3_7_SONNET_CONFIG = {
   bedrock: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
   vertex: 'claude-3-7-sonnet@20250219',
   foundry: 'claude-3-7-sonnet',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_3_5_V2_SONNET_CONFIG = {
@@ -18,6 +19,7 @@ export const CLAUDE_3_5_V2_SONNET_CONFIG = {
   bedrock: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
   vertex: 'claude-3-5-sonnet-v2@20241022',
   foundry: 'claude-3-5-sonnet',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_3_5_HAIKU_CONFIG = {
@@ -25,13 +27,15 @@ export const CLAUDE_3_5_HAIKU_CONFIG = {
   bedrock: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
   vertex: 'claude-3-5-haiku@20241022',
   foundry: 'claude-3-5-haiku',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_HAIKU_4_5_CONFIG = {
-  firstParty: 'claude-haiku-4-5-20251001',
-  bedrock: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
-  vertex: 'claude-haiku-4-5@20251001',
+  firstParty: 'claude-haiku-4-5-20251022',
+  bedrock: 'us.anthropic.claude-haiku-4-5-20251022-v1:0',
+  vertex: 'claude-haiku-4-5@20251022',
   foundry: 'claude-haiku-4-5',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_CONFIG = {
@@ -39,6 +43,7 @@ export const CLAUDE_SONNET_4_CONFIG = {
   bedrock: 'us.anthropic.claude-sonnet-4-20250514-v1:0',
   vertex: 'claude-sonnet-4@20250514',
   foundry: 'claude-sonnet-4',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_5_CONFIG = {
@@ -46,6 +51,7 @@ export const CLAUDE_SONNET_4_5_CONFIG = {
   bedrock: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
   vertex: 'claude-sonnet-4-5@20250929',
   foundry: 'claude-sonnet-4-5',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_CONFIG = {
@@ -53,6 +59,7 @@ export const CLAUDE_OPUS_4_CONFIG = {
   bedrock: 'us.anthropic.claude-opus-4-20250514-v1:0',
   vertex: 'claude-opus-4@20250514',
   foundry: 'claude-opus-4',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_1_CONFIG = {
@@ -60,6 +67,7 @@ export const CLAUDE_OPUS_4_1_CONFIG = {
   bedrock: 'us.anthropic.claude-opus-4-1-20250805-v1:0',
   vertex: 'claude-opus-4-1@20250805',
   foundry: 'claude-opus-4-1',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_5_CONFIG = {
@@ -67,6 +75,7 @@ export const CLAUDE_OPUS_4_5_CONFIG = {
   bedrock: 'us.anthropic.claude-opus-4-5-20251101-v1:0',
   vertex: 'claude-opus-4-5@20251101',
   foundry: 'claude-opus-4-5',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_6_CONFIG = {
@@ -74,6 +83,7 @@ export const CLAUDE_OPUS_4_6_CONFIG = {
   bedrock: 'us.anthropic.claude-opus-4-6-v1',
   vertex: 'claude-opus-4-6',
   foundry: 'claude-opus-4-6',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_6_CONFIG = {
@@ -81,6 +91,15 @@ export const CLAUDE_SONNET_4_6_CONFIG = {
   bedrock: 'us.anthropic.claude-sonnet-4-6',
   vertex: 'claude-sonnet-4-6',
   foundry: 'claude-sonnet-4-6',
+  dashscope: 'qwen3.6-plus',
+} as const satisfies ModelConfig
+
+export const QWEN_3_6_PLUS_CONFIG = {
+  firstParty: 'qwen3.6-plus',
+  bedrock: 'qwen3.6-plus',
+  vertex: 'qwen3.6-plus',
+  foundry: 'qwen3.6-plus',
+  dashscope: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 // @[MODEL LAUNCH]: Register the new config here.
@@ -96,6 +115,7 @@ export const ALL_MODEL_CONFIGS = {
   opus41: CLAUDE_OPUS_4_1_CONFIG,
   opus45: CLAUDE_OPUS_4_5_CONFIG,
   opus46: CLAUDE_OPUS_4_6_CONFIG,
+  qwen36plus: QWEN_3_6_PLUS_CONFIG,
 } as const satisfies Record<string, ModelConfig>
 
 export type ModelKey = keyof typeof ALL_MODEL_CONFIGS

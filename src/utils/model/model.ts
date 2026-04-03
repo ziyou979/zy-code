@@ -106,6 +106,10 @@ export function getDefaultOpusModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_OPUS_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_OPUS_MODEL
   }
+  // 百炼 API 使用 qwen 模型
+  if (process.env.DASHSCOPE_API_KEY || getAPIProvider() === 'dashscope') {
+    return 'qwen3.6-plus'
+  }
   // 3P providers (Bedrock, Vertex, Foundry) — kept as a separate branch
   // even when values match, since 3P availability lags firstParty and
   // these will diverge again at the next model launch.
@@ -119,6 +123,10 @@ export function getDefaultOpusModel(): ModelName {
 export function getDefaultSonnetModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_SONNET_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_SONNET_MODEL
+  }
+  // 百炼 API 使用 qwen 模型
+  if (process.env.DASHSCOPE_API_KEY || getAPIProvider() === 'dashscope') {
+    return 'qwen3.6-plus'
   }
   // Default to Sonnet 4.5 for 3P since they may not have 4.6 yet
   if (getAPIProvider() !== 'firstParty') {
@@ -260,6 +268,10 @@ export function firstPartyNameToCanonical(name: ModelName): ModelShortName {
   }
   if (name.includes('claude-3-haiku')) {
     return 'claude-3-haiku'
+  }
+  // Qwen models
+  if (name.includes('qwen3.6-plus')) {
+    return 'qwen3.6-plus'
   }
   const match = name.match(/(claude-(\d+-\d+-)?\w+)/)
   if (match && match[1]) {

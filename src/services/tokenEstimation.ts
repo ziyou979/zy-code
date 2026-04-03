@@ -164,12 +164,21 @@ export async function countMessagesTokensWithAPI(
         source: 'count_tokens',
       })
 
+      const apiProvider = getAPIProvider()
       const filteredBetas =
-        getAPIProvider() === 'vertex'
+        apiProvider === 'vertex'
           ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-          : betas
+          : apiProvider === 'dashscope'
+            ? [] // 百炼 API 不支持 betas
+            : betas
 
-      const response = await anthropic.beta.messages.countTokens({
+      // 百炼 API 不支持 beta API，使用标准 API
+      const isDashscope = apiProvider === 'dashscope'
+      const countTokensFn = isDashscope 
+        ? anthropic.messages.countTokens.bind(anthropic.messages)
+        : anthropic.beta.messages.countTokens.bind(anthropic.beta.messages)
+
+      const response = await countTokensFn({
         model: normalizeModelStringForAPI(model),
         messages:
           // When we pass tools and no messages, we need to pass a dummy message
@@ -177,8 +186,8 @@ export async function countMessagesTokensWithAPI(
           messages.length > 0 ? messages : [{ role: 'user', content: 'foo' }],
         tools,
         ...(filteredBetas.length > 0 && { betas: filteredBetas }),
-        // Enable thinking if messages contain thinking blocks
-        ...(containsThinking && {
+        // 百炼 API 不支持 thinking 参数
+        ...(!isDashscope && containsThinking && {
           thinking: {
             type: 'enabled',
             budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
@@ -291,15 +300,24 @@ export async function countTokensViaHaikuFallback(
       : [{ role: 'user', content: 'count' }]
 
   const betas = getModelBetas(model)
+  const apiProvider = getAPIProvider()
   // Filter betas for Vertex - some betas (like web-search) cause 400 errors
   // on certain Vertex endpoints. See issue #10789.
   const filteredBetas =
-    getAPIProvider() === 'vertex'
+    apiProvider === 'vertex'
       ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-      : betas
+      : apiProvider === 'dashscope'
+        ? [] // 百炼 API 不支持 betas
+        : betas
+
+  // 百炼 API 不支持 beta API，使用标准 API
+  const isDashscope = apiProvider === 'dashscope'
+  const createMessageFn = isDashscope
+    ? anthropic.messages.create.bind(anthropic.messages)
+    : anthropic.beta.messages.create.bind(anthropic.beta.messages)
 
   // biome-ignore lint/plugin: token counting needs specialized parameters (thinking, betas) that sideQuery doesn't support
-  const response = await anthropic.beta.messages.create({
+  const response = await createMessageFn({
     model: normalizeModelStringForAPI(model),
     max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
     messages: messagesToSend,
@@ -307,8 +325,8 @@ export async function countTokensViaHaikuFallback(
     ...(filteredBetas.length > 0 && { betas: filteredBetas }),
     metadata: getAPIMetadata(),
     ...getExtraBodyParams(),
-    // Enable thinking if messages contain thinking blocks
-    ...(containsThinking && {
+    // 百炼 API 不支持 thinking 参数
+    ...(!isDashscope && containsThinking && {
       thinking: {
         type: 'enabled',
         budget_tokens: TOKEN_COUNT_THINKING_BUDGET,

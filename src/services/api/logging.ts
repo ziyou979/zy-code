@@ -113,8 +113,14 @@ function detectGateway({
 }): KnownGateway | undefined {
   if (headers) {
     // Header names are already lowercase from the Headers API
+    // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
     const headerNames: string[] = []
-    headers.forEach((_, key) => headerNames.push(key))
+    if (typeof headers.forEach === 'function') {
+      headers.forEach((_, key) => headerNames.push(key))
+    } else {
+      // headers 是普通对象，使用 Object.keys 获取键名
+      Object.keys(headers).forEach(key => headerNames.push(key))
+    }
     for (const [gw, { prefixes }] of Object.entries(GATEWAY_FINGERPRINTS)) {
       if (prefixes.some(p => headerNames.some(h => h.startsWith(p)))) {
         return gw as KnownGateway

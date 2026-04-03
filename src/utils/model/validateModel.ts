@@ -54,6 +54,14 @@ export async function validateModel(
 
   // Try to make an actual API call with minimal parameters
   try {
+    const apiProvider = getAPIProvider()
+    const isDashscope = apiProvider === 'dashscope'
+    
+    // 百炼 API 不支持 cache_control 参数
+    const messageContent = isDashscope
+      ? [{ type: 'text' as const, text: 'Hi' }]
+      : [{ type: 'text' as const, text: 'Hi', cache_control: { type: 'ephemeral' as const } }]
+    
     await sideQuery({
       model: normalizedModel,
       max_tokens: 1,
@@ -62,13 +70,7 @@ export async function validateModel(
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Hi',
-              cache_control: { type: 'ephemeral' },
-            },
-          ],
+          content: messageContent,
         },
       ],
     })

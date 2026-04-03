@@ -468,11 +468,23 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
         organizationUuid: envOrganizationUuid,
       })
     }
+    // If we have env vars, skip OAuth checks entirely
+    return false
   }
 
-  // Wait for any in-flight token refresh to complete first, since
-  // refreshOAuthToken already fetches and stores profile info
-  await checkAndRefreshOAuthTokenIfNeeded()
+  // Skip OAuth token refresh and profile fetch during initialization
+  // to prevent "Invalid code" errors from blocking startup
+  try {
+    // Wait for any in-flight token refresh to complete first, since
+    // refreshOAuthToken already fetches and stores profile info
+    await checkAndRefreshOAuthTokenIfNeeded()
+  } catch (error) {
+    logForDebugging('OAuth token refresh skipped during init', {
+      level: 'warn',
+      error: errorMessage(error as Error),
+    })
+    return false
+  }
 
   const config = getGlobalConfig()
   if (
@@ -488,27 +500,28 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
 
   const tokens = getClaudeAIOAuthTokens()
   if (tokens?.accessToken) {
-    const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
-    if (profile) {
-      if (hasEnvVars) {
-        logForDebugging(
-          'OAuth profile fetch succeeded, overriding env var account info',
-          { level: 'info' },
-        )
+    try {
+      const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
+      if (profile) {
+        storeOAuthAccountInfo({
+          accountUuid: profile.account.uuid,
+          emailAddress: profile.account.email,
+          organizationUuid: profile.organization.uuid,
+          displayName: profile.account.display_name || undefined,
+          hasExtraUsageEnabled:
+            profile.organization.has_extra_usage_enabled ?? false,
+          billingType: profile.organization.billing_type ?? undefined,
+          accountCreatedAt: profile.account.created_at,
+          subscriptionCreatedAt:
+            profile.organization.subscription_created_at ?? undefined,
+        })
+        return true
       }
-      storeOAuthAccountInfo({
-        accountUuid: profile.account.uuid,
-        emailAddress: profile.account.email,
-        organizationUuid: profile.organization.uuid,
-        displayName: profile.account.display_name || undefined,
-        hasExtraUsageEnabled:
-          profile.organization.has_extra_usage_enabled ?? false,
-        billingType: profile.organization.billing_type ?? undefined,
-        accountCreatedAt: profile.account.created_at,
-        subscriptionCreatedAt:
-          profile.organization.subscription_created_at ?? undefined,
+    } catch (error) {
+      logForDebugging('OAuth profile fetch skipped during init', {
+        level: 'warn',
+        error: errorMessage(error as Error),
       })
-      return true
     }
   }
   return false

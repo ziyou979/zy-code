@@ -16,9 +16,8 @@ export interface PreflightCheckResult {
 }
 async function checkEndpoints(): Promise<PreflightCheckResult> {
   try {
-    const oauthConfig = getOauthConfig();
-    const tokenUrl = new URL(oauthConfig.TOKEN_URL);
-    const endpoints = [`${oauthConfig.BASE_API_URL}/api/hello`, `${tokenUrl.origin}/v1/oauth/hello`];
+    // 使用国内可访问的域名进行连通性检查
+    const endpoints = ['https://www.baidu.com'];
     const checkEndpoint = async (url: string): Promise<PreflightCheckResult> => {
       try {
         const response = await axios.get(url, {

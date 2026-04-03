@@ -107,7 +107,13 @@ export const init = memoize(async (): Promise<void> => {
 
     // Populate OAuth account info if it is not already cached in config. This is needed since the
     // OAuth account info may not be populated when logging in through the VSCode extension.
-    void populateOAuthAccountInfoIfNeeded()
+    // Wrapped in try-catch to prevent OAuth errors from blocking initialization
+    void populateOAuthAccountInfoIfNeeded().catch((error) => {
+      logForDebugging('OAuth account info population failed during init', {
+        level: 'warn',
+        error: errorMessage(error),
+      })
+    })
     profileCheckpoint('init_after_oauth_populate')
 
     // Initialize JetBrains IDE detection asynchronously (populates cache for later sync access)
