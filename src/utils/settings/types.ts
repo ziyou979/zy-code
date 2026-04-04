@@ -63,7 +63,7 @@ export const PermissionsSchema = lazySchema(() =>
             : EXTERNAL_PERMISSION_MODES,
         )
         .optional()
-        .describe('Default permission mode when Claude Code needs access'),
+        .describe('Default permission mode when ZY Code needs access'),
       disableBypassPermissionsMode: z
         .enum(['disable'])
         .optional()
@@ -211,7 +211,7 @@ export const DeniedMcpServerEntrySchema = lazySchema(() =>
  *
  * ⚠️ BACKWARD COMPATIBILITY NOTICE ⚠️
  *
- * This schema defines the structure of user settings files (.claude/settings.json).
+ * This schema defines the structure of user settings files (.zy/settings.json).
  * We support backward-compatible changes! Here's how:
  *
  * ✅ ALLOWED CHANGES:
@@ -258,7 +258,7 @@ export const SettingsSchema = lazySchema(() =>
       $schema: z
         .literal(CLAUDE_CODE_SETTINGS_SCHEMA_URL)
         .optional()
-        .describe('JSON Schema reference for Claude Code settings'),
+        .describe('JSON Schema reference for ZY Code settings'),
       apiKeyHelper: z
         .string()
         .optional()
@@ -291,7 +291,7 @@ export const SettingsSchema = lazySchema(() =>
                   .describe('IdP issuer URL for OIDC discovery'),
                 clientId: z
                   .string()
-                  .describe("Claude Code's client_id registered at the IdP"),
+                  .describe("ZY Code's client_id registered at the IdP"),
                 callbackPort: z
                   .number()
                   .int()
@@ -332,7 +332,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       env: EnvironmentVariablesSchema()
         .optional()
-        .describe('Environment variables to set for Claude Code sessions'),
+        .describe('Environment variables to set for ZY Code sessions'),
       // Attribution for commits and PRs
       attribution: z
         .object({
@@ -354,7 +354,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Customize attribution text for commits and PRs. ' +
-            'Each field defaults to the standard Claude Code attribution if not set.',
+            'Each field defaults to the standard ZY Code attribution if not set.',
         ),
       includeCoAuthoredBy: z
         .boolean()
@@ -367,7 +367,7 @@ export const SettingsSchema = lazySchema(() =>
         .boolean()
         .optional()
         .describe(
-          "Include built-in commit and PR workflow instructions in Claude's system prompt (default: true)",
+          "Include built-in commit and PR workflow instructions in the system prompt (default: true)",
         ),
       permissions: PermissionsSchema()
         .optional()
@@ -375,7 +375,7 @@ export const SettingsSchema = lazySchema(() =>
       model: z
         .string()
         .optional()
-        .describe('Override the default model used by Claude Code'),
+        .describe('Override the default model used by ZY Code'),
       // Enterprise allowlist of models
       availableModels: z
         .array(z.string())
@@ -395,6 +395,38 @@ export const SettingsSchema = lazySchema(() =>
           'Override mapping from Anthropic model ID (e.g. "claude-opus-4-6") to provider-specific ' +
             'model ID (e.g. a Bedrock inference profile ARN). Typically set in managed settings by ' +
             'enterprise administrators.',
+        ),
+      // Custom models defined by the user for the model picker
+      customModels: z
+        .array(
+          z.object({
+            alias: z
+              .string()
+              .describe(
+                'Short alias for the model (e.g., "qwen-max", "glm-4"). Used as the settings value.',
+              ),
+            model: z
+              .string()
+              .describe(
+                'Actual model ID sent to the API (e.g., "qwen-max-latest", "glm-4-plus").',
+              ),
+            label: z
+              .string()
+              .optional()
+              .describe(
+                'Display name in the model picker. Defaults to alias if not provided.',
+              ),
+            description: z
+              .string()
+              .optional()
+              .describe('Description shown below the model name in the picker.'),
+          }),
+        )
+        .optional()
+        .describe(
+          'Custom model definitions for the model picker. When set, these models replace ' +
+            'the built-in Claude models in the /model selector. Each entry defines an alias ' +
+            '(used in settings), the actual model ID (sent to the API), and display metadata.',
         ),
       // Whether to automatically approve all MCP servers in the project
       enableAllProjectMcpServers: z
@@ -541,7 +573,7 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'When set in managed settings, blocks non-plugin customization sources for the listed surfaces. ' +
             'Array form locks specific surfaces (e.g. ["skills", "hooks"]); `true` locks all four; `false` is an explicit no-op. ' +
-            'Blocked: ~/.claude/{surface}/, .claude/{surface}/ (project), settings.json hooks, .mcp.json. ' +
+            'Blocked: ~/.zy/{surface}/, .zy/{surface}/ (project), settings.json hooks, .mcp.json. ' +
             'NOT blocked: managed (policySettings) sources, plugin-provided customizations. ' +
             'Composes with strictKnownMarketplaces for end-to-end admin control — plugins gated by ' +
             'marketplace allowlist, everything else blocked here.',
@@ -596,7 +628,7 @@ export const SettingsSchema = lazySchema(() =>
         })
         .optional()
         .describe(
-          'Additional marketplaces to make available for this repository. Typically used in repository .claude/settings.json to ensure team members have required plugin sources.',
+          'Additional marketplaces to make available for this repository. Typically used in repository .zy/settings.json to ensure team members have required plugin sources.',
         ),
       // Enterprise strict list of allowed marketplace sources (policy settings only)
       // When set, ONLY these exact sources can be added. Check happens BEFORE download.
@@ -826,7 +858,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Custom directory for plan files, relative to project root. ' +
-            'If not set, defaults to ~/.claude/plans/',
+            'If not set, defaults to ~/.zy/plans/',
         ),
       ...(process.env.USER_TYPE === 'ant'
         ? {
@@ -875,7 +907,7 @@ export const SettingsSchema = lazySchema(() =>
               .boolean()
               .optional()
               .describe(
-                'Start Claude in assistant mode (custom system prompt, brief view, scheduled check-in skills)',
+                'Start ZY in assistant mode (custom system prompt, brief view, scheduled check-in skills)',
               ),
             assistantName: z
               .string()
@@ -945,7 +977,7 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Custom directory path for auto-memory storage. Supports ~/ prefix for home directory expansion. Ignored if set in projectSettings (checked-in .claude/settings.json) for security. When unset, defaults to ~/.claude/projects/<sanitized-cwd>/memory/.',
+          'Custom directory path for auto-memory storage. Supports ~/ prefix for home directory expansion. Ignored if set in projectSettings (checked-in .zy/settings.json) for security. When unset, defaults to ~/.zy/projects/<sanitized-cwd>/memory/.',
         ),
       autoDreamEnabled: z
         .boolean()
@@ -1057,7 +1089,7 @@ export const SettingsSchema = lazySchema(() =>
           'Glob patterns or absolute paths of CLAUDE.md files to exclude from loading. ' +
             'Patterns are matched against absolute file paths using picomatch. ' +
             'Only applies to User, Project, and Local memory types (Managed/policy files cannot be excluded). ' +
-            'Examples: "/home/user/monorepo/CLAUDE.md", "**/code/CLAUDE.md", "**/some-dir/.claude/rules/**"',
+            'Examples: "/home/user/monorepo/CLAUDE.md", "**/code/CLAUDE.md", "**/some-dir/.zy/rules/**"',
         ),
       pluginTrustMessage: z
         .string()

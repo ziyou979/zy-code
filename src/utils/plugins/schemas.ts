@@ -6,14 +6,14 @@ import { lazySchema } from '../lazySchema.js'
 /**
  * First-layer defense against official marketplace impersonation.
  *
- * This validation blocks direct impersonation attempts like "anthropic-official",
- * "claude-marketplace", etc. Indirect variations (e.g., "my-claude-marketplace")
+ * This validation blocks direct impersonation attempts like "zy-code-official",
+ * "zy-marketplace", etc. Indirect variations (e.g., "my-zy-marketplace")
  * are not blocked intentionally to avoid false positives on legitimate names.
  * Source org verification provides additional protection at registration/install time.
  */
 
 /**
- * Official marketplace names that are reserved for Anthropic/Claude official use.
+ * Official marketplace names that are reserved for ZY/ZY Code official use.
  * These names are allowed ONLY for official marketplaces and blocked for third parties.
  */
 export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
@@ -79,7 +79,7 @@ export const BLOCKED_OFFICIAL_NAME_PATTERN =
 const NON_ASCII_PATTERN = /[^\u0020-\u007E]/
 
 /**
- * Check if a marketplace name impersonates an official Anthropic/Claude marketplace.
+ * Check if a marketplace name impersonates an official ZY/ZY Code marketplace.
  *
  * @param name - The marketplace name to check
  * @returns true if the name is blocked (impersonates official), false if allowed
@@ -101,7 +101,7 @@ export function isBlockedOfficialName(name: string): boolean {
 }
 
 /**
- * The official GitHub organization for Anthropic marketplaces.
+ * The official GitHub organization for ZY marketplaces.
  * Reserved names must come from this org.
  */
 export const OFFICIAL_GITHUB_ORG = 'anthropics'
@@ -110,7 +110,7 @@ export const OFFICIAL_GITHUB_ORG = 'anthropics'
  * Validate that a marketplace with a reserved name comes from the official source.
  *
  * Reserved names (in ALLOWED_OFFICIAL_MARKETPLACE_NAMES) can only be used by
- * marketplaces from the official Anthropic GitHub organization.
+ * marketplaces from the official ZY GitHub organization.
  *
  * @param name - The marketplace name
  * @param source - The marketplace source configuration
@@ -323,7 +323,7 @@ const PluginManifestMetadataSchema = lazySchema(() =>
  * Schema for plugin hooks configuration (hooks.json)
  *
  * Defines the hooks that a plugin can provide to intercept and modify
- * Claude Code behavior at various lifecycle events.
+ * ZY Code behavior at various lifecycle events.
  */
 export const PluginHooksSchema = lazySchema(() =>
   z.object({
@@ -1228,7 +1228,7 @@ export function isLocalPluginSource(source: PluginSource): source is string {
  * For local sources (`file`/`directory`), `installLocation` IS the user's path —
  * it lives outside the plugins cache dir and marketplace operations on it are
  * read-only. For remote sources (`github`/`git`/`url`/`npm`), `installLocation`
- * is a cache-dir entry managed by Claude Code and subject to rm/re-clone.
+ * is a cache-dir entry managed by ZY Code and subject to rm/re-clone.
  *
  * Contrast with isLocalPluginSource, which operates on PluginSource (the
  * per-plugin source inside a marketplace entry) and checks for `./` prefix.
@@ -1440,7 +1440,7 @@ export const SettingsPluginEntrySchema = lazySchema(() =>
  *   "version": "1.2.0",
  *   "installedAt": "2024-01-15T10:30:00Z",
  *   "marketplace": "anthropic-tools",
- *   "installPath": "/home/user/.claude/plugins/installed/anthropic-tools/code-formatter"
+ *   "installPath": "/home/user/.zy/plugins/installed/anthropic-tools/code-formatter"
  * }
  */
 export const InstalledPluginSchema = lazySchema(() =>
@@ -1465,10 +1465,10 @@ export const InstalledPluginSchema = lazySchema(() =>
  * Schema for the installed_plugins.json file (V1 format)
  *
  * Contains a version number and maps plugin IDs to their installation metadata.
- * Maintained automatically by Claude Code, not edited by users.
+ * Maintained automatically by ZY Code, not edited by users.
  *
  * The version field tracks schema changes. When the version doesn't match
- * the current schema version, Claude Code will update the file on next startup.
+ * the current schema version, ZY Code will update the file on next startup.
  *
  * Example file:
  * {
@@ -1496,9 +1496,9 @@ export const InstalledPluginsFileSchemaV1 = lazySchema(() =>
  *
  * Plugins can be installed at different scopes:
  * - managed: Enterprise/system-wide (read-only, platform-specific paths)
- * - user: User's global settings (~/.claude/settings.json)
- * - project: Shared project settings ($project/.claude/settings.json)
- * - local: Personal project overrides ($project/.claude/settings.local.json)
+ * - user: User's global settings (~/.zy/settings.json)
+ * - project: Shared project settings ($project/.zy/settings.json)
+ * - local: Personal project overrides ($project/.zy/settings.local.json)
  *
  * Note: 'flag' scope plugins (from --settings) are session-only and
  * are NOT persisted to installed_plugins.json.
@@ -1585,7 +1585,7 @@ export const InstalledPluginsFileSchema = lazySchema(() =>
  * Example entry:
  * {
  *   "source": { "source": "github", "repo": "anthropic/claude-plugins" },
- *   "installLocation": "/home/user/.claude/plugins/cached/marketplaces/anthropic-tools",
+ *   "installLocation": "/home/user/.zy/plugins/cached/marketplaces/anthropic-tools",
  *   "lastUpdated": "2024-01-15T10:30:00Z"
  * }
  */

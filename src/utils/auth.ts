@@ -82,7 +82,7 @@ const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
 
 /**
  * CCR and Claude Desktop spawn the CLI with OAuth and should never fall back
- * to the user's ~/.claude/settings.json API-key config (apiKeyHelper,
+ * to the user's ~/.zy/settings.json API-key config (apiKeyHelper,
  * env.ANTHROPIC_API_KEY, env.ANTHROPIC_AUTH_TOKEN). Those settings exist for
  * the user's terminal CLI, not managed sessions. Without this guard, a user
  * who runs `claude` in their terminal with an API key sees every CCD session
@@ -103,25 +103,31 @@ export function isClaudeAISubscriber(): boolean {
 }
 
 /**
- * 检查 Anthropic 认证是否启用
+ * 检查认证是否启用
  * 支持百炼 DashScope API Key 启动
  */
-export function isAnthropicAuthEnabled(): boolean {
+export function isAuthEnabled(): boolean {
   // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
   if (process.env.DASHSCOPE_API_KEY) {
     return true
   }
-  
+
   const { hasToken } = getAuthTokenSource()
   return hasToken
 }
 
 /** Where the auth token is being sourced from, if any. */
-// this code is closely related to isAnthropicAuthEnabled
+// this code is closely related to isAuthEnabled
 export function getAuthTokenSource() {
   // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
   if (process.env.DASHSCOPE_API_KEY) {
     return { source: 'DASHSCOPE_API_KEY' as const, hasToken: true }
+  }
+
+  // 检查 onboarding 时配置的 API key
+  const config = getGlobalConfig()
+  if (config.configuredApiKey) {
+    return { source: 'configuredApiKey' as const, hasToken: true }
   }
 
   // --bare: API-key-only. apiKeyHelper (from --settings) is the only
@@ -184,19 +190,19 @@ export type ApiKeySource =
   | '/login managed key'
   | 'none'
 
-export function getAnthropicApiKey(): null | string {
-  const { key } = getAnthropicApiKeyWithSource()
+export function getApiKey(): null | string {
+  const { key } = getApiKeyWithSource()
   return key
 }
 
-export function hasAnthropicApiKeyAuth(): boolean {
-  const { key, source } = getAnthropicApiKeyWithSource({
+export function hasApiKeyAuth(): boolean {
+  const { key, source } = getApiKeyWithSource({
     skipRetrievingKeyFromApiKeyHelper: true,
   })
   return key !== null && source !== 'none'
 }
 
-export function getAnthropicApiKeyWithSource(
+export function getApiKeyWithSource(
   opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {},
 ): {
   key: null | string
@@ -206,7 +212,13 @@ export function getAnthropicApiKeyWithSource(
   if (process.env.DASHSCOPE_API_KEY) {
     return { key: process.env.DASHSCOPE_API_KEY, source: 'ANTHROPIC_API_KEY' }
   }
-  
+
+  // 检查 onboarding 时配置的 API key
+  const config = getGlobalConfig()
+  if (config.configuredApiKey) {
+    return { key: config.configuredApiKey, source: 'ANTHROPIC_API_KEY' }
+  }
+
   // --bare: hermetic auth. Only ANTHROPIC_API_KEY env or apiKeyHelper from
   // the --settings flag. Never touches keychain, config file, or approval
   // lists. 3P (Bedrock/Vertex/Foundry) uses provider creds, not this path.
@@ -328,7 +340,7 @@ export function getAnthropicApiKeyWithSource(
 /**
  * Get the configured apiKeyHelper from settings.
  * In bare mode, only the --settings flag source is consulted — apiKeyHelper
- * from ~/.claude/settings.json or project settings is ignored.
+ * from ~/.zy/settings.json or project settings is ignored.
  */
 export function getConfiguredApiKeyHelper(): string | undefined {
   if (isBareMode()) {
@@ -1025,7 +1037,7 @@ export function prefetchAwsCredentialsAndBedRockInfoIfSafe(): void {
   getModelStrings()
 }
 
-/** @private Use {@link getAnthropicApiKey} or {@link getAnthropicApiKeyWithSource} */
+/** @private Use {@link getApiKey} or {@link getApiKeyWithSource} */
 export const getApiKeyFromConfigOrMacOSKeychain = memoize(
   (): { key: string; source: ApiKeySource } | null => {
     if (isBareMode()) return null
@@ -1543,7 +1555,7 @@ export function hasProfileScope(): boolean {
 
 export function is1PApiCustomer(): boolean {
   // 1P API customers are users who are NOT:
-  // 1. Claude.ai subscribers (Max, Pro, Enterprise, Team)
+  // 1. ZY subscribers (Max, Pro, Enterprise, Team)
   // 2. Vertex AI users
   // 3. AWS Bedrock users
   // 4. Foundry users
@@ -1567,11 +1579,11 @@ export function is1PApiCustomer(): boolean {
 }
 
 /**
- * Gets OAuth account information when Anthropic auth is enabled.
+ * Gets OAuth account information when auth is enabled.
  * Returns undefined when using external API keys or third-party services.
  */
 export function getOauthAccountInfo(): AccountInfo | undefined {
-  return isAnthropicAuthEnabled() ? getGlobalConfig().oauthAccount : undefined
+  return isAuthEnabled() ? getGlobalConfig().oauthAccount : undefined
 }
 
 /**
@@ -1623,7 +1635,7 @@ export function getSubscriptionType(): SubscriptionType | null {
     return getMockSubscriptionType()
   }
 
-  if (!isAnthropicAuthEnabled()) {
+  if (!isAuthEnabled()) {
     return null
   }
   const oauthTokens = getClaudeAIOAuthTokens()
@@ -1658,7 +1670,7 @@ export function isProSubscriber(): boolean {
 }
 
 export function getRateLimitTier(): string | null {
-  if (!isAnthropicAuthEnabled()) {
+  if (!isAuthEnabled()) {
     return null
   }
   const oauthTokens = getClaudeAIOAuthTokens()
@@ -1674,15 +1686,15 @@ export function getSubscriptionName(): string {
 
   switch (subscriptionType) {
     case 'enterprise':
-      return 'Claude Enterprise'
+      return 'ZY Enterprise'
     case 'team':
-      return 'Claude Team'
+      return 'ZY Team'
     case 'max':
-      return 'Claude Max'
+      return 'ZY Max'
     case 'pro':
-      return 'Claude Pro'
+      return 'ZY Pro'
     default:
-      return 'Claude API'
+      return 'ZY API'
   }
 }
 
@@ -1820,8 +1832,8 @@ export type UserAccountInfo = {
 
 export function getAccountInformation() {
   const apiProvider = getAPIProvider()
-  // Only provide account info for first-party Anthropic API
-  if (apiProvider !== 'firstParty') {
+  // Only provide account info for first-party API
+  if (apiProvider !== 'anthropic' && apiProvider !== 'dashscope') {
     return undefined
   }
   const { source: authTokenSource } = getAuthTokenSource()
@@ -1836,7 +1848,7 @@ export function getAccountInformation() {
   } else {
     accountInfo.tokenSource = authTokenSource
   }
-  const { key: apiKey, source: apiKeySource } = getAnthropicApiKeyWithSource()
+  const { key: apiKey, source: apiKeySource } = getApiKeyWithSource()
   if (apiKey) {
     accountInfo.apiKeySource = apiKeySource
   }
@@ -1886,7 +1898,7 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
     return { valid: true }
   }
 
-  if (!isAnthropicAuthEnabled()) {
+  if (!isAuthEnabled()) {
     return { valid: true }
   }
 

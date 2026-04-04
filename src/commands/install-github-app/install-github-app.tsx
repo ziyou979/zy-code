@@ -7,7 +7,7 @@ import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithK
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box } from '../../ink.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { getAnthropicApiKey, isAnthropicAuthEnabled } from '../../utils/auth.js';
+import { getApiKey, isAuthEnabled } from '../../utils/auth.js';
 import { openBrowser } from '../../utils/browser.js';
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js';
 import { getGithubRepo } from '../../utils/git.js';
@@ -46,7 +46,7 @@ const INITIAL_STATE: State = {
 function InstallGitHubApp(props: {
   onDone: (message: string) => void;
 }): React.ReactNode {
-  const [existingApiKey] = useState(() => getAnthropicApiKey());
+  const [existingApiKey] = useState(() => getApiKey());
   const [state, setState] = useState({
     ...INITIAL_STATE,
     useExistingKey: !!existingApiKey,
@@ -288,7 +288,7 @@ function InstallGitHubApp(props: {
           repoWarnings.push({
             title: 'Invalid GitHub URL format',
             message: 'The repository URL format appears to be invalid.',
-            instructions: ['Use format: owner/repo or https://github.com/owner/repo', 'Example: anthropics/claude-cli']
+            instructions: ['Use format: owner/repo or https://github.com/owner/repo', 'Example: owner/repo']
           });
         } else {
           repoName_1 = match[1]?.replace(/\.git$/, '') || '';
@@ -298,7 +298,7 @@ function InstallGitHubApp(props: {
         repoWarnings.push({
           title: 'Repository format warning',
           message: 'Repository should be in format "owner/repo"',
-          instructions: ['Use format: owner/repo', 'Example: anthropics/claude-cli']
+          instructions: ['Use format: owner/repo', 'Example: owner/repo']
         });
       }
       const permissionCheck = await checkRepositoryPermissions(repoName_1);
@@ -547,7 +547,7 @@ function InstallGitHubApp(props: {
     case 'check-existing-secret':
       return <CheckExistingSecretStep useExistingSecret={state.useExistingSecret} secretName={state.secretName} onToggleUseExistingSecret={handleToggleUseExistingSecret} onSecretNameChange={handleSecretNameChange} onSubmit={handleSubmit} />;
     case 'api-key':
-      return <ApiKeyStep existingApiKey={existingApiKey} useExistingKey={state.useExistingKey} apiKeyOrOAuthToken={state.apiKeyOrOAuthToken} onApiKeyChange={handleApiKeyChange} onToggleUseExistingKey={handleToggleUseExistingKey} onSubmit={handleSubmit} onCreateOAuthToken={isAnthropicAuthEnabled() ? handleCreateOAuthToken : undefined} selectedOption={state.selectedApiKeyOption} onSelectOption={handleApiKeyOptionChange} />;
+      return <ApiKeyStep existingApiKey={existingApiKey} useExistingKey={state.useExistingKey} apiKeyOrOAuthToken={state.apiKeyOrOAuthToken} onApiKeyChange={handleApiKeyChange} onToggleUseExistingKey={handleToggleUseExistingKey} onSubmit={handleSubmit} onCreateOAuthToken={isAuthEnabled() ? handleCreateOAuthToken : undefined} selectedOption={state.selectedApiKeyOption} onSelectOption={handleApiKeyOptionChange} />;
     case 'creating':
       return <CreatingStep currentWorkflowInstallStep={state.currentWorkflowInstallStep} secretExists={state.secretExists} useExistingSecret={state.useExistingSecret} secretName={state.secretName} skipWorkflow={state.workflowAction === 'skip'} selectedWorkflows={state.selectedWorkflows} />;
     case 'success':

@@ -7,99 +7,123 @@ export type ModelConfig = Record<APIProvider, ModelName>
 // here since the pattern may change.
 
 export const CLAUDE_3_7_SONNET_CONFIG = {
-  firstParty: 'claude-3-7-sonnet-20250219',
+  anthropic: 'claude-3-7-sonnet-20250219',
   bedrock: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
   vertex: 'claude-3-7-sonnet@20250219',
   foundry: 'claude-3-7-sonnet',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-3.7-sonnet',
+  generic: 'claude-3-7-sonnet-20250219',
 } as const satisfies ModelConfig
 
 export const CLAUDE_3_5_V2_SONNET_CONFIG = {
-  firstParty: 'claude-3-5-sonnet-20241022',
+  anthropic: 'claude-3-5-sonnet-20241022',
   bedrock: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
   vertex: 'claude-3-5-sonnet-v2@20241022',
   foundry: 'claude-3-5-sonnet',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-3.5-sonnet',
+  generic: 'claude-3-5-sonnet-20241022',
 } as const satisfies ModelConfig
 
 export const CLAUDE_3_5_HAIKU_CONFIG = {
-  firstParty: 'claude-3-5-haiku-20241022',
+  anthropic: 'claude-3-5-haiku-20241022',
   bedrock: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
   vertex: 'claude-3-5-haiku@20241022',
   foundry: 'claude-3-5-haiku',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-3.5-haiku',
+  generic: 'claude-3-5-haiku-20241022',
 } as const satisfies ModelConfig
 
 export const CLAUDE_HAIKU_4_5_CONFIG = {
-  firstParty: 'claude-haiku-4-5-20251022',
+  anthropic: 'claude-haiku-4-5-20251022',
   bedrock: 'us.anthropic.claude-haiku-4-5-20251022-v1:0',
   vertex: 'claude-haiku-4-5@20251022',
   foundry: 'claude-haiku-4-5',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-haiku-4.5',
+  generic: 'claude-haiku-4-5-20251022',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_CONFIG = {
-  firstParty: 'claude-sonnet-4-20250514',
+  anthropic: 'claude-sonnet-4-20250514',
   bedrock: 'us.anthropic.claude-sonnet-4-20250514-v1:0',
   vertex: 'claude-sonnet-4@20250514',
   foundry: 'claude-sonnet-4',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-sonnet-4',
+  generic: 'claude-sonnet-4-20250514',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_5_CONFIG = {
-  firstParty: 'claude-sonnet-4-5-20250929',
+  anthropic: 'claude-sonnet-4-5-20250929',
   bedrock: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
   vertex: 'claude-sonnet-4-5@20250929',
   foundry: 'claude-sonnet-4-5',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-sonnet-4.5',
+  generic: 'claude-sonnet-4-5-20250929',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_CONFIG = {
-  firstParty: 'claude-opus-4-20250514',
+  anthropic: 'claude-opus-4-20250514',
   bedrock: 'us.anthropic.claude-opus-4-20250514-v1:0',
   vertex: 'claude-opus-4@20250514',
   foundry: 'claude-opus-4',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-opus-4',
+  generic: 'claude-opus-4-20250514',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_1_CONFIG = {
-  firstParty: 'claude-opus-4-1-20250805',
+  anthropic: 'claude-opus-4-1-20250805',
   bedrock: 'us.anthropic.claude-opus-4-1-20250805-v1:0',
   vertex: 'claude-opus-4-1@20250805',
   foundry: 'claude-opus-4-1',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-opus-4.1',
+  generic: 'claude-opus-4-1-20250805',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_5_CONFIG = {
-  firstParty: 'claude-opus-4-5-20251101',
+  anthropic: 'claude-opus-4-5-20251101',
   bedrock: 'us.anthropic.claude-opus-4-5-20251101-v1:0',
   vertex: 'claude-opus-4-5@20251101',
   foundry: 'claude-opus-4-5',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-opus-4.5',
+  generic: 'claude-opus-4-5-20251101',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_6_CONFIG = {
-  firstParty: 'claude-opus-4-6',
+  anthropic: 'claude-opus-4-6',
   bedrock: 'us.anthropic.claude-opus-4-6-v1',
   vertex: 'claude-opus-4-6',
   foundry: 'claude-opus-4-6',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-opus-4.6',
+  generic: 'claude-opus-4-6',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_6_CONFIG = {
-  firstParty: 'claude-sonnet-4-6',
+  anthropic: 'claude-sonnet-4-6',
   bedrock: 'us.anthropic.claude-sonnet-4-6',
   vertex: 'claude-sonnet-4-6',
   foundry: 'claude-sonnet-4-6',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'anthropic/claude-sonnet-4.6',
+  generic: 'claude-sonnet-4-6',
 } as const satisfies ModelConfig
 
 export const QWEN_3_6_PLUS_CONFIG = {
-  firstParty: 'qwen3.6-plus',
+  anthropic: 'qwen3.6-plus',
   bedrock: 'qwen3.6-plus',
   vertex: 'qwen3.6-plus',
   foundry: 'qwen3.6-plus',
   dashscope: 'qwen3.6-plus',
+  openrouter: 'qwen/qwen3.6-plus',
+  generic: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 // @[MODEL LAUNCH]: Register the new config here.
@@ -120,19 +144,19 @@ export const ALL_MODEL_CONFIGS = {
 
 export type ModelKey = keyof typeof ALL_MODEL_CONFIGS
 
-/** Union of all canonical first-party model IDs, e.g. 'claude-opus-4-6' | 'claude-sonnet-4-5-20250929' | … */
+/** Union of all canonical model IDs, e.g. 'claude-opus-4-6' | 'claude-sonnet-4-5-20250929' | … */
 export type CanonicalModelId =
-  (typeof ALL_MODEL_CONFIGS)[ModelKey]['firstParty']
+  (typeof ALL_MODEL_CONFIGS)[ModelKey]['anthropic']
 
 /** Runtime list of canonical model IDs — used by comprehensiveness tests. */
 export const CANONICAL_MODEL_IDS = Object.values(ALL_MODEL_CONFIGS).map(
-  c => c.firstParty,
+  c => c.anthropic,
 ) as [CanonicalModelId, ...CanonicalModelId[]]
 
 /** Map canonical ID → internal short key. Used to apply settings-based modelOverrides. */
 export const CANONICAL_ID_TO_KEY: Record<CanonicalModelId, ModelKey> =
   Object.fromEntries(
     (Object.entries(ALL_MODEL_CONFIGS) as [ModelKey, ModelConfig][]).map(
-      ([key, cfg]) => [cfg.firstParty, key],
+      ([key, cfg]) => [cfg.anthropic, key],
     ),
   ) as Record<CanonicalModelId, ModelKey>

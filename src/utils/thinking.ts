@@ -4,7 +4,7 @@ import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getCanonicalName } from './model/model.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
-import { getAPIProvider } from './model/providers.js'
+import { getAPIProvider, providerHasCapability } from './model/providers.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
 export type ThinkingConfig =
@@ -102,7 +102,7 @@ export function modelSupportsThinking(model: string): boolean {
   const canonical = getCanonicalName(model)
   const provider = getAPIProvider()
   // 1P and Foundry: all Claude 4+ models (including Haiku 4.5)
-  if (provider === 'foundry' || provider === 'firstParty') {
+  if (providerHasCapability(provider, 'thinking')) {
     return !canonical.includes('claude-3-')
   }
   // 3P (Bedrock/Vertex): only Opus 4+ and Sonnet 4+
@@ -140,7 +140,7 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
   // is a proxy). Do not default to true for other 3P as they have different formats
   // for their model strings.
   const provider = getAPIProvider()
-  return provider === 'firstParty' || provider === 'foundry'
+  return providerHasCapability(provider, 'adaptive_thinking')
 }
 
 export function shouldEnableThinkingByDefault(): boolean {

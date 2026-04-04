@@ -16,7 +16,7 @@ export function validateInputForSettingsFileEdit(
   originalContent: string,
   getUpdatedContent: () => string,
 ): Extract<ValidationResult, { result: false }> | null {
-  // Only validate Claude settings files
+  // Only validate ZY settings files
   if (!isClaudeSettingsPath(filePath)) {
     return null
   }
@@ -36,7 +36,7 @@ export function validateInputForSettingsFileEdit(
   if (!afterValidation.isValid) {
     return {
       result: false,
-      message: `Claude Code settings.json validation failed after edit:\n${afterValidation.error}\n\nFull schema:\n${afterValidation.fullSchema}\nIMPORTANT: Do not update the env unless explicitly instructed to do so.`,
+      message: `ZY Code settings.json validation failed after edit:\n${afterValidation.error}\n\nFull schema:\n${afterValidation.fullSchema}\nIMPORTANT: Do not update the env unless explicitly instructed to do so.`,
       errorCode: 10,
     }
   }

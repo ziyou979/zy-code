@@ -22,7 +22,7 @@ import type { Stream } from '@anthropic-ai/sdk/streaming.mjs'
 import { randomUUID } from 'crypto'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isAnthropicBaseUrl,
 } from 'src/utils/model/providers.js'
 import {
   getAttributionHeader,
@@ -158,7 +158,7 @@ import { isClaudeAISubscriber } from 'src/utils/auth.js'
 import {
   getToolSearchBetaHeader,
   modelSupportsStructuredOutputs,
-  shouldIncludeFirstPartyOnlyBetas,
+  shouldIncludeExperimentalBetas,
   shouldUseGlobalCacheScope,
 } from 'src/utils/betas.js'
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/claudeInChrome/common.js'
@@ -302,7 +302,7 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
   if (
     feature('ANTI_DISTILLATION_CC')
       ? process.env.CLAUDE_CODE_ENTRYPOINT === 'cli' &&
-        shouldIncludeFirstPartyOnlyBetas() &&
+        shouldIncludeExperimentalBetas() &&
         getFeatureValue_CACHED_MAY_BE_STALE(
           'tengu_anti_distill_fake_tool_injection',
           false,
@@ -484,7 +484,7 @@ export function configureTaskBudgetParams(
   if (
     !taskBudget ||
     'task_budget' in outputConfig ||
-    !shouldIncludeFirstPartyOnlyBetas()
+    !shouldIncludeExperimentalBetas()
   ) {
     return
   }
@@ -1447,7 +1447,7 @@ async function* queryModel(
     if (
       !afkHeaderLatched &&
       isAgenticQuery &&
-      shouldIncludeFirstPartyOnlyBetas() &&
+      shouldIncludeExperimentalBetas() &&
       (autoModeStateModule?.isAutoModeActive() ?? false)
     ) {
       afkHeaderLatched = true
@@ -1466,7 +1466,7 @@ async function* queryModel(
     if (
       !cacheEditingHeaderLatched &&
       cachedMCEnabled &&
-      getAPIProvider() === 'firstParty' &&
+      getAPIProvider() === 'anthropic' &&
       options.querySource === 'repl_main_thread'
     ) {
       cacheEditingHeaderLatched = true
@@ -1694,7 +1694,7 @@ async function* queryModel(
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       if (
         afkHeaderLatched &&
-        shouldIncludeFirstPartyOnlyBetas() &&
+        shouldIncludeExperimentalBetas() &&
         isAgenticQuery &&
         !betasParams.includes(AFK_MODE_BETA_HEADER)
       ) {
@@ -1707,11 +1707,11 @@ async function* queryModel(
     // the feature disables but the header doesn't flip.
     const useCachedMC =
       cachedMCEnabled &&
-      getAPIProvider() === 'firstParty' &&
+      getAPIProvider() === 'anthropic' &&
       options.querySource === 'repl_main_thread'
     if (
       cacheEditingHeaderLatched &&
-      getAPIProvider() === 'firstParty' &&
+      getAPIProvider() === 'anthropic' &&
       options.querySource === 'repl_main_thread' &&
       !betasParams.includes(cacheEditingBetaHeader)
     ) {
@@ -1844,7 +1844,7 @@ async function* queryModel(
         // server request ID) can still be correlated with server logs.
         // First-party only — 3P providers don't log it (inc-4029 class).
         clientRequestId =
-          getAPIProvider() === 'firstParty' && isFirstPartyAnthropicBaseUrl()
+          getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
             ? randomUUID()
             : undefined
 
@@ -3345,7 +3345,7 @@ export async function queryHaiku({
 type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
 
 /**
- * Query a specific model through the Claude Code infrastructure.
+ * Query a specific model through the ZY Code infrastructure.
  * This goes through the full query pipeline including proper authentication,
  * betas, and headers - unlike direct API calls.
  */

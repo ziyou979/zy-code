@@ -1,6 +1,6 @@
-# Claude Code — Source Build
+# ZY Code — Source Build
 
-这是 Claude Code CLI 的源码构建版本，基于 [Bun](https://bun.sh) 运行时。
+这是 ZY Code CLI 的源码构建版本，基于 [Bun](https://bun.sh) 运行时。
 
 ## 环境要求
 
@@ -100,7 +100,7 @@ TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目
 
 ## IdeaLab 网关（内网用户）
 
-由于 Claude Code 本身对 SSE 支持比较严格，而 IdeaLab 的 API 是非标准的，所以需要一个网关来转换 API 格式。我们推荐使用 [idea-cc-fix](https://code.alibaba-inc.com/cc-idealab-tools/idea-cc-fix) 将 IdeaLab 非标准 API 转换为 Claude Code 标准 Anthropic API 格式。
+由于 ZY Code 本身对 SSE 支持比较严格，而 IdeaLab 的 API 是非标准的，所以需要一个网关来转换 API 格式。我们推荐使用 [idea-cc-fix](https://code.alibaba-inc.com/cc-idealab-tools/idea-cc-fix) 将 IdeaLab 非标准 API 转换为 ZY Code 标准 Anthropic API 格式。
 
 **1. 启动网关**
 

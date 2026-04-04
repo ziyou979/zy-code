@@ -4,7 +4,7 @@
  *
  * When CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST is truthy in the spawn env, these
  * are stripped from settings-sourced env so the host's routing config isn't
- * overridden by a user's ~/.claude/settings.json — e.g. a Bedrock setup for
+ * overridden by a user's ~/.zy/settings.json — e.g. a Bedrock setup for
  * terminal CLI that would break a host that only supports first-party auth.
  *
  * @[MODEL LAUNCH]: New models usually don't need changes here —
@@ -83,7 +83,7 @@ export const DANGEROUS_SHELL_SETTINGS = [
 
 /**
  * Safe environment variables that can be applied before trust dialog.
- * These are Claude Code specific settings that don't pose security risks.
+ * These are ZY Code specific settings that don't pose security risks.
  *
  * IMPORTANT: This is the source of truth for which env vars are safe.
  * Any env var NOT in this list is considered dangerous and will trigger

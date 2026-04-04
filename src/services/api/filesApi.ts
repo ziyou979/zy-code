@@ -1,8 +1,8 @@
 /**
  * Files API client for managing files
  *
- * This module provides functionality to download and upload files to Anthropic Public Files API.
- * Used by the Claude Code agent to download file attachments at session startup.
+ * This module provides functionality to download and upload files to the Public Files API.
+ * Used by the ZY Code agent to download file attachments at session startup.
  *
  * API Reference: https://docs.anthropic.com/en/api/files-content
  */

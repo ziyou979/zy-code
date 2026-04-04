@@ -296,7 +296,7 @@ export const detectApk = memoize(async (): Promise<boolean> => {
 })
 
 /**
- * Memoized function to detect which package manager installed Claude
+ * Memoized function to detect which package manager installed ZY Code
  * Returns 'unknown' if no package manager is detected
  */
 export const getPackageManager = memoize(async (): Promise<PackageManager> => {

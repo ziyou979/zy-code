@@ -1,78 +1,132 @@
-import { c as _c } from "react/compiler-runtime";
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+import React, { useCallback, useEffect, useState } from 'react';
 import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js';
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { Box, Link, Newline, Text, useTheme } from '../ink.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';
-import { isAnthropicAuthEnabled } from '../utils/auth.js';
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js';
-import { getCustomApiKeyStatus } from '../utils/config.js';
-import { env } from '../utils/env.js';
-import { isRunningOnHomespace } from '../utils/envUtils.js';
-import type { ThemeSetting } from '../utils/theme.js';
-import { ApproveApiKey } from './ApproveApiKey.js';
-import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js';
+import { saveGlobalConfig } from '../utils/config.js';
 import { Select } from './CustomSelect/select.js';
 import { WelcomeV2 } from './LogoV2/WelcomeV2.js';
 import { PressEnterToContinue } from './PressEnterToContinue.js';
 import { ThemePicker } from './ThemePicker.js';
 import { OrderedList } from './ui/OrderedList.js';
-type StepId = 'preflight' | 'theme' | 'oauth' | 'api-key' | 'security' | 'terminal-setup';
+
+type StepId = 'preflight' | 'theme' | 'platform' | 'security' | 'terminal-setup';
+
 interface OnboardingStep {
   id: StepId;
   component: React.ReactNode;
 }
+
 type Props = {
   onDone(): void;
 };
-export function Onboarding({
-  onDone
-}: Props): React.ReactNode {
+
+type PlatformProvider = 'anthropic' | 'dashscope' | 'openrouter' | 'generic';
+
+interface PlatformConfig {
+  provider: PlatformProvider;
+  label: string;
+  description: string;
+  apiKeyLabel: string;
+  baseUrlHint?: string;
+}
+
+const PLATFORMS: PlatformConfig[] = [
+  {
+    provider: 'anthropic',
+    label: 'Anthropic',
+    description: '官方 API (api.anthropic.com)',
+    apiKeyLabel: 'Anthropic API Key',
+  },
+  {
+    provider: 'dashscope',
+    label: '百炼 DashScope',
+    description: '阿里云百炼平台',
+    apiKeyLabel: 'DashScope API Key',
+  },
+  {
+    provider: 'openrouter',
+    label: 'OpenRouter',
+    description: 'OpenRouter 代理',
+    apiKeyLabel: 'OpenRouter API Key',
+  },
+  {
+    provider: 'generic',
+    label: 'Generic',
+    description: '自定义兼容 Anthropic 格式的 API',
+    apiKeyLabel: 'API Key',
+  },
+];
+
+export function Onboarding({ onDone }: Props): React.ReactNode {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [skipOAuth, setSkipOAuth] = useState(false);
-  const [oauthEnabled] = useState(() => isAnthropicAuthEnabled());
   const [theme, setTheme] = useTheme();
+
   useEffect(() => {
-    logEvent('tengu_began_setup', {
-      oauthEnabled
-    });
-  }, [oauthEnabled]);
+    // onboarding started
+  }, []);
+
   function goToNextStep() {
     if (currentStepIndex < steps.length - 1) {
       const nextIndex = currentStepIndex + 1;
       setCurrentStepIndex(nextIndex);
-      logEvent('tengu_onboarding_step', {
-        oauthEnabled,
-        stepId: steps[nextIndex]?.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-      });
     } else {
       onDone();
     }
   }
-  function handleThemeSelection(newTheme: ThemeSetting) {
+
+  function handleThemeSelection(newTheme: ReturnType<typeof useTheme>[0]) {
     setTheme(newTheme);
     goToNextStep();
   }
+
   const exitState = useExitOnCtrlCDWithKeybindings();
 
-  // Define all onboarding steps
-  const themeStep = <Box marginX={1}>
-      <ThemePicker onThemeSelect={handleThemeSelection} showIntroText={true} helpText="To change this later, run /theme" hideEscToCancel={true} skipExitHandling={true} // Skip exit handling as Onboarding already handles it
-    />
-    </Box>;
-  const securityStep = <Box flexDirection="column" gap={1} paddingLeft={1}>
+  // Theme step
+  const themeStep = (
+    <Box marginX={1}>
+      <ThemePicker
+        onThemeSelect={handleThemeSelection}
+        showIntroText={true}
+        helpText="To change this later, run /theme"
+        hideEscToCancel={true}
+        skipExitHandling={true}
+      />
+    </Box>
+  );
+
+  // Platform setup step (replaces OAuth + API key approval)
+  function handlePlatformDone(provider: PlatformProvider, apiKey: string) {
+    const normalizedKey = normalizeApiKeyForConfig(apiKey);
+    saveGlobalConfig(current => ({
+      ...current,
+      configuredProvider: provider,
+      configuredApiKey: apiKey,
+      customApiKeyResponses: {
+        ...current.customApiKeyResponses,
+        approved: [...(current.customApiKeyResponses?.approved ?? []), normalizedKey],
+      },
+    }));
+    goToNextStep();
+  }
+
+  const platformStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <PlatformSetup onDone={handlePlatformDone} />
+    </Box>
+  );
+
+  // Security step
+  const securityStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
       <Text bold>Security notes:</Text>
       <Box flexDirection="column" width={70}>
-        {/**
-         * OrderedList misnumbers items when rendering conditionally,
-         * so put all items in the if/else
-         */}
         <OrderedList>
           <OrderedList.Item>
-            <Text>Claude can make mistakes</Text>
+            <Text>ZY Code can make mistakes</Text>
             <Text dimColor wrap="wrap">
-              You should always review Claude&apos;s responses, especially when
+              You should always review ZY Code&apos;s responses, especially when
               <Newline />
               running code.
               <Newline />
@@ -91,145 +145,179 @@ export function Onboarding({
         </OrderedList>
       </Box>
       <PressEnterToContinue />
-    </Box>;
-  // Create the steps array - determine which steps to include based on reAuth and oauthEnabled
-  const apiKeyNeedingApproval = useMemo(() => {
-    // Add API key step if needed
-    // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
-    // processes but ignored by Claude Code itself (see auth.ts).
-    if (!process.env.ANTHROPIC_API_KEY || isRunningOnHomespace()) {
-      return '';
-    }
-    const customApiKeyTruncated = normalizeApiKeyForConfig(process.env.ANTHROPIC_API_KEY);
-    if (getCustomApiKeyStatus(customApiKeyTruncated) === 'new') {
-      return customApiKeyTruncated;
-    }
-  }, []);
-  function handleApiKeyDone(approved: boolean) {
-    if (approved) {
-      setSkipOAuth(true);
-    }
-    goToNextStep();
-  }
+    </Box>
+  );
+
+  // Build steps array
   const steps: OnboardingStep[] = [];
-  steps.push({
-    id: 'theme',
-    component: themeStep
-  });
-  if (apiKeyNeedingApproval) {
-    steps.push({
-      id: 'api-key',
-      component: <ApproveApiKey customApiKeyTruncated={apiKeyNeedingApproval} onDone={handleApiKeyDone} />
-    });
-  }
-  if (oauthEnabled) {
-    steps.push({
-      id: 'oauth',
-      component: <SkippableStep skip={skipOAuth} onSkip={goToNextStep}>
-          <ConsoleOAuthFlow onDone={goToNextStep} />
-        </SkippableStep>
-    });
-  }
-  steps.push({
-    id: 'security',
-    component: securityStep
-  });
+  steps.push({ id: 'theme', component: themeStep });
+  steps.push({ id: 'platform', component: platformStep });
+  steps.push({ id: 'security', component: securityStep });
+
   if (shouldOfferTerminalSetup()) {
     steps.push({
       id: 'terminal-setup',
-      component: <Box flexDirection="column" gap={1} paddingLeft={1}>
-          <Text bold>Use Claude Code&apos;s terminal setup?</Text>
+      component: (
+        <Box flexDirection="column" gap={1} paddingLeft={1}>
+          <Text bold>Use ZY Code&apos;s terminal setup?</Text>
           <Box flexDirection="column" width={70} gap={1}>
             <Text>
               For the optimal coding experience, enable the recommended settings
               <Newline />
               for your terminal:{' '}
-              {env.terminal === 'Apple_Terminal' ? 'Option+Enter for newlines and visual bell' : 'Shift+Enter for newlines'}
+              {process.env.TERM_PROGRAM === 'Apple_Terminal' ? 'Option+Enter for newlines and visual bell' : 'Shift+Enter for newlines'}
             </Text>
-            <Select options={[{
-            label: 'Yes, use recommended settings',
-            value: 'install'
-          }, {
-            label: 'No, maybe later with /terminal-setup',
-            value: 'no'
-          }]} onChange={value => {
-            if (value === 'install') {
-              // Errors already logged in setupTerminal, just swallow and proceed
-              void setupTerminal(theme).catch(() => {}).finally(goToNextStep);
-            } else {
-              goToNextStep();
-            }
-          }} onCancel={() => goToNextStep()} />
+            <Select
+              options={[
+                { label: 'Yes, use recommended settings', value: 'install' },
+                { label: 'No, maybe later with /terminal-setup', value: 'no' },
+              ]}
+              onChange={value => {
+                if (value === 'install') {
+                  void setupTerminal(theme).catch(() => {}).finally(goToNextStep);
+                } else {
+                  goToNextStep();
+                }
+              }}
+              onCancel={() => goToNextStep()}
+            />
             <Text dimColor>
               {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to confirm · Esc to skip</>}
             </Text>
           </Box>
         </Box>
+      ),
     });
   }
+
   const currentStep = steps[currentStepIndex];
 
-  // Handle Enter on security step and Escape on terminal-setup step
-  // Dependencies match what goToNextStep uses internally
   const handleSecurityContinue = useCallback(() => {
     if (currentStepIndex === steps.length - 1) {
       onDone();
     } else {
       goToNextStep();
     }
-  }, [currentStepIndex, steps.length, oauthEnabled, onDone]);
+  }, [currentStepIndex, steps.length, onDone]);
+
   const handleTerminalSetupSkip = useCallback(() => {
     goToNextStep();
-  }, [currentStepIndex, steps.length, oauthEnabled, onDone]);
-  useKeybindings({
-    'confirm:yes': handleSecurityContinue
-  }, {
-    context: 'Confirmation',
-    isActive: currentStep?.id === 'security'
-  });
-  useKeybindings({
-    'confirm:no': handleTerminalSetupSkip
-  }, {
-    context: 'Confirmation',
-    isActive: currentStep?.id === 'terminal-setup'
-  });
-  return <Box flexDirection="column">
+  }, [currentStepIndex, steps.length, onDone]);
+
+  useKeybindings(
+    { 'confirm:yes': handleSecurityContinue },
+    { context: 'Confirmation', isActive: currentStep?.id === 'security' }
+  );
+  useKeybindings(
+    { 'confirm:no': handleTerminalSetupSkip },
+    { context: 'Confirmation', isActive: currentStep?.id === 'terminal-setup' }
+  );
+
+  return (
+    <Box flexDirection="column">
       <WelcomeV2 />
       <Box flexDirection="column" marginTop={1}>
         {currentStep?.component}
-        {exitState.pending && <Box padding={1}>
+        {exitState.pending && (
+          <Box padding={1}>
             <Text dimColor>Press {exitState.keyName} again to exit</Text>
-          </Box>}
+          </Box>
+        )}
       </Box>
-    </Box>;
+    </Box>
+  );
 }
-export function SkippableStep(t0) {
-  const $ = _c(4);
-  const {
-    skip,
-    onSkip,
-    children
-  } = t0;
-  let t1;
-  let t2;
-  if ($[0] !== onSkip || $[1] !== skip) {
-    t1 = () => {
-      if (skip) {
-        onSkip();
-      }
-    };
-    t2 = [skip, onSkip];
-    $[0] = onSkip;
-    $[1] = skip;
-    $[2] = t1;
-    $[3] = t2;
-  } else {
-    t1 = $[2];
-    t2 = $[3];
+
+function PlatformSetup({
+  onDone,
+}: {
+  onDone(provider: PlatformProvider, apiKey: string): void;
+}): React.ReactNode {
+  const [phase, setPhase] = useState<'provider' | 'apiKey'>('provider');
+  const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null);
+
+  const handleProviderSelect = (value: string) => {
+    const provider = value as PlatformProvider;
+    setSelectedProvider(provider);
+    setPhase('apiKey');
+  };
+
+  const handleApiKeyDone = (apiKey: string) => {
+    if (selectedProvider) {
+      onDone(selectedProvider, apiKey);
+    }
+  };
+
+  if (phase === 'provider') {
+    return (
+      <>
+        <Text bold>选择 AI 平台</Text>
+        <Box flexDirection="column" width={60} gap={1}>
+          <Select
+            options={PLATFORMS.map(p => ({
+              label: p.label,
+              description: p.description,
+              value: p.provider,
+            }))}
+            onChange={handleProviderSelect}
+            onCancel={() => onDone('anthropic', '')}
+          />
+          <Text dimColor>Enter to confirm · Esc to exit</Text>
+        </Box>
+      </>
+    );
   }
-  useEffect(t1, t2);
-  if (skip) {
-    return null;
-  }
-  return children;
+
+  // apiKey phase
+  const platform = PLATFORMS.find(p => p.provider === selectedProvider);
+  return (
+    <ApiKeyInput
+      apiKeyLabel={platform?.apiKeyLabel ?? 'API Key'}
+      baseUrlHint={platform?.baseUrlHint}
+      onDone={handleApiKeyDone}
+      onBack={() => setPhase('provider')}
+    />
+  );
+}
+
+function ApiKeyInput({
+  apiKeyLabel,
+  baseUrlHint,
+  onDone,
+  onBack,
+}: {
+  apiKeyLabel: string;
+  baseUrlHint?: string;
+  onDone(apiKey: string): void;
+  onBack(): void;
+}): React.ReactNode {
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>输入 {apiKeyLabel}</Text>
+      <Box flexDirection="column" width={60} gap={1}>
+        <Select
+          options={[
+            {
+              type: 'input',
+              label: apiKeyLabel,
+              value: 'input',
+              placeholder: 'sk-...',
+              onChange: value => {
+                if (value.trim().length > 0) {
+                  onDone(value.trim());
+                }
+              },
+              allowEmptySubmitToCancel: true,
+              resetCursorOnUpdate: true,
+            },
+          ]}
+          onCancel={onBack}
+        />
+        {baseUrlHint && (
+          <Text dimColor>Base URL: {baseUrlHint}</Text>
+        )}
+        <Text dimColor>Enter to confirm · 9 to go back</Text>
+      </Box>
+    </Box>
+  );
 }

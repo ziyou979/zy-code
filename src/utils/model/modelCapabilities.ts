@@ -13,7 +13,7 @@ import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import { isEssentialTrafficOnly } from '../privacyLevel.js'
 import { jsonStringify } from '../slowOperations.js'
-import { getAPIProvider, isFirstPartyAnthropicBaseUrl } from './providers.js'
+import { getAPIProvider, providerHasCapability, isAnthropicBaseUrl } from './providers.js'
 
 // .strip() — don't persist internal-only fields (mycro_deployments etc.) to disk
 const ModelCapabilitySchema = lazySchema(() =>
@@ -45,8 +45,8 @@ function getCachePath(): string {
 
 function isModelCapabilitiesEligible(): boolean {
   if (process.env.USER_TYPE !== 'ant') return false
-  if (getAPIProvider() !== 'firstParty') return false
-  if (!isFirstPartyAnthropicBaseUrl()) return false
+  if (!providerHasCapability(getAPIProvider(), 'prompt_caching')) return false
+  if (!isAnthropicBaseUrl()) return false
   return true
 }
 

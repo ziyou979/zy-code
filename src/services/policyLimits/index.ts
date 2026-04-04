@@ -24,7 +24,7 @@ import {
 } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getAnthropicApiKeyWithSource,
+  getApiKeyWithSource,
   getClaudeAIOAuthTokens,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
@@ -34,7 +34,7 @@ import { classifyAxiosError } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isAnthropicBaseUrl,
 } from '../../utils/model/providers.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { sleep } from '../../utils/sleep.js'
@@ -166,18 +166,18 @@ function computeChecksum(
  */
 export function isPolicyLimitsEligible(): boolean {
   // 3p provider users should not hit the policy limits endpoint
-  if (getAPIProvider() !== 'firstParty') {
+  if (getAPIProvider() !== 'anthropic') {
     return false
   }
 
   // Custom base URL users should not hit the policy limits endpoint
-  if (!isFirstPartyAnthropicBaseUrl()) {
+  if (!isAnthropicBaseUrl()) {
     return false
   }
 
   // Console users (API key) are eligible if we can get the actual key
   try {
-    const { key: apiKey } = getAnthropicApiKeyWithSource({
+    const { key: apiKey } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     if (apiKey) {
@@ -230,7 +230,7 @@ function getAuthHeaders(): {
 } {
   // Try API key first (for Console users)
   try {
-    const { key: apiKey } = getAnthropicApiKeyWithSource({
+    const { key: apiKey } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     if (apiKey) {

@@ -662,7 +662,7 @@ export async function calculateCommitAttribution(
             const diffSize = await getGitDiffSize(file)
             humanChars = diffSize > 0 ? diffSize : stats.size
           } else {
-            // New file not created by Claude
+            // New file not created by ZY
             humanChars = stats.size
           }
         } catch {

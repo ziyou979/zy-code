@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Build script for Claude Code.
+ * Build script for ZY Code.
  * Uses Bun's native bundler. All feature() flags default to false,
  * which DCEs internal-only code paths (BRIDGE_MODE, DAEMON, etc.).
  */

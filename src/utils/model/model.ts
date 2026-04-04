@@ -110,10 +110,10 @@ export function getDefaultOpusModel(): ModelName {
   if (process.env.DASHSCOPE_API_KEY || getAPIProvider() === 'dashscope') {
     return 'qwen3.6-plus'
   }
-  // 3P providers (Bedrock, Vertex, Foundry) — kept as a separate branch
-  // even when values match, since 3P availability lags firstParty and
+  // Non-anthropic providers (Bedrock, Vertex, Foundry) — kept as a separate branch
+  // even when values match, since provider availability lags and
   // these will diverge again at the next model launch.
-  if (getAPIProvider() !== 'firstParty') {
+  if (getAPIProvider() !== 'anthropic') {
     return getModelStrings().opus46
   }
   return getModelStrings().opus46
@@ -129,7 +129,7 @@ export function getDefaultSonnetModel(): ModelName {
     return 'qwen3.6-plus'
   }
   // Default to Sonnet 4.5 for 3P since they may not have 4.6 yet
-  if (getAPIProvider() !== 'firstParty') {
+  if (getAPIProvider() !== 'anthropic') {
     return getModelStrings().sonnet45
   }
   return getModelStrings().sonnet46
@@ -216,13 +216,7 @@ export function getDefaultMainLoopModel(): ModelName {
 }
 
 // @[MODEL LAUNCH]: Add a canonical name mapping for the new model below.
-/**
- * Pure string-match that strips date/provider suffixes from a first-party model
- * name. Input must already be a 1P-format ID (e.g. 'claude-3-7-sonnet-20250219',
- * 'us.anthropic.claude-opus-4-6-v1:0'). Does not touch settings, so safe at
- * module top-level (see MODEL_COSTS in modelCost.ts).
- */
-export function firstPartyNameToCanonical(name: ModelName): ModelShortName {
+export function canonicalNameToShort(name: ModelName): ModelShortName {
   name = name.toLowerCase()
   // Special cases for Claude 4+ models to differentiate versions
   // Order matters: check more specific versions first (4-5 before 4)
@@ -290,8 +284,8 @@ export function firstPartyNameToCanonical(name: ModelName): ModelShortName {
  */
 export function getCanonicalName(fullModelName: ModelName): ModelShortName {
   // Resolve overridden model IDs (e.g. Bedrock ARNs) back to canonical names.
-  // resolved is always a 1P-format ID, so firstPartyNameToCanonical can handle it.
-  return firstPartyNameToCanonical(resolveOverriddenModel(fullModelName))
+  // resolved is always a canonical-format ID, so canonicalNameToShort can handle it.
+  return canonicalNameToShort(resolveOverriddenModel(fullModelName))
 }
 
 // @[MODEL LAUNCH]: Update the default model description strings shown to users.
@@ -317,7 +311,7 @@ export function renderDefaultModelSetting(
 }
 
 export function getOpus46PricingSuffix(fastMode: boolean): string {
-  if (getAPIProvider() !== 'firstParty') return ''
+  if (getAPIProvider() !== 'anthropic') return ''
   const pricing = formatModelPricing(getOpus46CostTier(fastMode))
   const fastModeIndicator = fastMode ? ` (${LIGHTNING_BOLT})` : ''
   return ` ·${fastModeIndicator} ${pricing}`
@@ -327,7 +321,7 @@ export function isOpus1mMergeEnabled(): boolean {
   if (
     is1mContextDisabled() ||
     isProSubscriber() ||
-    getAPIProvider() !== 'firstParty'
+    getAPIProvider() !== 'anthropic'
   ) {
     return false
   }
@@ -350,6 +344,16 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
   if (isModelAlias(setting)) {
     return capitalize(setting)
   }
+  // Check custom models for display label
+  const settings = getSettings_DEPRECATED() || {}
+  if (settings.customModels && settings.customModels.length > 0) {
+    const customModel = settings.customModels.find(
+      m => m.alias === setting || m.model === setting,
+    )
+    if (customModel) {
+      return customModel.label ?? customModel.alias
+    }
+  }
   return renderModelName(setting)
 }
 
@@ -359,6 +363,18 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
  * if the model is not recognized as a public model.
  */
 export function getPublicModelDisplayName(model: ModelName): string | null {
+  // Check custom models first
+  const settings = getSettings_DEPRECATED() || {}
+  if (settings.customModels && settings.customModels.length > 0) {
+    const customModel = settings.customModels.find(
+      m => m.model === model || m.model + '[1m]' === model,
+    )
+    if (customModel) {
+      const has1m = model.toLowerCase().includes('[1m]')
+      return (customModel.label ?? customModel.alias) + (has1m ? ' (1M context)' : '')
+    }
+  }
+
   switch (model) {
     case getModelStrings().opus46:
       return 'Opus 4.6'
@@ -437,9 +453,9 @@ export function renderModelName(model: ModelName): string {
 export function getPublicModelName(model: ModelName): string {
   const publicName = getPublicModelDisplayName(model)
   if (publicName) {
-    return `Claude ${publicName}`
+    return `ZY ${publicName}`
   }
-  return `Claude (${model})`
+  return `ZY (${model})`
 }
 
 /**
@@ -487,7 +503,7 @@ export function parseUserSpecifiedModel(
   // strings pinned them in settings/env/--model/SDK before 4.5 launched.
   // 3P providers may not yet have 4.6 capacity, so pass through unchanged.
   if (
-    getAPIProvider() === 'firstParty' &&
+    getAPIProvider() === 'anthropic' &&
     isLegacyOpusFirstParty(modelString) &&
     isLegacyModelRemapEnabled()
   ) {
@@ -507,6 +523,17 @@ export function parseUserSpecifiedModel(
     // Fall through to the alias string if we cannot load the config. The API calls
     // will fail with this string, but we should hear about it through feedback and
     // can tell the user to restart/wait for flag cache refresh to get the latest values.
+  }
+
+  // Resolve custom model aliases from settings
+  const settings = getSettings_DEPRECATED() || {}
+  if (settings.customModels && settings.customModels.length > 0) {
+    const customModel = settings.customModels.find(
+      m => m.alias.toLowerCase() === modelString,
+    )
+    if (customModel) {
+      return customModel.model + (has1mTag ? '[1m]' : '')
+    }
   }
 
   // Preserve original case for custom model names (e.g., Azure Foundry deployment IDs)
@@ -583,6 +610,18 @@ export function getMarketingNameForModel(modelId: string): string | undefined {
   if (getAPIProvider() === 'foundry') {
     // deployment ID is user-defined in Foundry, so it may have no relation to the actual model
     return undefined
+  }
+
+  // Check custom models first
+  const settings = getSettings_DEPRECATED() || {}
+  if (settings.customModels && settings.customModels.length > 0) {
+    const customModel = settings.customModels.find(
+      m => m.model === modelId.replace(/\[1m\]$/i, ''),
+    )
+    if (customModel) {
+      const has1m = modelId.toLowerCase().includes('[1m]')
+      return customModel.label ?? (has1m ? `${customModel.alias} (1M context)` : customModel.alias)
+    }
   }
 
   const has1m = modelId.toLowerCase().includes('[1m]')

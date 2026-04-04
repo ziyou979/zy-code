@@ -1,7 +1,7 @@
 /**
  * Plugin Loader Module
  *
- * This module is responsible for discovering, loading, and validating Claude Code plugins
+ * This module is responsible for discovering, loading, and validating ZY Code plugins
  * from various sources including marketplaces and git repositories.
  *
  * NPM packages are also supported but must be referenced through marketplaces - the marketplace
@@ -163,7 +163,7 @@ export function getVersionedCachePathIn(
 
 /**
  * Get versioned cache path for a plugin under the primary plugins directory.
- * Format: ~/.claude/plugins/cache/{marketplace}/{plugin}/{version}/
+ * Format: ~/.zy/plugins/cache/{marketplace}/{plugin}/{version}/
  *
  * @param pluginId - Plugin identifier in format "name@marketplace"
  * @param version - Version string (semver, git SHA, etc.)
@@ -239,7 +239,7 @@ export async function probeSeedCacheAnyVersion(
 
 /**
  * Get legacy (non-versioned) cache path for a plugin.
- * Format: ~/.claude/plugins/cache/{plugin-name}/
+ * Format: ~/.zy/plugins/cache/{plugin-name}/
  *
  * Used for backward compatibility with existing installations.
  *

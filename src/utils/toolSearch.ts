@@ -36,7 +36,7 @@ import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isAnthropicBaseUrl,
 } from './model/providers.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
@@ -281,7 +281,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
 
   // tool_reference is a beta content type that third-party API gateways
   // (ANTHROPIC_BASE_URL proxies) typically don't support. When the provider
-  // is 'firstParty' but the base URL points elsewhere, the proxy will reject
+  // is 'anthropic' but the base URL points elsewhere, the proxy will reject
   // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected —
   // they have their own endpoints and beta headers.
   // https://github.com/anthropics/claude-code/issues/30912
@@ -298,8 +298,8 @@ export function isToolSearchEnabledOptimistic(): boolean {
   // with getToolSearchMode(), which also treats "" as unset.
   if (
     !process.env.ENABLE_TOOL_SEARCH &&
-    getAPIProvider() === 'firstParty' &&
-    !isFirstPartyAnthropicBaseUrl()
+    getAPIProvider() === 'anthropic' &&
+    !isAnthropicBaseUrl()
   ) {
     if (!loggedOptimistic) {
       loggedOptimistic = true
@@ -419,7 +419,7 @@ export async function isToolSearchEnabled(
   if (!modelSupportsToolReference(model)) {
     logForDebugging(
       `Tool search disabled for model '${model}': model does not support tool_reference blocks. ` +
-        `This feature is only available on Claude Sonnet 4+, Opus 4+, and newer models.`,
+        `This feature is only available on ZY Code Sonnet 4+, Opus 4+, and newer models.`,
     )
     logModeDecision(false, 'standard', 'model_unsupported')
     return false

@@ -46,7 +46,8 @@ import { isEnvTruthy } from './envUtils.js'
 import { createUserMessage } from './messages.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isAnthropicBaseUrl,
+  providerHasCapability,
 } from './model/providers.js'
 import {
   getFileReadIgnorePatterns,
@@ -197,8 +198,8 @@ export async function toolToAPISchema(
     // Gated to direct api.anthropic.com: proxies (LiteLLM etc.) and Bedrock/Vertex
     // with Claude 4.5 reject this field with 400. See GH#32742, PR #21729.
     if (
-      getAPIProvider() === 'firstParty' &&
-      isFirstPartyAnthropicBaseUrl() &&
+      providerHasCapability(getAPIProvider(), 'prompt_caching') &&
+      isAnthropicBaseUrl() &&
       (getFeatureValue_CACHED_MAY_BE_STALE('tengu_fgts', false) ||
         isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_FINE_GRAINED_TOOL_STREAMING))
     ) {
@@ -237,7 +238,7 @@ export async function toolToAPISchema(
   // schemas pass through — including fields added in the future.
   // cache_control is allowlisted: the base {type: 'ephemeral'} shape is
   // standard prompt caching (Bedrock/Vertex supported); the beta sub-fields
-  // (scope, ttl) are already gated upstream by shouldIncludeFirstPartyOnlyBetas
+  // (scope, ttl) are already gated upstream by shouldIncludeExperimentalBetas
   // which independently respects this kill switch.
   // github.com/anthropics/claude-code/issues/20031
   if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)) {

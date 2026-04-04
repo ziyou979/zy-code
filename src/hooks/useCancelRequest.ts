@@ -93,7 +93,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     }
 
     // Priority 1: If there's an active task running, cancel it first
-    // This takes precedence over queue management so users can always interrupt Claude
+    // This takes precedence over queue management so users can always interrupt ZY
     if (abortSignal !== undefined && !abortSignal.aborted) {
       logEvent('tengu_cancel', cancelProps)
       setToolUseConfirmQueue(() => [])

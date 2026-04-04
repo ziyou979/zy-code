@@ -240,7 +240,7 @@ export function buildAccountProperties(): Property[] {
 export function buildAPIProviderProperties(): Property[] {
   const apiProvider = getAPIProvider();
   const properties: Property[] = [];
-  if (apiProvider !== 'firstParty') {
+  if (apiProvider !== 'anthropic') {
     const providerLabel = {
       bedrock: 'AWS Bedrock',
       vertex: 'Google Vertex AI',
@@ -251,7 +251,7 @@ export function buildAPIProviderProperties(): Property[] {
       value: providerLabel
     });
   }
-  if (apiProvider === 'firstParty') {
+  if (apiProvider === 'anthropic') {
     const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL;
     if (anthropicBaseUrl) {
       properties.push({

@@ -1,9 +1,6 @@
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import {
-  getClaudeAIOAuthTokens,
-  isAnthropicAuthEnabled,
-} from '../utils/auth.js'
+import { getClaudeAIOAuthTokens } from '../utils/auth.js'
 
 /**
  * Kill-switch check for voice mode. Returns true unless the
@@ -24,7 +21,7 @@ export function isVoiceGrowthBookEnabled(): boolean {
 
 /**
  * Auth-only check for voice mode. Returns true when the user has a valid
- * Anthropic OAuth token. Backed by the memoized getClaudeAIOAuthTokens —
+ * OAuth token. Backed by the memoized getClaudeAIOAuthTokens —
  * first call spawns `security` on macOS (~20-50ms), subsequent calls are
  * cache hits. The memoize clears on token refresh (~once/hour), so one
  * cold spawn per refresh is expected. Cheap enough for usage-time checks.

@@ -5,7 +5,7 @@
 import axios from 'axios'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import {
-  getAnthropicApiKey,
+  getApiKey,
   getClaudeAIOAuthTokens,
   handleOAuth401Error,
   isClaudeAISubscriber,
@@ -50,7 +50,7 @@ export function getMCPUserAgent(): string {
 }
 
 // User-Agent for WebFetch requests to arbitrary sites. `Claude-User` is
-// Anthropic's publicly documented agent for user-initiated fetches (what site
+// our publicly documented agent for user-initiated fetches
 // operators match in robots.txt); the claude-code suffix lets them distinguish
 // local CLI traffic from claude.ai server-side fetches.
 export function getWebFetchUserAgent(): string {
@@ -94,7 +94,7 @@ export function getAuthHeaders(): AuthHeaders {
   }
   // TODO: this will fail if the API key is being set to an LLM Gateway key
   // should we try to query keychain / credentials for a valid Anthropic key?
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getApiKey()
   if (!apiKey) {
     return {
       headers: {},

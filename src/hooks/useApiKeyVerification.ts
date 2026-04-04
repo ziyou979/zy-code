@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { verifyApiKey } from '../services/api/claude.js'
 import {
-  getAnthropicApiKeyWithSource,
+  getApiKeyWithSource,
   getApiKeyFromApiKeyHelper,
-  isAnthropicAuthEnabled,
+  isAuthEnabled,
   isClaudeAISubscriber,
 } from '../utils/auth.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
@@ -28,12 +28,12 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
     if (process.env.DASHSCOPE_API_KEY) {
       return 'valid'
     }
-    if (!isAnthropicAuthEnabled() || isClaudeAISubscriber()) {
+    if (!isAuthEnabled() || isClaudeAISubscriber()) {
       return 'valid'
     }
     // Use skipRetrievingKeyFromApiKeyHelper to avoid executing apiKeyHelper
     // before trust dialog is shown (security: prevents RCE via settings.json)
-    const { key, source } = getAnthropicApiKeyWithSource({
+    const { key, source } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     // If apiKeyHelper is configured, we have a key source even though we
@@ -51,14 +51,14 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
       setStatus('valid')
       return
     }
-    if (!isAnthropicAuthEnabled() || isClaudeAISubscriber()) {
+    if (!isAuthEnabled() || isClaudeAISubscriber()) {
       setStatus('valid')
       return
     }
     // Warm the apiKeyHelper cache (no-op if not configured), then read from
-    // all sources. getAnthropicApiKeyWithSource() reads the now-warm cache.
+    // all sources. getApiKeyWithSource() reads the now-warm cache.
     await getApiKeyFromApiKeyHelper(getIsNonInteractiveSession())
-    const { key: apiKey, source } = getAnthropicApiKeyWithSource()
+    const { key: apiKey, source } = getApiKeyWithSource()
     if (!apiKey) {
       if (source === 'apiKeyHelper') {
         setStatus('error')

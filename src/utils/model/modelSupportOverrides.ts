@@ -29,7 +29,13 @@ const TIERS = [
  */
 export const get3PModelCapabilityOverride = memoize(
   (model: string, capability: ModelCapabilityOverride): boolean | undefined => {
-    if (getAPIProvider() === 'firstParty') {
+    const provider = getAPIProvider()
+    if (
+      provider === 'anthropic' ||
+      provider === 'dashscope' ||
+      provider === 'openrouter' ||
+      provider === 'generic'
+    ) {
       return undefined
     }
     const m = model.toLowerCase()

@@ -1,6 +1,6 @@
 import type { BetaUsage } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { shouldIncludeFirstPartyOnlyBetas } from './betas.js'
+import { shouldIncludeExperimentalBetas } from './betas.js'
 import { isEnvTruthy } from './envUtils.js'
 import { getInitialSettings } from './settings/settings.js'
 
@@ -62,7 +62,7 @@ export function isAdvisorEnabled(): boolean {
     return false
   }
   // The advisor beta header is first-party only (Bedrock/Vertex 400 on it).
-  if (!shouldIncludeFirstPartyOnlyBetas()) {
+  if (!shouldIncludeExperimentalBetas()) {
     return false
   }
   return getAdvisorConfig().enabled ?? false

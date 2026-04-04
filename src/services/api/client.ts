@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto'
 import type { GoogleAuth } from 'google-auth-library'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getAnthropicApiKey,
+  getApiKey,
   getApiKeyFromApiKeyHelper,
   getClaudeAIOAuthTokens,
   isClaudeAISubscriber,
@@ -14,7 +14,7 @@ import { getUserAgent } from 'src/utils/http.js'
 import { getSmallFastModel } from 'src/utils/model/model.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isAnthropicBaseUrl,
 } from 'src/utils/model/providers.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import {
@@ -74,14 +74,14 @@ function createStderrLogger(): ClientOptions['logger'] {
   return {
     error: (msg, ...args) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-      console.error('[Anthropic SDK ERROR]', msg, ...args),
+      console.error('[SDK ERROR]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-    warn: (msg, ...args) => console.error('[Anthropic SDK WARN]', msg, ...args),
+    warn: (msg, ...args) => console.error('[SDK WARN]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-    info: (msg, ...args) => console.error('[Anthropic SDK INFO]', msg, ...args),
+    info: (msg, ...args) => console.error('[SDK INFO]', msg, ...args),
     debug: (msg, ...args) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-      console.error('[Anthropic SDK DEBUG]', msg, ...args),
+      console.error('[SDK DEBUG]', msg, ...args),
   }
 }
 
@@ -297,31 +297,26 @@ export async function getAnthropicClient({
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic
   }
   if (process.env.DASHSCOPE_API_KEY || isEnvTruthy(process.env.CLAUDE_CODE_USE_DASHSCOPE)) {
-    // 百炼 API 兼容 Anthropic 格式，只需要设置 baseURL 和 API Key
+    // 百炼 API 兼容 Anthropic 协议格式，只需要设置 baseURL 和 API Key
     // 当设置了 DASHSCOPE_API_KEY 时自动启用，无需额外设置 CLAUDE_CODE_USE_DASHSCOPE
-    const dashscopeApiKey = process.env.DASHSCOPE_API_KEY || getAnthropicApiKey()
+    const dashscopeApiKey = process.env.DASHSCOPE_API_KEY || getApiKey()
     // 使用 Anthropic 兼容端点，而非 OpenAI 兼容端点
     const dashscopeBaseURL = process.env.DASHSCOPE_BASE_URL || 'https://dashscope.aliyuncs.com/apps/anthropic/'
-    
-    console.error(`[API:dashscope] ===== 百炼 API 配置 =====`)
-    console.error(`[API:dashscope] 请求地址 (baseURL): ${dashscopeBaseURL}`)
-    console.error(`[API:dashscope] API Key 长度: ${dashscopeApiKey?.length || 0}`)
-    console.error(`[API:dashscope] ========================`)
-    
+
     // 百炼 API 使用 OpenAI 兼容格式，需要清理不兼容的 headers
-    // 创建百炼专用的 headers，移除 Anthropic 特定的 headers
+    // 创建百炼专用的 headers，移除平台特定的 headers
     const dashscopeHeaders: Record<string, string> = {}
-    
-    // 只保留必要的 headers，移除 Anthropic 特定的 headers
+
+    // 只保留必要的 headers，移除平台特定的 headers
     if (defaultHeaders['User-Agent']) {
       dashscopeHeaders['User-Agent'] = defaultHeaders['User-Agent']
     }
     // 移除可能导致不兼容的 headers
-    // - X-Claude-Code-Session-Id: Anthropic 特定
-    // - x-app: Anthropic 特定
-    // - x-claude-*: Anthropic 特定
-    // - x-client-app: Anthropic 特定
-    // - x-anthropic-*: Anthropic 特定
+    // - X-Claude-Code-Session-Id: 平台特定
+    // - x-app: 平台特定
+    // - x-claude-*: 平台特定
+    // - x-client-app: 平台特定
+    // - x-anthropic-*: 平台特定
     
     const dashscopeConfig: ConstructorParameters<typeof Anthropic>[0] = {
       apiKey: dashscopeApiKey,
@@ -339,7 +334,7 @@ export async function getAnthropicClient({
 
   // Determine authentication method based on available tokens
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
-    apiKey: isClaudeAISubscriber() ? null : apiKey || getAnthropicApiKey(),
+    apiKey: isClaudeAISubscriber() ? null : apiKey || getApiKey(),
     authToken: isClaudeAISubscriber()
       ? getClaudeAIOAuthTokens()?.accessToken
       : undefined,
@@ -410,7 +405,7 @@ function buildFetch(
   // Only send to the first-party API — Bedrock/Vertex/Foundry don't log it
   // and unknown headers risk rejection by strict proxies (inc-4029 class).
   const injectClientRequestId =
-    getAPIProvider() === 'firstParty' && isFirstPartyAnthropicBaseUrl()
+    getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const headers = new Headers(init?.headers)

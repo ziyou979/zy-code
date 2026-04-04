@@ -232,7 +232,7 @@ function parseSettingsFileUncached(path: string): {
 
 /**
  * Get the absolute path to the associated file root for a given settings source
- * (e.g. for $PROJ_DIR/.claude/settings.json, returns $PROJ_DIR)
+ * (e.g. for $PROJ_DIR/.zy/settings.json, returns $PROJ_DIR)
  * @param source The source of the settings
  * @returns The root path of the settings file
  */
@@ -300,9 +300,9 @@ export function getRelativeSettingsFilePathForSource(
 ): string {
   switch (source) {
     case 'projectSettings':
-      return join('.claude', 'settings.json')
+      return join('.zy', 'settings.json')
     case 'localSettings':
-      return join('.claude', 'settings.local.json')
+      return join('.zy', 'settings.local.json')
   }
 }
 
@@ -850,7 +850,7 @@ export function getSettingsWithSources(): SettingsWithSources {
 /**
  * Get merged settings and validation errors from all sources
  * This function now uses session-level caching to avoid repeated file I/O.
- * Settings changes require Claude Code restart, so cache is valid for entire session.
+ * Settings changes require ZY Code restart, so cache is valid for entire session.
  * @returns Merged settings and all validation errors encountered
  */
 export function getSettingsWithErrors(): SettingsWithErrors {

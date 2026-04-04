@@ -1,9 +1,9 @@
-// Anthropic voice_stream speech-to-text client for push-to-talk.
+// Voice stream speech-to-text client for push-to-talk.
 //
 // Only reachable in ant builds (gated by feature('VOICE_MODE') in useVoice.ts import).
 //
-// Connects to Anthropic's voice_stream WebSocket endpoint using the same
-// OAuth credentials as Claude Code.  The endpoint uses conversation_engine
+// Connects to the voice_stream WebSocket endpoint using the same
+// OAuth credentials as ZY Code.  The endpoint uses conversation_engine
 // backed models for speech-to-text.  Designed for hold-to-talk: hold the
 // keybinding to record, release to stop and submit.
 //
@@ -17,7 +17,7 @@ import { getOauthConfig } from '../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getClaudeAIOAuthTokens,
-  isAnthropicAuthEnabled,
+  isAuthEnabled,
 } from '../utils/auth.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getUserAgent } from '../utils/http.js'
@@ -96,10 +96,10 @@ type VoiceStreamMessage =
 // ─── Availability ──────────────────────────────────────────────────────
 
 export function isVoiceStreamAvailable(): boolean {
-  // voice_stream uses the same OAuth as Claude Code — available when the
-  // user is authenticated with Anthropic (Claude.ai subscriber or has
+  // voice_stream uses the same OAuth as ZY Code — available when the
+  // user is authenticated (subscribers or has
   // valid OAuth tokens).
-  if (!isAnthropicAuthEnabled()) {
+  if (!isAuthEnabled()) {
     return false
   }
   const tokens = getClaudeAIOAuthTokens()

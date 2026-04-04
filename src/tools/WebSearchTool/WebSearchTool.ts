@@ -2,7 +2,8 @@ import type {
   BetaContentBlock,
   BetaWebSearchTool20250305,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import { getAPIProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, providerHasCapability } from 'src/utils/model/providers.js'
+
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
 import { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -155,7 +156,7 @@ export const WebSearchTool = buildTool({
   maxResultSizeChars: 100_000,
   shouldDefer: true,
   async description(input) {
-    return `Claude wants to search the web for: ${input.query}`
+    return `ZY wants to search the web for: ${input.query}`
   },
   userFacingName() {
     return 'Web Search'
@@ -169,8 +170,8 @@ export const WebSearchTool = buildTool({
     const provider = getAPIProvider()
     const model = getMainLoopModel()
 
-    // Enable for firstParty
-    if (provider === 'firstParty') {
+    // Enable for providers with web_search capability
+    if (providerHasCapability(provider, 'web_search')) {
       return true
     }
 
