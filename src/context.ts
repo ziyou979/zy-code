@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
 import {
   getAdditionalDirectoriesForzyMd,
-  setCachedzyMdContent,
+  setCachedZyMdContent,
 } from './bootstrap/state.js'
 import { getLocalISODate } from './constants/common.js'
 import {
@@ -173,7 +173,7 @@ export const getUserContext = memoize(
     // Cache for the auto-mode classifier (yoloClassifier.ts reads this
     // instead of importing zymd.ts directly, which would create a
     // cycle through permissions/filesystem → permissions → yoloClassifier).
-    setCachedzyMdContent(zyMd || null)
+    setCachedZyMdContent(zyMd || null)
 
     logForDiagnosticsNoPII('info', 'user_context_completed', {
       duration_ms: Date.now() - startTime,

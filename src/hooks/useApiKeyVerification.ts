@@ -8,7 +8,7 @@ import {
   isZyAISubscriber,
 } from '../utils/auth.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
-import { getAPIProvider } from '../utils/model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider } from '../utils/model/providers.js'
 
 export type VerificationStatus =
   | 'loading'
@@ -25,8 +25,8 @@ export type ApiKeyVerificationResult = {
 
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    // 支持百炼 DashScope - 通过 settings.json 配置，兼容 DASHSCOPE_API_KEY
-    if (getAPIProvider() === 'dashscope') {
+    // 支持 OpenAI 兼容格式的平台
+    if (isOpenAIFormatProvider(getAPIProvider())) {
       return 'valid'
     }
     if (!isAuthEnabled() || isZyAISubscriber()) {
@@ -47,8 +47,8 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [error, setError] = useState<Error | null>(null)
 
   const verify = useCallback(async (): Promise<void> => {
-    // 支持百炼 DashScope - 通过 settings.json 配置时跳过验证
-    if (getAPIProvider() === 'dashscope') {
+    // 支持 OpenAI 兼容格式的平台 - 通过 settings.json 配置时跳过验证
+    if (isOpenAIFormatProvider(getAPIProvider())) {
       setStatus('valid')
       return
     }

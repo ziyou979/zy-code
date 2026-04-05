@@ -118,9 +118,9 @@ type State = {
   lastAPIRequestMessages: BetaMessageStreamParams['messages'] | null
   // Last auto-mode classifier request(s) for /share transcript
   lastClassifierRequests: unknown[] | null
-  // CLAUDE.md content cached by context.ts for the auto-mode classifier.
+  // ZY.md content cached by context.ts for the auto-mode classifier.
   // Breaks the yoloClassifier → zymd → filesystem → permissions cycle.
-  cachedzyMdContent: string | null
+  cachedZyMdContent: string | null
   // In-memory error log for recent errors
   inMemoryErrorLog: Array<{ error: string; timestamp: string }>
   // Session-only plugins from --plugin-dir flag
@@ -344,7 +344,7 @@ function getInitialState(): State {
     lastAPIRequestMessages: null,
     // Last auto-mode classifier request(s) for /share transcript
     lastClassifierRequests: null,
-    cachedzyMdContent: null,
+    cachedZyMdContent: null,
     // In-memory error log for recent errors
     inMemoryErrorLog: [],
     // Session-only plugins from --plugin-dir flag
@@ -1204,12 +1204,12 @@ export function getLastClassifierRequests(): unknown[] | null {
   return STATE.lastClassifierRequests
 }
 
-export function setCachedzyMdContent(content: string | null): void {
-  STATE.cachedzyMdContent = content
+export function setCachedZyMdContent(content: string | null): void {
+  STATE.cachedZyMdContent = content
 }
 
-export function getCachedzyMdContent(): string | null {
-  return STATE.cachedzyMdContent
+export function getCachedZyMdContent(): string | null {
+  return STATE.cachedZyMdContent
 }
 
 export function addToInMemoryErrorLog(errorInfo: {

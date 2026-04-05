@@ -10,7 +10,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
-import { getAPIProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider } from 'src/utils/model/providers.js'
 import {
   getIsNonInteractiveSession,
 } from '../bootstrap/state.js'
@@ -1739,8 +1739,8 @@ export type UserAccountInfo = {
 
 export function getAccountInformation() {
   const apiProvider = getAPIProvider()
-  // Only provide account info for first-party API
-  if (apiProvider !== 'anthropic' && apiProvider !== 'dashscope') {
+  // Only provide account info for first-party API or OpenAI-compatible providers
+  if (apiProvider !== 'anthropic' && !isOpenAIFormatProvider(apiProvider)) {
     return undefined
   }
   const { source: authTokenSource } = getAuthTokenSource()

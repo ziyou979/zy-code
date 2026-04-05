@@ -5,7 +5,7 @@ import { mkdir, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { z } from 'zod/v4'
 import {
-  getCachedzyMdContent,
+  getCachedZyMdContent,
   getLastClassifierRequests,
   getSessionId,
   setLastClassifierRequests,
@@ -458,7 +458,7 @@ export function buildTranscriptForClassifier(
  * pre-PR behavior.
  */
 function buildzyMdMessage(): Anthropic.MessageParam | null {
-  const zyMd = getCachedzyMdContent()
+  const zyMd = getCachedZyMdContent()
   if (zyMd === null) return null
   return {
     role: 'user',

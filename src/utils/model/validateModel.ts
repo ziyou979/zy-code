@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { MODEL_ALIASES } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
-import { getAPIProvider } from './providers.js'
+import { getAPIProvider, isOpenAIFormatProvider } from './providers.js'
 import { sideQuery } from '../sideQuery.js'
 import {
   NotFoundError,
@@ -55,10 +55,10 @@ export async function validateModel(
   // Try to make an actual API call with minimal parameters
   try {
     const apiProvider = getAPIProvider()
-    const isDashscope = apiProvider === 'dashscope'
-    
-    // 百炼 API 不支持 cache_control 参数
-    const messageContent = isDashscope
+    const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
+
+    // OpenAI 兼容格式不支持 cache_control 参数
+    const messageContent = useOpenAIFormat
       ? [{ type: 'text' as const, text: 'Hi' }]
       : [{ type: 'text' as const, text: 'Hi', cache_control: { type: 'ephemeral' as const } }]
     

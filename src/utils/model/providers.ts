@@ -1,13 +1,13 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
 import { isEnvTruthy } from '../envUtils.js'
 
-export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic'
+export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi'
 
 /**
  * Get the configured API provider from settings (zy.json).
  * Returns null if not configured in settings.
  */
-function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | null {
+function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | null {
   try {
     const { getSettings_DEPRECATED } = require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getSettings_DEPRECATED()
@@ -21,7 +21,7 @@ function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'gene
  * Get the configured API provider from onboarding config.
  * Returns null if config isn't ready yet (early startup) or not configured.
  */
-function getConfiguredProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | null {
+function getConfiguredProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | null {
   try {
     const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
     return getGlobalConfig().configuredProvider ?? null
@@ -54,6 +54,15 @@ export function getAPIProvider(): APIProvider {
   // Generic Anthropic-compatible endpoint
   if (process.env.ZY_CODE_USE_GENERIC) {
     return 'generic'
+  }
+  if (isEnvTruthy(process.env.ZY_CODE_USE_OLLAMA)) {
+    return 'ollama'
+  }
+  if (isEnvTruthy(process.env.ZY_CODE_USE_ZHIPU)) {
+    return 'zhipu'
+  }
+  if (isEnvTruthy(process.env.ZY_CODE_USE_KIMI)) {
+    return 'kimi'
   }
   return isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)
     ? 'bedrock'
@@ -111,6 +120,20 @@ const PROVIDER_CAPABILITIES: Record<APIProvider, Set<ProviderCapability>> = {
     'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
     'context_management', 'prompt_caching', 'web_search', 'interleaved_thinking',
   ]),
+  ollama: new Set<ProviderCapability>([
+    // Ollama uses OpenAI-compatible API; capabilities depend on the
+    // underlying model loaded locally.
+    'thinking', 'adaptive_thinking', 'structured_outputs',
+    'context_management', 'web_search', 'interleaved_thinking',
+  ]),
+  zhipu: new Set<ProviderCapability>([
+    // ZhiPu (GLM) uses OpenAI-compatible API; capabilities depend on model.
+    'thinking', 'structured_outputs', 'context_management', 'web_search',
+  ]),
+  kimi: new Set<ProviderCapability>([
+    // Kimi (Moonshot) uses OpenAI-compatible API; capabilities depend on model.
+    'thinking', 'structured_outputs', 'context_management', 'web_search',
+  ]),
   foundry: new Set<ProviderCapability>([
     'thinking', 'structured_outputs', 'context_management', 'web_search', 'interleaved_thinking',
   ]),
@@ -158,7 +181,31 @@ export function isAnthropicBaseUrl(): boolean {
  * request-ID logging.
  */
 export function isCompatibleProvider(provider: APIProvider): boolean {
-  return provider === 'anthropic' || provider === 'dashscope' || provider === 'openrouter' || provider === 'generic'
+  return provider === 'anthropic' || provider === 'dashscope' || provider === 'openrouter' || provider === 'generic' || provider === 'ollama' || provider === 'zhipu' || provider === 'kimi'
+}
+
+/** OpenAI-compatible API format providers (use standard messages.create, no betas) */
+export type OpenAIFormatProvider = 'dashscope'
+
+/**
+ * Returns true for providers that use an OpenAI-compatible API format
+ * (translated through the Anthropic SDK). These providers do NOT support
+ * Anthropic-specific beta features like extended thinking, cache_control,
+ * context_management, etc.
+ */
+export function isOpenAIFormatProvider(provider: APIProvider): provider is OpenAIFormatProvider {
+  return provider === 'dashscope'
+}
+
+/** Providers that require custom endpoint configuration (base URL) but support full Anthropic format */
+export type CustomEndpointProvider = 'ollama' | 'zhipu' | 'kimi'
+
+/**
+ * Returns true for providers that require custom endpoint configuration
+ * (custom base URL) but otherwise support the full Anthropic message format.
+ */
+export function isCustomEndpointProvider(provider: APIProvider): provider is CustomEndpointProvider {
+  return provider === 'ollama' || provider === 'zhipu' || provider === 'kimi'
 }
 
 /**

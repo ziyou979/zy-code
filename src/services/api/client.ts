@@ -15,6 +15,8 @@ import { getSmallFastModel } from 'src/utils/model/model.js'
 import {
   getAPIProvider,
   isAnthropicBaseUrl,
+  isOpenAIFormatProvider,
+  isCustomEndpointProvider,
 } from 'src/utils/model/providers.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import {
@@ -85,7 +87,7 @@ function createStderrLogger(): ClientOptions['logger'] {
   }
 }
 
-export async function getAnthropicClient({
+export async function getLLMClient({
   apiKey,
   maxRetries,
   model,
@@ -230,7 +232,7 @@ export async function getAnthropicClient({
       import('google-auth-library'),
     ])
     // TODO: Cache either GoogleAuth instance or AuthClient to improve performance
-    // Currently we create a new GoogleAuth instance for every getAnthropicClient() call
+    // Currently we create a new GoogleAuth instance for every getLLMClient() call
     // This could cause repeated authentication flows and metadata server checks
     // However, caching needs careful handling of:
     // - Credential refresh/expiration
@@ -331,6 +333,32 @@ export async function getAnthropicClient({
     
     return new Anthropic(dashscopeConfig)
   }
+  // Custom endpoint providers (Ollama, ZhiPu, Kimi)
+  // These use a custom base URL but support the full Anthropic message format.
+  const apiProvider = getAPIProvider()
+  if (isCustomEndpointProvider(apiProvider)) {
+    const providerConfig = getCustomEndpointProviderConfig(apiProvider)
+    const providerApiKey = apiKey || providerConfig.apiKey || getApiKey()
+    const providerBaseURL = process.env.LLM_BASE_URL || providerConfig.baseURL
+
+    const customEndpointHeaders: Record<string, string> = {}
+    if (defaultHeaders['User-Agent']) {
+      customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent']
+    }
+
+    const providerAnthropicConfig: ConstructorParameters<typeof Anthropic>[0] = {
+      apiKey: providerApiKey,
+      baseURL: providerBaseURL,
+      defaultHeaders: customEndpointHeaders,
+      maxRetries: ARGS.maxRetries,
+      timeout: ARGS.timeout,
+      dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
+      ...(ARGS.fetch && { fetch: ARGS.fetch }),
+      ...(isDebugToStdErr() && { logger: createStderrLogger() }),
+    }
+
+    return new Anthropic(providerAnthropicConfig)
+  }
 
   // Determine authentication method based on available tokens
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
@@ -389,6 +417,37 @@ function getCustomHeaders(): Record<string, string> {
 }
 
 export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id'
+
+/**
+ * Default configuration for custom endpoint providers (Ollama, ZhiPu, Kimi).
+ * Users can override via environment variables:
+ * - LLM_BASE_URL: Custom base URL for any provider
+ * - LLM_API_KEY: Custom API key
+ * - Provider-specific: OLLAMA_BASE_URL, ZHIPU_BASE_URL, KIMI_BASE_URL, etc.
+ */
+function getCustomEndpointProviderConfig(
+  provider: 'ollama' | 'zhipu' | 'kimi',
+): { baseURL: string; apiKey?: string } {
+  const providerEnvMap: Record<string, { baseURLEnv: string }> = {
+    ollama: { baseURLEnv: 'OLLAMA_BASE_URL' },
+    zhipu: { baseURLEnv: 'ZHIPU_BASE_URL' },
+    kimi: { baseURLEnv: 'KIMI_BASE_URL' },
+  }
+
+  const config = providerEnvMap[provider]
+  const providerBaseURL = process.env[config.baseURLEnv]
+
+  const defaultBaseURLs: Record<string, string> = {
+    ollama: 'http://localhost:11434/v1/',
+    zhipu: 'https://open.bigmodel.cn/api/paas/v4/',
+    kimi: 'https://api.moonshot.cn/v1/',
+  }
+
+  return {
+    baseURL: providerBaseURL || defaultBaseURLs[provider] || 'http://localhost:11434/v1/',
+    apiKey: process.env.LLM_API_KEY || process.env[`${provider.toUpperCase()}_API_KEY`],
+  }
+}
 
 function buildFetch(
   fetchOverride: ClientOptions['fetch'],

@@ -1,5 +1,5 @@
 import memoize from 'lodash-es/memoize.js'
-import { getAPIProvider } from './providers.js'
+import { getAPIProvider, isCompatibleProvider } from './providers.js'
 
 export type ModelCapabilityOverride =
   | 'effort'
@@ -30,12 +30,7 @@ const TIERS = [
 export const get3PModelCapabilityOverride = memoize(
   (model: string, capability: ModelCapabilityOverride): boolean | undefined => {
     const provider = getAPIProvider()
-    if (
-      provider === 'anthropic' ||
-      provider === 'dashscope' ||
-      provider === 'openrouter' ||
-      provider === 'generic'
-    ) {
+    if (isCompatibleProvider(provider)) {
       return undefined
     }
     const m = model.toLowerCase()

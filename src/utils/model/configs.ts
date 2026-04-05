@@ -14,6 +14,9 @@ export const CLAUDE_3_7_SONNET_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-3.7-sonnet',
   generic: 'zy-3-7-sonnet-20250219',
+  ollama: 'zy-3-7-sonnet-20250219',
+  zhipu: 'zy-3-7-sonnet-20250219',
+  kimi: 'zy-3-7-sonnet-20250219',
 } as const satisfies ModelConfig
 
 export const CLAUDE_3_5_V2_SONNET_CONFIG = {
@@ -24,6 +27,9 @@ export const CLAUDE_3_5_V2_SONNET_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-3.5-sonnet',
   generic: 'zy-3-5-sonnet-20241022',
+  ollama: 'zy-3-5-sonnet-20241022',
+  zhipu: 'zy-3-5-sonnet-20241022',
+  kimi: 'zy-3-5-sonnet-20241022',
 } as const satisfies ModelConfig
 
 export const CLAUDE_3_5_HAIKU_CONFIG = {
@@ -34,6 +40,9 @@ export const CLAUDE_3_5_HAIKU_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-3.5-haiku',
   generic: 'zy-3-5-haiku-20241022',
+  ollama: 'zy-3-5-haiku-20241022',
+  zhipu: 'zy-3-5-haiku-20241022',
+  kimi: 'zy-3-5-haiku-20241022',
 } as const satisfies ModelConfig
 
 export const CLAUDE_HAIKU_4_5_CONFIG = {
@@ -44,6 +53,9 @@ export const CLAUDE_HAIKU_4_5_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-haiku-4.5',
   generic: 'zy-haiku-4-5-20251022',
+  ollama: 'zy-haiku-4-5-20251022',
+  zhipu: 'zy-haiku-4-5-20251022',
+  kimi: 'zy-haiku-4-5-20251022',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_CONFIG = {
@@ -54,6 +66,9 @@ export const CLAUDE_SONNET_4_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-sonnet-4',
   generic: 'zy-sonnet-4-20250514',
+  ollama: 'zy-sonnet-4-20250514',
+  zhipu: 'zy-sonnet-4-20250514',
+  kimi: 'zy-sonnet-4-20250514',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_5_CONFIG = {
@@ -64,6 +79,9 @@ export const CLAUDE_SONNET_4_5_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-sonnet-4.5',
   generic: 'zy-sonnet-4-5-20250929',
+  ollama: 'zy-sonnet-4-5-20250929',
+  zhipu: 'zy-sonnet-4-5-20250929',
+  kimi: 'zy-sonnet-4-5-20250929',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_CONFIG = {
@@ -74,6 +92,9 @@ export const CLAUDE_OPUS_4_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-opus-4',
   generic: 'zy-opus-4-20250514',
+  ollama: 'zy-opus-4-20250514',
+  zhipu: 'zy-opus-4-20250514',
+  kimi: 'zy-opus-4-20250514',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_1_CONFIG = {
@@ -84,6 +105,9 @@ export const CLAUDE_OPUS_4_1_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-opus-4.1',
   generic: 'zy-opus-4-1-20250805',
+  ollama: 'zy-opus-4-1-20250805',
+  zhipu: 'zy-opus-4-1-20250805',
+  kimi: 'zy-opus-4-1-20250805',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_5_CONFIG = {
@@ -94,6 +118,9 @@ export const CLAUDE_OPUS_4_5_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-opus-4.5',
   generic: 'zy-opus-4-5-20251101',
+  ollama: 'zy-opus-4-5-20251101',
+  zhipu: 'zy-opus-4-5-20251101',
+  kimi: 'zy-opus-4-5-20251101',
 } as const satisfies ModelConfig
 
 export const CLAUDE_OPUS_4_6_CONFIG = {
@@ -104,6 +131,9 @@ export const CLAUDE_OPUS_4_6_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-opus-4.6',
   generic: 'zy-opus-4-6',
+  ollama: 'zy-opus-4-6',
+  zhipu: 'zy-opus-4-6',
+  kimi: 'zy-opus-4-6',
 } as const satisfies ModelConfig
 
 export const CLAUDE_SONNET_4_6_CONFIG = {
@@ -114,6 +144,9 @@ export const CLAUDE_SONNET_4_6_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'anthropic/zy-sonnet-4.6',
   generic: 'zy-sonnet-4-6',
+  ollama: 'zy-sonnet-4-6',
+  zhipu: 'zy-sonnet-4-6',
+  kimi: 'zy-sonnet-4-6',
 } as const satisfies ModelConfig
 
 export const QWEN_3_6_PLUS_CONFIG = {
@@ -124,6 +157,9 @@ export const QWEN_3_6_PLUS_CONFIG = {
   dashscope: 'qwen3.6-plus',
   openrouter: 'qwen/qwen3.6-plus',
   generic: 'qwen3.6-plus',
+  ollama: 'qwen3.6-plus',
+  zhipu: 'qwen3.6-plus',
+  kimi: 'qwen3.6-plus',
 } as const satisfies ModelConfig
 
 // @[MODEL LAUNCH]: Register the new config here.

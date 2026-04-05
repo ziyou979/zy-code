@@ -4,7 +4,7 @@
 
 import axios from 'axios'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
-import { getAPIProvider } from './model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider } from './model/providers.js'
 import {
   getApiKey,
   getZyAIOAuthTokens,
@@ -28,7 +28,7 @@ export function getUserAgent(): string {
   // Turn-/process-scoped workload tag for cron-initiated requests. 1P-only
   // observability — proxies strip HTTP headers; QoS routing uses cc_workload
   // in the billing-header attribution block instead (see constants/system.ts).
-  // getAnthropicClient (client.ts:98) calls this per-request inside withRetry,
+  // getLLMClient (client.ts:98) calls this per-request inside withRetry,
   // so the read picks up the same setWorkload() value as getAttributionHeader.
   const workload = getWorkload()
   const workloadSuffix = workload ? `, workload/${workload}` : ''
@@ -69,8 +69,8 @@ export type AuthHeaders = {
  * 支持百炼 DashScope API Key
  */
 export function getAuthHeaders(): AuthHeaders {
-  // 支持百炼 DashScope - 通过 settings.json 配置，兼容 DASHSCOPE_API_KEY 环境变量
-  if (getAPIProvider() === 'dashscope') {
+  // 支持 OpenAI 兼容格式的平台（百炼、Ollama、智谱、Kimi 等）
+  if (isOpenAIFormatProvider(getAPIProvider())) {
     const apiKey = getApiKey()
     if (apiKey) {
       return {

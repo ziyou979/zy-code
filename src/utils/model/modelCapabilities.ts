@@ -5,7 +5,7 @@ import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
 import { z } from 'zod/v4'
 import { OAUTH_BETA_HEADER } from '../../constants/oauth.js'
-import { getAnthropicClient } from '../../services/api/client.js'
+import { getLLMClient } from '../../services/api/client.js'
 import { isZyAISubscriber } from '../auth.js'
 import { logForDebugging } from '../debug.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
@@ -87,7 +87,7 @@ export async function refreshModelCapabilities(): Promise<void> {
   if (isEssentialTrafficOnly()) return
 
   try {
-    const anthropic = await getAnthropicClient({ maxRetries: 1 })
+    const anthropic = await getLLMClient({ maxRetries: 1 })
     const betas = isZyAISubscriber() ? [OAUTH_BETA_HEADER] : undefined
     const parsed: ModelCapability[] = []
     for await (const entry of anthropic.models.list({ betas })) {

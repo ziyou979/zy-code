@@ -3,7 +3,7 @@ import type { BetaMessageParam as MessageParam } from '@anthropic-ai/sdk/resourc
 // @aws-sdk/client-bedrock-runtime is imported dynamically in countTokensWithBedrock()
 // to defer ~279KB of AWS SDK code until a Bedrock call is actually made
 import type { CountTokensCommandInput } from '@aws-sdk/client-bedrock-runtime'
-import { getAPIProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider } from 'src/utils/model/providers.js'
 import { VERTEX_COUNT_TOKENS_ALLOWED_BETAS } from '../constants/betas.js'
 import type { Attachment } from '../utils/attachments.js'
 import { getModelBetas } from '../utils/betas.js'
@@ -24,7 +24,7 @@ import {
 import { jsonStringify } from '../utils/slowOperations.js'
 import { isToolReferenceBlock } from '../utils/toolSearch.js'
 import { getAPIMetadata, getExtraBodyParams } from './api/zy.js'
-import { getAnthropicClient } from './api/client.js'
+import { getLLMClient } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
 
 // Minimal values for token counting with thinking enabled
@@ -158,23 +158,23 @@ export async function countMessagesTokensWithAPI(
         })
       }
 
-      const anthropic = await getAnthropicClient({
+      const anthropic = await getLLMClient({
         maxRetries: 1,
         model,
         source: 'count_tokens',
       })
 
       const apiProvider = getAPIProvider()
+      const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
       const filteredBetas =
         apiProvider === 'vertex'
           ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-          : apiProvider === 'dashscope'
-            ? [] // 百炼 API 不支持 betas
+          : useOpenAIFormat
+            ? [] // OpenAI 兼容格式不支持 betas
             : betas
 
-      // 百炼 API 不支持 beta API，使用标准 API
-      const isDashscope = apiProvider === 'dashscope'
-      const countTokensFn = isDashscope 
+      // OpenAI 兼容格式不支持 beta API，使用标准 API
+      const countTokensFn = useOpenAIFormat
         ? anthropic.messages.countTokens.bind(anthropic.messages)
         : anthropic.beta.messages.countTokens.bind(anthropic.beta.messages)
 
@@ -186,8 +186,8 @@ export async function countMessagesTokensWithAPI(
           messages.length > 0 ? messages : [{ role: 'user', content: 'foo' }],
         tools,
         ...(filteredBetas.length > 0 && { betas: filteredBetas }),
-        // 百炼 API 不支持 thinking 参数
-        ...(!isDashscope && containsThinking && {
+        // OpenAI 兼容格式不支持 thinking 参数
+        ...(!useOpenAIFormat && containsThinking && {
           thinking: {
             type: 'enabled',
             budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
@@ -284,7 +284,7 @@ export async function countTokensViaHaikuFallback(
     isVertexGlobalEndpoint || isBedrockWithThinking || isVertexWithThinking
       ? getDefaultSonnetModel()
       : getSmallFastModel()
-  const anthropic = await getAnthropicClient({
+  const anthropic = await getLLMClient({
     maxRetries: 1,
     model,
     source: 'count_tokens',
@@ -301,18 +301,18 @@ export async function countTokensViaHaikuFallback(
 
   const betas = getModelBetas(model)
   const apiProvider = getAPIProvider()
+  const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
   // Filter betas for Vertex - some betas (like web-search) cause 400 errors
   // on certain Vertex endpoints. See issue #10789.
   const filteredBetas =
     apiProvider === 'vertex'
       ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-      : apiProvider === 'dashscope'
-        ? [] // 百炼 API 不支持 betas
+      : useOpenAIFormat
+        ? [] // OpenAI 兼容格式不支持 betas
         : betas
 
-  // 百炼 API 不支持 beta API，使用标准 API
-  const isDashscope = apiProvider === 'dashscope'
-  const createMessageFn = isDashscope
+  // OpenAI 兼容格式不支持 beta API，使用标准 API
+  const createMessageFn = useOpenAIFormat
     ? anthropic.messages.create.bind(anthropic.messages)
     : anthropic.beta.messages.create.bind(anthropic.beta.messages)
 
@@ -325,8 +325,8 @@ export async function countTokensViaHaikuFallback(
     ...(filteredBetas.length > 0 && { betas: filteredBetas }),
     metadata: getAPIMetadata(),
     ...getExtraBodyParams(),
-    // 百炼 API 不支持 thinking 参数
-    ...(!isDashscope && containsThinking && {
+    // OpenAI 兼容格式不支持 thinking 参数
+    ...(!useOpenAIFormat && containsThinking && {
       thinking: {
         type: 'enabled',
         budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
