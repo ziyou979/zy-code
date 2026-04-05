@@ -10,7 +10,7 @@
 import { CLAUDE_AI_INFERENCE_SCOPE } from '../../constants/oauth.js'
 import {
   getApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
 } from '../../utils/auth.js'
 import {
   getAPIProvider,
@@ -36,7 +36,7 @@ export function resetSyncCache(): void {
  * - Console users (API key): All eligible (must have actual key, not just apiKeyHelper)
  * - OAuth users with known subscriptionType: Only Enterprise/C4E and Team
  * - OAuth users with subscriptionType === null (externally-injected tokens via
- *   CLAUDE_CODE_OAUTH_TOKEN / FD, or keychain tokens missing metadata): Eligible —
+ *   ZY_CODE_OAUTH_TOKEN / FD, or keychain tokens missing metadata): Eligible —
  *   the API returns empty settings for ineligible orgs, so the cost of a false
  *   positive is one round-trip
  *
@@ -63,19 +63,19 @@ export function isRemoteManagedSettingsEligible(): boolean {
   // (designed for CLI/CCD) don't apply there, and per-surface settings don't
   // exist yet. MDM/file-based managed settings still apply via settings.ts —
   // those require physical deployment and a different IT intent.
-  if (process.env.CLAUDE_CODE_ENTRYPOINT === 'local-agent') {
+  if (process.env.ZY_CODE_ENTRYPOINT === 'local-agent') {
     return (cached = setEligibility(false))
   }
 
-  // Check OAuth first: most Claude.ai users have no API key in the keychain.
+  // Check OAuth first: most Zy.ai users have no API key in the keychain.
   // The API key check spawns `security find-generic-password` (~20-50ms) which
   // returns null for OAuth-only users. Checking OAuth first short-circuits
   // that subprocess for the common case.
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getZyAIOAuthTokens()
 
-  // Externally-injected tokens (CCD via CLAUDE_CODE_OAUTH_TOKEN, CCR via
-  // CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR, Agent SDK, CI) carry no
-  // subscriptionType metadata — getClaudeAIOAuthTokens() constructs them with
+  // Externally-injected tokens (CCD via ZY_CODE_OAUTH_TOKEN, CCR via
+  // ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR, Agent SDK, CI) carry no
+  // subscriptionType metadata — getZyAIOAuthTokens() constructs them with
   // subscriptionType: null. The token itself is valid; let the API decide.
   // fetchRemoteManagedSettings handles 204/404 gracefully (returns {}), and
   // settings.ts falls through to MDM/file when remote is empty, so ineligible

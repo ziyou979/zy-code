@@ -45,21 +45,21 @@ export function getAPIProvider(): APIProvider {
   }
 
   // 百炼 / DashScope API
-  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_DASHSCOPE)) {
+  if (isEnvTruthy(process.env.ZY_CODE_USE_DASHSCOPE)) {
     return 'dashscope'
   }
-  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_OPENROUTER)) {
+  if (isEnvTruthy(process.env.ZY_CODE_USE_OPENROUTER)) {
     return 'openrouter'
   }
   // Generic Anthropic-compatible endpoint
-  if (process.env.CLAUDE_CODE_USE_GENERIC) {
+  if (process.env.ZY_CODE_USE_GENERIC) {
     return 'generic'
   }
-  return isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK)
+  return isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)
     ? 'bedrock'
-    : isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX)
+    : isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
       ? 'vertex'
-      : isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY)
+      : isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)
         ? 'foundry'
         : 'anthropic'
 }
@@ -165,7 +165,7 @@ export function isCompatibleProvider(provider: APIProvider): boolean {
  * Model capability — resolved from settings.json `modelCapabilities`.
  * Settings take priority over hardcoded provider-level declarations.
  *
- * Usage: replace `getCanonicalName(model).includes('claude-opus-4')` with
+ * Usage: replace `getCanonicalName(model).includes('zy-opus-4')` with
  * `modelHasCapability(model, 'thinking')`.
  */
 export function modelHasCapability(

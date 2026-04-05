@@ -42,7 +42,7 @@ import {
 import { count } from '../../utils/array.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
 } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError } from '../../utils/errors.js'
@@ -53,7 +53,7 @@ import {
 } from '../../utils/model/providers.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { logEvent } from '../analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import { getRetryDelay } from '../api/withRetry.js'
@@ -152,7 +152,7 @@ function isUsingOAuth(): boolean {
   if (getAPIProvider() !== 'anthropic' || !isAnthropicBaseUrl()) {
     return false
   }
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getZyAIOAuthTokens()
   return Boolean(
     tokens?.accessToken &&
       tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE) &&
@@ -170,13 +170,13 @@ function getAuthHeaders(): {
   headers?: Record<string, string>
   error?: string
 } {
-  const oauthTokens = getClaudeAIOAuthTokens()
+  const oauthTokens = getZyAIOAuthTokens()
   if (oauthTokens?.accessToken) {
     return {
       headers: {
         Authorization: `Bearer ${oauthTokens.accessToken}`,
         'anthropic-beta': OAUTH_BETA_HEADER,
-        'User-Agent': getClaudeCodeUserAgent(),
+        'User-Agent': getZyCodeUserAgent(),
       },
     }
   }
@@ -850,7 +850,7 @@ export async function pullTeamMemory(
 
   const filesWritten = await writeRemoteEntriesToLocal(entries)
   if (filesWritten > 0) {
-    const { clearMemoryFileCaches } = await import('../../utils/claudemd.js')
+    const { clearMemoryFileCaches } = await import('../../utils/zymd.js')
     clearMemoryFileCaches()
   }
   logForDebugging(`team-memory-sync: pulled ${filesWritten} files`, {

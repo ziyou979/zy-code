@@ -883,7 +883,7 @@ function isPathAllowed(
   }
 
   // 2. For write/create operations, check internal editable paths (plan files, scratchpad, agent memory, job dirs)
-  // This MUST come before checkPathSafetyForAutoEdit since .claude is a dangerous directory
+  // This MUST come before checkPathSafetyForAutoEdit since .zy is a dangerous directory
   // and internal editable paths live under ~/.zy/ — matching the ordering in
   // checkWritePermissionForTool (filesystem.ts step 1.5)
   if (operationType !== 'read') {
@@ -939,7 +939,7 @@ function isPathAllowed(
 
   // 3.7. For write/create operations to paths OUTSIDE the working directory,
   // check the sandbox write allowlist. When the sandbox is enabled, users
-  // have explicitly configured writable directories (e.g. /tmp/claude/) —
+  // have explicitly configured writable directories (e.g. /tmp/zy/) —
   // treat these as additional allowed write directories so redirects/Out-File/
   // New-Item don't prompt unnecessarily. Paths IN the working directory are
   // excluded: the sandbox allowlist always seeds '.' (cwd), which would
@@ -1581,13 +1581,13 @@ function checkPathConstraintsForStatement(
   // New-PSDrive, relative paths in later statements resolve against the
   // CHANGED cwd at runtime, but this validator resolves them against the
   // STALE getCwd() snapshot. Example attack (finding #3):
-  //   Set-Location ./.claude; Set-Content ./settings.json '...'
+  //   Set-Location ./.zy; Set-Content ./settings.json '...'
   // Validator sees ./settings.json → /project/settings.json (not a config file).
-  // Runtime writes /project/.zy/settings.json (Claude's permission config).
+  // Runtime writes /project/.zy/settings.json (Zy's permission config).
   //
   // ALTERNATIVE APPROACH (rejected): simulate cwd through the statement chain
-  // — after `Set-Location ./.claude`, validate subsequent statements with
-  // cwd='./.claude'. This would be more permissive but requires careful
+  // — after `Set-Location ./.zy`, validate subsequent statements with
+  // cwd='./.zy'. This would be more permissive but requires careful
   // handling of:
   //   - Push-Location/Pop-Location stack semantics
   //   - Set-Location with no args (→ home on some platforms)

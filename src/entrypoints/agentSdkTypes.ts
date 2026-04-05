@@ -98,7 +98,7 @@ type CreateSdkMcpServerOptions = {
  * Creates an MCP server instance that can be used with the SDK transport.
  * This allows SDK users to define custom tools that run in the same process.
  *
- * If your SDK MCP calls will run longer than 60s, override CLAUDE_CODE_STREAM_CLOSE_TIMEOUT
+ * If your SDK MCP calls will run longer than 60s, override ZY_CODE_STREAM_CLOSE_TIMEOUT
  */
 export function createSdkMcpServer(
   _options: CreateSdkMcpServerOptions,
@@ -153,7 +153,7 @@ export function unstable_v2_resumeSession(
  * @example
  * ```typescript
  * const result = await unstable_v2_prompt("What files are here?", {
- *   model: 'claude-sonnet-4-6'
+ *   model: 'zy-sonnet-4-6'
  * })
  * ```
  */
@@ -365,7 +365,7 @@ export function buildMissedTaskNotification(_missed: CronTask[]): string {
 }
 
 /**
- * A user message typed on claude.ai, extracted from the bridge WS.
+ * A user message typed on zy.ai, extracted from the bridge WS.
  * @internal
  */
 export type InboundPrompt = {
@@ -417,15 +417,15 @@ export type RemoteControlHandle = {
 }
 
 /**
- * Hold a claude.ai remote-control bridge connection from a daemon process.
+ * Hold a zy.ai remote-control bridge connection from a daemon process.
  *
  * The daemon owns the WebSocket in the PARENT process — if the agent
  * subprocess (spawned via `query()`) crashes, the daemon respawns it while
- * claude.ai keeps the same session. Contrast with `query.enableRemoteControl`
+ * zy.ai keeps the same session. Contrast with `query.enableRemoteControl`
  * which puts the WS in the CHILD process (dies with the agent).
  *
  * Pipe `query()` yields through `write()` + `sendResult()`. Read
- * `inboundPrompts()` (user typed on claude.ai) into `query()`'s input
+ * `inboundPrompts()` (user typed on zy.ai) into `query()`'s input
  * stream. Handle `controlRequests()` locally (interrupt → abort, set_model
  * → reconfigure).
  *

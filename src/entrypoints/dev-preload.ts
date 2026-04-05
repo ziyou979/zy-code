@@ -7,10 +7,10 @@ Object.assign(globalThis, {
   MACRO: {
     VERSION: 'dev',
     BUILD_TIME: new Date().toISOString(),
-    PACKAGE_URL: '@anthropic-ai/claude-code',
+    PACKAGE_URL: '@anthropic-ai/zy-code',
     NATIVE_PACKAGE_URL: null,
-    FEEDBACK_CHANNEL: 'https://github.com/anthropics/claude-code/issues',
-    ISSUES_EXPLAINER: 'report the issue at https://github.com/anthropics/claude-code/issues',
+    FEEDBACK_CHANNEL: 'https://github.com/anthropics/zy-code/issues',
+    ISSUES_EXPLAINER: 'report the issue at https://github.com/anthropics/zy-code/issues',
     VERSION_CHANGELOG: '',
   },
 })

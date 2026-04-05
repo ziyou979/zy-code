@@ -3,7 +3,7 @@ import addDir from './commands/add-dir/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
 import backfillSessions from './commands/backfill-sessions/index.js'
 import btw from './commands/btw/index.js'
-import goodClaude from './commands/good-claude/index.js'
+import goodZy from './commands/good-zy/index.js'
 import issue from './commands/issue/index.js'
 import feedback from './commands/feedback/index.js'
 import clear from './commands/clear/index.js'
@@ -167,7 +167,7 @@ import {
   clearPluginSkillsCache,
 } from './utils/plugins/loadPluginCommands.js'
 import memoize from 'lodash-es/memoize.js'
-import { isUsing3PServices, isClaudeAISubscriber } from './utils/auth.js'
+import { isUsing3PServices, isZyAISubscriber } from './utils/auth.js'
 import { isAnthropicBaseUrl } from './utils/model/providers.js'
 import env from './commands/env/index.js'
 import exit from './commands/exit/index.js'
@@ -229,7 +229,7 @@ export const INTERNAL_ONLY_COMMANDS = [
   commit,
   commitPushPr,
   ctx_viz,
-  goodClaude,
+  goodZy,
   issue,
   initVerifiers,
   ...(forceSnip ? [forceSnip] : []),
@@ -418,15 +418,15 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
   if (!cmd.availability) return true
   for (const a of cmd.availability) {
     switch (a) {
-      case 'claude-ai':
-        if (isClaudeAISubscriber()) return true
+      case 'zy-ai':
+        if (isZyAISubscriber()) return true
         break
       case 'console':
-        // Console API key user = direct 1P API customer (not 3P, not claude.ai).
+        // Console API key user = direct 1P API customer (not 3P, not zy.ai).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (
-          !isClaudeAISubscriber() &&
+          !isZyAISubscriber() &&
           !isUsing3PServices() &&
           isAnthropicBaseUrl()
         )

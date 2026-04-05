@@ -39,8 +39,8 @@ How to use the statusLine command:
      "transcript_path": "string", // Path to the conversation transcript
      "cwd": "string",         // Current working directory
      "model": {
-       "id": "string",           // Model ID (e.g., "claude-3-5-sonnet-20241022")
-       "display_name": "string"  // Display name (e.g., "Claude 3.5 Sonnet")
+       "id": "string",           // Model ID (e.g., "zy-3-5-sonnet-20241022")
+       "display_name": "string"  // Display name (e.g., "Zy 3.5 Sonnet")
      },
      "workspace": {
        "current_dir": "string",  // Current working directory path
@@ -64,7 +64,7 @@ How to use the statusLine command:
        "used_percentage": number | null,      // Pre-calculated: % of context used (0-100), null if no messages yet
        "remaining_percentage": number | null  // Pre-calculated: % of context remaining (0-100), null if no messages yet
      },
-     "rate_limits": {             // Optional: Claude.ai subscription usage limits. Only present for subscribers after first API response.
+     "rate_limits": {             // Optional: Zy.ai subscription usage limits. Only present for subscribers after first API response.
        "five_hour": {             // Optional: 5-hour session limit (may be absent)
          "used_percentage": number,   // Percentage of limit used (0-100)
          "resets_at": number          // Unix epoch seconds when this window resets
@@ -104,7 +104,7 @@ How to use the statusLine command:
    Or to display context used percentage:
    - input=$(cat); used=$(echo "$input" | jq -r '.context_window.used_percentage // empty'); [ -n "$used" ] && echo "Context: $used% used"
 
-   To display Claude.ai subscription rate limit usage (5-hour session limit):
+   To display Zy.ai subscription rate limit usage (5-hour session limit):
    - input=$(cat); pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty'); [ -n "$pct" ] && printf "5h: %.0f%%" "$pct"
 
    To display both 5-hour and 7-day limits when available:

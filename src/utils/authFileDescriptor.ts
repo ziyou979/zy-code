@@ -12,19 +12,19 @@ import { getFsImplementation } from './fsOperations.js'
 
 /**
  * Well-known token file locations in CCR. The Go environment-manager creates
- * /home/claude/.zy/remote/ and will (eventually) write these files too.
+ * /home/zy/.zy/remote/ and will (eventually) write these files too.
  * Until then, this module writes them on successful FD read so subprocesses
  * spawned inside the CCR container can find the token without inheriting
  * the FD — which they can't: pipe FDs don't cross tmux/shell boundaries.
  */
-const CCR_TOKEN_DIR = '/home/claude/.zy/remote'
+const CCR_TOKEN_DIR = '/home/zy/.zy/remote'
 export const CCR_OAUTH_TOKEN_PATH = `${CCR_TOKEN_DIR}/.oauth_token`
 export const CCR_API_KEY_PATH = `${CCR_TOKEN_DIR}/.api_key`
 export const CCR_SESSION_INGRESS_TOKEN_PATH = `${CCR_TOKEN_DIR}/.session_ingress_token`
 
 /**
  * Best-effort write of the token to a well-known location for subprocess
- * access. CCR-gated: outside CCR there's no /home/claude/ and no reason to
+ * access. CCR-gated: outside CCR there's no /home/zy/ and no reason to
  * put a token on disk that the FD was meant to keep off disk.
  */
 export function maybePersistTokenForSubprocesses(
@@ -32,7 +32,7 @@ export function maybePersistTokenForSubprocesses(
   token: string,
   tokenName: string,
 ): void {
-  if (!isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+  if (!isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
     return
   }
   try {
@@ -167,12 +167,12 @@ function getCredentialFromFd({
 
 /**
  * Get the CCR-injected OAuth token. See getCredentialFromFd for FD-vs-disk
- * rationale. Env var: CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR.
- * Well-known file: /home/claude/.zy/remote/.oauth_token.
+ * rationale. Env var: ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR.
+ * Well-known file: /home/zy/.zy/remote/.oauth_token.
  */
 export function getOAuthTokenFromFileDescriptor(): string | null {
   return getCredentialFromFd({
-    envVar: 'CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR',
+    envVar: 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR',
     wellKnownPath: CCR_OAUTH_TOKEN_PATH,
     label: 'OAuth token',
     getCached: getOauthTokenFromFd,
@@ -182,12 +182,12 @@ export function getOAuthTokenFromFileDescriptor(): string | null {
 
 /**
  * Get the CCR-injected API key. See getCredentialFromFd for FD-vs-disk
- * rationale. Env var: CLAUDE_CODE_API_KEY_FILE_DESCRIPTOR.
- * Well-known file: /home/claude/.zy/remote/.api_key.
+ * rationale. Env var: ZY_CODE_API_KEY_FILE_DESCRIPTOR.
+ * Well-known file: /home/zy/.zy/remote/.api_key.
  */
 export function getApiKeyFromFileDescriptor(): string | null {
   return getCredentialFromFd({
-    envVar: 'CLAUDE_CODE_API_KEY_FILE_DESCRIPTOR',
+    envVar: 'ZY_CODE_API_KEY_FILE_DESCRIPTOR',
     wellKnownPath: CCR_API_KEY_PATH,
     label: 'API key',
     getCached: getApiKeyFromFd,

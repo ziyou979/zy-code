@@ -14,7 +14,7 @@
  *       └── marketplaces/              # Cache directory for marketplace data
  *           ├── my-marketplace.json    # Cached marketplace from URL source
  *           └── github-marketplace/    # Cloned repository for GitHub source
- *               └── .claude-plugin/
+ *               └── .zy-plugin/
  *                   └── marketplace.json
  */
 
@@ -182,7 +182,7 @@ export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
   }
 
   // Lowest precedence: implicit < --add-dir < merged settings.
-  // An explicit extraKnownMarketplaces entry for claude-plugins-official
+  // An explicit extraKnownMarketplaces entry for zy-plugins-official
   // in --add-dir or settings wins.
   return {
     ...implicit,
@@ -502,7 +502,7 @@ function seedDirFor(installLocation: string): string | undefined {
 /**
  * Git pull operation (exported for testing)
  *
- * Pulls latest changes with a configurable timeout (default 120s, override via CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS).
+ * Pulls latest changes with a configurable timeout (default 120s, override via ZY_CODE_PLUGIN_GIT_TIMEOUT_MS).
  * Provides helpful error messages for common failure scenarios.
  * If a ref is specified, fetches and checks out that specific branch or tag.
  */
@@ -515,7 +515,7 @@ const GIT_NO_PROMPT_ENV = {
 const DEFAULT_PLUGIN_GIT_TIMEOUT_MS = 120 * 1000
 
 function getPluginGitTimeoutMs(): number {
-  const envValue = process.env.CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS
+  const envValue = process.env.ZY_CODE_PLUGIN_GIT_TIMEOUT_MS
   if (envValue) {
     const parsed = parseInt(envValue, 10)
     if (!isNaN(parsed) && parsed > 0) {
@@ -661,7 +661,7 @@ function enhanceGitPullErrorMessages(result: {
     const timeoutSec = Math.round(getPluginGitTimeoutMs() / 1000)
     return {
       ...result,
-      stderr: `Git pull timed out after ${timeoutSec}s. Try increasing the timeout via CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS environment variable.\n\nOriginal error: ${result.stderr}`,
+      stderr: `Git pull timed out after ${timeoutSec}s. Try increasing the timeout via ZY_CODE_PLUGIN_GIT_TIMEOUT_MS environment variable.\n\nOriginal error: ${result.stderr}`,
     }
   }
 
@@ -786,7 +786,7 @@ function extractSshHost(gitUrl: string): string | null {
 /**
  * Git clone operation (exported for testing)
  *
- * Clones a git repository with a configurable timeout (default 120s, override via CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS)
+ * Clones a git repository with a configurable timeout (default 120s, override via ZY_CODE_PLUGIN_GIT_TIMEOUT_MS)
  * and larger repositories. Provides helpful error messages for common failure scenarios.
  * Optionally checks out a specific branch or tag.
  *
@@ -910,7 +910,7 @@ export async function gitClone(
   if (result.error?.includes('timed out')) {
     return {
       ...result,
-      stderr: `Git clone timed out after ${Math.round(timeoutMs / 1000)}s. The repository may be too large for the current timeout. Set CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS to increase it (e.g., 300000 for 5 minutes).\n\nOriginal error: ${result.stderr}`,
+      stderr: `Git clone timed out after ${Math.round(timeoutMs / 1000)}s. The repository may be too large for the current timeout. Set ZY_CODE_PLUGIN_GIT_TIMEOUT_MS to increase it (e.g., 300000 for 5 minutes).\n\nOriginal error: ${result.stderr}`,
     }
   }
 
@@ -1070,7 +1070,7 @@ export async function reconcileSparseCheckout(
  * Example repository structure:
  * ```
  * my-marketplace/
- *   ├── .claude-plugin/
+ *   ├── .zy-plugin/
  *   │   └── marketplace.json    # Default location for marketplace manifest
  *   ├── plugins/                # Plugin implementations
  *   └── README.md
@@ -1273,7 +1273,7 @@ async function cacheMarketplaceFromUrl(
   const headers = {
     ...customHeaders,
     // User-Agent must come last to prevent override (for consistency with WebFetch)
-    'User-Agent': 'Claude-Code-Plugin-Manager',
+    'User-Agent': 'Zy-Code-Plugin-Manager',
   }
 
   let response
@@ -1409,7 +1409,7 @@ async function parseFileWithSchema<T>(
  *
  * Handles different source types:
  * - URL: Downloads marketplace.json directly
- * - GitHub: Clones repo and looks for .claude-plugin/marketplace.json
+ * - GitHub: Clones repo and looks for .zy-plugin/marketplace.json
  * - Git: Clones repository from git URL
  * - NPM: (Not yet implemented) Would fetch from npm package
  * - File: Reads from local filesystem
@@ -1421,7 +1421,7 @@ async function parseFileWithSchema<T>(
  * ~/.zy/plugins/marketplaces/
  *   ├── official-marketplace.json     # From URL source
  *   ├── github-marketplace/          # From GitHub/Git source
- *   │   └── .claude-plugin/
+ *   │   └── .zy-plugin/
  *   │       └── marketplace.json
  *   └── local-marketplace.json       # From file source
  *
@@ -1593,7 +1593,7 @@ async function loadAndCacheMarketplace(
 
         marketplacePath = join(
           temporaryCachePath,
-          source.path || '.claude-plugin/marketplace.json',
+          source.path || '.zy-plugin/marketplace.json',
         )
         break
       }
@@ -1610,7 +1610,7 @@ async function loadAndCacheMarketplace(
         )
         marketplacePath = join(
           temporaryCachePath,
-          source.path || '.claude-plugin/marketplace.json',
+          source.path || '.zy-plugin/marketplace.json',
         )
         break
       }
@@ -1622,8 +1622,8 @@ async function loadAndCacheMarketplace(
 
       case 'file': {
         // For local files, resolve paths relative to marketplace root directory
-        // File sources point to .claude-plugin/marketplace.json, so the marketplace
-        // root is two directories up (parent of .claude-plugin/)
+        // File sources point to .zy-plugin/marketplace.json, so the marketplace
+        // root is two directories up (parent of .zy-plugin/)
         // Resolve to absolute so error messages show the actual path checked
         // (legacy known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
@@ -1634,11 +1634,11 @@ async function loadAndCacheMarketplace(
       }
 
       case 'directory': {
-        // For directories, look for .claude-plugin/marketplace.json
+        // For directories, look for .zy-plugin/marketplace.json
         // Resolve to absolute so error messages show the actual path checked
         // (legacy known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
-        marketplacePath = join(absPath, '.claude-plugin', 'marketplace.json')
+        marketplacePath = join(absPath, '.zy-plugin', 'marketplace.json')
         temporaryCachePath = absPath
         cleanupNeeded = false
         break
@@ -1660,7 +1660,7 @@ async function loadAndCacheMarketplace(
         temporaryCachePath = join(cacheDir, source.name)
         marketplacePath = join(
           temporaryCachePath,
-          '.claude-plugin',
+          '.zy-plugin',
           'marketplace.json',
         )
         cleanupNeeded = false
@@ -1950,7 +1950,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
     throw new Error(
       `Marketplace '${name}' is registered from the read-only seed directory ` +
         `(${seedDir}) and will be re-registered on next startup. ` +
-        `To stop using its plugins: claude plugin disable <plugin>@${name}`,
+        `To stop using its plugins: zy plugin disable <plugin>@${name}`,
     )
   }
 
@@ -2058,11 +2058,11 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
 async function readCachedMarketplace(
   installLocation: string,
 ): Promise<PluginMarketplace> {
-  // For git-sourced directories, the manifest lives at .claude-plugin/marketplace.json.
+  // For git-sourced directories, the manifest lives at .zy-plugin/marketplace.json.
   // For url/file/directory sources it is the installLocation itself.
   // Try the nested path first; fall back to installLocation when it is a plain file
   // (ENOTDIR) or the nested file is simply missing (ENOENT).
-  const nestedPath = join(installLocation, '.claude-plugin', 'marketplace.json')
+  const nestedPath = join(installLocation, '.zy-plugin', 'marketplace.json')
   try {
     return await parseFileWithSchema(nestedPath, PluginMarketplaceSchema())
   } catch (e) {
@@ -2141,7 +2141,7 @@ export const getMarketplace = memoize(
       throw new Error(
         `Marketplace "${name}" has a relative source path (${entry.source.path}) ` +
           `in known_marketplaces.json — this is stale state from an older ` +
-          `ZY Code version. Run 'claude marketplace remove ${name}' and ` +
+          `ZY Code version. Run 'zy marketplace remove ${name}' and ` +
           `re-add it from the original project directory.`,
       )
     }
@@ -2310,7 +2310,7 @@ export async function refreshAllMarketplaces(): Promise<void> {
       continue
     }
     // inc-5046: same GCS intercept as refreshMarketplace() — bulk update
-    // hits this path on `claude plugin marketplace update` (no name arg).
+    // hits this path on `zy plugin marketplace update` (no name arg).
     if (name === OFFICIAL_MARKETPLACE_NAME) {
       const sha = await fetchOfficialMarketplaceFromGcs(
         entry.installLocation,
@@ -2420,7 +2420,7 @@ export async function refreshMarketplace(
             `(${installLocation}) — expected a path inside ${cacheDir}. ` +
             `This can happen after cross-platform path writes or manual edits ` +
             `to known_marketplaces.json. ` +
-            `Run: claude plugin marketplace remove "${name}" and re-add it.`,
+            `Run: zy plugin marketplace remove "${name}" and re-add it.`,
         )
       }
     }
@@ -2473,7 +2473,7 @@ export async function refreshMarketplace(
         const sshUrl = `git@github.com:${source.repo}.git`
         const httpsUrl = `https://github.com/${source.repo}.git`
 
-        if (isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+        if (isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
           // CCR: always HTTPS (no SSH keys available)
           await cacheMarketplaceFromGit(
             httpsUrl,
@@ -2533,14 +2533,14 @@ export async function refreshMarketplace(
             ? source.repo
             : redactUrlCredentials(source.url)
         const reason =
-          name === 'claude-code-plugins'
-            ? `We've deprecated "claude-code-plugins" in favor of "claude-plugins-official".`
+          name === 'zy-code-plugins'
+            ? `We've deprecated "zy-code-plugins" in favor of "zy-plugins-official".`
             : `This marketplace may have been deprecated or moved to a new location.`
         throw new Error(
           `The marketplace.json file is no longer present in this repository.\n\n` +
             `${reason}\n` +
             `Source: ${sourceDisplay}\n\n` +
-            `You can remove this marketplace with: claude plugin marketplace remove "${name}"`,
+            `You can remove this marketplace with: zy plugin marketplace remove "${name}"`,
         )
       }
     } else if (source.source === 'url') {

@@ -26,10 +26,10 @@ import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
 import { Spinner } from '../Spinner.js';
 import TextInput from '../TextInput.js';
 import { CapabilitiesSection } from './CapabilitiesSection.js';
-import type { ClaudeAIServerInfo, HTTPServerInfo, SSEServerInfo } from './types.js';
+import type { ZyAIServerInfo, HTTPServerInfo, SSEServerInfo } from './types.js';
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js';
 type Props = {
-  server: SSEServerInfo | HTTPServerInfo | ClaudeAIServerInfo;
+  server: SSEServerInfo | HTTPServerInfo | ZyAIServerInfo;
   serverToolsCount: number;
   onViewTools: () => void;
   onCancel: () => void;
@@ -58,11 +58,11 @@ export function MCPRemoteServerMenu({
   const [authorizationUrl, setAuthorizationUrl] = React.useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const authAbortControllerRef = useRef<AbortController | null>(null);
-  const [isClaudeAIAuthenticating, setIsClaudeAIAuthenticating] = useState(false);
-  const [claudeAIAuthUrl, setClaudeAIAuthUrl] = useState<string | null>(null);
-  const [isClaudeAIClearingAuth, setIsClaudeAIClearingAuth] = useState(false);
-  const [claudeAIClearAuthUrl, setClaudeAIClearAuthUrl] = useState<string | null>(null);
-  const [claudeAIClearAuthBrowserOpened, setClaudeAIClearAuthBrowserOpened] = useState(false);
+  const [isZyAIAuthenticating, setIsZyAIAuthenticating] = useState(false);
+  const [ZyAIAuthUrl, setZyAIAuthUrl] = useState<string | null>(null);
+  const [isZyAIClearingAuth, setIsZyAIClearingAuth] = useState(false);
+  const [ZyAIClearAuthUrl, setZyAIClearAuthUrl] = useState<string | null>(null);
+  const [ZyAIClearAuthBrowserOpened, setZyAIClearAuthBrowserOpened] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const unmountedRef = useRef(false);
@@ -89,14 +89,14 @@ export function MCPRemoteServerMenu({
   // 2. It's connected and has tools (meaning it's working via some auth mechanism)
   const isEffectivelyAuthenticated = server.isAuthenticated || server.client.type === 'connected' && serverToolsCount > 0;
   const reconnectMcpServer = useMcpReconnect();
-  const handleClaudeAIAuthComplete = React.useCallback(async () => {
-    setIsClaudeAIAuthenticating(false);
-    setClaudeAIAuthUrl(null);
+  const handleZyAIAuthComplete = React.useCallback(async () => {
+    setIsZyAIAuthenticating(false);
+    setZyAIAuthUrl(null);
     setIsReconnecting(true);
     try {
       const result = await reconnectMcpServer(server.name);
       const success = result.client.type === 'connected';
-      logEvent('tengu_claudeai_mcp_auth_completed', {
+      logEvent('tengu_Zyai_mcp_auth_completed', {
         success
       });
       if (success) {
@@ -107,7 +107,7 @@ export function MCPRemoteServerMenu({
         onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart ZY Code for the changes to take effect.');
       }
     } catch (err) {
-      logEvent('tengu_claudeai_mcp_auth_completed', {
+      logEvent('tengu_Zyai_mcp_auth_completed', {
         success: false
       });
       onComplete?.(handleReconnectError(err, server.name));
@@ -115,7 +115,7 @@ export function MCPRemoteServerMenu({
       setIsReconnecting(false);
     }
   }, [reconnectMcpServer, server.name, onComplete]);
-  const handleClaudeAIClearAuthComplete = React.useCallback(async () => {
+  const handleZyAIClearAuthComplete = React.useCallback(async () => {
     await clearServerCache(server.name, {
       ...server.config,
       scope: server.scope
@@ -139,11 +139,11 @@ export function MCPRemoteServerMenu({
         }
       };
     });
-    logEvent('tengu_claudeai_mcp_clear_auth_completed', {});
+    logEvent('tengu_Zyai_mcp_clear_auth_completed', {});
     onComplete?.(`Disconnected from ${server.name}.`);
-    setIsClaudeAIClearingAuth(false);
-    setClaudeAIClearAuthUrl(null);
-    setClaudeAIClearAuthBrowserOpened(false);
+    setIsZyAIClearingAuth(false);
+    setZyAIClearAuthUrl(null);
+    setZyAIClearAuthBrowserOpened(false);
   }, [server.name, server.config, server.scope, setAppState, onComplete]);
 
   // Escape to cancel authentication flow
@@ -157,43 +157,43 @@ export function MCPRemoteServerMenu({
     isActive: isAuthenticating
   });
 
-  // Escape to cancel Claude AI authentication
+  // Escape to cancel Zy AI authentication
   useKeybinding('confirm:no', () => {
-    setIsClaudeAIAuthenticating(false);
-    setClaudeAIAuthUrl(null);
+    setIsZyAIAuthenticating(false);
+    setZyAIAuthUrl(null);
   }, {
     context: 'Confirmation',
-    isActive: isClaudeAIAuthenticating
+    isActive: isZyAIAuthenticating
   });
 
-  // Escape to cancel Claude AI clear auth
+  // Escape to cancel Zy AI clear auth
   useKeybinding('confirm:no', () => {
-    setIsClaudeAIClearingAuth(false);
-    setClaudeAIClearAuthUrl(null);
-    setClaudeAIClearAuthBrowserOpened(false);
+    setIsZyAIClearingAuth(false);
+    setZyAIClearAuthUrl(null);
+    setZyAIClearAuthBrowserOpened(false);
   }, {
     context: 'Confirmation',
-    isActive: isClaudeAIClearingAuth
+    isActive: isZyAIClearingAuth
   });
 
   // Return key handling for authentication flows and 'c' to copy URL
   useInput((input, key) => {
-    if (key.return && isClaudeAIAuthenticating) {
-      void handleClaudeAIAuthComplete();
+    if (key.return && isZyAIAuthenticating) {
+      void handleZyAIAuthComplete();
     }
-    if (key.return && isClaudeAIClearingAuth) {
-      if (claudeAIClearAuthBrowserOpened) {
-        void handleClaudeAIClearAuthComplete();
+    if (key.return && isZyAIClearingAuth) {
+      if (ZyAIClearAuthBrowserOpened) {
+        void handleZyAIClearAuthComplete();
       } else {
         // First Enter: open the browser
         const connectorsUrl = `${getOauthConfig().CLAUDE_AI_ORIGIN}/settings/connectors`;
-        setClaudeAIClearAuthUrl(connectorsUrl);
-        setClaudeAIClearAuthBrowserOpened(true);
+        setZyAIClearAuthUrl(connectorsUrl);
+        setZyAIClearAuthBrowserOpened(true);
         void openBrowser(connectorsUrl);
       }
     }
     if (input === 'c' && !urlCopied) {
-      const urlToCopy = authorizationUrl || claudeAIAuthUrl || claudeAIClearAuthUrl;
+      const urlToCopy = authorizationUrl || ZyAIAuthUrl || ZyAIClearAuthUrl;
       if (urlToCopy) {
         void setClipboard(urlToCopy).then(raw => {
           if (unmountedRef.current) return;
@@ -212,36 +212,36 @@ export function MCPRemoteServerMenu({
   // Count MCP prompts for this server (skills are shown in /skills, not here)
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length;
   const toggleMcpServer = useMcpToggleEnabled();
-  const handleClaudeAIAuth = React.useCallback(async () => {
-    const claudeAiBaseUrl = getOauthConfig().CLAUDE_AI_ORIGIN;
+  const handleZyAIAuth = React.useCallback(async () => {
+    const zyAiBaseUrl = getOauthConfig().CLAUDE_AI_ORIGIN;
     const accountInfo = getOauthAccountInfo();
     const orgUuid = accountInfo?.organizationUuid;
     let authUrl: string;
-    if (orgUuid && server.config.type === 'claudeai-proxy' && server.config.id) {
+    if (orgUuid && server.config.type === 'zyai-proxy' && server.config.id) {
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
       const serverId = server.config.id.startsWith('mcprs') ? 'mcpsrv' + server.config.id.slice(5) : server.config.id;
-      const productSurface = encodeURIComponent(process.env.CLAUDE_CODE_ENTRYPOINT || 'cli');
-      authUrl = `${claudeAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
+      const productSurface = encodeURIComponent(process.env.ZY_CODE_ENTRYPOINT || 'cli');
+      authUrl = `${zyAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
     } else {
       // Fall back to settings/connectors if we don't have the required IDs
-      authUrl = `${claudeAiBaseUrl}/settings/connectors`;
+      authUrl = `${zyAiBaseUrl}/settings/connectors`;
     }
-    setClaudeAIAuthUrl(authUrl);
-    setIsClaudeAIAuthenticating(true);
-    logEvent('tengu_claudeai_mcp_auth_started', {});
+    setZyAIAuthUrl(authUrl);
+    setIsZyAIAuthenticating(true);
+    logEvent('tengu_Zyai_mcp_auth_started', {});
     await openBrowser(authUrl);
   }, [server.config]);
-  const handleClaudeAIClearAuth = React.useCallback(() => {
-    setIsClaudeAIClearingAuth(true);
-    logEvent('tengu_claudeai_mcp_clear_auth_started', {});
+  const handleZyAIClearAuth = React.useCallback(() => {
+    setIsZyAIClearingAuth(true);
+    logEvent('tengu_Zyai_mcp_clear_auth_started', {});
   }, []);
   const handleToggleEnabled = React.useCallback(async () => {
     const wasEnabled = server.client.type !== 'disabled';
     try {
       await toggleMcpServer(server.name);
-      if (server.config.type === 'claudeai-proxy') {
-        logEvent('tengu_claudeai_mcp_toggle', {
+      if (server.config.type === 'zyai-proxy') {
+        logEvent('tengu_Zyai_mcp_toggle', {
           new_state: (wasEnabled ? 'disabled' : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -254,7 +254,7 @@ export function MCPRemoteServerMenu({
     }
   }, [server.client.type, server.config.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const handleAuthenticate = React.useCallback(async () => {
-    if (server.config.type === 'claudeai-proxy') return;
+    if (server.config.type === 'zyai-proxy') return;
     setIsAuthenticating(true);
     setError(null);
     const controller = new AbortController();
@@ -301,7 +301,7 @@ export function MCPRemoteServerMenu({
     }
   }, [server.isAuthenticated, server.config, server.name, onComplete, reconnectMcpServer, isEffectivelyAuthenticated]);
   const handleClearAuth = async () => {
-    if (server.config.type === 'claudeai-proxy') return;
+    if (server.config.type === 'zyai-proxy') return;
     if (server.config) {
       // First revoke the authentication tokens and clear all auth state
       await revokeServerTokens(server.name, server.config);
@@ -342,9 +342,9 @@ export function MCPRemoteServerMenu({
     // XAA: silent exchange (cached id_token → no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy = server.config.type !== 'claudeai-proxy' && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    const authCopy = server.config.type !== 'zyai-proxy' && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Authenticating with {server.name}…</Text>
+        <Text color="zy">Authenticating with {server.name}…</Text>
         <Box>
           <Spinner />
           <Text>{authCopy}</Text>
@@ -382,14 +382,14 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
-  if (isClaudeAIAuthenticating) {
+  if (isZyAIAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Authenticating with {server.name}…</Text>
+        <Text color="zy">Authenticating with {server.name}…</Text>
         <Box>
           <Spinner />
           <Text> A browser window will open for authentication</Text>
         </Box>
-        {claudeAIAuthUrl && <Box flexDirection="column">
+        {ZyAIAuthUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
                 If your browser doesn&apos;t open automatically, copy this URL
@@ -399,7 +399,7 @@ export function MCPRemoteServerMenu({
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
-            <Link url={claudeAIAuthUrl} />
+            <Link url={ZyAIAuthUrl} />
           </Box>}
         <Box marginLeft={3} flexDirection="column">
           <Text color="permission">
@@ -411,15 +411,15 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
-  if (isClaudeAIClearingAuth) {
+  if (isZyAIClearingAuth) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Clear authentication for {server.name}</Text>
-        {claudeAIClearAuthBrowserOpened ? <>
+        <Text color="zy">Clear authentication for {server.name}</Text>
+        {ZyAIClearAuthBrowserOpened ? <>
             <Text>
               Find the MCP server in the browser and click
               &quot;Disconnect&quot;.
             </Text>
-            {claudeAIClearAuthUrl && <Box flexDirection="column">
+            {ZyAIClearAuthUrl && <Box flexDirection="column">
                 <Box>
                   <Text dimColor>
                     If your browser didn&apos;t open automatically, copy this
@@ -429,7 +429,7 @@ export function MCPRemoteServerMenu({
                       <KeyboardShortcutHint shortcut="c" action="copy" parens />
                     </Text>}
                 </Box>
-                <Link url={claudeAIClearAuthUrl} />
+                <Link url={ZyAIClearAuthUrl} />
               </Box>}
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
@@ -441,7 +441,7 @@ export function MCPRemoteServerMenu({
             </Box>
           </> : <>
             <Text>
-              This will open claude.ai in the browser. Find the MCP server in
+              This will open zy.ai in the browser. Find the MCP server in
               the list and click &quot;Disconnect&quot;.
             </Text>
             <Box marginLeft={3} flexDirection="column">
@@ -482,16 +482,16 @@ export function MCPRemoteServerMenu({
       value: 'tools'
     });
   }
-  if (server.config.type === 'claudeai-proxy') {
+  if (server.config.type === 'zyai-proxy') {
     if (server.client.type === 'connected') {
       menuOptions.push({
         label: 'Clear authentication',
-        value: 'claudeai-clear-auth'
+        value: 'zyai-clear-auth'
       });
     } else if (server.client.type !== 'disabled') {
       menuOptions.push({
         label: 'Authenticate',
-        value: 'claudeai-auth'
+        value: 'zyai-auth'
       });
     }
   } else {
@@ -550,7 +550,7 @@ export function MCPRemoteServerMenu({
               </Text> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
           </Box>
 
-          {server.transport !== 'claudeai-proxy' && <Box>
+          {server.transport !== 'zyai-proxy' && <Box>
               <Text bold>Auth: </Text>
               {isEffectivelyAuthenticated ? <Text>
                   {color('success', theme)(figures.tick)} authenticated
@@ -594,18 +594,18 @@ export function MCPRemoteServerMenu({
             case 'clear-auth':
               await handleClearAuth();
               break;
-            case 'claudeai-auth':
-              await handleClaudeAIAuth();
+            case 'zyai-auth':
+              await handleZyAIAuth();
               break;
-            case 'claudeai-clear-auth':
-              handleClaudeAIClearAuth();
+            case 'zyai-clear-auth':
+              handleZyAIClearAuth();
               break;
             case 'reconnectMcpServer':
               setIsReconnecting(true);
               try {
                 const result_1 = await reconnectMcpServer(server.name);
-                if (server.config.type === 'claudeai-proxy') {
-                  logEvent('tengu_claudeai_mcp_reconnect', {
+                if (server.config.type === 'zyai-proxy') {
+                  logEvent('tengu_Zyai_mcp_reconnect', {
                     success: result_1.client.type === 'connected'
                   });
                 }
@@ -614,8 +614,8 @@ export function MCPRemoteServerMenu({
                 } = handleReconnectResult(result_1, server.name);
                 onComplete?.(message_0);
               } catch (err_2) {
-                if (server.config.type === 'claudeai-proxy') {
-                  logEvent('tengu_claudeai_mcp_reconnect', {
+                if (server.config.type === 'zyai-proxy') {
+                  logEvent('tengu_Zyai_mcp_reconnect', {
                     success: false
                   });
                 }

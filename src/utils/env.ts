@@ -3,7 +3,7 @@ import { homedir } from 'os'
 import { join } from 'path'
 import { fileSuffixForOauthConfig } from '../constants/oauth.js'
 import { isRunningWithBun } from './bundledMode.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { findExecutable } from './findExecutable.js'
 import { getFsImplementation } from './fsOperations.js'
 import { which } from './which.js'
@@ -11,14 +11,14 @@ import { which } from './which.js'
 type Platform = 'win32' | 'darwin' | 'linux'
 
 // Config and data paths
-export const getGlobalClaudeFile = memoize((): string => {
+export const getGlobalZyFile = memoize((): string => {
   // Legacy fallback for backwards compatibility
   if (
     getFsImplementation().existsSync(
-      join(getClaudeConfigHomeDir(), '.config.json'),
+      join(getZyConfigHomeDir(), '.config.json'),
     )
   ) {
-    return join(getClaudeConfigHomeDir(), '.config.json')
+    return join(getZyConfigHomeDir(), '.config.json')
   }
 
   const filename = `.zy${fileSuffixForOauthConfig()}.json`
@@ -334,12 +334,12 @@ export const env = {
 
 /**
  * Returns the host platform for analytics reporting.
- * If CLAUDE_CODE_HOST_PLATFORM is set to a valid platform value, that overrides
+ * If ZY_CODE_HOST_PLATFORM is set to a valid platform value, that overrides
  * the detected platform. This is useful for container/remote environments where
  * process.platform reports the container OS but the actual host platform differs.
  */
 export function getHostPlatformForAnalytics(): Platform {
-  const override = process.env.CLAUDE_CODE_HOST_PLATFORM
+  const override = process.env.ZY_CODE_HOST_PLATFORM
   if (override === 'win32' || override === 'darwin' || override === 'linux') {
     return override
   }

@@ -198,7 +198,7 @@ async function handleBroadcast(
 
   if (!teamName) {
     throw new Error(
-      'Not in a team context. Create a team with Teammate spawnTeam first, or set CLAUDE_CODE_TEAM_NAME.',
+      'Not in a team context. Create a team with Teammate spawnTeam first, or set ZY_CODE_TEAM_NAME.',
     )
   }
 
@@ -211,7 +211,7 @@ async function handleBroadcast(
     getAgentName() || (isTeammate() ? 'teammate' : TEAM_LEAD_NAME)
   if (!senderName) {
     throw new Error(
-      'Cannot broadcast: sender name is required. Set CLAUDE_CODE_AGENT_NAME.',
+      'Cannot broadcast: sender name is required. Set ZY_CODE_AGENT_NAME.',
     )
   }
 
@@ -640,7 +640,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
             errorCode: 9,
           }
         }
-        // postInterClaudeMessage derives from= via getReplBridgeHandle() —
+        // postInterZyMessage derives from= via getReplBridgeHandle() —
         // check handle directly for the init-timing window. Also check
         // isReplBridgeActive() to reject outbound-only (CCR mirror) mode
         // where the bridge is write-only and peer messaging is unsupported.
@@ -755,10 +755,10 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
             }
           }
           /* eslint-disable @typescript-eslint/no-require-imports */
-          const { postInterClaudeMessage } =
+          const { postInterZyMessage } =
             require('../../bridge/peerSessions.js') as typeof import('../../bridge/peerSessions.js')
           /* eslint-enable @typescript-eslint/no-require-imports */
-          const result = await postInterClaudeMessage(
+          const result = await postInterZyMessage(
             addr.target,
             input.message,
           )

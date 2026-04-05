@@ -13,8 +13,8 @@
  * - User input waiting time
  *
  * Usage:
- * 1. Enable via CLAUDE_CODE_PERFETTO_TRACE=1 or CLAUDE_CODE_PERFETTO_TRACE=<path>
- * 2. Optionally set CLAUDE_CODE_PERFETTO_WRITE_INTERVAL_S=<positive integer> to write the
+ * 1. Enable via ZY_CODE_PERFETTO_TRACE=1 or ZY_CODE_PERFETTO_TRACE=<path>
+ * 2. Optionally set ZY_CODE_PERFETTO_WRITE_INTERVAL_S=<positive integer> to write the
  *    trace file periodically (default: write only on exit).
  * 3. Run ZY Code normally
  * 4. Trace file is written to ~/.zy/traces/trace-<session-id>.json
@@ -30,7 +30,7 @@ import { getSessionId } from '../../bootstrap/state.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { logForDebugging } from '../debug.js'
 import {
-  getClaudeConfigHomeDir,
+  getZyConfigHomeDir,
   isEnvDefinedFalsy,
   isEnvTruthy,
 } from '../envUtils.js'
@@ -251,7 +251,7 @@ function evictOldestEvents(): void {
  * Call this early in the application lifecycle
  */
 export function initializePerfettoTracing(): void {
-  const envValue = process.env.CLAUDE_CODE_PERFETTO_TRACE
+  const envValue = process.env.ZY_CODE_PERFETTO_TRACE
   logForDebugging(
     `[Perfetto] initializePerfettoTracing called, env value: ${envValue}`,
   )
@@ -270,7 +270,7 @@ export function initializePerfettoTracing(): void {
 
     // Determine trace file path
     if (isEnvTruthy(envValue)) {
-      const tracesDir = join(getClaudeConfigHomeDir(), 'traces')
+      const tracesDir = join(getZyConfigHomeDir(), 'traces')
       tracePath = join(tracesDir, `trace-${getSessionId()}.json`)
     } else {
       // Use the provided path
@@ -281,9 +281,9 @@ export function initializePerfettoTracing(): void {
       `[Perfetto] Tracing enabled, will write to: ${tracePath}, isEnabled=${isEnabled}`,
     )
 
-    // Start periodic full-trace write if CLAUDE_CODE_PERFETTO_WRITE_INTERVAL_S is a positive integer
+    // Start periodic full-trace write if ZY_CODE_PERFETTO_WRITE_INTERVAL_S is a positive integer
     const intervalSec = parseInt(
-      process.env.CLAUDE_CODE_PERFETTO_WRITE_INTERVAL_S ?? '',
+      process.env.ZY_CODE_PERFETTO_WRITE_INTERVAL_S ?? '',
       10,
     )
     if (intervalSec > 0) {

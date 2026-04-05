@@ -6,14 +6,14 @@
  * local UI / bridge / hooks / classifier. First resolver wins via claim().
  *
  * Inbound is a structured event: the server parses the user's "yes tbxkq"
- * reply and emits notifications/claude/channel/permission with
+ * reply and emits notifications/zy/channel/permission with
  * {request_id, behavior}. CC never sees the reply as text — approval
  * requires the server to deliberately emit that specific event, not just
  * relay content. Servers opt in by declaring
- * capabilities.experimental['claude/channel/permission'].
+ * capabilities.experimental['zy/channel/permission'].
  *
- * Kenneth's "would this let Claude self-approve?": the approving party is
- * the human via the channel, not Claude. But the trust boundary isn't the
+ * Kenneth's "would this let Zy self-approve?": the approving party is
+ * the human via the channel, not Zy. But the trust boundary isn't the
  * terminal — it's the allowlist (tengu_harbor_ledger). A compromised
  * channel server CAN fabricate "yes <id>" without the human seeing the
  * prompt. Accepted risk: a compromised channel already has unlimited
@@ -50,7 +50,7 @@ export type ChannelPermissionCallbacks = {
     handler: (response: ChannelPermissionResponse) => void,
   ): () => void
   /** Resolve a pending request from a structured channel event
-   *  (notifications/claude/channel/permission). Returns true if the ID
+   *  (notifications/zy/channel/permission). Returns true if the ID
    *  was pending — the server parsed the user's reply and emitted
    *  {request_id, behavior}; we just match against the map. */
   resolve(
@@ -68,7 +68,7 @@ export type ChannelPermissionCallbacks = {
  * autocorrect). No bare yes/no (conversational). No prefix/suffix chatter.
  *
  * CC generates the ID and sends the prompt. The SERVER parses the user's
- * reply and emits notifications/claude/channel/permission with {request_id,
+ * reply and emits notifications/zy/channel/permission with {request_id,
  * behavior} — CC doesn't regex-match text anymore. Exported so plugins can
  * import the exact regex rather than hand-copying it.
  */
@@ -188,8 +188,8 @@ export function filterPermissionRelayClients<
     (c): c is T & { type: 'connected' } =>
       c.type === 'connected' &&
       isInAllowlist(c.name) &&
-      c.capabilities?.experimental?.['claude/channel'] !== undefined &&
-      c.capabilities?.experimental?.['claude/channel/permission'] !== undefined,
+      c.capabilities?.experimental?.['zy/channel'] !== undefined &&
+      c.capabilities?.experimental?.['zy/channel/permission'] !== undefined,
   )
 }
 
@@ -201,7 +201,7 @@ export function filterPermissionRelayClients<
  * a React hook, stable reference stored in AppState.
  *
  * resolve() is called from the dedicated notification handler
- * (notifications/claude/channel/permission) with the structured payload.
+ * (notifications/zy/channel/permission) with the structured payload.
  * The server already parsed "yes tbxkq" → {request_id, behavior}; we just
  * match against the pending map. No regex on CC's side — text in the
  * general channel can't accidentally approve anything.

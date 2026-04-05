@@ -41,9 +41,9 @@ const PLATFORMS: PlatformConfig[] = [
     description: '官方 API (api.anthropic.com)',
     apiKeyLabel: 'Anthropic API Key',
     suggestedModels: [
-      { label: 'Sonnet 4.6', value: 'claude-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
-      { label: 'Opus 4.6', value: 'claude-opus-4-6-20250514', description: '最强能力，适合复杂工作' },
-      { label: 'Haiku 4.5', value: 'claude-haiku-4-5-20240307', description: '最快最便宜' },
+      { label: 'Sonnet 4.6', value: 'zy-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
+      { label: 'Opus 4.6', value: 'zy-opus-4-6-20250514', description: '最强能力，适合复杂工作' },
+      { label: 'Haiku 4.5', value: 'zy-haiku-4-5-20240307', description: '最快最便宜' },
     ],
   },
   {
@@ -63,8 +63,8 @@ const PLATFORMS: PlatformConfig[] = [
     description: 'OpenRouter 代理',
     apiKeyLabel: 'OpenRouter API Key',
     suggestedModels: [
-      { label: 'Sonnet', value: 'anthropic/claude-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
-      { label: 'Opus', value: 'anthropic/claude-opus-4-6-20250514', description: '最强能力' },
+      { label: 'Sonnet', value: 'anthropic/zy-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
+      { label: 'Opus', value: 'anthropic/zy-opus-4-6-20250514', description: '最强能力' },
     ],
   },
   {
@@ -179,7 +179,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
             <Text dimColor wrap="wrap">
               For more details see:
               <Newline />
-              <Link url="https://code.claude.com/docs/en/security" />
+              <Link url="https://code.zy.com/docs/en/security" />
             </Text>
           </OrderedList.Item>
         </OrderedList>
@@ -399,7 +399,7 @@ function ModelSetup({
                 type: 'input',
                 label: 'Model name',
                 value: 'input',
-                placeholder: 'e.g. qwen-max, claude-sonnet-4-6...',
+                placeholder: 'e.g. qwen-max, zy-sonnet-4-6...',
                 onChange: value => {
                   if (value.trim().length > 0) {
                     onDone(value.trim());

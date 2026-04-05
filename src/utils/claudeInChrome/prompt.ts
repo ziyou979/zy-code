@@ -62,7 +62,7 @@ For example, to get tab context:
 
 /**
  * Get the base chrome system prompt (without tool search instructions).
- * Tool search instructions are injected separately at request time in claude.ts
+ * Tool search instructions are injected separately at request time in zy.ts
  * based on the actual tool search enabled state.
  */
 export function getChromeSystemPrompt(): string {

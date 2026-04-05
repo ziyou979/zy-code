@@ -17,7 +17,7 @@ export interface GitHubActionsMetadata {
 
 /**
  * EnvironmentMetadata contains environment and runtime information
- * See claude-cli-internal/src/services/statsig.ts for the source of these fields
+ * See zy-cli-internal/src/services/statsig.ts for the source of these fields
  */
 export interface EnvironmentMetadata {
   platform?: string | undefined
@@ -29,8 +29,8 @@ export interface EnvironmentMetadata {
   is_ci?: boolean | undefined
   is_claubbit?: boolean | undefined
   is_github_action?: boolean | undefined
-  is_claude_code_action?: boolean | undefined
-  is_claude_ai_auth?: boolean | undefined
+  is_Zy_code_action?: boolean | undefined
+  is_Zy_ai_auth?: boolean | undefined
   version?: string | undefined
   /** GitHub Actions specific fields (only present when is_github_action is true) */
   github_event_name?: string | undefined
@@ -42,7 +42,7 @@ export interface EnvironmentMetadata {
   /** GitHub metadata (only present when is_github_action is true) */
   github_actions_metadata?: GitHubActionsMetadata | undefined
   arch?: string | undefined
-  is_claude_code_remote?: boolean | undefined
+  is_Zy_code_remote?: boolean | undefined
   remote_environment_type?: string | undefined
   claude_code_container_id?: string | undefined
   claude_code_remote_session_id?: string | undefined
@@ -61,9 +61,9 @@ export interface EnvironmentMetadata {
 }
 
 /**
- * SlackContext contains context fields present on every Claude-in-Slack (CIS) event.
+ * SlackContext contains context fields present on every Zy-in-Slack (CIS) event.
  * Event-specific fields (errorType, durationMs, httpStatus, etc.) go in
- * ClaudeCodeInternalEvent.additional_metadata as JSON.
+ * ZyCodeInternalEvent.additional_metadata as JSON.
  */
 export interface SlackContext {
   slack_team_id?: string | undefined
@@ -73,11 +73,11 @@ export interface SlackContext {
 }
 
 /**
- * ClaudeCodeInternalEvent represents events logged from Claude Code via Statsig
- * This schema matches the structure in claude-cli-internal/src/services/statsig.ts
+ * ZyCodeInternalEvent represents events logged from Zy Code via Statsig
+ * This schema matches the structure in zy-cli-internal/src/services/statsig.ts
  * Source table: proj-product-data-nhme.raw_statsig_internal_tools.events
  */
-export interface ClaudeCodeInternalEvent {
+export interface ZyCodeInternalEvent {
   /** Event name (e.g., "tengu_binary_feedback", "tengu_api_success") */
   event_name?: string | undefined
   /** Event timestamp */
@@ -121,7 +121,7 @@ export interface ClaudeCodeInternalEvent {
   agent_id?: string | undefined
   parent_session_id?: string | undefined
   agent_type?: string | undefined
-  /** Claude-in-Slack context (only present for cis_* events) */
+  /** Zy-in-Slack context (only present for cis_* events) */
   slack?: SlackContext | undefined
   team_name?: string | undefined
   skill_name?: string | undefined
@@ -189,8 +189,8 @@ function createBaseEnvironmentMetadata(): EnvironmentMetadata {
     is_ci: false,
     is_claubbit: false,
     is_github_action: false,
-    is_claude_code_action: false,
-    is_claude_ai_auth: false,
+    is_Zy_code_action: false,
+    is_Zy_ai_auth: false,
     version: '',
     github_event_name: '',
     github_actions_runner_environment: '',
@@ -199,7 +199,7 @@ function createBaseEnvironmentMetadata(): EnvironmentMetadata {
     wsl_version: '',
     github_actions_metadata: undefined,
     arch: '',
-    is_claude_code_remote: false,
+    is_Zy_code_remote: false,
     remote_environment_type: '',
     claude_code_container_id: '',
     claude_code_remote_session_id: '',
@@ -246,11 +246,11 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
       is_github_action: isSet(object.is_github_action)
         ? globalThis.Boolean(object.is_github_action)
         : false,
-      is_claude_code_action: isSet(object.is_claude_code_action)
-        ? globalThis.Boolean(object.is_claude_code_action)
+      is_Zy_code_action: isSet(object.is_Zy_code_action)
+        ? globalThis.Boolean(object.is_Zy_code_action)
         : false,
-      is_claude_ai_auth: isSet(object.is_claude_ai_auth)
-        ? globalThis.Boolean(object.is_claude_ai_auth)
+      is_Zy_ai_auth: isSet(object.is_Zy_ai_auth)
+        ? globalThis.Boolean(object.is_Zy_ai_auth)
         : false,
       version: isSet(object.version) ? globalThis.String(object.version) : '',
       github_event_name: isSet(object.github_event_name)
@@ -274,8 +274,8 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
         ? GitHubActionsMetadata.fromJSON(object.github_actions_metadata)
         : undefined,
       arch: isSet(object.arch) ? globalThis.String(object.arch) : '',
-      is_claude_code_remote: isSet(object.is_claude_code_remote)
-        ? globalThis.Boolean(object.is_claude_code_remote)
+      is_Zy_code_remote: isSet(object.is_Zy_code_remote)
+        ? globalThis.Boolean(object.is_Zy_code_remote)
         : false,
       remote_environment_type: isSet(object.remote_environment_type)
         ? globalThis.String(object.remote_environment_type)
@@ -352,11 +352,11 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
     if (message.is_github_action !== undefined) {
       obj.is_github_action = message.is_github_action
     }
-    if (message.is_claude_code_action !== undefined) {
-      obj.is_claude_code_action = message.is_claude_code_action
+    if (message.is_Zy_code_action !== undefined) {
+      obj.is_Zy_code_action = message.is_Zy_code_action
     }
-    if (message.is_claude_ai_auth !== undefined) {
-      obj.is_claude_ai_auth = message.is_claude_ai_auth
+    if (message.is_Zy_ai_auth !== undefined) {
+      obj.is_Zy_ai_auth = message.is_Zy_ai_auth
     }
     if (message.version !== undefined) {
       obj.version = message.version
@@ -385,8 +385,8 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
     if (message.arch !== undefined) {
       obj.arch = message.arch
     }
-    if (message.is_claude_code_remote !== undefined) {
-      obj.is_claude_code_remote = message.is_claude_code_remote
+    if (message.is_Zy_code_remote !== undefined) {
+      obj.is_Zy_code_remote = message.is_Zy_code_remote
     }
     if (message.remote_environment_type !== undefined) {
       obj.remote_environment_type = message.remote_environment_type
@@ -454,8 +454,8 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
     message.is_ci = object.is_ci ?? false
     message.is_claubbit = object.is_claubbit ?? false
     message.is_github_action = object.is_github_action ?? false
-    message.is_claude_code_action = object.is_claude_code_action ?? false
-    message.is_claude_ai_auth = object.is_claude_ai_auth ?? false
+    message.is_Zy_code_action = object.is_Zy_code_action ?? false
+    message.is_Zy_ai_auth = object.is_Zy_ai_auth ?? false
     message.version = object.version ?? ''
     message.github_event_name = object.github_event_name ?? ''
     message.github_actions_runner_environment =
@@ -469,7 +469,7 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
         ? GitHubActionsMetadata.fromPartial(object.github_actions_metadata)
         : undefined
     message.arch = object.arch ?? ''
-    message.is_claude_code_remote = object.is_claude_code_remote ?? false
+    message.is_Zy_code_remote = object.is_Zy_code_remote ?? false
     message.remote_environment_type = object.remote_environment_type ?? ''
     message.claude_code_container_id = object.claude_code_container_id ?? ''
     message.claude_code_remote_session_id =
@@ -549,7 +549,7 @@ export const SlackContext: MessageFns<SlackContext> = {
   },
 }
 
-function createBaseClaudeCodeInternalEvent(): ClaudeCodeInternalEvent {
+function createBaseZyCodeInternalEvent(): ZyCodeInternalEvent {
   return {
     event_name: '',
     client_timestamp: undefined,
@@ -583,8 +583,8 @@ function createBaseClaudeCodeInternalEvent(): ClaudeCodeInternalEvent {
   }
 }
 
-export const ClaudeCodeInternalEvent: MessageFns<ClaudeCodeInternalEvent> = {
-  fromJSON(object: any): ClaudeCodeInternalEvent {
+export const ZyCodeInternalEvent: MessageFns<ZyCodeInternalEvent> = {
+  fromJSON(object: any): ZyCodeInternalEvent {
     return {
       event_name: isSet(object.event_name)
         ? globalThis.String(object.event_name)
@@ -668,7 +668,7 @@ export const ClaudeCodeInternalEvent: MessageFns<ClaudeCodeInternalEvent> = {
     }
   },
 
-  toJSON(message: ClaudeCodeInternalEvent): unknown {
+  toJSON(message: ZyCodeInternalEvent): unknown {
     const obj: any = {}
     if (message.event_name !== undefined) {
       obj.event_name = message.event_name
@@ -760,15 +760,15 @@ export const ClaudeCodeInternalEvent: MessageFns<ClaudeCodeInternalEvent> = {
     return obj
   },
 
-  create<I extends Exact<DeepPartial<ClaudeCodeInternalEvent>, I>>(
+  create<I extends Exact<DeepPartial<ZyCodeInternalEvent>, I>>(
     base?: I,
-  ): ClaudeCodeInternalEvent {
-    return ClaudeCodeInternalEvent.fromPartial(base ?? ({} as any))
+  ): ZyCodeInternalEvent {
+    return ZyCodeInternalEvent.fromPartial(base ?? ({} as any))
   },
-  fromPartial<I extends Exact<DeepPartial<ClaudeCodeInternalEvent>, I>>(
+  fromPartial<I extends Exact<DeepPartial<ZyCodeInternalEvent>, I>>(
     object: I,
-  ): ClaudeCodeInternalEvent {
-    const message = createBaseClaudeCodeInternalEvent()
+  ): ZyCodeInternalEvent {
+    const message = createBaseZyCodeInternalEvent()
     message.event_name = object.event_name ?? ''
     message.client_timestamp = object.client_timestamp ?? undefined
     message.model = object.model ?? ''

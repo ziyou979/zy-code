@@ -2,7 +2,7 @@
  * Core plugin operations (install, uninstall, enable, disable, update)
  *
  * This module provides pure library functions that can be used by both:
- * - CLI commands (`claude plugin install/uninstall/enable/disable/update`)
+ * - CLI commands (`zy plugin install/uninstall/enable/disable/update`)
  * - Interactive UI (ManagePlugins.tsx)
  *
  * Functions in this module:
@@ -487,7 +487,7 @@ export async function uninstallPluginOp(
       if (actualScope === 'project') {
         return {
           success: false,
-          message: `Plugin "${plugin}" is enabled at project scope (.zy/settings.json, shared with your team). To disable just for you: claude plugin disable ${plugin} --scope local`,
+          message: `Plugin "${plugin}" is enabled at project scope (.zy/settings.json, shared with your team). To disable just for you: zy plugin disable ${plugin} --scope local`,
         }
       }
       return {
@@ -986,7 +986,7 @@ async function performPluginUpdate({
 
     // Try to load manifest from plugin directory (for version info)
     let pluginManifest: PluginManifest | undefined
-    const manifestPath = join(sourcePath, '.claude-plugin', 'plugin.json')
+    const manifestPath = join(sourcePath, '.zy-plugin', 'plugin.json')
     try {
       pluginManifest = await loadPluginManifest(
         manifestPath,

@@ -4,7 +4,7 @@ import { join } from 'path'
 import { logEvent } from '../services/analytics/index.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir } from './envUtils.js'
+import { getZyConfigHomeDir } from './envUtils.js'
 import { type FsOperations, getFsImplementation } from './fsOperations.js'
 import { cleanupOldImageCaches } from './imageStore.js'
 import * as lockfile from './lockfile.js'
@@ -298,7 +298,7 @@ async function cleanupSingleDirectory(
 }
 
 export function cleanupOldPlanFiles(): Promise<CleanupResult> {
-  const plansDir = join(getClaudeConfigHomeDir(), 'plans')
+  const plansDir = join(getZyConfigHomeDir(), 'plans')
   return cleanupSingleDirectory(plansDir, '.md')
 }
 
@@ -308,7 +308,7 @@ export async function cleanupOldFileHistoryBackups(): Promise<CleanupResult> {
   const fsImpl = getFsImplementation()
 
   try {
-    const configDir = getClaudeConfigHomeDir()
+    const configDir = getZyConfigHomeDir()
     const fileHistoryStorageDir = join(configDir, 'file-history')
 
     let dirents
@@ -353,7 +353,7 @@ export async function cleanupOldSessionEnvDirs(): Promise<CleanupResult> {
   const fsImpl = getFsImplementation()
 
   try {
-    const configDir = getClaudeConfigHomeDir()
+    const configDir = getZyConfigHomeDir()
     const sessionEnvBaseDir = join(configDir, 'session-env')
 
     let dirents
@@ -397,7 +397,7 @@ export async function cleanupOldDebugLogs(): Promise<CleanupResult> {
   const cutoffDate = getCutoffDate()
   const result: CleanupResult = { messages: 0, errors: 0 }
   const fsImpl = getFsImplementation()
-  const debugDir = join(getClaudeConfigHomeDir(), 'debug')
+  const debugDir = join(getZyConfigHomeDir(), 'debug')
 
   let dirents
   try {
@@ -436,7 +436,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000
  * Only runs once per day for Ant users.
  */
 export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
-  const markerPath = join(getClaudeConfigHomeDir(), '.npm-cache-cleanup')
+  const markerPath = join(getZyConfigHomeDir(), '.npm-cache-cleanup')
 
   try {
     const stat = await fs.stat(markerPath)
@@ -476,7 +476,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
       key: string
       time: number
     }>) {
-      if (entry.key.includes('@anthropic-ai/claude-')) {
+      if (entry.key.includes('@anthropic-ai/zy-')) {
         anthropicEntries.push({ key: entry.key, time: entry.time })
       }
     }
@@ -541,7 +541,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
  * The regular cleanupOldVersions() should still be used for installer flows.
  */
 export async function cleanupOldVersionsThrottled(): Promise<void> {
-  const markerPath = join(getClaudeConfigHomeDir(), '.version-cleanup')
+  const markerPath = join(getZyConfigHomeDir(), '.version-cleanup')
 
   try {
     const stat = await fs.stat(markerPath)

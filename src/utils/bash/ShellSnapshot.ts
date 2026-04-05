@@ -11,7 +11,7 @@ import {
   embeddedSearchToolsBinaryPath,
   hasEmbeddedSearchTools,
 } from '../embeddedTools.js'
-import { getClaudeConfigHomeDir } from '../envUtils.js'
+import { getZyConfigHomeDir } from '../envUtils.js'
 import { pathExists } from '../file.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
@@ -266,7 +266,7 @@ function getUserSnapshotContent(configFile: string): string {
  * Generates ZY Code specific snapshot content
  * This content is always included regardless of user configuration
  */
-async function getClaudeCodeSnapshotContent(): Promise<string> {
+async function getZyCodeSnapshotContent(): Promise<string> {
   // Get the appropriate PATH based on platform
   let pathValue = process.env.PATH
   if (getPlatform() === 'windows') {
@@ -317,7 +317,7 @@ RIPGREP_FUNC_END
   // For ant-native builds, shadow find/grep with bfs/ugrep embedded in the bun
   // binary. Unlike rg (which only activates if system rg is absent), we always
   // shadow find/grep since bfs/ugrep are drop-in replacements and we want
-  // consistent fast behavior in Claude's shell.
+  // consistent fast behavior in Zy's shell.
   const findGrepIntegration = createFindGrepShellIntegration()
   if (findGrepIntegration !== null) {
     content += `
@@ -357,7 +357,7 @@ async function getSnapshotScript(
       ? // we need to manually force alias expansion in bash - normally `getUserSnapshotContent` takes care of this
         'echo "shopt -s expand_aliases" >> "$SNAPSHOT_FILE"'
       : ''
-  const claudeCodeContent = await getClaudeCodeSnapshotContent()
+  const ZyCodeContent = await getZyCodeSnapshotContent()
 
   const script = `SNAPSHOT_FILE=${quote([snapshotFilePath])}
       ${configFileExists ? `source "${configFile}" < /dev/null` : '# No user config file to source'}
@@ -373,7 +373,7 @@ async function getSnapshotScript(
 
       ${userContent}
 
-      ${claudeCodeContent}
+      ${ZyCodeContent}
 
       # Exit silently on success, only report errors
       if [ ! -f "$SNAPSHOT_FILE" ]; then
@@ -388,7 +388,7 @@ async function getSnapshotScript(
 /**
  * Creates and saves the shell environment snapshot by loading the user's shell configuration
  *
- * This function is a critical part of Claude CLI's shell integration strategy. It:
+ * This function is a critical part of Zy CLI's shell integration strategy. It:
  *
  * 1. Identifies the user's shell config file (.zshrc, .bashrc, etc.)
  * 2. Creates a temporary script that sources this configuration file
@@ -400,7 +400,7 @@ async function getSnapshotScript(
  * The snapshot is saved to a temporary file that can be sourced by subsequent shell
  * commands, ensuring they run with the user's expected environment, aliases, and functions.
  *
- * This approach allows Claude CLI to execute commands as if they were run in the user's
+ * This approach allows Zy CLI to execute commands as if they were run in the user's
  * interactive shell, while avoiding the overhead of creating a new login shell for each command.
  * It handles both Bash and Zsh shells with their different syntax for functions, options, and aliases.
  *
@@ -436,7 +436,7 @@ export const createAndSaveSnapshot = async (
       // Create unique snapshot path with timestamp and random ID
       const timestamp = Date.now()
       const randomId = Math.random().toString(36).substring(2, 8)
-      const snapshotsDir = join(getClaudeConfigHomeDir(), 'shell-snapshots')
+      const snapshotsDir = join(getZyConfigHomeDir(), 'shell-snapshots')
       logForDebugging(`Snapshots directory: ${snapshotsDir}`)
       const shellSnapshotPath = join(
         snapshotsDir,
@@ -458,7 +458,7 @@ export const createAndSaveSnapshot = async (
         ['-c', '-l', snapshotScript],
         {
           env: {
-            ...((process.env.CLAUDE_CODE_DONT_INHERIT_ENV
+            ...((process.env.ZY_CODE_DONT_INHERIT_ENV
               ? {}
               : subprocessEnv()) as typeof process.env),
             SHELL: binShell,
@@ -485,7 +485,7 @@ export const createAndSaveSnapshot = async (
             logForDebugging(`  - Config file: ${getConfigFile(binShell)}`)
             logForDebugging(`  - Config file exists: ${configFileExists}`)
             logForDebugging(`  - Working directory: ${getCwd()}`)
-            logForDebugging(`  - Claude home: ${getClaudeConfigHomeDir()}`)
+            logForDebugging(`  - Zy home: ${getZyConfigHomeDir()}`)
             logForDebugging(`Full snapshot script:\n${snapshotScript}`)
             if (stdout) {
               logForDebugging(

@@ -363,7 +363,7 @@ export function ExitPlanModePermissionRequest({
 
       // Set initial message - REPL will handle context clear and fresh query
       // Add verification instruction if the feature is enabled
-      // Dead code elimination: CLAUDE_CODE_VERIFY_PLAN='false' in external builds, so === 'true' check allows Bun to eliminate the string
+      // Dead code elimination: ZY_CODE_VERIFY_PLAN='false' in external builds, so === 'true' check allows Bun to eliminate the string
       const verificationInstruction = undefined === 'true' ? `\n\nIMPORTANT: When you have finished implementing the plan, you MUST call the "VerifyPlanExecution" tool directly (NOT the ${AGENT_TOOL_NAME} tool or an agent) to trigger background verification.` : '';
 
       // Capture the transcript path before context is cleared (session ID will be regenerated)
@@ -600,7 +600,7 @@ export function ExitPlanModePermissionRequest({
     }
     return <PermissionDialog color="planMode" title="Exit plan mode?" workerBadge={workerBadge}>
         <Box flexDirection="column" paddingX={1} marginTop={1}>
-          <Text>Claude wants to exit plan mode</Text>
+          <Text>Zy wants to exit plan mode</Text>
           <Box marginTop={1}>
             <Select options={[{
             label: 'Yes',
@@ -627,7 +627,7 @@ export function ExitPlanModePermissionRequest({
       <PermissionDialog color="planMode" title="Ready to code?" innerPaddingX={0} workerBadge={workerBadge}>
         <Box flexDirection="column" marginTop={1}>
           <Box paddingX={1} flexDirection="column">
-            <Text>Here is Claude&apos;s plan:</Text>
+            <Text>Here is Zy&apos;s plan:</Text>
           </Box>
           <Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false} paddingX={1} marginBottom={1}
         // Necessary for Windows Terminal to render properly
@@ -644,7 +644,7 @@ export function ExitPlanModePermissionRequest({
                 </Box>}
             {!useStickyFooter && <>
                 <Text dimColor>
-                  Claude has written up a plan and is ready to execute. Would
+                  Zy has written up a plan and is ready to execute. Would
                   you like to proceed?
                 </Text>
                 <Box marginTop={1}>
@@ -738,7 +738,7 @@ export function buildPlanApprovalOptions({
     type: 'input',
     label: 'No, keep planning',
     value: 'no',
-    placeholder: 'Tell Claude what to change',
+    placeholder: 'Tell Zy what to change',
     description: 'shift+tab to approve with this feedback',
     onChange: onFeedbackChange
   });

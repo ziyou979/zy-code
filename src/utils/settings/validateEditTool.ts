@@ -1,5 +1,5 @@
 import type { ValidationResult } from 'src/Tool.js'
-import { isClaudeSettingsPath } from '../permissions/filesystem.js'
+import { isZySettingsPath } from '../permissions/filesystem.js'
 import { validateSettingsFileContent } from './validation.js'
 
 /**
@@ -17,7 +17,7 @@ export function validateInputForSettingsFileEdit(
   getUpdatedContent: () => string,
 ): Extract<ValidationResult, { result: false }> | null {
   // Only validate ZY settings files
-  if (!isClaudeSettingsPath(filePath)) {
+  if (!isZySettingsPath(filePath)) {
     return null
   }
 

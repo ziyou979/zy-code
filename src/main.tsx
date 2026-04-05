@@ -48,7 +48,7 @@ import { canUserConfigureAdvisor, getInitialAdvisorSetting, isAdvisorEnabled, is
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js';
 import { count, uniq } from './utils/array.js';
 import { installAsciicastRecorder } from './utils/asciicast.js';
-import { getSubscriptionType, isClaudeAISubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
+import { getSubscriptionType, isZyAISubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
@@ -84,7 +84,7 @@ import { isAnalyticsDisabled } from 'src/services/analytics/config.js';
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { initializeAnalyticsGates } from 'src/services/analytics/sink.js';
-import { getOriginalCwd, setAdditionalDirectoriesForClaudeMd, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
+import { getOriginalCwd, setAdditionalDirectoriesForzyMd, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
 import { filterCommandsForRemoteMode, getCommands } from './commands.js';
 import type { StatsStore } from './context/stats.js';
 import { launchAssistantInstallWizard, launchAssistantSessionChooser, launchInvalidSettingsDialog, launchResumeChooser, launchSnapshotUpdateDialog, launchTeleportRepoMismatchDialog, launchTeleportResumeWrapper } from './dialogLaunchers.js';
@@ -92,7 +92,7 @@ import { SHOW_CURSOR } from './ink/termio/dec.js';
 import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens } from './interactiveHelpers.js';
 import { initBuiltinPlugins } from './plugins/bundled/index.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { checkQuotaStatus } from './services/claudeAiLimits.js';
+import { checkQuotaStatus } from './services/zyAiLimits.js';
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js';
 import { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES } from './services/plugins/pluginCliCommands.js';
 import { initBundledSkills } from './skills/bundled/index.js';
@@ -101,8 +101,8 @@ import { getActiveAgentsFromList, getAgentDefinitionsWithOverrides, isBuiltInAge
 import type { LogOption } from './types/logs.js';
 import type { Message as MessageType } from './types/message.js';
 import { assertMinVersion } from './utils/autoUpdater.js';
-import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/claudeInChrome/prompt.js';
-import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/claudeInChrome/setup.js';
+import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/ClaudeInChrome/prompt.js';
+import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/ClaudeInChrome/setup.js';
 import { getContextWindowForModel } from './utils/context.js';
 import { loadConversationForResume } from './utils/conversationRecovery.js';
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
@@ -141,14 +141,14 @@ import { validateUuid } from './utils/uuid.js';
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
-import { fetchClaudeAIMcpConfigsIfEligible } from 'src/services/mcp/claudeai.js';
+import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js';
 import { clearServerCache } from 'src/services/mcp/client.js';
-import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupClaudeAiMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getClaudeCodeMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
+import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupZyAIMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getZyCodeMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
 import { logContextMetrics } from 'src/utils/api.js';
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/claudeInChrome/common.js';
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/ClaudeInChrome/common.js';
 import { registerCleanup } from 'src/utils/cleanupRegistry.js';
 import { eagerParseCliFlag } from 'src/utils/cliArgs.js';
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js';
@@ -293,7 +293,7 @@ function getCertEnvVarTelemetry(): Record<string, boolean> {
   if (process.env.NODE_EXTRA_CA_CERTS) {
     result.has_node_extra_ca_certs = true;
   }
-  if (process.env.CLAUDE_CODE_CLIENT_CERT) {
+  if (process.env.ZY_CODE_CLIENT_CERT) {
     result.has_client_cert = true;
   }
   if (hasNodeOption('--use-system-ca')) {
@@ -390,7 +390,7 @@ export function startDeferredPrefetches(): void {
   // However, the spawned processes and async work still contend for CPU and event
   // loop time, which skews startup benchmarks (CPU profiles, time-to-first-render
   // measurements). Skip all of it when we're only measuring startup performance.
-  if (isEnvTruthy(process.env.CLAUDE_CODE_EXIT_AFTER_FIRST_RENDER) ||
+  if (isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER) ||
   // --bare: skip ALL prefetches. These are cache-warms for the REPL's
   // first-turn responsiveness (initUser, getUserContext, tips, countFiles,
   // modelCapabilities, change detectors). Scripted -p calls don't have a
@@ -405,10 +405,10 @@ export function startDeferredPrefetches(): void {
   void getUserContext();
   prefetchSystemContextIfSafe();
   void getRelevantTips();
-  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) && !isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)) {
+  if (isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) && !isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH)) {
     void prefetchAwsCredentialsAndBedRockInfoIfSafe();
   }
-  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) && !isEnvTruthy(process.env.CLAUDE_CODE_SKIP_VERTEX_AUTH)) {
+  if (isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) && !isEnvTruthy(process.env.ZY_CODE_SKIP_VERTEX_AUTH)) {
     void prefetchGcpCredentialsIfSafe();
   }
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
@@ -451,7 +451,7 @@ function loadSettingsFromFlag(settingsFile: string): void {
       // the cache prefix and causing a 12x input token cost penalty.
       // The content hash ensures identical settings produce the same path
       // across process boundaries (each SDK query() spawns a new process).
-      settingsPath = generateTempFilePath('claude-settings', '.json', {
+      settingsPath = generateTempFilePath('zy-settings', '.json', {
         contentHash: trimmedSettings
       });
       writeFileSync_DEPRECATED(settingsPath, trimmedSettings, 'utf8');
@@ -516,7 +516,7 @@ function eagerLoadSettings(): void {
 }
 function initializeEntrypoint(isNonInteractive: boolean): void {
   // Skip if already set (e.g., by SDK or other entrypoints)
-  if (process.env.CLAUDE_CODE_ENTRYPOINT) {
+  if (process.env.ZY_CODE_ENTRYPOINT) {
     return;
   }
   const cliArgs = process.argv.slice(2);
@@ -524,22 +524,22 @@ function initializeEntrypoint(isNonInteractive: boolean): void {
   // Check for MCP serve command (handle flags before mcp serve, e.g., --debug mcp serve)
   const mcpIndex = cliArgs.indexOf('mcp');
   if (mcpIndex !== -1 && cliArgs[mcpIndex + 1] === 'serve') {
-    process.env.CLAUDE_CODE_ENTRYPOINT = 'mcp';
+    process.env.ZY_CODE_ENTRYPOINT = 'mcp';
     return;
   }
-  if (isEnvTruthy(process.env.CLAUDE_CODE_ACTION)) {
-    process.env.CLAUDE_CODE_ENTRYPOINT = 'claude-code-github-action';
+  if (isEnvTruthy(process.env.ZY_CODE_ACTION)) {
+    process.env.ZY_CODE_ENTRYPOINT = 'zy-code-github-action';
     return;
   }
 
   // Note: 'local-agent' entrypoint is set by the local agent mode launcher
-  // via CLAUDE_CODE_ENTRYPOINT env var (handled by early return above)
+  // via ZY_CODE_ENTRYPOINT env var (handled by early return above)
 
   // Set based on interactive status
-  process.env.CLAUDE_CODE_ENTRYPOINT = isNonInteractive ? 'sdk-cli' : 'cli';
+  process.env.ZY_CODE_ENTRYPOINT = isNonInteractive ? 'sdk-cli' : 'cli';
 }
 
-// Set by early argv processing when `claude open <url>` is detected (interactive mode only)
+// Set by early argv processing when `zy open <url>` is detected (interactive mode only)
 type PendingConnect = {
   url: string | undefined;
   authToken: string | undefined;
@@ -551,7 +551,7 @@ const _pendingConnect: PendingConnect | undefined = feature('DIRECT_CONNECT') ? 
   dangerouslySkipPermissions: false
 } : undefined;
 
-// Set by early argv processing when `claude assistant [sessionId]` is detected
+// Set by early argv processing when `zy assistant [sessionId]` is detected
 type PendingAssistantChat = {
   sessionId?: string;
   discover: boolean;
@@ -561,7 +561,7 @@ const _pendingAssistantChat: PendingAssistantChat | undefined = feature('KAIROS'
   discover: false
 } : undefined;
 
-// `claude ssh <host> [dir]` — parsed from argv early (same pattern as
+// `zy ssh <host> [dir]` — parsed from argv early (same pattern as
 // DIRECT_CONNECT above) so the main command path can pick it up and hand
 // the REPL an SSH-backed session instead of a local one.
 type PendingSSH = {
@@ -663,7 +663,7 @@ export async function main() {
     // URL arrives via Apple Event (not argv). LaunchServices overwrites
     // __CFBundleIdentifier to the launching bundle's ID, which is a precise
     // positive signal — cheaper than importing and guessing with heuristics.
-    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === 'com.anthropic.claude-code-url-handler') {
+    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === 'com.anthropic.zy-code-url-handler') {
       const {
         enableConfigs
       } = await import('./utils/config.js');
@@ -676,10 +676,10 @@ export async function main() {
     }
   }
 
-  // `claude assistant [sessionId]` — stash and strip so the main
+  // `zy assistant [sessionId]` — stash and strip so the main
   // command handles it, giving the full interactive TUI. Position-0 only
   // (matching the ssh pattern below) — indexOf would false-positive on
-  // `claude -p "explain assistant"`. Root-flag-before-subcommand
+  // `zy -p "explain assistant"`. Root-flag-before-subcommand
   // (e.g. `--debug assistant`) falls through to the stub, which
   // prints usage.
   if (feature('KAIROS') && _pendingAssistantChat) {
@@ -695,11 +695,11 @@ export async function main() {
         rawArgs.splice(0, 1); // drop 'assistant'
         process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs];
       }
-      // else: `claude assistant --help` → fall through to stub
+      // else: `zy assistant --help` → fall through to stub
     }
   }
 
-  // `claude ssh <host> [dir]` — strip from argv so the main command handler
+  // `zy ssh <host> [dir]` — strip from argv so the main command handler
   // runs (full interactive TUI), stash the host/dir for the REPL branch at
   // ~line 3720 to pick up. Headless (-p) mode not supported in v1: SSH
   // sessions need the local REPL to drive them (interrupt, permissions).
@@ -708,7 +708,7 @@ export async function main() {
     // SSH-specific flags can appear before the host positional (e.g.
     // `ssh --permission-mode auto host /tmp` — standard POSIX flags-before-
     // positionals). Pull them all out BEFORE checking whether a host was
-    // given, so `claude ssh --permission-mode auto host` and `claude ssh host
+    // given, so `zy ssh --permission-mode auto host` and `zy ssh host
     // --permission-mode auto` are equivalent. The host check below only needs
     // to guard against `-h`/`--help` (which commander should handle).
     if (rawCliArgs[0] === 'ssh') {
@@ -784,7 +784,7 @@ export async function main() {
       // Headless (-p) mode is not supported with SSH in v1 — reject early
       // so the flag doesn't silently cause local execution.
       if (rest.includes('-p') || rest.includes('--print')) {
-        process.stderr.write('Error: headless (-p/--print) mode is not supported with claude ssh\n');
+        process.stderr.write('Error: headless (-p/--print) mode is not supported with zy ssh\n');
         gracefulShutdownSync(1);
         return;
       }
@@ -817,33 +817,33 @@ export async function main() {
   // Determine client type
   const clientType = (() => {
     if (isEnvTruthy(process.env.GITHUB_ACTIONS)) return 'github-action';
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'sdk-ts') return 'sdk-typescript';
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'sdk-py') return 'sdk-python';
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'sdk-cli') return 'sdk-cli';
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'claude-vscode') return 'claude-vscode';
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'local-agent') return 'local-agent';
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'claude-desktop') return 'claude-desktop';
+    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-ts') return 'sdk-typescript';
+    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-py') return 'sdk-python';
+    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-cli') return 'sdk-cli';
+    if (process.env.ZY_CODE_ENTRYPOINT === 'zy-vscode') return 'zy-vscode';
+    if (process.env.ZY_CODE_ENTRYPOINT === 'local-agent') return 'local-agent';
+    if (process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop') return 'zy-desktop';
 
     // Check if session-ingress token is provided (indicates remote session)
-    const hasSessionIngressToken = process.env.CLAUDE_CODE_SESSION_ACCESS_TOKEN || process.env.CLAUDE_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR;
-    if (process.env.CLAUDE_CODE_ENTRYPOINT === 'remote' || hasSessionIngressToken) {
+    const hasSessionIngressToken = process.env.ZY_CODE_SESSION_ACCESS_TOKEN || process.env.ZY_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR;
+    if (process.env.ZY_CODE_ENTRYPOINT === 'remote' || hasSessionIngressToken) {
       return 'remote';
     }
     return 'cli';
   })();
   setClientType(clientType);
-  const previewFormat = process.env.CLAUDE_CODE_QUESTION_PREVIEW_FORMAT;
+  const previewFormat = process.env.ZY_CODE_QUESTION_PREVIEW_FORMAT;
   if (previewFormat === 'markdown' || previewFormat === 'html') {
     setQuestionPreviewFormat(previewFormat);
   } else if (!clientType.startsWith('sdk-') &&
   // Desktop and CCR pass previewFormat via toolConfig; when the feature is
   // gated off they pass undefined — don't override that with markdown.
-  clientType !== 'claude-desktop' && clientType !== 'local-agent' && clientType !== 'remote') {
+  clientType !== 'zy-desktop' && clientType !== 'local-agent' && clientType !== 'remote') {
     setQuestionPreviewFormat('markdown');
   }
 
-  // Tag sessions created via `claude remote-control` so the backend can identify them
-  if (process.env.CLAUDE_CODE_ENVIRONMENT_KIND === 'bridge') {
+  // Tag sessions created via `zy remote-control` so the backend can identify them
+  if (process.env.ZY_CODE_ENVIRONMENT_KIND === 'bridge') {
     setSessionSource('remote-control');
   }
   profileCheckpoint('main_client_type_determined');
@@ -919,7 +919,7 @@ async function run(): Promise<CommanderCommand> {
     // process.title on Windows sets the console title directly; on POSIX,
     // terminal shell integration may mirror the process name to the tab.
     // After init() so settings.json env can also gate this (gh-4765).
-    if (!isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_TERMINAL_TITLE)) {
+    if (!isEnvTruthy(process.env.ZY_CODE_DISABLE_TERMINAL_TITLE)) {
       process.title = 'zy';
     }
 
@@ -973,7 +973,7 @@ async function run(): Promise<CommanderCommand> {
     // If not provided but flag is present, value will be true
     // The actual filtering is handled in debug.ts by parsing process.argv
     return true;
-  }).addOption(new Option('--debug-to-stderr', 'Enable debug mode (to stderr)').argParser(Boolean).hideHelp()).option('--debug-file <path>', 'Write debug logs to a specific file path (implicitly enables debug mode)', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).option('-p, --print', 'Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when ZY is run with the -p mode. Only use this flag in directories you trust.', () => true).option('--bare', 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and CLAUDE.md auto-discovery. Sets CLAUDE_CODE_SIMPLE=1. Anthropic auth is strictly ANTHROPIC_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read). 3P providers (Bedrock/Vertex/Foundry) use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (CLAUDE.md dirs), --mcp-config, --settings, --agents, --plugin-dir.', () => true).addOption(new Option('--init', 'Run Setup hooks with init trigger, then continue').hideHelp()).addOption(new Option('--init-only', 'Run Setup and SessionStart:startup hooks, then exit').hideHelp()).addOption(new Option('--maintenance', 'Run Setup hooks with maintenance trigger, then continue').hideHelp()).addOption(new Option('--output-format <format>', 'Output format (only works with --print): "text" (default), "json" (single result), or "stream-json" (realtime streaming)').choices(['text', 'json', 'stream-json'])).addOption(new Option('--json-schema <schema>', 'JSON Schema for structured output validation. ' + 'Example: {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}').argParser(String)).option('--include-hook-events', 'Include all hook lifecycle events in the output stream (only works with --output-format=stream-json)', () => true).option('--include-partial-messages', 'Include partial message chunks as they arrive (only works with --print and --output-format=stream-json)', () => true).addOption(new Option('--input-format <format>', 'Input format (only works with --print): "text" (default), or "stream-json" (realtime streaming input)').choices(['text', 'stream-json'])).option('--mcp-debug', '[DEPRECATED. Use --debug instead] Enable MCP debug mode (shows MCP server errors)', () => true).option('--dangerously-skip-permissions', 'Bypass all permission checks. Recommended only for sandboxes with no internet access.', () => true).option('--allow-dangerously-skip-permissions', 'Enable bypassing all permission checks as an option, without it being enabled by default. Recommended only for sandboxes with no internet access.', () => true).addOption(new Option('--thinking <mode>', 'Thinking mode: enabled (equivalent to adaptive), disabled').choices(['enabled', 'adaptive', 'disabled']).hideHelp()).addOption(new Option('--max-thinking-tokens <tokens>', '[DEPRECATED. Use --thinking instead for newer models] Maximum number of thinking tokens (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-turns <turns>', 'Maximum number of agentic turns in non-interactive mode. This will early exit the conversation after the specified number of turns. (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-budget-usd <amount>', 'Maximum dollar amount to spend on API calls (only works with --print)').argParser(value => {
+  }).addOption(new Option('--debug-to-stderr', 'Enable debug mode (to stderr)').argParser(Boolean).hideHelp()).option('--debug-file <path>', 'Write debug logs to a specific file path (implicitly enables debug mode)', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).option('-p, --print', 'Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when ZY is run with the -p mode. Only use this flag in directories you trust.', () => true).option('--bare', 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and CLAUDE.md auto-discovery. Sets ZY_CODE_SIMPLE=1. Anthropic auth is strictly ANTHROPIC_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read). 3P providers (Bedrock/Vertex/Foundry) use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (CLAUDE.md dirs), --mcp-config, --settings, --agents, --plugin-dir.', () => true).addOption(new Option('--init', 'Run Setup hooks with init trigger, then continue').hideHelp()).addOption(new Option('--init-only', 'Run Setup and SessionStart:startup hooks, then exit').hideHelp()).addOption(new Option('--maintenance', 'Run Setup hooks with maintenance trigger, then continue').hideHelp()).addOption(new Option('--output-format <format>', 'Output format (only works with --print): "text" (default), "json" (single result), or "stream-json" (realtime streaming)').choices(['text', 'json', 'stream-json'])).addOption(new Option('--json-schema <schema>', 'JSON Schema for structured output validation. ' + 'Example: {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}').argParser(String)).option('--include-hook-events', 'Include all hook lifecycle events in the output stream (only works with --output-format=stream-json)', () => true).option('--include-partial-messages', 'Include partial message chunks as they arrive (only works with --print and --output-format=stream-json)', () => true).addOption(new Option('--input-format <format>', 'Input format (only works with --print): "text" (default), or "stream-json" (realtime streaming input)').choices(['text', 'stream-json'])).option('--mcp-debug', '[DEPRECATED. Use --debug instead] Enable MCP debug mode (shows MCP server errors)', () => true).option('--dangerously-skip-permissions', 'Bypass all permission checks. Recommended only for sandboxes with no internet access.', () => true).option('--allow-dangerously-skip-permissions', 'Enable bypassing all permission checks as an option, without it being enabled by default. Recommended only for sandboxes with no internet access.', () => true).addOption(new Option('--thinking <mode>', 'Thinking mode: enabled (equivalent to adaptive), disabled').choices(['enabled', 'adaptive', 'disabled']).hideHelp()).addOption(new Option('--max-thinking-tokens <tokens>', '[DEPRECATED. Use --thinking instead for newer models] Maximum number of thinking tokens (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-turns <turns>', 'Maximum number of agentic turns in non-interactive mode. This will early exit the conversation after the specified number of turns. (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-budget-usd <amount>', 'Maximum dollar amount to spend on API calls (only works with --print)').argParser(value => {
     const amount = Number(value);
     if (isNaN(amount) || amount <= 0) {
       throw new Error('--max-budget-usd must be a positive number greater than 0');
@@ -990,7 +990,7 @@ async function run(): Promise<CommanderCommand> {
     return Number.isFinite(n) ? n : undefined;
   }).hideHelp()).option('--from-pr [value]', 'Resume a session linked to a PR by PR number/URL, or open interactive picker with optional search term', value => value || true).option('--no-session-persistence', 'Disable session persistence - sessions will not be saved to disk and cannot be resumed (only works with --print)').addOption(new Option('--resume-session-at <message id>', 'When resuming, only messages up to and including the assistant message with <message.id> (use with --resume in print mode)').argParser(String).hideHelp()).addOption(new Option('--rewind-files <user-message-id>', 'Restore files to state at the specified user message and exit (requires --resume)').hideHelp())
   // @[MODEL LAUNCH]: Update the example model ID in the --model help text.
-  .option('--model <model>', `Model for the current session. Provide an alias for the latest model (e.g. 'sonnet' or 'opus') or a model's full name (e.g. 'claude-sonnet-4-6').`).addOption(new Option('--effort <level>', `Effort level for the current session (low, medium, high, max)`).argParser((rawValue: string) => {
+  .option('--model <model>', `Model for the current session. Provide an alias for the latest model (e.g. 'sonnet' or 'opus') or a model's full name (e.g. 'zy-sonnet-4-6').`).addOption(new Option('--effort <level>', `Effort level for the current session (low, medium, high, max)`).argParser((rawValue: string) => {
     const value = rawValue.toLowerCase();
     const allowed = ['low', 'medium', 'high', 'max'];
     if (!allowed.includes(value)) {
@@ -999,7 +999,7 @@ async function run(): Promise<CommanderCommand> {
     return value;
   })).option('--agent <agent>', `Agent for the current session. Overrides the 'agent' setting.`).option('--betas <betas...>', 'Beta headers to include in API requests (API key users only)').option('--fallback-model <model>', 'Enable automatic fallback to specified model when default model is overloaded (only works with --print)').addOption(new Option('--workload <tag>', 'Workload tag for billing-header attribution (cc_workload). Process-scoped; set by SDK daemon callers that spawn subprocesses for cron work. (only works with --print)').hideHelp()).option('--settings <file-or-json>', 'Path to a settings JSON file or a JSON string to load additional settings from').option('--add-dir <directories...>', 'Additional directories to allow tool access to').option('--ide', 'Automatically connect to IDE on startup if exactly one valid IDE is available', () => true).option('--strict-mcp-config', 'Only use MCP servers from --mcp-config, ignoring all other MCP configurations', () => true).option('--session-id <uuid>', 'Use a specific session ID for the conversation (must be a valid UUID)').option('-n, --name <name>', 'Set a display name for this session (shown in /resume and terminal title)').option('--agents <json>', 'JSON object defining custom agents (e.g. \'{"reviewer": {"description": "Reviews code", "prompt": "You are a code reviewer"}}\')').option('--setting-sources <sources>', 'Comma-separated list of setting sources to load (user, project, local).')
   // gh-33508: <paths...> (variadic) consumed everything until the next
-  // --flag. `claude --plugin-dir /path mcp add --transport http` swallowed
+  // --flag. `zy --plugin-dir /path mcp add --transport http` swallowed
   // `mcp` and `add` as paths, then choked on --transport as an unknown
   // top-level option. Single-value + collect accumulator means each
   // --plugin-dir takes exactly one arg; repeat the flag for multiple dirs.
@@ -1012,7 +1012,7 @@ async function run(): Promise<CommanderCommand> {
     if ((options as {
       bare?: boolean;
     }).bare) {
-      process.env.CLAUDE_CODE_SIMPLE = '1';
+      process.env.ZY_CODE_SIMPLE = '1';
     }
 
     // Ignore "code" as a prompt - treat it the same as no prompt
@@ -1114,7 +1114,7 @@ async function run(): Promise<CommanderCommand> {
     const agentsJson = options.agents;
     const agentCli = options.agent;
     if (feature('BG_SESSIONS') && agentCli) {
-      process.env.CLAUDE_CODE_AGENT = agentCli;
+      process.env.ZY_CODE_AGENT = agentCli;
     }
 
     // NOTE: LSP manager initialization is intentionally deferred until after
@@ -1139,7 +1139,7 @@ async function run(): Promise<CommanderCommand> {
     }).tasks;
     const taskListId = tasksOption ? typeof tasksOption === 'string' ? tasksOption : DEFAULT_TASKS_MODE_TASK_LIST_ID : undefined;
     if ("external" === 'ant' && taskListId) {
-      process.env.CLAUDE_CODE_TASK_LIST_ID = taskListId;
+      process.env.ZY_CODE_TASK_LIST_ID = taskListId;
     }
 
     // Extract worktree option
@@ -1186,7 +1186,7 @@ async function run(): Promise<CommanderCommand> {
     let storedTeammateOpts: TeammateOptions | undefined;
     if (isAgentSwarmsEnabled()) {
       // Extract agent identity options (for tmux-spawned agents)
-      // These replace the CLAUDE_CODE_* environment variables
+      // These replace the ZY_CODE_* environment variables
       const teammateOpts = extractTeammateOptions(options);
       storedTeammateOpts = teammateOpts;
 
@@ -1223,12 +1223,12 @@ async function run(): Promise<CommanderCommand> {
     }).sdkUrl ?? undefined;
 
     // Allow env var to enable partial messages (used by sandbox gateway for baku)
-    const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env.CLAUDE_CODE_INCLUDE_PARTIAL_MESSAGES);
+    const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env.ZY_CODE_INCLUDE_PARTIAL_MESSAGES);
 
     // Enable all hook event types when explicitly requested via SDK option
-    // or when running in CLAUDE_CODE_REMOTE mode (CCR needs them).
+    // or when running in ZY_CODE_REMOTE mode (CCR needs them).
     // Without this, only SessionStart and Setup events are emitted.
-    if (includeHookEvents || isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+    if (includeHookEvents || isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
       setAllHookEventsEnabled(true);
     }
 
@@ -1306,15 +1306,15 @@ async function run(): Promise<CommanderCommand> {
       file?: string[];
     }).file;
     if (fileSpecs && fileSpecs.length > 0) {
-      // Get session ingress token (provided by EnvManager via CLAUDE_CODE_SESSION_ACCESS_TOKEN)
+      // Get session ingress token (provided by EnvManager via ZY_CODE_SESSION_ACCESS_TOKEN)
       const sessionToken = getSessionIngressAuthToken();
       if (!sessionToken) {
-        process.stderr.write(chalk.red('Error: Session token required for file downloads. CLAUDE_CODE_SESSION_ACCESS_TOKEN must be set.\n'));
+        process.stderr.write(chalk.red('Error: Session token required for file downloads. ZY_CODE_SESSION_ACCESS_TOKEN must be set.\n'));
         process.exit(1);
       }
 
       // Resolve session ID: prefer remote session ID, fall back to internal session ID
-      const fileSessionId = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || getSessionId();
+      const fileSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID || getSessionId();
       const files = parseFileSpecs(fileSpecs);
       if (files.length > 0) {
         // Use ANTHROPIC_BASE_URL if set (by EnvManager), otherwise use OAuth config
@@ -1505,7 +1505,7 @@ async function run(): Promise<CommanderCommand> {
         // Enforce managed policy (allowedMcpServers / deniedMcpServers) on
         // --mcp-config servers. Without this, the CLI flag bypasses the
         // enterprise allowlist that user/project/local configs go through in
-        // getClaudeCodeMcpConfigs — callers spread dynamicMcpConfig back on
+        // getZyCodeMcpConfigs — callers spread dynamicMcpConfig back on
         // top of filtered results. Filter here at the source so all
         // downstream consumers see the policy-filtered set.
         const {
@@ -1522,18 +1522,18 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Extract Claude in Chrome option and enforce claude.ai subscriber check (unless user is ant)
+    // Extract Claude in Chrome option and enforce zy.ai subscriber check (unless user is ant)
     const chromeOpts = options as {
       chrome?: boolean;
     };
     // Store the explicit CLI flag so teammates can inherit it
     setChromeFlagOverride(chromeOpts.chrome);
-    const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && ("external" === 'ant' || isClaudeAISubscriber());
+    const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && ("external" === 'ant' || isZyAISubscriber());
     const autoEnableClaudeInChrome = !enableClaudeInChrome && shouldAutoEnableClaudeInChrome();
     if (enableClaudeInChrome) {
       const platform = getPlatform();
       try {
-        logEvent('tengu_claude_in_chrome_setup', {
+        logEvent('tengu_Zy_in_chrome_setup', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         const {
@@ -1550,7 +1550,7 @@ async function run(): Promise<CommanderCommand> {
           appendSystemPrompt = appendSystemPrompt ? `${chromeSystemPrompt}\n\n${appendSystemPrompt}` : chromeSystemPrompt;
         }
       } catch (error) {
-        logEvent('tengu_claude_in_chrome_setup_failed', {
+        logEvent('tengu_Zy_in_chrome_setup_failed', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         logForDebugging(`[Claude in Chrome] Error: ${error}`);
@@ -1630,7 +1630,7 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Store additional directories for CLAUDE.md loading (controlled by env var)
-    setAdditionalDirectoriesForClaudeMd(addDir);
+    setAdditionalDirectoriesForzyMd(addDir);
 
     // Channel server allowlist from --channels flag — servers whose
     // inbound push notifications should register this session. The option
@@ -1777,27 +1777,27 @@ async function run(): Promise<CommanderCommand> {
     });
     void assertMinVersion();
 
-    // claude.ai config fetch: -p mode only (interactive uses useManageMCPConnections
+    // zy.ai config fetch: -p mode only (interactive uses useManageMCPConnections
     // two-phase loading). Kicked off here to overlap with setup(); awaited
     // before runHeadless so single-turn -p sees connectors. Skipped under
     // enterprise/strict MCP to preserve policy boundaries.
-    const claudeaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
-    // --bare / SIMPLE: skip claude.ai proxy servers (datadog, Gmail,
+    const zyaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
+    // --bare / SIMPLE: skip zy.ai proxy servers (datadog, Gmail,
     // Slack, BigQuery, PubMed — 6-14s each to connect). Scripted calls
     // that need MCP pass --mcp-config explicitly.
-    !isBareMode() ? fetchClaudeAIMcpConfigsIfEligible().then(configs => {
+    !isBareMode() ? fetchZyAIMcpConfigsIfEligible().then(configs => {
       const {
         allowed,
         blocked
       } = filterMcpServersByPolicy(configs);
       if (blocked.length > 0) {
-        process.stderr.write(`Warning: claude.ai MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
+        process.stderr.write(`Warning: zy.ai MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
       }
       return allowed;
     }) : Promise.resolve({});
 
     // Kick off MCP config loading early (safe - just reads files, no execution).
-    // Both interactive and -p use getClaudeCodeMcpConfigs (local file reads only).
+    // Both interactive and -p use getZyCodeMcpConfigs (local file reads only).
     // The local promise is awaited later (before prefetchAllMcpResources) to
     // overlap config I/O with setup(), commands loading, and trust dialog.
     logForDebugging('[STARTUP] Loading MCP configs...');
@@ -1808,7 +1808,7 @@ async function run(): Promise<CommanderCommand> {
     // allMcpConfigs downstream so it survives this skip.
     const mcpConfigPromise = (strictMcpConfig || isBareMode() ? Promise.resolve({
       servers: {} as Record<string, ScopedMcpServerConfig>
-    }) : getClaudeCodeMcpConfigs(dynamicMcpConfig)).then(result => {
+    }) : getZyCodeMcpConfigs(dynamicMcpConfig)).then(result => {
       mcpConfigResolvedMs = Date.now() - mcpConfigStart;
       return result;
     });
@@ -1869,7 +1869,7 @@ async function run(): Promise<CommanderCommand> {
 
     // Apply coordinator mode tool filtering for headless path
     // (mirrors useMergedTools.ts filtering for REPL/interactive path)
-    if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE)) {
+    if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE)) {
       const {
         applyCoordinatorToolFilter
       } = await import('./utils/toolPool.js');
@@ -1920,7 +1920,7 @@ async function run(): Promise<CommanderCommand> {
     // pure in-memory array pushes (<1ms, zero I/O) that getBundledSkills()
     // reads synchronously. Previously ran inside setup() after ~20ms of
     // await points, so the parallel getCommands() memoized an empty list.
-    if (process.env.CLAUDE_CODE_ENTRYPOINT !== 'local-agent') {
+    if (process.env.ZY_CODE_ENTRYPOINT !== 'local-agent') {
       initBuiltinPlugins();
       initBundledSkills();
     }
@@ -2196,7 +2196,7 @@ async function run(): Promise<CommanderCommand> {
     // access and conflict with delegation instructions.
     if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
       proactive?: boolean;
-    }).proactive || isEnvTruthy(process.env.CLAUDE_CODE_PROACTIVE)) && !coordinatorModeModule?.isCoordinatorMode()) {
+    }).proactive || isEnvTruthy(process.env.ZY_CODE_PROACTIVE)) && !coordinatorModeModule?.isCoordinatorMode()) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const briefVisibility = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js')).isBriefEnabled() ? 'Call SendUserMessage at checkpoints to mark where things stand.' : 'The user will see any text you output.' : 'The user will see any text you output.';
       /* eslint-enable @typescript-eslint/no-require-imports */
@@ -2219,7 +2219,7 @@ async function run(): Promise<CommanderCommand> {
       const ctx = getRenderContext(false);
       getFpsMetrics = ctx.getFpsMetrics;
       stats = ctx.stats;
-      // Install asciicast recorder before Ink mounts (ant-only, opt-in via CLAUDE_CODE_TERMINAL_RECORDING=1)
+      // Install asciicast recorder before Ink mounts (ant-only, opt-in via ZY_CODE_TERMINAL_RECORDING=1)
       if ("external" === 'ant') {
         installAsciicastRecorder();
       }
@@ -2283,7 +2283,7 @@ async function run(): Promise<CommanderCommand> {
         void refreshPolicyLimits();
         // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
         resetUserCache();
-        // Refresh GrowthBook after login to get updated feature flags (e.g., for claude.ai MCPs)
+        // Refresh GrowthBook after login to get updated feature flags (e.g., for zy.ai MCPs)
         refreshGrowthBookAfterAuthChange();
         // Clear any stale trusted device token then enroll for Remote Control.
         // Both self-gate on tengu_sessions_elevated_auth_enforcement internally
@@ -2410,11 +2410,11 @@ async function run(): Promise<CommanderCommand> {
       tools: [],
       commands: []
     }) : prefetchAllMcpResources(regularMcpConfigs);
-    const claudeaiMcpPromise = isNonInteractiveSession ? Promise.resolve({
+    const zyaiMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
       commands: []
-    }) : claudeaiConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
+    }) : zyaiConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
       clients: [],
       tools: [],
       commands: []
@@ -2423,10 +2423,10 @@ async function run(): Promise<CommanderCommand> {
     // adds helper tools (ListMcpResourcesTool, ReadMcpResourceTool) via
     // local dedup flags, so merging two calls can yield duplicates. print.ts
     // already uniqBy's the final tool pool, but dedup here keeps appState clean.
-    const mcpPromise = Promise.all([localMcpPromise, claudeaiMcpPromise]).then(([local, claudeai]) => ({
-      clients: [...local.clients, ...claudeai.clients],
-      tools: uniqBy([...local.tools, ...claudeai.tools], 'name'),
-      commands: uniqBy([...local.commands, ...claudeai.commands], 'name')
+    const mcpPromise = Promise.all([localMcpPromise, zyaiMcpPromise]).then(([local, zyai]) => ({
+      clients: [...local.clients, ...zyai.clients],
+      tools: uniqBy([...local.tools, ...zyai.tools], 'name'),
+      commands: uniqBy([...local.commands, ...zyai.commands], 'name')
     }));
 
     // Start hooks early so they run in parallel with MCP connections.
@@ -2525,7 +2525,7 @@ async function run(): Promise<CommanderCommand> {
 
     // Register PID file for concurrent-session detection (~/.zy/sessions/)
     // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
-    // REPL path registers — not subcommands like `claude doctor`. Chained:
+    // REPL path registers — not subcommands like `zy doctor`. Chained:
     // count must run after register's write completes or it misses our own file.
     void registerSession().then(registered => {
       if (!registered) return;
@@ -2722,35 +2722,35 @@ async function run(): Promise<CommanderCommand> {
       // message and turn-1 tool list both need configured MCP tools present.
       // Zero-server case is free via the early return in connectMcpBatch.
       // Connectors parallelize inside getMcpToolsCommandsAndResources
-      // (processBatched with Promise.all). claude.ai is awaited too — its
+      // (processBatched with Promise.all). zy.ai is awaited too — its
       // fetch was kicked off early (line ~2558) so only residual time blocks
-      // here. --bare skips claude.ai entirely for perf-sensitive scripts.
+      // here. --bare skips zy.ai entirely for perf-sensitive scripts.
       profileCheckpoint('before_connectMcp');
       await connectMcpBatch(regularMcpConfigs, 'regular');
       profileCheckpoint('after_connectMcp');
-      // Dedup: suppress plugin MCP servers that duplicate a claude.ai
-      // connector (connector wins), then connect claude.ai servers.
+      // Dedup: suppress plugin MCP servers that duplicate a zy.ai
+      // connector (connector wins), then connect zy.ai servers.
       // Bounded wait — #23725 made this blocking so single-turn -p sees
       // connectors, but with 40+ slow connectors tengu_startup_perf p99
       // climbed to 76s. If fetch+connect doesn't finish in time, proceed;
       // the promise keeps running and updates headlessStore in the
       // background so turn 2+ still sees connectors.
-      const CLAUDE_AI_MCP_TIMEOUT_MS = 5_000;
-      const claudeaiConnect = claudeaiConfigPromise.then(claudeaiConfigs => {
-        if (Object.keys(claudeaiConfigs).length > 0) {
-          const claudeaiSigs = new Set<string>();
-          for (const config of Object.values(claudeaiConfigs)) {
+      const ZY_AI_MCP_TIMEOUT_MS = 5_000;
+      const zyaiConnect = zyaiConfigPromise.then(zyaiConfigs => {
+        if (Object.keys(zyaiConfigs).length > 0) {
+          const zyaiSigs = new Set<string>();
+          for (const config of Object.values(zyaiConfigs)) {
             const sig = getMcpServerSignature(config);
-            if (sig) claudeaiSigs.add(sig);
+            if (sig) zyaiSigs.add(sig);
           }
           const suppressed = new Set<string>();
           for (const [name, config] of Object.entries(regularMcpConfigs)) {
             if (!name.startsWith('plugin:')) continue;
             const sig = getMcpServerSignature(config);
-            if (sig && claudeaiSigs.has(sig)) suppressed.add(name);
+            if (sig && zyaiSigs.has(sig)) suppressed.add(name);
           }
           if (suppressed.size > 0) {
-            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate claude.ai connectors: ${[...suppressed].join(', ')}`);
+            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate zy.ai connectors: ${[...suppressed].join(', ')}`);
             // Disconnect before filtering from state. Only connected
             // servers need cleanup — clearServerCache on a never-connected
             // server triggers a real connect just to kill it (memoize
@@ -2786,27 +2786,27 @@ async function run(): Promise<CommanderCommand> {
             });
           }
         }
-        // Suppress claude.ai connectors that duplicate an enabled
+        // Suppress zy.ai connectors that duplicate an enabled
         // manual server (URL-signature match). Plugin dedup above only
         // handles `plugin:*` keys; this catches manual `.mcp.json` entries.
         // plugin:* must be excluded here — step 1 already suppressed
-        // those (claude.ai wins); leaving them in suppresses the
+        // those (zy.ai wins); leaving them in suppresses the
         // connector too, and neither survives (gh-39974).
         const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'));
         const {
-          servers: dedupedClaudeAi
-        } = dedupClaudeAiMcpServers(claudeaiConfigs, nonPluginConfigs);
-        return connectMcpBatch(dedupedClaudeAi, 'claudeai');
+          servers: dedupedZyAI
+        } = dedupZyAIMcpServers(zyaiConfigs, nonPluginConfigs);
+        return connectMcpBatch(dedupedZyAI, 'zyai');
       });
-      let claudeaiTimer: ReturnType<typeof setTimeout> | undefined;
-      const claudeaiTimedOut = await Promise.race([claudeaiConnect.then(() => false), new Promise<boolean>(resolve => {
-        claudeaiTimer = setTimeout(r => r(true), CLAUDE_AI_MCP_TIMEOUT_MS, resolve);
+      let zyaiTimer: ReturnType<typeof setTimeout> | undefined;
+      const zyaiTimedOut = await Promise.race([zyaiConnect.then(() => false), new Promise<boolean>(resolve => {
+        zyaiTimer = setTimeout(r => r(true), ZY_AI_MCP_TIMEOUT_MS, resolve);
       })]);
-      if (claudeaiTimer) clearTimeout(claudeaiTimer);
-      if (claudeaiTimedOut) {
-        logForDebugging(`[MCP] claude.ai connectors not ready after ${CLAUDE_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`);
+      if (zyaiTimer) clearTimeout(zyaiTimer);
+      if (zyaiTimedOut) {
+        logForDebugging(`[MCP] zy.ai connectors not ready after ${ZY_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`);
       }
-      profileCheckpoint('after_connectMcp_claudeai');
+      profileCheckpoint('after_connectMcp_zyai');
 
       // In headless mode, start deferred prefetches immediately (no user typing delay)
       // --bare / SIMPLE: startDeferredPrefetches early-returns internally.
@@ -3059,7 +3059,7 @@ async function run(): Promise<CommanderCommand> {
     // environments can be recreated at any user message index. Gating:
     //   - Build-time: this import is stubbed in external builds.
     //   - Runtime: uploader checks github.com/anthropics/* remote + gcloud auth.
-    //   - Safety: CLAUDE_CODE_DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
+    //   - Safety: ZY_CODE_DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
     // Import is dynamic + async to avoid adding startup latency.
     const sessionUploaderPromise = "external" === 'ant' ? import('./utils/sessionDataUploader.js') : null;
 
@@ -3191,7 +3191,7 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('SSH_REMOTE') && _pendingSSH?.host) {
-      // `claude ssh <host> [dir]` — probe remote, deploy binary if needed,
+      // `zy ssh <host> [dir]` — probe remote, deploy binary if needed,
       // spawn ssh with unix-socket -R forward to a local auth proxy, hand
       // the REPL an SSHSession. Tools run remotely, UI renders locally.
       // `--local` skips probe/deploy/ssh and spawns the current binary
@@ -3257,7 +3257,7 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('KAIROS') && _pendingAssistantChat && (_pendingAssistantChat.sessionId || _pendingAssistantChat.discover)) {
-      // `claude assistant [sessionId]` — REPL as a pure viewer client
+      // `zy assistant [sessionId]` — REPL as a pure viewer client
       // of a remote assistant session. The agentic loop runs remotely; this
       // process streams live events and POSTs messages. History is lazy-
       // loaded by useAssistantHistory on scroll-up (no blocking fetch here).
@@ -3287,7 +3287,7 @@ async function run(): Promise<CommanderCommand> {
           }
           // The daemon needs a few seconds to spin up its worker and
           // establish a bridge session before discovery will find it.
-          return await exitWithMessage(root, `Assistant installed in ${installedDir}. The daemon is starting up — run \`claude assistant\` again in a few seconds to connect.`, {
+          return await exitWithMessage(root, `Assistant installed in ${installedDir}. The daemon is starting up — run \`zy assistant\` again in a few seconds to connect.`, {
             exitCode: 0,
             beforeExit: () => gracefulShutdown(0)
           });
@@ -3310,7 +3310,7 @@ async function run(): Promise<CommanderCommand> {
       // getAccessToken closure for the token so reconnects get fresh tokens.
       const {
         checkAndRefreshOAuthTokenIfNeeded,
-        getClaudeAIOAuthTokens
+        getZyAIOAuthTokens
       } = await import('./utils/auth.js');
       await checkAndRefreshOAuthTokenIfNeeded();
       let apiCreds;
@@ -3319,7 +3319,7 @@ async function run(): Promise<CommanderCommand> {
       } catch (e) {
         return await exitWithError(root, `Error: ${e instanceof Error ? e.message : 'Failed to authenticate'}`, () => gracefulShutdown(1));
       }
-      const getAccessToken = (): string => getClaudeAIOAuthTokens()?.accessToken ?? apiCreds.accessToken;
+      const getAccessToken = (): string => getZyAIOAuthTokens()?.accessToken ?? apiCreds.accessToken;
 
       // Brief mode activation: setKairosActive(true) satisfies BOTH opt-in
       // and entitlement for isBriefEnabled() (BriefTool.ts:124-132).
@@ -3461,7 +3461,7 @@ async function run(): Promise<CommanderCommand> {
 
         // Create remote session config for the REPL
         const {
-          getClaudeAIOAuthTokens: getTokensForRemote
+          getZyAIOAuthTokens: getTokensForRemote
         } = await import('./utils/auth.js');
         const getAccessTokenForRemote = (): string => getTokensForRemote()?.accessToken ?? apiCreds.accessToken;
         const remoteSessionConfig = createRemoteSessionConfig(createdSession.id, getAccessTokenForRemote, apiCreds.orgUUID, hasInitialPrompt);
@@ -3847,7 +3847,7 @@ async function run(): Promise<CommanderCommand> {
   }
 
   // Teammate identity options (set by leader when spawning tmux teammates)
-  // These replace the CLAUDE_CODE_* environment variables
+  // These replace the ZY_CODE_* environment variables
   program.addOption(new Option('--agent-id <id>', 'Teammate agent ID').hideHelp());
   program.addOption(new Option('--agent-name <name>', 'Teammate display name').hideHelp());
   program.addOption(new Option('--team-name <name>', 'Team name for swarm coordination').hideHelp());
@@ -3889,7 +3889,7 @@ async function run(): Promise<CommanderCommand> {
     return program;
   }
 
-  // claude mcp
+  // zy mcp
 
   const mcp = program.command('mcp').description('Configure and manage MCP servers').configureHelp(createSortedHelpConfig()).enablePositionalOptions();
   mcp.command('serve').description(`Start the ZY Code MCP server`).option('-d, --debug', 'Enable debug mode', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).action(async ({
@@ -3942,7 +3942,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpAddJsonHandler(name, json, options);
   });
-  mcp.command('add-from-claude-desktop').description('Import MCP servers from Claude Desktop (Mac and WSL only)').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
+  mcp.command('add-from-zy-desktop').description('Import MCP servers from Zy Desktop (Mac and WSL only)').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
     const {
@@ -3957,7 +3957,7 @@ async function run(): Promise<CommanderCommand> {
     await mcpResetChoicesHandler();
   });
 
-  // claude server
+  // zy server
   if (feature('DIRECT_CONNECT')) {
     program.command('server').description('Start a ZY Code session server').option('--port <number>', 'HTTP port', '0').option('--host <string>', 'Bind address', '0.0.0.0').option('--auth-token <token>', 'Bearer token for auth').option('--unix <path>', 'Listen on a unix domain socket').option('--workspace <dir>', 'Default working directory for sessions that do not specify cwd').option('--idle-timeout <ms>', 'Idle timeout for detached sessions in ms (0 = never expire)', '600000').option('--max-sessions <n>', 'Maximum concurrent sessions (0 = unlimited)', '32').action(async (opts: {
       port: string;
@@ -4041,7 +4041,7 @@ async function run(): Promise<CommanderCommand> {
   // The actual interactive flow is handled by early argv rewriting in main()
   // (parallels the DIRECT_CONNECT/cc:// pattern above). If commander reaches
   // this action it means the argv rewrite didn't fire (e.g. user ran
-  // `claude ssh` with no host) — just print usage.
+  // `zy ssh` with no host) — just print usage.
   if (feature('SSH_REMOTE')) {
     program.command('ssh <host> [dir]').description('Run ZY Code on a remote host over SSH. Deploys the binary and ' + 'tunnels API auth back through your local machine — no remote setup needed.').option('--permission-mode <mode>', 'Permission mode for the remote session').option('--dangerously-skip-permissions', 'Skip all permission prompts on the remote (dangerous)').option('--local', 'e2e test mode — spawn the child CLI locally (skip ssh/deploy). ' + 'Exercises the auth proxy and unix-socket plumbing without a remote host.').action(async () => {
       // Argv rewriting in main() should have consumed `ssh <host>` before
@@ -4052,7 +4052,7 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude connect — subcommand only handles -p (headless) mode.
+  // zy connect — subcommand only handles -p (headless) mode.
   // Interactive mode (without -p) is handled by early argv rewriting in main()
   // which redirects to the main command with full TUI support.
   if (feature('DIRECT_CONNECT')) {
@@ -4098,16 +4098,16 @@ async function run(): Promise<CommanderCommand> {
   // zy auth
 
   const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
-  auth.command('login').description('Sign in to your account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use Console (API usage billing) instead of Claude subscription').option('--claudeai', 'Use Claude subscription (default)').action(async ({
+  auth.command('login').description('Sign in to your account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use Console (API usage billing) instead of Zy subscription').option('--zyai', 'Use Zy subscription (default)').action(async ({
     email,
     sso,
     console: useConsole,
-    claudeai
+    zyai
   }: {
     email?: string;
     sso?: boolean;
     console?: boolean;
-    claudeai?: boolean;
+    zyai?: boolean;
   }) => {
     const {
       authLogin
@@ -4116,7 +4116,7 @@ async function run(): Promise<CommanderCommand> {
       email,
       sso,
       console: useConsole,
-      claudeai
+      zyai
     });
   });
   auth.command('status').description('Show authentication status').option('--json', 'Output as JSON (default)').option('--text', 'Output as human-readable text').action(async (opts: {
@@ -4169,7 +4169,7 @@ async function run(): Promise<CommanderCommand> {
 
   // Marketplace subcommands
   const marketplaceCmd = pluginCmd.command('marketplace').description('Manage ZY Code marketplaces').configureHelp(createSortedHelpConfig());
-  marketplaceCmd.command('add <source>').description('Add a marketplace from a URL, path, or GitHub repo').addOption(coworkOption()).option('--sparse <paths...>', 'Limit checkout to specific directories via git sparse-checkout (for monorepos). Example: --sparse .claude-plugin plugins').option('--scope <scope>', 'Where to declare the marketplace: user (default), project, or local').action(async (source: string, options: {
+  marketplaceCmd.command('add <source>').description('Add a marketplace from a URL, path, or GitHub repo').addOption(coworkOption()).option('--sparse <paths...>', 'Limit checkout to specific directories via git sparse-checkout (for monorepos). Example: --sparse .zy-plugin plugins').option('--scope <scope>', 'Where to declare the marketplace: user (default), project, or local').action(async (source: string, options: {
     cowork?: boolean;
     sparse?: string[];
     scope?: string;
@@ -4311,18 +4311,18 @@ async function run(): Promise<CommanderCommand> {
     }
   }
 
-  // Remote Control command — connect local environment to claude.ai/code.
+  // Remote Control command — connect local environment to zy.ai/code.
   // The actual command is intercepted by the fast-path in cli.tsx before
   // Commander.js runs, so this registration exists only for help output.
   // Always hidden: isBridgeEnabled() at this point (before enableConfigs)
-  // would throw inside isClaudeAISubscriber → getGlobalConfig and return
+  // would throw inside isZyAISubscriber → getGlobalConfig and return
   // false via the try/catch — but not before paying ~65ms of side effects
   // (25ms settings Zod parse + 40ms sync `security` keychain subprocess).
   // The dynamic visibility never worked; the command was always hidden.
   if (feature('BRIDGE_MODE')) {
     program.command('remote-control', {
       hidden: true
-    }).alias('rc').description('Connect your local environment for remote-control sessions via claude.ai/code').action(async () => {
+    }).alias('rc').description('Connect your local environment for remote-control sessions via zy.ai/code').action(async () => {
       // Unreachable — cli.tsx fast-path handles this command before main.tsx loads.
       // If somehow reached, delegate to bridgeMain.
       const {
@@ -4353,7 +4353,7 @@ async function run(): Promise<CommanderCommand> {
     await doctorHandler(root);
   });
 
-  // claude update
+  // zy update
   //
   // For SemVer-compliant versioning with build metadata (X.X.X+SHA):
   // - We perform exact string comparison (including SHA) to detect any change
@@ -4366,9 +4366,9 @@ async function run(): Promise<CommanderCommand> {
     await update();
   });
 
-  // claude up — run the project's CLAUDE.md "# claude up" setup instructions.
+  // zy up — run the project's CLAUDE.md "# zy up" setup instructions.
   if ("external" === 'ant') {
-    program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# claude up" section of the nearest CLAUDE.md').action(async () => {
+    program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# zy up" section of the nearest CLAUDE.md').action(async () => {
       const {
         up
       } = await import('src/cli/up.js');
@@ -4376,10 +4376,10 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude rollback (ant-only)
+  // zy rollback (ant-only)
   // Rolls back to previous releases
   if ("external" === 'ant') {
-    program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  claude rollback                                    Go 1 version back from current\n  claude rollback 3                                  Go 3 versions back from current\n  claude rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
+    program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  zy rollback                                    Go 1 version back from current\n  zy rollback 3                                  Go 3 versions back from current\n  zy rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
       list?: boolean;
       dryRun?: boolean;
       safe?: boolean;
@@ -4391,7 +4391,7 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude install
+  // zy install
   program.command('install [target]').description('Install ZY Code native build. Use [target] to specify version (stable, latest, or specific version)').option('--force', 'Force installation even if already installed').action(async (target: string | undefined, options: {
     force?: boolean;
   }) => {
@@ -4408,7 +4408,7 @@ async function run(): Promise<CommanderCommand> {
       if (maybeSessionId) return maybeSessionId;
       return Number(value);
     };
-    // claude log
+    // zy log
     program.command('log').description('[ANT-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
       const {
         logHandler
@@ -4416,7 +4416,7 @@ async function run(): Promise<CommanderCommand> {
       await logHandler(logId);
     });
 
-    // claude error
+    // zy error
     program.command('error').description('[ANT-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
       const {
         errorHandler
@@ -4424,7 +4424,7 @@ async function run(): Promise<CommanderCommand> {
       await errorHandler(number);
     });
 
-    // claude export
+    // zy export
     program.command('export').description('[ANT-ONLY] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
 Examples:
   $ zy export 0 conversation.txt                Export conversation at log index 0
@@ -4560,7 +4560,7 @@ async function logTenguInit({
 }): Promise<void> {
   try {
     logEvent('tengu_init', {
-      entrypoint: 'claude' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      entrypoint: 'zy' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       hasInitialPrompt,
       hasStdin,
       verbose,
@@ -4611,7 +4611,7 @@ async function logTenguInit({
 function maybeActivateProactive(options: unknown): void {
   if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
     proactive?: boolean;
-  }).proactive || isEnvTruthy(process.env.CLAUDE_CODE_PROACTIVE))) {
+  }).proactive || isEnvTruthy(process.env.ZY_CODE_PROACTIVE))) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const proactiveModule = require('./proactive/index.js');
     if (!proactiveModule.isProactiveActive()) {
@@ -4624,12 +4624,12 @@ function maybeActivateBrief(options: unknown): void {
   const briefFlag = (options as {
     brief?: boolean;
   }).brief;
-  const briefEnv = isEnvTruthy(process.env.CLAUDE_CODE_BRIEF);
+  const briefEnv = isEnvTruthy(process.env.ZY_CODE_BRIEF);
   if (!briefFlag && !briefEnv) return;
-  // --brief / CLAUDE_CODE_BRIEF are explicit opt-ins: check entitlement,
+  // --brief / ZY_CODE_BRIEF are explicit opt-ins: check entitlement,
   // then set userMsgOptIn to activate the tool + prompt section. The env
   // var also grants entitlement (isBriefEntitled() reads it), so setting
-  // CLAUDE_CODE_BRIEF=1 alone force-enables for dev/testing — no GB gate
+  // ZY_CODE_BRIEF=1 alone force-enables for dev/testing — no GB gate
   // needed. initialIsBriefOnly reads getUserMsgOptIn() directly.
   // Conditional require: static import would leak the tool name string
   // into external builds via BriefTool.ts → prompt.ts.

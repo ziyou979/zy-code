@@ -39,7 +39,7 @@ const INITIAL_STATE: State = {
   secretName: 'ANTHROPIC_API_KEY',
   useExistingSecret: true,
   workflowExists: false,
-  selectedWorkflows: ['claude', 'claude-review'] as Workflow[],
+  selectedWorkflows: ['zy', 'zy-review'] as Workflow[],
   selectedApiKeyOption: 'new' as 'existing' | 'new' | 'oauth',
   authType: 'api_key'
 };
@@ -163,9 +163,9 @@ function InstallGitHubApp(props: {
         setState(prev_2 => ({
           ...prev_2,
           step: 'error',
-          error: 'A Claude workflow file already exists in this repository.',
+          error: 'A Zy workflow file already exists in this repository.',
           errorReason: 'Workflow file conflict',
-          errorInstructions: ['The file .github/workflows/claude.yml already exists', 'You can either:', '  1. Delete the existing file and run this command again', '  2. Update the existing file manually using the template from:', `     ${GITHUB_ACTION_SETUP_DOCS_URL}`]
+          errorInstructions: ['The file .github/workflows/zy.yml already exists', 'You can either:', '  1. Delete the existing file and run this command again', '  2. Update the existing file manually using the template from:', `     ${GITHUB_ACTION_SETUP_DOCS_URL}`]
         }));
       } else {
         logEvent('tengu_install_github_app_error', {
@@ -182,7 +182,7 @@ function InstallGitHubApp(props: {
     }
   }, [state.selectedRepoName, state.workflowAction, state.selectedWorkflows, state.useCurrentRepo, state.workflowExists, state.secretExists, state.authType]);
   async function openGitHubAppInstallation() {
-    const installUrl = 'https://github.com/apps/claude';
+    const installUrl = 'https://github.com/apps/zy';
     await openBrowser(installUrl);
   }
   async function checkRepositoryPermissions(repoName: string): Promise<{
@@ -213,7 +213,7 @@ function InstallGitHubApp(props: {
     }
   }
   async function checkExistingWorkflowFile(repoName_0: string): Promise<boolean> {
-    const checkFileResult = await execFileNoThrow('gh', ['api', `repos/${repoName_0}/contents/.github/workflows/claude.yml`, '--jq', '.sha']);
+    const checkFileResult = await execFileNoThrow('gh', ['api', `repos/${repoName_0}/contents/.github/workflows/zy.yml`, '--jq', '.sha']);
     return checkFileResult.code === 0;
   }
   async function checkExistingSecret() {
@@ -463,10 +463,10 @@ function InstallGitHubApp(props: {
       ...prev_23,
       apiKeyOrOAuthToken: token,
       useExistingKey: false,
-      secretName: 'CLAUDE_CODE_OAUTH_TOKEN',
+      secretName: 'ZY_CODE_OAUTH_TOKEN',
       authType: 'oauth_token'
     }));
-    void runSetupGitHubActions(token, 'CLAUDE_CODE_OAUTH_TOKEN');
+    void runSetupGitHubActions(token, 'ZY_CODE_OAUTH_TOKEN');
   }, [runSetupGitHubActions]);
   const handleOAuthCancel = useCallback(() => {
     setState(prev_24 => ({

@@ -101,7 +101,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
       return
     }
 
-    // Priority 2: Pop queue when Claude is idle (no running task to cancel)
+    // Priority 2: Pop queue when Zy is idle (no running task to cancel)
     if (hasCommandsInQueue()) {
       if (popCommandFromQueue) {
         popCommandFromQueue()

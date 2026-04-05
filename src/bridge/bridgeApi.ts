@@ -158,12 +158,12 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
               directory: config.dir,
               branch: config.branch,
               git_repo_url: config.gitRepoUrl,
-              // Advertise session capacity so claude.ai/code can show
+              // Advertise session capacity so zy.ai/code can show
               // "2/4 sessions" badges and only block the picker when
               // actually at capacity. Backends that don't yet accept
               // this field will silently ignore it.
               max_sessions: config.maxSessions,
-              // worker_type lets claude.ai filter environments by origin
+              // worker_type lets zy.ai filter environments by origin
               // (e.g. assistant picker only shows assistant-mode workers).
               // Desktop cowork app sends "cowork"; we send a distinct value.
               metadata: { worker_type: config.workerType },
@@ -471,7 +471,7 @@ function handleErrorStatus(
     case 403:
       throw new BridgeFatalError(
         isExpiredErrorType(errorType)
-          ? 'Remote Control session has expired. Please restart with `claude remote-control` or /remote-control.'
+          ? 'Remote Control session has expired. Please restart with `zy remote-control` or /remote-control.'
           : `${context}: Access denied (403)${detail ? `: ${detail}` : ''}. Check your organization permissions.`,
         403,
         errorType,
@@ -486,7 +486,7 @@ function handleErrorStatus(
     case 410:
       throw new BridgeFatalError(
         detail ??
-          'Remote Control session has expired. Please restart with `claude remote-control` or /remote-control.',
+          'Remote Control session has expired. Please restart with `zy remote-control` or /remote-control.',
         410,
         errorType ?? 'environment_expired',
       )

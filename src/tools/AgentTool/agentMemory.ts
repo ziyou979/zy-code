@@ -23,14 +23,14 @@ function sanitizeAgentTypeForPath(agentType: string): string {
 
 /**
  * Returns the local agent memory directory, which is project-specific and not checked into VCS.
- * When CLAUDE_CODE_REMOTE_MEMORY_DIR is set, persists to the mount with project namespacing.
+ * When ZY_CODE_REMOTE_MEMORY_DIR is set, persists to the mount with project namespacing.
  * Otherwise, uses <cwd>/.zy/agent-memory-local/<agentType>/.
  */
 function getLocalAgentMemoryDir(dirName: string): string {
-  if (process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR) {
+  if (process.env.ZY_CODE_REMOTE_MEMORY_DIR) {
     return (
       join(
-        process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR,
+        process.env.ZY_CODE_REMOTE_MEMORY_DIR,
         'projects',
         sanitizePath(
           findCanonicalGitRoot(getProjectRoot()) ?? getProjectRoot(),
@@ -82,12 +82,12 @@ export function isAgentMemoryPath(absolutePath: string): boolean {
     return true
   }
 
-  // Local scope: persisted to mount when CLAUDE_CODE_REMOTE_MEMORY_DIR is set, otherwise cwd-based
-  if (process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR) {
+  // Local scope: persisted to mount when ZY_CODE_REMOTE_MEMORY_DIR is set, otherwise cwd-based
+  if (process.env.ZY_CODE_REMOTE_MEMORY_DIR) {
     if (
       normalizedPath.includes(sep + 'agent-memory-local' + sep) &&
       normalizedPath.startsWith(
-        join(process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR, 'projects') + sep,
+        join(process.env.ZY_CODE_REMOTE_MEMORY_DIR, 'projects') + sep,
       )
     ) {
       return true

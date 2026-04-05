@@ -13,23 +13,23 @@ import {
   getIsNonInteractiveSession,
   getSessionId,
 } from '../../bootstrap/state.js'
-import { ClaudeCodeInternalEvent } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
+import { ZyCodeInternalEvent } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
 import { GrowthbookExperimentEvent } from '../../types/generated/events_mono/growthbook/v1/growthbook_experiment_event.js'
 import {
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
   hasProfileScope,
-  isClaudeAISubscriber,
+  isZyAISubscriber,
 } from '../../utils/auth.js'
 import { checkHasTrustDialogAccepted } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { errorMessage, isFsInaccessible, toError } from '../../utils/errors.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { readJSONLFile } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'
 import { stripProtoFields } from './index.js'
 import { type EventMetadata, to1PEventFormat } from './metadata.js'
@@ -42,12 +42,12 @@ const FILE_PREFIX = '1p_failed_events.'
 
 // Storage directory for failed events - evaluated at runtime to respect CLAUDE_CONFIG_DIR in tests
 function getStorageDir(): string {
-  return path.join(getClaudeConfigHomeDir(), 'telemetry')
+  return path.join(getZyConfigHomeDir(), 'telemetry')
 }
 
 // API envelope - event_data is the JSON output from proto toJSON()
 type FirstPartyEventLoggingEvent = {
-  event_type: 'ClaudeCodeInternalEvent' | 'GrowthbookExperimentEvent'
+  event_type: 'ZyCodeInternalEvent' | 'GrowthbookExperimentEvent'
   event_data: unknown
 }
 
@@ -311,7 +311,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       // Filter for event logs only (by scope name)
       const eventLogs = logs.filter(
         log =>
-          log.instrumentationScope?.name === 'com.anthropic.claude_code.events',
+          log.instrumentationScope?.name === 'com.anthropic.zy_code.events',
       )
 
       if (eventLogs.length === 0) {
@@ -537,8 +537,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
 
     const baseHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': getClaudeCodeUserAgent(),
-      'x-service-name': 'claude-code',
+      'User-Agent': getZyCodeUserAgent(),
+      'x-service-name': 'zy-code',
     }
 
     // Skip auth if trust hasn't been established yet
@@ -553,8 +553,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     // Skip auth when the OAuth token is expired or lacks user:profile
     // scope (service key sessions). Falls through to unauthenticated send.
     let shouldSkipAuth = this.skipAuth || !hasTrust
-    if (!shouldSkipAuth && isClaudeAISubscriber()) {
-      const tokens = getClaudeAIOAuthTokens()
+    if (!shouldSkipAuth && isZyAISubscriber()) {
+      const tokens = getZyAIOAuthTokens()
       if (!hasProfileScope()) {
         shouldSkipAuth = true
       } else if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {
@@ -688,8 +688,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
           )
         }
         events.push({
-          event_type: 'ClaudeCodeInternalEvent',
-          event_data: ClaudeCodeInternalEvent.toJSON({
+          event_type: 'ZyCodeInternalEvent',
+          event_data: ZyCodeInternalEvent.toJSON({
             event_id: attributes.event_id as string | undefined,
             event_name: eventName,
             client_timestamp: this.hrTimeToDate(log.hrTime),
@@ -725,8 +725,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       const additionalMetadata = stripProtoFields(rest)
 
       events.push({
-        event_type: 'ClaudeCodeInternalEvent',
-        event_data: ClaudeCodeInternalEvent.toJSON({
+        event_type: 'ZyCodeInternalEvent',
+        event_data: ZyCodeInternalEvent.toJSON({
           event_id: attributes.event_id as string | undefined,
           event_name: eventName,
           client_timestamp: this.hrTimeToDate(log.hrTime),

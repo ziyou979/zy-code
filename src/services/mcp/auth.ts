@@ -33,7 +33,7 @@ import { parse } from 'url'
 import xss from 'xss'
 import { MCP_CLIENT_METADATA_URL } from '../../constants/oauth.js'
 import { openBrowser } from '../../utils/browser.js'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import * as lockfile from '../../utils/lockfile.js'
 import { logMCPDebug } from '../../utils/log.js'
@@ -192,7 +192,7 @@ export async function normalizeOAuthErrorBody(
 
 /**
  * Creates a fetch function with a fresh 30-second timeout for each OAuth request.
- * Used by ClaudeAuthProvider for metadata discovery and token refresh.
+ * Used by ZyAuthProvider for metadata discovery and token refresh.
  * Prevents stale timeout signals from affecting auth operations.
  */
 function createAuthFetch(): FetchLike {
@@ -655,7 +655,7 @@ type XaaFailureStage =
  * 3. Save tokens to the same keychain slot as normal OAuth
  *
  * IdP connection details come from settings.xaaIdp (configured once via
- * `claude mcp xaa setup`). Per-server config is just `oauth.xaa: true`
+ * `zy mcp xaa setup`). Per-server config is just `oauth.xaa: true`
  * plus the AS clientId/clientSecret.
  *
  * No silent fallback: if `oauth.xaa` is set, XAA is the only path.
@@ -676,7 +676,7 @@ async function performMCPXaaAuth(
   const idp = getXaaIdpSettings()
   if (!idp) {
     throw new Error(
-      "XAA: no IdP connection configured. Run 'claude mcp xaa setup --issuer <url> --client-id <id> --client-secret' to configure.",
+      "XAA: no IdP connection configured. Run 'zy mcp xaa setup --issuer <url> --client-id <id> --client-secret' to configure.",
     )
   }
 
@@ -791,7 +791,7 @@ async function performMCPXaaAuth(
     }
 
     // Save tokens via the same storage path as normal OAuth. We write directly
-    // (instead of ClaudeAuthProvider.saveTokens) to avoid instantiating the
+    // (instead of ZyAuthProvider.saveTokens) to avoid instantiating the
     // whole provider just to write the same keys.
     const storage = getSecureStorage()
     const existingData = storage.read() || {}
@@ -858,7 +858,7 @@ export async function performMCPOAuthFlow(
   // If the IdP id_token isn't cached, this pops the browser once at the IdP
   // (shared across all XAA servers for that issuer). Subsequent servers hit
   // the cache and are silent. Tokens land in the same keychain slot, so the
-  // rest of CC's transport wiring (ClaudeAuthProvider.tokens() in client.ts)
+  // rest of CC's transport wiring (ZyAuthProvider.tokens() in client.ts)
   // works unchanged.
   //
   // No silent fallback: if `oauth.xaa` is set, XAA is the only path. We
@@ -866,12 +866,12 @@ export async function performMCPOAuthFlow(
   // user explicitly asked for XAA) and security-relevant (consent flow may
   // have a different trust/scope posture than the org's IdP policy).
   //
-  // Servers with `oauth.xaa` but CLAUDE_CODE_ENABLE_XAA unset hard-fail with
+  // Servers with `oauth.xaa` but ZY_CODE_ENABLE_XAA unset hard-fail with
   // actionable copy rather than silently degrade to consent.
   if (serverConfig.oauth?.xaa) {
     if (!isXaaEnabled()) {
       throw new Error(
-        `XAA is not enabled (set CLAUDE_CODE_ENABLE_XAA=1). Remove 'oauth.xaa' from server '${serverName}' to use the standard consent flow.`,
+        `XAA is not enabled (set ZY_CODE_ENABLE_XAA=1). Remove 'oauth.xaa' from server '${serverName}' to use the standard consent flow.`,
       )
     }
     logEvent('tengu_mcp_oauth_flow_start', {
@@ -965,7 +965,7 @@ export async function performMCPOAuthFlow(
       `Using redirect port: ${port}${configuredCallbackPort ? ' (from config)' : ''}`,
     )
 
-    const provider = new ClaudeAuthProvider(
+    const provider = new ZyAuthProvider(
       serverName,
       serverConfig,
       redirectUri,
@@ -1349,11 +1349,11 @@ export async function performMCPOAuthFlow(
  * retry → 403 again → aborts with "Server returned 403 after trying upscoping",
  * never reaching redirectToAuthorization where step-up scope is persisted.
  * With this flag set, tokens() omits refresh_token so the SDK falls through
- * to the PKCE flow. See github.com/anthropics/claude-code/issues/28258.
+ * to the PKCE flow. See github.com/anthropics/zy-code/issues/28258.
  */
 export function wrapFetchWithStepUpDetection(
   baseFetch: FetchLike,
-  provider: ClaudeAuthProvider,
+  provider: ZyAuthProvider,
 ): FetchLike {
   return async (url, init) => {
     const response = await baseFetch(url, init)
@@ -1373,7 +1373,7 @@ export function wrapFetchWithStepUpDetection(
   }
 }
 
-export class ClaudeAuthProvider implements OAuthClientProvider {
+export class ZyAuthProvider implements OAuthClientProvider {
   private serverName: string
   private serverConfig: McpSSEServerConfig | McpHTTPServerConfig
   private redirectUri: string
@@ -2091,10 +2091,10 @@ export class ClaudeAuthProvider implements OAuthClientProvider {
     refreshToken: string,
   ): Promise<OAuthTokens | undefined> {
     const serverKey = getServerKey(this.serverName, this.serverConfig)
-    const claudeDir = getClaudeConfigHomeDir()
-    await mkdir(claudeDir, { recursive: true })
+    const ZyDir = getZyConfigHomeDir()
+    await mkdir(ZyDir, { recursive: true })
     const sanitizedKey = serverKey.replace(/[^a-zA-Z0-9]/g, '_')
-    const lockfilePath = join(claudeDir, `mcp-refresh-${sanitizedKey}.lock`)
+    const lockfilePath = join(ZyDir, `mcp-refresh-${sanitizedKey}.lock`)
 
     let release: (() => Promise<void>) | undefined
     for (let retry = 0; retry < MAX_LOCK_RETRIES; retry++) {

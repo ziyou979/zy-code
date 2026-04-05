@@ -8,7 +8,7 @@ import { type AutoUpdaterResult, getLatestVersion, getMaxVersion, type InstallSt
 import { getGlobalConfig, isAutoUpdaterDisabled } from '../utils/config.js';
 import { logForDebugging } from '../utils/debug.js';
 import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js';
-import { installOrUpdateClaudePackage, localInstallationExists } from '../utils/localInstaller.js';
+import { installOrUpdateZyPackage, localInstallationExists } from '../utils/localInstaller.js';
 import { removeInstalledSymlink } from '../utils/nativeInstaller/index.js';
 import { gt, gte } from '../utils/semver.js';
 import { getInitialSettings } from '../utils/settings/settings.js';
@@ -107,7 +107,7 @@ export function AutoUpdater({
         // Use local update for local installations
         logForDebugging('AutoUpdater: Using local update method');
         updateMethod = 'local';
-        installStatus = await installOrUpdateClaudePackage(channel);
+        installStatus = await installOrUpdateZyPackage(channel);
       } else if (installationType === 'npm-global') {
         // Use global update for global installations
         logForDebugging('AutoUpdater: Using global update method');
@@ -124,7 +124,7 @@ export function AutoUpdater({
         const isMigrated = config.installMethod === 'local';
         updateMethod = isMigrated ? 'local' : 'global';
         if (isMigrated) {
-          installStatus = await installOrUpdateClaudePackage(channel);
+          installStatus = await installOrUpdateZyPackage(channel);
         } else {
           installStatus = await installGlobalPackage();
         }
@@ -188,7 +188,7 @@ export function AutoUpdater({
             ✓ Update installed · Restart to apply
           </Text>}
       {(autoUpdaterResult?.status === 'install_failed' || autoUpdaterResult?.status === 'no_permissions') && <Text color="error" wrap="truncate">
-          ✗ Auto-update failed &middot; Try <Text bold>claude doctor</Text> or{' '}
+          ✗ Auto-update failed &middot; Try <Text bold>zy doctor</Text> or{' '}
           <Text bold>
             {hasLocalInstall ? `cd ~/.zy/local && npm update ${MACRO.PACKAGE_URL}` : `npm i -g ${MACRO.PACKAGE_URL}`}
           </Text>

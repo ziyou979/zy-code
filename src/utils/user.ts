@@ -86,9 +86,9 @@ export const getCoreUserData = memoize(
     if (includeAnalyticsMetadata) {
       subscriptionType = getSubscriptionType() ?? undefined
       rateLimitTier = getRateLimitTier() ?? undefined
-      if (subscriptionType && config.claudeCodeFirstTokenDate) {
+      if (subscriptionType && config.ZyCodeFirstTokenDate) {
         const configFirstTokenTime = new Date(
-          config.claudeCodeFirstTokenDate,
+          config.ZyCodeFirstTokenDate,
         ).getTime()
         if (!isNaN(configFirstTokenTime)) {
           firstTokenTime = configFirstTokenTime

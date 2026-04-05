@@ -55,7 +55,7 @@ async function createBedrockClient() {
   // This ensures we query profiles from the same region the client will use
   const region = getAWSRegion()
 
-  const skipAuth = isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)
+  const skipAuth = isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH)
 
   const clientConfig: ConstructorParameters<typeof BedrockClient>[0] = {
     region,
@@ -98,7 +98,7 @@ export async function createBedrockRuntimeClient() {
     '@aws-sdk/client-bedrock-runtime'
   )
   const region = getAWSRegion()
-  const skipAuth = isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)
+  const skipAuth = isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH)
 
   const clientConfig: ConstructorParameters<typeof BedrockRuntimeClient>[0] = {
     region,
@@ -176,7 +176,7 @@ export const getInferenceProfileBackingModel = memoize(async function (
 })
 
 /**
- * Check if a model ID is a foundation model (e.g., "anthropic.claude-sonnet-4-5-20250929-v1:0")
+ * Check if a model ID is a foundation model (e.g., "anthropic.zy-sonnet-4-5-20250929-v1:0")
  */
 export function isFoundationModel(modelId: string): boolean {
   return modelId.startsWith('anthropic.')
@@ -213,11 +213,11 @@ export type BedrockRegionPrefix = (typeof BEDROCK_REGION_PREFIXES)[number]
  * Extract the region prefix from a Bedrock cross-region inference model ID.
  * Handles both plain model IDs and full ARN format.
  * For example:
- * - "eu.anthropic.claude-sonnet-4-5-20250929-v1:0" → "eu"
- * - "us.anthropic.claude-3-7-sonnet-20250219-v1:0" → "us"
- * - "arn:aws:bedrock:ap-northeast-2:123:inference-profile/global.anthropic.claude-opus-4-6-v1" → "global"
- * - "anthropic.claude-3-5-sonnet-20241022-v2:0" → undefined (foundation model)
- * - "claude-sonnet-4-5-20250929" → undefined (first-party format)
+ * - "eu.anthropic.zy-sonnet-4-5-20250929-v1:0" → "eu"
+ * - "us.anthropic.zy-3-7-sonnet-20250219-v1:0" → "us"
+ * - "arn:aws:bedrock:ap-northeast-2:123:inference-profile/global.anthropic.zy-opus-4-6-v1" → "global"
+ * - "anthropic.zy-3-5-sonnet-20241022-v2:0" → undefined (foundation model)
+ * - "zy-sonnet-4-5-20250929" → undefined (first-party format)
  */
 export function getBedrockRegionPrefix(
   modelId: string,
@@ -241,9 +241,9 @@ export function getBedrockRegionPrefix(
  * If the model is not a Bedrock model, it will be returned as-is.
  *
  * For example:
- * - applyBedrockRegionPrefix("us.anthropic.claude-sonnet-4-5-v1:0", "eu") → "eu.anthropic.claude-sonnet-4-5-v1:0"
- * - applyBedrockRegionPrefix("anthropic.claude-sonnet-4-5-v1:0", "eu") → "eu.anthropic.claude-sonnet-4-5-v1:0"
- * - applyBedrockRegionPrefix("claude-sonnet-4-5-20250929", "eu") → "claude-sonnet-4-5-20250929" (not a Bedrock model)
+ * - applyBedrockRegionPrefix("us.anthropic.zy-sonnet-4-5-v1:0", "eu") → "eu.anthropic.zy-sonnet-4-5-v1:0"
+ * - applyBedrockRegionPrefix("anthropic.zy-sonnet-4-5-v1:0", "eu") → "eu.anthropic.zy-sonnet-4-5-v1:0"
+ * - applyBedrockRegionPrefix("zy-sonnet-4-5-20250929", "eu") → "zy-sonnet-4-5-20250929" (not a Bedrock model)
  */
 export function applyBedrockRegionPrefix(
   modelId: string,

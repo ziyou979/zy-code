@@ -2146,7 +2146,7 @@ export function normalizeMessagesForAPI(
           // Must be a sibling, NOT inside tool_result.content — mixing text with
           // tool_reference inside the block is a server ValueError.
           // Idempotent: query.ts calls this per-tool-result; the output flows
-          // back through here via claude.ts on the next API request. The first
+          // back through here via zy.ts on the next API request. The first
           // pass's sibling gets a \n[id:xxx] suffix from appendMessageTag below,
           // so startsWith matches both bare and tagged forms.
           //
@@ -3563,7 +3563,7 @@ Read the team config to discover your teammates' names. Check the task list peri
               ? [
                   createUserMessage({
                     content: `Note: The file ${attachment.filename} was too large and has been truncated to the first ${MAX_LINES_TO_READ} lines. Don't tell the user about this truncation. Use ${FileReadTool.name} to read more of the file if you need.`,
-                    isMeta: true, // only claude will see this
+                    isMeta: true, // only zy will see this
                   }),
                 ]
               : []),
@@ -4238,10 +4238,10 @@ You have exited auto mode. The user may now want to interact more directly. You 
       ])
     }
     case 'verify_plan_reminder': {
-      // Dead code elimination: CLAUDE_CODE_VERIFY_PLAN='false' in external builds, so === 'true' check allows Bun to eliminate the string
+      // Dead code elimination: ZY_CODE_VERIFY_PLAN='false' in external builds, so === 'true' check allows Bun to eliminate the string
       /* eslint-disable-next-line custom-rules/no-process-env-top-level */
       const toolName =
-        process.env.CLAUDE_CODE_VERIFY_PLAN === 'true'
+        process.env.ZY_CODE_VERIFY_PLAN === 'true'
           ? 'VerifyPlanExecution'
           : ''
       const content = `You have completed implementing the plan. Please call the "${toolName}" tool directly (NOT the ${AGENT_TOOL_NAME} tool or an agent) to verify that all plan items were completed correctly.`
@@ -5081,7 +5081,7 @@ export function stripSignatureBlocks(messages: Message[]): Message[] {
     if (filtered.length === content.length) return msg
 
     // Strip to [] even for thinking-only messages. Streaming yields each
-    // content block as a separate same-id AssistantMessage (claude.ts:2150),
+    // content block as a separate same-id AssistantMessage (zy.ts:2150),
     // so a thinking-only singleton here is usually a split sibling that
     // mergeAssistantMessages (2232) rejoins with its text/tool_use partner.
     // If we returned the original message, the stale signature would survive

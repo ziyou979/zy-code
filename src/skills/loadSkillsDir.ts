@@ -10,7 +10,7 @@ import {
   relative,
 } from 'path'
 import {
-  getAdditionalDirectoriesForClaudeMd,
+  getAdditionalDirectoriesForzyMd,
   getSessionId,
 } from '../bootstrap/state.js'
 import {
@@ -30,7 +30,7 @@ import {
   parseEffortValue,
 } from '../utils/effort.js'
 import {
-  getClaudeConfigHomeDir,
+  getZyConfigHomeDir,
   isBareMode,
   isEnvTruthy,
 } from '../utils/envUtils.js'
@@ -73,7 +73,7 @@ export type LoadedFrom =
   | 'mcp'
 
 /**
- * Returns a claude config directory path for a given source.
+ * Returns a zy config directory path for a given source.
  */
 export function getSkillsPath(
   source: SettingSource | 'plugin',
@@ -83,7 +83,7 @@ export function getSkillsPath(
     case 'policySettings':
       return join(getManagedFilePath(), '.zy', dir)
     case 'userSettings':
-      return join(getClaudeConfigHomeDir(), dir)
+      return join(getZyConfigHomeDir(), dir)
     case 'projectSettings':
       return `.zy/${dir}`
     case 'plugin':
@@ -113,7 +113,7 @@ export function estimateSkillFrontmatterTokens(skill: Command): number {
  * Uses realpath to resolve symlinks, which is filesystem-agnostic and avoids
  * issues with filesystems that report unreliable inode values (e.g., inode 0 on
  * some virtual/container/NFS filesystems, or precision loss on ExFAT).
- * See: https://github.com/anthropics/claude-code/issues/13893
+ * See: https://github.com/anthropics/zy-code/issues/13893
  */
 async function getFileIdentity(filePath: string): Promise<string | null> {
   try {
@@ -637,7 +637,7 @@ async function loadSkillsFromCommandsDir(
  */
 export const getSkillDirCommands = memoize(
   async (cwd: string): Promise<Command[]> => {
-    const userSkillsDir = join(getClaudeConfigHomeDir(), 'skills')
+    const userSkillsDir = join(getZyConfigHomeDir(), 'skills')
     const managedSkillsDir = join(getManagedFilePath(), '.zy', 'skills')
     const projectSkillsDirs = getProjectDirsUpToHome('skills', cwd)
 
@@ -646,7 +646,7 @@ export const getSkillDirCommands = memoize(
     )
 
     // Load from additional directories (--add-dir)
-    const additionalDirs = getAdditionalDirectoriesForClaudeMd()
+    const additionalDirs = getAdditionalDirectoriesForzyMd()
     const skillsLocked = isRestrictedToPluginOnly('skills')
     const projectSettingsEnabled =
       isSettingSourceEnabled('projectSettings') && !skillsLocked
@@ -683,7 +683,7 @@ export const getSkillDirCommands = memoize(
       additionalSkillsNested,
       legacyCommands,
     ] = await Promise.all([
-      isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_POLICY_SKILLS)
+      isEnvTruthy(process.env.ZY_CODE_DISABLE_POLICY_SKILLS)
         ? Promise.resolve([])
         : loadSkillsFromSkillsDir(managedSkillsDir, 'policySettings'),
       isSettingSourceEnabled('userSettings') && !skillsLocked

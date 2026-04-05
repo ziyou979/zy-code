@@ -16,7 +16,7 @@ import WebSocket from 'ws'
 import { getOauthConfig } from '../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
   isAuthEnabled,
 } from '../utils/auth.js'
 import { logForDebugging } from '../utils/debug.js'
@@ -102,7 +102,7 @@ export function isVoiceStreamAvailable(): boolean {
   if (!isAuthEnabled()) {
     return false
   }
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getZyAIOAuthTokens()
   return tokens !== null && tokens.accessToken !== null
 }
 
@@ -115,7 +115,7 @@ export async function connectVoiceStream(
   // Ensure OAuth token is fresh before connecting
   await checkAndRefreshOAuthTokenIfNeeded()
 
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getZyAIOAuthTokens()
   if (!tokens?.accessToken) {
     logForDebugging('[voice_stream] No OAuth token available')
     return null
@@ -123,11 +123,11 @@ export async function connectVoiceStream(
 
   // voice_stream is a private_api route, but /api/ws/ is also exposed on
   // the api.anthropic.com listener (service_definitions.yaml private-api:
-  // visibility.external: true). We target that host instead of claude.ai
-  // because the claude.ai CF zone uses TLS fingerprinting and challenges
-  // non-browser clients (anthropics/claude-code#34094). Same private-api
+  // visibility.external: true). We target that host instead of zy.ai
+  // because the zy.ai CF zone uses TLS fingerprinting and challenges
+  // non-browser clients (anthropics/zy-code#34094). Same private-api
   // pod, same OAuth Bearer auth — just a CF zone that doesn't block us.
-  // Desktop dictation still uses claude.ai (Swift URLSession has a
+  // Desktop dictation still uses zy.ai (Swift URLSession has a
   // browser-class JA3 fingerprint, so CF lets it through).
   const wsBaseUrl =
     process.env.VOICE_STREAM_BASE_URL ||
@@ -511,7 +511,7 @@ export async function connectVoiceStream(
   ws.on('unexpected-response', (req: ClientRequest, res: IncomingMessage) => {
     const status = res.statusCode ?? 0
     // Bun's ws implementation on Windows can fire this event for a
-    // successful 101 Switching Protocols response (anthropics/claude-code#40510).
+    // successful 101 Switching Protocols response (anthropics/zy-code#40510).
     // 101 is never a rejection — bail before we destroy a working upgrade.
     if (status === 101) {
       logForDebugging(

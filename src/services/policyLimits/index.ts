@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (Claude.ai): Only Team and Enterprise/C4E subscribers are eligible
+ * - OAuth users (Zy.ai): Only Team and Enterprise/C4E subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without restrictions
  * - API returns empty restrictions for users without policy limits
  */
@@ -25,11 +25,11 @@ import {
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import {
@@ -39,7 +39,7 @@ import {
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   type PolicyLimitsFetchResult,
@@ -117,7 +117,7 @@ export function initializePolicyLimitsLoadingPromise(): void {
  * Get the path to the policy limits cache file
  */
 function getCachePath(): string {
-  return join(getClaudeConfigHomeDir(), CACHE_FILENAME)
+  return join(getZyConfigHomeDir(), CACHE_FILENAME)
 }
 
 /**
@@ -187,13 +187,13 @@ export function isPolicyLimitsEligible(): boolean {
     // No API key available - continue to check OAuth
   }
 
-  // For OAuth users, check if they have Claude.ai tokens
-  const tokens = getClaudeAIOAuthTokens()
+  // For OAuth users, check if they have Zy.ai tokens
+  const tokens = getZyAIOAuthTokens()
   if (!tokens?.accessToken) {
     return false
   }
 
-  // Must have Claude.ai inference scope
+  // Must have Zy.ai inference scope
   if (!tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE)) {
     return false
   }
@@ -244,8 +244,8 @@ function getAuthHeaders(): {
     // No API key available - continue to check OAuth
   }
 
-  // Fall back to OAuth tokens (for Claude.ai users)
-  const oauthTokens = getClaudeAIOAuthTokens()
+  // Fall back to OAuth tokens (for Zy.ai users)
+  const oauthTokens = getZyAIOAuthTokens()
   if (oauthTokens?.accessToken) {
     return {
       headers: {
@@ -315,7 +315,7 @@ async function fetchPolicyLimits(
     const endpoint = getPolicyLimitsEndpoint()
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getZyCodeUserAgent(),
     }
 
     if (cachedChecksum) {

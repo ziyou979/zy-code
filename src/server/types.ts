@@ -44,9 +44,9 @@ export type SessionInfo = {
  * so sessions can be resumed across server restarts.
  */
 export type SessionIndexEntry = {
-  /** Server-assigned session ID (matches the subprocess's claude session). */
+  /** Server-assigned session ID (matches the subprocess zy session). */
   sessionId: string
-  /** The claude transcript session ID for --resume. Same as sessionId for direct sessions. */
+  /** The Zy transcript session ID for --resume. Same as sessionId for direct sessions. */
   transcriptSessionId: string
   cwd: string
   permissionMode?: string

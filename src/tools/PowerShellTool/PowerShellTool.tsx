@@ -13,7 +13,7 @@ import { buildTool, type ToolDef } from '../../Tool.js';
 import { backgroundExistingForegroundTask, markTaskNotified, registerForeground, spawnShellTask, unregisterForeground } from '../../tasks/LocalShellTask/LocalShellTask.js';
 import type { AgentId } from '../../types/ids.js';
 import type { AssistantMessage } from '../../types/message.js';
-import { extractClaudeCodeHints } from '../../utils/claudeCodeHints.js';
+import { extractZyCodeHints } from '../../utils/ZyCodeHints.js';
 import { isEnvTruthy } from '../../utils/envUtils.js';
 import { errorMessage as getErrorMessage, ShellError } from '../../utils/errors.js';
 import { truncate } from '../../utils/format.js';
@@ -224,7 +224,7 @@ function isWindowsSandboxPolicyViolation(): boolean {
 // Check if background tasks are disabled at module load time
 const isBackgroundTasksDisabled =
 // eslint-disable-next-line custom-rules/no-process-env-top-level -- Intentional: schema must be defined at module load
-isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS);
+isEnvTruthy(process.env.ZY_CODE_DISABLE_BACKGROUND_TASKS);
 const fullInputSchema = lazySchema(() => z.strictObject({
   command: z.string().describe('The PowerShell command to execute'),
   timeout: semanticNumber(z.number().optional()).describe(`Optional timeout in milliseconds (max ${getMaxTimeoutMs()})`),
@@ -529,7 +529,7 @@ export const PowerShellTool = buildTool({
       // model (BashTool has no early return, so all paths flow through its
       // single extraction site).
       if (result.backgroundTaskId) {
-        const bgExtracted = extractClaudeCodeHints(result.stdout || '', input.command);
+        const bgExtracted = extractZyCodeHints(result.stdout || '', input.command);
         if (isMainThread && bgExtracted.hints.length > 0) {
           for (const hint of bgExtracted.hints) maybeRecordPluginHint(hint);
         }
@@ -562,12 +562,12 @@ export const PowerShellTool = buildTool({
       let stdout = stripEmptyLines(stdoutAccumulator.toString());
 
       // ZY Code hints protocol: CLIs/SDKs gated on CLAUDECODE=1 emit a
-      // `<claude-code-hint />` tag to stderr (merged into stdout here). Scan,
-      // record for useClaudeCodeHintRecommendation to surface, then strip
+      // `<zy-code-hint />` tag to stderr (merged into stdout here). Scan,
+      // record for useZyCodeHintRecommendation to surface, then strip
       // so the model never sees the tag — a zero-token side channel.
       // Stripping runs unconditionally (subagent output must stay clean too);
       // only the dialog recording is main-thread-only.
-      const extracted = extractClaudeCodeHints(stdout, input.command);
+      const extracted = extractZyCodeHints(stdout, input.command);
       stdout = extracted.stripped;
       if (isMainThread && extracted.hints.length > 0) {
         for (const hint of extracted.hints) maybeRecordPluginHint(hint);

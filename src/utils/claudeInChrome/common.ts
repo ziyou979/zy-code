@@ -472,7 +472,7 @@ export async function openInChrome(url: string): Promise<boolean> {
  * Get the socket directory path (Unix only)
  */
 export function getSocketDir(): string {
-  return `/tmp/claude-mcp-browser-bridge-${getUsername()}`
+  return `/tmp/zy-mcp-browser-bridge-${getUsername()}`
 }
 
 /**
@@ -512,7 +512,7 @@ export function getAllSocketPaths(): string[] {
   }
 
   // Legacy fallback paths
-  const legacyName = `claude-mcp-browser-bridge-${getUsername()}`
+  const legacyName = `zy-mcp-browser-bridge-${getUsername()}`
   const legacyTmpdir = join(tmpdir(), legacyName)
   const legacyTmp = `/tmp/${legacyName}`
 
@@ -528,7 +528,7 @@ export function getAllSocketPaths(): string[] {
 
 function getSocketName(): string {
   // NOTE: This must match the one used in the Claude in Chrome MCP
-  return `claude-mcp-browser-bridge-${getUsername()}`
+  return `zy-mcp-browser-bridge-${getUsername()}`
 }
 
 function getUsername(): string {

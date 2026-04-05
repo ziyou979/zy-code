@@ -711,9 +711,9 @@ export const BINARY_HIJACK_VARS = /^(LD_|DYLD_|PATH$)/
  * Strip ALL leading env var prefixes from a command, regardless of whether the
  * var name is in the safe-list.
  *
- * Used for deny/ask rule matching: when a user denies `claude` or `rm`, the
+ * Used for deny/ask rule matching: when a user denies `zy` or `rm`, the
  * command should stay blocked even if prefixed with arbitrary env vars like
- * `FOO=bar claude`. The safe-list restriction in stripSafeWrappers is correct
+ * `FOO=bar zy`. The safe-list restriction in stripSafeWrappers is correct
  * for allow rules (prevents `DOCKER_HOST=evil docker ps` from auto-matching
  * `Bash(docker ps:*)`), but deny rules must be harder to circumvent.
  *
@@ -817,10 +817,10 @@ function filterRulesByContentsMatchingInput(
   //
   // We iteratively apply both stripping operations to all candidates until no
   // new candidates are produced (fixed-point). This handles interleaved patterns
-  // like `nohup FOO=bar timeout 5 claude` where:
-  //   1. stripSafeWrappers strips `nohup` → `FOO=bar timeout 5 claude`
-  //   2. stripAllLeadingEnvVars strips `FOO=bar` → `timeout 5 claude`
-  //   3. stripSafeWrappers strips `timeout 5` → `claude` (deny match)
+  // like `nohup FOO=bar timeout 5 zy` where:
+  //   1. stripSafeWrappers strips `nohup` → `FOO=bar timeout 5 zy`
+  //   2. stripAllLeadingEnvVars strips `FOO=bar` → `timeout 5 zy`
+  //   3. stripSafeWrappers strips `timeout 5` → `zy` (deny match)
   //
   // Without iteration, single-pass compositions miss multi-layer interleaving.
   if (stripAllEnvVars) {
@@ -1216,7 +1216,7 @@ export async function checkCommandAndSuggestRules(
   // validators (backslash-escaped operators, etc.) would only add FPs.
   if (
     !astParseSucceeded &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK)
+    !isEnvTruthy(process.env.ZY_CODE_DISABLE_COMMAND_INJECTION_CHECK)
   ) {
     const safetyResult = await bashCommandIsSafeAsync(input.command)
 
@@ -1676,7 +1676,7 @@ export async function bashToolHasPermission(
   // When tree-sitter WASM is unavailable OR the injection check is disabled
   // via env var, we fall back to the old path (legacy gate at ~1370 runs).
   const injectionCheckDisabled = isEnvTruthy(
-    process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK,
+    process.env.ZY_CODE_DISABLE_COMMAND_INJECTION_CHECK,
   )
   // GrowthBook killswitch for shadow mode — when off, skip the native parse
   // entirely. Computed once; feature() must stay inline in the ternary below.
@@ -2039,7 +2039,7 @@ export async function bashToolHasPermission(
       // SECURITY: Compute compoundCommandHasCd from the full command, NOT
       // hardcode false. The pipe-handling path previously passed `false` here,
       // disabling the cd+redirect check at pathValidation.ts:821. Appending
-      // `| echo done` to `cd .claude && echo x > settings.json` routed through
+      // `| echo done` to `cd .zy && echo x > settings.json` routed through
       // this path with compoundCommandHasCd=false, letting the redirect write
       // to .zy/settings.json without the cd+redirect block firing.
       const pathResult = checkPathConstraints(
@@ -2084,7 +2084,7 @@ export async function bashToolHasPermission(
   // same question: "can splitCommand be trusted on this input?"
   if (
     astSubcommands === null &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK)
+    !isEnvTruthy(process.env.ZY_CODE_DISABLE_COMMAND_INJECTION_CHECK)
   ) {
     const originalCommandSafetyResult = await bashCommandIsSafeAsync(
       input.command,
@@ -2343,7 +2343,7 @@ export async function bashToolHasPermission(
   let hasPossibleCommandInjection = false
   if (
     astSubcommands === null &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK)
+    !isEnvTruthy(process.env.ZY_CODE_DISABLE_COMMAND_INJECTION_CHECK)
   ) {
     // CC-643: Batch divergence telemetry into a single logEvent. The per-sub
     // logEvent was the hot-path syscall driver (each call → /proc/self/stat

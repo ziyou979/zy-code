@@ -243,7 +243,7 @@ export const ConfigTool = buildTool({
           data: {
             success: false,
             error: !isAuthEnabled()
-              ? 'Voice mode requires a Claude.ai account. Please run /login to sign in.'
+              ? 'Voice mode requires a Zy.ai account. Please run /login to sign in.'
               : 'Voice mode is not available.',
           },
         }
@@ -273,7 +273,7 @@ export const ConfigTool = buildTool({
           data: {
             success: false,
             error:
-              'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+              'Voice mode requires a Zy.ai account. Please run /login to sign in.',
           },
         }
       }

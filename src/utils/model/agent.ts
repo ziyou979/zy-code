@@ -39,8 +39,8 @@ export function getAgentModel(
   toolSpecifiedModel?: ModelAlias,
   permissionMode?: PermissionMode,
 ): string {
-  if (process.env.CLAUDE_CODE_SUBAGENT_MODEL) {
-    return parseUserSpecifiedModel(process.env.CLAUDE_CODE_SUBAGENT_MODEL)
+  if (process.env.ZY_CODE_SUBAGENT_MODEL) {
+    return parseUserSpecifiedModel(process.env.ZY_CODE_SUBAGENT_MODEL)
   }
 
   // Extract Bedrock region prefix from parent model to inherit for subagents.
@@ -101,7 +101,7 @@ export function getAgentModel(
  * Prevents surprising downgrades: a Vertex user on Opus 4.6 (via /model) who
  * spawns a subagent with `model: opus` should get Opus 4.6, not whatever
  * getDefaultOpusModel() returns for 3P.
- * See https://github.com/anthropics/claude-code/issues/30815.
+ * See https://github.com/anthropics/zy-code/issues/30815.
  *
  * Only bare family aliases match. `opus[1m]`, `best`, `opusplan` fall through
  * since they carry semantics beyond "same tier as parent".

@@ -48,7 +48,7 @@ const MAX_CONSECUTIVE_INIT_FAILURES = 3;
  * Watches AppState.replBridgeEnabled — when toggled off (via /config or footer),
  * the bridge is torn down. When toggled back on, it re-initializes.
  *
- * Inbound messages from claude.ai are injected into the REPL via queuedCommands.
+ * Inbound messages from zy.ai are injected into the REPL via queuedCommands.
  */
 export function useReplBridge(messages: Message[], setMessages: (action: React.SetStateAction<Message[]>) => void, abortControllerRef: React.RefObject<AbortController | null>, commands: readonly Command[], mainLoopModel: string): {
   sendBridgeResult: () => void;
@@ -152,7 +152,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             shouldShowAppUpgradeMessage
           } = await import('../bridge/envLessBridgeConfig.js');
 
-          // Assistant mode: perpetual bridge session — claude.ai shows one
+          // Assistant mode: perpetual bridge session — zy.ai shows one
           // continuous conversation across CLI restarts instead of a new
           // session per invocation. initBridgeCore reads bridge-pointer.json
           // (the same crash-recovery file #20735 added) and reuses its
@@ -169,7 +169,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             perpetual = isAssistantMode();
           }
 
-          // When a user message arrives from claude.ai, inject it into the REPL.
+          // When a user message arrives from zy.ai, inject it into the REPL.
           // Preserves the original UUID so that when the message is forwarded
           // back to CCR, it matches the original — avoiding duplicate messages.
           //
@@ -610,7 +610,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             // GrowthBook hiccup doesn't hit the outer init-failure handler.
             const upgradeNudge = !perpetual ? await shouldShowAppUpgradeMessage().catch(() => false) : false;
             if (cancelled) return;
-            setMessages(prev_18 => [...prev_18, createBridgeStatusMessage(url, upgradeNudge ? 'Please upgrade to the latest version of the Claude mobile app to see your Remote Control sessions.' : undefined)]);
+            setMessages(prev_18 => [...prev_18, createBridgeStatusMessage(url, upgradeNudge ? 'Please upgrade to the latest version of the Zy mobile app to see your Remote Control sessions.' : undefined)]);
             logForDebugging(`[bridge:repl] Hook initialized, session=${handle_0.bridgeSessionId}`);
           }
         } catch (err) {

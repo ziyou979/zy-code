@@ -249,15 +249,15 @@ function renderErrorSpecificGuidance(errorType: LoadErrorType): React.ReactNode 
         </Box>;
     case 'auth':
       return <Box marginY={1} flexDirection="column">
-          <Text dimColor>Teleport requires a Claude account</Text>
+          <Text dimColor>Teleport requires a Zy account</Text>
           <Text dimColor>
-            Run <Text bold>/login</Text> and select &quot;Claude account with
+            Run <Text bold>/login</Text> and select &quot;Zy account with
             subscription&quot;
           </Text>
         </Box>;
     case 'api':
       return <Box marginY={1} flexDirection="column">
-          <Text dimColor>Sorry, Claude encountered an error</Text>
+          <Text dimColor>Sorry, Zy encountered an error</Text>
         </Box>;
     case 'other':
       return <Box marginY={1} flexDirection="row">

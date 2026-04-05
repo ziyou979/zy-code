@@ -99,7 +99,7 @@ import {
 import {
   getMaxOutputTokensForModel,
   queryModelWithStreaming,
-} from '../api/claude.js'
+} from '../api/zy.js'
 import {
   getPromptTooLongTokenGap,
   PROMPT_TOO_LONG_ERROR_MESSAGE,
@@ -122,7 +122,7 @@ import {
 export const POST_COMPACT_MAX_FILES_TO_RESTORE = 5
 export const POST_COMPACT_TOKEN_BUDGET = 50_000
 export const POST_COMPACT_MAX_TOKENS_PER_FILE = 5_000
-// Skills can be large (verify=18.7KB, claude-api=20.1KB). Previously re-injected
+// Skills can be large (verify=18.7KB, zy-api=20.1KB). Previously re-injected
 // unbounded on every compact → 5-10K tok/compact. Per-skill truncation beats
 // dropping — instructions at the top of a skill file are usually the critical
 // part. Budget sized to hold ~5 skills at the per-skill cap.
@@ -1181,7 +1181,7 @@ async function streamCompactSummary({
         // DO NOT set maxOutputTokens here. The fork piggybacks on the main thread's
         // prompt cache by sending identical cache-key params (system, tools, model,
         // messages prefix, thinking config). Setting maxOutputTokens would clamp
-        // budget_tokens via Math.min(budget, maxOutputTokens-1) in claude.ts,
+        // budget_tokens via Math.min(budget, maxOutputTokens-1) in zy.ts,
         // creating a thinking config mismatch that invalidates the cache.
         // The streaming fallback path (below) can safely set maxOutputTokensOverride
         // since it doesn't share cache with the main thread.
@@ -1686,8 +1686,8 @@ function shouldExcludeFromPostCompactRestore(
     // If we can't get plan file path, continue with other checks
   }
 
-  // Exclude all types of claude.md files
-  // TODO: Refactor to use isMemoryFilePath() from claudemd.ts for consistency
+  // Exclude all types of zy.md files
+  // TODO: Refactor to use isMemoryFilePath() from zymd.ts for consistency
   // and to also match child directory memory files (.zy/rules/*.md, etc.)
   try {
     const normalizedMemoryPaths = new Set(

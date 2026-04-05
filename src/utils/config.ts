@@ -16,8 +16,8 @@ import { getCwd } from '../utils/cwd.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { getGlobalClaudeFile } from './env.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getGlobalZyFile } from './env.js'
+import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { ConfigParseError, getErrnoCode } from './errors.js'
 import { writeFileSyncAndFlush_DEPRECATED } from './file.js'
 import { getFsImplementation } from './fsOperations.js'
@@ -112,8 +112,8 @@ export type ProjectConfig = {
 
   hasCompletedProjectOnboarding?: boolean
   projectOnboardingSeenCount: number
-  hasClaudeMdExternalIncludesApproved?: boolean
-  hasClaudeMdExternalIncludesWarningShown?: boolean
+  haszyMdExternalIncludesApproved?: boolean
+  haszyMdExternalIncludesWarningShown?: boolean
   // MCP server approval fields - migrated to settings but kept for backward compatibility
   enabledMcpjsonServers?: string[]
   disabledMcpjsonServers?: string[]
@@ -131,7 +131,7 @@ export type ProjectConfig = {
     sessionId: string
     hookBased?: boolean
   }
-  /** Spawn mode for `claude remote-control` multi-session. Set by first-run dialog or `w` toggle. */
+  /** Spawn mode for `zy remote-control` multi-session. Set by first-run dialog or `w` toggle. */
   remoteControlSpawnMode?: 'same-dir' | 'worktree'
 }
 
@@ -143,8 +143,8 @@ const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
   disabledMcpjsonServers: [],
   hasTrustDialogAccepted: false,
   projectOnboardingSeenCount: 0,
-  hasClaudeMdExternalIncludesApproved: false,
-  hasClaudeMdExternalIncludesWarningShown: false,
+  haszyMdExternalIncludesApproved: false,
+  haszyMdExternalIncludesWarningShown: false,
 }
 
 export type InstallMethod = 'local' | 'native' | 'global' | 'unknown'
@@ -205,12 +205,12 @@ export type GlobalConfig = {
   // @deprecated - Migrated to ~/.zy/cache/changelog.md. Keep for migration support.
   cachedChangelog?: string
   mcpServers?: Record<string, McpServerConfig>
-  // claude.ai MCP connectors that have successfully connected at least once.
+  // zy.ai MCP connectors that have successfully connected at least once.
   // Used to gate "connector unavailable" / "needs auth" startup notifications:
   // a connector the user has actually used is worth flagging when it breaks,
   // but an org-configured connector that's been needs-auth since day one is
   // something the user has demonstrably ignored and shouldn't nag about.
-  claudeAiMcpEverConnected?: string[]
+  zyAiMcpEverConnected?: string[]
   preferredNotifChannel: NotificationChannel
   /**
    * @deprecated. Use the Notification hook instead (docs/hooks.md).
@@ -378,7 +378,7 @@ export type GlobalConfig = {
   // First start time tracking
   firstStartTime?: string // ISO timestamp when ZY Code was first started on this machine
 
-  messageIdleNotifThresholdMs: number // How long the user has to have been idle to get a notification that Claude is done generating
+  messageIdleNotifThresholdMs: number // How long the user has to have been idle to get a notification that Zy is done generating
 
   githubActionSetupCount?: number // Number of times the user has set up the GitHub Action
   slackAppInstallCount?: number // Number of times the user has clicked to install the Slack app
@@ -400,7 +400,7 @@ export type GlobalConfig = {
   agentPushNotifEnabled?: boolean
 
   // ZY Code usage tracking
-  claudeCodeFirstTokenDate?: string // ISO timestamp of the user's first ZY Code OAuth token
+  ZyCodeFirstTokenDate?: string // ISO timestamp of the user's first ZY Code OAuth token
 
   // Model switch callout tracking (ant-only)
   modelSwitchCalloutDismissed?: boolean // Whether user chose "Don't show again"
@@ -474,7 +474,7 @@ export type GlobalConfig = {
   // Key: "owner/repo" (lowercase), Value: array of absolute paths where repo is cloned
   githubRepoPaths?: Record<string, string[]>
 
-  // Terminal emulator to launch for claude-cli:// deep links. Captured from
+  // Terminal emulator to launch for zy-cli:// deep links. Captured from
   // TERM_PROGRAM during interactive sessions since the deep link handler runs
   // headless (LaunchServices/xdg) with no TERM_PROGRAM set.
   deepLinkTerminal?: string
@@ -499,7 +499,7 @@ export type GlobalConfig = {
 
   // Claude in Chrome settings
   hasCompletedClaudeInChromeOnboarding?: boolean // Whether Claude in Chrome onboarding has been shown
-  claudeInChromeDefaultEnabled?: boolean // Whether Claude in Chrome is enabled by default (undefined means platform default)
+  ClaudeInChromeDefaultEnabled?: boolean // Whether Claude in Chrome is enabled by default (undefined means platform default)
   cachedChromeExtensionInstalled?: boolean // Cached result of whether Chrome extension is installed
 
   // Chrome extension pairing state (persisted across sessions)
@@ -513,10 +513,10 @@ export type GlobalConfig = {
   lspRecommendationNeverPlugins?: string[] // Plugin IDs to never suggest
   lspRecommendationIgnoredCount?: number // Track ignored recommendations (stops after 5)
 
-  // ZY Code hint protocol state (<claude-code-hint /> tags from CLIs/SDKs).
+  // ZY Code hint protocol state (<zy-code-hint /> tags from CLIs/SDKs).
   // Nested by hint type so future types (docs, mcp, ...) slot in without new
   // top-level keys.
-  claudeCodeHints?: {
+  ZyCodeHints?: {
     // Plugin IDs the user has already been prompted for. Show-once semantics:
     // recorded regardless of yes/no response, never re-prompted. Capped at
     // 100 entries to bound config growth — past that, hints stop entirely.
@@ -571,7 +571,7 @@ export type GlobalConfig = {
 
   // Disk cache for /api/claude_code/organizations/metrics_enabled.
   // Org-level settings change rarely; persisting across processes avoids a
-  // cold API call on every `claude -p` invocation.
+  // cold API call on every `zy -p` invocation.
   metricsStatusCache?: {
     enabled: boolean
     timestamp: number
@@ -658,7 +658,7 @@ export const GLOBAL_CONFIG_KEYS = [
   'inputNeededNotifEnabled',
   'agentPushNotifEnabled',
   'respectGitignore',
-  'claudeInChromeDefaultEnabled',
+  'ClaudeInChromeDefaultEnabled',
   'hasCompletedClaudeInChromeOnboarding',
   'lspRecommendationDisabled',
   'lspRecommendationNeverPlugins',
@@ -816,7 +816,7 @@ export function saveGlobalConfig(
   let written: GlobalConfig | null = null
   try {
     const didWrite = saveConfigWithLock(
-      getGlobalClaudeFile(),
+      getGlobalZyFile(),
       createDefaultGlobalConfig,
       current => {
         const config = updater(current)
@@ -846,7 +846,7 @@ export function saveGlobalConfig(
     // getConfig returns defaults. Refuse to write those over a good cached
     // config to avoid wiping auth. See GH #3117.
     const currentConfig = getConfig(
-      getGlobalClaudeFile(),
+      getGlobalZyFile(),
       createDefaultGlobalConfig,
     )
     if (wouldLoseAuthState(currentConfig)) {
@@ -866,7 +866,7 @@ export function saveGlobalConfig(
       ...config,
       projects: removeProjectHistory(currentConfig.projects),
     }
-    saveConfig(getGlobalClaudeFile(), written, DEFAULT_GLOBAL_CONFIG)
+    saveConfig(getGlobalZyFile(), written, DEFAULT_GLOBAL_CONFIG)
     writeThroughGlobalConfigCache(written)
   }
 }
@@ -883,7 +883,7 @@ let configCacheHits = 0
 let configCacheMisses = 0
 // Session-total count of actual disk writes to the global config file.
 // Exposed for ant-only dev diagnostics (see inc-4552) so anomalous write
-// rates surface in the UI before they corrupt ~/.claude.json.
+// rates surface in the UI before they corrupt ~/.zy.json.
 let globalConfigWriteCount = 0
 
 export function getGlobalConfigWriteCount(): number {
@@ -1003,7 +1003,7 @@ let freshnessWatcherStarted = false
 function startGlobalConfigFreshnessWatcher(): void {
   if (freshnessWatcherStarted || process.env.NODE_ENV === 'test') return
   freshnessWatcherStarted = true
-  const file = getGlobalClaudeFile()
+  const file = getGlobalZyFile()
   watchFile(
     file,
     { interval: CONFIG_FRESHNESS_POLL_MS, persistent: false },
@@ -1067,12 +1067,12 @@ export function getGlobalConfig(): GlobalConfig {
   try {
     let stats: { mtimeMs: number; size: number } | null = null
     try {
-      stats = getFsImplementation().statSync(getGlobalClaudeFile())
+      stats = getFsImplementation().statSync(getGlobalZyFile())
     } catch {
       // File doesn't exist
     }
     const config = migrateConfigFields(
-      getConfig(getGlobalClaudeFile(), createDefaultGlobalConfig),
+      getConfig(getGlobalZyFile(), createDefaultGlobalConfig),
     )
     globalConfigCache = {
       config,
@@ -1086,7 +1086,7 @@ export function getGlobalConfig(): GlobalConfig {
   } catch {
     // If anything goes wrong, fall back to uncached behavior
     return migrateConfigFields(
-      getConfig(getGlobalClaudeFile(), createDefaultGlobalConfig),
+      getConfig(getGlobalZyFile(), createDefaultGlobalConfig),
     )
   }
 }
@@ -1145,7 +1145,7 @@ function saveConfig<A extends object>(
       mode: 0o600,
     },
   )
-  if (file === getGlobalClaudeFile()) {
+  if (file === getGlobalZyFile()) {
     globalConfigWriteCount++
   }
 }
@@ -1184,7 +1184,7 @@ function saveConfigWithLock<A extends object>(
     const lockTime = Date.now() - startTime
     if (lockTime > 100) {
       logForDebugging(
-        'Lock acquisition took longer than expected - another Claude instance may be running',
+        'Lock acquisition took longer than expected - another Zy instance may be running',
       )
       logEvent('tengu_config_lock_contention', {
         lock_time_ms: lockTime,
@@ -1193,7 +1193,7 @@ function saveConfigWithLock<A extends object>(
 
     // Check for stale write - file changed since we last read it
     // Only check for global config file since lastReadFileStats tracks that specific file
-    if (lastReadFileStats && file === getGlobalClaudeFile()) {
+    if (lastReadFileStats && file === getGlobalZyFile()) {
       try {
         const currentStats = fs.statSync(file)
         if (
@@ -1220,9 +1220,9 @@ function saveConfigWithLock<A extends object>(
     // momentarily corrupted (concurrent writes, kill-during-write), this
     // returns defaults -- we must not write those back over good config.
     const currentConfig = getConfig(file, createDefault)
-    if (file === getGlobalClaudeFile() && wouldLoseAuthState(currentConfig)) {
+    if (file === getGlobalZyFile() && wouldLoseAuthState(currentConfig)) {
       logForDebugging(
-        'saveConfigWithLock: re-read config is missing auth that cache has; refusing to write to avoid wiping ~/.claude.json. See GH #3117.',
+        'saveConfigWithLock: re-read config is missing auth that cache has; refusing to write to avoid wiping ~/.zy.json. See GH #3117.',
         { level: 'error' },
       )
       logEvent('tengu_config_auth_loss_prevented', {})
@@ -1323,7 +1323,7 @@ function saveConfigWithLock<A extends object>(
         mode: 0o600,
       },
     )
-    if (file === getGlobalClaudeFile()) {
+    if (file === getGlobalZyFile()) {
       globalConfigWriteCount++
     }
     return true
@@ -1351,7 +1351,7 @@ export function enableConfigs(): void {
   configReadingAllowed = true
   // We only check the global config because currently all the configs share a file
   getConfig(
-    getGlobalClaudeFile(),
+    getGlobalZyFile(),
     createDefaultGlobalConfig,
     true /* throw on invalid */,
   )
@@ -1366,7 +1366,7 @@ export function enableConfigs(): void {
  * Uses ~/.zy/backups/ to keep the home directory clean.
  */
 function getConfigBackupDir(): string {
-  return join(getClaudeConfigHomeDir(), 'backups')
+  return join(getZyConfigHomeDir(), 'backups')
 }
 
 /**
@@ -1460,7 +1460,7 @@ function getConfig<A>(
       const backupPath = findMostRecentBackup(file)
       if (backupPath) {
         process.stderr.write(
-          `\nClaude configuration file not found at: ${file}\n` +
+          `\nZy configuration file not found at: ${file}\n` +
             `A backup file exists at: ${backupPath}\n` +
             `You can manually restore it by running: cp "${backupPath}" "${file}"\n\n`,
         )
@@ -1507,7 +1507,7 @@ function getConfig<A>(
       }
 
       process.stderr.write(
-        `\nClaude configuration file at ${file} is corrupted: ${error.message}\n`,
+        `\nZy configuration file at ${file} is corrupted: ${error.message}\n`,
       )
 
       // Try to backup the corrupted config file (only if not already backed up)
@@ -1645,7 +1645,7 @@ export function saveCurrentProjectConfig(
   let written: GlobalConfig | null = null
   try {
     const didWrite = saveConfigWithLock(
-      getGlobalClaudeFile(),
+      getGlobalZyFile(),
       createDefaultGlobalConfig,
       current => {
         const currentProjectConfig =
@@ -1675,7 +1675,7 @@ export function saveCurrentProjectConfig(
 
     // Same race window as saveGlobalConfig's fallback -- refuse to write
     // defaults over good cached config. See GH #3117.
-    const config = getConfig(getGlobalClaudeFile(), createDefaultGlobalConfig)
+    const config = getConfig(getGlobalZyFile(), createDefaultGlobalConfig)
     if (wouldLoseAuthState(config)) {
       logForDebugging(
         'saveCurrentProjectConfig fallback: re-read config is missing auth that cache has; refusing to write. See GH #3117.',
@@ -1698,7 +1698,7 @@ export function saveCurrentProjectConfig(
         [absolutePath]: newProjectConfig,
       },
     }
-    saveConfig(getGlobalClaudeFile(), written, DEFAULT_GLOBAL_CONFIG)
+    saveConfig(getGlobalZyFile(), written, DEFAULT_GLOBAL_CONFIG)
     writeThroughGlobalConfigCache(written)
   }
 }
@@ -1787,7 +1787,7 @@ export function getMemoryPath(memoryType: MemoryType): string {
 
   switch (memoryType) {
     case 'User':
-      return join(getClaudeConfigHomeDir(), 'CLAUDE.md')
+      return join(getZyConfigHomeDir(), 'CLAUDE.md')
     case 'Local':
       return join(cwd, 'CLAUDE.local.md')
     case 'Project':
@@ -1804,12 +1804,12 @@ export function getMemoryPath(memoryType: MemoryType): string {
   return '' // unreachable in external builds where TeamMem is not in MemoryType
 }
 
-export function getManagedClaudeRulesDir(): string {
+export function getManagedZyRulesDir(): string {
   return join(getManagedFilePath(), '.zy', 'rules')
 }
 
-export function getUserClaudeRulesDir(): string {
-  return join(getClaudeConfigHomeDir(), 'rules')
+export function getUserZyRulesDir(): string {
+  return join(getZyConfigHomeDir(), 'rules')
 }
 
 // Exported for testing only

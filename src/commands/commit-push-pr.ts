@@ -20,7 +20,7 @@ const ALLOWED_TOOLS = [
   'Bash(gh pr merge:*)',
   'ToolSearch',
   'mcp__slack__send_message',
-  'mcp__claude_ai_Slack__slack_send_message',
+  'mcp__Zy_ai_Slack__slack_send_message',
 ]
 
 function getPromptContent(
@@ -35,8 +35,8 @@ function getPromptContent(
   const username = process.env.USER || ''
 
   let prefix = ''
-  let reviewerArg = ' and `--reviewer anthropics/claude-code`'
-  let addReviewerArg = ' (and add `--add-reviewer anthropics/claude-code`)'
+  let reviewerArg = ' and `--reviewer anthropics/zy-code`'
+  let addReviewerArg = ' (and add `--add-reviewer anthropics/zy-code`)'
   let changelogSection = `
 
 ## Changelog

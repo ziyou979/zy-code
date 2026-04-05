@@ -104,10 +104,10 @@ export function ManageMarketplaces({
           });
         }
 
-        // Sort: claude-plugin-directory first, then alphabetically
+        // Sort: zy-plugin-directory first, then alphabetically
         states.sort((a, b) => {
-          if (a.name === 'claude-plugin-directory') return -1;
-          if (b.name === 'claude-plugin-directory') return 1;
+          if (a.name === 'zy-plugin-directory') return -1;
+          if (b.name === 'zy-plugin-directory') return 1;
           return a.name.localeCompare(b.name);
         });
         setMarketplaceStates(states);
@@ -286,10 +286,10 @@ export function ManageMarketplaces({
         });
       }
 
-      // Sort: claude-plugin-directory first, then alphabetically
+      // Sort: zy-plugin-directory first, then alphabetically
       newStates.sort((a, b) => {
-        if (a.name === 'claude-plugin-directory') return -1;
-        if (b.name === 'claude-plugin-directory') return 1;
+        if (a.name === 'zy-plugin-directory') return -1;
+        if (b.name === 'zy-plugin-directory') return 1;
         return a.name.localeCompare(b.name);
       });
       setMarketplaceStates(newStates);
@@ -627,13 +627,13 @@ export function ManageMarketplaces({
 
         {/* Processing indicator */}
         {isUpdating && <Box marginTop={1} flexDirection="column">
-            <Text color="claude">Updating marketplace…</Text>
+            <Text color="zy">Updating marketplace…</Text>
             {progressMessage && <Text dimColor>{progressMessage}</Text>}
           </Box>}
 
         {/* Success message */}
         {!isUpdating && successMessage && <Box marginTop={1}>
-            <Text color="claude">{successMessage}</Text>
+            <Text color="zy">{successMessage}</Text>
           </Box>}
 
         {/* Error message */}
@@ -711,9 +711,9 @@ export function ManageMarketplaces({
               <Box flexDirection="column" flexGrow={1}>
                 <Box flexDirection="row" gap={1}>
                   <Text bold strikethrough={state.pendingRemove} dimColor={state.pendingRemove}>
-                    {state.name === 'claude-plugins-official' && <Text color="claude">✻ </Text>}
+                    {state.name === 'zy-plugins-official' && <Text color="zy">✻ </Text>}
                     {state.name}
-                    {state.name === 'claude-plugins-official' && <Text color="claude"> ✻</Text>}
+                    {state.name === 'zy-plugins-official' && <Text color="zy"> ✻</Text>}
                   </Text>
                   {indicators.length > 0 && <Text color="warning">[{indicators.join(', ')}]</Text>}
                 </Box>
@@ -748,7 +748,7 @@ export function ManageMarketplaces({
 
       {/* Processing indicator */}
       {isProcessing && <Box marginTop={1}>
-          <Text color="claude">Processing changes…</Text>
+          <Text color="zy">Processing changes…</Text>
         </Box>}
 
       {/* Error display */}

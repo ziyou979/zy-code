@@ -15,10 +15,10 @@ const PLATFORMS: Record<Platform, {
   url: string;
 }> = {
   ios: {
-    url: 'https://apps.apple.com/app/claude-by-anthropic/id6473753684'
+    url: 'https://apps.apple.com/app/zy-by-anthropic/id6473753684'
   },
   android: {
-    url: 'https://play.google.com/store/apps/details?id=com.anthropic.claude'
+    url: 'https://play.google.com/store/apps/details?id=com.anthropic.zy'
   }
 };
 function MobileQRCode(t0) {

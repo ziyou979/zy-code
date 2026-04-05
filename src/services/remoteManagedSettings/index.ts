@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (Claude.ai): Only Enterprise/C4E and Team subscribers are eligible
+ * - OAuth users (Zy.ai): Only Enterprise/C4E and Team subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without remote settings
  * - API returns empty settings for users without managed settings
  */
@@ -19,7 +19,7 @@ import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -31,7 +31,7 @@ import {
 } from '../../utils/settings/types.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   checkManagedSettingsSecurity,
@@ -185,8 +185,8 @@ function getRemoteSettingsAuthHeaders(): {
     // No API key available - continue to check OAuth
   }
 
-  // Fall back to OAuth tokens (for Claude.ai users)
-  const oauthTokens = getClaudeAIOAuthTokens()
+  // Fall back to OAuth tokens (for Zy.ai users)
+  const oauthTokens = getZyAIOAuthTokens()
   if (oauthTokens?.accessToken) {
     return {
       headers: {
@@ -267,7 +267,7 @@ async function fetchRemoteManagedSettings(
     const endpoint = getRemoteManagedSettingsEndpoint()
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getZyCodeUserAgent(),
     }
 
     // Add If-None-Match header for ETag-based caching

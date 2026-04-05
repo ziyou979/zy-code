@@ -117,7 +117,7 @@ TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目
 
 网关默认监听 `127.0.0.1:9090`。
 
-**2. 配置 `~/.claude/settings.json`**
+**2. 配置 `~/.zy/settings.json`**
 
 ```json
 {

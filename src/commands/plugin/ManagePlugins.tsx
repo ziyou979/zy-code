@@ -10,7 +10,7 @@ import { MCPRemoteServerMenu } from '../../components/mcp/MCPRemoteServerMenu.js
 import { MCPStdioServerMenu } from '../../components/mcp/MCPStdioServerMenu.js';
 import { MCPToolDetailView } from '../../components/mcp/MCPToolDetailView.js';
 import { MCPToolListView } from '../../components/mcp/MCPToolListView.js';
-import type { ClaudeAIServerInfo, HTTPServerInfo, SSEServerInfo, StdioServerInfo } from '../../components/mcp/types.js';
+import type { ZyAIServerInfo, HTTPServerInfo, SSEServerInfo, StdioServerInfo } from '../../components/mcp/types.js';
 import { SearchBox } from '../../components/SearchBox.js';
 import { useSearchInput } from '../../hooks/useSearchInput.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
@@ -19,7 +19,7 @@ import { Box, Text, useInput, useTerminalFocus } from '../../ink.js';
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
 import { getBuiltinPluginDefinition } from '../../plugins/builtinPlugins.js';
 import { useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js';
-import type { MCPServerConnection, McpClaudeAIProxyServerConfig, McpHTTPServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
+import type { MCPServerConnection, McpZyAIProxyServerConfig, McpHTTPServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
 import { filterToolsByServer } from '../../services/mcp/utils.js';
 import { disablePluginOp, enablePluginOp, getPluginInstallationFromV2, isInstallableScope, isPluginEnabledAtProjectScope, uninstallPluginOp, updatePluginOp } from '../../services/plugins/pluginOperations.js';
 import { useAppState } from '../../state/AppState.js';
@@ -837,7 +837,7 @@ export function ManagePlugins({
       if (!hasMcpb) {
         try {
           const marketplaceDir = path.join(selectedPlugin!.plugin.path, '..');
-          const marketplaceJsonPath = path.join(marketplaceDir, '.claude-plugin', 'marketplace.json');
+          const marketplaceJsonPath = path.join(marketplaceDir, '.zy-plugin', 'marketplace.json');
           const content = await fs.readFile(marketplaceJsonPath, 'utf-8');
           const marketplace_1 = jsonParse(content);
           const entry_0 = marketplace_1.plugins?.find((p: {
@@ -895,10 +895,10 @@ export function ManagePlugins({
           });
         }
 
-        // Sort marketplaces: claude-plugin-directory first, then alphabetically
+        // Sort marketplaces: zy-plugin-directory first, then alphabetically
         marketplaceInfos.sort((a, b) => {
-          if (a.name === 'claude-plugin-directory') return -1;
-          if (b.name === 'claude-plugin-directory') return 1;
+          if (a.name === 'zy-plugin-directory') return -1;
+          if (b.name === 'zy-plugin-directory') return 1;
           return a.name.localeCompare(b.name);
         });
         setMarketplaces(marketplaceInfos);
@@ -2001,14 +2001,14 @@ export function ManagePlugins({
         config: client_3.config as McpHTTPServerConfig
       };
       return <MCPRemoteServerMenu server={server_1} serverToolsCount={serverToolsCount} onViewTools={handleMcpViewTools} onCancel={handleMcpCancel} onComplete={handleMcpComplete} borderless />;
-    } else if (configType === 'claudeai-proxy') {
-      const server_2: ClaudeAIServerInfo = {
+    } else if (configType === 'zyai-proxy') {
+      const server_2: ZyAIServerInfo = {
         name: client_3.name,
         client: client_3,
         scope: scope_5,
-        transport: 'claudeai-proxy',
+        transport: 'zyai-proxy',
         isAuthenticated: undefined,
-        config: client_3.config as McpClaudeAIProxyServerConfig
+        config: client_3.config as McpZyAIProxyServerConfig
       };
       return <MCPRemoteServerMenu server={server_2} serverToolsCount={serverToolsCount} onViewTools={handleMcpViewTools} onCancel={handleMcpCancel} onComplete={handleMcpComplete} borderless />;
     }
@@ -2025,7 +2025,7 @@ export function ManagePlugins({
     const configType_0 = client_4.config.type;
 
     // Build ServerInfo for MCPToolListView
-    let server_3: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ClaudeAIServerInfo;
+    let server_3: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ZyAIServerInfo;
     if (configType_0 === 'stdio') {
       server_3 = {
         name: client_4.name,
@@ -2057,9 +2057,9 @@ export function ManagePlugins({
         name: client_4.name,
         client: client_4,
         scope: scope_6,
-        transport: 'claudeai-proxy',
+        transport: 'zyai-proxy',
         isAuthenticated: undefined,
-        config: client_4.config as McpClaudeAIProxyServerConfig
+        config: client_4.config as McpZyAIProxyServerConfig
       };
     }
     return <MCPToolListView server={server_3} onSelectTool={(tool: Tool) => {
@@ -2084,7 +2084,7 @@ export function ManagePlugins({
     const configType_1 = client_5.config.type;
 
     // Build ServerInfo for MCPToolDetailView
-    let server_4: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ClaudeAIServerInfo;
+    let server_4: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ZyAIServerInfo;
     if (configType_1 === 'stdio') {
       server_4 = {
         name: client_5.name,
@@ -2116,9 +2116,9 @@ export function ManagePlugins({
         name: client_5.name,
         client: client_5,
         scope: scope_7,
-        transport: 'claudeai-proxy',
+        transport: 'zyai-proxy',
         isAuthenticated: undefined,
-        config: client_5.config as McpClaudeAIProxyServerConfig
+        config: client_5.config as McpZyAIProxyServerConfig
       };
     }
     return <MCPToolDetailView tool={tool_0} server={server_4} onBack={() => setViewState({

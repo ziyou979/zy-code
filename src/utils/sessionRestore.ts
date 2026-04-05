@@ -29,7 +29,7 @@ import type {
 } from '../types/logs.js'
 import type { Message } from '../types/message.js'
 import { renameRecordingForSession } from './asciicast.js'
-import { clearMemoryFileCaches } from './claudemd.js'
+import { clearMemoryFileCaches } from './zymd.js'
 import {
   type AttributionState,
   attributionRestoreStateFromLog,
@@ -454,7 +454,7 @@ export async function processResumedConversation(
     // copy source messages into the new JSONL via recordTranscript, but
     // content-replacement entries are a separate entry type only written by
     // recordContentReplacement (which query.ts calls for newlyReplaced, never
-    // the pre-loaded records). Without this seed, `claude -r {newSessionId}`
+    // the pre-loaded records). Without this seed, `zy -r {newSessionId}`
     // finds source tool_use_ids in messages but no matching replacement records
     // → they're classified as FROZEN → full content sent (cache miss, permanent
     // overage). insertContentReplacement stamps sessionId = getSessionId() =

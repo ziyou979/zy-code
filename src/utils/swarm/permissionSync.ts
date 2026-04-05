@@ -50,11 +50,11 @@ export const SwarmPermissionRequestSchema = lazySchema(() =>
   z.object({
     /** Unique identifier for this request */
     id: z.string(),
-    /** Worker's CLAUDE_CODE_AGENT_ID */
+    /** Worker's ZY_CODE_AGENT_ID */
     workerId: z.string(),
-    /** Worker's CLAUDE_CODE_AGENT_NAME */
+    /** Worker's ZY_CODE_AGENT_NAME */
     workerName: z.string(),
-    /** Worker's CLAUDE_CODE_AGENT_COLOR */
+    /** Worker's ZY_CODE_AGENT_COLOR */
     workerColor: z.string().optional(),
     /** Team name for routing */
     teamName: z.string(),

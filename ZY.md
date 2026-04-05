@@ -1,4 +1,4 @@
-# CLAUDE.md
+# ZY.md
 
 This file provides guidance to ZY Code when working with code in this repository.
 
@@ -22,7 +22,7 @@ There is no test runner configured. Testing is done by running the CLI directly.
 
 ## Architecture
 
-This is the Claude Code CLI — a terminal UI application built with **TypeScript + React (Ink)**, bundled by **Bun**.
+This is a terminal UI application built with **TypeScript + React (Ink)**, bundled by **Bun**.
 
 ### Entrypoints
 
@@ -50,7 +50,7 @@ The terminal UI is entirely React components rendered via **Ink**. Top-level scr
 
 ### Services (`src/services/`)
 
-- `api/` — Anthropic API client, retries, usage tracking
+- `api/` — API client, retries, usage tracking
 - `mcp/` — MCP server connection manager and OAuth
 - `lsp/` — LSP client for IDE-like diagnostics
 - `analytics/` — GrowthBook feature flags
@@ -65,7 +65,7 @@ Centralized app state via `AppStateStore.ts` / `store.ts` with selectors.
 Uses `Bun.build()` with:
 - Entry: `src/entrypoints/cli.tsx` → `dist/`
 - Compile-time `define` macros: `MACRO.VERSION`, `MACRO.BUILD_TIME`, `MACRO.PACKAGE_URL`, `MACRO.FEEDBACK_CHANNEL`
-- `process.env.USER_TYPE = "external"` gates Anthropic-internal code paths (tree-shaken at build time)
+- `process.env.USER_TYPE = "external"` gates internal code paths (tree-shaken at build time)
 - External packages (not bundled): cloud SDKs (`bedrock`, `vertex`), native binaries, lazy-loaded packages (`sharp`, `yaml`, etc.)
 - Custom plugins: resolves `react/compiler-runtime` and maps `color-diff-napi` to a local TypeScript fallback in `src/native-ts/`
 

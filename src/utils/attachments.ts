@@ -43,7 +43,7 @@ import {
   getMemoryFilesForNestedDirectory,
   getConditionalRulesForCwdLevelDirectory,
   type MemoryFileInfo,
-} from './claudemd.js'
+} from './zymd.js'
 import { dirname, parse, relative, resolve } from 'path'
 import { getCwd } from 'src/utils/cwd.js'
 import { getViewedTeammateTask } from '../state/selectors.js'
@@ -172,8 +172,8 @@ import {
   isMcpInstructionsDeltaEnabled,
   type ClientSideInstruction,
 } from './mcpInstructionsDelta.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from './claudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from './claudeInChrome/prompt.js'
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from './ClaudeInChrome/common.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from './ClaudeInChrome/prompt.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import type {
   HookEvent,
@@ -194,7 +194,7 @@ import {
   isThinkingMessage,
 } from './messages.js'
 import { isHumanTurn } from './messagePredicates.js'
-import { isEnvTruthy, getClaudeConfigHomeDir } from './envUtils.js'
+import { isEnvTruthy, getZyConfigHomeDir } from './envUtils.js'
 import { feature } from 'bun:bundle'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
@@ -750,8 +750,8 @@ export async function getAttachments(
   options?: { skipSkillDiscovery?: boolean },
 ): Promise<Attachment[]> {
   if (
-    isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_ATTACHMENTS) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)
+    isEnvTruthy(process.env.ZY_CODE_DISABLE_ATTACHMENTS) ||
+    isEnvTruthy(process.env.ZY_CODE_SIMPLE)
   ) {
     // query.ts:removeFromQueue dequeues these unconditionally after
     // getAttachmentMessages runs — returning [] here silently drops them.
@@ -2619,7 +2619,7 @@ export function resetSentSkillNames(): void {
  * on --resume when a skill_listing attachment already exists in the
  * transcript.
  *
- * `sentSkillNames` is module-scope — process-local. Each `claude -p` spawn
+ * `sentSkillNames` is module-scope — process-local. Each `zy -p` spawn
  * starts with an empty Map, so without this every resume re-injects the
  * full ~600-token listing even though it's already in the conversation from
  * the prior process. Shows up on every --resume; particularly loud for
@@ -3788,7 +3788,7 @@ function getTeamContextAttachment(messages: Message[]): Attachment[] {
     return []
   }
 
-  const configDir = getClaudeConfigHomeDir()
+  const configDir = getZyConfigHomeDir()
   const teamConfigPath = `${configDir}/teams/${teamName}/config.json`
   const taskListPath = `${configDir}/tasks/${teamName}/`
 
@@ -3808,7 +3808,7 @@ function getTokenUsageAttachment(
   messages: Message[],
   model: string,
 ): Attachment[] {
-  if (!isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_TOKEN_USAGE_ATTACHMENT)) {
+  if (!isEnvTruthy(process.env.ZY_CODE_ENABLE_TOKEN_USAGE_ATTACHMENT)) {
     return []
   }
 
@@ -3897,7 +3897,7 @@ async function getVerifyPlanReminderAttachment(
 ): Promise<Attachment[]> {
   if (
     process.env.USER_TYPE !== 'ant' ||
-    !isEnvTruthy(process.env.CLAUDE_CODE_VERIFY_PLAN)
+    !isEnvTruthy(process.env.ZY_CODE_VERIFY_PLAN)
   ) {
     return []
   }

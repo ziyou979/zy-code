@@ -8,9 +8,9 @@ import {
   getSubscriptionType,
   isOverageProvisioningAllowed,
 } from '../utils/auth.js'
-import { hasClaudeAiBillingAccess } from '../utils/billing.js'
+import { hasZyAiBillingAccess } from '../utils/billing.js'
 import { formatResetTime } from '../utils/format.js'
-import type { ClaudeAILimits } from './claudeAiLimits.js'
+import type { ZyAILimits } from './zyAiLimits.js'
 
 const FEEDBACK_CHANNEL_ANT = '#briarpatch-cc'
 
@@ -43,7 +43,7 @@ export type RateLimitMessage = {
  * Returns null if no message should be shown
  */
 export function getRateLimitMessage(
-  limits: ClaudeAILimits,
+  limits: ZyAILimits,
   model: string,
 ): RateLimitMessage | null {
   // Check overage scenarios first (when subscription is rejected but overage is available)
@@ -88,7 +88,7 @@ export function getRateLimitMessage(
     if (
       isTeamOrEnterprise &&
       hasExtraUsageEnabled &&
-      !hasClaudeAiBillingAccess()
+      !hasZyAiBillingAccess()
     ) {
       return null
     }
@@ -108,7 +108,7 @@ export function getRateLimitMessage(
  * Returns the message string or null if no error message should be shown
  */
 export function getRateLimitErrorMessage(
-  limits: ClaudeAILimits,
+  limits: ZyAILimits,
   model: string,
 ): string | null {
   const message = getRateLimitMessage(limits, model)
@@ -126,7 +126,7 @@ export function getRateLimitErrorMessage(
  * Returns the warning message string or null if no warning should be shown
  */
 export function getRateLimitWarning(
-  limits: ClaudeAILimits,
+  limits: ZyAILimits,
   model: string,
 ): string | null {
   const message = getRateLimitMessage(limits, model)
@@ -140,7 +140,7 @@ export function getRateLimitWarning(
   return null
 }
 
-function getLimitReachedText(limits: ClaudeAILimits, model: string): string {
+function getLimitReachedText(limits: ZyAILimits, model: string): string {
   const resetsAt = limits.resetsAt
   const resetTime = resetsAt ? formatResetTime(resetsAt, true) : undefined
   const overageResetTime = limits.overageResetsAt
@@ -196,7 +196,7 @@ function getLimitReachedText(limits: ClaudeAILimits, model: string): string {
   return formatLimitReachedText('usage limit', resetMessage, model)
 }
 
-function getEarlyWarningText(limits: ClaudeAILimits): string | null {
+function getEarlyWarningText(limits: ZyAILimits): string | null {
   let limitName: string | null = null
   switch (limits.rateLimitType) {
     case 'seven_day':
@@ -259,7 +259,7 @@ function getEarlyWarningText(limits: ClaudeAILimits): string | null {
  * Only used for warnings because actual rate limit hits will see an interactive menu of options.
  */
 function getWarningUpsellText(
-  rateLimitType: ClaudeAILimits['rateLimitType'],
+  rateLimitType: ZyAILimits['rateLimitType'],
 ): string | null {
   const subscriptionType = getSubscriptionType()
   const hasExtraUsageEnabled =
@@ -300,7 +300,7 @@ function getWarningUpsellText(
  * Get notification text for overage mode transitions
  * Used for transient notifications when entering overage mode
  */
-export function getUsingOverageText(limits: ClaudeAILimits): string {
+export function getUsingOverageText(limits: ZyAILimits): string {
   const resetTime = limits.resetsAt
     ? formatResetTime(limits.resetsAt, true)
     : ''

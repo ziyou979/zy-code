@@ -57,7 +57,7 @@ export type PermissionHandlerOptions = {
   hasFeedback?: boolean
   feedback?: string
   enteredFeedbackMode?: boolean
-  scope?: 'claude-folder' | 'global-claude-folder'
+  scope?: 'zy-folder' | 'global-zy-folder'
 }
 
 function handleAcceptOnce(
@@ -101,13 +101,13 @@ function handleAcceptSession(
 
   logPermissionEvent('accept', completionType, languageName, messageId)
 
-  // For claude-folder scope, grant session-level access to all .zy/ files
+  // For zy-folder scope, grant session-level access to all .zy/ files
   if (
-    options?.scope === 'claude-folder' ||
-    options?.scope === 'global-claude-folder'
+    options?.scope === 'zy-folder' ||
+    options?.scope === 'global-zy-folder'
   ) {
     const pattern =
-      options.scope === 'global-claude-folder'
+      options.scope === 'global-zy-folder'
         ? GLOBAL_CLAUDE_FOLDER_PERMISSION_PATTERN
         : CLAUDE_FOLDER_PERMISSION_PATTERN
     const suggestions: PermissionUpdate[] = [

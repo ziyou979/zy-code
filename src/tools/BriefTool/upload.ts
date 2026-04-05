@@ -2,7 +2,7 @@
  * Upload BriefTool attachments to private_api so web viewers can preview them.
  *
  * When the repl bridge is active, attachment paths are meaningless to a web
- * viewer (they're on Claude's machine). We upload to /api/oauth/file_upload —
+ * viewer (they're on Zy's machine). We upload to /api/oauth/file_upload —
  * the same store MessageComposer/SpaceMessage render from — and stash the
  * returned file_uuid alongside the path. Web resolves file_uuid → preview;
  * desktop/local try path first.
@@ -61,7 +61,7 @@ function debug(msg: string): void {
  * Base URL for uploads. Must match the host the token is valid for.
  *
  * Subprocess hosts (cowork) pass ANTHROPIC_BASE_URL alongside
- * CLAUDE_CODE_OAUTH_TOKEN — prefer that since getOauthConfig() only
+ * ZY_CODE_OAUTH_TOKEN — prefer that since getOauthConfig() only
  * returns staging when USE_STAGING_OAUTH is set, which such hosts don't
  * set. Without this a staging token hits api.anthropic.com → 401 → silent
  * skip → web viewer sees inert cards with no file_uuid.

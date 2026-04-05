@@ -71,7 +71,7 @@ export const ThinkingAdaptiveSchema = lazySchema(() =>
     .object({
       type: z.literal('adaptive'),
     })
-    .describe('Claude decides when and how much to think (Opus 4.6+).'),
+    .describe('Zy decides when and how much to think (Opus 4.6+).'),
 )
 
 export const ThinkingEnabledSchema = lazySchema(() =>
@@ -99,7 +99,7 @@ export const ThinkingConfigSchema = lazySchema(() =>
       ThinkingDisabledSchema(),
     ])
     .describe(
-      "Controls Claude's thinking/reasoning behavior. When set, takes precedence over the deprecated maxThinkingTokens.",
+      "Controls Zy's thinking/reasoning behavior. When set, takes precedence over the deprecated maxThinkingTokens.",
     ),
 )
 
@@ -148,19 +148,19 @@ export const McpServerConfigForProcessTransportSchema = lazySchema(() =>
   ]),
 )
 
-export const McpClaudeAIProxyServerConfigSchema = lazySchema(() =>
+export const McpZyAIProxyServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal('claudeai-proxy'),
+    type: z.literal('zyai-proxy'),
     url: z.string(),
     id: z.string(),
   }),
 )
 
-// Broader config type for status responses (includes claudeai-proxy which is output-only)
+// Broader config type for status responses (includes zyai-proxy which is output-only)
 export const McpServerStatusConfigSchema = lazySchema(() =>
   z.union([
     McpServerConfigForProcessTransportSchema(),
-    McpClaudeAIProxyServerConfigSchema(),
+    McpZyAIProxyServerConfigSchema(),
   ]),
 )
 
@@ -189,7 +189,7 @@ export const McpServerStatusSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Configuration scope (e.g., project, user, local, claudeai, managed)',
+          'Configuration scope (e.g., project, user, local, zyai, managed)',
         ),
       tools: z
         .array(
@@ -213,7 +213,7 @@ export const McpServerStatusSchema = lazySchema(() =>
         })
         .optional()
         .describe(
-          "@internal Server capabilities (available when connected). experimental['claude/channel'] is only present if the server's plugin is on the approved channels allowlist — use its presence to decide whether to show an Enable-channel prompt.",
+          "@internal Server capabilities (available when connected). experimental['zy/channel'] is only present if the server's plugin is on the approved channels allowlist — use its presence to decide whether to show an Enable-channel prompt.",
         ),
     })
     .describe('Status information for an MCP server connection.'),
@@ -1064,7 +1064,7 @@ export const ModelInfoSchema = lazySchema(() =>
         .boolean()
         .optional()
         .describe(
-          'Whether this model supports adaptive thinking (Claude decides when and how much to think)',
+          'Whether this model supports adaptive thinking (Zy decides when and how much to think)',
         ),
       supportsFastMode: z
         .boolean()
@@ -1128,7 +1128,7 @@ export const AgentDefinitionSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          "Model alias (e.g. 'sonnet', 'opus', 'haiku') or full model ID (e.g. 'claude-opus-4-5'). If omitted or 'inherit', uses the main model",
+          "Model alias (e.g. 'sonnet', 'opus', 'haiku') or full model ID (e.g. 'zy-opus-4-5'). If omitted or 'inherit', uses the main model",
         ),
       mcpServers: z.array(AgentMcpServerSpecSchema()).optional(),
       criticalSystemReminder_EXPERIMENTAL: z
@@ -1461,7 +1461,7 @@ export const SDKSystemMessageSchema = lazySchema(() =>
     agents: z.array(z.string()).optional(),
     apiKeySource: ApiKeySourceSchema(),
     betas: z.array(z.string()).optional(),
-    claude_code_version: z.string(),
+    zy_code_version: z.string(),
     cwd: z.string(),
     tools: z.array(z.string()),
     mcp_servers: z.array(

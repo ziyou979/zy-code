@@ -119,8 +119,8 @@ type State = {
   // Last auto-mode classifier request(s) for /share transcript
   lastClassifierRequests: unknown[] | null
   // CLAUDE.md content cached by context.ts for the auto-mode classifier.
-  // Breaks the yoloClassifier → claudemd → filesystem → permissions cycle.
-  cachedClaudeMdContent: string | null
+  // Breaks the yoloClassifier → zymd → filesystem → permissions cycle.
+  cachedzyMdContent: string | null
   // In-memory error log for recent errors
   inMemoryErrorLog: Array<{ error: string; timestamp: string }>
   // Session-only plugins from --plugin-dir flag
@@ -204,7 +204,7 @@ type State = {
   // Last date emitted to the model (for detecting midnight date changes)
   lastEmittedDate: string | null
   // Additional directories from --add-dir flag (for CLAUDE.md loading)
-  additionalDirectoriesForClaudeMd: string[]
+  additionalDirectoriesForzyMd: string[]
   // Channel server allowlist from --channels flag (servers whose channel
   // notifications should register this session). Parsed once in main.tsx —
   // the tag decides trust model: 'plugin' → marketplace verification +
@@ -344,7 +344,7 @@ function getInitialState(): State {
     lastAPIRequestMessages: null,
     // Last auto-mode classifier request(s) for /share transcript
     lastClassifierRequests: null,
-    cachedClaudeMdContent: null,
+    cachedzyMdContent: null,
     // In-memory error log for recent errors
     inMemoryErrorLog: [],
     // Session-only plugins from --plugin-dir flag
@@ -400,7 +400,7 @@ function getInitialState(): State {
     // Last date emitted to the model
     lastEmittedDate: null,
     // Additional directories from --add-dir flag (for CLAUDE.md loading)
-    additionalDirectoriesForClaudeMd: [],
+    additionalDirectoriesForzyMd: [],
     // Channel server allowlist from --channels flag
     allowedChannels: [],
     hasDevChannels: false,
@@ -952,35 +952,35 @@ export function setMeter(
   STATE.meter = meter
 
   // Initialize all counters using the provided factory
-  STATE.sessionCounter = createCounter('claude_code.session.count', {
+  STATE.sessionCounter = createCounter('zy_code.session.count', {
     description: 'Count of CLI sessions started',
   })
-  STATE.locCounter = createCounter('claude_code.lines_of_code.count', {
+  STATE.locCounter = createCounter('zy_code.lines_of_code.count', {
     description:
       "Count of lines of code modified, with the 'type' attribute indicating whether lines were added or removed",
   })
-  STATE.prCounter = createCounter('claude_code.pull_request.count', {
+  STATE.prCounter = createCounter('zy_code.pull_request.count', {
     description: 'Number of pull requests created',
   })
-  STATE.commitCounter = createCounter('claude_code.commit.count', {
+  STATE.commitCounter = createCounter('zy_code.commit.count', {
     description: 'Number of git commits created',
   })
-  STATE.costCounter = createCounter('claude_code.cost.usage', {
+  STATE.costCounter = createCounter('zy_code.cost.usage', {
     description: 'Cost of the ZY Code session',
     unit: 'USD',
   })
-  STATE.tokenCounter = createCounter('claude_code.token.usage', {
+  STATE.tokenCounter = createCounter('zy_code.token.usage', {
     description: 'Number of tokens used',
     unit: 'tokens',
   })
   STATE.codeEditToolDecisionCounter = createCounter(
-    'claude_code.code_edit_tool.decision',
+    'zy_code.code_edit_tool.decision',
     {
       description:
         'Count of code editing tool permission decisions (accept/reject) for Edit, Write, and NotebookEdit tools',
     },
   )
-  STATE.activeTimeCounter = createCounter('claude_code.active_time.total', {
+  STATE.activeTimeCounter = createCounter('zy_code.active_time.total', {
     description: 'Total active time in seconds',
     unit: 's',
   })
@@ -1204,12 +1204,12 @@ export function getLastClassifierRequests(): unknown[] | null {
   return STATE.lastClassifierRequests
 }
 
-export function setCachedClaudeMdContent(content: string | null): void {
-  STATE.cachedClaudeMdContent = content
+export function setCachedzyMdContent(content: string | null): void {
+  STATE.cachedzyMdContent = content
 }
 
-export function getCachedClaudeMdContent(): string | null {
-  return STATE.cachedClaudeMdContent
+export function getCachedzyMdContent(): string | null {
+  return STATE.cachedzyMdContent
 }
 
 export function addToInMemoryErrorLog(errorInfo: {
@@ -1233,7 +1233,7 @@ export function setAllowedSettingSources(sources: SettingSource[]): void {
 
 export function preferThirdPartyAuthentication(): boolean {
   // IDE extension should behave as 1P for authentication reasons.
-  return getIsNonInteractiveSession() && STATE.clientType !== 'claude-vscode'
+  return getIsNonInteractiveSession() && STATE.clientType !== 'zy-vscode'
 }
 
 export function setInlinePlugins(plugins: Array<string>): void {
@@ -1570,7 +1570,7 @@ export function addSlowOperation(operation: string, durationMs: number): void {
   if (process.env.USER_TYPE !== 'ant') return
   // Skip tracking for editor sessions (user editing a prompt file in $EDITOR)
   // These are intentionally slow since the user is drafting text
-  if (operation.includes('exec') && operation.includes('claude-prompt-')) {
+  if (operation.includes('exec') && operation.includes('zy-prompt-')) {
     return
   }
   const now = Date.now()
@@ -1663,14 +1663,14 @@ export function setLastEmittedDate(date: string | null): void {
   STATE.lastEmittedDate = date
 }
 
-export function getAdditionalDirectoriesForClaudeMd(): string[] {
-  return STATE.additionalDirectoriesForClaudeMd
+export function getAdditionalDirectoriesForzyMd(): string[] {
+  return STATE.additionalDirectoriesForzyMd
 }
 
-export function setAdditionalDirectoriesForClaudeMd(
+export function setAdditionalDirectoriesForzyMd(
   directories: string[],
 ): void {
-  STATE.additionalDirectoriesForClaudeMd = directories
+  STATE.additionalDirectoriesForzyMd = directories
 }
 
 export function getAllowedChannels(): ChannelEntry[] {

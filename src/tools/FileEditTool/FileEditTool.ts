@@ -404,7 +404,7 @@ export const FileEditTool = buildTool({
     // Discover skills from this file's path (fire-and-forget, non-blocking)
     // Skip in simple mode - no skills available
     const cwd = getCwd()
-    if (!isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
+    if (!isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
       const newSkillDirs = await discoverSkillDirsForPaths(
         [absoluteFilePath],
         cwd,
@@ -526,7 +526,7 @@ export const FileEditTool = buildTool({
 
     // 7. Log events
     if (absoluteFilePath.endsWith(`${sep}CLAUDE.md`)) {
-      logEvent('tengu_write_claudemd', {})
+      logEvent('tengu_write_Zymd', {})
     }
     countLinesChanged(patch)
 
@@ -544,7 +544,7 @@ export const FileEditTool = buildTool({
 
     let gitDiff: ToolUseDiff | undefined
     if (
-      isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) &&
+      isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_quartz_lantern', false)
     ) {
       const startTime = Date.now()

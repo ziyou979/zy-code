@@ -134,12 +134,12 @@ function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
     return 'ZY Code wants to enter plan mode';
   }
   if (feature('REVIEW_ARTIFACT') && toolUseConfirm.tool === ReviewArtifactTool) {
-    return 'Claude needs your approval for a review artifact';
+    return 'Zy needs your approval for a review artifact';
   }
   if (!toolName || toolName.trim() === '') {
     return 'ZY Code needs your attention';
   }
-  return `Claude needs your permission to use ${toolName}`;
+  return `Zy needs your permission to use ${toolName}`;
 }
 
 // TODO: Move this to Tool.renderPermissionRequest

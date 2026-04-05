@@ -26,12 +26,12 @@ type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 // `latest` has Cache-Control: max-age=300 so CDN staleness is bounded.
 // Backend (anthropic#317037) populates this prefix.
 const GCS_BASE =
-  'https://downloads.claude.ai/claude-code-releases/plugins/claude-plugins-official'
+  'https://downloads.zy.ai/zy-code-releases/plugins/zy-plugins-official'
 
-// Zip arc paths are seed-dir-relative (marketplaces/claude-plugins-official/…)
+// Zip arc paths are seed-dir-relative (marketplaces/zy-plugins-official/…)
 // so the titanium seed machinery can use the same zip. Strip this prefix when
 // extracting for a laptop install.
-const ARC_PREFIX = 'marketplaces/claude-plugins-official/'
+const ARC_PREFIX = 'marketplaces/zy-plugins-official/'
 
 /**
  * Fetch the official marketplace from GCS and extract to installLocation.
@@ -158,7 +158,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     // values below are static enums or a git SHA — not code/filepaths/PII.
     logEvent('tengu_plugin_remote_fetch', {
       source: 'marketplace_gcs' as SafeString,
-      host: 'downloads.claude.ai' as SafeString,
+      host: 'downloads.zy.ai' as SafeString,
       is_official: true,
       outcome: outcome as SafeString,
       duration_ms: Math.round(performance.now() - start),

@@ -226,7 +226,7 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     if (!isModelAllowed) {
       return false;
     }
-    if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)) {
+    if (isEnvTruthy(process.env.ZY_CODE_DISABLE_FEEDBACK_SURVEY)) {
       return false;
     }
     if (isFeedbackSurveyDisabled()) {

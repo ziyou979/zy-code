@@ -7,14 +7,14 @@ import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import { getAPIProvider } from './model/providers.js'
 import {
   getApiKey,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
   handleOAuth401Error,
-  isClaudeAISubscriber,
+  isZyAISubscriber,
 } from './auth.js'
-import { getClaudeCodeUserAgent } from './userAgent.js'
+import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
-// WARNING: We rely on `claude-cli` in the user agent for log filtering.
+// WARNING: We rely on `zy-cli` in the user agent for log filtering.
 // Please do NOT change this without making sure that logging also gets updated!
 export function getUserAgent(): string {
   const agentSdkVersion = process.env.CLAUDE_AGENT_SDK_VERSION
@@ -32,13 +32,13 @@ export function getUserAgent(): string {
   // so the read picks up the same setWorkload() value as getAttributionHeader.
   const workload = getWorkload()
   const workloadSuffix = workload ? `, workload/${workload}` : ''
-  return `claude-cli/${MACRO.VERSION} (${process.env.USER_TYPE}, ${process.env.CLAUDE_CODE_ENTRYPOINT ?? 'cli'}${agentSdkVersion}${clientApp}${workloadSuffix})`
+  return `zy-cli/${MACRO.VERSION} (${process.env.USER_TYPE}, ${process.env.ZY_CODE_ENTRYPOINT ?? 'cli'}${agentSdkVersion}${clientApp}${workloadSuffix})`
 }
 
 export function getMCPUserAgent(): string {
   const parts: string[] = []
-  if (process.env.CLAUDE_CODE_ENTRYPOINT) {
-    parts.push(process.env.CLAUDE_CODE_ENTRYPOINT)
+  if (process.env.ZY_CODE_ENTRYPOINT) {
+    parts.push(process.env.ZY_CODE_ENTRYPOINT)
   }
   if (process.env.CLAUDE_AGENT_SDK_VERSION) {
     parts.push(`agent-sdk/${process.env.CLAUDE_AGENT_SDK_VERSION}`)
@@ -47,15 +47,15 @@ export function getMCPUserAgent(): string {
     parts.push(`client-app/${process.env.CLAUDE_AGENT_SDK_CLIENT_APP}`)
   }
   const suffix = parts.length > 0 ? ` (${parts.join(', ')})` : ''
-  return `claude-code/${MACRO.VERSION}${suffix}`
+  return `zy-code/${MACRO.VERSION}${suffix}`
 }
 
-// User-Agent for WebFetch requests to arbitrary sites. `Claude-User` is
+// User-Agent for WebFetch requests to arbitrary sites. `Zy-User` is
 // our publicly documented agent for user-initiated fetches
-// operators match in robots.txt); the claude-code suffix lets them distinguish
-// local CLI traffic from claude.ai server-side fetches.
+// operators match in robots.txt); the zy-code suffix lets them distinguish
+// local CLI traffic from zy.ai server-side fetches.
 export function getWebFetchUserAgent(): string {
-  return `Claude-User (${getClaudeCodeUserAgent()}; +https://support.anthropic.com/)`
+  return `Zy-User (${getZyCodeUserAgent()}; +https://support.anthropic.com/)`
 }
 
 export type AuthHeaders = {
@@ -81,8 +81,8 @@ export function getAuthHeaders(): AuthHeaders {
     }
   }
   
-  if (isClaudeAISubscriber()) {
-    const oauthTokens = getClaudeAIOAuthTokens()
+  if (isZyAISubscriber()) {
+    const oauthTokens = getZyAIOAuthTokens()
     if (!oauthTokens?.accessToken) {
       return {
         headers: {},
@@ -142,7 +142,7 @@ export async function withOAuth401Retry<T>(
         typeof err.response?.data === 'string' &&
         err.response.data.includes('OAuth token has been revoked'))
     if (!isAuthError) throw err
-    const failedAccessToken = getClaudeAIOAuthTokens()?.accessToken
+    const failedAccessToken = getZyAIOAuthTokens()?.accessToken
     if (!failedAccessToken) throw err
     await handleOAuth401Error(failedAccessToken)
     return await request()

@@ -14,7 +14,7 @@ import type { MarketplaceSource } from './schemas.js'
  */
 export const OFFICIAL_MARKETPLACE_SOURCE = {
   source: 'github',
-  repo: 'anthropics/claude-plugins-official',
+  repo: 'anthropics/zy-plugins-official',
 } as const satisfies MarketplaceSource
 
 /**
@@ -22,4 +22,4 @@ export const OFFICIAL_MARKETPLACE_SOURCE = {
  * This is the name under which the marketplace will be registered
  * in the known_marketplaces.json file.
  */
-export const OFFICIAL_MARKETPLACE_NAME = 'claude-plugins-official'
+export const OFFICIAL_MARKETPLACE_NAME = 'zy-plugins-official'

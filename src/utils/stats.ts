@@ -50,7 +50,7 @@ export type SessionStats = {
   timestamp: string
 }
 
-export type ClaudeCodeStats = {
+export type ZyCodeStats = {
   // Activity overview
   totalSessions: number
   totalMessages: number
@@ -435,12 +435,12 @@ async function getAllSessionFiles(): Promise<string[]> {
 }
 
 /**
- * Convert a PersistedStatsCache to ClaudeCodeStats by computing derived fields.
+ * Convert a PersistedStatsCache to ZyCodeStats by computing derived fields.
  */
 function cacheToStats(
   cache: PersistedStatsCache,
   todayStats: ProcessedStats | null,
-): ClaudeCodeStats {
+): ZyCodeStats {
   // Merge cache with today's stats
   const dailyActivityMap = new Map<string, DailyActivity>()
   for (const day of cache.dailyActivity) {
@@ -590,7 +590,7 @@ function cacheToStats(
     cache.totalSpeculationTimeSavedMs +
     (todayStats?.totalSpeculationTimeSavedMs || 0)
 
-  const result: ClaudeCodeStats = {
+  const result: ZyCodeStats = {
     totalSessions,
     totalMessages,
     totalDays,
@@ -637,7 +637,7 @@ function cacheToStats(
  * Aggregates stats from all ZY Code sessions across all projects.
  * Uses a disk cache to avoid reprocessing historical data.
  */
-export async function aggregateClaudeCodeStats(): Promise<ClaudeCodeStats> {
+export async function aggregateZyCodeStats(): Promise<ZyCodeStats> {
   const allSessionFiles = await getAllSessionFiles()
 
   if (allSessionFiles.length === 0) {
@@ -715,11 +715,11 @@ export type StatsDateRange = '7d' | '30d' | 'all'
  * Aggregates stats for a specific date range.
  * For 'all', uses the cached aggregation. For other ranges, processes files directly.
  */
-export async function aggregateClaudeCodeStatsForRange(
+export async function aggregateZyCodeStatsForRange(
   range: StatsDateRange,
-): Promise<ClaudeCodeStats> {
+): Promise<ZyCodeStats> {
   if (range === 'all') {
-    return aggregateClaudeCodeStats()
+    return aggregateZyCodeStats()
   }
 
   const allSessionFiles = await getAllSessionFiles()
@@ -739,16 +739,16 @@ export async function aggregateClaudeCodeStatsForRange(
     fromDate: fromDateStr,
   })
 
-  return processedStatsToClaudeCodeStats(stats)
+  return processedStatsToZyCodeStats(stats)
 }
 
 /**
- * Convert ProcessedStats to ClaudeCodeStats.
+ * Convert ProcessedStats to ZyCodeStats.
  * Used for filtered date ranges that bypass the cache.
  */
-function processedStatsToClaudeCodeStats(
+function processedStatsToZyCodeStats(
   stats: ProcessedStats,
-): ClaudeCodeStats {
+): ZyCodeStats {
   const dailyActivitySorted = stats.dailyActivity
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -809,7 +809,7 @@ function processedStatsToClaudeCodeStats(
         ) + 1
       : 0
 
-  const result: ClaudeCodeStats = {
+  const result: ZyCodeStats = {
     totalSessions: stats.sessionStats.length,
     totalMessages: stats.totalMessages,
     totalDays,
@@ -1035,7 +1035,7 @@ export async function readSessionStartDate(
   }
 }
 
-function getEmptyStats(): ClaudeCodeStats {
+function getEmptyStats(): ZyCodeStats {
   return {
     totalSessions: 0,
     totalMessages: 0,

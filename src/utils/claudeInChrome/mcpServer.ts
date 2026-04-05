@@ -1,6 +1,6 @@
 import {
   type ClaudeForChromeContext,
-  createClaudeForChromeMcpServer,
+  createZyForChromeMcpServer,
   type Logger,
   type PermissionMode,
 } from '@ant/claude-for-chrome-mcp'
@@ -14,16 +14,16 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
-import { getClaudeAIOAuthTokens } from '../auth.js'
+import { getZyAIOAuthTokens } from '../auth.js'
 import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { sideQuery } from '../sideQuery.js'
 import { getAllSocketPaths, getSecureSocketPath } from './common.js'
 
-const EXTENSION_DOWNLOAD_URL = 'https://claude.ai/chrome'
+const EXTENSION_DOWNLOAD_URL = 'https://zy.ai/chrome'
 const BUG_REPORT_URL =
-  'https://github.com/anthropics/claude-code/issues/new?labels=bug,claude-in-chrome'
+  'https://github.com/anthropics/zy-code/issues/new?labels=bug,claude-in-chrome'
 
 // String metadata keys safe to forward to analytics. Keys like error_message
 // are excluded because they could contain page content or user data.
@@ -65,10 +65,10 @@ function getChromeBridgeUrl(): string | undefined {
   }
 
   if (isEnvTruthy(process.env.USE_STAGING_OAUTH)) {
-    return 'wss://bridge-staging.claudeusercontent.com'
+    return 'wss://bridge-staging.zyusercontent.com'
   }
 
-  return 'wss://bridge.claudeusercontent.com'
+  return 'wss://bridge.zyusercontent.com'
 }
 
 function isLocalBridge(): boolean {
@@ -106,14 +106,14 @@ export function createChromeContext(
     logger,
     socketPath: getSecureSocketPath(),
     getSocketPaths: getAllSocketPaths,
-    clientTypeId: 'claude-code',
+    clientTypeId: 'zy-code',
     onAuthenticationError: () => {
       logger.warn(
-        'Authentication error occurred. Please ensure you are logged into the Claude browser extension with the same claude.ai account as ZY Code.',
+        'Authentication error occurred. Please ensure you are logged into the Zy browser extension with the same zy.ai account as ZY Code.',
       )
     },
     onToolCallDisconnected: () => {
-      return `Browser extension is not connected. Please ensure the Claude browser extension is installed and running (${EXTENSION_DOWNLOAD_URL}), and that you are logged into claude.ai with the same account as ZY Code. If this is your first time connecting to Chrome, you may need to restart Chrome for the installation to take effect. If you continue to experience issues, please report a bug: ${BUG_REPORT_URL}`
+      return `Browser extension is not connected. Please ensure the Zy browser extension is installed and running (${EXTENSION_DOWNLOAD_URL}), and that you are logged into zy.ai with the same account as ZY Code. If this is your first time connecting to Chrome, you may need to restart Chrome for the installation to take effect. If you continue to experience issues, please report a bug: ${BUG_REPORT_URL}`
     },
     onExtensionPaired: (deviceId: string, name: string) => {
       saveGlobalConfig(config => {
@@ -143,7 +143,7 @@ export function createChromeContext(
           return getGlobalConfig().oauthAccount?.accountUuid
         },
         getOAuthToken: async () => {
-          return getClaudeAIOAuthTokens()?.accessToken ?? ''
+          return getZyAIOAuthTokens()?.accessToken ?? ''
         },
         ...(isLocalBridge() && { devUserId: 'dev_user_local' }),
       },
@@ -250,7 +250,7 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
   initializeAnalyticsSink()
   const context = createChromeContext()
 
-  const server = createClaudeForChromeMcpServer(context)
+  const server = createZyForChromeMcpServer(context)
   const transport = new StdioServerTransport()
 
   // Exit when parent process dies (stdin pipe closes).

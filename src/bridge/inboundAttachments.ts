@@ -18,7 +18,7 @@ import { basename, join } from 'path'
 import { z } from 'zod/v4'
 import { getSessionId } from '../bootstrap/state.js'
 import { logForDebugging } from '../utils/debug.js'
-import { getClaudeConfigHomeDir } from '../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { getBridgeAccessToken, getBridgeBaseUrl } from './bridgeConfig.js'
 
@@ -58,7 +58,7 @@ function sanitizeFileName(name: string): string {
 }
 
 function uploadsDir(): string {
-  return join(getClaudeConfigHomeDir(), 'uploads', getSessionId())
+  return join(getZyConfigHomeDir(), 'uploads', getSessionId())
 }
 
 /**
@@ -75,7 +75,7 @@ async function resolveOne(att: InboundAttachment): Promise<string | undefined> {
   let data: Buffer
   try {
     // getOauthConfig() (via getBridgeBaseUrl) throws on a non-allowlisted
-    // CLAUDE_CODE_CUSTOM_OAUTH_URL — keep it inside the try so a bad
+    // ZY_CODE_CUSTOM_OAUTH_URL — keep it inside the try so a bad
     // FedStart URL degrades to "no @path" instead of crashing print.ts's
     // reader loop (which has no catch around the await).
     const url = `${getBridgeBaseUrl()}/api/oauth/files/${encodeURIComponent(att.file_uuid)}/content`

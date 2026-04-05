@@ -137,7 +137,7 @@ export function attachErrorLogSink(newSink: ErrorLogSink): void {
  * Logs an error to multiple destinations for debugging and monitoring.
  *
  * This function logs errors to:
- * - Debug logs (visible via `claude --debug` or `tail -f ~/.zy/debug/latest`)
+ * - Debug logs (visible via `zy --debug` or `tail -f ~/.zy/debug/latest`)
  * - In-memory error log (accessible via `getInMemoryErrors()`, useful for including
  *   in bug reports or displaying recent errors to users)
  * - Persistent error log file (only for internal 'ant' users, stored in ~/.zy/errors/)
@@ -148,7 +148,7 @@ export function attachErrorLogSink(newSink: ErrorLogSink): void {
  * ```
  *
  * To view errors:
- * - Debug: Run `claude --debug` or `tail -f ~/.zy/debug/latest`
+ * - Debug: Run `zy --debug` or `tail -f ~/.zy/debug/latest`
  * - In-memory: Call `getInMemoryErrors()` to get recent errors for the current session
  */
 const isHardFailMode = memoize((): boolean => {
@@ -167,9 +167,9 @@ export function logError(error: unknown): void {
     // Check if error reporting should be disabled
     if (
       // Cloud providers (Bedrock/Vertex/Foundry) always disable features
-      isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
-      isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
-      isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
+      isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) ||
+      isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) ||
+      isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY) ||
       process.env.DISABLE_ERROR_REPORTING ||
       isEssentialTrafficOnly()
     ) {

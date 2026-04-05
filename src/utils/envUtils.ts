@@ -4,7 +4,7 @@ import { join } from 'path'
 
 // Memoized: 150+ callers, many on hot paths. Keyed off CLAUDE_CONFIG_DIR so
 // tests that change the env var get a fresh value without explicit cache.clear.
-export const getClaudeConfigHomeDir = memoize(
+export const getZyConfigHomeDir = memoize(
   (): string => {
     return (
       process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.zy')
@@ -14,7 +14,7 @@ export const getClaudeConfigHomeDir = memoize(
 )
 
 export function getTeamsDir(): string {
-  return join(getClaudeConfigHomeDir(), 'teams')
+  return join(getZyConfigHomeDir(), 'teams')
 }
 
 /**
@@ -47,19 +47,19 @@ export function isEnvDefinedFalsy(
 }
 
 /**
- * --bare / CLAUDE_CODE_SIMPLE — skip hooks, LSP, plugin sync, skill dir-walk,
+ * --bare / ZY_CODE_SIMPLE — skip hooks, LSP, plugin sync, skill dir-walk,
  * attribution, background prefetches, and ALL keychain/credential reads.
  * Auth is strictly ANTHROPIC_API_KEY env or apiKeyHelper from --settings.
  * Explicit CLI flags (--plugin-dir, --add-dir, --mcp-config) still honored.
  * ~30 gates across the codebase.
  *
  * Checks argv directly (in addition to the env var) because several gates
- * run before main.tsx's action handler sets CLAUDE_CODE_SIMPLE=1 from --bare
+ * run before main.tsx's action handler sets ZY_CODE_SIMPLE=1 from --bare
  * — notably startKeychainPrefetch() at main.tsx top-level.
  */
 export function isBareMode(): boolean {
   return (
-    isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE) ||
+    isEnvTruthy(process.env.ZY_CODE_SIMPLE) ||
     process.argv.includes('--bare')
   )
 }
@@ -150,18 +150,18 @@ export function isInProtectedNamespace(): boolean {
 /**
  * Model prefix → env var for Vertex region overrides.
  * Order matters: more specific prefixes must come before less specific ones
- * (e.g., 'claude-opus-4-1' before 'claude-opus-4').
+ * (e.g., 'zy-opus-4-1' before 'zy-opus-4').
  */
 const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = [
-  ['claude-haiku-4-5', 'VERTEX_REGION_CLAUDE_HAIKU_4_5'],
-  ['claude-3-5-haiku', 'VERTEX_REGION_CLAUDE_3_5_HAIKU'],
-  ['claude-3-5-sonnet', 'VERTEX_REGION_CLAUDE_3_5_SONNET'],
-  ['claude-3-7-sonnet', 'VERTEX_REGION_CLAUDE_3_7_SONNET'],
-  ['claude-opus-4-1', 'VERTEX_REGION_CLAUDE_4_1_OPUS'],
-  ['claude-opus-4', 'VERTEX_REGION_CLAUDE_4_0_OPUS'],
-  ['claude-sonnet-4-6', 'VERTEX_REGION_CLAUDE_4_6_SONNET'],
-  ['claude-sonnet-4-5', 'VERTEX_REGION_CLAUDE_4_5_SONNET'],
-  ['claude-sonnet-4', 'VERTEX_REGION_CLAUDE_4_0_SONNET'],
+  ['zy-haiku-4-5', 'VERTEX_REGION_CLAUDE_HAIKU_4_5'],
+  ['zy-3-5-haiku', 'VERTEX_REGION_CLAUDE_3_5_HAIKU'],
+  ['zy-3-5-sonnet', 'VERTEX_REGION_CLAUDE_3_5_SONNET'],
+  ['zy-3-7-sonnet', 'VERTEX_REGION_CLAUDE_3_7_SONNET'],
+  ['zy-opus-4-1', 'VERTEX_REGION_CLAUDE_4_1_OPUS'],
+  ['zy-opus-4', 'VERTEX_REGION_CLAUDE_4_0_OPUS'],
+  ['zy-sonnet-4-6', 'VERTEX_REGION_CLAUDE_4_6_SONNET'],
+  ['zy-sonnet-4-5', 'VERTEX_REGION_CLAUDE_4_5_SONNET'],
+  ['zy-sonnet-4', 'VERTEX_REGION_CLAUDE_4_0_SONNET'],
 ]
 
 /**

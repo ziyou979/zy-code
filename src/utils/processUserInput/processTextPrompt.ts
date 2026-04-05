@@ -39,7 +39,7 @@ export function processTextPrompt(
 
   // Emit user_prompt OTEL event for both string (CLI) and array (SDK/VS Code)
   // input shapes. Previously gated on `typeof input === 'string'`, so VS Code
-  // sessions never emitted user_prompt (anthropics/claude-code#33301).
+  // sessions never emitted user_prompt (anthropics/zy-code#33301).
   // For array input, use the LAST text block: createUserContent pushes the
   // user's message last (after any <ide_selection>/attachment context blocks),
   // so .findLast gets the actual prompt. userPromptText (first block) is kept

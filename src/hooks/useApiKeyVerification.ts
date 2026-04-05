@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
-import { verifyApiKey } from '../services/api/claude.js'
+import { verifyApiKey } from '../services/api/zy.js'
 import {
   getApiKeyWithSource,
   getApiKeyFromApiKeyHelper,
   isAuthEnabled,
-  isClaudeAISubscriber,
+  isZyAISubscriber,
 } from '../utils/auth.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
@@ -29,7 +29,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
     if (getAPIProvider() === 'dashscope') {
       return 'valid'
     }
-    if (!isAuthEnabled() || isClaudeAISubscriber()) {
+    if (!isAuthEnabled() || isZyAISubscriber()) {
       return 'valid'
     }
     // Use skipRetrievingKeyFromApiKeyHelper to avoid executing apiKeyHelper
@@ -52,7 +52,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
       setStatus('valid')
       return
     }
-    if (!isAuthEnabled() || isClaudeAISubscriber()) {
+    if (!isAuthEnabled() || isZyAISubscriber()) {
       setStatus('valid')
       return
     }

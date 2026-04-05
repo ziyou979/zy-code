@@ -2,7 +2,7 @@ import {
   getApiKey,
   getAuthTokenSource,
   getSubscriptionType,
-  isClaudeAISubscriber,
+  isZyAISubscriber,
 } from './auth.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
@@ -13,7 +13,7 @@ export function hasConsoleBillingAccess(): boolean {
     return false
   }
 
-  const isSubscriber = isClaudeAISubscriber()
+  const isSubscriber = isZyAISubscriber()
 
   // This might be wrong if user is signed into Max but also using an API key, but
   // we already show a warning on launch in that case
@@ -50,13 +50,13 @@ export function setMockBillingAccessOverride(value: boolean | null): void {
   mockBillingAccessOverride = value
 }
 
-export function hasClaudeAiBillingAccess(): boolean {
+export function hasZyAiBillingAccess(): boolean {
   // Check for mock billing access first (for /mock-limits testing)
   if (mockBillingAccessOverride !== null) {
     return mockBillingAccessOverride
   }
 
-  if (!isClaudeAISubscriber()) {
+  if (!isZyAISubscriber()) {
     return false
   }
 

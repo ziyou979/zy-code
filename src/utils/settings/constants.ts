@@ -198,5 +198,5 @@ export const SOURCES = [
  * The JSON Schema URL for ZY Code settings
  * You can edit the contents at https://github.com/SchemaStore/schemastore/blob/master/src/schemas/json/zy-code-settings.json
  */
-export const CLAUDE_CODE_SETTINGS_SCHEMA_URL =
+export const ZY_CODE_SETTINGS_SCHEMA_URL =
   'https://json.schemastore.org/zy-code-settings.json'

@@ -511,7 +511,7 @@ async function performPostCreationSetup(
   repoRoot: string,
   worktreePath: string,
 ): Promise<void> {
-  // Copy settings.local.json to the worktree's .claude directory
+  // Copy settings.local.json to the worktree's .zy directory
   // This propagates local settings (which may contain secrets) to the worktree
   const localSettingsRelativePath =
     getRelativeSettingsFilePathForSource('localSettings')
@@ -1174,7 +1174,7 @@ export async function hasWorktreeChanges(
 
 /**
  * Fast-path handler for --worktree --tmux.
- * Creates the worktree and execs into tmux running Claude inside.
+ * Creates the worktree and execs into tmux running Zy inside.
  * This is called early in cli.tsx before loading the full CLI.
  */
 export async function execIntoTmuxWorktree(args: string[]): Promise<{
@@ -1254,7 +1254,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
 
   // Mirror createWorktreeForSession(): hook takes precedence over git so the
   // WorktreeCreate hook substitutes the VCS backend for this fast-path too
-  // (anthropics/claude-code#39281). Git path below runs only when no hook.
+  // (anthropics/zy-code#39281). Git path below runs only when no hook.
   let worktreeDir: string
   let repoName: string
   if (hasWorktreeCreateHook()) {
@@ -1339,9 +1339,9 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Check if tmux prefix conflicts with Claude keybindings
-  // Claude binds: ctrl+b (task:background), ctrl+c, ctrl+d, ctrl+t, ctrl+o, ctrl+r, ctrl+s, ctrl+g, ctrl+e
-  const claudeBindings = [
+  // Check if tmux prefix conflicts with Zy keybindings
+  // Zy binds: ctrl+b (task:background), ctrl+c, ctrl+d, ctrl+t, ctrl+o, ctrl+r, ctrl+s, ctrl+g, ctrl+e
+  const ZyBindings = [
     'C-b',
     'C-c',
     'C-d',
@@ -1352,14 +1352,14 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     'C-g',
     'C-e',
   ]
-  const prefixConflicts = claudeBindings.includes(tmuxPrefix)
+  const prefixConflicts = ZyBindings.includes(tmuxPrefix)
 
   // Set env vars for the inner ZY to display tmux info in welcome message
   const tmuxEnv = {
     ...process.env,
-    CLAUDE_CODE_TMUX_SESSION: tmuxSessionName,
-    CLAUDE_CODE_TMUX_PREFIX: tmuxPrefix,
-    CLAUDE_CODE_TMUX_PREFIX_CONFLICTS: prefixConflicts ? '1' : '',
+    ZY_CODE_TMUX_SESSION: tmuxSessionName,
+    ZY_CODE_TMUX_PREFIX: tmuxPrefix,
+    ZY_CODE_TMUX_PREFIX_CONFLICTS: prefixConflicts ? '1' : '',
   }
 
   // Check if session already exists
@@ -1392,13 +1392,13 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     )
   }
 
-  // For ants in claude-cli-internal, set up dev panes (watch + start)
+  // For ants in zy-cli-internal, set up dev panes (watch + start)
   const isAnt = process.env.USER_TYPE === 'ant'
-  const isClaudeCliInternal = repoName === 'claude-cli-internal'
-  const shouldSetupDevPanes = isAnt && isClaudeCliInternal && !sessionExists
+  const isZyCliInternal = repoName === 'zy-cli-internal'
+  const shouldSetupDevPanes = isAnt && isZyCliInternal && !sessionExists
 
   if (shouldSetupDevPanes) {
-    // Create detached session with Claude in first pane
+    // Create detached session with Zy in first pane
     spawnSync(
       'tmux',
       [
@@ -1437,7 +1437,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       cwd: worktreeDir,
     })
 
-    // Select the first pane (Claude)
+    // Select the first pane (Zy)
     spawnSync('tmux', ['select-pane', '-t', `${tmuxSessionName}:0.0`], {
       cwd: worktreeDir,
     })

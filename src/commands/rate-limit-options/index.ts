@@ -1,12 +1,12 @@
 import type { Command } from '../../commands.js'
-import { isClaudeAISubscriber } from '../../utils/auth.js'
+import { isZyAISubscriber } from '../../utils/auth.js'
 
 const rateLimitOptions = {
   type: 'local-jsx',
   name: 'rate-limit-options',
   description: 'Show options when rate limit is reached',
   isEnabled: () => {
-    if (!isClaudeAISubscriber()) {
+    if (!isZyAISubscriber()) {
       return false
     }
 

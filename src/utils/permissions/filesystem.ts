@@ -17,7 +17,7 @@ import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../../services/anal
 import type { AnyObject, Tool, ToolPermissionContext } from '../../Tool.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { getCwd } from '../cwd.js'
-import { getClaudeConfigHomeDir } from '../envUtils.js'
+import { getZyConfigHomeDir } from '../envUtils.js'
 import {
   getFsImplementation,
   getPathsForPermissionCheck,
@@ -64,7 +64,7 @@ export const DANGEROUS_FILES = [
   '.profile',
   '.ripgreprc',
   '.mcp.json',
-  '.claude.json',
+  '.zy.json',
 ] as const
 
 /**
@@ -98,7 +98,7 @@ export function normalizeCaseForComparison(path: string): string {
  * permission dialog and SDK suggestions, so iterating on one skill doesn't
  * require granting session access to all of .zy/ (settings.json, hooks/, etc.).
  */
-export function getClaudeSkillScope(
+export function getZySkillScope(
   filePath: string,
 ): { skillName: string; pattern: string } | null {
   const absolutePath = expandPath(filePath)
@@ -197,7 +197,7 @@ function getSettingsPaths(): string[] {
   ).filter(path => path !== undefined)
 }
 
-export function isClaudeSettingsPath(filePath: string): boolean {
+export function isZySettingsPath(filePath: string): boolean {
   // SECURITY: Normalize path structure first to prevent bypass via redundant ./
   // sequences like `./.zy/./settings.json` which would evade the endsWith() check
   const expandedPath = expandPath(filePath)
@@ -222,8 +222,8 @@ export function isClaudeSettingsPath(filePath: string): boolean {
 }
 
 // Always ask when ZY Code tries to edit its own config files
-function isClaudeConfigFilePath(filePath: string): boolean {
-  if (isClaudeSettingsPath(filePath)) {
+function isZyConfigFilePath(filePath: string): boolean {
+  if (isZySettingsPath(filePath)) {
     return true
   }
 
@@ -292,7 +292,7 @@ function isProjectDirPath(absolutePath: string): boolean {
 
 /**
  * Checks if the scratchpad directory feature is enabled.
- * The scratchpad is a per-session directory for Claude to write temporary files.
+ * The scratchpad is a per-session directory for Zy to write temporary files.
  * Controlled by the tengu_scratch Statsig gate.
  */
 export function isScratchpadEnabled(): boolean {
@@ -300,37 +300,37 @@ export function isScratchpadEnabled(): boolean {
 }
 
 /**
- * Returns the user-specific Claude temp directory name.
- * On Unix: 'claude-{uid}' to prevent multi-user permission conflicts
- * On Windows: 'claude' (tmpdir() is already per-user)
+ * Returns the user-specific Zy temp directory name.
+ * On Unix: 'zy-{uid}' to prevent multi-user permission conflicts
+ * On Windows: 'zy' (tmpdir() is already per-user)
  */
-export function getClaudeTempDirName(): string {
+export function getZyTempDirName(): string {
   if (getPlatform() === 'windows') {
-    return 'claude'
+    return 'zy'
   }
   // Use UID to create per-user directories, preventing permission conflicts
   // when multiple users share the same /tmp directory
   const uid = process.getuid?.() ?? 0
-  return `claude-${uid}`
+  return `zy-${uid}`
 }
 
 /**
- * Returns the Claude temp directory path with symlinks resolved.
+ * Returns the Zy temp directory path with symlinks resolved.
  * Uses TMPDIR env var if set, otherwise:
- * - On Unix: /tmp/claude-{uid}/ (resolved to /private/tmp/claude-{uid}/ on macOS)
- * - On Windows: {tmpdir}/claude/ (e.g., C:\Users\{user}\AppData\Local\Temp\claude\)
+ * - On Unix: /tmp/zy-{uid}/ (resolved to /private/tmp/zy-{uid}/ on macOS)
+ * - On Windows: {tmpdir}/zy/ (e.g., C:\Users\{user}\AppData\Local\Temp\zy\)
  * This is a per-user temporary directory used by ZY Code for all temp files.
  *
  * NOTE: We resolve symlinks to ensure this path matches the resolved paths used
  * in permission checks. On macOS, /tmp is a symlink to /private/tmp, so without
- * resolution, paths like /tmp/claude-{uid}/... wouldn't match /private/tmp/claude-{uid}/...
+ * resolution, paths like /tmp/zy-{uid}/... wouldn't match /private/tmp/zy-{uid}/...
  */
 // Memoized: called per-tool from permission checks (yoloClassifier, sandbox-adapter)
-// and per-turn from BashTool prompt. Inputs (CLAUDE_CODE_TMPDIR env + platform) are
+// and per-turn from BashTool prompt. Inputs (ZY_CODE_TMPDIR env + platform) are
 // fixed at startup, and the realpath of the system tmp dir does not change mid-session.
-export const getClaudeTempDir = memoize(function getClaudeTempDir(): string {
+export const getZyTempDir = memoize(function getZyTempDir(): string {
   const baseTmpDir =
-    process.env.CLAUDE_CODE_TMPDIR ||
+    process.env.ZY_CODE_TMPDIR ||
     (getPlatform() === 'windows' ? tmpdir() : '/tmp')
 
   // Resolve symlinks in the base temp directory (e.g., /tmp -> /private/tmp on macOS)
@@ -343,7 +343,7 @@ export const getClaudeTempDir = memoize(function getClaudeTempDir(): string {
     // If resolution fails, use the original path
   }
 
-  return join(resolvedBaseTmpDir, getClaudeTempDirName()) + sep
+  return join(resolvedBaseTmpDir, getZyTempDirName()) + sep
 })
 
 /**
@@ -365,21 +365,21 @@ export const getClaudeTempDir = memoize(function getClaudeTempDir(): string {
 export const getBundledSkillsRoot = memoize(
   function getBundledSkillsRoot(): string {
     const nonce = randomBytes(16).toString('hex')
-    return join(getClaudeTempDir(), 'bundled-skills', MACRO.VERSION, nonce)
+    return join(getZyTempDir(), 'bundled-skills', MACRO.VERSION, nonce)
   },
 )
 
 /**
  * Returns the project temp directory path with trailing separator.
- * Path format: /tmp/claude-{uid}/{sanitized-cwd}/
+ * Path format: /tmp/zy-{uid}/{sanitized-cwd}/
  */
 export function getProjectTempDir(): string {
-  return join(getClaudeTempDir(), sanitizePath(getOriginalCwd())) + sep
+  return join(getZyTempDir(), sanitizePath(getOriginalCwd())) + sep
 }
 
 /**
  * Returns the scratchpad directory path for the current session.
- * Path format: /tmp/claude-{uid}/{sanitized-cwd}/{sessionId}/scratchpad/
+ * Path format: /tmp/zy-{uid}/{sanitized-cwd}/{sessionId}/scratchpad/
  */
 export function getScratchpadDir(): string {
   return join(getProjectTempDir(), getSessionId(), 'scratchpad')
@@ -414,7 +414,7 @@ function isScratchpadPath(absolutePath: string): boolean {
   const scratchpadDir = getScratchpadDir()
   // SECURITY: Normalize the path to resolve .. segments before checking
   // This prevents path traversal bypasses like:
-  //   echo "malicious" > /tmp/claude-0/proj/session/scratchpad/../../../etc/passwd
+  //   echo "malicious" > /tmp/zy-d+/proj/session/scratchpad/../../../etc/passwd
   // Without normalization, the path would pass the startsWith check but write to /etc/passwd
   const normalizedPath = normalize(absolutePath)
   return (
@@ -453,9 +453,9 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
         continue
       }
 
-      // Special case: .zy/worktrees/ is a structural path (where Claude stores
-      // git worktrees), not a user-created dangerous directory. Skip the .claude
-      // segment when it's followed by 'worktrees'. Any nested .claude directories
+      // Special case: .zy/worktrees/ is a structural path (where Zy stores
+      // git worktrees), not a user-created dangerous directory. Skip the .zy
+      // segment when it's followed by 'worktrees'. Any nested .zy directories
       // within the worktree (not followed by 'worktrees') are still blocked.
       if (dir === '.zy') {
         const nextSegment = pathSegments[i + 1]
@@ -463,7 +463,7 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
           nextSegment &&
           normalizeCaseForComparison(nextSegment) === 'worktrees'
         ) {
-          break // Skip this .claude, continue checking other segments
+          break // Skip this .zy, continue checking other segments
         }
       }
 
@@ -493,7 +493,7 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
  * - NTFS Alternate Data Streams (e.g., file.txt::$DATA or file.txt:stream)
  * - 8.3 short names (e.g., GIT~1, CLAUDE~1, SETTIN~1.JSON)
  * - Long path prefixes (e.g., \\?\C:\..., \\.\C:\..., //?/C:/..., //./C:/...)
- * - Trailing dots and spaces (e.g., .git., .claude , .bashrc...)
+ * - Trailing dots and spaces (e.g., .git., .zy , .bashrc...)
  * - DOS device names (e.g., .git.CON, settings.json.PRN, .bashrc.AUX)
  * - Three or more consecutive dots (e.g., .../file.txt, path/.../file, file...txt)
  *
@@ -569,7 +569,7 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
   }
 
   // Check for trailing dots and spaces that Windows strips during path resolution
-  // Examples: .git., .claude , .bashrc..., settings.json.
+  // Examples: .git., .zy , .bashrc..., settings.json.
   // This can bypass string matching if ".git" is blocked but ".git." is used
   if (/[.\s]+$/.test(path)) {
     return true
@@ -607,7 +607,7 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
  *
  * This function performs comprehensive safety checks including:
  * - Suspicious Windows path patterns (NTFS streams, 8.3 names, long path prefixes, etc.)
- * - Claude config files (.zy/settings.json, .zy/commands/, .zy/agents/)
+ * - Zy config files (.zy/settings.json, .zy/commands/, .zy/agents/)
  * - MCP CLI state files (managed internally by ZY Code)
  * - Dangerous files (.bashrc, .gitconfig, .git/, .vscode/, .idea/, etc.)
  *
@@ -638,9 +638,9 @@ export function checkPathSafetyForAutoEdit(
     }
   }
 
-  // Check for Claude config files on all paths
+  // Check for Zy config files on all paths
   for (const pathToCheck of pathsToCheck) {
-    if (isClaudeConfigFilePath(pathToCheck)) {
+    if (isZyConfigFilePath(pathToCheck)) {
       return {
         safe: false,
         message: `ZY requested permissions to write to ${path}, but you haven't granted it yet.`,
@@ -1239,7 +1239,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
   }
 
   // 1.5. Allow writes to internal editable paths (plan files, scratchpad)
-  // This MUST come before isDangerousFilePathToAutoEdit check since .claude is a dangerous directory
+  // This MUST come before isDangerousFilePathToAutoEdit check since .zy is a dangerous directory
   const absolutePathForEdit = expandPath(path)
   const internalEditResult = checkEditableInternalPath(
     absolutePathForEdit,
@@ -1255,11 +1255,11 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
   // permanently granting broad access to their .zy/ folder.
   //
   // matchingRuleForInput returns the first match across all sources. If the user
-  // also has a broader Edit(.claude) rule in userSettings (e.g. from sandbox
+  // also has a broader Edit(.zy) rule in userSettings (e.g. from sandbox
   // write-allow conversion), that rule would be found first and its source check
   // below would fail. Scope the search to session-only rules so the dialog's
-  // "allow Claude to edit its own settings for this session" option actually works.
-  const claudeFolderAllowRule = matchingRuleForInput(
+  // "allow Zy to edit its own settings for this session" option actually works.
+  const ZyFolderAllowRule = matchingRuleForInput(
     path,
     {
       ...toolPermissionContext,
@@ -1270,7 +1270,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     'edit',
     'allow',
   )
-  if (claudeFolderAllowRule) {
+  if (ZyFolderAllowRule) {
     // Check if this rule is scoped under .zy/ (project or global).
     // Accepts both the broad patterns ('/.zy/**', '~/.zy/**') and
     // narrowed ones like '/.zy/skills/my-skill/**' so users can grant
@@ -1278,7 +1278,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     // or hooks/. The rule already matched the path via matchingRuleForInput;
     // this is an additional scope check. Reject '..' to prevent a rule like
     // '/.zy/../**' from leaking this bypass outside .zy/.
-    const ruleContent = claudeFolderAllowRule.ruleValue.ruleContent
+    const ruleContent = ZyFolderAllowRule.ruleValue.ruleContent
     if (
       ruleContent &&
       (ruleContent.startsWith(CLAUDE_FOLDER_PERMISSION_PATTERN.slice(0, -2)) ||
@@ -1293,13 +1293,13 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
         updatedInput: input,
         decisionReason: {
           type: 'rule',
-          rule: claudeFolderAllowRule,
+          rule: ZyFolderAllowRule,
         },
       }
     }
   }
 
-  // 1.7. Check comprehensive safety validations (Windows patterns, Claude config, dangerous files)
+  // 1.7. Check comprehensive safety validations (Windows patterns, Zy config, dangerous files)
   // This MUST come before checking allow rules to prevent users from accidentally granting
   // permission to edit protected files
   const safetyCheck = checkPathSafetyForAutoEdit(path, pathsToCheck)
@@ -1309,7 +1309,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     // Everything else (.zy/settings.json, .git/, .vscode/, .idea/) falls
     // back to generateSuggestions — its setMode suggestion doesn't bypass
     // this check, but preserving it avoids a surprising empty array.
-    const skillScope = getClaudeSkillScope(path)
+    const skillScope = getZySkillScope(path)
     const safetySuggestions: PermissionUpdate[] = skillScope
       ? [
           {
@@ -1520,12 +1520,12 @@ export function checkEditableInternalPath(
   if (feature('TEMPLATES')) {
     const jobDir = process.env.CLAUDE_JOB_DIR
     if (jobDir) {
-      const jobsRoot = join(getClaudeConfigHomeDir(), 'jobs')
+      const jobsRoot = join(getZyConfigHomeDir(), 'jobs')
       const jobDirForms = getPathsForPermissionCheck(jobDir).map(normalize)
       const jobsRootForms = getPathsForPermissionCheck(jobsRoot).map(normalize)
       // Hijack guard: every resolved form of the job dir must sit under
       // some resolved form of the jobs root. Resolving both sides handles
-      // the case where ~/.claude is a symlink (e.g. to /data/claude-config).
+      // the case where ~/.zy is a symlink (e.g. to /data/zy-config).
       const isUnderJobsRoot = jobDirForms.every(jd =>
         jobsRootForms.some(jr => jd.startsWith(jr + sep)),
       )
@@ -1581,7 +1581,7 @@ export function checkEditableInternalPath(
   }
 
   // .zy/launch.json — desktop preview config (dev server command + port).
-  // The desktop's preview_start MCP tool instructs Claude to create/update
+  // The desktop's preview_start MCP tool instructs Zy to create/update
   // this file as part of the preview workflow. Without this carve-out the
   // .zy/ DANGEROUS_DIRECTORIES check prompts for it, which in SDK mode
   // cascades: user clicks "Always allow" → setMode:acceptEdits suggestion
@@ -1685,7 +1685,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Project temp directory (/tmp/claude/{sanitized-cwd}/)
+  // Project temp directory (/tmp/zy/{sanitized-cwd}/)
   // Intentionally allows reading files from all sessions in this project, not just the current session.
   // This enables cross-session file access within the same project's temp space.
   const projectTempDir = getProjectTempDir()
@@ -1725,7 +1725,7 @@ export function checkReadableInternalPath(
   }
 
   // Tasks directory (~/.zy/tasks/) for swarm task coordination
-  const tasksDir = join(getClaudeConfigHomeDir(), 'tasks') + sep
+  const tasksDir = join(getZyConfigHomeDir(), 'tasks') + sep
   if (
     normalizedPath === tasksDir.slice(0, -1) ||
     normalizedPath.startsWith(tasksDir)
@@ -1741,7 +1741,7 @@ export function checkReadableInternalPath(
   }
 
   // Teams directory (~/.zy/teams/) for swarm coordination
-  const teamsReadDir = join(getClaudeConfigHomeDir(), 'teams') + sep
+  const teamsReadDir = join(getZyConfigHomeDir(), 'teams') + sep
   if (
     normalizedPath === teamsReadDir.slice(0, -1) ||
     normalizedPath.startsWith(teamsReadDir)

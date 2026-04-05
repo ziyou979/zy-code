@@ -17,9 +17,9 @@ import { lazySchema } from '../lazySchema.js'
  * These names are allowed ONLY for official marketplaces and blocked for third parties.
  */
 export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
-  'claude-code-marketplace',
-  'claude-code-plugins',
-  'claude-plugins-official',
+  'zy-code-marketplace',
+  'zy-code-plugins',
+  'zy-plugins-official',
   'anthropic-marketplace',
   'anthropic-plugins',
   'agent-skills',
@@ -58,18 +58,18 @@ export function isMarketplaceAutoUpdate(
 }
 
 /**
- * Pattern to detect names that impersonate official Anthropic/Claude marketplaces.
+ * Pattern to detect names that impersonate official Anthropic/Zy marketplaces.
  *
  * Matches names containing variations like:
- * - "official" combined with "anthropic" or "claude" (e.g., "official-claude-plugins")
- * - "anthropic" or "claude" combined with "official" (e.g., "claude-official")
- * - Names starting with "anthropic" or "claude" followed by official-sounding terms
- *   like "marketplace", "plugins" (e.g., "anthropic-marketplace-new", "claude-plugins-v2")
+ * - "official" combined with "anthropic" or "zy" (e.g., "official-zy-plugins")
+ * - "anthropic" or "zy" combined with "official" (e.g., "zy-official")
+ * - Names starting with "anthropic" or "zy" followed by official-sounding terms
+ *   like "marketplace", "plugins" (e.g., "anthropic-marketplace-new", "zy-plugins-v2")
  *
  * The pattern is case-insensitive.
  */
 export const BLOCKED_OFFICIAL_NAME_PATTERN =
-  /(?:official[^a-z0-9]*(anthropic|claude)|(?:anthropic|claude)[^a-z0-9]*official|^(?:anthropic|claude)[^a-z0-9]*(marketplace|plugins|official))/i
+  /(?:official[^a-z0-9]*(anthropic|zy)|(?:anthropic|zy)[^a-z0-9]*official|^(?:anthropic|zy)[^a-z0-9]*(marketplace|plugins|official))/i
 
 /**
  * Pattern to detect non-ASCII characters that could be used for homograph attacks.
@@ -234,7 +234,7 @@ const MarketplaceNameSchema = lazySchema(() =>
     )
     .refine(name => !isBlockedOfficialName(name), {
       message:
-        'Marketplace name impersonates an official Anthropic/Claude marketplace',
+        'Marketplace name impersonates an official Anthropic/Zy marketplace',
     })
     .refine(name => name.toLowerCase() !== 'inline', {
       message:
@@ -656,7 +656,7 @@ const PluginManifestUserConfigSchema = lazySchema(() =>
 /**
  * Schema for channel declarations in plugin manifest.
  *
- * A channel is an MCP server that emits `notifications/claude/channel` to
+ * A channel is an MCP server that emits `notifications/zy/channel` to
  * inject messages into the conversation (Telegram, Slack, Discord, etc.).
  * Declaring it here lets the plugin prompt for user config (bot tokens,
  * owner IDs) at install time via the PluginOptionsFlow prompt,
@@ -879,7 +879,7 @@ const PluginManifestSettingsSchema = lazySchema(() =>
  * still fail, since a typo there is more likely to be an author mistake
  * than a vendor extension. Type mismatches and other validation errors
  * still fail at all levels. For developer feedback on unknown top-level
- * fields, use `claude plugin validate`.
+ * fields, use `zy plugin validate`.
  */
 export const PluginManifestSchema = lazySchema(() =>
   z.object({
@@ -926,7 +926,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Path to marketplace.json within repo (defaults to .claude-plugin/marketplace.json)',
+          'Path to marketplace.json within repo (defaults to .zy-plugin/marketplace.json)',
         ),
       sparsePaths: z
         .array(z.string())
@@ -934,7 +934,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .describe(
           'Directories to include via git sparse-checkout (cone mode). ' +
             'Use for monorepos where the marketplace lives in a subdirectory. ' +
-            'Example: [".claude-plugin", "plugins"]. ' +
+            'Example: [".zy-plugin", "plugins"]. ' +
             'If omitted, the full repository is cloned.',
         ),
     }),
@@ -958,7 +958,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Path to marketplace.json within repo (defaults to .claude-plugin/marketplace.json)',
+          'Path to marketplace.json within repo (defaults to .zy-plugin/marketplace.json)',
         ),
       sparsePaths: z
         .array(z.string())
@@ -966,7 +966,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .describe(
           'Directories to include via git sparse-checkout (cone mode). ' +
             'Use for monorepos where the marketplace lives in a subdirectory. ' +
-            'Example: [".claude-plugin", "plugins"]. ' +
+            'Example: [".zy-plugin", "plugins"]. ' +
             'If omitted, the full repository is cloned.',
         ),
     }),
@@ -984,7 +984,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
       source: z.literal('directory'),
       path: z
         .string()
-        .describe('Local directory containing .claude-plugin/marketplace.json'),
+        .describe('Local directory containing .zy-plugin/marketplace.json'),
     }),
     z.object({
       source: z.literal('hostPattern'),
@@ -1062,7 +1062,7 @@ export const gitSha = lazySchema(() =>
 export const PluginSourceSchema = lazySchema(() =>
   z.union([
     RelativePath().describe(
-      'Path to the plugin root, relative to the marketplace root (the directory containing .claude-plugin/, not .claude-plugin/ itself)',
+      'Path to the plugin root, relative to the marketplace root (the directory containing .zy-plugin/, not .zy-plugin/ itself)',
     ),
     z
       .object({
@@ -1140,7 +1140,7 @@ export const PluginSourceSchema = lazySchema(() =>
           .string()
           .min(1)
           .describe(
-            'Subdirectory within the repo containing the plugin (e.g., "tools/claude-plugin"). ' +
+            'Subdirectory within the repo containing the plugin (e.g., "tools/zy-plugin"). ' +
               'Cloned sparsely using partial clone (--filter=tree:0) to minimize bandwidth for monorepos.',
           ),
         ref: z
@@ -1584,7 +1584,7 @@ export const InstalledPluginsFileSchema = lazySchema(() =>
  *
  * Example entry:
  * {
- *   "source": { "source": "github", "repo": "anthropic/claude-plugins" },
+ *   "source": { "source": "github", "repo": "anthropic/zy-plugins" },
  *   "installLocation": "/home/user/.zy/plugins/cached/marketplaces/anthropic-tools",
  *   "lastUpdated": "2024-01-15T10:30:00Z"
  * }

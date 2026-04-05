@@ -104,7 +104,7 @@ ${question}`
 /**
  * Extract a display string from forked agent messages.
  *
- * IMPORTANT: claude.ts yields one AssistantMessage PER CONTENT BLOCK, not one
+ * IMPORTANT: zy.ts yields one AssistantMessage PER CONTENT BLOCK, not one
  * per API response. With adaptive thinking enabled (inherited from the main
  * thread to preserve the cache key), a thinking response arrives as:
  *   messages[0] = assistant { content: [thinking_block] }

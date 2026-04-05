@@ -4,14 +4,14 @@ import { type OptionWithDescription, Select } from '../../components/CustomSelec
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { Box, Text } from '../../ink.js';
 import { useAppState } from '../../state/AppState.js';
-import { isClaudeAISubscriber } from '../../utils/auth.js';
+import { isZyAISubscriber } from '../../utils/auth.js';
 import { openBrowser } from '../../utils/browser.js';
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, openInChrome } from '../../utils/claudeInChrome/common.js';
-import { isChromeExtensionInstalled } from '../../utils/claudeInChrome/setup.js';
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, openInChrome } from '../../utils/ClaudeInChrome/common.js';
+import { isChromeExtensionInstalled } from '../../utils/ClaudeInChrome/setup.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { env } from '../../utils/env.js';
 import { isRunningOnHomespace } from '../../utils/envUtils.js';
-const CHROME_EXTENSION_URL = 'https://claude.ai/chrome';
+const CHROME_EXTENSION_URL = 'https://zy.ai/chrome';
 const CHROME_PERMISSIONS_URL = 'https://clau.de/chrome/permissions';
 const CHROME_RECONNECT_URL = 'https://clau.de/chrome/reconnect';
 type MenuAction = 'install-extension' | 'reconnect' | 'manage-permissions' | 'toggle-default';
@@ -19,7 +19,7 @@ type Props = {
   onDone: (result?: string) => void;
   isExtensionInstalled: boolean;
   configEnabled: boolean | undefined;
-  isClaudeAISubscriber: boolean;
+  isZyAISubscriber: boolean;
   isWSL: boolean;
 };
 function ClaudeInChromeMenu(t0) {
@@ -28,7 +28,7 @@ function ClaudeInChromeMenu(t0) {
     onDone,
     isExtensionInstalled: installed,
     configEnabled,
-    isClaudeAISubscriber,
+    isZyAISubscriber,
     isWSL
   } = t0;
   const mcpClients = useAppState(_temp);
@@ -102,7 +102,7 @@ function ClaudeInChromeMenu(t0) {
             const newValue = !enabledByDefault;
             saveGlobalConfig(current => ({
               ...current,
-              claudeInChromeDefaultEnabled: newValue
+              ClaudeInChromeDefaultEnabled: newValue
             }));
             setEnabledByDefault(newValue);
           }
@@ -186,7 +186,7 @@ function ClaudeInChromeMenu(t0) {
   } else {
     options = $[8];
   }
-  const isDisabled = isWSL || true && !isClaudeAISubscriber;
+  const isDisabled = isWSL || true && !isZyAISubscriber;
   let t5;
   if ($[18] !== onDone) {
     t5 = () => onDone();
@@ -211,16 +211,16 @@ function ClaudeInChromeMenu(t0) {
     t7 = $[22];
   }
   let t8;
-  if ($[23] !== isClaudeAISubscriber) {
-    t8 = true && !isClaudeAISubscriber && <Text color="error">Claude in Chrome requires a claude.ai subscription.</Text>;
-    $[23] = isClaudeAISubscriber;
+  if ($[23] !== isZyAISubscriber) {
+    t8 = true && !isZyAISubscriber && <Text color="error">Claude in Chrome requires a claude.ai subscription.</Text>;
+    $[23] = isZyAISubscriber;
     $[24] = t8;
   } else {
     t8 = $[24];
   }
   let t9;
   if ($[25] !== handleAction || $[26] !== isConnected || $[27] !== isDisabled || $[28] !== isExtensionInstalled || $[29] !== options || $[30] !== selectKey || $[31] !== showInstallHint) {
-    t9 = !isDisabled && <>{!isHomespace && <Box flexDirection="column"><Text>Status:{" "}{isConnected ? <Text color="success">Enabled</Text> : <Text color="inactive">Disabled</Text>}</Text><Text>Extension:{" "}{isExtensionInstalled ? <Text color="success">Installed</Text> : <Text color="warning">Not detected</Text>}</Text></Box>}<Select key={selectKey} options={options} onChange={handleAction} hideIndexes={true} />{showInstallHint && <Text color="warning">Once installed, select {"\"Reconnect extension\""} to connect.</Text>}<Text><Text dimColor={true}>Usage: </Text><Text>claude --chrome</Text><Text dimColor={true}> or </Text><Text>claude --no-chrome</Text></Text><Text dimColor={true}>Site-level permissions are inherited from the Chrome extension. Manage permissions in the Chrome extension settings to control which sites Claude can browse, click, and type on.</Text></>;
+    t9 = !isDisabled && <>{!isHomespace && <Box flexDirection="column"><Text>Status:{" "}{isConnected ? <Text color="success">Enabled</Text> : <Text color="inactive">Disabled</Text>}</Text><Text>Extension:{" "}{isExtensionInstalled ? <Text color="success">Installed</Text> : <Text color="warning">Not detected</Text>}</Text></Box>}<Select key={selectKey} options={options} onChange={handleAction} hideIndexes={true} />{showInstallHint && <Text color="warning">Once installed, select {"\"Reconnect extension\""} to connect.</Text>}<Text><Text dimColor={true}>Usage: </Text><Text>zy --chrome</Text><Text dimColor={true}> or </Text><Text>zy --no-chrome</Text></Text><Text dimColor={true}>Site-level permissions are inherited from the Chrome extension. Manage permissions in the Chrome extension settings to control which sites Zy can browse, click, and type on.</Text></>;
     $[25] = handleAction;
     $[26] = isConnected;
     $[27] = isDisabled;
@@ -234,7 +234,7 @@ function ClaudeInChromeMenu(t0) {
   }
   let t10;
   if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
-    t10 = <Text dimColor={true}>Learn more: https://code.claude.com/docs/en/chrome</Text>;
+    t10 = <Text dimColor={true}>Learn more: https://code.zy.com/docs/en/chrome</Text>;
     $[33] = t10;
   } else {
     t10 = $[33];
@@ -278,7 +278,7 @@ function _temp(s) {
 export const call = async function (onDone: (result?: string) => void): Promise<React.ReactNode> {
   const isExtensionInstalled = await isChromeExtensionInstalled();
   const config = getGlobalConfig();
-  const isSubscriber = isClaudeAISubscriber();
+  const isSubscriber = isZyAISubscriber();
   const isWSL = env.isWslEnvironment();
-  return <ClaudeInChromeMenu onDone={onDone} isExtensionInstalled={isExtensionInstalled} configEnabled={config.claudeInChromeDefaultEnabled} isClaudeAISubscriber={isSubscriber} isWSL={isWSL} />;
+  return <ClaudeInChromeMenu onDone={onDone} isExtensionInstalled={isExtensionInstalled} configEnabled={config.ClaudeInChromeDefaultEnabled} isZyAISubscriber={isSubscriber} isWSL={isWSL} />;
 };

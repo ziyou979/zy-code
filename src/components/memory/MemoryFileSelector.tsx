@@ -16,8 +16,8 @@ import { readLastConsolidatedAt } from '../../services/autoDream/consolidationLo
 import { useAppState } from '../../state/AppState.js';
 import { getAgentMemoryDir } from '../../tools/AgentTool/agentMemory.js';
 import { openPath } from '../../utils/browser.js';
-import { getMemoryFiles, type MemoryFileInfo } from '../../utils/claudemd.js';
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js';
+import { getMemoryFiles, type MemoryFileInfo } from '../../utils/zymd.js';
+import { getZyConfigHomeDir } from '../../utils/envUtils.js';
 import { getDisplayPath } from '../../utils/file.js';
 import { formatRelativeTimeAgo } from '../../utils/format.js';
 import { projectIsInGitRepo } from '../../utils/memory/versions.js';
@@ -48,7 +48,7 @@ export function MemoryFileSelector(t0) {
     onCancel
   } = t0;
   const existingMemoryFiles = use(getMemoryFiles());
-  const userMemoryPath = join(getClaudeConfigHomeDir(), "CLAUDE.md");
+  const userMemoryPath = join(getZyConfigHomeDir(), "CLAUDE.md");
   const projectMemoryPath = join(getOriginalCwd(), "CLAUDE.md");
   const hasUserMemory = existingMemoryFiles.some(f => f.path === userMemoryPath);
   const hasProjectMemory = existingMemoryFiles.some(f_0 => f_0.path === projectMemoryPath);

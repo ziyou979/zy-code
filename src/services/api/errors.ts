@@ -16,9 +16,9 @@ import type {
 } from 'src/types/message.js'
 import {
   getApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
   getOauthAccountInfo,
-  isClaudeAISubscriber,
+  isZyAISubscriber,
 } from 'src/utils/auth.js'
 import {
   createAssistantAPIErrorMessage,
@@ -44,10 +44,10 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import {
-  type ClaudeAILimits,
+  type ZyAILimits,
   getRateLimitErrorMessage,
   type OverageDisabledReason,
-} from '../claudeAiLimits.js'
+} from '../zyAiLimits.js'
 import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
 import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
 
@@ -223,7 +223,7 @@ export function getOauthOrgNotAllowedErrorMessage(): string {
  * not via /login. Transient auth errors should suggest retrying, not logging in.
  */
 function isCCRMode(): boolean {
-  return isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)
+  return isEnvTruthy(process.env.ZY_CODE_REMOTE)
 }
 
 // Temp helper to log tool_use/tool_result mismatch errors
@@ -473,7 +473,7 @@ export function getAssistantMessageFromError(
   if (
     error instanceof APIError &&
     error.status === 429 &&
-    shouldProcessRateLimits(isClaudeAISubscriber())
+    shouldProcessRateLimits(isZyAISubscriber())
   ) {
     // Check if this is the new API with multiple rate limit headers
     const rateLimitType = error.headers?.get?.(
@@ -487,7 +487,7 @@ export function getAssistantMessageFromError(
     // If we have the new headers, use the new message generation
     if (rateLimitType || overageStatus) {
       // Build limits object from error headers to determine the appropriate message
-      const limits: ClaudeAILimits = {
+      const limits: ZyAILimits = {
         status: 'rejected',
         unifiedRateLimitFallbackAvailable: false,
         isUsingOverage: false,
@@ -535,7 +535,7 @@ export function getAssistantMessageFromError(
       // If getRateLimitErrorMessage returned null, it means the fallback mechanism
       // will handle this silently (e.g., Opus -> Sonnet fallback for eligible users).
       // Return NO_RESPONSE_REQUESTED so no error is shown to the user, but the
-      // message is still recorded in conversation history for Claude to see.
+      // message is still recorded in conversation history for Zy to see.
       return createAssistantAPIErrorMessage({
         content: NO_RESPONSE_REQUESTED,
         error: 'rate_limit',
@@ -547,7 +547,7 @@ export function getAssistantMessageFromError(
     // (e.g. 1M context without Extra Usage) and infra capacity 429s land here.
     if (error.message.includes('Extra usage is required for long context')) {
       const hint = getIsNonInteractiveSession()
-        ? 'enable extra usage at claude.ai/settings/usage, or use --model to switch to standard context'
+        ? 'enable extra usage at zy.ai/settings/usage, or use --model to switch to standard context'
         : 'run /extra-usage to enable, or /model to switch to standard context'
       return createAssistantAPIErrorMessage({
         content: `${API_ERROR_MESSAGE_PREFIX}: Extra usage is required for 1M context · ${hint}`,
@@ -742,7 +742,7 @@ export function getAssistantMessageFromError(
 
   // Check for invalid model name error for subscription users trying to use Opus
   if (
-    isClaudeAISubscriber() &&
+    isZyAISubscriber() &&
     error instanceof APIError &&
     error.status === 400 &&
     error.message.toLowerCase().includes('invalid model name') &&
@@ -766,7 +766,7 @@ export function getAssistantMessageFromError(
   ) {
     // Get organization ID from config - only use OAuth account data when actively using OAuth
     const orgId = getOauthAccountInfo()?.organizationUuid
-    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`claude\` with \`ANTHROPIC_MODEL=${getDefaultMainLoopModelSetting()}\``
+    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`zy\` with \`ANTHROPIC_MODEL=${getDefaultMainLoopModelSetting()}\``
     const msg = orgId
       ? `${baseMsg} or share your orgId (${orgId}) in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
       : `${baseMsg} or reach out in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
@@ -803,9 +803,9 @@ export function getAssistantMessageFromError(
     if (
       source === 'ANTHROPIC_API_KEY' &&
       process.env.ANTHROPIC_API_KEY &&
-      !isClaudeAISubscriber()
+      !isZyAISubscriber()
     ) {
-      const hasStoredOAuth = getClaudeAIOAuthTokens()?.accessToken != null
+      const hasStoredOAuth = getZyAIOAuthTokens()?.accessToken != null
       // Not 'authentication_failed' — that triggers VS Code's showLogin(), but
       // login can't fix this (approved env var keeps overriding OAuth). The fix
       // is configuration-based (unset the var), so invalid_request is correct.
@@ -893,7 +893,7 @@ export function getAssistantMessageFromError(
   // Bedrock errors like "403 You don't have access to the model with the specified model ID."
   // don't contain the actual model ID
   if (
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) &&
+    isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) &&
     error instanceof Error &&
     error.message.toLowerCase().includes('model id')
   ) {
@@ -1142,7 +1142,7 @@ export function classifyAPIError(error: unknown): string {
 
   // Bedrock-specific errors
   if (
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) &&
+    isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) &&
     error instanceof Error &&
     error.message.toLowerCase().includes('model id')
   ) {
@@ -1204,8 +1204,8 @@ export function getErrorMessageIfRefusal(
     : `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Please double press esc to edit your last message or start a new session for ZY Code to assist with a different task.`
 
   const modelSuggestion =
-    model !== 'claude-sonnet-4-20250514'
-      ? ' If you are seeing this refusal repeatedly, try running /model claude-sonnet-4-20250514 to switch models.'
+    model !== 'zy-sonnet-4-20250514'
+      ? ' If you are seeing this refusal repeatedly, try running /model zy-sonnet-4-20250514 to switch models.'
       : ''
 
   return createAssistantAPIErrorMessage({

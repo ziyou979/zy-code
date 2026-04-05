@@ -28,7 +28,7 @@ import {
 import type { ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { getCwd } from '../../utils/cwd.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import { getErrnoCode, isENOENT } from '../../utils/errors.js'
 import {
   addLineNumbers,
@@ -189,15 +189,15 @@ const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp'])
 
 /**
  * Detects if a file path is a session-related file for analytics logging.
- * Only matches files within the Claude config directory (e.g., ~/.claude).
+ * Only matches files within the Zy config directory (e.g., ~/.zy).
  * Returns the type of session file or null if not a session file.
  */
 function detectSessionFileType(
   filePath: string,
 ): 'session_memory' | 'session_transcript' | null {
-  const configDir = getClaudeConfigHomeDir()
+  const configDir = getZyConfigHomeDir()
 
-  // Only match files within the Claude config directory
+  // Only match files within the Zy config directory
   if (!filePath.startsWith(configDir)) {
     return null
   }
@@ -575,7 +575,7 @@ export const FileReadTool = buildTool({
     // Discover skills from this file's path (fire-and-forget, non-blocking)
     // Skip in simple mode - no skills available
     const cwd = getCwd()
-    if (!isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
+    if (!isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
       const newSkillDirs = await discoverSkillDirsForPaths([fullFilePath], cwd)
       if (newSkillDirs.length > 0) {
         // Store discovered dirs for attachment display
@@ -730,7 +730,7 @@ export const CYBER_RISK_MITIGATION_REMINDER =
   '\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n'
 
 // Models where cyber risk mitigation should be skipped
-const MITIGATION_EXEMPT_MODELS = new Set(['claude-opus-4-6'])
+const MITIGATION_EXEMPT_MODELS = new Set(['zy-opus-4-6'])
 
 function shouldIncludeFileReadMitigation(): boolean {
   const shortName = getMainLoopModel()

@@ -8,7 +8,7 @@ import type { ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
 } from '../../utils/auth.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
@@ -77,10 +77,10 @@ export const RemoteTriggerTool = buildTool({
   },
   async call(input: Input, context: ToolUseContext) {
     await checkAndRefreshOAuthTokenIfNeeded()
-    const accessToken = getClaudeAIOAuthTokens()?.accessToken
+    const accessToken = getZyAIOAuthTokens()?.accessToken
     if (!accessToken) {
       throw new Error(
-        'Not authenticated with a claude.ai account. Run /login and try again.',
+        'Not authenticated with a zy.ai account. Run /login and try again.',
       )
     }
     const orgUUID = await getOrganizationUUID()

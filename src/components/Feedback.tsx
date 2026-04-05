@@ -10,7 +10,7 @@ import type { CommandResultDisplay } from '../commands.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { Box, Text, useInput } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
-import { queryHaiku } from '../services/api/claude.js';
+import { queryHaiku } from '../services/api/zy.js';
 import { startsWithApiErrorPrefix } from '../services/api/errors.js';
 import type { Message } from '../types/message.js';
 import { checkAndRefreshOAuthTokenIfNeeded } from '../utils/auth.js';
@@ -32,7 +32,7 @@ import TextInput from './TextInput.js';
 
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250;
-const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/anthropics/claude-cli-internal/issues' : 'https://github.com/anthropics/claude-code/issues';
+const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/anthropics/zy-cli-internal/issues' : 'https://github.com/anthropics/zy-code/issues';
 type Props = {
   abortSignal: AbortSignal;
   messages: Message[];

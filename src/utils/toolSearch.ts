@@ -170,15 +170,15 @@ export type ToolSearchMode = 'tst' | 'tst-auto' | 'standard'
  *   (unset)               tst (default: always defer MCP and shouldDefer tools)
  */
 export function getToolSearchMode(): ToolSearchMode {
-  // CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS is a kill switch for beta API
+  // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS is a kill switch for beta API
   // features. Tool search emits defer_loading on tool definitions and
   // tool_reference content blocks — both require the API to accept a beta
   // header. When the kill switch is set, force 'standard' so no beta shapes
   // reach the wire, even if ENABLE_TOOL_SEARCH is also set. This is the
   // explicit escape hatch for proxy gateways that the heuristic in
   // isToolSearchEnabledOptimistic doesn't cover.
-  // github.com/anthropics/claude-code/issues/20031
-  if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
+  // github.com/anthropics/zy-code/issues/20031
+  if (isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
     return 'standard'
   }
 
@@ -284,7 +284,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
   // is 'anthropic' but the base URL points elsewhere, the proxy will reject
   // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected —
   // they have their own endpoints and beta headers.
-  // https://github.com/anthropics/claude-code/issues/30912
+  // https://github.com/anthropics/zy-code/issues/30912
   //
   // HOWEVER: some proxies DO support tool_reference (LiteLLM passthrough,
   // Cloudflare AI Gateway, corp gateways that forward beta headers). The
@@ -623,7 +623,7 @@ export type DeferredToolsDeltaScanContext = {
 
 /**
  * True → announce deferred tools via persisted delta attachments.
- * False → claude.ts keeps its per-call <available-deferred-tools>
+ * False → zy.ts keeps its per-call <available-deferred-tools>
  * header prepend (the attachment does not fire).
  */
 export function isDeferredToolsDeltaEnabled(): boolean {

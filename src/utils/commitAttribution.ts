@@ -23,13 +23,13 @@ import { sequential } from './sequential.js'
  *
  * NOTE: This is intentionally a repo allowlist, not an org-wide check.
  * The anthropics and anthropic-experimental orgs contain PUBLIC repos
- * (e.g. anthropics/claude-code, anthropic-experimental/sandbox-runtime).
+ * (e.g. anthropics/zy-code, anthropic-experimental/sandbox-runtime).
  * Undercover mode must stay ON in those to prevent codename leaks.
  * Only add repos here that are confirmed PRIVATE.
  */
 const INTERNAL_MODEL_REPOS = [
-  'github.com:anthropics/claude-cli-internal',
-  'github.com/anthropics/claude-cli-internal',
+  'github.com:anthropics/zy-cli-internal',
+  'github.com/anthropics/zy-cli-internal',
   'github.com:anthropics/anthropic',
   'github.com/anthropics/anthropic',
   'github.com:anthropics/apps',
@@ -60,8 +60,8 @@ const INTERNAL_MODEL_REPOS = [
   'github.com/anthropics/feldspar-testing',
   'github.com:anthropics/trellis',
   'github.com/anthropics/trellis',
-  'github.com:anthropics/claude-for-hiring',
-  'github.com/anthropics/claude-for-hiring',
+  'github.com:anthropics/zy-for-hiring',
+  'github.com/anthropics/zy-for-hiring',
   'github.com:anthropics/forge-web',
   'github.com/anthropics/forge-web',
   'github.com:anthropics/infra-manifests',
@@ -153,22 +153,22 @@ export function sanitizeSurfaceKey(surfaceKey: string): string {
  */
 export function sanitizeModelName(shortName: string): string {
   // Map internal variants to public equivalents based on model family
-  if (shortName.includes('opus-4-6')) return 'claude-opus-4-6'
-  if (shortName.includes('opus-4-5')) return 'claude-opus-4-5'
-  if (shortName.includes('opus-4-1')) return 'claude-opus-4-1'
-  if (shortName.includes('opus-4')) return 'claude-opus-4'
-  if (shortName.includes('sonnet-4-6')) return 'claude-sonnet-4-6'
-  if (shortName.includes('sonnet-4-5')) return 'claude-sonnet-4-5'
-  if (shortName.includes('sonnet-4')) return 'claude-sonnet-4'
-  if (shortName.includes('sonnet-3-7')) return 'claude-sonnet-3-7'
-  if (shortName.includes('haiku-4-5')) return 'claude-haiku-4-5'
-  if (shortName.includes('haiku-3-5')) return 'claude-haiku-3-5'
+  if (shortName.includes('opus-4-6')) return 'zy-opus-4-6'
+  if (shortName.includes('opus-4-5')) return 'zy-opus-4-5'
+  if (shortName.includes('opus-4-1')) return 'zy-opus-4-1'
+  if (shortName.includes('opus-4')) return 'zy-opus-4'
+  if (shortName.includes('sonnet-4-6')) return 'zy-sonnet-4-6'
+  if (shortName.includes('sonnet-4-5')) return 'zy-sonnet-4-5'
+  if (shortName.includes('sonnet-4')) return 'zy-sonnet-4'
+  if (shortName.includes('sonnet-3-7')) return 'zy-sonnet-3-7'
+  if (shortName.includes('haiku-4-5')) return 'zy-haiku-4-5'
+  if (shortName.includes('haiku-3-5')) return 'zy-haiku-3-5'
   // Unknown models get a generic name
-  return 'claude'
+  return 'zy'
 }
 
 /**
- * Attribution state for tracking Claude's contributions to files.
+ * Attribution state for tracking Zy's contributions to files.
  */
 export type AttributionState = {
   // File states keyed by relative path (from cwd)
@@ -192,11 +192,11 @@ export type AttributionState = {
 }
 
 /**
- * Summary of Claude's contribution for a commit.
+ * Summary of Zy's contribution for a commit.
  */
 export type AttributionSummary = {
-  claudePercent: number
-  claudeChars: number
+  ZyPercent: number
+  ZyChars: number
   humanChars: number
   surfaces: string[]
 }
@@ -205,7 +205,7 @@ export type AttributionSummary = {
  * Per-file attribution details for git notes.
  */
 export type FileAttribution = {
-  claudeChars: number
+  ZyChars: number
   humanChars: number
   percent: number
   surface: string
@@ -218,7 +218,7 @@ export type AttributionData = {
   version: 1
   summary: AttributionSummary
   files: Record<string, FileAttribution>
-  surfaceBreakdown: Record<string, { claudeChars: number; percent: number }>
+  surfaceBreakdown: Record<string, { ZyChars: number; percent: number }>
   excludedGenerated: string[]
   sessions: string[]
 }
@@ -227,12 +227,12 @@ export type AttributionData = {
  * Get the current client surface from environment.
  */
 export function getClientSurface(): string {
-  return process.env.CLAUDE_CODE_ENTRYPOINT ?? 'cli'
+  return process.env.ZY_CODE_ENTRYPOINT ?? 'cli'
 }
 
 /**
  * Build a surface key that includes the model name.
- * Format: "surface/model" (e.g., "cli/claude-sonnet")
+ * Format: "surface/model" (e.g., "cli/zy-sonnet")
  */
 export function buildSurfaceKey(surface: string, model: ModelName): string {
   return `${surface}/${model}`
@@ -332,12 +332,12 @@ function computeFileModificationState(
   const normalizedPath = normalizeFilePath(filePath)
 
   try {
-    // Calculate Claude's character contribution
-    let claudeContribution: number
+    // Calculate Zy's character contribution
+    let ZyContribution: number
 
     if (oldContent === '' || newContent === '') {
       // New file or full deletion - contribution is the content length
-      claudeContribution =
+      ZyContribution =
         oldContent === '' ? newContent.length : oldContent.length
     } else {
       // Find actual changed region via common prefix/suffix matching.
@@ -361,16 +361,16 @@ function computeFileModificationState(
       }
       const oldChangedLen = oldContent.length - prefixEnd - suffixLen
       const newChangedLen = newContent.length - prefixEnd - suffixLen
-      claudeContribution = Math.max(oldChangedLen, newChangedLen)
+      ZyContribution = Math.max(oldChangedLen, newChangedLen)
     }
 
     // Get current file state if it exists
     const existingState = existingFileStates.get(normalizedPath)
-    const existingContribution = existingState?.claudeContribution ?? 0
+    const existingContribution = existingState?.ZyContribution ?? 0
 
     return {
       contentHash: computeContentHash(newContent),
-      claudeContribution: existingContribution + claudeContribution,
+      ZyContribution: existingContribution + ZyContribution,
       mtime,
     }
   } catch (error) {
@@ -396,7 +396,7 @@ export async function getFileMtime(filePath: string): Promise<number> {
 }
 
 /**
- * Track a file modification by Claude.
+ * Track a file modification by Zy.
  * Called after Edit/Write tool completes.
  */
 export function trackFileModification(
@@ -423,7 +423,7 @@ export function trackFileModification(
   newFileStates.set(normalizedPath, newFileState)
 
   logForDebugging(
-    `Attribution: Tracked ${newFileState.claudeContribution} chars for ${normalizedPath}`,
+    `Attribution: Tracked ${newFileState.ZyContribution} chars for ${normalizedPath}`,
   )
 
   return {
@@ -433,8 +433,8 @@ export function trackFileModification(
 }
 
 /**
- * Track a file creation by Claude (e.g., via bash command).
- * Used when Claude creates a new file through a non-tracked mechanism.
+ * Track a file creation by Zy (e.g., via bash command).
+ * Used when Zy creates a new file through a non-tracked mechanism.
  */
 export function trackFileCreation(
   state: AttributionState,
@@ -447,8 +447,8 @@ export function trackFileCreation(
 }
 
 /**
- * Track a file deletion by Claude (e.g., via bash rm command).
- * Used when Claude deletes a file through a non-tracked mechanism.
+ * Track a file deletion by Zy (e.g., via bash rm command).
+ * Used when Zy deletes a file through a non-tracked mechanism.
  */
 export function trackFileDeletion(
   state: AttributionState,
@@ -457,12 +457,12 @@ export function trackFileDeletion(
 ): AttributionState {
   const normalizedPath = normalizeFilePath(filePath)
   const existingState = state.fileStates.get(normalizedPath)
-  const existingContribution = existingState?.claudeContribution ?? 0
+  const existingContribution = existingState?.ZyContribution ?? 0
   const deletedChars = oldContent.length
 
   const newFileState: FileAttributionState = {
     contentHash: '', // Empty hash for deleted files
-    claudeContribution: existingContribution + deletedChars,
+    ZyContribution: existingContribution + deletedChars,
     mtime: Date.now(),
   }
 
@@ -470,7 +470,7 @@ export function trackFileDeletion(
   newFileStates.set(normalizedPath, newFileState)
 
   logForDebugging(
-    `Attribution: Tracked deletion of ${normalizedPath} (${deletedChars} chars removed, total contribution: ${newFileState.claudeContribution})`,
+    `Attribution: Tracked deletion of ${normalizedPath} (${deletedChars} chars removed, total contribution: ${newFileState.ZyContribution})`,
   )
 
   return {
@@ -504,12 +504,12 @@ export function trackBulkFileChanges(
     if (change.type === 'deleted') {
       const normalizedPath = normalizeFilePath(change.path)
       const existingState = newFileStates.get(normalizedPath)
-      const existingContribution = existingState?.claudeContribution ?? 0
+      const existingContribution = existingState?.ZyContribution ?? 0
       const deletedChars = change.oldContent.length
 
       newFileStates.set(normalizedPath, {
         contentHash: '',
-        claudeContribution: existingContribution + deletedChars,
+        ZyContribution: existingContribution + deletedChars,
         mtime,
       })
 
@@ -529,7 +529,7 @@ export function trackBulkFileChanges(
         newFileStates.set(normalizedPath, newFileState)
 
         logForDebugging(
-          `Attribution: Tracked ${newFileState.claudeContribution} chars for ${normalizedPath}`,
+          `Attribution: Tracked ${newFileState.ZyContribution} chars for ${normalizedPath}`,
         )
       }
     }
@@ -557,7 +557,7 @@ export async function calculateCommitAttribution(
   const surfaces = new Set<string>()
   const surfaceCounts: Record<string, number> = {}
 
-  let totalClaudeChars = 0
+  let totalZyChars = 0
   let totalHumanChars = 0
 
   // Merge file states from all sessions
@@ -604,8 +604,8 @@ export async function calculateCommitAttribution(
       if (existing) {
         mergedFileStates.set(path, {
           ...fileState,
-          claudeContribution:
-            existing.claudeContribution + fileState.claudeContribution,
+          ZyContribution:
+            existing.ZyContribution + fileState.ZyContribution,
         })
       } else {
         mergedFileStates.set(path, fileState)
@@ -628,7 +628,7 @@ export async function calculateCommitAttribution(
       // Get the surface for this file
       const fileSurface = states[0]!.surface
 
-      let claudeChars = 0
+      let ZyChars = 0
       let humanChars = 0
 
       // Check if file was deleted
@@ -637,8 +637,8 @@ export async function calculateCommitAttribution(
       if (deleted) {
         // File was deleted
         if (fileState) {
-          // Claude deleted this file (tracked deletion)
-          claudeChars = fileState.claudeContribution
+          // Zy deleted this file (tracked deletion)
+          ZyChars = fileState.ZyContribution
           humanChars = 0
         } else {
           // Human deleted this file (untracked deletion)
@@ -655,7 +655,7 @@ export async function calculateCommitAttribution(
 
           if (fileState) {
             // We have tracked modifications for this file
-            claudeChars = fileState.claudeContribution
+            ZyChars = fileState.ZyContribution
             humanChars = 0
           } else if (baseline) {
             // File was modified but not tracked - human modification
@@ -672,16 +672,16 @@ export async function calculateCommitAttribution(
       }
 
       // Ensure non-negative values
-      claudeChars = Math.max(0, claudeChars)
+      ZyChars = Math.max(0, ZyChars)
       humanChars = Math.max(0, humanChars)
 
-      const total = claudeChars + humanChars
-      const percent = total > 0 ? Math.round((claudeChars / total) * 100) : 0
+      const total = ZyChars + humanChars
+      const percent = total > 0 ? Math.round((ZyChars / total) * 100) : 0
 
       return {
         type: 'file' as const,
         file,
-        claudeChars,
+        ZyChars,
         humanChars,
         percent,
         surface: fileSurface,
@@ -699,39 +699,39 @@ export async function calculateCommitAttribution(
     }
 
     files[result.file] = {
-      claudeChars: result.claudeChars,
+      ZyChars: result.ZyChars,
       humanChars: result.humanChars,
       percent: result.percent,
       surface: result.surface,
     }
 
-    totalClaudeChars += result.claudeChars
+    totalZyChars += result.ZyChars
     totalHumanChars += result.humanChars
 
     surfaceCounts[result.surface] =
-      (surfaceCounts[result.surface] ?? 0) + result.claudeChars
+      (surfaceCounts[result.surface] ?? 0) + result.ZyChars
   }
 
-  const totalChars = totalClaudeChars + totalHumanChars
-  const claudePercent =
-    totalChars > 0 ? Math.round((totalClaudeChars / totalChars) * 100) : 0
+  const totalChars = totalZyChars + totalHumanChars
+  const ZyPercent =
+    totalChars > 0 ? Math.round((totalZyChars / totalChars) * 100) : 0
 
   // Calculate surface breakdown (percentage of total content per surface)
   const surfaceBreakdown: Record<
     string,
-    { claudeChars: number; percent: number }
+    { ZyChars: number; percent: number }
   > = {}
   for (const [surface, chars] of Object.entries(surfaceCounts)) {
     // Calculate what percentage of TOTAL content this surface contributed
     const percent = totalChars > 0 ? Math.round((chars / totalChars) * 100) : 0
-    surfaceBreakdown[surface] = { claudeChars: chars, percent }
+    surfaceBreakdown[surface] = { ZyChars: chars, percent }
   }
 
   return {
     version: 1,
     summary: {
-      claudePercent,
-      claudeChars: totalClaudeChars,
+      ZyPercent,
+      ZyChars: totalZyChars,
       humanChars: totalHumanChars,
       surfaces: Array.from(surfaces),
     },

@@ -6,7 +6,7 @@ import { z } from 'zod/v4';
 import { callIdeRpc } from '../services/mcp/client.js';
 import type { ConnectedMCPServer, MCPServerConnection } from '../services/mcp/types.js';
 import type { PermissionMode } from '../types/permissions.js';
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isTrackedClaudeInChromeTabId } from '../utils/claudeInChrome/common.js';
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isTrackedClaudeInChromeTabId } from '../utils/ClaudeInChrome/common.js';
 import { lazySchema } from '../utils/lazySchema.js';
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js';
 
@@ -25,7 +25,7 @@ const ClaudeInChromePromptNotificationSchema = lazySchema(() => z.object({
 }));
 
 /**
- * A hook that listens for prompt notifications from the Claude for Chrome extension,
+ * A hook that listens for prompt notifications from the Zy for Chrome extension,
  * enqueues them as user prompts, and syncs permission mode changes to the extension.
  */
 export function usePromptsFromClaudeInChrome(mcpClients, toolPermissionMode) {

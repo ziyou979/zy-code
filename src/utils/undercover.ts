@@ -7,10 +7,10 @@
  * model it is.
  *
  * Activation:
- *   - CLAUDE_CODE_UNDERCOVER=1 — force ON (even in internal repos)
+ *   - ZY_CODE_UNDERCOVER=1 — force ON (even in internal repos)
  *   - Otherwise AUTO: active UNLESS the repo remote matches the internal
  *     allowlist (INTERNAL_MODEL_REPOS in commitAttribution.ts). Safe default
- *     is ON — Claude may push to public remotes from a CWD that isn't itself
+ *     is ON — Zy may push to public remotes from a CWD that isn't itself
  *     a git checkout (e.g. /tmp crash repro).
  *   - There is NO force-OFF. This guards against model codename leaks — if
  *     we're not confident we're in an internal repo, we stay undercover.
@@ -27,7 +27,7 @@ import { isEnvTruthy } from './envUtils.js'
 
 export function isUndercover(): boolean {
   if (process.env.USER_TYPE === 'ant') {
-    if (isEnvTruthy(process.env.CLAUDE_CODE_UNDERCOVER)) return true
+    if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return true
     // Auto: active unless we've positively confirmed we're in an allowlisted
     // internal repo. 'external', 'none', and null (check not yet run) all
     // resolve to ON. The check is primed in setup.ts; only 'internal' → OFF.
@@ -47,8 +47,8 @@ information. Do not blow your cover.
 NEVER include in commit messages or PR descriptions:
 - Internal model codenames (animal names like Capybara, Tengu, etc.)
 - Unreleased model version numbers (e.g., opus-4-7, sonnet-4-8)
-- Internal repo or project names (e.g., claude-cli-internal, anthropics/…)
-- Internal tooling, Slack channels, or short links (e.g., go/cc, #claude-code-…)
+- Internal repo or project names (e.g., zy-cli-internal, anthropics/…)
+- Internal tooling, Slack channels, or short links (e.g., go/cc, #zy-code-…)
 - The phrase "ZY Code" or any mention that you are an AI
 - Any hint of what model or version you are
 - Co-Authored-By lines or any other attribution
@@ -62,10 +62,10 @@ GOOD:
 - "Refactor parser for better error messages"
 
 BAD (never write these):
-- "Fix bug found while testing with Claude Capybara"
-- "1-shotted by claude-opus-4-6"
+- "Fix bug found while testing with Zy Capybara"
+- "1-shotted by zy-opus-4-6"
 - "Generated with ZY Code"
-- "Co-Authored-By: Claude Opus 4.6 <…>"
+- "Co-Authored-By: Zy Opus 4.6 <…>"
 `
   }
   return ''
@@ -80,7 +80,7 @@ BAD (never write these):
 export function shouldShowUndercoverAutoNotice(): boolean {
   if (process.env.USER_TYPE === 'ant') {
     // If forced via env, user already knows; don't nag.
-    if (isEnvTruthy(process.env.CLAUDE_CODE_UNDERCOVER)) return false
+    if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return false
     if (!isUndercover()) return false
     if (getGlobalConfig().hasSeenUndercoverAutoNotice) return false
     return true

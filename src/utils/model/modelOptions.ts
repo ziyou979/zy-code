@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { getInitialMainLoopModel } from '../../bootstrap/state.js'
 import {
-  isClaudeAISubscriber,
+  isZyAISubscriber,
   isMaxSubscriber,
   isTeamPremiumSubscriber,
 } from '../auth.js'
@@ -17,7 +17,7 @@ import { checkOpus1mAccess, checkSonnet1mAccess } from './check1mAccess.js'
 import { getAPIProvider, providerHasCapability } from './providers.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import {
-  getClaudeAiUserDefaultModelDescription,
+  getZyAiUserDefaultModelDescription,
   getDefaultSonnetModel,
   getDefaultOpusModel,
   getDefaultHaikuModel,
@@ -55,11 +55,11 @@ export function getDefaultOptionForUser(fastMode = false): ModelOption {
   }
 
   // Subscribers
-  if (isClaudeAISubscriber()) {
+  if (isZyAISubscriber()) {
     return {
       value: null,
       label: 'Default (recommended)',
-      description: getClaudeAiUserDefaultModelDescription(fastMode),
+      description: getZyAiUserDefaultModelDescription(fastMode),
     }
   }
 
@@ -217,7 +217,7 @@ function getMaxOpusOption(fastMode = false): ModelOption {
 
 export function getMaxSonnet46_1MOption(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking')
-  const billingInfo = isClaudeAISubscriber() ? ' · Billed as extra usage' : ''
+  const billingInfo = isZyAISubscriber() ? ' · Billed as extra usage' : ''
   return {
     value: 'sonnet[1m]',
     label: 'Sonnet (1M context)',
@@ -226,7 +226,7 @@ export function getMaxSonnet46_1MOption(): ModelOption {
 }
 
 export function getMaxOpus46_1MOption(fastMode = false): ModelOption {
-  const billingInfo = isClaudeAISubscriber() ? ' · Billed as extra usage' : ''
+  const billingInfo = isZyAISubscriber() ? ' · Billed as extra usage' : ''
   return {
     value: 'opus[1m]',
     label: 'Opus (1M context)',
@@ -297,7 +297,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
     ]
   }
 
-  if (isClaudeAISubscriber()) {
+  if (isZyAISubscriber()) {
     if (isMaxSubscriber() || isTeamPremiumSubscriber()) {
       // Max and Team Premium users: Opus is default, show Sonnet as alternative
       const premiumOptions = [getDefaultOptionForUser(fastMode)]
@@ -399,11 +399,11 @@ function getModelFamilyInfo(
 
   // Sonnet family
   if (
-    m.includes('claude-sonnet-4-6') ||
-    m.includes('claude-sonnet-4-5') ||
-    m.includes('claude-sonnet-4-') ||
-    m.includes('claude-3-7-sonnet') ||
-    m.includes('claude-3-5-sonnet')
+    m.includes('zy-sonnet-4-6') ||
+    m.includes('zy-sonnet-4-5') ||
+    m.includes('zy-sonnet-4-') ||
+    m.includes('zy-3-7-sonnet') ||
+    m.includes('zy-3-5-sonnet')
   ) {
     const currentName = getMarketingNameForModel(getDefaultSonnetModel())
     if (currentName) {
@@ -412,7 +412,7 @@ function getModelFamilyInfo(
   }
 
   // Opus family
-  if (m.includes('claude-opus-4')) {
+  if (m.includes('zy-opus-4')) {
     const currentName = getMarketingNameForModel(getDefaultOpusModel())
     if (currentName) {
       return { alias: 'Opus', currentVersionName: currentName }
@@ -421,8 +421,8 @@ function getModelFamilyInfo(
 
   // Haiku family
   if (
-    m.includes('claude-haiku') ||
-    m.includes('claude-3-5-haiku')
+    m.includes('zy-haiku') ||
+    m.includes('zy-3-5-haiku')
   ) {
     const currentName = getMarketingNameForModel(getDefaultHaikuModel())
     if (currentName) {

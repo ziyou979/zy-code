@@ -22,9 +22,9 @@ import {
 } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
+  getZyAIOAuthTokens,
 } from '../../utils/auth.js'
-import { clearMemoryFileCaches } from '../../utils/claudemd.js'
+import { clearMemoryFileCaches } from '../../utils/zymd.js'
 import { getMemoryPath } from '../../utils/config.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { classifyAxiosError } from '../../utils/errors.js'
@@ -37,7 +37,7 @@ import { markInternalWrite } from '../../utils/settings/internalWrites.js'
 import { getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 import { sleep } from '../../utils/sleep.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import { getRetryDelay } from '../api/withRetry.js'
@@ -214,7 +214,7 @@ function isUsingOAuth(): boolean {
     return false
   }
 
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getZyAIOAuthTokens()
   return Boolean(
     tokens?.accessToken && tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE),
   )
@@ -228,7 +228,7 @@ function getSettingsSyncAuthHeaders(): {
   headers: Record<string, string>
   error?: string
 } {
-  const oauthTokens = getClaudeAIOAuthTokens()
+  const oauthTokens = getZyAIOAuthTokens()
   if (oauthTokens?.accessToken) {
     return {
       headers: {
@@ -259,7 +259,7 @@ async function fetchUserSettingsOnce(): Promise<SettingsSyncFetchResult> {
 
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getZyCodeUserAgent(),
     }
 
     const endpoint = getSettingsSyncEndpoint()
@@ -360,7 +360,7 @@ async function uploadUserSettings(
 
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getZyCodeUserAgent(),
       'Content-Type': 'application/json',
     }
 

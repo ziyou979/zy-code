@@ -205,7 +205,7 @@ export const MEMORY_DRIFT_CAVEAT =
  * `## When to access memories` section. Includes MEMORY_DRIFT_CAVEAT.
  *
  * H6 (branch-pollution evals #22856, case 5 1/3 on capy): the "ignore" bullet
- * is the delta. Failure mode: user says "ignore memory about X" → Claude reads
+ * is the delta. Failure mode: user says "ignore memory about X" → Zy reads
  * code correctly but adds "not Y as noted in memory" — treats "ignore" as
  * "acknowledge then override" rather than "don't reference at all." The bullet
  * names that anti-pattern explicitly.

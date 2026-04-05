@@ -4,6 +4,6 @@ export default {
   type: 'local-jsx',
   name: 'usage',
   description: 'Show plan usage limits',
-  availability: ['claude-ai'],
+  availability: ['zy-ai'],
   load: () => import('./usage.js'),
 } satisfies Command

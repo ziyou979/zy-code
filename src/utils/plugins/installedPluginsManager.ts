@@ -1012,7 +1012,7 @@ function getPluginVersionFromManifest(
   pluginId: string,
 ): string {
   const fs = getFsImplementation()
-  const manifestPath = join(pluginCachePath, '.claude-plugin', 'plugin.json')
+  const manifestPath = join(pluginCachePath, '.zy-plugin', 'plugin.json')
 
   try {
     const manifestContent = fs.readFileSync(manifestPath, { encoding: 'utf-8' })
@@ -1220,8 +1220,8 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
 
           installPath = pluginCachePath
 
-          // Only read manifest if the .claude-plugin dir is present
-          if (dirEntries.includes('.claude-plugin')) {
+          // Only read manifest if the .zy-plugin dir is present
+          if (dirEntries.includes('.zy-plugin')) {
             version = getPluginVersionFromManifest(pluginCachePath, pluginId)
           }
 

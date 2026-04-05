@@ -18,7 +18,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import { accumulateUsage, updateUsage } from '../services/api/claude.js'
+import { accumulateUsage, updateUsage } from '../services/api/zy.js'
 import { EMPTY_USAGE, type NonNullableUsage } from '../services/api/logging.js'
 import type { ToolUseContext } from '../Tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
@@ -51,7 +51,7 @@ import { createAgentId } from './uuid.js'
  * CacheSafeParams carries the first five. Thinking config is derived from the
  * inherited toolUseContext.options.thinkingConfig — but can be inadvertently
  * changed if the fork sets maxOutputTokens, which clamps budget_tokens in
- * claude.ts (but only for older models that do not use adaptive thinking).
+ * zy.ts (but only for older models that do not use adaptive thinking).
  * See the maxOutputTokens doc on ForkedAgentParams.
  */
 export type CacheSafeParams = {
@@ -95,7 +95,7 @@ export type ForkedAgentParams = {
   overrides?: SubagentContextOverrides
   /**
    * Optional cap on output tokens. CAUTION: setting this changes both max_tokens
-   * AND budget_tokens (via clamping in claude.ts). If the fork uses cacheSafeParams
+   * AND budget_tokens (via clamping in zy.ts). If the fork uses cacheSafeParams
    * to share the parent's prompt cache, a different budget_tokens will invalidate
    * the cache — thinking config is part of the cache key. Only set this when cache
    * sharing is not a goal (e.g., compact summaries).
@@ -519,7 +519,7 @@ export async function runForkedAgent({
 
   // Do NOT filterIncompleteToolCalls here — it drops the whole assistant on
   // partial tool batches, orphaning the paired results (API 400). Dangling
-  // tool_uses are repaired downstream by ensureToolResultPairing in claude.ts,
+  // tool_uses are repaired downstream by ensureToolResultPairing in zy.ts,
   // same as the main thread — identical post-repair prefix keeps the cache hit.
   const initialMessages: Message[] = [...forkContextMessages, ...promptMessages]
 

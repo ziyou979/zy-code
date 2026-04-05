@@ -102,9 +102,9 @@ export function modelSupportsThinking(model: string): boolean {
   // IMPORTANT: Do not change thinking support without notifying the model
   // launch DRI and research. This can greatly affect model quality and bashing.
   const provider = getAPIProvider()
-  // 1P and Foundry: all Claude 4+ models (including Haiku 4.5)
+  // 1P and Foundry: all Zy 4+ models (including Haiku 4.5)
   if (providerHasCapability(provider, 'thinking')) {
-    return !model.toLowerCase().includes('claude-3-')
+    return !model.toLowerCase().includes('zy-3-')
   }
   // 3P (Bedrock/Vertex): only Opus 4+ and Sonnet 4+
   const m = model.toLowerCase()
@@ -120,7 +120,7 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
   // Check settings-based capabilities first
   if (modelHasCapability(model, 'adaptive_thinking')) return true
   const m = model.toLowerCase()
-  // Supported by a subset of Claude 4 models
+  // Supported by a subset of Zy 4 models
   if (m.includes('opus-4-6') || m.includes('sonnet-4-6')) {
     return true
   }

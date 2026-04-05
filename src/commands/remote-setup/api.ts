@@ -46,7 +46,7 @@ export type ImportTokenError =
  * POSTs a GitHub token to the CCR backend, which validates it against
  * GitHub's /user endpoint and stores it Fernet-encrypted in sync_user_tokens.
  * The stored token satisfies the same read paths as an OAuth token, so
- * clone/push in claude.ai/code works immediately after this succeeds.
+ * clone/push in zy.ai/code works immediately after this succeeds.
  */
 export async function importGithubToken(
   token: RedactedGithubToken,
@@ -167,7 +167,7 @@ export async function createDefaultEnvironment(): Promise<boolean> {
   }
 }
 
-/** Returns true when the user has valid Claude OAuth credentials. */
+/** Returns true when the user has valid Zy OAuth credentials. */
 export async function isSignedIn(): Promise<boolean> {
   try {
     await prepareApiRequest()

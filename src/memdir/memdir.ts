@@ -51,7 +51,7 @@ export type EntrypointTruncation = {
  * that names which cap fired. Line-truncates first (natural boundary), then
  * byte-truncates at the last newline before the cap so we don't cut mid-line.
  *
- * Shared by buildMemoryPrompt and claudemd getMemoryFiles (previously
+ * Shared by buildMemoryPrompt and zymd getMemoryFiles (previously
  * duplicated the line-only logic).
  */
 export function truncateEntrypointContent(raw: string): EntrypointTruncation {
@@ -110,7 +110,7 @@ const teamMemPrompts = feature('TEAMMEM')
 
 /**
  * Shared guidance text appended to each memory directory prompt line.
- * Shipped because Claude was burning turns on `ls`/`mkdir -p` before writing.
+ * Shipped because Zy was burning turns on `ls`/`mkdir -p` before writing.
  * Harness guarantees the directory exists via ensureMemoryDirExists().
  */
 export const DIR_EXISTS_GUIDANCE =
@@ -267,7 +267,7 @@ export function buildMemoryLines(
 
 /**
  * Build the typed-memory prompt with MEMORY.md content included.
- * Used by agent memory (which has no getClaudeMds() equivalent).
+ * Used by agent memory (which has no getzyMds() equivalent).
  */
 export function buildMemoryPrompt(params: {
   displayName: string
@@ -321,7 +321,7 @@ export function buildMemoryPrompt(params: {
  * Assistant sessions are effectively perpetual, so the agent writes memories
  * append-only to a date-named log file rather than maintaining MEMORY.md as
  * a live index. A separate nightly /dream skill distills logs into topic
- * files + MEMORY.md. MEMORY.md is still loaded into context (via claudemd.ts)
+ * files + MEMORY.md. MEMORY.md is still loaded into context (via zymd.ts)
  * as the distilled index — this prompt only changes where NEW memories go.
  */
 function buildAssistantDailyLogPrompt(skipIndex = false): string {
@@ -491,10 +491,10 @@ export async function loadMemoryPrompt(): Promise<string | null> {
 
   logEvent('tengu_memdir_disabled', {
     disabled_by_env_var: isEnvTruthy(
-      process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY,
+      process.env.ZY_CODE_DISABLE_AUTO_MEMORY,
     ),
     disabled_by_setting:
-      !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY) &&
+      !isEnvTruthy(process.env.ZY_CODE_DISABLE_AUTO_MEMORY) &&
       getInitialSettings().autoMemoryEnabled === false,
   })
   // Gate on the GB flag directly, not isTeamMemoryEnabled() — that function

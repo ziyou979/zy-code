@@ -7,7 +7,7 @@ import {
 import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js'
 import {
   BEDROCK_EXTRA_PARAMS_HEADERS,
-  CLAUDE_CODE_20250219_BETA_HEADER,
+  ZY_CODE_,
   CLI_INTERNAL_BETA_HEADER,
   CONTEXT_1M_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
@@ -22,7 +22,7 @@ import {
   WEB_SEARCH_BETA_HEADER,
 } from '../constants/betas.js'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
-import { isClaudeAISubscriber } from './auth.js'
+import { isZyAISubscriber } from './auth.js'
 import { has1mContext } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
@@ -68,7 +68,7 @@ export function filterAllowedSdkBetas(
     return undefined
   }
 
-  if (isClaudeAISubscriber()) {
+  if (isZyAISubscriber()) {
     // biome-ignore lint/suspicious/noConsole: intentional warning
     console.warn(
       'Warning: Custom betas are only available for API key users. Ignoring provided betas.',
@@ -105,25 +105,25 @@ export function modelSupportsISP(model: string): boolean {
     return true
   }
   if (providerHasCapability(provider, 'interleaved_thinking')) {
-    return !model.toLowerCase().includes('claude-3-')
+    return !model.toLowerCase().includes('zy-3-')
   }
   return (
-    model.toLowerCase().includes('claude-opus-4') || model.toLowerCase().includes('claude-sonnet-4')
+    model.toLowerCase().includes('zy-opus-4') || model.toLowerCase().includes('zy-sonnet-4')
   )
 }
 
 function vertexModelSupportsWebSearch(model: string): boolean {
   if (modelHasCapability(model, 'web_search')) return true
   const m = model.toLowerCase()
-  // Web search only supported on Claude 4.0+ models on Vertex
+  // Web search only supported on Zy 4.0+ models on Vertex
   return (
-    m.includes('claude-opus-4') ||
-    m.includes('claude-sonnet-4') ||
-    m.includes('claude-haiku-4')
+    m.includes('zy-opus-4') ||
+    m.includes('zy-sonnet-4') ||
+    m.includes('zy-haiku-4')
   )
 }
 
-// Context management is supported on Claude 4+ models
+// Context management is supported on Zy 4+ models
 export function modelSupportsContextManagement(model: string): boolean {
   if (modelHasCapability(model, 'context_management')) return true
   const provider = getAPIProvider()
@@ -131,13 +131,13 @@ export function modelSupportsContextManagement(model: string): boolean {
     return true
   }
   if (providerHasCapability(provider, 'context_management')) {
-    return !model.toLowerCase().includes('claude-3-')
+    return !model.toLowerCase().includes('zy-3-')
   }
   const m = model.toLowerCase()
   return (
-    m.includes('claude-opus-4') ||
-    m.includes('claude-sonnet-4') ||
-    m.includes('claude-haiku-4')
+    m.includes('zy-opus-4') ||
+    m.includes('zy-sonnet-4') ||
+    m.includes('zy-haiku-4')
   )
 }
 
@@ -151,16 +151,16 @@ export function modelSupportsStructuredOutputs(model: string): boolean {
   }
   const m = model.toLowerCase()
   return (
-    m.includes('claude-sonnet-4-6') ||
-    m.includes('claude-sonnet-4-5') ||
-    m.includes('claude-opus-4-1') ||
-    m.includes('claude-opus-4-5') ||
-    m.includes('claude-opus-4-6') ||
-    m.includes('claude-haiku-4-5')
+    m.includes('zy-sonnet-4-6') ||
+    m.includes('zy-sonnet-4-5') ||
+    m.includes('zy-opus-4-1') ||
+    m.includes('zy-opus-4-5') ||
+    m.includes('zy-opus-4-6') ||
+    m.includes('zy-haiku-4-5')
   )
 }
 
-// @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-claude-code-safety-research.
+// @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.
 export function modelSupportsAutoMode(model: string): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     const m = model.toLowerCase()
@@ -174,8 +174,8 @@ export function modelSupportsAutoMode(model: string): boolean {
     }
     // GrowthBook override: tengu_auto_mode_config.allowModels force-enables
     // auto mode for listed models, bypassing the denylist/allowlist below.
-    // Exact model IDs (e.g. "claude-strudel-v6-p") match only that model;
-    // canonical names (e.g. "claude-strudel") match the whole family.
+    // Exact model IDs (e.g. "zy-strudel-v6-p") match only that model;
+    // canonical names (e.g. "zy-strudel") match the whole family.
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
       allowModels?: string[]
     }>('tengu_auto_mode_config', {})
@@ -188,21 +188,21 @@ export function modelSupportsAutoMode(model: string): boolean {
       return true
     }
     if (process.env.USER_TYPE === 'ant') {
-      // Denylist: block known-unsupported claude models, allow everything else (ant-internal models etc.)
-      if (m.includes('claude-3-')) return false
-      // claude-*-4 not followed by -[6-9]: blocks bare -4, -4-YYYYMMDD, -4@, -4-0 thru -4-5
-      if (/claude-(opus|sonnet|haiku)-4(?!-[6-9])/.test(m)) return false
+      // Denylist: block known-unsupported zy models, allow everything else (ant-internal models etc.)
+      if (m.includes('zy-3-')) return false
+      // zy-*-4 not followed by -[6-9]: blocks bare -4, -4-YYYYMMDD, -4@, -4-0 thru -4-5
+      if (/zy-(opus|sonnet|haiku)-4(?!-[6-9])/.test(m)) return false
       return true
     }
     // External allowlist (firstParty already checked above).
-    return /^claude-(opus|sonnet)-4-6/.test(m)
+    return /^zy-(opus|sonnet)-4-6/.test(m)
   }
   return false
 }
 
 /**
  * Get the correct tool search beta header for the current API provider.
- * - Claude API / Foundry: advanced-tool-use-2025-11-20
+ * - Zy API / Foundry: advanced-tool-use-2025-11-20
  * - Vertex AI / Bedrock: tool-search-tool-2025-10-19
  */
 export function getToolSearchBetaHeader(): string {
@@ -221,7 +221,7 @@ export function getToolSearchBetaHeader(): string {
 export function shouldIncludeExperimentalBetas(): boolean {
   return (
     providerHasCapability(getAPIProvider(), 'interleaved_thinking') &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)
+    !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
   )
 }
 
@@ -233,7 +233,7 @@ export function shouldIncludeExperimentalBetas(): boolean {
 export function shouldUseGlobalCacheScope(): boolean {
   return (
     providerHasCapability(getAPIProvider(), 'prompt_caching') &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)
+    !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
   )
 }
 
@@ -244,17 +244,17 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   const includeExperimentalBetas = shouldIncludeExperimentalBetas()
 
   if (!isHaiku) {
-    betaHeaders.push(CLAUDE_CODE_20250219_BETA_HEADER)
+    betaHeaders.push(ZY_CODE_)
     if (
       process.env.USER_TYPE === 'ant' &&
-      process.env.CLAUDE_CODE_ENTRYPOINT === 'cli'
+      process.env.ZY_CODE_ENTRYPOINT === 'cli'
     ) {
       if (CLI_INTERNAL_BETA_HEADER) {
         betaHeaders.push(CLI_INTERNAL_BETA_HEADER)
       }
     }
   }
-  if (isClaudeAISubscriber()) {
+  if (isZyAISubscriber()) {
     betaHeaders.push(OAUTH_BETA_HEADER)
   }
   if (has1mContext(model)) {
@@ -317,7 +317,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
     betaHeaders.push(CONTEXT_MANAGEMENT_BETA_HEADER)
   }
   // Add strict tool use beta if experiment is enabled.
-  // Gate on includeExperimentalBetas: CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS
+  // Gate on includeExperimentalBetas: ZY_CODE_DISABLE_EXPERIMENTAL_BETAS
   // already strips schema.strict from tool bodies at api.ts's choke point, but
   // this header was escaping that kill switch. Proxy gateways that look like
   // anthropic but forward to Vertex reject this header with 400.
@@ -348,7 +348,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
     betaHeaders.push(TOKEN_EFFICIENT_TOOLS_BETA_HEADER)
   }
 
-  // Add web search beta for Vertex Claude 4.0+ models only
+  // Add web search beta for Vertex Zy 4.0+ models only
   if (provider === 'vertex' && vertexModelSupportsWebSearch(model)) {
     betaHeaders.push(WEB_SEARCH_BETA_HEADER)
   }
@@ -406,16 +406,16 @@ export function getMergedBetas(
 ): string[] {
   const baseBetas = [...getModelBetas(model)]
 
-  // Agentic queries always need claude-code and cli-internal beta headers.
+  // Agentic queries always need zy-code and cli-internal beta headers.
   // For non-Haiku models these are already in baseBetas; for Haiku they're
   // excluded by getAllModelBetas() since non-agentic Haiku calls don't need them.
   if (options?.isAgenticQuery) {
-    if (!baseBetas.includes(CLAUDE_CODE_20250219_BETA_HEADER)) {
-      baseBetas.push(CLAUDE_CODE_20250219_BETA_HEADER)
+    if (!baseBetas.includes(ZY_CODE_)) {
+      baseBetas.push(ZY_CODE_)
     }
     if (
       process.env.USER_TYPE === 'ant' &&
-      process.env.CLAUDE_CODE_ENTRYPOINT === 'cli' &&
+      process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
       CLI_INTERNAL_BETA_HEADER &&
       !baseBetas.includes(CLI_INTERNAL_BETA_HEADER)
     ) {

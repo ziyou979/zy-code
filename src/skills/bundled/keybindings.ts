@@ -112,8 +112,8 @@ function generateReservedShortcuts(): string {
 }
 
 const FILE_FORMAT_EXAMPLE: KeybindingsSchemaType = {
-  $schema: 'https://www.schemastore.org/claude-code-keybindings.json',
-  $docs: 'https://code.claude.com/docs/en/keybindings',
+  $schema: 'https://www.schemastore.org/zy-code-keybindings.json',
+  $docs: 'https://code.zy.com/docs/en/keybindings',
   bindings: [
     {
       context: 'Chat',

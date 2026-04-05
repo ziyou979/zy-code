@@ -98,13 +98,13 @@ export function isProcessRunning(pid: number): boolean {
  * Validate that a running process is actually a ZY process
  * This helps mitigate PID reuse issues
  */
-function isClaudeProcess(pid: number, expectedExecPath: string): boolean {
+function isZyProcess(pid: number, expectedExecPath: string): boolean {
   if (!isProcessRunning(pid)) {
     return false
   }
 
   // If the PID matches our current process, we know it's valid
-  // This handles test environments where the command might not contain 'claude'
+  // This handles test environments where the command might not contain 'zy'
   if (pid === process.pid) {
     return true
   }
@@ -117,12 +117,12 @@ function isClaudeProcess(pid: number, expectedExecPath: string): boolean {
       return true
     }
 
-    // Check if the command contains 'claude' or the expected exec path
+    // Check if the command contains 'zy' or the expected exec path
     const normalizedCommand = command.toLowerCase()
     const normalizedExecPath = expectedExecPath.toLowerCase()
 
     return (
-      normalizedCommand.includes('claude') ||
+      normalizedCommand.includes('zy') ||
       normalizedCommand.includes(normalizedExecPath)
     )
   } catch {
@@ -175,11 +175,11 @@ export function isLockActive(lockFilePath: string): boolean {
     return false
   }
 
-  // Secondary validation: is it actually a Claude process?
+  // Secondary validation: is it actually a Zy process?
   // This helps with PID reuse scenarios
-  if (!isClaudeProcess(pid, execPath)) {
+  if (!isZyProcess(pid, execPath)) {
     logForDebugging(
-      `Lock PID ${pid} is running but does not appear to be Claude - treating as stale`,
+      `Lock PID ${pid} is running but does not appear to be Zy - treating as stale`,
     )
     return false
   }
@@ -244,7 +244,7 @@ export async function tryAcquireLock(
 
   // Check if there's an existing active lock (including by our own process)
   // Use isLockActive for consistency with cleanup - it checks both PID running AND
-  // validates it's actually a Claude process (to handle PID reuse scenarios)
+  // validates it's actually a Zy process (to handle PID reuse scenarios)
   if (isLockActive(lockFilePath)) {
     const existingContent = readLockContent(lockFilePath)
     logForDebugging(

@@ -43,8 +43,8 @@ export function generateKeybindingsTemplate(): string {
 
   // Format as object wrapper with bindings array
   const config = {
-    $schema: 'https://www.schemastore.org/claude-code-keybindings.json',
-    $docs: 'https://code.claude.com/docs/en/keybindings',
+    $schema: 'https://www.schemastore.org/zy-code-keybindings.json',
+    $docs: 'https://code.zy.com/docs/en/keybindings',
     bindings,
   }
 

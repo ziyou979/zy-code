@@ -9,12 +9,12 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
-import { fetchAndStoreClaudeCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
+import { fetchAndStoreZyCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
 import {
   createAndStoreApiKey,
   fetchAndStoreUserRoles,
   refreshOAuthToken,
-  shouldUseClaudeAIAuth,
+  shouldUseZyAIAuth,
   storeOAuthAccountInfo,
 } from '../../services/oauth/client.js'
 import { getOauthProfileFromOauthToken } from '../../services/oauth/getOauthProfile.js'
@@ -92,8 +92,8 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
     logForDebugging(String(err), { level: 'error' }),
   )
 
-  if (shouldUseClaudeAIAuth(tokens.scopes)) {
-    await fetchAndStoreClaudeCodeFirstTokenDate().catch(err =>
+  if (shouldUseZyAIAuth(tokens.scopes)) {
+    await fetchAndStoreZyCodeFirstTokenDate().catch(err =>
       logForDebugging(String(err), { level: 'error' }),
     )
   } else {
@@ -113,36 +113,36 @@ export async function authLogin({
   email,
   sso,
   console: useConsole,
-  claudeai,
+  zyai,
 }: {
   email?: string
   sso?: boolean
   console?: boolean
-  claudeai?: boolean
+  zyai?: boolean
 }): Promise<void> {
-  if (useConsole && claudeai) {
+  if (useConsole && zyai) {
     process.stderr.write(
-      'Error: --console and --claudeai cannot be used together.\n',
+      'Error: --console and --zyai cannot be used together.\n',
     )
     process.exit(1)
   }
 
   const settings = getInitialSettings()
   // forceLoginMethod is a hard constraint (enterprise setting) — matches ConsoleOAuthFlow behavior.
-  // Without it, --console selects Console; --claudeai (or no flag) selects claude.ai.
-  const loginWithClaudeAi = settings.forceLoginMethod
-    ? settings.forceLoginMethod === 'claudeai'
+  // Without it, --console selects Console; --zyai (or no flag) selects zy.ai.
+  const loginWithZyAi = settings.forceLoginMethod
+    ? settings.forceLoginMethod === 'zyai'
     : !useConsole
   const orgUUID = settings.forceLoginOrgUUID
 
   // Fast path: if a refresh token is provided via env var, skip the browser
   // OAuth flow and exchange it directly for tokens.
-  const envRefreshToken = process.env.CLAUDE_CODE_OAUTH_REFRESH_TOKEN
+  const envRefreshToken = process.env.ZY_CODE_OAUTH_REFRESH_TOKEN
   if (envRefreshToken) {
-    const envScopes = process.env.CLAUDE_CODE_OAUTH_SCOPES
+    const envScopes = process.env.ZY_CODE_OAUTH_SCOPES
     if (!envScopes) {
       process.stderr.write(
-        'CLAUDE_CODE_OAUTH_SCOPES is required when using CLAUDE_CODE_OAUTH_REFRESH_TOKEN.\n' +
+        'ZY_CODE_OAUTH_SCOPES is required when using ZY_CODE_OAUTH_REFRESH_TOKEN.\n' +
           'Set it to the space-separated scopes the refresh token was issued with\n' +
           '(e.g. "user:inference" or "user:profile user:inference user:sessions:claude_code user:mcp_servers").\n',
       )
@@ -171,7 +171,7 @@ export async function authLogin({
       })
 
       logEvent('tengu_oauth_success', {
-        loginWithClaudeAi: shouldUseClaudeAIAuth(tokens.scopes),
+        loginWithZyAi: shouldUseZyAIAuth(tokens.scopes),
       })
       process.stdout.write('Login successful.\n')
       process.exit(0)
@@ -190,7 +190,7 @@ export async function authLogin({
   const oauthService = new OAuthService()
 
   try {
-    logEvent('tengu_oauth_flow_start', { loginWithClaudeAi })
+    logEvent('tengu_oauth_flow_start', { loginWithZyAi })
 
     const result = await oauthService.startOAuthFlow(
       async url => {
@@ -198,7 +198,7 @@ export async function authLogin({
         process.stdout.write(`If the browser didn't open, visit: ${url}\n`)
       },
       {
-        loginWithClaudeAi,
+        loginWithZyAi,
         loginHint: email,
         loginMethod: resolvedLoginMethod,
         orgUUID,
@@ -213,7 +213,7 @@ export async function authLogin({
       process.exit(1)
     }
 
-    logEvent('tengu_oauth_success', { loginWithClaudeAi })
+    logEvent('tengu_oauth_success', { loginWithZyAi })
 
     process.stdout.write('Login successful.\n')
     process.exit(0)
@@ -247,8 +247,8 @@ export async function authStatus(opts: {
   let authMethod: string = 'none'
   if (using3P) {
     authMethod = 'third_party'
-  } else if (authTokenSource === 'claude.ai') {
-    authMethod = 'claude.ai'
+  } else if (authTokenSource === 'zy.ai') {
+    authMethod = 'zy.ai'
   } else if (authTokenSource === 'apiKeyHelper') {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
@@ -256,7 +256,7 @@ export async function authStatus(opts: {
   } else if (apiKeySource === 'ANTHROPIC_API_KEY' || hasApiKeyEnvVar) {
     authMethod = 'api_key'
   } else if (apiKeySource === '/login managed key') {
-    authMethod = 'claude.ai'
+    authMethod = 'zy.ai'
   }
 
   if (opts.text) {
@@ -287,7 +287,7 @@ export async function authStatus(opts: {
     }
     if (!loggedIn) {
       process.stdout.write(
-        'Not logged in. Run claude auth login to authenticate.\n',
+        'Not logged in. Run zy auth login to authenticate.\n',
       )
     }
   } else {
@@ -306,7 +306,7 @@ export async function authStatus(opts: {
     if (resolvedApiKeySource) {
       output.apiKeySource = resolvedApiKeySource
     }
-    if (authMethod === 'claude.ai') {
+    if (authMethod === 'zy.ai') {
       output.email = oauthAccount?.emailAddress ?? null
       output.orgId = oauthAccount?.organizationUuid ?? null
       output.orgName = oauthAccount?.organizationName ?? null

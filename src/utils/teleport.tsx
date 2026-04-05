@@ -12,13 +12,13 @@ import { getOauthConfig } from '../constants/oauth.js';
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js';
 import type { Root } from '../ink.js';
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
-import { queryHaiku } from '../services/api/claude.js';
+import { queryHaiku } from '../services/api/zy.js';
 import { getSessionLogsViaOAuth, getTeleportEvents } from '../services/api/sessionIngress.js';
 import { getOrganizationUUID } from '../services/oauth/client.js';
 import { AppStateProvider } from '../state/AppState.js';
 import type { Message, SystemMessage } from '../types/message.js';
 import type { PermissionMode } from '../types/permissions.js';
-import { checkAndRefreshOAuthTokenIfNeeded, getClaudeAIOAuthTokens } from './auth.js';
+import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from './auth.js';
 import { checkGithubAppInstalled } from './background/remote/preconditions.js';
 import { deserializeMessages, type TeleportRemoteResponse } from './conversationRecovery.js';
 import { getCwd } from './cwd.js';
@@ -78,13 +78,13 @@ You should keep it short and simple, ideally no more than 6 words. Avoid using j
 Use sentence case for the title (capitalize only the first word and proper nouns), not Title Case.
 
 The branch name should be clear, concise, and accurately reflect the content of the coding task.
-You should keep it short and simple, ideally no more than 4 words. The branch should always start with "claude/" and should be all lower case, with words separated by dashes.
+You should keep it short and simple, ideally no more than 4 words. The branch should always start with "zy/" and should be all lower case, with words separated by dashes.
 
 Return a JSON object with "title" and "branch" fields.
 
-Example 1: {"title": "Fix login button not working on mobile", "branch": "claude/fix-mobile-login-button"}
-Example 2: {"title": "Update README with installation instructions", "branch": "claude/update-readme"}
-Example 3: {"title": "Improve performance of data processing script", "branch": "claude/improve-data-processing"}
+Example 1: {"title": "Fix login button not working on mobile", "branch": "zy/fix-mobile-login-button"}
+Example 2: {"title": "Update README with installation instructions", "branch": "zy/update-readme"}
+Example 3: {"title": "Improve performance of data processing script", "branch": "zy/improve-data-processing"}
 
 Here is the session description:
 <description>{description}</description>
@@ -95,13 +95,13 @@ type TitleAndBranch = {
 };
 
 /**
- * Generates a title and branch name for a coding session using Claude Haiku
+ * Generates a title and branch name for a coding session using Zy Haiku
  * @param description The description/prompt for the session
  * @returns Promise<TitleAndBranch> The generated title and branch name
  */
 async function generateTitleAndBranch(description: string, signal: AbortSignal): Promise<TitleAndBranch> {
   const fallbackTitle = truncateToWidth(description, 75);
-  const fallbackBranch = 'claude/task';
+  const fallbackBranch = 'zy/task';
   try {
     const userPrompt = SESSION_TITLE_AND_BRANCH_PROMPT.replace('{description}', description);
     const response = await queryHaiku({
@@ -433,12 +433,12 @@ export async function teleportResumeCodeSession(sessionId: string, onProgress?: 
   }
   logForDebugging(`Resuming code session ID: ${sessionId}`);
   try {
-    const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+    const accessToken = getZyAIOAuthTokens()?.accessToken;
     if (!accessToken) {
       logEvent('tengu_teleport_resume_error', {
         error_type: 'no_access_token' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
-      throw new Error('ZY Code web sessions require authentication with a Claude.ai account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.');
+      throw new Error('ZY Code web sessions require authentication with a Zy.ai account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.');
     }
 
     // Get organization UUID
@@ -466,7 +466,7 @@ export async function teleportResumeCodeSession(sessionId: string, onProgress?: 
           });
           // Include host for GHE users so they know which instance the repo is on
           const notInRepoDisplay = repoValidation.sessionHost && repoValidation.sessionHost.toLowerCase() !== 'github.com' ? `${repoValidation.sessionHost}/${repoValidation.sessionRepo}` : repoValidation.sessionRepo;
-          throw new TeleportOperationError(`You must run claude --teleport ${sessionId} from a checkout of ${notInRepoDisplay}.`, chalk.red(`You must run claude --teleport ${sessionId} from a checkout of ${chalk.bold(notInRepoDisplay)}.\n`));
+          throw new TeleportOperationError(`You must run zy --teleport ${sessionId} from a checkout of ${notInRepoDisplay}.`, chalk.red(`You must run zy --teleport ${sessionId} from a checkout of ${chalk.bold(notInRepoDisplay)}.\n`));
         }
       case 'mismatch':
         {
@@ -478,7 +478,7 @@ export async function teleportResumeCodeSession(sessionId: string, onProgress?: 
           const hostsDiffer = repoValidation.sessionHost && repoValidation.currentHost && repoValidation.sessionHost.replace(/:\d+$/, '').toLowerCase() !== repoValidation.currentHost.replace(/:\d+$/, '').toLowerCase();
           const sessionDisplay = hostsDiffer ? `${repoValidation.sessionHost}/${repoValidation.sessionRepo}` : repoValidation.sessionRepo;
           const currentDisplay = hostsDiffer ? `${repoValidation.currentHost}/${repoValidation.currentRepo}` : repoValidation.currentRepo;
-          throw new TeleportOperationError(`You must run claude --teleport ${sessionId} from a checkout of ${sessionDisplay}.\nThis repo is ${currentDisplay}.`, chalk.red(`You must run claude --teleport ${sessionId} from a checkout of ${chalk.bold(sessionDisplay)}.\nThis repo is ${chalk.bold(currentDisplay)}.\n`));
+          throw new TeleportOperationError(`You must run zy --teleport ${sessionId} from a checkout of ${sessionDisplay}.\nThis repo is ${currentDisplay}.`, chalk.red(`You must run zy --teleport ${sessionId} from a checkout of ${chalk.bold(sessionDisplay)}.\nThis repo is ${chalk.bold(currentDisplay)}.\n`));
         }
       case 'error':
         throw new TeleportOperationError(repoValidation.errorMessage || 'Failed to validate session repository', chalk.red(`Error: ${repoValidation.errorMessage || 'Failed to validate session repository'}\n`));
@@ -533,7 +533,7 @@ async function handleTeleportPrerequisites(root: Root, errorsToIgnore?: Set<Tele
 }
 
 /**
- * Creates a remote Claude.ai session with error handling and UI feedback.
+ * Creates a remote Zy.ai session with error handling and UI feedback.
  * Shows prerequisite error dialog in the existing root if needed.
  * @param root The existing Ink root to render dialogs into
  * @param description The description/prompt for the new session (null for no initial prompt)
@@ -633,7 +633,7 @@ export type PollRemoteSessionResponse = {
 export async function pollRemoteSessionEvents(sessionId: string, afterId: string | null = null, opts?: {
   skipMetadata?: boolean;
 }): Promise<PollRemoteSessionResponse> {
-  const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+  const accessToken = getZyAIOAuthTokens()?.accessToken;
   if (!accessToken) {
     throw new Error('No access token for polling');
   }
@@ -715,7 +715,7 @@ export async function pollRemoteSessionEvents(sessionId: string, afterId: string
 }
 
 /**
- * Creates a remote Claude.ai session using the Sessions API.
+ * Creates a remote Zy.ai session using the Sessions API.
  *
  * Two source modes:
  * - GitHub (default): backend clones from the repo's origin URL. Requires a
@@ -751,7 +751,7 @@ export async function teleportToRemote(options: {
   /**
    * Per-session env vars merged into session_context.environment_variables.
    * Write-only at the API layer (stripped from Get/List responses). When
-   * environmentId is set, CLAUDE_CODE_OAUTH_TOKEN is auto-injected from the
+   * environmentId is set, ZY_CODE_OAUTH_TOKEN is auto-injected from the
    * caller's accessToken so the container's hook can hit inference (the
    * server only passes through what the caller sends; bughunter.go mints
    * its own, user sessions don't get one automatically).
@@ -778,7 +778,7 @@ export async function teleportToRemote(options: {
   skipBundle?: boolean;
   /**
    * When set, reuses this branch as the outcome branch instead of generating
-   * a new claude/ branch. Sets allow_unrestricted_git_push on the source and
+   * a new zy/ branch. Sets allow_unrestricted_git_push on the source and
    * reuse_outcome_branches on the session context so the remote pushes to the
    * caller's branch directly.
    */
@@ -800,7 +800,7 @@ export async function teleportToRemote(options: {
   try {
     // Check authentication
     await checkAndRefreshOAuthTokenIfNeeded();
-    const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+    const accessToken = getZyAIOAuthTokens()?.accessToken;
     if (!accessToken) {
       logError(new Error('No access token found for remote session creation'));
       return null;
@@ -826,7 +826,7 @@ export async function teleportToRemote(options: {
         'x-organization-uuid': orgUUID
       };
       const envVars = {
-        CLAUDE_CODE_OAUTH_TOKEN: accessToken,
+        ZY_CODE_OAUTH_TOKEN: accessToken,
         ...(options.environmentVariables ?? {})
       };
 
@@ -1010,7 +1010,7 @@ export async function teleportToRemote(options: {
       if (!bundle.success) {
         logError(new Error(`Bundle upload failed: ${bundle.error}`));
         // Only steer users to GitHub setup when there's a remote to clone from.
-        const setup = repoInfo ? '. Please setup GitHub on https://claude.ai/code' : '';
+        const setup = repoInfo ? '. Please setup GitHub on https://zy.ai/code' : '';
         let msg: string;
         switch (bundle.failReason) {
           case 'empty_repo':
@@ -1198,7 +1198,7 @@ export async function teleportToRemote(options: {
  * reaper collects it.
  */
 export async function archiveRemoteSession(sessionId: string): Promise<void> {
-  const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+  const accessToken = getZyAIOAuthTokens()?.accessToken;
   if (!accessToken) return;
   const orgUUID = await getOrganizationUUID();
   if (!orgUUID) return;
