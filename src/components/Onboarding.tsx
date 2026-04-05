@@ -11,7 +11,7 @@ import { PressEnterToContinue } from './PressEnterToContinue.js';
 import { ThemePicker } from './ThemePicker.js';
 import { OrderedList } from './ui/OrderedList.js';
 
-type StepId = 'preflight' | 'theme' | 'platform' | 'security' | 'terminal-setup';
+type StepId = 'preflight' | 'theme' | 'platform' | 'model' | 'security' | 'terminal-setup';
 
 interface OnboardingStep {
   id: StepId;
@@ -30,6 +30,8 @@ interface PlatformConfig {
   description: string;
   apiKeyLabel: string;
   baseUrlHint?: string;
+  /** Default model suggestion and common models for this provider */
+  suggestedModels?: Array<{ label: string; value: string; description: string }>;
 }
 
 const PLATFORMS: PlatformConfig[] = [
@@ -38,18 +40,32 @@ const PLATFORMS: PlatformConfig[] = [
     label: 'Anthropic',
     description: '官方 API (api.anthropic.com)',
     apiKeyLabel: 'Anthropic API Key',
+    suggestedModels: [
+      { label: 'Sonnet 4.6', value: 'claude-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
+      { label: 'Opus 4.6', value: 'claude-opus-4-6-20250514', description: '最强能力，适合复杂工作' },
+      { label: 'Haiku 4.5', value: 'claude-haiku-4-5-20240307', description: '最快最便宜' },
+    ],
   },
   {
     provider: 'dashscope',
     label: '百炼 DashScope',
     description: '阿里云百炼平台',
     apiKeyLabel: 'DashScope API Key',
+    suggestedModels: [
+      { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: '综合能力强 (推荐)' },
+      { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: '高性能推理' },
+      { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: '快速轻量任务' },
+    ],
   },
   {
     provider: 'openrouter',
     label: 'OpenRouter',
     description: 'OpenRouter 代理',
     apiKeyLabel: 'OpenRouter API Key',
+    suggestedModels: [
+      { label: 'Sonnet', value: 'anthropic/claude-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
+      { label: 'Opus', value: 'anthropic/claude-opus-4-6-20250514', description: '最强能力' },
+    ],
   },
   {
     provider: 'generic',
@@ -59,9 +75,17 @@ const PLATFORMS: PlatformConfig[] = [
   },
 ];
 
+/**
+ * Model options for providers without pre-configured suggestions (generic).
+ */
+const GENERIC_MODEL_OPTIONS: Array<{ label: string; value: string; description: string }> = [
+  { label: '自定义模型', value: '__custom__', description: '输入完整的模型名称' },
+];
+
 export function Onboarding({ onDone }: Props): React.ReactNode {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [theme, setTheme] = useTheme();
+  const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null);
 
   useEffect(() => {
     // onboarding started
@@ -108,12 +132,28 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         approved: [...(current.customApiKeyResponses?.approved ?? []), normalizedKey],
       },
     }));
+    setSelectedProvider(provider);
     goToNextStep();
   }
 
   const platformStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
       <PlatformSetup onDone={handlePlatformDone} />
+    </Box>
+  );
+
+  // Model selection step
+  function handleModelDone(model: string) {
+    saveGlobalConfig(current => ({
+      ...current,
+      configuredModel: model,
+    }));
+    goToNextStep();
+  }
+
+  const modelStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <ModelSetup provider={selectedProvider} onDone={handleModelDone} />
     </Box>
   );
 
@@ -152,6 +192,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   const steps: OnboardingStep[] = [];
   steps.push({ id: 'theme', component: themeStep });
   steps.push({ id: 'platform', component: platformStep });
+  steps.push({ id: 'model', component: modelStep });
   steps.push({ id: 'security', component: securityStep });
 
   if (shouldOfferTerminalSetup()) {
@@ -319,5 +360,82 @@ function ApiKeyInput({
         <Text dimColor>Enter to confirm · 9 to go back</Text>
       </Box>
     </Box>
+  );
+}
+
+/**
+ * Model selection step during onboarding.
+ * Shows provider-suggested models, or a custom input for generic providers.
+ */
+function ModelSetup({
+  provider,
+  onDone,
+}: {
+  provider: PlatformProvider | null;
+  onDone(model: string): void;
+}): React.ReactNode {
+  const [phase, setPhase] = useState<'select' | 'custom'>('select');
+
+  const platform = PLATFORMS.find(p => p.provider === provider);
+  const modelOptions = platform?.suggestedModels ?? GENERIC_MODEL_OPTIONS;
+  const hasCustomOption = platform?.provider === 'generic';
+
+  const handleSelect = (value: string) => {
+    if (value === '__custom__') {
+      setPhase('custom');
+    } else {
+      onDone(value);
+    }
+  };
+
+  if (phase === 'custom') {
+    return (
+      <>
+        <Text bold>输入模型名称</Text>
+        <Box flexDirection="column" width={60} gap={1}>
+          <Select
+            options={[
+              {
+                type: 'input',
+                label: 'Model name',
+                value: 'input',
+                placeholder: 'e.g. qwen-max, claude-sonnet-4-6...',
+                onChange: value => {
+                  if (value.trim().length > 0) {
+                    onDone(value.trim());
+                  }
+                },
+                allowEmptySubmitToCancel: true,
+                resetCursorOnUpdate: true,
+              },
+            ]}
+            onCancel={() => setPhase('select')}
+          />
+          <Text dimColor>Enter to confirm · 9 to go back</Text>
+        </Box>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Text bold>选择默认对话模型</Text>
+      <Text dimColor>启动对话时使用的模型，后续可通过 /model 切换</Text>
+      <Box flexDirection="column" width={60} gap={1}>
+        <Select
+          options={modelOptions.map(m => ({
+            label: m.label,
+            description: m.description,
+            value: m.value,
+          }))}
+          onChange={handleSelect}
+          onCancel={() => onDone('')}
+        />
+        {hasCustomOption && (
+          <Text dimColor>或选择 "自定义模型" 输入其他模型</Text>
+        )}
+        <Text dimColor>Enter to confirm · Esc to skip</Text>
+      </Box>
+    </>
   );
 }

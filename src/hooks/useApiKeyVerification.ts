@@ -8,6 +8,7 @@ import {
   isClaudeAISubscriber,
 } from '../utils/auth.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
+import { getAPIProvider } from '../utils/model/providers.js'
 
 export type VerificationStatus =
   | 'loading'
@@ -24,8 +25,8 @@ export type ApiKeyVerificationResult = {
 
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
-    if (process.env.DASHSCOPE_API_KEY) {
+    // 支持百炼 DashScope - 通过 settings.json 配置，兼容 DASHSCOPE_API_KEY
+    if (getAPIProvider() === 'dashscope') {
       return 'valid'
     }
     if (!isAuthEnabled() || isClaudeAISubscriber()) {
@@ -46,8 +47,8 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [error, setError] = useState<Error | null>(null)
 
   const verify = useCallback(async (): Promise<void> => {
-    // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
-    if (process.env.DASHSCOPE_API_KEY) {
+    // 支持百炼 DashScope - 通过 settings.json 配置时跳过验证
+    if (getAPIProvider() === 'dashscope') {
       setStatus('valid')
       return
     }

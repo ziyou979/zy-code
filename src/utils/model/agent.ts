@@ -3,7 +3,6 @@ import { capitalize } from '../stringUtils.js'
 import { MODEL_ALIASES, type ModelAlias } from './aliases.js'
 import { applyBedrockRegionPrefix, getBedrockRegionPrefix } from './bedrock.js'
 import {
-  getCanonicalName,
   getRuntimeMainLoopModel,
   parseUserSpecifiedModel,
 } from './model.js'
@@ -108,14 +107,14 @@ export function getAgentModel(
  * since they carry semantics beyond "same tier as parent".
  */
 function aliasMatchesParentTier(alias: string, parentModel: string): boolean {
-  const canonical = getCanonicalName(parentModel)
+  const m = parentModel.toLowerCase()
   switch (alias.toLowerCase()) {
     case 'opus':
-      return canonical.includes('opus')
+      return m.includes('opus')
     case 'sonnet':
-      return canonical.includes('sonnet')
+      return m.includes('sonnet')
     case 'haiku':
-      return canonical.includes('haiku')
+      return m.includes('haiku')
     default:
       return false
   }

@@ -531,11 +531,10 @@ export async function verifyApiKey(
   apiKey: string,
   isNonInteractiveSession: boolean,
 ): Promise<boolean> {
-  // 支持百炼 DashScope API Key - 跳过验证
-  if (process.env.DASHSCOPE_API_KEY) {
+  // 支持百炼 DashScope - 通过 settings.json 配置时跳过验证
+  if (getAPIProvider() === 'dashscope') {
     return true
   }
-  
   // Skip API verification if running in print mode (isNonInteractiveSession)
   if (isNonInteractiveSession) {
     return true

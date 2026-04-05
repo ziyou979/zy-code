@@ -19,6 +19,7 @@ import {
   modelSupports1M,
 } from '../context.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { getGlobalConfig } from '../config.js'
 import { getModelStrings, resolveOverriddenModel } from './modelStrings.js'
 import { formatModelPricing, getOpus46CostTier } from '../modelCost.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
@@ -33,8 +34,33 @@ export type ModelShortName = string
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
+/** Tier-based model resolution: best > advanced > standard > compact > defaultModel */
+type ModelTier = 'best' | 'advanced' | 'standard' | 'compact'
+
+function getModelByTier(tier: ModelTier): ModelName {
+  const settings = getSettings_DEPRECATED() || {}
+  // 1. Tier-specific model
+  if (settings.models?.[tier]) {
+    return settings.models[tier]
+  }
+  // 2. Global default
+  if (settings.defaultModel) {
+    return settings.defaultModel
+  }
+  // 3. Built-in fallbacks (Claude defaults for users without custom config)
+  switch (tier) {
+    case 'best':
+    case 'advanced':
+      return getModelStrings().opus46
+    case 'standard':
+      return getModelStrings().sonnet46
+    case 'compact':
+      return getModelStrings().haiku45
+  }
+}
+
 export function getSmallFastModel(): ModelName {
-  return process.env.ANTHROPIC_SMALL_FAST_MODEL || getDefaultHaikuModel()
+  return getModelByTier('compact')
 }
 
 export function isNonCustomOpusModel(model: ModelName): boolean {
@@ -47,16 +73,13 @@ export function isNonCustomOpusModel(model: ModelName): boolean {
 }
 
 /**
- * Helper to get the model from /model (including via /config), the --model flag, environment variable,
- * or the saved settings. The returned value can be a model alias if that's what the user specified.
- * Undefined if the user didn't configure anything, in which case we fall back to
- * the default (null).
+ * Helper to get the model from /model (including via /config), the --model flag,
+ * or the saved settings.
  *
- * Priority order within this function:
- * 1. Model override during session (from /model command) - highest priority
+ * Priority:
+ * 1. Model override during session (from /model command)
  * 2. Model override at startup (from --model flag)
- * 3. ANTHROPIC_MODEL environment variable
- * 4. Settings (from user's saved settings)
+ * 3. Settings (from user's saved settings)
  */
 export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
   let specifiedModel: ModelSetting | undefined
@@ -66,7 +89,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
     specifiedModel = modelOverride
   } else {
     const settings = getSettings_DEPRECATED() || {}
-    specifiedModel = process.env.ANTHROPIC_MODEL || settings.model || undefined
+    specifiedModel = settings.model || undefined
   }
 
   // Ignore the user-specified model if it's not in the availableModels allowlist.
@@ -80,14 +103,11 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
 /**
  * Get the main loop model to use for the current session.
  *
- * Model Selection Priority Order:
- * 1. Model override during session (from /model command) - highest priority
+ * Priority:
+ * 1. Model override during session (from /model command)
  * 2. Model override at startup (from --model flag)
- * 3. ANTHROPIC_MODEL environment variable
- * 4. Settings (from user's saved settings)
- * 5. Built-in default
- *
- * @returns The resolved model name to use
+ * 3. Settings (from user's saved settings)
+ * 4. Built-in default (from defaultModel in settings)
  */
 export function getMainLoopModel(): ModelName {
   const model = getUserSpecifiedModelSetting()
@@ -98,51 +118,27 @@ export function getMainLoopModel(): ModelName {
 }
 
 export function getBestModel(): ModelName {
-  return getDefaultOpusModel()
+  return getModelByTier('best')
 }
 
-// @[MODEL LAUNCH]: Update the default Opus model (3P providers may lag so keep defaults unchanged).
+// Maps legacy Claude aliases to capability tiers
+const ALIAS_TO_TIER: Record<string, ModelTier> = {
+  opus: 'advanced',
+  sonnet: 'standard',
+  haiku: 'compact',
+  best: 'best',
+}
+
 export function getDefaultOpusModel(): ModelName {
-  if (process.env.ANTHROPIC_DEFAULT_OPUS_MODEL) {
-    return process.env.ANTHROPIC_DEFAULT_OPUS_MODEL
-  }
-  // 百炼 API 使用 qwen 模型
-  if (process.env.DASHSCOPE_API_KEY || getAPIProvider() === 'dashscope') {
-    return 'qwen3.6-plus'
-  }
-  // Non-anthropic providers (Bedrock, Vertex, Foundry) — kept as a separate branch
-  // even when values match, since provider availability lags and
-  // these will diverge again at the next model launch.
-  if (getAPIProvider() !== 'anthropic') {
-    return getModelStrings().opus46
-  }
-  return getModelStrings().opus46
+  return getModelByTier('advanced')
 }
 
-// @[MODEL LAUNCH]: Update the default Sonnet model (3P providers may lag so keep defaults unchanged).
 export function getDefaultSonnetModel(): ModelName {
-  if (process.env.ANTHROPIC_DEFAULT_SONNET_MODEL) {
-    return process.env.ANTHROPIC_DEFAULT_SONNET_MODEL
-  }
-  // 百炼 API 使用 qwen 模型
-  if (process.env.DASHSCOPE_API_KEY || getAPIProvider() === 'dashscope') {
-    return 'qwen3.6-plus'
-  }
-  // Default to Sonnet 4.5 for 3P since they may not have 4.6 yet
-  if (getAPIProvider() !== 'anthropic') {
-    return getModelStrings().sonnet45
-  }
-  return getModelStrings().sonnet46
+  return getModelByTier('standard')
 }
 
-// @[MODEL LAUNCH]: Update the default Haiku model (3P providers may lag so keep defaults unchanged).
 export function getDefaultHaikuModel(): ModelName {
-  if (process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) {
-    return process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
-  }
-
-  // Haiku 4.5 is available on all platforms (first-party, Foundry, Bedrock, Vertex)
-  return getModelStrings().haiku45
+  return getModelByTier('compact')
 }
 
 /**
@@ -157,18 +153,18 @@ export function getRuntimeMainLoopModel(params: {
 }): ModelName {
   const { permissionMode, mainLoopModel, exceeds200kTokens = false } = params
 
-  // opusplan uses Opus in plan mode without [1m] suffix.
+  // opusplan: advanced tier in plan mode
   if (
     getUserSpecifiedModelSetting() === 'opusplan' &&
     permissionMode === 'plan' &&
     !exceeds200kTokens
   ) {
-    return getDefaultOpusModel()
+    return getModelByTier('advanced')
   }
 
-  // sonnetplan by default
+  // haiku → standard tier in plan mode
   if (getUserSpecifiedModelSetting() === 'haiku' && permissionMode === 'plan') {
-    return getDefaultSonnetModel()
+    return getModelByTier('standard')
   }
 
   return mainLoopModel
@@ -177,13 +173,25 @@ export function getRuntimeMainLoopModel(params: {
 /**
  * Get the default main loop model setting.
  *
- * This handles the built-in default:
- * - Opus for Max and Team Premium users
- * - Sonnet 4.6 for all other users (including Team Standard, Pro, Enterprise)
- *
- * @returns The default model setting to use
+ * Priority for settings-configured users: mainLoopModel → defaultModel → models.standard.
+ * For Claude subscription users: Opus for Max/Team Premium, Sonnet for others.
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
+  const settings = getSettings_DEPRECATED()
+  // Non-subscription users: use mainLoopModel → defaultModel → models.standard → built-in fallback
+  if (settings?.mainLoopModel) {
+    return settings.mainLoopModel
+  }
+  if (settings?.defaultModel || settings?.models) {
+    return getModelByTier('standard')
+  }
+
+  // Check onboarding-configured model (configuredModel from globalConfig)
+  const config = getGlobalConfig()
+  if (config.configuredModel) {
+    return config.configuredModel
+  }
+
   // Ants default to defaultModel from flag config, or Opus 1M if not configured
   if (process.env.USER_TYPE === 'ant') {
     return (
@@ -203,7 +211,6 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
   }
 
   // PAYG (1P and 3P), Enterprise, Team Standard, and Pro get Sonnet as default
-  // Note that PAYG (3P) may default to an older Sonnet model
   return getDefaultSonnetModel()
 }
 
@@ -421,6 +428,11 @@ function maskModelCodename(baseName: string): string {
 }
 
 export function renderModelName(model: ModelName): string {
+  // For non-Anthropic providers, show the actual model string instead of
+  // mapping to Claude marketing names (e.g. qwen3.6-plus should not show as "Opus 4.6")
+  if (getAPIProvider() !== 'anthropic') {
+    return model
+  }
   const publicName = getPublicModelDisplayName(model)
   if (publicName) {
     return publicName
@@ -482,18 +494,13 @@ export function parseUserSpecifiedModel(
     : normalizedModel
 
   if (isModelAlias(modelString)) {
-    switch (modelString) {
-      case 'opusplan':
-        return getDefaultSonnetModel() + (has1mTag ? '[1m]' : '') // Sonnet is default, Opus in plan mode
-      case 'sonnet':
-        return getDefaultSonnetModel() + (has1mTag ? '[1m]' : '')
-      case 'haiku':
-        return getDefaultHaikuModel() + (has1mTag ? '[1m]' : '')
-      case 'opus':
-        return getDefaultOpusModel() + (has1mTag ? '[1m]' : '')
-      case 'best':
-        return getBestModel()
-      default:
+    const tier = ALIAS_TO_TIER[modelString]
+    if (tier) {
+      return getModelByTier(tier) + (has1mTag ? '[1m]' : '')
+    }
+    // opusplan: use advanced tier in plan mode, standard otherwise
+    if (modelString === 'opusplan') {
+      return getModelByTier('standard') + (has1mTag ? '[1m]' : '')
     }
   }
 
@@ -566,8 +573,7 @@ export function resolveSkillModelOverride(
   if (has1mContext(skillModel) || !has1mContext(currentModel)) {
     return skillModel
   }
-  // modelSupports1M matches on canonical IDs ('claude-opus-4-6', 'claude-sonnet-4');
-  // a bare 'opus' alias falls through getCanonicalName unmatched. Resolve first.
+  // modelSupports1M checks settings and raw model name. Resolve alias first.
   if (modelSupports1M(parseUserSpecifiedModel(skillModel))) {
     return skillModel + '[1m]'
   }
@@ -625,39 +631,39 @@ export function getMarketingNameForModel(modelId: string): string | undefined {
   }
 
   const has1m = modelId.toLowerCase().includes('[1m]')
-  const canonical = getCanonicalName(modelId)
+  const m = modelId.toLowerCase()
 
-  if (canonical.includes('claude-opus-4-6')) {
+  if (m.includes('claude-opus-4-6')) {
     return has1m ? 'Opus 4.6 (with 1M context)' : 'Opus 4.6'
   }
-  if (canonical.includes('claude-opus-4-5')) {
+  if (m.includes('claude-opus-4-5')) {
     return 'Opus 4.5'
   }
-  if (canonical.includes('claude-opus-4-1')) {
+  if (m.includes('claude-opus-4-1')) {
     return 'Opus 4.1'
   }
-  if (canonical.includes('claude-opus-4')) {
+  if (m.includes('claude-opus-4')) {
     return 'Opus 4'
   }
-  if (canonical.includes('claude-sonnet-4-6')) {
+  if (m.includes('claude-sonnet-4-6')) {
     return has1m ? 'Sonnet 4.6 (with 1M context)' : 'Sonnet 4.6'
   }
-  if (canonical.includes('claude-sonnet-4-5')) {
+  if (m.includes('claude-sonnet-4-5')) {
     return has1m ? 'Sonnet 4.5 (with 1M context)' : 'Sonnet 4.5'
   }
-  if (canonical.includes('claude-sonnet-4')) {
+  if (m.includes('claude-sonnet-4')) {
     return has1m ? 'Sonnet 4 (with 1M context)' : 'Sonnet 4'
   }
-  if (canonical.includes('claude-3-7-sonnet')) {
+  if (m.includes('claude-3-7-sonnet')) {
     return 'Claude 3.7 Sonnet'
   }
-  if (canonical.includes('claude-3-5-sonnet')) {
+  if (m.includes('claude-3-5-sonnet')) {
     return 'Claude 3.5 Sonnet'
   }
-  if (canonical.includes('claude-haiku-4-5')) {
+  if (m.includes('claude-haiku-4-5')) {
     return 'Haiku 4.5'
   }
-  if (canonical.includes('claude-3-5-haiku')) {
+  if (m.includes('claude-3-5-haiku')) {
     return 'Claude 3.5 Haiku'
   }
 

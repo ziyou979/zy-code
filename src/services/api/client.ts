@@ -296,10 +296,10 @@ export async function getAnthropicClient({
     // we have always been lying about the return type - this doesn't support batching or models
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic
   }
-  if (process.env.DASHSCOPE_API_KEY || isEnvTruthy(process.env.CLAUDE_CODE_USE_DASHSCOPE)) {
-    // 百炼 API 兼容 Anthropic 协议格式，只需要设置 baseURL 和 API Key
-    // 当设置了 DASHSCOPE_API_KEY 时自动启用，无需额外设置 CLAUDE_CODE_USE_DASHSCOPE
-    const dashscopeApiKey = process.env.DASHSCOPE_API_KEY || getApiKey()
+  if (getAPIProvider() === 'dashscope') {
+    // 百炼 API 兼容 Anthropic 协议格式，通过 settings.json 配置
+    // 兼容旧的 DASHSCOPE_API_KEY 环境变量
+    const dashscopeApiKey = getApiKey()
     // 使用 Anthropic 兼容端点，而非 OpenAI 兼容端点
     const dashscopeBaseURL = process.env.DASHSCOPE_BASE_URL || 'https://dashscope.aliyuncs.com/apps/anthropic/'
 
@@ -354,12 +354,6 @@ async function configureApiKeyHeaders(
   headers: Record<string, string>,
   isNonInteractiveSession: boolean,
 ): Promise<void> {
-  // 支持百炼 DashScope API Key
-  if (process.env.DASHSCOPE_API_KEY) {
-    headers['Authorization'] = `Bearer ${process.env.DASHSCOPE_API_KEY}`
-    return
-  }
-  
   const token =
     process.env.ANTHROPIC_AUTH_TOKEN ||
     (await getApiKeyFromApiKeyHelper(isNonInteractiveSession))

@@ -263,6 +263,39 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe('Path to a script that outputs authentication values'),
+      /** API provider: 'anthropic', 'dashscope', 'openrouter', 'generic' */
+      provider: z
+        .enum(['anthropic', 'dashscope', 'openrouter', 'generic'])
+        .optional()
+        .describe('API provider to use. Overrides onboarding config and env vars.'),
+      /** API key for the configured provider */
+      apiKey: z
+        .string()
+        .optional()
+        .describe('API key for authentication. Overrides environment variables.'),
+      /** Default model when no tier-specific model is configured */
+      defaultModel: z
+        .string()
+        .optional()
+        .describe(
+          'Default model used as fallback for aliases and when no tier-specific model is set.',
+        ),
+      /** Main loop model for conversation (overrides tier-based defaults) */
+      mainLoopModel: z
+        .string()
+        .optional()
+        .describe(
+          'Default model for the main conversation loop. Overrides tier-based model resolution.',
+        ),
+      /** Tier-based model configuration (best > advanced > standard > compact) */
+      models: z
+        .record(z.string(), z.string())
+        .optional()
+        .describe(
+          'Model configuration by capability tier. Keys: "best" (most capable), ' +
+            '"advanced" (complex reasoning), "standard" (everyday tasks), "compact" (fast/cheap). ' +
+            'Unconfigured tiers fall back to defaultModel.',
+        ),
       awsCredentialExport: z
         .string()
         .optional()
@@ -427,6 +460,43 @@ export const SettingsSchema = lazySchema(() =>
           'Custom model definitions for the model picker. When set, these models replace ' +
             'the built-in Claude models in the /model selector. Each entry defines an alias ' +
             '(used in settings), the actual model ID (sent to the API), and display metadata.',
+        ),
+      modelCapabilities: z
+        .array(
+          z.object({
+            model: z
+              .string()
+              .describe(
+                'Model ID or alias to match (e.g., "qwen3.6-plus", "qwen-max"). ' +
+                  'Case-insensitive substring match against the active model name.',
+              ),
+            capabilities: z
+              .array(
+                z.enum([
+                  'thinking',
+                  'adaptive_thinking',
+                  'effort',
+                  'structured_outputs',
+                  'context_management',
+                  'prompt_caching',
+                  'web_search',
+                  'interleaved_thinking',
+                  '1m_context',
+                  'auto_mode',
+                ]),
+              )
+              .describe('List of capabilities this model supports.'),
+            maxInputTokens: z
+              .number()
+              .optional()
+              .describe('Maximum input tokens. Defaults to 200000.'),
+          }),
+        )
+        .optional()
+        .describe(
+          'User-defined model capabilities. Used to declare what features ' +
+            'your custom/non-Claude model supports, replacing hardcoded Claude-only checks. ' +
+            'Matched by case-insensitive substring against the active model name.',
         ),
       // Whether to automatically approve all MCP servers in the project
       enableAllProjectMcpServers: z

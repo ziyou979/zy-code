@@ -17,7 +17,6 @@ import { checkOpus1mAccess, checkSonnet1mAccess } from './check1mAccess.js'
 import { getAPIProvider, providerHasCapability } from './providers.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import {
-  getCanonicalName,
   getClaudeAiUserDefaultModelDescription,
   getDefaultSonnetModel,
   getDefaultOpusModel,
@@ -396,15 +395,15 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
 function getModelFamilyInfo(
   model: string,
 ): { alias: string; currentVersionName: string } | null {
-  const canonical = getCanonicalName(model)
+  const m = model.toLowerCase()
 
   // Sonnet family
   if (
-    canonical.includes('claude-sonnet-4-6') ||
-    canonical.includes('claude-sonnet-4-5') ||
-    canonical.includes('claude-sonnet-4-') ||
-    canonical.includes('claude-3-7-sonnet') ||
-    canonical.includes('claude-3-5-sonnet')
+    m.includes('claude-sonnet-4-6') ||
+    m.includes('claude-sonnet-4-5') ||
+    m.includes('claude-sonnet-4-') ||
+    m.includes('claude-3-7-sonnet') ||
+    m.includes('claude-3-5-sonnet')
   ) {
     const currentName = getMarketingNameForModel(getDefaultSonnetModel())
     if (currentName) {
@@ -413,7 +412,7 @@ function getModelFamilyInfo(
   }
 
   // Opus family
-  if (canonical.includes('claude-opus-4')) {
+  if (m.includes('claude-opus-4')) {
     const currentName = getMarketingNameForModel(getDefaultOpusModel())
     if (currentName) {
       return { alias: 'Opus', currentVersionName: currentName }
@@ -422,8 +421,8 @@ function getModelFamilyInfo(
 
   // Haiku family
   if (
-    canonical.includes('claude-haiku') ||
-    canonical.includes('claude-3-5-haiku')
+    m.includes('claude-haiku') ||
+    m.includes('claude-3-5-haiku')
   ) {
     const currentName = getMarketingNameForModel(getDefaultHaikuModel())
     if (currentName) {

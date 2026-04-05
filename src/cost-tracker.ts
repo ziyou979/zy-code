@@ -44,7 +44,6 @@ import {
 import { isFastModeEnabled } from './utils/fastMode.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import { getCanonicalName } from './utils/model/model.js'
 import { calculateUSDCost } from './utils/modelCost.js'
 export {
   getTotalCostUSD as getTotalCost,
@@ -187,7 +186,7 @@ function formatModelUsage(): string {
   // Accumulate usage by short name
   const usageByShortName: { [shortName: string]: ModelUsage } = {}
   for (const [model, usage] of Object.entries(modelUsageMap)) {
-    const shortName = getCanonicalName(model)
+    const shortName = model
     if (!usageByShortName[shortName]) {
       usageByShortName[shortName] = {
         inputTokens: 0,

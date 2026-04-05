@@ -2,7 +2,7 @@
 import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getCanonicalName } from './model/model.js'
+import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
 import { getSettingsWithErrors } from './settings/settings.js'
@@ -92,6 +92,8 @@ export function modelSupportsThinking(model: string): boolean {
   if (supported3P !== undefined) {
     return supported3P
   }
+  // Check settings-based capabilities first
+  if (modelHasCapability(model, 'thinking')) return true
   if (process.env.USER_TYPE === 'ant') {
     if (resolveAntModel(model.toLowerCase())) {
       return true
@@ -99,14 +101,14 @@ export function modelSupportsThinking(model: string): boolean {
   }
   // IMPORTANT: Do not change thinking support without notifying the model
   // launch DRI and research. This can greatly affect model quality and bashing.
-  const canonical = getCanonicalName(model)
   const provider = getAPIProvider()
   // 1P and Foundry: all Claude 4+ models (including Haiku 4.5)
   if (providerHasCapability(provider, 'thinking')) {
-    return !canonical.includes('claude-3-')
+    return !model.toLowerCase().includes('claude-3-')
   }
   // 3P (Bedrock/Vertex): only Opus 4+ and Sonnet 4+
-  return canonical.includes('sonnet-4') || canonical.includes('opus-4')
+  const m = model.toLowerCase()
+  return m.includes('sonnet-4') || m.includes('opus-4')
 }
 
 // @[MODEL LAUNCH]: Add the new model to the allowlist if it supports adaptive thinking.
@@ -115,16 +117,18 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
   if (supported3P !== undefined) {
     return supported3P
   }
-  const canonical = getCanonicalName(model)
+  // Check settings-based capabilities first
+  if (modelHasCapability(model, 'adaptive_thinking')) return true
+  const m = model.toLowerCase()
   // Supported by a subset of Claude 4 models
-  if (canonical.includes('opus-4-6') || canonical.includes('sonnet-4-6')) {
+  if (m.includes('opus-4-6') || m.includes('sonnet-4-6')) {
     return true
   }
   // Exclude any other known legacy models (allowlist above catches 4-6 variants first)
   if (
-    canonical.includes('opus') ||
-    canonical.includes('sonnet') ||
-    canonical.includes('haiku')
+    m.includes('opus') ||
+    m.includes('sonnet') ||
+    m.includes('haiku')
   ) {
     return false
   }

@@ -4,6 +4,20 @@ import { isEnvTruthy } from '../envUtils.js'
 export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic'
 
 /**
+ * Get the configured API provider from settings (zy.json).
+ * Returns null if not configured in settings.
+ */
+function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | null {
+  try {
+    const { getSettings_DEPRECATED } = require('../settings/settings.js') as typeof import('../settings/settings.js')
+    const settings = getSettings_DEPRECATED()
+    return settings?.provider ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Get the configured API provider from onboarding config.
  * Returns null if config isn't ready yet (early startup) or not configured.
  */
@@ -18,14 +32,20 @@ function getConfiguredProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'ge
 }
 
 export function getAPIProvider(): APIProvider {
-  // 优先检查 onboarding 时配置的平台
+  // 1. 优先检查 settings.json (zy.json) 中配置的平台
+  const settingsProvider = getSettingsProvider()
+  if (settingsProvider) {
+    return settingsProvider
+  }
+
+  // 2. 检查 onboarding 时配置的平台
   const configured = getConfiguredProvider()
   if (configured) {
     return configured
   }
 
-  // 百炼 / DashScope API：设置了 DASHSCOPE_API_KEY 或 CLAUDE_CODE_USE_DASHSCOPE 时自动启用
-  if (process.env.DASHSCOPE_API_KEY || isEnvTruthy(process.env.CLAUDE_CODE_USE_DASHSCOPE)) {
+  // 百炼 / DashScope API
+  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_DASHSCOPE)) {
     return 'dashscope'
   }
   if (isEnvTruthy(process.env.CLAUDE_CODE_USE_OPENROUTER)) {
@@ -139,4 +159,55 @@ export function isAnthropicBaseUrl(): boolean {
  */
 export function isCompatibleProvider(provider: APIProvider): boolean {
   return provider === 'anthropic' || provider === 'dashscope' || provider === 'openrouter' || provider === 'generic'
+}
+
+/**
+ * Model capability — resolved from settings.json `modelCapabilities`.
+ * Settings take priority over hardcoded provider-level declarations.
+ *
+ * Usage: replace `getCanonicalName(model).includes('claude-opus-4')` with
+ * `modelHasCapability(model, 'thinking')`.
+ */
+export function modelHasCapability(
+  model: string,
+  capability: ProviderCapability | '1m_context' | 'auto_mode',
+): boolean {
+  const settings = readSettings()
+  if (settings?.modelCapabilities) {
+    const m = model.toLowerCase()
+    for (const mc of settings.modelCapabilities) {
+      if (m.includes(mc.model.toLowerCase())) {
+        if (mc.capabilities.includes(capability as never)) return true
+      }
+    }
+  }
+  return providerHasCapability(getAPIProvider(), capability as ProviderCapability)
+}
+
+export function getModelMaxInputTokens(model: string): number | undefined {
+  const settings = readSettings()
+  if (settings?.modelCapabilities) {
+    const m = model.toLowerCase()
+    for (const mc of settings.modelCapabilities) {
+      if (m.includes(mc.model.toLowerCase())) {
+        return mc.maxInputTokens
+      }
+    }
+  }
+  return undefined
+}
+
+function readSettings(): {
+  modelCapabilities?: Array<{
+    model: string
+    capabilities: string[]
+    maxInputTokens?: number
+  }>
+} | null {
+  try {
+    const { getSettings_DEPRECATED } = require('../settings/settings.js')
+    return getSettings_DEPRECATED()
+  } catch {
+    return null
+  }
 }

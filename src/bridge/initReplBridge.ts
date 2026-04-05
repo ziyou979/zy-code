@@ -31,6 +31,7 @@ import {
   handleOAuth401Error,
 } from '../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
+import { getAPIProvider } from '../utils/model/providers.js'
 import { logForDebugging } from '../utils/debug.js'
 import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
 import { errorMessage } from '../utils/errors.js'
@@ -144,8 +145,8 @@ export async function initReplBridge(
   // 2. Check OAuth — must be signed in with claude.ai. Runs before the
   // policy check so console-auth users get the actionable "/login" hint
   // instead of a misleading policy error from a stale/wrong-org cache.
-  // 支持百炼 DashScope API Key - 跳过 OAuth 检查
-  if (!getBridgeAccessToken() && !process.env.DASHSCOPE_API_KEY) {
+  // 支持百炼 DashScope - 通过 settings.json 配置时跳过 OAuth 检查
+  if (!getBridgeAccessToken() && getAPIProvider() !== 'dashscope') {
     logBridgeSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
     onStateChange?.('failed', '/login')
     return null

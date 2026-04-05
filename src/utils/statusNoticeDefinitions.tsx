@@ -8,6 +8,7 @@ import { relative } from 'path';
 import { formatNumber } from './format.js';
 import type { getGlobalConfig } from './config.js';
 import { getApiKeyWithSource, getApiKeyFromConfigOrMacOSKeychain, getAuthTokenSource, isClaudeAISubscriber } from './auth.js';
+import { getAPIProvider } from './model/providers.js';
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js';
 import { getAgentDescriptionsTotalTokens, AGENT_DESCRIPTIONS_THRESHOLD } from './statusNoticeHelpers.js';
 import { isSupportedJetBrainsTerminal, toIDEDisplayName, getTerminalIdeType } from './ide.js';
@@ -74,7 +75,7 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
   type: 'warning',
   isActive: () => {
     // 百炼 API 模式下忽略 ANTHROPIC_API_KEY 的冲突检查
-    if (process.env.DASHSCOPE_API_KEY) {
+    if (getAPIProvider() === 'dashscope') {
       return false;
     }
     
@@ -105,7 +106,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
   type: 'warning',
   isActive: () => {
     // 百炼 API 模式下忽略 ANTHROPIC_API_KEY 的冲突检查
-    if (process.env.DASHSCOPE_API_KEY) {
+    if (getAPIProvider() === 'dashscope') {
       return false;
     }
     

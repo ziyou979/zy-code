@@ -216,7 +216,8 @@ function parseSettingsFileUncached(path: string): {
     // rule doesn't cause the entire settings file to be rejected.
     const ruleWarnings = filterInvalidPermissionRules(data, path)
 
-    const result = SettingsSchema().safeParse(data)
+    const schema = SettingsSchema()
+    const result = schema.safeParse(data)
 
     if (!result.success) {
       const errors = formatZodError(result.error, path)

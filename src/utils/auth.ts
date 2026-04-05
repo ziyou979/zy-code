@@ -13,7 +13,6 @@ import { getModelStrings } from 'src/utils/model/modelStrings.js'
 import { getAPIProvider } from 'src/utils/model/providers.js'
 import {
   getIsNonInteractiveSession,
-  preferThirdPartyAuthentication,
 } from '../bootstrap/state.js'
 import {
   getMockSubscriptionType,
@@ -52,7 +51,6 @@ import {
   getClaudeConfigHomeDir,
   isBareMode,
   isEnvTruthy,
-  isRunningOnHomespace,
 } from './envUtils.js'
 import { errorMessage } from './errors.js'
 import { execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
@@ -104,11 +102,17 @@ export function isClaudeAISubscriber(): boolean {
 
 /**
  * 检查认证是否启用
- * 支持百炼 DashScope API Key 启动
  */
 export function isAuthEnabled(): boolean {
-  // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
-  if (process.env.DASHSCOPE_API_KEY) {
+  // 检查 settings.json (zy.json) 中配置的 API key
+  const settings = getSettings_DEPRECATED()
+  if (settings?.apiKey) {
+    return true
+  }
+
+  // 检查 onboarding 时配置的 API key 和其他来源
+  const config = getGlobalConfig()
+  if (config.configuredApiKey) {
     return true
   }
 
@@ -119,9 +123,10 @@ export function isAuthEnabled(): boolean {
 /** Where the auth token is being sourced from, if any. */
 // this code is closely related to isAuthEnabled
 export function getAuthTokenSource() {
-  // 支持百炼 DashScope API Key 启动 - 只要配置了就可以启动
-  if (process.env.DASHSCOPE_API_KEY) {
-    return { source: 'DASHSCOPE_API_KEY' as const, hasToken: true }
+  // 检查 settings.json (zy.json) 中配置的 API key
+  const settings = getSettings_DEPRECATED()
+  if (settings?.apiKey) {
+    return { source: 'settingsApiKey' as const, hasToken: true }
   }
 
   // 检查 onboarding 时配置的 API key
@@ -140,29 +145,11 @@ export function getAuthTokenSource() {
     return { source: 'none' as const, hasToken: false }
   }
 
-  if (process.env.ANTHROPIC_AUTH_TOKEN && !isManagedOAuthContext()) {
-    return { source: 'ANTHROPIC_AUTH_TOKEN' as const, hasToken: true }
-  }
-
-  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
-    return { source: 'CLAUDE_CODE_OAUTH_TOKEN' as const, hasToken: true }
-  }
-
   // Check for OAuth token from file descriptor (or its CCR disk fallback)
   const oauthTokenFromFd = getOAuthTokenFromFileDescriptor()
   if (oauthTokenFromFd) {
     // getOAuthTokenFromFileDescriptor has a disk fallback for CCR subprocesses
-    // that can't inherit the pipe FD. Distinguish by env var presence so the
-    // org-mismatch message doesn't tell the user to unset a variable that
-    // doesn't exist. Call sites fall through correctly — the new source is
-    // !== 'none' (cli/handlers/auth.ts → oauth_token) and not in the
-    // isEnvVarToken set (auth.ts:1844 → generic re-login message).
-    if (process.env.CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR) {
-      return {
-        source: 'CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR' as const,
-        hasToken: true,
-      }
-    }
+    // that can't inherit the pipe FD.
     return {
       source: 'CCR_OAUTH_TOKEN_FILE' as const,
       hasToken: true,
@@ -208,9 +195,10 @@ export function getApiKeyWithSource(
   key: null | string
   source: ApiKeySource
 } {
-  // 支持百炼 DashScope API Key - 只要配置了就可以启动
-  if (process.env.DASHSCOPE_API_KEY) {
-    return { key: process.env.DASHSCOPE_API_KEY, source: 'ANTHROPIC_API_KEY' }
+  // 检查 settings.json (zy.json) 中配置的 API key
+  const settings = getSettings_DEPRECATED()
+  if (settings?.apiKey) {
+    return { key: settings.apiKey, source: 'ANTHROPIC_API_KEY' }
   }
 
   // 检查 onboarding 时配置的 API key
@@ -219,13 +207,9 @@ export function getApiKeyWithSource(
     return { key: config.configuredApiKey, source: 'ANTHROPIC_API_KEY' }
   }
 
-  // --bare: hermetic auth. Only ANTHROPIC_API_KEY env or apiKeyHelper from
-  // the --settings flag. Never touches keychain, config file, or approval
-  // lists. 3P (Bedrock/Vertex/Foundry) uses provider creds, not this path.
+  // --bare: hermetic auth. Only apiKeyHelper from the --settings flag.
+  // 3P (Bedrock/Vertex/Foundry) uses provider creds, not this path.
   if (isBareMode()) {
-    if (process.env.ANTHROPIC_API_KEY) {
-      return { key: process.env.ANTHROPIC_API_KEY, source: 'ANTHROPIC_API_KEY' }
-    }
     if (getConfiguredApiKeyHelper()) {
       return {
         key: opts.skipRetrievingKeyFromApiKeyHelper
@@ -235,67 +219,6 @@ export function getApiKeyWithSource(
       }
     }
     return { key: null, source: 'none' }
-  }
-
-  // On homespace, don't use ANTHROPIC_API_KEY (use Console key instead)
-  // https://anthropic.slack.com/archives/C08428WSLKV/p1747331773214779
-  const apiKeyEnv = isRunningOnHomespace()
-    ? undefined
-    : process.env.ANTHROPIC_API_KEY
-
-  // Always check for direct environment variable when the user ran claude --print.
-  // This is useful for CI, etc.
-  if (preferThirdPartyAuthentication() && apiKeyEnv) {
-    return {
-      key: apiKeyEnv,
-      source: 'ANTHROPIC_API_KEY',
-    }
-  }
-
-  if (isEnvTruthy(process.env.CI) || process.env.NODE_ENV === 'test') {
-    // Check for API key from file descriptor first
-    const apiKeyFromFd = getApiKeyFromFileDescriptor()
-    if (apiKeyFromFd) {
-      return {
-        key: apiKeyFromFd,
-        source: 'ANTHROPIC_API_KEY',
-      }
-    }
-
-    if (
-      !apiKeyEnv &&
-      !process.env.CLAUDE_CODE_OAUTH_TOKEN &&
-      !process.env.CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR
-    ) {
-      throw new Error(
-        'ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN env var is required',
-      )
-    }
-
-    if (apiKeyEnv) {
-      return {
-        key: apiKeyEnv,
-        source: 'ANTHROPIC_API_KEY',
-      }
-    }
-
-    // OAuth token is present but this function returns API keys only
-    return {
-      key: null,
-      source: 'none',
-    }
-  }
-  // Check for ANTHROPIC_API_KEY before checking the apiKeyHelper or /login-managed key
-  if (
-    apiKeyEnv &&
-    getGlobalConfig().customApiKeyResponses?.approved?.includes(
-      normalizeApiKeyForConfig(apiKeyEnv),
-    )
-  ) {
-    return {
-      key: apiKeyEnv,
-      source: 'ANTHROPIC_API_KEY',
-    }
   }
 
   // Check for API key from file descriptor
@@ -1243,21 +1166,8 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
 }
 
 export const getClaudeAIOAuthTokens = memoize((): OAuthTokens | null => {
-  // --bare: API-key-only. No OAuth env tokens, no keychain, no credentials file.
+  // --bare: API-key-only. No OAuth tokens, no keychain, no credentials file.
   if (isBareMode()) return null
-
-  // Check for force-set OAuth token from environment variable
-  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
-    // Return an inference-only token (unknown refresh and expiry)
-    return {
-      accessToken: process.env.CLAUDE_CODE_OAUTH_TOKEN,
-      refreshToken: null,
-      expiresAt: null,
-      scopes: ['user:inference'],
-      subscriptionType: null,
-      rateLimitTier: null,
-    }
-  }
 
   // Check for OAuth token from file descriptor
   const oauthTokenFromFd = getOAuthTokenFromFileDescriptor()
@@ -1383,17 +1293,14 @@ async function handleOAuth401ErrorImpl(
 
 /**
  * Reads OAuth tokens asynchronously, avoiding blocking keychain reads.
- * Delegates to the sync memoized version for env var / file descriptor tokens
+ * Delegates to the sync memoized version for file descriptor tokens
  * (which don't hit the keychain), and only uses async for storage reads.
  */
 export async function getClaudeAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
   if (isBareMode()) return null
 
-  // Env var and FD tokens are sync and don't hit the keychain
-  if (
-    process.env.CLAUDE_CODE_OAUTH_TOKEN ||
-    getOAuthTokenFromFileDescriptor()
-  ) {
+  // FD tokens are sync and don't hit the keychain
+  if (getOAuthTokenFromFileDescriptor()) {
     return getClaudeAIOAuthTokens()
   }
 

@@ -14,7 +14,7 @@ import { isGeneratedFile } from './generatedFiles.js'
 import { getRemoteUrlForDir, resolveGitDir } from './git/gitFilesystem.js'
 import { findGitRoot, gitExe } from './git.js'
 import { logError } from './log.js'
-import { getCanonicalName, type ModelName } from './model/model.js'
+import { type ModelName } from './model/model.js'
 import { sequential } from './sequential.js'
 
 /**
@@ -235,7 +235,7 @@ export function getClientSurface(): string {
  * Format: "surface/model" (e.g., "cli/claude-sonnet")
  */
 export function buildSurfaceKey(surface: string, model: ModelName): string {
-  return `${surface}/${getCanonicalName(model)}`
+  return `${surface}/${model}`
 }
 
 /**

@@ -3,7 +3,6 @@ import { createHash } from 'crypto'
 import memoize from 'lodash-es/memoize.js'
 import { getOrCreateUserID } from '../../utils/config.js'
 import { logError } from '../../utils/log.js'
-import { getCanonicalName } from '../../utils/model/model.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { MODEL_COSTS } from '../../utils/modelCost.js'
 import { isAnalyticsDisabled } from './config.js'
@@ -203,8 +202,8 @@ export async function trackDatadogEvent(
 
     // Normalize model names for cardinality reduction (external users only)
     if (process.env.USER_TYPE !== 'ant' && typeof allData.model === 'string') {
-      const shortName = getCanonicalName(allData.model.replace(/\[1m]$/i, ''))
-      allData.model = shortName in MODEL_COSTS ? shortName : 'other'
+      const rawModel = allData.model.replace(/\[1m]$/i, '')
+      allData.model = rawModel in MODEL_COSTS ? rawModel : 'other'
     }
 
     // Truncate dev version to base + date (remove timestamp and sha for cardinality reduction)

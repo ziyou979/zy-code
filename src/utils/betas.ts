@@ -25,7 +25,7 @@ import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import { isClaudeAISubscriber } from './auth.js'
 import { has1mContext } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
-import { getCanonicalName } from './model/model.js'
+import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
 import { getInitialSettings } from './settings/settings.js'
@@ -97,69 +97,75 @@ export function modelSupportsISP(model: string): boolean {
   if (supported3P !== undefined) {
     return supported3P
   }
-  const canonical = getCanonicalName(model)
+  // Check settings-based capabilities first
+  if (modelHasCapability(model, 'interleaved_thinking')) return true
   const provider = getAPIProvider()
   // Foundry supports interleaved thinking for all models
   if (provider === 'foundry') {
     return true
   }
   if (providerHasCapability(provider, 'interleaved_thinking')) {
-    return !canonical.includes('claude-3-')
+    return !model.toLowerCase().includes('claude-3-')
   }
   return (
-    canonical.includes('claude-opus-4') || canonical.includes('claude-sonnet-4')
+    model.toLowerCase().includes('claude-opus-4') || model.toLowerCase().includes('claude-sonnet-4')
   )
 }
 
 function vertexModelSupportsWebSearch(model: string): boolean {
-  const canonical = getCanonicalName(model)
+  if (modelHasCapability(model, 'web_search')) return true
+  const m = model.toLowerCase()
   // Web search only supported on Claude 4.0+ models on Vertex
   return (
-    canonical.includes('claude-opus-4') ||
-    canonical.includes('claude-sonnet-4') ||
-    canonical.includes('claude-haiku-4')
+    m.includes('claude-opus-4') ||
+    m.includes('claude-sonnet-4') ||
+    m.includes('claude-haiku-4')
   )
 }
 
 // Context management is supported on Claude 4+ models
 export function modelSupportsContextManagement(model: string): boolean {
-  const canonical = getCanonicalName(model)
+  if (modelHasCapability(model, 'context_management')) return true
   const provider = getAPIProvider()
   if (provider === 'foundry') {
     return true
   }
   if (providerHasCapability(provider, 'context_management')) {
-    return !canonical.includes('claude-3-')
+    return !model.toLowerCase().includes('claude-3-')
   }
+  const m = model.toLowerCase()
   return (
-    canonical.includes('claude-opus-4') ||
-    canonical.includes('claude-sonnet-4') ||
-    canonical.includes('claude-haiku-4')
+    m.includes('claude-opus-4') ||
+    m.includes('claude-sonnet-4') ||
+    m.includes('claude-haiku-4')
   )
 }
 
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
 export function modelSupportsStructuredOutputs(model: string): boolean {
-  const canonical = getCanonicalName(model)
+  if (modelHasCapability(model, 'structured_outputs')) return true
   const provider = getAPIProvider()
   // Structured outputs only supported on providers that declare the capability
   if (!providerHasCapability(provider, 'structured_outputs')) {
     return false
   }
+  const m = model.toLowerCase()
   return (
-    canonical.includes('claude-sonnet-4-6') ||
-    canonical.includes('claude-sonnet-4-5') ||
-    canonical.includes('claude-opus-4-1') ||
-    canonical.includes('claude-opus-4-5') ||
-    canonical.includes('claude-opus-4-6') ||
-    canonical.includes('claude-haiku-4-5')
+    m.includes('claude-sonnet-4-6') ||
+    m.includes('claude-sonnet-4-5') ||
+    m.includes('claude-opus-4-1') ||
+    m.includes('claude-opus-4-5') ||
+    m.includes('claude-opus-4-6') ||
+    m.includes('claude-haiku-4-5')
   )
 }
 
 // @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-claude-code-safety-research.
 export function modelSupportsAutoMode(model: string): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const m = getCanonicalName(model)
+    const m = model.toLowerCase()
+    // Check settings-based auto_mode capability
+    if (modelHasCapability(model, 'auto_mode')) return true
     // External: firstParty-only at launch (PI probes not wired for
     // Bedrock/Vertex/Foundry yet). Checked before allowModels so the GB
     // override can't enable auto mode on unsupported providers.
@@ -233,7 +239,7 @@ export function shouldUseGlobalCacheScope(): boolean {
 
 export const getAllModelBetas = memoize((model: string): string[] => {
   const betaHeaders = []
-  const isHaiku = getCanonicalName(model).includes('haiku')
+  const isHaiku = model.toLowerCase().includes('haiku')
   const provider = getAPIProvider()
   const includeExperimentalBetas = shouldIncludeExperimentalBetas()
 

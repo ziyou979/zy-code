@@ -33,6 +33,12 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     description: 'Color theme for the UI',
     options: feature('AUTO_THEME') ? THEME_SETTINGS : THEME_NAMES,
   },
+  provider: {
+    source: 'settings',
+    type: 'string',
+    description: 'API provider to use (anthropic, dashscope, openrouter, generic)',
+    options: ['anthropic', 'dashscope', 'openrouter', 'generic'],
+  },
   editorMode: {
     source: 'global',
     type: 'string',
@@ -103,6 +109,46 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     },
     validateOnWrite: v => validateModel(String(v)),
     formatOnRead: v => (v === null ? 'default' : v),
+  },
+  mainLoopModel: {
+    source: 'settings',
+    type: 'string',
+    description: 'Default model for the main conversation loop (persisted in settings.json)',
+    getOptions: () => {
+      try {
+        return getModelOptions()
+          .filter(o => o.value !== null)
+          .map(o => o.value as string)
+      } catch {
+        return ['sonnet', 'opus', 'haiku']
+      }
+    },
+    validateOnWrite: v => validateModel(String(v)),
+  },
+  defaultModel: {
+    source: 'settings',
+    type: 'string',
+    description: 'Default model fallback for all aliases and when no model is configured',
+  },
+  'models.best': {
+    source: 'settings',
+    type: 'string',
+    description: 'Most capable model (used by getBestModel and /best)',
+  },
+  'models.advanced': {
+    source: 'settings',
+    type: 'string',
+    description: 'Complex reasoning model (maps to opus alias)',
+  },
+  'models.standard': {
+    source: 'settings',
+    type: 'string',
+    description: 'Everyday tasks model (maps to sonnet alias)',
+  },
+  'models.compact': {
+    source: 'settings',
+    type: 'string',
+    description: 'Fast/cheap model (maps to haiku alias)',
   },
   alwaysThinkingEnabled: {
     source: 'settings',

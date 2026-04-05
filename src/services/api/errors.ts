@@ -152,9 +152,17 @@ export function isMediaSizeErrorMessage(msg: AssistantMessage): boolean {
   )
 }
 export const CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE = 'Credit balance is too low'
-export const INVALID_API_KEY_ERROR_MESSAGE = process.env.DASHSCOPE_API_KEY ? '' : 'Not logged in · Please run /login'
 export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL =
   'Invalid API key · Fix external API key'
+
+/**
+ * Runtime check for invalid API key message.
+ * Cannot be a module-level constant because `getAPIProvider()` depends on
+ * settings.json which isn't loaded at import time.
+ */
+export function getInvalidApiKeyErrorMessage(): string {
+  return getAPIProvider() === 'dashscope' ? '' : 'Not logged in · Please run /login'
+}
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
   'Your ANTHROPIC_API_KEY belongs to a disabled organization · Unset the environment variable to use your subscription instead'
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY =
@@ -831,7 +839,7 @@ export function getAssistantMessageFromError(
       error: 'authentication_failed',
       content: isExternalSource
         ? INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL
-        : INVALID_API_KEY_ERROR_MESSAGE,
+        : getInvalidApiKeyErrorMessage(),
     })
   }
 

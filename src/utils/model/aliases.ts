@@ -1,12 +1,19 @@
 export const MODEL_ALIASES = [
-  'sonnet',
-  'opus',
-  'haiku',
   'best',
-  'sonnet[1m]',
-  'opus[1m]',
+  'advanced',
+  'standard',
+  'compact',
+  'opus',
+  'sonnet',
+  'haiku',
   'opusplan',
-  'qwen',
+  'best[1m]',
+  'advanced[1m]',
+  'standard[1m]',
+  'compact[1m]',
+  'opus[1m]',
+  'sonnet[1m]',
+  'haiku[1m]',
 ] as const
 export type ModelAlias = (typeof MODEL_ALIASES)[number]
 
@@ -16,10 +23,9 @@ export function isModelAlias(modelInput: string): modelInput is ModelAlias {
 
 /**
  * Bare model family aliases that act as wildcards in the availableModels allowlist.
- * When "opus" is in the allowlist, ANY opus model is allowed (opus 4.5, 4.6, etc.).
- * When a specific model ID is in the allowlist, only that exact version is allowed.
+ * When "advanced" is in the allowlist, any model configured for that tier is allowed.
  */
-export const MODEL_FAMILY_ALIASES = ['sonnet', 'opus', 'haiku'] as const
+export const MODEL_FAMILY_ALIASES = ['advanced', 'standard', 'compact'] as const
 
 export function isModelFamilyAlias(model: string): boolean {
   return (MODEL_FAMILY_ALIASES as readonly string[]).includes(model)

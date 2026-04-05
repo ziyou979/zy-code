@@ -25,7 +25,6 @@ import { logForDebugging } from './debug.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
 import {
-  getCanonicalName,
   getMainLoopModel,
   getPublicModelDisplayName,
   getPublicModelName,
@@ -355,7 +354,7 @@ export async function getEnhancedPRAttribution(
   )
 
   // Get short model name, sanitized for non-internal repos
-  const rawModelName = getCanonicalName(getMainLoopModel())
+  const rawModelName = getMainLoopModel()
   const shortModelName = isInternal
     ? rawModelName
     : sanitizeModelName(rawModelName)

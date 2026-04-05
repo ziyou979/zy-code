@@ -226,6 +226,8 @@ export type GlobalConfig = {
   configuredProvider?: 'anthropic' | 'dashscope' | 'openrouter' | 'generic'
   /** API key configured during onboarding */
   configuredApiKey?: string
+  /** Default model for conversation, configured during onboarding */
+  configuredModel?: string
   hasAcknowledgedCostThreshold?: boolean
   hasSeenUndercoverAutoNotice?: boolean // ant-only: whether the one-time auto-undercover explainer has been shown
   hasSeenUltraplanTerms?: boolean // ant-only: whether the one-time CCR terms notice has been shown in the ultraplan launch dialog

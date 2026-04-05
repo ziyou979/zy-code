@@ -2,7 +2,7 @@
 import { CONTEXT_1M_BETA_HEADER } from '../constants/betas.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
-import { getCanonicalName } from './model/model.js'
+import { modelHasCapability } from './model/providers.js'
 import { getModelCapability } from './model/modelCapabilities.js'
 
 // Model context window size (200k tokens for all models right now)
@@ -44,8 +44,8 @@ export function modelSupports1M(model: string): boolean {
   if (is1mContextDisabled()) {
     return false
   }
-  const canonical = getCanonicalName(model)
-  return canonical.includes('claude-sonnet-4') || canonical.includes('opus-4-6')
+  const canonical = model.toLowerCase()
+  return canonical.includes('claude-sonnet-4') || canonical.includes('opus-4-6') || modelHasCapability(model, '1m_context')
 }
 
 export function getContextWindowForModel(
@@ -105,7 +105,8 @@ export function getSonnet1mExpTreatmentEnabled(model: string): boolean {
   if (has1mContext(model)) {
     return false
   }
-  if (!getCanonicalName(model).includes('sonnet-4-6')) {
+  const canonical = model.toLowerCase()
+  if (!canonical.includes('sonnet-4-6')) {
     return false
   }
   return getGlobalConfig().clientDataCache?.['coral_reef_sonnet'] === 'true'
@@ -162,7 +163,7 @@ export function getModelMaxOutputTokens(model: string): {
     }
   }
 
-  const m = getCanonicalName(model)
+  const m = model.toLowerCase()
 
   if (m.includes('opus-4-6')) {
     defaultTokens = 64_000

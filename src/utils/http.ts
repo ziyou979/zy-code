@@ -4,6 +4,7 @@
 
 import axios from 'axios'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
+import { getAPIProvider } from './model/providers.js'
 import {
   getApiKey,
   getClaudeAIOAuthTokens,
@@ -68,12 +69,15 @@ export type AuthHeaders = {
  * 支持百炼 DashScope API Key
  */
 export function getAuthHeaders(): AuthHeaders {
-  // 支持百炼 DashScope API Key
-  if (process.env.DASHSCOPE_API_KEY) {
-    return {
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`,
-      },
+  // 支持百炼 DashScope - 通过 settings.json 配置，兼容 DASHSCOPE_API_KEY 环境变量
+  if (getAPIProvider() === 'dashscope') {
+    const apiKey = getApiKey()
+    if (apiKey) {
+      return {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
+      }
     }
   }
   
