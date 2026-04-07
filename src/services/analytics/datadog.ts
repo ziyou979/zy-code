@@ -4,7 +4,7 @@ import memoize from 'lodash-es/memoize.js'
 import { getOrCreateUserID } from '../../utils/config.js'
 import { logError } from '../../utils/log.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
-import { MODEL_COSTS } from '../../utils/modelCost.js'
+import { getStaticPricingForModel } from '../../utils/model/modelCapabilities.js'
 import { isAnalyticsDisabled } from './config.js'
 import { getEventMetadata } from './metadata.js'
 
@@ -203,7 +203,7 @@ export async function trackDatadogEvent(
     // Normalize model names for cardinality reduction (external users only)
     if (process.env.USER_TYPE !== 'ant' && typeof allData.model === 'string') {
       const rawModel = allData.model.replace(/\[1m]$/i, '')
-      allData.model = rawModel in MODEL_COSTS ? rawModel : 'other'
+      allData.model = getStaticPricingForModel(rawModel) ? rawModel : 'other'
     }
 
     // Truncate dev version to base + date (remove timestamp and sha for cardinality reduction)

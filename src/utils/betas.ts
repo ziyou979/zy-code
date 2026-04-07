@@ -105,25 +105,17 @@ export function modelSupportsISP(model: string): boolean {
     return true
   }
   if (providerHasCapability(provider, 'interleaved_thinking')) {
-    return !model.toLowerCase().includes('zy-3-')
+    return true
   }
-  return (
-    model.toLowerCase().includes('zy-opus-4') || model.toLowerCase().includes('zy-sonnet-4')
-  )
+  return false
 }
 
 function vertexModelSupportsWebSearch(model: string): boolean {
   if (modelHasCapability(model, 'web_search')) return true
-  const m = model.toLowerCase()
-  // Web search only supported on Zy 4.0+ models on Vertex
-  return (
-    m.includes('zy-opus-4') ||
-    m.includes('zy-sonnet-4') ||
-    m.includes('zy-haiku-4')
-  )
+  return false
 }
 
-// Context management is supported on Zy 4+ models
+// Context management is supported on providers that declare the capability
 export function modelSupportsContextManagement(model: string): boolean {
   if (modelHasCapability(model, 'context_management')) return true
   const provider = getAPIProvider()
@@ -131,14 +123,9 @@ export function modelSupportsContextManagement(model: string): boolean {
     return true
   }
   if (providerHasCapability(provider, 'context_management')) {
-    return !model.toLowerCase().includes('zy-3-')
+    return true
   }
-  const m = model.toLowerCase()
-  return (
-    m.includes('zy-opus-4') ||
-    m.includes('zy-sonnet-4') ||
-    m.includes('zy-haiku-4')
-  )
+  return false
 }
 
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
@@ -149,21 +136,12 @@ export function modelSupportsStructuredOutputs(model: string): boolean {
   if (!providerHasCapability(provider, 'structured_outputs')) {
     return false
   }
-  const m = model.toLowerCase()
-  return (
-    m.includes('zy-sonnet-4-6') ||
-    m.includes('zy-sonnet-4-5') ||
-    m.includes('zy-opus-4-1') ||
-    m.includes('zy-opus-4-5') ||
-    m.includes('zy-opus-4-6') ||
-    m.includes('zy-haiku-4-5')
-  )
+  return true
 }
 
 // @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.
 export function modelSupportsAutoMode(model: string): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const m = model.toLowerCase()
     // Check settings-based auto_mode capability
     if (modelHasCapability(model, 'auto_mode')) return true
     // External: firstParty-only at launch (PI probes not wired for
@@ -174,28 +152,22 @@ export function modelSupportsAutoMode(model: string): boolean {
     }
     // GrowthBook override: tengu_auto_mode_config.allowModels force-enables
     // auto mode for listed models, bypassing the denylist/allowlist below.
-    // Exact model IDs (e.g. "zy-strudel-v6-p") match only that model;
-    // canonical names (e.g. "zy-strudel") match the whole family.
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
       allowModels?: string[]
     }>('tengu_auto_mode_config', {})
     const rawLower = model.toLowerCase()
     if (
       config?.allowModels?.some(
-        am => am.toLowerCase() === rawLower || am.toLowerCase() === m,
+        am => am.toLowerCase() === rawLower || am.toLowerCase() === model.toLowerCase(),
       )
     ) {
       return true
     }
     if (process.env.USER_TYPE === 'ant') {
-      // Denylist: block known-unsupported zy models, allow everything else (ant-internal models etc.)
-      if (m.includes('zy-3-')) return false
-      // zy-*-4 not followed by -[6-9]: blocks bare -4, -4-YYYYMMDD, -4@, -4-0 thru -4-5
-      if (/zy-(opus|sonnet|haiku)-4(?!-[6-9])/.test(m)) return false
       return true
     }
     // External allowlist (firstParty already checked above).
-    return /^zy-(opus|sonnet)-4-6/.test(m)
+    return model.toLowerCase().includes('qwen3.6-plus')
   }
   return false
 }

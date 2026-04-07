@@ -1203,10 +1203,7 @@ export function getErrorMessageIfRefusal(
     ? `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Try rephrasing the request or attempting a different approach.`
     : `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Please double press esc to edit your last message or start a new session for ZY Code to assist with a different task.`
 
-  const modelSuggestion =
-    model !== 'zy-sonnet-4-20250514'
-      ? ' If you are seeing this refusal repeatedly, try running /model zy-sonnet-4-20250514 to switch models.'
-      : ''
+  const modelSuggestion = ''
 
   return createAssistantAPIErrorMessage({
     content: baseMessage + modelSuggestion,

@@ -385,82 +385,14 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
   return payg3pOptions
 }
 
-// @[MODEL LAUNCH]: Add the new model ID to the appropriate family pattern below
-// so the "newer version available" hint works correctly.
 /**
- * Map a full model name to its family alias and the marketing name of the
- * version the alias currently resolves to. Used to detect when a user has
- * a specific older version pinned and a newer one is available.
- */
-function getModelFamilyInfo(
-  model: string,
-): { alias: string; currentVersionName: string } | null {
-  const m = model.toLowerCase()
-
-  // Sonnet family
-  if (
-    m.includes('zy-sonnet-4-6') ||
-    m.includes('zy-sonnet-4-5') ||
-    m.includes('zy-sonnet-4-') ||
-    m.includes('zy-3-7-sonnet') ||
-    m.includes('zy-3-5-sonnet')
-  ) {
-    const currentName = getMarketingNameForModel(getDefaultSonnetModel())
-    if (currentName) {
-      return { alias: 'Sonnet', currentVersionName: currentName }
-    }
-  }
-
-  // Opus family
-  if (m.includes('zy-opus-4')) {
-    const currentName = getMarketingNameForModel(getDefaultOpusModel())
-    if (currentName) {
-      return { alias: 'Opus', currentVersionName: currentName }
-    }
-  }
-
-  // Haiku family
-  if (
-    m.includes('zy-haiku') ||
-    m.includes('zy-3-5-haiku')
-  ) {
-    const currentName = getMarketingNameForModel(getDefaultHaikuModel())
-    if (currentName) {
-      return { alias: 'Haiku', currentVersionName: currentName }
-    }
-  }
-
-  return null
-}
-
-/**
- * Returns a ModelOption for a known Anthropic model with a human-readable
- * label, and an upgrade hint if a newer version is available via the alias.
+ * Returns a ModelOption for a known model with a human-readable label.
  * Returns null if the model is not recognized.
  */
 function getKnownModelOption(model: string): ModelOption | null {
   const marketingName = getMarketingNameForModel(model)
   if (!marketingName) return null
 
-  const familyInfo = getModelFamilyInfo(model)
-  if (!familyInfo) {
-    return {
-      value: model,
-      label: marketingName,
-      description: model,
-    }
-  }
-
-  // Check if the alias currently resolves to a different (newer) version
-  if (marketingName !== familyInfo.currentVersionName) {
-    return {
-      value: model,
-      label: marketingName,
-      description: `Newer version available · select ${familyInfo.alias} for ${familyInfo.currentVersionName}`,
-    }
-  }
-
-  // Same version as the alias — just show the friendly name
   return {
     value: model,
     label: marketingName,

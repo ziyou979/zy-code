@@ -62,10 +62,10 @@ GOOD:
 - "Refactor parser for better error messages"
 
 BAD (never write these):
-- "Fix bug found while testing with Zy Capybara"
-- "1-shotted by zy-opus-4-6"
+- "Fix bug found while testing with internal model names"
+- "1-shotted by qwen3.6-plus"
 - "Generated with ZY Code"
-- "Co-Authored-By: Zy Opus 4.6 <…>"
+- "Co-Authored-By: Zy (qwen3.6-plus) <…>"
 `
   }
   return ''

@@ -425,7 +425,7 @@ export const SettingsSchema = lazySchema(() =>
         .record(z.string(), z.string())
         .optional()
         .describe(
-          'Override mapping from Anthropic model ID (e.g. "zy-opus-4-6") to provider-specific ' +
+          'Override mapping from Anthropic model ID (e.g. "qwen3.6-plus") to provider-specific ' +
             'model ID (e.g. a Bedrock inference profile ARN). Typically set in managed settings by ' +
             'enterprise administrators.',
         ),
@@ -490,6 +490,32 @@ export const SettingsSchema = lazySchema(() =>
               .number()
               .optional()
               .describe('Maximum input tokens. Defaults to 200000.'),
+            costs: z
+              .object({
+                inputTokens: z
+                  .number()
+                  .describe('每百万输入 token 费用（元）'),
+                outputTokens: z
+                  .number()
+                  .describe('每百万输出 token 费用（元）'),
+                promptCacheWriteTokens: z
+                  .number()
+                  .optional()
+                  .describe('每百万缓存写入 token 费用（元），不支持缓存时可不填'),
+                promptCacheReadTokens: z
+                  .number()
+                  .optional()
+                  .describe('每百万缓存读取 token 费用（元），不支持缓存时可不填'),
+                webSearchRequests: z
+                  .number()
+                  .optional()
+                  .describe('每次网络搜索费用（元），不支持搜索时可不填'),
+              })
+              .optional()
+              .describe(
+                '模型定价配置（单位：元）。' +
+                  '当设置时，覆盖内置定价用于费用计算和展示。',
+              ),
           }),
         )
         .optional()
@@ -826,6 +852,12 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'When true, fast mode does not persist across sessions. Each session starts with fast mode off.',
+        ),
+      fastModel: z
+        .string()
+        .optional()
+        .describe(
+          'Model to use when fast mode is enabled. When fast mode is toggled ON, the session switches to this model. When toggled OFF, it switches back to the previous model.',
         ),
       promptSuggestionEnabled: z
         .boolean()

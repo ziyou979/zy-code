@@ -176,7 +176,7 @@ export const getInferenceProfileBackingModel = memoize(async function (
 })
 
 /**
- * Check if a model ID is a foundation model (e.g., "anthropic.zy-sonnet-4-5-20250929-v1:0")
+ * Check if a model ID is a foundation model (e.g., "anthropic.qwen3.6-plus-v1:0")
  */
 export function isFoundationModel(modelId: string): boolean {
   return modelId.startsWith('anthropic.')
@@ -213,11 +213,10 @@ export type BedrockRegionPrefix = (typeof BEDROCK_REGION_PREFIXES)[number]
  * Extract the region prefix from a Bedrock cross-region inference model ID.
  * Handles both plain model IDs and full ARN format.
  * For example:
- * - "eu.anthropic.zy-sonnet-4-5-20250929-v1:0" → "eu"
- * - "us.anthropic.zy-3-7-sonnet-20250219-v1:0" → "us"
- * - "arn:aws:bedrock:ap-northeast-2:123:inference-profile/global.anthropic.zy-opus-4-6-v1" → "global"
- * - "anthropic.zy-3-5-sonnet-20241022-v2:0" → undefined (foundation model)
- * - "zy-sonnet-4-5-20250929" → undefined (first-party format)
+ * - "eu.anthropic.qwen3.6-plus-v1:0" → "eu"
+ * - "us.anthropic.qwen3.6-plus-v1:0" → "us"
+ * - "arn:aws:bedrock:ap-northeast-2:123:inference-profile/global.anthropic.qwen3.6-plus-v1" → "global"
+ * - "qwen3.6-plus" → undefined (first-party format)
  */
 export function getBedrockRegionPrefix(
   modelId: string,
@@ -241,9 +240,9 @@ export function getBedrockRegionPrefix(
  * If the model is not a Bedrock model, it will be returned as-is.
  *
  * For example:
- * - applyBedrockRegionPrefix("us.anthropic.zy-sonnet-4-5-v1:0", "eu") → "eu.anthropic.zy-sonnet-4-5-v1:0"
- * - applyBedrockRegionPrefix("anthropic.zy-sonnet-4-5-v1:0", "eu") → "eu.anthropic.zy-sonnet-4-5-v1:0"
- * - applyBedrockRegionPrefix("zy-sonnet-4-5-20250929", "eu") → "zy-sonnet-4-5-20250929" (not a Bedrock model)
+ * - applyBedrockRegionPrefix("us.anthropic.qwen3.6-plus-v1:0", "eu") → "eu.anthropic.qwen3.6-plus-v1:0"
+ * - applyBedrockRegionPrefix("anthropic.qwen3.6-plus-v1:0", "eu") → "eu.anthropic.qwen3.6-plus-v1:0"
+ * - applyBedrockRegionPrefix("qwen3.6-plus", "eu") → "qwen3.6-plus" (not a Bedrock model)
  */
 export function applyBedrockRegionPrefix(
   modelId: string,

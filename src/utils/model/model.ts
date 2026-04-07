@@ -7,25 +7,19 @@
  */
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
 import {
-  getSubscriptionType,
   isZyAISubscriber,
   isMaxSubscriber,
-  isProSubscriber,
   isTeamPremiumSubscriber,
 } from '../auth.js'
 import {
   has1mContext,
-  is1mContextDisabled,
   modelSupports1M,
 } from '../context.js'
-import { isEnvTruthy } from '../envUtils.js'
 import { getGlobalConfig } from '../config.js'
-import { getModelStrings, resolveOverriddenModel } from './modelStrings.js'
-import { formatModelPricing, getOpus46CostTier } from '../modelCost.js'
+import { resolveOverriddenModel } from './modelStrings.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 import type { PermissionMode } from '../permissions/PermissionMode.js'
 import { getAPIProvider } from './providers.js'
-import { LIGHTNING_BOLT } from '../../constants/figures.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { type ModelAlias, isModelAlias } from './aliases.js'
 import { capitalize } from '../stringUtils.js'
@@ -34,7 +28,7 @@ export type ModelShortName = string
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
-/** Tier-based model resolution: best > advanced > standard > compact > defaultModel */
+/** Tier-based model resolution: all tiers use qwen3.6-plus */
 type ModelTier = 'best' | 'advanced' | 'standard' | 'compact'
 
 function getModelByTier(tier: ModelTier): ModelName {
@@ -47,16 +41,8 @@ function getModelByTier(tier: ModelTier): ModelName {
   if (settings.defaultModel) {
     return settings.defaultModel
   }
-  // 3. Built-in fallbacks (Zy defaults for users without custom config)
-  switch (tier) {
-    case 'best':
-    case 'advanced':
-      return getModelStrings().opus46
-    case 'standard':
-      return getModelStrings().sonnet46
-    case 'compact':
-      return getModelStrings().haiku45
-  }
+  // 3. Built-in fallback
+  return 'qwen3.6-plus'
 }
 
 export function getSmallFastModel(): ModelName {
@@ -64,12 +50,7 @@ export function getSmallFastModel(): ModelName {
 }
 
 export function isNonCustomOpusModel(model: ModelName): boolean {
-  return (
-    model === getModelStrings().opus40 ||
-    model === getModelStrings().opus41 ||
-    model === getModelStrings().opus45 ||
-    model === getModelStrings().opus46
-  )
+  return false
 }
 
 /**
@@ -225,58 +206,9 @@ export function getDefaultMainLoopModel(): ModelName {
 // @[MODEL LAUNCH]: Add a canonical name mapping for the new model below.
 export function canonicalNameToShort(name: ModelName): ModelShortName {
   name = name.toLowerCase()
-  // Special cases for Zy 4+ models to differentiate versions
-  // Order matters: check more specific versions first (4-5 before 4)
-  if (name.includes('zy-opus-4-6')) {
-    return 'zy-opus-4-6'
-  }
-  if (name.includes('zy-opus-4-5')) {
-    return 'zy-opus-4-5'
-  }
-  if (name.includes('zy-opus-4-1')) {
-    return 'zy-opus-4-1'
-  }
-  if (name.includes('zy-opus-4')) {
-    return 'zy-opus-4'
-  }
-  if (name.includes('zy-sonnet-4-6')) {
-    return 'zy-sonnet-4-6'
-  }
-  if (name.includes('zy-sonnet-4-5')) {
-    return 'zy-sonnet-4-5'
-  }
-  if (name.includes('zy-sonnet-4')) {
-    return 'zy-sonnet-4'
-  }
-  if (name.includes('zy-haiku-4-5')) {
-    return 'zy-haiku-4-5'
-  }
-  // Zy 3.x models use a different naming scheme (zy-3-{family})
-  if (name.includes('zy-3-7-sonnet')) {
-    return 'zy-3-7-sonnet'
-  }
-  if (name.includes('zy-3-5-sonnet')) {
-    return 'zy-3-5-sonnet'
-  }
-  if (name.includes('zy-3-5-haiku')) {
-    return 'zy-3-5-haiku'
-  }
-  if (name.includes('zy-3-opus')) {
-    return 'zy-3-opus'
-  }
-  if (name.includes('zy-3-sonnet')) {
-    return 'zy-3-sonnet'
-  }
-  if (name.includes('zy-3-haiku')) {
-    return 'zy-3-haiku'
-  }
   // Qwen models
   if (name.includes('qwen3.6-plus')) {
     return 'qwen3.6-plus'
-  }
-  const match = name.match(/(zy-(\d+-\d+-)?\w+)/)
-  if (match && match[1]) {
-    return match[1]
   }
   // Fall back to the original name if no pattern matches
   return name
@@ -299,55 +231,24 @@ export function getCanonicalName(fullModelName: ModelName): ModelShortName {
 export function getZyAiUserDefaultModelDescription(
   fastMode = false,
 ): string {
-  if (isMaxSubscriber() || isTeamPremiumSubscriber()) {
-    if (isOpus1mMergeEnabled()) {
-      return `Opus 4.6 with 1M context · Most capable for complex work${fastMode ? getOpus46PricingSuffix(true) : ''}`
-    }
-    return `Opus 4.6 · Most capable for complex work${fastMode ? getOpus46PricingSuffix(true) : ''}`
-  }
-  return 'Sonnet 4.6 · Best for everyday tasks'
+  return 'qwen3.6-plus · Default model'
 }
 
 export function renderDefaultModelSetting(
   setting: ModelName | ModelAlias,
 ): string {
-  if (setting === 'opusplan') {
-    return 'Opus 4.6 in plan mode, else Sonnet 4.6'
-  }
   return renderModelName(parseUserSpecifiedModel(setting))
 }
 
-export function getOpus46PricingSuffix(fastMode: boolean): string {
-  if (getAPIProvider() !== 'anthropic') return ''
-  const pricing = formatModelPricing(getOpus46CostTier(fastMode))
-  const fastModeIndicator = fastMode ? ` (${LIGHTNING_BOLT})` : ''
-  return ` ·${fastModeIndicator} ${pricing}`
+export function getOpus46PricingSuffix(_fastMode: boolean): string {
+  return ''
 }
 
 export function isOpus1mMergeEnabled(): boolean {
-  if (
-    is1mContextDisabled() ||
-    isProSubscriber() ||
-    getAPIProvider() !== 'anthropic'
-  ) {
-    return false
-  }
-  // Fail closed when a subscriber's subscription type is unknown. The VS Code
-  // config-loading subprocess can have OAuth tokens with valid scopes but no
-  // subscriptionType field (stale or partial refresh). Without this guard,
-  // isProSubscriber() returns false for such users and the merge leaks
-  // opus[1m] into the model dropdown — the API then rejects it with a
-  // misleading "rate limit reached" error.
-  if (isZyAISubscriber() && getSubscriptionType() === null) {
-    return false
-  }
-  return true
+  return false
 }
 
 export function renderModelSetting(setting: ModelName | ModelAlias): string {
-  if (setting === 'opusplan') {
-    return 'Opus Plan'
-  }
   if (isModelAlias(setting)) {
     return capitalize(setting)
   }
@@ -382,40 +283,10 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
     }
   }
 
-  switch (model) {
-    case getModelStrings().opus46:
-      return 'Opus 4.6'
-    case getModelStrings().opus46 + '[1m]':
-      return 'Opus 4.6 (1M context)'
-    case getModelStrings().opus45:
-      return 'Opus 4.5'
-    case getModelStrings().opus41:
-      return 'Opus 4.1'
-    case getModelStrings().opus40:
-      return 'Opus 4'
-    case getModelStrings().sonnet46 + '[1m]':
-      return 'Sonnet 4.6 (1M context)'
-    case getModelStrings().sonnet46:
-      return 'Sonnet 4.6'
-    case getModelStrings().sonnet45 + '[1m]':
-      return 'Sonnet 4.5 (1M context)'
-    case getModelStrings().sonnet45:
-      return 'Sonnet 4.5'
-    case getModelStrings().sonnet40:
-      return 'Sonnet 4'
-    case getModelStrings().sonnet40 + '[1m]':
-      return 'Sonnet 4 (1M context)'
-    case getModelStrings().sonnet37:
-      return 'Sonnet 3.7'
-    case getModelStrings().sonnet35:
-      return 'Sonnet 3.5'
-    case getModelStrings().haiku45:
-      return 'Haiku 4.5'
-    case getModelStrings().haiku35:
-      return 'Haiku 3.5'
-    default:
-      return null
+  if (model === 'qwen3.6-plus') {
+    return 'qwen3.6-plus'
   }
+  return null
 }
 
 function maskModelCodename(baseName: string): string {
@@ -474,12 +345,6 @@ export function getPublicModelName(model: ModelName): string {
  * Returns a full model name for use in this session, possibly after resolving
  * a model alias.
  *
- * This function intentionally does not support version numbers to align with
- * the model switcher.
- *
- * Supports [1m] suffix on any model alias (e.g., haiku[1m], sonnet[1m]) to enable
- * 1M context window without requiring each variant to be in MODEL_ALIASES.
- *
  * @param modelInput The model alias or name provided by the user.
  */
 export function parseUserSpecifiedModel(
@@ -498,38 +363,6 @@ export function parseUserSpecifiedModel(
     if (tier) {
       return getModelByTier(tier) + (has1mTag ? '[1m]' : '')
     }
-    // opusplan: use advanced tier in plan mode, standard otherwise
-    if (modelString === 'opusplan') {
-      return getModelByTier('standard') + (has1mTag ? '[1m]' : '')
-    }
-  }
-
-  // Opus 4/4.1 are no longer available on the first-party API (same as
-  // Zy.ai) — silently remap to the current Opus default. The 'opus'
-  // alias already resolves to 4.6, so the only users on these explicit
-  // strings pinned them in settings/env/--model/SDK before 4.5 launched.
-  // 3P providers may not yet have 4.6 capacity, so pass through unchanged.
-  if (
-    getAPIProvider() === 'anthropic' &&
-    isLegacyOpusFirstParty(modelString) &&
-    isLegacyModelRemapEnabled()
-  ) {
-    return getDefaultOpusModel() + (has1mTag ? '[1m]' : '')
-  }
-
-  if (process.env.USER_TYPE === 'ant') {
-    const has1mAntTag = has1mContext(normalizedModel)
-    const baseAntModel = normalizedModel.replace(/\[1m]$/i, '').trim()
-
-    const antModel = resolveAntModel(baseAntModel)
-    if (antModel) {
-      const suffix = has1mAntTag ? '[1m]' : ''
-      return antModel.model + suffix
-    }
-
-    // Fall through to the alias string if we cannot load the config. The API calls
-    // will fail with this string, but we should hear about it through feedback and
-    // can tell the user to restart/wait for flag cache refresh to get the latest values.
   }
 
   // Resolve custom model aliases from settings
@@ -580,24 +413,6 @@ export function resolveSkillModelOverride(
   return skillModel
 }
 
-const LEGACY_OPUS_FIRSTPARTY = [
-  'zy-opus-4-20250514',
-  'zy-opus-4-1-20250805',
-  'zy-opus-4-0',
-  'zy-opus-4-1',
-]
-
-function isLegacyOpusFirstParty(model: string): boolean {
-  return LEGACY_OPUS_FIRSTPARTY.includes(model)
-}
-
-/**
- * Opt-out for the legacy Opus 4.0/4.1 → current Opus remap.
- */
-export function isLegacyModelRemapEnabled(): boolean {
-  return !isEnvTruthy(process.env.ZY_CODE_DISABLE_LEGACY_MODEL_REMAP)
-}
-
 export function modelDisplayString(model: ModelSetting): string {
   if (model === null) {
     if (process.env.USER_TYPE === 'ant') {
@@ -630,41 +445,8 @@ export function getMarketingNameForModel(modelId: string): string | undefined {
     }
   }
 
-  const has1m = modelId.toLowerCase().includes('[1m]')
-  const m = modelId.toLowerCase()
-
-  if (m.includes('zy-opus-4-6')) {
-    return has1m ? 'Opus 4.6 (with 1M context)' : 'Opus 4.6'
-  }
-  if (m.includes('zy-opus-4-5')) {
-    return 'Opus 4.5'
-  }
-  if (m.includes('zy-opus-4-1')) {
-    return 'Opus 4.1'
-  }
-  if (m.includes('zy-opus-4')) {
-    return 'Opus 4'
-  }
-  if (m.includes('zy-sonnet-4-6')) {
-    return has1m ? 'Sonnet 4.6 (with 1M context)' : 'Sonnet 4.6'
-  }
-  if (m.includes('zy-sonnet-4-5')) {
-    return has1m ? 'Sonnet 4.5 (with 1M context)' : 'Sonnet 4.5'
-  }
-  if (m.includes('zy-sonnet-4')) {
-    return has1m ? 'Sonnet 4 (with 1M context)' : 'Sonnet 4'
-  }
-  if (m.includes('zy-3-7-sonnet')) {
-    return 'Zy 3.7 Sonnet'
-  }
-  if (m.includes('zy-3-5-sonnet')) {
-    return 'Zy 3.5 Sonnet'
-  }
-  if (m.includes('zy-haiku-4-5')) {
-    return 'Haiku 4.5'
-  }
-  if (m.includes('zy-3-5-haiku')) {
-    return 'Zy 3.5 Haiku'
+  if (modelId.toLowerCase().includes('qwen3.6-plus')) {
+    return 'qwen3.6-plus'
   }
 
   return undefined

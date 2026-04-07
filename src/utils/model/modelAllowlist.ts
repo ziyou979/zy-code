@@ -11,7 +11,7 @@ function modelBelongsToFamily(model: string, family: string): boolean {
   if (model.includes(family)) {
     return true
   }
-  // Resolve aliases like "best" → "zy-opus-4-6" to check family membership
+  // Resolve aliases to check family membership
   if (isModelAlias(model)) {
     const resolved = parseUserSpecifiedModel(model).toLowerCase()
     return resolved.includes(family)
@@ -22,7 +22,6 @@ function modelBelongsToFamily(model: string, family: string): boolean {
 /**
  * Check if a model name starts with a prefix at a segment boundary.
  * The prefix must match up to the end of the name or a "-" separator.
- * e.g. "zy-opus-4-5" matches "zy-opus-4-5-20251101" but not "zy-opus-4-50".
  */
 function prefixMatchesModel(modelName: string, prefix: string): boolean {
   if (!modelName.startsWith(prefix)) {
@@ -33,8 +32,7 @@ function prefixMatchesModel(modelName: string, prefix: string): boolean {
 
 /**
  * Check if a model matches a version-prefix entry in the allowlist.
- * Supports shorthand like "opus-4-5" (mapped to "zy-opus-4-5") and
- * full prefixes like "zy-opus-4-5". Resolves input aliases before matching.
+ * Resolves input aliases before matching.
  */
 function modelMatchesVersionPrefix(model: string, entry: string): boolean {
   // Resolve the input model to a full name if it's an alias
@@ -42,15 +40,7 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
     ? parseUserSpecifiedModel(model).toLowerCase()
     : model
 
-  // Try the entry as-is (e.g. "zy-opus-4-5")
   if (prefixMatchesModel(resolvedModel, entry)) {
-    return true
-  }
-  // Try with "zy-" prefix (e.g. "opus-4-5" → "zy-opus-4-5")
-  if (
-    !entry.startsWith('zy-') &&
-    prefixMatchesModel(resolvedModel, `zy-${entry}`)
-  ) {
     return true
   }
   return false
@@ -71,7 +61,6 @@ function familyHasSpecificEntries(
       continue
     }
     // Check if entry is a version-qualified variant of this family
-    // e.g., "opus-4-5" or "zy-opus-4-5-20251101" for the "opus" family
     // Must match at a segment boundary (followed by '-' or end) to avoid
     // false positives like "opusplan" matching "opus"
     const idx = entry.indexOf(family)
@@ -92,10 +81,10 @@ function familyHasSpecificEntries(
  *
  * Matching tiers:
  * 1. Family aliases ("opus", "sonnet", "haiku") — wildcard for the entire family,
- *    UNLESS more specific entries for that family also exist (e.g., "opus-4-5").
+ *    UNLESS more specific entries for that family also exist.
  *    In that case, the family wildcard is ignored and only the specific entries apply.
- * 2. Version prefixes ("opus-4-5", "zy-opus-4-5") — any build of that version
- * 3. Full model IDs ("zy-opus-4-5-20251101") — exact match only
+ * 2. Version prefixes — any build of that version
+ * 3. Full model IDs — exact match only
  */
 export function isModelAllowed(model: string): boolean {
   const settings = getSettings_DEPRECATED() || {}
@@ -156,8 +145,7 @@ export function isModelAllowed(model: string): boolean {
     }
   }
 
-  // Version-prefix matching: "opus-4-5" or "zy-opus-4-5" matches
-  // "zy-opus-4-5-20251101" at a segment boundary
+  // Version-prefix matching at a segment boundary
   for (const entry of normalizedAllowlist) {
     if (!isModelFamilyAlias(entry) && !isModelAlias(entry)) {
       if (modelMatchesVersionPrefix(normalizedModel, entry)) {

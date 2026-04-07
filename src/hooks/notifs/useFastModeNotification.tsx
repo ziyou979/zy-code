@@ -2,15 +2,14 @@ import { c as _c } from "react/compiler-runtime";
 import { useEffect } from 'react';
 import { useNotifications } from 'src/context/notifications.js';
 import { useAppState, useSetAppState } from 'src/state/AppState.js';
-import { type CooldownReason, isFastModeEnabled, onCooldownExpired, onCooldownTriggered, onFastModeOverageRejection, onOrgFastModeChanged } from 'src/utils/fastMode.js';
+import { type CooldownReason, isFastModeEnabled, onCooldownExpired, onCooldownTriggered, onFastModeOverageRejection } from 'src/utils/fastMode.js';
 import { formatDuration } from 'src/utils/format.js';
 import { getIsRemoteMode } from '../../bootstrap/state.js';
 const COOLDOWN_STARTED_KEY = 'fast-mode-cooldown-started';
 const COOLDOWN_EXPIRED_KEY = 'fast-mode-cooldown-expired';
-const ORG_CHANGED_KEY = 'fast-mode-org-changed';
 const OVERAGE_REJECTED_KEY = 'fast-mode-overage-rejected';
 export function useFastModeNotification() {
-  const $ = _c(13);
+  const $ = _c(10);
   const {
     addNotification
   } = useNotifications();
@@ -18,7 +17,7 @@ export function useFastModeNotification() {
   const setAppState = useSetAppState();
   let t0;
   let t1;
-  if ($[0] !== addNotification || $[1] !== isFastMode || $[2] !== setAppState) {
+  if ($[0] !== addNotification || $[1] !== setAppState) {
     t0 = () => {
       if (getIsRemoteMode()) {
         return;
@@ -26,50 +25,8 @@ export function useFastModeNotification() {
       if (!isFastModeEnabled()) {
         return;
       }
-      return onOrgFastModeChanged(orgEnabled => {
-        if (orgEnabled) {
-          addNotification({
-            key: ORG_CHANGED_KEY,
-            color: "fastMode",
-            priority: "immediate",
-            text: "Fast mode is now available \xB7 /fast to turn on"
-          });
-        } else {
-          if (isFastMode) {
-            setAppState(_temp2);
-            addNotification({
-              key: ORG_CHANGED_KEY,
-              color: "warning",
-              priority: "immediate",
-              text: "Fast mode has been disabled by your organization"
-            });
-          }
-        }
-      });
-    };
-    t1 = [addNotification, isFastMode, setAppState];
-    $[0] = addNotification;
-    $[1] = isFastMode;
-    $[2] = setAppState;
-    $[3] = t0;
-    $[4] = t1;
-  } else {
-    t0 = $[3];
-    t1 = $[4];
-  }
-  useEffect(t0, t1);
-  let t2;
-  let t3;
-  if ($[5] !== addNotification || $[6] !== setAppState) {
-    t2 = () => {
-      if (getIsRemoteMode()) {
-        return;
-      }
-      if (!isFastModeEnabled()) {
-        return;
-      }
       return onFastModeOverageRejection(message => {
-        setAppState(_temp3);
+        setAppState(_temp2);
         addNotification({
           key: OVERAGE_REJECTED_KEY,
           color: "warning",
@@ -78,20 +35,20 @@ export function useFastModeNotification() {
         });
       });
     };
-    t3 = [addNotification, setAppState];
-    $[5] = addNotification;
-    $[6] = setAppState;
-    $[7] = t2;
-    $[8] = t3;
+    t1 = [addNotification, setAppState];
+    $[0] = addNotification;
+    $[1] = setAppState;
+    $[2] = t0;
+    $[3] = t1;
   } else {
-    t2 = $[7];
-    t3 = $[8];
+    t0 = $[2];
+    t1 = $[3];
   }
-  useEffect(t2, t3);
-  let t4;
-  let t5;
-  if ($[9] !== addNotification || $[10] !== isFastMode) {
-    t4 = () => {
+  useEffect(t0, t1);
+  let t2;
+  let t3;
+  if ($[4] !== addNotification || $[5] !== isFastMode) {
+    t2 = () => {
       if (getIsRemoteMode()) {
         return;
       }
@@ -125,26 +82,20 @@ export function useFastModeNotification() {
         unsubExpired();
       };
     };
-    t5 = [addNotification, isFastMode];
-    $[9] = addNotification;
-    $[10] = isFastMode;
-    $[11] = t4;
-    $[12] = t5;
+    t3 = [addNotification, isFastMode];
+    $[4] = addNotification;
+    $[5] = isFastMode;
+    $[6] = t2;
+    $[7] = t3;
   } else {
-    t4 = $[11];
-    t5 = $[12];
+    t2 = $[6];
+    t3 = $[7];
   }
-  useEffect(t4, t5);
+  useEffect(t2, t3);
 }
-function _temp3(prev_0) {
+function _temp2(prev_0) {
   return {
     ...prev_0,
-    fastMode: false
-  };
-}
-function _temp2(prev) {
-  return {
-    ...prev,
     fastMode: false
   };
 }

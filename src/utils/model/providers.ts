@@ -212,7 +212,7 @@ export function isCustomEndpointProvider(provider: APIProvider): provider is Cus
  * Model capability — resolved from settings.json `modelCapabilities`.
  * Settings take priority over hardcoded provider-level declarations.
  *
- * Usage: replace `getCanonicalName(model).includes('zy-opus-4')` with
+ * Usage: replace hardcoded model checks with
  * `modelHasCapability(model, 'thinking')`.
  */
 export function modelHasCapability(
@@ -244,11 +244,45 @@ export function getModelMaxInputTokens(model: string): number | undefined {
   return undefined
 }
 
+export function getModelCostsFromSettings(model: string): {
+  inputTokens: number
+  outputTokens: number
+  promptCacheWriteTokens: number
+  promptCacheReadTokens: number
+  webSearchRequests: number
+} | undefined {
+  const settings = readSettings()
+  if (settings?.modelCapabilities) {
+    const m = model.toLowerCase()
+    for (const mc of settings.modelCapabilities) {
+      if (m.includes(mc.model.toLowerCase())) {
+        if (mc.costs) {
+          return {
+            inputTokens: mc.costs.inputTokens,
+            outputTokens: mc.costs.outputTokens,
+            promptCacheWriteTokens: mc.costs.promptCacheWriteTokens ?? 0,
+            promptCacheReadTokens: mc.costs.promptCacheReadTokens ?? 0,
+            webSearchRequests: mc.costs.webSearchRequests ?? 0,
+          }
+        }
+      }
+    }
+  }
+  return undefined
+}
+
 function readSettings(): {
   modelCapabilities?: Array<{
     model: string
     capabilities: string[]
     maxInputTokens?: number
+    costs?: {
+      inputTokens: number
+      outputTokens: number
+      promptCacheWriteTokens?: number
+      promptCacheReadTokens?: number
+      webSearchRequests?: number
+    }
   }>
 } | null {
   try {

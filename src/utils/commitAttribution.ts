@@ -149,20 +149,9 @@ export function sanitizeSurfaceKey(surfaceKey: string): string {
 // @[MODEL LAUNCH]: Add a mapping for the new model ID so git commit trailers show the public name.
 /**
  * Sanitize a model name to its public equivalent.
- * Maps internal variants to their public names based on model family.
  */
 export function sanitizeModelName(shortName: string): string {
-  // Map internal variants to public equivalents based on model family
-  if (shortName.includes('opus-4-6')) return 'zy-opus-4-6'
-  if (shortName.includes('opus-4-5')) return 'zy-opus-4-5'
-  if (shortName.includes('opus-4-1')) return 'zy-opus-4-1'
-  if (shortName.includes('opus-4')) return 'zy-opus-4'
-  if (shortName.includes('sonnet-4-6')) return 'zy-sonnet-4-6'
-  if (shortName.includes('sonnet-4-5')) return 'zy-sonnet-4-5'
-  if (shortName.includes('sonnet-4')) return 'zy-sonnet-4'
-  if (shortName.includes('sonnet-3-7')) return 'zy-sonnet-3-7'
-  if (shortName.includes('haiku-4-5')) return 'zy-haiku-4-5'
-  if (shortName.includes('haiku-3-5')) return 'zy-haiku-3-5'
+  if (shortName.includes('qwen3.6-plus')) return 'qwen3.6-plus'
   // Unknown models get a generic name
   return 'zy'
 }
@@ -232,7 +221,7 @@ export function getClientSurface(): string {
 
 /**
  * Build a surface key that includes the model name.
- * Format: "surface/model" (e.g., "cli/zy-sonnet")
+ * Format: "surface/model" (e.g., "cli/qwen3.6-plus")
  */
 export function buildSurfaceKey(surface: string, model: ModelName): string {
   return `${surface}/${model}`

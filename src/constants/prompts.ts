@@ -111,16 +111,6 @@ export const ZY_CODE_DOCS_MAP_URL =
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY =
   '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
 
-// @[MODEL LAUNCH]: Update the latest frontier model.
-const FRONTIER_MODEL_NAME = 'Zy Opus 4.6'
-
-// @[MODEL LAUNCH]: Update the model family IDs below to the latest in each tier.
-const CLAUDE_4_5_OR_4_6_MODEL_IDS = {
-  opus: 'zy-opus-4-6',
-  sonnet: 'zy-sonnet-4-6',
-  haiku: 'zy-haiku-4-5-20251001',
-}
-
 function getHooksSection(): string {
   return `Users may configure 'hooks', shell commands that execute in response to events like tool calls, in settings. Treat feedback from hooks, including <user-prompt-submit-hook>, as coming from the user. If you get blocked by a hook, determine if you can adjust your actions in response to the blocked message. If not, ask the user to check their hooks configuration.`
 }
@@ -690,13 +680,10 @@ export async function computeSimpleEnvInfo(
     knowledgeCutoffMessage,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
-      : `The most recent Zy model family is Zy 4.5/4.6. Model IDs — Opus 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.opus}', Sonnet 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.sonnet}', Haiku 4.5: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.haiku}'. When building AI applications, default to the latest and most capable Zy models.`,
-    process.env.USER_TYPE === 'ant' && isUndercover()
-      ? null
       : `ZY Code is available as a CLI in the terminal, desktop app (Mac/Windows), web app (zy.ai/code), and IDE extensions (VS Code, JetBrains).`,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
-      : `Fast mode for ZY Code uses the same ${FRONTIER_MODEL_NAME} model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
+      : `Fast mode for ZY Code uses the same model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
   ].filter(item => item !== null)
 
   return [
@@ -709,19 +696,8 @@ export async function computeSimpleEnvInfo(
 // @[MODEL LAUNCH]: Add a knowledge cutoff date for the new model.
 function getKnowledgeCutoff(modelId: string): string | null {
   const canonical = modelId.toLowerCase()
-  if (canonical.includes('zy-sonnet-4-6')) {
-    return 'August 2025'
-  } else if (canonical.includes('zy-opus-4-6')) {
-    return 'May 2025'
-  } else if (canonical.includes('zy-opus-4-5')) {
-    return 'May 2025'
-  } else if (canonical.includes('zy-haiku-4')) {
-    return 'February 2025'
-  } else if (
-    canonical.includes('zy-opus-4') ||
-    canonical.includes('zy-sonnet-4')
-  ) {
-    return 'January 2025'
+  if (canonical.includes('qwen3.6-plus')) {
+    return '2025'
   }
   return null
 }

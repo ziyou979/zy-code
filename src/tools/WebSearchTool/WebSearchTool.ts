@@ -175,12 +175,9 @@ export const WebSearchTool = buildTool({
       return true
     }
 
-    // Enable for Vertex AI with supported models (Zy 4.0+)
+    // Enable for Vertex AI with supported models
     if (provider === 'vertex') {
-      const supportsWebSearch =
-        model.includes('zy-opus-4') ||
-        model.includes('zy-sonnet-4') ||
-        model.includes('zy-haiku-4')
+      const supportsWebSearch = model.includes('qwen3.6-plus')
 
       return supportsWebSearch
     }

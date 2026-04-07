@@ -151,7 +151,7 @@ export function Doctor(t0) {
       upperLimit: TASK_MAX_OUTPUT_UPPER_LIMIT
     }, {
       name: "ZY_CODE_MAX_OUTPUT_TOKENS",
-      ...getModelMaxOutputTokens("zy-opus-4-6")
+      ...getModelMaxOutputTokens("qwen3.6-plus")
     }];
     t4 = envVars.map(_temp8).filter(_temp9);
     $[5] = t4;

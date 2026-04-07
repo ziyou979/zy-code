@@ -149,20 +149,9 @@ export function isInProtectedNamespace(): boolean {
 // @[MODEL LAUNCH]: Add a Vertex region override env var for the new model.
 /**
  * Model prefix → env var for Vertex region overrides.
- * Order matters: more specific prefixes must come before less specific ones
- * (e.g., 'zy-opus-4-1' before 'zy-opus-4').
+ * Order matters: more specific prefixes must come before less specific ones.
  */
-const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = [
-  ['zy-haiku-4-5', 'VERTEX_REGION_CLAUDE_HAIKU_4_5'],
-  ['zy-3-5-haiku', 'VERTEX_REGION_CLAUDE_3_5_HAIKU'],
-  ['zy-3-5-sonnet', 'VERTEX_REGION_CLAUDE_3_5_SONNET'],
-  ['zy-3-7-sonnet', 'VERTEX_REGION_CLAUDE_3_7_SONNET'],
-  ['zy-opus-4-1', 'VERTEX_REGION_CLAUDE_4_1_OPUS'],
-  ['zy-opus-4', 'VERTEX_REGION_CLAUDE_4_0_OPUS'],
-  ['zy-sonnet-4-6', 'VERTEX_REGION_CLAUDE_4_6_SONNET'],
-  ['zy-sonnet-4-5', 'VERTEX_REGION_CLAUDE_4_5_SONNET'],
-  ['zy-sonnet-4', 'VERTEX_REGION_CLAUDE_4_0_SONNET'],
-]
+const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = []
 
 /**
  * Get the Vertex AI region for a specific model.

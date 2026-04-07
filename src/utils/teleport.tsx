@@ -95,7 +95,7 @@ type TitleAndBranch = {
 };
 
 /**
- * Generates a title and branch name for a coding session using Zy Haiku
+ * Generates a title and branch name for a coding session
  * @param description The description/prompt for the session
  * @returns Promise<TitleAndBranch> The generated title and branch name
  */

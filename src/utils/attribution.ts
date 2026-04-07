@@ -68,13 +68,13 @@ export function getAttributionTexts(): AttributionTexts {
 
   // @[MODEL LAUNCH]: Update the hardcoded fallback model name below (guards against codename leaks).
   // For internal repos, use the real model name. For external repos,
-  // fall back to "Zy Opus 4.6" for unrecognized models to avoid leaking codenames.
+  // fall back to "ZY (qwen3.6-plus)" for unrecognized models to avoid leaking codenames.
   const model = getMainLoopModel()
   const isKnownPublicModel = getPublicModelDisplayName(model) !== null
   const modelName =
     isInternalModelRepoCached() || isKnownPublicModel
       ? getPublicModelName(model)
-      : 'Zy Opus 4.6'
+      : 'ZY (qwen3.6-plus)'
   const defaultAttribution = `🤖 Generated with [ZY Code](${PRODUCT_URL})`
   const defaultCommit = `Co-Authored-By: ${modelName} <noreply@anthropic.com>`
 
@@ -283,12 +283,12 @@ async function getTranscriptStats(): Promise<{
 /**
  * Get enhanced PR attribution text with Zy contribution stats.
  *
- * Format: "🤖 Generated with ZY Code (93% 3-shotted by zy-opus-4-5)"
+ * Format: "🤖 Generated with ZY Code (93% 3-shotted by qwen3.6-plus)"
  *
  * Rules:
  * - Shows Zy contribution percentage from commit attribution
  * - Shows N-shotted where N is the prompt count (1-shotted, 2-shotted, etc.)
- * - Shows short model name (e.g., zy-opus-4-5)
+ * - Shows short model name (e.g., qwen3.6-plus)
  * - Returns default attribution if stats can't be computed
  *
  * @param getAppState Function to get the current AppState (from command context)
@@ -365,7 +365,7 @@ export async function getEnhancedPRAttribution(
     return defaultAttribution
   }
 
-  // Build the enhanced attribution: "🤖 Generated with ZY Code (93% 3-shotted by zy-opus-4-5, 2 memories recalled)"
+  // Build the enhanced attribution: "🤖 Generated with ZY Code (93% 3-shotted by qwen3.6-plus, 2 memories recalled)"
   const memSuffix =
     memoryAccessCount > 0
       ? `, ${memoryAccessCount} ${memoryAccessCount === 1 ? 'memory' : 'memories'} recalled`

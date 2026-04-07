@@ -45,7 +45,7 @@ export function modelSupports1M(model: string): boolean {
     return false
   }
   const canonical = model.toLowerCase()
-  return canonical.includes('zy-sonnet-4') || canonical.includes('opus-4-6') || modelHasCapability(model, '1m_context')
+  return canonical.includes('qwen3.6-plus') || modelHasCapability(model, '1m_context')
 }
 
 export function getContextWindowForModel(

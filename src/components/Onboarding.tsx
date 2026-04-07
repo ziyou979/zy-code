@@ -36,17 +36,6 @@ interface PlatformConfig {
 
 const PLATFORMS: PlatformConfig[] = [
   {
-    provider: 'anthropic',
-    label: 'Anthropic',
-    description: '官方 API (api.anthropic.com)',
-    apiKeyLabel: 'Anthropic API Key',
-    suggestedModels: [
-      { label: 'Sonnet 4.6', value: 'zy-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
-      { label: 'Opus 4.6', value: 'zy-opus-4-6-20250514', description: '最强能力，适合复杂工作' },
-      { label: 'Haiku 4.5', value: 'zy-haiku-4-5-20240307', description: '最快最便宜' },
-    ],
-  },
-  {
     provider: 'dashscope',
     label: '百炼 DashScope',
     description: '阿里云百炼平台',
@@ -55,16 +44,6 @@ const PLATFORMS: PlatformConfig[] = [
       { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: '综合能力强 (推荐)' },
       { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: '高性能推理' },
       { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: '快速轻量任务' },
-    ],
-  },
-  {
-    provider: 'openrouter',
-    label: 'OpenRouter',
-    description: 'OpenRouter 代理',
-    apiKeyLabel: 'OpenRouter API Key',
-    suggestedModels: [
-      { label: 'Sonnet', value: 'anthropic/zy-sonnet-4-6-20250514', description: '日常任务首选 (推荐)' },
-      { label: 'Opus', value: 'anthropic/zy-opus-4-6-20250514', description: '最强能力' },
     ],
   },
   {
@@ -399,7 +378,7 @@ function ModelSetup({
                 type: 'input',
                 label: 'Model name',
                 value: 'input',
-                placeholder: 'e.g. qwen-max, zy-sonnet-4-6...',
+                placeholder: 'e.g. qwen-max, qwen3.6-plus...',
                 onChange: value => {
                   if (value.trim().length > 0) {
                     onDone(value.trim());
