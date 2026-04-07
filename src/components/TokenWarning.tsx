@@ -7,6 +7,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { calculateTokenWarningState, getEffectiveContextWindowSize, isAutoCompactEnabled } from '../services/compact/autoCompact.js';
 import { useCompactWarningSuppression } from '../services/compact/compactWarningHook.js';
 import { getUpgradeMessage } from '../utils/model/contextWindowUpgradeCheck.js';
+import { tSync } from '../i18n/index.js';
 type Props = {
   tokenUsage: number;
   model: string;
@@ -57,8 +58,8 @@ function CollapseLabel(t0) {
   const [collapsed, staged, errors, emptySpawns, idleWarn_0] = t3 as [number, number, number, number, number];
   const total = collapsed + staged;
   if (errors > 0 || idleWarn_0) {
-    const problem = errors > 0 ? `collapse errors: ${errors}` : `collapse idle (${emptySpawns} empty runs)`;
-    const t4 = total > 0 ? `${collapsed} / ${total} summarized \u00b7 ${problem}` : problem;
+    const problem = errors > 0 ? tSync('tokenWarning.collapseErrors', { count: errors }) : tSync('tokenWarning.collapseIdle', { count: emptySpawns });
+    const t4 = total > 0 ? `${tSync('tokenWarning.summarized', { collapsed, total })} \u00b7 ${problem}` : problem;
     let t5;
     if ($[4] !== t4) {
       t5 = <Text color="warning" wrap="truncate">{t4}</Text>;
@@ -72,7 +73,7 @@ function CollapseLabel(t0) {
   if (total === 0) {
     return null;
   }
-  const label = `${collapsed} / ${total} summarized`;
+  const label = tSync('tokenWarning.summarized', { collapsed, total });
   const t4 = upgradeMessage ? `${label} \u00b7 ${upgradeMessage}` : label;
   let t5;
   if ($[6] !== t4) {
@@ -163,10 +164,12 @@ export function TokenWarning(t0) {
     }
     return t4;
   }
-  const autocompactLabel = reactiveOnlyMode ? `${100 - displayPercentLeft}% context used` : `${displayPercentLeft}% until auto-compact`;
+  const autocompactLabel = reactiveOnlyMode ? tSync('tokenWarning.contextUsed', { pct: 100 - displayPercentLeft }) : tSync('tokenWarning.untilAutoCompact', { pct: displayPercentLeft });
   let t4;
   if ($[9] !== autocompactLabel || $[10] !== isAboveErrorThreshold || $[11] !== percentLeft) {
-    t4 = <Box flexDirection="row">{showAutoCompactWarning ? <Text dimColor={true} wrap="truncate">{upgradeMessage ? `${autocompactLabel} \u00b7 ${upgradeMessage}` : autocompactLabel}</Text> : <Text color={isAboveErrorThreshold ? "error" : "warning"} wrap="truncate">{upgradeMessage ? `Context low (${percentLeft}% remaining) \u00b7 ${upgradeMessage}` : `Context low (${percentLeft}% remaining) \u00b7 Run /compact to compact & continue`}</Text>}</Box>;
+    const contextLowText = tSync('tokenWarning.contextLow', { pct: percentLeft });
+    const compactAction = tSync('tokenWarning.runCompact');
+    t4 = <Box flexDirection="row">{showAutoCompactWarning ? <Text dimColor={true} wrap="truncate">{upgradeMessage ? `${autocompactLabel} \u00b7 ${upgradeMessage}` : autocompactLabel}</Text> : <Text color={isAboveErrorThreshold ? "error" : "warning"} wrap="truncate">{upgradeMessage ? `${contextLowText} \u00b7 ${upgradeMessage}` : `${contextLowText} \u00b7 ${compactAction}`}</Text>}</Box>;
     $[9] = autocompactLabel;
     $[10] = isAboveErrorThreshold;
     $[11] = percentLeft;

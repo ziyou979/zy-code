@@ -1,57 +1,27 @@
 import { feature } from 'bun:bundle'
-import {
-  checkGate_CACHED_OR_BLOCKING,
-  getDynamicConfig_CACHED_MAY_BE_STALE,
-  getFeatureValue_CACHED_MAY_BE_STALE,
-} from '../services/analytics/growthbook.js'
 // Namespace import breaks the bridgeEnabled → auth → config → bridgeEnabled
 // cycle — authModule.foo is a live binding, so by the time the helpers below
-// call it, auth.js is fully loaded. Previously used require() for the same
-// deferral, but require() hits a CJS cache that diverges from the ESM
-// namespace after mock.module() (daemon/auth.test.ts), breaking spyOn.
+// call it, auth.js is fully loaded.
 import * as authModule from '../utils/auth.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
-import { lt } from '../utils/semver.js'
 
 /**
  * Runtime check for bridge mode entitlement.
  *
- * Remote Control requires a claude.ai subscription (the bridge auths to CCR
- * with the zy.ai OAuth token). isZyAISubscriber() excludes
- * Bedrock/Vertex/Foundry, apiKeyHelper/gateway deployments, env-var API keys,
- * and Console API logins — none of which have the OAuth token CCR needs.
- * See github.com/deshaw/anthropic-issues/issues/24.
- *
- * The `feature('BRIDGE_MODE')` guard ensures the GrowthBook string literal
- * is only referenced when bridge mode is enabled at build time.
+ * Remote Control requires a claude.ai subscription. Since there is no
+ * subscription context, bridge is never enabled.
  */
 export function isBridgeEnabled(): boolean {
-  // Positive ternary pattern — see docs/feature-gating.md.
-  // Negative pattern (if (!feature(...)) return) does not eliminate
-  // inline string literals from external builds.
-  return feature('BRIDGE_MODE')
-    ? isZyAISubscriber() &&
-        getFeatureValue_CACHED_MAY_BE_STALE('tengu_ccr_bridge', false)
-    : false
+  return false
 }
 
 /**
  * Blocking entitlement check for Remote Control.
  *
- * Returns cached `true` immediately (fast path). If the disk cache says
- * `false` or is missing, awaits GrowthBook init and fetches the fresh
- * server value (slow path, max ~5s), then writes it to disk.
- *
- * Use at entitlement gates where a stale `false` would unfairly block access.
- * For user-facing error paths, prefer `getBridgeDisabledReason()` which gives
- * a specific diagnostic. For render-body UI visibility checks, use
- * `isBridgeEnabled()` instead.
+ * Since there is no subscription context, bridge is never enabled.
  */
 export async function isBridgeEnabledBlocking(): Promise<boolean> {
-  return feature('BRIDGE_MODE')
-    ? isZyAISubscriber() &&
-        (await checkGate_CACHED_OR_BLOCKING('tengu_ccr_bridge'))
-    : false
+  return false
 }
 
 /**
@@ -68,36 +38,12 @@ export async function isBridgeEnabledBlocking(): Promise<boolean> {
  * that re-login would fix it. See CC-1165 / gh-33105.
  */
 export async function getBridgeDisabledReason(): Promise<string | null> {
-  if (feature('BRIDGE_MODE')) {
-    if (!isZyAISubscriber()) {
-      return 'Remote Control requires a claude.ai subscription. Run `zy auth login` to sign in with your zy.ai account.'
-    }
-    if (!hasProfileScope()) {
-      return 'Remote Control requires a full-scope login token. Long-lived tokens (from `zy setup-token` or ZY_CODE_OAUTH_TOKEN) are limited to inference-only for security reasons. Run `zy auth login` to use Remote Control.'
-    }
-    if (!getOauthAccountInfo()?.organizationUuid) {
-      return 'Unable to determine your organization for Remote Control eligibility. Run `zy auth login` to refresh your account information.'
-    }
-    if (!(await checkGate_CACHED_OR_BLOCKING('tengu_ccr_bridge'))) {
-      return 'Remote Control is not yet enabled for your account.'
-    }
-    return null
-  }
-  return 'Remote Control is not available in this build.'
+  return 'Remote Control requires a claude.ai subscription. Run `zy auth login` to sign in with your zy.ai account.'
 }
 
 // try/catch: main.tsx:5698 calls isBridgeEnabled() while defining the Commander
-// program, before enableConfigs() runs. isZyAISubscriber() → getGlobalConfig()
-// throws "Config accessed before allowed" there. Pre-config, no OAuth token can
-// exist anyway — false is correct. Same swallow getFeatureValue_CACHED_MAY_BE_STALE
-// already does at growthbook.ts:775-780.
-function isZyAISubscriber(): boolean {
-  try {
-    return authModule.isZyAISubscriber()
-  } catch {
-    return false
-  }
-}
+// program, before enableConfigs() runs. Pre-config, no OAuth token can
+// exist anyway — false is correct.
 function hasProfileScope(): boolean {
   try {
     return authModule.hasProfileScope()
@@ -158,17 +104,6 @@ export function isCseShimEnabled(): boolean {
  * loaded yet, the default '0.0.0' means the check passes — a safe fallback.
  */
 export function checkBridgeMinVersion(): string | null {
-  // Positive pattern — see docs/feature-gating.md.
-  // Negative pattern (if (!feature(...)) return) does not eliminate
-  // inline string literals from external builds.
-  if (feature('BRIDGE_MODE')) {
-    const config = getDynamicConfig_CACHED_MAY_BE_STALE<{
-      minVersion: string
-    }>('tengu_bridge_min_version', { minVersion: '0.0.0' })
-    if (config.minVersion && lt(MACRO.VERSION, config.minVersion)) {
-      return `Your version of ZY Code (${MACRO.VERSION}) is too old for Remote Control.\nVersion ${config.minVersion} or higher is required. Run \`zy update\` to update.`
-    }
-  }
   return null
 }
 
@@ -183,9 +118,7 @@ export function checkBridgeMinVersion(): string | null {
  * config.ts → growthbook.ts import cycle (growthbook.ts → user.ts → config.ts).
  */
 export function getCcrAutoConnectDefault(): boolean {
-  return feature('CCR_AUTO_CONNECT')
-    ? getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_harbor', false)
-    : false
+  return false
 }
 
 /**
@@ -196,7 +129,6 @@ export function getCcrAutoConnectDefault(): boolean {
  */
 export function isCcrMirrorEnabled(): boolean {
   return feature('CCR_MIRROR')
-    ? isEnvTruthy(process.env.ZY_CODE_CCR_MIRROR) ||
-        getFeatureValue_CACHED_MAY_BE_STALE('tengu_ccr_mirror', false)
+    ? isEnvTruthy(process.env.ZY_CODE_CCR_MIRROR)
     : false
 }

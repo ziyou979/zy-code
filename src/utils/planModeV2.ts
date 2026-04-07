@@ -1,5 +1,5 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getRateLimitTier, getSubscriptionType } from './auth.js'
+import { getRateLimitTier } from './auth.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 
 export function getPlanModeV2AgentCount(): number {
@@ -11,17 +11,9 @@ export function getPlanModeV2AgentCount(): number {
     }
   }
 
-  const subscriptionType = getSubscriptionType()
   const rateLimitTier = getRateLimitTier()
 
-  if (
-    subscriptionType === 'max' &&
-    rateLimitTier === 'default_Zy_max_20x'
-  ) {
-    return 3
-  }
-
-  if (subscriptionType === 'enterprise' || subscriptionType === 'team') {
+  if (rateLimitTier === 'default_Zy_max_20x') {
     return 3
   }
 

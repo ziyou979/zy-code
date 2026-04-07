@@ -5,7 +5,6 @@ import { useNotifications } from 'src/context/notifications.js';
 import { Text } from 'src/ink.js';
 import { getRateLimitWarning, getUsingOverageText } from 'src/services/zyAiLimits.js';
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js';
-import { getSubscriptionType } from 'src/utils/auth.js';
 import { hasZyAiBillingAccess } from 'src/utils/billing.js';
 import { getIsRemoteMode } from '../../bootstrap/state.js';
 export function useRateLimitWarningNotification(model) {
@@ -34,23 +33,8 @@ export function useRateLimitWarningNotification(model) {
   }
   const usingOverageText = t1;
   const shownWarningRef = useRef(null);
-  let t2;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = getSubscriptionType();
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  const subscriptionType = t2;
-  let t3;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = hasZyAiBillingAccess();
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  const hasBillingAccess = t3;
-  const isTeamOrEnterprise = subscriptionType === "team" || subscriptionType === "enterprise";
+  const hasBillingAccess = hasZyAiBillingAccess();
+  const isTeamOrEnterprise = false;
   const [hasShownOverageNotification, setHasShownOverageNotification] = useState(false);
   let t4;
   let t5;

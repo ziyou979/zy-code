@@ -14,7 +14,6 @@ import {
   checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,
   hasProfileScope,
-  isZyAISubscriber,
   saveApiKey,
 } from '../../utils/auth.js'
 import type { AccountInfo } from '../../utils/config.js'
@@ -487,12 +486,12 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
   }
 
   const config = getGlobalConfig()
+  // No subscription context — profile data not needed
   if (
     (config.oauthAccount &&
       config.oauthAccount.billingType !== undefined &&
       config.oauthAccount.accountCreatedAt !== undefined &&
       config.oauthAccount.subscriptionCreatedAt !== undefined) ||
-    !isZyAISubscriber() ||
     !hasProfileScope()
   ) {
     return false

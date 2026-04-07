@@ -774,6 +774,12 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'Preferred language for Zy responses and voice dictation (e.g., "japanese", "spanish")',
         ),
+      uiLanguage: z
+        .enum(['en', 'zh-CN'])
+        .optional()
+        .describe(
+          'Language for ZY Code UI text (tips, status messages, etc.). Defaults to "en".',
+        ),
       skipWebFetchPreflight: z
         .boolean()
         .optional()

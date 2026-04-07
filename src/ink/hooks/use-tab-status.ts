@@ -7,6 +7,7 @@ import {
 } from '../termio/osc.js'
 import type { Color } from '../termio/types.js'
 import { TerminalWriteContext } from '../useTerminalNotification.js'
+import { tSync } from '../../i18n/index.js'
 
 export type TabStatusKind = 'idle' | 'busy' | 'waiting'
 
@@ -24,7 +25,7 @@ const TAB_STATUS_PRESETS: Record<
 > = {
   idle: {
     indicator: rgb(0, 215, 95),
-    status: 'Idle',
+    status: tSync('spinner.idle'),
     statusColor: rgb(136, 136, 136),
   },
   busy: {

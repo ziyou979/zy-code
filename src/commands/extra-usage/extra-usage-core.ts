@@ -5,7 +5,6 @@ import {
 } from '../../services/api/adminRequests.js'
 import { invalidateOverageCreditGrantCache } from '../../services/api/overageCreditGrant.js'
 import { type ExtraUsage, fetchUtilization } from '../../services/api/usage.js'
-import { getSubscriptionType } from '../../utils/auth.js'
 import { hasZyAiBillingAccess } from '../../utils/billing.js'
 import { openBrowser } from '../../utils/browser.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
@@ -24,12 +23,10 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
   // /extra-usage more than once while iterating on the claim flow.
   invalidateOverageCreditGrantCache()
 
-  const subscriptionType = getSubscriptionType()
-  const isTeamOrEnterprise =
-    subscriptionType === 'team' || subscriptionType === 'enterprise'
+  // No subscription context — team/enterprise branch never reached
   const hasBillingAccess = hasZyAiBillingAccess()
 
-  if (!hasBillingAccess && isTeamOrEnterprise) {
+  if (!hasBillingAccess && false) {
     // Mirror apps/zy-ai useHasUnlimitedOverage(): if overage is enabled
     // with no monthly cap, there is nothing to request. On fetch error, fall
     // through and let the user ask (matching web's "err toward show" behavior).
@@ -101,9 +98,7 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
     }
   }
 
-  const url = isTeamOrEnterprise
-    ? 'https://zy.ai/admin-settings/usage'
-    : 'https://zy.ai/settings/usage'
+  const url = 'https://zy.ai/settings/usage'
 
   try {
     const opened = await openBrowser(url)

@@ -1,8 +1,6 @@
 import {
   getApiKey,
   getAuthTokenSource,
-  getSubscriptionType,
-  isZyAISubscriber,
 } from './auth.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
@@ -13,7 +11,8 @@ export function hasConsoleBillingAccess(): boolean {
     return false
   }
 
-  const isSubscriber = isZyAISubscriber()
+  // No subscription context, so this is always false
+  const isSubscriber = false
 
   // This might be wrong if user is signed into Max but also using an API key, but
   // we already show a warning on launch in that case
@@ -56,23 +55,5 @@ export function hasZyAiBillingAccess(): boolean {
     return mockBillingAccessOverride
   }
 
-  if (!isZyAISubscriber()) {
-    return false
-  }
-
-  const subscriptionType = getSubscriptionType()
-
-  // Consumer plans (Max/Pro) - individual users always have billing access
-  if (subscriptionType === 'max' || subscriptionType === 'pro') {
-    return true
-  }
-
-  // Team/Enterprise - check for admin or billing roles
-  const config = getGlobalConfig()
-  const orgRole = config.oauthAccount?.organizationRole
-
-  return (
-    !!orgRole &&
-    ['admin', 'billing', 'owner', 'primary_owner'].includes(orgRole)
-  )
+  return false
 }

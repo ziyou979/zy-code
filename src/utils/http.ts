@@ -3,13 +3,11 @@
  */
 
 import axios from 'axios'
-import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import { getAPIProvider, isOpenAIFormatProvider } from './model/providers.js'
 import {
   getApiKey,
   getZyAIOAuthTokens,
   handleOAuth401Error,
-  isZyAISubscriber,
 } from './auth.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
@@ -81,23 +79,7 @@ export function getAuthHeaders(): AuthHeaders {
     }
   }
   
-  if (isZyAISubscriber()) {
-    const oauthTokens = getZyAIOAuthTokens()
-    if (!oauthTokens?.accessToken) {
-      return {
-        headers: {},
-        error: 'No OAuth token available',
-      }
-    }
-    return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
-    }
-  }
-  // TODO: this will fail if the API key is being set to an LLM Gateway key
-  // should we try to query keychain / credentials for a valid Anthropic key?
+  // Use API key authentication
   const apiKey = getApiKey()
   if (!apiKey) {
     return {

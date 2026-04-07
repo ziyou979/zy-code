@@ -36,6 +36,7 @@ import { getCurrentTurnTokenBudget, getTurnOutputTokens } from '../bootstrap/sta
 import { TeammateSpinnerTree } from './Spinner/TeammateSpinnerTree.js';
 import { useAnimationFrame } from '../ink.js';
 import { getGlobalConfig } from '../utils/config.js';
+import { tSync } from '../i18n/index.js';
 export type { SpinnerMode } from './Spinner/index.js';
 const DEFAULT_CHARACTERS = getDefaultCharacters();
 const SPINNER_FRAMES = [...DEFAULT_CHARACTERS, ...[...DEFAULT_CHARACTERS].reverse()];
@@ -230,22 +231,22 @@ function SpinnerWithVerbInner({
     return <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>
-            {TEARDROP_ASTERISK} Idle
-            {!allIdle && ' · teammates running'}
+            {TEARDROP_ASTERISK} {tSync('spinner.idle')}
+            {!allIdle && ` · ${tSync('spinner.teammatesRunning')}`}
           </Text>
         </Box>
-        {showSpinnerTree && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderTokenCount={leaderTokenCount} leaderIdleText="Idle" />}
+        {showSpinnerTree && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderTokenCount={leaderTokenCount} leaderIdleText={tSync('spinner.idle')} />}
       </Box>;
   }
 
   // When viewing an idle teammate, show static idle display instead of animated spinner
   if (foregroundedTeammate?.isIdle) {
-    const idleText = allIdle ? `${TEARDROP_ASTERISK} Worked for ${formatDuration(Date.now() - foregroundedTeammate.startTime)}` : `${TEARDROP_ASTERISK} Idle`;
+    const idleText = allIdle ? `${TEARDROP_ASTERISK} ${tSync('spinner.workedFor', { duration: formatDuration(Date.now() - foregroundedTeammate.startTime) })}` : `${TEARDROP_ASTERISK} ${tSync('spinner.idle')}`;
     return <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>{idleText}</Text>
         </Box>
-        {showSpinnerTree && hasRunningTeammates && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? 'Idle' : undefined} leaderTokenCount={leaderTokenCount} />}
+        {showSpinnerTree && hasRunningTeammates && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? tSync('spinner.idle') : undefined} leaderTokenCount={leaderTokenCount} />}
       </Box>;
   }
 
@@ -265,7 +266,7 @@ function SpinnerWithVerbInner({
     if (budget !== null && budget > 0) {
       const tokens = getTurnOutputTokens();
       if (tokens >= budget) {
-        budgetText = `Target: ${formatNumber(tokens)} used (${formatNumber(budget)} min ${figures.tick})`;
+        budgetText = tSync('spinner.targetUsed', { used: formatNumber(tokens), budget: formatNumber(budget) });
       } else {
         const pct = Math.round(tokens / budget * 100);
         const remaining = budget - tokens;
@@ -273,7 +274,7 @@ function SpinnerWithVerbInner({
         const eta = rate > 0 ? ` \u00B7 ~${formatDuration(remaining / rate, {
           mostSignificantOnly: true
         })}` : '';
-        budgetText = `Target: ${formatNumber(tokens)} / ${formatNumber(budget)} (${pct}%)${eta}`;
+        budgetText = tSync('spinner.targetPercent', { used: formatNumber(tokens), budget: formatNumber(budget), pct, eta });
       }
     }
   }
@@ -293,7 +294,7 @@ function SpinnerWithVerbInner({
             </MessageResponse>}
           {(nextTask || effectiveTip) && <MessageResponse>
               <Text dimColor>
-                {nextTask ? `Next: ${nextTask.subject}` : `Tip: ${effectiveTip}`}
+                {nextTask ? tSync('spinner.next', { subject: nextTask.subject }) : tSync('spinner.tip', { tip: effectiveTip })}
               </Text>
             </MessageResponse>}
         </Box> : null}
@@ -346,7 +347,7 @@ function BriefSpinner(t0) {
   const [, time] = useAnimationFrame(reducedMotion ? null : 120);
   const runningCount = useAppState(_temp6);
   const showConnWarning = connStatus === "reconnecting" || connStatus === "disconnected";
-  const connText = connStatus === "reconnecting" ? "Reconnecting" : "Disconnected";
+  const connText = connStatus === "reconnecting" ? tSync('spinner.reconnecting') : tSync('spinner.disconnected');
   const dotFrame = Math.floor(time / 300) % 3;
   let t3;
   if ($[3] !== dotFrame || $[4] !== reducedMotion) {
@@ -388,7 +389,7 @@ function BriefSpinner(t0) {
   const {
     columns
   } = useTerminalSize();
-  const rightText = runningCount > 0 ? `${runningCount} in background` : "";
+  const rightText = runningCount > 0 ? tSync('spinner.inBackground', { count: runningCount }) : "";
   let t6;
   if ($[14] !== connText || $[15] !== showConnWarning || $[16] !== verbWidth) {
     t6 = showConnWarning ? stringWidth(connText) : verbWidth;
@@ -456,9 +457,9 @@ export function BriefIdleStatus() {
     columns
   } = useTerminalSize();
   const showConnWarning = connStatus === "reconnecting" || connStatus === "disconnected";
-  const connText = connStatus === "reconnecting" ? "Reconnecting\u2026" : "Disconnected";
+  const connText = connStatus === "reconnecting" ? tSync('spinner.reconnecting') + '\u2026' : tSync('spinner.disconnected');
   const leftText = showConnWarning ? connText : "";
-  const rightText = runningCount > 0 ? `${runningCount} in background` : "";
+  const rightText = runningCount > 0 ? tSync('spinner.inBackground', { count: runningCount }) : "";
   if (!leftText && !rightText) {
     let t0;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {

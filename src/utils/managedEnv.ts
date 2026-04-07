@@ -27,7 +27,7 @@ function withoutSSHTunnelVars(
   const {
     ANTHROPIC_UNIX_SOCKET: _1,
     ANTHROPIC_BASE_URL: _2,
-    ANTHROPIC_API_KEY: _3,
+    ZY_API_KEY: _3,
     ANTHROPIC_AUTH_TOKEN: _4,
     ZY_CODE_OAUTH_TOKEN: _5,
     ...rest

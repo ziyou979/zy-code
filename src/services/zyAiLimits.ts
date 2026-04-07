@@ -2,7 +2,6 @@ import { APIError } from '@anthropic-ai/sdk'
 import type { MessageParam } from '@anthropic-ai/sdk/resources/index.mjs'
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
-import { isZyAISubscriber } from '../utils/auth.js'
 import { getModelBetas } from '../utils/betas.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { logError } from '../utils/log.js'
@@ -91,11 +90,13 @@ const EARLY_WARNING_CLAIM_MAP: Record<string, RateLimitType> = {
   overage: 'overage',
 }
 
+import { tSync } from '../i18n/index.js'
+
 const RATE_LIMIT_DISPLAY_NAMES: Record<RateLimitType, string> = {
-  five_hour: 'session limit',
-  seven_day: 'weekly limit',
-  seven_day_opus: 'Opus limit',
-  seven_day_sonnet: 'Sonnet limit',
+  five_hour: tSync('rateLimit.sessionLimit'),
+  seven_day: tSync('rateLimit.weeklyLimit'),
+  seven_day_opus: tSync('rateLimit.opusLimit'),
+  seven_day_sonnet: tSync('rateLimit.sonnetLimit'),
   overage: 'extra usage limit',
 }
 
@@ -248,7 +249,7 @@ export async function checkQuotaStatus(): Promise<void> {
   }
 
   // Check if we should process rate limits (real subscriber or mock testing)
-  if (!shouldProcessRateLimits(isZyAISubscriber())) {
+  if (!shouldProcessRateLimits(false)) {
     return
   }
 
@@ -483,9 +484,7 @@ export function extractQuotaStatusFromHeaders(
   headers: globalThis.Headers,
 ): void {
   // Check if we need to process rate limits
-  const isSubscriber = isZyAISubscriber()
-
-  if (!shouldProcessRateLimits(isSubscriber)) {
+  if (!shouldProcessRateLimits(false)) {
     // If we have any rate limit state, clear it
     rawUtilization = {}
     if (currentLimits.status !== 'allowed' || currentLimits.resetsAt) {
@@ -514,7 +513,7 @@ export function extractQuotaStatusFromHeaders(
 
 export function extractQuotaStatusFromError(error: APIError): void {
   if (
-    !shouldProcessRateLimits(isZyAISubscriber()) ||
+    !shouldProcessRateLimits(false) ||
     error.status !== 429
   ) {
     return

@@ -22,7 +22,6 @@ import {
   WEB_SEARCH_BETA_HEADER,
 } from '../constants/betas.js'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
-import { isZyAISubscriber } from './auth.js'
 import { has1mContext } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
@@ -65,14 +64,6 @@ export function filterAllowedSdkBetas(
   sdkBetas: string[] | undefined,
 ): string[] | undefined {
   if (!sdkBetas || sdkBetas.length === 0) {
-    return undefined
-  }
-
-  if (isZyAISubscriber()) {
-    // biome-ignore lint/suspicious/noConsole: intentional warning
-    console.warn(
-      'Warning: Custom betas are only available for API key users. Ignoring provided betas.',
-    )
     return undefined
   }
 
@@ -225,9 +216,6 @@ export const getAllModelBetas = memoize((model: string): string[] => {
         betaHeaders.push(CLI_INTERNAL_BETA_HEADER)
       }
     }
-  }
-  if (isZyAISubscriber()) {
-    betaHeaders.push(OAUTH_BETA_HEADER)
   }
   if (has1mContext(model)) {
     betaHeaders.push(CONTEXT_1M_BETA_HEADER)

@@ -4,9 +4,7 @@ import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
 import { z } from 'zod/v4'
-import { OAUTH_BETA_HEADER } from '../../constants/oauth.js'
 import { getLLMClient } from '../../services/api/client.js'
-import { isZyAISubscriber } from '../auth.js'
 import { logForDebugging } from '../debug.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
@@ -157,9 +155,8 @@ export async function refreshModelCapabilities(): Promise<void> {
 
   try {
     const anthropic = await getLLMClient({ maxRetries: 1 })
-    const betas = isZyAISubscriber() ? [OAUTH_BETA_HEADER] : undefined
     const parsed: ModelCapability[] = []
-    for await (const entry of anthropic.models.list({ betas })) {
+    for await (const entry of anthropic.models.list({})) {
       const result = ModelCapabilitySchema().safeParse(entry)
       if (result.success) parsed.push(result.data)
     }

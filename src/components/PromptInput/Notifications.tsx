@@ -32,6 +32,7 @@ import { MemoryUsageIndicator } from '../MemoryUsageIndicator.js';
 import { SentryErrorBoundary } from '../SentryErrorBoundary.js';
 import { TokenWarning } from '../TokenWarning.js';
 import { SandboxPromptFooterHint } from './SandboxPromptFooterHint.js';
+import { tSync } from '../../i18n/index.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const VoiceIndicator: typeof import('./VoiceIndicator.js').VoiceIndicator = feature('VOICE_MODE') ? require('./VoiceIndicator.js').VoiceIndicator : () => null;
@@ -292,12 +293,12 @@ function NotificationContent({
           </Text>)}
       {isInOverageMode && !isTeamOrEnterprise && <Box>
           <Text dimColor wrap="truncate">
-            Now using extra usage
+            {tSync('notif.nowUsingExtraUsage')}
           </Text>
         </Box>}
       {apiKeyHelperSlow && <Box>
           <Text color="warning" wrap="truncate">
-            apiKeyHelper is taking a while{' '}
+            {tSync('notif.apiKeyHelperSlow')}{' '}
           </Text>
           <Text dimColor wrap="truncate">
             ({apiKeyHelperSlow})
@@ -305,17 +306,17 @@ function NotificationContent({
         </Box>}
       {(apiKeyStatus === 'invalid' || apiKeyStatus === 'missing') && <Box>
           <Text color="error" wrap="truncate">
-            {isEnvTruthy(process.env.ZY_CODE_REMOTE) ? 'Authentication error · Try again' : 'Not logged in · Run /login'}
+            {isEnvTruthy(process.env.ZY_CODE_REMOTE) ? tSync('notif.authError') : tSync('notif.notLoggedIn')}
           </Text>
         </Box>}
       {debug && <Box>
           <Text color="warning" wrap="truncate">
-            Debug mode
+            {tSync('notif.debugMode')}
           </Text>
         </Box>}
       {apiKeyStatus !== 'invalid' && apiKeyStatus !== 'missing' && verbose && <Box>
           <Text dimColor wrap="truncate">
-            {tokenUsage} tokens
+            {tSync('notif.tokenCount', { count: tokenUsage })}
           </Text>
         </Box>}
       {!isBriefOnly && <TokenWarning tokenUsage={tokenUsage} model={mainLoopModel} />}

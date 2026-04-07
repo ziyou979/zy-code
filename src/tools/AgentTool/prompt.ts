@@ -1,5 +1,4 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { getSubscriptionType } from '../../utils/auth.js'
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
 import { isTeammate } from '../../utils/teammate.js'
@@ -240,10 +239,9 @@ When NOT to use the ${AGENT_TOOL_NAME} tool:
 `
 
   // When listing via attachment, the "launch multiple agents" note is in the
-  // attachment message (conditioned on subscription there). When inline, keep
-  // the existing per-call getSubscriptionType() check.
+  // attachment message. When inline, always include the concurrency note.
   const concurrencyNote =
-    !listViaAttachment && getSubscriptionType() !== 'pro'
+    !listViaAttachment
       ? `
 - Launch multiple agents concurrently whenever possible, to maximize performance; to do that, use a single message with multiple tool uses`
       : ''

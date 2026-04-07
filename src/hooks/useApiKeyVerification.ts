@@ -5,7 +5,6 @@ import {
   getApiKeyWithSource,
   getApiKeyFromApiKeyHelper,
   isAuthEnabled,
-  isZyAISubscriber,
 } from '../utils/auth.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { getAPIProvider, isOpenAIFormatProvider } from '../utils/model/providers.js'
@@ -29,7 +28,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
     if (isOpenAIFormatProvider(getAPIProvider())) {
       return 'valid'
     }
-    if (!isAuthEnabled() || isZyAISubscriber()) {
+    if (!isAuthEnabled()) {
       return 'valid'
     }
     // Use skipRetrievingKeyFromApiKeyHelper to avoid executing apiKeyHelper
@@ -52,7 +51,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
       setStatus('valid')
       return
     }
-    if (!isAuthEnabled() || isZyAISubscriber()) {
+    if (!isAuthEnabled()) {
       setStatus('valid')
       return
     }

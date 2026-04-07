@@ -21,7 +21,6 @@ import {
 } from '../../bootstrap/state.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isOfficialMcpUrl } from '../mcp/officialRegistry.js'
-import { isZyAISubscriber, getSubscriptionType } from '../../utils/auth.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
 import {
   getWslVersion,
@@ -616,7 +615,7 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
     }),
     isGithubAction: isEnvTruthy(process.env.GITHUB_ACTIONS),
     isZyCodeAction: isEnvTruthy(process.env.ZY_CODE_ACTION),
-    isZyAiAuth: isZyAISubscriber(),
+    isZyAiAuth: false,
     version: MACRO.VERSION,
     versionBase: getVersionBase(),
     buildTime: MACRO.BUILD_TIME,
@@ -725,10 +724,6 @@ export async function getEventMetadata(
     // Swarm/team agent identification
     // Priority: AsyncLocalStorage context (subagents) > env vars (swarm teammates)
     ...getAgentIdentification(),
-    // Subscription tier for DAU-by-tier analytics
-    ...(getSubscriptionType() && {
-      subscriptionType: getSubscriptionType()!,
-    }),
     // Assistant mode tag — lives outside memoized buildEnvContext() because
     // setKairosActive() runs at main.tsx:~1648, after the first event may
     // have already fired and memoized the env. Read fresh per-event instead.

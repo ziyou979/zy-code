@@ -7,6 +7,7 @@ import { shouldProcessMockLimits } from 'src/services/rateLimitMocking.js'; // U
 import { getRateLimitTier, getSubscriptionType, isZyAISubscriber } from 'src/utils/auth.js';
 import { hasZyAiBillingAccess } from 'src/utils/billing.js';
 import { MessageResponse } from '../MessageResponse.js';
+import { tSync } from '../../i18n/index.js';
 type UpsellParams = {
   shouldShowUpsell: boolean;
   isMax20x: boolean;
@@ -26,24 +27,24 @@ export function getUpsellMessage({
   if (!shouldShowUpsell) return null;
   if (isMax20x) {
     if (isExtraUsageCommandEnabled) {
-      return '/extra-usage to finish what you\u2019re working on.';
+      return tSync('rateLimit.upsell.extraUsage');
     }
-    return '/login to switch to an API usage-billed account.';
+    return tSync('rateLimit.upsell.login');
   }
   if (shouldAutoOpenRateLimitOptionsMenu) {
-    return 'Opening your options\u2026';
+    return tSync('rateLimit.upsell.openingOptions');
   }
   if (!isTeamOrEnterprise && !isExtraUsageCommandEnabled) {
-    return '/upgrade to increase your usage limit.';
+    return tSync('rateLimit.upsell.upgrade');
   }
   if (isTeamOrEnterprise) {
     if (!isExtraUsageCommandEnabled) return null;
     if (hasBillingAccess) {
-      return '/extra-usage to finish what you\u2019re working on.';
+      return tSync('rateLimit.upsell.extraUsage');
     }
-    return '/extra-usage to request more usage from your admin.';
+    return tSync('rateLimit.upsell.requestAdmin');
   }
-  return '/upgrade or /extra-usage to finish what you\u2019re working on.';
+  return tSync('rateLimit.upsell.upgradeOrExtra');
 }
 type RateLimitMessageProps = {
   text: string;

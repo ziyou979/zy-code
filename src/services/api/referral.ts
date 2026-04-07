@@ -2,8 +2,6 @@ import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import {
   getOauthAccountInfo,
-  getSubscriptionType,
-  isZyAISubscriber,
 } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -67,13 +65,10 @@ export async function fetchReferralRedemptions(
 
 /**
  * Prechecks for if user can access guest passes feature
+ * No subscription context — always false.
  */
 function shouldCheckForPasses(): boolean {
-  return !!(
-    getOauthAccountInfo()?.organizationUuid &&
-    isZyAISubscriber() &&
-    getSubscriptionType() === 'max'
-  )
+  return false
 }
 
 /**

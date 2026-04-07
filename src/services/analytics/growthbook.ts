@@ -454,7 +454,7 @@ export function getApiBaseUrlHost(): string | undefined {
 function getUserAttributes(): GrowthBookUserAttributes {
   const user = getUserForGrowthBook()
 
-  // For ants, always try to include email from OAuth config even if ANTHROPIC_API_KEY is set.
+  // For ants, always try to include email from OAuth config even if a custom API key is set.
   // This ensures GrowthBook targeting by email works regardless of auth method.
   let email = user.email
   if (!email && process.env.USER_TYPE === 'zy-super') {

@@ -10,7 +10,6 @@ import {
 import axios from 'axios'
 import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import { getSubscriptionType, isZyAISubscriber } from '../auth.js'
 import { checkHasTrustDialogAccepted } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage, toError } from '../errors.js'
@@ -169,16 +168,8 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
       resourceAttributes['wsl.version'] = attrs['wsl.version'] as string
     }
 
-    // Add customer type and subscription type
-    if (isZyAISubscriber()) {
-      resourceAttributes['user.customer_type'] = 'zy_ai'
-      const subscriptionType = getSubscriptionType()
-      if (subscriptionType) {
-        resourceAttributes['user.subscription_type'] = subscriptionType
-      }
-    } else {
-      resourceAttributes['user.customer_type'] = 'api'
-    }
+    // Add customer type
+    resourceAttributes['user.customer_type'] = 'api'
 
     const transformed = {
       resource_attributes: resourceAttributes,

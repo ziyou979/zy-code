@@ -3,7 +3,6 @@ import { getOauthConfig } from '../../constants/oauth.js'
 import {
   getZyAIOAuthTokens,
   hasProfileScope,
-  isZyAISubscriber,
 } from '../../utils/auth.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
@@ -31,7 +30,8 @@ export type Utilization = {
 }
 
 export async function fetchUtilization(): Promise<Utilization | null> {
-  if (!isZyAISubscriber() || !hasProfileScope()) {
+  // No subscription context — skip API call
+  if (!hasProfileScope()) {
     return {}
   }
 

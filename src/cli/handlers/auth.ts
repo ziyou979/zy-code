@@ -25,7 +25,6 @@ import {
   getApiKeyWithSource,
   getAuthTokenSource,
   getOauthAccountInfo,
-  getSubscriptionType,
   isUsing3PServices,
   saveOAuthTokensIfNeeded,
   validateForceLoginOrg,
@@ -236,9 +235,8 @@ export async function authStatus(opts: {
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
   const { source: apiKeySource } = getApiKeyWithSource()
   const hasApiKeyEnvVar =
-    !!process.env.ANTHROPIC_API_KEY && !isRunningOnHomespace()
+    !!process.env.ZY_API_KEY && !isRunningOnHomespace()
   const oauthAccount = getOauthAccountInfo()
-  const subscriptionType = getSubscriptionType()
   const using3P = isUsing3PServices()
   const loggedIn =
     hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar || using3P
@@ -253,7 +251,7 @@ export async function authStatus(opts: {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
     authMethod = 'oauth_token'
-  } else if (apiKeySource === 'ANTHROPIC_API_KEY' || hasApiKeyEnvVar) {
+  } else if (apiKeySource === 'customApiKey' || hasApiKeyEnvVar) {
     authMethod = 'api_key'
   } else if (apiKeySource === '/login managed key') {
     authMethod = 'zy.ai'
@@ -283,7 +281,7 @@ export async function authStatus(opts: {
       }
     }
     if (!hasAuthProperty && hasApiKeyEnvVar) {
-      process.stdout.write('API key: ANTHROPIC_API_KEY\n')
+      process.stdout.write('API key: ZY_API_KEY\n')
     }
     if (!loggedIn) {
       process.stdout.write(
@@ -296,7 +294,7 @@ export async function authStatus(opts: {
       apiKeySource !== 'none'
         ? apiKeySource
         : hasApiKeyEnvVar
-          ? 'ANTHROPIC_API_KEY'
+          ? 'customApiKey'
           : null
     const output: Record<string, string | boolean | null> = {
       loggedIn,
@@ -310,7 +308,6 @@ export async function authStatus(opts: {
       output.email = oauthAccount?.emailAddress ?? null
       output.orgId = oauthAccount?.organizationUuid ?? null
       output.orgName = oauthAccount?.organizationName ?? null
-      output.subscriptionType = subscriptionType ?? null
     }
 
     process.stdout.write(jsonStringify(output, null, 2) + '\n')

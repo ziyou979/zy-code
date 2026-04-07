@@ -8,6 +8,7 @@ import { Box, Text } from '../../ink.js';
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
 import type { TaskType } from '../../Task.js';
 import type { Tool } from '../../Tool.js';
+import { tSync } from '../../i18n/index.js';
 import { buildTool, type ToolDef } from '../../Tool.js';
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
 import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js';
@@ -445,7 +446,7 @@ function TaskOutputResultDisplay(t0) {
         }
         let t6;
         if ($[18] !== task.error) {
-          t6 = task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>Error:</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>;
+          t6 = task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>{tSync('task.errorLabel')}</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>;
           $[18] = task.error;
           $[19] = t6;
         } else {
@@ -474,7 +475,7 @@ function TaskOutputResultDisplay(t0) {
       }
       let t3;
       if ($[27] !== expandShortcut) {
-        t3 = <MessageResponse><Text dimColor={true}>Read output ({expandShortcut} to expand)</Text></MessageResponse>;
+        t3 = <MessageResponse><Text dimColor={true}>{tSync('task.readOutput', { shortcut: expandShortcut })}</Text></MessageResponse>;
         $[27] = expandShortcut;
         $[28] = t3;
       } else {
@@ -485,7 +486,7 @@ function TaskOutputResultDisplay(t0) {
     if (result.retrieval_status === "timeout" || task.status === "running") {
       let t3;
       if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
-        t3 = <MessageResponse><Text dimColor={true}>Task is still running…</Text></MessageResponse>;
+        t3 = <MessageResponse><Text dimColor={true}>{tSync('task.stillRunning')}</Text></MessageResponse>;
         $[29] = t3;
       } else {
         t3 = $[29];
@@ -495,7 +496,7 @@ function TaskOutputResultDisplay(t0) {
     if (result.retrieval_status === "not_ready") {
       let t3;
       if ($[30] === Symbol.for("react.memo_cache_sentinel")) {
-        t3 = <MessageResponse><Text dimColor={true}>Task is still running…</Text></MessageResponse>;
+        t3 = <MessageResponse><Text dimColor={true}>{tSync('task.stillRunning')}</Text></MessageResponse>;
         $[30] = t3;
       } else {
         t3 = $[30];
@@ -532,7 +533,7 @@ function TaskOutputResultDisplay(t0) {
     }
     let t5;
     if ($[38] !== expandShortcut || $[39] !== task.output || $[40] !== verbose) {
-      t5 = !verbose && task.output && <Text dimColor={true}>{"     "}({expandShortcut} to expand)</Text>;
+      t5 = !verbose && task.output && <Text dimColor={true}>{"     "}{tSync('shortcut.hintParens', { shortcut: expandShortcut, action: tSync('common.expand') })}</Text>;
       $[38] = expandShortcut;
       $[39] = task.output;
       $[40] = verbose;

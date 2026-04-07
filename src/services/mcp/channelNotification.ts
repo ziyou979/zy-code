@@ -22,7 +22,6 @@ import { type ChannelEntry, getAllowedChannels } from '../../bootstrap/state.js'
 import { CHANNEL_TAG } from '../../constants/xml.js'
 import {
   getZyAIOAuthTokens,
-  getSubscriptionType,
 } from '../../utils/auth.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { parsePluginIdentifier } from '../../utils/plugins/pluginIdentifier.js'
@@ -125,13 +124,14 @@ export function wrapChannelMessage(
  * avoid double-reading getSettingsForSource (uncached).
  */
 export function getEffectiveChannelAllowlist(
-  sub: ReturnType<typeof getSubscriptionType>,
+  _sub: null,
   orgList: ChannelAllowlistEntry[] | undefined,
 ): {
   entries: ChannelAllowlistEntry[]
   source: 'org' | 'ledger'
 } {
-  if ((sub === 'team' || sub === 'enterprise') && orgList) {
+  // No subscription context — org list never applies
+  if (orgList) {
     return { entries: orgList, source: 'org' }
   }
   return { entries: getChannelAllowlist(), source: 'ledger' }
@@ -227,15 +227,9 @@ export function gateChannelServer(
     }
   }
 
-  // Teams/Enterprise opt-in. Managed orgs must explicitly enable channels.
-  // Default OFF — absent or false blocks. Keyed off subscription tier, not
-  // "policy settings exist" — a team org with zero configured policy keys
-  // (remote endpoint returns 404) is still a managed org and must not fall
-  // through to the unmanaged path.
-  const sub = getSubscriptionType()
-  const managed = sub === 'team' || sub === 'enterprise'
-  const policy = managed ? getSettingsForSource('policySettings') : undefined
-  if (managed && policy?.channelsEnabled !== true) {
+  // No subscription context — team/enterprise policy gate not applicable
+  const policy = getSettingsForSource('policySettings')
+  if (false && policy?.channelsEnabled !== true) {
     return {
       action: 'skip',
       kind: 'policy',

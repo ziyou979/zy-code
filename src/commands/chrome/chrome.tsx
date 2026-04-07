@@ -4,7 +4,6 @@ import { type OptionWithDescription, Select } from '../../components/CustomSelec
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { Box, Text } from '../../ink.js';
 import { useAppState } from '../../state/AppState.js';
-import { isZyAISubscriber } from '../../utils/auth.js';
 import { openBrowser } from '../../utils/browser.js';
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, openInChrome } from '../../utils/ClaudeInChrome/common.js';
 import { isChromeExtensionInstalled } from '../../utils/ClaudeInChrome/setup.js';
@@ -19,7 +18,6 @@ type Props = {
   onDone: (result?: string) => void;
   isExtensionInstalled: boolean;
   configEnabled: boolean | undefined;
-  isZyAISubscriber: boolean;
   isWSL: boolean;
 };
 function ClaudeInChromeMenu(t0) {
@@ -28,7 +26,6 @@ function ClaudeInChromeMenu(t0) {
     onDone,
     isExtensionInstalled: installed,
     configEnabled,
-    isZyAISubscriber,
     isWSL
   } = t0;
   const mcpClients = useAppState(_temp);
@@ -186,7 +183,7 @@ function ClaudeInChromeMenu(t0) {
   } else {
     options = $[8];
   }
-  const isDisabled = isWSL || true && !isZyAISubscriber;
+  const isDisabled = true;
   let t5;
   if ($[18] !== onDone) {
     t5 = () => onDone();
@@ -210,10 +207,11 @@ function ClaudeInChromeMenu(t0) {
   } else {
     t7 = $[22];
   }
+  // No subscription context — always show subscription required message
   let t8;
-  if ($[23] !== isZyAISubscriber) {
-    t8 = true && !isZyAISubscriber && <Text color="error">Claude in Chrome requires a claude.ai subscription.</Text>;
-    $[23] = isZyAISubscriber;
+  if ($[23] === Symbol.for("react.memo_cache_sentinel")) {
+    t8 = <Text color="error">Claude in Chrome requires a claude.ai subscription.</Text>;
+    $[23] = t8;
     $[24] = t8;
   } else {
     t8 = $[24];
@@ -278,7 +276,6 @@ function _temp(s) {
 export const call = async function (onDone: (result?: string) => void): Promise<React.ReactNode> {
   const isExtensionInstalled = await isChromeExtensionInstalled();
   const config = getGlobalConfig();
-  const isSubscriber = isZyAISubscriber();
   const isWSL = env.isWslEnvironment();
-  return <ClaudeInChromeMenu onDone={onDone} isExtensionInstalled={isExtensionInstalled} configEnabled={config.ClaudeInChromeDefaultEnabled} isZyAISubscriber={isSubscriber} isWSL={isWSL} />;
+  return <ClaudeInChromeMenu onDone={onDone} isExtensionInstalled={isExtensionInstalled} configEnabled={config.ClaudeInChromeDefaultEnabled} isWSL={isWSL} />;
 };

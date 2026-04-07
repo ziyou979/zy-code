@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import Text from '../../ink/components/Text.js';
+import { tSync } from '../../i18n/index.js';
 type Props = {
   /** The key or chord to display (e.g., "ctrl+o", "Enter", "↑/↓") */
   shortcut: string;
@@ -12,31 +13,25 @@ type Props = {
   bold?: boolean;
 };
 
+/** Map common action identifiers to i18n keys */
+const actionKeyMap: Record<string, string> = {
+  'expand': 'common.expand',
+  'collapse': 'common.collapse',
+  'select': 'common.select',
+  'confirm': 'common.confirm',
+  'cancel': 'common.cancel',
+  'navigate': 'common.navigate',
+  'toggle': 'common.toggle',
+  'manage': 'common.manage',
+};
+
 /**
  * Renders a keyboard shortcut hint like "ctrl+o to expand" or "(tab to toggle)"
  *
  * Wrap in <Text dimColor> for the common dim styling.
- *
- * @example
- * // Simple hint wrapped in dim Text
- * <Text dimColor><KeyboardShortcutHint shortcut="esc" action="cancel" /></Text>
- *
- * // With parentheses: "(ctrl+o to expand)"
- * <Text dimColor><KeyboardShortcutHint shortcut="ctrl+o" action="expand" parens /></Text>
- *
- * // With bold shortcut: "Enter to confirm" (Enter is bold)
- * <Text dimColor><KeyboardShortcutHint shortcut="Enter" action="confirm" bold /></Text>
- *
- * // Multiple hints with middot separator - use Byline
- * <Text dimColor>
- *   <Byline>
- *     <KeyboardShortcutHint shortcut="Enter" action="confirm" />
- *     <KeyboardShortcutHint shortcut="Esc" action="cancel" />
- *   </Byline>
- * </Text>
  */
 export function KeyboardShortcutHint(t0) {
-  const $ = _c(9);
+  const $ = _c(10);
   const {
     shortcut,
     action,
@@ -55,26 +50,19 @@ export function KeyboardShortcutHint(t0) {
     t3 = $[2];
   }
   const shortcutText = t3;
-  if (parens) {
-    let t4;
-    if ($[3] !== action || $[4] !== shortcutText) {
-      t4 = <Text>({shortcutText} to {action})</Text>;
-      $[3] = action;
-      $[4] = shortcutText;
-      $[5] = t4;
-    } else {
-      t4 = $[5];
-    }
-    return t4;
-  }
+  // Look up the action in the key map; fall back to raw action string
+  const actionKey = actionKeyMap[action];
+  const actionText = actionKey ? tSync(actionKey) : action;
+  const template = parens
+    ? tSync('shortcut.hintParens', { shortcut: shortcutText, action: actionText })
+    : tSync('shortcut.hint', { shortcut: shortcutText, action: actionText });
   let t4;
-  if ($[6] !== action || $[7] !== shortcutText) {
-    t4 = <Text>{shortcutText} to {action}</Text>;
-    $[6] = action;
-    $[7] = shortcutText;
-    $[8] = t4;
+  if ($[3] !== template) {
+    t4 = <Text>{template}</Text>;
+    $[3] = template;
+    $[4] = t4;
   } else {
-    t4 = $[8];
+    t4 = $[4];
   }
   return t4;
 }

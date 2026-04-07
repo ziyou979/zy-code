@@ -10,9 +10,26 @@ import {
 } from '../utils/auth.js'
 import { hasZyAiBillingAccess } from '../utils/billing.js'
 import { formatResetTime } from '../utils/format.js'
+import { tSync } from '../i18n/index.js'
 import type { ZyAILimits } from './zyAiLimits.js'
 
 const FEEDBACK_CHANNEL_ANT = '#briarpatch-cc'
+
+/**
+ * Get the translated name for a rate limit type
+ */
+function getLimitNameTranslation(rateLimitType: string, model: string): string {
+  if (rateLimitType === 'seven_day_sonnet') {
+    const subscriptionType = getSubscriptionType()
+    const isProOrEnterprise =
+      subscriptionType === 'pro' || subscriptionType === 'enterprise'
+    return isProOrEnterprise ? tSync('rateLimit.weeklyLimit') : tSync('rateLimit.sonnetLimit')
+  }
+  if (rateLimitType === 'seven_day_opus') return tSync('rateLimit.opusLimit')
+  if (rateLimitType === 'seven_day') return tSync('rateLimit.weeklyLimit')
+  if (rateLimitType === 'five_hour') return tSync('rateLimit.sessionLimit')
+  return tSync('rateLimit.usageLimit')
+}
 
 /**
  * All possible rate limit error message prefixes
@@ -52,7 +69,7 @@ export function getRateLimitMessage(
     // Show warning if approaching overage spending limit
     if (limits.overageStatus === 'allowed_warning') {
       return {
-        message: "You're close to your extra usage spending limit",
+        message: tSync('rateLimit.extraUsageSpendingLimit'),
         severity: 'warning',
       }
     }
@@ -146,7 +163,7 @@ function getLimitReachedText(limits: ZyAILimits, model: string): string {
   const overageResetTime = limits.overageResetsAt
     ? formatResetTime(limits.overageResetsAt, true)
     : undefined
-  const resetMessage = resetTime ? ` · resets ${resetTime}` : ''
+  const resetMessage = resetTime ? tSync('rateLimit.resetsAt', { time: resetTime }) : ''
 
   // if BOTH subscription (checked before this method) and overage are exhausted
   if (limits.overageStatus === 'rejected') {
@@ -155,64 +172,60 @@ function getLimitReachedText(limits: ZyAILimits, model: string): string {
     if (resetsAt && limits.overageResetsAt) {
       // Both timestamps present - use the earlier one
       if (resetsAt < limits.overageResetsAt) {
-        overageResetMessage = ` · resets ${resetTime}`
+        overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: resetTime })}`
       } else {
-        overageResetMessage = ` · resets ${overageResetTime}`
+        overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: overageResetTime })}`
       }
     } else if (resetTime) {
-      overageResetMessage = ` · resets ${resetTime}`
+      overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: resetTime })}`
     } else if (overageResetTime) {
-      overageResetMessage = ` · resets ${overageResetTime}`
+      overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: overageResetTime })}`
     }
 
     if (limits.overageDisabledReason === 'out_of_credits') {
-      return `You're out of extra usage${overageResetMessage}`
+      return tSync('rateLimit.outOfExtraUsage') + overageResetMessage
     }
 
     return formatLimitReachedText('limit', overageResetMessage, model)
   }
 
   if (limits.rateLimitType === 'seven_day_sonnet') {
-    const subscriptionType = getSubscriptionType()
-    const isProOrEnterprise =
-      subscriptionType === 'pro' || subscriptionType === 'enterprise'
-    // For pro and enterprise, Sonnet limit is the same as weekly
-    const limit = isProOrEnterprise ? 'weekly limit' : 'Sonnet limit'
+    const limit = getLimitNameTranslation(limits.rateLimitType, model)
     return formatLimitReachedText(limit, resetMessage, model)
   }
 
   if (limits.rateLimitType === 'seven_day_opus') {
-    return formatLimitReachedText('Opus limit', resetMessage, model)
+    return formatLimitReachedText(tSync('rateLimit.opusLimit'), resetMessage, model)
   }
 
   if (limits.rateLimitType === 'seven_day') {
-    return formatLimitReachedText('weekly limit', resetMessage, model)
+    return formatLimitReachedText(tSync('rateLimit.weeklyLimit'), resetMessage, model)
   }
 
   if (limits.rateLimitType === 'five_hour') {
-    return formatLimitReachedText('session limit', resetMessage, model)
+    return formatLimitReachedText(tSync('rateLimit.sessionLimit'), resetMessage, model)
   }
 
-  return formatLimitReachedText('usage limit', resetMessage, model)
+  return formatLimitReachedText(tSync('rateLimit.usageLimit'), resetMessage, model)
 }
 
 function getEarlyWarningText(limits: ZyAILimits): string | null {
   let limitName: string | null = null
   switch (limits.rateLimitType) {
     case 'seven_day':
-      limitName = 'weekly limit'
+      limitName = tSync('rateLimit.weeklyLimit')
       break
     case 'five_hour':
-      limitName = 'session limit'
+      limitName = tSync('rateLimit.sessionLimit')
       break
     case 'seven_day_opus':
-      limitName = 'Opus limit'
+      limitName = tSync('rateLimit.opusLimit')
       break
     case 'seven_day_sonnet':
-      limitName = 'Sonnet limit'
+      limitName = getLimitNameTranslation(limits.rateLimitType, '')
       break
     case 'overage':
-      limitName = 'extra usage'
+      limitName = tSync('rateLimit.usageLimit')
       break
     case undefined:
       return null
@@ -230,12 +243,12 @@ function getEarlyWarningText(limits: ZyAILimits): string | null {
   const upsell = getWarningUpsellText(limits.rateLimitType)
 
   if (used && resetTime) {
-    const base = `You've used ${used}% of your ${limitName} · resets ${resetTime}`
+    const base = tSync('rateLimit.usedPercentWithReset', { limit: limitName, pct: used, resetTime: tSync('rateLimit.resetsAt', { time: resetTime }) })
     return upsell ? `${base} · ${upsell}` : base
   }
 
   if (used) {
-    const base = `You've used ${used}% of your ${limitName}`
+    const base = tSync('rateLimit.usedPercent', { limit: limitName, pct: used })
     return upsell ? `${base} · ${upsell}` : base
   }
 
@@ -245,11 +258,11 @@ function getEarlyWarningText(limits: ZyAILimits): string | null {
   }
 
   if (resetTime) {
-    const base = `Approaching ${limitName} · resets ${resetTime}`
+    const base = tSync('rateLimit.approachingWithReset', { limit: limitName, resetTime: tSync('rateLimit.resetsAt', { time: resetTime }) })
     return upsell ? `${base} · ${upsell}` : base
   }
 
-  const base = `Approaching ${limitName}`
+  const base = tSync('rateLimit.approaching', { limit: limitName })
   return upsell ? `${base} · ${upsell}` : base
 }
 
@@ -271,7 +284,7 @@ function getWarningUpsellText(
     // Only show if overage provisioning is allowed for this org type (e.g., not AWS marketplace)
     if (subscriptionType === 'team' || subscriptionType === 'enterprise') {
       if (!hasExtraUsageEnabled && isOverageProvisioningAllowed()) {
-        return '/extra-usage to request more'
+        return tSync('rateLimit.upsell.requestAdmin')
       }
       // Teams/Enterprise with overages enabled or unsupported billing type don't need upsell
       return null
@@ -279,7 +292,7 @@ function getWarningUpsellText(
 
     // Pro/Max users: prompt to upgrade
     if (subscriptionType === 'pro' || subscriptionType === 'max') {
-      return '/upgrade to keep using ZY Code'
+      return tSync('rateLimit.upsell.upgrade')
     }
   }
 
@@ -287,7 +300,7 @@ function getWarningUpsellText(
   if (rateLimitType === 'overage') {
     if (subscriptionType === 'team' || subscriptionType === 'enterprise') {
       if (!hasExtraUsageEnabled && isOverageProvisioningAllowed()) {
-        return '/extra-usage to request more'
+        return tSync('rateLimit.upsell.requestAdmin')
       }
     }
   }
@@ -307,27 +320,23 @@ export function getUsingOverageText(limits: ZyAILimits): string {
 
   let limitName = ''
   if (limits.rateLimitType === 'five_hour') {
-    limitName = 'session limit'
+    limitName = tSync('rateLimit.sessionLimit')
   } else if (limits.rateLimitType === 'seven_day') {
-    limitName = 'weekly limit'
+    limitName = tSync('rateLimit.weeklyLimit')
   } else if (limits.rateLimitType === 'seven_day_opus') {
-    limitName = 'Opus limit'
+    limitName = tSync('rateLimit.opusLimit')
   } else if (limits.rateLimitType === 'seven_day_sonnet') {
-    const subscriptionType = getSubscriptionType()
-    const isProOrEnterprise =
-      subscriptionType === 'pro' || subscriptionType === 'enterprise'
-    // For pro and enterprise, Sonnet limit is the same as weekly
-    limitName = isProOrEnterprise ? 'weekly limit' : 'Sonnet limit'
+    limitName = getLimitNameTranslation(limits.rateLimitType, '')
   }
 
   if (!limitName) {
-    return 'Now using extra usage'
+    return tSync('rateLimit.nowUsingExtraUsage')
   }
 
   const resetMessage = resetTime
-    ? ` · Your ${limitName} resets ${resetTime}`
+    ? ` · 你的 ${limitName} ${tSync('rateLimit.resetsAt', { time: resetTime })}`
     : ''
-  return `You're now using extra usage${resetMessage}`
+  return tSync('rateLimit.nowUsingExtraUsage') + resetMessage
 }
 
 function formatLimitReachedText(
@@ -337,8 +346,8 @@ function formatLimitReachedText(
 ): string {
   // Enhanced messaging for Ant users
   if (process.env.USER_TYPE === 'zy-super') {
-    return `You've hit your ${limit}${resetMessage}. If you have feedback about this limit, post in ${FEEDBACK_CHANNEL_ANT}. You can reset your limits with /reset-limits`
+    return tSync('rateLimit.hit', { limit }) + resetMessage + `. 如果对此限额有反馈，请发布到 ${FEEDBACK_CHANNEL_ANT}。你可以使用 /reset-limits 重置限额`
   }
 
-  return `You've hit your ${limit}${resetMessage}`
+  return tSync('rateLimit.hit', { limit }) + resetMessage
 }

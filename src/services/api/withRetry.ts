@@ -18,8 +18,6 @@ import {
   clearGcpCredentialsCache,
   getZyAIOAuthTokens,
   handleOAuth401Error,
-  isZyAISubscriber,
-  isEnterpriseSubscriber,
 } from '../../utils/auth.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -330,7 +328,7 @@ export async function* withRetry<T>(
         // If FALLBACK_FOR_ALL_PRIMARY_MODELS is not set, fall through only if the primary model is a non-custom Opus model.
         // TODO: Revisit if the isNonCustomOpusModel check should still exist, or if isNonCustomOpusModel is a stale artifact of when ZY Code was hardcoded on Opus.
         (process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS ||
-          (!isZyAISubscriber() && isNonCustomOpusModel(options.model)))
+          isNonCustomOpusModel(options.model))
       ) {
         consecutive529Errors++
         if (consecutive529Errors >= MAX_529_RETRIES) {
@@ -736,12 +734,7 @@ function shouldRetry(error: APIError): boolean {
     : (error.headers as Record<string, string>)?.['x-should-retry']
 
   // If the server explicitly says whether or not to retry, obey.
-  // For Max and Pro users, should-retry is true, but in several hours, so we shouldn't.
-  // Enterprise users can retry because they typically use PAYG instead of rate limits.
-  if (
-    shouldRetryHeader === 'true' &&
-    (!isZyAISubscriber() || isEnterpriseSubscriber())
-  ) {
+  if (shouldRetryHeader === 'true') {
     return true
   }
 
@@ -766,10 +759,9 @@ function shouldRetry(error: APIError): boolean {
   // Retry on lock timeouts.
   if (error.status === 409) return true
 
-  // Retry on rate limits, but not for ZyAI Subscription users
-  // Enterprise users can retry because they typically use PAYG instead of rate limits
+  // Retry on rate limits
   if (error.status === 429) {
-    return !isZyAISubscriber() || isEnterpriseSubscriber()
+    return true
   }
 
   // Clear API key cache on 401 and allow retry.

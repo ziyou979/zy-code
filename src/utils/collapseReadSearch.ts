@@ -23,6 +23,7 @@ import type {
 } from '../types/message.js'
 import { getDisplayPath } from './file.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
+import { tSync } from '../i18n/index.js'
 import {
   isAutoManagedMemoryFile,
   isAutoManagedMemoryPattern,
@@ -950,6 +951,19 @@ export function collapseReadSearchGroups(
 }
 
 /**
+ * Helper to pick the right i18n key based on state.
+ */
+function summaryKey(
+  prefix: string,
+  isActive: boolean,
+  isFirst: boolean,
+): string {
+  const phase = isActive ? 'active' : 'done'
+  const position = isFirst ? 'first' : 'sub'
+  return `summary.${prefix}.${phase}.${position}`
+}
+
+/**
  * Generate a summary text for search/read/REPL counts.
  * @param searchCount Number of search operations
  * @param readCount Number of read operations
@@ -980,37 +994,31 @@ export function getSearchReadSummaryText(
     const { memorySearchCount, memoryReadCount, memoryWriteCount } =
       memoryCounts
     if (memoryReadCount > 0) {
-      const verb = isActive
-        ? parts.length === 0
-          ? 'Recalling'
-          : 'recalling'
-        : parts.length === 0
-          ? 'Recalled'
-          : 'recalled'
+      const key = summaryKey('memoryRead', isActive, parts.length === 0)
+      const unit = tSync(
+        memoryReadCount === 1
+          ? 'summary.memory_one'
+          : 'summary.memory_other',
+        { count: memoryReadCount },
+      )
       parts.push(
-        `${verb} ${memoryReadCount} ${memoryReadCount === 1 ? 'memory' : 'memories'}`,
+        tSync(key, { count: memoryReadCount, unit }),
       )
     }
     if (memorySearchCount > 0) {
-      const verb = isActive
-        ? parts.length === 0
-          ? 'Searching'
-          : 'searching'
-        : parts.length === 0
-          ? 'Searched'
-          : 'searched'
-      parts.push(`${verb} memories`)
+      const key = summaryKey('memorySearch', isActive, parts.length === 0)
+      parts.push(tSync(key))
     }
     if (memoryWriteCount > 0) {
-      const verb = isActive
-        ? parts.length === 0
-          ? 'Writing'
-          : 'writing'
-        : parts.length === 0
-          ? 'Wrote'
-          : 'wrote'
+      const key = summaryKey('memoryWrite', isActive, parts.length === 0)
+      const unit = tSync(
+        memoryWriteCount === 1
+          ? 'summary.memory_one'
+          : 'summary.memory_other',
+        { count: memoryWriteCount },
+      )
       parts.push(
-        `${verb} ${memoryWriteCount} ${memoryWriteCount === 1 ? 'memory' : 'memories'}`,
+        tSync(key, { count: memoryWriteCount, unit }),
       )
     }
     // Team memory operations
@@ -1020,45 +1028,47 @@ export function getSearchReadSummaryText(
   }
 
   if (searchCount > 0) {
-    const searchVerb = isActive
-      ? parts.length === 0
-        ? 'Searching for'
-        : 'searching for'
-      : parts.length === 0
-        ? 'Searched for'
-        : 'searched for'
-    parts.push(
-      `${searchVerb} ${searchCount} ${searchCount === 1 ? 'pattern' : 'patterns'}`,
+    const key = summaryKey('search', isActive, parts.length === 0)
+    const unit = tSync(
+      searchCount === 1
+        ? 'summary.search.pattern_one'
+        : 'summary.search.pattern_other',
+      { count: searchCount },
     )
+    parts.push(tSync(key, { count: searchCount, unit }))
   }
 
   if (readCount > 0) {
-    const readVerb = isActive
-      ? parts.length === 0
-        ? 'Reading'
-        : 'reading'
-      : parts.length === 0
-        ? 'Read'
-        : 'read'
-    parts.push(`${readVerb} ${readCount} ${readCount === 1 ? 'file' : 'files'}`)
+    const key = summaryKey('read', isActive, parts.length === 0)
+    const unit = tSync(
+      readCount === 1
+        ? 'summary.read.file_one'
+        : 'summary.read.file_other',
+      { count: readCount },
+    )
+    parts.push(tSync(key, { count: readCount, unit }))
   }
 
   if (listCount > 0) {
-    const listVerb = isActive
-      ? parts.length === 0
-        ? 'Listing'
-        : 'listing'
-      : parts.length === 0
-        ? 'Listed'
-        : 'listed'
-    parts.push(
-      `${listVerb} ${listCount} ${listCount === 1 ? 'directory' : 'directories'}`,
+    const key = summaryKey('list', isActive, parts.length === 0)
+    const unit = tSync(
+      listCount === 1
+        ? 'summary.list.directory_one'
+        : 'summary.list.directory_other',
+      { count: listCount },
     )
+    parts.push(tSync(key, { count: listCount, unit }))
   }
 
   if (replCount > 0) {
-    const replVerb = isActive ? "REPL'ing" : "REPL'd"
-    parts.push(`${replVerb} ${replCount} ${replCount === 1 ? 'time' : 'times'}`)
+    const key = isActive ? 'summary.repl.active' : 'summary.repl.done'
+    const unit = tSync(
+      replCount === 1
+        ? 'summary.repl.time_one'
+        : 'summary.repl.time_other',
+      { count: replCount },
+    )
+    parts.push(tSync(key, { count: replCount, unit }))
   }
 
   const text = parts.join(', ')

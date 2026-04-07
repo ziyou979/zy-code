@@ -41,9 +41,6 @@ import {
 } from 'src/bootstrap/state.js'
 import {
   getOtelHeadersFromHelper,
-  getSubscriptionType,
-  isDirectApiClient,
-  isZyAISubscriber,
 } from 'src/utils/auth.js'
 import { getPlatform, getWslVersion } from 'src/utils/platform.js'
 
@@ -334,16 +331,8 @@ function getBigQueryExportingReader() {
 }
 
 function isBigQueryMetricsEnabled() {
-  // BigQuery metrics are enabled for:
-  // 1. API customers (excluding Zy.ai subscribers and Bedrock/Vertex)
-  // 2. Zy for Enterprise (C4E) users
-  // 3. Zy for Teams users
-  const subscriptionType = getSubscriptionType()
-  const isC4EOrTeamUser =
-    isZyAISubscriber() &&
-    (subscriptionType === 'enterprise' || subscriptionType === 'team')
-
-  return isDirectApiClient() || isC4EOrTeamUser
+  // BigQuery metrics are always enabled for API customers
+  return true
 }
 
 /**

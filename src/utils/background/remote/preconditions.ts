@@ -3,9 +3,7 @@ import { getOauthConfig } from 'src/constants/oauth.js'
 import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
 import {
-  checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,
-  isZyAISubscriber,
 } from '../../auth.js'
 import { getCwd } from '../../cwd.js'
 import { logForDebugging } from '../../debug.js'
@@ -17,14 +15,10 @@ import { fetchEnvironments } from '../../teleport/environments.js'
 
 /**
  * Checks if user needs to log in with Zy.ai
- * Extracted from getTeleportErrors() in TeleportError.tsx
- * @returns true if login is required, false otherwise
+ * Since there is no subscription context, login is never required.
  */
 export async function checkNeedsZyAiLogin(): Promise<boolean> {
-  if (!isZyAISubscriber()) {
-    return false
-  }
-  return checkAndRefreshOAuthTokenIfNeeded()
+  return false
 }
 
 /**

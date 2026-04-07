@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import { tSync } from 'src/i18n/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { fileHistoryEnabled } from 'src/utils/fileHistory.js'
 import {
@@ -95,8 +96,7 @@ async function isMarketplacePluginRelevant(
 const externalTips: Tip[] = [
   {
     id: 'new-user-warmup',
-    content: async () =>
-      `Start with small features or bug fixes, tell Zy to propose a plan, and verify its suggested edits`,
+    content: async () => tSync('tip.newUserWarmup'),
     cooldownSessions: 3,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -106,7 +106,7 @@ const externalTips: Tip[] = [
   {
     id: 'plan-mode-for-complex-tasks',
     content: async () =>
-      `Use Plan Mode to prepare for a complex request before making changes. Press ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} twice to enable.`,
+      tSync('tip.planModeForComplexTasks', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
     cooldownSessions: 5,
     isRelevant: async () => {
       if (process.env.USER_TYPE === 'zy-super') return false

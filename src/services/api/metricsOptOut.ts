@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { hasProfileScope, isZyAISubscriber } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -126,15 +125,7 @@ async function refreshMetricsStatus(): Promise<MetricsStatus> {
  * an extra one during the 24h window is acceptable.
  */
 export async function checkMetricsEnabled(): Promise<MetricsStatus> {
-  // Service key OAuth sessions lack user:profile scope → would 403.
-  // API key users (non-subscribers) fall through and use x-api-key auth.
-  // This check runs before the disk read so we never persist auth-state-derived
-  // answers — only real API responses go to disk. Otherwise a service-key
-  // session would poison the cache for a later full-OAuth session.
-  if (isZyAISubscriber() && !hasProfileScope()) {
-    return { enabled: false, hasError: false }
-  }
-
+  // No subscription context — service key OAuth session check not applicable
   const cached = getGlobalConfig().metricsStatusCache
   if (cached) {
     if (Date.now() - cached.timestamp > DISK_CACHE_TTL_MS) {

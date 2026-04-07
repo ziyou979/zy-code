@@ -3,18 +3,17 @@
  * Implementation is lazy-loaded from cost.ts to reduce startup time.
  */
 import type { Command } from '../../commands.js'
-import { isZyAISubscriber } from '../../utils/auth.js'
 
 const cost = {
   type: 'local',
   name: 'cost',
   description: 'Show the total cost and duration of the current session',
   get isHidden() {
-    // Keep visible for Ants even if they're subscribers (they see cost breakdowns)
+    // Keep visible for Ants
     if (process.env.USER_TYPE === 'zy-super') {
       return false
     }
-    return isZyAISubscriber()
+    return false
   },
   supportsNonInteractive: true,
   load: () => import('./cost.js'),

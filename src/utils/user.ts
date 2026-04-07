@@ -4,7 +4,6 @@ import { getSessionId } from '../bootstrap/state.js'
 import {
   getOauthAccountInfo,
   getRateLimitTier,
-  getSubscriptionType,
 } from './auth.js'
 import { getGlobalConfig, getOrCreateUserID } from './config.js'
 import { getCwd } from './cwd.js'
@@ -80,20 +79,10 @@ export const getCoreUserData = memoize(
     const deviceId = getOrCreateUserID()
     const config = getGlobalConfig()
 
-    let subscriptionType: string | undefined
     let rateLimitTier: string | undefined
     let firstTokenTime: number | undefined
     if (includeAnalyticsMetadata) {
-      subscriptionType = getSubscriptionType() ?? undefined
       rateLimitTier = getRateLimitTier() ?? undefined
-      if (subscriptionType && config.ZyCodeFirstTokenDate) {
-        const configFirstTokenTime = new Date(
-          config.ZyCodeFirstTokenDate,
-        ).getTime()
-        if (!isNaN(configFirstTokenTime)) {
-          firstTokenTime = configFirstTokenTime
-        }
-      }
     }
 
     // Only include OAuth account data when actively using OAuth authentication
@@ -110,7 +99,6 @@ export const getCoreUserData = memoize(
       organizationUuid,
       accountUuid,
       userType: process.env.USER_TYPE,
-      subscriptionType,
       rateLimitTier,
       firstTokenTime,
       ...(isEnvTruthy(process.env.GITHUB_ACTIONS) && {

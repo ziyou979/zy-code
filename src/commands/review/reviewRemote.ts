@@ -24,7 +24,6 @@ import {
   getRemoteTaskSessionUrl,
   registerRemoteAgentTask,
 } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
-import { isEnterpriseSubscriber, isTeamSubscriber } from '../../utils/auth.js'
 import { detectCurrentRepositoryWithHost } from '../../utils/detectRepository.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { getDefaultBranch, gitExe } from '../../utils/git.js'
@@ -50,13 +49,6 @@ export type OverageGate =
  * billing terms. Fetches quota and utilization in parallel.
  */
 export async function checkOverageGate(): Promise<OverageGate> {
-  // Team and Enterprise plans include ultrareview — no free-review quota
-  // or Extra Usage dialog. The quota endpoint is scoped to consumer plans
-  // (pro/max); hitting it on team/ent would surface a confusing dialog.
-  if (isTeamSubscriber() || isEnterpriseSubscriber()) {
-    return { kind: 'proceed', billingNote: '' }
-  }
-
   const [quota, utilization] = await Promise.all([
     fetchUltrareviewQuota(),
     fetchUtilization().catch(() => null),

@@ -8,7 +8,7 @@ import { logEvent } from '../../services/analytics/index.js';
 import { useZyAiLimits } from '../../services/zyAiLimitsHook.js';
 import type { ToolUseContext } from '../../Tool.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { getOauthAccountInfo, getRateLimitTier, getSubscriptionType } from '../../utils/auth.js';
+import { getOauthAccountInfo, getRateLimitTier } from '../../utils/auth.js';
 import { hasZyAiBillingAccess } from '../../utils/billing.js';
 import { call as extraUsageCall } from '../extra-usage/extra-usage.js';
 import { extraUsage } from '../extra-usage/index.js';
@@ -31,24 +31,15 @@ function RateLimitOptionsMenu(t0) {
   const zyAiLimits = useZyAiLimits();
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = getSubscriptionType();
+    t1 = getRateLimitTier();
     $[0] = t1;
   } else {
     t1 = $[0];
   }
-  const subscriptionType = t1;
-  let t2;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = getRateLimitTier();
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  const rateLimitTier = t2;
+  const rateLimitTier = t1;
   const hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true;
-  const isMax = subscriptionType === "max";
-  const isMax20x = isMax && rateLimitTier === "default_Zy_max_20x";
-  const isTeamOrEnterprise = subscriptionType === "team" || subscriptionType === "enterprise";
+  const isMax20x = false;
+  const isTeamOrEnterprise = false;
   const buyFirst = getFeatureValue_CACHED_MAY_BE_STALE("tengu_jade_anvil_4", false);
   let t3;
   bb0: {

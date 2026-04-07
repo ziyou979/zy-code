@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { getOauthProfileFromApiKey } from 'src/services/oauth/getOauthProfile.js';
-import { isZyAISubscriber } from 'src/utils/auth.js';
 import { Text } from '../../ink.js';
 import { logEvent } from '../../services/analytics/index.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
@@ -41,10 +40,6 @@ function _temp(current) {
   };
 }
 async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {
-  // If already using subscription auth, there is nothing to switch to
-  if (isZyAISubscriber()) {
-    return null;
-  }
   const profile = await getOauthProfileFromApiKey();
   if (!profile) {
     return null;

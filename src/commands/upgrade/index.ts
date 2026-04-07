@@ -1,5 +1,4 @@
 import type { Command } from '../../commands.js'
-import { getSubscriptionType } from '../../utils/auth.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 
 const upgrade = {
@@ -8,8 +7,7 @@ const upgrade = {
   description: 'Upgrade to Max for higher rate limits and more Opus',
   availability: ['zy-ai'],
   isEnabled: () =>
-    !isEnvTruthy(process.env.DISABLE_UPGRADE_COMMAND) &&
-    getSubscriptionType() !== 'enterprise',
+    !isEnvTruthy(process.env.DISABLE_UPGRADE_COMMAND),
   load: () => import('./upgrade.js'),
 } satisfies Command
 

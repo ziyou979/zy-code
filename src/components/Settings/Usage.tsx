@@ -15,6 +15,7 @@ import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
 import { Byline } from '../design-system/Byline.js';
 import { ProgressBar } from '../design-system/ProgressBar.js';
 import { isEligibleForOverageCreditGrant, OverageCreditUpsell } from '../LogoV2/OverageCreditUpsell.js';
+import { tSync } from '../../i18n/index.js';
 type LimitBarProps = {
   title: string;
   limit: RateLimit;
@@ -39,7 +40,7 @@ function LimitBar(t0) {
   if (utilization === null) {
     return null;
   }
-  const usedText = `${Math.floor(utilization)}% used`;
+  const usedText = tSync('usage.percentUsed', { pct: Math.floor(utilization) });
   let subtext;
   if (resets_at) {
     let t2;
@@ -51,7 +52,7 @@ function LimitBar(t0) {
     } else {
       t2 = $[2];
     }
-    subtext = `Resets ${t2}`;
+    subtext = tSync('usage.resets', { time: t2 });
   }
   if (extraSubtext) {
     if (subtext) {
@@ -194,7 +195,7 @@ export function Usage(): React.ReactNode {
         };
       };
       const responseBody = axiosError.response?.data ? jsonStringify(axiosError.response.data) : undefined;
-      setError(responseBody ? `Failed to load usage data: ${responseBody}` : 'Failed to load usage data');
+      setError(responseBody ? tSync('usage.loadErrorDetail', { detail: responseBody }) : tSync('usage.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -210,7 +211,7 @@ export function Usage(): React.ReactNode {
   });
   if (error) {
     return <Box flexDirection="column" gap={1}>
-        <Text color="error">Error: {error}</Text>
+        <Text color="error">{tSync('usage.error', { error: error })}</Text>
         <Text dimColor>
           <Byline>
             <ConfigurableShortcutHint action="settings:retry" context="Settings" fallback="r" description="retry" />
@@ -221,7 +222,7 @@ export function Usage(): React.ReactNode {
   }
   if (!utilization) {
     return <Box flexDirection="column" gap={1}>
-        <Text dimColor>Loading usage data…</Text>
+        <Text dimColor>{tSync('usage.loading')}</Text>
         <Text dimColor>
           <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
         </Text>
@@ -235,19 +236,19 @@ export function Usage(): React.ReactNode {
   const subscriptionType = getSubscriptionType();
   const showSonnetBar = subscriptionType === 'max' || subscriptionType === 'team' || subscriptionType === null;
   const limits = [{
-    title: 'Current session',
+    title: tSync('usage.currentSession'),
     limit: utilization.five_hour
   }, {
-    title: 'Current week (all models)',
+    title: tSync('usage.currentWeekAll'),
     limit: utilization.seven_day
   }, ...(showSonnetBar ? [{
-    title: 'Current week (Sonnet only)',
+    title: tSync('usage.currentWeekSonnet'),
     limit: utilization.seven_day_sonnet
   }] : [])];
   return <Box flexDirection="column" gap={1} width="100%">
       {limits.some(({
       limit
-    }) => limit) || <Text dimColor>/usage is only available for subscription plans.</Text>}
+    }) => limit) || <Text dimColor>{tSync('usage.subscriptionOnly')}</Text>}
 
       {limits.map(({
       title,
@@ -267,7 +268,7 @@ type ExtraUsageSectionProps = {
   extraUsage: ExtraUsage;
   maxWidth: number;
 };
-const EXTRA_USAGE_SECTION_TITLE = 'Extra usage';
+const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage');
 function ExtraUsageSection(t0) {
   const $ = _c(20);
   const {
@@ -283,7 +284,7 @@ function ExtraUsageSection(t0) {
     if (extraUsageCommand.isEnabled()) {
       let t1;
       if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-        t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>Extra usage not enabled · /extra-usage to enable</Text></Box>;
+        t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.extraUsageNotEnabled')}</Text></Box>;
         $[0] = t1;
       } else {
         t1 = $[0];
@@ -295,7 +296,7 @@ function ExtraUsageSection(t0) {
   if (extraUsage.monthly_limit === null) {
     let t1;
     if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>Unlimited</Text></Box>;
+      t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.unlimited')}</Text></Box>;
       $[1] = t1;
     } else {
       t1 = $[1];
@@ -359,7 +360,7 @@ function ExtraUsageSection(t0) {
   } else {
     t8 = $[13];
   }
-  const t9 = `${formattedUsedCredits} / ${formattedMonthlyLimit} spent`;
+  const t9 = tSync('usage.spent', { used: formattedUsedCredits, total: formattedMonthlyLimit });
   let t10;
   if ($[14] !== T0 || $[15] !== maxWidth || $[16] !== t7 || $[17] !== t8 || $[18] !== t9) {
     t10 = <T0 title={t7} limit={t8} showTimeInReset={false} extraSubtext={t9} maxWidth={maxWidth} />;

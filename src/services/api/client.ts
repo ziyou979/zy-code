@@ -2,11 +2,8 @@ import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { randomUUID } from 'crypto'
 import type { GoogleAuth } from 'google-auth-library'
 import {
-  checkAndRefreshOAuthTokenIfNeeded,
   getApiKey,
   getApiKeyFromApiKeyHelper,
-  getZyAIOAuthTokens,
-  isZyAISubscriber,
   refreshAndGetAwsCredentials,
   refreshGcpCredentialsIfNeeded,
 } from 'src/utils/auth.js'
@@ -35,7 +32,7 @@ import {
  * Environment variables for different client types:
  *
  * Direct API:
- * - ANTHROPIC_API_KEY: Required for direct API access
+ * - ZY_API_KEY: Required for direct API access
  *
  * AWS Bedrock:
  * - AWS credentials configured via aws-sdk defaults
@@ -125,13 +122,8 @@ export async function getLLMClient({
     defaultHeaders['x-anthropic-additional-protection'] = 'true'
   }
 
-  logForDebugging('[API:auth] OAuth token check starting')
-  await checkAndRefreshOAuthTokenIfNeeded()
-  logForDebugging('[API:auth] OAuth token check complete')
-
-  if (!isZyAISubscriber()) {
-    await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession())
-  }
+  // Always configure API key headers (no subscription context)
+  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession())
 
   const resolvedFetch = buildFetch(fetchOverride, source)
 
@@ -357,10 +349,8 @@ export async function getLLMClient({
 
   // Determine authentication method based on available tokens
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
-    apiKey: isZyAISubscriber() ? null : apiKey || getApiKey(),
-    authToken: isZyAISubscriber()
-      ? getZyAIOAuthTokens()?.accessToken
-      : undefined,
+    apiKey: apiKey || getApiKey(),
+    authToken: undefined,
     // Set baseURL from OAuth config when using staging OAuth
     ...(process.env.USER_TYPE === 'zy-super' &&
     isEnvTruthy(process.env.USE_STAGING_OAUTH)

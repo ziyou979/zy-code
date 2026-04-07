@@ -58,11 +58,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
         return {}
       }
 
-      // Check for user:mcp_servers scope directly instead of isZyAISubscriber().
-      // In non-interactive mode, isZyAISubscriber() returns false when ANTHROPIC_API_KEY
-      // is set (even with valid OAuth tokens) because preferThirdPartyAuthentication() causes
-      // isAuthEnabled() to return false. Checking the scope directly allows users
-      // with both API keys and OAuth tokens to access zy.ai MCPs in print mode.
+      // Check for user:mcp_servers scope directly.
       if (!tokens.scopes?.includes('user:mcp_servers')) {
         logForDebugging(
           `[zyai-mcp] Missing user:mcp_servers scope (scopes=${tokens.scopes?.join(',') || 'none'})`,

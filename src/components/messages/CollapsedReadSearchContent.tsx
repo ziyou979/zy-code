@@ -14,6 +14,7 @@ import { formatDuration, formatSecondsShort } from '../../utils/format.js';
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
 import type { buildMessageLookups } from '../../utils/messages.js';
 import type { ThemeName } from '../../utils/theme.js';
+import { tSync } from '../../i18n/index.js';
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
 import { useSelectedMessageBg } from '../messageActions.js';
 import { PrBadge } from '../PrBadge.js';
@@ -287,7 +288,11 @@ export function CollapsedReadSearchContent({
     }
     if (elapsed !== undefined && elapsed >= 2) {
       const time = formatDuration(elapsed * 1000);
-      shellProgressSuffix = lines > 0 ? ` (${time} · ${lines} ${lines === 1 ? 'line' : 'lines'})` : ` (${time})`;
+      const lineUnit = tSync(
+        lines === 1 ? 'summary.line_one' : 'summary.line_other',
+        { count: lines },
+      );
+      shellProgressSuffix = lines > 0 ? ` (${time} · ${lines} ${lineUnit})` : ` (${time})`;
     }
   }
 
@@ -296,119 +301,129 @@ export function CollapsedReadSearchContent({
   const nonMemParts: React.ReactNode[] = [];
 
   // Git operations lead the line — they're the load-bearing outcome.
-  function pushPart(key: string, verb: string, body: React.ReactNode): void {
+  function pushPart(key: string, verbKey: string, body: React.ReactNode): void {
     const isFirst = nonMemParts.length === 0;
     if (!isFirst) nonMemParts.push(<Text key={`comma-${key}`}>, </Text>);
+    const verb = tSync(`summary.git.${verbKey}`);
     nonMemParts.push(<Text key={key}>
         {isFirst ? verb[0]!.toUpperCase() + verb.slice(1) : verb} {body}
       </Text>);
   }
   if (isFullscreenEnvEnabled() && message.commits?.length) {
-    const byKind = {
-      committed: 'committed',
-      amended: 'amended commit',
-      'cherry-picked': 'cherry-picked'
-    };
-    for (const kind of ['committed', 'amended', 'cherry-picked'] as const) {
-      const shas = message.commits.filter(c => c.kind === kind).map(c_0 => c_0.sha);
+    for (const kind of ['committed', 'amended', 'cherryPicked'] as const) {
+      const shas = message.commits.filter(c => c.kind === kind.replace('Picked', '-picked')).map(c_0 => c_0.sha);
       if (shas.length) {
-        pushPart(kind, byKind[kind], <Text bold>{shas.join(', ')}</Text>);
+        pushPart(kind, kind, <Text bold>{shas.join(', ')}</Text>);
       }
     }
   }
   if (isFullscreenEnvEnabled() && message.pushes?.length) {
     const branches = uniq(message.pushes.map(p => p.branch));
-    pushPart('push', 'pushed to', <Text bold>{branches.join(', ')}</Text>);
+    pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>);
   }
   if (isFullscreenEnvEnabled() && message.branches?.length) {
-    const byAction = {
-      merged: 'merged',
-      rebased: 'rebased onto'
-    };
     for (const b of message.branches) {
-      pushPart(`br-${b.action}-${b.ref}`, byAction[b.action], <Text bold>{b.ref}</Text>);
+      pushPart(`br-${b.action}-${b.ref}`, b.action === 'merged' ? 'merged' : 'rebasedOnto', <Text bold>{b.ref}</Text>);
     }
   }
   if (isFullscreenEnvEnabled() && message.prs?.length) {
-    const verbs = {
-      created: 'created',
-      edited: 'edited',
-      merged: 'merged',
-      commented: 'commented on',
-      closed: 'closed',
-      ready: 'marked ready'
-    };
     for (const pr of message.prs) {
-      pushPart(`pr-${pr.action}-${pr.number}`, verbs[pr.action], pr.url ? <PrBadge number={pr.number} url={pr.url} bold /> : <Text bold>PR #{pr.number}</Text>);
+      const verbKey = pr.action === 'ready' ? 'prMarkedReady' : `pr${pr.action[0]!.toUpperCase()}${pr.action.slice(1)}`;
+      pushPart(`pr-${pr.action}-${pr.number}`, verbKey, pr.url ? <PrBadge number={pr.number} url={pr.url} bold /> : <Text bold>PR #{pr.number}</Text>);
     }
   }
   if (searchCount > 0) {
     const isFirst_0 = nonMemParts.length === 0;
-    const searchVerb = isActiveGroup ? isFirst_0 ? 'Searching for' : 'searching for' : isFirst_0 ? 'Searched for' : 'searched for';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_0 ? 'first' : 'sub';
+    const searchKey = `summary.search.${phase}.${position}`;
+    const searchUnit = tSync(
+      searchCount === 1 ? 'summary.search.pattern_one' : 'summary.search.pattern_other',
+      { count: searchCount },
+    );
     if (!isFirst_0) {
       nonMemParts.push(<Text key="comma-s">, </Text>);
     }
     nonMemParts.push(<Text key="search">
-        {searchVerb} <Text bold>{searchCount}</Text>{' '}
-        {searchCount === 1 ? 'pattern' : 'patterns'}
+        {tSync(searchKey, { count: searchCount, unit: searchUnit })}
       </Text>);
   }
   if (readCount > 0) {
     const isFirst_1 = nonMemParts.length === 0;
-    const readVerb = isActiveGroup ? isFirst_1 ? 'Reading' : 'reading' : isFirst_1 ? 'Read' : 'read';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_1 ? 'first' : 'sub';
+    const readKey = `summary.read.${phase}.${position}`;
+    const readUnit = tSync(
+      readCount === 1 ? 'summary.read.file_one' : 'summary.read.file_other',
+      { count: readCount },
+    );
     if (!isFirst_1) {
       nonMemParts.push(<Text key="comma-r">, </Text>);
     }
     nonMemParts.push(<Text key="read">
-        {readVerb} <Text bold>{readCount}</Text>{' '}
-        {readCount === 1 ? 'file' : 'files'}
+        {tSync(readKey, { count: readCount, unit: readUnit })}
       </Text>);
   }
   if (listCount > 0) {
     const isFirst_2 = nonMemParts.length === 0;
-    const listVerb = isActiveGroup ? isFirst_2 ? 'Listing' : 'listing' : isFirst_2 ? 'Listed' : 'listed';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_2 ? 'first' : 'sub';
+    const listKey = `summary.list.${phase}.${position}`;
+    const listUnit = tSync(
+      listCount === 1 ? 'summary.list.directory_one' : 'summary.list.directory_other',
+      { count: listCount },
+    );
     if (!isFirst_2) {
       nonMemParts.push(<Text key="comma-l">, </Text>);
     }
     nonMemParts.push(<Text key="list">
-        {listVerb} <Text bold>{listCount}</Text>{' '}
-        {listCount === 1 ? 'directory' : 'directories'}
+        {tSync(listKey, { count: listCount, unit: listUnit })}
       </Text>);
   }
   if (replCount > 0) {
-    const replVerb = isActiveGroup ? "REPL'ing" : "REPL'd";
+    const replKey = isActiveGroup ? 'summary.repl.active' : 'summary.repl.done';
+    const replUnit = tSync(
+      replCount === 1 ? 'summary.repl.time_one' : 'summary.repl.time_other',
+      { count: replCount },
+    );
     if (nonMemParts.length > 0) {
       nonMemParts.push(<Text key="comma-repl">, </Text>);
     }
     nonMemParts.push(<Text key="repl">
-        {replVerb} <Text bold>{replCount}</Text>{' '}
-        {replCount === 1 ? 'time' : 'times'}
+        {tSync(replKey, { count: replCount, unit: replUnit })}
       </Text>);
   }
   if (mcpCallCount > 0) {
     const serverLabel = message.mcpServerNames?.map(n => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP';
     const isFirst_3 = nonMemParts.length === 0;
-    const verb_0 = isActiveGroup ? isFirst_3 ? 'Querying' : 'querying' : isFirst_3 ? 'Queried' : 'queried';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_3 ? 'first' : 'sub';
+    const mcpKey = `summary.mcp.${phase}.${position}`;
     if (!isFirst_3) {
       nonMemParts.push(<Text key="comma-mcp">, </Text>);
     }
     nonMemParts.push(<Text key="mcp">
-        {verb_0} {serverLabel}
+        {tSync(mcpKey, { server: serverLabel })}
         {mcpCallCount > 1 && <>
             {' '}
-            <Text bold>{mcpCallCount}</Text> times
+            <Text bold>{mcpCallCount}</Text> {tSync('summary.repl.time_other', { count: mcpCallCount })}
           </>}
       </Text>);
   }
   if (isFullscreenEnvEnabled() && bashCount > 0) {
     const isFirst_4 = nonMemParts.length === 0;
-    const verb_1 = isActiveGroup ? isFirst_4 ? 'Running' : 'running' : isFirst_4 ? 'Ran' : 'ran';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_4 ? 'first' : 'sub';
+    const bashKey = `summary.bash.${phase}.${position}`;
+    const bashUnit = tSync(
+      bashCount === 1 ? 'summary.bash.command_one' : 'summary.bash.command_other',
+      { count: bashCount },
+    );
     if (!isFirst_4) {
       nonMemParts.push(<Text key="comma-bash">, </Text>);
     }
     nonMemParts.push(<Text key="bash">
-        {verb_1} <Text bold>{bashCount}</Text> bash{' '}
-        {bashCount === 1 ? 'command' : 'commands'}
+        {tSync(bashKey, { count: bashCount, unit: bashUnit })}
       </Text>);
   }
 
@@ -417,32 +432,44 @@ export function CollapsedReadSearchContent({
   const memParts: React.ReactNode[] = [];
   if (memoryReadCount > 0) {
     const isFirst_5 = !hasPrecedingNonMem && memParts.length === 0;
-    const verb_2 = isActiveGroup ? isFirst_5 ? 'Recalling' : 'recalling' : isFirst_5 ? 'Recalled' : 'recalled';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_5 ? 'first' : 'sub';
+    const mrKey = `summary.memoryRead.${phase}.${position}`;
+    const mrUnit = tSync(
+      memoryReadCount === 1 ? 'summary.memory_one' : 'summary.memory_other',
+      { count: memoryReadCount },
+    );
     if (!isFirst_5) {
       memParts.push(<Text key="comma-mr">, </Text>);
     }
     memParts.push(<Text key="mem-read">
-        {verb_2} <Text bold>{memoryReadCount}</Text>{' '}
-        {memoryReadCount === 1 ? 'memory' : 'memories'}
+        {tSync(mrKey, { count: memoryReadCount, unit: mrUnit })}
       </Text>);
   }
   if (memorySearchCount > 0) {
     const isFirst_6 = !hasPrecedingNonMem && memParts.length === 0;
-    const verb_3 = isActiveGroup ? isFirst_6 ? 'Searching' : 'searching' : isFirst_6 ? 'Searched' : 'searched';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_6 ? 'first' : 'sub';
+    const msKey = `summary.memorySearch.${phase}.${position}`;
     if (!isFirst_6) {
       memParts.push(<Text key="comma-ms">, </Text>);
     }
-    memParts.push(<Text key="mem-search">{`${verb_3} memories`}</Text>);
+    memParts.push(<Text key="mem-search">{tSync(msKey)}</Text>);
   }
   if (memoryWriteCount > 0) {
     const isFirst_7 = !hasPrecedingNonMem && memParts.length === 0;
-    const verb_4 = isActiveGroup ? isFirst_7 ? 'Writing' : 'writing' : isFirst_7 ? 'Wrote' : 'wrote';
+    const phase = isActiveGroup ? 'active' : 'done';
+    const position = isFirst_7 ? 'first' : 'sub';
+    const mwKey = `summary.memoryWrite.${phase}.${position}`;
+    const mwUnit = tSync(
+      memoryWriteCount === 1 ? 'summary.memory_one' : 'summary.memory_other',
+      { count: memoryWriteCount },
+    );
     if (!isFirst_7) {
       memParts.push(<Text key="comma-mw">, </Text>);
     }
     memParts.push(<Text key="mem-write">
-        {verb_4} <Text bold>{memoryWriteCount}</Text>{' '}
-        {memoryWriteCount === 1 ? 'memory' : 'memories'}
+        {tSync(mwKey, { count: memoryWriteCount, unit: mwUnit })}
       </Text>);
   }
   return <Box flexDirection="column" marginTop={1} backgroundColor={bg}>

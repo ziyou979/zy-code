@@ -166,7 +166,7 @@ import {
   clearPluginSkillsCache,
 } from './utils/plugins/loadPluginCommands.js'
 import memoize from 'lodash-es/memoize.js'
-import { isUsing3PServices, isZyAISubscriber } from './utils/auth.js'
+import { isUsing3PServices } from './utils/auth.js'
 import { isAnthropicBaseUrl } from './utils/model/providers.js'
 import env from './commands/env/index.js'
 import exit from './commands/exit/index.js'
@@ -417,14 +417,12 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
   for (const a of cmd.availability) {
     switch (a) {
       case 'zy-ai':
-        if (isZyAISubscriber()) return true
-        break
+        return false
       case 'console':
         // Console API key user = direct API customer (not 3P, not zy.ai).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (
-          !isZyAISubscriber() &&
           !isUsing3PServices() &&
           isAnthropicBaseUrl()
         )

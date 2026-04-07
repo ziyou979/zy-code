@@ -81,7 +81,7 @@ const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
 /**
  * CCR and Zy Desktop spawn the CLI with OAuth and should never fall back
  * to the user's ~/.zy/settings.json API-key config (apiKeyHelper,
- * env.ANTHROPIC_API_KEY, env.ANTHROPIC_AUTH_TOKEN). Those settings exist for
+ * env.ZY_API_KEY, env.ANTHROPIC_AUTH_TOKEN). Those settings exist for
  * the user's terminal CLI, not managed sessions. Without this guard, a user
  * who runs `zy` in their terminal with an API key sees every CCD session
  * also use that key — and fail if it's stale/wrong-org.
@@ -172,7 +172,7 @@ export function getAuthTokenSource() {
 }
 
 export type ApiKeySource =
-  | 'ANTHROPIC_API_KEY'
+  | 'customApiKey'
   | 'apiKeyHelper'
   | '/login managed key'
   | 'none'
@@ -198,13 +198,13 @@ export function getApiKeyWithSource(
   // 检查 settings.json (zy.json) 中配置的 API key
   const settings = getSettings_DEPRECATED()
   if (settings?.apiKey) {
-    return { key: settings.apiKey, source: 'ANTHROPIC_API_KEY' }
+    return { key: settings.apiKey, source: 'customApiKey' }
   }
 
   // 检查 onboarding 时配置的 API key
   const config = getGlobalConfig()
   if (config.configuredApiKey) {
-    return { key: config.configuredApiKey, source: 'ANTHROPIC_API_KEY' }
+    return { key: config.configuredApiKey, source: 'customApiKey' }
   }
 
   // --bare: hermetic auth. Only apiKeyHelper from the --settings flag.
@@ -226,7 +226,7 @@ export function getApiKeyWithSource(
   if (apiKeyFromFd) {
     return {
       key: apiKeyFromFd,
-      source: 'ANTHROPIC_API_KEY',
+      source: 'customApiKey',
     }
   }
 

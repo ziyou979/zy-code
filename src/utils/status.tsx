@@ -1,9 +1,8 @@
-import chalk from 'chalk';
 import figures from 'figures';
 import * as React from 'react';
 import { color, Text } from '../ink.js';
 import type { MCPServerConnection } from '../services/mcp/types.js';
-import { getAccountInformation, isZyAISubscriber } from './auth.js';
+import { getAccountInformation } from './auth.js';
 import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './zymd.js';
 import { getDoctorDiagnostic } from './doctorDiagnostic.js';
 import { getAWSRegion, getDefaultVertexRegion, isEnvTruthy } from './envUtils.js';
@@ -352,10 +351,5 @@ export function buildAPIProviderProperties(): Property[] {
   return properties;
 }
 export function getModelDisplayLabel(mainLoopModel: string | null): string {
-  let modelLabel = modelDisplayString(mainLoopModel);
-  if (mainLoopModel === null && isZyAISubscriber()) {
-    const description = getZyAiUserDefaultModelDescription();
-    modelLabel = `${chalk.bold('Default')} ${description}`;
-  }
-  return modelLabel;
+  return modelDisplayString(mainLoopModel);
 }

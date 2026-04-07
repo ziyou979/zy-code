@@ -7,7 +7,7 @@ import { getCwd } from './cwd.js';
 import { relative } from 'path';
 import { formatNumber } from './format.js';
 import type { getGlobalConfig } from './config.js';
-import { getApiKeyWithSource, getApiKeyFromConfigOrMacOSKeychain, getAuthTokenSource, isZyAISubscriber } from './auth.js';
+import { getApiKeyWithSource, getApiKeyFromConfigOrMacOSKeychain, getAuthTokenSource } from './auth.js';
 import { getAPIProvider, isOpenAIFormatProvider } from './model/providers.js';
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js';
 import { getAgentDescriptionsTotalTokens, AGENT_DESCRIPTIONS_THRESHOLD } from './statusNoticeHelpers.js';
@@ -55,8 +55,8 @@ const zyAiSubscriberExternalTokenNotice: StatusNoticeDefinition = {
   id: 'zy-ai-external-token',
   type: 'warning',
   isActive: () => {
-    const authTokenInfo = getAuthTokenSource();
-    return isZyAISubscriber() && (authTokenInfo.source === 'ANTHROPIC_AUTH_TOKEN' || authTokenInfo.source === 'apiKeyHelper');
+    // No subscription context, so this notice is never active
+    return false;
   },
   render: () => {
     const authTokenInfo = getAuthTokenSource();
@@ -74,7 +74,7 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
   id: 'api-key-conflict',
   type: 'warning',
   isActive: () => {
-    // OpenAI 兼容格式模式下忽略 ANTHROPIC_API_KEY 的冲突检查
+    // OpenAI 兼容格式模式下忽略 ZY_API_KEY 的冲突检查
     if (isOpenAIFormatProvider(getAPIProvider())) {
       return false;
     }
@@ -84,7 +84,7 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
     } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true
     });
-    return !!getApiKeyFromConfigOrMacOSKeychain() && (apiKeySource === 'ANTHROPIC_API_KEY' || apiKeySource === 'apiKeyHelper');
+    return !!getApiKeyFromConfigOrMacOSKeychain() && (apiKeySource === 'customApiKey' || apiKeySource === 'apiKeyHelper');
   },
   render: () => {
     const {
@@ -105,7 +105,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
   id: 'both-auth-methods',
   type: 'warning',
   isActive: () => {
-    // OpenAI 兼容格式模式下忽略 ANTHROPIC_API_KEY 的冲突检查
+    // OpenAI 兼容格式模式下忽略 ZY_API_KEY 的冲突检查
     if (isOpenAIFormatProvider(getAPIProvider())) {
       return false;
     }
@@ -138,7 +138,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
             · Trying to use{' '}
             {authTokenInfo.source === 'zy.ai' ? 'zy.ai' : authTokenInfo.source}
             ?{' '}
-            {apiKeySource === 'ANTHROPIC_API_KEY' ? 'Unset the ANTHROPIC_API_KEY environment variable, or zy /logout then say "No" to the API key approval before login.' : apiKeySource === 'apiKeyHelper' ? 'Unset the apiKeyHelper setting.' : 'zy /logout'}
+            {apiKeySource === 'customApiKey' ? 'Unset the ZY_API_KEY environment variable, or zy /logout then say "No" to the API key approval before login.' : apiKeySource === 'apiKeyHelper' ? 'Unset the apiKeyHelper setting.' : 'zy /logout'}
           </Text>
           <Text color="warning">
             · Trying to use {apiKeySource}?{' '}
