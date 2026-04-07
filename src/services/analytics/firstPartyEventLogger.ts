@@ -18,7 +18,7 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { getCoreUserData } from '../../utils/user.js'
 import { isAnalyticsDisabled } from './config.js'
-import { FirstPartyEventLoggingExporter } from './firstPartyEventLoggingExporter.js'
+import { LocalFileExporter } from './localFileExporter.js'
 import type { GrowthBookUserAttributes } from './growthbook.js'
 import { getDynamicConfig_CACHED_MAY_BE_STALE } from './growthbook.js'
 import { getEventMetadata } from './metadata.js'
@@ -355,18 +355,10 @@ export function initialize1PEventLogging(): void {
 
   const resource = resourceFromAttributes(attributes)
 
-  // Create a new LoggerProvider with the EventLoggingExporter
-  // NOTE: This is kept separate from customer telemetry logs to ensure
-  // internal events don't leak to customer endpoints and vice versa.
-  // We don't register this globally - it's only used for internal event logging.
-  const eventLoggingExporter = new FirstPartyEventLoggingExporter({
-    maxBatchSize: maxExportBatchSize,
-    skipAuth: batchConfig.skipAuth,
-    maxAttempts: batchConfig.maxAttempts,
-    path: batchConfig.path,
-    baseUrl: batchConfig.baseUrl,
-    isKilled: () => isSinkKilled('firstParty'),
-  })
+  // Create a new LoggerProvider with a local file exporter.
+  // Events are written to ~/.zy/telemetry/first_party_events.log
+  // instead of being sent to the remote /api/event_logging/batch endpoint.
+  const eventLoggingExporter = new LocalFileExporter()
   firstPartyEventLoggerProvider = new LoggerProvider({
     resource,
     processors: [

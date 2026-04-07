@@ -1,19 +1,23 @@
-import axios from 'axios'
 import { createHash } from 'crypto'
+import { appendFileSync, mkdirSync } from 'fs'
+import { join } from 'path'
 import memoize from 'lodash-es/memoize.js'
 import { getOrCreateUserID } from '../../utils/config.js'
-import { logError } from '../../utils/log.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { getStaticPricingForModel } from '../../utils/model/modelCapabilities.js'
-import { isAnalyticsDisabled } from './config.js'
 import { getEventMetadata } from './metadata.js'
 
-const DATADOG_LOGS_ENDPOINT =
-  'https://http-intake.logs.us5.datadoghq.com/api/v2/logs'
-const DATADOG_CLIENT_TOKEN = 'pubbbf48e6d78dae54bceaa4acf463299bf'
+// All events that were previously sent to Datadog are now written to a local
+// file for local debugging and auditing.
+const TELEMETRY_LOG_DIR = join(
+  process.env.HOME || process.env.USERPROFILE || '~',
+  '.zy',
+  'telemetry',
+)
+const TELEMETRY_LOG_FILE = join(TELEMETRY_LOG_DIR, 'events.log')
+
 const DEFAULT_FLUSH_INTERVAL_MS = 15000
 const MAX_BATCH_SIZE = 100
-const NETWORK_TIMEOUT_MS = 5000
 
 const DATADOG_ALLOWED_EVENTS = new Set([
   'chrome_bridge_connection_succeeded',
@@ -98,22 +102,18 @@ let logBatch: DatadogLog[] = []
 let flushTimer: NodeJS.Timeout | null = null
 let datadogInitialized: boolean | null = null
 
-async function flushLogs(): Promise<void> {
+function flushLogs(): void {
   if (logBatch.length === 0) return
 
-  const logsToSend = logBatch
+  const logsToWrite = logBatch
   logBatch = []
 
   try {
-    await axios.post(DATADOG_LOGS_ENDPOINT, logsToSend, {
-      headers: {
-        'Content-Type': 'application/json',
-        'DD-API-KEY': DATADOG_CLIENT_TOKEN,
-      },
-      timeout: NETWORK_TIMEOUT_MS,
-    })
-  } catch (error) {
-    logError(error)
+    mkdirSync(TELEMETRY_LOG_DIR, { recursive: true })
+    const line = logsToWrite.map(entry => JSON.stringify(entry)).join('\n')
+    appendFileSync(TELEMETRY_LOG_FILE, line + '\n', 'utf8')
+  } catch {
+    // If we can't write to the local file, silently drop the events.
   }
 }
 
@@ -122,21 +122,16 @@ function scheduleFlush(): void {
 
   flushTimer = setTimeout(() => {
     flushTimer = null
-    void flushLogs()
+    flushLogs()
   }, getFlushIntervalMs()).unref()
 }
 
 export const initializeDatadog = memoize(async (): Promise<boolean> => {
-  if (isAnalyticsDisabled()) {
-    datadogInitialized = false
-    return false
-  }
-
   try {
+    mkdirSync(TELEMETRY_LOG_DIR, { recursive: true })
     datadogInitialized = true
     return true
-  } catch (error) {
-    logError(error)
+  } catch {
     datadogInitialized = false
     return false
   }
@@ -147,12 +142,12 @@ export const initializeDatadog = memoize(async (): Promise<boolean> => {
  * Called from gracefulShutdown() before process.exit() since
  * forceExit() prevents the beforeExit handler from firing.
  */
-export async function shutdownDatadog(): Promise<void> {
+export function shutdownDatadog(): void {
   if (flushTimer) {
     clearTimeout(flushTimer)
     flushTimer = null
   }
-  await flushLogs()
+  flushLogs()
 }
 
 // NOTE: use via src/services/analytics/index.ts > logEvent
@@ -160,10 +155,6 @@ export async function trackDatadogEvent(
   eventName: string,
   properties: { [key: string]: boolean | number | undefined },
 ): Promise<void> {
-  if (process.env.NODE_ENV !== 'production') {
-    return
-  }
-
   // Don't send events for 3P providers (Bedrock, Vertex, Foundry)
   if (getAPIProvider() !== 'anthropic') {
     return
@@ -268,12 +259,12 @@ export async function trackDatadogEvent(
         clearTimeout(flushTimer)
         flushTimer = null
       }
-      void flushLogs()
+      flushLogs()
     } else {
       scheduleFlush()
     }
-  } catch (error) {
-    logError(error)
+  } catch {
+    // Silently ignore — local file write failures are non-critical.
   }
 }
 
