@@ -1,0 +1,75 @@
+// Content for the zy-api bundled skill.
+// Each .md file is inlined as a string at build time via Bun's text loader.
+
+import csharpZyApi from './zy-api/csharp/zy-api.md'
+import curlExamples from './zy-api/curl/examples.md'
+import goZyApi from './zy-api/go/zy-api.md'
+import javaZyApi from './zy-api/java/zy-api.md'
+import phpZyApi from './zy-api/php/zy-api.md'
+import pythonAgentSdkPatterns from './zy-api/python/agent-sdk/patterns.md'
+import pythonAgentSdkReadme from './zy-api/python/agent-sdk/README.md'
+import pythonZyApiBatches from './zy-api/python/zy-api/batches.md'
+import pythonZyApiFilesApi from './zy-api/python/zy-api/files-api.md'
+import pythonZyApiReadme from './zy-api/python/zy-api/README.md'
+import pythonZyApiStreaming from './zy-api/python/zy-api/streaming.md'
+import pythonZyApiToolUse from './zy-api/python/zy-api/tool-use.md'
+import rubyZyApi from './zy-api/ruby/zy-api.md'
+import skillPrompt from './zy-api/SKILL.md'
+import sharedErrorCodes from './zy-api/shared/error-codes.md'
+import sharedLiveSources from './zy-api/shared/live-sources.md'
+import sharedModels from './zy-api/shared/models.md'
+import sharedPromptCaching from './zy-api/shared/prompt-caching.md'
+import sharedToolUseConcepts from './zy-api/shared/tool-use-concepts.md'
+import typescriptAgentSdkPatterns from './zy-api/typescript/agent-sdk/patterns.md'
+import typescriptAgentSdkReadme from './zy-api/typescript/agent-sdk/README.md'
+import typescriptZyApiBatches from './zy-api/typescript/zy-api/batches.md'
+import typescriptZyApiFilesApi from './zy-api/typescript/zy-api/files-api.md'
+import typescriptZyApiReadme from './zy-api/typescript/zy-api/README.md'
+import typescriptZyApiStreaming from './zy-api/typescript/zy-api/streaming.md'
+import typescriptZyApiToolUse from './zy-api/typescript/zy-api/tool-use.md'
+
+// @[MODEL LAUNCH]: Update the model IDs/names below. These are substituted into {{VAR}}
+// placeholders in the .md files at runtime before the skill prompt is sent.
+// After updating these constants, manually update the two files that still hardcode models:
+//   - zy-api/SKILL.md (Current Models pricing table)
+//   - zy-api/shared/models.md (full model catalog with legacy versions and alias mappings)
+export const SKILL_MODEL_VARS = {
+  OPUS_ID: 'qwen3.6-plus',
+  OPUS_NAME: 'qwen3.6-plus',
+  SONNET_ID: 'qwen3.6-plus',
+  SONNET_NAME: 'qwen3.6-plus',
+  HAIKU_ID: 'qwen3.6-plus',
+  HAIKU_NAME: 'qwen3.6-plus',
+  // Previous Sonnet ID — used in "do not append date suffixes" example in SKILL.md.
+  PREV_SONNET_ID: 'qwen3.6-plus',
+} satisfies Record<string, string>
+
+export const SKILL_PROMPT: string = skillPrompt
+
+export const SKILL_FILES: Record<string, string> = {
+  'csharp/zy-api.md': csharpZyApi,
+  'curl/examples.md': curlExamples,
+  'go/zy-api.md': goZyApi,
+  'java/zy-api.md': javaZyApi,
+  'php/zy-api.md': phpZyApi,
+  'python/agent-sdk/README.md': pythonAgentSdkReadme,
+  'python/agent-sdk/patterns.md': pythonAgentSdkPatterns,
+  'python/zy-api/README.md': pythonZyApiReadme,
+  'python/zy-api/batches.md': pythonZyApiBatches,
+  'python/zy-api/files-api.md': pythonZyApiFilesApi,
+  'python/zy-api/streaming.md': pythonZyApiStreaming,
+  'python/zy-api/tool-use.md': pythonZyApiToolUse,
+  'ruby/zy-api.md': rubyZyApi,
+  'shared/error-codes.md': sharedErrorCodes,
+  'shared/live-sources.md': sharedLiveSources,
+  'shared/models.md': sharedModels,
+  'shared/prompt-caching.md': sharedPromptCaching,
+  'shared/tool-use-concepts.md': sharedToolUseConcepts,
+  'typescript/agent-sdk/README.md': typescriptAgentSdkReadme,
+  'typescript/agent-sdk/patterns.md': typescriptAgentSdkPatterns,
+  'typescript/zy-api/README.md': typescriptZyApiReadme,
+  'typescript/zy-api/batches.md': typescriptZyApiBatches,
+  'typescript/zy-api/files-api.md': typescriptZyApiFilesApi,
+  'typescript/zy-api/streaming.md': typescriptZyApiStreaming,
+  'typescript/zy-api/tool-use.md': typescriptZyApiToolUse,
+}

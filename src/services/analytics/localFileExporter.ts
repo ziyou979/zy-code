@@ -1,0 +1,69 @@
+import { ExportResultCode, type ExportResult } from '@opentelemetry/core'
+import type {
+  LogRecordExporter,
+  ReadableLogRecord,
+} from '@opentelemetry/sdk-logs'
+import { appendFileSync, mkdirSync } from 'fs'
+import { join } from 'path'
+
+/**
+ * Local-only exporter that writes all 1P events to a local file
+ * instead of sending them to the remote endpoint.
+ */
+export class LocalFileExporter implements LogRecordExporter {
+  private readonly logFile: string
+  private isShutdown = false
+
+  constructor() {
+    const logDir = join(
+      process.env.HOME || process.env.USERPROFILE || '~',
+      '.zy',
+      'telemetry',
+    )
+    this.logFile = join(logDir, 'first_party_events.log')
+    mkdirSync(logDir, { recursive: true })
+  }
+
+  export(
+    logs: ReadableLogRecord[],
+    resultCallback: (result: ExportResult) => void,
+  ): void {
+    if (this.isShutdown) {
+      resultCallback({
+        code: ExportResultCode.FAILED,
+        error: new Error('Exporter has been shutdown'),
+      })
+      return
+    }
+
+    try {
+      for (const log of logs) {
+        const entry = {
+          timestamp: log.hrTime
+            ? new Date(
+                log.hrTime[0] * 1000 + log.hrTime[1] / 1000000,
+              ).toISOString()
+            : new Date().toISOString(),
+          scope: log.instrumentationScope?.name,
+          body: log.body,
+          attributes: log.attributes,
+        }
+        appendFileSync(this.logFile, JSON.stringify(entry) + '\n', 'utf8')
+      }
+      resultCallback({ code: ExportResultCode.SUCCESS })
+    } catch {
+      resultCallback({
+        code: ExportResultCode.FAILED,
+        error: new Error('Failed to write to local file'),
+      })
+    }
+  }
+
+  async shutdown(): Promise<void> {
+    this.isShutdown = true
+  }
+
+  async forceFlush(): Promise<void> {
+    // No-op for file-based exporter
+  }
+}
