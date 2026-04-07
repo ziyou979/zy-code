@@ -2,75 +2,72 @@ import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { Box, Text } from '../../ink.js';
 import { env } from '../../utils/env.js';
-export type ClawdPose = 'default' | 'arms-up' // both arms raised (used during jump)
-| 'look-left' // both pupils shifted left
-| 'look-right'; // both pupils shifted right
+
+export type ClawdPose =
+  | 'default'
+  | 'soaring'     // wing tips raised
+  | 'tilt-left'
+  | 'tilt-right';
 
 type Props = {
   pose?: ClawdPose;
 };
 
-// Standard-terminal pose fragments. Each row is split into segments so we can
-// vary only the parts that change (eyes, arms) while keeping the body/bg spans
-// stable. All poses end up 9 cols wide.
+// Wing shape — 9 cols wide, 3 rows.
+// ▀ = wing upper half, █ = body (full block, clearly visible)
+// ▄ = wing lower half
 //
-// arms-up: the row-2 arm shapes (▝▜ / ▛▘) move to row 1 as their
-// bottom-heavy mirrors (▗▟ / ▙▖) — same silhouette, one row higher.
-//
-// look-* use top-quadrant eye chars (▙/▟) so both eyes change from the
-// default (▛/▜, bottom pupils) — otherwise only one eye would appear to move.
+//  Visual:  ▀▀▀█▀▀▀  ← wings spread, █ body center (full block)
+//           ▄▄███▄▄  ← wing body fill + solid body column
+//             ▄ ▄     ← feather tips
 type Segments = {
-  /** row 1 left (no bg): optional raised arm + side */
   r1L: string;
-  /** row 1 eyes (with bg): left-eye, forehead, right-eye */
   r1E: string;
-  /** row 1 right (no bg): side + optional raised arm */
   r1R: string;
-  /** row 2 left (no bg): arm + body curve */
   r2L: string;
-  /** row 2 right (no bg): body curve + arm */
   r2R: string;
 };
 const POSES: Record<ClawdPose, Segments> = {
+  // 3L + 3E + 3R = 9
   default: {
-    r1L: ' ▐',
-    r1E: '▛███▜',
-    r1R: '▌',
-    r2L: '▝▜',
-    r2R: '▛▘'
+    r1L: ' ▀▀',
+    r1E: '█▀▀',
+    r1R: '▀▀ ',
+    // 2L + 3E + 2R = 7 (r2E overlays on "███" base → total 9)
+    r2L: '▄▄',
+    r2R: '▄▄',
   },
-  'look-left': {
-    r1L: ' ▐',
-    r1E: '▟███▟',
-    r1R: '▌',
-    r2L: '▝▜',
-    r2R: '▛▘'
+  soaring: {
+    r1L: '▗▀',
+    r1E: '█▀▀',
+    r1R: '▀▖',
+    r2L: '▄',
+    r2R: '▄',
   },
-  'look-right': {
-    r1L: ' ▐',
-    r1E: '▙███▙',
-    r1R: '▌',
-    r2L: '▝▜',
-    r2R: '▛▘'
+  'tilt-left': {
+    r1L: ' ▀▀',
+    r1E: '█▟▀',
+    r1R: '▀▀ ',
+    r2L: '▄▄',
+    r2R: '▄▄',
   },
-  'arms-up': {
-    r1L: '▗▟',
-    r1E: '▛███▜',
-    r1R: '▙▖',
-    r2L: ' ▜',
-    r2R: '▛ '
-  }
+  'tilt-right': {
+    r1L: ' ▀▀',
+    r1E: '█▙▀',
+    r1R: '▀▀ ',
+    r2L: '▄▄',
+    r2R: '▄▄',
+  },
 };
 
-// Apple Terminal uses a bg-fill trick (see below), so only eye poses make
-// sense. Arm poses fall back to default.
 const APPLE_EYES: Record<ClawdPose, string> = {
   default: ' ▗   ▖ ',
-  'look-left': ' ▘   ▘ ',
-  'look-right': ' ▝   ▝ ',
-  'arms-up': ' ▗   ▖ '
+  soaring: ' ▘   ▝ ',
+  'tilt-left': ' ▘   ▘ ',
+  'tilt-right': ' ▝   ▝ ',
 };
-export function Clawd(t0) {
+
+export function Clawd(t0: Props | undefined) {
   const $ = _c(26);
   let t1;
   if ($[0] !== t0) {
@@ -140,7 +137,7 @@ export function Clawd(t0) {
   }
   let t8;
   if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = <Text color="clawd_body" backgroundColor="clawd_background">█████</Text>;
+    t8 = <Text color="clawd_body" backgroundColor="clawd_background">█ █</Text>;
     $[16] = t8;
   } else {
     t8 = $[16];
@@ -164,7 +161,7 @@ export function Clawd(t0) {
   }
   let t11;
   if ($[22] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = <Text color="clawd_body">{"  "}▘▘ ▝▝{"  "}</Text>;
+    t11 = <Text color="clawd_body">{"   "}▄ ▄{"   "}</Text>;
     $[22] = t11;
   } else {
     t11 = $[22];
@@ -180,7 +177,8 @@ export function Clawd(t0) {
   }
   return t12;
 }
-function AppleTerminalClawd(t0) {
+
+function AppleTerminalClawd(t0: { pose: ClawdPose }) {
   const $ = _c(10);
   const {
     pose
@@ -220,7 +218,7 @@ function AppleTerminalClawd(t0) {
   let t7;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
     t6 = <Text backgroundColor="clawd_body">{" ".repeat(7)}</Text>;
-    t7 = <Text color="clawd_body">▘▘ ▝▝</Text>;
+    t7 = <Text color="clawd_body">▄ ▄</Text>;
     $[6] = t6;
     $[7] = t7;
   } else {

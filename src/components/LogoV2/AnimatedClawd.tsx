@@ -21,22 +21,22 @@ function hold(pose: ClawdPose, offset: number, frames: number): Frame[] {
 
 // Offset semantics: marginTop in a fixed-height-3 container. 0 = normal,
 // 1 = crouched. Container height stays 3 so the layout never shifts; during
-// a crouch (offset=1) Clawd's feet row dips below the container and gets
+// a crouch (offset=1) the wing's bottom row dips below the container and gets
 // clipped — reads as "ducking below the frame" before springing back up.
 
-// Click animation: crouch, then spring up with both arms raised. Twice.
+// Click animation: crouch, then spring up with wing soaring. Twice.
 const JUMP_WAVE: readonly Frame[] = [...hold('default', 1, 2),
 // crouch
-...hold('arms-up', 0, 3),
+...hold('soaring', 0, 3),
 // spring!
 ...hold('default', 0, 1), ...hold('default', 1, 2),
 // crouch again
-...hold('arms-up', 0, 3),
+...hold('soaring', 0, 3),
 // spring!
 ...hold('default', 0, 1)];
 
-// Click animation: glance right, then left, then back.
-const LOOK_AROUND: readonly Frame[] = [...hold('look-right', 0, 5), ...hold('look-left', 0, 5), ...hold('default', 0, 1)];
+// Click animation: tilt right, then left, then back.
+const LOOK_AROUND: readonly Frame[] = [...hold('tilt-right', 0, 5), ...hold('tilt-left', 0, 5), ...hold('default', 0, 1)];
 const CLICK_ANIMATIONS: readonly (readonly Frame[])[] = [JUMP_WAVE, LOOK_AROUND];
 const IDLE: Frame = {
   pose: 'default',
@@ -47,10 +47,10 @@ const incrementFrame = (i: number) => i + 1;
 const CLAWD_HEIGHT = 3;
 
 /**
- * Clawd with click-triggered animations (crouch-jump with arms up, or
- * look-around). Container height is fixed at CLAWD_HEIGHT — same footprint
+ * Wing with click-triggered animations (crouch-soar with wing tips up, or
+ * tilt-around). Container height is fixed at CLAWD_HEIGHT — same footprint
  * as a bare `<Clawd />` — so the surrounding layout never shifts. During a
- * crouch only the feet row clips (see comment above). Click only fires when
+ * crouch only the bottom row clips (see comment above). Click only fires when
  * mouse tracking is enabled (i.e. inside `<AlternateScreen>` / fullscreen);
  * elsewhere this renders and behaves identically to plain `<Clawd />`.
  */
