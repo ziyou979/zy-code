@@ -146,7 +146,7 @@ function isErrnoException(e: unknown): e is NodeJS.ErrnoException {
 // ─── Auth & endpoint ─────────────────────────────────────────
 
 /**
- * Check if user is authenticated with first-party OAuth (required for team memory sync).
+ * Check if user is authenticated with ZY OAuth (required for team memory sync).
  */
 function isUsingOAuth(): boolean {
   if (getAPIProvider() !== 'anthropic' || !isAnthropicBaseUrl()) {
@@ -757,7 +757,7 @@ async function writeRemoteEntriesToLocal(
 // ─── Public API ──────────────────────────────────────────────
 
 /**
- * Check if team memory sync is available (requires first-party OAuth).
+ * Check if team memory sync is available (requires ZY OAuth).
  */
 export function isTeamMemorySyncAvailable(): boolean {
   return isUsingOAuth()

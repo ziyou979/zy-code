@@ -7,7 +7,7 @@ import { appendFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
 /**
- * Local-only exporter that writes all 1P events to a local file
+ * Local-only exporter that writes all events to a local file
  * instead of sending them to the remote endpoint.
  */
 export class LocalFileExporter implements LogRecordExporter {
@@ -20,7 +20,7 @@ export class LocalFileExporter implements LogRecordExporter {
       '.zy',
       'telemetry',
     )
-    this.logFile = join(logDir, 'first_party_events.log')
+    this.logFile = join(logDir, 'zy_events.log')
     mkdirSync(logDir, { recursive: true })
   }
 

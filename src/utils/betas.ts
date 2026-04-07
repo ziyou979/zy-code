@@ -86,7 +86,7 @@ export function filterAllowedSdkBetas(
   return allowed.length > 0 ? allowed : undefined
 }
 
-// Generally, foundry supports all 1P features;
+// Generally, foundry supports all direct API features;
 // however out of an abundance of caution, we do not enable any which are behind an experiment
 
 export function modelSupportsISP(model: string): boolean {
@@ -144,10 +144,10 @@ export function modelSupportsAutoMode(model: string): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     // Check settings-based auto_mode capability
     if (modelHasCapability(model, 'auto_mode')) return true
-    // External: firstParty-only at launch (PI probes not wired for
+    // External: direct API-only at launch (PI probes not wired for
     // Bedrock/Vertex/Foundry yet). Checked before allowModels so the GB
     // override can't enable auto mode on unsupported providers.
-    if (process.env.USER_TYPE !== 'ant' && getAPIProvider() !== 'anthropic') {
+    if (process.env.USER_TYPE !== 'zy-super' && getAPIProvider() !== 'anthropic') {
       return false
     }
     // GrowthBook override: tengu_auto_mode_config.allowModels force-enables
@@ -163,10 +163,10 @@ export function modelSupportsAutoMode(model: string): boolean {
     ) {
       return true
     }
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       return true
     }
-    // External allowlist (firstParty already checked above).
+    // External allowlist (direct API already checked above).
     return model.toLowerCase().includes('qwen3.6-plus')
   }
   return false
@@ -198,9 +198,9 @@ export function shouldIncludeExperimentalBetas(): boolean {
 }
 
 /**
- * Global-scope prompt caching is firstParty only. Foundry is excluded because
+ * Global-scope prompt caching is direct API only. Foundry is excluded because
  * GrowthBook never bucketed Foundry users into the rollout experiment — the
- * treatment data is firstParty-only.
+ * treatment data is direct API-only.
  */
 export function shouldUseGlobalCacheScope(): boolean {
   return (
@@ -218,7 +218,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   if (!isHaiku) {
     betaHeaders.push(ZY_CODE_)
     if (
-      process.env.USER_TYPE === 'ant' &&
+      process.env.USER_TYPE === 'zy-super' &&
       process.env.ZY_CODE_ENTRYPOINT === 'cli'
     ) {
       if (CLI_INTERNAL_BETA_HEADER) {
@@ -266,7 +266,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // into), unset defers to GB.
   if (
     SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER &&
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     includeExperimentalBetas &&
     !isEnvDefinedFalsy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) &&
     (isEnvTruthy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) ||
@@ -278,7 +278,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // Add context management beta for tool clearing (ant opt-in) or thinking preservation
   const antOptedIntoToolClearing =
     isEnvTruthy(process.env.USE_API_CONTEXT_MANAGEMENT) &&
-    process.env.USER_TYPE === 'ant'
+    process.env.USER_TYPE === 'zy-super'
 
   const thinkingPreservationEnabled = modelSupportsContextManagement(model)
 
@@ -313,7 +313,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // isolate the CC A/B cohort from ~9.2M/week existing v1 senders. Ant-only
   // while the restored JsonToolUseOutputParser soaks.
   if (
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     includeExperimentalBetas &&
     tokenEfficientToolsEnabled
   ) {
@@ -329,7 +329,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
     betaHeaders.push(WEB_SEARCH_BETA_HEADER)
   }
 
-  // Always send the beta header for 1P. The header is a no-op without a scope field.
+  // Always send the beta header for direct API. The header is a no-op without a scope field.
   if (includeExperimentalBetas) {
     betaHeaders.push(PROMPT_CACHING_SCOPE_BETA_HEADER)
   }
@@ -386,7 +386,7 @@ export function getMergedBetas(
       baseBetas.push(ZY_CODE_)
     }
     if (
-      process.env.USER_TYPE === 'ant' &&
+      process.env.USER_TYPE === 'zy-super' &&
       process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
       CLI_INTERNAL_BETA_HEADER &&
       !baseBetas.includes(CLI_INTERNAL_BETA_HEADER)

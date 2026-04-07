@@ -15,7 +15,7 @@
  *   - There is NO force-OFF. This guards against model codename leaks — if
  *     we're not confident we're in an internal repo, we stay undercover.
  *
- * All code paths are gated on process.env.USER_TYPE === 'ant'. Since USER_TYPE is
+ * All code paths are gated on process.env.USER_TYPE === 'zy-super'. Since USER_TYPE is
  * a build-time --define, the bundler constant-folds these checks and dead-code-
  * eliminates the ant-only branches from external builds. In external builds every
  * function in this file reduces to a trivial return.
@@ -26,7 +26,7 @@ import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
 
 export function isUndercover(): boolean {
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return true
     // Auto: active unless we've positively confirmed we're in an allowlisted
     // internal repo. 'external', 'none', and null (check not yet run) all
@@ -37,7 +37,7 @@ export function isUndercover(): boolean {
 }
 
 export function getUndercoverInstructions(): string {
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     return `## UNDERCOVER MODE — CRITICAL
 
 You are operating UNDERCOVER in a PUBLIC/OPEN-SOURCE repository. Your commit
@@ -78,7 +78,7 @@ BAD (never write these):
  * flag on mount.
  */
 export function shouldShowUndercoverAutoNotice(): boolean {
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     // If forced via env, user already knows; don't nag.
     if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return false
     if (!isUndercover()) return false

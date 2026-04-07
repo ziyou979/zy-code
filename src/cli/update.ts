@@ -294,7 +294,7 @@ export async function update() {
     process.stderr.write('  • Run with --debug flag for more details\n')
     const packageName =
       MACRO.PACKAGE_URL ||
-      (process.env.USER_TYPE === 'ant'
+      (process.env.USER_TYPE === 'zy-super'
         ? '@anthropic-ai/zy-cli'
         : '@anthropic-ai/zy-code')
     process.stderr.write(

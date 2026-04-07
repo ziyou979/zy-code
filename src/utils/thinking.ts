@@ -94,7 +94,7 @@ export function modelSupportsThinking(model: string): boolean {
   }
   // Check settings-based capabilities first
   if (modelHasCapability(model, 'thinking')) return true
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     if (resolveAntModel(model.toLowerCase())) {
       return true
     }
@@ -102,7 +102,7 @@ export function modelSupportsThinking(model: string): boolean {
   // IMPORTANT: Do not change thinking support without notifying the model
   // launch DRI and research. This can greatly affect model quality and bashing.
   const provider = getAPIProvider()
-  // 1P and Foundry: all Zy 4+ models (including Haiku 4.5)
+  // Direct API and Foundry: all Zy 4+ models (including Haiku 4.5)
   if (providerHasCapability(provider, 'thinking')) {
     return !model.toLowerCase().includes('zy-3-')
   }
@@ -140,7 +140,7 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
   // enabled for model testing. DO NOT default to false for first party, otherwise
   // we may silently degrade model quality.
 
-  // Default to true for unknown model strings on 1P and Foundry (because Foundry
+  // Default to true for unknown model strings on direct API and Foundry (because Foundry
   // is a proxy). Do not default to true for other 3P as they have different formats
   // for their model strings.
   const provider = getAPIProvider()

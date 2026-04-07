@@ -49,7 +49,7 @@ import { isBetaTracingEnabled } from '../utils/telemetry/betaSessionTracing.js'
 import { getTelemetryAttributes } from '../utils/telemetryAttributes.js'
 import { setShellIfWindows } from '../utils/windowsPaths.js'
 
-// initialize1PEventLogging is dynamically imported to defer OpenTelemetry sdk-logs/resources
+// initializeZyEventLogging is dynamically imported to defer OpenTelemetry sdk-logs/resources
 
 // Track if telemetry has been initialized to prevent double initialization
 let telemetryInitialized = false
@@ -87,20 +87,20 @@ export const init = memoize(async (): Promise<void> => {
     setupGracefulShutdown()
     profileCheckpoint('init_after_graceful_shutdown')
 
-    // Initialize 1P event logging (no security concerns, but deferred to avoid
+    // Initialize ZY event logging (no security concerns, but deferred to avoid
     // loading OpenTelemetry sdk-logs at startup). growthbook.js is already in
-    // the module cache by this point (firstPartyEventLogger imports it), so the
+    // the module cache by this point (zyEventLogger imports it), so the
     // second dynamic import adds no load cost.
     void Promise.all([
-      import('../services/analytics/firstPartyEventLogger.js'),
+      import('../services/analytics/zyEventLogger.js'),
       import('../services/analytics/growthbook.js'),
     ]).then(([fp, gb]) => {
-      fp.initialize1PEventLogging()
+      fp.initializeZyEventLogging()
       // Rebuild the logger provider if tengu_1p_event_batch_config changes
       // mid-session. Change detection (isEqual) is inside the handler so
       // unchanged refreshes are no-ops.
       gb.onGrowthBookRefresh(() => {
-        void fp.reinitialize1PEventLoggingIfConfigChanged()
+        void fp.reinitializeZyEventLoggingIfConfigChanged()
       })
     })
     profileCheckpoint('init_after_1p_event_logging')

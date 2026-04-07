@@ -2,7 +2,7 @@
 /**
  * Ensure that any model codenames introduced here are also added to
  * scripts/excluded-strings.txt to avoid leaking them. Wrap any codename string
- * literals with process.env.USER_TYPE === 'ant' for Bun to remove the codenames
+ * literals with process.env.USER_TYPE === 'zy-super' for Bun to remove the codenames
  * during dead code elimination
  */
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
@@ -174,7 +174,7 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
   }
 
   // Ants default to defaultModel from flag config, or Opus 1M if not configured
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     return (
       getAntModelOverrideConfig()?.defaultModel ??
       getDefaultOpusModel() + '[1m]'
@@ -191,7 +191,7 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
     return getDefaultOpusModel() + (isOpus1mMergeEnabled() ? '[1m]' : '')
   }
 
-  // PAYG (1P and 3P), Enterprise, Team Standard, and Pro get Sonnet as default
+  // PAYG, Enterprise, Team Standard, and Pro get Sonnet as default
   return getDefaultSonnetModel()
 }
 
@@ -215,7 +215,7 @@ export function canonicalNameToShort(name: ModelName): ModelShortName {
 }
 
 /**
- * Maps a full model string to a shorter canonical version that's unified across 1P and 3P providers.
+ * Maps a full model string to a shorter canonical version that's unified across providers.
  * For example, 'zy-3-5-haiku-20241022' and 'us.anthropic.zy-3-5-haiku-20241022-v1:0'
  * would both be mapped to 'zy-3-5-haiku'.
  * @param fullModelName The full model name (e.g., 'zy-3-5-haiku-20241022')
@@ -308,7 +308,7 @@ export function renderModelName(model: ModelName): string {
   if (publicName) {
     return publicName
   }
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     const resolved = parseUserSpecifiedModel(model)
     const antModel = resolveAntModel(model)
     if (antModel) {
@@ -415,7 +415,7 @@ export function resolveSkillModelOverride(
 
 export function modelDisplayString(model: ModelSetting): string {
   if (model === null) {
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       return `Default for Ants (${renderDefaultModelSetting(getDefaultMainLoopModelSetting())})`
     } else if (isZyAISubscriber()) {
       return `Default (${getZyAiUserDefaultModelDescription()})`

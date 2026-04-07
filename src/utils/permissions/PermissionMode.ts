@@ -98,7 +98,7 @@ export function isExternalPermissionMode(
   mode: PermissionMode,
 ): mode is ExternalPermissionMode {
   // External users can't have auto, so always true for them
-  if (process.env.USER_TYPE !== 'ant') {
+  if (process.env.USER_TYPE !== 'zy-super') {
     return true
   }
   return mode !== 'auto' && mode !== 'bubble'

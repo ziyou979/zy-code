@@ -749,7 +749,7 @@ export function logAPISuccessAndDuration({
         .join('\n') || undefined
 
     // Thinking output - Ant-only (build-time gated)
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       thinkingOutput =
         newMessages
           .flatMap(m =>

@@ -49,7 +49,7 @@ export type AttributionTexts = {
  * - Remote mode: returns session URL for attribution
  */
 export function getAttributionTexts(): AttributionTexts {
-  if (process.env.USER_TYPE === 'ant' && isUndercover()) {
+  if (process.env.USER_TYPE === 'zy-super' && isUndercover()) {
     return { commit: '', pr: '' }
   }
 
@@ -296,7 +296,7 @@ async function getTranscriptStats(): Promise<{
 export async function getEnhancedPRAttribution(
   getAppState: () => AppState,
 ): Promise<string> {
-  if (process.env.USER_TYPE === 'ant' && isUndercover()) {
+  if (process.env.USER_TYPE === 'zy-super' && isUndercover()) {
     return ''
   }
 

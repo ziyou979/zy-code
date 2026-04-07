@@ -99,7 +99,7 @@ export function initializeWarningHandler(): void {
         occurrence_count: count + 1,
         classname:
           warning.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        ...(process.env.USER_TYPE === 'ant' && {
+        ...(process.env.USER_TYPE === 'zy-super' && {
           message:
             warning.message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }),

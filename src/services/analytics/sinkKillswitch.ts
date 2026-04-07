@@ -11,7 +11,7 @@ export type SinkName = 'datadog' | 'anthropic'
  * A value of true for a key stops all dispatch to that sink.
  * Default {} (nothing killed). Fail-open: missing/malformed config = sink stays on.
  *
- * NOTE: Must NOT be called from inside is1PEventLoggingEnabled() -
+ * NOTE: Must NOT be called from inside isZyEventLoggingEnabled() -
  * growthbook.ts:isGrowthBookEnabled() calls that, so a lookup here would recurse.
  * Call at per-event dispatch sites instead.
  */

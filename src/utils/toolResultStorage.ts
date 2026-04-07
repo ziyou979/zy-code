@@ -576,7 +576,7 @@ function collectCandidatesFromMessage(message: Message): ToolResultCandidate[] {
  * Extract candidate tool_result blocks grouped by API-level user message.
  *
  * normalizeMessagesForAPI merges consecutive user messages into one
- * (Bedrock compat; 1P does the same server-side), so parallel tool
+ * (Bedrock compat; direct API does the same server-side), so parallel tool
  * results that arrive as N separate user messages in our state become
  * ONE user message on the wire. The budget must group the same way or
  * it would see N under-budget messages instead of one over-budget

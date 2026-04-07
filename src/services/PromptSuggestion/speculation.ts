@@ -276,7 +276,7 @@ function createSpeculationFeedbackMessage(
   timeSavedMs: number,
   sessionTotalMs: number,
 ): Message | null {
-  if (process.env.USER_TYPE !== 'ant') return null
+  if (process.env.USER_TYPE !== 'zy-super') return null
 
   if (messages.length === 0 || timeSavedMs === 0) return null
 
@@ -336,7 +336,7 @@ function resetSpeculationState(setAppState: SetAppState): void {
 
 export function isSpeculationEnabled(): boolean {
   const enabled =
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     (getGlobalConfig().speculationEnabled ?? true)
   logForDebugging(`[Speculation] enabled=${enabled}`)
   return enabled

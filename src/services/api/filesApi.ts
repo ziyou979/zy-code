@@ -593,7 +593,7 @@ export async function uploadSessionFiles(
 }
 
 // ============================================================================
-// List Files Functions (1P/Cloud mode)
+// List Files Functions (Cloud mode)
 // ============================================================================
 
 /**
@@ -606,7 +606,7 @@ export type FileMetadata = {
 }
 
 /**
- * List files created after a given timestamp (1P/Cloud mode).
+ * List files created after a given timestamp (Cloud mode).
  * Uses the public GET /v1/files endpoint with after_created_at query param.
  * Handles pagination via after_id cursor when has_more is true.
  *

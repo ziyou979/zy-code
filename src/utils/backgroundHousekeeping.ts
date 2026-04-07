@@ -82,7 +82,7 @@ export function startBackgroundHousekeeping(): void {
   // For long-running sessions, schedule recurring cleanup every 24 hours.
   // Both cleanup functions use marker files and locks to throttle to once per day
   // and skip immediately if another process holds the lock.
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     const interval = setInterval(() => {
       void cleanupNpmCacheForAnthropicPackages()
       void cleanupOldVersionsThrottled()

@@ -34,7 +34,7 @@ const PROMPT_HEAD = `Fetches full schema definitions for deferred tools so they 
 // <available-deferred-tools> block (pre-gate behavior).
 function getToolLocationHint(): string {
   const deltaEnabled =
-    process.env.USER_TYPE === 'ant' ||
+    process.env.USER_TYPE === 'zy-super' ||
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_glacier_2xr', false)
   return deltaEnabled
     ? 'Deferred tools appear by name in <system-reminder> messages.'

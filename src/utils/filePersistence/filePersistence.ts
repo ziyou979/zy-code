@@ -4,7 +4,7 @@
  * This module provides the main orchestration logic for persisting files
  * at the end of each turn:
  * - BYOC mode: Upload files to Files API and collect file IDs
- * - 1P/Cloud mode: Query Files API listDirectory for file IDs (rclone handles sync)
+ * - Cloud mode: Query Files API listDirectory for file IDs (rclone handles sync)
  */
 
 import { feature } from 'bun:bundle'
@@ -240,9 +240,9 @@ async function executeBYOCPersistence(
 }
 
 /**
- * Execute Cloud (1P) mode persistence.
+ * Execute Cloud mode persistence.
  * TODO: Read file_id from xattr on output files. xattr-based file IDs are
- * currently being added for 1P environments.
+ * currently being added for direct API environments.
  */
 function executeCloudPersistence(): FilesPersistedEventData {
   logDebug('Cloud mode: xattr-based file ID reading not yet implemented')

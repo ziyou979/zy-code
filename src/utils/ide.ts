@@ -845,7 +845,7 @@ export function hasAccessToIDEExtensionDiffFeature(
 }
 
 const EXTENSION_ID =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? 'anthropic.zy-code-internal'
     : 'anthropic.zy-code'
 
@@ -881,7 +881,7 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
     const command = await getVSCodeIDECommand(ideType)
 
     if (command) {
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         return await installFromArtifactory(command)
       }
       let version = await getInstalledVSCodeExtensionVersion(command)

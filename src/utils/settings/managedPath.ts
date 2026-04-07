@@ -8,7 +8,7 @@ import { getPlatform } from '../platform.js'
 export const getManagedFilePath = memoize(function (): string {
   // Allow override for testing/demos (Ant-only, eliminated from external builds)
   if (
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     process.env.ZY_CODE_MANAGED_SETTINGS_PATH
   ) {
     return process.env.ZY_CODE_MANAGED_SETTINGS_PATH

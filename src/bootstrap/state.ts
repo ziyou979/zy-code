@@ -388,7 +388,7 @@ function getInitialState(): State {
     mainThreadAgentType: undefined,
     // Remote mode
     isRemoteMode: false,
-    ...(process.env.USER_TYPE === 'ant'
+    ...(process.env.USER_TYPE === 'zy-super'
       ? {
           replBridgeActive: false,
         }
@@ -1232,7 +1232,7 @@ export function setAllowedSettingSources(sources: SettingSource[]): void {
 }
 
 export function preferThirdPartyAuthentication(): boolean {
-  // IDE extension should behave as 1P for authentication reasons.
+  // IDE extension should behave as direct API for authentication reasons.
   return getIsNonInteractiveSession() && STATE.clientType !== 'zy-vscode'
 }
 
@@ -1567,7 +1567,7 @@ const MAX_SLOW_OPERATIONS = 10
 const SLOW_OPERATION_TTL_MS = 10000
 
 export function addSlowOperation(operation: string, durationMs: number): void {
-  if (process.env.USER_TYPE !== 'ant') return
+  if (process.env.USER_TYPE !== 'zy-super') return
   // Skip tracking for editor sessions (user editing a prompt file in $EDITOR)
   // These are intentionally slow since the user is drafting text
   if (operation.includes('exec') && operation.includes('zy-prompt-')) {

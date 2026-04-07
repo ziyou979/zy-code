@@ -24,7 +24,7 @@ export function isReplModeEnabled(): boolean {
   if (isEnvDefinedFalsy(process.env.ZY_CODE_REPL)) return false
   if (isEnvTruthy(process.env.CLAUDE_REPL_MODE)) return true
   return (
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     process.env.ZY_CODE_ENTRYPOINT === 'cli'
   )
 }

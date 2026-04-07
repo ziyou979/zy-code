@@ -4,7 +4,7 @@ import { hostname, tmpdir } from 'os'
 import { basename, join, resolve } from 'path'
 import { getRemoteSessionUrl } from '../constants/product.js'
 import { shutdownDatadog } from '../services/analytics/datadog.js'
-import { shutdown1PEventLogging } from '../services/analytics/firstPartyEventLogger.js'
+import { shutdownZyEventLogging } from '../services/analytics/zyEventLogger.js'
 import { checkGate_CACHED_OR_BLOCKING } from '../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -340,7 +340,7 @@ export async function runBridgeLoop(
 
   // For ant users, show where session debug logs will land so they can tail them.
   // sessionRunner.ts uses the same base path. File appears once a session spawns.
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     let debugGlob: string
     if (config.debugFile) {
       const ext = config.debugFile.lastIndexOf('.')
@@ -1132,7 +1132,7 @@ export async function runBridgeLoop(
             } else {
               sessionDebugFile = `${config.debugFile}-${safeId}`
             }
-          } else if (config.verbose || process.env.USER_TYPE === 'ant') {
+          } else if (config.verbose || process.env.USER_TYPE === 'zy-super') {
             sessionDebugFile = join(
               tmpdir(),
               'zy',              `bridge-session-${safeId}.log`,
@@ -2063,7 +2063,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
     // (sleep() doesn't unref its timer, but process.exit() follows immediately
     // so the ref'd timer can't delay shutdown.)
     await Promise.race([
-      Promise.all([shutdown1PEventLogging(), shutdownDatadog()]),
+      Promise.all([shutdownZyEventLogging(), shutdownDatadog()]),
       sleep(500, undefined, { unref: true }),
     ]).catch(() => {})
     // biome-ignore lint/suspicious/noConsole: intentional error output
@@ -2197,7 +2197,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
   // contain-provide-api (8211), so CLAUDE_BRIDGE_SESSION_INGRESS_URL must be
   // set explicitly. Ant-only, matching CLAUDE_BRIDGE_BASE_URL.
   const sessionIngressUrl =
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       ? process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       : baseUrl
@@ -2850,7 +2850,7 @@ export async function runBridgeHeadless(
     )
   }
   const sessionIngressUrl =
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       ? process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       : baseUrl

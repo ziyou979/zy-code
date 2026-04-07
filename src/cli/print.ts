@@ -492,7 +492,7 @@ export async function runHeadless(
   },
 ): Promise<void> {
   if (
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER)
   ) {
     process.stderr.write(
@@ -4475,7 +4475,7 @@ async function handleInitializeRequest(
       apiKeySource: accountInfo?.apiKeySource,
       // getAccountInformation() returns undefined under 3P providers, so the
       // other fields are all absent. apiProvider disambiguates "not logged
-      // in" (firstParty + tokenSource:none) from "3P, login not applicable".
+      // in" (direct API + tokenSource:none) from "3P, login not applicable".
       apiProvider: getAPIProvider(),
     },
     pid: process.pid,

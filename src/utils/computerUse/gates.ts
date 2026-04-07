@@ -35,9 +35,9 @@ function readConfig(): ChicagoConfig {
 
 // Max/Pro only for external rollout. Ant bypass so dogfooding continues
 // regardless of subscription tier — not all ants are max/pro, and per
-// CLAUDE.md:281, USER_TYPE !== 'ant' branches get zero antfooding.
+// CLAUDE.md:281, USER_TYPE !== 'zy-super' branches get zero antfooding.
 function hasRequiredSubscription(): boolean {
-  if (process.env.USER_TYPE === 'ant') return true
+  if (process.env.USER_TYPE === 'zy-super') return true
   const tier = getSubscriptionType()
   return tier === 'max' || tier === 'pro'
 }
@@ -48,7 +48,7 @@ export function getChicagoEnabled(): boolean {
   // laptop-setup.sh wires into ~/.zshrc — its presence is the cheap
   // proxy for "has monorepo access". Override: ALLOW_ANT_COMPUTER_USE_MCP=1.
   if (
-    process.env.USER_TYPE === 'ant' &&
+    process.env.USER_TYPE === 'zy-super' &&
     process.env.MONOREPO_ROOT_DIR &&
     !isEnvTruthy(process.env.ALLOW_ANT_COMPUTER_USE_MCP)
   ) {

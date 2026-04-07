@@ -75,7 +75,7 @@ function applyModelOverrides(ms: ModelStrings): ModelStrings {
 
 /**
  * Resolve an overridden model ID (e.g. a Bedrock ARN) back to its canonical
- * first-party model ID. If the input doesn't match any current override value,
+ * direct API model ID. If the input doesn't match any current override value,
  * it is returned unchanged. Safe to call during module init (no-ops if settings
  * aren't loaded yet).
  */

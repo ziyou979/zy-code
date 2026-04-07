@@ -61,7 +61,7 @@ export function isAdvisorEnabled(): boolean {
   if (isEnvTruthy(process.env.ZY_CODE_DISABLE_ADVISOR_TOOL)) {
     return false
   }
-  // The advisor beta header is first-party only (Bedrock/Vertex 400 on it).
+  // The advisor beta header is direct API only (Bedrock/Vertex 400 on it).
   if (!shouldIncludeExperimentalBetas()) {
     return false
   }
@@ -91,7 +91,7 @@ export function modelSupportsAdvisor(model: string): boolean {
   return (
     m.includes('opus-4-6') ||
     m.includes('sonnet-4-6') ||
-    process.env.USER_TYPE === 'ant'
+    process.env.USER_TYPE === 'zy-super'
   )
 }
 
@@ -101,7 +101,7 @@ export function isValidAdvisorModel(model: string): boolean {
   return (
     m.includes('opus-4-6') ||
     m.includes('sonnet-4-6') ||
-    process.env.USER_TYPE === 'ant'
+    process.env.USER_TYPE === 'zy-super'
   )
 }
 

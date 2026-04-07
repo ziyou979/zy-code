@@ -1393,7 +1393,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
   }
 
   // For ants in zy-cli-internal, set up dev panes (watch + start)
-  const isAnt = process.env.USER_TYPE === 'ant'
+  const isAnt = process.env.USER_TYPE === 'zy-super'
   const isZyCliInternal = repoName === 'zy-cli-internal'
   const shouldSetupDevPanes = isAnt && isZyCliInternal && !sessionExists
 

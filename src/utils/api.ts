@@ -306,7 +306,7 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
  *    - System prompt prefix (cacheScope='org')
  *    - Everything else concatenated (cacheScope='org')
  *
- * 2. Global cache mode with boundary marker (1P only, boundary found):
+ * 2. Global cache mode with boundary marker (direct API only, boundary found):
  *    Returns up to 4 blocks:
  *    - Attribution header (cacheScope=null)
  *    - System prompt prefix (cacheScope=null)

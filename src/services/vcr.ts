@@ -25,7 +25,7 @@ function shouldUseVCR(): boolean {
     return true
   }
 
-  if (process.env.USER_TYPE === 'ant' && isEnvTruthy(process.env.FORCE_VCR)) {
+  if (process.env.USER_TYPE === 'zy-super' && isEnvTruthy(process.env.FORCE_VCR)) {
     return true
   }
 

@@ -42,7 +42,7 @@ export type ModelOption = {
 }
 
 export function getDefaultOptionForUser(fastMode = false): ModelOption {
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     const currentModel = renderDefaultModelSetting(
       getDefaultMainLoopModelSetting(),
     )
@@ -266,7 +266,7 @@ function getOpusPlanOption(): ModelOption {
 }
 
 // @[MODEL LAUNCH]: Update the model picker lists below to include/reorder options for the new model.
-// Each user tier (ant, Max/Team Premium, Pro/Team Standard/Enterprise, PAYG 1P, PAYG 3P) has its own list.
+// Each user tier (ant, Max/Team Premium, Pro/Team Standard/Enterprise, direct API, cloud provider API) has its own list.
 function getModelOptionsBase(fastMode = false): ModelOption[] {
   // If user has defined custom models in settings, use those exclusively
   const settings = getSettings_DEPRECATED() || {}
@@ -279,7 +279,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
     return [getDefaultOptionForUser(fastMode), ...customModelOptions]
   }
 
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     // Build options from antModels config
     const antModelOptions: ModelOption[] = getAntModels().map(m => ({
       value: m.alias,
@@ -333,7 +333,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
     return standardOptions
   }
 
-  // PAYG 1P API: Default (Sonnet) + Sonnet 1M + Opus 4.6 + Opus 1M + Haiku
+  // Direct API (PAYG): Default (Sonnet) + Sonnet 1M + Opus 4.6 + Opus 1M + Haiku
   if (providerHasCapability(getAPIProvider(), 'prompt_caching')) {
     const payg1POptions = [getDefaultOptionForUser(fastMode)]
     if (checkSonnet1mAccess()) {

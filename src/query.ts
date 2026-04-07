@@ -924,7 +924,7 @@ async function* queryLoop(
             // Thinking signatures are model-bound: replaying a protected-thinking
             // block (e.g. capybara) to an unprotected fallback (e.g. opus) 400s.
             // Strip before retry so the fallback model gets clean history.
-            if (process.env.USER_TYPE === 'ant') {
+            if (process.env.USER_TYPE === 'zy-super') {
               messagesForQuery = stripSignatureBlocks(messagesForQuery)
             }
 

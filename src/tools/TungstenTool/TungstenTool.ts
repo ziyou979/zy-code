@@ -1,5 +1,5 @@
 // Stub for src/tools/TungstenTool/TungstenTool.ts
-// Internal Anthropic-only tool — never active in external builds (USER_TYPE !== 'ant')
+// Internal Anthropic-only tool — never active in external builds (USER_TYPE !== 'zy-super')
 
 import { z } from 'zod'
 import type { Tool } from '../../Tool.js'

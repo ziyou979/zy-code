@@ -18,7 +18,7 @@ export type McpInstructionsDelta = {
 /**
  * Client-authored instruction block to announce when a server connects,
  * in addition to (or instead of) the server's own `InitializeResult.instructions`.
- * Lets first-party servers (e.g., claude-in-chrome) carry client-side
+ * Lets ZY servers (e.g., claude-in-chrome) carry client-side
  * context the server itself doesn't know about.
  */
 export type ClientSideInstruction = {
@@ -38,7 +38,7 @@ export function isMcpInstructionsDeltaEnabled(): boolean {
   if (isEnvTruthy(process.env.ZY_CODE_MCP_INSTR_DELTA)) return true
   if (isEnvDefinedFalsy(process.env.ZY_CODE_MCP_INSTR_DELTA)) return false
   return (
-    process.env.USER_TYPE === 'ant' ||
+    process.env.USER_TYPE === 'zy-super' ||
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_basalt_3kr', false)
   )
 }

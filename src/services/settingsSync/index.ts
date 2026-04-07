@@ -202,7 +202,7 @@ async function doDownloadUserSettings(
 }
 
 /**
- * Check if user is authenticated with first-party OAuth.
+ * Check if user is authenticated with ZY OAuth.
  * Required for settings sync in both CLI (upload) and CCR (download) modes.
  *
  * Only checks user:inference (not user:profile) — CCR's file-descriptor token

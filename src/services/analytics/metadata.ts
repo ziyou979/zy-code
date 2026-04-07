@@ -3,7 +3,7 @@
  * Shared event metadata enrichment for analytics systems
  *
  * This module provides a single source of truth for collecting and formatting
- * event metadata across all analytics systems (Datadog, 1P).
+ * event metadata across all analytics systems (Datadog, direct API).
  */
 
 import { extname } from 'path'
@@ -116,7 +116,7 @@ export function isAnalyticsToolDetailsLoggingEnabled(
 }
 
 /**
- * Built-in first-party MCP servers whose names are fixed reserved strings,
+ * Built-in direct API MCP servers whose names are fixed reserved strings,
  * not user-configured — so logging them is not PII. Checked in addition to
  * isAnalyticsToolDetailsLoggingEnabled's transport/URL gates, which a stdio
  * built-in would otherwise fail.
@@ -744,9 +744,9 @@ export async function getEventMetadata(
 
 
 /**
- * Core event metadata for 1P event logging (snake_case format).
+ * Core event metadata for direct API event logging (snake_case format).
  */
-export type FirstPartyEventLoggingCoreMetadata = {
+export type ZyEventLoggingCoreMetadata = {
   session_id: string
   model: string
   user_type: string
@@ -766,9 +766,9 @@ export type FirstPartyEventLoggingCoreMetadata = {
 }
 
 /**
- * Complete event logging metadata format for 1P events.
+ * Complete event logging metadata format for direct API events.
  */
-export type FirstPartyEventLoggingMetadata = {
+export type ZyEventLoggingMetadata = {
   env: EnvironmentMetadata
   process?: string
   // auth is a top-level field on ZyCodeInternalEvent (proto PublicApiAuth).
@@ -776,7 +776,7 @@ export type FirstPartyEventLoggingMetadata = {
   auth?: PublicApiAuth
   // core fields correspond to the top level of ZyCodeInternalEvent.
   // They get directly exported to their individual columns in the BigQuery tables
-  core: FirstPartyEventLoggingCoreMetadata
+  core: ZyEventLoggingCoreMetadata
   // additional fields are populated in the additional_metadata field of the
   // ZyCodeInternalEvent proto. Includes but is not limited to information
   // that differs by event type.
@@ -784,20 +784,20 @@ export type FirstPartyEventLoggingMetadata = {
 }
 
 /**
- * Convert metadata to 1P event logging format (snake_case fields).
+ * Convert metadata to direct API event logging format (snake_case fields).
  *
  * The /api/event_logging/batch endpoint expects snake_case field names
  * for environment and core metadata.
  *
  * @param metadata - Core event metadata
  * @param additionalMetadata - Additional metadata to include
- * @returns Metadata formatted for 1P event logging
+ * @returns Metadata formatted for direct API event logging
  */
-export function to1PEventFormat(
+export function toZyEventFormat(
   metadata: EventMetadata,
   userMetadata: CoreUserData,
   additionalMetadata: Record<string, unknown> = {},
-): FirstPartyEventLoggingMetadata {
+): ZyEventLoggingMetadata {
   const {
     envContext,
     processMetrics,
@@ -891,7 +891,7 @@ export function to1PEventFormat(
   }
 
   // Convert core fields to snake_case
-  const core: FirstPartyEventLoggingCoreMetadata = {
+  const core: ZyEventLoggingCoreMetadata = {
     session_id: coreFields.sessionId,
     model: coreFields.model,
     user_type: coreFields.userType,
@@ -935,7 +935,7 @@ export function to1PEventFormat(
   // Map userMetadata to output fields.
   // Based on src/utils/user.ts getUser(), but with fields present in other
   // parts of ZyCodeInternalEvent deduplicated.
-  // Convert camelCase GitHubActionsMetadata to snake_case for 1P API
+  // Convert camelCase GitHubActionsMetadata to snake_case for direct API
   // Note: github_actions_metadata is placed inside env (EnvironmentMetadata)
   // rather than at the top level of ZyCodeInternalEvent
   if (userMetadata.githubActionsMetadata) {

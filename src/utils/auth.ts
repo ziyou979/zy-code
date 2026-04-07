@@ -93,7 +93,7 @@ function isManagedOAuthContext(): boolean {
   )
 }
 
-/** Whether we are supporting direct 1P auth. */
+/** Whether we are supporting direct API auth. */
 // this code is closely related to getAuthTokenSource
 export function isZyAISubscriber(): boolean {
   // 跳过登录检查，始终返回 false 以避免 OAuth 检查
@@ -1460,8 +1460,8 @@ export function hasProfileScope(): boolean {
   )
 }
 
-export function is1PApiCustomer(): boolean {
-  // 1P API customers are users who are NOT:
+export function isDirectApiClient(): boolean {
+  // Direct API customers are users who are NOT:
   // 1. ZY subscribers (Max, Pro, Enterprise, Team)
   // 2. Vertex AI users
   // 3. AWS Bedrock users
@@ -1739,7 +1739,7 @@ export type UserAccountInfo = {
 
 export function getAccountInformation() {
   const apiProvider = getAPIProvider()
-  // Only provide account info for first-party API or OpenAI-compatible providers
+  // Only provide account info for direct API or OpenAI-compatible providers
   if (apiProvider !== 'anthropic' && !isOpenAIFormatProvider(apiProvider)) {
     return undefined
   }

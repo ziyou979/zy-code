@@ -102,25 +102,25 @@ function getBatchConfig(): BatchConfig {
 }
 
 // Module-local state for event logging (not exposed globally)
-let firstPartyEventLogger: ReturnType<typeof logs.getLogger> | null = null
-let firstPartyEventLoggerProvider: LoggerProvider | null = null
+let zyEventLogger: ReturnType<typeof logs.getLogger> | null = null
+let zyEventLoggerProvider: LoggerProvider | null = null
 // Last batch config used to construct the provider — used by
-// reinitialize1PEventLoggingIfConfigChanged to decide whether a rebuild is
+// reinitializeZyEventLoggingIfConfigChanged to decide whether a rebuild is
 // needed when GrowthBook refreshes.
 let lastBatchConfig: BatchConfig | null = null
 /**
- * Flush and shutdown the 1P event logger.
+ * Flush and shutdown the ZY event logger.
  * This should be called as the final step before process exit to ensure
  * all events (including late ones from API responses) are exported.
  */
-export async function shutdown1PEventLogging(): Promise<void> {
-  if (!firstPartyEventLoggerProvider) {
+export async function shutdownZyEventLogging(): Promise<void> {
+  if (!zyEventLoggerProvider) {
     return
   }
   try {
-    await firstPartyEventLoggerProvider.shutdown()
-    if (process.env.USER_TYPE === 'ant') {
-      logForDebugging('1P event logging: final shutdown complete')
+    await zyEventLoggerProvider.shutdown()
+    if (process.env.USER_TYPE === 'zy-super') {
+      logForDebugging('ZY event logging: final shutdown complete')
     }
   } catch {
     // Ignore shutdown errors
@@ -128,7 +128,7 @@ export async function shutdown1PEventLogging(): Promise<void> {
 }
 
 /**
- * Check if 1P event logging is enabled.
+ * Check if ZY event logging is enabled.
  * Respects the same opt-outs as other analytics sinks:
  * - Test environment
  * - Third-party cloud providers (Bedrock/Vertex)
@@ -138,7 +138,7 @@ export async function shutdown1PEventLogging(): Promise<void> {
  * Note: Unlike BigQuery metrics, event logging does NOT check organization-level
  * metrics opt-out via API. It follows the same pattern as Statsig event logging.
  */
-export function is1PEventLoggingEnabled(): boolean {
+export function isZyEventLoggingEnabled(): boolean {
   // Respect standard analytics opt-outs
   return !isAnalyticsDisabled()
 }
@@ -153,8 +153,8 @@ export function is1PEventLoggingEnabled(): boolean {
  * @param eventName - Name of the event (e.g., 'tengu_api_query')
  * @param metadata - Additional metadata for the event (intentionally no strings, to avoid accidentally logging code/filepaths)
  */
-async function logEventTo1PAsync(
-  firstPartyEventLogger: Logger,
+async function logEventToZyAsync(
+  zyEventLogger: Logger,
   eventName: string,
   metadata: Record<string, number | boolean | undefined> = {},
 ): Promise<void> {
@@ -184,14 +184,14 @@ async function logEventTo1PAsync(
     }
 
     // Debug logging when debug mode is enabled
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
-        `[ANT-ONLY] 1P event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
+        `[ANT-ONLY] ZY event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
       )
     }
 
     // Emit log record
-    firstPartyEventLogger.emit({
+    zyEventLogger.emit({
       body: eventName,
       attributes,
     })
@@ -199,7 +199,7 @@ async function logEventTo1PAsync(
     if (process.env.NODE_ENV === 'development') {
       throw e
     }
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logError(e as Error)
     }
     // swallow
@@ -213,20 +213,20 @@ async function logEventTo1PAsync(
  * @param eventName - Name of the event (e.g., 'tengu_api_query')
  * @param metadata - Additional metadata for the event (intentionally no strings, to avoid accidentally logging code/filepaths)
  */
-export function logEventTo1P(
+export function logEventToZy(
   eventName: string,
   metadata: Record<string, number | boolean | undefined> = {},
 ): void {
-  if (!is1PEventLoggingEnabled()) {
+  if (!isZyEventLoggingEnabled()) {
     return
   }
 
-  if (!firstPartyEventLogger || isSinkKilled('firstParty')) {
+  if (!zyEventLogger || isSinkKilled('zyEvent')) {
     return
   }
 
   // Fire and forget - don't block on metadata enrichment
-  void logEventTo1PAsync(firstPartyEventLogger, eventName, metadata)
+  void logEventToZyAsync(zyEventLogger, eventName, metadata)
 }
 
 /**
@@ -247,19 +247,19 @@ function getEnvironmentForGrowthBook(): string {
 }
 
 /**
- * Log a GrowthBook experiment assignment event to 1P.
+ * Log a GrowthBook experiment assignment event to ZY.
  * Events are batched and exported to /api/event_logging/batch
  *
  * @param data - GrowthBook experiment assignment data
  */
-export function logGrowthBookExperimentTo1P(
+export function logGrowthBookExperimentToZy(
   data: GrowthBookExperimentData,
 ): void {
-  if (!is1PEventLoggingEnabled()) {
+  if (!isZyEventLoggingEnabled()) {
     return
   }
 
-  if (!firstPartyEventLogger || isSinkKilled('firstParty')) {
+  if (!zyEventLogger || isSinkKilled('zyEvent')) {
     return
   }
 
@@ -285,13 +285,13 @@ export function logGrowthBookExperimentTo1P(
     environment: getEnvironmentForGrowthBook(),
   }
 
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     logForDebugging(
-      `[ANT-ONLY] 1P GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
+      `[ANT-ONLY] ZY GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
     )
   }
 
-  firstPartyEventLogger.emit({
+  zyEventLogger.emit({
     body: 'growthbook_experiment',
     attributes,
   })
@@ -302,20 +302,20 @@ const DEFAULT_MAX_EXPORT_BATCH_SIZE = 200
 const DEFAULT_MAX_QUEUE_SIZE = 8192
 
 /**
- * Initialize 1P event logging infrastructure.
+ * Initialize ZY event logging infrastructure.
  * This creates a separate LoggerProvider for internal event logging,
  * independent of customer OTLP telemetry.
  *
  * This uses its own minimal resource configuration with just the attributes
  * we need for internal analytics (service name, version, platform info).
  */
-export function initialize1PEventLogging(): void {
+export function initializeZyEventLogging(): void {
   profileCheckpoint('1p_event_logging_start')
-  const enabled = is1PEventLoggingEnabled()
+  const enabled = isZyEventLoggingEnabled()
 
   if (!enabled) {
-    if (process.env.USER_TYPE === 'ant') {
-      logForDebugging('1P event logging not enabled')
+    if (process.env.USER_TYPE === 'zy-super') {
+      logForDebugging('ZY event logging not enabled')
     }
     return
   }
@@ -338,7 +338,7 @@ export function initialize1PEventLogging(): void {
 
   const maxQueueSize = batchConfig.maxQueueSize || DEFAULT_MAX_QUEUE_SIZE
 
-  // Build our own resource for 1P event logging with minimal attributes
+  // Build our own resource for ZY event logging with minimal attributes
   const platform = getPlatform()
   const attributes: Record<string, string> = {
     [ATTR_SERVICE_NAME]: 'zy-code',
@@ -356,10 +356,10 @@ export function initialize1PEventLogging(): void {
   const resource = resourceFromAttributes(attributes)
 
   // Create a new LoggerProvider with a local file exporter.
-  // Events are written to ~/.zy/telemetry/first_party_events.log
+  // Events are written to ~/.zy/telemetry/zy_events.log
   // instead of being sent to the remote /api/event_logging/batch endpoint.
   const eventLoggingExporter = new LocalFileExporter()
-  firstPartyEventLoggerProvider = new LoggerProvider({
+  zyEventLoggerProvider = new LoggerProvider({
     resource,
     processors: [
       new BatchLogRecordProcessor(eventLoggingExporter, {
@@ -374,20 +374,20 @@ export function initialize1PEventLogging(): void {
   // IMPORTANT: We must get the logger from our local provider, not logs.getLogger()
   // because logs.getLogger() returns a logger from the global provider, which is
   // separate and used for customer telemetry.
-  firstPartyEventLogger = firstPartyEventLoggerProvider.getLogger(
+  zyEventLogger = zyEventLoggerProvider.getLogger(
     'com.anthropic.zy_code.events',
     MACRO.VERSION,
   )
 }
 
 /**
- * Rebuild the 1P event logging pipeline if the batch config changed.
+ * Rebuild the ZY event logging pipeline if the batch config changed.
  * Register this with onGrowthBookRefresh so long-running sessions pick up
  * changes to batch size, delay, endpoint, etc.
  *
  * Event-loss safety:
- * 1. Null the logger first — concurrent logEventTo1P() calls hit the
- *    !firstPartyEventLogger guard and bail during the swap window. This drops
+ * 1. Null the logger first — concurrent logEventToZy() calls hit the
+ *    !zyEventLogger guard and bail during the swap window. This drops
  *    a handful of events but prevents emitting to a draining provider.
  * 2. forceFlush() drains the old BatchLogRecordProcessor buffer to the
  *    exporter. Export failures go to disk at getCurrentBatchFilePath() which
@@ -396,8 +396,8 @@ export function initialize1PEventLogging(): void {
  * 3. Swap to new provider/logger; old provider shutdown runs in background
  *    (buffer already drained, just cleanup).
  */
-export async function reinitialize1PEventLoggingIfConfigChanged(): Promise<void> {
-  if (!is1PEventLoggingEnabled() || !firstPartyEventLoggerProvider) {
+export async function reinitializeZyEventLoggingIfConfigChanged(): Promise<void> {
+  if (!isZyEventLoggingEnabled() || !zyEventLoggerProvider) {
     return
   }
 
@@ -407,15 +407,15 @@ export async function reinitialize1PEventLoggingIfConfigChanged(): Promise<void>
     return
   }
 
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     logForDebugging(
-      `1P event logging: ${BATCH_CONFIG_NAME} changed, reinitializing`,
+      `ZY event logging: ${BATCH_CONFIG_NAME} changed, reinitializing`,
     )
   }
 
-  const oldProvider = firstPartyEventLoggerProvider
-  const oldLogger = firstPartyEventLogger
-  firstPartyEventLogger = null
+  const oldProvider = zyEventLoggerProvider
+  const oldLogger = zyEventLogger
+  zyEventLogger = null
 
   try {
     await oldProvider.forceFlush()
@@ -423,16 +423,16 @@ export async function reinitialize1PEventLoggingIfConfigChanged(): Promise<void>
     // Export failures are already on disk; new exporter will retry them.
   }
 
-  firstPartyEventLoggerProvider = null
+  zyEventLoggerProvider = null
   try {
-    initialize1PEventLogging()
+    initializeZyEventLogging()
   } catch (e) {
     // Restore so the next GrowthBook refresh can retry. oldProvider was
     // only forceFlush()'d, not shut down — it's still functional. Without
-    // this, both stay null and the !firstPartyEventLoggerProvider gate at
+    // this, both stay null and the !zyEventLoggerProvider gate at
     // the top makes recovery impossible.
-    firstPartyEventLoggerProvider = oldProvider
-    firstPartyEventLogger = oldLogger
+    zyEventLoggerProvider = oldProvider
+    zyEventLogger = oldLogger
     logError(e)
     return
   }

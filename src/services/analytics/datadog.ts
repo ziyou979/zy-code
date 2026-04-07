@@ -192,7 +192,7 @@ export async function trackDatadogEvent(
     }
 
     // Normalize model names for cardinality reduction (external users only)
-    if (process.env.USER_TYPE !== 'ant' && typeof allData.model === 'string') {
+    if (process.env.USER_TYPE !== 'zy-super' && typeof allData.model === 'string') {
       const rawModel = allData.model.replace(/\[1m]$/i, '')
       allData.model = getStaticPricingForModel(rawModel) ? rawModel : 'other'
     }

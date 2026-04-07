@@ -49,7 +49,7 @@ export function applySettingsChange(
 
     // Ant-only: re-strip overly broad Bash allow rules after settings sync
     if (
-      process.env.USER_TYPE === 'ant' &&
+      process.env.USER_TYPE === 'zy-super' &&
       process.env.ZY_CODE_ENTRYPOINT !== 'local-agent'
     ) {
       const overlyBroad = findOverlyBroadBashPermissions(updatedRules, [])

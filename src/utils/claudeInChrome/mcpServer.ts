@@ -7,7 +7,7 @@ import {
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { format } from 'util'
 import { shutdownDatadog } from '../../services/analytics/datadog.js'
-import { shutdown1PEventLogging } from '../../services/analytics/firstPartyEventLogger.js'
+import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -50,7 +50,7 @@ function isPermissionMode(raw: string): raw is PermissionMode {
  */
 function getChromeBridgeUrl(): string | undefined {
   const bridgeEnabled =
-    process.env.USER_TYPE === 'ant' ||
+    process.env.USER_TYPE === 'zy-super' ||
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_copper_bridge', false)
 
   if (!bridgeEnabled) {
@@ -167,7 +167,7 @@ export function createChromeContext(
     // version — 0.3.0 sees an unknown field (allowed in spread), 0.4.0 sees a
     // structurally-matching one. Once 0.4.0 is published, this can switch to
     // the package's exported types and the dep can be bumped.
-    ...(process.env.USER_TYPE === 'ant' && {
+    ...(process.env.USER_TYPE === 'zy-super' && {
       callAnthropicMessages: async (req: {
         model: string
         max_tokens: number
@@ -261,7 +261,7 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
       return
     }
     exiting = true
-    await shutdown1PEventLogging()
+    await shutdownZyEventLogging()
     await shutdownDatadog()
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0)

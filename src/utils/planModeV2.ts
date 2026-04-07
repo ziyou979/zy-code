@@ -49,7 +49,7 @@ export function getPlanModeV2ExploreAgentCount(): number {
  */
 export function isPlanModeInterviewPhaseEnabled(): boolean {
   // Always on for ants
-  if (process.env.USER_TYPE === 'ant') return true
+  if (process.env.USER_TYPE === 'zy-super') return true
 
   const env = process.env.ZY_CODE_PLAN_MODE_INTERVIEW_PHASE
   if (isEnvTruthy(env)) return true

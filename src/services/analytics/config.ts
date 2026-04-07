@@ -2,7 +2,7 @@
  * Shared analytics configuration
  *
  * Common logic for determining when analytics should be disabled
- * across all analytics systems (Datadog, 1P)
+ * across all analytics systems (Datadog, direct API)
  */
 
 import { isEnvTruthy } from '../../utils/envUtils.js'

@@ -21,9 +21,9 @@ import {
   getUserForGrowthBook,
 } from '../../utils/user.js'
 import {
-  is1PEventLoggingEnabled,
-  logGrowthBookExperimentTo1P,
-} from './firstPartyEventLogger.js'
+  isZyEventLoggingEnabled,
+  logGrowthBookExperimentToZy,
+} from './zyEventLogger.js'
 
 /**
  * User attributes sent to GrowthBook for targeting.
@@ -95,7 +95,7 @@ let reinitializingPromise: Promise<unknown> | null = null
 
 // Listeners notified when GrowthBook feature values refresh (initial init or
 // periodic refresh). Use for systems that bake feature values into long-lived
-// objects at construction time (e.g. firstPartyEventLogger reads
+// objects at construction time (e.g. zyEventLogger reads
 // tengu_1p_event_batch_config once and builds a LoggerProvider with it) and
 // need to rebuild when config changes. Per-call readers like
 // getEventSamplingConfig / isSinkKilled don't need this — they're already
@@ -170,7 +170,7 @@ let envOverridesParsed = false
 function getEnvOverrides(): Record<string, unknown> | null {
   if (!envOverridesParsed) {
     envOverridesParsed = true
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       const raw = process.env.CLAUDE_INTERNAL_FC_OVERRIDES
       if (raw) {
         try {
@@ -209,7 +209,7 @@ export function hasGrowthBookEnvOverride(feature: string): boolean {
  * until the next saveGlobalConfig() invalidates it.
  */
 function getConfigOverrides(): Record<string, unknown> | undefined {
-  if (process.env.USER_TYPE !== 'ant') return undefined
+  if (process.env.USER_TYPE !== 'zy-super') return undefined
   try {
     return getGlobalConfig().growthBookOverrides
   } catch {
@@ -246,7 +246,7 @@ export function setGrowthBookConfigOverride(
   feature: string,
   value: unknown,
 ): void {
-  if (process.env.USER_TYPE !== 'ant') return
+  if (process.env.USER_TYPE !== 'zy-super') return
   try {
     saveGlobalConfig(c => {
       const current = c.growthBookOverrides ?? {}
@@ -271,7 +271,7 @@ export function setGrowthBookConfigOverride(
 }
 
 export function clearGrowthBookConfigOverrides(): void {
-  if (process.env.USER_TYPE !== 'ant') return
+  if (process.env.USER_TYPE !== 'zy-super') return
   try {
     saveGlobalConfig(c => {
       if (
@@ -302,7 +302,7 @@ function logExposureForFeature(feature: string): void {
   const expData = experimentDataByFeature.get(feature)
   if (expData) {
     loggedExposures.add(feature)
-    logGrowthBookExperimentTo1P({
+    logGrowthBookExperimentToZy({
       experimentId: expData.experimentId,
       variationId: expData.variationId,
       userAttributes: getUserAttributes(),
@@ -420,8 +420,8 @@ function syncRemoteEvalToDisk(): void {
  * Check if GrowthBook operations should be enabled
  */
 function isGrowthBookEnabled(): boolean {
-  // GrowthBook depends on 1P event logging.
-  return is1PEventLoggingEnabled()
+  // GrowthBook depends on direct API event logging.
+  return isZyEventLoggingEnabled()
 }
 
 /**
@@ -457,7 +457,7 @@ function getUserAttributes(): GrowthBookUserAttributes {
   // For ants, always try to include email from OAuth config even if ANTHROPIC_API_KEY is set.
   // This ensures GrowthBook targeting by email works regardless of auth method.
   let email = user.email
-  if (!email && process.env.USER_TYPE === 'ant') {
+  if (!email && process.env.USER_TYPE === 'zy-super') {
     email = getGlobalConfig().oauthAccount?.emailAddress
   }
 
@@ -495,13 +495,13 @@ const getGrowthBookClient = memoize(
 
     const attributes = getUserAttributes()
     const clientKey = getGrowthBookClientKey()
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
         `GrowthBook: Creating client with clientKey=${clientKey}, attributes: ${jsonStringify(attributes)}`,
       )
     }
     const baseUrl =
-      process.env.USER_TYPE === 'ant'
+      process.env.USER_TYPE === 'zy-super'
         ? process.env.ZY_CODE_GB_BASE_URL || 'https://api.anthropic.com/'
         : 'https://api.anthropic.com/'
 
@@ -535,7 +535,7 @@ const getGrowthBookClient = memoize(
         ? {}
         : { apiHostRequestHeaders: authHeaders.headers }),
       // Debug logging for Ants
-      ...(process.env.USER_TYPE === 'ant'
+      ...(process.env.USER_TYPE === 'zy-super'
         ? {
             log: (msg: string, ctx: Record<string, unknown>) => {
               logForDebugging(`GrowthBook: ${msg} ${jsonStringify(ctx)}`)
@@ -556,7 +556,7 @@ const getGrowthBookClient = memoize(
       .then(async result => {
         // Guard: if this client was replaced by a newer one, skip processing
         if (client !== thisClient) {
-          if (process.env.USER_TYPE === 'ant') {
+          if (process.env.USER_TYPE === 'zy-super') {
             logForDebugging(
               'GrowthBook: Skipping init callback for replaced client',
             )
@@ -564,7 +564,7 @@ const getGrowthBookClient = memoize(
           return
         }
 
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           logForDebugging(
             `GrowthBook initialized successfully, source: ${result.source}, success: ${result.success}`,
           )
@@ -590,7 +590,7 @@ const getGrowthBookClient = memoize(
         }
 
         // Log what features were loaded
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           const features = thisClient.getFeatures()
           if (features) {
             const featureKeys = Object.keys(features)
@@ -601,7 +601,7 @@ const getGrowthBookClient = memoize(
         }
       })
       .catch(error => {
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           logError(toError(error))
         }
       })
@@ -637,7 +637,7 @@ export const initializeGrowthBook = memoize(
       if (hasTrust) {
         const currentAuth = getAuthHeaders()
         if (!currentAuth.error) {
-          if (process.env.USER_TYPE === 'ant') {
+          if (process.env.USER_TYPE === 'zy-super') {
             logForDebugging(
               'GrowthBook: Auth became available after client creation, reinitializing',
             )
@@ -704,7 +704,7 @@ async function getFeatureValueInternal<T>(
     logExposureForFeature(feature)
   }
 
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     logForDebugging(
       `GrowthBook: getFeatureValue("${feature}") = ${jsonStringify(result)}`,
     )
@@ -1011,7 +1011,7 @@ export function resetGrowthBook(): void {
 
 // Periodic refresh interval (matches Statsig's 6-hour interval)
 const GROWTHBOOK_REFRESH_INTERVAL_MS =
-  process.env.USER_TYPE !== 'ant'
+  process.env.USER_TYPE !== 'zy-super'
     ? 6 * 60 * 60 * 1000 // 6 hours
     : 20 * 60 * 1000 // 20 min (for ants)
 let refreshInterval: ReturnType<typeof setInterval> | null = null
@@ -1041,7 +1041,7 @@ export async function refreshGrowthBookFeatures(): Promise<void> {
     // (e.g. refreshGrowthBookAfterAuthChange ran), skip processing the
     // stale payload. Mirrors the init-callback guard above.
     if (growthBookClient !== client) {
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         logForDebugging(
           'GrowthBook: Skipping refresh processing for replaced client',
         )
@@ -1057,7 +1057,7 @@ export async function refreshGrowthBookFeatures(): Promise<void> {
     // processRemoteEvalPayload (the guard above only covers refreshFeatures).
     if (growthBookClient !== client) return
 
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging('GrowthBook: Light refresh completed')
     }
 

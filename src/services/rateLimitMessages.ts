@@ -336,7 +336,7 @@ function formatLimitReachedText(
   _model: string,
 ): string {
   // Enhanced messaging for Ant users
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     return `You've hit your ${limit}${resetMessage}. If you have feedback about this limit, post in ${FEEDBACK_CHANNEL_ANT}. You can reset your limits with /reset-limits`
   }
 

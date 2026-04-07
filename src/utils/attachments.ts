@@ -3381,7 +3381,7 @@ async function getTaskReminderAttachments(
   }
 
   // Skip for ant users
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     return []
   }
 
@@ -3535,7 +3535,7 @@ async function getTeammateMailboxAttachments(
   if (!isAgentSwarmsEnabled()) {
     return []
   }
-  if (process.env.USER_TYPE !== 'ant') {
+  if (process.env.USER_TYPE !== 'zy-super') {
     return []
   }
 
@@ -3896,7 +3896,7 @@ async function getVerifyPlanReminderAttachment(
   toolUseContext: ToolUseContext,
 ): Promise<Attachment[]> {
   if (
-    process.env.USER_TYPE !== 'ant' ||
+    process.env.USER_TYPE !== 'zy-super' ||
     !isEnvTruthy(process.env.ZY_CODE_VERIFY_PLAN)
   ) {
     return []

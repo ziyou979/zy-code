@@ -25,7 +25,7 @@ export function getUserAgent(): string {
   const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP
     ? `, client-app/${process.env.CLAUDE_AGENT_SDK_CLIENT_APP}`
     : ''
-  // Turn-/process-scoped workload tag for cron-initiated requests. 1P-only
+  // Turn-/process-scoped workload tag for cron-initiated requests. Direct API-only
   // observability — proxies strip HTTP headers; QoS routing uses cc_workload
   // in the billing-header attribution block instead (see constants/system.ts).
   // getLLMClient (client.ts:98) calls this per-request inside withRetry,

@@ -261,7 +261,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         } else {
           debugFile = `${deps.debugFile}-${safeId}`
         }
-      } else if (deps.verbose || process.env.USER_TYPE === 'ant') {
+      } else if (deps.verbose || process.env.USER_TYPE === 'zy-super') {
         debugFile = join(tmpdir(), 'zy', `bridge-session-${safeId}.log`)
       }
 

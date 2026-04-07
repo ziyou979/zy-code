@@ -9,7 +9,7 @@ const SKILL_NAME = 'thinkback'
 
 function getPluginId(): string {
   const marketplaceName =
-    process.env.USER_TYPE === 'ant'
+    process.env.USER_TYPE === 'zy-super'
       ? INTERNAL_MARKETPLACE_NAME
       : OFFICIAL_MARKETPLACE_NAME
   return `thinkback@${marketplaceName}`

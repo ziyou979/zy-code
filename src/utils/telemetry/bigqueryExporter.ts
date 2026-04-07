@@ -47,7 +47,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     const defaultEndpoint = 'https://api.anthropic.com/api/claude_code/metrics'
 
     if (
-      process.env.USER_TYPE === 'ant' &&
+      process.env.USER_TYPE === 'zy-super' &&
       process.env.ANT_ZY_CODE_METRICS_ENDPOINT
     ) {
       this.endpoint =

@@ -2,14 +2,14 @@
  * Analytics sink implementation
  *
  * This module contains the actual analytics routing logic and should be
- * initialized during app startup. It routes events to Datadog and 1P event
+ * initialized during app startup. It routes events to Datadog and direct API event
  * logging.
  *
  * Usage: Call initializeAnalyticsSink() during app startup to attach the sink.
  */
 
 import { trackDatadogEvent } from './datadog.js'
-import { logEventTo1P, shouldSampleEvent } from './firstPartyEventLogger.js'
+import { logEventToZy, shouldSampleEvent } from './zyEventLogger.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from './growthbook.js'
 import { attachAnalyticsSink, stripProtoFields } from './index.js'
 import { isSinkKilled } from './sinkKillswitch.js'
@@ -62,13 +62,13 @@ function logEventImpl(eventName: string, metadata: LogEventMetadata): void {
 
   if (shouldTrackDatadog()) {
     // Datadog is a general-access backend — strip _PROTO_* keys
-    // (unredacted PII-tagged values meant only for the 1P privileged column).
+    // (unredacted PII-tagged values meant only for the direct API privileged column).
     void trackDatadogEvent(eventName, stripProtoFields(metadataWithSampleRate))
   }
 
-  // 1P receives the full payload including _PROTO_* — the exporter
+  // Direct API receives the full payload including _PROTO_* — the exporter
   // destructures and routes those keys to proto fields itself.
-  logEventTo1P(eventName, metadataWithSampleRate)
+  logEventToZy(eventName, metadataWithSampleRate)
 }
 
 /**

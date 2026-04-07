@@ -275,7 +275,7 @@ export async function countTokensViaHaikuFallback(
   const isVertexWithThinking =
     isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) && containsThinking
   // Otherwise always use Haiku - Haiku 4.5 supports thinking blocks.
-  // WARNING: if you change this to use a non-Haiku model, this request will fail in 1P unless it uses getCLISyspromptPrefix.
+  // WARNING: if you change this to use a non-Haiku model, this request will fail in direct API unless it uses getCLISyspromptPrefix.
   // Note: We don't need Sonnet for tool_reference blocks because we strip them via
   // stripToolSearchFieldsFromMessages() before sending.
   // Use getSmallFastModel() to respect ANTHROPIC_SMALL_FAST_MODEL env var for Bedrock users

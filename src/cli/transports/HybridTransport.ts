@@ -88,7 +88,7 @@ export class HybridTransport extends WebSocketTransport {
       jitterMs: 1000,
       // Optional cap so a persistently-failing server can't pin the drain
       // loop for the lifetime of the process. Undefined = indefinite retry.
-      // replBridge sets this; the 1P transportUtils path does not.
+      // replBridge sets this; the direct API transportUtils path does not.
       maxConsecutiveFailures,
       onBatchDropped: (batchSize, failures) => {
         logForDiagnosticsNoPII(

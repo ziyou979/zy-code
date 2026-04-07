@@ -299,7 +299,7 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
     }
   }
 
-  // Anti-distillation: send fake_tools opt-in for 1P CLI only
+  // Anti-distillation: send fake_tools opt-in for direct API CLI only
   if (
     feature('ANTI_DISTILLATION_CC')
       ? process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
@@ -407,7 +407,7 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
   let userEligible = getPromptCache1hEligible()
   if (userEligible === null) {
     userEligible =
-      process.env.USER_TYPE === 'ant' ||
+      process.env.USER_TYPE === 'zy-super' ||
       (isZyAISubscriber() && !currentLimits.isUsingOverage)
     setPromptCache1hEligible(userEligible)
   }
@@ -455,7 +455,7 @@ function configureEffortParams(
     // Send string effort level as is
     outputConfig.effort = effortValue
     betas.push(EFFORT_BETA_HEADER)
-  } else if (process.env.USER_TYPE === 'ant') {
+  } else if (process.env.USER_TYPE === 'zy-super') {
     // Numeric effort override - ant-only (uses anthropic_internal)
     const existingInternal =
       (extraBodyParams.anthropic_internal as Record<string, unknown>) || {}
@@ -542,7 +542,7 @@ export async function verifyApiKey(
   }
 
   try {
-    // WARNING: if you change this to use a non-Haiku model, this request will fail in 1P unless it uses getCLISyspromptPrefix.
+    // WARNING: if you change this to use a non-Haiku model, this request will fail in direct API unless it uses getCLISyspromptPrefix.
     const model = getSmallFastModel()
     const betas = getModelBetas(model)
     return await returnValue(
@@ -1205,7 +1205,7 @@ async function* queryModel(
   }
 
   // Add tool search beta header if enabled - required for defer_loading to be accepted
-  // Header differs by provider: 1P/Foundry use advanced-tool-use, Vertex/Bedrock use tool-search-tool
+  // Header differs by provider: direct API/Foundry use advanced-tool-use, Vertex/Bedrock use tool-search-tool
   // For Bedrock, this header must go in extraBodyParams, not the betas array
   const toolSearchHeader = useToolSearch ? getToolSearchBetaHeader() : null
   if (toolSearchHeader && getAPIProvider() !== 'bedrock') {
@@ -2036,7 +2036,7 @@ async function* queryModel(
             // Capture research from message_start if available (internal only).
             // Always overwrite with the latest value.
             if (
-              process.env.USER_TYPE === 'ant' &&
+              process.env.USER_TYPE === 'zy-super' &&
               'research' in (part.message as unknown as Record<string, unknown>)
             ) {
               research = (part.message as unknown as Record<string, unknown>)
@@ -2215,7 +2215,7 @@ async function* queryModel(
             }
             // Capture research from content_block_delta if available (internal only).
             // Always overwrite with the latest value.
-            if (process.env.USER_TYPE === 'ant' && 'research' in part) {
+            if (process.env.USER_TYPE === 'zy-super' && 'research' in part) {
               research = (part as { research: unknown }).research
             }
             break
@@ -2254,7 +2254,7 @@ async function* queryModel(
               type: 'assistant',
               uuid: randomUUID(),
               timestamp: new Date().toISOString(),
-              ...(process.env.USER_TYPE === 'ant' &&
+              ...(process.env.USER_TYPE === 'zy-super' &&
                 research !== undefined && { research }),
               ...(advisorModel && { advisorModel }),
             }
@@ -2269,7 +2269,7 @@ async function* queryModel(
             // already-yielded messages since message_delta arrives after
             // content_block_stop.
             if (
-              process.env.USER_TYPE === 'ant' &&
+              process.env.USER_TYPE === 'zy-super' &&
               'research' in (part as unknown as Record<string, unknown>)
             ) {
               research = (part as unknown as Record<string, unknown>).research
@@ -2633,7 +2633,7 @@ async function* queryModel(
         type: 'assistant',
         uuid: randomUUID(),
         timestamp: new Date().toISOString(),
-        ...(process.env.USER_TYPE === 'ant' &&
+        ...(process.env.USER_TYPE === 'zy-super' &&
           research !== undefined && {
             research,
           }),
@@ -2730,7 +2730,7 @@ async function* queryModel(
           type: 'assistant',
           uuid: randomUUID(),
           timestamp: new Date().toISOString(),
-          ...(process.env.USER_TYPE === 'ant' &&
+          ...(process.env.USER_TYPE === 'zy-super' &&
             research !== undefined && { research }),
           ...(advisorModel && { advisorModel }),
         }

@@ -5,7 +5,7 @@
  *
  * DESIGN: This module has NO dependencies to avoid import cycles.
  * Events are queued until attachAnalyticsSink() is called during app initialization.
- * The sink handles routing to Datadog and 1P event logging.
+ * The sink handles routing to Datadog and direct API event logging.
  */
 
 /**
@@ -23,9 +23,9 @@ export type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS = never
  * payload keys. The destination BQ column has privileged access controls,
  * so unredacted values are acceptable — unlike general-access backends.
  *
- * sink.ts strips `_PROTO_*` keys before Datadog fanout; only the 1P
- * exporter (firstPartyEventLoggingExporter) sees them and hoists them to the
- * top-level proto field. A single stripProtoFields call guards all non-1P
+ * sink.ts strips `_PROTO_*` keys before Datadog fanout; only the direct API
+ * exporter (zyEventExporter) sees them and hoists them to the
+ * top-level proto field. A single stripProtoFields call guards all non-direct-API
  * sinks — no per-sink filtering to forget.
  *
  * Usage: `rawName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED`
@@ -36,7 +36,7 @@ export type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED = never
  * Strip `_PROTO_*` keys from a payload destined for general-access storage.
  * Used by:
  *   - sink.ts: before Datadog fanout (never sees PII-tagged values)
- *   - firstPartyEventLoggingExporter: defensive strip of additional_metadata
+ *   - zyEventExporter: defensive strip of additional_metadata
  *     after hoisting known _PROTO_* keys to proto fields — prevents a future
  *     unrecognized _PROTO_foo from silently landing in the BQ JSON blob.
  *
@@ -104,7 +104,7 @@ export function attachAnalyticsSink(newSink: AnalyticsSink): void {
     eventQueue.length = 0
 
     // Log queue size for ants to help debug analytics initialization timing
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       sink.logEvent('analytics_sink_attached', {
         queued_event_count: queuedEvents.length,
       })

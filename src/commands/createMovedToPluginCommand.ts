@@ -41,7 +41,7 @@ export function createMovedToPluginCommand({
       args: string,
       context: ToolUseContext,
     ): Promise<ContentBlockParam[]> {
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         return [
           {
             type: 'text',

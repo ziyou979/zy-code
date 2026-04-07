@@ -30,7 +30,7 @@ const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)
 const STATSIG_SAMPLE_RATE = 0.005
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const STATSIG_LOGGING_SAMPLED =
-  process.env.USER_TYPE === 'ant' || Math.random() < STATSIG_SAMPLE_RATE
+  process.env.USER_TYPE === 'zy-super' || Math.random() < STATSIG_SAMPLE_RATE
 
 // Enable profiling if either detailed mode OR sampled for Statsig
 const SHOULD_PROFILE = DETAILED_PROFILING || STATSIG_LOGGING_SAMPLED

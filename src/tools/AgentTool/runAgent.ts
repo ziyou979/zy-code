@@ -359,7 +359,7 @@ export async function* runAgent({
   }
 
   // Log API calls path for subagents (ant-only)
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     logForDebugging(
       `[Subagent ${agentDefinition.agentType}] API calls: ${getDisplayPath(getDumpPromptsPath(agentId))}`,
     )

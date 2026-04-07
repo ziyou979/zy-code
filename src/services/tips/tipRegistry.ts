@@ -12,7 +12,7 @@ import { color } from '../../components/design-system/color.js'
 import { shouldShowOverageCreditUpsell } from '../../components/LogoV2/OverageCreditUpsell.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { isKairosCronEnabled } from '../../tools/ScheduleCronTool/prompt.js'
-import { is1PApiCustomer } from '../../utils/auth.js'
+import { isDirectApiClient } from '../../utils/auth.js'
 import { countConcurrentSessions } from '../../utils/concurrentSessions.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import {
@@ -109,7 +109,7 @@ const externalTips: Tip[] = [
       `Use Plan Mode to prepare for a complex request before making changes. Press ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} twice to enable.`,
     cooldownSessions: 5,
     isRelevant: async () => {
-      if (process.env.USER_TYPE === 'ant') return false
+      if (process.env.USER_TYPE === 'zy-super') return false
       const config = getGlobalConfig()
       // Show to users who haven't used plan mode recently (7+ days)
       const daysSinceLastUse = config.lastPlanModeUse
@@ -401,7 +401,7 @@ const externalTips: Tip[] = [
   {
     id: 'shift-tab',
     content: async () =>
-      process.env.USER_TYPE === 'ant'
+      process.env.USER_TYPE === 'zy-super'
         ? `Hit ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} to cycle between default mode and auto mode`
         : `Hit ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} to cycle between default mode, auto-accept edit mode, and plan mode`,
     cooldownSessions: 10,
@@ -476,7 +476,7 @@ const externalTips: Tip[] = [
       `Your default model setting is Opus Plan Mode. Press ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} twice to activate Plan Mode and plan with Zy Opus.`,
     cooldownSessions: 2,
     async isRelevant() {
-      if (process.env.USER_TYPE === 'ant') return false
+      if (process.env.USER_TYPE === 'zy-super') return false
       const config = getGlobalConfig()
       const modelSetting = getUserSpecifiedModelSetting()
       const hasOpusPlanMode = modelSetting === 'opusplan'
@@ -526,7 +526,7 @@ const externalTips: Tip[] = [
     },
     cooldownSessions: 3,
     isRelevant: async () => {
-      if (!is1PApiCustomer()) return false
+      if (!isDirectApiClient()) return false
       if (!modelSupportsEffort(getMainLoopModel())) return false
       if (getSettingsForSource('policySettings')?.effortLevel !== undefined) {
         return false
@@ -555,7 +555,7 @@ const externalTips: Tip[] = [
     },
     cooldownSessions: 3,
     isRelevant: async () => {
-      if (!is1PApiCustomer()) return false
+      if (!isDirectApiClient()) return false
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
           'tengu_tern_alloy',
@@ -577,7 +577,7 @@ const externalTips: Tip[] = [
     },
     cooldownSessions: 3,
     isRelevant: async () => {
-      if (!is1PApiCustomer()) return false
+      if (!isDirectApiClient()) return false
       if (!isKairosCronEnabled()) return false
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
@@ -624,7 +624,7 @@ const externalTips: Tip[] = [
     content: async () => 'Use /feedback to help us improve!',
     cooldownSessions: 15,
     async isRelevant() {
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         return false
       }
       const config = getGlobalConfig()
@@ -633,7 +633,7 @@ const externalTips: Tip[] = [
   },
 ]
 const internalOnlyTips: Tip[] =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? [
         {
           id: 'important-zymd',

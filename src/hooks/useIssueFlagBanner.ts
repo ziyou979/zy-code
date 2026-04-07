@@ -93,7 +93,7 @@ export function useIssueFlagBanner(
   messages: Message[],
   submitCount: number,
 ): boolean {
-  if (process.env.USER_TYPE !== 'ant') {
+  if (process.env.USER_TYPE !== 'zy-super') {
     return false
   }
 

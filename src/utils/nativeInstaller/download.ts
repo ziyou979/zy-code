@@ -138,7 +138,7 @@ export async function getLatestVersion(
   }
 
   // Route to appropriate source
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     // Use Artifactory for ant users
     const npmTag = channel === 'stable' ? 'stable' : 'latest'
     return getLatestVersionFromArtifactory(npmTag)
@@ -506,7 +506,7 @@ export async function downloadVersion(
     return 'binary'
   }
 
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     // Use Artifactory for ant users
     await downloadVersionFromArtifactory(version, stagingPath)
     return 'npm'

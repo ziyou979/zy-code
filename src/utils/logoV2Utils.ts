@@ -311,7 +311,7 @@ export function formatModelAndBilling(
  */
 export function getRecentReleaseNotesSync(maxItems: number): string[] {
   // For ants, use bundled changelog
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     const changelog = MACRO.VERSION_CHANGELOG
     if (changelog) {
       const commits = changelog.trim().split('\n').filter(Boolean)

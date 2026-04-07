@@ -7,7 +7,7 @@ import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { homedir } from 'os'
 
 import { shutdownDatadog } from '../../services/analytics/datadog.js'
-import { shutdown1PEventLogging } from '../../services/analytics/firstPartyEventLogger.js'
+import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
 import { enableConfigs } from '../config.js'
 import { logForDebugging } from '../debug.js'
@@ -93,7 +93,7 @@ export async function runComputerUseMcpServer(): Promise<void> {
   const shutdownAndExit = async (): Promise<void> => {
     if (exiting) return
     exiting = true
-    await Promise.all([shutdown1PEventLogging(), shutdownDatadog()])
+    await Promise.all([shutdownZyEventLogging(), shutdownDatadog()])
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0)
   }

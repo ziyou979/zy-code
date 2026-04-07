@@ -51,7 +51,7 @@ function getCachePath(): string {
 }
 
 function isModelCapabilitiesEligible(): boolean {
-  if (process.env.USER_TYPE !== 'ant') return false
+  if (process.env.USER_TYPE !== 'zy-super') return false
   if (!providerHasCapability(getAPIProvider(), 'prompt_caching')) return false
   if (!isAnthropicBaseUrl()) return false
   return true

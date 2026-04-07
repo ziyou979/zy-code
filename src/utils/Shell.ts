@@ -320,7 +320,7 @@ export async function exec(
         GIT_EDITOR: 'true',
         CLAUDECODE: '1',
         ...envOverrides,
-        ...(process.env.USER_TYPE === 'ant'
+        ...(process.env.USER_TYPE === 'zy-super'
           ? {
               ZY_CODE_SESSION_ID: getSessionId(),
             }

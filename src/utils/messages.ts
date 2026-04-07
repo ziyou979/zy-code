@@ -2093,7 +2093,7 @@ export function normalizeMessagesForAPI(
         }
         case 'user': {
           // Merge consecutive user messages because Bedrock doesn't support
-          // multiple user messages in a row; 1P API does and merges them
+          // multiple user messages in a row; direct API does and merges them
           // into a single user turn
 
           // When tool search is NOT enabled, strip all tool_reference blocks from
@@ -2684,7 +2684,7 @@ export function normalizeContentFromAPI(
               toolName: sanitizeToolNameForAnalytics(contentBlock.name),
               inputLen: contentBlock.input.length,
             })
-            if (process.env.USER_TYPE === 'ant') {
+            if (process.env.USER_TYPE === 'zy-super') {
               logForDebugging(
                 `tool input JSON parse fail: ${contentBlock.input.slice(0, 200)}`,
                 { level: 'warn' },

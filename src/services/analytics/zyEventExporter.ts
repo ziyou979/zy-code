@@ -32,7 +32,7 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'
 import { stripProtoFields } from './index.js'
-import { type EventMetadata, to1PEventFormat } from './metadata.js'
+import { type EventMetadata, toZyEventFormat } from './metadata.js'
 
 // Unique ID for this process run - used to isolate failed event files between runs
 const BATCH_UUID = randomUUID()
@@ -46,13 +46,13 @@ function getStorageDir(): string {
 }
 
 // API envelope - event_data is the JSON output from proto toJSON()
-type FirstPartyEventLoggingEvent = {
+type ZyEventLoggingEvent = {
   event_type: 'ZyCodeInternalEvent' | 'GrowthbookExperimentEvent'
   event_data: unknown
 }
 
-type FirstPartyEventLoggingPayload = {
-  events: FirstPartyEventLoggingEvent[]
+type ZyEventLoggingPayload = {
+  events: ZyEventLoggingEvent[]
 }
 
 /**
@@ -70,7 +70,7 @@ type FirstPartyEventLoggingPayload = {
  * - Chunking large event sets into smaller batches
  * - Auth fallback: retries without auth on 401 errors
  */
-export class FirstPartyEventLoggingExporter implements LogRecordExporter {
+export class ZyEventExporter implements LogRecordExporter {
   private readonly endpoint: string
   private readonly timeout: number
   private readonly maxBatchSize: number
@@ -103,8 +103,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       path?: string
       baseUrl?: string
       // Injected killswitch probe. Checked per-POST so that disabling the
-      // firstParty sink also stops backoff retries (not just new emits).
-      // Passed in rather than imported to avoid a cycle with firstPartyEventLogger.ts.
+      // zyEvent sink also stops backoff retries (not just new emits).
+      // Passed in rather than imported to avoid a cycle with zyEventLogger.ts.
       isKilled?: () => boolean
       schedule?: (fn: () => Promise<void>, delayMs: number) => () => void
     } = {},
@@ -154,23 +154,23 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
 
   private async loadEventsFromFile(
     filePath: string,
-  ): Promise<FirstPartyEventLoggingEvent[]> {
+  ): Promise<ZyEventLoggingEvent[]> {
     try {
-      return await readJSONLFile<FirstPartyEventLoggingEvent>(filePath)
+      return await readJSONLFile<ZyEventLoggingEvent>(filePath)
     } catch {
       return []
     }
   }
 
   private async loadEventsFromCurrentBatch(): Promise<
-    FirstPartyEventLoggingEvent[]
+    ZyEventLoggingEvent[]
   > {
     return this.loadEventsFromFile(this.getCurrentBatchFilePath())
   }
 
   private async saveEventsToFile(
     filePath: string,
-    events: FirstPartyEventLoggingEvent[],
+    events: ZyEventLoggingEvent[],
   ): Promise<void> {
     try {
       if (events.length === 0) {
@@ -193,7 +193,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
 
   private async appendEventsToFile(
     filePath: string,
-    events: FirstPartyEventLoggingEvent[],
+    events: ZyEventLoggingEvent[],
   ): Promise<void> {
     if (events.length === 0) return
     try {
@@ -251,24 +251,24 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       return
     }
 
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
-        `1P event logging: retrying ${events.length} events from previous batch`,
+        `ZY event logging: retrying ${events.length} events from previous batch`,
       )
     }
 
     const failedEvents = await this.sendEventsInBatches(events)
     if (failedEvents.length === 0) {
       await this.deleteFile(filePath)
-      if (process.env.USER_TYPE === 'ant') {
-        logForDebugging('1P event logging: previous batch retry succeeded')
+      if (process.env.USER_TYPE === 'zy-super') {
+        logForDebugging('ZY event logging: previous batch retry succeeded')
       }
     } else {
       // Save only the failed events back (not all original events)
       await this.saveEventsToFile(filePath, failedEvents)
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         logForDebugging(
-          `1P event logging: previous batch retry failed, ${failedEvents.length} events remain`,
+          `ZY event logging: previous batch retry failed, ${failedEvents.length} events remain`,
         )
       }
     }
@@ -279,9 +279,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     resultCallback: (result: ExportResult) => void,
   ): Promise<void> {
     if (this.isShutdown) {
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         logForDebugging(
-          '1P event logging export failed: Exporter has been shutdown',
+          'ZY event logging export failed: Exporter has been shutdown',
         )
       }
       resultCallback({
@@ -363,9 +363,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       }
       resultCallback({ code: ExportResultCode.SUCCESS })
     } catch (error) {
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         logForDebugging(
-          `1P event logging export failed: ${errorMessage(error)}`,
+          `ZY event logging export failed: ${errorMessage(error)}`,
         )
       }
       logError(error)
@@ -377,17 +377,17 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
   }
 
   private async sendEventsInBatches(
-    events: FirstPartyEventLoggingEvent[],
-  ): Promise<FirstPartyEventLoggingEvent[]> {
+    events: ZyEventLoggingEvent[],
+  ): Promise<ZyEventLoggingEvent[]> {
     // Chunk events into batches
-    const batches: FirstPartyEventLoggingEvent[][] = []
+    const batches: ZyEventLoggingEvent[][] = []
     for (let i = 0; i < events.length; i += this.maxBatchSize) {
       batches.push(events.slice(i, i + this.maxBatchSize))
     }
 
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
-        `1P event logging: exporting ${events.length} events in ${batches.length} batch(es)`,
+        `ZY event logging: exporting ${events.length} events in ${batches.length} batch(es)`,
       )
     }
 
@@ -395,7 +395,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     // endpoint is down and short-circuit: queue the failed batch plus all
     // remaining unsent batches without POSTing them. The backoff retry will
     // probe again with a single batch next tick.
-    const failedBatchEvents: FirstPartyEventLoggingEvent[] = []
+    const failedBatchEvents: ZyEventLoggingEvent[] = []
     let lastErrorContext: string | undefined
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i]!
@@ -406,10 +406,10 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
         for (let j = i; j < batches.length; j++) {
           failedBatchEvents.push(...batches[j]!)
         }
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           const skipped = batches.length - 1 - i
           logForDebugging(
-            `1P event logging: batch ${i + 1}/${batches.length} failed (${lastErrorContext}); short-circuiting ${skipped} remaining batch(es)`,
+            `ZY event logging: batch ${i + 1}/${batches.length} failed (${lastErrorContext}); short-circuiting ${skipped} remaining batch(es)`,
           )
         }
         break
@@ -428,7 +428,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
   }
 
   private async queueFailedEvents(
-    events: FirstPartyEventLoggingEvent[],
+    events: ZyEventLoggingEvent[],
   ): Promise<void> {
     const filePath = this.getCurrentBatchFilePath()
 
@@ -438,7 +438,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     const context = this.lastExportErrorContext
       ? ` (${this.lastExportErrorContext})`
       : ''
-    const message = `1P event logging: ${events.length} events failed to export${context}`
+    const message = `ZY event logging: ${events.length} events failed to export${context}`
     logError(new Error(message))
   }
 
@@ -454,9 +454,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       this.maxBackoffDelayMs,
     )
 
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
-        `1P event logging: scheduling backoff retry in ${delay}ms (attempt ${this.attempts})`,
+        `ZY event logging: scheduling backoff retry in ${delay}ms (attempt ${this.attempts})`,
       )
     }
 
@@ -475,9 +475,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       if (events.length === 0) break
 
       if (this.attempts >= this.maxAttempts) {
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           logForDebugging(
-            `1P event logging: max attempts (${this.maxAttempts}) reached, dropping ${events.length} events`,
+            `ZY event logging: max attempts (${this.maxAttempts}) reached, dropping ${events.length} events`,
           )
         }
         await this.deleteFile(filePath)
@@ -490,9 +490,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       // Clear file before retry (we have events in memory now)
       await this.deleteFile(filePath)
 
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         logForDebugging(
-          `1P event logging: retrying ${events.length} failed events (attempt ${this.attempts + 1})`,
+          `ZY event logging: retrying ${events.length} failed events (attempt ${this.attempts + 1})`,
         )
       }
 
@@ -510,8 +510,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
 
       // Success - reset backoff and continue loop to drain any newly queued events
       this.resetBackoff()
-      if (process.env.USER_TYPE === 'ant') {
-        logForDebugging('1P event logging: backoff retry succeeded')
+      if (process.env.USER_TYPE === 'zy-super') {
+        logForDebugging('ZY event logging: backoff retry succeeded')
       }
     }
   }
@@ -525,14 +525,14 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
   }
 
   private async sendBatchWithRetry(
-    payload: FirstPartyEventLoggingPayload,
+    payload: ZyEventLoggingPayload,
   ): Promise<void> {
     if (this.isKilled()) {
       // Throw so the caller short-circuits remaining batches and queues
       // everything to disk. Zero network traffic while killed; the backoff
       // timer keeps ticking and will resume POSTs as soon as the GrowthBook
       // cache picks up the cleared flag.
-      throw new Error('firstParty sink killswitch active')
+      throw new Error('zyEvent sink killswitch active')
     }
 
     const baseHeaders: Record<string, string> = {
@@ -546,8 +546,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     // Non-interactive sessions implicitly have workspace trust
     const hasTrust =
       checkHasTrustDialogAccepted() || getIsNonInteractiveSession()
-    if (process.env.USER_TYPE === 'ant' && !hasTrust) {
-      logForDebugging('1P event logging: Trust not accepted')
+    if (process.env.USER_TYPE === 'zy-super' && !hasTrust) {
+      logForDebugging('ZY event logging: Trust not accepted')
     }
 
     // Skip auth when the OAuth token is expired or lacks user:profile
@@ -559,9 +559,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
         shouldSkipAuth = true
       } else if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {
         shouldSkipAuth = true
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           logForDebugging(
-            '1P event logging: OAuth token expired, skipping auth to avoid 401',
+            'ZY event logging: OAuth token expired, skipping auth to avoid 401',
           )
         }
       }
@@ -573,9 +573,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       : getAuthHeaders()
     const useAuth = !authResult.error
 
-    if (!useAuth && process.env.USER_TYPE === 'ant') {
+    if (!useAuth && process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
-        `1P event logging: auth not available, sending without auth`,
+        `ZY event logging: auth not available, sending without auth`,
       )
     }
 
@@ -597,9 +597,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
         axios.isAxiosError(error) &&
         error.response?.status === 401
       ) {
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           logForDebugging(
-            '1P event logging: 401 auth error, retrying without auth',
+            'ZY event logging: 401 auth error, retrying without auth',
           )
         }
         const response = await axios.post(this.endpoint, payload, {
@@ -619,9 +619,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     withAuth: boolean,
     responseData: unknown,
   ): void {
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       logForDebugging(
-        `1P event logging: ${eventCount} events exported successfully${withAuth ? ' (with auth)' : ' (without auth)'}`,
+        `ZY event logging: ${eventCount} events exported successfully${withAuth ? ' (with auth)' : ' (without auth)'}`,
       )
       logForDebugging(`API Response: ${jsonStringify(responseData, null, 2)}`)
     }
@@ -634,8 +634,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
 
   private transformLogsToEvents(
     logs: ReadableLogRecord[],
-  ): FirstPartyEventLoggingPayload {
-    const events: FirstPartyEventLoggingEvent[] = []
+  ): ZyEventLoggingPayload {
+    const events: ZyEventLoggingEvent[] = []
 
     for (const log of logs) {
       const attributes = log.attributes || {}
@@ -682,9 +682,9 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
 
       if (!coreMetadata) {
         // Emit partial event if core metadata is missing
-        if (process.env.USER_TYPE === 'ant') {
+        if (process.env.USER_TYPE === 'zy-super') {
           logForDebugging(
-            `1P event logging: core_metadata missing for event ${eventName}`,
+            `ZY event logging: core_metadata missing for event ${eventName}`,
           )
         }
         events.push({
@@ -704,8 +704,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
         continue
       }
 
-      // Transform to 1P format
-      const formatted = to1PEventFormat(
+      // Transform to ZY format
+      const formatted = toZyEventFormat(
         coreMetadata,
         userMetadata,
         eventMetadata,
@@ -715,7 +715,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       // columns. Hoist known keys to proto fields, then defensively strip any
       // remaining _PROTO_* so an unrecognized future key can't silently land
       // in the general-access additional_metadata blob. sink.ts applies the
-      // same strip before Datadog; this closes the 1P side.
+      // same strip before Datadog; this closes the ZY side.
       const {
         _PROTO_skill_name,
         _PROTO_plugin_name,
@@ -765,15 +765,15 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     this.isShutdown = true
     this.resetBackoff()
     await this.forceFlush()
-    if (process.env.USER_TYPE === 'ant') {
-      logForDebugging('1P event logging exporter shutdown complete')
+    if (process.env.USER_TYPE === 'zy-super') {
+      logForDebugging('ZY event logging exporter shutdown complete')
     }
   }
 
   async forceFlush(): Promise<void> {
     await Promise.all(this.pendingExports)
-    if (process.env.USER_TYPE === 'ant') {
-      logForDebugging('1P event logging exporter flush complete')
+    if (process.env.USER_TYPE === 'zy-super') {
+      logForDebugging('ZY event logging exporter flush complete')
     }
   }
 }

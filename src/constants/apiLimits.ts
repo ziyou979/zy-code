@@ -61,7 +61,7 @@ export const API_PDF_MAX_PAGES = 100
 /**
  * Size threshold above which PDFs are extracted into page images
  * instead of being sent as base64 document blocks. This applies to
- * first-party API only; non-first-party always uses extraction.
+ * direct API only; non-direct-API always uses extraction.
  */
 export const PDF_EXTRACT_SIZE_THRESHOLD = 3 * 1024 * 1024 // 3 MB
 

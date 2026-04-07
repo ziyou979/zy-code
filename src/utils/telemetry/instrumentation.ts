@@ -42,7 +42,7 @@ import {
 import {
   getOtelHeadersFromHelper,
   getSubscriptionType,
-  is1PApiCustomer,
+  isDirectApiClient,
   isZyAISubscriber,
 } from 'src/utils/auth.js'
 import { getPlatform, getWslVersion } from 'src/utils/platform.js'
@@ -85,7 +85,7 @@ function telemetryTimeout(ms: number, message: string): Promise<never> {
 }
 
 export function bootstrapTelemetry() {
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     // Read from ANT_ prefixed variables that are defined at build time
     if (process.env.ANT_OTEL_METRICS_EXPORTER) {
       process.env.OTEL_METRICS_EXPORTER = process.env.ANT_OTEL_METRICS_EXPORTER
@@ -343,7 +343,7 @@ function isBigQueryMetricsEnabled() {
     isZyAISubscriber() &&
     (subscriptionType === 'enterprise' || subscriptionType === 'team')
 
-  return is1PApiCustomer() || isC4EOrTeamUser
+  return isDirectApiClient() || isC4EOrTeamUser
 }
 
 /**

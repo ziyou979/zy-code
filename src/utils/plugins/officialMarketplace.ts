@@ -1,8 +1,8 @@
 /**
  * Constants for the official Anthropic plugins marketplace.
  *
- * The official marketplace is hosted on GitHub and provides first-party
- * plugins developed by Anthropic. This file defines the constants needed
+ * The official marketplace is hosted on GitHub and provides official
+ * plugins developed by ZY. This file defines the constants needed
  * to install and identify this marketplace.
  */
 

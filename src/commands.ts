@@ -3,7 +3,6 @@ import addDir from './commands/add-dir/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
 import backfillSessions from './commands/backfill-sessions/index.js'
 import btw from './commands/btw/index.js'
-import goodZy from './commands/good-zy/index.js'
 import issue from './commands/issue/index.js'
 import feedback from './commands/feedback/index.js'
 import clear from './commands/clear/index.js'
@@ -46,7 +45,7 @@ import tasks from './commands/tasks/index.js'
 import teleport from './commands/teleport/index.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const agentsPlatform =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? require('./commands/agents-platform/index.js').default
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -229,7 +228,6 @@ export const INTERNAL_ONLY_COMMANDS = [
   commit,
   commitPushPr,
   ctx_viz,
-  goodZy,
   issue,
   initVerifiers,
   ...(forceSnip ? [forceSnip] : []),
@@ -340,7 +338,7 @@ const COMMANDS = memoize((): Command[] => [
   tasks,
   ...(workflowsCmd ? [workflowsCmd] : []),
   ...(torch ? [torch] : []),
-  ...(process.env.USER_TYPE === 'ant' && !process.env.IS_DEMO
+  ...(process.env.USER_TYPE === 'zy-super' && !process.env.IS_DEMO
     ? INTERNAL_ONLY_COMMANDS
     : []),
 ])
@@ -422,7 +420,7 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
         if (isZyAISubscriber()) return true
         break
       case 'console':
-        // Console API key user = direct 1P API customer (not 3P, not zy.ai).
+        // Console API key user = direct API customer (not 3P, not zy.ai).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (

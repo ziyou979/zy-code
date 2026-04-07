@@ -487,7 +487,7 @@ export function logSuggestionOutcome(
     }),
     ...(!wasAccepted && { timeToIgnoreMs: timeMs }),
     similarity,
-    ...(process.env.USER_TYPE === 'ant' && {
+    ...(process.env.USER_TYPE === 'zy-super' && {
       suggestion:
         suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       userInput:
@@ -514,7 +514,7 @@ export function logSuggestionSuppressed(
       reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     prompt_id:
       resolvedPromptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    ...(process.env.USER_TYPE === 'ant' &&
+    ...(process.env.USER_TYPE === 'zy-super' &&
       suggestion && {
         suggestion:
           suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

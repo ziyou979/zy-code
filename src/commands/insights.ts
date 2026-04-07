@@ -58,7 +58,7 @@ type RemoteHostInfo = {
 
 /* eslint-disable custom-rules/no-process-env-top-level */
 const getRunningRemoteHosts: () => Promise<string[]> =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? async () => {
         const { stdout, code } = await execFileNoThrow(
           'coder',
@@ -81,7 +81,7 @@ const getRunningRemoteHosts: () => Promise<string[]> =
     : async () => []
 
 const getRemoteHostSessionCount: (hs: string) => Promise<number> =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? async (homespace: string) => {
         const { stdout, code } = await execFileNoThrow(
           'ssh',
@@ -100,7 +100,7 @@ const collectFromRemoteHost: (
   hs: string,
   destDir: string,
 ) => Promise<{ copied: number; skipped: number }> =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? async (homespace: string, destDir: string) => {
         const result = { copied: 0, skipped: 0 }
 
@@ -188,7 +188,7 @@ const collectAllRemoteHostData: (destDir: string) => Promise<{
   totalCopied: number
   totalSkipped: number
 }> =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? async (destDir: string) => {
         const rHosts = await getRunningRemoteHosts()
         const result: RemoteHostInfo[] = []
@@ -1447,7 +1447,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT:
 Include 3 opportunities. Think BIG - autonomous workflows, parallel agents, iterating against tests.`,
     maxTokens: 8192,
   },
-  ...(process.env.USER_TYPE === 'ant'
+  ...(process.env.USER_TYPE === 'zy-super'
     ? [
         {
           name: 'cc_team_improvements',
@@ -2189,11 +2189,11 @@ function generateHtmlReport(
 
   // Build Team Feedback section (collapsible, ant-only)
   const ccImprovements =
-    process.env.USER_TYPE === 'ant'
+    process.env.USER_TYPE === 'zy-super'
       ? insights.cc_team_improvements?.improvements || []
       : []
   const modelImprovements =
-    process.env.USER_TYPE === 'ant'
+    process.env.USER_TYPE === 'zy-super'
       ? insights.model_behavior_improvements?.improvements || []
       : []
   const teamFeedbackHtml =
@@ -2805,7 +2805,7 @@ export async function generateUsageReport(options?: {
   let remoteStats: { hosts: RemoteHostInfo[]; totalCopied: number } | undefined
 
   // Optionally collect data from remote hosts first (ant-only)
-  if (process.env.USER_TYPE === 'ant' && options?.collectRemote) {
+  if (process.env.USER_TYPE === 'zy-super' && options?.collectRemote) {
     const destDir = join(getZyConfigHomeDir(), 'projects')
     const { hosts, totalCopied } = await collectAllRemoteHostData(destDir)
     remoteStats = { hosts, totalCopied }
@@ -3048,7 +3048,7 @@ const usageReport: Command = {
     let remoteHosts: string[] = []
     let hasRemoteHosts = false
 
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       // Parse --homespaces flag
       collectRemote = args?.includes('--homespaces') ?? false
 
@@ -3072,7 +3072,7 @@ const usageReport: Command = {
     let reportUrl = `file://${htmlPath}`
     let uploadHint = ''
 
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       // Try to upload to S3
       const timestamp = new Date()
         .toISOString()
@@ -3114,7 +3114,7 @@ Then access at: ${s3Url}`
 
     // Build remote host info (ant-only)
     let remoteInfo = ''
-    if (process.env.USER_TYPE === 'ant') {
+    if (process.env.USER_TYPE === 'zy-super') {
       if (remoteStats && remoteStats.totalCopied > 0) {
         const hsNames = remoteStats.hosts
           .filter(h => h.sessionCount > 0)

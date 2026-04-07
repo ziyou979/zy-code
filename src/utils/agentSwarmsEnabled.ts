@@ -23,7 +23,7 @@ function isAgentTeamsFlagSet(): boolean {
  */
 export function isAgentSwarmsEnabled(): boolean {
   // Ant: always on
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     return true
   }
 

@@ -27,7 +27,7 @@ const VERSION = '1.0.0'
 const MAX_MESSAGE_SIZE = 1024 * 1024 // 1MB - Max message size that can be sent to Chrome
 
 const LOG_FILE =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'zy-super'
     ? join(homedir(), '.zy', 'debug', 'chrome-native-host.txt')
     : undefined
 

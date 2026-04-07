@@ -6,7 +6,7 @@
  *   default < no-telemetry < essential-traffic
  *
  * - default:            Everything enabled.
- * - no-telemetry:       Analytics/telemetry disabled (Datadog, 1P events, feedback survey).
+ * - no-telemetry:       Analytics/telemetry disabled (Datadog, direct API events, feedback survey).
  * - essential-traffic:  ALL nonessential network traffic disabled
  *                       (telemetry + auto-updates, grove, release notes, model capabilities, etc.).
  *

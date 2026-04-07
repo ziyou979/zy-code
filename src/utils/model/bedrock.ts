@@ -216,7 +216,7 @@ export type BedrockRegionPrefix = (typeof BEDROCK_REGION_PREFIXES)[number]
  * - "eu.anthropic.qwen3.6-plus-v1:0" → "eu"
  * - "us.anthropic.qwen3.6-plus-v1:0" → "us"
  * - "arn:aws:bedrock:ap-northeast-2:123:inference-profile/global.anthropic.qwen3.6-plus-v1" → "global"
- * - "qwen3.6-plus" → undefined (first-party format)
+ * - "qwen3.6-plus" → undefined (direct API format)
  */
 export function getBedrockRegionPrefix(
   modelId: string,

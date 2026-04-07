@@ -13,7 +13,7 @@ export function resetProToOpusDefault(): void {
 
   const apiProvider = getAPIProvider()
 
-  // Pro users on firstParty get auto-migrated to Opus 4.5 default
+  // Pro users on direct API get auto-migrated to Opus 4.5 default
   if (apiProvider !== 'anthropic' || !isProSubscriber()) {
     saveGlobalConfig(current => ({
       ...current,

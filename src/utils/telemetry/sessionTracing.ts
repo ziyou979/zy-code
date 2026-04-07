@@ -135,7 +135,7 @@ export function isEnhancedTelemetryEnabled(): boolean {
       return false
     }
     return (
-      process.env.USER_TYPE === 'ant' ||
+      process.env.USER_TYPE === 'zy-super' ||
       getFeatureValue_CACHED_MAY_BE_STALE('enhanced_telemetry_beta', false)
     )
   }

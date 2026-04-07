@@ -37,7 +37,7 @@ const SLOW_OPERATION_THRESHOLD_MS = (() => {
   if (process.env.NODE_ENV === 'development') {
     return 20
   }
-  if (process.env.USER_TYPE === 'ant') {
+  if (process.env.USER_TYPE === 'zy-super') {
     return 300
   }
   return Infinity

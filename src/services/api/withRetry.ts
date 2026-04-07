@@ -199,7 +199,7 @@ export async function* withRetry<T>(
 
     try {
       // Check for mock rate limits (used by /mock-limits command for Ant employees)
-      if (process.env.USER_TYPE === 'ant') {
+      if (process.env.USER_TYPE === 'zy-super') {
         const mockError = checkMockRateLimitError(
           retryContext.model,
           wasFastModeActive,
@@ -210,7 +210,7 @@ export async function* withRetry<T>(
       }
 
       // Get a fresh client instance on first attempt or after authentication errors
-      // - 401 for first-party API authentication failures
+      // - 401 for API authentication failures
       // - 403 "OAuth token has been revoked" (another process refreshed the token)
       // - Bedrock-specific auth errors (403 or CredentialsProviderError)
       // - Vertex-specific auth errors (credential refresh failures, 401)
@@ -749,7 +749,7 @@ function shouldRetry(error: APIError): boolean {
   // For other status codes (401, 403, 400, 429, etc.), respect the header.
   if (shouldRetryHeader === 'false') {
     const is5xxError = error.status !== undefined && error.status >= 500
-    if (!(process.env.USER_TYPE === 'ant' && is5xxError)) {
+    if (!(process.env.USER_TYPE === 'zy-super' && is5xxError)) {
       return false
     }
   }
