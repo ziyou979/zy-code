@@ -83,6 +83,7 @@ import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { emitTaskTerminatedSdk } from '../sdkEventQueue.js'
 import { sleep } from '../sleep.js'
 import { jsonStringify } from '../slowOperations.js'
+import { isInternalBuild } from '../envUtils.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 import { claimTask, listTasks, type Task, updateTask } from '../tasks.js'
 import type { TeammateContext } from '../teammateContext.js'
@@ -947,7 +948,7 @@ export async function runInProcessTeammate(
       // Log agent memory loaded event for in-process teammates
       if (agentDefinition.memory) {
         logEvent('tengu_agent_memory_loaded', {
-          ...(process.env.USER_TYPE === 'zy-super'
+          ...(isInternalBuild()
             ? {
                 agent_type:
                   agentDefinition.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

@@ -7,6 +7,7 @@
 
 import { homedir, userInfo } from 'os'
 import { join } from 'path'
+import { isInternalBuild } from '../../envUtils.js'
 
 /** macOS preference domain for ZY Code MDM profiles. */
 export const MACOS_PREFERENCE_DOMAIN = 'com.anthropic.zycode'
@@ -65,7 +66,7 @@ export function getMacOSPlistPaths(): Array<{ path: string; label: string }> {
   })
 
   // Allow user-writable preferences for local MDM testing in ant builds only.
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     paths.push({
       path: join(
         homedir(),

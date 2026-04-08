@@ -15,6 +15,7 @@ import { logForDebugging } from '../debug.js'
 import { errorMessage, toError } from '../errors.js'
 import { getAuthHeaders } from '../http.js'
 import { logError } from '../log.js'
+import { isInternalBuild } from '../envUtils.js'
 import { jsonStringify } from '../slowOperations.js'
 import { getZyCodeUserAgent } from '../userAgent.js'
 
@@ -46,7 +47,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     const defaultEndpoint = 'https://api.anthropic.com/api/claude_code/metrics'
 
     if (
-      process.env.USER_TYPE === 'zy-super' &&
+      isInternalBuild() &&
       process.env.ANT_ZY_CODE_METRICS_ENDPOINT
     ) {
       this.endpoint =

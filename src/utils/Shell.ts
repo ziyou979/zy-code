@@ -15,6 +15,7 @@ import { pwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage, isENOENT } from './errors.js'
 import { getFsImplementation } from './fsOperations.js'
+import { isInternalBuild } from './envUtils.js'
 import { logError } from './log.js'
 import {
   createAbortedCommand,
@@ -320,7 +321,7 @@ export async function exec(
         GIT_EDITOR: 'true',
         CLAUDECODE: '1',
         ...envOverrides,
-        ...(process.env.USER_TYPE === 'zy-super'
+        ...(isInternalBuild()
           ? {
               ZY_CODE_SESSION_ID: getSessionId(),
             }

@@ -10,6 +10,7 @@
  * trailing `*`, ` *`, ` -…*`). PS-specific cmdlet strings live in
  * isDangerousPowerShellPermission (permissionSetup.ts).
  */
+import { isInternalBuild } from '../envUtils.js'
 
 /**
  * Cross-platform code-execution entry points present on both Unix and Windows.
@@ -55,7 +56,7 @@ export const DANGEROUS_BASH_PATTERNS: readonly string[] = [
   // These stay ant-only — external users don't have coo, and the rest are
   // an empirical-risk call grounded in ant sandbox data, not a universal
   // "this tool is unsafe" judgment. PS may want these once it has usage data.
-  ...(process.env.USER_TYPE === 'zy-super'
+  ...(isInternalBuild()
     ? [
         'fa run',
         // Cluster code launcher — arbitrary code on the cluster

@@ -10,6 +10,7 @@ import {
 import lodashCloneDeep from 'lodash-es/cloneDeep.js'
 import { addSlowOperation } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
+import { isInternalBuild } from './envUtils.js'
 
 // Extended WriteFileOptions to include 'flush' which is available in Node.js 20.1.0+
 // but not yet in @types/node
@@ -37,7 +38,7 @@ const SLOW_OPERATION_THRESHOLD_MS = (() => {
   if (process.env.NODE_ENV === 'development') {
     return 20
   }
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return 300
   }
   return Infinity

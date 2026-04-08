@@ -32,6 +32,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/gr
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { isInternalBuild } from '../envUtils.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
 import { logOTelEvent } from './events.js'
 
@@ -87,7 +88,7 @@ export function isBetaTracingEnabled(): boolean {
   // For external users, enable in SDK/headless mode OR when org is allowlisted.
   // Gate reads from disk cache, so first run after allowlisting returns false;
   // works from second run onward (same behavior as enhanced_telemetry_beta).
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return (
       getIsNonInteractiveSession() ||
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_trace_lantern', false)
@@ -428,7 +429,7 @@ export function addBetaLLMResponseAttributes(
 
   // Add thinking_output - ant-only
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     metadata.thinkingOutput !== undefined
   ) {
     const { content: thinkingOutput, truncated: thinkingTruncated } =

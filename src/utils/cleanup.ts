@@ -6,6 +6,7 @@ import { CACHE_PATHS } from './cachePaths.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { type FsOperations, getFsImplementation } from './fsOperations.js'
+import { isInternalBuild } from './envUtils.js'
 import { cleanupOldImageCaches } from './imageStore.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
@@ -596,7 +597,7 @@ export async function cleanupOldMessageFilesInBackground(): Promise<void> {
   if (removedWorktrees > 0) {
     logEvent('tengu_worktree_cleanup', { removed: removedWorktrees })
   }
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     await cleanupNpmCacheForAnthropicPackages()
   }
 }

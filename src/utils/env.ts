@@ -22,7 +22,7 @@ export const getGlobalZyFile = memoize((): string => {
   }
 
   const filename = `.zy${fileSuffixForOauthConfig()}.json`
-  return join(process.env.CLAUDE_CONFIG_DIR || homedir(), filename)
+  return join(process.env.ZY_CONFIG_DIR || homedir(), filename)
 })
 
 const hasInternetAccess = memoize(async (): Promise<boolean> => {

@@ -18,6 +18,7 @@ import { writeFileSyncAndFlush_DEPRECATED } from '../file.js'
 import { readFileSync } from '../fileRead.js'
 import { getFsImplementation, safeResolvePath } from '../fsOperations.js'
 import { addFileGlobRuleToGitignore } from '../git/gitignore.js'
+import { isInternalBuild } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { logError } from '../log.js'
 import { getPlatform } from '../platform.js'
@@ -963,7 +964,7 @@ export function getAutoModeConfig():
       if (result.success) {
         if (result.data.allow) allow.push(...result.data.allow)
         if (result.data.soft_deny) soft_deny.push(...result.data.soft_deny)
-        if (process.env.USER_TYPE === 'zy-super') {
+        if (isInternalBuild()) {
           if (result.data.deny) soft_deny.push(...result.data.deny)
         }
         if (result.data.environment)

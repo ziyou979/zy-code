@@ -38,6 +38,7 @@ import {
 } from './hooks.js'
 import { containsPathTraversal } from './path.js'
 import { getPlatform } from './platform.js'
+import { isInternalBuild } from './envUtils.js'
 import {
   getInitialSettings,
   getRelativeSettingsFilePathForSource,
@@ -1393,7 +1394,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
   }
 
   // For ants in zy-cli-internal, set up dev panes (watch + start)
-  const isAnt = process.env.USER_TYPE === 'zy-super'
+  const isAnt = isInternalBuild()
   const isZyCliInternal = repoName === 'zy-cli-internal'
   const shouldSetupDevPanes = isAnt && isZyCliInternal && !sessionExists
 

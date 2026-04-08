@@ -17,6 +17,7 @@ import { logForDebugging } from '../debug.js'
 import { toError } from '../errors.js'
 import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { getFsImplementation } from '../fsOperations.js'
+import { isInternalBuild } from '../envUtils.js'
 import { logError } from '../log.js'
 import { sleep } from '../sleep.js'
 import { jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
@@ -138,7 +139,7 @@ export async function getLatestVersion(
   }
 
   // Route to appropriate source
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // Use Artifactory for ant users
     const npmTag = channel === 'stable' ? 'stable' : 'latest'
     return getLatestVersionFromArtifactory(npmTag)
@@ -506,7 +507,7 @@ export async function downloadVersion(
     return 'binary'
   }
 
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // Use Artifactory for ant users
     await downloadVersionFromArtifactory(version, stagingPath)
     return 'npm'

@@ -1,5 +1,6 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { isInternalBuild } from '../envUtils.js'
 
 export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi'
 
@@ -165,7 +166,7 @@ export function isAnthropicBaseUrl(): boolean {
   try {
     const host = new URL(baseUrl).host
     const allowedHosts = ['api.anthropic.com']
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       allowedHosts.push('api-staging.anthropic.com')
     }
     return allowedHosts.includes(host)

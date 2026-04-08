@@ -24,9 +24,10 @@
 import { getRepoClassCached } from './commitAttribution.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 
 export function isUndercover(): boolean {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return true
     // Auto: active unless we've positively confirmed we're in an allowlisted
     // internal repo. 'external', 'none', and null (check not yet run) all
@@ -37,7 +38,7 @@ export function isUndercover(): boolean {
 }
 
 export function getUndercoverInstructions(): string {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return `## UNDERCOVER MODE — CRITICAL
 
 You are operating UNDERCOVER in a PUBLIC/OPEN-SOURCE repository. Your commit
@@ -78,7 +79,7 @@ BAD (never write these):
  * flag on mount.
  */
 export function shouldShowUndercoverAutoNotice(): boolean {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // If forced via env, user already knows; don't nag.
     if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return false
     if (!isUndercover()) return false

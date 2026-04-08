@@ -10,6 +10,7 @@ import {
 } from '../permissions/permissionSetup.js'
 import { syncPermissionRulesFromDisk } from '../permissions/permissions.js'
 import { loadAllPermissionRulesFromDisk } from '../permissions/permissionsLoader.js'
+import { isInternalBuild } from '../envUtils.js'
 import type { SettingSource } from './constants.js'
 import { getInitialSettings } from './settings.js'
 
@@ -49,7 +50,7 @@ export function applySettingsChange(
 
     // Ant-only: re-strip overly broad Bash allow rules after settings sync
     if (
-      process.env.USER_TYPE === 'zy-super' &&
+      isInternalBuild() &&
       process.env.ZY_CODE_ENTRYPOINT !== 'local-agent'
     ) {
       const overlyBroad = findOverlyBroadBashPermissions(updatedRules, [])

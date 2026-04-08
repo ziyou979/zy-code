@@ -5,6 +5,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { getPlatform } from './platform.js'
 
 // Track warnings to avoid spam — bounded to prevent unbounded memory growth
@@ -99,7 +100,7 @@ export function initializeWarningHandler(): void {
         occurrence_count: count + 1,
         classname:
           warning.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        ...(process.env.USER_TYPE === 'zy-super' && {
+        ...(isInternalBuild() && {
           message:
             warning.message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }),

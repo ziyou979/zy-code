@@ -12,14 +12,14 @@ type Props = {
   pose?: ZyPose;
 };
 
-// Z + Y 拼接形状 — 两个字母共享笔画
-// 5行 × 7列
+// 鸟形状 — 展翅飞翔的鸟
+// 5行 × 8列
 //
-//  视觉:  ███▀▀  ← Z 顶部 + Y 顶部左
-//         █▀█▄▌  ← Z 斜杠 + Y 交汇
-//          █ █    ← Y 分叉
-//         █  █    ← Y 左腿
-//         ███     ← Y 右腿延伸
+//  视觉:   ▗▄▖    ← 头部
+//         ▄█████▄ ← 展开的双翼
+//          █████  ← 身体中部
+//           ███   ← 身体下部
+//            █    ← 尾尖
 //
 // Colors: 主体 = clawd_body color
 //         背景填充 = clawd_background fill
@@ -33,32 +33,32 @@ type Segments = {
 
 const POSES: Record<ZyPose, Segments> = {
   default: {
-    r1: '███▀▀',
-    r2: ' ▄█▄▌',
-    r3: '  █ █ ',
-    r4: ' █  █ ',
-    r5: ' ████ ',
+    r1: '  ▗▄▖    ',
+    r2: ' ▄█████▄ ',
+    r3: '  █████  ',
+    r4: '   ███   ',
+    r5: '    █    ',
   },
   soaring: {
-    r1: '███▀▀',
-    r2: ' ▗█▝▌',
-    r3: '  █ █ ',
-    r4: ' █  █ ',
-    r5: ' ████ ',
+    r1: '  ▗▄▖    ',
+    r2: '▄███████▄',
+    r3: '  █████  ',
+    r4: '   ███   ',
+    r5: '    █    ',
   },
   'tilt-left': {
-    r1: '███▀▀',
-    r2: ' ▄█▄▌',
-    r3: '  █ █ ',
-    r4: '█  █  ',
-    r5: '████  ',
+    r1: ' ▗▄▖     ',
+    r2: '▄█████▄  ',
+    r3: ' █████   ',
+    r4: '  ███    ',
+    r5: '   █     ',
   },
   'tilt-right': {
-    r1: '███▀▀',
-    r2: ' ▄█▄▌',
-    r3: '  █ █ ',
-    r4: ' █  █ ',
-    r5: '  ████',
+    r1: '   ▗▄▖   ',
+    r2: '  ▄█████▄',
+    r3: '   █████ ',
+    r4: '    ███  ',
+    r5: '     █   ',
   },
 };
 
@@ -100,11 +100,11 @@ function AppleTerminalZy(t0: { pose: ZyPose }) {
   const { pose } = t0;
   return (
     <Box flexDirection="column" alignItems="center">
-      <Text color="clawd_body">███▀▀</Text>
-      <Text color="clawd_body"> ▄█▄▌</Text>
-      <Text color="clawd_body">  █ █ </Text>
-      <Text color="clawd_body"> █  █ </Text>
-      <Text color="clawd_body"> ████ </Text>
+      <Text color="clawd_body">  ▗▄▖    </Text>
+      <Text color="clawd_body"> ▄█████▄ </Text>
+      <Text color="clawd_body">  █████  </Text>
+      <Text color="clawd_body">   ███   </Text>
+      <Text color="clawd_body">    █    </Text>
     </Box>
   );
 }

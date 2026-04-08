@@ -14,9 +14,9 @@ import { openPath } from '../../utils/browser.js';
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemSaved = feature('TEAMMEM') ? require('./teamMemSaved.js') as typeof import('./teamMemSaved.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { TURN_COMPLETION_VERBS } from '../../constants/turnCompletionVerbs.js';
+import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import type { SystemMessage, SystemStopHookSummaryMessage, SystemBridgeStatusMessage, SystemTurnDurationMessage, SystemThinkingMessage, SystemMemorySavedMessage } from '../../types/message.js';
+import type { SystemMessage } from '../../types/message.js';
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js';
 import { formatDuration, formatNumber, formatSecondsShort } from '../../utils/format.js';
 import { getGlobalConfig } from '../../utils/config.js';
@@ -27,12 +27,15 @@ import { useAppStateStore } from '../../state/AppState.js';
 import { isBackgroundTask, type TaskState } from '../../tasks/types.js';
 import { getPillLabel } from '../../tasks/pillLabel.js';
 import { useSelectedMessageBg } from '../messageActions.js';
+import { JSX } from "react/jsx-runtime";
+
 type Props = {
   message: SystemMessage;
   addMargin: boolean;
   verbose: boolean;
   isTranscriptMode?: boolean;
 };
+
 export function SystemTextMessage(t0) {
   const $ = _c(51);
   const {
@@ -43,9 +46,9 @@ export function SystemTextMessage(t0) {
   } = t0;
   const bg = useSelectedMessageBg();
   if (message.subtype === "turn_duration") {
-    let t1;
+    let t1: JSX.Element;
     if ($[0] !== addMargin || $[1] !== message) {
-      t1 = <TurnDurationMessage message={message} addMargin={addMargin} />;
+      t1 = <TurnDurationMessage message={message} addMargin={addMargin}/>;
       $[0] = addMargin;
       $[1] = message;
       $[2] = t1;
@@ -55,9 +58,9 @@ export function SystemTextMessage(t0) {
     return t1;
   }
   if (message.subtype === "memory_saved") {
-    let t1;
+    let t1: JSX.Element;
     if ($[3] !== addMargin || $[4] !== message) {
-      t1 = <MemorySavedMessage message={message} addMargin={addMargin} />;
+      t1 = <MemorySavedMessage message={message} addMargin={addMargin}/>;
       $[3] = addMargin;
       $[4] = message;
       $[5] = t1;
@@ -68,14 +71,14 @@ export function SystemTextMessage(t0) {
   }
   if (message.subtype === "away_summary") {
     const t1 = addMargin ? 1 : 0;
-    let t2;
+    let t2: JSX.Element;
     if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
       t2 = <Box minWidth={2}><Text dimColor={true}>{REFERENCE_MARK}</Text></Box>;
       $[6] = t2;
     } else {
       t2 = $[6];
     }
-    let t3;
+    let t3: JSX.Element;
     if ($[7] !== message.content) {
       t3 = <Text dimColor={true}>{message.content}</Text>;
       $[7] = message.content;
@@ -83,7 +86,7 @@ export function SystemTextMessage(t0) {
     } else {
       t3 = $[8];
     }
-    let t4;
+    let t4: JSX.Element;
     if ($[9] !== bg || $[10] !== t1 || $[11] !== t3) {
       t4 = <Box flexDirection="row" marginTop={t1} backgroundColor={bg} width="100%">{t2}{t3}</Box>;
       $[9] = bg;
@@ -97,8 +100,8 @@ export function SystemTextMessage(t0) {
   }
   if (message.subtype === "agents_killed") {
     const t1 = addMargin ? 1 : 0;
-    let t2;
-    let t3;
+    let t2: JSX.Element;
+    let t3: JSX.Element;
     if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
       t2 = <Box minWidth={2}><Text color="error">{BLACK_CIRCLE}</Text></Box>;
       t3 = <Text dimColor={true}>All background agents stopped</Text>;
@@ -108,7 +111,7 @@ export function SystemTextMessage(t0) {
       t2 = $[13];
       t3 = $[14];
     }
-    let t4;
+    let t4: JSX.Element;
     if ($[15] !== bg || $[16] !== t1) {
       t4 = <Box flexDirection="row" marginTop={t1} backgroundColor={bg} width="100%">{t2}{t3}</Box>;
       $[15] = bg;
@@ -125,7 +128,7 @@ export function SystemTextMessage(t0) {
   if (message.subtype === "bridge_status") {
     let t1;
     if ($[18] !== addMargin || $[19] !== message) {
-      t1 = <BridgeStatusMessage message={message} addMargin={addMargin} />;
+      t1 = <BridgeStatusMessage message={message} addMargin={addMargin}/>;
       $[18] = addMargin;
       $[19] = message;
       $[20] = t1;
@@ -136,7 +139,7 @@ export function SystemTextMessage(t0) {
   }
   if (message.subtype === "scheduled_task_fire") {
     const t1 = addMargin ? 1 : 0;
-    let t2;
+    let t2: JSX.Element;
     if ($[21] !== message.content) {
       t2 = <Text dimColor={true}>{TEARDROP_ASTERISK} {message.content}</Text>;
       $[21] = message.content;
@@ -144,7 +147,7 @@ export function SystemTextMessage(t0) {
     } else {
       t2 = $[22];
     }
-    let t3;
+    let t3: JSX.Element;
     if ($[23] !== bg || $[24] !== t1 || $[25] !== t2) {
       t3 = <Box marginTop={t1} backgroundColor={bg} width="100%">{t2}</Box>;
       $[23] = bg;
@@ -158,8 +161,8 @@ export function SystemTextMessage(t0) {
   }
   if (message.subtype === "permission_retry") {
     const t1 = addMargin ? 1 : 0;
-    let t2;
-    let t3;
+    let t2: JSX.Element;
+    let t3: JSX.Element;
     if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
       t2 = <Text dimColor={true}>{TEARDROP_ASTERISK} </Text>;
       t3 = <Text>Allowed </Text>;
@@ -177,7 +180,7 @@ export function SystemTextMessage(t0) {
     } else {
       t4 = $[30];
     }
-    let t5;
+    let t5: JSX.Element;
     if ($[31] !== t4) {
       t5 = <Text bold={true}>{t4}</Text>;
       $[31] = t4;
@@ -185,7 +188,7 @@ export function SystemTextMessage(t0) {
     } else {
       t5 = $[32];
     }
-    let t6;
+    let t6: JSX.Element;
     if ($[33] !== bg || $[34] !== t1 || $[35] !== t5) {
       t6 = <Box marginTop={t1} backgroundColor={bg} width="100%">{t2}{t3}{t5}</Box>;
       $[33] = bg;
@@ -202,9 +205,9 @@ export function SystemTextMessage(t0) {
     return null;
   }
   if (message.subtype === "api_error") {
-    let t1;
+    let t1: JSX.Element;
     if ($[37] !== message || $[38] !== verbose) {
-      t1 = <SystemAPIErrorMessage message={message} verbose={verbose} />;
+      t1 = <SystemAPIErrorMessage message={message} verbose={verbose}/>;
       $[37] = message;
       $[38] = verbose;
       $[39] = t1;
@@ -214,7 +217,7 @@ export function SystemTextMessage(t0) {
     return t1;
   }
   if (message.subtype === "stop_hook_summary") {
-    let t1;
+    let t1: JSX.Element;
     if ($[40] !== addMargin || $[41] !== isTranscriptMode || $[42] !== message || $[43] !== verbose) {
       t1 = <StopHookSummaryMessage message={message} addMargin={addMargin} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
       $[40] = addMargin;
@@ -278,13 +281,11 @@ function StopHookSummaryMessage(t0) {
   }
   const totalDurationMs = t1;
   if (hookErrors.length === 0 && !preventedContinuation && !message.hookLabel) {
-    if (true || totalDurationMs < HOOK_TIMING_DISPLAY_THRESHOLD_MS) {
-      return null;
-    }
+    return null;
   }
-  let t2;
+  let t2: string;
   if ($[3] !== totalDurationMs) {
-    t2 = false && totalDurationMs > 0 ? ` (${formatSecondsShort(totalDurationMs)})` : "";
+    t2 = "";
     $[3] = totalDurationMs;
     $[4] = t2;
   } else {
@@ -589,7 +590,7 @@ function TurnDurationMessage(t0) {
   return t10;
 }
 function _temp4() {
-  return sample(TURN_COMPLETION_VERBS) ?? "Worked";
+  return sample(getTurnCompletionVerbs()) ?? "搞定了";
 }
 function MemorySavedMessage(t0) {
   const $ = _c(16);

@@ -416,7 +416,7 @@ const LABEL_MAP: Record<string, string> = {
 
 // Lazy getters: getZyConfigHomeDir() is memoized and reads process.env.
 // Calling it at module scope would populate the memoize cache before
-// entrypoints can set CLAUDE_CONFIG_DIR, breaking all 150+ other callers.
+// entrypoints can set ZY_CONFIG_DIR, breaking all 150+ other callers.
 function getDataDir(): string {
   return join(getZyConfigHomeDir(), 'usage-data')
 }

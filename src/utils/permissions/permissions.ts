@@ -14,6 +14,7 @@ import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import type { AssistantMessage } from '../../types/message.js'
 import { extractOutputRedirections } from '../bash/commands.js'
 import { logForDebugging } from '../debug.js'
+import { isInternalBuild } from '../envUtils.js'
 import { AbortError, toError } from '../errors.js'
 import { logError } from '../log.js'
 import { SandboxManager } from '../sandbox/sandbox-adapter.js'
@@ -703,7 +704,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
 
       // Notify ants when classifier error dumped prompts (will be in /share)
       if (
-        process.env.USER_TYPE === 'zy-super' &&
+        isInternalBuild() &&
         classifierResult.errorDumpPath &&
         context.addNotification
       ) {

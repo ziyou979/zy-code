@@ -13,6 +13,7 @@ import {
   shouldAddStdinRedirect,
 } from '../bash/shellQuoting.js'
 import { logForDebugging } from '../debug.js'
+import { isInternalBuild } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 import { getSessionEnvironmentScript } from '../sessionEnvironment.js'
 import { getSessionEnvVars } from '../sessionEnvVars.js'
@@ -219,7 +220,7 @@ export async function createBashShellProvider(
       // See tmuxSocket.ts for the full isolation architecture documentation.
       const commandUsesTmux = command.includes('tmux')
       if (
-        process.env.USER_TYPE === 'zy-super' &&
+        isInternalBuild() &&
         (hasTmuxToolBeenUsed() || commandUsesTmux)
       ) {
         await ensureSocketInitialized()

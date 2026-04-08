@@ -11,6 +11,7 @@ import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
 import { createSignal } from './signal.js'
 import { jsonParse, jsonStringify } from './slowOperations.js'
+import { isInternalBuild } from './envUtils.js'
 import { getTeamName } from './teammate.js'
 import { getTeammateContext } from './teammateContext.js'
 
@@ -317,7 +318,7 @@ export async function getTask(
     const data = jsonParse(content) as { status?: string }
 
     // TEMPORARY: Migrate old status names for existing sessions (ant-only)
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       if (data.status === 'open') data.status = 'pending'
       else if (data.status === 'resolved') data.status = 'completed'
       // Migrate development task statuses to in_progress

@@ -12,6 +12,7 @@ import {
 } from './debugFilter.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
+import { isInternalBuild } from './envUtils.js'
 import { writeToStderr } from './process.js'
 import { jsonStringify } from './slowOperations.js'
 
@@ -62,7 +63,7 @@ export const isDebugMode = memoize((): boolean => {
  * with --debug. Returns true if logging was already active.
  */
 export function enableDebugLogging(): boolean {
-  const wasActive = isDebugMode() || process.env.USER_TYPE === 'zy-super'
+  const wasActive = isDebugMode() || isInternalBuild()
   runtimeDebugEnabled = true
   isDebugMode.cache.clear?.()
   return wasActive
@@ -108,7 +109,7 @@ function shouldLogDebugMessage(message: string): boolean {
 
   // Non-ants only write debug logs when debug mode is active (via --debug at
   // startup or /debug mid-session). Ants always log for /share, bug reports.
-  if (process.env.USER_TYPE !== 'zy-super' && !isDebugMode()) {
+  if (!isInternalBuild() && !isDebugMode()) {
     return false
   }
 
@@ -256,7 +257,7 @@ const updateLatestDebugLogSymlink = memoize(async (): Promise<void> => {
  * Logs errors for Ants only, always visible in production.
  */
 export function logAntError(context: string, error: unknown): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

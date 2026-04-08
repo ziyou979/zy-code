@@ -2,7 +2,7 @@
 /**
  * Ensure that any model codenames introduced here are also added to
  * scripts/excluded-strings.txt to avoid leaking them. Wrap any codename string
- * literals with process.env.USER_TYPE === 'zy-super' for Bun to remove the codenames
+ * literals with isInternalBuild() for Bun to remove the codenames
  * during dead code elimination
  */
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
@@ -17,6 +17,7 @@ import type { PermissionMode } from '../permissions/PermissionMode.js'
 import { getAPIProvider } from './providers.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { type ModelAlias, isModelAlias } from './aliases.js'
+import { isInternalBuild } from '../envUtils.js'
 import { capitalize } from '../stringUtils.js'
 
 export type ModelShortName = string
@@ -169,7 +170,7 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
   }
 
   // Ants default to defaultModel from flag config, or Opus 1M if not configured
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return (
       getAntModelOverrideConfig()?.defaultModel ??
       getDefaultOpusModel() + '[1m]'
@@ -293,7 +294,7 @@ export function renderModelName(model: ModelName): string {
   if (publicName) {
     return publicName
   }
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const resolved = parseUserSpecifiedModel(model)
     const antModel = resolveAntModel(model)
     if (antModel) {
@@ -400,7 +401,7 @@ export function resolveSkillModelOverride(
 
 export function modelDisplayString(model: ModelSetting): string {
   if (model === null) {
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       return `Default for Ants (${renderDefaultModelSetting(getDefaultMainLoopModelSetting())})`
     }
     return `Default (${getDefaultMainLoopModel()})`

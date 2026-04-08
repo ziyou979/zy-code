@@ -13,6 +13,7 @@ import { TASK_CREATE_TOOL_NAME } from '../../tools/TaskCreateTool/constants.js'
 import { TASK_GET_TOOL_NAME } from '../../tools/TaskGetTool/constants.js'
 import { TASK_LIST_TOOL_NAME } from '../../tools/TaskListTool/constants.js'
 import { TASK_OUTPUT_TOOL_NAME } from '../../tools/TaskOutputTool/constants.js'
+import { isInternalBuild } from '../envUtils.js'
 import { TASK_STOP_TOOL_NAME } from '../../tools/TaskStopTool/prompt.js'
 import { TASK_UPDATE_TOOL_NAME } from '../../tools/TaskUpdateTool/constants.js'
 import { TEAM_CREATE_TOOL_NAME } from '../../tools/TeamCreateTool/constants.js'
@@ -35,7 +36,7 @@ const OVERFLOW_TEST_TOOL_NAME = feature('OVERFLOW_TEST_TOOL')
     ).OVERFLOW_TEST_TOOL_NAME
   : null
 const VERIFY_PLAN_EXECUTION_TOOL_NAME =
-  process.env.USER_TYPE === 'zy-super'
+  isInternalBuild()
     ? (
         require('../../tools/VerifyPlanExecutionTool/constants.js') as typeof import('../../tools/VerifyPlanExecutionTool/constants.js')
       ).VERIFY_PLAN_EXECUTION_TOOL_NAME

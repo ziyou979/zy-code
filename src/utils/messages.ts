@@ -84,6 +84,7 @@ import { quote } from './bash/shellQuote.js'
 import { formatNumber, formatTokens } from './format.js'
 import { getPewterLedgerVariant } from './planModeV2.js'
 import { jsonStringify } from './slowOperations.js'
+import { isInternalBuild } from './envUtils.js'
 
 // Hook attachments that have a hookName field (excludes HookPermissionDecisionAttachment)
 type HookAttachmentWithName = Exclude<
@@ -2684,7 +2685,7 @@ export function normalizeContentFromAPI(
               toolName: sanitizeToolNameForAnalytics(contentBlock.name),
               inputLen: contentBlock.input.length,
             })
-            if (process.env.USER_TYPE === 'zy-super') {
+            if (isInternalBuild()) {
               logForDebugging(
                 `tool input JSON parse fail: ${contentBlock.input.slice(0, 200)}`,
                 { level: 'warn' },

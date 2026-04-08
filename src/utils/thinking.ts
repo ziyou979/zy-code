@@ -5,6 +5,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
+import { isInternalBuild } from './envUtils.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
 export type ThinkingConfig =
@@ -94,7 +95,7 @@ export function modelSupportsThinking(model: string): boolean {
   }
   // Check settings-based capabilities first
   if (modelHasCapability(model, 'thinking')) return true
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     if (resolveAntModel(model.toLowerCase())) {
       return true
     }

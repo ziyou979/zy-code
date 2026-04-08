@@ -2,6 +2,7 @@ import type { BetaUsage } from '@anthropic-ai/sdk/resources/beta/messages/messag
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { shouldIncludeExperimentalBetas } from './betas.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { getInitialSettings } from './settings/settings.js'
 
 // The SDK does not yet have types for advisor blocks.
@@ -91,7 +92,7 @@ export function modelSupportsAdvisor(model: string): boolean {
   return (
     m.includes('opus-4-6') ||
     m.includes('sonnet-4-6') ||
-    process.env.USER_TYPE === 'zy-super'
+    isInternalBuild()
   )
 }
 
@@ -101,7 +102,7 @@ export function isValidAdvisorModel(model: string): boolean {
   return (
     m.includes('opus-4-6') ||
     m.includes('sonnet-4-6') ||
-    process.env.USER_TYPE === 'zy-super'
+    isInternalBuild()
   )
 }
 

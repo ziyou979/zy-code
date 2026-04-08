@@ -52,6 +52,7 @@ import { getContextWindowForModel } from './context.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { errorMessage, toError } from './errors.js'
 import { logError } from './log.js'
 import { normalizeMessagesForAPI } from './messages.js'
@@ -412,7 +413,7 @@ async function countBuiltInToolTokens(
   // split of the bulk count based on rough schema size estimation). Excludes
   // SkillTool since its tokens are shown in the separate Skills category.
   let systemToolDetails: SystemToolDetail[] = []
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const toolsForBreakdown = alwaysLoadedTools.filter(
       t => !toolMatchesName(t, SKILL_TOOL_NAME),
     )
@@ -1022,7 +1023,7 @@ export async function analyzeContextUsage(
   if (systemToolsTokens > 0) {
     cats.push({
       name:
-        process.env.USER_TYPE === 'zy-super'
+        isInternalBuild()
           ? '[ANT-ONLY] System tools'
           : 'System tools',
       tokens: systemToolsTokens,
@@ -1350,11 +1351,11 @@ export async function analyzeContextUsage(
     memoryFiles: memoryFileDetails,
     mcpTools: mcpToolDetails,
     deferredBuiltinTools:
-      process.env.USER_TYPE === 'zy-super' ? deferredBuiltinDetails : undefined,
+      isInternalBuild() ? deferredBuiltinDetails : undefined,
     systemTools:
-      process.env.USER_TYPE === 'zy-super' ? systemToolDetails : undefined,
+      isInternalBuild() ? systemToolDetails : undefined,
     systemPromptSections:
-      process.env.USER_TYPE === 'zy-super' ? systemPromptSections : undefined,
+      isInternalBuild() ? systemPromptSections : undefined,
     agents: agentDetails,
     slashCommands:
       slashCommandTokens > 0

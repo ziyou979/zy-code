@@ -25,6 +25,7 @@ import {
 } from './model.js'
 import { has1mContext } from '../context.js'
 import { getGlobalConfig } from '../config.js'
+import { isInternalBuild } from '../envUtils.js'
 
 // @[MODEL LAUNCH]: Update all the available and default model option strings below.
 
@@ -36,7 +37,7 @@ export type ModelOption = {
 }
 
 export function getDefaultOptionForUser(fastMode = false): ModelOption {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const currentModel = renderDefaultModelSetting(
       getDefaultMainLoopModelSetting(),
     )
@@ -262,7 +263,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
     return [getDefaultOptionForUser(fastMode), ...customModelOptions]
   }
 
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // Build options from antModels config
     const antModelOptions: ModelOption[] = getAntModels().map(m => ({
       value: m.alias,

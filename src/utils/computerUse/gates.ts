@@ -2,6 +2,7 @@ import type { CoordinateMode, CuSubGates } from '@ant/computer-use-mcp/types'
 
 import { getDynamicConfig_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { isInternalBuild } from '../envUtils.js'
 
 type ChicagoConfig = CuSubGates & {
   enabled: boolean
@@ -37,7 +38,7 @@ function readConfig(): ChicagoConfig {
 // CLAUDE.md:281, USER_TYPE !== 'zy-super' branches get zero antfooding.
 // No subscription context for external users, so always false.
 function hasRequiredSubscription(): boolean {
-  if (process.env.USER_TYPE === 'zy-super') return true
+  if (isInternalBuild()) return true
   return false
 }
 
@@ -47,7 +48,7 @@ export function getChicagoEnabled(): boolean {
   // laptop-setup.sh wires into ~/.zshrc — its presence is the cheap
   // proxy for "has monorepo access". Override: ALLOW_ANT_COMPUTER_USE_MCP=1.
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     process.env.MONOREPO_ROOT_DIR &&
     !isEnvTruthy(process.env.ALLOW_ANT_COMPUTER_USE_MCP)
   ) {

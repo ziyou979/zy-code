@@ -38,6 +38,7 @@ import {
   getAPIProvider,
   isAnthropicBaseUrl,
 } from './model/providers.js'
+import { isInternalBuild } from './envUtils.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 
@@ -628,7 +629,7 @@ export type DeferredToolsDeltaScanContext = {
  */
 export function isDeferredToolsDeltaEnabled(): boolean {
   return (
-    process.env.USER_TYPE === 'zy-super' ||
+    isInternalBuild() ||
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_glacier_2xr', false)
   )
 }

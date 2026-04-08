@@ -19,6 +19,7 @@ import {
   isEnvTruthy,
 } from '../envUtils.js'
 import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
+import { isInternalBuild } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 import { jsonStringify } from '../slowOperations.js'
 import {
@@ -77,7 +78,7 @@ export function shouldAutoEnableClaudeInChrome(): boolean {
   shouldAutoEnable =
     getIsInteractive() &&
     isChromeExtensionInstalled_CACHED_MAY_BE_STALE() &&
-    (process.env.USER_TYPE === 'zy-super' ||
+    (isInternalBuild() ||
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_chrome_auto_enable', false))
 
   return shouldAutoEnable
@@ -203,7 +204,7 @@ export async function installChromeNativeHostManifest(
     type: 'stdio',
     allowed_origins: [
       `chrome-extension://fcoeoabgfenejglbffodgkkbkcdhcgfn/`, // PROD_EXTENSION_ID
-      ...(process.env.USER_TYPE === 'zy-super'
+      ...(isInternalBuild()
         ? [
             'chrome-extension://dihbgbndebgnbjfmelmegjepbnkhlgni/', // DEV_EXTENSION_ID
             'chrome-extension://dngcpimnedloihjnnfngkgjoidhnaolf/', // ANT_EXTENSION_ID

@@ -37,6 +37,7 @@ const ideOnboardingDialog =
 import { createAbortController } from './abortController.js'
 import { logForDebugging } from './debug.js'
 import { envDynamic } from './envDynamic.js'
+import { isInternalBuild } from './envUtils.js'
 import { errorMessage, isFsInaccessible } from './errors.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
@@ -845,7 +846,7 @@ export function hasAccessToIDEExtensionDiffFeature(
 }
 
 const EXTENSION_ID =
-  process.env.USER_TYPE === 'zy-super'
+  isInternalBuild()
     ? 'anthropic.zy-code-internal'
     : 'anthropic.zy-code'
 
@@ -881,7 +882,7 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
     const command = await getVSCodeIDECommand(ideType)
 
     if (command) {
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         return await installFromArtifactory(command)
       }
       let version = await getInstalledVSCodeExtensionVersion(command)

@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { isInternalBuild } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
 import {
   EXTERNAL_PERMISSION_MODES,
@@ -830,7 +831,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       effortLevel: z
         .enum(
-          process.env.USER_TYPE === 'zy-super'
+          isInternalBuild()
             ? ['low', 'medium', 'high', 'max']
             : ['low', 'medium', 'high'],
         )
@@ -962,7 +963,7 @@ export const SettingsSchema = lazySchema(() =>
           'Custom directory for plan files, relative to project root. ' +
             'If not set, defaults to ~/.zy/plans/',
         ),
-      ...(process.env.USER_TYPE === 'zy-super'
+      ...(isInternalBuild()
         ? {
             classifierPermissionsEnabled: z
               .boolean()
@@ -1123,7 +1124,7 @@ export const SettingsSchema = lazySchema(() =>
                   .array(z.string())
                   .optional()
                   .describe('Rules for the auto mode classifier deny section'),
-                ...(process.env.USER_TYPE === 'zy-super'
+                ...(isInternalBuild()
                   ? {
                       // Back-compat alias for ant users; external users use soft_deny
                       deny: z.array(z.string()).optional(),

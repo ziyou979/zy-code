@@ -1,6 +1,7 @@
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
 import { getPlatform } from '../platform.js'
+import { isInternalBuild } from '../envUtils.js'
 
 /**
  * Get the path to the managed settings directory based on the current platform.
@@ -8,7 +9,7 @@ import { getPlatform } from '../platform.js'
 export const getManagedFilePath = memoize(function (): string {
   // Allow override for testing/demos (Ant-only, eliminated from external builds)
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     process.env.ZY_CODE_MANAGED_SETTINGS_PATH
   ) {
     return process.env.ZY_CODE_MANAGED_SETTINGS_PATH

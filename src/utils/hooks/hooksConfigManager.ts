@@ -2,6 +2,7 @@ import memoize from 'lodash-es/memoize.js'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
+import { isInternalBuild } from '../envUtils.js'
 import {
   getAllHooks,
   type IndividualHookConfig,
@@ -343,7 +344,7 @@ export function groupHooksByEventAndMatcher(
               pluginName: matcher.pluginId,
             })
           }
-        } else if (process.env.USER_TYPE === 'zy-super') {
+        } else if (isInternalBuild()) {
           eventGroup[matcherKey] ??= []
           for (const _hook of matcher.hooks) {
             eventGroup[matcherKey].push({

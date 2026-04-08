@@ -6,6 +6,7 @@ import type {
 } from '../services/mcp/types.js'
 import type { Message } from '../types/message.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 
 export type McpInstructionsDelta = {
   /** Server names — for stateless-scan reconstruction. */
@@ -38,7 +39,7 @@ export function isMcpInstructionsDeltaEnabled(): boolean {
   if (isEnvTruthy(process.env.ZY_CODE_MCP_INSTR_DELTA)) return true
   if (isEnvDefinedFalsy(process.env.ZY_CODE_MCP_INSTR_DELTA)) return false
   return (
-    process.env.USER_TYPE === 'zy-super' ||
+    isInternalBuild() ||
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_basalt_3kr', false)
   )
 }

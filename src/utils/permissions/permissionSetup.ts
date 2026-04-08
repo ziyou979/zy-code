@@ -13,6 +13,7 @@ import type {
 } from '../../Tool.js'
 import { getCwd } from '../cwd.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { isInternalBuild } from '../envUtils.js'
 import type { SettingSource } from '../settings/constants.js'
 import { SETTING_SOURCES } from '../settings/constants.js'
 import {
@@ -273,7 +274,7 @@ function isDangerousClassifierPermission(
   toolName: string,
   ruleContent: string | undefined,
 ): boolean {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // Tmux send-keys executes arbitrary shell, bypassing the classifier same as Bash(*)
     if (toolName === 'Tmux') return true
   }
@@ -951,7 +952,7 @@ export async function initializeToolPermissionContext({
   // Variable name kept for return-field compat; contains both shells.
   let overlyBroadBashPermissions: DangerousPermissionInfo[] = []
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     !isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
     process.env.ZY_CODE_ENTRYPOINT !== 'local-agent'
   ) {
@@ -1059,7 +1060,7 @@ export function getAutoModeUnavailableNotification(
       base = 'auto mode unavailable for this model'
       break
   }
-  return process.env.USER_TYPE === 'zy-super'
+  return isInternalBuild()
     ? `${base} · #zy-code-feedback`
     : base
 }
@@ -1111,7 +1112,7 @@ export async function verifyAutoModeGateAccess(
   const disableFastModeBreakerFires =
     !!autoModeConfig?.disableFastMode &&
     (!!fastMode ||
-      (process.env.USER_TYPE === 'zy-super' &&
+      (isInternalBuild() &&
         mainModel.toLowerCase().includes('-fast')))
   const modelSupported =
     modelSupportsAutoMode(mainModel) && !disableFastModeBreakerFires

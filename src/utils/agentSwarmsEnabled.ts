@@ -1,5 +1,6 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 
 /**
  * Check if --agent-teams flag is provided via CLI.
@@ -23,7 +24,7 @@ function isAgentTeamsFlagSet(): boolean {
  */
 export function isAgentSwarmsEnabled(): boolean {
   // Ant: always on
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return true
   }
 

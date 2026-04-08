@@ -7,6 +7,7 @@ import type { ToolUseContext } from '../Tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { isBuiltInAgent } from '../tools/AgentTool/loadAgentsDir.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { asSystemPrompt, type SystemPrompt } from './systemPromptType.js'
 
 export { asSystemPrompt, type SystemPrompt } from './systemPromptType.js'
@@ -85,7 +86,7 @@ export function buildEffectiveSystemPrompt({
   // Log agent memory loaded event for main loop agents
   if (mainThreadAgentDefinition?.memory) {
     logEvent('tengu_agent_memory_loaded', {
-      ...(process.env.USER_TYPE === 'zy-super' && {
+      ...(isInternalBuild() && {
         agent_type:
           mainThreadAgentDefinition.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }),

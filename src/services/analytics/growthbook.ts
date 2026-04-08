@@ -500,10 +500,7 @@ const getGrowthBookClient = memoize(
         `GrowthBook: Creating client with clientKey=${clientKey}, attributes: ${jsonStringify(attributes)}`,
       )
     }
-    const baseUrl =
-      process.env.USER_TYPE === 'zy-super'
-        ? process.env.ZY_CODE_GB_BASE_URL || 'https://api.anthropic.com/'
-        : 'https://api.anthropic.com/'
+    const baseUrl = process.env.USER_TYPE === 'zy-super' ? process.env.ZY_CODE_GB_BASE_URL : ''
 
     // Skip auth if trust hasn't been established yet
     // This prevents executing apiKeyHelper commands before the trust dialog

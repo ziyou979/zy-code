@@ -1,6 +1,7 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getRateLimitTier } from './auth.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 
 export function getPlanModeV2AgentCount(): number {
   // Environment variable override takes precedence
@@ -41,7 +42,7 @@ export function getPlanModeV2ExploreAgentCount(): number {
  */
 export function isPlanModeInterviewPhaseEnabled(): boolean {
   // Always on for ants
-  if (process.env.USER_TYPE === 'zy-super') return true
+  if (isInternalBuild()) return true
 
   const env = process.env.ZY_CODE_PLAN_MODE_INTERVIEW_PHASE
   if (isEnvTruthy(env)) return true

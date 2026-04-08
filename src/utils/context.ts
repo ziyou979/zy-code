@@ -2,6 +2,7 @@
 import { CONTEXT_1M_BETA_HEADER } from '../constants/betas.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { modelHasCapability } from './model/providers.js'
 import { getModelCapability } from './model/modelCapabilities.js'
 
@@ -57,7 +58,7 @@ export function getContextWindowForModel(
   // so users can cap the effective context window for local decisions (auto-compact, etc.)
   // while still using a 1M-capable endpoint.
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     process.env.ZY_CODE_MAX_CONTEXT_TOKENS
   ) {
     const override = parseInt(process.env.ZY_CODE_MAX_CONTEXT_TOKENS, 10)
@@ -88,7 +89,7 @@ export function getContextWindowForModel(
   if (getSonnet1mExpTreatmentEnabled(model)) {
     return 1_000_000
   }
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const antModel = resolveAntModel(model)
     if (antModel?.contextWindow) {
       return antModel.contextWindow
@@ -154,7 +155,7 @@ export function getModelMaxOutputTokens(model: string): {
   let defaultTokens: number
   let upperLimit: number
 
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const antModel = resolveAntModel(model.toLowerCase())
     if (antModel) {
       defaultTokens = antModel.defaultMaxTokens ?? MAX_OUTPUT_TOKENS_DEFAULT

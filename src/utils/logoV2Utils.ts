@@ -11,6 +11,7 @@ import {
 import { tSync } from '../i18n/index.js'
 import { getStoredChangelogFromMemory, parseChangelog } from './releaseNotes.js'
 import { gt } from './semver.js'
+import { isInternalBuild } from './envUtils.js'
 import { loadMessageLogs } from './sessionStorage.js'
 import { getInitialSettings } from './settings/settings.js'
 
@@ -309,7 +310,7 @@ export function formatModelAndBilling(
  */
 export function getRecentReleaseNotesSync(maxItems: number): string[] {
   // For ants, use bundled changelog
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const changelog = MACRO.VERSION_CHANGELOG
     if (changelog) {
       const commits = changelog.trim().split('\n').filter(Boolean)

@@ -24,6 +24,7 @@ import {
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import { has1mContext } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
@@ -138,7 +139,7 @@ export function modelSupportsAutoMode(model: string): boolean {
     // External: direct API-only at launch (PI probes not wired for
     // Bedrock/Vertex/Foundry yet). Checked before allowModels so the GB
     // override can't enable auto mode on unsupported providers.
-    if (process.env.USER_TYPE !== 'zy-super' && getAPIProvider() !== 'anthropic') {
+    if (!isInternalBuild() && getAPIProvider() !== 'anthropic') {
       return false
     }
     // GrowthBook override: tengu_auto_mode_config.allowModels force-enables
@@ -154,7 +155,7 @@ export function modelSupportsAutoMode(model: string): boolean {
     ) {
       return true
     }
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       return true
     }
     // External allowlist (direct API already checked above).
@@ -209,7 +210,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   if (!isHaiku) {
     betaHeaders.push(ZY_CODE_)
     if (
-      process.env.USER_TYPE === 'zy-super' &&
+      isInternalBuild() &&
       process.env.ZY_CODE_ENTRYPOINT === 'cli'
     ) {
       if (CLI_INTERNAL_BETA_HEADER) {
@@ -254,7 +255,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // into), unset defers to GB.
   if (
     SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER &&
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     includeExperimentalBetas &&
     !isEnvDefinedFalsy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) &&
     (isEnvTruthy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) ||
@@ -266,7 +267,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // Add context management beta for tool clearing (ant opt-in) or thinking preservation
   const antOptedIntoToolClearing =
     isEnvTruthy(process.env.USE_API_CONTEXT_MANAGEMENT) &&
-    process.env.USER_TYPE === 'zy-super'
+    isInternalBuild()
 
   const thinkingPreservationEnabled = modelSupportsContextManagement(model)
 
@@ -301,7 +302,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // isolate the CC A/B cohort from ~9.2M/week existing v1 senders. Ant-only
   // while the restored JsonToolUseOutputParser soaks.
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     includeExperimentalBetas &&
     tokenEfficientToolsEnabled
   ) {
@@ -374,7 +375,7 @@ export function getMergedBetas(
       baseBetas.push(ZY_CODE_)
     }
     if (
-      process.env.USER_TYPE === 'zy-super' &&
+      isInternalBuild() &&
       process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
       CLI_INTERNAL_BETA_HEADER &&
       !baseBetas.includes(CLI_INTERNAL_BETA_HEADER)

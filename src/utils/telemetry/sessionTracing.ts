@@ -16,6 +16,7 @@ import { AsyncLocalStorage } from 'async_hooks'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
+import { isInternalBuild } from '../envUtils.js'
 import { getTelemetryAttributes } from '../telemetryAttributes.js'
 import {
   addBetaInteractionAttributes,
@@ -135,7 +136,7 @@ export function isEnhancedTelemetryEnabled(): boolean {
       return false
     }
     return (
-      process.env.USER_TYPE === 'zy-super' ||
+isInternalBuild() ||
       getFeatureValue_CACHED_MAY_BE_STALE('enhanced_telemetry_beta', false)
     )
   }

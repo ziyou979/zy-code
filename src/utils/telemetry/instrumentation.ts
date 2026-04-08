@@ -62,6 +62,7 @@ import {
   endInteractionSpan,
   isEnhancedTelemetryEnabled,
 } from './sessionTracing.js'
+import { isInternalBuild } from '../envUtils.js'
 
 const DEFAULT_METRICS_EXPORT_INTERVAL_MS = 60000
 const DEFAULT_LOGS_EXPORT_INTERVAL_MS = 5000
@@ -82,7 +83,7 @@ function telemetryTimeout(ms: number, message: string): Promise<never> {
 }
 
 export function bootstrapTelemetry() {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // Read from ANT_ prefixed variables that are defined at build time
     if (process.env.ANT_OTEL_METRICS_EXPORTER) {
       process.env.OTEL_METRICS_EXPORTER = process.env.ANT_OTEL_METRICS_EXPORTER

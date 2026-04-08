@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { logForDebugging } from '../debug.js'
+import { isInternalBuild } from '../envUtils.js'
 import type { PermissionMode } from './PermissionMode.js'
 import {
   getAutoModeUnavailableReason,
@@ -38,7 +39,7 @@ export function getNextPermissionMode(
   switch (toolPermissionContext.mode) {
     case 'default':
       // Ants skip acceptEdits and plan — auto mode replaces them
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         if (toolPermissionContext.isBypassPermissionsModeAvailable) {
           return 'bypassPermissions'
         }

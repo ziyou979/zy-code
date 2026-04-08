@@ -17,6 +17,7 @@ import {
 import { CACHE_PATHS } from './cachePaths.js'
 import { stripDisplayTags, stripDisplayTagsAllowEmpty } from './displayTags.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 import { toError } from './errors.js'
 import { isEssentialTrafficOnly } from './privacyLevel.js'
 import { jsonParse } from './slowOperations.js'
@@ -348,7 +349,7 @@ export function captureAPIRequest(
   // CLAUDE.md-injected payload the API received. Overwritten each turn;
   // dumpPrompts.ts already holds 5 full request bodies for ants, so this is
   // not a new retention class.
-  setLastAPIRequestMessages(process.env.USER_TYPE === 'zy-super' ? messages : null)
+  setLastAPIRequestMessages(isInternalBuild() ? messages : null)
 }
 
 /**
