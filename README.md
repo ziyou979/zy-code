@@ -98,42 +98,120 @@ TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目
 
 如需使用这些功能，确保对应包已安装。
 
-## IdeaLab 网关（内网用户）
+## 配置
 
-由于 ZY Code 本身对 SSE 支持比较严格，而 IdeaLab 的 API 是非标准的，所以需要一个网关来转换 API 格式。我们推荐使用 [idea-cc-fix](https://code.alibaba-inc.com/cc-idealab-tools/idea-cc-fix) 将 IdeaLab 非标准 API 转换为 ZY Code 标准 Anthropic API 格式。
+ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源（用户、项目、本地、策略），按优先级合并。
 
-**1. 启动网关**
-
-```bash
-# macOS Apple Silicon（后台 daemon 模式）
-~/idea-cc-fix/dist/idea-cc-fix-darwin-arm64 start
-
-# macOS Intel
-~/idea-cc-fix/dist/idea-cc-fix-darwin-x64 start
-
-# Linux x64
-~/idea-cc-fix/dist/idea-cc-fix-linux-x64 start
-```
-
-网关默认监听 `127.0.0.1:9090`。
-
-**2. 配置 `~/.zy/settings.json`**
+### 配置示例
 
 ```json
 {
+  // API 提供商（可选值：anthropic, dashscope, openrouter, generic, ollama, zhipu, kimi）
+  "provider": "anthropic",
+
+  // API 密钥（优先级高于环境变量）
+  // "apiKey": "sk-xxx",
+
+  // 主对话模型
+  "mainLoopModel": "claude-sonnet-4-20250514",
+
+  // 默认模型（作为 fallback）
+  "defaultModel": "claude-sonnet-4-20250514",
+
+  // 按能力层级配置模型（best > advanced > standard > compact）
+  "models": {
+    "best": "claude-opus-4-20250514",
+    "advanced": "claude-sonnet-4-20250514",
+    "standard": "claude-sonnet-4-20250514",
+    "compact": "claude-haiku-4-5-20250514"
+  },
+
+  // 快速模式使用的模型
+  "fastModel": "claude-haiku-4-5-20250514",
+
+  // 环境变量
   "env": {
-    "ANTHROPIC_MODEL": "claude-sonnet-4-6",
-    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-4_5",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4_5",
-    "ANTHROPIC_AUTH_TOKEN": "your-api-key",
-    "ANTHROPIC_BASE_URL": "http://127.0.0.1:9090",
-    "API_TIMEOUT_MS": "3000000",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0"
-  }
+    "ANTHROPIC_AUTH_TOKEN": "your-api-key-here",
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
+    "DISABLE_TELEMETRY": "1"
+  },
+
+  // 语言设置
+  "language": "Chinese",
+
+  // 输出风格
+  "outputStyle": "concise",
+
+  // 权限配置
+  "permissions": {
+    "defaultMode": "acceptEdits"
+  },
+
+  // Hooks（执行前后钩子）
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "echo 'Session started'"
+      }
+    ]
+  },
+
+  // MCP 服务器配置
+  "mcp": {
+    "servers": {}
+  },
+
+  // 自定义模型（用于模型选择器）
+  "customModels": [
+    {
+      "alias": "qwen-max",
+      "model": "qwen-max-latest",
+      "label": "Qwen Max",
+      "description": "通义千问最大模型"
+    }
+  ],
+
+  // 会话保留天数（0 表示禁用持久化）
+  "cleanupPeriodDays": 30,
+
+  // 快速模式
+  "fastMode": false,
+
+  // 思考模式
+  "alwaysThinkingEnabled": true,
+
+  // 努力程度（low / medium / high）
+  "effortLevel": "medium"
 }
 ```
 
-**3. 运行 / 调试即可。**
+### 常用配置项
+
+| 配置项 | 类型 | 说明 |
+|---|---|---|
+| `provider` | string | API 提供商 |
+| `apiKey` | string | API 密钥 |
+| `mainLoopModel` | string | 主对话模型 |
+| `defaultModel` | string | 默认模型 |
+| `models` | object | 按能力层级配置模型 |
+| `fastModel` | string | 快速模式模型 |
+| `language` | string | 语言偏好 |
+| `outputStyle` | string | 输出风格 |
+| `permissions` | object | 权限配置 |
+| `env` | object | 环境变量 |
+| `hooks` | object | 钩子配置 |
+| `fastMode` | boolean | 是否启用快速模式 |
+| `alwaysThinkingEnabled` | boolean | 是否启用思考模式 |
+| `cleanupPeriodDays` | number | 会话保留天数 |
+
+### 配置来源优先级
+
+从低到高：
+1. **userSettings** — `~/.zy/settings.json`
+2. **projectSettings** — `.zy/settings.json`（项目根目录）
+3. **localSettings** — `.zy/settings.local.json`（本地，自动加入 .gitignore）
+4. **policySettings** — 企业策略配置（最高优先级）
+
+> **注意**: 请勿将包含真实 API Key 的配置文件提交到版本控制。
+

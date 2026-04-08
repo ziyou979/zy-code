@@ -57,14 +57,14 @@ function getSyncMessages(): Record<string, string> {
 }
 
 /**
- * Interpolate `{key}` placeholders in a string.
+ * 将 `{key}` 占位符替换为 vars 中的值
  */
 function interpolate(
   template: string,
   vars?: Record<string, string | number>,
 ): string {
   if (!vars) return template
-  return template.replace(/\{(\w+)\}/g, (_, k: string) => {
+  return template.replace(/\{(\w+)}/g, (_, k: string) => {
     const v = vars[k]
     return v !== undefined ? String(v) : `{${k}}`
   })

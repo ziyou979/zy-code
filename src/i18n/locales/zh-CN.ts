@@ -177,10 +177,10 @@ export const zhCN: TranslationResource = {
   'summary.memory_other': '记忆',
 
   // Summary — verb templates (active = 进行中, done = 已完成)
-  'summary.search.active.first': '正在搜索 {count} 个{unit}',
-  'summary.search.active.sub': '搜索 {count} 个{unit}',
-  'summary.search.done.first': '搜索了 {count} 个{unit}',
-  'summary.search.done.sub': '搜索了 {count} 个{unit}',
+  'summary.search.active.first': '正在根据 {count} 个{unit}进行搜索',
+  'summary.search.active.sub': '根据 {count} 个{unit}进行搜索',
+  'summary.search.done.first': '根据 {count} 个{unit}搜索完成',
+  'summary.search.done.sub': '根据 {count} 个{unit}搜索完成',
   'summary.read.active.first': '正在读取 {count} 个{unit}',
   'summary.read.active.sub': '读取 {count} 个{unit}',
   'summary.read.done.first': '读取了 {count} 个{unit}',
@@ -238,4 +238,11 @@ export const zhCN: TranslationResource = {
   'summary.git.prMarkedReady': '标记为就绪',
   'summary.line_one': '行',
   'summary.line_other': '行',
+
+  // Logo / Welcome screen
+  'logo.welcomeBack': '欢迎回来！',
+  'logo.welcomeBackUser': '欢迎回来，{username}！',
+  'logo.recentActivity': '最近对话',
+  'logo.noRecentActivity': '暂无最近对话',
+  'logo.recentActivityFooter': '/resume 查看更多',
 }

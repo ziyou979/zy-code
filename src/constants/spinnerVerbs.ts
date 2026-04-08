@@ -1,15 +1,57 @@
 import { getInitialSettings } from '../utils/settings/settings.js'
+import { getUiLanguage } from '../i18n/index.js'
+
+// Chinese spinner verbs — playful, idiomatic "正在XX中" style
+// Not a 1:1 translation of English verbs, but captures the same whimsical spirit
+const SPINNER_VERBS_ZH = [
+  '思考中',
+  '运算中',
+  '编织中',
+  '酝酿中',
+  '探索中',
+  '捣鼓中',
+  '折腾中',
+  '忙活中',
+  '琢磨中',
+  '施法中',
+  '脑洞中',
+  '冲刺中',
+  '雕琢中',
+  '构建中',
+  '推演中',
+  '检索中',
+  '生成中',
+  '合成中',
+  '调试中',
+  '编译中',
+  '拼装中',
+  '组合中',
+  '拆解中',
+  '分析中',
+  '整理中',
+  '排版中',
+  '梳理中',
+  '打磨中',
+  '优化中',
+  '进化中',
+  '运转中',
+  '飞转中',
+  '加载中',
+  '狂奔中',
+]
 
 export function getSpinnerVerbs(): string[] {
   const settings = getInitialSettings()
   const config = settings.spinnerVerbs
+  const baseVerbs = getUiLanguage() === 'zh-CN' ? SPINNER_VERBS_ZH : SPINNER_VERBS
+
   if (!config) {
-    return SPINNER_VERBS
+    return baseVerbs
   }
   if (config.mode === 'replace') {
-    return config.verbs.length > 0 ? config.verbs : SPINNER_VERBS
+    return config.verbs.length > 0 ? config.verbs : baseVerbs
   }
-  return [...SPINNER_VERBS, ...config.verbs]
+  return [...baseVerbs, ...config.verbs]
 }
 
 // Spinner verbs for loading messages

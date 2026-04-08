@@ -168,10 +168,13 @@ const largeAgentDescriptionsNotice: StatusNoticeDefinition = {
       </Box>;
   }
 };
+// 插件安装提示
 const jetbrainsPluginNotice: StatusNoticeDefinition = {
   id: 'jetbrains-plugin-install',
   type: 'info',
   isActive: context => {
+    // todo 暂时未实现插件，临时屏蔽一下
+    return false;
     // Only show if running in JetBrains built-in terminal
     if (!isSupportedJetBrainsTerminal()) {
       return false;
