@@ -121,7 +121,7 @@ const externalTips: Tip[] = [
   {
     id: 'default-permission-mode-config',
     content: async () =>
-      `Use /config to change your default permission mode (including Plan Mode)`,
+      tSync('tip.defaultPermissionModeConfig'),
     cooldownSessions: 10,
     isRelevant: async () => {
       try {
@@ -143,7 +143,7 @@ const externalTips: Tip[] = [
   {
     id: 'git-worktrees',
     content: async () =>
-      'Use git worktrees to run multiple Zy sessions in parallel.',
+      tSync('tip.gitWorktrees'),
     cooldownSessions: 10,
     isRelevant: async () => {
       try {
@@ -158,7 +158,7 @@ const externalTips: Tip[] = [
   {
     id: 'color-when-multi-clauding',
     content: async () =>
-      'Running multiple Zy sessions? Use /color and /rename to tell them apart at a glance.',
+      tSync('tip.colorWhenMultiSessions'),
     cooldownSessions: 10,
     isRelevant: async () => {
       if (getCurrentSessionAgentColor()) return false
@@ -170,8 +170,8 @@ const externalTips: Tip[] = [
     id: 'terminal-setup',
     content: async () =>
       env.terminal === 'Apple_Terminal'
-        ? 'Run /terminal-setup to enable convenient terminal integration like Option + Enter for new line and more'
-        : 'Run /terminal-setup to enable convenient terminal integration like Shift + Enter for new line and more',
+        ? tSync('tip.terminalSetupApple')
+        : tSync('tip.terminalSetupOther'),
     cooldownSessions: 10,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -185,8 +185,8 @@ const externalTips: Tip[] = [
     id: 'shift-enter',
     content: async () =>
       env.terminal === 'Apple_Terminal'
-        ? 'Press Option+Enter to send a multi-line message'
-        : 'Press Shift+Enter to send a multi-line message',
+        ? tSync('tip.shiftEnterApple')
+        : tSync('tip.shiftEnterOther'),
     cooldownSessions: 10,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -201,8 +201,8 @@ const externalTips: Tip[] = [
     id: 'shift-enter-setup',
     content: async () =>
       env.terminal === 'Apple_Terminal'
-        ? 'Run /terminal-setup to enable Option+Enter for new lines'
-        : 'Run /terminal-setup to enable Shift+Enter for new lines',
+        ? tSync('tip.shiftEnterSetupApple')
+        : tSync('tip.shiftEnterSetupOther'),
     cooldownSessions: 10,
     async isRelevant() {
       if (!shouldOfferTerminalSetup()) {
@@ -216,7 +216,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'memory-command',
-    content: async () => 'Use /memory to view and manage ZY Code memory',
+    content: async () => tSync('tip.memoryCommand'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -225,21 +225,21 @@ const externalTips: Tip[] = [
   },
   {
     id: 'theme-command',
-    content: async () => 'Use /theme to change the color theme',
+    content: async () => tSync('tip.themeCommand'),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'colorterm-truecolor',
     content: async () =>
-      'Try setting environment variable COLORTERM=truecolor for richer colors',
+      tSync('tip.colortermTruecolor'),
     cooldownSessions: 30,
     isRelevant: async () => !process.env.COLORTERM && chalk.level < 3,
   },
   {
     id: 'powershell-tool-env',
     content: async () =>
-      'Set ZY_CODE_USE_POWERSHELL_TOOL=1 to enable the PowerShell tool (preview)',
+      tSync('tip.powershellToolEnv'),
     cooldownSessions: 10,
     isRelevant: async () =>
       getPlatform() === 'windows' &&
@@ -248,14 +248,14 @@ const externalTips: Tip[] = [
   {
     id: 'status-line',
     content: async () =>
-      'Use /statusline to set up a custom status line that will display beneath the input box',
+      tSync('tip.statusLine'),
     cooldownSessions: 25,
     isRelevant: async () => getSettings_DEPRECATED().statusLine === undefined,
   },
   {
     id: 'prompt-queue',
     content: async () =>
-      'Hit Enter to queue up additional messages while ZY Code is working.',
+      tSync('tip.promptQueue'),
     cooldownSessions: 5,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -265,21 +265,23 @@ const externalTips: Tip[] = [
   {
     id: 'enter-to-steer-in-relatime',
     content: async () =>
-      'Send messages to ZY code while it works to steer ZY Code in real-time',
+      tSync('tip.enterToSteer'),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'todo-list',
     content: async () =>
-      'Ask ZY Code to create a todo list when working on complex tasks to track progress and remain on track',
+      tSync('tip.todoList'),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'vscode-command-install',
-    content: async () =>
-      `Open the Command Palette (Cmd+Shift+P) and run "Shell Command: Install '${env.terminal === 'vscode' ? 'code' : env.terminal}' command in PATH" to enable IDE integration`,
+    content: async () => {
+      const command = env.terminal === 'vscode' ? 'code' : env.terminal
+      return tSync('tip.vscodeCommandInstall', { command })
+    },
     cooldownSessions: 0,
     async isRelevant() {
       // Only show this tip if we're in a VS Code-style terminal
@@ -305,7 +307,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'ide-upsell-external-terminal',
-    content: async () => 'Connect ZY Code to your IDE · /ide',
+    content: async () => tSync('tip.ideUpsellExternalTerminal'),
     cooldownSessions: 4,
     async isRelevant() {
       if (isSupportedTerminal()) {
@@ -325,20 +327,20 @@ const externalTips: Tip[] = [
   {
     id: 'install-github-app',
     content: async () =>
-      'Run /install-github-app to tag @zy right from your Github issues and PRs',
+      tSync('tip.installGithubApp'),
     cooldownSessions: 10,
     isRelevant: async () => !getGlobalConfig().githubActionSetupCount,
   },
   {
     id: 'install-slack-app',
-    content: async () => 'Run /install-slack-app to use ZY Code in Slack',
+    content: async () => tSync('tip.installSlackApp'),
     cooldownSessions: 10,
     isRelevant: async () => !getGlobalConfig().slackAppInstallCount,
   },
   {
     id: 'permissions',
     content: async () =>
-      'Use /permissions to pre-approve and pre-deny bash, edit, and MCP tools',
+      tSync('tip.permissions'),
     cooldownSessions: 10,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -348,42 +350,42 @@ const externalTips: Tip[] = [
   {
     id: 'drag-and-drop-images',
     content: async () =>
-      'Did you know you can drag and drop image files into your terminal?',
+      tSync('tip.dragAndDropImages'),
     cooldownSessions: 10,
     isRelevant: async () => !env.isSSH(),
   },
   {
     id: 'paste-images-mac',
     content: async () =>
-      'Paste images into ZY Code using control+v (not cmd+v!)',
+      tSync('tip.pasteImagesMac'),
     cooldownSessions: 10,
     isRelevant: async () => getPlatform() === 'macos',
   },
   {
     id: 'double-esc',
     content: async () =>
-      'Double-tap esc to rewind the conversation to a previous point in time',
+      tSync('tip.doubleEsc'),
     cooldownSessions: 10,
     isRelevant: async () => !fileHistoryEnabled(),
   },
   {
     id: 'double-esc-code-restore',
     content: async () =>
-      'Double-tap esc to rewind the code and/or conversation to a previous point in time',
+      tSync('tip.doubleEscCodeRestore'),
     cooldownSessions: 10,
     isRelevant: async () => fileHistoryEnabled(),
   },
   {
     id: 'continue',
     content: async () =>
-      'Run zy --continue or zy --resume to resume a conversation',
+      tSync('tip.continue'),
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
   {
     id: 'rename-conversation',
     content: async () =>
-      'Name your conversations with /rename to find them easily in /resume later',
+      tSync('tip.renameConversation'),
     cooldownSessions: 15,
     isRelevant: async () =>
       isCustomTitleEnabled() && getGlobalConfig().numStartups > 10,
@@ -391,7 +393,7 @@ const externalTips: Tip[] = [
   {
     id: 'custom-commands',
     content: async () =>
-      'Create skills by adding .md files to .zy/skills/ in your project or ~/.zy/skills/ for skills that work in any project',
+      tSync('tip.customCommands'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -401,23 +403,21 @@ const externalTips: Tip[] = [
   {
     id: 'shift-tab',
     content: async () =>
-      process.env.USER_TYPE === 'zy-super'
-        ? `Hit ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} to cycle between default mode and auto mode`
-        : `Hit ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} to cycle between default mode, auto-accept edit mode, and plan mode`,
+      tSync('tip.shiftTab', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
   {
     id: 'image-paste',
     content: async () =>
-      `Use ${getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v')} to paste images from your clipboard`,
+      tSync('tip.imagePaste', { shortcut: getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v') }),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'custom-agents',
     content: async () =>
-      'Use /agents to optimize specific tasks. Eg. Software Architect, Code Writer, Code Reviewer',
+      tSync('tip.customAgents'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -427,7 +427,7 @@ const externalTips: Tip[] = [
   {
     id: 'agent-flag',
     content: async () =>
-      'Use --agent <agent_name> to directly start a conversation with a subagent',
+      tSync('tip.agentFlag'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -437,7 +437,7 @@ const externalTips: Tip[] = [
   {
     id: 'desktop-app',
     content: async () =>
-      'Run ZY Code locally or remotely using the Zy desktop app: clau.de/desktop',
+      tSync('tip.desktopApp'),
     cooldownSessions: 15,
     isRelevant: async () => getPlatform() !== 'linux',
   },
@@ -445,7 +445,8 @@ const externalTips: Tip[] = [
     id: 'desktop-shortcut',
     content: async ctx => {
       const blue = color('suggestion', ctx.theme)
-      return `Continue your session in ZY Code Desktop with ${blue('/desktop')}`
+      const text = tSync('tip.desktopShortcut', { shortcut: '/desktop' })
+      return text.replace('/desktop', blue('/desktop'))
     },
     cooldownSessions: 15,
     isRelevant: async () => {
@@ -459,21 +460,21 @@ const externalTips: Tip[] = [
   {
     id: 'web-app',
     content: async () =>
-      'Run tasks in the cloud while you keep coding locally · clau.de/web',
+      tSync('tip.webApp'),
     cooldownSessions: 15,
     isRelevant: async () => true,
   },
   {
     id: 'mobile-app',
     content: async () =>
-      '/mobile to use ZY Code from the Zy app on your phone',
+      tSync('tip.mobileApp'),
     cooldownSessions: 15,
     isRelevant: async () => true,
   },
   {
     id: 'opusplan-mode-reminder',
     content: async () =>
-      `Your default model setting is Opus Plan Mode. Press ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} twice to activate Plan Mode and plan with Zy Opus.`,
+      tSync('tip.opusPlanModeReminder', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
     cooldownSessions: 2,
     async isRelevant() {
       if (process.env.USER_TYPE === 'zy-super') return false
@@ -491,7 +492,8 @@ const externalTips: Tip[] = [
     id: 'frontend-design-plugin',
     content: async ctx => {
       const blue = color('suggestion', ctx.theme)
-      return `Working with HTML/CSS? Install the frontend-design plugin:\n${blue(`/plugin install frontend-design@${OFFICIAL_MARKETPLACE_NAME}`)}`
+      const command = blue(`/plugin install frontend-design@${OFFICIAL_MARKETPLACE_NAME}`)
+      return tSync('tip.frontendDesignPlugin', { command })
     },
     cooldownSessions: 3,
     isRelevant: async context =>
@@ -503,7 +505,8 @@ const externalTips: Tip[] = [
     id: 'vercel-plugin',
     content: async ctx => {
       const blue = color('suggestion', ctx.theme)
-      return `Working with Vercel? Install the vercel plugin:\n${blue(`/plugin install vercel@${OFFICIAL_MARKETPLACE_NAME}`)}`
+      const command = blue(`/plugin install vercel@${OFFICIAL_MARKETPLACE_NAME}`)
+      return tSync('tip.vercelPlugin', { command })
     },
     cooldownSessions: 3,
     isRelevant: async context =>
@@ -521,8 +524,8 @@ const externalTips: Tip[] = [
         'off' | 'copy_a' | 'copy_b'
       >('tengu_tide_elm', 'off')
       return variant === 'copy_b'
-        ? `Use ${cmd} for better one-shot answers. Zy thinks it through first.`
-        : `Working on something tricky? ${cmd} gives better first answers`
+        ? tSync('tip.effortHighB', { cmd })
+        : tSync('tip.effortHighA', { cmd })
     },
     cooldownSessions: 3,
     isRelevant: async () => {
@@ -550,8 +553,8 @@ const externalTips: Tip[] = [
         'off' | 'copy_a' | 'copy_b'
       >('tengu_tern_alloy', 'off')
       return variant === 'copy_b'
-        ? `For big tasks, tell Zy to ${blue('use subagents')}. They work in parallel and keep your main thread clean.`
-        : `Say ${blue('"fan out subagents"')} and Zy sends a team. Each one digs deep so nothing gets missed.`
+        ? tSync('tip.subagentFanoutB', { cmd: blue('use subagents') })
+        : tSync('tip.subagentFanoutA', { cmd: blue('"fan out subagents"') })
     },
     cooldownSessions: 3,
     isRelevant: async () => {
@@ -572,8 +575,8 @@ const externalTips: Tip[] = [
         'off' | 'copy_a' | 'copy_b'
       >('tengu_timber_lark', 'off')
       return variant === 'copy_b'
-        ? `Use ${blue('/loop 5m check the deploy')} to run any prompt on a schedule. Set it and forget it.`
-        : `${blue('/loop')} runs any prompt on a recurring schedule. Great for monitoring deploys, babysitting PRs, or polling status.`
+        ? tSync('tip.loopCommandB', { cmd: blue('/loop 5m check the deploy') })
+        : tSync('tip.loopCommandA', { cmd: blue('/loop') })
     },
     cooldownSessions: 3,
     isRelevant: async () => {
@@ -592,9 +595,10 @@ const externalTips: Tip[] = [
     content: async ctx => {
       const zy = color('zy', ctx.theme)
       const reward = getCachedReferrerReward()
+      const passes = zy('/passes')
       return reward
-        ? `Share ZY Code and earn ${zy(formatCreditAmount(reward))} of extra usage · ${zy('/passes')}`
-        : `You have free guest passes to share · ${zy('/passes')}`
+        ? tSync('tip.guestPasses', { reward: zy(formatCreditAmount(reward)), passes })
+        : tSync('tip.guestPassesNoReward', { passes })
     },
     cooldownSessions: 3,
     isRelevant: async () => {
@@ -613,15 +617,14 @@ const externalTips: Tip[] = [
       const info = getCachedOverageCreditGrant()
       const amount = info ? formatGrantAmount(info) : null
       if (!amount) return ''
-      // Copy from "OC & Bulk Overages copy" doc (#5 — CLI Rotating tip)
-      return `${zy(`${amount} in extra usage, on us`)} · third-party apps · ${zy('/extra-usage')}`
+      return tSync('tip.overageCredit', { amount: zy(`${amount} in extra usage, on us`), command: zy('/extra-usage') })
     },
     cooldownSessions: 3,
     isRelevant: async () => shouldShowOverageCreditUpsell(),
   },
   {
     id: 'feedback-command',
-    content: async () => 'Use /feedback to help us improve!',
+    content: async () => tSync('tip.feedbackCommand'),
     cooldownSessions: 15,
     async isRelevant() {
       if (process.env.USER_TYPE === 'zy-super') {

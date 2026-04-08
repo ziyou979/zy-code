@@ -64,7 +64,7 @@ export const en: TranslationResource = {
   'tip.customCommands':
     'Create skills by adding .md files to .zy/skills/ in your project or ~/.zy/skills/ for skills that work in any project',
   'tip.shiftTab':
-    'Hit {shortcut} to cycle between modes',
+    'Hit {shortcut} to cycle between modes (default, auto-accept edit, and plan mode)',
   'tip.imagePaste':
     'Use {shortcut} to paste images from your clipboard',
   'tip.customAgents':
@@ -102,13 +102,17 @@ export const en: TranslationResource = {
   'tip.guestPassesNoReward':
     'You have free guest passes to share · {passes}',
   'tip.overageCredit':
-    '{amount} · third-party apps · {shortcut}',
+    '{amount} · {command}',
   'tip.feedbackCommand':
     'Use /feedback to help us improve!',
   'tip.clearContext':
     'Use /clear to start fresh when switching topics and free up context',
   'tip.btwSideQuestion':
     'Use /btw to ask a quick side question without interrupting current work',
+  'tip.vscodeCommandInstall':
+    `Open the Command Palette (Cmd+Shift+P) and run "Shell Command: Install '{command}' command in PATH" to enable IDE integration`,
+  'tip.ideUpsellExternalTerminal':
+    'Connect ZY Code to your IDE · /ide',
 
   // Rate limit
   'rateLimit.hit': "You've hit your {limit}",

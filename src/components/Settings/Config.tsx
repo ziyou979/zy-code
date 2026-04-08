@@ -1566,6 +1566,8 @@ export function Config({
         updateSettingsForSource('userSettings', {
           language
         });
+        // Warm i18n so UI text updates immediately
+        void import('src/i18n/index.js').then(m => m.warmI18n());
         void logEvent('tengu_language_changed', {
           language: (language ?? 'default') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS

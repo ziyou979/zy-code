@@ -6,7 +6,7 @@ import type { TranslationResource } from './resourceTypes.js'
 export const zhCN: TranslationResource = {
   // Tips
   'tip.newUserWarmup':
-    '从小功能或 Bug 修复开始，让 Zy 提出方案并验证它的修改建议',
+    '从小功能或 Bug 修复开始，让 ZY Code 提出方案并验证它的修改建议',
   'tip.planModeForComplexTasks':
     '在复杂请求前使用计划模式做准备。按 {shortcut} 两次启用。',
   'tip.defaultPermissionModeConfig': '使用 /config 修改默认权限模式（包括计划模式）',
@@ -62,7 +62,9 @@ export const zhCN: TranslationResource = {
     '{cmd} 可以按设定的间隔运行任何提示。非常适合监控部署、看管 PR 或轮询状态。',
   'tip.guestPasses': '分享 ZY Code 并获得 {reward} 额外用量 · {passes}',
   'tip.guestPassesNoReward': '你有可以分享的访客通行证 · {passes}',
-  'tip.overageCredit': '{amount} · 第三方应用 · {shortcut}',
+  'tip.overageCredit': '{amount} · {command}',
+  'tip.vscodeCommandInstall': '在命令面板（Cmd+Shift+P）中运行"Shell Command: Install \'{command}\' command in PATH"以启用 IDE 集成',
+  'tip.ideUpsellExternalTerminal': '将 ZY Code 连接到你的 IDE · /ide',
   'tip.feedbackCommand': '使用 /feedback 帮助我们改进！',
   'tip.clearContext': '切换话题时使用 /clear 可以释放上下文',
   'tip.btwSideQuestion': '使用 /btw 快速提问，不会打断当前工作',
@@ -161,8 +163,8 @@ export const zhCN: TranslationResource = {
   'common.manage': '管理',
 
   // Summary — search/read/list activities (collapsed tool output)
-  'summary.search.pattern_one': '模式',
-  'summary.search.pattern_other': '模式',
+  'summary.search.pattern_one': '匹配模式',
+  'summary.search.pattern_other': '匹配模式',
   'summary.read.file_one': '文件',
   'summary.read.file_other': '文件',
   'summary.list.directory_one': '目录',

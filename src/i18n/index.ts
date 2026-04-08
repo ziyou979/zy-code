@@ -79,7 +79,7 @@ function interpolate(
  */
 export async function warmI18n(): Promise<void> {
   const settings = getInitialSettings()
-  const lang = resolveUiLanguage(settings.uiLanguage)
+  const lang = resolveUiLanguage(settings.language)
   await loadMessages(lang)
 
   // Also warm the sync cache
@@ -96,7 +96,7 @@ export async function warmI18n(): Promise<void> {
  */
 export function getUiLanguage(): UiLanguage {
   const settings = getInitialSettings()
-  return resolveUiLanguage(settings.uiLanguage)
+  return resolveUiLanguage(settings.language)
 }
 
 /**
