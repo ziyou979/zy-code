@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { useCallback } from 'react';
 import type { ChannelEntry } from '../bootstrap/state.js';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { gracefulShutdownSync } from '../utils/gracefulShutdown.js';
 import { Select } from './CustomSelect/index.js';
@@ -40,8 +41,8 @@ export function DevChannelsDialog(t0) {
   let t2;
   let t3;
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Text>--dangerously-load-development-channels is for local channel development only. Do not use this option to run channels you have downloaded off the internet.</Text>;
-    t3 = <Text>Please use --channels to run a list of approved channels.</Text>;
+    t2 = <Text>{tSync('devChannels.description')}</Text>;
+    t3 = <Text>{tSync('devChannels.useChannels')}</Text>;
     $[2] = t2;
     $[3] = t3;
   } else {
@@ -67,10 +68,10 @@ export function DevChannelsDialog(t0) {
   let t6;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
     t6 = [{
-      label: "I am using this for local development",
+      label: tSync('devChannels.confirmDev'),
       value: "accept"
     }, {
-      label: "Exit",
+      label: tSync('devChannels.exit'),
       value: "exit"
     }];
     $[8] = t6;
@@ -87,7 +88,7 @@ export function DevChannelsDialog(t0) {
   }
   let t8;
   if ($[11] !== t5 || $[12] !== t7) {
-    t8 = <Dialog title="WARNING: Loading development channels" color="error" onCancel={handleEscape}>{t5}{t7}</Dialog>;
+    t8 = <Dialog title={tSync('devChannels.warning')} color="error" onCancel={handleEscape}>{t5}{t7}</Dialog>;
     $[11] = t5;
     $[12] = t7;
     $[13] = t8;
