@@ -31,6 +31,10 @@ export function formatSecondsShort(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
+/**
+ * Formats milliseconds as a human-readable duration string.
+ * English style: "1m 8s", "48s"
+ */
 export function formatDuration(
   ms: number,
   options?: { hideTrailingZeros?: boolean; mostSignificantOnly?: boolean },
@@ -92,6 +96,70 @@ export function formatDuration(
     return `${minutes}m ${seconds}s`
   }
   return `${seconds}s`
+}
+
+/**
+ * Formats milliseconds as a human-readable duration string in Chinese style.
+ * Chinese style: "1分8秒", "48秒"
+ */
+export function formatDurationZh(
+  ms: number,
+  options?: { hideTrailingZeros?: boolean; mostSignificantOnly?: boolean },
+): string {
+  if (ms < 60000) {
+    if (ms === 0) {
+      return '0秒'
+    }
+    if (ms < 1) {
+      const s = (ms / 1000).toFixed(1)
+      return `${s}秒`
+    }
+    const s = Math.floor(ms / 1000).toString()
+    return `${s}秒`
+  }
+
+  let days = Math.floor(ms / 86400000)
+  let hours = Math.floor((ms % 86400000) / 3600000)
+  let minutes = Math.floor((ms % 3600000) / 60000)
+  let seconds = Math.round((ms % 60000) / 1000)
+
+  if (seconds === 60) {
+    seconds = 0
+    minutes++
+  }
+  if (minutes === 60) {
+    minutes = 0
+    hours++
+  }
+  if (hours === 24) {
+    hours = 0
+    days++
+  }
+
+  const hide = options?.hideTrailingZeros
+
+  if (options?.mostSignificantOnly) {
+    if (days > 0) return `${days}天`
+    if (hours > 0) return `${hours}小时`
+    if (minutes > 0) return `${minutes}分`
+    return `${seconds}秒`
+  }
+
+  if (days > 0) {
+    if (hide && hours === 0 && minutes === 0) return `${days}天`
+    if (hide && minutes === 0) return `${days}天${hours}小时`
+    return `${days}天${hours}小时${minutes}分`
+  }
+  if (hours > 0) {
+    if (hide && minutes === 0 && seconds === 0) return `${hours}小时`
+    if (hide && seconds === 0) return `${hours}小时${minutes}分`
+    return `${hours}小时${minutes}分${seconds}秒`
+  }
+  if (minutes > 0) {
+    if (hide && seconds === 0) return `${minutes}分`
+    return `${minutes}分${seconds}秒`
+  }
+  return `${seconds}秒`
 }
 
 // `new Intl.NumberFormat` is expensive, so cache formatters for reuse

@@ -17,6 +17,7 @@ import { isDefaultMode, permissionModeSymbol, permissionModeTitle, getModeColor 
 import { BackgroundTaskStatus } from '../tasks/BackgroundTaskStatus.js';
 import { isBackgroundTask } from '../../tasks/types.js';
 import { isPanelAgentTask } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
+import { tSync } from '../../i18n/index.js';
 import { getVisibleAgentTasks } from '../CoordinatorAgentStatus.js';
 import { count } from '../../utils/array.js';
 import { shouldHideTasksFooter } from '../tasks/taskStatusUtils.js';
@@ -408,7 +409,7 @@ function ModeIndicator({
   const tasksPart = hasBackgroundTasks && !hasTeammatePills && !shouldHideTasksFooter(tasks, showSpinnerTree) ? <BackgroundTaskStatus tasksSelected={tasksSelected} isViewingTeammate={isViewingTeammate} teammateFooterIndex={teammateFooterIndex} isLeaderIdle={!isLoading} onOpenDialog={onOpenTasksDialog} /> : null;
   if (parts.length === 0 && !tasksPart && !modePart && showHint) {
     parts.push(<Text dimColor key="shortcuts-hint">
-        ? for shortcuts
+        {tSync('shortcut.shortcutsHint')}
       </Text>);
   }
 

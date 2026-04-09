@@ -109,6 +109,11 @@ export const zhCN: TranslationResource = {
   'spinner.targetUsed': '目标：已使用 {used}（最低 {budget} {tick}）',
   'spinner.targetPercent': '目标：{used} / {budget} ({pct}%){eta}',
   'spinner.inBackground': '{count} 个后台任务',
+  'spinner.verbWithDuration': '{verb}，耗时 {duration}',
+  'spinner.idleFor': '空闲 {duration}',
+  'thinking.thoughtFor': '思考结束，耗时 {duration}',
+  'shortcut.interrupt': 'esc 中断',
+  'shortcut.shortcutsHint': '? 查看快捷键',
 
   // Notifications
   'notif.authError': '认证错误 · 重试',

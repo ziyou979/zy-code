@@ -157,6 +157,11 @@ export const en: TranslationResource = {
   'spinner.targetUsed': 'Target: {used} used ({budget} min {tick})',
   'spinner.targetPercent': 'Target: {used} / {budget} ({pct}%){eta}',
   'spinner.inBackground': '{count} in background',
+  'spinner.verbWithDuration': '{verb} for {duration}',
+  'spinner.idleFor': 'Idle for {duration}',
+  'thinking.thoughtFor': 'thought for {duration}',
+  'shortcut.interrupt': 'esc to interrupt',
+  'shortcut.shortcutsHint': '? for shortcuts',
 
   // Notifications
   'notif.authError': 'Authentication error · Try again',
@@ -293,4 +298,11 @@ export const en: TranslationResource = {
   'summary.git.prMarkedReady': 'marked ready',
   'summary.line_one': 'line',
   'summary.line_other': 'lines',
+
+  // Logo / Welcome screen
+  'logo.welcomeBack': 'Welcome back!',
+  'logo.welcomeBackUser': 'Welcome back, {username}!',
+  'logo.recentActivity': 'Recent Activity',
+  'logo.noRecentActivity': 'No recent activity',
+  'logo.recentActivityFooter': '/resume to see more',
 }

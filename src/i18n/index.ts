@@ -37,22 +37,34 @@ async function loadMessages(lang: UiLanguage): Promise<Record<string, string>> {
   return _cachedMessages
 }
 
-// Synchronous fallback — uses English strings directly.
-// The async `t()` should be preferred, but for hot paths (spinner animation)
-// we provide a sync path that still respects a pre-warmed cache.
+// Synchronous fallback — tries to load the current language messages
+// synchronously if the async cache hasn't been warmed yet.
 let _syncMessages: Record<string, string> | undefined
+let _syncMessagesLang: string | undefined
 
 function getSyncMessages(): Record<string, string> {
-  if (_syncMessages) return _syncMessages
-  // Synchronously load English as default — this is safe because the English
-  // file is a plain object with no async imports in the compiled output.
-  // For production, the startup code should call warmI18n() first.
+  const lang = getUiLanguage()
+  if (_syncMessages && _syncMessagesLang === lang) return _syncMessages
+  // Try to load the current language synchronously
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _syncMessages = require('./locales/en.js').en
+    if (lang === 'en') {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      _syncMessages = require('./locales/en.js').en
+    } else {
+      const loader = localeLoaders[lang]
+      if (loader) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const localeModule = require(`./locales/${lang}.js`)
+        _syncMessages = lang === 'zh-CN' ? localeModule.zhCN : localeModule[lang]
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        _syncMessages = require('./locales/en.js').en
+      }
+    }
   } catch {
     _syncMessages = {}
   }
+  _syncMessagesLang = lang
   return _syncMessages
 }
 
@@ -82,12 +94,12 @@ export async function warmI18n(): Promise<void> {
   const lang = resolveUiLanguage(settings.language)
   await loadMessages(lang)
 
-  // Also warm the sync cache
+  // Always update the sync cache so tSync can find translations before warmI18n completes
   if (lang === 'en') {
     _syncMessages = _cachedMessages
   } else {
-    // For non-English, keep English as the sync fallback
-    getSyncMessages()
+    // For non-English, load the current language messages into sync cache
+    _syncMessages = _cachedMessages
   }
 }
 
@@ -113,7 +125,7 @@ export async function t(
 }
 
 /**
- * Sync translate — uses the pre-warmed cache or falls back to English.
+ * Sync translate — uses the pre-warmed cache or loads the current locale synchronously.
  * Safe for hot paths like spinner animation.
  */
 export function tSync(

@@ -5,7 +5,8 @@ import { useMemo, useRef } from 'react';
 import { stringWidth } from '../../ink/stringWidth.js';
 import { Box, Text, useAnimationFrame } from '../../ink.js';
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js';
-import { formatDuration, formatNumber } from '../../utils/format.js';
+import { formatDuration, formatDurationZh, formatNumber } from '../../utils/format.js';
+import { getUiLanguage, tSync } from '../../i18n/index.js';
 import { toInkColor } from '../../utils/ink.js';
 import type { Theme } from '../../utils/theme.js';
 import { Byline } from '../design-system/Byline.js';
@@ -169,7 +170,10 @@ export function SpinnerAnimationRow({
   const tokensWidth = stringWidth(tokensText);
 
   // === Thinking text (may shrink to fit) ===
-  let thinkingText = thinkingStatus === 'thinking' ? `thinking${effortSuffix}` : typeof thinkingStatus === 'number' ? `thought for ${Math.max(1, Math.round(thinkingStatus / 1000))}s` : null;
+  const isZh = getUiLanguage() === 'zh-CN';
+  let thinkingText = thinkingStatus === 'thinking' ? `thinking${effortSuffix}` : typeof thinkingStatus === 'number' ? tSync('thinking.thoughtFor', {
+    duration: isZh ? formatDurationZh(thinkingStatus) : formatDuration(thinkingStatus)
+  }) : null;
   let thinkingWidthValue = thinkingText ? stringWidth(thinkingText) : 0;
 
   // === Progressive width gating ===
@@ -213,7 +217,7 @@ export function SpinnerAnimationRow({
               {thinkingText}
             </Text>] : [])];
   const status = foregroundedTeammate && !foregroundedTeammate.isIdle ? <>
-        <Text dimColor>(esc to interrupt </Text>
+        <Text dimColor>({tSync('shortcut.interrupt')} </Text>
         <Text color={toInkColor(foregroundedTeammate.identity.color)}>
           {foregroundedTeammate.identity.agentName}
         </Text>
