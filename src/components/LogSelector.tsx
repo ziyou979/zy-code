@@ -10,6 +10,7 @@ import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { applyColor } from '../ink/colorize.js';
 import type { Color } from '../ink/styles.js';
 import { Box, Text, useInput, useTerminalFocus, useTheme } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { logEvent } from '../services/analytics/index.js';
 import type { LogOption, SerializedMessage } from '../types/logs.js';
@@ -121,7 +122,7 @@ function buildLogLabel(log: LogOption, maxLabelWidth: number, options?: {
   // TreeSelect will add the prefix, so we just need to account for its width
   const prefixWidth = isGroupHeader && forkCount > 0 ? PARENT_PREFIX_WIDTH : isChild ? CHILD_PREFIX_WIDTH : 0;
   const sessionCountSuffix = isGroupHeader && forkCount > 0 ? ` (+${forkCount} other ${forkCount === 1 ? 'session' : 'sessions'})` : '';
-  const sidechainSuffix = log.isSidechain ? ' (sidechain)' : '';
+  const sidechainSuffix = log.isSidechain ? ` ${tSync('logSelector.sidechain')}` : '';
   const maxSummaryWidth = maxLabelWidth - prefixWidth - sidechainSuffix.length - sessionCountSuffix.length;
   const truncatedSummary = normalizeAndTruncateToWidth(getLogDisplayTitle(log), maxSummaryWidth);
   return `${truncatedSummary}${sidechainSuffix}${sessionCountSuffix}`;
@@ -669,7 +670,7 @@ export function LogSelector(t0) {
       if ($[79] !== highlightColor || $[80] !== maxLabelWidth || $[81] !== showAllProjects || $[82] !== snippets) {
         t32 = (log_9, index_0) => {
           const rawSummary = getLogDisplayTitle(log_9);
-          const summaryWithSidechain = rawSummary + (log_9.isSidechain ? " (sidechain)" : "");
+          const summaryWithSidechain = rawSummary + (log_9.isSidechain ? ` ${tSync('logSelector.sidechain')}` : "");
           const summary = normalizeAndTruncateToWidth(summaryWithSidechain, maxLabelWidth);
           const baseDescription = formatLogMetadata(log_9);
           const projectSuffix = showAllProjects && log_9.projectPath ? ` · ${log_9.projectPath}` : "";
@@ -722,9 +723,10 @@ export function LogSelector(t0) {
       const isExpanded = expandedGroupSessionIds.has(sessionId_0);
       const isChildNode = sessionLogs.indexOf(focusedLog) > 0;
       if (isChildNode) {
-        return "\u2190 to collapse";
+        return tSync('logSelector.collapseHint');
       }
-      return isExpanded ? "\u2190 to collapse" : "\u2192 to expand";
+      return isExpanded ? tSync('logSelector.collapseHint') : tSync('logSelector.expandHint');
+    };
     };
     $[84] = displayedLogs;
     $[85] = expandedGroupSessionIds;
@@ -823,7 +825,7 @@ export function LogSelector(t0) {
         }
         setAgenticSearchState({
           status: "error",
-          message: error instanceof Error ? error.message : "Search failed"
+          message: error instanceof Error ? error.message : tSync('logSelector.searchFailed')
         });
         logEvent("tengu_agentic_search_error", {
           query_length: searchQuery.length
@@ -1184,7 +1186,7 @@ export function LogSelector(t0) {
       filterIndicators.push(currentBranch);
     }
     if (hasMultipleWorktrees && !showAllWorktrees) {
-      filterIndicators.push("current worktree");
+      filterIndicators.push(tSync('logSelector.currentWorktree'));
     }
     $[149] = branchFilterEnabled;
     $[150] = currentBranch;
@@ -1263,7 +1265,7 @@ export function LogSelector(t0) {
   }
   let t60;
   if ($[166] !== columns || $[167] !== displayedLogs.length || $[168] !== effectiveTagIndex || $[169] !== focusedIndex || $[170] !== hasTags || $[171] !== showAllProjects || $[172] !== tagTabs || $[173] !== viewMode || $[174] !== visibleCount) {
-    t60 = hasTags ? <TagTabs tabs={tagTabs} selectedIndex={effectiveTagIndex} availableWidth={columns} showAllProjects={showAllProjects} /> : <Box flexShrink={0}><Text bold={true} color="suggestion">Resume Session{viewMode === "list" && displayedLogs.length > visibleCount && <Text dimColor={true}>{" "}({focusedIndex} of {displayedLogs.length})</Text>}</Text></Box>;
+    t60 = hasTags ? <TagTabs tabs={tagTabs} selectedIndex={effectiveTagIndex} availableWidth={columns} showAllProjects={showAllProjects} /> : <Box flexShrink={0}><Text bold={true} color="suggestion">{tSync('logSelector.resumeSession')}{viewMode === "list" && displayedLogs.length > visibleCount && <Text dimColor={true}>{" "}（{focusedIndex} / {displayedLogs.length}）</Text>}</Text></Box>;
     $[166] = columns;
     $[167] = displayedLogs.length;
     $[168] = effectiveTagIndex;
@@ -1307,7 +1309,7 @@ export function LogSelector(t0) {
   }
   let t65;
   if ($[185] !== agenticSearchState.status) {
-    t65 = agenticSearchState.status === "searching" && <Box paddingLeft={1} flexShrink={0}><Spinner /><Text> Searching…</Text></Box>;
+    t65 = agenticSearchState.status === "searching" && <Box paddingLeft={1} flexShrink={0}><Spinner /><Text> {tSync('logSelector.searching')}</Text></Box>;
     $[185] = agenticSearchState.status;
     $[186] = t65;
   } else {
@@ -1315,7 +1317,7 @@ export function LogSelector(t0) {
   }
   let t66;
   if ($[187] !== agenticSearchState.results || $[188] !== agenticSearchState.status) {
-    t66 = agenticSearchState.status === "results" && agenticSearchState.results.length > 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>Zy found these results:</Text></Box>;
+    t66 = agenticSearchState.status === "results" && agenticSearchState.results.length > 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.results')}</Text></Box>;
     $[187] = agenticSearchState.results;
     $[188] = agenticSearchState.status;
     $[189] = t66;
@@ -1324,7 +1326,7 @@ export function LogSelector(t0) {
   }
   let t67;
   if ($[190] !== agenticSearchState.results || $[191] !== agenticSearchState.status || $[192] !== filteredLogs) {
-    t67 = agenticSearchState.status === "results" && agenticSearchState.results.length === 0 && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>No matching sessions found.</Text></Box>;
+    t67 = agenticSearchState.status === "results" && agenticSearchState.results.length === 0 && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.noResults')}</Text></Box>;
     $[190] = agenticSearchState.results;
     $[191] = agenticSearchState.status;
     $[192] = filteredLogs;
@@ -1334,7 +1336,7 @@ export function LogSelector(t0) {
   }
   let t68;
   if ($[194] !== agenticSearchState.status || $[195] !== filteredLogs) {
-    t68 = agenticSearchState.status === "error" && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>No matching sessions found.</Text></Box>;
+    t68 = agenticSearchState.status === "error" && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.noResults')}</Text></Box>;
     $[194] = agenticSearchState.status;
     $[195] = filteredLogs;
     $[196] = t68;
@@ -1343,7 +1345,7 @@ export function LogSelector(t0) {
   }
   let t69;
   if ($[197] !== agenticSearchState.status || $[198] !== isAgenticSearchOptionFocused || $[199] !== onAgenticSearch || $[200] !== searchQuery) {
-    t69 = Boolean(searchQuery.trim()) && onAgenticSearch && false && agenticSearchState.status !== "searching" && agenticSearchState.status !== "results" && agenticSearchState.status !== "error" && <Box flexShrink={0} flexDirection="column"><Box flexDirection="row" gap={1}><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined}>{isAgenticSearchOptionFocused ? figures.pointer : " "}</Text><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined} bold={isAgenticSearchOptionFocused}>Search deeply using Zy →</Text></Box><Box height={1} /></Box>;
+    t69 = Boolean(searchQuery.trim()) && onAgenticSearch && false && agenticSearchState.status !== "searching" && agenticSearchState.status !== "results" && agenticSearchState.status !== "error" && <Box flexShrink={0} flexDirection="column"><Box flexDirection="row" gap={1}><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined}>{isAgenticSearchOptionFocused ? figures.pointer : " "}</Text><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined} bold={isAgenticSearchOptionFocused}>{tSync('logSelector.searchDeeply')} →</Text></Box><Box height={1} /></Box>;
     $[197] = agenticSearchState.status;
     $[198] = isAgenticSearchOptionFocused;
     $[199] = onAgenticSearch;
@@ -1354,7 +1356,7 @@ export function LogSelector(t0) {
   }
   let t70;
   if ($[202] !== agenticSearchState.status || $[203] !== branchFilterEnabled || $[204] !== columns || $[205] !== displayedLogs || $[206] !== expandedGroupSessionIds || $[207] !== flatOptions || $[208] !== focusedLog || $[209] !== focusedNode?.id || $[210] !== handleFlatOptionsSelectFocus || $[211] !== handleRenameSubmit || $[212] !== handleTreeSelectFocus || $[213] !== isAgenticSearchOptionFocused || $[214] !== onCancel || $[215] !== onSelect || $[216] !== renameCursorOffset || $[217] !== renameValue || $[218] !== treeNodes || $[219] !== viewMode || $[220] !== visibleCount) {
-    t70 = agenticSearchState.status === "searching" ? null : viewMode === "rename" && focusedLog ? <Box paddingLeft={2} flexDirection="column"><Text bold={true}>Rename session:</Text><Box paddingTop={1}><TextInput value={renameValue} onChange={setRenameValue} onSubmit={handleRenameSubmit} placeholder={getLogDisplayTitle(focusedLog, "Enter new session name")} columns={columns} cursorOffset={renameCursorOffset} onChangeCursorOffset={setRenameCursorOffset} showCursor={true} /></Box></Box> : isResumeWithRenameEnabled ? <TreeSelect nodes={treeNodes} onSelect={node_0 => {
+    t70 = agenticSearchState.status === "searching" ? null : viewMode === "rename" && focusedLog ? <Box paddingLeft={2} flexDirection="column"><Text bold={true}>{tSync('logSelector.renameSession')}:</Text><Box paddingTop={1}><TextInput value={renameValue} onChange={setRenameValue} onSubmit={handleRenameSubmit} placeholder={getLogDisplayTitle(focusedLog, "Enter new session name")} columns={columns} cursorOffset={renameCursorOffset} onChangeCursorOffset={setRenameCursorOffset} showCursor={true} /></Box></Box> : isResumeWithRenameEnabled ? <TreeSelect nodes={treeNodes} onSelect={node_0 => {
       onSelect(node_0.value.log);
     }} onFocus={handleTreeSelectFocus} onCancel={onCancel} focusNodeId={focusedNode?.id} visibleOptionCount={visibleCount} layout="expanded" isDisabled={viewMode === "search" || isAgenticSearchOptionFocused} hideIndexes={false} isNodeExpanded={nodeId => {
       if (viewMode === "search" || branchFilterEnabled) {
@@ -1409,7 +1411,7 @@ export function LogSelector(t0) {
   }
   let t71;
   if ($[222] !== agenticSearchState.status || $[223] !== currentBranch || $[224] !== exitState.keyName || $[225] !== exitState.pending || $[226] !== getExpandCollapseHint || $[227] !== hasMultipleWorktrees || $[228] !== isAgenticSearchOptionFocused || $[229] !== isSearching || $[230] !== onToggleAllProjects || $[231] !== showAllProjects || $[232] !== showAllWorktrees || $[233] !== viewMode) {
-    t71 = <Box paddingLeft={2}>{exitState.pending ? <Text dimColor={true}>Press {exitState.keyName} again to exit</Text> : viewMode === "rename" ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="save" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : agenticSearchState.status === "searching" ? <Text dimColor={true}><Byline><Text>Searching with Zy…</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : isAgenticSearchOptionFocused ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="search" /><KeyboardShortcutHint shortcut={"\u2193"} action="skip" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : viewMode === "search" ? <Text dimColor={true}><Byline><Text>{isSearching && false ? "Searching\u2026" : "Type to Search"}</Text><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="clear" /></Byline></Text> : <Text dimColor={true}><Byline>{onToggleAllProjects && <KeyboardShortcutHint shortcut="Ctrl+A" action={`show ${showAllProjects ? "current dir" : "all projects"}`} />}{currentBranch && <KeyboardShortcutHint shortcut="Ctrl+B" action="toggle branch" />}{hasMultipleWorktrees && <KeyboardShortcutHint shortcut="Ctrl+W" action={`show ${showAllWorktrees ? "current worktree" : "all worktrees"}`} />}<KeyboardShortcutHint shortcut="Ctrl+V" action="preview" /><KeyboardShortcutHint shortcut="Ctrl+R" action="rename" /><Text>Type to search</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />{getExpandCollapseHint() && <Text>{getExpandCollapseHint()}</Text>}</Byline></Text>}</Box>;
+    t71 = <Box paddingLeft={2}>{exitState.pending ? <Text dimColor={true}>再按一次 {exitState.keyName} 退出</Text> : viewMode === "rename" ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action={tSync('logSelector.save')} /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('logSelector.cancel')} /></Byline></Text> : agenticSearchState.status === "searching" ? <Text dimColor={true}><Byline><Text>{tSync('logSelector.search')}...</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('logSelector.cancel')} /></Byline></Text> : isAgenticSearchOptionFocused ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action={tSync('logSelector.search')} /><KeyboardShortcutHint shortcut={"\u2193"} action={tSync('logSelector.skip')} /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('logSelector.cancel')} /></Byline></Text> : viewMode === "search" ? <Text dimColor={true}><Byline><Text>{isSearching && false ? "搜索中…" : tSync('logSelector.typeToSearch')}</Text><KeyboardShortcutHint shortcut="Enter" action={tSync('common.select')} /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('logSelector.clear')} /></Byline></Text> : <Text dimColor={true}><Byline>{onToggleAllProjects && <KeyboardShortcutHint shortcut="Ctrl+A" action={`显示 ${showAllProjects ? "当前目录" : "所有项目"}`} />}{currentBranch && <KeyboardShortcutHint shortcut="Ctrl+B" action="切换分支" />}{hasMultipleWorktrees && <KeyboardShortcutHint shortcut="Ctrl+W" action={`显示 ${showAllWorktrees ? tSync('logSelector.currentWorktree') : "所有 worktrees"}`} />}<KeyboardShortcutHint shortcut="Ctrl+V" action={tSync('logSelector.preview')} /><KeyboardShortcutHint shortcut="Ctrl+R" action={tSync('logSelector.rename')} /><Text>{tSync('logSelector.typeToSearch')}</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('logSelector.cancel')} />{getExpandCollapseHint() && <Text>{getExpandCollapseHint()}</Text>}</Byline></Text>}</Box>;
     $[222] = agenticSearchState.status;
     $[223] = currentBranch;
     $[224] = exitState.keyName;
