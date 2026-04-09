@@ -10,6 +10,7 @@ import { Spinner } from '../components/Spinner.js';
 import { restoreCostStateForSession } from '../cost-tracker.js';
 import { setClipboard } from '../ink/termio/osc.js';
 import { Box, Text } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../services/analytics/index.js';
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../services/mcp/types.js';
@@ -299,13 +300,13 @@ export function ResumeConversation({
   if (loading) {
     return <Box>
         <Spinner />
-        <Text> Loading conversations…</Text>
+        <Text> {tSync('resume.loading')}</Text>
       </Box>;
   }
   if (resuming) {
     return <Box>
         <Spinner />
-        <Text> Resuming conversation…</Text>
+        <Text> {tSync('resume.resuming')}</Text>
       </Box>;
   }
   if (filteredLogs.length === 0) {
@@ -327,7 +328,7 @@ function NoConversationsMessage() {
   useKeybinding("app:interrupt", _temp, t0);
   let t1;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Box flexDirection="column"><Text>No conversations found to resume.</Text><Text dimColor={true}>Press Ctrl+C to exit and start a new conversation.</Text></Box>;
+    t1 = <Box flexDirection="column"><Text>{tSync('resume.noConversations')}</Text><Text dimColor={true}>{tSync('resume.exitHint')}</Text></Box>;
     $[1] = t1;
   } else {
     t1 = $[1];
@@ -352,14 +353,14 @@ function CrossProjectMessage(t0) {
   React.useEffect(_temp3, t1);
   let t2;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Text>This conversation is from a different directory.</Text>;
+    t2 = <Text>{tSync('resume.crossProject')}</Text>;
     $[1] = t2;
   } else {
     t2 = $[1];
   }
   let t3;
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Text>To resume, run:</Text>;
+    t3 = <Text>{tSync('resume.crossProjectCommand')}</Text>;
     $[2] = t3;
   } else {
     t3 = $[2];
@@ -374,7 +375,7 @@ function CrossProjectMessage(t0) {
   }
   let t5;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text dimColor={true}>(Command copied to clipboard)</Text>;
+    t5 = <Text dimColor={true}>（{tSync('resume.commandCopied')}）</Text>;
     $[5] = t5;
   } else {
     t5 = $[5];

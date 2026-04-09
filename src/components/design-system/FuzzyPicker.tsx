@@ -6,6 +6,7 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { clamp } from '../../ink/layout/geometry.js';
 import { Box, Text, useTerminalFocus } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { SearchBox } from '../SearchBox.js';
 import { Byline } from './Byline.js';
 import { KeyboardShortcutHint } from './KeyboardShortcutHint.js';
@@ -67,7 +68,7 @@ const CHROME_ROWS = 10;
 const MIN_VISIBLE = 2;
 export function FuzzyPicker<T>({
   title,
-  placeholder = 'Type to search…',
+  placeholder = tSync('fuzzyPicker.placeholder'),
   initialQuery,
   items,
   getKey,
@@ -82,9 +83,9 @@ export function FuzzyPicker<T>({
   onShiftTab,
   onFocus,
   onCancel,
-  emptyMessage = 'No results',
+  emptyMessage = tSync('fuzzyPicker.noResults'),
   matchLabel,
-  selectAction = 'select',
+  selectAction = tSync('fuzzyPicker.select'),
   extraHints
 }: Props<T>): React.ReactNode {
   const isTerminalFocused = useTerminalFocus();

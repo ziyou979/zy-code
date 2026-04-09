@@ -7,6 +7,7 @@ import { McpParsingWarnings } from 'src/components/mcp/McpParsingWarnings.js';
 import { getModelMaxOutputTokens } from 'src/utils/context.js';
 import { getZyConfigHomeDir } from 'src/utils/envUtils.js';
 import type { SettingSource } from 'src/utils/settings/constants.js';
+import { tSync } from '../i18n/index.js';
 import { getOriginalCwd } from '../bootstrap/state.js';
 import type { CommandResultDisplay } from '../commands.js';
 import { Pane } from '../components/design-system/Pane.js';
@@ -63,7 +64,7 @@ function DistTagsDisplay(t0) {
   if (!distTags.latest) {
     let t1;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true}>└ Failed to fetch versions</Text>;
+      t1 = <Text dimColor={true}>└ {tSync('doctor.failedToFetchVersions')}</Text>;
       $[0] = t1;
     } else {
       t1 = $[0];
@@ -72,7 +73,7 @@ function DistTagsDisplay(t0) {
   }
   let t1;
   if ($[1] !== distTags.stable) {
-    t1 = distTags.stable && <Text>└ Stable version: {distTags.stable}</Text>;
+    t1 = distTags.stable && <Text>└ {tSync('doctor.stableVersion')}: {distTags.stable}</Text>;
     $[1] = distTags.stable;
     $[2] = t1;
   } else {
@@ -80,7 +81,7 @@ function DistTagsDisplay(t0) {
   }
   let t2;
   if ($[3] !== distTags.latest) {
-    t2 = <Text>└ Latest version: {distTags.latest}</Text>;
+    t2 = <Text>└ {tSync('doctor.latestVersion')}: {distTags.latest}</Text>;
     $[3] = distTags.latest;
     $[4] = t2;
   } else {
@@ -222,7 +223,7 @@ export function Doctor(t0) {
   let t7;
   if ($[11] !== onDone) {
     t7 = () => {
-      onDone("ZY Code diagnostics dismissed", {
+      onDone(tSync('doctor.dismissed'), {
         display: "system"
       });
     };
@@ -256,7 +257,7 @@ export function Doctor(t0) {
   if (!diagnostic) {
     let t10;
     if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t10 = <Pane><Text dimColor={true}>Checking installation status…</Text></Pane>;
+      t10 = <Pane><Text dimColor={true}>{tSync('doctor.checking')}</Text></Pane>;
       $[16] = t10;
     } else {
       t10 = $[16];
@@ -265,7 +266,7 @@ export function Doctor(t0) {
   }
   let t10;
   if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-    t10 = <Text bold={true}>Diagnostics</Text>;
+    t10 = <Text bold={true}>{tSync('doctor.title')}</Text>;
     $[17] = t10;
   } else {
     t10 = $[17];
@@ -305,13 +306,13 @@ export function Doctor(t0) {
   }
   let t15;
   if ($[27] !== diagnostic.configInstallMethod) {
-    t15 = <Text>└ Config install method: {diagnostic.configInstallMethod}</Text>;
+    t15 = <Text>└ {tSync('doctor.configInstallMethod')}: {diagnostic.configInstallMethod}</Text>;
     $[27] = diagnostic.configInstallMethod;
     $[28] = t15;
   } else {
     t15 = $[28];
   }
-  const t16 = diagnostic.ripgrepStatus.working ? "OK" : "Not working";
+  const t16 = diagnostic.ripgrepStatus.working ? tSync('doctor.searchOk') : tSync('doctor.searchNotWorking');
   const t17 = diagnostic.ripgrepStatus.mode === "embedded" ? "bundled" : diagnostic.ripgrepStatus.mode === "builtin" ? "vendor" : diagnostic.ripgrepStatus.systemPath || "system";
   let t18;
   if ($[29] !== t16 || $[30] !== t17) {
@@ -324,7 +325,7 @@ export function Doctor(t0) {
   }
   let t19;
   if ($[32] !== diagnostic.recommendation) {
-    t19 = diagnostic.recommendation && <><Text /><Text color="warning">Recommendation: {diagnostic.recommendation.split("\n")[0]}</Text><Text dimColor={true}>{diagnostic.recommendation.split("\n")[1]}</Text></>;
+    t19 = diagnostic.recommendation && <><Text /><Text color="warning">{tSync('doctor.recommendation')}: {diagnostic.recommendation.split("\n")[0]}</Text><Text dimColor={true}>{diagnostic.recommendation.split("\n")[1]}</Text></>;
     $[32] = diagnostic.recommendation;
     $[33] = t19;
   } else {
@@ -332,7 +333,7 @@ export function Doctor(t0) {
   }
   let t20;
   if ($[34] !== diagnostic.multipleInstallations) {
-    t20 = diagnostic.multipleInstallations.length > 1 && <><Text /><Text color="warning">Warning: Multiple installations found</Text>{diagnostic.multipleInstallations.map(_temp1)}</>;
+    t20 = diagnostic.multipleInstallations.length > 1 && <><Text /><Text color="warning">{tSync('doctor.warningMultipleInstallations')}</Text>{diagnostic.multipleInstallations.map(_temp1)}</>;
     $[34] = diagnostic.multipleInstallations;
     $[35] = t20;
   } else {
@@ -348,7 +349,7 @@ export function Doctor(t0) {
   }
   let t22;
   if ($[38] !== errorsExcludingMcp) {
-    t22 = errorsExcludingMcp.length > 0 && <Box flexDirection="column" marginTop={1} marginBottom={1}><Text bold={true}>Invalid Settings</Text><ValidationErrorsList errors={errorsExcludingMcp} /></Box>;
+    t22 = errorsExcludingMcp.length > 0 && <Box flexDirection="column" marginTop={1} marginBottom={1}><Text bold={true}>{tSync('doctor.invalidSettings')}</Text><ValidationErrorsList errors={errorsExcludingMcp} /></Box>;
     $[38] = errorsExcludingMcp;
     $[39] = t22;
   } else {
@@ -373,12 +374,12 @@ export function Doctor(t0) {
   }
   let t24;
   if ($[51] === Symbol.for("react.memo_cache_sentinel")) {
-    t24 = <Text bold={true}>Updates</Text>;
+    t24 = <Text bold={true}>{tSync('doctor.updates')}</Text>;
     $[51] = t24;
   } else {
     t24 = $[51];
   }
-  const t25 = diagnostic.packageManager ? "Managed by package manager" : diagnostic.autoUpdates;
+  const t25 = diagnostic.packageManager ? tSync('doctor.managedByPackageManager') : diagnostic.autoUpdates;
   let t26;
   if ($[52] !== t25) {
     t26 = <Text>└ Auto-updates:{" "}{t25}</Text>;
@@ -389,7 +390,7 @@ export function Doctor(t0) {
   }
   let t27;
   if ($[54] !== diagnostic.hasUpdatePermissions) {
-    t27 = diagnostic.hasUpdatePermissions !== null && <Text>└ Update permissions:{" "}{diagnostic.hasUpdatePermissions ? "Yes" : "No (requires sudo)"}</Text>;
+    t27 = diagnostic.hasUpdatePermissions !== null && <Text>└ {tSync('doctor.updatePermissions')}:{" "}{diagnostic.hasUpdatePermissions ? tSync('doctor.yes') : tSync('doctor.noRequiresSudo')}</Text>;
     $[54] = diagnostic.hasUpdatePermissions;
     $[55] = t27;
   } else {
@@ -397,7 +398,7 @@ export function Doctor(t0) {
   }
   let t28;
   if ($[56] === Symbol.for("react.memo_cache_sentinel")) {
-    t28 = <Text>└ Auto-update channel: {autoUpdatesChannel}</Text>;
+    t28 = <Text>└ {tSync('doctor.autoUpdateChannel')}: {autoUpdatesChannel}</Text>;
     $[56] = t28;
   } else {
     t28 = $[56];
@@ -426,7 +427,7 @@ export function Doctor(t0) {
     t31 = <SandboxDoctorSection />;
     t32 = <McpParsingWarnings />;
     t33 = <KeybindingWarnings />;
-    t34 = envValidationErrors.length > 0 && <Box flexDirection="column"><Text bold={true}>Environment Variables</Text>{envValidationErrors.map(_temp11)}</Box>;
+    t34 = envValidationErrors.length > 0 && <Box flexDirection="column"><Text bold={true}>{tSync('doctor.environmentVariables')}</Text>{envValidationErrors.map(_temp11)}</Box>;
     $[61] = t31;
     $[62] = t32;
     $[63] = t33;
@@ -439,7 +440,7 @@ export function Doctor(t0) {
   }
   let t35;
   if ($[65] !== versionLockInfo) {
-    t35 = versionLockInfo?.enabled && <Box flexDirection="column"><Text bold={true}>Version Locks</Text>{versionLockInfo.staleLocksCleaned > 0 && <Text dimColor={true}>└ Cleaned {versionLockInfo.staleLocksCleaned} stale lock(s)</Text>}{versionLockInfo.locks.length === 0 ? <Text dimColor={true}>└ No active version locks</Text> : versionLockInfo.locks.map(_temp12)}</Box>;
+    t35 = versionLockInfo?.enabled && <Box flexDirection="column"><Text bold={true}>{tSync('doctor.versionLocks')}</Text>{versionLockInfo.staleLocksCleaned > 0 && <Text dimColor={true}>└ {tSync('doctor.cleanedStaleLocks')} {versionLockInfo.staleLocksCleaned} {tSync('doctor.staleLocks')}</Text>}{versionLockInfo.locks.length === 0 ? <Text dimColor={true}>└ {tSync('doctor.noActiveLocks')}</Text> : versionLockInfo.locks.map(_temp12)}</Box>;
     $[65] = versionLockInfo;
     $[66] = t35;
   } else {
@@ -447,7 +448,7 @@ export function Doctor(t0) {
   }
   let t36;
   if ($[67] !== agentInfo) {
-    t36 = agentInfo?.failedFiles && agentInfo.failedFiles.length > 0 && <Box flexDirection="column"><Text bold={true} color="error">Agent Parse Errors</Text><Text color="error">└ Failed to parse {agentInfo.failedFiles.length} agent file(s):</Text>{agentInfo.failedFiles.map(_temp13)}</Box>;
+    t36 = agentInfo?.failedFiles && agentInfo.failedFiles.length > 0 && <Box flexDirection="column"><Text bold={true} color="error">{tSync('doctor.agentParseErrors')}</Text><Text color="error">└ {tSync('doctor.failedToParse')} {agentInfo.failedFiles.length} {tSync('doctor.agentFiles')}:</Text>{agentInfo.failedFiles.map(_temp13)}</Box>;
     $[67] = agentInfo;
     $[68] = t36;
   } else {
@@ -455,7 +456,7 @@ export function Doctor(t0) {
   }
   let t37;
   if ($[69] !== pluginsErrors) {
-    t37 = pluginsErrors.length > 0 && <Box flexDirection="column"><Text bold={true} color="error">Plugin Errors</Text><Text color="error">└ {pluginsErrors.length} plugin error(s) detected:</Text>{pluginsErrors.map(_temp14)}</Box>;
+    t37 = pluginsErrors.length > 0 && <Box flexDirection="column"><Text bold={true} color="error">{tSync('doctor.pluginErrors')}</Text><Text color="error">└ {tSync('doctor.pluginErrorsDetected')} {pluginsErrors.length} {tSync('doctor.pluginErrorCount')}:</Text>{pluginsErrors.map(_temp14)}</Box>;
     $[69] = pluginsErrors;
     $[70] = t37;
   } else {
@@ -463,7 +464,7 @@ export function Doctor(t0) {
   }
   let t38;
   if ($[71] !== contextWarnings) {
-    t38 = contextWarnings?.unreachableRulesWarning && <Box flexDirection="column"><Text bold={true} color="warning">Unreachable Permission Rules</Text><Text>└{" "}<Text color="warning">{figures.warning}{" "}{contextWarnings.unreachableRulesWarning.message}</Text></Text>{contextWarnings.unreachableRulesWarning.details.map(_temp15)}</Box>;
+    t38 = contextWarnings?.unreachableRulesWarning && <Box flexDirection="column"><Text bold={true} color="warning">{tSync('doctor.unreachableRules')}</Text><Text>└{" "}<Text color="warning">{figures.warning}{" "}{contextWarnings.unreachableRulesWarning.message}</Text></Text>{contextWarnings.unreachableRulesWarning.details.map(_temp15)}</Box>;
     $[71] = contextWarnings;
     $[72] = t38;
   } else {
@@ -471,7 +472,7 @@ export function Doctor(t0) {
   }
   let t39;
   if ($[73] !== contextWarnings) {
-    t39 = contextWarnings && (contextWarnings.zyMdWarning || contextWarnings.agentWarning || contextWarnings.mcpWarning) && <Box flexDirection="column"><Text bold={true}>Context Usage Warnings</Text>{contextWarnings.zyMdWarning && <><Text>└{" "}<Text color="warning">{figures.warning} {contextWarnings.zyMdWarning.message}</Text></Text><Text>{"  "}└ Files:</Text>{contextWarnings.zyMdWarning.details.map(_temp16)}</>}{contextWarnings.agentWarning && <><Text>└{" "}<Text color="warning">{figures.warning} {contextWarnings.agentWarning.message}</Text></Text><Text>{"  "}└ Top contributors:</Text>{contextWarnings.agentWarning.details.map(_temp17)}</>}{contextWarnings.mcpWarning && <><Text>└{" "}<Text color="warning">{figures.warning} {contextWarnings.mcpWarning.message}</Text></Text><Text>{"  "}└ MCP servers:</Text>{contextWarnings.mcpWarning.details.map(_temp18)}</>}</Box>;
+    t39 = contextWarnings && (contextWarnings.zyMdWarning || contextWarnings.agentWarning || contextWarnings.mcpWarning) && <Box flexDirection="column"><Text bold={true}>{tSync('doctor.contextWarnings')}</Text>{contextWarnings.zyMdWarning && <><Text>└{" "}<Text color="warning">{figures.warning} {contextWarnings.zyMdWarning.message}</Text></Text><Text>{"  "}└ {tSync('status.cwd')}:</Text>{contextWarnings.zyMdWarning.details.map(_temp16)}</>}{contextWarnings.agentWarning && <><Text>└{" "}<Text color="warning">{figures.warning} {contextWarnings.agentWarning.message}</Text></Text><Text>{"  "}└ Top contributors:</Text>{contextWarnings.agentWarning.details.map(_temp17)}</>}{contextWarnings.mcpWarning && <><Text>└{" "}<Text color="warning">{figures.warning} {contextWarnings.mcpWarning.message}</Text></Text><Text>{"  "}└ MCP servers:</Text>{contextWarnings.mcpWarning.details.map(_temp18)}</>}</Box>;
     $[73] = contextWarnings;
     $[74] = t39;
   } else {
@@ -519,7 +520,7 @@ function _temp13(file, i_3) {
   return <Text key={i_3} dimColor={true}>{"  "}└ {file.path}: {file.error}</Text>;
 }
 function _temp12(lock, i_2) {
-  return <Text key={i_2}>└ {lock.version}: PID {lock.pid}{" "}{lock.isProcessRunning ? <Text>(running)</Text> : <Text color="warning">(stale)</Text>}</Text>;
+  return <Text key={i_2}>└ {lock.version}: PID {lock.pid}{" "}{lock.isProcessRunning ? <Text>（{tSync('doctor.running')}）</Text> : <Text color="warning">（{tSync('doctor.stale')}）</Text>}</Text>;
 }
 function _temp11(validation, i_1) {
   return <Text key={i_1}>└ {validation.name}:{" "}<Text color={validation.status === "capped" ? "warning" : "error"}>{validation.message}</Text></Text>;

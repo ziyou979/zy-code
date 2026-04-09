@@ -5,6 +5,7 @@ import { Suspense, use } from 'react';
 import { getSessionId } from '../../bootstrap/state.js';
 import type { LocalJSXCommandContext } from '../../commands.js';
 import { useIsInsideModal } from '../../context/modalContext.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text, useTheme } from '../../ink.js';
 import { type AppState, useAppState } from '../../state/AppState.js';
 import { getCwd } from '../../utils/cwd.js';
@@ -19,18 +20,18 @@ type Props = {
 function buildPrimarySection(): Property[] {
   const sessionId = getSessionId();
   const customTitle = getCurrentSessionTitle(sessionId);
-  const nameValue = customTitle ?? <Text dimColor>/rename to add a name</Text>;
+  const nameValue = customTitle ?? <Text dimColor>{tSync('status.noName')}</Text>;
   return [{
-    label: 'Version',
+    label: tSync('status.version'),
     value: MACRO.VERSION
   }, {
-    label: 'Session name',
+    label: tSync('status.sessionName'),
     value: nameValue
   }, {
-    label: 'Session ID',
+    label: tSync('status.sessionId'),
     value: sessionId
   }, {
-    label: 'cwd',
+    label: tSync('status.cwd'),
     value: getCwd()
   }, ...buildAccountProperties(), ...buildAPIProviderProperties()];
 }
@@ -47,7 +48,7 @@ function buildSecondarySection({
 }): Property[] {
   const modelLabel = getModelDisplayLabel(mainLoopModel);
   return [{
-    label: 'Model',
+    label: tSync('status.model'),
     value: modelLabel
   }, ...buildIDEProperties(mcp.clients, context.options.ideInstallationStatus, theme), ...buildMcpProperties(mcp.clients, theme), ...buildSandboxProperties(), ...buildSettingSourcesProperties()];
 }
@@ -212,7 +213,7 @@ function Diagnostics(t0) {
   }
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Text bold={true}>System Diagnostics</Text>;
+    t1 = <Text bold={true}>{tSync('status.diagnostics')}</Text>;
     $[0] = t1;
   } else {
     t1 = $[0];

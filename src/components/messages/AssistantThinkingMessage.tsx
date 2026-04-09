@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import type { ThinkingBlock, ThinkingBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import React from 'react';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
 import { Markdown } from '../Markdown.js';
 type Props = {
@@ -41,7 +42,7 @@ export function AssistantThinkingMessage(t0) {
     const t4 = addMargin ? 1 : 0;
     let t5;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t5 = <Text dimColor={true} italic={true}>{"\u2234 Thinking"} <CtrlOToExpand /></Text>;
+      t5 = <Text dimColor={true} italic={true}>{`\u2234 ${tSync('assistantThinking.label')}`} <CtrlOToExpand /></Text>;
       $[0] = t5;
     } else {
       t5 = $[0];
@@ -59,7 +60,7 @@ export function AssistantThinkingMessage(t0) {
   const t4 = addMargin ? 1 : 0;
   let t5;
   if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text dimColor={true} italic={true}>{"\u2234 Thinking"}…</Text>;
+    t5 = <Text dimColor={true} italic={true}>{`\u2234 ${tSync('assistantThinking.thinking')}`}</Text>;
     $[3] = t5;
   } else {
     t5 = $[3];

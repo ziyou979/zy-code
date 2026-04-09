@@ -6,6 +6,7 @@ import { useRegisterOverlay } from '../context/overlayContext.js';
 import { generateFileSuggestions } from '../hooks/fileSuggestions.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { Text } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { logEvent } from '../services/analytics/index.js';
 import { getCwd } from '../utils/cwd.js';
 import { openFileInExternalEditor } from '../utils/editor.js';
@@ -112,7 +113,7 @@ export function QuickOpenDialog(t0) {
         }
         setPreview({
           path: focusedPath,
-          content: "(preview unavailable)"
+          content: tSync('quickOpen.previewUnavailable')
         });
       });
       return () => controller.abort();
@@ -168,7 +169,7 @@ export function QuickOpenDialog(t0) {
   let t10;
   if ($[15] !== handleInsert) {
     t10 = {
-      action: "mention",
+      action: tSync('quickOpen.insertMention'),
       handler: p_4 => handleInsert(p_4, true)
     };
     $[15] = handleInsert;
@@ -179,7 +180,7 @@ export function QuickOpenDialog(t0) {
   let t11;
   if ($[17] !== handleInsert) {
     t11 = {
-      action: "insert path",
+      action: tSync('quickOpen.insertPath'),
       handler: p_5 => handleInsert(p_5, false)
     };
     $[17] = handleInsert;
@@ -197,7 +198,7 @@ export function QuickOpenDialog(t0) {
   }
   let t13;
   if ($[21] !== preview || $[22] !== previewWidth || $[23] !== query) {
-    t13 = p_7 => preview ? <><Text dimColor={true}>{truncatePathMiddle(p_7, previewWidth)}{preview.path !== p_7 ? " \xB7 loading\u2026" : ""}</Text>{preview.content.split("\n").map((line, i_1) => <Text key={i_1}>{highlightMatch(truncateToWidth(line, previewWidth), query)}</Text>)}</> : <LoadingState message={"Loading preview\u2026"} dimColor={true} />;
+    t13 = p_7 => preview ? <><Text dimColor={true}>{truncatePathMiddle(p_7, previewWidth)}{preview.path !== p_7 ? ` \xB7 ${tSync('quickOpen.previewLoading')}` : ""}</Text>{preview.content.split("\n").map((line, i_1) => <Text key={i_1}>{highlightMatch(truncateToWidth(line, previewWidth), query)}</Text>)}</> : <LoadingState message={tSync('quickOpen.previewLoading')} dimColor={true} />;
     $[21] = preview;
     $[22] = previewWidth;
     $[23] = query;
@@ -207,7 +208,7 @@ export function QuickOpenDialog(t0) {
   }
   let t14;
   if ($[25] !== handleOpen || $[26] !== onDone || $[27] !== results || $[28] !== t10 || $[29] !== t11 || $[30] !== t12 || $[31] !== t13 || $[32] !== t9 || $[33] !== visibleResults) {
-    t14 = <FuzzyPicker title="Quick Open" placeholder={"Type to search files\u2026"} items={results} getKey={_temp5} visibleCount={visibleResults} direction="up" previewPosition={t9} onQueryChange={handleQueryChange} onFocus={setFocusedPath} onSelect={handleOpen} onTab={t10} onShiftTab={t11} onCancel={onDone} emptyMessage={_temp6} selectAction="open in editor" renderItem={t12} renderPreview={t13} />;
+    t14 = <FuzzyPicker title={tSync('quickOpen.title')} placeholder={tSync('quickOpen.placeholder')} items={results} getKey={_temp5} visibleCount={visibleResults} direction="up" previewPosition={t9} onQueryChange={handleQueryChange} onFocus={setFocusedPath} onSelect={handleOpen} onTab={t10} onShiftTab={t11} onCancel={onDone} emptyMessage={_temp6} selectAction={tSync('quickOpen.action')} renderItem={t12} renderPreview={t13} />;
     $[25] = handleOpen;
     $[26] = onDone;
     $[27] = results;
@@ -224,7 +225,7 @@ export function QuickOpenDialog(t0) {
   return t14;
 }
 function _temp6(q_0) {
-  return q_0 ? "No matching files" : "Start typing to search\u2026";
+  return q_0 ? tSync('quickOpen.noResults') : tSync('quickOpen.startTyping');
 }
 function _temp5(p_3) {
   return p_3;

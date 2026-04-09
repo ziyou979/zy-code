@@ -245,4 +245,205 @@ export const zhCN: TranslationResource = {
   'logo.recentActivity': '最近对话',
   'logo.noRecentActivity': '暂无最近对话',
   'logo.recentActivityFooter': '/resume 查看更多',
+
+  // Resume conversation
+  'resume.loading': '正在加载对话…',
+  'resume.resuming': '正在恢复对话…',
+  'resume.noConversations': '未找到可恢复的对话。',
+  'resume.exitHint': '按 Ctrl+C 退出并开始新对话。',
+  'resume.crossProject': '此对话来自其他目录。',
+  'resume.crossProjectCommand': '如需恢复，请运行：',
+  'resume.commandCopied': '（命令已复制到剪贴板）',
+
+  // Idle return dialog
+  'idleReturn.description': '如果是新任务，清除上下文将节省用量并更快响应。',
+  'idleReturn.continue': '继续此对话',
+  'idleReturn.newConversation': '作为新对话发送消息',
+  'idleReturn.neverAsk': '不再询问',
+
+  // Invalid config dialog
+  'invalidConfig.title': '配置错误',
+  'invalidConfig.prompt': '选择一个选项：',
+  'invalidConfig.exit': '退出并手动修复',
+  'invalidConfig.reset': '重置为默认配置',
+
+  // Quick open dialog
+  'quickOpen.title': '快速打开',
+  'quickOpen.placeholder': '输入以搜索文件…',
+  'quickOpen.previewLoading': '正在加载预览…',
+  'quickOpen.previewUnavailable': '（预览不可用）',
+  'quickOpen.noResults': '未找到匹配的文件',
+  'quickOpen.startTyping': '开始输入以搜索…',
+  'quickOpen.action': '在编辑器中打开',
+  'quickOpen.insertMention': '引用',
+  'quickOpen.insertPath': '插入路径',
+
+  // Fuzzy picker
+  'fuzzyPicker.placeholder': '输入以搜索…',
+  'fuzzyPicker.noResults': '无结果',
+  'fuzzyPicker.select': '选择',
+
+  // Settings tabs
+  'settings.statusTab': '状态',
+  'settings.configTab': '配置',
+  'settings.usageTab': '用量',
+  'settings.gatesTab': '门控',
+  'settings.dismissed': '状态对话框已关闭',
+
+  // Status panel
+  'status.noName': '/rename 以添加名称',
+  'status.version': '版本',
+  'status.sessionName': '会话名称',
+  'status.sessionId': '会话 ID',
+  'status.cwd': '工作目录',
+  'status.model': '模型',
+  'status.diagnostics': '系统诊断',
+
+  // Doctor screen
+  'doctor.dismissed': 'ZY Code 诊断已关闭',
+  'doctor.checking': '正在检查安装状态…',
+  'doctor.title': '诊断',
+  'doctor.currentlyRunning': '当前运行：',
+  'doctor.path': '路径',
+  'doctor.invoked': '调用',
+  'doctor.configInstallMethod': '配置安装方式',
+  'doctor.searchOk': '正常',
+  'doctor.searchNotWorking': '不可用',
+  'doctor.recommendation': '建议',
+  'doctor.warningMultipleInstallations': '警告：发现多个安装',
+  'doctor.updates': '更新',
+  'doctor.autoUpdates': '自动更新',
+  'doctor.managedByPackageManager': '由包管理器管理',
+  'doctor.updatePermissions': '更新权限',
+  'doctor.yes': '是',
+  'doctor.noRequiresSudo': '否（需要 sudo）',
+  'doctor.autoUpdateChannel': '自动更新通道',
+  'doctor.failedToFetchVersions': '获取版本失败',
+  'doctor.stableVersion': '稳定版',
+  'doctor.latestVersion': '最新版',
+  'doctor.versionLocks': '版本锁定',
+  'doctor.noActiveLocks': '无活跃的版本锁定',
+  'doctor.staleLocks': '个过时锁',
+  'doctor.cleanedStaleLocks': '已清理',
+  'doctor.running': '运行中',
+  'doctor.stale': '已过期',
+  'doctor.agentParseErrors': 'Agent 解析错误',
+  'doctor.failedToParse': '解析了',
+  'doctor.agentFiles': '个 agent 文件失败',
+  'doctor.pluginErrors': '插件错误',
+  'doctor.pluginErrorsDetected': '检测到',
+  'doctor.pluginErrorCount': '个插件错误',
+  'doctor.unreachableRules': '不可达的权限规则',
+  'doctor.contextWarnings': '上下文使用警告',
+  'doctor.invalidSettings': '无效设置',
+  'doctor.environmentVariables': '环境变量',
+
+  // Background tasks dialog
+  'backgroundTasks.title': '后台任务',
+  'backgroundTasks.noTasks': '当前没有运行中的任务',
+  'backgroundTasks.dismissed': '后台任务对话框已关闭',
+  'backgroundTasks.agents': 'Agent',
+  'backgroundTasks.shells': 'Shell',
+  'backgroundTasks.monitors': '监控器',
+  'backgroundTasks.remoteAgents': '远程 Agent',
+  'backgroundTasks.localAgents': '本地 Agent',
+  'backgroundTasks.workflows': '工作流',
+  'backgroundTasks.team': '团队',
+  'backgroundTasks.activeShells': '活跃 Shell',
+  'backgroundTasks.activeAgents': '活跃 Agent',
+  'backgroundTasks.activeShell': '活跃 Shell',
+  'backgroundTasks.activeAgent': '活跃 Agent',
+  'backgroundTasks.agent': '个 Agent',
+  'backgroundTasks.agentSingular': '个 Agent',
+  'backgroundTasks.pressAgainToExit': '再按一次 {key} 退出',
+  'backgroundTasks.action.select': '选择',
+  'backgroundTasks.action.view': '查看',
+  'backgroundTasks.action.foreground': '前台',
+  'backgroundTasks.action.stop': '停止',
+  'backgroundTasks.action.stopAll': '停止所有 Agent',
+  'backgroundTasks.action.close': '关闭',
+
+  // Tag tabs
+  'tagTabs.all': '全部',
+  'tagTabs.resume': '恢复',
+  'tagTabs.resumeAllProjects': '恢复（所有项目）',
+  'tagTabs.leftArrow': '← ',
+  'tagTabs.rightHint': ' （tab 切换）',
+  'tagTabs.rightHintNoCount': '（tab 切换）',
+
+  // Compact boundary message
+  'compact.compacted': '对话已压缩（{shortcut} 查看历史）',
+
+  // Assistant thinking
+  'assistantThinking.label': '思考中',
+  'assistantThinking.thinking': '思考中…',
+
+  // Interrupted by user
+  'interruptedByUser.label': '已中断',
+  'interruptedByUser.whatNext': 'ZY 接下来应该做什么？',
+
+  // Shutdown messages
+  'shutdown.request': '来自 {from} 的关闭请求',
+  'shutdown.reason': '原因：{reason}',
+  'shutdown.rejected': '被 {from} 拒绝关闭',
+  'shutdown.teammateContinuing': '队友正在继续工作，稍后可以再次请求关闭。',
+  'shutdown.summaryRequest': '[关闭请求 来自 {from}]',
+  'shutdown.summaryApproved': '[关闭已批准] {from} 正在退出',
+  'shutdown.summaryRejected': '[关闭被拒绝] {from}：{reason}',
+
+  // Fallback tool error
+  'fallbackToolError.executionFailed': '工具执行失败',
+  'fallbackToolError.invalidParams': '工具参数无效',
+  'fallbackToolError.moreLines': '+{n} 行（{shortcut} 查看全部）',
+  'fallbackToolError.lineSingular': '行',
+  'fallbackToolError.linePlural': '行',
+
+  // Common messages
+  'common.noContent': '（无内容）',
+
+  // Dev channels dialog
+  'devChannels.warning': '警告：加载开发通道',
+  'devChannels.description': '--dangerously-load-development-channels 仅用于本地通道开发。请勿使用此选项运行从互联网下载的通道。',
+  'devChannels.useChannels': '请使用 --channels 运行已批准的通道列表。',
+  'devChannels.confirmDev': '我正在用于本地开发',
+  'devChannels.exit': '退出',
+
+  // MCP server dialog
+  'mcpServer.select': '选择要启用的服务器',
+  'mcpServer.rejectAll': '全部拒绝',
+  'mcpServer.warning': 'MCP 服务器可能执行代码或访问系统资源。所有工具调用都需要审批。了解更多请在 MCP 文档。',
+
+  // Background task status
+  'backgroundTaskStatus.toView': '查看',
+
+  // Shell progress
+  'shellProgress.done': '完成',
+  'shellProgress.error': '错误',
+  'shellProgress.stopped': '已停止',
+
+  // Log selector / session search
+  'logSelector.searching': '搜索中…',
+  'logSelector.results': 'ZY 找到了这些结果：',
+  'logSelector.noResults': '未找到匹配的会话。',
+  'logSelector.renameSession': '重命名会话：',
+  'logSelector.searchDeeply': '使用 ZY 深度搜索',
+  'logSelector.currentWorktree': '当前 worktree',
+  'logSelector.resumeSession': '恢复会话',
+  'logSelector.searchFailed': '搜索失败',
+  'logSelector.collapseHint': '<- 收起',
+  'logSelector.expandHint': '-> 展开',
+  'logSelector.sidechain': '（侧链）',
+  'logSelector.showCurrentDir': '显示当前目录',
+  'logSelector.showAllProjects': '显示所有项目',
+  'logSelector.toggleBranch': '切换分支',
+  'logSelector.showCurrentWorktree': '显示当前 worktree',
+  'logSelector.showAllWorktrees': '显示所有 worktrees',
+  'logSelector.preview': '预览',
+  'logSelector.rename': '重命名',
+  'logSelector.cancel': '取消',
+  'logSelector.save': '保存',
+  'logSelector.search': '搜索',
+  'logSelector.skip': '跳过',
+  'logSelector.clear': '清除',
+  'logSelector.typeToSearch': '输入以搜索',
 }

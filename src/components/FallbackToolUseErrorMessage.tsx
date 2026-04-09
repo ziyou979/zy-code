@@ -5,6 +5,7 @@ import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js';
 import { extractTag } from 'src/utils/messages.js';
 import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js';
 import { Box, Text } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
 import { countCharInString } from '../utils/stringUtils.js';
 import { MessageResponse } from './MessageResponse.js';
@@ -30,14 +31,14 @@ export function FallbackToolUseErrorMessage(t0) {
   if ($[0] !== result || $[1] !== verbose) {
     let error;
     if (typeof result !== "string") {
-      error = "Tool execution failed";
+      error = tSync('fallbackToolError.executionFailed');
     } else {
       const extractedError = extractTag(result, "tool_use_error") ?? result;
       const withoutSandboxViolations = removeSandboxViolationTags(extractedError);
       const withoutErrorTags = withoutSandboxViolations.replace(/<\/?error>/g, "");
       const trimmed = withoutErrorTags.trim();
       if (!verbose && trimmed.includes("InputValidationError: ")) {
-        error = "Invalid tool parameters";
+        error = tSync('fallbackToolError.invalidParams');
       } else {
         if (trimmed.startsWith("Error: ") || trimmed.startsWith("Cancelled: ")) {
           error = trimmed;
@@ -83,7 +84,7 @@ export function FallbackToolUseErrorMessage(t0) {
   }
   let t5;
   if ($[13] !== plusLines || $[14] !== transcriptShortcut || $[15] !== verbose) {
-    t5 = !verbose && plusLines > 0 && <Box><Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"} (</Text><Text dimColor={true} bold={true}>{transcriptShortcut}</Text><Text> </Text><Text dimColor={true}>to see all)</Text></Box>;
+    t5 = !verbose && plusLines > 0 && <Box><Text dimColor={true}>… +{plusLines} {plusLines === 1 ? tSync('fallbackToolError.lineSingular') : tSync('fallbackToolError.linePlural')} (</Text><Text dimColor={true} bold={true}>{transcriptShortcut}</Text><Text> </Text><Text dimColor={true}>{tSync('fallbackToolError.moreLines', { n: plusLines, shortcut: transcriptShortcut }).split(' ')[0]}</Text></Box>;
     $[13] = plusLines;
     $[14] = transcriptShortcut;
     $[15] = verbose;

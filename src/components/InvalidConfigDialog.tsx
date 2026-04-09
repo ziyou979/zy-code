@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, render, Text } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
 import { AppStateProvider } from '../state/AppState.js';
 import type { ConfigParseError } from '../utils/errors.js';
@@ -73,7 +74,7 @@ function InvalidConfigDialog(t0) {
   }
   let t5;
   if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text bold={true}>Choose an option:</Text>;
+    t5 = <Text bold={true}>{tSync('invalidConfig.prompt')}</Text>;
     $[10] = t5;
   } else {
     t5 = $[10];
@@ -81,10 +82,10 @@ function InvalidConfigDialog(t0) {
   let t6;
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
     t6 = [{
-      label: "Exit and fix manually",
+      label: tSync('invalidConfig.exit'),
       value: "exit"
     }, {
-      label: "Reset with default configuration",
+      label: tSync('invalidConfig.reset'),
       value: "reset"
     }];
     $[11] = t6;
@@ -102,7 +103,7 @@ function InvalidConfigDialog(t0) {
   }
   let t8;
   if ($[15] !== onExit || $[16] !== t4 || $[17] !== t7) {
-    t8 = <Dialog title="Configuration Error" color="error" onCancel={onExit}>{t4}{t7}</Dialog>;
+    t8 = <Dialog title={tSync('invalidConfig.title')} color="error" onCancel={onExit}>{t4}{t7}</Dialog>;
     $[15] = onExit;
     $[16] = t4;
     $[17] = t7;
