@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import type { ReactNode } from 'react';
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Text } from 'src/ink.js';
 import type { TaskStatus } from 'src/Task.js';
 import type { LocalShellTaskState } from 'src/tasks/LocalShellTask/guards.js';
@@ -41,7 +42,7 @@ export function ShellProgress(t0) {
       {
         let t1;
         if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <TaskStatusText status="completed" label="done" />;
+          t1 = <TaskStatusText status="completed" label={tSync('shellProgress.done')} />;
           $[0] = t1;
         } else {
           t1 = $[0];
@@ -52,7 +53,7 @@ export function ShellProgress(t0) {
       {
         let t1;
         if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <TaskStatusText status="failed" label="error" />;
+          t1 = <TaskStatusText status="failed" label={tSync('shellProgress.error')} />;
           $[1] = t1;
         } else {
           t1 = $[1];
@@ -63,7 +64,7 @@ export function ShellProgress(t0) {
       {
         let t1;
         if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <TaskStatusText status="killed" label="stopped" />;
+          t1 = <TaskStatusText status="killed" label={tSync('shellProgress.stopped')} />;
           $[2] = t1;
         } else {
           t1 = $[2];

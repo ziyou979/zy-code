@@ -11,6 +11,7 @@ import { getPillLabel, pillNeedsCta } from 'src/tasks/pillLabel.js';
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js';
 import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { AGENT_COLOR_TO_THEME_COLOR, AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js';
 import type { Theme } from '../../utils/theme.js';
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
@@ -215,7 +216,7 @@ export function BackgroundTaskStatus(t0) {
   }
   let t10;
   if ($[43] !== runningTasks) {
-    t10 = pillNeedsCta(runningTasks) && <Text dimColor={true}> · {figures.arrowDown} to view</Text>;
+    t10 = pillNeedsCta(runningTasks) && <Text dimColor={true}> · {figures.arrowDown} {tSync('backgroundTaskStatus.toView')}</Text>;
     $[43] = runningTasks;
     $[44] = t10;
   } else {
