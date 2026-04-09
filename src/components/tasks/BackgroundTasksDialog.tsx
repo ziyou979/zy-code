@@ -22,6 +22,7 @@ import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/
 import type { DeepImmutable } from 'src/types/utils.js';
 import { intersperse } from 'src/utils/array.js';
 import { TEAM_LEAD_NAME } from 'src/utils/swarm/constants.js';
+import { tSync } from '../../i18n/index.js';
 import { stopUltraplan } from '../../commands/ultraplan.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useRegisterOverlay } from '../../context/overlayContext.js';
@@ -232,7 +233,7 @@ export function BackgroundTasksDialog({
       if (current) {
         if (current.type === 'leader') {
           exitTeammateView(setAppState);
-          onDone('Viewing leader', {
+          onDone(tSync('backgroundTasks.dismissed'), {
             display: 'system'
           });
         } else {
@@ -255,7 +256,7 @@ export function BackgroundTasksDialog({
     if (viewState.mode !== 'list') return;
     if (e.key === 'left') {
       e.preventDefault();
-      onDone('Background tasks dialog dismissed', {
+      onDone(tSync('backgroundTasks.dismissed'), {
         display: 'system'
       });
       return;
@@ -291,13 +292,13 @@ export function BackgroundTasksDialog({
       if (currentSelection_0.type === 'in_process_teammate' && currentSelection_0.status === 'running') {
         e.preventDefault();
         enterTeammateView(currentSelection_0.id, setAppState);
-        onDone('Viewing teammate', {
+        onDone(tSync('backgroundTasks.dismissed'), {
           display: 'system'
         });
       } else if (currentSelection_0.type === 'leader') {
         e.preventDefault();
         exitTeammateView(setAppState);
-        onDone('Viewing leader', {
+        onDone(tSync('backgroundTasks.dismissed'), {
           display: 'system'
         });
       }
@@ -353,7 +354,7 @@ export function BackgroundTasksDialog({
   // then a second task started, 'back' should show the list — not close.
   const goBackToList = () => {
     if (skippedListOnMount.current && allSelectableItems.length <= 1) {
-      onDone('Background tasks dialog dismissed', {
+      onDone(tSync('backgroundTasks.dismissed'), {
         display: 'system'
       });
     } else {
@@ -382,7 +383,7 @@ export function BackgroundTasksDialog({
       case 'in_process_teammate':
         return <InProcessTeammateDetailDialog teammate={task_0} onDone={onDone} onKill={task_0.status === 'running' ? () => void killTeammateTask(task_0.id) : undefined} onBack={goBackToList} onForeground={task_0.status === 'running' ? () => {
           enterTeammateView(task_0.id, setAppState);
-          onDone('Viewing teammate', {
+          onDone(tSync('backgroundTasks.dismissed'), {
             display: 'system'
           });
         } : undefined} key={`teammate-${task_0.id}`} />;
@@ -403,30 +404,30 @@ export function BackgroundTasksDialog({
   const runningTeammateCount = count(teammateTasks, __2 => __2.status === 'running');
   const subtitle = intersperse([...(runningTeammateCount > 0 ? [<Text key="teammates">
               {runningTeammateCount}{' '}
-              {runningTeammateCount !== 1 ? 'agents' : 'agent'}
+              {runningTeammateCount !== 1 ? tSync('backgroundTasks.agent') : tSync('backgroundTasks.agentSingular')}
             </Text>] : []), ...(runningBashCount > 0 ? [<Text key="shells">
               {runningBashCount}{' '}
-              {runningBashCount !== 1 ? 'active shells' : 'active shell'}
+              {runningBashCount !== 1 ? tSync('backgroundTasks.activeShells') : tSync('backgroundTasks.activeShell')}
             </Text>] : []), ...(runningAgentCount > 0 ? [<Text key="agents">
               {runningAgentCount}{' '}
-              {runningAgentCount !== 1 ? 'active agents' : 'active agent'}
+              {runningAgentCount !== 1 ? tSync('backgroundTasks.activeAgents') : tSync('backgroundTasks.activeAgent')}
             </Text>] : [])], index => <Text key={`separator-${index}`}> · </Text>);
-  const actions = [<KeyboardShortcutHint key="upDown" shortcut="↑/↓" action="select" />, <KeyboardShortcutHint key="enter" shortcut="Enter" action="view" />, ...(currentSelection?.type === 'in_process_teammate' && currentSelection.status === 'running' ? [<KeyboardShortcutHint key="foreground" shortcut="f" action="foreground" />] : []), ...((currentSelection?.type === 'local_bash' || currentSelection?.type === 'local_agent' || currentSelection?.type === 'in_process_teammate' || currentSelection?.type === 'local_workflow' || currentSelection?.type === 'monitor_mcp' || currentSelection?.type === 'dream' || currentSelection?.type === 'remote_agent') && currentSelection.status === 'running' ? [<KeyboardShortcutHint key="kill" shortcut="x" action="stop" />] : []), ...(agentTasks.some(t => t.status === 'running') ? [<KeyboardShortcutHint key="kill-all" shortcut={killAgentsShortcut} action="stop all agents" />] : []), <KeyboardShortcutHint key="esc" shortcut="←/Esc" action="close" />];
+  const actions = [<KeyboardShortcutHint key="upDown" shortcut="↑/↓" action={tSync('backgroundTasks.action.select')} />, <KeyboardShortcutHint key="enter" shortcut="Enter" action={tSync('backgroundTasks.action.view')} />, ...(currentSelection?.type === 'in_process_teammate' && currentSelection.status === 'running' ? [<KeyboardShortcutHint key="foreground" shortcut="f" action={tSync('backgroundTasks.action.foreground')} />] : []), ...((currentSelection?.type === 'local_bash' || currentSelection?.type === 'local_agent' || currentSelection?.type === 'in_process_teammate' || currentSelection?.type === 'local_workflow' || currentSelection?.type === 'monitor_mcp' || currentSelection?.type === 'dream' || currentSelection?.type === 'remote_agent') && currentSelection.status === 'running' ? [<KeyboardShortcutHint key="kill" shortcut="x" action={tSync('backgroundTasks.action.stop')} />] : []), ...(agentTasks.some(t => t.status === 'running') ? [<KeyboardShortcutHint key="kill-all" shortcut={killAgentsShortcut} action={tSync('backgroundTasks.action.stopAll')} />] : []), <KeyboardShortcutHint key="esc" shortcut="←/Esc" action={tSync('backgroundTasks.action.close')} />];
   const handleCancel = () => onDone('Background tasks dialog dismissed', {
     display: 'system'
   });
   function renderInputGuide(exitState: ExitState): React.ReactNode {
     if (exitState.pending) {
-      return <Text>Press {exitState.keyName} again to exit</Text>;
+      return <Text>{tSync('backgroundTasks.pressAgainToExit', { key: exitState.keyName })}</Text>;
     }
     return <Byline>{actions}</Byline>;
   }
   return <Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
-      <Dialog title="Background tasks" subtitle={<>{subtitle}</>} onCancel={handleCancel} color="background" inputGuide={renderInputGuide}>
-        {allSelectableItems.length === 0 ? <Text dimColor>No tasks currently running</Text> : <Box flexDirection="column">
+      <Dialog title={tSync('backgroundTasks.title')} subtitle={<>{subtitle}</>} onCancel={handleCancel} color="background" inputGuide={renderInputGuide}>
+        {allSelectableItems.length === 0 ? <Text dimColor>{tSync('backgroundTasks.noTasks')}</Text> : <Box flexDirection="column">
             {teammateTasks.length > 0 && <Box flexDirection="column">
                 {(bashTasks.length > 0 || remoteSessions.length > 0 || agentTasks.length > 0) && <Text dimColor>
-                    <Text bold>{'  '}Agents</Text> (
+                    <Text bold>{'  '}{tSync('backgroundTasks.agents')}</Text> (
                     {count(teammateTasks, i => i.type !== 'leader')})
                   </Text>}
                 <Box flexDirection="column">
@@ -436,7 +437,7 @@ export function BackgroundTasksDialog({
 
             {bashTasks.length > 0 && <Box flexDirection="column" marginTop={teammateTasks.length > 0 ? 1 : 0}>
                 {(teammateTasks.length > 0 || remoteSessions.length > 0 || agentTasks.length > 0) && <Text dimColor>
-                    <Text bold>{'  '}Shells</Text> ({bashTasks.length})
+                    <Text bold>{'  '}{tSync('backgroundTasks.shells')}</Text> ({bashTasks.length})
                   </Text>}
                 <Box flexDirection="column">
                   {bashTasks.map(item_6 => <Item key={item_6.id} item={item_6} isSelected={item_6.id === currentSelection?.id} />)}
@@ -445,7 +446,7 @@ export function BackgroundTasksDialog({
 
             {mcpMonitors.length > 0 && <Box flexDirection="column" marginTop={teammateTasks.length > 0 || bashTasks.length > 0 ? 1 : 0}>
                 <Text dimColor>
-                  <Text bold>{'  '}Monitors</Text> ({mcpMonitors.length})
+                  <Text bold>{'  '}{tSync('backgroundTasks.monitors')}</Text> ({mcpMonitors.length})
                 </Text>
                 <Box flexDirection="column">
                   {mcpMonitors.map(item_7 => <Item key={item_7.id} item={item_7} isSelected={item_7.id === currentSelection?.id} />)}
@@ -454,7 +455,7 @@ export function BackgroundTasksDialog({
 
             {remoteSessions.length > 0 && <Box flexDirection="column" marginTop={teammateTasks.length > 0 || bashTasks.length > 0 || mcpMonitors.length > 0 ? 1 : 0}>
                 <Text dimColor>
-                  <Text bold>{'  '}Remote agents</Text> ({remoteSessions.length}
+                  <Text bold>{'  '}{tSync('backgroundTasks.remoteAgents')}</Text> ({remoteSessions.length}
                   )
                 </Text>
                 <Box flexDirection="column">
@@ -464,7 +465,7 @@ export function BackgroundTasksDialog({
 
             {agentTasks.length > 0 && <Box flexDirection="column" marginTop={teammateTasks.length > 0 || bashTasks.length > 0 || mcpMonitors.length > 0 || remoteSessions.length > 0 ? 1 : 0}>
                 <Text dimColor>
-                  <Text bold>{'  '}Local agents</Text> ({agentTasks.length})
+                  <Text bold>{'  '}{tSync('backgroundTasks.localAgents')}</Text> ({agentTasks.length})
                 </Text>
                 <Box flexDirection="column">
                   {agentTasks.map(item_9 => <Item key={item_9.id} item={item_9} isSelected={item_9.id === currentSelection?.id} />)}
@@ -473,7 +474,7 @@ export function BackgroundTasksDialog({
 
             {workflowTasks.length > 0 && <Box flexDirection="column" marginTop={teammateTasks.length > 0 || bashTasks.length > 0 || mcpMonitors.length > 0 || remoteSessions.length > 0 || agentTasks.length > 0 ? 1 : 0}>
                 <Text dimColor>
-                  <Text bold>{'  '}Workflows</Text> ({workflowTasks.length})
+                  <Text bold>{'  '}{tSync('backgroundTasks.workflows')}</Text> ({workflowTasks.length})
                 </Text>
                 <Box flexDirection="column">
                   {workflowTasks.map(item_10 => <Item key={item_10.id} item={item_10} isSelected={item_10.id === currentSelection?.id} />)}
@@ -633,7 +634,7 @@ function TeammateTaskGroups(t0) {
     t1 = <>{teamEntries.map(t2 => {
         const [teamName_0, items] = t2;
         const memberCount = items.length + leaderItems.length;
-        return <Box key={teamName_0} flexDirection="column"><Text dimColor={true}>{"  "}Team: {teamName_0} ({memberCount})</Text>{leaderItems.map(item_0 => <Item key={`${item_0.id}-${teamName_0}`} item={item_0} isSelected={item_0.id === currentSelectionId} />)}{items.map(item_1 => <Item key={item_1.id} item={item_1} isSelected={item_1.id === currentSelectionId} />)}</Box>;
+        return <Box key={teamName_0} flexDirection="column"><Text dimColor={true}>{"  "}{tSync('backgroundTasks.team')}: {teamName_0} ({memberCount})</Text>{leaderItems.map(item_0 => <Item key={`${item_0.id}-${teamName_0}`} item={item_0} isSelected={item_0.id === currentSelectionId} />)}{items.map(item_1 => <Item key={item_1.id} item={item_1} isSelected={item_1.id === currentSelectionId} />)}</Box>;
       })}</>;
     $[0] = currentSelectionId;
     $[1] = teammateTasks;
