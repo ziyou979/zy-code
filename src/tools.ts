@@ -11,14 +11,16 @@ import { NotebookEditTool } from './tools/NotebookEditTool/NotebookEditTool.js'
 import { WebFetchTool } from './tools/WebFetchTool/WebFetchTool.js'
 import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
 import { BriefTool } from './tools/BriefTool/BriefTool.js'
+import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
+
 // Dead code elimination: conditional import for ant-only tools
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 const REPLTool =
-  process.env.USER_TYPE === 'zy-super'
+  isInternalBuild()
     ? require('./tools/REPLTool/REPLTool.js').REPLTool
     : null
 const SuggestBackgroundPRTool =
-  process.env.USER_TYPE === 'zy-super'
+  isInternalBuild()
     ? require('./tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.js')
         .SuggestBackgroundPRTool
     : null
@@ -136,7 +138,6 @@ const WorkflowTool = feature('WORKFLOW_SCRIPTS')
 import type { ToolPermissionContext } from './Tool.js'
 import { getDenyRuleForTool } from './utils/permissions/permissions.js'
 import { hasEmbeddedSearchTools } from './utils/embeddedTools.js'
-import { isEnvTruthy } from './utils/envUtils.js'
 import { isPowerShellToolEnabled } from './utils/shell/shellToolUtils.js'
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js'
@@ -173,7 +174,6 @@ export function parseToolPreset(preset: string): ToolPreset | null {
 /**
  * Get the list of tool names for a given preset
  * Filters out tools that are disabled via isEnabled() check
- * @param preset The preset name
  * @returns Array of tool names
  */
 export function getToolsForDefaultPreset(): string[] {
@@ -211,8 +211,8 @@ export function getAllBaseTools(): Tools {
     AskUserQuestionTool,
     SkillTool,
     EnterPlanModeTool,
-    ...(process.env.USER_TYPE === 'zy-super' ? [ConfigTool] : []),
-    ...(process.env.USER_TYPE === 'zy-super' ? [TungstenTool] : []),
+    ...(isInternalBuild() ? [ConfigTool] : []),
+    ...(isInternalBuild() ? [TungstenTool] : []),
     ...(SuggestBackgroundPRTool ? [SuggestBackgroundPRTool] : []),
     ...(WebBrowserTool ? [WebBrowserTool] : []),
     ...(isTodoV2Enabled()
