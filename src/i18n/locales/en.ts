@@ -386,4 +386,22 @@ export const en: TranslationResource = {
   'help.newlineShift': 'shift + \u23CE for newline',
   'help.newlineBackslash': '\\\u23CE for newline',
   'help.newlineBackslashFull': 'backslash (\\) + return (\u23CE) for newline',
+
+  // Permission mode
+  'permissionMode.on': 'on',
+
+  // System message
+  'systemMessage.verbWithDuration': '{verb} for {duration}',
+  'systemMessage.tasksStillRunning': '{count} still running',
+
+  // Attachment
+  'attachment.completed': 'completed in background',
+  'attachment.stopped': 'stopped',
+  'attachment.stillRunning': 'still running in background',
+
+  // Teammate
+  'teammate.toolUseCount_one': '{count} tool use',
+  'teammate.toolUseCount_other': '{count} tool uses',
+  'teammate.tokenCount': '{count} tokens',
+  'teammate.enterToView': 'enter to view',
 }

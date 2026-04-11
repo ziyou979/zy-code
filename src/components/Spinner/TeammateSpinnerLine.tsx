@@ -14,6 +14,14 @@ import { formatDuration, formatDurationZh, formatNumber, truncateToWidth } from 
 import { getUiLanguage, tSync } from '../../i18n/index.js';
 import { toInkColor } from '../../utils/ink.js';
 import { TEAMMATE_SELECT_HINT } from './teammateSelectHint.js';
+
+function formatToolUseCount(count: number): string {
+  return tSync('teammate.toolUseCount', { count });
+}
+
+function formatTokenCount(count: number): string {
+  return tSync('teammate.tokenCount', { count });
+}
 type Props = {
   teammate: InProcessTeammateTaskState;
   isLast: boolean;
@@ -128,11 +136,11 @@ export function TeammateSpinnerLine({
   // Get stats from progress
   const toolUseCount = teammate.progress?.toolUseCount ?? 0;
   const tokenCount = teammate.progress?.tokenCount ?? 0;
-  const statsText = ` · ${toolUseCount} tool ${toolUseCount === 1 ? 'use' : 'uses'} · ${formatNumber(tokenCount)} tokens`;
+  const statsText = ` · ${formatToolUseCount(toolUseCount)} · ${formatTokenCount(tokenCount)}`;
   const statsWidth = stringWidth(statsText);
   const selectHintText = ` · ${TEAMMATE_SELECT_HINT}`;
   const selectHintWidth = stringWidth(selectHintText);
-  const viewHintText = ' · enter to view';
+  const viewHintText = ` · ${tSync('teammate.enterToView')}`;
   const viewHintWidth = stringWidth(viewHintText);
 
   // Progressive responsive layout:
@@ -218,8 +226,8 @@ export function TeammateSpinnerLine({
         {/* Stats: only shown when selected and terminal is wide enough */}
         {showStats && <Text dimColor>
             {' '}
-            · {toolUseCount} tool {toolUseCount === 1 ? 'use' : 'uses'} ·{' '}
-            {formatNumber(tokenCount)} tokens
+            · {formatToolUseCount(toolUseCount)} ·{' '}
+            {formatTokenCount(tokenCount)}
           </Text>}
         {/* Hints: select hint when highlighted, view hint when selected but not foregrounded */}
         {showSelectHint && <Text dimColor> · {TEAMMATE_SELECT_HINT}</Text>}

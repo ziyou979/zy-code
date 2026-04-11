@@ -12,14 +12,14 @@ type Props = {
   pose?: ZyPose;
 };
 
-// 鸟形状 — 展翅飞翔的鸟
-// 5行 × 8列
+// 水母形状 — 海绵宝宝风格的可爱水母 🪼
+// 5行 × 13列，严格左右对称（中心在索引6）
 //
-//  视觉:   ▗▄▖    ← 头部
-//         ▄█████▄ ← 展开的双翼
-//          █████  ← 身体中部
-//           ███   ← 身体下部
-//            █    ← 尾尖
+//  视觉:   ▄▀▀▀▀▀▀▀▄    ← 圆顶
+//         █  ●   ●  █   ← 身体 + 眼睛
+//         █  ▀▀▀  █     ← 嘴巴
+//         ▀▄     ▄▀     ← 两侧弯须
+//          ▀▄▀▀▀▄▀      ← 底部触须
 //
 // Colors: 主体 = clawd_body color
 //         背景填充 = clawd_background fill
@@ -33,32 +33,32 @@ type Segments = {
 
 const POSES: Record<ZyPose, Segments> = {
   default: {
-    r1: '  ▗▄▖    ',
-    r2: ' ▄█████▄ ',
-    r3: '  █████  ',
-    r4: '   ███   ',
-    r5: '    █    ',
+    r1: '  ▄▀▀▀▀▀▀▀▄  ',
+    r2: ' █  ●   ●  █ ',
+    r3: '  █  ▀▀▀  █  ',
+    r4: '  ▀▄     ▄▀  ',
+    r5: '   ▀▄▀▀▀▄▀   ',
   },
   soaring: {
-    r1: '  ▗▄▖    ',
-    r2: '▄███████▄',
-    r3: '  █████  ',
-    r4: '   ███   ',
-    r5: '    █    ',
+    r1: ' ▄▀▀▀▀▀▀▀▀▀▄ ',
+    r2: '█  ●     ●  █',
+    r3: '█    ▀▀▀    █',
+    r4: '▀▄         ▄▀',
+    r5: '  ▀▄▀▀▀▀▀▄▀  ',
   },
   'tilt-left': {
-    r1: ' ▗▄▖     ',
-    r2: '▄█████▄  ',
-    r3: ' █████   ',
-    r4: '  ███    ',
-    r5: '   █     ',
+    r1: ' ▄▀▀▀▀▀▀▀▄   ',
+    r2: '█  ●   ●  █  ',
+    r3: ' █  ▀▀▀  █   ',
+    r4: ' ▀▄     ▄▀   ',
+    r5: '  ▀▄▀▀▀▄▀    ',
   },
   'tilt-right': {
-    r1: '   ▗▄▖   ',
-    r2: '  ▄█████▄',
-    r3: '   █████ ',
-    r4: '    ███  ',
-    r5: '     █   ',
+    r1: '   ▄▀▀▀▀▀▀▀▄ ',
+    r2: '  █  ●   ●  █',
+    r3: '   █  ▀▀▀  █ ',
+    r4: '   ▀▄     ▄▀ ',
+    r5: '    ▀▄▀▀▀▄▀  ',
   },
 };
 
@@ -98,13 +98,14 @@ export function Zy(t0: Props | undefined) {
 
 function AppleTerminalZy(t0: { pose: ZyPose }) {
   const { pose } = t0;
+  const p = POSES[pose];
   return (
     <Box flexDirection="column" alignItems="center">
-      <Text color="clawd_body">  ▗▄▖    </Text>
-      <Text color="clawd_body"> ▄█████▄ </Text>
-      <Text color="clawd_body">  █████  </Text>
-      <Text color="clawd_body">   ███   </Text>
-      <Text color="clawd_body">    █    </Text>
+      <Text color="clawd_body">{p.r1}</Text>
+      <Text color="clawd_body">{p.r2}</Text>
+      <Text color="clawd_body">{p.r3}</Text>
+      <Text color="clawd_body">{p.r4}</Text>
+      <Text color="clawd_body">{p.r5}</Text>
     </Box>
   );
 }

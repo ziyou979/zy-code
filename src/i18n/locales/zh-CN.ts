@@ -431,6 +431,9 @@ export const zhCN: TranslationResource = {
   'shellProgress.error': '错误',
   'shellProgress.stopped': '已停止',
 
+  // Permission mode
+  'permissionMode.on': '应用于',
+
   // Log selector / session search
   'logSelector.searching': '搜索中…',
   'logSelector.results': 'ZY 找到了这些结果：',
@@ -534,4 +537,22 @@ export const zhCN: TranslationResource = {
   'help.newlineShift': 'shift + \u23CE 换行',
   'help.newlineBackslash': '\\\u23CE 换行',
   'help.newlineBackslashFull': '反斜杠 (\\) + 回车 (\u23CE) 换行',
+
+  // Permission mode
+  'permissionMode.on': '应用于',
+
+  // System message
+  'systemMessage.verbWithDuration': '{verb}，耗时 {duration}',
+  'systemMessage.tasksStillRunning': '{count} 个任务仍在运行',
+
+  // Attachment
+  'attachment.completed': '后台已完成',
+  'attachment.stopped': '已停止',
+  'attachment.stillRunning': '后台仍在运行',
+
+  // Teammate
+  'teammate.toolUseCount_one': '{count} 次工具使用',
+  'teammate.toolUseCount_other': '{count} 次工具使用',
+  'teammate.tokenCount': '{count} 个 token',
+  'teammate.enterToView': 'enter 查看',
 }

@@ -12,7 +12,7 @@ import { basename, sep } from 'path';
 import { UserTextMessage } from './UserTextMessage.js';
 import { DiagnosticsDisplay } from '../DiagnosticsDisplay.js';
 import { getContentText } from 'src/utils/messages.js';
-import type { Theme } from 'src/utils/theme.js';
+import { tSync } from '../../i18n/index.js';
 import { UserImageMessage } from './UserImageMessage.js';
 import { toInkColor } from '../../utils/ink.js';
 import { jsonParse } from '../../utils/slowOperations.js';
@@ -393,7 +393,7 @@ function GenericTaskStatus(t0) {
     attachment
   } = t0;
   const bg = useSelectedMessageBg();
-  const statusText = attachment.status === "completed" ? "completed in background" : attachment.status === "killed" ? "stopped" : attachment.status === "running" ? "still running in background" : attachment.status;
+  const statusText = attachment.status === "completed" ? tSync('attachment.completed') : attachment.status === "killed" ? tSync('attachment.stopped') : attachment.status === "running" ? tSync('attachment.stillRunning') : attachment.status;
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = <Text dimColor={true}>{BLACK_CIRCLE} </Text>;

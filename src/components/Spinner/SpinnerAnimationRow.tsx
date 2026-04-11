@@ -16,7 +16,6 @@ import type { SpinnerMode } from './types.js';
 import { useStalledAnimation } from './useStalledAnimation.js';
 import { interpolateColor, toRGBColor } from './utils.js';
 const SEP_WIDTH = stringWidth(' · ');
-const THINKING_BARE_WIDTH = stringWidth('thinking');
 const SHOW_TOKENS_AFTER_MS = 30_000;
 
 // Thinking shimmer constants. Previously lived in a separate ThinkingShimmerText
@@ -171,7 +170,9 @@ export function SpinnerAnimationRow({
 
   // === Thinking text (may shrink to fit) ===
   const isZh = getUiLanguage() === 'zh-CN';
-  let thinkingText = thinkingStatus === 'thinking' ? `thinking${effortSuffix}` : typeof thinkingStatus === 'number' ? tSync('thinking.thoughtFor', {
+  const thinkingLabel = isZh ? '思考中' : 'thinking';
+  const thinkingBareWidth = stringWidth(thinkingLabel);
+  let thinkingText = thinkingStatus === 'thinking' ? `${thinkingLabel}${effortSuffix}` : typeof thinkingStatus === 'number' ? tSync('thinking.thoughtFor', {
     duration: isZh ? formatDurationZh(thinkingStatus) : formatDuration(thinkingStatus)
   }) : null;
   let thinkingWidthValue = thinkingText ? stringWidth(thinkingText) : 0;
@@ -184,9 +185,9 @@ export function SpinnerAnimationRow({
   const availableSpace = columns - messageWidth - 5;
   let showThinking = wantsThinking && availableSpace > thinkingWidthValue;
   if (!showThinking && wantsThinking && thinkingStatus === 'thinking' && effortSuffix) {
-    if (availableSpace > THINKING_BARE_WIDTH) {
-      thinkingText = 'thinking';
-      thinkingWidthValue = THINKING_BARE_WIDTH;
+    if (availableSpace > thinkingBareWidth) {
+      thinkingText = thinkingLabel;
+      thinkingWidthValue = thinkingBareWidth;
       showThinking = true;
     }
   }

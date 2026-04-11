@@ -27,6 +27,7 @@ import { useAppStateStore } from '../../state/AppState.js';
 import { isBackgroundTask, type TaskState } from '../../tasks/types.js';
 import { getPillLabel } from '../../tasks/pillLabel.js';
 import { useSelectedMessageBg } from '../messageActions.js';
+import { tSync } from '../../i18n/index.js';
 import { JSX } from "react/jsx-runtime";
 
 type Props = {
@@ -565,8 +566,8 @@ function TurnDurationMessage(t0) {
   } else {
     t6 = $[8];
   }
-  const t7 = showTurnDuration && `${verb} for ${duration}`;
-  const t8 = backgroundTaskSummary && ` \u00B7 ${backgroundTaskSummary} still running`;
+  const t7 = showTurnDuration && tSync('systemMessage.verbWithDuration', { verb, duration });
+  const t8 = backgroundTaskSummary && tSync('systemMessage.tasksStillRunning', { count: backgroundTaskSummary });
   let t9;
   if ($[9] !== budgetSuffix || $[10] !== t7 || $[11] !== t8) {
     t9 = <Text dimColor={true}>{t7}{budgetSuffix}{t8}</Text>;
