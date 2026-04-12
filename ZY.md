@@ -74,3 +74,39 @@ Uses `Bun.build()` with:
 - `packages/claude-for-chrome-mcp/` — MCP server for Chrome extension
 - `packages/computer-use-mcp/` — MCP server for computer-use (screenshots, input simulation)
 - `packages/computer-use-input/` — Input simulation
+
+## 汉化规则（i18n）
+
+本项目使用 `src/i18n/` 模块进行国际化。修改 UI 文本时**必须**遵循以下规则：
+
+### 核心原则
+- **禁止**在组件中直接硬编码中文字符串
+- **必须**通过 `tSync()`（同步场景）或 `t()`（异步场景）读取翻译
+- 翻译 key 需要同时写入 `src/i18n/locales/en.ts`（英文原文）和 `src/i18n/locales/zh-CN.ts`（中文译文）
+
+### 使用方式
+```tsx
+import { tSync } from '../i18n/index.js'
+
+// 组件中使用
+<Text>{tSync('shellProgress.timeout')}</Text>
+<Text>{tSync('shellProgress.lines', { count })}</Text>
+```
+
+### KeyboardShortcutHint 特殊处理
+对于 `KeyboardShortcutHint` 组件中的 `action` 属性，需要在 `actionKeyMap` 中注册映射：
+```tsx
+// src/components/design-system/KeyboardShortcutHint.tsx
+const actionKeyMap: Record<string, string> = {
+  'expand': 'common.expand',
+  'interrupt': 'shortcut.interrupt',
+  'background': 'shortcut.background',
+  // ...新增 action 在此添加
+}
+```
+
+### 翻译 key 命名规范
+- 按功能模块分组：`shellProgress.xxx`、`backgroundTasks.xxx`、`shortcut.xxx`
+- 使用描述性名称，不要缩写
+- 支持插值：`'key': '已使用 {count} 行'`
+- 翻译后必须尝试构建，必须保证能够构建成功

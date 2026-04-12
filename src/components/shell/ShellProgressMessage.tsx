@@ -6,6 +6,7 @@ import { formatFileSize } from '../../utils/format.js';
 import { MessageResponse } from '../MessageResponse.js';
 import { OffscreenFreeze } from '../OffscreenFreeze.js';
 import { ShellTimeDisplay } from './ShellTimeDisplay.js';
+import { tSync } from '../../i18n/index.js';
 type Props = {
   output: string;
   fullOutput: string;
@@ -74,10 +75,10 @@ export function ShellProgressMessage(t0) {
   const extraLines = totalLines ? Math.max(0, totalLines - 5) : 0;
   let lineStatus = "";
   if (!verbose && totalBytes && totalLines) {
-    lineStatus = `~${totalLines} lines`;
+    lineStatus = `~${totalLines} ${tSync('shellProgress.lines')}`;
   } else {
     if (!verbose && extraLines > 0) {
-      lineStatus = `+${extraLines} lines`;
+      lineStatus = `+${extraLines} ${tSync('shellProgress.lines')}`;
     }
   }
   const t3 = verbose ? undefined : Math.min(5, lines.length);

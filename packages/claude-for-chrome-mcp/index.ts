@@ -14,3 +14,5 @@ export type ClaudeForChromeContext = Record<string, unknown>
 export function createClaudeForChromeMcpServer(_opts: unknown): unknown {
   throw new Error('claude-for-chrome-mcp not available in this build')
 }
+
+export const createZyForChromeMcpServer = createClaudeForChromeMcpServer

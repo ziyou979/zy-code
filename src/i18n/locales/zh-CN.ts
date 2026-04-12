@@ -1,10 +1,10 @@
 import type { TranslationResource } from './resourceTypes.js'
 
 /**
- * Simplified Chinese translations
+ * 简体中文
  */
 export const zhCN: TranslationResource = {
-  // Tips
+  // 提示 Tips
   'tip.newUserWarmup':
     '从小功能或 Bug 修复开始，让 ZY Code 提出方案并验证它的修改建议',
   'tip.planModeForComplexTasks':
@@ -42,7 +42,7 @@ export const zhCN: TranslationResource = {
   'tip.shiftTab': '按 {shortcut} 在模式之间切换',
   'tip.imagePaste': '使用 {shortcut} 从剪贴板粘贴图片',
   'tip.customAgents': '使用 /agents 优化特定任务，例如：软件架构师、代码编写者、代码审查者',
-  'tip.agentFlag': '使用 --agent <agent_name> 直接以指定子代理开始对话',
+  'tip.agentFlag': '使用 --agent <agent_name> 直接以指定子智能体开始对话',
   'tip.desktopApp': '使用 Zy 桌面应用在本地或远程运行 ZY Code：clau.de/desktop',
   'tip.desktopShortcut': '使用 {shortcut} 在 ZY Code 桌面版中继续你的会话',
   'tip.webApp': '在云端运行任务，本地继续编码 · clau.de/web',
@@ -69,7 +69,7 @@ export const zhCN: TranslationResource = {
   'tip.clearContext': '切换话题时使用 /clear 可以释放上下文',
   'tip.btwSideQuestion': '使用 /btw 快速提问，不会打断当前工作',
 
-  // Rate limit
+  // 限流提示 Rate limit
   'rateLimit.hit': '已达到 {limit}',
   'rateLimit.close': '接近',
   'rateLimit.outOfExtraUsage': '额外用量已耗尽',
@@ -117,7 +117,8 @@ export const zhCN: TranslationResource = {
   // Thinking
   'thinking.label': '思考中',
   'thinking.thoughtFor': '思考结束，耗时 {duration}',
-  'shortcut.interrupt': 'esc 中断',
+  'shortcut.interrupt': '中断',
+  'shortcut.background': '后台运行',
   'shortcut.shortcutsHint': '? 查看快捷键',
 
   // Notifications
@@ -427,12 +428,14 @@ export const zhCN: TranslationResource = {
   'backgroundTaskStatus.toView': '查看',
 
   // Shell progress
+  'shellProgress.timeout': '超时',
+  'shellProgress.lines': '行',
   'shellProgress.done': '完成',
   'shellProgress.error': '错误',
   'shellProgress.stopped': '已停止',
 
   // Permission mode
-  'permissionMode.on': '应用于',
+  'permissionMode.on': '已启用',
 
   // Log selector / session search
   'logSelector.searching': '搜索中…',
@@ -520,7 +523,8 @@ export const zhCN: TranslationResource = {
   'help.background': '& 后台运行',
   'help.sideQuestion': '/btw 快速提问',
   'help.clearInput': '双击 esc 清空输入',
-  'help.cycleModes': '{shortcut} 自动接受编辑',
+  'help.cycleModes': '{shortcut} 切换权限模式',
+  'help.cycleModeAction': '切换权限模式',
   'help.verboseOutput': '{shortcut} 详细输出',
   'help.toggleTasks': '{shortcut} 切换任务面板',
   'help.undo': '{shortcut} 撤销',
@@ -538,9 +542,6 @@ export const zhCN: TranslationResource = {
   'help.newlineBackslash': '\\\u23CE 换行',
   'help.newlineBackslashFull': '反斜杠 (\\) + 回车 (\u23CE) 换行',
 
-  // Permission mode
-  'permissionMode.on': '应用于',
-
   // System message
   'systemMessage.verbWithDuration': '{verb}，耗时 {duration}',
   'systemMessage.tasksStillRunning': '{count} 个任务仍在运行',
@@ -549,6 +550,40 @@ export const zhCN: TranslationResource = {
   'attachment.completed': '后台已完成',
   'attachment.stopped': '已停止',
   'attachment.stillRunning': '后台仍在运行',
+
+  // Onboarding
+  'onboarding.platform.dashscope': '百炼 DashScope',
+  'onboarding.platform.dashscopeDesc': '阿里云百炼平台',
+  'onboarding.model.qwen36plusDesc': '综合能力强（推荐）',
+  'onboarding.model.qwen35plusDesc': '高性能推理',
+  'onboarding.model.qwen35flashDesc': '快速轻量任务',
+  'onboarding.platform.genericDesc': '自定义兼容 Anthropic 格式的 API',
+  'onboarding.model.custom': '自定义模型',
+  'onboarding.model.customDesc': '输入完整的模型名称',
+  'onboarding.selectPlatform': '选择 AI 平台',
+  'onboarding.enterApiKey': '输入 {apiKeyLabel}',
+  'onboarding.confirmBack': 'Enter 确认 · 9 返回',
+  'onboarding.enterModelName': '输入模型名称',
+  'onboarding.selectDefaultModel': '选择默认对话模型',
+  'onboarding.modelDescription': '启动对话时使用的模型，后续可通过 /model 切换',
+  'onboarding.orCustomModel': '或选择 "自定义模型" 输入其他模型',
+  'onboarding.enterToConfirm': 'Enter 确认 · Esc 退出',
+  'onboarding.enterToConfirmSkip': 'Enter 确认 · Esc 跳过',
+  'onboarding.pressAgainToExit': '再按一次 {key} 退出',
+  'onboarding.security.title': '安全提示：',
+  'onboarding.security.risk1': 'ZY Code 可能会出错',
+  'onboarding.security.risk1desc': '你应该始终审查 ZY Code 的响应，尤其是在运行代码时。',
+  'onboarding.security.risk2': '由于提示注入风险，请仅在你信任的代码上使用',
+  'onboarding.security.risk2desc': '更多详情请参阅：',
+  'onboarding.terminalSetup.title': '使用 ZY Code 的终端设置？',
+  'onboarding.terminalSetup.description': '为了获得最佳编码体验，请为你的终端启用推荐设置：{settings}',
+  'onboarding.terminalSetup.appleSettings': 'Option+Enter 换行和视觉铃声',
+  'onboarding.terminalSetup.otherSettings': 'Shift+Enter 换行',
+  'onboarding.terminalSetup.yes': '是，使用推荐设置',
+  'onboarding.terminalSetup.no': '否，稍后通过 /terminal-setup 设置',
+
+  // System message
+  'systemMessage.defaultVerb': '搞定了',
 
   // Teammate
   'teammate.toolUseCount_one': '{count} 次工具使用',

@@ -23,6 +23,8 @@ const actionKeyMap: Record<string, string> = {
   'navigate': 'common.navigate',
   'toggle': 'common.toggle',
   'manage': 'common.manage',
+  'interrupt': 'shortcut.interrupt',
+  'background': 'shortcut.background',
 };
 
 /**

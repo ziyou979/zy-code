@@ -81,18 +81,18 @@ export function renderToScreen(
     )
   }
 
-  const t0 = performance.now()
+  const reconcileStartMs = performance.now()
   // @ts-expect-error updateContainerSync exists but not in @types
   reconciler.updateContainerSync(el, container, null, noop)
   // @ts-expect-error flushSyncWork exists but not in @types
   reconciler.flushSyncWork()
-  const t1 = performance.now()
+  const reconcileEndMs = performance.now()
 
   // Yoga layout. Root might not have a yogaNode if the tree is empty.
   root.yogaNode?.setWidth(width)
   root.yogaNode?.calculateLayout(width)
   const height = Math.ceil(root.yogaNode?.getComputedHeight() ?? 0)
-  const t2 = performance.now()
+  const layoutEndMs = performance.now()
 
   // Paint to a fresh Screen. Width = given, height = yoga's natural.
   // No alt-screen, no prevScreen (every call is fresh).
@@ -114,7 +114,7 @@ export function renderToScreen(
   // queue into the Screen's cell arrays. Without this the screen is
   // blank (constructor-zero).
   const rendered = output.get()
-  const t3 = performance.now()
+  const paintEndMs = performance.now()
 
   // Unmount so next call gets a fresh tree. Leaves root/container/pools.
   // @ts-expect-error updateContainerSync exists but not in @types
@@ -122,9 +122,9 @@ export function renderToScreen(
   // @ts-expect-error flushSyncWork exists but not in @types
   reconciler.flushSyncWork()
 
-  timing.reconcile += t1 - t0
-  timing.yoga += t2 - t1
-  timing.paint += t3 - t2
+  timing.reconcile += reconcileEndMs - reconcileStartMs
+  timing.yoga += layoutEndMs - reconcileEndMs
+  timing.paint += paintEndMs - layoutEndMs
   if (++timing.calls % LOG_EVERY === 0) {
     const total = timing.reconcile + timing.yoga + timing.paint + timing.scan
     logForDebugging(
@@ -155,7 +155,7 @@ export function scanPositions(screen: Screen, query: string): MatchPosition[] {
   const noSelect = screen.noSelect
   const positions: MatchPosition[] = []
 
-  const t0 = performance.now()
+  const scanStartMs = performance.now()
   for (let row = 0; row < h; row++) {
     const rowOff = row * w
     // Same text-build as applySearchHighlight. Keep in sync — or extract
@@ -195,7 +195,7 @@ export function scanPositions(screen: Screen, query: string): MatchPosition[] {
       pos = text.indexOf(lq, pos + qlen)
     }
   }
-  timing.scan += performance.now() - t0
+  timing.scan += performance.now() - scanStartMs
 
   return positions
 }

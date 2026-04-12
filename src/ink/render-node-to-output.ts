@@ -662,11 +662,11 @@ function renderNodeToOutput(
       let y1: number | undefined
       let y2: number | undefined
       if (needsClip) {
-        const x1 = clipHorizontally
+        const clipXStart = clipHorizontally
           ? x + yogaNode.getComputedBorder(LayoutEdge.Left)
           : undefined
 
-        const x2 = clipHorizontally
+        const clipXEnd = clipHorizontally
           ? x +
             yogaNode.getComputedWidth() -
             yogaNode.getComputedBorder(LayoutEdge.Right)
@@ -682,7 +682,7 @@ function renderNodeToOutput(
             yogaNode.getComputedBorder(LayoutEdge.Bottom)
           : undefined
 
-        output.clip({ x1, x2, y1, y2 })
+        output.clip({ x1: clipXStart, x2: clipXEnd, y1, y2 })
       }
 
       if (isScrollY) {

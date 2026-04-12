@@ -107,8 +107,8 @@ function parseCSI(rawSequence: string): Action | null {
   }
 
   const params = parseCSIParams(paramStr)
-  const p0 = params[0] ?? 1
-  const p1 = params[1] ?? 1
+  const firstParam = params[0] ?? 1
+  const secondParam = params[1] ?? 1
 
   // SGR (Select Graphic Rendition)
   if (finalByte === CSI.SGR && privateMode === '') {
@@ -119,41 +119,41 @@ function parseCSI(rawSequence: string): Action | null {
   if (finalByte === CSI.CUU) {
     return {
       type: 'cursor',
-      action: { type: 'move', direction: 'up', count: p0 },
+      action: { type: 'move', direction: 'up', count: firstParam },
     }
   }
   if (finalByte === CSI.CUD) {
     return {
       type: 'cursor',
-      action: { type: 'move', direction: 'down', count: p0 },
+      action: { type: 'move', direction: 'down', count: firstParam },
     }
   }
   if (finalByte === CSI.CUF) {
     return {
       type: 'cursor',
-      action: { type: 'move', direction: 'forward', count: p0 },
+      action: { type: 'move', direction: 'forward', count: firstParam },
     }
   }
   if (finalByte === CSI.CUB) {
     return {
       type: 'cursor',
-      action: { type: 'move', direction: 'back', count: p0 },
+      action: { type: 'move', direction: 'back', count: firstParam },
     }
   }
   if (finalByte === CSI.CNL) {
-    return { type: 'cursor', action: { type: 'nextLine', count: p0 } }
+    return { type: 'cursor', action: { type: 'nextLine', count: firstParam } }
   }
   if (finalByte === CSI.CPL) {
-    return { type: 'cursor', action: { type: 'prevLine', count: p0 } }
+    return { type: 'cursor', action: { type: 'prevLine', count: firstParam } }
   }
   if (finalByte === CSI.CHA) {
-    return { type: 'cursor', action: { type: 'column', col: p0 } }
+    return { type: 'cursor', action: { type: 'column', col: firstParam } }
   }
   if (finalByte === CSI.CUP || finalByte === CSI.HVP) {
-    return { type: 'cursor', action: { type: 'position', row: p0, col: p1 } }
+    return { type: 'cursor', action: { type: 'position', row: firstParam, col: secondParam } }
   }
   if (finalByte === CSI.VPA) {
-    return { type: 'cursor', action: { type: 'row', row: p0 } }
+    return { type: 'cursor', action: { type: 'row', row: firstParam } }
   }
 
   // Erase
@@ -166,20 +166,20 @@ function parseCSI(rawSequence: string): Action | null {
     return { type: 'erase', action: { type: 'line', region } }
   }
   if (finalByte === CSI.ECH) {
-    return { type: 'erase', action: { type: 'chars', count: p0 } }
+    return { type: 'erase', action: { type: 'chars', count: firstParam } }
   }
 
   // Scroll
   if (finalByte === CSI.SU) {
-    return { type: 'scroll', action: { type: 'up', count: p0 } }
+    return { type: 'scroll', action: { type: 'up', count: firstParam } }
   }
   if (finalByte === CSI.SD) {
-    return { type: 'scroll', action: { type: 'down', count: p0 } }
+    return { type: 'scroll', action: { type: 'down', count: firstParam } }
   }
   if (finalByte === CSI.DECSTBM) {
     return {
       type: 'scroll',
-      action: { type: 'setRegion', top: p0, bottom: p1 },
+      action: { type: 'setRegion', top: firstParam, bottom: secondParam },
     }
   }
 
@@ -193,7 +193,7 @@ function parseCSI(rawSequence: string): Action | null {
 
   // Cursor style
   if (finalByte === CSI.DECSCUSR && intermediate === ' ') {
-    const styleInfo = CURSOR_STYLES[p0] ?? CURSOR_STYLES[0]!
+    const styleInfo = CURSOR_STYLES[firstParam] ?? CURSOR_STYLES[0]!
     return { type: 'cursor', action: { type: 'style', ...styleInfo } }
   }
 
@@ -201,37 +201,37 @@ function parseCSI(rawSequence: string): Action | null {
   if (privateMode === '?' && (finalByte === CSI.SM || finalByte === CSI.RM)) {
     const enabled = finalByte === CSI.SM
 
-    if (p0 === DEC.CURSOR_VISIBLE) {
+    if (firstParam === DEC.CURSOR_VISIBLE) {
       return {
         type: 'cursor',
         action: enabled ? { type: 'show' } : { type: 'hide' },
       }
     }
-    if (p0 === DEC.ALT_SCREEN_CLEAR || p0 === DEC.ALT_SCREEN) {
+    if (firstParam === DEC.ALT_SCREEN_CLEAR || firstParam === DEC.ALT_SCREEN) {
       return { type: 'mode', action: { type: 'alternateScreen', enabled } }
     }
-    if (p0 === DEC.BRACKETED_PASTE) {
+    if (firstParam === DEC.BRACKETED_PASTE) {
       return { type: 'mode', action: { type: 'bracketedPaste', enabled } }
     }
-    if (p0 === DEC.MOUSE_NORMAL) {
+    if (firstParam === DEC.MOUSE_NORMAL) {
       return {
         type: 'mode',
         action: { type: 'mouseTracking', mode: enabled ? 'normal' : 'off' },
       }
     }
-    if (p0 === DEC.MOUSE_BUTTON) {
+    if (firstParam === DEC.MOUSE_BUTTON) {
       return {
         type: 'mode',
         action: { type: 'mouseTracking', mode: enabled ? 'button' : 'off' },
       }
     }
-    if (p0 === DEC.MOUSE_ANY) {
+    if (firstParam === DEC.MOUSE_ANY) {
       return {
         type: 'mode',
         action: { type: 'mouseTracking', mode: enabled ? 'any' : 'off' },
       }
     }
-    if (p0 === DEC.FOCUS_EVENTS) {
+    if (firstParam === DEC.FOCUS_EVENTS) {
       return { type: 'mode', action: { type: 'focusEvents', enabled } }
     }
   }

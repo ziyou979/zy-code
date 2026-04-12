@@ -384,17 +384,17 @@ export function jitteredNextCronRunMs(
   taskId: string,
   cfg: CronJitterConfig = DEFAULT_CRON_JITTER_CONFIG,
 ): number | null {
-  const t1 = nextCronRunMs(cron, fromMs)
-  if (t1 === null) return null
-  const t2 = nextCronRunMs(cron, t1)
+  const nextRunMs = nextCronRunMs(cron, fromMs)
+  if (nextRunMs === null) return null
+  const followingRunMs = nextCronRunMs(cron, nextRunMs)
   // No second match in the next year (e.g. pinned date) → nothing to
-  // proportion against, and near-certainly not a herd risk. Fire on t1.
-  if (t2 === null) return t1
+  // proportion against, and near-certainly not a herd risk. Fire on nextRunMs.
+  if (followingRunMs === null) return nextRunMs
   const jitter = Math.min(
-    jitterFrac(taskId) * cfg.recurringFrac * (t2 - t1),
+    jitterFrac(taskId) * cfg.recurringFrac * (followingRunMs - nextRunMs),
     cfg.recurringCapMs,
   )
-  return t1 + jitter
+  return nextRunMs + jitter
 }
 
 /**
@@ -424,24 +424,24 @@ export function oneShotJitteredNextCronRunMs(
   taskId: string,
   cfg: CronJitterConfig = DEFAULT_CRON_JITTER_CONFIG,
 ): number | null {
-  const t1 = nextCronRunMs(cron, fromMs)
-  if (t1 === null) return null
+  const nextRunMs = nextCronRunMs(cron, fromMs)
+  if (nextRunMs === null) return null
   // Cron resolution is 1 minute → computed times always have :00 seconds,
   // so a minute-field check is sufficient to identify the hot marks.
   // getMinutes() (local), not getUTCMinutes(): cron is evaluated in local
   // time, and "user picked a round time" means round in *their* TZ. In
   // half-hour-offset zones (India UTC+5:30) local :00 is UTC :30 — the
   // UTC check would jitter the wrong marks.
-  if (new Date(t1).getMinutes() % cfg.oneShotMinuteMod !== 0) return t1
+  if (new Date(nextRunMs).getMinutes() % cfg.oneShotMinuteMod !== 0) return nextRunMs
   // floor + frac * (max - floor) → uniform over [floor, max). With floor=0
   // this reduces to the original frac * max. With floor>0, even a taskId
   // hashing to 0 gets `floor` ms of lead — nobody fires on the exact mark.
   const lead =
     cfg.oneShotFloorMs +
     jitterFrac(taskId) * (cfg.oneShotMaxMs - cfg.oneShotFloorMs)
-  // t1 > fromMs is guaranteed by nextCronRunMs (strictly after), so the
+  // nextRunMs > fromMs is guaranteed by nextCronRunMs (strictly after), so the
   // max() only bites when the task was created inside its own lead window.
-  return Math.max(t1 - lead, fromMs)
+  return Math.max(nextRunMs - lead, fromMs)
 }
 
 /**

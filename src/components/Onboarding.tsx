@@ -10,6 +10,7 @@ import { WelcomeV2 } from './LogoV2/WelcomeV2.js';
 import { PressEnterToContinue } from './PressEnterToContinue.js';
 import { ThemePicker } from './ThemePicker.js';
 import { OrderedList } from './ui/OrderedList.js';
+import { tSync } from '../i18n/index.js';
 
 type StepId = 'preflight' | 'theme' | 'platform' | 'model' | 'security' | 'terminal-setup';
 
@@ -37,19 +38,19 @@ interface PlatformConfig {
 const PLATFORMS: PlatformConfig[] = [
   {
     provider: 'dashscope',
-    label: '百炼 DashScope',
-    description: '阿里云百炼平台',
+    label: tSync('onboarding.platform.dashscope'),
+    description: tSync('onboarding.platform.dashscopeDesc'),
     apiKeyLabel: 'DashScope API Key',
     suggestedModels: [
-      { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: '综合能力强 (推荐)' },
-      { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: '高性能推理' },
-      { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: '快速轻量任务' },
+      { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: tSync('onboarding.model.qwen36plusDesc') },
+      { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: tSync('onboarding.model.qwen35plusDesc') },
+      { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: tSync('onboarding.model.qwen35flashDesc') },
     ],
   },
   {
     provider: 'generic',
     label: 'Generic',
-    description: '自定义兼容 Anthropic 格式的 API',
+    description: tSync('onboarding.platform.genericDesc'),
     apiKeyLabel: 'API Key',
   },
 ];
@@ -58,7 +59,7 @@ const PLATFORMS: PlatformConfig[] = [
  * Model options for providers without pre-configured suggestions (generic).
  */
 const GENERIC_MODEL_OPTIONS: Array<{ label: string; value: string; description: string }> = [
-  { label: '自定义模型', value: '__custom__', description: '输入完整的模型名称' },
+  { label: tSync('onboarding.model.custom'), value: '__custom__', description: tSync('onboarding.model.customDesc') },
 ];
 
 export function Onboarding({ onDone }: Props): React.ReactNode {
@@ -139,24 +140,22 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   // Security step
   const securityStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <Text bold>Security notes:</Text>
+      <Text bold>{tSync('onboarding.security.title')}</Text>
       <Box flexDirection="column" width={70}>
         <OrderedList>
           <OrderedList.Item>
-            <Text>ZY Code can make mistakes</Text>
+            <Text>{tSync('onboarding.security.risk1')}</Text>
             <Text dimColor wrap="wrap">
-              You should always review ZY Code&apos;s responses, especially when
-              <Newline />
-              running code.
+              {tSync('onboarding.security.risk1desc')}
               <Newline />
             </Text>
           </OrderedList.Item>
           <OrderedList.Item>
             <Text>
-              Due to prompt injection risks, only use it with code you trust
+              {tSync('onboarding.security.risk2')}
             </Text>
             <Text dimColor wrap="wrap">
-              For more details see:
+              {tSync('onboarding.security.risk2desc')}
               <Newline />
               <Link url="https://code.zy.com/docs/en/security" />
             </Text>
@@ -179,18 +178,19 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       id: 'terminal-setup',
       component: (
         <Box flexDirection="column" gap={1} paddingLeft={1}>
-          <Text bold>Use ZY Code&apos;s terminal setup?</Text>
+          <Text bold>{tSync('onboarding.terminalSetup.title')}</Text>
           <Box flexDirection="column" width={70} gap={1}>
             <Text>
-              For the optimal coding experience, enable the recommended settings
-              <Newline />
-              for your terminal:{' '}
-              {process.env.TERM_PROGRAM === 'Apple_Terminal' ? 'Option+Enter for newlines and visual bell' : 'Shift+Enter for newlines'}
+              {tSync('onboarding.terminalSetup.description', {
+                settings: process.env.TERM_PROGRAM === 'Apple_Terminal'
+                  ? tSync('onboarding.terminalSetup.appleSettings')
+                  : tSync('onboarding.terminalSetup.otherSettings')
+              })}
             </Text>
             <Select
               options={[
-                { label: 'Yes, use recommended settings', value: 'install' },
-                { label: 'No, maybe later with /terminal-setup', value: 'no' },
+                { label: tSync('onboarding.terminalSetup.yes'), value: 'install' },
+                { label: tSync('onboarding.terminalSetup.no'), value: 'no' },
               ]}
               onChange={value => {
                 if (value === 'install') {
@@ -202,7 +202,10 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
               onCancel={() => goToNextStep()}
             />
             <Text dimColor>
-              {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to confirm · Esc to skip</>}
+              {exitState.pending
+                ? tSync('onboarding.pressAgainToExit', { key: exitState.keyName })
+                : tSync('onboarding.enterToConfirmSkip')
+              }
             </Text>
           </Box>
         </Box>
@@ -240,7 +243,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         {currentStep?.component}
         {exitState.pending && (
           <Box padding={1}>
-            <Text dimColor>Press {exitState.keyName} again to exit</Text>
+            <Text dimColor>{tSync('onboarding.pressAgainToExit', { key: exitState.keyName })}</Text>
           </Box>
         )}
       </Box>
@@ -271,7 +274,7 @@ function PlatformSetup({
   if (phase === 'provider') {
     return (
       <>
-        <Text bold>选择 AI 平台</Text>
+        <Text bold>{tSync('onboarding.selectPlatform')}</Text>
         <Box flexDirection="column" width={60} gap={1}>
           <Select
             options={PLATFORMS.map(p => ({
@@ -282,7 +285,7 @@ function PlatformSetup({
             onChange={handleProviderSelect}
             onCancel={() => onDone('anthropic', '')}
           />
-          <Text dimColor>Enter to confirm · Esc to exit</Text>
+          <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
         </Box>
       </>
     );
@@ -313,7 +316,7 @@ function ApiKeyInput({
 }): React.ReactNode {
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>输入 {apiKeyLabel}</Text>
+      <Text bold>{tSync('onboarding.enterApiKey', { apiKeyLabel })}</Text>
       <Box flexDirection="column" width={60} gap={1}>
         <Select
           options={[
@@ -336,7 +339,7 @@ function ApiKeyInput({
         {baseUrlHint && (
           <Text dimColor>Base URL: {baseUrlHint}</Text>
         )}
-        <Text dimColor>Enter to confirm · 9 to go back</Text>
+        <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
       </Box>
     </Box>
   );
@@ -370,7 +373,7 @@ function ModelSetup({
   if (phase === 'custom') {
     return (
       <>
-        <Text bold>输入模型名称</Text>
+        <Text bold>{tSync('onboarding.enterModelName')}</Text>
         <Box flexDirection="column" width={60} gap={1}>
           <Select
             options={[
@@ -390,7 +393,7 @@ function ModelSetup({
             ]}
             onCancel={() => setPhase('select')}
           />
-          <Text dimColor>Enter to confirm · 9 to go back</Text>
+          <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
         </Box>
       </>
     );
@@ -398,8 +401,8 @@ function ModelSetup({
 
   return (
     <>
-      <Text bold>选择默认对话模型</Text>
-      <Text dimColor>启动对话时使用的模型，后续可通过 /model 切换</Text>
+      <Text bold>{tSync('onboarding.selectDefaultModel')}</Text>
+      <Text dimColor>{tSync('onboarding.modelDescription')}</Text>
       <Box flexDirection="column" width={60} gap={1}>
         <Select
           options={modelOptions.map(m => ({
@@ -411,9 +414,9 @@ function ModelSetup({
           onCancel={() => onDone('')}
         />
         {hasCustomOption && (
-          <Text dimColor>或选择 "自定义模型" 输入其他模型</Text>
+          <Text dimColor>{tSync('onboarding.orCustomModel')}</Text>
         )}
-        <Text dimColor>Enter to confirm · Esc to skip</Text>
+        <Text dimColor>{tSync('onboarding.enterToConfirmSkip')}</Text>
       </Box>
     </>
   );

@@ -170,7 +170,7 @@ export function SpinnerAnimationRow({
 
   // === Thinking text (may shrink to fit) ===
   const isZh = getUiLanguage() === 'zh-CN';
-  const thinkingLabel = isZh ? '思考中' : 'thinking';
+  const thinkingLabel = tSync('thinking.label');
   const thinkingBareWidth = stringWidth(thinkingLabel);
   let thinkingText = thinkingStatus === 'thinking' ? `${thinkingLabel}${effortSuffix}` : typeof thinkingStatus === 'number' ? tSync('thinking.thoughtFor', {
     duration: isZh ? formatDurationZh(thinkingStatus) : formatDuration(thinkingStatus)

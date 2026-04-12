@@ -9,6 +9,7 @@ import { getCwd } from '../../utils/cwd.js';
 import { formatRelativeTimeAgo } from '../../utils/format.js';
 import { tSync } from '../../i18n/index.js';
 import type { FeedConfig, FeedLine } from './Feed.js';
+import {isInternalBuild} from "src/utils/envUtils.ts";
 export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
   const lines: FeedLine[] = activities.map(log => {
     const time = formatRelativeTimeAgo(log.modified);
@@ -27,7 +28,7 @@ export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
 }
 export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
   const lines: FeedLine[] = releaseNotes.map(note => {
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       const match = note.match(/^(\d+\s+\w+\s+ago)\s+(.+)$/);
       if (match) {
         return {
@@ -40,11 +41,11 @@ export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
       text: note
     };
   });
-  const emptyMessage = "external" === 'ant' ? 'Unable to fetch latest zy-cli-internal commits' : 'Check the ZY Code changelog for updates';
+  const emptyMessage = isInternalBuild() ? 'Unable to fetch latest zy-cli-internal commits' : tSync('logo.whatsNewEmpty');
   return {
-    title: "external" === 'ant' ? "What's new [ANT-ONLY: Latest CC commits]" : "What's new",
+    title: isInternalBuild() ? "What's new [ANT-ONLY: Latest CC commits]" : tSync('logo.whatsNew'),
     lines,
-    footer: lines.length > 0 ? '/release-notes for more' : undefined,
+    footer: lines.length > 0 ? tSync('logo.whatsNewFooter') : undefined,
     emptyMessage
   };
 }
@@ -61,22 +62,24 @@ export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
       text: `${checkmark}${text}`
     };
   });
-  const warningText = getCwd() === homedir() ? 'Note: You have launched zy in your home directory. For the best experience, launch it in a project directory instead.' : undefined;
+  const warningText = getCwd() === homedir() ? tSync('logo.homeDirWarning') : undefined;
   if (warningText) {
     lines.push({
       text: warningText
     });
   }
   return {
-    title: 'Tips for getting started',
+    title: tSync('logo.tipsGettingStarted'),
     lines
   };
 }
 export function createGuestPassesFeed(): FeedConfig {
   const reward = getCachedReferrerReward();
-  const subtitle = reward ? `Share ZY Code and earn ${formatCreditAmount(reward)} of extra usage` : 'Share ZY Code with friends';
+  const subtitle = reward
+    ? tSync('logo.guestPassesSubtitle', { reward: formatCreditAmount(reward) })
+    : tSync('logo.guestPassesSubtitleNoReward');
   return {
-    title: '3 guest passes',
+    title: tSync('logo.guestPassesTitle'),
     lines: [],
     customContent: {
       content: <>
@@ -87,6 +90,6 @@ export function createGuestPassesFeed(): FeedConfig {
         </>,
       width: 48
     },
-    footer: '/passes'
+    footer: tSync('logo.guestPassesFooter')
   };
 }

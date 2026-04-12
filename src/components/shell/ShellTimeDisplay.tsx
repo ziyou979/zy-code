@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Text } from '../../ink.js';
 import { formatDuration } from '../../utils/format.js';
+import { tSync } from '../../i18n/index.js';
 type Props = {
   elapsedTimeSeconds?: number;
   timeoutMs?: number;
@@ -27,7 +28,7 @@ export function ShellTimeDisplay(t0) {
   }
   const timeout = t1;
   if (elapsedTimeSeconds === undefined) {
-    const t2 = `(timeout ${timeout})`;
+    const t2 = `(${tSync('shellProgress.timeout')} ${timeout})`;
     let t3;
     if ($[2] !== t2) {
       t3 = <Text dimColor={true}>{t2}</Text>;
@@ -49,7 +50,7 @@ export function ShellTimeDisplay(t0) {
   }
   const elapsed = t3;
   if (timeout) {
-    const t4 = `(${elapsed} · timeout ${timeout})`;
+    const t4 = `(${elapsed} · ${tSync('shellProgress.timeout')} ${timeout})`;
     let t5;
     if ($[6] !== t4) {
       t5 = <Text dimColor={true}>{t4}</Text>;

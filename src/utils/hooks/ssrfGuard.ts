@@ -136,9 +136,9 @@ function expandIPv6Groups(addr: string): number[] | null {
   let tailHextets: number[] = []
   if (addr.includes('.')) {
     const lastColon = addr.lastIndexOf(':')
-    const v4 = addr.slice(lastColon + 1)
+    const ipv4Suffix = addr.slice(lastColon + 1)
     addr = addr.slice(0, lastColon)
-    const octets = v4.split('.').map(Number)
+    const octets = ipv4Suffix.split('.').map(Number)
     if (
       octets.length !== 4 ||
       octets.some(n => !Number.isInteger(n) || n < 0 || n > 255)

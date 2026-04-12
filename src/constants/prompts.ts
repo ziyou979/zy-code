@@ -133,7 +133,7 @@ function getLanguageSection(
   if (!languagePreference) return null
 
   return `# Language
-Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user. Technical terms and code identifiers should remain in their original form.`
+Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user, including intermediate operational text (e.g., before calling a tool). Technical terms and code identifiers should remain in their original form.`
 }
 
 function getOutputStyleSection(
@@ -555,6 +555,7 @@ ${CYBER_RISK_INSTRUCTION}`,
       : null,
     getActionsSection(),
     getUsingYourToolsSection(enabledTools),
+    getLanguageSection(settings.language),
     getSimpleToneAndStyleSection(),
     getOutputEfficiencySection(),
     // === BOUNDARY MARKER - DO NOT MOVE OR REMOVE ===

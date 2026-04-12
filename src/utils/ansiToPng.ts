@@ -249,12 +249,12 @@ function roundCorners(
   height: number,
   r: number,
 ): void {
-  const r2 = r * r
+  const rSquared = r * r
   for (let dy = 0; dy < r; dy++) {
     for (let dx = 0; dx < r; dx++) {
       const ox = r - dx - 0.5
       const oy = r - dy - 0.5
-      if (ox * ox + oy * oy <= r2) continue
+      if (ox * ox + oy * oy <= rSquared) continue
       // Top-left, top-right, bottom-left, bottom-right.
       px[(dy * width + dx) * 4 + 3] = 0
       px[(dy * width + (width - 1 - dx)) * 4 + 3] = 0

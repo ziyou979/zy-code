@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { Box, Text, type TextProps } from '../../ink.js';
+import { Box, Text } from '../../ink.js';
 import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { useState } from 'react';
@@ -591,7 +591,7 @@ function TurnDurationMessage(t0) {
   return t10;
 }
 function _temp4() {
-  return sample(getTurnCompletionVerbs()) ?? "搞定了";
+  return sample(getTurnCompletionVerbs()) ?? tSync('systemMessage.defaultVerb');
 }
 function MemorySavedMessage(t0) {
   const $ = _c(16);
