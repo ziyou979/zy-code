@@ -121,6 +121,21 @@ export const zhCN: TranslationResource = {
   'shortcut.background': '后台运行',
   'shortcut.shortcutsHint': '? 查看快捷键',
 
+  // 权限提示
+  'permission.cancel': '取消',
+  'permission.amend': '修改',
+  'permission.explain': '解释',
+  'permission.hide': '隐藏',
+  'permission.doYouWantToProceed': '是否继续？',
+  'permission.escToCancel': 'Esc {cancel}',
+  'permission.tabToAmend': 'Tab {amend}',
+  'permission.ctrlEToExplain': 'ctrl+e {explain}',
+  'permission.ctrlEToHide': 'ctrl+e {hide}',
+  'permission.feedbackAccept': '告诉 ZY Code 接下来怎么做',
+  'permission.feedbackReject': '告诉 ZY Code 哪里需要改进',
+  'permission.showDebugInfo': 'Ctrl+d 显示调试信息',
+  'permission.hideDebugInfo': 'Ctrl-D 隐藏调试信息',
+
   // Notifications
   'notif.authError': '认证错误 · 重试',
   'notif.notLoggedIn': '未登录 · 运行 /login',
@@ -172,6 +187,8 @@ export const zhCN: TranslationResource = {
   'common.navigate': '导航',
   'common.toggle': '切换',
   'common.manage': '管理',
+  'common.add': '添加',
+  'common.complete': '完成',
 
   // Summary — search/read/list activities (collapsed tool output)
   'summary.search.pattern_one': '匹配模式',

@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
-import React, { type ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { type ReactNode, useState } from 'react';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import type { KeybindingAction } from '../../keybindings/types.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
@@ -28,8 +29,8 @@ export type PermissionPromptProps<T extends string> = {
   toolAnalyticsContext?: ToolAnalyticsContext;
 };
 const DEFAULT_PLACEHOLDERS: Record<FeedbackType, string> = {
-  accept: 'tell Zy what to do next',
-  reject: 'tell Zy what to do differently'
+  accept: tSync('permission.feedbackAccept'),
+  reject: tSync('permission.feedbackReject')
 };
 
 /**
@@ -51,7 +52,7 @@ export function PermissionPrompt(t0) {
     question: t1,
     toolAnalyticsContext
   } = t0;
-  const question = t1 === undefined ? "Do you want to proceed?" : t1;
+  const question = t1 === undefined ? tSync('permission.doYouWantToProceed') : t1;
   const setAppState = useSetAppState();
   const [acceptFeedback, setAcceptFeedback] = useState("");
   const [rejectFeedback, setRejectFeedback] = useState("");
@@ -303,10 +304,10 @@ export function PermissionPrompt(t0) {
   } else {
     t10 = $[47];
   }
-  const t11 = showTabHint && " \xB7 Tab to amend";
+  const t11 = showTabHint && tSync('permission.tabToAmend', { amend: tSync('permission.amend') });
   let t12;
   if ($[48] !== t11) {
-    t12 = <Box marginTop={1}><Text dimColor={true}>Esc to cancel{t11}</Text></Box>;
+    t12 = <Box marginTop={1}><Text dimColor={true}>{tSync('permission.escToCancel', { cancel: tSync('permission.cancel') })}{t11}</Text></Box>;
     $[48] = t11;
     $[49] = t12;
   } else {

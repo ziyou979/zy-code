@@ -169,6 +169,21 @@ export const en: TranslationResource = {
   'shortcut.shortcutsHint': '? for shortcuts',
   'shortcut.background': 'run in background',
 
+  // Permission prompts
+  'permission.cancel': 'cancel',
+  'permission.amend': 'amend',
+  'permission.explain': 'explain',
+  'permission.hide': 'hide',
+  'permission.doYouWantToProceed': 'Do you want to proceed?',
+  'permission.escToCancel': 'Esc to {cancel}',
+  'permission.tabToAmend': 'Tab to {amend}',
+  'permission.ctrlEToExplain': 'ctrl+e to {explain}',
+  'permission.ctrlEToHide': 'ctrl+e to {hide}',
+  'permission.feedbackAccept': 'tell Zy what to do next',
+  'permission.feedbackReject': 'tell Zy what to do differently',
+  'permission.showDebugInfo': 'Ctrl+d to show debug info',
+  'permission.hideDebugInfo': 'Ctrl-D to hide debug info',
+
   // Notifications
   'notif.authError': 'Authentication error · Try again',
   'notif.notLoggedIn': 'Not logged in · Run /login',
@@ -222,6 +237,8 @@ export const en: TranslationResource = {
   'common.navigate': 'navigate',
   'common.toggle': 'toggle',
   'common.manage': 'manage',
+  'common.add': 'add',
+  'common.complete': 'complete',
 
   // Summary — search/read/list activities (collapsed tool output)
   // {count} is always provided; each language handles pluralization internally

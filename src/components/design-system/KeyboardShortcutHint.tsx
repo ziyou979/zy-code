@@ -25,6 +25,11 @@ const actionKeyMap: Record<string, string> = {
   'manage': 'common.manage',
   'interrupt': 'shortcut.interrupt',
   'background': 'shortcut.background',
+  'amend': 'permission.amend',
+  'explain': 'permission.explain',
+  'hide': 'permission.hide',
+  'add': 'common.add',
+  'complete': 'common.complete',
 };
 
 /**

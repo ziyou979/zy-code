@@ -2,6 +2,7 @@ import { relative } from 'path';
 import React, { useMemo } from 'react';
 import { useDiffInIDE } from '../../../hooks/useDiffInIDE.js';
 import { Box, Text } from '../../../ink.js';
+import { tSync } from '../../../i18n/index.js';
 import type { ToolUseContext } from '../../../Tool.js';
 import { getLanguageName } from '../../../utils/cliHighlight.js';
 import { getCwd } from '../../../utils/cwd.js';
@@ -195,8 +196,8 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
       </PermissionDialog>
       <Box paddingX={1} marginTop={1}>
         <Text dimColor>
-          Esc to cancel
-          {(focusedOption === 'yes' && !yesInputMode || focusedOption === 'no' && !noInputMode) && ' · Tab to amend'}
+          {tSync('permission.escToCancel', { cancel: tSync('permission.cancel') })}
+          {(focusedOption === 'yes' && !yesInputMode || focusedOption === 'no' && !noInputMode) && ` · ${tSync('permission.tabToAmend', { amend: tSync('permission.amend') })}`}
         </Text>
       </Box>
     </>;
