@@ -3,7 +3,7 @@
 
 export type ConnectorTextBlock = {
   type: 'connector_text'
-  text: string
+  connector_text: string
 }
 
 export function isConnectorTextBlock(block: unknown): block is ConnectorTextBlock {

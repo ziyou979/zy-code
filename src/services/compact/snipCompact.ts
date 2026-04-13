@@ -9,3 +9,11 @@ export function snipMessages(_messages: unknown[]): unknown[] {
 export function shouldSnip(_messages: unknown[]): boolean {
   return false
 }
+
+export function isSnipMarkerMessage(message: { type: string; subtype?: string }): boolean {
+  return message.type === 'system' && message.subtype === 'snip_marker'
+}
+
+export function isSnipRuntimeEnabled(): boolean {
+  return false
+}

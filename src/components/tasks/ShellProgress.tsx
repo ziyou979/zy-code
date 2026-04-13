@@ -16,9 +16,12 @@ export function TaskStatusText({
   const color = status === "completed" ? "success" : status === "failed" ? "error" : status === "killed" ? "warning" : undefined;
   return <Text color={color} dimColor={true}>({displayLabel}{suffix})</Text>;
 }
+type ShellProgressProps = {
+  shell: { status: TaskStatus };
+};
 export function ShellProgress({
   shell
-}: TaskStatusTextProps) {
+}: ShellProgressProps) {
   switch (shell.status) {
     case "completed":
       {
