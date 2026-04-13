@@ -30,7 +30,7 @@ export type Props = {
   message: NormalizedUserMessage | AssistantMessage | AttachmentMessageType | SystemMessage | GroupedToolUseMessageType | CollapsedReadSearchGroupType;
   lookups: ReturnType<typeof buildMessageLookups>;
   // TODO: Find a way to remove this, and leave spacing to the consumer
-  /** Absolute width for the container Box. When provided, eliminates a wrapper Box in the caller. */
+  /** 容器 Box 的绝对宽度。提供后，调用方可以省略包装 Box。 */
   containerWidth?: number;
   addMargin: boolean;
   tools: Tools;
@@ -47,9 +47,9 @@ export type Props = {
   onOpenRateLimitOptions?: () => void;
   isActiveCollapsedGroup?: boolean;
   isUserContinuation?: boolean;
-  /** ID of the last thinking block (uuid:index) to show, used for hiding past thinking in transcript mode */
+  /** 最后一个 thinking 块的 ID (uuid:index)，用于在 transcript 模式下隐藏过去的 thinking */
   lastThinkingBlockId?: string | null;
-  /** UUID of the latest user bash output message (for auto-expanding) */
+  /** 最新的 user bash output 消息的 UUID（用于自动展开） */
   latestBashOutputUUID?: string | null;
 };
 function MessageImpl({
@@ -319,25 +319,24 @@ export function hasThinkingContent(m: {
   return m.message.content.some(b => b.type === 'thinking' || b.type === 'redacted_thinking');
 }
 
-/** Exported for testing */
+/** 导出用于测试 */
 export function areMessagePropsEqual(prev: Props, next: Props): boolean {
   if (prev.message.uuid !== next.message.uuid) return false;
-  // Only re-render on lastThinkingBlockId change if this message actually
-  // has thinking content — otherwise every message in scrollback re-renders
-  // whenever streaming thinking starts/stops (CC-941).
+  // 仅在 lastThinkingBlockId 变更且该消息包含 thinking 内容时才重新渲染
+  // 否则每次 streaming thinking 开始/停止时，scrollback 中的每条消息都会重新渲染 (CC-941)
   if (prev.lastThinkingBlockId !== next.lastThinkingBlockId && hasThinkingContent(next.message)) {
     return false;
   }
-  // Verbose toggle changes thinking block visibility/expansion
+  // verbose 切换会改变 thinking 块的可见性/展开状态
   if (prev.verbose !== next.verbose) return false;
-  // Only re-render if this message's "is latest bash output" status changed,
-  // not when the global latestBashOutputUUID changes to a different message
+  // 仅当该消息的"是否为最新 bash output"状态发生变化时才重新渲染，
+  // 而不是当全局 latestBashOutputUUID 变为其他消息时
   const prevIsLatest = prev.latestBashOutputUUID === prev.message.uuid;
   const nextIsLatest = next.latestBashOutputUUID === next.message.uuid;
   if (prevIsLatest !== nextIsLatest) return false;
   if (prev.isTranscriptMode !== next.isTranscriptMode) return false;
-  // containerWidth is an absolute number in the no-metadata path (wrapper
-  // Box is skipped). Static messages must re-render on terminal resize.
+  // containerWidth 在无元数据路径中是一个绝对数值（跳过了包装 Box）。
+  // 静态消息必须在终端缩放时重新渲染。
   if (prev.containerWidth !== next.containerWidth) return false;
   if (prev.isStatic && next.isStatic) return true;
   return false;

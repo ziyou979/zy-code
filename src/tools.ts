@@ -13,7 +13,7 @@ import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
 import { BriefTool } from './tools/BriefTool/BriefTool.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 
-// Dead code elimination: conditional import for ant-only tools
+// 死代码消除：仅 Ant 内部工具的条件导入
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 const REPLTool =
   isInternalBuild()
@@ -60,7 +60,7 @@ import { ExitPlanModeV2Tool } from './tools/ExitPlanModeTool/ExitPlanModeV2Tool.
 import { TestingPermissionTool } from './tools/testing/TestingPermissionTool.js'
 import { GrepTool } from './tools/GrepTool/GrepTool.js'
 import { TungstenTool } from './tools/TungstenTool/TungstenTool.js'
-// Lazy require to break circular dependency: tools.ts -> TeamCreateTool/TeamDeleteTool -> ... -> tools.ts
+// 延迟 require 以打破循环依赖：tools.ts -> TeamCreateTool/TeamDeleteTool -> ... -> tools.ts
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getTeamCreateTool = () =>
   require('./tools/TeamCreateTool/TeamCreateTool.js')
@@ -88,7 +88,7 @@ import { TaskListTool } from './tools/TaskListTool/TaskListTool.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { isToolSearchEnabledOptimistic } from './utils/toolSearch.js'
 import { isTodoV2Enabled } from './utils/tasks.js'
-// Dead code elimination: conditional import for ZY_CODE_VERIFY_PLAN
+// 死代码消除：ZY_CODE_VERIFY_PLAN 的条件导入
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 const VerifyPlanExecutionTool =
   process.env.ZY_CODE_VERIFY_PLAN === 'true'
@@ -104,7 +104,7 @@ export {
   COORDINATOR_MODE_ALLOWED_TOOLS,
 } from './constants/tools.js'
 import { feature } from 'bun:bundle'
-// Dead code elimination: conditional import for OVERFLOW_TEST_TOOL
+// 死代码消除：OVERFLOW_TEST_TOOL 的条件导入
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 const OverflowTestTool = feature('OVERFLOW_TEST_TOOL')
   ? require('./tools/OverflowTestTool/OverflowTestTool.js').OverflowTestTool
@@ -157,7 +157,7 @@ const getPowerShellTool = () => {
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
- * Predefined tool presets that can be used with --tools flag
+ * 可与 --tools 标志配合使用的预定义工具预设
  */
 export const TOOL_PRESETS = ['default'] as const
 
@@ -172,9 +172,9 @@ export function parseToolPreset(preset: string): ToolPreset | null {
 }
 
 /**
- * Get the list of tool names for a given preset
- * Filters out tools that are disabled via isEnabled() check
- * @returns Array of tool names
+ * 获取指定预设的工具名称列表
+ * 过滤掉通过 isEnabled() 检查被禁用的工具
+ * @returns 工具名称数组
  */
 export function getToolsForDefaultPreset(): string[] {
   const tools = getAllBaseTools()
@@ -183,21 +183,20 @@ export function getToolsForDefaultPreset(): string[] {
 }
 
 /**
- * Get the complete exhaustive list of all tools that could be available
- * in the current environment (respecting process.env flags).
- * This is the source of truth for ALL tools.
+ * 获取当前环境中所有可用工具的完整列表（遵循 process.env 标志）。
+ * 这是所有工具的真实来源。
  */
 /**
- * NOTE: This MUST stay in sync with https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_global_system_caching, in order to cache the system prompt across users.
+ * NOTE: 此函数必须与 https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_global_system_caching 保持同步，以便跨用户缓存系统提示词。
  */
 export function getAllBaseTools(): Tools {
   return [
     AgentTool,
     TaskOutputTool,
     BashTool,
-    // Ant-native builds have bfs/ugrep embedded in the bun binary (same ARGV0
-    // trick as ripgrep). When available, find/grep in Zy's shell are aliased
-    // to these fast tools, so the dedicated Glob/Grep tools are unnecessary.
+    // Ant 原生构建在 bun 二进制文件中嵌入了 bfs/ugrep（与 ripgrep 相同的 ARGV0
+    // 技巧）。当可用时，Zy shell 中的 find/grep 会被别名化到这些快速工具，
+    // 因此不需要专用的 Glob/Grep 工具。
     ...(hasEmbeddedSearchTools() ? [] : [GlobTool, GrepTool]),
     ExitPlanModeV2Tool,
     FileReadTool,
@@ -244,20 +243,20 @@ export function getAllBaseTools(): Tools {
     ...(process.env.NODE_ENV === 'test' ? [TestingPermissionTool] : []),
     ListMcpResourcesTool,
     ReadMcpResourceTool,
-    // Include ToolSearchTool when tool search might be enabled (optimistic check)
-    // The actual decision to defer tools happens at request time in zy.ts
+    // 当工具搜索可能启用时（乐观检查），包含 ToolSearchTool
+    // 实际的延迟工具决策发生在 zy.ts 的请求时
     ...(isToolSearchEnabledOptimistic() ? [ToolSearchTool] : []),
   ]
 }
 
 /**
- * Filters out tools that are blanket-denied by the permission context.
- * A tool is filtered out if there's a deny rule matching its name with no
- * ruleContent (i.e., a blanket deny for that tool).
+ * 过滤掉被权限上下文全局拒绝规则禁止的工具。
+ * 如果存在与工具名称匹配的拒绝规则且没有 ruleContent（即对该工具的全局拒绝），
+ * 则该工具会被过滤掉。
  *
- * Uses the same matcher as the runtime permission check (step 1a), so MCP
- * server-prefix rules like `mcp__server` strip all tools from that server
- * before the model sees them — not just at call time.
+ * 使用与运行时权限检查（步骤 1a）相同的匹配器，因此 MCP 服务器前缀规则
+ * （如 `mcp__server`）会在模型看到之前就从该服务器剥离所有工具——
+ * 而不仅仅是在调用时。
  */
 export function filterToolsByDenyRules<
   T extends {
@@ -269,11 +268,11 @@ export function filterToolsByDenyRules<
 }
 
 export const getTools = (permissionContext: ToolPermissionContext): Tools => {
-  // Simple mode: only Bash, Read, and Edit tools
+  // 简单模式：仅使用 Bash、Read 和 Edit 工具
   if (isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
-    // --bare + REPL mode: REPL wraps Bash/Read/Edit/etc inside the VM, so
-    // return REPL instead of the raw primitives. Matches the non-bare path
-    // below which also hides REPL_ONLY_TOOLS when REPL is enabled.
+    // --bare + REPL 模式：REPL 在 VM 内部封装了 Bash/Read/Edit 等工具，
+    // 因此返回 REPL 而不是原始工具。与下方非 bare 路径一致，
+    // 该路径在启用 REPL 时也会隐藏 REPL_ONLY_TOOLS。
     if (isReplModeEnabled() && REPLTool) {
       const replSimple: Tool[] = [REPLTool]
       if (
@@ -285,9 +284,9 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
       return filterToolsByDenyRules(replSimple, permissionContext)
     }
     const simpleTools: Tool[] = [BashTool, FileReadTool, FileEditTool]
-    // When coordinator mode is also active, include AgentTool and TaskStopTool
-    // so the coordinator gets Task+TaskStop (via useMergedTools filtering) and
-    // workers get Bash/Read/Edit (via filterToolsForAgent filtering).
+    // 当协调器模式同时激活时，包含 AgentTool 和 TaskStopTool，
+    // 使协调器获得 Task+TaskStop（通过 useMergedTools 过滤），
+    // 而工作节点获得 Bash/Read/Edit（通过 filterToolsForAgent 过滤）。
     if (
       feature('COORDINATOR_MODE') &&
       coordinatorModeModule?.isCoordinatorMode()
@@ -297,7 +296,7 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
     return filterToolsByDenyRules(simpleTools, permissionContext)
   }
 
-  // Get all base tools and filter out special tools that get added conditionally
+  // 获取所有基础工具并过滤掉有条件添加的特殊工具
   const specialTools = new Set([
     ListMcpResourcesTool.name,
     ReadMcpResourceTool.name,
@@ -306,11 +305,11 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
 
   const tools = getAllBaseTools().filter(tool => !specialTools.has(tool.name))
 
-  // Filter out tools that are denied by the deny rules
+  // 过滤掉被拒绝规则禁止的工具
   let allowedTools = filterToolsByDenyRules(tools, permissionContext)
 
-  // When REPL mode is enabled, hide primitive tools from direct use.
-  // They're still accessible inside REPL via the VM context.
+  // 当 REPL 模式启用时，隐藏原始工具的直接使用。
+  // 它们仍然可以通过 REPL 内部的 VM 上下文访问。
   if (isReplModeEnabled()) {
     const replEnabled = allowedTools.some(tool =>
       toolMatchesName(tool, REPL_TOOL_NAME),
@@ -327,20 +326,20 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
 }
 
 /**
- * Assemble the full tool pool for a given permission context and MCP tools.
+ * 为给定权限上下文和 MCP 工具组装完整的工具池。
  *
- * This is the single source of truth for combining built-in tools with MCP tools.
- * Both REPL.tsx (via useMergedTools hook) and runAgent.ts (for coordinator workers)
- * use this function to ensure consistent tool pool assembly.
+ * 这是将内置工具与 MCP 工具组合的唯一真实来源。
+ * REPL.tsx（通过 useMergedTools hook）和 runAgent.ts（用于协调器工作节点）
+ * 都使用此函数来确保工具池组装的一致性。
  *
- * The function:
- * 1. Gets built-in tools via getTools() (respects mode filtering)
- * 2. Filters MCP tools by deny rules
- * 3. Deduplicates by tool name (built-in tools take precedence)
+ * 该函数：
+ * 1. 通过 getTools() 获取内置工具（遵循模式过滤）
+ * 2. 通过拒绝规则过滤 MCP 工具
+ * 3. 按工具名称去重（内置工具优先）
  *
- * @param permissionContext - Permission context for filtering built-in tools
- * @param mcpTools - MCP tools from appState.mcp.tools
- * @returns Combined, deduplicated array of built-in and MCP tools
+ * @param permissionContext - 用于过滤内置工具的权限上下文
+ * @param mcpTools - 来自 appState.mcp.tools 的 MCP 工具
+ * @returns 去重后的内置工具和 MCP 工具组合数组
  */
 export function assembleToolPool(
   permissionContext: ToolPermissionContext,
@@ -348,17 +347,16 @@ export function assembleToolPool(
 ): Tools {
   const builtInTools = getTools(permissionContext)
 
-  // Filter out MCP tools that are in the deny list
+  // 过滤掉在拒绝列表中的 MCP 工具
   const allowedMcpTools = filterToolsByDenyRules(mcpTools, permissionContext)
 
-  // Sort each partition for prompt-cache stability, keeping built-ins as a
-  // contiguous prefix. The server's zy_code_system_cache_policy places a
-  // global cache breakpoint after the last prefix-matched built-in tool; a flat
-  // sort would interleave MCP tools into built-ins and invalidate all downstream
-  // cache keys whenever an MCP tool sorts between existing built-ins. uniqBy
-  // preserves insertion order, so built-ins win on name conflict.
-  // Avoid Array.toSorted (Node 20+) — we support Node 18. builtInTools is
-  // readonly so copy-then-sort; allowedMcpTools is a fresh .filter() result.
+  // 为 prompt 缓存稳定性进行排序，保持内置工具作为连续前缀。
+  // 服务器的 zy_code_system_cache_policy 在最后一个前缀匹配的内置工具之后
+  // 设置全局缓存断点；扁平排序会将 MCP 工具插入内置工具中，导致每当
+  // MCP 工具排序插入现有内置工具之间时，所有下游缓存键失效。
+  // uniqBy 保留插入顺序，因此在名称冲突时内置工具优先。
+  // 避免使用 Array.toSorted（Node 20+）——我们支持 Node 18。
+  // builtInTools 是只读的，所以先复制再排序；allowedMcpTools 是新的 .filter() 结果。
   const byName = (a: Tool, b: Tool) => a.name.localeCompare(b.name)
   return uniqBy(
     [...builtInTools].sort(byName).concat(allowedMcpTools.sort(byName)),
@@ -367,18 +365,18 @@ export function assembleToolPool(
 }
 
 /**
- * Get all tools including both built-in tools and MCP tools.
+ * 获取所有工具，包括内置工具和 MCP 工具。
  *
- * This is the preferred function when you need the complete tools list for:
- * - Tool search threshold calculations (isToolSearchEnabled)
- * - Token counting that includes MCP tools
- * - Any context where MCP tools should be considered
+ * 当需要以下完整工具列表时，应优先使用此函数：
+ * - 工具搜索阈值计算（isToolSearchEnabled）
+ * - 包含 MCP 工具的 token 计数
+ * - 任何需要考虑 MCP 工具的场景
  *
- * Use getTools() only when you specifically need just built-in tools.
+ * 仅在明确只需要内置工具时使用 getTools()。
  *
- * @param permissionContext - Permission context for filtering built-in tools
- * @param mcpTools - MCP tools from appState.mcp.tools
- * @returns Combined array of built-in and MCP tools
+ * @param permissionContext - 用于过滤内置工具的权限上下文
+ * @param mcpTools - 来自 appState.mcp.tools 的 MCP 工具
+ * @returns 内置工具和 MCP 工具的组合数组
  */
 export function getMergedTools(
   permissionContext: ToolPermissionContext,

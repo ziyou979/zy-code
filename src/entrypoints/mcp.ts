@@ -37,8 +37,8 @@ export async function startMCPServer(
   debug: boolean,
   verbose: boolean,
 ): Promise<void> {
-  // Use size-limited LRU cache for readFileState to prevent unbounded memory growth
-  // 100 files and 25MB limit should be sufficient for MCP server operations
+  // 使用有限大小的 LRU 缓存 readFileState，防止内存无限增长
+  // 100 个文件和 25MB 限制对于 MCP 服务器操作应该足够
   const READ_FILE_STATE_CACHE_SIZE = 100
   const readFileStateCache = createFileStateCacheWithSizeLimit(
     READ_FILE_STATE_CACHE_SIZE,
@@ -68,8 +68,8 @@ export async function startMCPServer(
             let outputSchema: ToolOutput | undefined
             if (tool.outputSchema) {
               const convertedSchema = zodToJsonSchema(tool.outputSchema)
-              // MCP SDK requires outputSchema to have type: "object" at root level
-              // Skip schemas with anyOf/oneOf at root (from z.union, z.discriminatedUnion, etc.)
+              // MCP SDK 要求 outputSchema 在根级别具有 type: "object"
+              // 跳过根级别为 anyOf/oneOf 的 schema（来自 z.union、z.discriminatedUnion 等）
               // See: https://github.com/anthropics/zy-code/issues/8014
               if (
                 typeof convertedSchema === 'object' &&
@@ -107,8 +107,7 @@ export async function startMCPServer(
         throw new Error(`Tool ${name} not found`)
       }
 
-      // Assume MCP servers do not read messages separately from the tool
-      // call arguments.
+      // 假设 MCP 服务器不会从工具调用参数之外单独读取消息
       const toolUseContext: ToolUseContext = {
         abortController: createAbortController(),
         options: {

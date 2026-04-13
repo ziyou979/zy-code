@@ -12,39 +12,39 @@ import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js';
 import { getAWSRegion, getVertexRegionForModel, isEnvTruthy } from '../../utils/envUtils.js';
 
 /**
- * Environment variables for different client types:
+ * 不同客户端类型的环境变量：
  *
- * Direct API:
- * - ZY_API_KEY: Required for direct API access
+ * 直接 API：
+ * - ZY_API_KEY：直接 API 访问所需
  *
- * AWS Bedrock:
- * - AWS credentials configured via aws-sdk defaults
- * - AWS_REGION or AWS_DEFAULT_REGION: Sets the AWS region for all models (default: us-east-1)
- * - ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION: Optional. Override AWS region specifically for the small fast model (Haiku)
+ * AWS Bedrock：
+ * - 通过 aws-sdk 默认配置 AWS 凭证
+ * - AWS_REGION 或 AWS_DEFAULT_REGION：设置所有模型的 AWS 区域（默认：us-east-1）
+ * - ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION：可选。专门用于 small fast model (Haiku) 的 AWS 区域覆盖
  *
- * Foundry (Azure):
- * - ANTHROPIC_FOUNDRY_RESOURCE: Your Azure resource name (e.g., 'my-resource')
- *   For the full endpoint: https://{resource}.services.ai.azure.com/anthropic/v1/messages
- * - ANTHROPIC_FOUNDRY_BASE_URL: Optional. Alternative to resource - provide full base URL directly
- *   (e.g., 'https://my-resource.services.ai.azure.com')
+ * Foundry (Azure)：
+ * - ANTHROPIC_FOUNDRY_RESOURCE：你的 Azure 资源名称（例如 'my-resource'）
+ *   完整端点：https://{resource}.services.ai.azure.com/anthropic/v1/messages
+ * - ANTHROPIC_FOUNDRY_BASE_URL：可选。替代 resource，直接提供完整基础 URL
+ *   （例如 'https://my-resource.services.ai.azure.com'）
  *
- * Authentication (one of the following):
- * - ANTHROPIC_FOUNDRY_API_KEY: Your Microsoft Foundry API key (if using API key auth)
- * - Azure AD authentication: If no API key is provided, uses DefaultAzureCredential
- *   which supports multiple auth methods (environment variables, managed identity,
- *   Azure CLI, etc.). See: https://docs.microsoft.com/en-us/javascript/api/@azure/identity
+ * 认证（以下方式之一）：
+ * - ANTHROPIC_FOUNDRY_API_KEY：你的 Microsoft Foundry API 密钥（如果使用 API 密钥认证）
+ * - Azure AD 认证：如果未提供 API 密钥，则使用 DefaultAzureCredential
+ *   支持多种认证方式（环境变量、托管标识、Azure CLI 等）
+ *   参见：https://docs.microsoft.com/en-us/javascript/api/@azure/identity
  *
- * Vertex AI:
- * - CLOUD_ML_REGION: Optional. The default GCP region to use for all models
- *   If specific model region not specified above
- * - ANTHROPIC_VERTEX_PROJECT_ID: Required. Your GCP project ID
- * - Standard GCP credentials configured via google-auth-library
+ * Vertex AI：
+ * - CLOUD_ML_REGION：可选。用于所有模型的默认 GCP 区域
+ *   如果未在上方指定特定模型区域，则使用此值
+ * - ANTHROPIC_VERTEX_PROJECT_ID：必填。你的 GCP 项目 ID
+ * - 通过 google-auth-library 配置标准 GCP 凭证
  *
- * Priority for determining region:
- * 1. Hardcoded model-specific environment variables
- * 2. Global CLOUD_ML_REGION variable
- * 3. Default region from config
- * 4. Fallback region (us-east5)
+ * 确定区域的优先级：
+ * 1. 硬编码的模型特定环境变量
+ * 2. 全局 CLOUD_ML_REGION 变量
+ * 3. 配置中的默认区域
+ * 4. 回退区域 (us-east5)
  */
 
 function createStderrLogger(): ClientOptions['logger'] {
@@ -91,22 +91,22 @@ export async function getLLMClient({
     ...(remoteSessionId ? {
       'x-zy-remote-session-id': remoteSessionId
     } : {}),
-    // SDK consumers can identify their app/library for backend analytics
+    // SDK 消费者可以通过此标识在 SDK 请求上设置他们的 app/library，用于后端分析
     ...(clientApp ? {
       'x-client-app': clientApp
     } : {})
   };
 
-  // Log API client configuration for HFI debugging
+  // 记录 API 客户端配置，用于 HFI 调试
   logForDebugging(`[API:request] Creating client, ANTHROPIC_CUSTOM_HEADERS present: ${!!process.env.ANTHROPIC_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders['Authorization']}`);
 
-  // Add additional protection header if enabled via env var
+  // 如果通过环境变量启用了额外保护 header
   const additionalProtectionEnabled = isEnvTruthy(process.env.ZY_CODE_ADDITIONAL_PROTECTION);
   if (additionalProtectionEnabled) {
     defaultHeaders['x-anthropic-additional-protection'] = 'true';
   }
 
-  // Always configure API key headers (no subscription context)
+  // 始终配置 API 密钥 header（无订阅上下文）
   await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession());
   const resolvedFetch = buildFetch(fetchOverride, source);
   const ARGS = {
@@ -125,7 +125,7 @@ export async function getLLMClient({
     const {
       AnthropicBedrock
     } = await import('@anthropic-ai/bedrock-sdk');
-    // Use region override for small fast model if specified
+    // 如果指定了 small fast model 的区域覆盖，则使用
     const awsRegion = model === getSmallFastModel() && process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION ? process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION : getAWSRegion();
     const bedrockArgs: ConstructorParameters<typeof AnthropicBedrock>[0] = {
       ...ARGS,
@@ -138,16 +138,16 @@ export async function getLLMClient({
       })
     };
 
-    // Add API key authentication if available
+    // 添加 API 密钥认证（如果可用）
     if (process.env.AWS_BEARER_TOKEN_BEDROCK) {
       bedrockArgs.skipAuth = true;
-      // Add the Bearer token for Bedrock API key authentication
+      // 为 Bedrock API 密钥认证添加 Bearer token
       bedrockArgs.defaultHeaders = {
         ...bedrockArgs.defaultHeaders,
         Authorization: `Bearer ${process.env.AWS_BEARER_TOKEN_BEDROCK}`
       };
     } else if (!isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH)) {
-      // Refresh auth and get credentials with cache clearing
+      // 刷新认证并获取凭证，同时清除缓存
       const cachedCredentials = await refreshAndGetAwsCredentials();
       if (cachedCredentials) {
         bedrockArgs.awsAccessKey = cachedCredentials.accessKeyId;
@@ -155,22 +155,22 @@ export async function getLLMClient({
         bedrockArgs.awsSessionToken = cachedCredentials.sessionToken;
       }
     }
-    // we have always been lying about the return type - this doesn't support batching or models
+    // 返回值类型一直是不准确的——这不支持 batching 或 models
     return new AnthropicBedrock(bedrockArgs) as unknown as Anthropic;
   }
   if (isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)) {
     const {
       AnthropicFoundry
     } = await import('@anthropic-ai/foundry-sdk');
-    // Determine Azure AD token provider based on configuration
-    // SDK reads ANTHROPIC_FOUNDRY_API_KEY by default
+    // 根据配置确定 Azure AD token provider
+    // SDK 默认读取 ANTHROPIC_FOUNDRY_API_KEY
     let azureADTokenProvider: (() => Promise<string>) | undefined;
     if (!process.env.ANTHROPIC_FOUNDRY_API_KEY) {
       if (isEnvTruthy(process.env.ZY_CODE_SKIP_FOUNDRY_AUTH)) {
-        // Mock token provider for testing/proxy scenarios (similar to Vertex mock GoogleAuth)
+        // 测试/代理场景下的模拟 token provider（类似于 Vertex 的模拟 GoogleAuth）
         azureADTokenProvider = () => Promise.resolve('');
       } else {
-        // Use real Azure AD authentication with DefaultAzureCredential
+        // 使用 DefaultAzureCredential 进行真实的 Azure AD 认证
         const {
           DefaultAzureCredential: AzureCredential,
           getBearerTokenProvider
@@ -187,12 +187,12 @@ export async function getLLMClient({
         logger: createStderrLogger()
       })
     };
-    // we have always been lying about the return type - this doesn't support batching or models
+    // 返回值类型一直是不准确的——这不支持 batching 或 models
     return new AnthropicFoundry(foundryArgs) as unknown as Anthropic;
   }
   if (isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)) {
-    // Refresh GCP credentials if gcpAuthRefresh is configured and credentials are expired
-    // This is similar to how we handle AWS credential refresh for Bedrock
+    // 如果配置了 gcpAuthRefresh 且凭证已过期，则刷新 GCP 凭证
+    // 这与我们处理 Bedrock 的 AWS 凭证刷新类似
     if (!isEnvTruthy(process.env.ZY_CODE_SKIP_VERTEX_AUTH)) {
       await refreshGcpCredentialsIfNeeded();
     }
@@ -201,48 +201,48 @@ export async function getLLMClient({
     }, {
       GoogleAuth
     }] = await Promise.all([import('@anthropic-ai/vertex-sdk'), import('google-auth-library')]);
-    // TODO: Cache either GoogleAuth instance or AuthClient to improve performance
-    // Currently we create a new GoogleAuth instance for every getLLMClient() call
-    // This could cause repeated authentication flows and metadata server checks
-    // However, caching needs careful handling of:
-    // - Credential refresh/expiration
-    // - Environment variable changes (GOOGLE_APPLICATION_CREDENTIALS, project vars)
-    // - Cross-request auth state management
-    // See: https://github.com/googleapis/google-auth-library-nodejs/issues/390 for caching challenges
+    // TODO: 缓存 GoogleAuth 实例或 AuthClient 以提升性能
+    // 目前每次调用 getLLMClient() 都会创建新的 GoogleAuth 实例
+    // 这可能导致重复的认证流程和元数据服务器检查
+    // 但是，缓存需要仔细处理：
+    // - 凭证刷新/过期
+    // - 环境变量变更（GOOGLE_APPLICATION_CREDENTIALS、项目变量等）
+    // - 跨请求的认证状态管理
+    // 缓存的难点参见：https://github.com/googleapis/google-auth-library-nodejs/issues/390
 
-    // Prevent metadata server timeout by providing projectId as fallback
-    // google-auth-library checks project ID in this order:
-    // 1. Environment variables (GCLOUD_PROJECT, GOOGLE_CLOUD_PROJECT, etc.)
-    // 2. Credential files (service account JSON, ADC file)
+    // 提供 projectId 作为回退，防止元数据服务器超时
+    // google-auth-library 按以下顺序检查项目 ID：
+    // 1. 环境变量（GCLOUD_PROJECT、GOOGLE_CLOUD_PROJECT 等）
+    // 2. 凭证文件（服务账号 JSON、ADC 文件）
     // 3. gcloud config
-    // 4. GCE metadata server (causes 12s timeout outside GCP)
+    // 4. GCE 元数据服务器（在 GCP 外部会导致 12 秒超时）
     //
-    // We only set projectId if user hasn't configured other discovery methods
-    // to avoid interfering with their existing auth setup
+    // 仅在用户未配置其他发现方法时设置 projectId
+    // 以免干扰其现有的认证配置
 
-    // Check project environment variables in same order as google-auth-library
-    // See: https://github.com/googleapis/google-auth-library-nodejs/blob/main/src/auth/googleauth.ts
+    // 按 google-auth-library 相同的顺序检查项目环境变量
+    // 参见：https://github.com/googleapis/google-auth-library-nodejs/blob/main/src/auth/googleauth.ts
     const hasProjectEnvVar = process.env['GCLOUD_PROJECT'] || process.env['GOOGLE_CLOUD_PROJECT'] || process.env['gcloud_project'] || process.env['google_cloud_project'];
 
-    // Check for credential file paths (service account or ADC)
-    // Note: We're checking both standard and lowercase variants to be safe,
-    // though we should verify what google-auth-library actually checks
+    // 检查凭证文件路径（服务账号或 ADC）
+    // 注：同时检查标准和小写变体以确保安全
+    // 但我们应验证 google-auth-library 实际检查的是哪些
     const hasKeyFile = process.env['GOOGLE_APPLICATION_CREDENTIALS'] || process.env['google_application_credentials'];
     const googleAuth = isEnvTruthy(process.env.ZY_CODE_SKIP_VERTEX_AUTH) ? {
-      // Mock GoogleAuth for testing/proxy scenarios
+      // 测试/代理场景下模拟 GoogleAuth
       getClient: () => ({
         getRequestHeaders: () => ({})
       })
     } as unknown as GoogleAuth : new GoogleAuth({
       scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      // Only use ANTHROPIC_VERTEX_PROJECT_ID as last resort fallback
-      // This prevents the 12-second metadata server timeout when:
-      // - No project env vars are set AND
-      // - No credential keyfile is specified AND
-      // - ADC file exists but lacks project_id field
+      // 仅将 ANTHROPIC_VERTEX_PROJECT_ID 作为最后的回退方案
+      // 这可以防止在以下情况时出现 12 秒元数据服务器超时：
+      // - 未设置项目环境变量 且
+      // - 未指定凭证 keyfile 且
+      // - ADC 文件存在但缺少 project_id 字段
       //
-      // Risk: If auth project != API target project, this could cause billing/audit issues
-      // Mitigation: Users can set GOOGLE_CLOUD_PROJECT to override
+      // 风险：如果认证项目与 API 目标项目不一致，可能导致计费/审计问题
+      // 缓解措施：用户可以设置 GOOGLE_CLOUD_PROJECT 来覆盖
       ...(hasProjectEnvVar || hasKeyFile ? {} : {
         projectId: process.env.ANTHROPIC_VERTEX_PROJECT_ID
       })
@@ -255,7 +255,7 @@ export async function getLLMClient({
         logger: createStderrLogger()
       })
     };
-    // we have always been lying about the return type - this doesn't support batching or models
+    // 返回值类型一直是不准确的——这不支持 batching 或 models
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic;
   }
   if (getAPIProvider() === 'dashscope') {
@@ -296,8 +296,8 @@ export async function getLLMClient({
     };
     return new Anthropic(dashscopeConfig);
   }
-  // Custom endpoint providers (Ollama, ZhiPu, Kimi)
-  // These use a custom base URL but support the full Anthropic message format.
+  // 自定义端点提供商（Ollama、ZhiPu、Kimi）
+  // 这些使用自定义 base URL，但支持完整的 Anthropic 消息格式
   const apiProvider = getAPIProvider();
   if (isCustomEndpointProvider(apiProvider)) {
     const providerConfig = getCustomEndpointProviderConfig(apiProvider);
@@ -324,11 +324,11 @@ export async function getLLMClient({
     return new Anthropic(providerAnthropicConfig);
   }
 
-  // Determine authentication method based on available tokens
+  // 根据可用的 token 确定认证方式
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
     apiKey: apiKey || getApiKey(),
     authToken: undefined,
-    // Set baseURL from OAuth config when using staging OAuth
+    // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
     ...(process.env.USER_TYPE === 'zy-super' && isEnvTruthy(process.env.USE_STAGING_OAUTH) ? {
       baseURL: getOauthConfig().BASE_API_URL
     } : {}),
@@ -350,13 +350,13 @@ function getCustomHeaders(): Record<string, string> {
   const customHeadersEnv = process.env.ANTHROPIC_CUSTOM_HEADERS;
   if (!customHeadersEnv) return customHeaders;
 
-  // Split by newlines to support multiple headers
+  // 按换行符分割以支持多个 header
   const headerStrings = customHeadersEnv.split(/\n|\r\n/);
   for (const headerString of headerStrings) {
     if (!headerString.trim()) continue;
 
-    // Parse header in format "Name: Value" (curl style). Split on first `:`
-    // then trim — avoids regex backtracking on malformed long header lines.
+    // 解析 "Name: Value" 格式的 header（curl 风格）。在第一个 `:` 处分割
+    // 然后修剪空白——避免在畸形长 header 行上出现正则回溯
     const colonIdx = headerString.indexOf(':');
     if (colonIdx === -1) continue;
     const name = headerString.slice(0, colonIdx).trim();
@@ -370,11 +370,11 @@ function getCustomHeaders(): Record<string, string> {
 export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id';
 
 /**
- * Default configuration for custom endpoint providers (Ollama, ZhiPu, Kimi).
- * Users can override via environment variables:
- * - LLM_BASE_URL: Custom base URL for any provider
- * - LLM_API_KEY: Custom API key
- * - Provider-specific: OLLAMA_BASE_URL, ZHIPU_BASE_URL, KIMI_BASE_URL, etc.
+ * 自定义端点提供商（Ollama、ZhiPu、Kimi）的默认配置
+ * 用户可以通过环境变量覆盖：
+ * - LLM_BASE_URL：任何提供商的自定义 base URL
+ * - LLM_API_KEY：自定义 API 密钥
+ * - 特定提供商：OLLAMA_BASE_URL、ZHIPU_BASE_URL、KIMI_BASE_URL 等
  */
 function getCustomEndpointProviderConfig(provider: 'ollama' | 'zhipu' | 'kimi'): {
   baseURL: string;
@@ -408,15 +408,15 @@ function getCustomEndpointProviderConfig(provider: 'ollama' | 'zhipu' | 'kimi'):
 function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | undefined): ClientOptions['fetch'] {
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   const inner = fetchOverride ?? globalThis.fetch;
-  // Only send to the direct API — Bedrock/Vertex/Foundry don't log it
-  // and unknown headers risk rejection by strict proxies (inc-4029 class).
+  // 仅发送到直接 API——Bedrock/Vertex/Foundry 不记录此
+  // 未知 header 有被严格代理拒绝的风险（inc-4029 类）
   const injectClientRequestId = getAPIProvider() === 'anthropic' && isAnthropicBaseUrl();
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const headers = new Headers(init?.headers);
-    // Generate a client-side request ID so timeouts (which return no server
-    // request ID) can still be correlated with server logs by the API team.
-    // Callers that want to track the ID themselves can pre-set the header.
+    // 生成客户端侧请求 ID，以便超时（不返回服务器请求 ID）
+    // 仍能被 API 团队与服务器日志关联。
+    // 想要自行追踪 ID 的调用方可以预设此 header
     if (injectClientRequestId && !headers.has(CLIENT_REQUEST_ID_HEADER)) {
       headers.set(CLIENT_REQUEST_ID_HEADER, randomUUID());
     }
@@ -426,7 +426,7 @@ function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | unde
       const id = headers.get(CLIENT_REQUEST_ID_HEADER);
       logForDebugging(`[API REQUEST] ${new URL(url).pathname}${id ? ` ${CLIENT_REQUEST_ID_HEADER}=${id}` : ''} source=${source ?? 'unknown'}`);
     } catch {
-      // never let logging crash the fetch
+      // 绝不让日志导致 fetch 崩溃
     }
     return inner(input, {
       ...init,

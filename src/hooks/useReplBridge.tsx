@@ -25,30 +25,29 @@ import { createBridgeStatusMessage, createSystemMessage } from '../utils/message
 import { getAutoModeUnavailableNotification, getAutoModeUnavailableReason, isAutoModeGateEnabled, isBypassPermissionsModeDisabled, transitionPermissionMode } from '../utils/permissions/permissionSetup.js';
 import { getLeaderToolUseConfirmQueue } from '../utils/swarm/leaderPermissionBridge.js';
 
-/** How long after a failure before replBridgeEnabled is auto-cleared (stops retries). */
+/** 失败后多久自动清除 replBridgeEnabled（停止重试）。 */
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000;
 
 /**
- * Max consecutive initReplBridge failures before the hook stops re-attempting
- * for the session lifetime. Guards against paths that flip replBridgeEnabled
- * back on after auto-disable (settings sync, /remote-control, config tool)
- * when the underlying OAuth is unrecoverable — each re-attempt is another
- * guaranteed 401 against POST /v1/environments/bridge. Datadog 2026-03-08:
- * top stuck client generated 2,879 × 401/day alone (17% of all 401s on the
- * route).
+ * initReplBridge 连续失败的最大次数，超过此次数后 hook 将在整个 session
+ * 生命周期内停止重试。用于防止在 OAuth 不可恢复的情况下，
+ * replBridgeEnabled 被自动禁用后又通过其他路径（settings sync、
+ * /remote-control、config tool）重新开启——每次重试都会产生一次
+ * 对 POST /v1/environments/bridge 的 401 请求。Datadog 2026-03-08：
+ * 最严重的卡死客户端每天产生 2,879 次 401（占该路由所有 401 的 17%）。
  */
 const MAX_CONSECUTIVE_INIT_FAILURES = 3;
 
 /**
- * Hook that initializes an always-on bridge connection in the background
- * and writes new user/assistant messages to the bridge session.
+ * Hook，在后台初始化一个始终在线的 bridge 连接，
+ * 并将新的 user/assistant 消息写入 bridge session。
  *
- * Silently skips if bridge is not enabled or user is not OAuth-authenticated.
+ * 如果 bridge 未启用或用户未通过 OAuth 认证，则静默跳过。
  *
- * Watches AppState.replBridgeEnabled — when toggled off (via /config or footer),
- * the bridge is torn down. When toggled back on, it re-initializes.
+ * 监听 AppState.replBridgeEnabled——当关闭时（通过 /config 或 footer），
+ * bridge 会被拆除。当重新开启时，它会重新初始化。
  *
- * Inbound messages from zy.ai are injected into the REPL via queuedCommands.
+ * 来自 zy.ai 的入站消息通过 queuedCommands 注入到 REPL 中。
  */
 export function useReplBridge(messages: Message[], setMessages: (action: React.SetStateAction<Message[]>) => void, abortControllerRef: React.RefObject<AbortController | null>, commands: readonly Command[], mainLoopModel: string): {
   sendBridgeResult: () => void;
@@ -56,14 +55,13 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
   const handleRef = useRef<ReplBridgeHandle | null>(null);
   const teardownPromiseRef = useRef<Promise<void> | undefined>(undefined);
   const lastWrittenIndexRef = useRef(0);
-  // Tracks UUIDs already flushed as initial messages. Persists across
-  // bridge reconnections so Bridge #2+ only sends new messages — sending
-  // duplicate UUIDs causes the server to kill the WebSocket.
+  // 记录已作为初始消息刷新的 UUID。在 bridge 重连之间持久化，
+  // 因此 Bridge #2+ 仅发送新消息——发送重复的 UUID 会导致服务器关闭 WebSocket。
   const flushedUUIDsRef = useRef(new Set<string>());
   const failureTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  // Persists across effect re-runs (unlike the effect's local state). Reset
-  // only on successful init. Hits MAX_CONSECUTIVE_INIT_FAILURES → fuse blown
-  // for the session, regardless of replBridgeEnabled re-toggling.
+  // 在 effect 重跑之间持久化（与 effect 的局部状态不同）。
+  // 仅在成功 init 时重置。达到 MAX_CONSECUTIVE_INIT_FAILURES 后保险丝熔断，
+  // 无论 replBridgeEnabled 是否重新切换，整个 session 内不再重试。
   const consecutiveFailuresRef = useRef(0);
   const setAppState = useSetAppState();
   const commandsRef = useRef(commands);
@@ -89,13 +87,12 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   useAppState(s_2 => s_2.replBridgeInitialName) : undefined;
 
-  // Initialize/teardown bridge when enabled state changes.
-  // Passes current messages as initialMessages so the remote session
-  // starts with the existing conversation context (e.g. from /bridge).
+  // 当启用状态变化时，初始化/拆除 bridge。
+  // 传递当前消息作为 initialMessages，以便远程 session
+  // 可以从现有对话上下文开始（例如来自 /bridge）。
   useEffect(() => {
-    // feature() check must use positive pattern for dead code elimination —
-    // negative pattern (if (!feature(...)) return) does NOT eliminate
-    // dynamic imports below.
+    // feature() 检查必须使用正向模式以进行死代码消除——
+    // 负向模式（if (!feature(...)) return）不会消除下方的动态 import。
     if (feature('BRIDGE_MODE')) {
       if (!replBridgeEnabled) return;
       const outboundOnly = replBridgeOutboundOnly;
@@ -112,8 +109,8 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
       }
       if (consecutiveFailuresRef.current >= MAX_CONSECUTIVE_INIT_FAILURES) {
         logForDebugging(`[bridge:repl] Hook: ${consecutiveFailuresRef.current} consecutive init failures, not retrying this session`);
-        // Clear replBridgeEnabled so /remote-control doesn't mistakenly show
-        // BridgeDisconnectDialog for a bridge that never connected.
+        // 清除 replBridgeEnabled，使 /remote-control 不会错误地
+        // 为从未连接的 bridge 显示 BridgeDisconnectDialog。
         const fuseHint = 'disabled after repeated failures · restart to retry';
         notifyBridgeFailed(fuseHint);
         setAppState(prev => {
@@ -127,15 +124,14 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
         return;
       }
       let cancelled = false;
-      // Capture messages.length now so we don't re-send initial messages
-      // through writeMessages after the bridge connects.
+      // 现在捕获 messages.length，以便在 bridge 连接后
+      // 不会通过 writeMessages 重新发送初始消息。
       const initialMessageCount = messages.length;
       void (async () => {
         try {
-          // Wait for any in-progress teardown to complete before registering
-          // a new environment. Without this, the deregister HTTP call from
-          // the previous teardown races with the new register call, and the
-          // server may tear down the freshly-created environment.
+          // 在注册新 environment 之前，等待任何正在进行的 teardown 完成。
+          // 否则，前一次 teardown 的 deregister HTTP 调用会与
+          // 新的 register 调用发生竞争，服务器可能会拆除刚创建的 environment。
           if (teardownPromiseRef.current) {
             logForDebugging('[bridge:repl] Hook: waiting for previous teardown to complete before re-init');
             await teardownPromiseRef.current;
@@ -144,7 +140,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           }
           if (cancelled) return;
 
-          // Dynamic import so the module is tree-shaken in external builds
+          // 动态 import，使该模块在 external 构建 中被 tree-shake 掉
           const {
             initReplBridge
           } = await import('../bridge/initReplBridge.js');
@@ -152,15 +148,14 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             shouldShowAppUpgradeMessage
           } = await import('../bridge/envLessBridgeConfig.js');
 
-          // Assistant mode: perpetual bridge session — zy.ai shows one
-          // continuous conversation across CLI restarts instead of a new
-          // session per invocation. initBridgeCore reads bridge-pointer.json
-          // (the same crash-recovery file #20735 added) and reuses its
-          // {environmentId, sessionId} via reuseEnvironmentId +
-          // api.reconnectSession(). Teardown skips archive/deregister/
-          // pointer-clear so the session survives clean exits, not just
-          // crashes. Non-assistant bridges clear the pointer on teardown
-          // (crash-recovery only).
+          // Assistant 模式：永久 bridge session——zy.ai 在 CLI 重启之间
+          // 显示一个连续的对话，而不是每次调用创建新 session。
+          // initBridgeCore 读取 bridge-pointer.json（#20735 添加的
+          // 崩溃恢复文件），并通过 reuseEnvironmentId + api.reconnectSession()
+          // 重用其 {environmentId, sessionId}。Teardown 跳过
+          // archive/deregister/pointer-clear，因此 session 能在正常退出
+          // 而不仅仅是崩溃后存活。非 assistant bridge 在 teardown 时清除
+          // pointer（仅用于崩溃恢复）。
           let perpetual = false;
           if (feature('KAIROS')) {
             const {
@@ -169,14 +164,12 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             perpetual = isAssistantMode();
           }
 
-          // When a user message arrives from zy.ai, inject it into the REPL.
-          // Preserves the original UUID so that when the message is forwarded
-          // back to CCR, it matches the original — avoiding duplicate messages.
+          // 当来自 zy.ai 的用户消息到达时，将其注入到 REPL 中。
+          // 保留原始 UUID，以便消息转发回 CCR 时与原始消息匹配——避免重复消息。
           //
-          // Async because file_attachments (if present) need a network fetch +
-          // disk write before we enqueue with the @path prefix. Caller doesn't
-          // await — messages with attachments just land in the queue slightly
-          // later, which is fine (web messages aren't rapid-fire).
+          // 异步是因为 file_attachments（如果存在）需要在入队 @path 前缀之前
+          // 进行网络获取 + 磁盘写入。调用者不会 await——带附件的消息只是
+          // 稍晚一些进入队列，这没问题（web 消息不是快速连发的）。
           async function handleInboundMessage(msg: SDKMessage): Promise<void> {
             try {
               const fields = extractInboundMessageFields(msg);
@@ -185,7 +178,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 uuid
               } = fields;
 
-              // Dynamic import keeps the bridge code out of non-BRIDGE_MODE builds.
+              // 动态 import，使 bridge 代码不会出现在非 BRIDGE_MODE 构建中。
               const {
                 resolveAndPrepend
               } = await import('../bridge/inboundAttachments.js');
@@ -205,11 +198,11 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 value: content,
                 mode: 'prompt' as const,
                 uuid,
-                // skipSlashCommands stays true as defense-in-depth —
-                // processUserInputBase overrides it internally when bridgeOrigin
-                // is set AND the resolved command passes isBridgeSafeCommand.
-                // This keeps exit-word suppression and immediate-command blocks
-                // intact for any code path that checks skipSlashCommands directly.
+                // skipSlashCommands 保持 true 作为纵深防御——
+                // 当 bridgeOrigin 已设置且解析后的命令通过 isBridgeSafeCommand 时，
+                // processUserInputBase 会在内部覆盖它。
+                // 这使退出词抑制和即时命令块保持完整，适用于任何
+                // 直接检查 skipSlashCommands 的代码路径。
                 skipSlashCommands: true,
                 bridgeOrigin: true
               });
@@ -220,13 +213,12 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             }
           }
 
-          // State change callback — maps bridge lifecycle events to AppState.
+          // 状态变更回调——将 bridge 生命周期事件映射到 AppState。
           function handleStateChange(state: BridgeState, detail_0?: string): void {
             if (cancelled) return;
             if (outboundOnly) {
               logForDebugging(`[bridge:repl] Mirror state=${state}${detail_0 ? ` detail=${detail_0}` : ''}`);
-              // Sync replBridgeConnected so the forwarding effect starts/stops
-              // writing as the transport comes up or dies.
+              // 同步 replBridgeConnected，使转发 effect 在传输层建立或断开时开始/停止写入。
               if (state === 'failed') {
                 setAppState(prev_3 => {
                   if (!prev_3.replBridgeConnected) return prev_3;
@@ -282,12 +274,11 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                       replBridgeError: undefined
                     };
                   });
-                  // Send system/init so remote clients (web/iOS/Android) get
-                  // session metadata. REPL uses query() directly — never hits
-                  // QueryEngine's SDKMessage layer — so this is the only path
-                  // to put system/init on the REPL-bridge wire. Skills load is
-                  // async (memoized, cheap after REPL startup); fire-and-forget
-                  // so the connected-state transition isn't blocked.
+                  // 发送 system/init 使远程客户端（web/iOS/Android）获取 session 元数据。
+                  // REPL 直接使用 query()——从不经过 QueryEngine 的 SDKMessage 层——
+                  // 因此这是将 system/init 放到 REPL-bridge 线上的唯一路径。
+                  // Skills 加载是异步的（memoized，REPL 启动后开销小）；
+                  // fire-and-forget 以免阻塞连接状态转换。
                   if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_system_init', false)) {
                     void (async () => {
                       try {
@@ -295,22 +286,20 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                         if (cancelled) return;
                         const state_0 = store.getState();
                         handleRef.current?.writeSdkMessages([buildSystemInitMessage({
-                          // tools/mcpClients/plugins redacted for REPL-bridge:
-                          // MCP-prefixed tool names and server names leak which
-                          // integrations the user has wired up; plugin paths leak
-                          // raw filesystem paths (username, project structure).
-                          // CCR v2 persists SDK messages to Spanner — users who
-                          // tap "Connect from phone" may not expect these on
-                          // Anthropic's servers. QueryEngine (SDK) still emits
-                          // full lists — SDK consumers expect full telemetry.
+                          // tools/mcpClients/plugins 对 REPL-bridge 进行了脱敏：
+                          // MCP 前缀的工具名和服务器名会泄露用户已接入的集成；
+                          // 插件路径会泄露原始文件系统路径（用户名、项目结构）。
+                          // CCR v2 将 SDK 消息持久化到 Spanner——点击"从手机连接"的
+                          // 用户可能不希望这些信息出现在 Anthropic 的服务器上。
+                          // QueryEngine（SDK）仍然发出完整列表——SDK 消费者期望完整遥测。
                           tools: [],
                           mcpClients: [],
                           model: mainLoopModelRef.current,
                           permissionMode: state_0.toolPermissionContext.mode as PermissionMode,
-                          // TODO: avoid the cast
-                          // Remote clients can only invoke bridge-safe commands —
-                          // advertising unsafe ones (local-jsx, unallowed local)
-                          // would let mobile/web attempt them and hit errors.
+                          // TODO: 避免此类型转换
+                          // 远程客户端只能调用 bridge-safe 命令——
+                          // 广告不安全的命令（local-jsx、未允许的 local）
+                          // 会让 mobile/web 尝试调用并遇到错误。
                           commands: commandsRef.current.filter(isBridgeSafeCommand),
                           agents: state_0.agentDefinitions.activeAgents,
                           skills,
@@ -337,7 +326,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 });
                 break;
               case 'failed':
-                // Clear any previous failure dismiss timer
+                // 清除上一次的失败dismiss计时器
                 clearTimeout(failureTimeoutRef.current);
                 notifyBridgeFailed(detail_0);
                 setAppState(prev_5 => ({
@@ -347,7 +336,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   replBridgeSessionActive: false,
                   replBridgeConnected: false
                 }));
-                // Auto-disable after timeout so the hook stops retrying.
+                // 超时后自动禁用，使 hook 停止重试。
                 failureTimeoutRef.current = setTimeout(() => {
                   if (cancelled) return;
                   failureTimeoutRef.current = undefined;
@@ -364,11 +353,11 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             }
           }
 
-          // Map of pending bridge permission response handlers, keyed by request_id.
-          // Each entry is an onResponse handler waiting for CCR to reply.
+          // 等待中的 bridge 权限响应 handler 映射，以 request_id 为键。
+          // 每个条目是一个等待 CCR 回复的 onResponse handler。
           const pendingPermissionHandlers = new Map<string, (response: BridgePermissionResponse) => void>();
 
-          // Dispatch incoming control_response messages to registered handlers
+          // 将收到的 control_response 消息分发给已注册的 handler
           function handlePermissionResponse(msg_0: SDKControlResponse): void {
             const requestId = msg_0.response?.request_id;
             if (!requestId) return;
@@ -378,7 +367,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               return;
             }
             pendingPermissionHandlers.delete(requestId);
-            // Extract the permission decision from the control_response payload
+            // 从 control_response 负载中提取权限决策
             const inner = msg_0.response;
             if (inner.subtype === 'success' && inner.response && isBridgePermissionResponse(inner.response)) {
               handler(inner.response);
@@ -414,16 +403,16 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               });
             },
             onSetPermissionMode(mode) {
-              // Policy guards MUST fire before transitionPermissionMode —
-              // its internal auto-gate check is a defensive throw (with a
-              // setAutoModeActive(true) side-effect BEFORE the throw) rather
-              // than a graceful reject. Letting that throw escape would:
-              // (1) leave STATE.autoModeActive=true while the mode is
-              //     unchanged (3-way invariant violation per src/CLAUDE.md)
-              // (2) fail to send a control_response → server kills WS
-              // These mirror print.ts handleSetPermissionMode; the bridge
-              // can't import the checks directly (bootstrap-isolation), so
-              // it relies on this verdict to emit the error response.
+              // 策略守卫必须在 transitionPermissionMode 之前触发——
+              // 其内部的 auto-gate 检查是防御性抛出（在抛出之前有
+              // setAutoModeActivity(true) 副作用），而不是优雅拒绝。
+              // 让该抛出逃逸会：
+              // (1) 在 mode 不变的情况下留下 STATE.autoModeActive=true
+              //     （违反 src/CLAUDE.md 中的三方不变式）
+              // (2) 无法发送 control_response → 服务器关闭 WS
+              // 这些镜像于 print.ts handleSetPermissionMode；bridge
+              // 无法直接导入这些检查（bootstrap-isolation），因此
+              // 依赖此判定来发出错误响应。
               if (mode === 'bypassPermissions') {
                 if (isBypassPermissionsModeDisabled()) {
                   return {
@@ -445,8 +434,8 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   error: reason ? `Cannot set permission mode to auto: ${getAutoModeUnavailableNotification(reason)}` : 'Cannot set permission mode to auto'
                 };
               }
-              // Guards passed — apply via the centralized transition so
-              // prePlanMode stashing and auto-mode state sync all fire.
+              // 守卫通过——通过集中式 transition 应用，
+              // 使 prePlanMode 存储和 auto-mode 状态同步全部触发。
               setAppState(prev_12 => {
                 const current = prev_12.toolPermissionContext.mode;
                 if (current === mode) return prev_12;
@@ -459,7 +448,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   }
                 };
               });
-              // Recheck queued permission prompts now that mode changed.
+              // 模式已变更，重新检查队列中的权限提示。
               setImmediate(() => {
                 getLeaderToolUseConfirmQueue()?.(currentQueue => {
                   currentQueue.forEach(item => {
@@ -480,9 +469,9 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             perpetual
           });
           if (cancelled) {
-            // Effect was cancelled while initReplBridge was in flight.
-            // Tear down the handle to avoid leaking resources (poll loop,
-            // WebSocket, registered environment, cleanup callback).
+            // Effect 在 initReplBridge 执行期间被取消。
+            // 拆除 handle 以避免泄漏资源（poll loop、
+            // WebSocket、已注册的 environment、清理回调）。
             logForDebugging(`[bridge:repl] Hook: init cancelled during flight, tearing down${handle_0 ? ` env=${handle_0.environmentId}` : ''}`);
             if (handle_0) {
               void handle_0.teardown();
@@ -490,10 +479,10 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             return;
           }
           if (!handle_0) {
-            // initReplBridge returned null — a precondition failed. For most
-            // cases (no_oauth, policy_denied, etc.) onStateChange('failed')
-            // already fired with a specific hint. The GrowthBook-gate-off case
-            // is intentionally silent — not a failure, just not rolled out.
+            // initReplBridge 返回 null——前置条件失败。对于大多数情况
+            // （no_oauth、policy_denied 等），onStateChange('failed')
+            // 已带着具体提示触发。GrowthBook-gate-off 的情况是故意静默的——
+            // 不是失败，只是尚未推送。
             consecutiveFailuresRef.current++;
             logForDebugging(`[bridge:repl] Init returned null (precondition or session creation failed); consecutive failures: ${consecutiveFailuresRef.current}`);
             clearTimeout(failureTimeoutRef.current);
@@ -518,8 +507,8 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           handleRef.current = handle_0;
           setReplBridgeHandle(handle_0);
           consecutiveFailuresRef.current = 0;
-          // Skip initial messages in the forwarding effect — they were
-          // already loaded as session events during creation.
+          // 在转发 effect 中跳过初始消息——它们已在创建时
+          // 作为 session events 加载。
           lastWrittenIndexRef.current = initialMessageCount;
           if (outboundOnly) {
             setAppState(prev_15 => {
@@ -535,8 +524,8 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             });
             logForDebugging(`[bridge:repl] Mirror initialized, session=${handle_0.bridgeSessionId}`);
           } else {
-            // Build bridge permission callbacks so the interactive permission
-            // handler can race bridge responses against local user interaction.
+            // 构建 bridge 权限回调，使交互式权限 handler
+            // 可以在 bridge 响应和本地用户交互之间进行竞态。
             const permissionCallbacks: BridgePermissionCallbacks = {
               sendRequest(requestId_0, toolName, input, toolUseId, description, permissionSuggestions, blockedPath) {
                 handle_0.sendControlRequest({
@@ -585,8 +574,8 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               replBridgePermissionCallbacks: permissionCallbacks
             }));
             const url = getRemoteSessionUrl(handle_0.bridgeSessionId, handle_0.sessionIngressUrl);
-            // environmentId === '' signals the v2 env-less path. buildBridgeConnectUrl
-            // builds an env-specific connect URL, which doesn't exist without an env.
+            // environmentId === '' 表示 v2 无 env 路径。buildBridgeConnectUrl
+            // 构建特定于 env 的连接 URL，没有 env 时不存在。
             const hasEnv = handle_0.environmentId !== '';
             const connectUrl_0 = hasEnv ? buildBridgeConnectUrl(handle_0.environmentId, handle_0.sessionIngressUrl) : undefined;
             setAppState(prev_17 => {
@@ -604,22 +593,21 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               };
             });
 
-            // Show bridge status with URL in the transcript. perpetual (KAIROS
-            // assistant mode) falls back to v1 at initReplBridge.ts — skip the
-            // v2-only upgrade nudge for them. Own try/catch so a cosmetic
-            // GrowthBook hiccup doesn't hit the outer init-failure handler.
+            // 在转录中显示 bridge 状态及 URL。perpetual（KAIROS
+            // assistant 模式）在 initReplBridge.ts 回退到 v1——
+            // 为他们跳过仅 v2 的升级提示。使用独立的 try/catch，
+            // 使 GrowthBook 的小问题不会影响到外层的 init-failure handler。
             const upgradeNudge = !perpetual ? await shouldShowAppUpgradeMessage().catch(() => false) : false;
             if (cancelled) return;
             setMessages(prev_18 => [...prev_18, createBridgeStatusMessage(url, upgradeNudge ? 'Please upgrade to the latest version of the Zy mobile app to see your Remote Control sessions.' : undefined)]);
             logForDebugging(`[bridge:repl] Hook initialized, session=${handle_0.bridgeSessionId}`);
           }
         } catch (err) {
-          // Never crash the REPL — surface the error in the UI.
-          // Check cancelled first (symmetry with the !handle path at line ~386):
-          // if initReplBridge threw during rapid toggle-off (in-flight network
-          // error), don't count that toward the fuse or spam a stale error
-          // into the UI. Also fixes pre-existing spurious setAppState/
-          // setMessages on cancelled throws.
+          // 绝不让 REPL 崩溃——在 UI 中暴露错误。
+          // 先检查 cancelled（与 ~386 行 !handle 路径对称）：
+          // 如果 initReplBridge 在快速 toggle-off 期间抛出（进行中的网络错误），
+          // 不要将其计入保险丝或向 UI 发送过时的错误。
+          // 同时修复了之前在 cancelled 抛出时虚假的 setAppState/setMessages。
           if (cancelled) return;
           consecutiveFailuresRef.current++;
           const errMsg = errorMessage(err);
@@ -679,25 +667,24 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
     }
   }, [replBridgeEnabled, replBridgeOutboundOnly, setAppState, setMessages, addNotification]);
 
-  // Write new messages as they appear.
-  // Also re-runs when replBridgeConnected changes (bridge finishes init),
-  // so any messages that arrived before the bridge was ready get written.
+  // 新消息出现时写入。
+  // 当 replBridgeConnected 变化时（bridge 完成初始化）也会重跑，
+  // 因此 bridge 就绪之前到达的消息也会被写入。
   useEffect(() => {
-    // Positive feature() guard — see first useEffect comment
+    // 正向 feature() 守卫——参见第一个 useEffect 注释
     if (feature('BRIDGE_MODE')) {
       if (!replBridgeConnected) return;
       const handle_1 = handleRef.current;
       if (!handle_1) return;
 
-      // Clamp the index in case messages were compacted (array shortened).
-      // After compaction the ref could exceed messages.length, and without
-      // clamping no new messages would be forwarded.
+      // 如果消息被压缩（数组缩短），钳位索引。
+      // 压缩后 ref 可能超过 messages.length，如果不钳位则不会转发新消息。
       if (lastWrittenIndexRef.current > messages.length) {
         logForDebugging(`[bridge:repl] Compaction detected: lastWrittenIndex=${lastWrittenIndexRef.current} > messages.length=${messages.length}, clamping`);
       }
       const startIndex = Math.min(lastWrittenIndexRef.current, messages.length);
 
-      // Collect new messages since last write
+      // 收集上次写入以来的新消息
       const newMessages: Message[] = [];
       for (let i = startIndex; i < messages.length; i++) {
         const msg_1 = messages[i];

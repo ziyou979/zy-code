@@ -40,6 +40,10 @@ export function FileEditPermissionRequest(props) {
   let t8;
   let t9;
   const parsed = parseInput(props.toolUseConfirm.input);
+  let file_path: string;
+  let old_string: string;
+  let new_string: string;
+  let replace_all: boolean | undefined;
   ({
     file_path,
     old_string,

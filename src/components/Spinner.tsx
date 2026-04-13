@@ -51,28 +51,28 @@ type Props = {
   spinnerSuffix?: string | null;
   verbose: boolean;
   hasActiveTools?: boolean;
-  /** Leader's turn has completed (no active query). Used to suppress stall-red spinner when only teammates are running. */
+  /** Leader 的 turn 已完成（无活跃查询）。用于仅在 teammates 运行时抑制停滞红色 spinner。 */
   leaderIsIdle?: boolean;
 };
 
-// Thin wrapper: branches on isBriefOnly so the two variants have independent
-// hook call chains. Without this split, toggling /brief mid-render would
-// violate Rules of Hooks (the inner variant calls ~10 more hooks).
+// 薄包装：根据 isBriefOnly 分支，使两个变体有独立的 hook 调用链。
+// 没有这个分割，在渲染中途切换 /brief 会违反 Hooks 规则
+// （内部变体调用约 10 个额外的 hook）。
 export function SpinnerWithVerb(props: Props): React.ReactNode {
   const isBriefOnly = useAppState(s => s.isBriefOnly);
-  // REPL overrides isBriefOnly→false when viewing a teammate transcript
-  // (see isBriefOnly={viewedTeammateTask ? false : isBriefOnly}). That
-  // prop isn't threaded here, so replicate the gate from the store —
-  // teammate view needs the real spinner (which shows teammate status).
+  // REPL 在查看 teammate transcript 时将 isBriefOnly 覆盖为 false
+  // （参见 isBriefOnly={viewedTeammateTask ? false : isBriefOnly}）。
+  // 该 prop 未传递到这里，所以从 store 复制 gate——
+  // teammate 视图需要真正的 spinner（显示 teammate 状态）。
   const viewingAgentTaskId = useAppState(s_0 => s_0.viewingAgentTaskId);
-  // Hoisted to mount-time — this component re-renders at animation framerate.
+  // 提升到 mount 时——该组件以动画帧率重新渲染。
   const briefEnvEnabled = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   useMemo(() => isEnvTruthy(process.env.ZY_CODE_BRIEF), []) : false;
 
-  // Runtime gate mirrors isBriefEnabled() but inlined — importing from
-  // BriefTool.ts would leak tool-name strings into external builds. Single
-  // spinner instance → hooks stay unconditional (two subs, negligible).
+  // 运行时 gate 镜像 isBriefEnabled() 但内联——从 BriefTool.ts 导入会
+  // 将 tool 名称字符串泄漏到 external build 中。单个 spinner 实例 →
+  // hook 保持无条件（两个订阅，可忽略不计）。
   if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && (getKairosActive() || getUserMsgOptIn() && (briefEnvEnabled || getFeatureValue_CACHED_MAY_BE_STALE('tengu_kairos_brief', false))) && isBriefOnly && !viewingAgentTaskId) {
     return <BriefSpinner mode={props.mode} overrideMessage={props.overrideMessage} />;
   }
@@ -96,11 +96,11 @@ function SpinnerWithVerbInner({
   const settings = useSettings();
   const reducedMotion = settings.prefersReducedMotion ?? false;
 
-  // NOTE: useAnimationFrame(50) lives in SpinnerAnimationRow, not here.
-  // This component only re-renders when props or app state change —
-  // it is no longer on the 50ms clock. All `time`-derived values
-  // (frame, glimmer, stalled intensity, token counter, thinking shimmer,
-  // elapsed-time timer) are computed inside the child.
+  // NOTE: useAnimationFrame(50) 位于 SpinnerAnimationRow 中，不在这里。
+  // 该组件仅在 props 或 app state 变化时重新渲染——
+  // 不再在 50ms 时钟上。所有 `time` 派生的值
+  // （frame、glimmer、stalled intensity、token 计数器、thinking shimmer、
+  // 经过时间计时器）都在子组件中计算。
 
   const tasks = useAppState(s => s.tasks);
   const viewingAgentTaskId = useAppState(s_0 => s_0.viewingAgentTaskId);
@@ -109,7 +109,7 @@ function SpinnerWithVerbInner({
   const showSpinnerTree = expandedView === 'teammates';
   const selectedIPAgentIndex = useAppState(s_2 => s_2.selectedIPAgentIndex);
   const viewSelectionMode = useAppState(s_3 => s_3.viewSelectionMode);
-  // Get foregrounded teammate (if viewing a teammate's transcript)
+  // 获取 foregrounded teammate（如果正在查看 teammate 的 transcript）
   const foregroundedTeammate = viewingAgentTaskId ? getViewedTeammateTask({
     viewingAgentTaskId,
     tasks
@@ -119,30 +119,30 @@ function SpinnerWithVerbInner({
   } = useTerminalSize();
   const tasksV2 = useTasksV2();
 
-  // Track thinking status: 'thinking' | number (duration in ms) | null
-  // Shows each state for minimum 2s to avoid UI jank
+  // 追踪 thinking 状态：'thinking' | number（持续时间 ms）| null
+  // 每个状态至少显示 2s，以避免 UI 抖动
   const [thinkingStatus, setThinkingStatus] = useState<'thinking' | number | null>(null);
   const thinkingStartRef = useRef<number | null>(null);
   useEffect(() => {
     let showDurationTimer: ReturnType<typeof setTimeout> | null = null;
     let clearStatusTimer: ReturnType<typeof setTimeout> | null = null;
     if (mode === 'thinking') {
-      // Started thinking
+      // 开始 thinking
       if (thinkingStartRef.current === null) {
         thinkingStartRef.current = Date.now();
         setThinkingStatus('thinking');
       }
     } else if (thinkingStartRef.current !== null) {
-      // Stopped thinking - calculate duration and ensure 2s minimum display
+      // 停止 thinking - 计算持续时间并确保至少显示 2s
       const duration = Date.now() - thinkingStartRef.current;
       const elapsed = Date.now() - thinkingStartRef.current;
       const remainingThinkingTime = Math.max(0, 2000 - elapsed);
       thinkingStartRef.current = null;
 
-      // Show "thinking..." for remaining time if < 2s elapsed, then show duration
+      // 如果经过时间 < 2s，在剩余时间内显示"thinking..."，然后显示持续时间
       const showDuration = (): void => {
         setThinkingStatus(duration);
-        // Clear after 2s
+        // 2s 后清除
         clearStatusTimer = setTimeout(setThinkingStatus, 2000, null);
       };
       if (remainingThinkingTime > 0) {
@@ -157,19 +157,19 @@ function SpinnerWithVerbInner({
     };
   }, [mode]);
 
-  // Find the current in-progress task and next pending task
+  // 查找当前进行中的任务和下一个 pending 任务
   const currentTodo = tasksV2?.find(task => task.status !== 'pending' && task.status !== 'completed');
   const nextTask = findNextPendingTask(tasksV2);
 
-  // Use useState with initializer to pick a random verb once on mount
+  // 使用带初始化器的 useState，在 mount 时随机选择一个 verb
   const [randomVerb] = useState(() => sample(getSpinnerVerbs()));
 
-  // Leader's own verb (always the leader's, regardless of who is foregrounded)
+  // Leader 自己的 verb（始终是 leader 的，无论谁被 foregrounded）
   const leaderVerb = overrideMessage ?? currentTodo?.activeForm ?? currentTodo?.subject ?? randomVerb;
   const effectiveVerb = foregroundedTeammate && !foregroundedTeammate.isIdle ? foregroundedTeammate.spinnerVerb ?? randomVerb : leaderVerb;
   const message = effectiveVerb + '…';
 
-  // Track CLI activity when spinner is active
+  // spinner 活跃时追踪 CLI 活动
   useEffect(() => {
     const operationId = 'spinner-' + mode;
     activityManager.startCLIActivity(operationId);
@@ -180,13 +180,13 @@ function SpinnerWithVerbInner({
   const effortValue = useAppState(s_4 => s_4.effortValue);
   const effortSuffix = getEffortSuffix(getMainLoopModel(), effortValue);
 
-  // Check if any running in-process teammates exist (needed for both modes)
+  // 检查是否有运行中的 in-process teammates（两种模式都需要）
   const runningTeammates = getAllInProcessTeammateTasks(tasks).filter(t => t.status === 'running');
   const hasRunningTeammates = runningTeammates.length > 0;
   const allIdle = hasRunningTeammates && runningTeammates.every(t_0 => t_0.isIdle);
 
-  // Gather aggregate token stats from all running swarm teammates
-  // In spinner-tree mode, skip aggregation (teammates have their own lines in the tree)
+  // 收集所有运行中 swarm teammates 的聚合 token 统计
+  // 在 spinner-tree 模式下，跳过聚合（teammates 在树中有自己的行）
   let teammateTokens = 0;
   if (!showSpinnerTree) {
     for (const task_0 of Object.values(tasks)) {
@@ -198,33 +198,30 @@ function SpinnerWithVerbInner({
     }
   }
 
-  // Stale read of the refs for showBtwTip below — we're off the 50ms clock
-  // so this only updates when props/app state change, which is sufficient for
-  // a coarse 30s threshold.
+  // 对下面 showBtwTip 的 refs 进行陈旧读取——我们不在 50ms 时钟上，
+  // 所以这仅在 props/app state 变化时更新，对于粗略的 30s 阈值已足够。
   const elapsedSnapshot = pauseStartTimeRef.current !== null ? pauseStartTimeRef.current - loadingStartTimeRef.current - totalPausedMsRef.current : Date.now() - loadingStartTimeRef.current - totalPausedMsRef.current;
 
-  // Leader token count for TeammateSpinnerTree — read raw (non-animated) from
-  // the ref. The tree is only shown when teammates are running; teammate
-  // progress updates to s.tasks trigger re-renders that keep this fresh.
+  // TeammateSpinnerTree 的 Leader token 计数——从 ref 读取原始（非动画）值。
+  // 该树仅在 teammates 运行时显示；teammate 进度更新到 s.tasks 会触发
+  // 重新渲染以保持此值新鲜。
   const leaderTokenCount = Math.round(responseLengthRef.current / 4);
   const defaultColor: keyof Theme = 'zy';
   const defaultShimmerColor = 'ZyShimmer';
   const messageColor = overrideColor ?? defaultColor;
   const shimmerColor = overrideShimmerColor ?? defaultShimmerColor;
 
-  // Compute TTFT string here (off the 50ms animation clock) and pass to
-  // SpinnerAnimationRow so it folds into the `(thought for Ns · ...)` status
-  // line instead of taking a separate row. apiMetricsRef is a ref so this
-  // doesn't trigger re-renders; we pick up updates on the parent's ~25x/turn
-  // re-render cadence, same as the old ApiMetricsLine did.
+  // 在此处计算 TTFT 字符串（不在 50ms 动画时钟上）并传递给
+  // 我们在父组件约 25 次/turn 的重新渲染节奏上获取更新，
+  // 与旧的 ApiMetricsLine 相同。
   let ttftText: string | null = null;
   if ("external" === 'ant' && apiMetricsRef?.current && apiMetricsRef.current.length > 0) {
     ttftText = computeTtftText(apiMetricsRef.current);
   }
 
-  // When leader is idle but teammates are running (and we're viewing the leader),
-  // show a static dim idle display instead of the animated spinner — otherwise
-  // useStalledAnimation detects no new tokens after 3s and turns the spinner red.
+  // 当 leader 空闲但 teammates 在运行（且我们正在查看 leader）时，
+  // 显示静态的暗色空闲显示而不是动画 spinner——否则
+  // useStalledAnimation 在 3s 后检测不到新 token 会将 spinner 变红。
   if (leaderIsIdle && hasRunningTeammates && !foregroundedTeammate) {
     return <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
@@ -237,7 +234,7 @@ function SpinnerWithVerbInner({
       </Box>;
   }
 
-  // When viewing an idle teammate, show static idle display instead of animated spinner
+  // 查看空闲的 teammate 时，显示静态空闲显示而不是动画 spinner
   if (foregroundedTeammate?.isIdle) {
     const idleText = allIdle ? `${TEARDROP_ASTERISK} ${tSync('spinner.workedFor', {
       duration: formatDuration(Date.now() - foregroundedTeammate.startTime)
@@ -250,16 +247,15 @@ function SpinnerWithVerbInner({
       </Box>;
   }
 
-  // Time-based tip overrides: coarse thresholds so a stale ref read (we're
-  // off the 50ms clock) is fine. Other triggers (mode change, setMessages)
-  // cause re-renders that refresh this in practice.
+  // 基于时间的 tip 覆盖：粗略的阈值，因此陈旧的 ref 读取（我们不在 50ms 时钟上）没问题。
+  // 其他触发器（mode 变化、setMessages）实际上会导致重新渲染来刷新这个。
   let contextTipsActive = false;
   const tipsEnabled = settings.spinnerTipsEnabled !== false;
   const showClearTip = tipsEnabled && elapsedSnapshot > 1_800_000;
   const showBtwTip = tipsEnabled && elapsedSnapshot > 30_000 && !getGlobalConfig().btwUseCount;
   const effectiveTip = contextTipsActive ? undefined : showClearTip && !nextTask ? tSync('tip.clearContext') : showBtwTip && !nextTask ? tSync('tip.btwSideQuestion') : spinnerTip;
 
-  // Budget text (ant-only) — shown above the tip line
+  // Budget 文本（仅 ant）——显示在 tip 行上方
   let budgetText: string | null = null;
   if (feature('TOKEN_BUDGET')) {
     const budget = getCurrentTurnTokenBudget();
@@ -293,9 +289,8 @@ function SpinnerWithVerbInner({
             <TaskListV2 tasks={tasksV2} />
           </MessageResponse>
         </Box> : nextTask || effectiveTip || budgetText ?
-    // IMPORTANT: we need this width="100%" to avoid an Ink bug where the
-    // tip gets duplicated over and over while the spinner is running if
-    // the terminal is very small. TODO: fix this in Ink.
+    // 重要：我们需要这个 width="100%" 来避免 Ink bug，
+    // 当 spinner 运行时如果终端非常小，tip 会被反复复制。TODO: 在 Ink 中修复这个问题。
     <Box width="100%" flexDirection="column">
           {budgetText && <MessageResponse>
               <Text dimColor>{budgetText}</Text>
@@ -313,15 +308,13 @@ function SpinnerWithVerbInner({
     </Box>;
 }
 
-// Brief/assistant mode spinner: single status line. PromptInput drops its
-// own marginTop when isBriefOnly is active, so this component owns the
-// 2-row footprint between messages and input. Footprint is [blank, content]
-// — one blank row above (breathing room under the messages list), spinner
-// flush against the input bar. PromptInput's absolute-positioned
-// Notifications overlay compensates with marginTop=-2 in brief mode
-// (PromptInput.tsx:~2928) so it floats into the blank row above the
-// spinner, not over the spinner content. Paired with BriefIdleStatus which
-// keeps the same footprint when idle.
+// Brief/assistant 模式 spinner：单行状态。PromptInput 在 isBriefOnly 活跃时
+// 丢弃自己的 marginTop，因此该组件拥有消息和输入之间的 2 行占位。
+// 占位是 [blank, content]——上方一行空白（消息列表下的呼吸空间），
+// spinner 紧贴输入栏。PromptInput 的绝对定位 Notifications 覆盖在
+// brief 模式下用 marginTop=-2 补偿（PromptInput.tsx:~2928），这样它
+// 浮动到 spinner 上方的空白行，而不是覆盖 spinner 内容。与 BriefIdleStatus
+// 配对，在空闲时保持相同的占位。
 type BriefSpinnerProps = {
   mode: SpinnerMode;
   overrideMessage?: string | null;
@@ -367,10 +360,9 @@ function BriefSpinner({
   return <Box flexDirection="row" width="100%" marginTop={1} paddingLeft={2}>{showConnWarning ? <Text color="error">{connText + dots}</Text> : <>{before ? <Text dimColor={true}>{before}</Text> : null}{shimmer ? <Text>{shimmer}</Text> : null}{after ? <Text dimColor={true}>{after}</Text> : null}<Text dimColor={true}>{dots}</Text></>}{rightText ? <><Text>{" ".repeat(pad)}</Text><Text color="subtle">{rightText}</Text></> : null}</Box>;
 }
 
-// Idle placeholder for brief mode. Same 2-row [blank, content] footprint
-// as BriefSpinner so the input bar never jumps when toggling between
-// working/idle/disconnected. See BriefSpinner's comment for the
-// Notifications overlay coupling.
+// brief 模式的空闲占位符。与 BriefSpinner 相同的 2 行 [blank, content] 占位，
+// 这样在 working/idle/disconnected 之间切换时输入栏永远不会跳动。
+// 有关 Notifications 覆盖耦合，请参阅 BriefSpinner 的注释。
 
 export function BriefIdleStatus() {
   const connStatus = useAppState(s => s.remoteConnectionStatus);

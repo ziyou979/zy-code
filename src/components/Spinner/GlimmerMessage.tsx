@@ -42,6 +42,8 @@ export function GlimmerMessage({
     });
   }
   const t3 = stringWidth(message);
+  let segments: typeof segs;
+  let messageWidth: number;
   ({
     segments,
     messageWidth

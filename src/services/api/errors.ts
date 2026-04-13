@@ -75,10 +75,10 @@ export function isPromptTooLongMessage(msg: AssistantMessage): boolean {
 }
 
 /**
- * Parse actual/limit token counts from a raw prompt-too-long API error
- * message like "prompt is too long: 137500 tokens > 135000 maximum".
- * The raw string may be wrapped in SDK prefixes or JSON envelopes, or
- * have different casing (Vertex), so this is intentionally lenient.
+ * 从原始 prompt-too-long API 错误消息中解析 actual/limit token 计数，
+ * 例如 "prompt is too long: 137500 tokens > 135000 maximum"。
+ * 原始字符串可能被 SDK 前缀或 JSON 信封包装，或有不同的大小写（Vertex），
+ * 因此这里的解析故意宽松。
  */
 export function parsePromptTooLongTokenCounts(rawMessage: string): {
   actualTokens: number | undefined
@@ -94,10 +94,10 @@ export function parsePromptTooLongTokenCounts(rawMessage: string): {
 }
 
 /**
- * Returns how many tokens over the limit a prompt-too-long error reports,
- * or undefined if the message isn't PTL or its errorDetails are unparseable.
- * Reactive compact uses this gap to jump past multiple groups in one retry
- * instead of peeling one-at-a-time.
+ * 返回 prompt-too-long 错误报告的超出限制的 token 数，
+ * 如果消息不是 PTL 或其 errorDetails 无法解析则返回 undefined。
+ * 响应式 compact 使用此差值在一次重试中跳过多个组，
+ * 而非逐个剥离。
  */
 export function getPromptTooLongTokenGap(
   msg: AssistantMessage,
@@ -116,17 +116,17 @@ export function getPromptTooLongTokenGap(
 }
 
 /**
- * Is this raw API error text a media-size rejection that stripImagesFromMessages
- * can fix? Reactive compact's summarize retry uses this to decide whether to
- * strip and retry (media error) or bail (anything else).
+ * 这是原始 API 错误文本中 stripImagesFromMessages 可以修复的
+ * 媒体大小拒绝错误吗？响应式 compact 的重试使用此来决定是
+ * 剥离并重试（媒体错误）还是放弃（其他任何情况）。
  *
- * Patterns MUST stay in sync with the getAssistantMessageFromError branches
- * that populate errorDetails (~L523 PDF, ~L560 image, ~L573 many-image) and
- * the classifyAPIError branches (~L929-946). The closed loop: errorDetails is
- * only set after those branches already matched these same substrings, so
- * isMediaSizeError(errorDetails) is tautologically true for that path. API
- * wording drift causes graceful degradation (errorDetails stays undefined,
- * caller short-circuits), not a false negative.
+ * 这些模式必须与填充 errorDetails 的 getAssistantMessageFromError 分支
+ * （~L523 PDF、~L560 image、~L573 many-image）以及
+ * classifyAPIError 分支（~L929-946）保持同步。闭环：errorDetails
+ * 仅在这些分支已经匹配了相同的子串后才会设置，因此
+ * isMediaSizeError(errorDetails) 对于该路径是同义反复为真。
+ * API 措辞漂移会导致优雅降级（errorDetails 保持 undefined，
+ * 调用方短路），而非假阴性。
  */
 export function isMediaSizeError(raw: string): boolean {
   return (
@@ -137,10 +137,10 @@ export function isMediaSizeError(raw: string): boolean {
 }
 
 /**
- * Message-level predicate: is this assistant message a media-size rejection?
- * Parallel to isPromptTooLongMessage. Checks errorDetails (the raw API error
- * string populated by the getAssistantMessageFromError branches at ~L523/560/573)
- * rather than content text, since media errors have per-variant content strings.
+ * 消息级谓词：此 assistant 消息是媒体大小拒绝错误吗？
+ * 与 isPromptTooLongMessage 并行。检查 errorDetails（由
+ * getAssistantMessageFromError 分支在 ~L523/560/573 填充的原始 API 错误字符串）
+ * 而非内容文本，因为媒体错误有每个变体的内容字符串。
  */
 export function isMediaSizeErrorMessage(msg: AssistantMessage): boolean {
   return (
@@ -154,9 +154,9 @@ export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL =
   'Invalid API key · Fix external API key'
 
 /**
- * Runtime check for invalid API key message.
- * Cannot be a module-level constant because `getAPIProvider()` depends on
- * settings.json which isn't loaded at import time.
+ * 运行时检查无效 API 密钥消息。
+ * 不能是模块级常量，因为 `getAPIProvider()` 依赖于
+ * 导入时未加载的 settings.json。
  */
 export function getInvalidApiKeyErrorMessage(): string {
   return isOpenAIFormatProvider(getAPIProvider()) ? '' : 'Not logged in · Please run /login'
@@ -216,22 +216,22 @@ export function getOauthOrgNotAllowedErrorMessage(): string {
 }
 
 /**
- * Check if we're in CCR (ZY Code Remote) mode.
- * In CCR mode, auth is handled via JWTs provided by the infrastructure,
- * not via /login. Transient auth errors should suggest retrying, not logging in.
+ * 检查我们是否处于 CCR（ZY Code Remote）模式。
+ * 在 CCR 模式下，认证通过基础设施提供的 JWT 处理，
+ * 而非通过 /login。瞬时认证错误应建议重试，而非登录。
  */
 function isCCRMode(): boolean {
   return isEnvTruthy(process.env.ZY_CODE_REMOTE)
 }
 
-// Temp helper to log tool_use/tool_result mismatch errors
+// 记录 tool_use/tool_result 不匹配错误的临时辅助函数
 function logToolUseToolResultMismatch(
   toolUseId: string,
   messages: Message[],
   messagesForAPI: (UserMessage | AssistantMessage)[],
 ): void {
   try {
-    // Find tool_use in normalized messages
+    // 在规范化消息中查找 tool_use
     let normalizedIndex = -1
     for (let i = 0; i < messagesForAPI.length; i++) {
       const msg = messagesForAPI[i]
@@ -252,7 +252,7 @@ function logToolUseToolResultMismatch(
       if (normalizedIndex !== -1) break
     }
 
-    // Find tool_use in original messages
+    // 在原始消息中查找 tool_use
     let originalIndex = -1
     for (let i = 0; i < messages.length; i++) {
       const msg = messages[i]
@@ -275,7 +275,7 @@ function logToolUseToolResultMismatch(
       if (originalIndex !== -1) break
     }
 
-    // Build normalized sequence
+    // 构建规范化序列
     const normalizedSeq: string[] = []
     for (let i = normalizedIndex + 1; i < messagesForAPI.length; i++) {
       const msg = messagesForAPI[i]
@@ -303,7 +303,7 @@ function logToolUseToolResultMismatch(
       }
     }
 
-    // Build pre-normalized sequence
+    // 构建规范化前序列
     const preNormalizedSeq: string[] = []
     for (let i = originalIndex + 1; i < messages.length; i++) {
       const msg = messages[i]
@@ -367,7 +367,7 @@ function logToolUseToolResultMismatch(
       }
     }
 
-    // Log to Statsig
+    // 记录到 Statsig
     logEvent('tengu_tool_use_tool_result_mismatch_error', {
       toolUseId:
         toolUseId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -383,12 +383,12 @@ function logToolUseToolResultMismatch(
       originalToolUseIndex: originalIndex,
     })
   } catch (_) {
-    // Ignore errors in debug logging
+    // 忽略调试日志中的错误
   }
 }
 
 /**
- * Type guard to check if a value is a valid Message response from the API
+ * 类型守卫，检查值是否为来自 API 的有效 Message 响应
  */
 export function isValidAPIMessage(value: unknown): value is BetaMessage {
   return (
@@ -403,7 +403,7 @@ export function isValidAPIMessage(value: unknown): value is BetaMessage {
   )
 }
 
-/** Lower-level error that AWS can return. */
+/** AWS 可以返回的更底层错误。 */
 type AmazonError = {
   Output?: {
     __type?: string
@@ -412,15 +412,15 @@ type AmazonError = {
 }
 
 /**
- * Given a response that doesn't look quite right, see if it contains any known error types we can extract.
+ * 给定看起来不太正确的响应，查看是否包含我们可以提取的任何已知错误类型。
  */
 export function extractUnknownErrorFormat(value: unknown): string | undefined {
-  // Check if value is a valid object first
+  // 首先检查值是否为有效对象
   if (!value || typeof value !== 'object') {
     return undefined
   }
 
-  // Amazon Bedrock routing errors
+  // Amazon Bedrock 路由错误
   if ((value as AmazonError).Output?.__type) {
     return (value as AmazonError).Output!.__type
   }
@@ -436,7 +436,7 @@ export function getAssistantMessageFromError(
     messagesForAPI?: (UserMessage | AssistantMessage)[]
   },
 ): AssistantMessage {
-  // Check for SDK timeout errors
+  // 检查 SDK 超时错误
   if (
     error instanceof APIConnectionTimeoutError ||
     (error instanceof APIConnectionError &&
@@ -448,16 +448,16 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for image size/resize errors (thrown before API call during validation)
-  // Use getImageTooLargeErrorMessage() to show "esc esc" hint for CLI users
-  // but a generic message for SDK users (non-interactive mode)
+  // 检查图像大小/缩放错误（在 API 调用前的验证期间抛出）
+  // 使用 getImageTooLargeErrorMessage() 为 CLI 用户显示 "esc esc" 提示
+  // 但为 SDK 用户（非交互模式）显示通用消息
   if (error instanceof ImageSizeError || error instanceof ImageResizeError) {
     return createAssistantAPIErrorMessage({
       content: getImageTooLargeErrorMessage(),
     })
   }
 
-  // Check for emergency capacity off switch for Opus PAYG users
+  // 检查 Opus PAYG 用户的紧急容量关闭开关
   if (
     error instanceof Error &&
     error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)
@@ -473,7 +473,7 @@ export function getAssistantMessageFromError(
     error.status === 429 &&
     shouldProcessRateLimits(false)
   ) {
-    // Check if this is the new API with multiple rate limit headers
+    // 检查这是否是带有多个限速 header 的新 API
     const rateLimitType = error.headers?.get?.(
       'anthropic-ratelimit-unified-representative-claim',
     ) as 'five_hour' | 'seven_day' | 'seven_day_opus' | null
@@ -482,16 +482,16 @@ export function getAssistantMessageFromError(
       'anthropic-ratelimit-unified-overage-status',
     ) as 'allowed' | 'allowed_warning' | 'rejected' | null
 
-    // If we have the new headers, use the new message generation
+    // 如果有新 header，使用新的消息生成
     if (rateLimitType || overageStatus) {
-      // Build limits object from error headers to determine the appropriate message
+      // 从错误 header 构建 limits 对象以确定适当的消息
       const limits: ZyAILimits = {
         status: 'rejected',
         unifiedRateLimitFallbackAvailable: false,
         isUsingOverage: false,
       }
 
-      // Extract rate limit information from headers
+      // 从错误 header 提取限速信息
       const resetHeader = error.headers?.get?.(
         'anthropic-ratelimit-unified-reset',
       )
@@ -521,7 +521,7 @@ export function getAssistantMessageFromError(
         limits.overageDisabledReason = overageDisabledReason
       }
 
-      // Use the new message format for all new API rate limits
+      // 对所有新 API 限速使用新的消息格式
       const specificErrorMessage = getRateLimitErrorMessage(limits, model)
       if (specificErrorMessage) {
         return createAssistantAPIErrorMessage({
@@ -530,19 +530,19 @@ export function getAssistantMessageFromError(
         })
       }
 
-      // If getRateLimitErrorMessage returned null, it means the fallback mechanism
-      // will handle this silently (e.g., Opus -> Sonnet fallback for eligible users).
-      // Return NO_RESPONSE_REQUESTED so no error is shown to the user, but the
-      // message is still recorded in conversation history for Zy to see.
+      // 如果 getRateLimitErrorMessage 返回 null，表示回退机制
+      // 将静默处理此情况（例如，符合条件的用户的 Opus -> Sonnet 回退）。
+      // 返回 NO_RESPONSE_REQUESTED 以便不向用户显示错误，但
+      // 消息仍会记录在对话历史中供 Zy 查看。
       return createAssistantAPIErrorMessage({
         content: NO_RESPONSE_REQUESTED,
         error: 'rate_limit',
       })
     }
 
-    // No quota headers — this is NOT a quota limit. Surface what the API actually
-    // said instead of a generic "Rate limit reached". Entitlement rejections
-    // (e.g. 1M context without Extra Usage) and infra capacity 429s land here.
+    // 无限额 header——这不是配额限制。显示 API 实际返回的内容
+    // 而非通用的 "Rate limit reached"。权限拒绝
+    // （例如 1M 上下文无 Extra Usage）和基础设施容量 429 都会到达此处。
     if (error.message.includes('Extra usage is required for long context')) {
       const hint = getIsNonInteractiveSession()
         ? 'enable extra usage at zy.ai/settings/usage, or use --model to switch to standard context'
@@ -552,8 +552,8 @@ export function getAssistantMessageFromError(
         error: 'rate_limit',
       })
     }
-    // SDK's APIError.makeMessage prepends "429 " and JSON-stringifies the body
-    // when there's no top-level .message — extract the inner error.message.
+    // SDK 的 APIError.makeMessage 在没有顶层 .message 时会
+    // 前置 "429 " 并 JSON 字符串化 body——提取内部 error.message。
     const stripped = error.message.replace(/^429\s+/, '')
     const innerMessage = stripped.match(/"message"\s*:\s*"([^"]*)"/)?.[1]
     const detail = innerMessage || stripped
@@ -563,15 +563,15 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Handle prompt too long errors (Vertex returns 413, direct API returns 400)
-  // Use case-insensitive check since Vertex returns "Prompt is too long" (capitalized)
+  // 处理 prompt 过长错误（Vertex 返回 413，直接 API 返回 400）
+  // 使用不区分大小写的检查，因为 Vertex 返回 "Prompt is too long"（大写）
   if (
     error instanceof Error &&
     error.message.toLowerCase().includes('prompt is too long')
   ) {
-    // Content stays generic (UI matches on exact string). The raw error with
-    // token counts goes into errorDetails — reactive compact's retry loop
-    // parses the gap from there via getPromptTooLongTokenGap.
+    // 内容保持通用（UI 匹配精确字符串）。带有 token 计数的原始错误
+    // 进入 errorDetails——响应式 compact 的重试循环通过
+    // getPromptTooLongTokenGap 从那里解析差值。
     return createAssistantAPIErrorMessage({
       content: PROMPT_TOO_LONG_ERROR_MESSAGE,
       error: 'invalid_request',
@@ -579,7 +579,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for PDF page limit errors
+  // 检查 PDF 页数限制错误
   if (
     error instanceof Error &&
     /maximum of \d+ PDF pages/.test(error.message)
@@ -591,7 +591,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for password-protected PDF errors
+  // 检查密码保护的 PDF 错误
   if (
     error instanceof Error &&
     error.message.includes('The PDF specified is password protected')
@@ -602,9 +602,9 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for invalid PDF errors (e.g., HTML file renamed to .pdf)
-  // Without this handler, invalid PDF document blocks persist in conversation
-  // context and cause every subsequent API call to fail with 400.
+  // 检查无效 PDF 错误（例如，HTML 文件重命名为 .pdf）
+  // 没有此处理程序，无效的 PDF 文档块会持续存在于对话
+  // 上下文中，导致每次后续 API 调用都以 400 失败。
   if (
     error instanceof Error &&
     error.message.includes('The PDF specified was not valid')
@@ -615,7 +615,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for image size errors (e.g., "image exceeds 5 MB maximum: 5316852 bytes > 5242880 bytes")
+  // 检查图像大小错误（例如 "image exceeds 5 MB maximum: 5316852 bytes > 5242880 bytes"）
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -628,7 +628,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for many-image dimension errors (API enforces stricter 2000px limit for many-image requests)
+  // 检查多图像尺寸错误（API 对多图像请求强制实施更严格的 2000px 限制）
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -644,9 +644,9 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Server rejected the afk-mode beta header (plan does not include auto
-  // mode). AFK_MODE_BETA_HEADER is '' in non-TRANSCRIPT_CLASSIFIER builds,
-  // so the truthy guard keeps this inert there.
+  // 服务器拒绝了 afk-mode beta header（计划不包含 auto mode）。
+  // AFK_MODE_BETA_HEADER 在非 TRANSCRIPT_CLASSIFIER 构建中为 ''，
+  // 因此 truthy 守卫使其在那里保持无效。
   if (
     AFK_MODE_BETA_HEADER &&
     error instanceof APIError &&
@@ -660,8 +660,8 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for request too large errors (413 status)
-  // This typically happens when a large PDF + conversation context exceeds the 32MB API limit
+  // 检查请求过大错误（413 状态码）
+  // 这通常在大型 PDF + 对话上下文超过 32MB API 限制时发生
   if (error instanceof APIError && error.status === 413) {
     return createAssistantAPIErrorMessage({
       content: getRequestTooLargeErrorMessage(),
@@ -669,7 +669,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for tool_use/tool_result concurrency error
+  // 检查 tool_use/tool_result 并发错误
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -677,7 +677,7 @@ export function getAssistantMessageFromError(
       '`tool_use` ids were found without `tool_result` blocks immediately after',
     )
   ) {
-    // Log to Statsig if we have the message context
+    // 如果有消息上下文则记录到 Statsig
     if (options?.messages && options?.messagesForAPI) {
       const toolUseIdMatch = error.message.match(/toolu_[a-zA-Z0-9]+/)
       const toolUseId = toolUseIdMatch ? toolUseIdMatch[0] : null
@@ -719,9 +719,9 @@ export function getAssistantMessageFromError(
     logEvent('tengu_unexpected_tool_result', {})
   }
 
-  // Duplicate tool_use IDs (CC-1212). ensureToolResultPairing strips these
-  // before send, so hitting this means a new corruption path slipped through.
-  // Log for root-causing, and give users a recovery path instead of deadlock.
+  // 重复的 tool_use ID（CC-1212）。ensureToolResultPairing 在发送前会剥离这些，
+  // 因此遇到此错误意味着新的损坏路径漏过了。
+  // 记录以追踪根本原因，并给用户提供恢复路径而非死锁。
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -738,16 +738,16 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for invalid model name error for Ant users. ZY Code may be
-  // defaulting to a custom internal-only model for Ants, and there might be
-  // Ants using new or unknown org IDs that haven't been gated in.
+  // 检查 Ant 用户的无效模型名称错误。ZY Code 可能
+  // 默认为 Ant 专用的内部模型，并且可能有
+  // 使用新的或未知 org ID 的 Ant 尚未被门控。
   if (
     process.env.USER_TYPE === 'zy-super' &&
     !process.env.ANTHROPIC_MODEL &&
     error instanceof Error &&
     error.message.toLowerCase().includes('invalid model name')
   ) {
-    // Get organization ID from config - only use OAuth account data when actively using OAuth
+    // 从配置获取组织 ID——仅在使用 OAuth 时使用 OAuth 账户数据
     const orgId = getOauthAccountInfo()?.organizationUuid
     const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`zy\` with \`ANTHROPIC_MODEL=${getDefaultMainLoopModelSetting()}\``
     const msg = orgId
@@ -769,29 +769,29 @@ export function getAssistantMessageFromError(
       error: 'billing_error',
     })
   }
-  // "Organization has been disabled" — commonly a stale ZY_API_KEY
-  // from a previous employer/project overriding subscription auth. Only handle
-  // the env-var case; apiKeyHelper and /login-managed keys mean the active
-  // auth's org is genuinely disabled with no dormant fallback to point at.
+  // "Organization has been disabled"——通常是之前的雇主/项目
+  // 的过期 ZY_API_KEY 覆盖了订阅认证。仅处理环境变量情况；
+  // apiKeyHelper 和 /login-managed 密钥意味着活跃认证的组织
+  // 确实被禁用，且没有休眠回退可指向。
   if (
     error instanceof APIError &&
     error.status === 400 &&
     error.message.toLowerCase().includes('organization has been disabled')
   ) {
     const { source } = getApiKeyWithSource()
-    // getApiKeyWithSource conflates the env var with FD-passed keys
-    // under the same source value, and in CCR mode OAuth stays active despite
-    // the env var. The three guards ensure we only blame the env var when it's
-    // actually set and actually on the wire.
+    // getApiKeyWithSource 将环境变量与 FD-passed 密钥
+    // 合并到同一个 source 值下，且在 CCR 模式下 OAuth 尽管有
+    // 环境变量仍保持活跃。这三个守卫确保我们仅在环境变量
+    // 实际设置且实际在线路上时才归咎于环境变量。
     if (
       source === 'customApiKey' &&
       process.env.ZY_API_KEY &&
       true
     ) {
       const hasStoredOAuth = getZyAIOAuthTokens()?.accessToken != null
-      // Not 'authentication_failed' — that triggers VS Code's showLogin(), but
-      // login can't fix this (approved env var keeps overriding OAuth). The fix
-      // is configuration-based (unset the var), so invalid_request is correct.
+      // 不是 'authentication_failed'——这会触发 VS Code 的 showLogin()，但
+      // 登录无法修复此问题（已批准的环境变量会持续覆盖 OAuth）。修复
+      // 是基于配置的（取消设置变量），因此 invalid_request 是正确的。
       return createAssistantAPIErrorMessage({
         error: 'invalid_request',
         content: hasStoredOAuth
@@ -805,7 +805,7 @@ export function getAssistantMessageFromError(
     error instanceof Error &&
     error.message.toLowerCase().includes('x-api-key')
   ) {
-    // In CCR mode, auth is via JWTs - this is likely a transient network issue
+    // CCR 模式下认证通过 JWT——这可能是瞬时网络问题
     if (isCCRMode()) {
       return createAssistantAPIErrorMessage({
         error: 'authentication_failed',
@@ -813,7 +813,7 @@ export function getAssistantMessageFromError(
       })
     }
 
-    // Check if the API key is from an external source
+    // 检查 API 密钥是否来自外部来源
     const { source } = getApiKeyWithSource()
     const isExternalSource =
       source === 'customApiKey' || source === 'apiKeyHelper'
@@ -826,7 +826,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for OAuth token revocation error
+  // 检查 OAuth token 撤销错误
   if (
     error instanceof APIError &&
     error.status === 403 &&
@@ -838,7 +838,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Check for OAuth organization not allowed error
+  // 检查 OAuth 组织不允许错误
   if (
     error instanceof APIError &&
     (error.status === 401 || error.status === 403) &&
@@ -852,12 +852,12 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Generic handler for other 401/403 authentication errors
+  // 其他 401/403 认证错误的通用处理
   if (
     error instanceof APIError &&
     (error.status === 401 || error.status === 403)
   ) {
-    // In CCR mode, auth is via JWTs - this is likely a transient network issue
+    // CCR 模式下认证通过 JWT——这可能是瞬时网络问题
     if (isCCRMode()) {
       return createAssistantAPIErrorMessage({
         error: 'authentication_failed',
@@ -873,8 +873,8 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Bedrock errors like "403 You don't have access to the model with the specified model ID."
-  // don't contain the actual model ID
+  // Bedrock 错误如 "403 You don't have access to the model with the specified model ID."
+  // 不包含实际的模型 ID
   if (
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) &&
     error instanceof Error &&
@@ -890,9 +890,9 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // 404 Not Found — usually means the selected model doesn't exist or isn't
-  // available. Guide the user to /model so they can pick a valid one.
-  // For 3P users, suggest a specific fallback model they can try.
+  // 404 未找到——通常意味着所选模型不存在或不可用。
+  // 引导用户使用 /model 以便选择有效的模型。
+  // 对于第三方用户，建议一个特定的回退模型。
   if (error instanceof APIError && error.status === 404) {
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
     const fallbackSuggestion = get3PModelFallbackSuggestion(model)
@@ -904,7 +904,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Connection errors (non-timeout) — use formatAPIError for detailed messages
+  // 连接错误（非超时）——使用 formatAPIError 获取详细消息
   if (error instanceof APIConnectionError) {
     return createAssistantAPIErrorMessage({
       content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error)}`,
@@ -925,24 +925,24 @@ export function getAssistantMessageFromError(
 }
 
 /**
- * For 3P users, suggest a fallback model when the selected model is unavailable.
- * Returns a model name suggestion, or undefined if no suggestion is applicable.
+ * 对于第三方用户，当所选模型不可用时建议回退模型。
+ * 返回模型名称建议，如果没有适用建议则返回 undefined。
  */
 function get3PModelFallbackSuggestion(model: string): string | undefined {
   if (getAPIProvider() === 'anthropic') {
     return undefined
   }
-  // @[MODEL LAUNCH]: Add a fallback suggestion chain for the new model → previous version for 3P
+  // @[MODEL LAUNCH]: 为新模型 → 之前版本添加第三方用户的回退建议链
   const m = model.toLowerCase()
-  // If the failing model looks like an Opus 4.6 variant, suggest the default Opus (4.1 for 3P)
+  // 如果失败的模型看起来像 Opus 4.6 变体，建议默认 Opus（第三方用户为 4.1）
   if (m.includes('opus-4-6') || m.includes('opus_4_6')) {
     return getModelStrings().opus41
   }
-  // If the failing model looks like a Sonnet 4.6 variant, suggest Sonnet 4.5
+  // 如果失败的模型看起来像 Sonnet 4.6 变体，建议 Sonnet 4.5
   if (m.includes('sonnet-4-6') || m.includes('sonnet_4_6')) {
     return getModelStrings().sonnet45
   }
-  // If the failing model looks like a Sonnet 4.5 variant, suggest Sonnet 4
+  // 如果失败的模型看起来像 Sonnet 4.5 变体，建议 Sonnet 4
   if (m.includes('sonnet-4-5') || m.includes('sonnet_4_5')) {
     return getModelStrings().sonnet40
   }
@@ -950,16 +950,16 @@ function get3PModelFallbackSuggestion(model: string): string | undefined {
 }
 
 /**
- * Classifies an API error into a specific error type for analytics tracking.
- * Returns a standardized error type string suitable for Datadog tagging.
+ * 将 API 错误分类为特定的错误类型，用于分析跟踪。
+ * 返回适用于 Datadog 标签的标准化错误类型字符串。
  */
 export function classifyAPIError(error: unknown): string {
-  // Aborted requests
+  // 被中止的请求
   if (error instanceof Error && error.message === 'Request was aborted.') {
     return 'aborted'
   }
 
-  // Timeout errors
+  // 超时错误
   if (
     error instanceof APIConnectionTimeoutError ||
     (error instanceof APIConnectionError &&
@@ -968,7 +968,7 @@ export function classifyAPIError(error: unknown): string {
     return 'api_timeout'
   }
 
-  // Check for repeated 529 errors
+  // 检查重复的 529 错误
   if (
     error instanceof Error &&
     error.message.includes(REPEATED_529_ERROR_MESSAGE)
@@ -976,7 +976,7 @@ export function classifyAPIError(error: unknown): string {
     return 'repeated_529'
   }
 
-  // Check for emergency capacity off switch
+  // 检查紧急容量关闭开关
   if (
     error instanceof Error &&
     error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)
@@ -984,12 +984,12 @@ export function classifyAPIError(error: unknown): string {
     return 'capacity_off_switch'
   }
 
-  // Rate limiting
+  // 限速
   if (error instanceof APIError && error.status === 429) {
     return 'rate_limit'
   }
 
-  // Server overload (529)
+  // 服务器过载（529）
   if (
     error instanceof APIError &&
     (error.status === 529 ||
@@ -998,7 +998,7 @@ export function classifyAPIError(error: unknown): string {
     return 'server_overload'
   }
 
-  // Prompt/content size errors
+  // Prompt/内容大小错误
   if (
     error instanceof Error &&
     error.message
@@ -1008,7 +1008,7 @@ export function classifyAPIError(error: unknown): string {
     return 'prompt_too_long'
   }
 
-  // PDF errors
+  // PDF 错误
   if (
     error instanceof Error &&
     /maximum of \d+ PDF pages/.test(error.message)
@@ -1023,7 +1023,7 @@ export function classifyAPIError(error: unknown): string {
     return 'pdf_password_protected'
   }
 
-  // Image size errors
+  // 图像大小错误
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -1033,7 +1033,7 @@ export function classifyAPIError(error: unknown): string {
     return 'image_too_large'
   }
 
-  // Many-image dimension errors
+  // 多图像尺寸错误
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -1043,7 +1043,7 @@ export function classifyAPIError(error: unknown): string {
     return 'image_too_large'
   }
 
-  // Tool use errors (400)
+  // Tool use 错误 (400)
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -1070,7 +1070,7 @@ export function classifyAPIError(error: unknown): string {
     return 'duplicate_tool_use_id'
   }
 
-  // Invalid model errors (400)
+  // 无效模型错误 (400)
   if (
     error instanceof APIError &&
     error.status === 400 &&
@@ -1079,7 +1079,7 @@ export function classifyAPIError(error: unknown): string {
     return 'invalid_model'
   }
 
-  // Credit/billing errors
+  // 积分/计费错误
   if (
     error instanceof Error &&
     error.message
@@ -1089,7 +1089,7 @@ export function classifyAPIError(error: unknown): string {
     return 'credit_balance_low'
   }
 
-  // Authentication errors
+  // 认证错误
   if (
     error instanceof Error &&
     error.message.toLowerCase().includes('x-api-key')
@@ -1115,7 +1115,7 @@ export function classifyAPIError(error: unknown): string {
     return 'oauth_org_not_allowed'
   }
 
-  // Generic auth errors
+  // 通用认证错误
   if (
     error instanceof APIError &&
     (error.status === 401 || error.status === 403)
@@ -1123,7 +1123,7 @@ export function classifyAPIError(error: unknown): string {
     return 'auth_error'
   }
 
-  // Bedrock-specific errors
+  // Bedrock 特定错误
   if (
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) &&
     error instanceof Error &&
@@ -1132,14 +1132,14 @@ export function classifyAPIError(error: unknown): string {
     return 'bedrock_model_access'
   }
 
-  // Status code based fallbacks
+  // 基于状态码的回退
   if (error instanceof APIError) {
     const status = error.status
     if (status >= 500) return 'server_error'
     if (status >= 400) return 'client_error'
   }
 
-  // Connection errors - check for SSL/TLS issues first
+  // 连接错误——优先检查 SSL/TLS 问题
   if (error instanceof APIConnectionError) {
     const connectionDetails = extractConnectionErrorDetails(error)
     if (connectionDetails?.isSSLError) {

@@ -1,11 +1,10 @@
-// These side-effects must run before all other imports:
-// 1. profileCheckpoint marks entry before heavy module evaluation begins
-// 2. startMdmRawRead fires MDM subprocesses (plutil/reg query) so they run in
-//    parallel with the remaining ~135ms of imports below
-// 3. startKeychainPrefetch fires both macOS keychain reads (OAuth + legacy API
-//    key) in parallel — isRemoteManagedSettingsEligible() otherwise reads them
-//    sequentially via sync spawn inside applySafeConfigEnvironmentVariables()
-//    (~65ms on every macOS startup)
+// 这些副作用必须在所有其他导入之前运行：
+// 1. profileCheckpoint 在重型模块评估开始前标记入口
+// 2. startMdmRawRead 触发 MDM 子进程（plutil/reg query），使其与下方
+//    剩余约 135ms 的导入并行运行
+// 3. startKeychainPrefetch 并行触发两个 macOS keychain 读取（OAuth + 旧版 API
+//    密钥）—— 否则 isRemoteManagedSettingsEligible() 会在 applySafeConfigEnvironmentVariables()
+//    内部通过同步 spawn 顺序读取它们（每次 macOS 启动约 65ms）
 import { profileCheckpoint, profileReport } from './utils/startupProfiler.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
@@ -66,17 +65,17 @@ import { computeInitialTeamContext } from './utils/swarm/reconnection.js';
 import { initializeWarningHandler } from './utils/warningHandler.js';
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js';
 
-// Lazy require to avoid circular dependency: teammate.ts -> AppState.tsx -> ... -> main.tsx
+// 延迟加载以避免循环依赖：teammate.ts -> AppState.tsx -> ... -> main.tsx
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getTeammateUtils = () => require('./utils/teammate.js') as typeof import('./utils/teammate.js');
 const getTeammatePromptAddendum = () => require('./utils/swarm/teammatePromptAddendum.js') as typeof import('./utils/swarm/teammatePromptAddendum.js');
 const getTeammateModeSnapshot = () => require('./utils/swarm/backends/teammateModeSnapshot.js') as typeof import('./utils/swarm/backends/teammateModeSnapshot.js');
 /* eslint-enable @typescript-eslint/no-require-imports */
-// Dead code elimination: conditional import for COORDINATOR_MODE
+// 死代码消除：COORDINATOR_MODE 的条件导入
 /* eslint-disable @typescript-eslint/no-require-imports */
 const coordinatorModeModule = feature('COORDINATOR_MODE') ? require('./coordinator/coordinatorMode.js') as typeof import('./coordinator/coordinatorMode.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
-// Dead code elimination: conditional import for KAIROS (assistant mode)
+// 死代码消除：KAIROS（助手模式）的条件导入
 /* eslint-disable @typescript-eslint/no-require-imports */
 const assistantModule = feature('KAIROS') ? require('./assistant/index.js') as typeof import('./assistant/index.js') : null;
 const kairosGate = feature('KAIROS') ? require('./assistant/gate.js') as typeof import('./assistant/gate.js') : null;
@@ -137,7 +136,7 @@ import { logPluginLoadErrors, logPluginsEnabledForSession } from './utils/teleme
 import { logSkillsLoaded } from './utils/telemetry/skillLoadedEvent.js';
 import { generateTempFilePath } from './utils/tempfile.js';
 import { validateUuid } from './utils/uuid.js';
-// Plugin startup checks are now handled non-blockingly in REPL.tsx
+// 插件启动检查现在在 REPL.tsx 中以非阻塞方式处理
 
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
@@ -171,7 +170,7 @@ import { type ChannelEntry, getInitialMainLoopModel, getIsNonInteractiveSession,
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/permissions/autoModeState.js') as typeof import('./utils/permissions/autoModeState.js') : null;
 
-// TeleportRepoMismatchDialog, TeleportResumeWrapper dynamically imported at call sites
+// TeleportRepoMismatchDialog、TeleportResumeWrapper 在调用处动态导入
 import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
 import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
 import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
@@ -185,7 +184,7 @@ import { resetAutoModeOptInForDefaultOffer } from './migrations/resetAutoModeOpt
 import { resetProToOpusDefault } from './migrations/resetProToOpusDefault.js';
 import { createRemoteSessionConfig } from './remote/RemoteSessionManager.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
-// teleportWithProgress dynamically imported at call site
+// teleportWithProgress 在调用处动态导入
 import { createDirectConnectSession, DirectConnectError } from './server/createDirectConnectSession.js';
 import { initializeLspServerManager } from './services/lsp/manager.js';
 import { shouldEnablePromptSuggestion } from './services/PromptSuggestion/promptSuggestion.js';
@@ -210,9 +209,9 @@ import { getTmuxInstallInstructions, isTmuxAvailable, parsePRReference } from '.
 profileCheckpoint('main_tsx_imports_loaded');
 
 /**
- * Log managed settings keys to Statsig for analytics.
- * This is called after init() completes to ensure settings are loaded
- * and environment variables are applied before model resolution.
+ * 将托管设置键记录到 Statsig 用于分析。
+ * 在 init() 完成后调用，以确保在模型解析之前
+ * 设置已加载且环境变量已应用。
  */
 function logManagedSettings(): void {
   try {
@@ -229,7 +228,7 @@ function logManagedSettings(): void {
   }
 }
 
-// Check if running in debug/inspection mode
+// 检查是否运行在调试/检查模式
 function isBeingDebugged() {
   const isBun = isRunningWithBun();
 
@@ -263,19 +262,19 @@ function isBeingDebugged() {
   }
 }
 
-// Exit if we detect node debugging or inspection
+// 如果检测到 node 调试或检查，则退出
 if ("external" !== 'ant' && isBeingDebugged()) {
-  // Use process.exit directly here since we're in the top-level code before imports
-  // and gracefulShutdown is not yet available
+  // 此处直接使用 process.exit，因为我们处于导入前的顶层代码
+  // 且 gracefulShutdown 尚不可用
   // eslint-disable-next-line custom-rules/no-top-level-side-effects
   process.exit(1);
 }
 
 /**
- * Per-session skill/plugin telemetry. Called from both the interactive path
- * and the headless -p path (before runHeadless) — both go through
- * main.tsx but branch before the interactive startup path, so it needs two
- * call sites here rather than one here + one in QueryEngine.
+ * 每个会话的技能/插件遥测。从交互路径和
+ * 无头 -p 路径（在 runHeadless 之前）调用 —— 两者都经过
+ * main.tsx 但在交互启动路径之前分支，所以需要两个
+ * 调用点，而不是一个在这里 + 一个在 QueryEngine 中。
  */
 function logSessionTelemetry(): void {
   const model = parseUserSpecifiedModel(getInitialMainLoopModel() ?? getDefaultMainLoopModel());
@@ -321,8 +320,8 @@ async function logStartupTelemetry(): Promise<void> {
   });
 }
 
-// @[MODEL LAUNCH]: Consider any migrations you may need for model strings. See migrateSonnet1mToSonnet45.ts for an example.
-// Bump this when adding a new sync migration so existing users re-run the set.
+// @[MODEL LAUNCH]：考虑为模型字符串添加必要的迁移。参见 migrateSonnet1mToSonnet45.ts 示例。
+// 添加新的同步迁移时递增此值，以便现有用户重新运行迁移集。
 const CURRENT_MIGRATION_VERSION = 11;
 function runMigrations(): void {
   if (getGlobalConfig().migrationVersion !== CURRENT_MIGRATION_VERSION) {
@@ -346,30 +345,30 @@ function runMigrations(): void {
       migrationVersion: CURRENT_MIGRATION_VERSION
     });
   }
-  // Async migration - fire and forget since it's non-blocking
+  // 异步迁移 —— 触发后不等待，因为是非阻塞的
   migrateChangelogFromConfig().catch(() => {
-    // Silently ignore migration errors - will retry on next startup
+    // 静默忽略迁移错误 —— 下次启动时重试
   });
 }
 
 /**
- * Prefetch system context (including git status) only when it's safe to do so.
- * Git commands can execute arbitrary code via hooks and config (e.g., core.fsmonitor,
- * diff.external), so we must only run them after trust is established or in
- * non-interactive mode where trust is implicit.
+ * 仅在安全的情况下预取系统上下文（包括 git 状态）。
+ * Git 命令可以通过钩子和配置执行任意代码（例如 core.fsmonitor、
+ * diff.external），因此我们必须在建立信任后或在
+ * 信任是隐式的非交互模式下才能运行它们。
  */
 function prefetchSystemContextIfSafe(): void {
   const isNonInteractiveSession = getIsNonInteractiveSession();
 
-  // In non-interactive mode (--print), trust dialog is skipped and
-  // execution is considered trusted (as documented in help text)
+  // 在非交互模式（--print）下，跳过信任对话框且
+  // 执行被视为受信任的（如帮助文本中所述）
   if (isNonInteractiveSession) {
     logForDiagnosticsNoPII('info', 'prefetch_system_context_non_interactive');
     void getSystemContext();
     return;
   }
 
-  // In interactive mode, only prefetch if trust has already been established
+  // 在交互模式下，仅在已建立信任时才预取
   const hasTrust = checkHasTrustDialogAccepted();
   if (hasTrust) {
     logForDiagnosticsNoPII('info', 'prefetch_system_context_has_trust');
@@ -377,31 +376,30 @@ function prefetchSystemContextIfSafe(): void {
   } else {
     logForDiagnosticsNoPII('info', 'prefetch_system_context_skipped_no_trust');
   }
-  // Otherwise, don't prefetch - wait for trust to be established first
+  // 否则，不预取 —— 等待信任建立后再进行
 }
 
 /**
- * Start background prefetches and housekeeping that are NOT needed before first render.
- * These are deferred from setup() to reduce event loop contention and child process
- * spawning during the critical startup path.
- * Call this after the REPL has been rendered.
+ * 启动首次渲染不需要的后台预取和清理工作。
+ * 这些从 setup() 中延迟出来，以减少事件循环竞争和
+ * 关键启动路径中的子进程生成。
+ * 在 REPL 渲染后调用此函数。
  */
 export function startDeferredPrefetches(): void {
-  // This function runs after first render, so it doesn't block the initial paint.
-  // However, the spawned processes and async work still contend for CPU and event
-  // loop time, which skews startup benchmarks (CPU profiles, time-to-first-render
-  // measurements). Skip all of it when we're only measuring startup performance.
+  // 此函数在首次渲染后运行，因此不会阻塞初始绘制。
+  // 但是，生成的子进程和异步工作仍然会竞争 CPU 和事件
+  // 循环时间，这会扭曲启动基准测试（CPU 配置文件、首次渲染时间
+  // 测量）。仅在测量启动性能时跳过所有这些操作。
   if (isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER) ||
-  // --bare: skip ALL prefetches. These are cache-warms for the REPL's
-  // first-turn responsiveness (initUser, getUserContext, tips, countFiles,
-  // modelCapabilities, change detectors). Scripted -p calls don't have a
-  // "user is typing" window to hide this work in — it's pure overhead on
-  // the critical path.
+  // --bare：跳过所有预取。这些是 REPL 首次响应性的缓存预热
+  //（initUser、getUserContext、tips、countFiles、
+  // modelCapabilities、change detectors）。脚本化的 -p 调用没有
+  // "用户正在输入"的时间窗口来隐藏这些工作 —— 它是关键路径上的纯开销。
   isBareMode()) {
     return;
   }
 
-  // Process-spawning prefetches (consumed at first API call, user is still typing)
+  // 生成子进程的预取（在首次 API 调用时使用，用户仍在输入）
   void initUser();
   void getUserContext();
   prefetchSystemContextIfSafe();
@@ -415,18 +413,18 @@ export function startDeferredPrefetches(): void {
   }
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
 
-  // Analytics and feature flag initialization
+  // 分析数据和功能标志初始化
   void initializeAnalyticsGates();
   void prefetchOfficialMcpUrls();
   void refreshModelCapabilities();
 
-  // File change detectors deferred from init() to unblock first render
+  // 文件变更检测器从 init() 延迟以不阻塞首次渲染
   void settingsChangeDetector.initialize();
   if (!isBareMode()) {
     void skillChangeDetector.initialize();
   }
 
-  // Event loop stall detector — logs when the main thread is blocked >500ms
+  // 事件循环停顿检测器 —— 当主线程阻塞超过 500ms 时记录日志
   if ("external" === 'ant') {
     void import('./utils/eventLoopStallDetector.js').then(m => m.startEventLoopStallDetector());
   }
@@ -458,7 +456,7 @@ function loadSettingsFromFlag(settingsFile: string): void {
       });
       writeFileSync_DEPRECATED(settingsPath, trimmedSettings, 'utf8');
     } else {
-      // It's a file path - resolve and validate by attempting to read
+      // 这是一个文件路径 —— 解析并通过尝试读取来验证
       const {
         resolvedPath: resolvedSettingsPath
       } = safeResolvePath(getFsImplementation(), settingsFile);
@@ -498,18 +496,18 @@ function loadSettingSourcesFromFlag(settingSourcesArg: string): void {
 }
 
 /**
- * Parse and load settings flags early, before init()
- * This ensures settings are filtered from the start of initialization
+ * 在 init() 之前早期解析并加载设置标志
+ * 这确保从初始化开始就过滤设置
  */
 function eagerLoadSettings(): void {
   profileCheckpoint('eagerLoadSettings_start');
-  // Parse --settings flag early to ensure settings are loaded before init()
+  // 早期解析 --settings 标志以确保在 init() 之前加载设置
   const settingsFile = eagerParseCliFlag('--settings');
   if (settingsFile) {
     loadSettingsFromFlag(settingsFile);
   }
 
-  // Parse --setting-sources flag early to control which sources are loaded
+  // 早期解析 --setting-sources 标志以控制加载哪些来源
   const settingSourcesArg = eagerParseCliFlag('--setting-sources');
   if (settingSourcesArg !== undefined) {
     loadSettingSourcesFromFlag(settingSourcesArg);
@@ -517,13 +515,13 @@ function eagerLoadSettings(): void {
   profileCheckpoint('eagerLoadSettings_end');
 }
 function initializeEntrypoint(isNonInteractive: boolean): void {
-  // Skip if already set (e.g., by SDK or other entrypoints)
+  // 如果已设置则跳过（例如由 SDK 或其他入口点设置）
   if (process.env.ZY_CODE_ENTRYPOINT) {
     return;
   }
   const cliArgs = process.argv.slice(2);
 
-  // Check for MCP serve command (handle flags before mcp serve, e.g., --debug mcp serve)
+  // 检查 MCP serve 命令（处理 mcp serve 前的标志，例如 --debug mcp serve）
   const mcpIndex = cliArgs.indexOf('mcp');
   if (mcpIndex !== -1 && cliArgs[mcpIndex + 1] === 'serve') {
     process.env.ZY_CODE_ENTRYPOINT = 'mcp';
@@ -534,14 +532,14 @@ function initializeEntrypoint(isNonInteractive: boolean): void {
     return;
   }
 
-  // Note: 'local-agent' entrypoint is set by the local agent mode launcher
-  // via ZY_CODE_ENTRYPOINT env var (handled by early return above)
+  // 注意：'local-agent' 入口点由本地代理模式启动器
+  // 通过 ZY_CODE_ENTRYPOINT 环境变量设置（由上方的提前返回处理）
 
-  // Set based on interactive status
+  // 根据交互状态设置
   process.env.ZY_CODE_ENTRYPOINT = isNonInteractive ? 'sdk-cli' : 'cli';
 }
 
-// Set by early argv processing when `zy open <url>` is detected (interactive mode only)
+// 当检测到 `zy open <url>` 时由早期 argv 处理设置（仅限交互模式）
 type PendingConnect = {
   url: string | undefined;
   authToken: string | undefined;
@@ -553,7 +551,7 @@ const _pendingConnect: PendingConnect | undefined = feature('DIRECT_CONNECT') ? 
   dangerouslySkipPermissions: false
 } : undefined;
 
-// Set by early argv processing when `zy assistant [sessionId]` is detected
+// 当检测到 `zy assistant [sessionId]` 时由早期 argv 处理设置
 type PendingAssistantChat = {
   sessionId?: string;
   discover: boolean;
@@ -563,9 +561,9 @@ const _pendingAssistantChat: PendingAssistantChat | undefined = feature('KAIROS'
   discover: false
 } : undefined;
 
-// `zy ssh <host> [dir]` — parsed from argv early (same pattern as
-// DIRECT_CONNECT above) so the main command path can pick it up and hand
-// the REPL an SSH-backed session instead of a local one.
+// `zy ssh <host> [dir]` —— 从 argv 早期解析（与上方
+// DIRECT_CONNECT 相同的模式），以便主命令路径可以接收它并交给
+// REPL 一个 SSH 支持的会话，而不是本地会话。
 type PendingSSH = {
   host: string | undefined;
   cwd: string | undefined;
@@ -587,20 +585,20 @@ const _pendingSSH: PendingSSH | undefined = feature('SSH_REMOTE') ? {
 export async function main() {
   profileCheckpoint('main_function_start');
 
-  // SECURITY: Prevent Windows from executing commands from current directory
-  // This must be set before ANY command execution to prevent PATH hijacking attacks
+  // 安全：防止 Windows 从当前目录执行命令
+  // 必须在任何命令执行之前设置，以防止 PATH 劫持攻击
   // See: https://docs.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-searchpathw
   process.env.NoDefaultCurrentDirectoryInExePath = '1';
 
-  // Initialize warning handler early to catch warnings
+  // 早期初始化警告处理器以捕获警告
   initializeWarningHandler();
   process.on('exit', () => {
     resetCursor();
   });
   process.on('SIGINT', () => {
-    // In print mode, print.ts registers its own SIGINT handler that aborts
-    // the in-flight query and calls gracefulShutdown; skip here to avoid
-    // preempting it with a synchronous process.exit().
+    // 在 print 模式下，print.ts 注册了自己的 SIGINT 处理器来中止
+    // 进行中的查询并调用 gracefulShutdown；在此跳过以避免
+    // 用同步的 process.exit() 抢占它。
     if (process.argv.includes('-p') || process.argv.includes('--print')) {
       return;
     }
@@ -608,9 +606,9 @@ export async function main() {
   });
   profileCheckpoint('main_warning_handler_initialized');
 
-  // Check for cc:// or cc+unix:// URL in argv — rewrite so the main command
-  // handles it, giving the full interactive TUI instead of a stripped-down subcommand.
-  // For headless (-p), we rewrite to the internal `open` subcommand.
+  // 在 argv 中检查 cc:// 或 cc+unix:// URL —— 重写以便主命令
+  // 处理它，提供完整的交互式 TUI 而不是精简的子命令。
+  // 对于无头模式（-p），我们重写为内部的 `open` 子命令。
   if (feature('DIRECT_CONNECT')) {
     const rawCliArgs = process.argv.slice(2);
     const ccIdx = rawCliArgs.findIndex(a => a.startsWith('cc://') || a.startsWith('cc+unix://'));
@@ -622,7 +620,7 @@ export async function main() {
       const parsed = parseConnectUrl(ccUrl);
       _pendingConnect.dangerouslySkipPermissions = rawCliArgs.includes('--dangerously-skip-permissions');
       if (rawCliArgs.includes('-p') || rawCliArgs.includes('--print')) {
-        // Headless: rewrite to internal `open` subcommand
+        // 无头模式：重写为内部 `open` 子命令
         const stripped = rawCliArgs.filter((_, i) => i !== ccIdx);
         const dspIdx = stripped.indexOf('--dangerously-skip-permissions');
         if (dspIdx !== -1) {
@@ -630,7 +628,7 @@ export async function main() {
         }
         process.argv = [process.argv[0]!, process.argv[1]!, 'open', ccUrl, ...stripped];
       } else {
-        // Interactive: strip cc:// URL and flags, run main command
+        // 交互模式：剥离 cc:// URL 和标志，运行主命令
         _pendingConnect.url = parsed.serverUrl;
         _pendingConnect.authToken = parsed.authToken;
         const stripped = rawCliArgs.filter((_, i) => i !== ccIdx);
@@ -643,9 +641,9 @@ export async function main() {
     }
   }
 
-  // Handle deep link URIs early — this is invoked by the OS protocol handler
-  // and should bail out before full init since it only needs to parse the URI
-  // and open a terminal.
+  // 早期处理深度链接 URI —— 由操作系统协议处理器调用
+  // 应该在完整 init 之前退出，因为它只需要解析 URI
+  // 并打开终端。
   if (feature('LODESTONE')) {
     const handleUriIdx = process.argv.indexOf('--handle-uri');
     if (handleUriIdx !== -1 && process.argv[handleUriIdx + 1]) {
@@ -661,10 +659,10 @@ export async function main() {
       process.exit(exitCode);
     }
 
-    // macOS URL handler: when LaunchServices launches our .app bundle, the
-    // URL arrives via Apple Event (not argv). LaunchServices overwrites
-    // __CFBundleIdentifier to the launching bundle's ID, which is a precise
-    // positive signal — cheaper than importing and guessing with heuristics.
+    // macOS URL 处理器：当 LaunchServices 启动我们的 .app bundle 时，
+    // URL 通过 Apple Event 到达（而不是 argv）。LaunchServices 将
+    // __CFBundleIdentifier 覆盖为启动 bundle 的 ID，这是一个精确的
+    // 正面信号 —— 比用启发式方法导入和猜测更便宜。
     if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === 'com.anthropic.zy-code-url-handler') {
       const {
         enableConfigs
@@ -678,12 +676,11 @@ export async function main() {
     }
   }
 
-  // `zy assistant [sessionId]` — stash and strip so the main
-  // command handles it, giving the full interactive TUI. Position-0 only
-  // (matching the ssh pattern below) — indexOf would false-positive on
-  // `zy -p "explain assistant"`. Root-flag-before-subcommand
-  // (e.g. `--debug assistant`) falls through to the stub, which
-  // prints usage.
+  // `zy assistant [sessionId]` —— 暂存并剥离，以便主命令
+  // 处理它，提供完整的交互式 TUI。仅限位置 0（与下方
+  // ssh 模式匹配）—— indexOf 会对 `zy -p "explain assistant"` 产生误判。
+  // 根标志在子命令前（例如 `--debug assistant`）会透传到存根，
+  // 打印用法说明。
   if (feature('KAIROS') && _pendingAssistantChat) {
     const rawArgs = process.argv.slice(2);
     if (rawArgs[0] === 'assistant') {
@@ -701,18 +698,18 @@ export async function main() {
     }
   }
 
-  // `zy ssh <host> [dir]` — strip from argv so the main command handler
-  // runs (full interactive TUI), stash the host/dir for the REPL branch at
-  // ~line 3720 to pick up. Headless (-p) mode not supported in v1: SSH
-  // sessions need the local REPL to drive them (interrupt, permissions).
+  // `zy ssh <host> [dir]` —— 从 argv 剥离以便主命令处理器
+  // 运行（完整交互式 TUI），暂存主机/目录供 REPL 分支在
+  // ~line 3720 处接收。无头模式（-p）在 v1 中不受支持：SSH
+  // 会话需要本地 REPL 来驱动（中断、权限）。
   if (feature('SSH_REMOTE') && _pendingSSH) {
     const rawCliArgs = process.argv.slice(2);
-    // SSH-specific flags can appear before the host positional (e.g.
-    // `ssh --permission-mode auto host /tmp` — standard POSIX flags-before-
-    // positionals). Pull them all out BEFORE checking whether a host was
-    // given, so `zy ssh --permission-mode auto host` and `zy ssh host
-    // --permission-mode auto` are equivalent. The host check below only needs
-    // to guard against `-h`/`--help` (which commander should handle).
+    // SSH 特定标志可以出现在主机位置参数之前（例如
+    // `ssh --permission-mode auto host /tmp` —— 标准的 POSIX 标志在前
+    // 位置参数）。在检查是否给出了主机之前将它们全部提取出来，
+    // 这样 `zy ssh --permission-mode auto host` 和 `zy ssh host
+    // --permission-mode auto` 是等价的。下方的主机检查只需要
+    // 防御 `-h`/`--help`（commander 应该处理）。
     if (rawCliArgs[0] === 'ssh') {
       const localIdx = rawCliArgs.indexOf('--local');
       if (localIdx !== -1) {
@@ -734,10 +731,10 @@ export async function main() {
         _pendingSSH.permissionMode = rawCliArgs[pmEqIdx]!.split('=')[1];
         rawCliArgs.splice(pmEqIdx, 1);
       }
-      // Forward session-resume + model flags to the remote CLI's initial spawn.
-      // --continue/-c and --resume <uuid> operate on the REMOTE session history
-      // (which persists under the remote's ~/.zy/projects/<cwd>/).
-      // --model controls which model the remote uses.
+      // 将会话恢复和模型标志转发给远程 CLI 的初始生成。
+      // --continue/-c 和 --resume <uuid> 操作于远程会话历史
+      // （持久化在远程的 ~/.zy/projects/<cwd>/ 下）。
+      // --model 控制远程使用的模型。
       const extractFlag = (flag: string, opts: {
         hasValue?: boolean;
         as?: string;
@@ -770,12 +767,12 @@ export async function main() {
         hasValue: true
       });
     }
-    // After pre-extraction, any remaining dash-arg at [1] is either -h/--help
-    // (commander handles) or an unknown-to-ssh flag (fall through to commander
-    // so it surfaces a proper error). Only a non-dash arg is the host.
+    // 提取后，[1] 处剩余的任何 dash 参数要么是 -h/--help
+    //（commander 处理），要么是对 ssh 未知的标志（透传给 commander
+    // 以便它显示正确的错误）。只有非 dash 参数才是主机。
     if (rawCliArgs[0] === 'ssh' && rawCliArgs[1] && !rawCliArgs[1].startsWith('-')) {
       _pendingSSH.host = rawCliArgs[1];
-      // Optional positional cwd.
+      // 可选的位置参数 cwd。
       let consumed = 2;
       if (rawCliArgs[2] && !rawCliArgs[2].startsWith('-')) {
         _pendingSSH.cwd = rawCliArgs[2];
@@ -783,40 +780,40 @@ export async function main() {
       }
       const rest = rawCliArgs.slice(consumed);
 
-      // Headless (-p) mode is not supported with SSH in v1 — reject early
-      // so the flag doesn't silently cause local execution.
+      // 无头模式（-p）在 v1 中不支持 SSH —— 提前拒绝
+      // 以免标志静默导致本地执行。
       if (rest.includes('-p') || rest.includes('--print')) {
         process.stderr.write('Error: headless (-p/--print) mode is not supported with zy ssh\n');
         gracefulShutdownSync(1);
         return;
       }
 
-      // Rewrite argv so the main command sees remaining flags but not `ssh`.
+      // 重写 argv 以便主命令看到剩余标志但不包括 `ssh`。
       process.argv = [process.argv[0]!, process.argv[1]!, ...rest];
     }
   }
 
-  // Check for -p/--print and --init-only flags early to set isInteractiveSession before init()
-  // This is needed because telemetry initialization calls auth functions that need this flag
+  // 早期检查 -p/--print 和 --init-only 标志以在 init() 之前设置 isInteractiveSession
+  // 这是必需的，因为遥测初始化调用需要此标志的认证函数
   const cliArgs = process.argv.slice(2);
   const hasPrintFlag = cliArgs.includes('-p') || cliArgs.includes('--print');
   const hasInitOnlyFlag = cliArgs.includes('--init-only');
   const hasSdkUrl = cliArgs.some(arg => arg.startsWith('--sdk-url'));
   const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || hasSdkUrl || !process.stdout.isTTY;
 
-  // Stop capturing early input for non-interactive modes
+  // 停止为非交互模式捕获早期输入
   if (isNonInteractive) {
     stopCapturingEarlyInput();
   }
 
-  // Set simplified tracking fields
+  // 设置简化的跟踪字段
   const isInteractive = !isNonInteractive;
   setIsInteractive(isInteractive);
 
-  // Initialize entrypoint based on mode - needs to be set before any event is logged
+  // 根据模式初始化入口点 —— 需要在记录任何事件之前设置
   initializeEntrypoint(isNonInteractive);
 
-  // Determine client type
+  // 确定客户端类型
   const clientType = (() => {
     if (isEnvTruthy(process.env.GITHUB_ACTIONS)) return 'github-action';
     if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-ts') return 'sdk-typescript';
@@ -826,7 +823,7 @@ export async function main() {
     if (process.env.ZY_CODE_ENTRYPOINT === 'local-agent') return 'local-agent';
     if (process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop') return 'zy-desktop';
 
-    // Check if session-ingress token is provided (indicates remote session)
+    // 检查是否提供了会话入口令牌（表示远程会话）
     const hasSessionIngressToken = process.env.ZY_CODE_SESSION_ACCESS_TOKEN || process.env.ZY_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR;
     if (process.env.ZY_CODE_ENTRYPOINT === 'remote' || hasSessionIngressToken) {
       return 'remote';
@@ -838,20 +835,20 @@ export async function main() {
   if (previewFormat === 'markdown' || previewFormat === 'html') {
     setQuestionPreviewFormat(previewFormat);
   } else if (!clientType.startsWith('sdk-') &&
-  // Desktop and CCR pass previewFormat via toolConfig; when the feature is
-  // gated off they pass undefined — don't override that with markdown.
+  // Desktop 和 CCR 通过 toolConfig 传递 previewFormat；当功能被
+  // 关闭时它们传递 undefined —— 不要用 markdown 覆盖它。
   clientType !== 'zy-desktop' && clientType !== 'local-agent' && clientType !== 'remote') {
     setQuestionPreviewFormat('markdown');
   }
 
-  // Tag sessions created via `zy remote-control` so the backend can identify them
+  // 标记通过 `zy remote-control` 创建的会话，以便后端识别它们
   if (process.env.ZY_CODE_ENVIRONMENT_KIND === 'bridge') {
     setSessionSource('remote-control');
   }
   profileCheckpoint('main_client_type_determined');
 
 
-  // Parse and load settings flags early, before init()
+  // 早期解析并加载设置标志，在 init() 之前
   eagerLoadSettings();
 
   profileCheckpoint('main_before_run');
@@ -861,7 +858,7 @@ export async function main() {
 }
 async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json'): Promise<string | AsyncIterable<string>> {
   if (!process.stdin.isTTY &&
-  // Input hijacking breaks MCP.
+  // 输入劫持会破坏 MCP。
   !process.argv.includes('mcp')) {
     if (inputFormat === 'stream-json') {
       return process.stdin;
@@ -872,11 +869,11 @@ async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json
       data += chunk;
     };
     process.stdin.on('data', onData);
-    // If no data arrives in 3s, stop waiting and warn. Stdin is likely an
-    // inherited pipe from a parent that isn't writing (subprocess spawned
-    // without explicit stdin handling). 3s covers slow producers like curl,
-    // jq on large files, python with import overhead. The warning makes
-    // silent data loss visible for the rare producer that's slower still.
+    // 如果 3 秒内没有数据到达，停止等待并发出警告。Stdin 可能是
+    // 从没有写入的父进程继承的管道（子进程生成时
+    // 没有明确的 stdin 处理）。3 秒覆盖了慢速生产者如 curl、
+    // 大文件上的 jq、有导入开销的 python。警告使
+    // 对于仍然更慢的罕见生产者，静默数据丢失可见。
     const timedOut = await peekForStdinData(process.stdin, 3000);
     process.stdin.off('data', onData);
     if (timedOut) {
@@ -889,9 +886,9 @@ async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json
 async function run(): Promise<CommanderCommand> {
   profileCheckpoint('run_function_start');
 
-  // Create help config that sorts options by long option name.
-  // Commander supports compareOptions at runtime but @commander-js/extra-typings
-  // doesn't include it in the type definitions, so we use Object.assign to add it.
+  // 创建帮助配置，按长选项名排序选项。
+  // Commander 支持运行时 compareOptions，但 @commander-js/extra-typings
+  // 的类型定义中不包含它，所以我们使用 Object.assign 来添加。
   function createSortedHelpConfig(): {
     sortSubcommands: true;
     sortOptions: true;
@@ -907,46 +904,46 @@ async function run(): Promise<CommanderCommand> {
   const program = new CommanderCommand().configureHelp(createSortedHelpConfig()).enablePositionalOptions();
   profileCheckpoint('run_commander_initialized');
 
-  // Use preAction hook to run initialization only when executing a command,
-  // not when displaying help. This avoids the need for env variable signaling.
+  // 使用 preAction 钩子在执行命令时运行初始化，
+  // 而不是在显示帮助时。这避免了需要环境变量信号。
   program.hook('preAction', async thisCommand => {
     profileCheckpoint('preAction_start');
-    // Await async subprocess loads started at module evaluation (lines 12-20).
-    // Nearly free — subprocesses complete during the ~135ms of imports above.
-    // Must resolve before init() which triggers the first settings read
-    // (applySafeConfigEnvironmentVariables → getSettingsForSource('policySettings')
-    // → isRemoteManagedSettingsEligible → sync keychain reads otherwise ~65ms).
+    // 等待在模块评估时启动的异步子进程加载（第 12-20 行）。
+    // 几乎免费 —— 子进程在上方约 135ms 的导入期间完成。
+    // 必须在 init() 之前解析，init() 会触发第一次设置读取
+    //（applySafeConfigEnvironmentVariables → getSettingsForSource('policySettings')
+    // → isRemoteManagedSettingsEligible → 否则同步 keychain 读取约 65ms）。
     await Promise.all([ensureMdmSettingsLoaded(), ensureKeychainPrefetchCompleted()]);
     profileCheckpoint('preAction_after_mdm');
     await init();
     profileCheckpoint('preAction_after_init');
 
-    // process.title on Windows sets the console title directly; on POSIX,
-    // terminal shell integration may mirror the process name to the tab.
-    // After init() so settings.json env can also gate this (gh-4765).
+    // Windows 上的 process.title 直接设置控制台标题；在 POSIX 上，
+    // 终端 shell 集成可能会将进程名称镜像到标签页。
+    // 在 init() 之后，以便 settings.json env 也可以控制此（gh-4765）。
     if (!isEnvTruthy(process.env.ZY_CODE_DISABLE_TERMINAL_TITLE)) {
       process.title = 'zy';
     }
 
-    // Attach logging sinks so subcommand handlers can use logEvent/logError.
-    // Before PR #11106 logEvent dispatched directly; after, events queue until
-    // a sink attaches. setup() attaches sinks for the default command, but
-    // subcommands (doctor, mcp, plugin, auth) never call setup() and would
-    // silently drop events on process.exit(). Both inits are idempotent.
+    // 附加日志接收器以便子命令处理器可以使用 logEvent/logError。
+    // PR #11106 之前 logEvent 直接分派；之后，事件排队直到
+    // 接收器附加。setup() 为默认命令附加接收器，但
+    // 子命令（doctor、mcp、plugin、auth）从不调用 setup()，会在
+    // process.exit() 时静默丢弃事件。两个初始化都是幂等的。
     const {
       initSinks
     } = await import('./utils/sinks.js');
     initSinks();
     profileCheckpoint('preAction_after_sinks');
 
-    // gh-33508: --plugin-dir is a top-level program option. The default
-    // action reads it from its own options destructure, but subcommands
-    // (plugin list, plugin install, mcp *) have their own actions and
-    // never see it. Wire it up here so getInlinePlugins() works everywhere.
-    // thisCommand.opts() is typed {} here because this hook is attached
-    // before .option('--plugin-dir', ...) in the chain — extra-typings
-    // builds the type as options are added. Narrow with a runtime guard;
-    // the collect accumulator + [] default guarantee string[] in practice.
+    // gh-33508：--plugin-dir 是顶级程序选项。默认
+    // action 从自己的选项解构中读取它，但子命令
+    //（plugin list、plugin install、mcp *）有自己的 action 且
+    // 从不会看到它。在这里连接它以便 getInlinePlugins() 在任何地方都有效。
+    // thisCommand.opts() 在这里类型为 {}，因为这个钩子附加在
+    // .option('--plugin-dir', ...) 之前 —— extra-typings
+    // 在添加选项时构建类型。用运行时守卫缩小范围；
+    // collect 累加器 + [] 默认保证实践中为 string[]。
     const pluginDir = thisCommand.getOptionValue('pluginDir');
     if (Array.isArray(pluginDir) && pluginDir.length > 0 && pluginDir.every(p => typeof p === 'string')) {
       setInlinePlugins(pluginDir);
@@ -955,28 +952,28 @@ async function run(): Promise<CommanderCommand> {
     runMigrations();
     profileCheckpoint('preAction_after_migrations');
 
-    // Load remote managed settings for enterprise customers (non-blocking)
-    // Fails open - if fetch fails, continues without remote settings
-    // Settings are applied via hot-reload when they arrive
-    // Must happen after init() to ensure config reading is allowed
+    // 为企业客户加载远程托管设置（非阻塞）
+    // 开放失败 —— 如果获取失败，继续而不使用远程设置
+    // 设置到达时通过热重载应用
+    // 必须在 init() 之后发生以确保允许读取配置
     void loadRemoteManagedSettings();
     void loadPolicyLimits();
     profileCheckpoint('preAction_after_remote_settings');
 
-    // Load settings sync (non-blocking, fail-open)
-    // CLI: uploads local settings to remote (CCR download is handled by print.ts)
+    // 同步加载设置（非阻塞，开放失败）
+    // CLI：将本地设置上传到远程（CCR 下载由 print.ts 处理）
     if (feature('UPLOAD_USER_SETTINGS')) {
       void import('./services/settingsSync/index.js').then(m => m.uploadUserSettingsInBackground());
     }
     profileCheckpoint('preAction_after_settings_sync');
   });
   program.name('zy').description(`ZY Code - starts an interactive session by default, use -p/--print for non-interactive output`).argument('[prompt]', 'Your prompt', String)
-  // Subcommands inherit helpOption via commander's copyInheritedSettings —
-  // setting it once here covers mcp, plugin, auth, and all other subcommands.
+  // 子命令通过 commander 的 copyInheritedSettings 继承 helpOption ——
+  // 在这里设置一次就覆盖了 mcp、plugin、auth 和所有其他子命令。
   .helpOption('-h, --help', 'Display help for command').option('-d, --debug [filter]', 'Enable debug mode with optional category filtering (e.g., "api,hooks" or "!1p,!file")', (_value: string | true) => {
-    // If value is provided, it will be the filter string
-    // If not provided but flag is present, value will be true
-    // The actual filtering is handled in debug.ts by parsing process.argv
+    // 如果提供了值，它将是过滤字符串
+    // 如果没有提供但标志存在，值将为 true
+    // 实际的过滤由 debug.ts 通过解析 process.argv 处理
     return true;
   }).addOption(new Option('--debug-to-stderr', 'Enable debug mode (to stderr)').argParser(Boolean).hideHelp()).option('--debug-file <path>', 'Write debug logs to a specific file path (implicitly enables debug mode)', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).option('-p, --print', 'Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when ZY is run with the -p mode. Only use this flag in directories you trust.', () => true).option('--bare', 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and CLAUDE.md auto-discovery. Sets ZY_CODE_SIMPLE=1. Auth is strictly ZY_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read). 3P providers (Bedrock/Vertex/Foundry) use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (CLAUDE.md dirs), --mcp-config, --settings, --agents, --plugin-dir.', () => true).addOption(new Option('--init', 'Run Setup hooks with init trigger, then continue').hideHelp()).addOption(new Option('--init-only', 'Run Setup and SessionStart:startup hooks, then exit').hideHelp()).addOption(new Option('--maintenance', 'Run Setup hooks with maintenance trigger, then continue').hideHelp()).addOption(new Option('--output-format <format>', 'Output format (only works with --print): "text" (default), "json" (single result), or "stream-json" (realtime streaming)').choices(['text', 'json', 'stream-json'])).addOption(new Option('--json-schema <schema>', 'JSON Schema for structured output validation. ' + 'Example: {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}').argParser(String)).option('--include-hook-events', 'Include all hook lifecycle events in the output stream (only works with --output-format=stream-json)', () => true).option('--include-partial-messages', 'Include partial message chunks as they arrive (only works with --print and --output-format=stream-json)', () => true).addOption(new Option('--input-format <format>', 'Input format (only works with --print): "text" (default), or "stream-json" (realtime streaming input)').choices(['text', 'stream-json'])).option('--mcp-debug', '[DEPRECATED. Use --debug instead] Enable MCP debug mode (shows MCP server errors)', () => true).option('--dangerously-skip-permissions', 'Bypass all permission checks. Recommended only for sandboxes with no internet access.', () => true).option('--allow-dangerously-skip-permissions', 'Enable bypassing all permission checks as an option, without it being enabled by default. Recommended only for sandboxes with no internet access.', () => true).addOption(new Option('--thinking <mode>', 'Thinking mode: enabled (equivalent to adaptive), disabled').choices(['enabled', 'adaptive', 'disabled']).hideHelp()).addOption(new Option('--max-thinking-tokens <tokens>', '[DEPRECATED. Use --thinking instead for newer models] Maximum number of thinking tokens (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-turns <turns>', 'Maximum number of agentic turns in non-interactive mode. This will early exit the conversation after the specified number of turns. (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-budget-usd <amount>', 'Maximum dollar amount to spend on API calls (only works with --print)').argParser(value => {
     const amount = Number(value);
@@ -1003,25 +1000,25 @@ async function run(): Promise<CommanderCommand> {
     }
     return value;
   })).option('--agent <agent>', `Agent for the current session. Overrides the 'agent' setting.`).option('--betas <betas...>', 'Beta headers to include in API requests (API key users only)').option('--fallback-model <model>', 'Enable automatic fallback to specified model when default model is overloaded (only works with --print)').addOption(new Option('--workload <tag>', 'Workload tag for billing-header attribution (cc_workload). Process-scoped; set by SDK daemon callers that spawn subprocesses for cron work. (only works with --print)').hideHelp()).option('--settings <file-or-json>', 'Path to a settings JSON file or a JSON string to load additional settings from').option('--add-dir <directories...>', 'Additional directories to allow tool access to').option('--ide', 'Automatically connect to IDE on startup if exactly one valid IDE is available', () => true).option('--strict-mcp-config', 'Only use MCP servers from --mcp-config, ignoring all other MCP configurations', () => true).option('--session-id <uuid>', 'Use a specific session ID for the conversation (must be a valid UUID)').option('-n, --name <name>', 'Set a display name for this session (shown in /resume and terminal title)').option('--agents <json>', 'JSON object defining custom agents (e.g. \'{"reviewer": {"description": "Reviews code", "prompt": "You are a code reviewer"}}\')').option('--setting-sources <sources>', 'Comma-separated list of setting sources to load (user, project, local).')
-  // gh-33508: <paths...> (variadic) consumed everything until the next
-  // --flag. `zy --plugin-dir /path mcp add --transport http` swallowed
-  // `mcp` and `add` as paths, then choked on --transport as an unknown
-  // top-level option. Single-value + collect accumulator means each
-  // --plugin-dir takes exactly one arg; repeat the flag for multiple dirs.
+  // gh-33508：<paths...>（可变参数）消费直到下一个
+  // --flag。`zy --plugin-dir /path mcp add --transport http` 吞掉了
+  // `mcp` 和 `add` 作为 paths，然后因为 --transport 作为未知
+  // 顶级选项而报错。单值 + collect 累加器意味着每个
+  // --plugin-dir 只接受一个参数；重复标志用于多个目录。
   .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable ZY in Chrome integration').option('--no-chrome', 'Disable ZY in Chrome integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').action(async (prompt, options) => {
   
     profileCheckpoint('action_handler_start');
 
-    // --bare = one-switch minimal mode. Sets SIMPLE so all the existing
-    // gates fire (CLAUDE.md, skills, hooks inside executeHooks, agent
-    // dir-walk). Must be set before setup() / any of the gated work runs.
+    // --bare = 一键最小模式。设置 SIMPLE 以便所有现有的
+    // 门控触发（CLAUDE.md、skills、hooks 在 executeHooks 中、agent
+    // 目录遍历）。必须在 setup() / 任何门控工作运行之前设置。
     if ((options as {
       bare?: boolean;
     }).bare) {
       process.env.ZY_CODE_SIMPLE = '1';
     }
 
-    // Ignore "code" as a prompt - treat it the same as no prompt
+    // 忽略 "code" 作为提示 —— 与没有提示一样处理
     if (prompt === 'code') {
       logEvent('tengu_code_prompt_ignored', {});
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -1029,44 +1026,43 @@ async function run(): Promise<CommanderCommand> {
       prompt = undefined;
     }
 
-    // Log event for any single-word prompt
+    // 记录任何单字提示的事件
     if (prompt && typeof prompt === 'string' && !/\s/.test(prompt) && prompt.length > 0) {
       logEvent('tengu_single_word_prompt', {
         length: prompt.length
       });
     }
 
-    // Assistant mode: when .zy/settings.json has assistant: true AND
-    // the tengu_kairos GrowthBook gate is on, force brief on. Permission
-    // mode is left to the user — settings defaultMode or --permission-mode
-    // apply as normal. REPL-typed messages already default to 'next'
-    // priority (messageQueueManager.enqueue) so they drain mid-turn between
-    // tool calls. SendUserMessage (BriefTool) is enabled via the brief env
-    // var. SleepTool stays disabled (its isEnabled() gates on proactive).
-    // kairosEnabled is computed once here and reused at the
-    // getAssistantSystemPromptAddendum() call site further down.
+    // 助手模式：当 .zy/settings.json 有 assistant: true 且
+    // tengu_kairos GrowthBook 门开启时，强制 brief 开启。权限
+    // 模式留给用户 —— 设置 defaultMode 或 --permission-mode
+    // 正常应用。REPL 输入的消息默认为 'next'
+    // 优先级（messageQueueManager.enqueue），以便它们在工具调用之间
+    // 中转中排空。SendUserMessage（BriefTool）通过 brief env
+    // 变量启用。SleepTool 保持禁用（它的 isEnabled() 门控在 proactive 上）。
+    // kairosEnabled 在这里计算一次并在下方
+    // getAssistantSystemPromptAddendum() 调用处重用。
     //
-    // Trust gate: .zy/settings.json is attacker-controllable in an
-    // untrusted clone. We run ~1000 lines before showSetupScreens() shows
-    // the trust dialog, and by then we've already appended
-    // .zy/agents/assistant.md to the system prompt. Refuse to activate
-    // until the directory has been explicitly trusted.
+    // 信任门：.zy/settings.json 在不可信的 clone 中是攻击者可控制的。
+    // 我们在 showSetupScreens() 显示信任对话框之前运行约 1000 行代码，
+    // 到那时我们已经将 .zy/agents/assistant.md 附加到了系统提示。
+    // 在目录被明确信任之前拒绝激活。
     let kairosEnabled = false;
     let assistantTeamContext: Awaited<ReturnType<NonNullable<typeof assistantModule>['initializeAssistantTeam']>> | undefined;
     if (feature('KAIROS') && (options as {
       assistant?: boolean;
     }).assistant && assistantModule) {
-      // --assistant (Agent SDK daemon mode): force the latch before
-      // isAssistantMode() runs below. The daemon has already checked
-      // entitlement — don't make the child re-check tengu_kairos.
+      // --assistant（Agent SDK 守护进程模式）：在
+      // isAssistantMode() 在下面运行之前强制锁定。守护进程已经检查过
+      // 权限 —— 不要让子进程重新检查 tengu_kairos。
       assistantModule.markAssistantForced();
     }
     if (feature('KAIROS') && assistantModule?.isAssistantMode() &&
-    // Spawned teammates share the leader's cwd + settings.json, so
-    // isAssistantMode() is true for them too. --agent-id being set
-    // means we ARE a spawned teammate (extractTeammateOptions runs
-    // ~170 lines later so check the raw commander option) — don't
-    // re-init the team or override teammateMode/proactive/brief.
+    // 生成的队友共享领导者的 cwd + settings.json，所以
+    // isAssistantMode() 对它们也为 true。--agent-id 被设置
+    // 意味着我们是一个生成的队友（extractTeammateOptions 在
+    // 约 170 行后运行，所以检查原始 commander 选项）—— 不要
+    // 重新初始化团队或覆盖 teammateMode/proactive/brief。
     !(options as {
       agentId?: unknown;
     }).agentId && kairosGate) {
@@ -1074,10 +1070,10 @@ async function run(): Promise<CommanderCommand> {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.warn(chalk.yellow('Assistant mode disabled: directory is not trusted. Accept the trust dialog and restart.'));
       } else {
-        // Blocking gate check — returns cached `true` instantly; if disk
-        // cache is false/missing, lazily inits GrowthBook and fetches fresh
-        // (max ~5s). --assistant skips the gate entirely (daemon is
-        // pre-entitled).
+        // 阻塞门检查 —— 缓存的 `true` 立即返回；如果磁盘
+        // 缓存为 false/缺失，延迟初始化 GrowthBook 并获取新鲜数据
+        //（最多约 5 秒）。--assistant 完全跳过此门（守护进程是
+        // 预先授权的）。
         kairosEnabled = assistantModule.isAssistantForced() || (await kairosGate.isKairosEnabled());
         if (kairosEnabled) {
           const opts = options as {
@@ -1085,10 +1081,10 @@ async function run(): Promise<CommanderCommand> {
           };
           opts.brief = true;
           setKairosActive(true);
-          // Pre-seed an in-process team so Agent(name: "foo") spawns
-          // teammates without TeamCreate. Must run BEFORE setup() captures
-          // the teammateMode snapshot (initializeAssistantTeam calls
-          // setCliTeammateModeOverride internally).
+          // 预播种一个进程内团队，以便 Agent(name: "foo") 生成
+          // 队友时不需要 TeamCreate。必须在 setup() 捕获
+          // teammateMode 快照之前运行（initializeAssistantTeam 内部调用
+          // setCliTeammateModeOverride）。
           assistantTeamContext = await assistantModule.initializeAssistantTeam();
         }
       }
@@ -1127,7 +1123,7 @@ async function run(): Promise<CommanderCommand> {
     // the trust dialog is accepted. This prevents plugin LSP servers from
     // executing code in untrusted directories before user consent.
 
-    // Extract these separately so they can be modified if needed
+    // 单独提取这些以便需要时可以修改
     let outputFormat = options.outputFormat;
     let inputFormat = options.inputFormat;
     let verbose = options.verbose ?? getGlobalConfig().verbose;
@@ -1136,10 +1132,10 @@ async function run(): Promise<CommanderCommand> {
     const initOnly = options.initOnly ?? false;
     const maintenance = options.maintenance ?? false;
 
-    // Extract disable slash commands flag
+    // 提取禁用斜杠命令标志
     const disableSlashCommands = options.disableSlashCommands || false;
 
-    // Extract tasks mode options (ant-only)
+    // 提取任务模式选项（仅限 ant）
     const tasksOption = "external" === 'ant' && (options as {
       tasks?: boolean | string;
     }).tasks;
@@ -1148,15 +1144,15 @@ async function run(): Promise<CommanderCommand> {
       process.env.ZY_CODE_TASK_LIST_ID = taskListId;
     }
 
-    // Extract worktree option
-    // worktree can be true (flag without value) or a string (custom name or PR reference)
+    // 提取 worktree 选项
+    // worktree 可以是 true（不带值的标志）或字符串（自定义名称或 PR 引用）
     const worktreeOption = isWorktreeModeEnabled() ? (options as {
       worktree?: boolean | string;
     }).worktree : undefined;
     let worktreeName = typeof worktreeOption === 'string' ? worktreeOption : undefined;
     const worktreeEnabled = worktreeOption !== undefined;
 
-    // Check if worktree name is a PR reference (#N or GitHub PR URL)
+    // 检查 worktree 名称是否是 PR 引用（#N 或 GitHub PR URL）
     let worktreePRNumber: number | undefined;
     if (worktreeName) {
       const prNum = parsePRReference(worktreeName);
@@ -1166,12 +1162,12 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Extract tmux option (requires --worktree)
+    // 提取 tmux 选项（需要 --worktree）
     const tmuxEnabled = isWorktreeModeEnabled() && (options as {
       tmux?: boolean;
     }).tmux === true;
 
-    // Validate tmux option
+    // 验证 tmux 选项
     if (tmuxEnabled) {
       if (!worktreeEnabled) {
         process.stderr.write(chalk.red('Error: --tmux requires --worktree\n'));
@@ -1187,16 +1183,16 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Extract teammate options (for tmux-spawned agents)
-    // Declared outside the if block so it's accessible later for system prompt addendum
+    // 提取队友选项（用于 tmux 生成的代理）
+    // 在 if 块外声明，以便稍后可用于系统提示附录
     let storedTeammateOpts: TeammateOptions | undefined;
     if (isAgentSwarmsEnabled()) {
-      // Extract agent identity options (for tmux-spawned agents)
-      // These replace the ZY_CODE_* environment variables
+      // 提取代理身份选项（用于 tmux 生成的代理）
+      // 这些替换了 ZY_CODE_* 环境变量
       const teammateOpts = extractTeammateOptions(options);
       storedTeammateOpts = teammateOpts;
 
-      // If any teammate identity option is provided, all three required ones must be present
+      // 如果提供了任何队友身份选项，则必须提供所有三个必需的选项
       const hasAnyTeammateOpt = teammateOpts.agentId || teammateOpts.agentName || teammateOpts.teamName;
       const hasAllRequiredTeammateOpts = teammateOpts.agentId && teammateOpts.agentName && teammateOpts.teamName;
       if (hasAnyTeammateOpt && !hasAllRequiredTeammateOpts) {
@@ -1204,7 +1200,7 @@ async function run(): Promise<CommanderCommand> {
         process.exit(1);
       }
 
-      // If teammate identity is provided via CLI, set up dynamicTeamContext
+      // 如果通过 CLI 提供了队友身份，则设置 dynamicTeamContext
       if (teammateOpts.agentId && teammateOpts.agentName && teammateOpts.teamName) {
         getTeammateUtils().setDynamicTeamContext?.({
           agentId: teammateOpts.agentId,
@@ -1216,82 +1212,82 @@ async function run(): Promise<CommanderCommand> {
         });
       }
 
-      // Set teammate mode CLI override if provided
-      // This must be done before setup() captures the snapshot
+      // 如果提供了队友模式 CLI 覆盖，则设置
+      // 这必须在 setup() 捕获快照之前完成
       if (teammateOpts.teammateMode) {
         getTeammateModeSnapshot().setCliTeammateModeOverride?.(teammateOpts.teammateMode);
       }
     }
 
-    // Extract remote sdk options
+    // 提取远程 SDK 选项
     const sdkUrl = (options as {
       sdkUrl?: string;
     }).sdkUrl ?? undefined;
 
-    // Allow env var to enable partial messages (used by sandbox gateway for baku)
+    // 允许环境变量启用部分消息（用于沙箱网关的 baku）
     const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env.ZY_CODE_INCLUDE_PARTIAL_MESSAGES);
 
-    // Enable all hook event types when explicitly requested via SDK option
-    // or when running in ZY_CODE_REMOTE mode (CCR needs them).
-    // Without this, only SessionStart and Setup events are emitted.
+    // 通过 SDK 选项明确要求时启用所有钩子事件类型
+    // 或在 ZY_CODE_REMOTE 模式下运行时（CCR 需要它们）。
+    // 否则，只发射 SessionStart 和 Setup 事件。
     if (includeHookEvents || isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
       setAllHookEventsEnabled(true);
     }
 
-    // Auto-set input/output formats, verbose mode, and print mode when SDK URL is provided
+    // 当提供 SDK URL 时自动设置输入/输出格式、详细模式和打印模式
     if (sdkUrl) {
-      // If SDK URL is provided, automatically use stream-json formats unless explicitly set
+      // 如果提供了 SDK URL，自动使用 stream-json 格式，除非明确设置
       if (!inputFormat) {
         inputFormat = 'stream-json';
       }
       if (!outputFormat) {
         outputFormat = 'stream-json';
       }
-      // Auto-enable verbose mode unless explicitly disabled or already set
+      // 自动启用详细模式，除非明确禁用或已设置
       if (options.verbose === undefined) {
         verbose = true;
       }
-      // Auto-enable print mode unless explicitly disabled
+      // 自动启用打印模式，除非明确禁用
       if (!options.print) {
         print = true;
       }
     }
 
-    // Extract teleport option
+    // 提取 teleport 选项
     const teleport = (options as {
       teleport?: string | true;
     }).teleport ?? null;
 
-    // Extract remote option (can be true if no description provided, or a string)
+    // 提取 remote 选项（如果没有提供描述可以为 true，或为字符串）
     const remoteOption = (options as {
       remote?: string | true;
     }).remote;
     const remote = remoteOption === true ? '' : remoteOption ?? null;
 
-    // Extract --remote-control / --rc flag (enable bridge in interactive session)
+    // 提取 --remote-control / --rc 标志（在交互会话中启用桥接）
     const remoteControlOption = (options as {
       remoteControl?: string | true;
     }).remoteControl ?? (options as {
       rc?: string | true;
     }).rc;
-    // Actual bridge check is deferred to after showSetupScreens() so that
-    // trust is established and GrowthBook has auth headers.
+    // 实际的桥接检查延迟到 showSetupScreens() 之后，以便
+    // 建立信任且 GrowthBook 有认证头。
     let remoteControl = false;
     const remoteControlName = typeof remoteControlOption === 'string' && remoteControlOption.length > 0 ? remoteControlOption : undefined;
 
-    // Validate session ID if provided
+    // 如果提供了会话 ID，则验证它
     if (sessionId) {
-      // Check for conflicting flags
-      // --session-id can be used with --continue or --resume when --fork-session is also provided
-      // (to specify a custom ID for the forked session)
+      // 检查冲突的标志
+      // --session-id 可以与 --continue 或 --resume 一起使用，当同时提供了 --fork-session 时
+      //（用于指定叉会话的自定义 ID）
       if ((options.continue || options.resume) && !options.forkSession) {
         process.stderr.write(chalk.red('Error: --session-id can only be used with --continue or --resume if --fork-session is also specified.\n'));
         process.exit(1);
       }
 
-      // When --sdk-url is provided (bridge/remote mode), the session ID is a
-      // server-assigned tagged ID (e.g. "session_local_01...") rather than a
-      // UUID. Skip UUID validation and local existence checks in that case.
+      // 当提供 --sdk-url 时（桥接/远程模式），会话 ID 是
+      // 服务器分配的标记 ID（例如 "session_local_01..."）而不是
+      // UUID。跳过 UUID 验证和本地存在性检查。
       if (!sdkUrl) {
         const validatedSessionId = validateUuid(sessionId);
         if (!validatedSessionId) {
@@ -1299,7 +1295,7 @@ async function run(): Promise<CommanderCommand> {
           process.exit(1);
         }
 
-        // Check if session ID already exists
+        // 检查会话 ID 是否已存在
         if (sessionIdExists(validatedSessionId)) {
           process.stderr.write(chalk.red(`Error: Session ID ${validatedSessionId} is already in use.\n`));
           process.exit(1);
@@ -1307,45 +1303,45 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Download file resources if specified via --file flag
+    // 如果通过 --file 标志指定了文件资源，则下载它们
     const fileSpecs = (options as {
       file?: string[];
     }).file;
     if (fileSpecs && fileSpecs.length > 0) {
-      // Get session ingress token (provided by EnvManager via ZY_CODE_SESSION_ACCESS_TOKEN)
+      // 获取会话入口令牌（由 EnvManager 通过 ZY_CODE_SESSION_ACCESS_TOKEN 提供）
       const sessionToken = getSessionIngressAuthToken();
       if (!sessionToken) {
         process.stderr.write(chalk.red('Error: Session token required for file downloads. ZY_CODE_SESSION_ACCESS_TOKEN must be set.\n'));
         process.exit(1);
       }
 
-      // Resolve session ID: prefer remote session ID, fall back to internal session ID
+      // 解析会话 ID：优先使用远程会话 ID，回退到内部会话 ID
       const fileSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID || getSessionId();
       const files = parseFileSpecs(fileSpecs);
       if (files.length > 0) {
-        // Use ANTHROPIC_BASE_URL if set (by EnvManager), otherwise use OAuth config
-        // This ensures consistency with session ingress API in all environments
+        // 如果设置了 ANTHROPIC_BASE_URL（由 EnvManager 设置），否则使用 OAuth 配置
+        // 这确保在所有环境中与会话入口 API 保持一致
         const config: FilesApiConfig = {
           baseUrl: process.env.ANTHROPIC_BASE_URL || getOauthConfig().BASE_API_URL,
           oauthToken: sessionToken,
           sessionId: fileSessionId
         };
 
-        // Start download without blocking startup - await before REPL renders
+        // 开始下载而不阻塞启动 —— 在 REPL 渲染之前等待
         fileDownloadPromise = downloadSessionFiles(files, config);
       }
     }
 
-    // Get isNonInteractiveSession from state (was set before init())
+    // 从状态获取 isNonInteractiveSession（在 init() 之前设置）
     const isNonInteractiveSession = getIsNonInteractiveSession();
 
-    // Validate that fallback model is different from main model
+    // 验证回退模型与主模型不同
     if (fallbackModel && options.model && fallbackModel === options.model) {
       process.stderr.write(chalk.red('Error: Fallback model cannot be the same as the main model. Please specify a different model for --fallback-model.\n'));
       process.exit(1);
     }
 
-    // Handle system prompt options
+    // 处理系统提示选项
     let systemPrompt = options.systemPrompt;
     if (options.systemPromptFile) {
       if (options.systemPrompt) {
@@ -1366,7 +1362,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Handle append system prompt options
+    // 处理附加系统提示选项
     let appendSystemPrompt = options.appendSystemPrompt;
     if (options.appendSystemPromptFile) {
       if (options.appendSystemPrompt) {
@@ -1387,7 +1383,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Add teammate-specific system prompt addendum for tmux teammates
+    // 为 tmux 队友添加队友特定的系统提示附录
     if (isAgentSwarmsEnabled() && storedTeammateOpts?.agentId && storedTeammateOpts?.agentName && storedTeammateOpts?.teamName) {
       const addendum = getTeammatePromptAddendum().TEAMMATE_SYSTEM_PROMPT_ADDENDUM;
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${addendum}` : addendum;
@@ -1400,15 +1396,15 @@ async function run(): Promise<CommanderCommand> {
       dangerouslySkipPermissions
     });
 
-    // Store session bypass permissions mode for trust dialog check
+    // 存储会话绕过权限模式以进行信任对话框检查
     setSessionBypassPermissionsMode(permissionMode === 'bypassPermissions');
     if (feature('TRANSCRIPT_CLASSIFIER')) {
-      // autoModeFlagCli is the "did the user intend auto this session" signal.
-      // Set when: --enable-auto-mode, --permission-mode auto, resolved mode
-      // is auto, OR settings defaultMode is auto but the gate denied it
-      // (permissionMode resolved to default with no explicit CLI override).
-      // Used by verifyAutoModeGateAccess to decide whether to notify on
-      // auto-unavailable, and by tengu_auto_mode_config opt-in carousel.
+      // autoModeFlagCli 是"用户本次会话是否打算使用 auto"的信号。
+      // 当以下情况时设置：--enable-auto-mode、--permission-mode auto、解析的
+      // 模式是 auto，或设置 defaultMode 是 auto 但门拒绝它
+      //（permissionMode 解析为默认，没有明确的 CLI 覆盖）。
+      // 由 verifyAutoModeGateAccess 决定是否在
+      // auto-unavailable 时通知，以及由 tengu_auto_mode_config opt-in carousel 使用。
       if ((options as {
         enableAutoMode?: boolean;
       }).enableAutoMode || permissionModeCli === 'auto' || permissionMode === 'auto' || !permissionModeCli && isDefaultPermissionModeAuto()) {
@@ -1416,10 +1412,10 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Parse the MCP config files/strings if provided
+    // 如果提供了 MCP 配置文件/字符串，则解析它们
     let dynamicMcpConfig: Record<string, ScopedMcpServerConfig> = {};
     if (mcpConfig && mcpConfig.length > 0) {
-      // Process mcpConfig array
+      // 处理 mcpConfig 数组
       const processedConfigs = mcpConfig.map(config => config.trim()).filter(config => config.length > 0);
       let allConfigs: Record<string, McpServerConfig> = {};
       const allErrors: ValidationError[] = [];
@@ -1427,7 +1423,7 @@ async function run(): Promise<CommanderCommand> {
         let configs: Record<string, McpServerConfig> | null = null;
         let errors: ValidationError[] = [];
 
-        // First try to parse as JSON string
+        // 首先尝试解析为 JSON 字符串
         const parsedJson = safeParseJSON(configItem);
         if (parsedJson) {
           const result = parseMcpConfig({
@@ -1442,7 +1438,7 @@ async function run(): Promise<CommanderCommand> {
             errors = result.errors;
           }
         } else {
-          // Try as file path
+          // 尝试作为文件路径
           const configPath = resolve(configItem);
           const result = parseMcpConfigFromFilePath({
             filePath: configPath,
@@ -1458,7 +1454,7 @@ async function run(): Promise<CommanderCommand> {
         if (errors.length > 0) {
           allErrors.push(...errors);
         } else if (configs) {
-          // Merge configs, later ones override earlier ones
+          // 合并配置，后面的覆盖前面的
           allConfigs = {
             ...allConfigs,
             ...configs
@@ -1474,8 +1470,8 @@ async function run(): Promise<CommanderCommand> {
         process.exit(1);
       }
       if (Object.keys(allConfigs).length > 0) {
-        // SDK hosts (Nest/Desktop) own their server naming and may reuse
-        // built-in names — skip reserved-name checks for type:'sdk'.
+        // SDK 主机（Nest/Desktop）拥有自己的服务器命名权，并且可以重用
+        // 内置名称 —— 跳过 type:'sdk' 的保留名称检查。
         const nonSdkConfigNames = Object.entries(allConfigs).filter(([, config]) => config.type !== 'sdk').map(([name]) => name);
         let reservedNameError: string | null = null;
         if (nonSdkConfigNames.some(isClaudeInChromeMCPServer)) {
@@ -1496,24 +1492,23 @@ async function run(): Promise<CommanderCommand> {
           process.exit(1);
         }
 
-        // Add dynamic scope to all configs. type:'sdk' entries pass through
-        // unchanged — they're extracted into sdkMcpConfigs downstream and
-        // passed to print.ts. The Python SDK relies on this path (it doesn't
-        // send sdkMcpServers in the initialize message). Dropping them here
-        // broke Coworker (inc-5122). The policy filter below already exempts
-        // type:'sdk', and the entries are inert without an SDK transport on
-        // stdin, so there's no bypass risk from letting them through.
+        // 向所有配置添加动态范围。type:'sdk' 条目直接传递
+        // 不变 —— 它们在下游被提取到 sdkMcpConfigs 中并
+        // 传递给 print.ts。Python SDK 依赖此路径（它不在
+        // 初始化消息中发送 sdkMcpServers）。在此处丢弃它们会
+        // 破坏 Coworker（inc-5122）。策略过滤器下面已经豁免了
+        // type:'sdk'，并且没有 SDK 传输时这些条目在 stdin 上是
+        // 无效的，所以让它们通过不会有绕过风险。
         const scopedConfigs = mapValues(allConfigs, config => ({
           ...config,
           scope: 'dynamic' as const
         }));
 
-        // Enforce managed policy (allowedMcpServers / deniedMcpServers) on
-        // --mcp-config servers. Without this, the CLI flag bypasses the
-        // enterprise allowlist that user/project/local configs go through in
-        // getZyCodeMcpConfigs — callers spread dynamicMcpConfig back on
-        // top of filtered results. Filter here at the source so all
-        // downstream consumers see the policy-filtered set.
+        // 对 --mcp-config 服务器执行托管策略（allowedMcpServers / deniedMcpServers）。
+        // 没有这个，CLI 标志会绕过 user/project/local 配置在
+        // getZyCodeMcpConfigs 中通过的企业允许列表 —— 调用者将 dynamicMcpConfig
+        // 扩展回过滤后的结果之上。在此源处过滤以便所有
+        // 下游消费者看到经过策略过滤的集合。
         const {
           allowed,
           blocked
@@ -1528,11 +1523,11 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Extract Claude in Chrome option and enforce zy.ai subscriber check (unless user is ant)
+    // 提取 Claude in Chrome 选项并强制 zy.ai 订阅者检查（除非用户是 ant）
     const chromeOpts = options as {
       chrome?: boolean;
     };
-    // Store the explicit CLI flag so teammates can inherit it
+    // 存储明确的 CLI 标志以便队友可以继承它
     setChromeFlagOverride(chromeOpts.chrome);
     const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && "external" === 'ant';
     const autoEnableClaudeInChrome = !enableClaudeInChrome && shouldAutoEnableClaudeInChrome();
@@ -1577,23 +1572,23 @@ async function run(): Promise<CommanderCommand> {
         const hint = feature('WEB_BROWSER_TOOL') && typeof Bun !== 'undefined' && 'WebView' in Bun ? CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER : CLAUDE_IN_CHROME_SKILL_HINT;
         appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${hint}` : hint;
       } catch (error) {
-        // Silently skip any errors for the auto-enable
+        // 静默跳过自动启用的任何错误
         logForDebugging(`[Claude in Chrome] Error (auto-enable): ${error}`);
       }
     }
 
-    // Extract strict MCP config flag
+    // 提取严格的 MCP 配置标志
     const strictMcpConfig = options.strictMcpConfig || false;
 
-    // Check if enterprise MCP configuration exists. When it does, only allow dynamic MCP
-    // configs that contain special server types (sdk)
+    // 检查是否存在企业 MCP 配置。当存在时，只允许包含特殊服务器类型（sdk）的动态 MCP
+    // 配置
     if (doesEnterpriseMcpConfigExist()) {
       if (strictMcpConfig) {
         process.stderr.write(chalk.red('You cannot use --strict-mcp-config when an enterprise MCP config is present'));
         process.exit(1);
       }
 
-      // For --mcp-config, allow if all servers are internal types (sdk)
+      // 对于 --mcp-config，如果所有服务器都是内部类型（sdk）则允许
       if (dynamicMcpConfig && !areMcpConfigsAllowedWithEnterpriseMcpConfig(dynamicMcpConfig)) {
         process.stderr.write(chalk.red('You cannot dynamically configure MCP servers when an enterprise MCP config is present'));
         process.exit(1);
@@ -1635,24 +1630,24 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Store additional directories for CLAUDE.md loading (controlled by env var)
+    // 存储额外目录用于 CLAUDE.md 加载（由 env var 控制）
     setAdditionalDirectoriesForzyMd(addDir);
 
-    // Channel server allowlist from --channels flag — servers whose
-    // inbound push notifications should register this session. The option
-    // is added inside a feature() block so TS doesn't know about it
-    // on the options type — same pattern as --assistant at main.tsx:1824.
-    // devChannels is deferred: showSetupScreens shows a confirmation dialog
-    // and only appends to allowedChannels on accept.
+    // 来自 --channels 标志的通道服务器允许列表 —— 服务器 whose
+    // 入站推送通知应注册此会话。选项
+    // 在 feature() 块内添加，所以 TS 不知道它
+    // 在选项类型上 —— 与 main.tsx:1824 处的 --assistant 相同模式。
+    // devChannels 延迟：showSetupScreens 显示确认对话框
+    // 并且只在接受时附加到 allowedChannels。
     let devChannels: ChannelEntry[] | undefined;
     if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
       // Parse plugin:name@marketplace / server:Y tags into typed entries.
-      // Tag decides trust model downstream: plugin-kind hits marketplace
-      // verification + GrowthBook allowlist, server-kind always fails
-      // allowlist (schema is plugin-only) unless dev flag is set.
-      // Untagged or marketplace-less plugin entries are hard errors —
-      // silently not-matching in the gate would look like channels are
-      // "on" but nothing ever fires.
+      // Tag 决定下游信任模型：plugin-kind 命中市场
+      // 验证 + GrowthBook 允许列表，server-kind 总是失败
+      // 允许列表（schema 仅适用于插件），除非设置了 dev 标志。
+      // 未标记或没有 marketpalce 的插件条目是硬错误 ——
+      // 在门中静默不匹配看起来像通道
+      // "开启" 但什么都不触发。
       const parseChannelEntries = (raw: string[], flag: string): ChannelEntry[] => {
         const entries: ChannelEntry[] = [];
         const bad: string[] = [];
@@ -1690,11 +1685,11 @@ async function run(): Promise<CommanderCommand> {
       };
       const rawChannels = channelOpts.channels;
       const rawDev = channelOpts.dangerouslyLoadDevelopmentChannels;
-      // Always parse + set. ChannelsNotice reads getAllowedChannels() and
-      // renders the appropriate branch (disabled/noAuth/policyBlocked/
-      // listening) in the startup screen. gateChannelServer() enforces.
-      // --channels works in both interactive and print/SDK modes; dev-channels
-      // stays interactive-only (requires a confirmation dialog).
+      // 始终解析 + 设置。ChannelsNotice 读取 getAllowedChannels() 并
+      // 在启动屏幕中渲染适当的分支（disabled/noAuth/policyBlocked/
+      // listening）。gateChannelServer() 强制执行。
+      // --channels 在交互和打印/SDK 模式中都有效；dev-channels
+      // 保持仅限交互模式（需要确认对话框）。
       let channelEntries: ChannelEntry[] = [];
       if (rawChannels && rawChannels.length > 0) {
         channelEntries = parseChannelEntries(rawChannels, '--channels');
@@ -1705,12 +1700,12 @@ async function run(): Promise<CommanderCommand> {
           devChannels = parseChannelEntries(rawDev, '--dangerously-load-development-channels');
         }
       }
-      // Flag-usage telemetry. Plugin identifiers are logged (same tier as
-      // tengu_plugin_installed — public-registry-style names); server-kind
-      // names are not (MCP-server-name tier, opt-in-only elsewhere).
-      // Per-server gate outcomes land in tengu_mcp_channel_gate once
-      // servers connect. Dev entries go through a confirmation dialog after
-      // this — dev_plugins captures what was typed, not what was accepted.
+      // 标志使用遥测。记录插件标识符（与
+      // tengu_plugin_installed 相同层级 —— 公共注册表式名称）；server-kind
+      // 不记录（MCP 服务器名称层级，仅在其他地方选择加入）。
+      // 每个服务器的门结果进入 tengu_mcp_channel_gate 一旦
+      // 服务器连接。dev 条目经过确认对话框后
+      // —— dev_plugins 捕获输入的内容，而不是接受的内容。
       if (channelEntries.length > 0 || (devChannels?.length ?? 0) > 0) {
         const joinPluginIds = (entries: ChannelEntry[]) => {
           const ids = entries.flatMap(e => e.kind === 'plugin' ? [`${e.name}@${e.marketplace}`] : []);
@@ -1725,12 +1720,12 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // SDK opt-in for SendUserMessage via --tools. All sessions require
-    // explicit opt-in; listing it in --tools signals intent. Runs BEFORE
-    // initializeToolPermissionContext so getToolsForDefaultPreset() sees
-    // the tool as enabled when computing the base-tools disallow filter.
-    // Conditional require avoids leaking the tool-name string into
-    // external builds.
+    // SDK 通过 --tools 选择启用 SendUserMessage。所有会话都需要
+    // 明确选择；在 --tools 中列出它表示意图。运行在
+    // initializeToolPermissionContext 之前，以便 getToolsForDefaultPreset() 在计算基础工具不允许过滤器时
+    // 看到该工具已启用。
+    // 条件导入避免将工具名称字符串泄漏到
+    // 外部构建中。
     if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && baseTools.length > 0) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const {
@@ -1747,9 +1742,9 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // This await replaces blocking existsSync/statSync calls that were already in
-    // the startup path. Wall-clock time is unchanged; we just yield to the event
-    // loop during the fs I/O instead of blocking it. See #19661.
+    // 此 await 替换了启动路径中已有的阻塞 existsSync/statSync 调用。
+    // 挂钟时间不变；我们只是在 fs I/O 期间让出事件循环
+    // 而不是阻塞它。参见 #19661。
     const initResult = await initializeToolPermissionContext({
       allowedToolsCli: allowedTools,
       disallowedToolsCli: disallowedTools,
@@ -1765,7 +1760,7 @@ async function run(): Promise<CommanderCommand> {
       overlyBroadBashPermissions
     } = initResult;
 
-    // Handle overly broad shell allow rules for ant users (Bash(*), PowerShell(*))
+    // 为 ant 用户处理过于宽泛的 shell 允许规则（Bash(*)、PowerShell(*)）
     if ("external" === 'ant' && overlyBroadBashPermissions.length > 0) {
       for (const permission of overlyBroadBashPermissions) {
         logForDebugging(`Ignoring overly broad shell permission ${permission.ruleDisplay} from ${permission.sourceDisplay}`);
@@ -1776,21 +1771,21 @@ async function run(): Promise<CommanderCommand> {
       toolPermissionContext = stripDangerousPermissionsForAutoMode(toolPermissionContext);
     }
 
-    // Print any warnings from initialization
+    // 打印初始化中的任何警告
     warnings.forEach(warning => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.error(warning);
     });
     void assertMinVersion();
 
-    // zy.ai config fetch: -p mode only (interactive uses useManageMCPConnections
-    // two-phase loading). Kicked off here to overlap with setup(); awaited
-    // before runHeadless so single-turn -p sees connectors. Skipped under
-    // enterprise/strict MCP to preserve policy boundaries.
+    // zy.ai 配置获取：仅 -p 模式（交互使用 useManageMCPConnections
+    // 两阶段加载）。在这里启动以便与 setup() 重叠；在
+    // runHeadless 之前等待，以便单次 -p 看到连接器。在
+    // 企业/严格 MCP 下跳过以保留策略边界。
     const zyaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
-    // --bare / SIMPLE: skip zy.ai proxy servers (datadog, Gmail,
-    // Slack, BigQuery, PubMed — 6-14s each to connect). Scripted calls
-    // that need MCP pass --mcp-config explicitly.
+    // --bare / SIMPLE：跳过 zy.ai 代理服务器（datadog、Gmail、
+    // Slack、BigQuery、PubMed —— 每个连接 6-14 秒）。需要 MCP 的脚本化调用
+    // 显式传递 --mcp-config。
     !isBareMode() ? fetchZyAIMcpConfigsIfEligible().then(configs => {
       const {
         allowed,
@@ -1802,16 +1797,16 @@ async function run(): Promise<CommanderCommand> {
       return allowed;
     }) : Promise.resolve({});
 
-    // Kick off MCP config loading early (safe - just reads files, no execution).
-    // Both interactive and -p use getZyCodeMcpConfigs (local file reads only).
-    // The local promise is awaited later (before prefetchAllMcpResources) to
-    // overlap config I/O with setup(), commands loading, and trust dialog.
+    // 早期启动 MCP 配置加载（安全 —— 仅读取文件，不执行）。
+    // 交互和 -p 都使用 getZyCodeMcpConfigs（仅本地文件读取）。
+    // 本地 promise 稍后等待（在 prefetchAllMcpResources 之前）以便
+    // 与 setup()、命令加载和信任对话框重叠配置 I/O。
     logForDebugging('[STARTUP] Loading MCP configs...');
     const mcpConfigStart = Date.now();
     let mcpConfigResolvedMs: number | undefined;
-    // --bare skips auto-discovered MCP (.mcp.json, user settings, plugins) —
-    // only explicit --mcp-config works. dynamicMcpConfig is spread onto
-    // allMcpConfigs downstream so it survives this skip.
+    // --bare 跳过自动发现的 MCP（.mcp.json、用户设置、插件）——
+    // 只有显式的 --mcp-config 有效。dynamicMcpConfig 在下游
+    // 扩展到 allMcpConfigs 上，所以它在此跳过后仍然存在。
     const mcpConfigPromise = (strictMcpConfig || isBareMode() ? Promise.resolve({
       servers: {} as Record<string, ScopedMcpServerConfig>
     }) : getZyCodeMcpConfigs(dynamicMcpConfig)).then(result => {
@@ -1832,7 +1827,7 @@ async function run(): Promise<CommanderCommand> {
       process.exit(1);
     }
 
-    // Validate sdkUrl is only used with appropriate formats (formats are auto-set above)
+    // 验证 sdkUrl 仅与适当的格式一起使用（格式在上面自动设置）
     if (sdkUrl) {
       if (inputFormat !== 'stream-json' || outputFormat !== 'stream-json') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -1841,7 +1836,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Validate replayUserMessages is only used with stream-json formats
+    // 验证 replayUserMessages 仅与 stream-json 格式一起使用
     if (options.replayUserMessages) {
       if (inputFormat !== 'stream-json' || outputFormat !== 'stream-json') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -1850,7 +1845,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Validate includePartialMessages is only used with print mode and stream-json output
+    // 验证 includePartialMessages 仅与打印模式和 stream-json 输出一起使用
     if (effectiveIncludePartialMessages) {
       if (!isNonInteractiveSession || outputFormat !== 'stream-json') {
         writeToStderr(`Error: --include-partial-messages requires --print and --output-format=stream-json.`);
@@ -1858,7 +1853,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Validate --no-session-persistence is only used with print mode
+    // 验证 --no-session-persistence 仅与打印模式一起使用
     if (options.sessionPersistence === false && !isNonInteractiveSession) {
       writeToStderr(`Error: --no-session-persistence can only be used with --print mode.`);
       process.exit(1);
@@ -1868,14 +1863,14 @@ async function run(): Promise<CommanderCommand> {
   
     profileCheckpoint('action_after_input_prompt');
 
-    // Activate proactive mode BEFORE getTools() so SleepTool.isEnabled()
-    // (which returns isProactiveActive()) passes and Sleep is included.
-    // The later REPL-path maybeActivateProactive() calls are idempotent.
+    // 在 getTools() 之前激活主动模式，以便 SleepTool.isEnabled()
+    //（返回 isProactiveActive()）通过并包含 Sleep。
+    // 稍后 REPL 路径的 maybeActivateProactive() 调用是幂等的。
     maybeActivateProactive(options);
     let tools = getTools(toolPermissionContext);
 
-    // Apply coordinator mode tool filtering for headless path
-    // (mirrors useMergedTools.ts filtering for REPL/interactive path)
+    // 为无头路径应用协调器模式工具过滤
+    //（镜像 useMergedTools.ts 对 REPL/交互路径的过滤）
     if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE)) {
       const {
         applyCoordinatorToolFilter
@@ -1892,9 +1887,9 @@ async function run(): Promise<CommanderCommand> {
     if (jsonSchema) {
       const syntheticOutputResult = createSyntheticOutputTool(jsonSchema);
       if ('tool' in syntheticOutputResult) {
-        // Add SyntheticOutputTool to the tools array AFTER getTools() filtering.
-        // This tool is excluded from normal filtering (see tools.ts) because it's
-        // an implementation detail for structured output, not a user-controlled tool.
+        // 在 getTools() 过滤之后将 SyntheticOutputTool 添加到工具数组。
+        // 此工具从正常过滤中排除（参见 tools.ts），因为它是
+        // 结构化输出的实现细节，不是用户控制的工具。
         tools = [...tools, syntheticOutputResult.tool];
         logEvent('tengu_structured_output_enabled', {
           schema_property_count: Object.keys(jsonSchema.properties as Record<string, unknown> || {}).length as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1907,7 +1902,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // IMPORTANT: setup() must be called before any other code that depends on the cwd or worktree setup
+    // 重要：setup() 必须在任何其他依赖 cwd 或 worktree 设置的代码之前调用
   
     profileCheckpoint('action_before_setup');
     logForDebugging('[STARTUP] Running setup()...');
@@ -1918,16 +1913,16 @@ async function run(): Promise<CommanderCommand> {
     const messagingSocketPath = feature('UDS_INBOX') ? (options as {
       messagingSocketPath?: string;
     }).messagingSocketPath : undefined;
-    // Parallelize setup() with commands+agents loading. setup()'s ~28ms is
-    // mostly startUdsMessaging (socket bind, ~20ms) — not disk-bound, so it
-    // doesn't contend with getCommands' file reads. Gated on !worktreeEnabled
-    // since --worktree makes setup() process.chdir() (setup.ts:203), and
-    // commands/agents need the post-chdir cwd.
+    // 并行化 setup() 与命令+代理加载。setup() 的约 28ms 主要是
+    // startUdsMessaging（socket 绑定，约 20ms）—— 不是磁盘绑定的，所以它
+    // 不与 getCommands 的文件读取竞争。在 !worktreeEnabled 门控，
+    // 因为 --worktree 使 setup() 执行 process.chdir()（setup.ts:203），
+    // 而命令/代理需要 post-chdir 的 cwd。
     const preSetupCwd = getCwd();
-    // Register bundled skills/plugins before kicking getCommands() — they're
-    // pure in-memory array pushes (<1ms, zero I/O) that getBundledSkills()
-    // reads synchronously. Previously ran inside setup() after ~20ms of
-    // await points, so the parallel getCommands() memoized an empty list.
+    // 在启动 getCommands() 之前注册捆绑的技能/插件 —— 它们是
+    // 纯内存数组推送（<1ms，零 I/O），getBundledSkills()
+    // 同步读取。之前在 setup() 中运行，在约 20ms 的
+    // await 点之后，所以并行的 getCommands() 缓存了一个空列表。
     if (process.env.ZY_CODE_ENTRYPOINT !== 'local-agent') {
       initBuiltinPlugins();
       initBundledSkills();
@@ -1935,8 +1930,8 @@ async function run(): Promise<CommanderCommand> {
     const setupPromise = setup(preSetupCwd, permissionMode, allowDangerouslySkipPermissions, worktreeEnabled, worktreeName, tmuxEnabled, sessionId ? validateUuid(sessionId) : undefined, worktreePRNumber, messagingSocketPath);
     const commandsPromise = worktreeEnabled ? null : getCommands(preSetupCwd);
     const agentDefsPromise = worktreeEnabled ? null : getAgentDefinitionsWithOverrides(preSetupCwd);
-    // Suppress transient unhandledRejection if these reject during the
-    // ~28ms setupPromise await before Promise.all joins them below.
+    // 如果这些在下方约 28ms setupPromise await 期间拒绝，
+    // 在 Promise.all 连接它们之前抑制瞬态 unhandledRejection。
     commandsPromise?.catch(() => {});
     agentDefsPromise?.catch(() => {});
     await setupPromise;
@@ -1944,12 +1939,11 @@ async function run(): Promise<CommanderCommand> {
   
     profileCheckpoint('action_after_setup');
 
-    // Replay user messages into stream-json only when the socket was
-    // explicitly requested. The auto-generated socket is passive — it
-    // lets tools inject if they want to, but turning it on by default
-    // shouldn't reshape stream-json for SDK consumers who never touch it.
-    // Callers who inject and also want those injections visible in the
-    // stream pass --messaging-socket-path explicitly (or --replay-user-messages).
+    // 仅在显式请求 socket 时才将用户消息重放到 stream-json。
+    // 自动生成的 socket 是被动的 —— 它让工具在想要时注入，
+    // 但默认开启会为从未使用它的 SDK 消费者重塑 stream-json。
+    // 注入并希望在流中看到这些注入的调用者
+    // 显式传递 --messaging-socket-path（或 --replay-user-messages）。
     let effectiveReplayUserMessages = !!options.replayUserMessages;
     if (feature('UDS_INBOX')) {
       if (!effectiveReplayUserMessages && outputFormat === 'stream-json') {
@@ -1959,88 +1953,85 @@ async function run(): Promise<CommanderCommand> {
       }
     }
     if (getIsNonInteractiveSession()) {
-      // Apply full merged settings env now (including project-scoped
-      // .zy/settings.json PATH/GIT_DIR/GIT_WORK_TREE) so gitExe() and
-      // the git spawn below see it. Trust is implicit in -p mode; the
-      // docstring at managedEnv.ts:96-97 says this applies "potentially
-      // dangerous environment variables such as LD_PRELOAD, PATH" from all
-      // sources. The later call in the isNonInteractiveSession block below
-      // is idempotent (Object.assign, configureGlobalAgents ejects prior
-      // interceptor) and picks up any plugin-contributed env after plugin
-      // init. Project settings are already loaded here:
-      // applySafeConfigEnvironmentVariables in init() called
-      // getSettings_DEPRECATED at managedEnv.ts:86 which merges all enabled
-      // sources including projectSettings/localSettings.
+      // 现在应用完全合并的设置 env（包括项目范围的
+      // .zy/settings.json PATH/GIT_DIR/GIT_WORK_TREE）以便 gitExe() 和
+      // 下方的 git 生成看到它。信任在 -p 模式中是隐式的；
+      // managedEnv.ts:96-97 的文档字符串说这应用了"潜在的
+      // 危险环境变量如 LD_PRELOAD、PATH"来自所有
+      // 来源。下方 isNonInteractiveSession 块中的后续调用
+      // 是幂等的（Object.assign，configureGlobalAgents 弹出先前的
+      // 拦截器）并选择插件贡献的 env 在插件
+      // 初始化之后。项目设置已经在此加载：
+      // init() 中的 applySafeConfigEnvironmentVariables 调用了
+      // managedEnv.ts:86 的 getSettings_DEPRECATED，它合并了所有启用的
+      // 源，包括 projectSettings/localSettings。
       applyConfigEnvironmentVariables();
 
-      // Spawn git status/log/branch now so the subprocess execution overlaps
-      // with the getCommands await below and startDeferredPrefetches. After
-      // setup() so cwd is final (setup.ts:254 may process.chdir(worktreePath)
-      // for --worktree) and after the applyConfigEnvironmentVariables above
-      // so PATH/GIT_DIR/GIT_WORK_TREE from all sources (trusted + project)
-      // are applied. getSystemContext is memoized; the
-      // prefetchSystemContextIfSafe call in startDeferredPrefetches becomes
-      // a cache hit. The microtask from await getIsGit() drains at the
-      // getCommands Promise.all await below. Trust is implicit in -p mode
-      // (same gate as prefetchSystemContextIfSafe).
+      // 现在生成 git status/log/branch 子进程，以便子进程执行与
+      // 下方的 getCommands await 和 startDeferredPrefetches 重叠。在
+      // setup() 之后，以便 cwd 是最终的（setup.ts:254 对于 --worktree 可能
+      // process.chdir(worktreePath)），并在上面的 applyConfigEnvironmentVariables
+      // 之后以便应用所有来源的 PATH/GIT_DIR/GIT_WORK_TREE（受信任 + 项目）。
+      // getSystemContext 是缓存的；startDeferredPrefetches 中的
+      // prefetchSystemContextIfSafe 调用变成缓存命中。await getIsGit()
+      // 的微任务在 getCommands Promise.all await 下方排空。
+      // 信任在 -p 模式中是隐式的（与 prefetchSystemContextIfSafe 相同的门控）。
       void getSystemContext();
-      // Kick getUserContext now too — its first await (fs.readFile in
-      // getMemoryFiles) yields naturally, so the CLAUDE.md directory walk
-      // runs during the ~280ms overlap window before the context
-      // Promise.all join in print.ts. The void getUserContext() in
-      // startDeferredPrefetches becomes a memoize cache-hit.
+      // 现在也启动 getUserContext —— 它的首次 await（getMemoryFiles
+      // 中的 fs.readFile）自然让出，所以 CLAUDE.md 目录遍历
+      // 在 context Promise.all 连接之前约 280ms 的重叠窗口中运行。
+      // startDeferredPrefetches 中的 void getUserContext() 变成缓存命中。
       void getUserContext();
-      // Kick ensureModelStringsInitialized now — for Bedrock this triggers
-      // a 100-200ms profile fetch that was awaited serially at
-      // print.ts:739. updateBedrockModelStrings is sequential()-wrapped so
-      // the await joins the in-flight fetch. Non-Bedrock is a sync
-      // early-return (zero-cost).
+      // 现在启动 ensureModelStringsInitialized —— 对于 Bedrock 这会触发
+      // 100-200ms 的配置获取，之前在 print.ts:739 串行等待。
+      // updateBedrockModelStrings 是 sequential() 包装的，所以
+      // await 连接进行中的获取。非 Bedrock 是同步
+      // 提前返回（零成本）。
       void ensureModelStringsInitialized();
     }
 
-    // Apply --name: cache-only so no orphan file is created before the
-    // session ID is finalized by --continue/--resume. materializeSessionFile
-    // persists it on the first user message; REPL's useTerminalTitle reads it
-    // via getCurrentSessionTitle.
+    // 应用 --name：仅缓存，以便在
+    // 会话 ID 最终通过 --continue/--resume 确定之前不创建孤立文件。
+    // materializeSessionFile 在首次用户消息时持久化它；
+    // REPL 的 useTerminalTitle 通过 getCurrentSessionTitle 读取它。
     const sessionNameArg = options.name?.trim();
     if (sessionNameArg) {
       cacheSessionTitle(sessionNameArg);
     }
 
-    // Ant model aliases (capybara-fast etc.) resolve via the
-    // tengu_ant_model_override GrowthBook flag. _CACHED_MAY_BE_STALE reads
-    // disk synchronously; disk is populated by a fire-and-forget write. On a
-    // cold cache, parseUserSpecifiedModel returns the unresolved alias, the
-    // API 404s, and -p exits before the async write lands — crashloop on
-    // fresh pods. Awaiting init here populates the in-memory payload map that
-    // _CACHED_MAY_BE_STALE now checks first. Gated so the warm path stays
-    // non-blocking:
-    //  - explicit model via --model or ANTHROPIC_MODEL (both feed alias resolution)
-    //  - no env override (which short-circuits _CACHED_MAY_BE_STALE before disk)
-    //  - flag absent from disk (== null also catches pre-#22279 poisoned null)
+    // Ant 模型别名（capybara-fast 等）通过
+    // tengu_ant_model_override GrowthBook 标志解析。_CACHED_MAY_BE_STALE
+    // 同步读取磁盘；磁盘由 fire-and-forget 写入填充。在
+    // 冷缓存上，parseUserSpecifiedModel 返回未解析的别名，
+    // API 404，并且 -p 在异步写入落地之前退出 —— 新鲜 pod 上崩溃循环。
+    // 在此等待 init 填充 _CACHED_MAY_BE_STALE 现在首先检查的内存负载映射。
+    // 门控以便温暖路径保持非阻塞：
+    //  - 通过 --model 或 ANTHROPIC_MODEL 显式指定模型（两者都馈入别名解析）
+    //  - 没有 env 覆盖（它在磁盘之前在 _CACHED_MAY_BE_STALE 之前短路）
+    //  - 标志在磁盘上不存在（== null 也捕获 pre-#22279 中毒的 null）
     const explicitModel = options.model || process.env.ANTHROPIC_MODEL;
     if ("external" === 'ant' && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
       await initializeGrowthBook();
     }
 
-    // Special case the default model with the null keyword
+    // 用 null 关键字特殊处理默认模型
     // NOTE: Model resolution happens after setup() to ensure trust is established before AWS auth
     const userSpecifiedModel = options.model === 'default' ? getDefaultMainLoopModel() : options.model;
     const userSpecifiedFallbackModel = fallbackModel === 'default' ? getDefaultMainLoopModel() : fallbackModel;
 
-    // Reuse preSetupCwd unless setup() chdir'd (worktreeEnabled). Saves a
-    // getCwd() syscall in the common path.
+    // 重用 preSetupCwd，除非 setup() chdir'd（worktreeEnabled）。
+    // 在常见路径中节省一个 getCwd() 系统调用。
     const currentCwd = worktreeEnabled ? getCwd() : preSetupCwd;
     logForDebugging('[STARTUP] Loading commands and agents...');
     const commandsStart = Date.now();
-    // Join the promises kicked before setup() (or start fresh if
-    // worktreeEnabled gated the early kick). Both memoized by cwd.
+    // 连接在 setup() 之前启动的 promises（或者如果
+    // worktreeEnabled 门控了早期启动则重新开始）。两者都按 cwd 缓存。
     const [commands, agentDefinitionsResult] = await Promise.all([commandsPromise ?? getCommands(currentCwd), agentDefsPromise ?? getAgentDefinitionsWithOverrides(currentCwd)]);
     logForDebugging(`[STARTUP] Commands and agents loaded in ${Date.now() - commandsStart}ms`);
   
     profileCheckpoint('action_commands_loaded');
 
-    // Parse CLI agents if provided via --agents flag
+    // 如果通过 --agents 标志提供了 CLI 代理，则解析它们
     let cliAgents: typeof agentDefinitionsResult.activeAgents = [];
     if (agentsJson) {
       try {
@@ -2053,7 +2044,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Merge CLI agents with existing ones
+    // 将 CLI 代理与现有的合并
     const allAgents = [...agentDefinitionsResult.allAgents, ...cliAgents];
     const agentDefinitions = {
       ...agentDefinitionsResult,
@@ -2061,7 +2052,7 @@ async function run(): Promise<CommanderCommand> {
       activeAgents: getActiveAgentsFromList(allAgents)
     };
 
-    // Look up main thread agent from CLI flag or settings
+    // 从 CLI 标志或设置查找主线程代理
     const agentSetting = agentCli ?? getInitialSettings().agent;
     let mainThreadAgentDefinition: (typeof agentDefinitions.activeAgents)[number] | undefined;
     if (agentSetting) {
@@ -2071,10 +2062,10 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Store the main thread agent type in bootstrap state so hooks can access it
+    // 将主线程代理类型存储在引导状态中，以便钩子可以访问它
     setMainThreadAgentType(mainThreadAgentDefinition?.agentType);
 
-    // Log agent flag usage — only log agent name for built-in agents to avoid leaking custom agent names
+    // 记录代理标志使用情况 —— 仅为内置代理记录代理名称，以避免泄露自定义代理名称
     if (mainThreadAgentDefinition) {
       logEvent('tengu_agent_flag', {
         agentType: isBuiltInAgent(mainThreadAgentDefinition) ? mainThreadAgentDefinition.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS : 'custom' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2084,13 +2075,13 @@ async function run(): Promise<CommanderCommand> {
       });
     }
 
-    // Persist agent setting to session transcript for resume view display and restoration
+    // 将代理设置持久化到会话转录中，以便恢复视图显示和恢复
     if (mainThreadAgentDefinition?.agentType) {
       saveAgentSetting(mainThreadAgentDefinition.agentType);
     }
 
-    // Apply the agent's system prompt for non-interactive sessions
-    // (interactive mode uses buildEffectiveSystemPrompt instead)
+    // 为非交互会话应用代理的系统提示
+    //（交互模式使用 buildEffectiveSystemPrompt）
     if (isNonInteractiveSession && mainThreadAgentDefinition && !systemPrompt && !isBuiltInAgent(mainThreadAgentDefinition)) {
       const agentSystemPrompt = mainThreadAgentDefinition.getSystemPrompt();
       if (agentSystemPrompt) {
@@ -2098,12 +2089,12 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // initialPrompt goes first so its slash command (if any) is processed;
-    // user-provided text becomes trailing context.
-    // Only concatenate when inputPrompt is a string. When it's an
-    // AsyncIterable (SDK stream-json mode), template interpolation would
-    // call .toString() producing "[object Object]". The AsyncIterable case
-    // is handled in print.ts via structuredIO.prependUserMessage().
+    // initialPrompt 放在前面以便其斜杠命令（如果有）被处理；
+    // 用户提供的文本变成尾部上下文。
+    // 仅在 inputPrompt 是字符串时连接。当它是
+    // AsyncIterable（SDK stream-json 模式）时，模板插值会
+    // 调用 .toString() 产生 "[object Object]"。AsyncIterable 情况
+    // 在 print.ts 中通过 structuredIO.prependUserMessage() 处理。
     if (mainThreadAgentDefinition?.initialPrompt) {
       if (typeof inputPrompt === 'string') {
         inputPrompt = inputPrompt ? `${mainThreadAgentDefinition.initialPrompt}\n\n${inputPrompt}` : mainThreadAgentDefinition.initialPrompt;
@@ -2112,15 +2103,15 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Compute effective model early so hooks can run in parallel with MCP
-    // If user didn't specify a model but agent has one, use the agent's model
+    // 早期计算有效模型，以便钩子可以与 MCP 并行运行
+    // 如果用户没有指定模型但代理有一个，使用代理的模型
     let effectiveModel = userSpecifiedModel;
     if (!effectiveModel && mainThreadAgentDefinition?.model && mainThreadAgentDefinition.model !== 'inherit') {
       effectiveModel = parseUserSpecifiedModel(mainThreadAgentDefinition.model);
     }
     setMainLoopModelOverride(effectiveModel);
 
-    // Compute resolved model for hooks (use user-specified model at launch)
+    // 为钩子计算解析的模型（使用启动时用户指定的模型）
     setInitialMainLoopModel(getUserSpecifiedModelSetting() || null);
     const initialMainLoopModel = getInitialMainLoopModel();
     const resolvedInitialModel = parseUserSpecifiedModel(initialMainLoopModel ?? getDefaultMainLoopModel());
@@ -2147,23 +2138,23 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // For tmux teammates with --agent-type, append the custom agent's prompt
+    // 对于带有 --agent-type 的 tmux 队友，附加自定义代理的提示
     if (isAgentSwarmsEnabled() && storedTeammateOpts?.agentId && storedTeammateOpts?.agentName && storedTeammateOpts?.teamName && storedTeammateOpts?.agentType) {
-      // Look up the custom agent definition
+      // 查找自定义代理定义
       const customAgent = agentDefinitions.activeAgents.find(a => a.agentType === storedTeammateOpts.agentType);
       if (customAgent) {
-        // Get the prompt - need to handle both built-in and custom agents
+        // 获取提示 —— 需要处理内置和自定义代理
         let customPrompt: string | undefined;
         if (customAgent.source === 'built-in') {
-          // Built-in agents have getSystemPrompt that takes toolUseContext
-          // We can't access full toolUseContext here, so skip for now
+          // 内置代理有接受 toolUseContext 的 getSystemPrompt
+          // 我们在这里无法访问完整的 toolUseContext，所以暂时跳过
           logForDebugging(`[teammate] Built-in agent ${storedTeammateOpts.agentType} - skipping custom prompt (not supported)`);
         } else {
-          // Custom agents have getSystemPrompt that takes no args
+          // 自定义代理有不接受参数的 getSystemPrompt
           customPrompt = customAgent.getSystemPrompt();
         }
 
-        // Log agent memory loaded event for tmux teammates
+        // 为 tmux 队友记录代理内存加载事件
         if (customAgent.memory) {
           logEvent('tengu_agent_memory_loaded', {
             ...("external" === 'ant' && {
@@ -2182,15 +2173,15 @@ async function run(): Promise<CommanderCommand> {
       }
     }
     maybeActivateBrief(options);
-    // defaultView: 'chat' is a persisted opt-in — check entitlement and set
-    // userMsgOptIn so the tool + prompt section activate. Interactive-only:
-    // defaultView is a display preference; SDK sessions have no display, and
-    // the assistant installer writes defaultView:'chat' to settings.local.json
-    // which would otherwise leak into --print sessions in the same directory.
-    // Runs right after maybeActivateBrief() so all startup opt-in paths fire
-    // BEFORE any isBriefEnabled() read below (proactive prompt's
-    // briefVisibility). A persisted 'chat' after a GB kill-switch falls
-    // through (entitlement fails).
+    // defaultView: 'chat' 是持久化的选择加入 —— 检查授权并设置
+    // userMsgOptIn 以便工具 + 提示部分激活。仅限交互：
+    // defaultView 是显示偏好；SDK 会话没有显示，并且
+    // 助手安装程序将 defaultView:'chat' 写入 settings.local.json
+    // 否则会泄漏到同一目录中的 --print 会话。
+    // 在 maybeActivateBrief() 之后立即运行，以便所有启动选择加入路径触发
+    // 在任何 isBriefEnabled() 读取之前（主动提示的
+    // briefVisibility）。GB 关闭开关后的持久化 'chat' 会
+    // 透传（授权失败）。
     if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && !getIsNonInteractiveSession() && !getUserMsgOptIn() && getInitialSettings().defaultView === 'chat') {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const {
@@ -2201,9 +2192,9 @@ async function run(): Promise<CommanderCommand> {
         setUserMsgOptIn(true);
       }
     }
-    // Coordinator mode has its own system prompt and filters out Sleep, so
-    // the generic proactive prompt would tell it to call a tool it can't
-    // access and conflict with delegation instructions.
+    // 协调器模式有自己的系统提示并过滤掉 Sleep，所以
+    // 通用主动提示会告诉它调用它无法访问的工具
+    // 并与委托指令冲突。
     if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
       proactive?: boolean;
     }).proactive || isEnvTruthy(process.env.ZY_CODE_PROACTIVE)) && !coordinatorModeModule?.isCoordinatorMode()) {
@@ -2218,18 +2209,18 @@ async function run(): Promise<CommanderCommand> {
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${assistantAddendum}` : assistantAddendum;
     }
 
-    // Ink root is only needed for interactive sessions — patchConsole in the
-    // Ink constructor would swallow console output in headless mode.
+    // Ink 根仅在交互会话中需要 —— Ink 构造函数中的
+    // patchConsole 会在无头模式下吞掉控制台输出。
     let root!: Root;
     let getFpsMetrics!: () => FpsMetrics | undefined;
     let stats!: StatsStore;
 
-    // Show setup screens after commands are loaded
+    // 在命令加载后显示设置屏幕
     if (!isNonInteractiveSession) {
       const ctx = getRenderContext(false);
       getFpsMetrics = ctx.getFpsMetrics;
       stats = ctx.stats;
-      // Install asciicast recorder before Ink mounts (ant-only, opt-in via ZY_CODE_TERMINAL_RECORDING=1)
+      // 在 Ink 挂载之前安装 asciicast 录制器（仅限 ant，通过 ZY_CODE_TERMINAL_RECORDING=1 选择加入）
       if ("external" === 'ant') {
         installAsciicastRecorder();
       }
@@ -2240,10 +2231,10 @@ async function run(): Promise<CommanderCommand> {
       root = await createRoot(ctx.renderOptions);
     
 
-      // Log startup time now, before any blocking dialog renders. Logging
-      // from REPL's first render (the old location) included however long
-      // the user sat on trust/OAuth/onboarding/resume-picker — p99 was ~70s
-      // dominated by dialog-wait time, not code-path startup.
+      // 现在记录启动时间，在任何阻塞对话框渲染之前。从
+      // REPL 首次渲染（旧位置）记录包括了用户坐在
+      // 信任/OAuth/入门/恢复选择器上的时间 —— p99 约 70s
+      // 由对话框等待时间主导，而不是代码路径启动时间。
       logEvent('tengu_timer', {
         event: 'startup' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         durationMs: Math.round(process.uptime() * 1000)
@@ -2255,8 +2246,8 @@ async function run(): Promise<CommanderCommand> {
     
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
 
-      // Now that trust is established and GrowthBook has auth headers,
-      // resolve the --remote-control / --rc entitlement gate.
+      // 现在信任已建立且 GrowthBook 有认证头，
+      // 解析 --remote-control / --rc 授权门。
       if (feature('BRIDGE_MODE') && remoteControlOption !== undefined) {
         const {
           getBridgeDisabledReason
@@ -2268,7 +2259,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // Check for pending agent memory snapshot updates (only for --agent mode, ant-only)
+      // 检查待处理的代理内存快照更新（仅限 --agent 模式，仅限 ant）
       if (feature('AGENT_MEMORY_SNAPSHOT') && mainThreadAgentDefinition && isCustomAgent(mainThreadAgentDefinition) && mainThreadAgentDefinition.memory && mainThreadAgentDefinition.pendingSnapshotUpdate) {
         const agentDef = mainThreadAgentDefinition;
         const choice = await launchSnapshotUpdateDialog(root, {
@@ -2286,56 +2277,54 @@ async function run(): Promise<CommanderCommand> {
         agentDef.pendingSnapshotUpdate = undefined;
       }
 
-      // Skip executing /login if we just completed onboarding for it
+      // 如果刚刚完成了入门培训，则跳过执行 /login
       if (onboardingShown && prompt?.trim().toLowerCase() === '/login') {
         prompt = '';
       }
       if (onboardingShown) {
-        // Refresh auth-dependent services now that the user has logged in during onboarding.
-        // Keep in sync with the post-login logic in src/commands/login.tsx
+        // 现在刷新认证依赖的服务，因为用户在入门培训期间已登录
+        // 与 src/commands/login.tsx 中的登录后逻辑保持一致
         void refreshRemoteManagedSettings();
         void refreshPolicyLimits();
-        // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
+        // 在 GrowthBook 刷新之前清除用户数据缓存，以便它获取新鲜凭证
         resetUserCache();
-        // Refresh GrowthBook after login to get updated feature flags (e.g., for zy.ai MCPs)
+        // 登录后刷新 GrowthBook 以获取更新的功能标志（例如用于 zy.ai MCP）
         refreshGrowthBookAfterAuthChange();
-        // Clear any stale trusted device token then enroll for Remote Control.
-        // Both self-gate on tengu_sessions_elevated_auth_enforcement internally
-        // — enrollTrustedDevice() via checkGate_CACHED_OR_BLOCKING (awaits
-        // the GrowthBook reinit above), clearTrustedDeviceToken() via the
-        // sync cached check (acceptable since clear is idempotent).
+        // 清除任何过时的受信任设备令牌，然后注册远程控制。
+        // 两者都在内部通过 tengu_sessions_elevated_auth_enforcement 自门控
+        // —— enrollTrustedDevice() 通过 checkGate_CACHED_OR_BLOCKING（等待
+        // 上方的 GrowthBook 重新初始化），clearTrustedDeviceToken() 通过
+        // 同步缓存检查（可接受，因为清除是幂等的）。
         void import('./bridge/trustedDevice.js').then(m => {
           m.clearTrustedDeviceToken();
           return m.enrollTrustedDevice();
         });
       }
 
-      // Validate that the active token's org matches forceLoginOrgUUID (if set
-      // in managed settings). Runs after onboarding so managed settings and
-      // login state are fully loaded.
+      // 验证活动令牌的 org 是否匹配 forceLoginOrgUUID（如果在托管设置中设置）。
+      // 在入门培训之后运行，以便托管设置和登录状态完全加载。
       const orgValidation = await validateForceLoginOrg();
       if (!orgValidation.valid) {
         await exitWithError(root, orgValidation.message);
       }
     }
 
-    // If gracefulShutdown was initiated (e.g., user rejected trust dialog),
-    // process.exitCode will be set. Skip all subsequent operations that could
-    // trigger code execution before the process exits (e.g. we don't want apiKeyHelper
-    // to run if trust was not established).
+    // 如果启动了 gracefulShutdown（例如用户拒绝了信任对话框），
+    // process.exitCode 将被设置。跳过所有可能触发代码执行的后续操作
+    // 在进程退出之前（例如，如果未建立信任，我们不希望 apiKeyHelper 运行）。
     if (process.exitCode !== undefined) {
       logForDebugging('Graceful shutdown initiated, skipping further initialization');
       return;
     }
 
-    // Initialize LSP manager AFTER trust is established (or in non-interactive mode
-    // where trust is implicit). This prevents plugin LSP servers from executing
-    // code in untrusted directories before user consent.
-    // Must be after inline plugins are set (if any) so --plugin-dir LSP servers are included.
+    // 在建立信任后初始化 LSP 管理器（或在非交互模式中
+    // 信任是隐式的）。这防止插件 LSP 服务器在用户同意之前
+    // 在不可信的目录中执行代码。
+    // 必须在设置内联插件之后（如果有）以便 --plugin-dir LSP 服务器被包含。
     initializeLspServerManager();
 
-    // Show settings validation errors after trust is established
-    // MCP config errors don't block settings from loading, so exclude them
+    // 在建立信任后显示设置验证错误
+    // MCP 配置错误不会阻止设置加载，所以排除它们
     if (!isNonInteractiveSession) {
       const {
         errors
@@ -2349,12 +2338,11 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Check quota status, fast mode, passes eligibility, and bootstrap data
-    // after trust is established. These make API calls which could trigger
-    // apiKeyHelper execution.
-    // --bare / SIMPLE: skip — these are cache-warms for the REPL's
-    // first-turn responsiveness (quota, passes, fastMode, bootstrap data). Fast
-    // mode doesn't apply to the Agent SDK anyway (see getFastModeUnavailableReason).
+    // 在建立信任后检查配额状态、快速模式、passes 资格和引导数据
+    // 这些进行 API 调用，可能触发 apiKeyHelper 执行。
+    // --bare / SIMPLE：跳过 —— 这些是 REPL 首次响应性的缓存预热
+    //（配额、passes、fastMode、引导数据）。快速模式不适用于 Agent SDK
+    //（参见 getFastModeUnavailableReason）。
     const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('tengu_cicada_nap_ms', 0);
     const lastPrefetched = getGlobalConfig().startupPrefetchedAt ?? 0;
     const skipStartupPrefetches = isBareMode() || bgRefreshThrottleMs > 0 && Date.now() - lastPrefetched < bgRefreshThrottleMs;
@@ -2363,7 +2351,7 @@ async function run(): Promise<CommanderCommand> {
       logForDebugging(`Starting background startup prefetches${lastPrefetchedInfo}`);
       checkQuotaStatus().catch(error => logError(error));
 
-      // Fetch bootstrap data from the server and update all cache values.
+      // 从服务器获取引导数据并更新所有缓存值。
       void fetchBootstrapData();
 
       // TODO: Consolidate other prefetches into a single bootstrap request.
@@ -2378,21 +2366,21 @@ async function run(): Promise<CommanderCommand> {
       logForDebugging(`Skipping startup prefetches, last ran ${Math.round((Date.now() - lastPrefetched) / 1000)}s ago`);
     }
     if (!isNonInteractiveSession) {
-      void refreshExampleCommands(); // Pre-fetch example commands (runs git log, no API call)
+      void refreshExampleCommands(); // 预取示例命令（运行 git log，无 API 调用）
     }
 
-    // Resolve MCP configs (started early, overlaps with setup/trust dialog work)
+    // 解析 MCP 配置（早期启动，与 setup/信任对话框工作重叠）
     const {
       servers: existingMcpConfigs
     } = await mcpConfigPromise;
     logForDebugging(`[STARTUP] MCP configs resolved in ${mcpConfigResolvedMs}ms (awaited at +${Date.now() - mcpConfigStart}ms)`);
-    // CLI flag (--mcp-config) should override file-based configs, matching settings precedence
+    // CLI 标志（--mcp-config）应覆盖基于文件的配置，与设置优先级匹配
     const allMcpConfigs = {
       ...existingMcpConfigs,
       ...dynamicMcpConfig
     };
 
-    // Separate SDK configs from regular MCP configs
+    // 将 SDK 配置与普通 MCP 配置分开
     const sdkMcpConfigs: Record<string, McpSdkServerConfig> = {};
     const regularMcpConfigs: Record<string, ScopedMcpServerConfig> = {};
     for (const [name, config] of Object.entries(allMcpConfigs)) {
@@ -2406,10 +2394,10 @@ async function run(): Promise<CommanderCommand> {
   
     profileCheckpoint('action_mcp_configs_loaded');
 
-    // Prefetch MCP resources after trust dialog (this is where execution happens).
-    // Interactive mode only: print mode defers connects until headlessStore exists
-    // and pushes per-server (below), so ToolSearch's pending-client handling works
-    // and one slow server doesn't block the batch.
+    // 在信任对话框之后预取 MCP 资源（这是执行发生的地方）。
+    // 仅限交互模式：打印模式延迟连接直到 headlessStore 存在
+    // 并按服务器推送（下方），所以 ToolSearch 的 pending-client 处理有效
+    // 且一个慢速服务器不会阻塞批次。
     const localMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
@@ -2424,36 +2412,36 @@ async function run(): Promise<CommanderCommand> {
       tools: [],
       commands: []
     });
-    // Merge with dedup by name: each prefetchAllMcpResources call independently
-    // adds helper tools (ListMcpResourcesTool, ReadMcpResourceTool) via
-    // local dedup flags, so merging two calls can yield duplicates. print.ts
-    // already uniqBy's the final tool pool, but dedup here keeps appState clean.
+    // 按名称去重合并：每个 prefetchAllMcpResources 调用独立
+    // 添加帮助工具（ListMcpResourcesTool、ReadMcpResourceTool）通过
+    // 本地去重标志，所以合并两个调用可能产生重复。print.ts
+    // 已经对最终工具池进行 uniqBy 处理，但在此去重保持 appState 干净。
     const mcpPromise = Promise.all([localMcpPromise, zyaiMcpPromise]).then(([local, zyai]) => ({
       clients: [...local.clients, ...zyai.clients],
       tools: uniqBy([...local.tools, ...zyai.tools], 'name'),
       commands: uniqBy([...local.commands, ...zyai.commands], 'name')
     }));
 
-    // Start hooks early so they run in parallel with MCP connections.
-    // Skip for initOnly/init/maintenance (handled separately), non-interactive
-    // (handled via setupTrigger), and resume/continue (conversationRecovery.ts
-    // fires 'resume' instead — without this guard, hooks fire TWICE on /resume
-    // and the second systemMessage clobbers the first. gh-30825)
+    // 早期启动钩子以便它们与 MCP 连接并行运行。
+    // 跳过 initOnly/init/maintenance（单独处理）、非交互
+    //（通过 setupTrigger 处理）和 resume/continue（conversationRecovery.ts
+    // 改为触发 'resume' —— 没有这个守卫，钩子在 /resume 上触发两次
+    // 且第二个 systemMessage 覆盖第一个。gh-30825）
     const hooksPromise = initOnly || init || maintenance || isNonInteractiveSession || options.continue || options.resume ? null : processSessionStartHooks('startup', {
       agentType: mainThreadAgentDefinition?.agentType,
       model: resolvedInitialModel
     });
 
-    // MCP never blocks REPL render OR turn 1 TTFT. useManageMCPConnections
-    // populates appState.mcp async as servers connect (connectToServer is
-    // memoized — the prefetch calls above and the hook converge on the same
-    // connections). getToolUseContext reads store.getState() fresh via
-    // computeTools(), so turn 1 sees whatever's connected by query time.
-    // Slow servers populate for turn 2+. Matches interactive-no-prompt
-    // behavior. Print mode: per-server push into headlessStore (below).
+    // MCP 从不阻塞 REPL 渲染或第 1 轮 TTFT。useManageMCPConnections
+    // 在服务器连接时异步填充 appState.mcp（connectToServer 是
+    // 缓存的 —— 上方的预取调用和钩子汇聚到相同的
+    // 连接）。getToolUseContext 通过 computeTools() 新鲜读取 store.getState()，
+    // 所以第 1 轮看到查询时已连接的任何内容。
+    // 慢速服务器为第 2+ 轮填充。匹配交互无提示
+    // 行为。打印模式：按服务器推送到 headlessStore（下方）。
     const hookMessages: Awaited<NonNullable<typeof hooksPromise>> = [];
-    // Suppress transient unhandledRejection — the prefetch warms the
-    // memoized connectToServer cache but nobody awaits it in interactive.
+    // 抑制瞬态 unhandledRejection —— 预取预热
+    // 缓存的 connectToServer 缓存，但在交互模式下没有人等待它。
     mcpPromise.catch(() => {});
     const mcpClients: Awaited<typeof mcpPromise>['clients'] = [];
     const mcpTools: Awaited<typeof mcpPromise>['tools'] = [];
@@ -2523,15 +2511,15 @@ async function run(): Promise<CommanderCommand> {
       assistantActivationPath: feature('KAIROS') && kairosEnabled ? assistantModule?.getAssistantActivationPath() : undefined
     });
 
-    // Log context metrics once at initialization
+    // 初始化时记录一次上下文指标
     void logContextMetrics(regularMcpConfigs, toolPermissionContext);
     void logPermissionContextForAnts(null, 'initialization');
     logManagedSettings();
 
-    // Register PID file for concurrent-session detection (~/.zy/sessions/)
-    // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
-    // REPL path registers — not subcommands like `zy doctor`. Chained:
-    // count must run after register's write completes or it misses our own file.
+    // 注册 PID 文件用于并发会话检测（~/.zy/sessions/）
+    // 并触发多 clauding 遥测。放在这里（不是 init.ts）以便只有
+    // REPL 路径注册 —— 不是 `zy doctor` 等子命令。链式：
+    // count 必须在 register 的写入完成后运行，否则它会错过我们自己的文件。
     void registerSession().then(registered => {
       if (!registered) return;
       if (sessionNameArg) {
@@ -2546,27 +2534,27 @@ async function run(): Promise<CommanderCommand> {
       });
     });
 
-    // Initialize versioned plugins system (triggers V1→V2 migration if
-    // needed). Then run orphan GC, THEN warm the Grep/Glob exclusion cache.
-    // Sequencing matters: the warmup scans disk for .orphaned_at markers,
-    // so it must see the GC's Pass 1 (remove markers from reinstalled
-    // versions) and Pass 2 (stamp unmarked orphans) already applied. The
-    // warm also lands before autoupdate (fires on first submit in REPL)
-    // can orphan this session's active version underneath us.
-    // --bare / SIMPLE: skip plugin version sync + orphan cleanup. These
-    // are install/upgrade bookkeeping that scripted calls don't need —
-    // the next interactive session will reconcile. The await here was
-    // blocking -p on a marketplace round-trip.
+    // 初始化版本化插件系统（如果需要触发 V1→V2 迁移）。
+    // 然后运行孤儿 GC，再预热 Grep/Glob 排除缓存。
+    // 顺序很重要：预热扫描磁盘查找 .orphaned_at 标记，
+    // 所以它必须看到 GC 的 Pass 1（从重新安装的版本中移除标记）
+    // 和 Pass 2（标记未标记的孤儿）已应用。
+    // 预热还在自动更新之前落地（在 REPL 中首次提交时触发）
+    // 不会在我们下面孤立此会话的活跃版本。
+    // --bare / SIMPLE：跳过插件版本同步 + 孤儿清理。这些是
+    // 脚本化调用不需要的安装/升级簿记 ——
+    // 下次交互会话将协调。此处的 await 之前
+    // 阻塞了 -p 在市场往返上。
     if (isBareMode()) {
       // skip — no-op
     } else if (isNonInteractiveSession) {
-      // In headless mode, await to ensure plugin sync completes before CLI exits
+      // 在无头模式下，等待以确保插件同步在 CLI 退出之前完成
       await initializeVersionedPlugins();
       profileCheckpoint('action_after_plugins_init');
       void cleanupOrphanedPluginVersionsInBackground().then(() => getGlobExclusionsForPluginCache());
     } else {
-      // In interactive mode, fire-and-forget — this is purely bookkeeping
-      // that doesn't affect runtime behavior of the current session
+      // 在交互模式下，触发后不等待 —— 这纯粹是
+      // 不影响当前会话运行时行为的簿记
       void initializeVersionedPlugins().then(async () => {
         profileCheckpoint('action_after_plugins_init');
         await cleanupOrphanedPluginVersionsInBackground();
@@ -2586,44 +2574,44 @@ async function run(): Promise<CommanderCommand> {
       return;
     }
 
-    // --print mode
+    // --print 模式
     if (isNonInteractiveSession) {
       if (outputFormat === 'stream-json' || outputFormat === 'json') {
         setHasFormattedOutput(true);
       }
 
-      // Apply full environment variables in print mode since trust dialog is bypassed
-      // This includes potentially dangerous environment variables from untrusted sources
-      // but print mode is considered trusted (as documented in help text)
+      // 在打印模式下应用完整的环境变量，因为信任对话框被跳过
+      // 这包括来自不可信来源的潜在危险环境变量
+      // 但打印模式被视为受信任的（如帮助文本中所述）
       applyConfigEnvironmentVariables();
 
-      // Initialize telemetry after env vars are applied so OTEL endpoint env vars and
-      // otelHeadersHelper (which requires trust to execute) are available.
+      // 在应用环境变量后初始化遥测，以便 OTEL 端点环境变量和
+      // otelHeadersHelper（需要信任才能执行）可用。
       initializeTelemetryAfterTrust();
 
-      // Kick SessionStart hooks now so the subprocess spawn overlaps with
-      // MCP connect + plugin init + print.ts import below. loadInitialMessages
-      // joins this at print.ts:4397. Guarded same as loadInitialMessages —
-      // continue/resume/teleport paths don't fire startup hooks (or fire them
-      // conditionally inside the resume branch, where this promise is
-      // undefined and the ?? fallback runs). Also skip when setupTrigger is
-      // set — those paths run setup hooks first (print.ts:544), and session
-      // start hooks must wait until setup completes.
+      // 现在启动 SessionStart 钩子，以便子进程生成与
+      // MCP 连接 + 插件初始化 + 下方 print.ts 导入重叠。
+      // loadInitialMessages 在 print.ts:4397 连接此 promise。
+      // 守卫与 loadInitialMessages 相同 ——
+      // continue/resume/teleport 路径不触发启动钩子
+      //（或在 resume 分支内有条件地触发它们，此 promise 为
+      // undefined 且 ?? 回退运行）。当 setupTrigger 设置时也跳过
+      // —— 那些路径先运行 setup 钩子（print.ts:544），且会话
+      // 启动钩子必须等待 setup 完成。
       const sessionStartHooksPromise = options.continue || options.resume || teleport || setupTrigger ? undefined : processSessionStartHooks('startup');
-      // Suppress transient unhandledRejection if this rejects before
-      // loadInitialMessages awaits it. Downstream await still observes the
-      // rejection — this just prevents the spurious global handler fire.
+      // 如果这在 loadInitialMessages 等待之前拒绝，抑制瞬态 unhandledRejection。
+      // 下游等待仍然观察到拒绝 —— 这只是防止虚假的全局处理器触发。
       sessionStartHooksPromise?.catch(() => {});
       profileCheckpoint('before_validateForceLoginOrg');
-      // Validate org restriction for non-interactive sessions
+      // 验证非交互会话的 org 限制
       const orgValidation = await validateForceLoginOrg();
       if (!orgValidation.valid) {
         process.stderr.write(orgValidation.message + '\n');
         process.exit(1);
       }
 
-      // Headless mode supports all prompt commands and some local commands
-      // If disableSlashCommands is true, return empty array
+      // 无头模式支持所有提示命令和一些本地命令
+      // 如果 disableSlashCommands 为 true，返回空数组
       const commandsHeadless = disableSlashCommands ? [] : commands.filter(command => command.type === 'prompt' && !command.disableNonInteractive || command.type === 'local' && command.supportsNonInteractive);
       const defaultState = getDefaultAppState();
       const headlessInitialState: AppState = {
@@ -2642,29 +2630,28 @@ async function run(): Promise<CommanderCommand> {
         ...(isAdvisorEnabled() && advisorModel && {
           advisorModel
         }),
-        // kairosEnabled gates the async fire-and-forget path in
-        // executeForkedSlashCommand (processSlashCommand.tsx:132) and
-        // AgentTool's shouldRunAsync. The REPL initialState sets this at
-        // ~3459; headless was defaulting to false, so the daemon child's
-        // scheduled tasks and Agent-tool calls ran synchronously — N
-        // overdue cron tasks on spawn = N serial subagent turns blocking
-        // user input. Computed at :1620, well before this branch.
+        // kairosEnabled 门控 executeForkedSlashCommand 中的异步 fire-and-forget 路径
+        //（processSlashCommand.tsx:132）和 AgentTool 的 shouldRunAsync。
+        // REPL initialState 在约 3459 处设置此；无头默认为 false，
+        // 所以守护进程子计划的任务和 Agent-tool 调用同步运行
+        // —— 生成时 N 个逾期的 cron 任务 = N 个串行子代理回合阻塞用户输入。
+        // 在此分支之前于 :1620 计算。
         ...(feature('KAIROS') ? {
           kairosEnabled
         } : {})
       };
 
-      // Init app state
+      // 初始化应用状态
       const headlessStore = createStore(headlessInitialState, onChangeAppState);
 
-      // Check if bypassPermissions should be disabled based on Statsig gate
-      // This runs in parallel to the code below, to avoid blocking the main loop.
+      // 根据 Statsig 门检查是否应禁用 bypassPermissions
+      // 这与下方代码并行运行，以避免阻塞主循环。
       if (toolPermissionContext.mode === 'bypassPermissions' || allowDangerouslySkipPermissions) {
         void checkAndDisableBypassPermissions(toolPermissionContext);
       }
 
-      // Async check of auto mode gate — corrects state and disables auto if needed.
-      // Gated on TRANSCRIPT_CLASSIFIER (not USER_TYPE) so GrowthBook kill switch runs for external builds too.
+      // 自动模式门的异步检查 —— 更正状态并在需要时禁用自动。
+      // 门控在 TRANSCRIPT_CLASSIFIER（不是 USER_TYPE）以便 GrowthBook 终止开关也为外部构建运行。
       if (feature('TRANSCRIPT_CLASSIFIER')) {
         void verifyAutoModeGateAccess(toolPermissionContext, headlessStore.getState().fastMode).then(({
           updateContext
@@ -2680,19 +2667,19 @@ async function run(): Promise<CommanderCommand> {
         });
       }
 
-      // Set global state for session persistence
+      // 为会话持久化设置全局状态
       if (options.sessionPersistence === false) {
         setSessionPersistenceDisabled(true);
       }
 
-      // Store SDK betas in global state for context window calculation
-      // Only store allowed betas (filters by allowlist and subscriber status)
+      // 将 SDK betas 存储在全局状态中，用于上下文窗口计算
+      // 仅存储允许的 betas（按允许列表和订阅者状态过滤）
       setSdkBetas(filterAllowedSdkBetas(betas));
 
-      // Print-mode MCP: per-server incremental push into headlessStore.
-      // Mirrors useManageMCPConnections — push pending first (so ToolSearch's
-      // pending-check at ToolSearchTool.ts:334 sees them), then replace with
-      // connected/failed as each server settles.
+      // 打印模式 MCP：按服务器增量推送到 headlessStore。
+      // 镜像 useManageMCPConnections —— 先推送 pending（以便 ToolSearch
+      // 在 ToolSearchTool.ts:334 的 pending 检查看到它们），然后用
+      // connected/failed 替换每个服务器稳定时。
       const connectMcpBatch = (configs: Record<string, ScopedMcpServerConfig>, label: string): Promise<void> => {
         if (Object.keys(configs).length === 0) return Promise.resolve();
         headlessStore.setState(prev => ({
@@ -2722,24 +2709,24 @@ async function run(): Promise<CommanderCommand> {
           }));
         }, configs).catch(err => logForDebugging(`[MCP] ${label} connect error: ${err}`));
       };
-      // Await all MCP configs — print mode is often single-turn, so
-      // "late-connecting servers visible next turn" doesn't help. SDK init
-      // message and turn-1 tool list both need configured MCP tools present.
-      // Zero-server case is free via the early return in connectMcpBatch.
-      // Connectors parallelize inside getMcpToolsCommandsAndResources
-      // (processBatched with Promise.all). zy.ai is awaited too — its
-      // fetch was kicked off early (line ~2558) so only residual time blocks
-      // here. --bare skips zy.ai entirely for perf-sensitive scripts.
+      // 等待所有 MCP 配置 —— 打印模式通常是单次，所以
+      // "下一轮可见的晚连接服务器"没有帮助。SDK 初始化
+      // 消息和第一轮工具列表都需要存在的 MCP 工具。
+      // 零服务器情况通过 connectMcpBatch 中的早期返回免费处理。
+      // 连接器在 getMcpToolsCommandsAndResources 内部并行化
+      //（带 Promise.all 的 processBatched）。zy.ai 也等待 —— 它的
+      // 获取很早就启动了（约第 2558 行）所以只有剩余时间阻塞
+      // 在这里。--bare 完全跳过 zy.ai 以用于性能敏感的脚本。
       profileCheckpoint('before_connectMcp');
       await connectMcpBatch(regularMcpConfigs, 'regular');
       profileCheckpoint('after_connectMcp');
-      // Dedup: suppress plugin MCP servers that duplicate a zy.ai
-      // connector (connector wins), then connect zy.ai servers.
-      // Bounded wait — #23725 made this blocking so single-turn -p sees
-      // connectors, but with 40+ slow connectors tengu_startup_perf p99
-      // climbed to 76s. If fetch+connect doesn't finish in time, proceed;
-      // the promise keeps running and updates headlessStore in the
-      // background so turn 2+ still sees connectors.
+      // 去重：抑制重复 zy.ai 连接器的插件 MCP 服务器
+      //（连接器获胜），然后连接 zy.ai 服务器。
+      // 有界等待 —— #23725 使其阻塞以便单次 -p 看到
+      // 连接器，但有 40+ 慢速连接器时 tengu_startup_perf p99
+      // 攀升到 76 秒。如果获取+连接没有及时完成，继续；
+      // promise 继续运行并在后台更新 headlessStore
+      // 以便第 2+ 轮仍然看到连接器。
       const ZY_AI_MCP_TIMEOUT_MS = 5_000;
       const zyaiConnect = zyaiConfigPromise.then(zyaiConfigs => {
         if (Object.keys(zyaiConfigs).length > 0) {
@@ -2791,12 +2778,11 @@ async function run(): Promise<CommanderCommand> {
             });
           }
         }
-        // Suppress zy.ai connectors that duplicate an enabled
-        // manual server (URL-signature match). Plugin dedup above only
-        // handles `plugin:*` keys; this catches manual `.mcp.json` entries.
-        // plugin:* must be excluded here — step 1 already suppressed
-        // those (zy.ai wins); leaving them in suppresses the
-        // connector too, and neither survives (gh-39974).
+        // 抑制重复已启用手动服务器的 zy.ai 连接器
+        //（URL 签名匹配）。上方的插件去重仅处理 `plugin:*` 键；
+        // 这捕获手动 `.mcp.json` 条目。plugin:* 必须在此处排除
+        // —— 步骤 1 已经抑制了那些（zy.ai 获胜）；留下它们也会
+        // 抑制连接器，两者都不存活（gh-39974）。
         const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'));
         const {
           servers: dedupedZyAI
@@ -2813,11 +2799,11 @@ async function run(): Promise<CommanderCommand> {
       }
       profileCheckpoint('after_connectMcp_zyai');
 
-      // In headless mode, start deferred prefetches immediately (no user typing delay)
-      // --bare / SIMPLE: startDeferredPrefetches early-returns internally.
-      // backgroundHousekeeping (initExtractMemories, pruneShellSnapshots,
-      // cleanupOldMessageFiles) and sdkHeapDumpMonitor are all bookkeeping
-      // that scripted calls don't need — the next interactive session reconciles.
+      // 在无头模式下，立即启动延迟预取（没有用户输入延迟）
+      // --bare / SIMPLE：startDeferredPrefetches 在内部早期返回。
+      // backgroundHousekeeping（initExtractMemories、pruneShellSnapshots、
+      // cleanupOldMessageFiles）和 sdkHeapDumpMonitor 都是脚本化调用
+      // 不需要的簿记 —— 下次交互会话将协调。
       if (!isBareMode()) {
         startDeferredPrefetches();
         void import('./utils/backgroundHousekeeping.js').then(m => m.startBackgroundHousekeeping());
@@ -2865,7 +2851,7 @@ async function run(): Promise<CommanderCommand> {
       return;
     }
 
-    // Log model config at startup
+    // 启动时记录模型配置
     logEvent('tengu_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       env_var: process.env.ANTHROPIC_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2873,10 +2859,10 @@ async function run(): Promise<CommanderCommand> {
       agent: agentSetting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
 
-    // Get deprecation warning for the initial model (resolvedInitialModel computed earlier for hooks parallelization)
+    // 获取初始模型的弃用警告（resolvedInitialModel 早先为钩子并行化计算）
     const deprecationWarning = getModelDeprecationWarning(resolvedInitialModel);
 
-    // Build initial notification queue
+    // 构建初始通知队列
     const initialNotifications: Array<{
       key: string;
       text: string;
@@ -2914,8 +2900,8 @@ async function run(): Promise<CommanderCommand> {
       ...toolPermissionContext,
       mode: isAgentSwarmsEnabled() && getTeammateUtils().isPlanModeRequired() ? 'plan' as const : toolPermissionContext.mode
     };
-    // All startup opt-in paths (--tools, --brief, defaultView) have fired
-    // above; initialIsBriefOnly just reads the resulting state.
+    // 所有启动选择加入路径（--tools、--brief、defaultView）已在上方触发；
+    // initialIsBriefOnly 仅读取结果状态。
     const initialIsBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ? getUserMsgOptIn() : false;
     const fullRemoteControl = remoteControl || getRemoteControlAtStartup() || kairosEnabled;
     let ccrMirrorEnabled = false;
@@ -3031,23 +3017,23 @@ async function run(): Promise<CommanderCommand> {
       ...(isAdvisorEnabled() && advisorModel && {
         advisorModel
       }),
-      // Compute teamContext synchronously to avoid useEffect setState during render.
-      // KAIROS: assistantTeamContext takes precedence — set earlier in the
-      // KAIROS block so Agent(name: "foo") can spawn in-process teammates
-      // without TeamCreate. computeInitialTeamContext() is for tmux-spawned
-      // teammates reading their own identity, not the assistant-mode leader.
+      // 同步计算 teamContext 以避免渲染期间的 useEffect setState。
+      // KAIROS：assistantTeamContext 优先 —— 在
+      // KAIROS 块中更早设置，以便 Agent(name: "foo") 可以生成进程内队友
+      // 而不需要 TeamCreate。computeInitialTeamContext() 用于 tmux 生成的
+      // 队友读取自己的身份，而不是助手模式领导者。
       teamContext: feature('KAIROS') ? assistantTeamContext ?? computeInitialTeamContext?.() : computeInitialTeamContext?.()
     };
 
-    // Add CLI initial prompt to history
+    // 将 CLI 初始提示添加到历史记录
     if (inputPrompt) {
       addToHistory(String(inputPrompt));
     }
     const initialTools = mcpTools;
 
-    // Increment numStartups synchronously — first-render readers like
-    // shouldShowEffortCallout (via useState initializer) need the updated
-    // value before setImmediate fires. Defer only telemetry.
+    // 同步递增 numStartups —— 首次渲染读取器如
+    // shouldShowEffortCallout（通过 useState 初始化器）需要在 setImmediate 触发之前获得更新的
+    // 值。仅延迟遥测。
     saveGlobalConfig(current => ({
       ...current,
       numStartups: (current.numStartups ?? 0) + 1
@@ -3057,20 +3043,20 @@ async function run(): Promise<CommanderCommand> {
       logSessionTelemetry();
     });
 
-    // Set up per-turn session environment data uploader (ant-only build).
-    // Default-enabled for all ant users when working in an Anthropic-owned
-    // repo. Captures git/filesystem state (NOT transcripts) at each turn so
-    // environments can be recreated at any user message index. Gating:
-    //   - Build-time: this import is stubbed in external builds.
-    //   - Runtime: uploader checks github.com/anthropics/* remote + gcloud auth.
-    //   - Safety: ZY_CODE_DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
-    // Import is dynamic + async to avoid adding startup latency.
+    // 设置每轮会话环境数据上传器（仅限 ant 构建）。
+    // 在 Anthropic 拥有的仓库中工作时为所有 ant 用户默认启用。
+    // 在每轮捕获 git/文件系统状态（不是转录），以便
+    // 可以在任何用户消息索引处重新创建环境。门控：
+    //   - 构建时：此导入在外部构建中是存根。
+    //   - 运行时：上传者检查 github.com/anthropics/* 远程 + gcloud 认证。
+    //   - 安全：ZY_CODE_DISABLE_SESSION_DATA_UPLOAD=1 绕过（测试设置此）。
+    // 导入是动态 + 异步的，以避免增加启动延迟。
     const sessionUploaderPromise = "external" === 'ant' ? import('./utils/sessionDataUploader.js') : null;
 
-    // Defer session uploader resolution to the onTurnComplete callback to avoid
-    // adding a new top-level await in main.tsx (performance-critical path).
-    // The per-turn auth logic in sessionDataUploader.ts handles unauthenticated
-    // state gracefully (re-checks each turn, so auth recovery mid-session works).
+    // 将会话上传器解析延迟到 onTurnComplete 回调，以避免
+    // 在 main.tsx 中添加新的顶级 await（性能关键路径）。
+    // sessionDataUploader.ts 中的每轮认证逻辑优雅地处理未认证
+    // 状态（每轮重新检查，所以会话中间的认证恢复有效）。
     const uploaderReady = sessionUploaderPromise ? sessionUploaderPromise.then(mod => mod.createSessionTurnUploader()).catch(() => null) : null;
     const sessionConfig = {
       debug: debug || debugToStderr,
@@ -3093,7 +3079,7 @@ async function run(): Promise<CommanderCommand> {
       })
     };
 
-    // Shared context for processResumedConversation calls
+    // 用于 processResumedConversation 调用的共享上下文
     const resumeContext = {
       modeApi: coordinatorModeModule,
       mainThreadAgentDefinition,
@@ -3103,12 +3089,12 @@ async function run(): Promise<CommanderCommand> {
       initialState
     };
     if (options.continue) {
-      // Continue the most recent conversation directly
+      // 直接继续最近的对话
       let resumeSucceeded = false;
       try {
         const resumeStart = performance.now();
 
-        // Clear stale caches before resuming to ensure fresh file/skill discovery
+        // 在恢复之前清除过时的缓存，以确保新鲜的文件/技能发现
         const {
           clearSessionCaches
         } = await import('./commands/clear/caches.js');
@@ -3158,7 +3144,7 @@ async function run(): Promise<CommanderCommand> {
         process.exit(1);
       }
     } else if (feature('DIRECT_CONNECT') && _pendingConnect?.url) {
-      // `zy connect <url>` — full interactive TUI connected to a remote server
+      // `zy connect <url>` —— 完整交互式 TUI 连接到远程服务器
       let directConnectConfig;
       try {
         const session = await createDirectConnectSession({
@@ -3195,11 +3181,11 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('SSH_REMOTE') && _pendingSSH?.host) {
-      // `zy ssh <host> [dir]` — probe remote, deploy binary if needed,
-      // spawn ssh with unix-socket -R forward to a local auth proxy, hand
-      // the REPL an SSHSession. Tools run remotely, UI renders locally.
-      // `--local` skips probe/deploy/ssh and spawns the current binary
-      // directly with the same env — e2e test of the proxy/auth plumbing.
+      // `zy ssh <host> [dir]` —— 探测远程，如果需要则部署二进制文件，
+      // 生成带有 unix-socket -R 转发到本地认证代理的 ssh，将
+      // SSHSession 交给 REPL。工具在远程运行，UI 在本地渲染。
+      // `--local` 跳过探测/部署/ssh 并直接生成当前二进制文件
+      // 使用相同的环境 —— 代理/认证管道的 e2e 测试。
       const {
         createSSHSession,
         createLocalSSHSession,
@@ -3216,9 +3202,9 @@ async function run(): Promise<CommanderCommand> {
           });
         } else {
           process.stderr.write(`Connecting to ${_pendingSSH.host}…\n`);
-          // In-place progress: \r + EL0 (erase to end of line). Final \n on
-          // success so the next message lands on a fresh line. No-op when
-          // stderr isn't a TTY (piped/redirected) — \r would just emit noise.
+          // 原位进度：\r + EL0（擦除到行尾）。成功时最终 \n
+          // 以便下一条消息落在新行上。当 stderr
+          // 不是 TTY 时无操作（管道/重定向）—— \r 只会发出噪音。
           const isTTY = process.stderr.isTTY;
           let hadProgress = false;
           sshSession = await createSSHSession({
@@ -3261,16 +3247,16 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('KAIROS') && _pendingAssistantChat && (_pendingAssistantChat.sessionId || _pendingAssistantChat.discover)) {
-      // `zy assistant [sessionId]` — REPL as a pure viewer client
-      // of a remote assistant session. The agentic loop runs remotely; this
-      // process streams live events and POSTs messages. History is lazy-
-      // loaded by useAssistantHistory on scroll-up (no blocking fetch here).
+      // `zy assistant [sessionId]` —— REPL 作为纯查看器客户端
+      // 连接远程助手会话。代理循环在远程运行；此
+      // 进程流式传输实时事件并 POST 消息。历史是懒惰
+      // 加载的，由 useAssistantHistory 在滚动向上时加载（此处无阻塞获取）。
       const {
         discoverAssistantSessions
       } = await import('./assistant/sessionDiscovery.js');
       let targetSessionId = _pendingAssistantChat.sessionId;
 
-      // Discovery flow — list bridge environments, filter sessions
+      // 发现流程 —— 列出桥接环境，过滤会话
       if (!targetSessionId) {
         let sessions;
         try {
@@ -3310,8 +3296,8 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // Auth — call prepareApiRequest() once for orgUUID, but use a
-      // getAccessToken closure for the token so reconnects get fresh tokens.
+      // 认证 —— 调用 prepareApiRequest() 一次获取 orgUUID，但使用
+      // getAccessToken 闭包获取令牌，以便重新连接获取新鲜令牌。
       const {
         checkAndRefreshOAuthTokenIfNeeded,
         getZyAIOAuthTokens
@@ -3325,8 +3311,8 @@ async function run(): Promise<CommanderCommand> {
       }
       const getAccessToken = (): string => getZyAIOAuthTokens()?.accessToken ?? apiCreds.accessToken;
 
-      // Brief mode activation: setKairosActive(true) satisfies BOTH opt-in
-      // and entitlement for isBriefEnabled() (BriefTool.ts:124-132).
+      // Brief 模式激活：setKairosActive(true) 满足 isBriefEnabled() 的选择加入
+      // 和授权（BriefTool.ts:124-132）。
       setKairosActive(true);
       setUserMsgOptIn(true);
       setIsRemoteMode(true);
@@ -3357,7 +3343,7 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (options.resume || options.fromPr || teleport || remote !== null) {
-      // Handle resume flow - from file (ant-only), session ID, or interactive selector
+      // 处理恢复流程 —— 从文件（仅限 ant）、会话 ID 或交互式选择器恢复
 
       // Clear stale caches before resuming to ensure fresh file/skill discovery
       const {
@@ -3368,12 +3354,12 @@ async function run(): Promise<CommanderCommand> {
       let processedResume: ProcessedResume | undefined = undefined;
       let maybeSessionId = validateUuid(options.resume);
       let searchTerm: string | undefined = undefined;
-      // Store full LogOption when found by custom title (for cross-worktree resume)
+      // 按自定义标题找到时存储完整的 LogOption（用于跨 worktree 恢复）
       let matchedLog: LogOption | null = null;
-      // PR filter for --from-pr flag
+      // --from-pr 标志的 PR 过滤
       let filterByPr: boolean | number | string | undefined = undefined;
 
-      // Handle --from-pr flag
+      // 处理 --from-pr 标志
       if (options.fromPr) {
         if (options.fromPr === true) {
           // Show all sessions with linked PRs
@@ -3384,7 +3370,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // If resume value is not a UUID, try exact match by custom title first
+      // 如果恢复值不是 UUID，首先尝试按自定义标题精确匹配
       if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
         const trimmedValue = options.resume.trim();
         if (trimmedValue) {
@@ -3392,11 +3378,11 @@ async function run(): Promise<CommanderCommand> {
             exact: true
           });
           if (matches.length === 1) {
-            // Exact match found - store full LogOption for cross-worktree resume
+            // 精确匹配找到 —— 存储完整的 LogOption 用于跨 worktree 恢复
             matchedLog = matches[0]!;
             maybeSessionId = getSessionIdFromLog(matchedLog) ?? null;
           } else {
-            // No match or multiple matches - use as search term for picker
+            // 无匹配或多个匹配 —— 用作选择器的搜索词
             searchTerm = trimmedValue;
           }
         }
@@ -3411,10 +3397,10 @@ async function run(): Promise<CommanderCommand> {
         }
       }
       if (remote !== null) {
-        // Create remote session (optionally with initial prompt)
+        // 创建远程会话（可选带初始提示）
         const hasInitialPrompt = remote.length > 0;
 
-        // Check if TUI mode is enabled - description is only optional in TUI mode
+        // 检查是否启用了 TUI 模式 —— 描述仅在 TUI 模式下是可选的
         const isRemoteTuiEnabled = getFeatureValue_CACHED_MAY_BE_STALE('tengu_remote_backend', false);
         if (!isRemoteTuiEnabled && !hasInitialPrompt) {
           return await exitWithError(root, 'Error: --remote requires a description.\nUsage: zy --remote "your task description"', () => gracefulShutdown(1));
@@ -3423,7 +3409,7 @@ async function run(): Promise<CommanderCommand> {
           has_initial_prompt: String(hasInitialPrompt) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
 
-        // Pass current branch so CCR clones the repo at the right revision
+        // 传递当前分支以便 CCR 在正确的修订版克隆仓库
         const currentBranch = await getBranch();
         const createdSession = await teleportToRemoteWithErrorHandling(root, hasInitialPrompt ? remote : null, new AbortController().signal, currentBranch || undefined);
         if (!createdSession) {
@@ -3436,9 +3422,9 @@ async function run(): Promise<CommanderCommand> {
           session_id: createdSession.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
 
-        // Check if new remote TUI mode is enabled via feature gate
+        // 通过功能门检查是否启用了新的远程 TUI 模式
         if (!isRemoteTuiEnabled) {
-          // Original behavior: print session info and exit
+          // 原始行为：打印会话信息并退出
           process.stdout.write(`Created remote session: ${createdSession.title}\n`);
           process.stdout.write(`View: ${getRemoteSessionUrl(createdSession.id)}?m=0\n`);
           process.stdout.write(`Resume with: zy --teleport ${createdSession.id}\n`);
@@ -3446,12 +3432,12 @@ async function run(): Promise<CommanderCommand> {
           process.exit(0);
         }
 
-        // New behavior: start local TUI with CCR engine
-        // Mark that we're in remote mode for command visibility
+        // 新行为：启动带 CCR 引擎的本地 TUI
+        // 标记我们处于远程模式以进行命令可见性
         setIsRemoteMode(true);
         switchSession(asSessionId(createdSession.id));
 
-        // Get OAuth credentials for remote session
+        // 获取远程会话的 OAuth 凭证
         let apiCreds: {
           accessToken: string;
           orgUUID: string;
@@ -3463,30 +3449,30 @@ async function run(): Promise<CommanderCommand> {
           return await exitWithError(root, `Error: ${errorMessage(error) || 'Failed to authenticate'}`, () => gracefulShutdown(1));
         }
 
-        // Create remote session config for the REPL
+        // 为 REPL 创建远程会话配置
         const {
           getZyAIOAuthTokens: getTokensForRemote
         } = await import('./utils/auth.js');
         const getAccessTokenForRemote = (): string => getTokensForRemote()?.accessToken ?? apiCreds.accessToken;
         const remoteSessionConfig = createRemoteSessionConfig(createdSession.id, getAccessTokenForRemote, apiCreds.orgUUID, hasInitialPrompt);
 
-        // Add remote session info as initial system message
+        // 将远程会话信息作为初始系统消息添加
         const remoteSessionUrl = `${getRemoteSessionUrl(createdSession.id)}?m=0`;
         const remoteInfoMessage = createSystemMessage(`/remote-control is active. Code in CLI or at ${remoteSessionUrl}`, 'info');
 
-        // Create initial user message from the prompt if provided (CCR echoes it back but we ignore that)
+        // 如果提供了提示，从提示创建初始用户消息（CCR 回显它但我们忽略）
         const initialUserMessage = hasInitialPrompt ? createUserMessage({
           content: remote
         }) : null;
 
-        // Set remote session URL in app state for footer indicator
+        // 在应用状态中设置远程会话 URL 用于底部指示器
         const remoteInitialState = {
           ...initialState,
           remoteSessionUrl
         };
 
-        // Pre-filter commands to only include remote-safe ones.
-        // CCR's init response may further refine the list (via handleRemoteInit in REPL).
+        // 预过滤命令以仅包含远程安全的命令。
+        // CCR 的初始化响应可能进一步细化列表（通过 REPL 中的 handleRemoteInit）。
         const remoteCommands = filterCommandsForRemoteMode(commands);
         await launchRepl(root, {
           getFpsMetrics,
@@ -3507,12 +3493,12 @@ async function run(): Promise<CommanderCommand> {
         return;
       } else if (teleport) {
         if (teleport === true || teleport === '') {
-          // Interactive mode: show task selector and handle resume
+          // 交互模式：显示任务选择器并处理恢复
           logEvent('tengu_teleport_interactive_mode', {});
           logForDebugging('selectAndResumeTeleportTask: Starting teleport flow...');
           const teleportResult = await launchTeleportResumeWrapper(root);
           if (!teleportResult) {
-            // User cancelled or error occurred
+            // 用户取消或发生错误
             await gracefulShutdown(0);
             process.exit(0);
           }
@@ -3525,34 +3511,34 @@ async function run(): Promise<CommanderCommand> {
             mode: 'direct' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
           try {
-            // First, fetch session and validate repository before checking git state
+            // 首先，在检查 git 状态之前获取会话并验证仓库
             const sessionData = await fetchSession(teleport);
             const repoValidation = await validateSessionRepository(sessionData);
 
-            // Handle repo mismatch or not in repo cases
+            // 处理仓库不匹配或不在仓库中的情况
             if (repoValidation.status === 'mismatch' || repoValidation.status === 'not_in_repo') {
               const sessionRepo = repoValidation.sessionRepo;
               if (sessionRepo) {
-                // Check for known paths
+                // 检查已知路径
                 const knownPaths = getKnownPathsForRepo(sessionRepo);
                 const existingPaths = await filterExistingPaths(knownPaths);
                 if (existingPaths.length > 0) {
-                  // Show directory switch dialog
+                  // 显示目录切换对话框
                   const selectedPath = await launchTeleportRepoMismatchDialog(root, {
                     targetRepo: sessionRepo,
                     initialPaths: existingPaths
                   });
                   if (selectedPath) {
-                    // Change to the selected directory
+                    // 切换到选定的目录
                     process.chdir(selectedPath);
                     setCwd(selectedPath);
                     setOriginalCwd(selectedPath);
                   } else {
-                    // User cancelled
+                    // 用户取消
                     await gracefulShutdown(0);
                   }
                 } else {
-                  // No known paths - show original error
+                  // 没有已知路径 —— 显示原始错误
                   throw new TeleportOperationError(`You must run zy --teleport ${teleport} from a checkout of ${sessionRepo}.`, chalk.red(`You must run zy --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`));
                 }
               }
@@ -3561,12 +3547,12 @@ async function run(): Promise<CommanderCommand> {
             }
             await validateGitState();
 
-            // Use progress UI for teleport
+            // 使用进度 UI 进行 teleport
             const {
               teleportWithProgress
             } = await import('./components/TeleportProgress.js');
             const result = await teleportWithProgress(root, teleport);
-            // Track teleported session for reliability logging
+            // 跟踪 teleported 会话用于可靠性日志
             setTeleportedSessionInfo({
               sessionId: teleport
             });
@@ -3668,14 +3654,14 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // If not loaded as a file, try as session ID
+      // 如果未作为文件加载，尝试作为会话 ID
       if (maybeSessionId) {
-        // Resume specific session by ID
+        // 按 ID 恢复特定会话
         const sessionId = maybeSessionId;
         try {
           const resumeStart = performance.now();
-          // Use matchedLog if available (for cross-worktree resume by custom title)
-          // Otherwise fall back to sessionId string (for direct UUID resume)
+          // 如果可用使用 matchedLog（用于按自定义标题跨 worktree 恢复）
+          // 否则回退到 sessionId 字符串（用于直接 UUID 恢复）
           const result = await loadConversationForResume(matchedLog ?? sessionId, undefined);
           if (!result) {
             logEvent('tengu_session_resumed', {
@@ -3708,7 +3694,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // Await file downloads before rendering REPL (files must be available)
+      // 在渲染 REPL 之前等待文件下载（文件必须可用）
       if (fileDownloadPromise) {
         try {
           const results = await fileDownloadPromise;
@@ -3721,7 +3707,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // If we have a processed resume or teleport messages, render the REPL
+      // 如果我们有处理过的恢复或 teleport 消息，渲染 REPL
       const resumeData = processedResume ?? (Array.isArray(messages) ? {
         messages,
         fileHistorySnapshots: undefined,
@@ -3748,7 +3734,7 @@ async function run(): Promise<CommanderCommand> {
           initialAgentColor: resumeData.agentColor
         }, renderAndRun);
       } else {
-        // Show interactive selector (includes same-repo worktrees)
+        // 显示交互式选择器（包括同仓库 worktrees）
         // Note: ResumeConversation loads logs internally to ensure proper GC after selection
         await launchResumeChooser(root, {
           getFpsMetrics,
@@ -3762,26 +3748,26 @@ async function run(): Promise<CommanderCommand> {
         });
       }
     } else {
-      // Pass unresolved hooks promise to REPL so it can render immediately
-      // instead of blocking ~500ms waiting for SessionStart hooks to finish.
-      // REPL will inject hook messages when they resolve and await them before
-      // the first API call so the model always sees hook context.
+      // 将未解决的钩子 promise 传递给 REPL，以便它可以立即渲染
+      // 而不是阻塞约 500ms 等待 SessionStart 钩子完成。
+      // REPL 将在钩子解析时注入钩子消息，并在
+      // 首次 API 调用之前等待它们，以便模型始终看到钩子上下文。
       const pendingHookMessages = hooksPromise && hookMessages.length === 0 ? hooksPromise : undefined;
     
     profileCheckpoint('action_after_hooks');
       maybeActivateProactive(options);
       maybeActivateBrief(options);
-      // Persist the current mode for fresh sessions so future resumes know what mode was used
+      // 为新会话持久化当前模式，以便未来的恢复知道使用了什么模式
       if (feature('COORDINATOR_MODE')) {
         saveMode(coordinatorModeModule?.isCoordinatorMode() ? 'coordinator' : 'normal');
       }
 
-      // If launched via a deep link, show a provenance banner so the user
-      // knows the session originated externally. Linux xdg-open and
-      // browsers with "always allow" set dispatch the link with no OS-level
-      // confirmation, so this is the only signal the user gets that the
-      // prompt — and the working directory / CLAUDE.md it implies — came
-      // from an external source rather than something they typed.
+      // 如果通过深度链接启动，显示来源横幅以便用户
+      // 知道会话是从外部启动的。Linux xdg-open 和
+      // 设置了"始终允许"的浏览器在没有操作系统级别
+      // 确认的情况下分派链接，所以这是用户得到的唯一信号
+      // 提示 —— 以及它暗示的工作目录 / CLAUDE.md —— 来自
+      // 外部来源，而不是他们输入的内容。
       let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null;
       if (feature('LODESTONE')) {
         if (options.deepLinkOrigin) {
@@ -3812,7 +3798,7 @@ async function run(): Promise<CommanderCommand> {
     }
   }).version(`${MACRO.VERSION} (ZY Code)`, '-v, --version', 'Output the version number');
 
-  // Worktree flags
+  // worktree 标志
   program.option('-w, --worktree [name]', 'Create a new git worktree for this session (optionally specify a name)');
   program.option('--tmux', 'Create a tmux session for the worktree (requires --worktree). Uses iTerm2 native panes when available; use --tmux=classic for traditional tmux.');
   if (canUserConfigureAdvisor()) {
@@ -3851,8 +3837,8 @@ async function run(): Promise<CommanderCommand> {
     program.addOption(new Option('--dangerously-load-development-channels <servers...>', 'Load channel servers not on the approved allowlist. For local channel development only. Shows a confirmation dialog at startup.').hideHelp());
   }
 
-  // Teammate identity options (set by leader when spawning tmux teammates)
-  // These replace the ZY_CODE_* environment variables
+  // 队友身份选项（由领导者在生成 tmux 队友时设置）
+  // 这些替换了 ZY_CODE_* 环境变量
   program.addOption(new Option('--agent-id <id>', 'Teammate agent ID').hideHelp());
   program.addOption(new Option('--agent-name <name>', 'Teammate display name').hideHelp());
   program.addOption(new Option('--team-name <name>', 'Team name for swarm coordination').hideHelp());
@@ -3862,10 +3848,10 @@ async function run(): Promise<CommanderCommand> {
   program.addOption(new Option('--teammate-mode <mode>', 'How to spawn teammates: "tmux", "in-process", or "auto"').choices(['auto', 'tmux', 'in-process']).hideHelp());
   program.addOption(new Option('--agent-type <type>', 'Custom agent type for this teammate').hideHelp());
 
-  // Enable SDK URL for all builds but hide from help
+  // 为所有构建启用 SDK URL 但从帮助中隐藏
   program.addOption(new Option('--sdk-url <url>', 'Use remote WebSocket endpoint for SDK I/O streaming (only with -p and stream-json format)').hideHelp());
 
-  // Enable teleport/remote flags for all builds but keep them undocumented until GA
+  // 为所有构建启用 teleport/remote 标志，但在 GA 之前保持未文档化
   program.addOption(new Option('--teleport [session]', 'Resume a teleport session, optionally specify session ID').hideHelp());
   program.addOption(new Option('--remote [description]', 'Create a remote session with the given description').hideHelp());
   if (feature('BRIDGE_MODE')) {
@@ -3877,14 +3863,14 @@ async function run(): Promise<CommanderCommand> {
   }
   profileCheckpoint('run_main_options_built');
 
-  // -p/--print mode: skip subcommand registration. The 52 subcommands
-  // (mcp, auth, plugin, skill, task, config, doctor, update, etc.) are
-  // never dispatched in print mode — commander routes the prompt to the
-  // default action. The subcommand registration path was measured at ~65ms
-  // on baseline — mostly the isBridgeEnabled() call (25ms settings Zod parse
-  // + 40ms sync keychain subprocess), both hidden by the try/catch that
-  // always returns false before enableConfigs(). cc:// URLs are rewritten to
-  // `open` at main() line ~851 BEFORE this runs, so argv check is safe here.
+  // -p/--print 模式：跳过子命令注册。52 个子命令
+  //（mcp、auth、plugin、skill、task、config、doctor、update 等）
+  // 在打印模式下从不调度 —— commander 将提示路由到
+  // 默认 action。子命令注册路径在基线上测量约 65ms
+  // —— 主要是 isBridgeEnabled() 调用（25ms 设置 Zod 解析
+  // + 40ms 同步 keychain 子进程），两者都被 try/catch 隐藏，
+  // 在 enableConfigs() 之前总是返回 false。cc:// URL 在 main() 约第 851 行
+  // 在此运行之前重写为 `open`，所以此处的 argv 检查是安全的。
   const isPrintMode = process.argv.includes('-p') || process.argv.includes('--print');
   const isCcUrl = process.argv.some(a => a.startsWith('cc://') || a.startsWith('cc+unix://'));
   if (isPrintMode && !isCcUrl) {
@@ -3913,7 +3899,7 @@ async function run(): Promise<CommanderCommand> {
     });
   });
 
-  // Register the mcp add subcommand (extracted for testability)
+  // 注册 mcp add 子命令（为可测试性提取）
   registerMcpAddCommand(mcp);
   if (isXaaEnabled()) {
     registerMcpXaaIdpCommand(mcp);
@@ -4031,7 +4017,7 @@ async function run(): Promise<CommanderCommand> {
       const shutdown = async () => {
         if (shuttingDown) return;
         shuttingDown = true;
-        // Stop accepting new connections before tearing down sessions.
+        // 在拆除会话之前停止接受新连接。
         server.stop(true);
         await sessionManager.destroyAll();
         await removeServerLock();
@@ -4042,24 +4028,24 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // `zy ssh <host> [dir]` — registered here only so --help shows it.
-  // The actual interactive flow is handled by early argv rewriting in main()
-  // (parallels the DIRECT_CONNECT/cc:// pattern above). If commander reaches
-  // this action it means the argv rewrite didn't fire (e.g. user ran
-  // `zy ssh` with no host) — just print usage.
+  // `zy ssh <host> [dir]` —— 仅在此处注册以便 --help 显示它。
+  // 实际的交互流程由 main() 中的早期 argv 重写处理
+  //（与上方的 DIRECT_CONNECT/cc:// 模式并行）。如果 commander 到达
+  // 此 action 意味着 argv 重写没有触发（例如用户运行
+  // `zy ssh` 没有主机）—— 只打印用法。
   if (feature('SSH_REMOTE')) {
     program.command('ssh <host> [dir]').description('Run ZY Code on a remote host over SSH. Deploys the binary and ' + 'tunnels API auth back through your local machine — no remote setup needed.').option('--permission-mode <mode>', 'Permission mode for the remote session').option('--dangerously-skip-permissions', 'Skip all permission prompts on the remote (dangerous)').option('--local', 'e2e test mode — spawn the child CLI locally (skip ssh/deploy). ' + 'Exercises the auth proxy and unix-socket plumbing without a remote host.').action(async () => {
-      // Argv rewriting in main() should have consumed `ssh <host>` before
-      // commander runs. Reaching here means host was missing or the
-      // rewrite predicate didn't match.
+      // main() 中的 argv 重写应该在 commander 运行之前消费 `ssh <host>`。
+      // 到达这里意味着主机缺失或
+      // 重写谓词不匹配。
       process.stderr.write('Usage: zy ssh <user@host | ssh-config-alias> [dir]\n\n' + "Runs ZY Code on a remote Linux host. You don't need to install\n" + 'anything on the remote or run `zy auth login` there — the binary is\n' + 'deployed over SSH and API auth tunnels back through your local machine.\n');
       process.exit(1);
     });
   }
 
-  // zy connect — subcommand only handles -p (headless) mode.
-  // Interactive mode (without -p) is handled by early argv rewriting in main()
-  // which redirects to the main command with full TUI support.
+  // zy connect —— 子命令仅处理 -p（无头）模式。
+  // 交互模式（不带 -p）由 main() 中的早期 argv 重写处理
+  // 重定向到主命令，具有完整 TUI 支持。
   if (feature('DIRECT_CONNECT')) {
     program.command('open <cc-url>').description('Connect to a ZY Code server (internal — use cc:// URLs)').option('-p, --print [prompt]', 'Print mode (headless)').option('--output-format <format>', 'Output format: text, json, stream-json', 'text').action(async (ccUrl: string, opts: {
       print?: string | boolean;
@@ -4146,7 +4132,7 @@ async function run(): Promise<CommanderCommand> {
    * @param error The error that occurred
    * @param action Description of the action that failed
    */
-  // Hidden flag on all plugin/marketplace subcommands to target cowork_plugins.
+  // 在所有插件/市场子命令上的隐藏标志，以 targeting cowork_plugins。
   const coworkOption = () => new Option('--cowork', 'Use cowork_plugins directory').hideHelp();
 
   // Plugin validate command
@@ -4347,7 +4333,7 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // Doctor command - check installation health
+  // 医生命令 —— 检查安装健康状态
   program.command('doctor').description('Check the health of your ZY Code auto-updater. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
     const [{
       doctorHandler
@@ -4360,10 +4346,10 @@ async function run(): Promise<CommanderCommand> {
 
   // zy update
   //
-  // For SemVer-compliant versioning with build metadata (X.X.X+SHA):
-  // - We perform exact string comparison (including SHA) to detect any change
-  // - This ensures users always get the latest build, even when only the SHA changes
-  // - UI shows both versions including build metadata for clarity
+  // 对于符合 SemVer 的版本控制带构建元数据（X.X.X+SHA）：
+  // - 我们执行精确字符串比较（包括 SHA）以检测任何更改
+  // - 这确保用户始终获得最新构建，即使只有 SHA 更改
+  // - UI 显示两个版本包括构建元数据以便清晰
   program.command('update').alias('upgrade').description('Check for updates and install if available').action(async () => {
     const {
       update
@@ -4381,8 +4367,8 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // zy rollback (ant-only)
-  // Rolls back to previous releases
+  // zy rollback（仅限 ant）
+  // 回滚到之前的版本
   if ("external" === 'ant') {
     program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  zy rollback                                    Go 1 version back from current\n  zy rollback 3                                  Go 3 versions back from current\n  zy rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
       list?: boolean;
@@ -4406,7 +4392,7 @@ async function run(): Promise<CommanderCommand> {
     await installHandler(target, options);
   });
 
-  // ant-only commands
+  // 仅限 ant 的命令
   if ("external" === 'ant') {
     const validateLogId = (value: string) => {
       const maybeSessionId = validateUuid(value);
@@ -4511,10 +4497,10 @@ Examples:
 
   profileCheckpoint('run_after_parse');
 
-  // Record final checkpoint for total_time calculation
+  // 记录最终checkpoint 用于 total_time 计算
   profileCheckpoint('main_after_run');
 
-  // Log startup perf to Statsig (sampled) and output detailed report if enabled
+  // 将启动性能记录到 Statsig（采样）并在启用时输出详细报告
   profileReport();
   return program;
 }
@@ -4633,13 +4619,13 @@ function maybeActivateBrief(options: unknown): void {
   }).brief;
   const briefEnv = isEnvTruthy(process.env.ZY_CODE_BRIEF);
   if (!briefFlag && !briefEnv) return;
-  // --brief / ZY_CODE_BRIEF are explicit opt-ins: check entitlement,
-  // then set userMsgOptIn to activate the tool + prompt section. The env
-  // var also grants entitlement (isBriefEntitled() reads it), so setting
-  // ZY_CODE_BRIEF=1 alone force-enables for dev/testing — no GB gate
-  // needed. initialIsBriefOnly reads getUserMsgOptIn() directly.
-  // Conditional require: static import would leak the tool name string
-  // into external builds via BriefTool.ts → prompt.ts.
+  // --brief / ZY_CODE_BRIEF 是显式选择加入：检查授权，
+  // 然后设置 userMsgOptIn 以激活工具 + 提示部分。env
+  // 变量也授予授权（isBriefEntitled() 读取它），所以设置
+  // ZY_CODE_BRIEF=1  alone 为开发/测试强制启用 —— 不需要 GB 门
+  //。initialIsBriefOnly 直接读取 getUserMsgOptIn()。
+  // 条件导入：静态导入会将工具名称字符串泄漏到
+  // 外部构建中，通过 BriefTool.ts → prompt.ts。
   /* eslint-disable @typescript-eslint/no-require-imports */
   const {
     isBriefEntitled
@@ -4649,8 +4635,8 @@ function maybeActivateBrief(options: unknown): void {
   if (entitled) {
     setUserMsgOptIn(true);
   }
-  // Fire unconditionally once intent is seen: enabled=false captures the
-  // "user tried but was gated" failure mode in Datadog.
+  // 一旦看到意图就无条件触发：enabled=false 在 Datadog 中捕获
+  // "用户尝试但被门控"的失败模式。
   logEvent('tengu_brief_mode_enabled', {
     enabled: entitled,
     gated: !entitled,

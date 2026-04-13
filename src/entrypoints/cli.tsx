@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle';
 
-// Bugfix for corepack auto-pinning, which adds yarnpkg to peoples' package.jsons
+// 修复 corepack 自动 pinning 问题，它会在用户的 package.json 中添加 yarnpkg
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 process.env.COREPACK_ENABLE_AUTO_PIN = '0';
 
-// Set max heap size for child processes in CCR environments (containers have 16GB)
+// 为 CCR 环境的子进程设置最大堆大小（容器有 16GB 内存）
 // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level, custom-rules/safe-env-boolean-check
 if (process.env.ZY_CODE_REMOTE === 'true') {
   // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
@@ -13,10 +13,10 @@ if (process.env.ZY_CODE_REMOTE === 'true') {
   process.env.NODE_OPTIONS = existing ? `${existing} --max-old-space-size=8192` : '--max-old-space-size=8192';
 }
 
-// Harness-science L0 ablation baseline. Inlined here (not init.ts) because
-// BashTool/AgentTool/PowerShellTool capture DISABLE_BACKGROUND_TASKS into
-// module-level consts at import time — init() runs too late. feature() gate
-// DCEs this entire block from external builds.
+// 对照实验基线。内联在此处（而非 init.ts），因为
+// BashTool/AgentTool/PowerShellTool 在导入时会将 DISABLE_BACKGROUND_TASKS 捕获到
+// 模块级常量中 —— init() 执行得太晚。feature() 门控
+// 会将整个块从外部构建中通过 DCE 移除。
 // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
 if (feature('ABLATION_BASELINE') && process.env.ZY_CODE_ABLATION_BASELINE) {
   for (const k of ['ZY_CODE_SIMPLE', 'ZY_CODE_DISABLE_THINKING', 'DISABLE_INTERLEAVED_THINKING', 'DISABLE_COMPACT', 'DISABLE_AUTO_COMPACT', 'ZY_CODE_DISABLE_AUTO_MEMORY', 'ZY_CODE_DISABLE_BACKGROUND_TASKS']) {
@@ -26,30 +26,30 @@ if (feature('ABLATION_BASELINE') && process.env.ZY_CODE_ABLATION_BASELINE) {
 }
 
 /**
- * Bootstrap entrypoint - checks for special flags before loading the full CLI.
- * All imports are dynamic to minimize module evaluation for fast paths.
- * Fast-path for --version has zero imports beyond this file.
+ * 引导入口 —— 在加载完整 CLI 之前检查特殊标志。
+ * 所有导入都是动态的，以最小化快速路径的模块求值。
+ * --version 的快速路径在此文件之外零导入。
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
-  // Fast-path for --version/-v: zero module loading needed
+  // --version/-v 快速路径：无需加载任何模块
   if (args.length === 1 && (args[0] === '--version' || args[0] === '-v' || args[0] === '-V')) {
-    // MACRO.VERSION is inlined at build time
+    // MACRO.VERSION 在构建时内联
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(`${MACRO.VERSION} (ZY Code)`);
     return;
   }
 
-  // For all other paths, load the startup profiler
+  // 其他路径：加载启动性能分析器
   const {
     profileCheckpoint
   } = await import('../utils/startupProfiler.js');
   profileCheckpoint('cli_entry');
 
-  // Fast-path for --dump-system-prompt: output the rendered system prompt and exit.
-  // Used by prompt sensitivity evals to extract the system prompt at a specific commit.
-  // Ant-only: eliminated from external builds via feature flag.
+  // --dump-system-prompt 快速路径：输出渲染后的系统提示并退出。
+  // 用于提示词敏感度评估，以提取特定提交的系统提示。
+  // 仅限 Ant 内部使用：通过 feature flag 从外部构建中移除。
   if (feature('DUMP_SYSTEM_PROMPT') && args[0] === '--dump-system-prompt') {
     profileCheckpoint('cli_dump_system_prompt_path');
     const {
@@ -92,11 +92,11 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for `--daemon-worker=<kind>` (internal — supervisor spawns this).
-  // Must come before the daemon subcommand check: spawned per-worker, so
-  // perf-sensitive. No enableConfigs(), no analytics sinks at this layer —
-  // workers are lean. If a worker kind needs configs/auth (assistant will),
-  // it calls them inside its run() fn.
+  // `--daemon-worker=<kind>` 快速路径（内部 —— supervisor 派生此进程）。
+  // 必须放在 daemon 子命令检查之前：每个 worker 单独派生，因此
+  // 对性能敏感。此层不启用 enableConfigs()，无分析 sink ——
+  // worker 是轻量级的。如果某种 worker 需要配置/认证（如 assistant），
+  // 它会在自己的 run() 函数中调用。
   if (feature('DAEMON') && args[0] === '--daemon-worker') {
     const {
       runDaemonWorker
@@ -105,10 +105,10 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for `zy remote-control` (also accepts legacy `zy remote` / `zy sync` / `zy bridge`):
-  // serve local machine as bridge environment.
-  // feature() must stay inline for build-time dead code elimination;
-  // isBridgeEnabled() checks the runtime GrowthBook gate.
+  // `zy remote-control` 快速路径（也接受旧版 `zy remote` / `zy sync` / `zy bridge`）：
+  // 将本地机器作为 bridge 环境提供服务。
+  // feature() 必须保持内联以实现构建时死代码消除；
+  // isBridgeEnabled() 检查运行时 GrowthBook 门控。
   if (feature('BRIDGE_MODE') && (args[0] === 'remote-control' || args[0] === 'rc' || args[0] === 'remote' || args[0] === 'sync' || args[0] === 'bridge')) {
     profileCheckpoint('cli_bridge_path');
     const {
@@ -129,10 +129,10 @@ async function main(): Promise<void> {
       exitWithError
     } = await import('../utils/process.js');
 
-    // Auth check must come before the GrowthBook gate check — without auth,
-    // GrowthBook has no user context and would return a stale/default false.
-    // getBridgeDisabledReason awaits GB init, so the returned value is fresh
-    // (not the stale disk cache), but init still needs auth headers to work.
+    // 认证检查必须放在 GrowthBook 门控检查之前 —— 没有认证，
+    // GrowthBook 没有用户上下文，会返回过期/默认的 false。
+    // getBridgeDisabledReason 会等待 GB 初始化，因此返回值是最新的
+    //（而非过期的磁盘缓存），但 init 仍需要认证头才能工作。
     const {
       getZyAIOAuthTokens
     } = await import('../utils/auth.js');
@@ -148,7 +148,7 @@ async function main(): Promise<void> {
       exitWithError(versionError);
     }
 
-    // Bridge is a remote control feature - check policy limits
+    // Bridge 是一个远程控制功能 —— 检查策略限制
     const {
       waitForPolicyLimitsToLoad,
       isPolicyAllowed
@@ -161,7 +161,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for `zy daemon [subcommand]`: long-running supervisor.
+  // `zy daemon [subcommand]` 快速路径：长期运行的 supervisor。
   if (feature('DAEMON') && args[0] === 'daemon') {
     profileCheckpoint('cli_daemon_path');
     const {
@@ -179,9 +179,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for `zy ps|logs|attach|kill` and `--bg`/`--background`.
-  // Session management against the ~/.zy/sessions/ registry. Flag
-  // literals are inlined so bg.js only loads when actually dispatching.
+  // `zy ps|logs|attach|kill` 和 `--bg`/`--background` 快速路径。
+  // 针对 ~/.zy/sessions/ 注册表的会话管理。标志
+  // 字面量是内联的，因此 bg.js 仅在实际分发时加载。
   if (feature('BG_SESSIONS') && (args[0] === 'ps' || args[0] === 'logs' || args[0] === 'attach' || args[0] === 'kill' || args.includes('--bg') || args.includes('--background'))) {
     profileCheckpoint('cli_bg_path');
     const {
@@ -208,21 +208,21 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for template job commands.
+  // 模板 job 命令快速路径。
   if (feature('TEMPLATES') && (args[0] === 'new' || args[0] === 'list' || args[0] === 'reply')) {
     profileCheckpoint('cli_templates_path');
     const {
       templatesMain
     } = await import('../cli/handlers/templateJobs.js');
     await templatesMain(args);
-    // process.exit (not return) — mountFleetView's Ink TUI can leave event
-    // loop handles that prevent natural exit.
+    // process.exit（非 return）—— mountFleetView 的 Ink TUI 可能留下事件
+    // 循环句柄阻止自然退出。
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0);
   }
 
-  // Fast-path for `zy environment-runner`: headless BYOC runner.
-  // feature() must stay inline for build-time dead code elimination.
+  // `zy environment-runner` 快速路径：无头 BYOC 运行器。
+  // feature() 必须保持内联以实现构建时死代码消除。
   if (feature('BYOC_ENVIRONMENT_RUNNER') && args[0] === 'environment-runner') {
     profileCheckpoint('cli_environment_runner_path');
     const {
@@ -232,9 +232,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for `zy self-hosted-runner`: headless self-hosted-runner
-  // targeting the SelfHostedRunnerWorkerService API (register + poll; poll IS
-  // heartbeat). feature() must stay inline for build-time dead code elimination.
+  // `zy self-hosted-runner` 快速路径：无头自托管运行器，
+  // 面向 SelfHostedRunnerWorkerService API（注册 + 轮询；轮询即为心跳）。
+  // feature() 必须保持内联以实现构建时死代码消除。
   if (feature('SELF_HOSTED_RUNNER') && args[0] === 'self-hosted-runner') {
     profileCheckpoint('cli_self_hosted_runner_path');
     const {
@@ -244,7 +244,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for --worktree --tmux: exec into tmux before loading full CLI
+  // --worktree --tmux 快速路径：在加载完整 CLI 之前 exec 进入 tmux
   const hasTmuxFlag = args.includes('--tmux') || args.includes('--tmux=classic');
   if (hasTmuxFlag && (args.includes('-w') || args.includes('--worktree') || args.some(a => a.startsWith('--worktree=')))) {
     profileCheckpoint('cli_tmux_worktree_fast_path');
@@ -263,7 +263,7 @@ async function main(): Promise<void> {
       if (result.handled) {
         return;
       }
-      // If not handled (e.g., error), fall through to normal CLI
+      // 如果未处理（如发生错误），回退到正常 CLI 流程
       if (result.error) {
         const {
           exitWithError
@@ -273,18 +273,18 @@ async function main(): Promise<void> {
     }
   }
 
-  // Redirect common update flag mistakes to the update subcommand
+  // 将常见的更新标志错误重定向到 update 子命令
   if (args.length === 1 && (args[0] === '--update' || args[0] === '--upgrade')) {
     process.argv = [process.argv[0]!, process.argv[1]!, 'update'];
   }
 
-  // --bare: set SIMPLE early so gates fire during module eval / commander
-  // option building (not just inside the action handler).
+  // --bare：尽早设置 SIMPLE，使门控在模块求值 / commander
+  // 选项构建时触发（而非仅在 action handler 内部）。
   if (args.includes('--bare')) {
     process.env.ZY_CODE_SIMPLE = '1';
   }
 
-  // No special flags detected, load and run the full CLI
+  // 未检测到特殊标志，加载并运行完整 CLI
   const {
     startCapturingEarlyInput
   } = await import('../utils/earlyInput.js');

@@ -85,6 +85,8 @@ export default function BashToolResultMessage({
   const {
     cleanedStderr: stderrWithoutViolations
   } = extractSandboxViolations(stdErrWithViolations);
+  let stderr: string;
+  let cwdResetWarning: string | undefined;
   ({
     cleanedStderr: stderr,
     cwdResetWarning

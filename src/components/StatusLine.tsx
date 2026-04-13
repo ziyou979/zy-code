@@ -28,8 +28,8 @@ import { doesMostRecentAssistantMessageExceed200k, getCurrentUsage } from '../ut
 import { getCurrentWorktreeSession } from '../utils/worktree.js';
 import { isVimModeEnabled } from './PromptInput/utils.js';
 export function statusLineShouldDisplay(settings: ReadonlySettings): boolean {
-  // Assistant mode: statusline fields (model, permission mode, cwd) reflect the
-  // REPL/daemon process, not what the agent child is actually running. Hide it.
+  // Assistant 模式：statusline 字段（model、permission mode、cwd）反映的是
+  // REPL/daemon 进程，而不是 agent 子进程实际运行的内容。隐藏它。
   if (feature('KAIROS') && getKairosActive()) return false;
   return settings?.statusLine !== undefined;
 }
@@ -126,8 +126,8 @@ function buildStatusLineCommandInput(permissionMode: PermissionMode, exceeds200k
   };
 }
 type Props = {
-  // messages stays behind a ref (read only in the debounced callback);
-  // lastAssistantMessageId is the actual re-render trigger.
+  // messages 保持在 ref 后面（仅在 debounced callback 中只读）；
+  // lastAssistantMessageId 是实际的重新渲染触发器。
   messagesRef: React.RefObject<Message[]>;
   lastAssistantMessageId: string | null;
   vimMode?: VimMode;
@@ -149,12 +149,12 @@ function StatusLineInner({
   const {
     addNotification
   } = useNotifications();
-  // AppState-sourced model — same source as API requests. getMainLoopModel()
-  // re-reads settings.json on every call, so another session's /model write
-  // would leak into this session's statusline (anthropics/zy-code#37596).
+  // 从 AppState 获取的 model——与 API 请求相同的来源。getMainLoopModel()
+  // 在每次调用时重新读取 settings.json，所以另一个会话的 /model 写入
+  // 会泄漏到此会话的 statusline 中（anthropics/zy-code#37596）。
   const mainLoopModel = useMainLoopModel();
 
-  // Keep latest values in refs for stable callback access
+  // 将最新值保持在 ref 中，以便在回调中稳定访问
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const vimModeRef = useRef(vimMode);
@@ -166,7 +166,7 @@ function StatusLineInner({
   const mainLoopModelRef = useRef(mainLoopModel);
   mainLoopModelRef.current = mainLoopModel;
 
-  // Track previous state to detect changes and cache expensive calculations
+  // 追踪之前的状态以检测变化并缓存昂贵的计算
   const previousStateRef = useRef<{
     messageId: string | null;
     exceeds200kTokens: boolean;
@@ -181,15 +181,15 @@ function StatusLineInner({
     mainLoopModel
   });
 
-  // Debounce timer ref
+  // Debounce 计时器 ref
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // True when the next invocation should log its result (first run or after settings reload)
+  // 为 true 时，下一次调用应该记录其结果（首次运行或 settings 重载后）
   const logNextResultRef = useRef(true);
 
-  // Stable update function — reads latest values from refs
+  // 稳定的更新函数——从 ref 读取最新值
   const doUpdate = useCallback(async () => {
-    // Cancel any in-flight requests
+    // 取消任何进行中的请求
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -199,7 +199,7 @@ function StatusLineInner({
     try {
       let exceeds200kTokens = previousStateRef.current.exceeds200kTokens;
 
-      // Only recalculate 200k check if messages changed
+      // 仅在消息变化时重新计算 200k 检查
       const currentMessageId = getLastAssistantMessageId(msgs);
       if (currentMessageId !== previousStateRef.current.messageId) {
         exceeds200kTokens = doesMostRecentAssistantMessageExceed200k(msgs);
@@ -218,11 +218,11 @@ function StatusLineInner({
         });
       }
     } catch {
-      // Silently ignore errors in status line updates
+      // 静默忽略 status line 更新中的错误
     }
   }, [messagesRef, setAppState]);
 
-  // Stable debounced schedule function — no deps, uses refs
+  // 稳定的 debounce 调度函数——无依赖项，使用 refs
   const scheduleUpdate = useCallback(() => {
     if (debounceTimerRef.current !== undefined) {
       clearTimeout(debounceTimerRef.current);
@@ -233,11 +233,11 @@ function StatusLineInner({
     }, 300, debounceTimerRef, doUpdate);
   }, [doUpdate]);
 
-  // Only trigger update when assistant message, permission mode, vim mode, or model actually changes
+  // 仅在 assistant 消息、permission mode、vim mode 或 model 实际变化时触发更新
   useEffect(() => {
     if (lastAssistantMessageId !== previousStateRef.current.messageId || permissionMode !== previousStateRef.current.permissionMode || vimMode !== previousStateRef.current.vimMode || mainLoopModel !== previousStateRef.current.mainLoopModel) {
-      // Don't update messageId here — let doUpdate handle it so
-      // exceeds200kTokens is recalculated with the latest messages
+      // 不要在此处更新 messageId——让 doUpdate 处理它，这样
+      // exceeds200kTokens 会用最新的消息重新计算
       previousStateRef.current.permissionMode = permissionMode;
       previousStateRef.current.vimMode = vimMode;
       previousStateRef.current.mainLoopModel = mainLoopModel;
@@ -245,7 +245,7 @@ function StatusLineInner({
     }
   }, [lastAssistantMessageId, permissionMode, vimMode, mainLoopModel, scheduleUpdate]);
 
-  // When the statusLine command changes (hot reload), log the next result
+  // 当 statusLine 命令变更时（热重载），记录下一次结果
   const statusLineCommand = settings?.statusLine?.command;
   const isFirstSettingsRender = useRef(true);
   useEffect(() => {
@@ -257,7 +257,7 @@ function StatusLineInner({
     void doUpdate();
   }, [statusLineCommand, doUpdate]);
 
-  // Separate effect for logging on mount
+  // 在 mount 时记录日志的独立 effect
   useEffect(() => {
     const statusLine = settings?.statusLine;
     if (statusLine) {
@@ -265,15 +265,15 @@ function StatusLineInner({
         command_length: statusLine.command.length,
         padding: statusLine.padding
       });
-      // Log if status line is configured but disabled by disableAllHooks
+      // 如果配置了 status line 但被 disableAllHooks 禁用，则记录日志
       if (settings.disableAllHooks === true) {
         logForDebugging('Status line is configured but disableAllHooks is true', {
           level: 'warn'
         });
       }
-      // executeStatusLineCommand (hooks.ts) returns undefined when trust is
-      // blocked — statusLineText stays undefined forever, user sees nothing,
-      // and tengu_status_line_mount above fires anyway so telemetry looks fine.
+      // executeStatusLineCommand（hooks.ts）在 trust 被阻止时返回 undefined——
+      // statusLineText 会一直保持 undefined，用户看不到任何内容，
+      // 而上面的 tengu_status_line_mount 仍然会触发，所以遥测看起来正常。
       if (!checkHasTrustDialogAccepted()) {
         addNotification({
           key: 'statusline-trust-blocked',
@@ -290,7 +290,7 @@ function StatusLineInner({
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   }, []); // Only run once on mount - settings stable for initial logging
 
-  // Initial update on mount + cleanup on unmount
+  // mount 时初始更新 + unmount 时清理
   useEffect(() => {
     void doUpdate();
     return () => {
@@ -303,13 +303,13 @@ function StatusLineInner({
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   }, []); // Only run once on mount, not when doUpdate changes
 
-  // Get padding from settings or default to 0
+  // 从 settings 获取 padding，或默认为 0
   const paddingX = settings?.statusLine?.padding ?? 0;
 
-  // StatusLine must have stable height in fullscreen — the footer is
-  // flexShrink:0 so a 0→1 row change when the command finishes steals
-  // a row from ScrollBox and shifts content. Reserve the row while loading
-  // (same trick as PromptInputFooterLeftSide).
+  // StatusLine 在 fullscreen 中必须有稳定的高度——footer 是
+  // flexShrink:0，所以当命令完成时从 0→1 行的变化会从
+  // ScrollBox 偷走一行并移动内容。在加载时保留该行
+  // （与 PromptInputFooterLeftSide 相同的技巧）。
   return <Box paddingX={paddingX} gap={2}>
       {statusLineText ? <Text dimColor wrap="truncate">
           <Ansi>{statusLineText}</Ansi>
@@ -317,7 +317,7 @@ function StatusLineInner({
     </Box>;
 }
 
-// Parent (PromptInputFooter) re-renders on every setMessages, but StatusLine's
-// own props now only change when lastAssistantMessageId flips — memo keeps it
-// from being dragged along (previously ~18 no-prop-change renders per session).
+// 父组件（PromptInputFooter）在每次 setMessages 时重新渲染，但 StatusLine 的
+// 自己的 props 现在仅在 lastAssistantMessageId 变化时才变化——memo 让它
+// 免于被拖着走（之前每个会话约 18 次无 prop 变化的渲染）。
 export const StatusLine = memo(StatusLineInner);

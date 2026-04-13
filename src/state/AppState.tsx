@@ -68,19 +68,19 @@ function useAppStore(): AppStateStore {
 }
 
 /**
- * Subscribe to a slice of AppState. Only re-renders when the selected value
- * changes (compared via Object.is).
+ * 订阅 AppState 的某个部分。仅在所选值发生变化时重新渲染
+ *（通过 Object.is 比较）。
  *
- * For multiple independent fields, call the hook multiple times:
+ * 对于多个独立字段，可以多次调用该 hook：
  * ```
  * const verbose = useAppState(s => s.verbose)
  * const model = useAppState(s => s.mainLoopModel)
  * ```
  *
- * Do NOT return new objects from the selector -- Object.is will always see
- * them as changed. Instead, select an existing sub-object reference:
+ * 不要从 selector 中返回新对象 —— Object.is 会将它们始终视为已更改。
+ * 相反，选择现有的子对象引用：
  * ```
- * const { text, promptId } = useAppState(s => s.promptSuggestion) // good
+ * const { text, promptId } = useAppState(s => s.promptSuggestion) // 正确做法
  * ```
  */
 export function useAppState(selector) {
@@ -97,16 +97,16 @@ export function useAppState(selector) {
 }
 
 /**
- * Get the setAppState updater without subscribing to any state.
- * Returns a stable reference that never changes -- components using only
- * this hook will never re-render from state changes.
+ * 获取 setAppState 更新器，而不订阅任何状态。
+ * 返回一个永不变化的稳定引用 —— 仅使用此 hook 的组件
+ * 永远不会因状态变化而重新渲染。
  */
 export function useSetAppState() {
   return useAppStore().setState;
 }
 
 /**
- * Get the store directly (for passing getState/setState to non-React code).
+ * 直接获取 store（用于将 getState/setState 传递给非 React 代码）。
  */
 export function useAppStateStore() {
   return useAppStore();
@@ -114,8 +114,8 @@ export function useAppStateStore() {
 const NOOP_SUBSCRIBE = () => () => {};
 
 /**
- * Safe version of useAppState that returns undefined if called outside of AppStateProvider.
- * Useful for components that may be rendered in contexts where AppStateProvider isn't available.
+ * useAppState 的安全版本，如果在 AppStateProvider 外部调用则返回 undefined。
+ * 适用于可能在 AppStateProvider 不可用的上下文中渲染的组件。
  */
 export function useAppStateMaybeOutsideOfProvider(selector) {
   const store = useContext(AppStoreContext);

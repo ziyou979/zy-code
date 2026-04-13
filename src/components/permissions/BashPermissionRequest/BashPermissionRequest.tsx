@@ -53,6 +53,8 @@ export function BashPermissionRequest(props) {
     workerBadge
   } = props;
   let sedInfo;
+  let command: string;
+  let description: string | undefined;
   ({
     command,
     description
