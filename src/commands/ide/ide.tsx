@@ -145,7 +145,7 @@ function RunningIDESelector({
 function InstallOnMount({
   ide,
   onInstall
-}) {
+}: IDEOpenSelectionProps) {
   useEffect(() => {
     onInstall(ide);
   }, [ide, onInstall]);

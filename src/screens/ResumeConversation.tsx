@@ -323,7 +323,7 @@ function NoConversationsMessage() {
 }
 function CrossProjectMessage({
   command
-}) {
+}: Props) {
   React.useEffect(() => {
     const timeout = setTimeout(() => {
       process.exit(0);

@@ -115,7 +115,7 @@ function BridgeToggle({
 
 function BridgeDisconnectDialog({
   onDone
-}) {
+}: Props) {
   useRegisterOverlay("bridge-disconnect-dialog");
   const setAppState = useSetAppState();
   const sessionUrl = useAppState(s => s.replBridgeSessionUrl);

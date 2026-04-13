@@ -23,7 +23,7 @@ export function ApiKeyStep({
   onCreateOAuthToken,
   selectedOption = existingApiKey ? "existing" : onCreateOAuthToken ? "oauth" : "new",
   onSelectOption
-}) {
+}: ApiKeyStepProps) {
   const [cursorOffset, setCursorOffset] = useState(0);
   const terminalSize = useTerminalSize();
   const [theme] = useTheme();

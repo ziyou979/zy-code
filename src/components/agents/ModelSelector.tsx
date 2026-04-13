@@ -11,7 +11,7 @@ export function ModelSelector({
   initialModel,
   onComplete,
   onCancel
-}) {
+}: ModelSelectorProps) {
   let modelOptions;
   const base = getAgentModelOptions();
   if (initialModel && !base.some(o => o.value === initialModel)) {

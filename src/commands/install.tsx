@@ -51,7 +51,7 @@ function getInstallationPath(): string {
 }
 function SetupNotes({
   messages
-}) {
+}: InstallProps) {
   if (messages.length === 0) {
     return null;
   }

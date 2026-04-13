@@ -48,7 +48,7 @@ function SedEditPermissionRequestInner({
   sedInfo,
   contentPromise,
   ...props
-}) {
+}: SedEditPermissionRequestProps) {
   const {
     filePath
   } = sedInfo;

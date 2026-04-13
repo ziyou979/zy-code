@@ -13,7 +13,7 @@ interface Props {
 export function IdeOnboardingDialog({
   onDone,
   installationStatus
-}) {
+}: Props) {
   markDialogAsShown();
   useKeybindings({
     "confirm:yes": onDone,

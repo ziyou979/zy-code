@@ -85,7 +85,7 @@ interface Props {
 }
 export function ContextVisualization({
   data
-}) {
+}: Props) {
   const {
     categories,
     totalTokens,

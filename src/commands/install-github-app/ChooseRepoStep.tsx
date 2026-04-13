@@ -18,7 +18,7 @@ export function ChooseRepoStep({
   onRepoUrlChange,
   onSubmit,
   onToggleUseCurrentRepo
-}) {
+}: ChooseRepoStepProps) {
   const [cursorOffset, setCursorOffset] = useState(0);
   const [showEmptyError, setShowEmptyError] = useState(false);
   const terminalSize = useTerminalSize();

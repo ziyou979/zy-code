@@ -8,7 +8,7 @@ interface ExistingWorkflowStepProps {
 export function ExistingWorkflowStep({
   repoName,
   onSelectAction
-}) {
+}: ExistingWorkflowStepProps) {
   const options = [{
     label: "Update workflow file with latest version",
     value: "update"

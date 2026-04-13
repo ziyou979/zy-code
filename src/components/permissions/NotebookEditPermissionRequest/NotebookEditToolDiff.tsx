@@ -45,7 +45,7 @@ function NotebookEditToolDiffInner({
   verbose,
   width,
   promise
-}) {
+}: InnerProps) {
   const notebookData = use(promise);
   let oldSource;
   if (!notebookData || !cell_id) {

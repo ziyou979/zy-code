@@ -11,7 +11,7 @@ interface WarningsStepProps {
 export function WarningsStep({
   warnings,
   onContinue
-}) {
+}: WarningsStepProps) {
   useKeybinding("confirm:yes", onContinue, {
     context: "Confirmation"
   });

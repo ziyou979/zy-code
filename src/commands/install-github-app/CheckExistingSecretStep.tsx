@@ -16,7 +16,7 @@ export function CheckExistingSecretStep({
   onToggleUseExistingSecret,
   onSecretNameChange,
   onSubmit
-}) {
+}: CheckExistingSecretStepProps) {
   const [cursorOffset, setCursorOffset] = useState(0);
   const terminalSize = useTerminalSize();
   const [theme] = useTheme();

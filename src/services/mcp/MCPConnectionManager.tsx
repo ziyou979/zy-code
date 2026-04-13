@@ -38,7 +38,7 @@ export function MCPConnectionManager({
   children,
   dynamicMcpConfig,
   isStrictMcpConfig
-}) {
+}: MCPConnectionManagerProps) {
   const {
     reconnectMcpServer,
     toggleMcpServer

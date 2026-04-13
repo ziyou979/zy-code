@@ -59,7 +59,7 @@ export function EffortCallout({
 }
 function EffortIndicatorSymbol({
   level
-}) {
+}: Props) {
   const t1 = effortLevelToSymbol(level);
   return <Text color="suggestion">{t1}</Text>;
 }

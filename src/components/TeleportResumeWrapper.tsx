@@ -25,7 +25,7 @@ export function TeleportResumeWrapper({
   onError,
   isEmbedded = false,
   source
-}) {
+}: TeleportResumeWrapperProps) {
   const {
     resumeSession,
     isResuming,

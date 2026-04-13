@@ -16,7 +16,7 @@ export function CreatingStep({
   secretName,
   skipWorkflow = false,
   selectedWorkflows
-}) {
+}: CreatingStepProps) {
   const progressSteps = skipWorkflow ? ["Getting repository information", secretExists && useExistingSecret ? "Using existing API key secret" : `Setting up ${secretName} secret`] : ["Getting repository information", "Creating branch", selectedWorkflows.length > 1 ? "Creating workflow files" : "Creating workflow file", secretExists && useExistingSecret ? "Using existing API key secret" : `Setting up ${secretName} secret`, "Opening pull request page"];
   return <><Box flexDirection="column" borderStyle="round" paddingX={1}>{<Box flexDirection="column" marginBottom={1}><Text bold={true}>Install GitHub App</Text><Text dimColor={true}>Create GitHub Actions workflow</Text></Box>}{progressSteps.map((stepText, index) => {
         let status = "pending";

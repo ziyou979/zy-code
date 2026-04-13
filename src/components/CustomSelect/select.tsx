@@ -468,7 +468,7 @@ export function Select({
 function TwoColumnRow({
   isFocused,
   children
-}) {
+}: SelectProps) {
   const cursorRef = useDeclaredCursor({
     line: 0,
     column: 0,

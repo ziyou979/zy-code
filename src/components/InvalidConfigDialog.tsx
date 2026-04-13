@@ -27,7 +27,7 @@ function InvalidConfigDialog({
   errorDescription,
   onExit,
   onReset
-}) {
+}: InvalidConfigDialogProps) {
   const handleSelect = value => {
     if (value === "exit") {
       onExit();

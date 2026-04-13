@@ -124,7 +124,7 @@ function SystemTextMessageInner({
   dot,
   color,
   dimColor
-}) {
+}: Props) {
   const {
     columns
   } = useTerminalSize();

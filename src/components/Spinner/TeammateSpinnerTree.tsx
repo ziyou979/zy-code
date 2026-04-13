@@ -56,6 +56,6 @@ export function TeammateSpinnerTree({
 }
 function HideRow({
   isSelected
-}) {
+}: Props) {
   return <Box paddingLeft={3}>{<Text color={isSelected ? "suggestion" : undefined} bold={isSelected}>{isSelected ? figures.pointer : " "}</Text>}{<Text dimColor={!isSelected} bold={isSelected}>{isSelected ? "\u2558\u2550" : "\u2514\u2500"}{" "}</Text>}{<Text dimColor={!isSelected} bold={isSelected}>hide</Text>}{isSelected && <Text dimColor={true}> · enter to collapse</Text>}</Box>;
 }

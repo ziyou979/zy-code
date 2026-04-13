@@ -10,7 +10,7 @@ interface InstallAppStepProps {
 export function InstallAppStep({
   repoUrl,
   onSubmit
-}) {
+}: InstallAppStepProps) {
   useKeybinding("confirm:yes", onSubmit, {
     context: "Confirmation"
   });
