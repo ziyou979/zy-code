@@ -2,25 +2,25 @@
 
 This file provides guidance to ZY Code when working with code in this repository.
 
-## Commands
+## 启动/构建命令
 
 ```bash
-# Build
+# 构建
 bun run build           # Full build (CLI + SDK) → dist/
 bun run build:cli       # Build CLI only
 bun run build:sdk       # Build SDK only
 
-# Run
+# 启动
 bun run start           # Run built CLI (dist/cli.js)
 bun src/entrypoints/cli.tsx  # Run CLI directly without building (dev mode)
 
-# Type check
+# 格式校验
 bun tsc --noEmit
 ```
 
 There is no test runner configured. Testing is done by running the CLI directly.
 
-## Architecture
+## 架构
 
 This is a terminal UI application built with **TypeScript + React (Ink)**, bundled by **Bun**.
 

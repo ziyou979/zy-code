@@ -12,6 +12,7 @@ import { type Rectangle, unionRect } from './layout/geometry.js'
 import {
   blitRegion,
   CellWidth,
+  clearRegion,
   extractHyperlinkFromStyles,
   filterOutHyperlinkStyles,
   markNoSelectRegion,
@@ -274,9 +275,10 @@ export default class Output {
     let blitCells = 0
     let writeCells = 0
 
-    // Pass 1: expand damage to cover clear regions. The buffer is freshly
-    // zeroed by resetScreen, so this pass only marks damage so diff()
-    // checks these regions against the previous frame.
+    // Pass 1: expand damage to cover clear regions AND actually clear the
+    // cells in the screen buffer. This prevents stale content from surviving
+    // when blit copies from prevScreen or when damage bounds are narrower
+    // than the old content (e.g., text shrinking within the same line).
     //
     // Also collect clears from absolute-positioned nodes. An absolute
     // node overlays normal-flow siblings; when it shrinks, its clear is
@@ -301,6 +303,7 @@ export default class Output {
         height: maxY - startY,
       }
       screen.damage = screen.damage ? unionRect(screen.damage, rect) : rect
+      clearRegion(screen, startX, startY, maxX - startX, maxY - startY)
       if (operation.fromAbsolute) absoluteClears.push(rect)
     }
 
@@ -386,12 +389,10 @@ export default class Output {
               rowStart = row + 1
             }
           }
-          continue
         }
 
         case 'shift': {
           shiftRows(screen, operation.top, operation.bottom, operation.n)
-          continue
         }
 
         case 'write': {
@@ -502,7 +503,6 @@ export default class Output {
             }
             offsetY++
           }
-          continue
         }
       }
     }
