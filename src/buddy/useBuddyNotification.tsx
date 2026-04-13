@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import React, { useEffect } from 'react';
 import { useNotifications } from '../context/notifications.js';
@@ -19,62 +18,36 @@ export function isBuddyLive(): boolean {
   const d = new Date();
   return d.getFullYear() > 2026 || d.getFullYear() === 2026 && d.getMonth() >= 3;
 }
-function RainbowText(t0) {
-  const $ = _c(2);
-  const {
-    text
-  } = t0;
-  let t1;
-  if ($[0] !== text) {
-    t1 = <>{[...text].map(_temp)}</>;
-    $[0] = text;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  return t1;
+function RainbowText({
+  text
+}) {
+  return <>{[...text].map((ch, i) => <Text key={i} color={getRainbowColor(i)}>{ch}</Text>)}</>;
 }
 
 // Rainbow /buddy teaser shown on startup when no companion hatched yet.
 // Idle presence and reactions are handled by CompanionSprite directly.
-function _temp(ch, i) {
-  return <Text key={i} color={getRainbowColor(i)}>{ch}</Text>;
-}
+
 export function useBuddyNotification() {
-  const $ = _c(4);
   const {
     addNotification,
     removeNotification
   } = useNotifications();
-  let t0;
-  let t1;
-  if ($[0] !== addNotification || $[1] !== removeNotification) {
-    t0 = () => {
-      if (!feature("BUDDY")) {
-        return;
-      }
-      const config = getGlobalConfig();
-      if (config.companion || !isBuddyTeaserWindow()) {
-        return;
-      }
-      addNotification({
-        key: "buddy-teaser",
-        jsx: <RainbowText text="/buddy" />,
-        priority: "immediate",
-        timeoutMs: 15000
-      });
-      return () => removeNotification("buddy-teaser");
-    };
-    t1 = [addNotification, removeNotification];
-    $[0] = addNotification;
-    $[1] = removeNotification;
-    $[2] = t0;
-    $[3] = t1;
-  } else {
-    t0 = $[2];
-    t1 = $[3];
-  }
-  useEffect(t0, t1);
+  useEffect(() => {
+    if (!feature("BUDDY")) {
+      return;
+    }
+    const config = getGlobalConfig();
+    if (config.companion || !isBuddyTeaserWindow()) {
+      return;
+    }
+    addNotification({
+      key: "buddy-teaser",
+      jsx: <RainbowText text="/buddy" />,
+      priority: "immediate",
+      timeoutMs: 15000
+    });
+    return () => removeNotification("buddy-teaser");
+  }, [addNotification, removeNotification]);
 }
 export function findBuddyTriggerPositions(text: string): Array<{
   start: number;

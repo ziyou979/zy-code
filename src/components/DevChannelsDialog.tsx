@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React, { useCallback } from 'react';
 import type { ChannelEntry } from '../bootstrap/state.js';
 import { tSync } from '../i18n/index.js';
@@ -10,96 +9,32 @@ type Props = {
   channels: ChannelEntry[];
   onAccept(): void;
 };
-export function DevChannelsDialog(t0) {
-  const $ = _c(14);
-  const {
-    channels,
-    onAccept
-  } = t0;
-  let t1;
-  if ($[0] !== onAccept) {
-    t1 = function onChange(value) {
-      bb2: switch (value) {
-        case "accept":
-          {
-            onAccept();
-            break bb2;
-          }
-        case "exit":
-          {
-            gracefulShutdownSync(1);
-          }
-      }
-    };
-    $[0] = onAccept;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  const onChange = t1;
-  const handleEscape = _temp;
-  let t2;
-  let t3;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Text>{tSync('devChannels.description')}</Text>;
-    t3 = <Text>{tSync('devChannels.useChannels')}</Text>;
-    $[2] = t2;
-    $[3] = t3;
-  } else {
-    t2 = $[2];
-    t3 = $[3];
-  }
-  let t4;
-  if ($[4] !== channels) {
-    t4 = channels.map(_temp2).join(", ");
-    $[4] = channels;
-    $[5] = t4;
-  } else {
-    t4 = $[5];
-  }
-  let t5;
-  if ($[6] !== t4) {
-    t5 = <Box flexDirection="column" gap={1}>{t2}{t3}<Text dimColor={true}>Channels:{" "}{t4}</Text></Box>;
-    $[6] = t4;
-    $[7] = t5;
-  } else {
-    t5 = $[7];
-  }
-  let t6;
-  if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = [{
+export function DevChannelsDialog({
+  channels,
+  onAccept
+}: Props) {
+  const onChange = function onChange(value) {
+    switch (value) {
+      case "accept":
+        {
+          onAccept();
+          break;
+        }
+      case "exit":
+        {
+          gracefulShutdownSync(1);
+        }
+    }
+  };
+  const handleEscape = () => {
+    gracefulShutdownSync(0);
+  };
+  const t4 = channels.map(c => c.kind === "plugin" ? `plugin:${c.name}@${c.marketplace}` : `server:${c.name}`).join(", ");
+  return <Dialog title={tSync('devChannels.warning')} color="error" onCancel={handleEscape}>{<Box flexDirection="column" gap={1}>{<Text>{tSync('devChannels.description')}</Text>}{<Text>{tSync('devChannels.useChannels')}</Text>}<Text dimColor={true}>Channels:{" "}{t4}</Text></Box>}{<Select options={[{
       label: tSync('devChannels.confirmDev'),
       value: "accept"
     }, {
       label: tSync('devChannels.exit'),
       value: "exit"
-    }];
-    $[8] = t6;
-  } else {
-    t6 = $[8];
-  }
-  let t7;
-  if ($[9] !== onChange) {
-    t7 = <Select options={t6} onChange={value_0 => onChange(value_0 as 'accept' | 'exit')} />;
-    $[9] = onChange;
-    $[10] = t7;
-  } else {
-    t7 = $[10];
-  }
-  let t8;
-  if ($[11] !== t5 || $[12] !== t7) {
-    t8 = <Dialog title={tSync('devChannels.warning')} color="error" onCancel={handleEscape}>{t5}{t7}</Dialog>;
-    $[11] = t5;
-    $[12] = t7;
-    $[13] = t8;
-  } else {
-    t8 = $[13];
-  }
-  return t8;
-}
-function _temp2(c) {
-  return c.kind === "plugin" ? `plugin:${c.name}@${c.marketplace}` : `server:${c.name}`;
-}
-function _temp() {
-  gracefulShutdownSync(0);
+    }]} onChange={value_0 => onChange(value_0 as 'accept' | 'exit')} />}</Dialog>;
 }

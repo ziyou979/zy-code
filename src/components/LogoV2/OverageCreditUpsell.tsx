@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useState } from 'react';
 import { Text } from '../../ink.js';
@@ -46,12 +45,11 @@ export function maybeRefreshOverageCreditCache(): void {
   void refreshOverageCreditGrantCache();
 }
 export function useShowOverageCreditUpsell() {
-  const [show] = useState(_temp);
+  const [show] = useState(() => {
+    maybeRefreshOverageCreditCache();
+    return shouldShowOverageCreditUpsell();
+  });
   return show;
-}
-function _temp() {
-  maybeRefreshOverageCreditCache();
-  return shouldShowOverageCreditUpsell();
 }
 export function incrementOverageCreditUpsellSeenCount(): void {
   let newCount = 0;
@@ -82,60 +80,30 @@ type Props = {
   maxWidth?: number;
   twoLine?: boolean;
 };
-export function OverageCreditUpsell(t0) {
-  const $ = _c(8);
-  const {
-    maxWidth,
-    twoLine
-  } = t0;
+export function OverageCreditUpsell({
+  maxWidth,
+  twoLine
+}: Props) {
   let t1;
   let t2;
-  if ($[0] !== maxWidth || $[1] !== twoLine) {
-    t2 = Symbol.for("react.early_return_sentinel");
-    bb0: {
-      const info = getCachedOverageCreditGrant();
-      if (!info) {
-        t2 = null;
-        break bb0;
-      }
-      const amount = formatGrantAmount(info);
-      if (!amount) {
-        t2 = null;
-        break bb0;
-      }
-      if (twoLine) {
-        const title = getFeedTitle(amount);
-        let t3;
-        if ($[4] !== maxWidth) {
-          t3 = maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTITLE;
-          $[4] = maxWidth;
-          $[5] = t3;
-        } else {
-          t3 = $[5];
-        }
-        let t4;
-        if ($[6] !== t3) {
-          t4 = <Text dimColor={true}>{t3}</Text>;
-          $[6] = t3;
-          $[7] = t4;
-        } else {
-          t4 = $[7];
-        }
-        t2 = <><Text color="zy">{maxWidth ? truncate(title, maxWidth) : title}</Text>{t4}</>;
-        break bb0;
-      }
+  t2 = Symbol.for("react.early_return_sentinel");
+  const info = getCachedOverageCreditGrant();
+  if (!info) {
+    t2 = null;
+  } else {
+    const amount = formatGrantAmount(info);
+    if (!amount) {
+      t2 = null;
+    } else if (twoLine) {
+      const title = getFeedTitle(amount);
+      const t3 = maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTITLE;
+      t2 = <><Text color="zy">{maxWidth ? truncate(title, maxWidth) : title}</Text>{<Text dimColor={true}>{t3}</Text>}</>;
+    } else {
       const text = getUsageText(amount);
       const display = maxWidth ? truncate(text, maxWidth) : text;
       const highlightLen = Math.min(getFeedTitle(amount).length, display.length);
       t1 = <Text dimColor={true}><Text color="zy">{display.slice(0, highlightLen)}</Text>{display.slice(highlightLen)}</Text>;
     }
-    $[0] = maxWidth;
-    $[1] = twoLine;
-    $[2] = t1;
-    $[3] = t2;
-  } else {
-    t1 = $[2];
-    t2 = $[3];
   }
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
     return t2;

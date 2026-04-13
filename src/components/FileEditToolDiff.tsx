@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { Suspense, use, useState } from 'react';
@@ -21,41 +20,13 @@ type DiffData = {
   fileContent: string | undefined;
 };
 export function FileEditToolDiff(props) {
-  const $ = _c(7);
-  let t0;
-  if ($[0] !== props.edits || $[1] !== props.file_path) {
-    t0 = () => loadDiffData(props.file_path, props.edits);
-    $[0] = props.edits;
-    $[1] = props.file_path;
-    $[2] = t0;
-  } else {
-    t0 = $[2];
-  }
-  const [dataPromise] = useState(t0);
-  let t1;
-  if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <DiffFrame placeholder={true} />;
-    $[3] = t1;
-  } else {
-    t1 = $[3];
-  }
-  let t2;
-  if ($[4] !== dataPromise || $[5] !== props.file_path) {
-    t2 = <Suspense fallback={t1}><DiffBody promise={dataPromise} file_path={props.file_path} /></Suspense>;
-    $[4] = dataPromise;
-    $[5] = props.file_path;
-    $[6] = t2;
-  } else {
-    t2 = $[6];
-  }
-  return t2;
+  const [dataPromise] = useState(() => loadDiffData(props.file_path, props.edits));
+  return <Suspense fallback={<DiffFrame placeholder={true} />}><DiffBody promise={dataPromise} file_path={props.file_path} /></Suspense>;
 }
-function DiffBody(t0) {
-  const $ = _c(6);
-  const {
-    promise,
-    file_path
-  } = t0;
+function DiffBody({
+  promise,
+  file_path
+}: Props) {
   const {
     patch,
     firstLine,
@@ -64,44 +35,13 @@ function DiffBody(t0) {
   const {
     columns
   } = useTerminalSize();
-  let t1;
-  if ($[0] !== columns || $[1] !== fileContent || $[2] !== file_path || $[3] !== firstLine || $[4] !== patch) {
-    t1 = <DiffFrame><StructuredDiffList hunks={patch} dim={false} width={columns} filePath={file_path} firstLine={firstLine} fileContent={fileContent} /></DiffFrame>;
-    $[0] = columns;
-    $[1] = fileContent;
-    $[2] = file_path;
-    $[3] = firstLine;
-    $[4] = patch;
-    $[5] = t1;
-  } else {
-    t1 = $[5];
-  }
-  return t1;
+  return <DiffFrame><StructuredDiffList hunks={patch} dim={false} width={columns} filePath={file_path} firstLine={firstLine} fileContent={fileContent} /></DiffFrame>;
 }
-function DiffFrame(t0) {
-  const $ = _c(5);
-  const {
-    children,
-    placeholder
-  } = t0;
-  let t1;
-  if ($[0] !== children || $[1] !== placeholder) {
-    t1 = placeholder ? <Text dimColor={true}>…</Text> : children;
-    $[0] = children;
-    $[1] = placeholder;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
-  }
-  let t2;
-  if ($[3] !== t1) {
-    t2 = <Box flexDirection="column"><Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false}>{t1}</Box></Box>;
-    $[3] = t1;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  return t2;
+function DiffFrame({
+  children,
+  placeholder
+}) {
+  return <Box flexDirection="column"><Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false}>{placeholder ? <Text dimColor={true}>…</Text> : children}</Box></Box>;
 }
 async function loadDiffData(file_path: string, edits: FileEdit[]): Promise<DiffData> {
   const valid = edits.filter(e => e.old_string != null && e.new_string != null);

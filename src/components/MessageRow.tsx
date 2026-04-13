@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import type { Command } from '../commands.js';
 import { Box } from '../ink.js';
@@ -90,209 +89,61 @@ export function hasContentAfterIndex(messages: RenderableMessage[], index: numbe
   }
   return false;
 }
-function MessageRowImpl(t0) {
-  const $ = _c(64);
-  const {
-    message: msg,
-    isUserContinuation,
-    hasContentAfter,
-    tools,
-    commands,
-    verbose,
-    inProgressToolUseIDs,
-    streamingToolUseIDs,
-    screen,
-    canAnimate,
-    onOpenRateLimitOptions,
-    lastThinkingBlockId,
-    latestBashOutputUUID,
-    columns,
-    isLoading,
-    lookups
-  } = t0;
+function MessageRowImpl({
+  message: msg,
+  isUserContinuation,
+  hasContentAfter,
+  tools,
+  commands,
+  verbose,
+  inProgressToolUseIDs,
+  streamingToolUseIDs,
+  screen,
+  canAnimate,
+  onOpenRateLimitOptions,
+  lastThinkingBlockId,
+  latestBashOutputUUID,
+  columns,
+  isLoading,
+  lookups
+}: Props) {
   const isTranscriptMode = screen === "transcript";
   const isGrouped = msg.type === "grouped_tool_use";
   const isCollapsed = msg.type === "collapsed_read_search";
-  let t1;
-  if ($[0] !== hasContentAfter || $[1] !== inProgressToolUseIDs || $[2] !== isCollapsed || $[3] !== isLoading || $[4] !== msg) {
-    t1 = isCollapsed && (hasAnyToolInProgress(msg, inProgressToolUseIDs) || isLoading && !hasContentAfter);
-    $[0] = hasContentAfter;
-    $[1] = inProgressToolUseIDs;
-    $[2] = isCollapsed;
-    $[3] = isLoading;
-    $[4] = msg;
-    $[5] = t1;
-  } else {
-    t1 = $[5];
-  }
-  const isActiveCollapsedGroup = t1;
-  let t2;
-  if ($[6] !== isCollapsed || $[7] !== isGrouped || $[8] !== msg) {
-    t2 = isGrouped ? msg.displayMessage : isCollapsed ? getDisplayMessageFromCollapsed(msg) : msg;
-    $[6] = isCollapsed;
-    $[7] = isGrouped;
-    $[8] = msg;
-    $[9] = t2;
-  } else {
-    t2 = $[9];
-  }
-  const displayMsg = t2;
-  let t3;
-  if ($[10] !== isCollapsed || $[11] !== isGrouped || $[12] !== lookups || $[13] !== msg) {
-    t3 = isGrouped || isCollapsed ? [] : getProgressMessagesFromLookup(msg, lookups);
-    $[10] = isCollapsed;
-    $[11] = isGrouped;
-    $[12] = lookups;
-    $[13] = msg;
-    $[14] = t3;
-  } else {
-    t3 = $[14];
-  }
-  const progressMessagesForMessage = t3;
-  let t4;
-  if ($[15] !== inProgressToolUseIDs || $[16] !== isCollapsed || $[17] !== isGrouped || $[18] !== lookups || $[19] !== msg || $[20] !== screen || $[21] !== streamingToolUseIDs) {
-    const siblingToolUseIDs = isGrouped || isCollapsed ? EMPTY_STRING_SET : getSiblingToolUseIDsFromLookup(msg, lookups);
-    t4 = shouldRenderStatically(msg, streamingToolUseIDs, inProgressToolUseIDs, siblingToolUseIDs, screen, lookups);
-    $[15] = inProgressToolUseIDs;
-    $[16] = isCollapsed;
-    $[17] = isGrouped;
-    $[18] = lookups;
-    $[19] = msg;
-    $[20] = screen;
-    $[21] = streamingToolUseIDs;
-    $[22] = t4;
-  } else {
-    t4 = $[22];
-  }
-  const isStatic = t4;
+  const isActiveCollapsedGroup = isCollapsed && (hasAnyToolInProgress(msg, inProgressToolUseIDs) || isLoading && !hasContentAfter);
+  const displayMsg = isGrouped ? msg.displayMessage : isCollapsed ? getDisplayMessageFromCollapsed(msg) : msg;
+  const progressMessagesForMessage = isGrouped || isCollapsed ? [] : getProgressMessagesFromLookup(msg, lookups);
+  const siblingToolUseIDs = isGrouped || isCollapsed ? EMPTY_STRING_SET : getSiblingToolUseIDsFromLookup(msg, lookups);
+  const isStatic = shouldRenderStatically(msg, streamingToolUseIDs, inProgressToolUseIDs, siblingToolUseIDs, screen, lookups);
   let shouldAnimate = false;
   if (canAnimate) {
     if (isGrouped) {
-      let t5;
-      if ($[23] !== inProgressToolUseIDs || $[24] !== msg.messages) {
-        let t6;
-        if ($[26] !== inProgressToolUseIDs) {
-          t6 = m => {
-            const content = m.message.content[0];
-            return content?.type === "tool_use" && inProgressToolUseIDs.has(content.id);
-          };
-          $[26] = inProgressToolUseIDs;
-          $[27] = t6;
-        } else {
-          t6 = $[27];
-        }
-        t5 = msg.messages.some(t6);
-        $[23] = inProgressToolUseIDs;
-        $[24] = msg.messages;
-        $[25] = t5;
-      } else {
-        t5 = $[25];
-      }
-      shouldAnimate = t5;
+      shouldAnimate = msg.messages.some(m => {
+        const content = m.message.content[0];
+        return content?.type === "tool_use" && inProgressToolUseIDs.has(content.id);
+      });
     } else {
       if (isCollapsed) {
-        let t5;
-        if ($[28] !== inProgressToolUseIDs || $[29] !== msg) {
-          t5 = hasAnyToolInProgress(msg, inProgressToolUseIDs);
-          $[28] = inProgressToolUseIDs;
-          $[29] = msg;
-          $[30] = t5;
-        } else {
-          t5 = $[30];
-        }
-        shouldAnimate = t5;
+        shouldAnimate = hasAnyToolInProgress(msg, inProgressToolUseIDs);
       } else {
-        let t5;
-        if ($[31] !== inProgressToolUseIDs || $[32] !== msg) {
-          const toolUseID = getToolUseID(msg);
-          t5 = !toolUseID || inProgressToolUseIDs.has(toolUseID);
-          $[31] = inProgressToolUseIDs;
-          $[32] = msg;
-          $[33] = t5;
-        } else {
-          t5 = $[33];
-        }
-        shouldAnimate = t5;
+        const toolUseID = getToolUseID(msg);
+        shouldAnimate = !toolUseID || inProgressToolUseIDs.has(toolUseID);
       }
     }
   }
-  let t5;
-  if ($[34] !== displayMsg || $[35] !== isTranscriptMode) {
-    t5 = isTranscriptMode && displayMsg.type === "assistant" && displayMsg.message.content.some(_temp) && (displayMsg.timestamp || displayMsg.message.model);
-    $[34] = displayMsg;
-    $[35] = isTranscriptMode;
-    $[36] = t5;
-  } else {
-    t5 = $[36];
-  }
-  const hasMetadata = t5;
-  const t6 = !hasMetadata;
-  const t7 = hasMetadata ? undefined : columns;
-  let t8;
-  if ($[37] !== commands || $[38] !== inProgressToolUseIDs || $[39] !== isActiveCollapsedGroup || $[40] !== isStatic || $[41] !== isTranscriptMode || $[42] !== isUserContinuation || $[43] !== lastThinkingBlockId || $[44] !== latestBashOutputUUID || $[45] !== lookups || $[46] !== msg || $[47] !== onOpenRateLimitOptions || $[48] !== progressMessagesForMessage || $[49] !== shouldAnimate || $[50] !== t6 || $[51] !== t7 || $[52] !== tools || $[53] !== verbose) {
-    t8 = <Message message={msg} lookups={lookups} addMargin={t6} containerWidth={t7} tools={tools} commands={commands} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={progressMessagesForMessage} shouldAnimate={shouldAnimate} shouldShowDot={true} isTranscriptMode={isTranscriptMode} isStatic={isStatic} onOpenRateLimitOptions={onOpenRateLimitOptions} isActiveCollapsedGroup={isActiveCollapsedGroup} isUserContinuation={isUserContinuation} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} />;
-    $[37] = commands;
-    $[38] = inProgressToolUseIDs;
-    $[39] = isActiveCollapsedGroup;
-    $[40] = isStatic;
-    $[41] = isTranscriptMode;
-    $[42] = isUserContinuation;
-    $[43] = lastThinkingBlockId;
-    $[44] = latestBashOutputUUID;
-    $[45] = lookups;
-    $[46] = msg;
-    $[47] = onOpenRateLimitOptions;
-    $[48] = progressMessagesForMessage;
-    $[49] = shouldAnimate;
-    $[50] = t6;
-    $[51] = t7;
-    $[52] = tools;
-    $[53] = verbose;
-    $[54] = t8;
-  } else {
-    t8 = $[54];
-  }
-  const messageEl = t8;
+  const hasMetadata = isTranscriptMode && displayMsg.type === "assistant" && displayMsg.message.content.some(c => c.type === "text") && (displayMsg.timestamp || displayMsg.message.model);
+  const messageEl = <Message message={msg} lookups={lookups} addMargin={!hasMetadata} containerWidth={hasMetadata ? undefined : columns} tools={tools} commands={commands} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={progressMessagesForMessage} shouldAnimate={shouldAnimate} shouldShowDot={true} isTranscriptMode={isTranscriptMode} isStatic={isStatic} onOpenRateLimitOptions={onOpenRateLimitOptions} isActiveCollapsedGroup={isActiveCollapsedGroup} isUserContinuation={isUserContinuation} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} />;
   if (!hasMetadata) {
-    let t9;
-    if ($[55] !== messageEl) {
-      t9 = <OffscreenFreeze>{messageEl}</OffscreenFreeze>;
-      $[55] = messageEl;
-      $[56] = t9;
-    } else {
-      t9 = $[56];
-    }
-    return t9;
+    return <OffscreenFreeze>{messageEl}</OffscreenFreeze>;
   }
-  let t9;
-  if ($[57] !== displayMsg || $[58] !== isTranscriptMode) {
-    t9 = <Box flexDirection="row" justifyContent="flex-end" gap={1} marginTop={1}><MessageTimestamp message={displayMsg} isTranscriptMode={isTranscriptMode} /><MessageModel message={displayMsg} isTranscriptMode={isTranscriptMode} /></Box>;
-    $[57] = displayMsg;
-    $[58] = isTranscriptMode;
-    $[59] = t9;
-  } else {
-    t9 = $[59];
-  }
-  let t10;
-  if ($[60] !== columns || $[61] !== messageEl || $[62] !== t9) {
-    t10 = <OffscreenFreeze><Box width={columns} flexDirection="column">{t9}{messageEl}</Box></OffscreenFreeze>;
-    $[60] = columns;
-    $[61] = messageEl;
-    $[62] = t9;
-    $[63] = t10;
-  } else {
-    t10 = $[63];
-  }
-  return t10;
+  return <OffscreenFreeze><Box width={columns} flexDirection="column">{<Box flexDirection="row" justifyContent="flex-end" gap={1} marginTop={1}><MessageTimestamp message={displayMsg} isTranscriptMode={isTranscriptMode} /><MessageModel message={displayMsg} isTranscriptMode={isTranscriptMode} /></Box>}{messageEl}</Box></OffscreenFreeze>;
 }
 
 /**
  * Checks if a message is "streaming" - i.e., its content may still be changing.
  * Exported for testing.
  */
-function _temp(c) {
-  return c.type === "text";
-}
+
 export function isMessageStreaming(msg: RenderableMessage, streamingToolUseIDs: Set<string>): boolean {
   if (msg.type === 'grouped_tool_use') {
     return msg.messages.some(m => {

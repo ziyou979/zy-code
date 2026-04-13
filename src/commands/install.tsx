@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import React, { useEffect, useState } from 'react';
@@ -50,41 +49,14 @@ function getInstallationPath(): string {
   }
   return '~/.local/bin/zy';
 }
-function SetupNotes(t0) {
-  const $ = _c(5);
-  const {
-    messages
-  } = t0;
+function SetupNotes({
+  messages
+}) {
   if (messages.length === 0) {
     return null;
   }
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Box><Text color="warning"><StatusIcon status="warning" withSpace={true} />Setup notes:</Text></Box>;
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  let t2;
-  if ($[1] !== messages) {
-    t2 = messages.map(_temp);
-    $[1] = messages;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  let t3;
-  if ($[3] !== t2) {
-    t3 = <Box flexDirection="column" gap={0} marginBottom={1}>{t1}{t2}</Box>;
-    $[3] = t2;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  return t3;
-}
-function _temp(message, index) {
-  return <Box key={index} marginLeft={2}><Text dimColor={true}>• {message}</Text></Box>;
+  const t2 = messages.map((message, index) => <Box key={index} marginLeft={2}><Text dimColor={true}>• {message}</Text></Box>);
+  return <Box flexDirection="column" gap={0} marginBottom={1}>{<Box><Text color="warning"><StatusIcon status="warning" withSpace={true} />Setup notes:</Text></Box>}{t2}</Box>;
 }
 function Install({
   onDone,

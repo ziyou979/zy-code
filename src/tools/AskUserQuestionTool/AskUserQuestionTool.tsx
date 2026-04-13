@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { getAllowedChannels, getQuestionPreviewFormat } from 'src/bootstrap/state.js';
@@ -80,31 +79,13 @@ export const _sdkOutputSchema = outputSchema;
 export type Question = z.infer<ReturnType<typeof questionSchema>>;
 export type QuestionOption = z.infer<ReturnType<typeof questionOptionSchema>>;
 export type Output = z.infer<OutputSchema>;
-function AskUserQuestionResultMessage(t0) {
-  const $ = _c(3);
-  const {
-    answers
-  } = t0;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Box flexDirection="row"><Text color={getModeColor("default")}>{BLACK_CIRCLE} </Text><Text>User answered ZY's questions:</Text></Box>;
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  let t2;
-  if ($[1] !== answers) {
-    t2 = <Box flexDirection="column" marginTop={1}>{t1}<MessageResponse><Box flexDirection="column">{Object.entries(answers).map(_temp)}</Box></MessageResponse></Box>;
-    $[1] = answers;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  return t2;
-}
-function _temp(t0) {
-  const [questionText, answer] = t0;
-  return <Text key={questionText} color="inactive">· {questionText} → {answer}</Text>;
+function AskUserQuestionResultMessage({
+  answers
+}) {
+  return <Box flexDirection="column" marginTop={1}>{<Box flexDirection="row"><Text color={getModeColor("default")}>{BLACK_CIRCLE} </Text><Text>User answered ZY's questions:</Text></Box>}<MessageResponse><Box flexDirection="column">{Object.entries(answers).map(t0 => {
+          const [questionText, answer] = t0;
+          return <Text key={questionText} color="inactive">· {questionText} → {answer}</Text>;
+        })}</Box></MessageResponse></Box>;
 }
 export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({
   name: ASK_USER_QUESTION_TOOL_NAME,

@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import React from 'react';
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
@@ -13,108 +12,21 @@ import { truncate } from '../../utils/format.js';
 import { extractTag } from '../../utils/messages.js';
 
 // Reusable component for search result summaries
-function SearchResultSummary(t0) {
-  const $ = _c(26);
-  const {
-    count,
-    countLabel,
-    secondaryCount,
-    secondaryLabel,
-    content,
-    verbose
-  } = t0;
-  let t1;
-  if ($[0] !== count) {
-    t1 = <Text bold={true}>{count} </Text>;
-    $[0] = count;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== count || $[3] !== countLabel) {
-    t2 = count === 0 || count > 1 ? countLabel : countLabel.slice(0, -1);
-    $[2] = count;
-    $[3] = countLabel;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  let t3;
-  if ($[5] !== t1 || $[6] !== t2) {
-    t3 = <Text>Found {t1}{t2}</Text>;
-    $[5] = t1;
-    $[6] = t2;
-    $[7] = t3;
-  } else {
-    t3 = $[7];
-  }
-  const primaryText = t3;
-  let t4;
-  if ($[8] !== secondaryCount || $[9] !== secondaryLabel) {
-    t4 = secondaryCount !== undefined && secondaryLabel ? <Text>{" "}across <Text bold={true}>{secondaryCount} </Text>{secondaryCount === 0 || secondaryCount > 1 ? secondaryLabel : secondaryLabel.slice(0, -1)}</Text> : null;
-    $[8] = secondaryCount;
-    $[9] = secondaryLabel;
-    $[10] = t4;
-  } else {
-    t4 = $[10];
-  }
-  const secondaryText = t4;
+function SearchResultSummary({
+  count,
+  countLabel,
+  secondaryCount,
+  secondaryLabel,
+  content,
+  verbose
+}) {
+  const t2 = count === 0 || count > 1 ? countLabel : countLabel.slice(0, -1);
+  const primaryText = <Text>Found {<Text bold={true}>{count} </Text>}{t2}</Text>;
+  const secondaryText = secondaryCount !== undefined && secondaryLabel ? <Text>{" "}across <Text bold={true}>{secondaryCount} </Text>{secondaryCount === 0 || secondaryCount > 1 ? secondaryLabel : secondaryLabel.slice(0, -1)}</Text> : null;
   if (verbose) {
-    let t5;
-    if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-      t5 = <Text dimColor={true}>  ⎿  </Text>;
-      $[11] = t5;
-    } else {
-      t5 = $[11];
-    }
-    let t6;
-    if ($[12] !== primaryText || $[13] !== secondaryText) {
-      t6 = <Box flexDirection="row"><Text>{t5}{primaryText}{secondaryText}</Text></Box>;
-      $[12] = primaryText;
-      $[13] = secondaryText;
-      $[14] = t6;
-    } else {
-      t6 = $[14];
-    }
-    let t7;
-    if ($[15] !== content) {
-      t7 = <Box marginLeft={5}><Text>{content}</Text></Box>;
-      $[15] = content;
-      $[16] = t7;
-    } else {
-      t7 = $[16];
-    }
-    let t8;
-    if ($[17] !== t6 || $[18] !== t7) {
-      t8 = <Box flexDirection="column">{t6}{t7}</Box>;
-      $[17] = t6;
-      $[18] = t7;
-      $[19] = t8;
-    } else {
-      t8 = $[19];
-    }
-    return t8;
+    return <Box flexDirection="column">{<Box flexDirection="row"><Text>{<Text dimColor={true}>  ⎿  </Text>}{primaryText}{secondaryText}</Text></Box>}{<Box marginLeft={5}><Text>{content}</Text></Box>}</Box>;
   }
-  let t5;
-  if ($[20] !== count) {
-    t5 = count > 0 && <CtrlOToExpand />;
-    $[20] = count;
-    $[21] = t5;
-  } else {
-    t5 = $[21];
-  }
-  let t6;
-  if ($[22] !== primaryText || $[23] !== secondaryText || $[24] !== t5) {
-    t6 = <MessageResponse height={1}><Text>{primaryText}{secondaryText} {t5}</Text></MessageResponse>;
-    $[22] = primaryText;
-    $[23] = secondaryText;
-    $[24] = t5;
-    $[25] = t6;
-  } else {
-    t6 = $[25];
-  }
-  return t6;
+  return <MessageResponse height={1}><Text>{primaryText}{secondaryText} {count > 0 && <CtrlOToExpand />}</Text></MessageResponse>;
 }
 type Output = {
   mode?: 'content' | 'files_with_matches' | 'count';

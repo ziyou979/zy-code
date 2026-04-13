@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { extraUsage as extraUsageCommand } from 'src/commands/extra-usage/index.js';
@@ -23,16 +22,13 @@ type LimitBarProps = {
   showTimeInReset?: boolean;
   extraSubtext?: string;
 };
-function LimitBar(t0) {
-  const $ = _c(34);
-  const {
-    title,
-    limit,
-    maxWidth,
-    showTimeInReset: t1,
-    extraSubtext
-  } = t0;
-  const showTimeInReset = t1 === undefined ? true : t1;
+function LimitBar({
+  title,
+  limit,
+  maxWidth,
+  showTimeInReset = true,
+  extraSubtext
+}: LimitBarProps) {
   const {
     utilization,
     resets_at
@@ -40,19 +36,15 @@ function LimitBar(t0) {
   if (utilization === null) {
     return null;
   }
-  const usedText = tSync('usage.percentUsed', { pct: Math.floor(utilization) });
+  const usedText = tSync('usage.percentUsed', {
+    pct: Math.floor(utilization)
+  });
   let subtext;
   if (resets_at) {
-    let t2;
-    if ($[0] !== resets_at || $[1] !== showTimeInReset) {
-      t2 = formatResetText(resets_at, true, showTimeInReset);
-      $[0] = resets_at;
-      $[1] = showTimeInReset;
-      $[2] = t2;
-    } else {
-      t2 = $[2];
-    }
-    subtext = tSync('usage.resets', { time: t2 });
+    const t2 = formatResetText(resets_at, true, showTimeInReset);
+    subtext = tSync('usage.resets', {
+      time: t2
+    });
   }
   if (extraSubtext) {
     if (subtext) {
@@ -62,114 +54,9 @@ function LimitBar(t0) {
     }
   }
   if (maxWidth >= 62) {
-    let t2;
-    if ($[3] !== title) {
-      t2 = <Text bold={true}>{title}</Text>;
-      $[3] = title;
-      $[4] = t2;
-    } else {
-      t2 = $[4];
-    }
-    const t3 = utilization / 100;
-    let t4;
-    if ($[5] !== t3) {
-      t4 = <ProgressBar ratio={t3} width={50} fillColor="rate_limit_fill" emptyColor="rate_limit_empty" />;
-      $[5] = t3;
-      $[6] = t4;
-    } else {
-      t4 = $[6];
-    }
-    let t5;
-    if ($[7] !== usedText) {
-      t5 = <Text>{usedText}</Text>;
-      $[7] = usedText;
-      $[8] = t5;
-    } else {
-      t5 = $[8];
-    }
-    let t6;
-    if ($[9] !== t4 || $[10] !== t5) {
-      t6 = <Box flexDirection="row" gap={1}>{t4}{t5}</Box>;
-      $[9] = t4;
-      $[10] = t5;
-      $[11] = t6;
-    } else {
-      t6 = $[11];
-    }
-    let t7;
-    if ($[12] !== subtext) {
-      t7 = subtext && <Text dimColor={true}>{subtext}</Text>;
-      $[12] = subtext;
-      $[13] = t7;
-    } else {
-      t7 = $[13];
-    }
-    let t8;
-    if ($[14] !== t2 || $[15] !== t6 || $[16] !== t7) {
-      t8 = <Box flexDirection="column">{t2}{t6}{t7}</Box>;
-      $[14] = t2;
-      $[15] = t6;
-      $[16] = t7;
-      $[17] = t8;
-    } else {
-      t8 = $[17];
-    }
-    return t8;
+    return <Box flexDirection="column">{<Text bold={true}>{title}</Text>}{<Box flexDirection="row" gap={1}>{<ProgressBar ratio={utilization / 100} width={50} fillColor="rate_limit_fill" emptyColor="rate_limit_empty" />}{<Text>{usedText}</Text>}</Box>}{subtext && <Text dimColor={true}>{subtext}</Text>}</Box>;
   } else {
-    let t2;
-    if ($[18] !== title) {
-      t2 = <Text bold={true}>{title}</Text>;
-      $[18] = title;
-      $[19] = t2;
-    } else {
-      t2 = $[19];
-    }
-    let t3;
-    if ($[20] !== subtext) {
-      t3 = subtext && <><Text> </Text><Text dimColor={true}>· {subtext}</Text></>;
-      $[20] = subtext;
-      $[21] = t3;
-    } else {
-      t3 = $[21];
-    }
-    let t4;
-    if ($[22] !== t2 || $[23] !== t3) {
-      t4 = <Text>{t2}{t3}</Text>;
-      $[22] = t2;
-      $[23] = t3;
-      $[24] = t4;
-    } else {
-      t4 = $[24];
-    }
-    const t5 = utilization / 100;
-    let t6;
-    if ($[25] !== maxWidth || $[26] !== t5) {
-      t6 = <ProgressBar ratio={t5} width={maxWidth} fillColor="rate_limit_fill" emptyColor="rate_limit_empty" />;
-      $[25] = maxWidth;
-      $[26] = t5;
-      $[27] = t6;
-    } else {
-      t6 = $[27];
-    }
-    let t7;
-    if ($[28] !== usedText) {
-      t7 = <Text>{usedText}</Text>;
-      $[28] = usedText;
-      $[29] = t7;
-    } else {
-      t7 = $[29];
-    }
-    let t8;
-    if ($[30] !== t4 || $[31] !== t6 || $[32] !== t7) {
-      t8 = <Box flexDirection="column">{t4}{t6}{t7}</Box>;
-      $[30] = t4;
-      $[31] = t6;
-      $[32] = t7;
-      $[33] = t8;
-    } else {
-      t8 = $[33];
-    }
-    return t8;
+    return <Box flexDirection="column">{<Text>{<Text bold={true}>{title}</Text>}{subtext && <><Text> </Text><Text dimColor={true}>· {subtext}</Text></>}</Text>}{<ProgressBar ratio={utilization / 100} width={maxWidth} fillColor="rate_limit_fill" emptyColor="rate_limit_empty" />}{<Text>{usedText}</Text>}</Box>;
   }
 }
 export function Usage(): React.ReactNode {
@@ -195,7 +82,9 @@ export function Usage(): React.ReactNode {
         };
       };
       const responseBody = axiosError.response?.data ? jsonStringify(axiosError.response.data) : undefined;
-      setError(responseBody ? tSync('usage.loadErrorDetail', { detail: responseBody }) : tSync('usage.loadError'));
+      setError(responseBody ? tSync('usage.loadErrorDetail', {
+        detail: responseBody
+      }) : tSync('usage.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +100,9 @@ export function Usage(): React.ReactNode {
   });
   if (error) {
     return <Box flexDirection="column" gap={1}>
-        <Text color="error">{tSync('usage.error', { error: error })}</Text>
+        <Text color="error">{tSync('usage.error', {
+          error: error
+        })}</Text>
         <Text dimColor>
           <Byline>
             <ConfigurableShortcutHint action="settings:retry" context="Settings" fallback="r" description="retry" />
@@ -269,12 +160,10 @@ type ExtraUsageSectionProps = {
   maxWidth: number;
 };
 const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage');
-function ExtraUsageSection(t0) {
-  const $ = _c(20);
-  const {
-    extraUsage,
-    maxWidth
-  } = t0;
+function ExtraUsageSection({
+  extraUsage,
+  maxWidth
+}: ExtraUsageSectionProps) {
   const subscriptionType = getSubscriptionType();
   const isProOrMax = subscriptionType === "pro" || subscriptionType === "max";
   if (!isProOrMax) {
@@ -282,96 +171,28 @@ function ExtraUsageSection(t0) {
   }
   if (!extraUsage.is_enabled) {
     if (extraUsageCommand.isEnabled()) {
-      let t1;
-      if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-        t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.extraUsageNotEnabled')}</Text></Box>;
-        $[0] = t1;
-      } else {
-        t1 = $[0];
-      }
-      return t1;
+      return <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.extraUsageNotEnabled')}</Text></Box>;
     }
     return null;
   }
   if (extraUsage.monthly_limit === null) {
-    let t1;
-    if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.unlimited')}</Text></Box>;
-      $[1] = t1;
-    } else {
-      t1 = $[1];
-    }
-    return t1;
+    return <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.unlimited')}</Text></Box>;
   }
   if (typeof extraUsage.used_credits !== "number" || typeof extraUsage.utilization !== "number") {
     return null;
   }
-  const t1 = extraUsage.used_credits / 100;
-  let t2;
-  if ($[2] !== t1) {
-    t2 = formatCost(t1, 2);
-    $[2] = t1;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  const formattedUsedCredits = t2;
-  const t3 = extraUsage.monthly_limit / 100;
-  let t4;
-  if ($[4] !== t3) {
-    t4 = formatCost(t3, 2);
-    $[4] = t3;
-    $[5] = t4;
-  } else {
-    t4 = $[5];
-  }
-  const formattedMonthlyLimit = t4;
-  let T0;
-  let t5;
-  let t6;
-  let t7;
-  if ($[6] !== extraUsage.utilization) {
-    const now = new Date();
-    const oneMonthReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    T0 = LimitBar;
-    t7 = EXTRA_USAGE_SECTION_TITLE;
-    t5 = extraUsage.utilization;
-    t6 = oneMonthReset.toISOString();
-    $[6] = extraUsage.utilization;
-    $[7] = T0;
-    $[8] = t5;
-    $[9] = t6;
-    $[10] = t7;
-  } else {
-    T0 = $[7];
-    t5 = $[8];
-    t6 = $[9];
-    t7 = $[10];
-  }
-  let t8;
-  if ($[11] !== t5 || $[12] !== t6) {
-    t8 = {
-      utilization: t5,
-      resets_at: t6
-    };
-    $[11] = t5;
-    $[12] = t6;
-    $[13] = t8;
-  } else {
-    t8 = $[13];
-  }
-  const t9 = tSync('usage.spent', { used: formattedUsedCredits, total: formattedMonthlyLimit });
-  let t10;
-  if ($[14] !== T0 || $[15] !== maxWidth || $[16] !== t7 || $[17] !== t8 || $[18] !== t9) {
-    t10 = <T0 title={t7} limit={t8} showTimeInReset={false} extraSubtext={t9} maxWidth={maxWidth} />;
-    $[14] = T0;
-    $[15] = maxWidth;
-    $[16] = t7;
-    $[17] = t8;
-    $[18] = t9;
-    $[19] = t10;
-  } else {
-    t10 = $[19];
-  }
-  return t10;
+  const formattedUsedCredits = formatCost(extraUsage.used_credits / 100, 2);
+  const formattedMonthlyLimit = formatCost(extraUsage.monthly_limit / 100, 2);
+  const now = new Date();
+  const oneMonthReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const T0 = LimitBar;
+  const t6 = oneMonthReset.toISOString();
+  const t9 = tSync('usage.spent', {
+    used: formattedUsedCredits,
+    total: formattedMonthlyLimit
+  });
+  return <T0 title={EXTRA_USAGE_SECTION_TITLE} limit={{
+    utilization: extraUsage.utilization,
+    resets_at: t6
+  }} showTimeInReset={false} extraSubtext={t9} maxWidth={maxWidth} />;
 }

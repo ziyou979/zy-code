@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle';
 import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js';
@@ -1753,11 +1752,9 @@ const THEME_LABELS: Record<string, string> = {
   'dark-ansi': 'Dark mode (ANSI colors only)',
   'light-ansi': 'Light mode (ANSI colors only)'
 };
-function NotifChannelLabel(t0) {
-  const $ = _c(4);
-  const {
-    value
-  } = t0;
+function NotifChannelLabel({
+  value
+}) {
   switch (value) {
     case "auto":
       {
@@ -1766,45 +1763,25 @@ function NotifChannelLabel(t0) {
     case "iterm2":
       {
         let t1;
-        if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>;
-          $[0] = t1;
-        } else {
-          t1 = $[0];
-        }
+        t1 = <Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>;
         return t1;
       }
     case "terminal_bell":
       {
         let t1;
-        if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Text>;
-          $[1] = t1;
-        } else {
-          t1 = $[1];
-        }
+        t1 = <Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Text>;
         return t1;
       }
     case "kitty":
       {
         let t1;
-        if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>;
-          $[2] = t1;
-        } else {
-          t1 = $[2];
-        }
+        t1 = <Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>;
         return t1;
       }
     case "ghostty":
       {
         let t1;
-        if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Text>;
-          $[3] = t1;
-        } else {
-          t1 = $[3];
-        }
+        t1 = <Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Text>;
         return t1;
       }
     case "iterm2_with_bell":

@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ContentBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import { randomUUID, type UUID } from 'crypto';
 import figures from 'figures';
@@ -413,192 +412,61 @@ function getRestoreOptionConversationText(option: RestoreOption): string {
       return 'The conversation will be unchanged.';
   }
 }
-function RestoreOptionDescription(t0) {
-  const $ = _c(11);
-  const {
-    selectedRestoreOption,
-    canRestoreCode,
-    diffStatsForRestore
-  } = t0;
+function RestoreOptionDescription({
+  selectedRestoreOption,
+  canRestoreCode,
+  diffStatsForRestore
+}) {
   const showCodeRestore = canRestoreCode && (selectedRestoreOption === "both" || selectedRestoreOption === "code");
-  let t1;
-  if ($[0] !== selectedRestoreOption) {
-    t1 = getRestoreOptionConversationText(selectedRestoreOption);
-    $[0] = selectedRestoreOption;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== t1) {
-    t2 = <Text dimColor={true}>{t1}</Text>;
-    $[2] = t1;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  let t3;
-  if ($[4] !== diffStatsForRestore || $[5] !== selectedRestoreOption || $[6] !== showCodeRestore) {
-    t3 = !isSummarizeOption(selectedRestoreOption) && (showCodeRestore ? <RestoreCodeConfirmation diffStatsForRestore={diffStatsForRestore} /> : <Text dimColor={true}>The code will be unchanged.</Text>);
-    $[4] = diffStatsForRestore;
-    $[5] = selectedRestoreOption;
-    $[6] = showCodeRestore;
-    $[7] = t3;
-  } else {
-    t3 = $[7];
-  }
-  let t4;
-  if ($[8] !== t2 || $[9] !== t3) {
-    t4 = <Box flexDirection="column">{t2}{t3}</Box>;
-    $[8] = t2;
-    $[9] = t3;
-    $[10] = t4;
-  } else {
-    t4 = $[10];
-  }
-  return t4;
+  const t1 = getRestoreOptionConversationText(selectedRestoreOption);
+  const t3 = !isSummarizeOption(selectedRestoreOption) && (showCodeRestore ? <RestoreCodeConfirmation diffStatsForRestore={diffStatsForRestore} /> : <Text dimColor={true}>The code will be unchanged.</Text>);
+  return <Box flexDirection="column">{<Text dimColor={true}>{t1}</Text>}{t3}</Box>;
 }
-function RestoreCodeConfirmation(t0) {
-  const $ = _c(14);
-  const {
-    diffStatsForRestore
-  } = t0;
+function RestoreCodeConfirmation({
+  diffStatsForRestore
+}) {
   if (diffStatsForRestore === undefined) {
     return;
   }
   if (!diffStatsForRestore.filesChanged || !diffStatsForRestore.filesChanged[0]) {
-    let t1;
-    if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true}>The code has not changed (nothing will be restored).</Text>;
-      $[0] = t1;
-    } else {
-      t1 = $[0];
-    }
-    return t1;
+    return <Text dimColor={true}>The code has not changed (nothing will be restored).</Text>;
   }
   const numFilesChanged = diffStatsForRestore.filesChanged.length;
   let fileLabel;
   if (numFilesChanged === 1) {
-    let t1;
-    if ($[1] !== diffStatsForRestore.filesChanged[0]) {
-      t1 = path.basename(diffStatsForRestore.filesChanged[0] || "");
-      $[1] = diffStatsForRestore.filesChanged[0];
-      $[2] = t1;
-    } else {
-      t1 = $[2];
-    }
-    fileLabel = t1;
+    fileLabel = path.basename(diffStatsForRestore.filesChanged[0] || "");
   } else {
     if (numFilesChanged === 2) {
-      let t1;
-      if ($[3] !== diffStatsForRestore.filesChanged[0]) {
-        t1 = path.basename(diffStatsForRestore.filesChanged[0] || "");
-        $[3] = diffStatsForRestore.filesChanged[0];
-        $[4] = t1;
-      } else {
-        t1 = $[4];
-      }
-      const file1 = t1;
-      let t2;
-      if ($[5] !== diffStatsForRestore.filesChanged[1]) {
-        t2 = path.basename(diffStatsForRestore.filesChanged[1] || "");
-        $[5] = diffStatsForRestore.filesChanged[1];
-        $[6] = t2;
-      } else {
-        t2 = $[6];
-      }
-      const file2 = t2;
+      const file1 = path.basename(diffStatsForRestore.filesChanged[0] || "");
+      const file2 = path.basename(diffStatsForRestore.filesChanged[1] || "");
       fileLabel = `${file1} and ${file2}`;
     } else {
-      let t1;
-      if ($[7] !== diffStatsForRestore.filesChanged[0]) {
-        t1 = path.basename(diffStatsForRestore.filesChanged[0] || "");
-        $[7] = diffStatsForRestore.filesChanged[0];
-        $[8] = t1;
-      } else {
-        t1 = $[8];
-      }
-      const file1_0 = t1;
+      const file1_0 = path.basename(diffStatsForRestore.filesChanged[0] || "");
       fileLabel = `${file1_0} and ${diffStatsForRestore.filesChanged.length - 1} other files`;
     }
   }
-  let t1;
-  if ($[9] !== diffStatsForRestore) {
-    t1 = <DiffStatsText diffStats={diffStatsForRestore} />;
-    $[9] = diffStatsForRestore;
-    $[10] = t1;
-  } else {
-    t1 = $[10];
-  }
-  let t2;
-  if ($[11] !== fileLabel || $[12] !== t1) {
-    t2 = <><Text dimColor={true}>The code will be restored{" "}{t1} in {fileLabel}.</Text></>;
-    $[11] = fileLabel;
-    $[12] = t1;
-    $[13] = t2;
-  } else {
-    t2 = $[13];
-  }
-  return t2;
+  return <><Text dimColor={true}>The code will be restored{" "}{<DiffStatsText diffStats={diffStatsForRestore} />} in {fileLabel}.</Text></>;
 }
-function DiffStatsText(t0) {
-  const $ = _c(7);
-  const {
-    diffStats
-  } = t0;
+function DiffStatsText({
+  diffStats
+}) {
   if (!diffStats || !diffStats.filesChanged) {
     return;
   }
-  let t1;
-  if ($[0] !== diffStats.insertions) {
-    t1 = <Text color="diffAddedWord">+{diffStats.insertions} </Text>;
-    $[0] = diffStats.insertions;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== diffStats.deletions) {
-    t2 = <Text color="diffRemovedWord">-{diffStats.deletions}</Text>;
-    $[2] = diffStats.deletions;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  let t3;
-  if ($[4] !== t1 || $[5] !== t2) {
-    t3 = <>{t1}{t2}</>;
-    $[4] = t1;
-    $[5] = t2;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  return t3;
+  return <>{<Text color="diffAddedWord">+{diffStats.insertions} </Text>}{<Text color="diffRemovedWord">-{diffStats.deletions}</Text>}</>;
 }
-function UserMessageOption(t0) {
-  const $ = _c(31);
-  const {
-    userMessage,
-    color,
-    dimColor,
-    isCurrent,
-    paddingRight
-  } = t0;
+function UserMessageOption({
+  userMessage,
+  color,
+  dimColor,
+  isCurrent,
+  paddingRight
+}) {
   const {
     columns
   } = useTerminalSize();
   if (isCurrent) {
-    let t1;
-    if ($[0] !== color || $[1] !== dimColor) {
-      t1 = <Box width="100%"><Text italic={true} color={color} dimColor={dimColor}>(current)</Text></Box>;
-      $[0] = color;
-      $[1] = dimColor;
-      $[2] = t1;
-    } else {
-      t1 = $[2];
-    }
-    return t1;
+    return <Box width="100%"><Text italic={true} color={color} dimColor={dimColor}>(current)</Text></Box>;
   }
   const content = userMessage.message.content;
   const lastBlock = typeof content === "string" ? null : content[content.length - 1];
@@ -610,110 +478,42 @@ function UserMessageOption(t0) {
   let t4;
   let t5;
   let t6;
-  if ($[3] !== color || $[4] !== columns || $[5] !== content || $[6] !== dimColor || $[7] !== lastBlock || $[8] !== paddingRight) {
-    t6 = Symbol.for("react.early_return_sentinel");
-    bb0: {
-      const rawMessageText = typeof content === "string" ? content.trim() : lastBlock && isTextBlock(lastBlock) ? lastBlock.text.trim() : "(no prompt)";
-      const messageText = stripDisplayTags(rawMessageText);
-      if (isEmptyMessageText(messageText)) {
-        let t7;
-        if ($[17] !== color || $[18] !== dimColor) {
-          t7 = <Box flexDirection="row" width="100%"><Text italic={true} color={color} dimColor={dimColor}>((empty message))</Text></Box>;
-          $[17] = color;
-          $[18] = dimColor;
-          $[19] = t7;
-        } else {
-          t7 = $[19];
-        }
-        t6 = t7;
-        break bb0;
-      }
-      if (messageText.includes("<bash-input>")) {
-        const input = extractTag(messageText, "bash-input");
-        if (input) {
-          let t7;
-          if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
-            t7 = <Text color="bashBorder">!</Text>;
-            $[20] = t7;
-          } else {
-            t7 = $[20];
-          }
-          t6 = <Box flexDirection="row" width="100%">{t7}<Text color={color} dimColor={dimColor}>{" "}{input}</Text></Box>;
-          break bb0;
-        }
-      }
-      if (messageText.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
-        const commandMessage = extractTag(messageText, COMMAND_MESSAGE_TAG);
-        const args = extractTag(messageText, "command-args");
-        const isSkillFormat = extractTag(messageText, "skill-format") === "true";
-        if (commandMessage) {
-          if (isSkillFormat) {
-            t6 = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>Skill({commandMessage})</Text></Box>;
-            break bb0;
-          } else {
-            t6 = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>/{commandMessage} {args}</Text></Box>;
-            break bb0;
-          }
-        }
-      }
-      T1 = Box;
-      t4 = "row";
-      t5 = "100%";
-      T0 = Text;
-      t1 = color;
-      t2 = dimColor;
-      t3 = paddingRight ? truncate(messageText, columns - paddingRight, true) : messageText.slice(0, 500).split("\n").slice(0, 4).join("\n");
-    }
-    $[3] = color;
-    $[4] = columns;
-    $[5] = content;
-    $[6] = dimColor;
-    $[7] = lastBlock;
-    $[8] = paddingRight;
-    $[9] = T0;
-    $[10] = T1;
-    $[11] = t1;
-    $[12] = t2;
-    $[13] = t3;
-    $[14] = t4;
-    $[15] = t5;
-    $[16] = t6;
+  t6 = Symbol.for("react.early_return_sentinel");
+  const rawMessageText = typeof content === "string" ? content.trim() : lastBlock && isTextBlock(lastBlock) ? lastBlock.text.trim() : "(no prompt)";
+  const messageText = stripDisplayTags(rawMessageText);
+  if (isEmptyMessageText(messageText)) {
+    t6 = <Box flexDirection="row" width="100%"><Text italic={true} color={color} dimColor={dimColor}>((empty message))</Text></Box>;
   } else {
-    T0 = $[9];
-    T1 = $[10];
-    t1 = $[11];
-    t2 = $[12];
-    t3 = $[13];
-    t4 = $[14];
-    t5 = $[15];
-    t6 = $[16];
+    if (messageText.includes("<bash-input>")) {
+      const input = extractTag(messageText, "bash-input");
+      if (input) {
+        t6 = <Box flexDirection="row" width="100%">{<Text color="bashBorder">!</Text>}<Text color={color} dimColor={dimColor}>{" "}{input}</Text></Box>;
+      }
+    }
+    if (messageText.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
+      const commandMessage = extractTag(messageText, COMMAND_MESSAGE_TAG);
+      const args = extractTag(messageText, "command-args");
+      const isSkillFormat = extractTag(messageText, "skill-format") === "true";
+      if (commandMessage) {
+        if (isSkillFormat) {
+          t6 = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>Skill({commandMessage})</Text></Box>;
+        } else {
+          t6 = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>/{commandMessage} {args}</Text></Box>;
+        }
+      }
+    }
+    T1 = Box;
+    t4 = "row";
+    t5 = "100%";
+    T0 = Text;
+    t1 = color;
+    t2 = dimColor;
+    t3 = paddingRight ? truncate(messageText, columns - paddingRight, true) : messageText.slice(0, 500).split("\n").slice(0, 4).join("\n");
   }
   if (t6 !== Symbol.for("react.early_return_sentinel")) {
     return t6;
   }
-  let t7;
-  if ($[21] !== T0 || $[22] !== t1 || $[23] !== t2 || $[24] !== t3) {
-    t7 = <T0 color={t1} dimColor={t2}>{t3}</T0>;
-    $[21] = T0;
-    $[22] = t1;
-    $[23] = t2;
-    $[24] = t3;
-    $[25] = t7;
-  } else {
-    t7 = $[25];
-  }
-  let t8;
-  if ($[26] !== T1 || $[27] !== t4 || $[28] !== t5 || $[29] !== t7) {
-    t8 = <T1 flexDirection={t4} width={t5}>{t7}</T1>;
-    $[26] = T1;
-    $[27] = t4;
-    $[28] = t5;
-    $[29] = t7;
-    $[30] = t8;
-  } else {
-    t8 = $[30];
-  }
-  return t8;
+  return <T1 flexDirection={t4} width={t5}>{<T0 color={t1} dimColor={t2}>{t3}</T0>}</T1>;
 }
 
 /**

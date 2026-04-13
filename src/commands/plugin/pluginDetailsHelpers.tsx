@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 /**
  * Shared helper functions and types for plugin details views
  *
@@ -76,41 +75,8 @@ export function buildPluginDetailsMenuOptions(hasHomepage: string | undefined, g
 /**
  * Key hint component for plugin selection screens
  */
-export function PluginSelectionKeyHint(t0) {
-  const $ = _c(7);
-  const {
-    hasSelection
-  } = t0;
-  let t1;
-  if ($[0] !== hasSelection) {
-    t1 = hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />;
-    $[0] = hasSelection;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  let t3;
-  let t4;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />;
-    t3 = <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />;
-    t4 = <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />;
-    $[2] = t2;
-    $[3] = t3;
-    $[4] = t4;
-  } else {
-    t2 = $[2];
-    t3 = $[3];
-    t4 = $[4];
-  }
-  let t5;
-  if ($[5] !== t1) {
-    t5 = <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{t1}{t2}{t3}{t4}</Byline></Text></Box>;
-    $[5] = t1;
-    $[6] = t5;
-  } else {
-    t5 = $[6];
-  }
-  return t5;
+export function PluginSelectionKeyHint({
+  hasSelection
+}) {
+  return <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />}{<ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />}{<ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />}{<ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />}</Byline></Text></Box>;
 }

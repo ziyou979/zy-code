@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import figures from 'figures';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -41,36 +40,10 @@ const CHECKING_TEXT = 'Attempting to auto-approve\u2026';
 // has a Compiler bailout (see below), so nothing was auto-memoized — the full
 // JSX tree was reconstructed 20-60 times per classifier check.
 function ClassifierCheckingSubtitle() {
-  const $ = _c(6);
   const [ref, glimmerIndex] = useShimmerAnimation("requesting", CHECKING_TEXT, false);
-  let t0;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = [...CHECKING_TEXT];
-    $[0] = t0;
-  } else {
-    t0 = $[0];
-  }
-  let t1;
-  if ($[1] !== glimmerIndex) {
-    t1 = <Text>{t0.map((char, i) => <ShimmerChar key={i} char={char} index={i} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="subtle" />)}</Text>;
-    $[1] = glimmerIndex;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
-  }
-  let t2;
-  if ($[3] !== ref || $[4] !== t1) {
-    t2 = <Box ref={ref}>{t1}</Box>;
-    $[3] = ref;
-    $[4] = t1;
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  return t2;
+  return <Box ref={ref}>{<Text>{[...CHECKING_TEXT].map((char, i) => <ShimmerChar key={i} char={char} index={i} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="subtle" />)}</Text>}</Box>;
 }
 export function BashPermissionRequest(props) {
-  const $ = _c(21);
   const {
     toolUseConfirm,
     toolUseContext,
@@ -79,58 +52,16 @@ export function BashPermissionRequest(props) {
     verbose,
     workerBadge
   } = props;
-  let command;
-  let description;
-  let t0;
-  if ($[0] !== toolUseConfirm.input) {
-    ({
-      command,
-      description
-    } = BashTool.inputSchema.parse(toolUseConfirm.input));
-    t0 = parseSedEditCommand(command);
-    $[0] = toolUseConfirm.input;
-    $[1] = command;
-    $[2] = description;
-    $[3] = t0;
-  } else {
-    command = $[1];
-    description = $[2];
-    t0 = $[3];
-  }
-  const sedInfo = t0;
+  let sedInfo;
+  ({
+    command,
+    description
+  } = BashTool.inputSchema.parse(toolUseConfirm.input));
+  sedInfo = parseSedEditCommand(command);
   if (sedInfo) {
-    let t1;
-    if ($[4] !== onDone || $[5] !== onReject || $[6] !== sedInfo || $[7] !== toolUseConfirm || $[8] !== toolUseContext || $[9] !== verbose || $[10] !== workerBadge) {
-      t1 = <SedEditPermissionRequest toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} sedInfo={sedInfo} />;
-      $[4] = onDone;
-      $[5] = onReject;
-      $[6] = sedInfo;
-      $[7] = toolUseConfirm;
-      $[8] = toolUseContext;
-      $[9] = verbose;
-      $[10] = workerBadge;
-      $[11] = t1;
-    } else {
-      t1 = $[11];
-    }
-    return t1;
+    return <SedEditPermissionRequest toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} sedInfo={sedInfo} />;
   }
-  let t1;
-  if ($[12] !== command || $[13] !== description || $[14] !== onDone || $[15] !== onReject || $[16] !== toolUseConfirm || $[17] !== toolUseContext || $[18] !== verbose || $[19] !== workerBadge) {
-    t1 = <BashPermissionRequestInner toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} command={command} description={description} />;
-    $[12] = command;
-    $[13] = description;
-    $[14] = onDone;
-    $[15] = onReject;
-    $[16] = toolUseConfirm;
-    $[17] = toolUseContext;
-    $[18] = verbose;
-    $[19] = workerBadge;
-    $[20] = t1;
-  } else {
-    t1 = $[20];
-  }
-  return t1;
+  return <BashPermissionRequestInner toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} command={command} description={description} />;
 }
 
 // Inner component that uses hooks - only called for non-MCP CLI commands
@@ -471,9 +402,17 @@ function BashPermissionRequestInner({
           </Box>
           <Box justifyContent="space-between" marginTop={1}>
             <Text dimColor>
-              {tSync('permission.escToCancel', { cancel: tSync('permission.cancel') })}
-              {(focusedOption === 'yes' && !yesInputMode || focusedOption === 'no' && !noInputMode) && ` · ${tSync('permission.tabToAmend', { amend: tSync('permission.amend') })}`}
-              {explainerState.enabled && ` · ${explainerState.visible ? tSync('permission.ctrlEToHide', { hide: tSync('permission.hide') }) : tSync('permission.ctrlEToExplain', { explain: tSync('permission.explain') })}`}
+              {tSync('permission.escToCancel', {
+            cancel: tSync('permission.cancel')
+          })}
+              {(focusedOption === 'yes' && !yesInputMode || focusedOption === 'no' && !noInputMode) && ` · ${tSync('permission.tabToAmend', {
+            amend: tSync('permission.amend')
+          })}`}
+              {explainerState.enabled && ` · ${explainerState.visible ? tSync('permission.ctrlEToHide', {
+            hide: tSync('permission.hide')
+          }) : tSync('permission.ctrlEToExplain', {
+            explain: tSync('permission.explain')
+          })}`}
             </Text>
             {toolUseContext.options.debug && <Text dimColor>{tSync('permission.showDebugInfo')}</Text>}
           </Box>

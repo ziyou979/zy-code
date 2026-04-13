@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { execa } from 'execa';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -268,282 +267,118 @@ function ThinkbackInstaller({
 }
 type MenuAction = 'play' | 'edit' | 'fix' | 'regenerate';
 type GenerativeAction = Exclude<MenuAction, 'play'>;
-function ThinkbackMenu(t0) {
-  const $ = _c(19);
-  const {
-    onDone,
-    onAction,
-    skillDir,
-    hasGenerated
-  } = t0;
+function ThinkbackMenu({
+  onDone,
+  onAction,
+  skillDir,
+  hasGenerated
+}) {
   const [hasSelected, setHasSelected] = useState(false);
-  let t1;
-  if ($[0] !== hasGenerated) {
-    t1 = hasGenerated ? [{
-      label: "Play animation",
-      value: "play" as const,
-      description: "Watch your year in review"
-    }, {
-      label: "Edit content",
-      value: "edit" as const,
-      description: "Modify the animation"
-    }, {
-      label: "Fix errors",
-      value: "fix" as const,
-      description: "Fix validation or rendering issues"
-    }, {
-      label: "Regenerate",
-      value: "regenerate" as const,
-      description: "Create a new animation from scratch"
-    }] : [{
-      label: "Let's go!",
-      value: "regenerate" as const,
-      description: "Generate your personalized animation"
-    }];
-    $[0] = hasGenerated;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  const options = t1;
-  let t2;
-  if ($[2] !== onAction || $[3] !== onDone || $[4] !== skillDir) {
-    t2 = function handleSelect(value) {
-      setHasSelected(true);
-      if (value === "play") {
-        playAnimation(skillDir).then(() => {
-          onDone(undefined, {
-            display: "skip"
-          });
+  const options = hasGenerated ? [{
+    label: "Play animation",
+    value: "play" as const,
+    description: "Watch your year in review"
+  }, {
+    label: "Edit content",
+    value: "edit" as const,
+    description: "Modify the animation"
+  }, {
+    label: "Fix errors",
+    value: "fix" as const,
+    description: "Fix validation or rendering issues"
+  }, {
+    label: "Regenerate",
+    value: "regenerate" as const,
+    description: "Create a new animation from scratch"
+  }] : [{
+    label: "Let's go!",
+    value: "regenerate" as const,
+    description: "Generate your personalized animation"
+  }];
+  const handleSelect = function handleSelect(value) {
+    setHasSelected(true);
+    if (value === "play") {
+      playAnimation(skillDir).then(() => {
+        onDone(undefined, {
+          display: "skip"
         });
-      } else {
-        onAction(value);
-      }
-    };
-    $[2] = onAction;
-    $[3] = onDone;
-    $[4] = skillDir;
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  const handleSelect = t2;
-  let t3;
-  if ($[6] !== onDone) {
-    t3 = function handleCancel() {
-      onDone(undefined, {
-        display: "skip"
       });
-    };
-    $[6] = onDone;
-    $[7] = t3;
-  } else {
-    t3 = $[7];
-  }
-  const handleCancel = t3;
+    } else {
+      onAction(value);
+    }
+  };
+  const handleCancel = function handleCancel() {
+    onDone(undefined, {
+      display: "skip"
+    });
+  };
   if (hasSelected) {
     return null;
   }
-  let t4;
-  if ($[8] !== hasGenerated) {
-    t4 = !hasGenerated && <Box flexDirection="column"><Text>Relive your year of coding with Zy.</Text><Text dimColor={true}>{"We'll create a personalized ASCII animation celebrating your journey."}</Text></Box>;
-    $[8] = hasGenerated;
-    $[9] = t4;
-  } else {
-    t4 = $[9];
-  }
-  let t5;
-  if ($[10] !== handleSelect || $[11] !== options) {
-    t5 = <Select options={options} onChange={handleSelect} visibleOptionCount={5} />;
-    $[10] = handleSelect;
-    $[11] = options;
-    $[12] = t5;
-  } else {
-    t5 = $[12];
-  }
-  let t6;
-  if ($[13] !== t4 || $[14] !== t5) {
-    t6 = <Box flexDirection="column" gap={1}>{t4}{t5}</Box>;
-    $[13] = t4;
-    $[14] = t5;
-    $[15] = t6;
-  } else {
-    t6 = $[15];
-  }
-  let t7;
-  if ($[16] !== handleCancel || $[17] !== t6) {
-    t7 = <Dialog title="Think Back on 2025 with ZY Code" subtitle="Generate your 2025 ZY Code Think Back (takes a few minutes to run)" onCancel={handleCancel} color="zy">{t6}</Dialog>;
-    $[16] = handleCancel;
-    $[17] = t6;
-    $[18] = t7;
-  } else {
-    t7 = $[18];
-  }
-  return t7;
+  return <Dialog title="Think Back on 2025 with ZY Code" subtitle="Generate your 2025 ZY Code Think Back (takes a few minutes to run)" onCancel={handleCancel} color="zy">{<Box flexDirection="column" gap={1}>{!hasGenerated && <Box flexDirection="column"><Text>Relive your year of coding with Zy.</Text><Text dimColor={true}>{"We'll create a personalized ASCII animation celebrating your journey."}</Text></Box>}{<Select options={options} onChange={handleSelect} visibleOptionCount={5} />}</Box>}</Dialog>;
 }
 const EDIT_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=edit to modify my existing ZY Code year in review animation. Ask me what I want to change. When the animation is ready, tell the user to run /think-back again to play it.';
 const FIX_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=fix to fix validation or rendering errors in my existing ZY Code year in review animation. Run the validator, identify errors, and fix them. When the animation is ready, tell the user to run /think-back again to play it.';
 const REGENERATE_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=regenerate to create a completely new ZY Code year in review animation from scratch. Delete the existing animation and start fresh. When the animation is ready, tell the user to run /think-back again to play it.';
-function ThinkbackFlow(t0) {
-  const $ = _c(27);
-  const {
-    onDone
-  } = t0;
+function ThinkbackFlow({
+  onDone
+}) {
   const [installComplete, setInstallComplete] = useState(false);
   const [installError, setInstallError] = useState(null);
   const [skillDir, setSkillDir] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(null);
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = function handleReady() {
-      setInstallComplete(true);
-    };
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  const handleReady = t1;
-  let t2;
-  if ($[1] !== onDone) {
-    t2 = message => {
-      setInstallError(message);
-      onDone(`Error with thinkback: ${message}. Try running /plugin to manually install the think-back plugin.`, {
-        display: "system"
+  const handleReady = function handleReady() {
+    setInstallComplete(true);
+  };
+  const handleError = message => {
+    setInstallError(message);
+    onDone(`Error with thinkback: ${message}. Try running /plugin to manually install the think-back plugin.`, {
+      display: "system"
+    });
+  };
+  useEffect(() => {
+    if (installComplete && !skillDir && !installError) {
+      getThinkbackSkillDir().then(dir => {
+        if (dir) {
+          logForDebugging(`Thinkback skill directory: ${dir}`);
+          setSkillDir(dir);
+        } else {
+          handleError("Could not find thinkback skill directory");
+        }
       });
+    }
+  }, [installComplete, skillDir, installError, handleError]);
+  useEffect(() => {
+    if (!skillDir) {
+      return;
+    }
+    const dataPath = join(skillDir, "year_in_review.js");
+    pathExists(dataPath).then(exists => {
+      logForDebugging(`Checking for ${dataPath}: ${exists ? "found" : "not found"}`);
+      setHasGenerated(exists);
+    });
+  }, [skillDir]);
+  const handleAction = function handleAction(action) {
+    const prompts = {
+      edit: EDIT_PROMPT,
+      fix: FIX_PROMPT,
+      regenerate: REGENERATE_PROMPT
     };
-    $[1] = onDone;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  const handleError = t2;
-  let t3;
-  let t4;
-  if ($[3] !== handleError || $[4] !== installComplete || $[5] !== installError || $[6] !== skillDir) {
-    t3 = () => {
-      if (installComplete && !skillDir && !installError) {
-        getThinkbackSkillDir().then(dir => {
-          if (dir) {
-            logForDebugging(`Thinkback skill directory: ${dir}`);
-            setSkillDir(dir);
-          } else {
-            handleError("Could not find thinkback skill directory");
-          }
-        });
-      }
-    };
-    t4 = [installComplete, skillDir, installError, handleError];
-    $[3] = handleError;
-    $[4] = installComplete;
-    $[5] = installError;
-    $[6] = skillDir;
-    $[7] = t3;
-    $[8] = t4;
-  } else {
-    t3 = $[7];
-    t4 = $[8];
-  }
-  useEffect(t3, t4);
-  let t5;
-  let t6;
-  if ($[9] !== skillDir) {
-    t5 = () => {
-      if (!skillDir) {
-        return;
-      }
-      const dataPath = join(skillDir, "year_in_review.js");
-      pathExists(dataPath).then(exists => {
-        logForDebugging(`Checking for ${dataPath}: ${exists ? "found" : "not found"}`);
-        setHasGenerated(exists);
-      });
-    };
-    t6 = [skillDir];
-    $[9] = skillDir;
-    $[10] = t5;
-    $[11] = t6;
-  } else {
-    t5 = $[10];
-    t6 = $[11];
-  }
-  useEffect(t5, t6);
-  let t7;
-  if ($[12] !== onDone) {
-    t7 = function handleAction(action) {
-      const prompts = {
-        edit: EDIT_PROMPT,
-        fix: FIX_PROMPT,
-        regenerate: REGENERATE_PROMPT
-      };
-      onDone(prompts[action], {
-        display: "user",
-        shouldQuery: true
-      });
-    };
-    $[12] = onDone;
-    $[13] = t7;
-  } else {
-    t7 = $[13];
-  }
-  const handleAction = t7;
+    onDone(prompts[action], {
+      display: "user",
+      shouldQuery: true
+    });
+  };
   if (installError) {
-    let t8;
-    if ($[14] !== installError) {
-      t8 = <Text color="error">Error: {installError}</Text>;
-      $[14] = installError;
-      $[15] = t8;
-    } else {
-      t8 = $[15];
-    }
-    let t9;
-    if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t9 = <Text dimColor={true}>Try running /plugin to manually install the think-back plugin.</Text>;
-      $[16] = t9;
-    } else {
-      t9 = $[16];
-    }
-    let t10;
-    if ($[17] !== t8) {
-      t10 = <Box flexDirection="column">{t8}{t9}</Box>;
-      $[17] = t8;
-      $[18] = t10;
-    } else {
-      t10 = $[18];
-    }
-    return t10;
+    return <Box flexDirection="column">{<Text color="error">Error: {installError}</Text>}{<Text dimColor={true}>Try running /plugin to manually install the think-back plugin.</Text>}</Box>;
   }
   if (!installComplete) {
-    let t8;
-    if ($[19] !== handleError) {
-      t8 = <ThinkbackInstaller onReady={handleReady} onError={handleError} />;
-      $[19] = handleError;
-      $[20] = t8;
-    } else {
-      t8 = $[20];
-    }
-    return t8;
+    return <ThinkbackInstaller onReady={handleReady} onError={handleError} />;
   }
   if (!skillDir || hasGenerated === null) {
-    let t8;
-    if ($[21] === Symbol.for("react.memo_cache_sentinel")) {
-      t8 = <Box><Spinner /><Text>Loading thinkback skill…</Text></Box>;
-      $[21] = t8;
-    } else {
-      t8 = $[21];
-    }
-    return t8;
+    return <Box><Spinner /><Text>Loading thinkback skill…</Text></Box>;
   }
-  let t8;
-  if ($[22] !== handleAction || $[23] !== hasGenerated || $[24] !== onDone || $[25] !== skillDir) {
-    t8 = <ThinkbackMenu onDone={onDone} onAction={handleAction} skillDir={skillDir} hasGenerated={hasGenerated} />;
-    $[22] = handleAction;
-    $[23] = hasGenerated;
-    $[24] = onDone;
-    $[25] = skillDir;
-    $[26] = t8;
-  } else {
-    t8 = $[26];
-  }
-  return t8;
+  return <ThinkbackMenu onDone={onDone} onAction={handleAction} skillDir={skillDir} hasGenerated={hasGenerated} />;
 }
 export async function call(onDone: (result?: string, options?: {
   display?: CommandResultDisplay;

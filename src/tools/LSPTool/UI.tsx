@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import React from 'react';
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
@@ -58,104 +57,24 @@ const OPERATION_LABELS: Record<Input['operation'], {
 /**
  * Reusable component for LSP result summaries with collapsed/expanded views
  */
-function LSPResultSummary(t0) {
-  const $ = _c(24);
-  const {
-    operation,
-    resultCount,
-    fileCount,
-    content,
-    verbose
-  } = t0;
-  let t1;
-  if ($[0] !== operation) {
-    t1 = OPERATION_LABELS[operation] || {
-      singular: "result",
-      plural: "results"
-    };
-    $[0] = operation;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  const labelConfig = t1;
+function LSPResultSummary({
+  operation,
+  resultCount,
+  fileCount,
+  content,
+  verbose
+}) {
+  const labelConfig = OPERATION_LABELS[operation] || {
+    singular: "result",
+    plural: "results"
+  };
   const countLabel = resultCount === 1 ? labelConfig.singular : labelConfig.plural;
-  let t2;
-  if ($[2] !== countLabel || $[3] !== labelConfig.special || $[4] !== operation || $[5] !== resultCount) {
-    t2 = operation === "hover" && resultCount > 0 && labelConfig.special ? <Text>Hover info {labelConfig.special}</Text> : <Text>Found <Text bold={true}>{resultCount} </Text>{countLabel}</Text>;
-    $[2] = countLabel;
-    $[3] = labelConfig.special;
-    $[4] = operation;
-    $[5] = resultCount;
-    $[6] = t2;
-  } else {
-    t2 = $[6];
-  }
-  const primaryText = t2;
-  let t3;
-  if ($[7] !== fileCount) {
-    t3 = fileCount > 1 ? <Text>{" "}across <Text bold={true}>{fileCount} </Text>files</Text> : null;
-    $[7] = fileCount;
-    $[8] = t3;
-  } else {
-    t3 = $[8];
-  }
-  const secondaryText = t3;
+  const primaryText = operation === "hover" && resultCount > 0 && labelConfig.special ? <Text>Hover info {labelConfig.special}</Text> : <Text>Found <Text bold={true}>{resultCount} </Text>{countLabel}</Text>;
+  const secondaryText = fileCount > 1 ? <Text>{" "}across <Text bold={true}>{fileCount} </Text>files</Text> : null;
   if (verbose) {
-    let t4;
-    if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-      t4 = <Text dimColor={true}>  ⎿  </Text>;
-      $[9] = t4;
-    } else {
-      t4 = $[9];
-    }
-    let t5;
-    if ($[10] !== primaryText || $[11] !== secondaryText) {
-      t5 = <Box flexDirection="row"><Text>{t4}{primaryText}{secondaryText}</Text></Box>;
-      $[10] = primaryText;
-      $[11] = secondaryText;
-      $[12] = t5;
-    } else {
-      t5 = $[12];
-    }
-    let t6;
-    if ($[13] !== content) {
-      t6 = <Box marginLeft={5}><Text>{content}</Text></Box>;
-      $[13] = content;
-      $[14] = t6;
-    } else {
-      t6 = $[14];
-    }
-    let t7;
-    if ($[15] !== t5 || $[16] !== t6) {
-      t7 = <Box flexDirection="column">{t5}{t6}</Box>;
-      $[15] = t5;
-      $[16] = t6;
-      $[17] = t7;
-    } else {
-      t7 = $[17];
-    }
-    return t7;
+    return <Box flexDirection="column">{<Box flexDirection="row"><Text>{<Text dimColor={true}>  ⎿  </Text>}{primaryText}{secondaryText}</Text></Box>}{<Box marginLeft={5}><Text>{content}</Text></Box>}</Box>;
   }
-  let t4;
-  if ($[18] !== resultCount) {
-    t4 = resultCount > 0 && <CtrlOToExpand />;
-    $[18] = resultCount;
-    $[19] = t4;
-  } else {
-    t4 = $[19];
-  }
-  let t5;
-  if ($[20] !== primaryText || $[21] !== secondaryText || $[22] !== t4) {
-    t5 = <MessageResponse height={1}><Text>{primaryText}{secondaryText} {t4}</Text></MessageResponse>;
-    $[20] = primaryText;
-    $[21] = secondaryText;
-    $[22] = t4;
-    $[23] = t5;
-  } else {
-    t5 = $[23];
-  }
-  return t5;
+  return <MessageResponse height={1}><Text>{primaryText}{secondaryText} {resultCount > 0 && <CtrlOToExpand />}</Text></MessageResponse>;
 }
 export function userFacingName(): string {
   return 'LSP';

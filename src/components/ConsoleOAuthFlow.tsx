@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { installOAuthTokens } from '../cli/handlers/auth.js';
@@ -344,282 +343,128 @@ type OAuthStatusMessageProps = {
   setOAuthStatus: (status: OAuthStatus) => void;
   setLoginWithZyAi: (value: boolean) => void;
 };
-function OAuthStatusMessage(t0) {
-  const $ = _c(51);
-  const {
-    oauthStatus,
-    mode,
-    startingMessage,
-    forcedMethodMessage,
-    showPastePrompt,
-    pastedCode,
-    setPastedCode,
-    cursorOffset,
-    setCursorOffset,
-    textInputColumns,
-    handleSubmitCode,
-    setOAuthStatus,
-    setLoginWithZyAi
-  } = t0;
+function OAuthStatusMessage({
+  oauthStatus,
+  mode,
+  startingMessage,
+  forcedMethodMessage,
+  showPastePrompt,
+  pastedCode,
+  setPastedCode,
+  cursorOffset,
+  setCursorOffset,
+  textInputColumns,
+  handleSubmitCode,
+  setOAuthStatus,
+  setLoginWithZyAi
+}: OAuthStatusMessageProps) {
   switch (oauthStatus.state) {
     case "idle":
       {
         const t1 = startingMessage ? startingMessage : "ZY Code can be used with your Zy subscription or billed based on API usage through your Console account.";
         let t2;
-        if ($[0] !== t1) {
-          t2 = <Text bold={true}>{t1}</Text>;
-          $[0] = t1;
-          $[1] = t2;
-        } else {
-          t2 = $[1];
-        }
+        t2 = <Text bold={true}>{t1}</Text>;
         let t3;
-        if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-          t3 = <Text>Select login method:</Text>;
-          $[2] = t3;
-        } else {
-          t3 = $[2];
-        }
+        t3 = <Text>Select login method:</Text>;
         let t4;
-        if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-          t4 = {
-            label: <Text>Zy account with subscription ·{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[ANT-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
-            value: "zyai"
-          };
-          $[3] = t4;
-        } else {
-          t4 = $[3];
-        }
+        t4 = {
+          label: <Text>Zy account with subscription ·{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[ANT-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
+          value: "zyai"
+        };
         let t5;
-        if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-          t5 = {
-            label: <Text>Anthropic Console account ·{" "}<Text dimColor={true}>API usage billing</Text>{"\n"}</Text>,
-            value: "console"
-          };
-          $[4] = t5;
-        } else {
-          t5 = $[4];
-        }
+        t5 = {
+          label: <Text>Anthropic Console account ·{" "}<Text dimColor={true}>API usage billing</Text>{"\n"}</Text>,
+          value: "console"
+        };
         let t6;
-        if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-          t6 = [t4, t5, {
-            label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
-            value: "platform"
-          }];
-          $[5] = t6;
-        } else {
-          t6 = $[5];
-        }
+        t6 = [t4, t5, {
+          label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
+          value: "platform"
+        }];
         let t7;
-        if ($[6] !== setLoginWithZyAi || $[7] !== setOAuthStatus) {
-          t7 = <Box><Select options={t6} onChange={value_0 => {
-              if (value_0 === "platform") {
-                logEvent("tengu_oauth_platform_selected", {});
-                setOAuthStatus({
-                  state: "platform_setup"
-                });
+        t7 = <Box><Select options={t6} onChange={value_0 => {
+            if (value_0 === "platform") {
+              logEvent("tengu_oauth_platform_selected", {});
+              setOAuthStatus({
+                state: "platform_setup"
+              });
+            } else {
+              setOAuthStatus({
+                state: "ready_to_start"
+              });
+              if (value_0 === "zyai") {
+                logEvent("tengu_oauth_Zyai_selected", {});
+                setLoginWithZyAi(true);
               } else {
-                setOAuthStatus({
-                  state: "ready_to_start"
-                });
-                if (value_0 === "zyai") {
-                  logEvent("tengu_oauth_Zyai_selected", {});
-                  setLoginWithZyAi(true);
-                } else {
-                  logEvent("tengu_oauth_console_selected", {});
-                  setLoginWithZyAi(false);
-                }
+                logEvent("tengu_oauth_console_selected", {});
+                setLoginWithZyAi(false);
               }
-            }} /></Box>;
-          $[6] = setLoginWithZyAi;
-          $[7] = setOAuthStatus;
-          $[8] = t7;
-        } else {
-          t7 = $[8];
-        }
+            }
+          }} /></Box>;
         let t8;
-        if ($[9] !== t2 || $[10] !== t7) {
-          t8 = <Box flexDirection="column" gap={1} marginTop={1}>{t2}{t3}{t7}</Box>;
-          $[9] = t2;
-          $[10] = t7;
-          $[11] = t8;
-        } else {
-          t8 = $[11];
-        }
+        t8 = <Box flexDirection="column" gap={1} marginTop={1}>{t2}{t3}{t7}</Box>;
         return t8;
       }
     case "platform_setup":
       {
         let t1;
-        if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Text bold={true}>Using 3rd-party platforms</Text>;
-          $[12] = t1;
-        } else {
-          t1 = $[12];
-        }
+        t1 = <Text bold={true}>Using 3rd-party platforms</Text>;
         let t2;
         let t3;
-        if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <Text>ZY Code supports Amazon Bedrock, Microsoft Foundry, and Vertex AI. Set the required environment variables, then restart ZY Code.</Text>;
-          t3 = <Text>If you are part of an enterprise organization, contact your administrator for setup instructions.</Text>;
-          $[13] = t2;
-          $[14] = t3;
-        } else {
-          t2 = $[13];
-          t3 = $[14];
-        }
+        t2 = <Text>ZY Code supports Amazon Bedrock, Microsoft Foundry, and Vertex AI. Set the required environment variables, then restart ZY Code.</Text>;
+        t3 = <Text>If you are part of an enterprise organization, contact your administrator for setup instructions.</Text>;
         let t4;
-        if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-          t4 = <Text bold={true}>Documentation:</Text>;
-          $[15] = t4;
-        } else {
-          t4 = $[15];
-        }
+        t4 = <Text bold={true}>Documentation:</Text>;
         let t5;
-        if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-          t5 = <Text>· Amazon Bedrock:{" "}<Link url="https://code.zy.com/docs/en/amazon-bedrock">https://code.zy.com/docs/en/amazon-bedrock</Link></Text>;
-          $[16] = t5;
-        } else {
-          t5 = $[16];
-        }
+        t5 = <Text>· Amazon Bedrock:{" "}<Link url="https://code.zy.com/docs/en/amazon-bedrock">https://code.zy.com/docs/en/amazon-bedrock</Link></Text>;
         let t6;
-        if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-          t6 = <Text>· Microsoft Foundry:{" "}<Link url="https://code.zy.com/docs/en/microsoft-foundry">https://code.zy.com/docs/en/microsoft-foundry</Link></Text>;
-          $[17] = t6;
-        } else {
-          t6 = $[17];
-        }
+        t6 = <Text>· Microsoft Foundry:{" "}<Link url="https://code.zy.com/docs/en/microsoft-foundry">https://code.zy.com/docs/en/microsoft-foundry</Link></Text>;
         let t7;
-        if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
-          t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.zy.com/docs/en/google-vertex-ai">https://code.zy.com/docs/en/google-vertex-ai</Link></Text></Box>;
-          $[18] = t7;
-        } else {
-          t7 = $[18];
-        }
+        t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.zy.com/docs/en/google-vertex-ai">https://code.zy.com/docs/en/google-vertex-ai</Link></Text></Box>;
         let t8;
-        if ($[19] === Symbol.for("react.memo_cache_sentinel")) {
-          t8 = <Box flexDirection="column" gap={1} marginTop={1}>{t1}<Box flexDirection="column" gap={1}>{t2}{t3}{t7}<Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to go back to login options.</Text></Box></Box></Box>;
-          $[19] = t8;
-        } else {
-          t8 = $[19];
-        }
+        t8 = <Box flexDirection="column" gap={1} marginTop={1}>{t1}<Box flexDirection="column" gap={1}>{t2}{t3}{t7}<Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to go back to login options.</Text></Box></Box></Box>;
         return t8;
       }
     case "waiting_for_login":
       {
         let t1;
-        if ($[20] !== forcedMethodMessage) {
-          t1 = forcedMethodMessage && <Box><Text dimColor={true}>{forcedMethodMessage}</Text></Box>;
-          $[20] = forcedMethodMessage;
-          $[21] = t1;
-        } else {
-          t1 = $[21];
-        }
+        t1 = forcedMethodMessage && <Box><Text dimColor={true}>{forcedMethodMessage}</Text></Box>;
         let t2;
-        if ($[22] !== showPastePrompt) {
-          t2 = !showPastePrompt && <Box><Spinner /><Text>Opening browser to sign in…</Text></Box>;
-          $[22] = showPastePrompt;
-          $[23] = t2;
-        } else {
-          t2 = $[23];
-        }
+        t2 = !showPastePrompt && <Box><Spinner /><Text>Opening browser to sign in…</Text></Box>;
         let t3;
-        if ($[24] !== cursorOffset || $[25] !== handleSubmitCode || $[26] !== oauthStatus.url || $[27] !== pastedCode || $[28] !== setCursorOffset || $[29] !== setPastedCode || $[30] !== showPastePrompt || $[31] !== textInputColumns) {
-          t3 = showPastePrompt && <Box><Text>{PASTE_HERE_MSG}</Text><TextInput value={pastedCode} onChange={setPastedCode} onSubmit={value => handleSubmitCode(value, oauthStatus.url)} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} columns={textInputColumns} mask="*" /></Box>;
-          $[24] = cursorOffset;
-          $[25] = handleSubmitCode;
-          $[26] = oauthStatus.url;
-          $[27] = pastedCode;
-          $[28] = setCursorOffset;
-          $[29] = setPastedCode;
-          $[30] = showPastePrompt;
-          $[31] = textInputColumns;
-          $[32] = t3;
-        } else {
-          t3 = $[32];
-        }
+        t3 = showPastePrompt && <Box><Text>{PASTE_HERE_MSG}</Text><TextInput value={pastedCode} onChange={setPastedCode} onSubmit={value => handleSubmitCode(value, oauthStatus.url)} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} columns={textInputColumns} mask="*" /></Box>;
         let t4;
-        if ($[33] !== t1 || $[34] !== t2 || $[35] !== t3) {
-          t4 = <Box flexDirection="column" gap={1}>{t1}{t2}{t3}</Box>;
-          $[33] = t1;
-          $[34] = t2;
-          $[35] = t3;
-          $[36] = t4;
-        } else {
-          t4 = $[36];
-        }
+        t4 = <Box flexDirection="column" gap={1}>{t1}{t2}{t3}</Box>;
         return t4;
       }
     case "creating_api_key":
       {
         let t1;
-        if ($[37] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Box flexDirection="column" gap={1}><Box><Spinner /><Text>Creating API key for ZY Code…</Text></Box></Box>;
-          $[37] = t1;
-        } else {
-          t1 = $[37];
-        }
+        t1 = <Box flexDirection="column" gap={1}><Box><Spinner /><Text>Creating API key for ZY Code…</Text></Box></Box>;
         return t1;
       }
     case "about_to_retry":
       {
         let t1;
-        if ($[38] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Box flexDirection="column" gap={1}><Text color="permission">Retrying…</Text></Box>;
-          $[38] = t1;
-        } else {
-          t1 = $[38];
-        }
+        t1 = <Box flexDirection="column" gap={1}><Text color="permission">Retrying…</Text></Box>;
         return t1;
       }
     case "success":
       {
         let t1;
-        if ($[39] !== mode || $[40] !== oauthStatus.token) {
-          t1 = mode === "setup-token" && oauthStatus.token ? null : <>{getOauthAccountInfo()?.emailAddress ? <Text dimColor={true}>Logged in as{" "}<Text>{getOauthAccountInfo()?.emailAddress}</Text></Text> : null}<Text color="success">Login successful. Press <Text bold={true}>Enter</Text> to continue…</Text></>;
-          $[39] = mode;
-          $[40] = oauthStatus.token;
-          $[41] = t1;
-        } else {
-          t1 = $[41];
-        }
+        t1 = mode === "setup-token" && oauthStatus.token ? null : <>{getOauthAccountInfo()?.emailAddress ? <Text dimColor={true}>Logged in as{" "}<Text>{getOauthAccountInfo()?.emailAddress}</Text></Text> : null}<Text color="success">Login successful. Press <Text bold={true}>Enter</Text> to continue…</Text></>;
         let t2;
-        if ($[42] !== t1) {
-          t2 = <Box flexDirection="column">{t1}</Box>;
-          $[42] = t1;
-          $[43] = t2;
-        } else {
-          t2 = $[43];
-        }
+        t2 = <Box flexDirection="column">{t1}</Box>;
         return t2;
       }
     case "error":
       {
         let t1;
-        if ($[44] !== oauthStatus.message) {
-          t1 = <Text color="error">OAuth error: {oauthStatus.message}</Text>;
-          $[44] = oauthStatus.message;
-          $[45] = t1;
-        } else {
-          t1 = $[45];
-        }
+        t1 = <Text color="error">OAuth error: {oauthStatus.message}</Text>;
         let t2;
-        if ($[46] !== oauthStatus.toRetry) {
-          t2 = oauthStatus.toRetry && <Box marginTop={1}><Text color="permission">Press <Text bold={true}>Enter</Text> to retry.</Text></Box>;
-          $[46] = oauthStatus.toRetry;
-          $[47] = t2;
-        } else {
-          t2 = $[47];
-        }
+        t2 = oauthStatus.toRetry && <Box marginTop={1}><Text color="permission">Press <Text bold={true}>Enter</Text> to retry.</Text></Box>;
         let t3;
-        if ($[48] !== t1 || $[49] !== t2) {
-          t3 = <Box flexDirection="column" gap={1}>{t1}{t2}</Box>;
-          $[48] = t1;
-          $[49] = t2;
-          $[50] = t3;
-        } else {
-          t3 = $[50];
-        }
+        t3 = <Box flexDirection="column" gap={1}>{t1}{t2}</Box>;
         return t3;
       }
     default:

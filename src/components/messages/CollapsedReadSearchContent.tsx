@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import { basename } from 'path';
 import React, { useRef } from 'react';
@@ -40,100 +39,41 @@ type Props = {
 };
 
 /** Render a single tool use in verbose mode */
-function VerboseToolUse(t0) {
-  const $ = _c(24);
-  const {
-    content,
-    tools,
-    lookups,
-    inProgressToolUseIDs,
-    shouldAnimate,
-    theme
-  } = t0;
+function VerboseToolUse({
+  content,
+  tools,
+  lookups,
+  inProgressToolUseIDs,
+  shouldAnimate,
+  theme
+}: Props) {
   const bg = useSelectedMessageBg();
   let t1;
   let t2;
-  if ($[0] !== bg || $[1] !== content.id || $[2] !== content.input || $[3] !== content.name || $[4] !== inProgressToolUseIDs || $[5] !== lookups || $[6] !== shouldAnimate || $[7] !== theme || $[8] !== tools) {
-    t2 = Symbol.for("react.early_return_sentinel");
-    bb0: {
-      const tool = findToolByName(tools, content.name) ?? findToolByName(getReplPrimitiveTools(), content.name);
-      if (!tool) {
-        t2 = null;
-        break bb0;
-      }
-      let t3;
-      if ($[11] !== content.id || $[12] !== lookups.resolvedToolUseIDs) {
-        t3 = lookups.resolvedToolUseIDs.has(content.id);
-        $[11] = content.id;
-        $[12] = lookups.resolvedToolUseIDs;
-        $[13] = t3;
-      } else {
-        t3 = $[13];
-      }
-      const isResolved = t3;
-      let t4;
-      if ($[14] !== content.id || $[15] !== lookups.erroredToolUseIDs) {
-        t4 = lookups.erroredToolUseIDs.has(content.id);
-        $[14] = content.id;
-        $[15] = lookups.erroredToolUseIDs;
-        $[16] = t4;
-      } else {
-        t4 = $[16];
-      }
-      const isError = t4;
-      let t5;
-      if ($[17] !== content.id || $[18] !== inProgressToolUseIDs) {
-        t5 = inProgressToolUseIDs.has(content.id);
-        $[17] = content.id;
-        $[18] = inProgressToolUseIDs;
-        $[19] = t5;
-      } else {
-        t5 = $[19];
-      }
-      const isInProgress = t5;
-      const resultMsg = lookups.toolResultByToolUseID.get(content.id);
-      const rawToolResult = resultMsg?.type === "user" ? resultMsg.toolUseResult : undefined;
-      const parsedOutput = tool.outputSchema?.safeParse(rawToolResult);
-      const toolResult = parsedOutput?.success ? parsedOutput.data : undefined;
-      const parsedInput = tool.inputSchema.safeParse(content.input);
-      const input = parsedInput.success ? parsedInput.data : undefined;
-      const userFacingName = tool.userFacingName(input);
-      const toolUseMessage = input ? tool.renderToolUseMessage(input, {
-        theme,
-        verbose: true
-      }) : null;
-      const t6 = shouldAnimate && isInProgress;
-      const t7 = !isResolved;
-      let t8;
-      if ($[20] !== isError || $[21] !== t6 || $[22] !== t7) {
-        t8 = <ToolUseLoader shouldAnimate={t6} isUnresolved={t7} isError={isError} />;
-        $[20] = isError;
-        $[21] = t6;
-        $[22] = t7;
-        $[23] = t8;
-      } else {
-        t8 = $[23];
-      }
-      t1 = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}><Box flexDirection="row">{t8}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
-            verbose: true,
-            tools,
-            theme
-          })}</Box>}</Box>;
-    }
-    $[0] = bg;
-    $[1] = content.id;
-    $[2] = content.input;
-    $[3] = content.name;
-    $[4] = inProgressToolUseIDs;
-    $[5] = lookups;
-    $[6] = shouldAnimate;
-    $[7] = theme;
-    $[8] = tools;
-    $[9] = t1;
-    $[10] = t2;
+  t2 = Symbol.for("react.early_return_sentinel");
+  const tool = findToolByName(tools, content.name) ?? findToolByName(getReplPrimitiveTools(), content.name);
+  if (!tool) {
+    t2 = null;
   } else {
-    t1 = $[9];
-    t2 = $[10];
+    const isResolved = lookups.resolvedToolUseIDs.has(content.id);
+    const isError = lookups.erroredToolUseIDs.has(content.id);
+    const isInProgress = inProgressToolUseIDs.has(content.id);
+    const resultMsg = lookups.toolResultByToolUseID.get(content.id);
+    const rawToolResult = resultMsg?.type === "user" ? resultMsg.toolUseResult : undefined;
+    const parsedOutput = tool.outputSchema?.safeParse(rawToolResult);
+    const toolResult = parsedOutput?.success ? parsedOutput.data : undefined;
+    const parsedInput = tool.inputSchema.safeParse(content.input);
+    const input = parsedInput.success ? parsedInput.data : undefined;
+    const userFacingName = tool.userFacingName(input);
+    const toolUseMessage = input ? tool.renderToolUseMessage(input, {
+      theme,
+      verbose: true
+    }) : null;
+    t1 = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}><Box flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate && isInProgress} isUnresolved={!isResolved} isError={isError} />}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
+          verbose: true,
+          tools,
+          theme
+        })}</Box>}</Box>;
   }
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
     return t2;
@@ -288,10 +228,9 @@ export function CollapsedReadSearchContent({
     }
     if (elapsed !== undefined && elapsed >= 2) {
       const time = formatDuration(elapsed * 1000);
-      const lineUnit = tSync(
-        lines === 1 ? 'summary.line_one' : 'summary.line_other',
-        { count: lines },
-      );
+      const lineUnit = tSync(lines === 1 ? 'summary.line_one' : 'summary.line_other', {
+        count: lines
+      });
       shellProgressSuffix = lines > 0 ? ` (${time} · ${lines} ${lineUnit})` : ` (${time})`;
     }
   }
@@ -337,15 +276,17 @@ export function CollapsedReadSearchContent({
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_0 ? 'first' : 'sub';
     const searchKey = `summary.search.${phase}.${position}`;
-    const searchUnit = tSync(
-      searchCount === 1 ? 'summary.search.pattern_one' : 'summary.search.pattern_other',
-      { count: searchCount },
-    );
+    const searchUnit = tSync(searchCount === 1 ? 'summary.search.pattern_one' : 'summary.search.pattern_other', {
+      count: searchCount
+    });
     if (!isFirst_0) {
       nonMemParts.push(<Text key="comma-s">, </Text>);
     }
     nonMemParts.push(<Text key="search">
-        {tSync(searchKey, { count: searchCount, unit: searchUnit })}
+        {tSync(searchKey, {
+        count: searchCount,
+        unit: searchUnit
+      })}
       </Text>);
   }
   if (readCount > 0) {
@@ -353,15 +294,17 @@ export function CollapsedReadSearchContent({
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_1 ? 'first' : 'sub';
     const readKey = `summary.read.${phase}.${position}`;
-    const readUnit = tSync(
-      readCount === 1 ? 'summary.read.file_one' : 'summary.read.file_other',
-      { count: readCount },
-    );
+    const readUnit = tSync(readCount === 1 ? 'summary.read.file_one' : 'summary.read.file_other', {
+      count: readCount
+    });
     if (!isFirst_1) {
       nonMemParts.push(<Text key="comma-r">, </Text>);
     }
     nonMemParts.push(<Text key="read">
-        {tSync(readKey, { count: readCount, unit: readUnit })}
+        {tSync(readKey, {
+        count: readCount,
+        unit: readUnit
+      })}
       </Text>);
   }
   if (listCount > 0) {
@@ -369,28 +312,32 @@ export function CollapsedReadSearchContent({
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_2 ? 'first' : 'sub';
     const listKey = `summary.list.${phase}.${position}`;
-    const listUnit = tSync(
-      listCount === 1 ? 'summary.list.directory_one' : 'summary.list.directory_other',
-      { count: listCount },
-    );
+    const listUnit = tSync(listCount === 1 ? 'summary.list.directory_one' : 'summary.list.directory_other', {
+      count: listCount
+    });
     if (!isFirst_2) {
       nonMemParts.push(<Text key="comma-l">, </Text>);
     }
     nonMemParts.push(<Text key="list">
-        {tSync(listKey, { count: listCount, unit: listUnit })}
+        {tSync(listKey, {
+        count: listCount,
+        unit: listUnit
+      })}
       </Text>);
   }
   if (replCount > 0) {
     const replKey = isActiveGroup ? 'summary.repl.active' : 'summary.repl.done';
-    const replUnit = tSync(
-      replCount === 1 ? 'summary.repl.time_one' : 'summary.repl.time_other',
-      { count: replCount },
-    );
+    const replUnit = tSync(replCount === 1 ? 'summary.repl.time_one' : 'summary.repl.time_other', {
+      count: replCount
+    });
     if (nonMemParts.length > 0) {
       nonMemParts.push(<Text key="comma-repl">, </Text>);
     }
     nonMemParts.push(<Text key="repl">
-        {tSync(replKey, { count: replCount, unit: replUnit })}
+        {tSync(replKey, {
+        count: replCount,
+        unit: replUnit
+      })}
       </Text>);
   }
   if (mcpCallCount > 0) {
@@ -403,10 +350,14 @@ export function CollapsedReadSearchContent({
       nonMemParts.push(<Text key="comma-mcp">, </Text>);
     }
     nonMemParts.push(<Text key="mcp">
-        {tSync(mcpKey, { server: serverLabel })}
+        {tSync(mcpKey, {
+        server: serverLabel
+      })}
         {mcpCallCount > 1 && <>
             {' '}
-            <Text bold>{mcpCallCount}</Text> {tSync('summary.repl.time_other', { count: mcpCallCount })}
+            <Text bold>{mcpCallCount}</Text> {tSync('summary.repl.time_other', {
+          count: mcpCallCount
+        })}
           </>}
       </Text>);
   }
@@ -415,15 +366,17 @@ export function CollapsedReadSearchContent({
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_4 ? 'first' : 'sub';
     const bashKey = `summary.bash.${phase}.${position}`;
-    const bashUnit = tSync(
-      bashCount === 1 ? 'summary.bash.command_one' : 'summary.bash.command_other',
-      { count: bashCount },
-    );
+    const bashUnit = tSync(bashCount === 1 ? 'summary.bash.command_one' : 'summary.bash.command_other', {
+      count: bashCount
+    });
     if (!isFirst_4) {
       nonMemParts.push(<Text key="comma-bash">, </Text>);
     }
     nonMemParts.push(<Text key="bash">
-        {tSync(bashKey, { count: bashCount, unit: bashUnit })}
+        {tSync(bashKey, {
+        count: bashCount,
+        unit: bashUnit
+      })}
       </Text>);
   }
 
@@ -435,15 +388,17 @@ export function CollapsedReadSearchContent({
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_5 ? 'first' : 'sub';
     const mrKey = `summary.memoryRead.${phase}.${position}`;
-    const mrUnit = tSync(
-      memoryReadCount === 1 ? 'summary.memory_one' : 'summary.memory_other',
-      { count: memoryReadCount },
-    );
+    const mrUnit = tSync(memoryReadCount === 1 ? 'summary.memory_one' : 'summary.memory_other', {
+      count: memoryReadCount
+    });
     if (!isFirst_5) {
       memParts.push(<Text key="comma-mr">, </Text>);
     }
     memParts.push(<Text key="mem-read">
-        {tSync(mrKey, { count: memoryReadCount, unit: mrUnit })}
+        {tSync(mrKey, {
+        count: memoryReadCount,
+        unit: mrUnit
+      })}
       </Text>);
   }
   if (memorySearchCount > 0) {
@@ -461,15 +416,17 @@ export function CollapsedReadSearchContent({
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_7 ? 'first' : 'sub';
     const mwKey = `summary.memoryWrite.${phase}.${position}`;
-    const mwUnit = tSync(
-      memoryWriteCount === 1 ? 'summary.memory_one' : 'summary.memory_other',
-      { count: memoryWriteCount },
-    );
+    const mwUnit = tSync(memoryWriteCount === 1 ? 'summary.memory_one' : 'summary.memory_other', {
+      count: memoryWriteCount
+    });
     if (!isFirst_7) {
       memParts.push(<Text key="comma-mw">, </Text>);
     }
     memParts.push(<Text key="mem-write">
-        {tSync(mwKey, { count: memoryWriteCount, unit: mwUnit })}
+        {tSync(mwKey, {
+        count: memoryWriteCount,
+        unit: mwUnit
+      })}
       </Text>);
   }
   return <Box flexDirection="column" marginTop={1} backgroundColor={bg}>

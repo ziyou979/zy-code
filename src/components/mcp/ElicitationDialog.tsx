@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ElicitRequestFormParams, ElicitRequestURLParams, ElicitResult, PrimitiveSchemaDefinition } from '@modelcontextprotocol/sdk/types.js';
 import figures from 'figures';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -47,33 +46,12 @@ function resetTypeahead(ta: {
  * column alignment here (other checkbox states are width-1 glyphs).
  */
 function ResolvingSpinner() {
-  const $ = _c(4);
   const [frame, setFrame] = useState(0);
-  let t0;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = () => {
-      const timer = setInterval(setFrame, 80, advanceSpinnerFrame);
-      return () => clearInterval(timer);
-    };
-    t1 = [];
-    $[0] = t0;
-    $[1] = t1;
-  } else {
-    t0 = $[0];
-    t1 = $[1];
-  }
-  useEffect(t0, t1);
-  const t2 = RESOLVING_SPINNER_CHARS[frame];
-  let t3;
-  if ($[2] !== t2) {
-    t3 = <Text color="warning">{t2}</Text>;
-    $[2] = t2;
-    $[3] = t3;
-  } else {
-    t3 = $[3];
-  }
-  return t3;
+  useEffect(() => {
+    const timer = setInterval(setFrame, 80, advanceSpinnerFrame);
+    return () => clearInterval(timer);
+  }, []);
+  return <Text color="warning">{RESOLVING_SPINNER_CHARS[frame]}</Text>;
 }
 
 /** Format an ISO date/datetime for display, keeping the ISO value for submission. */
@@ -109,36 +87,15 @@ function formatDateDisplay(isoValue: string, schema: PrimitiveSchemaDefinition):
     return isoValue;
   }
 }
-export function ElicitationDialog(t0) {
-  const $ = _c(7);
-  const {
-    event,
-    onResponse,
-    onWaitingDismiss
-  } = t0;
+export function ElicitationDialog({
+  event,
+  onResponse,
+  onWaitingDismiss
+}) {
   if (event.params.mode === "url") {
-    let t1;
-    if ($[0] !== event || $[1] !== onResponse || $[2] !== onWaitingDismiss) {
-      t1 = <ElicitationURLDialog event={event} onResponse={onResponse} onWaitingDismiss={onWaitingDismiss} />;
-      $[0] = event;
-      $[1] = onResponse;
-      $[2] = onWaitingDismiss;
-      $[3] = t1;
-    } else {
-      t1 = $[3];
-    }
-    return t1;
+    return <ElicitationURLDialog event={event} onResponse={onResponse} onWaitingDismiss={onWaitingDismiss} />;
   }
-  let t1;
-  if ($[4] !== event || $[5] !== onResponse) {
-    t1 = <ElicitationFormDialog event={event} onResponse={onResponse} />;
-    $[4] = event;
-    $[5] = onResponse;
-    $[6] = t1;
-  } else {
-    t1 = $[6];
-  }
-  return t1;
+  return <ElicitationFormDialog event={event} onResponse={onResponse} />;
 }
 function ElicitationFormDialog({
   event,

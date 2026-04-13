@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle';
 // Dead code elimination: conditional import for COORDINATOR_MODE
@@ -73,156 +72,55 @@ type Props = {
   onOpenTasksDialog?: (taskId?: string) => void;
 };
 function ProactiveCountdown() {
-  const $ = _c(7);
   const nextTickAt = useSyncExternalStore(proactiveModule?.subscribeToProactiveChanges ?? NO_OP_SUBSCRIBE, proactiveModule?.getNextTickAt ?? NULL, NULL);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
-  let t0;
-  let t1;
-  if ($[0] !== nextTickAt) {
-    t0 = () => {
-      if (nextTickAt === null) {
-        setRemainingSeconds(null);
-        return;
-      }
-      const update = function update() {
-        const remaining = Math.max(0, Math.ceil((nextTickAt - Date.now()) / 1000));
-        setRemainingSeconds(remaining);
-      };
-      update();
-      const interval = setInterval(update, 1000);
-      return () => clearInterval(interval);
+  useEffect(() => {
+    if (nextTickAt === null) {
+      setRemainingSeconds(null);
+      return;
+    }
+    const update = function update() {
+      const remaining = Math.max(0, Math.ceil((nextTickAt - Date.now()) / 1000));
+      setRemainingSeconds(remaining);
     };
-    t1 = [nextTickAt];
-    $[0] = nextTickAt;
-    $[1] = t0;
-    $[2] = t1;
-  } else {
-    t0 = $[1];
-    t1 = $[2];
-  }
-  useEffect(t0, t1);
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [nextTickAt]);
   if (remainingSeconds === null) {
     return null;
   }
-  const t2 = remainingSeconds * 1000;
-  let t3;
-  if ($[3] !== t2) {
-    t3 = formatDuration(t2, {
-      mostSignificantOnly: true
-    });
-    $[3] = t2;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  let t4;
-  if ($[5] !== t3) {
-    t4 = <Text dimColor={true}>waiting{" "}{t3}</Text>;
-    $[5] = t3;
-    $[6] = t4;
-  } else {
-    t4 = $[6];
-  }
-  return t4;
+  const t3 = formatDuration(remainingSeconds * 1000, {
+    mostSignificantOnly: true
+  });
+  return <Text dimColor={true}>waiting{" "}{t3}</Text>;
 }
-export function PromptInputFooterLeftSide(t0) {
-  const $ = _c(27);
-  const {
-    exitMessage,
-    vimMode,
-    mode,
-    toolPermissionContext,
-    suppressHint,
-    isLoading,
-    tasksSelected,
-    teamsSelected,
-    tmuxSelected,
-    teammateFooterIndex,
-    isPasting,
-    isSearching,
-    historyQuery,
-    setHistoryQuery,
-    historyFailedMatch,
-    onOpenTasksDialog
-  } = t0;
+export function PromptInputFooterLeftSide({
+  exitMessage,
+  vimMode,
+  mode,
+  toolPermissionContext,
+  suppressHint,
+  isLoading,
+  tasksSelected,
+  teamsSelected,
+  tmuxSelected,
+  teammateFooterIndex,
+  isPasting,
+  isSearching,
+  historyQuery,
+  setHistoryQuery,
+  historyFailedMatch,
+  onOpenTasksDialog
+}: Props) {
   if (exitMessage.show) {
-    let t1;
-    if ($[0] !== exitMessage.key) {
-      t1 = <Text dimColor={true} key="exit-message">Press {exitMessage.key} again to exit</Text>;
-      $[0] = exitMessage.key;
-      $[1] = t1;
-    } else {
-      t1 = $[1];
-    }
-    return t1;
+    return <Text dimColor={true} key="exit-message">Press {exitMessage.key} again to exit</Text>;
   }
   if (isPasting) {
-    let t1;
-    if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true} key="pasting-message">Pasting text…</Text>;
-      $[2] = t1;
-    } else {
-      t1 = $[2];
-    }
-    return t1;
+    return <Text dimColor={true} key="pasting-message">Pasting text…</Text>;
   }
-  let t1;
-  if ($[3] !== isSearching || $[4] !== vimMode) {
-    t1 = isVimModeEnabled() && vimMode === "INSERT" && !isSearching;
-    $[3] = isSearching;
-    $[4] = vimMode;
-    $[5] = t1;
-  } else {
-    t1 = $[5];
-  }
-  const showVim = t1;
-  let t2;
-  if ($[6] !== historyFailedMatch || $[7] !== historyQuery || $[8] !== isSearching || $[9] !== setHistoryQuery) {
-    t2 = isSearching && <HistorySearchInput value={historyQuery} onChange={setHistoryQuery} historyFailedMatch={historyFailedMatch} />;
-    $[6] = historyFailedMatch;
-    $[7] = historyQuery;
-    $[8] = isSearching;
-    $[9] = setHistoryQuery;
-    $[10] = t2;
-  } else {
-    t2 = $[10];
-  }
-  let t3;
-  if ($[11] !== showVim) {
-    t3 = showVim ? <Text dimColor={true} key="vim-insert">-- INSERT --</Text> : null;
-    $[11] = showVim;
-    $[12] = t3;
-  } else {
-    t3 = $[12];
-  }
-  const t4 = !suppressHint && !showVim;
-  let t5;
-  if ($[13] !== isLoading || $[14] !== mode || $[15] !== onOpenTasksDialog || $[16] !== t4 || $[17] !== tasksSelected || $[18] !== teammateFooterIndex || $[19] !== teamsSelected || $[20] !== tmuxSelected || $[21] !== toolPermissionContext) {
-    t5 = <ModeIndicator mode={mode} toolPermissionContext={toolPermissionContext} showHint={t4} isLoading={isLoading} tasksSelected={tasksSelected} teamsSelected={teamsSelected} teammateFooterIndex={teammateFooterIndex} tmuxSelected={tmuxSelected} onOpenTasksDialog={onOpenTasksDialog} />;
-    $[13] = isLoading;
-    $[14] = mode;
-    $[15] = onOpenTasksDialog;
-    $[16] = t4;
-    $[17] = tasksSelected;
-    $[18] = teammateFooterIndex;
-    $[19] = teamsSelected;
-    $[20] = tmuxSelected;
-    $[21] = toolPermissionContext;
-    $[22] = t5;
-  } else {
-    t5 = $[22];
-  }
-  let t6;
-  if ($[23] !== t2 || $[24] !== t3 || $[25] !== t5) {
-    t6 = <Box justifyContent="flex-start" gap={1}>{t2}{t3}{t5}</Box>;
-    $[23] = t2;
-    $[24] = t3;
-    $[25] = t5;
-    $[26] = t6;
-  } else {
-    t6 = $[26];
-  }
-  return t6;
+  const showVim = isVimModeEnabled() && vimMode === "INSERT" && !isSearching;
+  return <Box justifyContent="flex-start" gap={1}>{isSearching && <HistorySearchInput value={historyQuery} onChange={setHistoryQuery} historyFailedMatch={historyFailedMatch} />}{showVim ? <Text dimColor={true} key="vim-insert">-- INSERT --</Text> : null}{<ModeIndicator mode={mode} toolPermissionContext={toolPermissionContext} showHint={!suppressHint && !showVim} isLoading={isLoading} tasksSelected={tasksSelected} teamsSelected={teamsSelected} teammateFooterIndex={teammateFooterIndex} tmuxSelected={tmuxSelected} onOpenTasksDialog={onOpenTasksDialog} />}</Box>;
 }
 type ModeIndicatorProps = {
   mode: PromptInputMode;

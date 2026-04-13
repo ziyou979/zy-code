@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { saveCurrentProjectConfig } from '../utils/config.js';
 export type StatsStore = {
@@ -101,58 +100,28 @@ type Props = {
   store?: StatsStore;
   children: React.ReactNode;
 };
-export function StatsProvider(t0) {
-  const $ = _c(7);
-  const {
-    store: externalStore,
-    children
-  } = t0;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = createStatsStore();
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  const internalStore = t1;
+export function StatsProvider({
+  store: externalStore,
+  children
+}: Props) {
+  const internalStore = createStatsStore();
   const store = externalStore ?? internalStore;
-  let t2;
-  let t3;
-  if ($[1] !== store) {
-    t2 = () => {
-      const flush = () => {
-        const metrics = store.getAll();
-        if (Object.keys(metrics).length > 0) {
-          saveCurrentProjectConfig(current => ({
-            ...current,
-            lastSessionMetrics: metrics
-          }));
-        }
-      };
-      process.on("exit", flush);
-      return () => {
-        process.off("exit", flush);
-      };
+  useEffect(() => {
+    const flush = () => {
+      const metrics = store.getAll();
+      if (Object.keys(metrics).length > 0) {
+        saveCurrentProjectConfig(current => ({
+          ...current,
+          lastSessionMetrics: metrics
+        }));
+      }
     };
-    t3 = [store];
-    $[1] = store;
-    $[2] = t2;
-    $[3] = t3;
-  } else {
-    t2 = $[2];
-    t3 = $[3];
-  }
-  useEffect(t2, t3);
-  let t4;
-  if ($[4] !== children || $[5] !== store) {
-    t4 = <StatsContext.Provider value={store}>{children}</StatsContext.Provider>;
-    $[4] = children;
-    $[5] = store;
-    $[6] = t4;
-  } else {
-    t4 = $[6];
-  }
-  return t4;
+    process.on("exit", flush);
+    return () => {
+      process.off("exit", flush);
+    };
+  }, [store]);
+  return <StatsContext.Provider value={store}>{children}</StatsContext.Provider>;
 }
 export function useStats() {
   const store = useContext(StatsContext);
@@ -162,58 +131,18 @@ export function useStats() {
   return store;
 }
 export function useCounter(name) {
-  const $ = _c(3);
   const store = useStats();
-  let t0;
-  if ($[0] !== name || $[1] !== store) {
-    t0 = value => store.increment(name, value);
-    $[0] = name;
-    $[1] = store;
-    $[2] = t0;
-  } else {
-    t0 = $[2];
-  }
-  return t0;
+  return value => store.increment(name, value);
 }
 export function useGauge(name) {
-  const $ = _c(3);
   const store = useStats();
-  let t0;
-  if ($[0] !== name || $[1] !== store) {
-    t0 = value => store.set(name, value);
-    $[0] = name;
-    $[1] = store;
-    $[2] = t0;
-  } else {
-    t0 = $[2];
-  }
-  return t0;
+  return value => store.set(name, value);
 }
 export function useTimer(name) {
-  const $ = _c(3);
   const store = useStats();
-  let t0;
-  if ($[0] !== name || $[1] !== store) {
-    t0 = value => store.observe(name, value);
-    $[0] = name;
-    $[1] = store;
-    $[2] = t0;
-  } else {
-    t0 = $[2];
-  }
-  return t0;
+  return value => store.observe(name, value);
 }
 export function useSet(name) {
-  const $ = _c(3);
   const store = useStats();
-  let t0;
-  if ($[0] !== name || $[1] !== store) {
-    t0 = value => store.add(name, value);
-    $[0] = name;
-    $[1] = store;
-    $[2] = t0;
-  } else {
-    t0 = $[2];
-  }
-  return t0;
+  return value => store.add(name, value);
 }

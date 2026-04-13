@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useLayoutEffect } from 'react';
 import { PassThrough } from 'stream';
@@ -15,39 +14,17 @@ import { render, useApp } from '../ink.js';
  * before exiting. This is more robust than process.nextTick() for React 19's
  * async render cycle.
  */
-function RenderOnceAndExit(t0) {
-  const $ = _c(5);
-  const {
-    children
-  } = t0;
+function RenderOnceAndExit({
+  children
+}) {
   const {
     exit
   } = useApp();
-  let t1;
-  let t2;
-  if ($[0] !== exit) {
-    t1 = () => {
-      const timer = setTimeout(exit, 0);
-      return () => clearTimeout(timer);
-    };
-    t2 = [exit];
-    $[0] = exit;
-    $[1] = t1;
-    $[2] = t2;
-  } else {
-    t1 = $[1];
-    t2 = $[2];
-  }
-  useLayoutEffect(t1, t2);
-  let t3;
-  if ($[3] !== children) {
-    t3 = <>{children}</>;
-    $[3] = children;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  return t3;
+  useLayoutEffect(() => {
+    const timer = setTimeout(exit, 0);
+    return () => clearTimeout(timer);
+  }, [exit]);
+  return <>{children}</>;
 }
 
 // DEC synchronized update markers used by terminals
@@ -81,7 +58,6 @@ export function renderToAnsiString(node: React.ReactNode, columns?: number): Pro
     // match what the user sees on screen.
     const stream = new PassThrough();
     if (columns !== undefined) {
-      ;
       (stream as unknown as {
         columns: number;
       }).columns = columns;

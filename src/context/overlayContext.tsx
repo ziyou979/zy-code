@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 /**
  * Overlay tracking for Escape key coordination.
  *
@@ -36,71 +35,44 @@ const NON_MODAL_OVERLAYS = new Set(['autocomplete']);
  * }
  */
 export function useRegisterOverlay(id, t0) {
-  const $ = _c(8);
   const enabled = t0 === undefined ? true : t0;
   const store = useContext(AppStoreContext);
   const setAppState = store?.setState;
-  let t1;
-  let t2;
-  if ($[0] !== enabled || $[1] !== id || $[2] !== setAppState) {
-    t1 = () => {
-      if (!enabled || !setAppState) {
-        return;
+  useEffect(() => {
+    if (!enabled || !setAppState) {
+      return;
+    }
+    setAppState(prev => {
+      if (prev.activeOverlays.has(id)) {
+        return prev;
       }
-      setAppState(prev => {
-        if (prev.activeOverlays.has(id)) {
-          return prev;
+      const next = new Set(prev.activeOverlays);
+      next.add(id);
+      return {
+        ...prev,
+        activeOverlays: next
+      };
+    });
+    return () => {
+      setAppState(prev_0 => {
+        if (!prev_0.activeOverlays.has(id)) {
+          return prev_0;
         }
-        const next = new Set(prev.activeOverlays);
-        next.add(id);
+        const next_0 = new Set(prev_0.activeOverlays);
+        next_0.delete(id);
         return {
-          ...prev,
-          activeOverlays: next
+          ...prev_0,
+          activeOverlays: next_0
         };
       });
-      return () => {
-        setAppState(prev_0 => {
-          if (!prev_0.activeOverlays.has(id)) {
-            return prev_0;
-          }
-          const next_0 = new Set(prev_0.activeOverlays);
-          next_0.delete(id);
-          return {
-            ...prev_0,
-            activeOverlays: next_0
-          };
-        });
-      };
     };
-    t2 = [id, enabled, setAppState];
-    $[0] = enabled;
-    $[1] = id;
-    $[2] = setAppState;
-    $[3] = t1;
-    $[4] = t2;
-  } else {
-    t1 = $[3];
-    t2 = $[4];
-  }
-  useEffect(t1, t2);
-  let t3;
-  let t4;
-  if ($[5] !== enabled) {
-    t3 = () => {
-      if (!enabled) {
-        return;
-      }
-      return _temp;
-    };
-    t4 = [enabled];
-    $[5] = enabled;
-    $[6] = t3;
-    $[7] = t4;
-  } else {
-    t3 = $[6];
-    t4 = $[7];
-  }
-  useLayoutEffect(t3, t4);
+  }, [id, enabled, setAppState]);
+  useLayoutEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    return () => instances.get(process.stdout)?.invalidatePrevFrame();
+  }, [enabled]);
 }
 
 /**
@@ -116,11 +88,9 @@ export function useRegisterOverlay(id, t0) {
  *   useKeybinding('chat:cancel', handleCancel, { isActive })
  * }
  */
-function _temp() {
-  return instances.get(process.stdout)?.invalidatePrevFrame();
-}
+
 export function useIsOverlayActive() {
-  return useAppState(_temp2);
+  return useAppState(s => s.activeOverlays.size > 0);
 }
 
 /**
@@ -134,17 +104,14 @@ export function useIsOverlayActive() {
  * // Use for TextInput focus - allows typing during autocomplete
  * focus: !isSearchingHistory && !isModalOverlayActive
  */
-function _temp2(s) {
-  return s.activeOverlays.size > 0;
-}
+
 export function useIsModalOverlayActive() {
-  return useAppState(_temp3);
-}
-function _temp3(s) {
-  for (const id of s.activeOverlays) {
-    if (!NON_MODAL_OVERLAYS.has(id)) {
-      return true;
+  return useAppState(s => {
+    for (const id of s.activeOverlays) {
+      if (!NON_MODAL_OVERLAYS.has(id)) {
+        return true;
+      }
     }
-  }
-  return false;
+    return false;
+  });
 }

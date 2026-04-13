@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
@@ -53,166 +52,67 @@ type Props = {
   isInputWrapped?: boolean;
   isNarrow?: boolean;
 };
-export function Notifications(t0) {
-  const $ = _c(34);
-  const {
-    apiKeyStatus,
-    autoUpdaterResult,
-    debug,
-    isAutoUpdating,
-    verbose,
-    messages,
-    onAutoUpdaterResult,
-    onChangeIsUpdating,
-    ideSelection,
-    mcpClients,
-    isInputWrapped: t1,
-    isNarrow: t2
-  } = t0;
-  const isInputWrapped = t1 === undefined ? false : t1;
-  const isNarrow = t2 === undefined ? false : t2;
-  let t3;
-  if ($[0] !== messages) {
-    const messagesForTokenCount = getMessagesAfterCompactBoundary(messages);
-    t3 = tokenCountFromLastAPIResponse(messagesForTokenCount);
-    $[0] = messages;
-    $[1] = t3;
-  } else {
-    t3 = $[1];
-  }
-  const tokenUsage = t3;
+export function Notifications({
+  apiKeyStatus,
+  autoUpdaterResult,
+  debug,
+  isAutoUpdating,
+  verbose,
+  messages,
+  onAutoUpdaterResult,
+  onChangeIsUpdating,
+  ideSelection,
+  mcpClients,
+  isInputWrapped = false,
+  isNarrow = false
+}: Props) {
+  const messagesForTokenCount = getMessagesAfterCompactBoundary(messages);
+  const tokenUsage = tokenCountFromLastAPIResponse(messagesForTokenCount);
   const mainLoopModel = useMainLoopModel();
-  let t4;
-  if ($[2] !== mainLoopModel || $[3] !== tokenUsage) {
-    t4 = calculateTokenWarningState(tokenUsage, mainLoopModel);
-    $[2] = mainLoopModel;
-    $[3] = tokenUsage;
-    $[4] = t4;
-  } else {
-    t4 = $[4];
-  }
+  const t4 = calculateTokenWarningState(tokenUsage, mainLoopModel);
   const isShowingCompactMessage = t4.isAboveWarningThreshold;
   const {
     status: ideStatus
   } = useIdeConnectionStatus(mcpClients);
-  const notifications = useAppState(_temp);
+  const notifications = useAppState(s => s.notifications);
   const {
     addNotification,
     removeNotification
   } = useNotifications();
   const zyAiLimits = useZyAiLimits();
-  let t5;
-  let t6;
-  if ($[5] !== addNotification) {
-    t5 = () => {
-      setEnvHookNotifier((text, isError) => {
-        addNotification({
-          key: "env-hook",
-          text,
-          color: isError ? "error" : undefined,
-          priority: isError ? "medium" : "low",
-          timeoutMs: isError ? 8000 : 5000
-        });
+  useEffect(() => {
+    setEnvHookNotifier((text, isError) => {
+      addNotification({
+        key: "env-hook",
+        text,
+        color: isError ? "error" : undefined,
+        priority: isError ? "medium" : "low",
+        timeoutMs: isError ? 8000 : 5000
       });
-      return _temp2;
-    };
-    t6 = [addNotification];
-    $[5] = addNotification;
-    $[6] = t5;
-    $[7] = t6;
-  } else {
-    t5 = $[6];
-    t6 = $[7];
-  }
-  useEffect(t5, t6);
+    });
+    return () => setEnvHookNotifier(null);
+  }, [addNotification]);
   const shouldShowIdeSelection = ideStatus === "connected" && (ideSelection?.filePath || ideSelection?.text && ideSelection.lineCount > 0);
   const shouldShowAutoUpdater = !shouldShowIdeSelection || isAutoUpdating || autoUpdaterResult?.status !== "success";
   const isInOverageMode = zyAiLimits.isUsingOverage;
-  let t7;
-  if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = getSubscriptionType();
-    $[8] = t7;
-  } else {
-    t7 = $[8];
-  }
-  const subscriptionType = t7;
+  const subscriptionType = getSubscriptionType();
   const isTeamOrEnterprise = subscriptionType === "team" || subscriptionType === "enterprise";
-  let t8;
-  if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = getExternalEditor();
-    $[9] = t8;
-  } else {
-    t8 = $[9];
-  }
-  const editor = t8;
+  const editor = getExternalEditor();
   const shouldShowExternalEditorHint = isInputWrapped && !isShowingCompactMessage && apiKeyStatus !== "invalid" && apiKeyStatus !== "missing" && editor !== undefined;
-  let t10;
-  let t9;
-  if ($[10] !== addNotification || $[11] !== removeNotification || $[12] !== shouldShowExternalEditorHint) {
-    t9 = () => {
-      if (shouldShowExternalEditorHint && editor) {
-        logEvent("tengu_external_editor_hint_shown", {});
-        addNotification({
-          key: "external-editor-hint",
-          jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={`edit in ${toIDEDisplayName(editor)}`} /></Text>,
-          priority: "immediate",
-          timeoutMs: 5000
-        });
-      } else {
-        removeNotification("external-editor-hint");
-      }
-    };
-    t10 = [shouldShowExternalEditorHint, editor, addNotification, removeNotification];
-    $[10] = addNotification;
-    $[11] = removeNotification;
-    $[12] = shouldShowExternalEditorHint;
-    $[13] = t10;
-    $[14] = t9;
-  } else {
-    t10 = $[13];
-    t9 = $[14];
-  }
-  useEffect(t9, t10);
-  const t11 = isNarrow ? "flex-start" : "flex-end";
-  const t12 = isInOverageMode ?? false;
-  let t13;
-  if ($[15] !== apiKeyStatus || $[16] !== autoUpdaterResult || $[17] !== debug || $[18] !== ideSelection || $[19] !== isAutoUpdating || $[20] !== isShowingCompactMessage || $[21] !== mainLoopModel || $[22] !== mcpClients || $[23] !== notifications || $[24] !== onAutoUpdaterResult || $[25] !== onChangeIsUpdating || $[26] !== shouldShowAutoUpdater || $[27] !== t12 || $[28] !== tokenUsage || $[29] !== verbose) {
-    t13 = <NotificationContent ideSelection={ideSelection} mcpClients={mcpClients} notifications={notifications} isInOverageMode={t12} isTeamOrEnterprise={isTeamOrEnterprise} apiKeyStatus={apiKeyStatus} debug={debug} verbose={verbose} tokenUsage={tokenUsage} mainLoopModel={mainLoopModel} shouldShowAutoUpdater={shouldShowAutoUpdater} autoUpdaterResult={autoUpdaterResult} isAutoUpdating={isAutoUpdating} isShowingCompactMessage={isShowingCompactMessage} onAutoUpdaterResult={onAutoUpdaterResult} onChangeIsUpdating={onChangeIsUpdating} />;
-    $[15] = apiKeyStatus;
-    $[16] = autoUpdaterResult;
-    $[17] = debug;
-    $[18] = ideSelection;
-    $[19] = isAutoUpdating;
-    $[20] = isShowingCompactMessage;
-    $[21] = mainLoopModel;
-    $[22] = mcpClients;
-    $[23] = notifications;
-    $[24] = onAutoUpdaterResult;
-    $[25] = onChangeIsUpdating;
-    $[26] = shouldShowAutoUpdater;
-    $[27] = t12;
-    $[28] = tokenUsage;
-    $[29] = verbose;
-    $[30] = t13;
-  } else {
-    t13 = $[30];
-  }
-  let t14;
-  if ($[31] !== t11 || $[32] !== t13) {
-    t14 = <SentryErrorBoundary><Box flexDirection="column" alignItems={t11} flexShrink={0} overflowX="hidden">{t13}</Box></SentryErrorBoundary>;
-    $[31] = t11;
-    $[32] = t13;
-    $[33] = t14;
-  } else {
-    t14 = $[33];
-  }
-  return t14;
-}
-function _temp2() {
-  return setEnvHookNotifier(null);
-}
-function _temp(s) {
-  return s.notifications;
+  useEffect(() => {
+    if (shouldShowExternalEditorHint && editor) {
+      logEvent("tengu_external_editor_hint_shown", {});
+      addNotification({
+        key: "external-editor-hint",
+        jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={`edit in ${toIDEDisplayName(editor)}`} /></Text>,
+        priority: "immediate",
+        timeoutMs: 5000
+      });
+    } else {
+      removeNotification("external-editor-hint");
+    }
+  }, [shouldShowExternalEditorHint, editor, addNotification, removeNotification]);
+  return <SentryErrorBoundary><Box flexDirection="column" alignItems={isNarrow ? "flex-start" : "flex-end"} flexShrink={0} overflowX="hidden">{<NotificationContent ideSelection={ideSelection} mcpClients={mcpClients} notifications={notifications} isInOverageMode={isInOverageMode ?? false} isTeamOrEnterprise={isTeamOrEnterprise} apiKeyStatus={apiKeyStatus} debug={debug} verbose={verbose} tokenUsage={tokenUsage} mainLoopModel={mainLoopModel} shouldShowAutoUpdater={shouldShowAutoUpdater} autoUpdaterResult={autoUpdaterResult} isAutoUpdating={isAutoUpdating} isShowingCompactMessage={isShowingCompactMessage} onAutoUpdaterResult={onAutoUpdaterResult} onChangeIsUpdating={onChangeIsUpdating} />}</Box></SentryErrorBoundary>;
 }
 function NotificationContent({
   ideSelection,
@@ -316,7 +216,9 @@ function NotificationContent({
         </Box>}
       {apiKeyStatus !== 'invalid' && apiKeyStatus !== 'missing' && verbose && <Box>
           <Text dimColor wrap="truncate">
-            {tSync('notif.tokenCount', { count: tokenUsage })}
+            {tSync('notif.tokenCount', {
+          count: tokenUsage
+        })}
           </Text>
         </Box>}
       {!isBriefOnly && <TokenWarning tokenUsage={tokenUsage} model={mainLoopModel} />}

@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { Box, Text } from '../ink.js';
 import * as React from 'react';
@@ -241,7 +240,9 @@ function SpinnerWithVerbInner({
 
   // When viewing an idle teammate, show static idle display instead of animated spinner
   if (foregroundedTeammate?.isIdle) {
-    const idleText = allIdle ? `${TEARDROP_ASTERISK} ${tSync('spinner.workedFor', { duration: formatDuration(Date.now() - foregroundedTeammate.startTime) })}` : `${TEARDROP_ASTERISK} ${tSync('spinner.idle')}`;
+    const idleText = allIdle ? `${TEARDROP_ASTERISK} ${tSync('spinner.workedFor', {
+      duration: formatDuration(Date.now() - foregroundedTeammate.startTime)
+    })}` : `${TEARDROP_ASTERISK} ${tSync('spinner.idle')}`;
     return <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>{idleText}</Text>
@@ -266,7 +267,10 @@ function SpinnerWithVerbInner({
     if (budget !== null && budget > 0) {
       const tokens = getTurnOutputTokens();
       if (tokens >= budget) {
-        budgetText = tSync('spinner.targetUsed', { used: formatNumber(tokens), budget: formatNumber(budget) });
+        budgetText = tSync('spinner.targetUsed', {
+          used: formatNumber(tokens),
+          budget: formatNumber(budget)
+        });
       } else {
         const pct = Math.round(tokens / budget * 100);
         const remaining = budget - tokens;
@@ -274,7 +278,12 @@ function SpinnerWithVerbInner({
         const eta = rate > 0 ? ` \u00B7 ~${formatDuration(remaining / rate, {
           mostSignificantOnly: true
         })}` : '';
-        budgetText = tSync('spinner.targetPercent', { used: formatNumber(tokens), budget: formatNumber(budget), pct, eta });
+        budgetText = tSync('spinner.targetPercent', {
+          used: formatNumber(tokens),
+          budget: formatNumber(budget),
+          pct,
+          eta
+        });
       }
     }
   }
@@ -294,7 +303,11 @@ function SpinnerWithVerbInner({
             </MessageResponse>}
           {(nextTask || effectiveTip) && <MessageResponse>
               <Text dimColor>
-                {nextTask ? tSync('spinner.next', { subject: nextTask.subject }) : tSync('spinner.tip', { tip: effectiveTip })}
+                {nextTask ? tSync('spinner.next', {
+            subject: nextTask.subject
+          }) : tSync('spinner.tip', {
+            tip: effectiveTip
+          })}
               </Text>
             </MessageResponse>}
         </Box> : null}
@@ -314,240 +327,79 @@ type BriefSpinnerProps = {
   mode: SpinnerMode;
   overrideMessage?: string | null;
 };
-function BriefSpinner(t0) {
-  const $ = _c(31);
-  const {
-    mode,
-    overrideMessage
-  } = t0;
+function BriefSpinner({
+  mode,
+  overrideMessage
+}: BriefSpinnerProps) {
   const settings = useSettings();
   const reducedMotion = settings.prefersReducedMotion ?? false;
-  const [randomVerb] = useState(_temp4);
+  const [randomVerb] = useState(() => sample(getSpinnerVerbs()) ?? "Working");
   const verb = overrideMessage ?? randomVerb;
-  const connStatus = useAppState(_temp5);
-  let t1;
-  let t2;
-  if ($[0] !== mode) {
-    t1 = () => {
-      const operationId = "spinner-" + mode;
-      activityManager.startCLIActivity(operationId);
-      return () => {
-        activityManager.endCLIActivity(operationId);
-      };
+  const connStatus = useAppState(s => s.remoteConnectionStatus);
+  useEffect(() => {
+    const operationId = "spinner-" + mode;
+    activityManager.startCLIActivity(operationId);
+    return () => {
+      activityManager.endCLIActivity(operationId);
     };
-    t2 = [mode];
-    $[0] = mode;
-    $[1] = t1;
-    $[2] = t2;
-  } else {
-    t1 = $[1];
-    t2 = $[2];
-  }
-  useEffect(t1, t2);
+  }, [mode]);
   const [, time] = useAnimationFrame(reducedMotion ? null : 120);
-  const runningCount = useAppState(_temp6);
+  const runningCount = useAppState(s_0 => count(Object.values(s_0.tasks), isBackgroundTask) + s_0.remoteBackgroundTaskCount);
   const showConnWarning = connStatus === "reconnecting" || connStatus === "disconnected";
   const connText = connStatus === "reconnecting" ? tSync('spinner.reconnecting') : tSync('spinner.disconnected');
   const dotFrame = Math.floor(time / 300) % 3;
-  let t3;
-  if ($[3] !== dotFrame || $[4] !== reducedMotion) {
-    t3 = reducedMotion ? "\u2026  " : ".".repeat(dotFrame + 1).padEnd(3);
-    $[3] = dotFrame;
-    $[4] = reducedMotion;
-    $[5] = t3;
-  } else {
-    t3 = $[5];
-  }
-  const dots = t3;
-  let t4;
-  if ($[6] !== verb) {
-    t4 = stringWidth(verb);
-    $[6] = verb;
-    $[7] = t4;
-  } else {
-    t4 = $[7];
-  }
-  const verbWidth = t4;
-  let t5;
-  if ($[8] !== reducedMotion || $[9] !== showConnWarning || $[10] !== time || $[11] !== verb || $[12] !== verbWidth) {
-    const glimmerIndex = reducedMotion || showConnWarning ? -100 : computeGlimmerIndex(Math.floor(time / SHIMMER_INTERVAL_MS), verbWidth);
-    t5 = computeShimmerSegments(verb, glimmerIndex);
-    $[8] = reducedMotion;
-    $[9] = showConnWarning;
-    $[10] = time;
-    $[11] = verb;
-    $[12] = verbWidth;
-    $[13] = t5;
-  } else {
-    t5 = $[13];
-  }
+  const dots = reducedMotion ? "\u2026  " : ".".repeat(dotFrame + 1).padEnd(3);
+  const verbWidth = stringWidth(verb);
+  const glimmerIndex = reducedMotion || showConnWarning ? -100 : computeGlimmerIndex(Math.floor(time / SHIMMER_INTERVAL_MS), verbWidth);
   const {
     before,
     shimmer,
     after
-  } = t5;
+  } = computeShimmerSegments(verb, glimmerIndex);
   const {
     columns
   } = useTerminalSize();
-  const rightText = runningCount > 0 ? tSync('spinner.inBackground', { count: runningCount }) : "";
-  let t6;
-  if ($[14] !== connText || $[15] !== showConnWarning || $[16] !== verbWidth) {
-    t6 = showConnWarning ? stringWidth(connText) : verbWidth;
-    $[14] = connText;
-    $[15] = showConnWarning;
-    $[16] = verbWidth;
-    $[17] = t6;
-  } else {
-    t6 = $[17];
-  }
+  const rightText = runningCount > 0 ? tSync('spinner.inBackground', {
+    count: runningCount
+  }) : "";
+  const t6 = showConnWarning ? stringWidth(connText) : verbWidth;
   const leftWidth = t6 + 3;
   const pad = Math.max(1, columns - 2 - leftWidth - stringWidth(rightText));
-  let t7;
-  if ($[18] !== after || $[19] !== before || $[20] !== connText || $[21] !== dots || $[22] !== shimmer || $[23] !== showConnWarning) {
-    t7 = showConnWarning ? <Text color="error">{connText + dots}</Text> : <>{before ? <Text dimColor={true}>{before}</Text> : null}{shimmer ? <Text>{shimmer}</Text> : null}{after ? <Text dimColor={true}>{after}</Text> : null}<Text dimColor={true}>{dots}</Text></>;
-    $[18] = after;
-    $[19] = before;
-    $[20] = connText;
-    $[21] = dots;
-    $[22] = shimmer;
-    $[23] = showConnWarning;
-    $[24] = t7;
-  } else {
-    t7 = $[24];
-  }
-  let t8;
-  if ($[25] !== pad || $[26] !== rightText) {
-    t8 = rightText ? <><Text>{" ".repeat(pad)}</Text><Text color="subtle">{rightText}</Text></> : null;
-    $[25] = pad;
-    $[26] = rightText;
-    $[27] = t8;
-  } else {
-    t8 = $[27];
-  }
-  let t9;
-  if ($[28] !== t7 || $[29] !== t8) {
-    t9 = <Box flexDirection="row" width="100%" marginTop={1} paddingLeft={2}>{t7}{t8}</Box>;
-    $[28] = t7;
-    $[29] = t8;
-    $[30] = t9;
-  } else {
-    t9 = $[30];
-  }
-  return t9;
+  return <Box flexDirection="row" width="100%" marginTop={1} paddingLeft={2}>{showConnWarning ? <Text color="error">{connText + dots}</Text> : <>{before ? <Text dimColor={true}>{before}</Text> : null}{shimmer ? <Text>{shimmer}</Text> : null}{after ? <Text dimColor={true}>{after}</Text> : null}<Text dimColor={true}>{dots}</Text></>}{rightText ? <><Text>{" ".repeat(pad)}</Text><Text color="subtle">{rightText}</Text></> : null}</Box>;
 }
 
 // Idle placeholder for brief mode. Same 2-row [blank, content] footprint
 // as BriefSpinner so the input bar never jumps when toggling between
 // working/idle/disconnected. See BriefSpinner's comment for the
 // Notifications overlay coupling.
-function _temp6(s_0) {
-  return count(Object.values(s_0.tasks), isBackgroundTask) + s_0.remoteBackgroundTaskCount;
-}
-function _temp5(s) {
-  return s.remoteConnectionStatus;
-}
-function _temp4() {
-  return sample(getSpinnerVerbs()) ?? "Working";
-}
+
 export function BriefIdleStatus() {
-  const $ = _c(9);
-  const connStatus = useAppState(_temp7);
-  const runningCount = useAppState(_temp8);
+  const connStatus = useAppState(s => s.remoteConnectionStatus);
+  const runningCount = useAppState(s_0 => count(Object.values(s_0.tasks), isBackgroundTask) + s_0.remoteBackgroundTaskCount);
   const {
     columns
   } = useTerminalSize();
   const showConnWarning = connStatus === "reconnecting" || connStatus === "disconnected";
   const connText = connStatus === "reconnecting" ? tSync('spinner.reconnecting') + '\u2026' : tSync('spinner.disconnected');
   const leftText = showConnWarning ? connText : "";
-  const rightText = runningCount > 0 ? tSync('spinner.inBackground', { count: runningCount }) : "";
+  const rightText = runningCount > 0 ? tSync('spinner.inBackground', {
+    count: runningCount
+  }) : "";
   if (!leftText && !rightText) {
-    let t0;
-    if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t0 = <Box height={2} />;
-      $[0] = t0;
-    } else {
-      t0 = $[0];
-    }
-    return t0;
+    return <Box height={2} />;
   }
   const pad = Math.max(1, columns - 2 - stringWidth(leftText) - stringWidth(rightText));
-  let t0;
-  if ($[1] !== leftText) {
-    t0 = leftText ? <Text color="error">{leftText}</Text> : null;
-    $[1] = leftText;
-    $[2] = t0;
-  } else {
-    t0 = $[2];
-  }
-  let t1;
-  if ($[3] !== pad || $[4] !== rightText) {
-    t1 = rightText ? <><Text>{" ".repeat(pad)}</Text><Text color="subtle">{rightText}</Text></> : null;
-    $[3] = pad;
-    $[4] = rightText;
-    $[5] = t1;
-  } else {
-    t1 = $[5];
-  }
-  let t2;
-  if ($[6] !== t0 || $[7] !== t1) {
-    t2 = <Box marginTop={1} paddingLeft={2}><Text>{t0}{t1}</Text></Box>;
-    $[6] = t0;
-    $[7] = t1;
-    $[8] = t2;
-  } else {
-    t2 = $[8];
-  }
-  return t2;
-}
-function _temp8(s_0) {
-  return count(Object.values(s_0.tasks), isBackgroundTask) + s_0.remoteBackgroundTaskCount;
-}
-function _temp7(s) {
-  return s.remoteConnectionStatus;
+  return <Box marginTop={1} paddingLeft={2}><Text>{leftText ? <Text color="error">{leftText}</Text> : null}{rightText ? <><Text>{" ".repeat(pad)}</Text><Text color="subtle">{rightText}</Text></> : null}</Text></Box>;
 }
 export function Spinner() {
-  const $ = _c(8);
   const settings = useSettings();
   const reducedMotion = settings.prefersReducedMotion ?? false;
   const [ref, time] = useAnimationFrame(reducedMotion ? null : 120);
   if (reducedMotion) {
-    let t0;
-    if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t0 = <Text color="text">●</Text>;
-      $[0] = t0;
-    } else {
-      t0 = $[0];
-    }
-    let t1;
-    if ($[1] !== ref) {
-      t1 = <Box ref={ref} flexWrap="wrap" height={1} width={2}>{t0}</Box>;
-      $[1] = ref;
-      $[2] = t1;
-    } else {
-      t1 = $[2];
-    }
-    return t1;
+    return <Box ref={ref} flexWrap="wrap" height={1} width={2}>{<Text color="text">●</Text>}</Box>;
   }
   const frame = Math.floor(time / 120) % SPINNER_FRAMES.length;
-  const t0 = SPINNER_FRAMES[frame];
-  let t1;
-  if ($[3] !== t0) {
-    t1 = <Text color="text">{t0}</Text>;
-    $[3] = t0;
-    $[4] = t1;
-  } else {
-    t1 = $[4];
-  }
-  let t2;
-  if ($[5] !== ref || $[6] !== t1) {
-    t2 = <Box ref={ref} flexWrap="wrap" height={1} width={2}>{t1}</Box>;
-    $[5] = ref;
-    $[6] = t1;
-    $[7] = t2;
-  } else {
-    t2 = $[7];
-  }
-  return t2;
+  return <Box ref={ref} flexWrap="wrap" height={1} width={2}>{<Text color="text">{SPINNER_FRAMES[frame]}</Text>}</Box>;
 }
 function findNextPendingTask(tasks: Task[] | undefined): Task | undefined {
   if (!tasks) {

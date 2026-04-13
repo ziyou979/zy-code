@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs';
 import { useEffect, useRef } from 'react';
 import { logError } from 'src/utils/log.js';
@@ -29,40 +28,18 @@ const ClaudeInChromePromptNotificationSchema = lazySchema(() => z.object({
  * enqueues them as user prompts, and syncs permission mode changes to the extension.
  */
 export function usePromptsFromClaudeInChrome(mcpClients, toolPermissionMode) {
-  const $ = _c(6);
   useRef(undefined);
-  let t0;
-  if ($[0] !== mcpClients) {
-    t0 = [mcpClients];
-    $[0] = mcpClients;
-    $[1] = t0;
-  } else {
-    t0 = $[1];
-  }
-  useEffect(_temp, t0);
-  let t1;
-  let t2;
-  if ($[2] !== mcpClients || $[3] !== toolPermissionMode) {
-    t1 = () => {
-      const chromeClient = findChromeClient(mcpClients);
-      if (!chromeClient) {
-        return;
-      }
-      const chromeMode = toolPermissionMode === "bypassPermissions" ? "skip_all_permission_checks" : "ask";
-      callIdeRpc("set_permission_mode", {
-        mode: chromeMode
-      }, chromeClient);
-    };
-    t2 = [mcpClients, toolPermissionMode];
-    $[2] = mcpClients;
-    $[3] = toolPermissionMode;
-    $[4] = t1;
-    $[5] = t2;
-  } else {
-    t1 = $[4];
-    t2 = $[5];
-  }
-  useEffect(t1, t2);
+  useEffect(_temp, [mcpClients]);
+  useEffect(() => {
+    const chromeClient = findChromeClient(mcpClients);
+    if (!chromeClient) {
+      return;
+    }
+    const chromeMode = toolPermissionMode === "bypassPermissions" ? "skip_all_permission_checks" : "ask";
+    callIdeRpc("set_permission_mode", {
+      mode: chromeMode
+    }, chromeClient);
+  }, [mcpClients, toolPermissionMode]);
 }
 function _temp() {}
 function findChromeClient(clients: MCPServerConnection[]): ConnectedMCPServer | undefined {

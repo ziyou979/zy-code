@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle';
 import { spawnSync } from 'child_process';
@@ -318,47 +317,16 @@ function median(values: number[]): number {
  * Small component to display transcript mode footer with dynamic keybinding.
  * Must be rendered inside KeybindingSetup to access keybinding context.
  */
-function TranscriptModeFooter(t0) {
-  const $ = _c(9);
-  const {
-    showAllInTranscript,
-    virtualScroll,
-    searchBadge,
-    suppressShowAll: t1,
-    status
-  } = t0;
-  const suppressShowAll = t1 === undefined ? false : t1;
+function TranscriptModeFooter({
+  showAllInTranscript,
+  virtualScroll,
+  searchBadge,
+  suppressShowAll = false,
+  status
+}) {
   const toggleShortcut = useShortcutDisplay("app:toggleTranscript", "Global", "ctrl+o");
   const showAllShortcut = useShortcutDisplay("transcript:toggleShowAll", "Transcript", "ctrl+e");
-  const t2 = searchBadge ? " \xB7 n/N to navigate" : virtualScroll ? ` · ${figures.arrowUp}${figures.arrowDown} scroll · home/end top/bottom` : suppressShowAll ? "" : ` · ${showAllShortcut} to ${showAllInTranscript ? "collapse" : "show all"}`;
-  let t3;
-  if ($[0] !== t2 || $[1] !== toggleShortcut) {
-    t3 = <Text dimColor={true}>Showing detailed transcript · {toggleShortcut} to toggle{t2}</Text>;
-    $[0] = t2;
-    $[1] = toggleShortcut;
-    $[2] = t3;
-  } else {
-    t3 = $[2];
-  }
-  let t4;
-  if ($[3] !== searchBadge || $[4] !== status) {
-    t4 = status ? <><Box flexGrow={1} /><Text>{status} </Text></> : searchBadge ? <><Box flexGrow={1} /><Text dimColor={true}>{searchBadge.current}/{searchBadge.count}{"  "}</Text></> : null;
-    $[3] = searchBadge;
-    $[4] = status;
-    $[5] = t4;
-  } else {
-    t4 = $[5];
-  }
-  let t5;
-  if ($[6] !== t3 || $[7] !== t4) {
-    t5 = <Box noSelect={true} alignItems="center" alignSelf="center" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" marginTop={1} paddingLeft={2} width="100%">{t3}{t4}</Box>;
-    $[6] = t3;
-    $[7] = t4;
-    $[8] = t5;
-  } else {
-    t5 = $[8];
-  }
-  return t5;
+  return <Box noSelect={true} alignItems="center" alignSelf="center" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" marginTop={1} paddingLeft={2} width="100%">{<Text dimColor={true}>Showing detailed transcript · {toggleShortcut} to toggle{searchBadge ? " \xB7 n/N to navigate" : virtualScroll ? ` · ${figures.arrowUp}${figures.arrowDown} scroll · home/end top/bottom` : suppressShowAll ? "" : ` · ${showAllShortcut} to ${showAllInTranscript ? "collapse" : "show all"}`}</Text>}{status ? <><Box flexGrow={1} /><Text>{status} </Text></> : searchBadge ? <><Box flexGrow={1} /><Text dimColor={true}>{searchBadge.current}/{searchBadge.count}{"  "}</Text></> : null}</Box>;
 }
 
 /** less-style / bar. 1-row, same border-top styling as TranscriptModeFooter
@@ -481,47 +449,24 @@ const TITLE_ANIMATION_INTERVAL_MS = 960;
  * entire REPL tree. Before extraction, the tick was ~1 REPL render/sec for
  * the duration of every turn, dragging PromptInput and friends along.
  */
-function AnimatedTerminalTitle(t0) {
-  const $ = _c(6);
-  const {
-    isAnimating,
-    title,
-    disabled,
-    noPrefix
-  } = t0;
+function AnimatedTerminalTitle({
+  isAnimating,
+  title,
+  disabled,
+  noPrefix
+}) {
   const terminalFocused = useTerminalFocus();
   const [frame, setFrame] = useState(0);
-  let t1;
-  let t2;
-  if ($[0] !== disabled || $[1] !== isAnimating || $[2] !== noPrefix || $[3] !== terminalFocused) {
-    t1 = () => {
-      if (disabled || noPrefix || !isAnimating || !terminalFocused) {
-        return;
-      }
-      const interval = setInterval(_temp2, TITLE_ANIMATION_INTERVAL_MS, setFrame);
-      return () => clearInterval(interval);
-    };
-    t2 = [disabled, noPrefix, isAnimating, terminalFocused];
-    $[0] = disabled;
-    $[1] = isAnimating;
-    $[2] = noPrefix;
-    $[3] = terminalFocused;
-    $[4] = t1;
-    $[5] = t2;
-  } else {
-    t1 = $[4];
-    t2 = $[5];
-  }
-  useEffect(t1, t2);
+  useEffect(() => {
+    if (disabled || noPrefix || !isAnimating || !terminalFocused) {
+      return;
+    }
+    const interval = setInterval(setFrame_0 => setFrame_0(f => (f + 1) % TITLE_ANIMATION_FRAMES.length), TITLE_ANIMATION_INTERVAL_MS, setFrame);
+    return () => clearInterval(interval);
+  }, [disabled, noPrefix, isAnimating, terminalFocused]);
   const prefix = isAnimating ? TITLE_ANIMATION_FRAMES[frame] ?? TITLE_STATIC_PREFIX : TITLE_STATIC_PREFIX;
   useTerminalTitle(disabled ? null : noPrefix ? title : `${prefix} ${title}`);
   return null;
-}
-function _temp2(setFrame_0) {
-  return setFrame_0(_temp);
-}
-function _temp(f) {
-  return (f + 1) % TITLE_ANIMATION_FRAMES.length;
 }
 export type Props = {
   commands: Command[];
@@ -3682,7 +3627,7 @@ export function REPL({
       // everything. The ctx-agent will re-stage on the next
       // threshold crossing.
       /* eslint-disable @typescript-eslint/no-require-imports */
-      ;
+
       (require('../services/contextCollapse/index.js') as typeof import('../services/contextCollapse/index.js')).resetContextCollapse();
       /* eslint-enable @typescript-eslint/no-require-imports */
     }

@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -763,75 +762,12 @@ type ManageMarketplacesKeyHintsProps = {
   exitState: Props['exitState'];
   hasPendingActions: boolean;
 };
-function ManageMarketplacesKeyHints(t0) {
-  const $ = _c(18);
-  const {
-    exitState,
-    hasPendingActions
-  } = t0;
+function ManageMarketplacesKeyHints({
+  exitState,
+  hasPendingActions
+}: ManageMarketplacesKeyHintsProps) {
   if (exitState.pending) {
-    let t1;
-    if ($[0] !== exitState.keyName) {
-      t1 = <Box marginTop={1}><Text dimColor={true} italic={true}>Press {exitState.keyName} again to go back</Text></Box>;
-      $[0] = exitState.keyName;
-      $[1] = t1;
-    } else {
-      t1 = $[1];
-    }
-    return t1;
+    return <Box marginTop={1}><Text dimColor={true} italic={true}>Press {exitState.keyName} again to go back</Text></Box>;
   }
-  let t1;
-  if ($[2] !== hasPendingActions) {
-    t1 = hasPendingActions && <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="apply changes" />;
-    $[2] = hasPendingActions;
-    $[3] = t1;
-  } else {
-    t1 = $[3];
-  }
-  let t2;
-  if ($[4] !== hasPendingActions) {
-    t2 = !hasPendingActions && <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="select" />;
-    $[4] = hasPendingActions;
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  let t3;
-  if ($[6] !== hasPendingActions) {
-    t3 = !hasPendingActions && <KeyboardShortcutHint shortcut="u" action="update" />;
-    $[6] = hasPendingActions;
-    $[7] = t3;
-  } else {
-    t3 = $[7];
-  }
-  let t4;
-  if ($[8] !== hasPendingActions) {
-    t4 = !hasPendingActions && <KeyboardShortcutHint shortcut="r" action="remove" />;
-    $[8] = hasPendingActions;
-    $[9] = t4;
-  } else {
-    t4 = $[9];
-  }
-  const t5 = hasPendingActions ? "cancel" : "go back";
-  let t6;
-  if ($[10] !== t5) {
-    t6 = <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={t5} />;
-    $[10] = t5;
-    $[11] = t6;
-  } else {
-    t6 = $[11];
-  }
-  let t7;
-  if ($[12] !== t1 || $[13] !== t2 || $[14] !== t3 || $[15] !== t4 || $[16] !== t6) {
-    t7 = <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{t1}{t2}{t3}{t4}{t6}</Byline></Text></Box>;
-    $[12] = t1;
-    $[13] = t2;
-    $[14] = t3;
-    $[15] = t4;
-    $[16] = t6;
-    $[17] = t7;
-  } else {
-    t7 = $[17];
-  }
-  return t7;
+  return <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{hasPendingActions && <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="apply changes" />}{!hasPendingActions && <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="select" />}{!hasPendingActions && <KeyboardShortcutHint shortcut="u" action="update" />}{!hasPendingActions && <KeyboardShortcutHint shortcut="r" action="remove" />}{<ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={hasPendingActions ? "cancel" : "go back"} />}</Byline></Text></Box>;
 }

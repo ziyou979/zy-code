@@ -850,10 +850,13 @@ export async function main() {
   }
   profileCheckpoint('main_client_type_determined');
 
+
   // Parse and load settings flags early, before init()
   eagerLoadSettings();
+
   profileCheckpoint('main_before_run');
   await run();
+
   profileCheckpoint('main_after_run');
 }
 async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json'): Promise<string | AsyncIterable<string>> {
@@ -1006,6 +1009,7 @@ async function run(): Promise<CommanderCommand> {
   // top-level option. Single-value + collect accumulator means each
   // --plugin-dir takes exactly one arg; repeat the flag for multiple dirs.
   .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable ZY in Chrome integration').option('--no-chrome', 'Disable ZY in Chrome integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').action(async (prompt, options) => {
+  
     profileCheckpoint('action_handler_start');
 
     // --bare = one-switch minimal mode. Sets SIMPLE so all the existing
@@ -1861,6 +1865,7 @@ async function run(): Promise<CommanderCommand> {
     }
     const effectivePrompt = prompt || '';
     let inputPrompt = await getInputPrompt(effectivePrompt, (inputFormat ?? 'text') as 'text' | 'stream-json');
+  
     profileCheckpoint('action_after_input_prompt');
 
     // Activate proactive mode BEFORE getTools() so SleepTool.isEnabled()
@@ -1903,6 +1908,7 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // IMPORTANT: setup() must be called before any other code that depends on the cwd or worktree setup
+  
     profileCheckpoint('action_before_setup');
     logForDebugging('[STARTUP] Running setup()...');
     const setupStart = Date.now();
@@ -1935,6 +1941,7 @@ async function run(): Promise<CommanderCommand> {
     agentDefsPromise?.catch(() => {});
     await setupPromise;
     logForDebugging(`[STARTUP] setup() completed in ${Date.now() - setupStart}ms`);
+  
     profileCheckpoint('action_after_setup');
 
     // Replay user messages into stream-json only when the socket was
@@ -2030,6 +2037,7 @@ async function run(): Promise<CommanderCommand> {
     // worktreeEnabled gated the early kick). Both memoized by cwd.
     const [commands, agentDefinitionsResult] = await Promise.all([commandsPromise ?? getCommands(currentCwd), agentDefsPromise ?? getAgentDefinitionsWithOverrides(currentCwd)]);
     logForDebugging(`[STARTUP] Commands and agents loaded in ${Date.now() - commandsStart}ms`);
+  
     profileCheckpoint('action_commands_loaded');
 
     // Parse CLI agents if provided via --agents flag
@@ -2225,10 +2233,12 @@ async function run(): Promise<CommanderCommand> {
       if ("external" === 'ant') {
         installAsciicastRecorder();
       }
+    
       const {
         createRoot
       } = await import('./ink.js');
       root = await createRoot(ctx.renderOptions);
+    
 
       // Log startup time now, before any blocking dialog renders. Logging
       // from REPL's first render (the old location) included however long
@@ -2239,8 +2249,10 @@ async function run(): Promise<CommanderCommand> {
         durationMs: Math.round(process.uptime() * 1000)
       });
       logForDebugging('[STARTUP] Running showSetupScreens()...');
+    
       const setupScreensStart = Date.now();
       const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableClaudeInChrome, devChannels);
+    
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
 
       // Now that trust is established and GrowthBook has auth headers,
@@ -2391,6 +2403,7 @@ async function run(): Promise<CommanderCommand> {
         regularMcpConfigs[name] = typedConfig as ScopedMcpServerConfig;
       }
     }
+  
     profileCheckpoint('action_mcp_configs_loaded');
 
     // Prefetch MCP resources after trust dialog (this is where execution happens).
@@ -3754,7 +3767,8 @@ async function run(): Promise<CommanderCommand> {
       // REPL will inject hook messages when they resolve and await them before
       // the first API call so the model always sees hook context.
       const pendingHookMessages = hooksPromise && hookMessages.length === 0 ? hooksPromise : undefined;
-      profileCheckpoint('action_after_hooks');
+    
+    profileCheckpoint('action_after_hooks');
       maybeActivateProactive(options);
       maybeActivateBrief(options);
       // Persist the current mode for fresh sessions so future resumes know what mode was used
@@ -4491,8 +4505,10 @@ Examples:
       await completionHandler(shell, opts, program);
     });
   }
+
   profileCheckpoint('run_before_parse');
   await program.parseAsync(process.argv);
+
   profileCheckpoint('run_after_parse');
 
   // Record final checkpoint for total_time calculation

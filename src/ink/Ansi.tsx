@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import Link from './components/Link.js';
 import Text from './components/Text.js';
@@ -29,83 +28,41 @@ type SpanProps = {
  *
  * Memoized to prevent re-renders when parent changes but children string is the same.
  */
-export const Ansi = React.memo(function Ansi(t0) {
-  const $ = _c(12);
-  const {
-    children,
-    dimColor
-  } = t0;
+export const Ansi = React.memo(function Ansi({
+  children,
+  dimColor
+}: SpanProps) {
   if (typeof children !== "string") {
-    let t1;
-    if ($[0] !== children || $[1] !== dimColor) {
-      t1 = dimColor ? <Text dim={true}>{String(children)}</Text> : <Text>{String(children)}</Text>;
-      $[0] = children;
-      $[1] = dimColor;
-      $[2] = t1;
-    } else {
-      t1 = $[2];
-    }
-    return t1;
+    return dimColor ? <Text dim={true}>{String(children)}</Text> : <Text>{String(children)}</Text>;
   }
   if (children === "") {
     return null;
   }
-  let t1;
+  let content;
   let t2;
-  if ($[3] !== children || $[4] !== dimColor) {
-    t2 = Symbol.for("react.early_return_sentinel");
-    bb0: {
-      const spans = parseToSpans(children);
-      if (spans.length === 0) {
-        t2 = null;
-        break bb0;
-      }
-      if (spans.length === 1 && !hasAnyProps(spans[0].props)) {
-        t2 = dimColor ? <Text dim={true}>{spans[0].text}</Text> : <Text>{spans[0].text}</Text>;
-        break bb0;
-      }
-      let t3;
-      if ($[7] !== dimColor) {
-        t3 = (span, i) => {
-          const hyperlink = span.props.hyperlink;
-          if (dimColor) {
-            span.props.dim = true;
-          }
-          const hasTextProps = hasAnyTextProps(span.props);
-          if (hyperlink) {
-            return hasTextProps ? <Link key={i} url={hyperlink}><StyledText color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText></Link> : <Link key={i} url={hyperlink}>{span.text}</Link>;
-          }
-          return hasTextProps ? <StyledText key={i} color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText> : span.text;
-        };
-        $[7] = dimColor;
-        $[8] = t3;
-      } else {
-        t3 = $[8];
-      }
-      t1 = spans.map(t3);
-    }
-    $[3] = children;
-    $[4] = dimColor;
-    $[5] = t1;
-    $[6] = t2;
+  t2 = Symbol.for("react.early_return_sentinel");
+  const spans = parseToSpans(children);
+  if (spans.length === 0) {
+    t2 = null;
+  } else if (spans.length === 1 && !hasAnyProps(spans[0].props)) {
+    t2 = dimColor ? <Text dim={true}>{spans[0].text}</Text> : <Text>{spans[0].text}</Text>;
   } else {
-    t1 = $[5];
-    t2 = $[6];
+    content = spans.map((span, i) => {
+      const hyperlink = span.props.hyperlink;
+      if (dimColor) {
+        span.props.dim = true;
+      }
+      const hasTextProps = hasAnyTextProps(span.props);
+      if (hyperlink) {
+        return hasTextProps ? <Link key={i} url={hyperlink}><StyledText color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText></Link> : <Link key={i} url={hyperlink}>{span.text}</Link>;
+      }
+      return hasTextProps ? <StyledText key={i} color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText> : span.text;
+    });
   }
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
     return t2;
   }
-  const content = t1;
-  let t3;
-  if ($[9] !== content || $[10] !== dimColor) {
-    t3 = dimColor ? <Text dim={true}>{content}</Text> : <Text>{content}</Text>;
-    $[9] = content;
-    $[10] = dimColor;
-    $[11] = t3;
-  } else {
-    t3 = $[11];
-  }
-  return t3;
+  return dimColor ? <Text dim={true}>{content}</Text> : <Text>{content}</Text>;
 });
 type Span = {
   text: string;
@@ -230,62 +187,17 @@ type BaseTextStyleProps = {
 };
 
 // Wrapper component that handles bold/dim mutual exclusivity for Text
-function StyledText(t0) {
-  const $ = _c(14);
-  let bold;
-  let children;
-  let dim;
-  let rest;
-  if ($[0] !== t0) {
-    ({
-      bold,
-      dim,
-      children,
-      ...rest
-    } = t0);
-    $[0] = t0;
-    $[1] = bold;
-    $[2] = children;
-    $[3] = dim;
-    $[4] = rest;
-  } else {
-    bold = $[1];
-    children = $[2];
-    dim = $[3];
-    rest = $[4];
-  }
+function StyledText({
+  bold,
+  dim,
+  children,
+  ...rest
+}: BaseTextStyleProps) {
   if (dim) {
-    let t1;
-    if ($[5] !== children || $[6] !== rest) {
-      t1 = <Text {...rest} dim={true}>{children}</Text>;
-      $[5] = children;
-      $[6] = rest;
-      $[7] = t1;
-    } else {
-      t1 = $[7];
-    }
-    return t1;
+    return <Text {...rest} dim={true}>{children}</Text>;
   }
   if (bold) {
-    let t1;
-    if ($[8] !== children || $[9] !== rest) {
-      t1 = <Text {...rest} bold={true}>{children}</Text>;
-      $[8] = children;
-      $[9] = rest;
-      $[10] = t1;
-    } else {
-      t1 = $[10];
-    }
-    return t1;
+    return <Text {...rest} bold={true}>{children}</Text>;
   }
-  let t1;
-  if ($[11] !== children || $[12] !== rest) {
-    t1 = <Text {...rest}>{children}</Text>;
-    $[11] = children;
-    $[12] = rest;
-    $[13] = t1;
-  } else {
-    t1 = $[13];
-  }
-  return t1;
+  return <Text {...rest}>{children}</Text>;
 }

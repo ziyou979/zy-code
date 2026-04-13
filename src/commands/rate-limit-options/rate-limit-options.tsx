@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React, { useMemo, useState } from 'react';
 import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js';
 import { type OptionWithDescription, Select } from '../../components/CustomSelect/select.js';
@@ -21,179 +20,85 @@ type RateLimitOptionsMenuProps = {
   } | undefined) => void;
   context: ToolUseContext & LocalJSXCommandContext;
 };
-function RateLimitOptionsMenu(t0) {
-  const $ = _c(25);
-  const {
-    onDone,
-    context
-  } = t0;
+function RateLimitOptionsMenu({
+  onDone,
+  context
+}: RateLimitOptionsMenuProps) {
   const [subCommandJSX, setSubCommandJSX] = useState(null);
   const zyAiLimits = useZyAiLimits();
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = getRateLimitTier();
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  const rateLimitTier = t1;
+  const rateLimitTier = getRateLimitTier();
   const hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true;
   const isMax20x = false;
   const isTeamOrEnterprise = false;
   const buyFirst = getFeatureValue_CACHED_MAY_BE_STALE("tengu_jade_anvil_4", false);
-  let t3;
-  bb0: {
-    let actionOptions;
-    if ($[2] !== zyAiLimits.overageDisabledReason || $[3] !== zyAiLimits.overageStatus) {
-      actionOptions = [];
-      if (extraUsage.isEnabled()) {
-        const hasBillingAccess = hasZyAiBillingAccess();
-        const needsToRequestFromAdmin = isTeamOrEnterprise && !hasBillingAccess;
-        const isOrgSpendCapDepleted = zyAiLimits.overageDisabledReason === "out_of_credits" || zyAiLimits.overageDisabledReason === "org_level_disabled_until" || zyAiLimits.overageDisabledReason === "org_service_zero_credit_limit";
-        if (needsToRequestFromAdmin && isOrgSpendCapDepleted) {} else {
-          const isOverageState = zyAiLimits.overageStatus === "rejected" || zyAiLimits.overageStatus === "allowed_warning";
-          let label;
-          if (needsToRequestFromAdmin) {
-            label = isOverageState ? "Request more" : "Request extra usage";
-          } else {
-            label = hasExtraUsageEnabled ? "Add funds to continue with extra usage" : "Switch to extra usage";
-          }
-          let t4;
-          if ($[5] !== label) {
-            t4 = {
-              label,
-              value: "extra-usage"
-            };
-            $[5] = label;
-            $[6] = t4;
-          } else {
-            t4 = $[6];
-          }
-          actionOptions.push(t4);
-        }
-      }
-      if (!isMax20x && !isTeamOrEnterprise && upgrade.isEnabled()) {
-        let t4;
-        if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-          t4 = {
-            label: "Upgrade your plan",
-            value: "upgrade"
-          };
-          $[7] = t4;
-        } else {
-          t4 = $[7];
-        }
-        actionOptions.push(t4);
-      }
-      $[2] = zyAiLimits.overageDisabledReason;
-      $[3] = zyAiLimits.overageStatus;
-      $[4] = actionOptions;
-    } else {
-      actionOptions = $[4];
-    }
-    let t4;
-    if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-      t4 = {
-        label: "Stop and wait for limit to reset",
-        value: "cancel"
-      };
-      $[8] = t4;
-    } else {
-      t4 = $[8];
-    }
-    const cancelOption = t4;
-    if (buyFirst) {
-      let t5;
-      if ($[9] !== actionOptions) {
-        t5 = [...actionOptions, cancelOption];
-        $[9] = actionOptions;
-        $[10] = t5;
+  let options;
+  const actionOptions = [];
+  if (extraUsage.isEnabled()) {
+    const hasBillingAccess = hasZyAiBillingAccess();
+    const needsToRequestFromAdmin = isTeamOrEnterprise && !hasBillingAccess;
+    const isOrgSpendCapDepleted = zyAiLimits.overageDisabledReason === "out_of_credits" || zyAiLimits.overageDisabledReason === "org_level_disabled_until" || zyAiLimits.overageDisabledReason === "org_service_zero_credit_limit";
+    if (needsToRequestFromAdmin && isOrgSpendCapDepleted) {} else {
+      const isOverageState = zyAiLimits.overageStatus === "rejected" || zyAiLimits.overageStatus === "allowed_warning";
+      let label;
+      if (needsToRequestFromAdmin) {
+        label = isOverageState ? "Request more" : "Request extra usage";
       } else {
-        t5 = $[10];
+        label = hasExtraUsageEnabled ? "Add funds to continue with extra usage" : "Switch to extra usage";
       }
-      t3 = t5;
-      break bb0;
-    }
-    let t5;
-    if ($[11] !== actionOptions) {
-      t5 = [cancelOption, ...actionOptions];
-      $[11] = actionOptions;
-      $[12] = t5;
-    } else {
-      t5 = $[12];
-    }
-    t3 = t5;
-  }
-  const options = t3;
-  let t4;
-  if ($[13] !== onDone) {
-    t4 = function handleCancel() {
-      logEvent("tengu_rate_limit_options_menu_cancel", {});
-      onDone(undefined, {
-        display: "skip"
+      actionOptions.push({
+        label,
+        value: "extra-usage"
       });
-    };
-    $[13] = onDone;
-    $[14] = t4;
-  } else {
-    t4 = $[14];
+    }
   }
-  const handleCancel = t4;
-  let t5;
-  if ($[15] !== context || $[16] !== handleCancel || $[17] !== onDone) {
-    t5 = function handleSelect(value) {
-      if (value === "upgrade") {
-        logEvent("tengu_rate_limit_options_menu_select_upgrade", {});
-        upgradeCall(onDone, context).then(jsx => {
-          if (jsx) {
-            setSubCommandJSX(jsx);
+  if (!isMax20x && !isTeamOrEnterprise && upgrade.isEnabled()) {
+    actionOptions.push({
+      label: "Upgrade your plan",
+      value: "upgrade"
+    });
+  }
+  const cancelOption = {
+    label: "Stop and wait for limit to reset",
+    value: "cancel"
+  };
+  if (buyFirst) {
+    options = [...actionOptions, cancelOption];
+  } else {
+    options = [cancelOption, ...actionOptions];
+  }
+  const handleCancel = function handleCancel() {
+    logEvent("tengu_rate_limit_options_menu_cancel", {});
+    onDone(undefined, {
+      display: "skip"
+    });
+  };
+  const handleSelect = function handleSelect(value) {
+    if (value === "upgrade") {
+      logEvent("tengu_rate_limit_options_menu_select_upgrade", {});
+      upgradeCall(onDone, context).then(jsx => {
+        if (jsx) {
+          setSubCommandJSX(jsx);
+        }
+      });
+    } else {
+      if (value === "extra-usage") {
+        logEvent("tengu_rate_limit_options_menu_select_extra_usage", {});
+        extraUsageCall(onDone, context).then(jsx_0 => {
+          if (jsx_0) {
+            setSubCommandJSX(jsx_0);
           }
         });
       } else {
-        if (value === "extra-usage") {
-          logEvent("tengu_rate_limit_options_menu_select_extra_usage", {});
-          extraUsageCall(onDone, context).then(jsx_0 => {
-            if (jsx_0) {
-              setSubCommandJSX(jsx_0);
-            }
-          });
-        } else {
-          if (value === "cancel") {
-            handleCancel();
-          }
+        if (value === "cancel") {
+          handleCancel();
         }
       }
-    };
-    $[15] = context;
-    $[16] = handleCancel;
-    $[17] = onDone;
-    $[18] = t5;
-  } else {
-    t5 = $[18];
-  }
-  const handleSelect = t5;
+    }
+  };
   if (subCommandJSX) {
     return subCommandJSX;
   }
-  let t6;
-  if ($[19] !== handleSelect || $[20] !== options) {
-    t6 = <Select options={options} onChange={handleSelect} visibleOptionCount={options.length} />;
-    $[19] = handleSelect;
-    $[20] = options;
-    $[21] = t6;
-  } else {
-    t6 = $[21];
-  }
-  let t7;
-  if ($[22] !== handleCancel || $[23] !== t6) {
-    t7 = <Dialog title="What do you want to do?" onCancel={handleCancel} color="suggestion">{t6}</Dialog>;
-    $[22] = handleCancel;
-    $[23] = t6;
-    $[24] = t7;
-  } else {
-    t7 = $[24];
-  }
-  return t7;
+  return <Dialog title="What do you want to do?" onCancel={handleCancel} color="suggestion">{<Select options={options} onChange={handleSelect} visibleOptionCount={options.length} />}</Dialog>;
 }
 export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContext & LocalJSXCommandContext): Promise<React.ReactNode> {
   return <RateLimitOptionsMenu onDone={onDone} context={context} />;

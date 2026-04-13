@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React from 'react';
 import { Text } from '../../ink.js';
@@ -69,26 +68,10 @@ const STATUS_CONFIG: Record<Status, {
  *   Waiting for response
  * </Text>
  */
-export function StatusIcon(t0) {
-  const $ = _c(5);
-  const {
-    status,
-    withSpace: t1
-  } = t0;
-  const withSpace = t1 === undefined ? false : t1;
+export function StatusIcon({
+  status,
+  withSpace = false
+}: Props) {
   const config = STATUS_CONFIG[status];
-  const t2 = !config.color;
-  const t3 = withSpace && " ";
-  let t4;
-  if ($[0] !== config.color || $[1] !== config.icon || $[2] !== t2 || $[3] !== t3) {
-    t4 = <Text color={config.color} dimColor={t2}>{config.icon}{t3}</Text>;
-    $[0] = config.color;
-    $[1] = config.icon;
-    $[2] = t2;
-    $[3] = t3;
-    $[4] = t4;
-  } else {
-    t4 = $[4];
-  }
-  return t4;
+  return <Text color={config.color} dimColor={!config.color}>{config.icon}{withSpace && " "}</Text>;
 }

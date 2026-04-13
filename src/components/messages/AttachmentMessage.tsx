@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import React, { useMemo } from 'react';
 import { Ansi, Box, Text } from '../../ink.js';
@@ -358,178 +357,43 @@ export function AttachmentMessage({
 type TaskStatusAttachment = Extract<Attachment, {
   type: 'task_status';
 }>;
-function TaskStatusMessage(t0) {
-  const $ = _c(4);
-  const {
-    attachment
-  } = t0;
+function TaskStatusMessage({
+  attachment
+}: Props) {
   if (false && attachment.status === "killed") {
     return null;
   }
   if (isAgentSwarmsEnabled() && attachment.taskType === "in_process_teammate") {
-    let t1;
-    if ($[0] !== attachment) {
-      t1 = <TeammateTaskStatus attachment={attachment} />;
-      $[0] = attachment;
-      $[1] = t1;
-    } else {
-      t1 = $[1];
-    }
-    return t1;
+    return <TeammateTaskStatus attachment={attachment} />;
   }
-  let t1;
-  if ($[2] !== attachment) {
-    t1 = <GenericTaskStatus attachment={attachment} />;
-    $[2] = attachment;
-    $[3] = t1;
-  } else {
-    t1 = $[3];
-  }
-  return t1;
+  return <GenericTaskStatus attachment={attachment} />;
 }
-function GenericTaskStatus(t0) {
-  const $ = _c(9);
-  const {
-    attachment
-  } = t0;
+function GenericTaskStatus({
+  attachment
+}) {
   const bg = useSelectedMessageBg();
   const statusText = attachment.status === "completed" ? tSync('attachment.completed') : attachment.status === "killed" ? tSync('attachment.stopped') : attachment.status === "running" ? tSync('attachment.stillRunning') : attachment.status;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Text dimColor={true}>{BLACK_CIRCLE} </Text>;
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  let t2;
-  if ($[1] !== attachment.description) {
-    t2 = <Text bold={true}>{attachment.description}</Text>;
-    $[1] = attachment.description;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  let t3;
-  if ($[3] !== statusText || $[4] !== t2) {
-    t3 = <Text dimColor={true}>Task "{t2}" {statusText}</Text>;
-    $[3] = statusText;
-    $[4] = t2;
-    $[5] = t3;
-  } else {
-    t3 = $[5];
-  }
-  let t4;
-  if ($[6] !== bg || $[7] !== t3) {
-    t4 = <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>{t1}{t3}</Box>;
-    $[6] = bg;
-    $[7] = t3;
-    $[8] = t4;
-  } else {
-    t4 = $[8];
-  }
-  return t4;
+  return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>{<Text dimColor={true}>{BLACK_CIRCLE} </Text>}{<Text dimColor={true}>Task "{<Text bold={true}>{attachment.description}</Text>}" {statusText}</Text>}</Box>;
 }
-function TeammateTaskStatus(t0) {
-  const $ = _c(16);
-  const {
-    attachment
-  } = t0;
+function TeammateTaskStatus({
+  attachment
+}) {
   const bg = useSelectedMessageBg();
-  let t1;
-  if ($[0] !== attachment.taskId) {
-    t1 = s => s.tasks[attachment.taskId];
-    $[0] = attachment.taskId;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  const task = useAppState(t1);
+  const task = useAppState(s => s.tasks[attachment.taskId]);
   if (task?.type !== "in_process_teammate") {
-    let t2;
-    if ($[2] !== attachment) {
-      t2 = <GenericTaskStatus attachment={attachment} />;
-      $[2] = attachment;
-      $[3] = t2;
-    } else {
-      t2 = $[3];
-    }
-    return t2;
+    return <GenericTaskStatus attachment={attachment} />;
   }
-  let t2;
-  if ($[4] !== task.identity.color) {
-    t2 = toInkColor(task.identity.color);
-    $[4] = task.identity.color;
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  const agentColor = t2;
+  const agentColor = toInkColor(task.identity.color);
   const statusText = attachment.status === "completed" ? "shut down gracefully" : attachment.status;
-  let t3;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Text dimColor={true}>{BLACK_CIRCLE} </Text>;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  let t4;
-  if ($[7] !== agentColor || $[8] !== task.identity.agentName) {
-    t4 = <Text color={agentColor} bold={true} dimColor={false}>@{task.identity.agentName}</Text>;
-    $[7] = agentColor;
-    $[8] = task.identity.agentName;
-    $[9] = t4;
-  } else {
-    t4 = $[9];
-  }
-  let t5;
-  if ($[10] !== statusText || $[11] !== t4) {
-    t5 = <Text dimColor={true}>Teammate{" "}{t4}{" "}{statusText}</Text>;
-    $[10] = statusText;
-    $[11] = t4;
-    $[12] = t5;
-  } else {
-    t5 = $[12];
-  }
-  let t6;
-  if ($[13] !== bg || $[14] !== t5) {
-    t6 = <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>{t3}{t5}</Box>;
-    $[13] = bg;
-    $[14] = t5;
-    $[15] = t6;
-  } else {
-    t6 = $[15];
-  }
-  return t6;
+  return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>{<Text dimColor={true}>{BLACK_CIRCLE} </Text>}{<Text dimColor={true}>Teammate{" "}{<Text color={agentColor} bold={true} dimColor={false}>@{task.identity.agentName}</Text>}{" "}{statusText}</Text>}</Box>;
 }
 // We allow setting dimColor to false here to help work around the dim-bold bug.
 // https://github.com/chalk/chalk/issues/290
-function Line(t0) {
-  const $ = _c(7);
-  const {
-    dimColor: t1,
-    children,
-    color
-  } = t0;
-  const dimColor = t1 === undefined ? true : t1;
+function Line({
+  dimColor = true,
+  children,
+  color
+}) {
   const bg = useSelectedMessageBg();
-  let t2;
-  if ($[0] !== children || $[1] !== color || $[2] !== dimColor) {
-    t2 = <MessageResponse><Text color={color} dimColor={dimColor} wrap="wrap">{children}</Text></MessageResponse>;
-    $[0] = children;
-    $[1] = color;
-    $[2] = dimColor;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  let t3;
-  if ($[4] !== bg || $[5] !== t2) {
-    t3 = <Box backgroundColor={bg}>{t2}</Box>;
-    $[4] = bg;
-    $[5] = t2;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  return t3;
+  return <Box backgroundColor={bg}>{<MessageResponse><Text color={color} dimColor={dimColor} wrap="wrap">{children}</Text></MessageResponse>}</Box>;
 }

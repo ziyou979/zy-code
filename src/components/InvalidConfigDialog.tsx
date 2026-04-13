@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, render, Text } from '../ink.js';
 import { tSync } from '../i18n/index.js';
@@ -23,95 +22,26 @@ interface InvalidConfigDialogProps {
 /**
  * Dialog shown when the Zy config file contains invalid JSON
  */
-function InvalidConfigDialog(t0) {
-  const $ = _c(19);
-  const {
-    filePath,
-    errorDescription,
-    onExit,
-    onReset
-  } = t0;
-  let t1;
-  if ($[0] !== onExit || $[1] !== onReset) {
-    t1 = value => {
-      if (value === "exit") {
-        onExit();
-      } else {
-        onReset();
-      }
-    };
-    $[0] = onExit;
-    $[1] = onReset;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
-  }
-  const handleSelect = t1;
-  let t2;
-  if ($[3] !== filePath) {
-    t2 = <Text>The configuration file at <Text bold={true}>{filePath}</Text> contains invalid JSON.</Text>;
-    $[3] = filePath;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  let t3;
-  if ($[5] !== errorDescription) {
-    t3 = <Text>{errorDescription}</Text>;
-    $[5] = errorDescription;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  let t4;
-  if ($[7] !== t2 || $[8] !== t3) {
-    t4 = <Box flexDirection="column" gap={1}>{t2}{t3}</Box>;
-    $[7] = t2;
-    $[8] = t3;
-    $[9] = t4;
-  } else {
-    t4 = $[9];
-  }
-  let t5;
-  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text bold={true}>{tSync('invalidConfig.prompt')}</Text>;
-    $[10] = t5;
-  } else {
-    t5 = $[10];
-  }
-  let t6;
-  if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = [{
-      label: tSync('invalidConfig.exit'),
-      value: "exit"
-    }, {
-      label: tSync('invalidConfig.reset'),
-      value: "reset"
-    }];
-    $[11] = t6;
-  } else {
-    t6 = $[11];
-  }
-  let t7;
-  if ($[12] !== handleSelect || $[13] !== onExit) {
-    t7 = <Box flexDirection="column">{t5}<Select options={t6} onChange={handleSelect} onCancel={onExit} /></Box>;
-    $[12] = handleSelect;
-    $[13] = onExit;
-    $[14] = t7;
-  } else {
-    t7 = $[14];
-  }
-  let t8;
-  if ($[15] !== onExit || $[16] !== t4 || $[17] !== t7) {
-    t8 = <Dialog title={tSync('invalidConfig.title')} color="error" onCancel={onExit}>{t4}{t7}</Dialog>;
-    $[15] = onExit;
-    $[16] = t4;
-    $[17] = t7;
-    $[18] = t8;
-  } else {
-    t8 = $[18];
-  }
-  return t8;
+function InvalidConfigDialog({
+  filePath,
+  errorDescription,
+  onExit,
+  onReset
+}) {
+  const handleSelect = value => {
+    if (value === "exit") {
+      onExit();
+    } else {
+      onReset();
+    }
+  };
+  return <Dialog title={tSync('invalidConfig.title')} color="error" onCancel={onExit}>{<Box flexDirection="column" gap={1}>{<Text>The configuration file at <Text bold={true}>{filePath}</Text> contains invalid JSON.</Text>}{<Text>{errorDescription}</Text>}</Box>}{<Box flexDirection="column">{<Text bold={true}>{tSync('invalidConfig.prompt')}</Text>}<Select options={[{
+        label: tSync('invalidConfig.exit'),
+        value: "exit"
+      }, {
+        label: tSync('invalidConfig.reset'),
+        value: "reset"
+      }]} onChange={handleSelect} onCancel={onExit} /></Box>}</Dialog>;
 }
 
 /**

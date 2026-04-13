@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import figures from 'figures';
 import React, { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
@@ -418,7 +417,9 @@ export function BackgroundTasksDialog({
   });
   function renderInputGuide(exitState: ExitState): React.ReactNode {
     if (exitState.pending) {
-      return <Text>{tSync('backgroundTasks.pressAgainToExit', { key: exitState.keyName })}</Text>;
+      return <Text>{tSync('backgroundTasks.pressAgainToExit', {
+          key: exitState.keyName
+        })}</Text>;
     }
     return <Byline>{actions}</Byline>;
   }
@@ -550,103 +551,37 @@ function toListItem(task: BackgroundTaskState): ListItem {
       };
   }
 }
-function Item(t0) {
-  const $ = _c(14);
-  const {
-    item,
-    isSelected
-  } = t0;
+function Item({
+  item,
+  isSelected
+}) {
   const {
     columns
   } = useTerminalSize();
   const maxActivityWidth = Math.max(30, columns - 26);
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = isCoordinatorMode();
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  const useGreyPointer = t1;
-  const t2 = useGreyPointer && isSelected;
-  const t3 = isSelected ? figures.pointer + " " : "  ";
-  let t4;
-  if ($[1] !== t2 || $[2] !== t3) {
-    t4 = <Text dimColor={t2}>{t3}</Text>;
-    $[1] = t2;
-    $[2] = t3;
-    $[3] = t4;
-  } else {
-    t4 = $[3];
-  }
-  const t5 = isSelected && !useGreyPointer ? "suggestion" : undefined;
-  let t6;
-  if ($[4] !== item.task || $[5] !== item.type || $[6] !== maxActivityWidth) {
-    t6 = item.type === "leader" ? <Text>@{TEAM_LEAD_NAME}</Text> : <BackgroundTaskComponent task={item.task} maxActivityWidth={maxActivityWidth} />;
-    $[4] = item.task;
-    $[5] = item.type;
-    $[6] = maxActivityWidth;
-    $[7] = t6;
-  } else {
-    t6 = $[7];
-  }
-  let t7;
-  if ($[8] !== t5 || $[9] !== t6) {
-    t7 = <Text color={t5}>{t6}</Text>;
-    $[8] = t5;
-    $[9] = t6;
-    $[10] = t7;
-  } else {
-    t7 = $[10];
-  }
-  let t8;
-  if ($[11] !== t4 || $[12] !== t7) {
-    t8 = <Box flexDirection="row">{t4}{t7}</Box>;
-    $[11] = t4;
-    $[12] = t7;
-    $[13] = t8;
-  } else {
-    t8 = $[13];
-  }
-  return t8;
+  const useGreyPointer = isCoordinatorMode();
+  return <Box flexDirection="row">{<Text dimColor={useGreyPointer && isSelected}>{isSelected ? figures.pointer + " " : "  "}</Text>}{<Text color={isSelected && !useGreyPointer ? "suggestion" : undefined}>{item.type === "leader" ? <Text>@{TEAM_LEAD_NAME}</Text> : <BackgroundTaskComponent task={item.task} maxActivityWidth={maxActivityWidth} />}</Text>}</Box>;
 }
-function TeammateTaskGroups(t0) {
-  const $ = _c(3);
-  const {
-    teammateTasks,
-    currentSelectionId
-  } = t0;
-  let t1;
-  if ($[0] !== currentSelectionId || $[1] !== teammateTasks) {
-    const leaderItems = teammateTasks.filter(_temp);
-    const teammateItems = teammateTasks.filter(_temp2);
-    const teams = new Map();
-    for (const item of teammateItems) {
-      const teamName = item.task.identity.teamName;
-      const group = teams.get(teamName);
-      if (group) {
-        group.push(item);
-      } else {
-        teams.set(teamName, [item]);
-      }
+function TeammateTaskGroups({
+  teammateTasks,
+  currentSelectionId
+}) {
+  const leaderItems = teammateTasks.filter(i => i.type === "leader");
+  const teammateItems = teammateTasks.filter(i_0 => i_0.type === "in_process_teammate");
+  const teams = new Map();
+  for (const item of teammateItems) {
+    const teamName = item.task.identity.teamName;
+    const group = teams.get(teamName);
+    if (group) {
+      group.push(item);
+    } else {
+      teams.set(teamName, [item]);
     }
-    const teamEntries = [...teams.entries()];
-    t1 = <>{teamEntries.map(t2 => {
-        const [teamName_0, items] = t2;
-        const memberCount = items.length + leaderItems.length;
-        return <Box key={teamName_0} flexDirection="column"><Text dimColor={true}>{"  "}{tSync('backgroundTasks.team')}: {teamName_0} ({memberCount})</Text>{leaderItems.map(item_0 => <Item key={`${item_0.id}-${teamName_0}`} item={item_0} isSelected={item_0.id === currentSelectionId} />)}{items.map(item_1 => <Item key={item_1.id} item={item_1} isSelected={item_1.id === currentSelectionId} />)}</Box>;
-      })}</>;
-    $[0] = currentSelectionId;
-    $[1] = teammateTasks;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
   }
-  return t1;
-}
-function _temp2(i_0) {
-  return i_0.type === "in_process_teammate";
-}
-function _temp(i) {
-  return i.type === "leader";
+  const teamEntries = [...teams.entries()];
+  return <>{teamEntries.map(t2 => {
+      const [teamName_0, items] = t2;
+      const memberCount = items.length + leaderItems.length;
+      return <Box key={teamName_0} flexDirection="column"><Text dimColor={true}>{"  "}{tSync('backgroundTasks.team')}: {teamName_0} ({memberCount})</Text>{leaderItems.map(item_0 => <Item key={`${item_0.id}-${teamName_0}`} item={item_0} isSelected={item_0.id === currentSelectionId} />)}{items.map(item_1 => <Item key={item_1.id} item={item_1} isSelected={item_1.id === currentSelectionId} />)}</Box>;
+    })}</>;
 }

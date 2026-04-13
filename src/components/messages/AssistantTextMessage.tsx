@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import React, { useContext } from 'react';
 import { ERROR_MESSAGE_USER_ABORT } from 'src/services/compact/compact.js';
@@ -26,33 +25,16 @@ type Props = {
   onOpenRateLimitOptions?: () => void;
 };
 function InvalidApiKeyMessage() {
-  const $ = _c(2);
-  let t0;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = isMacOsKeychainLocked();
-    $[0] = t0;
-  } else {
-    t0 = $[0];
-  }
-  const isKeychainLocked = t0;
-  let t1;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <MessageResponse><Box flexDirection="column"><Text color="error">{getInvalidApiKeyErrorMessage()}</Text>{isKeychainLocked && <Text dimColor={true}>· Run in another terminal: security unlock-keychain</Text>}</Box></MessageResponse>;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  return t1;
+  const isKeychainLocked = isMacOsKeychainLocked();
+  return <MessageResponse><Box flexDirection="column"><Text color="error">{getInvalidApiKeyErrorMessage()}</Text>{isKeychainLocked && <Text dimColor={true}>· Run in another terminal: security unlock-keychain</Text>}</Box></MessageResponse>;
 }
-export function AssistantTextMessage(t0) {
-  const $ = _c(34);
-  const {
-    param: t1,
-    addMargin,
-    shouldShowDot,
-    verbose,
-    onOpenRateLimitOptions
-  } = t0;
+export function AssistantTextMessage({
+  param: t1,
+  addMargin,
+  shouldShowDot,
+  verbose,
+  onOpenRateLimitOptions
+}: Props) {
   const {
     text
   } = t1;
@@ -61,37 +43,14 @@ export function AssistantTextMessage(t0) {
     return null;
   }
   if (isRateLimitErrorMessage(text)) {
-    let t2;
-    if ($[0] !== onOpenRateLimitOptions || $[1] !== text) {
-      t2 = <RateLimitMessage text={text} onOpenRateLimitOptions={onOpenRateLimitOptions} />;
-      $[0] = onOpenRateLimitOptions;
-      $[1] = text;
-      $[2] = t2;
-    } else {
-      t2 = $[2];
-    }
-    return t2;
+    return <RateLimitMessage text={text} onOpenRateLimitOptions={onOpenRateLimitOptions} />;
   }
   // Check runtime-resolved API key error message (cannot be a switch case constant)
   if (text === getInvalidApiKeyErrorMessage()) {
-    let t2;
-    if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = <InvalidApiKeyMessage />;
-      $[6] = t2;
-    } else {
-      t2 = $[6];
-    }
-    return t2;
+    return <InvalidApiKeyMessage />;
   }
   if (text === INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL) {
-    let t2;
-    if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = <MessageResponse height={1}><Text color="error">{INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL}</Text></MessageResponse>;
-      $[7] = t2;
-    } else {
-      t2 = $[7];
-    }
-    return t2;
+    return <MessageResponse height={1}><Text color="error">{INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL}</Text></MessageResponse>;
   }
   switch (text) {
     case NO_RESPONSE_REQUESTED:
@@ -101,95 +60,49 @@ export function AssistantTextMessage(t0) {
     case PROMPT_TOO_LONG_ERROR_MESSAGE:
       {
         let t2;
-        if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = getUpgradeMessage("warning");
-          $[3] = t2;
-        } else {
-          t2 = $[3];
-        }
+        t2 = getUpgradeMessage("warning");
         const upgradeHint = t2;
         let t3;
-        if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-          t3 = <MessageResponse height={1}><Text color="error">Context limit reached · /compact or /clear to continue{upgradeHint ? ` · ${upgradeHint}` : ""}</Text></MessageResponse>;
-          $[4] = t3;
-        } else {
-          t3 = $[4];
-        }
+        t3 = <MessageResponse height={1}><Text color="error">Context limit reached · /compact or /clear to continue{upgradeHint ? ` · ${upgradeHint}` : ""}</Text></MessageResponse>;
         return t3;
       }
     case CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE:
       {
         let t2;
-        if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <MessageResponse height={1}><Text color="error">Credit balance too low · Add funds: https://platform.zy.com/settings/billing</Text></MessageResponse>;
-          $[5] = t2;
-        } else {
-          t2 = $[5];
-        }
+        t2 = <MessageResponse height={1}><Text color="error">Credit balance too low · Add funds: https://platform.zy.com/settings/billing</Text></MessageResponse>;
         return t2;
       }
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY:
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH:
       {
         let t2;
-        if ($[8] !== text) {
-          t2 = <MessageResponse><Text color="error">{text}</Text></MessageResponse>;
-          $[8] = text;
-          $[9] = t2;
-        } else {
-          t2 = $[9];
-        }
+        t2 = <MessageResponse><Text color="error">{text}</Text></MessageResponse>;
         return t2;
       }
     case TOKEN_REVOKED_ERROR_MESSAGE:
       {
         let t2;
-        if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <MessageResponse height={1}><Text color="error">{TOKEN_REVOKED_ERROR_MESSAGE}</Text></MessageResponse>;
-          $[10] = t2;
-        } else {
-          t2 = $[10];
-        }
+        t2 = <MessageResponse height={1}><Text color="error">{TOKEN_REVOKED_ERROR_MESSAGE}</Text></MessageResponse>;
         return t2;
       }
     case API_TIMEOUT_ERROR_MESSAGE:
       {
         let t2;
-        if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <MessageResponse height={1}><Text color="error">{API_TIMEOUT_ERROR_MESSAGE}{process.env.API_TIMEOUT_MS && <>{" "}(API_TIMEOUT_MS={process.env.API_TIMEOUT_MS}ms, try increasing it)</>}</Text></MessageResponse>;
-          $[11] = t2;
-        } else {
-          t2 = $[11];
-        }
+        t2 = <MessageResponse height={1}><Text color="error">{API_TIMEOUT_ERROR_MESSAGE}{process.env.API_TIMEOUT_MS && <>{" "}(API_TIMEOUT_MS={process.env.API_TIMEOUT_MS}ms, try increasing it)</>}</Text></MessageResponse>;
         return t2;
       }
     case CUSTOM_OFF_SWITCH_MESSAGE:
       {
         let t2;
-        if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <Text color="error">We are experiencing high demand for Opus 4.</Text>;
-          $[12] = t2;
-        } else {
-          t2 = $[12];
-        }
+        t2 = <Text color="error">We are experiencing high demand for Opus 4.</Text>;
         let t3;
-        if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
-          t3 = <MessageResponse><Box flexDirection="column" gap={1}>{t2}<Text>To continue immediately, use /model to switch to{" "}{renderModelName(getDefaultSonnetModel())} and continue coding.</Text></Box></MessageResponse>;
-          $[13] = t3;
-        } else {
-          t3 = $[13];
-        }
+        t3 = <MessageResponse><Box flexDirection="column" gap={1}>{t2}<Text>To continue immediately, use /model to switch to{" "}{renderModelName(getDefaultSonnetModel())} and continue coding.</Text></Box></MessageResponse>;
         return t3;
       }
     case ERROR_MESSAGE_USER_ABORT:
       {
         let t2;
-        if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <MessageResponse height={1}><InterruptedByUser /></MessageResponse>;
-          $[14] = t2;
-        } else {
-          t2 = $[14];
-        }
+        t2 = <MessageResponse height={1}><InterruptedByUser /></MessageResponse>;
         return t2;
       }
     default:
@@ -198,70 +111,23 @@ export function AssistantTextMessage(t0) {
           const truncated = !verbose && text.length > MAX_API_ERROR_CHARS;
           const t2 = text === API_ERROR_MESSAGE_PREFIX ? `${API_ERROR_MESSAGE_PREFIX}: Please wait a moment and try again.` : truncated ? text.slice(0, MAX_API_ERROR_CHARS) + "\u2026" : text;
           let t3;
-          if ($[15] !== t2) {
-            t3 = <Text color="error">{t2}</Text>;
-            $[15] = t2;
-            $[16] = t3;
-          } else {
-            t3 = $[16];
-          }
+          t3 = <Text color="error">{t2}</Text>;
           let t4;
-          if ($[17] !== truncated) {
-            t4 = truncated && <CtrlOToExpand />;
-            $[17] = truncated;
-            $[18] = t4;
-          } else {
-            t4 = $[18];
-          }
+          t4 = truncated && <CtrlOToExpand />;
           let t5;
-          if ($[19] !== t3 || $[20] !== t4) {
-            t5 = <MessageResponse><Box flexDirection="column">{t3}{t4}</Box></MessageResponse>;
-            $[19] = t3;
-            $[20] = t4;
-            $[21] = t5;
-          } else {
-            t5 = $[21];
-          }
+          t5 = <MessageResponse><Box flexDirection="column">{t3}{t4}</Box></MessageResponse>;
           return t5;
         }
         const t2 = addMargin ? 1 : 0;
         const t3 = isSelected ? "messageActionsBackground" : undefined;
         let t4;
-        if ($[22] !== isSelected || $[23] !== shouldShowDot) {
-          t4 = shouldShowDot && <NoSelect fromLeftEdge={true} minWidth={2}><Text color={isSelected ? "suggestion" : "text"}>{BLACK_CIRCLE}</Text></NoSelect>;
-          $[22] = isSelected;
-          $[23] = shouldShowDot;
-          $[24] = t4;
-        } else {
-          t4 = $[24];
-        }
+        t4 = shouldShowDot && <NoSelect fromLeftEdge={true} minWidth={2}><Text color={isSelected ? "suggestion" : "text"}>{BLACK_CIRCLE}</Text></NoSelect>;
         let t5;
-        if ($[25] !== text) {
-          t5 = <Box flexDirection="column"><Markdown>{text}</Markdown></Box>;
-          $[25] = text;
-          $[26] = t5;
-        } else {
-          t5 = $[26];
-        }
+        t5 = <Box flexDirection="column"><Markdown>{text}</Markdown></Box>;
         let t6;
-        if ($[27] !== t4 || $[28] !== t5) {
-          t6 = <Box flexDirection="row">{t4}{t5}</Box>;
-          $[27] = t4;
-          $[28] = t5;
-          $[29] = t6;
-        } else {
-          t6 = $[29];
-        }
+        t6 = <Box flexDirection="row">{t4}{t5}</Box>;
         let t7;
-        if ($[30] !== t2 || $[31] !== t3 || $[32] !== t6) {
-          t7 = <Box alignItems="flex-start" flexDirection="row" justifyContent="space-between" marginTop={t2} width="100%" backgroundColor={t3}>{t6}</Box>;
-          $[30] = t2;
-          $[31] = t3;
-          $[32] = t6;
-          $[33] = t7;
-        } else {
-          t7 = $[33];
-        }
+        t7 = <Box alignItems="flex-start" flexDirection="row" justifyContent="space-between" marginTop={t2} width="100%" backgroundColor={t3}>{t6}</Box>;
         return t7;
       }
   }

@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { z } from 'zod/v4';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
@@ -351,234 +350,56 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
     return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
   }
 } satisfies ToolDef<InputSchema, TaskOutputToolOutput>);
-function TaskOutputResultDisplay(t0) {
-  const $ = _c(54);
-  const {
-    content,
-    verbose: t1,
-    theme
-  } = t0;
-  const verbose = t1 === undefined ? false : t1;
+function TaskOutputResultDisplay({
+  content,
+  verbose = false,
+  theme
+}) {
   const expandShortcut = useShortcutDisplay("app:toggleTranscript", "Global", "ctrl+o");
-  let t2;
-  if ($[0] !== content) {
-    t2 = typeof content === "string" ? jsonParse(content) : content;
-    $[0] = content;
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  const result = t2;
+  const result = typeof content === "string" ? jsonParse(content) : content;
   if (!result.task) {
-    let t3;
-    if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <MessageResponse><Text dimColor={true}>No task output available</Text></MessageResponse>;
-      $[2] = t3;
-    } else {
-      t3 = $[2];
-    }
-    return t3;
+    return <MessageResponse><Text dimColor={true}>No task output available</Text></MessageResponse>;
   }
   const {
     task
   } = result;
   if (task.task_type === "local_bash") {
-    let t3;
-    if ($[3] !== task.error || $[4] !== task.output) {
-      t3 = {
-        stdout: task.output,
-        stderr: "",
-        isImage: false,
-        dangerouslyDisableSandbox: true,
-        returnCodeInterpretation: task.error
-      };
-      $[3] = task.error;
-      $[4] = task.output;
-      $[5] = t3;
-    } else {
-      t3 = $[5];
-    }
-    const bashOut = t3;
-    let t4;
-    if ($[6] !== bashOut || $[7] !== verbose) {
-      t4 = <BashToolResultMessage content={bashOut} verbose={verbose} />;
-      $[6] = bashOut;
-      $[7] = verbose;
-      $[8] = t4;
-    } else {
-      t4 = $[8];
-    }
-    return t4;
+    const bashOut = {
+      stdout: task.output,
+      stderr: "",
+      isImage: false,
+      dangerouslyDisableSandbox: true,
+      returnCodeInterpretation: task.error
+    };
+    return <BashToolResultMessage content={bashOut} verbose={verbose} />;
   }
   if (task.task_type === "local_agent") {
     const lineCount = task.result ? countCharInString(task.result, "\n") + 1 : 0;
     if (result.retrieval_status === "success") {
       if (verbose) {
-        let t3;
-        if ($[9] !== lineCount || $[10] !== task.description) {
-          t3 = <Text>{task.description} ({lineCount} lines)</Text>;
-          $[9] = lineCount;
-          $[10] = task.description;
-          $[11] = t3;
-        } else {
-          t3 = $[11];
-        }
-        let t4;
-        if ($[12] !== task.prompt || $[13] !== theme) {
-          t4 = task.prompt && <AgentPromptDisplay prompt={task.prompt} theme={theme} dim={true} />;
-          $[12] = task.prompt;
-          $[13] = theme;
-          $[14] = t4;
-        } else {
-          t4 = $[14];
-        }
-        let t5;
-        if ($[15] !== task.result || $[16] !== theme) {
-          t5 = task.result && <Box marginTop={1}><AgentResponseDisplay content={[{
-              type: "text",
-              text: task.result
-            }]} theme={theme} /></Box>;
-          $[15] = task.result;
-          $[16] = theme;
-          $[17] = t5;
-        } else {
-          t5 = $[17];
-        }
-        let t6;
-        if ($[18] !== task.error) {
-          t6 = task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>{tSync('task.errorLabel')}</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>;
-          $[18] = task.error;
-          $[19] = t6;
-        } else {
-          t6 = $[19];
-        }
-        let t7;
-        if ($[20] !== t4 || $[21] !== t5 || $[22] !== t6) {
-          t7 = <Box flexDirection="column" paddingLeft={2} marginTop={1}>{t4}{t5}{t6}</Box>;
-          $[20] = t4;
-          $[21] = t5;
-          $[22] = t6;
-          $[23] = t7;
-        } else {
-          t7 = $[23];
-        }
-        let t8;
-        if ($[24] !== t3 || $[25] !== t7) {
-          t8 = <Box flexDirection="column">{t3}{t7}</Box>;
-          $[24] = t3;
-          $[25] = t7;
-          $[26] = t8;
-        } else {
-          t8 = $[26];
-        }
-        return t8;
+        return <Box flexDirection="column">{<Text>{task.description} ({lineCount} lines)</Text>}{<Box flexDirection="column" paddingLeft={2} marginTop={1}>{task.prompt && <AgentPromptDisplay prompt={task.prompt} theme={theme} dim={true} />}{task.result && <Box marginTop={1}><AgentResponseDisplay content={[{
+                type: "text",
+                text: task.result
+              }]} theme={theme} /></Box>}{task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>{tSync('task.errorLabel')}</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>}</Box>}</Box>;
       }
-      let t3;
-      if ($[27] !== expandShortcut) {
-        t3 = <MessageResponse><Text dimColor={true}>{tSync('task.readOutput', { shortcut: expandShortcut })}</Text></MessageResponse>;
-        $[27] = expandShortcut;
-        $[28] = t3;
-      } else {
-        t3 = $[28];
-      }
-      return t3;
+      return <MessageResponse><Text dimColor={true}>{tSync('task.readOutput', {
+            shortcut: expandShortcut
+          })}</Text></MessageResponse>;
     }
     if (result.retrieval_status === "timeout" || task.status === "running") {
-      let t3;
-      if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
-        t3 = <MessageResponse><Text dimColor={true}>{tSync('task.stillRunning')}</Text></MessageResponse>;
-        $[29] = t3;
-      } else {
-        t3 = $[29];
-      }
-      return t3;
+      return <MessageResponse><Text dimColor={true}>{tSync('task.stillRunning')}</Text></MessageResponse>;
     }
     if (result.retrieval_status === "not_ready") {
-      let t3;
-      if ($[30] === Symbol.for("react.memo_cache_sentinel")) {
-        t3 = <MessageResponse><Text dimColor={true}>{tSync('task.stillRunning')}</Text></MessageResponse>;
-        $[30] = t3;
-      } else {
-        t3 = $[30];
-      }
-      return t3;
+      return <MessageResponse><Text dimColor={true}>{tSync('task.stillRunning')}</Text></MessageResponse>;
     }
-    let t3;
-    if ($[31] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <MessageResponse><Text dimColor={true}>Task not ready</Text></MessageResponse>;
-      $[31] = t3;
-    } else {
-      t3 = $[31];
-    }
-    return t3;
+    return <MessageResponse><Text dimColor={true}>Task not ready</Text></MessageResponse>;
   }
   if (task.task_type === "remote_agent") {
-    let t3;
-    if ($[32] !== task.description || $[33] !== task.status) {
-      t3 = <Text>  {task.description} [{task.status}]</Text>;
-      $[32] = task.description;
-      $[33] = task.status;
-      $[34] = t3;
-    } else {
-      t3 = $[34];
-    }
-    let t4;
-    if ($[35] !== task.output || $[36] !== verbose) {
-      t4 = task.output && verbose && <Box paddingLeft={4} marginTop={1}><Text>{task.output}</Text></Box>;
-      $[35] = task.output;
-      $[36] = verbose;
-      $[37] = t4;
-    } else {
-      t4 = $[37];
-    }
-    let t5;
-    if ($[38] !== expandShortcut || $[39] !== task.output || $[40] !== verbose) {
-      t5 = !verbose && task.output && <Text dimColor={true}>{"     "}{tSync('shortcut.hintParens', { shortcut: expandShortcut, action: tSync('common.expand') })}</Text>;
-      $[38] = expandShortcut;
-      $[39] = task.output;
-      $[40] = verbose;
-      $[41] = t5;
-    } else {
-      t5 = $[41];
-    }
-    let t6;
-    if ($[42] !== t3 || $[43] !== t4 || $[44] !== t5) {
-      t6 = <Box flexDirection="column">{t3}{t4}{t5}</Box>;
-      $[42] = t3;
-      $[43] = t4;
-      $[44] = t5;
-      $[45] = t6;
-    } else {
-      t6 = $[45];
-    }
-    return t6;
+    return <Box flexDirection="column">{<Text>  {task.description} [{task.status}]</Text>}{task.output && verbose && <Box paddingLeft={4} marginTop={1}><Text>{task.output}</Text></Box>}{!verbose && task.output && <Text dimColor={true}>{"     "}{tSync('shortcut.hintParens', {
+          shortcut: expandShortcut,
+          action: tSync('common.expand')
+        })}</Text>}</Box>;
   }
-  let t3;
-  if ($[46] !== task.description || $[47] !== task.status) {
-    t3 = <Text>  {task.description} [{task.status}]</Text>;
-    $[46] = task.description;
-    $[47] = task.status;
-    $[48] = t3;
-  } else {
-    t3 = $[48];
-  }
-  let t4;
-  if ($[49] !== task.output) {
-    t4 = task.output && <Box paddingLeft={4}><Text>{task.output.slice(0, 500)}</Text></Box>;
-    $[49] = task.output;
-    $[50] = t4;
-  } else {
-    t4 = $[50];
-  }
-  let t5;
-  if ($[51] !== t3 || $[52] !== t4) {
-    t5 = <Box flexDirection="column">{t3}{t4}</Box>;
-    $[51] = t3;
-    $[52] = t4;
-    $[53] = t5;
-  } else {
-    t5 = $[53];
-  }
-  return t5;
+  return <Box flexDirection="column">{<Text>  {task.description} [{task.status}]</Text>}{task.output && <Box paddingLeft={4}><Text>{task.output.slice(0, 500)}</Text></Box>}</Box>;
 }
 export default TaskOutputTool;

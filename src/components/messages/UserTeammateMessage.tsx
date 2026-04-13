@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import figures from 'figures';
 import * as React from 'react';
@@ -147,59 +146,12 @@ type TeammateMessageContentProps = {
   summary?: string;
   isTranscriptMode?: boolean;
 };
-export function TeammateMessageContent(t0) {
-  const $ = _c(14);
-  const {
-    displayName,
-    inkColor,
-    content,
-    summary,
-    isTranscriptMode
-  } = t0;
-  const t1 = `@${displayName}${figures.pointer}`;
-  let t2;
-  if ($[0] !== inkColor || $[1] !== t1) {
-    t2 = <Text color={inkColor}>{t1}</Text>;
-    $[0] = inkColor;
-    $[1] = t1;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  let t3;
-  if ($[3] !== summary) {
-    t3 = summary && <Text> {summary}</Text>;
-    $[3] = summary;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  let t4;
-  if ($[5] !== t2 || $[6] !== t3) {
-    t4 = <Box>{t2}{t3}</Box>;
-    $[5] = t2;
-    $[6] = t3;
-    $[7] = t4;
-  } else {
-    t4 = $[7];
-  }
-  let t5;
-  if ($[8] !== content || $[9] !== isTranscriptMode) {
-    t5 = isTranscriptMode && <Box paddingLeft={2}><Text><Ansi>{content}</Ansi></Text></Box>;
-    $[8] = content;
-    $[9] = isTranscriptMode;
-    $[10] = t5;
-  } else {
-    t5 = $[10];
-  }
-  let t6;
-  if ($[11] !== t4 || $[12] !== t5) {
-    t6 = <Box flexDirection="column" marginTop={1}>{t4}{t5}</Box>;
-    $[11] = t4;
-    $[12] = t5;
-    $[13] = t6;
-  } else {
-    t6 = $[13];
-  }
-  return t6;
+export function TeammateMessageContent({
+  displayName,
+  inkColor,
+  content,
+  summary,
+  isTranscriptMode
+}: TeammateMessageContentProps) {
+  return <Box flexDirection="column" marginTop={1}>{<Box>{<Text color={inkColor}>{`@${displayName}${figures.pointer}`}</Text>}{summary && <Text> {summary}</Text>}</Box>}{isTranscriptMode && <Box paddingLeft={2}><Text><Ansi>{content}</Ansi></Text></Box>}</Box>;
 }

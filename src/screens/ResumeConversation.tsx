@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import { dirname } from 'path';
 import React from 'react';
@@ -264,7 +263,7 @@ export function ResumeConversation({
       }
       if (feature('CONTEXT_COLLAPSE')) {
         /* eslint-disable @typescript-eslint/no-require-imports */
-        ;
+
         (require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')).restoreFromEntries(result_3.contextCollapseCommits ?? [], result_3.contextCollapseSnapshot);
         /* eslint-enable @typescript-eslint/no-require-imports */
       }
@@ -315,85 +314,21 @@ export function ResumeConversation({
   return <LogSelector logs={filteredLogs} maxHeight={rows} onCancel={onCancel} onSelect={onSelect} onLogsChanged={isResumeWithRenameEnabled ? () => loadLogs(showAllProjects) : undefined} onLoadMore={loadMoreLogs} initialSearchQuery={initialSearchQuery} showAllProjects={showAllProjects} onToggleAllProjects={handleToggleAllProjects} onAgenticSearch={agenticSessionSearch} />;
 }
 function NoConversationsMessage() {
-  const $ = _c(2);
-  let t0;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = {
-      context: "Global"
-    };
-    $[0] = t0;
-  } else {
-    t0 = $[0];
-  }
-  useKeybinding("app:interrupt", _temp, t0);
-  let t1;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Box flexDirection="column"><Text>{tSync('resume.noConversations')}</Text><Text dimColor={true}>{tSync('resume.exitHint')}</Text></Box>;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  return t1;
+  useKeybinding("app:interrupt", () => {
+    process.exit(1);
+  }, {
+    context: "Global"
+  });
+  return <Box flexDirection="column"><Text>{tSync('resume.noConversations')}</Text><Text dimColor={true}>{tSync('resume.exitHint')}</Text></Box>;
 }
-function _temp() {
-  process.exit(1);
-}
-function CrossProjectMessage(t0) {
-  const $ = _c(8);
-  const {
-    command
-  } = t0;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = [];
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  React.useEffect(_temp3, t1);
-  let t2;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Text>{tSync('resume.crossProject')}</Text>;
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  let t3;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Text>{tSync('resume.crossProjectCommand')}</Text>;
-    $[2] = t3;
-  } else {
-    t3 = $[2];
-  }
-  let t4;
-  if ($[3] !== command) {
-    t4 = <Box flexDirection="column">{t3}<Text> {command}</Text></Box>;
-    $[3] = command;
-    $[4] = t4;
-  } else {
-    t4 = $[4];
-  }
-  let t5;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text dimColor={true}>（{tSync('resume.commandCopied')}）</Text>;
-    $[5] = t5;
-  } else {
-    t5 = $[5];
-  }
-  let t6;
-  if ($[6] !== t4) {
-    t6 = <Box flexDirection="column" gap={1}>{t2}{t4}{t5}</Box>;
-    $[6] = t4;
-    $[7] = t6;
-  } else {
-    t6 = $[7];
-  }
-  return t6;
-}
-function _temp3() {
-  const timeout = setTimeout(_temp2, 100);
-  return () => clearTimeout(timeout);
-}
-function _temp2() {
-  process.exit(0);
+function CrossProjectMessage({
+  command
+}) {
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      process.exit(0);
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, []);
+  return <Box flexDirection="column" gap={1}>{<Text>{tSync('resume.crossProject')}</Text>}{<Box flexDirection="column">{<Text>{tSync('resume.crossProjectCommand')}</Text>}<Text> {command}</Text></Box>}{<Text dimColor={true}>（{tSync('resume.commandCopied')}）</Text>}</Box>;
 }

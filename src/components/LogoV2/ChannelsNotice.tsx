@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 // Conditionally require()'d in LogoV2.tsx behind feature('KAIROS') ||
 // feature('KAIROS_CHANNELS'). No feature() guard here — the whole file
 // tree-shakes via the require pattern when both flags are false (see
@@ -16,185 +15,49 @@ import { getZyAIOAuthTokens } from '../../utils/auth.js';
 import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js';
 import { getSettingsForSource } from '../../utils/settings/settings.js';
 export function ChannelsNotice() {
-  const $ = _c(32);
-  const [t0] = useState(_temp);
-  const {
-    channels,
-    disabled,
-    noAuth,
-    policyBlocked,
-    list,
-    unmatched
-  } = t0;
+  const [t0] = useState(() => {
+    const ch = getAllowedChannels();
+    if (ch.length === 0) {
+      return {
+        channels: ch,
+        disabled: false,
+        noAuth: false,
+        policyBlocked: false,
+        list: "",
+        unmatched: [] as Unmatched[]
+      };
+    }
+    const l = ch.map(formatEntry).join(", ");
+    // No subscription context — managed is always false
+    const managed = false;
+    const policy = getSettingsForSource("policySettings");
+    const allowlist = getEffectiveChannelAllowlist(null, policy?.allowedChannelPlugins);
+    return {
+      channels: ch,
+      disabled: !isChannelsEnabled(),
+      noAuth: !getZyAIOAuthTokens()?.accessToken,
+      policyBlocked: managed && policy?.channelsEnabled !== true,
+      list: l,
+      unmatched: findUnmatched(ch, allowlist)
+    };
+  });
   if (channels.length === 0) {
     return null;
   }
-  const hasNonDev = channels.some(_temp2);
+  const hasNonDev = channels.some(c => !c.dev);
   const flag = getHasDevChannels() && hasNonDev ? "Channels" : getHasDevChannels() ? "--dangerously-load-development-channels" : "--channels";
   if (disabled) {
-    let t1;
-    if ($[0] !== flag || $[1] !== list) {
-      t1 = <Text color="error">{flag} ignored ({list})</Text>;
-      $[0] = flag;
-      $[1] = list;
-      $[2] = t1;
-    } else {
-      t1 = $[2];
-    }
-    let t2;
-    if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = <Text dimColor={true}>Channels are not currently available</Text>;
-      $[3] = t2;
-    } else {
-      t2 = $[3];
-    }
-    let t3;
-    if ($[4] !== t1) {
-      t3 = <Box paddingLeft={2} flexDirection="column">{t1}{t2}</Box>;
-      $[4] = t1;
-      $[5] = t3;
-    } else {
-      t3 = $[5];
-    }
-    return t3;
+    return <Box paddingLeft={2} flexDirection="column">{<Text color="error">{flag} ignored ({list})</Text>}{<Text dimColor={true}>Channels are not currently available</Text>}</Box>;
   }
   if (noAuth) {
-    let t1;
-    if ($[6] !== flag || $[7] !== list) {
-      t1 = <Text color="error">{flag} ignored ({list})</Text>;
-      $[6] = flag;
-      $[7] = list;
-      $[8] = t1;
-    } else {
-      t1 = $[8];
-    }
-    let t2;
-    if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = <Text dimColor={true}>Channels require zy.ai authentication · run /login, then restart</Text>;
-      $[9] = t2;
-    } else {
-      t2 = $[9];
-    }
-    let t3;
-    if ($[10] !== t1) {
-      t3 = <Box paddingLeft={2} flexDirection="column">{t1}{t2}</Box>;
-      $[10] = t1;
-      $[11] = t3;
-    } else {
-      t3 = $[11];
-    }
-    return t3;
+    return <Box paddingLeft={2} flexDirection="column">{<Text color="error">{flag} ignored ({list})</Text>}{<Text dimColor={true}>Channels require zy.ai authentication · run /login, then restart</Text>}</Box>;
   }
   if (policyBlocked) {
-    let t1;
-    if ($[12] !== flag || $[13] !== list) {
-      t1 = <Text color="error">{flag} blocked by org policy ({list})</Text>;
-      $[12] = flag;
-      $[13] = list;
-      $[14] = t1;
-    } else {
-      t1 = $[14];
-    }
-    let t2;
-    let t3;
-    if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = <Text dimColor={true}>Inbound messages will be silently dropped</Text>;
-      t3 = <Text dimColor={true}>Have an administrator set channelsEnabled: true in managed settings to enable</Text>;
-      $[15] = t2;
-      $[16] = t3;
-    } else {
-      t2 = $[15];
-      t3 = $[16];
-    }
-    let t4;
-    if ($[17] !== unmatched) {
-      t4 = unmatched.map(_temp3);
-      $[17] = unmatched;
-      $[18] = t4;
-    } else {
-      t4 = $[18];
-    }
-    let t5;
-    if ($[19] !== t1 || $[20] !== t4) {
-      t5 = <Box paddingLeft={2} flexDirection="column">{t1}{t2}{t3}{t4}</Box>;
-      $[19] = t1;
-      $[20] = t4;
-      $[21] = t5;
-    } else {
-      t5 = $[21];
-    }
-    return t5;
+    const t4 = unmatched.map(u => <Text key={`${formatEntry(u.entry)}:${u.why}`} color="warning">{formatEntry(u.entry)} · {u.why}</Text>);
+    return <Box paddingLeft={2} flexDirection="column">{<Text color="error">{flag} blocked by org policy ({list})</Text>}{<Text dimColor={true}>Inbound messages will be silently dropped</Text>}{<Text dimColor={true}>Have an administrator set channelsEnabled: true in managed settings to enable</Text>}{t4}</Box>;
   }
-  let t1;
-  if ($[22] !== list) {
-    t1 = <Text color="error">Listening for channel messages from: {list}</Text>;
-    $[22] = list;
-    $[23] = t1;
-  } else {
-    t1 = $[23];
-  }
-  let t2;
-  if ($[24] !== flag) {
-    t2 = <Text dimColor={true}>Experimental · inbound messages will be pushed into this session, this carries prompt injection risks. Restart ZY Code without {flag} to disable.</Text>;
-    $[24] = flag;
-    $[25] = t2;
-  } else {
-    t2 = $[25];
-  }
-  let t3;
-  if ($[26] !== unmatched) {
-    t3 = unmatched.map(_temp4);
-    $[26] = unmatched;
-    $[27] = t3;
-  } else {
-    t3 = $[27];
-  }
-  let t4;
-  if ($[28] !== t1 || $[29] !== t2 || $[30] !== t3) {
-    t4 = <Box paddingLeft={2} flexDirection="column">{t1}{t2}{t3}</Box>;
-    $[28] = t1;
-    $[29] = t2;
-    $[30] = t3;
-    $[31] = t4;
-  } else {
-    t4 = $[31];
-  }
-  return t4;
-}
-function _temp4(u_0) {
-  return <Text key={`${formatEntry(u_0.entry)}:${u_0.why}`} color="warning">{formatEntry(u_0.entry)} · {u_0.why}</Text>;
-}
-function _temp3(u) {
-  return <Text key={`${formatEntry(u.entry)}:${u.why}`} color="warning">{formatEntry(u.entry)} · {u.why}</Text>;
-}
-function _temp2(c) {
-  return !c.dev;
-}
-function _temp() {
-  const ch = getAllowedChannels();
-  if (ch.length === 0) {
-    return {
-      channels: ch,
-      disabled: false,
-      noAuth: false,
-      policyBlocked: false,
-      list: "",
-      unmatched: [] as Unmatched[]
-    };
-  }
-  const l = ch.map(formatEntry).join(", ");
-  // No subscription context — managed is always false
-  const managed = false;
-  const policy = getSettingsForSource("policySettings");
-  const allowlist = getEffectiveChannelAllowlist(null, policy?.allowedChannelPlugins);
-  return {
-    channels: ch,
-    disabled: !isChannelsEnabled(),
-    noAuth: !getZyAIOAuthTokens()?.accessToken,
-    policyBlocked: managed && policy?.channelsEnabled !== true,
-    list: l,
-    unmatched: findUnmatched(ch, allowlist)
-  };
+  const t3 = unmatched.map(u_0 => <Text key={`${formatEntry(u_0.entry)}:${u_0.why}`} color="warning">{formatEntry(u_0.entry)} · {u_0.why}</Text>);
+  return <Box paddingLeft={2} flexDirection="column">{<Text color="error">Listening for channel messages from: {list}</Text>}{<Text dimColor={true}>Experimental · inbound messages will be pushed into this session, this carries prompt injection risks. Restart ZY Code without {flag} to disable.</Text>}{t3}</Box>;
 }
 function formatEntry(c: ChannelEntry): string {
   return c.kind === 'plugin' ? `plugin:${c.name}@${c.marketplace}` : `server:${c.name}`;

@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 /**
  * Shared state machine + install helper for plugin-recommendation hooks
  * (LSP, zy-code-hint). Centralizes the gate chain, async-guard,
@@ -22,58 +21,33 @@ type PluginData = NonNullable<Awaited<ReturnType<typeof getPluginById>>>;
  * identity tracks recommendation, so clearing re-triggers resolution.
  */
 export function usePluginRecommendationBase() {
-  const $ = _c(6);
   const [recommendation, setRecommendation] = React.useState(null);
   const isCheckingRef = React.useRef(false);
-  let t0;
-  if ($[0] !== recommendation) {
-    t0 = resolve => {
-      if (getIsRemoteMode()) {
-        return;
+  const tryResolve = resolve => {
+    if (getIsRemoteMode()) {
+      return;
+    }
+    if (recommendation) {
+      return;
+    }
+    if (isCheckingRef.current) {
+      return;
+    }
+    isCheckingRef.current = true;
+    resolve().then(rec => {
+      if (rec) {
+        setRecommendation(rec);
       }
-      if (recommendation) {
-        return;
-      }
-      if (isCheckingRef.current) {
-        return;
-      }
-      isCheckingRef.current = true;
-      resolve().then(rec => {
-        if (rec) {
-          setRecommendation(rec);
-        }
-      }).catch(logError).finally(() => {
-        isCheckingRef.current = false;
-      });
-    };
-    $[0] = recommendation;
-    $[1] = t0;
-  } else {
-    t0 = $[1];
-  }
-  const tryResolve = t0;
-  let t1;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = () => setRecommendation(null);
-    $[2] = t1;
-  } else {
-    t1 = $[2];
-  }
-  const clearRecommendation = t1;
-  let t2;
-  if ($[3] !== recommendation || $[4] !== tryResolve) {
-    t2 = {
-      recommendation,
-      clearRecommendation,
-      tryResolve
-    };
-    $[3] = recommendation;
-    $[4] = tryResolve;
-    $[5] = t2;
-  } else {
-    t2 = $[5];
-  }
-  return t2;
+    }).catch(logError).finally(() => {
+      isCheckingRef.current = false;
+    });
+  };
+  const clearRecommendation = () => setRecommendation(null);
+  return {
+    recommendation,
+    clearRecommendation,
+    tryResolve
+  };
 }
 
 /** Look up plugin, run install(), emit standard success/failure notification. */

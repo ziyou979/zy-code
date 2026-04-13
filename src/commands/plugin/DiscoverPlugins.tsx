@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -648,132 +647,55 @@ export function DiscoverPlugins({
       <DiscoverPluginsKeyHint hasSelection={selectedForInstall.size > 0} canToggle={selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled} />
     </Box>;
 }
-function DiscoverPluginsKeyHint(t0) {
-  const $ = _c(10);
-  const {
-    hasSelection,
-    canToggle
-  } = t0;
-  let t1;
-  if ($[0] !== hasSelection) {
-    t1 = hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />;
-    $[0] = hasSelection;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Text>type to search</Text>;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  let t3;
-  if ($[3] !== canToggle) {
-    t3 = canToggle && <ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />;
-    $[3] = canToggle;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  let t4;
-  let t5;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />;
-    t5 = <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />;
-    $[5] = t4;
-    $[6] = t5;
-  } else {
-    t4 = $[5];
-    t5 = $[6];
-  }
-  let t6;
-  if ($[7] !== t1 || $[8] !== t3) {
-    t6 = <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{t1}{t2}{t3}{t4}{t5}</Byline></Text></Box>;
-    $[7] = t1;
-    $[8] = t3;
-    $[9] = t6;
-  } else {
-    t6 = $[9];
-  }
-  return t6;
+function DiscoverPluginsKeyHint({
+  hasSelection,
+  canToggle
+}: Props) {
+  return <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />}{<Text>type to search</Text>}{canToggle && <ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />}{<ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />}{<ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />}</Byline></Text></Box>;
 }
 
 /**
  * Context-aware empty state message for the Discover screen
  */
-function EmptyStateMessage(t0) {
-  const $ = _c(6);
-  const {
-    reason
-  } = t0;
+function EmptyStateMessage({
+  reason
+}) {
   switch (reason) {
     case "git-not-installed":
       {
         let t1;
-        if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <><Text dimColor={true}>Git is required to install marketplaces.</Text><Text dimColor={true}>Please install git and restart ZY Code.</Text></>;
-          $[0] = t1;
-        } else {
-          t1 = $[0];
-        }
+        t1 = <><Text dimColor={true}>Git is required to install marketplaces.</Text><Text dimColor={true}>Please install git and restart ZY Code.</Text></>;
         return t1;
       }
     case "all-blocked-by-policy":
       {
         let t1;
-        if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <><Text dimColor={true}>Your organization policy does not allow any external marketplaces.</Text><Text dimColor={true}>Contact your administrator.</Text></>;
-          $[1] = t1;
-        } else {
-          t1 = $[1];
-        }
+        t1 = <><Text dimColor={true}>Your organization policy does not allow any external marketplaces.</Text><Text dimColor={true}>Contact your administrator.</Text></>;
         return t1;
       }
     case "policy-restricts-sources":
       {
         let t1;
-        if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <><Text dimColor={true}>Your organization restricts which marketplaces can be added.</Text><Text dimColor={true}>Switch to the Marketplaces tab to view allowed sources.</Text></>;
-          $[2] = t1;
-        } else {
-          t1 = $[2];
-        }
+        t1 = <><Text dimColor={true}>Your organization restricts which marketplaces can be added.</Text><Text dimColor={true}>Switch to the Marketplaces tab to view allowed sources.</Text></>;
         return t1;
       }
     case "all-marketplaces-failed":
       {
         let t1;
-        if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <><Text dimColor={true}>Failed to load marketplace data.</Text><Text dimColor={true}>Check your network connection.</Text></>;
-          $[3] = t1;
-        } else {
-          t1 = $[3];
-        }
+        t1 = <><Text dimColor={true}>Failed to load marketplace data.</Text><Text dimColor={true}>Check your network connection.</Text></>;
         return t1;
       }
     case "all-plugins-installed":
       {
         let t1;
-        if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <><Text dimColor={true}>All available plugins are already installed.</Text><Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text></>;
-          $[4] = t1;
-        } else {
-          t1 = $[4];
-        }
+        t1 = <><Text dimColor={true}>All available plugins are already installed.</Text><Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text></>;
         return t1;
       }
     case "no-marketplaces-configured":
     default:
       {
         let t1;
-        if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <><Text dimColor={true}>No plugins available.</Text><Text dimColor={true}>Add a marketplace first using the Marketplaces tab.</Text></>;
-          $[5] = t1;
-        } else {
-          t1 = $[5];
-        }
+        t1 = <><Text dimColor={true}>No plugins available.</Text><Text dimColor={true}>Add a marketplace first using the Marketplaces tab.</Text></>;
         return t1;
       }
   }

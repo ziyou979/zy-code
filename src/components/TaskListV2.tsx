@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import * as React from 'react';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
@@ -239,139 +238,27 @@ function getTaskIcon(status: Task['status']): {
       };
   }
 }
-function TaskItem(t0) {
-  const $ = _c(37);
-  const {
-    task,
-    ownerColor,
-    openBlockers,
-    activity,
-    ownerActive,
-    columns
-  } = t0;
+function TaskItem({
+  task,
+  ownerColor,
+  openBlockers,
+  activity,
+  ownerActive,
+  columns
+}: TaskItemProps) {
   const isCompleted = task.status === "completed";
   const isInProgress = task.status === "in_progress";
   const isBlocked = openBlockers.length > 0;
-  let t1;
-  if ($[0] !== task.status) {
-    t1 = getTaskIcon(task.status);
-    $[0] = task.status;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
   const {
     icon,
     color
-  } = t1;
+  } = getTaskIcon(task.status);
   const showActivity = isInProgress && !isBlocked && activity;
   const showOwner = columns >= 60 && task.owner && ownerActive;
-  let t2;
-  if ($[2] !== showOwner || $[3] !== task.owner) {
-    t2 = showOwner ? stringWidth(` (@${task.owner})`) : 0;
-    $[2] = showOwner;
-    $[3] = task.owner;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  const ownerWidth = t2;
+  const ownerWidth = showOwner ? stringWidth(` (@${task.owner})`) : 0;
   const maxSubjectWidth = Math.max(15, columns - 15 - ownerWidth);
-  let t3;
-  if ($[5] !== maxSubjectWidth || $[6] !== task.subject) {
-    t3 = truncateToWidth(task.subject, maxSubjectWidth);
-    $[5] = maxSubjectWidth;
-    $[6] = task.subject;
-    $[7] = t3;
-  } else {
-    t3 = $[7];
-  }
-  const displaySubject = t3;
+  const displaySubject = truncateToWidth(task.subject, maxSubjectWidth);
   const maxActivityWidth = Math.max(15, columns - 15);
-  let t4;
-  if ($[8] !== activity || $[9] !== maxActivityWidth) {
-    t4 = activity ? truncateToWidth(activity, maxActivityWidth) : undefined;
-    $[8] = activity;
-    $[9] = maxActivityWidth;
-    $[10] = t4;
-  } else {
-    t4 = $[10];
-  }
-  const displayActivity = t4;
-  let t5;
-  if ($[11] !== color || $[12] !== icon) {
-    t5 = <Text color={color}>{icon} </Text>;
-    $[11] = color;
-    $[12] = icon;
-    $[13] = t5;
-  } else {
-    t5 = $[13];
-  }
-  const t6 = isCompleted || isBlocked;
-  let t7;
-  if ($[14] !== displaySubject || $[15] !== isCompleted || $[16] !== isInProgress || $[17] !== t6) {
-    t7 = <Text bold={isInProgress} strikethrough={isCompleted} dimColor={t6}>{displaySubject}</Text>;
-    $[14] = displaySubject;
-    $[15] = isCompleted;
-    $[16] = isInProgress;
-    $[17] = t6;
-    $[18] = t7;
-  } else {
-    t7 = $[18];
-  }
-  let t8;
-  if ($[19] !== ownerColor || $[20] !== showOwner || $[21] !== task.owner) {
-    t8 = showOwner && <Text dimColor={true}>{" ("}{ownerColor ? <ThemedText color={ownerColor}>@{task.owner}</ThemedText> : `@${task.owner}`}{")"}</Text>;
-    $[19] = ownerColor;
-    $[20] = showOwner;
-    $[21] = task.owner;
-    $[22] = t8;
-  } else {
-    t8 = $[22];
-  }
-  let t9;
-  if ($[23] !== isBlocked || $[24] !== openBlockers) {
-    t9 = isBlocked && <Text dimColor={true}>{" "}{figures.pointerSmall} blocked by{" "}{[...openBlockers].sort(_temp).map(_temp2).join(", ")}</Text>;
-    $[23] = isBlocked;
-    $[24] = openBlockers;
-    $[25] = t9;
-  } else {
-    t9 = $[25];
-  }
-  let t10;
-  if ($[26] !== t5 || $[27] !== t7 || $[28] !== t8 || $[29] !== t9) {
-    t10 = <Box>{t5}{t7}{t8}{t9}</Box>;
-    $[26] = t5;
-    $[27] = t7;
-    $[28] = t8;
-    $[29] = t9;
-    $[30] = t10;
-  } else {
-    t10 = $[30];
-  }
-  let t11;
-  if ($[31] !== displayActivity || $[32] !== showActivity) {
-    t11 = showActivity && displayActivity && <Box><Text dimColor={true}>{"  "}{displayActivity}{figures.ellipsis}</Text></Box>;
-    $[31] = displayActivity;
-    $[32] = showActivity;
-    $[33] = t11;
-  } else {
-    t11 = $[33];
-  }
-  let t12;
-  if ($[34] !== t10 || $[35] !== t11) {
-    t12 = <Box flexDirection="column">{t10}{t11}</Box>;
-    $[34] = t10;
-    $[35] = t11;
-    $[36] = t12;
-  } else {
-    t12 = $[36];
-  }
-  return t12;
-}
-function _temp2(id) {
-  return `#${id}`;
-}
-function _temp(a, b) {
-  return parseInt(a, 10) - parseInt(b, 10);
+  const displayActivity = activity ? truncateToWidth(activity, maxActivityWidth) : undefined;
+  return <Box flexDirection="column">{<Box>{<Text color={color}>{icon} </Text>}{<Text bold={isInProgress} strikethrough={isCompleted} dimColor={isCompleted || isBlocked}>{displaySubject}</Text>}{showOwner && <Text dimColor={true}>{" ("}{ownerColor ? <ThemedText color={ownerColor}>@{task.owner}</ThemedText> : `@${task.owner}`}{")"}</Text>}{isBlocked && <Text dimColor={true}>{" "}{figures.pointerSmall} blocked by{" "}{[...openBlockers].sort((a, b) => parseInt(a, 10) - parseInt(b, 10)).map(id => `#${id}`).join(", ")}</Text>}</Box>}{showActivity && displayActivity && <Box><Text dimColor={true}>{"  "}{displayActivity}{figures.ellipsis}</Text></Box>}</Box>;
 }

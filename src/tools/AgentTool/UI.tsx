@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import * as React from 'react';
 import { ConfigurableShortcutHint } from 'src/components/ConfigurableShortcutHint.js';
@@ -181,136 +180,45 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
 const ESTIMATED_LINES_PER_TOOL = 9;
 const TERMINAL_BUFFER_LINES = 7;
 type Output = z.input<ReturnType<typeof outputSchema>>;
-export function AgentPromptDisplay(t0) {
-  const $ = _c(3);
-  const {
-    prompt,
-    dim: t1
-  } = t0;
+export function AgentPromptDisplay({
+  prompt,
+  dim: t1
+}) {
   t1 === undefined ? false : t1;
-  let t2;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Text color="success" bold={true}>Prompt:</Text>;
-    $[0] = t2;
-  } else {
-    t2 = $[0];
-  }
-  let t3;
-  if ($[1] !== prompt) {
-    t3 = <Box flexDirection="column">{t2}<Box paddingLeft={2}><Markdown>{prompt}</Markdown></Box></Box>;
-    $[1] = prompt;
-    $[2] = t3;
-  } else {
-    t3 = $[2];
-  }
-  return t3;
+  return <Box flexDirection="column">{<Text color="success" bold={true}>Prompt:</Text>}<Box paddingLeft={2}><Markdown>{prompt}</Markdown></Box></Box>;
 }
-export function AgentResponseDisplay(t0) {
-  const $ = _c(5);
-  const {
-    content
-  } = t0;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Text color="success" bold={true}>Response:</Text>;
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  let t2;
-  if ($[1] !== content) {
-    t2 = content.map(_temp);
-    $[1] = content;
-    $[2] = t2;
-  } else {
-    t2 = $[2];
-  }
-  let t3;
-  if ($[3] !== t2) {
-    t3 = <Box flexDirection="column">{t1}{t2}</Box>;
-    $[3] = t2;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  return t3;
-}
-function _temp(block, index) {
-  return <Box key={index} paddingLeft={2} marginTop={index === 0 ? 0 : 1}><Markdown>{block.text}</Markdown></Box>;
+export function AgentResponseDisplay({
+  content
+}) {
+  const t2 = content.map((block, index) => <Box key={index} paddingLeft={2} marginTop={index === 0 ? 0 : 1}><Markdown>{block.text}</Markdown></Box>);
+  return <Box flexDirection="column">{<Text color="success" bold={true}>Response:</Text>}{t2}</Box>;
 }
 type VerboseAgentTranscriptProps = {
   progressMessages: ProgressMessage<Progress>[];
   tools: Tools;
   verbose: boolean;
 };
-function VerboseAgentTranscript(t0) {
-  const $ = _c(15);
-  const {
-    progressMessages,
-    tools,
-    verbose
-  } = t0;
-  let t1;
-  if ($[0] !== progressMessages) {
-    t1 = buildSubagentLookups(progressMessages.filter(_temp2).map(_temp3));
-    $[0] = progressMessages;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
+function VerboseAgentTranscript({
+  progressMessages,
+  tools,
+  verbose
+}: VerboseAgentTranscriptProps) {
   const {
     lookups: agentLookups,
     inProgressToolUseIDs
-  } = t1;
-  let t2;
-  if ($[2] !== agentLookups || $[3] !== inProgressToolUseIDs || $[4] !== progressMessages || $[5] !== tools || $[6] !== verbose) {
-    const filteredMessages = progressMessages.filter(_temp4);
-    let t3;
-    if ($[8] !== agentLookups || $[9] !== inProgressToolUseIDs || $[10] !== tools || $[11] !== verbose) {
-      t3 = progressMessage => <MessageResponse key={progressMessage.uuid} height={1}><MessageComponent message={progressMessage.data.message} lookups={agentLookups} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} isTranscriptMode={false} isStatic={true} /></MessageResponse>;
-      $[8] = agentLookups;
-      $[9] = inProgressToolUseIDs;
-      $[10] = tools;
-      $[11] = verbose;
-      $[12] = t3;
-    } else {
-      t3 = $[12];
+  } = buildSubagentLookups(progressMessages.filter(pm => hasProgressMessage(pm.data)).map(pm_0 => pm_0.data));
+  const filteredMessages = progressMessages.filter(pm_1 => {
+    if (!hasProgressMessage(pm_1.data)) {
+      return false;
     }
-    t2 = filteredMessages.map(t3);
-    $[2] = agentLookups;
-    $[3] = inProgressToolUseIDs;
-    $[4] = progressMessages;
-    $[5] = tools;
-    $[6] = verbose;
-    $[7] = t2;
-  } else {
-    t2 = $[7];
-  }
-  let t3;
-  if ($[13] !== t2) {
-    t3 = <>{t2}</>;
-    $[13] = t2;
-    $[14] = t3;
-  } else {
-    t3 = $[14];
-  }
-  return t3;
-}
-function _temp4(pm_1) {
-  if (!hasProgressMessage(pm_1.data)) {
-    return false;
-  }
-  const msg = pm_1.data.message;
-  if (msg.type === "user" && msg.toolUseResult === undefined) {
-    return false;
-  }
-  return true;
-}
-function _temp3(pm_0) {
-  return pm_0.data;
-}
-function _temp2(pm) {
-  return hasProgressMessage(pm.data);
+    const msg = pm_1.data.message;
+    if (msg.type === "user" && msg.toolUseResult === undefined) {
+      return false;
+    }
+    return true;
+  });
+  const t2 = filteredMessages.map(progressMessage => <MessageResponse key={progressMessage.uuid} height={1}><MessageComponent message={progressMessage.data.message} lookups={agentLookups} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} isTranscriptMode={false} isStatic={true} /></MessageResponse>);
+  return <>{t2}</>;
 }
 export function renderToolResultMessage(data: Output, progressMessagesForMessage: ProgressMessage<Progress>[], {
   tools,

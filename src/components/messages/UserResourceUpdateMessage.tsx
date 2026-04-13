@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import * as React from 'react';
 import { REFRESH_ARROW } from '../../constants/figures.js';
@@ -58,12 +57,10 @@ function formatUri(uri: string): string {
   }
   return uri;
 }
-export function UserResourceUpdateMessage(t0) {
-  const $ = _c(12);
-  const {
-    addMargin,
-    param: t1
-  } = t0;
+export function UserResourceUpdateMessage({
+  addMargin,
+  param: t1
+}) {
   const {
     text
   } = t1;
@@ -72,49 +69,18 @@ export function UserResourceUpdateMessage(t0) {
   let t3;
   let t4;
   let t5;
-  if ($[0] !== addMargin || $[1] !== text) {
-    t5 = Symbol.for("react.early_return_sentinel");
-    bb0: {
-      const updates = parseUpdates(text);
-      if (updates.length === 0) {
-        t5 = null;
-        break bb0;
-      }
-      T0 = Box;
-      t2 = "column";
-      t3 = addMargin ? 1 : 0;
-      t4 = updates.map(_temp);
-    }
-    $[0] = addMargin;
-    $[1] = text;
-    $[2] = T0;
-    $[3] = t2;
-    $[4] = t3;
-    $[5] = t4;
-    $[6] = t5;
+  t5 = Symbol.for("react.early_return_sentinel");
+  const updates = parseUpdates(text);
+  if (updates.length === 0) {
+    t5 = null;
   } else {
-    T0 = $[2];
-    t2 = $[3];
-    t3 = $[4];
-    t4 = $[5];
-    t5 = $[6];
+    T0 = Box;
+    t2 = "column";
+    t3 = addMargin ? 1 : 0;
+    t4 = updates.map((update, i) => <Box key={i}><Text><Text color="success">{REFRESH_ARROW}</Text>{" "}<Text dimColor={true}>{update.server}:</Text>{" "}<Text color="suggestion">{update.kind === "resource" ? formatUri(update.target) : update.target}</Text>{update.reason && <Text dimColor={true}> · {update.reason}</Text>}</Text></Box>);
   }
   if (t5 !== Symbol.for("react.early_return_sentinel")) {
     return t5;
   }
-  let t6;
-  if ($[7] !== T0 || $[8] !== t2 || $[9] !== t3 || $[10] !== t4) {
-    t6 = <T0 flexDirection={t2} marginTop={t3}>{t4}</T0>;
-    $[7] = T0;
-    $[8] = t2;
-    $[9] = t3;
-    $[10] = t4;
-    $[11] = t6;
-  } else {
-    t6 = $[11];
-  }
-  return t6;
-}
-function _temp(update, i) {
-  return <Box key={i}><Text><Text color="success">{REFRESH_ARROW}</Text>{" "}<Text dimColor={true}>{update.server}:</Text>{" "}<Text color="suggestion">{update.kind === "resource" ? formatUri(update.target) : update.target}</Text>{update.reason && <Text dimColor={true}> · {update.reason}</Text>}</Text></Box>;
+  return <T0 flexDirection={t2} marginTop={t3}>{t4}</T0>;
 }

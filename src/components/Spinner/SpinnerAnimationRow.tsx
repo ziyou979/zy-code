@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import * as React from 'react';
 import { useMemo, useRef } from 'react';
@@ -234,11 +233,9 @@ export function SpinnerAnimationRow({
       {status}
     </Box>;
 }
-function SpinnerModeGlyph(t0) {
-  const $ = _c(2);
-  const {
-    mode
-  } = t0;
+function SpinnerModeGlyph({
+  mode
+}: SpinnerAnimationRowProps) {
   switch (mode) {
     case "tool-input":
     case "tool-use":
@@ -246,23 +243,13 @@ function SpinnerModeGlyph(t0) {
     case "thinking":
       {
         let t1;
-        if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Box width={2}><Text dimColor={true}>{figures.arrowDown}</Text></Box>;
-          $[0] = t1;
-        } else {
-          t1 = $[0];
-        }
+        t1 = <Box width={2}><Text dimColor={true}>{figures.arrowDown}</Text></Box>;
         return t1;
       }
     case "requesting":
       {
         let t1;
-        if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Box width={2}><Text dimColor={true}>{figures.arrowUp}</Text></Box>;
-          $[1] = t1;
-        } else {
-          t1 = $[1];
-        }
+        t1 = <Box width={2}><Text dimColor={true}>{figures.arrowUp}</Text></Box>;
         return t1;
       }
   }

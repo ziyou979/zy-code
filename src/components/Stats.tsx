@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import { plot as asciichart } from 'asciichart';
 import chalk from 'chalk';
@@ -79,35 +78,11 @@ function createAllTimeStatsPromise(): Promise<StatsResult> {
     };
   });
 }
-export function Stats(t0) {
-  const $ = _c(4);
-  const {
-    onClose
-  } = t0;
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = createAllTimeStatsPromise();
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  const allTimePromise = t1;
-  let t2;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box marginTop={1}><Spinner /><Text> Loading your ZY Code stats…</Text></Box>;
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  let t3;
-  if ($[2] !== onClose) {
-    t3 = <Suspense fallback={t2}><StatsContent allTimePromise={allTimePromise} onClose={onClose} /></Suspense>;
-    $[2] = onClose;
-    $[3] = t3;
-  } else {
-    t3 = $[3];
-  }
-  return t3;
+export function Stats({
+  onClose
+}) {
+  const allTimePromise = createAllTimeStatsPromise();
+  return <Suspense fallback={<Box marginTop={1}><Spinner /><Text> Loading your ZY Code stats…</Text></Box>}><StatsContent allTimePromise={allTimePromise} onClose={onClose} /></Suspense>;
 }
 type StatsContentProps = {
   allTimePromise: Promise<StatsResult>;
@@ -118,240 +93,85 @@ type StatsContentProps = {
  * Inner component that uses React 19's use() to read the stats promise.
  * Suspends while loading all-time stats, then handles date range changes without suspending.
  */
-function StatsContent(t0) {
-  const $ = _c(34);
-  const {
-    allTimePromise,
-    onClose
-  } = t0;
+function StatsContent({
+  allTimePromise,
+  onClose
+}: StatsContentProps) {
   const allTimeResult = use(allTimePromise);
   const [dateRange, setDateRange] = useState("all");
-  let t1;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = {};
-    $[0] = t1;
-  } else {
-    t1 = $[0];
-  }
-  const [statsCache, setStatsCache] = useState(t1);
+  const [statsCache, setStatsCache] = useState({});
   const [isLoadingFiltered, setIsLoadingFiltered] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
   const [copyStatus, setCopyStatus] = useState(null);
-  let t2;
-  let t3;
-  if ($[1] !== dateRange || $[2] !== statsCache) {
-    t2 = () => {
-      if (dateRange === "all") {
-        return;
+  useEffect(() => {
+    if (dateRange === "all") {
+      return;
+    }
+    if (statsCache[dateRange]) {
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingFiltered(true);
+    aggregateZyCodeStatsForRange(dateRange).then(data => {
+      if (!cancelled) {
+        setStatsCache(prev => ({
+          ...prev,
+          [dateRange]: data
+        }));
+        setIsLoadingFiltered(false);
       }
-      if (statsCache[dateRange]) {
-        return;
+    }).catch(() => {
+      if (!cancelled) {
+        setIsLoadingFiltered(false);
       }
-      let cancelled = false;
-      setIsLoadingFiltered(true);
-      aggregateZyCodeStatsForRange(dateRange).then(data => {
-        if (!cancelled) {
-          setStatsCache(prev => ({
-            ...prev,
-            [dateRange]: data
-          }));
-          setIsLoadingFiltered(false);
-        }
-      }).catch(() => {
-        if (!cancelled) {
-          setIsLoadingFiltered(false);
-        }
-      });
-      return () => {
-        cancelled = true;
-      };
+    });
+    return () => {
+      cancelled = true;
     };
-    t3 = [dateRange, statsCache];
-    $[1] = dateRange;
-    $[2] = statsCache;
-    $[3] = t2;
-    $[4] = t3;
-  } else {
-    t2 = $[3];
-    t3 = $[4];
-  }
-  useEffect(t2, t3);
+  }, [dateRange, statsCache]);
   const displayStats = dateRange === "all" ? allTimeResult.type === "success" ? allTimeResult.data : null : statsCache[dateRange] ?? (allTimeResult.type === "success" ? allTimeResult.data : null);
   const allTimeStats = allTimeResult.type === "success" ? allTimeResult.data : null;
-  let t4;
-  if ($[5] !== onClose) {
-    t4 = () => {
+  const handleClose = () => {
+    onClose("Stats dialog dismissed", {
+      display: "system"
+    });
+  };
+  useKeybinding("confirm:no", handleClose, {
+    context: "Confirmation"
+  });
+  useInput((input, key) => {
+    if (key.ctrl && (input === "c" || input === "d")) {
       onClose("Stats dialog dismissed", {
         display: "system"
       });
-    };
-    $[5] = onClose;
-    $[6] = t4;
-  } else {
-    t4 = $[6];
-  }
-  const handleClose = t4;
-  let t5;
-  if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = {
-      context: "Confirmation"
-    };
-    $[7] = t5;
-  } else {
-    t5 = $[7];
-  }
-  useKeybinding("confirm:no", handleClose, t5);
-  let t6;
-  if ($[8] !== activeTab || $[9] !== dateRange || $[10] !== displayStats || $[11] !== onClose) {
-    t6 = (input, key) => {
-      if (key.ctrl && (input === "c" || input === "d")) {
-        onClose("Stats dialog dismissed", {
-          display: "system"
-        });
-      }
-      if (key.tab) {
-        setActiveTab(_temp);
-      }
-      if (input === "r" && !key.ctrl && !key.meta) {
-        setDateRange(getNextDateRange(dateRange));
-      }
-      if (key.ctrl && input === "s" && displayStats) {
-        handleScreenshot(displayStats, activeTab, setCopyStatus);
-      }
-    };
-    $[8] = activeTab;
-    $[9] = dateRange;
-    $[10] = displayStats;
-    $[11] = onClose;
-    $[12] = t6;
-  } else {
-    t6 = $[12];
-  }
-  useInput(t6);
-  if (allTimeResult.type === "error") {
-    let t7;
-    if ($[13] !== allTimeResult.message) {
-      t7 = <Box marginTop={1}><Text color="error">Failed to load stats: {allTimeResult.message}</Text></Box>;
-      $[13] = allTimeResult.message;
-      $[14] = t7;
-    } else {
-      t7 = $[14];
     }
-    return t7;
+    if (key.tab) {
+      setActiveTab(prev_0 => prev_0 === "Overview" ? "Models" : "Overview");
+    }
+    if (input === "r" && !key.ctrl && !key.meta) {
+      setDateRange(getNextDateRange(dateRange));
+    }
+    if (key.ctrl && input === "s" && displayStats) {
+      handleScreenshot(displayStats, activeTab, setCopyStatus);
+    }
+  });
+  if (allTimeResult.type === "error") {
+    return <Box marginTop={1}><Text color="error">Failed to load stats: {allTimeResult.message}</Text></Box>;
   }
   if (allTimeResult.type === "empty") {
-    let t7;
-    if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-      t7 = <Box marginTop={1}><Text color="warning">No stats available yet. Start using ZY Code!</Text></Box>;
-      $[15] = t7;
-    } else {
-      t7 = $[15];
-    }
-    return t7;
+    return <Box marginTop={1}><Text color="warning">No stats available yet. Start using ZY Code!</Text></Box>;
   }
   if (!displayStats || !allTimeStats) {
-    let t7;
-    if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t7 = <Box marginTop={1}><Spinner /><Text> Loading stats…</Text></Box>;
-      $[16] = t7;
-    } else {
-      t7 = $[16];
-    }
-    return t7;
+    return <Box marginTop={1}><Spinner /><Text> Loading stats…</Text></Box>;
   }
-  let t7;
-  if ($[17] !== allTimeStats || $[18] !== dateRange || $[19] !== displayStats || $[20] !== isLoadingFiltered) {
-    t7 = <Tab title="Overview"><OverviewTab stats={displayStats} allTimeStats={allTimeStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>;
-    $[17] = allTimeStats;
-    $[18] = dateRange;
-    $[19] = displayStats;
-    $[20] = isLoadingFiltered;
-    $[21] = t7;
-  } else {
-    t7 = $[21];
-  }
-  let t8;
-  if ($[22] !== dateRange || $[23] !== displayStats || $[24] !== isLoadingFiltered) {
-    t8 = <Tab title="Models"><ModelsTab stats={displayStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>;
-    $[22] = dateRange;
-    $[23] = displayStats;
-    $[24] = isLoadingFiltered;
-    $[25] = t8;
-  } else {
-    t8 = $[25];
-  }
-  let t9;
-  if ($[26] !== t7 || $[27] !== t8) {
-    t9 = <Box flexDirection="row" gap={1} marginBottom={1}><Tabs title="" color="zy" defaultTab="Overview">{t7}{t8}</Tabs></Box>;
-    $[26] = t7;
-    $[27] = t8;
-    $[28] = t9;
-  } else {
-    t9 = $[28];
-  }
-  const t10 = copyStatus ? ` · ${copyStatus}` : "";
-  let t11;
-  if ($[29] !== t10) {
-    t11 = <Box paddingLeft={2}><Text dimColor={true}>Esc to cancel · r to cycle dates · ctrl+s to copy{t10}</Text></Box>;
-    $[29] = t10;
-    $[30] = t11;
-  } else {
-    t11 = $[30];
-  }
-  let t12;
-  if ($[31] !== t11 || $[32] !== t9) {
-    t12 = <Pane color="zy">{t9}{t11}</Pane>;
-    $[31] = t11;
-    $[32] = t9;
-    $[33] = t12;
-  } else {
-    t12 = $[33];
-  }
-  return t12;
+  return <Pane color="zy">{<Box flexDirection="row" gap={1} marginBottom={1}><Tabs title="" color="zy" defaultTab="Overview">{<Tab title="Overview"><OverviewTab stats={displayStats} allTimeStats={allTimeStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>}{<Tab title="Models"><ModelsTab stats={displayStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>}</Tabs></Box>}{<Box paddingLeft={2}><Text dimColor={true}>Esc to cancel · r to cycle dates · ctrl+s to copy{copyStatus ? ` · ${copyStatus}` : ""}</Text></Box>}</Pane>;
 }
-function _temp(prev_0) {
-  return prev_0 === "Overview" ? "Models" : "Overview";
-}
-function DateRangeSelector(t0) {
-  const $ = _c(9);
-  const {
-    dateRange,
-    isLoading
-  } = t0;
-  let t1;
-  if ($[0] !== dateRange) {
-    t1 = DATE_RANGE_ORDER.map((range, i) => <Text key={range}>{i > 0 && <Text dimColor={true}> · </Text>}{range === dateRange ? <Text bold={true} color="zy">{DATE_RANGE_LABELS[range]}</Text> : <Text dimColor={true}>{DATE_RANGE_LABELS[range]}</Text>}</Text>);
-    $[0] = dateRange;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== t1) {
-    t2 = <Box>{t1}</Box>;
-    $[2] = t1;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  let t3;
-  if ($[4] !== isLoading) {
-    t3 = isLoading && <Spinner />;
-    $[4] = isLoading;
-    $[5] = t3;
-  } else {
-    t3 = $[5];
-  }
-  let t4;
-  if ($[6] !== t2 || $[7] !== t3) {
-    t4 = <Box marginBottom={1} gap={1}>{t2}{t3}</Box>;
-    $[6] = t2;
-    $[7] = t3;
-    $[8] = t4;
-  } else {
-    t4 = $[8];
-  }
-  return t4;
+function DateRangeSelector({
+  dateRange,
+  isLoading
+}: StatsContentProps) {
+  const t1 = DATE_RANGE_ORDER.map((range, i) => <Text key={range}>{i > 0 && <Text dimColor={true}> · </Text>}{range === dateRange ? <Text bold={true} color="zy">{DATE_RANGE_LABELS[range]}</Text> : <Text dimColor={true}>{DATE_RANGE_LABELS[range]}</Text>}</Text>);
+  return <Box marginBottom={1} gap={1}>{<Box>{t1}</Box>}{isLoading && <Spinner />}</Box>;
 }
 function OverviewTab({
   stats,
@@ -713,13 +533,11 @@ function generateFunFactoid(stats: ZyCodeStats, totalTokens: number): string {
   const randomIndex = Math.floor(Math.random() * factoids.length);
   return factoids[randomIndex]!;
 }
-function ModelsTab(t0) {
-  const $ = _c(15);
-  const {
-    stats,
-    dateRange,
-    isLoading
-  } = t0;
+function ModelsTab({
+  stats,
+  dateRange,
+  isLoading
+}) {
   const {
     headerFocused,
     focusHeader
@@ -728,42 +546,36 @@ function ModelsTab(t0) {
   const {
     columns: terminalWidth
   } = useTerminalSize();
-  const modelEntries = Object.entries(stats.modelUsage).sort(_temp7);
-  const t1 = !headerFocused;
-  let t2;
-  if ($[0] !== t1) {
-    t2 = {
-      isActive: t1
-    };
-    $[0] = t1;
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
+  const modelEntries = Object.entries(stats.modelUsage).sort((t0, t1) => {
+    const [, a] = t0;
+    const [, b] = t1;
+    return b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens);
+  });
   useInput((_input, key) => {
     if (key.downArrow && scrollOffset < modelEntries.length - 4) {
       setScrollOffset(prev => Math.min(prev + 2, modelEntries.length - 4));
     }
     if (key.upArrow) {
       if (scrollOffset > 0) {
-        setScrollOffset(_temp8);
+        setScrollOffset(prev_0 => Math.max(prev_0 - 2, 0));
       } else {
         focusHeader();
       }
     }
-  }, t2);
+  }, {
+    isActive: !headerFocused
+  });
   if (modelEntries.length === 0) {
-    let t3;
-    if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <Box><Text color="subtle">No model usage data available</Text></Box>;
-      $[2] = t3;
-    } else {
-      t3 = $[2];
-    }
-    return t3;
+    return <Box><Text color="subtle">No model usage data available</Text></Box>;
   }
-  const totalTokens = modelEntries.reduce(_temp9, 0);
-  const chartOutput = generateTokenChart(stats.dailyModelTokens, modelEntries.map(_temp0), terminalWidth);
+  const totalTokens = modelEntries.reduce((sum, t0) => {
+    const [, usage] = t0;
+    return sum + usage.inputTokens + usage.outputTokens;
+  }, 0);
+  const chartOutput = generateTokenChart(stats.dailyModelTokens, modelEntries.map(t0 => {
+    const [model] = t0;
+    return model;
+  }), terminalWidth);
   const visibleModels = modelEntries.slice(scrollOffset, scrollOffset + 4);
   const midpoint = Math.ceil(visibleModels.length / 2);
   const leftModels = visibleModels.slice(0, midpoint);
@@ -771,66 +583,15 @@ function ModelsTab(t0) {
   const canScrollUp = scrollOffset > 0;
   const canScrollDown = scrollOffset < modelEntries.length - 4;
   const showScrollHint = modelEntries.length > 4;
-  let t3;
-  if ($[3] !== dateRange || $[4] !== isLoading) {
-    t3 = <DateRangeSelector dateRange={dateRange} isLoading={isLoading} />;
-    $[3] = dateRange;
-    $[4] = isLoading;
-    $[5] = t3;
-  } else {
-    t3 = $[5];
-  }
   const T0 = Box;
-  const t5 = "column";
-  const t6 = 36;
   const t8 = rightModels.map(t7 => {
     const [model_1, usage_1] = t7;
     return <ModelEntry key={model_1} model={model_1} usage={usage_1} totalTokens={totalTokens} />;
   });
-  let t9;
-  if ($[6] !== T0 || $[7] !== t8) {
-    t9 = <T0 flexDirection={t5} width={t6}>{t8}</T0>;
-    $[6] = T0;
-    $[7] = t8;
-    $[8] = t9;
-  } else {
-    t9 = $[8];
-  }
-  let t10;
-  if ($[9] !== canScrollDown || $[10] !== canScrollUp || $[11] !== modelEntries || $[12] !== scrollOffset || $[13] !== showScrollHint) {
-    t10 = showScrollHint && <Box marginTop={1}><Text color="subtle">{canScrollUp ? figures.arrowUp : " "}{" "}{canScrollDown ? figures.arrowDown : " "} {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{" "}{modelEntries.length} models (↑↓ to scroll)</Text></Box>;
-    $[9] = canScrollDown;
-    $[10] = canScrollUp;
-    $[11] = modelEntries;
-    $[12] = scrollOffset;
-    $[13] = showScrollHint;
-    $[14] = t10;
-  } else {
-    t10 = $[14];
-  }
-  return <Box flexDirection="column" marginTop={1}>{chartOutput && <Box flexDirection="column" marginBottom={1}><Text bold={true}>Tokens per Day</Text><Ansi>{chartOutput.chart}</Ansi><Text color="subtle">{chartOutput.xAxisLabels}</Text><Box>{chartOutput.legend.map(_temp1)}</Box></Box>}{t3}<Box flexDirection="row" gap={4}><Box flexDirection="column" width={36}>{leftModels.map(t4 => {
+  return <Box flexDirection="column" marginTop={1}>{chartOutput && <Box flexDirection="column" marginBottom={1}><Text bold={true}>Tokens per Day</Text><Ansi>{chartOutput.chart}</Ansi><Text color="subtle">{chartOutput.xAxisLabels}</Text><Box>{chartOutput.legend.map((item, i) => <Text key={item.model}>{i > 0 ? " \xB7 " : ""}<Ansi>{item.coloredBullet}</Ansi> {item.model}</Text>)}</Box></Box>}{<DateRangeSelector dateRange={dateRange} isLoading={isLoading} />}<Box flexDirection="row" gap={4}><Box flexDirection="column" width={36}>{leftModels.map(t4 => {
           const [model_0, usage_0] = t4;
           return <ModelEntry key={model_0} model={model_0} usage={usage_0} totalTokens={totalTokens} />;
-        })}</Box>{t9}</Box>{t10}</Box>;
-}
-function _temp1(item, i) {
-  return <Text key={item.model}>{i > 0 ? " \xB7 " : ""}<Ansi>{item.coloredBullet}</Ansi> {item.model}</Text>;
-}
-function _temp0(t0) {
-  const [model] = t0;
-  return model;
-}
-function _temp9(sum, t0) {
-  const [, usage] = t0;
-  return sum + usage.inputTokens + usage.outputTokens;
-}
-function _temp8(prev_0) {
-  return Math.max(prev_0 - 2, 0);
-}
-function _temp7(t0, t1) {
-  const [, a] = t0;
-  const [, b] = t1;
-  return b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens);
+        })}</Box>{<T0 flexDirection={"column"} width={36}>{t8}</T0>}</Box>{showScrollHint && <Box marginTop={1}><Text color="subtle">{canScrollUp ? figures.arrowUp : " "}{" "}{canScrollDown ? figures.arrowDown : " "} {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{" "}{modelEntries.length} models (↑↓ to scroll)</Text></Box>}</Box>;
 }
 type ModelEntryProps = {
   model: string;
@@ -841,92 +602,17 @@ type ModelEntryProps = {
   };
   totalTokens: number;
 };
-function ModelEntry(t0) {
-  const $ = _c(21);
-  const {
-    model,
-    usage,
-    totalTokens
-  } = t0;
+function ModelEntry({
+  model,
+  usage,
+  totalTokens
+}: ModelEntryProps) {
   const modelTokens = usage.inputTokens + usage.outputTokens;
-  const t1 = modelTokens / totalTokens * 100;
-  let t2;
-  if ($[0] !== t1) {
-    t2 = t1.toFixed(1);
-    $[0] = t1;
-    $[1] = t2;
-  } else {
-    t2 = $[1];
-  }
-  const percentage = t2;
-  let t3;
-  if ($[2] !== model) {
-    t3 = renderModelName(model);
-    $[2] = model;
-    $[3] = t3;
-  } else {
-    t3 = $[3];
-  }
-  let t4;
-  if ($[4] !== t3) {
-    t4 = <Text bold={true}>{t3}</Text>;
-    $[4] = t3;
-    $[5] = t4;
-  } else {
-    t4 = $[5];
-  }
-  let t5;
-  if ($[6] !== percentage) {
-    t5 = <Text color="subtle">({percentage}%)</Text>;
-    $[6] = percentage;
-    $[7] = t5;
-  } else {
-    t5 = $[7];
-  }
-  let t6;
-  if ($[8] !== t4 || $[9] !== t5) {
-    t6 = <Text>{figures.bullet} {t4}{" "}{t5}</Text>;
-    $[8] = t4;
-    $[9] = t5;
-    $[10] = t6;
-  } else {
-    t6 = $[10];
-  }
-  let t7;
-  if ($[11] !== usage.inputTokens) {
-    t7 = formatNumber(usage.inputTokens);
-    $[11] = usage.inputTokens;
-    $[12] = t7;
-  } else {
-    t7 = $[12];
-  }
-  let t8;
-  if ($[13] !== usage.outputTokens) {
-    t8 = formatNumber(usage.outputTokens);
-    $[13] = usage.outputTokens;
-    $[14] = t8;
-  } else {
-    t8 = $[14];
-  }
-  let t9;
-  if ($[15] !== t7 || $[16] !== t8) {
-    t9 = <Text color="subtle">{"  "}In: {t7} · Out:{" "}{t8}</Text>;
-    $[15] = t7;
-    $[16] = t8;
-    $[17] = t9;
-  } else {
-    t9 = $[17];
-  }
-  let t10;
-  if ($[18] !== t6 || $[19] !== t9) {
-    t10 = <Box flexDirection="column">{t6}{t9}</Box>;
-    $[18] = t6;
-    $[19] = t9;
-    $[20] = t10;
-  } else {
-    t10 = $[20];
-  }
-  return t10;
+  const percentage = (modelTokens / totalTokens * 100).toFixed(1);
+  const t3 = renderModelName(model);
+  const t7 = formatNumber(usage.inputTokens);
+  const t8 = formatNumber(usage.outputTokens);
+  return <Box flexDirection="column">{<Text>{figures.bullet} {<Text bold={true}>{t3}</Text>}{" "}{<Text color="subtle">({percentage}%)</Text>}</Text>}{<Text color="subtle">{"  "}In: {t7} · Out:{" "}{t8}</Text>}</Box>;
 }
 type ChartLegend = {
   model: string;

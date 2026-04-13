@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
@@ -157,86 +156,29 @@ type RejectionDiffData = {
   firstLine: string | null;
   fileContent: string | undefined;
 };
-function EditRejectionDiff(t0) {
-  const $ = _c(16);
-  const {
-    filePath,
-    oldString,
-    newString,
-    replaceAll,
-    style,
-    verbose
-  } = t0;
-  let t1;
-  if ($[0] !== filePath || $[1] !== newString || $[2] !== oldString || $[3] !== replaceAll) {
-    t1 = () => loadRejectionDiff(filePath, oldString, newString, replaceAll);
-    $[0] = filePath;
-    $[1] = newString;
-    $[2] = oldString;
-    $[3] = replaceAll;
-    $[4] = t1;
-  } else {
-    t1 = $[4];
-  }
-  const [dataPromise] = useState(t1);
-  let t2;
-  if ($[5] !== filePath || $[6] !== verbose) {
-    t2 = <FileEditToolUseRejectedMessage file_path={filePath} operation="update" firstLine={null} verbose={verbose} />;
-    $[5] = filePath;
-    $[6] = verbose;
-    $[7] = t2;
-  } else {
-    t2 = $[7];
-  }
-  let t3;
-  if ($[8] !== dataPromise || $[9] !== filePath || $[10] !== style || $[11] !== verbose) {
-    t3 = <EditRejectionBody promise={dataPromise} filePath={filePath} style={style} verbose={verbose} />;
-    $[8] = dataPromise;
-    $[9] = filePath;
-    $[10] = style;
-    $[11] = verbose;
-    $[12] = t3;
-  } else {
-    t3 = $[12];
-  }
-  let t4;
-  if ($[13] !== t2 || $[14] !== t3) {
-    t4 = <Suspense fallback={t2}>{t3}</Suspense>;
-    $[13] = t2;
-    $[14] = t3;
-    $[15] = t4;
-  } else {
-    t4 = $[15];
-  }
-  return t4;
+function EditRejectionDiff({
+  filePath,
+  oldString,
+  newString,
+  replaceAll,
+  style,
+  verbose
+}) {
+  const [dataPromise] = useState(() => loadRejectionDiff(filePath, oldString, newString, replaceAll));
+  return <Suspense fallback={<FileEditToolUseRejectedMessage file_path={filePath} operation="update" firstLine={null} verbose={verbose} />}>{<EditRejectionBody promise={dataPromise} filePath={filePath} style={style} verbose={verbose} />}</Suspense>;
 }
-function EditRejectionBody(t0) {
-  const $ = _c(7);
-  const {
-    promise,
-    filePath,
-    style,
-    verbose
-  } = t0;
+function EditRejectionBody({
+  promise,
+  filePath,
+  style,
+  verbose
+}) {
   const {
     patch,
     firstLine,
     fileContent
   } = use(promise);
-  let t1;
-  if ($[0] !== fileContent || $[1] !== filePath || $[2] !== firstLine || $[3] !== patch || $[4] !== style || $[5] !== verbose) {
-    t1 = <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={patch} firstLine={firstLine} fileContent={fileContent} style={style} verbose={verbose} />;
-    $[0] = fileContent;
-    $[1] = filePath;
-    $[2] = firstLine;
-    $[3] = patch;
-    $[4] = style;
-    $[5] = verbose;
-    $[6] = t1;
-  } else {
-    t1 = $[6];
-  }
-  return t1;
+  return <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={patch} firstLine={firstLine} fileContent={fileContent} style={style} verbose={verbose} />;
 }
 async function loadRejectionDiff(filePath: string, oldString: string, newString: string, replaceAll: boolean): Promise<RejectionDiffData> {
   try {

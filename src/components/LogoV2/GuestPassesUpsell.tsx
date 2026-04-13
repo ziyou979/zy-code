@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useState } from 'react';
 import { Text } from '../../ink.js';
@@ -34,11 +33,8 @@ function shouldShowGuestPassesUpsell(): boolean {
   return true;
 }
 export function useShowGuestPassesUpsell() {
-  const [show] = useState(_temp);
+  const [show] = useState(() => shouldShowGuestPassesUpsell());
   return show;
-}
-function _temp() {
-  return shouldShowGuestPassesUpsell();
 }
 export function incrementGuestPassesSeenCount(): void {
   let newCount = 0;
@@ -56,14 +52,6 @@ export function incrementGuestPassesSeenCount(): void {
 
 // Condensed layout for mini welcome screen
 export function GuestPassesUpsell() {
-  const $ = _c(1);
-  let t0;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    const reward = getCachedReferrerReward();
-    t0 = <Text dimColor={true}><Text color="zy">[✻]</Text> <Text color="zy">[✻]</Text>{" "}<Text color="zy">[✻]</Text> ·{" "}{reward ? `Share ZY Code and earn ${formatCreditAmount(reward)} of extra usage · /passes` : "3 guest passes at /passes"}</Text>;
-    $[0] = t0;
-  } else {
-    t0 = $[0];
-  }
-  return t0;
+  const reward = getCachedReferrerReward();
+  return <Text dimColor={true}><Text color="zy">[✻]</Text> <Text color="zy">[✻]</Text>{" "}<Text color="zy">[✻]</Text> ·{" "}{reward ? `Share ZY Code and earn ${formatCreditAmount(reward)} of extra usage · /passes` : "3 guest passes at /passes"}</Text>;
 }

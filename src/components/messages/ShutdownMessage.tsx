@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { Box, Text } from '../../ink.js';
 import { tSync } from '../../i18n/index.js';
@@ -10,37 +9,14 @@ type ShutdownRequestProps = {
 /**
  * Renders a shutdown request with a warning-colored border.
  */
-export function ShutdownRequestDisplay(t0) {
-  const $ = _c(7);
-  const {
-    request
-  } = t0;
-  let t1;
-  if ($[0] !== request.from) {
-    t1 = <Box marginBottom={1}><Text color="warning" bold={true}>{tSync('shutdown.request', { from: request.from })}</Text></Box>;
-    $[0] = request.from;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== request.reason) {
-    t2 = request.reason && <Box><Text>{tSync('shutdown.reason', { reason: request.reason })}</Text></Box>;
-    $[2] = request.reason;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  let t3;
-  if ($[4] !== t1 || $[5] !== t2) {
-    t3 = <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="warning" flexDirection="column" paddingX={1} paddingY={1}>{t1}{t2}</Box></Box>;
-    $[4] = t1;
-    $[5] = t2;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  return t3;
+export function ShutdownRequestDisplay({
+  request
+}: ShutdownRequestProps) {
+  return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="warning" flexDirection="column" paddingX={1} paddingY={1}>{<Box marginBottom={1}><Text color="warning" bold={true}>{tSync('shutdown.request', {
+            from: request.from
+          })}</Text></Box>}{request.reason && <Box><Text>{tSync('shutdown.reason', {
+            reason: request.reason
+          })}</Text></Box>}</Box></Box>;
 }
 type ShutdownRejectedProps = {
   response: ShutdownRejectedMessage;
@@ -49,44 +25,14 @@ type ShutdownRejectedProps = {
 /**
  * Renders a shutdown rejected message with a subtle (grey) border.
  */
-export function ShutdownRejectedDisplay(t0) {
-  const $ = _c(8);
-  const {
-    response
-  } = t0;
-  let t1;
-  if ($[0] !== response.from) {
-    t1 = <Text color="subtle" bold={true}>{tSync('shutdown.rejected', { from: response.from })}</Text>;
-    $[0] = response.from;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== response.reason) {
-    t2 = <Box marginTop={1} borderStyle="dashed" borderColor="subtle" borderLeft={false} borderRight={false} paddingX={1}><Text>{tSync('shutdown.reason', { reason: response.reason })}</Text></Box>;
-    $[2] = response.reason;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  let t3;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Box marginTop={1}><Text dimColor={true}>{tSync('shutdown.teammateContinuing')}</Text></Box>;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  let t4;
-  if ($[5] !== t1 || $[6] !== t2) {
-    t4 = <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="subtle" flexDirection="column" paddingX={1} paddingY={1}>{t1}{t2}{t3}</Box></Box>;
-    $[5] = t1;
-    $[6] = t2;
-    $[7] = t4;
-  } else {
-    t4 = $[7];
-  }
-  return t4;
+export function ShutdownRejectedDisplay({
+  response
+}: ShutdownRejectedProps) {
+  return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="subtle" flexDirection="column" paddingX={1} paddingY={1}>{<Text color="subtle" bold={true}>{tSync('shutdown.rejected', {
+          from: response.from
+        })}</Text>}{<Box marginTop={1} borderStyle="dashed" borderColor="subtle" borderLeft={false} borderRight={false} paddingX={1}><Text>{tSync('shutdown.reason', {
+            reason: response.reason
+          })}</Text></Box>}{<Box marginTop={1}><Text dimColor={true}>{tSync('shutdown.teammateContinuing')}</Text></Box>}</Box></Box>;
 }
 
 /**
@@ -118,15 +64,22 @@ export function tryRenderShutdownMessage(content: string): React.ReactNode | nul
 export function getShutdownMessageSummary(content: string): string | null {
   const request = isShutdownRequest(content);
   if (request) {
-    return `${tSync('shutdown.summaryRequest', { from: request.from })}${request.reason ? ` ${request.reason}` : ''}`;
+    return `${tSync('shutdown.summaryRequest', {
+      from: request.from
+    })}${request.reason ? ` ${request.reason}` : ''}`;
   }
   const approved = isShutdownApproved(content);
   if (approved) {
-    return `${tSync('shutdown.summaryApproved', { from: approved.from })}`;
+    return `${tSync('shutdown.summaryApproved', {
+      from: approved.from
+    })}`;
   }
   const rejected = isShutdownRejected(content);
   if (rejected) {
-    return `${tSync('shutdown.summaryRejected', { from: rejected.from, reason: rejected.reason })}`;
+    return `${tSync('shutdown.summaryRejected', {
+      from: rejected.from,
+      reason: rejected.reason
+    })}`;
   }
   return null;
 }

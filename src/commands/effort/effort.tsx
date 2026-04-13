@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
@@ -120,7 +119,7 @@ function ShowCurrentEffort(t0) {
   const {
     onDone
   } = t0;
-  const effortValue = useAppState(_temp);
+  const effortValue = useAppState(s => s.effortValue);
   const model = useMainLoopModel();
   const {
     message
@@ -128,44 +127,24 @@ function ShowCurrentEffort(t0) {
   onDone(message);
   return null;
 }
-function _temp(s) {
-  return s.effortValue;
-}
-function ApplyEffortAndClose(t0) {
-  const $ = _c(6);
-  const {
-    result,
-    onDone
-  } = t0;
+function ApplyEffortAndClose({
+  result,
+  onDone
+}) {
   const setAppState = useSetAppState();
   const {
     effortUpdate,
     message
   } = result;
-  let t1;
-  let t2;
-  if ($[0] !== effortUpdate || $[1] !== message || $[2] !== onDone || $[3] !== setAppState) {
-    t1 = () => {
-      if (effortUpdate) {
-        setAppState(prev => ({
-          ...prev,
-          effortValue: effortUpdate.value
-        }));
-      }
-      onDone(message);
-    };
-    t2 = [setAppState, effortUpdate, message, onDone];
-    $[0] = effortUpdate;
-    $[1] = message;
-    $[2] = onDone;
-    $[3] = setAppState;
-    $[4] = t1;
-    $[5] = t2;
-  } else {
-    t1 = $[4];
-    t2 = $[5];
-  }
-  React.useEffect(t1, t2);
+  React.useEffect(() => {
+    if (effortUpdate) {
+      setAppState(prev => ({
+        ...prev,
+        effortValue: effortUpdate.value
+      }));
+    }
+    onDone(message);
+  }, [setAppState, effortUpdate, message, onDone]);
   return null;
 }
 export async function call(onDone: LocalJSXCommandOnDone, _context: unknown, args?: string): Promise<React.ReactNode> {

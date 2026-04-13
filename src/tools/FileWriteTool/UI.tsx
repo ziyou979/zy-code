@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import type { StructuredPatchHunk } from 'diff';
 import { isAbsolute, relative, resolve } from 'path';
@@ -36,94 +35,20 @@ export function countLines(content: string): number {
   const parts = content.split(EOL);
   return content.endsWith(EOL) ? parts.length - 1 : parts.length;
 }
-function FileWriteToolCreatedMessage(t0) {
-  const $ = _c(25);
-  const {
-    filePath,
-    content,
-    verbose
-  } = t0;
+function FileWriteToolCreatedMessage({
+  filePath,
+  content,
+  verbose
+}) {
   const {
     columns
   } = useTerminalSize();
   const contentWithFallback = content || "(No content)";
   const numLines = countLines(content);
   const plusLines = numLines - MAX_LINES_TO_RENDER;
-  let t1;
-  if ($[0] !== numLines) {
-    t1 = <Text bold={true}>{numLines}</Text>;
-    $[0] = numLines;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  let t2;
-  if ($[2] !== filePath || $[3] !== verbose) {
-    t2 = verbose ? filePath : relative(getCwd(), filePath);
-    $[2] = filePath;
-    $[3] = verbose;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  let t3;
-  if ($[5] !== t2) {
-    t3 = <Text bold={true}>{t2}</Text>;
-    $[5] = t2;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  let t4;
-  if ($[7] !== t1 || $[8] !== t3) {
-    t4 = <Text>Wrote {t1} lines to{" "}{t3}</Text>;
-    $[7] = t1;
-    $[8] = t3;
-    $[9] = t4;
-  } else {
-    t4 = $[9];
-  }
-  let t5;
-  if ($[10] !== contentWithFallback || $[11] !== verbose) {
-    t5 = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
-    $[10] = contentWithFallback;
-    $[11] = verbose;
-    $[12] = t5;
-  } else {
-    t5 = $[12];
-  }
-  const t6 = columns - 12;
-  let t7;
-  if ($[13] !== filePath || $[14] !== t5 || $[15] !== t6) {
-    t7 = <Box flexDirection="column"><HighlightedCode code={t5} filePath={filePath} width={t6} /></Box>;
-    $[13] = filePath;
-    $[14] = t5;
-    $[15] = t6;
-    $[16] = t7;
-  } else {
-    t7 = $[16];
-  }
-  let t8;
-  if ($[17] !== numLines || $[18] !== plusLines || $[19] !== verbose) {
-    t8 = !verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>;
-    $[17] = numLines;
-    $[18] = plusLines;
-    $[19] = verbose;
-    $[20] = t8;
-  } else {
-    t8 = $[20];
-  }
-  let t9;
-  if ($[21] !== t4 || $[22] !== t7 || $[23] !== t8) {
-    t9 = <MessageResponse><Box flexDirection="column">{t4}{t7}{t8}</Box></MessageResponse>;
-    $[21] = t4;
-    $[22] = t7;
-    $[23] = t8;
-    $[24] = t9;
-  } else {
-    t9 = $[24];
-  }
-  return t9;
+  const t2 = verbose ? filePath : relative(getCwd(), filePath);
+  const t5 = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
+  return <MessageResponse><Box flexDirection="column">{<Text>Wrote {<Text bold={true}>{numLines}</Text>} lines to{" "}{<Text bold={true}>{t2}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={t5} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
 }
 export function userFacingName(input: Partial<{
   file_path: string;
@@ -205,107 +130,33 @@ type RejectionDiffData = {
 } | {
   type: 'error';
 };
-function WriteRejectionDiff(t0) {
-  const $ = _c(20);
-  const {
-    filePath,
-    content,
-    style,
-    verbose
-  } = t0;
-  let t1;
-  if ($[0] !== content || $[1] !== filePath) {
-    t1 = () => loadRejectionDiff(filePath, content);
-    $[0] = content;
-    $[1] = filePath;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
-  }
-  const [dataPromise] = useState(t1);
-  let t2;
-  if ($[3] !== content) {
-    t2 = content.split("\n")[0] ?? null;
-    $[3] = content;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  const firstLine = t2;
-  let t3;
-  if ($[5] !== content || $[6] !== filePath || $[7] !== firstLine || $[8] !== verbose) {
-    t3 = <FileEditToolUseRejectedMessage file_path={filePath} operation="write" content={content} firstLine={firstLine} verbose={verbose} />;
-    $[5] = content;
-    $[6] = filePath;
-    $[7] = firstLine;
-    $[8] = verbose;
-    $[9] = t3;
-  } else {
-    t3 = $[9];
-  }
-  const createFallback = t3;
-  let t4;
-  if ($[10] !== createFallback || $[11] !== dataPromise || $[12] !== filePath || $[13] !== firstLine || $[14] !== style || $[15] !== verbose) {
-    t4 = <WriteRejectionBody promise={dataPromise} filePath={filePath} firstLine={firstLine} createFallback={createFallback} style={style} verbose={verbose} />;
-    $[10] = createFallback;
-    $[11] = dataPromise;
-    $[12] = filePath;
-    $[13] = firstLine;
-    $[14] = style;
-    $[15] = verbose;
-    $[16] = t4;
-  } else {
-    t4 = $[16];
-  }
-  let t5;
-  if ($[17] !== createFallback || $[18] !== t4) {
-    t5 = <Suspense fallback={createFallback}>{t4}</Suspense>;
-    $[17] = createFallback;
-    $[18] = t4;
-    $[19] = t5;
-  } else {
-    t5 = $[19];
-  }
-  return t5;
+function WriteRejectionDiff({
+  filePath,
+  content,
+  style,
+  verbose
+}) {
+  const [dataPromise] = useState(() => loadRejectionDiff(filePath, content));
+  const firstLine = content.split("\n")[0] ?? null;
+  const createFallback = <FileEditToolUseRejectedMessage file_path={filePath} operation="write" content={content} firstLine={firstLine} verbose={verbose} />;
+  return <Suspense fallback={createFallback}>{<WriteRejectionBody promise={dataPromise} filePath={filePath} firstLine={firstLine} createFallback={createFallback} style={style} verbose={verbose} />}</Suspense>;
 }
-function WriteRejectionBody(t0) {
-  const $ = _c(8);
-  const {
-    promise,
-    filePath,
-    firstLine,
-    createFallback,
-    style,
-    verbose
-  } = t0;
+function WriteRejectionBody({
+  promise,
+  filePath,
+  firstLine,
+  createFallback,
+  style,
+  verbose
+}) {
   const data = use(promise);
   if (data.type === "create") {
     return createFallback;
   }
   if (data.type === "error") {
-    let t1;
-    if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <MessageResponse><Text>(No changes)</Text></MessageResponse>;
-      $[0] = t1;
-    } else {
-      t1 = $[0];
-    }
-    return t1;
+    return <MessageResponse><Text>(No changes)</Text></MessageResponse>;
   }
-  let t1;
-  if ($[1] !== data.oldContent || $[2] !== data.patch || $[3] !== filePath || $[4] !== firstLine || $[5] !== style || $[6] !== verbose) {
-    t1 = <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={data.patch} firstLine={firstLine} fileContent={data.oldContent} style={style} verbose={verbose} />;
-    $[1] = data.oldContent;
-    $[2] = data.patch;
-    $[3] = filePath;
-    $[4] = firstLine;
-    $[5] = style;
-    $[6] = verbose;
-    $[7] = t1;
-  } else {
-    t1 = $[7];
-  }
-  return t1;
+  return <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={data.patch} firstLine={firstLine} fileContent={data.oldContent} style={style} verbose={verbose} />;
 }
 async function loadRejectionDiff(filePath: string, content: string): Promise<RejectionDiffData> {
   try {

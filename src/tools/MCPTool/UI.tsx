@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import figures from 'figures';
 import * as React from 'react';
@@ -156,113 +155,44 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
  * 2. If JSON is a small flat-ish object, render as aligned key: value.
  * 3. Otherwise fall through to OutputLine (pretty-print + truncate).
  */
-function MCPTextOutput(t0) {
-  const $ = _c(18);
-  const {
-    content,
-    verbose
-  } = t0;
-  let t1;
-  if ($[0] !== content || $[1] !== verbose) {
-    t1 = Symbol.for("react.early_return_sentinel");
-    bb0: {
-      const unwrapped = tryUnwrapTextPayload(content);
-      if (unwrapped !== null) {
-        const t2 = unwrapped.extras.length > 0 && <Text dimColor={true}>{unwrapped.extras.map(_temp).join(" \xB7 ")}</Text>;
-        let t3;
-        if ($[3] !== unwrapped || $[4] !== verbose) {
-          t3 = <OutputLine content={unwrapped.body} verbose={verbose} linkifyUrls={true} />;
-          $[3] = unwrapped;
-          $[4] = verbose;
-          $[5] = t3;
-        } else {
-          t3 = $[5];
-        }
-        let t4;
-        if ($[6] !== t2 || $[7] !== t3) {
-          t4 = <MessageResponse><Box flexDirection="column">{t2}{t3}</Box></MessageResponse>;
-          $[6] = t2;
-          $[7] = t3;
-          $[8] = t4;
-        } else {
-          t4 = $[8];
-        }
-        t1 = t4;
-        break bb0;
-      }
-    }
-    $[0] = content;
-    $[1] = verbose;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
+function MCPTextOutput({
+  content,
+  verbose
+}) {
+  let t1 = Symbol.for("react.early_return_sentinel");
+  const unwrapped = tryUnwrapTextPayload(content);
+  if (unwrapped !== null) {
+    t1 = <MessageResponse><Box flexDirection="column">{unwrapped.extras.length > 0 && <Text dimColor={true}>{unwrapped.extras.map(t0 => {
+            const [k, v] = t0;
+            return `${k}: ${v}`;
+          }).join(" \xB7 ")}</Text>}{<OutputLine content={unwrapped.body} verbose={verbose} linkifyUrls={true} />}</Box></MessageResponse>;
   }
   if (t1 !== Symbol.for("react.early_return_sentinel")) {
     return t1;
   }
-  let t2;
-  if ($[9] !== content) {
-    t2 = Symbol.for("react.early_return_sentinel");
-    bb1: {
-      const flat = tryFlattenJson(content);
-      if (flat !== null) {
-        const maxKeyWidth = Math.max(...flat.map(_temp2));
-        let t3;
-        if ($[11] !== maxKeyWidth) {
-          t3 = (t4, i) => {
-            const [key, value] = t4;
-            return <Text key={i}><Text dimColor={true}>{key.padEnd(maxKeyWidth)}: </Text><Ansi>{linkifyUrlsInText(value)}</Ansi></Text>;
-          };
-          $[11] = maxKeyWidth;
-          $[12] = t3;
-        } else {
-          t3 = $[12];
-        }
-        const t4 = <Box flexDirection="column">{flat.map(t3)}</Box>;
-        let t5;
-        if ($[13] !== t4) {
-          t5 = <MessageResponse>{t4}</MessageResponse>;
-          $[13] = t4;
-          $[14] = t5;
-        } else {
-          t5 = $[14];
-        }
-        t2 = t5;
-        break bb1;
-      }
-    }
-    $[9] = content;
-    $[10] = t2;
-  } else {
-    t2 = $[10];
+  let t2 = Symbol.for("react.early_return_sentinel");
+  const flat = tryFlattenJson(content);
+  if (flat !== null) {
+    const maxKeyWidth = Math.max(...flat.map(t0 => {
+      const [k_0] = t0;
+      return stringWidth(k_0);
+    }));
+    t2 = <MessageResponse>{<Box flexDirection="column">{flat.map((t4, i) => {
+          const [key, value] = t4;
+          return <Text key={i}><Text dimColor={true}>{key.padEnd(maxKeyWidth)}: </Text><Ansi>{linkifyUrlsInText(value)}</Ansi></Text>;
+        })}</Box>}</MessageResponse>;
   }
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
     return t2;
   }
-  let t3;
-  if ($[15] !== content || $[16] !== verbose) {
-    t3 = <OutputLine content={content} verbose={verbose} linkifyUrls={true} />;
-    $[15] = content;
-    $[16] = verbose;
-    $[17] = t3;
-  } else {
-    t3 = $[17];
-  }
-  return t3;
+  return <OutputLine content={content} verbose={verbose} linkifyUrls={true} />;
 }
 
 /**
  * Parse content as a JSON object and return its entries. Null if content
  * doesn't parse, isn't an object, is too large, or has 0/too-many keys.
  */
-function _temp2(t0) {
-  const [k_0] = t0;
-  return stringWidth(k_0);
-}
-function _temp(t0) {
-  const [k, v] = t0;
-  return `${k}: ${v}`;
-}
+
 function parseJsonEntries(content: string, {
   maxChars,
   maxKeys

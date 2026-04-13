@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { EnterPlanModeTool } from 'src/tools/EnterPlanModeTool/EnterPlanModeTool.js';
@@ -143,74 +142,24 @@ function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
 }
 
 // TODO: Move this to Tool.renderPermissionRequest
-export function PermissionRequest(t0) {
-  const $ = _c(18);
-  const {
-    toolUseConfirm,
-    toolUseContext,
-    onDone,
-    onReject,
-    verbose,
-    workerBadge,
-    setStickyFooter
-  } = t0;
-  let t1;
-  if ($[0] !== onDone || $[1] !== onReject || $[2] !== toolUseConfirm) {
-    t1 = () => {
-      onDone();
-      onReject();
-      toolUseConfirm.onReject();
-    };
-    $[0] = onDone;
-    $[1] = onReject;
-    $[2] = toolUseConfirm;
-    $[3] = t1;
-  } else {
-    t1 = $[3];
-  }
-  let t2;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = {
-      context: "Confirmation"
-    };
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  useKeybinding("app:interrupt", t1, t2);
-  let t3;
-  if ($[5] !== toolUseConfirm) {
-    t3 = getNotificationMessage(toolUseConfirm);
-    $[5] = toolUseConfirm;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  const notificationMessage = t3;
+export function PermissionRequest({
+  toolUseConfirm,
+  toolUseContext,
+  onDone,
+  onReject,
+  verbose,
+  workerBadge,
+  setStickyFooter
+}: PermissionRequestProps) {
+  useKeybinding("app:interrupt", () => {
+    onDone();
+    onReject();
+    toolUseConfirm.onReject();
+  }, {
+    context: "Confirmation"
+  });
+  const notificationMessage = getNotificationMessage(toolUseConfirm);
   useNotifyAfterTimeout(notificationMessage, "permission_prompt");
-  let t4;
-  if ($[7] !== toolUseConfirm.tool) {
-    t4 = permissionComponentForTool(toolUseConfirm.tool);
-    $[7] = toolUseConfirm.tool;
-    $[8] = t4;
-  } else {
-    t4 = $[8];
-  }
-  const PermissionComponent = t4;
-  let t5;
-  if ($[9] !== PermissionComponent || $[10] !== onDone || $[11] !== onReject || $[12] !== setStickyFooter || $[13] !== toolUseConfirm || $[14] !== toolUseContext || $[15] !== verbose || $[16] !== workerBadge) {
-    t5 = <PermissionComponent toolUseContext={toolUseContext} toolUseConfirm={toolUseConfirm} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} setStickyFooter={setStickyFooter} />;
-    $[9] = PermissionComponent;
-    $[10] = onDone;
-    $[11] = onReject;
-    $[12] = setStickyFooter;
-    $[13] = toolUseConfirm;
-    $[14] = toolUseContext;
-    $[15] = verbose;
-    $[16] = workerBadge;
-    $[17] = t5;
-  } else {
-    t5 = $[17];
-  }
-  return t5;
+  const PermissionComponent = permissionComponentForTool(toolUseConfirm.tool);
+  return <PermissionComponent toolUseContext={toolUseContext} toolUseConfirm={toolUseConfirm} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} setStickyFooter={setStickyFooter} />;
 }

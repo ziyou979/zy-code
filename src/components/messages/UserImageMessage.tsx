@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { pathToFileURL } from 'url';
 import Link from '../../ink/components/Link.js';
@@ -17,42 +16,15 @@ type Props = {
  * Uses MessageResponse styling to appear connected to the message above,
  * unless addMargin is true (image starts a new user turn without text).
  */
-export function UserImageMessage(t0) {
-  const $ = _c(7);
-  const {
-    imageId,
-    addMargin
-  } = t0;
+export function UserImageMessage({
+  imageId,
+  addMargin
+}: Props) {
   const label = imageId ? `[Image #${imageId}]` : "[Image]";
-  let t1;
-  if ($[0] !== imageId || $[1] !== label) {
-    const imagePath = imageId ? getStoredImagePath(imageId) : null;
-    t1 = imagePath && supportsHyperlinks() ? <Link url={pathToFileURL(imagePath).href}><Text>{label}</Text></Link> : <Text>{label}</Text>;
-    $[0] = imageId;
-    $[1] = label;
-    $[2] = t1;
-  } else {
-    t1 = $[2];
-  }
-  const content = t1;
+  const imagePath = imageId ? getStoredImagePath(imageId) : null;
+  const content = imagePath && supportsHyperlinks() ? <Link url={pathToFileURL(imagePath).href}><Text>{label}</Text></Link> : <Text>{label}</Text>;
   if (addMargin) {
-    let t2;
-    if ($[3] !== content) {
-      t2 = <Box marginTop={1}>{content}</Box>;
-      $[3] = content;
-      $[4] = t2;
-    } else {
-      t2 = $[4];
-    }
-    return t2;
+    return <Box marginTop={1}>{content}</Box>;
   }
-  let t2;
-  if ($[5] !== content) {
-    t2 = <MessageResponse>{content}</MessageResponse>;
-    $[5] = content;
-    $[6] = t2;
-  } else {
-    t2 = $[6];
-  }
-  return t2;
+  return <MessageResponse>{content}</MessageResponse>;
 }

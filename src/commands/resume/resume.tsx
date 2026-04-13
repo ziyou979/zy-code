@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import type { UUID } from 'crypto';
 import figures from 'figures';
@@ -36,55 +35,16 @@ function resumeHelpMessage(result: ResumeResult): string {
       return `Found ${result.count} sessions matching ${chalk.bold(result.arg)}. Please use /resume to pick a specific session.`;
   }
 }
-function ResumeError(t0) {
-  const $ = _c(10);
-  const {
-    message,
-    args,
-    onDone
-  } = t0;
-  let t1;
-  let t2;
-  if ($[0] !== onDone) {
-    t1 = () => {
-      const timer = setTimeout(onDone, 0);
-      return () => clearTimeout(timer);
-    };
-    t2 = [onDone];
-    $[0] = onDone;
-    $[1] = t1;
-    $[2] = t2;
-  } else {
-    t1 = $[1];
-    t2 = $[2];
-  }
-  React.useEffect(t1, t2);
-  let t3;
-  if ($[3] !== args) {
-    t3 = <Text dimColor={true}>{figures.pointer} /resume {args}</Text>;
-    $[3] = args;
-    $[4] = t3;
-  } else {
-    t3 = $[4];
-  }
-  let t4;
-  if ($[5] !== message) {
-    t4 = <MessageResponse><Text>{message}</Text></MessageResponse>;
-    $[5] = message;
-    $[6] = t4;
-  } else {
-    t4 = $[6];
-  }
-  let t5;
-  if ($[7] !== t3 || $[8] !== t4) {
-    t5 = <Box flexDirection="column">{t3}{t4}</Box>;
-    $[7] = t3;
-    $[8] = t4;
-    $[9] = t5;
-  } else {
-    t5 = $[9];
-  }
-  return t5;
+function ResumeError({
+  message,
+  args,
+  onDone
+}) {
+  React.useEffect(() => {
+    const timer = setTimeout(onDone, 0);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+  return <Box flexDirection="column">{<Text dimColor={true}>{figures.pointer} /resume {args}</Text>}{<MessageResponse><Text>{message}</Text></MessageResponse>}</Box>;
 }
 function ResumeCommand({
   onDone,

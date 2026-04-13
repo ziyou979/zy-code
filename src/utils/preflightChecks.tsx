@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { logEvent } from 'src/services/analytics/index.js';
@@ -74,76 +73,30 @@ async function checkEndpoints(): Promise<PreflightCheckResult> {
 interface PreflightStepProps {
   onSuccess: () => void;
 }
-export function PreflightStep(t0) {
-  const $ = _c(12);
-  const {
-    onSuccess
-  } = t0;
+export function PreflightStep({
+  onSuccess
+}) {
   const [result, setResult] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
   const showSpinner = useTimeout(1000) && isChecking;
-  let t1;
-  let t2;
-  if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = () => {
-      const run = async function run() {
-        const checkResult = await checkEndpoints();
-        setResult(checkResult);
-        setIsChecking(false);
-      };
-      run();
+  useEffect(() => {
+    const run = async function run() {
+      const checkResult = await checkEndpoints();
+      setResult(checkResult);
+      setIsChecking(false);
     };
-    t2 = [];
-    $[0] = t1;
-    $[1] = t2;
-  } else {
-    t1 = $[0];
-    t2 = $[1];
-  }
-  useEffect(t1, t2);
-  let t3;
-  let t4;
-  if ($[2] !== onSuccess || $[3] !== result) {
-    t3 = () => {
-      if (result?.success) {
-        onSuccess();
-      } else {
-        if (result && !result.success) {
-          const timer = setTimeout(_temp, 100);
-          return () => clearTimeout(timer);
-        }
+    run();
+  }, []);
+  useEffect(() => {
+    if (result?.success) {
+      onSuccess();
+    } else {
+      if (result && !result.success) {
+        const timer = setTimeout(() => process.exit(1), 100);
+        return () => clearTimeout(timer);
       }
-    };
-    t4 = [result, onSuccess];
-    $[2] = onSuccess;
-    $[3] = result;
-    $[4] = t3;
-    $[5] = t4;
-  } else {
-    t3 = $[4];
-    t4 = $[5];
-  }
-  useEffect(t3, t4);
-  let t5;
-  if ($[6] !== isChecking || $[7] !== result || $[8] !== showSpinner) {
-    t5 = isChecking && showSpinner ? <Box paddingLeft={1}><Spinner /><Text>Checking connectivity...</Text></Box> : !result?.success && !isChecking && <Box flexDirection="column" gap={1}><Text color="error">Unable to connect to API services</Text><Text color="error">{result?.error}</Text>{result?.sslHint ? <Box flexDirection="column" gap={1}><Text>{result.sslHint}</Text><Text color="suggestion">See https://code.zy.com/docs/en/network-config</Text></Box> : <Box flexDirection="column" gap={1}><Text>Please check your internet connection and network settings.</Text><Text>Note: ZY Code might not be available in your country. Check supported countries at{" "}<Text color="suggestion">https://anthropic.com/supported-countries</Text></Text></Box>}</Box>;
-    $[6] = isChecking;
-    $[7] = result;
-    $[8] = showSpinner;
-    $[9] = t5;
-  } else {
-    t5 = $[9];
-  }
-  let t6;
-  if ($[10] !== t5) {
-    t6 = <Box flexDirection="column" gap={1} paddingLeft={1}>{t5}</Box>;
-    $[10] = t5;
-    $[11] = t6;
-  } else {
-    t6 = $[11];
-  }
-  return t6;
-}
-function _temp() {
-  return process.exit(1);
+    }
+  }, [result, onSuccess]);
+  const t5 = isChecking && showSpinner ? <Box paddingLeft={1}><Spinner /><Text>Checking connectivity...</Text></Box> : !result?.success && !isChecking && <Box flexDirection="column" gap={1}><Text color="error">Unable to connect to API services</Text><Text color="error">{result?.error}</Text>{result?.sslHint ? <Box flexDirection="column" gap={1}><Text>{result.sslHint}</Text><Text color="suggestion">See https://code.zy.com/docs/en/network-config</Text></Box> : <Box flexDirection="column" gap={1}><Text>Please check your internet connection and network settings.</Text><Text>Note: ZY Code might not be available in your country. Check supported countries at{" "}<Text color="suggestion">https://anthropic.com/supported-countries</Text></Text></Box>}</Box>;
+  return <Box flexDirection="column" gap={1} paddingLeft={1}>{t5}</Box>;
 }

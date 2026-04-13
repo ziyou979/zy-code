@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import type { RefObject } from 'react';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -271,130 +270,29 @@ export function useMessageActions(cursor: MessageActionsState | null, setCursor:
 }
 
 // Must mount inside <KeybindingSetup>.
-export function MessageActionsKeybindings(t0) {
-  const $ = _c(2);
-  const {
-    handlers,
+export function MessageActionsKeybindings({
+  handlers,
+  isActive
+}) {
+  useKeybindings(handlers, {
+    context: "MessageActions",
     isActive
-  } = t0;
-  let t1;
-  if ($[0] !== isActive) {
-    t1 = {
-      context: "MessageActions",
-      isActive
-    };
-    $[0] = isActive;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  useKeybindings(handlers, t1);
+  });
   return null;
 }
 
 // borderTop-only Box matches PromptInput's ─── line for stable footer height.
-export function MessageActionsBar(t0) {
-  const $ = _c(28);
-  const {
-    cursor
-  } = t0;
-  let T0;
-  let T1;
-  let t1;
-  let t2;
-  let t3;
-  let t4;
-  let t5;
-  let t6;
-  let t7;
-  if ($[0] !== cursor) {
-    const applicable = MESSAGE_ACTIONS.filter(a => isApplicable(a, cursor));
-    T1 = Box;
-    t4 = "column";
-    t5 = 0;
-    t6 = 1;
-    if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-      t7 = <Box borderStyle="single" borderTop={true} borderBottom={false} borderLeft={false} borderRight={false} borderDimColor={true} />;
-      $[10] = t7;
-    } else {
-      t7 = $[10];
-    }
-    T0 = Box;
-    t1 = 2;
-    t2 = 1;
-    t3 = applicable.map((a_0, i) => {
-      const label = typeof a_0.label === "function" ? a_0.label(cursor) : a_0.label;
-      return <React.Fragment key={a_0.key}>{i > 0 && <Text dimColor={true}> · </Text>}<Text bold={true} dimColor={false}>{a_0.key}</Text><Text dimColor={true}> {label}</Text></React.Fragment>;
-    });
-    $[0] = cursor;
-    $[1] = T0;
-    $[2] = T1;
-    $[3] = t1;
-    $[4] = t2;
-    $[5] = t3;
-    $[6] = t4;
-    $[7] = t5;
-    $[8] = t6;
-    $[9] = t7;
-  } else {
-    T0 = $[1];
-    T1 = $[2];
-    t1 = $[3];
-    t2 = $[4];
-    t3 = $[5];
-    t4 = $[6];
-    t5 = $[7];
-    t6 = $[8];
-    t7 = $[9];
-  }
-  let t10;
-  let t11;
-  let t12;
-  let t8;
-  let t9;
-  if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = <Text dimColor={true}> · </Text>;
-    t9 = <Text bold={true} dimColor={false}>{figures.arrowUp}{figures.arrowDown}</Text>;
-    t10 = <Text dimColor={true}> navigate · </Text>;
-    t11 = <Text bold={true} dimColor={false}>esc</Text>;
-    t12 = <Text dimColor={true}> back</Text>;
-    $[11] = t10;
-    $[12] = t11;
-    $[13] = t12;
-    $[14] = t8;
-    $[15] = t9;
-  } else {
-    t10 = $[11];
-    t11 = $[12];
-    t12 = $[13];
-    t8 = $[14];
-    t9 = $[15];
-  }
-  let t13;
-  if ($[16] !== T0 || $[17] !== t1 || $[18] !== t2 || $[19] !== t3) {
-    t13 = <T0 paddingX={t1} paddingY={t2}>{t3}{t8}{t9}{t10}{t11}{t12}</T0>;
-    $[16] = T0;
-    $[17] = t1;
-    $[18] = t2;
-    $[19] = t3;
-    $[20] = t13;
-  } else {
-    t13 = $[20];
-  }
-  let t14;
-  if ($[21] !== T1 || $[22] !== t13 || $[23] !== t4 || $[24] !== t5 || $[25] !== t6 || $[26] !== t7) {
-    t14 = <T1 flexDirection={t4} flexShrink={t5} paddingY={t6}>{t7}{t13}</T1>;
-    $[21] = T1;
-    $[22] = t13;
-    $[23] = t4;
-    $[24] = t5;
-    $[25] = t6;
-    $[26] = t7;
-    $[27] = t14;
-  } else {
-    t14 = $[27];
-  }
-  return t14;
+export function MessageActionsBar({
+  cursor
+}) {
+  const applicable = MESSAGE_ACTIONS.filter(a => isApplicable(a, cursor));
+  const T1 = Box;
+  const T0 = Box;
+  const t3 = applicable.map((a_0, i) => {
+    const label = typeof a_0.label === "function" ? a_0.label(cursor) : a_0.label;
+    return <React.Fragment key={a_0.key}>{i > 0 && <Text dimColor={true}> · </Text>}<Text bold={true} dimColor={false}>{a_0.key}</Text><Text dimColor={true}> {label}</Text></React.Fragment>;
+  });
+  return <T1 flexDirection={"column"} flexShrink={0} paddingY={1}>{<Box borderStyle="single" borderTop={true} borderBottom={false} borderLeft={false} borderRight={false} borderDimColor={true} />}{<T0 paddingX={2} paddingY={1}>{t3}{<Text dimColor={true}> · </Text>}{<Text bold={true} dimColor={false}>{figures.arrowUp}{figures.arrowDown}</Text>}{<Text dimColor={true}> navigate · </Text>}{<Text bold={true} dimColor={false}>esc</Text>}{<Text dimColor={true}> back</Text>}</T0>}</T1>;
 }
 export function stripSystemReminders(text: string): string {
   const CLOSE = '</system-reminder>';

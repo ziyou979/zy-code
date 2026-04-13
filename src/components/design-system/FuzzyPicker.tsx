@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useSearchInput } from '../../hooks/useSearchInput.js';
@@ -223,88 +222,28 @@ type ListProps<T> = Pick<Props<T>, 'visibleCount' | 'direction' | 'getKey' | 're
   focusedIndex: number;
   emptyText: string;
 };
-function List(t0) {
-  const $ = _c(27);
-  const {
-    visible,
-    windowStart,
-    visibleCount,
-    total,
-    focusedIndex,
-    direction,
-    getKey,
-    renderItem,
-    emptyText
-  } = t0;
+function List({
+  visible,
+  windowStart,
+  visibleCount,
+  total,
+  focusedIndex,
+  direction,
+  getKey,
+  renderItem,
+  emptyText
+}: ListProps) {
   if (visible.length === 0) {
-    let t1;
-    if ($[0] !== emptyText) {
-      t1 = <Text dimColor={true}>{emptyText}</Text>;
-      $[0] = emptyText;
-      $[1] = t1;
-    } else {
-      t1 = $[1];
-    }
-    let t2;
-    if ($[2] !== t1 || $[3] !== visibleCount) {
-      t2 = <Box height={visibleCount} flexShrink={0}>{t1}</Box>;
-      $[2] = t1;
-      $[3] = visibleCount;
-      $[4] = t2;
-    } else {
-      t2 = $[4];
-    }
-    return t2;
+    return <Box height={visibleCount} flexShrink={0}>{<Text dimColor={true}>{emptyText}</Text>}</Box>;
   }
-  let t1;
-  if ($[5] !== direction || $[6] !== focusedIndex || $[7] !== getKey || $[8] !== renderItem || $[9] !== total || $[10] !== visible || $[11] !== visibleCount || $[12] !== windowStart) {
-    let t2;
-    if ($[14] !== direction || $[15] !== focusedIndex || $[16] !== getKey || $[17] !== renderItem || $[18] !== total || $[19] !== visible.length || $[20] !== visibleCount || $[21] !== windowStart) {
-      t2 = (item, i) => {
-        const actualIndex = windowStart + i;
-        const isFocused = actualIndex === focusedIndex;
-        const atLowEdge = i === 0 && windowStart > 0;
-        const atHighEdge = i === visible.length - 1 && windowStart + visibleCount < total;
-        return <ListItem key={getKey(item)} isFocused={isFocused} showScrollUp={direction === "up" ? atHighEdge : atLowEdge} showScrollDown={direction === "up" ? atLowEdge : atHighEdge} styled={false}>{renderItem(item, isFocused)}</ListItem>;
-      };
-      $[14] = direction;
-      $[15] = focusedIndex;
-      $[16] = getKey;
-      $[17] = renderItem;
-      $[18] = total;
-      $[19] = visible.length;
-      $[20] = visibleCount;
-      $[21] = windowStart;
-      $[22] = t2;
-    } else {
-      t2 = $[22];
-    }
-    t1 = visible.map(t2);
-    $[5] = direction;
-    $[6] = focusedIndex;
-    $[7] = getKey;
-    $[8] = renderItem;
-    $[9] = total;
-    $[10] = visible;
-    $[11] = visibleCount;
-    $[12] = windowStart;
-    $[13] = t1;
-  } else {
-    t1 = $[13];
-  }
-  const rows = t1;
-  const t2 = direction === "up" ? "column-reverse" : "column";
-  let t3;
-  if ($[23] !== rows || $[24] !== t2 || $[25] !== visibleCount) {
-    t3 = <Box height={visibleCount} flexShrink={0} flexDirection={t2}>{rows}</Box>;
-    $[23] = rows;
-    $[24] = t2;
-    $[25] = visibleCount;
-    $[26] = t3;
-  } else {
-    t3 = $[26];
-  }
-  return t3;
+  const rows = visible.map((item, i) => {
+    const actualIndex = windowStart + i;
+    const isFocused = actualIndex === focusedIndex;
+    const atLowEdge = i === 0 && windowStart > 0;
+    const atHighEdge = i === visible.length - 1 && windowStart + visibleCount < total;
+    return <ListItem key={getKey(item)} isFocused={isFocused} showScrollUp={direction === "up" ? atHighEdge : atLowEdge} showScrollDown={direction === "up" ? atLowEdge : atHighEdge} styled={false}>{renderItem(item, isFocused)}</ListItem>;
+  });
+  return <Box height={visibleCount} flexShrink={0} flexDirection={direction === "up" ? "column-reverse" : "column"}>{rows}</Box>;
 }
 function firstWord(s: string): string {
   const i = s.indexOf(' ');

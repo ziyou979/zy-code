@@ -1,4 +1,3 @@
-import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import * as path from 'path';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -22,188 +21,59 @@ type IDEScreenProps = {
   onClose: () => void;
   onSelect: (ide?: DetectedIDEInfo) => void;
 };
-function IDEScreen(t0) {
-  const $ = _c(39);
-  const {
-    availableIDEs,
-    unavailableIDEs,
-    selectedIDE,
-    onClose,
-    onSelect
-  } = t0;
-  let t1;
-  if ($[0] !== selectedIDE?.port) {
-    t1 = selectedIDE?.port?.toString() ?? "None";
-    $[0] = selectedIDE?.port;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
+function IDEScreen({
+  availableIDEs,
+  unavailableIDEs,
+  selectedIDE,
+  onClose,
+  onSelect
+}: IDEScreenProps) {
+  const t1 = selectedIDE?.port?.toString() ?? "None";
   const [selectedValue, setSelectedValue] = useState(t1);
   const [showAutoConnectDialog, setShowAutoConnectDialog] = useState(false);
   const [showDisableAutoConnectDialog, setShowDisableAutoConnectDialog] = useState(false);
-  let t2;
-  if ($[2] !== availableIDEs || $[3] !== onSelect) {
-    t2 = value => {
-      if (value !== "None" && shouldShowAutoConnectDialog()) {
-        setShowAutoConnectDialog(true);
+  const handleSelectIDE = value => {
+    if (value !== "None" && shouldShowAutoConnectDialog()) {
+      setShowAutoConnectDialog(true);
+    } else {
+      if (value === "None" && shouldShowDisableAutoConnectDialog()) {
+        setShowDisableAutoConnectDialog(true);
       } else {
-        if (value === "None" && shouldShowDisableAutoConnectDialog()) {
-          setShowDisableAutoConnectDialog(true);
-        } else {
-          onSelect(availableIDEs.find(ide => ide.port === parseInt(value)));
-        }
+        onSelect(availableIDEs.find(ide => ide.port === parseInt(value)));
       }
+    }
+  };
+  const ideCounts = availableIDEs.reduce((acc, ide_0) => {
+    acc[ide_0.name] = (acc[ide_0.name] || 0) + 1;
+    return acc;
+  }, {});
+  const options = availableIDEs.map(ide_1 => {
+    const hasMultipleInstances = (ideCounts[ide_1.name] || 0) > 1;
+    const showWorkspace = hasMultipleInstances && ide_1.workspaceFolders.length > 0;
+    return {
+      label: ide_1.name,
+      value: ide_1.port.toString(),
+      description: showWorkspace ? formatWorkspaceFolders(ide_1.workspaceFolders) : undefined
     };
-    $[2] = availableIDEs;
-    $[3] = onSelect;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  const handleSelectIDE = t2;
-  let t3;
-  if ($[5] !== availableIDEs) {
-    t3 = availableIDEs.reduce(_temp, {});
-    $[5] = availableIDEs;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  const ideCounts = t3;
-  let t4;
-  if ($[7] !== availableIDEs || $[8] !== ideCounts) {
-    let t5;
-    if ($[10] !== ideCounts) {
-      t5 = ide_1 => {
-        const hasMultipleInstances = (ideCounts[ide_1.name] || 0) > 1;
-        const showWorkspace = hasMultipleInstances && ide_1.workspaceFolders.length > 0;
-        return {
-          label: ide_1.name,
-          value: ide_1.port.toString(),
-          description: showWorkspace ? formatWorkspaceFolders(ide_1.workspaceFolders) : undefined
-        };
-      };
-      $[10] = ideCounts;
-      $[11] = t5;
-    } else {
-      t5 = $[11];
-    }
-    t4 = availableIDEs.map(t5).concat([{
-      label: "None",
-      value: "None",
-      description: undefined
-    }]);
-    $[7] = availableIDEs;
-    $[8] = ideCounts;
-    $[9] = t4;
-  } else {
-    t4 = $[9];
-  }
-  const options = t4;
+  }).concat([{
+    label: "None",
+    value: "None",
+    description: undefined
+  }]);
   if (showAutoConnectDialog) {
-    let t5;
-    if ($[12] !== handleSelectIDE || $[13] !== selectedValue) {
-      t5 = <IdeAutoConnectDialog onComplete={() => handleSelectIDE(selectedValue)} />;
-      $[12] = handleSelectIDE;
-      $[13] = selectedValue;
-      $[14] = t5;
-    } else {
-      t5 = $[14];
-    }
-    return t5;
+    return <IdeAutoConnectDialog onComplete={() => handleSelectIDE(selectedValue)} />;
   }
   if (showDisableAutoConnectDialog) {
-    let t5;
-    if ($[15] !== onSelect) {
-      t5 = <IdeDisableAutoConnectDialog onComplete={() => {
-        onSelect(undefined);
-      }} />;
-      $[15] = onSelect;
-      $[16] = t5;
-    } else {
-      t5 = $[16];
-    }
-    return t5;
-  }
-  let t5;
-  if ($[17] !== availableIDEs.length) {
-    t5 = availableIDEs.length === 0 && <Text dimColor={true}>{isSupportedJetBrainsTerminal() ? "No available IDEs detected. Please install the plugin and restart your IDE:\nhttps://docs.zy.com/s/zy-code-jetbrains" : "No available IDEs detected. Make sure your IDE has the ZY Code extension or plugin installed and is running."}</Text>;
-    $[17] = availableIDEs.length;
-    $[18] = t5;
-  } else {
-    t5 = $[18];
-  }
-  let t6;
-  if ($[19] !== availableIDEs.length || $[20] !== handleSelectIDE || $[21] !== options || $[22] !== selectedValue) {
-    t6 = availableIDEs.length !== 0 && <Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
-      setSelectedValue(value_0);
-      handleSelectIDE(value_0);
+    return <IdeDisableAutoConnectDialog onComplete={() => {
+      onSelect(undefined);
     }} />;
-    $[19] = availableIDEs.length;
-    $[20] = handleSelectIDE;
-    $[21] = options;
-    $[22] = selectedValue;
-    $[23] = t6;
-  } else {
-    t6 = $[23];
   }
-  let t7;
-  if ($[24] !== availableIDEs) {
-    t7 = availableIDEs.length !== 0 && availableIDEs.some(_temp2) && <Box marginTop={1}><Text color="warning">Note: Only one ZY Code instance can be connected to VS Code at a time.</Text></Box>;
-    $[24] = availableIDEs;
-    $[25] = t7;
-  } else {
-    t7 = $[25];
-  }
-  let t8;
-  if ($[26] !== availableIDEs.length) {
-    t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && <Box marginTop={1}><Text dimColor={true}>Tip: You can enable auto-connect to IDE in /config or with the --ide flag</Text></Box>;
-    $[26] = availableIDEs.length;
-    $[27] = t8;
-  } else {
-    t8 = $[27];
-  }
-  let t9;
-  if ($[28] !== unavailableIDEs) {
-    t9 = unavailableIDEs.length > 0 && <Box marginTop={1} flexDirection="column"><Text dimColor={true}>Found {unavailableIDEs.length} other running IDE(s). However, their workspace/project directories do not match the current cwd.</Text><Box marginTop={1} flexDirection="column">{unavailableIDEs.map(_temp3)}</Box></Box>;
-    $[28] = unavailableIDEs;
-    $[29] = t9;
-  } else {
-    t9 = $[29];
-  }
-  let t10;
-  if ($[30] !== t5 || $[31] !== t6 || $[32] !== t7 || $[33] !== t8 || $[34] !== t9) {
-    t10 = <Box flexDirection="column">{t5}{t6}{t7}{t8}{t9}</Box>;
-    $[30] = t5;
-    $[31] = t6;
-    $[32] = t7;
-    $[33] = t8;
-    $[34] = t9;
-    $[35] = t10;
-  } else {
-    t10 = $[35];
-  }
-  let t11;
-  if ($[36] !== onClose || $[37] !== t10) {
-    t11 = <Dialog title="Select IDE" subtitle="Connect to an IDE for integrated development features." onCancel={onClose} color="ide">{t10}</Dialog>;
-    $[36] = onClose;
-    $[37] = t10;
-    $[38] = t11;
-  } else {
-    t11 = $[38];
-  }
-  return t11;
-}
-function _temp3(ide_3, index) {
-  return <Box key={index} paddingLeft={3}><Text dimColor={true}>• {ide_3.name}: {formatWorkspaceFolders(ide_3.workspaceFolders)}</Text></Box>;
-}
-function _temp2(ide_2) {
-  return ide_2.name === "VS Code" || ide_2.name === "Visual Studio Code";
-}
-function _temp(acc, ide_0) {
-  acc[ide_0.name] = (acc[ide_0.name] || 0) + 1;
-  return acc;
+  const t7 = availableIDEs.length !== 0 && availableIDEs.some(ide_2 => ide_2.name === "VS Code" || ide_2.name === "Visual Studio Code") && <Box marginTop={1}><Text color="warning">Note: Only one ZY Code instance can be connected to VS Code at a time.</Text></Box>;
+  const t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && <Box marginTop={1}><Text dimColor={true}>Tip: You can enable auto-connect to IDE in /config or with the --ide flag</Text></Box>;
+  return <Dialog title="Select IDE" subtitle="Connect to an IDE for integrated development features." onCancel={onClose} color="ide">{<Box flexDirection="column">{availableIDEs.length === 0 && <Text dimColor={true}>{isSupportedJetBrainsTerminal() ? "No available IDEs detected. Please install the plugin and restart your IDE:\nhttps://docs.zy.com/s/zy-code-jetbrains" : "No available IDEs detected. Make sure your IDE has the ZY Code extension or plugin installed and is running."}</Text>}{availableIDEs.length !== 0 && <Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
+        setSelectedValue(value_0);
+        handleSelectIDE(value_0);
+      }} />}{t7}{t8}{unavailableIDEs.length > 0 && <Box marginTop={1} flexDirection="column"><Text dimColor={true}>Found {unavailableIDEs.length} other running IDE(s). However, their workspace/project directories do not match the current cwd.</Text><Box marginTop={1} flexDirection="column">{unavailableIDEs.map((ide_3, index) => <Box key={index} paddingLeft={3}><Text dimColor={true}>• {ide_3.name}: {formatWorkspaceFolders(ide_3.workspaceFolders)}</Text></Box>)}</Box></Box>}</Box>}</Dialog>;
 }
 async function findCurrentIDE(availableIDEs: DetectedIDEInfo[], dynamicMcpConfig?: Record<string, ScopedMcpServerConfig>): Promise<DetectedIDEInfo | null> {
   const currentConfig = dynamicMcpConfig?.ide;
@@ -224,196 +94,61 @@ type IDEOpenSelectionProps = {
     display?: CommandResultDisplay;
   }) => void;
 };
-function IDEOpenSelection(t0) {
-  const $ = _c(18);
-  const {
-    availableIDEs,
-    onSelectIDE,
-    onDone
-  } = t0;
-  let t1;
-  if ($[0] !== availableIDEs[0]?.port) {
-    t1 = availableIDEs[0]?.port?.toString() ?? "";
-    $[0] = availableIDEs[0]?.port;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
+function IDEOpenSelection({
+  availableIDEs,
+  onSelectIDE,
+  onDone
+}: IDEOpenSelectionProps) {
+  const t1 = availableIDEs[0]?.port?.toString() ?? "";
   const [selectedValue, setSelectedValue] = useState(t1);
-  let t2;
-  if ($[2] !== availableIDEs || $[3] !== onSelectIDE) {
-    t2 = value => {
-      const selectedIDE = availableIDEs.find(ide => ide.port === parseInt(value));
-      onSelectIDE(selectedIDE);
-    };
-    $[2] = availableIDEs;
-    $[3] = onSelectIDE;
-    $[4] = t2;
-  } else {
-    t2 = $[4];
-  }
-  const handleSelectIDE = t2;
-  let t3;
-  if ($[5] !== availableIDEs) {
-    t3 = availableIDEs.map(_temp4);
-    $[5] = availableIDEs;
-    $[6] = t3;
-  } else {
-    t3 = $[6];
-  }
-  const options = t3;
-  let t4;
-  if ($[7] !== onDone) {
-    t4 = function handleCancel() {
-      onDone("IDE selection cancelled", {
-        display: "system"
-      });
-    };
-    $[7] = onDone;
-    $[8] = t4;
-  } else {
-    t4 = $[8];
-  }
-  const handleCancel = t4;
-  let t5;
-  if ($[9] !== handleSelectIDE) {
-    t5 = value_0 => {
-      setSelectedValue(value_0);
-      handleSelectIDE(value_0);
-    };
-    $[9] = handleSelectIDE;
-    $[10] = t5;
-  } else {
-    t5 = $[10];
-  }
-  let t6;
-  if ($[11] !== options || $[12] !== selectedValue || $[13] !== t5) {
-    t6 = <Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={t5} />;
-    $[11] = options;
-    $[12] = selectedValue;
-    $[13] = t5;
-    $[14] = t6;
-  } else {
-    t6 = $[14];
-  }
-  let t7;
-  if ($[15] !== handleCancel || $[16] !== t6) {
-    t7 = <Dialog title="Select an IDE to open the project" onCancel={handleCancel} color="ide">{t6}</Dialog>;
-    $[15] = handleCancel;
-    $[16] = t6;
-    $[17] = t7;
-  } else {
-    t7 = $[17];
-  }
-  return t7;
-}
-function _temp4(ide_0) {
-  return {
+  const handleSelectIDE = value => {
+    const selectedIDE = availableIDEs.find(ide => ide.port === parseInt(value));
+    onSelectIDE(selectedIDE);
+  };
+  const options = availableIDEs.map(ide_0 => ({
     label: ide_0.name,
     value: ide_0.port.toString()
+  }));
+  const handleCancel = function handleCancel() {
+    onDone("IDE selection cancelled", {
+      display: "system"
+    });
   };
-}
-function RunningIDESelector(t0) {
-  const $ = _c(15);
-  const {
-    runningIDEs,
-    onSelectIDE,
-    onDone
-  } = t0;
-  const [selectedValue, setSelectedValue] = useState(runningIDEs[0] ?? "");
-  let t1;
-  if ($[0] !== onSelectIDE) {
-    t1 = value => {
-      onSelectIDE(value as IdeType);
-    };
-    $[0] = onSelectIDE;
-    $[1] = t1;
-  } else {
-    t1 = $[1];
-  }
-  const handleSelectIDE = t1;
-  let t2;
-  if ($[2] !== runningIDEs) {
-    t2 = runningIDEs.map(_temp5);
-    $[2] = runningIDEs;
-    $[3] = t2;
-  } else {
-    t2 = $[3];
-  }
-  const options = t2;
-  let t3;
-  if ($[4] !== onDone) {
-    t3 = function handleCancel() {
-      onDone("IDE selection cancelled", {
-        display: "system"
-      });
-    };
-    $[4] = onDone;
-    $[5] = t3;
-  } else {
-    t3 = $[5];
-  }
-  const handleCancel = t3;
-  let t4;
-  if ($[6] !== handleSelectIDE) {
-    t4 = value_0 => {
+  return <Dialog title="Select an IDE to open the project" onCancel={handleCancel} color="ide">{<Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
       setSelectedValue(value_0);
       handleSelectIDE(value_0);
-    };
-    $[6] = handleSelectIDE;
-    $[7] = t4;
-  } else {
-    t4 = $[7];
-  }
-  let t5;
-  if ($[8] !== options || $[9] !== selectedValue || $[10] !== t4) {
-    t5 = <Select defaultFocusValue={selectedValue} options={options} onChange={t4} />;
-    $[8] = options;
-    $[9] = selectedValue;
-    $[10] = t4;
-    $[11] = t5;
-  } else {
-    t5 = $[11];
-  }
-  let t6;
-  if ($[12] !== handleCancel || $[13] !== t5) {
-    t6 = <Dialog title="Select IDE to install extension" onCancel={handleCancel} color="ide">{t5}</Dialog>;
-    $[12] = handleCancel;
-    $[13] = t5;
-    $[14] = t6;
-  } else {
-    t6 = $[14];
-  }
-  return t6;
+    }} />}</Dialog>;
 }
-function _temp5(ide) {
-  return {
+function RunningIDESelector({
+  runningIDEs,
+  onSelectIDE,
+  onDone
+}: IDEOpenSelectionProps) {
+  const [selectedValue, setSelectedValue] = useState(runningIDEs[0] ?? "");
+  const handleSelectIDE = value => {
+    onSelectIDE(value as IdeType);
+  };
+  const options = runningIDEs.map(ide => ({
     label: toIDEDisplayName(ide),
     value: ide
+  }));
+  const handleCancel = function handleCancel() {
+    onDone("IDE selection cancelled", {
+      display: "system"
+    });
   };
+  return <Dialog title="Select IDE to install extension" onCancel={handleCancel} color="ide">{<Select defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
+      setSelectedValue(value_0);
+      handleSelectIDE(value_0);
+    }} />}</Dialog>;
 }
-function InstallOnMount(t0) {
-  const $ = _c(4);
-  const {
-    ide,
-    onInstall
-  } = t0;
-  let t1;
-  let t2;
-  if ($[0] !== ide || $[1] !== onInstall) {
-    t1 = () => {
-      onInstall(ide);
-    };
-    t2 = [ide, onInstall];
-    $[0] = ide;
-    $[1] = onInstall;
-    $[2] = t1;
-    $[3] = t2;
-  } else {
-    t1 = $[2];
-    t2 = $[3];
-  }
-  useEffect(t1, t2);
+function InstallOnMount({
+  ide,
+  onInstall
+}) {
+  useEffect(() => {
+    onInstall(ide);
+  }, [ide, onInstall]);
   return null;
 }
 export async function call(onDone: (result?: string, options?: {
