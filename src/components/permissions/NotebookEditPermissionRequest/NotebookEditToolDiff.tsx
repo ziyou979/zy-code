@@ -1,6 +1,6 @@
 import { relative } from 'path';
 import * as React from 'react';
-import { Suspense, use, useMemo } from 'react';
+import { Suspense, use } from 'react';
 import { Box, NoSelect, Text } from '../../../ink.js';
 import type { NotebookCellType, NotebookContent } from '../../../types/notebook.js';
 import { intersperse } from '../../../utils/array.js';

@@ -1,7 +1,5 @@
-import { feature } from 'bun:bundle'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getZyAIOAuthTokens } from '../utils/auth.js'
-
+import { feature } from 'bun:bundle';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js';
 /**
  * Kill-switch check for voice mode. Returns true unless the
  * `tengu_amber_quartz_disabled` GrowthBook flag is flipped on (emergency
@@ -14,9 +12,7 @@ export function isVoiceGrowthBookEnabled(): boolean {
   // Positive ternary pattern — see docs/feature-gating.md.
   // Negative pattern (if (!feature(...)) return) does not eliminate
   // inline string literals from external builds.
-  return feature('VOICE_MODE')
-    ? !getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_quartz_disabled', false)
-    : false
+  return feature('VOICE_MODE') ? !getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_quartz_disabled', false) : false;
 }
 
 /**
@@ -28,7 +24,7 @@ export function isVoiceGrowthBookEnabled(): boolean {
  */
 export function hasVoiceAuth(): boolean {
   // 国内不可用语音模式，始终返回 false
-  return false
+  return false;
 }
 
 /**
@@ -38,5 +34,5 @@ export function hasVoiceAuth(): boolean {
  * paths use useVoiceEnabled() instead (memoizes the auth half).
  */
 export function isVoiceModeEnabled(): boolean {
-  return hasVoiceAuth() && isVoiceGrowthBookEnabled()
+  return hasVoiceAuth() && isVoiceGrowthBookEnabled();
 }

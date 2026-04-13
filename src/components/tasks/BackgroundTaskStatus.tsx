@@ -1,13 +1,13 @@
 import figures from 'figures';
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
 import { stringWidth } from 'src/ink/stringWidth.js';
 import { useAppState, useSetAppState } from 'src/state/AppState.js';
 import { enterTeammateView, exitTeammateView } from 'src/state/teammateViewHelpers.js';
 import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js';
 import { getPillLabel, pillNeedsCta } from 'src/tasks/pillLabel.js';
-import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js';
+import { isBackgroundTask, type TaskState } from 'src/tasks/types.js';
 import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js';
 import { Box, Text } from '../../ink.js';
 import { tSync } from '../../i18n/index.js';

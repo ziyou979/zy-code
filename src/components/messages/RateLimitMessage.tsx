@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { extraUsage } from 'src/commands/extra-usage/index.js';
 import { Box, Text } from 'src/ink.js';
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js';

@@ -118,7 +118,7 @@ export function ThemeProvider({
  * Returns the resolved theme for rendering (never 'auto') and a setter that
  * accepts any ThemeSetting (including 'auto').
  */
-export function useTheme() {
+export function useTheme(): [ThemeName, (setting: ThemeSetting) => void] {
   const {
     currentTheme,
     setThemeSetting

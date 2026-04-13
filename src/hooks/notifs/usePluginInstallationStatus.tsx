@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { getIsRemoteMode } from '../../bootstrap/state.js';
 import { useNotifications } from '../../context/notifications.js';
 import { Text } from '../../ink.js';
@@ -27,7 +27,11 @@ export function usePluginInstallationStatus() {
       failedPluginsCount: failedPlugins.length
     };
   }
-  const { totalFailed, failedMarketplacesCount, failedPluginsCount } = t0;
+  const {
+    totalFailed,
+    failedMarketplacesCount,
+    failedPluginsCount
+  } = t0;
   useEffect(() => {
     if (getIsRemoteMode()) {
       return;

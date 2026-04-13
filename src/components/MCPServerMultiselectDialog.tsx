@@ -1,5 +1,5 @@
 import partition from 'lodash-es/partition.js';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { tSync } from '../i18n/index.js';
 import { logEvent } from 'src/services/analytics/index.js';
 import { Box, Text } from '../ink.js';

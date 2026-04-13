@@ -1,15 +1,14 @@
 import figures from 'figures';
-import React, { useCallback, useState } from 'react';
-import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js';
+import React, { useState } from 'react';
 import { Box, Text } from '../../../ink.js';
 import { useAppState } from '../../../state/AppState.js';
-import type { Question, QuestionOption } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js';
+import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js';
 import type { PastedContent } from '../../../utils/config.js';
 import { getExternalEditor } from '../../../utils/editor.js';
 import { toIDEDisplayName } from '../../../utils/ide.js';
 import type { ImageDimensions } from '../../../utils/imageResizer.js';
 import { editPromptInEditor } from '../../../utils/promptEditor.js';
-import { type OptionWithDescription, Select, SelectMulti } from '../../CustomSelect/index.js';
+import { Select, SelectMulti } from '../../CustomSelect/index.js';
 import { Divider } from '../../design-system/Divider.js';
 import { FilePathLink } from '../../FilePathLink.js';
 import { PermissionRequestTitle } from '../PermissionRequestTitle.js';

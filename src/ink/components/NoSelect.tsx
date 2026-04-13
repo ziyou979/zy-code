@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren } from 'react';
+import React from 'react';
 import Box, { type Props as BoxProps } from './Box.js';
 type Props = Omit<BoxProps, 'noSelect'> & {
   /**

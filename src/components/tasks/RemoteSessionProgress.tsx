@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import type { RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js';
-import type { DeepImmutable } from 'src/types/utils.js';
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js';
 import { useSettings } from '../../hooks/useSettings.js';
 import { Text, useAnimationFrame } from '../../ink.js';

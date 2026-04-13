@@ -2,7 +2,6 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { logEvent } from 'src/services/analytics/index.js';
 import { Spinner } from '../components/Spinner.js';
-import { getOauthConfig } from '../constants/oauth.js';
 import { useTimeout } from '../hooks/useTimeout.js';
 import { Box, Text } from '../ink.js';
 import { getSSLErrorHint } from '../services/api/errorUtils.js';

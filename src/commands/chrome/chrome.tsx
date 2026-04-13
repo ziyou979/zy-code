@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { type OptionWithDescription, Select } from '../../components/CustomSelect/select.js';
+import { Select } from '../../components/CustomSelect/select.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { Box, Text } from '../../ink.js';
 import { useAppState } from '../../state/AppState.js';

@@ -1,6 +1,5 @@
 import figures from 'figures';
 import React, { useState } from 'react';
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
 import { AGENT_COLOR_TO_THEME_COLOR, AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js';
 import { capitalize } from '../../utils/stringUtils.js';

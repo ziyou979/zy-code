@@ -1,6 +1,6 @@
 import capitalize from 'lodash-es/capitalize.js';
 import * as React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { getFastModeModelDisplay, isFastModeAvailable, isFastModeCooldown, isFastModeEnabled } from 'src/utils/fastMode.js';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isFeedbackSurveyDisabled } from 'src/services/analytics/config.js';
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
@@ -8,7 +8,6 @@ import { isEnvTruthy } from '../../utils/envUtils.js';
 import { isCompactBoundaryMessage } from '../../utils/messages.js';
 import { logOTelEvent } from '../../utils/telemetry/events.js';
 import { useSurveyState } from './useSurveyState.js';
-import type { FeedbackSurveyResponse } from './utils.js';
 const HIDE_THANKS_AFTER_MS = 3000;
 const POST_COMPACT_SURVEY_GATE = 'tengu_post_compact_survey';
 const SURVEY_PROBABILITY = 0.2; // Show survey 20% of the time after compaction

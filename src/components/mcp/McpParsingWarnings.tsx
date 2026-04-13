@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { getMcpConfigsByScope } from 'src/services/mcp/config.js';
 import type { ConfigScope } from 'src/services/mcp/types.js';
 import { describeMcpConfigFilePath, getScopeLabel } from 'src/services/mcp/utils.js';

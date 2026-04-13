@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, type Ref } from 'react';
+import React, { type Ref } from 'react';
 import Box from '../../ink/components/Box.js';
 import type { DOMElement } from '../../ink/dom.js';
 import type { ClickEvent } from '../../ink/events/click-event.js';
@@ -21,6 +21,7 @@ type ThemedColorProps = {
 // Base Styles without color props (they'll be overridden)
 type BaseStylesWithoutColors = Omit<Styles, 'textWrap' | 'borderColor' | 'borderTopColor' | 'borderBottomColor' | 'borderLeftColor' | 'borderRightColor' | 'backgroundColor'>;
 export type Props = BaseStylesWithoutColors & ThemedColorProps & {
+  children?: React.ReactNode;
   ref?: Ref<DOMElement>;
   tabIndex?: number;
   autoFocus?: boolean;

@@ -1,8 +1,8 @@
 import { marked, type Token, type Tokens } from 'marked';
-import React, { Suspense, use, useMemo, useRef } from 'react';
+import React, { Suspense, use, useRef } from 'react';
 import { useSettings } from '../hooks/useSettings.js';
 import { Ansi, Box, useTheme } from '../ink.js';
-import { type CliHighlight, getCliHighlightPromise } from '../utils/cliHighlight.js';
+import { getCliHighlightPromise } from '../utils/cliHighlight.js';
 import { hashContent } from '../utils/hash.js';
 import { configureMarked, formatToken } from '../utils/markdown.js';
 import { stripPromptXMLTags } from '../utils/messages.js';

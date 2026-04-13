@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useMemo } from 'react';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { Ansi, Text } from '../../ink.js';
 import { createHyperlink } from '../../utils/hyperlink.js';

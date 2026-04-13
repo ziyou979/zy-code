@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useSettings } from '../hooks/useSettings.js';
-import { Ansi, Box, type DOMElement, measureElement, NoSelect, Text, useTheme } from '../ink.js';
+import { Ansi, Box, measureElement, NoSelect, Text, useTheme } from '../ink.js';
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js';
 import sliceAnsi from '../utils/sliceAnsi.js';
 import { countCharInString } from '../utils/stringUtils.js';

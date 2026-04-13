@@ -1,6 +1,5 @@
 import figures from 'figures';
 import * as React from 'react';
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import type { Tools } from '../../Tool.js';

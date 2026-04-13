@@ -1,6 +1,6 @@
-import React, { createContext, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
-import type { WizardContextValue, WizardProviderProps } from './types.js';
+import type { WizardContextValue } from './types.js';
 
 // Use any here for the context since it will be cast properly when used
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

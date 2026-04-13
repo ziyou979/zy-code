@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import type { UUID } from 'crypto';
 import * as React from 'react';
 import { getSessionId } from '../../bootstrap/state.js';
-import type { CommandResultDisplay } from '../../commands.js';
 import { Select } from '../../components/CustomSelect/select.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';

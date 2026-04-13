@@ -10,17 +10,19 @@ import { stringWidth } from '../../ink/stringWidth.js';
 import { Box, Text } from '../../ink.js';
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js';
 import { summarizeRecentActivities } from '../../utils/collapseReadSearch.js';
-import { formatDuration, formatDurationZh, formatNumber, truncateToWidth } from '../../utils/format.js';
+import { formatDuration, formatDurationZh, truncateToWidth } from '../../utils/format.js';
 import { getUiLanguage, tSync } from '../../i18n/index.js';
 import { toInkColor } from '../../utils/ink.js';
 import { TEAMMATE_SELECT_HINT } from './teammateSelectHint.js';
-
 function formatToolUseCount(count: number): string {
-  return tSync('teammate.toolUseCount', { count });
+  return tSync('teammate.toolUseCount', {
+    count
+  });
 }
-
 function formatTokenCount(count: number): string {
-  return tSync('teammate.tokenCount', { count });
+  return tSync('teammate.tokenCount', {
+    count
+  });
 }
 type Props = {
   teammate: InProcessTeammateTaskState;
@@ -190,10 +192,15 @@ export function TeammateSpinnerLine({
         const isZh = getUiLanguage() === 'zh-CN';
         const durationText = isZh ? formatDurationZh(Math.max(0, Date.now() - teammate.startTime - (teammate.totalPausedMs ?? 0))) : displayTime;
         return <Text dimColor>
-            {tSync('spinner.verbWithDuration', { verb: pastTenseVerb, duration: durationText })}
+            {tSync('spinner.verbWithDuration', {
+            verb: pastTenseVerb,
+            duration: durationText
+          })}
           </Text>;
       }
-      return <Text dimColor>{tSync('spinner.idleFor', { duration: idleElapsedTime })}</Text>;
+      return <Text dimColor>{tSync('spinner.idleFor', {
+          duration: idleElapsedTime
+        })}</Text>;
     }
     // Active - show spinner glyph + activity description (only when not highlighted;
     // when highlighted, the main spinner above already shows the verb)

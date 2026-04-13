@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import type { TeleportRemoteResponse } from 'src/utils/conversationRecovery.js';
-import type { CodeSession } from 'src/utils/teleport/api.js';
 import { type TeleportSource, useTeleportResume } from '../hooks/useTeleportResume.js';
 import { Box, Text } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';

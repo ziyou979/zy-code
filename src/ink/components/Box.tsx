@@ -1,5 +1,5 @@
 import '../global.d.ts';
-import React, { type PropsWithChildren, type Ref } from 'react';
+import React, { type Ref } from 'react';
 import type { Except } from 'type-fest';
 import type { DOMElement } from '../dom.js';
 import type { ClickEvent } from '../events/click-event.js';
@@ -8,6 +8,7 @@ import type { KeyboardEvent } from '../events/keyboard-event.js';
 import type { Styles } from '../styles.js';
 import * as warn from '../warn.js';
 export type Props = Except<Styles, 'textWrap'> & {
+  children?: React.ReactNode;
   ref?: Ref<DOMElement>;
   /**
    * Tab order index. Nodes with `tabIndex >= 0` participate in

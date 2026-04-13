@@ -1,14 +1,12 @@
 import { feature } from 'bun:bundle';
-import type { BetaContentBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs';
-import type { ImageBlockParam, TextBlockParam, ThinkingBlockParam, ToolResultBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
 import * as React from 'react';
 import type { Command } from '../commands.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { Box } from '../ink.js';
 import type { Tools } from '../Tool.js';
-import { type ConnectorTextBlock, isConnectorTextBlock } from '../types/connectorText.js';
+import { isConnectorTextBlock } from '../types/connectorText.js';
 import type { AssistantMessage, AttachmentMessage as AttachmentMessageType, CollapsedReadSearchGroup as CollapsedReadSearchGroupType, GroupedToolUseMessage as GroupedToolUseMessageType, NormalizedUserMessage, ProgressMessage, SystemMessage } from '../types/message.js';
-import { type AdvisorBlock, isAdvisorBlock } from '../utils/advisor.js';
+import { isAdvisorBlock } from '../utils/advisor.js';
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js';
 import { logError } from '../utils/log.js';
 import type { buildMessageLookups } from '../utils/messages.js';

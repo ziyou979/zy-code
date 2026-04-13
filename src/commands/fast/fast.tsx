@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js';
+import type { LocalJSXCommandContext } from '../../commands.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { FastIcon, getFastIconString } from '../../components/FastIcon.js';
 import { Box, Link, Text } from '../../ink.js';

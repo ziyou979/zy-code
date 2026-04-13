@@ -1,5 +1,5 @@
 import figures from 'figures';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';

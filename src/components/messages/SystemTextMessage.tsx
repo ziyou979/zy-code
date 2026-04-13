@@ -27,7 +27,6 @@ import { isBackgroundTask, type TaskState } from '../../tasks/types.js';
 import { getPillLabel } from '../../tasks/pillLabel.js';
 import { useSelectedMessageBg } from '../messageActions.js';
 import { tSync } from '../../i18n/index.js';
-import { JSX } from "react/jsx-runtime";
 type Props = {
   message: SystemMessage;
   addMargin: boolean;

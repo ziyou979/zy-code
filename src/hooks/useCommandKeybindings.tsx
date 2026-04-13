@@ -8,7 +8,7 @@
  * Commands triggered via keybinding are treated as "immediate" - they execute right
  * away and preserve the user's existing input text (the prompt is not cleared).
  */
-import { useMemo } from 'react';
+
 import { useIsModalOverlayActive } from '../context/overlayContext.js';
 import { useOptionalKeybindingContext } from '../keybindings/KeybindingContext.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';

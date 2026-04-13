@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import { logError } from 'src/utils/log.js';
 import { getOriginalCwd } from '../../../bootstrap/state.js';
 import { Box, Text } from '../../../ink.js';
@@ -8,10 +8,9 @@ import { SkillTool } from '../../../tools/SkillTool/SkillTool.js';
 import { env } from '../../../utils/env.js';
 import { shouldShowAlwaysAllowOptions } from '../../../utils/permissions/permissionsLoader.js';
 import { logUnaryEvent } from '../../../utils/unaryLogging.js';
-import { type UnaryEvent, usePermissionRequestLogging } from '../hooks.js';
+import { usePermissionRequestLogging } from '../hooks.js';
 import { PermissionDialog } from '../PermissionDialog.js';
-import { PermissionPrompt, type PermissionPromptOption, type ToolAnalyticsContext } from '../PermissionPrompt.js';
-import type { PermissionRequestProps } from '../PermissionRequest.js';
+import { PermissionPrompt } from '../PermissionPrompt.js';
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js';
 type SkillOptionValue = 'yes' | 'yes-exact' | 'yes-prefix' | 'no';
 export function SkillPermissionRequest(props) {

@@ -1,7 +1,6 @@
 import figures from 'figures';
 import * as React from 'react';
 import type { SettingSource } from 'src/utils/settings/constants.js';
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
 import type { ResolvedAgent } from '../../tools/AgentTool/agentDisplay.js';
 import { AGENT_SOURCE_GROUPS, compareAgentsByName, getOverrideSourceLabel, resolveAgentModelDisplay } from '../../tools/AgentTool/agentDisplay.js';
