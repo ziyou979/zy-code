@@ -30,7 +30,7 @@ export function ShellProgressMessage({
   const lines = strippedOutput.split("\n").filter(line => line);
   const displayLines = verbose ? strippedFullOutput : lines.slice(-5).join("\n");
   if (!lines.length) {
-    return <MessageResponse><OffscreenFreeze>{<Text dimColor={true}>Running… </Text>}<ShellTimeDisplay elapsedTimeSeconds={elapsedTimeSeconds} timeoutMs={timeoutMs} /></OffscreenFreeze></MessageResponse>;
+    return <MessageResponse><OffscreenFreeze>{<Text dimColor={true}>{tSync('bash.running')} </Text>}<ShellTimeDisplay elapsedTimeSeconds={elapsedTimeSeconds} timeoutMs={timeoutMs} /></OffscreenFreeze></MessageResponse>;
   }
   const extraLines = totalLines ? Math.max(0, totalLines - 5) : 0;
   let lineStatus = "";

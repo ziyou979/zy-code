@@ -35,14 +35,14 @@ export function ExportDialog({
     columns
   } = useTerminalSize();
 
-  // Handle going back from filename input to option selection
+  // 处理从文件名输入返回到选项选择
   const handleGoBack = useCallback(() => {
     setShowFilenameInput(false);
     setSelectedOption(null);
   }, []);
   const handleSelectOption = async (value: string): Promise<void> => {
     if (value === 'clipboard') {
-      // Copy to clipboard immediately
+      // 立即复制到剪贴板
       const raw = await setClipboard(content);
       if (raw) process.stdout.write(raw);
       onDone({
@@ -74,8 +74,8 @@ export function ExportDialog({
     }
   };
 
-  // Dialog calls onCancel when Escape is pressed. If we are in the filename
-  // input sub-screen, go back to the option list instead of closing entirely.
+  // 按 Escape 时对话框调用 onCancel。如果我们在文件名输入子屏幕，
+  // 返回选项列表而不是完全关闭。
   const handleCancel = useCallback(() => {
     if (showFilenameInput) {
       handleGoBack();
@@ -96,7 +96,7 @@ export function ExportDialog({
     description: 'Save the conversation to a file in the current directory'
   }];
 
-  // Custom input guide that changes based on dialog state
+  // 根据对话框状态变化的自定义输入指南
   function renderInputGuide(exitState: ExitState): React.ReactNode {
     if (showFilenameInput) {
       return <Byline>
@@ -110,7 +110,7 @@ export function ExportDialog({
     return <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />;
   }
 
-  // Use Settings context so 'n' key doesn't cancel (allows typing 'n' in filename input)
+  // 使用 Settings 上下文，这样 'n' 键不会取消（允许在文件名输入中输入 'n'）
   useKeybinding('confirm:no', handleCancel, {
     context: 'Settings',
     isActive: showFilenameInput

@@ -7,9 +7,9 @@ import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { InVirtualListContext } from './messageActions.js';
 import { tSync } from '../i18n/index.js';
 
-// Context to track if we're inside a sub agent
-// Similar to MessageResponseContext, this helps us avoid showing
-// too many "(ctrl+o to expand)" hints in sub agent output
+// 上下文跟踪我们是否在子 agent 内
+// 类似于 MessageResponseContext，这帮助我们避免在子 agent 输出中显示
+// 太多 "(ctrl+o to expand)" 提示
 const SubAgentContext = React.createContext(false);
 export function SubAgentProvider({
   children

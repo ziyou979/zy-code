@@ -52,14 +52,14 @@ const SAFE_ERROR_THEME_NAME: ThemeName = 'dark';
 export async function showInvalidConfigDialog({
   error
 }: InvalidConfigHandlerProps): Promise<void> {
-  // Extend RenderOptions with theme property for this specific usage
+  // 为特定用途扩展 RenderOptions，添加 theme 属性
   type SafeRenderOptions = Parameters<typeof render>[1] & {
     theme?: ThemeName;
   };
   const renderOptions: SafeRenderOptions = {
     ...getBaseRenderOptions(false),
-    // IMPORTANT: Use hardcoded theme name to avoid circular dependency with getGlobalConfig()
-    // This allows the error dialog to show even when config file has JSON syntax errors
+    // 重要：使用硬编码的主题名称以避免与 getGlobalConfig() 的循环依赖
+    // 这使错误对话框即使在配置文件有 JSON 语法错误时也能显示
     theme: SAFE_ERROR_THEME_NAME
   };
   await new Promise<void>(async resolve => {

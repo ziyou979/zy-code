@@ -58,9 +58,9 @@ export function hasContentAfterIndex(messages: RenderableMessage[], index: numbe
         if (getToolSearchOrReadInfo(content.name, content.input, tools).isCollapsible) {
           continue;
         }
-        // Non-collapsible tool uses appear in syntheticStreamingToolUseMessages
-        // before their ID is added to inProgressToolUseIDs. Skip while streaming
-        // to avoid briefly finalizing the read group.
+        // 不可折叠的工具调用出现在 syntheticStreamingToolUseMessages 中
+        // 在其 ID 添加到 inProgressToolUseIDs 之前。流式处理期间跳过以避免
+        // 短暂 finalize read 组。
         if (streamingToolUseIDs.has(content.id)) {
           continue;
         }
@@ -70,15 +70,14 @@ export function hasContentAfterIndex(messages: RenderableMessage[], index: numbe
     if (msg?.type === 'system' || msg?.type === 'attachment') {
       continue;
     }
-    // Tool results arrive while the collapsed group is still being built
+    // 工具结果在折叠组仍在构建时到达
     if (msg?.type === 'user') {
       const content = msg.message.content[0];
       if (content?.type === 'tool_result') {
         continue;
       }
     }
-    // Collapsible grouped_tool_use messages arrive transiently before being
-    // merged into the current collapsed group on the next render cycle
+    // 可折叠的 grouped_tool_use 消息在合并到下一个渲染周期的当前折叠组之前短暂出现
     if (msg?.type === 'grouped_tool_use') {
       const firstInput = msg.messages[0]?.message.content[0]?.input;
       if (getToolSearchOrReadInfo(msg.toolName, firstInput, tools).isCollapsible) {
@@ -191,13 +190,13 @@ export function allToolsResolved(msg: RenderableMessage, resolvedToolUseIDs: Set
  * Exported for testing.
  */
 export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
-  // Different message reference = content may have changed, must re-render
+  // 不同的消息引用 = 内容可能已更改，必须重新渲染
   if (prev.message !== next.message) return false;
 
-  // Screen mode change = re-render
+  // 屏幕模式变化 = 重新渲染
   if (prev.screen !== next.screen) return false;
 
-  // Verbose toggle changes thinking block visibility
+  // verbose 切换改变思考块的可见性
   if (prev.verbose !== next.verbose) return false;
 
   // collapsed_read_search is never static in prompt mode (matches shouldRenderStatically)
@@ -205,7 +204,7 @@ export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
     return false;
   }
 
-  // Width change affects Box layout
+  // 宽度变化影响 Box 布局
   if (prev.columns !== next.columns) return false;
 
   // latestBashOutputUUID affects rendering (full vs truncated output)
@@ -220,14 +219,14 @@ export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
     return false;
   }
 
-  // Check if this message is still "in flight"
+  // 检查此消息是否仍在"传输中"
   const isStreaming = isMessageStreaming(prev.message, prev.streamingToolUseIDs);
   const isResolved = allToolsResolved(prev.message, prev.lookups.resolvedToolUseIDs);
 
-  // Only bail out for truly static messages
+  // 仅对真正静态的消息才跳出
   if (isStreaming || !isResolved) return false;
 
-  // Static message - safe to skip re-render
+  // 静态消息——可以安全跳过重新渲染
   return true;
 }
 export const MessageRow = React.memo(MessageRowImpl, areMessageRowPropsEqual);

@@ -21,7 +21,7 @@ export function TeleportStash({
   const [stashing, setStashing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load changed files on mount
+  // 挂载时加载更改的文件
   useEffect(() => {
     const loadChangedFiles = async () => {
       try {

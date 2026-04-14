@@ -12,14 +12,13 @@ export function tryFormatJson(line: string): string {
     const parsed = jsonParse(line);
     const stringified = jsonStringify(parsed);
 
-    // Check if precision was lost during JSON round-trip
-    // This happens when large integers exceed Number.MAX_SAFE_INTEGER
-    // We normalize both strings by removing whitespace and unnecessary
-    // escapes (\/ is valid but optional in JSON) for comparison
+    // 检查 JSON 往返过程中是否丢失精度
+    // 当大整数超过 Number.MAX_SAFE_INTEGER 时会发生这种情况
+    // 我们通过移除空白和不必要的转义（\/ 在 JSON 中有效但可选）来归一化两个字符串进行比较
     const normalizedOriginal = line.replace(/\\\//g, '/').replace(/\s+/g, '');
     const normalizedStringified = stringified.replace(/\s+/g, '');
     if (normalizedOriginal !== normalizedStringified) {
-      // Precision loss detected - return original line unformatted
+      // 检测到精度损失——返回未格式化的原始行
       return line;
     }
     return jsonStringify(parsed, null, 2);
@@ -36,8 +35,8 @@ export function tryJsonFormatContent(content: string): string {
   return allLines.map(tryFormatJson).join('\n');
 }
 
-// Match http(s) URLs inside JSON string values. Conservative: no quotes,
-// no whitespace, no trailing comma/brace that'd be JSON structure.
+// 匹配 JSON 字符串值中的 http(s) URL。保守：无引号、
+// 无空白、无尾随逗号/大括号等 JSON 结构。
 const URL_IN_JSON = /https?:\/\/[^\s"'<>\\]+/g;
 export function linkifyUrlsInText(content: string): string {
   return content.replace(URL_IN_JSON, url => createHyperlink(url));

@@ -53,7 +53,7 @@ export function Passes({
   useEffect(() => {
     async function loadPassesData() {
       try {
-        // Check eligibility first (uses cache if available)
+        // 首先检查资格（如果可用则使用缓存）
         const eligibilityData = await getCachedOrFetchPassesEligibility();
         if (!eligibilityData || !eligibilityData.eligible) {
           setIsAvailable(false);
@@ -62,18 +62,18 @@ export function Passes({
         }
         setIsAvailable(true);
 
-        // Store the referral link if available
+        // 存储推荐链接（如果可用）
         if (eligibilityData.referral_code_details?.referral_link) {
           setReferralLink(eligibilityData.referral_code_details.referral_link);
         }
 
-        // Store referrer reward info for v1 campaign messaging
+        // 存储推荐人奖励信息用于 v1 活动消息
         setReferrerReward(eligibilityData.referrer_reward);
 
-        // Use the campaign returned from eligibility for redemptions
+        // 使用资格返回的活动进行兑换
         const campaign = eligibilityData.referral_code_details?.campaign ?? 'zy_code_guest_pass';
 
-        // Fetch redemptions data
+        // 获取兑换数据
         let redemptionsData: ReferralRedemptionsResponse;
         try {
           redemptionsData = await fetchReferralRedemptions(campaign);
@@ -84,7 +84,7 @@ export function Passes({
           return;
         }
 
-        // Build pass statuses array
+        // 构建通行证状态数组
         const redemptions = redemptionsData.redemptions || [];
         const maxRedemptions = redemptionsData.limit || 3;
         const statuses: PassStatus[] = [];
@@ -98,7 +98,7 @@ export function Passes({
         setPassStatuses(statuses);
         setLoading(false);
       } catch (err) {
-        // For any error, just show passes as not available
+        // 对于任何错误，都显示通行证不可用
         logError(err as Error);
         setIsAvailable(false);
         setLoading(false);
@@ -128,14 +128,14 @@ export function Passes({
   }
   const availableCount = count(passStatuses, p => p.isAvailable);
 
-  // Sort passes: available first, then redeemed
+  // 排序通行证：可用的在前，然后已兑换的
   const sortedPasses = [...passStatuses].sort((a, b) => +b.isAvailable - +a.isAvailable);
 
-  // ASCII art for tickets
+  // 票证的 ASCII 艺术
   const renderTicket = (pass: PassStatus) => {
     const isRedeemed = !pass.isAvailable;
     if (isRedeemed) {
-      // Grayed out redeemed ticket with slashes
+      // 灰显已兑换的票证，带斜线
       return <Box key={pass.passNumber} flexDirection="column" marginRight={1}>
           <Text dimColor>{'┌─────────╱'}</Text>
           <Text dimColor>{` ) CC ${TEARDROP_ASTERISK} ┊╱`}</Text>

@@ -15,11 +15,11 @@ export function LspRecommendationMenu({
   fileExtension,
   onResponse
 }: Props): React.ReactNode {
-  // Use ref to avoid timer reset when onResponse changes
+  // 使用 ref 避免 onResponse 变化时重置定时器
   const onResponseRef = React.useRef(onResponse);
   onResponseRef.current = onResponse;
 
-  // 30-second auto-dismiss timer - counts as ignored (no)
+  // 30 秒自动关闭定时器——计为忽略（no）
   React.useEffect(() => {
     const timeoutId = setTimeout(ref => ref.current('no'), AUTO_DISMISS_MS, onResponseRef);
     return () => clearTimeout(timeoutId);

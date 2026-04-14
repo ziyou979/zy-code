@@ -5,6 +5,7 @@ import type { z } from 'zod/v4';
 import { ProgressBar } from '../../components/design-system/ProgressBar.js';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { linkifyUrlsInText, OutputLine } from '../../components/shell/OutputLine.js';
+import { tSync } from '../../i18n/index.js';
 import { stringWidth } from '../../ink/stringWidth.js';
 import { Ansi, Box, Text } from '../../ink.js';
 import type { ToolProgressData } from '../../Tool.js';
@@ -57,7 +58,7 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
   const lastProgress = progressMessagesForMessage.at(-1);
   if (!lastProgress?.data) {
     return <MessageResponse height={1}>
-        <Text dimColor>Running…</Text>
+        <Text dimColor>{tSync('bash.running')}</Text>
       </MessageResponse>;
   }
   const {
@@ -67,7 +68,7 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
   } = lastProgress.data;
   if (progress === undefined) {
     return <MessageResponse height={1}>
-        <Text dimColor>Running…</Text>
+        <Text dimColor>{tSync('bash.running')}</Text>
       </MessageResponse>;
   }
   if (total !== undefined && total > 0) {

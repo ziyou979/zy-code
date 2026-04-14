@@ -21,9 +21,9 @@ export function MessageResponse({
   return <Ratchet lock="offscreen">{content}</Ratchet>;
 }
 
-// This is a context that is used to determine if the message response
-// is rendered as a descendant of another MessageResponse. We use it
-// to avoid rendering nested ⎿ characters.
+// 此上下文用于确定消息响应是否
+// 作为另一个 MessageResponse 的后代渲染。我们用它
+// 来避免渲染嵌套的 ⎿ 字符。
 let MessageResponseContext;
 MessageResponseContext = React.createContext(false);
 function MessageResponseProvider({

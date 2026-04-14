@@ -143,8 +143,7 @@ function EffortLevelIndicator({
 }
 function cycleEffortLevel(current: EffortLevel, direction: 'left' | 'right', includeMax: boolean): EffortLevel {
   const levels: EffortLevel[] = includeMax ? ['low', 'medium', 'high', 'max'] : ['low', 'medium', 'high'];
-  // If the current level isn't in the cycle (e.g. 'max' after switching to a
-  // non-Opus model), clamp to 'high'.
+  // 如果当前级别不在循环中（例如切换到非 Opus 模型后的 'max'），钳位到 'high'。
   const idx = levels.indexOf(current);
   const currentIndex = idx !== -1 ? idx : levels.indexOf('high');
   if (direction === 'right') {

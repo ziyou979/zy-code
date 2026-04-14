@@ -1,29 +1,28 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 
 /**
- * GrowthBook config for time-based microcompact.
+ * 基于时间的 microcompact 的 GrowthBook 配置。
  *
- * Triggers content-clearing microcompact when the gap since the last main-loop
- * assistant message exceeds a threshold — the server-side prompt cache has
- * almost certainly expired, so the full prefix will be rewritten anyway.
- * Clearing old tool results before the request shrinks what gets rewritten.
+ * 当距上次主循环助手消息的间隔超过阈值时触发内容清除
+ * microcompact — 服务器端提示缓存几乎肯定已过期，
+ * 因此完整前缀无论如何都会被重写。在请求之前清除旧工具结果
+ * 可以缩小被重写的内容。
  *
- * Runs BEFORE the API call (in microcompactMessages, upstream of callModel)
- * so the shrunk prompt is what actually gets sent. Running after the first
- * miss would only help subsequent turns.
+ * 在 API 调用之前运行（在 microcompactMessages 中，callModel 的上游），
+ * 以便收缩后的提示是实际发送的内容。在第一次未命中之后运行
+ * 只对后续轮次有帮助。
  *
- * Main thread only — subagents have short lifetimes where gap-based eviction
- * doesn't apply.
+ * 仅主线程 — 子代理的生存期很短，基于间隔的驱逐不适用。
  */
 export type TimeBasedMCConfig = {
-  /** Master switch. When false, time-based microcompact is a no-op. */
+  /** 主开关。为 false 时，基于时间的 microcompact 是空操作。 */
   enabled: boolean
-  /** Trigger when (now − last assistant timestamp) exceeds this many minutes.
-   *  60 is the safe choice: the server's 1h cache TTL is guaranteed expired
-   *  for all users, so we never force a miss that wouldn't have happened. */
+  /** 当（现在 − 上次助手时间戳）超过此分钟数时触发。
+   *  60 是安全选择：服务器的 1 小时缓存 TTL 保证对所有用户都已过期，
+   *  所以我们永远不会强制一个本不会发生的未命中。 */
   gapThresholdMinutes: number
-  /** Keep this many most-recent compactable tool results.
-   *  When set, takes priority over any default; older results are cleared. */
+  /** 保留最近多少个可压缩的工具结果。
+   *  设置时优先于任何默认值；更旧的结果将被清除。 */
   keepRecent: number
 }
 
@@ -34,8 +33,8 @@ const TIME_BASED_MC_CONFIG_DEFAULTS: TimeBasedMCConfig = {
 }
 
 export function getTimeBasedMCConfig(): TimeBasedMCConfig {
-  // Hoist the GB read so exposure fires on every eval path, not just when
-  // the caller's other conditions (querySource, messages.length) pass.
+  // 提升 GB 读取，使曝光在每个求值路径上触发，而不仅是
+  // 当调用者的其他条件（querySource、messages.length）通过时。
   return getFeatureValue_CACHED_MAY_BE_STALE<TimeBasedMCConfig>(
     'tengu_slate_heron',
     TIME_BASED_MC_CONFIG_DEFAULTS,

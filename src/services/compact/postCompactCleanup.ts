@@ -10,29 +10,27 @@ import { clearBetaTracingState } from '../../utils/telemetry/betaSessionTracing.
 import { resetMicrocompactState } from './microCompact.js'
 
 /**
- * Run cleanup of caches and tracking state after compaction.
- * Call this after both auto-compact and manual /compact to free memory
- * held by tracking structures that are invalidated by compaction.
+ * 在压缩后运行缓存和跟踪状态的清理。
+ * 在自动压缩和手动 /compact 后调用此函数，以释放
+ * 被压缩无效化的跟踪结构所持有的内存。
  *
- * Note: We intentionally do NOT clear invoked skill content here.
- * Skill content must survive across multiple compactions so that
- * createSkillAttachmentIfNeeded() can include the full skill text
- * in subsequent compaction attachments.
+ * 注意：我们有意不在此处清除已调用技能的内容。
+ * 技能内容必须在多次压缩之间保持存活，以便
+ * createSkillAttachmentIfNeeded() 可以在后续压缩附件中包含完整技能文本。
  *
- * querySource: pass the compacting query's source so we can skip
- * resets that would clobber main-thread module-level state. Subagents
- * (agent:*) run in the same process and share module-level state
- * (context-collapse store, getMemoryFiles one-shot hook flag,
- * getUserContext cache); resetting those when a SUBAGENT compacts
- * would corrupt the MAIN thread's state. All compaction callers should
- * pass querySource — undefined is only safe for callers that are
- * genuinely main-thread-only (/compact, /clear).
+ * querySource：传递压缩查询的源，以便我们可以跳过
+ * 会破坏主线程模块级状态的重置。子代理（agent:*）
+ * 在同一进程中运行并共享模块级状态
+ * （context-collapse 存储、getMemoryFiles 一次性钩子标志、
+ * getUserContext 缓存）；当子代理压缩时重置这些会
+ * 损坏主线程的状态。所有压缩调用者都应传递 querySource —
+ * undefined 仅对真正的主线程专用调用者安全（/compact、/clear）。
  */
 export function runPostCompactCleanup(querySource?: QuerySource): void {
-  // Subagents (agent:*) run in the same process and share module-level
-  // state with the main thread. Only reset main-thread module-level state
-  // (context-collapse, memory file cache) for main-thread compacts.
-  // Same startsWith pattern as isMainThread (index.ts:188).
+  // 子代理（agent:*）在同一进程中运行并与主线程共享模块级
+  // 状态。仅为主线程压缩重置主线程模块级状态
+  // （context-collapse、memory 文件缓存）。
+  // 使用与 isMainThread 相同的 startsWith 模式（index.ts:188）。
   const isMainThreadCompact =
     querySource === undefined ||
     querySource.startsWith('repl_main_thread') ||
@@ -49,13 +47,12 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
     }
   }
   if (isMainThreadCompact) {
-    // getUserContext is a memoized outer layer wrapping getzyMds() →
-    // getMemoryFiles(). If only the inner getMemoryFiles cache is cleared,
-    // the next turn hits the getUserContext cache and never reaches
-    // getMemoryFiles(), so the armed InstructionsLoaded hook never fires.
-    // Manual /compact already clears this explicitly at its call sites;
-    // auto-compact and reactive-compact did not — this centralizes the
-    // clear so all compaction paths behave consistently.
+    // getUserContext 是包装 getzyMds() → getMemoryFiles() 的 memoized 外层。
+    // 如果只清除内层的 getMemoryFiles 缓存，下次点击会命中
+    // getUserContext 缓存而永远不会到达 getMemoryFiles()，因此已武装的
+    // InstructionsLoaded 钩子永远不会触发。
+    // 手动 /compact 已在其调用站点显式清除此项；
+    // 自动压缩和响应式压缩没有 — 这集中了清除，使所有压缩路径行为一致。
     getUserContext.cache.clear?.()
     resetGetMemoryFilesCache('compact')
   }

@@ -2,6 +2,7 @@ import { basename, sep } from 'path';
 import React, { type ReactNode } from 'react';
 import { getOriginalCwd } from '../../bootstrap/state.js';
 import { Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js';
 import { permissionRuleExtractPrefix } from '../../utils/permissions/shellRuleMatching.js';
 function commandListDisplay(commands: string[]): ReactNode {
@@ -95,14 +96,14 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
       const firstPath = readPaths[0]!;
       const dirName = basename(firstPath) || firstPath;
       return <Text>
-          Yes, allow reading from <Text bold>{dirName}</Text>
-          {sep} from this project
+          {tSync('permission.yesAllowReadSinglePath', { dir: dirName })}
+          {sep} {tSync('permission.fromThisProject')}
         </Text>;
     }
 
     // Multiple read paths
     return <Text>
-        Yes, allow reading from {formatPathList(readPaths)} from this project
+        {tSync('permission.yesAllowReadMultiplePathsStart')} {formatPathList(readPaths)} {tSync('permission.fromThisProject')}
       </Text>;
   }
   if (hasDirectories && !hasReadPaths && !hasCommands) {

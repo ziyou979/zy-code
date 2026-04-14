@@ -13,6 +13,7 @@ import { Message as MessageComponent } from '../../components/Message.js';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { ToolUseLoader } from '../../components/ToolUseLoader.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js';
 import { findToolByName, type Tools } from '../../Tool.js';
 import type { Message, ProgressMessage } from '../../types/message.js';
@@ -402,8 +403,7 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
     } = getProgressStats();
     return <MessageResponse height={1}>
         <Text dimColor>
-          In progress… · <Text bold>{toolUseCount}</Text> tool{' '}
-          {toolUseCount === 1 ? 'use' : 'uses'}
+          {tSync('agent.inProgress')}… · <Text bold>{toolUseCount}</Text> {tSync(toolUseCount === 1 ? 'agent.toolUse_one' : 'agent.toolUse_other', { count: toolUseCount })}
           {tokens && ` · ${formatNumber(tokens)} tokens`} ·{' '}
           <ConfigurableShortcutHint action="app:toggleTranscript" context="Global" fallback="ctrl+o" description="expand" parens />
         </Text>

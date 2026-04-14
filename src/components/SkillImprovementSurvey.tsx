@@ -37,7 +37,7 @@ type ViewProps = {
   setInputValue: (value: string) => void;
 };
 
-// Only 1 (apply) and 0 (dismiss) are valid for this survey
+// 仅 1（应用）和 0（关闭）对此调查有效
 const VALID_INPUTS = ['0', '1'] as const;
 function isValidInput(input: string): boolean {
   return (VALID_INPUTS as readonly string[]).includes(input);

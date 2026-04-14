@@ -5,6 +5,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { ShellProgressMessage } from '../../components/shell/ShellProgressMessage.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js';
@@ -110,7 +111,7 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
   const lastProgress = progressMessagesForMessage.at(-1);
   if (!lastProgress || !lastProgress.data) {
     return <MessageResponse height={1}>
-        <Text dimColor>Running…</Text>
+        <Text dimColor>{tSync('bash.running')}</Text>
       </MessageResponse>;
   }
   const data = lastProgress.data;

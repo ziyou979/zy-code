@@ -28,7 +28,8 @@ const actionKeyMap: Record<string, string> = {
   'explain': 'permission.explain',
   'hide': 'permission.hide',
   'add': 'common.add',
-  'complete': 'common.complete'
+  'complete': 'common.complete',
+  'stop agents': 'shortcut.stopAgents'
 };
 
 /**
@@ -42,15 +43,15 @@ export function KeyboardShortcutHint({
   parens = false,
   bold = false
 }: Props) {
-  const shortcutText = bold ? <Text bold={true}>{shortcut}</Text> : shortcut;
   // Look up the action in the key map; fall back to raw action string
   const actionKey = actionKeyMap[action];
   const actionText = actionKey ? tSync(actionKey) : action;
+  const shortcutValue = bold ? <Text bold={true}>{shortcut}</Text> : shortcut;
   const template = parens ? tSync('shortcut.hintParens', {
-    shortcut: shortcutText,
+    shortcut: shortcutValue,
     action: actionText
   }) : tSync('shortcut.hint', {
-    shortcut: shortcutText,
+    shortcut: shortcutValue,
     action: actionText
   });
   return <Text>{template}</Text>;

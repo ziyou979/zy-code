@@ -25,11 +25,11 @@ import {
 import { runPostCompactCleanup } from './postCompactCleanup.js'
 import { trySessionMemoryCompaction } from './sessionMemoryCompact.js'
 
-// Reserve this many tokens for output during compaction
-// Based on p99.99 of compact summary output being 17,387 tokens.
+// 压缩期间为输出保留这么多令牌
+// 基于 p99.99 的压缩摘要输出为 17,387 令牌。
 const MAX_OUTPUT_TOKENS_FOR_SUMMARY = 20_000
 
-// Returns the context window size minus the max output tokens for the model
+// 返回上下文窗口大小减去模型的最大输出令牌数
 export function getEffectiveContextWindowSize(model: string): number {
   const reservedTokensForSummary = Math.min(
     getMaxOutputTokensForModel(model),
@@ -51,11 +51,11 @@ export function getEffectiveContextWindowSize(model: string): number {
 export type AutoCompactTrackingState = {
   compacted: boolean
   turnCounter: number
-  // Unique ID per turn
+  // 每轮唯一 ID
   turnId: string
-  // Consecutive autocompact failures. Reset on success.
-  // Used as a circuit breaker to stop retrying when the context is
-  // irrecoverably over the limit (e.g., prompt_too_long).
+  // 连续自动压缩失败次数。成功时重置。
+  // 用作断路器，在上下文不可恢复地超过
+  // 限制时停止重试（例如 prompt_too_long）。
   consecutiveFailures?: number
 }
 
@@ -64,9 +64,9 @@ export const WARNING_THRESHOLD_BUFFER_TOKENS = 20_000
 export const ERROR_THRESHOLD_BUFFER_TOKENS = 20_000
 export const MANUAL_COMPACT_BUFFER_TOKENS = 3_000
 
-// Stop trying autocompact after this many consecutive failures.
-// BQ 2026-03-10: 1,279 sessions had 50+ consecutive failures (up to 3,272)
-// in a single session, wasting ~250K API calls/day globally.
+// 在这么多连续失败后停止尝试自动压缩。
+// BQ 2026-03-10：1,279 个会话有 50+ 连续失败（最多 3,272）
+// 在单个会话中，全球每天浪费约 250K API 调用。
 const MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3
 
 export function getAutoCompactThreshold(model: string): number {
@@ -75,7 +75,7 @@ export function getAutoCompactThreshold(model: string): number {
   const autocompactThreshold =
     effectiveContextWindow - AUTOCOMPACT_BUFFER_TOKENS
 
-  // Override for easier testing of autocompact
+  // 便于测试自动压缩的覆盖
   const envPercent = process.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
   if (envPercent) {
     const parsed = parseFloat(envPercent)
@@ -148,11 +148,11 @@ export function isAutoCompactEnabled(): boolean {
   if (isEnvTruthy(process.env.DISABLE_COMPACT)) {
     return false
   }
-  // Allow disabling just auto-compact (keeps manual /compact working)
+  // 允许禁用仅自动压缩（保持手动 /compact 工作）
   if (isEnvTruthy(process.env.DISABLE_AUTO_COMPACT)) {
     return false
   }
-  // Check if user has disabled auto-compact in their settings
+  // 检查用户是否在其设置中禁用了自动压缩
   const userConfig = getGlobalConfig()
   return userConfig.autoCompactEnabled
 }
@@ -161,21 +161,20 @@ export async function shouldAutoCompact(
   messages: Message[],
   model: string,
   querySource?: QuerySource,
-  // Snip removes messages but the surviving assistant's usage still reflects
-  // pre-snip context, so tokenCountWithEstimation can't see the savings.
-  // Subtract the rough-delta that snip already computed.
+  // Snip 移除消息但存活的助手的用法仍然反映
+  // 压缩前的上下文，所以 tokenCountWithEstimation 看不到节省。
+  // 减去 snip 已经计算的粗略增量。
   snipTokensFreed = 0,
 ): Promise<boolean> {
-  // Recursion guards. session_memory and compact are forked agents that
-  // would deadlock.
+  // 递归守卫。session_memory 和 compact 是分叉代理，会导致死锁。
   if (querySource === 'session_memory' || querySource === 'compact') {
     return false
   }
-  // marble_origami is the ctx-agent — if ITS context blows up and
-  // autocompact fires, runPostCompactCleanup calls resetContextCollapse()
-  // which destroys the MAIN thread's committed log (module-level state
-  // shared across forks). Inside feature() so the string DCEs from
-  // external builds (it's in excluded-strings.txt).
+  // marble_origami 是 ctx-agent — 如果它的上下文爆炸并且
+  // 自动压缩触发，runPostCompactCleanup 调用 resetContextCollapse()
+  // 这会破坏主线程的提交日志（跨分叉共享的模块级状态）。
+  // 放在 feature() 内以便该字符串从外部构建中 DCE
+  // （在 excluded-strings.txt 中）。
   if (feature('CONTEXT_COLLAPSE')) {
     if (querySource === 'marble_origami') {
       return false
@@ -186,32 +185,32 @@ export async function shouldAutoCompact(
     return false
   }
 
-  // Reactive-only mode: suppress proactive autocompact, let reactive compact
-  // catch the API's prompt-too-long. feature() wrapper keeps the flag string
-  // out of external builds (REACTIVE_COMPACT is ant-only).
-  // Note: returning false here also means autoCompactIfNeeded never reaches
-  // trySessionMemoryCompaction in the query loop — the /compact call site
-  // still tries session memory first. Revisit if reactive-only graduates.
+  // 仅响应式模式：抑制主动自动压缩，让响应式压缩捕获
+  // API 的 prompt-too-long。feature() 包装器保持标志字符串
+  // 不进入外部构建（REACTIVE_COMPACT 是 ant 专用）。
+  // 注意：此处返回 false 也意味着 autoCompactIfNeeded 永远不会到达
+  // 查询循环中的 trySessionMemoryCompaction — /compact 调用站点
+  // 仍然首先尝试会话内存。如果响应式模式毕业则重新审视。
   if (feature('REACTIVE_COMPACT')) {
     if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_raccoon', false)) {
       return false
     }
   }
 
-  // Context-collapse mode: same suppression. Collapse IS the context
-  // management system when it's on — the 90% commit / 95% blocking-spawn
-  // flow owns the headroom problem. Autocompact firing at effective-13k
-  // (~93% of effective) sits right between collapse's commit-start (90%)
-  // and blocking (95%), so it would race collapse and usually win, nuking
-  // granular context that collapse was about to save. Gating here rather
-  // than in isAutoCompactEnabled() keeps reactiveCompact alive as the 413
-  // fallback (it consults isAutoCompactEnabled directly) and leaves
-  // sessionMemory + manual /compact working.
+  // 上下文折叠模式：相同的抑制。折叠 IS 上下文
+  // 管理系统 — 90% 提交 / 95% 阻塞生成的流拥有
+  // 余量问题。自动压缩在有效 13k 时触发
+  // （有效的约 93%），正好位于折叠的提交开始（90%）
+  // 和阻塞（95%）之间，所以它会与折叠竞争并通常获胜，
+  // 摧毁折叠即将保存的细粒度上下文。在这里门控而不是
+  // 在 isAutoCompactEnabled() 中保持 reactiveCompact 作为 413
+  // 回退（它直接咨询 isAutoCompactEnabled）并让
+  // sessionMemory + 手动 /compact 工作。
   //
-  // Consult isContextCollapseEnabled (not the raw gate) so the
-  // CLAUDE_CONTEXT_COLLAPSE env override is honored here too. require()
-  // inside the block breaks the init-time cycle (this file exports
-  // getEffectiveContextWindowSize which collapse's index imports).
+  // 咨询 isContextCollapseEnabled（而非原始门），以便
+  // CLAUDE_CONTEXT_COLLAPSE 环境变量覆盖也在此处得到尊重。
+  // require() 在块内打破初始化时的循环（此文件导出
+  // getEffectiveContextWindowSize，折叠的 index 导入它）。
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { isContextCollapseEnabled } =
@@ -254,9 +253,9 @@ export async function autoCompactIfNeeded(
     return { wasCompacted: false }
   }
 
-  // Circuit breaker: stop retrying after N consecutive failures.
-  // Without this, sessions where context is irrecoverably over the limit
-  // hammer the API with doomed compaction attempts on every turn.
+  // 断路器：在 N 次连续失败后停止重试。
+  // 没有这个，上下文不可恢复地超过限制的会话
+  // 会在每轮用注定失败的压缩尝试轰炸 API。
   if (
     tracking?.consecutiveFailures !== undefined &&
     tracking.consecutiveFailures >= MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES
@@ -284,21 +283,21 @@ export async function autoCompactIfNeeded(
     querySource,
   }
 
-  // EXPERIMENT: Try session memory compaction first
+  // 实验：首先尝试会话内存压缩
   const sessionMemoryResult = await trySessionMemoryCompaction(
     messages,
     toolUseContext.agentId,
     recompactionInfo.autoCompactThreshold,
   )
   if (sessionMemoryResult) {
-    // Reset lastSummarizedMessageId since session memory compaction prunes messages
-    // and the old message UUID will no longer exist after the REPL replaces messages
+    // 重置 lastSummarizedMessageId，因为会话内存压缩会修剪消息
+    // 并且在 REPL 替换消息后旧的消息 UUID 将不再存在
     setLastSummarizedMessageId(undefined)
     runPostCompactCleanup(querySource)
-    // Reset cache read baseline so the post-compact drop isn't flagged as a
-    // break. compactConversation does this internally; SM-compact doesn't.
-    // BQ 2026-03-01: missing this made 20% of tengu_prompt_cache_break events
-    // false positives (systemPromptChanged=true, timeSinceLastAssistantMsg=-1).
+    // 重置缓存读取基线，以便压缩后的下降不被标记为
+    // 中断。compactConversation 在内部执行此操作；SM 压缩不执行。
+    // BQ 2026-03-01：缺少此项使 20% 的 tengu_prompt_cache_break 事件
+    // 成为误报（systemPromptChanged=true, timeSinceLastAssistantMsg=-1）。
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
       notifyCompaction(querySource ?? 'compact', toolUseContext.agentId)
     }
@@ -314,30 +313,30 @@ export async function autoCompactIfNeeded(
       messages,
       toolUseContext,
       cacheSafeParams,
-      true, // Suppress user questions for autocompact
-      undefined, // No custom instructions for autocompact
+      true, // 为自动压缩抑制用户问题
+      undefined, // 自动压缩无自定义指令
       true, // isAutoCompact
       recompactionInfo,
     )
 
-    // Reset lastSummarizedMessageId since legacy compaction replaces all messages
-    // and the old message UUID will no longer exist in the new messages array
+    // 重置 lastSummarizedMessageId，因为传统压缩会替换所有消息
+    // 并且旧的消息 UUID 将不再存在于新的消息数组中
     setLastSummarizedMessageId(undefined)
     runPostCompactCleanup(querySource)
 
     return {
       wasCompacted: true,
       compactionResult,
-      // Reset failure count on success
+      // 成功时重置失败计数
       consecutiveFailures: 0,
     }
   } catch (error) {
     if (!hasExactErrorMessage(error, ERROR_MESSAGE_USER_ABORT)) {
       logError(error)
     }
-    // Increment consecutive failure count for circuit breaker.
-    // The caller threads this through autoCompactTracking so the
-    // next query loop iteration can skip futile retry attempts.
+    // 增加连续失败计数以供断路器使用。
+    // 调用者通过 autoCompactTracking 传递此值，以便
+    // 下次查询循环迭代可以跳过无效的重试尝试。
     const prevFailures = tracking?.consecutiveFailures ?? 0
     const nextFailures = prevFailures + 1
     if (nextFailures >= MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES) {

@@ -11,11 +11,11 @@ const MAX_LINES_TO_RENDER = 10;
 type Props = {
   file_path: string;
   operation: 'write' | 'update';
-  // For updates - show diff
+  // 对于更新——显示 diff
   patch?: StructuredPatchHunk[];
   firstLine: string | null;
   fileContent?: string;
-  // For new file creation - show content preview
+  // 对于新文件创建——显示内容预览
   content?: string;
   style?: 'condensed';
   verbose: boolean;

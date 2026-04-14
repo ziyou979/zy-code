@@ -503,6 +503,9 @@ export const en: TranslationResource = {
   'permission.yesAllowEditsThisSession': 'Yes, allow all edits during this session ({shortcut})',
   'permission.yesAllowReadThisSession': 'Yes, during this session',
   'permission.yesAllowReadFromDir': 'Yes, allow reading from {dir}/ during this session',
+  'permission.yesAllowReadSinglePath': 'Yes, allow reading from {dir}/',
+  'permission.yesAllowReadMultiplePathsStart': 'Yes, allow reading from',
+  'permission.fromThisProject': 'from this project',
   'permission.yesAllowEditsInDir': 'Yes, allow all edits in {dir}/ during this session ({shortcut})',
   'permission.yesAllowZyFolderEdits': 'Yes, and allow Zy to edit its own settings for this session',
   'permission.yesInstallPlugin': 'Yes, install {pluginName}',
@@ -516,4 +519,13 @@ export const en: TranslationResource = {
   'permission.deleteAllowedTool': 'Delete allowed tool?',
   'permission.deleteDeniedTool': 'Delete denied tool?',
   'permission.deleteAskTool': 'Delete ask tool?',
+
+  // Shortcut hints
+  'shortcut.stopAgents': 'stop agents',
+  'common.running': 'Running',
+
+  // Agent tool
+  'agent.inProgress': 'In progress…',
+  'agent.toolUse_one': 'tool use',
+  'agent.toolUse_other': 'tool uses',
 }

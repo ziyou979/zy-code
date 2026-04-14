@@ -621,6 +621,9 @@ export const zhCN: TranslationResource = {
   'permission.yesAllowEditsThisSession': '是，允许本次会话中的所有编辑 ({shortcut})',
   'permission.yesAllowReadThisSession': '是，本次会话期间允许读取',
   'permission.yesAllowReadFromDir': '是，允许本次会话中从 {dir}/ 读取',
+  'permission.yesAllowReadSinglePath': '是，允许读取 {dir}/',
+  'permission.yesAllowReadMultiplePathsStart': '是，允许读取',
+  'permission.fromThisProject': '从此项目中',
   'permission.yesAllowEditsInDir': '是，允许本次会话中对 {dir}/ 的所有编辑 ({shortcut})',
   'permission.yesAllowZyFolderEdits': '是，允许 ZY 在本次会话中编辑自己的设置',
   'permission.yesInstallPlugin': '是，安装 {pluginName}',
@@ -634,4 +637,13 @@ export const zhCN: TranslationResource = {
   'permission.deleteAllowedTool': '删除已允许的工具？',
   'permission.deleteDeniedTool': '删除已拒绝的工具？',
   'permission.deleteAskTool': '删除需确认的工具？',
+
+  // 快捷键提示
+  'shortcut.stopAgents': '停止 agent',
+  'common.running': '运行中',
+
+  // Agent 工具
+  'agent.inProgress': '进行中…',
+  'agent.toolUse_one': '次工具使用',
+  'agent.toolUse_other': '次工具使用',
 }

@@ -35,8 +35,8 @@ export function effortLevelToSymbol(level: EffortLevel): string {
     case 'max':
       return EFFORT_MAX
     default:
-      // Defensive: level can originate from remote config. If an unknown
-      // value slips through, render the high symbol rather than undefined.
+      // 防御性：level 可能来自远程配置。如果有未知值漏过，
+      // 渲染 high 符号而非 undefined。
       return EFFORT_HIGH
   }
 }

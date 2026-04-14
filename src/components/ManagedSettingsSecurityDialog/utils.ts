@@ -15,11 +15,11 @@ export type DangerousSettings = {
 }
 
 /**
- * Extract dangerous settings from a settings object.
+ * 从设置对象中提取危险设置。
  *
- * Dangerous env vars are determined by checking against SAFE_ENV_VARS -
- * any env var NOT in SAFE_ENV_VARS is considered dangerous.
- * See managedEnv.ts for the authoritative list and threat categories.
+ * 危险环境变量通过与 SAFE_ENV_VARS 检查确定——
+ * 不在 SAFE_ENV_VARS 中的任何环境变量都被视为危险。
+ * 参见 managedEnv.ts 获取权威列表和威胁类别。
  */
 export function extractDangerousSettings(
   settings: SettingsJson | null | undefined,
@@ -32,7 +32,7 @@ export function extractDangerousSettings(
     }
   }
 
-  // Extract dangerous shell settings
+  // 提取危险的 shell 设置
   const shellSettings: Partial<Record<DangerousShellSetting, string>> = {}
   for (const key of DANGEROUS_SHELL_SETTINGS) {
     const value = settings[key]
@@ -41,12 +41,12 @@ export function extractDangerousSettings(
     }
   }
 
-  // Extract dangerous env vars - any var NOT in SAFE_ENV_VARS is dangerous
+  // 提取危险的环境变量——不在 SAFE_ENV_VARS 中的变量都是危险的
   const envVars: Record<string, string> = {}
   if (settings.env && typeof settings.env === 'object') {
     for (const [key, value] of Object.entries(settings.env)) {
       if (typeof value === 'string' && value.length > 0) {
-        // Check if this env var is NOT in the safe list
+        // 检查此环境变量是否不在安全列表中
         if (!SAFE_ENV_VARS.has(key.toUpperCase())) {
           envVars[key] = value
         }
@@ -54,7 +54,7 @@ export function extractDangerousSettings(
     }
   }
 
-  // Check for hooks
+  // 检查是否有 hooks
   const hasHooks =
     settings.hooks !== undefined &&
     settings.hooks !== null &&
@@ -70,7 +70,7 @@ export function extractDangerousSettings(
 }
 
 /**
- * Check if settings contain any dangerous settings
+ * 检查设置是否包含任何危险设置
  */
 export function hasDangerousSettings(dangerous: DangerousSettings): boolean {
   return (
@@ -81,8 +81,8 @@ export function hasDangerousSettings(dangerous: DangerousSettings): boolean {
 }
 
 /**
- * Compare two sets of dangerous settings to see if the new settings
- * have changed or added dangerous settings compared to the old settings
+ * 比较两组危险设置，查看新设置与旧设置相比
+ * 是否更改或添加了危险设置
  */
 export function hasDangerousSettingsChanged(
   oldSettings: SettingsJson | null | undefined,
@@ -91,17 +91,17 @@ export function hasDangerousSettingsChanged(
   const oldDangerous = extractDangerousSettings(oldSettings)
   const newDangerous = extractDangerousSettings(newSettings)
 
-  // If new settings don't have any dangerous settings, no prompt needed
+  // 如果新设置没有任何危险设置，不需要提示
   if (!hasDangerousSettings(newDangerous)) {
     return false
   }
 
-  // If old settings didn't have dangerous settings but new does, prompt needed
+  // 如果旧设置没有危险设置但新设置有，需要提示
   if (!hasDangerousSettings(oldDangerous)) {
     return true
   }
 
-  // Compare the dangerous settings - any change triggers a prompt
+  // 比较危险设置——任何变化都会触发提示
   const oldJson = jsonStringify({
     shellSettings: oldDangerous.shellSettings,
     envVars: oldDangerous.envVars,
@@ -117,25 +117,25 @@ export function hasDangerousSettingsChanged(
 }
 
 /**
- * Format dangerous settings as a human-readable list for the UI
- * Only returns setting names, not values
+ * 将危险设置格式化为人类可读的列表用于 UI
+ * 仅返回设置名称，不返回值
  */
 export function formatDangerousSettingsList(
   dangerous: DangerousSettings,
 ): string[] {
   const items: string[] = []
 
-  // Shell settings (names only)
+  // Shell 设置（仅名称）
   for (const key of Object.keys(dangerous.shellSettings)) {
     items.push(key)
   }
 
-  // Env vars (names only)
+  // 环境变量（仅名称）
   for (const key of Object.keys(dangerous.envVars)) {
     items.push(key)
   }
 
-  // Hooks
+  // 钩子
   if (dangerous.hasHooks) {
     items.push('hooks')
   }

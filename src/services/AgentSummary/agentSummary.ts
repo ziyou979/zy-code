@@ -1,13 +1,11 @@
 /**
- * Periodic background summarization for coordinator mode sub-agents.
+ * 协调器模式下子代理的定期后台摘要。
  *
- * Forks the sub-agent's conversation every ~30s using runForkedAgent()
- * to generate a 1-2 sentence progress summary. The summary is stored
- * on AgentProgress for UI display.
+ * 每约 30 秒使用 runForkedAgent() 分叉子代理的对话，
+ * 生成 1-2 句进度摘要。摘要存储在 AgentProgress 上用于 UI 显示。
  *
- * Cache sharing: uses the same CacheSafeParams as the parent agent
- * to share the prompt cache. Tools are kept in the request for cache
- * key matching but denied via canUseTool callback.
+ * 缓存共享：与父代理使用相同的 CacheSafeParams 以共享提示缓存。
+ * 工具保留在请求中以匹配缓存键，但通过 canUseTool 回调拒绝。
  */
 
 import type { TaskContext } from '../../Task.js'
@@ -49,9 +47,9 @@ export function startAgentSummarization(
   cacheSafeParams: CacheSafeParams,
   setAppState: TaskContext['setAppState'],
 ): { stop: () => void } {
-  // Drop forkContextMessages from the closure — runSummary rebuilds it each
-  // tick from getAgentTranscript(). Without this, the original fork messages
-  // (passed from AgentTool.tsx) are pinned for the lifetime of the timer.
+  // 从闭包中删除 forkContextMessages — runSummary 每次
+  // 从 getAgentTranscript() 重新构建它。没有这个，原始的 fork 消息
+  // （从 AgentTool.tsx 传递）会在计时器的生命周期内被固定。
   const { forkContextMessages: _drop, ...baseParams } = cacheSafeParams
   let summaryAbortController: AbortController | null = null
   let timeoutId: ReturnType<typeof setTimeout> | null = null
@@ -67,17 +65,17 @@ export function startAgentSummarization(
       // Read current messages from transcript
       const transcript = await getAgentTranscript(agentId)
       if (!transcript || transcript.messages.length < 3) {
-        // Not enough context yet — finally block will schedule next attempt
+        // 上下文不足 — finally 块将安排下次尝试
         logForDebugging(
           `[AgentSummary] Skipping summary for ${taskId}: not enough messages (${transcript?.messages.length ?? 0})`,
         )
         return
       }
 
-      // Filter to clean message state
+      // 过滤为干净的消息状态
       const cleanMessages = filterIncompleteToolCalls(transcript.messages)
 
-      // Build fork params with current messages
+      // 使用当前消息构建分叉参数
       const forkParams: CacheSafeParams = {
         ...baseParams,
         forkContextMessages: cleanMessages,
@@ -87,25 +85,24 @@ export function startAgentSummarization(
         `[AgentSummary] Forking for summary, ${cleanMessages.length} messages in context`,
       )
 
-      // Create abort controller for this summary
+      // 为此摘要创建 abort controller
       summaryAbortController = new AbortController()
 
-      // Deny tools via callback, NOT by passing tools:[] - that busts cache
+      // 通过回调拒绝工具，而不是传递 tools:[] — 那样会破坏缓存
       const canUseTool = async () => ({
         behavior: 'deny' as const,
         message: 'No tools needed for summary',
         decisionReason: { type: 'other' as const, reason: 'summary only' },
       })
 
-      // DO NOT set maxOutputTokens here. The fork piggybacks on the main
-      // thread's prompt cache by sending identical cache-key params (system,
-      // tools, model, messages prefix, thinking config). Setting maxOutputTokens
-      // would clamp budget_tokens, creating a thinking config mismatch that
-      // invalidates the cache.
+      // 不要在这里设置 maxOutputTokens。分叉通过发送相同的缓存键参数
+      // （system、tools、model、messages 前缀、thinking config）来 piggyback
+      // 主线程的提示缓存。设置 maxOutputTokens 会钳制 budget_tokens，
+      // 创建 thinking config 不匹配，从而无效化缓存。
       //
-      // ContentReplacementState is cloned by default in createSubagentContext
-      // from forkParams.toolUseContext (the subagent's LIVE state captured at
-      // onCacheSafeParams time). No explicit override needed.
+      // ContentReplacementState 默认在 createSubagentContext 中从
+      // forkParams.toolUseContext（onCacheSafeParams 时捕获的子代理 LIVE 状态）
+      // 克隆。不需要显式覆盖。
       const result = await runForkedAgent({
         promptMessages: [
           createUserMessage({ content: buildSummaryPrompt(previousSummary) }),
@@ -120,10 +117,10 @@ export function startAgentSummarization(
 
       if (stopped) return
 
-      // Extract summary text from result
+      // 从结果中提取摘要文本
       for (const msg of result.messages) {
         if (msg.type !== 'assistant') continue
-        // Skip API error messages
+        // 跳过 API 错误消息
         if (msg.isApiErrorMessage) {
           logForDebugging(
             `[AgentSummary] Skipping API error message for ${taskId}`,
@@ -147,7 +144,7 @@ export function startAgentSummarization(
       }
     } finally {
       summaryAbortController = null
-      // Reset timer on completion (not initiation) to prevent overlapping summaries
+      // 完成时（而非启动时）重置计时器，防止摘要重叠
       if (!stopped) {
         scheduleNext()
       }
@@ -172,7 +169,7 @@ export function startAgentSummarization(
     }
   }
 
-  // Start the first timer
+  // 启动第一个计时器
   scheduleNext()
 
   return { stop }

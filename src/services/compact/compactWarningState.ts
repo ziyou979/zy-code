@@ -1,18 +1,18 @@
 import { createStore } from '../../state/store.js'
 
 /**
- * Tracks whether the "context left until autocompact" warning should be suppressed.
- * We suppress immediately after successful compaction since we don't have accurate
- * token counts until the next API response.
+ * 跟踪是否应抑制"自动压缩前剩余的上下文"警告。
+ * 成功压缩后立即抑制，因为在下次 API 响应之前
+ * 我们没有准确的令牌计数。
  */
 export const compactWarningStore = createStore<boolean>(false)
 
-/** Suppress the compact warning. Call after successful compaction. */
+/** 抑制压缩警告。在成功压缩后调用。 */
 export function suppressCompactWarning(): void {
   compactWarningStore.setState(() => true)
 }
 
-/** Clear the compact warning suppression. Called at start of new compact attempt. */
+/** 清除压缩警告抑制。在新的压缩尝试开始时调用。 */
 export function clearCompactWarningSuppression(): void {
   compactWarningStore.setState(() => false)
 }

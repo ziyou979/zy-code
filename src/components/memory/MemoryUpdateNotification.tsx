@@ -7,11 +7,11 @@ export function getRelativeMemoryPath(path: string): string {
   const homeDir = homedir();
   const cwd = getCwd();
 
-  // Calculate relative paths
+  // 计算相对路径
   const relativeToHome = path.startsWith(homeDir) ? '~' + path.slice(homeDir.length) : null;
   const relativeToCwd = path.startsWith(cwd) ? './' + relative(cwd, path) : null;
 
-  // Return the shorter path, or absolute if neither is applicable
+  // 返回较短的路径，如果都不适用则返回绝对路径
   if (relativeToHome && relativeToCwd) {
     return relativeToHome.length <= relativeToCwd.length ? relativeToHome : relativeToCwd;
   }

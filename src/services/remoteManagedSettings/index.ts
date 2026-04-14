@@ -544,7 +544,7 @@ export async function loadRemoteManagedSettings(): Promise<void> {
       settingsChangeDetector.notifyChange('policySettings')
     }
   } finally {
-    // Always resolve the promise, even if fetch failed (fail-open)
+    // 始终解析 Promise，即使获取失败（失败时开放）
     if (loadingCompleteResolve) {
       loadingCompleteResolve()
       loadingCompleteResolve = null
@@ -553,45 +553,45 @@ export async function loadRemoteManagedSettings(): Promise<void> {
 }
 
 /**
- * Refresh remote settings asynchronously (for auth state changes)
- * This is used when login/logout occurs
- * Fails open - if fetch fails, continues without remote settings
+ * 异步刷新远程设置（用于认证状态变更）
+ * 在登录/注销时使用
+ * 失败时开放 — 如果获取失败，继续不使用远程设置
  */
 export async function refreshRemoteManagedSettings(): Promise<void> {
-  // Clear caches first
+  // 先清除缓存
   await clearRemoteManagedSettingsCache()
 
-  // If not enabled, notify that policy settings changed (to empty)
+  // 如果未启用，通知策略设置已变更（变为空）
   if (!isRemoteManagedSettingsEligible()) {
     settingsChangeDetector.notifyChange('policySettings')
     return
   }
 
-  // Try to load new settings (fails open if fetch fails)
+  // 尝试加载新设置（如果获取失败则失败时开放）
   await fetchAndLoadRemoteManagedSettings()
   logForDebugging('Remote settings: Refreshed after auth change')
 
-  // Notify listeners. notifyChange resets the settings cache internally;
-  // this triggers hot-reload (AppState update, env var application, etc.)
+  // 通知监听器。notifyChange 在内部重置设置缓存；
+  // 这触发热重载（AppState 更新、环境变量应用等）
   settingsChangeDetector.notifyChange('policySettings')
 }
 
 /**
- * Background polling callback - fetches settings and triggers hot-reload if changed
+ * 后台轮询回调 — 获取设置并在变更时触发热重载
  */
 async function pollRemoteSettings(): Promise<void> {
   if (!isRemoteManagedSettingsEligible()) {
     return
   }
 
-  // Get current cached settings for comparison
+  // 获取当前缓存的设置以进行比较
   const prevCache = getRemoteManagedSettingsSyncFromCache()
   const previousSettings = prevCache ? jsonStringify(prevCache) : null
 
   try {
     await fetchAndLoadRemoteManagedSettings()
 
-    // Check if settings actually changed
+    // 检查设置是否实际变更
     const newCache = getRemoteManagedSettingsSyncFromCache()
     const newSettings = newCache ? jsonStringify(newCache) : null
     if (newSettings !== previousSettings) {
@@ -599,13 +599,13 @@ async function pollRemoteSettings(): Promise<void> {
       settingsChangeDetector.notifyChange('policySettings')
     }
   } catch {
-    // Don't fail closed for background polling - just continue
+    // 后台轮询不要失败时关闭 — 只需继续
   }
 }
 
 /**
- * Start background polling for remote settings
- * Polls every hour to pick up settings changes mid-session
+ * 启动远程设置的后台轮询
+ * 每小时轮询一次以获取会话中途的设置变更
  */
 export function startBackgroundPolling(): void {
   if (pollingIntervalId !== null) {
@@ -621,12 +621,12 @@ export function startBackgroundPolling(): void {
   }, POLLING_INTERVAL_MS)
   pollingIntervalId.unref()
 
-  // Register cleanup to stop polling on shutdown
+  // 注册清理以在关闭时停止轮询
   registerCleanup(async () => stopBackgroundPolling())
 }
 
 /**
- * Stop background polling for remote settings
+ * 停止远程设置的后台轮询
  */
 export function stopBackgroundPolling(): void {
   if (pollingIntervalId !== null) {

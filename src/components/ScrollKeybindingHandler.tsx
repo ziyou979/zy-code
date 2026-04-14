@@ -226,8 +226,8 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
         // delta>1. Without this, the 2nd event at gap<1ms has m≈1 → STEP*m=15
         // → one gentle click gives 1+15=16 rows.
         //
-        // Device-switch guard ②: trackpad flick produces 100+ events at <5ms
-        // (measured); mouse produces ≤3. 5+ consecutive → trackpad flick.
+        // 设备切换守卫 ②：触控板轻扫产生 100+ 事件在 <5ms 内
+        //（实测）；鼠标产生 ≤3。5+ 连续 → 触控板轻扫。
         if (++state.burstCount >= 5) {
           state.wheelMode = false;
           state.burstCount = 0;
@@ -239,7 +239,7 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
         state.burstCount = 0;
       }
     }
-    // Re-check: may have disengaged above.
+    // 重新检查：可能在上方已解除。
     if (state.wheelMode) {
       // xterm.js decay curve with STEP×3, higher cap. No idle threshold —
       // the curve handles it (gap=1000ms → m≈0.01 → mult≈1). No frac —
@@ -253,9 +253,9 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
     }
 
     // ─── TRACKPAD / HI-RES (native, non-wheel-mode) ───
-    // Tight 40ms burst window: sub-40ms events ramp, anything slower resets.
-    // Trackpad flick delivers 200+ events at <20ms gaps → rails to cap 6.
-    // Trackpad slow swipe at 40-400ms gaps → resets every event → 1 row each.
+    // 紧密 40ms 突发窗口：子 40ms 事件加速，更慢的重置。
+    // 触控板轻扫在 <20ms 间隙产生 200+ 事件 → 加速到上限 6。
+    // 触控板慢滑在 40-400ms 间隙 → 每次事件重置 → 每次 1 行。
     if (gap > WHEEL_ACCEL_WINDOW_MS) {
       state.mult = state.base;
     } else {
@@ -266,9 +266,9 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
   }
 
   // ─── VSCODE (xterm.js, browser wheel events) ───
-  // Browser wheel events — no encoder bounce, no SGR bursts. Decay curve
-  // unchanged from the original tuning. Same formula shape as wheel mode
-  // above (keep in sync) but STEP=5 not 15 — higher event rate here.
+  // 浏览器滚轮事件——无编码器反弹，无 SGR 突发。衰减曲线
+  // 与原始调优不变。与上方 wheel 模式公式形状相同（保持同步），
+  // 但 STEP=5 而非 15——此处事件率更高。
   const gap = now - state.time;
   const sameDir = dir === state.dir;
   state.time = now;
@@ -280,9 +280,8 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
   // (100ms+, slow deliberate scroll) the curve gives 1-3.
   if (sameDir && gap < WHEEL_BURST_MS) return 1;
   if (!sameDir || gap > WHEEL_DECAY_IDLE_MS) {
-    // Direction reversal or long idle: start at 2 (not 1) so the first
-    // click after a pause moves a visible amount. Without this, idle-
-    // then-resume in the same direction decays to mult≈1 (1 row).
+    // 方向反转或长时间空闲：从 2 开始（而非 1），这样暂停后的第一次
+    // 点击移动可见量。没有这个的话，同方向空闲后恢复会衰减到 mult≈1（1 行）。
     state.mult = 2;
     state.frac = 0;
   } else {
@@ -325,12 +324,11 @@ export function initWheelAccel(xtermJs = false, base = 1): WheelAccelState {
   };
 }
 
-// Lazy-init helper. isXtermJs() combines the TERM_PROGRAM env check + async
-// XTVERSION probe — the probe may not have resolved at render time, so this
-// is called on the first wheel event (>>50ms after startup) when it's settled.
-// Logs detected mode once so --debug users can verify SSH detection worked.
-// The renderer also calls isXtermJsHost() (in render-node-to-output) to
-// select the drain algorithm — no state to pass through.
+// 延迟初始化辅助函数。isXtermJs() 组合 TERM_PROGRAM env 检查 + 异步
+// XTVERSION 探测——探测可能在渲染时未解析，所以这在第一个滚轮事件时调用
+//（启动后 >>50ms），此时已稳定。记录检测模式一次，使 --debug 用户可以
+// 验证 SSH 检测有效。渲染器也调用 isXtermJsHost()（在 render-node-to-output 中）
+// 来选择排放算法——无需传递状态。
 function initAndLogWheelAccel(): WheelAccelState {
   const xtermJs = isXtermJs();
   const base = readScrollSpeedBase();
@@ -338,16 +336,15 @@ function initAndLogWheelAccel(): WheelAccelState {
   return initWheelAccel(xtermJs, base);
 }
 
-// Drag-to-scroll: when dragging past the viewport edge, scroll by this many
-// rows every AUTOSCROLL_INTERVAL_MS. Mode 1002 mouse tracking only fires on
-// cell change, so a timer is needed to continue scrolling while stationary.
+// 拖拽滚动：当拖拽超过视口边缘时，每 AUTOSCROLL_INTERVAL_MS 滚动这么多行。
+// 模式 1002 鼠标跟踪仅在单元格变化时触发，所以需要一个定时器在静止时继续滚动。
 const AUTOSCROLL_LINES = 2;
 const AUTOSCROLL_INTERVAL_MS = 50;
-// Hard cap on consecutive auto-scroll ticks. If the release event is lost
-// (mouse released outside terminal window — some emulators don't capture the
-// pointer and drop the release), isDragging stays true and the timer would
-// run until a scroll boundary. Cap bounds the damage; any new drag motion
-// event restarts the count via check()→start().
+// 连续自动滚动 tick 的硬上限。如果释放事件丢失
+//（在终端窗口外释放鼠标——某些模拟器不捕获
+// 指针并丢弃释放），isDragging 保持 true，定时器会
+// 一直运行到滚动边界。上限限制损害；任何新的拖拽运动
+// 事件通过 check()→start() 重新会计数。
 const AUTOSCROLL_MAX_TICKS = 200; // 10s @ 50ms
 
 /**
@@ -366,9 +363,9 @@ export function ScrollKeybindingHandler({
   const {
     addNotification
   } = useNotifications();
-  // Lazy-inited on first wheel event so the XTVERSION probe (fired at
-  // raw-mode-enable time) has resolved by then — initializing in useRef()
-  // would read getWheelBase() before the probe reply arrives over SSH.
+  // 在第一个滚轮事件时延迟初始化，这样 XTVERSION 探测（在
+  // raw-mode-enable 时触发）那时已解析——在 useRef() 中初始化会在
+  // SSH 上探测回复到达之前读取 getWheelBase()。
   const wheelAccel = useRef<WheelAccelState | null>(null);
   function showCopiedToast(text: string): void {
     // getClipboardPath reads env synchronously — predicts what setClipboard
@@ -401,44 +398,40 @@ export function ScrollKeybindingHandler({
     if (text_0) showCopiedToast(text_0);
   }
 
-  // Translate selection to track a keyboard page jump. Selection coords are
-  // screen-buffer-local; a scrollTo that moves content by N rows must also
-  // shift anchor+focus by N so the highlight stays on the same text (native
-  // terminal behavior: selection moves with content, clips at viewport
-  // edges). Rows that scroll out of the viewport are captured into
-  // scrolledOffAbove/Below before the scroll so getSelectedText still
-  // returns the full text. Wheel scroll (scroll:lineUp/Down via scrollBy)
-  // still clears — its async pendingScrollDelta drain means the actual
-  // delta isn't known synchronously (follow-up).
+  // 转换选区以跟踪键盘页面跳转。选区坐标是
+  // 屏幕缓冲区局部的；将内容移动 N 行的 scrollTo 也必须
+  // 将 anchor+focus 移动 N，这样高亮保持在相同文本上（原生
+  // 终端行为：选区随内容移动，在视口边缘裁剪）。
+  // 滚出视口的行在滚动前被捕获到
+  // scrolledOffAbove/Below，所以 getSelectedText 仍然返回完整文本。
+  // 滚轮滚动（通过 scrollBy 的 scroll:lineUp/Down）仍然清除——
+  // 其异步 pendingScrollDelta 排放意味着实际 delta 无法同步知道。
   function translateSelectionForJump(s: ScrollBoxHandle, delta: number): void {
     const sel = selection.getState();
     if (!sel?.anchor || !sel.focus) return;
     const top = s.getViewportTop();
     const bottom = top + s.getViewportHeight() - 1;
-    // Only translate if the selection is ON scrollbox content. Selections
-    // in the footer/prompt/StickyPromptHeader are on static text — the
-    // scroll doesn't move what's under them. Same guard as ink.tsx's
-    // auto-follow translate (commit 36a8d154).
+    // 仅当选区在 scrollbox 内容上时才转换。页脚/提示/StickyPromptHeader
+    // 中的选区在静态文本上——滚动不会移动它们下面的内容。
+    // 与 ink.tsx 的自动跟随转换相同的守卫（commit 36a8d154）。
     if (sel.anchor.row < top || sel.anchor.row > bottom) return;
-    // Cross-boundary: anchor in scrollbox, focus in footer/header. Mirror
-    // ink.tsx's Flag-3 guard — fall through without shifting OR capturing.
-    // The static endpoint pins the selection; shifting would teleport it
-    // into scrollbox content.
+    // 跨边界：anchor 在 scrollbox，focus 在页脚/头部。镜像
+    // ink.tsx 的 Flag-3 守卫——不移动也不捕获。
+    // 静态端点固定选区；移动会将其传送到 scrollbox 内容中。
     if (sel.focus.row < top || sel.focus.row > bottom) return;
     const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
     const cur = s.getScrollTop() + s.getPendingDelta();
-    // Actual scroll distance after boundary clamp. jumpBy may call
-    // scrollToBottom when target >= max but the view can't move past max,
-    // so the selection shift is bounded here.
+    // 边界钳位后的实际滚动距离。jumpBy 可能在 target >= max 时调用
+    // scrollToBottom，但视图无法超过 max 移动，所以选区位移在此受限。
     const actual = Math.max(0, Math.min(max, cur + delta)) - cur;
     if (actual === 0) return;
     if (actual > 0) {
-      // Scrolling down: content moves up. Rows at the TOP leave viewport.
-      // Anchor+focus shift -actual so they track the content that moved up.
+      // 向下滚动：内容向上移动。顶部的行离开视口。
+      // Anchor+focus 移动 -actual，这样它们跟踪向上移动的内容。
       selection.captureScrolledRows(top, top + actual - 1, 'above');
       selection.shiftSelection(-actual, top, bottom);
     } else {
-      // Scrolling up: content moves down. Rows at the BOTTOM leave viewport.
+      // 向上滚动：内容向下移动。底部的行离开视口。
       const a = -actual;
       selection.captureScrolledRows(bottom - a + 1, bottom, 'below');
       selection.shiftSelection(a, top, bottom);
@@ -462,9 +455,9 @@ export function ScrollKeybindingHandler({
       onScroll?.(sticky_0, s_1);
     },
     'scroll:lineUp': () => {
-      // Wheel: scrollBy accumulates into pendingScrollDelta, drained async
-      // by the renderer. captureScrolledRows can't read the outgoing rows
-      // before they leave (drain is non-deterministic). Clear for now.
+      // 滚轮：scrollBy 累积到 pendingScrollDelta，由渲染器异步排放。
+      // captureScrolledRows 无法在行离开前读取外出行
+      //（排放是非确定性的）。暂时清除。
       selection.clearSelection();
       const s_2 = scrollRef.current;
       // Return false (not consumed) when the ScrollBox content fits —
@@ -554,16 +547,16 @@ export function ScrollKeybindingHandler({
     isActive
   });
 
-  // Modal pager keys — transcript mode only. less/tmux copy-mode lineage:
-  // ctrl+u/d (half-page), ctrl+b/f (full-page), g/G (top/bottom). Tom's
-  // resolution (2026-03-15): "In ctrl-o mode, ctrl-u, ctrl-d, etc. should
-  // roughly just work!" — transcript is the copy-mode container.
+  // 模态寻呼键——仅转录模式。less/tmux copy-mode 谱系：
+  // ctrl+u/d（半页），ctrl+b/f（整页），g/G（顶部/底部）。
+  // Tom 的决议（2026-03-15）："在 ctrl-o 模式下，ctrl-u、ctrl-d 等应该大致正常工作！"
+  // ——转录是 copy-mode 容器。
   //
-  // Safe because the conflicting handlers aren't reachable here:
-  //   ctrl+u → kill-line, ctrl+d → exit: PromptInput not mounted
-  //   ctrl+b → task:background: SessionBackgroundHint not mounted
-  //   ctrl+f → chat:killAgents moved to ctrl+x ctrl+k; no conflict
-  //   g/G → printable chars: no prompt to eat them, no vim/sticky gate needed
+  // 安全，因为冲突的处理程序在这里不可达：
+  //   ctrl+u → kill-line，ctrl+d → exit：未挂载 PromptInput
+  //   ctrl+b → task:background：未挂载 SessionBackgroundHint
+  //   ctrl+f → chat:killAgents 已移至 ctrl+x ctrl+k；无冲突
+  //   g/G → 可打印字符：没有提示吃掉它们，不需要 vim/sticky 门控
   //
   // TODO(search): `/`, n/N — build on Richard Kim's d94b07add4 (branch
   // zy/jump-recent-message-CEPcq). getItemY Yoga-walk + computeOrigin +
@@ -581,17 +574,15 @@ export function ScrollKeybindingHandler({
     isActive: isActive && isModal
   });
 
-  // Esc clears selection; any other keystroke also clears it (matches
-  // native terminal behavior where selection disappears on input).
-  // Ctrl+C copies when a selection exists — needed on legacy terminals
-  // where ctrl+shift+c sends the same byte (\x03, shift is lost) and
-  // cmd+c never reaches the pty (terminal intercepts it for Edit > Copy).
-  // Handled via raw useInput so we can conditionally consume: Esc/Ctrl+C
-  // only stop propagation when a selection exists, letting them still work
-  // for cancel-request / interrupt otherwise. Other keys never stop
-  // propagation — they're observed to clear selection as a side-effect.
-  // The selection:copy keybinding (ctrl+shift+c / cmd+c) registers above
-  // via useKeybindings and consumes its event before reaching here.
+  // Esc 清除选区；任何其他按键也会清除它（匹配原生终端行为，
+  // 选区在输入时消失）。Ctrl+C 在存在选区时复制——在旧终端上需要，
+  // 那里 ctrl+shift+c 发送相同字节（\x03，shift 丢失），
+  // cmd+c 永远不会到达 pty（终端拦截它用于 Edit > Copy）。
+  // 通过原始 useInput 处理，使我们可以有条件地消费：
+  // Esc/Ctrl+C 仅在存在选区时停止传播，让它们仍然可以用于
+  // 取消请求/中断。其他按键从不阻止传播——它们作为副作用清除选区。
+  // selection:copy 快捷键（ctrl+shift+c / cmd+c）通过 useKeybindings
+  // 在上方注册并在到达此处之前消费其事件。
   useInput((input_0, key_0, event_0) => {
     if (!selection.hasSelection()) return;
     if (key_0.escape) {
@@ -637,12 +628,12 @@ export function ScrollKeybindingHandler({
 function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection: ReturnType<typeof useSelection>, isActive: boolean, onScroll: Props['onScroll']): void {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const dirRef = useRef<-1 | 0 | 1>(0); // -1 scrolling up, +1 down, 0 idle
-  // Survives stop() — reset only on drag-finish. See check() for semantics.
+  // 在 stop() 后仍然存活——仅在拖拽结束时重置。参见 check() 了解语义。
   const lastScrolledDirRef = useRef<-1 | 0 | 1>(0);
   const ticksRef = useRef(0);
-  // onScroll may change identity every render (if not memoized by caller).
-  // Read through a ref so the effect doesn't re-subscribe and kill the timer
-  // on each scroll-induced re-render.
+  // onScroll 可能每次渲染都改变标识（如果调用者未 memo 化）。
+  // 通过 ref 读取，这样 effect 不会在每次滚动引起的重新渲染时
+  // 重新订阅并杀死定时器。
   const onScrollRef = useRef(onScroll);
   onScrollRef.current = onScroll;
   useEffect(() => {
@@ -671,27 +662,26 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
       // tick's scroll hasn't drained yet, captureScrolledRows would read
       // stale content (same rows as last tick → duplicated in the
       // accumulator AND missing the rows that actually scrolled out).
-      // Skip this tick; the 50ms interval will retry after Ink's 16ms
-      // render catches up. Also prevents shiftAnchor from desyncing.
+      // 跳过此 tick；50ms 间隔将在 Ink 的 16ms 渲染赶上后重试。
+      // 也防止 shiftAnchor 不同步。
       if (s.getPendingDelta() !== 0) return;
       const top = s.getViewportTop();
       const bottom = top + s.getViewportHeight() - 1;
-      // Clamp anchor within [top, bottom]. Not [0, bottom]: the ScrollBox
-      // padding row at 0 would produce a blank line between scrolledOffAbove
-      // and the on-screen content in getSelectedText. The padding-row
-      // highlight was a minor visual nicety; text correctness wins.
+      // 将 anchor 钳位在 [top, bottom] 内。不是 [0, bottom]：ScrollBox
+      // 在 0 处的填充行会在 getSelectedText 中产生 scrolledOffAbove
+      // 与屏幕内容之间的空行。填充行高亮是一个次要的视觉好处；
+      // 文本正确性优先。
       if (dir < 0) {
         if (s.getScrollTop() <= 0) {
           stop();
           return;
         }
-        // Scrolling up: content moves down in viewport, so anchor row +N.
-        // Clamp to actual scroll distance so anchor stays in sync when near
-        // the top boundary (renderer clamps scrollTop to 0 on drain).
+        // 向上滚动：内容在视口中向下移动，所以 anchor 行 +N。
+        // 钳位到实际滚动距离，使 anchor 在接近顶部边界时保持同步
+        //（渲染器在排放时将 scrollTop 钳位为 0）。
         const actual = Math.min(AUTOSCROLL_LINES, s.getScrollTop());
-        // Capture rows about to scroll out the BOTTOM before scrollBy
-        // overwrites them. Only rows inside the selection are captured
-        // (captureScrolledRows intersects with selection bounds).
+        // 捕获即将滚出底部的行，在 scrollBy 覆盖它们之前。
+        // 仅捕获选区内的行（captureScrolledRows 与选区边界相交）。
         selection.captureScrolledRows(bottom - actual + 1, bottom, 'below');
         selection.shiftAnchor(actual, 0, bottom);
         s.scrollBy(-AUTOSCROLL_LINES);
@@ -701,11 +691,11 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
           stop();
           return;
         }
-        // Scrolling down: content moves up in viewport, so anchor row -N.
-        // Clamp to actual scroll distance so anchor stays in sync when near
-        // the bottom boundary (renderer clamps scrollTop to max on drain).
+        // 向下滚动：内容在视口中向上移动，所以 anchor 行 -N。
+        // 钳位到实际滚动距离，使 anchor 在接近底部边界时保持同步
+        //（渲染器在排放时将 scrollTop 钳位为 max）。
         const actual_0 = Math.min(AUTOSCROLL_LINES, max - s.getScrollTop());
-        // Capture rows about to scroll out the TOP.
+        // 捕获即将滚出顶部的行。
         selection.captureScrolledRows(top, top + actual_0 - 1, 'above');
         selection.shiftAnchor(-actual_0, top, bottom);
         s.scrollBy(AUTOSCROLL_LINES);
@@ -713,10 +703,9 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
       onScrollRef.current?.(false, s);
     }
     function start(dir_0: -1 | 1): void {
-      // Record BEFORE early-return: the empty-accumulator reset in check()
-      // may have zeroed this during the pre-crossing phase (accumulators
-      // empty until the anchor row enters the capture range). Re-record
-      // on every call so the corruption is instantly healed.
+      // 在提前返回之前记录：check() 中的空累加器重置
+      // 可能在预穿越阶段将此清零（累加器在 anchor 行进入捕获范围之前为空）。
+      // 每次调用都重新记录，这样损坏可以立即修复。
       lastScrolledDirRef.current = dir_0;
       if (dirRef.current === dir_0) return; // already going this way
       stop();
@@ -731,13 +720,12 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
       }
     }
 
-    // Re-evaluated on every selection change (start/drag/finish/clear).
-    // Drives drag-to-scroll autoscroll when the drag leaves the viewport.
-    // Prior versions broke sticky here on drag-start to prevent selection
-    // drift during streaming — ink.tsx now translates selection coords by
-    // the follow delta instead (native terminal behavior: view keeps
-    // scrolling, highlight walks up with the text). Keeping sticky also
-    // avoids useVirtualScroll's tail-walk → forward-walk phantom growth.
+    // 每次选区变化时重新评估（开始/拖拽/结束/清除）。
+    // 当拖拽离开视口时驱动拖拽自动滚动。
+    // 之前的版本在拖拽开始时破坏了 sticky 状态以防止流式期间选区漂移——
+    // ink.tsx 现在改为通过跟随 delta 转换选区坐标（原生终端行为：
+    // 视图继续滚动，高亮随文本向上移动）。保持 sticky 也避免了
+    // useVirtualScroll 的尾部遍历 → 向前遍历幻影增长。
     function check(): void {
       const s_0 = scrollRef.current;
       if (!s_0) {
@@ -747,28 +735,25 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
       const top_0 = s_0.getViewportTop();
       const bottom_0 = top_0 + s_0.getViewportHeight() - 1;
       const sel_0 = selection.getState();
-      // Pass the LAST-scrolled direction (not dirRef) so the anchor guard is
-      // bypassed after shiftAnchor has clamped anchor toward row 0. Using
-      // lastScrolledDirRef (survives stop()) lets autoscroll resume after a
-      // brief mouse dip into the viewport. Same-direction only — a mouse
-      // jump from below-bottom to above-top must stop, since reversing while
-      // the scrolledOffAbove/Below accumulators hold the prior direction's
-      // rows would duplicate text in getSelectedText. Reset on drag-finish
-      // OR when both accumulators are empty: startSelection clears them
-      // (selection.ts), so a new drag after a lost-release (isDragging
-      // stuck true, the reason AUTOSCROLL_MAX_TICKS exists) still resets.
-      // Safe: start() below re-records lastScrolledDirRef before its
-      // early-return, so a mid-scroll reset here is instantly undone.
+      // 传递最后滚动方向（而非 dirRef），这样在 shiftAnchor 将 anchor
+      // 钳位到第 0 行后绕过锚守卫。使用 lastScrolledDirRef（在 stop() 后仍然存活）
+      // 使鼠标短暂进入视口后自动滚动可以恢复。仅同方向——鼠标
+      // 从底部跳到顶部必须停止，因为在反转时 scrolledOffAbove/Below
+      // 累加器持有先前方向的行，会在 getSelectedText 中重复文本。
+      // 在拖拽结束时重置，或当两个累加器都为空时：startSelection 清除它们
+      //（selection.ts），所以在丢失释放后的新拖拽（isDragging 卡住为 true，
+      // 即 AUTOSCROLL_MAX_TICKS 存在的原因）仍然重置。
+      // 安全：下方的 start() 在提前返回之前重新记录 lastScrolledDirRef，
+      // 所以此处的中途重置会立即撤销。
       if (!sel_0?.isDragging || sel_0.scrolledOffAbove.length === 0 && sel_0.scrolledOffBelow.length === 0) {
         lastScrolledDirRef.current = 0;
       }
       const dir_1 = dragScrollDirection(sel_0, top_0, bottom_0, lastScrolledDirRef.current);
       if (dir_1 === 0) {
-        // Blocked reversal: focus jumped to the opposite edge (off-window
-        // drag return, fast flick). handleSelectionDrag already moved focus
-        // past the anchor, flipping selectionBounds — the accumulator is
-        // now orphaned (holds rows on the wrong side). Clear it so
-        // getSelectedText matches the visible highlight.
+        // 被阻止的反转：焦点跳到对面边缘（窗外拖拽返回、快速轻扫）。
+        // handleSelectionDrag 已将焦点移过锚点，翻转了 selectionBounds——
+        // 累加器现在孤立了（持有错误一侧的行）。清除它使
+        // getSelectedText 匹配可见高亮。
         if (lastScrolledDirRef.current !== 0 && sel_0?.focus) {
           const want = sel_0.focus.row < top_0 ? -1 : sel_0.focus.row > bottom_0 ? 1 : 0;
           if (want !== 0 && want !== lastScrolledDirRef.current) {
@@ -792,20 +777,18 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
 }
 
 /**
- * Compute autoscroll direction for a drag selection relative to the ScrollBox
- * viewport. Returns 0 when not dragging, anchor/focus missing, or the anchor
- * is outside the viewport — a multi-click or drag that started in the input
- * area must not commandeer the message scroll (double-click in the input area
- * while scrolled up previously corrupted the anchor via shiftAnchor and
- * spuriously scrolled the message history every 50ms until release).
+ * 计算拖拽选区相对于 ScrollBox 视口的自动滚动方向。
+ * 当不拖拽、缺少 anchor/focus 或 anchor 在视口外时返回 0——
+ * 在输入区域开始的多击或拖拽不能劫持消息滚动
+ *（在输入区域双击，而之前向上滚动，会通过 shiftAnchor 损坏 anchor，
+ * 并在释放前每 50ms 虚假滚动消息历史）。
  *
- * alreadyScrollingDir bypasses the anchor-in-viewport guard once autoscroll
- * is active (shiftAnchor legitimately clamps the anchor toward row 0, below
- * `top`) but only allows SAME-direction continuation. If the focus jumps to
- * the opposite edge (below→above or above→below — possible with a fast flick
- * or off-window drag since mode 1002 reports on cell change, not per cell),
- * returns 0 to stop — reversing without clearing scrolledOffAbove/Below
- * would duplicate captured rows when they scroll back on-screen.
+ * alreadyScrollingDir 在自动滚动激活后绕过 anchor-in-viewport 守卫
+ *（shiftAnchor 合法地将 anchor 钳位到第 0 行，低于 `top`），
+ * 但只允许同方向继续。如果焦点跳到对面边缘
+ *（下→上或上→下——快速轻扫或窗外拖拽可能发生，
+ * 因为模式 1002 在单元格变化时报告，而非每单元格），
+ * 返回 0 停止——不清除 scrolledOffAbove/Below 就反转会在行滚回屏幕时重复捕获的行。
  */
 export function dragScrollDirection(sel: SelectionState | null, top: number, bottom: number, alreadyScrollingDir: -1 | 0 | 1 = 0): -1 | 0 | 1 {
   if (!sel?.isDragging || !sel.anchor || !sel.focus) return 0;
@@ -846,15 +829,13 @@ export function jumpBy(s: ScrollBoxHandle, delta: number): boolean {
   return false;
 }
 
-// Wheel-down past maxScroll re-enables sticky so wheeling at the bottom
-// naturally re-pins (matches typical chat-app behavior). Returns the
-// resulting sticky state so callers can propagate it.
+// 滚轮向下超过 maxScroll 重新启用 sticky，这样在底部滚轮滚动时自然重新固定
+//（匹配典型聊天应用行为）。返回结果的 sticky 状态使调用者可以传播它。
 function scrollDown(s: ScrollBoxHandle, amount: number): boolean {
   const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
-  // Include pendingDelta: scrollBy accumulates into pendingScrollDelta
-  // without updating scrollTop, so getScrollTop() alone is stale within
-  // a batch of wheel events. Without this, wheeling to the bottom never
-  // re-enables sticky scroll.
+  // 包含 pendingDelta：scrollBy 累积到 pendingScrollDelta 而不更新 scrollTop，
+  // 所以在一批滚轮事件中 getScrollTop() 单独是过时的。没有这个的话，
+  // 滚轮滚到底部永远不会重新启用 sticky 滚动。
   const effectiveTop = s.getScrollTop() + s.getPendingDelta();
   if (effectiveTop + amount >= max) {
     s.scrollToBottom();
@@ -864,15 +845,14 @@ function scrollDown(s: ScrollBoxHandle, amount: number): boolean {
   return false;
 }
 
-// Wheel-up past scrollTop=0 clamps via scrollTo(0), clearing
-// pendingScrollDelta so aggressive wheel bursts (e.g. MX Master free-spin)
-// don't accumulate an unbounded negative delta. Without this clamp,
-// useVirtualScroll's [effLo, effHi] span grows past what MAX_MOUNTED_ITEMS
-// can cover and intermediate drain frames render at scrollTops with no
-// mounted children — blank viewport.
+// 滚轮向上超过 scrollTop=0 通过 scrollTo(0) 钳位，清除
+// pendingScrollDelta，使激进的滚轮突发（例如 MX Master 自由旋转）
+// 不会累积无界的负 delta。没有这个钳位的话，
+// useVirtualScroll 的 [effLo, effHi] 跨度会增长到 MAX_MOUNTED_ITEMS
+// 无法覆盖的范围，中间排放帧渲染在没有挂载子节点的 scrollTop 上——空白视口。
 export function scrollUp(s: ScrollBoxHandle, amount: number): void {
-  // Include pendingDelta: scrollBy accumulates without updating scrollTop,
-  // so getScrollTop() alone is stale within a batch of wheel events.
+  // 包含 pendingDelta：scrollBy 累积而不更新 scrollTop，
+  // 所以在一批滚轮事件中 getScrollTop() 单独是过时的。
   const effectiveTop = s.getScrollTop() + s.getPendingDelta();
   if (effectiveTop - amount <= 0) {
     s.scrollTo(0);
@@ -883,26 +863,24 @@ export function scrollUp(s: ScrollBoxHandle, amount: number): void {
 export type ModalPagerAction = 'lineUp' | 'lineDown' | 'halfPageUp' | 'halfPageDown' | 'fullPageUp' | 'fullPageDown' | 'top' | 'bottom';
 
 /**
- * Maps a keystroke to a modal pager action. Exported for testing.
- * Returns null for keys the modal pager doesn't handle (they fall through).
+ * 将按键映射到模态寻呼动作。导出用于测试。
+ * 对模态寻呼不处理的按键返回 null（它们穿透）。
  *
- * ctrl+u/d/b/f are the less-lineage bindings. g/G are bare letters (only
- * safe when no prompt is mounted). G arrives as input='G' shift=false on
- * legacy terminals, or input='g' shift=true on kitty-protocol terminals.
- * Lowercase g needs the !shift guard so it doesn't also match kitty-G.
+ * ctrl+u/d/b/f 是 less 谱系的绑定。g/G 是裸字母
+ *（仅在没有挂载提示时安全）。G 在旧终端上以 input='G' shift=false 到达，
+ * 或在 kitty 协议终端上以 input='g' shift=true 到达。
+ * 小写 g 需要 !shift 守卫，这样它不会也匹配 kitty-G。
  *
- * Key-repeat: stdin coalesces held-down printables into one multi-char
- * string (e.g. 'ggg'). Only uniform-char batches are handled — mixed input
- * like 'gG' isn't key-repeat. g/G are idempotent absolute jumps, so the
- * count is irrelevant (consuming the batch just prevents it from leaking
- * to the selection-clear-on-printable handler).
+ * 按键重复：stdin 将按住的可打印字符合并为一个多字符字符串
+ *（例如 'ggg'）。仅处理统一字符批次——混合输入如 'gG' 不是按键重复。
+ * g/G 是幂等的绝对跳转，所以计数无关紧要
+ *（消费批次只是防止它泄漏到可打印字符的选区清除处理器）。
  */
 export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' | 'shift' | 'upArrow' | 'downArrow' | 'home' | 'end'>): ModalPagerAction | null {
   if (key.meta) return null;
-  // Special keys first — arrows/home/end arrive with empty or junk input,
-  // so these must be checked before any input-string logic. shift is
-  // reserved for selection-extend (selectionFocusMoveForKey); ctrl+home/end
-  // already has a useKeybindings route to scroll:top/bottom.
+  // 特殊键优先——箭头/home/end 带有空或垃圾输入到达，
+  // 所以这些必须在任何输入字符串逻辑之前检查。shift 保留用于选区扩展
+  //（selectionFocusMoveForKey）；ctrl+home/end 已有 useKeybindings 路由到 scroll:top/bottom。
   if (!key.ctrl && !key.shift) {
     if (key.upArrow) return 'lineUp';
     if (key.downArrow) return 'lineDown';
@@ -920,9 +898,9 @@ export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' |
         return 'fullPageUp';
       case 'f':
         return 'fullPageDown';
-      // emacs-style line scroll (less accepts both ctrl+n/p and ctrl+e/y).
-      // Works during search nav — fine-adjust after a jump without
-      // leaving modal. No !searchOpen gate on this useInput's isActive.
+      // emacs 风格的行滚动（less 接受 ctrl+n/p 和 ctrl+e/y）。
+      // 在搜索导航期间工作——跳转后微调而不离开模态。
+      // 此 useInput 的 isActive 上没有 !searchOpen 门控。
       case 'n':
         return 'lineDown';
       case 'p':
@@ -931,7 +909,7 @@ export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' |
         return null;
     }
   }
-  // Bare letters. Key-repeat batches: only act on uniform runs.
+  // 裸字母。按键重复批次：仅对统一连续字符执行。
   const c = input[0];
   if (!c || input !== c.repeat(input.length)) return null;
   // kitty sends G as input='g' shift=true; legacy as 'G' shift=false.
@@ -948,8 +926,8 @@ export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' |
       return 'lineDown';
     case 'k':
       return 'lineUp';
-    // less: space = page down, b = page up. ctrl+b already maps above;
-    // bare b is the less-native version.
+    // less：space = 向下翻页，b = 向上翻页。ctrl+b 已在上方映射；
+    // 裸 b 是 less 原生版本。
     case ' ':
       return 'fullPageDown';
     case 'b':
@@ -960,11 +938,10 @@ export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' |
 }
 
 /**
- * Applies a modal pager action to a ScrollBox. Returns the resulting sticky
- * state, or null if the action was null (nothing to do — caller should fall
- * through). Calls onBeforeJump(delta) before scrolling so the caller can
- * translate the text selection by the scroll delta (capture outgoing rows,
- * shift anchor+focus) instead of clearing it. Exported for testing.
+ * 将模态寻呼动作应用于 ScrollBox。返回结果的 sticky 状态，
+ * 或如果动作为 null 则返回 null（无事可做——调用者应穿透）。
+ * 在滚动前调用 onBeforeJump(delta)，使调用者可以按滚动 delta
+ * 转换文本选区（捕获外出行、移动 anchor+focus）而非清除它。导出用于测试。
  */
 export function applyModalPagerAction(s: ScrollBoxHandle, act: ModalPagerAction | null, onBeforeJump: (delta: number) => void): boolean | null {
   switch (act) {
@@ -1001,8 +978,8 @@ export function applyModalPagerAction(s: ScrollBoxHandle, act: ModalPagerAction 
       {
         const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
         onBeforeJump(max - (s.getScrollTop() + s.getPendingDelta()));
-        // Eager-write scrollTop before scrollToBottom — same double-shift
-        // fix as scroll:bottom and jumpBy's max branch.
+        // 在 scrollToBottom 之前提前写入 scrollTop——与 scroll:bottom 和
+        // jumpBy 的 max 分支相同的双重偏移修复。
         s.scrollTo(max);
         s.scrollToBottom();
         return true;

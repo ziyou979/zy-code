@@ -11,9 +11,9 @@ import { Select } from './CustomSelect/select.js';
 import { Dialog } from './design-system/Dialog.js';
 import { Spinner } from './Spinner.js';
 
-// Inline require breaks the cycle this file would otherwise close:
-// sessionStorage → commands → exit → ExitFlow → here. All call sites
-// are inside callbacks, so the lazy require never sees an undefined import.
+// 内联 require 打破此文件会形成的循环：
+// sessionStorage → commands → exit → ExitFlow → 此处。所有调用点
+// 都在回调内，所以延迟 require 永远不会看到未定义的导入。
 function recordWorktreeExit(): void {
   /* eslint-disable @typescript-eslint/no-require-imports */
   ;
@@ -44,16 +44,16 @@ export function WorktreeExitDialog({
         setChanges(changeLines);
       }
 
-      // Check for commits to eject
+      // 检查是否有提交需要弹出
       if (worktreeSession) {
-        // Get commits in worktree that are not in original branch
+        // 获取 worktree 中不在原始分支中的提交
         const {
           stdout: commitsStr
         } = await execFileNoThrow('git', ['rev-list', '--count', `${worktreeSession.originalHeadCommit}..HEAD`]);
         const count = parseInt(commitsStr.trim()) || 0;
         setCommitCount(count);
 
-        // If no changes and no commits, clean up silently
+        // 如果没有更改也没有提交，静默清理
         if (changeLines.length === 0 && count === 0) {
           setStatus('removing');
           void cleanupWorktree().then(() => {
@@ -193,11 +193,11 @@ export function WorktreeExitDialog({
   }
   function handleCancel() {
     if (onCancel) {
-      // Abort exit and return to the session
+      // 中止退出并返回会话
       onCancel();
       return;
     }
-    // Fallback: treat Escape as "keep" if no onCancel provided
+    // 后备：如果没有提供 onCancel，将 Escape 视为"保留"
     void handleSelect('keep');
   }
   const removeDescription = hasUncommitted || hasCommits ? 'All changes and commits will be lost.' : 'Clean up the worktree directory.';

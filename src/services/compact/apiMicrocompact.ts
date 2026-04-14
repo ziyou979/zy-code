@@ -11,10 +11,10 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 
 // docs: https://docs.google.com/document/d/1oCT4evvWTh3P6z-kcfNQwWTCxAhkoFndSaNS9Gm40uw/edit?tab=t.0
 
-// Default values for context management strategies
-// Match client-side microcompact token values
-const DEFAULT_MAX_INPUT_TOKENS = 180_000 // Typical warning threshold
-const DEFAULT_TARGET_INPUT_TOKENS = 40_000 // Keep last 40k tokens like client-side
+// 上下文管理策略的默认值
+// 匹配客户端 microcompact 令牌值
+const DEFAULT_MAX_INPUT_TOKENS = 180_000 // 典型警告阈值
+const DEFAULT_TARGET_INPUT_TOKENS = 40_000 // 保留最后 40k 令牌，如客户端
 
 const TOOLS_CLEARABLE_RESULTS = [
   ...SHELL_TOOL_NAMES,
@@ -31,7 +31,7 @@ const TOOLS_CLEARABLE_USES = [
   NOTEBOOK_EDIT_TOOL_NAME,
 ]
 
-// Context management strategy types matching API documentation
+// 匹配 API 文档的上下文管理策略类型
 export type ContextEditStrategy =
   | {
       type: 'clear_tool_uses_20250919'
@@ -55,12 +55,12 @@ export type ContextEditStrategy =
       keep: { type: 'thinking_turns'; value: number } | 'all'
     }
 
-// Context management configuration wrapper
+// 上下文管理配置包装器
 export type ContextManagementConfig = {
   edits: ContextEditStrategy[]
 }
 
-// API-based microcompact implementation that uses native context management
+// 使用原生上下文管理的基于 API 的 microcompact 实现
 export function getAPIContextManagement(options?: {
   hasThinking?: boolean
   isRedactThinkingActive?: boolean
@@ -74,11 +74,11 @@ export function getAPIContextManagement(options?: {
 
   const strategies: ContextEditStrategy[] = []
 
-  // Preserve thinking blocks in previous assistant turns. Skip when
-  // redact-thinking is active — redacted blocks have no model-visible content.
-  // When clearAllThinking is set (>1h idle = cache miss), keep only the last
-  // thinking turn — the API schema requires value >= 1, and omitting the edit
-  // falls back to the model-policy default (often "all"), which wouldn't clear.
+  // 保留之前助手轮次中的思考块。跳过当
+  // redact-thinking 激活时 — 编辑后的块没有模型可见内容。
+  // 当 clearAllThinking 设置时（>1h 空闲 = 缓存未命中），只保留最后一个
+  // 思考轮次 — API 模式要求 value >= 1，省略编辑
+  // 会回退到模型策略默认值（通常是 "all"），这不会清除。
   if (hasThinking && !isRedactThinkingActive) {
     strategies.push({
       type: 'clear_thinking_20251015',
@@ -86,7 +86,7 @@ export function getAPIContextManagement(options?: {
     })
   }
 
-  // Tool clearing strategies are ant-only
+  // 工具清除策略仅 ant 专用
   if (process.env.USER_TYPE !== 'zy-super') {
     return strategies.length > 0 ? { edits: strategies } : undefined
   }
@@ -96,7 +96,7 @@ export function getAPIContextManagement(options?: {
   )
   const useClearToolUses = isEnvTruthy(process.env.USE_API_CLEAR_TOOL_USES)
 
-  // If no tool clearing strategy is enabled, return early
+  // 如果未启用任何工具清除策略，提前返回
   if (!useClearToolResults && !useClearToolUses) {
     return strategies.length > 0 ? { edits: strategies } : undefined
   }

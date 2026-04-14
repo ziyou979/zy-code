@@ -33,7 +33,7 @@ interface ExtendedMemoryFileInfo extends MemoryFileInfo {
   exists: boolean;
 }
 
-// Remember last selected path
+// 记住最后选择的路径
 let lastSelectedPath: string | undefined;
 const OPEN_FOLDER_PREFIX = '__open_folder__';
 type Props = {
