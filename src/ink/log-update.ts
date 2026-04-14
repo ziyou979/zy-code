@@ -270,15 +270,38 @@ export class LogUpdate {
         )
       }
 
-      // clear(N) moves cursor UP by N-1 lines and to column 0
-      // This puts us at line prev.screen.height - N = next.screen.height
-      // But we want to be at next.screen.height - 1 (bottom of new screen)
-      screen.txn(prev => [
+      // eraseLines(n) erases n rows starting from the CURRENT cursor position,
+      // moving upward. After the diff loop the cursor can be ANYWHERE (at the
+      // last changed cell). If the cursor is not at the bottom row, eraseLines
+      // clears the WRONG rows — leaving stale content between the cursor and
+      // the old screen bottom. This manifests as "old content lingering below"
+      // when a streaming response shrinks (e.g., interrupted AI output).
+      //
+      // Fix: move cursor to prevHeight-1 (bottom row of old screen) before
+      // erasing, so eraseLines always clears from the actual bottom.
+      const prevHeight = prev.screen.height
+
+      // Move cursor to bottom row of old screen
+      screen.txn(prev => {
+        const dy = prevHeight - 1 - prev.y
+        if (dy !== 0 || prev.x !== 0) {
+          return [
+            [CARRIAGE_RETURN, { type: 'cursorMove', x: 0, y: dy }],
+            { dx: -prev.x, dy },
+          ]
+        }
+        return [[], { dx: 0, dy: 0 }]
+      })
+
+      // clear(N) erases N rows from cursor upward (cursor moves up N-1).
+      // After erase, cursor is at row (prevHeight-1) - (N-1) = nextHeight.
+      // We then move down 1 to land at nextHeight-1 (bottom of new screen).
+      screen.txn(() => [
         [
           { type: 'clear', count: linesToClear },
           { type: 'cursorMove', x: 0, y: -1 },
         ],
-        { dx: -prev.x, dy: -linesToClear },
+        { dx: 0, dy: -linesToClear },
       ])
     }
 
