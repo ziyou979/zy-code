@@ -52,6 +52,17 @@ export const HOOK_EVENTS = [
   'FileChanged',
 ] as const
 
+export type HookEvent = typeof HOOK_EVENTS[number]
+
+export type SDKAssistantMessageError =
+  | 'authentication_failed'
+  | 'billing_error'
+  | 'rate_limit'
+  | 'invalid_request'
+  | 'server_error'
+  | 'unknown'
+  | 'max_output_tokens'
+
 export const EXIT_REASONS = [
   'clear',
   'resume',

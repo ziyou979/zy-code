@@ -22,6 +22,8 @@ export type {
 } from './sdk/controlTypes.js'
 // Re-export core types (common serializable types)
 export * from './sdk/coreTypes.js'
+// Explicitly export HookEvent to ensure it's available
+export type { HookEvent } from './sdk/coreTypes.js'
 // Re-export runtime types (callbacks, interfaces with methods)
 export * from './sdk/runtimeTypes.js'
 

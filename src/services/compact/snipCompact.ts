@@ -1,5 +1,7 @@
 // Stub for src/services/compact/snipCompact.ts
 
+export const SNIP_NUDGE_TEXT = 'Context has been compacted to stay within limits.'
+
 export type SnipResult = { snipped: boolean; content: string }
 
 export function snipMessages(_messages: unknown[]): unknown[] {

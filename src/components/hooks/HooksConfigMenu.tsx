@@ -12,7 +12,7 @@
  */
 import * as React from 'react';
 import { useState } from 'react';
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js';
+import type { HookEvent } from 'src/entrypoints/agentSdkTypes';
 import { useAppState, useAppStateStore } from 'src/state/AppState.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useSettingsChange } from '../../hooks/useSettingsChange.js';
@@ -51,7 +51,7 @@ export function HooksConfigMenu({
   toolNames,
   onExit
 }: Props) {
-  const [modeState, setModeState] = useState({
+  const [modeState, setModeState] = useState<ModeState>({
     mode: "select-event"
   });
   const [disabledByPolicy, setDisabledByPolicy] = useState(() => {

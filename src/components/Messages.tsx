@@ -53,6 +53,8 @@ import type { JumpHandle } from './VirtualMessageList.js';
 // useAppState/useSettings 来获取自己的更新。
 const LogoHeader = React.memo(function LogoHeader({
   agentDefinitions
+}: {
+  agentDefinitions?: AgentDefinitionsResult;
 }) {
   return <OffscreenFreeze><Box flexDirection="column" gap={1}>{<LogoV2 />}<React.Suspense fallback={null}><StatusNotices agentDefinitions={agentDefinitions} /></React.Suspense></Box></OffscreenFreeze>;
 });
@@ -547,7 +549,9 @@ const MessagesImpl = ({
       return b != null && isAdvisorBlock(b) && b.type === 'advisor_tool_result' && b.content.type === 'advisor_result';
     }
     if (msg_6.type !== 'user') return false;
-    const b_0 = msg_6.message.content[0];
+    const content = msg_6.message.content;
+    if (!Array.isArray(content)) return false;
+    const b_0 = content[0];
     if (b_0?.type !== 'tool_result' || b_0.is_error || !msg_6.toolUseResult) return false;
     const name = lookupsRef.current.toolUseByToolUseID.get(b_0.tool_use_id)?.name;
     const tool = name ? findToolByName(tools, name) : undefined;
@@ -683,7 +687,7 @@ const MessagesImpl = ({
 /** click-to-expand 的 key：使用 tool_use_id（如果可用，这样 tool_use + 其
  *  tool_result 可以同时展开），否则对 groups/thinking 使用 uuid。 */
 function expandKey(msg: RenderableMessage): string {
-  return (msg.type === 'assistant' || msg.type === 'user' ? getToolUseID(msg) : null) ?? msg.uuid;
+  return (msg.type === 'assistant' || msg.type === 'user' ? getToolUseID(msg as NormalizedMessage) : null) ?? msg.uuid;
 }
 
 // 自定义比较器，防止 streaming 期间不必要的重新渲染。
@@ -747,11 +751,11 @@ export function shouldRenderStatically(message: RenderableMessage, streamingTool
       {
         if (message.type === 'assistant') {
           const block = message.message.content[0];
-          if (block?.type === 'server_tool_use') {
-            return lookups.resolvedToolUseIDs.has(block.id);
+          if ((block as any)?.type === 'server_tool_use') {
+            return lookups.resolvedToolUseIDs.has((block as any).id);
           }
         }
-        const toolUseID = getToolUseID(message);
+        const toolUseID = getToolUseID(message as NormalizedMessage);
         if (!toolUseID) {
           return true;
         }
@@ -776,7 +780,7 @@ export function shouldRenderStatically(message: RenderableMessage, streamingTool
       }
     case 'grouped_tool_use':
       {
-        const allResolved = message.messages.every(msg => {
+        const allResolved = (message as any).messages.every((msg: any) => {
           const content = msg.message.content[0];
           return content?.type === 'tool_use' && lookups.resolvedToolUseIDs.has(content.id);
         });

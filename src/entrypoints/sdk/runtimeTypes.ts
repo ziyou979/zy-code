@@ -32,10 +32,10 @@ export type SDKSession = {
   messages: SessionMessage[]
 }
 
-export type SdkMcpToolDefinition = {
+export type SdkMcpToolDefinition<T> = {
   name: string
   description: string
-  inputSchema: Record<string, unknown>
+  inputSchema: Record<string, T>
 }
 
 export type McpSdkServerConfigWithInstance = {

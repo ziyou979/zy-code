@@ -19,19 +19,31 @@ import { AgentNavigationFooter } from './AgentNavigationFooter.js';
 import { AgentsList } from './AgentsList.js';
 import { deleteAgentFromFile } from './agentFileUtils.js';
 import { CreateAgentWizard } from './new-agent-creation/CreateAgentWizard.js';
+import type { SettingSource } from '../../utils/settings/constants.js';
 type Props = {
   tools: Tools;
   onExit: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
 };
+
+type AgentSource = SettingSource | 'built-in' | 'plugin';
+
+type ModeState = 
+  | { mode: "list-agents"; source: AgentSource | 'all' }
+  | { mode: "create-agent" }
+  | { mode: "agent-menu"; agent: any; previousMode: ModeState }
+  | { mode: "view-agent"; agent: any; previousMode: ModeState }
+  | { mode: "edit-agent"; agent: any; previousMode: ModeState }
+  | { mode: "delete-confirm"; agent: any; previousMode: ModeState };
+
 export function AgentsMenu({
   tools,
   onExit
 }: Props) {
-  const [modeState, setModeState] = useState({
+  const [modeState, setModeState] = useState<ModeState>({
     mode: "list-agents",
-    source: "all"
+    source: "all" as const
   });
   const agentDefinitions = useAppState(s => s.agentDefinitions);
   const mcpTools = useAppState(s_0 => s_0.mcp.tools);
@@ -141,17 +153,16 @@ export function AgentsMenu({
       {
         let t13;
         let t14;
+        let t15;
         t14 = a_9 => a_9.agentType === modeState.agent.agentType && a_9.source === modeState.agent.source;
         t13 = allAgents.find(t14);
         const freshAgent_1 = t13;
         const agentToUse = freshAgent_1 || modeState.agent;
         const isEditable = agentToUse.source !== "built-in" && agentToUse.source !== "plugin" && agentToUse.source !== "flagSettings";
-        let t14;
         t14 = {
           label: "View agent",
           value: "view"
         };
-        let t15;
         t15 = isEditable ? [{
           label: "Edit agent",
           value: "edit"
@@ -226,17 +237,16 @@ export function AgentsMenu({
       {
         let t13;
         let t14;
+        let t15;
         t14 = a_8 => a_8.agentType === modeState.agent.agentType && a_8.source === modeState.agent.source;
         t13 = allAgents.find(t14);
         const freshAgent_0 = t13;
         const agentToDisplay = freshAgent_0 || modeState.agent;
-        let t14;
         t14 = () => setModeState({
           mode: "agent-menu",
           agent: agentToDisplay,
           previousMode: modeState.previousMode
         });
-        let t15;
         t15 = () => setModeState({
           mode: "agent-menu",
           agent: agentToDisplay,
@@ -307,8 +317,8 @@ export function AgentsMenu({
         t13 = allAgents.find(t14);
         const freshAgent = t13;
         const agentToEdit = freshAgent || modeState.agent;
-        const t15 = `Edit agent: ${agentToEdit.agentType}`;
         let t15;
+        t15 = `Edit agent: ${agentToEdit.agentType}`;
         t15 = () => setModeState(modeState.previousMode);
         let t16;
         let t17;

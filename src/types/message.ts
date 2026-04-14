@@ -20,18 +20,20 @@ import type { Progress } from '../Tool.js'
 
 export type MessageOrigin =
   | { kind: 'human' }
-  | { kind: 'channel'; channel: string }
+  | { kind: 'channel'; channel: string; server?: string }
   | { kind: 'skill'; skill: string }
   | { kind: 'hook'; hookName: string }
   | { kind: 'agent'; agentId: string }
   | { kind: 'teammate'; agentId: string; teamName: string }
+  | { kind: 'task-notification' }
+  | { kind: 'coordinator' }
 
 export type PartialCompactDirection = 'forward' | 'backward'
 
 export interface BaseMessage {
   uuid: UUID | string
   timestamp: string
-  isMeta?: true
+  isMeta?: boolean
 }
 
 // ============================================================
@@ -41,7 +43,7 @@ export interface BaseMessage {
 export interface AssistantMessage extends BaseMessage {
   type: 'assistant'
   message: BetaMessage & {
-    container: null
+    container?: null
     context_management: null | Record<string, unknown>
   }
   requestId?: string
@@ -118,6 +120,7 @@ export interface NormalizedUserMessage extends BaseMessage {
   }
   imagePasteIds?: number[]
   sourceToolAssistantUUID?: UUID
+  sourceToolUseID?: string
   permissionMode?: PermissionMode
   origin?: MessageOrigin
 }
@@ -153,9 +156,9 @@ export type AttachmentContent =
   | { type: 'reasoning'; level: string }
   | { type: 'text'; content: string }
 
-export interface AttachmentMessage extends BaseMessage {
+export interface AttachmentMessage<T extends Record<string, unknown> = { type: string }> extends BaseMessage {
   type: 'attachment'
-  attachment: {
+  attachment: T & {
     type: string
     origin?: MessageOrigin
     content?: AttachmentContent
@@ -183,8 +186,13 @@ export interface SystemInformationalMessage extends BaseMessage {
 export interface SystemAPIErrorMessage extends BaseMessage {
   type: 'system'
   subtype: 'api_error'
-  content: string
+  content?: string
   level: 'error'
+  cause?: Error
+  error?: unknown
+  retryInMs?: number
+  retryAttempt?: number
+  maxRetries?: number
 }
 
 export interface SystemPermissionRetryMessage extends BaseMessage {
@@ -207,6 +215,7 @@ export interface SystemLocalCommandMessage extends BaseMessage {
   type: 'system'
   subtype: 'local_command'
   content: string
+  level?: string
 }
 
 export interface SystemAwaySummaryMessage extends BaseMessage {
@@ -220,6 +229,7 @@ export interface SystemCompactBoundaryMessage extends BaseMessage {
   subtype: 'compact_boundary'
   content: string
   compactMetadata: CompactMetadata
+  level?: string
 }
 
 export interface SystemFileSnapshotMessage extends BaseMessage {
@@ -237,6 +247,14 @@ export interface SystemMicrocompactBoundaryMessage extends BaseMessage {
   type: 'system'
   subtype: 'microcompact_boundary'
   content: string
+  level?: string
+  microcompactMetadata?: {
+    trigger: string
+    preTokens: number
+    tokensSaved?: number
+    compactedToolIds?: string[]
+    clearedAttachmentUUIDs?: string[]
+  }
 }
 
 export interface SystemScheduledTaskFireMessage extends BaseMessage {
@@ -248,45 +266,72 @@ export interface SystemScheduledTaskFireMessage extends BaseMessage {
 export interface SystemTurnDurationMessage extends BaseMessage {
   type: 'system'
   subtype: 'turn_duration'
-  content: string
+  content?: string
   durationMs: number
+  budgetTokens?: number
+  budgetLimit?: number
+  budgetNudges?: number
+  messageCount?: number
 }
 
 export interface SystemAgentsKilledMessage extends BaseMessage {
   type: 'system'
   subtype: 'agents_killed'
-  content: string
+  content?: string
 }
 
 export interface ToolUseSummaryMessage extends BaseMessage {
-  type: 'system'
-  subtype: 'tool_use_summary'
-  content: string
+  type: 'tool_use_summary'
+  summary: string
+  precedingToolUseIds: string[]
+  content?: string
 }
 
 export interface TombstoneMessage extends BaseMessage {
   type: 'system'
   subtype: 'tombstone'
   content: string
+  message: Message
 }
 
 export interface SystemApiMetricsMessage extends BaseMessage {
   type: 'system'
   subtype: 'api_metrics'
-  content: string
+  content?: string
+  ttftMs?: number
+  otps?: number
+  isP50?: boolean
+  hookDurationMs?: number
+  turnDurationMs?: number
+  toolDurationMs?: number
+  classifierDurationMs?: number
+  toolCount?: number
+  hookCount?: number
+  classifierCount?: number
+  configWriteCount?: number
 }
 
 export interface SystemStopHookSummaryMessage extends BaseMessage {
   type: 'system'
   subtype: 'stop_hook_summary'
-  content: string
+  content: string | undefined
   hookInfos: StopHookInfo[]
+  hookCount?: number
+  hookErrors?: string[]
+  preventedContinuation?: boolean
+  stopReason?: string
+  hasOutput?: boolean
+  level?: string
+  toolUseID?: string
+  hookLabel?: string
+  totalDurationMs?: number
 }
 
 export interface SystemMemorySavedMessage extends BaseMessage {
   type: 'system'
   subtype: 'memory_saved'
-  content: string
+  content?: string
+  writtenPaths?: string[]
 }
 
 export type SystemMessage =
@@ -322,14 +367,25 @@ export interface HookResultMessage extends BaseMessage {
 
 export interface StreamEvent extends BaseMessage {
   type: 'stream_event'
-  event: string
-  data: unknown
+  event: {
+    type: string
+    content_block?: any
+    delta?: any
+    index?: number
+    [key: string]: unknown
+  }
+  data?: unknown
+  ttftMs?: number
 }
 
 export interface RequestStartEvent extends BaseMessage {
   type: 'request_start'
   requestId: string
   model: string
+}
+
+export interface StreamRequestStartEvent extends BaseMessage {
+  type: 'stream_request_start'
 }
 
 export interface StopHookInfo {
@@ -370,11 +426,13 @@ export type CollapsibleMessage =
 export interface CompactMetadata {
   trigger: string
   preTokens: number
+  userContext?: string
   preservedSegment?: {
     headUuid: string
     anchorUuid: string
     tailUuid: string
   }
+  messagesSummarized?: number
 }
 
 // ============================================================
@@ -388,6 +446,9 @@ export type RenderableMessage =
   | ProgressMessage
   | AttachmentMessage
   | HookResultMessage
+  | CollapsedReadSearchGroup
+  | GroupedToolUseMessage
+  | GroupedToolUseMessageWithMessages
 
 export type NormalizedMessage =
   | NormalizedUserMessage
@@ -406,3 +467,9 @@ export type Message =
   | SystemMessage
   | ProgressMessage
   | AttachmentMessage
+  | StreamEvent
+  | StreamRequestStartEvent
+  | RequestStartEvent
+  | HookResultMessage
+  | ToolUseSummaryMessage
+  | TombstoneMessage
