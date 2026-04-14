@@ -45,7 +45,12 @@ export type McpSdkServerConfigWithInstance = {
 
 export type ListSessionsOptions = Record<string, unknown>
 export type GetSessionInfoOptions = Record<string, unknown>
+export type GetSessionMessagesOptions = {
+  dir?: string
+  limit?: number
+  offset?: number
+  includeSystemMessages?: boolean
+}
 export type SessionMutationOptions = Record<string, unknown>
 export type ForkSessionOptions = Record<string, unknown>
 export type ForkSessionResult = { sessionId: string }
-export type SDKSessionInfo = { id: string; createdAt: string }
