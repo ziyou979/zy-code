@@ -14,11 +14,11 @@ type ParsedUpdate = {
   reason?: string;
 };
 
-// Parse resource and polling updates from XML format
+// 从 XML 格式解析 resource 和 polling 更新
 function parseUpdates(text: string): ParsedUpdate[] {
   const updates: ParsedUpdate[] = [];
 
-  // Match <mcp-resource-update server="..." uri="...">
+  // 匹配 <mcp-resource-update server="..." uri="...">
   const resourceRegex = /<mcp-resource-update\s+server="([^"]+)"\s+uri="([^"]+)"[^>]*>(?:[\s\S]*?<reason>([^<]+)<\/reason>)?/g;
   let match;
   while ((match = resourceRegex.exec(text)) !== null) {
@@ -30,7 +30,7 @@ function parseUpdates(text: string): ParsedUpdate[] {
     });
   }
 
-  // Match <mcp-polling-update type="tool" server="..." tool="...">
+  // 匹配 <mcp-polling-update type="tool" server="..." tool="...">
   const pollingRegex = /<mcp-polling-update\s+type="([^"]+)"\s+server="([^"]+)"\s+tool="([^"]+)"[^>]*>(?:[\s\S]*?<reason>([^<]+)<\/reason>)?/g;
   while ((match = pollingRegex.exec(text)) !== null) {
     updates.push({
@@ -43,15 +43,15 @@ function parseUpdates(text: string): ParsedUpdate[] {
   return updates;
 }
 
-// Format URI for display - show just the meaningful part
+// 格式化 URI 用于显示——仅展示有意义的部分
 function formatUri(uri: string): string {
-  // For file:// URIs, show just the filename
+  // 对于 file:// URI，仅显示文件名
   if (uri.startsWith('file://')) {
     const path = uri.slice(7);
     const parts = path.split('/');
     return parts[parts.length - 1] || path;
   }
-  // For other URIs, show the whole thing but truncated
+  // 对于其他 URI，显示完整内容但进行截断
   if (uri.length > 40) {
     return uri.slice(0, 39) + '\u2026';
   }

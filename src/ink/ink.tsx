@@ -39,9 +39,9 @@ import { DBP, DFE, DISABLE_MOUSE_TRACKING, ENABLE_MOUSE_TRACKING, ENTER_ALT_SCRE
 import { CLEAR_ITERM2_PROGRESS, CLEAR_TAB_STATUS, setClipboard, supportsTabStatus, wrapForMultiplexer } from './termio/osc.js';
 import { TerminalWriteProvider } from './useTerminalNotification.js';
 
-// Alt-screen: renderer.ts sets cursor.visible = !isTTY || screen.height===0,
-// which is always false in alt-screen (TTY + content fills screen).
-// Reusing a frozen object saves 1 allocation per frame.
+// 替代屏幕：renderer.ts 设置 cursor.visible = !isTTY || screen.height===0，
+// 这在替代屏幕中始终为 false（TTY + 内容填满屏幕）。
+// 复用冻结对象可以每帧节省 1 次分配。
 const ALT_SCREEN_ANCHOR_CURSOR = Object.freeze({
   x: 0,
   y: 0,
@@ -56,8 +56,8 @@ const ERASE_THEN_HOME_PATCH = Object.freeze({
   content: ERASE_SCREEN + CURSOR_HOME
 });
 
-// Cached per-Ink-instance, invalidated on resize. frame.cursor.y for
-// alt-screen is always terminalRows - 1 (renderer.ts).
+// 按 Ink 实例缓存，resize 时失效。alt-screen 的 frame.cursor.y
+// 始终为 terminalRows - 1（见 renderer.ts）。
 function makeAltScreenParkPatch(terminalRows: number) {
   return Object.freeze({
     type: 'stdout' as const,

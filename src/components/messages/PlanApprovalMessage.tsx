@@ -111,7 +111,7 @@ export function formatTeammateMessageContent(content: string): string {
     return taskAssignmentSummary;
   }
 
-  // Check for teammate_terminated message
+  // 检查 teammate_terminated 消息
   try {
     const parsed = jsonParse(content) as {
       type?: string;

@@ -1,7 +1,7 @@
 /**
- * Vim Text Object Finding
+ * Vim 文本对象查找
  *
- * Functions for finding text object boundaries (iw, aw, i", a(, etc.)
+ * 用于查找文本对象边界的函数（iw、aw、i"、a( 等）
  */
 
 import {

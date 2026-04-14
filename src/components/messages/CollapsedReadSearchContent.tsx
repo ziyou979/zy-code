@@ -22,9 +22,9 @@ import { ToolUseLoader } from '../ToolUseLoader.js';
 const teamMemCollapsed = feature('TEAMMEM') ? require('./teamMemCollapsed.js') as typeof import('./teamMemCollapsed.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// Hold each ⤿ hint for a minimum duration so fast-completing tool calls
-// (bash commands, file reads, search patterns) are actually readable instead
-// of flickering past in a single frame.
+// 保持每个 ⤿ 提示的最小显示时长，这样快速完成的工具调用
+//（bash 命令、文件读取、搜索模式）才是可读的，而不是
+// 在一帧内闪烁消失。
 const MIN_HINT_DISPLAY_MS = 700;
 type Props = {
   message: CollapsedReadSearchGroup;
@@ -37,7 +37,7 @@ type Props = {
   isActiveGroup?: boolean;
 };
 
-/** Render a single tool use in verbose mode */
+/** 在 verbose 模式下渲染单个工具使用 */
 function VerboseToolUse({
   content,
   tools,
@@ -105,9 +105,9 @@ export function CollapsedReadSearchContent({
   const hasMemoryOps = memorySearchCount > 0 || memoryReadCount > 0 || memoryWriteCount > 0;
   const hasTeamMemoryOps = feature('TEAMMEM') ? teamMemCollapsed!.checkHasTeamMemOps(message) : false;
 
-  // Track the max seen counts so they only ever increase. The debounce timer
-  // causes extra re-renders at arbitrary times; during a brief "invisible window"
-  // in the streaming executor the group count can dip, which causes jitter.
+  // 跟踪最大已见计数，使其只能递增。debounce 计时器
+  // 会在任意时刻产生额外的 re-render；在流式执行器的
+  // 短暂"不可见窗口"期间，组计数可能下降，这会导致抖动。
   const maxReadCountRef = useRef(0);
   const maxSearchCountRef = useRef(0);
   const maxListCountRef = useRef(0);
@@ -122,9 +122,9 @@ export function CollapsedReadSearchContent({
   const searchCount = maxSearchCountRef.current;
   const listCount = maxListCountRef.current;
   const mcpCallCount = maxMcpCountRef.current;
-  // Subtract commands surfaced as "Committed …" / "Created PR …" so the
-  // same command isn't counted twice. gitOpBashCount is read live (no max-ref
-  // needed — it's 0 until results arrive, then only grows).
+  // 减去作为 "Committed …" / "Created PR …" 显示的命令，这样
+  // 同一命令不会被计数两次。gitOpBashCount 是实时读取的（不需要 max-ref，
+  // 在结果到达之前为 0，之后只增不减）。
   const gitOpBashCount = message.gitOpBashCount ?? 0;
   const bashCount = isFullscreenEnvEnabled() ? Math.max(0, maxBashCountRef.current - gitOpBashCount) : 0;
   const hasNonMemoryOps = searchCount > 0 || readCount > 0 || listCount > 0 || replCount > 0 || mcpCallCount > 0 || bashCount > 0 || gitOpBashCount > 0;
@@ -138,9 +138,9 @@ export function CollapsedReadSearchContent({
     incomingHint = lastRead !== undefined ? getDisplayPath(lastRead) : lastSearch;
   }
 
-  // Active REPL calls emit repl_tool_call progress with the current inner
-  // tool's name+input. Virtual messages don't arrive until REPL completes,
-  // so this is the only source of a live hint during execution.
+  // 活跃的 REPL 调用发出 repl_tool_call 进度，包含当前内部
+  // 工具的 name+input。虚拟消息直到 REPL 完成才到达，
+  // 因此这是执行期间实时提示的唯一来源。
   if (isActiveGroup) {
     for (const id_0 of toolUseIds) {
       if (!inProgressToolUseIDs.has(id_0)) continue;
@@ -157,7 +157,7 @@ export function CollapsedReadSearchContent({
   }
   const displayedHint = useMinDisplayTime(incomingHint, MIN_HINT_DISPLAY_MS);
 
-  // In verbose mode, render each tool use with its 1-line result summary
+  // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
     const toolUses: NormalizedAssistantMessage[] = [];
     for (const msg of groupMessages) {
@@ -197,19 +197,19 @@ export function CollapsedReadSearchContent({
       </Box>;
   }
 
-  // Non-verbose mode: Show counts with blinking grey dot while active, green dot when finalized
-  // Use present tense when active, past tense when finalized
+  // 非 verbose 模式：活跃时显示带闪烁灰点的计数，完成后显示绿点
+  // 活跃时使用现在时，完成后使用过去时
 
-  // Defensive: If all counts are 0, don't render the collapsed group
-  // This shouldn't happen in normal operation, but handles edge cases
+  // 防御性检查：如果所有计数都为 0，不渲染折叠组
+  // 正常操作中不应该发生，但处理了边界情况
   if (!hasMemoryOps && !hasTeamMemoryOps && !hasNonMemoryOps) {
     return null;
   }
 
-  // Find the slowest in-progress shell command in this group. BashTool yields
-  // progress every second but the collapsed renderer never showed it — long
-  // commands (npm install, tests) looked frozen. Shown after 2s so fast
-  // commands stay clean; the ticking counter reassures that slow ones aren't stuck.
+  // 找到此组中最慢的正在执行的 shell 命令。BashTool 每秒
+  // 产生进度，但折叠渲染器从未显示过它——长耗时命令
+  //（npm install、测试）看起来像是卡住了。2 秒后显示，这样快速
+  // 命令保持干净；跳动的计数器让用户确信慢命令没有卡住。
   let shellProgressSuffix = '';
   if (isFullscreenEnvEnabled() && isActiveGroup) {
     let elapsed: number | undefined;
@@ -234,11 +234,11 @@ export function CollapsedReadSearchContent({
     }
   }
 
-  // Build non-memory parts first (search, read, repl, mcp, bash) — these render
-  // before memory so the line reads "Ran 3 bash commands, recalled 1 memory".
+  // 首先构建非 memory 部分（search、read、repl、mcp、bash）——这些在 memory 之前渲染，
+  // 这样行读起来是 "Ran 3 bash commands, recalled 1 memory"。
   const nonMemParts: React.ReactNode[] = [];
 
-  // Git operations lead the line — they're the load-bearing outcome.
+  // Git 操作引领行首——它们是关键的产出结果。
   function pushPart(key: string, verbKey: string, body: React.ReactNode): void {
     const isFirst = nonMemParts.length === 0;
     if (!isFirst) nonMemParts.push(<Text key={`comma-${key}`}>, </Text>);
@@ -379,7 +379,7 @@ export function CollapsedReadSearchContent({
       </Text>);
   }
 
-  // Build memory parts (auto-memory) — rendered after nonMemParts
+  // 构建 memory 部分（auto-memory）——在 nonMemParts 之后渲染
   const hasPrecedingNonMem = nonMemParts.length > 0;
   const memParts: React.ReactNode[] = [];
   if (memoryReadCount > 0) {
@@ -443,9 +443,9 @@ export function CollapsedReadSearchContent({
         </Text>
       </Box>
       {isActiveGroup && displayedHint !== undefined &&
-    // Row layout: 5-wide gutter for ⎿, then a flex column for the text.
-    // Ink's wrap stays inside the right column so continuation lines
-    // indent under ⎿. MAX_HINT_CHARS in commandAsHint caps total at ~5 lines.
+    // 行布局：5 宽 gutter 用于 ⎿，然后是 flex 列用于文本。
+    // Ink 的 wrap 保留在右侧列内，因此续行在 ⎿ 下方缩进。
+    // MAX_HINT_CHARS in commandAsHint 将总计限制为约 5 行。
     <Box flexDirection="row">
           <Box width={5} flexShrink={0}>
             <Text dimColor>{'  ⎿  '}</Text>

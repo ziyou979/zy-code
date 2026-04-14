@@ -31,9 +31,9 @@ import { startUpstreamProxyRelay } from './relay.js'
 export const SESSION_TOKEN_PATH = '/run/ccr/session_token'
 const SYSTEM_CA_BUNDLE = '/etc/ssl/certs/ca-certificates.crt'
 
-// Hosts the proxy must NOT intercept. Covers loopback, RFC1918, the IMDS
-// range, and the package registries + GitHub that CCR containers already
-// reach directly. Mirrors airlock/scripts/sandbox-shell-ccr.sh.
+// 代理不应拦截的主机列表。涵盖回环地址、RFC1918 私有地址、IMDS
+// 范围，以及 CCR 容器已经直接访问的包注册表和 GitHub。
+// 与 airlock/scripts/sandbox-shell-ccr.sh 保持一致。
 const NO_PROXY_LIST = [
   'localhost',
   '127.0.0.1',
@@ -42,12 +42,12 @@ const NO_PROXY_LIST = [
   '10.0.0.0/8',
   '172.16.0.0/12',
   '192.168.0.0/16',
-  // Anthropic API: no upstream route will ever match, and the MITM breaks
-  // non-Bun runtimes (Python httpx/certifi doesn't trust the forged CA).
-  // Three forms because NO_PROXY parsing differs across runtimes:
-  //   *.anthropic.com  — Bun, curl, Go (glob match)
-  //   .anthropic.com   — Python urllib/httpx (suffix match, strips leading dot)
-  //   anthropic.com    — apex domain fallback
+  // Anthropic API：任何上游路由都不会匹配，且 MITM 会破坏
+  // 非 Bun 运行时（Python httpx/certifi 不信任伪造的 CA）。
+  // 三种形式是因为不同运行时的 NO_PROXY 解析方式不同：
+  //   *.anthropic.com  — Bun、curl、Go（glob 匹配）
+  //   .anthropic.com   — Python urllib/httpx（后缀匹配，会去除前导点）
+  //   anthropic.com    — 顶点域名后备
   'anthropic.com',
   '.anthropic.com',
   '*.anthropic.com',

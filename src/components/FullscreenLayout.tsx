@@ -101,69 +101,60 @@ export function useUnseenDivider(messageCount: number): {
   shiftDivider: (indexDelta: number, heightDelta: number) => void;
 } {
   const [dividerIndex, setDividerIndex] = useState<number | null>(null);
-  // Ref holds the current count for onScrollAway to snapshot. Written in
-  // the render body (not useEffect) so wheel events arriving between a
-  // message-append render and its effect flush don't capture a stale
-  // count (off-by-one in the baseline). React Compiler bails out here —
-  // acceptable for a hook instantiated once in REPL.
+  // Ref 保存当前消息数量，供 onScrollAway 快照使用。在渲染体中写入
+  //（而非 useEffect），这样在消息追加渲染与 effect 刷新之间到达的滚轮事件
+  // 不会捕获到过时的数量（基线偏差一格）。React Compiler 在此处会退出优化——
+  // 对于 REPL 中只实例化一次的 hook 来说可以接受。
   const countRef = useRef(messageCount);
   countRef.current = messageCount;
-  // scrollHeight snapshot — the divider's y in content coords. Ref-only:
-  // read synchronously in onScrollAway (setState is batched, can't
-  // read-then-write in the same callback) AND by FullscreenLayout's
-  // pillVisible subscription. null = pinned to bottom.
+  // scrollHeight 快照——分割线在内容坐标系中的 y 位置。仅用 ref：
+  // 在 onScrollAway 中同步读取（setState 是批处理的，无法在同一个
+  // 回调中读后写），同时供 FullscreenLayout 的 pillVisible 订阅使用。
+  // null 表示固定在底部。
   const dividerYRef = useRef<number | null>(null);
   const onRepin = useCallback(() => {
-    // Don't clear dividerYRef here — a trackpad momentum wheel event
-    // racing in the same stdin batch would see null and re-snapshot,
-    // overriding the setDividerIndex(null) below. The useEffect below
-    // clears the ref after React commits the null dividerIndex, so the
-    // ref stays non-null until the state settles.
+    // 不要在这里清除 dividerYRef——同一 stdin 批次中竞态到达的触控板动量滚轮事件
+    // 会看到 null 并重新快照，覆盖下方的 setDividerIndex(null)。下方的 useEffect
+    // 会在 React 提交 null dividerIndex 后清除 ref，因此 ref 在状态稳定前保持非 null。
     setDividerIndex(null);
   }, []);
   const onScrollAway = useCallback((handle: ScrollBoxHandle) => {
-    // Nothing below the viewport → nothing to jump to. Covers both:
-    // • empty/short session: scrollUp calls scrollTo(0) which breaks sticky
-    //   even at scrollTop=0 (wheel-up on fresh session showed the pill)
-    // • click-to-select at bottom: useDragToScroll.check() calls
-    //   scrollTo(current) to break sticky so streaming content doesn't shift
-    //   under the selection, then onScroll(false, …) — but scrollTop is still
-    //   at max (Sarah Deaton, #zy-code-feedback 2026-03-15)
-    // pendingDelta: scrollBy accumulates without updating scrollTop. Without
-    // it, wheeling up from max would see scrollTop==max and suppress the pill.
+    // 视口下方没有内容 → 没有可跳转的目标。涵盖两种情况：
+    // • 会话为空/较短：scrollUp 调用 scrollTo(0) 会破坏 sticky 状态
+    //   即使 scrollTop=0（新会话上的滚轮上滚会显示 pill）
+    // • 底部点击选择：useDragToScroll.check() 调用 scrollTo(current) 破坏
+    //   sticky 状态以便流式内容不会在选择下移动，然后触发 onScroll(false, …)
+    //   但 scrollTop 仍在最大值
+    // pendingDelta：scrollBy 累积但不更新 scrollTop。没有它的话，从最大值滚轮上滚
+    // 会看到 scrollTop==max 并抑制 pill 显示。
     const max = Math.max(0, handle.getScrollHeight() - handle.getViewportHeight());
     if (handle.getScrollTop() + handle.getPendingDelta() >= max) return;
-    // Snapshot only on the FIRST scroll-away. onScrollAway fires on EVERY
-    // scroll action (not just the initial break from sticky) — this guard
-    // preserves the original baseline so the count doesn't reset on the
-    // second PageUp. Subsequent calls are ref-only no-ops (no REPL re-render).
+    // 仅在第一次离开底部时快照。onScrollAway 在每次滚动操作时都会触发
+    //（而不仅是初次离开 sticky）——此守卫保留原始基线，这样第二次 PageUp 时
+    // 计数不会重置。后续调用仅为 ref 级别的空操作（不会触发 REPL 重新渲染）。
     if (dividerYRef.current === null) {
       dividerYRef.current = handle.getScrollHeight();
-      // New scroll-away session → move the divider here (replaces old one)
+      // 新的滚动离开会话 → 将分割线移动到这里（替换旧的）
       setDividerIndex(countRef.current);
     }
   }, []);
   const jumpToNew = useCallback((handle_0: ScrollBoxHandle | null) => {
     if (!handle_0) return;
-    // scrollToBottom (not scrollTo(dividerY)): sets stickyScroll=true so
-    // useVirtualScroll mounts the tail and render-node-to-output pins
-    // scrollTop=maxScroll. scrollTo sets stickyScroll=false → the clamp
-    // (still at top-range bounds before React re-renders) pins scrollTop
-    // back, stopping short. The divider stays rendered (dividerIndex
-    // unchanged) so users see where new messages started; the clear on
-    // next submit/explicit scroll-to-bottom handles cleanup.
+    // scrollToBottom（而非 scrollTo(dividerY)）：设置 stickyScroll=true 使
+    // useVirtualScroll 挂载尾部，render-node-to-output 固定 scrollTop=maxScroll。
+    // scrollTo 设置 stickyScroll=false → 钳位（仍在 React 重新渲染前的顶部范围边界）
+    // 会将 scrollTop 拉回，导致滚动不足。分割线保持渲染（dividerIndex 不变），
+    // 因此用户可以看到新消息的起始位置；下次提交/显式滚动到底部时会清理。
     handle_0.scrollToBottom();
   }, []);
 
-  // Sync dividerYRef with dividerIndex. When onRepin fires (submit,
-  // scroll-to-bottom), it sets dividerIndex=null but leaves the ref
-  // non-null — a wheel event racing in the same stdin batch would
-  // otherwise see null and re-snapshot. Deferring the ref clear to
-  // useEffect guarantees the ref stays non-null until React has committed
-  // the null dividerIndex, blocking the if-null guard in onScrollAway.
+  // 同步 dividerYRef 与 dividerIndex。当 onRepin 触发（提交、滚动到底部）时，
+  // 它将 dividerIndex 设为 null 但 ref 保持非 null——同一 stdin 批次中竞态到达的
+  // 滚轮事件否则会看到 null 并重新快照。将 ref 清除延迟到 useEffect 保证 ref 在
+  // React 提交 null dividerIndex 之前保持非 null，从而阻止 onScrollAway 中的 if-null 守卫。
   //
-  // Also handles /clear, rewind, teammate-view swap — if the count drops
-  // below the divider index, the divider would point at nothing.
+  // 同时处理 /clear、回退、teammate-view 切换——如果计数下降到分割线索引以下，
+  // 分割线将指向空位置。
   useEffect(() => {
     if (dividerIndex === null) {
       dividerYRef.current = null;
@@ -202,10 +193,10 @@ export function countUnseenAssistantTurns(messages: readonly Message[], dividerI
   for (let i = dividerIndex; i < messages.length; i++) {
     const m = messages[i]!;
     if (m.type === 'progress') continue;
-    // Tool-use-only assistant entries aren't "new messages" to the user —
-    // skip them the same way we skip progress. prevWasAssistant is NOT
-    // updated, so a text block immediately following still counts as the
-    // same turn (tool_use + text from one API response = 1).
+    // 仅包含工具调用的 assistant 条目对用户来说不是"新消息"——
+    // 与跳过 progress 消息一样跳过它们。prevWasAssistant 不会更新，
+    // 因此紧随其后的文本块仍然算作同一个回合（一次 API 响应中的
+    // tool_use + text = 1）。
     if (m.type === 'assistant' && !assistantHasVisibleText(m)) continue;
     const isAssistant = m.type === 'assistant';
     if (isAssistant && !prevWasAssistant) count++;
@@ -237,10 +228,10 @@ export type UnseenDivider = {
  */
 export function computeUnseenDivider(messages: readonly Message[], dividerIndex: number | null): UnseenDivider | undefined {
   if (dividerIndex === null) return undefined;
-  // Skip progress and null-rendering attachments when picking the divider
-  // anchor — Messages.tsx filters these out of renderableMessages before the
-  // dividerBeforeIndex search, so their UUID wouldn't be found (CC-724).
-  // Hook attachments use randomUUID() so nothing shares their 24-char prefix.
+  // 跳过 progress 和 null-rendering attachments 来选择分割线锚点——
+  // Messages.tsx 在 dividerBeforeIndex 搜索之前将这些从 renderableMessages 中过滤掉，
+  // 因此它们的 UUID 不会被找到 (CC-724)。Hook attachments 使用 randomUUID()，
+  // 所以没有东西与它们的 24 字符前缀共享。
   let anchorIdx = dividerIndex;
   while (anchorIdx < messages.length && (messages[anchorIdx]?.type === 'progress' || isNullRenderingAttachment(messages[anchorIdx]!))) {
     anchorIdx++;
@@ -331,13 +322,12 @@ export function FullscreenLayout({
   return <>{scrollable}{bottom}{overlay}{modal}</>;
 }
 
-// Slack-style pill. Absolute overlay at bottom={0} of the scrollwrap — floats
-// over the ScrollBox's last content row, only obscuring the centered pill
-// text (the rest of the row shows ScrollBox content). Scroll-smear from
-// DECSTBM shifting the pill's pixels is repaired at the Ink layer
-// (absoluteRectsPrev third-pass in render-node-to-output.ts, #23939). Shows
-// "Jump to bottom" when count is 0 (scrolled away but no new messages yet —
-// the dead zone where users previously thought chat stalled).
+// Slack 风格的 pill。绝对定位在 scrollwrap 底部={0} 的覆盖层——浮动在
+// ScrollBox 最后一个内容行之上，仅遮住居中的 pill 文本（该行的其余部分
+// 显示 ScrollBox 内容）。DECSTBM 移动 pill 像素造成的滚动涂抹在 Ink 层
+// 修复（render-node-to-output.ts 中的 absoluteRectsPrev 第三遍，#23939）。
+// count 为 0 时显示 "Jump to bottom"（已离开底部但尚无新消息——
+// 用户之前认为聊天卡死的死区）。
 
 function _temp() {}
 function NewMessagesPill({
@@ -348,18 +338,15 @@ function NewMessagesPill({
   return <Box position="absolute" bottom={0} left={0} right={0} justifyContent="center"><Box onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>{<Text backgroundColor={hover ? "userMessageBackgroundHover" : "userMessageBackground"} dimColor={true}>{" "}{count > 0 ? `${count} new ${plural(count, "message")}` : "Jump to bottom"}{" "}{figures.arrowDown}{" "}</Text>}</Box></Box>;
 }
 
-// Context breadcrumb: when scrolled up into history, pin the current
-// conversation turn's prompt above the viewport so you know what Zy was
-// responding to. Normal-flow sibling BEFORE the ScrollBox (mirrors the pill
-// below it) — shrinks the ScrollBox by exactly 1 row via flex, stays outside
-// the DECSTBM scroll region. Click jumps back to the prompt.
+// 上下文面包屑：向上滚动到历史记录时，将当前对话回合的提示固定在视口上方，
+// 这样你可以知道 Zy 在回复什么。正常流中位于 ScrollBox 之前的兄弟元素
+//（镜像下方的 pill）——通过 flex 将 ScrollBox 缩小恰好 1 行，保持在
+// DECSTBM 滚动区域之外。点击跳回到提示。
 //
-// Height is FIXED at 1 row (truncate-end for long prompts). A variable-height
-// header (1 when short, 2 when wrapped) shifts the ScrollBox by 1 row every
-// time the sticky prompt switches during scroll — content jumps on screen
-// even with scrollTop unchanged (the DECSTBM region top shifts with the
-// ScrollBox, and the diff engine sees "everything moved"). Fixed height
-// keeps the ScrollBox anchored; only the header TEXT changes, not its box.
+// 高度固定为 1 行（长提示截断尾部）。可变高度的头部（短文本 1 行，换行 2 行）
+// 会在滚动过程中每次 sticky prompt 切换时将 ScrollBox 移动 1 行——即使 scrollTop
+// 未变，内容也会在屏幕上跳动（DECSTBM 区域顶部随 ScrollBox 移动，diff 引擎
+// 认为"所有内容都移动了"）。固定高度保持 ScrollBox 锚定；只有头部文本变化，而非其框体。
 function StickyPromptHeader({
   text,
   onClick
@@ -368,14 +355,13 @@ function StickyPromptHeader({
   return <Box flexShrink={0} width="100%" height={1} paddingRight={1} backgroundColor={hover ? "userMessageBackgroundHover" : "userMessageBackground"} onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>{<Text color="subtle" wrap="truncate-end">{figures.pointer} {text}</Text>}</Box>;
 }
 
-// Slash-command suggestion overlay — see promptOverlayContext.tsx for why
-// it's portaled. Scroll-smear from floating over the DECSTBM region is
-// repaired at the Ink layer (absoluteRectsPrev in render-node-to-output.ts).
-// The renderer clamps negative y to 0 for absolute elements (see
-// render-node-to-output.ts), so the top rows (best matches) stay visible
-// even when the overlay extends above the viewport. We omit minHeight and
-// flex-end here: they would create empty padding rows that shift visible
-// items down into the prompt area when the list has fewer items than max.
+// 斜杠命令建议覆盖层——参见 promptOverlayContext.tsx 了解为何要 portal 出去。
+// 浮动在 DECSTBM 区域上方的滚动涂抹在 Ink 层修复
+//（render-node-to-output.ts 中的 absoluteRectsPrev）。
+// 渲染器将绝对元素的负 y 值钳位为 0（参见 render-node-to-output.ts），
+// 因此即使覆盖层延伸到视口上方，顶行（最佳匹配）仍然可见。
+// 此处省略 minHeight 和 flex-end：它们会创建空填充行，当列表项数少于最大值时，
+// 会将可见项下移到提示区域。
 function SuggestionsOverlay() {
   const data = usePromptOverlay();
   if (!data || data.suggestions.length === 0) {
@@ -384,9 +370,9 @@ function SuggestionsOverlay() {
   return <Box position="absolute" bottom="100%" left={0} right={0} paddingX={2} paddingTop={1} flexDirection="column" opaque={true}><PromptInputFooterSuggestions suggestions={data.suggestions} selectedSuggestion={data.selectedSuggestion} maxColumnWidth={data.maxColumnWidth} overlay={true} /></Box>;
 }
 
-// Dialog portaled from PromptInput (AutoModeOptInDialog) — same clip-escape
-// pattern as SuggestionsOverlay. Renders later in tree order so it paints
-// over suggestions if both are ever up (they shouldn't be).
+// 从 PromptInput portal 出去的对话框（AutoModeOptInDialog）——与 SuggestionsOverlay
+// 相同的 clip-escape 模式。在树序中靠后渲染，这样如果两者同时显示时会覆盖建议列表
+//（它们不应该同时出现）。
 function DialogOverlay() {
   const node = usePromptOverlayDialog();
   if (!node) {

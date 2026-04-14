@@ -14,9 +14,8 @@ type Props = {
 const CHANNEL_RE = new RegExp(`<${CHANNEL_TAG}\\s+source="([^"]+)"([^>]*)>\\n?([\\s\\S]*?)\\n?</${CHANNEL_TAG}>`);
 const USER_ATTR_RE = /\buser="([^"]+)"/;
 
-// Plugin-provided servers get names like plugin:slack-channel:slack via
-// addPluginScopeToServers — show just the leaf. Matches the suffix-match
-// logic in isServerInChannels.
+// 插件提供的服务器通过 addPluginScopeToServers 获得类似 plugin:slack-channel:slack 的名称
+// ——仅显示叶子节点。与 isServerInChannels 中的后缀匹配逻辑一致。
 function displayServerName(name: string): string {
   const i = name.lastIndexOf(':');
   return i === -1 ? name : name.slice(i + 1);

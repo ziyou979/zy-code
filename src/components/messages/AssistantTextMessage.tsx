@@ -45,7 +45,7 @@ export function AssistantTextMessage({
   if (isRateLimitErrorMessage(text)) {
     return <RateLimitMessage text={text} onOpenRateLimitOptions={onOpenRateLimitOptions} />;
   }
-  // Check runtime-resolved API key error message (cannot be a switch case constant)
+  // 检查运行时解析的 API key 错误消息（不能是 switch case 常量）
   if (text === getInvalidApiKeyErrorMessage()) {
     return <InvalidApiKeyMessage />;
   }

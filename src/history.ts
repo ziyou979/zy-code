@@ -25,25 +25,24 @@ const MAX_PASTED_CONTENT_LENGTH = 1024
 type StoredPastedContent = {
   id: number
   type: 'text' | 'image'
-  content?: string // Inline content for small pastes
-  contentHash?: string // Hash reference for large pastes stored externally
+  content?: string // 小粘贴的内联内容
+  contentHash?: string // 存储在外部的较大粘贴内容的哈希引用
   mediaType?: string
   filename?: string
 }
 
 /**
- * ZY Code parses history for pasted content references to match back to
- * pasted content. The references look like:
- *   Text: [Pasted text #1 +10 lines]
- *   Image: [Image #2]
- * The numbers are expected to be unique within a single prompt but not across
- * prompts. We choose numeric, auto-incrementing IDs as they are more
- * user-friendly than other ID options.
+ * ZY Code 会解析历史记录中的粘贴内容引用，以便与
+ * 实际粘贴内容进行匹配。引用的格式如下：
+ *   文本：[Pasted text #1 +10 lines]
+ *   图片：[Image #2]
+ * 这些编号在单个提示中应该是唯一的，但在不同提示之间可以重复。
+ * 我们选择使用数字自动递增 ID，因为它们比其他 ID 选项更友好。
  */
 
-// Note: The original text paste implementation would consider input like
-// "line1\nline2\nline3" to have +2 lines, not 3 lines. We preserve that
-// behavior here.
+// 注意：原始的文本粘贴实现会将类似
+// "line1\nline2\nline3" 的输入视为 +2 行，而不是 3 行。
+// 我们在这里保留该行为。
 export function getPastedTextRefNumLines(text: string): number {
   return (text.match(/\r\n|\r|\n/g) || []).length
 }

@@ -102,24 +102,22 @@ type ListItem = {
   status: 'running';
 };
 
-// WORKFLOW_SCRIPTS is ant-only (build_flags.yaml). Static imports would leak
-// ~1.3K lines into external builds. Gate with feature() + require so the
-// bundler can dead-code-eliminate the branch.
+// WORKFLOW_SCRIPTS 仅限 ant（build_flags.yaml）。静态导入会泄漏约 1.3K 行到外部构建中。
+// 使用 feature() + require 门控，这样打包器可以对分支进行死代码消除。
 /* eslint-disable @typescript-eslint/no-require-imports */
 const WorkflowDetailDialog = feature('WORKFLOW_SCRIPTS') ? (require('./WorkflowDetailDialog.js') as typeof import('./WorkflowDetailDialog.js')).WorkflowDetailDialog : null;
 const workflowTaskModule = feature('WORKFLOW_SCRIPTS') ? require('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js') as typeof import('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js') : null;
 const killWorkflowTask = workflowTaskModule?.killWorkflowTask ?? null;
 const skipWorkflowAgent = workflowTaskModule?.skipWorkflowAgent ?? null;
 const retryWorkflowAgent = workflowTaskModule?.retryWorkflowAgent ?? null;
-// Relative path, not `src/...` path-mapping — Bun's DCE can statically
-// resolve + eliminate `./` requires, but path-mapped strings stay opaque
-// and survive as dead literals in the bundle. Matches tasks.ts pattern.
+// 相对路径，而非 `src/...` 路径映射——Bun 的 DCE 可以静态解析并消除 `./` require，
+// 但路径映射的字符串保持不透明，会作为死文字保留在包中。与 tasks.ts 模式一致。
 const monitorMcpModule = feature('MONITOR_TOOL') ? require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js') : null;
 const killMonitorMcp = monitorMcpModule?.killMonitorMcp ?? null;
 const MonitorMcpDetailDialog = feature('MONITOR_TOOL') ? (require('./MonitorMcpDetailDialog.js') as typeof import('./MonitorMcpDetailDialog.js')).MonitorMcpDetailDialog : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// Helper to get filtered background tasks (excludes foregrounded local_agent)
+// 辅助函数：获取过滤后的后台任务（排除已前置的 local_agent）
 function getSelectableBackgroundTasks(tasks: Record<string, TaskState> | undefined, foregroundedTaskId: string | undefined): TaskState[] {
   const backgroundTasks = Object.values(tasks ?? {}).filter(isBackgroundTask);
   return backgroundTasks.filter(task => !(task.type === 'local_agent' && task.id === foregroundedTaskId));
@@ -136,11 +134,10 @@ export function BackgroundTasksDialog({
   const killAgentsShortcut = useShortcutDisplay('chat:killAgents', 'Chat', 'ctrl+x ctrl+k');
   const typedTasks = tasks as Record<string, TaskState> | undefined;
 
-  // Track if we skipped list view on mount (for back button behavior)
+  // 追踪挂载时是否跳过了列表视图（用于返回按钮行为）
   const skippedListOnMount = useRef(false);
 
-  // Compute initial view state - skip list if caller provided a specific task,
-  // or if there's exactly one task
+  // 计算初始视图状态——如果调用者提供了具体任务或只有一个任务，则跳过列表
   const [viewState, setViewState] = useState<ViewState>(() => {
     if (initialDetailTaskId) {
       skippedListOnMount.current = true;
@@ -163,11 +160,10 @@ export function BackgroundTasksDialog({
   });
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-  // Register as modal overlay so parent Chat keybindings (up/down for history)
-  // are deactivated while this dialog is open
+  // 注册为模态覆盖层，这样此对话框打开时父级 Chat 快捷键（上/下键翻历史）会被禁用
   useRegisterOverlay('background-tasks-dialog');
 
-  // Memoize the sorted and categorized items together to ensure stable references
+  // 将排序和分类的项目一起 memo 化以确保引用稳定
   const {
     bashTasks,
     remoteSessions,
@@ -178,7 +174,7 @@ export function BackgroundTasksDialog({
     dreamTasks: dreamTasks_0,
     allSelectableItems
   } = useMemo(() => {
-    // Filter to only show running/pending background tasks, matching the status bar count
+    // 过滤，仅显示运行中/等待中的后台任务，与状态栏计数保持一致
     const backgroundTasks = Object.values(typedTasks ?? {}).filter(isBackgroundTask);
     const allItems_0 = backgroundTasks.map(toListItem);
     const sorted = allItems_0.sort((a, b) => {
@@ -192,14 +188,14 @@ export function BackgroundTasksDialog({
     });
     const bash = sorted.filter(item => item.type === 'local_bash');
     const remote = sorted.filter(item_0 => item_0.type === 'remote_agent');
-    // Exclude foregrounded task - it's being viewed in the main UI, not a background task
+    // 排除已前置的任务——它正在主 UI 中查看，不是后台任务
     const agent = sorted.filter(item_1 => item_1.type === 'local_agent' && item_1.id !== foregroundedTaskId);
     const workflows = sorted.filter(item_2 => item_2.type === 'local_workflow');
     const monitorMcp = sorted.filter(item_3 => item_3.type === 'monitor_mcp');
     const dreamTasks = sorted.filter(item_4 => item_4.type === 'dream');
-    // In spinner-tree mode, exclude teammates from the dialog (they appear in the tree)
+    // 在 spinner-tree 模式下，从对话框中排除 teammate（它们出现在树中）
     const teammates = showSpinnerTree ? [] : sorted.filter(item_5 => item_5.type === 'in_process_teammate');
-    // Add leader entry when there are teammates, so users can foreground back to leader
+    // 当有 teammate 时添加 leader 条目，这样用户可以返回 foreground 到 leader
     const leaderItem: ListItem[] = teammates.length > 0 ? [{
       id: '__leader__',
       type: 'leader',
@@ -214,16 +210,15 @@ export function BackgroundTasksDialog({
       mcpMonitors: monitorMcp,
       dreamTasks,
       teammateTasks: [...leaderItem, ...teammates],
-      // Order MUST match JSX render order (teammates \u2192 bash \u2192 monitorMcp \u2192
-      // remote \u2192 agent \u2192 workflows \u2192 dream) so \u2193/\u2191 navigation moves the cursor
-      // visually downward.
+      // 顺序必须与 JSX 渲染顺序一致（teammates → bash → monitorMcp →
+      // remote → agent → workflows → dream），这样 ↓/↑ 导航时光标视觉上向下移动。
       allSelectableItems: [...leaderItem, ...teammates, ...bash, ...monitorMcp, ...remote, ...agent, ...workflows, ...dreamTasks]
     };
   }, [typedTasks, foregroundedTaskId, showSpinnerTree]);
   const currentSelection = allSelectableItems[selectedIndex] ?? null;
 
-  // Use configurable keybindings for standard navigation and confirm/cancel.
-  // confirm:no is handled by Dialog's onCancel prop.
+  // 使用可配置的快捷键进行标准导航和确认/取消。
+  // confirm:no 由 Dialog 的 onCancel 属性处理。
   useKeybindings({
     'confirm:previous': () => setSelectedIndex(prev => Math.max(0, prev - 1)),
     'confirm:next': () => setSelectedIndex(prev_0 => Math.min(allSelectableItems.length - 1, prev_0 + 1)),
@@ -248,10 +243,10 @@ export function BackgroundTasksDialog({
     isActive: viewState.mode === 'list'
   });
 
-  // Component-specific shortcuts (x=stop, f=foreground, right=zoom) shown in UI.
-  // These are task-type and status dependent, not standard dialog keybindings.
+  // 组件专属快捷键（x=停止，f=前置，right=放大）在 UI 中显示。
+  // 这些取决于任务类型和状态，不是标准对话框快捷键。
   const handleKeyDown = (e: KeyboardEvent) => {
-    // Only handle input when in list mode
+    // 仅在列表模式下处理输入
     if (viewState.mode !== 'list') return;
     if (e.key === 'left') {
       e.preventDefault();
@@ -261,9 +256,9 @@ export function BackgroundTasksDialog({
       return;
     }
 
-    // Compute current selection at the time of the key press
+    // 计算按键时刻的当前选中项
     const currentSelection_0 = allSelectableItems[selectedIndex];
-    if (!currentSelection_0) return; // everything below requires a selection
+    if (!currentSelection_0) return; // 以下内容都需要选中项
 
     if (e.key === 'x') {
       e.preventDefault();
@@ -319,17 +314,17 @@ export function BackgroundTasksDialog({
     await RemoteAgentTask.kill(taskId_3, setAppState);
   }
 
-  // Wrap onDone in useEffectEvent to get a stable reference that always calls
-  // the current onDone callback without causing the effect to re-fire.
+  // 用 useEffectEvent 包装 onDone，获得稳定引用，始终调用当前 onDone 回调，
+  // 而不会导致 effect 重新触发。
   const onDoneEvent = useEffectEvent(onDone);
   useEffect(() => {
     if (viewState.mode !== 'list') {
       const task = (typedTasks ?? {})[viewState.itemId];
-      // Workflow tasks get a grace: their detail view stays open through
-      // completion so the user sees the final state before eviction.
+      // Workflow 任务有宽限期：它们的详情视图在完成后保持打开，
+      // 这样用户可以在被清除前看到最终状态。
       if (!task || task.type !== 'local_workflow' && !isBackgroundTask(task)) {
-        // Task was removed or is no longer a background task (e.g. killed).
-        // If we skipped the list on mount, close the dialog entirely.
+        // 任务已被移除或不再是后台任务（例如被终止）。
+        // 如果挂载时跳过了列表，则完全关闭对话框。
         if (skippedListOnMount.current) {
           onDoneEvent('Background tasks dialog dismissed', {
             display: 'system'
@@ -347,10 +342,9 @@ export function BackgroundTasksDialog({
     }
   }, [viewState, typedTasks, selectedIndex, allSelectableItems, onDoneEvent]);
 
-  // Helper to go back to list view (or close dialog if we skipped list on
-  // mount AND there's still only ≤1 item). Checking current count prevents
-  // the stale-state trap: if you opened with 1 task (auto-skipped to detail),
-  // then a second task started, 'back' should show the list — not close.
+  // 返回列表视图的辅助函数（如果挂载时跳过了列表且仍只有 ≤1 项，则关闭对话框）。
+  // 检查当前计数可防止过时状态陷阱：如果打开时只有 1 个任务（自动跳到详情），
+  // 然后第二个任务开始了，"返回"应显示列表——而非关闭。
   const goBackToList = () => {
     if (skippedListOnMount.current && allSelectableItems.length <= 1) {
       onDone(tSync('backgroundTasks.dismissed'), {
@@ -364,14 +358,14 @@ export function BackgroundTasksDialog({
     }
   };
 
-  // If an item is selected, show the appropriate view
+  // 如果选中了某项，显示相应的视图
   if (viewState.mode !== 'list' && typedTasks) {
     const task_0 = typedTasks[viewState.itemId];
     if (!task_0) {
       return null;
     }
 
-    // Detail mode - show appropriate detail dialog
+    // 详情模式——显示相应的详情对话框
     switch (task_0.type) {
       case 'local_bash':
         return <ShellDetailDialog shell={task_0} onDone={onDone} onKillShell={() => void killShellTask(task_0.id)} onBack={goBackToList} key={`shell-${task_0.id}`} />;

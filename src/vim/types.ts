@@ -1,15 +1,15 @@
 /**
- * Vim Mode State Machine Types
+ * Vim 模式状态机类型
  *
- * This file defines the complete state machine for vim input handling.
- * The types ARE the documentation - reading them tells you how the system works.
+ * 此文件定义了 vim 输入处理的完整状态机。
+ * 类型即文档 — 阅读它们就能了解系统的工作原理。
  *
- * State Diagram:
+ * 状态图：
  * ```
  *                              VimState
  *   ┌──────────────────────────────┬──────────────────────────────────────┐
  *   │  INSERT                      │  NORMAL                              │
- *   │  (tracks insertedText)       │  (CommandState machine)              │
+ *   │  (追踪 insertedText)         │  (CommandState 状态机)               │
  *   │                              │                                      │
  *   │                              │  idle ──┬─[d/c/y]──► operator        │
  *   │                              │         ├─[1-9]────► count           │
@@ -27,7 +27,7 @@
  */
 
 // ============================================================================
-// Core Types
+// 核心类型
 // ============================================================================
 
 export type Operator = 'delete' | 'change' | 'yank'

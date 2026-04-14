@@ -10,16 +10,15 @@ import type { RenderableMessage } from '../types/message.js';
 import { TextHoverColorContext } from './design-system/ThemedText.js';
 import { ScrollChromeContext } from './FullscreenLayout.js';
 
-// Rows of breathing room above the target when we scrollTo.
+// scrollTo 时目标上方留出的空间行数。
 const HEADROOM = 3;
 import { logForDebugging } from '../utils/debug.js';
 import { sleep } from '../utils/sleep.js';
 import { renderableSearchText } from '../utils/transcriptSearch.js';
 import { isNavigableMessage, type MessageActionsNav, type MessageActionsState, type NavigableMessage, stripSystemReminders, toolCallOf } from './messageActions.js';
 
-// Fallback extractor: lower + cache here for callers without the
-// Messages.tsx tool-lookup path (tests, static contexts). Messages.tsx
-// provides its own lowering cache that also handles tool extractSearchText.
+// 后备提取器：在此处降低并缓存，供没有 Messages.tsx 工具查找路径的调用者使用
+//（测试、静态上下文）。Messages.tsx 提供自己的降低缓存，还处理 tool extractSearchText。
 const fallbackLowerCache = new WeakMap<RenderableMessage, string>();
 function defaultExtractSearchText(msg: RenderableMessage): string {
   const cached = fallbackLowerCache.get(msg);
@@ -32,44 +31,39 @@ export type StickyPrompt = {
   text: string;
   scrollTo: () => void;
 }
-// Click sets this — header HIDES but padding stays collapsed (0) so
-// the content ❯ lands at screen row 0 instead of row 1. Cleared on
-// the next sticky-prompt compute (user scrolls again).
+// 点击设置此值——头部隐藏但 padding 保持折叠（0），这样内容 ❯ 落在屏幕第 0 行而非第 1 行。
+// 下次 sticky-prompt 计算时清除（用户再次滚动）。
 | 'clicked';
 
-/** Huge pasted prompts (cat file | zy) can be MBs. Header wraps into
- *  2 rows via overflow:hidden — this just bounds the React prop size. */
+/** 超大粘贴提示（cat file | zy）可能达 MB 级。头部通过 overflow:hidden 换行为
+ *  2 行——这仅限制 React 属性大小。*/
 const STICKY_TEXT_CAP = 500;
 
-/** Imperative handle for transcript navigation. Methods compute matches
- *  HERE (renderableMessages indices are only valid inside this component —
- *  Messages.tsx filters and reorders, REPL can't compute externally). */
+/** 转录导航的命令式句柄。方法在此计算匹配项（renderableMessages 索引仅在此组件内有效——
+ *  Messages.tsx 过滤并重新排序，REPL 无法在外部计算）。*/
 export type JumpHandle = {
   jumpToIndex: (i: number) => void;
   setSearchQuery: (q: string) => void;
   nextMatch: () => void;
   prevMatch: () => void;
-  /** Capture current scrollTop as the incsearch anchor. Typing jumps
-   *  around as preview; 0-matches snaps back here. Enter/n/N never
-   *  restore (they don't call setSearchQuery with empty). Next / call
-   *  overwrites. */
+  /** 捕获当前 scrollTop 作为 incsearch 锚点。输入时预览会跳动；
+   *  0 匹配时回到此处。Enter/n/N 从不恢复（它们不调用空字符串的 setSearchQuery）。
+   *  下次 / 调用会覆盖。*/
   setAnchor: () => void;
-  /** Warm the search-text cache by extracting every message's text.
-   *  Returns elapsed ms, or 0 if already warm (subsequent / in same
-   *  transcript session). Yields before work so the caller can paint
-   *  "indexing…" first. Caller shows "indexed in Xms" on resolve. */
+  /** 预热搜索文本缓存，提取每条消息的文本。返回耗时 ms，
+   *  或 0 如果已预热（同一转录会话中的后续 /）。
+   *  工作前 yield 以便调用者先绘制 "indexing…"。调用者在 resolve 后显示 "indexed in Xms"。*/
   warmSearchIndex: () => Promise<number>;
-  /** Manual scroll (j/k/PgUp/wheel) exited the search context. Clear
-   *  positions (yellow goes away, inverse highlights stay). Next n/N
-   *  re-establishes via step()→jump(). Wired from ScrollKeybindingHandler's
-   *  onScroll — only fires for keyboard/wheel, not programmatic scrollTo. */
+  /** 手动滚动（j/k/PgUp/滚轮）退出了搜索上下文。清除位置
+   *  （黄色标记消失，反向高亮保留）。下次 n/N 通过 step()→jump() 重新建立。
+   *  从 ScrollKeybindingHandler 的 onScroll 连接——仅对键盘/滚轮触发，不对编程式 scrollTo 触发。*/
   disarmSearch: () => void;
 };
 type Props = {
   messages: RenderableMessage[];
   scrollRef: RefObject<ScrollBoxHandle | null>;
-  /** Invalidates heightCache on change — cached heights from a different
-   *  width are wrong (text rewrap → black screen on scroll-up after widen). */
+  /** 更改时使 heightCache 失效——来自不同宽度的缓存高度是错误的
+   *  （文本重新换行→放大后向上滚动时黑屏）。*/
   columns: number;
   itemKey: (msg: RenderableMessage) => string;
   renderItem: (msg: RenderableMessage, index: number) => React.ReactNode;
@@ -90,20 +84,18 @@ type Props = {
    *  FullscreenLayout instead of REPL. */
   trackStickyPrompt?: boolean;
   selectedIndex?: number;
-  /** Nav handle lives here because height measurement lives here. */
+  /** 导航句柄放在这里因为高度测量在这里。*/
   cursorNavRef?: React.Ref<MessageActionsNav>;
   setCursor?: (c: MessageActionsState | null) => void;
   jumpRef?: RefObject<JumpHandle | null>;
-  /** Fires when search matches change (query edit, n/N). current is
-   *  1-based for "3/47" display; 0 means no matches. */
+  /** 搜索匹配变化时触发（查询编辑、n/N）。current 是 1 基的用于 "3/47" 显示；
+   *  0 表示没有匹配项。*/
   onSearchMatchesChange?: (count: number, current: number) => void;
-  /** Paint existing DOM subtree to fresh Screen, scan. Element from the
-   *  main tree (all providers). Message-relative positions (row 0 = el
-   *  top). Works for any height — closes the tall-message gap. */
+  /** 将现有 DOM 子树绘制到新的 Screen 并扫描。来自主树的元素（包含所有 provider）。
+   *  消息相对的位置（row 0 = 元素顶部）。适用于任何高度——填补高消息的间隙。*/
   scanElement?: (el: DOMElement) => MatchPosition[];
-  /** Position-based CURRENT highlight. Positions known upfront (from
-   *  scanElement), navigation = index arithmetic + scrollTo. rowOffset
-   *  = message's current screen-top; positions stay stable. */
+  /** 基于位置的 CURRENT 高亮。位置预先已知（来自 scanElement），
+   *  导航 = 索引算术 + scrollTo。rowOffset = 消息当前屏幕顶部；位置保持稳定。*/
   setPositions?: (state: {
     positions: MatchPosition[];
     rowOffset: number;
@@ -112,29 +104,26 @@ type Props = {
 };
 
 /**
- * Returns the text of a real user prompt, or null for anything else.
- * "Real" = what the human typed: not tool results, not XML-wrapped payloads
- * (<bash-stdout>, <command-message>, <teammate-message>, etc.), not meta.
+ * 返回真实用户提示的文本，其他情况返回 null。
+ * "Real" = 人类输入的内容：不是工具结果，不是 XML 包装的负载
+ *（<bash-stdout>、<command-message>、<teammate-message> 等），不是元数据。
  *
- * Two shapes land here: NormalizedUserMessage (normal prompts) and
- * AttachmentMessage with type==='queued_command' (prompts sent mid-turn
- * while a tool was executing — they get drained as attachments on the
- * next turn, see query.ts:1410). Both render as ❯-prefixed UserTextMessage
- * in the UI so both should stick.
+ * 两种形状会到这里：NormalizedUserMessage（正常提示）和
+ * AttachmentMessage（type==='queued_command'，在工具执行期间发送的提示——
+ * 它们在下个回合作为附件被排出，参见 query.ts:1410）。两者在 UI 中都渲染为
+ * ❯ 前缀的 UserTextMessage，所以两者都应该粘住。
  *
- * Leading <system-reminder> blocks are stripped before checking — they get
- * prepended to the stored text for Zy's context (memory updates, auto
- * mode reminders) but aren't what the user typed. Without stripping, any
- * prompt that happened to get a reminder is rejected by the startsWith('<')
- * check. Shows up on `cc -c` resumes where memory-update reminders are dense.
+ * 检查前会剥离开头的 <system-reminder> 块——它们为 Zy 的上下文（记忆更新、自动
+ * 模式提醒）被添加到存储的文本中，但不是用户输入的内容。不剥离的话，任何恰好
+ * 获得提醒的提示都会被 startsWith('<') 检查拒绝。出现在 `cc -c` 恢复时，
+ * 记忆更新提醒很密集。
  */
 const promptTextCache = new WeakMap<RenderableMessage, string | null>();
 function stickyPromptText(msg: RenderableMessage): string | null {
-  // Cache keyed on message object — messages are append-only and don't
-  // mutate, so a WeakMap hit is always valid. The walk (StickyTracker,
-  // per-scroll-tick) calls this 5-50+ times with the SAME messages every
-  // tick; the system-reminder strip allocates a fresh string on each
-  // parse. WeakMap self-GCs on compaction/clear (messages[] replaced).
+  // 以消息对象为键的缓存——消息是追加的且不会突变，
+  // 所以 WeakMap 命中始终有效。walk（StickyTracker，每次滚动 tick）
+  // 每个 tick 用相同的消息调用此函数 5-50+ 次；系统提醒剥离每次
+  // 解析都分配新字符串。WeakMap 在压缩/清除时自动 GC（messages[] 被替换）。
   const cached = promptTextCache.get(msg);
   if (cached !== undefined) return cached;
   const result = computeStickyPromptText(msg);
@@ -159,12 +148,12 @@ function computeStickyPromptText(msg: RenderableMessage): string | null {
 }
 
 /**
- * Virtualized message list for fullscreen mode. Split from Messages.tsx so
- * useVirtualScroll is called unconditionally (rules-of-hooks) — Messages.tsx
- * conditionally renders either this or a plain .map().
+ * 全屏模式下的虚拟化消息列表。从 Messages.tsx 拆分出来，以便
+ * useVirtualScroll 被无条件调用（hooks 规则）——Messages.tsx
+ * 有条件地渲染此组件或普通的 .map()。
  *
- * The wrapping <Box ref> is the measurement anchor — MessageRow doesn't take
- * a ref. Single-child column Box passes Yoga height through unchanged.
+ * 包装的 <Box ref> 是测量锚点——MessageRow 不接受 ref。
+ * 单子元素 column Box 将 Yoga height 原样传递。
  */
 type VirtualItemProps = {
   itemKey: string;
@@ -180,19 +169,19 @@ type VirtualItemProps = {
   renderItem: (msg: RenderableMessage, idx: number) => React.ReactNode;
 };
 
-// Item wrapper with stable click handlers. The per-item closures were the
-// `operationNewArrowFunction` leafs → `FunctionExecutable::finalizeUnconditionally`
-// GC cleanup (16% of GC time during fast scroll). 3 closures × 60 mounted ×
-// 10 commits/sec = 1800 closures/sec. With stable onClickK/onEnterK/onLeaveK
-// threaded via itemKey, the closures here are per-item-per-render but CHEAP
-// (just wrap the stable callback with k bound) and don't close over msg/idx
-// which lets JIT inline them. The bigger win is inside: MessageRow.memo
-// bails for unchanged msgs, skipping marked.lexer + formatToken.
+// 具有稳定点击句柄的项目包装器。每个项目的闭包是
+// `operationNewArrowFunction` 叶节点 → `FunctionExecutable::finalizeUnconditionally`
+// GC 清理（快速滚动期间 16% 的 GC 时间）。3 个闭包 × 60 个挂载项 ×
+// 10 次提交/秒 = 1800 个闭包/秒。通过 itemKey 传递稳定的
+// onClickK/onEnterK/onLeaveK 后，此处的闭包是每个项目每个渲染的，但很便宜
+//（仅用绑定的 k 包装稳定回调），且不闭合 msg/idx，
+// 这使 JIT 可以内联它们。更大的收益在内部：MessageRow.memo
+// 对未更改的消息 bail，跳过 marked.lexer + formatToken。
 //
-// NOT React.memo'd — renderItem captures changing state (cursor, selectedIdx,
-// verbose). Memoing with a comparator that ignores renderItem would use a
-// STALE closure on bail (wrong selection highlight, stale verbose). Including
-// renderItem in the comparator defeats memo since it's fresh each render.
+// 不使用 React.memo——renderItem 捕获变化的状态（光标、selectedIdx、
+// verbose）。使用忽略 renderItem 的比较器进行 memo 会在 bail 时使用
+// 过时的闭包（错误的选中标记、过时的 verbose）。在比较器中包含
+// renderItem 会使 memo 失效，因为它每次渲染都是新的。
 function VirtualItem({
   itemKey: k,
   msg,
@@ -229,10 +218,9 @@ export function VirtualMessageList({
   scanElement,
   setPositions
 }: Props): React.ReactNode {
-  // Incremental key array. Streaming appends one message at a time; rebuilding
-  // the full string array on every commit allocates O(n) per message (~1MB
-  // churn at 27k messages). Append-only delta push when the prefix matches;
-  // fall back to full rebuild on compaction, /clear, or itemKey change.
+  // 增量 key 数组。流式追加每次一条消息；每次提交重建
+  // 完整字符串数组会为每条消息分配 O(n)（27k 消息时约 1MB  churn）。
+  // 前缀匹配时仅追加增量 push；在压缩、/clear 或 itemKey 更改时回退到完整重建。
   const keysRef = useRef<string[]>([]);
   const prevMessagesRef = useRef<typeof messages>(messages);
   const prevItemKeyRef = useRef(itemKey);
@@ -260,7 +248,7 @@ export function VirtualMessageList({
   } = useVirtualScroll(scrollRef, keys, columns);
   const [start, end] = range;
 
-  // Unmeasured (undefined height) falls through — assume visible.
+  // 未测量（高度 undefined）的穿过——假设可见。
   const isVisible = useCallback((i: number) => {
     const h = getItemHeight(i);
     if (h === 0) return false;
@@ -285,13 +273,13 @@ export function VirtualMessageList({
     };
     const isUser = (i: number) => isVisible(i) && messages[i]!.type === 'user';
     return {
-      // Entry via shift+↑ = same semantic as in-cursor shift+↑ (prevUser).
+      // 通过 shift+↑ 进入 = 与光标内 shift+↑ 相同语义（prevUser）。
       enterCursor: () => scan(messages.length - 1, -1, isUser),
       navigatePrev: () => scan(selIdx - 1, -1),
       navigateNext: () => {
         if (scan(selIdx + 1, 1)) return;
-        // Past last visible → exit + repin. Last message's TOP is at viewport
-        // top (selection-scroll effect); its BOTTOM may be below the fold.
+        // 超过最后可见项 → 退出并重新固定。最后消息的顶部在视口
+        // 顶部（选择滚动效果）；其底部可能在视口下方。
         scrollRef.current?.scrollToBottom();
         setCursor?.(null);
       },
@@ -303,9 +291,8 @@ export function VirtualMessageList({
       getSelected: () => selIdx >= 0 ? messages[selIdx] ?? null : null
     };
   }, [messages, selectedIndex, setCursor, isVisible]);
-  // Two-phase jump + search engine. Read-through-ref so the handle stays
-  // stable across renders — offsets/messages identity changes every render,
-  // can't go in useImperativeHandle deps without recreating the handle.
+  // 两阶段跳转 + 搜索引擎。通过 ref 读取以保持句柄在渲染间稳定——
+  // offsets/messages 标识每次渲染都变化，不能放在 useImperativeHandle 依赖中而不重新创建句柄。
   const jumpState = useRef({
     offsets,
     start,
@@ -323,10 +310,10 @@ export function VirtualMessageList({
     scrollToIndex
   };
 
-  // Keep cursor-selected message visible. offsets rebuilds every render
-  // — as a bare dep this re-pinned on every mousewheel tick. Read through
-  // jumpState instead; past-overscan jumps land via scrollToIndex, next
-  // nav is precise.
+  // 保持光标选中的消息可见。offsets 每次重建重新构建
+  // ——作为裸依赖会在每次鼠标滚轮 tick 时重新固定。改为通过
+  // jumpState 读取；超出 overscan 的跳转通过 scrollToIndex 着陆，
+  // 下次导航是精确的。
   useEffect(() => {
     if (selectedIndex === undefined) return;
     const s = jumpState.current;
@@ -338,18 +325,18 @@ export function VirtualMessageList({
     }
   }, [selectedIndex, scrollRef]);
 
-  // Pending seek request. jump() sets this + bumps seekGen. The seek
-  // effect fires post-paint (passive effect — after resetAfterCommit),
-  // checks if target is mounted. Yes → scan+highlight. No → re-estimate
-  // with a fresher anchor (start moved toward idx) and scrollTo again.
+  // 待处理的搜索请求。jump() 设置此项 + 增加 seekGen。搜索
+  // effect 在绘制后触发（passive effect——resetAfterCommit 之后），
+  // 检查目标是否已挂载。是 → 扫描并高亮。否 → 用更新的锚点
+  //（start 向 idx 移动）重新估计并再次 scrollTo。
   const scanRequestRef = useRef<{
     idx: number;
     wantLast: boolean;
     tries: number;
   } | null>(null);
-  // Message-relative positions from scanElement. Row 0 = message top.
-  // Stable across scroll — highlight computes rowOffset fresh. msgIdx
-  // for computing rowOffset = getItemTop(msgIdx) - scrollTop.
+  // 来自 scanElement 的消息相对位置。Row 0 = 消息顶部。
+  // 滚动时保持稳定——highlight 重新计算 rowOffset。msgIdx
+  // 用于计算 rowOffset = getItemTop(msgIdx) - scrollTop。
   const elementPositions = useRef<{
     msgIdx: number;
     positions: MatchPosition[];
@@ -357,14 +344,13 @@ export function VirtualMessageList({
     msgIdx: -1,
     positions: []
   });
-  // Wraparound guard. Auto-advance stops if ptr wraps back to here.
+  // 回绕保护。如果 ptr 回绕到此位置，自动前进停止。
   const startPtrRef = useRef(-1);
-  // Phantom-burst cap. Resets on scan success.
+  // 幻影突发限制。扫描成功时重置。
   const phantomBurstRef = useRef(0);
-  // One-deep queue: n/N arriving mid-seek gets stored (not dropped) and
-  // fires after the seek completes. Holding n stays smooth without
-  // queueing 30 jumps. Latest press overwrites — we want the direction
-  // the user is going NOW, not where they were 10 keypresses ago.
+  // 单深度队列：搜索进行中的 n/N 会被存储（不丢弃）并在搜索完成后触发。
+  // 按住 n 保持平滑，不会排队 30 次跳转。最新按下覆盖——我们需要用户
+  // 当前前进的方向，而不是 10 次按键之前的方向。
   const pendingStepRef = useRef<1 | -1 | 0>(0);
   // step + highlight via ref so the seek effect reads latest without
   // closure-capture or deps churn.
@@ -375,11 +361,11 @@ export function VirtualMessageList({
     // deduplicated msg indices
     ptr: 0,
     screenOrd: 0,
-    // Cumulative engine-occurrence count before each matches[k]. Lets us
-    // compute a global current index: prefixSum[ptr] + screenOrd + 1.
-    // Engine-counted (indexOf on extractSearchText), not render-counted —
-    // close enough for the badge; exact counts would need scanElement on
-    // every matched message (~1-3ms × N). total = prefixSum[matches.length].
+    // 每个 matches[k] 之前的引擎出现累计计数。让我们可以
+    // 计算全局当前索引：prefixSum[ptr] + screenOrd + 1。
+    // 引擎计数（extractSearchText 上的 indexOf），而非渲染计数——
+    // 对于徽章来说足够接近；精确计数需要对每条匹配消息调用 scanElement
+    //（~1-3ms × N）。total = prefixSum[matches.length]。
     prefixSum: [] as number[]
   });
   // scrollTop at the moment / was pressed. Incsearch preview-jumps snap

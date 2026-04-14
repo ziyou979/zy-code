@@ -1,14 +1,14 @@
 /**
- * Vim Motion Functions
+ * Vim 移动函数
  *
- * Pure functions for resolving vim motions to cursor positions.
+ * 用于将 vim 移动命令解析为光标位置的纯函数。
  */
 
 import type { Cursor } from '../utils/Cursor.js'
 
 /**
- * Resolve a motion to a target cursor position.
- * Does not modify anything - pure calculation.
+ * 将移动命令解析为目标光标位置。
+ * 不修改任何内容 — 纯计算函数。
  */
 export function resolveMotion(
   key: string,

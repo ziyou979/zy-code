@@ -1,24 +1,22 @@
 /**
- * Leaf state module for the remote-managed-settings sync cache.
+ * 远程托管设置同步缓存的叶子状态模块。
  *
- * Split from syncCache.ts to break the settings.ts → syncCache.ts → auth.ts →
- * settings.ts cycle. auth.ts sits inside the large settings SCC; importing it
- * from settings.ts's own dependency chain pulls hundreds of modules into the
- * eagerly-evaluated SCC at startup.
+ * 从 syncCache.ts 拆分出来，以打破 settings.ts → syncCache.ts → auth.ts →
+ * settings.ts 的循环。auth.ts 位于大型设置 SCC 内；从 settings.ts 自己的依赖链
+ * 中导入它会在启动时将数百个模块拉入急切求值的 SCC。
  *
- * This module imports only leaves (path, envUtils, file, json, types,
- * settings/settingsCache — also a leaf, only type-imports validation). settings.ts
- * reads the cache from here. syncCache.ts keeps isRemoteManagedSettingsEligible
- * (the auth-touching part) and re-exports everything from here for callers that
- * don't care about the cycle.
+ * 此模块仅导入叶子节点（path、envUtils、file、json、types、
+ * settings/settingsCache — 也是叶子节点，仅类型导入验证）。settings.ts
+ * 从这里读取缓存。syncCache.ts 保留 isRemoteManagedSettingsEligible
+ * （涉及 auth 的部分）并从此处重新导出所有内容，供不关心循环的调用者使用。
  *
- * Eligibility is a tri-state here: undefined (not yet determined — return
- * null), false (ineligible — return null), true (proceed). managedEnv.ts
- * calls isRemoteManagedSettingsEligible() just before the policySettings
- * read — after userSettings/flagSettings env vars are applied, so the check
- * sees config-provided ZY_CODE_USE_BEDROCK/ANTHROPIC_BASE_URL. That call
- * computes once and mirrors the result here via setEligibility(). Every
- * subsequent read hits the cached bool instead of re-running the auth chain.
+ * 资格状态在这里是三态的：undefined（尚未确定 — 返回 null）、
+ * false（不符合资格 — 返回 null）、true（继续）。managedEnv.ts
+ * 在读取 policySettings 之前调用 isRemoteManagedSettingsEligible() —
+ * 在应用 userSettings/flagSettings 环境变量之后，因此检查能看到
+ * 配置提供的 ZY_CODE_USE_BEDROCK/ANTHROPIC_BASE_URL。该调用计算一次
+ * 并通过 setEligibility() 将结果镜像到这里。每次后续读取都会命中
+ * 缓存的布尔值，而不是重新运行 auth 链。
  */
 
 import { join } from 'path'
@@ -52,8 +50,8 @@ export function getSettingsPath(): string {
   return join(getZyConfigHomeDir(), SETTINGS_FILENAME)
 }
 
-// sync IO — settings pipeline is sync. fileRead and jsonRead are leaves;
-// file.ts and json.ts both sit in the settings SCC.
+// 同步 IO — 设置管线是同步的。fileRead 和 jsonRead 是叶子节点；
+// file.ts 和 json.ts 都位于设置 SCC 中。
 function loadSettings(): SettingsJson | null {
   try {
     const content = readFileSync(getSettingsPath())
@@ -73,22 +71,22 @@ export function getRemoteManagedSettingsSyncFromCache(): SettingsJson | null {
   const cachedSettings = loadSettings()
   if (cachedSettings) {
     sessionCache = cachedSettings
-    // Remote settings just became available for the first time. Any merged
-    // getSettings_DEPRECATED() result cached before this moment is missing
-    // the policySettings layer (the `eligible !== true` guard above returned
-    // null). Flush so the next merged read re-merges with this layer visible.
+    // 远程设置首次变为可用。在此之前缓存的任何合并的
+    // getSettings_DEPRECATED() 结果都缺少 policySettings 层
+    // （上面的 `eligible !== true` 守卫返回了 null）。刷新以便
+    // 下次合并读取时能看到此层。
     //
-    // Fires at most once: subsequent calls hit `if (sessionCache)` above.
-    // When called from loadSettingsFromDisk() (settings.ts:546), the merged
-    // cache is still null (setSessionSettingsCache runs at :732 after
-    // loadSettingsFromDisk returns) — no-op. The async-fetch arm (index.ts
-    // setSessionCache + notifyChange) already handles its own reset.
+    // 最多触发一次：后续调用会命中上面的 `if (sessionCache)`。
+    // 当从 loadSettingsFromDisk() 调用时（settings.ts:546），合并
+    // 缓存仍为 null（setSessionSettingsCache 在 :732 运行，在
+    // loadSettingsFromDisk 返回之后）— 空操作。异步获取分支
+    // （index.ts setSessionCache + notifyChange）已处理自己的重置。
     //
-    // gh-23085: isBridgeEnabled() at main.tsx Commander-definition time
-    // (before preAction → init() → isRemoteManagedSettingsEligible()) reached
-    // getSettings_DEPRECATED() at auth.ts:115. The try/catch in bridgeEnabled
-    // swallowed the later getGlobalConfig() throw, but the merged settings
-    // cache was already poisoned. See managedSettingsHeadless.int.test.ts.
+    // gh-23085: main.tsx Commander 定义时的 isBridgeEnabled()
+    // （在 preAction → init() → isRemoteManagedSettingsEligible() 之前）
+    // 访问了 auth.ts:115 的 getSettings_DEPRECATED()。bridgeEnabled 中的
+    // try/catch 吞掉了后续 getGlobalConfig() 的抛出，但合并设置缓存
+    // 已经被污染。参见 managedSettingsHeadless.int.test.ts。
     resetSettingsCache()
     return cachedSettings
   }

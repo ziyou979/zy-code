@@ -12,33 +12,33 @@ import { logEvent } from '../analytics/index.js';
 export type SecurityCheckResult = 'approved' | 'rejected' | 'no_check_needed';
 
 /**
- * Check if new remote managed settings contain dangerous settings that require user approval.
- * Shows a blocking dialog if dangerous settings have changed or been added.
+ * 检查新的远程托管设置是否包含需要用户批准的危险设置。
+ * 如果危险设置发生更改或新增，会显示阻塞对话框。
  *
- * @param cachedSettings The current cached settings (may be null for first run)
- * @param newSettings The new settings fetched from the API
- * @returns 'approved' if user accepts, 'rejected' if user declines, 'no_check_needed' if no dangerous changes
+ * @param cachedSettings 当前缓存的设置（首次运行时可能为 null）
+ * @param newSettings 从 API 获取的新设置
+ * @returns 用户接受返回 'approved'，拒绝返回 'rejected'，无危险变更返回 'no_check_needed'
  */
 export async function checkManagedSettingsSecurity(cachedSettings: SettingsJson | null, newSettings: SettingsJson | null): Promise<SecurityCheckResult> {
-  // If new settings don't have dangerous settings, no check needed
+  // 如果新设置没有危险设置，无需检查
   if (!newSettings || !hasDangerousSettings(extractDangerousSettings(newSettings))) {
     return 'no_check_needed';
   }
 
-  // If dangerous settings haven't changed, no check needed
+  // 如果危险设置未发生变化，无需检查
   if (!hasDangerousSettingsChanged(cachedSettings, newSettings)) {
     return 'no_check_needed';
   }
 
-  // Skip dialog in non-interactive mode (consistent with trust dialog behavior)
+  // 非交互模式下跳过对话框（与信任对话框行为一致）
   if (!getIsInteractive()) {
     return 'no_check_needed';
   }
 
-  // Log that dialog is being shown
+  // 记录对话框已显示
   logEvent('tengu_managed_settings_security_dialog_shown', {});
 
-  // Show blocking dialog
+  // 显示阻塞对话框
   return new Promise<SecurityCheckResult>(resolve => {
     void (async () => {
       const {
@@ -61,8 +61,8 @@ export async function checkManagedSettingsSecurity(cachedSettings: SettingsJson 
 }
 
 /**
- * Handle the security check result by exiting if rejected
- * Returns true if we should continue, false if we should stop
+ * 处理安全检查结果，如果被拒绝则退出
+ * 返回 true 表示继续，false 表示停止
  */
 export function handleSecurityCheckResult(result: SecurityCheckResult): boolean {
   if (result === 'rejected') {

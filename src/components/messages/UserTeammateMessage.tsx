@@ -59,8 +59,8 @@ export function UserTeammateMessage({
   isTranscriptMode
 }: Props): React.ReactNode {
   const messages = parseTeammateMessages(text).filter(msg => {
-    // Pre-filter shutdown lifecycle messages to avoid empty wrapper
-    // Box elements creating blank lines between model turns
+    // 提前过滤 shutdown 生命周期消息，避免空 wrapper
+    // Box 元素在 model 轮次之间创建空行
     if (isShutdownApproved(msg.content)) {
       return false;
     }
@@ -80,25 +80,25 @@ export function UserTeammateMessage({
       const inkColor = toInkColor(msg_0.color);
       const displayName = getDisplayName(msg_0.teammateId);
 
-      // Try to render as plan approval message (request or response)
+      // 尝试渲染为 plan approval 消息（请求或响应）
       const planApprovalElement = tryRenderPlanApprovalMessage(msg_0.content, displayName);
       if (planApprovalElement) {
         return <React.Fragment key={index}>{planApprovalElement}</React.Fragment>;
       }
 
-      // Try to render as shutdown message (request or rejected)
+      // 尝试渲染为 shutdown 消息（请求或拒绝）
       const shutdownElement = tryRenderShutdownMessage(msg_0.content);
       if (shutdownElement) {
         return <React.Fragment key={index}>{shutdownElement}</React.Fragment>;
       }
 
-      // Try to render as task assignment message
+      // 尝试渲染为 task assignment 消息
       const taskAssignmentElement = tryRenderTaskAssignmentMessage(msg_0.content);
       if (taskAssignmentElement) {
         return <React.Fragment key={index}>{taskAssignmentElement}</React.Fragment>;
       }
 
-      // Try to parse as structured JSON message
+      // 尝试解析为结构化 JSON 消息
       let parsedIdleNotification: {
         type?: string;
       } | null = null;
@@ -108,12 +108,12 @@ export function UserTeammateMessage({
         // Not JSON
       }
 
-      // Hide idle notifications - they are processed silently
+      // 隐藏 idle 通知——它们会被静默处理
       if (parsedIdleNotification?.type === 'idle_notification') {
         return null;
       }
 
-      // Task completed notification - show which task was completed
+      // 任务完成通知——显示哪个任务已完成
       if (parsedIdleNotification?.type === 'task_completed') {
         const taskCompleted = parsedIdleNotification as {
           type: string;
@@ -134,7 +134,7 @@ export function UserTeammateMessage({
             </Box>;
       }
 
-      // Default: plain text message (truncated)
+      // 默认：纯文本消息（已截断）
       return <TeammateMessageContent key={index} displayName={displayName} inkColor={inkColor} content={msg_0.content} summary={msg_0.summary} isTranscriptMode={isTranscriptMode} />;
     })}
     </Box>;

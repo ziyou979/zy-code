@@ -4,17 +4,17 @@ import { Box, Text } from '../ink.js';
 import { tSync } from '../i18n/index.js';
 import { truncateToWidth } from '../utils/format.js';
 
-// Constants for width calculations - derived from actual rendered strings
+// 宽度计算常量——来源于实际渲染的字符串
 const ALL_TAB_LABEL = 'All';
-const TAB_PADDING = 2; // Space before and after tab text: " {tab} "
+const TAB_PADDING = 2; // 标签文本前后的空格：" {tab} "
 const HASH_PREFIX_LENGTH = 1; // "#" prefix for non-All tabs
 const LEFT_ARROW_PREFIX = '← ';
 const RIGHT_HINT_WITH_COUNT_PREFIX = '→';
 const RIGHT_HINT_SUFFIX = tSync('tagTabs.rightHint');
 const RIGHT_HINT_NO_COUNT = tSync('tagTabs.rightHintNoCount');
-const MAX_OVERFLOW_DIGITS = 2; // Assume max 99 hidden tabs for width calculation
+const MAX_OVERFLOW_DIGITS = 2; // 假设最多 99 个隐藏标签用于宽度计算
 
-// Computed widths
+// 计算出的宽度
 const LEFT_ARROW_WIDTH = LEFT_ARROW_PREFIX.length + MAX_OVERFLOW_DIGITS + 1; // "← NN " with gap
 const RIGHT_HINT_WIDTH_WITH_COUNT = RIGHT_HINT_WITH_COUNT_PREFIX.length + MAX_OVERFLOW_DIGITS + RIGHT_HINT_SUFFIX.length; // "→NN (tab to cycle)"
 const RIGHT_HINT_WIDTH_NO_COUNT = RIGHT_HINT_NO_COUNT.length;
@@ -26,23 +26,23 @@ type Props = {
 };
 
 /**
- * Calculate the display width of a tab
+ * 计算标签的显示宽度
  */
 function getTabWidth(tab: string, maxWidth?: number): number {
   if (tab === ALL_TAB_LABEL) {
     return ALL_TAB_LABEL.length + TAB_PADDING;
   }
-  // For non-All tabs: " #{tag} " but truncate tag if needed
+  // 非 All 标签：" #{tag} "，但必要时截断 tag
   const tagWidth = stringWidth(tab);
   const effectiveTagWidth = maxWidth ? Math.min(tagWidth, maxWidth - TAB_PADDING - HASH_PREFIX_LENGTH) : tagWidth;
   return Math.max(0, effectiveTagWidth) + TAB_PADDING + HASH_PREFIX_LENGTH;
 }
 
 /**
- * Truncate a tag to fit within maxWidth, accounting for padding and hash prefix
+ * 截断标签以在 maxWidth 内显示，考虑填充和 # 前缀
  */
 function truncateTag(tag: string, maxWidth: number): string {
-  // Available space for the tag text itself: maxWidth - " #" - " "
+  // 标签文本本身的可用空间：maxWidth - " #" - " "
   const availableForTag = maxWidth - TAB_PADDING - HASH_PREFIX_LENGTH;
   if (stringWidth(tag) <= availableForTag) {
     return tag;
@@ -61,34 +61,34 @@ export function TagTabs({
   const resumeLabel = showAllProjects ? tSync('tagTabs.resumeAllProjects') : tSync('tagTabs.resume');
   const resumeLabelWidth = resumeLabel.length + 1; // +1 for gap
 
-  // Calculate how much space we have for tabs (use worst-case hint width)
+  // 计算有多少空间用于标签（使用最坏情况的提示宽度）
   const rightHintWidth = Math.max(RIGHT_HINT_WIDTH_WITH_COUNT, RIGHT_HINT_WIDTH_NO_COUNT);
   const maxTabsWidth = availableWidth - resumeLabelWidth - rightHintWidth - 2; // 2 for gaps
 
-  // Clamp selectedIndex to valid range
+  // 将 selectedIndex 钳位到有效范围
   const safeSelectedIndex = Math.max(0, Math.min(selectedIndex, tabs.length - 1));
 
-  // Calculate width of each tab, with truncation for very long tags
-  const maxSingleTabWidth = Math.max(20, Math.floor(maxTabsWidth / 2)); // At least show half the space for one tab
+  // 计算每个标签的宽度，对非常长的标签进行截断
+  const maxSingleTabWidth = Math.max(20, Math.floor(maxTabsWidth / 2)); // 至少为一个标签显示一半空间
   const tabWidths = tabs.map(tab => getTabWidth(tab, maxSingleTabWidth));
 
-  // Find a window of tabs that fits, centered around selectedIndex
+  // 找到适合的一窗标签，以 selectedIndex 为中心
   let startIndex = 0;
   let endIndex = tabs.length;
 
-  // Calculate total width of all tabs
+  // 计算所有标签的总宽度
   const totalTabsWidth = tabWidths.reduce((sum, w, i) => sum + w + (i < tabWidths.length - 1 ? 1 : 0), 0); // +1 for gaps between tabs
 
   if (totalTabsWidth > maxTabsWidth) {
-    // Need to show a subset - account for left arrow when not at start
+    // 需要显示子集——不在开头时考虑左箭头
     const effectiveMaxWidth = maxTabsWidth - LEFT_ARROW_WIDTH;
 
-    // Start with the selected tab
+    // 从选中的标签开始
     let windowWidth = tabWidths[safeSelectedIndex] ?? 0;
     startIndex = safeSelectedIndex;
     endIndex = safeSelectedIndex + 1;
 
-    // Expand window to include more tabs
+    // 扩展窗口以包含更多标签
     while (startIndex > 0 || endIndex < tabs.length) {
       const canExpandLeft = startIndex > 0;
       const canExpandRight = endIndex < tabs.length;

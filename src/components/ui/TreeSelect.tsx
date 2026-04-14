@@ -19,91 +19,90 @@ type FlattenedNode<T> = {
 };
 export type TreeSelectProps<T> = {
   /**
-   * Tree nodes to display.
+   * 树节点列表。
    */
   readonly nodes: TreeNode<T>[];
 
   /**
-   * Callback when a node is selected.
+   * 选中节点时的回调。
    */
   readonly onSelect: (node: TreeNode<T>) => void;
 
   /**
-   * Callback when cancel is pressed.
+   * 按下取消时的回调。
    */
   readonly onCancel?: () => void;
 
   /**
-   * Callback when focused node changes.
+   * 聚焦节点变化时的回调。
    */
   readonly onFocus?: (node: TreeNode<T>) => void;
 
   /**
-   * Node to focus by ID.
+   * 按 ID 指定初始聚焦的节点。
    */
   readonly focusNodeId?: string | number;
 
   /**
-   * Number of visible options.
+   * 可见选项数量。
    */
   readonly visibleOptionCount?: number;
 
   /**
-   * Layout of the options.
+   * 选项的布局方式。
    */
   readonly layout?: 'compact' | 'expanded' | 'compact-vertical';
 
   /**
-   * When disabled, user input is ignored.
+   * 禁用时，用户输入将被忽略。
    */
   readonly isDisabled?: boolean;
 
   /**
-   * When true, hides the numeric indexes next to each option.
+   * 为 true 时，隐藏每个选项旁的数字索引。
    */
   readonly hideIndexes?: boolean;
 
   /**
-   * Function to determine if a node should be initially expanded.
-   * If not provided, all nodes start collapsed.
+   * 用于判断节点是否应初始展开的函数。
+   * 如果未提供，所有节点初始均为收起状态。
    */
   readonly isNodeExpanded?: (nodeId: string | number) => boolean;
 
   /**
-   * Callback when a node is expanded.
+   * 节点展开时的回调。
    */
   readonly onExpand?: (nodeId: string | number) => void;
 
   /**
-   * Callback when a node is collapsed.
+   * 节点收起时的回调。
    */
   readonly onCollapse?: (nodeId: string | number) => void;
 
   /**
-   * Custom prefix function for parent nodes
-   * @param isExpanded - Whether the parent node is currently expanded
-   * @returns The prefix string to display (default: '▼ ' when expanded, '▶ ' when collapsed)
+   * 父节点的前缀自定义函数
+   * @param isExpanded - 父节点当前是否展开
+   * @returns 要显示的前缀字符串（默认：展开时为 '▼ '，收起时为 '▶ '）
    */
   readonly getParentPrefix?: (isExpanded: boolean) => string;
 
   /**
-   * Custom prefix function for child nodes
-   * @param depth - The depth of the child node in the tree (0-indexed from parent)
-   * @returns The prefix string to display (default: '  ▸ ')
+   * 子节点的前缀自定义函数
+   * @param depth - 子节点在树中的深度（从父节点开始，0 起始）
+   * @returns 要显示的前缀字符串（默认：'  ▸ '）
    */
   readonly getChildPrefix?: (depth: number) => string;
 
   /**
-   * Callback when user presses up from the first item.
-   * If provided, navigation will not wrap to the last item.
+   * 用户在第一项按上方向键时的回调。
+   * 如果提供，导航将不会循环到最后一项。
    */
   readonly onUpFromFirstItem?: () => void;
 };
 
 /**
- * TreeSelect is a generic component for selecting items from a hierarchical tree structure.
- * It handles expand/collapse state, keyboard navigation, and renders the tree as a flat list
- * using the Select component.
+ * TreeSelect 是一个泛型组件，用于从层级树结构中选择条目。
+ * 它处理展开/收起状态、键盘导航，并使用 Select 组件将树渲染为扁平列表。
  */
 export function TreeSelect({
   nodes,

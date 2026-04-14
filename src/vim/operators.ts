@@ -1,7 +1,7 @@
 /**
- * Vim Operator Functions
+ * Vim 操作符函数
  *
- * Pure functions for executing vim operators (delete, change, yank, etc.)
+ * 用于执行 vim 操作符（删除、更改、复制等）的纯函数
  */
 
 import { Cursor } from '../utils/Cursor.js'

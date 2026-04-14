@@ -35,15 +35,14 @@ export function UserToolSuccessMessage({
   isTranscriptMode
 }: Props): React.ReactNode {
   const [theme] = useTheme();
-  // Hook stays inside feature() ternary so external builds don't pay a
-  // per-scrollback-message store subscription — same pattern as
-  // UserPromptMessage.tsx.
+  // Hook 保留在 feature() 三元表达式内部，这样外部构建不会为每条
+  // 回滚消息承担 store 订阅开销——与 UserPromptMessage.tsx 模式相同。
   const isBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   useAppState(s => s.isBriefOnly) : false;
 
-  // Capture classifier approval once on mount, then delete from Map to prevent linear growth.
-  // useState lazy initializer ensures the value persists across re-renders.
+  // 在 mount 时捕获一次 classifier approval，然后从 Map 中删除以防止线性增长。
+  // useState 惰性初始化器确保该值在多次 re-render 之间持久化。
   const [classifierRule] = React.useState(() => getClassifierApproval(toolUseID));
   const [yoloReason] = React.useState(() => getYoloClassifierApproval(toolUseID));
   React.useEffect(() => {
@@ -53,10 +52,9 @@ export function UserToolSuccessMessage({
     return null;
   }
 
-  // Resumed transcripts deserialize toolUseResult via raw JSON.parse with no
-  // validation (parseJSONL). A partial/corrupt/old-format result crashes
-  // renderToolResultMessage on first field access (anthropics/zy-code#39817).
-  // Validate against outputSchema before rendering — mirrors CollapsedReadSearchContent.
+  // 恢复的转录通过 raw JSON.parse（无验证的 parseJSONL）反序列化 toolUseResult。
+  // 不完整/损坏/旧格式的结果会在首次访问字段时导致渲染崩溃（anthropics/zy-code#39817）。
+  // 在渲染前用 outputSchema 验证——与 CollapsedReadSearchContent 一致。
   const parsedOutput = tool.outputSchema?.safeParse(message.toolUseResult);
   if (parsedOutput && !parsedOutput.success) {
     return null;
@@ -72,15 +70,15 @@ export function UserToolSuccessMessage({
     input: lookups.toolUseByToolUseID.get(toolUseID)?.input
   }) ?? null;
 
-  // Don't render anything if the tool result message is null
+  // 如果工具结果消息为 null，则不渲染任何内容
   if (renderedMessage === null) {
     return null;
   }
 
-  // Tools that return '' from userFacingName opt out of tool chrome and
-  // render like plain assistant text. Skip the tool-result width constraint
-  // so MarkdownTable's SAFETY_MARGIN=4 (tuned for the assistant-text 2-col
-  // dot gutter) holds — otherwise tables wrap their box-drawing chars.
+  // 从 userFacingName 返回 '' 的工具选择不使用工具外框，
+  // 渲染为纯 assistant 文本。跳过工具结果宽度约束，
+  // 以便 MarkdownTable 的 SAFETY_MARGIN=4（针对 assistant-text 的 2 列
+  // 点状沟槽调优）生效——否则表格会换行其制表符。
   const rendersAsAssistantText = tool.userFacingName(undefined) === '';
   return <Box flexDirection="column">
       <Box flexDirection="column" width={rendersAsAssistantText ? undefined : width}>

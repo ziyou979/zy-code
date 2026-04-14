@@ -1,8 +1,8 @@
 /**
- * Vim State Transition Table
+ * Vim 状态转换表
  *
- * This is the scannable source of truth for state transitions.
- * To understand what happens in any state, look up that state's transition function.
+ * 这是状态转换的可扫描真实来源。
+ * 要了解任何状态下会发生什么，查找该状态的转换函数即可。
  */
 
 import { resolveMotion } from './motions.js'

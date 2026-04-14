@@ -1,15 +1,14 @@
 /**
- * Remote Managed Settings Service
+ * 远程托管设置服务
  *
- * Manages fetching, caching, and validation of remote-managed settings
- * for enterprise customers. Uses checksum-based validation to minimize
- * network traffic and provides graceful degradation on failures.
+ * 管理企业客户远程托管设置的获取、缓存和验证。使用基于校验和的验证
+ * 来最小化网络流量，并在失败时提供优雅降级。
  *
- * Eligibility:
- * - Console users (API key): All eligible
- * - OAuth users (Zy.ai): Only Enterprise/C4E and Team subscribers are eligible
- * - API fails open (non-blocking) - if fetch fails, continues without remote settings
- * - API returns empty settings for users without managed settings
+ * 资格说明：
+ * - 控制台用户（API 密钥）：全部符合
+ * - OAuth 用户（Zy.ai）：仅限 Enterprise/C4E 和 Team 订阅用户
+ * - API 失败时开放（非阻塞）— 如果获取失败，继续不使用远程设置
+ * - API 对没有托管设置的用户返回空设置
  */
 
 import axios from 'axios'
@@ -48,31 +47,30 @@ import {
   RemoteManagedSettingsResponseSchema,
 } from './types.js'
 
-// Constants
-const SETTINGS_TIMEOUT_MS = 10000 // 10 seconds for settings fetch
+// 常量
+const SETTINGS_TIMEOUT_MS = 10000 // 设置获取 10 秒超时
 const DEFAULT_MAX_RETRIES = 5
-const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 小时
 
-// Background polling state
+// 后台轮询状态
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null
 
-// Promise that resolves when initial remote settings loading completes
-// This allows other systems to wait for remote settings before initializing
+// 解析远程设置加载完成的 Promise
+// 这允许其他系统在初始化之前等待远程设置加载
 let loadingCompletePromise: Promise<void> | null = null
 let loadingCompleteResolve: (() => void) | null = null
 
-// Timeout for the loading promise to prevent deadlocks if loadRemoteManagedSettings() is never called
-// (e.g., in Agent SDK tests that don't go through main.tsx)
-const LOADING_PROMISE_TIMEOUT_MS = 30000 // 30 seconds
+// 加载 Promise 的超时，防止在未调用 loadRemoteManagedSettings() 时死锁
+// （例如在不经由 main.tsx 的 Agent SDK 测试中）
+const LOADING_PROMISE_TIMEOUT_MS = 30000 // 30 秒
 
 /**
- * Initialize the loading promise for remote managed settings
- * This should be called early (e.g., in init.ts) to allow other systems
- * to await remote settings loading even if loadRemoteManagedSettings()
- * hasn't been called yet.
+ * 初始化远程托管设置的加载 Promise
+ * 应该在早期调用（例如在 init.ts 中），以允许其他系统
+ * 等待远程设置加载，即使尚未调用 loadRemoteManagedSettings()。
  *
- * Only creates the promise if the user is eligible for remote settings.
- * Includes a timeout to prevent deadlocks if loadRemoteManagedSettings() is never called.
+ * 仅在用户符合远程设置资格时创建 Promise。
+ * 包含超时以防止在从未调用 loadRemoteManagedSettings() 时死锁。
  */
 export function initializeRemoteManagedSettingsLoadingPromise(): void {
   if (loadingCompletePromise) {
@@ -83,8 +81,8 @@ export function initializeRemoteManagedSettingsLoadingPromise(): void {
     loadingCompletePromise = new Promise(resolve => {
       loadingCompleteResolve = resolve
 
-      // Set a timeout to resolve the promise even if loadRemoteManagedSettings() is never called
-      // This prevents deadlocks in Agent SDK tests and other non-CLI contexts
+      // 设置超时，即使从未调用 loadRemoteManagedSettings() 也解析 Promise
+      // 这防止了 Agent SDK 测试和其他非 CLI 上下文中的死锁
       setTimeout(() => {
         if (loadingCompleteResolve) {
           logForDebugging(
@@ -99,15 +97,15 @@ export function initializeRemoteManagedSettingsLoadingPromise(): void {
 }
 
 /**
- * Get the remote settings API endpoint
- * Uses the OAuth config base API URL
+ * 获取远程设置 API 端点
+ * 使用 OAuth 配置的基础 API URL
  */
 function getRemoteManagedSettingsEndpoint() {
   return `${getOauthConfig().BASE_API_URL}/api/claude_code/settings`
 }
 
 /**
- * Recursively sort all keys in an object to match Python's json.dumps(sort_keys=True)
+ * 递归排序对象中的所有键，以匹配 Python 的 json.dumps(sort_keys=True)
  */
 function sortKeysDeep(obj: unknown): unknown {
   if (Array.isArray(obj)) {
@@ -124,33 +122,33 @@ function sortKeysDeep(obj: unknown): unknown {
 }
 
 /**
- * Compute checksum from settings content for HTTP caching
- * Must match server's Python: json.dumps(settings, sort_keys=True, separators=(",", ":"))
- * Exported for testing to verify compatibility with server-side implementation
+ * 从设置内容计算校验和，用于 HTTP 缓存
+ * 必须与服务器的 Python 匹配：json.dumps(settings, sort_keys=True, separators=(",", ":"))
+ * 导出用于测试，以验证与服务器端实现的兼容性
  */
 export function computeChecksumFromSettings(settings: SettingsJson): string {
   const sorted = sortKeysDeep(settings)
-  // No spaces after separators to match Python's separators=(",", ":")
+  // 分隔符后无空格以匹配 Python 的 separators=(",", ":")
   const normalized = jsonStringify(sorted)
   const hash = createHash('sha256').update(normalized).digest('hex')
   return `sha256:${hash}`
 }
 
 /**
- * Check if the current user is eligible for remote managed settings
- * This is the public API for other systems to check eligibility
- * Used to determine if they should wait for remote settings to load
+ * 检查当前用户是否有资格使用远程托管设置
+ * 这是其他系统检查资格的公共 API
+ * 用于确定是否应该等待远程设置加载
  */
 export function isEligibleForRemoteManagedSettings(): boolean {
   return isRemoteManagedSettingsEligible()
 }
 
 /**
- * Wait for the initial remote settings loading to complete
- * Returns immediately if:
- * - User is not eligible for remote settings
- * - Loading has already completed
- * - Loading was never started
+ * 等待初始远程设置加载完成
+ * 在以下情况立即返回：
+ * - 用户不符合远程设置资格
+ * - 加载已完成
+ * - 加载从未开始
  */
 export async function waitForRemoteManagedSettingsToLoad(): Promise<void> {
   if (loadingCompletePromise) {
@@ -159,17 +157,17 @@ export async function waitForRemoteManagedSettingsToLoad(): Promise<void> {
 }
 
 /**
- * Get auth headers for remote settings without calling getSettings()
- * This avoids circular dependencies during settings loading
- * Supports both API key and OAuth authentication
+ * 获取远程设置的认证头，不调用 getSettings()
+ * 这避免了设置加载期间的循环依赖
+ * 支持 API 密钥和 OAuth 认证
  */
 function getRemoteSettingsAuthHeaders(): {
   headers: Record<string, string>
   error?: string
 } {
-  // Try API key first (for Console users)
-  // Skip apiKeyHelper to avoid circular dependency with getSettings()
-  // Wrap in try-catch because getApiKeyWithSource throws in CI/test environments
+  // 先尝试 API 密钥（适用于控制台用户）
+  // 跳过 apiKeyHelper 以避免与 getSettings() 的循环依赖
+  // 用 try-catch 包装，因为 getApiKeyWithSource 在 CI/测试环境中会抛出异常
   try {
     const { key: apiKey } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
@@ -182,10 +180,10 @@ function getRemoteSettingsAuthHeaders(): {
       }
     }
   } catch {
-    // No API key available - continue to check OAuth
+    // 无 API 密钥可用 - 继续检查 OAuth
   }
 
-  // Fall back to OAuth tokens (for Zy.ai users)
+  // 回退到 OAuth 令牌（适用于 Zy.ai 用户）
   const oauthTokens = getZyAIOAuthTokens()
   if (oauthTokens?.accessToken) {
     return {
@@ -203,8 +201,8 @@ function getRemoteSettingsAuthHeaders(): {
 }
 
 /**
- * Fetch remote settings with retry logic and exponential backoff
- * Uses existing codebase retry utilities for consistency
+ * 使用重试逻辑和指数退避获取远程设置
+ * 使用现有的代码库重试工具以保持一致性
  */
 async function fetchWithRetry(
   cachedChecksum?: string,
@@ -214,22 +212,22 @@ async function fetchWithRetry(
   for (let attempt = 1; attempt <= DEFAULT_MAX_RETRIES + 1; attempt++) {
     lastResult = await fetchRemoteManagedSettings(cachedChecksum)
 
-    // Return immediately on success
+    // 成功立即返回
     if (lastResult.success) {
       return lastResult
     }
 
-    // Don't retry if the error is not retryable (e.g., auth errors)
+    // 如果错误不可重试，则不重试（例如认证错误）
     if (lastResult.skipRetry) {
       return lastResult
     }
 
-    // If we've exhausted retries, return the last error
+    // 如果已耗尽重试次数，返回最后一个错误
     if (attempt > DEFAULT_MAX_RETRIES) {
       return lastResult
     }
 
-    // Calculate delay and wait before next retry
+    // 计算延迟并在下次重试前等待
     const delayMs = getRetryDelay(attempt)
     logForDebugging(
       `Remote settings: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`,
@@ -237,26 +235,26 @@ async function fetchWithRetry(
     await sleep(delayMs)
   }
 
-  // Should never reach here, but TypeScript needs it
+  // 绝不应到达这里，但 TypeScript 需要它
   return lastResult!
 }
 
 /**
- * Fetch the full remote settings (single attempt, no retries)
- * Optionally pass a cached checksum for ETag-based caching
+ * 获取完整的远程设置（单次尝试，无重试）
+ * 可选择传入缓存的校验和用于 ETag 缓存
  */
 async function fetchRemoteManagedSettings(
   cachedChecksum?: string,
 ): Promise<RemoteManagedSettingsFetchResult> {
   try {
-    // Ensure OAuth token is fresh before fetching settings
-    // This prevents 401 errors from stale cached tokens
+    // 获取设置前确保 OAuth 令牌是最新的
+    // 这防止了因过期缓存令牌导致的 401 错误
     await checkAndRefreshOAuthTokenIfNeeded()
 
-    // Use local auth header getter to avoid circular dependency with getSettings()
+    // 使用本地认证头获取器以避免与 getSettings() 的循环依赖
     const authHeaders = getRemoteSettingsAuthHeaders()
     if (authHeaders.error) {
-      // Auth errors should not be retried - return a special flag to skip retries
+      // 认证错误不应重试 — 返回特殊标志以跳过重试
       return {
         success: false,
         error: `Authentication required for remote settings`,
@@ -270,7 +268,7 @@ async function fetchRemoteManagedSettings(
       'User-Agent': getZyCodeUserAgent(),
     }
 
-    // Add If-None-Match header for ETag-based caching
+    // 为基于 ETag 的缓存添加 If-None-Match 头
     if (cachedChecksum) {
       headers['If-None-Match'] = `"${cachedChecksum}"`
     }
@@ -278,24 +276,24 @@ async function fetchRemoteManagedSettings(
     const response = await axios.get(endpoint, {
       headers,
       timeout: SETTINGS_TIMEOUT_MS,
-      // Allow 204, 304, and 404 responses without treating them as errors.
-      // 204/404 are returned when no settings exist for the user or the feature flag is off.
+      // 允许 204、304 和 404 响应，不将其视为错误。
+      // 当用户没有设置或功能标志关闭时返回 204/404。
       validateStatus: status =>
         status === 200 || status === 204 || status === 304 || status === 404,
     })
 
-    // Handle 304 Not Modified - cached version is still valid
+    // 处理 304 Not Modified — 缓存版本仍然有效
     if (response.status === 304) {
       logForDebugging('Remote settings: Using cached settings (304)')
       return {
         success: true,
-        settings: null, // Signal that cache is valid
+        settings: null, // 信号缓存有效
         checksum: cachedChecksum,
       }
     }
 
-    // Handle 204 No Content / 404 Not Found - no settings exist or feature flag is off.
-    // Return empty object (not null) so callers don't fall back to cached settings.
+    // 处理 204 No Content / 404 Not Found — 没有设置或功能标志关闭。
+    // 返回空对象（不是 null），以便调用者不会回退到缓存的设置。
     if (response.status === 204 || response.status === 404) {
       logForDebugging(`Remote settings: No settings found (${response.status})`)
       return {
@@ -318,7 +316,7 @@ async function fetchRemoteManagedSettings(
       }
     }
 
-    // Full validation of settings structure
+    // 完整验证设置结构
     const settingsValidation = SettingsSchema().safeParse(parsed.data.settings)
     if (!settingsValidation.success) {
       logForDebugging(
@@ -339,12 +337,12 @@ async function fetchRemoteManagedSettings(
   } catch (error) {
     const { kind, status, message } = classifyAxiosError(error)
     if (status === 404) {
-      // 404 means no remote settings configured
+      // 404 表示没有配置远程设置
       return { success: true, settings: {}, checksum: '' }
     }
     switch (kind) {
       case 'auth':
-        // Auth errors (401, 403) should not be retried - the API key doesn't have access
+        // 认证错误（401、403）不应重试 — API 密钥没有访问权限
         return {
           success: false,
           error: 'Not authorized for remote settings',
@@ -361,8 +359,8 @@ async function fetchRemoteManagedSettings(
 }
 
 /**
- * Save remote settings to file
- * Stores raw settings JSON (checksum is computed on-demand when needed)
+ * 保存远程设置到文件
+ * 存储原始设置 JSON（校验和在需要时按需计算）
  */
 async function saveSettings(settings: SettingsJson): Promise<void> {
   try {
@@ -381,21 +379,21 @@ async function saveSettings(settings: SettingsJson): Promise<void> {
     logForDebugging(
       `Remote settings: Failed to save - ${error instanceof Error ? error.message : 'unknown error'}`,
     )
-    // Ignore save errors - we'll refetch on next startup
+    // 忽略保存错误 — 下次启动时重新获取
   }
 }
 
 /**
- * Clear all remote settings (session, persistent, and stop polling)
+ * 清除所有远程设置（会话、持久化和停止轮询）
  */
 export async function clearRemoteManagedSettingsCache(): Promise<void> {
-  // Stop background polling
+  // 停止后台轮询
   stopBackgroundPolling()
 
-  // Clear session cache
+  // 清除会话缓存
   resetSyncCache()
 
-  // Clear loading promise state
+  // 清除加载 Promise 状态
   loadingCompletePromise = null
   loadingCompleteResolve = null
 
@@ -403,34 +401,34 @@ export async function clearRemoteManagedSettingsCache(): Promise<void> {
     const path = getSettingsPath()
     await unlink(path)
   } catch {
-    // Ignore errors when clearing file (ENOENT is expected)
+    // 清除文件时忽略错误（预期会出现 ENOENT）
   }
 }
 
 /**
- * Fetch and load remote settings with file caching
- * Internal function that handles the full load/fetch logic
- * Fails open - returns null if fetch fails and no cache exists
+ * 使用文件缓存获取和加载远程设置
+ * 内部函数，处理完整的加载/获取逻辑
+ * 失败时开放 — 如果获取失败且不存在缓存则返回 null
  */
 async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null> {
   if (!isRemoteManagedSettingsEligible()) {
     return null
   }
 
-  // Load cached settings from file
+  // 从文件加载缓存的设置
   const cachedSettings = getRemoteManagedSettingsSyncFromCache()
 
-  // Compute checksum locally from cached settings for HTTP caching validation
+  // 从缓存的设置本地计算校验和，用于 HTTP 缓存验证
   const cachedChecksum = cachedSettings
     ? computeChecksumFromSettings(cachedSettings)
     : undefined
 
   try {
-    // Fetch settings from API with retry logic
+    // 使用重试逻辑从 API 获取设置
     const result = await fetchWithRetry(cachedChecksum)
 
     if (!result.success) {
-      // On fetch failure, use stale file if available (graceful degradation)
+      // 获取失败时，如果有文件则使用过期的文件（优雅降级）
       if (cachedSettings) {
         logForDebugging(
           'Remote settings: Using stale cache after fetch failure',
@@ -438,29 +436,29 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
         setSessionCache(cachedSettings)
         return cachedSettings
       }
-      // No cache available - fail open, continue without remote settings
+      // 无可用缓存 — 失败时开放，继续不使用远程设置
       return null
     }
 
-    // Handle 304 Not Modified - cached settings are still valid
+    // 处理 304 Not Modified — 缓存的设置仍然有效
     if (result.settings === null && cachedSettings) {
       logForDebugging('Remote settings: Cache still valid (304 Not Modified)')
       setSessionCache(cachedSettings)
       return cachedSettings
     }
 
-    // Save new settings to file (only if non-empty)
+    // 保存新设置到文件（仅当非空时）
     const newSettings = result.settings || {}
     const hasContent = Object.keys(newSettings).length > 0
 
     if (hasContent) {
-      // Check for dangerous settings changes before applying
+      // 应用前检查危险设置变更
       const securityResult = await checkManagedSettingsSecurity(
         cachedSettings,
         newSettings,
       )
       if (!handleSecurityCheckResult(securityResult)) {
-        // User rejected - don't apply settings, return cached or null
+        // 用户拒绝 — 不应用设置，返回缓存或 null
         logForDebugging(
           'Remote settings: User rejected new settings, using cached settings',
         )
@@ -473,8 +471,8 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
       return newSettings
     }
 
-    // Empty settings (404 response) - delete cached file if it exists
-    // This ensures stale settings don't persist when a user's remote settings are removed
+    // 空设置（404 响应）— 如果存在则删除缓存文件
+    // 这确保当用户的远程设置被移除时，过期的设置不会持续存在
     setSessionCache(newSettings)
     try {
       const path = getSettingsPath()
@@ -490,7 +488,7 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
     }
     return newSettings
   } catch {
-    // On any error, use stale file if available (graceful degradation)
+    // 发生任何错误时，如果有过期文件则使用它（优雅降级）
     if (cachedSettings) {
       logForDebugging('Remote settings: Using stale cache after error')
       setSessionCache(cachedSettings)
@@ -503,18 +501,18 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
 }
 
 /**
- * Load remote settings during CLI initialization
- * Fails open - if fetch fails, continues without remote settings
- * Also starts background polling to pick up settings changes mid-session
+ * 在 CLI 初始化期间加载远程设置
+ * 失败时开放 — 如果获取失败，继续不使用远程设置
+ * 同时启动后台轮询以在会话中途获取设置变更
  *
- * This function sets up a promise that other systems can await via
- * waitForRemoteManagedSettingsToLoad() to ensure they don't initialize
- * until remote settings have been fetched.
+ * 此函数设置一个 Promise，其他系统可以通过
+ * waitForRemoteManagedSettingsToLoad() 等待，以确保它们在
+ * 远程设置获取完成之前不会初始化。
  */
 export async function loadRemoteManagedSettings(): Promise<void> {
-  // Set up the promise for other systems to wait on
-  // Only if the user is eligible for remote settings AND promise not already set up
-  // (initializeRemoteManagedSettingsLoadingPromise may have been called earlier)
+  // 为其他系统设置等待的 Promise
+  // 仅在用户符合远程设置资格且 Promise 尚未设置时
+  // （initializeRemoteManagedSettingsLoadingPromise 可能已经被提前调用）
   if (isRemoteManagedSettingsEligible() && !loadingCompletePromise) {
     loadingCompletePromise = new Promise(resolve => {
       loadingCompleteResolve = resolve
