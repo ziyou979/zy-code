@@ -3,3 +3,7 @@
 export function collapseContext(_messages: unknown[]): unknown[] {
   return _messages
 }
+
+export function projectView(_messages: unknown[]): unknown[] {
+  return _messages
+}

@@ -177,7 +177,7 @@ export function LogSelector({
   const [previewLog, setPreviewLog] = React.useState(null);
   const prevFocusedIdRef = React.useRef(null);
   const [selectedTagIndex, setSelectedTagIndex] = React.useState(0);
-  const [agenticSearchState, setAgenticSearchState] = React.useState({
+  const [agenticSearchState, setAgenticSearchState] = React.useState<AgenticSearchState>({
     status: "idle"
   });
   const [isAgenticSearchOptionFocused, setIsAgenticSearchOptionFocused] = React.useState(false);

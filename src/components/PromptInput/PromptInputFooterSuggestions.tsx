@@ -37,6 +37,10 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
   item,
   maxColumnWidth,
   isSelected
+}: {
+  item: SuggestionItem;
+  maxColumnWidth: number;
+  isSelected: boolean;
 }) {
   const columns = useTerminalSize().columns;
   const isUnified = isUnifiedSuggestion(item.id);

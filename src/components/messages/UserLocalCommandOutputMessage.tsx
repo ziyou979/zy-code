@@ -8,6 +8,9 @@ import { MessageResponse } from '../MessageResponse.js';
 type Props = {
   content: string;
 };
+type ContentProps = {
+  children: string;
+};
 export function UserLocalCommandOutputMessage({
   content
 }: Props) {
@@ -34,7 +37,7 @@ export function UserLocalCommandOutputMessage({
 }
 function IndentedContent({
   children
-}: Props) {
+}: ContentProps) {
   if (children.startsWith(`${DIAMOND_OPEN} `) || children.startsWith(`${DIAMOND_FILLED} `)) {
     return <CloudLaunchContent>{children}</CloudLaunchContent>;
   }
@@ -42,7 +45,7 @@ function IndentedContent({
 }
 function CloudLaunchContent({
   children
-}: Props) {
+}: ContentProps) {
   const diamond = children[0];
   const nl = children.indexOf("\n");
   const header = nl === -1 ? children.slice(2) : children.slice(2, nl);

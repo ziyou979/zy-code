@@ -65,9 +65,9 @@ export function ThemeProvider({
       if (activeSetting !== 'auto' || !internal_querier) return;
       let cleanup: (() => void) | undefined;
       let cancelled = false;
-      void import('../../utils/systemThemeWatcher.js').then(({
-        watchSystemTheme
-      }) => {
+      void import('../../utils/systemThemeWatcher.js').then((mod) => {
+        const { watchSystemTheme } = mod as typeof import('../../utils/systemThemeWatcher.js');
+        if (!watchSystemTheme) return;
         if (cancelled) return;
         cleanup = watchSystemTheme(internal_querier, setSystemTheme);
       });
