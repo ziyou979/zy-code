@@ -47,12 +47,12 @@ function VerboseToolUse({
   theme
 }: Props) {
   const bg = useSelectedMessageBg();
-  let t1;
-  let t2;
-  t2 = Symbol.for("react.early_return_sentinel");
+  let boxElement;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const tool = findToolByName(tools, content.name) ?? findToolByName(getReplPrimitiveTools(), content.name);
   if (!tool) {
-    t2 = null;
+    earlyReturn = null;
   } else {
     const isResolved = lookups.resolvedToolUseIDs.has(content.id);
     const isError = lookups.erroredToolUseIDs.has(content.id);
@@ -68,16 +68,16 @@ function VerboseToolUse({
       theme,
       verbose: true
     }) : null;
-    t1 = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}><Box flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate && isInProgress} isUnresolved={!isResolved} isError={isError} />}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
+    boxElement = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}><Box flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate && isInProgress} isUnresolved={!isResolved} isError={isError} />}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
           verbose: true,
           tools,
           theme
         })}</Box>}</Box>;
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return t1;
+  return boxElement;
 }
 export function CollapsedReadSearchContent({
   message,
@@ -101,7 +101,7 @@ export function CollapsedReadSearchContent({
   } = message;
   const [theme] = useTheme();
   const toolUseIds = getToolUseIdsFromCollapsedGroup(message);
-  const anyError = toolUseIds.some(id => lookups.erroredToolUseIDs.has(id));
+  const anyError = toolUseIds.some((id) => lookups.erroredToolUseIDs.has(id));
   const hasMemoryOps = memorySearchCount > 0 || memoryReadCount > 0 || memoryWriteCount > 0;
   const hasTeamMemoryOps = feature('TEAMMEM') ? teamMemCollapsed!.checkHasTeamMemOps(message) : false;
 
@@ -168,7 +168,7 @@ export function CollapsedReadSearchContent({
       }
     }
     return <Box flexDirection="column">
-        {toolUses.map(msg_0 => {
+        {toolUses.map((msg_0) => {
         const content = msg_0.message.content[0];
         if (content?.type !== 'tool_use') return null;
         return <VerboseToolUse key={content.id} content={content} tools={tools} lookups={lookups} inProgressToolUseIDs={inProgressToolUseIDs} shouldAnimate={shouldAnimate} theme={theme} />;
@@ -184,7 +184,7 @@ export function CollapsedReadSearchContent({
                 {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
               </Text>)}
           </>}
-        {message.relevantMemories?.map(m => <Box key={m.path} flexDirection="column" marginTop={1}>
+        {message.relevantMemories?.map((m) => <Box key={m.path} flexDirection="column" marginTop={1}>
             <Text dimColor>
               {'  ⎿  '}Recalled {basename(m.path)}
             </Text>
@@ -249,14 +249,14 @@ export function CollapsedReadSearchContent({
   }
   if (isFullscreenEnvEnabled() && message.commits?.length) {
     for (const kind of ['committed', 'amended', 'cherryPicked'] as const) {
-      const shas = message.commits.filter(c => c.kind === kind.replace('Picked', '-picked')).map(c_0 => c_0.sha);
+      const shas = message.commits.filter((c) => c.kind === kind.replace('Picked', '-picked')).map((c_0) => c_0.sha);
       if (shas.length) {
         pushPart(kind, kind, <Text bold>{shas.join(', ')}</Text>);
       }
     }
   }
   if (isFullscreenEnvEnabled() && message.pushes?.length) {
-    const branches = uniq(message.pushes.map(p => p.branch));
+    const branches = uniq(message.pushes.map((p) => p.branch));
     pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>);
   }
   if (isFullscreenEnvEnabled() && message.branches?.length) {
@@ -340,7 +340,7 @@ export function CollapsedReadSearchContent({
       </Text>);
   }
   if (mcpCallCount > 0) {
-    const serverLabel = message.mcpServerNames?.map(n => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP';
+    const serverLabel = message.mcpServerNames?.map((n) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP';
     const isFirst_3 = nonMemParts.length === 0;
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_3 ? 'first' : 'sub';

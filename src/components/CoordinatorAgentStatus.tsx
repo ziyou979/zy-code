@@ -31,11 +31,11 @@ export function getVisibleAgentTasks(tasks: AppState['tasks']): LocalAgentTaskSt
   return Object.values(tasks).filter((t): t is LocalAgentTaskState => isPanelAgentTask(t) && t.evictAfter !== 0).sort((a, b) => a.startTime - b.startTime);
 }
 export function CoordinatorTaskPanel(): React.ReactNode {
-  const tasks = useAppState(s => s.tasks);
-  const viewingAgentTaskId = useAppState(s_0 => s_0.viewingAgentTaskId);
-  const agentNameRegistry = useAppState(s_1 => s_1.agentNameRegistry);
-  const coordinatorTaskIndex = useAppState(s_2 => s_2.coordinatorTaskIndex);
-  const tasksSelected = useAppState(s_3 => s_3.footerSelection === 'tasks');
+  const tasks = useAppState((s) => s.tasks);
+  const viewingAgentTaskId = useAppState((s_0) => s_0.viewingAgentTaskId);
+  const agentNameRegistry = useAppState((s_1) => s_1.agentNameRegistry);
+  const coordinatorTaskIndex = useAppState((s_2) => s_2.coordinatorTaskIndex);
+  const tasksSelected = useAppState((s_3) => s_3.footerSelection === 'tasks');
   const selectedIndex = tasksSelected ? coordinatorTaskIndex : undefined;
   const setAppState = useSetAppState();
   const visibleTasks = getVisibleAgentTasks(tasks);
@@ -80,10 +80,10 @@ export function CoordinatorTaskPanel(): React.ReactNode {
  * stays accurate without needing its own tick.
  */
 export function useCoordinatorTaskCount() {
-  const tasks = useAppState(s => s.tasks);
-  let t0;
-  t0 = 0;
-  return t0;
+  const tasks = useAppState((s) => s.tasks);
+
+
+  return 0;
 }
 function MainLine({
   isSelected,
@@ -133,8 +133,8 @@ function AgentLine({
   const hintPart = isSelected && !isViewed ? ` · x to ${isRunning ? "stop" : "clear"}` : "";
   const suffixPart = ` ${sep} ${elapsed}${tokenText}${queuedText}${hintPart}`;
   const availableForDesc = columns - stringWidth(prefix) - stringWidth(`${bullet} `) - stringWidth(namePart) - stringWidth(suffixPart);
-  const t3 = Math.max(0, availableForDesc);
-  const truncated = wrapText(displayDescription, t3, "truncate-end");
+  const maxResult = Math.max(0, availableForDesc);
+  const truncated = wrapText(displayDescription, maxResult, "truncate-end");
   const line = <Text dimColor={dim} bold={isViewed}>{prefix}{bullet}{" "}{name && <><Text dimColor={false} bold={true}>{name}</Text>{": "}</>}{truncated} {sep} {elapsed}{tokenText}{queuedCount > 0 && <Text color="warning">{queuedText}</Text>}{hintPart && <Text dimColor={true}>{hintPart}</Text>}</Text>;
   if (!onClick) {
     return line;

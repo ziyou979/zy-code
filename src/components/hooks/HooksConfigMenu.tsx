@@ -60,7 +60,7 @@ export function HooksConfigMenu({
     return hooksDisabled && getSettingsForSource("policySettings")?.disableAllHooks === true;
   });
   const [restrictedByPolicy, setRestrictedByPolicy] = useState(() => getSettingsForSource("policySettings")?.allowManagedHooksOnly === true);
-  useSettingsChange(source => {
+  useSettingsChange((source) => {
     if (source === "policySettings") {
       const settings_0 = getSettings_DEPRECATED();
       const hooksDisabled_0 = settings_0?.disableAllHooks === true;
@@ -71,9 +71,9 @@ export function HooksConfigMenu({
   const mode = modeState.mode;
   const selectedEvent = "event" in modeState ? modeState.event : "PreToolUse";
   const selectedMatcher = "matcher" in modeState ? modeState.matcher : null;
-  const mcp = useAppState(s => s.mcp);
+  const mcp = useAppState((s) => s.mcp);
   const appStateStore = useAppStateStore();
-  const combinedToolNames = [...toolNames, ...mcp.tools.map(tool => tool.name)];
+  const combinedToolNames = [...toolNames, ...mcp.tools.map((tool) => tool.name)];
   const hooksByEventAndMatcher = groupHooksByEventAndMatcher(appStateStore.getState(), combinedToolNames);
   const sortedMatchersForSelectedEvent = getSortedMatchersForEvent(hooksByEventAndMatcher, selectedEvent);
   const hooksForSelectedMatcher = getHooksForMatcher(hooksByEventAndMatcher, selectedEvent, selectedMatcher);
@@ -145,15 +145,15 @@ export function HooksConfigMenu({
     totalHooksCount: total
   };
   if (hooksDisabled_1) {
-    const t24 = plural(totalHooksCount, "hook");
-    const t25 = plural(totalHooksCount, "is", "are");
-    return <Dialog title="Hook Configuration - Disabled" onCancel={handleExit} inputGuide={() => <Text>Esc to close</Text>}>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text>All hooks are currently {<Text bold={true}>disabled</Text>}{disabledByPolicy && " by a managed settings file"}. You have{" "}{<Text bold={true}>{totalHooksCount}</Text>} configured{" "}{t24} that{" "}{t25} not running.</Text>}{<Box marginTop={1}><Text dimColor={true}>When hooks are disabled:</Text></Box>}{<Text dimColor={true}>· No hook commands will execute</Text>}{<Text dimColor={true}>· StatusLine will not be displayed</Text>}{<Text dimColor={true}>· Tool operations will proceed without hook validation</Text>}</Box>}{!disabledByPolicy && <Text dimColor={true}>To re-enable hooks, remove "disableAllHooks" from settings.json or ask Zy.</Text>}</Box>}</Dialog>;
+    const pluralResult = plural(totalHooksCount, "hook");
+    const pluralResult2 = plural(totalHooksCount, "is", "are");
+    return <Dialog title="Hook Configuration - Disabled" onCancel={handleExit} inputGuide={() => <Text>Esc to close</Text>}>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text>All hooks are currently {<Text bold={true}>disabled</Text>}{disabledByPolicy && " by a managed settings file"}. You have{" "}{<Text bold={true}>{totalHooksCount}</Text>} configured{" "}{pluralResult} that{" "}{pluralResult2} not running.</Text>}{<Box marginTop={1}><Text dimColor={true}>When hooks are disabled:</Text></Box>}{<Text dimColor={true}>· No hook commands will execute</Text>}{<Text dimColor={true}>· StatusLine will not be displayed</Text>}{<Text dimColor={true}>· Tool operations will proceed without hook validation</Text>}</Box>}{!disabledByPolicy && <Text dimColor={true}>To re-enable hooks, remove "disableAllHooks" from settings.json or ask Zy.</Text>}</Box>}</Dialog>;
   }
   switch (modeState.mode) {
     case "select-event":
       {
         let t21;
-        t21 = event_2 => {
+        t21 = (event_2) => {
           if (getMatcherMetadata(event_2, combinedToolNames) !== undefined) {
             setModeState({
               mode: "select-matcher",
@@ -175,7 +175,7 @@ export function HooksConfigMenu({
       {
         const t21 = hookEventMetadata[modeState.event];
         let t22;
-        t22 = matcher => {
+        t22 = (matcher) => {
           setModeState({
             mode: "select-hook",
             event: modeState.event,
@@ -188,15 +188,15 @@ export function HooksConfigMenu({
             mode: "select-event"
           });
         };
-        let t24;
-        t24 = <SelectMatcherMode selectedEvent={modeState.event} matchersForSelectedEvent={sortedMatchersForSelectedEvent} hooksByEventAndMatcher={hooksByEventAndMatcher} eventDescription={t21.description} onSelect={t22} onCancel={t23} />;
-        return t24;
+        let pluralResult;
+        pluralResult = <SelectMatcherMode selectedEvent={modeState.event} matchersForSelectedEvent={sortedMatchersForSelectedEvent} hooksByEventAndMatcher={hooksByEventAndMatcher} eventDescription={t21.description} onSelect={t22} onCancel={t23} />;
+        return pluralResult;
       }
     case "select-hook":
       {
         const t21 = hookEventMetadata[modeState.event];
         let t22;
-        t22 = hook_1 => {
+        t22 = (hook_1) => {
           setModeState({
             mode: "view-hook",
             event: modeState.event,
@@ -216,9 +216,9 @@ export function HooksConfigMenu({
             });
           }
         };
-        let t24;
-        t24 = <SelectHookMode selectedEvent={modeState.event} selectedMatcher={modeState.matcher} hooksForSelectedMatcher={hooksForSelectedMatcher} hookEventMetadata={t21} onSelect={t22} onCancel={t23} />;
-        return t24;
+        let pluralResult;
+        pluralResult = <SelectHookMode selectedEvent={modeState.event} selectedMatcher={modeState.matcher} hooksForSelectedMatcher={hooksForSelectedMatcher} hookEventMetadata={t21} onSelect={t22} onCancel={t23} />;
+        return pluralResult;
       }
     case "view-hook":
       {
@@ -226,8 +226,8 @@ export function HooksConfigMenu({
         let t22;
         t22 = getMatcherMetadata(modeState.event, combinedToolNames);
         const t23 = t22 !== undefined;
-        let t24;
-        t24 = () => {
+        let pluralResult;
+        pluralResult = () => {
           const {
             event: event_1,
             hook: hook_0
@@ -238,9 +238,9 @@ export function HooksConfigMenu({
             matcher: hook_0.matcher || ""
           });
         };
-        let t25;
-        t25 = <ViewHookMode selectedHook={t21} eventSupportsMatcher={t23} onCancel={t24} />;
-        return t25;
+        let pluralResult2;
+        pluralResult2 = <ViewHookMode selectedHook={t21} eventSupportsMatcher={t23} onCancel={pluralResult} />;
+        return pluralResult2;
       }
   }
 }

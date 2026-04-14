@@ -159,7 +159,7 @@ export function LogSelector({
   const isDeepSearchEnabled = false;
   const [themeName] = useTheme();
   const theme = getTheme(themeName);
-  const highlightColor = text => applyColor(text, theme.warning as Color);
+  const highlightColor = (text) => applyColor(text, theme.warning as Color);
   const isAgenticSearchEnabled = false;
   const [currentBranch, setCurrentBranch] = React.useState(null);
   const [branchFilterEnabled, setBranchFilterEnabled] = React.useState(false);
@@ -215,14 +215,14 @@ export function LogSelector({
   const [deepSearchResults, setDeepSearchResults] = React.useState(null);
   const [isSearching, setIsSearching] = React.useState(false);
   React.useEffect(() => {
-    getBranch().then(branch => setCurrentBranch(branch));
-    getWorktreePaths(currentCwd).then(paths => {
+    getBranch().then((branch) => setCurrentBranch(branch));
+    getWorktreePaths(currentCwd).then((paths) => {
       setHasMultipleWorktrees(paths.length > 1);
     });
   }, [currentCwd]);
-  const searchableTextByLog = new Map(logs.map(log => [log, buildSearchableText(log)]));
-  let t19;
-  t19 = null;
+  const searchableTextByLog = new Map(logs.map((log) => [log, buildSearchableText(log)]));
+
+
   const uniqueTags = getUniqueTags(logs);
   const hasTags = uniqueTags.length > 0;
   const tagTabs = hasTags ? ["All", ...uniqueTags] : [];
@@ -232,7 +232,7 @@ export function LogSelector({
   const tagTabsLines = hasTags ? 1 : 0;
   let filtered = logs;
   if (isResumeWithRenameEnabled) {
-    filtered = logs.filter(log_1 => {
+    filtered = logs.filter((log_1) => {
       const currentSessionId = getSessionId();
       const logSessionId = getSessionIdFromLog(log_1);
       const isCurrentSession = currentSessionId && logSessionId === currentSessionId;
@@ -253,13 +253,13 @@ export function LogSelector({
     });
   }
   if (tagFilter !== undefined) {
-    filtered = filtered.filter(log_2 => log_2.tag === tagFilter);
+    filtered = filtered.filter((log_2) => log_2.tag === tagFilter);
   }
   if (branchFilterEnabled && currentBranch) {
-    filtered = filtered.filter(log_3 => log_3.gitBranch === currentBranch);
+    filtered = filtered.filter((log_3) => log_3.gitBranch === currentBranch);
   }
   if (hasMultipleWorktrees && !showAllWorktrees) {
-    filtered = filtered.filter(log_4 => log_4.projectPath === currentCwd);
+    filtered = filtered.filter((log_4) => log_4.projectPath === currentCwd);
   }
   const baseFilteredLogs = filtered;
   let titleFilteredLogs;
@@ -267,7 +267,7 @@ export function LogSelector({
     titleFilteredLogs = baseFilteredLogs;
   } else {
     const query = searchQuery.toLowerCase();
-    titleFilteredLogs = baseFilteredLogs.filter(log_5 => {
+    titleFilteredLogs = baseFilteredLogs.filter((log_5) => {
       const displayedTitle = getLogDisplayTitle(log_5).toLowerCase();
       const branch_0 = (log_5.gitBranch || "").toLowerCase();
       const tag = (log_5.tag || "").toLowerCase();
@@ -298,7 +298,7 @@ export function LogSelector({
         return (a.score ?? 1) - (b.score ?? 1);
       });
       setDeepSearchResults_0({
-        results: results.map(r => ({
+        results: results.map((r) => ({
           log: r.item.log,
           score: r.score,
           searchableText: r.item.searchableText
@@ -322,8 +322,8 @@ export function LogSelector({
         }
       }
     }
-    const titleMatchIds = new Set(filtered_0.map(log_6 => log_6.messages[0]?.uuid));
-    const transcriptOnlyMatches = deepSearchResults.results.map(r_0 => r_0.log).filter(log_7 => !titleMatchIds.has(log_7.messages[0]?.uuid));
+    const titleMatchIds = new Set(filtered_0.map((log_6) => log_6.messages[0]?.uuid));
+    const transcriptOnlyMatches = deepSearchResults.results.map((r_0) => r_0.log).filter((log_7) => !titleMatchIds.has(log_7.messages[0]?.uuid));
     filtered_0 = [...filtered_0, ...transcriptOnlyMatches];
   }
   const {
@@ -345,7 +345,7 @@ export function LogSelector({
     treeNodes = [];
   } else {
     const sessionGroups = groupLogsBySessionId(displayedLogs);
-    treeNodes = Array.from(sessionGroups.entries()).map(t31 => {
+    treeNodes = Array.from(sessionGroups.entries()).map((t31) => {
       const [sessionId, groupLogs] = t31;
       const latestLog = groupLogs[0];
       const indexInFiltered = displayedLogs.indexOf(latestLog);
@@ -436,7 +436,7 @@ export function LogSelector({
     if (!sessionId_0) {
       return "";
     }
-    const sessionLogs = displayedLogs.filter(log_10 => getSessionIdFromLog(log_10) === sessionId_0);
+    const sessionLogs = displayedLogs.filter((log_10) => getSessionIdFromLog(log_10) === sessionId_0);
     const hasMultipleLogs = sessionLogs.length > 1;
     if (!hasMultipleLogs) {
       return "";
@@ -550,7 +550,7 @@ export function LogSelector({
       }
     }
   }, [agenticSearchState.status, isResumeWithRenameEnabled, treeNodes, displayedLogs]);
-  const handleFlatOptionsSelectFocus = value => {
+  const handleFlatOptionsSelectFocus = (value) => {
     const index_1 = parseInt(value, 10);
     const log_11 = displayedLogs[index_1];
     if (!log_11 || prevFocusedIdRef.current === index_1.toString()) {
@@ -567,9 +567,9 @@ export function LogSelector({
     });
     setFocusedIndex(index_1 + 1);
   };
-  const handleTreeSelectFocus = node => {
+  const handleTreeSelectFocus = (node) => {
     setFocusedNode(node);
-    const index_2 = displayedLogs.findIndex(log_12 => getSessionIdFromLog(log_12) === getSessionIdFromLog(node.value.log));
+    const index_2 = displayedLogs.findIndex((log_12) => getSessionIdFromLog(log_12) === getSessionIdFromLog(node.value.log));
     if (index_2 >= 0) {
       setFocusedIndex(index_2 + 1);
     }
@@ -638,7 +638,7 @@ export function LogSelector({
         }
         if (hasTags && key.tab) {
           const offset = key.shift ? -1 : 1;
-          setSelectedTagIndex(prev => {
+          setSelectedTagIndex((prev) => {
             const current = prev < tagTabs.length ? prev : 0;
             const newIndex = (current + tagTabs.length + offset) % tagTabs.length;
             const newTab = tagTabs[newIndex];
@@ -736,31 +736,31 @@ export function LogSelector({
       setPreviewLog(null);
     }} onSelect={onSelect} />;
   }
-  const t69 = Boolean(searchQuery.trim()) && onAgenticSearch && false && agenticSearchState.status !== "searching" && agenticSearchState.status !== "results" && agenticSearchState.status !== "error" && <Box flexShrink={0} flexDirection="column"><Box flexDirection="row" gap={1}><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined}>{isAgenticSearchOptionFocused ? figures.pointer : " "}</Text><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined} bold={isAgenticSearchOptionFocused}>{tSync('logSelector.searchDeeply')} →</Text></Box><Box height={1} /></Box>;
-  return <Box flexDirection="column" height={maxHeight - 1}>{<Box flexShrink={0}><Divider color="suggestion" /></Box>}{<Box flexShrink={0}><Text> </Text></Box>}{hasTags ? <TagTabs tabs={tagTabs} selectedIndex={effectiveTagIndex} availableWidth={columns} showAllProjects={showAllProjects} /> : <Box flexShrink={0}><Text bold={true} color="suggestion">{tSync('logSelector.resumeSession')}{viewMode === "list" && displayedLogs.length > visibleCount && <Text dimColor={true}>{" "}（{focusedIndex} / {displayedLogs.length}）</Text>}</Text></Box>}{<SearchBox query={searchQuery} isFocused={viewMode === "search"} isTerminalFocused={isTerminalFocused} cursorOffset={searchCursorOffset} />}{filterIndicators.length > 0 && viewMode !== "search" && <Box flexShrink={0} paddingLeft={2}><Text dimColor={true}><Byline>{filterIndicators}</Byline></Text></Box>}{<Box flexShrink={0}><Text> </Text></Box>}{agenticSearchState.status === "searching" && <Box paddingLeft={1} flexShrink={0}><Spinner /><Text> {tSync('logSelector.searching')}</Text></Box>}{agenticSearchState.status === "results" && agenticSearchState.results.length > 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.results')}</Text></Box>}{agenticSearchState.status === "results" && agenticSearchState.results.length === 0 && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.noResults')}</Text></Box>}{agenticSearchState.status === "error" && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.noResults')}</Text></Box>}{t69}{agenticSearchState.status === "searching" ? null : viewMode === "rename" && focusedLog ? <Box paddingLeft={2} flexDirection="column"><Text bold={true}>{tSync('logSelector.renameSession')}:</Text><Box paddingTop={1}><TextInput value={renameValue} onChange={setRenameValue} onSubmit={handleRenameSubmit} placeholder={getLogDisplayTitle(focusedLog, "Enter new session name")} columns={columns} cursorOffset={renameCursorOffset} onChangeCursorOffset={setRenameCursorOffset} showCursor={true} /></Box></Box> : isResumeWithRenameEnabled ? <TreeSelect nodes={treeNodes} onSelect={node_0 => {
+  const boxElement = Boolean(searchQuery.trim()) && onAgenticSearch && false && agenticSearchState.status !== "searching" && agenticSearchState.status !== "results" && agenticSearchState.status !== "error" && <Box flexShrink={0} flexDirection="column"><Box flexDirection="row" gap={1}><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined}>{isAgenticSearchOptionFocused ? figures.pointer : " "}</Text><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined} bold={isAgenticSearchOptionFocused}>{tSync('logSelector.searchDeeply')} →</Text></Box><Box height={1} /></Box>;
+  return <Box flexDirection="column" height={maxHeight - 1}>{<Box flexShrink={0}><Divider color="suggestion" /></Box>}{<Box flexShrink={0}><Text> </Text></Box>}{hasTags ? <TagTabs tabs={tagTabs} selectedIndex={effectiveTagIndex} availableWidth={columns} showAllProjects={showAllProjects} /> : <Box flexShrink={0}><Text bold={true} color="suggestion">{tSync('logSelector.resumeSession')}{viewMode === "list" && displayedLogs.length > visibleCount && <Text dimColor={true}>{" "}（{focusedIndex} / {displayedLogs.length}）</Text>}</Text></Box>}{<SearchBox query={searchQuery} isFocused={viewMode === "search"} isTerminalFocused={isTerminalFocused} cursorOffset={searchCursorOffset} />}{filterIndicators.length > 0 && viewMode !== "search" && <Box flexShrink={0} paddingLeft={2}><Text dimColor={true}><Byline>{filterIndicators}</Byline></Text></Box>}{<Box flexShrink={0}><Text> </Text></Box>}{agenticSearchState.status === "searching" && <Box paddingLeft={1} flexShrink={0}><Spinner /><Text> {tSync('logSelector.searching')}</Text></Box>}{agenticSearchState.status === "results" && agenticSearchState.results.length > 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.results')}</Text></Box>}{agenticSearchState.status === "results" && agenticSearchState.results.length === 0 && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.noResults')}</Text></Box>}{agenticSearchState.status === "error" && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{tSync('logSelector.noResults')}</Text></Box>}{boxElement}{agenticSearchState.status === "searching" ? null : viewMode === "rename" && focusedLog ? <Box paddingLeft={2} flexDirection="column"><Text bold={true}>{tSync('logSelector.renameSession')}:</Text><Box paddingTop={1}><TextInput value={renameValue} onChange={setRenameValue} onSubmit={handleRenameSubmit} placeholder={getLogDisplayTitle(focusedLog, "Enter new session name")} columns={columns} cursorOffset={renameCursorOffset} onChangeCursorOffset={setRenameCursorOffset} showCursor={true} /></Box></Box> : isResumeWithRenameEnabled ? <TreeSelect nodes={treeNodes} onSelect={(node_0) => {
       onSelect(node_0.value.log);
-    }} onFocus={handleTreeSelectFocus} onCancel={onCancel} focusNodeId={focusedNode?.id} visibleOptionCount={visibleCount} layout="expanded" isDisabled={viewMode === "search" || isAgenticSearchOptionFocused} hideIndexes={false} isNodeExpanded={nodeId => {
+    }} onFocus={handleTreeSelectFocus} onCancel={onCancel} focusNodeId={focusedNode?.id} visibleOptionCount={visibleCount} layout="expanded" isDisabled={viewMode === "search" || isAgenticSearchOptionFocused} hideIndexes={false} isNodeExpanded={(nodeId) => {
       if (viewMode === "search" || branchFilterEnabled) {
         return true;
       }
       const sessionId_2 = typeof nodeId === "string" && nodeId.startsWith("group:") ? nodeId.substring(6) : null;
       return sessionId_2 ? expandedGroupSessionIds.has(sessionId_2) : false;
-    }} onExpand={nodeId_0 => {
+    }} onExpand={(nodeId_0) => {
       const sessionId_3 = typeof nodeId_0 === "string" && nodeId_0.startsWith("group:") ? nodeId_0.substring(6) : null;
       if (sessionId_3) {
-        setExpandedGroupSessionIds(prev_0 => new Set(prev_0).add(sessionId_3));
+        setExpandedGroupSessionIds((prev_0) => new Set(prev_0).add(sessionId_3));
         logEvent("tengu_session_group_expanded", {});
       }
-    }} onCollapse={nodeId_1 => {
+    }} onCollapse={(nodeId_1) => {
       const sessionId_4 = typeof nodeId_1 === "string" && nodeId_1.startsWith("group:") ? nodeId_1.substring(6) : null;
       if (sessionId_4) {
-        setExpandedGroupSessionIds(prev_1 => {
+        setExpandedGroupSessionIds((prev_1) => {
           const newSet = new Set(prev_1);
           newSet.delete(sessionId_4);
           return newSet;
         });
       }
-    }} onUpFromFirstItem={enterSearchMode} /> : <Select options={flatOptions} onChange={value_0 => {
+    }} onUpFromFirstItem={enterSearchMode} /> : <Select options={flatOptions} onChange={(value_0) => {
       const itemIndex = parseInt(value_0, 10);
       const log_13 = displayedLogs[itemIndex];
       if (log_13) {
@@ -791,7 +791,7 @@ function extractSearchableText(message: SerializedMessage): string {
 
   // Handle array of content blocks
   if (Array.isArray(content)) {
-    return content.map(block => {
+    return content.map((block) => {
       if (typeof block === 'string') return block;
       if ('text' in block && typeof block.text === 'string') return block.text;
       return '';
@@ -828,7 +828,7 @@ function groupLogsBySessionId(filteredLogs: LogOption[]): Map<string, LogOption[
   }
 
   // Sort logs within each group by modified date (newest first)
-  groups.forEach(logs => logs.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime()));
+  groups.forEach((logs) => logs.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime()));
   return groups;
 }
 

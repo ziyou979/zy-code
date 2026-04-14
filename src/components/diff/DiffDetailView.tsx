@@ -32,9 +32,9 @@ export function DiffDetailView({
   const {
     columns
   } = useTerminalSize();
-  let t1;
+  let config;
   if (!filePath) {
-    t1 = {
+    config = {
       firstLine: null,
       fileContent: undefined
     };
@@ -42,7 +42,7 @@ export function DiffDetailView({
     const fullPath = resolve(getCwd(), filePath);
     const content = readFileSafe(fullPath);
     const t2 = content?.split("\n")[0] ?? null;
-    t1 = {
+    config = {
       firstLine: t2,
       fileContent: content ?? undefined
     };
@@ -50,7 +50,7 @@ export function DiffDetailView({
   const {
     firstLine,
     fileContent
-  } = t1;
+  } = config;
   if (isUntracked) {
     return <Box flexDirection="column" width="100%">{<Box>{<Text bold={true}>{filePath}</Text>}{<Text dimColor={true}> (untracked)</Text>}</Box>}{<Divider padding={4} />}{<Box flexDirection="column">{<Text dimColor={true} italic={true}>New file not yet staged.</Text>}<Text dimColor={true} italic={true}>Run `git add {filePath}` to see line counts.</Text></Box>}</Box>;
   }
@@ -60,6 +60,6 @@ export function DiffDetailView({
   if (isLargeFile) {
     return <Box flexDirection="column" width="100%">{<Box><Text bold={true}>{filePath}</Text></Box>}{<Divider padding={4} />}{<Box flexDirection="column"><Text dimColor={true} italic={true}>Large file - diff exceeds 1 MB limit</Text></Box>}</Box>;
   }
-  const t6 = hunks.length === 0 ? <Text dimColor={true}>No diff content</Text> : hunks.map((hunk, index) => <StructuredDiff key={index} patch={hunk} filePath={filePath} firstLine={firstLine} fileContent={fileContent} dim={false} width={columns - 2 - 2} />);
-  return <Box flexDirection="column" width="100%">{<Box>{<Text bold={true}>{filePath}</Text>}{isTruncated && <Text dimColor={true}> (truncated)</Text>}</Box>}{<Divider padding={4} />}{<Box flexDirection="column">{t6}</Box>}{isTruncated && <Text dimColor={true} italic={true}>… diff truncated (exceeded 400 line limit)</Text>}</Box>;
+  const textElement = hunks.length === 0 ? <Text dimColor={true}>No diff content</Text> : hunks.map((hunk, index) => <StructuredDiff key={index} patch={hunk} filePath={filePath} firstLine={firstLine} fileContent={fileContent} dim={false} width={columns - 2 - 2} />);
+  return <Box flexDirection="column" width="100%">{<Box>{<Text bold={true}>{filePath}</Text>}{isTruncated && <Text dimColor={true}> (truncated)</Text>}</Box>}{<Divider padding={4} />}{<Box flexDirection="column">{textElement}</Box>}{isTruncated && <Text dimColor={true} italic={true}>… diff truncated (exceeded 400 line limit)</Text>}</Box>;
 }

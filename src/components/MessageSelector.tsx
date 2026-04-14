@@ -50,7 +50,7 @@ export function MessageSelector({
   onClose,
   preselectedMessage
 }: Props): React.ReactNode {
-  const fileHistory = useAppState(s => s.fileHistory);
+  const fileHistory = useAppState((s) => s.fileHistory);
   const [error, setError] = useState<string | undefined>(undefined);
   const isFileHistoryEnabled = fileHistoryEnabled();
 
@@ -72,7 +72,7 @@ export function MessageSelector({
   useEffect(() => {
     if (!preselectedMessage || !isFileHistoryEnabled) return;
     let cancelled = false;
-    void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid).then(stats => {
+    void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid).then((stats) => {
       if (!cancelled) setDiffStatsForRestore(stats);
     });
     return () => {
@@ -252,8 +252,8 @@ export function MessageSelector({
     logEvent('tengu_message_selector_cancelled', {});
     onClose();
   }, [onClose, messageToRestore, preselectedMessage]);
-  const moveUp = useCallback(() => setSelectedIndex(prev => Math.max(0, prev - 1)), []);
-  const moveDown = useCallback(() => setSelectedIndex(prev_0 => Math.min(messageOptions.length - 1, prev_0 + 1)), [messageOptions.length]);
+  const moveUp = useCallback(() => setSelectedIndex((prev) => Math.max(0, prev - 1)), []);
+  const moveDown = useCallback(() => setSelectedIndex((prev_0) => Math.min(messageOptions.length - 1, prev_0 + 1)), [messageOptions.length]);
   const jumpToTop = useCallback(() => setSelectedIndex(0), []);
   const jumpToBottom = useCallback(() => setSelectedIndex(messageOptions.length - 1), [messageOptions.length]);
   const handleSelectCurrent = useCallback(() => {
@@ -293,12 +293,12 @@ export function MessageSelector({
           const nextUserMessage = messageOptions.at(itemIndex + 1);
           const diffStats_0 = canRestore ? computeDiffStatsBetweenMessages(messages, userMessage.uuid, nextUserMessage?.uuid !== currentUUID ? nextUserMessage?.uuid : undefined) : undefined;
           if (diffStats_0 !== undefined) {
-            setFileHistoryMetadata(prev_1 => ({
+            setFileHistoryMetadata((prev_1) => ({
               ...prev_1,
               [itemIndex]: diffStats_0
             }));
           } else {
-            setFileHistoryMetadata(prev_2 => ({
+            setFileHistoryMetadata((prev_2) => ({
               ...prev_2,
               [itemIndex]: undefined
             }));
@@ -339,7 +339,7 @@ export function MessageSelector({
             {isRestoring && isSummarizeOption(restoringOption) ? <Box flexDirection="row" gap={1}>
                 <Spinner />
                 <Text>Summarizing…</Text>
-              </Box> : <Select isDisabled={isRestoring} options={getRestoreOptions(!!canRestoreCode_0)} defaultFocusValue={canRestoreCode_0 ? 'both' : 'conversation'} onFocus={value => setSelectedRestoreOption(value as RestoreOption)} onChange={value_0 => onSelectRestoreOption(value_0 as RestoreOption)} onCancel={() => preselectedMessage ? onClose() : setMessageToRestore(undefined)} />}
+              </Box> : <Select isDisabled={isRestoring} options={getRestoreOptions(!!canRestoreCode_0)} defaultFocusValue={canRestoreCode_0 ? 'both' : 'conversation'} onFocus={(value) => setSelectedRestoreOption(value as RestoreOption)} onChange={(value_0) => onSelectRestoreOption(value_0 as RestoreOption)} onCancel={() => preselectedMessage ? onClose() : setMessageToRestore(undefined)} />}
             {canRestoreCode_0 && <Box marginBottom={1}>
                 <Text dimColor>
                   {figures.warning} Rewinding does not affect files edited
@@ -417,9 +417,9 @@ function RestoreOptionDescription({
   diffStatsForRestore
 }) {
   const showCodeRestore = canRestoreCode && (selectedRestoreOption === "both" || selectedRestoreOption === "code");
-  const t1 = getRestoreOptionConversationText(selectedRestoreOption);
-  const t3 = !isSummarizeOption(selectedRestoreOption) && (showCodeRestore ? <RestoreCodeConfirmation diffStatsForRestore={diffStatsForRestore} /> : <Text dimColor={true}>The code will be unchanged.</Text>);
-  return <Box flexDirection="column">{<Text dimColor={true}>{t1}</Text>}{t3}</Box>;
+  const getRestoreOptionConversationTextResult = getRestoreOptionConversationText(selectedRestoreOption);
+  const restoreCodeConfirmationElement = !isSummarizeOption(selectedRestoreOption) && (showCodeRestore ? <RestoreCodeConfirmation diffStatsForRestore={diffStatsForRestore} /> : <Text dimColor={true}>The code will be unchanged.</Text>);
+  return <Box flexDirection="column">{<Text dimColor={true}>{getRestoreOptionConversationTextResult}</Text>}{restoreCodeConfirmationElement}</Box>;
 }
 function RestoreCodeConfirmation({
   diffStatsForRestore
@@ -469,24 +469,24 @@ function UserMessageOption({
   }
   const content = userMessage.message.content;
   const lastBlock = typeof content === "string" ? null : content[content.length - 1];
-  let T0;
-  let T1;
+  let TextComponent;
+  let BoxComponent;
   let t1;
   let t2;
-  let t3;
-  let t4;
-  let t5;
-  let t6;
-  t6 = Symbol.for("react.early_return_sentinel");
+  let truncateResult;
+
+
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const rawMessageText = typeof content === "string" ? content.trim() : lastBlock && isTextBlock(lastBlock) ? lastBlock.text.trim() : "(no prompt)";
   const messageText = stripDisplayTags(rawMessageText);
   if (isEmptyMessageText(messageText)) {
-    t6 = <Box flexDirection="row" width="100%"><Text italic={true} color={color} dimColor={dimColor}>((empty message))</Text></Box>;
+    earlyReturn = <Box flexDirection="row" width="100%"><Text italic={true} color={color} dimColor={dimColor}>((empty message))</Text></Box>;
   } else {
     if (messageText.includes("<bash-input>")) {
       const input = extractTag(messageText, "bash-input");
       if (input) {
-        t6 = <Box flexDirection="row" width="100%">{<Text color="bashBorder">!</Text>}<Text color={color} dimColor={dimColor}>{" "}{input}</Text></Box>;
+        earlyReturn = <Box flexDirection="row" width="100%">{<Text color="bashBorder">!</Text>}<Text color={color} dimColor={dimColor}>{" "}{input}</Text></Box>;
       }
     }
     if (messageText.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
@@ -495,35 +495,35 @@ function UserMessageOption({
       const isSkillFormat = extractTag(messageText, "skill-format") === "true";
       if (commandMessage) {
         if (isSkillFormat) {
-          t6 = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>Skill({commandMessage})</Text></Box>;
+          earlyReturn = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>Skill({commandMessage})</Text></Box>;
         } else {
-          t6 = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>/{commandMessage} {args}</Text></Box>;
+          earlyReturn = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>/{commandMessage} {args}</Text></Box>;
         }
       }
     }
-    T1 = Box;
-    t4 = "row";
-    t5 = "100%";
-    T0 = Text;
+    BoxComponent = Box;
+
+
+    TextComponent = Text;
     t1 = color;
     t2 = dimColor;
-    t3 = paddingRight ? truncate(messageText, columns - paddingRight, true) : messageText.slice(0, 500).split("\n").slice(0, 4).join("\n");
+    truncateResult = paddingRight ? truncate(messageText, columns - paddingRight, true) : messageText.slice(0, 500).split("\n").slice(0, 4).join("\n");
   }
-  if (t6 !== Symbol.for("react.early_return_sentinel")) {
-    return t6;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return <T1 flexDirection={t4} width={t5}>{<T0 color={t1} dimColor={t2}>{t3}</T0>}</T1>;
+  return <BoxComponent flexDirection={"row"} width={"100%"}>{<TextComponent color={t1} dimColor={t2}>{truncateResult}</TextComponent>}</BoxComponent>;
 }
 
 /**
  * Computes the diff stats for all the file edits in-between two messages.
  */
 function computeDiffStatsBetweenMessages(messages: Message[], fromMessageId: UUID, toMessageId: UUID | undefined): DiffStats | undefined {
-  const startIndex = messages.findIndex(msg => msg.uuid === fromMessageId);
+  const startIndex = messages.findIndex((msg) => msg.uuid === fromMessageId);
   if (startIndex === -1) {
     return undefined;
   }
-  let endIndex = toMessageId ? messages.findIndex(msg => msg.uuid === toMessageId) : messages.length;
+  let endIndex = toMessageId ? messages.findIndex((msg) => msg.uuid === toMessageId) : messages.length;
   if (endIndex === -1) {
     endIndex = messages.length;
   }
@@ -547,8 +547,8 @@ function computeDiffStatsBetweenMessages(messages: Message[], fromMessageId: UUI
         insertions += result.content.split(/\r?\n/).length;
       } else {
         for (const hunk of result.structuredPatch) {
-          const additions = count(hunk.lines, line => line.startsWith('+'));
-          const removals = count(hunk.lines, line => line.startsWith('-'));
+          const additions = count(hunk.lines, (line) => line.startsWith('+'));
+          const removals = count(hunk.lines, (line) => line.startsWith('-'));
           insertions += additions;
           deletions += removals;
         }
@@ -612,7 +612,7 @@ export function messagesAfterAreOnlySynthetic(messages: Message[], fromIndex: nu
     if (msg.type === 'assistant') {
       const content = msg.message.content;
       if (Array.isArray(content)) {
-        const hasMeaningfulContent = content.some(block => block.type === 'text' && block.text.trim() || block.type === 'tool_use');
+        const hasMeaningfulContent = content.some((block) => block.type === 'text' && block.text.trim() || block.type === 'tool_use');
         if (hasMeaningfulContent) return false;
       }
       continue;

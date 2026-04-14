@@ -21,7 +21,7 @@ export function It2SetupPrompt({
   const [error, setError] = useState(null);
   const exitState = useExitOnCtrlCDWithKeybindings();
   useEffect(() => {
-    detectPythonPackageManager().then(pm => {
+    detectPythonPackageManager().then((pm) => {
       setPackageManager(pm);
     });
   }, []);
@@ -35,7 +35,7 @@ export function It2SetupPrompt({
   useInput((_input, key) => {
     if (step === "api-instructions" && key.return) {
       setStep("verifying");
-      verifyIt2Setup().then(result => {
+      verifyIt2Setup().then((result) => {
         if (result.success) {
           markIt2SetupComplete();
           setStep("success");
@@ -66,13 +66,13 @@ export function It2SetupPrompt({
     setPreferTmuxOverIterm2(true);
     onDone("use-tmux");
   };
-  let T0;
-  let T1;
-  let t10;
-  let t11;
-  let t13;
-  let t14;
-  let t9;
+  let BoxComponent;
+  let PaneComponent;
+
+
+  let renderContentResult;
+
+
   const renderContent = () => {
     switch (step) {
       case "initial":
@@ -127,7 +127,7 @@ export function It2SetupPrompt({
       value: "cancel",
       description: "Skip teammate spawning for now"
     });
-    return <Box flexDirection="column" gap={1}><Text>To use native iTerm2 split panes for teammates, you need the{" "}<Text bold={true}>it2</Text> CLI tool.</Text><Text dimColor={true}>This enables teammates to appear as split panes within your current window.</Text><Box marginTop={1}><Select options={options} onChange={value => {
+    return <Box flexDirection="column" gap={1}><Text>To use native iTerm2 split panes for teammates, you need the{" "}<Text bold={true}>it2</Text> CLI tool.</Text><Text dimColor={true}>This enables teammates to appear as split panes within your current window.</Text><Box marginTop={1}><Select options={options} onChange={(value) => {
           switch (value) {
             case "install":
               {
@@ -167,7 +167,7 @@ export function It2SetupPrompt({
       value: "cancel",
       description: "Skip teammate spawning for now"
     });
-    return <Box flexDirection="column" gap={1}><Text color="error">Installation failed</Text>{error && <Text dimColor={true}>{error}</Text>}<Text dimColor={true}>You can try installing manually:{" "}{packageManager === "uvx" ? "uv tool install it2" : packageManager === "pipx" ? "pipx install it2" : "pip install --user it2"}</Text><Box marginTop={1}><Select options={options_0} onChange={value_0 => {
+    return <Box flexDirection="column" gap={1}><Text color="error">Installation failed</Text>{error && <Text dimColor={true}>{error}</Text>}<Text dimColor={true}>You can try installing manually:{" "}{packageManager === "uvx" ? "uv tool install it2" : packageManager === "pipx" ? "pipx install it2" : "pip install --user it2"}</Text><Box marginTop={1}><Select options={options_0} onChange={(value_0) => {
           switch (value_0) {
             case "retry":
               {
@@ -214,12 +214,12 @@ export function It2SetupPrompt({
       value: "cancel",
       description: "Skip teammate spawning for now"
     });
-    return <Box flexDirection="column" gap={1}><Text color="error">Verification failed</Text>{error && <Text dimColor={true}>{error}</Text>}<Text>Make sure:</Text><Box flexDirection="column" paddingLeft={2}><Text>· Python API is enabled in iTerm2 preferences</Text><Text>· You may need to restart iTerm2 after enabling</Text></Box><Box marginTop={1}><Select options={options_1} onChange={value_1 => {
+    return <Box flexDirection="column" gap={1}><Text color="error">Verification failed</Text>{error && <Text dimColor={true}>{error}</Text>}<Text>Make sure:</Text><Box flexDirection="column" paddingLeft={2}><Text>· Python API is enabled in iTerm2 preferences</Text><Text>· You may need to restart iTerm2 after enabling</Text></Box><Box marginTop={1}><Select options={options_1} onChange={(value_1) => {
           switch (value_1) {
             case "retry":
               {
                 setStep("verifying");
-                verifyIt2Setup().then(result_1 => {
+                verifyIt2Setup().then((result_1) => {
                   if (result_1.success) {
                     markIt2SetupComplete();
                     setStep("success");
@@ -243,13 +243,13 @@ export function It2SetupPrompt({
           }
         }} onCancel={() => onDone("cancelled")} /></Box></Box>;
   }
-  T1 = Pane;
-  t14 = "permission";
-  T0 = Box;
-  t9 = "column";
-  t10 = 1;
-  t11 = 1;
-  const t12 = <Text bold={true} color="permission">iTerm2 Split Pane Setup</Text>;
-  t13 = renderContent();
-  return <T1 color={t14}>{<T0 flexDirection={t9} gap={t10} paddingBottom={t11}>{t12}{t13}{step !== "installing" && step !== "verifying" && step !== "success" && <Text dimColor={true} italic={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Esc to cancel</>}</Text>}</T0>}</T1>;
+  PaneComponent = Pane;
+
+  BoxComponent = Box;
+
+
+
+  const textElement = <Text bold={true} color="permission">iTerm2 Split Pane Setup</Text>;
+  renderContentResult = renderContent();
+  return <PaneComponent color={"permission"}>{<BoxComponent flexDirection={"column"} gap={1} paddingBottom={1}>{textElement}{renderContentResult}{step !== "installing" && step !== "verifying" && step !== "success" && <Text dimColor={true} italic={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Esc to cancel</>}</Text>}</BoxComponent>}</PaneComponent>;
 }

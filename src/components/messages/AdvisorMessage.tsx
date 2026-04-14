@@ -27,9 +27,9 @@ export function AdvisorMessage({
 }: Props) {
   if (block.type === "server_tool_use") {
     const input = block.input && Object.keys(block.input).length > 0 ? jsonStringify(block.input) : null;
-    const t3 = resolvedToolUseIDs.has(block.id);
-    const t5 = erroredToolUseIDs.has(block.id);
-    return <Box marginTop={addMargin ? 1 : 0} paddingRight={2} flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate} isUnresolved={!t3} isError={t5} />}{<Text bold={true}>Advising</Text>}{advisorModel ? <Text dimColor={true}> using {renderModelName(advisorModel)}</Text> : null}{input ? <Text dimColor={true}> · {input}</Text> : null}</Box>;
+    const hasResult = resolvedToolUseIDs.has(block.id);
+    const hasResult2 = erroredToolUseIDs.has(block.id);
+    return <Box marginTop={addMargin ? 1 : 0} paddingRight={2} flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate} isUnresolved={!hasResult} isError={hasResult2} />}{<Text bold={true}>Advising</Text>}{advisorModel ? <Text dimColor={true}> using {renderModelName(advisorModel)}</Text> : null}{input ? <Text dimColor={true}> · {input}</Text> : null}</Box>;
   }
   let body;
   switch (block.content.type) {

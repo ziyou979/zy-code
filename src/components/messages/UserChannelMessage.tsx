@@ -24,41 +24,41 @@ function displayServerName(name: string): string {
 const TRUNCATE_AT = 60;
 export function UserChannelMessage({
   addMargin,
-  param: t1
+  param
 }) {
   const {
     text
-  } = t1;
-  let T0;
-  let T1;
-  let T2;
-  let t2;
-  let t3;
-  let t5;
-  let t6;
-  let t7;
+  } = param;
+  let TextComponent;
+  let TextComponent2;
+  let BoxComponent;
+
+  let displayServerNameResult;
+
+  let conditionalValue;
+  let earlyReturn;
   let truncated;
   let user;
-  t7 = Symbol.for("react.early_return_sentinel");
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const m = CHANNEL_RE.exec(text);
   if (!m) {
-    t7 = null;
+    earlyReturn = null;
   } else {
     const [, source, attrs, content] = m;
     user = USER_ATTR_RE.exec(attrs ?? "")?.[1];
     const body = (content ?? "").trim().replace(/\s+/g, " ");
     truncated = truncateToWidth(body, TRUNCATE_AT);
-    T2 = Box;
-    t6 = addMargin ? 1 : 0;
-    T1 = Text;
-    const t4 = <Text color="suggestion">{CHANNEL_ARROW}</Text>;
-    t5 = " ";
-    T0 = Text;
-    t2 = true;
-    t3 = displayServerName(source ?? "");
+    BoxComponent = Box;
+    conditionalValue = addMargin ? 1 : 0;
+    TextComponent2 = Text;
+    const textElement = <Text color="suggestion">{CHANNEL_ARROW}</Text>;
+
+    TextComponent = Text;
+
+    displayServerNameResult = displayServerName(source ?? "");
   }
-  if (t7 !== Symbol.for("react.early_return_sentinel")) {
-    return t7;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return <T2 marginTop={t6}>{<T1>{t4}{t5}{<T0 dimColor={t2}>{t3}{user ? ` \u00b7 ${user}` : ""}:</T0>}{" "}{truncated}</T1>}</T2>;
+  return <BoxComponent marginTop={conditionalValue}>{<TextComponent2>{textElement}{" "}{<TextComponent dimColor={true}>{displayServerNameResult}{user ? ` \u00b7 ${user}` : ""}:</TextComponent>}{" "}{truncated}</TextComponent2>}</BoxComponent>;
 }

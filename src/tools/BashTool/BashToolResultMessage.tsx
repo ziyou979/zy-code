@@ -63,7 +63,7 @@ function extractCwdResetWarning(stderr: string): {
   };
 }
 export default function BashToolResultMessage({
-  content: t1,
+  content,
   verbose,
   timeoutMs
 }) {
@@ -74,14 +74,14 @@ export default function BashToolResultMessage({
     returnCodeInterpretation,
     noOutputExpected,
     backgroundTaskId
-  } = t1;
+  } = content;
   const stdout = t2 === undefined ? "" : t2;
   const stdErrWithViolations = t3 === undefined ? "" : t3;
-  let T0;
-  let t4;
-  let t6;
-  let t7;
-  t7 = Symbol.for("react.early_return_sentinel");
+  let BoxComponent;
+
+  let outputLineElement;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const {
     cleanedStderr: stderrWithoutViolations
   } = extractSandboxViolations(stdErrWithViolations);
@@ -91,18 +91,18 @@ export default function BashToolResultMessage({
     cleanedStderr: stderr,
     cwdResetWarning
   } = extractCwdResetWarning(stderrWithoutViolations));
-  let t5;
+  let outputLineElement2;
   if (isImage) {
-    t7 = <MessageResponse height={1}><Text dimColor={true}>[Image data detected and sent to ZY]</Text></MessageResponse>;
+    earlyReturn = <MessageResponse height={1}><Text dimColor={true}>[Image data detected and sent to ZY]</Text></MessageResponse>;
   } else {
-    T0 = Box;
-    t4 = "column";
-    t5 = stdout !== "" ? <OutputLine content={stdout} verbose={verbose} /> : null;
-    t6 = stderr.trim() !== "" ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null;
+    BoxComponent = Box;
+
+    outputLineElement2 = stdout !== "" ? <OutputLine content={stdout} verbose={verbose} /> : null;
+    outputLineElement = stderr.trim() !== "" ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null;
   }
-  if (t7 !== Symbol.for("react.early_return_sentinel")) {
-    return t7;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  const t9 = stdout === "" && stderr.trim() === "" && !cwdResetWarning ? <MessageResponse height={1}><Text dimColor={true}>{backgroundTaskId ? <>Running in the background{" "}<KeyboardShortcutHint shortcut={"\u2193"} action="manage" parens={true} /></> : returnCodeInterpretation || (noOutputExpected ? "Done" : "(No output)")}</Text></MessageResponse> : null;
-  return <T0 flexDirection={t4}>{t5}{t6}{cwdResetWarning ? <MessageResponse><Text dimColor={true}>{cwdResetWarning}</Text></MessageResponse> : null}{t9}{timeoutMs && <MessageResponse><ShellTimeDisplay timeoutMs={timeoutMs} /></MessageResponse>}</T0>;
+  const messageResponseElement = stdout === "" && stderr.trim() === "" && !cwdResetWarning ? <MessageResponse height={1}><Text dimColor={true}>{backgroundTaskId ? <>Running in the background{" "}<KeyboardShortcutHint shortcut={"\u2193"} action="manage" parens={true} /></> : returnCodeInterpretation || (noOutputExpected ? "Done" : "(No output)")}</Text></MessageResponse> : null;
+  return <BoxComponent flexDirection={"column"}>{outputLineElement2}{outputLineElement}{cwdResetWarning ? <MessageResponse><Text dimColor={true}>{cwdResetWarning}</Text></MessageResponse> : null}{messageResponseElement}{timeoutMs && <MessageResponse><ShellTimeDisplay timeoutMs={timeoutMs} /></MessageResponse>}</BoxComponent>;
 }

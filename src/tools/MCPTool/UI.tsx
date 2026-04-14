@@ -39,9 +39,9 @@ const MAX_JSON_PARSE_CHARS = 200_000;
 const UNWRAP_MIN_STRING_LEN = 200;
 export function renderToolUseMessage(input: z.infer<ReturnType<typeof inputSchema>>, {
   verbose
-}: {
-  verbose: boolean;
-}): React.ReactNode {
+
+
+}: {verbose: boolean;}): React.ReactNode {
   if (Object.keys(input).length === 0) {
     return '';
   }
@@ -90,10 +90,10 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
 export function renderToolResultMessage(output: string | MCPToolResult, _progressMessagesForMessage: ProgressMessage<ToolProgressData>[], {
   verbose,
   input
-}: {
-  verbose: boolean;
-  input?: unknown;
-}): React.ReactNode {
+
+
+
+}: {verbose: boolean;input?: unknown;}): React.ReactNode {
   const mcpOutput = output as MCPToolResult;
   if (!verbose) {
     const slackSend = trySlackSendCompact(mcpOutput, input);
@@ -159,31 +159,31 @@ function MCPTextOutput({
   content,
   verbose
 }) {
-  let t1 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn = Symbol.for("react.early_return_sentinel");
   const unwrapped = tryUnwrapTextPayload(content);
   if (unwrapped !== null) {
-    t1 = <MessageResponse><Box flexDirection="column">{unwrapped.extras.length > 0 && <Text dimColor={true}>{unwrapped.extras.map(t0 => {
+    earlyReturn = <MessageResponse><Box flexDirection="column">{unwrapped.extras.length > 0 && <Text dimColor={true}>{unwrapped.extras.map((t0) => {
             const [k, v] = t0;
             return `${k}: ${v}`;
           }).join(" \xB7 ")}</Text>}{<OutputLine content={unwrapped.body} verbose={verbose} linkifyUrls={true} />}</Box></MessageResponse>;
   }
-  if (t1 !== Symbol.for("react.early_return_sentinel")) {
-    return t1;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  let t2 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn2 = Symbol.for("react.early_return_sentinel");
   const flat = tryFlattenJson(content);
   if (flat !== null) {
-    const maxKeyWidth = Math.max(...flat.map(t0 => {
+    const maxKeyWidth = Math.max(...flat.map((t0) => {
       const [k_0] = t0;
       return stringWidth(k_0);
     }));
-    t2 = <MessageResponse>{<Box flexDirection="column">{flat.map((t4, i) => {
+    earlyReturn2 = <MessageResponse>{<Box flexDirection="column">{flat.map((t4, i) => {
           const [key, value] = t4;
           return <Text key={i}><Text dimColor={true}>{key.padEnd(maxKeyWidth)}: </Text><Ansi>{linkifyUrlsInText(value)}</Ansi></Text>;
         })}</Box>}</MessageResponse>;
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn2 !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn2;
   }
   return <OutputLine content={content} verbose={verbose} linkifyUrls={true} />;
 }
@@ -196,10 +196,10 @@ function MCPTextOutput({
 function parseJsonEntries(content: string, {
   maxChars,
   maxKeys
-}: {
-  maxChars: number;
-  maxKeys: number;
-}): [string, unknown][] | null {
+
+
+
+}: {maxChars: number;maxKeys: number;}): [string, unknown][] | null {
   const trimmed = content.trim();
   if (trimmed.length === 0 || trimmed.length > maxChars || trimmed[0] !== '{') {
     return null;
@@ -305,7 +305,7 @@ export function trySlackSendCompact(output: string | MCPToolResult, input: unkno
 } | null {
   let text: unknown = output;
   if (Array.isArray(output)) {
-    const block = output.find(b => b.type === 'text');
+    const block = output.find((b) => b.type === 'text');
     text = block && 'text' in block ? block.text : undefined;
   }
   if (typeof text !== 'string' || !text.includes('"message_link"')) {

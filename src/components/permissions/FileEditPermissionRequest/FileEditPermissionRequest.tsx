@@ -24,21 +24,21 @@ const ideDiffSupport: IDEDiffSupport<FileEditInput> = {
   }
 };
 export function FileEditPermissionRequest(props) {
-  const parseInput = input => FileEditTool.inputSchema.parse(input);
-  let T0;
-  let T1;
-  let T2;
-  let t0;
-  let t1;
-  let t10;
-  let t2;
-  let t3;
-  let t4;
-  let t5;
-  let t6;
-  let t7;
-  let t8;
-  let t9;
+  const parseInput = (input) => FileEditTool.inputSchema.parse(input);
+  let TextComponent;
+  let TextComponent2;
+  let FilePermissionDialogComponent;
+
+  let basenameResult;
+  let relativeResult;
+
+
+  let toolUseConfirm2;
+  let toolUseContext2;
+  let onDone2;
+  let onReject2;
+  let workerBadge2;
+
   const parsed = parseInput(props.toolUseConfirm.input);
   let file_path: string;
   let old_string: string;
@@ -50,21 +50,21 @@ export function FileEditPermissionRequest(props) {
     new_string,
     replace_all
   } = parsed);
-  T2 = FilePermissionDialog;
-  t4 = props.toolUseConfirm;
-  t5 = props.toolUseContext;
-  t6 = props.onDone;
-  t7 = props.onReject;
-  t8 = props.workerBadge;
-  t9 = "Edit file";
-  t10 = relative(getCwd(), file_path);
-  T1 = Text;
-  t2 = "Do you want to make this edit to";
-  t3 = " ";
-  T0 = Text;
-  t0 = true;
-  t1 = basename(file_path);
-  return <T2 toolUseConfirm={t4} toolUseContext={t5} onDone={t6} onReject={t7} workerBadge={t8} title={t9} subtitle={t10} question={<T1>{t2}{t3}{<T0 bold={t0}>{t1}</T0>}?</T1>} content={<FileEditToolDiff file_path={file_path} edits={[{
+  FilePermissionDialogComponent = FilePermissionDialog;
+  toolUseConfirm2 = props.toolUseConfirm;
+  toolUseContext2 = props.toolUseContext;
+  onDone2 = props.onDone;
+  onReject2 = props.onReject;
+  workerBadge2 = props.workerBadge;
+
+  relativeResult = relative(getCwd(), file_path);
+  TextComponent2 = Text;
+
+
+  TextComponent = Text;
+
+  basenameResult = basename(file_path);
+  return <FilePermissionDialogComponent toolUseConfirm={toolUseConfirm2} toolUseContext={toolUseContext2} onDone={onDone2} onReject={onReject2} workerBadge={workerBadge2} title={"Edit file"} subtitle={relativeResult} question={<TextComponent2>{"Do you want to make this edit to"}{" "}{<TextComponent bold={true}>{basenameResult}</TextComponent>}?</TextComponent2>} content={<FileEditToolDiff file_path={file_path} edits={[{
     old_string,
     new_string,
     replace_all: replace_all || false

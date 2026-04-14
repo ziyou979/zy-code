@@ -29,8 +29,8 @@ export function GlimmerMessage({
   stalledIntensity = 0
 }: Props) {
   const [themeName] = useTheme();
-  let t2;
-  t2 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const theme = getTheme(themeName);
   const segs = [];
   for (const {
@@ -41,7 +41,7 @@ export function GlimmerMessage({
       width: stringWidth(segment)
     });
   }
-  const t3 = stringWidth(message);
+  const stringWidthResult = stringWidth(message);
   let segments: typeof segs;
   let messageWidth: number;
   ({
@@ -49,20 +49,20 @@ export function GlimmerMessage({
     messageWidth
   } = {
     segments: segs,
-    messageWidth: t3
+    messageWidth: stringWidthResult
   });
   if (!message) {
-    t2 = null;
+    earlyReturn = null;
   } else if (stalledIntensity > 0) {
     const baseColorStr = theme[messageColor];
     const baseRGB = baseColorStr ? parseRGB(baseColorStr) : null;
     if (baseRGB) {
       const interpolated = interpolateColor(baseRGB, ERROR_RED, stalledIntensity);
       const color = toRGBColor(interpolated);
-      t2 = <><Text color={color}>{message}</Text>{<Text color={color}> </Text>}</>;
+      earlyReturn = <><Text color={color}>{message}</Text>{<Text color={color}> </Text>}</>;
     } else {
       const color_0 = stalledIntensity > 0.5 ? "error" : messageColor;
-      t2 = <>{<Text color={color_0}>{message}</Text>}{<Text color={color_0}> </Text>}</>;
+      earlyReturn = <>{<Text color={color_0}>{message}</Text>}{<Text color={color_0}> </Text>}</>;
     }
   } else if (mode === "tool-use") {
     const baseColorStr_0 = theme[messageColor];
@@ -71,14 +71,14 @@ export function GlimmerMessage({
     const shimmerRGB = shimmerColorStr ? parseRGB(shimmerColorStr) : null;
     if (baseRGB_0 && shimmerRGB) {
       const interpolated_0 = interpolateColor(baseRGB_0, shimmerRGB, flashOpacity);
-      t2 = <>{<Text color={toRGBColor(interpolated_0)}>{message}</Text>}{<Text color={messageColor}> </Text>}</>;
+      earlyReturn = <>{<Text color={toRGBColor(interpolated_0)}>{message}</Text>}{<Text color={messageColor}> </Text>}</>;
     } else {
       const color_1 = flashOpacity > 0.5 ? shimmerColor : messageColor;
-      t2 = <>{<Text color={color_1}>{message}</Text>}{<Text color={messageColor}> </Text>}</>;
+      earlyReturn = <>{<Text color={color_1}>{message}</Text>}{<Text color={messageColor}> </Text>}</>;
     }
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
   const shimmerStart = glimmerIndex - 1;
   const shimmerEnd = glimmerIndex + 1;

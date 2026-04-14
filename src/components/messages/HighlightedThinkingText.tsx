@@ -24,11 +24,11 @@ export function HighlightedThinkingText({
     return <Box flexDirection="column" paddingLeft={2}>{<Box flexDirection="row">{<Text color={isQueued ? "subtle" : "briefLabelYou"}>You</Text>}{ts ? <Text dimColor={true}> {ts}</Text> : null}</Box>}{<Text color={isQueued ? "subtle" : "text"}>{text}</Text>}</Box>;
   }
   let parts;
-  let t1;
-  t1 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const triggers = isUltrathinkEnabled() ? findThinkingTriggerPositions(text) : [];
   if (triggers.length === 0) {
-    t1 = <Text>{<Text color={pointerColor}>{figures.pointer} </Text>}{<Text color="text">{text}</Text>}</Text>;
+    earlyReturn = <Text>{<Text color={pointerColor}>{figures.pointer} </Text>}{<Text color="text">{text}</Text>}</Text>;
   } else {
     parts = [];
     let cursor = 0;
@@ -45,8 +45,8 @@ export function HighlightedThinkingText({
       parts.push(<Text key={`plain-${cursor}`} color="text">{text.slice(cursor)}</Text>);
     }
   }
-  if (t1 !== Symbol.for("react.early_return_sentinel")) {
-    return t1;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
   return <Text>{<Text color={pointerColor}>{figures.pointer} </Text>}{parts}</Text>;
 }

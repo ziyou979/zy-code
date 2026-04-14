@@ -10,18 +10,18 @@ export function usePluginInstallationStatus() {
   const {
     addNotification
   } = useNotifications();
-  const installationStatus = useAppState(s => s.plugins.installationStatus);
-  let t0;
+  const installationStatus = useAppState((s) => s.plugins.installationStatus);
+  let config;
   if (!installationStatus) {
-    t0 = {
+    config = {
       totalFailed: 0,
       failedMarketplacesCount: 0,
       failedPluginsCount: 0
     };
   } else {
-    const failedMarketplaces = installationStatus.marketplaces.filter(m => m.status === "failed");
-    const failedPlugins = installationStatus.plugins.filter(p => p.status === "failed");
-    t0 = {
+    const failedMarketplaces = installationStatus.marketplaces.filter((m) => m.status === "failed");
+    const failedPlugins = installationStatus.plugins.filter((p) => p.status === "failed");
+    config = {
       totalFailed: failedMarketplaces.length + failedPlugins.length,
       failedMarketplacesCount: failedMarketplaces.length,
       failedPluginsCount: failedPlugins.length
@@ -31,7 +31,7 @@ export function usePluginInstallationStatus() {
     totalFailed,
     failedMarketplacesCount,
     failedPluginsCount
-  } = t0;
+  } = config;
   useEffect(() => {
     if (getIsRemoteMode()) {
       return;

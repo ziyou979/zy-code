@@ -34,7 +34,7 @@ const ideDiffSupport: IDEDiffSupport<FileWriteToolInput> = {
   }
 };
 export function FileWritePermissionRequest(props) {
-  const parseInput = input => FileWriteTool.inputSchema.parse(input);
+  const parseInput = (input) => FileWriteTool.inputSchema.parse(input);
   const parsed = parseInput(props.toolUseConfirm.input);
   const {
     file_path,
@@ -50,18 +50,18 @@ export function FileWritePermissionRequest(props) {
     if (!isENOENT(e)) {
       throw e;
     }
-    const t3 = {
+    const config = {
       fileExists: false,
       oldContent: ""
     };
-    t1 = t3;
+    t1 = config;
   }
   const {
     fileExists,
     oldContent
   } = t1;
   const actionText = fileExists ? "overwrite" : "create";
-  const t8 = relative(getCwd(), file_path);
-  const t9 = basename(file_path);
-  return <FilePermissionDialog toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={fileExists ? "Overwrite file" : "Create file"} subtitle={t8} question={<Text>Do you want to {actionText} {<Text bold={true}>{t9}</Text>}?</Text>} content={<FileWriteToolDiff file_path={file_path} content={content} fileExists={fileExists} oldContent={oldContent} />} path={file_path} completionType="write_file_single" parseInput={parseInput} ideDiffSupport={ideDiffSupport} />;
+  const relativeResult = relative(getCwd(), file_path);
+  const basenameResult = basename(file_path);
+  return <FilePermissionDialog toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={fileExists ? "Overwrite file" : "Create file"} subtitle={relativeResult} question={<Text>Do you want to {actionText} {<Text bold={true}>{basenameResult}</Text>}?</Text>} content={<FileWriteToolDiff file_path={file_path} content={content} fileExists={fileExists} oldContent={oldContent} />} path={file_path} completionType="write_file_single" parseInput={parseInput} ideDiffSupport={ideDiffSupport} />;
 }

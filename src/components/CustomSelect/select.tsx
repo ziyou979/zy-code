@@ -214,7 +214,7 @@ export function Select({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [inputValues, setInputValues] = useState(() => {
     const initialMap = new Map();
-    options.forEach(option => {
+    options.forEach((option) => {
       if (option.type === "input" && option.initialValue) {
         initialMap.set(option.value, option.initialValue);
       }
@@ -230,7 +230,7 @@ export function Select({
         const currentValue = inputValues.get(option_0.value) ?? "";
         const newInitial = option_0.initialValue;
         if (newInitial !== lastInitial && currentValue === lastInitial) {
-          setInputValues(prev => {
+          setInputValues((prev) => {
             const next = new Map(prev);
             next.set(option_0.value, newInitial);
             return next;
@@ -261,8 +261,8 @@ export function Select({
     inputValues,
     imagesSelected,
     onEnterImageSelection: () => {
-      if (pastedContents && Object.values(pastedContents).some(c_0 => c_0.type === "image")) {
-        const imageCount = count(Object.values(pastedContents), c => c.type === "image");
+      if (pastedContents && Object.values(pastedContents).some((c_0) => c_0.type === "image")) {
+        const imageCount = count(Object.values(pastedContents), (c) => c.type === "image");
         setImagesSelected(true);
         setSelectedImageIndex(imageCount - 1);
         return true;
@@ -270,11 +270,11 @@ export function Select({
       return false;
     }
   });
-  let T0;
-  let t15;
-  let t16;
-  let t17;
-  t17 = Symbol.for("react.early_return_sentinel");
+  let BoxComponent;
+  let containerResult;
+  let mappedItems;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const styles = {
     container: () => ({
       flexDirection: "column" as const
@@ -284,9 +284,9 @@ export function Select({
     })
   };
   if (layout === "expanded") {
-    const t18 = state.options.length.toString();
-    const maxIndexWidth = t18.length;
-    t17 = <Box {...styles.container()}>{state.visibleOptions.map((option_1, index) => {
+    const toStringResult = state.options.length.toString();
+    const maxIndexWidth = toStringResult.length;
+    earlyReturn = <Box {...styles.container()}>{state.visibleOptions.map((option_1, index) => {
         const isFirstVisibleOption = option_1.index === state.visibleFromIndex;
         const isLastVisibleOption = option_1.index === state.visibleToIndex - 1;
         const areMoreOptionsBelow = state.visibleToIndex < options.length;
@@ -296,14 +296,14 @@ export function Select({
         const isSelected = state.value === option_1.value;
         if (option_1.type === "input") {
           const inputValue = inputValues.has(option_1.value) ? inputValues.get(option_1.value) : option_1.initialValue || "";
-          return <SelectInputOption key={String(option_1.value)} option={option_1} isFocused={isFocused} isSelected={isSelected} shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption} shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption} maxIndexWidth={maxIndexWidth} index={i} inputValue={inputValue} onInputChange={value => {
-            setInputValues(prev_0 => {
+          return <SelectInputOption key={String(option_1.value)} option={option_1} isFocused={isFocused} isSelected={isSelected} shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption} shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption} maxIndexWidth={maxIndexWidth} index={i} inputValue={inputValue} onInputChange={(value) => {
+            setInputValues((prev_0) => {
               const next_0 = new Map(prev_0);
               next_0.set(option_1.value, value);
               return next_0;
             });
-          }} onSubmit={value_0 => {
-            const hasImageAttachments = pastedContents && Object.values(pastedContents).some(c_1 => c_1.type === "image");
+          }} onSubmit={(value_0) => {
+            const hasImageAttachments = pastedContents && Object.values(pastedContents).some((c_1) => c_1.type === "image");
             if (value_0.trim() || hasImageAttachments || option_1.allowEmptySubmitToCancel) {
               onChange?.(option_1.value);
             } else {
@@ -323,7 +323,7 @@ export function Select({
       })}</Box>;
   } else if (layout === "compact-vertical") {
     const maxIndexWidth_0 = hideIndexes ? 0 : state.options.length.toString().length;
-    t17 = <Box {...styles.container()}>{state.visibleOptions.map((option_2, index_1) => {
+    earlyReturn = <Box {...styles.container()}>{state.visibleOptions.map((option_2, index_1) => {
         const isFirstVisibleOption_0 = option_2.index === state.visibleFromIndex;
         const isLastVisibleOption_0 = option_2.index === state.visibleToIndex - 1;
         const areMoreOptionsBelow_0 = state.visibleToIndex < options.length;
@@ -333,14 +333,14 @@ export function Select({
         const isSelected_0 = state.value === option_2.value;
         if (option_2.type === "input") {
           const inputValue_0 = inputValues.has(option_2.value) ? inputValues.get(option_2.value) : option_2.initialValue || "";
-          return <SelectInputOption key={String(option_2.value)} option={option_2} isFocused={isFocused_0} isSelected={isSelected_0} shouldShowDownArrow={areMoreOptionsBelow_0 && isLastVisibleOption_0} shouldShowUpArrow={areMoreOptionsAbove_0 && isFirstVisibleOption_0} maxIndexWidth={maxIndexWidth_0} index={i_0} inputValue={inputValue_0} onInputChange={value_1 => {
-            setInputValues(prev_1 => {
+          return <SelectInputOption key={String(option_2.value)} option={option_2} isFocused={isFocused_0} isSelected={isSelected_0} shouldShowDownArrow={areMoreOptionsBelow_0 && isLastVisibleOption_0} shouldShowUpArrow={areMoreOptionsAbove_0 && isFirstVisibleOption_0} maxIndexWidth={maxIndexWidth_0} index={i_0} inputValue={inputValue_0} onInputChange={(value_1) => {
+            setInputValues((prev_1) => {
               const next_1 = new Map(prev_1);
               next_1.set(option_2.value, value_1);
               return next_1;
             });
-          }} onSubmit={value_2 => {
-            const hasImageAttachments_0 = pastedContents && Object.values(pastedContents).some(c_2 => c_2.type === "image");
+          }} onSubmit={(value_2) => {
+            const hasImageAttachments_0 = pastedContents && Object.values(pastedContents).some((c_2) => c_2.type === "image");
             if (value_2.trim() || hasImageAttachments_0 || option_2.allowEmptySubmitToCancel) {
               onChange?.(option_2.value);
             } else {
@@ -359,8 +359,8 @@ export function Select({
       })}</Box>;
   } else {
     const maxIndexWidth_1 = hideIndexes ? 0 : state.options.length.toString().length;
-    const hasInputOptions = state.visibleOptions.some(opt => opt.type === "input");
-    const hasDescriptions = !inlineDescriptions && !hasInputOptions && state.visibleOptions.some(opt_0 => opt_0.description);
+    const hasInputOptions = state.visibleOptions.some((opt) => opt.type === "input");
+    const hasDescriptions = !inlineDescriptions && !hasInputOptions && state.visibleOptions.some((opt_0) => opt_0.description);
     const optionData = state.visibleOptions.map((option_3, index_3) => {
       const isFirstVisibleOption_1 = option_3.index === state.visibleFromIndex;
       const isLastVisibleOption_1 = option_3.index === state.visibleToIndex - 1;
@@ -388,7 +388,7 @@ export function Select({
       };
     });
     if (hasDescriptions) {
-      const maxLabelWidth = Math.max(...optionData.map(data => {
+      const maxLabelWidth = Math.max(...optionData.map((data) => {
         if (data.option.type === "input") {
           return 0;
         }
@@ -397,7 +397,7 @@ export function Select({
         const checkmarkWidth = data.isSelected ? 2 : 0;
         return 2 + indexWidth + stringWidth(labelText_2) + checkmarkWidth;
       }));
-      t17 = <Box {...styles.container()}>{optionData.map(data_0 => {
+      earlyReturn = <Box {...styles.container()}>{optionData.map((data_0) => {
           if (data_0.option.type === "input") {
             return null;
           }
@@ -409,9 +409,9 @@ export function Select({
           return <TwoColumnRow key={String(data_0.option.value)} isFocused={data_0.isFocused}><Box flexDirection="row" flexShrink={0}>{data_0.isFocused ? <Text color="suggestion">{figures.pointer}</Text> : data_0.shouldShowDownArrow ? <Text dimColor={true}>{figures.arrowDown}</Text> : data_0.shouldShowUpArrow ? <Text dimColor={true}>{figures.arrowUp}</Text> : <Text> </Text>}<Text> </Text><Text dimColor={data_0.isOptionDisabled} color={data_0.isOptionDisabled ? undefined : data_0.isSelected ? "success" : data_0.isFocused ? "suggestion" : undefined}>{!hideIndexes && <Text dimColor={true}>{`${data_0.index}.`.padEnd(maxIndexWidth_1 + 2)}</Text>}{data_0.label}</Text>{data_0.isSelected && <Text color="success"> {figures.tick}</Text>}{padding > 0 && <Text>{" ".repeat(padding)}</Text>}</Box><Box flexGrow={1} marginLeft={2}><Text wrap="wrap" dimColor={data_0.isOptionDisabled || data_0.option.dimDescription !== false} color={data_0.isOptionDisabled ? undefined : data_0.isSelected ? "success" : data_0.isFocused ? "suggestion" : undefined}><Ansi>{data_0.option.description || " "}</Ansi></Text></Box></TwoColumnRow>;
         })}</Box>;
     } else {
-      T0 = Box;
-      t15 = styles.container();
-      t16 = state.visibleOptions.map((option_4, index_4) => {
+      BoxComponent = Box;
+      containerResult = styles.container();
+      mappedItems = state.visibleOptions.map((option_4, index_4) => {
         if (option_4.type === "input") {
           const inputValue_1 = inputValues.has(option_4.value) ? inputValues.get(option_4.value) : option_4.initialValue || "";
           const isFirstVisibleOption_2 = option_4.index === state.visibleFromIndex;
@@ -421,14 +421,14 @@ export function Select({
           const i_2 = state.visibleFromIndex + index_4 + 1;
           const isFocused_2 = !isDisabled && state.focusedValue === option_4.value;
           const isSelected_2 = state.value === option_4.value;
-          return <SelectInputOption key={String(option_4.value)} option={option_4} isFocused={isFocused_2} isSelected={isSelected_2} shouldShowDownArrow={areMoreOptionsBelow_2 && isLastVisibleOption_2} shouldShowUpArrow={areMoreOptionsAbove_2 && isFirstVisibleOption_2} maxIndexWidth={maxIndexWidth_1} index={i_2} inputValue={inputValue_1} onInputChange={value_3 => {
-            setInputValues(prev_2 => {
+          return <SelectInputOption key={String(option_4.value)} option={option_4} isFocused={isFocused_2} isSelected={isSelected_2} shouldShowDownArrow={areMoreOptionsBelow_2 && isLastVisibleOption_2} shouldShowUpArrow={areMoreOptionsAbove_2 && isFirstVisibleOption_2} maxIndexWidth={maxIndexWidth_1} index={i_2} inputValue={inputValue_1} onInputChange={(value_3) => {
+            setInputValues((prev_2) => {
               const next_2 = new Map(prev_2);
               next_2.set(option_4.value, value_3);
               return next_2;
             });
-          }} onSubmit={value_4 => {
-            const hasImageAttachments_1 = pastedContents && Object.values(pastedContents).some(c_3 => c_3.type === "image");
+          }} onSubmit={(value_4) => {
+            const hasImageAttachments_1 = pastedContents && Object.values(pastedContents).some((c_3) => c_3.type === "image");
             if (value_4.trim() || hasImageAttachments_1 || option_4.allowEmptySubmitToCancel) {
               onChange?.(option_4.value);
             } else {
@@ -454,10 +454,10 @@ export function Select({
       });
     }
   }
-  if (t17 !== Symbol.for("react.early_return_sentinel")) {
-    return t17;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return <T0 {...t15}>{t16}</T0>;
+  return <BoxComponent {...containerResult}>{mappedItems}</BoxComponent>;
 }
 
 // Row container for the two-column (label + description) layout. Unlike

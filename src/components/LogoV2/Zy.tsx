@@ -3,10 +3,10 @@ import { Box, Text } from '../../ink.js';
 import { env } from '../../utils/env.js';
 
 export type ZyPose =
-  | 'default'
-  | 'soaring'
-  | 'tilt-left'
-  | 'tilt-right';
+'default' |
+'soaring' |
+'tilt-left' |
+'tilt-right';
 
 type Props = {
   pose?: ZyPose;
@@ -37,39 +37,39 @@ const POSES: Record<ZyPose, Segments> = {
     r2: ' █  ●   ●  █ ',
     r3: '  █  ▀▀▀  █  ',
     r4: '  ▀▄     ▄▀  ',
-    r5: '   ▀▄▀▀▀▄▀   ',
+    r5: '   ▀▄▀▀▀▄▀   '
   },
   soaring: {
     r1: ' ▄▀▀▀▀▀▀▀▀▀▄ ',
     r2: '█  ●     ●  █',
     r3: '█    ▀▀▀    █',
     r4: '▀▄         ▄▀',
-    r5: '  ▀▄▀▀▀▀▀▄▀  ',
+    r5: '  ▀▄▀▀▀▀▀▄▀  '
   },
   'tilt-left': {
     r1: ' ▄▀▀▀▀▀▀▀▄   ',
     r2: '█  ●   ●  █  ',
     r3: ' █  ▀▀▀  █   ',
     r4: ' ▀▄     ▄▀   ',
-    r5: '  ▀▄▀▀▀▄▀    ',
+    r5: '  ▀▄▀▀▀▄▀    '
   },
   'tilt-right': {
     r1: '   ▄▀▀▀▀▀▀▀▄ ',
     r2: '  █  ●   ●  █',
     r3: '   █  ▀▀▀  █ ',
     r4: '   ▀▄     ▄▀ ',
-    r5: '    ▀▄▀▀▀▄▀  ',
-  },
+    r5: '    ▀▄▀▀▀▄▀  '
+  }
 };
 
 export function Zy(t0: Props | undefined) {
-  let t1;
+  let config;
   if (t0 === undefined) {
-    t1 = {};
+    config = {};
   } else {
-    t1 = t0;
+    config = t0;
   }
-  const { pose: t2 } = t1;
+  const { pose: t2 } = config;
   const pose = t2 === undefined ? 'default' : t2;
   if (env.terminal === 'Apple_Terminal') {
     return <AppleTerminalZy pose={pose} />;
@@ -92,11 +92,11 @@ export function Zy(t0: Props | undefined) {
       <Text>
         <Text color="clawd_body">{p.r5}</Text>
       </Text>
-    </Box>
-  );
+    </Box>);
+
 }
 
-function AppleTerminalZy(t0: { pose: ZyPose }) {
+function AppleTerminalZy(t0: {pose: ZyPose;}) {
   const { pose } = t0;
   const p = POSES[pose];
   return (
@@ -106,6 +106,6 @@ function AppleTerminalZy(t0: { pose: ZyPose }) {
       <Text color="clawd_body">{p.r3}</Text>
       <Text color="clawd_body">{p.r4}</Text>
       <Text color="clawd_body">{p.r5}</Text>
-    </Box>
-  );
+    </Box>);
+
 }

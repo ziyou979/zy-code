@@ -29,7 +29,7 @@ function InvalidApiKeyMessage() {
   return <MessageResponse><Box flexDirection="column"><Text color="error">{getInvalidApiKeyErrorMessage()}</Text>{isKeychainLocked && <Text dimColor={true}>· Run in another terminal: security unlock-keychain</Text>}</Box></MessageResponse>;
 }
 export function AssistantTextMessage({
-  param: t1,
+  param,
   addMargin,
   shouldShowDot,
   verbose,
@@ -37,7 +37,7 @@ export function AssistantTextMessage({
 }: Props) {
   const {
     text
-  } = t1;
+  } = param;
   const isSelected = useContext(MessageActionsSelectedContext);
   if (isEmptyMessageText(text)) {
     return null;

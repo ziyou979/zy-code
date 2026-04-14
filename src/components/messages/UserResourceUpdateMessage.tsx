@@ -59,28 +59,28 @@ function formatUri(uri: string): string {
 }
 export function UserResourceUpdateMessage({
   addMargin,
-  param: t1
+  param
 }) {
   const {
     text
-  } = t1;
-  let T0;
-  let t2;
-  let t3;
-  let t4;
-  let t5;
-  t5 = Symbol.for("react.early_return_sentinel");
+  } = param;
+  let BoxComponent;
+
+  let conditionalValue;
+  let mappedItems;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const updates = parseUpdates(text);
   if (updates.length === 0) {
-    t5 = null;
+    earlyReturn = null;
   } else {
-    T0 = Box;
-    t2 = "column";
-    t3 = addMargin ? 1 : 0;
-    t4 = updates.map((update, i) => <Box key={i}><Text><Text color="success">{REFRESH_ARROW}</Text>{" "}<Text dimColor={true}>{update.server}:</Text>{" "}<Text color="suggestion">{update.kind === "resource" ? formatUri(update.target) : update.target}</Text>{update.reason && <Text dimColor={true}> · {update.reason}</Text>}</Text></Box>);
+    BoxComponent = Box;
+
+    conditionalValue = addMargin ? 1 : 0;
+    mappedItems = updates.map((update, i) => <Box key={i}><Text><Text color="success">{REFRESH_ARROW}</Text>{" "}<Text dimColor={true}>{update.server}:</Text>{" "}<Text color="suggestion">{update.kind === "resource" ? formatUri(update.target) : update.target}</Text>{update.reason && <Text dimColor={true}> · {update.reason}</Text>}</Text></Box>);
   }
-  if (t5 !== Symbol.for("react.early_return_sentinel")) {
-    return t5;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return <T0 flexDirection={t2} marginTop={t3}>{t4}</T0>;
+  return <BoxComponent flexDirection={"column"} marginTop={conditionalValue}>{mappedItems}</BoxComponent>;
 }

@@ -39,13 +39,13 @@ export const Ansi = React.memo(function Ansi({
     return null;
   }
   let content;
-  let t2;
-  t2 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const spans = parseToSpans(children);
   if (spans.length === 0) {
-    t2 = null;
+    earlyReturn = null;
   } else if (spans.length === 1 && !hasAnyProps(spans[0].props)) {
-    t2 = dimColor ? <Text dim={true}>{spans[0].text}</Text> : <Text>{spans[0].text}</Text>;
+    earlyReturn = dimColor ? <Text dim={true}>{spans[0].text}</Text> : <Text>{spans[0].text}</Text>;
   } else {
     content = spans.map((span, i) => {
       const hyperlink = span.props.hyperlink;
@@ -59,8 +59,8 @@ export const Ansi = React.memo(function Ansi({
       return hasTextProps ? <StyledText key={i} color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText> : span.text;
     });
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
   return dimColor ? <Text dim={true}>{content}</Text> : <Text>{content}</Text>;
 });
@@ -87,7 +87,7 @@ function parseToSpans(input: string): Span[] {
       continue;
     }
     if (action.type === 'text') {
-      const text = action.graphemes.map(g => g.value).join('');
+      const text = action.graphemes.map((g) => g.value).join('');
       if (!text) continue;
       const props = textStyleToSpanProps(action.style);
       if (currentHyperlink) {

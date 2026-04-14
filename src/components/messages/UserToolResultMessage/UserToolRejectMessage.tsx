@@ -33,14 +33,14 @@ export function UserToolRejectMessage({
   if (!tool || !tool.renderToolUseRejectedMessage) {
     return <FallbackToolUseRejectedMessage />;
   }
-  let t2;
-  let t3;
-  t3 = Symbol.for("react.early_return_sentinel");
+  let fallbackToolUseRejectedMessageElement;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const parsedInput = tool.inputSchema.safeParse(input);
   if (!parsedInput.success) {
-    t3 = <FallbackToolUseRejectedMessage />;
+    earlyReturn = <FallbackToolUseRejectedMessage />;
   } else {
-    t2 = tool.renderToolUseRejectedMessage(parsedInput.data, {
+    fallbackToolUseRejectedMessageElement = tool.renderToolUseRejectedMessage(parsedInput.data, {
       columns,
       messages: [],
       tools,
@@ -51,8 +51,8 @@ export function UserToolRejectMessage({
       isTranscriptMode
     }) ?? <FallbackToolUseRejectedMessage />;
   }
-  if (t3 !== Symbol.for("react.early_return_sentinel")) {
-    return t3;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return t2;
+  return fallbackToolUseRejectedMessageElement;
 }

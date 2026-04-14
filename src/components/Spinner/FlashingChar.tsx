@@ -15,7 +15,7 @@ export function FlashingChar({
   shimmerColor
 }: Props) {
   const [themeName] = useTheme();
-  let t1 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn = Symbol.for("react.early_return_sentinel");
   const theme = getTheme(themeName);
   const baseColorStr = theme[messageColor];
   const shimmerColorStr = theme[shimmerColor];
@@ -23,10 +23,10 @@ export function FlashingChar({
   const shimmerRGB = shimmerColorStr ? parseRGB(shimmerColorStr) : null;
   if (baseRGB && shimmerRGB) {
     const interpolated = interpolateColor(baseRGB, shimmerRGB, flashOpacity);
-    t1 = <Text color={toRGBColor(interpolated)}>{char}</Text>;
+    earlyReturn = <Text color={toRGBColor(interpolated)}>{char}</Text>;
   }
-  if (t1 !== Symbol.for("react.early_return_sentinel")) {
-    return t1;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
   const shouldUseShimmer = flashOpacity > 0.5;
   return <Text color={shouldUseShimmer ? shimmerColor : messageColor}>{char}</Text>;

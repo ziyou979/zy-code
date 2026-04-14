@@ -8,21 +8,21 @@ export function SandboxDoctorSection() {
   if (!SandboxManager.isSandboxEnabledInSettings()) {
     return null;
   }
-  let t0;
-  let t1;
-  t1 = Symbol.for("react.early_return_sentinel");
+  let boxElement;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const depCheck = SandboxManager.checkDependencies();
   const hasErrors = depCheck.errors.length > 0;
   const hasWarnings = depCheck.warnings.length > 0;
   if (!hasErrors && !hasWarnings) {
-    t1 = null;
+    earlyReturn = null;
   } else {
     const statusColor = hasErrors ? "error" as const : "warning" as const;
     const statusText = hasErrors ? "Missing dependencies" : "Available (with warnings)";
-    t0 = <Box flexDirection="column"><Text bold={true}>Sandbox</Text><Text>└ Status: <Text color={statusColor}>{statusText}</Text></Text>{depCheck.errors.map((e, i) => <Text key={i} color="error">└ {e}</Text>)}{depCheck.warnings.map((w, i_0) => <Text key={i_0} color="warning">└ {w}</Text>)}{hasErrors && <Text dimColor={true}>└ Run /sandbox for install instructions</Text>}</Box>;
+    boxElement = <Box flexDirection="column"><Text bold={true}>Sandbox</Text><Text>└ Status: <Text color={statusColor}>{statusText}</Text></Text>{depCheck.errors.map((e, i) => <Text key={i} color="error">└ {e}</Text>)}{depCheck.warnings.map((w, i_0) => <Text key={i_0} color="warning">└ {w}</Text>)}{hasErrors && <Text dimColor={true}>└ Run /sandbox for install instructions</Text>}</Box>;
   }
-  if (t1 !== Symbol.for("react.early_return_sentinel")) {
-    return t1;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return t0;
+  return boxElement;
 }

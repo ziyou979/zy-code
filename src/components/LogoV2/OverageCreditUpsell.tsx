@@ -53,7 +53,7 @@ export function useShowOverageCreditUpsell() {
 }
 export function incrementOverageCreditUpsellSeenCount(): void {
   let newCount = 0;
-  saveGlobalConfig(prev => {
+  saveGlobalConfig((prev) => {
     newCount = (prev.overageCreditUpsellSeenCount ?? 0) + 1;
     return {
       ...prev,
@@ -84,31 +84,31 @@ export function OverageCreditUpsell({
   maxWidth,
   twoLine
 }: Props) {
-  let t1;
-  let t2;
-  t2 = Symbol.for("react.early_return_sentinel");
+  let textElement;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const info = getCachedOverageCreditGrant();
   if (!info) {
-    t2 = null;
+    earlyReturn = null;
   } else {
     const amount = formatGrantAmount(info);
     if (!amount) {
-      t2 = null;
+      earlyReturn = null;
     } else if (twoLine) {
       const title = getFeedTitle(amount);
-      const t3 = maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTITLE;
-      t2 = <><Text color="zy">{maxWidth ? truncate(title, maxWidth) : title}</Text>{<Text dimColor={true}>{t3}</Text>}</>;
+      const truncateResult = maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTITLE;
+      earlyReturn = <><Text color="zy">{maxWidth ? truncate(title, maxWidth) : title}</Text>{<Text dimColor={true}>{truncateResult}</Text>}</>;
     } else {
       const text = getUsageText(amount);
       const display = maxWidth ? truncate(text, maxWidth) : text;
       const highlightLen = Math.min(getFeedTitle(amount).length, display.length);
-      t1 = <Text dimColor={true}><Text color="zy">{display.slice(0, highlightLen)}</Text>{display.slice(highlightLen)}</Text>;
+      textElement = <Text dimColor={true}><Text color="zy">{display.slice(0, highlightLen)}</Text>{display.slice(highlightLen)}</Text>;
     }
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return t1;
+  return textElement;
 }
 
 /**

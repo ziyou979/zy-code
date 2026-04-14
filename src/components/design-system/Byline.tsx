@@ -36,17 +36,17 @@ type Props = {
 export function Byline({
   children
 }: Props) {
-  let t1;
-  let t2;
-  t2 = Symbol.for("react.early_return_sentinel");
+  let mappedItems;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const validChildren = Children.toArray(children);
   if (validChildren.length === 0) {
-    t2 = null;
+    earlyReturn = null;
   } else {
-    t1 = validChildren.map((child, index) => <React.Fragment key={isValidElement(child) ? child.key ?? index : index}>{index > 0 && <Text dimColor={true}> · </Text>}{child}</React.Fragment>);
+    mappedItems = validChildren.map((child, index) => <React.Fragment key={isValidElement(child) ? child.key ?? index : index}>{index > 0 && <Text dimColor={true}> · </Text>}{child}</React.Fragment>);
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return <>{t1}</>;
+  return <>{mappedItems}</>;
 }

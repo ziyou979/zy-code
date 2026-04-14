@@ -17,9 +17,9 @@ export function DiffFileList({
   const {
     columns
   } = useTerminalSize();
-  let t1;
+  let config;
   if (files.length === 0 || files.length <= MAX_VISIBLE_FILES) {
-    t1 = {
+    config = {
       startIndex: 0,
       endIndex: files.length
     };
@@ -30,7 +30,7 @@ export function DiffFileList({
       end = files.length;
       start = Math.max(0, end - MAX_VISIBLE_FILES);
     }
-    t1 = {
+    config = {
       startIndex: start,
       endIndex: end
     };
@@ -38,7 +38,7 @@ export function DiffFileList({
   const {
     startIndex,
     endIndex
-  } = t1;
+  } = config;
   if (files.length === 0) {
     return <Text dimColor={true}>No changed files</Text>;
   }
@@ -47,9 +47,9 @@ export function DiffFileList({
   const maxPathWidth = Math.max(20, columns - 16 - 3 - 4);
   const hasMoreBelow = endIndex < files.length;
   const needsPagination = files.length > MAX_VISIBLE_FILES;
-  const T0 = Box;
-  const t4 = visibleFiles.map((file, index) => <FileItem key={file.path} file={file} isSelected={startIndex + index === selectedIndex} maxPathWidth={maxPathWidth} />);
-  return <T0 flexDirection={"column"}>{needsPagination && <Text dimColor={true}>{hasMoreAbove ? ` ↑ ${startIndex} more ${plural(startIndex, "file")}` : " "}</Text>}{t4}{needsPagination && <Text dimColor={true}>{hasMoreBelow ? ` ↓ ${files.length - endIndex} more ${plural(files.length - endIndex, "file")}` : " "}</Text>}</T0>;
+  const BoxComponent = Box;
+  const mappedItems = visibleFiles.map((file, index) => <FileItem key={file.path} file={file} isSelected={startIndex + index === selectedIndex} maxPathWidth={maxPathWidth} />);
+  return <BoxComponent flexDirection={"column"}>{needsPagination && <Text dimColor={true}>{hasMoreAbove ? ` ↑ ${startIndex} more ${plural(startIndex, "file")}` : " "}</Text>}{mappedItems}{needsPagination && <Text dimColor={true}>{hasMoreBelow ? ` ↓ ${files.length - endIndex} more ${plural(files.length - endIndex, "file")}` : " "}</Text>}</BoxComponent>;
 }
 function FileItem({
   file,

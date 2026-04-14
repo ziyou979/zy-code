@@ -54,7 +54,7 @@ function PermissionDecisionInfoItem({
     switch (decisionReason.type) {
       case "subcommandResults":
         {
-          return <Box flexDirection="column">{Array.from(decisionReason.reasons.entries()).map(t2 => {
+          return <Box flexDirection="column">{Array.from(decisionReason.reasons.entries()).map((t2) => {
               const [subcommand, result] = t2;
               const icon = result.behavior === "allow" ? color("success", theme)(figures.tick) : color("error", theme)(figures.cross);
               return <Box flexDirection="column" key={subcommand}><Text>{icon} {subcommand}</Text>{result.decisionReason !== undefined && result.decisionReason.type !== "subcommandResults" && <Text><Text dimColor={true}>{"  "}⎿{"  "}</Text><Ansi>{decisionReasonDisplayString(result.decisionReason)}</Ansi></Text>}{result.behavior === "ask" && <SuggestedRules suggestions={result.suggestions} />}</Box>;
@@ -66,34 +66,34 @@ function PermissionDecisionInfoItem({
         }
     }
   };
-  const t3 = formatDecisionReason();
-  return <Box flexDirection="column">{title && <Text>{title}</Text>}{t3}</Box>;
+  const formatDecisionReasonResult = formatDecisionReason();
+  return <Box flexDirection="column">{title && <Text>{title}</Text>}{formatDecisionReasonResult}</Box>;
 }
 function SuggestedRules({
   suggestions
 }: PermissionDecisionInfoItemProps) {
-  let T0;
-  let T1;
-  let t1;
-  let t3;
-  let t4;
-  let t5;
-  t5 = Symbol.for("react.early_return_sentinel");
+  let AnsiComponent;
+  let TextComponent;
+  let joinedString;
+
+
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const rules = extractRules(suggestions);
   if (rules.length === 0) {
-    t5 = null;
+    earlyReturn = null;
   } else {
-    T1 = Text;
-    const t2 = <Text dimColor={true}>{"  "}⎿{"  "}</Text>;
-    t3 = "Suggested rules:";
-    t4 = " ";
-    T0 = Ansi;
-    t1 = rules.map(rule => chalk.bold(permissionRuleValueToString(rule))).join(", ");
+    TextComponent = Text;
+    const textElement = <Text dimColor={true}>{"  "}⎿{"  "}</Text>;
+
+
+    AnsiComponent = Ansi;
+    joinedString = rules.map((rule) => chalk.bold(permissionRuleValueToString(rule))).join(", ");
   }
-  if (t5 !== Symbol.for("react.early_return_sentinel")) {
-    return t5;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return <T1>{t2}{t3}{t4}{<T0>{t1}</T0>}</T1>;
+  return <TextComponent>{textElement}{"Suggested rules:"}{" "}{<AnsiComponent>{joinedString}</AnsiComponent>}</TextComponent>;
 }
 type Props = {
   permissionResult: PermissionDecision;
@@ -103,7 +103,7 @@ type Props = {
 // Helper function to extract directories from permission updates
 function extractDirectories(updates: PermissionUpdate[] | undefined): string[] {
   if (!updates) return [];
-  return updates.flatMap(update => {
+  return updates.flatMap((update) => {
     switch (update.type) {
       case 'addDirectories':
         return update.directories;
@@ -116,7 +116,7 @@ function extractDirectories(updates: PermissionUpdate[] | undefined): string[] {
 // Helper function to extract mode from permission updates
 function extractMode(updates: PermissionUpdate[] | undefined): PermissionMode | undefined {
   if (!updates) return undefined;
-  const update = updates.findLast(u => u.type === 'setMode');
+  const update = updates.findLast((u) => u.type === 'setMode');
   return update?.type === 'setMode' ? update.mode : undefined;
 }
 function SuggestionDisplay({
@@ -126,27 +126,27 @@ function SuggestionDisplay({
   if (!suggestions || suggestions.length === 0) {
     return <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestions </Text>}</Box>}{<Text>None</Text>}</Box>;
   }
-  let t1;
-  let t2;
-  t2 = Symbol.for("react.early_return_sentinel");
+  let boxElement;
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const rules = extractRules(suggestions);
   const directories = extractDirectories(suggestions);
   const mode = extractMode(suggestions);
   if (rules.length === 0 && directories.length === 0 && !mode) {
-    t2 = <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestion </Text>}</Box>}{<Text>None</Text>}</Box>;
+    earlyReturn = <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestion </Text>}</Box>}{<Text>None</Text>}</Box>;
   } else {
-    t1 = <Box flexDirection="column">{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestions </Text>}</Box>}{<Text> </Text>}</Box>}{rules.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Rules </Text></Box><Box flexDirection="column">{rules.map((rule, index) => <Text key={index}>{figures.bullet} {permissionRuleValueToString(rule)}</Text>)}</Box></Box>}{directories.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Directories </Text></Box><Box flexDirection="column">{directories.map((dir, index_0) => <Text key={index_0}>{figures.bullet} {dir}</Text>)}</Box></Box>}{mode && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Mode </Text></Box><Text>{permissionModeTitle(mode)}</Text></Box>}</Box>;
+    boxElement = <Box flexDirection="column">{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestions </Text>}</Box>}{<Text> </Text>}</Box>}{rules.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Rules </Text></Box><Box flexDirection="column">{rules.map((rule, index) => <Text key={index}>{figures.bullet} {permissionRuleValueToString(rule)}</Text>)}</Box></Box>}{directories.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Directories </Text></Box><Box flexDirection="column">{directories.map((dir, index_0) => <Text key={index_0}>{figures.bullet} {dir}</Text>)}</Box></Box>}{mode && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Mode </Text></Box><Text>{permissionModeTitle(mode)}</Text></Box>}</Box>;
   }
-  if (t2 !== Symbol.for("react.early_return_sentinel")) {
-    return t2;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
-  return t1;
+  return boxElement;
 }
 export function PermissionDecisionDebugInfo({
   permissionResult,
   toolName
 }) {
-  const toolPermissionContext = useAppState(s => s.toolPermissionContext);
+  const toolPermissionContext = useAppState((s) => s.toolPermissionContext);
   const decisionReason = permissionResult.decisionReason;
   const suggestions = "suggestions" in permissionResult ? permissionResult.suggestions : undefined;
   let unreachableRules;
@@ -156,9 +156,9 @@ export function PermissionDecisionDebugInfo({
   });
   const suggestedRules = extractRules(suggestions);
   if (suggestedRules.length > 0) {
-    unreachableRules = all.filter(u => suggestedRules.some(suggested => suggested.toolName === u.rule.ruleValue.toolName && suggested.ruleContent === u.rule.ruleValue.ruleContent));
+    unreachableRules = all.filter((u) => suggestedRules.some((suggested) => suggested.toolName === u.rule.ruleValue.toolName && suggested.ruleContent === u.rule.ruleValue.ruleContent));
   } else if (toolName) {
-    unreachableRules = all.filter(u_0 => u_0.rule.ruleValue.toolName === toolName);
+    unreachableRules = all.filter((u_0) => u_0.rule.ruleValue.toolName === toolName);
   } else {
     unreachableRules = all;
   }
