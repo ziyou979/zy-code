@@ -2348,8 +2348,8 @@ export function REPL({
         thinkingConfig: s.thinkingEnabled !== false ? thinkingConfig : {
           type: 'disabled'
         },
-        // Merge fresh from store rather than closing over useMergedClients'
-        // memoized output. initialMcpClients is a prop (session-constant).
+        // 从 store.getState() 新鲜读取而不是闭包捕获
+        // initialMcpClients 是 prop（会话常量）
         mcpClients: mergeClients(initialMcpClients, s.mcp.clients),
         mcpResources: s.mcp.resources,
         ideInstallationStatus: ideInstallationStatus,
@@ -2661,8 +2661,8 @@ export function REPL({
       // handleMessageFromStream。如果存在压缩边界则清除上下文阻塞
       // 以便压缩后 proactive tick 恢复。
       if (newMessages.some(isCompactBoundaryMessage)) {
-        // Bump conversationId so Messages.tsx row keys change and
-        // stale memoized rows remount with post-compact content.
+        // 提升 conversationId 以便 Messages.tsx 行键改变且
+        // 过时 memoized 行以压缩后内容重新挂载。
         setConversationId(randomUUID());
         if (feature('PROACTIVE') || feature('KAIROS')) {
           proactiveModule?.setContextBlocked(false);
@@ -3299,8 +3299,8 @@ export function REPL({
         resetTimingRefs();
       }
 
-      // Increment prompt count for attribution tracking and save snapshot
-      // The snapshot persists promptCount so it survives compaction
+      // 提升归因计数的 prompt count 并保存快照
+      // 快照持久化 promptCount 以便它在压缩后仍然保留
       if (feature('COMMIT_ATTRIBUTION')) {
         setAppState(prev => ({
           ...prev,
@@ -3469,7 +3469,7 @@ export function REPL({
   // 累积，全部追溯到此依赖。
   mainLoopModel, pastedContents, ideSelection, setUserInputOnProcessing, setAbortController, addNotification, onQuery, stashedPrompt, setStashedPrompt, setAppState, onBeforeQuery, canUseTool, remoteSession, setMessages, awaitPendingHooks, repinScroll]);
 
-  // Callback for when user submits input while viewing a teammate's transcript
+  // 查看 teammate 转录时用户提交输入的回调
   const onAgentSubmit = useCallback(async (input: string, task: InProcessTeammateTaskState | LocalAgentTaskState, helpers: PromptInputHelpers) => {
     if (isLocalAgentTask(task)) {
       appendMessageToLocalAgent(task.id, createUserMessage({
@@ -3502,10 +3502,10 @@ export function REPL({
     helpers.clearBuffer();
   }, [setAppState, setInputValue, getToolUseContext, canUseTool, mainLoopModel, addNotification]);
 
-  // Handlers for auto-run /issue or /good-zy (defined after onSubmit)
+  // 自动运行 /issue 或 /good-zy 的处理程序（在 onSubmit 之后定义）
   const handleAutoRunIssue = useCallback(() => {
     const command = autoRunIssueReason ? getAutoRunCommand(autoRunIssueReason) : '/issue';
-    setAutoRunIssueReason(null); // Clear the state
+    setAutoRunIssueReason(null); // 清除状态
     onSubmit(command, {
       setCursorOffset: () => {},
       clearBuffer: () => {},
@@ -3518,7 +3518,7 @@ export function REPL({
     setAutoRunIssueReason(null);
   }, []);
 
-  // Handler for when user presses 1 on survey thanks screen to share details
+  // 用户按下 survey 感谢屏幕上的 1 以分享详细信息的处理程序
   const handleSurveyRequestFeedback = useCallback(() => {
     const command = "external" === 'ant' ? '/issue' : '/feedback';
     onSubmit(command, {
@@ -3530,11 +3530,11 @@ export function REPL({
     });
   }, [onSubmit]);
 
-  // onSubmit is unstable (deps include `messages` which changes every turn).
-  // `handleOpenRateLimitOptions` is prop-drilled to every MessageRow, and each
-  // MessageRow fiber pins the closure (and transitively the entire REPL render
-  // scope, ~1.8KB) at mount time. Using a ref keeps this callback stable so
-  // old REPL scopes can be GC'd — saves ~35MB over a 1000-turn session.
+  // onSubmit 不稳定（依赖包含 `messages`，每回合变化）。
+  // `handleOpenRateLimitOptions` 作为 prop 传递到每个 MessageRow，且每个
+  // MessageRow fiber 在挂载时固定闭包（以及传递的整个 REPL 渲染范围，约 1.8KB）。
+  // 使用 ref 保持此回调稳定以便旧的 REPL 范围可以被 GC 回收
+  // —— 在 1000 回合会话中节省约 35MB。
   const onSubmitRef = useRef(onSubmit);
   onSubmitRef.current = onSubmit;
   const handleOpenRateLimitOptions = useCallback(() => {
@@ -3546,9 +3546,9 @@ export function REPL({
   }, []);
   const handleExit = useCallback(async () => {
     setIsExiting(true);
-    // In bg sessions, always detach instead of kill — even when a worktree is
-    // active. Without this guard, the worktree branch below short-circuits into
-    // ExitFlow (which calls gracefulShutdown) before exit.tsx is ever loaded.
+    // 在后台会话中，始终 detach 而非 kill —— 即使 worktree 活动
+    // 也是如此。没有这个守卫，下面的 worktree 分支会在 exit.tsx 加载前
+    // 短路进入 ExitFlow（调用 gracefulShutdown）
     if (feature('BG_SESSIONS') && isBgSession()) {
       spawnSync('tmux', ['detach-client'], {
         stdio: 'ignore'
@@ -3567,9 +3567,9 @@ export function REPL({
     const exitMod = await exit.load();
     const exitFlowResult = await exitMod.call(() => {});
     setExitFlow(exitFlowResult);
-    // If call() returned without killing the process (bg session detach),
-    // clear isExiting so the UI is usable on reattach. No-op on the normal
-    // path — gracefulShutdown's process.exit() means we never get here.
+    // 如果 call() 返回但未杀死进程（后台会话 detach），
+    // 清除 isExiting 以便重新附着时 UI 可用。正常路径上无操作
+    // —— gracefulShutdown 的 process.exit() 意味着我们永远不会到这里
     if (exitFlowResult === null) {
       setIsExiting(false);
     }
@@ -3578,11 +3578,10 @@ export function REPL({
     setIsMessageSelectorVisible(prev => !prev);
   }, []);
 
-  // Rewind conversation state to just before `message`: slice messages,
-  // reset conversation ID, microcompact state, permission mode, prompt suggestion.
-  // Does NOT touch the prompt input. Index is computed from messagesRef (always
-  // fresh via the setMessages wrapper) so callers don't need to worry about
-  // stale closures.
+  // 将对话状态回退到恰好在 `message` 之前：切片消息、
+  // 重置 conversationId、microcompact 状态、权限模式、提示建议。
+  // 不触及提示输入。索引通过 messagesRef 计算（通过 setMessages 包装器始终新鲜）
+  // 所以调用者无需担心过时闭包。
   const rewindConversationTo = useCallback((message: UserMessage) => {
     const prev = messagesRef.current;
     const messageIndex = prev.lastIndexOf(message);
@@ -3600,27 +3599,25 @@ export function REPL({
     // don't reference tool_use_ids from truncated messages
     resetMicrocompactState();
     if (feature('CONTEXT_COLLAPSE')) {
-      // Rewind truncates the REPL array. Commits whose archived span
-      // was past the rewind point can't be projected anymore
-      // (projectView silently skips them) but the staged queue and ID
-      // maps reference stale uuids. Simplest safe reset: drop
-      // everything. The ctx-agent will re-stage on the next
-      // threshold crossing.
+      // 回退截断 REPL 数组。归档跨度超过回退点的提交
+      // 无法再投影（projectView 静默跳过它们），但暂存队列和 ID
+      // 映射引用过时的 uuid。最安全简单的重置：丢弃所有内容。
+      // ctx-agent 将在下次超过阈值时重新暂存
       /* eslint-disable @typescript-eslint/no-require-imports */
 
       (require('../services/contextCollapse/index.js') as typeof import('../services/contextCollapse/index.js')).resetContextCollapse();
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
 
-    // Restore state from the message we're rewinding to
+    // 从回退到的消息恢复状态
     setAppState(prev => ({
       ...prev,
-      // Restore permission mode from the message
+      // 从消息恢复权限模式
       toolPermissionContext: message.permissionMode && prev.toolPermissionContext.mode !== message.permissionMode ? {
         ...prev.toolPermissionContext,
         mode: message.permissionMode
       } : prev.toolPermissionContext,
-      // Clear stale prompt suggestion from previous conversation state
+      // 清除来自之前对话状态的过时提示建议
       promptSuggestion: {
         text: null,
         promptId: null,
@@ -3631,9 +3628,9 @@ export function REPL({
     }));
   }, [setMessages, setAppState]);
 
-  // Synchronous rewind + input population. Used directly by auto-restore on
-  // interrupt (so React batches with the abort's setMessages → single render,
-  // no flicker). MessageSelector wraps this in setImmediate via handleRestoreMessage.
+  // 同步回退 + 填充输入。由中断时的自动恢复直接使用
+  // （以便 React 与 abort 的 setMessages 批处理 → 单次渲染，无闪烁）。
+  // MessageSelector 通过 handleRestoreMessage 在 setImmediate 中包装此函数。
   const restoreMessageSync = useCallback((message: UserMessage) => {
     rewindConversationTo(message);
     const r = textForResubmit(message);
@@ -3642,7 +3639,7 @@ export function REPL({
       setInputMode(r.mode);
     }
 
-    // Restore pasted images
+    // 恢复粘贴的图片
     if (Array.isArray(message.message.content) && message.message.content.some(block => block.type === 'image')) {
       const imageBlocks: Array<ImageBlockParam> = message.message.content.filter(block => block.type === 'image');
       if (imageBlocks.length > 0) {
@@ -3664,26 +3661,25 @@ export function REPL({
   }, [rewindConversationTo, setInputValue]);
   restoreMessageSyncRef.current = restoreMessageSync;
 
-  // MessageSelector path: defer via setImmediate so the "Interrupted" message
-  // renders to static output before rewind — otherwise it remains vestigial
-  // at the top of the screen.
+  // MessageSelector 路径：通过 setImmediate 延迟以便 "Interrupted" 消息
+  // 在回退前渲染为静态输出 —— 否则它保持在屏幕顶部的残留状态
   const handleRestoreMessage = useCallback(async (message: UserMessage) => {
     setImmediate((restore, message) => restore(message), restoreMessageSync, message);
   }, [restoreMessageSync]);
 
-  // Not memoized — hook stores caps via ref, reads latest closure at dispatch.
-  // 24-char prefix: deriveUUID preserves first 24, renderable uuid prefix-matches raw source.
+  // 未 memoized —— hook 通过 ref 存储 caps，在调度时读取最新闭包。
+  // 24 字符前缀：deriveUUID 保留前 24 位，可渲染的 uuid 前缀匹配原始来源
   const findRawIndex = (uuid: string) => {
     const prefix = uuid.slice(0, 24);
     return messages.findIndex(m => m.uuid.slice(0, 24) === prefix);
   };
   const messageActionCaps: MessageActionCaps = {
     copy: text =>
-    // setClipboard RETURNS OSC 52 — caller must stdout.write (tmux side-effects load-buffer, but that's tmux-only).
+    // setClipboard 返回 OSC 52 —— 调用者必须 stdout.write（tmux 副作用 load-buffer，但仅限 tmux）
     void setClipboard(text).then(raw => {
       if (raw) process.stdout.write(raw);
       addNotification({
-        // Same key as text-selection copy — repeated copies replace toast, don't queue.
+        // 与文本选择复制相同的 key —— 重复复制替换 toast，不排队
         key: 'selection-copied',
         text: 'copied',
         color: 'success',
@@ -3692,19 +3688,19 @@ export function REPL({
       });
     }),
     edit: async msg => {
-      // Same skip-confirm check as /rewind: lossless → direct, else confirm dialog.
+      // 与 /rewind 相同的 skip-confirm 检查：无损 → 直接，否则确认对话框
       const rawIdx = findRawIndex(msg.uuid);
       const raw = rawIdx >= 0 ? messages[rawIdx] : undefined;
       if (!raw || !selectableUserMessagesFilter(raw)) return;
       const noFileChanges = !(await fileHistoryHasAnyChanges(fileHistory, raw.uuid));
       const onlySynthetic = messagesAfterAreOnlySynthetic(messages, rawIdx);
       if (noFileChanges && onlySynthetic) {
-        // rewindConversationTo's setMessages races stream appends — cancel first (idempotent).
+        // rewindConversationTo 的 setMessages 与流式追加竞争 —— 先取消（幂等）
         onCancel();
-        // handleRestoreMessage also restores pasted images.
+        // handleRestoreMessage 还恢复粘贴的图片
         void handleRestoreMessage(raw);
       } else {
-        // Dialog path: onPreRestore (= onCancel) fires when user CONFIRMS, not on nevermind.
+        // 对话框路径：onPreRestore（= onCancel）在用户确认时触发，而非取消时
         setMessageSelectorPreselect(raw);
         setIsMessageSelectorVisible(true);
       }
@@ -3715,11 +3711,11 @@ export function REPL({
     handlers: messageActionHandlers
   } = useMessageActions(cursor, setCursor, cursorNavRef, messageActionCaps);
   async function onInit() {
-    // Always verify API key on startup, so we can show the user an error in the
-    // bottom right corner of the screen if the API key is invalid.
+    // 始终在启动时验证 API key，以便在 API key 无效时
+    // 可以在屏幕右下角向用户显示错误
     void reverify();
 
-    // Populate readFileState with CLAUDE.md files at startup
+    // 启动时用 CLAUDE.md 文件填充 readFileState
     const memoryFiles = await getMemoryFiles();
     if (memoryFiles.length > 0) {
       const fileList = memoryFiles.map(f => `  [${f.type}] ${f.path} (${f.content.length} chars)${f.parent ? ` (included by ${f.parent})` : ''}`).join('\n');
@@ -3728,10 +3724,10 @@ export function REPL({
       logForDebugging('No CLAUDE.md/rules files found');
     }
     for (const file of memoryFiles) {
-      // When the injected content doesn't match disk (stripped HTML comments,
-      // stripped frontmatter, MEMORY.md truncation), cache the RAW disk bytes
-      // with isPartialView so Edit/Write require a real Read first while
-      // getChangedFiles + nested_memory dedup still work.
+      // 当注入的内容与磁盘不匹配时（剥离的 HTML 注释、
+      // 剥离的 frontmatter、MEMORY.md 截断），缓存原始磁盘字节
+      // 并设置 isPartialView 以便 Edit/Write 需要真正的 Read 先行，
+      // 同时 getChangedFiles + nested_memory 去重仍然有效
       readFileState.current.set(file.path, {
         content: file.contentDiffersFromDisk ? file.rawContent ?? file.content : file.content,
         timestamp: Date.now(),
@@ -3741,32 +3737,29 @@ export function REPL({
       });
     }
 
-    // Initial message handling is done via the initialMessage effect
+    // 初始消息通过 initialMessage effect 处理
   }
 
-  // Register cost summary tracker
+  // 注册成本摘要追踪器
   useCostSummary(useFpsMetrics());
 
-  // Record transcripts locally, for debugging and conversation recovery
-  // Don't record conversation if we only have initial messages; optimizes
-  // the case where user resumes a conversation then quites before doing
-  // anything else
+  // 在本地记录转录，用于调试和对话恢复
+  // 如果只有初始消息则不记录对话；优化用户恢复对话后
+  // 未做任何操作就退出的情况
   useLogMessages(messages, messages.length === initialMessages?.length);
 
-  // REPL Bridge: replicate user/assistant messages to the bridge session
-  // for remote access via zy.ai. No-op in external builds or when not enabled.
+  // REPL Bridge：将用户/助手消息复制到 bridge 会话
+  // 以便通过 zy.ai 远程访问。在外部构建或未启用时无操作
   const {
     sendBridgeResult
   } = useReplBridge(messages, setMessages, abortControllerRef, commands, mainLoopModel);
   sendBridgeResultRef.current = sendBridgeResult;
   useAfterFirstRender();
 
-  // Track prompt queue usage for analytics. Fire once per transition from
-  // empty to non-empty, not on every length change -- otherwise a render loop
-  // (concurrent onQuery thrashing, etc.) spams saveGlobalConfig, which hits
-  // ELOCKED under concurrent sessions and falls back to unlocked writes.
-  // That write storm is the primary trigger for ~/.zy.json corruption
-  // (GH #3117).
+  // 跟踪提示队列使用以进行分析。每次从空到非空的转换触发一次，
+  // 而不是每次长度变化都触发 —— 否则渲染循环（并发 onQuery 抖动等）
+  // 会垃圾式保存 saveGlobalConfig，在并发会话下触发 ELOCKED 并回退到未锁定写入。
+  // 该写入风暴是 ~/.zy.json 损坏的主要触发因素（GH #3117）
   const hasCountedQueueUseRef = useRef(false);
   useEffect(() => {
     if (queuedCommands.length < 1) {
@@ -3781,7 +3774,7 @@ export function REPL({
     }));
   }, [queuedCommands.length]);
 
-  // Process queued commands when query completes and queue has items
+  // 查询完成且队列有项目时处理排队命令
 
   const executeQueuedInput = useCallback(async (queuedCommands: QueuedCommand[]) => {
     await handlePromptSubmit({
@@ -3817,10 +3810,10 @@ export function REPL({
     queryGuard
   });
 
-  // We'll use the global lastInteractionTime from state.ts
+  // 使用 state.ts 中的全局 lastInteractionTime
 
-  // Update last interaction time when input changes.
-  // Must be immediate because useEffect runs after the Ink render cycle flush.
+  // 输入变化时更新最后交互时间。
+  // 必须立即执行，因为 useEffect 在 Ink 渲染周期刷新之后运行
   useEffect(() => {
     activityManager.recordUserActivity();
     updateLastInteractionTime(true);
@@ -3831,30 +3824,30 @@ export function REPL({
     }
   }, [submitCount]);
 
-  // Show notification when Zy is done responding and user is idle
+  // Zy 完成响应且用户空闲时显示通知
   useEffect(() => {
-    // Don't set up notification if Zy is busy
+    // Zy 忙时不显示通知
     if (isLoading) return;
 
-    // Only enable notifications after the first new interaction in this session
+    // 仅在此会话中第一次新交互后启用通知
     if (submitCount === 0) return;
 
-    // No query has completed yet
+    // 尚未有查询完成
     if (lastQueryCompletionTime === 0) return;
 
-    // Set timeout to check idle state
+    // 设置超时以检查空闲状态
     const timer = setTimeout((lastQueryCompletionTime, isLoading, toolJSX, focusedInputDialogRef, terminal) => {
-      // Check if user has interacted since the response ended
+      // 检查用户在响应结束后是否已交互
       const lastUserInteraction = getLastInteractionTime();
       if (lastUserInteraction > lastQueryCompletionTime) {
-        // User has interacted since Zy finished - they're not idle, don't notify
+        // 用户在 Zy 完成后已交互 —— 他们不是空闲，不通知
         return;
       }
 
-      // User hasn't interacted since response ended, check other conditions
+      // 用户在响应结束后未交互，检查其他条件
       const idleTimeSinceResponse = Date.now() - lastQueryCompletionTime;
       if (!isLoading && !toolJSX &&
-      // Use ref to get current dialog state, avoiding stale closure
+      // 使用 ref 获取当前对话框状态，避免过时闭包
       focusedInputDialogRef.current === undefined && idleTimeSinceResponse >= getGlobalConfig().messageIdleNotifThresholdMs) {
         void sendNotification({
           message: 'Zy is waiting for your input',
@@ -3865,9 +3858,9 @@ export function REPL({
     return () => clearTimeout(timer);
   }, [isLoading, toolJSX, submitCount, lastQueryCompletionTime, terminal]);
 
-  // Idle-return hint: show notification when idle threshold is exceeded.
-  // Timer fires after the configured idle period; notification persists until
-  // dismissed or the user submits.
+  // 空闲返回提示：超过空闲阈值时显示通知。
+  // 定时器在配置的空闲期后触发；通知持续直到
+  // 被取消或用户提交
   useEffect(() => {
     if (lastQueryCompletionTime === 0) return;
     if (isLoading) return;
@@ -3895,9 +3888,9 @@ export function REPL({
                 new task? /clear to save {formattedTokens} tokens
               </Text>,
         priority: 'medium',
-        // Persist until submit — the hint fires at T+75min idle, user may
-        // not return for hours. removeNotification in useEffect cleanup
-        // handles dismissal. 0x7FFFFFFF = setTimeout max (~24.8 days).
+        // 持续直到提交 —— 提示在 T+75min 空闲时触发，用户可能
+        // 数小时后才回来。useEffect 清理中的 removeNotification 处理取消。
+        // 0x7FFFFFFF = setTimeout 最大值（约 24.8 天）
         timeoutMs: 0x7fffffff
       });
       hintRef.current = mode;
@@ -3916,25 +3909,24 @@ export function REPL({
     };
   }, [lastQueryCompletionTime, isLoading, addNotification, removeNotification]);
 
-  // Submits incoming prompts from teammate messages or tasks mode as new turns
-  // Returns true if submission succeeded, false if a query is already running
+  // 将来自 teammate 消息或 tasks 模式的传入提示作为新回合提交
+  // 提交成功返回 true，查询已在运行返回 false
   const handleIncomingPrompt = useCallback((content: string, options?: {
     isMeta?: boolean;
   }): boolean => {
     if (queryGuard.isActive) return false;
 
-    // Defer to user-queued commands — user input always takes priority
-    // over system messages (teammate messages, task list items, etc.)
-    // Read from the module-level store at call time (not the render-time
-    // snapshot) to avoid a stale closure — this callback's deps don't
-    // include the queue.
+    // 延迟到用户排队命令 —— 用户输入始终优先于
+    // 系统消息（teammate 消息、任务列表项等）
+    // 在调用时从模块级 store 读取（而非渲染时快照）
+    // 以避免过时闭包 —— 此回调的依赖不包含队列
     if (getCommandQueue().some(cmd => cmd.mode === 'prompt' || cmd.mode === 'bash')) {
       return false;
     }
     const newAbortController = createAbortController();
     setAbortController(newAbortController);
 
-    // Create a user message with the formatted content (includes XML wrapper)
+    // 创建包含格式化内容的用户消息（包含 XML 包装器）
     const userMessage = createUserMessage({
       content,
       isMeta: options?.isMeta ? true : undefined
@@ -3943,7 +3935,7 @@ export function REPL({
     return true;
   }, [onQuery, mainLoopModel, store]);
 
-  // Voice input integration (VOICE_MODE builds only)
+  // 语音输入集成（仅 VOICE_MODE 构建）
   const voice = feature('VOICE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   useVoiceIntegration({
@@ -3967,14 +3959,14 @@ export function REPL({
     onSubmitMessage: handleIncomingPrompt
   });
 
-  // Scheduled tasks from .zy/scheduled_tasks.json (CronCreate/Delete/List)
+  // 来自 .zy/scheduled_tasks.json 的计划任务（CronCreate/Delete/List）
   if (feature('AGENT_TRIGGERS')) {
-    // Assistant mode bypasses the isLoading gate (the proactive tick →
-    // Sleep → tick loop would otherwise starve the scheduler).
-    // kairosEnabled is set once in initialState (main.tsx) and never mutated — no
-    // subscription needed. The tengu_kairos_cron runtime gate is checked inside
-    // useScheduledTasks's effect (not here) since wrapping a hook call in a dynamic
-    // condition would break rules-of-hooks.
+    // Assistant 模式绕过 isLoading 门控（主动 tick →
+    // Sleep → tick 循环否则会饿死调度器）。
+    // kairosEnabled 在 initialState（main.tsx）中设置一次且从不改变 —— 无需
+    // 订阅。tengu_kairos_cron 运行时门控在
+    // useScheduledTasks 的 effect 内部检查（不在此处），因为将 hook 调用包装在动态
+    // 条件中会破坏 rules-of-hooks
     const assistantMode = store.getState().kairosEnabled;
     // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
     useScheduledTasks!({
@@ -3984,12 +3976,12 @@ export function REPL({
     });
   }
 
-  // Note: Permission polling is now handled by useInboxPoller
-  // - Workers receive permission responses via mailbox messages
-  // - Leaders receive permission requests via mailbox messages
+  // 注意：权限轮询现在由 useInboxPoller 处理
+  // - Worker 通过邮箱消息接收权限响应
+  // - Leader 通过邮箱消息接收权限请求
 
   if ("external" === 'ant') {
-    // Tasks mode: watch for tasks and auto-process them
+    // Tasks 模式：监视任务并自动处理它们
     // eslint-disable-next-line react-hooks/rules-of-hooks
     // biome-ignore lint/correctness/useHookAtTopLevel: conditional for dead code elimination in external builds
     useTaskListWatcher({
@@ -4020,19 +4012,19 @@ export function REPL({
     });
   }
 
-  // Abort the current operation when a 'now' priority message arrives
-  // (e.g. from a chat UI client via UDS).
+  // 收到 'now' 优先级消息时中止当前操作
+  // （例如来自通过 UDS 的聊天 UI 客户端）
   useEffect(() => {
     if (queuedCommands.some(cmd => cmd.priority === 'now')) {
       abortControllerRef.current?.abort('interrupt');
     }
   }, [queuedCommands]);
 
-  // Initial load
+  // 初始加载
   useEffect(() => {
     void onInit();
 
-    // Cleanup on unmount
+    // 卸载时清理
     return () => {
       void diagnosticTracker.shutdown();
     };
@@ -4040,19 +4032,19 @@ export function REPL({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Listen for suspend/resume events
+  // 监听 suspend/resume 事件
   const {
     internal_eventEmitter
   } = useStdin();
   const [remountKey, setRemountKey] = useState(0);
   useEffect(() => {
     const handleSuspend = () => {
-      // Print suspension instructions
+      // 打印挂起指令
       process.stdout.write(`\nZY Code has been suspended. Run \`fg\` to bring ZY Code back.\nNote: ctrl + z now suspends ZY Code, ctrl + _ undoes input.\n`);
     };
     const handleResume = () => {
-      // Force complete component tree replacement instead of terminal clear
-      // Ink now handles line count reset internally on SIGCONT
+      // 强制完整组件树替换而非终端清除
+      // Ink 现在在 SIGCONT 时内部处理行数重置
       setRemountKey(prev => prev + 1);
     };
     internal_eventEmitter?.on('suspend', handleSuspend);
@@ -4063,39 +4055,39 @@ export function REPL({
     };
   }, [internal_eventEmitter]);
 
-  // Derive stop hook spinner suffix from messages state
+  // 从消息状态派生停止 hook spinner 后缀
   const stopHookSpinnerSuffix = useMemo(() => {
     if (!isLoading) return null;
 
-    // Find stop hook progress messages
+    // 查找停止 hook 进度消息
     const progressMsgs = messages.filter((m): m is ProgressMessage<HookProgress> => m.type === 'progress' && m.data.type === 'hook_progress' && (m.data.hookEvent === 'Stop' || m.data.hookEvent === 'SubagentStop'));
     if (progressMsgs.length === 0) return null;
 
-    // Get the most recent stop hook execution
+    // 获取最近的停止 hook 执行
     const currentToolUseID = progressMsgs.at(-1)?.toolUseID;
     if (!currentToolUseID) return null;
 
-    // Check if there's already a summary message for this execution (hooks completed)
+    // 检查此执行是否已有摘要消息（hooks 已完成）
     const hasSummaryForCurrentExecution = messages.some(m => m.type === 'system' && m.subtype === 'stop_hook_summary' && m.toolUseID === currentToolUseID);
     if (hasSummaryForCurrentExecution) return null;
     const currentHooks = progressMsgs.filter(p => p.toolUseID === currentToolUseID);
     const total = currentHooks.length;
 
-    // Count completed hooks
+    // 统计已完成的 hooks
     const completedCount = count(messages, m => {
       if (m.type !== 'attachment') return false;
       const attachment = m.attachment;
       return 'hookEvent' in attachment && (attachment.hookEvent === 'Stop' || attachment.hookEvent === 'SubagentStop') && 'toolUseID' in attachment && attachment.toolUseID === currentToolUseID;
     });
 
-    // Check if any hook has a custom status message
+    // 检查是否有任何 hook 有自定义状态消息
     const customMessage = currentHooks.find(p => p.data.statusMessage)?.data.statusMessage;
     if (customMessage) {
-      // Use custom message with progress counter if multiple hooks
+      // 如果有多个 hook，使用自定义消息加进度计数器
       return total === 1 ? `${customMessage}…` : `${customMessage}… ${completedCount}/${total}`;
     }
 
-    // Fall back to default behavior
+    // 回退到默认行为
     const hookType = currentHooks[0]?.data.hookEvent === 'SubagentStop' ? 'subagent stop' : 'stop';
     if ("external" === 'ant') {
       const cmd = currentHooks[completedCount]?.data.command;
@@ -4105,7 +4097,7 @@ export function REPL({
     return total === 1 ? `running ${hookType} hook` : `running stop hooks… ${completedCount}/${total}`;
   }, [messages, isLoading]);
 
-  // Callback to capture frozen state when entering transcript mode
+  // 进入转录模式时捕获冻结状态的回调
   const handleEnterTranscript = useCallback(() => {
     setFrozenTranscriptState({
       messagesLength: messages.length,
@@ -4113,18 +4105,18 @@ export function REPL({
     });
   }, [messages.length, streamingToolUses.length]);
 
-  // Callback to clear frozen state when exiting transcript mode
+  // 退出转录模式时清除冻结状态的回调
   const handleExitTranscript = useCallback(() => {
     setFrozenTranscriptState(null);
   }, []);
 
-  // Props for GlobalKeybindingHandlers component (rendered inside KeybindingSetup)
+  // GlobalKeybindingHandlers 组件的 props（在 KeybindingSetup 内部渲染）
   const virtualScrollActive = isFullscreenEnvEnabled() && !disableVirtualScroll;
 
-  // Transcript search state. Hooks must be unconditional so they live here
-  // (not inside the `if (screen === 'transcript')` branch below); isActive
-  // gates the useInput. Query persists across bar open/close so n/N keep
-  // working after Enter dismisses the bar (less semantics).
+  // 转录搜索状态。Hook 必须无条件所以它们在此处
+  // （不在下面的 `if (screen === 'transcript')` 分支内）；isActive
+  // 门控 useInput。查询在 bar 打开/关闭之间持续，所以 n/N 在
+  // Enter 关闭 bar 后继续工作（less 语义）
   const jumpRef = useRef<JumpHandle | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -4140,17 +4132,15 @@ export function REPL({
     // (highlights, n/N) is just state. Esc/q/ctrl+c → transcript:exit
     // (ungated). Highlights clear on exit via the screen-change effect.
     if (input === '/') {
-      // Capture scrollTop NOW — typing is a preview, 0-matches snaps
-      // back here. Synchronous ref write, fires before the bar's
-      // mount-effect calls setSearchQuery.
+      // 立即捕获 scrollTop —— 打字是预览，0 匹配会跳回这里。
+      // 同步 ref 写入，在 bar 的 mount-effect 调用 setSearchQuery 之前触发
       jumpRef.current?.setAnchor();
       setSearchOpen(true);
       event.stopImmediatePropagation();
       return;
     }
-    // Held-key batching: tokenizer coalesces to 'nnn'. Same uniform-batch
-    // pattern as modalPagerAction in ScrollKeybindingHandler.tsx. Each
-    // repeat is a step (n isn't idempotent like g).
+    // 按住键批处理：tokenizer 合并为 'nnn'。与 ScrollKeybindingHandler.tsx
+    // 中 modalPagerAction 相同的 uniform-batch 模式。每次重复是一步（n 不是幂等的，不像 g）
     const c = input[0];
     if ((c === 'n' || c === 'N') && input === c.repeat(input.length) && searchCount > 0) {
       const fn = c === 'n' ? jumpRef.current?.nextMatch : jumpRef.current?.prevMatch;
@@ -4158,8 +4148,8 @@ export function REPL({
       event.stopImmediatePropagation();
     }
   },
-  // Search needs virtual scroll (jumpRef drives VirtualMessageList). [
-  // kills it, so !dumpMode — after [ there's nothing to jump in.
+  // 搜索需要虚拟滚动（jumpRef 驱动 VirtualMessageList）。[
+  // 杀死它，所以 !dumpMode —— 在 [ 之后没什么可跳转的
   {
     isActive: screen === 'transcript' && virtualScrollActive && !searchOpen && !dumpMode
   });
@@ -4169,11 +4159,10 @@ export function REPL({
     setPositions
   } = useSearchHighlight();
 
-  // Resize → abort search. Positions are (msg, query, WIDTH)-keyed —
-  // cached positions are stale after a width change (new layout, new
-  // wrapping). Clearing searchQuery triggers VML's setSearchQuery('')
-  // which clears positionsCache + setPositions(null). Bar closes.
-  // User hits / again → fresh everything.
+  // 调整大小 → 中止搜索。Positions 以 (msg, query, WIDTH) 为键 ——
+  // 宽度变化后缓存的 positions 过时（新布局，新换行）。
+  // 清除 searchQuery 触发 VML 的 setSearchQuery('') 清除 positionsCache +
+  // setPositions(null)。bar 关闭。用户再次按 / → 全新初始化
   const transcriptCols = useTerminalSize().columns;
   const prevColsRef = React.useRef(transcriptCols);
   React.useEffect(() => {
@@ -4190,39 +4179,37 @@ export function REPL({
     }
   }, [transcriptCols, searchQuery, searchOpen, setHighlight]);
 
-  // Transcript escape hatches. Bare letters in modal context (no prompt
-  // competing for input) — same class as g/G/j/k in ScrollKeybindingHandler.
+  // 转录退出快捷键。模态上下文中的裸字母（没有提示竞争输入）
+  // —— 与 ScrollKeybindingHandler 中的 g/G/j/k 相同类别
   useInput((input, key, event) => {
     if (key.ctrl || key.meta) return;
     if (input === 'q') {
-      // less: q quits the pager. ctrl+o toggles; q is the lineage exit.
+      // less: q 退出 pager。ctrl+o 切换；q 是 lineage 退出
       handleExitTranscript();
       event.stopImmediatePropagation();
       return;
     }
     if (input === '[' && !dumpMode) {
-      // Force dump-to-scrollback. Also expand + uncap — no point dumping
-      // a subset. Terminal/tmux cmd-F can now find anything. Guard here
-      // (not in isActive) so v still works post-[ — dump-mode footer at
-      // ~4898 wires editorStatus, confirming v is meant to stay live.
+      // 强制转储到回滚。同时展开 + 解除限制 —— 转储子集没有意义。
+      // 终端/tmux cmd-F 现在可以搜索任何内容。守卫在此
+      // （不在 isActive 中）所以 v 在 [ 之后仍然有效 —— dump-mode footer 在
+      // ~4898 连接 editorStatus，确认 v 应该保持活跃
       setDumpMode(true);
       setShowAllInTranscript(true);
       event.stopImmediatePropagation();
     } else if (input === 'v') {
-      // less-style: v opens the file in $VISUAL/$EDITOR. Render the full
-      // transcript (same path /export uses), write to tmp, hand off.
-      // openFileInExternalEditor handles alt-screen suspend/resume for
-      // terminal editors; GUI editors spawn detached.
+      // less 风格：v 在 $VISUAL/$EDITOR 中打开文件。渲染完整
+      // 转录（与 /export 相同的路径），写入 tmp，交出。
+      // openFileInExternalEditor 处理终端编辑器的 alt-screen 挂起/恢复；
+      // GUI 编辑器分离生成
       event.stopImmediatePropagation();
-      // Drop double-taps: the render is async and a second press before it
-      // completes would run a second parallel render (double memory, two
-      // tempfiles, two editor spawns). editorGenRef only guards
-      // transcript-exit staleness, not same-session concurrency.
+      // 防止双击：渲染是异步的，在完成前的第二次按下会运行
+      // 第二个并行渲染（双倍内存、两个临时文件、两次编辑器生成）。
+      // editorGenRef 仅守卫转录退出过时的情况，不守卫同会话并发
       if (editorRenderingRef.current) return;
       editorRenderingRef.current = true;
-      // Capture generation + make a staleness-aware setter. Each write
-      // checks gen (transcript exit bumps it → late writes from the
-      // async render go silent).
+      // 捕获 generation + 创建防过时 setter。每次写入检查 gen
+      // （转录退出增加它 —— 来自异步渲染的迟写入静默失败）
       const gen = editorGenRef.current;
       const setStatus = (s: string): void => {
         if (gen !== editorGenRef.current) return;
@@ -4232,10 +4219,10 @@ export function REPL({
       setStatus(`rendering ${deferredMessages.length} messages…`);
       void (async () => {
         try {
-          // Width = terminal minus vim's line-number gutter (4 digits +
-          // space + slack). Floor at 80. PassThrough has no .columns so
-          // without this Ink defaults to 80. Trailing-space strip: right-
-          // aligned timestamps still leave a flexbox spacer run at EOL.
+          // 宽度 = 终端宽度减去 vim 的行号边栏（4 位数字 +
+          // 空格 + 余量）。最低 80。PassThrough 没有 .columns 所以
+          // 没有这个 Ink 默认 80。去除尾部空格：右对齐的时间戳
+          // 仍然在行尾留下 flexbox 空格运行
           // eslint-disable-next-line custom-rules/prefer-use-terminal-size -- one-shot at keypress time, not a reactive render dep
           const w = Math.max(80, (process.stdout.columns ?? 80) - 6);
           const raw = await renderMessagesToPlainText(deferredMessages, tools, w);
@@ -4253,17 +4240,17 @@ export function REPL({
       })();
     }
   },
-  // !searchOpen: typing 'v' or '[' in the search bar is search input, not
-  // a command. No !dumpMode here — v should work after [ (the [ handler
-  // guards itself inline).
+  // !searchOpen: 在搜索栏中键入 'v' 或 '[' 是搜索输入，不是
+  // 命令。此处无 !dumpMode —— v 在 [ 之后应该有效（[ 处理程序
+  // 在内部自行守卫）
   {
     isActive: screen === 'transcript' && virtualScrollActive && !searchOpen
   });
 
-  // Fresh `less` per transcript entry. Prevents stale highlights matching
-  // unrelated normal-mode text (overlay is alt-screen-global) and avoids
-  // surprise n/N on re-entry. Same exit resets [ dump mode — each ctrl+o
-  // entry is a fresh instance.
+  // 每次转录条目使用新的 `less`。防止过时高亮匹配
+  // 不相关的普通模式文本（覆盖层是 alt-screen-global）并避免
+  // 重新进入时意外 n/N。相同的退出重置 [ dump 模式 —— 每次 ctrl+o
+  // 条目是新实例
   const inTranscript = screen === 'transcript' && virtualScrollActive;
   useEffect(() => {
     if (!inTranscript) {
@@ -4302,27 +4289,26 @@ export function REPL({
     searchBarOpen: searchOpen
   };
 
-  // Use frozen lengths to slice arrays, avoiding memory overhead of cloning
+  // 使用冻结长度切片数组，避免克隆的内存开销
   const transcriptMessages = frozenTranscriptState ? deferredMessages.slice(0, frozenTranscriptState.messagesLength) : deferredMessages;
   const transcriptStreamingToolUses = frozenTranscriptState ? streamingToolUses.slice(0, frozenTranscriptState.streamingToolUsesLength) : streamingToolUses;
 
-  // Handle shift+down for teammate navigation and background task management.
-  // Guard onOpenBackgroundTasks when a local-jsx dialog (e.g. /mcp) is open —
-  // otherwise Shift+Down stacks BackgroundTasksDialog on top and deadlocks input.
+  // 处理 teammate 导航和后台任务管理的 shift+down。
+  // 当 local-jsx 对话框（例如 /mcp）打开时守卫 onOpenBackgroundTasks ——
+  // 否则 Shift+Down 会在 BackgroundTasksDialog 之上叠加并死锁输入
   useBackgroundTaskNavigation({
     onOpenBackgroundTasks: isShowingLocalJSXCommand ? undefined : () => setShowBashesDialog(true)
   });
-  // Auto-exit viewing mode when teammate completes or errors
+  // teammate 完成或出错时自动退出查看模式
   useTeammateViewAutoExit();
   if (screen === 'transcript') {
-    // Virtual scroll replaces the 30-message cap: everything is scrollable
-    // and memory is bounded by the viewport. Without it, wrapping transcript
-    // in a ScrollBox would mount all messages (~250 MB on long sessions —
-    // the exact problem), so the kill switch and non-fullscreen paths must
-    // fall through to the legacy render: no alt screen, dump to terminal
-    // scrollback, 30-cap + Ctrl+E. Reusing scrollRef is safe — normal-mode
-    // and transcript-mode are mutually exclusive (this early return), so
-    // only one ScrollBox is ever mounted at a time.
+    // 虚拟滚动替代 30 条消息限制：所有内容可滚动且
+    // 内存由视口限制。没有它，用 ScrollBox 包装转录会
+    // 挂载所有消息（长会话上约 250 MB —— 正是这个问题），
+    // 所以 kill switch 和非全屏路径必须回退到旧版渲染：
+    // 无 alt screen，转储到终端回滚，30 条限制 + Ctrl+E。
+    // 重用 scrollRef 是安全的 —— 普通模式和转录模式互斥
+    // （此提前返回），所以一次只有一个 ScrollBox 挂载
     const transcriptScrollRef = isFullscreenEnvEnabled() && !disableVirtualScroll && !dumpMode ? scrollRef : undefined;
     const transcriptMessagesElement = <Messages messages={transcriptMessages} tools={tools} commands={commands} verbose={true} toolJSX={null} toolUseConfirmQueue={[]} inProgressToolUseIDs={inProgressToolUseIDs} isMessageSelectorVisible={false} conversationId={conversationId} screen={screen} agentDefinitions={agentDefinitions} streamingToolUses={transcriptStreamingToolUses} showAllInTranscript={showAllInTranscript} onOpenRateLimitOptions={handleOpenRateLimitOptions} isLoading={isLoading} hidePastThinking={true} streamingThinking={streamingThinking} scrollRef={transcriptScrollRef} jumpRef={jumpRef} onSearchMatchesChange={onSearchMatchesChange} scanElement={scanElement} setPositions={setPositions} disableRenderCap={dumpMode} />;
     const transcriptToolJSX = toolJSX && <Box flexDirection="column" width="100%">
@@ -4334,21 +4320,18 @@ export function REPL({
         {feature('VOICE_MODE') ? <VoiceKeybindingHandler voiceHandleKeyEvent={voice.handleKeyEvent} stripTrailing={voice.stripTrailing} resetAnchor={voice.resetAnchor} isActive={!toolJSX?.isLocalJSXCommand} /> : null}
         <CommandKeybindingHandlers onSubmit={onSubmit} isActive={!toolJSX?.isLocalJSXCommand} />
         {transcriptScrollRef ?
-      // ScrollKeybindingHandler must mount before CancelRequestHandler so
-      // ctrl+c-with-selection copies instead of cancelling the active task.
-      // Its raw useInput handler only stops propagation when a selection
-      // exists — without one, ctrl+c falls through to CancelRequestHandler.
+      // ScrollKeybindingHandler 必须在 CancelRequestHandler 之前挂载，
+      // 这样 ctrl+c 带选择时复制而非取消活动任务。
+      // 其原始 useInput 处理程序仅在选择存在时停止传播
+      // —— 没有选择时，ctrl+c 透传到 CancelRequestHandler。
       <ScrollKeybindingHandler scrollRef={scrollRef}
-      // Yield wheel/ctrl+u/d to UltraplanChoiceDialog's own scroll
-      // handler while the modal is showing.
+      // 模态显示时将 wheel/ctrl+u/d 交给 UltraplanChoiceDialog 自己的滚动处理程序
       isActive={focusedInputDialog !== 'ultraplan-choice'}
-      // g/G/j/k/ctrl+u/ctrl+d would eat keystrokes the search bar
-      // wants. Off while searching.
+      // g/G/j/k/ctrl+u/ctrl+d 会吃掉搜索栏想要的按键。搜索时关闭
       isModal={!searchOpen}
-      // Manual scroll exits the search context — clear the yellow
-      // current-match marker. Positions are (msg, rowOffset)-keyed;
-      // j/k changes scrollTop so rowOffset is stale → wrong row
-      // gets yellow. Next n/N re-establishes via step()→jump().
+      // 手动滚动退出搜索上下文 —— 清除黄色当前匹配标记。
+      // Positions 以 (msg, rowOffset) 为键；j/k 改变 scrollTop 所以 rowOffset 过时
+      // → 错误行获得黄色。下次 n/N 通过 step()→jump() 重新建立
       onScroll={() => jumpRef.current?.disarmSearch()} /> : null}
         <CancelRequestHandler {...cancelRequestProps} />
         {transcriptScrollRef ? <FullscreenLayout scrollRef={scrollRef} scrollable={<>
@@ -4356,34 +4339,32 @@ export function REPL({
                 {transcriptToolJSX}
                 <SandboxViolationExpandedView />
               </>} bottom={searchOpen ? <TranscriptSearchBar jumpRef={jumpRef}
-      // Seed was tried (c01578c8) — broke /hello muscle
-      // memory (cursor lands after 'foo', /hello → foohello).
-      // Cancel-restore handles the 'don't lose prior search'
-      // concern differently (onCancel re-applies searchQuery).
+      // 曾尝试种子（c01578c8）—— 破坏了 /hello 肌肉记忆
+      // （光标落在 'foo' 后，/hello → foohello）。
+      // Cancel-restore 以不同方式处理“不要丢失之前搜索”的问题
+      // （onCancel 重新应用 searchQuery）
       initialQuery="" count={searchCount} current={searchCurrent} onClose={q => {
-        // Enter — commit. 0-match guard: junk query shouldn't
-        // persist (badge hidden, n/N dead anyway).
+        // Enter —— 确认。0 匹配守卫：垃圾查询不应
+        // 持续（徽章隐藏，n/N 无论如何都失效）
         setSearchQuery(searchCount > 0 ? q : '');
         setSearchOpen(false);
-        // onCancel path: bar unmounts before its useEffect([query])
-        // can fire with ''. Without this, searchCount stays stale
-        // (n guard at :4956 passes) and VML's matches[] too
-        // (nextMatch walks the old array). Phantom nav, no
-        // highlight. onExit (Enter, q non-empty) still commits.
+        // onCancel 路径：bar 在其 useEffect([query]) 能触发之前卸载
+        // 且为 ''。没有这个，searchCount 保持过时
+        // （n 守卫在 :4956 通过）且 VML 的 matches[] 也过时
+        // （nextMatch 走过时数组）。幽灵导航，无高亮。
+        // onExit（Enter，q 非空）仍然提交
         if (!q) {
           setSearchCount(0);
           setSearchCurrent(0);
           jumpRef.current?.setSearchQuery('');
         }
       }} onCancel={() => {
-        // Esc/ctrl+c/ctrl+g — undo. Bar's effect last fired
-        // with whatever was typed. searchQuery (REPL state)
-        // is unchanged since / (onClose = commit, didn't run).
-        // Two VML calls: '' restores anchor (0-match else-
-        // branch), then searchQuery re-scans from anchor's
-        // nearest. Both synchronous — one React batch.
-        // setHighlight explicit: REPL's sync-effect dep is
-        // searchQuery (unchanged), wouldn't re-fire.
+        // Esc/ctrl+c/ctrl+g —— 撤销。bar 的 effect 最后一次触发
+        // 时带有输入的内容。searchQuery（REPL state）自 / 以来未变
+        // （onClose = 确认，未运行）。两次 VML 调用：'' 恢复 anchor
+        // （0 匹配 else 分支），然后 searchQuery 从 anchor 的最近重新扫描。
+        // 两者同步 —— 一次 React 批处理。
+        // setHighlight 显式：REPL 的 sync-effect 依赖是 searchQuery（未变），不会重新触发
         setSearchOpen(false);
         jumpRef.current?.setSearchQuery('');
         jumpRef.current?.setSearchQuery(searchQuery);
@@ -4398,14 +4379,14 @@ export function REPL({
             <TranscriptModeFooter showAllInTranscript={showAllInTranscript} virtualScroll={false} suppressShowAll={dumpMode} status={editorStatus || undefined} />
           </>}
       </KeybindingSetup>;
-    // The virtual-scroll branch (FullscreenLayout above) needs
-    // <AlternateScreen>'s <Box height={rows}> constraint — without it,
-    // ScrollBox's flexGrow has no ceiling, viewport = content height,
-    // scrollTop pins at 0, and Ink's screen buffer sizes to the full
-    // spacer (200×5k+ rows on long sessions). Same root type + props as
-    // normal mode's wrap below so React reconciles and the alt buffer
-    // stays entered across toggle. The 30-cap dump branch stays
-    // unwrapped — it wants native terminal scrollback.
+    // 虚拟滚动分支（上面的 FullscreenLayout）需要
+    // <AlternateScreen> 的 <Box height={rows}> 约束 —— 没有它，
+    // ScrollBox 的 flexGrow 没有上限，视口 = 内容高度，
+    // scrollTop 固定在 0，且 Ink 的屏幕缓冲区大小为完整
+    // 间隔（长会话上 200×5k+ 行）。与下面普通模式的
+    // wrap 相同的根类型 + props 以便 React 调和且 alt buffer
+    // 在切换时保持进入。30 条限制的 dump 分支保持
+    // 未包装 —— 它需要原生终端回滚
     if (transcriptScrollRef) {
       return <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>
           {transcriptReturn}
@@ -4414,62 +4395,58 @@ export function REPL({
     return transcriptReturn;
   }
 
-  // Get viewed agent task (inlined from selectors for explicit data flow).
-  // viewedAgentTask: teammate OR local_agent — drives the boolean checks
-  // below. viewedTeammateTask: teammate-only narrowed, for teammate-specific
-  // field access (inProgressToolUseIDs).
+  // 获取查看的 agent 任务（从选择器内联以获得显式数据流）。
+  // viewedAgentTask：teammate 或 local_agent —— 驱动下方的布尔检查。
+  // viewedTeammateTask：仅 teammate 缩小，用于 teammate 专属字段访问（inProgressToolUseIDs）
   const viewedTask = viewingAgentTaskId ? tasks[viewingAgentTaskId] : undefined;
   const viewedTeammateTask = viewedTask && isInProcessTeammateTask(viewedTask) ? viewedTask : undefined;
   const viewedAgentTask = viewedTeammateTask ?? (viewedTask && isLocalAgentTask(viewedTask) ? viewedTask : undefined);
 
-  // Bypass useDeferredValue when streaming text is showing so Messages renders
-  // the final message in the same frame streaming text clears. Also bypass when
-  // not loading — deferredMessages only matters during streaming (keeps input
-  // responsive); after the turn ends, showing messages immediately prevents a
-  // jitter gap where the spinner is gone but the answer hasn't appeared yet.
-  // Only reducedMotion users keep the deferred path during loading.
+  // 当流式文本显示时绕过 useDeferredValue 以便 Messages 在
+  // 流式文本清除的同一帧渲染最终消息。同时在
+  // 未加载时绕过 —— deferredMessages 仅在流式传输期间重要（保持输入响应）；
+  // 回合结束后，立即显示消息防止闪烁间隙，spinner 消失但答案尚未出现。
+  // 只有 reducedMotion 用户在加载期间保持 deferred 路径
   const usesSyncMessages = showStreamingText || !isLoading;
-  // When viewing an agent, never fall through to leader — empty until
-  // bootstrap/stream fills. Closes the see-leader-type-agent footgun.
+  // 查看 agent 时，绝不回退到 leader —— 空直到
+  // bootstrap/stream 填充。关闭查看 leader 类型 agent 的陷阱
   const displayedMessages = viewedAgentTask ? viewedAgentTask.messages ?? [] : usesSyncMessages ? messages : deferredMessages;
-  // Show the placeholder until the real user message appears in
-  // displayedMessages. userInputOnProcessing stays set for the whole turn
-  // (cleared in resetLoadingState); this length check hides it once
-  // displayedMessages grows past the baseline captured at submit time.
-  // Covers both gaps: before setMessages is called (processUserInput), and
-  // while deferredMessages lags behind messages. Suppressed when viewing an
-  // agent — displayedMessages is a different array there, and onAgentSubmit
-  // doesn't use the placeholder anyway.
+  // 显示占位符直到真实用户消息出现在
+  // displayedMessages 中。userInputOnProcessing 在整个回合保持设置
+  // （在 resetLoadingState 清除）；此长度检查在 displayedMessages 超过
+  // 提交时捕获的基线后隐藏它。覆盖两个间隙：在 setMessages 被调用之前
+  // （processUserInput），以及 deferredMessages 落后于 messages 时。
+  // 查看 agent 时抑制 —— displayedMessages 是不同的数组，且 onAgentSubmit
+  // 无论如何不使用占位符
   const placeholderText = userInputOnProcessing && !viewedAgentTask && displayedMessages.length <= userInputBaselineRef.current ? userInputOnProcessing : undefined;
   const toolPermissionOverlay = focusedInputDialog === 'tool-permission' ? <PermissionRequest key={toolUseConfirmQueue[0]?.toolUseID} onDone={() => setToolUseConfirmQueue(([_, ...tail]) => tail)} onReject={handleQueuedCommandOnCancel} toolUseConfirm={toolUseConfirmQueue[0]!} toolUseContext={getToolUseContext(messages, messages, abortController ?? createAbortController(), mainLoopModel)} verbose={verbose} workerBadge={toolUseConfirmQueue[0]?.workerBadge} setStickyFooter={isFullscreenEnvEnabled() ? setPermissionStickyFooter : undefined} /> : null;
 
-  // Narrow terminals: companion collapses to a one-liner that REPL stacks
-  // on its own row (above input in fullscreen, below in scrollback) instead
-  // of row-beside. Wide terminals keep the row layout with sprite on the right.
+  // 窄终端：companion 折叠为一行，REPL 将其堆叠
+  // 在自己的行上（全屏时在输入上方，回滚时在下方）而非
+  // 行旁边。宽终端保持行布局，精灵在右侧
   const companionNarrow = transcriptCols < MIN_COLS_FOR_FULL_SPRITE;
-  // Hide the sprite when PromptInput early-returns BackgroundTasksDialog.
-  // The sprite sits as a row sibling of PromptInput, so the dialog's Pane
-  // divider draws at useTerminalSize() width but only gets terminalWidth -
-  // spriteWidth — divider stops short and dialog text wraps early. Don't
-  // check footerSelection: pill FOCUS (arrow-down to tasks pill) must keep
-  // the sprite visible so arrow-right can navigate to it.
+  // PromptInput 提前返回 BackgroundTasksDialog 时隐藏精灵。
+  // 精灵作为 PromptInput 的行兄弟放置，所以对话框的 Pane
+  // 分隔线在 useTerminalSize() 宽度处绘制但只获得 terminalWidth -
+  // spriteWidth —— 分隔线提前停止且对话框文字提前换行。
+  // 不检查 footerSelection：pill 焦点（向下箭头到任务 pill）必须保持
+  // 精灵可见以便右箭头可以导航到它
   const companionVisible = !toolJSX?.shouldHidePromptInput && !focusedInputDialog && !showBashesDialog;
 
-  // In fullscreen, ALL local-jsx slash commands float in the modal slot —
-  // FullscreenLayout wraps them in an absolute-positioned bottom-anchored
-  // pane (▔ divider, ModalContext). Pane/Dialog inside detect the context
-  // and skip their own top-level frame. Non-fullscreen keeps the inline
-  // render paths below. Commands that used to route through bottom
-  // (immediate: /model, /mcp, /btw, ...) and scrollable (non-immediate:
-  // /config, /theme, /diff, ...) both go here now.
+  // 全屏时，所有 local-jsx 斜杠命令浮动在模态插槽中 ——
+  // FullscreenLayout 将它们包装在绝对定位底部锚定的
+  // 面板中（▔ 分隔线，ModalContext）。Pane/Dialog 在内部检测上下文
+  // 并跳过自己的顶级框架。非全屏保持下面的内联
+  // 渲染路径。曾经通过 bottom 路由的命令（immediate: /model, /mcp, /btw, ...）
+  // 和 scrollable（非 immediate: /config, /theme, /diff, ...）现在都走这里
   const toolJsxCentered = isFullscreenEnvEnabled() && toolJSX?.isLocalJSXCommand === true;
   const centeredModal: React.ReactNode = toolJsxCentered ? toolJSX!.jsx : null;
 
-  // <AlternateScreen> at the root: everything below is inside its
-  // <Box height={rows}>. Handlers/contexts are zero-height so ScrollBox's
-  // flexGrow in FullscreenLayout resolves against this Box. The transcript
-  // early return above wraps its virtual-scroll branch the same way; only
-  // the 30-cap dump branch stays unwrapped for native terminal scrollback.
+  // 根部的 <AlternateScreen>：下面的所有内容都在其
+  // <Box height={rows}> 内。Handlers/contexts 是零高度所以 ScrollBox 的
+  // flexGrow 在 FullscreenLayout 中针对此 Box 解析。上面的转录
+  // 提前返回以相同方式包装其虚拟滚动分支；只有
+  // 30 条限制的 dump 分支保持未包装以获得原生终端回滚
   const mainReturn = <KeybindingSetup>
       <AnimatedTerminalTitle isAnimating={titleIsAnimating} title={terminalTitle} disabled={titleDisabled} noPrefix={showStatusInTerminalTab} />
       <GlobalKeybindingHandlers {...globalKeybindingProps} />
@@ -4494,8 +4471,8 @@ export function REPL({
               <TeammateViewHeader />
               <Messages messages={displayedMessages} tools={tools} commands={commands} verbose={verbose} toolJSX={toolJSX} toolUseConfirmQueue={toolUseConfirmQueue} inProgressToolUseIDs={viewedTeammateTask ? viewedTeammateTask.inProgressToolUseIDs ?? new Set() : inProgressToolUseIDs} isMessageSelectorVisible={isMessageSelectorVisible} conversationId={conversationId} screen={screen} streamingToolUses={streamingToolUses} showAllInTranscript={showAllInTranscript} agentDefinitions={agentDefinitions} onOpenRateLimitOptions={handleOpenRateLimitOptions} isLoading={isLoading} streamingText={isLoading && !viewedAgentTask ? visibleStreamingText : null} isBriefOnly={viewedAgentTask ? false : isBriefOnly} unseenDivider={viewedAgentTask ? undefined : unseenDivider} scrollRef={isFullscreenEnvEnabled() ? scrollRef : undefined} trackStickyPrompt={isFullscreenEnvEnabled() ? true : undefined} cursor={cursor} setCursor={setCursor} cursorNavRef={cursorNavRef} />
               <AwsAuthStatusBox />
-              {/* Hide the processing placeholder while a modal is showing —
-                  it would sit at the last visible transcript row right above
+              {/* 显示模态时隐藏处理占位符 ——
+                  它会坐在最后可见的转录行上方，紧靠
                   ▔ 分隔线，显示 "❯ /config" 显得冗余
                   （模态框本身就是 /config UI）。在模态框外保持显示，
                   以便用户在 Zy 处理时能看到自己的输入回显。 */}
