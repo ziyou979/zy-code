@@ -684,7 +684,8 @@ export class CCRClient {
         (2 * Math.random() - 1)
       this.heartbeatTimer = setTimeout(tick, this.heartbeatIntervalMs + jitter)
     }
-    const tick = (): void => {
+    let tick;
+    tick = (): void => {
       void this.sendHeartbeat()
       // stopHeartbeat nulls the timer; check after the fire-and-forget send
       // but before rescheduling so close() during sendHeartbeat is honored.

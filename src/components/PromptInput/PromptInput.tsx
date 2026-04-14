@@ -981,7 +981,8 @@ function PromptInput({
   const setSuggestionsState = useCallback((updater: typeof suggestionsState | ((prev: typeof suggestionsState) => typeof suggestionsState)) => {
     setSuggestionsStateRaw(prev => typeof updater === 'function' ? updater(prev) : updater);
   }, []);
-  const onSubmit = useCallback(async (inputParam: string, isSubmittingSlashCommand = false) => {
+  let onSubmit;
+  onSubmit = useCallback(async (inputParam: string, isSubmittingSlashCommand = false) => {
     inputParam = inputParam.trimEnd();
 
     // Don't submit if a footer indicator is being opened. Read fresh from
@@ -1254,7 +1255,8 @@ function PromptInput({
   const doublePressEscFromEmpty = useDoublePress(() => {}, () => onShowMessageSelector());
 
   // Function to get the queued command for editing. Returns true if commands were popped.
-  const popAllCommandsFromQueue = useCallback((): boolean => {
+  let popAllCommandsFromQueue;
+  popAllCommandsFromQueue = useCallback((): boolean => {
     const result = popAllEditable(input, cursorOffset);
     if (!result) {
       return false;

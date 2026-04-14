@@ -161,7 +161,8 @@ export function openFileInExternalEditor(
   }
 }
 
-export const getExternalEditor = memoize((): string | undefined => {
+export let getExternalEditor;
+getExternalEditor = memoize((): string | undefined => {
   // Prioritize environment variables
   if (process.env.VISUAL?.trim()) {
     return process.env.VISUAL.trim()

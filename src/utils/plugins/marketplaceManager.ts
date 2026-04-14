@@ -2119,7 +2119,8 @@ export async function getMarketplaceCacheOnly(
  * @param name - The marketplace name to fetch
  * @returns The marketplace object or null if not found/failed
  */
-export const getMarketplace = memoize(
+export let getMarketplace;
+getMarketplace = memoize(
   async (name: string): Promise<PluginMarketplace> => {
     const config = await loadKnownMarketplacesConfig()
     const entry = config[name]

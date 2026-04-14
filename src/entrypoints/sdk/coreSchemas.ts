@@ -334,7 +334,8 @@ export const PermissionResultSchema = lazySchema(() =>
   ]),
 )
 
-export const PermissionModeSchema = lazySchema(() =>
+export let PermissionModeSchema;
+PermissionModeSchema = lazySchema(() =>
   z
     .enum(['default', 'acceptEdits', 'bypassPermissions', 'plan', 'dontAsk'])
     .describe(
@@ -934,7 +935,8 @@ export const SyncHookJSONOutputSchema = lazySchema(() =>
   }),
 )
 
-export const ElicitationHookSpecificOutputSchema = lazySchema(() =>
+export let ElicitationHookSpecificOutputSchema;
+ElicitationHookSpecificOutputSchema = lazySchema(() =>
   z
     .object({
       hookEventName: z.literal('Elicitation'),
@@ -946,7 +948,8 @@ export const ElicitationHookSpecificOutputSchema = lazySchema(() =>
     ),
 )
 
-export const ElicitationResultHookSpecificOutputSchema = lazySchema(() =>
+export let ElicitationResultHookSpecificOutputSchema;
+ElicitationResultHookSpecificOutputSchema = lazySchema(() =>
   z
     .object({
       hookEventName: z.literal('ElicitationResult'),
@@ -958,7 +961,8 @@ export const ElicitationResultHookSpecificOutputSchema = lazySchema(() =>
     ),
 )
 
-export const WorktreeCreateHookSpecificOutputSchema = lazySchema(() =>
+export let WorktreeCreateHookSpecificOutputSchema;
+WorktreeCreateHookSpecificOutputSchema = lazySchema(() =>
   z
     .object({
       hookEventName: z.literal('WorktreeCreate'),
@@ -1253,7 +1257,8 @@ export const NonNullableUsagePlaceholder = lazySchema(() => z.unknown())
 // SDK Message Types
 // ============================================================================
 
-export const SDKAssistantMessageErrorSchema = lazySchema(() =>
+export let SDKAssistantMessageErrorSchema;
+SDKAssistantMessageErrorSchema = lazySchema(() =>
   z.enum([
     'authentication_failed',
     'billing_error',
@@ -1880,7 +1885,8 @@ export const SDKMessageSchema = lazySchema(() =>
   ]),
 )
 
-export const FastModeStateSchema = lazySchema(() =>
+export let FastModeStateSchema;
+FastModeStateSchema = lazySchema(() =>
   z
     .enum(['off', 'cooldown', 'on'])
     .describe(

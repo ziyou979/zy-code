@@ -133,7 +133,8 @@ function createBaseGitHubActionsMetadata(): GitHubActionsMetadata {
   return { actor_id: '', repository_id: '', repository_owner_id: '' }
 }
 
-export const GitHubActionsMetadata: MessageFns<GitHubActionsMetadata> = {
+export let GitHubActionsMetadata;
+GitHubActionsMetadata = {
   fromJSON(object: any): GitHubActionsMetadata {
     return {
       actor_id: isSet(object.actor_id)
@@ -218,7 +219,8 @@ function createBaseEnvironmentMetadata(): EnvironmentMetadata {
   }
 }
 
-export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
+export let EnvironmentMetadata;
+EnvironmentMetadata = {
   fromJSON(object: any): EnvironmentMetadata {
     return {
       platform: isSet(object.platform)
@@ -499,7 +501,8 @@ function createBaseSlackContext(): SlackContext {
   }
 }
 
-export const SlackContext: MessageFns<SlackContext> = {
+export let SlackContext;
+SlackContext = {
   fromJSON(object: any): SlackContext {
     return {
       slack_team_id: isSet(object.slack_team_id)
@@ -583,7 +586,8 @@ function createBaseZyCodeInternalEvent(): ZyCodeInternalEvent {
   }
 }
 
-export const ZyCodeInternalEvent: MessageFns<ZyCodeInternalEvent> = {
+export let ZyCodeInternalEvent;
+ZyCodeInternalEvent = {
   fromJSON(object: any): ZyCodeInternalEvent {
     return {
       event_name: isSet(object.event_name)

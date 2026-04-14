@@ -3134,7 +3134,8 @@ export const loadAllPlugins = memoize(async (): Promise<PluginLoadResult> => {
  * the full loader don't get plugin-cache-miss from their downstream
  * cache-only consumers.
  */
-export const loadAllPluginsCacheOnly = memoize(
+export let loadAllPluginsCacheOnly;
+loadAllPluginsCacheOnly = memoize(
   async (): Promise<PluginLoadResult> => {
     if (isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) {
       return loadAllPlugins()

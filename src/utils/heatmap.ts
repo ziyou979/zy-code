@@ -178,7 +178,8 @@ function getIntensity(
 }
 
 // Zy orange color (hex #da7756)
-const ZyOrange = chalk.hex('#da7756')
+let ZyOrange;
+ZyOrange = chalk.hex('#da7756')
 
 function getHeatmapChar(intensity: number): string {
   switch (intensity) {

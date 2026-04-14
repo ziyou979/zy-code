@@ -1467,7 +1467,8 @@ export function parseMcpConfigFromFilePath(params: {
   })
 }
 
-export const doesEnterpriseMcpConfigExist = memoize((): boolean => {
+export let doesEnterpriseMcpConfigExist;
+doesEnterpriseMcpConfigExist = memoize((): boolean => {
   const { config } = parseMcpConfigFromFilePath({
     filePath: getEnterpriseMcpFilePath(),
     expandVars: true,

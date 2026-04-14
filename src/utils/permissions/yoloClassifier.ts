@@ -1400,7 +1400,8 @@ function isJsonlTranscriptEnabled(): boolean {
  * Guarded at definition for DCE — with external:false, the string content
  * is absent from external builds (same pattern as the .txt requires above).
  */
-const POWERSHELL_DENY_GUIDANCE: readonly string[] = feature(
+let POWERSHELL_DENY_GUIDANCE;
+POWERSHELL_DENY_GUIDANCE = feature(
   'POWERSHELL_AUTO_MODE',
 )
   ? [

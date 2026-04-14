@@ -478,7 +478,8 @@ export function switchSession(
   sessionSwitched.emit(sessionId)
 }
 
-const sessionSwitched = createSignal<[id: SessionId]>()
+let sessionSwitched;
+sessionSwitched = createSignal<[id: SessionId]>()
 
 /**
  * Register a callback that fires when switchSession changes the active

@@ -201,7 +201,8 @@ export const insertBeforeNode = (
   markDirty(node)
 }
 
-export const removeChildNode = (
+export let removeChildNode;
+removeChildNode = (
   node: DOMElement,
   removeNode: DOMNode,
 ): void => {
@@ -329,7 +330,8 @@ export const createTextNode = (text: string): TextNode => {
   return node
 }
 
-const measureTextNode = function (
+let measureTextNode;
+measureTextNode = function (
   node: DOMNode,
   width: number,
   widthMode: LayoutMeasureMode,
@@ -376,7 +378,8 @@ const measureTextNode = function (
 // ink-raw-ansi nodes hold pre-rendered ANSI strings with known dimensions.
 // No stringWidth, no wrapping, no tab expansion — the producer (e.g. ColorDiff)
 // already wrapped to the target width and each line is exactly one terminal row.
-const measureRawAnsiNode = function (node: DOMElement): {
+let measureRawAnsiNode;
+measureRawAnsiNode = function (node: DOMElement): {
   width: number
   height: number
 } {
@@ -390,7 +393,8 @@ const measureRawAnsiNode = function (node: DOMElement): {
  * Mark a node and all its ancestors as dirty for re-rendering.
  * Also marks yoga dirty for text remeasurement if this is a text node.
  */
-export const markDirty = (node?: DOMNode): void => {
+export let markDirty;
+markDirty = (node?: DOMNode): void => {
   let current: DOMNode | undefined = node
   let markedYoga = false
 
@@ -422,7 +426,8 @@ export const scheduleRenderFrom = (node?: DOMNode): void => {
   if (cur && cur.nodeName !== '#text') (cur as DOMElement).onRender?.()
 }
 
-export const setTextNodeValue = (node: TextNode, text: string): void => {
+export let setTextNodeValue;
+setTextNodeValue = (node: TextNode, text: string): void => {
   if (typeof text !== 'string') {
     text = String(text)
   }

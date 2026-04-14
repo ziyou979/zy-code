@@ -961,7 +961,8 @@ export function prefetchAwsCredentialsAndBedRockInfoIfSafe(): void {
 }
 
 /** @private Use {@link getApiKey} or {@link getApiKeyWithSource} */
-export const getApiKeyFromConfigOrMacOSKeychain = memoize(
+export let getApiKeyFromConfigOrMacOSKeychain;
+getApiKeyFromConfigOrMacOSKeychain = memoize(
   (): { key: string; source: ApiKeySource } | null => {
     if (isBareMode()) return null
     // TODO: migrate to SecureStorage
@@ -1165,7 +1166,8 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
   }
 }
 
-export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
+export let getZyAIOAuthTokens;
+getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
   // --bare: API-key-only. No OAuth tokens, no keychain, no credentials file.
   if (isBareMode()) return null
 

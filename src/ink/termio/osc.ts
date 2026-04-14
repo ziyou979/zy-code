@@ -226,7 +226,8 @@ export function _resetLinuxCopyCache(): void {
 /**
  * OSC command numbers
  */
-export const OSC = {
+export let OSC;
+OSC = {
   SET_TITLE_AND_ICON: 0,
   SET_ICON: 1,
   SET_TITLE: 2,
@@ -417,7 +418,8 @@ function osc8Id(url: string): string {
 }
 
 /** End a hyperlink (OSC 8) */
-export const LINK_END = osc(OSC.HYPERLINK, '', '')
+export let LINK_END;
+LINK_END = osc(OSC.HYPERLINK, '', '')
 
 // iTerm2 OSC 9 subcommands
 

@@ -18,7 +18,8 @@ export function MCPToolDetailView({
   const [toolDescription, setToolDescription] = React.useState("");
   const t1 = extractMcpToolDisplayName(fullDisplayName);
   const toolName = getMcpDisplayName(tool.name, server.name);
-  const fullDisplayName = tool.userFacingName ? tool.userFacingName({}) : toolName;
+  let fullDisplayName;
+  fullDisplayName = tool.userFacingName ? tool.userFacingName({}) : toolName;
   const displayName = t1;
   const isReadOnly = tool.isReadOnly?.({}) ?? false;
   const isDestructive = tool.isDestructive?.({}) ?? false;

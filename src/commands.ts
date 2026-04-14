@@ -553,7 +553,8 @@ export function getMcpSkillCommands(
 
 // SkillTool 显示模型可以调用的所有基于 prompt 的命令
 // 包括技能（来自 /skills/）和命令（来自 /commands/）
-export const getSkillToolCommands = memoize(
+export let getSkillToolCommands;
+getSkillToolCommands = memoize(
   async (cwd: string): Promise<Command[]> => {
     const allCommands = await getCommands(cwd)
     return allCommands.filter(
@@ -576,7 +577,8 @@ export const getSkillToolCommands = memoize(
 // 筛选命令，仅包含技能。技能是为模型提供专用能力的命令。
 // 通过 loadedFrom 为 'skills'、'plugin' 或 'bundled'，
 // 或设置了 disableModelInvocation 来识别。
-export const getSlashCommandToolSkills = memoize(
+export let getSlashCommandToolSkills;
+getSlashCommandToolSkills = memoize(
   async (cwd: string): Promise<Command[]> => {
     try {
       const allCommands = await getCommands(cwd)

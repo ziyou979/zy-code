@@ -1179,7 +1179,8 @@ export const PluginSourceSchema = lazySchema(() =>
  * occurrence, and MarketplaceSource appears three times in the settings schema
  * (extraKnownMarketplaces, strictKnownMarketplaces, blockedMarketplaces).
  */
-const SettingsMarketplacePluginSchema = lazySchema(() =>
+let SettingsMarketplacePluginSchema;
+SettingsMarketplacePluginSchema = lazySchema(() =>
   z
     .object({
       name: z
@@ -1364,7 +1365,8 @@ const DEP_REF_REGEX =
  * constraints don't cause old clients to fail schema validation and reject
  * the whole plugin. See CC-993 for the eventual version-range design.
  */
-export const DependencyRefSchema = lazySchema(() =>
+export let DependencyRefSchema;
+DependencyRefSchema = lazySchema(() =>
   z.union([
     z
       .string()

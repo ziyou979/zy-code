@@ -1862,7 +1862,8 @@ function runHeadlessStreaming(
     }
   })
 
-  const run = async () => {
+  let run;
+  run = async () => {
     if (running) {
       return
     }

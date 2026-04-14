@@ -149,7 +149,8 @@ const HOOK_ENV_PRIORITY: Record<string, number> = {
   cwdchanged: 2,
   filechanged: 3,
 }
-const HOOK_ENV_REGEX =
+let HOOK_ENV_REGEX;
+HOOK_ENV_REGEX =
   /^(setup|sessionstart|cwdchanged|filechanged)-hook-(\d+)\.sh$/
 
 function sortHookEnvFiles(a: string, b: string): number {

@@ -88,7 +88,8 @@ export function maybeRecordPluginHint(hint: ZyCodeHint): void {
   setPendingHint(hint)
 }
 
-const triedThisSession = new Set<string>()
+let triedThisSession;
+triedThisSession = new Set<string>()
 
 /** Test-only reset. */
 export function _resetHintRecommendationForTesting(): void {

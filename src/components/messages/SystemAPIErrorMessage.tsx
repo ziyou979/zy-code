@@ -35,6 +35,7 @@ export function SystemAPIErrorMessage({
   const T1 = Box;
   const T2 = MessageResponse;
   const t5 = truncated ? formatted.slice(0, MAX_API_ERROR_CHARS) + "\u2026" : formatted;
-  const truncated = !verbose && formatted.length > MAX_API_ERROR_CHARS;
+  let truncated;
+  truncated = !verbose && formatted.length > MAX_API_ERROR_CHARS;
   return <T2>{<T1 flexDirection={"column"}>{<T0 color={"error"}>{t5}</T0>}{truncated && <CtrlOToExpand />}{<Text dimColor={true}>Retrying in {retryInSecondsLive}{" "}{retryInSecondsLive === 1 ? "second" : "seconds"}… (attempt{" "}{retryAttempt}/{maxRetries}){process.env.API_TIMEOUT_MS ? ` · API_TIMEOUT_MS=${process.env.API_TIMEOUT_MS}ms, try increasing it` : ""}</Text>}</T1>}</T2>;
 }

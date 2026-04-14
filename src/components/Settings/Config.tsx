@@ -1743,7 +1743,8 @@ function teammateModelDisplayString(value: string | null | undefined): string {
   if (value === null) return "Default (leader's model)";
   return modelDisplayString(value);
 }
-const THEME_LABELS: Record<string, string> = {
+let THEME_LABELS;
+THEME_LABELS = {
   auto: 'Auto (match terminal)',
   dark: 'Dark mode',
   light: 'Light mode',

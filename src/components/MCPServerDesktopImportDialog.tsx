@@ -51,7 +51,8 @@ export function MCPServerDesktopImportDialog({
     done(importedCount);
   };
   const [theme] = useTheme();
-  const done = importedCount_0 => {
+  let done;
+  done = importedCount_0 => {
     if (importedCount_0 > 0) {
       writeToStdout(`\n${color("success", theme)(`Successfully imported ${importedCount_0} MCP ${plural(importedCount_0, "server")} to ${scope} config.`)}\n`);
     } else {

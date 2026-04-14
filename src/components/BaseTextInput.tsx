@@ -51,7 +51,8 @@ export function BaseTextInput({
     },
     onImagePaste: props.onImagePaste
   });
-  const isPasting = t3;
+  let isPasting;
+  isPasting = t3;
   const {
     onIsPastingChange
   } = props;

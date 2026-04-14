@@ -35,7 +35,8 @@ export class WebSocketTransport implements Transport {
           nws.removeEventListener('error', onError)
           resolve()
         }
-        const onError = (event: Event) => {
+        let onError;
+        onError = (event: Event) => {
           nws.removeEventListener('open', onOpen)
           nws.removeEventListener('error', onError)
           logForDiagnosticsNoPII('error', 'mcp_websocket_connect_fail')

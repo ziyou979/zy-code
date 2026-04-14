@@ -1883,9 +1883,12 @@ export function REPL({
   // 很昂贵（~170ms），所以我们使用 useState 的懒初始化器来
   // 精确创建一次，然后将稳定引用送入 useRef。
   const [initialReadFileState] = useState(() => createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE));
-  const readFileState = useRef(initialReadFileState);
-  const bashTools = useRef(new Set<string>());
-  const bashToolsProcessedIdx = useRef(0);
+  let readFileState;
+  readFileState = useRef(initialReadFileState);
+  let bashTools;
+  bashTools = useRef(new Set<string>());
+  let bashToolsProcessedIdx;
+  bashToolsProcessedIdx = useRef(0);
   // 会话级 skill 发现跟踪（为 tengu_skill_tool_invocation 提供
   // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
   // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
@@ -1899,7 +1902,8 @@ export function REPL({
 
   // 从消息中恢复读取文件状态的辅助函数（用于 resume 流程）
   // 这使 Zy 能够编辑在之前会话中读取的文件
-  const restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
+  let restoreReadFileState;
+  restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
     const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE);
     readFileState.current = mergeFileStateCaches(readFileState.current, extracted);
     for (const tool of extractBashToolsFromMessages(messages)) {
@@ -1931,7 +1935,8 @@ export function REPL({
   const [autoRunIssueReason, setAutoRunIssueReason] = useState<AutoRunIssueReason | null>(null);
   // Ref 跟踪此 survey 周期是否触发了 autoRunIssue，
   // 以便即使在 autoRunIssueReason 清除后也能抑制 [1] 后续提示。
-  const didAutoRunIssueRef = useRef(false);
+  let didAutoRunIssueRef;
+  didAutoRunIssueRef = useRef(false);
 
   // 退出反馈流程的 state
   const [exitFlow, setExitFlow] = useState<React.ReactNode>(null);
@@ -3067,7 +3072,8 @@ export function REPL({
     }
     void processInitialMessage(pending);
   }, [initialMessage, isLoading, setMessages, setAppState, onQuery, mainLoopModel, tools]);
-  const onSubmit = useCallback(async (input: string, helpers: PromptInputHelpers, speculationAccept?: {
+  let onSubmit;
+  onSubmit = useCallback(async (input: string, helpers: PromptInputHelpers, speculationAccept?: {
     state: ActiveSpeculationState;
     speculationSessionTimeSavedMs: number;
     setAppState: SetAppState;

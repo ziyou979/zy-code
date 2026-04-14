@@ -187,10 +187,11 @@ function parsePatternCommand(
  * Extracts paths from command arguments for different path commands.
  * Each command has specific logic for how it handles paths and flags.
  */
-export const PATH_EXTRACTORS: Record<
-  PathCommand,
-  (args: string[]) => string[]
-> = {
+export let PATH_EXTRACTORS;
+PATH_EXTRACTORS = {
+
+
+
   // cd: special case - all args form one path
   cd: args => (args.length === 0 ? [homedir()] : [args.join(' ')]),
 

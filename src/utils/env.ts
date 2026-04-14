@@ -313,7 +313,8 @@ function isSSHSession(): boolean {
   )
 }
 
-export const env = {
+export let env;
+env = {
   hasInternetAccess,
   isCI: isEnvTruthy(process.env.CI),
   platform: (['win32', 'darwin'].includes(process.platform)

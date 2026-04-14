@@ -169,7 +169,8 @@ export type SandboxPermissionResponseCallback = {
 }
 
 // Module-level registry for sandbox permission callbacks
-const pendingSandboxCallbacks: Map<string, SandboxPermissionResponseCallback> =
+let pendingSandboxCallbacks;
+pendingSandboxCallbacks =
   new Map()
 
 /**

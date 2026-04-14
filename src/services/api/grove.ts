@@ -229,7 +229,8 @@ async function fetchAndStoreGroveConfig(accountId: string): Promise<void> {
  * Returns ApiResult to distinguish between API failure and success.
  * Uses existing OAuth 401 retry, then returns failure if that doesn't help.
  */
-export const getGroveNoticeConfig = memoize(
+export let getGroveNoticeConfig;
+getGroveNoticeConfig = memoize(
   async (): Promise<ApiResult<GroveConfig>> => {
     // Grove is a notification feature; during an outage, skipping it is correct.
     if (isEssentialTrafficOnly()) {

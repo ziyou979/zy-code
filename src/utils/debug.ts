@@ -83,13 +83,15 @@ export const getDebugFilter = memoize((): DebugFilter | null => {
   return parseDebugFilter(filterPattern)
 })
 
-export const isDebugToStdErr = memoize((): boolean => {
+export let isDebugToStdErr;
+isDebugToStdErr = memoize((): boolean => {
   return (
     process.argv.includes('--debug-to-stderr') || process.argv.includes('-d2e')
   )
 })
 
-export const getDebugFilePath = memoize((): string | null => {
+export let getDebugFilePath;
+getDebugFilePath = memoize((): string | null => {
   for (let i = 0; i < process.argv.length; i++) {
     const arg = process.argv[i]!
     if (arg.startsWith('--debug-file=')) {
@@ -240,7 +242,8 @@ export function getDebugLogPath(): string {
  * Updates the latest debug log symlink to point to the current debug log file.
  * Creates or updates a symlink at ~/.zy/debug/latest
  */
-const updateLatestDebugLogSymlink = memoize(async (): Promise<void> => {
+let updateLatestDebugLogSymlink;
+updateLatestDebugLogSymlink = memoize(async (): Promise<void> => {
   try {
     const debugLogPath = getDebugLogPath()
     const debugLogsDir = dirname(debugLogPath)

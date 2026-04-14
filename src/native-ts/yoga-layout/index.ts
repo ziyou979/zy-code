@@ -963,7 +963,8 @@ export class Node {
   }
 }
 
-const DEFAULT_CONFIG = createConfig()
+let DEFAULT_CONFIG;
+DEFAULT_CONFIG = createConfig()
 
 const CACHE_SLOTS = 4
 function cacheWrite(

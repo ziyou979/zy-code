@@ -548,7 +548,8 @@ export function getRipgrepStatus(): {
 /**
  * Test ripgrep availability on first use and cache the result
  */
-const testRipgrepOnFirstUse = memoize(async (): Promise<void> => {
+let testRipgrepOnFirstUse;
+testRipgrepOnFirstUse = memoize(async (): Promise<void> => {
   // Already tested
   if (ripgrepStatus !== null) {
     return

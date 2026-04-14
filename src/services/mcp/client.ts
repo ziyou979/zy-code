@@ -1464,7 +1464,8 @@ export const connectToServer = memoize(
                 }, 50)
 
                 // Absolute failsafe: clear interval after 600ms no matter what
-                const failsafeTimeout = setTimeout(() => {
+                let failsafeTimeout;
+                failsafeTimeout = setTimeout(() => {
                   if (!resolved) {
                     resolved = true
                     clearInterval(checkInterval)
@@ -1740,7 +1741,8 @@ export function mcpToolInputToAutoClassifierInput(
     : toolName
 }
 
-export const fetchToolsForClient = memoizeWithLRU(
+export let fetchToolsForClient;
+fetchToolsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Tool[]> => {
     if (client.type !== 'connected') return []
 
@@ -1997,7 +1999,8 @@ export const fetchToolsForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export const fetchResourcesForClient = memoizeWithLRU(
+export let fetchResourcesForClient;
+fetchResourcesForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<ServerResource[]> => {
     if (client.type !== 'connected') return []
 
@@ -2030,7 +2033,8 @@ export const fetchResourcesForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export const fetchCommandsForClient = memoizeWithLRU(
+export let fetchCommandsForClient;
+fetchCommandsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Command[]> => {
     if (client.type !== 'connected') return []
 

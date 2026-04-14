@@ -117,7 +117,8 @@ function createBaseTimestamp(): Timestamp {
   return { seconds: 0, nanos: 0 }
 }
 
-export const Timestamp: MessageFns<Timestamp> = {
+export let Timestamp;
+Timestamp = {
   fromJSON(object: any): Timestamp {
     return {
       seconds: isSet(object.seconds) ? globalThis.Number(object.seconds) : 0,

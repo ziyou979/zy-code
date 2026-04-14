@@ -156,7 +156,8 @@ export async function createRoot({
   }
 }
 
-const getOptions = (
+let getOptions;
+getOptions = (
   stdout: NodeJS.WriteStream | RenderOptions | undefined = {},
 ): RenderOptions => {
   if (stdout instanceof Stream) {
@@ -169,7 +170,8 @@ const getOptions = (
   return stdout
 }
 
-const getInstance = (
+let getInstance;
+getInstance = (
   stdout: NodeJS.WriteStream,
   createInstance: () => Ink,
 ): Ink => {

@@ -74,7 +74,8 @@ export function resetUserCache(): void {
  * Get core user data.
  * This is the base representation that gets transformed for different analytics providers.
  */
-export const getCoreUserData = memoize(
+export let getCoreUserData;
+getCoreUserData = memoize(
   (includeAnalyticsMetadata?: boolean): CoreUserData => {
     const deviceId = getOrCreateUserID()
     const config = getGlobalConfig()
@@ -170,7 +171,8 @@ async function getEmailAsync(): Promise<string | undefined> {
  * Get the user's git email from `git config user.email`.
  * Memoized so the subprocess only spawns once per process.
  */
-export const getGitEmail = memoize(async (): Promise<string | undefined> => {
+export let getGitEmail;
+getGitEmail = memoize(async (): Promise<string | undefined> => {
   const result = await execa('git config --get user.email', {
     shell: true,
     reject: false,

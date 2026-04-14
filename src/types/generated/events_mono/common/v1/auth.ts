@@ -17,7 +17,8 @@ function createBasePublicApiAuth(): PublicApiAuth {
   return { account_id: 0, organization_uuid: '', account_uuid: '' }
 }
 
-export const PublicApiAuth: MessageFns<PublicApiAuth> = {
+export let PublicApiAuth;
+PublicApiAuth = {
   fromJSON(object: any): PublicApiAuth {
     return {
       account_id: isSet(object.account_id)

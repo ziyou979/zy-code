@@ -66,7 +66,8 @@ type PrimaryInput = {
   extract: (input: Record<string, unknown>) => string | undefined;
 };
 const str = (k: string) => (i: Record<string, unknown>) => typeof i[k] === 'string' ? i[k] : undefined;
-const PRIMARY_INPUT: Record<string, PrimaryInput> = {
+let PRIMARY_INPUT;
+PRIMARY_INPUT = {
   Read: {
     label: 'path',
     extract: str('file_path')

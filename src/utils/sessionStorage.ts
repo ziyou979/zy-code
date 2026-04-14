@@ -433,7 +433,8 @@ export function isCustomTitleEnabled(): boolean {
 // string; homedir/env/regex are all session-invariant so the result is
 // stable for a given input. Worktree switches just change the key — no
 // cache clear needed.
-export const getProjectDir = memoize((projectDir: string): string => {
+export let getProjectDir;
+getProjectDir = memoize((projectDir: string): string => {
   return join(getProjectsDir(), sanitizePath(projectDir))
 })
 
@@ -3839,7 +3840,8 @@ async function loadSessionFile(sessionId: UUID): Promise<{
  * Gets message UUIDs for a specific session without loading all sessions.
  * Memoized to avoid re-reading the same session file multiple times.
  */
-const getSessionMessages = memoize(
+let getSessionMessages;
+getSessionMessages = memoize(
   async (sessionId: UUID): Promise<Set<UUID>> => {
     const { messages } = await loadSessionFile(sessionId)
     return new Set(messages.keys())
@@ -4574,7 +4576,8 @@ export async function getSessionFilesWithMtime(
  * means ~6.4 MB of I/O — fast on any modern filesystem while giving users
  * a much better initial view than the previous default of 10.
  */
-const INITIAL_ENRICH_COUNT = 50
+let INITIAL_ENRICH_COUNT;
+INITIAL_ENRICH_COUNT = 50
 
 type LiteMetadata = {
   firstPrompt: string

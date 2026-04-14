@@ -24,7 +24,8 @@ export function MessageResponse({
 // This is a context that is used to determine if the message response
 // is rendered as a descendant of another MessageResponse. We use it
 // to avoid rendering nested ⎿ characters.
-const MessageResponseContext = React.createContext(false);
+let MessageResponseContext;
+MessageResponseContext = React.createContext(false);
 function MessageResponseProvider({
   children
 }: Props) {

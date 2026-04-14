@@ -1718,5 +1718,7 @@ export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
 }
 /* eslint-enable custom-rules/no-sync-fs */
 
-const CONSOLE_STDOUT_METHODS = ['log', 'info', 'debug', 'dir', 'dirxml', 'count', 'countReset', 'group', 'groupCollapsed', 'groupEnd', 'table', 'time', 'timeEnd', 'timeLog'] as const;
-const CONSOLE_STDERR_METHODS = ['warn', 'error', 'trace'] as const;
+let CONSOLE_STDOUT_METHODS;
+CONSOLE_STDOUT_METHODS = ['log', 'info', 'debug', 'dir', 'dirxml', 'count', 'countReset', 'group', 'groupCollapsed', 'groupEnd', 'table', 'time', 'timeEnd', 'timeLog'] as const;
+let CONSOLE_STDERR_METHODS;
+CONSOLE_STDERR_METHODS = ['warn', 'error', 'trace'] as const;

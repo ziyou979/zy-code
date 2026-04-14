@@ -57,7 +57,8 @@ function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
   }
 }
 
-export const GrowthbookExperimentEvent: MessageFns<GrowthbookExperimentEvent> =
+export let GrowthbookExperimentEvent;
+GrowthbookExperimentEvent =
   {
     fromJSON(object: any): GrowthbookExperimentEvent {
       return {

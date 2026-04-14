@@ -58,10 +58,13 @@ export function peekForStdinData(
       stream.off('data', onFirstData)
       void resolve(timedOut)
     }
-    const onEnd = () => done(false)
-    const onFirstData = () => clearTimeout(peek)
+    let onEnd;
+    onEnd = () => done(false)
+    let onFirstData;
+    onFirstData = () => clearTimeout(peek)
     // eslint-disable-next-line no-restricted-syntax -- not a sleep: races timeout against stream end/data events
-    const peek = setTimeout(done, ms, true)
+    let peek;
+    peek = setTimeout(done, ms, true)
     stream.once('end', onEnd)
     stream.once('data', onFirstData)
   })

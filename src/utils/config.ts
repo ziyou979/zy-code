@@ -1591,7 +1591,8 @@ function getConfig<A>(
 }
 
 // Memoized function to get the project path for config lookup
-export const getProjectPathForConfig = memoize((): string => {
+export let getProjectPathForConfig;
+getProjectPathForConfig = memoize((): string => {
   const originalCwd = getOriginalCwd()
   const gitRoot = findCanonicalGitRoot(originalCwd)
 

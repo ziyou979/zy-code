@@ -1351,7 +1351,8 @@ export async function initializeIdeIntegration(
 /**
  * Detects the host IP to use to connect to the extension.
  */
-const detectHostIP = memoize(
+let detectHostIP;
+detectHostIP = memoize(
   async (isIdeRunningInWindows: boolean, port: number) => {
     if (process.env.ZY_CODE_IDE_HOST_OVERRIDE) {
       return process.env.ZY_CODE_IDE_HOST_OVERRIDE

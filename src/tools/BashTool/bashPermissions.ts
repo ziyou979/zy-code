@@ -375,7 +375,8 @@ export const bashPermissionRule: (
  * - GOFLAGS, RUSTFLAGS, NODE_OPTIONS (can contain code execution flags)
  * - HOME, TMPDIR, SHELL, BASH_ENV (affect system behavior)
  */
-const SAFE_ENV_VARS = new Set([
+let SAFE_ENV_VARS;
+SAFE_ENV_VARS = new Set([
   // Go - build/runtime settings only
   'GOEXPERIMENT', // experimental features
   'GOOS', // target OS
@@ -444,7 +445,8 @@ const SAFE_ENV_VARS = new Set([
  *
  * Based on analysis of 30 days of tengu_internal_bash_tool_use_permission_request events.
  */
-const ANT_ONLY_SAFE_ENV_VARS = new Set([
+let ANT_ONLY_SAFE_ENV_VARS;
+ANT_ONLY_SAFE_ENV_VARS = new Set([
   // Kubernetes and container config (config file pointers, not execution)
   'KUBECONFIG', // kubectl config file path — controls which cluster kubectl uses
   'DOCKER_HOST', // Docker daemon socket/endpoint — controls which daemon docker talks to

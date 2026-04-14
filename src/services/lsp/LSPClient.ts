@@ -122,7 +122,8 @@ export function createLSPClient(
             cleanup()
             reject(error)
           }
-          const cleanup = (): void => {
+          let cleanup;
+          cleanup = (): void => {
             spawnedProcess.removeListener('spawn', onSpawn)
             spawnedProcess.removeListener('error', onError)
           }
