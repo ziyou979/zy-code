@@ -47,8 +47,7 @@ function SpeechBubble({
   const lines = wrap(text, 30);
   const T0 = Box;
   const borderColor = fading ? "inactive" : color;
-  const t6 = lines.map(t7);
-  const t7 = (l, i) => <Text key={i} italic={true} dimColor={!fading} color={fading ? "inactive" : undefined}>{l}</Text>;
+  const t6 = lines.map((l, i) => <Text key={i} italic={true} dimColor={!fading} color={fading ? "inactive" : undefined}>{l}</Text>);
   const bubble = <T0 flexDirection={"column"} borderStyle={"round"} borderColor={borderColor} paddingX={1} width={34}>{t6}</T0>;
   if (tail === "right") {
     return <Box flexDirection="row" alignItems="center">{bubble}{<Text color={borderColor}>─</Text>}</Box>;

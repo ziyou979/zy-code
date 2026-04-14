@@ -31,7 +31,7 @@ import { toArray } from '../generators.js';
 import { registerSkillHooks } from '../hooks/registerSkillHooks.js';
 import { logError } from '../log.js';
 import { enqueuePendingNotification } from '../messageQueueManager.js';
-import { createCommandInputMessage, createSyntheticUserCaveatMessage, createSystemMessage, createUserInterruptionMessage, createUserMessage, formatCommandInputTags, isCompactBoundaryMessage, isSystemLocalCommandMessage, normalizeMessages, prepareUserContent } from '../messages.js';
+import { createCommandInputMessage, createSyntheticUserCaveatMessage, createSystemMessage, createUserInterruptionMessage, createUserMessage, deriveUUID, formatCommandInputTags, isCompactBoundaryMessage, isSystemLocalCommandMessage, normalizeMessages, prepareUserContent } from '../messages.js';
 import type { ModelAlias } from '../model/aliases.js';
 import { parseToolListFromCLI } from '../permissions/permissionSetup.js';
 import { hasPermissionsToUseTool } from '../permissions/permissions.js';
@@ -190,7 +190,10 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   const parentToolUseID = `forked-command-${command.name}`;
   let toolUseCounter = 0;
 
-  // Helper to create a progress message from an agent message
+  // Helper to create a progress message from an agent message.
+  // Uses deriveUUID for stable UUIDs — unstable UUIDs cause React key
+  // instability → component remounts → Ink rendering corruption
+  // (overlapping text from stale DOM nodes).
   const createProgressMessage = (message: AssistantMessage | NormalizedUserMessage): ProgressMessage<AgentProgress> => {
     toolUseCounter++;
     return {
@@ -204,7 +207,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
       parentToolUseID,
       toolUseID: `${parentToolUseID}-${toolUseCounter}`,
       timestamp: new Date().toISOString(),
-      uuid: randomUUID()
+      uuid: deriveUUID(agentId, toolUseCounter)
     };
   };
 

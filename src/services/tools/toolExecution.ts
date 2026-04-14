@@ -507,6 +507,10 @@ function streamedCheckPermissionsAndCallTool(
   // Ideally the progress reporting and tool call reporting would
   // be via separate mechanisms.
   const stream = new Stream<MessageUpdateLazy>()
+  // Track progress message index for stable UUID generation.
+  // Unstable UUIDs cause React key instability → component remounts →
+  // Ink rendering corruption (overlapping text from stale DOM nodes).
+  let progressIndex = 0
   checkPermissionsAndCallTool(
     tool,
     toolUseID,
@@ -551,6 +555,7 @@ function streamedCheckPermissionsAndCallTool(
           toolUseID: progress.toolUseID,
           parentToolUseID: toolUseID,
           data: progress.data,
+          index: progressIndex++,
         }),
       })
     },

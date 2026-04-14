@@ -113,9 +113,7 @@ export function PromptInputFooterSuggestions({
   const startIndex = Math.max(0, Math.min(selectedSuggestion - Math.floor(maxVisibleItems / 2), suggestions.length - maxVisibleItems));
   const endIndex = Math.min(startIndex + maxVisibleItems, suggestions.length);
   const visibleItems = suggestions.slice(startIndex, endIndex);
-  const T0 = Box;
-  const t4 = visibleItems.map(t5);
-  const t5 = item_0 => <SuggestionItemRow key={item_0.id} item={item_0} maxColumnWidth={maxColumnWidth} isSelected={item_0.id === suggestions[selectedSuggestion]?.id} />;
-  return <T0 flexDirection={"column"} justifyContent={overlay ? undefined : "flex-end"}>{t4}</T0>;
+  const renderedItems = visibleItems.map(item_0 => <SuggestionItemRow key={item_0.id} item={item_0} maxColumnWidth={maxColumnWidth} isSelected={item_0.id === suggestions[selectedSuggestion]?.id} />);
+  return <Box flexDirection={"column"} justifyContent={overlay ? undefined : "flex-end"}>{renderedItems}</Box>;
 }
 export default memo(PromptInputFooterSuggestions);

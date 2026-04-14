@@ -118,10 +118,10 @@ export function QuestionView({
     label: opt.label,
     description: opt.description
   }));
+  const t8 = async (currentValue, setValue) => {
   const handleOpenEditor = t8;
   const questionText = question.question;
   const questionState = questionStates[questionText];
-  const t8 = async (currentValue, setValue) => {
     const result = await editPromptInEditor(currentValue);
     if (result.content !== null && result.content !== currentValue) {
       setValue(result.content);

@@ -142,7 +142,7 @@ function buildLogMetadata(log: LogOption, options?: {
 export function LogSelector({
   logs,
   maxHeight = Infinity,
-  forceWidth: columns = terminalSize.columns,
+  forceWidth,
   onCancel,
   onSelect,
   onLogsChanged,
@@ -153,6 +153,7 @@ export function LogSelector({
   onAgenticSearch
 }) {
   const terminalSize = useTerminalSize();
+  const columns = forceWidth ?? terminalSize.columns;
   const exitState = useExitOnCtrlCDWithKeybindings(onCancel);
   const isTerminalFocused = useTerminalFocus();
   const isResumeWithRenameEnabled = isCustomTitleEnabled();

@@ -307,7 +307,7 @@ export function AgentsMenu({
         t13 = allAgents.find(t14);
         const freshAgent = t13;
         const agentToEdit = freshAgent || modeState.agent;
-        const t14 = `Edit agent: ${agentToEdit.agentType}`;
+        const t15 = `Edit agent: ${agentToEdit.agentType}`;
         let t15;
         t15 = () => setModeState(modeState.previousMode);
         let t16;

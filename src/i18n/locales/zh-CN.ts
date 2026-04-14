@@ -10,7 +10,7 @@ export const zhCN: TranslationResource = {
   'tip.planModeForComplexTasks':
     '在复杂请求前使用计划模式做准备。按 {shortcut} 两次启用。',
   'tip.defaultPermissionModeConfig': '使用 /config 修改默认权限模式（包括计划模式）',
-  'tip.gitWorktrees': '使用 git worktrees 并行运行多个 Zy 会话。',
+  'tip.gitWorktrees': '使用 git worktrees 并行运行多个 ZY Code 会话。',
   'tip.colorWhenMultiSessions': '同时运行多个 ZY Code 会话？使用 /color 和 /rename 来区分它们。',
   'tip.terminalSetupApple':
     '运行 /terminal-setup 启用便捷的终端集成，如 Option + Enter 换行等',
@@ -43,10 +43,12 @@ export const zhCN: TranslationResource = {
   'tip.imagePaste': '使用 {shortcut} 从剪贴板粘贴图片',
   'tip.customAgents': '使用 /agents 优化特定任务，例如：软件架构师、代码编写者、代码审查者',
   'tip.agentFlag': '使用 --agent <agent_name> 直接以指定子智能体开始对话',
-  'tip.desktopApp': '使用 Zy 桌面应用在本地或远程运行 ZY Code：clau.de/desktop',
+  // 'tip.desktopApp': '使用 ZY code 桌面应用在本地或远程运行 ZY Code：clau.de/desktop',
+  'tip.desktopApp': 'ZY code 桌面应用开发中，敬请期待',
   'tip.desktopShortcut': '使用 {shortcut} 在 ZY Code 桌面版中继续你的会话',
   'tip.webApp': '在云端运行任务，本地继续编码 · clau.de/web',
-  'tip.mobileApp': '/mobile 在手机上的 Zy 应用中使用 ZY Code',
+  // 'tip.mobileApp': '/mobile 在手机上的 ZY code  应用中使用 ZY Code',
+  'tip.mobileApp': 'ZY code 桌面应用开发中，敬请期待',
   'tip.opusPlanModeReminder':
     '你的默认模型设置为 Opus Plan Mode。按 {shortcut} 两次激活计划模式，与 Zy Opus 一起规划。',
   'tip.frontendDesignPlugin': '在处理 HTML/CSS？安装前端设计插件：\n{command}',

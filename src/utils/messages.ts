@@ -605,17 +605,19 @@ export function createProgressMessage<P extends Progress>({
   toolUseID,
   parentToolUseID,
   data,
+  index = 0,
 }: {
   toolUseID: string
   parentToolUseID: string
   data: P
+  index?: number
 }): ProgressMessage<P> {
   return {
     type: 'progress',
     data,
     toolUseID,
     parentToolUseID,
-    uuid: randomUUID(),
+    uuid: deriveUUID(toolUseID, index),
     timestamp: new Date().toISOString(),
   }
 }
@@ -723,7 +725,7 @@ export function isNotEmptyMessage(message: Message): boolean {
 // Deterministic UUID derivation. Produces a stable UUID-shaped string from a
 // parent UUID + content block index so that the same input always produces the
 // same key across calls. Used by normalizeMessages and synthetic message creation.
-export function deriveUUID(parentUUID: UUID, index: number): UUID {
+export function deriveUUID(parentUUID: string, index: number): UUID {
   const hex = index.toString(16).padStart(12, '0')
   return `${parentUUID.slice(0, 24)}${hex}` as UUID
 }

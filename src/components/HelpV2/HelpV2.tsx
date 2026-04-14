@@ -35,10 +35,10 @@ export function HelpV2({
   const exitState = useExitOnCtrlCDWithKeybindings(close);
   const dismissShortcut = useShortcutDisplay("help:dismiss", "Help", "esc");
   const builtinNames = builtInCommandNames();
+  const t4 = [];
   const antOnlyCommands = t4;
   const builtinCommands = commands.filter(cmd => builtinNames.has(cmd.name) && !cmd.isHidden);
   const t3 = commands.filter(cmd_2 => !builtinNames.has(cmd_2.name) && !cmd_2.isHidden);
-  const t4 = [];
   const customCommands = t3;
   const tabs = [<Tab key="general" title="general"><General /></Tab>];
   tabs.push(<Tab key="commands" title="commands"><Commands commands={builtinCommands} maxHeight={maxHeight} columns={columns} title="Browse default commands:" onCancel={close} /></Tab>);

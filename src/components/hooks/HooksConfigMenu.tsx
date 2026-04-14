@@ -152,8 +152,7 @@ export function HooksConfigMenu({
   switch (modeState.mode) {
     case "select-event":
       {
-        let t21;
-        t21 = (event_2) => {
+        const t21 = (event_2) => {
           if (getMatcherMetadata(event_2, combinedToolNames) !== undefined) {
             setModeState({
               mode: "select-matcher",
@@ -174,16 +173,14 @@ export function HooksConfigMenu({
     case "select-matcher":
       {
         const t21 = hookEventMetadata[modeState.event];
-        let t22;
-        t22 = (matcher) => {
+        const t22 = (matcher) => {
           setModeState({
             mode: "select-hook",
             event: modeState.event,
             matcher
           });
         };
-        let t23;
-        t23 = () => {
+        const t23 = () => {
           setModeState({
             mode: "select-event"
           });
