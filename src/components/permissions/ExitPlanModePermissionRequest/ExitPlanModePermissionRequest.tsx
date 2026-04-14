@@ -38,6 +38,7 @@ import { Markdown } from '../../Markdown.js';
 import { PermissionDialog } from '../PermissionDialog.js';
 import type { PermissionRequestProps } from '../PermissionRequest.js';
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js';
+import { tSync } from 'src/i18n/index.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('../../../utils/permissions/autoModeState.js') as typeof import('../../../utils/permissions/autoModeState.js') : null;
@@ -603,10 +604,10 @@ export function ExitPlanModePermissionRequest({
           <Text>Zy wants to exit plan mode</Text>
           <Box marginTop={1}>
             <Select options={[{
-            label: 'Yes',
+            label: tSync('permission.yes'),
             value: 'yes' as const
           }, {
-            label: 'No',
+            label: tSync('permission.no'),
             value: 'no' as const
           }]} onChange={handleEmptyPlanResponse} onCancel={() => {
             logEvent('tengu_plan_exit', {

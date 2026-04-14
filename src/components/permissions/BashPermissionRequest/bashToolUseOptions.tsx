@@ -6,6 +6,7 @@ import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpda
 import { shouldShowAlwaysAllowOptions } from '../../../utils/permissions/permissionsLoader.js';
 import type { OptionWithDescription } from '../../CustomSelect/select.js';
 import { generateShellSuggestionsLabel } from '../shellPermissionHelpers.js';
+import { tSync } from 'src/i18n/index.js';
 export type BashToolUseOption = 'yes' | 'yes-apply-suggestions' | 'yes-prefix-edited' | 'yes-classifier-reviewed' | 'no';
 
 /**
@@ -62,15 +63,15 @@ export function bashToolUseOptions({
   if (yesInputMode) {
     options.push({
       type: 'input',
-      label: 'Yes',
+      label: tSync('permission.yes'),
       value: 'yes',
-      placeholder: 'and tell Zy what to do next',
+      placeholder: tSync('permission.tellZyNext'),
       onChange: onAcceptFeedbackChange,
       allowEmptySubmitToCancel: true
     });
   } else {
     options.push({
-      label: 'Yes',
+      label: tSync('permission.yes'),
       value: 'yes'
     });
   }
@@ -130,15 +131,15 @@ export function bashToolUseOptions({
   if (noInputMode) {
     options.push({
       type: 'input',
-      label: 'No',
+      label: tSync('permission.no'),
       value: 'no',
-      placeholder: 'and tell Zy what to do differently',
+      placeholder: tSync('permission.tellZyDifferently'),
       onChange: onRejectFeedbackChange,
       allowEmptySubmitToCancel: true
     });
   } else {
     options.push({
-      label: 'No',
+      label: tSync('permission.no'),
       value: 'no'
     });
   }

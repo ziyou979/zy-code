@@ -12,12 +12,12 @@ export function UserLocalCommandOutputMessage({
   content
 }: Props) {
   let lines;
-  let t1;
-  t1 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn;
+  earlyReturn = Symbol.for("react.early_return_sentinel");
   const stdout = extractTag(content, "local-command-stdout");
   const stderr = extractTag(content, "local-command-stderr");
   if (!stdout && !stderr) {
-    t1 = <MessageResponse><Text dimColor={true}>{NO_CONTENT_MESSAGE}</Text></MessageResponse>;
+    earlyReturn = <MessageResponse><Text dimColor={true}>{NO_CONTENT_MESSAGE}</Text></MessageResponse>;
   } else {
     lines = [];
     if (stdout?.trim()) {
@@ -27,8 +27,8 @@ export function UserLocalCommandOutputMessage({
       lines.push(<IndentedContent key="stderr">{stderr.trim()}</IndentedContent>);
     }
   }
-  if (t1 !== Symbol.for("react.early_return_sentinel")) {
-    return t1;
+  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
+    return earlyReturn;
   }
   return lines;
 }
@@ -46,10 +46,9 @@ function CloudLaunchContent({
   const diamond = children[0];
   const nl = children.indexOf("\n");
   const header = nl === -1 ? children.slice(2) : children.slice(2, nl);
+  const sep = header.indexOf(" \xB7 ");
   const label = sep === -1 ? header : header.slice(0, sep);
   const rest = nl === -1 ? "" : children.slice(nl + 1).trim();
-  const t1 = sep === -1 ? "" : header.slice(sep);
-  const sep = header.indexOf(" \xB7 ");
-  const suffix = t1;
+  const suffix = sep === -1 ? "" : header.slice(sep);
   return <Box flexDirection="column">{<Text>{<Text color="background">{diamond} </Text>}{<Text bold={true}>{label}</Text>}{suffix && <Text dimColor={true}>{suffix}</Text>}</Text>}{rest && <Box flexDirection="row"><Text dimColor={true}>{"  \u23BF  "}</Text><Text dimColor={true}>{rest}</Text></Box>}</Box>;
 }

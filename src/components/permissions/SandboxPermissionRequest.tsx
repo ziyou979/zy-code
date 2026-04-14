@@ -3,6 +3,7 @@ import { Box, Text } from 'src/ink.js';
 import { type NetworkHostPattern, shouldAllowManagedSandboxDomainsOnly } from 'src/utils/sandbox/sandbox-adapter.js';
 import { Select } from '../CustomSelect/select.js';
 import { PermissionDialog } from './PermissionDialog.js';
+import { tSync } from 'src/i18n/index.js';
 export type SandboxPermissionRequestProps = {
   hostPattern: NetworkHostPattern;
   onUserResponse: (response: {
@@ -46,16 +47,16 @@ export function SandboxPermissionRequest({
   };
   const managedDomainsOnly = shouldAllowManagedSandboxDomainsOnly();
   const options = [{
-    label: "Yes",
+    label: tSync('permission.yes'),
     value: "yes"
   }, ...(!managedDomainsOnly ? [{
-    label: <Text>Yes, and don't ask again for <Text bold={true}>{host}</Text></Text>,
+    label: <Text>{tSync('permission.yesDontAskAgainDomain', { domain: host })}</Text>,
     value: "yes-dont-ask-again"
   }] : []), {
-    label: <Text>No, and tell Zy what to do differently <Text bold={true}>(esc)</Text></Text>,
+    label: tSync('permission.noAndTell'),
     value: "no"
   }];
-  return <PermissionDialog title="Network request outside of sandbox"><Box flexDirection="column" paddingX={2} paddingY={1}>{<Box>{<Text dimColor={true}>Host:</Text>}<Text> {host}</Text></Box>}{<Box marginTop={1}><Text>Do you want to allow this connection?</Text></Box>}{<Box><Select options={options} onChange={onSelect} onCancel={() => {
+  return <PermissionDialog title="Network request outside of sandbox"><Box flexDirection="column" paddingX={2} paddingY={1}>{<Box>{<Text dimColor={true}>Host:</Text>}<Text> {host}</Text></Box>}{<Box marginTop={1}><Text>{tSync('permission.allowNetworkConnection')}</Text></Box>}{<Box><Select options={options} onChange={onSelect} onCancel={() => {
           onUserResponse({
             allow: false,
             persistToSettings: false

@@ -3,6 +3,7 @@ import figures from 'figures';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useAppState, useSetAppState } from 'src/state/AppState.js';
+import { tSync } from 'src/i18n/index.js';
 import { applyPermissionUpdate, persistPermissionUpdate } from 'src/utils/permissions/PermissionUpdate.js';
 import type { CommandResultDisplay } from '../../../commands.js';
 import { Select } from '../../../components/CustomSelect/select.js';
@@ -66,11 +67,12 @@ function RuleDetails({
     return <>{<Box flexDirection="column" gap={1} borderStyle="round" paddingLeft={1} paddingRight={1} borderColor="permission">{<Text bold={true} color="permission">Rule details</Text>}{ruleDescription}{<Text italic={true}>This rule is configured by managed settings and cannot be modified.{"\n"}Contact your system administrator for more information.</Text>}</Box>}{footer}</>;
   }
   const t8 = getRuleBehaviorLabel(rule.ruleBehavior);
-  return <>{<Box flexDirection="column" gap={1} borderStyle="round" paddingLeft={1} paddingRight={1} borderColor="error">{<Text bold={true} color="error">Delete {t8} tool?</Text>}{ruleDescription}{<Text>Are you sure you want to delete this permission rule?</Text>}{<Select onChange={_ => _ === "yes" ? onDelete() : onCancel()} onCancel={onCancel} options={[{
-        label: "Yes",
+  const deleteTitle = rule.ruleBehavior === 'allow' ? tSync('permission.deleteAllowedTool') : rule.ruleBehavior === 'deny' ? tSync('permission.deleteDeniedTool') : tSync('permission.deleteAskTool');
+  return <>{<Box flexDirection="column" gap={1} borderStyle="round" paddingLeft={1} paddingRight={1} borderColor="error">{<Text bold={true} color="error">{deleteTitle}</Text>}{ruleDescription}{<Text>{tSync('permission.deletePermissionRule')}</Text>}{<Select onChange={_ => _ === "yes" ? onDelete() : onCancel()} onCancel={onCancel} options={[{
+        label: tSync('permission.yes'),
         value: "yes"
       }, {
-        label: "No",
+        label: tSync('permission.no'),
         value: "no"
       }]} />}</Box>}{footer}</>;
 }

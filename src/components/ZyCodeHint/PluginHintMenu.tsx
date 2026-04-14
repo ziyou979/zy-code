@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Box, Text } from '../../ink.js';
 import { Select } from '../CustomSelect/select.js';
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
+import { tSync } from 'src/i18n/index.js';
 type Props = {
   pluginName: string;
   pluginDescription?: string;
@@ -37,14 +38,14 @@ export function PluginHintMenu({
   }
   const options = [{
     label: <Text>
-          Yes, install <Text bold>{pluginName}</Text>
+          {tSync('permission.yesInstallPlugin', { pluginName })}
         </Text>,
     value: 'yes'
   }, {
-    label: 'No',
+    label: tSync('permission.no'),
     value: 'no'
   }, {
-    label: "No, and don't show plugin installation hints again",
+    label: tSync('permission.noDontShowPluginAgain'),
     value: 'disable'
   }];
   return <PermissionDialog title="Plugin Recommendation">

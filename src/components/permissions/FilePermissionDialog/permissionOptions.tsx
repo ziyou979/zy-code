@@ -8,6 +8,7 @@ import type { ToolPermissionContext } from '../../../Tool.js';
 import { expandPath, getDirectoryForPath } from '../../../utils/path.js';
 import { normalizeCaseForComparison, pathInAllowedWorkingPath } from '../../../utils/permissions/filesystem.js';
 import type { OptionWithDescription } from '../../CustomSelect/select.js';
+import { tSync } from 'src/i18n/index.js';
 /**
  * Check if a path is within the project's .zy/ folder.
  * This is used to determine whether to show the special ".zy folder" permission option.
@@ -74,9 +75,9 @@ export function getFilePermissionOptions({
   if (yesInputMode && onAcceptFeedbackChange) {
     options.push({
       type: 'input',
-      label: 'Yes',
+      label: tSync('permission.yes'),
       value: 'yes',
-      placeholder: 'and tell Zy what to do next',
+      placeholder: tSync('permission.tellZyNext'),
       onChange: onAcceptFeedbackChange,
       allowEmptySubmitToCancel: true,
       option: {
@@ -85,7 +86,7 @@ export function getFilePermissionOptions({
     });
   } else {
     options.push({
-      label: 'Yes',
+      label: tSync('permission.yes'),
       value: 'yes',
       option: {
         type: 'accept-once'
@@ -104,7 +105,7 @@ export function getFilePermissionOptions({
   // persisted permission rules.
   if ((inZyFolder || inGlobalZyFolder) && operationType !== 'read') {
     options.push({
-      label: 'Yes, and allow Zy to edit its own settings for this session',
+      label: tSync('permission.yesAllowZyFolderEdits'),
       value: 'yes-zy-folder',
       option: {
         type: 'accept-session',
@@ -117,11 +118,10 @@ export function getFilePermissionOptions({
     if (inAllowedPath) {
       // Inside working directory
       if (operationType === 'read') {
-        sessionLabel = 'Yes, during this session';
+        sessionLabel = tSync('permission.yesAllowReadThisSession');
       } else {
         sessionLabel = <Text>
-            Yes, allow all edits during this session{' '}
-            <Text bold>({modeCycleShortcut})</Text>
+            {tSync('permission.yesAllowEditsThisSession', { shortcut: modeCycleShortcut })}
           </Text>;
       }
     } else {
@@ -130,13 +130,11 @@ export function getFilePermissionOptions({
       const dirName = basename(dirPath) || 'this directory';
       if (operationType === 'read') {
         sessionLabel = <Text>
-            Yes, allow reading from <Text bold>{dirName}/</Text> during this
-            session
+            {tSync('permission.yesAllowReadFromDir', { dir: dirName })}
           </Text>;
       } else {
         sessionLabel = <Text>
-            Yes, allow all edits in <Text bold>{dirName}/</Text> during this
-            session <Text bold>({modeCycleShortcut})</Text>
+            {tSync('permission.yesAllowEditsInDir', { dir: dirName, shortcut: modeCycleShortcut })}
           </Text>;
       }
     }
@@ -153,9 +151,9 @@ export function getFilePermissionOptions({
   if (noInputMode && onRejectFeedbackChange) {
     options.push({
       type: 'input',
-      label: 'No',
+      label: tSync('permission.no'),
       value: 'no',
-      placeholder: 'and tell Zy what to do differently',
+      placeholder: tSync('permission.tellZyDifferently'),
       onChange: onRejectFeedbackChange,
       allowEmptySubmitToCancel: true,
       option: {
@@ -165,7 +163,7 @@ export function getFilePermissionOptions({
   } else {
     // Not in input mode - simple option
     options.push({
-      label: 'No',
+      label: tSync('permission.no'),
       value: 'no',
       option: {
         type: 'reject'

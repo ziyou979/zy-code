@@ -12,6 +12,7 @@ import { usePermissionRequestLogging } from '../hooks.js';
 import { PermissionDialog } from '../PermissionDialog.js';
 import { PermissionPrompt } from '../PermissionPrompt.js';
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js';
+import { tSync } from 'src/i18n/index.js';
 type SkillOptionValue = 'yes' | 'yes-exact' | 'yes-prefix' | 'no';
 export function SkillPermissionRequest(props) {
   const {
@@ -38,7 +39,7 @@ export function SkillPermissionRequest(props) {
   const originalCwd = getOriginalCwd();
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions();
   const baseOptions = [{
-    label: "Yes",
+    label: tSync('permission.yes'),
     value: "yes",
     feedbackConfig: {
       type: "accept"
@@ -47,20 +48,20 @@ export function SkillPermissionRequest(props) {
   const alwaysAllowOptions = [];
   if (showAlwaysAllowOptions) {
     alwaysAllowOptions.push({
-      label: <Text>Yes, and don't ask again for {<Text bold={true}>{skill}</Text>} in{" "}{<Text bold={true}>{originalCwd}</Text>}</Text>,
+      label: <Text>{tSync('permission.yesDontAskAgainInCwd', { name: skill, cwd: originalCwd })}</Text>,
       value: "yes-exact"
     });
     const spaceIndex = skill.indexOf(" ");
     if (spaceIndex > 0) {
       const commandPrefix = skill.substring(0, spaceIndex);
       alwaysAllowOptions.push({
-        label: <Text>Yes, and don't ask again for{" "}{<Text bold={true}>{commandPrefix + ":*"}</Text>} commands in{" "}{<Text bold={true}>{originalCwd}</Text>}</Text>,
+        label: <Text>{tSync('permission.yesDontAskAgainCommands', { name: commandPrefix + ":*", cwd: originalCwd })}</Text>,
         value: "yes-prefix"
       });
     }
   }
   const noOption = {
-    label: "No",
+    label: tSync('permission.no'),
     value: "no",
     feedbackConfig: {
       type: "reject"

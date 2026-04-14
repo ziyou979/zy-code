@@ -10,6 +10,7 @@ import { usePermissionRequestLogging } from './hooks.js';
 import { PermissionDialog } from './PermissionDialog.js';
 import { PermissionPrompt } from './PermissionPrompt.js';
 import { PermissionRuleExplanation } from './PermissionRuleExplanation.js';
+import { tSync } from 'src/i18n/index.js';
 type FallbackOptionValue = 'yes' | 'yes-dont-ask-again' | 'no';
 export function FallbackPermissionRequest({
   toolUseConfirm,
@@ -98,7 +99,7 @@ export function FallbackPermissionRequest({
   const originalCwd = getOriginalCwd();
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions();
   const result = [{
-    label: "Yes",
+    label: tSync('permission.yes'),
     value: "yes",
     feedbackConfig: {
       type: "accept"
@@ -106,12 +107,12 @@ export function FallbackPermissionRequest({
   }];
   if (showAlwaysAllowOptions) {
     result.push({
-      label: <Text>Yes, and don't ask again for {<Text bold={true}>{userFacingName}</Text>}{" "}commands in {<Text bold={true}>{originalCwd}</Text>}</Text>,
+      label: <Text>{tSync('permission.yesDontAskAgainCommands', { name: userFacingName, cwd: originalCwd })}</Text>,
       value: "yes-dont-ask-again"
     });
   }
   const rejectOption = {
-    label: "No",
+    label: tSync('permission.no'),
     value: "no",
     feedbackConfig: {
       type: "reject"

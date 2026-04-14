@@ -4,6 +4,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import { isSupportedTerminal } from '../utils/ide.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
+import { tSync } from 'src/i18n/index.js';
 type IdeAutoConnectDialogProps = {
   onComplete: () => void;
 };
@@ -20,10 +21,10 @@ export function IdeAutoConnectDialog({
     onComplete();
   };
   const options = [{
-    label: "Yes",
+    label: tSync('permission.yes'),
     value: "yes"
   }, {
-    label: "No",
+    label: tSync('permission.no'),
     value: "no"
   }];
   return <Dialog title="Do you wish to enable auto-connect to IDE?" color="ide" onCancel={onComplete}>{<Select options={options} onChange={handleSelect} defaultValue="yes" />}{<Text dimColor={true}>You can also configure this in /config or with the --ide flag</Text>}</Dialog>;
@@ -52,10 +53,10 @@ export function IdeDisableAutoConnectDialog({
     onComplete(false);
   };
   const options = [{
-    label: "No",
+    label: tSync('permission.no'),
     value: "no"
   }, {
-    label: "Yes",
+    label: tSync('permission.yes'),
     value: "yes"
   }];
   return <Dialog title="Do you wish to disable auto-connect to IDE?" subtitle="You can also configure this in /config" onCancel={handleCancel} color="ide">{<Select options={options} onChange={handleSelect} defaultValue="no" />}</Dialog>;

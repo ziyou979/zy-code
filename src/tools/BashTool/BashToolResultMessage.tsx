@@ -91,12 +91,13 @@ export default function BashToolResultMessage({
     cleanedStderr: stderr,
     cwdResetWarning
   } = extractCwdResetWarning(stderrWithoutViolations));
+  let t5;
   if (isImage) {
     t7 = <MessageResponse height={1}><Text dimColor={true}>[Image data detected and sent to ZY]</Text></MessageResponse>;
   } else {
     T0 = Box;
     t4 = "column";
-    const t5 = stdout !== "" ? <OutputLine content={stdout} verbose={verbose} /> : null;
+    t5 = stdout !== "" ? <OutputLine content={stdout} verbose={verbose} /> : null;
     t6 = stderr.trim() !== "" ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null;
   }
   if (t7 !== Symbol.for("react.early_return_sentinel")) {

@@ -7,6 +7,7 @@ import { usePermissionRequestLogging } from '../hooks.js';
 import { PermissionDialog } from '../PermissionDialog.js';
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js';
 import { logUnaryPermissionEvent } from '../utils.js';
+import { tSync } from 'src/i18n/index.js';
 function inputToPermissionRuleContent(input: {
   [k: string]: unknown;
 }): string {
@@ -46,17 +47,17 @@ export function WebFetchPermissionRequest({
   usePermissionRequestLogging(toolUseConfirm, unaryEvent);
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions();
   const result = [{
-    label: "Yes",
+    label: tSync('permission.yes'),
     value: "yes"
   }];
   if (showAlwaysAllowOptions) {
     result.push({
-      label: <Text>Yes, and don't ask again for {<Text bold={true}>{hostname}</Text>}</Text>,
+      label: <Text>{tSync('permission.yesDontAskAgainDomain', { domain: hostname })}</Text>,
       value: "yes-dont-ask-again-domain"
     });
   }
   result.push({
-    label: <Text>No, and tell Zy what to do differently <Text bold={true}>(esc)</Text></Text>,
+    label: tSync('permission.noAndTell'),
     value: "no"
   });
   const options = result;
@@ -102,5 +103,5 @@ export function WebFetchPermissionRequest({
     theme,
     verbose
   });
-  return <PermissionDialog title="Fetch" workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{t6}</Text>}{<Text dimColor={true}>{toolUseConfirm.description}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<Text>Do you want to allow Zy to fetch this content?</Text>}{<Select options={options} onChange={onChange} onCancel={() => onChange("no")} />}</Box>}</PermissionDialog>;
+  return <PermissionDialog title="Fetch" workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{t6}</Text>}{<Text dimColor={true}>{toolUseConfirm.description}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<Text>{tSync('permission.allowWebFetch')}</Text>}{<Select options={options} onChange={onChange} onCancel={() => onChange("no")} />}</Box>}</PermissionDialog>;
 }
