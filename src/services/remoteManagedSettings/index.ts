@@ -519,11 +519,11 @@ export async function loadRemoteManagedSettings(): Promise<void> {
     })
   }
 
-  // Cache-first: if we have cached settings on disk, apply them and unblock
-  // waiters immediately. The fetch still runs below; notifyChange fires once,
-  // after the fetch, as before. Saves the ~77ms fetch-wait on print-mode startup.
-  // getRemoteManagedSettingsSyncFromCache has the eligibility guard and populates
-  // the session cache internally — no need to call setSessionCache here.
+  // 缓存优先：如果磁盘上有缓存的设置，立即应用并解除
+  // 等待者的阻塞。获取仍在下面运行；notifyChange 像以前一样
+  // 在获取后触发一次。节省打印模式启动时约 77ms 的获取等待。
+  // getRemoteManagedSettingsSyncFromCache 有资格守卫并在内部
+  // 填充会话缓存 — 这里不需要调用 setSessionCache。
   if (getRemoteManagedSettingsSyncFromCache() && loadingCompleteResolve) {
     loadingCompleteResolve()
     loadingCompleteResolve = null
@@ -532,14 +532,14 @@ export async function loadRemoteManagedSettings(): Promise<void> {
   try {
     const settings = await fetchAndLoadRemoteManagedSettings()
 
-    // Start background polling to pick up settings changes mid-session
+    // 启动后台轮询以在会话中途获取设置变更
     if (isRemoteManagedSettingsEligible()) {
       startBackgroundPolling()
     }
 
-    // Trigger hot-reload if settings were loaded (new or from cache).
-    // notifyChange resets the settings cache internally before iterating
-    // listeners — env vars, telemetry, and permissions update on next read.
+    // 如果加载了设置（新的或来自缓存），触发热重载。
+    // notifyChange 在遍历监听器之前在内部重置设置缓存 —
+    // 环境变量、遥测和权限在下次读取时更新。
     if (settings !== null) {
       settingsChangeDetector.notifyChange('policySettings')
     }

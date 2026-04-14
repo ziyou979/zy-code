@@ -368,17 +368,17 @@ export function VirtualMessageList({
     //（~1-3ms × N）。total = prefixSum[matches.length]。
     prefixSum: [] as number[]
   });
-  // scrollTop at the moment / was pressed. Incsearch preview-jumps snap
-  // back here when matches drop to 0. -1 = no anchor (before first /).
+  // 按下 / 时的 scrollTop。incsearch 预览跳转在匹配数降为 0 时回到此处。
+  // -1 = 没有锚点（第一次 / 之前）。
   const searchAnchor = useRef(-1);
   const indexWarmed = useRef(false);
 
-  // Scroll target for message i: land at MESSAGE TOP. est = top - HEADROOM
-  // so lo = top - est = HEADROOM ≥ 0 (or lo = top if est clamped to 0).
-  // Post-clamp read-back in jump() handles the scrollHeight boundary.
-  // No frac (render transform didn't respect it), no monotone clamp
-  // (was a safety net for frac garbage — without frac, est IS the next
-  // message's top, spam-n/N converges because message tops are ordered).
+  // 消息 i 的滚动目标：落在消息顶部。est = top - HEADROOM
+  // 使 lo = top - est = HEADROOM ≥ 0（或 est 钳位为 0 时 lo = top）。
+  // 跳转后的回读处理 scrollHeight 边界。
+  // 没有 frac（渲染变换不尊重它），没有单调钳位
+  //（原本是 frac 垃圾的安全网——没有 frac 时，est 就是下一条
+  // 消息的顶部，连续 n/N 会收敛因为消息顶部是有序的）。
   function targetFor(i: number): number {
     const top = jumpState.current.getItemTop(i);
     return Math.max(0, top - HEADROOM);
