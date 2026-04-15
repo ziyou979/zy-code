@@ -13,7 +13,7 @@ function OrderedListComponent({
   const {
     marker: parentMarker
   } = useContext(OrderedListContext);
-  const numberOfItems = 0;
+  let numberOfItems = 0;
   for (const child of React.Children.toArray(children)) {
     if (!isValidElement(child) || child.type !== OrderedListItem) {
       continue;
