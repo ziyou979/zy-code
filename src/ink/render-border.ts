@@ -19,7 +19,7 @@ export const CUSTOM_BORDER_STYLES = {
     left: '╎',
     right: '╎',
     bottom: '╌',
-    // there aren't any line-drawing characters for dashes unfortunately
+    // 遗憾的是，这里没有用于划线字符的破折号
     topLeft: ' ',
     topRight: ' ',
     bottomLeft: ' ',
@@ -56,7 +56,7 @@ function embedTextInBorder(
     position = borderLength - textLength - offset - 1 // -1 for corner character
   }
 
-  // Ensure position is valid
+  // 确保位置有效
   position = Math.max(1, Math.min(position, borderLength - textLength - 1))
 
   const before = borderLine.substring(0, 1) + borderChar.repeat(position - 1)
@@ -130,7 +130,7 @@ const renderBorder = (
         (showRightBorder ? box.topRight : '')
       : ''
 
-    // Handle text in top border
+    // 处理顶部边框中的文本
     let topBorder: string | undefined
     if (showTopBorder && node.style.borderText?.position === 'top') {
       const [before, text, after] = embedTextInBorder(
@@ -186,7 +186,7 @@ const renderBorder = (
         (showRightBorder ? box.bottomRight : '')
       : ''
 
-    // Handle text in bottom border
+    // 处理底部边框中的文本
     let bottomBorder: string | undefined
     if (showBottomBorder && node.style.borderText?.position === 'bottom') {
       const [before, text, after] = embedTextInBorder(

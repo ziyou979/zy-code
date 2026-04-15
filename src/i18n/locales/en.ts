@@ -184,6 +184,16 @@ export const en: TranslationResource = {
   'permission.showDebugInfo': 'Ctrl+d to show debug info',
   'permission.hideDebugInfo': 'Ctrl-D to hide debug info',
 
+  // Trust dialog
+  'trustDialog.title': 'Accessing workspace:',
+  'trustDialog.safetyCheck': "Quick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work from your team). If not, take a moment to review what's in this folder first.",
+  'trustDialog.capabilities': "ZY Code'll be able to read, edit, and execute files here.",
+  'trustDialog.securityGuide': 'Security guide',
+  'trustDialog.trust': 'Yes, I trust this folder',
+  'trustDialog.exit': 'No, exit',
+  'trustDialog.pressAgainToExit': 'Press {key} again to exit',
+  'trustDialog.enterToConfirm': 'Enter to confirm · Esc to cancel',
+
   // Notifications
   'notif.authError': 'Authentication error · Try again',
   'notif.notLoggedIn': 'Not logged in · Run /login',

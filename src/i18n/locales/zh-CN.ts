@@ -138,6 +138,16 @@ export const zhCN: TranslationResource = {
   'permission.showDebugInfo': 'Ctrl+d 显示调试信息',
   'permission.hideDebugInfo': 'Ctrl-D 隐藏调试信息',
 
+  // 信任对话框 Trust dialog
+  'trustDialog.title': '正在访问工作区：',
+  'trustDialog.safetyCheck': '快速安全检查：这是你创建或信任的项目吗？（比如你自己的代码、知名的开源项目或团队的工作）。如果不是，请先花一点时间查看此文件夹中的内容。',
+  'trustDialog.capabilities': 'ZY Code 将能够在此处读取、编辑和执行文件。',
+  'trustDialog.securityGuide': '安全指南',
+  'trustDialog.trust': '是的，我信任此文件夹',
+  'trustDialog.exit': '不，退出',
+  'trustDialog.pressAgainToExit': '再按一次 {key} 退出',
+  'trustDialog.enterToConfirm': '回车确认 · Esc 取消',
+
   // Notifications
   'notif.authError': '认证错误 · 重试',
   'notif.notLoggedIn': '未登录 · 运行 /login',

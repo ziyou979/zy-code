@@ -2,8 +2,8 @@ import type { DOMElement } from './dom.js'
 import type { TextStyles } from './styles.js'
 
 /**
- * A segment of text with its associated styles.
- * Used for structured rendering without ANSI string transforms.
+ * 带有样式的文本片段。
+ * 用于结构化渲染，无需 ANSI 字符串转换。
  */
 export type StyledSegment = {
   text: string
@@ -12,8 +12,8 @@ export type StyledSegment = {
 }
 
 /**
- * Squash text nodes into styled segments, propagating styles down through the tree.
- * This allows structured styling without relying on ANSI string transforms.
+ * 将文本节点压缩为带样式的片段，将样式向下传播到整个树中。
+ * 这样可以实现结构化样式，而无需依赖 ANSI 字符串转换。
  */
 export function squashTextNodesToSegments(
   node: DOMElement,
@@ -63,8 +63,8 @@ export function squashTextNodesToSegments(
 }
 
 /**
- * Squash text nodes into a plain string (without styles).
- * Used for text measurement in layout calculations.
+ * 将文本节点压缩为纯字符串（不含样式）。
+ * 用于布局计算中的文本测量。
  */
 function squashTextNodes(node: DOMElement): string {
   let text = ''

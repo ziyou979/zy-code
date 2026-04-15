@@ -7,62 +7,64 @@ import instances from './instances.js'
 
 export type RenderOptions = {
   /**
-   * Output stream where app will be rendered.
+   * 应用将被渲染到的输出流。
    *
    * @default process.stdout
    */
   stdout?: NodeJS.WriteStream
   /**
-   * Input stream where app will listen for input.
+   * 应用将监听输入的输入流。
    *
    * @default process.stdin
    */
   stdin?: NodeJS.ReadStream
   /**
-   * Error stream.
+   * 错误流。
    * @default process.stderr
    */
   stderr?: NodeJS.WriteStream
   /**
-   * Configure whether Ink should listen to Ctrl+C keyboard input and exit the app. This is needed in case `process.stdin` is in raw mode, because then Ctrl+C is ignored by default and process is expected to handle it manually.
+   * 配置 Ink 是否应该监听 Ctrl+C 键盘输入并退出应用。
+   * 当 `process.stdin` 处于 raw 模式时需要这个选项，因为默认情况下 Ctrl+C 会被忽略，
+   * 进程需要手动处理它。
    *
    * @default true
    */
   exitOnCtrlC?: boolean
 
   /**
-   * Patch console methods to ensure console output doesn't mix with Ink output.
+   * 修补 console 方法以确保 console 输出不与 Ink 输出混合。
    *
    * @default true
    */
   patchConsole?: boolean
 
   /**
-   * Called after each frame render with timing and flicker information.
+   * 每次帧渲染后调用，带有时间和闪烁信息。
    */
   onFrame?: (event: FrameEvent) => void
 }
 
 export type Instance = {
   /**
-   * Replace previous root node with a new one or update props of the current root node.
+   * 用新的根节点替换之前的根节点，或更新当前根节点的属性。
    */
   rerender: Ink['render']
   /**
-   * Manually unmount the whole Ink app.
+   * 手动卸载整个 Ink 应用。
    */
   unmount: Ink['unmount']
   /**
-   * Returns a promise, which resolves when app is unmounted.
+   * 返回一个 promise，当应用卸载时解析。
    */
   waitUntilExit: Ink['waitUntilExit']
   cleanup: () => void
 }
 
 /**
- * A managed Ink root, similar to react-dom's createRoot API.
- * Separates instance creation from rendering so the same root
- * can be reused for multiple sequential screens.
+ * 托管的 Ink 根节点，类似于 react-dom 的 createRoot API。
+ * 将实例创建与渲染分离，以便同一个根节点可以
+ * 复用于多个连续屏幕。
  */
 export type Root = {
   render: (node: ReactNode) => void
@@ -71,7 +73,7 @@ export type Root = {
 }
 
 /**
- * Mount a component and render the output.
+ * 挂载组件并渲染输出。
  */
 export const renderSync = (
   node: ReactNode,
@@ -108,10 +110,10 @@ const wrappedRender = async (
   node: ReactNode,
   options?: NodeJS.WriteStream | RenderOptions,
 ): Promise<Instance> => {
-  // Preserve the microtask boundary that `await loadYoga()` used to provide.
-  // Without it, the first render fires synchronously before async startup work
-  // (e.g. useReplBridge notification state) settles, and the subsequent Static
-  // write overwrites scrollback instead of appending below the logo.
+  // 保留 `await loadYoga()` 曾经提供的微任务边界。
+  // 没有它，第一次渲染会在异步启动工作
+  //（例如 useReplBridge 通知状态）稳定之前同步触发，
+  // 随后的 Static 写入会覆盖 scrollback 而不是附加到 logo 下方。
   await Promise.resolve()
   const instance = renderSync(node, options)
   logForDebugging(
@@ -123,8 +125,8 @@ const wrappedRender = async (
 export default wrappedRender
 
 /**
- * Create an Ink root without rendering anything yet.
- * Like react-dom's createRoot — call root.render() to mount a tree.
+ * 创建一个 Ink 根节点，但尚未渲染任何内容。
+ * 类似于 react-dom 的 createRoot — 调用 root.render() 来挂载树。
  */
 export async function createRoot({
   stdout = process.stdout,
@@ -134,7 +136,7 @@ export async function createRoot({
   patchConsole = true,
   onFrame,
 }: RenderOptions = {}): Promise<Root> {
-  // See wrappedRender — preserve microtask boundary from the old WASM await.
+  // 见 wrappedRender — 保留旧的 WASM await 的微任务边界。
   await Promise.resolve()
   const instance = new Ink({
     stdout,
@@ -145,8 +147,8 @@ export async function createRoot({
     onFrame,
   })
 
-  // Register in the instances map so that code that looks up the Ink
-  // instance by stdout (e.g. external editor pause/resume) can find it.
+  // 注册到实例映射中，这样通过 stdout 查找 Ink
+  // 实例的代码（例如外部编辑器暂停/恢复）可以找到它。
   instances.set(stdout, instance)
 
   return {

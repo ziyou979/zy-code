@@ -6,6 +6,7 @@ import type { Command } from '../../commands.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { Box, Link, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+import { tSync } from '../../i18n/index.js';
 import { getMcpConfigsByScope } from '../../services/mcp/config.js';
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js';
 import { checkHasTrustDialogAccepted, saveCurrentProjectConfig } from '../../utils/config.js';
@@ -96,11 +97,11 @@ export function TrustDialog({
     setTimeout(onDone);
     return null;
   }
-  return <PermissionDialog color="warning" titleColor="warning" title="Accessing workspace:"><Box flexDirection="column" gap={1} paddingTop={1}>{<Text bold={true}>{getFsImplementation().cwd()}</Text>}{<Text>Quick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work from your team). If not, take a moment to review what{"'"}s in this folder first.</Text>}{<Text>ZY Code{"'"}ll be able to read, edit, and execute files here.</Text>}{<Text dimColor={true}><Link url="https://code.zy.com/docs/en/security">Security guide</Link></Text>}{<Select options={[{
-        label: "Yes, I trust this folder",
+  return <PermissionDialog color="warning" titleColor="warning" title={tSync('trustDialog.title')}><Box flexDirection="column" gap={1} paddingTop={1}>{<Text bold={true}>{getFsImplementation().cwd()}</Text>}{<Text>{tSync('trustDialog.safetyCheck')}</Text>}{<Text>{tSync('trustDialog.capabilities')}</Text>}{<Text dimColor={true}><Link url="https://code.zy.com/docs/en/security">{tSync('trustDialog.securityGuide')}</Link></Text>}{<Select options={[{
+        label: tSync('trustDialog.trust'),
         value: "enable_all"
       }, {
-        label: "No, exit",
+        label: tSync('trustDialog.exit'),
         value: "exit"
-      }]} onChange={value_0 => onChange(value_0 as 'enable_all' | 'exit')} onCancel={() => onChange("exit")} />}{<Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to confirm · Esc to cancel</>}</Text>}</Box></PermissionDialog>;
+      }]} onChange={value_0 => onChange(value_0 as 'enable_all' | 'exit')} onCancel={() => onChange("exit")} />}{<Text dimColor={true}>{exitState.pending ? <>{tSync('trustDialog.pressAgainToExit', { key: exitState.keyName })}</> : <>{tSync('trustDialog.enterToConfirm')}</>}</Text>}</Box></PermissionDialog>;
 }

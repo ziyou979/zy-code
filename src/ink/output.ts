@@ -27,14 +27,14 @@ import { stringWidth } from './stringWidth.js'
 import { widestLine } from './widest-line.js'
 
 /**
- * A grapheme cluster with precomputed terminal width, styleId, and hyperlink.
- * Built once per unique line (cached via charCache), so the per-char hot loop
- * is just property reads + setCellAt — no stringWidth, no style interning,
- * no hyperlink extraction per frame.
+ * 带有预计算终端宽度、styleId 和 hyperlink 的字素簇。
+ * 每个唯一行构建一次（通过 charCache 缓存），因此每字符热循环
+ * 只是属性读取 + setCellAt — 每帧无 stringWidth、无样式内联、
+ * 无 hyperlink 提取。
  *
- * styleId is safe to cache: StylePool is session-lived (never reset).
- * hyperlink is stored as a string (not interned ID) since hyperlinkPool
- * resets every 5 min; setCellAt interns it per-frame (cheap Map.get).
+ * styleId 可安全缓存：StylePool 是会话级别的（永不重置）。
+ * hyperlink 存储为字符串（非内联 ID），因为 hyperlinkPool
+ * 每 5 分钟重置一次；setCellAt 每帧内联它（便宜的 Map.get）。
  */
 type ClusteredChar = {
   value: string
@@ -44,9 +44,9 @@ type ClusteredChar = {
 }
 
 /**
- * Collects write/blit/clear/clip operations from the render tree, then
- * applies them to a Screen buffer in `get()`. The Screen is what gets
- * diffed against the previous frame to produce terminal updates.
+ * 收集来自渲染树的 write/blit/clear/clip 操作，然后
+ * 在 `get()` 中将它们应用到 Screen 缓冲区。Screen 是用于
+ * 与前一帧进行比较以生成终端更新的内容。
  */
 
 type Options = {
@@ -54,8 +54,8 @@ type Options = {
   height: number
   stylePool: StylePool
   /**
-   * Screen to render into. Will be reset before use.
-   * For double-buffering, pass a reusable screen. Otherwise create a new one.
+   * 要渲染的屏幕。使用前会重置。
+   * 对于双缓冲，传入可复用的 screen。否则创建一个新的。
    */
   screen: Screen
 }
@@ -75,11 +75,11 @@ type WriteOperation = {
   y: number
   text: string
   /**
-   * Per-line soft-wrap flags, parallel to text.split('\n'). softWrap[i]=true
-   * means line i is a continuation of line i-1 (the `\n` before it was
-   * inserted by word-wrap, not in the source). Index 0 is always false.
-   * Undefined means the producer didn't track wrapping (e.g. fills,
-   * raw-ansi) — the screen's per-row bitmap is left untouched.
+   * 每行软换行标志，与 text.split('\n') 并行。softWrap[i]=true
+   * 表示第 i 行是第 i-1 行的延续（`\n` 之前由
+   * 单词换行插入，而非源文件中的）。索引 0 始终为 false。
+   * Undefined 表示生产者未跟踪换行（例如 fills、
+   * raw-ansi）— 屏幕的每行位图保持不变。
    */
   softWrap?: boolean[]
 }
@@ -97,10 +97,10 @@ export type Clip = {
 }
 
 /**
- * Intersect two clips. `undefined` on an axis means unbounded; the other
- * clip's bound wins. If both are bounded, take the tighter constraint
- * (max of mins, min of maxes). If the resulting region is empty
- * (x1 >= x2 or y1 >= y2), writes clipped by it will be dropped.
+ * 交叉两个 clip。轴上的 `undefined` 表示无界；另一个
+ * clip 的边界获胜。如果两者都有界，取更紧的约束
+ *（最大最小值，最小最大值）。如果结果区域为空
+ *（x1 >= x2 或 y1 >= y2），被其裁剪的写入将被丢弃。
  */
 function intersectClip(parent: Clip | undefined, child: Clip): Clip {
   if (!parent) return child
@@ -154,11 +154,11 @@ type ClearOperation = {
   type: 'clear'
   region: Rectangle
   /**
-   * Set when the clear is for an absolute-positioned node's old bounds.
-   * Absolute nodes overlay normal-flow siblings, so their stale paint is
-   * what an earlier sibling's clean-subtree blit wrongly restores from
-   * prevScreen. Normal-flow siblings' clears don't have this problem —
-   * their old position can't have been painted on top of a sibling.
+   * 当清除是针对绝对定位节点的旧边界时设置。
+   * 绝对节点覆盖普通流兄弟节点，所以它们的陈旧绘制是
+   * 早期兄弟节点的干净子树 blit 错误地从
+   * prevScreen 恢复的内容。普通流兄弟节点的清除没有这个问题 —
+   * 它们的旧位置不可能被绘制在兄弟节点上方。
    */
   fromAbsolute?: boolean
 }
@@ -190,11 +190,11 @@ export default class Output {
   }
 
   /**
-   * Reuse this Output for a new frame. Zeroes the screen buffer, clears
-   * the operation list (backing storage is retained), and caps charCache
-   * growth. Preserving charCache across frames is the main win — most
-   * lines don't change between renders, so tokenize + grapheme clustering
-   * becomes a cache hit.
+   * 复用此 Output 用于新帧。归零屏幕缓冲区，清除
+   * 操作列表（保留底层存储），并限制 charCache
+   * 增长。跨帧保留 charCache 是主要优势 — 大多数
+   * 行在渲染之间不变化，所以 tokenize + grapheme 聚类
+   * 成为缓存命中。
    */
   reset(width: number, height: number, screen: Screen): void {
     this.width = width
@@ -206,34 +206,34 @@ export default class Output {
   }
 
   /**
-   * Copy cells from a source screen region (blit = block image transfer).
+   * 从屏幕区域复制单元格（blit = 块图像传输）。
    */
   blit(src: Screen, x: number, y: number, width: number, height: number): void {
     this.operations.push({ type: 'blit', src, x, y, width, height })
   }
 
   /**
-   * Shift full-width rows within [top, bottom] by n. n > 0 = up. Mirrors
-   * what DECSTBM + SU/SD does to the terminal. Paired with blit() to reuse
-   * prevScreen content during pure scroll, avoiding full child re-render.
+   * 在 [top, bottom] 范围内移动全宽行。n > 0 = 向上。镜像
+   * DECSTBM + SU/SD 对终端的操作。与 blit() 配对使用，在纯滚动期间
+   * 复用 prevScreen 内容，避免完整子节点重新渲染。
    */
   shift(top: number, bottom: number, n: number): void {
     this.operations.push({ type: 'shift', top, bottom, n })
   }
 
   /**
-   * Clear a region by writing empty cells. Used when a node shrinks to
-   * ensure stale content from the previous frame is removed.
+   * 通过写入空单元格清除区域。用于节点缩小时
+   * 确保上一帧的陈旧内容被移除。
    */
   clear(region: Rectangle, fromAbsolute?: boolean): void {
     this.operations.push({ type: 'clear', region, fromAbsolute })
   }
 
   /**
-   * Mark a region as non-selectable (excluded from fullscreen text
-   * selection copy + highlight). Used by <NoSelect> to fence off
-   * gutters (line numbers, diff sigils). Applied AFTER blit/write so
-   * the mark wins regardless of what's blitted into the region.
+   * 标记区域为不可选择（从全屏文本
+   * 选择复制 + 高亮中排除）。由 <NoSelect> 用于围栏
+   * 装订线（行号、差异符号）。在 blit/write 之后应用，所以
+   * 无论什么 blit 到该区域，标记都获胜。
    */
   noSelect(region: Rectangle): void {
     this.operations.push({ type: 'noSelect', region })
@@ -271,22 +271,22 @@ export default class Output {
     const screenWidth = this.width
     const screenHeight = this.height
 
-    // Track blit vs write cell counts for debugging
+    // 跟踪 blit 与写入单元格数用于调试
     let blitCells = 0
     let writeCells = 0
 
-    // Pass 1: expand damage to cover clear regions AND actually clear the
-    // cells in the screen buffer. This prevents stale content from surviving
-    // when blit copies from prevScreen or when damage bounds are narrower
-    // than the old content (e.g., text shrinking within the same line).
+    // 传递 1：展开 damage 以覆盖清除区域并实际清除
+    // 屏幕缓冲区中的单元格。这防止了陈旧内容在
+    // blit 从 prevScreen 复制或 damage 边界比
+    // 旧内容窄时存活（例如，文本在同一行内缩小）。
     //
-    // Also collect clears from absolute-positioned nodes. An absolute
-    // node overlays normal-flow siblings; when it shrinks, its clear is
-    // pushed AFTER those siblings' clean-subtree blits (DOM order). The
-    // blit copies the absolute node's own stale paint from prevScreen,
-    // and since clear is damage-only, the ghost survives diff. Normal-
-    // flow clears don't need this — a normal-flow node's old position
-    // can't have been painted on top of a sibling's current position.
+    // 同时收集来自绝对定位节点的清除。绝对
+    // 节点覆盖普通流兄弟节点；当它缩小时，其清除被
+    // 推送到那些兄弟节点的干净子树 blits 之后（DOM 顺序）。
+    // blit 从 prevScreen 复制绝对节点自己的陈旧绘制，
+    // 由于 clear 只是 damage-only，幽灵在 diff 中存活。普通
+    // 流清除不需要这个 — 普通流节点的旧位置
+    // 不可能被绘制在兄弟节点当前位置的上方。
     const absoluteClears: Rectangle[] = []
     for (const operation of this.operations) {
       if (operation.type !== 'clear') continue
@@ -312,17 +312,17 @@ export default class Output {
     for (const operation of this.operations) {
       switch (operation.type) {
         case 'clear':
-          // handled in pass 1
+          // 传递 1 中已处理
           continue
 
         case 'clip':
-          // Intersect with the parent clip (if any) so nested
-          // overflow:hidden boxes can't write outside their ancestor's
-          // clip region. Without this, a message with overflow:hidden at
-          // the bottom of a scrollbox pushes its OWN clip (based on its
-          // layout bounds, already translated by -scrollTop) which can
-          // extend below the scrollbox viewport — writes escape into
-          // the sibling bottom section's rows.
+          // 与父 clip 交叉（如果有），这样嵌套的
+          // overflow:hidden 盒子不能写入其祖先的
+          // clip 区域之外。没有这个，在滚动框底部
+          // 带有 overflow:hidden 的消息会推送它自己的 clip（基于其
+          // 布局边界，已由 -scrollTop 转换），可以
+          // 扩展到滚动框视口下方 — 写入逃逸到
+          // 兄弟底部部分的行中。
           clips.push(intersectClip(clips.at(-1), operation.clip))
           continue
 
@@ -331,9 +331,9 @@ export default class Output {
           continue
 
         case 'blit': {
-          // Bulk-copy cells from source screen region using TypedArray.set().
-          // Tracking damage ensures diff() checks blitted cells for stale content
-          // when a parent blits an area that previously contained child content.
+          // 使用 TypedArray.set() 从源屏幕区域批量复制单元格。
+          // 跟踪 damage 确保 diff() 检查 blitted 单元格的陈旧内容
+          // 当父节点 blit 了一个之前包含子节点内容的区域时。
           const {
             src,
             x: regionX,
@@ -341,10 +341,10 @@ export default class Output {
             width: regionWidth,
             height: regionHeight,
           } = operation
-          // Intersect with active clip — a child's clean-blit passes its full
-          // cached rect, but the parent ScrollBox may have shrunk (pill mount).
-          // Without this, the blit writes past the ScrollBox's new bottom edge
-          // into the pill's row.
+          // 与 active clip 交叉 — 子节点的干净 blit 传递其完整
+          // 缓存的 rect，但父 ScrollBox 可能已缩小（pill 挂载）。
+          // 没有这个，blit 会写入超过 ScrollBox 新底边
+          // 进入 pill 的行。
           const clip = clips.at(-1)
           const startX = Math.max(regionX, clip?.x1 ?? 0)
           const startY = Math.max(regionY, clip?.y1 ?? 0)
@@ -361,10 +361,10 @@ export default class Output {
             clip?.x2 ?? Infinity,
           )
           if (startX >= maxX || startY >= maxY) continue
-          // Skip rows covered by an absolute-positioned node's clear.
-          // Absolute nodes overlay normal-flow siblings, so prevScreen in
-          // that region holds the absolute node's stale paint — blitting
-          // it back would ghost. See absoluteClears collection above.
+          // 跳过被绝对定位节点清除覆盖的行。
+          // 绝对节点覆盖普通流兄弟节点，所以 prevScreen 在
+          // 该区域保存绝对节点的陈旧绘制 — blit
+          // 会将其复制回来产生幽灵。见上方 absoluteClears 收集。
           if (absoluteClears.length === 0) {
             blitRegion(screen, src, startX, startY, maxX, maxY)
             blitCells += (maxY - startY) * (maxX - startX)
@@ -411,8 +411,8 @@ export default class Output {
             const clipVertically =
               typeof clip?.y1 === 'number' && typeof clip?.y2 === 'number'
 
-            // If text is positioned outside of clipping area altogether,
-            // skip to the next operation to avoid unnecessary calculations
+            // 如果文本完全在裁剪区域之外，
+            // 跳到下一个操作以避免不必要的计算
             if (clipHorizontally) {
               const width = widestLine(text)
 
@@ -435,12 +435,12 @@ export default class Output {
                 const width = stringWidth(line)
                 const to = x + width > clip.x2! ? clip.x2! - x : width
                 let sliced = sliceAnsi(line, from, to)
-                // Wide chars (CJK, emoji) occupy 2 cells. When `to` lands
-                // on the first cell of a wide char, sliceAnsi includes the
-                // entire glyph and the result overflows clip.x2 by one cell,
-                // writing a SpacerTail into the adjacent sibling. Re-slice
-                // one cell earlier; wide chars are exactly 2 cells, so a
-                // single retry always fits.
+                // 宽字符（CJK、emoji）占用 2 个单元格。当 `to` 落在
+                // 宽字符的第一个单元格上时，sliceAnsi 包含
+                // 整个字形并导致结果溢出 clip.x2 一个单元格，
+                // 将 SpacerTail 写入相邻兄弟节点。重新切片
+                // 一个单元格之前；宽字符正好是 2 个单元格，所以
+                // 一次重试总是合适。
                 if (stringWidth(sliced) > to - from) {
                   sliced = sliceAnsi(line, from, to - 1)
                 }
@@ -457,10 +457,10 @@ export default class Output {
               const height = lines.length
               const to = y + height > clip.y2! ? clip.y2! - y : height
 
-              // If the first visible line is a soft-wrap continuation, we
-              // need the clipped previous line's content end so
-              // screen.softWrap[lineY] correctly records the join point
-              // even though that line's cells were never written.
+              // 如果第一行可见行是软换行延续，我们
+              // 需要裁剪的前一行内容末尾，这样
+              // screen.softWrap[lineY] 正确记录连接点
+              // 即使该行的单元格从未被写入。
               if (softWrap && from > 0 && softWrap[from] === true) {
                 prevContentEnd = x + stringWidth(lines[from - 1]!)
               }
@@ -479,7 +479,7 @@ export default class Output {
 
           for (const line of lines) {
             const lineY = y + offsetY
-            // Line can be outside screen if `text` is taller than screen height
+            // 如果 `text` 高于屏幕高度，行可能在屏幕外
             if (lineY >= screenHeight) {
               break
             }
@@ -493,9 +493,9 @@ export default class Output {
               this.charCache,
             )
             writeCells += contentEnd - x
-            // See Screen.softWrap docstring for the encoding. contentEnd
-            // from writeLineToScreen is tab-expansion-aware, unlike
-            // x+stringWidth(line) which treats tabs as width 0.
+            // 见 Screen.softWrap 文档字符串了解编码。contentEnd
+            // 来自 writeLineToScreen 是制表符展开感知的，不同于
+            // x+stringWidth(line) 将制表符视为宽度 0。
             if (softWrap) {
               const isSW = softWrap[swFrom + offsetY] === true
               swBits[lineY] = isSW ? prevContentEnd : 0
@@ -507,11 +507,11 @@ export default class Output {
       }
     }
 
-    // noSelect ops go LAST so they win over blits (which copy noSelect
-    // from prevScreen) and writes (which don't touch noSelect). This way
-    // a <NoSelect> box correctly fences its region even when the parent
-    // blits, and moving a <NoSelect> between frames correctly clears the
-    // old region (resetScreen already zeroed the bitmap).
+    // noSelect 操作放在最后，这样它们优先于 blits（从 prevScreen 复制 noSelect）
+    // 和 writes（不触及 noSelect）。这样
+    // <NoSelect> 盒子正确地围栏其区域，即使父节点
+    // 执行 blit，并且在帧之间移动 <NoSelect> 时正确地清除旧区域
+    //（resetScreen 已经将位图归零）。
     for (const operation of this.operations) {
       if (operation.type === 'noSelect') {
         const { x, y, width, height } = operation.region
@@ -519,7 +519,7 @@ export default class Output {
       }
     }
 
-    // Log blit/write ratio for debugging - high write count suggests blitting isn't working
+    // 记录 blit/写入比例用于调试 - 高写入比例表明 blitting 未正常工作
     const totalCells = blitCells + writeCells
     if (totalCells > 1000 && writeCells > blitCells) {
       logForDebugging(
@@ -543,12 +543,12 @@ function stylesEqual(a: AnsiCode[], b: AnsiCode[]): boolean {
 }
 
 /**
- * Convert a string with ANSI codes into styled characters with proper grapheme
- * clustering. Fixes ansi-tokenize splitting grapheme clusters (like family
- * emojis) into individual code points.
+ * 将带有 ANSI 码的字符串转换为带有正确字素
+ * 聚类的带样式字符。修复 ansi-tokenize 将字素簇（如家庭
+ * emoji）拆分为单个码点的问题。
  *
- * Also precomputes styleId + hyperlink per style run (not per char) — an
- * 80-char line with 3 style runs does 3 intern calls instead of 80.
+ * 还为每个样式运行预计算 styleId + hyperlink（不是每个字符）—
+ * 一个 80 字符的行有 3 个样式运行，执行 3 次 intern 调用而不是 80 次。
  */
 function styledCharsWithGraphemeClustering(
   chars: StyledChar[],
@@ -565,7 +565,7 @@ function styledCharsWithGraphemeClustering(
     const char = chars[i]!
     const styles = char.styles
 
-    // Different styles means we need to flush and start new buffer
+    // 样式不同，所以需要刷新并开始新缓冲区
     if (bufferChars.length > 0 && !stylesEqual(styles, bufferStyles)) {
       flushBuffer(bufferChars.join(''), bufferStyles, stylePool, result)
       bufferChars.length = 0
@@ -575,7 +575,7 @@ function styledCharsWithGraphemeClustering(
     bufferStyles = styles
   }
 
-  // Final flush
+  // 最终刷新
   if (bufferChars.length > 0) {
     flushBuffer(bufferChars.join(''), bufferStyles, stylePool, result)
   }
@@ -589,14 +589,14 @@ function flushBuffer(
   stylePool: StylePool,
   out: ClusteredChar[],
 ): void {
-  // Compute styleId + hyperlink ONCE for the whole style run.
-  // Every grapheme in this buffer shares the same styles.
+  // 为整个样式运行计算 styleId + hyperlink 一次。
+  // 此缓冲区中的每个字素共享相同的样式。
   //
-  // Extract and track hyperlinks separately, filter from styles.
-  // Always check for OSC 8 codes to filter, not just when a URL is
-  // extracted. The tokenizer treats OSC 8 close codes (empty URL) as
-  // active styles, so they must be filtered even when no hyperlink
-  // URL is present.
+  // 单独提取和跟踪 hyperlink，从样式中过滤。
+  // 始终检查 OSC 8 代码以过滤，不仅在提取 URL 时。
+  // 分词器将 OSC 8 关闭代码（空 URL）视为
+  // 活动样式，所以即使没有 hyperlink
+  // URL 存在也必须过滤。
   const hyperlink = extractHyperlinkFromStyles(styles) ?? undefined
   const hasOsc8Styles =
     hyperlink !== undefined ||
@@ -620,15 +620,15 @@ function flushBuffer(
 }
 
 /**
- * Write a single line's characters into the screen buffer.
- * Extracted from Output.get() so JSC can optimize this tight,
- * monomorphic loop independently — better register allocation,
- * setCellAt inlining, and type feedback than when buried inside
- * a 300-line dispatch function.
+ * 将单行字符写入屏幕缓冲区。
+ * 从 Output.get() 中提取，这样 JSC 可以优化这个紧密的
+ * 单态循环独立运行 — 更好的寄存器分配、
+ * setCellAt 内联和类型反馈，而不是埋在
+ * 300 行的分发函数中。
  *
- * Returns the end column (x + visual width, including tab expansion) so
- * the caller can record it in screen.softWrap without re-walking the
- * line via stringWidth(). Caller computes the debug cell-count as end-x.
+ * 返回结束列（x + 视觉宽度，包括制表符展开）这样
+ * 调用者可以在 screen.softWrap 中记录它，而无需通过 stringWidth() 重新遍历
+ * 行。调用者将调试单元格数计算为 end-x。
  */
 function writeLineToScreen(
   screen: Screen,
@@ -656,11 +656,11 @@ function writeLineToScreen(
     const character = characters[charIdx]!
     const codePoint = character.value.codePointAt(0)
 
-    // Handle C0 control characters (0x00-0x1F) that cause cursor movement
-    // mismatches. stringWidth treats these as width 0, but terminals may
-    // move the cursor differently.
+    // 处理导致光标移动不匹配的 C0 控制字符（0x00-0x1F）。
+    // stringWidth 将它们视为宽度 0，但终端可能
+    // 以不同方式移动光标。
     if (codePoint !== undefined && codePoint <= 0x1f) {
-      // Tab (0x09): expand to spaces to reach next tab stop
+      // 制表符（0x09）：展开为空格以到达下一个制表位
       if (codePoint === 0x09) {
         const tabWidth = 8
         const spacesToNextStop = tabWidth - (offsetX % tabWidth)
@@ -674,11 +674,11 @@ function writeLineToScreen(
           offsetX++
         }
       }
-      // ESC (0x1B): skip incomplete escape sequences that ansi-tokenize
-      // didn't recognize. ansi-tokenize only parses SGR sequences (ESC[...m)
-      // and OSC 8 hyperlinks (ESC]8;;url BEL). Other sequences like cursor
-      // movement, screen clearing, or terminal title become individual char
-      // tokens that we need to skip here.
+      // ESC（0x1B）：跳过 ansi-tokenize 未识别的不完整转义序列。
+      // ansi-tokenize 只解析 SGR 序列（ESC[...m）
+      // 和 OSC 8 hyperlink（ESC]8;;url BEL）。其他序列如光标
+      // 移动、屏幕清除或终端标题成为单个字符
+      // 令牌，我们需要在这里跳过它们。
       else if (codePoint === 0x1b) {
         const nextChar = characters[charIdx + 1]?.value
         const nextCode = nextChar?.codePointAt(0)
@@ -688,18 +688,18 @@ function writeLineToScreen(
           nextChar === '*' ||
           nextChar === '+'
         ) {
-          // Charset selection: ESC ( X, ESC ) X, etc.
-          // Skip the intermediate char and the charset designator
+          // 字符集选择：ESC ( X、ESC ) X 等。
+          // 跳过中间字符和字符集指示符
           charIdx += 2
         } else if (nextChar === '[') {
-          // CSI sequence: ESC [ ... final-byte
-          // Final byte is in range 0x40-0x7E (@, A-Z, [\]^_`, a-z, {|}~)
-          // Examples: ESC[2J (clear), ESC[?25l (cursor hide), ESC[H (home)
-          charIdx++ // skip the [
+          // CSI 序列：ESC [ ... final-byte
+          // Final byte 在 0x40-0x7E 范围内（@、A-Z、[\]^_`、a-z、{|}~）
+          // 例如：ESC[2J（清除）、ESC[?25l（光标隐藏）、ESC[H（归位）
+          charIdx++ // 跳过 [
           while (charIdx < characters.length - 1) {
             charIdx++
             const c = characters[charIdx]?.value.codePointAt(0)
-            // Final byte terminates the sequence
+            // Final byte 终止序列
             if (c !== undefined && c >= 0x40 && c <= 0x7e) {
               break
             }
@@ -711,26 +711,26 @@ function writeLineToScreen(
           nextChar === '^' ||
           nextChar === 'X'
         ) {
-          // String-based sequences terminated by BEL (0x07) or ST (ESC \):
-          // - OSC: ESC ] ... (Operating System Command)
-          // - DCS: ESC P ... (Device Control String)
-          // - APC: ESC _ ... (Application Program Command)
-          // - PM:  ESC ^ ... (Privacy Message)
-          // - SOS: ESC X ... (Start of String)
-          charIdx++ // skip the introducer char
+          // 基于字符串的序列由 BEL（0x07）或 ST（ESC \）终止：
+          // - OSC：ESC ] ...（操作系统命令）
+          // - DCS：ESC P ...（设备控制字符串）
+          // - APC：ESC _ ...（应用程序命令）
+          // - PM： ESC ^ ...（隐私消息）
+          // - SOS：ESC X ...（字符串开始）
+          charIdx++ // 跳过引入字符
           while (charIdx < characters.length - 1) {
             charIdx++
             const c = characters[charIdx]?.value
-            // BEL (0x07) terminates the sequence
+            // BEL（0x07）终止序列
             if (c === '\x07') {
               break
             }
-            // ST (String Terminator) is ESC \
-            // When we see ESC, check if next char is backslash
+            // ST（字符串终止符）是 ESC \
+            // 当我们看到 ESC 时，检查下一个字符是否是反斜杠
             if (c === '\x1b') {
               const nextC = characters[charIdx + 1]?.value
               if (nextC === '\\') {
-                charIdx++ // skip the backslash too
+                charIdx++ // 也跳过反斜杠
                 break
               }
             }
@@ -740,26 +740,26 @@ function writeLineToScreen(
           nextCode >= 0x30 &&
           nextCode <= 0x7e
         ) {
-          // Single-character escape sequences: ESC followed by 0x30-0x7E
-          // (excluding the multi-char introducers already handled above)
-          // - Fp range (0x30-0x3F): ESC 7 (save cursor), ESC 8 (restore)
-          // - Fe range (0x40-0x5F): ESC D (index), ESC M (reverse index)
-          // - Fs range (0x60-0x7E): ESC c (reset)
-          charIdx++ // skip the command char
+          // 单字符转义序列：ESC 后跟 0x30-0x7E
+          //（排除已处理的多字符引入符）
+          // - Fp 范围（0x30-0x3F）：ESC 7（保存光标）、ESC 8（恢复）
+          // - Fe 范围（0x40-0x5F）：ESC D（索引）、ESC M（反向索引）
+          // - Fs 范围（0x60-0x7E）：ESC c（重置）
+          charIdx++ // 跳过命令字符
         }
       }
-      // Carriage return (0x0D): would move cursor to column 0, skip it
-      // Backspace (0x08): would move cursor left, skip it
-      // Bell (0x07), vertical tab (0x0B), form feed (0x0C): skip
-      // All other control chars (0x00-0x06, 0x0E-0x1F): skip
-      // Note: newline (0x0A) is already handled by line splitting
+      // 回车（0x0D）：将光标移动到第 0 列，跳过它
+      // 退格（0x08）：将光标左移，跳过它
+      // 响铃（0x07）、垂直制表（0x0B）、换页（0x0C）：跳过
+      // 所有其他控制字符（0x00-0x06、0x0E-0x1F）：跳过
+      // 注意：换行（0x0A）已由行分割处理
       continue
     }
 
-    // Zero-width characters (combining marks, ZWNJ, ZWS, etc.)
-    // don't occupy terminal cells — storing them as Narrow cells
-    // desyncs the virtual cursor from the real terminal cursor.
-    // Width was computed once during clustering (cached via charCache).
+    // 零宽度字符（组合标记、ZWNJ、ZWS 等）
+    // 不占用终端单元格 — 将它们存储为 Narrow 单元格
+    // 会使虚拟光标与实际终端光标不同步。
+    // 宽度已在聚类时计算一次（通过 charCache 缓存）。
     const charWidth = character.width
     if (charWidth === 0) {
       continue
@@ -767,9 +767,9 @@ function writeLineToScreen(
 
     const isWideCharacter = charWidth >= 2
 
-    // Wide char at last column can't fit — terminal would wrap it to
-    // the next line, desyncing our cursor model. Place a SpacerHead
-    // to mark the blank column, matching terminal behavior.
+    // 宽字符在最后一列无法容纳 — 终端会将其换行到
+    // 下一行，使我们的光标模型不同步。放置一个 SpacerHead
+    // 标记空白列，匹配终端行为。
     if (isWideCharacter && offsetX + 2 > screenWidth) {
       setCellAt(screen, offsetX, y, {
         char: ' ',
@@ -781,9 +781,9 @@ function writeLineToScreen(
       continue
     }
 
-    // styleId + hyperlink were precomputed during clustering (once per
-    // style run, cached via charCache). Hot loop is now just property
-    // reads — no intern, no extract, no filter per frame.
+    // styleId + hyperlink 在聚类时预计算（每个
+    // 样式运行一次，通过 charCache 缓存）。热循环现在只是属性
+    // 读取 — 每帧无 intern、无 extract、无 filter。
     setCellAt(screen, offsetX, y, {
       char: character.value,
       styleId: character.styleId,
