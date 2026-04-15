@@ -29,7 +29,9 @@ const actionKeyMap: Record<string, string> = {
   'hide': 'permission.hide',
   'add': 'common.add',
   'complete': 'common.complete',
-  'stop agents': 'shortcut.stopAgents'
+  'stop agents': 'shortcut.stopAgents',
+  'close': 'common.close',
+  'cycle': 'shortcut.cycleMode'
 };
 
 /**

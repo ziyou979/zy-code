@@ -239,6 +239,7 @@ export const en: TranslationResource = {
   'common.manage': 'manage',
   'common.add': 'add',
   'common.complete': 'complete',
+  'common.close': 'close',
 
   // Summary — search/read/list activities (collapsed tool output)
   // {count} is always provided; each language handles pluralization internally
@@ -522,10 +523,27 @@ export const en: TranslationResource = {
 
   // Shortcut hints
   'shortcut.stopAgents': 'stop agents',
+  'shortcut.cycleMode': 'cycle mode',
   'common.running': 'Running',
 
   // Agent tool
   'agent.inProgress': 'In progress…',
   'agent.toolUse_one': 'tool use',
   'agent.toolUse_other': 'tool uses',
+
+  // Skills
+  'skills.menu.title': 'Skills',
+  'skills.menu.subtitle': '{count} {skill}',
+  'skills.menu.noSkills': 'No skills found',
+  'skills.menu.dismissed': 'Skills dialog dismissed',
+  'skills.menu.createHint': 'Create skills in .zy/skills/ or ~/.zy/skills/',
+  'skills.menu.descriptionTokens': '{count} description tokens',
+  'skills.menu.pluginSkills': 'Plugin skills',
+  'skills.menu.mcpSkills': 'MCP skills',
+  'skills.menu.sourceSkills': '{source} skills',
+  'skills.improvement.suggested': 'Skill improvement suggested for "{skillName}"',
+  'skills.improvement.apply': 'Apply',
+  'skills.improvement.dismiss': 'Dismiss',
+  'skills.permission.useSkill': 'Use skill "{skill}"?',
+  'skills.permission.mayUse': 'Zy may use instructions, code, or files from this Skill.',
 }

@@ -9,6 +9,7 @@ import { getSettingSourceName, type SettingSource } from '../../utils/settings/c
 import { plural } from '../../utils/stringUtils.js';
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
 import { Dialog } from '../design-system/Dialog.js';
+import { tSync } from 'src/i18n/index.js';
 
 // Skills are always PromptCommands with CommandBase properties
 type SkillCommand = CommandBase & PromptCommand;
@@ -21,12 +22,12 @@ type Props = {
 };
 function getSourceTitle(source: SkillSource): string {
   if (source === 'plugin') {
-    return 'Plugin skills';
+    return tSync('skills.menu.pluginSkills');
   }
   if (source === 'mcp') {
-    return 'MCP skills';
+    return tSync('skills.menu.mcpSkills');
   }
-  return `${capitalize(getSettingSourceName(source))} skills`;
+  return tSync('skills.menu.sourceSkills', { source: capitalize(getSettingSourceName(source)) });
 }
 function getSourceSubtitle(source: SkillSource, skills: SkillCommand[]): string | undefined {
   // MCP skills show server names; file-based skills show filesystem paths.
@@ -67,18 +68,18 @@ export function SkillsMenu({
   }
   const skillsBySource = groups;
   const handleCancel = () => {
-    onExit("Skills dialog dismissed", {
+    onExit(tSync('skills.menu.dismissed'), {
       display: "system"
     });
   };
   if (skills.length === 0) {
-    return <Dialog title="Skills" subtitle="No skills found" onCancel={handleCancel} hideInputGuide={true}>{<Text dimColor={true}>Create skills in .zy/skills/ or ~/.zy/skills/</Text>}{<Text dimColor={true} italic={true}><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="close" /></Text>}</Dialog>;
+    return <Dialog title={tSync('skills.menu.title')} subtitle={tSync('skills.menu.noSkills')} onCancel={handleCancel} hideInputGuide={true}>{<Text dimColor={true}>{tSync('skills.menu.createHint')}</Text>}{<Text dimColor={true} italic={true}><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="close" /></Text>}</Dialog>;
   }
   const renderSkill = skill_0 => {
     const estimatedTokens = estimateSkillFrontmatterTokens(skill_0);
     const tokenDisplay = `~${formatTokens(estimatedTokens)}`;
     const pluginName = skill_0.source === "plugin" ? skill_0.pluginInfo?.pluginManifest.name : undefined;
-    return <Box key={`${skill_0.name}-${skill_0.source}`}><Text>{getCommandName(skill_0)}</Text><Text dimColor={true}>{pluginName ? ` · ${pluginName}` : ""} · {tokenDisplay} description tokens</Text></Box>;
+    return <Box key={`${skill_0.name}-${skill_0.source}`}><Text>{getCommandName(skill_0)}</Text><Text dimColor={true}>{pluginName ? ` · ${pluginName}` : ""} · {tSync('skills.menu.descriptionTokens', { count: estimatedTokens })}</Text></Box>;
   };
   const renderSkillGroup = source_0 => {
     const groupSkills = skillsBySource[source_0];
@@ -95,5 +96,5 @@ export function SkillsMenu({
   const t9 = renderSkillGroup("policySettings");
   const t10 = renderSkillGroup("plugin");
   const t11 = renderSkillGroup("mcp");
-  return <Dialog title="Skills" subtitle={`${skills.length} ${t5}`} onCancel={handleCancel} hideInputGuide={true}>{<Box flexDirection="column" gap={1}>{t7}{t8}{t9}{t10}{t11}</Box>}{<Text dimColor={true} italic={true}><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="close" /></Text>}</Dialog>;
+  return <Dialog title={tSync('skills.menu.title')} subtitle={tSync('skills.menu.subtitle', { count: skills.length, skill: t5 })} onCancel={handleCancel} hideInputGuide={true}>{<Box flexDirection="column" gap={1}>{t7}{t8}{t9}{t10}{t11}</Box>}{<Text dimColor={true} italic={true}><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="close" /></Text>}</Dialog>;
 }

@@ -191,6 +191,7 @@ export const zhCN: TranslationResource = {
   'common.manage': '管理',
   'common.add': '添加',
   'common.complete': '完成',
+  'common.close': '关闭',
 
   // Summary — search/read/list activities (collapsed tool output)
   'summary.search.pattern_one': '匹配模式',
@@ -640,10 +641,27 @@ export const zhCN: TranslationResource = {
 
   // 快捷键提示
   'shortcut.stopAgents': '停止 agent',
+  'shortcut.cycleMode': '切换模式',
   'common.running': '运行中',
 
   // Agent 工具
   'agent.inProgress': '进行中…',
   'agent.toolUse_one': '次工具使用',
   'agent.toolUse_other': '次工具使用',
+
+  // Skills 技能
+  'skills.menu.title': '技能',
+  'skills.menu.subtitle': '{count} 个{skill}',
+  'skills.menu.noSkills': '未找到技能',
+  'skills.menu.dismissed': '技能对话框已关闭',
+  'skills.menu.createHint': '在 .zy/skills/ 或 ~/.zy/skills/ 中创建技能',
+  'skills.menu.descriptionTokens': '{count} 个描述 token',
+  'skills.menu.pluginSkills': '插件技能',
+  'skills.menu.mcpSkills': 'MCP 技能',
+  'skills.menu.sourceSkills': '{source} 技能',
+  'skills.improvement.suggested': '建议改进技能 "{skillName}"',
+  'skills.improvement.apply': '应用',
+  'skills.improvement.dismiss': '忽略',
+  'skills.permission.useSkill': '使用技能 "{skill}"？',
+  'skills.permission.mayUse': 'ZY 可能会使用此技能中的指令、代码或文件。',
 }

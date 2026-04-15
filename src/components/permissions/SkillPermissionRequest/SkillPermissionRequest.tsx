@@ -170,5 +170,5 @@ export function SkillPermissionRequest(props) {
     onDone();
   };
   const t14 = commandObj?.description;
-  return <PermissionDialog title={`Use skill "${skill}"?`} workerBadge={workerBadge}>{<Text>Zy may use instructions, code, or files from this Skill.</Text>}{<Box flexDirection="column" paddingX={2} paddingY={1}><Text dimColor={true}>{t14}</Text></Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<PermissionPrompt options={options} onSelect={handleSelect} onCancel={handleCancel} toolAnalyticsContext={toolAnalyticsContext} />}</Box>}</PermissionDialog>;
+  return <PermissionDialog title={tSync('skills.permission.useSkill', { skill })} workerBadge={workerBadge}>{<Text>{tSync('skills.permission.mayUse')}</Text>}{<Box flexDirection="column" paddingX={2} paddingY={1}><Text dimColor={true}>{t14}</Text></Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<PermissionPrompt options={options} onSelect={handleSelect} onCancel={handleCancel} toolAnalyticsContext={toolAnalyticsContext} />}</Box>}</PermissionDialog>;
 }
