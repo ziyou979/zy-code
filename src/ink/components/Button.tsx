@@ -11,24 +11,23 @@ type ButtonState = {
 export type Props = Except<Styles, 'textWrap'> & {
   ref?: Ref<DOMElement>;
   /**
-   * Called when the button is activated via Enter, Space, or click.
+   * 通过 Enter、Space 或点击激活按钮时调用。
    */
   onAction: () => void;
   /**
-   * Tab order index. Defaults to 0 (in tab order).
-   * Set to -1 for programmatically focusable only.
+   * Tab 顺序索引。默认为 0（在 tab 顺序中）。
+   * 设为 -1 表示仅可编程聚焦。
    */
   tabIndex?: number;
   /**
-   * Focus this button when it mounts.
+   * 按钮挂载时自动聚焦。
    */
   autoFocus?: boolean;
   /**
-   * Render prop receiving the interactive state. Use this to
-   * style children based on focus/hover/active — Button itself
-   * is intentionally unstyled.
+   * 渲染 prop，接收交互状态。用于根据 focus/hover/active 状态
+   * 设置子元素样式——Button 本身有意不添加样式。
    *
-   * If not provided, children render as-is (no state-dependent styling).
+   * 如果不提供，子元素将原样渲染（无状态依赖样式）。
    */
   children: ((state: ButtonState) => React.ReactNode) | React.ReactNode;
 };

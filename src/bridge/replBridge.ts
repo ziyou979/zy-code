@@ -170,7 +170,7 @@ export type BridgeCoreParams = {
    * default.
    */
   initialHistoryCap?: number
-  // Same REPL-flush machinery as InitBridgeOptions — daemon omits these.
+  // 与 InitBridgeOptions 相同的 REPL 刷新机制 — daemon 省略这些。
   initialMessages?: Message[]
   previouslyFlushedUUIDs?: Set<string>
   onInboundMessage?: (msg: SDKMessage) => void
@@ -245,7 +245,7 @@ const POLL_ERROR_INITIAL_DELAY_MS = 2_000
 const POLL_ERROR_MAX_DELAY_MS = 60_000
 const POLL_ERROR_GIVE_UP_MS = 15 * 60 * 1000
 
-// Monotonically increasing counter for distinguishing init calls in logs
+// 单调递增计数器，用于在日志中区分 init 调用
 let initSequence = 0
 
 /**
@@ -297,17 +297,17 @@ export async function initBridgeCore(
 
   const seq = ++initSequence
 
-  // bridgePointer import hoisted: perpetual mode reads it before register;
-  // non-perpetual writes it after session create; both use clear at teardown.
+  // bridgePointer 导入提升：perpetual 模式在 register 之前读取它；
+  // 非 perpetual 在 session create 之后写入它；两者都在 teardown 时使用 clear。
   const { writeBridgePointer, clearBridgePointer, readBridgePointer } =
     await import('./bridgePointer.js')
 
-  // Perpetual mode: read the crash-recovery pointer and treat it as prior
-  // state. The pointer is written unconditionally after session create
-  // (crash-recovery for all sessions); perpetual mode just skips the
-  // teardown clear so it survives clean exits too. Only reuse 'repl'
-  // pointers — a crashed standalone bridge (`zy remote-control`)
-  // writes source:'standalone' with a different workerType.
+  // Perpetual 模式：读取崩溃恢复指针并将其视为先前
+  // 状态。指针在 session create 后无条件写入
+  // （所有会话的崩溃恢复）；perpetual 模式只是跳过
+  // teardown clear，所以它也能在干净退出后存活。只重用 'repl'
+  // 指针 — 崩溃的独立 bridge（`zy remote-control`）
+  // 写入 source:'standalone' 和不同的 workerType。
   const rawPrior = perpetual ? await readBridgePointer(dir) : null
   const prior = rawPrior?.source === 'repl' ? rawPrior : null
 
@@ -315,7 +315,7 @@ export async function initBridgeCore(
     `[bridge:repl] initBridgeCore #${seq} starting (initialMessages=${initialMessages?.length ?? 0}${prior ? ` perpetual prior=env:${prior.environmentId}` : ''})`,
   )
 
-  // 5. Register bridge environment
+  // 5. 注册 bridge 环境
   const rawApi = createBridgeApiClient({
     baseUrl,
     getAccessToken,
@@ -324,8 +324,8 @@ export async function initBridgeCore(
     onAuth401,
     getTrustedDeviceToken,
   })
-  // Ant-only: interpose so /bridge-kick can inject poll/register/heartbeat
-  // failures. Zero cost in external builds (rawApi passes through unchanged).
+  // 仅 Ant：拦截以便 /bridge-kick 可以注入 poll/register/heartbeat
+  // 故障。在外部构建中零成本（rawApi 直接传递不变）。
   const api =
     process.env.USER_TYPE === 'zy-super' ? wrapApiForFaultInjection(rawApi) : rawApi
 
@@ -357,8 +357,8 @@ export async function initBridgeCore(
       'registration_failed',
       `[bridge:repl] Environment registration failed: ${errorMessage(err)}`,
     )
-    // Stale pointer may be the cause (expired/deleted env) — clear it so
-    // the next start doesn't retry the same dead ID.
+    // 陈旧指针可能是原因（过期/删除的环境）— 清除它以便
+    // 下次启动不会重试相同的死 ID。
     if (prior) {
       await clearBridgePointer(dir)
     }
@@ -388,14 +388,14 @@ export async function initBridgeCore(
       )
       return false
     }
-    // The pointer stores what createBridgeSession returned (session_*,
-    // compat/convert.go:41). /bridge/reconnect is an environments-layer
-    // endpoint — once the server's ccr_v2_compat_enabled gate is on it
-    // looks sessions up by their infra tag (cse_*) and returns "Session
-    // not found" for the session_* costume. We don't know the gate state
-    // pre-poll, so try both; the re-tag is a no-op if the ID is already
-    // cse_* (doReconnect Strategy 1 path — currentSessionId never mutates
-    // to cse_* but future-proof the check).
+    // 指针存储 createBridgeSession 返回的内容（session_*，
+    // compat/convert.go:41）。/bridge/reconnect 是 environments 层
+    // 端点 — 一旦服务器的 ccr_v2_compat_enabled 门控开启，它会
+    // 通过 infra 标签（cse_*）查找会话，并对 session_* 伪装返回
+    // "Session not found"。我们在 poll 前不知道门控状态，
+    // 所以两者都试；如果 ID 已经是 cse_*，重新标记是无操作
+    // （doReconnect Strategy 1 路径 — currentSessionId 永远不会变异
+    // 为 cse_*，但为未来检查做准备）。
     const infraId = toInfraSessionId(sessionId)
     const candidates =
       infraId === sessionId ? [sessionId] : [sessionId, infraId]
@@ -418,10 +418,10 @@ export async function initBridgeCore(
     return false
   }
 
-  // Perpetual init: env is alive but has no queued work after clean
-  // teardown. reconnectSession re-queues it. doReconnect() has the same
-  // call but only fires on poll 404 (env dead);
-  // here the env is alive but idle.
+  // Perpetual 初始化：环境存活但干净 teardown 后没有排队工作。
+  // reconnectSession 重新排队它。doReconnect() 有相同的
+  // 调用但只在 poll 404 时触发（环境死亡）；
+  // 这里环境存活但空闲。
   const reusedPriorSession = prior
     ? await tryReconnectInPlace(prior.environmentId, prior.sessionId)
     : false
@@ -429,13 +429,12 @@ export async function initBridgeCore(
     await clearBridgePointer(dir)
   }
 
-  // 6. Create session on the bridge. Initial messages are NOT included as
-  // session creation events because those use STREAM_ONLY persistence and
-  // are published before the CCR UI subscribes, so they get lost. Instead,
-  // initial messages are flushed via the ingress WebSocket once it connects.
+  // 6. 在 bridge 上创建会话。初始消息不包含为
+  // 会话创建事件，因为它们使用 STREAM_ONLY 持久化且
+  // 在 CCR UI 订阅之前发布，所以会丢失。相反，
+  // 初始消息在 ingress WebSocket 连接后通过它刷新。
 
-  // Mutable session ID — updated when the environment+session pair is
-  // re-created after a connection loss.
+  // 可变会话 ID — 在连接丢失后重新创建环境+会话对时更新。
   let currentSessionId: string
 
 
@@ -444,10 +443,10 @@ export async function initBridgeCore(
     logForDebugging(
       `[bridge:repl] Perpetual session reused: ${currentSessionId}`,
     )
-    // Server already has all initialMessages from the prior CLI run. Mark
-    // them as previously-flushed so the initial flush filter excludes them
-    // (previouslyFlushedUUIDs is a fresh Set on every CLI start). Duplicate
-    // UUIDs cause the server to kill the WebSocket.
+    // 服务器已经有之前 CLI 运行的所有 initialMessages。标记
+    // 它们为已刷新，以便初始刷新过滤器排除它们
+    // （previouslyFlushedUUIDs 在每次 CLI 启动时是新的 Set）。
+    // 重复的 UUID 会导致服务器杀死 WebSocket。
     if (initialMessages && previouslyFlushedUUIDs) {
       for (const msg of initialMessages) {
         previouslyFlushedUUIDs.add(msg.uuid)
@@ -476,11 +475,11 @@ export async function initBridgeCore(
     logForDebugging(`[bridge:repl] Session created: ${currentSessionId}`)
   }
 
-  // Crash-recovery pointer: written now so a kill -9 at any point after
-  // this leaves a recoverable trail. Cleared in teardown (non-perpetual)
-  // or left alone (perpetual mode — pointer survives clean exit too).
-  // `zy remote-control --continue` from the same directory will detect
-  // it and offer to resume.
+  // 崩溃恢复指针：现在写入，以便此后任何时刻的 kill -9
+  // 留下可恢复的轨迹。在 teardown 中清除（非 perpetual）
+  // 或保持不变（perpetual 模式 — 指针在干净退出后也存活）。
+  // 从相同目录运行 `zy remote-control --continue` 会检测到
+  // 它并提供恢复选项。
   await writeBridgePointer(dir, {
     sessionId: currentSessionId,
     environmentId,
@@ -492,8 +491,8 @@ export async function initBridgeCore(
     inProtectedNamespace: isInProtectedNamespace(),
   })
 
-  // UUIDs of initial messages. Used for dedup in writeMessages to avoid
-  // re-sending messages that were already flushed on WebSocket open.
+  // 初始消息的 UUID。用于 writeMessages 中的去重，以避免
+  // 重新发送已在 WebSocket 打开时刷新的消息。
   const initialMessageUUIDs = new Set<string>()
   if (initialMessages) {
     for (const msg of initialMessages) {
@@ -501,85 +500,84 @@ export async function initBridgeCore(
     }
   }
 
-  // Bounded ring buffer of UUIDs for messages we've already sent to the
-  // server via the ingress WebSocket. Serves two purposes:
-  //  1. Echo filtering — ignore our own messages bouncing back on the WS.
-  //  2. Secondary dedup in writeMessages — catch race conditions where
-  //     the hook's index-based tracking isn't sufficient.
+  // 已通过 ingress WebSocket 发送到服务器的消息的
+  // 有界环形 UUID 缓冲区。有两个用途：
+  //  1. 回显过滤 — 忽略我们在 WS 上弹回的自己消息。
+  //  2. writeMessages 中的次要去重 — 捕获钩子基于索引的
+  //     跟踪不够充分的竞态条件。
   //
-  // Seeded with initialMessageUUIDs so that when the server echoes back
-  // the initial conversation context over the ingress WebSocket, those
-  // messages are recognized as echoes and not re-injected into the REPL.
+  // 用 initialMessageUUIDs 播种，以便当服务器通过 ingress
+  // WebSocket 回显初始对话上下文时，这些消息被识别为
+  // 回显而不会重新注入 REPL。
   //
-  // Capacity of 2000 covers well over any realistic echo window (echoes
-  // arrive within milliseconds) and any messages that might be re-encountered
-  // after compaction. The hook's lastWrittenIndexRef is the primary dedup;
-  // this is a safety net.
+  // 容量 2000 远高于任何现实的回显窗口（回显
+  // 在几毫秒内到达）和压缩后可能重新遇到的任何消息。
+  // 钩子的 lastWrittenIndexRef 是主要去重；这是安全网。
   const recentPostedUUIDs = new BoundedUUIDSet(2000)
   for (const uuid of initialMessageUUIDs) {
     recentPostedUUIDs.add(uuid)
   }
 
-  // Bounded set of INBOUND prompt UUIDs we've already forwarded to the REPL.
-  // Defensive dedup for when the server re-delivers prompts (seq-num
-  // negotiation failure, server edge cases, transport swap races). The
-  // seq-num carryover below is the primary fix; this is the safety net.
+  // 已转发到 REPL 的入站提示 UUID 的有界集合。
+  // 当服务器重新传递提示时的防御性去重（seq-num
+  // 协商失败、服务器边缘情况、传输交换竞态）。
+  // 下面的 seq-num 携带是主要修复；这是安全网。
   const recentInboundUUIDs = new BoundedUUIDSet(2000)
 
-  // 7. Start poll loop for work items — this is what makes the session
-  // "live" on zy.ai. When a user types there, the backend dispatches
-  // a work item to our environment. We poll for it, get the ingress token,
-  // and connect the ingress WebSocket.
+  // 7. 启动工作项轮询循环 — 这就是让会话
+  // 在 zy.ai 上"活跃"的原因。当用户在那里输入时，后端
+  // 会向我们的环境分发工作项。我们轮询它，获取 ingress token，
+  // 并连接 ingress WebSocket。
   //
-  // The poll loop keeps running: when work arrives it connects the ingress
-  // WebSocket, and if the WebSocket drops unexpectedly (code != 1000) it
-  // resumes polling to get a fresh ingress token and reconnect.
+  // 轮询循环持续运行：当工作到达时它连接 ingress
+  // WebSocket，如果 WebSocket 意外断开（code != 1000），它会
+  // 恢复轮询以获取新的 ingress token 并重新连接。
   const pollController = new AbortController()
-  // Adapter over either HybridTransport (v1: WS reads + POST writes to
-  // Session-Ingress) or SSETransport+CCRClient (v2: SSE reads + POST
-  // writes to CCR /worker/*). The v1/v2 choice is made in onWorkReceived:
-  // server-driven via secret.use_code_sessions, with CLAUDE_BRIDGE_USE_CCR_V2
-  // as an ant-dev override.
+  // 适配 HybridTransport（v1：WS 读取 + POST 写入
+  // Session-Ingress）或 SSETransport+CCRClient（v2：SSE 读取 + POST
+  // 写入 CCR /worker/*）。v1/v2 选择在 onWorkReceived 中决定：
+  // 由 secret.use_code_sessions 服务器驱动，CLAUDE_BRIDGE_USE_CCR_V2
+  // 作为 ant-dev 覆盖。
   let transport: ReplBridgeTransport | null = null
-  // Bumped on every onWorkReceived. Captured in createV2ReplTransport's .then()
-  // closure to detect stale resolutions: if two calls race while transport is
-  // null, both registerWorker() (bumping server epoch), and whichever resolves
-  // SECOND is the correct one — but the transport !== null check gets this
-  // backwards (first-to-resolve installs, second discards). The generation
-  // counter catches it independent of transport state.
+  // 每次 onWorkReceived 时递增。在 createV2ReplTransport 的 .then()
+  // 闭包中捕获以检测陈旧决议：如果两个调用在 transport 为
+  // null 时竞态，两者都调用 registerWorker()（递增服务器 epoch），
+  // 第二个解析的是正确的 — 但 transport !== null 检查搞反了
+  // （先解析的安装，第二个丢弃）。生成计数器
+  // 独立于 transport 状态捕获它。
   let v2Generation = 0
-  // SSE sequence-number high-water mark carried across transport swaps.
-  // Without this, each new SSETransport starts at 0, sends no
-  // from_sequence_num / Last-Event-ID on its first connect, and the server
-  // replays the entire session event history — every prompt ever sent
-  // re-delivered as fresh inbound messages on every onWorkReceived.
+  // 跨传输交换携带的 SSE 序列号高水位标记。
+  // 没有这个，每个新的 SSETransport 从 0 开始，在首次连接时
+  // 不发送 from_sequence_num / Last-Event-ID，服务器会
+  // 重播整个会话事件历史 — 每次发送的每个提示都
+  // 作为新的入站消息重新传递。
   //
-  // Seed only when we actually reconnected the prior session. If
-  // `reusedPriorSession` is false we fell through to `createSession()` —
-  // the caller's persisted seq-num belongs to a dead session and applying
-  // it to the fresh stream (starting at 1) silently drops events. Same
-  // hazard as doReconnect Strategy 2; same fix as the reset there.
+  // 仅在我们实际重新连接了先前会话时才播种。如果
+  // `reusedPriorSession` 为 false，我们落入 `createSession()` —
+  // 调用者持久化的 seq-num 属于死会话，应用到
+  // 从 1 开始的新流会静默丢弃事件。与 doReconnect
+  // Strategy 2 相同的危险；相同的修复。
   let lastTransportSequenceNum = reusedPriorSession ? initialSSESequenceNum : 0
-  // Track the current work ID so teardown can call stopWork
+  // 跟踪当前工作 ID，以便 teardown 可以调用 stopWork
   let currentWorkId: string | null = null
-  // Session ingress JWT for the current work item — used for heartbeat auth.
+  // 当前工作项的会话 ingress JWT — 用于心跳认证。
   let currentIngressToken: string | null = null
-  // Signal to wake the at-capacity sleep early when the transport is lost,
-  // so the poll loop immediately switches back to fast polling for new work.
+  // 当传输丢失时提前唤醒容量睡眠的信号，
+  // 以便轮询循环立即切换回快速轮询新工作。
   const capacityWake = createCapacityWake(pollController.signal)
   const wakePollLoop = capacityWake.wake
   const capacitySignal = capacityWake.signal
-  // Gates message writes during the initial flush to prevent ordering
-  // races where new messages arrive at the server interleaved with history.
+  // 在初始刷新期间门控消息写入，以防止排序
+  // 竞态，新消息与历史交错到达服务器。
   const flushGate = new FlushGate<Message>()
 
-  // Latch for onUserMessage — flips true when the callback returns true
-  // (policy says "done deriving"). If no callback, skip scanning entirely
-  // (daemon path — no title derivation needed).
+  // onUserMessage 的锁存器 — 当回调返回 true 时翻转为 true
+  // （策略说"完成派生"）。如果没有回调，完全跳过扫描
+  // （daemon 路径 — 不需要标题派生）。
   let userMessageCallbackDone = !onUserMessage
 
-  // Shared counter for environment re-creations, used by both
-  // onEnvironmentLost and the abnormal-close handler.
+  // 环境重新创建的共享计数器，由
+  // onEnvironmentLost 和异常关闭处理程序共同使用。
   const MAX_ENVIRONMENT_RECREATIONS = 3
   let environmentRecreations = 0
   let reconnectPromise: Promise<boolean> | null = null

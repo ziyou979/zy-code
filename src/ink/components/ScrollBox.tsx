@@ -11,11 +11,11 @@ export type ScrollBoxHandle = {
   scrollTo: (y: number) => void;
   scrollBy: (dy: number) => void;
   /**
-   * Scroll so `el`'s top is at the viewport top (plus `offset`). Unlike
-   * scrollTo which bakes a number that's stale by the time the throttled
-   * render fires, this defers the position read to render time —
-   * render-node-to-output reads `el.yogaNode.getComputedTop()` in the
-   * SAME Yoga pass that computes scrollHeight. Deterministic. One-shot.
+   * 滚动使 `el` 的顶部对齐到视口顶部（加上 `offset`）。与
+   * scrollTo 不同，scrollTo 使用的是节流渲染触发时已过时的数值，
+   * 而该方法将位置读取推迟到渲染时 ——
+   * render-node-to-output 在计算 scrollHeight 的同一个 Yoga 渲染流程中
+   * 读取 `el.yogaNode.getComputedTop()`。确定性执行，一次性完成。
    */
   scrollToElement: (el: DOMElement, offset?: number) => void;
   scrollToBottom: () => void;
@@ -23,61 +23,58 @@ export type ScrollBoxHandle = {
   getPendingDelta: () => number;
   getScrollHeight: () => number;
   /**
-   * Like getScrollHeight, but reads Yoga directly instead of the cached
-   * value written by render-node-to-output (throttled, up to 16ms stale).
-   * Use when you need a fresh value in useLayoutEffect after a React commit
-   * that grew content. Slightly more expensive (native Yoga call).
+   * 类似于 getScrollHeight，但直接读取 Yoga 而非缓存值。
+   * 缓存值由 render-node-to-output 写入（节流，最多过时 16ms）。
+   * 当你在内容增长后的 React commit 之后，需要在 useLayoutEffect 中
+   * 获取最新值时使用该方法。开销略大（需要调用原生 Yoga）。
    */
   getFreshScrollHeight: () => number;
   getViewportHeight: () => number;
   /**
-   * Absolute screen-buffer row of the first visible content line (inside
-   * padding). Used for drag-to-scroll edge detection.
+   * 首个可见内容行的绝对屏幕缓冲行号（在 padding 内部）。
+   * 用于拖拽滚动边缘检测。
    */
   getViewportTop: () => number;
   /**
-   * True when scroll is pinned to the bottom. Set by scrollToBottom, the
-   * initial stickyScroll attribute, and by the renderer when positional
-   * follow fires (scrollTop at prevMax, content grows). Cleared by
-   * scrollTo/scrollBy. Stable signal for "at bottom" that doesn't depend on
-   * layout values (unlike scrollTop+viewportH >= scrollHeight).
+   * 滚动是否钉在底部。由 scrollToBottom、初始 stickyScroll 属性、
+   * 以及渲染器在 positional follow 触发时设置（内容增长时 scrollTop
+   * 处于 prevMax）。被 scrollTo/scrollBy 清除。作为"在底部"的稳定信号，
+   * 不依赖布局值（不像 scrollTop+viewportH >= scrollHeight）。
    */
   isSticky: () => boolean;
   /**
-   * Subscribe to imperative scroll changes (scrollTo/scrollBy/scrollToBottom).
-   * Does NOT fire for stickyScroll updates done by the Ink renderer — those
-   * happen during Ink's render phase after React has committed. Callers that
-   * care about the sticky case should treat "at bottom" as a fallback.
+   * 订阅命令式滚动变化（scrollTo/scrollBy/scrollToBottom）。
+   * 不会为 Ink 渲染器完成的 stickyScroll 更新触发 —— 那些发生在
+   * React commit 之后的 Ink 渲染阶段。关心 sticky 场景的调用方
+   * 应将"在底部"作为后备行为。
    */
   subscribe: (listener: () => void) => () => void;
   /**
-   * Set the render-time scrollTop clamp to the currently-mounted children's
-   * coverage span. Called by useVirtualScroll after computing its range;
-   * render-node-to-output clamps scrollTop to [min, max] so burst scrollTo
-   * calls that race past React's async re-render show the edge of mounted
-   * content instead of blank spacer. Pass undefined to disable (sticky,
-   * cold start).
+   * 将渲染时的 scrollTop 钳位设置为当前已挂载子元素的覆盖范围。
+   * 由 useVirtualScroll 在计算范围后调用；render-node-to-output
+   * 将 scrollTop 钳位到 [min, max]，使得超过 React 异步重渲染的
+   * 突发 scrollTo 调用会显示已挂载内容的边缘，而非空白占位符。
+   * 传入 undefined 则禁用（sticky、冷启动场景）。
    */
   setClampBounds: (min: number | undefined, max: number | undefined) => void;
 };
 export type ScrollBoxProps = Except<Styles, 'textWrap' | 'overflow' | 'overflowX' | 'overflowY'> & {
   ref?: Ref<ScrollBoxHandle>;
   /**
-   * When true, automatically pins scroll position to the bottom when content
-   * grows. Unset manually via scrollTo/scrollBy to break the stickiness.
+   * 为 true 时，内容增长时自动将滚动位置钉在底部。
+   * 可通过 scrollTo/scrollBy 手动解除粘性。
    */
   stickyScroll?: boolean;
 };
 
 /**
- * A Box with `overflow: scroll` and an imperative scroll API.
+ * 带有 `overflow: scroll` 和命令式滚动 API 的 Box。
  *
- * Children are laid out at their full Yoga-computed height inside a
- * constrained container. At render time, only children intersecting the
- * visible window (scrollTop..scrollTop+height) are rendered (viewport
- * culling). Content is translated by -scrollTop and clipped to the box bounds.
+ * 子元素在受限容器内以其完整的 Yoga 计算高度进行布局。
+ * 渲染时，仅渲染与可见窗口（scrollTop..scrollTop+height）相交的
+ * 子元素（视口裁剪）。内容通过 -scrollTop 平移并裁剪到盒子边界。
  *
- * Works best inside a fullscreen (constrained-height root) Ink tree.
+ * 最适合在 Ink 全屏（受限高度的根）树内使用。
  */
 function ScrollBox({
   children,
@@ -86,14 +83,14 @@ function ScrollBox({
   ...style
 }: PropsWithChildren<ScrollBoxProps>): React.ReactNode {
   const domRef = useRef<DOMElement>(null);
-  // scrollTo/scrollBy bypass React: they mutate scrollTop on the DOM node,
-  // mark it dirty, and call the root's throttled scheduleRender directly.
-  // The Ink renderer reads scrollTop from the node — no React state needed,
-  // no reconciler overhead per wheel event. The microtask defer coalesces
-  // multiple scrollBy calls in one input batch (discreteUpdates) into one
-  // render — otherwise scheduleRender's leading edge fires on the FIRST
-  // event before subsequent events mutate scrollTop. scrollToBottom still
-  // forces a React render: sticky is attribute-observed, no DOM-only path.
+  // scrollTo/scrollBy 绕过 React：直接修改 DOM 节点上的 scrollTop，
+  // 标记为 dirty，并调用根的节流 scheduleRender。
+  // Ink 渲染器从节点读取 scrollTop —— 不需要 React 状态，
+  // 每次 wheel 事件无需 reconciler 开销。微任务 defer 将一次输入批次
+  //（discreteUpdates）中的多次 scrollBy 调用合并为一次渲染 ——
+  // 否则 scheduleRender 的前沿会在第一个事件上触发，而后续事件还未
+  // 修改 scrollTop。scrollToBottom 仍会触发 React 渲染：sticky 是
+  // 属性观察的，没有纯 DOM 路径。
   const [, forceRender] = useState(0);
   const listenersRef = useRef(new Set<() => void>());
   const renderQueuedRef = useRef(false);
@@ -101,9 +98,9 @@ function ScrollBox({
     for (const l of listenersRef.current) l();
   };
   function scrollMutated(el: DOMElement): void {
-    // Signal background intervals (IDE poll, LSP poll, GCS fetch, orphan
-    // check) to skip their next tick — they compete for the event loop and
-    // contributed to 1402ms max frame gaps during scroll drain.
+    // 通知后台间隔（IDE 轮询、LSP 轮询、GCS 请求、孤立检查）
+    // 跳过下一次 tick —— 它们竞争事件循环，在滚动释放期间
+    // 曾导致最大 1402ms 的帧间隔。
     markScrollActivity();
     markDirty(el);
     markCommitStart();
@@ -119,8 +116,8 @@ function ScrollBox({
     scrollTo(y: number) {
       const el = domRef.current;
       if (!el) return;
-      // Explicit false overrides the DOM attribute so manual scroll
-      // breaks stickiness. Render code checks ?? precedence.
+      // 显式 false 会覆盖 DOM 属性，使手动滚动解除粘性。
+      // 渲染代码通过 ?? 优先级检查。
       el.stickyScroll = false;
       el.pendingScrollDelta = undefined;
       el.scrollAnchor = undefined;
@@ -142,11 +139,10 @@ function ScrollBox({
       const el = domRef.current;
       if (!el) return;
       el.stickyScroll = false;
-      // Wheel input cancels any in-flight anchor seek — user override.
+      // 滚轮输入取消任何进行中的锚点寻址 —— 用户覆盖。
       el.scrollAnchor = undefined;
-      // Accumulate in pendingScrollDelta; renderer drains it at a capped
-      // rate so fast flicks show intermediate frames. Pure accumulator:
-      // scroll-up followed by scroll-down naturally cancels.
+      // 累积到 pendingScrollDelta；渲染器以限速释放，
+      // 使快速滑动显示中间帧。纯累加器：上滚后接下滚自然抵消。
       el.pendingScrollDelta = (el.pendingScrollDelta ?? 0) + Math.floor(dy);
       scrollMutated(el);
     },
@@ -163,9 +159,9 @@ function ScrollBox({
       return domRef.current?.scrollTop ?? 0;
     },
     getPendingDelta() {
-      // Accumulated-but-not-yet-drained delta. useVirtualScroll needs
-      // this to mount the union [committed, committed+pending] range —
-      // otherwise intermediate drain frames find no children (blank).
+      // 已累积但尚未释放的增量。useVirtualScroll 需要
+      // 此值来挂载联合范围 [committed, committed+pending] ——
+      // 否则中间释放帧找不到子元素（显示空白）。
       return domRef.current?.pendingScrollDelta ?? 0;
     },
     getScrollHeight() {
@@ -197,23 +193,22 @@ function ScrollBox({
       el.scrollClampMax = max;
     }
   }),
-  // notify/scrollMutated are inline (no useCallback) but only close over
-  // refs + imports — stable. Empty deps avoids rebuilding the handle on
-  // every render (which re-registers the ref = churn).
+  // notify/scrollMutated 是内联的（未用 useCallback），但仅闭包
+  // 引用 ref 和导入 —— 保持稳定。空依赖数组避免每次渲染时
+  // 重建 handle（会重新注册 ref = 额外开销）。
   // eslint-disable-next-line react-hooks/exhaustive-deps
   []);
 
-  // Structure: outer viewport (overflow:scroll, constrained height) >
-  // inner content (flexGrow:1, flexShrink:0 — fills at least the viewport
-  // but grows beyond it for tall content). flexGrow:1 lets children use
-  // spacers to pin elements to the bottom of the scroll area. Yoga's
-  // Overflow.Scroll prevents the viewport from growing to fit the content.
-  // The renderer computes scrollHeight from the content box and culls
-  // content's children based on scrollTop.
+  // 结构：外层视口（overflow:scroll，受限高度）>
+  // 内部内容（flexGrow:1, flexShrink:0 —— 至少填满视口，
+  // 高内容时可超出）。flexGrow:1 让子元素可用 spacer 将元素
+  // 固定在滚动区域底部。Yoga 的 Overflow.Scroll 防止视口
+  // 增长以适应内容。渲染器从内容框计算 scrollHeight 并根据
+  // scrollTop 裁剪内容的子元素。
   //
-  // stickyScroll is passed as a DOM attribute (via ink-box directly) so it's
-  // available on the first render — ref callbacks fire after the initial
-  // commit, which is too late for the first frame.
+  // stickyScroll 作为 DOM 属性传递（通过 ink-box 直接传递），
+  // 使其在首次渲染时可用 —— ref 回调在首次 commit 后才触发，
+  // 对第一帧来说太晚了。
   return <ink-box ref={el => {
     domRef.current = el;
     if (el) el.scrollTop ??= 0;

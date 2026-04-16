@@ -5,8 +5,9 @@ import { wrapAnsi } from './wrapAnsi.js'
 
 const ELLIPSIS = '…'
 
-// sliceAnsi may include a boundary-spanning wide char (e.g. CJK at position
-// end-1 with width 2 overshoots by 1). Retry with a tighter bound once.
+// sliceAnsi 可能会包含跨越边界的宽字符（例如位于 end-1 位置、
+// 宽度为 2 的 CJK 字符会超出 1 个单位）。一旦发现超界，
+// 用更紧的边界重试一次。
 function sliceFit(text: string, start: number, end: number): string {
   const s = sliceAnsi(text, start, end)
   return stringWidth(s) > end - start ? sliceAnsi(text, start, end - 1) : s

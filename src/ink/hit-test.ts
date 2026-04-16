@@ -4,16 +4,15 @@ import type { EventHandlerProps } from './events/event-handlers.js'
 import { nodeCache } from './node-cache.js'
 
 /**
- * Find the deepest DOM element whose rendered rect contains (col, row).
+ * 查找渲染矩形包含 (col, row) 的最深 DOM 元素。
  *
- * Uses the nodeCache populated by renderNodeToOutput — rects are in screen
- * coordinates with all offsets (including scrollTop translation) already
- * applied. Children are traversed in reverse so later siblings (painted on
- * top) win. Nodes not in nodeCache (not rendered this frame, or lacking a
- * yogaNode) are skipped along with their subtrees.
+ * 使用 renderNodeToOutput 填充的 nodeCache——矩形使用屏幕坐标，
+ * 所有偏移（包括 scrollTop 平移）已应用。子节点逆序遍历，以便
+ * 后渲染的兄弟节点（绘制在上层）优先命中。不在 nodeCache 中的
+ * 节点（本帧未渲染或缺少 yogaNode）及其子树会被跳过。
  *
- * Returns the hit node even if it has no onClick — dispatchClick walks up
- * via parentNode to find handlers.
+ * 即使命中节点没有 onClick 也会返回——dispatchClick 会通过
+ * parentNode 向上查找处理器。
  */
 export function hitTest(
   node: DOMElement,
@@ -30,7 +29,7 @@ export function hitTest(
   ) {
     return null
   }
-  // Later siblings paint on top; reversed traversal returns topmost hit.
+  // 后渲染的兄弟节点绘制在上层；逆序遍历返回最上层的命中结果。
   for (let i = node.childNodes.length - 1; i >= 0; i--) {
     const child = node.childNodes[i]!
     if (child.nodeName === '#text') continue
@@ -41,10 +40,10 @@ export function hitTest(
 }
 
 /**
- * Hit-test the root at (col, row) and bubble a ClickEvent from the deepest
- * containing node up through parentNode. Only nodes with an onClick handler
- * fire. Stops when a handler calls stopImmediatePropagation(). Returns
- * true if at least one onClick handler fired.
+ * 在 (col, row) 处对 root 进行命中测试，并从最深的包含节点
+ * 向上通过 parentNode 冒泡 ClickEvent。只有带 onClick 处理器的
+ * 节点才会触发。当处理器调用 stopImmediatePropagation() 时停止。
+ * 至少有一个 onClick 处理器触发时返回 true。
  */
 export function dispatchClick(
   root: DOMElement,
@@ -55,8 +54,8 @@ export function dispatchClick(
   let target: DOMElement | undefined = hitTest(root, col, row) ?? undefined
   if (!target) return false
 
-  // Click-to-focus: find the closest focusable ancestor and focus it.
-  // root is always ink-root, which owns the FocusManager.
+  // 点击聚焦：查找最近的聚焦祖先并聚焦它。
+  // root 始终是 ink-root，它拥有 FocusManager。
   if (root.focusManager) {
     let focusTarget: DOMElement | undefined = target
     while (focusTarget) {
@@ -89,15 +88,13 @@ export function dispatchClick(
 }
 
 /**
- * Fire onMouseEnter/onMouseLeave as the pointer moves. Like DOM
- * mouseenter/mouseleave: does NOT bubble — moving between children does
- * not re-fire on the parent. Walks up from the hit node collecting every
- * ancestor with a hover handler; diffs against the previous hovered set;
- * fires leave on the nodes exited, enter on the nodes entered.
+ * 当指针移动时触发 onMouseEnter/onMouseLeave。类似 DOM
+ * mouseenter/mouseleave：不冒泡——在子节点之间移动不会重新在父节点上触发。
+ * 从命中节点向上遍历，收集所有带 hover 处理器的祖先节点；与之前的
+ * hover 集合做差集；对退出的节点触发 leave，对进入的节点触发 enter。
  *
- * Mutates `hovered` in place so the caller (App instance) can hold it
- * across calls. Clears the set when the hit is null (cursor moved into a
- * non-rendered gap or off the root rect).
+ * 原地修改 `hovered`，以便调用者（App 实例）在多次调用之间持有它。
+ * 当命中为 null 时清空集合（光标移入未渲染的间隙或离开 root 矩形）。
  */
 export function dispatchHover(
   root: DOMElement,
@@ -115,7 +112,7 @@ export function dispatchHover(
   for (const old of hovered) {
     if (!next.has(old)) {
       hovered.delete(old)
-      // Skip handlers on detached nodes (removed between mouse events)
+      // 跳过已分离节点上的处理器（在两次鼠标事件之间被移除）
       if (old.parentNode) {
         ;(old._eventHandlers as EventHandlerProps | undefined)?.onMouseLeave?.()
       }

@@ -1,14 +1,14 @@
 /**
- * ANSI Parser - Semantic Action Generator
+ * ANSI 解析器 - 语义动作生成器
  *
- * A streaming parser for ANSI escape sequences that produces semantic actions.
- * Uses the tokenizer for escape sequence boundary detection, then interprets
- * each sequence to produce structured actions.
+ * 用于 ANSI 转义序列的流式解析器，生成语义动作。
+ * 使用分词器进行转义序列边界检测，然后解释
+ * 每个序列以生成结构化动作。
  *
- * Key design decisions:
- * - Streaming: can process input incrementally
- * - Semantic output: produces structured actions, not string tokens
- * - Style tracking: maintains current text style state
+ * 关键设计决策：
+ * - 流式：可以增量处理输入
+ * - 语义输出：生成结构化动作，而非字符串 token
+ * - 样式跟踪：维护当前文本样式状态
  */
 
 import { getGraphemeSegmenter } from '../../utils/intl.js'
@@ -23,7 +23,7 @@ import type { Action, Grapheme, TextStyle } from './types.js'
 import { defaultStyle } from './types.js'
 
 // =============================================================================
-// Grapheme Utilities
+// 字位工具
 // =============================================================================
 
 function isEmoji(codePoint: number): boolean {
@@ -75,7 +75,7 @@ function* segmentGraphemes(str: string): Generator<Grapheme> {
 }
 
 // =============================================================================
-// Sequence Parsing
+// 序列解析
 // =============================================================================
 
 function parseCSIParams(paramStr: string): number[] {
@@ -83,7 +83,7 @@ function parseCSIParams(paramStr: string): number[] {
   return paramStr.split(/[;:]/).map(s => (s === '' ? 0 : parseInt(s, 10)))
 }
 
-/** Parse a raw CSI sequence (e.g., "\x1b[31m") into an action */
+/** 解析原始 CSI 序列（例如 "\x1b[31m"）为动作 */
 function parseCSI(rawSequence: string): Action | null {
   const inner = rawSequence.slice(2)
   if (inner.length === 0) return null
@@ -110,12 +110,12 @@ function parseCSI(rawSequence: string): Action | null {
   const firstParam = params[0] ?? 1
   const secondParam = params[1] ?? 1
 
-  // SGR (Select Graphic Rendition)
+  // SGR（选择图形渲染）
   if (finalByte === CSI.SGR && privateMode === '') {
     return { type: 'sgr', params: paramStr }
   }
 
-  // Cursor movement
+  // 光标移动
   if (finalByte === CSI.CUU) {
     return {
       type: 'cursor',
@@ -156,7 +156,7 @@ function parseCSI(rawSequence: string): Action | null {
     return { type: 'cursor', action: { type: 'row', row: firstParam } }
   }
 
-  // Erase
+  // 擦除
   if (finalByte === CSI.ED) {
     const region = ERASE_DISPLAY[params[0] ?? 0] ?? 'toEnd'
     return { type: 'erase', action: { type: 'display', region } }
@@ -169,7 +169,7 @@ function parseCSI(rawSequence: string): Action | null {
     return { type: 'erase', action: { type: 'chars', count: firstParam } }
   }
 
-  // Scroll
+  // 滚动
   if (finalByte === CSI.SU) {
     return { type: 'scroll', action: { type: 'up', count: firstParam } }
   }
@@ -183,7 +183,7 @@ function parseCSI(rawSequence: string): Action | null {
     }
   }
 
-  // Cursor save/restore
+  // 光标保存/恢复
   if (finalByte === CSI.SCOSC) {
     return { type: 'cursor', action: { type: 'save' } }
   }
@@ -191,13 +191,13 @@ function parseCSI(rawSequence: string): Action | null {
     return { type: 'cursor', action: { type: 'restore' } }
   }
 
-  // Cursor style
+  // 光标样式
   if (finalByte === CSI.DECSCUSR && intermediate === ' ') {
     const styleInfo = CURSOR_STYLES[firstParam] ?? CURSOR_STYLES[0]!
     return { type: 'cursor', action: { type: 'style', ...styleInfo } }
   }
 
-  // Private modes
+  // 私有模式
   if (privateMode === '?' && (finalByte === CSI.SM || finalByte === CSI.RM)) {
     const enabled = finalByte === CSI.SM
 
@@ -240,7 +240,7 @@ function parseCSI(rawSequence: string): Action | null {
 }
 
 /**
- * Identify the type of escape sequence from its raw form.
+ * 从原始形式识别转义序列类型。
  */
 function identifySequence(
   seq: string,
@@ -256,17 +256,17 @@ function identifySequence(
 }
 
 // =============================================================================
-// Main Parser
+// 主解析器
 // =============================================================================
 
 /**
- * Parser class - maintains state for streaming/incremental parsing
+ * 解析器类 - 维护流式/增量解析的状态
  *
- * Usage:
+ * 用法：
  * ```typescript
  * const parser = new Parser()
  * const actions1 = parser.feed('partial\x1b[')
- * const actions2 = parser.feed('31mred')  // state maintained internally
+ * const actions2 = parser.feed('31mred')  // 内部维护状态
  * ```
  */
 export class Parser {
@@ -283,7 +283,7 @@ export class Parser {
     this.linkUrl = undefined
   }
 
-  /** Feed input and get resulting actions */
+  /** 输入并获取生成的动作 */
   feed(input: string): Action[] {
     const tokens = this.tokenizer.feed(input)
     const actions: Action[] = []
@@ -307,7 +307,7 @@ export class Parser {
   }
 
   private processText(text: string): Action[] {
-    // Handle BEL characters embedded in text
+    // 处理嵌入文本中的 BEL 字符
     const actions: Action[] = []
     let current = ''
 
@@ -351,9 +351,9 @@ export class Parser {
       }
 
       case 'osc': {
-        // Extract OSC content (between ESC ] and terminator)
+        // 提取 OSC 内容（ESC ] 和终止符之间）
         let content = seq.slice(2)
-        // Remove terminator (BEL or ESC \)
+        // 移除终止符（BEL 或 ESC \）
         if (content.endsWith('\x07')) {
           content = content.slice(0, -1)
         } else if (content.endsWith('\x1b\\')) {
@@ -383,8 +383,8 @@ export class Parser {
       }
 
       case 'ss3':
-        // SS3 sequences are typically cursor keys in application mode
-        // For output parsing, treat as unknown
+        // SS3 序列通常是应用模式下的光标键
+        // 对于输出解析，视为未知
         return [{ type: 'unknown', sequence: seq }]
 
       default:

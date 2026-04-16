@@ -7,12 +7,12 @@ type Props = {
   param: TextBlockParam;
 };
 export function UserBashInputMessage({
-  param: t1,
+  param,
   addMargin
 }: Props) {
   const {
     text
-  } = t1;
+  } = param;
   const input = extractTag(text, "bash-input");
   if (!input) {
     return null;

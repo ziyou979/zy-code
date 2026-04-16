@@ -51,13 +51,13 @@ export class LogUpdate {
 
   renderPreviousOutput_DEPRECATED(prevFrame: Frame): Diff {
     if (!this.options.isTTY) {
-      // Non-TTY output is no longer supported (string output was removed)
+      // 非 TTY 输出不再支持（字符串输出已被移除）
       return [NEWLINE]
     }
     return this.getRenderOpsForDone(prevFrame)
   }
 
-  // Called when process resumes from suspension (SIGCONT) to prevent clobbering terminal content
+  // 进程从挂起状态恢复（SIGCONT）时调用，防止覆盖终端内容
   reset(): void {
     this.state.previousOutput = ''
   }
@@ -72,7 +72,7 @@ export class LogUpdate {
       for (let x = 0; x < screen.width; x++) {
         const cell = cellAt(screen, x, y)
         if (cell && cell.width !== CellWidth.SpacerTail) {
-          // Handle hyperlink transitions
+          // 处理超链接状态切换
           if (cell.hyperlink !== currentHyperlink) {
             if (currentHyperlink !== undefined) {
               line += LINK_END
@@ -91,12 +91,12 @@ export class LogUpdate {
           line += cell.char
         }
       }
-      // Close any open hyperlink before resetting styles
+      // 在重置样式前关闭所有打开的超链接
       if (currentHyperlink !== undefined) {
         line += LINK_END
         currentHyperlink = undefined
       }
-      // Reset styles at end of line so trimEnd doesn't leave dangling codes
+      // 在行尾重置样式，防止 trimEnd 残留控制码
       const resetCodes = diffAnsiCodes(currentStyles, [])
       if (resetCodes.length > 0) {
         line += ansiCodesToString(resetCodes)
@@ -133,12 +133,10 @@ export class LogUpdate {
     const startTime = performance.now()
     const stylePool = this.options.stylePool
 
-    // Since we assume the cursor is at the bottom on the screen, we only need
-    // to clear when the viewport gets shorter (i.e. the cursor position drifts)
-    // or when it gets thinner (and text wraps). We _could_ figure out how to
-    // not reset here but that would involve predicting the current layout
-    // _after_ the viewport change which means calcuating text wrapping.
-    // Resizing is a rare enough event that it's not practically a big issue.
+    // 由于我们假设光标位于屏幕底部，因此仅在视口变矮（即光标位置偏移）
+    // 或变窄（导致文本换行）时才需要清屏。我们本可以想办法避免在此重置，
+    // 但这需要预测视口变化后的布局，意味着要计算文本换行。
+    // 窗口大小调整是相对少见的操作，因此实际上不是大问题。
     if (
       next.viewport.height < prev.viewport.height ||
       (prev.viewport.width !== 0 && next.viewport.width !== prev.viewport.width)
@@ -146,22 +144,19 @@ export class LogUpdate {
       return fullResetSequence_CAUSES_FLICKER(next, 'resize', stylePool)
     }
 
-    // DECSTBM scroll optimization: when a ScrollBox's scrollTop changed,
-    // shift content with a hardware scroll (CSI top;bot r + CSI n S/T)
-    // instead of rewriting the whole scroll region. The shiftRows on
-    // prev.screen simulates the shift so the diff loop below naturally
-    // finds only the rows that scrolled IN as diffs. prev.screen is
-    // about to become backFrame (reused next render) so mutation is safe.
-    // CURSOR_HOME after RESET_SCROLL_REGION is defensive — DECSTBM reset
-    // homes cursor per spec but terminal implementations vary.
+    // DECSTBM 滚动优化：当 ScrollBox 的 scrollTop 变化时，
+    // 使用硬件滚动（CSI top;bot r + CSI n S/T）而非重写整个滚动区域来移动内容。
+    // 对 prev.screen 执行 shiftRows 模拟内容移位，这样下方的 diff 循环
+    // 自然会将仅新滚入的行识别为差异。prev.screen 即将成为 backFrame
+    // （供下次渲染复用），因此直接修改是安全的。
+    // RESET_SCROLL_REGION 后的 CURSOR_HOME 是防御性措施 —— 规范规定 DECSTBM
+    // 重置会将光标归位，但各终端实现存在差异。
     //
-    // decstbmSafe: caller passes false when the DECSTBM→diff sequence
-    // can't be made atomic (no DEC 2026 / BSU/ESU). Without atomicity the
-    // outer terminal renders the intermediate state — region scrolled,
-    // edge rows not yet painted — a visible vertical jump on every frame
-    // where scrollTop moves. Falling through to the diff loop writes all
-    // shifted rows: more bytes, no intermediate state. next.screen from
-    // render-node-to-output's blit+shift is correct either way.
+    // decstbmSafe：当 DECSTBM→diff 序列无法保证原子性时调用方传入 false
+    // （即没有 DEC 2026 / BSU/ESU）。缺乏原子性时，外部终端会渲染中间状态
+    // —— 区域已滚动但边缘行尚未绘制 —— 导致每次 scrollTop 移动时出现可见的
+    // 垂直跳动。回退到 diff 循环会写出所有移位的行：字节更多，但无中间状态。
+    // render-node-to-output 的 blit+shift 生成的 next.screen 无论如何都是正确的。
     let scrollPatch: Diff = []
     if (altScreen && next.scrollHint && decstbmSafe) {
       const { top, bottom, delta } = next.scrollHint
@@ -184,33 +179,30 @@ export class LogUpdate {
       }
     }
 
-    // We have to use purely relative operations to manipulate the cursor since
-    // we don't know its starting point.
+    // 我们必须使用纯相对操作来操纵光标，因为我们不知道它的起始位置。
     //
-    // When content height >= viewport height AND cursor is at the bottom,
-    // the cursor restore at the end of the previous frame caused terminal scroll.
-    // viewportY tells us how many rows are in scrollback from content overflow.
-    // Additionally, the cursor-restore scroll pushes 1 more row into scrollback.
-    // We need fullReset if any changes are to rows that are now in scrollback.
+    // 当内容高度 >= 视口高度 且光标位于底部时，
+    // 上一帧末尾的光标恢复操作会导致终端滚动。
+    // viewportY 告诉我们内容溢出后有多少行进入了回滚区。
+    // 此外，光标恢复时的滚动还会再将 1 行推入回滚区。
+    // 如果要对已进入回滚区的行做任何改动，就需要 fullReset。
     //
-    // This early full-reset check only applies in "steady state" (not growing).
-    // For growing, the viewportY calculation below (with cursorRestoreScroll)
-    // catches unreachable scrollback rows in the diff loop instead.
+    // 这个早期的 full-reset 检查仅适用于"稳态"（非增长场景）。
+    // 对于增长场景，下方的 viewportY 计算（含 cursorRestoreScroll）
+    // 会在 diff 循环中捕捉到那些无法触及的回滚行。
     const cursorAtBottom = prev.cursor.y >= prev.screen.height
     const isGrowing = next.screen.height > prev.screen.height
-    // When content fills the viewport exactly (height == viewport) and the
-    // cursor is at the bottom, the cursor-restore LF at the end of the
-    // previous frame scrolled 1 row into scrollback. Use >= to catch this.
+    // 当内容恰好填满视口（height == viewport）且光标位于底部时，
+    // 上一帧末尾的光标恢复 LF 已将 1 行滚动到回滚区。使用 >= 来覆盖此情况。
     const prevHadScrollback =
       cursorAtBottom && prev.screen.height >= prev.viewport.height
     const isShrinking = next.screen.height < prev.screen.height
     const nextFitsViewport = next.screen.height <= prev.viewport.height
 
-    // When shrinking from above-viewport to at-or-below-viewport, content that
-    // was in scrollback should now be visible. Terminal clear operations can't
-    // bring scrollback content into view, so we need a full reset.
-    // Use <= (not <) because even when next height equals viewport height, the
-    // scrollback depth from the previous render differs from a fresh render.
+    // 当从视口上方缩小到视口内或以下时，原本在回滚区的内容现在应该可见。
+    // 终端清除操作无法将回滚区内容拉入可视区域，因此需要完整重置。
+    // 使用 <=（而非 <）是因为即使下一个高度等于视口高度，
+    // 前一次渲染的回滚深度与全新渲染也不同。
     if (prevHadScrollback && nextFitsViewport && isShrinking) {
       logForDebugging(
         `Full reset (shrink->below): prevHeight=${prev.screen.height}, nextHeight=${next.screen.height}, viewport=${prev.viewport.height}`,
@@ -224,8 +216,8 @@ export class LogUpdate {
       cursorAtBottom &&
       !isGrowing
     ) {
-      // viewportY = rows in scrollback from content overflow
-      // +1 for the row pushed by cursor-restore scroll
+      // viewportY = 内容溢出导致进入回滚区的行数
+      // +1 是光标恢复滚动推入的那一行
       const viewportY = prev.screen.height - prev.viewport.height
       const scrollbackRows = viewportY + 1
 
@@ -249,19 +241,18 @@ export class LogUpdate {
 
     const screen = new VirtualScreen(prev.cursor, next.viewport.width)
 
-    // Treat empty screen as height 1 to avoid spurious adjustments on first render
+    // 将空屏幕视为高度 1，避免首次渲染时出现误调整
     const heightDelta =
       Math.max(next.screen.height, 1) - Math.max(prev.screen.height, 1)
     const shrinking = heightDelta < 0
     const growing = heightDelta > 0
 
-    // Handle shrinking: clear lines from the bottom
+    // 处理缩小：从底部清除行
     if (shrinking) {
       const linesToClear = prev.screen.height - next.screen.height
 
-      // eraseLines only works within the viewport - it can't clear scrollback.
-      // If we need to clear more lines than fit in the viewport, some are in
-      // scrollback, so we need a full reset.
+      // eraseLines 仅在视口内有效 —— 无法清除回滚区。
+      // 如果需要清除的行数超出视口容量，说明有些行在回滚区中，需要完整重置。
       if (linesToClear > prev.viewport.height) {
         return fullResetSequence_CAUSES_FLICKER(
           next,
@@ -270,18 +261,16 @@ export class LogUpdate {
         )
       }
 
-      // eraseLines(n) erases n rows starting from the CURRENT cursor position,
-      // moving upward. After the diff loop the cursor can be ANYWHERE (at the
-      // last changed cell). If the cursor is not at the bottom row, eraseLines
-      // clears the WRONG rows — leaving stale content between the cursor and
-      // the old screen bottom. This manifests as "old content lingering below"
-      // when a streaming response shrinks (e.g., interrupted AI output).
+      // eraseLines(n) 从当前光标位置向上擦除 n 行。diff 循环结束后光标可能
+      // 位于任意位置（在最后一个被改动的单元格处）。如果光标不在底部行，
+      // eraseLines 会清除错误的行 —— 导致光标与旧屏幕底部之间残留旧内容。
+      // 这在流式响应缩小时表现为"下方旧内容 lingering"（例如被中断的 AI 输出）。
       //
-      // Fix: move cursor to prevHeight-1 (bottom row of old screen) before
-      // erasing, so eraseLines always clears from the actual bottom.
+      // 修复：在擦除前将光标移到 prevHeight-1（旧屏幕的底部行），
+      // 确保 eraseLines 始终从实际底部开始清除。
       const prevHeight = prev.screen.height
 
-      // Move cursor to bottom row of old screen
+      // 将光标移到旧屏幕的底部行
       screen.txn(prev => {
         const dy = prevHeight - 1 - prev.y
         if (dy !== 0 || prev.x !== 0) {
@@ -293,9 +282,9 @@ export class LogUpdate {
         return [[], { dx: 0, dy: 0 }]
       })
 
-      // clear(N) erases N rows from cursor upward (cursor moves up N-1).
-      // After erase, cursor is at row (prevHeight-1) - (N-1) = nextHeight.
-      // We then move down 1 to land at nextHeight-1 (bottom of new screen).
+      // clear(N) 从光标位置向上擦除 N 行（光标上移 N-1）。
+      // 擦除后，光标位于 (prevHeight-1) - (N-1) = nextHeight 行。
+      // 然后再下移 1 行到达 nextHeight-1（新屏幕的底部）。
       screen.txn(() => [
         [
           { type: 'clear', count: linesToClear },
@@ -305,13 +294,12 @@ export class LogUpdate {
       ])
     }
 
-    // viewportY = number of rows in scrollback (not visible on terminal).
-    // For shrinking: use max(prev, next) because terminal clears don't scroll.
-    // For growing: use prev state because new rows haven't scrolled old ones yet.
-    // When prevHadScrollback, add 1 for the cursor-restore LF that scrolled
-    // an additional row out of view at the end of the previous frame. Without
-    // this, the diff loop treats that row as reachable — but the cursor clamps
-    // at viewport top, causing writes to land 1 row off and garbling the output.
+    // viewportY = 回滚区中的行数（终端上不可见）。
+    // 对于缩小：取 max(prev, next)，因为终端清除操作不会引起滚动。
+    // 对于增长：使用 prev 状态，因为新行还未将旧行滚动。
+    // 当 prevHadScrollback 为 true 时，加 1 以计入上一帧末尾光标恢复 LF
+    // 滚出可视区域的那一行。不加的话，diff 循环会将该行视为可达 —— 但光标
+    // 会在视口顶部被截断，导致写入偏移 1 行，输出错乱。
     const cursorRestoreScroll = prevHadScrollback ? 1 : 0
     const viewportY = growing
       ? Math.max(
@@ -325,19 +313,18 @@ export class LogUpdate {
     let currentStyleId = stylePool.none
     let currentHyperlink: Hyperlink = undefined
 
-    // First pass: render changes to existing rows (rows < prev.screen.height)
+    // 第一遍：渲染对已有行的改动（行号 < prev.screen.height）
     let needsFullReset = false
     let resetTriggerY = -1
     diffEach(prev.screen, next.screen, (x, y, removed, added) => {
-      // Skip new rows - we'll render them directly after
+      // 跳过新行 —— 稍后直接渲染
       if (growing && y >= prev.screen.height) {
         return
       }
 
-      // Skip spacers during rendering because the terminal will automatically
-      // advance 2 columns when we write the wide character itself.
-      // SpacerTail: Second cell of a wide character
-      // SpacerHead: Marks line-end position where wide char wraps to next line
+      // 渲染时跳过占位符，因为终端在写入宽字符时会自动前进 2 列。
+      // SpacerTail: 宽字符的第二个单元格
+      // SpacerHead: 标记宽字符换行到下一行时的行末位置
       if (
         added &&
         (added.width === CellWidth.SpacerTail ||
@@ -355,16 +342,15 @@ export class LogUpdate {
         return
       }
 
-      // Skip empty cells that don't need to overwrite existing content.
-      // This prevents writing trailing spaces that would cause unnecessary
-      // line wrapping at the edge of the screen.
-      // Uses isEmptyCellAt to check if both packed words are zero (empty cell).
+      // 跳过不需要覆盖已有内容的空白单元格。
+      // 这避免了在屏幕边缘写入尾部空格导致不必要的换行。
+      // 使用 isEmptyCellAt 检查 packed words 是否都为零（空白单元格）。
       if (added && isEmptyCellAt(next.screen, x, y) && !removed) {
         return
       }
 
-      // If the cell outside the viewport range has changed, we need to reset
-      // because we can't move the cursor there to draw.
+      // 如果视口范围外的单元格发生了改动，需要重置，
+      // 因为我们无法将光标移到那里去绘制。
       if (y < viewportY) {
         needsFullReset = true
         resetTriggerY = y
@@ -385,9 +371,9 @@ export class LogUpdate {
           currentStyleId = added.styleId
         }
       } else if (removed) {
-        // Cell was removed - clear it with a space
-        // (This handles shrinking content)
-        // Reset any active styles/hyperlinks first to avoid leaking into cleared cells
+        // 单元格已被移除 —— 用空格清除
+        // （用于处理内容缩小的情况）
+        // 先重置活跃样式和超链接，避免泄漏到已清除的单元格
         const styleIdToReset = currentStyleId
         const hyperlinkToReset = currentHyperlink
         currentStyleId = stylePool.none
@@ -410,7 +396,7 @@ export class LogUpdate {
       })
     }
 
-    // Reset styles before rendering new rows (they'll set their own styles)
+    // 渲染新行前重置样式（新行会自行设置样式）
     currentStyleId = transitionStyle(
       screen.diff,
       stylePool,
@@ -423,7 +409,7 @@ export class LogUpdate {
       undefined,
     )
 
-    // Handle growth: render new rows directly (they naturally scroll the terminal)
+    // 处理增长：直接渲染新行（它们会自然引起终端滚动）
     if (growing) {
       renderFrameSlice(
         screen,
@@ -434,24 +420,22 @@ export class LogUpdate {
       )
     }
 
-    // Restore cursor. Skipped in alt-screen: the cursor is hidden, its
-    // position only matters as the starting point for the NEXT frame's
-    // relative moves, and in alt-screen the next frame always begins with
-    // CSI H (see ink.tsx onRender) which resets to (0,0) regardless. This
-    // saves a CR + cursorMove round-trip (~6-10 bytes) every frame.
+    // 恢复光标。在 alt-screen 中跳过：光标是隐藏的，其位置
+    // 仅作为下一帧相对移动的起点，而在 alt-screen 中下一帧总是以
+    // CSI H 开头（见 ink.tsx onRender），无论当前在哪都会重置到 (0,0)。
+    // 这样每帧节省一次 CR + cursorMove 往返（约 6-10 字节）。
     //
-    // Main screen: if cursor needs to be past the last line of content
-    // (typical: cursor.y = screen.height), emit \n to create that line
-    // since cursor movement can't create new lines.
+    // 主屏幕：如果光标需要在最后一行内容之后（常见情况：cursor.y = screen.height），
+    // 则发出 \n 来创建该行，因为光标移动无法创建新行。
     if (altScreen) {
-      // no-op; next frame's CSI H anchors cursor
+      // 无操作；下一帧的 CSI H 会锚定光标
     } else if (next.cursor.y >= next.screen.height) {
-      // Move to column 0 of current line, then emit newlines to reach target row
+      // 移动到当前行的第 0 列，然后发出换行符到达目标行
       screen.txn(prev => {
         const rowsToCreate = next.cursor.y - prev.y
         if (rowsToCreate > 0) {
-          // Use CR to resolve pending wrap (if any) without advancing
-          // to the next line, then LF to create each new row.
+          // 使用 CR 解决待处理的换行（如果有），而不会前进到下一行，
+          // 然后用 LF 创建每个新行。
           const patches: Diff = new Array<Diff[number]>(1 + rowsToCreate)
           patches[0] = CARRIAGE_RETURN
           for (let i = 0; i < rowsToCreate; i++) {
@@ -459,10 +443,10 @@ export class LogUpdate {
           }
           return [patches, { dx: -prev.x, dy: rowsToCreate }]
         }
-        // At or past target row - need to move cursor to correct position
+        // 已在目标行或超过目标行 —— 需要将光标移到正确位置
         const dy = next.cursor.y - prev.y
         if (dy !== 0 || prev.x !== next.cursor.x) {
-          // Use CR to clear pending wrap (if any), then cursor move
+          // 使用 CR 清除待处理换行（如果有），然后移动光标
           const patches: Diff = [CARRIAGE_RETURN]
           patches.push({ type: 'cursorMove', x: next.cursor.x, y: dy })
           return [patches, { dx: next.cursor.x - prev.x, dy }]
@@ -529,7 +513,7 @@ function fullResetSequence_CAUSES_FLICKER(
   stylePool: StylePool,
   debug?: { triggerY: number; prevLine: string; nextLine: string },
 ): Diff {
-  // After clearTerminal, cursor is at (0, 0)
+  // clearTerminal 之后，光标位于 (0, 0)
   const screen = new VirtualScreen({ x: 0, y: 0 }, frame.viewport.width)
   renderFrame(screen, frame, stylePool)
   return [{ type: 'clearTerminal', reason, debug }, ...screen.diff]
@@ -544,8 +528,8 @@ function renderFrame(
 }
 
 /**
- * Render a slice of rows from the frame's screen.
- * Each row is rendered followed by a newline. Cursor ends at (0, endY).
+ * 渲染帧屏幕的行切片。
+ * 每行渲染后跟随一个换行符。光标最终位于 (0, endY)。
  */
 function renderFrameSlice(
   screen: VirtualScreen,
@@ -556,20 +540,19 @@ function renderFrameSlice(
 ): VirtualScreen {
   let currentStyleId = stylePool.none
   let currentHyperlink: Hyperlink = undefined
-  // Track the styleId of the last rendered cell on this line (-1 if none).
-  // Passed to visibleCellAtIndex to enable fg-only space optimization.
+  // 跟踪此行上最后一个已渲染单元格的 styleId（-1 表示无）。
+  // 传给 visibleCellAtIndex 以启用仅前景色的空格优化。
   let lastRenderedStyleId = -1
 
   const { width: screenWidth, cells, charPool, hyperlinkPool } = frame.screen
 
   let index = startY * screenWidth
   for (let y = startY; y < endY; y += 1) {
-    // Advance cursor to this row using LF (not CSI CUD / cursor-down).
-    // CSI CUD stops at the viewport bottom margin and cannot scroll,
-    // but LF scrolls the viewport to create new lines. Without this,
-    // when the cursor is at the viewport bottom, moveCursorTo's
-    // cursor-down silently fails, creating a permanent off-by-one
-    // between the virtual cursor and the real terminal cursor.
+    // 使用 LF（而非 CSI CUD / 光标下移）将光标推进到这一行。
+    // CSI CUD 会在视口底部边距处停止且无法滚动，
+    // 但 LF 会滚动视口来创建新行。如果不这样做，
+    // 当光标位于视口底部时，moveCursorTo 的光标下移会静默失败，
+    // 导致虚拟光标与真实终端光标之间产生永久的一行偏差。
     if (screen.cursor.y < y) {
       const rowsToAdvance = y - screen.cursor.y
       screen.txn(prev => {
@@ -581,14 +564,14 @@ function renderFrameSlice(
         return [patches, { dx: -prev.x, dy: rowsToAdvance }]
       })
     }
-    // Reset at start of each line — no cell rendered yet
+    // 每行开始时重置 —— 尚未渲染任何单元格
     lastRenderedStyleId = -1
 
     for (let x = 0; x < screenWidth; x += 1, index += 1) {
-      // Skip spacers, unstyled empty cells, and fg-only styled spaces that
-      // match the last rendered style (since cursor-forward produces identical
-      // visual result). visibleCellAtIndex handles the optimization internally
-      // to avoid allocating Cell objects for skipped cells.
+      // 跳过占位符、无样式的空白单元格，以及仅含前景色且样式
+      // 与上一个已渲染单元格匹配的空格（因为光标前进会产生相同的
+      // 视觉效果）。visibleCellAtIndex 内部处理此优化，避免为跳过的
+      // 单元格分配 Cell 对象。
       const cell = visibleCellAtIndex(
         cells,
         charPool,
@@ -602,7 +585,7 @@ function renderFrameSlice(
 
       moveCursorTo(screen, x, y)
 
-      // Handle hyperlink
+      // 处理超链接
       const targetHyperlink = cell.hyperlink
       currentHyperlink = transitionHyperlink(
         screen.diff,
@@ -610,17 +593,16 @@ function renderFrameSlice(
         targetHyperlink,
       )
 
-      // Style transition — cached string, zero allocations after warmup
+      // 样式切换 —— 缓存的字符串，预热后零分配
       const styleStr = stylePool.transition(currentStyleId, cell.styleId)
       if (writeCellWithStyleStr(screen, cell, styleStr)) {
         currentStyleId = cell.styleId
         lastRenderedStyleId = cell.styleId
       }
     }
-    // Reset styles/hyperlinks before newline so background color doesn't
-    // bleed into the next line when the terminal scrolls. The old code
-    // reset implicitly by writing trailing unstyled spaces; now that we
-    // skip empty cells, we must reset explicitly.
+    // 换行前重置样式和超链接，防止背景色在终端滚动时泄漏到下一行。
+    // 旧代码通过写入尾部无样式空格隐式重置；现在我们跳过空白单元格，
+    // 必须显式重置。
     currentStyleId = transitionStyle(
       screen.diff,
       stylePool,
@@ -632,13 +614,13 @@ function renderFrameSlice(
       currentHyperlink,
       undefined,
     )
-    // CR+LF at end of row — \r resets to column 0, \n moves to next line.
-    // Without \r, the terminal cursor stays at whatever column content ended
-    // (since we skip trailing spaces, this can be mid-row).
+    // 行尾 CR+LF —— \r 回到第 0 列，\n 移动到下一行。
+    // 不加 \r 时，终端光标会停留在内容结束处的列（由于我们跳过了
+    // 尾部空格，可能停在行中位置）。
     screen.txn(prev => [[CARRIAGE_RETURN, NEWLINE], { dx: -prev.x, dy: 1 }])
   }
 
-  // Reset any open style/hyperlink at end of slice
+  // 在切片末尾重置所有打开的样式和超链接
   transitionStyle(screen.diff, stylePool, currentStyleId, stylePool.none)
   transitionHyperlink(screen.diff, currentHyperlink, undefined)
 
@@ -648,15 +630,13 @@ function renderFrameSlice(
 type Delta = { dx: number; dy: number }
 
 /**
- * Write a cell with a pre-serialized style transition string (from
- * StylePool.transition). Inlines the txn logic to avoid closure/tuple/delta
- * allocations on every cell.
+ * 使用预序列化的样式切换字符串（来自 StylePool.transition）写入单元格。
+ * 内联了 txn 逻辑，避免每个单元格都产生闭包/元组/delta 分配。
  *
- * Returns true if the cell was written, false if skipped (wide char at
- * viewport edge). Callers MUST gate currentStyleId updates on this — when
- * skipped, styleStr is never pushed and the terminal's style state is
- * unchanged. Updating the virtual tracker anyway desyncs it from the
- * terminal, and the next transition is computed from phantom state.
+ * 返回 true 表示单元格已写入，false 表示被跳过（视口边缘的宽字符）。
+ * 调用者必须以返回值作为 currentStyleId 更新的条件 —— 跳过时，
+ * styleStr 不会被推送，终端的样式状态也不会改变。如果仍更新虚拟追踪器，
+ * 会导致其与终端状态不同步，下一次切换会基于幽灵状态计算。
  */
 function writeCellWithStyleStr(
   screen: VirtualScreen,
@@ -667,9 +647,9 @@ function writeCellWithStyleStr(
   const px = screen.cursor.x
   const vw = screen.viewportWidth
 
-  // Don't write wide chars that would cross the viewport edge.
-  // Single-codepoint chars (CJK) at vw-2 are safe; multi-codepoint
-  // graphemes (flags, ZWJ emoji) need stricter threshold.
+  // 不要写入会跨越视口边缘的宽字符。
+  // 单码点字符（CJK）在 vw-2 处是安全的；多码点字形（国旗、ZWJ emoji）
+  // 需要更严格的阈值。
   if (cellWidth === 2 && px < vw) {
     const threshold = cell.char.length > 2 ? vw : vw + 1
     if (px + 2 >= threshold) {
@@ -684,12 +664,11 @@ function writeCellWithStyleStr(
 
   const needsCompensation = cellWidth === 2 && needsWidthCompensation(cell.char)
 
-  // On terminals with old wcwidth tables, a compensated emoji only advances
-  // the cursor 1 column, so the CHA below skips column x+1 without painting
-  // it. Write a styled space there first — on correct terminals the emoji
-  // glyph (width 2) overwrites it harmlessly; on old terminals it fills the
-  // gap with the emoji's background. Also clears any stale content at x+1.
-  // CHA is 1-based, so column px+1 (0-based) is CHA target px+2.
+  // 在 wcwidth 表较旧的终端上，补偿后的 emoji 只会将光标前进 1 列，
+  // 因此下面的 CHA 会跳过第 x+1 列而不绘制它。先在那里写一个带样式的
+  // 空格 —— 在正确的终端上，emoji 字形（宽度 2）会无害地覆盖它；
+  // 在旧终端上，它会用 emoji 的背景色填充缝隙。同时清除 x+1 处的残留内容。
+  // CHA 是 1 基的，所以第 px+1 列（0 基）对应的 CHA 目标是 px+2。
   if (needsCompensation && px + 1 < vw) {
     diff.push({ type: 'cursorTo', col: px + 2 })
     diff.push({ type: 'stdout', content: ' ' })
@@ -698,12 +677,12 @@ function writeCellWithStyleStr(
 
   diff.push({ type: 'stdout', content: cell.char })
 
-  // Force terminal cursor to correct column after the emoji.
+  // 在 emoji 之后强制终端光标到达正确列。
   if (needsCompensation) {
     diff.push({ type: 'cursorTo', col: px + cellWidth + 1 })
   }
 
-  // Update cursor — mutate in place to avoid Point allocation
+  // 更新光标 —— 原地修改以避免 Point 分配
   if (px >= vw) {
     screen.cursor.x = cellWidth
     screen.cursor.y++
@@ -719,9 +698,8 @@ function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
     const dy = targetY - prev.y
     const inPendingWrap = prev.x >= screen.viewportWidth
 
-    // If we're in pending wrap state (cursor.x >= width), use CR
-    // to reset to column 0 on the current line without advancing
-    // to the next line, then issue the cursor movement.
+    // 如果处于待换行状态（cursor.x >= width），使用 CR
+    // 回到当前行的第 0 列而不前进到下一行，然后执行光标移动。
     if (inPendingWrap) {
       return [
         [CARRIAGE_RETURN, { type: 'cursorMove', x: targetX, y: dy }],
@@ -729,8 +707,7 @@ function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
       ]
     }
 
-    // When moving to a different line, use carriage return (\r) to reset to
-    // column 0 first, then cursor move.
+    // 移动到不同行时，先用回车符（\r）回到第 0 列，再移动光标。
     if (dy !== 0) {
       return [
         [CARRIAGE_RETURN, { type: 'cursorMove', x: targetX, y: dy }],
@@ -738,32 +715,32 @@ function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
       ]
     }
 
-    // Standard same-line cursor move
+    // 同行标准光标移动
     return [[{ type: 'cursorMove', x: dx, y: dy }], { dx, dy }]
   })
 }
 
 /**
- * Identify emoji where the terminal's wcwidth may disagree with Unicode.
- * On terminals with correct tables, the CHA we emit is a harmless no-op.
+ * 识别终端 wcwidth 可能与 Unicode 不一致的 emoji。
+ * 在使用正确表的终端上，我们发出的 CHA 是无害的无操作。
  *
- * Two categories:
- * 1. Newer emoji (Unicode 12.0+) missing from terminal wcwidth tables.
- * 2. Text-by-default emoji + VS16 (U+FE0F): the base codepoint is width 1
- *    in wcwidth, but VS16 triggers emoji presentation making it width 2.
- *    Examples: ⚔️ (U+2694), ☠️ (U+2620), ❤️ (U+2764).
+ * 两类情况：
+ * 1. 较新的 emoji（Unicode 12.0+），终端 wcwidth 表中缺失。
+ * 2. 默认为文本显示的 emoji + VS16（U+FE0F）：基础码点在 wcwidth
+ *    中宽度为 1，但 VS16 触发 emoji 显示使其宽度变为 2。
+ *    例如：⚔️（U+2694）、☠️（U+2620）、❤️（U+2764）。
  */
 function needsWidthCompensation(char: string): boolean {
   const cp = char.codePointAt(0)
   if (cp === undefined) return false
-  // U+1FA70-U+1FAFF: Symbols and Pictographs Extended-A (Unicode 12.0-15.0)
-  // U+1FB00-U+1FBFF: Symbols for Legacy Computing (Unicode 13.0)
+  // U+1FA70-U+1FAFF：Symbols and Pictographs Extended-A（Unicode 12.0-15.0）
+  // U+1FB00-U+1FBFF：Symbols for Legacy Computing（Unicode 13.0）
   if ((cp >= 0x1fa70 && cp <= 0x1faff) || (cp >= 0x1fb00 && cp <= 0x1fbff)) {
     return true
   }
-  // Text-by-default emoji with VS16: scan for U+FE0F in multi-codepoint
-  // graphemes. Single BMP chars (length 1) and surrogate pairs without VS16
-  // skip this check. VS16 (0xFE0F) can't collide with surrogates (0xD800-0xDFFF).
+  // 带 VS16 的默认为文本显示的 emoji：在多码点字形中扫描 U+FE0F。
+  // 单个 BMP 字符（长度 1）和不带 VS16 的代理对跳过此检查。
+  // VS16（0xFE0F）不会与代理对（0xD800-0xDFFF）冲突。
   if (char.length >= 2) {
     for (let i = 0; i < char.length; i++) {
       if (char.charCodeAt(i) === 0xfe0f) return true
@@ -773,8 +750,8 @@ function needsWidthCompensation(char: string): boolean {
 }
 
 class VirtualScreen {
-  // Public for direct mutation by writeCellWithStyleStr (avoids txn overhead).
-  // File-private class — not exposed outside log-update.ts.
+  // writeCellWithStyleStr 直接公开修改（避免 txn 开销）。
+  // 文件私有类 —— 不暴露到 log-update.ts 外部。
   cursor: Point
   diff: Diff = []
 

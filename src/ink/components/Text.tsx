@@ -3,47 +3,47 @@ import React from 'react';
 import type { Color, Styles } from '../styles.js';
 type BaseProps = {
   /**
-   * Change text color. Accepts a raw color value (rgb, hex, ansi).
+   * 更改文本颜色。接受原始颜色值（rgb、hex、ansi）。
    */
   readonly color?: Color;
 
   /**
-   * Same as `color`, but for background.
+   * 与 `color` 类似，但用于背景色。
    */
   readonly backgroundColor?: Color;
 
   /**
-   * Make the text italic.
+   * 使文本倾斜。
    */
   readonly italic?: boolean;
 
   /**
-   * Make the text underlined.
+   * 使文本带下划线。
    */
   readonly underline?: boolean;
 
   /**
-   * Make the text crossed with a line.
+   * 使文本带删除线。
    */
   readonly strikethrough?: boolean;
 
   /**
-   * Inverse background and foreground colors.
+   * 反转前景色和背景色。
    */
   readonly inverse?: boolean;
 
   /**
-   * This property tells Ink to wrap or truncate text if its width is larger than container.
-   * If `wrap` is passed (by default), Ink will wrap text and split it into multiple lines.
-   * If `truncate-*` is passed, Ink will truncate text instead, which will result in one line of text with the rest cut off.
+   * 此属性告诉 Ink 在文本宽度超过容器时进行换行或截断。
+   * 如果传入 `wrap`（默认），Ink 将换行并拆分为多行。
+   * 如果传入 `truncate-*`，Ink 将截断文本，结果为单行文本，其余部分被裁剪。
    */
   readonly wrap?: Styles['textWrap'];
   readonly children?: ReactNode;
 };
 
 /**
- * Bold and dim are mutually exclusive in terminals.
- * This type ensures you can use one or the other, but not both.
+ * 在终端中 bold 和 dim 是互斥的。
+ * 此类型确保你只能使用其中之一，但不能同时使用。
  */
 type WeightProps = {
   bold?: never;
@@ -108,7 +108,7 @@ const memoizedStylesForWrap: Record<NonNullable<Styles['textWrap']>, Styles> = {
 } as const;
 
 /**
- * This component can display text, and change its style to make it colorful, bold, underline, italic or strikethrough.
+ * 此组件用于显示文本，并可更改样式使其多彩色、加粗、下划线、斜体或删除线。
  */
 export default function Text({
   color,

@@ -28,7 +28,7 @@ export function TeamMemCountParts({
     return null;
   }
   const nodes = [];
-  const count = hasPrecedingParts ? 1 : 0;
+  let count = hasPrecedingParts ? 1 : 0;
   if (tmReadCount > 0) {
     const verb = isActiveGroup ? count === 0 ? "Recalling" : "recalling" : count === 0 ? "Recalled" : "recalled";
     if (count > 0) {

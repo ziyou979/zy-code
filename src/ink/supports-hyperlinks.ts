@@ -1,7 +1,7 @@
 import supportsHyperlinksLib from 'supports-hyperlinks'
 
-// Additional terminals that support OSC 8 hyperlinks but aren't detected by supports-hyperlinks.
-// Checked against both TERM_PROGRAM and LC_TERMINAL (the latter is preserved inside tmux).
+// 额外支持 OSC 8 超链接但未被 supports-hyperlinks 库检测到的终端。
+// 同时检查 TERM_PROGRAM 和 LC_TERMINAL（后者在 tmux 内仍然保留）。
 export const ADDITIONAL_HYPERLINK_TERMINALS = [
   'ghostty',
   'Hyper',
@@ -19,9 +19,9 @@ type SupportsHyperlinksOptions = {
 }
 
 /**
- * Returns whether stdout supports OSC 8 hyperlinks.
- * Extends the supports-hyperlinks library with additional terminal detection.
- * @param options Optional overrides for testing (env, stdoutSupported)
+ * 判断标准输出是否支持 OSC 8 超链接。
+ * 在 supports-hyperlinks 库基础上扩展了额外的终端检测。
+ * @param options 可选覆盖，用于测试（env、stdoutSupported）
  */
 export function supportsHyperlinks(
   options?: SupportsHyperlinksOptions,
@@ -34,20 +34,20 @@ export function supportsHyperlinks(
 
   const env = options?.env ?? process.env
 
-  // Check for additional terminals not detected by supports-hyperlinks
+  // 检查 supports-hyperlinks 未检测到的额外终端
   const termProgram = env['TERM_PROGRAM']
   if (termProgram && ADDITIONAL_HYPERLINK_TERMINALS.includes(termProgram)) {
     return true
   }
 
-  // LC_TERMINAL is set by some terminals (e.g. iTerm2) and preserved inside tmux,
-  // where TERM_PROGRAM is overwritten to 'tmux'.
+  // LC_TERMINAL 由某些终端（如 iTerm2）设置，并在 tmux 内保留，
+  // 此时 TERM_PROGRAM 会被覆盖为 'tmux'。
   const lcTerminal = env['LC_TERMINAL']
   if (lcTerminal && ADDITIONAL_HYPERLINK_TERMINALS.includes(lcTerminal)) {
     return true
   }
 
-  // Kitty sets TERM=xterm-kitty
+  // Kitty 设置 TERM=xterm-kitty
   const term = env['TERM']
   if (term?.includes('kitty')) {
     return true

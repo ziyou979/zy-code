@@ -1,8 +1,7 @@
-// Terminal focus state signal — non-React access to DECSET 1004 focus events.
-// 'unknown' is the default for terminals that don't support focus reporting;
-// consumers treat 'unknown' identically to 'focused' (no throttling).
-// Subscribers are notified synchronously when focus changes, used by
-// TerminalFocusProvider to avoid polling.
+// 终端焦点状态信号——非 React 方式访问 DECSET 1004 焦点事件。
+// 'unknown' 是不支持焦点报告的终端的默认值；
+// 调用者将 'unknown' 与 'focused' 同等对待（不做节流）。
+// 焦点变化时同步通知订阅者，TerminalFocusProvider 借此避免轮询。
 export type TerminalFocusState = 'focused' | 'blurred' | 'unknown'
 
 let focusState: TerminalFocusState = 'unknown'
@@ -11,7 +10,7 @@ const subscribers: Set<() => void> = new Set()
 
 export function setTerminalFocused(v: boolean): void {
   focusState = v ? 'focused' : 'blurred'
-  // Notify useSyncExternalStore subscribers
+  // 通知 useSyncExternalStore 订阅者
   for (const cb of subscribers) {
     cb()
   }
@@ -31,7 +30,7 @@ export function getTerminalFocusState(): TerminalFocusState {
   return focusState
 }
 
-// For useSyncExternalStore
+// 供 useSyncExternalStore 使用
 export function subscribeTerminalFocus(cb: () => void): () => void {
   subscribers.add(cb)
   return () => {

@@ -4,15 +4,14 @@ import { OSC, osc } from '../termio/osc.js'
 import { TerminalWriteContext } from '../useTerminalNotification.js'
 
 /**
- * Declaratively set the terminal tab/window title.
+ * 声明式设置终端标签页/窗口标题。
  *
- * Pass a string to set the title. ANSI escape sequences are stripped
- * automatically so callers don't need to know about terminal encoding.
- * Pass `null` to opt out — the hook becomes a no-op and leaves the
- * terminal title untouched.
+ * 传入字符串设置标题。ANSI 转义序列会自动剥离，
+ * 因此调用者无需了解终端编码细节。
+ * 传入 `null` 退出——hook 变为 no-op，不修改终端标题。
  *
- * On Windows, uses `process.title` (classic conhost doesn't support OSC).
- * Elsewhere, writes OSC 0 (set title+icon) via Ink's stdout.
+ * Windows 上使用 `process.title`（经典 conhost 不支持 OSC）。
+ * 其他平台通过 Ink 的 stdout 写入 OSC 0（设置标题+图标）。
  */
 export function useTerminalTitle(title: string | null): void {
   const writeRaw = useContext(TerminalWriteContext)

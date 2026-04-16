@@ -21,11 +21,11 @@ function getStatusColor(status: string | null): TextProps['color'] {
 }
 export function UserAgentNotificationMessage({
   addMargin,
-  param: t1
+  param
 }: Props) {
   const {
     text
-  } = t1;
+  } = param;
   const summary = extractTag(text, "summary");
   if (!summary) {
     return null;

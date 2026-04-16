@@ -1,19 +1,19 @@
 import { EventEmitter as NodeEventEmitter } from 'events'
 import { Event } from './event.js'
 
-// Similar to node's builtin EventEmitter, but is also aware of our `Event`
-// class, and so `emit` respects `stopImmediatePropagation()`.
+// 类似于 node 内置的 EventEmitter，但也感知我们的 `Event`
+// 类，因此 `emit` 会尊重 `stopImmediatePropagation()`。
 export class EventEmitter extends NodeEventEmitter {
   constructor() {
     super()
-    // Disable the default maxListeners warning. In React, many components
-    // can legitimately listen to the same event (e.g., useInput hooks).
-    // The default limit of 10 causes spurious warnings.
+    // 禁用默认的 maxListeners 警告。在 React 中，多个组件
+    // 监听同一事件是合理的（例如 useInput hooks）。
+    // 默认的 10 个限制会导致误报警告。
     this.setMaxListeners(0)
   }
 
   override emit(type: string | symbol, ...args: unknown[]): boolean {
-    // Delegate to node for `error`, since it's not treated like a normal event
+    // 将 `error` 委托给 node 处理，因为它不被视为普通事件
     if (type === 'error') {
       return super.emit(type, ...args)
     }

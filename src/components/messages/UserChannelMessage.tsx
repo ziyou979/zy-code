@@ -24,40 +24,23 @@ const TRUNCATE_AT = 60;
 export function UserChannelMessage({
   addMargin,
   param
-}) {
+} : Props) {
   const {
     text
   } = param;
-  let TextComponent;
-  let TextComponent2;
-  let BoxComponent;
+  const channelMatched = CHANNEL_RE.exec(text);
 
-  let displayServerNameResult;
-
-  let conditionalValue;
-  let earlyReturn;
-  let truncated;
-  let user;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
-  const m = CHANNEL_RE.exec(text);
-  if (!m) {
-    earlyReturn = null;
-  } else {
-    const [, source, attrs, content] = m;
-    user = USER_ATTR_RE.exec(attrs ?? "")?.[1];
-    const body = (content ?? "").trim().replace(/\s+/g, " ");
-    truncated = truncateToWidth(body, TRUNCATE_AT);
-    BoxComponent = Box;
-    conditionalValue = addMargin ? 1 : 0;
-    TextComponent2 = Text;
-    const textElement = <Text color="suggestion">{CHANNEL_ARROW}</Text>;
-
-    TextComponent = Text;
-
-    displayServerNameResult = displayServerName(source ?? "");
+  if (!channelMatched) {
+    return null;
   }
-  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn;
-  }
-  return <BoxComponent marginTop={conditionalValue}>{<TextComponent2>{textElement}{" "}{<TextComponent dimColor={true}>{displayServerNameResult}{user ? ` \u00b7 ${user}` : ""}:</TextComponent>}{" "}{truncated}</TextComponent2>}</BoxComponent>;
+
+  const [, source, attrs, content] = channelMatched;
+  const user = USER_ATTR_RE.exec(attrs ?? "")?.[1];
+  const body = (content ?? "").trim().replace(/\s+/g, " ");
+  const truncated = truncateToWidth(body, TRUNCATE_AT);
+  const conditionalValue = addMargin ? 1 : 0;
+  const textElement = <Text color="suggestion">{CHANNEL_ARROW}</Text>;
+  const displayServerNameResult = displayServerName(source ?? "");
+
+  return <Box marginTop={conditionalValue}>{<Text>{textElement}{" "}{<Text dimColor={true}>{displayServerNameResult}{user ? ` \u00b7 ${user}` : ""}:</Text>}{" "}{truncated}</Text>}</Box>;
 }

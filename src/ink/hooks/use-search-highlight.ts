@@ -5,27 +5,25 @@ import instances from '../instances.js'
 import type { MatchPosition } from '../render-to-screen.js'
 
 /**
- * Set the search highlight query on the Ink instance. Non-empty → all
- * visible occurrences are inverted on the next frame (SGR 7, screen-buffer
- * overlay, same damage machinery as selection). Empty → clears.
+ * 在 Ink 实例上设置搜索高亮查询。非空值 → 下一帧所有
+ * 可见匹配项都会反色显示（SGR 7，屏幕缓冲区叠加层，与选择
+ * 使用相同的损伤机制）。空值 → 清除。
  *
- * This is a screen-space highlight — it matches the RENDERED text, not the
- * source message text. Works for anything visible (bash output, file paths,
- * error messages) regardless of where it came from in the message tree. A
- * query that matched in source but got truncated/ellipsized in rendering
- * won't highlight; that's acceptable — we highlight what you see.
+ * 这是屏幕空间高亮——匹配的是渲染后的文本，而非源消息文本。
+ * 对任何可见内容都有效（bash 输出、文件路径、错误消息），
+ * 无论它在消息树中的来源。在源中匹配但被截断/省略的内容
+ * 不会高亮；这是可接受的——我们高亮的是你看到的内容。
  */
 export function useSearchHighlight(): {
   setQuery: (query: string) => void
-  /** Paint an existing DOM subtree (from the MAIN tree) to a fresh
-   *  Screen at its natural height, scan. Element-relative positions
-   *  (row 0 = element top). Zero context duplication — the element
-   *  IS the one built with all real providers. */
+  /** 将现有 DOM 子树（来自主树）绘制到新的 Screen 上，
+   *  以其自然高度扫描。元素相对位置（第 0 行 = 元素顶部）。
+   *  零上下文重复——元素就是用所有真实 provider 构建的那个。 */
   scanElement: (el: DOMElement) => MatchPosition[]
-  /** Position-based CURRENT highlight. Every frame writes yellow at
-   *  positions[currentIdx] + rowOffset. The scan-highlight (inverse on
-   *  all matches) still runs — this overlays on top. rowOffset tracks
-   *  scroll; positions stay stable (message-relative). null clears. */
+  /** 基于位置的当前高亮。每帧在 positions[currentIdx] + rowOffset
+   *  处绘制黄色。扫描高亮（所有匹配项反色）仍然运行——这个叠加
+   *  在其之上。rowOffset 跟踪滚动；位置保持稳定（相对于消息）。
+   *  null 清除。 */
   setPositions: (
     state: {
       positions: MatchPosition[]

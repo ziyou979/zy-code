@@ -1,37 +1,37 @@
 /**
- * ESC Sequence Parser
+ * ESC 序列解析器
  *
- * Handles simple escape sequences: ESC + one or two characters
+ * 处理简单转义序列：ESC + 一个或两个字符
  */
 
 import type { Action } from './types.js'
 
 /**
- * Parse a simple ESC sequence
+ * 解析简单 ESC 序列
  *
- * @param chars - Characters after ESC (not including ESC itself)
+ * @param chars - ESC 之后的字符（不包括 ESC 本身）
  */
 export function parseEsc(chars: string): Action | null {
   if (chars.length === 0) return null
 
   const first = chars[0]!
 
-  // Full reset (RIS)
+  // 完整重置（RIS）
   if (first === 'c') {
     return { type: 'reset' }
   }
 
-  // Cursor save (DECSC)
+  // 光标保存（DECSC）
   if (first === '7') {
     return { type: 'cursor', action: { type: 'save' } }
   }
 
-  // Cursor restore (DECRC)
+  // 光标恢复（DECRC）
   if (first === '8') {
     return { type: 'cursor', action: { type: 'restore' } }
   }
 
-  // Index - move cursor down (IND)
+  // 索引 - 光标下移（IND）
   if (first === 'D') {
     return {
       type: 'cursor',
@@ -39,7 +39,7 @@ export function parseEsc(chars: string): Action | null {
     }
   }
 
-  // Reverse index - move cursor up (RI)
+  // 反向索引 - 光标上移（RI）
   if (first === 'M') {
     return {
       type: 'cursor',
@@ -47,21 +47,21 @@ export function parseEsc(chars: string): Action | null {
     }
   }
 
-  // Next line (NEL)
+  // 下一行（NEL）
   if (first === 'E') {
     return { type: 'cursor', action: { type: 'nextLine', count: 1 } }
   }
 
-  // Horizontal tab set (HTS)
+  // 设置水平制表位（HTS）
   if (first === 'H') {
     return null // Tab stop, not commonly needed
   }
 
-  // Charset selection (ESC ( X, ESC ) X, etc.) - silently ignore
+  // 字符集选择（ESC ( X, ESC ) X 等）- 静默忽略
   if ('()'.includes(first) && chars.length >= 2) {
     return null
   }
 
-  // Unknown
+  // 未知
   return { type: 'unknown', sequence: `\x1b${chars}` }
 }

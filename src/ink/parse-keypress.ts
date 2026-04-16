@@ -1,8 +1,8 @@
 /**
- * Keyboard input parser - converts terminal input to key events
+ * 键盘输入解析器 - 将终端输入转换为按键事件
  *
- * Uses the termio tokenizer for escape sequence boundary detection,
- * then interprets sequences as keypresses.
+ * 使用 termio 分词器进行转义序列边界检测，
+ * 然后将序列解析为按键事件。
  */
 import { Buffer } from 'buffer'
 import { PASTE_END, PASTE_START } from './termio/csi.js'
@@ -16,51 +16,51 @@ const FN_KEY_RE =
   // eslint-disable-next-line no-control-regex
   /^(?:\x1b+)(O|N|\[|\[\[)(?:(\d+)(?:;(\d+))?([~^$])|(?:1;)?(\d+)?([a-zA-Z]))/
 
-// CSI u (kitty keyboard protocol): ESC [ codepoint [; modifier] u
-// Example: ESC[13;2u = Shift+Enter, ESC[27u = Escape (no modifiers)
-// Modifier is optional - when absent, defaults to 1 (no modifiers)
+// CSI u（kitty 键盘协议）：ESC [ 码点 [; 修饰键] u
+// 例如：ESC[13;2u = Shift+Enter，ESC[27u = Escape（无修饰键）
+// 修饰键为可选 — 不存在时默认为 1（无修饰键）
 // eslint-disable-next-line no-control-regex
 const CSI_U_RE = /^\x1b\[(\d+)(?:;(\d+))?u/
 
-// xterm modifyOtherKeys: ESC [ 27 ; modifier ; keycode ~
-// Example: ESC[27;2;13~ = Shift+Enter. Emitted by Ghostty/tmux/xterm when
-// modifyOtherKeys=2 is active or via user keybinds, typically over SSH where
-// TERM sniffing misses Ghostty and we never push Kitty keyboard mode.
-// Note param order is reversed vs CSI u (modifier first, keycode second).
+// xterm modifyOtherKeys：ESC [ 27 ; 修饰键 ; 键码 ~
+// 例如：ESC[27;2;13~ = Shift+Enter。由 Ghostty/tmux/xterm 在
+// modifyOtherKeys=2 激活时或通过用户按键绑定发出，通常在 SSH 环境下使用，
+// 因为 TERM 探测无法识别 Ghostty，我们也从未推送 Kitty 键盘模式。
+// 注意参数顺序与 CSI u 相反（修饰键在前，键码在后）。
 // eslint-disable-next-line no-control-regex
 const MODIFY_OTHER_KEYS_RE = /^\x1b\[27;(\d+);(\d+)~/
 
-// -- Terminal response patterns (inbound sequences from the terminal itself) --
-// DECRPM: CSI ? Ps ; Pm $ y  — response to DECRQM (request mode)
+// -- 终端响应序列（来自终端本身的入站序列） --
+// DECRPM: CSI ? Ps ; Pm $ y  — 对 DECRQM（请求模式）的响应
 // eslint-disable-next-line no-control-regex
 const DECRPM_RE = /^\x1b\[\?(\d+);(\d+)\$y$/
-// DA1: CSI ? Ps ; ... c  — primary device attributes response
+// DA1: CSI ? Ps ; ... c  — 主设备属性响应
 // eslint-disable-next-line no-control-regex
 const DA1_RE = /^\x1b\[\?([\d;]*)c$/
-// DA2: CSI > Ps ; ... c  — secondary device attributes response
+// DA2: CSI > Ps ; ... c  — 次设备属性响应
 // eslint-disable-next-line no-control-regex
 const DA2_RE = /^\x1b\[>([\d;]*)c$/
-// Kitty keyboard flags: CSI ? flags u  — response to CSI ? u query
-// (private ? marker distinguishes from CSI u key events)
+// Kitty 键盘标志位：CSI ? flags u  — 对 CSI ? u 查询的响应
+// （私有 ? 标记用于与 CSI u 按键事件区分）
 // eslint-disable-next-line no-control-regex
 const KITTY_FLAGS_RE = /^\x1b\[\?(\d+)u$/
-// DECXCPR cursor position: CSI ? row ; col R
-// The ? marker disambiguates from modified F3 keys (Shift+F3 = CSI 1;2 R,
-// Ctrl+F3 = CSI 1;5 R, etc.) — plain CSI row;col R is genuinely ambiguous.
+// DECXCPR 光标位置：CSI ? row ; col R
+// ? 标记用于与修饰过的 F3 键区分（Shift+F3 = CSI 1;2 R，
+// Ctrl+F3 = CSI 1;5 R 等）— 普通的 CSI row;col R 确实存在歧义。
 // eslint-disable-next-line no-control-regex
 const CURSOR_POSITION_RE = /^\x1b\[\?(\d+);(\d+)R$/
-// OSC response: OSC code ; data (BEL|ST)
+// OSC 响应：OSC 代码 ; 数据 (BEL|ST)
 // eslint-disable-next-line no-control-regex
 const OSC_RESPONSE_RE = /^\x1b\](\d+);(.*?)(?:\x07|\x1b\\)$/s
-// XTVERSION: DCS > | name ST  — terminal name/version string (answer to CSI > 0 q).
-// xterm.js replies "xterm.js(X.Y.Z)"; Ghostty, kitty, iTerm2, etc. reply with
-// their own name. Unlike TERM_PROGRAM, this survives SSH since the query/reply
-// goes through the pty, not the environment.
+// XTVERSION：DCS > | 名称 ST  — 终端名称/版本字符串（对 CSI > 0 q 的响应）。
+// xterm.js 返回 "xterm.js(X.Y.Z)"；Ghostty、kitty、iTerm2 等返回各自的名称。
+// 与 TERM_PROGRAM 不同，该信息在 SSH 环境下依然有效，因为查询/响应
+// 走的是 pty，而非环境变量。
 // eslint-disable-next-line no-control-regex
 const XTVERSION_RE = /^\x1bP>\|(.*?)(?:\x07|\x1b\\)$/s
-// SGR mouse event: CSI < button ; col ; row M (press) or m (release)
-// Button codes: 64=wheel-up, 65=wheel-down (0x40 | wheel-bit).
-// Button 32=left-drag (0x20 | motion-bit). Plain 0/1/2 = left/mid/right click.
+// SGR 鼠标事件：CSI < 按钮 ; 列 ; 行 M（按下）或 m（释放）
+// 按钮编码：64=滚轮上，65=滚轮下（0x40 | 滚轮位）。
+// 按钮 32=左键拖拽（0x20 | 移动位）。普通 0/1/2 = 左/中/右键点击。
 // eslint-disable-next-line no-control-regex
 const SGR_MOUSE_RE = /^\x1b\[<(\d+);(\d+);(\d+)([Mm])$/
 
@@ -80,7 +80,7 @@ function createPasteKey(content: string): ParsedKey {
   }
 }
 
-/** DECRPM status values (response to DECRQM) */
+/** DECRPM 状态值（对 DECRQM 的响应） */
 export const DECRPM_STATUS = {
   NOT_RECOGNIZED: 0,
   SET: 1,
@@ -90,37 +90,37 @@ export const DECRPM_STATUS = {
 } as const
 
 /**
- * A response sequence received from the terminal (not a keypress).
- * Emitted in answer to queries like DECRQM, DA1, OSC 11, etc.
+ * 从终端接收到的响应序列（非按键事件）。
+ * 用于回答 DECRQM、DA1、OSC 11 等查询。
  */
 export type TerminalResponse =
-  /** DECRPM: answer to DECRQM (request DEC private mode status) */
+  /** DECRPM：对 DECRQM（请求 DEC 私有模式状态）的应答 */
   | { type: 'decrpm'; mode: number; status: number }
-  /** DA1: primary device attributes (used as a universal sentinel) */
+  /** DA1：主设备属性（用作通用哨兵） */
   | { type: 'da1'; params: number[] }
-  /** DA2: secondary device attributes (terminal version info) */
+  /** DA2：次设备属性（终端版本信息） */
   | { type: 'da2'; params: number[] }
-  /** Kitty keyboard protocol: current flags (answer to CSI ? u) */
+  /** Kitty 键盘协议：当前标志位（对 CSI ? u 的应答） */
   | { type: 'kittyKeyboard'; flags: number }
-  /** DSR: cursor position report (answer to CSI 6 n) */
+  /** DSR：光标位置报告（对 CSI 6 n 的应答） */
   | { type: 'cursorPosition'; row: number; col: number }
-  /** OSC response: generic operating-system-command reply (e.g. OSC 11 bg color) */
+  /** OSC 响应：通用操作系统命令应答（例如 OSC 11 背景色） */
   | { type: 'osc'; code: number; data: string }
-  /** XTVERSION: terminal name/version string (answer to CSI > 0 q).
-   *  Example values: "xterm.js(5.5.0)", "ghostty 1.2.0", "iTerm2 3.6". */
+  /** XTVERSION：终端名称/版本字符串（对 CSI > 0 q 的应答）。
+   *  示例值："xterm.js(5.5.0)"、"ghostty 1.2.0"、"iTerm2 3.6"。 */
   | { type: 'xtversion'; name: string }
 
 /**
- * Try to recognize a sequence token as a terminal response.
- * Returns null if the sequence is not a known response pattern
- * (i.e. it should be treated as a keypress).
+ * 尝试将序列标记识别为终端响应。
+ * 如果不是已知的响应模式则返回 null
+ * （即应作为按键事件处理）。
  *
- * These patterns are syntactically distinguishable from keyboard input —
- * no physical key produces CSI ? ... c or CSI ? ... $ y, so they can be
- * safely parsed out of the input stream at any time.
+ * 这些模式在语法上与键盘输入可区分 —
+ * 没有物理按键能产生 CSI ? ... c 或 CSI ? ... $ y，因此可以
+ * 在任何时候安全地从输入流中解析出来。
  */
 function parseTerminalResponse(s: string): TerminalResponse | null {
-  // CSI-prefixed responses
+  // CSI 前缀响应
   if (s.startsWith('\x1b[')) {
     let m: RegExpExecArray | null
 
@@ -155,7 +155,7 @@ function parseTerminalResponse(s: string): TerminalResponse | null {
     return null
   }
 
-  // OSC responses (e.g. OSC 11 ; rgb:... for bg color query)
+  // OSC 响应（例如 OSC 11 ; rgb:... 用于背景色查询）
   if (s.startsWith('\x1b]')) {
     const m = OSC_RESPONSE_RE.exec(s)
     if (m) {
@@ -163,7 +163,7 @@ function parseTerminalResponse(s: string): TerminalResponse | null {
     }
   }
 
-  // DCS responses (e.g. XTVERSION: DCS > | name ST)
+  // DCS 响应（例如 XTVERSION: DCS > | name ST）
   if (s.startsWith('\x1bP')) {
     const m = XTVERSION_RE.exec(s)
     if (m) {
@@ -183,7 +183,7 @@ export type KeyParseState = {
   mode: 'NORMAL' | 'IN_PASTE'
   incomplete: string
   pasteBuffer: string
-  // Internal tokenizer instance
+  // 内部分词器实例
   _tokenizer?: Tokenizer
 }
 
@@ -217,13 +217,13 @@ export function parseMultipleKeypresses(
   const isFlush = input === null
   const inputString = isFlush ? '' : inputToString(input)
 
-  // Get or create tokenizer
+  // 获取或创建分词器
   const tokenizer = prevState._tokenizer ?? createTokenizer({ x10Mouse: true })
 
-  // Tokenize the input
+  // 对输入进行分词
   const tokens = isFlush ? tokenizer.flush() : tokenizer.feed(inputString)
 
-  // Convert tokens to parsed keys, handling paste mode
+  // 将标记转换为解析后的按键事件，处理粘贴模式
   const keys: ParsedInput[] = []
   let inPaste = prevState.mode === 'IN_PASTE'
   let pasteBuffer = prevState.pasteBuffer
@@ -234,14 +234,14 @@ export function parseMultipleKeypresses(
         inPaste = true
         pasteBuffer = ''
       } else if (token.value === PASTE_END) {
-        // Always emit a paste key, even for empty pastes. This allows
-        // downstream handlers to detect empty pastes (e.g., for clipboard
-        // image handling on macOS). The paste content may be empty string.
+        // 始终发送粘贴事件，即使是空粘贴。这允许下游处理器
+        // 检测空粘贴（例如 macOS 上的剪贴板图片处理）。
+        // 粘贴内容可能为空字符串。
         keys.push(createPasteKey(pasteBuffer))
         inPaste = false
         pasteBuffer = ''
       } else if (inPaste) {
-        // Sequences inside paste are treated as literal text
+        // 粘贴模式内的序列被视为纯文本
         pasteBuffer += token.value
       } else {
         const response = parseTerminalResponse(token.value)
@@ -263,17 +263,16 @@ export function parseMultipleKeypresses(
         /^\[<\d+;\d+;\d+[Mm]$/.test(token.value) ||
         /^\[M[\x60-\x7f][\x20-\uffff]{2}$/.test(token.value)
       ) {
-        // Orphaned SGR/X10 mouse tail (fullscreen only — mouse tracking is off
-        // otherwise). A heavy render blocked the event loop past App's 50ms
-        // flush timer, so the buffered ESC was flushed as a lone Escape and
-        // the continuation `[<btn;col;rowM` arrived as text. Re-synthesize
-        // with the ESC prefix so the scroll event still fires instead of
-        // leaking into the prompt. The spurious Escape is gone; App.tsx's
-        // readableLength check prevents it. The X10 Cb slot is narrowed to
-        // the wheel range [\x60-\x7f] (0x40|modifiers + 32) — a full [\x20-]
-        // range would match typed input like `[MAX]` batched into one read
-        // and silently drop it as a phantom click. Click/drag orphans leak
-        // as visible garbage instead; deletable garbage beats silent loss.
+        // 孤立的 SGR/X10 鼠标尾部（仅限全屏模式 — 否则鼠标跟踪已关闭）。
+        // 繁重的渲染阻塞了事件循环，超过 App 的 50ms 刷新定时器，
+        // 导致缓冲的 ESC 被作为单独的 Escape 刷新，而后续部分
+        // `[<btn;col;rowM` 作为文本到达。重新添加 ESC 前缀进行合成，
+        // 使滚动事件仍能触发，而不是泄漏到提示符中。虚假的 Escape
+        // 已消失；App.tsx 的 readableLength 检查可防止此问题。
+        // X10 Cb 槽位被收窄到滚轮范围 [\x60-\x7f]（0x40|修饰键 + 32）—
+        // 完整的 [\x20-] 范围会匹配像 `[MAX]` 这样批量读取的输入，
+        // 并将其作为幻影点击静默丢弃。点击/拖拽的孤立事件会以可见
+        // 垃圾形式泄漏；可删除的垃圾优于静默丢失。
         const resynthesized = '\x1b' + token.value
         const mouse = parseMouseEvent(resynthesized)
         keys.push(mouse ?? parseKeypress(resynthesized))
@@ -283,14 +282,14 @@ export function parseMultipleKeypresses(
     }
   }
 
-  // If flushing and still in paste mode, emit what we have
+  // 如果正在刷新且仍处于粘贴模式，发出已缓存的内容
   if (isFlush && inPaste && pasteBuffer) {
     keys.push(createPasteKey(pasteBuffer))
     inPaste = false
     pasteBuffer = ''
   }
 
-  // Build new state
+  // 构建新状态
   const newState: KeyParseState = {
     mode: inPaste ? 'IN_PASTE' : 'NORMAL',
     incomplete: tokenizer.buffer(),
@@ -302,12 +301,12 @@ export function parseMultipleKeypresses(
 }
 
 const keyName: Record<string, string> = {
-  /* xterm/gnome ESC O letter */
+  /* xterm/gnome ESC O 字母 */
   OP: 'f1',
   OQ: 'f2',
   OR: 'f3',
   OS: 'f4',
-  /* Application keypad mode (numpad digits 0-9) */
+  /* 应用小键盘模式（数字键 0-9） */
   Op: '0',
   Oq: '1',
   Or: '2',
@@ -318,7 +317,7 @@ const keyName: Record<string, string> = {
   Ow: '7',
   Ox: '8',
   Oy: '9',
-  /* Application keypad mode (numpad operators) */
+  /* 应用小键盘模式（运算符） */
   Oj: '*',
   Ok: '+',
   Ol: ',',
@@ -326,18 +325,18 @@ const keyName: Record<string, string> = {
   On: '.',
   Oo: '/',
   OM: 'return',
-  /* xterm/rxvt ESC [ number ~ */
+  /* xterm/rxvt ESC [ 数字 ~ */
   '[11~': 'f1',
   '[12~': 'f2',
   '[13~': 'f3',
   '[14~': 'f4',
-  /* from Cygwin and used in libuv */
+  /* 来自 Cygwin，libuv 中使用 */
   '[[A': 'f1',
   '[[B': 'f2',
   '[[C': 'f3',
   '[[D': 'f4',
   '[[E': 'f5',
-  /* common */
+  /* 常见 */
   '[15~': 'f5',
   '[17~': 'f6',
   '[18~': 'f7',
@@ -346,7 +345,7 @@ const keyName: Record<string, string> = {
   '[21~': 'f10',
   '[23~': 'f11',
   '[24~': 'f12',
-  /* xterm ESC [ letter */
+  /* xterm ESC [ 字母 */
   '[A': 'up',
   '[B': 'down',
   '[C': 'right',
@@ -354,7 +353,7 @@ const keyName: Record<string, string> = {
   '[E': 'clear',
   '[F': 'end',
   '[H': 'home',
-  /* xterm/gnome ESC O letter */
+  /* xterm/gnome ESC O 字母 */
   OA: 'up',
   OB: 'down',
   OC: 'right',
@@ -362,7 +361,7 @@ const keyName: Record<string, string> = {
   OE: 'clear',
   OF: 'end',
   OH: 'home',
-  /* xterm/rxvt ESC [ number ~ */
+  /* xterm/rxvt ESC [ 数字 ~ */
   '[1~': 'home',
   '[2~': 'insert',
   '[3~': 'delete',
@@ -375,7 +374,7 @@ const keyName: Record<string, string> = {
   /* rxvt */
   '[7~': 'home',
   '[8~': 'end',
-  /* rxvt keys with modifiers */
+  /* rxvt 带修饰键的按键 */
   '[a': 'up',
   '[b': 'down',
   '[c': 'right',
@@ -401,18 +400,19 @@ const keyName: Record<string, string> = {
   '[6^': 'pagedown',
   '[7^': 'home',
   '[8^': 'end',
-  /* misc. */
+  /* 杂项 */
   '[Z': 'tab',
 }
 
 export const nonAlphanumericKeys = [
-  // Filter out single-character values (digits, operators from numpad) since
-  // those are printable characters that should produce input
+  // 过滤掉单字符值（来自小键盘的数字、运算符），因为
+  // 这些是可打印字符，应该产生输入
   ...Object.values(keyName).filter(v => v.length > 1),
-  // escape and backspace are assigned directly in parseKeypress (not via the
-  // keyName map), so the spread above misses them. Without these, ctrl+escape
-  // via Kitty/modifyOtherKeys leaks the literal word "escape" as input text
-  // (input-event.ts:58 assigns keypress.name when ctrl is set).
+  // escape 和 backspace 直接在 parseKeypress 中赋值（不通过
+  // keyName 映射），所以上面的展开会漏掉它们。如果不加这两个，
+  // 通过 Kitty/modifyOtherKeys 的 ctrl+escape 会把字面量单词
+  // "escape" 泄漏为输入文本（input-event.ts:58 在设置 ctrl 时
+  // 会分配 keypress.name）。
   'escape',
   'backspace',
   'wheelup',
@@ -454,13 +454,13 @@ const isCtrlKey = (code: string): boolean => {
 }
 
 /**
- * Decode XTerm-style modifier value to individual flags.
- * Modifier encoding: 1 + (shift ? 1 : 0) + (alt ? 2 : 0) + (ctrl ? 4 : 0) + (super ? 8 : 0)
+ * 将 XTerm 风格的修饰键值解码为独立标志位。
+ * 修饰键编码：1 + (shift ? 1 : 0) + (alt ? 2 : 0) + (ctrl ? 4 : 0) + (super ? 8 : 0)
  *
- * Note: `meta` here means Alt/Option (bit 2). `super` is a distinct
- * modifier (bit 8, i.e. Cmd on macOS / Win key). Most legacy terminal
- * sequences can't express super — it only arrives via kitty keyboard
- * protocol (CSI u) or xterm modifyOtherKeys.
+ * 注意：此处的 `meta` 指 Alt/Option（第 2 位）。`super` 是一个独立的
+ * 修饰键（第 8 位，即 macOS 上的 Cmd / Win 键）。大多数遗留终端
+ * 序列无法表达 super — 它只能通过 kitty 键盘协议
+ *（CSI u）或 xterm modifyOtherKeys 传入。
  */
 function decodeModifier(modifier: number): {
   shift: boolean
@@ -478,10 +478,10 @@ function decodeModifier(modifier: number): {
 }
 
 /**
- * Map keycode to key name for modifyOtherKeys/CSI u sequences.
- * Handles both ASCII keycodes and Kitty keyboard protocol functional keys.
+ * 将键码映射为键名，用于 modifyOtherKeys/CSI u 序列。
+ * 同时处理 ASCII 键码和 Kitty 键盘协议功能键。
  *
- * Numpad codepoints are from Unicode Private Use Area, defined at:
+ * 小键盘码点来自 Unicode 私有使用区，定义见：
  * https://sw.kovidgoyal.net/kitty/keyboard-protocol/#functional-key-definitions
  */
 function keycodeToName(keycode: number): string | undefined {
@@ -517,22 +517,22 @@ function keycodeToName(keycode: number): string | undefined {
       return '8'
     case 57408:
       return '9'
-    case 57409: // KP_DECIMAL
+    case 57409: // KP_DECIMAL（小数点）
       return '.'
-    case 57410: // KP_DIVIDE
+    case 57410: // KP_DIVIDE（除号）
       return '/'
-    case 57411: // KP_MULTIPLY
+    case 57411: // KP_MULTIPLY（乘号）
       return '*'
-    case 57412: // KP_SUBTRACT
+    case 57412: // KP_SUBTRACT（减号）
       return '-'
-    case 57413: // KP_ADD
+    case 57413: // KP_ADD（加号）
       return '+'
-    case 57414: // KP_ENTER
+    case 57414: // KP_ENTER（回车）
       return 'return'
-    case 57415: // KP_EQUAL
+    case 57415: // KP_EQUAL（等号）
       return '='
     default:
-      // Printable ASCII characters
+      // 可打印 ASCII 字符
       if (keycode >= 32 && keycode <= 126) {
         return String.fromCharCode(keycode).toLowerCase()
       }
@@ -555,41 +555,40 @@ export type ParsedKey = {
   isPasted: boolean
 }
 
-/** A terminal response sequence (DECRPM, DA1, OSC reply, etc.) parsed
- *  out of the input stream. Not user input — consumers should dispatch
- *  to a response handler. */
+/** 从输入流中解析出的终端响应序列（DECRPM、DA1、OSC 应答等）。
+ *  非用户输入 — 消费者应分发到响应处理器。 */
 export type ParsedResponse = {
   kind: 'response'
-  /** Raw escape sequence bytes, for debugging/logging */
+  /** 原始转义序列字节，用于调试/日志 */
   sequence: string
   response: TerminalResponse
 }
 
-/** SGR mouse event with coordinates. Emitted for clicks, drags, and
- *  releases (wheel events remain ParsedKey). col/row are 1-indexed
- *  from the terminal sequence (CSI < btn;col;row M/m). */
+/** 带有坐标的 SGR 鼠标事件。用于点击、拖拽和
+ *  释放（滚轮事件保留为 ParsedKey）。col/row 为终端序列
+ *  的 1 起始索引（CSI < btn;col;row M/m）。 */
 export type ParsedMouse = {
   kind: 'mouse'
-  /** Raw SGR button code. Low 2 bits = button (0=left,1=mid,2=right),
-   *  bit 5 (0x20) = drag/motion, bit 6 (0x40) = wheel. */
+  /** 原始 SGR 按钮编码。低 2 位 = 按钮（0=左，1=中，2=右），
+   *  第 5 位（0x20）= 拖拽/移动，第 6 位（0x40）= 滚轮。 */
   button: number
-  /** 'press' for M terminator, 'release' for m terminator */
+  /** M 终止符表示 'press'（按下），m 终止符表示 'release'（释放） */
   action: 'press' | 'release'
-  /** 1-indexed column (from terminal) */
+  /** 列（1 起始，来自终端） */
   col: number
-  /** 1-indexed row (from terminal) */
+  /** 行（1 起始，来自终端） */
   row: number
   sequence: string
 }
 
-/** Everything that can come out of the input parser: a user keypress/paste,
- *  a mouse click/drag event, or a terminal response to a query we sent. */
+/** 输入解析器可能输出的所有内容：用户按键/粘贴、
+ *  鼠标点击/拖拽事件，或对已发送查询的终端响应。 */
 export type ParsedInput = ParsedKey | ParsedMouse | ParsedResponse
 
 /**
- * Parse an SGR mouse event sequence into a ParsedMouse, or null if not a
- * mouse event or if it's a wheel event (wheel stays as ParsedKey for the
- * keybinding system). Button bit 0x40 = wheel, bit 0x20 = drag/motion.
+ * 将 SGR 鼠标事件序列解析为 ParsedMouse，如果不是鼠标
+ * 事件或是滚轮事件则返回 null（滚轮保留为 ParsedKey 供
+ * 键绑定系统使用）。按钮第 0x40 位 = 滚轮，第 0x20 位 = 拖拽/移动。
  */
 function parseMouseEvent(s: string): ParsedMouse | null {
   const match = SGR_MOUSE_RE.exec(s)
@@ -627,12 +626,12 @@ function parseKeypress(s: string = ''): ParsedKey {
 
   key.sequence = key.sequence || s || key.name
 
-  // Handle CSI u (kitty keyboard protocol): ESC [ codepoint [; modifier] u
-  // Example: ESC[13;2u = Shift+Enter, ESC[27u = Escape (no modifiers)
+  // 处理 CSI u（kitty 键盘协议）：ESC [ 码点 [; 修饰键] u
+  // 例如：ESC[13;2u = Shift+Enter，ESC[27u = Escape（无修饰键）
   let match: RegExpExecArray | null
   if ((match = CSI_U_RE.exec(s))) {
     const codepoint = parseInt(match[1]!, 10)
-    // Modifier defaults to 1 (no modifiers) when not present
+    // 修饰键不存在时默认为 1（无修饰键）
     const modifier = match[2] ? parseInt(match[2], 10) : 1
     const mods = decodeModifier(modifier)
     const name = keycodeToName(codepoint)
@@ -651,9 +650,9 @@ function parseKeypress(s: string = ''): ParsedKey {
     }
   }
 
-  // Handle xterm modifyOtherKeys: ESC [ 27 ; modifier ; keycode ~
-  // Must run before FN_KEY_RE — FN_KEY_RE only allows 2 params before ~ and
-  // would leave the tail as garbage if it partially matched.
+  // 处理 xterm modifyOtherKeys：ESC [ 27 ; 修饰键 ; 键码 ~
+  // 必须在 FN_KEY_RE 之前运行 — FN_KEY_RE 在 ~ 前只允许 2 个参数，
+  // 如果部分匹配会留下尾部垃圾。
   if ((match = MODIFY_OTHER_KEYS_RE.exec(s))) {
     const mods = decodeModifier(parseInt(match[1]!, 10))
     const name = keycodeToName(parseInt(match[2]!, 10))
@@ -672,25 +671,25 @@ function parseKeypress(s: string = ''): ParsedKey {
     }
   }
 
-  // SGR mouse wheel events. Click/drag/release events are handled
-  // earlier by parseMouseEvent and emitted as ParsedMouse, so they
-  // never reach here. Mask with 0x43 (bits 6+1+0) to check wheel-flag
-  // + direction while ignoring modifier bits (Shift=0x04, Meta=0x08,
-  // Ctrl=0x10) — modified wheel events (e.g. Ctrl+scroll, button=80)
-  // should still be recognized as wheelup/wheeldown.
+  // SGR 鼠标滚轮事件。点击/拖拽/释放事件由前面的
+  // parseMouseEvent 处理并发出 ParsedMouse，因此不会到达这里。
+  // 用 0x43 掩码（第 6+1+0 位）检查滚轮标志位
+  // + 方向，同时忽略修饰键位（Shift=0x04、Meta=0x08、
+  // Ctrl=0x10）— 修饰过的滚轮事件（例如 Ctrl+滚动，button=80）
+  // 仍应被识别为 wheelup/wheeldown。
   if ((match = SGR_MOUSE_RE.exec(s))) {
     const button = parseInt(match[1]!, 10)
     if ((button & 0x43) === 0x40) return createNavKey(s, 'wheelup', false)
     if ((button & 0x43) === 0x41) return createNavKey(s, 'wheeldown', false)
-    // Shouldn't reach here (parseMouseEvent catches non-wheel) but be safe
+    // 理论上不应到达此处（parseMouseEvent 已处理非滚轮事件），但做安全处理
     return createNavKey(s, 'mouse', false)
   }
 
-  // X10 mouse: CSI M + 3 raw bytes (Cb+32, Cx+32, Cy+32). Terminals that
-  // ignore DECSET 1006 (SGR) but honor 1000/1002 emit this legacy encoding.
-  // Button bits match SGR: 0x40 = wheel, low bit = direction. Non-wheel
-  // X10 events (clicks/drags) are swallowed here — we only enable mouse
-  // tracking in alt-screen and only need wheel for ScrollBox.
+  // X10 鼠标：CSI M + 3 个原始字节（Cb+32，Cx+32，Cy+32）。忽略
+  // DECSET 1006（SGR）但支持 1000/1002 的终端会发出这种遗留编码。
+  // 按钮位匹配 SGR：0x40 = 滚轮，低位 = 方向。非滚轮
+  // X10 事件（点击/拖拽）在此被静默处理 — 我们仅在
+  // 备用屏幕中启用鼠标跟踪，且 ScrollBox 只需要滚轮。
   if (s.length === 6 && s.startsWith('\x1b[M')) {
     const button = s.charCodeAt(3) - 32
     if ((button & 0x43) === 0x40) return createNavKey(s, 'wheelup', false)
@@ -757,7 +756,7 @@ function parseKeypress(s: string = ''): ParsedKey {
     key.ctrl = isCtrlKey(code) || key.ctrl
   }
 
-  // iTerm in natural text editing mode
+  // iTerm 自然文本编辑模式
   if (key.raw === '\x1Bb') {
     key.meta = true
     key.name = 'left'

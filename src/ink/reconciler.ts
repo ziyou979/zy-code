@@ -27,9 +27,8 @@ import { getFocusManager, getRootNode } from './focus.js'
 import { LayoutDisplay } from './layout/node.js'
 import applyStyles, { type Styles, type TextStyles } from './styles.js'
 
-// We need to conditionally perform devtools connection to avoid
-// accidentally breaking other third-party code.
-// See https://github.com/vadimdemedes/ink/issues/384
+// 我们需要有条件地执行 devtools 连接，以避免意外破坏其他第三方代码。
+// 参见 https://github.com/vadimdemedes/ink/issues/384
 if (process.env.NODE_ENV === 'development') {
   try {
     // eslint-disable-next-line custom-rules/no-top-level-dynamic-import -- dev-only; NODE_ENV check is DCE'd in production
@@ -96,8 +95,7 @@ const cleanupYogaNode = (node: DOMElement | TextNode): void => {
   const yogaNode = node.yogaNode
   if (yogaNode) {
     yogaNode.unsetMeasureFunc()
-    // Clear all references BEFORE freeing to prevent other code from
-    // accessing freed WASM memory during concurrent operations
+    // 在释放之前清除所有引用，防止其他代码在并发操作期间访问已释放的 WASM 内存
     clearYogaNodeReferences(node)
     yogaNode.freeRecursive()
   }
@@ -144,11 +142,8 @@ function applyProp(node: DOMElement, key: string, value: unknown): void {
 
 // --
 
-// react-reconciler's Fiber shape — only the fields we walk. The 5th arg to
-// createInstance is the Fiber (`workInProgress` in react-reconciler.dev.js).
-// _debugOwner is the component that rendered this element (dev builds only);
-// return is the parent fiber (always present). We prefer _debugOwner since it
-// skips past Box/Text wrappers to the actual named component.
+// react-reconciler 的 Fiber 结构 —— 仅包含我们遍历的字段。createInstance 的第 5 个参数是 Fiber（react-reconciler.dev.js 中的 `workInProgress`）。
+// _debugOwner 是渲染此元素的组件（仅 dev 构建）；return 是父 fiber（始终存在）。我们优先使用 _debugOwner，因为它可以跳过 Box/Text 包装器直接找到实际的命名组件。
 type FiberLike = {
   elementType?: { displayName?: string; name?: string } | string | null
   _debugOwner?: FiberLike | null
@@ -168,7 +163,7 @@ export function getOwnerChain(fiber: unknown): string[] {
         ? (t as { displayName?: string; name?: string }).displayName ||
           (t as { displayName?: string; name?: string }).name
         : typeof t === 'string'
-          ? undefined // host element (ink-box etc) — skip
+          ? undefined // 宿主元素（ink-box 等）—— 跳过
           : t?.displayName || t?.name
     if (name && name !== chain[chain.length - 1]) chain.push(name)
     cur = cur._debugOwner ?? cur.return
@@ -186,7 +181,7 @@ export function isDebugRepaintsEnabled(): boolean {
 
 export const dispatcher = new Dispatcher()
 
-// --- COMMIT INSTRUMENTATION (temp debugging) ---
+// --- COMMIT 埋点（临时调试）---
 // eslint-disable-next-line custom-rules/no-process-env-top-level -- debug instrumentation, read-once is fine
 const COMMIT_LOG = process.env.ZY_CODE_COMMIT_LOG
 let _commits = 0
@@ -197,8 +192,8 @@ let _createCount = 0
 let _prepareAt = 0
 // --- END ---
 
-// --- SCROLL PROFILING (bench/scroll-e2e.sh reads via getLastYogaMs) ---
-// Set by onComputeLayout wrapper in ink.tsx; read by onRender for phases.
+// --- SCROLL 性能分析（bench/scroll-e2e.sh 通过 getLastYogaMs 读取）---
+// 由 ink.tsx 中的 onComputeLayout 包装器设置；由 onRender 读取用于阶段划分。
 let _lastYogaMs = 0
 let _lastCommitMs = 0
 let _commitStart = 0
@@ -232,7 +227,7 @@ const reconciler = createReconciler<
   unknown,
   DOMElement,
   HostContext,
-  null, // UpdatePayload - not used in React 19
+  null, // UpdatePayload - React 19 中未使用
   NodeJS.Timeout,
   -1,
   null
@@ -422,7 +417,7 @@ const reconciler = createReconciler<
     cleanupYogaNode(removeNode)
     getFocusManager(node).handleNodeRemoved(removeNode, node)
   },
-  // React 19 commitUpdate receives old and new props directly instead of an updatePayload
+  // React 19 的 commitUpdate 直接接收旧的和新的 props，而不是 updatePayload
   commitUpdate(
     node: DOMElement,
     _type: ElementNames,
@@ -468,7 +463,7 @@ const reconciler = createReconciler<
       root.focusManager!.handleNodeRemoved(removeNode, root)
     }
   },
-  // React 19 required methods
+  // React 19 所需的方法
   maySuspendCommit(): boolean {
     return false
   },
@@ -505,8 +500,8 @@ const reconciler = createReconciler<
   },
 })
 
-// Wire the reconciler's discreteUpdates into the dispatcher.
-// This breaks the import cycle: dispatcher.ts doesn't import reconciler.ts.
+// 将 reconciler 的 discreteUpdates 接入 dispatcher。
+// 这样打破了导入循环：dispatcher.ts 不导入 reconciler.ts。
 dispatcher.discreteUpdates = reconciler.discreteUpdates.bind(reconciler)
 
 export default reconciler

@@ -4,23 +4,22 @@ import type { DOMElement } from '../dom.js'
 
 type ViewportEntry = {
   /**
-   * Whether the element is currently within the terminal viewport
+   * 元素当前是否在终端视口内
    */
   isVisible: boolean
 }
 
 /**
- * Hook to detect if a component is within the terminal viewport.
+ * Hook 用于检测组件是否在终端视口内。
  *
- * Returns a callback ref and a viewport entry object.
- * Attach the ref to the component you want to track.
+ * 返回一个回调 ref 和一个视口条目对象。
+ * 将 ref 附加到要跟踪的组件上即可。
  *
- * The entry is updated during the layout phase (useLayoutEffect) so callers
- * always read fresh values during render. Visibility changes do NOT trigger
- * re-renders on their own — callers that re-render for other reasons (e.g.
- * animation ticks, state changes) will pick up the latest value naturally.
- * This avoids infinite update loops when combined with other layout effects
- * that also call setState.
+ * 条目在 layout 阶段更新（useLayoutEffect），因此调用者在渲染期间
+ * 总能读取到最新值。可见性变化本身不会触发重新渲染——因其他原因
+ * （如动画滴答、状态变化）重新渲染的调用者会自然获取最新值。
+ * 这避免了与也调用 setState 的其他 layout effects 结合时
+ * 产生无限更新循环。
  *
  * @example
  * const [ref, entry] = useTerminalViewport()
@@ -38,11 +37,9 @@ export function useTerminalViewport(): [
     elementRef.current = el
   }, [])
 
-  // Runs on every render because yoga layout values can change
-  // without React being aware. Only updates the ref — no setState
-  // to avoid cascading re-renders during the commit phase.
-  // Walks the DOM ancestor chain fresh each time to avoid holding stale
-  // references after yoga tree rebuilds.
+  // 每次渲染都运行，因为 yoga 布局值可能在 React 不知情的情况下变化。
+  // 只更新 ref——不使用 setState，避免在 commit 阶段级联重新渲染。
+  // 每次都重新遍历 DOM 祖先链，避免在 yoga 树重建后持有过期引用。
   useLayoutEffect(() => {
     const element = elementRef.current
     if (!element?.yogaNode || !terminalSize) {
@@ -52,12 +49,11 @@ export function useTerminalViewport(): [
     const height = element.yogaNode.getComputedHeight()
     const rows = terminalSize.rows
 
-    // Walk the DOM parent chain (not yoga.getParent()) so we can detect
-    // scroll containers and subtract their scrollTop. Yoga computes layout
-    // positions without scroll offset — scrollTop is applied at render time.
-    // Without this, an element inside a ScrollBox whose yoga position exceeds
-    // terminalRows would be considered offscreen even when scrolled into view
-    // (e.g., the spinner in fullscreen mode after enough messages accumulate).
+    // 遍历 DOM 父链（而非 yoga.getParent()），这样可以检测滚动容器
+    // 并减去它们的 scrollTop。yoga 计算布局位置时不考虑滚动偏移——
+    // scrollTop 在渲染时应用。没有这个处理，ScrollBox 内 yoga 位置
+    // 超过 terminalRows 的元素会被认为在屏幕外，即使已滚动到可视区域
+    // （例如全屏模式下积累足够多消息后的 spinner）。
     let absoluteTop = element.yogaNode.getComputedTop()
     let parent: DOMElement | undefined = element.parentNode
     let root = element.yogaNode
@@ -66,22 +62,21 @@ export function useTerminalViewport(): [
         absoluteTop += parent.yogaNode.getComputedTop()
         root = parent.yogaNode
       }
-      // scrollTop is only ever set on scroll containers (by ScrollBox + renderer).
-      // Non-scroll nodes have undefined scrollTop → falsy fast-path.
+      // scrollTop 仅在滚动容器上设置（由 ScrollBox + renderer 设置）。
+      // 非滚动节点的 scrollTop 为 undefined → 快速路径跳过。
       if (parent.scrollTop) absoluteTop -= parent.scrollTop
       parent = parent.parentNode
     }
 
-    // Only the root's height matters
+    // 只有根节点的高度有意义
     const screenHeight = root.getComputedHeight()
 
     const bottom = absoluteTop + height
-    // When content overflows the viewport (screenHeight > rows), the
-    // cursor-restore at frame end scrolls one extra row into scrollback.
-    // log-update.ts accounts for this with scrollbackRows = viewportY + 1.
-    // We must match, otherwise an element at the boundary is considered
-    // "visible" here (animation keeps ticking) but its row is treated as
-    // scrollback by log-update (content change → full reset → flicker).
+    // 当内容超出视口时（screenHeight > rows），帧末的光标恢复会
+    // 多滚动一行到回滚区。log-update.ts 通过 scrollbackRows = viewportY + 1
+    // 来处理这一点。我们必须匹配，否则边界处的元素在这里被认为是"可见"的
+    // （动画继续滴答），但其行被 log-update 当作回滚区处理
+    // （内容变化 → 完全重置 → 闪烁）。
     const cursorRestoreScroll = screenHeight > rows ? 1 : 0
     const viewportY = Math.max(0, screenHeight - rows) + cursorRestoreScroll
     const viewportBottom = viewportY + rows

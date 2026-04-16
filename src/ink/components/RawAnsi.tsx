@@ -1,28 +1,27 @@
 import React from 'react';
 type Props = {
   /**
-   * Pre-rendered ANSI lines. Each element must be exactly one terminal row
-   * (already wrapped to `width` by the producer) with ANSI escape codes inline.
+   * 预渲染的 ANSI 行。每个元素必须恰好是一个终端行
+   * （已由生产者按 `width` 换行），ANSI 转义码内联。
    */
   lines: string[];
-  /** Column width the producer wrapped to. Sent to Yoga as the fixed leaf width. */
+  /** 生产者换行的列宽。作为固定叶子宽度传给 Yoga。 */
   width: number;
 };
 
 /**
- * Bypass the <Ansi> → React tree → Yoga → squash → re-serialize roundtrip for
- * content that is already terminal-ready.
+ * 绕过 <Ansi> → React 树 → Yoga → 压缩 → 重新序列化的循环，
+ * 直接输出终端就绪的内容。
  *
- * Use this when an external renderer (e.g. the ColorDiff NAPI module) has
- * already produced ANSI-escaped, width-wrapped output. A normal <Ansi> mount
- * reparses that output into one React <Text> per style span, lays out each
- * span as a Yoga flex child, then walks the tree to re-emit the same escape
- * codes it was given. For a long transcript full of syntax-highlighted diffs
- * that roundtrip is the dominant cost of the render.
+ * 当外部渲染器（如 ColorDiff NAPI 模块）已生成 ANSI 转义且按宽度
+ * 换行的输出时使用此组件。普通 <Ansi> 挂载会将该输出重新解析为每个
+ * 样式段的 React <Text>，将每段布局为 Yoga flex 子节点，然后遍历
+ * 树重新发出相同的转义码。对于充满语法高亮差异的长转录，这个往返
+ * 是渲染的主要开销。
  *
- * This component emits a single Yoga leaf with a constant-time measure func
- * (width × lines.length) and hands the joined string straight to output.write(),
- * which already splits on '\n' and parses ANSI into the screen buffer.
+ * 此组件发射单个 Yoga 叶子，具有常数时间的 measure 函数
+ * （宽度 × lines.length），并将拼接的字符串直接交给 output.write()，
+ * 后者已按 '\n' 分割并将 ANSI 解析到屏幕缓冲区。
  */
 export function RawAnsi({
   lines,

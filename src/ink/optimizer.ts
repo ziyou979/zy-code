@@ -1,17 +1,17 @@
 import type { Diff } from './frame.js'
 
 /**
- * Optimize a diff by applying all optimization rules in a single pass.
- * This reduces the number of patches that need to be written to the terminal.
+ * 在单次遍历中应用所有优化规则来优化 diff。
+ * 这减少了需要写入终端的 patch 数量。
  *
- * Rules applied:
- * - Remove empty stdout patches
- * - Merge consecutive cursorMove patches
- * - Remove no-op cursorMove (0,0) patches
- * - Concat adjacent style patches (transition diffs — can't drop either)
- * - Dedupe consecutive hyperlinks with same URI
- * - Cancel cursor hide/show pairs
- * - Remove clear patches with count 0
+ * 应用的规则：
+ * - 移除空的 stdout patch
+ * - 合并连续的 cursorMove patch
+ * - 移除无意义的 cursorMove (0,0) patch
+ * - 拼接相邻的样式 patch（transition diff — 两者都不能丢弃）
+ * - 去重连续相同 URI 的 hyperlink
+ * - 抵消 cursor hide/show 配对
+ * - 移除 count 为 0 的 clear patch
  */
 export function optimize(diff: Diff): Diff {
   if (diff.length <= 1) {
@@ -24,7 +24,7 @@ export function optimize(diff: Diff): Diff {
   for (const patch of diff) {
     const type = patch.type
 
-    // Skip no-ops
+    // 跳过无操作
     if (type === 'stdout') {
       if (patch.content === '') continue
     } else if (type === 'cursorMove') {
@@ -33,13 +33,13 @@ export function optimize(diff: Diff): Diff {
       if (patch.count === 0) continue
     }
 
-    // Try to merge with previous patch
+    // 尝试与前一个 patch 合并
     if (len > 0) {
       const lastIdx = len - 1
       const last = result[lastIdx]!
       const lastType = last.type
 
-      // Merge consecutive cursorMove
+      // 合并连续的 cursorMove
       if (type === 'cursorMove' && lastType === 'cursorMove') {
         result[lastIdx] = {
           type: 'cursorMove',
@@ -49,23 +49,23 @@ export function optimize(diff: Diff): Diff {
         continue
       }
 
-      // Collapse consecutive cursorTo (only the last one matters)
+      // 折叠连续的 cursorTo（只有最后一个有效）
       if (type === 'cursorTo' && lastType === 'cursorTo') {
         result[lastIdx] = patch
         continue
       }
 
-      // Concat adjacent style patches. styleStr is a transition diff
-      // (computed by diffAnsiCodes(from, to)), not a setter — dropping
-      // the first is only sound if its undo-codes are a subset of the
-      // second's, which is NOT guaranteed. e.g. [\e[49m, \e[2m]: dropping
-      // the bg reset leaks it into the next \e[2J/\e[2K via BCE.
+      // 拼接相邻的样式 patch。styleStr 是 transition diff
+      //（由 diffAnsiCodes(from, to) 计算），不是 setter —— 仅当
+      // 第一个 patch 的撤销码是第二个的子集时才能安全丢弃第一个，
+      // 但这并不保证。例如 [\e[49m, \e[2m]：丢弃背景重置
+      // 会通过 BCE 泄漏到下一个 \e[2J/\e[2K。
       if (type === 'styleStr' && lastType === 'styleStr') {
         result[lastIdx] = { type: 'styleStr', str: last.str + patch.str }
         continue
       }
 
-      // Dedupe hyperlinks
+      // 去重 hyperlink
       if (
         type === 'hyperlink' &&
         lastType === 'hyperlink' &&
@@ -74,7 +74,7 @@ export function optimize(diff: Diff): Diff {
         continue
       }
 
-      // Cancel cursor hide/show pairs
+      // 抵消 cursor hide/show 配对
       if (
         (type === 'cursorShow' && lastType === 'cursorHide') ||
         (type === 'cursorHide' && lastType === 'cursorShow')

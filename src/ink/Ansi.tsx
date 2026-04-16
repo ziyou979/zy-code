@@ -21,12 +21,12 @@ type SpanProps = {
 };
 
 /**
- * Component that parses ANSI escape codes and renders them using Text components.
+ * 解析 ANSI 转义码并使用 Text 组件渲染的组件。
  *
- * Use this as an escape hatch when you have pre-formatted ANSI strings from
- * external tools (like cli-highlight) that need to be rendered in Ink.
+ * 当你有来自外部工具（如 cli-highlight）的预格式化 ANSI 字符串
+ * 需要在 Ink 中渲染时，可用作逃生舱。
  *
- * Memoized to prevent re-renders when parent changes but children string is the same.
+ * 已做记忆化，当 children 字符串相同但父组件变化时避免重渲染。
  */
 export const Ansi = React.memo(function Ansi({
   children,
@@ -70,7 +70,7 @@ type Span = {
 };
 
 /**
- * Parse an ANSI string into spans using the termio parser.
+ * 使用 termio 解析器将 ANSI 字符串解析为 span。
  */
 function parseToSpans(input: string): Span[] {
   const parser = new Parser();
@@ -94,7 +94,7 @@ function parseToSpans(input: string): Span[] {
         props.hyperlink = currentHyperlink;
       }
 
-      // Try to merge with previous span if props match
+      // 尝试与前一个 span 合并（如果 props 相同）
       const lastSpan = spans[spans.length - 1];
       if (lastSpan && propsEqual(lastSpan.props, props)) {
         lastSpan.text += text;
@@ -110,7 +110,7 @@ function parseToSpans(input: string): Span[] {
 }
 
 /**
- * Convert termio's TextStyle to SpanProps.
+ * 将 termio 的 TextStyle 转换为 SpanProps。
  */
 function textStyleToSpanProps(style: TextStyle): SpanProps {
   const props: SpanProps = {};
@@ -127,7 +127,7 @@ function textStyleToSpanProps(style: TextStyle): SpanProps {
   return props;
 }
 
-// Map termio named colors to the ansi: format
+// 将 termio 命名颜色映射到 ansi: 格式
 const NAMED_COLOR_MAP: Record<NamedColor, string> = {
   black: 'ansi:black',
   red: 'ansi:red',
@@ -148,7 +148,7 @@ const NAMED_COLOR_MAP: Record<NamedColor, string> = {
 };
 
 /**
- * Convert termio's Color to the string format used by Ink.
+ * 将 termio 的 Color 转换为 Ink 使用的字符串格式。
  */
 function colorToString(color: TermioColor): Color | undefined {
   switch (color.type) {
@@ -164,7 +164,7 @@ function colorToString(color: TermioColor): Color | undefined {
 }
 
 /**
- * Check if two SpanProps are equal for merging.
+ * 比较两个 SpanProps 是否相等，用于合并判断。
  */
 function propsEqual(a: SpanProps, b: SpanProps): boolean {
   return a.color === b.color && a.backgroundColor === b.backgroundColor && a.bold === b.bold && a.dim === b.dim && a.italic === b.italic && a.underline === b.underline && a.strikethrough === b.strikethrough && a.inverse === b.inverse && a.hyperlink === b.hyperlink;
@@ -176,7 +176,7 @@ function hasAnyTextProps(props: SpanProps): boolean {
   return props.color !== undefined || props.backgroundColor !== undefined || props.dim === true || props.bold === true || props.italic === true || props.underline === true || props.strikethrough === true || props.inverse === true;
 }
 
-// Text style props without weight (bold/dim) - these are handled separately
+// 不含字重（bold/dim）的文本样式 props——这些由 Text 单独处理
 type BaseTextStyleProps = {
   color?: Color;
   backgroundColor?: Color;
@@ -186,7 +186,7 @@ type BaseTextStyleProps = {
   inverse?: boolean;
 };
 
-// Wrapper component that handles bold/dim mutual exclusivity for Text
+// 处理 bold/dim 互斥逻辑的包装组件，适配 Text 组件
 function StyledText({
   bold,
   dim,

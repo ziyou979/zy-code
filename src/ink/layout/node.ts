@@ -1,5 +1,5 @@
 // --
-// Adapter interface for the layout engine (Yoga)
+// 布局引擎 (Yoga) 的适配器接口
 
 export const LayoutEdge = {
   All: 'all',
@@ -91,19 +91,19 @@ export type LayoutMeasureMode =
   (typeof LayoutMeasureMode)[keyof typeof LayoutMeasureMode]
 
 export type LayoutNode = {
-  // Tree
+  // 树结构
   insertChild(child: LayoutNode, index: number): void
   removeChild(child: LayoutNode): void
   getChildCount(): number
   getParent(): LayoutNode | null
 
-  // Layout computation
+  // 布局计算
   calculateLayout(width?: number, height?: number): void
   setMeasureFunc(fn: LayoutMeasureFunc): void
   unsetMeasureFunc(): void
   markDirty(): void
 
-  // Layout reading (post-layout)
+  // 布局读取（布局计算后）
   getComputedLeft(): number
   getComputedTop(): number
   getComputedWidth(): number
@@ -111,7 +111,7 @@ export type LayoutNode = {
   getComputedBorder(edge: LayoutEdge): number
   getComputedPadding(edge: LayoutEdge): number
 
-  // Style setters
+  // 样式设置器
   setWidth(value: number): void
   setWidthPercent(value: number): void
   setWidthAuto(): void
@@ -146,7 +146,7 @@ export type LayoutNode = {
   setBorder(edge: LayoutEdge, value: number): void
   setGap(gutter: LayoutGutter, value: number): void
 
-  // Lifecycle
+  // 生命周期
   free(): void
   freeRecursive(): void
 }

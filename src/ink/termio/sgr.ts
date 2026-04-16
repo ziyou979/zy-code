@@ -1,8 +1,8 @@
 /**
- * SGR (Select Graphic Rendition) Parser
+ * SGR（选择图形渲染）解析器
  *
- * Parses SGR parameters and applies them to a TextStyle.
- * Handles both semicolon (;) and colon (:) separated parameters.
+ * 解析 SGR 参数并将其应用于 TextStyle。
+ * 同时处理分号（;）和冒号（:）分隔的参数。
  */
 
 import type { NamedColor, TextStyle, UnderlineStyle } from './types.js'

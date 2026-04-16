@@ -14,27 +14,27 @@ export type Progress = {
 }
 
 /**
- * Checks if the terminal supports OSC 9;4 progress reporting.
- * Supported terminals:
- * - ConEmu (Windows) - all versions
+ * 检查终端是否支持 OSC 9;4 进度报告。
+ * 支持的终端：
+ * - ConEmu (Windows) - 所有版本
  * - Ghostty 1.2.0+
  * - iTerm2 3.6.6+
  *
- * Note: Windows Terminal interprets OSC 9;4 as notifications, not progress.
+ * 注意：Windows Terminal 会将 OSC 9;4 解释为通知，而非进度。
  */
 export function isProgressReportingAvailable(): boolean {
-  // Only available if we have a TTY (not piped)
+  // 仅在 TTY 环境下可用（非管道模式）
   if (!process.stdout.isTTY) {
     return false
   }
 
-  // Explicitly exclude Windows Terminal, which interprets OSC 9;4 as
-  // notifications rather than progress indicators
+  // 明确排除 Windows Terminal，它会将 OSC 9;4 解释为
+  // 通知，而非进度指示器
   if (process.env.WT_SESSION) {
     return false
   }
 
-  // ConEmu supports OSC 9;4 for progress (all versions)
+  // ConEmu 支持 OSC 9;4 进度报告（所有版本）
   if (
     process.env.ConEmuANSI ||
     process.env.ConEmuPID ||
@@ -48,13 +48,13 @@ export function isProgressReportingAvailable(): boolean {
     return false
   }
 
-  // Ghostty 1.2.0+ supports OSC 9;4 for progress
+  // Ghostty 1.2.0+ 支持 OSC 9;4 进度报告
   // https://ghostty.org/docs/install/release-notes/1-2-0
   if (process.env.TERM_PROGRAM === 'ghostty') {
     return gte(version.version, '1.2.0')
   }
 
-  // iTerm2 3.6.6+ supports OSC 9;4 for progress
+  // iTerm2 3.6.6+ 支持 OSC 9;4 进度报告
   // https://iterm2.com/downloads.html
   if (process.env.TERM_PROGRAM === 'iTerm.app') {
     return gte(version.version, '3.6.6')
@@ -64,19 +64,19 @@ export function isProgressReportingAvailable(): boolean {
 }
 
 /**
- * Checks if the terminal supports DEC mode 2026 (synchronized output).
- * When supported, BSU/ESU sequences prevent visible flicker during redraws.
+ * 检查终端是否支持 DEC 模式 2026（同步输出）。
+ * 支持时，BSU/ESU 序列可防止重绘时出现可见闪烁。
  */
 export function isSynchronizedOutputSupported(): boolean {
-  // tmux parses and proxies every byte but doesn't implement DEC 2026.
-  // BSU/ESU pass through to the outer terminal but tmux has already
-  // broken atomicity by chunking. Skip to save 16 bytes/frame + parser work.
+  // tmux 会解析并转发每个字节，但不实现 DEC 2026。
+  // BSU/ESU 会透传到外部终端，但 tmux 已经通过分块
+  // 破坏了原子性。跳过以节省每帧 16 字节 + 解析器开销。
   if (process.env.TMUX) return false
 
   const termProgram = process.env.TERM_PROGRAM
   const term = process.env.TERM
 
-  // Modern terminals with known DEC 2026 support
+  // 已知支持 DEC 2026 的现代终端
   if (
     termProgram === 'iTerm.app' ||
     termProgram === 'WezTerm' ||
@@ -89,25 +89,25 @@ export function isSynchronizedOutputSupported(): boolean {
     return true
   }
 
-  // kitty sets TERM=xterm-kitty or KITTY_WINDOW_ID
+  // kitty 会设置 TERM=xterm-kitty 或 KITTY_WINDOW_ID
   if (term?.includes('kitty') || process.env.KITTY_WINDOW_ID) return true
 
-  // Ghostty may set TERM=xterm-ghostty without TERM_PROGRAM
+  // Ghostty 可能设置 TERM=xterm-ghostty 而不设置 TERM_PROGRAM
   if (term === 'xterm-ghostty') return true
 
-  // foot sets TERM=foot or TERM=foot-extra
+  // foot 会设置 TERM=foot 或 TERM=foot-extra
   if (term?.startsWith('foot')) return true
 
-  // Alacritty may set TERM containing 'alacritty'
+  // Alacritty 可能设置包含 'alacritty' 的 TERM
   if (term?.includes('alacritty')) return true
 
-  // Zed uses the alacritty_terminal crate which supports DEC 2026
+  // Zed 使用 alacritty_terminal crate，支持 DEC 2026
   if (process.env.ZED_TERM) return true
 
   // Windows Terminal
   if (process.env.WT_SESSION) return true
 
-  // VTE-based terminals (GNOME Terminal, Tilix, etc.) since VTE 0.68
+  // VTE 终端（GNOME Terminal、Tilix 等），自 VTE 0.68 起支持
   const vteVersion = process.env.VTE_VERSION
   if (vteVersion) {
     const version = parseInt(vteVersion, 10)
@@ -117,42 +117,41 @@ export function isSynchronizedOutputSupported(): boolean {
   return false
 }
 
-// -- XTVERSION-detected terminal name (populated async at startup) --
+// -- 通过 XTVERSION 检测终端名称（启动时异步获取） --
 //
-// TERM_PROGRAM is not forwarded over SSH by default, so env-based detection
-// fails when ZY runs remotely inside a VS Code integrated terminal.
-// XTVERSION (CSI > 0 q → DCS > | name ST) goes through the pty — the query
-// reaches the *client* terminal and the reply comes back through stdin.
-// App.tsx fires the query when raw mode enables; setXtversionName() is called
-// from the response handler. Readers should treat undefined as "not yet known"
-// and fall back to env-var detection.
+// 默认情况下 TERM_PROGRAM 不会通过 SSH 转发，因此当 ZY 在
+// VS Code 集成终端内远程运行时，基于环境变量的检测会失效。
+// XTVERSION（CSI > 0 q → DCS > | name ST）通过 pty 传输——查询
+// 会到达*客户端*终端，回复通过 stdin 返回。
+// App.tsx 在启用 raw mode 时触发查询；setXtversionName() 在
+// 响应处理程序中被调用。调用者应将 undefined 视为"尚未获知"，
+// 并回退到环境变量检测。
 
 let xtversionName: string | undefined
 
-/** Record the XTVERSION response. Called once from App.tsx when the reply
- *  arrives on stdin. No-op if already set (defend against re-probe). */
+/** 记录 XTVERSION 响应。从 App.tsx 调用，当 stdin 收到回复时触发。
+ *  如果已设置则不操作（防止重复探测）。 */
 export function setXtversionName(name: string): void {
   if (xtversionName === undefined) xtversionName = name
 }
 
-/** True if running in an xterm.js-based terminal (VS Code, Cursor, Windsurf
- *  integrated terminals). Combines TERM_PROGRAM env check (fast, sync, but
- *  not forwarded over SSH) with the XTVERSION probe result (async, survives
- *  SSH — query/reply goes through the pty). Early calls may miss the probe
- *  reply — call lazily (e.g. in an event handler) if SSH detection matters. */
+/** 判断是否在 xterm.js 终端中运行（VS Code、Cursor、Windsurf
+ *  集成终端）。结合 TERM_PROGRAM 环境变量检查（快速、同步，但
+ *  不通过 SSH 转发）和 XTVERSION 探测结果（异步，支持 SSH——
+ *  查询/回复通过 pty 传输）。早期调用可能错过探测回复——如果需要
+ *  SSH 检测，请延迟调用（例如在事件处理程序中）。 */
 export function isXtermJs(): boolean {
   if (process.env.TERM_PROGRAM === 'vscode') return true
   return xtversionName?.startsWith('xterm.js') ?? false
 }
 
-// Terminals known to correctly implement the Kitty keyboard protocol
-// (CSI >1u) and/or xterm modifyOtherKeys (CSI >4;2m) for ctrl+shift+<letter>
-// disambiguation. We previously enabled unconditionally (#23350), assuming
-// terminals silently ignore unknown CSI — but some terminals honor the enable
-// and emit codepoints our input parser doesn't handle (notably over SSH and
-// in xterm.js-based terminals like VS Code). tmux is allowlisted because it
-// accepts modifyOtherKeys and doesn't forward the kitty sequence to the outer
-// terminal.
+// 已知正确实现 Kitty 键盘协议
+// (CSI >1u) 和/或 xterm modifyOtherKeys (CSI >4;2m) 的终端，
+// 用于消除 ctrl+shift+<字母> 的歧义。我们之前无条件启用（#23350），
+// 假设终端会静默忽略未知 CSI——但有些终端会处理这些序列并
+// 发出我们的输入解析器无法处理的码点（尤其是在 SSH 和
+// 基于 xterm.js 的终端如 VS Code 中）。tmux 在白名单中是因为它
+// 接受 modifyOtherKeys 且不会将 kitty 序列转发到外部终端。
 const EXTENDED_KEYS_TERMINALS = [
   'iTerm.app',
   'kitty',
@@ -162,24 +161,23 @@ const EXTENDED_KEYS_TERMINALS = [
   'windows-terminal',
 ]
 
-/** True if this terminal correctly handles extended key reporting
- *  (Kitty keyboard protocol + xterm modifyOtherKeys). */
+/** 判断当前终端是否正确处理扩展键报告
+ *  （Kitty 键盘协议 + xterm modifyOtherKeys）。 */
 export function supportsExtendedKeys(): boolean {
   return EXTENDED_KEYS_TERMINALS.includes(env.terminal ?? '')
 }
 
-/** True if the terminal scrolls the viewport when it receives cursor-up
- *  sequences that reach above the visible area. On Windows, conhost's
- *  SetConsoleCursorPosition follows the cursor into scrollback
- *  (microsoft/terminal#14774), yanking users to the top of their buffer
- *  mid-stream. WT_SESSION catches WSL-in-Windows-Terminal where platform
- *  is linux but output still routes through conhost. */
+/** 终端收到光标上移序列且超出可见区域时，是否会滚动视口。
+ *  在 Windows 上，conhost 的 SetConsoleCursorPosition 会跟随光标
+ *  进入回滚区（microsoft/terminal#14774），导致用户在流中间被
+ *  拉到缓冲区顶部。WT_SESSION 可捕获 Windows Terminal 中的 WSL，
+ *  此时 platform 为 linux，但输出仍通过 conhost 路由。 */
 export function hasCursorUpViewportYankBug(): boolean {
   return process.platform === 'win32' || !!process.env.WT_SESSION
 }
 
-// Computed once at module load — terminal capabilities don't change mid-session.
-// Exported so callers can pass a sync-skip hint gated to specific modes.
+// 模块加载时计算一次——终端能力在会话期间不会改变。
+// 导出以便调用方传递同步跳过提示，仅限特定模式。
 export const SYNC_OUTPUT_SUPPORTED = isSynchronizedOutputSupported()
 
 export type Terminal = {
@@ -192,17 +190,17 @@ export function writeDiffToTerminal(
   diff: Diff,
   skipSyncMarkers = false,
 ): void {
-  // No output if there are no patches
+  // 没有补丁时无输出
   if (diff.length === 0) {
     return
   }
 
-  // BSU/ESU wrapping is opt-out to keep main-screen behavior unchanged.
-  // Callers pass skipSyncMarkers=true when the terminal doesn't support
-  // DEC 2026 (e.g. tmux) AND the cost matters (high-frequency alt-screen).
+  // BSU/ESU 包装默认关闭，以保持主屏行为不变。
+  // 当终端不支持 DEC 2026（如 tmux）且开销较大时
+  //（高频 alt-screen），调用方传入 skipSyncMarkers=true。
   const useSync = !skipSyncMarkers
 
-  // Buffer all writes into a single string to avoid multiple write calls
+  // 将所有写入缓冲为单个字符串，避免多次写入调用
   let buffer = useSync ? BSU : ''
 
   for (const patch of diff) {
@@ -242,7 +240,7 @@ export function writeDiffToTerminal(
     }
   }
 
-  // Add synchronized update end and flush buffer
+  // 添加同步更新结束标记并刷新缓冲区
   if (useSync) buffer += ESU
   terminal.stdout.write(buffer)
 }

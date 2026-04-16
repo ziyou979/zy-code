@@ -20,21 +20,21 @@ import {
   setCellStyleId,
 } from './screen.js'
 
-/** Position of a match within a rendered message, relative to the message's
- *  own bounding box (row 0 = message top). Stable across scroll — to
- *  highlight on the real screen, add the message's screen-row offset. */
+/** 匹配项在渲染消息中的位置，相对于消息自身的
+ *  边界框（第 0 行 = 消息顶部）。滚动时保持稳定——
+ *  要在真实屏幕上高亮，需加上消息的 screen-row 偏移。 */
 export type MatchPosition = {
   row: number
   col: number
-  /** Number of CELLS the match spans (= query.length for ASCII, more
-   *  for wide chars in the query). */
+  /** 匹配跨越的 CELL 数量（ASCII 查询 = query.length，
+   *  包含宽字符时更多）。 */
   len: number
 }
 
-// Shared across calls. Pools accumulate style/char interns — reusing them
-// means later calls hit cache more. Root/container reuse saves the
-// createContainer cost (~1ms). LegacyRoot: all work sync, no scheduling —
-// ConcurrentRoot's scheduler backlog leaks across roots via flushSyncWork.
+// 多次调用之间共享。Pool 会积累 style/char 的缓存——复用它们
+// 能让后续调用更多地命中缓存。Root/container 复用可节省
+// createContainer 开销（约 1ms）。LegacyRoot：所有工作同步执行，无调度——
+// ConcurrentRoot 的调度器积压会通过 flushSyncWork 在 root 之间泄漏。
 let root: DOMElement | undefined
 let container: ReturnType<typeof reconciler.createContainer> | undefined
 let stylePool: StylePool | undefined
@@ -45,17 +45,17 @@ let output: Output | undefined
 const timing = { reconcile: 0, yoga: 0, paint: 0, scan: 0, calls: 0 }
 const LOG_EVERY = 20
 
-/** Render a React element (wrapped in all contexts the component needs —
- *  caller's job) to an isolated Screen buffer at the given width. Returns
- *  the Screen + natural height (from yoga). Used for search: render ONE
- *  message, scan its Screen for the query, get exact (row, col) positions.
+/** 将 React 元素（由调用者包装好组件所需的全部上下文）
+ *  渲染到指定宽度的独立 Screen 缓冲区。返回 Screen + 自然高度
+ *  （来自 yoga）。用于搜索：渲染单条消息，扫描其 Screen 查找关键词，
+ *  获取精确的 (row, col) 位置。
  *
- *  ~1-3ms per call (yoga alloc + calculateLayout + paint). The
- *  flushSyncWork cross-root leak measured ~0.0003ms/call growth — fine
- *  for on-demand single-message rendering, pathological for render-all-
- *  8k-upfront. Cache per (msg, query, width) upstream.
+ *  每次调用约 1-3ms（yoga 分配 + calculateLayout + 绘制）。
+ *  flushSyncWork 的跨 root 泄漏测量显示每次调用增长约 0.0003ms——
+ *  按需渲染单条消息可以接受，但预先渲染全部 8k 条会非常糟糕。
+ *  在上游按 (msg, query, width) 做缓存。
  *
- *  Unmounts between calls. Root/container/pools persist for reuse. */
+ *  每次调用之间会卸载。Root/container/pool 会保留以供复用。 */
 export function renderToScreen(
   el: ReactElement,
   width: number,
@@ -88,17 +88,17 @@ export function renderToScreen(
   reconciler.flushSyncWork()
   const reconcileEndMs = performance.now()
 
-  // Yoga layout. Root might not have a yogaNode if the tree is empty.
+  // Yoga 布局。如果树为空，root 可能没有 yogaNode。
   root.yogaNode?.setWidth(width)
   root.yogaNode?.calculateLayout(width)
   const height = Math.ceil(root.yogaNode?.getComputedHeight() ?? 0)
   const layoutEndMs = performance.now()
 
-  // Paint to a fresh Screen. Width = given, height = yoga's natural.
-  // No alt-screen, no prevScreen (every call is fresh).
+  // 绘制到全新的 Screen。宽度 = 给定值，高度 = yoga 计算的自然高度。
+  // 无 alt-screen，无 prevScreen（每次调用都是全新的）。
   const screen = createScreen(
     width,
-    Math.max(1, height), // avoid 0-height Screen (createScreen may choke)
+    Math.max(1, height), // 避免高度为 0 的 Screen（createScreen 可能出错）
     stylePool!,
     charPool!,
     hyperlinkPool!,
@@ -110,13 +110,13 @@ export function renderToScreen(
   }
   resetLayoutShifted()
   renderNodeToOutput(root, output, { prevScreen: undefined })
-  // renderNodeToOutput queues writes into Output; .get() flushes the
-  // queue into the Screen's cell arrays. Without this the screen is
-  // blank (constructor-zero).
+  // renderNodeToOutput 将写入排队到 Output；.get() 将队列
+  // 刷新到 Screen 的 cell 数组。不执行此步则屏幕为空
+  // （构造时为零）。
   const rendered = output.get()
   const paintEndMs = performance.now()
 
-  // Unmount so next call gets a fresh tree. Leaves root/container/pools.
+  // 卸载以便下次调用获得全新的树。保留 root/container/pool。
   // @ts-expect-error updateContainerSync exists but not in @types
   reconciler.updateContainerSync(null, container, null, noop)
   // @ts-expect-error flushSyncWork exists but not in @types
@@ -138,14 +138,13 @@ export function renderToScreen(
   return { screen: rendered, height }
 }
 
-/** Scan a Screen buffer for all occurrences of query. Returns positions
- *  relative to the buffer (row 0 = buffer top). Same cell-skip logic as
- *  applySearchHighlight (SpacerTail/SpacerHead/noSelect) so positions
- *  match what the overlay highlight would find. Case-insensitive.
+/** 扫描 Screen 缓冲区查找 query 的所有出现位置。返回相对于
+ *  缓冲区的位置（第 0 行 = 缓冲区顶部）。使用与 applySearchHighlight
+ *  （SpacerTail/SpacerHead/noSelect）相同的跳过 cell 逻辑，因此
+ *  位置与覆盖高亮能匹配上。不区分大小写。
  *
- *  For the side-render use: this Screen is the FULL message (natural
- *  height, not viewport-clipped). Positions are stable — to highlight
- *  on the real screen, add the message's screen offset (lo). */
+ *  用于侧边渲染：此 Screen 是完整消息（自然高度，不被视口裁剪）。
+ *  位置是稳定的——要在真实屏幕上高亮，加上消息的屏幕偏移（lo）。 */
 export function scanPositions(screen: Screen, query: string): MatchPosition[] {
   const lq = query.toLowerCase()
   if (!lq) return []
@@ -158,11 +157,11 @@ export function scanPositions(screen: Screen, query: string): MatchPosition[] {
   const scanStartMs = performance.now()
   for (let row = 0; row < h; row++) {
     const rowOff = row * w
-    // Same text-build as applySearchHighlight. Keep in sync — or extract
-    // to a shared helper (TODO once both are stable). codeUnitToCell
-    // maps indexOf positions (code units in the LOWERCASED text) to cell
-    // indices in colOf — surrogate pairs (emoji) and multi-unit lowercase
-    // (Turkish İ → i + U+0307) make text.length > colOf.length.
+    // 与 applySearchHighlight 相同的文本构建方式。保持同步——
+    // 或提取为共享 helper（待两者都稳定后 TODO）。codeUnitToCell
+    // 将 indexOf 位置（小写文本中的代码单元）映射到 colOf 中的 cell
+    // 索引——代理对（emoji）和多单元小写（土耳其语 İ → i + U+0307）
+    // 导致 text.length > colOf.length。
     let text = ''
     const colOf: number[] = []
     const codeUnitToCell: number[] = []
@@ -184,7 +183,7 @@ export function scanPositions(screen: Screen, query: string): MatchPosition[] {
       text += lc
       colOf.push(col)
     }
-    // Non-overlapping — same advance as applySearchHighlight.
+    // 不重叠——与 applySearchHighlight 相同的推进方式。
     let pos = text.indexOf(lq)
     while (pos >= 0) {
       const startCi = codeUnitToCell[pos]!
@@ -200,15 +199,15 @@ export function scanPositions(screen: Screen, query: string): MatchPosition[] {
   return positions
 }
 
-/** Write CURRENT (yellow+bold+underline) at positions[currentIdx] +
- *  rowOffset. OTHER positions are NOT styled here — the scan-highlight
- *  (applySearchHighlight with null hint) does inverse for all visible
- *  matches, including these. Two-layer: scan = 'you could go here',
- *  position = 'you ARE here'. Writing inverse again here would be a
- *  no-op (withInverse idempotent) but wasted work.
+/** 在 positions[currentIdx] + rowOffset 处写入 CURRENT 样式
+ *  （黄色+加粗+下划线）。其他位置不在此处设置样式——
+ *  搜索高亮（applySearchHighlight 使用 null hint）对所有可见
+ *  匹配项做反色处理，包括这些。两层设计：scan = "你可以跳到这里"，
+ *  position = "你当前在这里"。在此再写一次反色不会有问题
+ *  （withInverse 幂等），但是多余工作。
  *
- *  Positions are message-relative (row 0 = message top). rowOffset =
- *  message's current screen-top (lo). Clips outside [0, height). */
+ *  位置是相对于消息的（第 0 行 = 消息顶部）。rowOffset =
+ *  消息当前的屏幕顶部（lo）。会裁剪掉 [0, height) 范围外的部分。 */
 export function applyPositionedHighlight(
   screen: Screen,
   stylePool: StylePool,

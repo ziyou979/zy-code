@@ -34,14 +34,14 @@ function getHandler(
 }
 
 /**
- * Collect all listeners for an event in dispatch order.
+ * 按派发顺序收集事件的所有监听器。
  *
- * Uses react-dom's two-phase accumulation pattern:
- * - Walk from target to root
- * - Capture handlers are prepended (unshift) → root-first
- * - Bubble handlers are appended (push) → target-first
+ * 使用 react-dom 的两阶段收集模式：
+ * - 从 target 遍历到 root
+ * - 捕获阶段的监听器插入到前面（unshift）→ 从 root 开始
+ * - 冒泡阶段的监听器追加到后面（push）→ 从 target 开始
  *
- * Result: [root-cap, ..., parent-cap, target-cap, target-bub, parent-bub, ..., root-bub]
+ * 结果：[root-cap, ..., parent-cap, target-cap, target-bub, parent-bub, ..., root-bub]
  */
 function collectListeners(
   target: EventTarget,
@@ -79,10 +79,10 @@ function collectListeners(
 }
 
 /**
- * Execute collected listeners with propagation control.
+ * 执行已收集的监听器，支持传播控制。
  *
- * Before each handler, calls event._prepareForTarget(node) so event
- * subclasses can do per-node setup.
+ * 在每个监听器执行前，调用 event._prepareForTarget(node)，
+ * 以便 event 子类可以执行每个节点的初始化操作。
  */
 function processDispatchQueue(
   listeners: DispatchListener[],
@@ -116,8 +116,8 @@ function processDispatchQueue(
 // --
 
 /**
- * Map terminal event types to React scheduling priorities.
- * Mirrors react-dom's getEventPriority() switch.
+ * 将终端事件类型映射到 React 调度优先级。
+ * 与 react-dom 的 getEventPriority() switch 逻辑一致。
  */
 function getEventPriority(eventType: string): number {
   switch (eventType) {
@@ -148,15 +148,15 @@ type DiscreteUpdates = <A, B>(
 ) => boolean
 
 /**
- * Owns event dispatch state and the capture/bubble dispatch loop.
+ * 管理事件派发状态和捕获/冒泡派发循环。
  *
- * The reconciler host config reads currentEvent and currentUpdatePriority
- * to implement resolveUpdatePriority, resolveEventType, and
- * resolveEventTimeStamp — mirroring how react-dom's host config reads
- * ReactDOMSharedInternals and window.event.
+ * reconciler host config 通过读取 currentEvent 和 currentUpdatePriority
+ * 来实现 resolveUpdatePriority、resolveEventType 和
+ * resolveEventTimeStamp —— 这与 react-dom 的 host config
+ * 读取 ReactDOMSharedInternals 和 window.event 的方式一致。
  *
- * discreteUpdates is injected after construction (by InkReconciler)
- * to break the import cycle.
+ * discreteUpdates 在构造函数之后注入（由 InkReconciler 完成），
+ * 以打破循环依赖。
  */
 export class Dispatcher {
   currentEvent: TerminalEvent | null = null
@@ -164,9 +164,9 @@ export class Dispatcher {
   discreteUpdates: DiscreteUpdates | null = null
 
   /**
-   * Infer event priority from the currently-dispatching event.
-   * Called by the reconciler host config's resolveUpdatePriority
-   * when no explicit priority has been set.
+   * 根据当前正在派发的事件推断事件优先级。
+   * 在未显式设置优先级时，由 reconciler host config 的
+   * resolveUpdatePriority 调用。
    */
   resolveEventPriority(): number {
     if (this.currentUpdatePriority !== (NoEventPriority as number)) {
@@ -179,8 +179,8 @@ export class Dispatcher {
   }
 
   /**
-   * Dispatch an event through capture and bubble phases.
-   * Returns true if preventDefault() was NOT called.
+   * 通过捕获和冒泡阶段派发事件。
+   * 如果未调用 preventDefault()，则返回 true。
    */
   dispatch(target: EventTarget, event: TerminalEvent): boolean {
     const previousEvent = this.currentEvent
@@ -201,8 +201,8 @@ export class Dispatcher {
   }
 
   /**
-   * Dispatch with discrete (sync) priority.
-   * For user-initiated events: keyboard, click, focus, paste.
+   * 以离散（同步）优先级派发事件。
+   * 用于用户主动触发的事件：键盘、点击、焦点、粘贴。
    */
   dispatchDiscrete(target: EventTarget, event: TerminalEvent): boolean {
     if (!this.discreteUpdates) {
@@ -218,8 +218,8 @@ export class Dispatcher {
   }
 
   /**
-   * Dispatch with continuous priority.
-   * For high-frequency events: resize, scroll, mouse move.
+   * 以连续优先级派发事件。
+   * 用于高频事件：resize、scroll、鼠标移动。
    */
   dispatchContinuous(target: EventTarget, event: TerminalEvent): boolean {
     const previousPriority = this.currentUpdatePriority

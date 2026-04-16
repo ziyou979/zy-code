@@ -1,15 +1,15 @@
 /**
- * ANSI Parser Module
+ * ANSI 解析器模块
  *
- * A semantic ANSI escape sequence parser inspired by ghostty, tmux, and iTerm2.
+ * 一个受 ghostty、tmux 和 iTerm2 启发的语义化 ANSI 转义序列解析器。
  *
- * Key features:
- * - Semantic output: produces structured actions, not string tokens
- * - Streaming: can parse input incrementally via Parser class
- * - Style tracking: maintains text style state across parse calls
- * - Comprehensive: supports SGR, CSI, OSC, ESC sequences
+ * 主要特性：
+ * - 语义化输出：生成结构化的操作，而非字符串标记
+ * - 流式处理：可通过 Parser 类逐步解析输入
+ * - 样式追踪：在多次解析调用间维护文本样式状态
+ * - 全面支持：支持 SGR、CSI、OSC、ESC 序列
  *
- * Usage:
+ * 用法：
  *
  * ```typescript
  * import { Parser } from './termio.js'
@@ -20,9 +20,9 @@
  * ```
  */
 
-// Parser
+// 解析器
 export { Parser } from './termio/parser.js'
-// Types
+// 类型
 export type {
   Action,
   Color,

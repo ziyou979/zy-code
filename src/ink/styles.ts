@@ -33,13 +33,13 @@ export type AnsiColor =
   | 'ansi:cyanBright'
   | 'ansi:whiteBright'
 
-/** Raw color value - not a theme key */
+/** 原始颜色值 —— 非主题 key */
 export type Color = RGBColor | HexColor | Ansi256Color | AnsiColor
 
 /**
- * Structured text styling properties.
- * Used to style text without relying on ANSI string transforms.
- * Colors are raw values - theme resolution happens at the component layer.
+ * 结构化的文本样式属性。
+ * 用于在不依赖 ANSI 字符串转换的情况下设置文本样式。
+ * 颜色为原始值 —— 在组件层解析主题。
  */
 export type TextStyles = {
   readonly color?: Color
@@ -70,135 +70,135 @@ export type Styles = {
   readonly right?: number | `${number}%`
 
   /**
-   * Size of the gap between an element's columns.
+   * 元素列之间的间距大小。
    */
   readonly columnGap?: number
 
   /**
-   * Size of the gap between element's rows.
+   * 元素行之间的间距大小。
    */
   readonly rowGap?: number
 
   /**
-   * Size of the gap between an element's columns and rows. Shorthand for `columnGap` and `rowGap`.
+   * 元素列和行之间的间距大小。`columnGap` 和 `rowGap` 的简写。
    */
   readonly gap?: number
 
   /**
-   * Margin on all sides. Equivalent to setting `marginTop`, `marginBottom`, `marginLeft` and `marginRight`.
+   * 四边外边距。等价于同时设置 `marginTop`、`marginBottom`、`marginLeft` 和 `marginRight`。
    */
   readonly margin?: number
 
   /**
-   * Horizontal margin. Equivalent to setting `marginLeft` and `marginRight`.
+   * 水平外边距。等价于同时设置 `marginLeft` 和 `marginRight`。
    */
   readonly marginX?: number
 
   /**
-   * Vertical margin. Equivalent to setting `marginTop` and `marginBottom`.
+   * 垂直外边距。等价于同时设置 `marginTop` 和 `marginBottom`。
    */
   readonly marginY?: number
 
   /**
-   * Top margin.
+   * 上外边距。
    */
   readonly marginTop?: number
 
   /**
-   * Bottom margin.
+   * 下外边距。
    */
   readonly marginBottom?: number
 
   /**
-   * Left margin.
+   * 左外边距。
    */
   readonly marginLeft?: number
 
   /**
-   * Right margin.
+   * 右外边距。
    */
   readonly marginRight?: number
 
   /**
-   * Padding on all sides. Equivalent to setting `paddingTop`, `paddingBottom`, `paddingLeft` and `paddingRight`.
+   * 四边内边距。等价于同时设置 `paddingTop`、`paddingBottom`、`paddingLeft` 和 `paddingRight`。
    */
   readonly padding?: number
 
   /**
-   * Horizontal padding. Equivalent to setting `paddingLeft` and `paddingRight`.
+   * 水平内边距。等价于同时设置 `paddingLeft` 和 `paddingRight`。
    */
   readonly paddingX?: number
 
   /**
-   * Vertical padding. Equivalent to setting `paddingTop` and `paddingBottom`.
+   * 垂直内边距。等价于同时设置 `paddingTop` 和 `paddingBottom`。
    */
   readonly paddingY?: number
 
   /**
-   * Top padding.
+   * 上内边距。
    */
   readonly paddingTop?: number
 
   /**
-   * Bottom padding.
+   * 下内边距。
    */
   readonly paddingBottom?: number
 
   /**
-   * Left padding.
+   * 左内边距。
    */
   readonly paddingLeft?: number
 
   /**
-   * Right padding.
+   * 右内边距。
    */
   readonly paddingRight?: number
 
   /**
-   * This property defines the ability for a flex item to grow if necessary.
-   * See [flex-grow](https://css-tricks.com/almanac/properties/f/flex-grow/).
+   * 定义 flex 项目在必要时增长的能力。
+   * 参见 [flex-grow](https://css-tricks.com/almanac/properties/f/flex-grow/)。
    */
   readonly flexGrow?: number
 
   /**
-   * It specifies the “flex shrink factor”, which determines how much the flex item will shrink relative to the rest of the flex items in the flex container when there isn’t enough space on the row.
-   * See [flex-shrink](https://css-tricks.com/almanac/properties/f/flex-shrink/).
+   * 指定 “flex 收缩系数”，决定 flex 项目在行空间不足时相对于容器中其他 flex 项目的收缩程度。
+   * 参见 [flex-shrink](https://css-tricks.com/almanac/properties/f/flex-shrink/)。
    */
   readonly flexShrink?: number
 
   /**
-   * It establishes the main-axis, thus defining the direction flex items are placed in the flex container.
-   * See [flex-direction](https://css-tricks.com/almanac/properties/f/flex-direction/).
+   * 建立主轴，从而定义 flex 项目在 flex 容器中的排列方向。
+   * 参见 [flex-direction](https://css-tricks.com/almanac/properties/f/flex-direction/)。
    */
   readonly flexDirection?: 'row' | 'column' | 'row-reverse' | 'column-reverse'
 
   /**
-   * It specifies the initial size of the flex item, before any available space is distributed according to the flex factors.
-   * See [flex-basis](https://css-tricks.com/almanac/properties/f/flex-basis/).
+   * 指定 flex 项目的初始大小，在任何可用空间根据 flex 系数分配之前。
+   * 参见 [flex-basis](https://css-tricks.com/almanac/properties/f/flex-basis/)。
    */
   readonly flexBasis?: number | string
 
   /**
-   * It defines whether the flex items are forced in a single line or can be flowed into multiple lines. If set to multiple lines, it also defines the cross-axis which determines the direction new lines are stacked in.
-   * See [flex-wrap](https://css-tricks.com/almanac/properties/f/flex-wrap/).
+   * 定义 flex 项目是强制排列在单行还是可以流入多行。如果设置为多行，还定义交叉轴方向，决定新行的堆叠方向。
+   * 参见 [flex-wrap](https://css-tricks.com/almanac/properties/f/flex-wrap/)。
    */
   readonly flexWrap?: 'nowrap' | 'wrap' | 'wrap-reverse'
 
   /**
-   * The align-items property defines the default behavior for how items are laid out along the cross axis (perpendicular to the main axis).
-   * See [align-items](https://css-tricks.com/almanac/properties/a/align-items/).
+   * align-items 属性定义了项目在交叉轴（垂直于主轴）上的默认对齐方式。
+   * 参见 [align-items](https://css-tricks.com/almanac/properties/a/align-items/)。
    */
   readonly alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch'
 
   /**
-   * It makes possible to override the align-items value for specific flex items.
-   * See [align-self](https://css-tricks.com/almanac/properties/a/align-self/).
+   * 允许为特定 flex 项目覆盖 align-items 的值。
+   * 参见 [align-self](https://css-tricks.com/almanac/properties/a/align-self/)。
    */
   readonly alignSelf?: 'flex-start' | 'center' | 'flex-end' | 'auto'
 
   /**
-   * It defines the alignment along the main axis.
-   * See [justify-content](https://css-tricks.com/almanac/properties/j/justify-content/).
+   * 定义项目在主轴上的对齐方式。
+   * 参见 [justify-content](https://css-tricks.com/almanac/properties/j/justify-content/)。
    */
   readonly justifyContent?:
     | 'flex-start'
@@ -209,196 +209,187 @@ export type Styles = {
     | 'center'
 
   /**
-   * Width of the element in spaces.
-   * You can also set it in percent, which will calculate the width based on the width of parent element.
+   * 元素的宽度（以空格数为单位）。
+   * 也可以设置为百分比，将根据父元素的宽度计算。
    */
   readonly width?: number | string
 
   /**
-   * Height of the element in lines (rows).
-   * You can also set it in percent, which will calculate the height based on the height of parent element.
+   * 元素的高度（以行数为准）。
+   * 也可以设置为百分比，将根据父元素的高度计算。
    */
   readonly height?: number | string
 
   /**
-   * Sets a minimum width of the element.
+   * 设置元素的最小宽度。
    */
   readonly minWidth?: number | string
 
   /**
-   * Sets a minimum height of the element.
+   * 设置元素的最小高度。
    */
   readonly minHeight?: number | string
 
   /**
-   * Sets a maximum width of the element.
+   * 设置元素的最大宽度。
    */
   readonly maxWidth?: number | string
 
   /**
-   * Sets a maximum height of the element.
+   * 设置元素的最大高度。
    */
   readonly maxHeight?: number | string
 
   /**
-   * Set this property to `none` to hide the element.
+   * 将此属性设置为 `none` 以隐藏元素。
    */
   readonly display?: 'flex' | 'none'
 
   /**
-   * Add a border with a specified style.
-   * If `borderStyle` is `undefined` (which it is by default), no border will be added.
+   * 为边框添加指定样式。
+   * 如果 `borderStyle` 为 `undefined`（默认值），则不添加边框。
    */
   readonly borderStyle?: BorderStyle
 
   /**
-   * Determines whether top border is visible.
+   * 决定上边框是否可见。
    *
    * @default true
    */
   readonly borderTop?: boolean
 
   /**
-   * Determines whether bottom border is visible.
+   * 决定下边框是否可见。
    *
    * @default true
    */
   readonly borderBottom?: boolean
 
   /**
-   * Determines whether left border is visible.
+   * 决定左边框是否可见。
    *
    * @default true
    */
   readonly borderLeft?: boolean
 
   /**
-   * Determines whether right border is visible.
+   * 决定右边框是否可见。
    *
    * @default true
    */
   readonly borderRight?: boolean
 
   /**
-   * Change border color.
-   * Shorthand for setting `borderTopColor`, `borderRightColor`, `borderBottomColor` and `borderLeftColor`.
+   * 修改边框颜色。设置 `borderTopColor`、`borderRightColor`、`borderBottomColor` 和 `borderLeftColor` 的简写。
    */
   readonly borderColor?: Color
 
   /**
-   * Change top border color.
-   * Accepts raw color values (rgb, hex, ansi).
+   * 修改上边框颜色。接受原始颜色值（rgb、hex、ansi）。
    */
   readonly borderTopColor?: Color
 
   /**
-   * Change bottom border color.
-   * Accepts raw color values (rgb, hex, ansi).
+   * 修改下边框颜色。接受原始颜色值（rgb、hex、ansi）。
    */
   readonly borderBottomColor?: Color
 
   /**
-   * Change left border color.
-   * Accepts raw color values (rgb, hex, ansi).
+   * 修改左边框颜色。接受原始颜色值（rgb、hex、ansi）。
    */
   readonly borderLeftColor?: Color
 
   /**
-   * Change right border color.
-   * Accepts raw color values (rgb, hex, ansi).
+   * 修改右边框颜色。接受原始颜色值（rgb、hex、ansi）。
    */
   readonly borderRightColor?: Color
 
   /**
-   * Dim the border color.
-   * Shorthand for setting `borderTopDimColor`, `borderBottomDimColor`, `borderLeftDimColor` and `borderRightDimColor`.
+   * 淡化边框颜色。设置 `borderTopDimColor`、`borderBottomDimColor`、`borderLeftDimColor` 和 `borderRightDimColor` 的简写。
    *
    * @default false
    */
   readonly borderDimColor?: boolean
 
   /**
-   * Dim the top border color.
+   * 淡化上边框颜色。
    *
    * @default false
    */
   readonly borderTopDimColor?: boolean
 
   /**
-   * Dim the bottom border color.
+   * 淡化下边框颜色。
    *
    * @default false
    */
   readonly borderBottomDimColor?: boolean
 
   /**
-   * Dim the left border color.
+   * 淡化左边框颜色。
    *
    * @default false
    */
   readonly borderLeftDimColor?: boolean
 
   /**
-   * Dim the right border color.
+   * 淡化右边框颜色。
    *
    * @default false
    */
   readonly borderRightDimColor?: boolean
 
   /**
-   * Add text within the border. Only applies to top or bottom borders.
+   * 在边框内添加文本。仅适用于上边框或下边框。
    */
   readonly borderText?: BorderTextOptions
 
   /**
-   * Background color for the box. Fills the interior with background-colored
-   * spaces and is inherited by child text nodes as their default background.
+   * 盒子的背景色。用背景色的空格填充内部区域，
+   * 子文本节点将其作为默认背景继承。
    */
   readonly backgroundColor?: Color
 
   /**
-   * Fill the box's interior (padding included) with spaces before
-   * rendering children, so nothing behind it shows through. Like
-   * `backgroundColor` but without emitting any SGR — the terminal's
-   * default background is used. Useful for absolute-positioned overlays
-   * where Box padding/gaps would otherwise be transparent.
+   * 在渲染子元素之前，用空格填充盒子内部（包括 padding 区域），
+   * 使后方的内容不会透出。类似于 `backgroundColor`，
+   * 但不发射任何 SGR —— 使用终端的默认背景。适用于绝对定位的覆盖层，
+   * 此时 Box 的 padding/gap 默认是透明的。
    */
   readonly opaque?: boolean
 
   /**
-   * Behavior for an element's overflow in both directions.
-   * 'scroll' constrains the container's size (children do not expand it)
-   * and enables scrollTop-based virtualized scrolling at render time.
+   * 元素在两个方向上的溢出行为。
+   * 'scroll' 会限制容器大小（子元素不会撑大容器），
+   * 并在渲染时启用基于 scrollTop 的虚拟滚动。
    *
    * @default 'visible'
    */
   readonly overflow?: 'visible' | 'hidden' | 'scroll'
 
   /**
-   * Behavior for an element's overflow in horizontal direction.
+   * 元素在水平方向上的溢出行为。
    *
    * @default 'visible'
    */
   readonly overflowX?: 'visible' | 'hidden' | 'scroll'
 
   /**
-   * Behavior for an element's overflow in vertical direction.
+   * 元素在垂直方向上的溢出行为。
    *
    * @default 'visible'
    */
   readonly overflowY?: 'visible' | 'hidden' | 'scroll'
 
   /**
-   * Exclude this box's cells from text selection in fullscreen mode.
-   * Cells inside this region are skipped by both the selection highlight
-   * and the copied text — useful for fencing off gutters (line numbers,
-   * diff sigils) so click-drag over a diff yields clean copyable code.
-   * Only affects alt-screen text selection; no-op otherwise.
+   * 在全屏模式下，将此盒子的单元格排除在文本选择之外。
+   * 该区域内的单元格会被选择高亮和复制文本跳过 —— 用于隔离边栏（行号、
+   * diff 标记），这样在 diff 上拖拽选择可以得到干净可复制的代码。
+   * 仅影响 alt-screen 文本选择；其他场景无效果。
    *
-   * `'from-left-edge'` extends the exclusion from column 0 to the box's
-   * right edge for every row it occupies — this covers any upstream
-   * indentation (tool message prefix, tree lines) so a multi-row drag
-   * doesn't pick up leading whitespace from middle rows.
+   * `'from-left-edge'` 从第 0 列延伸到盒子的右边缘，覆盖其占据的每一行
+   * —— 这会覆盖任何上游缩进（工具消息前缀、树形连线），
+   * 使得多行拖拽不会在中间行选中前导空白。
    */
   readonly noSelect?: boolean | 'from-left-edge'
 }
@@ -432,10 +423,10 @@ function applyPositionEdge(
 }
 
 const applyOverflowStyles = (node: LayoutNode, style: Styles): void => {
-  // Yoga's Overflow controls whether children expand the container.
-  // 'hidden' and 'scroll' both prevent expansion; 'scroll' additionally
-  // signals that the renderer should apply scrollTop translation.
-  // overflowX/Y are render-time concerns; for layout we use the union.
+  // Yoga 的 Overflow 控制子元素是否会撑大容器。
+  // 'hidden' 和 'scroll' 都阻止撑大；'scroll' 还额外
+  // 向渲染器发出信号，应用 scrollTop 偏移。
+  // overflowX/Y 是渲染时的考虑；对于布局，使用两者的并集。
   const y = style.overflowY ?? style.overflow
   const x = style.overflowX ?? style.overflow
   if (y === 'scroll' || x === 'scroll') {
@@ -694,10 +685,10 @@ const applyBorderStyles = (
   style: Styles,
   resolvedStyle?: Styles,
 ): void => {
-  // resolvedStyle is the full current style (already set on the DOM node).
-  // style may be a diff with only changed properties. For border side props,
-  // we need the resolved value because `borderStyle` in a diff may not include
-  // unchanged border side values (e.g. borderTop stays false but isn't in the diff).
+  // resolvedStyle 是完整的当前样式（已设置在 DOM 节点上）。
+  // style 可能是一个只包含变更属性的 diff。对于边框侧边属性，
+  // 我们需要解析后的值，因为 diff 中的 `borderStyle` 可能不包含
+  // 未变更的边框侧值（例如 borderTop 保持 false 但不在 diff 中）。
   const resolved = resolvedStyle ?? style
 
   if ('borderStyle' in style) {
@@ -720,9 +711,9 @@ const applyBorderStyles = (
       resolved.borderRight !== false ? borderWidth : 0,
     )
   } else {
-    // Handle individual border property changes (when only borderX changes without borderStyle).
-    // Skip undefined values — they mean the prop was removed or never set,
-    // not that a border should be enabled.
+    // 处理单个边框属性的变更（仅修改 borderX 而不修改 borderStyle 时）。
+    // 跳过 undefined 值 —— 它们表示属性被移除或从未设置，
+    // 而不是应该启用边框。
     if ('borderTop' in style && style.borderTop !== undefined) {
       node.setBorder(LayoutEdge.Top, style.borderTop === false ? 0 : 1)
     }

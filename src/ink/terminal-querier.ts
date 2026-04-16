@@ -1,36 +1,34 @@
 /**
- * Query the terminal and await responses without timeouts.
+ * 无需超时地查询终端并等待响应。
  *
- * Terminal queries (DECRQM, DA1, OSC 11, etc.) share the stdin stream
- * with keyboard input. Response sequences are syntactically
- * distinguishable from key events, so the input parser recognizes them
- * and dispatches them here.
+ * 终端查询（DECRQM、DA1、OSC 11 等）与键盘输入共享 stdin 流。
+ * 响应序列在语法上与按键事件可区分，因此输入解析器能识别它们
+ * 并将其分发到此处。
  *
- * To avoid timeouts, each query batch is terminated by a DA1 sentinel
- * (CSI c) — every terminal since VT100 responds to DA1, and terminals
- * answer queries in order. So: if your query's response arrives before
- * DA1's, the terminal supports it; if DA1 arrives first, it doesn't.
+ * 为避免超时，每批查询都以 DA1 哨兵（CSI c）终止——自 VT100
+ * 以来每个终端都会响应 DA1，且终端按顺序回答查询。因此：如果
+ * 你的查询响应在 DA1 之前到达，说明终端支持它；如果 DA1 先到，
+ * 说明不支持。
  *
- * Usage:
+ * 用法：
  *   const [sync, grapheme] = await Promise.all([
  *     querier.send(decrqm(2026)),
  *     querier.send(decrqm(2027)),
  *     querier.flush(),
  *   ])
- *   // sync and grapheme are DECRPM responses or undefined if unsupported
+ *   // sync 和 grapheme 是 DECRPM 响应，不支持则为 undefined
  */
 
 import type { TerminalResponse } from './parse-keypress.js'
 import { csi } from './termio/csi.js'
 import { osc } from './termio/osc.js'
 
-/** A terminal query: an outbound request sequence paired with a matcher
- *  that recognizes the expected inbound response. Built by `decrqm()`,
- *  `oscColor()`, `kittyKeyboard()`, etc. */
+/** 终端查询：一个出站请求序列，配对一个识别预期入站响应的匹配器。
+ *  由 `decrqm()`、`oscColor()`、`kittyKeyboard()` 等构建。*/
 export type TerminalQuery<T extends TerminalResponse = TerminalResponse> = {
-  /** Escape sequence to write to stdout */
+  /** 写入 stdout 的转义序列 */
   request: string
-  /** Recognizes the expected response in the inbound stream */
+  /** 在入站流中识别预期响应 */
   match: (r: TerminalResponse) => r is T
 }
 
@@ -42,10 +40,10 @@ type CursorPosResponse = Extract<TerminalResponse, { type: 'cursorPosition' }>
 type OscResponse = Extract<TerminalResponse, { type: 'osc' }>
 type XtversionResponse = Extract<TerminalResponse, { type: 'xtversion' }>
 
-// -- Query builders --
+// -- 查询构建器 --
 
-/** DECRQM: request DEC private mode status (CSI ? mode $ p).
- *  Terminal replies with DECRPM (CSI ? mode ; status $ y) or ignores. */
+/** DECRQM：请求 DEC 私有模式状态（CSI ? mode $ p）。
+ *  终端回复 DECRPM（CSI ? mode ; status $ y）或忽略。*/
 export function decrqm(mode: number): TerminalQuery<DecrpmResponse> {
   return {
     request: csi(`?${mode}$p`),
@@ -53,9 +51,8 @@ export function decrqm(mode: number): TerminalQuery<DecrpmResponse> {
   }
 }
 
-/** Primary Device Attributes query (CSI c). Every terminal answers this —
- *  used internally by flush() as a universal sentinel. Call directly if
- *  you want the DA1 params. */
+/** 主设备属性查询（CSI c）。每个终端都会应答——
+ *  flush() 内部用作通用哨兵。直接调用可获取 DA1 参数。*/
 export function da1(): TerminalQuery<Da1Response> {
   return {
     request: csi('c'),
@@ -63,7 +60,7 @@ export function da1(): TerminalQuery<Da1Response> {
   }
 }
 
-/** Secondary Device Attributes query (CSI > c). Returns terminal version. */
+/** 次设备属性查询（CSI > c）。返回终端版本。*/
 export function da2(): TerminalQuery<Da2Response> {
   return {
     request: csi('>c'),
@@ -71,8 +68,8 @@ export function da2(): TerminalQuery<Da2Response> {
   }
 }
 
-/** Query current Kitty keyboard protocol flags (CSI ? u).
- *  Terminal replies with CSI ? flags u or ignores. */
+/** 查询当前 Kitty 键盘协议标志（CSI ? u）。
+ *  终端回复 CSI ? flags u 或忽略。*/
 export function kittyKeyboard(): TerminalQuery<KittyResponse> {
   return {
     request: csi('?u'),
@@ -80,10 +77,10 @@ export function kittyKeyboard(): TerminalQuery<KittyResponse> {
   }
 }
 
-/** DECXCPR: request cursor position with DEC-private marker (CSI ? 6 n).
- *  Terminal replies with CSI ? row ; col R. The `?` marker is critical —
- *  the plain DSR form (CSI 6 n → CSI row;col R) is ambiguous with
- *  modified F3 keys (Shift+F3 = CSI 1;2 R, etc.). */
+/** DECXCPR：请求光标位置，带 DEC 私有标记（CSI ? 6 n）。
+ *  终端回复 CSI ? row ; col R。`?` 标记至关重要——
+ *  普通 DSR 形式（CSI 6 n → CSI row;col R）与修改后的 F3 键
+ *  （Shift+F3 = CSI 1;2 R 等）会产生歧义。*/
 export function cursorPosition(): TerminalQuery<CursorPosResponse> {
   return {
     request: csi('?6n'),
@@ -91,8 +88,8 @@ export function cursorPosition(): TerminalQuery<CursorPosResponse> {
   }
 }
 
-/** OSC dynamic color query (e.g. OSC 11 for bg color, OSC 10 for fg).
- *  The `?` data slot asks the terminal to reply with the current value. */
+/** OSC 动态颜色查询（如 OSC 11 查背景色，OSC 10 查前景色）。
+ *  `?` 数据槽位请求终端回复当前值。*/
 export function oscColor(code: number): TerminalQuery<OscResponse> {
   return {
     request: osc(code, '?'),
@@ -100,11 +97,11 @@ export function oscColor(code: number): TerminalQuery<OscResponse> {
   }
 }
 
-/** XTVERSION: request terminal name/version (CSI > 0 q).
- *  Terminal replies with DCS > | name ST (e.g. "xterm.js(5.5.0)") or ignores.
- *  This survives SSH — the query goes through the pty, not the environment,
- *  so it identifies the *client* terminal even when TERM_PROGRAM isn't
- *  forwarded. Used to detect xterm.js for wheel-scroll compensation. */
+/** XTVERSION：请求终端名称/版本（CSI > 0 q）。
+ *  终端回复 DCS > | name ST（如 "xterm.js(5.5.0)"）或忽略。
+ *  该查询能穿越 SSH——查询通过 pty 而非环境变量发出，
+ *  因此即使 TERM_PROGRAM 未转发，也能识别*客户端*终端。
+ *  用于检测 xterm.js 以进行滚轮滚动补偿。*/
 export function xtversion(): TerminalQuery<XtversionResponse> {
   return {
     request: csi('>0q'),
@@ -112,9 +109,9 @@ export function xtversion(): TerminalQuery<XtversionResponse> {
   }
 }
 
-// -- Querier --
+// -- 查询器 --
 
-/** Sentinel request sequence (DA1). Kept internal; flush() writes it. */
+/** 哨兵请求序列（DA1）。保持内部使用，由 flush() 写入。*/
 const SENTINEL = csi('c')
 
 type Pending =
@@ -127,23 +124,23 @@ type Pending =
 
 export class TerminalQuerier {
   /**
-   * Interleaved queue of queries and sentinels in send order. Terminals
-   * respond in order, so each flush() barrier only drains queries queued
-   * before it — concurrent batches from independent callers stay isolated.
+   * 查询和哨兵的交错队列，按发送顺序排列。终端按顺序响应，
+   * 因此每次 flush() 屏障只排空排在其前面的查询——来自不同调用者
+   * 的并发批次保持隔离。
    */
   private queue: Pending[] = []
 
   constructor(private stdout: NodeJS.WriteStream) {}
 
   /**
-   * Send a query and wait for its response.
+   * 发送查询并等待响应。
    *
-   * Resolves with the response when `query.match` matches an incoming
-   * TerminalResponse, or with `undefined` when a flush() sentinel arrives
-   * before any matching response (meaning the terminal ignored the query).
+   * 当 `query.match` 匹配到传入的 TerminalResponse 时 resolve 为响应，
+   * 或在 flush() 哨兵先于任何匹配响应到达时 resolve 为 `undefined`
+   * （意味着终端忽略了该查询）。
    *
-   * Never rejects; never times out on its own. If you never call flush()
-   * and the terminal doesn't respond, the promise remains pending.
+   * 永不 reject；永不自行超时。如果从不调用 flush() 且终端不响应，
+   * promise 将保持 pending 状态。
    */
   send<T extends TerminalResponse>(
     query: TerminalQuery<T>,
@@ -159,13 +156,12 @@ export class TerminalQuerier {
   }
 
   /**
-   * Send the DA1 sentinel. Resolves when DA1's response arrives.
+   * 发送 DA1 哨兵。DA1 响应到达时 resolve。
    *
-   * As a side effect, all queries still pending when DA1 arrives are
-   * resolved with `undefined` (terminal didn't respond → doesn't support
-   * the query). This is the barrier that makes send() timeout-free.
+   * 副作用：DA1 到达时仍 pending 的所有查询都以 `undefined` resolve
+   * （终端未响应 → 不支持该查询）。这使得 send() 无需超时。
    *
-   * Safe to call with no pending queries — still waits for a round-trip.
+   * 在没有待处理查询时调用也是安全的——仍然等待一次往返。
    */
   flush(): Promise<void> {
     return new Promise(resolve => {
@@ -175,22 +171,20 @@ export class TerminalQuerier {
   }
 
   /**
-   * Dispatch a response parsed from stdin. Called by App.tsx's
-   * processKeysInBatch for every `kind: 'response'` item.
+   * 分发从 stdin 解析的响应。由 App.tsx 的 processKeysInBatch
+   * 对每个 `kind: 'response'` 项调用。
    *
-   * Matching strategy:
-   * - First, try to match a pending query (FIFO, first match wins).
-   *   This lets callers send(da1()) explicitly if they want the DA1
-   *   params — a separate DA1 write means the terminal sends TWO DA1
-   *   responses. The first matches the explicit query; the second
-   *   (unmatched) fires the sentinel.
-   * - Otherwise, if this is a DA1, fire the FIRST pending sentinel:
-   *   resolve any queries queued before that sentinel with undefined
-   *   (the terminal answered DA1 without answering them → unsupported)
-   *   and signal its flush() completion. Only draining up to the first
-   *   sentinel keeps later batches intact when multiple callers have
-   *   concurrent queries in flight.
-   * - Unsolicited responses (no match, no sentinel) are silently dropped.
+   * 匹配策略：
+   * - 首先，尝试匹配待处理查询（FIFO，先匹配者胜出）。
+   *   这允许调用者显式 send(da1()) 获取 DA1 参数——
+   *   单独写入 DA1 意味着终端发送两个 DA1 响应。第一个匹配
+   *   显式查询，第二个（未匹配的）触发哨兵。
+   * - 否则，如果是 DA1，触发第一个待处理哨兵：
+   *   将排在该哨兵之前的所有查询以 undefined resolve
+   *   （终端回答了 DA1 但未回答它们 → 不支持）并通知其
+   *   flush() 完成。只排空到第一个哨兵，这样当多个调用者有
+   *   并发查询时，后面的批次保持完整。
+   * - 非预期响应（无匹配、无哨兵）被静默丢弃。
    */
   onResponse(r: TerminalResponse): void {
     const idx = this.queue.findIndex(p => p.kind === 'query' && p.match(r))

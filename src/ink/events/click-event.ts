@@ -1,31 +1,31 @@
 import { Event } from './event.js'
 
 /**
- * Mouse click event. Fired on left-button release without drag, only when
- * mouse tracking is enabled (i.e. inside <AlternateScreen>).
+ * 鼠标点击事件。在左键释放且无拖拽时触发，仅在
+ * 启用鼠标跟踪时触发（即在 <AlternateScreen> 内）。
  *
- * Bubbles from the deepest hit node up through parentNode. Call
- * stopImmediatePropagation() to prevent ancestors' onClick from firing.
+ * 从最深的命中节点向上通过 parentNode 冒泡。调用
+ * stopImmediatePropagation() 可阻止祖先的 onClick 触发。
  */
 export class ClickEvent extends Event {
-  /** 0-indexed screen column of the click */
+  /** 点击的屏幕列号（0 起始索引） */
   readonly col: number
-  /** 0-indexed screen row of the click */
+  /** 点击的屏幕行号（0 起始索引） */
   readonly row: number
   /**
-   * Click column relative to the current handler's Box (col - box.x).
-   * Recomputed by dispatchClick before each handler fires, so an onClick
-   * on a container sees coords relative to that container, not to any
-   * child the click landed on.
+   * 点击列相对于当前处理者 Box 的位置（col - box.x）。
+   * 由 dispatchClick 在每个处理者触发前重新计算，
+   * 因此容器上的 onClick 看到的是相对于该容器的坐标，
+   * 而不是点击命中的子元素的坐标。
    */
   localCol = 0
-  /** Click row relative to the current handler's Box (row - box.y). */
+  /** 点击行相对于当前处理者 Box 的位置（row - box.y）。 */
   localRow = 0
   /**
-   * True if the clicked cell has no visible content (unwritten in the
-   * screen buffer — both packed words are 0). Handlers can check this to
-   * ignore clicks on blank space to the right of text, so accidental
-   * clicks on empty terminal space don't toggle state.
+   * 如果点击的单元格没有可见内容（在屏幕缓冲区中未写入
+   * —— 两个 packed word 均为 0），则为 true。处理者可以检查
+   * 此项以忽略空白区域的点击，避免意外点击
+   * 终端空白区域触发状态切换。
    */
   readonly cellIsBlank: boolean
 

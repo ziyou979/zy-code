@@ -28,7 +28,7 @@ import {
 } from './node.js'
 
 // --
-// Edge/Gutter mapping
+// Edge/Gutter 映射
 
 const EDGE_MAP: Record<LayoutEdge, Edge> = {
   all: Edge.All,
@@ -49,7 +49,7 @@ const GUTTER_MAP: Record<LayoutGutter, Gutter> = {
 }
 
 // --
-// Yoga adapter
+// Yoga 适配器
 
 export class YogaLayoutNode implements LayoutNode {
   readonly yoga: YogaNode
@@ -58,7 +58,7 @@ export class YogaLayoutNode implements LayoutNode {
     this.yoga = yoga
   }
 
-  // Tree
+  // 树结构
 
   insertChild(child: LayoutNode, index: number): void {
     this.yoga.insertChild((child as YogaLayoutNode).yoga, index)
@@ -77,7 +77,7 @@ export class YogaLayoutNode implements LayoutNode {
     return p ? new YogaLayoutNode(p) : null
   }
 
-  // Layout
+  // 布局
 
   calculateLayout(width?: number, _height?: number): void {
     this.yoga.calculateLayout(width, undefined, Direction.LTR)
@@ -103,7 +103,7 @@ export class YogaLayoutNode implements LayoutNode {
     this.yoga.markDirty()
   }
 
-  // Computed layout
+  // 计算后的布局
 
   getComputedLeft(): number {
     return this.yoga.getComputedLeft()
@@ -129,7 +129,7 @@ export class YogaLayoutNode implements LayoutNode {
     return this.yoga.getComputedPadding(EDGE_MAP[edge]!)
   }
 
-  // Style setters
+  // 样式设置器
 
   setWidth(value: number): void {
     this.yoga.setWidth(value)
@@ -286,7 +286,7 @@ export class YogaLayoutNode implements LayoutNode {
     this.yoga.setGap(GUTTER_MAP[gutter]!, value)
   }
 
-  // Lifecycle
+  // 生命周期
 
   free(): void {
     this.yoga.free()
@@ -297,11 +297,11 @@ export class YogaLayoutNode implements LayoutNode {
 }
 
 // --
-// Instance management
+// 实例管理
 //
-// The TS yoga-layout port is synchronous — no WASM loading, no linear memory
-// growth, so no preload/swap/reset machinery is needed. The Yoga instance is
-// just a plain JS object available at import time.
+// TS 版本的 yoga-layout 移植是同步的 —— 无需加载 WASM，无线性内存
+// 增长，因此不需要预加载/交换/重置机制。Yoga 实例只是
+// 导入时即可用的普通 JS 对象。
 
 export function createYogaLayoutNode(): LayoutNode {
   return new YogaLayoutNode(Yoga.Node.create())

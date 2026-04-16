@@ -11,8 +11,7 @@ export function createClock(tickIntervalMs: number): Clock {
   let interval: ReturnType<typeof setInterval> | null = null;
   let currentTickIntervalMs = tickIntervalMs;
   let startTime = 0;
-  // Snapshot of the current tick's time, ensuring all subscribers in the same
-  // tick see the same value (keeps animations synchronized)
+  // 当前 tick 时间的快照，确保同一 tick 中的所有订阅者看到相同的值（保持动画同步）
   let tickTime = 0;
   function tick(): void {
     tickTime = Date.now() - startTime;
@@ -49,10 +48,8 @@ export function createClock(tickIntervalMs: number): Clock {
       if (startTime === 0) {
         startTime = Date.now();
       }
-      // When the clock interval is running, return the synchronized tickTime
-      // so all subscribers in the same tick see the same value.
-      // When paused (no keepAlive subscribers), return real-time to avoid
-      // returning a stale tickTime from the last tick before the pause.
+      // 当时钟间隔运行时，返回同步的 tickTime，以便同一 tick 中的所有订阅者看到相同的值。
+      // 暂停时（无 keepAlive 订阅者），返回实时值以避免返回暂停前的陈旧 tickTime。
       if (interval && tickTime) {
         return tickTime;
       }
@@ -68,9 +65,9 @@ export function createClock(tickIntervalMs: number): Clock {
 export const ClockContext = createContext<Clock | null>(null);
 const BLURRED_TICK_INTERVAL_MS = FRAME_INTERVAL_MS * 2;
 
-// Own component so App.tsx doesn't re-render when the clock is created.
-// The clock value is stable (created once via useState), so the provider
-// never causes consumer re-renders on its own.
+// 独立组件，避免 App.tsx 在创建时钟时重新渲染。
+// 时钟值是稳定的（通过 useState 只创建一次），因此 provider
+// 本身不会导致消费者重新渲染。
 export function ClockProvider({
   children
 }) {

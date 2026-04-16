@@ -18,7 +18,7 @@ const rgb = (r: number, g: number, b: number): Color => ({
   b,
 })
 
-// Per the OSC 21337 usage guide's suggested mapping.
+// 根据 OSC 21337 使用指南的建议映射。
 const TAB_STATUS_PRESETS: Record<
   TabStatusKind,
   { indicator: Color; status: string; statusColor: Color }
@@ -41,23 +41,23 @@ const TAB_STATUS_PRESETS: Record<
 }
 
 /**
- * Declaratively set the tab-status indicator (OSC 21337).
+ * 声明式设置标签页状态指示器 (OSC 21337)。
  *
- * Emits a colored dot + short status text to the tab sidebar. Terminals
- * that don't support OSC 21337 discard the sequence silently, so this is
- * safe to call unconditionally. Wrapped for tmux/screen passthrough.
+ * 在标签页侧边栏发射一个彩色圆点 + 简短状态文本。不支持 OSC 21337
+ * 的终端会静默丢弃该序列，因此可以安全地无条件调用。已针对
+ * tmux/screen 透传进行包装。
  *
- * Pass `null` to opt out. If a status was previously set, transitioning to
- * `null` emits CLEAR_TAB_STATUS so toggling off mid-session doesn't leave
- * a stale dot. Process-exit cleanup is handled by ink.tsx's unmount path.
+ * 传入 `null` 表示退出。如果之前设置过状态，切换到 `null` 时会
+ * 发射 CLEAR_TAB_STATUS，确保会话中途关闭时不会残留圆点。
+ * 进程退出时的清理由 ink.tsx 的卸载路径处理。
  */
 export function useTabStatus(kind: TabStatusKind | null): void {
   const writeRaw = useContext(TerminalWriteContext)
   const prevKindRef = useRef<TabStatusKind | null>(null)
 
   useEffect(() => {
-    // When kind transitions from non-null to null (e.g. user toggles off
-    // showStatusInTerminalTab mid-session), clear the stale dot.
+    // 当 kind 从非 null 切换到 null（例如用户在会话中关闭
+    // showStatusInTerminalTab）时，清除残留的圆点。
     if (kind === null) {
       if (prevKindRef.current !== null && writeRaw && supportsTabStatus()) {
         writeRaw(wrapForMultiplexer(CLEAR_TAB_STATUS))

@@ -1,5 +1,5 @@
 /**
- * Utility for persisting large tool results to disk instead of truncating them.
+ * 将大型工具结果持久化到磁盘而非截断的工具。
  */
 
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
@@ -23,42 +23,42 @@ import { logError } from './log.js'
 import { getProjectDir } from './sessionStorage.js'
 import { jsonStringify } from './slowOperations.js'
 
-// Subdirectory name for tool results within a session
+// 会话内工具结果的子目录名
 export const TOOL_RESULTS_SUBDIR = 'tool-results'
 
-// XML tag used to wrap persisted output messages
+// 用于包装持久化输出消息的 XML 标签
 export const PERSISTED_OUTPUT_TAG = '<persisted-output>'
 export const PERSISTED_OUTPUT_CLOSING_TAG = '</persisted-output>'
 
-// Message used when tool result content was cleared without persisting to file
+// 工具结果内容被清除但未持久化到文件时使用的消息
 export const TOOL_RESULT_CLEARED_MESSAGE = '[Old tool result content cleared]'
 
 /**
- * GrowthBook override map: tool name -> persistence threshold (chars).
- * When a tool name is present in this map, that value is used directly as the
- * effective threshold, bypassing the Math.min() clamp against the 50k default.
- * Tools absent from the map use the hardcoded fallback.
- * Flag default is {} (no overrides == behavior unchanged).
+ * GrowthBook 覆盖映射：工具名 -> 持久化阈值（字符数）。
+ * 当工具名存在于该映射中时，该值直接作为有效阈值使用，
+ * 绕过与 50k 默认值的 Math.min() 钳制。
+ * 不在映射中的工具使用硬编码的后备值。
+ * Flag 默认为 {}（无覆盖 == 行为不变）。
  */
 const PERSIST_THRESHOLD_OVERRIDE_FLAG = 'tengu_satin_quoll'
 
 /**
- * Resolve the effective persistence threshold for a tool.
- * GrowthBook override wins when present; otherwise falls back to the declared
- * per-tool cap clamped by the global default.
+ * 解析工具的有效持久化阈值。
+ * GrowthBook 覆盖值优先（如果存在）；否则回退到声明的每工具上限，
+ * 并与全局默认值钳制。
  *
- * Defensive: GrowthBook's cache returns `cached !== undefined ? cached : default`,
- * so a flag served as `null` leaks through. We guard with optional chaining and a
- * typeof check so any non-object flag value (null, string, number) falls through
- * to the hardcoded default instead of throwing on index or returning 0.
+ * 防御性处理：GrowthBook 缓存返回 `cached !== undefined ? cached : default`，
+ * 因此 flag 为 `null` 时会泄漏。我们通过可选链和 typeof 检查进行防护，
+ * 使任何非对象 flag 值（null、string、number）回退到硬编码默认值，
+ * 而不是在索引时抛出或返回 0。
  */
 export function getPersistenceThreshold(
   toolName: string,
   declaredMaxResultSizeChars: number,
 ): number {
-  // Infinity = hard opt-out. Read self-bounds via maxTokens; persisting its
-  // output to a file the model reads back with Read is circular. Checked
-  // before the GB override so tengu_satin_quoll can't force it back on.
+  // Infinity = 硬关闭。通过 maxTokens 读取自限制；将其
+  // 输出持久到文件再让模型通过 Read 回读是循环的。
+  // 在 GB 覆盖之前检查，因此 tengu_satin_quoll 无法强制重新启用。
   if (!Number.isFinite(declaredMaxResultSizeChars)) {
     return declaredMaxResultSizeChars
   }
@@ -77,7 +77,7 @@ export function getPersistenceThreshold(
   return Math.min(declaredMaxResultSizeChars, DEFAULT_MAX_RESULT_SIZE_CHARS)
 }
 
-// Result of persisting a tool result to disk
+// 将工具结果持久化到磁盘的结果
 export type PersistedToolResult = {
   filepath: string
   originalSize: number
@@ -86,30 +86,30 @@ export type PersistedToolResult = {
   hasMore: boolean
 }
 
-// Error result when persistence fails
+// 持久化失败时的错误结果
 export type PersistToolResultError = {
   error: string
 }
 
 /**
- * Get the session directory (projectDir/sessionId)
+ * 获取会话目录（projectDir/sessionId）
  */
 function getSessionDir(): string {
   return join(getProjectDir(getOriginalCwd()), getSessionId())
 }
 
 /**
- * Get the tool results directory for this session (projectDir/sessionId/tool-results)
+ * 获取此会话的工具结果目录（projectDir/sessionId/tool-results）
  */
 export function getToolResultsDir(): string {
   return join(getSessionDir(), TOOL_RESULTS_SUBDIR)
 }
 
-// Preview size in bytes for the reference message
+// 引用消息的预览大小（字节）
 export const PREVIEW_SIZE_BYTES = 2000
 
 /**
- * Get the filepath where a tool result would be persisted.
+ * 获取工具结果将被持久化的文件路径。
  */
 export function getToolResultPath(id: string, isJson: boolean): string {
   const ext = isJson ? 'json' : 'txt'
@@ -117,7 +117,7 @@ export function getToolResultPath(id: string, isJson: boolean): string {
 }
 
 /**
- * Ensure the session-specific tool results directory exists
+ * 确保会话特定的工具结果目录存在
  */
 export async function ensureToolResultsDir(): Promise<void> {
   try {
@@ -128,11 +128,11 @@ export async function ensureToolResultsDir(): Promise<void> {
 }
 
 /**
- * Persist a tool result to disk and return information about the persisted file
+ * 将工具结果持久化到磁盘并返回关于持久化文件的信息
  *
- * @param content - The tool result content to persist (string or array of content blocks)
- * @param toolUseId - The ID of the tool use that produced the result
- * @returns Information about the persisted file including filepath and preview
+ * @param content - 要持久化的工具结果内容（字符串或内容块数组）
+ * @param toolUseId - 产生结果的工具使用 ID
+ * @returns 关于持久化文件的信息，包括文件路径和预览
  */
 export async function persistToolResult(
   content: NonNullable<ToolResultBlockParam['content']>,
@@ -140,7 +140,7 @@ export async function persistToolResult(
 ): Promise<PersistedToolResult | PersistToolResultError> {
   const isJson = Array.isArray(content)
 
-  // Check for non-text content - we can only persist text blocks
+  // 检查非文本内容 - 我们只能持久化文本块
   if (isJson) {
     const hasNonTextContent = content.some(block => block.type !== 'text')
     if (hasNonTextContent) {
@@ -154,10 +154,9 @@ export async function persistToolResult(
   const filepath = getToolResultPath(toolUseId, isJson)
   const contentStr = isJson ? jsonStringify(content, null, 2) : content
 
-  // tool_use_id is unique per invocation and content is deterministic for a
-  // given id, so skip if the file already exists. This prevents re-writing
-  // the same content on every API turn when microcompact replays the
-  // original messages. Use 'wx' instead of a stat-then-write race.
+  // tool_use_id 在每次调用中唯一，且内容对于给定 id 是确定性的，
+  // 因此如果文件已存在则跳过。这防止了 microcompact 回放原始消息时
+  // 在每次 API 轮次重写相同内容。使用 'wx' 而非 stat-then-write 竞争。
   try {
     await writeFile(filepath, contentStr, { encoding: 'utf-8', flag: 'wx' })
     logForDebugging(
@@ -168,10 +167,10 @@ export async function persistToolResult(
       logError(toError(error))
       return { error: getFileSystemErrorMessage(toError(error)) }
     }
-    // EEXIST: already persisted on a prior turn, fall through to preview
+    // EEXIST：已在之前的轮次中持久化，继续到预览生成
   }
 
-  // Generate a preview
+  // 生成预览
   const { preview, hasMore } = generatePreview(contentStr, PREVIEW_SIZE_BYTES)
 
   return {
@@ -184,7 +183,7 @@ export async function persistToolResult(
 }
 
 /**
- * Build a message for large tool results with preview
+ * 为大型工具结果构建带有预览的消息
  */
 export function buildLargeToolResultMessage(
   result: PersistedToolResult,
@@ -199,8 +198,8 @@ export function buildLargeToolResultMessage(
 }
 
 /**
- * Process a tool result for inclusion in a message.
- * Maps the result to the API format and persists large results to disk.
+ * 处理工具结果以包含在消息中。
+ * 将结果映射为 API 格式并将大型结果持久化到磁盘。
  */
 export async function processToolResultBlock<T>(
   tool: {
@@ -226,8 +225,8 @@ export async function processToolResultBlock<T>(
 }
 
 /**
- * Process a pre-mapped tool result block. Applies persistence for large results
- * without re-calling mapToolResultToToolResultBlockParam.
+ * 处理已映射的工具结果块。对大型结果应用持久化，
+ * 无需重新调用 mapToolResultToToolResultBlockParam。
  */
 export async function processPreMappedToolResultBlock(
   toolResultBlock: ToolResultBlockParam,
@@ -242,10 +241,9 @@ export async function processPreMappedToolResultBlock(
 }
 
 /**
- * True when a tool_result's content is empty or effectively empty. Covers:
- * undefined/null/'', whitespace-only strings, empty arrays, and arrays whose
- * only blocks are text blocks with empty/whitespace text. Non-text blocks
- * (images, tool_reference) are treated as non-empty.
+ * 当 tool_result 的内容为空或实际为空时返回 true。涵盖：
+ * undefined/null/''、仅空白字符的字符串、空数组，以及仅包含
+ * 空/空白文本块的数组。非文本块（图片、tool_reference）视为非空。
  */
 export function isToolResultContentEmpty(
   content: ToolResultBlockParam['content'],
@@ -265,25 +263,25 @@ export function isToolResultContentEmpty(
 }
 
 /**
- * Handle large tool results by persisting to disk instead of truncating.
- * Returns the original block if no persistence needed, or a modified block
- * with the content replaced by a reference to the persisted file.
+ * 通过将大型工具结果持久化到磁盘而非截断来处理。
+ * 如果不需要持久化则返回原始块，否则返回修改后的块，
+ * 内容被替换为对持久化文件的引用。
  */
 async function maybePersistLargeToolResult(
   toolResultBlock: ToolResultBlockParam,
   toolName: string,
   persistenceThreshold?: number,
 ): Promise<ToolResultBlockParam> {
-  // Check size first before doing any async work - most tool results are small
+  // 先检查大小再进行任何异步工作 - 大多数工具结果都很小
   const content = toolResultBlock.content
 
-  // inc-4586: Empty tool_result content at the prompt tail causes some models
-  // (notably capybara) to emit the \n\nHuman: stop sequence and end their turn
-  // with zero output. The server renderer inserts no \n\nAssistant: marker after
-  // tool results, so a bare </function_results>\n\n pattern-matches to a turn
-  // boundary. Several tools can legitimately produce empty output (silent-success
-  // shell commands, MCP servers returning content:[], REPL statements, etc.).
-  // Inject a short marker so the model always has something to react to.
+  // inc-4586: 提示词末尾的空 tool_result 内容会导致某些模型
+  // （尤其是 capybara）发出 \n\nHuman: 停止序列并以零输出来结束轮次。
+  // 服务器渲染器在工具结果后不插入 \n\nAssistant: 标记，
+  // 因此裸露的 </function_results>\n\n 会模式匹配为轮次边界。
+  // 多个工具可能合法产生空输出（静默成功的 shell 命令、
+  // 返回 content:[] 的 MCP 服务器、REPL 语句等）。
+  // 注入一个短标记，让模型总有东西可以响应。
   if (isToolResultContentEmpty(content)) {
     logEvent('tengu_tool_empty_result', {
       toolName: sanitizeToolNameForAnalytics(toolName),
@@ -293,34 +291,34 @@ async function maybePersistLargeToolResult(
       content: `(${toolName} completed with no output)`,
     }
   }
-  // Narrow after the emptiness guard — content is non-nullish past this point.
+  // 在空值检查后缩小范围 - 此后内容非空
   if (!content) {
     return toolResultBlock
   }
 
-  // Skip persistence for image content blocks - they need to be sent as-is to ZY
+  // 跳过图片内容块的持久化 - 它们需要原样发送给 ZY
   if (hasImageBlock(content)) {
     return toolResultBlock
   }
 
   const size = contentSize(content)
 
-  // Use tool-specific threshold if provided, otherwise fall back to global limit
+  // 如果提供了工具特定的阈值则使用，否则回退到全局限制
   const threshold = persistenceThreshold ?? MAX_TOOL_RESULT_BYTES
   if (size <= threshold) {
     return toolResultBlock
   }
 
-  // Persist the entire content as a unit
+  // 将整个内容作为一个单元进行持久化
   const result = await persistToolResult(content, toolResultBlock.tool_use_id)
   if (isPersistError(result)) {
-    // If persistence failed, return the original block unchanged
+    // 如果持久化失败，返回原始块不变
     return toolResultBlock
   }
 
   const message = buildLargeToolResultMessage(result)
 
-  // Log analytics
+  // 记录分析数据
   logEvent('tengu_tool_result_persisted', {
     toolName: sanitizeToolNameForAnalytics(toolName),
     originalSizeBytes: result.originalSize,
@@ -334,7 +332,7 @@ async function maybePersistLargeToolResult(
 }
 
 /**
- * Generate a preview of content, truncating at a newline boundary when possible.
+ * 生成内容的预览，尽可能在新行边界处截断。
  */
 export function generatePreview(
   content: string,
@@ -344,19 +342,19 @@ export function generatePreview(
     return { preview: content, hasMore: false }
   }
 
-  // Find the last newline within the limit to avoid cutting mid-line
+  // 在限制内找到最后一个换行符，避免从中间切断
   const truncated = content.slice(0, maxBytes)
   const lastNewline = truncated.lastIndexOf('\n')
 
-  // If we found a newline reasonably close to the limit, use it
-  // Otherwise fall back to the exact limit
+  // 如果找到了距离限制足够近的换行符，则使用它
+  // 否则回退到精确限制
   const cutPoint = lastNewline > maxBytes * 0.5 ? lastNewline : maxBytes
 
   return { preview: content.slice(0, cutPoint), hasMore: true }
 }
 
 /**
- * Type guard to check if persist result is an error
+ * 类型守卫，检查持久化结果是否为错误
  */
 export function isPersistError(
   result: PersistedToolResult | PersistToolResultError,
@@ -364,28 +362,26 @@ export function isPersistError(
   return 'error' in result
 }
 
-// --- Message-level aggregate tool result budget ---
+// --- 消息级别的工具结果聚合预算 ---
 //
-// Tracks replacement state across turns so enforceToolResultBudget makes the
-// same choices every time (preserves prompt cache prefix).
+// 跨轮次跟踪替换状态，以便 enforceToolResultBudget 每次做出
+// 相同的选择（保留提示词缓存前缀）。
 
 /**
- * Per-conversation-thread state for the aggregate tool result budget.
- * State must be stable to preserve prompt cache:
- *   - seenIds: results that have passed through the budget check (replaced
- *     or not). Once seen, a result's fate is frozen for the conversation.
- *   - replacements: subset of seenIds that were persisted to disk and
- *     replaced with previews, mapped to the exact preview string shown to
- *     the model. Re-application is a Map lookup — no file I/O, guaranteed
- *     byte-identical, cannot fail.
+ * 每个对话线程的工具结果聚合预算状态。
+ * 状态必须稳定以保留提示词缓存：
+ *   - seenIds: 已通过预算检查的结果（已替换或未替换）。
+ *     一旦见过，结果的命运在对话中即冻结。
+ *   - replacements: seenIds 的子集，已持久化到磁盘并替换为预览，
+ *     映射到向模型显示的确切预览字符串。重新应用是 Map 查找——
+ *     无文件 I/O，保证字节级一致，不会失败。
  *
- * Lifecycle: one instance per conversation thread, carried on ToolUseContext.
- * Main thread: REPL provisions once, never resets — stale entries after
- * /clear, rewind, resume, or compact are never looked up (tool_use_ids are
- * UUIDs) so they're harmless. Subagents: createSubagentContext clones the
- * parent's state by default (cache-sharing forks like agentSummary need
- * identical decisions), or resumeAgentBackground threads one reconstructed
- * from sidechain records.
+ * 生命周期：每个对话线程一个实例，携带在 ToolUseContext 上。
+ * 主线程：REPL 初始化一次，永不重置——/clear、rewind、resume
+ * 或 compact 后的过期条目永远不会被查找（tool_use_ids 是 UUID），
+ * 因此它们是无害的。子代理：createSubagentContext 默认克隆父级
+ * 状态（像 agentSummary 这样的缓存共享分叉需要相同的决策），
+ * 或者 resumeAgentBackground 传递一个从 sidechain 记录重建的实例。
  */
 export type ContentReplacementState = {
   seenIds: Set<string>
@@ -397,10 +393,10 @@ export function createContentReplacementState(): ContentReplacementState {
 }
 
 /**
- * Clone replacement state for a cache-sharing fork (e.g. agentSummary).
- * The fork needs state identical to the source at fork time so
- * enforceToolResultBudget makes the same choices → same wire prefix →
- * prompt cache hit. Mutating the clone does not affect the source.
+ * 为缓存共享分叉（如 agentSummary）克隆替换状态。
+ * 分叉需要在分叉时与源相同的状态，以便
+ * enforceToolResultBudget 做出相同的选择 → 相同的传输前缀 →
+ * 提示词缓存命中。修改克隆不会影响源。
  */
 export function cloneContentReplacementState(
   source: ContentReplacementState,
@@ -412,11 +408,11 @@ export function cloneContentReplacementState(
 }
 
 /**
- * Resolve the per-message aggregate budget limit. GrowthBook override
- * (tengu_hawthorn_window) wins when present and a finite positive number;
- * otherwise falls back to the hardcoded constant. Defensive typeof/finite
- * check: GrowthBook's cache returns `cached !== undefined ? cached : default`,
- * so a flag served as null/string/NaN leaks through.
+ * 解析每条消息的聚合预算限制。GrowthBook 覆盖
+ * (tengu_hawthorn_window) 在存在且为有限正数时优先；
+ * 否则回退到硬编码常量。防御性 typeof/finite
+ * 检查：GrowthBook 的缓存返回 `cached !== undefined ? cached : default`，
+ * 因此 flag 为 null/string/NaN 时会泄漏。
  */
 export function getPerMessageBudgetLimit(): number {
   const override = getFeatureValue_CACHED_MAY_BE_STALE<number | null>(
@@ -434,15 +430,15 @@ export function getPerMessageBudgetLimit(): number {
 }
 
 /**
- * Provision replacement state for a new conversation thread.
+ * 为新对话线程分配替换状态。
  *
- * Encapsulates the feature-flag gate + reconstruct-vs-fresh choice:
- *   - Flag off → undefined (query.ts skips enforcement entirely)
- *   - No initialMessages (cold start) → fresh
- *   - initialMessages present → reconstruct (freeze all candidate IDs so the
- *     budget never replaces content the model already saw unreplaced). Empty
- *     or absent records freeze everything; non-empty records additionally
- *     populate the replacements Map for byte-identical re-apply.
+ * 封装了 feature-flag 门控 + 重建与新建的选择：
+ *   - Flag 关闭 → undefined（query.ts 完全跳过执行）
+ *   - 无 initialMessages（冷启动）→ 新建
+ *   - 存在 initialMessages → 重建（冻结所有候选 ID，使
+ *     预算永远不会替换模型已经见过但未替换的内容）。
+ *     空或缺失的记录冻结所有内容；非空记录还会填充
+ *     replacements Map 以实现字节级一致的重新应用。
  */
 export function provisionContentReplacementState(
   initialMessages?: Message[],
@@ -463,14 +459,14 @@ export function provisionContentReplacementState(
 }
 
 /**
- * Serializable record of one content-replacement decision. Written to the
- * transcript as a ContentReplacementEntry so decisions survive resume.
- * Discriminated by `kind` so future replacement mechanisms (user text,
- * offloaded images) can share the same transcript entry type.
+ * 一次内容替换决策的可序列化记录。写入
+ * 转录作为 ContentReplacementEntry，以便决策在 resume 后保留。
+ * 通过 `kind` 区分，以便未来的替换机制（用户文本、
+ * 卸载的图片）可以共享相同的转录条目类型。
  *
- * `replacement` is the exact string the model saw — stored rather than
- * derived on resume so code changes to the preview template, size formatting,
- * or path layout can't silently break prompt cache.
+ * `replacement` 是模型看到的确切字符串——存储而非在 resume 时
+ * 派生，因此预览模板、大小格式化或路径布局的代码更改
+ * 不会静默破坏提示词缓存。
  */
 export type ContentReplacementRecord = {
   kind: 'tool-result'
@@ -498,9 +494,9 @@ type CandidatePartition = {
 function isContentAlreadyCompacted(
   content: ToolResultBlockParam['content'],
 ): boolean {
-  // All budget-produced content starts with the tag (buildLargeToolResultMessage).
-  // `.startsWith()` avoids false-positives when the tag appears anywhere else
-  // in the content (e.g., reading this source file).
+  // 所有预算生成的内容都以标签开头（buildLargeToolResultMessage）。
+  // `.startsWith()` 避免标签出现在内容其他位置时的误报
+  // （例如，读取这个源文件）。
   return typeof content === 'string' && content.startsWith(PERSISTED_OUTPUT_TAG)
 }
 
@@ -519,9 +515,9 @@ function contentSize(
   content: NonNullable<ToolResultBlockParam['content']>,
 ): number {
   if (typeof content === 'string') return content.length
-  // Sum text-block lengths directly. Slightly under-counts vs serialized
-  // (no JSON framing), but the budget is a rough token heuristic anyway.
-  // Avoids allocating a content-sized string every enforcement pass.
+  // 直接对文本块长度求和。与序列化相比略微少计
+  // （无 JSON 框架），但预算本身是粗略的 token 启发式。
+  // 避免在每次执行时分配内容大小的字符串。
   return content.reduce(
     (sum, b) => sum + (b.type === 'text' ? b.text.length : 0),
     0,
@@ -529,9 +525,9 @@ function contentSize(
 }
 
 /**
- * Walk messages and build tool_use_id → tool_name from assistant tool_use
- * blocks. tool_use always precedes its tool_result (model calls, then result
- * arrives), so by the time budget enforcement sees a result, its name is known.
+ * 遍历消息并从 assistant 的 tool_use 块构建 tool_use_id → tool_name 映射。
+ * tool_use 总是在其 tool_result 之前（模型调用，然后结果到达），
+ * 因此当预算执行看到结果时，其名称已经可知。
  */
 function buildToolNameMap(messages: Message[]): Map<string, string> {
   const map = new Map<string, string>()
@@ -549,10 +545,10 @@ function buildToolNameMap(messages: Message[]): Map<string, string> {
 }
 
 /**
- * Extract candidate tool_result blocks from a single user message: blocks
- * that are non-empty, non-image, and not already compacted by tag (i.e. by
- * the per-tool limit, or an earlier iteration of this same query call).
- * Returns [] for messages with no eligible blocks.
+ * 从单个用户消息中提取候选 tool_result 块：
+ * 非空、非图片、且尚未通过标签压缩的块
+ * （即受每工具限制或同一 query 调用的早期迭代处理）。
+ * 对于没有合格块的消息返回 []。
  */
 function collectCandidatesFromMessage(message: Message): ToolResultCandidate[] {
   if (message.type !== 'user' || !Array.isArray(message.message.content)) {
@@ -573,29 +569,28 @@ function collectCandidatesFromMessage(message: Message): ToolResultCandidate[] {
 }
 
 /**
- * Extract candidate tool_result blocks grouped by API-level user message.
+ * 按 API 级别的用户消息分组提取候选 tool_result 块。
  *
- * normalizeMessagesForAPI merges consecutive user messages into one
- * (Bedrock compat; direct API does the same server-side), so parallel tool
- * results that arrive as N separate user messages in our state become
- * ONE user message on the wire. The budget must group the same way or
- * it would see N under-budget messages instead of one over-budget
- * message and fail to enforce exactly when it matters most.
+ * normalizeMessagesForAPI 将连续的用户消息合并为一个
+ * （Bedrock 兼容；直接 API 在服务端做同样的事），因此
+ * 以 N 个独立用户消息到达的并行工具结果在线上变为
+ * 一个用户消息。预算必须用相同方式分组，否则
+ * 会看到 N 条低于预算的消息而非一条超预算的消息，
+ * 在最关键的时候无法执行。
  *
- * A "group" is a maximal run of user messages NOT separated by an
- * assistant message. Only assistant messages create wire-level
- * boundaries — normalizeMessagesForAPI filters out progress entirely
- * and merges attachment / system(local_command) INTO adjacent user
- * blocks, so those types do NOT break groups here either.
+ * "组" 是未被 assistant 消息分隔的用户消息的最大连续段。
+ * 只有 assistant 消息创建线级别边界——normalizeMessagesForAPI
+ * 完全过滤 progress 并将 attachment/system(local_command) 合并
+ * 到相邻的用户块中，因此这些类型在这里也不会打破组。
  *
- * This matters for abort-during-parallel-tools paths: agent_progress
- * messages (non-ephemeral, persisted in REPL state) can interleave
- * between fresh tool_result messages. If we flushed on progress, those
- * tool_results would split into under-budget groups, slip through
- * unreplaced, get frozen, then be merged by normalizeMessagesForAPI
- * into one over-budget wire message — defeating the feature.
+ * 这对于并行工具期间的中止路径很重要：agent_progress 消息
+ * （非临时的，持久化在 REPL 状态中）可以穿插在新的
+ * tool_result 消息之间。如果我们按 progress 刷新，那些
+ * tool_results 会分裂为低于预算的组，未经替换就通过，
+ * 被冻结，然后被 normalizeMessagesForAPI 合并为一条
+ * 超预算的线上消息——使此功能失效。
  *
- * Only groups with at least one eligible candidate are returned.
+ * 只返回至少有一个合格候选的组。
  */
 function collectCandidatesByMessage(
   messages: Message[],
@@ -608,18 +603,18 @@ function collectCandidatesByMessage(
     current = []
   }
 
-  // Track all assistant message.ids seen so far — same-ID fragments are
-  // merged by normalizeMessagesForAPI (messages.ts ~2126 walks back PAST
-  // different-ID assistants via `continue`), so any re-appearance of a
-  // previously-seen ID must NOT create a group boundary. Two scenarios:
-  //   • Consecutive: streamingToolExecution yields one AssistantMessage per
-  //     content_block_stop (same id); a fast tool drains between blocks;
-  //     abort/hook-stop leaves [asst(X), user(trA), asst(X), user(trB)].
-  //   • Interleaved: coordinator/teammate streams mix different responses
-  //     so [asst(X), user(trA), asst(Y), user(trB), asst(X), user(trC)].
-  // In both, normalizeMessagesForAPI merges the X fragments into one wire
-  // assistant, and their following tool_results merge into one wire user
-  // message — so the budget must see them as one group too.
+  // 跟踪所有已见过的 assistant message.id——相同 ID 的片段会被
+  // normalizeMessagesForAPI 合并（messages.ts ~2126 通过 `continue`
+  // 遍历过不同 ID 的 assistant），因此任何之前见过的 ID 的再次出现
+  // 不能创建组边界。两种场景：
+  //   • 连续的：streamingToolExecution 每个 content_block_stop 生成
+  //     一个 AssistantMessage（相同 id）；快速工具在块之间排水；
+  //     abort/hook-stop 留下 [asst(X), user(trA), asst(X), user(trB)]。
+  //   • 交错的：coordinator/teammate 流混合不同的响应，
+  //     所以 [asst(X), user(trA), asst(Y), user(trB), asst(X), user(trC)]。
+  // 在这两种情况下，normalizeMessagesForAPI 将 X 片段合并为一个线上
+  // assistant，其后续的 tool_results 合并为一个线上用户消息——
+  // 因此预算也必须将它们视为一个组。
   const seenAsstIds = new Set<string>()
   for (const message of messages) {
     if (message.type === 'user') {
@@ -630,8 +625,8 @@ function collectCandidatesByMessage(
         seenAsstIds.add(message.message.id)
       }
     }
-    // progress / attachment / system are filtered or merged by
-    // normalizeMessagesForAPI — they don't create wire boundaries.
+    // progress/attachment/system 被 normalizeMessagesForAPI 过滤或合并——
+    // 它们不创建线上边界。
   }
   flush()
 
@@ -639,12 +634,11 @@ function collectCandidatesByMessage(
 }
 
 /**
- * Partition candidates by their prior decision state:
- *  - mustReapply: previously replaced → re-apply the cached replacement for
- *    prefix stability
- *  - frozen: previously seen and left unreplaced → off-limits (replacing
- *    now would change a prefix that was already cached)
- *  - fresh: never seen → eligible for new replacement decisions
+ * 根据之前的决策状态对候选进行分区：
+ *  - mustReapply：之前已替换 → 重新应用缓存的替换以保持前缀稳定
+ *  - frozen：之前见过但未替换 → 禁止触碰（现在替换会改变
+ *    已缓存的前缀）
+ *  - fresh：从未见过 → 符合新的替换决策条件
  */
 function partitionByPriorDecision(
   candidates: ToolResultCandidate[],
@@ -667,10 +661,10 @@ function partitionByPriorDecision(
 }
 
 /**
- * Pick the largest fresh results to replace until the model-visible total
- * (frozen + remaining fresh) is at or under budget, or fresh is exhausted.
- * If frozen results alone exceed budget we accept the overage — microcompact
- * will eventually clear them.
+ * 选择最大的 fresh 结果进行替换，直到模型可见的总量
+ * （frozen + 剩余的 fresh）达到或低于预算，或耗尽 fresh。
+ * 如果仅 frozen 结果就超过预算，我们接受超量——
+ * microcompact 最终会清除它们。
  */
 function selectFreshToReplace(
   fresh: ToolResultCandidate[],
@@ -683,18 +677,18 @@ function selectFreshToReplace(
   for (const c of sorted) {
     if (remaining <= limit) break
     selected.push(c)
-    // We don't know the replacement size until after persist, but previews
-    // are ~2K and results hitting this path are much larger, so subtracting
-    // the full size is a close approximation for selection purposes.
+    // 我们不知道持久化后的替换大小，但预览约 ~2K，
+    // 到达此路径的结果要大得多，因此减去完整大小
+    // 对于选择目的是一个接近的近似值。
     remaining -= c.size
   }
   return selected
 }
 
 /**
- * Return a new Message[] where each tool_result block whose id appears in
- * replacementMap has its content replaced. Messages and blocks with no
- * replacements are passed through by reference.
+ * 返回一个新的 Message[]，其中 tool_result 块的 id 出现在
+ * replacementMap 中的内容已被替换。没有替换的消息和块
+ * 通过引用传递。
  */
 function replaceToolResultContents(
   messages: Message[],
@@ -737,34 +731,31 @@ async function buildReplacement(
 }
 
 /**
- * Enforce the per-message budget on aggregate tool result size.
+ * 对聚合工具结果大小执行每条消息的预算。
  *
- * For each user message whose tool_result blocks together exceed the
- * per-message limit (see getPerMessageBudgetLimit), the largest FRESH
- * (never-before-seen) results in THAT message are persisted to disk and
- * replaced with previews.
- * Messages are evaluated independently — a 150K result in one message and
- * a 150K result in another are both under budget and untouched.
+ * 对于 tool_result 块合计超过每条消息限制（见
+ * getPerMessageBudgetLimit）的每条用户消息，该消息中最大的
+ * FRESH（从未见过）结果被持久化到磁盘并替换为预览。
+ * 消息独立评估——一条消息中的 150K 结果和另一条消息中的
+ * 150K 结果都低于预算且不受影响。
  *
- * State is tracked by tool_use_id in `state`. Once a result is seen its
- * fate is frozen: previously-replaced results get the same replacement
- * re-applied every turn from the cached preview string (zero I/O,
- * byte-identical), and previously-unreplaced results are never replaced
- * later (would break prompt cache).
+ * 状态通过 `state` 中的 tool_use_id 跟踪。一旦结果被见过，
+ * 其命运即冻结：之前替换过的结果每轮从缓存的预览字符串
+ * 重新应用相同的替换（零 I/O、字节级一致），之前未替换的
+ * 结果永远不会在之后替换（会破坏提示词缓存）。
  *
- * Each turn adds at most one new user message with tool_result blocks,
- * so the per-message loop typically does the budget check at most once;
- * all prior messages just re-apply cached replacements.
+ * 每轮最多添加一条带有 tool_result 块的新用户消息，
+ * 因此每消息循环通常最多执行一次预算检查；
+ * 所有之前的消息只是重新应用缓存的替换。
  *
- * @param state — MUTATED: seenIds and replacements are updated in place
- *   to record choices made this call. The caller holds a stable reference
- *   across turns; returning a new object would require error-prone ref
- *   updates after every query.
+ * @param state — 可变：seenIds 和 replacements 就地更新
+ *   以记录本次调用做出的选择。调用者在轮次中持有稳定的
+ *   引用；返回新对象需要在每次查询后进行容易出错的引用更新。
  *
- * Returns `{ messages, newlyReplaced }`:
- *   - messages: same array instance when no replacement is needed
- *   - newlyReplaced: replacements made THIS call (not re-applies).
- *     Caller persists these to the transcript for resume reconstruction.
+ * 返回 `{ messages, newlyReplaced }`：
+ *   - messages: 不需要替换时为相同的数组实例
+ *   - newlyReplaced: 本次调用进行的替换（非重新应用）。
+ *     调用者将这些持久化到转录中以供 resume 重建。
  */
 export async function enforceToolResultBudget(
   messages: Message[],
@@ -780,14 +771,14 @@ export async function enforceToolResultBudget(
   const shouldSkip = (id: string): boolean =>
     nameByToolUseId !== undefined &&
     skipToolNames.has(nameByToolUseId.get(id) ?? '')
-  // Resolve once per call. A mid-session flag change only affects FRESH
-  // messages (prior decisions are frozen via seenIds/replacements), so
-  // prompt cache for already-seen content is preserved regardless.
+  // 每次调用解析一次。会话中的 flag 更改只影响 FRESH
+  // 消息（之前的决策通过 seenIds/replacements 冻结），因此
+  // 已见过内容的提示词缓存无论怎样都保留。
   const limit = getPerMessageBudgetLimit()
 
-  // Walk each API-level message group independently. For previously-processed messages
-  // (all IDs in seenIds) this just re-applies cached replacements. For the
-  // single new message this turn added, it runs the budget check.
+  // 独立遍历每个 API 级别的消息组。对于之前处理过的消息
+  // （seenIds 中的所有 ID），这只是重新应用缓存的替换。对于
+  // 本轮添加的单条新消息，它运行预算检查。
   const replacementMap = new Map<string, string>()
   const toPersist: ToolResultCandidate[] = []
   let reappliedCount = 0
@@ -799,25 +790,24 @@ export async function enforceToolResultBudget(
       state,
     )
 
-    // Re-apply: pure Map lookups. No file I/O, byte-identical, cannot fail.
+    // 重新应用：纯 Map 查找。无文件 I/O，字节级一致，不会失败。
     mustReapply.forEach(c => replacementMap.set(c.toolUseId, c.replacement))
     reappliedCount += mustReapply.length
 
-    // Fresh means this is a new message. Check its per-message budget.
-    // (A previously-processed message has fresh.length === 0 because all
-    // its IDs were added to seenIds when first seen.)
+    // Fresh 意味着这是一条新消息。检查其每条消息的预算。
+    // （之前处理过的消息 fresh.length === 0，因为所有
+    // 它的 ID 在首次见过时已添加到 seenIds。）
     if (fresh.length === 0) {
-      // mustReapply/frozen are already in seenIds from their first pass —
-      // re-adding is a no-op but keeps the invariant explicit.
+      // mustReapply/frozen 已在第一次遍历时加入 seenIds——
+      // 重新添加是无操作但保持显式不变量。
       candidates.forEach(c => state.seenIds.add(c.toolUseId))
       continue
     }
 
-    // Tools with maxResultSizeChars: Infinity (Read) — never persist.
-    // Mark as seen (frozen) so the decision sticks across turns. They don't
-    // count toward freshSize; if that lets the group slip under budget and
-    // the wire message is still large, that's the contract — Read's own
-    // maxTokens is the bound, not this wrapper.
+    // maxResultSizeChars 为 Infinity 的工具（Read）——永不持久化。
+    // 标记为 seen（frozen）使决策跨轮生效。它们不计入
+    // freshSize；如果这让组低于预算但线上消息仍然很大，
+    // 这是约定——Read 自己的 maxTokens 是边界，而非这个包装器。
     const skipped = fresh.filter(c => shouldSkip(c.toolUseId))
     skipped.forEach(c => state.seenIds.add(c.toolUseId))
     const eligible = fresh.filter(c => !shouldSkip(c.toolUseId))
@@ -850,18 +840,18 @@ export async function enforceToolResultBudget(
     return { messages, newlyReplaced: [] }
   }
 
-  // Fresh: concurrent persist for all selected candidates across all
-  // messages. In practice toPersist comes from a single message per turn.
+  // Fresh: 对所有消息中选中的候选并发持久化。
+  // 实际上 toPersist 每轮来自单条消息。
   const freshReplacements = await Promise.all(
     toPersist.map(async c => [c, await buildReplacement(c)] as const),
   )
   const newlyReplaced: ToolResultReplacementRecord[] = []
   let replacedSize = 0
   for (const [candidate, replacement] of freshReplacements) {
-    // Mark seen HERE, post-await, atomically with replacements.set for
-    // success cases. For persist failures (replacement === null) the ID
-    // is seen-but-unreplaced — the original content was sent to the
-    // model, so treating it as frozen going forward is correct.
+    // 在这里标记为 seen，在 await 之后，与 replacements.set 原子操作
+    // 用于成功情况。对于持久化失败（replacement === null），
+    // ID 是已见过但未替换的——原始内容已发送给模型，
+    // 因此将其视为 frozen 是正确的。
     state.seenIds.add(candidate.toolUseId)
     if (replacement === null) continue
     replacedSize += candidate.size
@@ -909,17 +899,17 @@ export async function enforceToolResultBudget(
 }
 
 /**
- * Query-loop integration point for the aggregate budget.
+ * 聚合预算的查询循环集成点。
  *
- * Gates on `state` (undefined means feature disabled → no-op return),
- * applies enforcement, and fires an optional transcript-write callback
- * for new replacements. The caller (query.ts) owns the persistence gate
- * — it passes a callback only for querySources that read records back on
- * resume (repl_main_thread*, agent:*); ephemeral runForkedAgent callers
- * (agentSummary, sessionMemory, /btw, compact) pass undefined.
+ * 以 `state` 为门控（undefined 表示功能禁用 → 无操作返回），
+ * 执行强制，并为新替换触发可选的转录写入回调。
+ * 调用者（query.ts）拥有持久化门控——它只为在 resume 时
+ * 回读记录的 querySource 传递回调
+ * （repl_main_thread*, agent:*）；临时的 runForkedAgent 调用者
+ * （agentSummary、sessionMemory、/btw、compact）传递 undefined。
  *
- * @returns messages with replacements applied, or the input array unchanged
- *   when the feature is off or no replacement occurred.
+ * @returns 应用了替换的 messages，或当功能关闭或未发生替换时
+ *   不变的输入数组。
  */
 export async function applyToolResultBudget(
   messages: Message[],
@@ -936,26 +926,25 @@ export async function applyToolResultBudget(
 }
 
 /**
- * Reconstruct replacement state from content-replacement records loaded from
- * the transcript. Used on resume so the budget makes the same choices it
- * made in the original session (prompt cache stability).
+ * 从转录中加载的内容替换记录重建替换状态。
+ * 用于 resume，以便预算做出与原始会话中相同的选择
+ * （提示词缓存稳定性）。
  *
- * Accepts the full ContentReplacementRecord[] from LogOption (may include
- * future non-tool-result kinds); only tool-result records are applied here.
+ * 接受来自 LogOption 的完整 ContentReplacementRecord[]
+ * （可能包含未来的非工具结果类型）；这里仅应用工具结果记录。
  *
- *   - replacements: populated directly from the stored replacement strings.
- *     Records for IDs not in messages (e.g. after compact) are skipped —
- *     they're inert anyway.
- *   - seenIds: every candidate tool_use_id in the loaded messages. A result
- *     being in the transcript means it was sent to the model, so it was seen.
- *     This freezes unreplaced results against future replacement.
- *   - inheritedReplacements: gap-fill for fork-subagent resume. A fork's
- *     original run applies parent-inherited replacements via mustReapply
- *     (never persisted — not newlyReplaced). On resume the sidechain has
- *     the original content but no record, so records alone would classify
- *     it as frozen. The parent's live state still has the mapping; copy
- *     it for IDs in messages that records don't cover. No-op for non-fork
- *     resumes (parent IDs aren't in the subagent's messages).
+ *   - replacements: 直接从存储的替换字符串填充。
+ *     不在消息中的 ID 的记录（例如 compact 后）被跳过——
+ *     它们反正也是惰性的。
+ *   - seenIds: 加载消息中的每个候选 tool_use_id。
+ *     结果在转录中意味着它已发送给模型，所以它被见过。
+ *     这会冻结未替换的结果，防止未来被替换。
+ *   - inheritedReplacements: 为 fork-子代理 resume 填补空白。
+ *     分叉的原始运行通过 mustReapply 应用从父级继承的替换
+ *     （从未持久化——不是 newlyReplaced）。在 resume 时 sidechain
+ *     有原始内容但没有记录，因此仅靠记录会将其分类为 frozen。
+ *     父级的实时状态仍有映射；复制记录未覆盖的消息中的 ID。
+ *     对于非 fork resume 是无操作（父级 ID 不在子代理的消息中）。
  */
 export function reconstructContentReplacementState(
   messages: Message[],
@@ -988,15 +977,15 @@ export function reconstructContentReplacementState(
 }
 
 /**
- * AgentTool-resume variant: encapsulates the feature-flag gate + parent
- * gap-fill so both AgentTool.call and resumeAgentBackground share one
- * implementation. Returns undefined when parentState is undefined (feature
- * off); otherwise reconstructs from sidechain records with parent's live
- * replacements filling gaps for fork-inherited mustReapply entries.
+ * AgentTool-resume 变体：封装 feature-flag 门控 + 父级
+ * 空白填补，使 AgentTool.call 和 resumeAgentBackground 共享
+ * 一个实现。当 parentState 为 undefined 时返回 undefined
+ * （功能关闭）；否则从 sidechain 记录重建，用父级的
+ * 实时替换填补 fork 继承的 mustReapply 条目的空白。
  *
- * Kept out of AgentTool.tsx — that file is at the feature() DCE complexity
- * cliff and cannot tolerate even +1 net source line without silently
- * breaking feature('TRANSCRIPT_CLASSIFIER') eval in tests.
+ * 保持在 AgentTool.tsx 之外——该文件处于 feature() DCE 复杂度
+ * 临界点，无法容忍 +1 行源代码而不静默破坏
+ * 测试中的 feature('TRANSCRIPT_CLASSIFIER') 评估。
  */
 export function reconstructForSubagentResume(
   parentState: ContentReplacementState | undefined,
@@ -1012,11 +1001,11 @@ export function reconstructForSubagentResume(
 }
 
 /**
- * Get a human-readable error message from a filesystem error
+ * 从文件系统错误获取人类可读的错误消息
  */
 function getFileSystemErrorMessage(error: Error): string {
-  // Node.js filesystem errors have a 'code' property
-  // eslint-disable-next-line no-restricted-syntax -- uses .path, not just .code
+  // Node.js 文件系统错误有一个 'code' 属性
+  // eslint-disable-next-line no-restricted-syntax -- 使用 .path，不只是 .code
   const nodeError = error as NodeJS.ErrnoException
   if (nodeError.code) {
     switch (nodeError.code) {

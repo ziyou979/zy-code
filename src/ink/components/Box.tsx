@@ -11,21 +11,19 @@ export type Props = Except<Styles, 'textWrap'> & {
   children?: React.ReactNode;
   ref?: Ref<DOMElement>;
   /**
-   * Tab order index. Nodes with `tabIndex >= 0` participate in
-   * Tab/Shift+Tab cycling; `-1` means programmatically focusable only.
+   * Tab 顺序索引。`tabIndex >= 0` 的节点参与 Tab/Shift+Tab 循环；
+   * `-1` 表示仅可编程聚焦。
    */
   tabIndex?: number;
   /**
-   * Focus this element when it mounts. Like the HTML `autofocus`
-   * attribute — the FocusManager calls `focus(node)` during the
-   * reconciler's `commitMount` phase.
+   * 元素挂载时自动聚焦。类似 HTML `autofocus` 属性——FocusManager
+   * 在 reconciler 的 `commitMount` 阶段调用 `focus(node)`。
    */
   autoFocus?: boolean;
   /**
-   * Fired on left-button click (press + release without drag). Only works
-   * inside `<AlternateScreen>` where mouse tracking is enabled — no-op
-   * otherwise. The event bubbles from the deepest hit Box up through
-   * ancestors; call `event.stopImmediatePropagation()` to stop bubbling.
+   * 左键点击时触发（按下 + 释放，无拖拽）。仅在启用鼠标追踪的
+   * `<AlternateScreen>` 内有效——否则无作用。事件从最深的命中 Box
+   * 向上冒泡到祖先；调用 `event.stopImmediatePropagation()` 可阻止冒泡。
    */
   onClick?: (event: ClickEvent) => void;
   onFocus?: (event: FocusEvent) => void;
@@ -35,18 +33,17 @@ export type Props = Except<Styles, 'textWrap'> & {
   onKeyDown?: (event: KeyboardEvent) => void;
   onKeyDownCapture?: (event: KeyboardEvent) => void;
   /**
-   * Fired when the mouse moves into this Box's rendered rect. Like DOM
-   * `mouseenter`, does NOT bubble — moving between children does not
-   * re-fire on the parent. Only works inside `<AlternateScreen>` where
-   * mode-1003 mouse tracking is enabled.
+   * 鼠标移入此 Box 的渲染区域时触发。类似 DOM `mouseenter`，
+   * 不会冒泡——在子元素之间移动不会在父元素上重新触发。
+   * 仅在启用 mode-1003 鼠标追踪的 `<AlternateScreen>` 内有效。
    */
   onMouseEnter?: () => void;
-  /** Fired when the mouse moves out of this Box's rendered rect. */
+  /** 鼠标移出此 Box 的渲染区域时触发。 */
   onMouseLeave?: () => void;
 };
 
 /**
- * `<Box>` is an essential Ink component to build your layout. It's like `<div style="display: flex">` in the browser.
+ * `<Box>` 是构建布局的核心 Ink 组件。类似于浏览器中的 `<div style="display: flex">`。
  */
 function Box({
   children: t1,

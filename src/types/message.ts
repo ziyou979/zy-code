@@ -189,7 +189,7 @@ export interface SystemAPIErrorMessage extends BaseMessage {
   content?: string
   level: 'error'
   cause?: Error
-  error?: unknown
+  error?: APIError
   retryInMs?: number
   retryAttempt?: number
   maxRetries?: number
@@ -328,6 +328,7 @@ export interface SystemStopHookSummaryMessage extends BaseMessage {
 }
 
 export interface SystemMemorySavedMessage extends BaseMessage {
+  teamCount: number;
   type: 'system'
   subtype: 'memory_saved'
   content?: string
@@ -404,6 +405,9 @@ export interface GroupedToolUseMessage extends BaseMessage {
 }
 
 export interface CollapsedReadSearchGroup extends BaseMessage {
+  teamMemoryWriteCount: number;
+  teamMemoryReadCount: number;
+  teamMemorySearchCount: number;
   type: 'collapsed_read_search'
   content: string
   collapsedCount: number

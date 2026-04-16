@@ -2,13 +2,11 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import { ClockContext } from '../components/ClockContext.js'
 
 /**
- * Returns the clock time, updating at the given interval.
- * Subscribes as non-keepAlive — won't keep the clock alive on its own,
- * but updates whenever a keepAlive subscriber (e.g. the spinner)
- * is driving the clock.
+ * 返回时钟时间，以给定间隔更新。
+ * 订阅为非 keepAlive 模式——不会单独保持时钟活跃，
+ * 但当有 keepAlive 订阅者（如 spinner）驱动时钟时会更新。
  *
- * Use this to drive pure time-based computations (shimmer position,
- * frame index) from the shared clock.
+ * 用于从共享时钟驱动纯时间相关的计算（闪烁位置、帧索引）。
  */
 export function useAnimationTimer(intervalMs: number): number {
   const clock = useContext(ClockContext)
@@ -34,11 +32,11 @@ export function useAnimationTimer(intervalMs: number): number {
 }
 
 /**
- * Interval hook backed by the shared Clock.
+ * 基于共享 Clock 的 interval hook。
  *
- * Unlike `useInterval` from `usehooks-ts` (which creates its own setInterval),
- * this piggybacks on the single shared clock so all timers consolidate into
- * one wake-up. Pass `null` for intervalMs to pause.
+ * 与 `usehooks-ts` 的 `useInterval`（创建自己的 setInterval）不同，
+ * 这个 hook 依赖单个共享时钟，所有定时器合并为一次唤醒。
+ * 传入 `null` 作为 intervalMs 可暂停。
  */
 export function useInterval(
   callback: () => void,

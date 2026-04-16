@@ -7,8 +7,8 @@ import Text from './Text.js';
 
 /* eslint-disable custom-rules/no-process-cwd -- stack trace file:// paths are relative to the real OS cwd, not the virtual cwd */
 
-// Error's source file is reported as file:///home/user/file.js
-// This function removes the file://[cwd] part
+// Error 的源文件报告为 file:///home/user/file.js
+// 此函数移除 file://[cwd] 部分
 const cleanupPath = (path: string | undefined): string | undefined => {
   return path?.replace(`file://${process.cwd()}/`, '');
 };
@@ -86,7 +86,7 @@ export default function ErrorOverview({
           {error.stack.split('\n').slice(1).map(line_1 => {
         const parsedLine = getStackUtils().parseLine(line_1);
 
-        // If the line from the stack cannot be parsed, we print out the unparsed line.
+        // 如果无法解析该行，则输出未解析的行。
         if (!parsedLine) {
           return <Box key={line_1}>
                     <Text dim>- </Text>

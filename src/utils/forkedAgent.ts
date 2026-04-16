@@ -1,11 +1,11 @@
 /**
- * Helper for running forked agent query loops with usage tracking.
+ * 用于运行分叉代理查询循环并跟踪用量的辅助工具。
  *
- * This utility ensures forked agents:
- * 1. Share identical cache-critical params with the parent to guarantee prompt cache hits
- * 2. Track full usage metrics across the entire query loop
- * 3. Log metrics via the tengu_fork_agent_query event when complete
- * 4. Isolate mutable state to prevent interference with the main agent loop
+ * 此工具确保分叉代理：
+ * 1. 与父级共享相同的缓存关键参数，以保证提示词缓存命中
+ * 2. 在整个查询循环中跟踪完整的用量指标
+ * 3. 完成时通过 tengu_fork_agent_query 事件记录指标
+ * 4. 隔离可变状态，防止干扰主代理循环
  */
 
 import type { UUID } from 'crypto'
@@ -44,32 +44,32 @@ import {
 import { createAgentId } from './uuid.js'
 
 /**
- * Parameters that must be identical between the fork and parent API requests
- * to share the parent's prompt cache. The Anthropic API cache key is composed of:
- * system prompt, tools, model, messages (prefix), and thinking config.
+ * 分叉与父 API 请求之间必须相同的参数，以共享
+ * 父级的提示词缓存。Anthropic API 缓存键由以下部分组成：
+ * 系统提示词、工具、模型、消息（前缀）和思考配置。
  *
- * CacheSafeParams carries the first five. Thinking config is derived from the
- * inherited toolUseContext.options.thinkingConfig — but can be inadvertently
- * changed if the fork sets maxOutputTokens, which clamps budget_tokens in
- * zy.ts (but only for older models that do not use adaptive thinking).
- * See the maxOutputTokens doc on ForkedAgentParams.
+ * CacheSafeParams 携带前五项。思考配置派生自
+ * 继承的 toolUseContext.options.thinkingConfig——但如果分叉
+ * 设置了 maxOutputTokens，可能会无意中更改它，后者会在
+ * zy.ts 中钳制 budget_tokens（仅对不使用自适应思考的旧模型）。
+ * 参见 ForkedAgentParams 上 maxOutputTokens 的文档。
  */
 export type CacheSafeParams = {
-  /** System prompt - must match parent for cache hits */
+  /** 系统提示词 - 必须与父级匹配才能缓存命中 */
   systemPrompt: SystemPrompt
-  /** User context - prepended to messages, affects cache */
+  /** 用户上下文 - 前置添加到消息，影响缓存 */
   userContext: { [k: string]: string }
-  /** System context - appended to system prompt, affects cache */
+  /** 系统上下文 - 附加到系统提示词，影响缓存 */
   systemContext: { [k: string]: string }
-  /** Tool use context containing tools, model, and other options */
+  /** 包含工具、模型和其他选项的工具使用上下文 */
   toolUseContext: ToolUseContext
-  /** Parent context messages for prompt cache sharing */
+  /** 用于提示词缓存共享的父级上下文消息 */
   forkContextMessages: Message[]
 }
 
-// Slot written by handleStopHooks after each turn so post-turn forks
-// (promptSuggestion, postTurnSummary, /btw) can share the main loop's
-// prompt cache without each caller threading params through.
+// 由 handleStopHooks 在每轮后写入的槽位，以便轮后分叉
+//（promptSuggestion、postTurnSummary、/btw）共享主循环的
+// 提示词缓存，而无需每个调用者传递参数。
 let lastCacheSafeParams: CacheSafeParams | null = null
 
 export function saveCacheSafeParams(params: CacheSafeParams | null): void {
@@ -81,52 +81,52 @@ export function getLastCacheSafeParams(): CacheSafeParams | null {
 }
 
 export type ForkedAgentParams = {
-  /** Messages to start the forked query loop with */
+  /** 启动分叉查询循环的消息 */
   promptMessages: Message[]
-  /** Cache-safe parameters that must match the parent query */
+  /** 必须与父级查询匹配的缓存安全参数 */
   cacheSafeParams: CacheSafeParams
-  /** Permission check function for the forked agent */
+  /** 分叉代理的权限检查函数 */
   canUseTool: CanUseToolFn
-  /** Source identifier for tracking */
+  /** 用于跟踪的来源标识符 */
   querySource: QuerySource
-  /** Label for analytics (e.g., 'session_memory', 'supervisor') */
+  /** 分析用标签（如 'session_memory'、'supervisor'） */
   forkLabel: string
-  /** Optional overrides for the subagent context (e.g., readFileState from setup phase) */
+  /** 子代理上下文的可选覆盖（如设置阶段的 readFileState） */
   overrides?: SubagentContextOverrides
   /**
-   * Optional cap on output tokens. CAUTION: setting this changes both max_tokens
-   * AND budget_tokens (via clamping in zy.ts). If the fork uses cacheSafeParams
-   * to share the parent's prompt cache, a different budget_tokens will invalidate
-   * the cache — thinking config is part of the cache key. Only set this when cache
-   * sharing is not a goal (e.g., compact summaries).
+   * 输出 token 的可选上限。注意：设置此项会同时更改 max_tokens
+   * 和 budget_tokens（通过 zy.ts 中的钳制）。如果分叉使用 cacheSafeParams
+   * 共享父级的提示词缓存，不同的 budget_tokens 会使缓存失效——
+   * 思考配置是缓存键的一部分。仅在不以缓存共享为目标时
+   * 设置此项（例如 compact 摘要）。
    */
   maxOutputTokens?: number
-  /** Optional cap on number of turns (API round-trips) */
+  /** 轮次（API 往返）数量的可选上限 */
   maxTurns?: number
-  /** Optional callback invoked for each message as it arrives (for streaming UI) */
+  /** 每条消息到达时调用的可选回调（用于流式 UI） */
   onMessage?: (message: Message) => void
-  /** Skip sidechain transcript recording (e.g., for ephemeral work like speculation) */
+  /** 跳过 sidechain 转录记录（如用于 speculation 等临时工作） */
   skipTranscript?: boolean
-  /** Skip writing new prompt cache entries on the last message. For
-   *  fire-and-forget forks where no future request will read from this prefix. */
+  /** 跳过在最后一条消息上写入新的提示词缓存条目。用于
+   *  即发即忘的分叉，未来没有请求会此前缀读取。 */
   skipCacheWrite?: boolean
 }
 
 export type ForkedAgentResult = {
-  /** All messages yielded during the query loop */
+  /** 查询循环中生成的所有消息 */
   messages: Message[]
-  /** Accumulated usage across all API calls in the loop */
+  /** 循环中所有 API 调用的累计用量 */
   totalUsage: NonNullableUsage
 }
 
 /**
- * Creates CacheSafeParams from REPLHookContext.
- * Use this helper when forking from a post-sampling hook context.
+ * 从 REPLHookContext 创建 CacheSafeParams。
+ * 在从后采样钩子上下文分叉时使用此辅助工具。
  *
- * To override specific fields (e.g., toolUseContext with cloned file state),
- * spread the result and override: `{ ...createCacheSafeParams(context), toolUseContext: clonedContext }`
+ * 要覆盖特定字段（如带克隆文件状态的 toolUseContext），
+ * 展开结果并覆盖：`{ ...createCacheSafeParams(context), toolUseContext: clonedContext }`
  *
- * @param context - The REPLHookContext from the post-sampling hook
+ * @param context - 来自后采样钩子的 REPLHookContext
  */
 export function createCacheSafeParams(
   context: REPLHookContext,
@@ -141,8 +141,8 @@ export function createCacheSafeParams(
 }
 
 /**
- * Creates a modified getAppState that adds allowed tools to the permission context.
- * This is used by forked skill/command execution to grant tool permissions.
+ * 创建一个修改后的 getAppState，将允许的工具添加到权限上下文中。
+ * 分叉技能/命令执行使用此来授予工具权限。
  */
 export function createGetAppStateWithAllowedTools(
   baseGetAppState: ToolUseContext['getAppState'],
@@ -171,44 +171,44 @@ export function createGetAppStateWithAllowedTools(
 }
 
 /**
- * Result from preparing a forked command context.
+ * 准备分叉命令上下文的结果。
  */
 export type PreparedForkedContext = {
-  /** Skill content with args replaced */
+  /** 已替换参数的技能内容 */
   skillContent: string
-  /** Modified getAppState with allowed tools */
+  /** 带有允许工具的修改后的 getAppState */
   modifiedGetAppState: ToolUseContext['getAppState']
-  /** The general-purpose agent to use */
+  /** 要使用的通用代理 */
   baseAgent: AgentDefinition
-  /** Initial prompt messages */
+  /** 初始提示词消息 */
   promptMessages: Message[]
 }
 
 /**
- * Prepares the context for executing a forked command/skill.
- * This handles the common setup that both SkillTool and slash commands need.
+ * 准备执行分叉命令/技能的上下文。
+ * 这处理 SkillTool 和斜杠命令都需要的公共设置。
  */
 export async function prepareForkedCommandContext(
   command: PromptCommand,
   args: string,
   context: ToolUseContext,
 ): Promise<PreparedForkedContext> {
-  // Get skill content with $ARGUMENTS replaced
+  // 获取已替换 $ARGUMENTS 的技能内容
   const skillPrompt = await command.getPromptForCommand(args, context)
   const skillContent = skillPrompt
     .map(block => (block.type === 'text' ? block.text : ''))
     .join('\n')
 
-  // Parse and prepare allowed tools
+  // 解析并准备允许的工具
   const allowedTools = parseToolListFromCLI(command.allowedTools ?? [])
 
-  // Create modified context with allowed tools
+  // 创建带有允许工具的修改后的上下文
   const modifiedGetAppState = createGetAppStateWithAllowedTools(
     context.getAppState,
     allowedTools,
   )
 
-  // Use command.agent if specified, otherwise 'general-purpose'
+  // 如果指定了 command.agent 则使用，否则使用 'general-purpose'
   const agentTypeName = command.agent ?? 'general-purpose'
   const agents = context.options.agentDefinitions.activeAgents
   const baseAgent =
@@ -220,7 +220,7 @@ export async function prepareForkedCommandContext(
     throw new Error('No agent available for forked execution')
   }
 
-  // Prepare prompt messages
+  // 准备提示词消息
   const promptMessages = [createUserMessage({ content: skillContent })]
 
   return {
@@ -232,7 +232,7 @@ export async function prepareForkedCommandContext(
 }
 
 /**
- * Extracts result text from agent messages.
+ * 从代理消息中提取结果文本。
  */
 export function extractResultText(
   agentMessages: Message[],
@@ -250,82 +250,82 @@ export function extractResultText(
 }
 
 /**
- * Options for creating a subagent context.
+ * 创建子代理上下文的选项。
  *
- * By default, all mutable state is isolated to prevent interference with the parent.
- * Use these options to:
- * - Override specific fields (e.g., custom options, agentId, messages)
- * - Explicitly opt-in to sharing specific callbacks (for interactive subagents)
+ * 默认情况下，所有可变状态都是隔离的，以防止干扰父级。
+ * 使用这些选项来：
+ * - 覆盖特定字段（如自定义选项、agentId、消息）
+ * - 显式选择共享特定回调（用于交互式子代理）
  */
 export type SubagentContextOverrides = {
-  /** Override the options object (e.g., custom tools, model) */
+  /** 覆盖 options 对象（如自定义工具、模型） */
   options?: ToolUseContext['options']
-  /** Override the agentId (for subagents with their own ID) */
+  /** 覆盖 agentId（用于有自己 ID 的子代理） */
   agentId?: AgentId
-  /** Override the agentType (for subagents with a specific type) */
+  /** 覆盖 agentType（用于有特定类型的子代理） */
   agentType?: string
-  /** Override the messages array */
+  /** 覆盖 messages 数组 */
   messages?: Message[]
-  /** Override the readFileState (e.g., fresh cache instead of clone) */
+  /** 覆盖 readFileState（如用新缓存而非克隆） */
   readFileState?: ToolUseContext['readFileState']
-  /** Override the abortController */
+  /** 覆盖 abortController */
   abortController?: AbortController
-  /** Override the getAppState function */
+  /** 覆盖 getAppState 函数 */
   getAppState?: ToolUseContext['getAppState']
 
   /**
-   * Explicit opt-in to share parent's setAppState callback.
-   * Use for interactive subagents that need to update shared state.
-   * @default false (isolated no-op)
+   * 显式选择共享父级的 setAppState 回调。
+   * 用于需要更新共享状态的交互式子代理。
+   * @default false（隔离的无操作）
    */
   shareSetAppState?: boolean
   /**
-   * Explicit opt-in to share parent's setResponseLength callback.
-   * Use for subagents that contribute to parent's response metrics.
-   * @default false (isolated no-op)
+   * 显式选择共享父级的 setResponseLength 回调。
+   * 用于对父级响应指标有贡献的子代理。
+   * @default false（隔离的无操作）
    */
   shareSetResponseLength?: boolean
   /**
-   * Explicit opt-in to share parent's abortController.
-   * Use for interactive subagents that should abort with parent.
-   * Note: Only applies if abortController override is not provided.
-   * @default false (new controller linked to parent)
+   * 显式选择共享父级的 abortController。
+   * 用于应与父级一起中止的交互式子代理。
+   * 注意：仅当未提供 abortController 覆盖时适用。
+   * @default false（链接到父级的新控制器）
    */
   shareAbortController?: boolean
-  /** Critical system reminder to re-inject at every user turn */
+  /** 要在每个用户轮次重新注入的关键系统提醒 */
   criticalSystemReminder_EXPERIMENTAL?: string
-  /** When true, canUseTool must always be called even when hooks auto-approve.
-   *  Used by speculation for overlay file path rewriting. */
+  /** 为 true 时，即使钩子自动批准也必须始终调用 canUseTool。
+   *  speculation 使用此项进行覆盖文件路径重写。 */
   requireCanUseTool?: boolean
-  /** Override replacement state — used by resumeAgentBackground to thread
-   * state reconstructed from the resumed sidechain so the same results
-   * are re-replaced (prompt cache stability). */
+  /** 覆盖替换状态 — resumeAgentBackground 使用此项传递
+   * 从恢复的 sidechain 重建的状态，以便相同的结果
+   * 被重新替换（提示词缓存稳定性）。 */
   contentReplacementState?: ContentReplacementState
 }
 
 /**
- * Creates an isolated ToolUseContext for subagents.
+ * 为子代理创建隔离的 ToolUseContext。
  *
- * By default, ALL mutable state is isolated to prevent interference:
- * - readFileState: cloned from parent
- * - abortController: new controller linked to parent (parent abort propagates)
- * - getAppState: wrapped to set shouldAvoidPermissionPrompts
- * - All mutation callbacks (setAppState, etc.): no-op
- * - Fresh collections: nestedMemoryAttachmentTriggers, toolDecisions
+ * 默认情况下，所有可变状态都是隔离的以防止干扰：
+ * - readFileState：从父级克隆
+ * - abortController：链接到父级的新控制器（父级中止会传播）
+ * - getAppState：包装以设置 shouldAvoidPermissionPrompts
+ * - 所有变异回调（setAppState 等）：无操作
+ * - 新的集合：nestedMemoryAttachmentTriggers、toolDecisions
  *
- * Callers can:
- * - Override specific fields via the overrides parameter
- * - Explicitly opt-in to sharing specific callbacks (shareSetAppState, etc.)
+ * 调用者可以：
+ * - 通过 overrides 参数覆盖特定字段
+ * - 显式选择共享特定回调（shareSetAppState 等）
  *
- * @param parentContext - The parent's ToolUseContext to create subagent context from
- * @param overrides - Optional overrides and sharing options
+ * @param parentContext - 用于创建子代理上下文的父级 ToolUseContext
+ * @param overrides - 可选的覆盖和共享选项
  *
  * @example
- * // Full isolation (for background agents like session memory)
+ * // 完全隔离（用于会话内存等后台代理）
  * const ctx = createSubagentContext(parentContext)
  *
  * @example
- * // Custom options and agentId (for AgentTool async agents)
+ * // 自定义选项和 agentId（用于 AgentTool 异步代理）
  * const ctx = createSubagentContext(parentContext, {
  *   options: customOptions,
  *   agentId: newAgentId,
@@ -333,7 +333,7 @@ export type SubagentContextOverrides = {
  * })
  *
  * @example
- * // Interactive subagent that shares some state
+ * // 共享部分状态的交互式子代理
  * const ctx = createSubagentContext(parentContext, {
  *   options: customOptions,
  *   agentId: newAgentId,
@@ -346,15 +346,15 @@ export function createSubagentContext(
   parentContext: ToolUseContext,
   overrides?: SubagentContextOverrides,
 ): ToolUseContext {
-  // Determine abortController: explicit override > share parent's > new child
+  // 确定 abortController：显式覆盖 > 共享父级 > 新建子级
   const abortController =
     overrides?.abortController ??
     (overrides?.shareAbortController
       ? parentContext.abortController
       : createChildAbortController(parentContext.abortController))
 
-  // Determine getAppState - wrap to set shouldAvoidPermissionPrompts unless sharing abortController
-  // (if sharing abortController, it's an interactive agent that CAN show UI)
+  // 确定 getAppState - 包装以设置 shouldAvoidPermissionPrompts，除非共享 abortController
+  //（如果共享 abortController，则是可以显示 UI 的交互式代理）
   const getAppState: ToolUseContext['getAppState'] = overrides?.getAppState
     ? overrides.getAppState
     : overrides?.shareAbortController
@@ -374,28 +374,28 @@ export function createSubagentContext(
         }
 
   return {
-    // Mutable state - cloned by default to maintain isolation
-    // Clone overrides.readFileState if provided, otherwise clone from parent
+    // 可变状态 - 默认克隆以保持隔离
+    // 如果提供了 overrides.readFileState 则克隆它，否则从父级克隆
     readFileState: cloneFileStateCache(
       overrides?.readFileState ?? parentContext.readFileState,
     ),
     nestedMemoryAttachmentTriggers: new Set<string>(),
     loadedNestedMemoryPaths: new Set<string>(),
     dynamicSkillDirTriggers: new Set<string>(),
-    // Per-subagent: tracks skills surfaced by discovery for was_discovered telemetry (SkillTool.ts:116)
+    // 每个子代理：跟踪发现暴露的技能用于 was_discovered 遥测（SkillTool.ts:116）
     discoveredSkillNames: new Set<string>(),
     toolDecisions: undefined,
-    // Budget decisions: override > clone of parent > undefined (feature off).
+    // 预算决策：覆盖 > 克隆父级 > undefined（功能关闭）。
     //
-    // Clone by default (not fresh): cache-sharing forks process parent
-    // messages containing parent tool_use_ids. A fresh state would see
-    // them as unseen and make divergent replacement decisions → wire
-    // prefix differs → cache miss. A clone makes identical decisions →
-    // cache hit. For non-forking subagents the parent UUIDs never match
-    // — clone is a harmless no-op.
+    // 默认克隆（非新建）：缓存共享分叉处理包含
+    // 父级 tool_use_ids 的父级消息。新建状态会将它们
+    // 视为未见并做出不同的替换决策 → 传输前缀不同
+    // → 缓存未命中。克隆做出相同的决策 → 缓存命中。
+    // 对于非分叉子代理，父级 UUID 永远不会匹配——
+    // 克隆是无害的无操作。
     //
-    // Override: AgentTool resume (reconstructed from sidechain records)
-    // and inProcessRunner (per-teammate persistent loop state).
+    // 覆盖：AgentTool resume（从 sidechain 记录重建）
+    // 和 inProcessRunner（每个队友的持久循环状态）。
     contentReplacementState:
       overrides?.contentReplacementState ??
       (parentContext.contentReplacementState
@@ -405,14 +405,14 @@ export function createSubagentContext(
     // AbortController
     abortController,
 
-    // AppState access
+    // AppState 访问
     getAppState,
     setAppState: overrides?.shareSetAppState
       ? parentContext.setAppState
       : () => {},
-    // Task registration/kill must always reach the root store, even when
-    // setAppState is a no-op — otherwise async agents' background bash tasks
-    // are never registered and never killed (PPID=1 zombie).
+    // 任务注册/终止必须始终到达根存储，即使
+    // setAppState 是无操作——否则异步代理的后台 bash 任务
+    // 永远不会被注册和终止（PPID=1 僵尸进程）。
     setAppStateForTasks:
       parentContext.setAppStateForTasks ?? parentContext.setAppState,
     // Async subagents whose setAppState is a no-op need local denial tracking

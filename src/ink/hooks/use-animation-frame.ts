@@ -4,18 +4,17 @@ import type { DOMElement } from '../dom.js'
 import { useTerminalViewport } from './use-terminal-viewport.js'
 
 /**
- * Hook for synchronized animations that pause when offscreen.
+ * 用于同步动画的 Hook，离屏时暂停。
  *
- * Returns a ref to attach to the animated element and the current animation time.
- * All instances share the same clock, so animations stay in sync.
- * The clock only runs when at least one keepAlive subscriber exists.
+ * 返回一个附加到动画元素的 ref 和当前动画时间。
+ * 所有实例共享同一个时钟，因此动画保持同步。
+ * 只有当至少有一个 keepAlive 订阅者时时钟才会运行。
  *
- * Pass `null` to pause — unsubscribes from the clock so no ticks fire.
- * Time freezes at the last value and resumes from the current clock time
- * when a number is passed again.
+ * 传入 `null` 暂停——取消订阅时钟，不再触发滴答。
+ * 时间冻结在最后的值，再次传入数字时从当前时钟时间恢复。
  *
- * @param intervalMs - How often to update, or null to pause
- * @returns [ref, time] - Ref to attach to element, elapsed time in ms
+ * @param intervalMs - 更新间隔，或 null 暂停
+ * @returns [ref, time] - 附加到元素的 ref，经过的时间（ms）
  *
  * @example
  * function Spinner() {
@@ -24,8 +23,7 @@ import { useTerminalViewport } from './use-terminal-viewport.js'
  *   return <Box ref={ref}>{FRAMES[frame]}</Box>
  * }
  *
- * The clock automatically slows when the terminal is blurred,
- * so consumers don't need to handle focus state.
+ * 终端失焦时时钟会自动减速，因此调用者无需处理焦点状态。
  */
 export function useAnimationFrame(
   intervalMs: number | null = 16,
@@ -49,7 +47,7 @@ export function useAnimationFrame(
       }
     }
 
-    // keepAlive: true — visible animations drive the clock
+    // keepAlive: true —— 可见的动画驱动时钟
     return clock.subscribe(onChange, true)
   }, [clock, intervalMs, active])
 

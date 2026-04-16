@@ -1,8 +1,8 @@
-// Store all instances of Ink (instance.js) to ensure that consecutive render() calls
-// use the same instance of Ink and don't create a new one
+// 存储所有 Ink 实例，确保连续的 render() 调用
+// 使用同一个 Ink 实例，而不是创建新实例
 //
-// This map has to be stored in a separate file, because render.js creates instances,
-// but instance.js should delete itself from the map on unmount
+// 这个 Map 必须存储在单独的文件中，因为 render.js 创建实例，
+// 而 instance.js 应在卸载时从 Map 中删除自身
 
 import type Ink from './ink.js'
 

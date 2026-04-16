@@ -13,9 +13,9 @@ export type Frame = {
   readonly screen: Screen
   readonly viewport: Size
   readonly cursor: Cursor
-  /** DECSTBM scroll optimization hint (alt-screen only, null otherwise). */
+  /** DECSTBM 滚动优化提示（仅 alt-screen，否则为 null）。 */
   readonly scrollHint?: ScrollHint | null
-  /** A ScrollBox has remaining pendingScrollDelta — schedule another frame. */
+  /** ScrollBox 还有剩余的 pendingScrollDelta —— 安排下一帧渲染。 */
   readonly scrollDrainPending?: boolean
 }
 
@@ -37,30 +37,30 @@ export type FlickerReason = 'resize' | 'offscreen' | 'clear'
 
 export type FrameEvent = {
   durationMs: number
-  /** Phase breakdown in ms + patch count. Populated when the ink instance
-   *  has frame-timing instrumentation enabled (via onFrame wiring). */
+  /** 各阶段耗时（毫秒）及 patch 数量。当 ink 实例
+   *  启用了帧时间插桩（通过 onFrame 连接）时填充。 */
   phases?: {
-    /** createRenderer output: DOM → yoga layout → screen buffer */
+    /** createRenderer 输出：DOM → yoga 布局 → 屏幕缓冲区 */
     renderer: number
-    /** LogUpdate.render(): screen diff → Patch[] (the hot path this PR optimizes) */
+    /** LogUpdate.render()：屏幕比对 → Patch[]（本次 PR 优化的热路径） */
     diff: number
-    /** optimize(): patch merge/dedupe */
+    /** optimize()：patch 合并/去重 */
     optimize: number
-    /** writeDiffToTerminal(): serialize patches → ANSI → stdout */
+    /** writeDiffToTerminal()：序列化 patches → ANSI → stdout */
     write: number
-    /** Pre-optimize patch count (proxy for how much changed this frame) */
+    /** 优化前的 patch 数量（表示本帧变更了多少内容） */
     patches: number
-    /** yoga calculateLayout() time (runs in resetAfterCommit, before onRender) */
+    /** yoga calculateLayout() 耗时（在 resetAfterCommit 中运行，onRender 之前） */
     yoga: number
-    /** React reconcile time: scrollMutated → resetAfterCommit. 0 if no commit. */
+    /** React 调和耗时：scrollMutated → resetAfterCommit。无 commit 时为 0。 */
     commit: number
-    /** layoutNode() calls this frame (recursive, includes cache-hit returns) */
+    /** 本帧 layoutNode() 调用次数（递归，包含缓存命中返回） */
     yogaVisited: number
-    /** measureFunc (text wrap/width) calls — the expensive part */
+    /** measureFunc（文本换行/宽度）调用次数 —— 耗时部分 */
     yogaMeasured: number
-    /** early returns via _hasL single-slot cache */
+    /** 通过 _hasL 单槽缓存的提前返回次数 */
     yogaCacheHits: number
-    /** total yoga Node instances alive (create - free). Growth = leak. */
+    /** 存活的 yoga Node 实例总数（create - free）。增长 = 内存泄漏。 */
     yogaLive: number
   }
   flickers: Array<{
@@ -76,9 +76,9 @@ export type Patch =
   | {
       type: 'clearTerminal'
       reason: FlickerReason
-      // Populated by log-update when a scrollback diff triggers the reset.
-      // ink.tsx uses triggerY with findOwnerChainAtRow to attribute the
-      // flicker to its source React component.
+      // 当 scrollback diff 触发重置时由 log-update 填充。
+      // ink.tsx 使用 triggerY 配合 findOwnerChainAtRow 将
+      // 闪烁归因到其源 React 组件。
       debug?: { triggerY: number; prevLine: string; nextLine: string }
     }
   | { type: 'cursorHide' }
@@ -87,20 +87,20 @@ export type Patch =
   | { type: 'cursorTo'; col: number }
   | { type: 'carriageReturn' }
   | { type: 'hyperlink'; uri: string }
-  // Pre-serialized style transition string from StylePool.transition() —
-  // cached by (fromId, toId), zero allocations after warmup.
+  // 来自 StylePool.transition() 的预序列化样式转换字符串 ——
+  // 按 (fromId, toId) 缓存，预热后零分配。
   | { type: 'styleStr'; str: string }
 
 export type Diff = Patch[]
 
 /**
- * Determines whether the screen should be cleared based on the current and previous frame.
- * Returns the reason for clearing, or undefined if no clear is needed.
+ * 根据当前帧和上一帧判断是否需要清屏。
+ * 返回清屏原因，不需要清屏时返回 undefined。
  *
- * Screen clearing is triggered when:
- * 1. Terminal has been resized (viewport dimensions changed) → 'resize'
- * 2. Current frame screen height exceeds available terminal rows → 'offscreen'
- * 3. Previous frame screen height exceeded available terminal rows → 'offscreen'
+ * 触发清屏的条件：
+ * 1. 终端尺寸发生变化（视口维度改变） → 'resize'
+ * 2. 当前帧屏幕高度超过终端可用行数 → 'offscreen'
+ * 3. 上一帧屏幕高度超过终端可用行数 → 'offscreen'
  */
 export function shouldClearScreen(
   prevFrame: Frame,

@@ -1,11 +1,11 @@
 /**
- * ANSI Control Characters and Escape Sequence Introducers
+ * ANSI 控制字符和转义序列引导符
  *
- * Based on ECMA-48 / ANSI X3.64 standards.
+ * 基于 ECMA-48 / ANSI X3.64 标准。
  */
 
 /**
- * C0 (7-bit) control characters
+ * C0（7 位）控制字符
  */
 export const C0 = {
   NUL: 0x00,
@@ -43,32 +43,32 @@ export const C0 = {
   DEL: 0x7f,
 } as const
 
-// String constants for output generation
+// 用于输出生成的字符串常量
 export const ESC = '\x1b'
 export const BEL = '\x07'
 export const SEP = ';'
 
 /**
- * Escape sequence type introducers (byte after ESC)
+ * 转义序列类型引导符（ESC 之后的字节）
  */
 export const ESC_TYPE = {
-  CSI: 0x5b, // [ - Control Sequence Introducer
-  OSC: 0x5d, // ] - Operating System Command
-  DCS: 0x50, // P - Device Control String
-  APC: 0x5f, // _ - Application Program Command
-  PM: 0x5e, // ^ - Privacy Message
-  SOS: 0x58, // X - Start of String
-  ST: 0x5c, // \ - String Terminator
+  CSI: 0x5b, // [ - 控制序列引导符
+  OSC: 0x5d, // ] - 操作系统命令
+  DCS: 0x50, // P - 设备控制字符串
+  APC: 0x5f, // _ - 应用程序命令
+  PM: 0x5e, // ^ - 隐私消息
+  SOS: 0x58, // X - 字符串开始
+  ST: 0x5c, // \ - 字符串终止符
 } as const
 
-/** Check if a byte is a C0 control character */
+/** 判断一个字节是否为 C0 控制字符 */
 export function isC0(byte: number): boolean {
   return byte < 0x20 || byte === 0x7f
 }
 
 /**
- * Check if a byte is an ESC sequence final byte (0-9, :, ;, <, =, >, ?, @ through ~)
- * ESC sequences have a wider final byte range than CSI
+ * 判断一个字节是否为 ESC 序列的结束字节（0-9、:、;、<、=、>、?、@ 到 ~）
+ * ESC 序列的结束字节范围比 CSI 更宽
  */
 export function isEscFinal(byte: number): boolean {
   return byte >= 0x30 && byte <= 0x7e

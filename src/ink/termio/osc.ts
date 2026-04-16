@@ -1,5 +1,5 @@
 /**
- * OSC (Operating System Command) Types and Parser
+ * OSC（操作系统命令）类型和解析器
  */
 
 import { Buffer } from 'buffer'
@@ -10,27 +10,27 @@ import type { Action, Color, TabStatusAction } from './types.js'
 
 export const OSC_PREFIX = ESC + String.fromCharCode(ESC_TYPE.OSC)
 
-/** String Terminator (ESC \) - alternative to BEL for terminating OSC */
+/** 字符串终止符（ESC \）- 用于终止 OSC 的 BEL 替代方案 */
 export const ST = ESC + '\\'
 
-/** Generate an OSC sequence: ESC ] p1;p2;...;pN <terminator>
- * Uses ST terminator for Kitty (avoids beeps), BEL for others */
+/** 生成 OSC 序列：ESC ] p1;p2;...;pN <终止符>
+ * Kitty 使用 ST 终止符（避免蜂鸣），其他使用 BEL */
 export function osc(...parts: (string | number)[]): string {
   const terminator = env.terminal === 'kitty' ? ST : BEL
   return `${OSC_PREFIX}${parts.join(SEP)}${terminator}`
 }
 
 /**
- * Wrap an escape sequence for terminal multiplexer passthrough.
- * tmux and GNU screen intercept escape sequences; DCS passthrough
- * tunnels them to the outer terminal unmodified.
+ * 将转义序列包装为终端复用器直通。
+ * tmux 和 GNU screen 会拦截转义序列；DCS 直通
+ * 将它们无损地传输到外部终端。
  *
- * tmux 3.3+ gates this behind `allow-passthrough` (default off). When off,
- * tmux silently drops the whole DCS — no junk, no worse than unwrapped OSC.
- * Users who want passthrough set it in their .tmux.conf; we don't mutate it.
+ * tmux 3.3+ 需要 `allow-passthrough` 门控（默认关闭）。关闭时，
+ * tmux 会静默丢弃整个 DCS — 没有垃圾，也不比未包装的 OSC 更糟。
+ * 需要直通的用戶在其 .tmux.conf 中设置；我们不会修改它。
  *
- * Do NOT wrap BEL: raw \x07 triggers tmux's bell-action (window flag);
- * wrapped \x07 is opaque DCS payload and tmux never sees the bell.
+ * 不要包装 BEL：原始 \x07 会触发 tmux 的铃铛动作（窗口标志）；
+ * 包装后的 \x07 是不透明的 DCS 载荷，tmux 永远不会看到铃铛。
  */
 export function wrapForMultiplexer(sequence: string): string {
   if (process.env['TMUX']) {
@@ -44,20 +44,20 @@ export function wrapForMultiplexer(sequence: string): string {
 }
 
 /**
- * Which path setClipboard() will take, based on env state. Synchronous so
- * callers can show an honest toast without awaiting the copy itself.
+ * setClipboard() 将采用的路径，基于 env 状态。同步的，所以
+ * 调用者可以诚实地显示 toast，而无需等待复制本身。
  *
- * - 'native': pbcopy (or equivalent) will run — high-confidence system
- *   clipboard write. tmux buffer may also be loaded as a bonus.
- * - 'tmux-buffer': tmux load-buffer will run, but no native tool — paste
- *   with prefix+] works. System clipboard depends on tmux's set-clipboard
- *   option + outer terminal OSC 52 support; can't know from here.
- * - 'osc52': only the raw OSC 52 sequence will be written to stdout.
- *   Best-effort; iTerm2 disables OSC 52 by default.
+ * - 'native': 将运行 pbcopy（或等效工具）— 高置信度的系统
+ *   剪贴板写入。tmux 缓冲区也可能作为额外加载。
+ * - 'tmux-buffer': 将运行 tmux load-buffer，但没有原生工具 — 使用
+ *   prefix+] 粘贴。系统剪贴板取决于 tmux 的 set-clipboard
+ *   选项和外部终端 OSC 52 支持；从这里无法知道。
+ * - 'osc52': 仅将原始 OSC 52 序列写入 stdout。
+ *   尽力而为；iTerm2 默认禁用 OSC 52。
  *
- * pbcopy gating uses SSH_CONNECTION specifically, not SSH_TTY — tmux panes
- * inherit SSH_TTY forever even after local reattach, but SSH_CONNECTION is
- * in tmux's default update-environment set and gets cleared.
+ * pbcopy 门控使用 SSH_CONNECTION 而非 SSH_TTY — tmux 面板
+ * 在本地重新连接后仍会永远继承 SSH_TTY，但 SSH_CONNECTION 在
+ * tmux 默认的 update-environment 集合中，本地连接时会被清除。
  */
 export type ClipboardPath = 'native' | 'tmux-buffer' | 'osc52'
 
@@ -70,22 +70,22 @@ export function getClipboardPath(): ClipboardPath {
 }
 
 /**
- * Wrap a payload in tmux's DCS passthrough: ESC P tmux ; <payload> ESC \
- * tmux forwards the payload to the outer terminal, bypassing its own parser.
- * Inner ESCs must be doubled. Requires `set -g allow-passthrough on` in
- * ~/.tmux.conf; without it, tmux silently drops the whole DCS (no regression).
+ * 将载荷包装在 tmux 的 DCS 直通中：ESC P tmux ; <载荷> ESC \
+ * tmux 将载荷转发到外部终端，绕过其自身的解析器。
+ * 内部 ESC 必须加倍。需要在 ~/.tmux.conf 中设置 `set -g allow-passthrough on`；
+ * 没有它，tmux 会静默丢弃整个 DCS（无回归）。
  */
 function tmuxPassthrough(payload: string): string {
   return `${ESC}Ptmux;${payload.replaceAll(ESC, ESC + ESC)}${ST}`
 }
 
 /**
- * Load text into tmux's paste buffer via `tmux load-buffer`.
- * -w (tmux 3.2+) propagates to the outer terminal's clipboard via tmux's
- * own OSC 52 emission. -w is dropped for iTerm2: tmux's OSC 52 emission
- * crashes the iTerm2 session over SSH.
+ * 通过 `tmux load-buffer` 将文本加载到 tmux 的粘贴缓冲区。
+ * -w（tmux 3.2+）通过 tmux 自身的 OSC 52 发射传播到外部终端的剪贴板。
+ * -w 针对 iTerm2 被移除：tmux 的 OSC 52 发射
+ * 会在 SSH 上使 iTerm2 会话崩溃。
  *
- * Returns true if the buffer was loaded successfully.
+ * 如果缓冲区加载成功则返回 true。
  */
 export async function tmuxLoadBuffer(text: string): Promise<boolean> {
   if (!process.env['TMUX']) return false
@@ -102,71 +102,70 @@ export async function tmuxLoadBuffer(text: string): Promise<boolean> {
 }
 
 /**
- * OSC 52 clipboard write: ESC ] 52 ; c ; <base64> BEL/ST
- * 'c' selects the clipboard (vs 'p' for primary selection on X11).
+ * OSC 52 剪贴板写入：ESC ] 52 ; c ; <base64> BEL/ST
+ * 'c' 选择剪贴板（相对于 X11 上的 'p' 主选择）。
  *
- * When inside tmux ($TMUX set), `tmux load-buffer -w -` is the primary
- * path. tmux's buffer is always reachable — works over SSH, survives
- * detach/reattach, immune to stale env vars. The -w flag (tmux 3.2+) tells
- * tmux to also propagate to the outer terminal via its own OSC 52 path,
- * which tmux wraps correctly for the attached client. On older tmux, -w is
- * ignored and the buffer is still loaded. -w is dropped for iTerm2 (#22432)
- * because tmux's own OSC 52 emission (empty selection param: ESC]52;;b64)
- * crashes iTerm2 over SSH.
+ * 在 tmux 内部时（设置了 $TMUX），`tmux load-buffer -w -` 是主要
+ * 路径。tmux 的缓冲区始终可达 — 适用于 SSH、分离/重新连接、
+ * 不受过期环境变量影响。-w 标志（tmux 3.2+）告诉
+ * tmux 也通过其自身的 OSC 52 路径传播到外部终端，
+ * tmux 会为连接的客户端正确包装。在旧版本 tmux 上，-w 被
+ * 忽略，但缓冲区仍被加载。-w 针对 iTerm2 被移除（#22432）
+ * 因为 tmux 自身的 OSC 52 发射（空选择参数：ESC]52;;b64）
+ * 会在 SSH 上使 iTerm2 崩溃。
  *
- * After load-buffer succeeds, we ALSO return a DCS-passthrough-wrapped
- * OSC 52 for the caller to write to stdout. Our sequence uses explicit `c`
- * (not tmux's crashy empty-param variant), so it sidesteps the #22432 path.
- * With `allow-passthrough on` + an OSC-52-capable outer terminal, selection
- * reaches the system clipboard; with either off, tmux silently drops the
- * DCS and prefix+] still works. See Greg Smith's "free pony" in
- * https://anthropic.slack.com/archives/C07VBSHV7EV/p1773177228548119.
+ * 在 load-buffer 成功后，我们还返回 DCS 直通包装的
+ * OSC 52 供调用者写入 stdout。我们的序列使用显式 `c`
+ *（而非 tmux 的崩溃空参数变体），因此它绕过了 #22432 路径。
+ * 启用 `allow-passthrough on` + 支持 OSC-52 的外部终端时，选择
+ * 会到达系统剪贴板；任一则关闭，tmux 会静默丢弃
+ * DCS，prefix+] 仍然可用。
  *
- * If load-buffer fails entirely, fall through to raw OSC 52.
+ * 如果 load-buffer 完全失败，回退到原始 OSC 52。
  *
- * Outside tmux, write raw OSC 52 to stdout (caller handles the write).
+ * 在 tmux 外部，将原始 OSC 52 写入 stdout（调用者处理写入）。
  *
- * Local (no SSH_CONNECTION): also shell out to a native clipboard utility.
- * OSC 52 and tmux -w both depend on terminal settings — iTerm2 disables
- * OSC 52 by default, VS Code shows a permission prompt on first use. Native
- * utilities (pbcopy/wl-copy/xclip/xsel/clip.exe) always work locally. Over
- * SSH these would write to the remote clipboard — OSC 52 is the right path there.
+ * 本地（无 SSH_CONNECTION）：还调用原生剪贴板工具。
+ * OSC 52 和 tmux -w 都取决于终端设置 — iTerm2 默认禁用
+ * OSC 52，VS Code 首次使用时显示权限提示。原生
+ * 工具（pbcopy/wl-copy/xclip/xsel/clip.exe）在本地始终可用。在
+ * SSH 上这些会写入远程剪贴板 — OSC 52 在那里是正确路径。
  *
- * Returns the sequence for the caller to write to stdout (raw OSC 52
- * outside tmux, DCS-wrapped inside).
+ * 返回序列供调用者写入 stdout（tmux
+ * 外部为原始 OSC 52，内部为 DCS 包装）。
  */
 export async function setClipboard(text: string): Promise<string> {
   const b64 = Buffer.from(text, 'utf8').toString('base64')
   const raw = osc(OSC.CLIPBOARD, 'c', b64)
 
-  // Native safety net — fire FIRST, before the tmux await, so a quick
-  // focus-switch after selecting doesn't race pbcopy. Previously this ran
-  // AFTER awaiting tmux load-buffer, adding ~50-100ms of subprocess latency
-  // before pbcopy even started — fast cmd+tab → paste would beat it
-  // (https://anthropic.slack.com/archives/C07VBSHV7EV/p1773943921788829).
-  // Gated on SSH_CONNECTION (not SSH_TTY) since tmux panes inherit SSH_TTY
-  // forever but SSH_CONNECTION is in tmux's default update-environment and
-  // clears on local attach. Fire-and-forget.
+  // 原生安全网 — 在 tmux await 之前触发 FIRST，这样在
+  // 选择后快速切换焦点不会与 pbcopy 竞争。之前这运行
+  // 在等待 tmux load-buffer 之后，增加了约 50-100ms 的子进程延迟
+  // 才启动 pbcopy — 快速 cmd+tab → 粘贴会抢先完成
+  //（https://anthropic.slack.com/archives/C07VBSHV7EV/p1773943921788829）。
+  // 受 SSH_CONNECTION 门控（而非 SSH_TTY），因为 tmux 面板永远继承 SSH_TTY，
+  // 但 SSH_CONNECTION 在 tmux 默认的 update-environment 中，
+  // 本地连接时会被清除。触发后不等待。
   if (!process.env['SSH_CONNECTION']) copyNative(text)
 
   const tmuxBufferLoaded = await tmuxLoadBuffer(text)
 
-  // Inner OSC uses BEL directly (not osc()) — ST's ESC would need doubling
-  // too, and BEL works everywhere for OSC 52.
+  // 内部 OSC 直接使用 BEL（而非 osc()）— ST 的 ESC 也需要加倍，
+  // 而 BEL 在 OSC 52 上到处都可用。
   if (tmuxBufferLoaded) return tmuxPassthrough(`${ESC}]52;c;${b64}${BEL}`)
   return raw
 }
 
-// Linux clipboard tool: undefined = not yet probed, null = none available.
-// Probe order: wl-copy (Wayland) → xclip (X11) → xsel (X11 fallback).
-// Cached after first attempt so repeated mouse-ups skip the probe chain.
+// Linux 剪贴板工具：undefined = 尚未探测，null = 无可用。
+// 探测顺序：wl-copy（Wayland）→ xclip（X11）→ xsel（X11 备选）。
+// 首次尝试后缓存，以便后续鼠标操作跳过探测链。
 let linuxCopy: 'wl-copy' | 'xclip' | 'xsel' | null | undefined
 
 /**
- * Shell out to a native clipboard utility as a safety net for OSC 52.
- * Only called when not in an SSH session (over SSH, these would write to
- * the remote machine's clipboard — OSC 52 is the right path there).
- * Fire-and-forget: failures are silent since OSC 52 may have succeeded.
+ * 调用原生剪贴板工具作为 OSC 52 的安全网。
+ * 仅在非 SSH 会话时调用（在 SSH 上，这些会写入
+ * 远程机器的剪贴板 — OSC 52 在那里是正确路径）。
+ * 触发后不等待：失败是静默的，因为 OSC 52 可能已经成功。
  */
 function copyNative(text: string): void {
   const opts = { input: text, useCwd: false, timeout: 2000 }
@@ -188,7 +187,7 @@ function copyNative(text: string): void {
         void execFileNoThrow('xsel', ['--clipboard', '--input'], opts)
         return
       }
-      // First call: probe wl-copy (Wayland) then xclip/xsel (X11), cache winner.
+      // 首次调用：探测 wl-copy（Wayland）然后 xclip/xsel（X11），缓存赢家。
       void execFileNoThrow('wl-copy', [], opts).then(r => {
         if (r.code === 0) {
           linuxCopy = 'wl-copy'
@@ -211,20 +210,20 @@ function copyNative(text: string): void {
       return
     }
     case 'win32':
-      // clip.exe is always available on Windows. Unicode handling is
-      // imperfect (system locale encoding) but good enough for a fallback.
+      // clip.exe 在 Windows 上始终可用。Unicode 处理
+      // 不完美（系统区域编码）但作为备选足够。
       void execFileNoThrow('clip', [], opts)
       return
   }
 }
 
-/** @internal test-only */
+/** @internal 仅测试使用 */
 export function _resetLinuxCopyCache(): void {
   linuxCopy = undefined
 }
 
 /**
- * OSC command numbers
+ * OSC 命令编号
  */
 export let OSC;
 OSC = {
@@ -250,9 +249,9 @@ OSC = {
 } as const
 
 /**
- * Parse an OSC sequence into an action
+ * 解析 OSC 序列为动作
  *
- * @param content - The sequence content (without ESC ] and terminator)
+ * @param content - 序列内容（不含 ESC ] 和终止符）
  */
 export function parseOSC(content: string): Action | null {
   const semicolonIdx = content.indexOf(';')
@@ -261,7 +260,7 @@ export function parseOSC(content: string): Action | null {
 
   const commandNum = parseInt(command, 10)
 
-  // Window/icon title
+  // 窗口/图标标题
   if (commandNum === OSC.SET_TITLE_AND_ICON) {
     return { type: 'title', action: { type: 'both', title: data } }
   }
@@ -272,7 +271,7 @@ export function parseOSC(content: string): Action | null {
     return { type: 'title', action: { type: 'windowTitle', title: data } }
   }
 
-  // Hyperlinks (OSC 8)
+  // 超链接（OSC 8）
   if (commandNum === OSC.HYPERLINK) {
     const parts = data.split(';')
     const paramsStr = parts[0] ?? ''
@@ -302,7 +301,7 @@ export function parseOSC(content: string): Action | null {
     }
   }
 
-  // Tab status (OSC 21337)
+  // 标签状态（OSC 21337）
   if (commandNum === OSC.TAB_STATUS) {
     return { type: 'tabStatus', action: parseTabStatus(data) }
   }
@@ -311,9 +310,9 @@ export function parseOSC(content: string): Action | null {
 }
 
 /**
- * Parse an XParseColor-style color spec into an RGB Color.
- * Accepts `#RRGGBB` and `rgb:R/G/B` (1–4 hex digits per component, scaled
- * to 8-bit). Returns null on parse failure.
+ * 将 XParseColor 风格的颜色规范解析为 RGB Color。
+ * 接受 `#RRGGBB` 和 `rgb:R/G/B`（每个分量 1-4 个十六进制数字，
+ * 缩放到 8 位）。解析失败时返回 null。
  */
 export function parseOscColor(spec: string): Color | null {
   const hex = spec.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
@@ -329,7 +328,7 @@ export function parseOscColor(spec: string): Color | null {
     /^rgb:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})$/i,
   )
   if (rgb) {
-    // XParseColor: N hex digits → value / (16^N - 1), scale to 0-255
+    // XParseColor：N 个十六进制数字 → 值 / (16^N - 1)，缩放到 0-255
     const scale = (s: string) =>
       Math.round((parseInt(s, 16) / (16 ** s.length - 1)) * 255)
     return {
@@ -343,9 +342,8 @@ export function parseOscColor(spec: string): Color | null {
 }
 
 /**
- * Parse OSC 21337 payload: `key=value;key=value;...` with `\;` and `\\`
- * escapes inside values. Bare key or `key=` clears that field; unknown
- * keys are ignored.
+ * 解析 OSC 21337 载荷：`key=value;key=value;...`，值内支持 `\;` 和 `\\`
+ * 转义。裸键或 `key=` 清除该字段；未知键被忽略。
  */
 function parseTabStatus(data: string): TabStatusAction {
   const action: TabStatusAction = {}
@@ -365,7 +363,7 @@ function parseTabStatus(data: string): TabStatusAction {
   return action
 }
 
-/** Split `k=v;k=v` honoring `\;` and `\\` escapes. Yields [key, unescapedValue]. */
+/** 分割 `k=v;k=v`，尊重 `\;` 和 `\\` 转义。产出 [key, unescapedValue]。 */
 function* splitTabStatusPairs(data: string): Generator<[string, string]> {
   let key = ''
   let val = ''
@@ -394,13 +392,13 @@ function* splitTabStatusPairs(data: string): Generator<[string, string]> {
   if (key || inVal) yield [key, val]
 }
 
-// Output generators
+// 输出生成器
 
-/** Start a hyperlink (OSC 8). Auto-assigns an id= param derived from the URL
- *  so terminals group wrapped lines of the same link together (the spec says
- *  cells with matching URI *and* nonempty id are joined; without an id each
- *  wrapped line is a separate link — inconsistent hover, partial tooltips).
- *  Empty url = close sequence (empty params per spec). */
+/** 开始超链接（OSC 8）。自动从 URL 派生 id= 参数，
+ *  以便终端将同一链接的换行归为一组（规范说明
+ *  具有匹配 URI 和非空 id 的单元格会合并；没有 id 时，
+ *  每行都是独立的链接 — 悬停行为不一致，工具提示不完整）。
+ *  空 url = 结束序列（按规范使用空参数）。 */
 export function link(url: string, params?: Record<string, string>): string {
   if (!url) return LINK_END
   const p = { id: osc8Id(url), ...params }
@@ -417,20 +415,20 @@ function osc8Id(url: string): string {
   return (h >>> 0).toString(36)
 }
 
-/** End a hyperlink (OSC 8) */
+/** 结束超链接（OSC 8） */
 export let LINK_END;
 LINK_END = osc(OSC.HYPERLINK, '', '')
 
-// iTerm2 OSC 9 subcommands
+// iTerm2 OSC 9 子命令
 
-/** iTerm2 OSC 9 subcommand numbers */
+/** iTerm2 OSC 9 子命令编号 */
 export const ITERM2 = {
   NOTIFY: 0,
   BADGE: 2,
   PROGRESS: 4,
 } as const
 
-/** Progress operation codes (for use with ITERM2.PROGRESS) */
+/** 进度操作代码（与 ITERM2.PROGRESS 配合使用） */
 export const PROGRESS = {
   CLEAR: 0,
   SET: 1,
@@ -439,41 +437,41 @@ export const PROGRESS = {
 } as const
 
 /**
- * Clear iTerm2 progress bar sequence (OSC 9;4;0;BEL)
- * Uses BEL terminator since this is for cleanup (not runtime notification)
- * and we want to ensure it's always sent regardless of terminal type.
+ * 清除 iTerm2 进度条序列（OSC 9;4;0;BEL）
+ * 使用 BEL 终止符，因为这是用于清理（而非运行时通知）
+ * 且我们希望能确保始终发送，无论终端类型如何。
  */
 export const CLEAR_ITERM2_PROGRESS = `${OSC_PREFIX}${OSC.ITERM2};${ITERM2.PROGRESS};${PROGRESS.CLEAR};${BEL}`
 
 /**
- * Clear terminal title sequence (OSC 0 with empty string + BEL).
- * Uses BEL terminator for cleanup — safe on all terminals.
+ * 清除终端标题序列（OSC 0 带空字符串 + BEL）。
+ * 使用 BEL 终止符进行清理 — 在所有终端上安全。
  */
 export const CLEAR_TERMINAL_TITLE = `${OSC_PREFIX}${OSC.SET_TITLE_AND_ICON};${BEL}`
 
-/** Clear all three OSC 21337 tab-status fields. Used on exit. */
+/** 清除所有三个 OSC 21337 标签状态字段。在退出时使用。 */
 export const CLEAR_TAB_STATUS = osc(
   OSC.TAB_STATUS,
   'indicator=;status=;status-color=',
 )
 
 /**
- * Gate for emitting OSC 21337 (tab-status indicator). Ant-only while the
- * spec is unstable. Terminals that don't recognize it discard silently, so
- * emission is safe unconditionally — we don't gate on terminal detection
- * since support is expected across several terminals.
+ * OSC 21337（标签状态指示器）的发射门控。在规范
+ * 不稳定期间仅限 Ant。不识别它的终端会静默丢弃，因此
+ * 无条件发射是安全的 — 我们不门控终端检测，
+ * 因为预计多个终端都会支持。
  *
- * Callers must wrap output with wrapForMultiplexer() so tmux/screen
- * DCS-passthrough carries the sequence to the outer terminal.
+ * 调用者必须使用 wrapForMultiplexer() 包装输出，以便 tmux/screen
+ * DCS 直通将序列传输到外部终端。
  */
 export function supportsTabStatus(): boolean {
   return process.env.USER_TYPE === 'zy-super'
 }
 
 /**
- * Emit an OSC 21337 tab-status sequence. Omitted fields are left unchanged
- * by the receiving terminal; `null` sends an empty value to clear.
- * `;` and `\` in status text are escaped per the spec.
+ * 发射 OSC 21337 标签状态序列。省略的字段在接收终端中保持不变；
+ * `null` 发送空值以清除。
+ * 状态文本中的 `;` 和 `\` 按规范转义。
  */
 export function tabStatus(fields: TabStatusAction): string {
   const parts: string[] = []

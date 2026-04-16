@@ -10,7 +10,7 @@ export type Size = {
 
 export type Rectangle = Point & Size
 
-/** Edge insets (padding, margin, border) */
+/** 边距（内边距、外边距、边框） */
 export type Edges = {
   top: number
   right: number
@@ -18,7 +18,7 @@ export type Edges = {
   left: number
 }
 
-/** Create uniform edges */
+/** 创建均匀边距 */
 export function edges(all: number): Edges
 export function edges(vertical: number, horizontal: number): Edges
 export function edges(
@@ -37,7 +37,7 @@ export function edges(a: number, b?: number, c?: number, d?: number): Edges {
   return { top: a, right: b, bottom: c, left: d! }
 }
 
-/** Add two edge values */
+/** 将两组边距对应相加 */
 export function addEdges(a: Edges, b: Edges): Edges {
   return {
     top: a.top + b.top,
@@ -47,10 +47,10 @@ export function addEdges(a: Edges, b: Edges): Edges {
   }
 }
 
-/** Zero edges constant */
+/** 零边距常量 */
 export const ZERO_EDGES: Edges = { top: 0, right: 0, bottom: 0, left: 0 }
 
-/** Convert partial edges to full edges with defaults */
+/** 将不完整的边距补全为默认值 */
 export function resolveEdges(partial?: Partial<Edges>): Edges {
   return {
     top: partial?.top ?? 0,
