@@ -520,6 +520,10 @@ export const en: TranslationResource = {
   'permission.yesAllowEditsInDir': 'Yes, allow all edits in {dir}/ during this session ({shortcut})',
   'permission.yesAllowZyFolderEdits': 'Yes, and allow Zy to edit its own settings for this session',
   'permission.yesInstallPlugin': 'Yes, install {pluginName}',
+  'permission.yesAllowAccessDir': 'Yes, and always allow access to {dir}/ from this project',
+  'permission.yesAllowAccessDirs': 'Yes, and always allow access to {dirs} from this project',
+  'permission.yesAllowReadAndAccess': 'Yes, and allow {paths} access and {commands} commands',
+  'permission.yesAllowAccessAndCommands': 'Yes, and allow access to {paths} and {commands} commands',
   'permission.noDontShowPluginAgain': "No, and don't show plugin installation hints again",
   'permission.noRecommended': 'No (recommended)',
   'permission.tellZyNext': 'and tell Zy what to do next',
@@ -531,6 +535,17 @@ export const en: TranslationResource = {
   'permission.deleteDeniedTool': 'Delete denied tool?',
   'permission.deleteAskTool': 'Delete ask tool?',
 
+  // Permission dialogs - directory access (persist across sessions)
+  'permission.alwaysAllowAccessToDir': 'Yes, and always allow access to {dir}',
+  'permission.alwaysAllowAccessToDirs': 'Yes, and always allow access to {dirs} from this project',
+
+  // Permission dialogs - commands only (don't ask again)
+  'permission.dontAskAgainForCommands': "Yes, and don't ask again for {commands} commands in {cwd}",
+
+  // Permission dialogs - mixed paths and commands
+  'permission.allowAccessAndCommands': 'Yes, and allow access to {paths} and {commands} commands',
+  'permission.allowPathsAccessAndCommands': 'Yes, and allow {paths} access and {commands} commands',
+
   // Shortcut hints
   'shortcut.stopAgents': 'stop agents',
   'shortcut.cycleMode': 'cycle mode',
@@ -540,6 +555,14 @@ export const en: TranslationResource = {
   'agent.inProgress': 'In progress…',
   'agent.toolUse_one': 'tool use',
   'agent.toolUse_other': 'tool uses',
+  'agent.backgroundAgentsLaunched': '{count} background agents launched',
+  'agent.agentsFinished': '{count} {type} finished',
+  'agent.agentsFinishedNoType': '{count} agents finished',
+  'agent.runningPrefix': 'Running',
+  'agent.runningAgents': 'Running {count} {type}…',
+  'agent.runningAgentsNoType': 'Running {count} agents…',
+  'agent.remoteLaunched': 'Remote agent launched',
+  'agent.backgrounded': 'Backgrounded agent',
 
   // Skills
   'skills.menu.title': 'Skills',
@@ -556,4 +579,24 @@ export const en: TranslationResource = {
   'skills.improvement.dismiss': 'Dismiss',
   'skills.permission.useSkill': 'Use skill "{skill}"?',
   'skills.permission.mayUse': 'Zy may use instructions, code, or files from this Skill.',
+
+  // Pill label (background task status)
+  'pill.shell_one': '1 shell',
+  'pill.shell_other': '{count} shells',
+  'pill.monitor_one': '1 monitor',
+  'pill.monitor_other': '{count} monitors',
+  'pill.team_one': '1 team',
+  'pill.team_other': '{count} teams',
+  'pill.localAgent_one': '1 local agent',
+  'pill.localAgent_other': '{count} local agents',
+  'pill.cloudSession_one': '1 cloud session',
+  'pill.cloudSession_other': '{count} cloud sessions',
+  'pill.backgroundWorkflow_one': '1 background workflow',
+  'pill.backgroundWorkflow_other': '{count} background workflows',
+  'pill.dreaming': 'dreaming',
+  'pill.ultraplanReady': 'ultraplan ready',
+  'pill.ultraplanNeedsInput': 'ultraplan needs your input',
+  'pill.ultraplan': 'ultraplan',
+  'pill.backgroundTask_one': '1 background task',
+  'pill.backgroundTask_other': '{count} background tasks',
 }

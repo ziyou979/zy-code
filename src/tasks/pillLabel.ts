@@ -1,6 +1,7 @@
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../constants/figures.js'
 import { count } from '../utils/array.js'
 import type { BackgroundTaskState } from './types.js'
+import { tSync } from '../i18n/index.js'
 
 /**
  * Produces the compact footer-pill label for a set of background tasks.
@@ -21,9 +22,9 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
         const shells = n - monitors
         const parts: string[] = []
         if (shells > 0)
-          parts.push(shells === 1 ? '1 shell' : `${shells} shells`)
+          parts.push(tSync(shells === 1 ? 'pill.shell_one' : 'pill.shell_other', { count: shells }))
         if (monitors > 0)
-          parts.push(monitors === 1 ? '1 monitor' : `${monitors} monitors`)
+          parts.push(tSync(monitors === 1 ? 'pill.monitor_one' : 'pill.monitor_other', { count: monitors }))
         return parts.join(', ')
       }
       case 'in_process_teammate': {
@@ -32,38 +33,34 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
             t.type === 'in_process_teammate' ? t.identity.teamName : '',
           ),
         ).size
-        return teamCount === 1 ? '1 team' : `${teamCount} teams`
+        return tSync(teamCount === 1 ? 'pill.team_one' : 'pill.team_other', { count: teamCount })
       }
       case 'local_agent':
-        return n === 1 ? '1 local agent' : `${n} local agents`
+        return tSync(n === 1 ? 'pill.localAgent_one' : 'pill.localAgent_other', { count: n })
       case 'remote_agent': {
         const first = tasks[0]!
-        // Per design mockup: ◇ open diamond while running/needs-input,
-        // ◆ filled once ExitPlanMode is awaiting approval.
         if (n === 1 && first.type === 'remote_agent' && first.isUltraplan) {
           switch (first.ultraplanPhase) {
             case 'plan_ready':
-              return `${DIAMOND_FILLED} ultraplan ready`
+              return `${DIAMOND_FILLED} ${tSync('pill.ultraplanReady')}`
             case 'needs_input':
-              return `${DIAMOND_OPEN} ultraplan needs your input`
+              return `${DIAMOND_OPEN} ${tSync('pill.ultraplanNeedsInput')}`
             default:
-              return `${DIAMOND_OPEN} ultraplan`
+              return `${DIAMOND_OPEN} ${tSync('pill.ultraplan')}`
           }
         }
-        return n === 1
-          ? `${DIAMOND_OPEN} 1 cloud session`
-          : `${DIAMOND_OPEN} ${n} cloud sessions`
+        return tSync(n === 1 ? 'pill.cloudSession_one' : 'pill.cloudSession_other', { count: n })
       }
       case 'local_workflow':
-        return n === 1 ? '1 background workflow' : `${n} background workflows`
+        return tSync(n === 1 ? 'pill.backgroundWorkflow_one' : 'pill.backgroundWorkflow_other', { count: n })
       case 'monitor_mcp':
-        return n === 1 ? '1 monitor' : `${n} monitors`
+        return tSync(n === 1 ? 'pill.monitor_one' : 'pill.monitor_other', { count: n })
       case 'dream':
-        return 'dreaming'
+        return tSync('pill.dreaming')
     }
   }
 
-  return `${n} background ${n === 1 ? 'task' : 'tasks'}`
+  return tSync(n === 1 ? 'pill.backgroundTask_one' : 'pill.backgroundTask_other', { count: n })
 }
 
 /**

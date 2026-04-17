@@ -650,6 +650,17 @@ export const zhCN: TranslationResource = {
   'permission.deleteDeniedTool': '删除已拒绝的工具？',
   'permission.deleteAskTool': '删除需确认的工具？',
 
+  // 权限对话框 - 目录访问（跨会话持续允许）
+  'permission.alwaysAllowAccessToDir': '是，并始终允许访问 {dir}',
+  'permission.alwaysAllowAccessToDirs': '是，并始终允许从本项目访问 {dirs}',
+
+  // 权限对话框 - 仅命令（不再询问）
+  'permission.dontAskAgainForCommands': '是，此后不再询问 {cwd} 中的 {commands} 命令',
+
+  // 权限对话框 - 混合路径和命令
+  'permission.allowAccessAndCommands': '是，并允许访问 {paths} 和执行 {commands} 命令',
+  'permission.allowPathsAccessAndCommands': '是，并允许 {paths} 访问权限和 {commands} 命令',
+
   // 快捷键提示
   'shortcut.stopAgents': '停止 agent',
   'shortcut.cycleMode': '切换模式',
@@ -675,4 +686,32 @@ export const zhCN: TranslationResource = {
   'skills.improvement.dismiss': '忽略',
   'skills.permission.useSkill': '使用技能 "{skill}"？',
   'skills.permission.mayUse': 'ZY 可能会使用此技能中的指令、代码或文件。',
+
+  // Agent 工具 - 状态
+  'agent.runningPrefix': '运行中',
+  'agent.backgroundAgentsLaunched': '已启动 {count} 个后台 agent',
+  'agent.agentsFinished': '{count} 个{type}已完成',
+  'agent.agentsFinishedNoType': '{count} 个 agent 已完成',
+  'agent.runningAgents': '正在运行 {count} 个{type}…',
+  'agent.runningAgentsNoType': '正在运行 {count} 个 agent…',
+
+  // Pill 标签（后台任务状态）
+  'pill.shell_one': '1 个 shell',
+  'pill.shell_other': '{count} 个 shell',
+  'pill.monitor_one': '1 个监控器',
+  'pill.monitor_other': '{count} 个监控器',
+  'pill.team_one': '1 个团队',
+  'pill.team_other': '{count} 个团队',
+  'pill.localAgent_one': '1 个本地 agent',
+  'pill.localAgent_other': '{count} 个本地 agent',
+  'pill.cloudSession_one': '1 个云端会话',
+  'pill.cloudSession_other': '{count} 个云端会话',
+  'pill.backgroundWorkflow_one': '1 个后台工作流',
+  'pill.backgroundWorkflow_other': '{count} 个后台工作流',
+  'pill.dreaming': '构想中',
+  'pill.ultraplanReady': 'ultraplan 已就绪',
+  'pill.ultraplanNeedsInput': 'ultraplan 需要你的输入',
+  'pill.ultraplan': 'ultraplan',
+  'pill.backgroundTask_one': '1 个后台任务',
+  'pill.backgroundTask_other': '{count} 个后台任务',
 }

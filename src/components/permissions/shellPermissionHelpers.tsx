@@ -57,6 +57,24 @@ function formatPathList(paths: string[]): ReactNode {
     </Text>;
 }
 
+/** Plain-text variant of formatPathList for use in i18n interpolation */
+function formatPathListPlain(paths: string[]): string {
+  const names = paths.map(p => basename(p) || p);
+  if (names.length === 1) return `${names[0]}${sep}`;
+  if (names.length === 2) return `${names[0]}${sep} and ${names[1]}${sep}`;
+  return `${names[0]}${sep}, ${names[1]}${sep} and ${paths.length - 2} more`;
+}
+
+/** Plain-text command list for i18n interpolation */
+function formatCommandsPlain(commands: string[]): string {
+  if (commands.length === 0) return '';
+  const plainText = commands.join(', ');
+  if (plainText.length > 50) return 'similar';
+  if (commands.length === 1) return commands[0]!;
+  if (commands.length === 2) return `${commands[0]} and ${commands[1]}`;
+  return `${commands.slice(0, -1).join(', ')}, and ${commands[commands.length - 1]}`;
+}
+
 /**
  * Generate the label for the "Yes, and apply suggestions" option in shell
  * permission dialogs (Bash, PowerShell). Parametrized by the shell tool name
@@ -112,23 +130,20 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
       const firstDir = directories[0]!;
       const dirName = basename(firstDir) || firstDir;
       return <Text>
-          Yes, and always allow access to <Text bold>{dirName}</Text>
-          {sep} from this project
+          {tSync('permission.alwaysAllowAccessToDir', { dir: dirName })}
+          {sep} {tSync('permission.fromThisProject')}
         </Text>;
     }
 
     // Multiple directories
     return <Text>
-        Yes, and always allow access to {formatPathList(directories)} from this
-        project
+        {tSync('permission.alwaysAllowAccessToDirs', { dirs: formatPathListPlain(directories) })}
       </Text>;
   }
   if (hasCommands && !hasDirectories && !hasReadPaths) {
     // Only shell command permissions
     return <Text>
-        {"Yes, and don't ask again for "}
-        {commandListDisplayTruncated(shellCommands)} commands in{' '}
-        <Text bold>{getOriginalCwd()}</Text>
+        {tSync('permission.dontAskAgainForCommands', { commands: formatCommandsPlain(shellCommands), cwd: getOriginalCwd() })}
       </Text>;
   }
 
@@ -139,9 +154,8 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
     if (hasDirectories && hasReadPaths) {
       // Mixed - use generic "access to"
       return <Text>
-          Yes, and always allow access to {formatPathList(allPaths)} from this
-          project
-        </Text>;
+        {tSync('permission.alwaysAllowAccessToDirs', { dirs: formatPathListPlain(allPaths) })}
+      </Text>;
     }
   }
   if ((hasDirectories || hasReadPaths) && hasCommands) {
@@ -151,14 +165,12 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
     // Keep it concise but informative
     if (allPaths.length === 1 && shellCommands.length === 1) {
       return <Text>
-          Yes, and allow access to {formatPathList(allPaths)} and{' '}
-          {commandListDisplayTruncated(shellCommands)} commands
-        </Text>;
+        {tSync('permission.allowAccessAndCommands', { paths: formatPathListPlain(allPaths), commands: formatCommandsPlain(shellCommands) })}
+      </Text>;
     }
     return <Text>
-        Yes, and allow {formatPathList(allPaths)} access and{' '}
-        {commandListDisplayTruncated(shellCommands)} commands
-      </Text>;
+      {tSync('permission.allowPathsAccessAndCommands', { paths: formatPathListPlain(allPaths), commands: formatCommandsPlain(shellCommands) })}
+    </Text>;
   }
   return null;
 }

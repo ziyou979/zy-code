@@ -239,7 +239,7 @@ export function renderToolResultMessage(data: Output, progressMessagesForMessage
     return <Box flexDirection="column">
         <MessageResponse height={1}>
           <Text>
-            Remote agent launched{' '}
+            {tSync('agent.remoteLaunched')}{' '}
             <Text dimColor>
               · {internal.taskId} · {internal.sessionUrl}
             </Text>
@@ -254,7 +254,7 @@ export function renderToolResultMessage(data: Output, progressMessagesForMessage
     return <Box flexDirection="column">
         <MessageResponse height={1}>
           <Text>
-            Backgrounded agent
+            {tSync('agent.backgrounded')}
             {!isTranscriptMode && <Text dimColor>
                 {' ('}
                 <Byline>
@@ -648,16 +648,16 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
         <ToolUseLoader shouldAnimate={shouldAnimate && anyUnresolved} isUnresolved={anyUnresolved} isError={anyError} />
         <Text>
           {allComplete ? allAsync ? <>
-                <Text bold>{toolUses.length}</Text> background agents launched{' '}
+                <Text bold>{toolUses.length}</Text> {tSync('agent.backgroundAgentsLaunched', { count: toolUses.length })}{' '}
                 <Text dimColor>
                   <KeyboardShortcutHint shortcut="↓" action="manage" parens />
                 </Text>
               </> : <>
                 <Text bold>{toolUses.length}</Text>{' '}
-                {commonType ? `${commonType} agents` : 'agents'} finished
+                {commonType ? tSync('agent.agentsFinished', { count: toolUses.length, type: `${commonType} agents` }) : tSync('agent.agentsFinishedNoType', { count: toolUses.length })}
               </> : <>
-              Running <Text bold>{toolUses.length}</Text>{' '}
-              {commonType ? `${commonType} agents` : 'agents'}…
+              {tSync('agent.runningPrefix')} <Text bold>{toolUses.length}</Text>{' '}
+              {commonType ? tSync('agent.runningAgents', { count: toolUses.length, type: `${commonType} agents` }) : tSync('agent.runningAgentsNoType', { count: toolUses.length })}
             </>}{' '}
         </Text>
         {!allAsync && <CtrlOToExpand />}
