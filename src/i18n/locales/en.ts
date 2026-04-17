@@ -563,6 +563,9 @@ export const en: TranslationResource = {
   'agent.runningAgentsNoType': 'Running {count} agents…',
   'agent.remoteLaunched': 'Remote agent launched',
   'agent.backgrounded': 'Backgrounded agent',
+  'agent.moreToolUses_one': '+{count} more tool use',
+  'agent.moreToolUses_other': '+{count} more tool uses',
+  'agent.apiCallsOnly': '[ANT-ONLY] API calls: {path}',
 
   // Skills
   'skills.menu.title': 'Skills',
@@ -599,4 +602,22 @@ export const en: TranslationResource = {
   'pill.ultraplan': 'ultraplan',
   'pill.backgroundTask_one': '1 background task',
   'pill.backgroundTask_other': '{count} background tasks',
+
+  // Team memory collapsed UI — verb forms: first/first lowercase/done/done lowercase
+  'teamMem.read.first': 'Recalling',
+  'teamMem.read.sub': 'recalling',
+  'teamMem.read.done': 'Recalled',
+  'teamMem.read.doneSub': 'recalled',
+  'teamMem.search.first': 'Searching',
+  'teamMem.search.sub': 'searching',
+  'teamMem.search.done': 'Searched',
+  'teamMem.search.doneSub': 'searched',
+  'teamMem.write.first': 'Writing',
+  'teamMem.write.sub': 'writing',
+  'teamMem.write.done': 'Wrote',
+  'teamMem.write.doneSub': 'wrote',
+  'teamMem.memory_one': 'memory',
+  'teamMem.memory_other': 'memories',
+  'teamMem.searchedMemories': 'Searched team memories',
+  'teamMem.searchingMemories': 'Searching team memories',
 }

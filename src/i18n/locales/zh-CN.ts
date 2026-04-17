@@ -694,6 +694,11 @@ export const zhCN: TranslationResource = {
   'agent.agentsFinishedNoType': '{count} 个 agent 已完成',
   'agent.runningAgents': '正在运行 {count} 个{type}…',
   'agent.runningAgentsNoType': '正在运行 {count} 个 agent…',
+  'agent.remoteLaunched': '远程 agent 已启动',
+  'agent.backgrounded': '后台 agent',
+  'agent.moreToolUses_one': '+{count} 次额外工具使用',
+  'agent.moreToolUses_other': '+{count} 次额外工具使用',
+  'agent.apiCallsOnly': '[ANT-ONLY] API 调用：{path}',
 
   // Pill 标签（后台任务状态）
   'pill.shell_one': '1 个 shell',
@@ -714,4 +719,22 @@ export const zhCN: TranslationResource = {
   'pill.ultraplan': 'ultraplan',
   'pill.backgroundTask_one': '1 个后台任务',
   'pill.backgroundTask_other': '{count} 个后台任务',
+
+  // Team memory 折叠 UI — 动词形式：首个/后续/已完成首个/已完成后续
+  'teamMem.read.first': '正在回想',
+  'teamMem.read.sub': '回想',
+  'teamMem.read.done': '已回想',
+  'teamMem.read.doneSub': '回想',
+  'teamMem.search.first': '正在搜索',
+  'teamMem.search.sub': '搜索',
+  'teamMem.search.done': '已搜索',
+  'teamMem.search.doneSub': '搜索',
+  'teamMem.write.first': '正在写入',
+  'teamMem.write.sub': '写入',
+  'teamMem.write.done': '已写入',
+  'teamMem.write.doneSub': '写入',
+  'teamMem.memory_one': '条记忆',
+  'teamMem.memory_other': '条记忆',
+  'teamMem.searchedMemories': '已搜索团队记忆',
+  'teamMem.searchingMemories': '正在搜索团队记忆',
 }

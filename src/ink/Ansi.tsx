@@ -5,7 +5,7 @@ import type { Color } from './styles.js';
 import { type NamedColor, Parser, type Color as TermioColor, type TextStyle } from './termio.js';
 type Props = {
   children: string;
-  /** When true, force all text to be rendered with dim styling */
+  /** 为 true 时，强制所有文本以暗淡样式渲染 */
   dimColor?: boolean;
 };
 type SpanProps = {

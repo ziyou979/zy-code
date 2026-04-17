@@ -33,9 +33,9 @@ import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js';
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3;
 
 /**
- * Guard: checks if progress data has a `message` field (agent_progress or
- * skill_progress).  Other progress types (e.g. bash_progress forwarded from
- * sub-agents) lack this field and must be skipped by UI helpers.
+ * 守卫函数：检查 progress 数据是否包含 `message` 字段（agent_progress 或
+ * skill_progress）。其他类型的 progress（例如从子代理转发的 bash_progress）
+ * 缺少此字段，必须被 UI 助手跳过。
  */
 function hasProgressMessage(data: Progress): data is AgentToolProgress {
   if (!('message' in data)) {
@@ -46,11 +46,11 @@ function hasProgressMessage(data: Progress): data is AgentToolProgress {
 }
 
 /**
- * Check if a progress message is a search/read/REPL operation (tool use or result).
- * Returns { isSearch, isRead, isREPL } if it's a collapsible operation, null otherwise.
+ * 检查 progress 消息是否为 search/read/REPL 操作（工具使用或结果）。
+ * 如果是可折叠操作，返回 { isSearch, isRead, isREPL }，否则返回 null。
  *
- * For tool_result messages, uses the provided `toolUseByID` map to find the
- * corresponding tool_use block instead of relying on `normalizedMessages`.
+ * 对于 tool_result 消息，使用提供的 `toolUseByID` 映射来查找对应的
+ * tool_use 块，而不是依赖 `normalizedMessages`。
  */
 function getSearchOrReadInfo(progressMessage: ProgressMessage<Progress>, tools: Tools, toolUseByID: Map<string, ToolUseBlockParam>): {
   isSearch: boolean;
@@ -62,12 +62,12 @@ function getSearchOrReadInfo(progressMessage: ProgressMessage<Progress>, tools: 
   }
   const message = progressMessage.data.message;
 
-  // Check tool_use (assistant message)
+  // 检查 tool_use（助手消息）
   if (message.type === 'assistant') {
     return getSearchOrReadFromContent(message.message.content[0], tools);
   }
 
-  // Check tool_result (user message) - find corresponding tool use from the map
+  // 检查 tool_result（用户消息）- 从映射中查找对应的 tool use
   if (message.type === 'user') {
     const content = message.message.content[0];
     if (content?.type === 'tool_result') {
@@ -85,7 +85,7 @@ type SummaryMessage = {
   readCount: number;
   replCount: number;
   uuid: string;
-  isActive: boolean; // true if still in progress (last message was tool_use, not tool_result)
+  isActive: boolean; // true 表示仍在进行中（最后一条消息是 tool_use 而非 tool_result）
 };
 type ProcessedMessage = {
   type: 'original';
@@ -93,12 +93,12 @@ type ProcessedMessage = {
 } | SummaryMessage;
 
 /**
- * Process progress messages to group consecutive search/read operations into summaries.
- * For ants only - returns original messages for non-ants.
- * @param isAgentRunning - If true, the last group is always marked as active (in progress)
+ * 处理 progress 消息，将连续的 search/read 操作分组为摘要。
+ * 仅适用于 ant —— 对非 ant 返回原始消息。
+ * @param isAgentRunning - 如果为 true，最后一个分组始终标记为活跃（进行中）
  */
 function processProgressMessages(messages: ProgressMessage<Progress>[], tools: Tools, isAgentRunning: boolean): ProcessedMessage[] {
-  // Only process for ants
+  // 仅对 ant 进行处理
   if ("external" !== 'ant') {
     return messages.filter((m): m is ProgressMessage<AgentToolProgress> => hasProgressMessage(m.data) && m.data.message.type !== 'user').map(m => ({
       type: 'original',
@@ -127,10 +127,10 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
   }
   const agentMessages = messages.filter((m): m is ProgressMessage<AgentToolProgress> => hasProgressMessage(m.data));
 
-  // Build tool_use lookup incrementally as we iterate
+  // 在迭代过程中逐步构建 tool_use 查找表
   const toolUseByID = new Map<string, ToolUseBlockParam>();
   for (const msg of agentMessages) {
-    // Track tool_use blocks as we see them
+    // 跟踪遇到的 tool_use 块
     if (msg.data.message.type === 'assistant') {
       for (const c of msg.data.message.message.content) {
         if (c.type === 'tool_use') {
@@ -140,7 +140,7 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
     }
     const info = getSearchOrReadInfo(msg, tools, toolUseByID);
     if (info && (info.isSearch || info.isRead || info.isREPL)) {
-      // This is a search/read/REPL operation - add to current group
+      // 这是一个 search/read/REPL 操作 - 添加到当前分组
       if (!currentGroup) {
         currentGroup = {
           searchCount: 0,
@@ -149,7 +149,7 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
           startUuid: msg.uuid
         };
       }
-      // Only count tool_result messages (not tool_use) to avoid double counting
+      // 仅统计 tool_result 消息（不统计 tool_use）以避免重复计数
       if (msg.data.message.type === 'user') {
         if (info.isSearch) {
           currentGroup.searchCount++;
@@ -160,11 +160,11 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
         }
       }
     } else {
-      // Non-search/read/REPL message - flush current group (completed) and add this message
+      // 非 search/read/REPL 消息 - 刷新当前分组（已完成）并添加此消息
       flushGroup(false);
-      // Skip user tool_result messages — subagent progress messages lack
-      // toolUseResult, so UserToolSuccessMessage returns null and the
-      // height=1 Box in renderToolUseProgressMessage shows as a blank line.
+      // 跳过用户 tool_result 消息 — 子代理 progress 消息缺少
+      // toolUseResult，因此 UserToolSuccessMessage 返回 null，
+      // renderToolUseProgressMessage 中的 height=1 Box 会显示为空白行。
       if (msg.data.message.type !== 'user') {
         result.push({
           type: 'original',
@@ -174,7 +174,7 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
     }
   }
 
-  // Flush any remaining group - it's active if the agent is still running
+  // 刷新剩余分组 - 如果代理仍在运行则为活跃状态
   flushGroup(isAgentRunning);
   return result;
 }
@@ -232,8 +232,7 @@ export function renderToolResultMessage(data: Output, progressMessagesForMessage
   theme: ThemeName;
   isTranscriptMode?: boolean;
 }): React.ReactNode {
-  // Remote-launched agents (ant-only) use a private output type not in the
-  // public schema. Narrow via the internal discriminant.
+  // 远程启动的代理（仅限 ant）使用公共 schema 中不存在的内部输出类型。通过内部判别式进行 narrowing。
   const internal = data as Output | RemoteLaunchedOutput;
   if (internal.status === 'remote_launched') {
     return <Box flexDirection="column">
@@ -296,7 +295,7 @@ export function renderToolResultMessage(data: Output, progressMessagesForMessage
   return <Box flexDirection="column">
       {"external" === 'ant' && <MessageResponse>
           <Text color="warning">
-            [ANT-ONLY] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
+            {tSync('agent.apiCallsOnly', { path: getDisplayPath(getDumpPromptsPath(agentId)) })}
           </Text>
         </MessageResponse>}
       {isTranscriptMode && prompt && <MessageResponse>
@@ -373,8 +372,8 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
       </MessageResponse>;
   }
 
-  // Checks to see if we should show a super condensed progress message summary.
-  // This prevents flickers when the terminal size is too small to render all the dynamic content
+  // 检查是否应该显示超级精简的 progress 消息摘要。
+  // 这可以防止终端尺寸太小无法渲染所有动态内容时出现的闪烁。
   const toolToolRenderLinesEstimate = (inProgressToolCallCount ?? 1) * ESTIMATED_LINES_PER_TOOL + TERMINAL_BUFFER_LINES;
   const shouldUseCondensedMode = !isTranscriptMode && terminalSize && terminalSize.rows && terminalSize.rows < toolToolRenderLinesEstimate;
   const getProgressStats = () => {
@@ -410,17 +409,17 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
       </MessageResponse>;
   }
 
-  // Process messages to group consecutive search/read operations into summaries (ants only)
-  // isAgentRunning=true since this is the progress view while the agent is still running
+  // 处理消息，将连续的 search/read 操作分组为摘要（仅 ant）
+  // isAgentRunning=true 因为这是代理仍在运行时显示的 progress 视图
   const processedMessages = processProgressMessages(progressMessages, tools, true);
 
-  // For display, take the last few processed messages
+  // 用于显示，取最后几条处理后的消息
   const displayedMessages = isTranscriptMode ? processedMessages : processedMessages.slice(-MAX_PROGRESS_MESSAGES_TO_SHOW);
 
-  // Count hidden tool uses specifically (not all messages) to match the
-  // final "Done (N tool uses)" count. Each tool use generates multiple
-  // progress messages (tool_use + tool_result + text), so counting all
-  // hidden messages inflates the number shown to the user.
+  // 专门统计隐藏的工具使用次数（而不是所有消息），以匹配最终的
+  // "Done (N tool uses)" 计数。每个工具使用会生成多条 progress 消息
+  //（tool_use + tool_result + text），因此统计所有隐藏消息会导致
+  // 向用户显示的数字膨胀。
   const hiddenMessages = isTranscriptMode ? [] : processedMessages.slice(0, Math.max(0, processedMessages.length - MAX_PROGRESS_MESSAGES_TO_SHOW));
   const hiddenToolUseCount = count(hiddenMessages, m => {
     if (m.type === 'summary') {
@@ -435,10 +434,10 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
   const firstData = progressMessages[0]?.data;
   const prompt = firstData && hasProgressMessage(firstData) ? firstData.prompt : undefined;
 
-  // After grouping, displayedMessages can be empty when the only progress so
-  // far is an assistant tool_use for a search/read op (grouped but not yet
-  // counted, since counts increment on tool_result). Fall back to the
-  // initializing text so MessageResponse doesn't render a bare ⎿.
+  // 分组后，当唯一 progress 是 search/read 操作的 assistant tool_use 时
+  //（已分组但尚未计数，因为计数在 tool_result 时才增加），
+  // displayedMessages 可能为空。回退到初始化文本，
+  // 这样 MessageResponse 不会渲染空的 ⎿。
   if (displayedMessages.length === 0 && !(isTranscriptMode && prompt)) {
     return <MessageResponse height={1}>
         <Text dimColor>{INITIALIZING_TEXT}</Text>
@@ -456,22 +455,21 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
             </Box>}
           {displayedMessages.map(processed => {
           if (processed.type === 'summary') {
-            // Render summary for grouped search/read/REPL operations using shared formatting
+            // 使用共享格式渲染分组 search/read/REPL 操作的摘要
             const summaryText = getSearchReadSummaryText(processed.searchCount, processed.readCount, processed.isActive, processed.replCount);
             return <Box key={processed.uuid} height={1} overflow="hidden">
                   <Text dimColor>{summaryText}</Text>
                 </Box>;
           }
-          // Render original message without height=1 wrapper so null
-          // content (tool not found, renderToolUseMessage returns null)
-          // doesn't leave a blank line. Tool call headers are single-line
-          // anyway so truncation isn't needed.
+          // 渲染原始消息，不使用 height=1 包装，这样 null
+          // 内容（找不到工具，renderToolUseMessage 返回 null）
+          // 不会留下空白行。工具调用头部是单行的，
+          // 因此不需要截断。
           return <MessageComponent key={processed.message.uuid} message={processed.message.data.message} lookups={subagentLookups} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={collapsedInProgressIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} style="condensed" isTranscriptMode={false} isStatic={true} />;
         })}
         </SubAgentProvider>
         {hiddenToolUseCount > 0 && <Text dimColor>
-            +{hiddenToolUseCount} more tool{' '}
-            {hiddenToolUseCount === 1 ? 'use' : 'uses'} <CtrlOToExpand />
+            {tSync(hiddenToolUseCount === 1 ? 'agent.moreToolUses_one' : 'agent.moreToolUses_other', { count: hiddenToolUseCount })} <CtrlOToExpand />
           </Text>}
       </Box>
     </MessageResponse>;
@@ -495,13 +493,13 @@ export function renderToolUseRejectedMessage(_input: {
   verbose: boolean;
   isTranscriptMode?: boolean;
 }): React.ReactNode {
-  // Get agentId from progress messages if available (agent was running before rejection)
+  // 从 progress 消息中获取 agentId（如果可用，代理在被拒绝前正在运行）
   const firstData = progressMessagesForMessage[0]?.data;
   const agentId = firstData && hasProgressMessage(firstData) ? firstData.agentId : undefined;
   return <>
       {"external" === 'ant' && agentId && <MessageResponse>
           <Text color="warning">
-            [ANT-ONLY] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
+            {tSync('agent.apiCallsOnly', { path: getDisplayPath(getDumpPromptsPath(agentId)) })}
           </Text>
         </MessageResponse>}
       {renderToolUseProgressMessage(progressMessagesForMessage, {
@@ -573,7 +571,7 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
     tools
   } = options;
 
-  // Calculate stats for each agent
+  // 计算每个代理的统计数据
   const agentStats = toolUses.map(({
     param,
     isResolved,
@@ -585,11 +583,11 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
     const lastToolInfo = extractLastToolInfo(progressMessages, tools);
     const parsedInput = inputSchema().safeParse(param.input);
 
-    // teammate_spawned is not part of the exported Output type (cast through unknown
-    // for dead code elimination), so check via string comparison on the raw value
+    // teammate_spawned 不在导出的 Output 类型中（通过 unknown 进行类型转换
+    // 以便死代码消除），因此对原始值进行字符串比较来检查
     const isTeammateSpawn = result?.output?.status as string === 'teammate_spawned';
 
-    // For teammate spawns, show @name with type in parens and description as status
+    // 对于 teammate 生成，显示 @name 并在括号中显示类型，描述作为状态
     let agentType: string;
     let description: string | undefined;
     let color: keyof Theme | undefined;
@@ -600,7 +598,7 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
       const subagentType = parsedInput.data.subagent_type;
       description = isCustomSubagentType(subagentType) ? subagentType : undefined;
       taskDescription = parsedInput.data.description;
-      // Use the custom agent definition's color on the type, not the name
+      // 在类型上使用自定义代理定义的颜色，而不是名称
       descriptionColor = isCustomSubagentType(subagentType) ? getAgentColor(subagentType) as keyof Theme | undefined : undefined;
     } else {
       agentType = parsedInput.success ? userFacingName(parsedInput.data) : 'Agent';
@@ -609,7 +607,7 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
       taskDescription = undefined;
     }
 
-    // Check if this was launched as a background agent OR backgrounded mid-execution
+    // 检查这是否作为后台代理启动，还是在执行过程中被后台化
     const launchedAsAsync = parsedInput.success && 'run_in_background' in parsedInput.data && parsedInput.data.run_in_background === true;
     const outputStatus = (result?.output as {
       status?: string;
@@ -637,11 +635,11 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
   const anyError = toolUses.some(t => t.isError);
   const allComplete = !anyUnresolved;
 
-  // Check if all agents are the same type
+  // 检查所有代理是否为同一类型
   const allSameType = agentStats.length > 0 && agentStats.every(stat => stat.agentType === agentStats[0]?.agentType);
   const commonType = allSameType && agentStats[0]?.agentType !== 'Agent' ? agentStats[0]?.agentType : null;
 
-  // Check if all resolved agents are async (background)
+  // 检查所有已完成的代理是否都是异步（后台）的
   const allAsync = agentStats.every(stat => stat.isAsync);
   return <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
@@ -673,7 +671,7 @@ export function userFacingName(input: Partial<{
   team_name: string;
 }> | undefined): string {
   if (input?.subagent_type && input.subagent_type !== GENERAL_PURPOSE_AGENT.agentType) {
-    // Display "worker" agents as "Agent" for cleaner UI
+    // 将 "worker" 代理显示为 "Agent"，使 UI 更简洁
     if (input.subagent_type === 'worker') {
       return 'Agent';
     }
@@ -690,11 +688,11 @@ export function userFacingNameBackgroundColor(input: Partial<{
     return undefined;
   }
 
-  // Get the color for this agent
+  // 获取此代理的颜色
   return getAgentColor(input.subagent_type) as keyof Theme | undefined;
 }
 export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[], tools: Tools): string | null {
-  // Build tool_use lookup from all progress messages (needed for reverse iteration)
+  // 从所有 progress 消息中构建 tool_use 查找表（反向迭代需要）
   const toolUseByID = new Map<string, ToolUseBlockParam>();
   for (const pm of progressMessages) {
     if (!hasProgressMessage(pm.data)) {
@@ -709,7 +707,7 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
     }
   }
 
-  // Count trailing consecutive search/read operations from the end
+  // 从末尾开始统计连续的 search/read 操作
   let searchCount = 0;
   let readCount = 0;
   for (let i = progressMessages.length - 1; i >= 0; i--) {
@@ -719,7 +717,7 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
     }
     const info = getSearchOrReadInfo(msg, tools, toolUseByID);
     if (info && (info.isSearch || info.isRead)) {
-      // Only count tool_result messages to avoid double counting
+      // 仅统计 tool_result 消息以避免重复计数
       if (msg.data.message.type === 'user') {
         if (info.isSearch) {
           searchCount++;
@@ -735,7 +733,7 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
     return getSearchReadSummaryText(searchCount, readCount, true);
   }
 
-  // Find the last tool_result message
+  // 查找最后一条 tool_result 消息
   const lastToolResult = progressMessages.findLast((msg): msg is ProgressMessage<AgentToolProgress> => {
     if (!hasProgressMessage(msg.data)) {
       return false;
@@ -746,20 +744,20 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
   if (lastToolResult?.data.message.type === 'user') {
     const toolResultBlock = lastToolResult.data.message.message.content.find(c => c.type === 'tool_result');
     if (toolResultBlock?.type === 'tool_result') {
-      // Look up the corresponding tool_use — already indexed above
+      // 查找对应的 tool_use — 已在上面索引
       const toolUseBlock = toolUseByID.get(toolResultBlock.tool_use_id);
       if (toolUseBlock) {
         const tool = findToolByName(tools, toolUseBlock.name);
         if (!tool) {
-          return toolUseBlock.name; // Fallback to raw name
+          return toolUseBlock.name; // 回退到原始名称
         }
         const input = toolUseBlock.input as Record<string, unknown>;
         const parsedInput = tool.inputSchema.safeParse(input);
 
-        // Get user-facing tool name
+        // 获取面向用户的工具名称
         const userFacingToolName = tool.userFacingName(parsedInput.success ? parsedInput.data : undefined);
 
-        // Try to get summary from the tool itself
+        // 尝试从工具本身获取摘要
         if (tool.getToolUseSummary) {
           const summary = tool.getToolUseSummary(parsedInput.success ? parsedInput.data : undefined);
           if (summary) {
@@ -767,7 +765,7 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
           }
         }
 
-        // Default: just show user-facing tool name
+        // 默认值：仅显示面向用户的工具名称
         return userFacingToolName;
       }
     }
