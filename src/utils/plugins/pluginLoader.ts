@@ -150,7 +150,7 @@ export function getVersionedCachePathIn(
     /[^a-zA-Z0-9\-_]/g,
     '-',
   )
-  // Sanitize version to prevent path traversal attacks
+  // 清理版本号以防止路径遍历攻击
   const sanitizedVersion = version.replace(/[^a-zA-Z0-9\-_.]/g, '-')
   return join(
     baseDir,
@@ -202,7 +202,7 @@ async function probeSeedCache(
       const entries = await readdir(seedPath)
       if (entries.length > 0) return seedPath
     } catch {
-      // Try next seed
+      // 尝试下一个种子
     }
   }
   return null
@@ -221,8 +221,8 @@ export async function probeSeedCacheAnyVersion(
   pluginId: string,
 ): Promise<string | null> {
   for (const seedDir of getPluginSeedDirs()) {
-    // The parent of the version dir — computed the same way as
-    // getVersionedCachePathIn, just without the version component.
+    // 版本目录的父目录 — 计算方式与
+    // getVersionedCachePathIn 相同，只是没有版本组件。
     const pluginDir = dirname(getVersionedCachePathIn(seedDir, pluginId, '_'))
     try {
       const versions = await readdir(pluginDir)
@@ -231,7 +231,7 @@ export async function probeSeedCacheAnyVersion(
       const entries = await readdir(versionDir)
       if (entries.length > 0) return versionDir
     } catch {
-      // Try next seed
+      // 尝试下一个种子
     }
   }
   return null
@@ -267,7 +267,7 @@ export async function resolvePluginPath(
   pluginId: string,
   version?: string,
 ): Promise<string> {
-  // Try versioned path first
+  // 先尝试版本化路径
   if (version) {
     const versionedPath = getVersionedCachePath(pluginId, version)
     if (await pathExists(versionedPath)) {
@@ -275,14 +275,14 @@ export async function resolvePluginPath(
     }
   }
 
-  // Fall back to legacy path for existing installations
+  // 回退到旧路径以兼容现有安装
   const pluginName = parsePluginIdentifier(pluginId).name || pluginId
   const legacyPath = getLegacyCachePath(pluginName)
   if (await pathExists(legacyPath)) {
     return legacyPath
   }
 
-  // Return versioned path for new installations
+  // 为新安装返回版本化路径
   return version ? getVersionedCachePath(pluginId, version) : legacyPath
 }
 
@@ -306,18 +306,18 @@ export async function copyDir(src: string, dest: string): Promise<void> {
     } else if (entry.isSymbolicLink()) {
       const linkTarget = await readlink(srcPath)
 
-      // Resolve the symlink to get the actual target path
-      // This prevents circular symlinks when src and dest overlap (e.g., via symlink chains)
+      // 解析符号链接以获取实际目标路径
+      // 这防止 src 和 dest 重叠时的循环符号链接（例如通过符号链）
       let resolvedTarget: string
       try {
         resolvedTarget = await realpath(srcPath)
       } catch {
-        // Broken symlink - copy the raw link target as-is
+        // 损坏的符号链接 — 原样复制链接目标
         await symlink(linkTarget, destPath)
         continue
       }
 
-      // Resolve the source directory to handle symlinked source dirs
+      // 解析源目录以处理符号链接的源目录
       let resolvedSrc: string
       try {
         resolvedSrc = await realpath(src)
@@ -325,7 +325,7 @@ export async function copyDir(src: string, dest: string): Promise<void> {
         resolvedSrc = src
       }
 
-      // Check if target is within the source tree (using proper path prefix matching)
+      // 检查目标是否在源树内（使用正确的路径前缀匹配）
       const srcPrefix = resolvedSrc.endsWith(sep)
         ? resolvedSrc
         : resolvedSrc + sep
@@ -333,14 +333,13 @@ export async function copyDir(src: string, dest: string): Promise<void> {
         resolvedTarget.startsWith(srcPrefix) ||
         resolvedTarget === resolvedSrc
       ) {
-        // Target is within source tree - create relative symlink that preserves
-        // the same structure in the destination
+        // 目标在源树内 — 创建保留相同结构的相对符号链接
         const targetRelativeToSrc = relative(resolvedSrc, resolvedTarget)
         const destTargetPath = join(dest, targetRelativeToSrc)
         const relativeLinkPath = relative(dirname(destPath), destTargetPath)
         await symlink(relativeLinkPath, destPath)
       } else {
-        // Target is outside source tree - use absolute resolved path
+        // 目标在源树外 — 使用绝对解析路径
         await symlink(resolvedTarget, destPath)
       }
     }
@@ -369,12 +368,12 @@ export async function copyPluginToVersionedCache(
   entry?: PluginMarketplaceEntry,
   marketplaceDir?: string,
 ): Promise<string> {
-  // When zip cache is enabled, the canonical format is a ZIP file
+  // 启用 zip 缓存时，规范格式是 ZIP 文件
   const zipCacheMode = isPluginZipCacheEnabled()
   const cachePath = getVersionedCachePath(pluginId, version)
   const zipPath = getVersionedZipCachePath(pluginId, version)
 
-  // If cache already exists (directory or ZIP), return it
+  // 如果缓存已存在（目录或 ZIP），直接返回
   if (zipCacheMode) {
     if (await pathExists(zipPath)) {
       logForDebugging(
@@ -390,15 +389,15 @@ export async function copyPluginToVersionedCache(
       )
       return cachePath
     }
-    // Directory exists but is empty, remove it so we can recreate with content
+    // 目录存在但为空，删除它以便用内容重新创建
     logForDebugging(
       `Removing empty cache directory for ${pluginId} at ${cachePath}`,
     )
     await rmdir(cachePath)
   }
 
-  // Seed cache hit — return seed path in place (read-only, no copy).
-  // Callers handle both directory and .zip paths; this returns a directory.
+  // 种子缓存命中 — 原样返回种子路径（只读，不复制）。
+  // 调用者处理目录和 .zip 路径；这里返回目录。
   const seedPath = await probeSeedCache(pluginId, version)
   if (seedPath) {
     logForDebugging(
@@ -407,11 +406,11 @@ export async function copyPluginToVersionedCache(
     return seedPath
   }
 
-  // Create parent directories
+  // 创建父目录
   await getFsImplementation().mkdir(dirname(cachePath))
 
-  // For local plugins: copy entry.source directory (the single source of truth)
-  // For remote plugins: marketplaceDir is undefined, fall back to copying sourcePath
+  // 对于本地插件：复制 entry.source 目录（单一真实来源）
+  // 对于远程插件：marketplaceDir 未定义，回退复制 sourcePath
   if (entry && typeof entry.source === 'string' && marketplaceDir) {
     const sourceDir = validatePathWithinBase(marketplaceDir, entry.source)
 
@@ -421,9 +420,9 @@ export async function copyPluginToVersionedCache(
     try {
       await copyDir(sourceDir, cachePath)
     } catch (e: unknown) {
-      // Only remap ENOENT from the top-level sourceDir itself — nested ENOENTs
-      // from recursive copyDir (broken symlinks, raced deletes) should preserve
-      // their original path in the error.
+      // 仅重新映射顶层 sourceDir 本身的 ENOENT — 递归 copyDir
+      // 中的嵌套 ENOENT（损坏的符号链接、竞争的删除）应保留
+      // 原始路径在错误中。
       if (isENOENT(e) && getErrnoPath(e) === sourceDir) {
         throw new Error(
           `Plugin source directory not found: ${sourceDir} (from entry.source: ${entry.source})`,
@@ -432,18 +431,18 @@ export async function copyPluginToVersionedCache(
       throw e
     }
   } else {
-    // Fallback for remote plugins (already downloaded) or plugins without entry.source
+    // 远程插件（已下载）或没有 entry.source 的插件的回退
     logForDebugging(
       `Copying plugin ${pluginId} to versioned cache (fallback to full copy)`,
     )
     await copyDir(sourcePath, cachePath)
   }
 
-  // Remove .git directory from cache if present
+  // 从缓存中移除 .git 目录（如果存在）
   const gitPath = join(cachePath, '.git')
   await rm(gitPath, { recursive: true, force: true })
 
-  // Validate that cache has content - if empty, throw so fallback can be used
+  // 验证缓存有内容 — 如果为空则抛出，以便使用回退
   const cacheEntries = await readdir(cachePath)
   if (cacheEntries.length === 0) {
     throw new Error(
@@ -451,7 +450,7 @@ export async function copyPluginToVersionedCache(
     )
   }
 
-  // Zip cache mode: convert directory to ZIP and remove the directory
+  // Zip 缓存模式：将目录转换为 ZIP 并删除目录
   if (zipCacheMode) {
     await convertDirectoryToZipInPlace(cachePath, zipPath)
     logForDebugging(
@@ -465,7 +464,7 @@ export async function copyPluginToVersionedCache(
 }
 
 /**
- * Validate a git URL using Node.js URL parsing
+ * 使用 Node.js URL 解析验证 git URL
  */
 function validateGitUrl(url: string): string {
   try {
@@ -473,7 +472,7 @@ function validateGitUrl(url: string): string {
     if (!['https:', 'http:', 'file:'].includes(parsed.protocol)) {
       if (!/^git@[a-zA-Z0-9.-]+:/.test(url)) {
         throw new Error(
-          `Invalid git URL protocol: ${parsed.protocol}. Only HTTPS, HTTP, file:// and SSH (git@) URLs are supported.`,
+          `无效的 git URL 协议: ${parsed.protocol}。仅支持 HTTPS、HTTP、file:// 和 SSH (git@) URL。`,
         )
       }
     }
@@ -487,7 +486,7 @@ function validateGitUrl(url: string): string {
 }
 
 /**
- * Install a plugin from npm using a global cache (exported for testing)
+ * 使用 npm 从全局缓存安装插件（导出用于测试）
  */
 export async function installFromNpm(
   packageName: string,
@@ -524,12 +523,12 @@ export async function installFromNpm(
 }
 
 /**
- * Clone a git repository (exported for testing)
+ * 克隆 git 仓库（导出用于测试）
  *
- * @param gitUrl - The git URL to clone
- * @param targetPath - Where to clone the repository
- * @param ref - Optional branch or tag to checkout
- * @param sha - Optional specific commit SHA to checkout
+ * @param gitUrl - 要克隆的 git URL
+ * @param targetPath - 克隆到的位置
+ * @param ref - 可选的分支或标签以检出
+ * @param sha - 可选的特定提交 SHA 以检出
  */
 export async function gitClone(
   gitUrl: string,
@@ -537,8 +536,8 @@ export async function gitClone(
   ref?: string,
   sha?: string,
 ): Promise<void> {
-  // Use --recurse-submodules to initialize submodules
-  // Always start with shallow clone for efficiency
+  // 使用 --recurse-submodules 初始化子模块
+  // 始终从浅克隆开始以提高效率
   const args = [
     'clone',
     '--depth',
@@ -547,12 +546,12 @@ export async function gitClone(
     '--shallow-submodules',
   ]
 
-  // Add --branch flag for specific ref (works for both branches and tags)
+  // 为特定 ref 添加 --branch 标志（适用于分支和标签）
   if (ref) {
     args.push('--branch', ref)
   }
 
-  // If sha is specified, use --no-checkout since we'll checkout the SHA separately
+  // 指定 sha 时，使用 --no-checkout 因为我们将单独检出 SHA
   if (sha) {
     args.push('--no-checkout')
   }
@@ -573,9 +572,9 @@ export async function gitClone(
     throw new Error(`Failed to clone repository: ${cloneResult.stderr}`)
   }
 
-  // If sha is specified, fetch and checkout that specific commit
+  // 指定 sha 时，获取并检出特定提交
   if (sha) {
-    // Try shallow fetch of the specific SHA first (most efficient)
+    // 先尝试浅获取特定 SHA（最高效）
     const shallowFetchResult = await execFileNoThrowWithCwd(
       gitExe(),
       ['fetch', '--depth', '1', 'origin', sha],
@@ -583,8 +582,8 @@ export async function gitClone(
     )
 
     if (shallowFetchResult.code !== 0) {
-      // Some servers don't support fetching arbitrary SHAs
-      // Fall back to unshallow fetch to get full history
+      // 某些服务器不支持获取任意 SHA
+      // 回退到完整获取以获取完整历史
       logForDebugging(
         `Shallow fetch of SHA ${sha} failed, falling back to unshallow fetch`,
       )
@@ -608,7 +607,7 @@ export async function gitClone(
       }
     }
 
-    // Checkout the specific commit
+    // 检出特定提交
     const checkoutResult = await execFileNoThrowWithCwd(
       gitExe(),
       ['checkout', sha],
@@ -629,8 +628,8 @@ export async function gitClone(
     }
   }
 
-  // Fire success only after ALL network ops (clone + optional SHA fetch)
-  // complete — same telemetry-scope discipline as mcpb and marketplace_url.
+  // 仅在所有网络操作（克隆 + 可选 SHA 获取）
+  // 完成后触发成功 — 与 mcpb 和 marketplace_url 的遥测范围一致。
   logPluginFetch(
     'plugin_clone',
     gitUrl,
@@ -640,7 +639,7 @@ export async function gitClone(
 }
 
 /**
- * Install a plugin from a git URL
+ * 从 git URL 安装插件
  */
 async function installFromGit(
   gitUrl: string,
@@ -657,7 +656,7 @@ async function installFromGit(
 }
 
 /**
- * Install a plugin from GitHub
+ * 从 GitHub 安装插件
  */
 async function installFromGitHub(
   repo: string,
@@ -670,7 +669,7 @@ async function installFromGitHub(
       `Invalid GitHub repository format: ${repo}. Expected format: owner/repo`,
     )
   }
-  // Use HTTPS for CCR (no SSH keys), SSH for normal CLI
+  // CCR 使用 HTTPS（无 SSH 密钥），普通 CLI 使用 SSH
   const gitUrl = isEnvTruthy(process.env.ZY_CODE_REMOTE)
     ? `https://github.com/${repo}.git`
     : `git@github.com:${repo}.git`
@@ -730,7 +729,7 @@ export async function installFromGitSubdir(
   }
 
   const gitUrl = resolveGitSubdirUrl(url)
-  // Clone into a sibling temp dir (same filesystem → rename works, no EXDEV).
+  // 克隆到同级临时目录（同一文件系统 → 重命名可行，无 EXDEV）。
   const cloneDir = `${targetPath}.clone`
 
   const cloneArgs = [
@@ -764,11 +763,11 @@ export async function installFromGitSubdir(
       )
     }
 
-    // Capture the resolved commit SHA before discarding the clone. The
-    // extracted subdir has no .git, so the caller can't rev-parse it later.
-    // If the source specified a full 40-char sha we already know it; otherwise
-    // read HEAD (which points to ref's tip after --branch, or the remote
-    // default branch if no ref was given).
+    // 在丢弃克隆前捕获解析的提交 SHA。提取的
+    // 子目录没有 .git，所以调用者无法在之后 rev-parse。
+    // 如果源指定了完整的 40 字符 sha 我们已经知道它；否则
+    // 读取 HEAD（在 --branch 后指向 ref 的尖端，或者如果没有
+    // 给定 ref 则指向远程默认分支）。
     let resolvedSha: string | undefined
 
     if (sha) {
@@ -800,11 +799,11 @@ export async function installFromGitSubdir(
       }
       resolvedSha = sha
     } else {
-      // checkout HEAD materializes the working tree (this is where blobs are
-      // lazy-fetched — the slow, network-bound step). It doesn't move HEAD;
-      // --branch at clone time already positioned it. rev-parse HEAD is a
-      // purely read-only ref lookup (no index lock), so it runs safely in
-      // parallel with checkout and we avoid waiting on the network for it.
+      // checkout HEAD 物化工作树（这是 blob 延迟获取的地方
+      // — 慢速、网络绑定的步骤）。它不会移动 HEAD；
+      // 克隆时的 --branch 已经定位了它。rev-parse HEAD 是
+      // 纯只读的引用查找（无索引锁），因此它可以安全地与
+      // checkout 并行运行，我们避免等待网络。
       const [checkout, revParse] = await Promise.all([
         execFileNoThrowWithCwd(gitExe(), ['checkout', 'HEAD'], {
           cwd: cloneDir,
@@ -823,9 +822,9 @@ export async function installFromGitSubdir(
       }
     }
 
-    // Path traversal guard: resolve+verify the subdir stays inside cloneDir
-    // before moving it out. rename ENOENT is wrapped with a friendlier
-    // message that references the source path, not internal temp dirs.
+    // 路径遍历守卫：在移出之前解析+验证子目录
+    // 保持在 cloneDir 内。rename ENOENT 被包装为更友好的
+    // 消息，引用源路径而非内部临时目录。
     const resolvedSubdir = validatePathWithinBase(cloneDir, subdirPath)
     try {
       await rename(resolvedSubdir, targetPath)
@@ -851,7 +850,7 @@ export async function installFromGitSubdir(
 }
 
 /**
- * Install a plugin from a local path
+ * 从本地路径安装插件
  */
 async function installFromLocal(
   sourcePath: string,
@@ -868,7 +867,7 @@ async function installFromLocal(
 }
 
 /**
- * Generate a temporary cache name for a plugin
+ * 生成插件的临时缓存名称
  */
 export function generateTemporaryCacheNameForPlugin(
   source: PluginSource,
@@ -906,7 +905,7 @@ export function generateTemporaryCacheNameForPlugin(
 }
 
 /**
- * Cache a plugin from an external source
+ * 从外部来源缓存插件
  */
 export async function cachePlugin(
   source: PluginSource,
@@ -989,7 +988,7 @@ export async function cachePlugin(
       if (result.success) {
         manifest = result.data
       } else {
-        // Manifest exists but is invalid - throw error
+        // 清单存在但无效 — 抛出错误
         const errors = result.error.issues
           .map(err => `${err.path.join('.')}: ${err.message}`)
           .join(', ')
@@ -1003,7 +1002,7 @@ export async function cachePlugin(
         )
       }
     } catch (error) {
-      // Check if this is a validation error we just threw
+      // 检查这是否是我们刚刚抛出的验证错误
       if (
         error instanceof Error &&
         error.message.includes('invalid manifest file')
@@ -1011,7 +1010,7 @@ export async function cachePlugin(
         throw error
       }
 
-      // JSON parse error
+      // JSON 解析错误
       const errorMsg = errorMessage(error)
       logForDebugging(
         `Failed to parse manifest at ${manifestPath}: ${errorMsg}`,
@@ -1035,7 +1034,7 @@ export async function cachePlugin(
       if (result.success) {
         manifest = result.data
       } else {
-        // Manifest exists but is invalid - throw error
+        // 清单存在但无效 — 抛出错误
         const errors = result.error.issues
           .map(err => `${err.path.join('.')}: ${err.message}`)
           .join(', ')
@@ -1050,7 +1049,7 @@ export async function cachePlugin(
         )
       }
     } catch (error) {
-      // Check if this is a validation error we just threw
+      // 检查这是否是我们刚刚抛出的验证错误
       if (
         error instanceof Error &&
         error.message.includes('invalid manifest file')
@@ -1058,7 +1057,7 @@ export async function cachePlugin(
         throw error
       }
 
-      // JSON parse error
+      // JSON 解析错误
       const errorMsg = errorMessage(error)
       logForDebugging(
         `Failed to parse legacy manifest at ${legacyManifestPath}: ${errorMsg}`,
@@ -1149,10 +1148,10 @@ export async function loadPluginManifest(
   pluginName: string,
   source: string,
 ): Promise<PluginManifest> {
-  // Check if manifest file exists
-  // If not, create a minimal manifest to allow plugin to function
+  // 检查清单文件是否存在
+  // 如果不存在，创建最小清单以使插件能够运行
   if (!(await pathExists(manifestPath))) {
-    // Return default manifest with provided name and source
+    // 使用提供的名称和源返回默认清单
     return {
       name: pluginName,
       description: `Plugin from ${source}`,
@@ -1160,19 +1159,19 @@ export async function loadPluginManifest(
   }
 
   try {
-    // Read and parse the manifest JSON file
+    // 读取并解析清单 JSON 文件
     const content = await readFile(manifestPath, { encoding: 'utf-8' })
     const parsedJson = jsonParse(content)
 
-    // Validate against the PluginManifest schema
+    // 针对 PluginManifest schema 进行验证
     const result = PluginManifestSchema().safeParse(parsedJson)
 
     if (result.success) {
-      // Valid manifest - return the validated data
+      // 清单有效 — 返回验证后的数据
       return result.data
     }
 
-    // Schema validation failed but JSON was valid
+    // Schema 验证失败但 JSON 是有效的
     const errors = result.error.issues
       .map(err =>
         err.path.length > 0
@@ -1198,7 +1197,7 @@ export async function loadPluginManifest(
       throw error
     }
 
-    // JSON parsing failed or file read error
+    // JSON 解析失败或文件读取错误
     const errorMsg = errorMessage(error)
 
     logForDebugging(
@@ -1234,8 +1233,8 @@ async function loadPluginHooks(
   const content = await readFile(hooksConfigPath, { encoding: 'utf-8' })
   const rawHooksConfig = jsonParse(content)
 
-  // The hooks.json file has a wrapper structure with description and hooks
-  // Use PluginHooksSchema to validate and extract the hooks property
+  // hooks.json 文件有一个包含 description 和 hooks 的包装结构
+  // 使用 PluginHooksSchema 来验证并提取 hooks 属性
   const validatedPluginHooks = PluginHooksSchema().parse(rawHooksConfig)
 
   return validatedPluginHooks.hooks as HooksSettings
@@ -1272,14 +1271,14 @@ async function validatePluginPaths(
   contextLabel: string,
   errors: PluginError[],
 ): Promise<string[]> {
-  // Parallelize the async pathExists checks
+  // 并行执行异步 pathExists 检查
   const checks = await Promise.all(
     relPaths.map(async relPath => {
       const fullPath = join(pluginPath, relPath)
       return { relPath, fullPath, exists: await pathExists(fullPath) }
     }),
   )
-  // Process results in original order to keep error/log ordering deterministic
+  // 按原始顺序处理结果，以保持错误/日志顺序确定性
   const validPaths: string[] = []
   for (const { relPath, fullPath, exists } of checks) {
     if (exists) {

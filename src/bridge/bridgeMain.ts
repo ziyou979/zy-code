@@ -2766,13 +2766,13 @@ export async function bridgeMain(args: string[]): Promise<void> {
   process.exit(0)
 }
 
-// ─── Headless bridge (daemon worker) ────────────────────────────────────────
+// ─── 无头 bridge（daemon worker）────────────────────────────────────────────────
 
 /**
- * Thrown by runBridgeHeadless for configuration issues the supervisor should
- * NOT retry (trust not accepted, worktree unavailable, http-not-https). The
- * daemon worker catches this and exits with EXIT_CODE_PERMANENT so the
- * supervisor parks the worker instead of respawning it on backoff.
+ * 由 runBridgeHeadless 抛出，用于监督器不应该重试的配置问题
+ *（未接受信任、worktree 不可用、http 非 https）。
+ * daemon worker 捕获此错误并以 EXIT_CODE_PERMANENT 退出，
+ * 使监督器停放 worker 而不是在退避时重新生成它。
  */
 export class BridgeHeadlessPermanentError extends Error {
   constructor(message: string) {
@@ -2796,15 +2796,14 @@ export type HeadlessBridgeOpts = {
 }
 
 /**
- * Non-interactive bridge entrypoint for the `remoteControl` daemon worker.
+ * `remoteControl` daemon worker 的无交互 bridge 入口点。
  *
- * Linear subset of bridgeMain(): no readline dialogs, no stdin key handlers,
- * no TUI, no process.exit(). Config comes from the caller (daemon.json), auth
- * comes via IPC (supervisor's AuthManager), logs go to the worker's stdout
- * pipe. Throws on fatal errors — the worker catches and maps permanent vs
- * transient to the right exit code.
+ * bridgeMain() 的线性子集：没有 readline 对话框、没有 stdin 键处理程序、
+ * 没有 TUI、没有 process.exit()。配置来自调用者（daemon.json），
+ * 认证通过 IPC（监督器的 AuthManager），日志输出到 worker 的 stdout 管道。
+ * 致命错误时抛出——worker 捕获并将永久 vs 瞬态映射到正确的退出码。
  *
- * Resolves cleanly when `signal` aborts and the poll loop tears down.
+ * 当 `signal` 中止且轮询循环清理时干净地解析。
  */
 export async function runBridgeHeadless(
   opts: HeadlessBridgeOpts,
@@ -2812,9 +2811,9 @@ export async function runBridgeHeadless(
 ): Promise<void> {
   const { dir, log } = opts
 
-  // Worker inherits the supervisor's CWD. chdir first so git utilities
-  // (getBranch/getRemoteUrl) — which read from bootstrap CWD state set
-  // below — resolve against the right repo.
+  // Worker 继承监督器的 CWD。先 chdir 以便 git 工具
+  //（getBranch/getRemoteUrl）——从下方设置的 bootstrap CWD 状态读取——
+  // 能正确解析到对应的仓库。
   process.chdir(dir)
   const { setOriginalCwd, setCwdState } = await import('../bootstrap/state.js')
   setOriginalCwd(dir)
@@ -2834,7 +2833,7 @@ export async function runBridgeHeadless(
   }
 
   if (!opts.getAccessToken()) {
-    // Transient — supervisor's AuthManager may pick up a token on next cycle.
+    // 瞬态——监督器的 AuthManager 可能在下一个周期获取到 token。
     throw new Error(BRIDGE_LOGIN_ERROR)
   }
 
@@ -2908,7 +2907,7 @@ export async function runBridgeHeadless(
     environmentId = reg.environment_id
     environmentSecret = reg.environment_secret
   } catch (err) {
-    // Transient — let supervisor backoff-retry.
+    // 瞬态——让监督器退避重试。
     throw new Error(`Bridge registration failed: ${errorMessage(err)}`)
   }
 
@@ -2963,7 +2962,7 @@ export async function runBridgeHeadless(
   )
 }
 
-/** BridgeLogger adapter that routes everything to a single line-log fn. */
+/** BridgeLogger 适配器，将所有内容路由到单行日志函数。 */
 function createHeadlessBridgeLogger(log: (s: string) => void): BridgeLogger {
   const noop = (): void => {}
   return {

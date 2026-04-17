@@ -123,7 +123,7 @@ export async function ensureToolResultsDir(): Promise<void> {
   try {
     await mkdir(getToolResultsDir(), { recursive: true })
   } catch {
-    // Directory may already exist
+    // 目录可能已存在
   }
 }
 
@@ -820,12 +820,13 @@ export async function enforceToolResultBudget(
         ? selectFreshToReplace(eligible, frozenSize, limit)
         : []
 
-    // Mark non-persisting candidates as seen NOW (synchronously). IDs
-    // selected for persist are marked seen AFTER the await, alongside
-    // replacements.set — keeps the pair atomic under observation so no
-    // concurrent reader (once subagents share state) ever sees X∈seenIds
-    // but X∉replacements, which would misclassify X as frozen and send
-    // full content while the main thread sends the preview → cache miss.
+    // 将不需要持久化的候选标记为已见（同步）。选中
+    // 持久化的 ID 在 await 之后才标记为已见，与
+    // replacements.set 一起——保持这对在观察下的原子性，
+    // 这样没有并发读者（当子代理共享状态时）会看到
+    // X 在 seenIds 中但 X 不在 replacements 中，否则会将 X
+    // 误分类为 frozen 并发送完整内容，而主线程发送预览
+    // 导致缓存未命中。
     const selectedIds = new Set(selected.map(c => c.toolUseId))
     candidates
       .filter(c => !selectedIds.has(c.toolUseId))

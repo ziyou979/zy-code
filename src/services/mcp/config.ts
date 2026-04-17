@@ -57,14 +57,14 @@ import {
 import { getProjectMcpServerStatus } from './utils.js'
 
 /**
- * Get the path to the managed MCP configuration file
+ * 获取托管 MCP 配置文件的路径
  */
 export function getEnterpriseMcpFilePath(): string {
   return join(getManagedFilePath(), 'managed-mcp.json')
 }
 
 /**
- * Internal utility: Add scope to server configs
+ * 内部工具：向服务器配置添加作用域
  */
 function addScopeToServers(
   servers: Record<string, McpServerConfig> | undefined,
@@ -88,7 +88,7 @@ function addScopeToServers(
 async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
   const mcpJsonPath = join(getCwd(), '.mcp.json')
 
-  // Read existing file permissions to preserve them
+  // 读取现有文件权限以便保留
   let existingMode: number | undefined
   try {
     const stats = await stat(mcpJsonPath)
@@ -98,10 +98,10 @@ async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
     if (code !== 'ENOENT') {
       throw e
     }
-    // File doesn't exist yet -- no permissions to preserve
+    // 文件尚不存在 — 无需保留权限
   }
 
-  // Write to temp file, flush to disk, then atomic rename
+  // 写入临时文件，刷新到磁盘，然后原子重命名
   const tempPath = `${mcpJsonPath}.tmp.${process.pid}.${Date.now()}`
   const handle = await open(tempPath, 'w', existingMode ?? 0o644)
   try {
@@ -114,28 +114,28 @@ async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
   }
 
   try {
-    // Restore original file permissions on the temp file before rename
+    // 重命名前在临时文件上恢复原始文件权限
     if (existingMode !== undefined) {
       await chmod(tempPath, existingMode)
     }
     await rename(tempPath, mcpJsonPath)
   } catch (e: unknown) {
-    // Clean up temp file on failure
+    // 失败时清理临时文件
     try {
       await unlink(tempPath)
     } catch {
-      // Best-effort cleanup
+      // 尽力清理
     }
     throw e
   }
 }
 
 /**
- * Extract command array from server config (stdio servers only)
- * Returns null for non-stdio servers
+ * 从服务器配置中提取命令数组（仅 stdio 服务器）
+ * 非 stdio 服务器返回 null
  */
 function getServerCommandArray(config: McpServerConfig): string[] | null {
-  // Non-stdio servers don't have commands
+  // 非 stdio 服务器没有命令
   if (config.type !== undefined && config.type !== 'stdio') {
     return null
   }
@@ -144,7 +144,7 @@ function getServerCommandArray(config: McpServerConfig): string[] | null {
 }
 
 /**
- * Check if two command arrays match exactly
+ * 检查两个命令数组是否完全匹配
  */
 function commandArraysMatch(a: string[], b: string[]): boolean {
   if (a.length !== b.length) {
@@ -227,7 +227,7 @@ export function dedupPluginMcpServers(
   servers: Record<string, ScopedMcpServerConfig>
   suppressed: Array<{ name: string; duplicateOf: string }>
 } {
-  // Map signature -> server name so we can report which server a dup matches
+  // 签名 -> 服务器名称的映射，以便报告哪个服务器匹配重复项
   const manualSigs = new Map<string, string>()
   for (const [name, config] of Object.entries(manualServers)) {
     const sig = getMcpServerSignature(config)
@@ -318,9 +318,9 @@ export function dedupZyAIMcpServers(
  *   "https://example.com:*\/*" matches any port
  */
 function urlPatternToRegex(pattern: string): RegExp {
-  // Escape regex special characters except *
+  // 转义正则特殊字符，但 * 除外
   const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-  // Replace * with regex equivalent (match any characters)
+  // 将 * 替换为正则等价物（匹配任意字符）
   const regexStr = escaped.replace(/\*/g, '.*')
   return new RegExp(`^${regexStr}$`)
 }
@@ -367,17 +367,17 @@ function isMcpServerDenied(
 ): boolean {
   const settings = getMcpDenylistSettings()
   if (!settings.deniedMcpServers) {
-    return false // No restrictions
+    return false // 没有限制
   }
 
-  // Check name-based denial
+  // 检查基于名称的拒绝
   for (const entry of settings.deniedMcpServers) {
     if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
       return true
     }
   }
 
-  // Check command-based denial (stdio servers only) and URL-based denial (remote servers only)
+  // 检查基于命令的拒绝（仅 stdio 服务器）和基于 URL 的拒绝（仅远程服务器）
   if (config) {
     const serverCommand = getServerCommandArray(config)
     if (serverCommand) {
@@ -418,22 +418,22 @@ function isMcpServerAllowedByPolicy(
   serverName: string,
   config?: McpServerConfig,
 ): boolean {
-  // Denylist takes absolute precedence
+  // 拒绝列表具有绝对优先级
   if (isMcpServerDenied(serverName, config)) {
     return false
   }
 
   const settings = getMcpAllowlistSettings()
   if (!settings.allowedMcpServers) {
-    return true // No allowlist restrictions (undefined)
+    return true // 没有允许列表限制（undefined）
   }
 
-  // Empty allowlist means block all servers
+  // 空允许列表意味着阻止所有服务器
   if (settings.allowedMcpServers.length === 0) {
     return false
   }
 
-  // Check if allowlist contains any command-based or URL-based entries
+  // 检查允许列表是否包含任何基于命令或基于 URL 的条目
   const hasCommandEntries = settings.allowedMcpServers.some(
     isMcpServerCommandEntry,
   )
@@ -444,9 +444,9 @@ function isMcpServerAllowedByPolicy(
     const serverUrl = getServerUrl(config)
 
     if (serverCommand) {
-      // This is a stdio server
+      // 这是 stdio 服务器
       if (hasCommandEntries) {
-        // If ANY serverCommand entries exist, stdio servers MUST match one of them
+        // 如果存在任何 serverCommand 条目，stdio 服务器必须匹配其中之一
         for (const entry of settings.allowedMcpServers) {
           if (
             isMcpServerCommandEntry(entry) &&
@@ -455,9 +455,9 @@ function isMcpServerAllowedByPolicy(
             return true
           }
         }
-        return false // Stdio server doesn't match any command entry
+        return false // Stdio 服务器不匹配任何命令条目
       } else {
-        // No command entries, check name-based allowance
+        // 没有命令条目，检查基于名称的允许
         for (const entry of settings.allowedMcpServers) {
           if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
             return true
@@ -466,9 +466,9 @@ function isMcpServerAllowedByPolicy(
         return false
       }
     } else if (serverUrl) {
-      // This is a remote server (sse, http, ws, etc.)
+      // 这是远程服务器（sse、http、ws 等）
       if (hasUrlEntries) {
-        // If ANY serverUrl entries exist, remote servers MUST match one of them
+        // 如果存在任何 serverUrl 条目，远程服务器必须匹配其中之一
         for (const entry of settings.allowedMcpServers) {
           if (
             isMcpServerUrlEntry(entry) &&
@@ -477,9 +477,9 @@ function isMcpServerAllowedByPolicy(
             return true
           }
         }
-        return false // Remote server doesn't match any URL entry
+        return false // 远程服务器不匹配任何 URL 条目
       } else {
-        // No URL entries, check name-based allowance
+        // 没有 URL 条目，检查基于名称的允许
         for (const entry of settings.allowedMcpServers) {
           if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
             return true
@@ -488,7 +488,7 @@ function isMcpServerAllowedByPolicy(
         return false
       }
     } else {
-      // Unknown server type - check name-based allowance only
+      // 未知服务器类型 — 仅检查基于名称的允许
       for (const entry of settings.allowedMcpServers) {
         if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
           return true
@@ -498,7 +498,7 @@ function isMcpServerAllowedByPolicy(
     }
   }
 
-  // No config provided - check name-based allowance only
+  // 未提供配置 — 仅检查基于名称的允许
   for (const entry of settings.allowedMcpServers) {
     if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
       return true
@@ -633,7 +633,7 @@ export async function addMcpConfig(
     )
   }
 
-  // Block reserved server name "claude-in-chrome"
+  // 阻止保留的服务器名称 "claude-in-chrome"
   if (isClaudeInChromeMCPServer(name)) {
     throw new Error(`Cannot add MCP server "${name}": this name is reserved.`)
   }
@@ -647,14 +647,14 @@ export async function addMcpConfig(
     }
   }
 
-  // Block adding servers when enterprise MCP config exists (it has exclusive control)
+  // 当存在企业 MCP 配置时阻止添加服务器（它具有独占控制）
   if (doesEnterpriseMcpConfigExist()) {
     throw new Error(
       `Cannot add MCP server: enterprise MCP configuration is active and has exclusive control over MCP servers`,
     )
   }
 
-  // Validate config first (needed for command-based policy checks)
+  // 先验证配置（基于命令的策略检查需要）
   const result = McpServerConfigSchema().safeParse(config)
   if (!result.success) {
     const formattedErrors = result.error.issues
@@ -664,21 +664,21 @@ export async function addMcpConfig(
   }
   const validatedConfig = result.data
 
-  // Check denylist (with config for command-based checks)
+  // 检查拒绝列表（含配置用于基于命令的检查）
   if (isMcpServerDenied(name, validatedConfig)) {
     throw new Error(
       `Cannot add MCP server "${name}": server is explicitly blocked by enterprise policy`,
     )
   }
 
-  // Check allowlist (with config for command-based checks)
+  // 检查允许列表（含配置用于基于命令的检查）
   if (!isMcpServerAllowedByPolicy(name, validatedConfig)) {
     throw new Error(
       `Cannot add MCP server "${name}": not allowed by enterprise policy`,
     )
   }
 
-  // Check if server already exists in the target scope
+  // 检查服务器是否已存在于目标作用域中
   switch (scope) {
     case 'project': {
       const { servers } = getProjectMcpConfigsFromCwd()
@@ -709,7 +709,7 @@ export async function addMcpConfig(
       throw new Error('Cannot add MCP server to scope: zyai')
   }
 
-  // Add based on scope
+  // 根据作用域添加
   switch (scope) {
     case 'project': {
       const { servers: existingServers } = getProjectMcpConfigsFromCwd()
@@ -724,7 +724,7 @@ export async function addMcpConfig(
       mcpServers[name] = validatedConfig
       const mcpConfig = { mcpServers }
 
-      // Write back to .mcp.json
+      // 写回 .mcp.json
       try {
         await writeMcpjsonFile(mcpConfig)
       } catch (error) {
@@ -778,7 +778,7 @@ export async function removeMcpConfig(
         throw new Error(`No MCP server found with name: ${name} in .mcp.json`)
       }
 
-      // Strip scope information when writing back to .mcp.json
+      // 写回 .mcp.json 时剥离作用域信息
       const mcpServers: Record<string, McpServerConfig> = {}
       for (const [serverName, serverConfig] of Object.entries(
         existingServers,
@@ -813,7 +813,7 @@ export async function removeMcpConfig(
     }
 
     case 'local': {
-      // Check if server exists before updating
+      // 更新前先检查服务器是否存在
       const config = getCurrentProjectConfig()
       if (!config.mcpServers?.[name]) {
         throw new Error(`No project-local MCP server found with name: ${name}`)
@@ -844,7 +844,7 @@ export function getProjectMcpConfigsFromCwd(): {
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
-  // Check if project source is enabled
+  // 检查项目源是否已启用
   if (!isSettingSourceEnabled('projectSettings')) {
     return { servers: {}, errors: [] }
   }
@@ -857,7 +857,7 @@ export function getProjectMcpConfigsFromCwd(): {
     scope: 'project',
   })
 
-  // Missing .mcp.json is expected, but malformed files should report errors
+  // 缺少 .mcp.json 是预期的，但格式错误的文件应报告错误
   if (!config) {
     const nonMissingErrors = errors.filter(
       e => !e.message.startsWith('MCP config file not found'),
@@ -891,7 +891,7 @@ export function getMcpConfigsByScope(
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
-  // Check if this source is enabled
+  // 检查此源是否已启用
   const sourceMap: Record<
     string,
     'projectSettings' | 'userSettings' | 'localSettings'
@@ -910,7 +910,7 @@ export function getMcpConfigsByScope(
       const allServers: Record<string, ScopedMcpServerConfig> = {}
       const allErrors: ValidationError[] = []
 
-      // Build list of directories to check
+      // 构建要检查的目录列表
       const dirs: string[] = []
       let currentDir = getCwd()
 
@@ -919,7 +919,7 @@ export function getMcpConfigsByScope(
         currentDir = dirname(currentDir)
       }
 
-      // Process from root downward to CWD (so closer files have higher priority)
+      // 从根目录向下处理到 CWD（使更近的文件具有更高优先级）
       for (const dir of dirs.reverse()) {
         const mcpJsonPath = join(dir, '.mcp.json')
 
@@ -929,7 +929,7 @@ export function getMcpConfigsByScope(
           scope: 'project',
         })
 
-        // Missing .mcp.json in parent directories is expected, but malformed files should report errors
+        // 父目录中缺少 .mcp.json 是预期的，但格式错误的文件应报告错误
         if (!config) {
           const nonMissingErrors = errors.filter(
             e => !e.message.startsWith('MCP config file not found'),
@@ -945,7 +945,7 @@ export function getMcpConfigsByScope(
         }
 
         if (config.mcpServers) {
-          // Merge servers, with files closer to CWD overriding parent configs
+          // 合并服务器，更靠近 CWD 的文件覆盖父配置
           Object.assign(allServers, addScopeToServers(config.mcpServers, scope))
         }
 
@@ -1002,7 +1002,7 @@ export function getMcpConfigsByScope(
         scope: 'enterprise',
       })
 
-      // Missing enterprise config file is expected, but malformed files should report errors
+      // 缺少企业配置文件是预期的，但格式错误的文件应报告错误
       if (!config) {
         const nonMissingErrors = errors.filter(
           e => !e.message.startsWith('MCP config file not found'),
@@ -1033,8 +1033,8 @@ export function getMcpConfigsByScope(
 export function getMcpConfigByName(name: string): ScopedMcpServerConfig | null {
   const { servers: enterpriseServers } = getMcpConfigsByScope('enterprise')
 
-  // When MCP is locked to plugin-only, only enterprise servers are reachable
-  // by name. User/project/local servers are blocked — same as getZyCodeMcpConfigs().
+  // 当 MCP 锁定为仅插件时，仅企业服务器可通过
+  // 名称访问。用户/项目/本地服务器被阻止 — 与 getZyCodeMcpConfigs() 相同。
   if (isRestrictedToPluginOnly('mcp')) {
     return enterpriseServers[name] ?? null
   }
@@ -1079,10 +1079,10 @@ export async function getZyCodeMcpConfigs(
 }> {
   const { servers: enterpriseServers } = getMcpConfigsByScope('enterprise')
 
-  // If an enterprise mcp config exists, do not use any others; this has exclusive control over all MCP servers
-  // (enterprise customers often do not want their users to be able to add their own MCP servers).
+  // 如果存在企业 mcp 配置，不使用任何其他配置；这对所有 MCP 服务器具有独占控制
+  //（企业客户通常不希望用户能够添加自己的 MCP 服务器）。
   if (doesEnterpriseMcpConfigExist()) {
-    // Apply policy filtering to enterprise servers
+    // 对企业服务器应用策略过滤
     const filtered: Record<string, ScopedMcpServerConfig> = {}
 
     for (const [name, serverConfig] of Object.entries(enterpriseServers)) {
@@ -1095,8 +1095,8 @@ export async function getZyCodeMcpConfigs(
     return { servers: filtered, errors: [] }
   }
 
-  // Load other scopes — unless the managed policy locks MCP to plugin-only.
-  // Unlike the enterprise-exclusive block above, this keeps plugin servers.
+  // 加载其他作用域 — 除非托管策略将 MCP 锁定为仅插件。
+  // 与上面的企业独占块不同，这会保留插件服务器。
   const mcpLocked = isRestrictedToPluginOnly('mcp')
   const noServers: { servers: Record<string, ScopedMcpServerConfig> } = {
     servers: {},
@@ -1111,19 +1111,19 @@ export async function getZyCodeMcpConfigs(
     ? noServers
     : getMcpConfigsByScope('local')
 
-  // Load plugin MCP servers
+  // 加载插件 MCP 服务器
   const pluginMcpServers: Record<string, ScopedMcpServerConfig> = {}
 
   const pluginResult = await loadAllPluginsCacheOnly()
 
-  // Collect MCP-specific errors during server loading
+  // 收集服务器加载期间的 MCP 特定错误
   const mcpErrors: PluginError[] = []
 
-  // Log any plugin loading errors - NEVER silently fail in production
+  // 记录任何插件加载错误 — 生产中绝不静默失败
   if (pluginResult.errors.length > 0) {
     for (const error of pluginResult.errors) {
-      // Only log as MCP error if it's actually MCP-related
-      // Otherwise just log as debug since the plugin might not have MCP servers
+      // 仅当确实是 MCP 相关时才记录为 MCP 错误
+      // 否则仅记录为调试，因为插件可能没有 MCP 服务器
       if (
         error.type === 'mcp-config-invalid' ||
         error.type === 'mcpb-download-failed' ||
@@ -1133,8 +1133,8 @@ export async function getZyCodeMcpConfigs(
         const errorMessage = `Plugin MCP loading error - ${error.type}: ${getPluginErrorMessage(error)}`
         logError(new Error(errorMessage))
       } else {
-        // Plugin doesn't exist or isn't available - this is common and not necessarily an error
-        // The plugin system will handle installing it if possible
+        // 插件不存在或不可用 — 这很常见，不一定是错误
+        // 插件系统会在可能时处理安装
         const errorType = error.type
         logForDebugging(
           `Plugin not available for MCP: ${error.source} - error type: ${errorType}`,
@@ -1143,7 +1143,7 @@ export async function getZyCodeMcpConfigs(
     }
   }
 
-  // Process enabled plugins for MCP servers in parallel
+  // 并行处理已启用插件的 MCP 服务器
   const pluginServerResults = await Promise.all(
     pluginResult.enabled.map(plugin => getPluginMcpServers(plugin, mcpErrors)),
   )
@@ -1153,7 +1153,7 @@ export async function getZyCodeMcpConfigs(
     }
   }
 
-  // Add any MCP-specific errors from server loading to plugin errors
+  // 将服务器加载的任何 MCP 特定错误添加到插件错误中
   if (mcpErrors.length > 0) {
     for (const error of mcpErrors) {
       const errorMessage = `Plugin MCP server error - ${error.type}: ${getPluginErrorMessage(error)}`
@@ -1161,7 +1161,7 @@ export async function getZyCodeMcpConfigs(
     }
   }
 
-  // Filter project servers to only include approved ones
+  // 过滤项目服务器以仅包含已批准的
   const approvedProjectServers: Record<string, ScopedMcpServerConfig> = {}
   for (const [name, config] of Object.entries(projectServers)) {
     if (getProjectMcpServerStatus(name) === 'approved') {
@@ -1169,13 +1169,13 @@ export async function getZyCodeMcpConfigs(
     }
   }
 
-  // Dedup plugin servers against manually-configured ones (and each other).
-  // Plugin server keys are namespaced `plugin:x:y` so they never collide with
-  // manual keys in the merge below — this content-based filter catches the case
-  // where both would launch the same underlying process/connection.
-  // Only servers that will actually connect are valid dedup targets — a
-  // disabled manual server mustn't suppress a plugin server, or neither runs
-  // (manual is skipped by name at connection time; plugin was removed here).
+  // 对插件服务器与手动配置的服务器进行去重（以及彼此之间）。
+  // 插件服务器键使用命名空间 `plugin:x:y`，因此它们永远不会与
+  // 下面的合并中的手动键冲突 — 基于内容的过滤器捕获
+  // 两者都会启动相同底层进程/连接的情况。
+  // 仅实际会连接的服务器才是有效的去重目标 —
+  // 禁用的手动服务器不应压制插件服务器，否则两者都不运行
+  //（手动在连接时按名称跳过；插件在此被移除）。
   const extraTargets = await extraDedupTargets
   const enabledManualServers: Record<string, ScopedMcpServerConfig> = {}
   for (const [name, config] of Object.entries({
@@ -1192,10 +1192,10 @@ export async function getZyCodeMcpConfigs(
       enabledManualServers[name] = config
     }
   }
-  // Split off disabled/policy-blocked plugin servers so they don't win the
-  // first-plugin-wins race against an enabled duplicate — same invariant as
-  // above. They're merged back after dedup so they still appear in /mcp
-  // (policy filtering at the end of this function drops blocked ones).
+  // 分离被禁用/被策略阻止的插件服务器，使它们不会在
+  // 与已启用的重复项竞争时赢得"首个插件胜出" — 与上面相同的不变量。
+  // 它们在对之后合并回去，因此它们仍出现在 /mcp 中
+  //（此函数末尾的策略过滤会丢弃被阻止的）。
   const enabledPluginServers: Record<string, ScopedMcpServerConfig> = {}
   const disabledPluginServers: Record<string, ScopedMcpServerConfig> = {}
   for (const [name, config] of Object.entries(pluginMcpServers)) {
@@ -1213,10 +1213,10 @@ export async function getZyCodeMcpConfigs(
     enabledManualServers,
   )
   Object.assign(dedupedPluginServers, disabledPluginServers)
-  // Surface suppressions in /plugin UI. Pushed AFTER the logError loop above
-  // so these don't go to the error log — they're informational, not errors.
+  // 在 /plugin UI 中显示压制。推入上述 logError 循环之后，
+  // 因此这些不会进入错误日志 — 它们是信息性的，而非错误。
   for (const { name, duplicateOf } of suppressed) {
-    // name is "plugin:${pluginName}:${serverName}" from addPluginScopeToServers
+    // 名称是 "plugin:${pluginName}:${serverName}"，来自 addPluginScopeToServers
     const parts = name.split(':')
     if (parts[0] !== 'plugin' || parts.length < 3) continue
     mcpErrors.push({
@@ -1228,7 +1228,7 @@ export async function getZyCodeMcpConfigs(
     })
   }
 
-  // Merge in order of precedence: plugin < user < project < local
+  // 按优先级顺序合并：plugin < user < project < local
   const configs = Object.assign(
     {},
     dedupedPluginServers,
@@ -1237,7 +1237,7 @@ export async function getZyCodeMcpConfigs(
     localServers,
   )
 
-  // Apply policy filtering to merged configs
+  // 对合并后的配置应用策略过滤
   const filtered: Record<string, ScopedMcpServerConfig> = {}
 
   for (const [name, serverConfig] of Object.entries(configs)) {
@@ -1259,13 +1259,13 @@ export async function getAllMcpConfigs(): Promise<{
   servers: Record<string, ScopedMcpServerConfig>
   errors: PluginError[]
 }> {
-  // In enterprise mode, don't load zy.ai servers (enterprise has exclusive control)
+  // 在企业模式下，不加载 zy.ai 服务器（企业具有独占控制）
   if (doesEnterpriseMcpConfigExist()) {
     return getZyCodeMcpConfigs()
   }
 
-  // Kick off the zy.ai fetch before getZyCodeMcpConfigs so it overlaps
-  // with loadAllPluginsCacheOnly() inside. Memoized — the awaited call below is a cache hit.
+  // 在 getZyCodeMcpConfigs 之前启动 zy.ai 获取，使其重叠
+  // 与内部的 loadAllPluginsCacheOnly()。已备忘录化 — 下面等待的调用是缓存命中。
   const zyaiPromise = fetchZyAIMcpConfigsIfEligible()
   const { servers: ZyCodeServers, errors } = await getZyCodeMcpConfigs(
     {},
@@ -1275,15 +1275,15 @@ export async function getAllMcpConfigs(): Promise<{
     await zyaiPromise,
   )
 
-  // Suppress zy.ai connectors that duplicate an enabled manual server.
-  // Keys never collide (`slack` vs `zy.ai Slack`) so the merge below
-  // won't catch this — need content-based dedup by URL signature.
+  // 抑制与已启用的手动服务器重复的 zy.ai 连接器。
+  // 键永远不会冲突（`slack` 与 `zy.ai Slack`），所以下面的合并
+  // 无法捕获 — 需要通过 URL 签名进行基于内容的去重。
   const { servers: dedupedZyAI } = dedupZyAIMcpServers(
     zyaiMcpServers,
     ZyCodeServers,
   )
 
-  // Merge with zy.ai having lowest precedence
+  // 合并时 zy.ai 具有最低优先级
   const servers = Object.assign({}, dedupedZyAI, ZyCodeServers)
 
   return { servers, errors }
@@ -1320,7 +1320,7 @@ export function parseMcpConfig(params: {
     }
   }
 
-  // Validate each server and expand variables if requested
+  // 验证每个服务器并在请求时展开变量
   const errors: ValidationError[] = []
   const validatedServers: Record<string, McpServerConfig> = {}
 
@@ -1347,7 +1347,7 @@ export function parseMcpConfig(params: {
       configToCheck = expanded
     }
 
-    // Check for Windows-specific npx usage without cmd wrapper
+    // 检查在没有 cmd 包装器的情况下使用 Windows 特定的 npx
     if (
       getPlatform() === 'windows' &&
       (!configToCheck.type || configToCheck.type === 'stdio') &&
@@ -1495,9 +1495,9 @@ export function shouldAllowManagedMcpServersOnly(): boolean {
 export function areMcpConfigsAllowedWithEnterpriseMcpConfig(
   configs: Record<string, ScopedMcpServerConfig>,
 ): boolean {
-  // NOTE: While all SDK MCP servers should be safe from a security perspective, we are still discussing
-  // what the best way to do this is. In the meantime, we are limiting this to zy-vscode for now to
-  // unbreak the VSCode extension for certain enterprise customers who have enterprise MCP config enabled.
+  // 注意：虽然所有 SDK MCP 服务器从安全角度都应该是安全的，但我们仍在讨论
+  // 最佳方式。同时，我们暂时将其限制为 zy-vscode，以便
+  // 为启用了企业 MCP 配置的某些企业客户修复 VSCode 扩展。
   // https://anthropic.slack.com/archives/C093UA0KLD7/p1764975463670109
   return Object.values(configs).every(
     c => c.type === 'sdk' && c.name === 'zy-vscode',

@@ -402,7 +402,7 @@ export function createSubagentContext(
         ? cloneContentReplacementState(parentContext.contentReplacementState)
         : undefined),
 
-    // AbortController
+    // 中止控制器
     abortController,
 
     // AppState 访问
@@ -415,13 +415,13 @@ export function createSubagentContext(
     // 永远不会被注册和终止（PPID=1 僵尸进程）。
     setAppStateForTasks:
       parentContext.setAppStateForTasks ?? parentContext.setAppState,
-    // Async subagents whose setAppState is a no-op need local denial tracking
-    // so the denial counter actually accumulates across retries.
+    // 异步子代理的 setAppState 为无操作时，需要本地的拒绝跟踪状态，
+    // 以便拒绝计数器在重试时能够正确累积。
     localDenialTracking: overrides?.shareSetAppState
       ? parentContext.localDenialTracking
       : createDenialTrackingState(),
 
-    // Mutation callbacks - no-op by default
+    // 变更回调——默认为无操作
     setInProgressToolUseIDs: () => {},
     setResponseLength: overrides?.shareSetResponseLength
       ? parentContext.setResponseLength
@@ -430,25 +430,25 @@ export function createSubagentContext(
       ? parentContext.pushApiMetricsEntry
       : undefined,
     updateFileHistoryState: () => {},
-    // Attribution is scoped and functional (prev => next) — safe to share even
-    // when setAppState is stubbed. Concurrent calls compose via React's state queue.
+    // 归属范围限定且功能化（prev => next）——即使
+    // setAppState 被存根化也可以安全共享。并发调用通过 React 状态队列组合。
     updateAttributionState: parentContext.updateAttributionState,
 
-    // UI callbacks - undefined for subagents (can't control parent UI)
+    // UI 回调——子代理为 undefined（无法控制父级 UI）
     addNotification: undefined,
     setToolJSX: undefined,
     setStreamMode: undefined,
     setSDKStatus: undefined,
     openMessageSelector: undefined,
 
-    // Fields that can be overridden or copied from parent
+    // 可被覆盖或从父级复制的字段
     options: overrides?.options ?? parentContext.options,
     messages: overrides?.messages ?? parentContext.messages,
-    // Generate new agentId for subagents (each subagent should have its own ID)
+    // 为子代理生成新的 agentId（每个子代理应有自己的 ID）
     agentId: overrides?.agentId ?? createAgentId(),
     agentType: overrides?.agentType,
 
-    // Create new query tracking chain for subagent with incremented depth
+    // 为子代理创建新的查询跟踪链，深度递增
     queryTracking: {
       chainId: randomUUID(),
       depth: (parentContext.queryTracking?.depth ?? -1) + 1,
@@ -462,12 +462,12 @@ export function createSubagentContext(
 }
 
 /**
- * Runs a forked agent query loop and tracks cache hit metrics.
+ * 运行分叉代理查询循环并跟踪缓存命中指标。
  *
- * This function:
- * 1. Uses identical cache-safe params from parent to enable prompt caching
- * 2. Accumulates usage across all query iterations
- * 3. Logs tengu_fork_agent_query with full usage when complete
+ * 此函数：
+ * 1. 使用与父级相同的缓存安全参数以启用提示词缓存
+ * 2. 累积所有查询迭代的用量
+ * 3. 完成时记录 tengu_fork_agent_query 及完整用量
  *
  * @example
  * ```typescript
@@ -511,20 +511,20 @@ export async function runForkedAgent({
     forkContextMessages,
   } = cacheSafeParams
 
-  // Create isolated context to prevent mutation of parent state
+  // 创建隔离上下文以防止修改父级状态
   const isolatedToolUseContext = createSubagentContext(
     toolUseContext,
     overrides,
   )
 
-  // Do NOT filterIncompleteToolCalls here — it drops the whole assistant on
-  // partial tool batches, orphaning the paired results (API 400). Dangling
-  // tool_uses are repaired downstream by ensureToolResultPairing in zy.ts,
-  // same as the main thread — identical post-repair prefix keeps the cache hit.
+  // 此处不要过滤 incompleteToolCalls——它会在部分工具批次时丢弃整个 assistant，
+  // 导致配对的 tool_result 成为孤儿（API 400）。悬空的 tool_uses 会在下游
+  // 由 zy.ts 中的 ensureToolResultPairing 修复，与主线程相同——
+  // 修复后的前缀一致，保持缓存命中。
   const initialMessages: Message[] = [...forkContextMessages, ...promptMessages]
 
-  // Generate agent ID and record initial messages for transcript
-  // When skipTranscript is set, skip agent ID creation and all transcript I/O
+  // 生成 agent ID 并记录初始消息用于转录
+  // 设置 skipTranscript 时，跳过 agent ID 创建和所有转录 I/O
   const agentId = skipTranscript ? undefined : createAgentId(forkLabel)
   let lastRecordedUuid: UUID | null = null
   if (agentId) {
@@ -533,14 +533,14 @@ export async function runForkedAgent({
         `Forked agent [${forkLabel}] failed to record initial transcript: ${err}`,
       ),
     )
-    // Track the last recorded message UUID for parent chain continuity
+    // 跟踪最后记录的消息 UUID 用于父级链连续性
     lastRecordedUuid =
       initialMessages.length > 0
         ? initialMessages[initialMessages.length - 1]!.uuid
         : null
   }
 
-  // Run the query loop with isolated context (cache-safe params preserved)
+  // 使用隔离上下文运行查询循环（保留缓存安全参数）
   try {
     for await (const message of query({
       messages: initialMessages,
@@ -554,7 +554,7 @@ export async function runForkedAgent({
       maxTurns,
       skipCacheWrite,
     })) {
-      // Extract real usage from message_delta stream events (final usage per API call)
+      // 从 message_delta 流事件中提取真实用量（每次 API 调用的最终用量）
       if (message.type === 'stream_event') {
         if (
           'event' in message &&
@@ -577,7 +577,7 @@ export async function runForkedAgent({
       outputMessages.push(message as Message)
       onMessage?.(message as Message)
 
-      // Record transcript for recordable message types (same pattern as runAgent.ts)
+      // 记录可记录消息类型的转录（与 runAgent.ts 相同的模式）
       const msg = message as Message
       if (
         agentId &&
@@ -597,9 +597,9 @@ export async function runForkedAgent({
       }
     }
   } finally {
-    // Release cloned file state cache memory (same pattern as runAgent.ts)
+    // 释放克隆的文件状态缓存内存（与 runAgent.ts 相同的模式）
     isolatedToolUseContext.readFileState.clear()
-    // Release the cloned fork context messages
+    // 释放克隆的分叉上下文消息
     initialMessages.length = 0
   }
 
@@ -609,7 +609,7 @@ export async function runForkedAgent({
 
   const durationMs = Date.now() - startTime
 
-  // Log the fork query metrics with full NonNullableUsage
+  // 记录分叉查询指标，包含完整的 NonNullableUsage
   logForkAgentQueryEvent({
     forkLabel,
     querySource,
@@ -626,7 +626,7 @@ export async function runForkedAgent({
 }
 
 /**
- * Logs the tengu_fork_agent_query event with full NonNullableUsage fields.
+ * 记录 tengu_fork_agent_query 事件，包含完整的 NonNullableUsage 字段。
  */
 function logForkAgentQueryEvent({
   forkLabel,
@@ -643,7 +643,7 @@ function logForkAgentQueryEvent({
   totalUsage: NonNullableUsage
   queryTracking?: { chainId: string; depth: number }
 }): void {
-  // Calculate cache hit rate
+  // 计算缓存命中率
   const totalInputTokens =
     totalUsage.input_tokens +
     totalUsage.cache_creation_input_tokens +
@@ -654,7 +654,7 @@ function logForkAgentQueryEvent({
       : 0
 
   logEvent('tengu_fork_agent_query', {
-    // Metadata
+    // 元数据
     forkLabel:
       forkLabel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     querySource:
@@ -662,7 +662,7 @@ function logForkAgentQueryEvent({
     durationMs,
     messageCount,
 
-    // NonNullableUsage fields
+    // NonNullableUsage 字段
     inputTokens: totalUsage.input_tokens,
     outputTokens: totalUsage.output_tokens,
     cacheReadInputTokens: totalUsage.cache_read_input_tokens,
@@ -674,10 +674,10 @@ function logForkAgentQueryEvent({
     cacheCreationEphemeral5mTokens:
       totalUsage.cache_creation.ephemeral_5m_input_tokens,
 
-    // Derived metrics
+    // 派生指标
     cacheHitRate,
 
-    // Query tracking
+    // 查询跟踪
     ...(queryTracking
       ? {
           queryChainId:

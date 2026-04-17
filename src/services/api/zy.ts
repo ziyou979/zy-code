@@ -256,7 +256,7 @@ import {
   withRetry,
 } from './withRetry.js'
 
-// Define a type that represents valid JSON values
+// 定义表示合法 JSON 值的类型
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
 type JsonObject = { [key: string]: JsonValue }
 type JsonArray = JsonValue[]
@@ -705,7 +705,7 @@ export type Options = {
   mcpTools: Tools
   hasPendingMcpServers?: boolean
   queryTracking?: QueryChainTracking
-  agentId?: AgentId // Only set for subagents
+  agentId?: AgentId // 仅子代理设置
   outputFormat?: BetaJSONOutputFormat
   fastMode?: boolean
   advisorModel?: string
@@ -2805,12 +2805,12 @@ async function* queryModel(
         errorModel = errorFromRetry.retryContext.model
       }
 
-      // Extract quota status from error headers if it's a rate limit error
+      // 如果是限流错误，从错误头中提取配额状态
       if (error instanceof APIError) {
         extractQuotaStatusFromError(error)
       }
 
-      // Extract requestId from stream, error header, or error body
+      // 从流、错误头或错误体中提取 requestId
       const requestId =
         streamRequestId ||
         (error instanceof APIError ? error.requestID : undefined) ||
@@ -2836,8 +2836,8 @@ async function* queryModel(
         previousRequestId,
       })
 
-      // Don't yield an assistant error message for user aborts
-      // The interruption message is handled in query.ts
+      // 用户中止不生成助手错误消息
+      // 中断消息在 query.ts 中处理
       if (error instanceof APIUserAbortError) {
         releaseStreamResources()
         return
@@ -2852,16 +2852,16 @@ async function* queryModel(
     }
   } finally {
     stopSessionActivity('api_call')
-    // Must be in the finally block: if the generator is terminated early
-    // via .return() (e.g. consumer breaks out of for-await-of, or query.ts
-    // encounters an abort), code after the try/finally never executes.
-    // Without this, the Response object's native TLS/socket buffers leak
-    // until the generator itself is GC'd (see GH #32920).
+    // 必须在 finally 块中：如果生成器被提前终止
+    // 通过 .return()（例如消费者跳出 for-await-of，或 query.ts
+    // 遇到中止），try/finally 之后的代码将不会执行。
+    // 没有这个，Response 对象的原生 TLS/socket 缓冲区会泄漏
+    // 直到生成器被 GC 回收（见 GH #32920）。
     releaseStreamResources()
 
-    // Non-streaming fallback cost: the streaming path tracks cost in the
-    // message_delta handler before any yield. Fallback pushes to newMessages
-    // then yields, so tracking must be here to survive .return() at the yield.
+    // 非流式回退成本：流式路径在 message_delta 处理器中
+    // yield 之前跟踪成本。回退推送到 newMessages 然后 yield，
+    // 所以必须在这里跟踪才能在 yield 处被 .return() 捕获。
     if (fallbackMessage) {
       const fallbackUsage = fallbackMessage.message.usage
       usage = updateUsage(EMPTY_USAGE, fallbackUsage)
@@ -2875,16 +2875,16 @@ async function* queryModel(
     }
   }
 
-  // Mark all registered tools as sent to API so they become eligible for deletion
+  // 标记所有已注册工具为已发送到 API，使其符合删除条件
   if (feature('CACHED_MICROCOMPACT') && cachedMCEnabled) {
     markToolsSentToAPIState()
   }
 
-  // Track the last requestId for the main conversation chain so shutdown
-  // can send a cache eviction hint to inference. Exclude backgrounded
-  // sessions (Ctrl+B) which share the repl_main_thread querySource but
-  // run inside an agent context — they are independent conversation chains
-  // whose cache should not be evicted when the foreground session clears.
+  // 跟踪主会话链的最后 requestId，以便关闭时
+  // 向推理发送缓存驱逐提示。排除后台会话
+  //（Ctrl+B），它们共享 repl_main_thread querySource 但
+  // 在代理上下文中运行 — 它们是独立的会话链，
+  // 前台会话清理时不应驱逐其缓存。
   if (
     streamRequestId &&
     !getAgentContext() &&
@@ -2894,9 +2894,9 @@ async function* queryModel(
     setLastMainRequestId(streamRequestId)
   }
 
-  // Precompute scalars so the fire-and-forget .then() closure doesn't pin the
-  // full messagesForAPI array (the entire conversation up to the context window
-  // limit) until getToolPermissionContext() resolves.
+  // 预计算标量值，避免即发即弃的 .then() 闭包在
+  // getToolPermissionContext() 解析前持有完整的 messagesForAPI 数组
+  //（上下文窗口限制内的整个会话）。
   const logMessageCount = messagesForAPI.length
   const logMessageTokens = tokenCountFromLastAPIResponse(messagesForAPI)
   void options.getToolPermissionContext().then(permissionContext => {
@@ -2919,8 +2919,8 @@ async function* queryModel(
       costUSD,
       queryTracking: options.queryTracking,
       permissionMode: permissionContext.mode,
-      // Pass newMessages for beta tracing - extraction happens in logging.ts
-      // only when beta tracing is enabled
+      // 传递 newMessages 用于 beta 追踪 — 提取在 logging.ts 中
+      // 仅在启用 beta 追踪时执行
       newMessages,
       llmSpan,
       globalCacheStrategy,
@@ -2932,13 +2932,13 @@ async function* queryModel(
     })
   })
 
-  // Defensive: also release on normal completion (no-op if finally already ran).
+  // 防御性措施：正常完成时也释放（如果 finally 已运行则无影响）。
   releaseStreamResources()
 }
 
 /**
- * Cleans up stream resources to prevent memory leaks.
- * @internal Exported for testing
+ * 清理流资源以防止内存泄漏。
+ * @internal 导出用于测试
  */
 export function cleanupStream(
   stream: Stream<BetaRawMessageStreamEvent> | undefined,
@@ -2947,24 +2947,24 @@ export function cleanupStream(
     return
   }
   try {
-    // Abort the stream via its controller if not already aborted
+    // 通过控制器中止流（如果尚未中止）
     if (!stream.controller.signal.aborted) {
       stream.controller.abort()
     }
   } catch {
-    // Ignore - stream may already be closed
+    // 忽略 — 流可能已关闭
   }
 }
 
 /**
- * Updates usage statistics with new values from streaming API events.
- * Note: Anthropic's streaming API provides cumulative usage totals, not incremental deltas.
- * Each event contains the complete usage up to that point in the stream.
+ * 使用流式 API 事件的新值更新使用量统计。
+ * 注意：Anthropic 的流式 API 提供累积使用量总计，而非增量。
+ * 每个事件包含流中截至该点的完整使用量。
  *
- * Input-related tokens (input_tokens, cache_creation_input_tokens, cache_read_input_tokens)
- * are typically set in message_start and remain constant. message_delta events may send
- * explicit 0 values for these fields, which should not overwrite the values from message_start.
- * We only update these fields if they have a non-null, non-zero value.
+ * 输入相关令牌（input_tokens、cache_creation_input_tokens、cache_read_input_tokens）
+ * 通常在 message_start 中设置并保持不变。message_delta 事件可能会发送
+ * 这些字段的显式 0 值，不应覆盖 message_start 中的值。
+ * 仅当这些字段具有非空、非零值时才更新。
  */
 export function updateUsage(
   usage: Readonly<NonNullableUsage>,
@@ -2999,7 +2999,7 @@ export function updateUsage(
     },
     service_tier: usage.service_tier,
     cache_creation: {
-      // SDK type BetaMessageDeltaUsage is missing cache_creation, but it's real!
+      // SDK 类型 BetaMessageDeltaUsage 缺少 cache_creation，但实际存在！
       ephemeral_1h_input_tokens:
         (partUsage as BetaUsage).cache_creation?.ephemeral_1h_input_tokens ??
         usage.cache_creation.ephemeral_1h_input_tokens,
@@ -3007,11 +3007,11 @@ export function updateUsage(
         (partUsage as BetaUsage).cache_creation?.ephemeral_5m_input_tokens ??
         usage.cache_creation.ephemeral_5m_input_tokens,
     },
-    // cache_deleted_input_tokens: returned by the API when cache editing
-    // deletes KV cache content, but not in SDK types. Kept off NonNullableUsage
-    // so the string is eliminated from external builds by dead code elimination.
-    // Uses the same > 0 guard as other token fields to prevent message_delta
-    // from overwriting the real value with 0.
+    // cache_deleted_input_tokens：缓存编辑删除 KV 缓存内容时
+    // API 返回该值，但不在 SDK 类型中。从 NonNullableUsage 中移除
+    // 以便该字符串通过死代码消除从外部构建中剔除。
+    // 使用与其他令牌字段相同的 > 0 守卫，防止 message_delta
+    // 用 0 覆盖真实值。
     ...(feature('CACHED_MICROCOMPACT')
       ? {
           cache_deleted_input_tokens:
@@ -3032,8 +3032,8 @@ export function updateUsage(
 }
 
 /**
- * Accumulates usage from one message into a total usage object.
- * Used to track cumulative usage across multiple assistant turns.
+ * 累积消息的使用量到总量对象。
+ * 用于跟踪多个助手轮次间的累积使用量。
  */
 export function accumulateUsage(
   totalUsage: Readonly<NonNullableUsage>,
@@ -3055,7 +3055,7 @@ export function accumulateUsage(
         totalUsage.server_tool_use.web_fetch_requests +
         messageUsage.server_tool_use.web_fetch_requests,
     },
-    service_tier: messageUsage.service_tier, // Use the most recent service tier
+    service_tier: messageUsage.service_tier, // 使用最新的 service tier
     cache_creation: {
       ephemeral_1h_input_tokens:
         totalUsage.cache_creation.ephemeral_1h_input_tokens +
@@ -3064,8 +3064,8 @@ export function accumulateUsage(
         totalUsage.cache_creation.ephemeral_5m_input_tokens +
         messageUsage.cache_creation.ephemeral_5m_input_tokens,
     },
-    // See comment in updateUsage — field is not on NonNullableUsage to keep
-    // the string out of external builds.
+    // 见 updateUsage 中的注释 — 该字段不在 NonNullableUsage 上，
+    // 以保持字符串不出现在外部构建中。
     ...(feature('CACHED_MICROCOMPACT')
       ? {
           cache_deleted_input_tokens:
@@ -3076,9 +3076,9 @@ export function accumulateUsage(
             ).cache_deleted_input_tokens ?? 0),
         }
       : {}),
-    inference_geo: messageUsage.inference_geo, // Use the most recent
-    iterations: messageUsage.iterations, // Use the most recent
-    speed: messageUsage.speed, // Use the most recent
+    inference_geo: messageUsage.inference_geo, // 使用最新的
+    iterations: messageUsage.iterations, // 使用最新的
+    speed: messageUsage.speed, // 使用最新的
   }
 }
 
@@ -3104,7 +3104,7 @@ type CachedMCPinnedEdits = {
   block: CachedMCEditsBlock
 }
 
-// Exported for testing cache_reference placement constraints
+// 导出用于测试 cache_reference 放置约束
 export function addCacheBreakpoints(
   messages: (UserMessage | AssistantMessage)[],
   enablePromptCaching: boolean,
@@ -3120,17 +3120,16 @@ export function addCacheBreakpoints(
     skipCacheWrite,
   })
 
-  // Exactly one message-level cache_control marker per request. Mycro's
-  // turn-to-turn eviction (page_manager/index.rs: Index::insert) frees
-  // local-attention KV pages at any cached prefix position NOT in
-  // cache_store_int_token_boundaries. With two markers the second-to-last
-  // position is protected and its locals survive an extra turn even though
-  // nothing will ever resume from there — with one marker they're freed
-  // immediately. For fire-and-forget forks (skipCacheWrite) we shift the
-  // marker to the second-to-last message: that's the last shared-prefix
-  // point, so the write is a no-op merge on mycro (entry already exists)
-  // and the fork doesn't leave its own tail in the KVCC. Dense pages are
-  // refcounted and survive via the new hash either way.
+  // 每个请求恰好一个消息级 cache_control 标记。Mycro 的
+  // 逐轮驱逐（page_manager/index.rs: Index::insert）会释放
+  // 不在 cache_store_int_token_boundaries 中的缓存前缀位置
+  // 的局部注意力 KV 页面。如果有两个标记，倒数第二个
+  // 位置会被保护，其局部页面会多存活一轮，尽管
+  // 永远不会从那里恢复 — 如果只有一个标记则立即释放。
+  // 对于即发即弃的分叉（skipCacheWrite），我们将标记移到
+  // 倒数第二个消息：那是最后的共享前缀点，因此写入对 mycro
+  // 是空合并（条目已存在），分叉也不会在 KVCC 中留下自己的尾部。
+  // Dense 页面无论如何都会通过新哈希被引用计数并保留。
   const markerIndex = skipCacheWrite ? messages.length - 2 : messages.length - 1
   const result = messages.map((msg, index) => {
     const addCache = index === markerIndex
@@ -3154,10 +3153,10 @@ export function addCacheBreakpoints(
     return result
   }
 
-  // Track all cache_references being deleted to prevent duplicates across blocks.
+  // 跟踪所有被删除的 cache_references，防止跨块重复。
   const seenDeleteRefs = new Set<string>()
 
-  // Helper to deduplicate a cache_edits block against already-seen deletions
+  // 辅助函数：对 cache_edits 块去重，排除已见过的删除项
   const deduplicateEdits = (block: CachedMCEditsBlock): CachedMCEditsBlock => {
     const uniqueEdits = block.edits.filter(edit => {
       if (seenDeleteRefs.has(edit.cache_reference)) {
@@ -3169,7 +3168,7 @@ export function addCacheBreakpoints(
     return { ...block, edits: uniqueEdits }
   }
 
-  // Re-insert all previously-pinned cache_edits at their original positions
+  // 在原始位置重新插入所有之前固定的 cache_edits
   for (const pinned of pinnedEdits ?? []) {
     const msg = result[pinned.userMessageIndex]
     if (msg && msg.role === 'user') {
@@ -3183,7 +3182,7 @@ export function addCacheBreakpoints(
     }
   }
 
-  // Insert new cache_edits into the last user message and pin them
+  // 将新的 cache_edits 插入最后一条用户消息并固定
   if (newCacheEdits && result.length > 0) {
     const dedupedNewEdits = deduplicateEdits(newCacheEdits)
     if (dedupedNewEdits.edits.length > 0) {
@@ -3194,7 +3193,7 @@ export function addCacheBreakpoints(
             msg.content = [{ type: 'text', text: msg.content as string }]
           }
           insertBlockAfterToolResults(msg.content, dedupedNewEdits)
-          // Pin so this block is re-sent at the same position in future calls
+          // 固定以便在将来的调用中在同一位置重新发送此块
           pinCacheEdits(i, newCacheEdits)
 
           logForDebugging(
@@ -3206,10 +3205,10 @@ export function addCacheBreakpoints(
     }
   }
 
-  // Add cache_reference to tool_result blocks that are within the cached prefix.
-  // Must be done AFTER cache_edits insertion since that modifies content arrays.
+  // 向缓存前缀范围内的 tool_result 块添加 cache_reference。
+  // 必须在 cache_edits 插入之后执行，因为那会修改 content 数组。
   if (enablePromptCaching) {
-    // Find the last message containing a cache_control marker
+    // 查找包含 cache_control 标记的最后一条消息
     let lastCCMsg = -1
     for (let i = 0; i < result.length; i++) {
       const msg = result[i]!
@@ -3222,13 +3221,13 @@ export function addCacheBreakpoints(
       }
     }
 
-    // Add cache_reference to tool_result blocks that are strictly before
-    // the last cache_control marker. The API requires cache_reference to
-    // appear "before or on" the last cache_control — we use strict "before"
-    // to avoid edge cases where cache_edits splicing shifts block indices.
+    // 向严格位于最后 cache_control 标记之前的 tool_result 块
+    // 添加 cache_reference。API 要求 cache_reference 出现在
+    // 最后一个 cache_control"之前或之上" — 我们使用严格"之前"
+    // 以避免 cache_edits 拼接改变块索引的边界情况。
     //
-    // Create new objects instead of mutating in-place to avoid contaminating
-    // blocks reused by secondary queries that use models without cache_editing support.
+    // 创建新对象而非原地修改，以避免污染被
+    // 不支持 cache_editing 的模型的次要查询复用的块。
     if (lastCCMsg >= 0) {
       for (let i = 0; i < lastCCMsg; i++) {
         const msg = result[i]!
@@ -3263,7 +3262,7 @@ export function buildSystemPromptBlocks(
     querySource?: QuerySource
   },
 ): TextBlockParam[] {
-  // IMPORTANT: Do not add any more blocks for caching or you will get a 400
+  // 重要：不要再添加任何用于缓存的块，否则会收到 400 错误
   return splitSysPromptPrefix(systemPrompt, {
     skipGlobalCacheForSystemPrompt: options?.skipGlobalCacheForSystemPrompt,
   }).map(block => {
@@ -3331,16 +3330,16 @@ export async function queryHaiku({
       return [result]
     },
   )
-  // We don't use streaming for Haiku so this is safe
+  // Haiku 不使用流式，所以这里是安全的
   return result[0]! as AssistantMessage
 }
 
 type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
 
 /**
- * Query a specific model through the ZY Code infrastructure.
- * This goes through the full query pipeline including proper authentication,
- * betas, and headers - unlike direct API calls.
+ * 通过 ZY Code 基础设施查询特定模型。
+ * 这会经过完整的查询流水线，包括正确的认证、
+ * beta 功能和请求头 — 与直接 API 调用不同。
  */
 export async function queryWithModel({
   systemPrompt = asSystemPrompt([]),
@@ -3392,20 +3391,20 @@ export async function queryWithModel({
   return result[0]! as AssistantMessage
 }
 
-// Non-streaming requests have a 10min max per the docs:
+// 非流式请求根据文档有 10 分钟上限：
 // https://platform.zy.com/docs/en/api/errors#long-requests
-// The SDK's 21333-token cap is derived from 10min × 128k tokens/hour, but we
-// bypass it by setting a client-level timeout, so we can cap higher.
+// SDK 的 21333 令牌上限由 10 分钟 × 128k 令牌/小时推导，但我们
+// 通过设置客户端级超时绕过它，因此可以设置更高的上限。
 export let MAX_NON_STREAMING_TOKENS;
 MAX_NON_STREAMING_TOKENS = 64_000
 
 /**
- * Adjusts thinking budget when max_tokens is capped for non-streaming fallback.
- * Ensures the API constraint: max_tokens > thinking.budget_tokens
+ * 当 max_tokens 在非流式回退中被限制时调整思考预算。
+ * 确保满足 API 约束：max_tokens > thinking.budget_tokens
  *
- * @param params - The parameters that will be sent to the API
- * @param maxTokensCap - The maximum allowed tokens (MAX_NON_STREAMING_TOKENS)
- * @returns Adjusted parameters with thinking budget capped if needed
+ * @param params - 将发送给 API 的参数
+ * @param maxTokensCap - 允许的最大令牌数（MAX_NON_STREAMING_TOKENS）
+ * @returns 调整后的参数，必要时已限制思考预算
  */
 export function adjustParamsForNonStreaming<
   T extends {
@@ -3415,8 +3414,8 @@ export function adjustParamsForNonStreaming<
 >(params: T, maxTokensCap: number): T {
   const cappedMaxTokens = Math.min(params.max_tokens, maxTokensCap)
 
-  // Adjust thinking budget if it would exceed capped max_tokens
-  // to maintain the constraint: max_tokens > thinking.budget_tokens
+  // 如果思考预算超过限制的 max_tokens 则调整
+  // 以维护约束：max_tokens > thinking.budget_tokens
   const adjustedParams = { ...params }
   if (
     adjustedParams.thinking?.type === 'enabled' &&
@@ -3426,7 +3425,7 @@ export function adjustParamsForNonStreaming<
       ...adjustedParams.thinking,
       budget_tokens: Math.min(
         adjustedParams.thinking.budget_tokens,
-        cappedMaxTokens - 1, // Must be at least 1 less than max_tokens
+        cappedMaxTokens - 1, // 必须至少比 max_tokens 少 1
       ),
     }
   }
@@ -3438,19 +3437,19 @@ export function adjustParamsForNonStreaming<
 }
 
 function isMaxTokensCapEnabled(): boolean {
-  // 3P default: false (not validated on Bedrock/Vertex)
+  // 第三方默认值：false（Bedrock/Vertex 上不验证）
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_otk_slot_v1', false)
 }
 
 export function getMaxOutputTokensForModel(model: string): number {
   const maxOutputTokens = getModelMaxOutputTokens(model)
 
-  // Slot-reservation cap: drop default to 8k for all models. BQ p99 output
-  // = 4,911 tokens; 32k/64k defaults over-reserve 8-16× slot capacity.
-  // Requests hitting the cap get one clean retry at 64k (query.ts
-  // max_output_tokens_escalate). Math.min keeps models with lower native
-  // defaults (e.g. zy-3-opus at 4k) at their native value. Applied
-  // before the env-var override so ZY_CODE_MAX_OUTPUT_TOKENS still wins.
+  // 槽位预留上限：将所有模型的默认值降至 8k。BQ p99 输出
+  // = 4,911 令牌；32k/64k 默认值超量预留 8-16 倍槽位容量。
+  // 触达上限的请求可获得一次干净的 64k 重试（query.ts
+  // max_output_tokens_escalate）。Math.min 保留原生默认值较低的模型
+  //（例如 zy-3-opus 为 4k）在其原值。应用于环境变量覆盖之前，
+  // 因此 ZY_CODE_MAX_OUTPUT_TOKENS 仍然优先。
   const defaultTokens = isMaxTokensCapEnabled()
     ? Math.min(maxOutputTokens.default, CAPPED_DEFAULT_MAX_TOKENS)
     : maxOutputTokens.default

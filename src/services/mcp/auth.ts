@@ -119,7 +119,7 @@ function redactSensitiveUrlParams(url: string): string {
     }
     return parsedUrl.toString()
   } catch {
-    // Return as-is if not a valid URL
+    // 如果不是合法 URL 则原样返回
     return url
   }
 }
@@ -200,21 +200,21 @@ function createAuthFetch(): FetchLike {
     const timeoutSignal = AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS)
     const isPost = init?.method?.toUpperCase() === 'POST'
 
-    // No existing signal - just use timeout
+    // 没有现有信号 — 直接使用超时
     if (!init?.signal) {
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       const response = await fetch(url, { ...init, signal: timeoutSignal })
       return isPost ? normalizeOAuthErrorBody(response) : response
     }
 
-    // Combine signals: abort when either fires
+    // 组合信号：任一触发即中止
     const controller = new AbortController()
     const abort = () => controller.abort()
 
     init.signal.addEventListener('abort', abort)
     timeoutSignal.addEventListener('abort', abort)
 
-    // Cleanup to prevent event listener leaks after fetch completes
+    // 清理以防止 fetch 完成后事件监听器泄漏
     const cleanup = () => {
       init.signal?.removeEventListener('abort', abort)
       timeoutSignal.removeEventListener('abort', abort)
@@ -290,17 +290,16 @@ async function fetchAuthServerMetadata(
       return authorizationServerMetadata
     }
   } catch (err) {
-    // Any error from the RFC 9728 → RFC 8414 chain (5xx from the root or
-    // resolved-AS probe, schema parse failure, network error) — fall through
-    // to the legacy path-aware retry.
+    // RFC 9728 → RFC 8414 链的任何错误（根或已解析 AS 探测的 5xx、
+    // 模式解析失败、网络错误）— 继续走到旧版路径感知重试。
     logMCPDebug(
       serverName,
       `RFC 9728 discovery failed, falling back: ${errorMessage(err)}`,
     )
   }
 
-  // Fallback only when the URL has a path component; for root URLs the SDK's
-  // own fallback already probed the same endpoints.
+  // 仅当 URL 有路径组件时才回退；对于根 URL，SDK 的
+  // 自带回退已经探测了相同的端点。
   const url = new URL(serverUrl)
   if (url.pathname === '/') {
     return undefined
@@ -350,10 +349,9 @@ export function hasMcpDiscoveryButNoToken(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): boolean {
-  // XAA servers can silently re-auth via cached id_token even without an
-  // access/refresh token — tokens() fires the xaaRefresh path. Skipping the
-  // connection here would make that auto-auth branch unreachable after
-  // invalidateCredentials('tokens') clears the stored tokens.
+  // XAA 服务器即使没有 access/refresh token 也可以通过缓存的 id_token 静默重新认证 —
+  // tokens() 会触发 xaaRefresh 路径。在此跳过连接会使
+  // invalidateCredentials('tokens') 清除存储的 token 后该自动认证分支无法到达。
   if (isXaaEnabled() && serverConfig.oauth?.xaa) {
     return false
   }
@@ -405,9 +403,9 @@ async function revokeToken({
     'Content-Type': 'application/x-www-form-urlencoded',
   }
 
-  // RFC 7009 §2.1 requires client auth per RFC 6749 §2.3. XAA always uses a
-  // confidential client at the AS — strict ASes (Okta/Stytch) reject public-
-  // client revocation of confidential-client tokens.
+  // RFC 7009 §2.1 要求按 RFC 6749 §2.3 进行客户端认证。XAA 始终在
+  // AS 使用机密客户端 — 严格的 AS（Okta/Stytch）会拒绝
+  // 公共客户端撤销机密客户端的 token。
   if (clientId && clientSecret) {
     if (authMethod === 'client_secret_post') {
       params.set('client_id', clientId)
@@ -431,7 +429,7 @@ async function revokeToken({
     await axios.post(endpoint, params, { headers })
     logMCPDebug(serverName, `Successfully revoked ${tokenTypeHint}`)
   } catch (error: unknown) {
-    // Fallback for non-RFC-7009-compliant servers that require Bearer auth
+    // 不符合 RFC 7009 的服务器的后备方案，要求 Bearer 认证
     if (
       axios.isAxiosError(error) &&
       error.response?.status === 401 &&
@@ -441,8 +439,8 @@ async function revokeToken({
         serverName,
         `Got 401, retrying ${tokenTypeHint} revocation with Bearer auth`,
       )
-      // RFC 6749 §2.3.1: must not send more than one auth method. The retry
-      // switches to Bearer — clear any client creds from the body.
+      // RFC 6749 §2.3.1：不能发送超过一种认证方法。重试
+      // 切换到 Bearer — 从 body 中清除任何客户端凭证。
       params.delete('client_id')
       params.delete('client_secret')
       await axios.post(endpoint, params, {
@@ -476,11 +474,11 @@ export async function revokeServerTokens(
   const serverKey = getServerKey(serverName, serverConfig)
   const tokenData = existingData.mcpOAuth[serverKey]
 
-  // Attempt server-side revocation if there are tokens to revoke (best-effort)
+  // 如果有 token 要撤销则尝试服务端撤销（尽力而为）
   if (tokenData?.accessToken || tokenData?.refreshToken) {
     try {
-      // For XAA (and any PRM-discovered auth), the AS is at a different host
-      // than the MCP URL — use the persisted discoveryState if we have it.
+      // 对于 XAA（和任何 PRM 发现的认证），AS 位于与
+      // MCP URL 不同的主机 — 如果有 discoveryState 则使用它。
       const asUrl =
         tokenData.discoveryState?.authorizationServerUrl ?? serverConfig.url
       const metadata = await fetchAuthServerMetadata(
@@ -500,8 +498,8 @@ export async function revokeServerTokens(
           logMCPDebug(serverName, 'Server does not support token revocation')
         } else {
           const revocationEndpointStr = String(revocationEndpoint)
-          // RFC 7009 defines revocation_endpoint_auth_methods_supported
-          // separately from the token endpoint's list; prefer it if present.
+          // RFC 7009 定义了 revocation_endpoint_auth_methods_supported，
+          // 与 token 端点的列表分开；如果存在则优先使用。
           const authMethods =
             ('revocation_endpoint_auth_methods_supported' in metadata
               ? metadata.revocation_endpoint_auth_methods_supported
@@ -520,7 +518,7 @@ export async function revokeServerTokens(
             `Revoking tokens via ${revocationEndpointStr} (${authMethod})`,
           )
 
-          // Revoke refresh token first (more important - prevents future access token generation)
+          // 先撤销 refresh token（更重要 — 防止未来生成 access token）
           if (tokenData.refreshToken) {
             try {
               await revokeToken({
@@ -534,7 +532,7 @@ export async function revokeServerTokens(
                 authMethod,
               })
             } catch (error: unknown) {
-              // Log but continue
+              // 记录但继续
               logMCPDebug(
                 serverName,
                 `Failed to revoke refresh token: ${errorMessage(error)}`,
@@ -542,7 +540,7 @@ export async function revokeServerTokens(
             }
           }
 
-          // Then revoke access token (may already be invalidated by refresh token revocation)
+          // 然后撤销 access token（可能已被 refresh token 撤销失效）
           if (tokenData.accessToken) {
             try {
               await revokeToken({
@@ -565,19 +563,19 @@ export async function revokeServerTokens(
         }
       }
     } catch (error: unknown) {
-      // Log error but don't throw - revocation is best-effort
+      // 记录错误但不抛出 — 撤销是尽力而为
       logMCPDebug(serverName, `Failed to revoke tokens: ${errorMessage(error)}`)
     }
   } else {
     logMCPDebug(serverName, 'No tokens to revoke')
   }
 
-  // Always clear local tokens, regardless of server-side revocation result.
+  // 无论服务端撤销结果如何，始终清除本地 token
   clearServerTokensFromLocalStorage(serverName, serverConfig)
 
-  // When re-authenticating, preserve step-up auth state (scope + discovery)
-  // so the next performMCPOAuthFlow can use cached scope instead of
-  // re-probing. For "Clear Auth" (default), wipe everything.
+  // 重新认证时保留 step-up 认证状态（scope + discovery），
+  // 以便下次 performMCPOAuthFlow 可以使用缓存的 scope 而无需
+  // 重新探测。对于"Clear Auth"（默认），清除所有内容。
   if (
     preserveStepUpState &&
     tokenData &&
@@ -599,8 +597,8 @@ export async function revokeServerTokens(
             : {}),
           ...(tokenData.discoveryState
             ? {
-                // Strip legacy bulky metadata fields here too so users with
-                // existing overflowed blobs recover on next re-auth (#30337).
+                // 也在此处剥离旧版臃肿的元数据字段，使已有
+                // 溢出 blob 的用户能在下次重新认证时恢复（#30337）。
                 discoveryState: {
                   authorizationServerUrl:
                     tokenData.discoveryState.authorizationServerUrl,
@@ -672,7 +670,7 @@ async function performMCPXaaAuth(
     throw new Error('XAA: oauth.xaa must be set') // guarded by caller
   }
 
-  // IdP config comes from user-level settings, not per-server.
+  // IdP 配置来自用户级设置，而非每个服务器。
   const idp = getXaaIdpSettings()
   if (!idp) {
     throw new Error(
@@ -690,8 +688,8 @@ async function performMCPXaaAuth(
   const clientConfig = getMcpClientConfig(serverName, serverConfig)
   const clientSecret = clientConfig?.clientSecret
   if (!clientSecret) {
-    // Diagnostic context for serverKey mismatch debugging. Only computed
-    // on the error path so there's no perf cost on success.
+    // 用于调试 serverKey 不匹配的诊断上下文。仅在
+    // 错误路径上计算，因此成功时无性能开销。
     const wantedKey = getServerKey(serverName, serverConfig)
     const haveKeys = Object.keys(
       getSecureStorage().read()?.mcpOAuthClientConfig ?? {},
@@ -712,13 +710,13 @@ async function performMCPXaaAuth(
 
   logMCPDebug(serverName, 'XAA: starting cross-app access flow')
 
-  // IdP client secret lives in a separate keychain slot (keyed by IdP issuer),
-  // NOT the AS secret — different trust domain. Optional: if absent, PKCE-only.
+  // IdP 客户端密钥存储在独立的 keychain 槽中（由 IdP issuer 键控），
+  // 而非 AS 密钥 — 不同的信任域。可选：如果没有，则仅使用 PKCE。
   const idpClientSecret = getIdpClientSecret(idp.issuer)
 
-  // Acquire id_token (cached or via one OIDC browser pop at the IdP).
-  // Peek the cache first so we can report idTokenCacheHit in analytics before
-  // acquireIdpIdToken potentially writes a fresh one.
+  // 获取 id_token（缓存或通过 IdP 的一次 OIDC 浏览器弹出）。
+  // 先查看缓存以便在 acquireIdpIdToken 可能写入新 token 之前
+  // 在分析中报告 idTokenCacheHit。
   const idTokenCacheHit = getCachedIdpIdToken(idp.issuer) !== undefined
 
   let failureStage: XaaFailureStage = 'idp_login'
@@ -739,12 +737,12 @@ async function performMCPXaaAuth(
       throw e
     }
 
-    // Discover the IdP's token endpoint for the RFC 8693 exchange.
+    // 发现 IdP 的 token 端点用于 RFC 8693 交换。
     failureStage = 'discovery'
     const oidc = await discoverOidc(idp.issuer)
 
-    // Run the exchange. performCrossAppAccess throws XaaTokenExchangeError
-    // for the IdP leg and "jwt-bearer grant failed" for the AS leg.
+    // 执行交换。performCrossAppAccess 为 IdP 段抛出
+    // XaaTokenExchangeError，为 AS 段抛出 "jwt-bearer grant failed"。
     failureStage = 'token_exchange'
     let tokens
     try {
@@ -764,10 +762,10 @@ async function performMCPXaaAuth(
     } catch (e) {
       if (abortSignal?.aborted) throw new AuthenticationCancelledError()
       const msg = errorMessage(e)
-      // If the IdP says the id_token is bad, drop it from the cache so the
-      // next attempt does a fresh IdP login. XaaTokenExchangeError carries
-      // shouldClearIdToken so we key off OAuth semantics (4xx / invalid body
-      // → clear; 5xx IdP outage → preserve) rather than substring matching.
+      // 如果 IdP 说 id_token 无效，从缓存中删除以便
+      // 下次尝试进行全新的 IdP 登录。XaaTokenExchangeError 携带
+      // shouldClearIdToken，因此我们依赖 OAuth 语义（4xx / 无效 body → 清除；
+      // 5xx IdP 故障 → 保留）而非子串匹配。
       if (e instanceof XaaTokenExchangeError) {
         if (e.shouldClearIdToken) {
           clearIdpIdToken(idp.issuer)
@@ -781,8 +779,8 @@ async function performMCPXaaAuth(
         msg.includes('AS metadata discovery failed') ||
         msg.includes('no authorization server supports jwt-bearer')
       ) {
-        // performCrossAppAccess runs PRM + AS discovery before the actual
-        // exchange — don't attribute their failures to 'token_exchange'.
+        // performCrossAppAccess 在实际交换前运行 PRM + AS 发现
+        // — 不要将它们的失败归因于 'token_exchange'。
         failureStage = 'discovery'
       } else if (msg.includes('jwt-bearer')) {
         failureStage = 'jwt_bearer'
@@ -790,9 +788,9 @@ async function performMCPXaaAuth(
       throw e
     }
 
-    // Save tokens via the same storage path as normal OAuth. We write directly
-    // (instead of ZyAuthProvider.saveTokens) to avoid instantiating the
-    // whole provider just to write the same keys.
+    // 通过与普通 OAuth 相同的存储路径保存 token。我们直接写入
+    //（而非 ZyAuthProvider.saveTokens）以避免仅为写入相同键而
+    // 实例化整个提供者。
     const storage = getSecureStorage()
     const existingData = storage.read() || {}
     const serverKey = getServerKey(serverName, serverConfig)
@@ -806,15 +804,15 @@ async function performMCPXaaAuth(
           serverName,
           serverUrl: serverConfig.url,
           accessToken: tokens.access_token,
-          // AS may omit refresh_token on jwt-bearer — preserve any existing one
+          // AS 可能在 jwt-bearer 上省略 refresh_token — 保留任何现有的
           refreshToken: tokens.refresh_token ?? prev?.refreshToken,
           expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000,
           scope: tokens.scope,
           clientId,
           clientSecret,
-          // Persist the AS URL so _doRefresh and revokeServerTokens can locate
-          // the token/revocation endpoints when MCP URL ≠ AS URL (the common
-          // XAA topology).
+          // 持久化 AS URL，使 _doRefresh 和 revokeServerTokens 能在
+          // MCP URL ≠ AS URL 时（常见的 XAA 拓扑）定位
+          // token/撤销端点。
           discoveryState: {
             authorizationServerUrl: tokens.authorizationServerUrl,
           },
@@ -829,7 +827,7 @@ async function performMCPXaaAuth(
       idTokenCacheHit,
     })
   } catch (e) {
-    // User-initiated cancel (Esc during IdP browser pop) isn't a failure.
+    // 用户发起的取消（IdP 浏览器弹出期间按 Esc）不是失败。
     if (e instanceof AuthenticationCancelledError) {
       throw e
     }
@@ -854,20 +852,20 @@ export async function performMCPOAuthFlow(
     onWaitingForCallback?: (submit: (callbackUrl: string) => void) => void
   },
 ): Promise<void> {
-  // XAA (SEP-990): if configured, bypass the per-server consent dance.
-  // If the IdP id_token isn't cached, this pops the browser once at the IdP
-  // (shared across all XAA servers for that issuer). Subsequent servers hit
-  // the cache and are silent. Tokens land in the same keychain slot, so the
-  // rest of CC's transport wiring (ZyAuthProvider.tokens() in client.ts)
-  // works unchanged.
+  // XAA（SEP-990）：如果配置了，跳过每个服务器的同意流程。
+  // 如果 IdP id_token 未缓存，这会在 IdP 弹出一次浏览器
+  //（对该发行人的所有 XAA 服务器共享）。后续服务器命中
+  // 缓存并且是静默的。Token 存储在相同的 keychain 槽中，因此
+  // CC 的其余传输接线（client.ts 中的 ZyAuthProvider.tokens()）
+  // 不变地工作。
   //
-  // No silent fallback: if `oauth.xaa` is set, XAA is the only path. We
-  // never fall through to the consent flow — that would be surprising (the
-  // user explicitly asked for XAA) and security-relevant (consent flow may
-  // have a different trust/scope posture than the org's IdP policy).
+  // 无静默回退：如果设置了 `oauth.xaa`，XAA 是唯一路径。我们
+  // 永远不会回退到同意流程 — 那会令人惊讶（用户
+  // 明确要求 XAA）且与安全相关（同意流程可能有
+  // 与组织 IdP 策略不同的信任/scope 姿态）。
   //
-  // Servers with `oauth.xaa` but ZY_CODE_ENABLE_XAA unset hard-fail with
-  // actionable copy rather than silently degrade to consent.
+  // 设置了 `oauth.xaa` 但未设置 ZY_CODE_ENABLE_XAA 的服务器会硬性失败，
+  // 提供可操作提示而非静默降级到同意流程。
   if (serverConfig.oauth?.xaa) {
     if (!isXaaEnabled()) {
       throw new Error(
@@ -888,8 +886,8 @@ export async function performMCPOAuthFlow(
           }
         : {}),
     })
-    // performMCPXaaAuth logs its own success/failure events (with
-    // idTokenCacheHit + xaaFailureStage).
+    // performMCPXaaAuth 记录自己的成功/失败事件（含
+    // idTokenCacheHit + xaaFailureStage）。
     await performMCPXaaAuth(
       serverName,
       serverConfig,
@@ -900,9 +898,9 @@ export async function performMCPOAuthFlow(
     return
   }
 
-  // Check for cached step-up scope and resource metadata URL before clearing
-  // tokens. The transport-attached auth provider persists scope when it receives
-  // a step-up 401, so we can use it here instead of making an extra probe request.
+  // 清除 token 前先检查缓存的 step-up scope 和资源元数据 URL。
+  // 传输附加的认证提供者在收到 step-up 401 时持久化 scope，
+  // 因此我们可以在此使用它而无需发出额外的探测请求。
   const storage = getSecureStorage()
   const serverKey = getServerKey(serverName, serverConfig)
   const cachedEntry = storage.read()?.mcpOAuth?.[serverKey]
@@ -1569,18 +1567,18 @@ export class ZyAuthProvider implements OAuthClientProvider {
     //
     // No special-casing of {accessToken:'', expiresAt:0}. Yes, SDK auth()
     // writes that mid-flow (saveClientInformation defaults). But with this
-    // auto-auth branch, the *first* tokens() call — before auth() writes
-    // anything — fires xaaRefresh. If id_token is cached, SDK short-circuits
-    // there and never reaches the write. If id_token isn't cached, xaaRefresh
-    // returns undefined in ~1 keychain read, auth() proceeds, writes the
-    // marker, calls tokens() again, xaaRefresh fails again identically.
-    // Harmless redundancy, not a wasted exchange. And guarding on `!==''`
-    // permanently bricks auto-auth when a *prior* session left that marker
-    // in keychain — real bug seen with xaa.dev.
+    // 在此自动认证分支中，*首次* tokens() 调用 — auth() 写入
+    // 任何内容之前 — 触发 xaaRefresh。如果 id_token 已缓存，SDK 在那里
+    // 短路，永远不会到达写入。如果 id_token 未缓存，xaaRefresh
+    // 在约 1 次 keychain 读取内返回 undefined，auth() 继续，写入
+    // 标记，再次调用 tokens()，xaaRefresh 再次相同地失败。
+    // 无害的冗余，不是浪费的交换。而对 `!==''` 的守卫会在
+    // *之前* 的会话在 keychain 中留下该标记时永久破坏自动认证 —
+    // 用 xaa.dev 见过的真实 bug。
     //
-    // xaaRefresh() internally short-circuits to undefined when the id_token
-    // isn't cached (or settings.xaaIdp is gone) → we fall through to the
-    // existing needs-auth path → user runs `xaa login`.
+    // xaaRefresh() 在 id_token 未缓存时（或 settings.xaaIdp 消失时）
+    // 内部短路到 undefined — 我们走到现有的需要认证路径 —
+    // 用户运行 `xaa login`。
     //
     if (
       isXaaEnabled() &&
@@ -1609,9 +1607,9 @@ export class ZyAuthProvider implements OAuthClientProvider {
           `XAA silent exchange failed: ${errorMessage(e)}`,
         )
       }
-      // Fall through. Either id_token isn't cached (xaaRefresh returned
-      // undefined) or the exchange errored. Normal path below handles both:
-      // !tokenData → undefined → 401 → needs-auth; expired → undefined → same.
+      // 继续走。要么 id_token 未缓存（xaaRefresh 返回
+      // undefined），要么交换出错。下面的普通路径处理这两种情况：
+      // !tokenData → undefined → 401 → 需要认证；过期 → undefined → 相同。
     }
 
     if (!tokenData) {
@@ -1619,12 +1617,12 @@ export class ZyAuthProvider implements OAuthClientProvider {
       return undefined
     }
 
-    // Check if token is expired
+    // 检查 token 是否过期
     const expiresIn = (tokenData.expiresAt - Date.now()) / 1000
 
-    // Step-up check: if a 403 insufficient_scope was detected and the current
-    // token doesn't have the requested scope, omit refresh_token below so the
-    // SDK skips refresh and falls through to the PKCE flow.
+    // Step-up 检查：如果检测到 403 insufficient_scope 且当前
+    // token 没有请求的 scope，在下方省略 refresh_token，使
+    // SDK 跳过刷新并走 PKCE 流程。
     const currentScopes = tokenData.scope?.split(' ') ?? []
     const needsStepUp =
       this._pendingStepUpScope !== undefined &&
@@ -1636,19 +1634,19 @@ export class ZyAuthProvider implements OAuthClientProvider {
       )
     }
 
-    // If token is expired and we don't have a refresh token, return undefined
+    // 如果 token 过期且没有 refresh token，返回 undefined
     if (expiresIn <= 0 && !tokenData.refreshToken) {
       logMCPDebug(this.serverName, `Token expired without refresh token`)
       return undefined
     }
 
-    // If token is expired or about to expire (within 5 minutes) and we have a refresh token, refresh it proactively.
-    // This proactive refresh is a UX improvement - it avoids the latency of a failed request followed by token refresh.
-    // While MCP servers should return 401 for expired tokens (which triggers SDK-level refresh), proactively refreshing
-    // before expiry provides a smoother user experience.
-    // Skip when step-up is pending — refreshing can't elevate scope (RFC 6749 §6).
+    // 如果 token 过期或即将过期（5 分钟内）且有 refresh token，主动刷新。
+    // 这是 UX 改进 — 避免失败请求加 token 刷新的延迟。
+    // 虽然 MCP 服务器应对过期 token 返回 401（触发 SDK 级刷新），
+    // 但在过期前主动刷新提供更平滑的用户体验。
+    // step-up 待处理时跳过 — 刷新无法提升 scope（RFC 6749 §6）。
     if (expiresIn <= 300 && tokenData.refreshToken && !needsStepUp) {
-      // Reuse existing refresh promise if one is in progress to prevent concurrent refreshes
+      // 复用现有的刷新进行中中的 promise，防止并发刷新
       if (!this._refreshInProgress) {
         logMCPDebug(
           this.serverName,
@@ -1684,7 +1682,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
       }
     }
 
-    // Return current tokens (may be expired if refresh failed or not needed yet)
+    // 返回当前 token（如果刷新失败或暂时不需要，可能已过期）
     const tokens = {
       access_token: tokenData.accessToken,
       refresh_token: needsStepUp ? undefined : tokenData.refreshToken,
@@ -1750,7 +1748,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
    */
   private async xaaRefresh(): Promise<OAuthTokens | undefined> {
     const idp = getXaaIdpSettings()
-    if (!idp) return undefined // config was removed mid-session
+    if (!idp) return undefined // 配置在会话中被移除
 
     const idToken = getCachedIdpIdToken(idp.issuer)
     if (!idToken) {
@@ -1768,15 +1766,15 @@ export class ZyAuthProvider implements OAuthClientProvider {
         this.serverName,
         'XAA: missing clientId or clientSecret in config — skipping silent refresh',
       )
-      return undefined // shouldn't happen if `mcp add` was correct
+      return undefined // 如果 `mcp add` 正确不应该发生
     }
 
     const idpClientSecret = getIdpClientSecret(idp.issuer)
 
-    // Discover IdP token endpoint. Could cache (fetchCache.ts already
-    // caches /.well-known/ requests), but OIDC metadata is cheap + idempotent.
-    // xaaRefresh is the silent tokens() path — soft-fail to undefined so the
-    // caller falls through to needs-authentication instead of throwing mid-connect.
+    // 发现 IdP token 端点。可以缓存（fetchCache.ts 已
+    // 缓存 /.well-known/ 请求），但 OIDC 元数据便宜且幂等。
+    // xaaRefresh 是静默 tokens() 路径 — 软失败到 undefined，
+    // 使调用者走需要认证路径而非在连接中间抛出。
     let oidc
     try {
       oidc = await discoverOidc(idp.issuer)
@@ -1801,11 +1799,11 @@ export class ZyAuthProvider implements OAuthClientProvider {
         },
         this.serverName,
       )
-      // Write directly (not via saveTokens) so clientId + clientSecret land in
-      // storage even when this is the first write for serverKey. saveTokens
-      // only spreads existing data; if no prior performMCPXaaAuth ran,
-      // revokeServerTokens would later read tokenData.clientId as undefined
-      // and send a client_id-less RFC 7009 request that strict ASes reject.
+      // 直接写入（非 saveTokens）使 clientId + clientSecret 进入
+      // 存储，即使这是 serverKey 的首次写入。saveTokens
+      // 只展开现有数据；如果之前没有 performMCPXaaAuth 运行，
+      // revokeServerTokens 稍后会读到 tokenData.clientId 为 undefined
+      // 并发送缺少 client_id 的 RFC 7009 请求，严格 AS 会拒绝。
       const storage = getSecureStorage()
       const existingData = storage.read() || {}
       const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1850,10 +1848,10 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
-    // Store the authorization URL
+    // 存储授权 URL
     this._authorizationUrl = authorizationUrl.toString()
 
-    // Extract and store scopes from the authorization URL for later use in token exchange
+    // 从授权 URL 中提取并存储 scope 供稍后 token 交换使用
     const scopes = authorizationUrl.searchParams.get('scope')
     logMCPDebug(
       this.serverName,
@@ -1868,7 +1866,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
         `Captured scopes from authorization URL: ${scopes}`,
       )
     } else {
-      // If no scope in URL, try to get it from metadata
+      // 如果 URL 中没有 scope，尝试从元数据获取
       const metadataScope = getScopeFromMetadata(this._metadata)
       if (metadataScope) {
         this._scopes = metadataScope
@@ -1881,12 +1879,12 @@ export class ZyAuthProvider implements OAuthClientProvider {
       }
     }
 
-    // Persist scope for step-up auth: only when the transport-attached provider
-    // (handleRedirection=false) receives a step-up 401. The SDK calls auth()
-    // which calls redirectToAuthorization with the new scope. We persist it
-    // so the next performMCPOAuthFlow can use it without an extra probe request.
-    // Guard with !handleRedirection to avoid persisting during normal auth flows
-    // (where the scope may come from metadata scopes_supported rather than a 401).
+    // 持久化 scope 用于 step-up 认证：仅当传输附加的提供者
+    //（handleRedirection=false）收到 step-up 401 时。SDK 调用 auth()
+    // 然后调用 redirectToAuthorization 传入新 scope。我们持久化它
+    // 使下次 performMCPOAuthFlow 可以使用它而无需额外探测请求。
+    // 用 !handleRedirection 守卫以避免在普通认证流程中持久化
+    //（scope 可能来自元数据 scopes_supported 而非 401）。
     if (this._scopes && !this.handleRedirection) {
       const storage = getSecureStorage()
       const existingData = storage.read() || {}
@@ -1907,7 +1905,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
       return
     }
 
-    // Validate URL scheme for security
+    // 出于安全原因验证 URL scheme
     const urlString = authorizationUrl.toString()
     if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
       throw new Error(
@@ -1919,8 +1917,8 @@ export class ZyAuthProvider implements OAuthClientProvider {
     const redactedUrl = redactSensitiveUrlParams(urlString)
     logMCPDebug(this.serverName, `Authorization URL: ${redactedUrl}`)
 
-    // Notify the UI about the authorization URL BEFORE opening the browser,
-    // so users can see the URL as a fallback if the browser fails to open
+    // 在打开浏览器之前通知 UI 授权 URL，
+    // 以便浏览器打开失败时用户可以将 URL 作为后备方案查看
     if (this.onAuthorizationUrlCallback) {
       this.onAuthorizationUrlCallback(urlString)
     }
@@ -2004,15 +2002,15 @@ export class ZyAuthProvider implements OAuthClientProvider {
       `Saving discovery state (authServer: ${state.authorizationServerUrl})`,
     )
 
-    // Persist only the URLs, NOT the full metadata blobs.
-    // authorizationServerMetadata alone is ~1.5-2KB per MCP server (every
-    // grant type, PKCE method, endpoint the IdP supports). On macOS the
-    // keychain write goes through `security -i` which has a 4096-byte stdin
-    // line limit — with hex encoding that's ~2013 bytes of JSON total. Two
-    // OAuth MCP servers persisting full metadata overflows it, corrupting
-    // the credential store (#30337). The SDK re-fetches missing metadata
-    // with one HTTP GET on the next auth — see node_modules/.../auth.js
-    // `cachedState.authorizationServerMetadata ?? await discover...`.
+    // 仅持久化 URL，而非完整的元数据 blob。
+    // authorizationServerMetadata 每个 MCP 服务器约 1.5-2KB（
+    // IdP 支持的每个 grant type、PKCE 方法、端点）。在 macOS 上
+    // keychain 写入通过 `security -i` 进行，有 4096 字节 stdin
+    // 行限制 — 十六进制编码后约 2013 字节 JSON 总计。两个
+    // OAuth MCP 服务器持久化完整元数据会溢出它，损坏
+    // 凭证存储（#30337）。SDK 在下次认证时用
+    // 一次 HTTP GET 重新获取缺失的元数据 — 见 node_modules/.../auth.js
+    // `cachedState.authorizationServerMetadata ?? await discover...`。
     const updatedData: SecureStorageData = {
       ...existingData,
       mcpOAuth: {
@@ -2056,7 +2054,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
       }
     }
 
-    // Check config hint for direct metadata URL
+    // 检查配置提示以获取直接元数据 URL
     const metadataUrl = this.serverConfig.oauth?.authServerMetadataUrl
     if (metadataUrl) {
       logMCPDebug(
@@ -2136,7 +2134,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     }
 
     try {
-      // Re-read tokens after acquiring lock — another process may have refreshed
+      // 获取锁后重新读取 token — 另一个进程可能已刷新
       clearKeychainCache()
       const storage = getSecureStorage()
       const data = storage.read()
@@ -2156,7 +2154,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
             token_type: 'Bearer',
           }
         }
-        // Use the freshest refresh token from storage
+        // 使用存储中最新的 refresh token
         if (tokenData.refreshToken) {
           refreshToken = tokenData.refreshToken
         }
@@ -2212,13 +2210,13 @@ export class ZyAuthProvider implements OAuthClientProvider {
         logMCPDebug(this.serverName, `Starting token refresh`)
         const authFetch = createAuthFetch()
 
-        // Reuse cached metadata from the initial OAuth flow if available,
-        // since metadata (token endpoint URL, etc.) is static per auth server.
-        // Priority:
-        // 1. In-memory cache (same-session refreshes)
-        // 2. Persisted discovery state from initial auth (cross-session) —
-        //    avoids re-running RFC 9728 discovery on every refresh.
-        // 3. Full RFC 9728 → RFC 8414 re-discovery via fetchAuthServerMetadata.
+        // 如果初始 OAuth 流程中有缓存的元数据则复用，
+        // 因为元数据（token 端点 URL 等）对每个认证服务器是静态的。
+        // 优先级：
+        // 1. 内存缓存（同会话刷新）
+        // 2. 初始认证中持久化的 discovery state（跨会话）—
+        //    避免每次刷新重新运行 RFC 9728 发现。
+        // 3. 通过 fetchAuthServerMetadata 完整 RFC 9728 → RFC 8414 重新发现。
         let metadata = this._metadata
         if (!metadata) {
           const cached = await this.discoveryState()
@@ -2252,7 +2250,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
           emitRefreshEvent('failure', 'metadata_discovery_failed')
           return undefined
         }
-        // Cache for future refreshes
+        // 缓存供将来刷新使用
         this._metadata = metadata
 
         const clientInfo = await this.clientInformation()
@@ -2284,8 +2282,8 @@ export class ZyAuthProvider implements OAuthClientProvider {
         emitRefreshEvent('failure', 'no_tokens_returned')
         return undefined
       } catch (error) {
-        // Invalid grant means the refresh token itself is invalid/revoked/expired.
-        // But another process may have already refreshed successfully — check first.
+        // Invalid grant 意味着 refresh token 本身无效/已撤销/过期。
+        // 但另一个进程可能已成功刷新 — 先检查。
         if (error instanceof InvalidGrantError) {
           logMCPDebug(
             this.serverName,
@@ -2303,9 +2301,9 @@ export class ZyAuthProvider implements OAuthClientProvider {
                 this.serverName,
                 `Another process refreshed tokens, using those`,
               )
-              // Not emitted as success: this process did not perform a
-              // refresh, and the winning process already emitted its own
-              // success event. Emitting here would double-count.
+              // 不作为成功发出：此进程未执行
+              // 刷新，且获胜的进程已发出自己的
+              // 成功事件。在此发出会重复计数。
               return {
                 access_token: tokenData.accessToken,
                 refresh_token: tokenData.refreshToken,
@@ -2324,7 +2322,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
           return undefined
         }
 
-        // Retry on timeouts or transient server errors
+        // 超时或临时服务器错误时重试
         const isTimeoutError =
           error instanceof Error &&
           /timeout|timed out|etimedout|econnreset/i.test(error.message)
@@ -2446,18 +2444,18 @@ function getScopeFromMetadata(
   metadata: AuthorizationServerMetadata | undefined,
 ): string | undefined {
   if (!metadata) return undefined
-  // Try 'scope' first (non-standard but used by some providers)
+  // 先尝试 'scope'（非标准但某些提供者使用）
   if ('scope' in metadata && typeof metadata.scope === 'string') {
     return metadata.scope
   }
-  // Try 'default_scope' (non-standard but used by some providers)
+  // 尝试 'default_scope'（非标准但某些提供者使用）
   if (
     'default_scope' in metadata &&
     typeof metadata.default_scope === 'string'
   ) {
     return metadata.default_scope
   }
-  // Fall back to scopes_supported (standard OAuth 2.0 field)
+  // 回退到 scopes_supported（标准 OAuth 2.0 字段）
   if (metadata.scopes_supported && Array.isArray(metadata.scopes_supported)) {
     return metadata.scopes_supported.join(' ')
   }

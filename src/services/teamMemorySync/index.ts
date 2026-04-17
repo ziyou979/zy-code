@@ -1,27 +1,25 @@
 /**
- * Team Memory Sync Service
+ * 团队记忆同步服务
  *
- * Syncs team memory files between the local filesystem and the server API.
- * Team memory is scoped per-repo (identified by git remote hash) and shared
- * across all authenticated org members.
+ * 在本地文件系统与服务器 API 之间同步团队记忆文件。
+ * 团队记忆以仓库为单位（通过 git remote hash 标识），在同一组织的所有认证成员间共享。
  *
- * API contract (anthropic/anthropic#250711 + #283027):
- *   GET  /api/claude_code/team_memory?repo={owner/repo}            → TeamMemoryData (includes entryChecksums)
- *   GET  /api/claude_code/team_memory?repo={owner/repo}&view=hashes → metadata + entryChecksums only (no entry bodies)
- *   PUT  /api/claude_code/team_memory?repo={owner/repo}            → upload entries (upsert semantics)
- *   404 = no data exists yet
+ * API 契约（anthropic/anthropic#250711 + #283027）：
+ *   GET  /api/claude_code/team_memory?repo={owner/repo}            → TeamMemoryData（包含 entryChecksums）
+ *   GET  /api/claude_code/team_memory?repo={owner/repo}&view=hashes → 仅 metadata + entryChecksums（不含条目内容）
+ *   PUT  /api/claude_code/team_memory?repo={owner/repo}            → 上传条目（upsert 语义）
+ *   404 = 尚不存在数据
  *
- * Sync semantics:
- *   - Pull overwrites local files with server content (server wins per-key).
- *   - Push uploads only keys whose content hash differs from serverChecksums
- *     (delta upload). Server uses upsert: keys not in the PUT are preserved.
- *   - File deletions do NOT propagate: deleting a local file won't remove it
- *     from the server, and the next pull will restore it locally.
+ * 同步语义：
+ *   - Pull 会用服务器内容覆盖本地文件（按 key 服务器优先）。
+ *   - Push 仅上传内容哈希与 serverChecksums 不同的 key（增量上传）。
+ *     服务器使用 upsert：PUT 中未包含的 key 会被保留。
+ *   - 本地文件删除不会传播到服务器：删除本地文件不会从服务器移除，
+ *     下次 pull 会重新恢复到本地。
  *
- * State management:
- *   All mutable state (ETag tracking, watcher suppression) lives in a
- *   SyncState object created by the caller and threaded through every call.
- *   This avoids module-level mutable state and gives tests natural isolation.
+ * 状态管理：
+ *   所有可变状态（ETag 跟踪、watcher 抑制）都存储在调用方创建并贯穿所有调用的
+ *   SyncState 对象中。这避免了模块级可变状态，并为测试提供天然的隔离性。
  */
 
 import axios from 'axios'
@@ -69,51 +67,50 @@ import {
 } from './types.js'
 
 const TEAM_MEMORY_SYNC_TIMEOUT_MS = 30_000
-// Per-entry size cap — server default from anthropic/anthropic#293258.
-// Pre-filtering oversized entries saves bandwidth: the structured 413 for
-// this case doesn't give us anything to learn (one file is just too big).
+// 每个条目的大小上限 —— 来自 anthropic/anthropic#293258 的服务器默认值。
+// 预先过滤过大的条目可以节省带宽：此情况下的结构化 413 错误
+// 不会提供额外信息（只是一个文件太大了）。
 const MAX_FILE_SIZE_BYTES = 250_000
-// No client-side DEFAULT_MAX_ENTRIES: the server's entry-count cap is
-// GB-tunable per-org (claude_code_team_memory_limits), so any compile-time
-// constant here will drift.  We only truncate after learning the effective
-// limit from a structured 413's extra_details.max_entries.
-// Gateway body-size cap.  The API gateway rejects PUT bodies over ~256-512KB
-// with an unstructured (HTML) 413 before the request reaches the app server —
-// distinguishable from the app's structured entry-count 413 only by latency
-// (~750ms gateway vs ~2.3s app on comparable payloads).  #21969 removed the
-// client entry-count cap; cold pushes from heavy users then sent 300KB-1.4MB
-// bodies and hit this.  200KB leaves headroom under the observed threshold
-// and keeps a single-entry-at-MAX_FILE_SIZE_BYTES solo batch (~250KB) just
-// under the real gateway limit.  Batches larger than this are split into
-// sequential PUTs — server upsert-merge semantics make that safe.
+// 客户端不设置 DEFAULT_MAX_ENTRIES：服务器的条目数量上限
+// 可按组织进行 GB 级别调整（claude_code_team_memory_limits），因此任何编译时
+// 常量都会过时。只有在收到结构化 413 的 extra_details.max_entries 后才会截断。
+// API 网关的 body 大小上限。API 网关会在请求到达应用服务器之前，
+// 用非结构化（HTML）413 拒绝超过 ~256-512KB 的 PUT body ——
+// 仅能通过延迟时间（网关约 ~750ms，应用服务器约 ~2.3s）
+// 与应用的条目数量 413 区分。#21969 移除了客户端条目数量上限；
+// 重度用户的冷推送会发送 300KB-1.4MB 的 body 并触发此限制。
+// 200KB 在观察到的阈值之下留有余量，
+// 并使单个 MAX_FILE_SIZE_BYTES 的独立批处理（~250KB）
+// 刚好低于实际网关限制。超过此大小的批处理会被拆分为
+// 顺序 PUT —— 服务器的 upsert-merge 语义使其是安全的。
 const MAX_PUT_BODY_BYTES = 200_000
 const MAX_RETRIES = 3
 const MAX_CONFLICT_RETRIES = 2
 
-// ─── Sync state ─────────────────────────────────────────────
+// ─── 同步状态 ─────────────────────────────────────────────
 
 /**
- * Mutable state for the team memory sync service.
- * Created once per session by the watcher and passed to all sync functions.
- * Tests create a fresh instance per test for isolation.
+ * 团队记忆同步服务的可变状态。
+ * 由 watcher 在每个会话中创建一次，并传递给所有同步函数。
+ * 测试为每个测试创建新实例以实现隔离。
  */
 export type SyncState = {
-  /** Last known server checksum (ETag) for conditional requests. */
+  /** 用于条件请求的最后已知服务器校验和（ETag）。 */
   lastKnownChecksum: string | null
   /**
-   * Per-key content hash (`sha256:<hex>`) of what we believe the server
-   * currently holds. Populated from server-provided entryChecksums on pull
-   * and from local hashes on successful push. Used to compute the delta on
-   * push — only keys whose local hash differs are uploaded.
+   * 我们认定的服务器当前持有的每个 key 的内容哈希（`sha256:<hex>`）。
+   * 在 pull 时从服务器提供的 entryChecksums 填充，
+   * 在 push 成功后从本地哈希填充。用于在 push 时计算增量 ——
+   * 仅上传本地哈希不同的 key。
    */
   serverChecksums: Map<string, string>
   /**
-   * Server-enforced max_entries cap, learned from a structured 413 response
-   * (anthropic/anthropic#293258 adds error_code + extra_details.max_entries).
-   * Stays null until a 413 is observed — the server's cap is GB-tunable
-   * per-org so there is no correct client-side default.  While null,
-   * readLocalTeamMemory sends everything and lets the server be
-   * authoritative (it rejects atomically).
+   * 服务器强制的 max_entries 上限，从结构化 413 响应中学习得到
+   * （anthropic/anthropic#293258 添加了 error_code + extra_details.max_entries）。
+   * 在观察到 413 之前保持为 null —— 服务器的上限可按组织进行 GB 级别调整，
+   * 因此没有正确的客户端默认值。当为 null 时，
+   * readLocalTeamMemory 会发送所有内容，让服务器拥有
+   * 最终决定权（它会原子性地拒绝）。
    */
   serverMaxEntries: number | null
 }
@@ -127,26 +124,26 @@ export function createSyncState(): SyncState {
 }
 
 /**
- * Compute `sha256:<hex>` over the UTF-8 bytes of the given content.
- * Format matches the server's entryChecksums values (anthropic/anthropic#283027)
- * so local-vs-server comparison works by direct string equality.
+ * 对给定内容的 UTF-8 字节计算 `sha256:<hex>`。
+ * 格式与服务器的 entryChecksums 值匹配（anthropic/anthropic#283027），
+ * 因此本地与服务器的比较可以通过直接字符串相等来完成。
  */
 export function hashContent(content: string): string {
   return 'sha256:' + createHash('sha256').update(content, 'utf8').digest('hex')
 }
 
 /**
- * Type guard narrowing an unknown error to a Node.js errno-style exception.
- * Uses `in` narrowing so no `as` cast is needed at call sites.
+ * 类型守卫，将未知 error 收窄为 Node.js 的 errno 风格异常。
+ * 使用 `in` 收窄，因此调用处不需要 `as` 转换。
  */
 function isErrnoException(e: unknown): e is NodeJS.ErrnoException {
   return e instanceof Error && 'code' in e && typeof e.code === 'string'
 }
 
-// ─── Auth & endpoint ─────────────────────────────────────────
+// ─── 认证与端点 ─────────────────────────────────────────
 
 /**
- * Check if user is authenticated with ZY OAuth (required for team memory sync).
+ * 检查用户是否已使用 ZY OAuth 认证（团队记忆同步的必要条件）。
  */
 function isUsingOAuth(): boolean {
   if (getAPIProvider() !== 'anthropic' || !isAnthropicBaseUrl()) {
@@ -183,7 +180,7 @@ function getAuthHeaders(): {
   return { error: 'No OAuth token available for team memory sync' }
 }
 
-// ─── Fetch (pull) ────────────────────────────────────────────
+// ─── 拉取（fetch） ────────────────────────────────────────────
 
 async function fetchTeamMemoryOnce(
   state: SyncState,
@@ -244,7 +241,7 @@ async function fetchTeamMemoryOnce(
       }
     }
 
-    // Extract checksum from response data or ETag header
+    // 从响应数据或 ETag 头中提取校验和
     const responseChecksum =
       parsed.data.checksum ||
       response.headers['etag']?.replace(/^"|"$/g, '') ||
@@ -306,11 +303,11 @@ async function fetchTeamMemoryOnce(
 }
 
 /**
- * Fetch only per-key checksums + metadata (no entry bodies).
- * Used for cheap serverChecksums refresh during 412 conflict resolution — avoids
- * downloading ~300KB of content just to learn which keys changed.
- * Requires anthropic/anthropic#283027 deployed; on failure the caller fails the
- * push and the watcher retries on the next edit.
+ * 仅获取每个 key 的校验和 + 元数据（不含条目内容）。
+ * 用于 412 冲突解决期间廉价刷新 serverChecksums —— 避免
+ * 为了知道哪些 key 发生变化而下载 ~300KB 的内容。
+ * 需要 anthropic/anthropic#283027 已部署；失败时调用方会
+ * 使 push 失败，watcher 会在下次编辑时重试。
  */
 async function fetchTeamMemoryHashes(
   state: SyncState,
@@ -339,8 +336,8 @@ async function fetchTeamMemoryHashes(
       response.data?.checksum || response.headers['etag']?.replace(/^"|"$/g, '')
     const entryChecksums = response.data?.entryChecksums
 
-    // Requires anthropic/anthropic#283027. If entryChecksums is missing,
-    // treat as a probe failure — caller fails the push; watcher retries.
+    // 需要 anthropic/anthropic#283027。如果缺少 entryChecksums，
+    // 视为探测失败 —— 调用方会使 push 失败，watcher 会重试。
     if (!entryChecksums || typeof entryChecksums !== 'object') {
       return {
         success: false,
@@ -409,19 +406,19 @@ async function fetchTeamMemory(
   return lastResult!
 }
 
-// ─── Upload (push) ───────────────────────────────────────────
+// ─── 上传（push） ───────────────────────────────────────────
 
 /**
- * Split a delta into PUT-sized batches under MAX_PUT_BODY_BYTES each.
+ * 将增量拆分为每个不超过 MAX_PUT_BODY_BYTES 的 PUT 批次。
  *
- * Greedy bin-packing over sorted keys — sorting gives deterministic batches
- * across calls, which matters for ETag stability if the conflict loop retries
- * after a partial commit.  The byte count is the full serialized body
- * including JSON overhead, so what we measure is what axios sends.
+ * 对排序后的 key 进行贪心装箱 —— 排序确保跨调用的批次确定性，
+ * 这在冲突循环重试部分提交后对 ETag 稳定性很重要。
+ * 字节数计算包含完整的序列化 body（包括 JSON 开销），
+ * 因此我们测量的就是 axios 发送的大小。
  *
- * A single entry exceeding MAX_PUT_BODY_BYTES goes into its own solo batch
- * (MAX_FILE_SIZE_BYTES=250K already caps individual files; a ~250K solo body
- * is above our soft cap but below the gateway's observed real threshold).
+ * 单个条目超过 MAX_PUT_BODY_BYTES 时会独自成为一批
+ * （MAX_FILE_SIZE_BYTES=250K 已经限制了单个文件大小；
+ * ~250K 的独立 body 高于我们的软限制，但低于网关观察到的实际阈值）。
  */
 export function batchDeltaByBytes(
   delta: Record<string, string>,
@@ -429,14 +426,14 @@ export function batchDeltaByBytes(
   const keys = Object.keys(delta).sort()
   if (keys.length === 0) return []
 
-  // Fixed overhead for `{"entries":{}}` — each entry then adds its marginal
-  // bytes.  jsonStringify (≡ JSON.stringify under the hood) on the raw
-  // strings handles escaping so the count matches what axios serializes.
+  // `{"entries":{}}` 的固定开销 —— 每个条目然后增加其边际
+  // 字节数。jsonStringify（底层等价于 JSON.stringify）处理原始
+  // 字符串的转义，因此计数与 axios 序列化的结果匹配。
   const EMPTY_BODY_BYTES = Buffer.byteLength('{"entries":{}}', 'utf8')
   const entryBytes = (k: string, v: string): number =>
     Buffer.byteLength(jsonStringify(k), 'utf8') +
     Buffer.byteLength(jsonStringify(v), 'utf8') +
-    2 // colon + comma (comma over-counts by 1 on the last entry; harmless slack)
+    1 // 冒号 + 逗号（最后一个条目多算了 1 个逗号；无影响，只是余量）
 
   const batches: Array<Record<string, string>> = []
   let current: Record<string, string> = {}
@@ -526,10 +523,10 @@ async function uploadTeamMemory(
     let serverErrorCode: 'team_memory_too_many_entries' | undefined
     let serverMaxEntries: number | undefined
     let serverReceivedEntries: number | undefined
-    // Parse structured 413 (anthropic/anthropic#293258). The server's
-    // RequestTooLargeException includes error_code + extra_details with
-    // the effective max_entries (may be GB-tuned per-org). Cache it so
-    // the next push trims to the right value.
+    // 解析结构化 413（anthropic/anthropic#293258）。服务器的
+    // RequestTooLargeException 包含 error_code + extra_details，其中
+    // 有有效的 max_entries（可按组织进行 GB 级别调整）。缓存它以便
+    // 下次 push 时截断到正确的值。
     if (httpStatus === 413 && axios.isAxiosError(error)) {
       const parsed = TeamMemoryTooManyEntriesSchema().safeParse(
         error.response?.data,
@@ -552,17 +549,16 @@ async function uploadTeamMemory(
   }
 }
 
-// ─── Local file operations ───────────────────────────────────
+// ─── 本地文件操作 ───────────────────────────────────────────
 
 /**
- * Read all team memory files from the local directory into a flat key-value map.
- * Keys are relative paths from the team memory directory.
- * Empty files are included (content will be empty string).
+ * 从本地目录读取所有团队记忆文件到一个扁平的 key-value 映射中。
+ * Key 是相对于团队记忆目录的路径。
+ * 空文件也会被包含（内容为空字符串）。
  *
- * PSR M22174: Each file is scanned for credentials before inclusion
- * using patterns from gitleaks. Files containing secrets are SKIPPED
- * (not uploaded) and collected in skippedSecrets so the caller can
- * warn the user.
+ * PSR M22174：每个文件在包含之前都会使用 gitleaks 的模式扫描凭证。
+ * 包含密钥的文件会被跳过（不上传），并收集到 skippedSecrets 中，
+ * 以便调用方向用户发出警告。
  */
 async function readLocalTeamMemory(maxEntries: number | null): Promise<{
   entries: Record<string, string>
@@ -593,14 +589,14 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
               const content = await readFile(fullPath, 'utf8')
               const relPath = relative(teamDir, fullPath).replaceAll('\\', '/')
 
-              // PSR M22174: scan for secrets BEFORE adding to the upload
-              // payload. If a secret is detected, skip this file entirely
-              // so it never leaves the machine.
+              // PSR M22174：在添加到上传 payload 之前扫描密钥。
+              // 如果检测到密钥，则完全跳过此文件，
+              // 以确保它永远不会离开本机。
               const secretMatches = scanForSecrets(content)
               if (secretMatches.length > 0) {
-                // Report only the first match per file — one secret is
-                // enough to skip the file and we don't want to log more
-                // than necessary about credential locations.
+                // 每个文件只报告第一个匹配项 —— 一个密钥就
+                // 足以跳过文件，我们不想记录太多关于
+                // 凭证位置的信息。
                 const firstMatch = secretMatches[0]!
                 skippedSecrets.push({
                   path: relPath,
@@ -616,7 +612,7 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
 
               entries[relPath] = content
             } catch {
-              // Skip unreadable files
+              // 跳过无法读取的文件
             }
           }
         }),
@@ -634,23 +630,23 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
 
   await walkDir(teamDir)
 
-  // Truncate only if we've LEARNED a cap from the server (via a structured
-  // 413's extra_details.max_entries — anthropic/anthropic#293258).  The
-  // server's entry-count cap is GB-tunable per-org via
-  // claude_code_team_memory_limits; we have no way to know it in advance.
-  // Before the first 413 we send everything and let the server be
-  // authoritative.  The server validates total stored entries after merge
-  // (not PUT body count) and rejects atomically — nothing is written on 413.
+  // 仅在从服务器学到上限后才截断（通过结构化
+  // 413 的 extra_details.max_entries —— anthropic/anthropic#293258）。
+  // 服务器的条目数量上限可通过 claude_code_team_memory_limits
+  // 按组织进行 GB 级别调整；我们无法提前知道它。
+  // 在第一次 413 之前我们发送所有内容，让服务器拥有
+  // 最终决定权。服务器在合并后验证总存储条目数
+  //（不是 PUT body 数量），并在 413 时原子性地拒绝 —— 不会写入任何内容。
   //
-  // Sorting before truncation is what makes delta computation work: without
-  // it, the parallel walk above picks a different N-of-M subset each push
-  // (Promise.all resolves in completion order), serverChecksums misses keys,
-  // and the "delta" balloons to near-full snapshot.  With deterministic
-  // truncation, the same N keys are compared against the same server state.
+  // 截断前的排序是增量计算能够工作的前提：没有它，
+  // 上面的并行遍历每次 push 会选择不同的 N/M 子集
+  //（Promise.all 按完成顺序解析），serverChecksums 会遗漏 key，
+  // 而"增量"会膨胀到接近完整快照。使用确定性
+  // 截断，相同的 N 个 key 会与相同的服务器状态进行比较。
   //
-  // When disk has more files than the learned cap, alphabetically-last ones
-  // consistently never sync.  When the merged (server + delta) count exceeds
-  // the cap we still fail — recovering requires soft_delete_keys.
+  // 当磁盘文件数超过学习到的上限时，字母顺序最后的文件
+  // 会一直无法同步。当合并后（服务器 + 增量）的数量超过
+  // 上限时仍然会失败 —— 恢复需要 soft_delete_keys。
   const keys = Object.keys(entries).sort()
   if (maxEntries !== null && keys.length > maxEntries) {
     const dropped = keys.slice(maxEntries)
@@ -673,18 +669,18 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
 }
 
 /**
- * Write remote team memory entries to the local directory.
- * Validates every path against the team memory directory boundary.
- * Skips entries whose on-disk content already matches, so unchanged
- * files keep their mtime and don't spuriously invalidate the
- * getMemoryFiles cache or trigger watcher events.
+ * 将远程团队记忆条目写入本地目录。
+ * 验证每个路径是否超出团队记忆目录边界。
+ * 跳过磁盘内容已匹配的条目，因此未更改的文件
+ * 保留其 mtime，不会错误地使 getMemoryFile 缓存
+ * 失效或触发 watcher 事件。
  *
- * Parallel: each entry is processed independently (validate + read-compare
- * + mkdir + write). Concurrent mkdir on a shared parent is safe with
- * recursive: true (EEXIST is swallowed). The initial pull is the long
- * pole in startTeamMemoryWatcher — p99 was ~22s serial at 50 entries.
+ * 并行：每个条目独立处理（验证 + 读取比较
+ * + mkdir + 写入）。共享父目录上的并发 mkdir 是安全的
+ * recursive: true（EEXIST 会被吞掉）。初始 pull 是
+ * startTeamMemoryWatcher 中的耗时操作 —— 50 个条目时 p99 串行约 ~22s。
  *
- * Returns the number of files actually written.
+ * 返回实际写入的文件数量。
  */
 async function writeRemoteEntriesToLocal(
   entries: Record<string, string>,
@@ -711,9 +707,9 @@ async function writeRemoteEntriesToLocal(
         return false
       }
 
-      // Skip if on-disk content already matches. Handles the common case
-      // where pull returns unchanged entries (skipEtagCache path, first
-      // pull of a session with warm disk state from prior session).
+      // 如果磁盘内容已经匹配则跳过。处理常见情况：
+      // pull 返回未更改的条目（skipEtagCache 路径，前一会话
+      // 有热磁盘状态的首次拉取）。
       try {
         const existing = await readFile(validatedPath, 'utf8')
         if (existing === content) {
@@ -730,7 +726,7 @@ async function writeRemoteEntriesToLocal(
             { level: 'debug' },
           )
         }
-        // Fall through to write for ENOENT/ENOTDIR (file doesn't exist yet)
+        // 对 ENOENT/ENOTDIR（文件尚不存在）继续执行写入
       }
 
       try {
@@ -754,18 +750,18 @@ async function writeRemoteEntriesToLocal(
   return count(results, Boolean)
 }
 
-// ─── Public API ──────────────────────────────────────────────
+// ─── 公共 API ──────────────────────────────────────────────
 
 /**
- * Check if team memory sync is available (requires ZY OAuth).
+ * 检查团队记忆同步是否可用（需要 ZY OAuth）。
  */
 export function isTeamMemorySyncAvailable(): boolean {
   return isUsingOAuth()
 }
 
 /**
- * Pull team memory from the server and write to local directory.
- * Returns true if any files were updated.
+ * 从服务器拉取团队记忆并写入本地目录。
+ * 如果有任何文件被更新则返回 true。
  */
 export async function pullTeamMemory(
   state: SyncState,
@@ -773,7 +769,7 @@ export async function pullTeamMemory(
 ): Promise<{
   success: boolean
   filesWritten: number
-  /** Number of entries the server returned, regardless of whether they were written to disk. */
+  /** 服务器返回的条目数量，无论是否写入磁盘。 */
   entryCount: number
   notModified?: boolean
   error?: string
@@ -822,8 +818,8 @@ export async function pullTeamMemory(
     return { success: true, filesWritten: 0, entryCount: 0, notModified: true }
   }
   if (result.isEmpty || !result.data) {
-    // Server has no data — clear stale serverChecksums so the next push
-    // doesn't skip entries it thinks the server already has.
+    // 服务器没有数据 —— 清除过时的 serverChecksums，
+    // 这样下次 push 不会跳过它认为服务器已有的条目。
     state.serverChecksums.clear()
     logPull(startTime, { success: true })
     return { success: true, filesWritten: 0, entryCount: 0 }
@@ -832,10 +828,10 @@ export async function pullTeamMemory(
   const entries = result.data.content.entries
   const responseChecksums = result.data.content.entryChecksums
 
-  // Refresh serverChecksums from server-provided per-key hashes.
-  // Requires anthropic/anthropic#283027 — if the response lacks entryChecksums
-  // (pre-deploy server), serverChecksums stays empty and the next push uploads
-  // everything; it self-corrects on push success.
+  // 从服务器提供的每个 key 的哈希刷新 serverChecksums。
+  // 需要 anthropic/anthropic#283027 —— 如果响应缺少 entryChecksums
+  //（部署前的服务器），serverChecksums 保持为空，下次 push 会全量上传；
+  // 它在 push 成功后会自我修正。
   state.serverChecksums.clear()
   if (responseChecksums) {
     for (const [key, hash] of Object.entries(responseChecksums)) {
@@ -867,24 +863,24 @@ export async function pullTeamMemory(
 }
 
 /**
- * Push local team memory files to the server with optimistic locking.
+ * 使用乐观锁将本地团队记忆文件推送到服务器。
  *
- * Uses delta upload: only keys whose local content hash differs from
- * serverChecksums are included in the PUT. On 412 conflict, probes
- * GET ?view=hashes to refresh serverChecksums, recomputes the delta
- * (naturally excluding keys where a teammate's push matches ours),
- * and retries. No merge, no disk writes — server-only new keys from
- * a teammate's concurrent push propagate on the next pull.
+ * 使用增量上传：仅包含本地内容哈希与
+ * serverChecksums 不同的 key 到 PUT 中。遇到 412 冲突时，探测
+ * GET ?view=hashes 来刷新 serverChecksums，重新计算增量
+ *（自然排除了队友 push 中与我们内容相同的 key），
+ * 并重试。不合并、不写入磁盘 —— 队友并发 push
+ * 带来的服务器新 key 会在下次 pull 时传播。
  *
- * Local-wins-on-conflict is the opposite of syncTeamMemory's pull-first
- * semantics. This is intentional: pushTeamMemory is triggered by a local edit,
- * and that edit must not be silently discarded just because a teammate pushed
- * in the meantime. Content-level merge (same key, both changed) is not
- * attempted — the local version simply overwrites the server version for that
- * key, and the server's edit to that key is lost. This is the lesser evil:
- * the local user is actively editing and can re-incorporate the teammate's
- * changes, whereas silently discarding the local edit loses work the user
- * just did with no recourse.
+ * 冲突时本地优先与 syncTeamMemory 的 pull 优先
+ * 语义相反。这是有意为之：pushTeamMemory 由本地编辑触发，
+ * 该编辑不能因为队友同时 push 而被静默丢弃。
+ * 内容级别合并（同一个 key，双方都改了）不会
+ * 尝试 —— 本地版本直接覆盖服务器版本，
+ * 而服务器对该 key 的编辑会丢失。这是两害相权取其轻：
+ * 本地用户正在积极编辑，可以重新整合队友的
+ * 更改，而静默丢弃本地编辑会使用户刚刚完成的工作
+ * 无法挽回地丢失。
  */
 export async function pushTeamMemory(
   state: SyncState,
@@ -913,18 +909,18 @@ export async function pushTeamMemory(
     }
   }
 
-  // Read local entries once at the start. Conflict resolution does NOT re-read
-  // from disk — the delta computation against a refreshed serverChecksums naturally
-  // excludes server-origin content, so the user's local edit cannot be clobbered.
-  // Secret scanning (PSR M22174) happens here once — files with detected
-  // secrets are excluded from the upload set.
+  // 在开始时读取本地条目一次。冲突解决不会重新从
+  // 磁盘读取 —— 针对刷新后的 serverChecksums 计算增量自然
+  // 排除了来自服务器的内容，因此用户的本地编辑不会被覆盖。
+  // 密钥扫描（PSR M22174）在这里只执行一次 —— 包含密钥的文件
+  // 会被排除在上传集合之外。
   const localRead = await readLocalTeamMemory(state.serverMaxEntries)
   const entries = localRead.entries
   const skippedSecrets = localRead.skippedSecrets
   if (skippedSecrets.length > 0) {
-    // Log a user-visible warning listing which files were skipped and why.
-    // Don't block the push — just exclude those files. The secret VALUE is
-    // never logged, only the type label.
+    // 记录用户可见的警告，列出哪些文件被跳过及原因。
+    // 不阻塞 push —— 仅排除这些文件。密钥的 VALUE
+    // 永远不会被记录，只记录类型标签。
     const summary = skippedSecrets
       .map(s => `"${s.path}" (${s.label})`)
       .join(', ')
@@ -934,8 +930,8 @@ export async function pushTeamMemory(
     )
     logEvent('tengu_team_mem_secret_skipped', {
       file_count: skippedSecrets.length,
-      // Only log gitleaks rule IDs (not values, not paths — paths could
-      // leak repo structure). Comma-joined for compact single-field analytics.
+      // 只记录 gitleaks 规则 ID（不记录值，不记录路径 —— 路径可能
+      // 泄漏仓库结构）。逗号连接以压缩为单个 analytics 字段。
       rule_ids: skippedSecrets
         .map(s => s.ruleId)
         .join(
@@ -944,8 +940,8 @@ export async function pushTeamMemory(
     })
   }
 
-  // Hash each local entry once. The loop recomputes the delta each iteration
-  // (serverChecksums may change after a 412 probe) but local hashes are stable.
+  // 对每个本地条目哈希一次。循环在每次迭代时重新计算增量
+  //（serverChecksums 可能在 412 探测后变化），但本地哈希是稳定的。
   const localHashes = new Map<string, string>()
   for (const [key, content] of Object.entries(entries)) {
     localHashes.set(key, hashContent(content))
@@ -958,11 +954,11 @@ export async function pushTeamMemory(
     conflictAttempt <= MAX_CONFLICT_RETRIES;
     conflictAttempt++
   ) {
-    // Delta: only upload keys whose content hash differs from what we believe
-    // the server holds. On first push after a fresh pull, this is exactly the
-    // user's local edits. After a 412 probe, matching hashes are excluded —
-    // server-origin content from a teammate's concurrent push is naturally
-    // dropped from the delta, so we never re-upload it.
+    // 增量：仅上传内容哈希与我们认为服务器持有的
+    // 内容不同的 key。首次 pull 后的 push，这正好是
+    // 用户的本地编辑。412 探测后，匹配的哈希被排除 ——
+    // 队友并发 push 带来的服务器内容自然被
+    // 从增量中排除，因此我们永远不会重新上传它。
     const delta: Record<string, string> = {}
     for (const [key, localHash] of localHashes) {
       if (state.serverChecksums.get(key) !== localHash) {
@@ -972,9 +968,8 @@ export async function pushTeamMemory(
     const deltaCount = Object.keys(delta).length
 
     if (deltaCount === 0) {
-      // Nothing to upload. This is the expected fast path after a fresh pull
-      // with no local edits, and also the convergence point after a 412 where
-      // the teammate's push was a strict superset of ours.
+      // 没有可上传的内容。这是拉取后没有本地编辑时的预期快速路径，
+      // 也是 412 后队友 push 是我们严格超集时的收敛点。
       logPush(startTime, {
         success: true,
         conflict: sawConflict,
@@ -987,15 +982,15 @@ export async function pushTeamMemory(
       }
     }
 
-    // Split the delta into PUT-sized batches to stay under the gateway's
-    // body-size limit.  Typical deltas (1-3 edited files) land in one batch;
-    // cold pushes with many files are where this earns its keep.  Each batch
-    // is a complete PUT that upserts its keys independently — if batch N
-    // fails, batches 1..N-1 are already committed server-side.  Updating
-    // serverChecksums after each success means the outer conflict-loop retry
-    // naturally resumes from the uncommitted tail (those keys still differ).
-    // state.lastKnownChecksum is updated inside uploadTeamMemory on each
-    // 200, so the ETag chain threads through the batches automatically.
+    // 将增量拆分为 PUT 大小的批次，以保持在网关的
+    // body 大小限制之下。典型的增量（1-3 个已编辑文件）会落在一个批次中；
+    // 包含多个文件的冷推送才是它发挥作用的地方。每个批次
+    // 是一个完整的 PUT，独立 upsert 其 key —— 如果批次 N
+    // 失败，批次 1..N-1 已经在服务器端提交。每次成功后更新
+    // serverChecksums 意味着外部冲突循环的重试
+    // 自然会从未提交的尾部恢复（这些 key 仍然不同）。
+    // state.lastKnownChecksum 在 uploadTeamMemory 中每次
+    // 200 响应时更新，因此 ETag 链自动贯穿批次。
     const batches = batchDeltaByBytes(delta)
     let filesUploaded = 0
     let result: TeamMemorySyncUploadResult | undefined
@@ -1014,14 +1009,14 @@ export async function pushTeamMemory(
       }
       filesUploaded += Object.keys(batch).length
     }
-    // batches is non-empty (deltaCount > 0 guaranteed by the check above),
-    // so the loop executed at least once.
+    // 批次非空（deltaCount > 0 由上面的检查保证），
+    // 因此循环至少执行了一次。
     result = result!
 
     if (result.success) {
-      // Server-side delta propagation to disk (server-only new keys from a
-      // teammate's concurrent push) happens on the next pull — we only
-      // fetched hashes during conflict resolution, not bodies.
+      // 服务器端增量传播到磁盘（队友并发 push 带来的
+      // 服务器新 key）会在下次 pull 时发生 —— 我们在
+      // 冲突解决期间只获取了哈希，没有获取内容。
       logForDebugging(
         batches.length > 1
           ? `team-memory-sync: pushed ${filesUploaded} of ${localHashes.size} files in ${batches.length} batches`
@@ -1044,12 +1039,12 @@ export async function pushTeamMemory(
     }
 
     if (!result.conflict) {
-      // If the server returned a structured 413 with its effective
-      // max_entries (anthropic/anthropic#293258), cache it so the next push
-      // trims to the right cap. The server may GB-tune this per-org.
-      // This push still fails — re-trimming mid-push would require re-reading
-      // local entries and re-computing the delta, and we'd need
-      // soft_delete_keys to shrink below current server count anyway.
+      // 如果服务器返回了结构化的 413 及其有效的
+      // max_entries（anthropic/anthropic#293258），缓存它以便下次 push
+      // 截断到正确的上限。服务器可能按组织进行 GB 级别调整。
+      // 这次 push 仍然失败 —— 在 push 中间重新截断需要重新读取
+      // 本地条目并重新计算增量，而且我们需要
+      // soft_delete_keys 来缩小到当前服务器计数以下。
       if (result.serverMaxEntries !== undefined) {
         state.serverMaxEntries = result.serverMaxEntries
         logForDebugging(
@@ -1057,10 +1052,10 @@ export async function pushTeamMemory(
           { level: 'warn' },
         )
       }
-      // filesUploaded may be nonzero if earlier batches committed before this
-      // one failed. Those keys ARE on the server; the push is a failure
-      // because it's incomplete, but we don't re-upload them on retry
-      // (serverChecksums was updated).
+      // filesUploaded 可能非零，如果之前的批次在
+      // 此批次失败前已提交。这些 key 确实已经在服务器上；
+      // push 是不完整的所以视为失败，但重试时不会重新上传它们
+      //（serverChecksums 已被更新）。
       logPush(startTime, {
         success: false,
         filesUploaded,
@@ -1068,8 +1063,8 @@ export async function pushTeamMemory(
         putBatches: batches.length > 1 ? batches.length : undefined,
         errorType: result.errorType,
         status: result.httpStatus,
-        // Datadog: filter @error_code:team_memory_too_many_entries to track
-        // too-many-files rejections distinct from gateway/unstructured 413s
+        // Datadog：筛选 @error_code:team_memory_too_many_entries 以跟踪
+        // 文件过多被拒绝的情况，区别于网关/非结构化 413
         errorCode: result.serverErrorCode,
         serverMaxEntries: result.serverMaxEntries,
         serverReceivedEntries: result.serverReceivedEntries,
@@ -1083,7 +1078,7 @@ export async function pushTeamMemory(
       }
     }
 
-    // 412 conflict — refresh serverChecksums and retry with a tighter delta.
+    // 412 冲突 —— 刷新 serverChecksums 并用更紧凑的增量重试。
     sawConflict = true
     if (conflictAttempt >= MAX_CONFLICT_RETRIES) {
       logForDebugging(
@@ -1111,13 +1106,13 @@ export async function pushTeamMemory(
       { level: 'info' },
     )
 
-    // Cheap probe: fetch only per-key checksums, no entry bodies. Refreshes
-    // serverChecksums so the next iteration's delta drops any keys a teammate just
-    // pushed with identical content.
+    // 廉价探测：仅获取每个 key 的校验和，不含条目内容。刷新
+    // serverChecksums 以便下次迭代的增量排除队友刚 push 的
+    // 内容相同的 key。
     const probe = await fetchTeamMemoryHashes(state, repoSlug)
     if (!probe.success || !probe.entryChecksums) {
-      // Requires anthropic/anthropic#283027. A transient probe failure here is
-      // fine: the push is failed and the watcher will retry on the next edit.
+      // 需要 anthropic/anthropic#283027。此处短暂的探测失败
+      // 没问题：push 会失败，watcher 会在下次编辑时重试。
       logPush(startTime, {
         success: false,
         conflict: true,
@@ -1146,9 +1141,9 @@ export async function pushTeamMemory(
 }
 
 /**
- * Bidirectional sync: pull from server, merge with local, push back.
- * Server entries take precedence on conflict (last-write-wins by the server).
- * Push uses conflict resolution (retries on 412) via pushTeamMemory.
+ * 双向同步：从服务器拉取，与本地合并，再推送回去。
+ * 冲突时服务器条目优先（服务器最后写入者获胜）。
+ * Push 使用冲突解决（412 时重试），通过 pushTeamMemory 实现。
  */
 export async function syncTeamMemory(state: SyncState): Promise<{
   success: boolean
@@ -1156,7 +1151,7 @@ export async function syncTeamMemory(state: SyncState): Promise<{
   filesPushed: number
   error?: string
 }> {
-  // 1. Pull remote → local (skip ETag cache for full sync)
+  // 1. 从远程拉取到本地（跳过 ETag 缓存以进行完整同步）
   const pullResult = await pullTeamMemory(state, { skipEtagCache: true })
   if (!pullResult.success) {
     return {
@@ -1167,7 +1162,7 @@ export async function syncTeamMemory(state: SyncState): Promise<{
     }
   }
 
-  // 2. Push local → remote (with conflict resolution)
+  // 2. 从本地推送到远程（带冲突解决）
   const pushResult = await pushTeamMemory(state)
   if (!pushResult.success) {
     return {
@@ -1190,7 +1185,7 @@ export async function syncTeamMemory(state: SyncState): Promise<{
   }
 }
 
-// ─── Telemetry helpers ───────────────────────────────────────
+// ─── 遥测辅助函数 ───────────────────────────────────────
 
 function logPull(
   startTime: number,

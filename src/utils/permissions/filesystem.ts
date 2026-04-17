@@ -51,8 +51,8 @@ import { getRuleByContentsForToolName } from './permissions.js'
 declare const MACRO: { VERSION: string }
 
 /**
- * Dangerous files that should be protected from auto-editing.
- * These files can be used for code execution or data exfiltration.
+ * 不应在 auto 模式下自动编辑的危险文件。
+ * 这些文件可用于代码执行或数据泄露。
  */
 export const DANGEROUS_FILES = [
   '.gitconfig',
@@ -68,8 +68,8 @@ export const DANGEROUS_FILES = [
 ] as const
 
 /**
- * Dangerous directories that should be protected from auto-editing.
- * These directories contain sensitive configuration or executable files.
+ * 不应在 auto 模式下自动编辑的危险目录。
+ * 这些目录包含敏感配置或可执行文件。
  */
 export const DANGEROUS_DIRECTORIES = [
   '.git',
@@ -79,13 +79,13 @@ export const DANGEROUS_DIRECTORIES = [
 ] as const
 
 /**
- * Normalizes a path for case-insensitive comparison.
- * This prevents bypassing security checks using mixed-case paths on case-insensitive
- * filesystems (macOS/Windows) like `.cLauDe/Settings.locaL.json`.
+ * 规范化路径以进行不区分大小写的比较。
+ * 这可以防止在不区分大小写的文件系统（macOS/Windows）上使用混合大小写路径
+ * （如 `.cLauDe/Settings.locaL.json`）绕过安全检查。
  *
- * We always normalize to lowercase regardless of platform for consistent security.
- * @param path The path to normalize
- * @returns The lowercase path for safe comparison
+ * 无论平台如何，我们总是将路径转为小写以确保安全一致性。
+ * @param path 要规范化的路径
+ * @returns 小写路径，用于安全比较
  */
 export function normalizeCaseForComparison(path: string): string {
   return path.toLowerCase()
@@ -117,11 +117,11 @@ export function getZySkillScope(
 
   for (const { dir, prefix } of bases) {
     const dirLower = normalizeCaseForComparison(dir)
-    // Try both path separators (Windows paths may not be normalized to /)
+    // 同时尝试两个路径分隔符（Windows 路径可能未规范化为 /）
     for (const s of [sep, '/']) {
       if (absolutePathLower.startsWith(dirLower + s.toLowerCase())) {
-        // Match on lowercase, but slice the ORIGINAL path so the skill name
-        // preserves case (pattern matching downstream is case-sensitive)
+        // 在小写上匹配，但切片原始路径以保留技能名称的大小写
+        // （下游模式匹配区分大小写）
         const rest = absolutePath.slice(dir.length + s.length)
         const slash = rest.indexOf('/')
         const bslash = sep === '\\' ? rest.indexOf('\\') : -1
@@ -131,22 +131,21 @@ export function getZySkillScope(
             : bslash === -1
               ? slash
               : Math.min(slash, bslash)
-        // Require a separator: file must be INSIDE the skill dir, not a
-        // file directly under skills/ (no skill scope for that)
+        // 需要分隔符：文件必须在技能目录内部，而不是直接在 skills/ 下
+        // （这种情况没有技能范围）
         if (cut <= 0) return null
         const skillName = rest.slice(0, cut)
-        // Reject traversal and empty. Use includes('..') not === '..' to
-        // match step 1.6's ruleContent.includes('..') guard: a skillName like
-        // 'v2..beta' would otherwise produce a suggestion step 1.7 emits but
-        // step 1.6 always rejects (dead suggestion, infinite re-prompt).
+        // 拒绝路径穿越和空值。使用 includes('..') 而非 === '..'
+        // 以匹配步骤 1.6 的 ruleContent.includes('..') 守卫：
+        // 像 'v2..beta' 这样的 skillName 会产生步骤 1.7 发出的建议，
+        // 但步骤 1.6 始终拒绝（死建议，无限重新提示）。
         if (!skillName || skillName === '.' || skillName.includes('..')) {
           return null
         }
-        // Reject glob metacharacters. skillName is interpolated into a
-        // gitignore pattern consumed by ignore().add() in matchingRuleForInput
-        // at step 1.6. A directory literally named '*' (valid on POSIX) would
-        // produce '/.zy/skills/*/**' which matches ALL skills. Return null
-        // to fall through to generateSuggestions() instead.
+        // 拒绝 glob 元字符。skillName 被插入到 gitignore 模式中，
+        // 由 matchingRuleForInput 中的 ignore().add() 消费（步骤 1.6）。
+        // 字面名为 '*' 的目录（在 POSIX 上有效）会产生 '/.zy/skills/*/**'，
+        // 这将匹配所有技能。返回 null 以便回退到 generateSuggestions()。
         if (/[*?[\]]/.test(skillName)) return null
         return { skillName, pattern: prefix + skillName + '/**' }
       }
@@ -156,33 +155,33 @@ export function getZySkillScope(
   return null
 }
 
-// Always use / as the path separator per gitignore spec
+// 始终使用 / 作为路径分隔符，遵循 gitignore 规范
 // https://git-scm.com/docs/gitignore
 const DIR_SEP = posix.sep
 
 /**
- * Cross-platform relative path calculation that returns POSIX-style paths.
- * Handles Windows path conversion internally.
- * @param from The base path
- * @param to The target path
- * @returns A POSIX-style relative path
+ * 跨平台相对路径计算，返回 POSIX 风格路径。
+ * 内部处理 Windows 路径转换。
+ * @param from 基础路径
+ * @param to 目标路径
+ * @returns POSIX 风格的相对路径
  */
 export function relativePath(from: string, to: string): string {
   if (getPlatform() === 'windows') {
-    // Convert Windows paths to POSIX for consistent comparison
+    // 将 Windows 路径转换为 POSIX 以进行一致比较
     const posixFrom = windowsPathToPosixPath(from)
     const posixTo = windowsPathToPosixPath(to)
     return posix.relative(posixFrom, posixTo)
   }
-  // Use POSIX paths directly
+  // 直接使用 POSIX 路径
   return posix.relative(from, to)
 }
 
 /**
- * Converts a path to POSIX format for pattern matching.
- * Handles Windows path conversion internally.
- * @param path The path to convert
- * @returns A POSIX-style path
+ * 将路径转换为 POSIX 格式以进行模式匹配。
+ * 内部处理 Windows 路径转换。
+ * @param path 要转换的路径
+ * @returns POSIX 风格的路径
  */
 export function toPosixPath(path: string): string {
   if (getPlatform() === 'windows') {
@@ -198,38 +197,38 @@ function getSettingsPaths(): string[] {
 }
 
 export function isZySettingsPath(filePath: string): boolean {
-  // SECURITY: Normalize path structure first to prevent bypass via redundant ./
-  // sequences like `./.zy/./settings.json` which would evade the endsWith() check
+  // 安全：先规范化路径结构以防止通过冗余 ./ 序列绕过安全
+  // 例如 `./.zy/./settings.json` 会规避 endsWith() 检查
   const expandedPath = expandPath(filePath)
 
-  // Normalize for case-insensitive comparison to prevent bypassing security
-  // with paths like .cLauDe/Settings.locaL.json
+  // 进行不区分大小写的规范化比较，防止通过 .cLauDe/Settings.locaL.json
+  // 等路径绕过安全检查
   const normalizedPath = normalizeCaseForComparison(expandedPath)
 
-  // Use platform separator so endsWith checks work on both Unix (/) and Windows (\)
+  // 使用平台分隔符以确保 endsWith 检查在 Unix (/) 和 Windows (\) 上都有效
   if (
     normalizedPath.endsWith(`${sep}.zy${sep}settings.json`) ||
     normalizedPath.endsWith(`${sep}.zy${sep}settings.local.json`)
   ) {
-    // Include .zy/settings.json even for other projects
+    // 即使是其他项目，也包含 .zy/settings.json
     return true
   }
-  // Check for current project's settings files (including managed settings and CLI args)
-  // Both paths are now absolute and normalized for consistent comparison
+  // 检查当前项目的设置文件（包括托管设置和 CLI 参数）
+  // 两条路径现在都是绝对路径且已规范化，便于一致比较
   return getSettingsPaths().some(
     settingsPath => normalizeCaseForComparison(settingsPath) === normalizedPath,
   )
 }
 
-// Always ask when ZY Code tries to edit its own config files
+// ZY Code 尝试编辑自身配置文件时始终询问
 function isZyConfigFilePath(filePath: string): boolean {
   if (isZySettingsPath(filePath)) {
     return true
   }
 
-  // Check if file is within .zy/commands or .zy/agents directories
-  // using proper path segment validation (not string matching with includes())
-  // pathInWorkingPath now handles case-insensitive comparison to prevent bypasses
+  // 检查文件是否在 .zy/commands 或 .zy/agents 目录内
+  // 使用正确的路径段验证（而非用 includes() 进行字符串匹配）
+  // pathInWorkingPath 现在处理不区分大小写的比较以防止绕过
   const commandsDir = join(getOriginalCwd(), '.zy', 'commands')
   const agentsDir = join(getOriginalCwd(), '.zy', 'agents')
   const skillsDir = join(getOriginalCwd(), '.zy', 'skills')
@@ -241,13 +240,13 @@ function isZyConfigFilePath(filePath: string): boolean {
   )
 }
 
-// Check if file is the plan file for the current session
+// 检查文件是否为当前会话的 plan 文件
 function isSessionPlanFile(absolutePath: string): boolean {
-  // Check if path is a plan file for this session (main or agent-specific)
-  // Main plan file: {plansDir}/{planSlug}.md
-  // Agent plan file: {plansDir}/{planSlug}-agent-{agentId}.md
+  // 检查路径是否为当前会话的 plan 文件（主文件或 agent 特定文件）
+  // 主 plan 文件：{plansDir}/{planSlug}.md
+  // Agent plan 文件：{plansDir}/{planSlug}-agent-{agentId}.md
   const expectedPrefix = join(getPlansDirectory(), getPlanSlug())
-  // SECURITY: Normalize to prevent path traversal bypasses via .. segments
+  // 安全：规范化以防止通过 .. 段进行路径穿越绕过
   const normalizedPath = normalize(absolutePath)
   return (
     normalizedPath.startsWith(expectedPrefix) && normalizedPath.endsWith('.md')
@@ -255,35 +254,35 @@ function isSessionPlanFile(absolutePath: string): boolean {
 }
 
 /**
- * Returns the session memory directory path for the current session with trailing separator.
- * Path format: {projectDir}/{sessionId}/session-memory/
+ * 返回当前会话的会话内存目录路径，带尾部路径分隔符。
+ * 路径格式：{projectDir}/{sessionId}/session-memory/
  */
 export function getSessionMemoryDir(): string {
   return join(getProjectDir(getCwd()), getSessionId(), 'session-memory') + sep
 }
 
 /**
- * Returns the session memory file path for the current session.
- * Path format: {projectDir}/{sessionId}/session-memory/summary.md
+ * 返回当前会话的会话内存文件路径。
+ * 路径格式：{projectDir}/{sessionId}/session-memory/summary.md
  */
 export function getSessionMemoryPath(): string {
   return join(getSessionMemoryDir(), 'summary.md')
 }
 
-// Check if file is within the session memory directory
+// 检查文件是否在会话内存目录内
 function isSessionMemoryPath(absolutePath: string): boolean {
-  // SECURITY: Normalize to prevent path traversal bypasses via .. segments
+  // 安全：规范化以防止通过 .. 段进行路径穿越绕过
   const normalizedPath = normalize(absolutePath)
   return normalizedPath.startsWith(getSessionMemoryDir())
 }
 
 /**
- * Check if file is within the current project's directory.
- * Path format: ~/.zy/projects/{sanitized-cwd}/...
+ * 检查文件是否在当前项目的目录内。
+ * 路径格式：~/.zy/projects/{sanitized-cwd}/...
  */
 function isProjectDirPath(absolutePath: string): boolean {
   const projectDir = getProjectDir(getCwd())
-  // SECURITY: Normalize to prevent path traversal bypasses via .. segments
+  // 安全：规范化以防止通过 .. 段进行路径穿越绕过
   const normalizedPath = normalize(absolutePath)
   return (
     normalizedPath === projectDir || normalizedPath.startsWith(projectDir + sep)
@@ -291,76 +290,74 @@ function isProjectDirPath(absolutePath: string): boolean {
 }
 
 /**
- * Checks if the scratchpad directory feature is enabled.
- * The scratchpad is a per-session directory for Zy to write temporary files.
- * Controlled by the tengu_scratch Statsig gate.
+ * 检查暂存目录功能是否已启用。
+ * 暂存目录是 Zy 写入临时文件的每会话目录。
+ * 由 tengu_scratch Statsig 门控控制。
  */
 export function isScratchpadEnabled(): boolean {
   return checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_scratch')
 }
 
 /**
- * Returns the user-specific Zy temp directory name.
- * On Unix: 'zy-{uid}' to prevent multi-user permission conflicts
- * On Windows: 'zy' (tmpdir() is already per-user)
+ * 返回用户特定的 Zy 临时目录名称。
+ * Unix 上：'zy-{uid}' 以防止多用户权限冲突
+ * Windows 上：'zy'（tmpdir() 已经是每用户的）
  */
 export function getZyTempDirName(): string {
   if (getPlatform() === 'windows') {
     return 'zy'
   }
-  // Use UID to create per-user directories, preventing permission conflicts
-  // when multiple users share the same /tmp directory
+  // 使用 UID 创建每用户目录，防止多个用户共享同一 /tmp 目录时的权限冲突
   const uid = process.getuid?.() ?? 0
   return `zy-${uid}`
 }
 
 /**
- * Returns the Zy temp directory path with symlinks resolved.
- * Uses TMPDIR env var if set, otherwise:
- * - On Unix: /tmp/zy-{uid}/ (resolved to /private/tmp/zy-{uid}/ on macOS)
- * - On Windows: {tmpdir}/zy/ (e.g., C:\Users\{user}\AppData\Local\Temp\zy\)
- * This is a per-user temporary directory used by ZY Code for all temp files.
+ * 返回已解析符号链接的 Zy 临时目录路径。
+ * 如果设置了 TMPDIR 环境变量则使用它，否则：
+ * - Unix 上：/tmp/zy-{uid}/（在 macOS 上解析为 /private/tmp/zy-{uid}/）
+ * - Windows 上：{tmpdir}/zy/（例如 C:\Users\{user}\AppData\Local\Temp\zy\）
+ * 这是 ZY Code 用于所有临时文件的每用户临时目录。
  *
- * NOTE: We resolve symlinks to ensure this path matches the resolved paths used
- * in permission checks. On macOS, /tmp is a symlink to /private/tmp, so without
- * resolution, paths like /tmp/zy-{uid}/... wouldn't match /private/tmp/zy-{uid}/...
+ * 注意：我们解析符号链接以确保此路径与权限检查中使用的解析路径匹配。
+ * 在 macOS 上，/tmp 是指向 /private/tmp 的符号链接，因此如果不解析，
+ * /tmp/zy-{uid}/... 等路径将无法匹配 /private/tmp/zy-{uid}/...
+ *
+ * 已缓存：在权限检查（yoloClassifier、sandbox-adapter）中每次工具调用时调用，
+ * 在 BashTool prompt 中每轮次调用。输入（ZY_CODE_TMPDIR 环境变量 + 平台）
+ * 在启动时固定，系统 tmp 目录的 realpath 在会话中间不会改变。
  */
-// Memoized: called per-tool from permission checks (yoloClassifier, sandbox-adapter)
-// and per-turn from BashTool prompt. Inputs (ZY_CODE_TMPDIR env + platform) are
-// fixed at startup, and the realpath of the system tmp dir does not change mid-session.
 export const getZyTempDir = memoize(function getZyTempDir(): string {
   const baseTmpDir =
     process.env.ZY_CODE_TMPDIR ||
     (getPlatform() === 'windows' ? tmpdir() : '/tmp')
 
-  // Resolve symlinks in the base temp directory (e.g., /tmp -> /private/tmp on macOS)
-  // This ensures the path matches resolved paths in permission checks
+  // 解析基础临时目录中的符号链接（例如 macOS 上 /tmp -> /private/tmp）
+  // 这确保路径与权限检查中的解析路径匹配
   const fs = getFsImplementation()
   let resolvedBaseTmpDir = baseTmpDir
   try {
     resolvedBaseTmpDir = fs.realpathSync(baseTmpDir)
   } catch {
-    // If resolution fails, use the original path
+    // 如果解析失败，使用原始路径
   }
 
   return join(resolvedBaseTmpDir, getZyTempDirName()) + sep
 })
 
 /**
- * Root for bundled-skill file extraction (see bundledSkills.ts).
+ * 打包技能文件提取的根目录（参见 bundledSkills.ts）。
  *
- * SECURITY: The per-process random nonce is the load-bearing defense here.
- * Every other path component (uid, VERSION, skill name, file keys) is public
- * knowledge, so without it a local attacker can pre-create the tree on a
- * shared /tmp — sticky bit prevents deletion, not creation — and either
- * symlink an intermediate directory (O_NOFOLLOW only checks the final
- * component) or own a parent dir and swap file contents post-write for prompt
- * injection via the read allowlist. diskOutput.ts gets the same property from
- * the session-ID UUID in its path.
+ * 安全：每进程的随机 nonce 是这里的决定性防御。
+ * 所有其他路径组件（uid、VERSION、技能名称、文件键）都是公开知识，
+ * 因此如果没有 nonce，本地攻击者可以在共享 /tmp 上预先创建树 —
+ * sticky bit 防止删除，但不防止创建 — 并且可以
+ * 将中间目录符号链接（O_NOFOLLOW 仅检查最后一个组件），
+ * 或者拥有父目录并在写入后交换文件内容以通过读允许列表进行 prompt 注入。
+ * diskOutput.ts 从其路径中的会话 ID UUID 获得相同的属性。
  *
- * Memoized so the extraction writes and the permission check agree on the
- * path for the life of the process. Version-scoped so stale extractions from
- * other binaries don't fall under the allowlist.
+ * 已缓存，因此提取和权限检查在进程生命周期内对路径达成一致。
+ * 按版本范围划分，因此来自其他二进制文件的过时提取不会落入允许列表。
  */
 export const getBundledSkillsRoot = memoize(
   function getBundledSkillsRoot(): string {
@@ -370,26 +367,26 @@ export const getBundledSkillsRoot = memoize(
 )
 
 /**
- * Returns the project temp directory path with trailing separator.
- * Path format: /tmp/zy-{uid}/{sanitized-cwd}/
+ * 返回项目临时目录路径，带尾部路径分隔符。
+ * 路径格式：/tmp/zy-{uid}/{sanitized-cwd}/
  */
 export function getProjectTempDir(): string {
   return join(getZyTempDir(), sanitizePath(getOriginalCwd())) + sep
 }
 
 /**
- * Returns the scratchpad directory path for the current session.
- * Path format: /tmp/zy-{uid}/{sanitized-cwd}/{sessionId}/scratchpad/
+ * 返回当前会话的暂存目录路径。
+ * 路径格式：/tmp/zy-{uid}/{sanitized-cwd}/{sessionId}/scratchpad/
  */
 export function getScratchpadDir(): string {
   return join(getProjectTempDir(), getSessionId(), 'scratchpad')
 }
 
 /**
- * Ensures the scratchpad directory exists for the current session.
- * Creates the directory with secure permissions (0o700) if it doesn't exist.
- * Returns the path to the scratchpad directory.
- * @throws If scratchpad feature is not enabled
+ * 确保当前会话的暂存目录存在。
+ * 如果目录不存在，以安全权限（0o700）创建。
+ * 返回暂存目录的路径。
+ * @throws 如果暂存功能未启用
  */
 export async function ensureScratchpadDir(): Promise<string> {
   if (!isScratchpadEnabled()) {
@@ -399,23 +396,23 @@ export async function ensureScratchpadDir(): Promise<string> {
   const fs = getFsImplementation()
   const scratchpadDir = getScratchpadDir()
 
-  // Create directory recursively with secure permissions (owner-only access)
-  // FsOperations.mkdir handles recursive: true internally and is a no-op if dir exists
+  // 递归创建目录，使用安全权限（仅所有者访问）
+  // FsOperations.mkdir 内部处理 recursive: true，如果目录已存在则为无操作
   await fs.mkdir(scratchpadDir, { mode: 0o700 })
 
   return scratchpadDir
 }
 
-// Check if file is within the scratchpad directory
+// 检查文件是否在暂存目录内
 function isScratchpadPath(absolutePath: string): boolean {
   if (!isScratchpadEnabled()) {
     return false
   }
   const scratchpadDir = getScratchpadDir()
-  // SECURITY: Normalize the path to resolve .. segments before checking
-  // This prevents path traversal bypasses like:
+  // 安全：规范化路径以解析 .. 段后再进行检查
+  // 这防止路径穿越绕过，例如：
   //   echo "malicious" > /tmp/zy-d+/proj/session/scratchpad/../../../etc/passwd
-  // Without normalization, the path would pass the startsWith check but write to /etc/passwd
+  // 如果不规范化，路径会通过 startsWith 检查，但实际写入的是 /etc/passwd
   const normalizedPath = normalize(absolutePath)
   return (
     normalizedPath === scratchpadDir ||
@@ -424,26 +421,26 @@ function isScratchpadPath(absolutePath: string): boolean {
 }
 
 /**
- * Check if a file path is dangerous to auto-edit without explicit permission.
- * This includes:
- * - Files in .git directories or .gitconfig files (to prevent git-based data exfiltration and code execution)
- * - Files in .vscode directories (to prevent VS Code settings manipulation and potential code execution)
- * - Files in .idea directories (to prevent JetBrains IDE settings manipulation)
- * - Shell configuration files (to prevent shell startup script manipulation)
- * - UNC paths (to prevent network file access and WebDAV attacks)
+ * 检查文件路径在没有显式权限的情况下对 auto 编辑是否危险。
+ * 包括：
+ * - .git 目录或 .gitconfig 文件中的文件（防止基于 git 的数据泄露和代码执行）
+ * - .vscode 目录中的文件（防止 VS Code 设置操纵和潜在代码执行）
+ * - .idea 目录中的文件（防止 JetBrains IDE 设置操纵）
+ * - shell 配置文件（防止 shell 启动脚本操纵）
+ * - UNC 路径（防止网络文件访问和 WebDAV 攻击）
  */
 function isDangerousFilePathToAutoEdit(path: string): boolean {
   const absolutePath = expandPath(path)
   const pathSegments = absolutePath.split(sep)
   const fileName = pathSegments.at(-1)
 
-  // Check for UNC paths (defense-in-depth to catch any patterns that might not be caught by containsVulnerableUncPath)
-  // Block anything starting with \\ or // as these are potentially UNC paths that could access network resources
+  // 检查 UNC 路径（纵深防御，捕获 containsVulnerableUncPath 可能未捕获的模式）
+  // 阻止所有以 \\ 或 // 开头的内容，因为这些可能是访问网络资源的 UNC 路径
   if (path.startsWith('\\\\') || path.startsWith('//')) {
     return true
   }
 
-  // Check if path is within dangerous directories (case-insensitive to prevent bypasses)
+  // 检查路径是否在危险目录内（不区分大小写以防止绕过）
   for (let i = 0; i < pathSegments.length; i++) {
     const segment = pathSegments[i]!
     const normalizedSegment = normalizeCaseForComparison(segment)
@@ -453,17 +450,16 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
         continue
       }
 
-      // Special case: .zy/worktrees/ is a structural path (where Zy stores
-      // git worktrees), not a user-created dangerous directory. Skip the .zy
-      // segment when it's followed by 'worktrees'. Any nested .zy directories
-      // within the worktree (not followed by 'worktrees') are still blocked.
+      // 特殊情况：.zy/worktrees/ 是结构性路径（ZY 存储 git worktree 的地方），
+      // 而非用户创建的危险目录。当后面跟着 'worktrees' 时跳过 .zy 段。
+      // worktree 内任何嵌套的 .zy 目录（后面不跟 'worktrees'）仍然被阻止。
       if (dir === '.zy') {
         const nextSegment = pathSegments[i + 1]
         if (
           nextSegment &&
           normalizeCaseForComparison(nextSegment) === 'worktrees'
         ) {
-          break // Skip this .zy, continue checking other segments
+          break // 跳过此 .zy，继续检查其他段
         }
       }
 
@@ -471,7 +467,7 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
     }
   }
 
-  // Check for dangerous configuration files (case-insensitive)
+  // 检查危险的配置文件（不区分大小写）
   if (fileName) {
     const normalizedFileName = normalizeCaseForComparison(fileName)
     if (
@@ -488,61 +484,58 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
 }
 
 /**
- * Detects suspicious Windows path patterns that could bypass security checks.
- * These patterns include:
- * - NTFS Alternate Data Streams (e.g., file.txt::$DATA or file.txt:stream)
- * - 8.3 short names (e.g., GIT~1, CLAUDE~1, SETTIN~1.JSON)
- * - Long path prefixes (e.g., \\?\C:\..., \\.\C:\..., //?/C:/..., //./C:/...)
- * - Trailing dots and spaces (e.g., .git., .zy , .bashrc...)
- * - DOS device names (e.g., .git.CON, settings.json.PRN, .bashrc.AUX)
- * - Three or more consecutive dots (e.g., .../file.txt, path/.../file, file...txt)
+ * 检测可能绕过安全检查的可疑 Windows 路径模式。
+ * 这些模式包括：
+ * - NTFS 备用数据流（例如 file.txt::$DATA 或 file.txt:stream）
+ * - 8.3 短名称（例如 GIT~1、CLAUDE~1、SETTIN~1.JSON）
+ * - 长路径前缀（例如 \\?\C:\...、\\.\C:\...、//?/C:/...、//./C:/...）
+ * - 尾部点和空格（例如 .git.、.zy 、.bashrc...）
+ * - DOS 设备名称（例如 .git.CON、settings.json.PRN、.bashrc.AUX）
+ * - 三个或更多连续点（例如 .../file.txt、path/.../file、file...txt）
  *
- * When detected, these paths should always require manual approval to prevent
- * bypassing security checks through path canonicalization vulnerabilities.
+ * 检测到这些路径时，应始终要求手动审批，以防止
+ * 通过路径规范化漏洞绕过安全检查。
  *
- * ## Why Check on All Platforms?
+ * ## 为什么在所有平台上检查？
  *
- * While these patterns are primarily Windows-specific, NTFS filesystems can be
- * mounted on Linux and macOS (e.g., using ntfs-3g). On these systems, the same
- * bypass techniques would work - an attacker could use short names or long path
- * prefixes to bypass security checks. Therefore, we check for these patterns on
- * all platforms to ensure comprehensive protection. (Note: the ADS colon check
- * is Windows/WSL-only, since colon syntax is only interpreted by the Windows
- * kernel; on Linux/macOS, NTFS ADS is accessed via xattrs, not colon syntax.)
+ * 虽然这些模式主要是 Windows 特有的，但 NTFS 文件系统可以挂载到
+ * Linux 和 macOS 上（例如使用 ntfs-3g）。在这些系统上，相同的
+ * 绕过技术也会生效 — 攻击者可以使用短名称或长路径前缀来绕过安全检查。
+ * 因此，我们在所有平台上检查这些模式以确保全面保护。
+ * （注意：ADS 冒号检查仅限 Windows/WSL，因为冒号语法仅由 Windows
+ * 内核解释；在 Linux/macOS 上，NTFS ADS 通过 xattrs 访问，而非冒号语法。）
  *
- * ## Why Detection Instead of Normalization?
+ * ## 为什么选择检测而非规范化？
  *
- * An alternative approach would be to normalize these paths using Windows APIs
- * (e.g., GetLongPathNameW). However, this approach has significant challenges:
+ * 另一种方法是使用 Windows API（例如 GetLongPathNameW）规范化这些路径。
+ * 但这种方法面临重大挑战：
  *
- * 1. **Filesystem dependency**: Short path normalization is relative to files that
- *    currently exist on the filesystem. This creates issues when writing to new
- *    files since they don't exist yet and cannot be normalized.
+ * 1. **文件系统依赖**：短路径规范化相对于文件系统中当前存在的文件。
+ *    这在写入新文件时会产生问题，因为它们尚不存在且无法规范化。
  *
- * 2. **Race conditions**: The filesystem state can change between normalization
- *    and actual file access, creating TOCTOU (Time-Of-Check-Time-Of-Use) vulnerabilities.
+ * 2. **竞态条件**：规范化与实际文件访问之间的文件系统状态可能发生变化，
+ *    产生 TOCTOU（检查时-使用时）漏洞。
  *
- * 3. **Complexity**: Proper normalization requires Windows-specific APIs, handling
- *    multiple edge cases, and dealing with various path formats (UNC, device paths, etc.).
+ * 3. **复杂性**：正确的规范化需要 Windows 特定的 API，处理多种边缘情况，
+ *    并处理各种路径格式（UNC、设备路径等）。
  *
- * 4. **Reliability**: Pattern detection is more predictable and doesn't depend on
- *    external system state.
+ * 4. **可靠性**：模式检测更可预测，不依赖于外部系统状态。
  *
- * If you are considering adding normalization for these paths, please reach out to
- * AppSec first to discuss the security implications and implementation approach.
+ * 如果你正在考虑为这些路径添加规范化，请先联系 AppSec
+ * 讨论安全影响和实现方法。
  *
- * @param path The path to check for suspicious patterns
- * @returns true if suspicious Windows path patterns are detected
+ * @param path 要检查可疑模式的路径
+ * @returns 如果检测到可疑 Windows 路径模式则返回 true
  */
 function hasSuspiciousWindowsPathPattern(path: string): boolean {
-  // Check for NTFS Alternate Data Streams
-  // Look for ':' after position 2 to skip drive letters (e.g., C:\)
-  // Examples: file.txt::$DATA, .bashrc:hidden, settings.json:stream
-  // Note: ADS colon syntax is only interpreted by the Windows kernel. On WSL,
-  // DrvFs mounts route file operations through the Windows kernel, so colon
-  // syntax is still interpreted as ADS separators. On Linux/macOS (non-WSL),
-  // even when NTFS is mounted, ADS is accessed via xattrs (ntfs-3g) not colon
-  // syntax, and colons are valid filename characters.
+  // 检查 NTFS 备用数据流
+  // 查找位置 2 之后的 ':' 以跳过盘符（例如 C:\）
+  // 示例：file.txt::$DATA、.bashrc:hidden、settings.json:stream
+  // 注意：ADS 冒号语法仅由 Windows 内核解释。在 WSL 上，
+  // DrvFs 挂载将文件操作路由通过 Windows 内核，因此冒号
+  // 语法仍被解释为 ADS 分隔符。在 Linux/macOS（非 WSL）上，
+  // 即使挂载了 NTFS，ADS 也通过 xattrs（ntfs-3g）访问，而非冒号
+  // 语法，冒号是有效的文件名字符。
   if (getPlatform() === 'windows' || getPlatform() === 'wsl') {
     const colonIndex = path.indexOf(':', 2)
     if (colonIndex !== -1) {
@@ -550,15 +543,15 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
     }
   }
 
-  // Check for 8.3 short names
-  // Look for '~' followed by a digit
-  // Examples: GIT~1, CLAUDE~1, SETTIN~1.JSON, BASHRC~1
+  // 检查 8.3 短名称
+  // 查找 '~' 后跟数字
+  // 示例：GIT~1、CLAUDE~1、SETTIN~1.JSON、BASHRC~1
   if (/~\d/.test(path)) {
     return true
   }
 
-  // Check for long path prefixes (both backslash and forward slash variants)
-  // Examples: \\?\C:\Users\..., \\.\C:\..., //?/C:/..., //./C:/...
+  // 检查长路径前缀（反斜杠和正斜杠变体）
+  // 示例：\\?\C:\Users\...、\\.\C:\...、//?/C:/...、//./C:/...
   if (
     path.startsWith('\\\\?\\') ||
     path.startsWith('\\\\.\\') ||
@@ -568,32 +561,32 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
     return true
   }
 
-  // Check for trailing dots and spaces that Windows strips during path resolution
-  // Examples: .git., .zy , .bashrc..., settings.json.
-  // This can bypass string matching if ".git" is blocked but ".git." is used
+  // 检查 Windows 在路径解析时去除的尾部点和空格
+  // 示例：.git.、.zy 、.bashrc...、settings.json.
+  // 如果 ".git" 被阻止但使用 ".git."，则可以绕过字符串匹配
   if (/[.\s]+$/.test(path)) {
     return true
   }
 
-  // Check for DOS device names that Windows treats as special devices
-  // Examples: .git.CON, settings.json.PRN, .bashrc.AUX
-  // Device names: CON, PRN, AUX, NUL, COM1-9, LPT1-9
+  // 检查 Windows 视为特殊设备的 DOS 设备名称
+  // 示例：.git.CON、settings.json.PRN、.bashrc.AUX
+  // 设备名称：CON、PRN、AUX、NUL、COM1-9、LPT1-9
   if (/\.(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(path)) {
     return true
   }
 
-  // Check for three or more consecutive dots (...) when used as a path component
-  // This pattern can be used to bypass security checks or create confusion
-  // Examples: .../file.txt, path/.../file
-  // Only block when dots are preceded AND followed by path separators (/ or \)
-  // This allows legitimate uses like Next.js catch-all routes [...]name]
+  // 检查三个或更多连续点（...）用作路径组件时
+  // 此模式可用于绕过安全检查或造成混淆
+  // 示例：.../file.txt、path/.../file
+  // 仅当点前后都有路径分隔符（/ 或 \）时才阻止
+  // 这允许 Next.js 捕获所有路由 [...]name] 等合法用途
   if (/(^|\/|\\)\.{3,}(\/|\\|$)/.test(path)) {
     return true
   }
 
-  // Check for UNC paths (on all platforms for defense-in-depth)
-  // Examples: \\server\share, \\foo.com\file, //server/share, \\192.168.1.1\share
-  // UNC paths can access remote resources, leak credentials, and bypass working directory restrictions
+  // 检查 UNC 路径（在所有平台上进行纵深防御）
+  // 示例：\\server\share、\\foo.com\file、//server/share、\\192.168.1.1\share
+  // UNC 路径可以访问远程资源、泄露凭据并绕过工作目录限制
   if (containsVulnerableUncPath(path)) {
     return true
   }
@@ -602,20 +595,20 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
 }
 
 /**
- * Checks if a path is safe for auto-editing (acceptEdits mode).
- * Returns information about why the path is unsafe, or null if all checks pass.
+ * 检查路径对 auto 编辑（acceptEdits 模式）是否安全。
+ * 返回路径不安全的原因信息，如果所有检查通过则返回 null。
  *
- * This function performs comprehensive safety checks including:
- * - Suspicious Windows path patterns (NTFS streams, 8.3 names, long path prefixes, etc.)
- * - Zy config files (.zy/settings.json, .zy/commands/, .zy/agents/)
- * - MCP CLI state files (managed internally by ZY Code)
- * - Dangerous files (.bashrc, .gitconfig, .git/, .vscode/, .idea/, etc.)
+ * 此函数执行全面的安全检查，包括：
+ * - 可疑 Windows 路径模式（NTFS 流、8.3 名称、长路径前缀等）
+ * - Zy 配置文件（.zy/settings.json、.zy/commands/、.zy/agents/）
+ * - MCP CLI 状态文件（由 ZY Code 内部管理）
+ * - 危险文件（.bashrc、.gitconfig、.git/、.vscode/、.idea/ 等）
  *
- * IMPORTANT: This function checks BOTH the original path AND resolved symlink paths
- * to prevent bypasses via symlinks pointing to protected files.
+ * 重要：此函数检查原始路径和解析的符号链接路径，
+ * 以防止通过指向受保护文件的符号链接绕过。
  *
- * @param path The path to check for safety
- * @returns Object with safe=false and message if unsafe, or { safe: true } if all checks pass
+ * @param path 要检查安全性的路径
+ * @returns 如果不安全则返回 safe=false 和 message，如果所有检查通过则返回 { safe: true }
  */
 export function checkPathSafetyForAutoEdit(
   path: string,
@@ -627,7 +620,7 @@ export function checkPathSafetyForAutoEdit(
   const pathsToCheck =
     precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
 
-  // Check for suspicious Windows path patterns on all paths
+  // 在所有路径上检查可疑 Windows 路径模式
   for (const pathToCheck of pathsToCheck) {
     if (hasSuspiciousWindowsPathPattern(pathToCheck)) {
       return {
@@ -638,7 +631,7 @@ export function checkPathSafetyForAutoEdit(
     }
   }
 
-  // Check for Zy config files on all paths
+  // 在所有路径上检查 Zy 配置文件
   for (const pathToCheck of pathsToCheck) {
     if (isZyConfigFilePath(pathToCheck)) {
       return {
@@ -649,7 +642,7 @@ export function checkPathSafetyForAutoEdit(
     }
   }
 
-  // Check for dangerous files on all paths
+  // 在所有路径上检查危险文件
   for (const pathToCheck of pathsToCheck) {
     if (isDangerousFilePathToAutoEdit(pathToCheck)) {
       return {
@@ -660,7 +653,7 @@ export function checkPathSafetyForAutoEdit(
     }
   }
 
-  // All safety checks passed
+  // 所有安全检查通过
   return { safe: true }
 }
 
@@ -673,11 +666,11 @@ export function allWorkingDirectories(
   ])
 }
 
-// Working directories are session-stable; memoize their resolved forms to
-// avoid repeated existsSync/lstatSync/realpathSync syscalls on every
-// permission check. Keyed by path string — getPathsForPermissionCheck is
-// deterministic for existing directories within a session.
-// Exported for test/preload.ts cache clearing (shard-isolation).
+// 工作目录在会话中稳定；缓存它们的解析形式以避免
+// 在每次权限检查时重复执行 existsSync/lstatSync/realpathSync 系统调用。
+// 以路径字符串为键 — getPathsForPermissionCheck 在会话内对于
+// 现有目录是确定性的。
+// 导出用于 test/preload.ts 缓存清除（shard-isolation）。
 export const getResolvedWorkingDirPaths = memoize(getPathsForPermissionCheck)
 
 export function pathInAllowedWorkingPath(
@@ -685,20 +678,20 @@ export function pathInAllowedWorkingPath(
   toolPermissionContext: ToolPermissionContext,
   precomputedPathsToCheck?: readonly string[],
 ): boolean {
-  // Check both the original path and the resolved symlink path
+  // 检查原始路径和解析的符号链接路径
   const pathsToCheck =
     precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
 
-  // Resolve working directories the same way we resolve input paths so
-  // comparisons are symmetric. Without this, a resolved input path
-  // (e.g. /System/Volumes/Data/home/... on macOS) would not match an
-  // unresolved working directory (/home/...), causing false denials.
+  // 与我们解析输入路径的方式相同地解析工作目录，以便
+  // 比较是对称的。如果不这样做，解析后的输入路径
+  // （例如 macOS 上的 /System/Volumes/Data/home/...）将无法匹配
+  // 未解析的工作目录（/home/...），导致错误的拒绝。
   const workingPaths = Array.from(
     allWorkingDirectories(toolPermissionContext),
   ).flatMap(wp => getResolvedWorkingDirPaths(wp))
 
-  // All paths must be within allowed working paths
-  // If any resolved path is outside, deny access
+  // 所有路径必须在允许的工作路径内
+  // 如果任何解析后的路径在外部，则拒绝访问
   return pathsToCheck.every(pathToCheck =>
     workingPaths.some(workingPath =>
       pathInWorkingPath(pathToCheck, workingPath),
@@ -710,7 +703,7 @@ export function pathInWorkingPath(path: string, workingPath: string): boolean {
   const absolutePath = expandPath(path)
   const absoluteWorkingPath = expandPath(workingPath)
 
-  // On macOS, handle common symlink issues:
+  // 在 macOS 上，处理常见的符号链接问题：
   // - /var -> /private/var
   // - /tmp -> /private/tmp
   const normalizedPath = absolutePath
@@ -720,17 +713,17 @@ export function pathInWorkingPath(path: string, workingPath: string): boolean {
     .replace(/^\/private\/var\//, '/var/')
     .replace(/^\/private\/tmp(\/|$)/, '/tmp$1')
 
-  // Normalize case for case-insensitive comparison to prevent bypassing security
-  // checks on case-insensitive filesystems (macOS/Windows) like .cLauDe/CoMmAnDs
+  // 进行不区分大小写的规范化比较，防止在不区分大小写的文件系统
+  // （macOS/Windows）上绕过安全检查，例如 .cLauDe/CoMmAnDs
   const caseNormalizedPath = normalizeCaseForComparison(normalizedPath)
   const caseNormalizedWorkingPath = normalizeCaseForComparison(
     normalizedWorkingPath,
   )
 
-  // Use cross-platform relative path helper
+  // 使用跨平台相对路径辅助函数
   const relative = relativePath(caseNormalizedWorkingPath, caseNormalizedPath)
 
-  // Same path
+  // 相同路径
   if (relative === '') {
     return true
   }
@@ -739,7 +732,7 @@ export function pathInWorkingPath(path: string, workingPath: string): boolean {
     return false
   }
 
-  // Path is inside (relative path that doesn't go up)
+  // 路径在内部（相对路径且不上溯）
   return !posix.isAbsolute(relative)
 }
 
@@ -771,24 +764,24 @@ function normalizePatternToPath({
   pattern: string
   rootPath: string
 }): string | null {
-  // If the pattern root + pattern combination starts with our reference root
+  // 如果模式根 + 模式组合从我们的参考根开始
   const fullPattern = posix.join(patternRoot, pattern)
   if (patternRoot === rootPath) {
-    // If the pattern root exactly matches our reference root no need to change
+    // 如果模式根与我们的参考根完全匹配，则无需更改
     return prependDirSep(pattern)
   } else if (fullPattern.startsWith(`${rootPath}${DIR_SEP}`)) {
-    // Extract the relative part
+    // 提取相对部分
     const relativePart = fullPattern.slice(rootPath.length)
     return prependDirSep(relativePart)
   } else {
-    // Handle patterns that are inside the reference root but not starting with it
+    // 处理在参考根内部但不以它开头的模式
     const relativePath = posix.relative(rootPath, patternRoot)
     if (
       !relativePath ||
       relativePath.startsWith(`..${DIR_SEP}`) ||
       relativePath === '..'
     ) {
-      // Pattern is outside the reference root, so it can be skipped
+      // 模式在参考根之外，因此可以跳过
       return null
     } else {
       const relativePattern = posix.join(relativePath, pattern)
@@ -801,16 +794,16 @@ export function normalizePatternsToPath(
   patternsByRoot: Map<string | null, string[]>,
   root: string,
 ): string[] {
-  // null root means the pattern can match anywhere
+  // null 根表示模式可以在任何地方匹配
   const result = new Set(patternsByRoot.get(null) ?? [])
 
   for (const [patternRoot, patterns] of patternsByRoot.entries()) {
     if (patternRoot === null) {
-      // already added
+      // 已添加
       continue
     }
 
-    // Check each pattern to see if the full path starts with our reference root
+    // 检查每个模式，查看完整路径是否从我们的参考根开始
     for (const pattern of patterns) {
       const normalizedPattern = normalizePatternToPath({
         patternRoot,
@@ -826,11 +819,11 @@ export function normalizePatternsToPath(
 }
 
 /**
- * Collects all deny rules for file read permissions and returns their ignore patterns
- * Each pattern must be resolved relative to its root (map key)
- * Null keys are used for patterns that don't have a root
+ * 收集文件读权限的所有拒绝规则并返回它们的 ignore 模式
+ * 每个模式必须相对于其根（map 的键）解析
+ * null 键用于没有根的模式
  *
- * This is used to hide files that are blocked by Read deny rules.
+ * 这用于隐藏被 Read 拒绝规则阻止的文件。
  *
  * @param toolPermissionContext
  */
@@ -858,23 +851,23 @@ function patternWithRoot(
   root: string | null
 } {
   if (pattern.startsWith(`${DIR_SEP}${DIR_SEP}`)) {
-    // Patterns starting with // resolve relative to /
+    // 以 // 开头的模式相对于 / 解析
     const patternWithoutDoubleSlash = pattern.slice(1)
 
-    // On Windows, check if this is a POSIX-style drive path like //c/Users/...
-    // Note: UNC paths (//server/share) will not match this regex and will be treated
-    // as root-relative patterns, which may need separate handling in the future
+    // 在 Windows 上，检查这是否为 POSIX 风格的盘符路径，如 //c/Users/...
+    // 注意：UNC 路径（//server/share）不会匹配此正则，将作为
+    // 根相对模式处理，将来可能需要单独处理
     if (
       getPlatform() === 'windows' &&
       patternWithoutDoubleSlash.match(/^\/[a-z]\//i)
     ) {
-      // Convert POSIX path to Windows format
-      // The pattern is like /c/Users/... so we convert it to C:\Users\...
+      // 将 POSIX 路径转换为 Windows 格式
+      // 模式类似于 /c/Users/...，因此将其转换为 C:\Users\...
       const driveLetter = patternWithoutDoubleSlash[1]?.toUpperCase() ?? 'C'
       // Keep the pattern in POSIX format since relativePath returns POSIX paths
       const pathAfterDrive = patternWithoutDoubleSlash.slice(2)
 
-      // Extract the drive root (C:\) and the rest of the pattern
+      // 提取盘符根目录（C:\）和模式的其余部分
       const driveRoot = `${driveLetter}:\\`
       const relativeFromDrive = pathAfterDrive.startsWith('/')
         ? pathAfterDrive.slice(1)
@@ -891,21 +884,21 @@ function patternWithRoot(
       root: DIR_SEP,
     }
   } else if (pattern.startsWith(`~${DIR_SEP}`)) {
-    // Patterns starting with ~/ resolve relative to homedir
+    // 以 ~/ 开头的模式相对于 homedir 解析
     return {
       relativePattern: pattern.slice(1),
       root: homedir().normalize('NFC'),
     }
   } else if (pattern.startsWith(DIR_SEP)) {
-    // Patterns starting with / resolve relative to the directory where settings are stored (without .zy/)
+    // 以 / 开头的模式相对于存储设置的目录解析（不含 .zy/）
     return {
       relativePattern: pattern,
       root: rootPathForSource(source),
     }
   }
-  // No root specified, put it with all the other patterns
-  // Normalize patterns that start with "./" to remove the prefix
-  // This ensures that patterns like "./.env" match files like ".env"
+  // 未指定根，将其与其他所有模式放在一起
+  // 规范化以 "./" 开头的模式以移除前缀
+  // 这确保像 "./.env" 这样的模式能匹配像 ".env" 这样的文件
   let normalizedPattern = pattern
   if (pattern.startsWith(`.${DIR_SEP}`)) {
     normalizedPattern = pattern.slice(2)
@@ -924,10 +917,10 @@ function getPatternsByRoot(
   const toolName = (() => {
     switch (toolType) {
       case 'edit':
-        // Apply Edit tool rules to any tool editing files
+        // 将 Edit 工具规则应用于任何编辑文件的工具
         return FILE_EDIT_TOOL_NAME
       case 'read':
-        // Apply Read tool rules to any tool reading files
+        // 将 Read 工具规则应用于任何读取文件的工具
         return FILE_READ_TOOL_NAME
     }
   })()
@@ -937,7 +930,7 @@ function getPatternsByRoot(
     toolName,
     behavior,
   )
-  // Resolve rules relative to path based on source
+  // 相对于路径根据来源解析规则
   const patternsByRoot = new Map<string | null, Map<string, PermissionRule>>()
   for (const [pattern, rule] of rules.entries()) {
     const { relativePattern, root } = patternWithRoot(pattern, rule.source)
@@ -946,7 +939,7 @@ function getPatternsByRoot(
       patternsForRoot = new Map<string, PermissionRule>()
       patternsByRoot.set(root, patternsForRoot)
     }
-    // Store the rule keyed by the root
+    // 以根为键存储规则
     patternsForRoot.set(relativePattern, rule)
   }
   return patternsByRoot
@@ -960,7 +953,7 @@ export function matchingRuleForInput(
 ): PermissionRule | null {
   let fileAbsolutePath = expandPath(path)
 
-  // On Windows, convert to POSIX format to match against permission patterns
+  // 在 Windows 上，转换为 POSIX 格式以与权限模式匹配
   if (getPlatform() === 'windows' && fileAbsolutePath.includes('\\')) {
     fileAbsolutePath = windowsPathToPosixPath(fileAbsolutePath)
   }
@@ -973,12 +966,12 @@ export function matchingRuleForInput(
 
   // Check each root for a matching pattern
   for (const [root, patternMap] of patternsByRoot.entries()) {
-    // Transform patterns for the ignore library
+    // 为 ignore 库转换模式
     const patterns = Array.from(patternMap.keys()).map(pattern => {
       let adjustedPattern = pattern
 
-      // Remove /** suffix - ignore library treats 'path' as matching both
-      // the path itself and everything inside it
+      // 移除 /** 后缀 — ignore 库将 'path' 视为同时匹配
+      // 路径本身和其中的所有内容
       if (adjustedPattern.endsWith('/**')) {
         adjustedPattern = adjustedPattern.slice(0, -3)
       }
@@ -988,18 +981,18 @@ export function matchingRuleForInput(
 
     const ig = ignore().add(patterns)
 
-    // Use cross-platform relative path helper for POSIX-style patterns
+    // 使用跨平台相对路径辅助函数 for POSIX-style patterns
     const relativePathStr = relativePath(
       root ?? getCwd(),
       fileAbsolutePath ?? getCwd(),
     )
 
     if (relativePathStr.startsWith(`..${DIR_SEP}`)) {
-      // The path is outside the root, so ignore it
+      // 路径在根之外，因此忽略它
       continue
     }
 
-    // Important: ig.test throws if you give it an empty string
+    // 重要：如果传入空字符串，ig.test 会抛出异常
     if (!relativePathStr) {
       continue
     }
@@ -1007,10 +1000,10 @@ export function matchingRuleForInput(
     const igResult = ig.test(relativePathStr)
 
     if (igResult.ignored && igResult.rule) {
-      // Map the matched pattern back to the original rule
+      // 将匹配的模式映射回原始规则
       const originalPattern = igResult.rule.pattern
 
-      // Check if this was a /** pattern we simplified
+      // 检查这是否是我们简化的 /** 模式
       const withWildcard = originalPattern + '/**'
       if (patternMap.has(withWildcard)) {
         return patternMap.get(withWildcard) ?? null
@@ -1020,12 +1013,12 @@ export function matchingRuleForInput(
     }
   }
 
-  // No matching rule found
+  // 未找到匹配的规则
   return null
 }
 
 /**
- * Permission result for read permission for the specified tool & tool input
+ * 指定工具和工具输入的读权限结果
  */
 export function checkReadPermissionForTool(
   tool: Tool,
@@ -1040,16 +1033,16 @@ export function checkReadPermissionForTool(
   }
   const path = tool.getPath(input)
 
-  // Get paths to check (includes both original and resolved symlinks).
-  // Computed once here and threaded through checkWritePermissionForTool →
-  // checkPathSafetyForAutoEdit → pathInAllowedWorkingPath to avoid redundant
-  // existsSync/lstatSync/realpathSync syscalls on the same path (previously
-  // 6× = 30 syscalls per Read permission check).
+  // 获取要检查的路径（包括原始路径和解析的符号链接）。
+  // 在此处计算一次并传递到 checkWritePermissionForTool →
+  // checkPathSafetyForAutoEdit → pathInAllowedWorkingPath，以避免对
+  // 同一路径重复执行 existsSync/lstatSync/realpathSync 系统调用
+  // （此前每次 Read 权限检查 = 6× = 30 次系统调用）。
   const pathsToCheck = getPathsForPermissionCheck(path)
 
-  // 1. Defense-in-depth: Block UNC paths early (before other checks)
-  // This catches paths starting with \\ or // that could access network resources
-  // This may catch some UNC patterns not detected by containsVulnerableUncPath
+  // 1. 纵深防御：尽早阻止 UNC 路径（在其他检查之前）
+  // 这捕获以 \\ 或 // 开头的可能访问网络资源的路径
+  // 这可能捕获一些 containsVulnerableUncPath 未检测到的 UNC 模式
   for (const pathToCheck of pathsToCheck) {
     if (pathToCheck.startsWith('\\\\') || pathToCheck.startsWith('//')) {
       return {
@@ -1063,7 +1056,7 @@ export function checkReadPermissionForTool(
     }
   }
 
-  // 2. Check for suspicious Windows path patterns (defense in depth)
+  // 2. 检查可疑 Windows 路径模式（纵深防御）
   for (const pathToCheck of pathsToCheck) {
     if (hasSuspiciousWindowsPathPattern(pathToCheck)) {
       return {
@@ -1078,9 +1071,9 @@ export function checkReadPermissionForTool(
     }
   }
 
-  // 3. Check for READ-SPECIFIC deny rules first - check both the original path and resolved symlink path
-  // SECURITY: This must come before any allow checks (including "edit access implies read access")
-  // to prevent bypassing explicit read deny rules
+  // 3. 首先检查读特定的拒绝规则 — 检查原始路径和解析的符号链接路径
+  // 安全：这必须在任何放行检查（包括"编辑权限隐含读权限"）之前
+  // 以防止绕过显式的读拒绝规则
   for (const pathToCheck of pathsToCheck) {
     const denyRule = matchingRuleForInput(
       pathToCheck,
@@ -1100,8 +1093,8 @@ export function checkReadPermissionForTool(
     }
   }
 
-  // 4. Check for READ-SPECIFIC ask rules - check both the original path and resolved symlink path
-  // SECURITY: This must come before implicit allow checks to ensure explicit ask rules are honored
+  // 4. 检查读特定的 ask 规则 — 检查原始路径和解析的符号链接路径
+  // 安全：这必须在隐式放行检查之前，以确保显式 ask 规则被遵守
   for (const pathToCheck of pathsToCheck) {
     const askRule = matchingRuleForInput(
       pathToCheck,
@@ -1121,8 +1114,8 @@ export function checkReadPermissionForTool(
     }
   }
 
-  // 5. Edit access implies read access (but only if no read-specific deny/ask rules exist)
-  // We check this after read-specific rules so that explicit read restrictions take precedence
+  // 5. 编辑权限隐含读权限（但仅在没有读特定的拒绝/ask 规则时）
+  // 我们在读特定规则之后检查此内容，以便显式读限制优先
   const editResult = checkWritePermissionForTool(
     tool,
     input,
@@ -1133,7 +1126,7 @@ export function checkReadPermissionForTool(
     return editResult
   }
 
-  // 6. Allow reads in working directories
+  // 6. 允许在工作目录中读取
   const isInWorkingDir = pathInAllowedWorkingPath(
     path,
     toolPermissionContext,
@@ -1150,14 +1143,14 @@ export function checkReadPermissionForTool(
     }
   }
 
-  // 7. Allow reads from internal harness paths (session-memory, plans, tool-results)
+  // 7. 允许从内部 harness 路径读取（session-memory、plans、tool-results）
   const absolutePath = expandPath(path)
   const internalReadResult = checkReadableInternalPath(absolutePath, input)
   if (internalReadResult.behavior !== 'passthrough') {
     return internalReadResult
   }
 
-  // 8. Check for allow rules
+  // 8. 检查放行规则
   const allowRule = matchingRuleForInput(
     path,
     toolPermissionContext,
@@ -1175,8 +1168,8 @@ export function checkReadPermissionForTool(
     }
   }
 
-  // 12. Default to asking for permission
-  // At this point, isInWorkingDir is false (from step #6), so path is outside working directories
+  // 12. 默认请求权限
+  // 此时，isInWorkingDir 为 false（来自步骤 #6），因此路径在允许的工作目录之外
   return {
     behavior: 'ask',
     message: `ZY requested permissions to read from ${path}, but you haven't granted it yet.`,
@@ -1194,13 +1187,12 @@ export function checkReadPermissionForTool(
 }
 
 /**
- * Permission result for write permission for the specified tool & tool input.
+ * 指定工具和工具输入的写权限结果。
  *
- * @param precomputedPathsToCheck - Optional cached result of
- *   `getPathsForPermissionCheck(tool.getPath(input))`. Callers MUST derive this
- *   from the same `tool` and `input` in the same synchronous frame — `path` is
- *   re-derived internally for error messages and internal-path checks, so a
- *   stale value would silently check deny rules for the wrong path.
+ * @param precomputedPathsToCheck - `getPathsForPermissionCheck(tool.getPath(input))`
+ *   的可选缓存结果。调用者必须在同一个同步帧中从相同的 `tool`
+ *   和 `input` 派生此值 — `path` 在内部重新派生用于错误消息
+ *   和内部路径检查，因此过时的值会静默检查错误路径的拒绝规则。
  */
 export function checkWritePermissionForTool<Input extends AnyObject>(
   tool: Tool<Input>,
@@ -1216,7 +1208,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
   }
   const path = tool.getPath(input)
 
-  // 1. Check for deny rules - check both the original path and resolved symlink path
+  // 1. 检查拒绝规则 — 检查原始路径和解析的符号链接路径
   const pathsToCheck =
     precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
   for (const pathToCheck of pathsToCheck) {
@@ -1238,8 +1230,8 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 1.5. Allow writes to internal editable paths (plan files, scratchpad)
-  // This MUST come before isDangerousFilePathToAutoEdit check since .zy is a dangerous directory
+  // 1.5. 允许写入内部可编辑路径（plan 文件、暂存目录）
+  // 这必须在 isDangerousFilePathToAutoEdit 检查之前，因为 .zy 是危险目录
   const absolutePathForEdit = expandPath(path)
   const internalEditResult = checkEditableInternalPath(
     absolutePathForEdit,
@@ -1249,16 +1241,16 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     return internalEditResult
   }
 
-  // 1.6. Check for .zy/** allow rules BEFORE safety checks
-  // This allows session-level permissions to bypass the safety blocks for .zy/
-  // We only allow this for session-level rules to prevent users from accidentally
-  // permanently granting broad access to their .zy/ folder.
+  // 1.6. 在安全检查之前检查 .zy/** 放行规则
+  // 这允许会话级权限绕过 .zy/ 的安全块
+  // 我们仅允许会话级规则，以防止用户意外地
+  // 永久授予对 .zy/ 文件夹的广泛访问。
   //
-  // matchingRuleForInput returns the first match across all sources. If the user
-  // also has a broader Edit(.zy) rule in userSettings (e.g. from sandbox
-  // write-allow conversion), that rule would be found first and its source check
-  // below would fail. Scope the search to session-only rules so the dialog's
-  // "allow Zy to edit its own settings for this session" option actually works.
+  // matchingRuleForInput 返回所有来源中的第一个匹配。如果用户
+  // 在 userSettings 中也有更广泛的 Edit(.zy) 规则（例如来自 sandbox
+  // write-allow 转换），则该规则会首先被找到，下方的来源检查
+  // 会失败。将搜索范围限制为仅会话级规则，以便对话框中的
+  // "允许 ZY 在此会话期间编辑其自身设置"选项真正有效。
   const ZyFolderAllowRule = matchingRuleForInput(
     path,
     {
@@ -1271,13 +1263,13 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     'allow',
   )
   if (ZyFolderAllowRule) {
-    // Check if this rule is scoped under .zy/ (project or global).
-    // Accepts both the broad patterns ('/.zy/**', '~/.zy/**') and
-    // narrowed ones like '/.zy/skills/my-skill/**' so users can grant
-    // session access to a single skill without also exposing settings.json
-    // or hooks/. The rule already matched the path via matchingRuleForInput;
-    // this is an additional scope check. Reject '..' to prevent a rule like
-    // '/.zy/../**' from leaking this bypass outside .zy/.
+    // 检查此规则是否在 .zy/ 范围内（项目级或全局级）。
+    // 接受宽泛模式（'/.zy/**'、'~/.zy/**'）和
+    // 缩小模式如 '/.zy/skills/my-skill/**'，以便用户可以授予
+    // 对单个技能的会话访问，而不暴露 settings.json
+    // 或 hooks/。规则已通过 matchingRuleForInput 匹配路径；
+    // 这是额外的范围检查。拒绝 '..' 以防止如
+    // '/.zy/../**' 这样的规则将此绕过泄漏到 .zy/ 之外。
     const ruleContent = ZyFolderAllowRule.ruleValue.ruleContent
     if (
       ruleContent &&
@@ -1299,16 +1291,16 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 1.7. Check comprehensive safety validations (Windows patterns, Zy config, dangerous files)
-  // This MUST come before checking allow rules to prevent users from accidentally granting
-  // permission to edit protected files
+  // 1.7. 检查全面的安全验证（Windows 模式、ZY 配置、危险文件）
+  // 这必须在检查放行规则之前，以防止用户意外地授予
+  // 编辑受保护文件的权限
   const safetyCheck = checkPathSafetyForAutoEdit(path, pathsToCheck)
   if (!safetyCheck.safe) {
-    // SDK suggestion: if under .zy/skills/{name}/, emit the narrowed
-    // session-scoped addRules that step 1.6 will honor on the next call.
-    // Everything else (.zy/settings.json, .git/, .vscode/, .idea/) falls
-    // back to generateSuggestions — its setMode suggestion doesn't bypass
-    // this check, but preserving it avoids a surprising empty array.
+    // SDK 建议：如果在 .zy/skills/{name}/ 下，发出缩小的
+    // 会话范围 addRules，步骤 1.6 将在下次调用时遵守。
+    // 其他所有内容（.zy/settings.json、.git/、.vscode/、.idea/）回退到
+    // generateSuggestions — 其 setMode 建议不会绕过
+    // 此检查，但保留它可以避免令人惊讶的空数组。
     const skillScope = getZySkillScope(path)
     const safetySuggestions: PermissionUpdate[] = skillScope
       ? [
@@ -1337,7 +1329,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 2. Check for ask rules - check both the original path and resolved symlink path
+  // 2. 检查 ask 规则 — 检查原始路径和解析的符号链接路径
   for (const pathToCheck of pathsToCheck) {
     const askRule = matchingRuleForInput(
       pathToCheck,
@@ -1357,7 +1349,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 3. If in acceptEdits or sandboxBashMode mode, allow all writes in original cwd
+  // 3. 如果在 acceptEdits 或 sandboxBashMode 模式下，允许原始 cwd 中的所有写入
   const isInWorkingDir = pathInAllowedWorkingPath(
     path,
     toolPermissionContext,
@@ -1374,7 +1366,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 4. Check for allow rules
+  // 4. 检查放行规则
   const allowRule = matchingRuleForInput(
     path,
     toolPermissionContext,
@@ -1392,7 +1384,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 5. Default to asking for permission
+  // 5. 默认请求权限
   return {
     behavior: 'ask',
     message: `ZY requested permissions to write to ${path}, but you haven't granted it yet.`,
@@ -1424,8 +1416,8 @@ export function generateSuggestions(
   )
 
   if (operationType === 'read' && isOutsideWorkingDir) {
-    // For read operations outside working directories, add Read rules
-    // IMPORTANT: Include both the symlink path and resolved path so subsequent checks pass
+    // 对于读操作在工作目录之外，添加 Read 规则
+    // 重要：包括符号链接路径和解析路径，以便后续检查通过
     const dirPath = getDirectoryForPath(filePath)
     const dirsToAdd = getPathsForPermissionCheck(dirPath)
 
@@ -1436,11 +1428,11 @@ export function generateSuggestions(
     return suggestions
   }
 
-  // Only suggest setMode:acceptEdits when it would be an upgrade. In auto
-  // mode the classifier already auto-approves edits; in bypassPermissions
-  // everything is allowed; in acceptEdits it's a no-op. Suggesting it
-  // anyway and having the SDK host apply it on "Always allow" silently
-  // downgrades auto → acceptEdits, which then prompts for MCP/Bash.
+  // 仅在 setMode:acceptEdits 是升级时才建议。在 auto
+  // 模式下，分类器已自动批准编辑；在 bypassPermissions
+  // 下一切都被允许；在 acceptEdits 下这是无操作。仍然建议它
+  // 并让 SDK 主机在"始终允许"时应用，会静默
+  // 将 auto 降级为 acceptEdits，然后提示 MCP/Bash。
   const shouldSuggestAcceptEdits =
     toolPermissionContext.mode === 'default' ||
     toolPermissionContext.mode === 'plan'
@@ -1451,8 +1443,8 @@ export function generateSuggestions(
       : []
 
     if (isOutsideWorkingDir) {
-      // For write operations outside working directories, also add the directory
-      // IMPORTANT: Include both the symlink path and resolved path so subsequent checks pass
+      // 对于写操作在工作目录之外，也添加目录
+      // 重要：包括符号链接路径和解析路径，以便后续检查通过
       const dirPath = getDirectoryForPath(filePath)
       const dirsToAdd = getPathsForPermissionCheck(dirPath)
 
@@ -1466,25 +1458,25 @@ export function generateSuggestions(
     return updates
   }
 
-  // For read operations inside working directories, just change mode
+  // 对于读操作在工作目录内，仅更改模式
   return shouldSuggestAcceptEdits
     ? [{ type: 'setMode', mode: 'acceptEdits', destination: 'session' }]
     : []
 }
 
 /**
- * Check if a path is an internal path that can be edited without permission.
- * Returns a PermissionResult - either 'allow' if matched, or 'passthrough' to continue checking.
+ * 检查路径是否为可以无需权限编辑的内部路径。
+ * 返回 PermissionResult — 如果匹配则返回 'allow'，否则返回 'passthrough' 以继续检查。
  */
 export function checkEditableInternalPath(
   absolutePath: string,
   input: { [key: string]: unknown },
 ): PermissionResult {
-  // SECURITY: Normalize path to prevent traversal bypasses via .. segments
-  // This is defense-in-depth; individual helper functions also normalize
+  // 安全：规范化路径以防止通过 .. 段进行穿越绕过
+  // 这是纵深防御；各个辅助函数也进行规范化
   const normalizedPath = normalize(absolutePath)
 
-  // Plan files for current session
+  // 当前会话的 plan 文件
   if (isSessionPlanFile(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1496,7 +1488,7 @@ export function checkEditableInternalPath(
     }
   }
 
-  // Scratchpad directory for current session
+  // 当前会话的暂存目录
   if (isScratchpadPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1508,24 +1500,24 @@ export function checkEditableInternalPath(
     }
   }
 
-  // Template job's own directory. Env key hardcoded (vs importing JOB_ENV_KEY
-  // from jobs/state) so tree-shaking eliminates the string from external
-  // builds — spawn.test.ts asserts the string matches. Hijack guard: the env
-  // var value must itself resolve under ~/.zy/jobs/. Symlink guard: every
-  // resolved form of the target (lexical + symlink chain) must fall under some
-  // resolved form of the job dir, so a symlink inside the job dir pointing at
-  // e.g. ~/.ssh/authorized_keys does not get a free write. Resolving both
-  // sides handles the macOS /tmp → /private/tmp case where the config dir
-  // lives under a symlinked root.
+  // 模板作业自身目录。环境变量键硬编码
+  // （而非从 jobs/state 导入 JOB_ENV_KEY），因此 tree-shaking 在外部
+  // 构建中消除该字符串 — spawn.test.ts 断言字符串匹配。劫持守卫：env
+  // 变量值本身必须解析到 ~/.zy/jobs/ 下。符号链接守卫：每个
+  // 解析后的目标形式（词法 + 符号链）必须落在某个
+  // 解析后的作业目录形式下，因此作业目录内指向
+  // 例如 ~/.ssh/authorized_keys 的符号链接不会获得免费写入。
+  // 解析两侧处理 macOS /tmp → /private/tmp 的情况，
+  // 其中配置目录位于符号链接的根下。
   if (feature('TEMPLATES')) {
     const jobDir = process.env.CLAUDE_JOB_DIR
     if (jobDir) {
       const jobsRoot = join(getZyConfigHomeDir(), 'jobs')
       const jobDirForms = getPathsForPermissionCheck(jobDir).map(normalize)
       const jobsRootForms = getPathsForPermissionCheck(jobsRoot).map(normalize)
-      // Hijack guard: every resolved form of the job dir must sit under
-      // some resolved form of the jobs root. Resolving both sides handles
-      // the case where ~/.zy is a symlink (e.g. to /data/zy-config).
+      // 劫持守卫：作业目录的每个解析形式必须位于
+      // 作业根的某个解析形式之下。解析两侧处理
+      // ~/.zy 是符号链接（例如指向 /data/zy-config）的情况。
       const isUnderJobsRoot = jobDirForms.every(jd =>
         jobsRootForms.some(jr => jd.startsWith(jr + sep)),
       )
@@ -1550,7 +1542,7 @@ export function checkEditableInternalPath(
     }
   }
 
-  // Agent memory directory (for self-improving agents)
+  // Agent 内存目录（用于自改进代理）
   if (isAgentMemoryPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1562,13 +1554,13 @@ export function checkEditableInternalPath(
     }
   }
 
-  // Memdir directory (persistent memory for cross-session learning)
-  // This pre-safety-check carve-out exists because the default path is under
-  // ~/.zy/, which is in DANGEROUS_DIRECTORIES. The CLAUDE_COWORK_MEMORY_PATH_OVERRIDE
-  // override is an arbitrary caller-designated directory with no such conflict,
-  // so it gets NO special permission treatment here — writes go through normal
-  // permission flow (step 5 → ask). SDK callers who want silent memory should
-  // pass an allow rule for the override path.
+  // Memdir 目录（用于跨会话学习的持久内存）
+  // 此安全检查前 carve-out 存在是因为默认路径位于
+  // ~/.zy/ 下，这在 DANGEROUS_DIRECTORIES 中。CLAUDE_COWORK_MEMORY_PATH_OVERRIDE
+  // 覆盖是调用者指定的任意目录，没有此类冲突，
+  // 因此它在此不获得特殊权限处理 — 写入走正常
+  // 权限流程（步骤 5 → ask）。希望静默内存的 SDK 调用者应
+  // 为覆盖路径传递放行规则。
   if (!hasAutoMemPathOverride() && isAutoMemPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1580,13 +1572,12 @@ export function checkEditableInternalPath(
     }
   }
 
-  // .zy/launch.json — desktop preview config (dev server command + port).
-  // The desktop's preview_start MCP tool instructs Zy to create/update
-  // this file as part of the preview workflow. Without this carve-out the
-  // .zy/ DANGEROUS_DIRECTORIES check prompts for it, which in SDK mode
-  // cascades: user clicks "Always allow" → setMode:acceptEdits suggestion
-  // applied → silent downgrade from auto mode. Matches the project-level
-  // .zy/ only (not ~/.zy/) since launch.json is per-project.
+  // .zy/launch.json — 桌面预览配置（开发服务器命令 + 端口）。
+  // 桌面的 preview_start MCP 工具指示 ZY 作为预览工作流的一部分
+  // 创建/更新此文件。没有此 carve-out，.zy/ DANGEROUS_DIRECTORIES
+  // 检查会提示它，这在 SDK 模式下会级联：用户点击"始终允许"
+  // → 应用 setMode:acceptEdits 建议 → 从 auto 模式静默降级。
+  // 仅匹配项目级 .zy/（而非 ~/.zy/），因为 launch.json 是每个项目的。
   if (
     normalizeCaseForComparison(normalizedPath) ===
     normalizeCaseForComparison(join(getOriginalCwd(), '.zy', 'launch.json'))
@@ -1605,18 +1596,18 @@ export function checkEditableInternalPath(
 }
 
 /**
- * Check if a path is an internal path that can be read without permission.
- * Returns a PermissionResult - either 'allow' if matched, or 'passthrough' to continue checking.
+ * 检查路径是否为可以无需权限读取的内部路径。
+ * 返回 PermissionResult — 如果匹配则返回 'allow'，否则返回 'passthrough' 以继续检查。
  */
 export function checkReadableInternalPath(
   absolutePath: string,
   input: { [key: string]: unknown },
 ): PermissionResult {
-  // SECURITY: Normalize path to prevent traversal bypasses via .. segments
-  // This is defense-in-depth; individual helper functions also normalize
+  // 安全：规范化路径以防止通过 .. 段进行穿越绕过
+  // 这是纵深防御；各个辅助函数也进行规范化
   const normalizedPath = normalize(absolutePath)
 
-  // Session memory directory
+  // 会话内存目录
   if (isSessionMemoryPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1628,8 +1619,8 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Project directory (for reading past session memories)
-  // Path format: ~/.zy/projects/{sanitized-cwd}/...
+  // 项目目录（用于读取过去的会话内存）
+  // 路径格式：~/.zy/projects/{sanitized-cwd}/...
   if (isProjectDirPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1641,7 +1632,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Plan files for current session
+  // 当前会话的 plan 文件
   if (isSessionPlanFile(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1653,8 +1644,8 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Tool results directory (persisted large outputs)
-  // Use path separator suffix to prevent path traversal (e.g., tool-results-evil/)
+  // 工具结果目录（持久化大输出）
+  // 使用路径分隔符后缀防止路径穿越（例如 tool-results-evil/）
   const toolResultsDir = getToolResultsDir()
   const toolResultsDirWithSep = toolResultsDir.endsWith(sep)
     ? toolResultsDir
@@ -1673,7 +1664,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Scratchpad directory for current session
+  // 当前会话的暂存目录
   if (isScratchpadPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1685,9 +1676,9 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Project temp directory (/tmp/zy/{sanitized-cwd}/)
-  // Intentionally allows reading files from all sessions in this project, not just the current session.
-  // This enables cross-session file access within the same project's temp space.
+  // 项目临时目录（/tmp/zy/{sanitized-cwd}/）
+  // 有意允许读取此项目中所有会话的文件，而不仅仅是当前会话。
+  // 这启用了同一项目临时空间内的跨会话文件访问。
   const projectTempDir = getProjectTempDir()
   if (normalizedPath.startsWith(projectTempDir)) {
     return {
@@ -1700,7 +1691,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Agent memory directory (for self-improving agents)
+  // Agent 内存目录（用于自改进代理）
   if (isAgentMemoryPath(normalizedPath)) {
     return {
       behavior: 'allow',
@@ -1724,7 +1715,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Tasks directory (~/.zy/tasks/) for swarm task coordination
+  // Tasks 目录（~/.zy/tasks/）用于 swarm 任务协调
   const tasksDir = join(getZyConfigHomeDir(), 'tasks') + sep
   if (
     normalizedPath === tasksDir.slice(0, -1) ||
@@ -1740,7 +1731,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Teams directory (~/.zy/teams/) for swarm coordination
+  // Teams 目录（~/.zy/teams/）用于 swarm 协调
   const teamsReadDir = join(getZyConfigHomeDir(), 'teams') + sep
   if (
     normalizedPath === teamsReadDir.slice(0, -1) ||
@@ -1756,11 +1747,11 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Bundled skill reference files extracted on first invocation.
-  // SECURITY: See getBundledSkillsRoot() — the per-process nonce in the path
-  // is the load-bearing defense; uid/VERSION alone are public knowledge and
-  // squattable. We always write-before-read on invocation, so content under
-  // this subtree is harness-controlled.
+  // 首次调用时提取的打包技能参考文件。
+  // 安全：参见 getBundledSkillsRoot() — 路径中的每进程 nonce
+  // 是决定性防御；仅 uid/VERSION 是公开知识且
+  // 可被抢占。我们在调用时先写后读，因此此
+  // 子树下的内容由 harness 控制。
   const bundledSkillsRoot = getBundledSkillsRoot() + sep
   if (normalizedPath.startsWith(bundledSkillsRoot)) {
     return {
