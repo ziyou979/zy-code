@@ -14,6 +14,7 @@ import { useWizard } from '../../../wizard/index.js';
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
 import { getNewRelativeAgentFilePath } from '../../agentFileUtils.js';
 import { validateAgent } from '../../validateAgent.js';
+import type { AgentWizardData } from '../types.js';
 type Props = {
   tools: Tools;
   existingAgents: AgentDefinition[];
@@ -31,7 +32,7 @@ export function ConfirmStep({
   const {
     goBack,
     wizardData
-  } = useWizard();
+  } = useWizard<AgentWizardData>();
   useKeybinding("confirm:no", goBack, {
     context: "Confirmation"
   });

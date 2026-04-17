@@ -31,7 +31,7 @@ type SpanProps = {
 export const Ansi = React.memo(function Ansi({
   children,
   dimColor
-}: SpanProps) {
+}: Props) {
   if (typeof children !== "string") {
     return dimColor ? <Text dim={true}>{String(children)}</Text> : <Text>{String(children)}</Text>;
   }
@@ -176,8 +176,11 @@ function hasAnyTextProps(props: SpanProps): boolean {
   return props.color !== undefined || props.backgroundColor !== undefined || props.dim === true || props.bold === true || props.italic === true || props.underline === true || props.strikethrough === true || props.inverse === true;
 }
 
-// 不含字重（bold/dim）的文本样式 props——这些由 Text 单独处理
-type BaseTextStyleProps = {
+// 文本样式 props，包含字重和 children
+type StyledTextProps = {
+  children?: React.ReactNode;
+  bold?: boolean;
+  dim?: boolean;
   color?: Color;
   backgroundColor?: Color;
   italic?: boolean;
@@ -192,7 +195,7 @@ function StyledText({
   dim,
   children,
   ...rest
-}: BaseTextStyleProps) {
+}: StyledTextProps) {
   if (dim) {
     return <Text {...rest} dim={true}>{children}</Text>;
   }

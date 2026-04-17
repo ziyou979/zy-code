@@ -66,7 +66,7 @@ export default function BashToolResultMessage({
   content,
   verbose,
   timeoutMs
-}) {
+}: Props) {
   const {
     stdout: t2,
     stderr: t3,
