@@ -1,8 +1,11 @@
 // Utility Types - general purpose TypeScript utility types.
 
-export type DeepImmutable<T> = {
-  readonly [K in keyof T]: DeepImmutable<T[K]>
-}
+export type DeepImmutable<T> =
+  T extends Map<infer K, infer V> ? ReadonlyMap<K, V> :
+  T extends Set<infer U> ? ReadonlySet<U> :
+  T extends (...args: any[]) => any ? T :
+  T extends object ? { readonly [K in keyof T]: DeepImmutable<T[K]> } :
+  T
 
 export type DeepMutable<T> = {
   -readonly [K in keyof T]: DeepMutable<T[K]>

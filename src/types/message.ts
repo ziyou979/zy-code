@@ -97,6 +97,8 @@ export interface UserMessage extends BaseMessage {
   sourceToolAssistantUUID?: UUID
   permissionMode?: PermissionMode
   origin?: MessageOrigin
+  /** Plan content attached when exiting plan mode ("clear context and implement" flow). */
+  planContent?: string
 }
 
 export interface NormalizedUserMessage extends BaseMessage {

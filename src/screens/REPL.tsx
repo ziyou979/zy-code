@@ -3029,7 +3029,7 @@ export function REPL({
             ...prev,
             fileHistory: updater(prev.fileHistory)
           }));
-        }, initialMsg.message.uuid);
+        }, initialMsg.message.uuid as any);
       }
 
       // 确保 SessionStart hook 上下文在第一次 API

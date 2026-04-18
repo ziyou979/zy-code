@@ -22,8 +22,7 @@ type DiffData = {
 };
 export function FileEditToolDiff(props: Props) {
   const [dataPromise] = useState(() => loadDiffData(props.file_path, props.edits));
-  // @ts-ignore
-  return <Suspense fallback={<DiffFrame placeholder={true} />}>{(DiffBody as any)({ promise: dataPromise, file_path: props.file_path })}</Suspense>;
+  return <Suspense fallback={<DiffFrame placeholder={true} />}><DiffBody promise={dataPromise} file_path={props.file_path} /></Suspense>;
 }
 function DiffBody(props: { promise: Promise<DiffData>; file_path: string }) {
   const {
@@ -39,7 +38,7 @@ function DiffBody(props: { promise: Promise<DiffData>; file_path: string }) {
 function DiffFrame({
   children,
   placeholder = false
-}: { children: React.ReactNode; placeholder?: boolean }) {
+}: { children?: React.ReactNode; placeholder?: boolean }) {
   return <Box flexDirection="column"><Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false}>{placeholder ? <Text dimColor={true}>…</Text> : children}</Box></Box>;
 }
 async function loadDiffData(file_path: string, edits: FileEdit[]): Promise<DiffData> {

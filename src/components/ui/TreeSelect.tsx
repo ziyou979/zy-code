@@ -121,8 +121,7 @@ export function TreeSelect({
   getChildPrefix,
   onUpFromFirstItem
 }: TreeSelectProps<any>) {
-  const t4 = new Set() as Set<string>;
-  const [internalExpandedIds, setInternalExpandedIds] = React.useState(t4);
+  const [internalExpandedIds, setInternalExpandedIds] = React.useState(new Set<string>());
   const isProgrammaticFocusRef = React.useRef(false);
   const lastFocusedIdRef = React.useRef(null);
   const isExpanded = nodeId => {

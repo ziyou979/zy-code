@@ -83,7 +83,7 @@ function useAppStore(): AppStateStore {
  * const { text, promptId } = useAppState(s => s.promptSuggestion) // 正确做法
  * ```
  */
-export function useAppState(selector) {
+export function useAppState<T>(selector: (state: AppState) => T): T {
   const store = useAppStore();
   const get = () => {
     const state = store.getState();

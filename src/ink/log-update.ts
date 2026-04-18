@@ -295,20 +295,19 @@ export class LogUpdate {
     }
 
     // viewportY = 回滚区中的行数（终端上不可见）。
-    // 对于缩小：取 max(prev, next)，因为终端清除操作不会引起滚动。
-    // 对于增长：使用 prev 状态，因为新行还未将旧行滚动。
+    // 始终使用 max(prev, next) 高度来确保一致性 —— 当子 Agent 的
+    // spinner/status 更新导致内容高度在 N 和 N+1 之间频繁切换时，
+    // growing/shrinking 标志会在帧之间翻转。使用统一的计算方式可以
+    // 避免 viewportY 在帧之间不一致，防止 diff 循环将内容写到错误的行。
     // 当 prevHadScrollback 为 true 时，加 1 以计入上一帧末尾光标恢复 LF
     // 滚出可视区域的那一行。不加的话，diff 循环会将该行视为可达 —— 但光标
     // 会在视口顶部被截断，导致写入偏移 1 行，输出错乱。
     const cursorRestoreScroll = prevHadScrollback ? 1 : 0
-    const viewportY = growing
-      ? Math.max(
-          0,
-          prev.screen.height - prev.viewport.height + cursorRestoreScroll,
-        )
-      : Math.max(prev.screen.height, next.screen.height) -
-        next.viewport.height +
-        cursorRestoreScroll
+    const maxHeight = Math.max(prev.screen.height, next.screen.height)
+    const viewportY = Math.max(
+      0,
+      maxHeight - next.viewport.height + cursorRestoreScroll,
+    )
 
     let currentStyleId = stylePool.none
     let currentHyperlink: Hyperlink = undefined
