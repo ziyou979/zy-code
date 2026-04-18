@@ -563,12 +563,6 @@ export default class Ink {
         width: frame.screen.width,
         height: frame.screen.height
       };
-      // 布局变化（如子 Agent 的 spinner/status 更新导致高度波动）可能
-      // 使 displayCursor 与实际终端光标位置不同步。重置它以避免下一帧
-      // 的 preamble 相对移动从错误的位置开始计算，导致内容写到错误的行。
-      if (!this.altScreenActive && didLayoutShift()) {
-        this.displayCursor = null;
-      }
     }
 
     // Alt-screen: anchor the physical cursor to (0,0) before every diff.
