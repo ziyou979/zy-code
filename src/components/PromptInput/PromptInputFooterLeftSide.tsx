@@ -269,8 +269,8 @@ function ModeIndicator({
   ...(isInternalBuild() && hasTmuxSession ? [(TungstenPill as any)({ key: 'tmux', selected: tmuxSelected })] : []), ...(isAgentSwarmsEnabled() && hasTeams ? [<TeamStatus key="teams" teamsSelected={teamsSelected} showHint={showHint && !hasBackgroundTasks} />] : []), ...(shouldShowPrStatus ? [<PrBadge key="pr-status" number={prStatus.number!} url={prStatus.url!} reviewState={prStatus.reviewState!} />] : [])];
 
   // Check if any in-process teammates exist (for hint text cycling)
-  const hasAnyInProcessTeammates = (Object.values(tasks) as any[]).some((task: any) => task.type === 'in_process_teammate' && task.status === 'running');
-  const hasRunningAgentTasks = (Object.values(tasks) as any[]).some((task: any) => task.type === 'local_agent' && task.status === 'running');
+  const hasAnyInProcessTeammates = Object.values(tasks).some(task => task.type === 'in_process_teammate' && task.status === 'running');
+  const hasRunningAgentTasks = Object.values(tasks).some(task => task.type === 'local_agent' && task.status === 'running');
 
   // Get hint parts separately for potential second-line rendering
   const hintParts = showHint ? getSpinnerHintParts(isLoading, escShortcut, todosShortcut, killAgentsShortcut, hasTaskItems, expandedView, hasAnyInProcessTeammates, hasRunningAgentTasks, isKillAgentsConfirmShowing) : [];

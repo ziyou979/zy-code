@@ -514,6 +514,8 @@ export const zhCN: TranslationResource = {
   'bash.done': '完成',
   'bash.noOutput': '（无输出）',
   'bash.imageDetected': '[检测到图片数据并已发送]',
+  'bash.runningCommand': '正在运行命令',
+  'bash.runningActivity': '正在运行 {desc}',
 
   // File read tool
   'fileRead.readImage': '读取图片 ({size})',
@@ -656,6 +658,10 @@ export const zhCN: TranslationResource = {
 
   // 权限对话框 - 仅命令（不再询问）
   'permission.dontAskAgainForCommands': '是，此后不再询问 {cwd} 中的 {commands} 命令',
+  'permission.yesDontAskAgainPrefix': '是，并且不再询问',
+  'permission.commandPrefixPlaceholder': '命令前缀（例如：npm run:*）',
+  'permission.powershellPrefixPlaceholder': '命令前缀（例如：Get-Process:*）',
+  'permission.classifierDescriptionPlaceholder': '描述要允许的内容...',
 
   // 权限对话框 - 混合路径和命令
   'permission.allowAccessAndCommands': '是，并允许访问 {paths} 和执行 {commands} 命令',

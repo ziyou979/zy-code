@@ -87,9 +87,9 @@ export function bashToolUseOptions({
     if (editablePrefix !== undefined && onEditablePrefixChange && !hasNonBashSuggestions && suggestions.length > 0) {
       options.push({
         type: 'input',
-        label: 'Yes, and don\u2019t ask again for',
+        label: tSync('permission.yesDontAskAgainPrefix'),
         value: 'yes-prefix-edited',
-        placeholder: 'command prefix (e.g., npm run:*)',
+        placeholder: tSync('permission.commandPrefixPlaceholder'),
         initialValue: editablePrefix,
         onChange: onEditablePrefixChange,
         allowEmptySubmitToCancel: true,
@@ -117,9 +117,9 @@ export function bashToolUseOptions({
     if (isInternalBuild() && !editablePrefixShown && isClassifierPermissionsEnabled() && onClassifierDescriptionChange && !initialClassifierDescriptionEmpty && !descriptionAlreadyExists(classifierDescription ?? '', existingAllowDescriptions) && decisionReason?.type !== 'classifier') {
       options.push({
         type: 'input',
-        label: 'Yes, and don\u2019t ask again for',
+        label: tSync('permission.yesDontAskAgainPrefix'),
         value: 'yes-classifier-reviewed',
-        placeholder: 'describe what to allow...',
+        placeholder: tSync('permission.classifierDescriptionPlaceholder'),
         initialValue: classifierDescription ?? '',
         onChange: onClassifierDescriptionChange,
         allowEmptySubmitToCancel: true,

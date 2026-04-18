@@ -29,7 +29,7 @@ function DiffBody(props: { promise: Promise<DiffData>; file_path: string }) {
     patch,
     firstLine,
     fileContent
-  } = use(props.promise) as any;
+  } = use(props.promise);
   const {
     columns
   } = useTerminalSize();

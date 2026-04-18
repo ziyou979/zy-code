@@ -358,6 +358,8 @@ export const en: TranslationResource = {
   'bash.done': 'Done',
   'bash.noOutput': '(No output)',
   'bash.imageDetected': '[Image data detected and sent to ZY]',
+  'bash.runningCommand': 'Running command',
+  'bash.runningActivity': 'Running {desc}',
 
   // File read tool
   'fileRead.readImage': 'Read image ({size})',
@@ -541,6 +543,10 @@ export const en: TranslationResource = {
 
   // Permission dialogs - commands only (don't ask again)
   'permission.dontAskAgainForCommands': "Yes, and don't ask again for {commands} commands in {cwd}",
+  'permission.yesDontAskAgainPrefix': "Yes, and don't ask again for",
+  'permission.commandPrefixPlaceholder': 'command prefix (e.g., npm run:*)',
+  'permission.powershellPrefixPlaceholder': 'command prefix (e.g., Get-Process:*)',
+  'permission.classifierDescriptionPlaceholder': 'describe what to allow...',
 
   // Permission dialogs - mixed paths and commands
   'permission.allowAccessAndCommands': 'Yes, and allow access to {paths} and {commands} commands',
