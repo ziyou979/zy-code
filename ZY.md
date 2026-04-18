@@ -23,6 +23,7 @@ There is no test runner configured. Testing is done by running the CLI directly.
 ## 架构
 
 This is a terminal UI application built with **TypeScript + React (Ink)**, bundled by **Bun**.
+当前项目的代码，若含有注释内容，一律使用中文
 
 ### Entrypoints
 
