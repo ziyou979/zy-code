@@ -95,9 +95,9 @@ function Diagnostics({
   promise
 }) {
   const diagnostics = use(promise);
-  if (diagnostics.length === 0) {
+  if ((diagnostics as any).length === 0) {
     return null;
   }
-  const t2 = diagnostics.map((diagnostic, i) => <Box key={i} flexDirection="row" gap={1} paddingX={1}><Text color="error">{figures.warning}</Text>{typeof diagnostic === "string" ? <Text wrap="wrap">{diagnostic}</Text> : diagnostic}</Box>);
+  const t2 = (diagnostics as any).map((diagnostic: any, i: number) => <Box key={i} flexDirection="row" gap={1} paddingX={1}><Text color="error">{figures.warning}</Text>{typeof diagnostic === "string" ? <Text wrap="wrap">{diagnostic}</Text> : diagnostic}</Box>);
   return <Box flexDirection="column" paddingBottom={1}>{<Text bold={true}>{tSync('status.diagnostics')}</Text>}{t2}</Box>;
 }

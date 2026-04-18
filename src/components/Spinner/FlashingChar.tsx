@@ -23,7 +23,7 @@ export function FlashingChar({
   const shimmerRGB = shimmerColorStr ? parseRGB(shimmerColorStr) : null;
   if (baseRGB && shimmerRGB) {
     const interpolated = interpolateColor(baseRGB, shimmerRGB, flashOpacity);
-    earlyReturn = <Text color={toRGBColor(interpolated)}>{char}</Text>;
+    earlyReturn = <Text color={toRGBColor(interpolated)}>{char}</Text> as any;
   }
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
     return earlyReturn;

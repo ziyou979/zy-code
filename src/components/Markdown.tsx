@@ -97,7 +97,7 @@ function MarkdownBody({
   let nonTableContent = "";
   const flushNonTableContent = function flushNonTableContent() {
     if (nonTableContent) {
-      elements.push(<Ansi key={elements.length} dimColor={dimColor}>{nonTableContent.trim()}</Ansi>);
+      elements.push(<Ansi key={elements.length} dimColor={dimColor as any}>{nonTableContent.trim()}</Ansi>);
       nonTableContent = "";
     }
   };

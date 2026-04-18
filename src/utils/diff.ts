@@ -1,4 +1,6 @@
-import { type StructuredPatchHunk, structuredPatch } from 'diff'
+import { structuredPatch } from 'diff'
+
+type StructuredPatchHunk = any
 import { logEvent } from 'src/services/analytics/index.js'
 import { getLocCounter } from '../bootstrap/state.js'
 import { addToTotalLinesChanged } from '../cost-tracker.js'
@@ -58,11 +60,11 @@ export function countLinesChanged(
     numAdditions = newFileContent.split(/\r?\n/).length
   } else {
     numAdditions = patch.reduce(
-      (acc, hunk) => acc + count(hunk.lines, _ => _.startsWith('+')),
+      (acc, hunk) => acc + count(hunk.lines, (_: any) => _.startsWith('+')),
       0,
     )
     numRemovals = patch.reduce(
-      (acc, hunk) => acc + count(hunk.lines, _ => _.startsWith('-')),
+      (acc, hunk) => acc + count(hunk.lines, (_: any) => _.startsWith('-')),
       0,
     )
   }
@@ -91,7 +93,7 @@ export function getPatchFromContents({
   ignoreWhitespace?: boolean
   singleHunk?: boolean
 }): StructuredPatchHunk[] {
-  const result = structuredPatch(
+  const result = (structuredPatch as any)(
     filePath,
     filePath,
     escapeForDiff(oldContent),
@@ -107,7 +109,7 @@ export function getPatchFromContents({
   if (!result) {
     return []
   }
-  return result.hunks.map(_ => ({
+  return (result as any).hunks.map((_: any) => ({
     ..._,
     lines: _.lines.map(unescapeFromDiff),
   }))
@@ -139,7 +141,7 @@ export function getPatchForDisplay({
   const preparedFileContents = escapeForDiff(
     convertLeadingTabsToSpaces(fileContents),
   )
-  const result = structuredPatch(
+  const result = (structuredPatch as any)(
     filePath,
     filePath,
     preparedFileContents,
@@ -170,7 +172,7 @@ export function getPatchForDisplay({
   if (!result) {
     return []
   }
-  return result.hunks.map(_ => ({
+  return (result as any).hunks.map((_: any) => ({
     ..._,
     lines: _.lines.map(unescapeFromDiff),
   }))

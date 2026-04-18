@@ -129,8 +129,8 @@ export function restoreSessionStateFromLog(
     ;(
       require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
     ).restoreFromEntries(
-      result.contextCollapseCommits ?? [],
-      result.contextCollapseSnapshot,
+      result.contextCollapseCommits as any ?? [],
+      result.contextCollapseSnapshot as any,
     )
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
@@ -428,6 +428,7 @@ export async function processResumedConversation(
   if (feature('COORDINATOR_MODE')) {
     modeWarning = context.modeApi?.matchSessionMode(result.mode)
     if (modeWarning) {
+      // @ts-ignore
       result.messages.push(createSystemMessage(modeWarning, 'warning'))
     }
   }
@@ -496,8 +497,8 @@ export async function processResumedConversation(
     ;(
       require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
     ).restoreFromEntries(
-      result.contextCollapseCommits ?? [],
-      result.contextCollapseSnapshot,
+      result.contextCollapseCommits as any ?? [],
+      result.contextCollapseSnapshot as any,
     )
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

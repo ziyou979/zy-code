@@ -66,7 +66,7 @@ export const call: LocalCommandCall = async (args, context) => {
         // as a break. compactConversation does this internally; SM-compact doesn't.
         if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
           notifyCompaction(
-            context.options.querySource ?? 'compact',
+            (context.options.querySource ?? 'compact') as any,
             context.agentId,
           )
         }
@@ -84,7 +84,7 @@ export const call: LocalCommandCall = async (args, context) => {
 
     // Reactive-only mode: route /compact through the reactive path.
     // Checked after session-memory (that path is cheap and orthogonal).
-    if (reactiveCompact?.isReactiveOnlyMode()) {
+    if ((reactiveCompact as any)?.isReactiveOnlyMode()) {
       return await compactViaReactive(
         messages,
         context,
@@ -172,7 +172,7 @@ async function compactViaReactive(
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
 
-    const outcome = await reactive.reactiveCompactOnPromptTooLong(
+    const outcome = await (reactive as any).reactiveCompactOnPromptTooLong(
       messages,
       cacheSafeParams,
       { customInstructions: mergedInstructions, trigger: 'manual' },
@@ -262,7 +262,7 @@ async function getCacheSharingParams(
     context.options.tools,
     context.options.mainLoopModel,
     Array.from(
-      appState.toolPermissionContext.additionalWorkingDirectories.keys(),
+      (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
     ),
     context.options.mcpClients,
   )

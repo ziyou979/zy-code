@@ -62,7 +62,7 @@ import { isMcpInstructionsDeltaEnabled } from '../utils/mcpInstructionsDelta.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getCachedMCConfigForFRC = feature('CACHED_MICROCOMPACT')
   ? (
-      require('../services/compact/cachedMCConfig.js') as typeof import('../services/compact/cachedMCConfig.js')
+      require('../services/compact/cachedMCConfig.js') as any
     ).getCachedMCConfig
   : null
 
@@ -84,7 +84,7 @@ const DISCOVER_SKILLS_TOOL_NAME: string | null = feature(
   'EXPERIMENTAL_SKILL_SEARCH',
 )
   ? (
-      require('../tools/DiscoverSkillsTool/prompt.js') as typeof import('../tools/DiscoverSkillsTool/prompt.js')
+      require('../tools/DiscoverSkillsTool/prompt.js') as any
     ).DISCOVER_SKILLS_TOOL_NAME
   : null
 // Capture the module (not .isSkillSearchEnabled directly) so spyOn() in tests
@@ -751,7 +751,7 @@ export async function enhanceSystemPromptWithEnvDetails(
   // omits this param — `?? true` preserves guidance there.
   const discoverSkillsGuidance =
     feature('EXPERIMENTAL_SKILL_SEARCH') &&
-    skillSearchFeatureCheck?.isSkillSearchEnabled() &&
+    (skillSearchFeatureCheck as any)?.isSkillSearchEnabled() &&
     DISCOVER_SKILLS_TOOL_NAME !== null &&
     (enabledToolNames?.has(DISCOVER_SKILLS_TOOL_NAME) ?? true)
       ? getDiscoverSkillsGuidance()

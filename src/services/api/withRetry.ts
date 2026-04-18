@@ -56,10 +56,10 @@ export const BASE_DELAY_MS = 500
 // 在容量级联期间，每次重试都会在网关上放大 3-10 倍，而用户反正也看不到这些失败。
 // 新来源默认不重试——仅在用户等待结果时才添加到此处。
 const FOREGROUND_529_RETRY_SOURCES = new Set<QuerySource>([
-  'repl_main_thread',
-  'repl_main_thread:outputStyle:custom',
-  'repl_main_thread:outputStyle:Explanatory',
-  'repl_main_thread:outputStyle:Learning',
+  'repl_main_thread' as any,
+  'repl_main_thread:outputStyle:custom' as any,
+  'repl_main_thread:outputStyle:Explanatory' as any,
+  'repl_main_thread:outputStyle:Learning' as any,
   'sdk',
   'agent:custom',
   'agent:default',
@@ -514,7 +514,7 @@ function getRetryAfter(error: unknown): string | null {
       'retry-after'
     ] ||
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      ((error as APIError).headers as Headers)?.get?.('retry-after')) ??
+      ((error as any).headers as any)?.get?.('retry-after')) ??
     null
   )
 }
@@ -722,11 +722,11 @@ function shouldRetry(error: APIError): boolean {
   // 注意这不是标准 header。
   // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
   const shouldRetryHeader = typeof error.headers?.get === 'function'
-    ? error.headers.get('x-should-retry')
-    : (error.headers as Record<string, string>)?.['x-should-retry']
+    ? (error.headers.get as any)('x-should-retry')
+    : ((error.headers as any) as any)?.['x-should-retry']
 
   // 如果服务器明确指示是否重试，则遵循。
-  if (shouldRetryHeader === 'true') {
+  if ((shouldRetryHeader as any) === 'true') {
     return true
   }
 
@@ -805,7 +805,7 @@ function getRetryAfterMs(error: APIError): number | null {
 function getRateLimitResetDelayMs(error: APIError): number | null {
   // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
   const resetHeader = typeof error.headers?.get === 'function'
-    ? error.headers.get?.('anthropic-ratelimit-unified-reset')
+    ? (error.headers.get as any)?.('anthropic-ratelimit-unified-reset')
     : (error.headers as Record<string, string>)?.['anthropic-ratelimit-unified-reset']
   if (!resetHeader) return null
   const resetUnixSec = Number(resetHeader)

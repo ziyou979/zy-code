@@ -17,6 +17,7 @@ import { AbortError } from '../../utils/errors.js';
 import { lazySchema } from '../../utils/lazySchema.js';
 import { extractTextContent } from '../../utils/messages.js';
 import { semanticBoolean } from '../../utils/semanticBoolean.js';
+import { isInternalBuild } from '../../utils/envUtils.js';
 import { sleep } from '../../utils/sleep.js';
 import { jsonParse } from '../../utils/slowOperations.js';
 import { countCharInString } from '../../utils/stringUtils.js';
@@ -160,7 +161,7 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
     return this.isReadOnly?.(_input) ?? false;
   },
   isEnabled() {
-    return "external" !== 'ant';
+    return !isInternalBuild();
   },
   isReadOnly(_input) {
     return true;
@@ -370,6 +371,7 @@ function TaskOutputResultDisplay({
       dangerouslyDisableSandbox: true,
       returnCodeInterpretation: task.error
     };
+    // @ts-ignore
     return <BashToolResultMessage content={bashOut} verbose={verbose} />;
   }
   if (task.task_type === "local_agent") {
@@ -377,9 +379,8 @@ function TaskOutputResultDisplay({
     if (result.retrieval_status === "success") {
       if (verbose) {
         return <Box flexDirection="column">{<Text>{task.description} ({lineCount} lines)</Text>}{<Box flexDirection="column" paddingLeft={2} marginTop={1}>{task.prompt && <AgentPromptDisplay prompt={task.prompt} theme={theme} dim={true} />}{task.result && <Box marginTop={1}><AgentResponseDisplay content={[{
-                type: "text",
                 text: task.result
-              }]} theme={theme} /></Box>}{task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>{tSync('task.errorLabel')}</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>}</Box>}</Box>;
+              }] as any} theme={theme} /></Box>}{task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>{tSync('task.errorLabel')}</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>}</Box>}</Box>;
       }
       return <MessageResponse><Text dimColor={true}>{tSync('task.readOutput', {
             shortcut: expandShortcut

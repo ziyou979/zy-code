@@ -65,7 +65,7 @@ export const HighlightedCode = memo(function HighlightedCode({
 function CodeLine({
   line,
   gutterWidth
-}: Props) {
+}: any) {
   const gutter = sliceAnsi(line, 0, gutterWidth);
   const content = sliceAnsi(line, gutterWidth);
   return <Box flexDirection="row">{<NoSelect fromLeftEdge={true}><Text><Ansi>{gutter}</Ansi></Text></NoSelect>}{<Text><Ansi>{content}</Ansi></Text>}</Box>;

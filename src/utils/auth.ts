@@ -1109,40 +1109,40 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
   success: boolean
   warning?: string
 } {
-  if (!shouldUseZyAIAuth(tokens.scopes)) {
+  if (!shouldUseZyAIAuth((tokens as any).scopes)) {
     logEvent('tengu_oauth_tokens_not_Zy_ai', {})
     return { success: true }
   }
 
   // Skip saving inference-only tokens (they come from env vars)
-  if (!tokens.refreshToken || !tokens.expiresAt) {
+  if (!tokens.refreshToken || !(tokens as any).expiresAt) {
     logEvent('tengu_oauth_tokens_inference_only', {})
     return { success: true }
   }
 
   const secureStorage = getSecureStorage()
   const storageBackend =
-    secureStorage.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
+    (secureStorage as any).name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
   try {
-    const storageData = secureStorage.read() || {}
+    const storageData = (secureStorage as any).read() || {}
     const existingOauth = storageData.zyAiOauth
 
     storageData.zyAiOauth = {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      expiresAt: tokens.expiresAt,
-      scopes: tokens.scopes,
+      expiresAt: (tokens as any).expiresAt,
+      scopes: (tokens as any).scopes,
       // Profile fetch in refreshOAuthToken swallows errors and returns null on
       // transient failures (network, 5xx, rate limit). Don't clobber a valid
       // stored subscription with null — fall back to the existing value.
       subscriptionType:
-        tokens.subscriptionType ?? existingOauth?.subscriptionType ?? null,
+        (tokens as any).subscriptionType ?? existingOauth?.subscriptionType ?? null,
       rateLimitTier:
-        tokens.rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
+        (tokens as any).rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
     }
 
-    const updateStatus = secureStorage.update(storageData)
+    const updateStatus = (secureStorage as any).update(storageData)
 
     if (updateStatus.success) {
       logEvent('tengu_oauth_tokens_saved', { storageBackend })
@@ -1182,12 +1182,12 @@ getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
       scopes: ['user:inference'],
       subscriptionType: null,
       rateLimitTier: null,
-    }
+    } as any
   }
 
   try {
     const secureStorage = getSecureStorage()
-    const storageData = secureStorage.read()
+    const storageData = (secureStorage as any).read()
     const oauthData = storageData?.zyAiOauth
 
     if (!oauthData?.accessToken) {
@@ -1308,7 +1308,7 @@ export async function getZyAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
 
   try {
     const secureStorage = getSecureStorage()
-    const storageData = await secureStorage.readAsync()
+    const storageData = await (secureStorage as any).readAsync()
     const oauthData = storageData?.zyAiOauth
     if (!oauthData?.accessToken) {
       return null
@@ -1352,7 +1352,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     return false
   }
 
-  if (!shouldUseZyAIAuth(tokens.scopes)) {
+  if (!shouldUseZyAIAuth((tokens as any).scopes)) {
     return false
   }
 
@@ -1363,7 +1363,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
   const freshTokens = await getZyAIOAuthTokensAsync()
   if (
     !freshTokens?.refreshToken ||
-    !isOAuthTokenExpired(freshTokens.expiresAt)
+    !isOAuthTokenExpired((freshTokens as any).expiresAt)
   ) {
     return false
   }
@@ -1408,7 +1408,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     const lockedTokens = await getZyAIOAuthTokensAsync()
     if (
       !lockedTokens?.refreshToken ||
-      !isOAuthTokenExpired(lockedTokens.expiresAt)
+      !isOAuthTokenExpired((lockedTokens as any).expiresAt)
     ) {
       logEvent('tengu_oauth_token_refresh_race_resolved', {})
       return false
@@ -1419,9 +1419,9 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
       // For Zy.ai subscribers, omit scopes so the default
       // CLAUDE_AI_OAUTH_SCOPES applies — this allows scope expansion
       // (e.g. adding user:file_upload) on refresh without re-login.
-      scopes: shouldUseZyAIAuth(lockedTokens.scopes)
+      scopes: shouldUseZyAIAuth((lockedTokens as any).scopes)
         ? undefined
-        : lockedTokens.scopes,
+        : (lockedTokens as any).scopes,
     })
     saveOAuthTokensIfNeeded(refreshedTokens)
 
@@ -1435,7 +1435,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     getZyAIOAuthTokens.cache?.clear?.()
     clearKeychainCache()
     const currentTokens = await getZyAIOAuthTokensAsync()
-    if (currentTokens && !isOAuthTokenExpired(currentTokens.expiresAt)) {
+    if (currentTokens && !isOAuthTokenExpired((currentTokens as any).expiresAt)) {
       logEvent('tengu_oauth_token_refresh_race_recovered', {})
       return true
     }
@@ -1527,10 +1527,10 @@ export function hasOpusAccess(): boolean {
   const subscriptionType = getSubscriptionType()
 
   return (
-    subscriptionType === 'max' ||
-    subscriptionType === 'enterprise' ||
-    subscriptionType === 'team' ||
-    subscriptionType === 'pro' ||
+    (subscriptionType as any) === 'max' ||
+    (subscriptionType as any) === 'enterprise' ||
+    (subscriptionType as any) === 'team' ||
+    (subscriptionType as any) === 'pro' ||
     // subscriptionType === null covers both API users and the case where
     // subscribers do not have subscription type populated. For those
     // subscribers, when in doubt, we should not limit their access to Opus.
@@ -1556,26 +1556,26 @@ export function getSubscriptionType(): SubscriptionType | null {
 }
 
 export function isMaxSubscriber(): boolean {
-  return getSubscriptionType() === 'max'
+  return (getSubscriptionType() as any) === 'max'
 }
 
 export function isTeamSubscriber(): boolean {
-  return getSubscriptionType() === 'team'
+  return (getSubscriptionType() as any) === 'team'
 }
 
 export function isTeamPremiumSubscriber(): boolean {
   return (
-    getSubscriptionType() === 'team' &&
+    (getSubscriptionType() as any) === 'team' &&
     getRateLimitTier() === 'default_Zy_max_5x'
   )
 }
 
 export function isEnterpriseSubscriber(): boolean {
-  return getSubscriptionType() === 'enterprise'
+  return (getSubscriptionType() as any) === 'enterprise'
 }
 
 export function isProSubscriber(): boolean {
-  return getSubscriptionType() === 'pro'
+  return (getSubscriptionType() as any) === 'pro'
 }
 
 export function getRateLimitTier(): string | null {
@@ -1593,7 +1593,7 @@ export function getRateLimitTier(): string | null {
 export function getSubscriptionName(): string {
   const subscriptionType = getSubscriptionType()
 
-  switch (subscriptionType) {
+  switch (subscriptionType as any) {
     case 'enterprise':
       return 'ZY Enterprise'
     case 'team':
@@ -1718,8 +1718,9 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
   }
 }
 
+// @ts-ignore
 function isConsumerPlan(plan: SubscriptionType): plan is 'max' | 'pro' {
-  return plan === 'max' || plan === 'pro'
+  return (plan as any) === 'max' || (plan as any) === 'pro'
 }
 
 export function isConsumerSubscriber(): boolean {
@@ -1748,8 +1749,8 @@ export function getAccountInformation() {
   const { source: authTokenSource } = getAuthTokenSource()
   const accountInfo: UserAccountInfo = {}
   if (
-    authTokenSource === 'ZY_CODE_OAUTH_TOKEN' ||
-    authTokenSource === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
+    (authTokenSource as any) === 'ZY_CODE_OAUTH_TOKEN' ||
+    (authTokenSource as any) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
   ) {
     accountInfo.tokenSource = authTokenSource
   } else if (isZyAISubscriber()) {
@@ -1831,8 +1832,8 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
   // in ~/.zy.json is user-writable and cannot be trusted.
   const { source } = getAuthTokenSource()
   const isEnvVarToken =
-    source === 'ZY_CODE_OAUTH_TOKEN' ||
-    source === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
+    (source as any) === 'ZY_CODE_OAUTH_TOKEN' ||
+    (source as any) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
 
   const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
   if (!profile) {
@@ -1848,14 +1849,14 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
     }
   }
 
-  const tokenOrgUuid = profile.organization.uuid
+  const tokenOrgUuid = (profile as any).organization.uuid
   if (tokenOrgUuid === requiredOrgUuid) {
     return { valid: true }
   }
 
   if (isEnvVarToken) {
     const envVarName =
-      source === 'ZY_CODE_OAUTH_TOKEN'
+      (source as any) === 'ZY_CODE_OAUTH_TOKEN'
         ? 'ZY_CODE_OAUTH_TOKEN'
         : 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
     return {

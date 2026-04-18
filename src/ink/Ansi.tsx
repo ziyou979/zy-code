@@ -39,8 +39,7 @@ export const Ansi = React.memo(function Ansi({
     return null;
   }
   let content;
-  let earlyReturn;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
+  let earlyReturn: any = Symbol.for("react.early_return_sentinel");
   const spans = parseToSpans(children);
   if (spans.length === 0) {
     earlyReturn = null;

@@ -231,16 +231,16 @@ export async function createAndUploadGitBundle(
     )
 
     if (!bundle.ok) {
-      logForDebugging(`[gitBundle] ${bundle.error}`)
+      logForDebugging(`[gitBundle] ${(bundle as any).error}`)
       logEvent('tengu_ccr_bundle_upload', {
         outcome:
-          bundle.failReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          (bundle as any).failReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         max_bytes: maxBytes,
       })
       return {
         success: false,
-        error: bundle.error,
-        failReason: bundle.failReason,
+        error: (bundle as any).error,
+        failReason: (bundle as any).failReason,
       }
     }
 
@@ -254,7 +254,7 @@ export async function createAndUploadGitBundle(
         outcome:
           'failed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-      return { success: false, error: upload.error }
+      return { success: false, error: (upload as any).error }
     }
 
     logForDebugging(

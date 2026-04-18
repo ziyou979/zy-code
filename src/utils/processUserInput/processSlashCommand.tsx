@@ -21,7 +21,7 @@ import { createAbortController } from '../abortController.js';
 import { getAgentContext } from '../agentContext.js';
 import { createAttachmentMessage, getAttachmentMessages } from '../attachments.js';
 import { logForDebugging } from '../debug.js';
-import { isEnvTruthy } from '../envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js';
 import { AbortError, MalformedCommandError } from '../errors.js';
 import { getDisplayPath } from '../file.js';
 import { extractResultText, prepareForkedCommandContext } from '../forkedAgent.js';
@@ -156,7 +156,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
         },
         canUseTool,
         isAsync: true,
-        querySource: 'agent:custom',
+        querySource: 'agent:custom' as any,
         model: command.model as ModelAlias | undefined,
         availableTools: freshTools,
         override: {
@@ -199,7 +199,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
     return {
       type: 'progress',
       data: {
-        message,
+        message: message as any,
         type: 'agent_progress',
         prompt: skillContent,
         agentId
@@ -238,7 +238,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
       },
       canUseTool,
       isAsync: false,
-      querySource: 'agent:custom',
+      querySource: 'agent:custom' as any,
       model: command.model as ModelAlias | undefined,
       availableTools: context.options.tools
     })) {
@@ -276,7 +276,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   logForDebugging(`Forked slash command /${command.name} completed with agent ${agentId}`);
 
   // Prepend debug log for ant users so it appears inside the command output
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     resultText = `[ANT-ONLY] API calls: ${getDisplayPath(getDumpPromptsPath(agentId))}\n${resultText}`;
   }
 
@@ -357,7 +357,7 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
         }),
         // gh-32591: preserve args so the user can copy/resubmit without
         // retyping. System warning is UI-only (filtered before API).
-        ...(parsedArgs ? [createSystemMessage(`Args from unknown skill: ${parsedArgs}`, 'warning')] : [])],
+        ...(parsedArgs ? [createSystemMessage(`Args from unknown skill: ${parsedArgs}`, 'warn')] : [])],
         shouldQuery: false,
         resultText: unknownMessage
       };
@@ -430,7 +430,7 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
     logEvent('tengu_input_command', {
       ...eventData,
       invocation_trigger: 'user-slash' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      ...("external" === 'ant' && {
+      ...(isInternalBuild() && {
         skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...(returnedCommand.type === 'prompt' && {
           skill_source: returnedCommand.source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -498,7 +498,7 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
   logEvent('tengu_input_command', {
     ...eventData,
     invocation_trigger: 'user-slash' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    ...("external" === 'ant' && {
+    ...(isInternalBuild() && {
       skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       ...(returnedCommand.type === 'prompt' && {
         skill_source: returnedCommand.source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -701,7 +701,7 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
               // (UUIDs never repeat, so they're never looked up).
               resetMicrocompactState();
               return {
-                messages: buildPostCompactMessages(compactionResultWithSlashMessages),
+                messages: buildPostCompactMessages(compactionResultWithSlashMessages) as any,
                 shouldQuery: false,
                 command
               };
@@ -899,7 +899,7 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
   // adding seconds of latency to every skill invocation.
   const attachmentMessages = await toArray(getAttachmentMessages(result.filter((block): block is TextBlockParam => block.type === 'text').map(block => block.text).join(' '), context, null, [],
   // queuedCommands - handled by query.ts for mid-turn attachments
-  context.messages, 'repl_main_thread', {
+  context.messages, 'repl_main_thread' as any, {
     skipSkillDiscovery: true
   }));
   const messages = [createUserMessage({

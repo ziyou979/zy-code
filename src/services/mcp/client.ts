@@ -115,9 +115,7 @@ import { getLoggingSafeMcpBaseUrl } from './utils.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fetchMcpSkillsForClient = feature('MCP_SKILLS')
-  ? (
-      require('../../skills/mcpSkills.js') as typeof import('../../skills/mcpSkills.js')
-    ).fetchMcpSkillsForClient
+  ? (require('../../skills/mcpSkills.js') as any).fetchMcpSkillsForClient
   : null
 
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
@@ -227,13 +225,14 @@ function getMcpToolTimeoutMs(): number {
   )
 }
 
+// @ts-ignore
 import { isClaudeInChromeMCPServer } from '../../utils/ClaudeInChrome/common.js'
 
 // 惰性加载：toolRendering.tsx 引入 React/ink；仅在 Zy-in-Chrome MCP 服务器连接时需要
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ClaudeInChromeToolRendering =
-  (): typeof import('../../utils/ClaudeInChrome/toolRendering.js') =>
-    require('../../utils/ClaudeInChrome/toolRendering.js')
+  (): typeof import('../../utils/claudeInChrome/toolRendering.js') =>
+    require('../../utils/claudeInChrome/toolRendering.js')
 // 惰性加载：wrapper.tsx → hostAdapter.ts → executor.ts 引入两个原生模块
 //（@ant/computer-use-input + @ant/computer-use-swift）。由
 // GrowthBook tengu_malort_pedway 运行时门控（见 gates.ts）。
@@ -898,12 +897,12 @@ export const connectToServer = memoize(
         )
         logMCPDebug(name, `zy.ai proxy transport created successfully`)
       } else if (
-        (serverRef.type === 'stdio' || !serverRef.type) &&
+        ((serverRef as any).type === 'stdio' || !(serverRef as any).type) &&
         isClaudeInChromeMCPServer(name)
       ) {
         // 在进程中运行 Chrome MCP 服务器以避免生成约 325 MB 的子进程
         const { createChromeContext } = await import(
-          '../../utils/ClaudeInChrome/mcpServer.js'
+          '../../utils/claudeInChrome/mcpServer.js'
         )
         const { createZyForChromeMcpServer } = await import(
           '@ant/claude-for-chrome-mcp'
@@ -912,14 +911,14 @@ export const connectToServer = memoize(
           './InProcessTransport.js'
         )
         const context = createChromeContext(serverRef.env)
-        inProcessServer = createZyForChromeMcpServer(context)
+        inProcessServer = createZyForChromeMcpServer(context) as any
         const [clientTransport, serverTransport] = createLinkedTransportPair()
         await inProcessServer.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Chrome MCP server started`)
       } else if (
         feature('CHICAGO_MCP') &&
-        (serverRef.type === 'stdio' || !serverRef.type) &&
+        ((serverRef as any).type === 'stdio' || !(serverRef as any).type) &&
         isComputerUseMCPServer!(name)
       ) {
         // 在进程中运行 Computer Use MCP 服务器 — 与上面 Chrome 相同的理由。
@@ -936,7 +935,7 @@ export const connectToServer = memoize(
         await inProcessServer.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Computer Use MCP server started`)
-      } else if (serverRef.type === 'stdio' || !serverRef.type) {
+      } else if ((serverRef as any).type === 'stdio' || !(serverRef as any).type) {
         const finalCommand =
           process.env.ZY_CODE_SHELL_PREFIX || serverRef.command
         const finalArgs = process.env.ZY_CODE_SHELL_PREFIX
@@ -952,7 +951,7 @@ export const connectToServer = memoize(
           stderr: 'pipe', // 防止 MCP 服务器的错误输出打印到 UI
         })
       } else {
-        throw new Error(`Unsupported server type: ${serverRef.type}`)
+        throw new Error(`Unsupported server type: ${(serverRef as any).type}`)
       }
 
       // 在连接前为 stdio 传输设置 stderr 日志记录，以防连接启动期间

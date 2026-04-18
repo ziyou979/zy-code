@@ -24,6 +24,7 @@ type TextBlockParam = Anthropic.TextBlockParam
 type Tool = Anthropic.Tool
 type ToolChoice = Anthropic.ToolChoice
 type BetaMessage = Anthropic.Beta.Messages.BetaMessage
+// @ts-ignore
 type BetaJSONOutputFormat = Anthropic.Beta.Messages.BetaJSONOutputFormat
 type BetaThinkingConfigParam = Anthropic.Beta.Messages.BetaThinkingConfigParam
 

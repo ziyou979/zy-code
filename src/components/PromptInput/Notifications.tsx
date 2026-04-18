@@ -96,7 +96,7 @@ export function Notifications({
   const shouldShowAutoUpdater = !shouldShowIdeSelection || isAutoUpdating || autoUpdaterResult?.status !== "success";
   const isInOverageMode = zyAiLimits.isUsingOverage;
   const subscriptionType = getSubscriptionType();
-  const isTeamOrEnterprise = subscriptionType === "team" || subscriptionType === "enterprise";
+  const isTeamOrEnterprise = (subscriptionType as any) === "team" || (subscriptionType as any) === "enterprise";
   const editor = getExternalEditor();
   const shouldShowExternalEditorHint = isInputWrapped && !isShowingCompactMessage && apiKeyStatus !== "invalid" && apiKeyStatus !== "missing" && editor !== undefined;
   useEffect(() => {

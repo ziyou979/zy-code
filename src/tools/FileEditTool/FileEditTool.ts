@@ -435,7 +435,7 @@ export const FileEditTool = buildTool({
       await fileHistoryTrackEdit(
         updateFileHistoryState,
         absoluteFilePath,
-        parentMessage.uuid,
+        parentMessage.uuid as any,
       )
     }
 

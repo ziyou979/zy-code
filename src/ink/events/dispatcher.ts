@@ -2,6 +2,7 @@ import {
   ContinuousEventPriority,
   DefaultEventPriority,
   DiscreteEventPriority,
+  // @ts-ignore
   NoEventPriority,
 } from 'react-reconciler/constants.js'
 import { logError } from '../../utils/log.js'

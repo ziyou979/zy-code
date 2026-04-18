@@ -23,7 +23,7 @@ export function getCompanionIntroAttachment(
   for (const msg of messages ?? []) {
     if (msg.type !== 'attachment') continue
     if (msg.attachment.type !== 'companion_intro') continue
-    if (msg.attachment.name === companion.name) return []
+    if ((msg.attachment as any).name === companion.name) return []
   }
 
   return [

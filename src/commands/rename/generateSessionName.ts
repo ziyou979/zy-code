@@ -35,7 +35,7 @@ export async function generateSessionName(
       },
       signal,
       options: {
-        querySource: 'rename_generate_name',
+        querySource: 'rename_generate_name' as any,
         agents: [],
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,

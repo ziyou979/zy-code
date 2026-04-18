@@ -14,6 +14,7 @@ export default function Link({
 }: Props) {
   const content = children ?? url;
   if (supportsHyperlinks()) {
+    // @ts-ignore
     return <Text><ink-link href={url}>{content}</ink-link></Text>;
   }
   return <Text>{fallback ?? content}</Text>;

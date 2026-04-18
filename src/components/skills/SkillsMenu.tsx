@@ -58,7 +58,7 @@ export function SkillsMenu({
     mcp: []
   };
   for (const skill of skills) {
-    const source = skill.source as SkillSource;
+    const source = (skill as any).source as SkillSource;
     if (source in groups) {
       groups[source].push(skill);
     }

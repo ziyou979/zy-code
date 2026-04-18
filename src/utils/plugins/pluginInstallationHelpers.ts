@@ -408,7 +408,7 @@ export async function installResolvedPlugin({
     allowedCrossMarketplaces,
   )
   if (!resolution.ok) {
-    return { ok: false, reason: 'resolution-failed', resolution }
+    return { ok: false, reason: 'resolution-failed', resolution: resolution as any }
   }
 
   // ── Policy guard for transitive dependencies ──
@@ -525,31 +525,31 @@ export async function installPluginFromMarketplace({
     })
 
     if (!result.ok) {
-      switch (result.reason) {
+      switch ((result as any).reason) {
         case 'local-source-no-location':
           return {
             success: false,
-            error: `Cannot install local plugin "${result.pluginName}" without marketplace install location`,
+            error: `Cannot install local plugin "${(result as any).pluginName}" without marketplace install location`,
           }
         case 'settings-write-failed':
           return {
             success: false,
-            error: `Failed to update settings: ${result.message}`,
+            error: `Failed to update settings: ${(result as any).message}`,
           }
         case 'resolution-failed':
           return {
             success: false,
-            error: formatResolutionError(result.resolution),
+            error: formatResolutionError((result as any).resolution),
           }
         case 'blocked-by-policy':
           return {
             success: false,
-            error: `Plugin "${result.pluginName}" is blocked by your organization's policy and cannot be installed`,
+            error: `Plugin "${(result as any).pluginName}" is blocked by your organization's policy and cannot be installed`,
           }
         case 'dependency-blocked-by-policy':
           return {
             success: false,
-            error: `Cannot install "${result.pluginName}": dependency "${result.blockedDependency}" is blocked by your organization's policy`,
+            error: `Cannot install "${(result as any).pluginName}": dependency "${(result as any).blockedDependency}" is blocked by your organization's policy`,
           }
       }
     }
@@ -585,7 +585,7 @@ export async function installPluginFromMarketplace({
 
     return {
       success: true,
-      message: `✓ Installed ${entry.name}${result.depNote}. Run /reload-plugins to activate.`,
+      message: `✓ Installed ${entry.name}${(result as any).depNote}. Run /reload-plugins to activate.`,
     }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)

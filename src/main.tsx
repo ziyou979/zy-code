@@ -63,6 +63,7 @@ import { skillChangeDetector } from './utils/skills/skillChangeDetector.js';
 import { jsonParse, writeFileSync_DEPRECATED } from './utils/slowOperations.js';
 import { computeInitialTeamContext } from './utils/swarm/reconnection.js';
 import { initializeWarningHandler } from './utils/warningHandler.js';
+import { isInternalBuild } from './utils/envUtils.js';
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js';
 
 // 延迟加载以避免循环依赖：teammate.ts -> AppState.tsx -> ... -> main.tsx
@@ -101,8 +102,10 @@ import { getActiveAgentsFromList, getAgentDefinitionsWithOverrides, isBuiltInAge
 import type { LogOption } from './types/logs.js';
 import type { Message as MessageType } from './types/message.js';
 import { assertMinVersion } from './utils/autoUpdater.js';
-import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/ClaudeInChrome/prompt.js';
-import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/ClaudeInChrome/setup.js';
+// @ts-ignore
+import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/claudeInChrome/prompt.js';
+// @ts-ignore
+import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/claudeInChrome/setup.js';
 import { getContextWindowForModel } from './utils/context.js';
 import { loadConversationForResume } from './utils/conversationRecovery.js';
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
@@ -148,6 +151,7 @@ import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
 import { logContextMetrics } from 'src/utils/api.js';
+// @ts-ignore
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/ClaudeInChrome/common.js';
 import { registerCleanup } from 'src/utils/cleanupRegistry.js';
 import { eagerParseCliFlag } from 'src/utils/cliArgs.js';
@@ -263,7 +267,7 @@ function isBeingDebugged() {
 }
 
 // 如果检测到 node 调试或检查，则退出
-if ("external" !== 'ant' && isBeingDebugged()) {
+if (!isInternalBuild() && isBeingDebugged()) {
   // 此处直接使用 process.exit，因为我们处于导入前的顶层代码
   // 且 gracefulShutdown 尚不可用
   // eslint-disable-next-line custom-rules/no-top-level-side-effects
@@ -337,7 +341,7 @@ function runMigrations(): void {
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       resetAutoModeOptInForDefaultOffer();
     }
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       migrateFennecToOpus();
     }
     saveGlobalConfig(prev => prev.migrationVersion === CURRENT_MIGRATION_VERSION ? prev : {
@@ -425,8 +429,8 @@ export function startDeferredPrefetches(): void {
   }
 
   // 事件循环停顿检测器 —— 当主线程阻塞超过 500ms 时记录日志
-  if ("external" === 'ant') {
-    void import('./utils/eventLoopStallDetector.js').then(m => m.startEventLoopStallDetector());
+  if (isInternalBuild()) {
+    void import('./utils/eventLoopStallDetector.js').then((m: any) => m.startEventLoopStallDetector());
   }
 }
 function loadSettingsFromFlag(settingsFile: string): void {
@@ -615,9 +619,10 @@ export async function main() {
     if (ccIdx !== -1 && _pendingConnect) {
       const ccUrl = rawCliArgs[ccIdx]!;
       const {
+        // @ts-ignore
         parseConnectUrl
       } = await import('./server/parseConnectUrl.js');
-      const parsed = parseConnectUrl(ccUrl);
+      const parsed = (parseConnectUrl as any)(ccUrl);
       _pendingConnect.dangerouslySkipPermissions = rawCliArgs.includes('--dangerously-skip-permissions');
       if (rawCliArgs.includes('-p') || rawCliArgs.includes('--print')) {
         // 无头模式：重写为内部 `open` 子命令
@@ -1048,6 +1053,7 @@ async function run(): Promise<CommanderCommand> {
     // 到那时我们已经将 .zy/agents/assistant.md 附加到了系统提示。
     // 在目录被明确信任之前拒绝激活。
     let kairosEnabled = false;
+    // @ts-ignore
     let assistantTeamContext: Awaited<ReturnType<NonNullable<typeof assistantModule>['initializeAssistantTeam']>> | undefined;
     if (feature('KAIROS') && (options as {
       assistant?: boolean;
@@ -1055,9 +1061,9 @@ async function run(): Promise<CommanderCommand> {
       // --assistant（Agent SDK 守护进程模式）：在
       // isAssistantMode() 在下面运行之前强制锁定。守护进程已经检查过
       // 权限 —— 不要让子进程重新检查 tengu_kairos。
-      assistantModule.markAssistantForced();
+      (assistantModule as any).markAssistantForced();
     }
-    if (feature('KAIROS') && assistantModule?.isAssistantMode() &&
+    if (feature('KAIROS') && (assistantModule as any)?.isAssistantMode() &&
     // 生成的队友共享领导者的 cwd + settings.json，所以
     // isAssistantMode() 对它们也为 true。--agent-id 被设置
     // 意味着我们是一个生成的队友（extractTeammateOptions 在
@@ -1074,7 +1080,7 @@ async function run(): Promise<CommanderCommand> {
         // 缓存为 false/缺失，延迟初始化 GrowthBook 并获取新鲜数据
         //（最多约 5 秒）。--assistant 完全跳过此门（守护进程是
         // 预先授权的）。
-        kairosEnabled = assistantModule.isAssistantForced() || (await kairosGate.isKairosEnabled());
+        kairosEnabled = (assistantModule as any).isAssistantForced() || (await (kairosGate as any).isKairosEnabled());
         if (kairosEnabled) {
           const opts = options as {
             brief?: boolean;
@@ -1085,7 +1091,7 @@ async function run(): Promise<CommanderCommand> {
           // 队友时不需要 TeamCreate。必须在 setup() 捕获
           // teammateMode 快照之前运行（initializeAssistantTeam 内部调用
           // setCliTeammateModeOverride）。
-          assistantTeamContext = await assistantModule.initializeAssistantTeam();
+          assistantTeamContext = await (assistantModule as any).initializeAssistantTeam();
         }
       }
     }
@@ -1136,11 +1142,11 @@ async function run(): Promise<CommanderCommand> {
     const disableSlashCommands = options.disableSlashCommands || false;
 
     // 提取任务模式选项（仅限 ant）
-    const tasksOption = "external" === 'ant' && (options as {
+    const tasksOption = isInternalBuild() && (options as {
       tasks?: boolean | string;
     }).tasks;
     const taskListId = tasksOption ? typeof tasksOption === 'string' ? tasksOption : DEFAULT_TASKS_MODE_TASK_LIST_ID : undefined;
-    if ("external" === 'ant' && taskListId) {
+    if (isInternalBuild() && taskListId) {
       process.env.ZY_CODE_TASK_LIST_ID = taskListId;
     }
 
@@ -1529,7 +1535,7 @@ async function run(): Promise<CommanderCommand> {
     };
     // 存储明确的 CLI 标志以便队友可以继承它
     setChromeFlagOverride(chromeOpts.chrome);
-    const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && "external" === 'ant';
+    const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && isInternalBuild();
     const autoEnableClaudeInChrome = !enableClaudeInChrome && shouldAutoEnableClaudeInChrome();
     if (enableClaudeInChrome) {
       const platform = getPlatform();
@@ -1761,7 +1767,7 @@ async function run(): Promise<CommanderCommand> {
     } = initResult;
 
     // 为 ant 用户处理过于宽泛的 shell 允许规则（Bash(*)、PowerShell(*)）
-    if ("external" === 'ant' && overlyBroadBashPermissions.length > 0) {
+    if (isInternalBuild() && overlyBroadBashPermissions.length > 0) {
       for (const permission of overlyBroadBashPermissions) {
         logForDebugging(`Ignoring overly broad shell permission ${permission.ruleDisplay} from ${permission.sourceDisplay}`);
       }
@@ -2010,7 +2016,7 @@ async function run(): Promise<CommanderCommand> {
     //  - 没有 env 覆盖（它在磁盘之前在 _CACHED_MAY_BE_STALE 之前短路）
     //  - 标志在磁盘上不存在（== null 也捕获 pre-#22279 中毒的 null）
     const explicitModel = options.model || process.env.ANTHROPIC_MODEL;
-    if ("external" === 'ant' && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
+    if (isInternalBuild() && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
       await initializeGrowthBook();
     }
 
@@ -2157,7 +2163,7 @@ async function run(): Promise<CommanderCommand> {
         // 为 tmux 队友记录代理内存加载事件
         if (customAgent.memory) {
           logEvent('tengu_agent_memory_loaded', {
-            ...("external" === 'ant' && {
+            ...(isInternalBuild() && {
               agent_type: customAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
             }),
             scope: customAgent.memory as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2205,7 +2211,7 @@ async function run(): Promise<CommanderCommand> {
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${proactivePrompt}` : proactivePrompt;
     }
     if (feature('KAIROS') && kairosEnabled && assistantModule) {
-      const assistantAddendum = assistantModule.getAssistantSystemPromptAddendum();
+      const assistantAddendum = (assistantModule as any).getAssistantSystemPromptAddendum();
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${assistantAddendum}` : assistantAddendum;
     }
 
@@ -2221,7 +2227,7 @@ async function run(): Promise<CommanderCommand> {
       getFpsMetrics = ctx.getFpsMetrics;
       stats = ctx.stats;
       // 在 Ink 挂载之前安装 asciicast 录制器（仅限 ant，通过 ZY_CODE_TERMINAL_RECORDING=1 选择加入）
-      if ("external" === 'ant') {
+      if (isInternalBuild()) {
         installAsciicastRecorder();
       }
     
@@ -2269,9 +2275,10 @@ async function run(): Promise<CommanderCommand> {
         });
         if (choice === 'merge') {
           const {
+            // @ts-ignore
             buildMergePrompt
           } = await import('./components/agents/SnapshotUpdateDialog.js');
-          const mergePrompt = buildMergePrompt(agentDef.agentType, agentDef.memory!);
+          const mergePrompt = (buildMergePrompt as any)(agentDef.agentType, agentDef.memory!);
           inputPrompt = inputPrompt ? `${mergePrompt}\n\n${inputPrompt}` : mergePrompt;
         }
         agentDef.pendingSnapshotUpdate = undefined;
@@ -2305,7 +2312,7 @@ async function run(): Promise<CommanderCommand> {
       // 在入门培训之后运行，以便托管设置和登录状态完全加载。
       const orgValidation = await validateForceLoginOrg();
       if (!orgValidation.valid) {
-        await exitWithError(root, orgValidation.message);
+        await exitWithError(root, (orgValidation as any).message);
       }
     }
 
@@ -2508,7 +2515,7 @@ async function run(): Promise<CommanderCommand> {
       systemPromptFlag: systemPrompt ? options.systemPromptFile ? 'file' : 'flag' : undefined,
       appendSystemPromptFlag: appendSystemPrompt ? options.appendSystemPromptFile ? 'file' : 'flag' : undefined,
       thinkingConfig,
-      assistantActivationPath: feature('KAIROS') && kairosEnabled ? assistantModule?.getAssistantActivationPath() : undefined
+      assistantActivationPath: feature('KAIROS') && kairosEnabled ? (assistantModule as any)?.getAssistantActivationPath() : undefined
     });
 
     // 初始化时记录一次上下文指标
@@ -2606,7 +2613,7 @@ async function run(): Promise<CommanderCommand> {
       // 验证非交互会话的 org 限制
       const orgValidation = await validateForceLoginOrg();
       if (!orgValidation.valid) {
-        process.stderr.write(orgValidation.message + '\n');
+        process.stderr.write((orgValidation as any).message + '\n');
         process.exit(1);
       }
 
@@ -2807,8 +2814,8 @@ async function run(): Promise<CommanderCommand> {
       if (!isBareMode()) {
         startDeferredPrefetches();
         void import('./utils/backgroundHousekeeping.js').then(m => m.startBackgroundHousekeeping());
-        if ("external" === 'ant') {
-          void import('./utils/sdkHeapDumpMonitor.js').then(m => m.startSdkMemoryMonitor());
+        if (isInternalBuild()) {
+          void import('./utils/sdkHeapDumpMonitor.js').then((m: any) => m.startSdkMemoryMonitor());
         }
       }
       logSessionTelemetry();
@@ -3051,13 +3058,13 @@ async function run(): Promise<CommanderCommand> {
     //   - 运行时：上传者检查 github.com/anthropics/* 远程 + gcloud 认证。
     //   - 安全：ZY_CODE_DISABLE_SESSION_DATA_UPLOAD=1 绕过（测试设置此）。
     // 导入是动态 + 异步的，以避免增加启动延迟。
-    const sessionUploaderPromise = "external" === 'ant' ? import('./utils/sessionDataUploader.js') : null;
+    const sessionUploaderPromise = isInternalBuild() ? import('./utils/sessionDataUploader.js') : null;
 
     // 将会话上传器解析延迟到 onTurnComplete 回调，以避免
     // 在 main.tsx 中添加新的顶级 await（性能关键路径）。
     // sessionDataUploader.ts 中的每轮认证逻辑优雅地处理未认证
     // 状态（每轮重新检查，所以会话中间的认证恢复有效）。
-    const uploaderReady = sessionUploaderPromise ? sessionUploaderPromise.then(mod => mod.createSessionTurnUploader()).catch(() => null) : null;
+    const uploaderReady = sessionUploaderPromise ? sessionUploaderPromise.then((mod: any) => mod.createSessionTurnUploader()).catch(() => null) : null;
     const sessionConfig = {
       debug: debug || debugToStderr,
       commands: [...commands, ...mcpCommands],
@@ -3187,8 +3194,11 @@ async function run(): Promise<CommanderCommand> {
       // `--local` 跳过探测/部署/ssh 并直接生成当前二进制文件
       // 使用相同的环境 —— 代理/认证管道的 e2e 测试。
       const {
+        // @ts-ignore
         createSSHSession,
+        // @ts-ignore
         createLocalSSHSession,
+        // @ts-ignore
         SSHSessionError
       } = await import('./ssh/createSSHSession.js');
       let sshSession;
@@ -3253,7 +3263,7 @@ async function run(): Promise<CommanderCommand> {
       // 加载的，由 useAssistantHistory 在滚动向上时加载（此处无阻塞获取）。
       const {
         discoverAssistantSessions
-      } = await import('./assistant/sessionDiscovery.js');
+      } = await import('./assistant/sessionDiscovery.js' as any);
       let targetSessionId = _pendingAssistantChat.sessionId;
 
       // 发现流程 —— 列出桥接环境，过滤会话
@@ -3568,11 +3578,13 @@ async function run(): Promise<CommanderCommand> {
           }
         }
       }
-      if ("external" === 'ant') {
+      if (isInternalBuild()) {
         if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
           // Check for ccshare URL (e.g. https://go/ccshare/boris-20260311-211036)
           const {
+            // @ts-ignore
             parseCcshareId,
+            // @ts-ignore
             loadCcshare
           } = await import('./utils/ccshareResume.js');
           const ccshareId = parseCcshareId(options.resume);
@@ -3780,9 +3792,9 @@ async function run(): Promise<CommanderCommand> {
             prefillLength: options.prefill?.length,
             repo: options.deepLinkRepo,
             lastFetch: options.deepLinkLastFetch !== undefined ? new Date(options.deepLinkLastFetch) : undefined
-          }), 'warning');
+          }), 'warning' as any);
         } else if (options.prefill) {
-          deepLinkBanner = createSystemMessage('Launched with a pre-filled prompt — review it before pressing Enter.', 'warning');
+          deepLinkBanner = createSystemMessage('Launched with a pre-filled prompt — review it before pressing Enter.', 'warning' as any);
         }
       }
       const initialMessages = deepLinkBanner ? [deepLinkBanner, ...hookMessages] : hookMessages.length > 0 ? hookMessages : undefined;
@@ -3804,7 +3816,7 @@ async function run(): Promise<CommanderCommand> {
   if (canUserConfigureAdvisor()) {
     program.addOption(new Option('--advisor <model>', 'Enable the server-side advisor tool with the specified model (alias or full ID).').hideHelp());
   }
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     program.addOption(new Option('--delegate-permissions', '[ANT-ONLY] Alias for --permission-mode auto.').implies({
       permissionMode: 'auto'
     }));
@@ -3963,23 +3975,31 @@ async function run(): Promise<CommanderCommand> {
         randomBytes
       } = await import('crypto');
       const {
+        // @ts-ignore
         startServer
       } = await import('./server/server.js');
       const {
+        // @ts-ignore
         SessionManager
       } = await import('./server/sessionManager.js');
       const {
+        // @ts-ignore
         DangerousBackend
       } = await import('./server/backends/dangerousBackend.js');
       const {
+        // @ts-ignore
         printBanner
       } = await import('./server/serverBanner.js');
       const {
+        // @ts-ignore
         createServerLogger
       } = await import('./server/serverLog.js');
       const {
+        // @ts-ignore
         writeServerLock,
+        // @ts-ignore
         removeServerLock,
+        // @ts-ignore
         probeRunningServer
       } = await import('./server/lockfile.js');
       const existing = await probeRunningServer();
@@ -4047,17 +4067,19 @@ async function run(): Promise<CommanderCommand> {
   // 交互模式（不带 -p）由 main() 中的早期 argv 重写处理
   // 重定向到主命令，具有完整 TUI 支持。
   if (feature('DIRECT_CONNECT')) {
+    // @ts-ignore
     program.command('open <cc-url>').description('Connect to a ZY Code server (internal — use cc:// URLs)').option('-p, --print [prompt]', 'Print mode (headless)').option('--output-format <format>', 'Output format: text, json, stream-json', 'text').action(async (ccUrl: string, opts: {
       print?: string | boolean;
       outputFormat: string;
     }) => {
       const {
+        // @ts-ignore
         parseConnectUrl
       } = await import('./server/parseConnectUrl.js');
       const {
         serverUrl,
         authToken
-      } = parseConnectUrl(ccUrl);
+      } = (parseConnectUrl as any)(ccUrl);
       let connectConfig;
       try {
         const session = await createDirectConnectSession({
@@ -4078,6 +4100,7 @@ async function run(): Promise<CommanderCommand> {
         process.exit(1);
       }
       const {
+        // @ts-ignore
         runConnectHeadless
       } = await import('./server/connectHeadless.js');
       const prompt = typeof opts.print === 'string' ? opts.print : '';
@@ -4358,9 +4381,10 @@ async function run(): Promise<CommanderCommand> {
   });
 
   // zy up — run the project's CLAUDE.md "# zy up" setup instructions.
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# zy up" section of the nearest CLAUDE.md').action(async () => {
       const {
+        // @ts-ignore
         up
       } = await import('src/cli/up.js');
       await up();
@@ -4369,13 +4393,14 @@ async function run(): Promise<CommanderCommand> {
 
   // zy rollback（仅限 ant）
   // 回滚到之前的版本
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  zy rollback                                    Go 1 version back from current\n  zy rollback 3                                  Go 3 versions back from current\n  zy rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
       list?: boolean;
       dryRun?: boolean;
       safe?: boolean;
     }) => {
       const {
+        // @ts-ignore
         rollback
       } = await import('src/cli/rollback.js');
       await rollback(target, options);
@@ -4393,7 +4418,7 @@ async function run(): Promise<CommanderCommand> {
   });
 
   // 仅限 ant 的命令
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     const validateLogId = (value: string) => {
       const maybeSessionId = validateUuid(value);
       if (maybeSessionId) return maybeSessionId;
@@ -4402,6 +4427,7 @@ async function run(): Promise<CommanderCommand> {
     // zy log
     program.command('log').description('[ANT-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
       const {
+        // @ts-ignore
         logHandler
       } = await import('./cli/handlers/ant.js');
       await logHandler(logId);
@@ -4410,6 +4436,7 @@ async function run(): Promise<CommanderCommand> {
     // zy error
     program.command('error').description('[ANT-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
       const {
+        // @ts-ignore
         errorHandler
       } = await import('./cli/handlers/ant.js');
       await errorHandler(number);
@@ -4423,17 +4450,19 @@ Examples:
   $ zy export input.json output.txt             Render JSON log file to text
   $ zy export <uuid>.jsonl output.txt           Render JSONL session file to text`).action(async (source: string, outputFile: string) => {
       const {
+        // @ts-ignore
         exportHandler
       } = await import('./cli/handlers/ant.js');
       await exportHandler(source, outputFile);
     });
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       const taskCmd = program.command('task').description('[ANT-ONLY] Manage task list tasks');
       taskCmd.command('create <subject>').description('Create a new task').option('-d, --description <text>', 'Task description').option('-l, --list <id>', 'Task list ID (defaults to "tasklist")').action(async (subject: string, opts: {
         description?: string;
         list?: string;
       }) => {
         const {
+          // @ts-ignore
           taskCreateHandler
         } = await import('./cli/handlers/ant.js');
         await taskCreateHandler(subject, opts);
@@ -4444,6 +4473,7 @@ Examples:
         json?: boolean;
       }) => {
         const {
+          // @ts-ignore
           taskListHandler
         } = await import('./cli/handlers/ant.js');
         await taskListHandler(opts);
@@ -4452,6 +4482,7 @@ Examples:
         list?: string;
       }) => {
         const {
+          // @ts-ignore
           taskGetHandler
         } = await import('./cli/handlers/ant.js');
         await taskGetHandler(id, opts);
@@ -4465,6 +4496,7 @@ Examples:
         clearOwner?: boolean;
       }) => {
         const {
+          // @ts-ignore
           taskUpdateHandler
         } = await import('./cli/handlers/ant.js');
         await taskUpdateHandler(id, opts);
@@ -4473,6 +4505,7 @@ Examples:
         list?: string;
       }) => {
         const {
+          // @ts-ignore
           taskDirHandler
         } = await import('./cli/handlers/ant.js');
         await taskDirHandler(opts);
@@ -4486,6 +4519,7 @@ Examples:
       output?: string;
     }) => {
       const {
+        // @ts-ignore
         completionHandler
       } = await import('./cli/handlers/ant.js');
       await completionHandler(shell, opts, program);
@@ -4588,7 +4622,7 @@ async function logTenguInit({
         assistantActivationPath: assistantActivationPath as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       }),
       autoUpdatesChannel: (getInitialSettings().autoUpdatesChannel ?? 'latest') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      ...("external" === 'ant' ? (() => {
+      ...(isInternalBuild() ? (() => {
         const cwd = getCwd();
         const gitRoot = findGitRoot(cwd);
         const rp = gitRoot ? relative(gitRoot, cwd) || '.' : undefined;

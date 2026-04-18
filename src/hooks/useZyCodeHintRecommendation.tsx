@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { useNotifications } from '../context/notifications.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED, logEvent } from '../services/analytics/index.js';
-import { clearPendingHint, getPendingHintSnapshot, markShownThisSession, subscribeToPendingHint } from '../utils/ZyCodeHints.js';
+import { clearPendingHint, getPendingHintSnapshot, markShownThisSession, subscribeToPendingHint } from '../utils/zyCodeHints.js';
 import { logForDebugging } from '../utils/debug.js';
 import { disableHintRecommendations, markHintPluginShown, type PluginHintRecommendation, resolvePluginHint } from '../utils/plugins/hintRecommendation.js';
 import { installPluginFromMarketplace } from '../utils/plugins/pluginInstallationHelpers.js';
@@ -73,7 +73,7 @@ export function useZyCodeHintRecommendation() {
               trigger: "hint"
             });
             if (!result.success) {
-              throw new Error(result.error);
+              throw new Error((result as any).error);
             }
           });
           break;

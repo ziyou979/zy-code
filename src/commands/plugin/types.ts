@@ -1,6 +1,6 @@
 // Plugin Command Types
 
-export type ViewState = 'browse' | 'installed' | 'marketplace' | 'details' | 'validate' | 'add-marketplace' | 'manage-marketplaces'
+export type ViewState = any
 
 export type PluginSettingsProps = {
   onComplete: () => void

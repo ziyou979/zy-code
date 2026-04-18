@@ -42,6 +42,7 @@ import uniqBy from 'lodash-es/uniqBy.js';
 import { getProjectRoot } from '../bootstrap/state.js';
 import { formatCommandsWithinBudget } from '../tools/SkillTool/prompt.js';
 import { getContextWindowForModel } from './context.js';
+// @ts-ignore
 import type { DiscoverySignal } from '../services/skillSearch/signals.js';
 // DCE 条件加载。所有技能搜索字符串字面量，
 // 否则会泄露到外部构建中，都放在这些模块内。
@@ -76,8 +77,8 @@ import { getOriginalCwd, getSessionId, getSdkBetas, getTotalCostUSD, getTotalOut
 import type { QuerySource } from '../constants/querySource.js';
 import { getDeferredToolsDelta, isDeferredToolsDeltaEnabled, isToolSearchEnabledOptimistic, isToolSearchToolAvailable, modelSupportsToolReference, type DeferredToolsDeltaScanContext } from './toolSearch.js';
 import { getMcpInstructionsDelta, isMcpInstructionsDeltaEnabled, type ClientSideInstruction } from './mcpInstructionsDelta.js';
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from './ClaudeInChrome/common.js';
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from './ClaudeInChrome/prompt.js';
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from './claudeInChrome/common.js';
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from './claudeInChrome/prompt.js';
 import type { MCPServerConnection } from '../services/mcp/types.js';
 import type { HookEvent, SyncHookJSONOutput } from 'src/entrypoints/agentSdkTypes.js';
 import { checkForAsyncHookResponses, removeDeliveredAsyncHooks } from './hooks/AsyncHookRegistry.js';
@@ -558,7 +559,7 @@ export async function getAttachments(input: string | null, toolUseContext: ToolU
   // 但该内容不是用户意图，不应触发发现。
   // 没有此门控时，110KB 的 SKILL.md 会在每次技能调用时
   // 触发约 3.3s 的分块 AKI 查询（会话 13a9afae）。
-  ...(feature('EXPERIMENTAL_SKILL_SEARCH') && skillSearchModules && !options?.skipSkillDiscovery ? [maybe('skill_discovery', () => skillSearchModules.prefetch.getTurnZeroSkillDiscovery(input, messages ?? [], context))] : [])] : [];
+  ...(feature('EXPERIMENTAL_SKILL_SEARCH') && skillSearchModules && !options?.skipSkillDiscovery ? [maybe('skill_discovery', () => (skillSearchModules.prefetch as any).getTurnZeroSkillDiscovery(input, messages ?? [], context))] : [])] : [];
 
   // 先处理用户输入附件（包括 @提到的文件）
   // 这确保文件在 nested_memory 处理之前添加到 nestedMemoryAttachmentTriggers
@@ -588,7 +589,7 @@ export async function getAttachments(input: string | null, toolUseContext: ToolU
   // 它与 leader 共享 AppState.teamContext，因此 isTeamLead 解析为
   // true，它会将 leader 的 DM 读取并标记为已读作为临时附件，
   // 静默窃取本应作为永久轮次传递的消息。
-  ...(querySource === 'session_memory' ? [] : [maybe('teammate_mailbox', async () => getTeammateMailboxAttachments(toolUseContext))]), maybe('team_context', async () => getTeamContextAttachment(messages ?? []))] : []), maybe('agent_pending_messages', async () => getAgentPendingMessageAttachments(toolUseContext)), maybe('critical_system_reminder', () => Promise.resolve(getCriticalSystemReminderAttachment(toolUseContext))), ...(feature('COMPACTION_REMINDERS') ? [maybe('compaction_reminder', () => Promise.resolve(getCompactionReminderAttachment(messages ?? [], toolUseContext.options.mainLoopModel)))] : []), ...(feature('HISTORY_SNIP') ? [maybe('context_efficiency', () => Promise.resolve(getContextEfficiencyAttachment(messages ?? [])))] : [])];
+  ...((querySource as any) === 'session_memory' ? [] : [maybe('teammate_mailbox', async () => getTeammateMailboxAttachments(toolUseContext))]), maybe('team_context', async () => getTeamContextAttachment(messages ?? []))] : []), maybe('agent_pending_messages', async () => getAgentPendingMessageAttachments(toolUseContext)), maybe('critical_system_reminder', () => Promise.resolve(getCriticalSystemReminderAttachment(toolUseContext))), ...(feature('COMPACTION_REMINDERS') ? [maybe('compaction_reminder', () => Promise.resolve(getCompactionReminderAttachment(messages ?? [], toolUseContext.options.mainLoopModel)))] : []), ...(feature('HISTORY_SNIP') ? [maybe('context_efficiency', () => Promise.resolve(getContextEfficiencyAttachment(messages ?? [])))] : [])];
 
   // 语义上仅用于主对话或不具备并发安全实现的附件
   const mainThreadAttachments = isMainThread ? [maybe('ide_selection', async () => getSelectedLinesFromIDE(ideSelection, toolUseContext)), maybe('ide_opened_file', async () => getOpenedFileFromIDE(ideSelection, toolUseContext)), maybe('output_style', async () => Promise.resolve(getOutputStyleAttachment())), maybe('diagnostics', async () => getDiagnosticAttachments(toolUseContext)), maybe('lsp_diagnostics', async () => getLSPDiagnosticAttachments(toolUseContext)), maybe('unified_tasks', async () => getUnifiedTaskAttachments(toolUseContext)), maybe('async_hook_responses', async () => getAsyncHookResponseAttachments()), maybe('token_usage', async () => Promise.resolve(getTokenUsageAttachment(messages ?? [], toolUseContext.options.mainLoopModel))), maybe('budget_usd', async () => Promise.resolve(getMaxBudgetUsdAttachment(toolUseContext.options.maxBudgetUsd))), maybe('output_token_usage', async () => Promise.resolve(getOutputTokenUsageAttachment())), maybe('verify_plan_reminder', async () => getVerifyPlanReminderAttachment(messages, toolUseContext))] : [];
@@ -597,7 +598,7 @@ export async function getAttachments(input: string | null, toolUseContext: ToolU
   const [threadAttachmentResults, mainThreadAttachmentResults] = await Promise.all([Promise.all(allThreadAttachments), Promise.all(mainThreadAttachments)]);
   clearTimeout(timeoutId);
   // 防御性：泄露 [undefined] 的 getter 会使下方的 .map(a => a.type) 崩溃。
-  return [...userAttachmentResults.flat(), ...threadAttachmentResults.flat(), ...mainThreadAttachmentResults.flat()].filter(a => a !== undefined && a !== null);
+  return ([...userAttachmentResults.flat(), ...threadAttachmentResults.flat(), ...mainThreadAttachmentResults.flat()].filter(a => a !== undefined && a !== null) as any);
 }
 async function maybe<A>(label: string, f: () => Promise<A[]>): Promise<A[]> {
   const startTime = Date.now();
@@ -958,7 +959,7 @@ export function getDateChangeAttachments(messages: Message[] | undefined): Attac
   // 按消息时间戳分桶，因此多天空隔也能正确刷新每一天。
   if (feature('KAIROS')) {
     if (getKairosActive() && messages !== undefined) {
-      sessionTranscriptModule?.flushOnDateChange(messages, currentDate);
+      (sessionTranscriptModule as any)?.flushOnDateChange(messages, currentDate);
     }
   }
   return [{
@@ -1040,8 +1041,8 @@ export function getAgentListingDeltaAttachment(toolUseContext: ToolUseContext, m
   for (const msg of messages ?? []) {
     if (msg.type !== 'attachment') continue;
     if (msg.attachment.type !== 'agent_listing_delta') continue;
-    for (const t of msg.attachment.addedTypes) announced.add(t);
-    for (const t of msg.attachment.removedTypes) announced.delete(t);
+    for (const t of (msg.attachment as any).addedTypes) announced.add(t);
+    for (const t of (msg.attachment as any).removedTypes) announced.delete(t);
   }
   const currentTypes = new Set(filtered.map(a => a.agentType));
   const added = filtered.filter(a => !announced.has(a.agentType));
@@ -1580,7 +1581,7 @@ export function collectSurfacedMemories(messages: ReadonlyArray<Message>): {
   let totalBytes = 0;
   for (const m of messages) {
     if (m.type === 'attachment' && m.attachment.type === 'relevant_memories') {
-      for (const mem of m.attachment.memories) {
+      for (const mem of (m.attachment as any).memories) {
         paths.add(mem.path);
         totalBytes += mem.content.length;
       }
@@ -1945,7 +1946,7 @@ async function getSkillListingAttachments(toolUseContext: ToolUseContext): Promi
   // 但子代理使用异步 subagent_spawn 信号（工具后收集，首轮可见）。
   // Bundled + MCP 小巧且有意图信号；用户/项目/插件技能通过发现获取。
   // feature() 优先用于 DCE — 否则属性访问字符串会泄露，即使对 null 使用 ?.。
-  if (feature('EXPERIMENTAL_SKILL_SEARCH') && skillSearchModules?.featureCheck.isSkillSearchEnabled()) {
+  if (feature('EXPERIMENTAL_SKILL_SEARCH') && (skillSearchModules?.featureCheck as any)?.isSkillSearchEnabled()) {
     allCommands = filterToBundledAndMcp(allCommands);
   }
   const agentKey = toolUseContext.agentId ?? '';
@@ -2019,7 +2020,7 @@ export function extractAtMentionedFiles(content: string): string[] {
   // 提取普通提及
   const regularMatchArray = content.match(regularAtMentionRegex) || [];
   regularMatchArray.forEach(match => {
-    const filename = match.slice(match.indexOf('@') + 1);
+    const filename = (match as any).slice((match as any).indexOf('@') + 1);
     // 如果以引号开头则不包含（已作为引号处理）
     if (!filename.startsWith('"')) {
       regularMatches.push(filename);
@@ -2352,12 +2353,12 @@ export async function generateFileAttachment(filename: string, toolUseContext: T
   }
 }
 export function createAttachmentMessage(attachment: Attachment): AttachmentMessage {
-  return {
+  return ({
     attachment,
     type: 'attachment',
     uuid: randomUUID(),
     timestamp: new Date().toISOString()
-  };
+  } as any);
 }
 function getTodoReminderTurnCounts(messages: Message[]): {
   turnsSinceLastTodoWrite: number;
@@ -2945,10 +2946,11 @@ export function getContextEfficiencyAttachment(messages: Message[]): Attachment[
   // 延迟 require 使此文件不包含 snip 字符串。
   const {
     isSnipRuntimeEnabled,
+    // @ts-ignore
     shouldNudgeForSnips
   } =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('../services/compact/snipCompact.js') as typeof import('../services/compact/snipCompact.js');
+  (require('../services/compact/snipCompact.js') as any) as typeof import('../services/compact/snipCompact.js');
   if (!isSnipRuntimeEnabled()) {
     return [];
   }

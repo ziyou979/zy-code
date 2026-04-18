@@ -159,8 +159,11 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
 function MCPTextOutput({
   content,
   verbose
-}) {
-  let earlyReturn = Symbol.for("react.early_return_sentinel");
+}: {
+  content: string;
+  verbose: boolean;
+}): React.ReactNode {
+  let earlyReturn: React.ReactNode | symbol = Symbol.for("react.early_return_sentinel");
   const unwrapped = tryUnwrapTextPayload(content);
   if (unwrapped !== null) {
     earlyReturn = <MessageResponse><Box flexDirection="column">{unwrapped.extras.length > 0 && <Text dimColor={true}>{unwrapped.extras.map((t0) => {
@@ -169,9 +172,9 @@ function MCPTextOutput({
           }).join(" \xB7 ")}</Text>}{<OutputLine content={unwrapped.body} verbose={verbose} linkifyUrls={true} />}</Box></MessageResponse>;
   }
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn;
+    return earlyReturn as any;
   }
-  let earlyReturn2 = Symbol.for("react.early_return_sentinel");
+  let earlyReturn2: React.ReactNode | symbol = Symbol.for("react.early_return_sentinel");
   const flat = tryFlattenJson(content);
   if (flat !== null) {
     const maxKeyWidth = Math.max(...flat.map((t0) => {
@@ -184,9 +187,9 @@ function MCPTextOutput({
         })}</Box>}</MessageResponse>;
   }
   if (earlyReturn2 !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn2;
+    return earlyReturn2 as any;
   }
-  return <OutputLine content={content} verbose={verbose} linkifyUrls={true} />;
+  return <OutputLine content={content as any} verbose={verbose} linkifyUrls={true} />;
 }
 
 /**

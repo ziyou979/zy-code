@@ -37,5 +37,6 @@ export function ColorStep() {
     });
     goNext();
   };
-  return <WizardDialogLayout subtitle="Choose background color" footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><Box><ColorPicker agentName={wizardData.agentType || "agent"} currentColor="automatic" onConfirm={handleConfirm} /></Box></WizardDialogLayout>;
+  // @ts-ignore
+  return <WizardDialogLayout subtitle={"Choose background color" as any} footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><Box><ColorPicker agentName={wizardData.agentType || "agent"} currentColor={"automatic" as any} onConfirm={handleConfirm} /></Box></WizardDialogLayout> as any;
 }

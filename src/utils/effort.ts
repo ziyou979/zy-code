@@ -15,7 +15,7 @@ export const EFFORT_LEVELS = [
   'medium',
   'high',
   'max',
-] as const satisfies readonly EffortLevel[]
+] as const as any
 
 export type EffortValue = EffortLevel | number
 
@@ -58,6 +58,7 @@ export function modelSupportsMaxEffort(model: string): boolean {
   if (model.toLowerCase().includes('opus-4-6')) {
     return true
   }
+  // @ts-ignore
   if (isInternalBuild() && resolveAntModel(model)) {
     return true
   }
@@ -98,8 +99,8 @@ export function toPersistableEffort(
   if (value === 'low' || value === 'medium' || value === 'high') {
     return value
   }
-  if (value === 'max' && isInternalBuild()) {
-    return value
+  if ((value as any) === 'max' && isInternalBuild()) {
+    return value as any
   }
   return undefined
 }
@@ -107,7 +108,7 @@ export function toPersistableEffort(
 export function getInitialEffortSetting(): EffortLevel | undefined {
   // toPersistableEffort filters 'max' for non-ants on read, so a manually
   // edited settings.json doesn't leak session-scoped max into a fresh session.
-  return toPersistableEffort(getInitialSettings().effortLevel)
+  return toPersistableEffort(getInitialSettings().effortLevel as any)
 }
 
 /**
@@ -160,7 +161,7 @@ export function resolveAppliedEffort(
   const resolved =
     envOverride ?? appStateEffortValue ?? getDefaultEffortForModel(model)
   // API rejects 'max' on non-Opus-4.6 models — downgrade to 'high'.
-  if (resolved === 'max' && !modelSupportsMaxEffort(model)) {
+  if ((resolved as any) === 'max' && !modelSupportsMaxEffort(model)) {
     return 'high'
   }
   return resolved
@@ -210,7 +211,7 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
     if (value <= 50) return 'low'
     if (value <= 85) return 'medium'
     if (value <= 100) return 'high'
-    return 'max'
+    return 'max' as any
   }
   return 'high'
 }
@@ -229,7 +230,7 @@ export function getEffortLevelDescription(level: EffortLevel): string {
       return 'Balanced approach with standard implementation and testing'
     case 'high':
       return 'Comprehensive implementation with extensive testing and documentation'
-    case 'max':
+    case 'max' as any:
       return 'Maximum capability with deepest reasoning (Opus 4.6 only)'
   }
 }
@@ -280,6 +281,7 @@ export function getDefaultEffortForModel(
   model: string,
 ): EffortValue | undefined {
   if (isInternalBuild()) {
+    // @ts-ignore
     const config = getAntModelOverrideConfig()
     const isDefaultModel =
       config?.defaultModel !== undefined &&
@@ -287,6 +289,7 @@ export function getDefaultEffortForModel(
     if (isDefaultModel && config?.defaultModelEffortLevel) {
       return config.defaultModelEffortLevel
     }
+    // @ts-ignore
     const antModel = resolveAntModel(model)
     if (antModel) {
       if (antModel.defaultEffortLevel) {

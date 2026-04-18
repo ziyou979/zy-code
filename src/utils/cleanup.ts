@@ -464,6 +464,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
 
   const startTime = Date.now()
   try {
+    // @ts-ignore
     const cacache = await import('cacache')
     const cutoff = startTime - ONE_DAY_MS
 

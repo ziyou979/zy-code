@@ -4,8 +4,9 @@ import { Dialog } from '../../components/design-system/Dialog.js';
 import { Box, Text } from '../../ink.js';
 import { useAppState } from '../../state/AppState.js';
 import { openBrowser } from '../../utils/browser.js';
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, openInChrome } from '../../utils/ClaudeInChrome/common.js';
-import { isChromeExtensionInstalled } from '../../utils/ClaudeInChrome/setup.js';
+// @ts-ignore
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, openInChrome } from '../../utils/claudeInChrome/common.js';
+import { isChromeExtensionInstalled } from '../../utils/claudeInChrome/setup.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { env } from '../../utils/env.js';
 import { isRunningOnHomespace } from '../../utils/envUtils.js';

@@ -88,7 +88,7 @@ ${question}`
       message: 'Side questions cannot use tools',
       decisionReason: { type: 'other' as const, reason: 'side_question' },
     }),
-    querySource: 'side_question',
+    querySource: 'side_question' as any,
     forkLabel: 'side_question',
     maxTurns: 1, // Single turn only - no tool use loops
     // No future request shares this suffix; skip writing cache entries.

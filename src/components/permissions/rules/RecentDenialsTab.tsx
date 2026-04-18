@@ -27,8 +27,8 @@ export function RecentDenialsTab({
     onHeaderFocusChange?.(headerFocused);
   }, [headerFocused, onHeaderFocusChange]);
   const [denials] = useState(() => getAutoModeDenials());
-  const [approved, setApproved] = useState(() => new Set());
-  const [retry, setRetry] = useState(() => new Set());
+  const [approved, setApproved] = useState(() => new Set<number>());
+  const [retry, setRetry] = useState(() => new Set<number>());
   const [focusedIdx, setFocusedIdx] = useState(0);
   useEffect(() => {
     onStateChange({

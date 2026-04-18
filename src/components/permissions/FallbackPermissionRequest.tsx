@@ -25,7 +25,7 @@ export function FallbackPermissionRequest({
     completion_type: "tool_use_single",
     language_name: "none"
   };
-  usePermissionRequestLogging(toolUseConfirm, unaryEvent);
+  usePermissionRequestLogging(toolUseConfirm, unaryEvent as any);
   const handleSelect = (value, feedback) => {
     switch (value) {
       case "yes":
@@ -107,8 +107,11 @@ export function FallbackPermissionRequest({
   }];
   if (showAlwaysAllowOptions) {
     result.push({
-      label: <Text>{tSync('permission.yesDontAskAgainCommands', { name: userFacingName, cwd: originalCwd })}</Text>,
-      value: "yes-dont-ask-again"
+      label: <Text>{tSync('permission.yesDontAskAgainCommands', { name: userFacingName, cwd: originalCwd })}</Text> as any,
+      value: "yes-dont-ask-again",
+      feedbackConfig: {
+        type: "accept"
+      }
     });
   }
   const rejectOption = {
@@ -131,5 +134,6 @@ export function FallbackPermissionRequest({
   });
   const t12 = originalUserFacingName.endsWith(" (MCP)") ? <Text dimColor={true}> (MCP)</Text> : "";
   const t14 = truncateToLines(toolUseConfirm.description, 3);
+  // @ts-ignore
   return <PermissionDialog title="Tool use" workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{userFacingName}({t11}){t12}</Text>}{<Text dimColor={true}>{t14}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<PermissionPrompt options={options} onSelect={handleSelect} onCancel={handleCancel} toolAnalyticsContext={toolAnalyticsContext} />}</Box>}</PermissionDialog>;
 }

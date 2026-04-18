@@ -209,7 +209,7 @@ export function Select({
   onImagePaste,
   pastedContents,
   onRemoveImage
-}: SelectProps) {
+}: any) {
   const [imagesSelected, setImagesSelected] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [inputValues, setInputValues] = useState(() => {
@@ -261,8 +261,8 @@ export function Select({
     inputValues,
     imagesSelected,
     onEnterImageSelection: () => {
-      if (pastedContents && Object.values(pastedContents).some((c_0) => c_0.type === "image")) {
-        const imageCount = count(Object.values(pastedContents), (c) => c.type === "image");
+      if (pastedContents && Object.values(pastedContents).some((c_0: any) => (c_0 as any).type === "image")) {
+        const imageCount = count(Object.values(pastedContents), (c: any) => (c as any).type === "image");
         setImagesSelected(true);
         setSelectedImageIndex(imageCount - 1);
         return true;
@@ -303,7 +303,7 @@ export function Select({
               return next_0;
             });
           }} onSubmit={(value_0) => {
-            const hasImageAttachments = pastedContents && Object.values(pastedContents).some((c_1) => c_1.type === "image");
+            const hasImageAttachments = pastedContents && Object.values(pastedContents).some((c_1: any) => (c_1 as any).type === "image");
             if (value_0.trim() || hasImageAttachments || option_1.allowEmptySubmitToCancel) {
               onChange?.(option_1.value);
             } else {
@@ -340,7 +340,7 @@ export function Select({
               return next_1;
             });
           }} onSubmit={(value_2) => {
-            const hasImageAttachments_0 = pastedContents && Object.values(pastedContents).some((c_2) => c_2.type === "image");
+            const hasImageAttachments_0 = pastedContents && Object.values(pastedContents).some((c_2: any) => (c_2 as any).type === "image");
             if (value_2.trim() || hasImageAttachments_0 || option_2.allowEmptySubmitToCancel) {
               onChange?.(option_2.value);
             } else {
@@ -428,7 +428,7 @@ export function Select({
               return next_2;
             });
           }} onSubmit={(value_4) => {
-            const hasImageAttachments_1 = pastedContents && Object.values(pastedContents).some((c_3) => c_3.type === "image");
+            const hasImageAttachments_1 = pastedContents && Object.values(pastedContents).some((c_3: any) => (c_3 as any).type === "image");
             if (value_4.trim() || hasImageAttachments_1 || option_4.allowEmptySubmitToCancel) {
               onChange?.(option_4.value);
             } else {
@@ -468,7 +468,7 @@ export function Select({
 function TwoColumnRow({
   isFocused,
   children
-}: SelectProps) {
+}: any) {
   const cursorRef = useDeclaredCursor({
     line: 0,
     column: 0,

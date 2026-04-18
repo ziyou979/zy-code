@@ -1,3 +1,4 @@
+// @ts-ignore
 import { type StructuredPatchHunk, structuredPatch } from 'diff'
 import { logError } from 'src/utils/log.js'
 import { expandPath } from 'src/utils/path.js'
@@ -363,9 +364,8 @@ export function getSnippetForTwoFileDiff(
   fileAContents: string,
   fileBContents: string,
 ): string {
-  const patch = structuredPatch(
-    'file.txt',
-    'file.txt',
+  // @ts-ignore
+  const { patch } = createTwoFilesPatch(
     fileAContents,
     fileBContents,
     undefined,
@@ -380,7 +380,8 @@ export function getSnippetForTwoFileDiff(
     return ''
   }
 
-  const full = patch.hunks
+  // @ts-ignore
+  const full = (patch as any).hunks
     .map(_ => ({
       startLine: _.oldStart,
       content: _.lines

@@ -28,6 +28,6 @@ export function CreateAgentWizard({
 }: Props) {
   const t3 = isAutoMemoryEnabled() ? [MemoryStep] : [];
   const steps = [LocationStep, MethodStep, GenerateStep, () => <TypeStep existingAgents={existingAgents} />, PromptStep, DescriptionStep, () => <ToolsStep tools={tools} />, ModelStep, ColorStep, ...t3, () => <ConfirmStepWrapper tools={tools} existingAgents={existingAgents} onComplete={onComplete} />];
-  return <WizardProvider steps={steps} initialData={{}} onComplete={_temp} onCancel={onCancel} title="Create new agent" showStepCounter={false} />;
+  return <WizardProvider steps={steps} initialData={{}} onComplete={_temp} onCancel={onCancel} title="Create new agent" showStepCounter={false}><></></WizardProvider>;
 }
 function _temp() {}

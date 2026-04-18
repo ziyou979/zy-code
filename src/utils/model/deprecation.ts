@@ -41,6 +41,9 @@ const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
       dashscope: null,
       openrouter: null,
       generic: null,
+      ollama: null,
+      zhipu: null,
+      kimi: null,
     },
   },
   'zy-3-7-sonnet': {
@@ -53,6 +56,9 @@ const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
       dashscope: null,
       openrouter: null,
       generic: null,
+      ollama: null,
+      zhipu: null,
+      kimi: null,
     },
   },
   'zy-3-5-haiku': {
@@ -65,7 +71,7 @@ const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
       dashscope: null,
       openrouter: null,
       generic: null,
-    },
+    } as any,
   },
 }
 

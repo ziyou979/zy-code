@@ -61,6 +61,7 @@ import { logForDebugging } from '../../utils/debug.js';
 import { parseDirectMemberMessage, sendDirectMemberMessage } from '../../utils/directMemberMessage.js';
 import type { EffortLevel } from '../../utils/effort.js';
 import { env } from '../../utils/env.js';
+import { isInternalBuild } from '../../utils/envUtils.js';
 import { errorMessage } from '../../utils/errors.js';
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
 import { getFastModeUnavailableReason, isFastModeAvailable, isFastModeCooldown, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
@@ -294,8 +295,8 @@ function PromptInput({
   // otherwise bridge becomes an invisible selection stop.
   const bridgeFooterVisible = replBridgeConnected && (replBridgeExplicit || replBridgeReconnecting);
   // Tmux pill (ant-only) — visible when there's an active tungsten session
-  const hasTungstenSession = useAppState(s => "external" === 'ant' && s.tungstenActiveSession !== undefined);
-  const tmuxFooterVisible = "external" === 'ant' && hasTungstenSession;
+  const hasTungstenSession = useAppState(s => isInternalBuild() && s.tungstenActiveSession !== undefined);
+  const tmuxFooterVisible = isInternalBuild() && hasTungstenSession;
   // WebBrowser pill — visible when a browser is open
   const bagelFooterVisible = useAppState(s => false);
   const teamContext = useAppState(s => s.teamContext);
@@ -391,7 +392,7 @@ function PromptInput({
   // exist. When only local_agent tasks are running (coordinator/fork mode), the
   // pill is absent, so the -1 sentinel would leave nothing visually selected.
   // In that case, skip -1 and treat 0 as the minimum selectable index.
-  const hasBgTaskPill = useMemo(() => Object.values(tasks).some(t => isBackgroundTask(t) && !("external" === 'ant' && isPanelAgentTask(t))), [tasks]);
+  const hasBgTaskPill = useMemo(() => Object.values(tasks).some(t => isBackgroundTask(t) && !(isInternalBuild() && isPanelAgentTask(t))), [tasks]);
   const minCoordinatorIndex = hasBgTaskPill ? -1 : 0;
   // Clamp index when tasks complete and the list shrinks beneath the cursor
   useEffect(() => {
@@ -438,7 +439,7 @@ function PromptInput({
     if (!teamContext) {
       return [];
     }
-    const teammateCount = count(Object.values(teamContext.teammates), t => t.name !== 'team-lead');
+    const teammateCount = count(Object.values(teamContext.teammates) as any[], (t: any) => t.name !== 'team-lead');
     return [{
       name: teamContext.teamName,
       memberCount: teammateCount,
@@ -451,11 +452,11 @@ function PromptInput({
   // Which pills render below the input box. Order here IS the nav order
   // (down/right = forward, up/left = back). Selection lives in AppState so
   // pills rendered outside PromptInput (CompanionSprite) can read focus.
-  const runningTaskCount = useMemo(() => count(Object.values(tasks), t => t.status === 'running'), [tasks]);
+  const runningTaskCount = useMemo(() => count(Object.values(tasks) as any[], (t: any) => t.status === 'running'), [tasks]);
   // Panel shows retained-completed agents too (getVisibleAgentTasks), so the
   // pill must stay navigable whenever the panel has rows — not just when
   // something is running.
-  const tasksFooterVisible = (runningTaskCount > 0 || "external" === 'ant' && coordinatorTaskCount > 0) && !shouldHideTasksFooter(tasks, showSpinnerTree);
+  const tasksFooterVisible = (runningTaskCount > 0 || isInternalBuild() && coordinatorTaskCount > 0) && !shouldHideTasksFooter(tasks, showSpinnerTree);
   const teamsFooterVisible = cachedTeams.length > 0;
   const footerItems = useMemo(() => [tasksFooterVisible && 'tasks', tmuxFooterVisible && 'tmux', bagelFooterVisible && 'bagel', teamsFooterVisible && 'teams', bridgeFooterVisible && 'bridge', companionFooterVisible && 'companion'].filter(Boolean) as FooterItem[], [tasksFooterVisible, tmuxFooterVisible, bagelFooterVisible, teamsFooterVisible, bridgeFooterVisible, companionFooterVisible]);
 
@@ -564,9 +565,9 @@ function PromptInput({
       const name = match[2];
 
       // Check if this name matches a team member
-      const member = memberValues.find(t => t.name === name);
-      if (member?.color) {
-        const themeColor = AGENT_COLOR_TO_THEME_COLOR[member.color as AgentColorName];
+      const member = memberValues.find((t: any) => t.name === name);
+      if ((member as any)?.color) {
+        const themeColor = AGENT_COLOR_TO_THEME_COLOR[(member as any).color as AgentColorName];
         if (themeColor) {
           highlights.push({
             start: nameStart,
@@ -1055,7 +1056,7 @@ function PromptInput({
           clearBuffer();
           resetHistory();
           return;
-        } else if (result.error === 'no_team_context') {
+        } else if ((result as any).error === 'no_team_context') {
           // No team context - fall through to normal prompt submission
         } else {
           // Unknown recipient - fall through to normal prompt submission
@@ -1744,7 +1745,7 @@ function PromptInput({
   useKeybindings({
     'footer:up': () => {
       // ↑ scrolls within the coordinator task list before leaving the pill
-      if (tasksSelected && "external" === 'ant' && coordinatorTaskCount > 0 && coordinatorTaskIndex > minCoordinatorIndex) {
+      if (tasksSelected && isInternalBuild() && coordinatorTaskCount > 0 && coordinatorTaskIndex > minCoordinatorIndex) {
         setCoordinatorTaskIndex(prev => prev - 1);
         return;
       }
@@ -1752,7 +1753,7 @@ function PromptInput({
     },
     'footer:down': () => {
       // ↓ scrolls within the coordinator task list, never leaves the pill
-      if (tasksSelected && "external" === 'ant' && coordinatorTaskCount > 0) {
+      if (tasksSelected && isInternalBuild() && coordinatorTaskCount > 0) {
         if (coordinatorTaskIndex < coordinatorTaskCount - 1) {
           setCoordinatorTaskIndex(prev => prev + 1);
         }
@@ -1815,7 +1816,7 @@ function PromptInput({
           }
           break;
         case 'tmux':
-          if ("external" === 'ant') {
+          if (isInternalBuild()) {
             setAppState(prev => prev.tungstenPanelAutoHidden ? {
               ...prev,
               tungstenPanelAutoHidden: false
@@ -2261,6 +2262,7 @@ function PromptInput({
               </> : '─'.repeat(columns)}
           </Text>
           <Box flexDirection="row" width="100%">
+            {/* @ts-ignore -- PromptInputModeIndicator props extended in ant build */}
             <PromptInputModeIndicator mode={mode} isLoading={isLoading} viewingAgentName={viewingAgentName} viewingAgentColor={viewingAgentColor} />
             <Box flexGrow={1} flexShrink={1} onClick={handleInputClick}>
               {textInputElement}
@@ -2268,6 +2270,7 @@ function PromptInput({
           </Box>
           <Text color={swarmBanner.bgColor}>{'─'.repeat(columns)}</Text>
         </> : <Box flexDirection="row" alignItems="flex-start" justifyContent="flex-start" borderColor={getBorderColor()} borderStyle="round" borderLeft={false} borderRight={false} borderBottom width="100%" borderText={buildBorderText(showFastIcon ?? false, showFastIconHint, fastModeCooldown)}>
+          {/* @ts-ignore */}
           <PromptInputModeIndicator mode={mode} isLoading={isLoading} viewingAgentName={viewingAgentName} viewingAgentColor={viewingAgentColor} />
           <Box flexGrow={1} flexShrink={1} onClick={handleInputClick}>
             {textInputElement}

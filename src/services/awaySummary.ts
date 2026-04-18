@@ -51,7 +51,7 @@ export async function generateAwaySummary(
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,
         agents: [],
-        querySource: 'away_summary',
+        querySource: 'away_summary' as any,
         mcpTools: [],
         skipCacheWrite: true,
       },

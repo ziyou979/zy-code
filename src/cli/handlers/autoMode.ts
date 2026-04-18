@@ -113,7 +113,7 @@ export async function autoModeCritiqueHandler(options: {
   let response
   try {
     response = await sideQuery({
-      querySource: 'auto_mode_critique',
+      querySource: 'auto_mode_critique' as any,
       model,
       system: CRITIQUE_SYSTEM_PROMPT,
       skipSystemPromptPrefix: true,

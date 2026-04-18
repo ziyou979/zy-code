@@ -52,10 +52,10 @@ export async function collectContextData(
     const { projectView } =
       require('../../services/contextCollapse/operations.js') as typeof import('../../services/contextCollapse/operations.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
-    apiView = projectView(apiView)
+    apiView = projectView(apiView) as any
   }
 
-  const { messages: compactedMessages } = await microcompactMessages(apiView)
+  const { messages: compactedMessages } = (await microcompactMessages(apiView) as any) as { messages: Message[] }
   const appState = getAppState()
 
   return analyzeContextUsage(

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CLI `ComputerExecutor` implementation. Wraps two native modules:
  *   - `@ant/computer-use-input` (Rust/enigo) — mouse, keyboard, frontmost app

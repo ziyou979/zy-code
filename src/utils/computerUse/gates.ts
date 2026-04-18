@@ -17,7 +17,7 @@ const DEFAULTS: ChicagoConfig = {
   hideBeforeAction: true,
   autoTargetDisplay: true,
   clipboardGuard: true,
-  coordinateMode: 'pixels',
+  coordinateMode: 'pixels' as any,
 }
 
 // Spread over defaults so a partial JSON ({"enabled": true} alone) inherits the

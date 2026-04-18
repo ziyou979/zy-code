@@ -66,8 +66,8 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
         // Check if we were aborted during hook execution
         // IMPORTANT: We emit a cancelled event per hook
         if (
-          result.message?.type === 'attachment' &&
-          result.message.attachment.type === 'hook_cancelled'
+          (result.message as any)?.type === 'attachment' &&
+          (result.message as any).attachment.type === 'hook_cancelled'
         ) {
           logEvent('tengu_post_tool_hooks_cancelled', {
             toolName: sanitizeToolNameForAnalytics(tool.name),
@@ -95,11 +95,11 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
         if (
           result.message &&
           !(
-            result.message.type === 'attachment' &&
-            result.message.attachment.type === 'hook_blocking_error'
+            (result.message as any).type === 'attachment' &&
+            (result.message as any).attachment.type === 'hook_blocking_error'
           )
         ) {
-          yield { message: result.message }
+          yield { message: result.message as any }
         }
 
         if (result.blockingError) {
@@ -222,8 +222,8 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
       try {
         // Check if we were aborted during hook execution
         if (
-          result.message?.type === 'attachment' &&
-          result.message.attachment.type === 'hook_cancelled'
+          (result.message as any)?.type === 'attachment' &&
+          (result.message as any).attachment.type === 'hook_cancelled'
         ) {
           logEvent('tengu_post_tool_failure_hooks_cancelled', {
             toolName: sanitizeToolNameForAnalytics(tool.name),
@@ -247,11 +247,11 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
         if (
           result.message &&
           !(
-            result.message.type === 'attachment' &&
-            result.message.attachment.type === 'hook_blocking_error'
+            (result.message as any).type === 'attachment' &&
+            (result.message as any).attachment.type === 'hook_blocking_error'
           )
         ) {
-          yield { message: result.message }
+          yield { message: result.message as any }
         }
 
         if (result.blockingError) {
@@ -476,7 +476,7 @@ export async function* runPreToolUseHooks(
     )) {
       try {
         if (result.message) {
-          yield { type: 'message', message: { message: result.message } }
+          yield { type: 'message', message: { message: result.message as any } }
         }
         if (result.blockingError) {
           const denialMessage = getPreToolHookBlockingMessage(

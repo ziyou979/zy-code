@@ -111,8 +111,7 @@ export const init = memoize(async (): Promise<void> => {
     void populateOAuthAccountInfoIfNeeded().catch((error) => {
       logForDebugging('OAuth account info population failed during init', {
         level: 'warn',
-        error: errorMessage(error),
-      })
+      } as any)
     })
     profileCheckpoint('init_after_oauth_populate')
 

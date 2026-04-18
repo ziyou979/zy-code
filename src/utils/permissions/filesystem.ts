@@ -662,7 +662,7 @@ export function allWorkingDirectories(
 ): Set<string> {
   return new Set([
     getOriginalCwd(),
-    ...context.additionalWorkingDirectories.keys(),
+    ...(context.additionalWorkingDirectories as any).keys(),
   ])
 }
 
@@ -1319,12 +1319,12 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
       : generateSuggestions(path, 'write', toolPermissionContext, pathsToCheck)
     return {
       behavior: 'ask',
-      message: safetyCheck.message,
+      message: (safetyCheck as any).message,
       suggestions: safetySuggestions,
       decisionReason: {
         type: 'safetyCheck',
-        reason: safetyCheck.message,
-        classifierApprovable: safetyCheck.classifierApprovable,
+        reason: (safetyCheck as any).message,
+        classifierApprovable: (safetyCheck as any).classifierApprovable,
       },
     }
   }

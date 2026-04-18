@@ -83,17 +83,17 @@ function computeSearchText(msg: RenderableMessage): string {
       // relevant_memories renders full m.content in transcript mode
       // (AttachmentMessage.tsx <Ansi>{m.content}</Ansi>). Visible but
       // unsearchable without this — [ dump finds it, / doesn't.
-      if (msg.attachment.type === 'relevant_memories') {
-        raw = msg.attachment.memories.map(m => m.content).join('\n')
+      if ((msg.attachment as any).type === 'relevant_memories') {
+        raw = (msg.attachment as any).memories.map((m: any) => m.content).join('\n')
       } else if (
         // Mid-turn prompts — queued while an agent is running. Render via
         // UserTextMessage (AttachmentMessage.tsx:~348). stickyPromptText
         // (VirtualMessageList.tsx:~103) has the same guards — mirror here.
-        msg.attachment.type === 'queued_command' &&
-        msg.attachment.commandMode !== 'task-notification' &&
-        !msg.attachment.isMeta
+        (msg.attachment as any).type === 'queued_command' &&
+        (msg.attachment as any).commandMode !== 'task-notification' &&
+        !(msg.attachment as any).isMeta
       ) {
-        const p = msg.attachment.prompt
+        const p = (msg.attachment as any).prompt
         raw =
           typeof p === 'string'
             ? p
@@ -105,8 +105,8 @@ function computeSearchText(msg: RenderableMessage): string {
       // relevant_memories attachments are absorbed into collapse groups
       // (collapseReadSearch.ts); their content is visible in transcript mode
       // via CollapsedReadSearchContent, so mirror it here for / search.
-      if (msg.relevantMemories) {
-        raw = msg.relevantMemories.map(m => m.content).join('\n')
+      if ((msg as any).relevantMemories) {
+        raw = (msg as any).relevantMemories.map((m: any) => m.content).join('\n')
       }
       break
     }

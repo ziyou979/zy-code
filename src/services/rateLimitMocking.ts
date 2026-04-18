@@ -61,6 +61,7 @@ export function checkMockRateLimitError(
       { error: { type: 'rate_limit_error', message: headerlessMessage } },
       headerlessMessage,
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
+      // @ts-ignore
       new globalThis.Headers(),
     )
   }
@@ -105,6 +106,7 @@ export function checkMockRateLimitError(
       { error: { type: 'rate_limit_error', message: 'Rate limit exceeded' } },
       'Rate limit exceeded',
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
+      // @ts-ignore
       new globalThis.Headers(
         Object.entries(fastModeHeaders).filter(([_, v]) => v !== undefined) as [
           string,
@@ -125,6 +127,7 @@ export function checkMockRateLimitError(
       { error: { type: 'rate_limit_error', message: 'Rate limit exceeded' } },
       'Rate limit exceeded',
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
+      // @ts-ignore
       new globalThis.Headers(
         Object.entries(mockHeaders).filter(([_, v]) => v !== undefined) as [
           string,

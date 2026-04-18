@@ -24,6 +24,7 @@ import type { SecureStorage, SecureStorageData } from './types.js'
 const SECURITY_STDIN_LINE_LIMIT = 4096 - 64
 
 export const macOsKeychainStorage = {
+  // @ts-ignore
   name: 'keychain',
   read(): SecureStorageData | null {
     const prev = keychainCacheState.cache
@@ -156,7 +157,7 @@ export const macOsKeychainStorage = {
       return { success: false }
     }
   },
-  delete(): boolean {
+  delete(): Promise<void> {
     // Invalidate cache before delete
     clearKeychainCache()
 
@@ -168,9 +169,9 @@ export const macOsKeychainStorage = {
       execSyncWithDefaults_DEPRECATED(
         `security delete-generic-password -a "${username}" -s "${storageServiceName}"`,
       )
-      return true
+      return true as any
     } catch (_e) {
-      return false
+      return false as any
     }
   },
 } satisfies SecureStorage

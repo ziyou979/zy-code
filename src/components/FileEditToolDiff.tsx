@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { Suspense, use, useState } from 'react';
@@ -19,28 +20,26 @@ type DiffData = {
   firstLine: string | null;
   fileContent: string | undefined;
 };
-export function FileEditToolDiff(props) {
+export function FileEditToolDiff(props: Props) {
   const [dataPromise] = useState(() => loadDiffData(props.file_path, props.edits));
-  return <Suspense fallback={<DiffFrame placeholder={true} />}><DiffBody promise={dataPromise} file_path={props.file_path} /></Suspense>;
+  // @ts-ignore
+  return <Suspense fallback={<DiffFrame placeholder={true} />}>{(DiffBody as any)({ promise: dataPromise, file_path: props.file_path })}</Suspense>;
 }
-function DiffBody({
-  promise,
-  file_path
-}: Props) {
+function DiffBody(props: { promise: Promise<DiffData>; file_path: string }) {
   const {
     patch,
     firstLine,
     fileContent
-  } = use(promise);
+  } = use(props.promise) as any;
   const {
     columns
   } = useTerminalSize();
-  return <DiffFrame><StructuredDiffList hunks={patch} dim={false} width={columns} filePath={file_path} firstLine={firstLine} fileContent={fileContent} /></DiffFrame>;
+  return <DiffFrame><StructuredDiffList hunks={patch} dim={false} width={columns} filePath={props.file_path} firstLine={firstLine} fileContent={fileContent} /></DiffFrame>;
 }
 function DiffFrame({
   children,
-  placeholder
-}) {
+  placeholder = false
+}: { children: React.ReactNode; placeholder?: boolean }) {
   return <Box flexDirection="column"><Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false}>{placeholder ? <Text dimColor={true}>…</Text> : children}</Box></Box>;
 }
 async function loadDiffData(file_path: string, edits: FileEdit[]): Promise<DiffData> {

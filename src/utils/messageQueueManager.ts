@@ -287,7 +287,7 @@ export function remove(commandsToRemove: QueuedCommand[]): void {
   }
 
   for (const _cmd of commandsToRemove) {
-    logOperation('remove')
+    logOperation('remove' as any)
   }
 }
 
@@ -308,7 +308,7 @@ export function removeByFilter(
   if (removed.length > 0) {
     notifySubscribers()
     for (const _cmd of removed) {
-      logOperation('remove')
+      logOperation('remove' as any)
     }
   }
 
@@ -342,7 +342,7 @@ export function resetCommandQueue(): void {
 
 const NON_EDITABLE_MODES = new Set<PromptInputMode>([
   'task-notification',
-] satisfies Permutations<Exclude<PromptInputMode, EditablePromptInputMode>>)
+] as any)
 
 export function isPromptInputModeEditable(
   mode: PromptInputMode,
@@ -470,7 +470,7 @@ export function popAllEditable(
 
   for (const command of editable) {
     logOperation(
-      'popAll',
+      'popAll' as any,
       typeof command.value === 'string' ? command.value : undefined,
     )
   }

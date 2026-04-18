@@ -94,8 +94,8 @@ export class RemoteIO extends StructuredIO {
 
     // Set up data callback
     this.isBridge = process.env.ZY_CODE_ENVIRONMENT_KIND === 'bridge'
-    this.isDebug = isDebugMode()
-    this.transport.setOnData((data: string) => {
+    this.isDebug = (isDebugMode as any)()
+    ((this.transport as any).setOnData as any)?.((data: string) => {
       this.inputStream.write(data)
       if (this.isBridge && this.isDebug) {
         writeToStdout(data.endsWith('\n') ? data : data + '\n')
@@ -103,7 +103,7 @@ export class RemoteIO extends StructuredIO {
     })
 
     // Set up close callback to handle connection failures
-    this.transport.setOnClose(() => {
+    (this.transport as any).setOnClose(() => {
       // End the input stream to trigger graceful shutdown
       this.inputStream.end()
     })
@@ -232,7 +232,7 @@ export class RemoteIO extends StructuredIO {
     if (this.ccrClient) {
       await this.ccrClient.writeEvent(message)
     } else {
-      await this.transport.write(message)
+      await (this.transport as any).write(message)
     }
     if (this.isBridge) {
       if (message.type === 'control_request' || this.isDebug) {
@@ -249,7 +249,7 @@ export class RemoteIO extends StructuredIO {
       clearInterval(this.keepAliveTimer)
       this.keepAliveTimer = null
     }
-    this.transport.close()
+    (this.transport as any).close()
     this.inputStream.end()
   }
 }

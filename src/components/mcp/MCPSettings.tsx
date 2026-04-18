@@ -22,7 +22,7 @@ export function MCPSettings({
   const mcp = useAppState(s => s.mcp);
   const agentDefinitions = useAppState(s_0 => s_0.agentDefinitions);
   const mcpClients = mcp.clients;
-  const [viewState, setViewState] = React.useState({
+  const [viewState, setViewState] = React.useState<{ type: string; server?: any; agentServer?: any; defaultTab?: string; toolIndex?: number }>({
     type: "list"
   });
   const [servers, setServers] = React.useState([]);
@@ -108,48 +108,48 @@ export function MCPSettings({
         t9 = server => setViewState({
           type: "server-menu",
           server
-        });
+        } as any);
         t10 = agentServer => setViewState({
           type: "agent-server-menu",
           agentServer
-        });
+        } as any);
         let t11;
-        t11 = <MCPListPanel servers={servers} agentServers={agentMcpServers} onSelectServer={t9} onSelectAgentServer={t10} onComplete={onComplete} defaultTab={viewState.defaultTab} />;
+        t11 = <MCPListPanel servers={servers} agentServers={agentMcpServers} onSelectServer={t9} onSelectAgentServer={t10} onComplete={onComplete} />;
         return t11;
       }
     case "server-menu":
       {
         let t9;
-        t9 = filterToolsByServer(mcp.tools, viewState.server.name);
+        t9 = filterToolsByServer(mcp.tools, (viewState as any).server.name);
         const serverTools_0 = t9;
-        const defaultTab = viewState.server.transport === "zyai-proxy" ? "zy.ai" : "ZY Code";
-        if (viewState.server.transport === "stdio") {
+        const defaultTab = (viewState as any).server.transport === "zyai-proxy" ? "zy.ai" : "ZY Code";
+        if ((viewState as any).server.transport === "stdio") {
           let t10;
           t10 = () => setViewState({
             type: "server-tools",
-            server: viewState.server
-          });
+            server: (viewState as any).server
+          } as any);
           let t11;
           t11 = () => setViewState({
             type: "list",
             defaultTab
-          });
+          } as any);
           let t12;
-          t12 = <MCPStdioServerMenu server={viewState.server} serverToolsCount={serverTools_0.length} onViewTools={t10} onCancel={t11} onComplete={onComplete} />;
+          t12 = <MCPStdioServerMenu server={(viewState as any).server} serverToolsCount={serverTools_0.length} onViewTools={t10} onCancel={t11} onComplete={onComplete} />;
           return t12;
         } else {
           let t10;
           t10 = () => setViewState({
             type: "server-tools",
-            server: viewState.server
-          });
+            server: (viewState as any).server
+          } as any);
           let t11;
           t11 = () => setViewState({
             type: "list",
             defaultTab
-          });
+          } as any);
           let t12;
-          t12 = <MCPRemoteServerMenu server={viewState.server} serverToolsCount={serverTools_0.length} onViewTools={t10} onCancel={t11} onComplete={onComplete} />;
+          t12 = <MCPRemoteServerMenu server={(viewState as any).server} serverToolsCount={serverTools_0.length} onViewTools={t10} onCancel={t11} onComplete={onComplete} />;
           return t12;
         }
       }
@@ -159,37 +159,37 @@ export function MCPSettings({
         let t9;
         t9 = (_, index) => setViewState({
           type: "server-tool-detail",
-          server: viewState.server,
+          server: (viewState as any).server,
           toolIndex: index
-        });
+        } as any);
         t10 = () => setViewState({
           type: "server-menu",
-          server: viewState.server
-        });
+          server: (viewState as any).server
+        } as any);
         let t11;
-        t11 = <MCPToolListView server={viewState.server} onSelectTool={t9} onBack={t10} />;
+        t11 = <MCPToolListView server={(viewState as any).server} onSelectTool={t9} onBack={t10} />;
         return t11;
       }
     case "server-tool-detail":
       {
         let t9;
-        t9 = filterToolsByServer(mcp.tools, viewState.server.name);
+        t9 = filterToolsByServer(mcp.tools, (viewState as any).server.name);
         const serverTools = t9;
-        const tool = serverTools[viewState.toolIndex];
+        const tool = serverTools[(viewState as any).toolIndex];
         if (!tool) {
           setViewState({
             type: "server-tools",
-            server: viewState.server
-          });
+            server: (viewState as any).server
+          } as any);
           return null;
         }
         let t10;
         t10 = () => setViewState({
           type: "server-tools",
-          server: viewState.server
-        });
+          server: (viewState as any).server
+        } as any);
         let t11;
-        t11 = <MCPToolDetailView tool={tool} server={viewState.server} onBack={t10} />;
+        t11 = <MCPToolDetailView tool={tool} server={(viewState as any).server} onBack={t10} />;
         return t11;
       }
     case "agent-server-menu":
@@ -198,9 +198,9 @@ export function MCPSettings({
         t9 = () => setViewState({
           type: "list",
           defaultTab: "Agents"
-        });
+        } as any);
         let t10;
-        t10 = <MCPAgentServerMenu agentServer={viewState.agentServer} onCancel={t9} onComplete={onComplete} />;
+        t10 = <MCPAgentServerMenu agentServer={(viewState as any).agentServer} onCancel={t9} onComplete={onComplete} />;
         return t10;
       }
   }

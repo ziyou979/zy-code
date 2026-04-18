@@ -167,8 +167,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   );
 
   // Build steps array
-  let steps;
-  steps = [];
+  const steps = [];
   steps.push({ id: 'theme', component: themeStep });
   steps.push({ id: 'platform', component: platformStep });
   steps.push({ id: 'model', component: modelStep });

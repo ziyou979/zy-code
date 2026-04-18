@@ -98,7 +98,7 @@ export function getRateLimitMessage(
     // if overages are enabled - they'll seamlessly roll into overage
     const subscriptionType = getSubscriptionType()
     const isTeamOrEnterprise =
-      subscriptionType === 'team' || subscriptionType === 'enterprise'
+      (subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise'
     const hasExtraUsageEnabled =
       getOauthAccountInfo()?.hasExtraUsageEnabled === true
 
@@ -282,7 +282,7 @@ function getWarningUpsellText(
   if (rateLimitType === 'five_hour') {
     // Teams/Enterprise with overages disabled: prompt to request extra usage
     // Only show if overage provisioning is allowed for this org type (e.g., not AWS marketplace)
-    if (subscriptionType === 'team' || subscriptionType === 'enterprise') {
+    if ((subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise') {
       if (!hasExtraUsageEnabled && isOverageProvisioningAllowed()) {
         return tSync('rateLimit.upsell.requestAdmin')
       }
@@ -291,14 +291,14 @@ function getWarningUpsellText(
     }
 
     // Pro/Max users: prompt to upgrade
-    if (subscriptionType === 'pro' || subscriptionType === 'max') {
+    if ((subscriptionType as any) === 'pro' || (subscriptionType as any) === 'max') {
       return tSync('rateLimit.upsell.upgrade')
     }
   }
 
   // Overage warning (approaching spending limit)
   if (rateLimitType === 'overage') {
-    if (subscriptionType === 'team' || subscriptionType === 'enterprise') {
+    if ((subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise') {
       if (!hasExtraUsageEnabled && isOverageProvisioningAllowed()) {
         return tSync('rateLimit.upsell.requestAdmin')
       }

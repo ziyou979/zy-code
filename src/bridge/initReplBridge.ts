@@ -478,10 +478,11 @@ export async function initReplBridge(
   let workerType: BridgeWorkerType = 'zy_code'
   if (feature('KAIROS')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
+    // @ts-ignore
     const { isAssistantMode } =
-      require('../assistant/index.js') as typeof import('../assistant/index.js')
+      (require('../assistant/index.js') as any) as typeof import('../assistant/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
-    if (isAssistantMode()) {
+    if ((isAssistantMode as any)?.() as any) {
       workerType = 'zy_code_assistant'
     }
   }

@@ -21,6 +21,7 @@ import type {
   StopHookInfo,
   SystemStopHookSummaryMessage,
 } from '../types/message.js'
+import type { BetaContentBlockParam } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import { getDisplayPath } from './file.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
 import { tSync } from '../i18n/index.js'
@@ -37,7 +38,7 @@ const teamMemOps = feature('TEAMMEM')
   : null
 const SNIP_TOOL_NAME = feature('HISTORY_SNIP')
   ? (
-      require('../tools/SnipTool/prompt.js') as typeof import('../tools/SnipTool/prompt.js')
+      require('../tools/SnipTool/prompt.js') as any
     ).SNIP_TOOL_NAME
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -312,15 +313,15 @@ function getCollapsibleToolInfo(
   }
   if (msg.type === 'grouped_tool_use') {
     // For grouped tool uses, check the first message's input
-    const firstContent = msg.messages[0]?.message.content[0]
+    const firstContent = (msg as any).messages[0]?.message.content[0]
     const info = getSearchOrReadFromContent(
       firstContent
-        ? { type: 'tool_use', name: msg.toolName, input: firstContent.input }
+        ? { type: 'tool_use', name: (msg as any).toolName, input: firstContent.input }
         : undefined,
       tools,
     )
     if (info && firstContent?.type === 'tool_use') {
-      return { name: msg.toolName, input: firstContent.input, ...info }
+      return { name: (msg as any).toolName, input: firstContent.input, ...info }
     }
   }
   return null
@@ -357,10 +358,10 @@ function isNonCollapsibleToolUse(
     }
   }
   if (msg.type === 'grouped_tool_use') {
-    const firstContent = msg.messages[0]?.message.content[0]
+    const firstContent = (msg as any).messages[0]?.message.content[0]
     if (
       firstContent?.type === 'tool_use' &&
-      !isToolSearchOrRead(msg.toolName, firstContent.input, tools)
+      !isToolSearchOrRead((msg as any).toolName, firstContent.input, tools)
     ) {
       return true
     }
@@ -416,10 +417,10 @@ function isCollapsibleToolUse(
     )
   }
   if (msg.type === 'grouped_tool_use') {
-    const firstContent = msg.messages[0]?.message.content[0]
+    const firstContent = (msg as any).messages[0]?.message.content[0]
     return (
       firstContent?.type === 'tool_use' &&
-      isToolSearchOrRead(msg.toolName, firstContent.input, tools)
+      isToolSearchOrRead((msg as any).toolName, firstContent.input, tools)
     )
   }
   return false
@@ -434,7 +435,7 @@ function isCollapsibleToolResult(
   collapsibleToolUseIds: Set<string>,
 ): msg is CollapsibleMessage {
   if (msg.type === 'user') {
-    const toolResults = msg.message.content.filter(
+    const toolResults = (msg.message.content as BetaContentBlockParam[]).filter(
       (c): c is { type: 'tool_result'; tool_use_id: string } =>
         c.type === 'tool_result',
     )
@@ -458,7 +459,7 @@ function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
     }
   }
   if (msg.type === 'grouped_tool_use') {
-    return msg.messages
+    return (msg as any).messages
       .map(m => {
         const content = m.message.content[0]
         return content.type === 'tool_use' ? content.id : ''
@@ -475,7 +476,7 @@ export function getToolUseIdsFromCollapsedGroup(
   message: CollapsedReadSearchGroup,
 ): string[] {
   const ids: string[] = []
-  for (const msg of message.messages) {
+  for (const msg of (message as any).messages) {
     ids.push(...getToolUseIdsFromMessage(msg))
   }
   return ids
@@ -501,7 +502,7 @@ export function hasAnyToolInProgress(
 export function getDisplayMessageFromCollapsed(
   message: CollapsedReadSearchGroup,
 ): Exclude<CollapsibleMessage, { type: 'grouped_tool_use' }> {
-  const firstMsg = message.displayMessage
+  const firstMsg = (message as any).displayMessage
   if (firstMsg.type === 'grouped_tool_use') {
     return firstMsg.displayMessage
   }
@@ -513,7 +514,7 @@ export function getDisplayMessageFromCollapsed(
  */
 function countToolUses(msg: RenderableMessage): number {
   if (msg.type === 'grouped_tool_use') {
-    return msg.messages.length
+    return (msg as any).messages.length
   }
   return 1
 }
@@ -534,7 +535,7 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
       }
     }
   } else if (msg.type === 'grouped_tool_use') {
-    for (const m of msg.messages) {
+    for (const m of (msg as any).messages) {
       const content = m.message.content[0]
       if (content?.type === 'tool_use') {
         const input = content.input as { file_path?: string } | undefined
@@ -557,14 +558,14 @@ function scanBashResultForGitOps(
   msg: CollapsibleMessage,
   group: GroupAccumulator,
 ): void {
-  if (msg.type !== 'user') return
-  const out = msg.toolUseResult as
+  if ((msg as any).type !== 'user') return
+  const out = (msg as any).toolUseResult as
     | { stdout?: string; stderr?: string }
     | undefined
   if (!out?.stdout && !out?.stderr) return
   // git push writes the ref update to stderr — scan both streams.
   const combined = (out.stdout ?? '') + '\n' + (out.stderr ?? '')
-  for (const c of msg.message.content) {
+  for (const c of (msg as any).message.content) {
     if (c.type !== 'tool_result') continue
     const command = group.bashCommands?.get(c.tool_use_id)
     if (!command) continue
@@ -695,7 +696,7 @@ function createCollapsedGroup(
   const teamMemWriteCount = feature('TEAMMEM')
     ? (group.teamMemoryWriteCount ?? 0)
     : 0
-  const result: CollapsedReadSearchGroup = {
+  const result = {
     type: 'collapsed_read_search',
     // Subtract memory + team memory counts so regular counts only reflect non-memory operations
     searchCount: Math.max(
@@ -721,33 +722,33 @@ function createCollapsedGroup(
     displayMessage: firstMsg,
     uuid: `collapsed-${firstMsg.uuid}` as UUID,
     timestamp: firstMsg.timestamp,
-  }
+  } as any as CollapsedReadSearchGroup
   if (feature('TEAMMEM')) {
     result.teamMemorySearchCount = teamMemSearchCount
     result.teamMemoryReadCount = teamMemReadCount
     result.teamMemoryWriteCount = teamMemWriteCount
   }
   if ((group.mcpCallCount ?? 0) > 0) {
-    result.mcpCallCount = group.mcpCallCount
-    result.mcpServerNames = [...(group.mcpServerNames ?? [])]
+    ;(result as any).mcpCallCount = group.mcpCallCount
+    ;(result as any).mcpServerNames = [...(group.mcpServerNames ?? [])]
   }
   if (isFullscreenEnvEnabled()) {
     if ((group.bashCount ?? 0) > 0) {
-      result.bashCount = group.bashCount
-      result.gitOpBashCount = group.gitOpBashCount
+      ;(result as any).bashCount = group.bashCount
+      ;(result as any).gitOpBashCount = group.gitOpBashCount
     }
-    if ((group.commits?.length ?? 0) > 0) result.commits = group.commits
-    if ((group.pushes?.length ?? 0) > 0) result.pushes = group.pushes
-    if ((group.branches?.length ?? 0) > 0) result.branches = group.branches
-    if ((group.prs?.length ?? 0) > 0) result.prs = group.prs
+    if ((group.commits?.length ?? 0) > 0) (result as any).commits = group.commits
+    if ((group.pushes?.length ?? 0) > 0) (result as any).pushes = group.pushes
+    if ((group.branches?.length ?? 0) > 0) (result as any).branches = group.branches
+    if ((group.prs?.length ?? 0) > 0) (result as any).prs = group.prs
   }
   if (group.hookCount > 0) {
-    result.hookTotalMs = group.hookTotalMs
-    result.hookCount = group.hookCount
-    result.hookInfos = group.hookInfos
+    ;(result as any).hookTotalMs = group.hookTotalMs
+    ;(result as any).hookCount = group.hookCount
+    ;(result as any).hookInfos = group.hookInfos
   }
   if (group.relevantMemories && group.relevantMemories.length > 0) {
-    result.relevantMemories = group.relevantMemories
+    ;(result as any).relevantMemories = group.relevantMemories
   }
   return result
 }
@@ -900,7 +901,7 @@ export function collapseReadSearchGroups(
       currentGroup.hookCount += msg.hookCount
       currentGroup.hookTotalMs +=
         msg.totalDurationMs ??
-        msg.hookInfos.reduce((sum, h) => sum + (h.durationMs ?? 0), 0)
+        msg.hookInfos.reduce((sum, h) => sum + ((h as any).durationMs ?? 0), 0)
       currentGroup.hookInfos.push(...msg.hookInfos)
     } else if (
       currentGroup.messages.length > 0 &&
@@ -915,7 +916,7 @@ export function collapseReadSearchGroups(
       // suppresses the fallback). createCollapsedGroup adds .length to
       // memoryReadCount after the readCount subtraction instead.
       currentGroup.relevantMemories ??= []
-      currentGroup.relevantMemories.push(...msg.attachment.memories)
+      currentGroup.relevantMemories.push(...(msg.attachment as any).memories)
     } else if (shouldSkipMessage(msg)) {
       // Don't flush the group for skippable messages (thinking, attachments, system)
       // If a group is in progress, defer these messages to output after the collapsed group

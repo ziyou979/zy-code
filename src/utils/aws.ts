@@ -61,6 +61,7 @@ export async function checkStsCallerIdentity(): Promise<void> {
 export async function clearAwsIniCache(): Promise<void> {
   try {
     logForDebugging('Clearing AWS credential provider cache')
+    // @ts-ignore
     const { fromIni } = await import('@aws-sdk/credential-providers')
     const iniProvider = fromIni({ ignoreCache: true })
     await iniProvider() // This updates the global file cache

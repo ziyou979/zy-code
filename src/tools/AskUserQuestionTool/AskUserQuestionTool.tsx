@@ -84,7 +84,7 @@ function AskUserQuestionResultMessage({
 }) {
   return <Box flexDirection="column" marginTop={1}>{<Box flexDirection="row"><Text color={getModeColor("default")}>{BLACK_CIRCLE} </Text><Text>User answered ZY's questions:</Text></Box>}<MessageResponse><Box flexDirection="column">{Object.entries(answers).map(t0 => {
           const [questionText, answer] = t0;
-          return <Text key={questionText} color="inactive">· {questionText} → {answer}</Text>;
+          return <Text key={questionText} color="inactive">· {questionText} → {answer as any}</Text>;
         })}</Box></MessageResponse></Box>;
 }
 export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({

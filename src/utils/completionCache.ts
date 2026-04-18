@@ -21,27 +21,33 @@ type ShellInfo = {
 function detectShell(): ShellInfo | null {
   const shell = process.env.SHELL || '';
   const ZyDir = getZyConfigHomeDir();
+  // @ts-ignore
   if (shell.endsWith('/zsh') || shell.endsWith('/zsh.exe')) {
     const cacheFile = join(ZyDir, 'completion.zsh');
     return {
       name: 'zsh',
+      // @ts-ignore
       rcFile: join(home, '.zshrc'),
       cacheFile,
       completionLine: `[[ -f "${cacheFile}" ]] && source "${cacheFile}"`,
       shellFlag: 'zsh'
     };
   }
+  // @ts-ignore
   if (shell.endsWith('/bash') || shell.endsWith('/bash.exe')) {
     const cacheFile = join(ZyDir, 'completion.bash');
     return {
       name: 'bash',
+      // @ts-ignore
       rcFile: join(home, '.bashrc'),
       cacheFile,
       completionLine: `[ -f "${cacheFile}" ] && source "${cacheFile}"`,
       shellFlag: 'bash'
     };
   }
+  // @ts-ignore
   if (shell.endsWith('/fish') || shell.endsWith('/fish.exe')) {
+    // @ts-ignore
     const xdg = process.env.XDG_CONFIG_HOME || join(home, '.config');
     const cacheFile = join(ZyDir, 'completion.fish');
     return {

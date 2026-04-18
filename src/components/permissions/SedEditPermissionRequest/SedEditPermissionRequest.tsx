@@ -12,6 +12,7 @@ import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDial
 import type { PermissionRequestProps } from '../PermissionRequest.js';
 type SedEditPermissionRequestProps = PermissionRequestProps & {
   sedInfo: SedEditInfo;
+  contentPromise?: Promise<FileReadResult>;
 };
 type FileReadResult = {
   oldContent: string;
@@ -55,7 +56,7 @@ function SedEditPermissionRequestInner({
   const {
     oldContent,
     fileExists
-  } = use(contentPromise);
+  } = use(contentPromise) as FileReadResult;
   const newContent = applySedSubstitution(oldContent, sedInfo);
   let edits;
   if (oldContent === newContent) {

@@ -70,7 +70,7 @@ async function getCachedMCModule(): Promise<
 
 function ensureCachedMCState(): import('./cachedMicrocompact.js').CachedMCState {
   if (!cachedMCState && cachedMCModule) {
-    cachedMCState = cachedMCModule.createCachedMCState()
+    cachedMCState = (cachedMCModule as any).createCachedMCState()
   }
   if (!cachedMCState) {
     throw new Error(
@@ -101,7 +101,7 @@ export function getPinnedCacheEdits(): import('./cachedMicrocompact.js').PinnedC
   if (!cachedMCState) {
     return []
   }
-  return cachedMCState.pinnedEdits
+  return (cachedMCState as any).pinnedEdits
 }
 
 /**
@@ -113,7 +113,7 @@ export function pinCacheEdits(
   block: import('./cachedMicrocompact.js').CacheEditsBlock,
 ): void {
   if (cachedMCState) {
-    cachedMCState.pinnedEdits.push({ userMessageIndex, block })
+    (cachedMCState as any).pinnedEdits.push({ userMessageIndex, block })
   }
 }
 
@@ -123,13 +123,13 @@ export function pinCacheEdits(
  */
 export function markToolsSentToAPIState(): void {
   if (cachedMCState && cachedMCModule) {
-    cachedMCModule.markToolsSentToAPI(cachedMCState)
+    (cachedMCModule as any).markToolsSentToAPI(cachedMCState)
   }
 }
 
 export function resetMicrocompactState(): void {
   if (cachedMCState && cachedMCModule) {
-    cachedMCModule.resetCachedMCState(cachedMCState)
+    (cachedMCModule as any).resetCachedMCState(cachedMCState)
   }
   pendingCacheEdits = null
 }
@@ -146,9 +146,9 @@ function calculateToolResultTokens(block: ToolResultBlockParam): number {
 
   // Array of TextBlockParam | ImageBlockParam | DocumentBlockParam
   return block.content.reduce((sum, item) => {
-    if (item.type === 'text') {
-      return sum + roughTokenCountEstimation(item.text)
-    } else if (item.type === 'image' || item.type === 'document') {
+    if ((item as any).type === 'text') {
+      return sum + roughTokenCountEstimation((item as any).text)
+    } else if ((item as any).type === 'image' || (item as any).type === 'document') {
       // Images/documents are approximately 2000 tokens regardless of format
       return sum + IMAGE_MAX_TOKEN_SIZE
     }
@@ -277,8 +277,8 @@ export async function microcompactMessages(
     const mod = await getCachedMCModule()
     const model = toolUseContext?.options.mainLoopModel ?? getMainLoopModel()
     if (
-      mod.isCachedMicrocompactEnabled() &&
-      mod.isModelSupportedForCacheEditing(model) &&
+      (mod as any).isCachedMicrocompactEnabled() &&
+      (mod as any).isModelSupportedForCacheEditing(model) &&
       isMainThreadSource(querySource)
     ) {
       return await cachedMicrocompactPath(messages, querySource)
@@ -308,7 +308,7 @@ async function cachedMicrocompactPath(
 ): Promise<MicrocompactResult> {
   const mod = await getCachedMCModule()
   const state = ensureCachedMCState()
-  const config = mod.getCachedMCConfig()
+  const config = (mod as any).getCachedMCConfig()
 
   const compactableToolIds = new Set(collectCompactableToolIds(messages))
   // Second pass: register tool results grouped by user message
@@ -319,21 +319,21 @@ async function cachedMicrocompactPath(
         if (
           block.type === 'tool_result' &&
           compactableToolIds.has(block.tool_use_id) &&
-          !state.registeredTools.has(block.tool_use_id)
+          !(state as any).registeredTools.has(block.tool_use_id)
         ) {
-          mod.registerToolResult(state, block.tool_use_id)
+          (mod as any).registerToolResult(state, block.tool_use_id)
           groupIds.push(block.tool_use_id)
         }
       }
-      mod.registerToolMessage(state, groupIds)
+      (mod as any).registerToolMessage(state, groupIds)
     }
   }
 
-  const toolsToDelete = mod.getToolResultsToDelete(state)
+  const toolsToDelete = (mod as any).getToolResultsToDelete(state)
 
   if (toolsToDelete.length > 0) {
     // Create and queue the cache_edits block for the API layer
-    const cacheEdits = mod.createCacheEditsBlock(state, toolsToDelete)
+    const cacheEdits = (mod as any).createCacheEditsBlock(state, toolsToDelete)
     if (cacheEdits) {
       pendingCacheEdits = cacheEdits
     }
@@ -348,7 +348,7 @@ async function cachedMicrocompactPath(
       deletedToolIds: toolsToDelete.join(
         ',',
       ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      activeToolCount: state.toolOrder.length - state.deletedRefs.size,
+      activeToolCount: (state as any).toolOrder.length - (state as any).deletedRefs.size,
       triggerType:
         'auto' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       threshold: config.triggerThreshold,
@@ -363,7 +363,7 @@ async function cachedMicrocompactPath(
       // Pass the actual querySource — isMainThreadSource now prefix-matches
       // so output-style variants enter here, and getTrackingKey keys on the
       // full source string, not the 'repl_main_thread' prefix.
-      notifyCacheDeletion(querySource ?? 'repl_main_thread')
+      notifyCacheDeletion((querySource ?? 'repl_main_thread') as any)
     }
 
     // Return messages unchanged - cache_reference and cache_edits are added at API layer

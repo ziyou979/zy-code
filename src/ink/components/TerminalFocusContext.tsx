@@ -17,8 +17,9 @@ TerminalFocusContext.displayName = 'TerminalFocusContext';
 // Children are a stable prop reference, so they don't re-render either —
 // only components that consume the context will re-render.
 export function TerminalFocusProvider({
-  children
-}: TerminalFocusContextProps) {
+  children,
+  ...props
+}: TerminalFocusContextProps & { children?: React.ReactNode }) {
   const isTerminalFocused = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocused);
   const terminalFocusState = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocusState);
   const value = {

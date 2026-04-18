@@ -181,9 +181,9 @@ export function ResumeConversation({
     const crossProjectCheck = checkCrossProjectResume(log_0, showAllProjects, worktreePaths);
     if (crossProjectCheck.isCrossProject) {
       if (!crossProjectCheck.isSameRepoWorktree) {
-        const raw = await setClipboard(crossProjectCheck.command);
+        const raw = await setClipboard((crossProjectCheck as any).command);
         if (raw) process.stdout.write(raw);
-        setCrossProjectCommand(crossProjectCheck.command);
+        setCrossProjectCommand((crossProjectCheck as any).command);
         return;
       }
     }
@@ -214,7 +214,7 @@ export function ResumeConversation({
               activeAgents: getActiveAgentsFromList(freshAgentDefs.allAgents)
             }
           }));
-          result_3.messages.push(createSystemMessage(warning, 'warning'));
+          result_3.messages.push(createSystemMessage(warning, 'warning' as any));
         }
       }
       if (result_3.sessionId && !forkSession) {
@@ -264,7 +264,7 @@ export function ResumeConversation({
       if (feature('CONTEXT_COLLAPSE')) {
         /* eslint-disable @typescript-eslint/no-require-imports */
 
-        (require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')).restoreFromEntries(result_3.contextCollapseCommits ?? [], result_3.contextCollapseSnapshot);
+        (require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')).restoreFromEntries(result_3.contextCollapseCommits ?? [] as any, result_3.contextCollapseSnapshot as any);
         /* eslint-enable @typescript-eslint/no-require-imports */
       }
       logEvent('tengu_session_resumed', {
@@ -291,10 +291,10 @@ export function ResumeConversation({
     }
   }
   if (crossProjectCommand) {
-    return <CrossProjectMessage command={crossProjectCommand} />;
+    return <CrossProjectMessage command={crossProjectCommand as any} />;
   }
   if (resumeData) {
-    return <REPL debug={debug} commands={commands} initialTools={initialTools} initialMessages={resumeData.messages} initialFileHistorySnapshots={resumeData.fileHistorySnapshots} initialContentReplacements={resumeData.contentReplacements} initialAgentName={resumeData.agentName} initialAgentColor={resumeData.agentColor} mcpClients={mcpClients} dynamicMcpConfig={dynamicMcpConfig} strictMcpConfig={strictMcpConfig} systemPrompt={systemPrompt} appendSystemPrompt={appendSystemPrompt} mainThreadAgentDefinition={resumeData.mainThreadAgentDefinition} autoConnectIdeFlag={autoConnectIdeFlag} disableSlashCommands={disableSlashCommands} taskListId={taskListId} thinkingConfig={thinkingConfig} onTurnComplete={onTurnComplete} />;
+    return <REPL debug={debug} commands={commands} initialTools={initialTools} initialMessages={resumeData.messages} initialFileHistorySnapshots={resumeData.fileHistorySnapshots} initialContentReplacements={resumeData.contentReplacements} initialAgentName={resumeData.agentName} initialAgentColor={resumeData.agentColor} mcpClients={mcpClients} dynamicMcpConfig={dynamicMcpConfig} strictMcpConfig={strictMcpConfig} systemPrompt={systemPrompt} appendSystemPrompt={appendSystemPrompt} mainThreadAgentDefinition={resumeData.mainThreadAgentDefinition} autoConnectIdeFlag={autoConnectIdeFlag} disableSlashCommands={disableSlashCommands} taskListId={taskListId} thinkingConfig={thinkingConfig} onTurnComplete={onTurnComplete} /> as any;
   }
   if (loading) {
     return <Box>
@@ -311,6 +311,7 @@ export function ResumeConversation({
   if (filteredLogs.length === 0) {
     return <NoConversationsMessage />;
   }
+  // @ts-ignore
   return <LogSelector logs={filteredLogs} maxHeight={rows} onCancel={onCancel} onSelect={onSelect} onLogsChanged={isResumeWithRenameEnabled ? () => loadLogs(showAllProjects) : undefined} onLoadMore={loadMoreLogs} initialSearchQuery={initialSearchQuery} showAllProjects={showAllProjects} onToggleAllProjects={handleToggleAllProjects} onAgenticSearch={agenticSessionSearch} />;
 }
 function NoConversationsMessage() {
@@ -323,7 +324,7 @@ function NoConversationsMessage() {
 }
 function CrossProjectMessage({
   command
-}: Props) {
+}: { command: string }) {
   React.useEffect(() => {
     const timeout = setTimeout(() => {
       process.exit(0);

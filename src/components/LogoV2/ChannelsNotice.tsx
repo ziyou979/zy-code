@@ -41,6 +41,7 @@ export function ChannelsNotice() {
       unmatched: findUnmatched(ch, allowlist)
     };
   });
+  const { channels, disabled, noAuth, policyBlocked, list, unmatched } = t0;
   if (channels.length === 0) {
     return null;
   }

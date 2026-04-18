@@ -1,7 +1,7 @@
-import type {
-  ComputerUseHostAdapter,
-  Logger,
-} from '@ant/computer-use-mcp/types'
+import type {} from '@ant/computer-use-mcp/types'
+
+type ComputerUseHostAdapter = any
+type Logger = any
 import { format } from 'util'
 import { logForDebugging } from '../debug.js'
 import { COMPUTER_USE_MCP_SERVER_NAME } from './common.js'
@@ -46,8 +46,8 @@ export function getComputerUseHostAdapter(): ComputerUseHostAdapter {
     }),
     ensureOsPermissions: async () => {
       const cu = requireComputerUseSwift()
-      const accessibility = cu.tcc.checkAccessibility()
-      const screenRecording = cu.tcc.checkScreenRecording()
+      const accessibility = (cu as any).tcc.checkAccessibility()
+      const screenRecording = (cu as any).tcc.checkScreenRecording()
       return accessibility && screenRecording
         ? { granted: true }
         : { granted: false, accessibility, screenRecording }

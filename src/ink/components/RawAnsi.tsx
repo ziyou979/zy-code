@@ -30,6 +30,7 @@ export function RawAnsi({
   if (lines.length === 0) {
     return null;
   }
-  const t1 = lines.join("\n");
-  return <ink-raw-ansi rawText={t1} rawWidth={width} rawHeight={lines.length} />;
+  const joinedText = lines.join("\n");
+  // @ts-ignore
+  return <ink-raw-ansi rawText={joinedText} rawWidth={width} rawHeight={lines.length} />;
 }

@@ -124,12 +124,12 @@ export async function resumeAgentBackground({
           )
         : undefined
       const additionalWorkingDirectories = Array.from(
-        appState.toolPermissionContext.additionalWorkingDirectories.keys(),
+        (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
       )
       const defaultSystemPrompt = await getSystemPrompt(
         toolUseContext.options.tools,
         toolUseContext.options.mainLoopModel,
-        additionalWorkingDirectories,
+        additionalWorkingDirectories as any,
         toolUseContext.options.mcpClients,
       )
       forkParentSystemPrompt = buildEffectiveSystemPrompt({

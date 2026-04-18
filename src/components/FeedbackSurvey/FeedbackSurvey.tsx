@@ -65,7 +65,7 @@ function FeedbackSurveyThanks({
   setInputValue,
   onRequestFeedback
 }: ThanksProps) {
-  const showFollowUp = onRequestFeedback && lastResponse === "good";
+  const showFollowUp = onRequestFeedback && (lastResponse as any) === "good";
   const t1 = Boolean(showFollowUp);
   useDebouncedDigitInput({
     inputValue,
@@ -82,5 +82,5 @@ function FeedbackSurveyThanks({
     }
   });
   const feedbackCommand = false ? "/issue" : "/feedback";
-  return <Box marginTop={1} flexDirection="column">{<Text color="success">Thanks for the feedback!</Text>}{showFollowUp ? <Text dimColor={true}>(Optional) Press [<Text color="ansi:cyan">1</Text>] to tell us what went well {" \xB7 "}{feedbackCommand}</Text> : lastResponse === "bad" ? <Text dimColor={true}>Use /issue to report model behavior issues.</Text> : <Text dimColor={true}>Use {feedbackCommand} to share detailed feedback anytime.</Text>}</Box>;
+  return <Box marginTop={1} flexDirection="column">{<Text color="success">Thanks for the feedback!</Text>}{showFollowUp ? <Text dimColor={true}>(Optional) Press [<Text color="ansi:cyan">1</Text>] to tell us what went well {" \xB7 "}{feedbackCommand}</Text> : (lastResponse as any) === "bad" ? <Text dimColor={true}>Use /issue to report model behavior issues.</Text> : <Text dimColor={true}>Use {feedbackCommand} to share detailed feedback anytime.</Text>}</Box>;
 }

@@ -1193,7 +1193,7 @@ export async function runInProcessTeammate(
             isAsync: true,
             canShowPermissionPrompts: allowPermissionPrompts ?? true,
             forkContextMessages,
-            querySource: 'agent:custom',
+            querySource: 'agent:custom' as any,
             override: { abortController: currentWorkAbortController },
             model: model as ModelAlias | undefined,
             preserveToolUseResults: true,

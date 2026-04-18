@@ -5,7 +5,7 @@ import type { MCPServerConnection } from '../services/mcp/types.js';
 import { getAccountInformation } from './auth.js';
 import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './zymd.js';
 import { getDoctorDiagnostic } from './doctorDiagnostic.js';
-import { getAWSRegion, getDefaultVertexRegion, isEnvTruthy } from './envUtils.js';
+import { getAWSRegion, getDefaultVertexRegion, isEnvTruthy, isInternalBuild } from './envUtils.js';
 import { getDisplayPath } from './file.js';
 import { formatNumber } from './format.js';
 import { getIdeClientName, type IDEExtensionInstallationStatus, isJetBrainsIde, toIDEDisplayName } from './ide.js';
@@ -25,7 +25,7 @@ export type Property = {
 };
 export type Diagnostic = React.ReactNode;
 export function buildSandboxProperties(): Property[] {
-  if ("external" !== 'ant') {
+  if (!isInternalBuild()) {
     return [];
   }
   const isSandboxed = SandboxManager.isSandboxingEnabled();

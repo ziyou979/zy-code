@@ -53,10 +53,10 @@ export type TeleportProgressCallback = (step: TeleportProgressStep) => void;
  */
 function createTeleportResumeSystemMessage(branchError: Error | null): SystemMessage {
   if (branchError === null) {
-    return createSystemMessage('Session resumed', 'suggestion');
+    return createSystemMessage('Session resumed', 'suggestion' as any);
   }
   const formattedError = branchError instanceof TeleportOperationError ? branchError.formattedMessage : branchError.message;
-  return createSystemMessage(`Session resumed without branch: ${formattedError}`, 'warning');
+  return createSystemMessage(`Session resumed without branch: ${formattedError}`, 'warning' as any);
 }
 
 /**
@@ -125,7 +125,7 @@ async function generateTitleAndBranch(description: string, signal: AbortSignal):
       },
       signal,
       options: {
-        querySource: 'teleport_generate_title',
+        querySource: 'teleport_generate_title' as any,
         agents: [],
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,
@@ -844,7 +844,7 @@ export async function teleportToRemote(options: {
           signal
         });
         if (!bundle.success) {
-          logError(new Error(`Bundle upload failed: ${bundle.error}`));
+          logError(new Error(`Bundle upload failed: ${(bundle as any).error}`));
           return null;
         }
         seedBundleFileId = bundle.fileId;
@@ -1008,11 +1008,11 @@ export async function teleportToRemote(options: {
         signal
       });
       if (!bundle.success) {
-        logError(new Error(`Bundle upload failed: ${bundle.error}`));
+        logError(new Error(`Bundle upload failed: ${(bundle as any).error}`));
         // Only steer users to GitHub setup when there's a remote to clone from.
         const setup = repoInfo ? '. Please setup GitHub on https://zy.ai/code' : '';
         let msg: string;
-        switch (bundle.failReason) {
+        switch ((bundle as any).failReason) {
           case 'empty_repo':
             msg = 'Repository has no commits — run `git add . && git commit -m "initial"` then retry';
             break;
@@ -1020,16 +1020,16 @@ export async function teleportToRemote(options: {
             msg = `Repo is too large to teleport${setup}`;
             break;
           case 'git_error':
-            msg = `Failed to create git bundle (${bundle.error})${setup}`;
+            msg = `Failed to create git bundle (${(bundle as any).error})${setup}`;
             break;
           case undefined:
-            msg = `Bundle upload failed: ${bundle.error}${setup}`;
+            msg = `Bundle upload failed: ${(bundle as any).error}${setup}`;
             break;
           default:
             {
-              const _exhaustive: never = bundle.failReason;
+              const _exhaustive: any = (bundle as any).failReason as any;
               void _exhaustive;
-              msg = `Bundle upload failed: ${bundle.error}`;
+              msg = `Bundle upload failed: ${(bundle as any).error}`;
             }
         }
         options.onBundleFail?.(msg);

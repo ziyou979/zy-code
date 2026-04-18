@@ -6,7 +6,7 @@ import { computeGlimmerIndex, computeShimmerSegments, SHIMMER_INTERVAL_MS } from
 import { feature } from 'bun:bundle';
 import { getKairosActive, getUserMsgOptIn } from '../bootstrap/state.js';
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js';
-import { isEnvTruthy } from '../utils/envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js';
 import { count } from '../utils/array.js';
 import sample from 'lodash-es/sample.js';
 import { formatDuration, formatNumber } from '../utils/format.js';
@@ -183,7 +183,7 @@ function SpinnerWithVerbInner({
   // 检查是否有运行中的 in-process teammates（两种模式都需要）
   const runningTeammates = getAllInProcessTeammateTasks(tasks).filter(t => t.status === 'running');
   const hasRunningTeammates = runningTeammates.length > 0;
-  const allIdle = hasRunningTeammates && runningTeammates.every(t_0 => t_0.isIdle);
+  const allIdle = hasRunningTeammates && runningTeammates.every(teammate => teammate.isIdle);
 
   // 收集所有运行中 swarm teammates 的聚合 token 统计
   // 在 spinner-tree 模式下，跳过聚合（teammates 在树中有自己的行）
@@ -215,7 +215,9 @@ function SpinnerWithVerbInner({
   // 我们在父组件约 25 次/turn 的重新渲染节奏上获取更新，
   // 与旧的 ApiMetricsLine 相同。
   let ttftText: string | null = null;
-  if ("external" === 'ant' && apiMetricsRef?.current && apiMetricsRef.current.length > 0) {
+  // @ts-ignore -- ant-only: apiMetricsRef and computeTtftText are only available in internal builds
+  if (isInternalBuild() && apiMetricsRef?.current && apiMetricsRef.current.length > 0) {
+    // @ts-ignore -- ant-only
     ttftText = computeTtftText(apiMetricsRef.current);
   }
 
@@ -354,8 +356,8 @@ function BriefSpinner({
   const rightText = runningCount > 0 ? tSync('spinner.inBackground', {
     count: runningCount
   }) : "";
-  const t6 = showConnWarning ? stringWidth(connText) : verbWidth;
-  const leftWidth = t6 + 3;
+  const textWidth = showConnWarning ? stringWidth(connText) : verbWidth;
+  const leftWidth = textWidth + 3;
   const pad = Math.max(1, columns - 2 - leftWidth - stringWidth(rightText));
   return <Box flexDirection="row" width="100%" marginTop={1} paddingLeft={2}>{showConnWarning ? <Text color="error">{connText + dots}</Text> : <>{before ? <Text dimColor={true}>{before}</Text> : null}{shimmer ? <Text>{shimmer}</Text> : null}{after ? <Text dimColor={true}>{after}</Text> : null}<Text dimColor={true}>{dots}</Text></>}{rightText ? <><Text>{" ".repeat(pad)}</Text><Text color="subtle">{rightText}</Text></> : null}</Box>;
 }

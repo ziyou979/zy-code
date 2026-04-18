@@ -31,7 +31,7 @@ import { createUserMessage } from '../utils/messages.js'
 function convertAssistantMessage(msg: SDKAssistantMessage): AssistantMessage {
   return {
     type: 'assistant',
-    message: msg.message,
+    message: msg.message as any,
     uuid: msg.uuid,
     requestId: undefined,
     timestamp: new Date().toISOString(),
@@ -45,8 +45,10 @@ function convertAssistantMessage(msg: SDKAssistantMessage): AssistantMessage {
 function convertStreamEvent(msg: SDKPartialAssistantMessage): StreamEvent {
   return {
     type: 'stream_event',
-    event: msg.event,
-  }
+    event: msg.event as any,
+    uuid: (msg as any).uuid,
+    timestamp: (msg as any).timestamp,
+  } as any
 }
 
 /**
@@ -62,7 +64,7 @@ function convertResultMessage(msg: SDKResultMessage): SystemMessage {
     type: 'system',
     subtype: 'informational',
     content,
-    level: isError ? 'warning' : 'info',
+    level: (isError ? 'warning' : 'info') as any,
     uuid: msg.uuid,
     timestamp: new Date().toISOString(),
   }
@@ -174,7 +176,7 @@ export function convertSDKMessage(
       return { type: 'message', message: convertAssistantMessage(msg) }
 
     case 'user': {
-      const content = msg.message?.content
+      const content = (msg.message as any)?.content
       // Tool result messages from the remote server need to be converted so
       // they render and collapse like local tool results. Detect via content
       // shape (tool_result blocks) — parent_tool_use_id is NOT reliable: the

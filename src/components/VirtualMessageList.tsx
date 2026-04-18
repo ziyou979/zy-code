@@ -134,12 +134,12 @@ function computeStickyPromptText(msg: RenderableMessage): string | null {
   let raw: string | null = null;
   if (msg.type === 'user') {
     if (msg.isMeta || msg.isVisibleInTranscriptOnly) return null;
-    const block = msg.message.content[0];
+    const block = (msg.message.content[0] as any);
     if (block?.type !== 'text') return null;
     raw = block.text;
-  } else if (msg.type === 'attachment' && msg.attachment.type === 'queued_command' && msg.attachment.commandMode !== 'task-notification' && !msg.attachment.isMeta) {
-    const p = msg.attachment.prompt;
-    raw = typeof p === 'string' ? p : p.flatMap(b => b.type === 'text' ? [b.text] : []).join('\n');
+  } else if ((msg as any).type === 'attachment' && (msg as any).attachment.type === 'queued_command' && (msg as any).attachment.commandMode !== 'task-notification' && !(msg as any).attachment.isMeta) {
+    const p = (msg as any).attachment.prompt;
+    raw = typeof p === 'string' ? p : p.flatMap((b: any) => b.type === 'text' ? [b.text] : []).join('\n');
   }
   if (raw === null) return null;
   const t = stripSystemReminders(raw);
@@ -257,7 +257,7 @@ export function VirtualMessageList({
   useImperativeHandle(cursorNavRef, (): MessageActionsNav => {
     const select = (m: NavigableMessage) => setCursor?.({
       uuid: m.uuid,
-      msgType: m.type,
+      msgType: m.type as any,
       expanded: false,
       toolName: toolCallOf(m)?.name
     });

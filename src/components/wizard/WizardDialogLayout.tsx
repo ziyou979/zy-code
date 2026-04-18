@@ -23,7 +23,7 @@ export function WizardDialogLayout({
     title: providerTitle,
     showStepCounter,
     goBack
-  } = useWizard();
+  } = useWizard() as any;
   const title = titleOverride || providerTitle || "Wizard";
   const stepSuffix = showStepCounter !== false ? ` (${currentStepIndex + 1}/${totalSteps})` : "";
   return <>{<Dialog title={`${title}${stepSuffix}`} subtitle={subtitle} onCancel={goBack} color={color} hideInputGuide={true} isCancelActive={false}>{children}</Dialog>}{<WizardNavigationFooter instructions={footerText} />}</>;

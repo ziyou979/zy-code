@@ -52,7 +52,7 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
 
   // Reuse pre-fetched profile if available, otherwise fetch fresh
   const profile =
-    tokens.profile ?? (await getOauthProfileFromOauthToken(tokens.accessToken))
+    (tokens as any).profile ?? (await getOauthProfileFromOauthToken(tokens.accessToken))
   if (profile) {
     storeOAuthAccountInfo({
       accountUuid: profile.account.uuid,
@@ -66,12 +66,12 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
         profile.organization.subscription_created_at ?? undefined,
       accountCreatedAt: profile.account.created_at,
     })
-  } else if (tokens.tokenAccount) {
+  } else if ((tokens as any).tokenAccount) {
     // Fallback to token exchange account data when profile endpoint fails
     storeOAuthAccountInfo({
-      accountUuid: tokens.tokenAccount.uuid,
-      emailAddress: tokens.tokenAccount.emailAddress,
-      organizationUuid: tokens.tokenAccount.organizationUuid,
+      accountUuid: (tokens as any).tokenAccount.uuid,
+      emailAddress: (tokens as any).tokenAccount.emailAddress,
+      organizationUuid: (tokens as any).tokenAccount.organizationUuid,
     })
   }
 
@@ -91,7 +91,7 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
     logForDebugging(String(err), { level: 'error' }),
   )
 
-  if (shouldUseZyAIAuth(tokens.scopes)) {
+  if (shouldUseZyAIAuth((tokens as any).scopes)) {
     await fetchAndStoreZyCodeFirstTokenDate().catch(err =>
       logForDebugging(String(err), { level: 'error' }),
     )
@@ -157,8 +157,8 @@ export async function authLogin({
       await installOAuthTokens(tokens)
 
       const orgResult = await validateForceLoginOrg()
-      if (!orgResult.valid) {
-        process.stderr.write(orgResult.message + '\n')
+      if (!(orgResult as any).valid) {
+        process.stderr.write((orgResult as any).message + '\n')
         process.exit(1)
       }
 
@@ -170,7 +170,7 @@ export async function authLogin({
       })
 
       logEvent('tengu_oauth_success', {
-        loginWithZyAi: shouldUseZyAIAuth(tokens.scopes),
+        loginWithZyAi: shouldUseZyAIAuth((tokens as any).scopes),
       })
       process.stdout.write('Login successful.\n')
       process.exit(0)
@@ -207,8 +207,8 @@ export async function authLogin({
     await installOAuthTokens(result)
 
     const orgResult = await validateForceLoginOrg()
-    if (!orgResult.valid) {
-      process.stderr.write(orgResult.message + '\n')
+    if (!(orgResult as any).valid) {
+      process.stderr.write((orgResult as any).message + '\n')
       process.exit(1)
     }
 

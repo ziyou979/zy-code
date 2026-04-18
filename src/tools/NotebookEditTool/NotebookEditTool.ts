@@ -312,7 +312,7 @@ export const NotebookEditTool = buildTool({
       await fileHistoryTrackEdit(
         updateFileHistoryState,
         fullPath,
-        parentMessage.uuid,
+        parentMessage.uuid as any,
       )
     }
 
@@ -376,7 +376,7 @@ export const NotebookEditTool = buildTool({
         }
       }
 
-      const language = notebook.metadata.language_info?.name ?? 'python'
+      const language = (notebook.metadata.language_info as any)?.name ?? 'python'
       let new_cell_id = undefined
       if (
         notebook.nbformat > 4 ||
@@ -396,20 +396,20 @@ export const NotebookEditTool = buildTool({
         let new_cell: NotebookCell
         if (cell_type === 'markdown') {
           new_cell = {
-            cell_type: 'markdown',
+            cellType: 'markdown' as any,
             id: new_cell_id,
             source: new_source,
-            metadata: {},
-          }
+            metadata: {} as any,
+          } as any
         } else {
           new_cell = {
-            cell_type: 'code',
+            cellType: 'code' as any,
             id: new_cell_id,
             source: new_source,
-            metadata: {},
-            execution_count: null,
+            metadata: {} as any,
+            execution_count: null as any,
             outputs: [],
-          }
+          } as any
         }
         // Insert the new cell
         notebook.cells.splice(cellIndex, 0, new_cell)
@@ -417,13 +417,13 @@ export const NotebookEditTool = buildTool({
         // Find the specified cell
         const targetCell = notebook.cells[cellIndex]! // validateInput ensures cell_number is in bounds
         targetCell.source = new_source
-        if (targetCell.cell_type === 'code') {
+        if ((targetCell as any).cellType === 'code') {
           // Reset execution count and clear outputs since cell was modified
-          targetCell.execution_count = null
+          (targetCell as any).execution_count = null
           targetCell.outputs = []
         }
-        if (cell_type && cell_type !== targetCell.cell_type) {
-          targetCell.cell_type = cell_type
+        if (cell_type && cell_type !== (targetCell as any).cellType) {
+          (targetCell as any).cellType = cell_type
         }
       }
       // Write back to file

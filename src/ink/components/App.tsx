@@ -165,7 +165,7 @@ export default class App extends PureComponent<Props, State> {
           internal_eventEmitter: this.internal_eventEmitter,
           internal_querier: this.querier
         }}>
-            <TerminalFocusProvider>
+            <TerminalFocusProvider isTerminalFocused={false} terminalFocusState={'unfocused' as any}>
               <ClockProvider>
                 <CursorDeclarationContext.Provider value={this.props.onCursorDeclaration ?? (() => {})}>
                   {this.state.error ? <ErrorOverview error={this.state.error as Error} /> : this.props.children}

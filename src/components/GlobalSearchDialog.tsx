@@ -34,10 +34,12 @@ const MAX_TOTAL_MATCHES = 500;
  * Global Search dialog (ctrl+shift+f / cmd+shift+f).
  * Debounced ripgrep search across the workspace.
  */
+// @ts-ignore
 export function GlobalSearchDialog({
   onDone,
   onInsert
 }) {
+  // @ts-ignore
   useRegisterOverlay("global-search");
   const {
     columns,

@@ -48,31 +48,31 @@ export function DiffFileList({
   const hasMoreBelow = endIndex < files.length;
   const needsPagination = files.length > MAX_VISIBLE_FILES;
   const BoxComponent = Box;
-  const mappedItems = visibleFiles.map((file, index) => <FileItem key={file.path} file={file} isSelected={startIndex + index === selectedIndex} maxPathWidth={maxPathWidth} />);
+  const mappedItems = visibleFiles.map((file, index) => <FileItem key={file.path} file={file as any} isSelected={startIndex + index === selectedIndex as any} maxPathWidth={maxPathWidth as any} />);
   return <BoxComponent flexDirection={"column"}>{needsPagination && <Text dimColor={true}>{hasMoreAbove ? ` ↑ ${startIndex} more ${plural(startIndex, "file")}` : " "}</Text>}{mappedItems}{needsPagination && <Text dimColor={true}>{hasMoreBelow ? ` ↓ ${files.length - endIndex} more ${plural(files.length - endIndex, "file")}` : " "}</Text>}</BoxComponent>;
 }
 function FileItem({
   file,
   isSelected,
   maxPathWidth
-}: Props) {
-  const displayPath = truncateStartToWidth(file.path, maxPathWidth);
+}: any) {
+  const displayPath = truncateStartToWidth((file as any).path, maxPathWidth);
   const pointer = isSelected ? figures.pointer + " " : "  ";
   const line = `${pointer}${displayPath}`;
-  return <Box flexDirection="row">{<Text bold={isSelected} color={isSelected ? "background" : undefined} inverse={isSelected}>{line}</Text>}{<Box flexGrow={1} />}{<FileStats file={file} isSelected={isSelected} />}</Box>;
+  return <Box flexDirection="row">{<Text bold={isSelected} color={isSelected ? "background" : undefined} inverse={isSelected}>{line}</Text>}{<Box flexGrow={1} />}{<FileStats file={file as any} isSelected={isSelected as any} />}</Box>;
 }
 function FileStats({
   file,
   isSelected
-}: Props) {
-  if (file.isUntracked) {
+}: any) {
+  if ((file as any).isUntracked) {
     return <Text dimColor={!isSelected} italic={true}>untracked</Text>;
   }
-  if (file.isBinary) {
+  if ((file as any).isBinary) {
     return <Text dimColor={!isSelected} italic={true}>Binary file</Text>;
   }
-  if (file.isLargeFile) {
+  if ((file as any).isLargeFile) {
     return <Text dimColor={!isSelected} italic={true}>Large file modified</Text>;
   }
-  return <Text>{file.linesAdded > 0 && <Text color="diffAddedWord" bold={isSelected}>+{file.linesAdded}</Text>}{file.linesAdded > 0 && file.linesRemoved > 0 && " "}{file.linesRemoved > 0 && <Text color="diffRemovedWord" bold={isSelected}>-{file.linesRemoved}</Text>}{file.isTruncated && <Text dimColor={!isSelected}> (truncated)</Text>}</Text>;
+  return <Text>{(file as any).linesAdded > 0 && <Text color="diffAddedWord" bold={isSelected}>+{(file as any).linesAdded}</Text>}{(file as any).linesAdded > 0 && (file as any).linesRemoved > 0 && " "}{(file as any).linesRemoved > 0 && <Text color="diffRemovedWord" bold={isSelected}>-{(file as any).linesRemoved}</Text>}{(file as any).isTruncated && <Text dimColor={!isSelected}> (truncated)</Text>}</Text>;
 }

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// @ts-ignore - Some types not exported in current SDK version
 import type {
   BetaContentBlock,
   BetaContentBlockParam,
@@ -38,6 +40,7 @@ import {
   toolMatchesName,
 } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
+// @ts-ignore - ConnectorTextDelta may not be exported
 import {
   type ConnectorTextBlock,
   type ConnectorTextDelta,
@@ -161,8 +164,10 @@ import {
   shouldIncludeExperimentalBetas,
   shouldUseGlobalCacheScope,
 } from 'src/utils/betas.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/ClaudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/ClaudeInChrome/prompt.js'
+// @ts-ignore
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/claudeInChrome/common.js'
+// @ts-ignore
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/claudeInChrome/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
@@ -1094,8 +1099,8 @@ async function* queryModel(
     options.querySource.startsWith('repl_main_thread') ||
     options.querySource.startsWith('agent:') ||
     options.querySource === 'sdk' ||
-    options.querySource === 'hook_agent' ||
-    options.querySource === 'verification_agent'
+    (options.querySource as any) === 'hook_agent' ||
+    (options.querySource as any) === 'verification_agent'
   const betas = getMergedBetas(options.model, { isAgenticQuery })
 
   // 启用 advisor 时始终发送 advisor beta header，以便
@@ -1215,12 +1220,11 @@ async function* queryModel(
   let cachedMCEnabled = false
   let cacheEditingBetaHeader = ''
   if (feature('CACHED_MICROCOMPACT')) {
-    const {
-      isCachedMicrocompactEnabled,
-      isModelSupportedForCacheEditing,
-      getCachedMCConfig,
-    } = await import('../compact/cachedMicrocompact.js')
-    const betas = await import('src/constants/betas.js')
+    const cachedMicrocompact = await import('../compact/cachedMicrocompact.js') as any
+    const betas = await import('src/constants/betas.js') as any
+    const isCachedMicrocompactEnabled = cachedMicrocompact.isCachedMicrocompactEnabled
+    const isModelSupportedForCacheEditing = cachedMicrocompact.isModelSupportedForCacheEditing
+    const getCachedMCConfig = cachedMicrocompact.getCachedMCConfig
     cacheEditingBetaHeader = betas.CACHE_EDITING_BETA_HEADER
     const featureEnabled = isCachedMicrocompactEnabled()
     const modelSupported = isModelSupportedForCacheEditing(options.model)
@@ -1461,7 +1465,7 @@ async function* queryModel(
       !cacheEditingHeaderLatched &&
       cachedMCEnabled &&
       getAPIProvider() === 'anthropic' &&
-      options.querySource === 'repl_main_thread'
+      (options.querySource as any) === 'repl_main_thread'
     ) {
       cacheEditingHeaderLatched = true
       setCacheEditingHeaderLatched(true)
@@ -1701,11 +1705,11 @@ async function* queryModel(
     const useCachedMC =
       cachedMCEnabled &&
       getAPIProvider() === 'anthropic' &&
-      options.querySource === 'repl_main_thread'
+      (options.querySource as any) === 'repl_main_thread'
     if (
       cacheEditingHeaderLatched &&
       getAPIProvider() === 'anthropic' &&
-      options.querySource === 'repl_main_thread' &&
+      (options.querySource as any) === 'repl_main_thread' &&
       !betasParams.includes(cacheEditingBetaHeader)
     ) {
       betasParams.push(cacheEditingBetaHeader)

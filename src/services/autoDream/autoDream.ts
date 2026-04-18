@@ -225,7 +225,7 @@ ${sessionIds.map(id => `- ${id}`).join('\n')}`
         promptMessages: [createUserMessage({ content: prompt })],
         cacheSafeParams: createCacheSafeParams(context),
         canUseTool: createAutoMemCanUseTool(memoryRoot),
-        querySource: 'auto_dream',
+        querySource: 'auto_dream' as any,
         forkLabel: 'auto_dream',
         skipTranscript: true,
         overrides: { abortController },
@@ -243,7 +243,8 @@ ${sessionIds.map(id => `- ${id}`).join('\n')}`
       ) {
         appendSystemMessage({
           ...createMemorySavedMessage(dreamState.filesTouched),
-          verb: 'Improved',
+          // @ts-ignore
+          verb: 'Improved' as any,
         })
       }
       logForDebugging(

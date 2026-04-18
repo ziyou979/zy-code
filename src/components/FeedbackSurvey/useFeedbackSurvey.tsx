@@ -40,7 +40,7 @@ const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
 const DEFAULT_TRANSCRIPT_ASK_CONFIG: TranscriptAskConfig = {
   probability: 0
 };
-export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submitCount: number, surveyType: FeedbackSurveyType = 'session', hasActivePrompt: boolean = false): {
+export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submitCount: number, surveyType: FeedbackSurveyType = 'session' as any, hasActivePrompt: boolean = false): {
   state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted';
   lastResponse: FeedbackSurveyResponse | null;
   handleSelect: (selected: FeedbackSurveyResponse) => boolean;
@@ -117,13 +117,13 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     void logOTelEvent('feedback_survey', {
       event_type: 'responded',
       appearance_id: appearanceId_0,
-      response: selected,
+      response: selected as any,
       survey_type: surveyType
     });
   }, [updateLastShownTime, surveyType]);
   const shouldShowTranscriptPrompt = useCallback((selected_0: FeedbackSurveyResponse) => {
     // Only bad and good ratings trigger the transcript ask
-    if (selected_0 !== 'bad' && selected_0 !== 'good') {
+    if ((selected_0 as any) !== 'bad' && (selected_0 as any) !== 'good') {
       return false;
     }
 
@@ -138,11 +138,11 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     }
 
     // Probability gate from GrowthBook config (separate per rating)
-    const probability = selected_0 === 'bad' ? badTranscriptAskConfig.probability : goodTranscriptAskConfig.probability;
+    const probability = (selected_0 as any) === 'bad' ? badTranscriptAskConfig.probability : goodTranscriptAskConfig.probability;
     return Math.random() <= probability;
   }, [badTranscriptAskConfig.probability, goodTranscriptAskConfig.probability]);
   const onTranscriptPromptShown = useCallback((appearanceId_1: string, surveyResponse: FeedbackSurveyResponse) => {
-    const trigger: TranscriptShareTrigger = surveyResponse === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey';
+    const trigger: TranscriptShareTrigger = (surveyResponse as any) === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey' as any;
     logEvent('tengu_feedback_survey_event', {
       event_type: 'transcript_prompt_appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -157,7 +157,7 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     });
   }, [surveyType]);
   const onTranscriptSelect = useCallback(async (appearanceId_2: string, selected_1: TranscriptShareResponse, surveyResponse_0: FeedbackSurveyResponse | null): Promise<boolean> => {
-    const trigger_0: TranscriptShareTrigger = surveyResponse_0 === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey';
+    const trigger_0: TranscriptShareTrigger = (surveyResponse_0 as any) === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey';
     logEvent('tengu_feedback_survey_event', {
       event_type: `transcript_share_${selected_1}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

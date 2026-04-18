@@ -15,7 +15,7 @@ export function DescriptionStep() {
     updateWizardData,
     wizardData
   } = useWizard();
-  const [whenToUse, setWhenToUse] = useState(wizardData.whenToUse || "");
+  const [whenToUse, setWhenToUse] = useState<string>((wizardData.whenToUse || "") as string);
   const [cursorOffset, setCursorOffset] = useState(whenToUse.length);
   const [error, setError] = useState(null);
   useKeybinding("confirm:no", goBack, {

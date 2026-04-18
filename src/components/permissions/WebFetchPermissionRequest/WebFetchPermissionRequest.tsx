@@ -43,7 +43,7 @@ export function WebFetchPermissionRequest({
   const unaryEvent = {
     completion_type: "tool_use_single",
     language_name: "none"
-  };
+  } as any;
   usePermissionRequestLogging(toolUseConfirm, unaryEvent);
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions();
   const result = [{
@@ -52,7 +52,7 @@ export function WebFetchPermissionRequest({
   }];
   if (showAlwaysAllowOptions) {
     result.push({
-      label: <Text>{tSync('permission.yesDontAskAgainDomain', { domain: hostname })}</Text>,
+      label: <Text>{tSync('permission.yesDontAskAgainDomain', { domain: hostname })}</Text> as any,
       value: "yes-dont-ask-again-domain"
     });
   }

@@ -104,7 +104,7 @@ export function clearSessionCaches(
   // Dynamic import to preserve dead code elimination for COMMIT_ATTRIBUTION feature flag
   if (feature('COMMIT_ATTRIBUTION')) {
     void import('../../utils/attributionHooks.js').then(
-      ({ clearAttributionCaches }) => clearAttributionCaches(),
+      (mod: any) => mod.clearAttributionCaches(),
     )
   }
   // Clear repository detection caches

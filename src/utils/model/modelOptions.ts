@@ -58,7 +58,7 @@ function getCustomSonnetOption(): ModelOption | undefined {
 function getSonnet46Option(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
-    value: is3P ? getModelStrings().sonnet46 : 'sonnet',
+    value: is3P ? (getModelStrings() as any).sonnet46 : 'sonnet',
     label: 'Sonnet',
     description: `Sonnet 4.6 · Best for everyday tasks${is3P ? '' : ` · ${formatModelPricing(COST_TIER_3_15)}`}`,
     descriptionForModel: 'Sonnet 4.6 - best for everyday tasks. Generally recommended for most coding tasks'
@@ -89,7 +89,7 @@ function getOpus41Option(): ModelOption {
 function getOpus46Option(fastMode = false): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
-    value: is3P ? getModelStrings().opus46 : 'opus',
+    value: is3P ? (getModelStrings() as any).opus46 : 'opus',
     label: 'Opus',
     description: `Opus 4.6 · Most capable for complex work${getOpus46PricingSuffix(fastMode)}`,
     descriptionForModel: 'Opus 4.6 - most capable for complex work'
@@ -98,7 +98,7 @@ function getOpus46Option(fastMode = false): ModelOption {
 export function getSonnet46_1MOption(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
-    value: is3P ? getModelStrings().sonnet46 + '[1m]' : 'sonnet[1m]',
+    value: is3P ? (getModelStrings() as any).sonnet46 + '[1m]' : 'sonnet[1m]',
     label: 'Sonnet (1M context)',
     description: `Sonnet 4.6 for long sessions${is3P ? '' : ` · ${formatModelPricing(COST_TIER_3_15)}`}`,
     descriptionForModel: 'Sonnet 4.6 with 1M context window - for long sessions with large codebases'
@@ -107,7 +107,7 @@ export function getSonnet46_1MOption(): ModelOption {
 export function getOpus46_1MOption(fastMode = false): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
-    value: is3P ? getModelStrings().opus46 + '[1m]' : 'opus[1m]',
+    value: is3P ? (getModelStrings() as any).opus46 + '[1m]' : 'opus[1m]',
     label: 'Opus (1M context)',
     description: `Opus 4.6 for long sessions${getOpus46PricingSuffix(fastMode)}`,
     descriptionForModel: 'Opus 4.6 with 1M context window - for long sessions with large codebases'
@@ -147,7 +147,7 @@ function getHaiku35Option(): ModelOption {
 function getHaikuOption(): ModelOption {
   // Return correct Haiku option based on provider
   const haikuModel = getDefaultHaikuModel();
-  return haikuModel === getModelStrings().haiku45 ? getHaiku45Option() : getHaiku35Option();
+  return haikuModel === (getModelStrings() as any).haiku45 ? getHaiku45Option() : getHaiku35Option();
 }
 function getMaxOpusOption(fastMode = false): ModelOption {
   return {
@@ -174,7 +174,7 @@ export function getMaxOpus46_1MOption(fastMode = false): ModelOption {
 function getMergedOpus1MOption(fastMode = false): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
-    value: is3P ? getModelStrings().opus46 + '[1m]' : 'opus[1m]',
+    value: is3P ? (getModelStrings() as any).opus46 + '[1m]' : 'opus[1m]',
     label: 'Opus (1M context)',
     description: `Opus 4.6 with 1M context · Most capable for complex work${!is3P && fastMode ? getOpus46PricingSuffix(fastMode) : ''}`,
     descriptionForModel: 'Opus 4.6 with 1M context - most capable for complex work'
@@ -213,6 +213,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
   }
   if (isInternalBuild()) {
     // Build options from antModels config
+    // @ts-ignore
     const antModelOptions: ModelOption[] = getAntModels().map(m => ({
       value: m.alias,
       label: m.label,

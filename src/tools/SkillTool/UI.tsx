@@ -77,12 +77,12 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
   const hiddenCount = progressMessages.length - displayedMessages.length;
   const {
     inProgressToolUseIDs
-  } = buildSubagentLookups(progressMessages.map(pm => pm.data));
+  } = buildSubagentLookups(progressMessages.map(pm => pm.data) as any);
   return <MessageResponse>
       <Box flexDirection="column">
         <SubAgentProvider>
-          {displayedMessages.map(progressMessage => <Box key={progressMessage.uuid} height={1} overflow="hidden">
-              <MessageComponent message={progressMessage.data.message} lookups={EMPTY_LOOKUPS} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} style="condensed" isTranscriptMode={false} isStatic={true} />
+          {displayedMessages.map((progressMessage: any) => <Box key={progressMessage.uuid} height={1} overflow="hidden">
+              <MessageComponent message={progressMessage.data.message as any} lookups={EMPTY_LOOKUPS} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} style="condensed" isTranscriptMode={false} isStatic={true} />
             </Box>)}
         </SubAgentProvider>
         {hiddenCount > 0 && <Text dimColor>

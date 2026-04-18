@@ -232,7 +232,7 @@ function List({
   getKey,
   renderItem,
   emptyText
-}: ListProps) {
+}: ListProps<any>) {
   if (visible.length === 0) {
     return <Box height={visibleCount} flexShrink={0}>{<Text dimColor={true}>{emptyText}</Text>}</Box>;
   }

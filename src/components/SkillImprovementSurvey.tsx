@@ -56,7 +56,7 @@ function SkillImprovementSurveyView({
       const lastChar = normalizeFullWidthDigits(inputValue.slice(-1));
       if (isValidInput(lastChar)) {
         setInputValue(inputValue.slice(0, -1));
-        onSelect(lastChar === "1" ? "good" : "dismissed");
+        onSelect((lastChar === "1" ? "good" : "dismissed") as any);
       }
     }
   }, [inputValue, onSelect, setInputValue]);

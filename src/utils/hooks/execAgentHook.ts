@@ -171,7 +171,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         systemContext: {},
         canUseTool: hasPermissionsToUseTool,
         toolUseContext: agentToolUseContext,
-        querySource: 'hook_agent',
+        querySource: 'hook_agent' as any,
       })) {
         // Process stream events to update response length in the spinner
         handleMessageFromStream(
@@ -213,7 +213,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           message.type === 'attachment' &&
           message.attachment.type === 'structured_output'
         ) {
-          const parsed = hookResponseSchema().safeParse(message.attachment.data)
+          const parsed = hookResponseSchema().safeParse((message.attachment as any).data)
           if (parsed.success) {
             structuredOutputResult = parsed.data
             logForDebugging(
@@ -299,7 +299,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
-        }),
+        }) as any,
       }
     } catch (error) {
       parentTimeoutSignal.removeEventListener('abort', onParentTimeout)
@@ -333,7 +333,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         stderr: `Error executing agent hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
-      }),
+      }) as any,
     }
   }
 }

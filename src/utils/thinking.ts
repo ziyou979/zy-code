@@ -4,7 +4,6 @@ import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
-import { getAPIProvider, providerHasCapability } from './model/providers.js'
 import { isInternalBuild } from './envUtils.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
@@ -96,6 +95,7 @@ export function modelSupportsThinking(model: string): boolean {
   // Check settings-based capabilities first
   if (modelHasCapability(model, 'thinking')) return true
   if (isInternalBuild()) {
+    // @ts-ignore
     if (resolveAntModel(model.toLowerCase())) {
       return true
     }

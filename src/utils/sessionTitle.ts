@@ -100,7 +100,7 @@ export async function generateSessionTitle(
       },
       signal,
       options: {
-        querySource: 'generate_session_title',
+        querySource: 'generate_session_title' as any,
         agents: [],
         // Reflect the actual session mode — this module is called from
         // both the SDK print path (non-interactive) and the CCR remote

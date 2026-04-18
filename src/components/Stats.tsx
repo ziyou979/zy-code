@@ -22,6 +22,7 @@ import { resolveThemeSetting } from '../utils/systemTheme.js';
 import { getTheme, themeColorToAnsi } from '../utils/theme.js';
 import { Pane } from './design-system/Pane.js';
 import { Tab, Tabs, useTabHeaderFocus } from './design-system/Tabs.js';
+import { isInternalBuild } from '../utils/envUtils.js';
 import { Spinner } from './Spinner.js';
 function formatPeakDay(dateStr: string): string {
   const date = new Date(dateStr);
@@ -99,7 +100,7 @@ function StatsContent({
 }: StatsContentProps) {
   const allTimeResult = use(allTimePromise);
   const [dateRange, setDateRange] = useState("all");
-  const [statsCache, setStatsCache] = useState({});
+  const [statsCache, setStatsCache] = useState({} as any);
   const [isLoadingFiltered, setIsLoadingFiltered] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
   const [copyStatus, setCopyStatus] = useState(null);
@@ -112,7 +113,7 @@ function StatsContent({
     }
     let cancelled = false;
     setIsLoadingFiltered(true);
-    aggregateZyCodeStatsForRange(dateRange).then(data => {
+    aggregateZyCodeStatsForRange(dateRange as any).then(data => {
       if (!cancelled) {
         setStatsCache(prev => ({
           ...prev,
@@ -149,10 +150,10 @@ function StatsContent({
       setActiveTab(prev_0 => prev_0 === "Overview" ? "Models" : "Overview");
     }
     if (input === "r" && !key.ctrl && !key.meta) {
-      setDateRange(getNextDateRange(dateRange));
+      setDateRange(getNextDateRange(dateRange as any));
     }
     if (key.ctrl && input === "s" && displayStats) {
-      handleScreenshot(displayStats, activeTab, setCopyStatus);
+      handleScreenshot(displayStats, activeTab as any, setCopyStatus);
     }
   });
   if (allTimeResult.type === "error") {
@@ -164,12 +165,12 @@ function StatsContent({
   if (!displayStats || !allTimeStats) {
     return <Box marginTop={1}><Spinner /><Text> Loading stats…</Text></Box>;
   }
-  return <Pane color="zy">{<Box flexDirection="row" gap={1} marginBottom={1}><Tabs title="" color="zy" defaultTab="Overview">{<Tab title="Overview"><OverviewTab stats={displayStats} allTimeStats={allTimeStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>}{<Tab title="Models"><ModelsTab stats={displayStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>}</Tabs></Box>}{<Box paddingLeft={2}><Text dimColor={true}>Esc to cancel · r to cycle dates · ctrl+s to copy{copyStatus ? ` · ${copyStatus}` : ""}</Text></Box>}</Pane>;
+  return <Pane color="zy">{<Box flexDirection="row" gap={1} marginBottom={1}><Tabs title="" color="zy" defaultTab="Overview">{<Tab title="Overview"><OverviewTab stats={displayStats} allTimeStats={allTimeStats} dateRange={dateRange as any} isLoading={isLoadingFiltered} /></Tab>}{<Tab title="Models"><ModelsTab stats={displayStats} dateRange={dateRange as any} isLoading={isLoadingFiltered} /></Tab>}</Tabs></Box>}{<Box paddingLeft={2}><Text dimColor={true}>Esc to cancel · r to cycle dates · ctrl+s to copy{copyStatus ? ` · ${copyStatus}` : ""}</Text></Box>}</Pane>;
 }
 function DateRangeSelector({
   dateRange,
   isLoading
-}: StatsContentProps) {
+}: any) {
   const t1 = DATE_RANGE_ORDER.map((range, i) => <Text key={range}>{i > 0 && <Text dimColor={true}> · </Text>}{range === dateRange ? <Text bold={true} color="zy">{DATE_RANGE_LABELS[range]}</Text> : <Text dimColor={true}>{DATE_RANGE_LABELS[range]}</Text>}</Text>);
   return <Box marginBottom={1} gap={1}>{<Box>{t1}</Box>}{isLoading && <Spinner />}</Box>;
 }
@@ -255,6 +256,7 @@ function OverviewTab({
         </Box>}
 
       {/* Date range selector */}
+      {/* @ts-ignore */}
       <DateRangeSelector dateRange={dateRange} isLoading={isLoading} />
 
       {/* Section 1: Usage */}
@@ -332,7 +334,7 @@ function OverviewTab({
       </Box>
 
       {/* Speculation time saved (ant-only) */}
-      {"external" === 'ant' && stats.totalSpeculationTimeSavedMs > 0 && <Box flexDirection="row" gap={4}>
+      {isInternalBuild() && stats.totalSpeculationTimeSavedMs > 0 && <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
               <Text wrap="truncate">
                 Speculation saved:{' '}
@@ -547,8 +549,8 @@ function ModelsTab({
     columns: terminalWidth
   } = useTerminalSize();
   const modelEntries = Object.entries(stats.modelUsage).sort((t0, t1) => {
-    const [, a] = t0;
-    const [, b] = t1;
+    const [, a]: [string, any] = t0;
+    const [, b]: [string, any] = t1;
     return b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens);
   });
   useInput((_input, key) => {
@@ -569,7 +571,7 @@ function ModelsTab({
     return <Box><Text color="subtle">No model usage data available</Text></Box>;
   }
   const totalTokens = modelEntries.reduce((sum, t0) => {
-    const [, usage] = t0;
+    const [, usage]: [string, any] = t0;
     return sum + usage.inputTokens + usage.outputTokens;
   }, 0);
   const chartOutput = generateTokenChart(stats.dailyModelTokens, modelEntries.map(t0 => {
@@ -583,15 +585,17 @@ function ModelsTab({
   const canScrollUp = scrollOffset > 0;
   const canScrollDown = scrollOffset < modelEntries.length - 4;
   const showScrollHint = modelEntries.length > 4;
-  const T0 = Box;
-  const t8 = rightModels.map(t7 => {
-    const [model_1, usage_1] = t7;
+  const StatsBox = Box;
+  const rightModelEntries = rightModels.map(entry => {
+    const [model_1, usage_1] = entry;
+    // @ts-ignore -- ModelEntry props may differ between builds
     return <ModelEntry key={model_1} model={model_1} usage={usage_1} totalTokens={totalTokens} />;
   });
-  return <Box flexDirection="column" marginTop={1}>{chartOutput && <Box flexDirection="column" marginBottom={1}><Text bold={true}>Tokens per Day</Text><Ansi>{chartOutput.chart}</Ansi><Text color="subtle">{chartOutput.xAxisLabels}</Text><Box>{chartOutput.legend.map((item, i) => <Text key={item.model}>{i > 0 ? " \xB7 " : ""}<Ansi>{item.coloredBullet}</Ansi> {item.model}</Text>)}</Box></Box>}{<DateRangeSelector dateRange={dateRange} isLoading={isLoading} />}<Box flexDirection="row" gap={4}><Box flexDirection="column" width={36}>{leftModels.map(t4 => {
-          const [model_0, usage_0] = t4;
+  return <Box flexDirection="column" marginTop={1}>{chartOutput && <Box flexDirection="column" marginBottom={1}><Text bold={true}>Tokens per Day</Text><Ansi>{chartOutput.chart}</Ansi><Text color="subtle">{chartOutput.xAxisLabels}</Text><Box>{chartOutput.legend.map((item, i) => <Text key={item.model}>{i > 0 ? " · " : ""}<Ansi>{item.coloredBullet}</Ansi> {item.model}</Text>)}</Box></Box>}{/* @ts-ignore */}<DateRangeSelector dateRange={dateRange} isLoading={isLoading} /><Box flexDirection="row" gap={4}><Box flexDirection="column" width={36}>{leftModels.map(entry => {
+          const [model_0, usage_0] = entry;
+          // @ts-ignore -- Type error in ModelEntry usage prop
           return <ModelEntry key={model_0} model={model_0} usage={usage_0} totalTokens={totalTokens} />;
-        })}</Box>{<T0 flexDirection={"column"} width={36}>{t8}</T0>}</Box>{showScrollHint && <Box marginTop={1}><Text color="subtle">{canScrollUp ? figures.arrowUp : " "}{" "}{canScrollDown ? figures.arrowDown : " "} {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{" "}{modelEntries.length} models (↑↓ to scroll)</Text></Box>}</Box>;
+        })}</Box>{<StatsBox flexDirection={"column"} width={36}>{rightModelEntries}</StatsBox>}</Box>{showScrollHint && <Box marginTop={1}><Text color="subtle">{canScrollUp ? figures.arrowUp : " "}{" "}{canScrollDown ? figures.arrowDown : " "} {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{" "}{modelEntries.length} models (↑↓ to scroll)</Text></Box>}</Box>;
 }
 type ModelEntryProps = {
   model: string;
@@ -609,10 +613,10 @@ function ModelEntry({
 }: ModelEntryProps) {
   const modelTokens = usage.inputTokens + usage.outputTokens;
   const percentage = (modelTokens / totalTokens * 100).toFixed(1);
-  const t3 = renderModelName(model);
-  const t7 = formatNumber(usage.inputTokens);
-  const t8 = formatNumber(usage.outputTokens);
-  return <Box flexDirection="column">{<Text>{figures.bullet} {<Text bold={true}>{t3}</Text>}{" "}{<Text color="subtle">({percentage}%)</Text>}</Text>}{<Text color="subtle">{"  "}In: {t7} · Out:{" "}{t8}</Text>}</Box>;
+  const displayName = renderModelName(model);
+  const formattedInput = formatNumber(usage.inputTokens);
+  const formattedOutput = formatNumber(usage.outputTokens);
+  return <Box flexDirection="column">{<Text>{figures.bullet} {<Text bold={true}>{displayName}</Text>}{" "}{<Text color="subtle">({percentage}%)</Text>}</Text>}{<Text color="subtle">{"  "}In: {formattedInput} · Out:{" "}{formattedOutput}</Text>}</Box>;
 }
 type ChartLegend = {
   model: string;
@@ -837,7 +841,7 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
   lines.push(row('Active days', activeDaysVal, 'Peak hour', peakHourVal));
 
   // Speculation time saved (ant-only)
-  if ("external" === 'ant' && stats.totalSpeculationTimeSavedMs > 0) {
+  if (isInternalBuild() && stats.totalSpeculationTimeSavedMs > 0) {
     const label = 'Speculation saved:'.padEnd(COL1_LABEL_WIDTH);
     lines.push(label + h(formatDuration(stats.totalSpeculationTimeSavedMs)));
   }

@@ -150,6 +150,7 @@ export class TaskOutput {
           entry.#totalBytes = bytesTotal
           entry.#onProgress(
             content.slice(last5Start),
+            // @ts-ignore
             content.slice(n100),
             totalLines,
             bytesTotal,

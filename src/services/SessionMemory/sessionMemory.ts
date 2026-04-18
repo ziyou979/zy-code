@@ -275,6 +275,7 @@ const extractSessionMemory = sequential(async function (
   const { messages, toolUseContext, querySource } = context
 
   // Only run session memory on main REPL thread
+  // @ts-ignore
   if (querySource !== 'repl_main_thread') {
     // Don't log this - it's expected for subagents, teammates, etc.
     return
@@ -319,6 +320,7 @@ const extractSessionMemory = sequential(async function (
     promptMessages: [createUserMessage({ content: userPrompt })],
     cacheSafeParams: createCacheSafeParams(context),
     canUseTool: createMemoryFileCanUseTool(memoryPath),
+    // @ts-ignore
     querySource: 'session_memory',
     forkLabel: 'session_memory',
     overrides: { readFileState: setupContext.readFileState },
@@ -427,6 +429,7 @@ export async function manuallyExtractSessionMemory(
         forkContextMessages: messages,
       },
       canUseTool: createMemoryFileCanUseTool(memoryPath),
+      // @ts-ignore
       querySource: 'session_memory',
       forkLabel: 'session_memory_manual',
       overrides: { readFileState: setupContext.readFileState },

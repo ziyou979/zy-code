@@ -32,7 +32,7 @@ export function effortLevelToSymbol(level: EffortLevel): string {
       return EFFORT_MEDIUM
     case 'high':
       return EFFORT_HIGH
-    case 'max':
+    case 'max' as any:
       return EFFORT_MAX
     default:
       // 防御性：level 可能来自远程配置。如果有未知值漏过，

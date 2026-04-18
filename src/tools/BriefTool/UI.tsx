@@ -74,6 +74,6 @@ export function AttachmentList({
   if (!attachments || attachments.length === 0) {
     return null;
   }
-  const t1 = attachments.map(att => <Box key={att.path} flexDirection="row"><Text dimColor={true}>{figures.pointerSmall} {att.isImage ? "[image]" : "[file]"}{" "}</Text><Text>{getDisplayPath(att.path)}</Text><Text dimColor={true}> ({formatFileSize(att.size)})</Text></Box>);
-  return <Box flexDirection="column" marginTop={1}>{t1}</Box>;
+  const attachmentItems = attachments.map(att => <Box key={att.path} flexDirection="row"><Text dimColor={true}>{figures.pointerSmall} {att.isImage ? "[image]" : "[file]"}{" "}</Text><Text>{getDisplayPath(att.path)}</Text><Text dimColor={true}> ({formatFileSize(att.size)})</Text></Box>);
+  return <Box flexDirection="column" marginTop={1}>{attachmentItems}</Box>;
 }

@@ -81,7 +81,7 @@ Your response must be a JSON object matching one of the following schemas:
           isNonInteractiveSession: true,
           hasAppendSystemPrompt: false,
           agents: [],
-          querySource: 'hook_prompt',
+          querySource: 'hook_prompt' as any,
           mcpTools: [],
           agentId: toolUseContext.agentId,
           outputFormat: {
@@ -126,7 +126,7 @@ Your response must be a JSON object matching one of the following schemas:
             stderr: 'JSON validation failed',
             stdout: fullResponse,
             exitCode: 1,
-          }),
+          }) as any,
         }
       }
 
@@ -146,7 +146,7 @@ Your response must be a JSON object matching one of the following schemas:
             stderr: `Schema validation failed: ${parsed.error.message}`,
             stdout: fullResponse,
             exitCode: 1,
-          }),
+          }) as any,
         }
       }
 
@@ -178,7 +178,7 @@ Your response must be a JSON object matching one of the following schemas:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
-        }),
+        }) as any,
       }
     } catch (error) {
       cleanupSignal()
@@ -205,7 +205,7 @@ Your response must be a JSON object matching one of the following schemas:
         stderr: `Error executing prompt hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
-      }),
+      }) as any,
     }
   }
 }

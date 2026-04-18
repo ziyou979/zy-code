@@ -28,6 +28,7 @@ import { getShellHistoryCompletion } from '../utils/suggestions/shellHistoryComp
 import { getSlackChannelSuggestions, hasSlackMcpServer } from '../utils/suggestions/slackChannelSuggestions.js';
 import { TEAM_LEAD_NAME } from '../utils/swarm/constants.js';
 import { applyFileSuggestion, findLongestCommonPrefix, onIndexBuildComplete, startBackgroundCacheRefresh } from './fileSuggestions.js';
+import { isTestEnv } from '../utils/envUtils.js';
 import { generateUnifiedSuggestions } from './unifiedSuggestions.js';
 
 // Unicode-aware character class for file path tokens:
@@ -492,7 +493,7 @@ export function useTypeahead({
   // subsequent tests in the shard. The subscriber still registers so
   // fileSuggestions tests that trigger a refresh directly work correctly.
   useEffect(() => {
-    if ("production" !== 'test') {
+    if (!isTestEnv()) {
       startBackgroundCacheRefresh();
     }
     return onIndexBuildComplete(() => {

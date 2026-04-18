@@ -19,7 +19,7 @@ export function GenerateStep(): ReactNode {
     goBack,
     goToStep,
     wizardData
-  } = useWizard<AgentWizardData>();
+  } = useWizard<AgentWizardData>() as any;
   const [prompt, setPrompt] = useState(wizardData.generationPrompt || '');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);

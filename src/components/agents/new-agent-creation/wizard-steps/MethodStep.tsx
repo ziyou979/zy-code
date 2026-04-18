@@ -12,7 +12,7 @@ export function MethodStep() {
     goBack,
     updateWizardData,
     goToStep
-  } = useWizard();
+  } = useWizard() as any;
   const methodOptions = [{
     label: "Generate with Zy (recommended)",
     value: "generate"

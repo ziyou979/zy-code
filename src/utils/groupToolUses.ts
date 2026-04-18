@@ -67,7 +67,7 @@ export function applyGrouping(
   // First pass: group tool uses by message.id + tool name
   const groups = new Map<
     string,
-    NormalizedAssistantMessage<BetaToolUseBlock>[]
+    NormalizedAssistantMessage[]
   >()
 
   for (const msg of messages) {
@@ -75,7 +75,7 @@ export function applyGrouping(
     if (info && toolsWithGrouping.has(info.toolName)) {
       const key = `${info.messageId}:${info.toolName}`
       const group = groups.get(key) ?? []
-      group.push(msg as NormalizedAssistantMessage<BetaToolUseBlock>)
+      group.push(msg as NormalizedAssistantMessage)
       groups.set(key, group)
     }
   }
@@ -83,7 +83,7 @@ export function applyGrouping(
   // Identify valid groups (2+ items) and collect their tool use IDs
   const validGroups = new Map<
     string,
-    NormalizedAssistantMessage<BetaToolUseBlock>[]
+    NormalizedAssistantMessage[]
   >()
   const groupedToolUseIds = new Set<string>()
 
@@ -146,14 +146,14 @@ export function applyGrouping(
 
           const groupedMessage: GroupedToolUseMessage = {
             type: 'grouped_tool_use',
-            toolName: info.toolName,
-            messages: group,
-            results,
-            displayMessage: firstMsg,
+            toolName: info.toolName as any,
+            messages: group as any,
+            results: results as any,
+            displayMessage: firstMsg as any,
             uuid: `grouped-${firstMsg.uuid}`,
             timestamp: firstMsg.timestamp,
             messageId: info.messageId,
-          }
+          } as any
           result.push(groupedMessage)
         }
         continue

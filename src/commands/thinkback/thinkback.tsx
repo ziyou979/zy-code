@@ -17,6 +17,7 @@ import { pathExists } from '../../utils/file.js';
 import { logError } from '../../utils/log.js';
 import { getPlatform } from '../../utils/platform.js';
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
+import { isInternalBuild } from '../../utils/envUtils.js';
 import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js';
 import { addMarketplaceSource, clearMarketplacesCache, loadKnownMarketplacesConfig, refreshMarketplace } from '../../utils/plugins/marketplaceManager.js';
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js';
@@ -28,10 +29,10 @@ const INTERNAL_MARKETPLACE_NAME = 'zy-code-marketplace';
 const INTERNAL_MARKETPLACE_REPO = 'anthropics/zy-code-marketplace';
 const OFFICIAL_MARKETPLACE_REPO = 'anthropics/zy-plugins-official';
 function getMarketplaceName(): string {
-  return "external" === 'ant' ? INTERNAL_MARKETPLACE_NAME : OFFICIAL_MARKETPLACE_NAME;
+  return isInternalBuild() ? INTERNAL_MARKETPLACE_NAME : OFFICIAL_MARKETPLACE_NAME;
 }
 function getMarketplaceRepo(): string {
-  return "external" === 'ant' ? INTERNAL_MARKETPLACE_REPO : OFFICIAL_MARKETPLACE_REPO;
+  return isInternalBuild() ? INTERNAL_MARKETPLACE_REPO : OFFICIAL_MARKETPLACE_REPO;
 }
 function getPluginId(): string {
   return `thinkback@${getMarketplaceName()}`;

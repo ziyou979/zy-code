@@ -135,9 +135,9 @@ export async function runFilePersistence(
       files: [],
       failed: [
         {
-          filename: outputsDir,
+          filename: outputsDir as any,
           error: errorMessage(error),
-        },
+        } as any,
       ],
     }
   }
@@ -181,9 +181,9 @@ async function executeBYOCPersistence(
       files: [],
       failed: [
         {
-          filename: outputsDir,
+          filename: outputsDir as any,
           error: `Too many files modified (${modifiedFiles.length}). Maximum: ${FILE_COUNT_LIMIT}.`,
-        },
+        } as any,
       ],
     }
   }
@@ -218,14 +218,14 @@ async function executeBYOCPersistence(
   for (const result of results) {
     if (result.success) {
       persistedFiles.push({
-        filename: result.path,
-        file_id: result.fileId,
-      })
+        filename: result.path as any,
+        file_id: result.fileId as any,
+      } as any)
     } else {
       failedFiles.push({
-        filename: result.path,
-        error: result.error,
-      })
+        filename: result.path as any,
+        error: (result as any).error,
+      } as any)
     }
   }
 

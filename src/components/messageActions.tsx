@@ -26,13 +26,13 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
     case 'user':
       {
         if (msg.isMeta || msg.isCompactSummary) return false;
-        const b = msg.message.content[0];
+        const b = (msg.message.content[0] as any);
         if (b?.type !== 'text') return false;
         // 中断等——合成的，不是用户创作的。
-        if (SYNTHETIC_MESSAGES.has(b.text)) return false;
+        if (SYNTHETIC_MESSAGES.has((b as any).text)) return false;
         // 与 VirtualMessageList sticky-prompt 相同的过滤器：XML 包装的
         //（命令扩展、bash 输出等）不是真正的提示。
-        return !stripSystemReminders(b.text).startsWith('<');
+        return !stripSystemReminders((b as any).text).startsWith('<');
       }
     case 'system':
       // biome-ignore lint/nursery/useExhaustiveSwitchCases: blocklist — fallthrough return-true is the design
@@ -43,7 +43,7 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
         case 'memory_saved':
         case 'agents_killed':
         case 'away_summary':
-        case 'thinking':
+        case 'thinking' as any:
           return false;
       }
       return true;
@@ -66,8 +66,7 @@ type PrimaryInput = {
   extract: (input: Record<string, unknown>) => string | undefined;
 };
 const str = (k: string) => (i: Record<string, unknown>) => typeof i[k] === 'string' ? i[k] : undefined;
-let PRIMARY_INPUT;
-PRIMARY_INPUT = {
+const PRIMARY_INPUT = {
   Read: {
     label: 'path',
     extract: str('file_path')
@@ -131,9 +130,9 @@ export function toolCallOf(msg: NavigableMessage): {
     };
   }
   if (msg.type === 'grouped_tool_use') {
-    const b = msg.messages[0]?.message.content[0];
+    const b = (msg as any).messages[0]?.message.content[0];
     if (b?.type === 'tool_use') return {
-      name: msg.toolName,
+      name: (msg as any).toolName,
       input: b.input as Record<string, unknown>
     };
   }
@@ -166,7 +165,7 @@ export const MESSAGE_ACTIONS = [action({
   key: 'enter',
   label: 'edit',
   types: ['user'],
-  run: (m, c) => void c.edit(m)
+  run: (m, c) => void c.edit(m as any)
 }), action({
   key: 'c',
   label: 'copy',
@@ -309,20 +308,20 @@ export function copyTextOf(msg: NavigableMessage): string {
   switch (msg.type) {
     case 'user':
       {
-        const b = msg.message.content[0];
-        return b?.type === 'text' ? stripSystemReminders(b.text) : '';
+        const b = (msg.message.content[0] as any);
+        return (b as any)?.type === 'text' ? stripSystemReminders((b as any).text) : '';
       }
     case 'assistant':
       {
-        const b = msg.message.content[0];
-        if (b?.type === 'text') return b.text;
+        const b = (msg.message.content[0] as any);
+        if ((b as any)?.type === 'text') return (b as any).text;
         const tc = toolCallOf(msg);
         return tc ? PRIMARY_INPUT[tc.name]?.extract(tc.input) ?? '' : '';
       }
     case 'grouped_tool_use':
-      return msg.results.map(toolResultText).filter(Boolean).join('\n\n');
+      return (msg as any).results.map(toolResultText).filter(Boolean).join('\n\n');
     case 'collapsed_read_search':
-      return msg.messages.flatMap(m => m.type === 'user' ? [toolResultText(m)] : m.type === 'grouped_tool_use' ? m.results.map(toolResultText) : []).filter(Boolean).join('\n\n');
+      return (msg as any).messages.flatMap((m: any) => m.type === 'user' ? [toolResultText(m)] : m.type === 'grouped_tool_use' ? m.results.map(toolResultText) : []).filter(Boolean).join('\n\n');
     case 'system':
       if ('content' in msg) return msg.content;
       if ('error' in msg) return String(msg.error);
@@ -331,8 +330,8 @@ export function copyTextOf(msg: NavigableMessage): string {
       {
         const a = msg.attachment;
         if (a.type === 'queued_command') {
-          const p = a.prompt;
-          return typeof p === 'string' ? p : p.flatMap(b => b.type === 'text' ? [b.text] : []).join('\n');
+          const p = (a as any).prompt;
+          return typeof p === 'string' ? p : p.flatMap((b: any) => b.type === 'text' ? [b.text] : []).join('\n');
         }
         return `[${a.type}]`;
       }

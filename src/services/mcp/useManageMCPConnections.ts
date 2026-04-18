@@ -21,12 +21,12 @@ import type {
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fetchMcpSkillsForClient = feature('MCP_SKILLS')
   ? (
-      require('../../skills/mcpSkills.js') as typeof import('../../skills/mcpSkills.js')
+      require('../../skills/mcpSkills.js') as any
     ).fetchMcpSkillsForClient
   : null
 const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? (
-      require('../skillSearch/localSearch.js') as typeof import('../skillSearch/localSearch.js')
+      require('../skillSearch/localSearch.js') as any
     ).clearSkillIndexCache
   : null
 
@@ -525,7 +525,8 @@ export function useManageMCPConnections(
                       value: wrapChannelMessage(client.name, content, meta),
                       priority: 'next',
                       isMeta: true,
-                      origin: { kind: 'channel', server: client.name },
+                      // @ts-ignore
+                      origin: { kind: 'channel', server: client.name } as any,
                       skipSlashCommands: true,
                     })
                   },

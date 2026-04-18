@@ -19,7 +19,7 @@ import { runWithAgentContext } from '../../utils/agentContext.js';
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
 import { getCwd, runWithCwdOverride } from '../../utils/cwd.js';
 import { logForDebugging } from '../../utils/debug.js';
-import { isEnvTruthy } from '../../utils/envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
 import { AbortError, errorMessage, toError } from '../../utils/errors.js';
 import type { CacheSafeParams } from '../../utils/forkedAgent.js';
 import { lazySchema } from '../../utils/lazySchema.js';
@@ -96,7 +96,7 @@ const fullInputSchema = lazySchema(() => {
     mode: permissionModeSchema().optional().describe('Permission mode for spawned teammate (e.g., "plan" to require plan approval).')
   });
   return baseInputSchema().merge(multiAgentInputSchema).extend({
-    isolation: ("external" === 'ant' ? z.enum(['worktree', 'remote']) : z.enum(['worktree'])).optional().describe("external" === 'ant' ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the agent in a remote CCR environment (always runs in background).' : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.'),
+    isolation: (isInternalBuild() ? z.enum(['worktree', 'remote']) : z.enum(['worktree'])).optional().describe(isInternalBuild() ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the agent in a remote CCR environment (always runs in background).' : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.'),
     cwd: z.string().optional().describe('Absolute path to run the agent in. Overrides the working directory for all filesystem and shell operations within this agent. Mutually exclusive with isolation: "worktree".')
   });
 });
@@ -432,10 +432,10 @@ export const AgentTool = buildTool({
 
     // Remote isolation: delegate to CCR. Gated ant-only — the guard enables
     // dead code elimination of the entire block for external builds.
-    if ("external" === 'ant' && effectiveIsolation === 'remote') {
+    if (isInternalBuild() && effectiveIsolation === 'remote') {
       const eligibility = await checkRemoteAgentEligibility();
       if (!eligibility.eligible) {
-        const reasons = eligibility.errors.map(formatPreconditionError).join('\n');
+        const reasons = (eligibility as any).errors.map(formatPreconditionError).join('\n');
         throw new Error(`Cannot launch remote agent:\n${reasons}`);
       }
       let bundleFailHint: string | undefined;
@@ -499,8 +499,8 @@ export const AgentTool = buildTool({
         // Fallback: recompute. May diverge from parent's cached bytes if
         // GrowthBook state changed between parent turn-start and fork spawn.
         const mainThreadAgentDefinition = appState.agent ? appState.agentDefinitions.activeAgents.find(a => a.agentType === appState.agent) : undefined;
-        const additionalWorkingDirectories = Array.from(appState.toolPermissionContext.additionalWorkingDirectories.keys());
-        const defaultSystemPrompt = await getSystemPrompt(toolUseContext.options.tools, toolUseContext.options.mainLoopModel, additionalWorkingDirectories, toolUseContext.options.mcpClients);
+        const additionalWorkingDirectories = Array.from((appState.toolPermissionContext as any).additionalWorkingDirectories.keys());
+        const defaultSystemPrompt = await getSystemPrompt(toolUseContext.options.tools, toolUseContext.options.mainLoopModel, additionalWorkingDirectories as string[], toolUseContext.options.mcpClients);
         forkParentSystemPrompt = buildEffectiveSystemPrompt({
           mainThreadAgentDefinition,
           toolUseContext,
@@ -512,7 +512,7 @@ export const AgentTool = buildTool({
       promptMessages = buildForkedMessages(prompt, assistantMessage);
     } else {
       try {
-        const additionalWorkingDirectories = Array.from(appState.toolPermissionContext.additionalWorkingDirectories.keys());
+        const additionalWorkingDirectories = Array.from((appState.toolPermissionContext as any).additionalWorkingDirectories.keys());
 
         // All agents have getSystemPrompt - pass toolUseContext to all
         const agentPrompt = selectedAgent.getSystemPrompt({
@@ -522,7 +522,7 @@ export const AgentTool = buildTool({
         // Log agent memory loaded event for subagents
         if (selectedAgent.memory) {
           logEvent('tengu_agent_memory_loaded', {
-            ...("external" === 'ant' && {
+            ...(isInternalBuild() && {
               agent_type: selectedAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
             }),
             scope: selectedAgent.memory as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -531,7 +531,7 @@ export const AgentTool = buildTool({
         }
 
         // Apply environment details enhancement
-        enhancedSystemPrompt = await enhanceSystemPromptWithEnvDetails([agentPrompt], resolvedAgentModel, additionalWorkingDirectories);
+        enhancedSystemPrompt = await enhanceSystemPromptWithEnvDetails([agentPrompt], resolvedAgentModel, additionalWorkingDirectories as string[]);
       } catch (error) {
         logForDebugging(`Failed to get system prompt for agent ${selectedAgent.agentType}: ${errorMessage(error)}`);
       }
@@ -564,7 +564,7 @@ export const AgentTool = buildTool({
     // <task-notification> re-entry there is handled by the else branch
     // below (registerAsyncAgentTask + notifyOnCompletion).
     const assistantForceAsync = feature('KAIROS') ? appState.kairosEnabled : false;
-    const shouldRunAsync = (run_in_background === true || selectedAgent.background === true || isCoordinator || forceAsync || assistantForceAsync || (proactiveModule?.isProactiveActive() ?? false)) && !isBackgroundTasksDisabled;
+    const shouldRunAsync = (run_in_background === true || selectedAgent.background === true || isCoordinator || forceAsync || assistantForceAsync || ((proactiveModule as any)?.isProactiveActive() ?? false)) && !isBackgroundTasksDisabled;
     // Assemble the worker's tool pool independently of the parent's.
     // Workers always get their tools from assembleToolPool with their own
     // permission mode, so they aren't affected by the parent's tool
@@ -1062,12 +1062,12 @@ export const AgentTool = buildTool({
             } = raceResult;
             if (result.done) break;
             const message = result.value;
-            agentMessages.push(message);
+            agentMessages.push(message as any);
 
             // Emit task_progress for the VS Code subagent panel
-            updateProgressFromMessage(syncTracker, message, syncResolveActivity, toolUseContext.options.tools);
+            updateProgressFromMessage(syncTracker, message as any, syncResolveActivity, toolUseContext.options.tools);
             if (foregroundTaskId) {
-              const lastToolName = getLastToolUseName(message);
+              const lastToolName = getLastToolUseName(message as any);
               if (lastToolName) {
                 emitTaskProgress(syncTracker, foregroundTaskId, toolUseContext.toolUseId, description, agentStartTime, lastToolName);
                 // Keep AppState task.progress in sync when SDK summaries are
@@ -1081,26 +1081,26 @@ export const AgentTool = buildTool({
 
             // Forward bash_progress events from sub-agent to parent so the SDK
             // receives tool_progress events just as it does for the main agent.
-            if (message.type === 'progress' && (message.data.type === 'bash_progress' || message.data.type === 'powershell_progress') && onProgress) {
+            if ((message as any).type === 'progress' && ((message as any).data.type === 'bash_progress' || (message as any).data.type === 'powershell_progress') && onProgress) {
               onProgress({
-                toolUseID: message.toolUseID,
-                data: message.data
+                toolUseID: (message as any).toolUseID,
+                data: (message as any).data
               });
             }
-            if (message.type !== 'assistant' && message.type !== 'user') {
+            if ((message as any).type !== 'assistant' && (message as any).type !== 'user') {
               continue;
             }
 
             // Increment token count in spinner for assistant messages
             // Subagent streaming events are filtered out in runAgent.ts, so we
             // need to count tokens from completed messages here
-            if (message.type === 'assistant') {
-              const contentLength = getAssistantMessageContentLength(message);
+            if ((message as any).type === 'assistant') {
+              const contentLength = getAssistantMessageContentLength(message as any);
               if (contentLength > 0) {
                 toolUseContext.setResponseLength(len => len + contentLength);
               }
             }
-            const normalizedNew = normalizeMessages([message]);
+            const normalizedNew: any[] = normalizeMessages([message as any]) as any;
             for (const m of normalizedNew) {
               for (const content of m.message.content) {
                 if (content.type !== 'tool_use' && content.type !== 'tool_result') {
@@ -1112,7 +1112,7 @@ export const AgentTool = buildTool({
                   onProgress({
                     toolUseID: `agent_${assistantMessage.message.id}`,
                     data: {
-                      message: m,
+                      message: m as any,
                       type: 'agent_progress',
                       // prompt only needed on first progress message (UI.tsx:624
                       // reads progressMessages[0]). Omit here to avoid duplication.
@@ -1284,7 +1284,7 @@ export const AgentTool = buildTool({
     // Only route through auto mode classifier when in auto mode
     // In all other modes, auto-approve sub-agent generation
     // Note: "external" === 'ant' guard enables dead code elimination for external builds
-    if ("external" === 'ant' && appState.toolPermissionContext.mode === 'auto') {
+    if (isInternalBuild() && appState.toolPermissionContext.mode === 'auto') {
       return {
         behavior: 'passthrough',
         message: 'Agent tool requires permission to spawn sub-agents.'

@@ -173,7 +173,8 @@ function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
     entry =>
       entry.type === 'user' && !('isSidechain' in entry && entry.isSidechain),
   )
-  return countUserPromptsInMessages(nonSidechain)
+  // @ts-ignore
+  return countUserPromptsInMessages(nonSidechain as any)
 }
 
 /**
@@ -381,7 +382,9 @@ export async function getEnhancedPRAttribution(
   // squash commit body verbatim — trailer lines at the end become proper git
   // trailers on the squash commit.
   if (feature('COMMIT_ATTRIBUTION') && isInternal && attributionData) {
+    // @ts-ignore
     const { buildPRTrailers } = await import('./attributionTrailer.js')
+    // @ts-ignore
     const trailers = buildPRTrailers(attributionData, appState.attribution)
     const result = `${summary}\n\n${trailers.join('\n')}`
     logForDebugging(`PR Attribution: returning with trailers: ${result}`)

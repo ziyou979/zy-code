@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { Box, NoSelect, Text } from '../ink.js';

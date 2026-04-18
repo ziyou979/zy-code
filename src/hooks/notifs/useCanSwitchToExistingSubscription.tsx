@@ -10,6 +10,7 @@ const MAX_SHOW_COUNT = 3;
  * Hook to check if the user has a subscription on Console but isn't logged into it.
  */
 export function useCanSwitchToExistingSubscription() {
+  // @ts-ignore
   useStartupNotification(_temp2);
 }
 
@@ -44,10 +45,10 @@ async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {
   if (!profile) {
     return null;
   }
-  if (profile.account.has_Zy_max) {
+  if ((profile as any).account.has_Zy_max) {
     return 'Max';
   }
-  if (profile.account.has_Zy_pro) {
+  if ((profile as any).account.has_Zy_pro) {
     return 'Pro';
   }
   return null;

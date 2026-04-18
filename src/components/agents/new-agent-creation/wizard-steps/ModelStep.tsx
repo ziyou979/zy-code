@@ -18,5 +18,5 @@ export function ModelStep() {
     });
     goNext();
   };
-  return <WizardDialogLayout subtitle="Select model" footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><ModelSelector initialModel={wizardData.selectedModel} onComplete={handleComplete} onCancel={goBack} /></WizardDialogLayout>;
+  return <WizardDialogLayout subtitle="Select model" footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><ModelSelector initialModel={wizardData.selectedModel as any} onComplete={handleComplete} onCancel={goBack} /></WizardDialogLayout>;
 }

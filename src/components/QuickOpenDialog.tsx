@@ -29,6 +29,7 @@ export function QuickOpenDialog({
   onDone,
   onInsert
 }: Props) {
+  // @ts-ignore
   useRegisterOverlay("quick-open");
   const {
     columns,

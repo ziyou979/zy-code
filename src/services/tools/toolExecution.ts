@@ -404,7 +404,7 @@ export async function* runToolUse(
           },
         ],
         toolUseResult: `Error: No such tool available: ${toolName}`,
-        sourceToolAssistantUUID: assistantMessage.uuid,
+        sourceToolAssistantUUID: assistantMessage.uuid as any,
       }),
     }
     return
@@ -446,7 +446,7 @@ export async function* runToolUse(
         message: createUserMessage({
           content: [content],
           toolUseResult: CANCEL_MESSAGE,
-          sourceToolAssistantUUID: assistantMessage.uuid,
+          sourceToolAssistantUUID: assistantMessage.uuid as any,
         }),
       }
       return
@@ -483,7 +483,7 @@ export async function* runToolUse(
           },
         ],
         toolUseResult: detailedError,
-        sourceToolAssistantUUID: assistantMessage.uuid,
+        sourceToolAssistantUUID: assistantMessage.uuid as any,
       }),
     }
   }
@@ -678,7 +678,7 @@ async function checkPermissionsAndCallTool(
             },
           ],
           toolUseResult: `InputValidationError: ${parsedInput.error.message}`,
-          sourceToolAssistantUUID: assistantMessage.uuid,
+          sourceToolAssistantUUID: assistantMessage.uuid as any,
         }),
       },
     ]
@@ -731,7 +731,7 @@ async function checkPermissionsAndCallTool(
             },
           ],
           toolUseResult: `Error: ${isValidCall.message}`,
-          sourceToolAssistantUUID: assistantMessage.uuid,
+          sourceToolAssistantUUID: assistantMessage.uuid as any,
         }),
       },
     ]
@@ -829,7 +829,7 @@ async function checkPermissionsAndCallTool(
             preToolHookInfos.push({
               command: att.command,
               durationMs: att.durationMs,
-            })
+            } as any)
           }
         }
         break
@@ -859,7 +859,7 @@ async function checkPermissionsAndCallTool(
           message: createUserMessage({
             content: [createToolResultStopMessage(toolUseID)],
             toolUseResult: `Error: ${stopReason}`,
-            sourceToolAssistantUUID: assistantMessage.uuid,
+            sourceToolAssistantUUID: assistantMessage.uuid as any,
           }),
         })
         return resultingMessages
@@ -886,7 +886,7 @@ async function checkPermissionsAndCallTool(
           false,
           undefined,
           false,
-          'suggestion',
+          'suggestion' as any,
           undefined,
           'PreToolUse',
           preToolHookDurationMs,
@@ -1071,7 +1071,7 @@ async function checkPermissionsAndCallTool(
         content: messageContent,
         imagePasteIds: rejectImageIds,
         toolUseResult: `Error: ${errorMessage}`,
-        sourceToolAssistantUUID: assistantMessage.uuid,
+        sourceToolAssistantUUID: assistantMessage.uuid as any,
       }),
     })
 
@@ -1467,7 +1467,7 @@ async function checkPermissionsAndCallTool(
               ? undefined
               : toolUseResult,
           mcpMeta: toolUseContext.agentId ? undefined : mcpMeta,
-          sourceToolAssistantUUID: assistantMessage.uuid,
+          sourceToolAssistantUUID: assistantMessage.uuid as any,
         }),
         contextModifier: toolContextModifier
           ? {
@@ -1513,7 +1513,7 @@ async function checkPermissionsAndCallTool(
             postToolHookInfos.push({
               command: att.command,
               durationMs: att.durationMs,
-            })
+            } as any)
           }
         }
       } else {
@@ -1529,7 +1529,7 @@ async function checkPermissionsAndCallTool(
             postToolHookInfos.push({
               command: att.command,
               durationMs: att.durationMs,
-            })
+            } as any)
           }
         }
       }
@@ -1558,7 +1558,7 @@ async function checkPermissionsAndCallTool(
             false,
             undefined,
             false,
-            'suggestion',
+            'suggestion' as any,
             undefined,
             'PostToolUse',
             postToolHookDurationMs,
@@ -1735,7 +1735,7 @@ async function checkPermissionsAndCallTool(
                 McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
               ? error.mcpMeta
               : undefined,
-          sourceToolAssistantUUID: assistantMessage.uuid,
+          sourceToolAssistantUUID: assistantMessage.uuid as any,
         }),
       },
       ...hookMessages,

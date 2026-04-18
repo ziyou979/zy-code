@@ -113,7 +113,8 @@ export function validateZipFile(
 export async function unzipFile(
   zipData: Buffer,
 ): Promise<Record<string, Uint8Array>> {
-  const { unzipSync } = await import('fflate')
+  // @ts-ignore
+  const { unzipSync } = await import('fflate') as any
   const compressedSize = zipData.length
 
   const state: ZipValidationState = {

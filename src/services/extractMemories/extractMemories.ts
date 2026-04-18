@@ -416,7 +416,7 @@ export function initExtractMemories(): void {
         promptMessages: [createUserMessage({ content: userPrompt })],
         cacheSafeParams,
         canUseTool,
-        querySource: 'extract_memories',
+        querySource: 'extract_memories' as any,
         forkLabel: 'extract_memories',
         // The extractMemories subagent does not need to record to transcript.
         // Doing so can create race conditions with the main thread.

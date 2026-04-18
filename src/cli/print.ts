@@ -127,6 +127,7 @@ import type {
   SDKControlMcpSetServersResponse,
   SDKControlReloadPluginsResponse,
 } from 'src/entrypoints/sdk/controlTypes.js'
+// @ts-ignore
 import type { PermissionMode } from '@anthropic-ai/zy-agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'process'
@@ -538,10 +539,10 @@ export async function runHeadless(
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule &&
-    !proactiveModule.isProactiveActive() &&
+    !(proactiveModule as any).isProactiveActive() &&
     isEnvTruthy(process.env.ZY_CODE_PROACTIVE)
   ) {
-    proactiveModule.activateProactive('command')
+    (proactiveModule as any).activateProactive('command')
   }
 
   // Periodically force a full GC to keep memory usage in check
@@ -1648,8 +1649,8 @@ function runHeadlessStreaming(
       ) {
         config = {
           type: 'stdio' as const,
-          command: connection.config.command,
-          args: connection.config.args,
+          command: (connection.config as any).command,
+          args: (connection.config as any).args,
         }
       }
       const serverTools =
@@ -1802,12 +1803,12 @@ function runHeadlessStreaming(
         type === 'http' ||
         type === 'sdk'
       ) {
-        supportedConfigs[name] = config
+        supportedConfigs[name] = config as any
       }
     }
     for (const [name, config] of Object.entries(sdkMcpConfigs)) {
-      if (config.type === 'sdk' && !(name in supportedConfigs)) {
-        supportedConfigs[name] = config
+      if ((config as any).type === 'sdk' && !(name in supportedConfigs)) {
+        supportedConfigs[name] = config as any
       }
     }
     const { response, sdkServersChanged } =
@@ -1836,8 +1837,9 @@ function runHeadlessStreaming(
       ? () => {
           setTimeout(() => {
             if (
-              !proactiveModule?.isProactiveActive() ||
-              proactiveModule.isProactivePaused() ||
+              !proactiveModule ||
+              !(proactiveModule as any).isProactiveActive() ||
+              (proactiveModule as any).isProactivePaused() ||
               inputClosed
             ) {
               return
@@ -2256,14 +2258,14 @@ function runHeadlessStreaming(
 
           if (feature('FILE_PERSISTENCE') && turnStartTime !== undefined) {
             void executeFilePersistence(
-              turnStartTime,
+              turnStartTime as any,
               abortController.signal,
               result => {
                 output.enqueue({
                   type: 'system' as const,
                   subtype: 'files_persisted' as const,
-                  files: result.files,
-                  failed: result.failed,
+                  files: result.files as any,
+                  failed: result.failed as any,
                   processed_at: new Date().toISOString(),
                   uuid: randomUUID(),
                   session_id: getSessionId(),
@@ -2476,8 +2478,9 @@ function runHeadlessStreaming(
     // Proactive tick: if proactive is active and queue is empty, inject a tick
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
-      proactiveModule?.isProactiveActive() &&
-      !proactiveModule.isProactivePaused()
+      proactiveModule &&
+      (proactiveModule as any).isProactiveActive() &&
+      !(proactiveModule as any).isProactivePaused()
     ) {
       if (peek(isMainThread) === undefined && !inputClosed) {
         scheduleProactiveTick!()
@@ -2848,9 +2851,9 @@ function runHeadlessStreaming(
           suggestionState.lastEmitted = null
           suggestionState.pendingSuggestion = null
           sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'end_session') {
+        } else if ((message.request as any).subtype === 'end_session') {
           logForDebugging(
-            `[print.ts] end_session received, reason=${message.request.reason ?? 'unspecified'}`,
+            `[print.ts] end_session received, reason=${(message.request as any).reason ?? 'unspecified'}`,
           )
           if (abortController) {
             abortController.abort()
@@ -2916,12 +2919,12 @@ function runHeadlessStreaming(
           if (hasCommandsInQueue()) {
             void run()
           }
-        } else if (message.request.subtype === 'set_permission_mode') {
-          const m = message.request // for typescript (TODO: use readonly types to avoid this)
+        } else if ((message.request as any).subtype === 'set_permission_mode') {
+          const m = message.request as any
           setAppState(prev => ({
             ...prev,
             toolPermissionContext: handleSetPermissionMode(
-              m,
+              m as any,
               message.request_id,
               prev.toolPermissionContext,
               output,
@@ -2990,7 +2993,7 @@ function runHeadlessStreaming(
             sdkClient.type === 'connected' &&
             sdkClient.client?.transport?.onmessage
           ) {
-            sdkClient.client.transport.onmessage(mcpRequest.message)
+            sdkClient.client.transport.onmessage(mcpRequest.message as any)
           }
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'rewind_files') {
@@ -3002,7 +3005,7 @@ function runHeadlessStreaming(
             message.request.dry_run ?? false,
           )
           if (result.canRewind || message.request.dry_run) {
-            sendControlResponseSuccess(message, result)
+            sendControlResponseSuccess(message, result as any)
           } else {
             sendControlResponseError(
               message,
@@ -3057,7 +3060,7 @@ function runHeadlessStreaming(
           const { response, sdkServersChanged } = await applyMcpServerChanges(
             message.request.servers,
           )
-          sendControlResponseSuccess(message, response)
+          sendControlResponseSuccess(message, response as any)
 
           // Connect SDK servers AFTER response to avoid deadlock
           if (sdkServersChanged) {
@@ -3295,11 +3298,11 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage)
             }
           }
-        } else if (message.request.subtype === 'channel_enable') {
+        } else if ((message.request as any).subtype === 'channel_enable') {
           const currentAppState = getAppState()
           handleChannelEnable(
             message.request_id,
-            message.request.serverName,
+            (message.request as any).serverName,
             // Pool spread matches mcp_status — all three client sources.
             [
               ...currentAppState.mcp.clients,
@@ -3308,8 +3311,8 @@ function runHeadlessStreaming(
             ],
             output,
           )
-        } else if (message.request.subtype === 'mcp_authenticate') {
-          const { serverName } = message.request
+        } else if ((message.request as any).subtype === 'mcp_authenticate') {
+          const { serverName } = message.request as any
           const currentAppState = getAppState()
           const config =
             getMcpConfigByName(serverName) ??
@@ -3461,8 +3464,8 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage(error))
             }
           }
-        } else if (message.request.subtype === 'mcp_oauth_callback_url') {
-          const { serverName, callbackUrl } = message.request
+        } else if ((message.request as any).subtype === 'mcp_oauth_callback_url') {
+          const { serverName, callbackUrl } = message.request as any
           const submit = oauthCallbackSubmitters.get(serverName)
           if (submit) {
             // Validate the callback URL before submitting. The submit
@@ -3512,13 +3515,13 @@ function runHeadlessStreaming(
               `No active OAuth flow for server: ${serverName}`,
             )
           }
-        } else if (message.request.subtype === 'zy_authenticate') {
+        } else if ((message.request as any).subtype === 'zy_authenticate') {
           // Anthropic OAuth over the control channel. The SDK client owns
           // the user's browser (we're headless in -p mode); we hand back
           // both URLs and wait. Automatic URL → localhost listener catches
           // the redirect if the browser is on this host; manual URL → the
           // success page shows "code#state" for zy_oauth_callback.
-          const { loginWithZyAi } = message.request
+          const loginWithZyAi = (message.request as any).loginWithZyAi
 
           // Clean up any prior flow. cleanup() closes the localhost listener
           // and nulls the manual resolver. The prior `flow` promise is left
@@ -3607,8 +3610,8 @@ function runHeadlessStreaming(
             sendControlResponseError(message, errorMessage(error))
           }
         } else if (
-          message.request.subtype === 'zy_oauth_callback' ||
-          message.request.subtype === 'zy_oauth_wait_for_completion'
+          (message.request as any).subtype === 'zy_oauth_callback' ||
+          (message.request as any).subtype === 'zy_oauth_wait_for_completion'
         ) {
           if (!zyOAuth) {
             sendControlResponseError(
@@ -3619,10 +3622,10 @@ function runHeadlessStreaming(
             // Inject the manual code synchronously — must happen in stdin
             // message order so a subsequent zy_authenticate doesn't
             // replace the service before this code lands.
-            if (message.request.subtype === 'zy_oauth_callback') {
+            if ((message.request as any).subtype === 'zy_oauth_callback') {
               zyOAuth.service.handleManualAuthCodeInput({
-                authorizationCode: message.request.authorizationCode,
-                state: message.request.state,
+                authorizationCode: (message.request as any).authorizationCode,
+                state: (message.request as any).state,
               })
             }
             // Detach the await — the stdin reader is serial and blocking
@@ -3649,8 +3652,8 @@ function runHeadlessStreaming(
                 sendControlResponseError(message, errorMessage(error)),
             )
           }
-        } else if (message.request.subtype === 'mcp_clear_auth') {
-          const { serverName } = message.request
+        } else if ((message.request as any).subtype === 'mcp_clear_auth') {
+          const { serverName } = message.request as any
           const currentAppState = getAppState()
           const config =
             getMcpConfigByName(serverName) ??
@@ -3781,11 +3784,11 @@ function runHeadlessStreaming(
           } catch (error) {
             sendControlResponseError(message, errorMessage(error))
           }
-        } else if (message.request.subtype === 'generate_session_title') {
+        } else if ((message.request as any).subtype === 'generate_session_title') {
           // Fire-and-forget so the Haiku call does not block the stdin loop
           // (which would delay processing of subsequent user messages /
           // interrupts for the duration of the API roundtrip).
-          const { description, persist } = message.request
+          const { description, persist } = message.request as any
           // Reuse the live controller only if it has not already been aborted
           // (e.g. by interrupt()); an aborted signal would cause queryHaiku to
           // immediately throw APIUserAbortError → {title: null}.
@@ -3813,7 +3816,7 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage(e))
             }
           })()
-        } else if (message.request.subtype === 'side_question') {
+        } else if ((message.request as any).subtype === 'side_question') {
           // Same fire-and-forget pattern as generate_session_title above —
           // the forked agent's API roundtrip must not block the stdin loop.
           //
@@ -3829,7 +3832,7 @@ function runHeadlessStreaming(
           // matches in the common case. May still miss the cache for
           // coordinator mode or memory-mechanics extras — acceptable, the
           // alternative is the side question failing entirely.
-          const { question } = message.request
+          const { question } = message.request as any
           void (async () => {
             try {
               const saved = getLastCacheSafeParams()
@@ -3882,16 +3885,16 @@ function runHeadlessStreaming(
             enabled: boolean
           }
           if (req.enabled) {
-            if (!proactiveModule!.isProactiveActive()) {
-              proactiveModule!.activateProactive('command')
+            if (!proactiveModule || !(proactiveModule as any).isProactiveActive()) {
+              (proactiveModule as any).activateProactive('command')
               scheduleProactiveTick!()
             }
           } else {
-            proactiveModule!.deactivateProactive()
+            (proactiveModule as any).deactivateProactive()
           }
           sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'remote_control') {
-          if (message.request.enabled) {
+        } else if ((message.request as any).subtype === 'remote_control') {
+          if ((message.request as any).enabled) {
             if (bridgeHandle) {
               // Already connected
               sendControlResponseSuccess(message, {
@@ -4065,11 +4068,11 @@ function runHeadlessStreaming(
         const sessionId = getSessionId() as UUID
         const existsInSession = await doesMessageExistInSession(
           sessionId,
-          message.uuid,
+          message.uuid as any,
         )
 
         // Check both historical duplicates (from file) and runtime duplicates (this session)
-        if (existsInSession || receivedMessageUuids.has(message.uuid)) {
+        if (existsInSession || receivedMessageUuids.has(message.uuid as any)) {
           logForDebugging(`Skipping duplicate user message: ${message.uuid}`)
           // Send acknowledgment for duplicate message if replay mode is enabled
           if (options.replayUserMessages) {
@@ -4097,15 +4100,15 @@ function runHeadlessStreaming(
         }
 
         // Track this UUID to prevent runtime duplicates
-        trackReceivedMessageUuid(message.uuid)
+        trackReceivedMessageUuid(message.uuid as any)
       }
 
       enqueue({
         mode: 'prompt' as const,
         // file_attachments rides the protobuf catchall from the web composer.
         // Same-ref no-op when absent (no 'file_attachments' key).
-        value: await resolveAndPrepend(message, message.message.content),
-        uuid: message.uuid,
+        value: await resolveAndPrepend(message, (message.message as any).content),
+        uuid: message.uuid as any,
         priority: message.priority,
       })
       // Increment prompt count for attribution tracking and save snapshot
@@ -4467,9 +4470,9 @@ async function handleInitializeRequest(
     })),
     output_style: outputStyle,
     available_output_styles: Object.keys(availableOutputStyles),
-    models: modelInfos,
+    models: modelInfos as any,
     account: {
-      email: accountInfo?.email,
+      email: (accountInfo as any)?.email,
       organization: accountInfo?.organization,
       subscriptionType: accountInfo?.subscription,
       tokenSource: accountInfo?.tokenSource,
@@ -4478,7 +4481,7 @@ async function handleInitializeRequest(
       // other fields are all absent. apiProvider disambiguates "not logged
       // in" (direct API + tokenSource:none) from "3P, login not applicable".
       apiProvider: getAPIProvider(),
-    },
+    } as any,
     pid: process.pid,
   }
 
@@ -4495,7 +4498,7 @@ async function handleInitializeRequest(
     response: {
       subtype: 'success',
       request_id: requestId,
-      response: initResponse,
+      response: initResponse as any,
     },
   })
 
@@ -4752,7 +4755,7 @@ function handleChannelEnable(
         value: wrapChannelMessage(serverName, content, meta),
         priority: 'next',
         isMeta: true,
-        origin: { kind: 'channel', server: serverName },
+        origin: { kind: 'channel', server: serverName } as any,
         skipSlashCommands: true,
       })
     },
@@ -4828,7 +4831,7 @@ function reregisterChannelHandlerAfterReconnect(
         value: wrapChannelMessage(connection.name, content, meta),
         priority: 'next',
         isMeta: true,
-        origin: { kind: 'channel', server: connection.name },
+        origin: { kind: 'channel', server: connection.name } as any,
         skipSlashCommands: true,
       })
     },

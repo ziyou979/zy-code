@@ -155,7 +155,7 @@ export function AgentEditor({
         await handleSave({
           tools: finalTools
         });
-      }} />;
+      }} onCancel={() => {}} />;
     case 'edit-color':
       return <ColorPicker agentName={agent.agentType} currentColor={selectedColor || agent.color as AgentColorName || 'automatic'} onConfirm={async color => {
         setSelectedColor(color);

@@ -99,10 +99,10 @@ export function RemoteSessionProgress({
   if (session.status === "failed") {
     return <Text bold={true} color="error" dimColor={true}>error</Text>;
   }
-  if (!session.todoList.length) {
-    return <Text dimColor={true}>{session.status}…</Text>;
+  if (!(session as any).todoList.length) {
+    return <Text dimColor={true}>{(session as any).status}…</Text>;
   }
-  const completed = count(session.todoList, _ => _.status === "completed");
+  const completed = count((session as any).todoList, (_: any) => _.status === "completed");
   const total = session.todoList.length;
   return <Text dimColor={true}>{completed}/{total}</Text>;
 }

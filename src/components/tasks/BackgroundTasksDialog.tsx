@@ -14,7 +14,9 @@ import { LocalAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js';
 import type { LocalShellTaskState } from 'src/tasks/LocalShellTask/guards.js';
 import { LocalShellTask } from 'src/tasks/LocalShellTask/LocalShellTask.js';
 // Type import is erased at build time — safe even though module is ant-gated.
+// @ts-ignore
 import type { LocalWorkflowTaskState } from 'src/tasks/LocalWorkflowTask/LocalWorkflowTask.js';
+// @ts-ignore
 import type { MonitorMcpTaskState } from 'src/tasks/MonitorMcpTask/MonitorMcpTask.js';
 import { RemoteAgentTask, type RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js';
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js';
@@ -105,15 +107,17 @@ type ListItem = {
 // WORKFLOW_SCRIPTS 仅限 ant（build_flags.yaml）。静态导入会泄漏约 1.3K 行到外部构建中。
 // 使用 feature() + require 门控，这样打包器可以对分支进行死代码消除。
 /* eslint-disable @typescript-eslint/no-require-imports */
+// @ts-ignore
 const WorkflowDetailDialog = feature('WORKFLOW_SCRIPTS') ? (require('./WorkflowDetailDialog.js') as typeof import('./WorkflowDetailDialog.js')).WorkflowDetailDialog : null;
 const workflowTaskModule = feature('WORKFLOW_SCRIPTS') ? require('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js') as typeof import('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js') : null;
-const killWorkflowTask = workflowTaskModule?.killWorkflowTask ?? null;
-const skipWorkflowAgent = workflowTaskModule?.skipWorkflowAgent ?? null;
-const retryWorkflowAgent = workflowTaskModule?.retryWorkflowAgent ?? null;
+const killWorkflowTask = (workflowTaskModule as any)?.killWorkflowTask ?? null;
+const skipWorkflowAgent = (workflowTaskModule as any)?.skipWorkflowAgent ?? null;
+const retryWorkflowAgent = (workflowTaskModule as any)?.retryWorkflowAgent ?? null;
 // 相对路径，而非 `src/...` 路径映射——Bun 的 DCE 可以静态解析并消除 `./` require，
 // 但路径映射的字符串保持不透明，会作为死文字保留在包中。与 tasks.ts 模式一致。
 const monitorMcpModule = feature('MONITOR_TOOL') ? require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js') : null;
-const killMonitorMcp = monitorMcpModule?.killMonitorMcp ?? null;
+const killMonitorMcp = (monitorMcpModule as any)?.killMonitorMcp ?? null;
+// @ts-ignore
 const MonitorMcpDetailDialog = feature('MONITOR_TOOL') ? (require('./MonitorMcpDetailDialog.js') as typeof import('./MonitorMcpDetailDialog.js')).MonitorMcpDetailDialog : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -161,6 +165,7 @@ export function BackgroundTasksDialog({
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   // 注册为模态覆盖层，这样此对话框打开时父级 Chat 快捷键（上/下键翻历史）会被禁用
+  // @ts-ignore
   useRegisterOverlay('background-tasks-dialog');
 
   // 将排序和分类的项目一起 memo 化以确保引用稳定

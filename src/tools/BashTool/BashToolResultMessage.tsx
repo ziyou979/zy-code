@@ -80,8 +80,7 @@ export default function BashToolResultMessage({
   let BoxComponent;
 
   let outputLineElement;
-  let earlyReturn;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
+  let earlyReturn = Symbol.for("react.early_return_sentinel");
   const {
     cleanedStderr: stderrWithoutViolations
   } = extractSandboxViolations(stdErrWithViolations);
@@ -93,11 +92,12 @@ export default function BashToolResultMessage({
   } = extractCwdResetWarning(stderrWithoutViolations));
   let outputLineElement2;
   if (isImage) {
+    // @ts-ignore
     earlyReturn = <MessageResponse height={1}><Text dimColor={true}>[Image data detected and sent to ZY]</Text></MessageResponse>;
   } else {
     BoxComponent = Box;
 
-    outputLineElement2 = stdout !== "" ? <OutputLine content={stdout} verbose={verbose} /> : null;
+    outputLineElement2 = (stdout !== "" ? <OutputLine content={stdout as any} verbose={verbose} /> : null) as any;
     outputLineElement = stderr.trim() !== "" ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null;
   }
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {

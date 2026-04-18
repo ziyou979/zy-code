@@ -44,6 +44,6 @@ export function AlternateScreen({
       writeRaw((mouseTracking ? DISABLE_MOUSE_TRACKING : "") + EXIT_ALT_SCREEN);
     };
   }, [writeRaw, mouseTracking]);
-  const t4 = size?.rows ?? 24;
-  return <Box flexDirection="column" height={t4} width="100%" flexShrink={0}>{children}</Box>;
+  const terminalRows = size?.rows ?? 24;
+  return <Box flexDirection="column" height={terminalRows} width="100%" flexShrink={0}>{children}</Box>;
 }

@@ -48,7 +48,7 @@ const readStoredToken = memoize((): string | undefined => {
   if (envToken) {
     return envToken
   }
-  return getSecureStorage().read()?.trustedDeviceToken
+  return (getSecureStorage() as any).read()?.trustedDeviceToken
 })
 
 export function getTrustedDeviceToken(): string | undefined {
@@ -75,10 +75,11 @@ export function clearTrustedDeviceToken(): void {
   }
   const secureStorage = getSecureStorage()
   try {
-    const data = secureStorage.read()
+    const data = (secureStorage as any).read()
     if (data?.trustedDeviceToken) {
+      // @ts-ignore
       delete data.trustedDeviceToken
-      secureStorage.update(data)
+      (secureStorage as any).update(data)
     }
   } catch {
     // Best-effort — don't block login if storage is inaccessible
@@ -180,7 +181,7 @@ export async function enrollTrustedDevice(): Promise<void> {
     }
 
     try {
-      const storageData = secureStorage.read()
+      const storageData = (secureStorage as any).read()
       if (!storageData) {
         logForDebugging(
           '[trusted-device] Cannot read storage, skipping token persist',
@@ -188,7 +189,7 @@ export async function enrollTrustedDevice(): Promise<void> {
         return
       }
       storageData.trustedDeviceToken = token
-      const result = secureStorage.update(storageData)
+      const result = (secureStorage as any).update(storageData)
       if (!result.success) {
         logForDebugging(
           `[trusted-device] Failed to persist token: ${result.warning ?? 'unknown'}`,

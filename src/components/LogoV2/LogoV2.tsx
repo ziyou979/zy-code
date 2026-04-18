@@ -26,6 +26,10 @@ import { VoiceModeNotice } from './VoiceModeNotice.js';
 import { Opus1mMergeNotice } from './Opus1mMergeNotice.js';
 import { feature } from 'bun:bundle';
 
+// Type declarations for missing components
+const GateOverridesWarning: any = null;
+const ExperimentEnrollmentNotice: any = null;
+
 // Conditional require so ChannelsNotice.tsx tree-shakes when both flags are
 // false. A module-scope helper component inside a feature() ternary does NOT
 // tree-shake (docs/feature-gating.md); the require pattern eliminates the

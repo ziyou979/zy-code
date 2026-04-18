@@ -199,7 +199,7 @@ async function updateMagicDoc(
     canUseTool,
     isAsync: true,
     forkContextMessages: messages,
-    querySource: 'magic_docs',
+    querySource: 'magic_docs' as any,
     override: {
       systemPrompt,
       userContext,
@@ -219,7 +219,7 @@ const updateMagicDocs = sequential(async function (
 ): Promise<void> {
   const { messages, querySource } = context
 
-  if (querySource !== 'repl_main_thread') {
+  if ((querySource as any) !== 'repl_main_thread') {
     return
   }
 

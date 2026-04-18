@@ -9,6 +9,7 @@ export const getBedrockInferenceProfiles = memoize(async function (): Promise<
 > {
   const [client, { ListInferenceProfilesCommand }] = await Promise.all([
     createBedrockClient(),
+    // @ts-ignore
     import('@aws-sdk/client-bedrock'),
   ])
   const allProfiles = []
@@ -48,6 +49,7 @@ export function findFirstMatch(
 }
 
 async function createBedrockClient() {
+  // @ts-ignore
   const { BedrockClient } = await import('@aws-sdk/client-bedrock')
   // Match the Anthropic Bedrock SDK's region behavior exactly:
   // - Reads AWS_REGION or AWS_DEFAULT_REGION env vars (not AWS config files)
@@ -82,7 +84,7 @@ async function createBedrockClient() {
     // Only refresh credentials if not using API key authentication
     const cachedCredentials = await refreshAndGetAwsCredentials()
     if (cachedCredentials) {
-      clientConfig.credentials = {
+      (clientConfig as any).credentials = {
         accessKeyId: cachedCredentials.accessKeyId,
         secretAccessKey: cachedCredentials.secretAccessKey,
         sessionToken: cachedCredentials.sessionToken,
@@ -127,7 +129,7 @@ export async function createBedrockRuntimeClient() {
     // Only refresh credentials if not using API key authentication
     const cachedCredentials = await refreshAndGetAwsCredentials()
     if (cachedCredentials) {
-      clientConfig.credentials = {
+      (clientConfig as any).credentials = {
         accessKeyId: cachedCredentials.accessKeyId,
         secretAccessKey: cachedCredentials.secretAccessKey,
         sessionToken: cachedCredentials.sessionToken,
@@ -144,6 +146,7 @@ export const getInferenceProfileBackingModel = memoize(async function (
   try {
     const [client, { GetInferenceProfileCommand }] = await Promise.all([
       createBedrockClient(),
+      // @ts-ignore
       import('@aws-sdk/client-bedrock'),
     ])
     const command = new GetInferenceProfileCommand({

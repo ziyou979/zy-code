@@ -150,7 +150,7 @@ function getTrackingKey(
   querySource: QuerySource,
   agentId?: AgentId,
 ): string | null {
-  if (querySource === 'compact') return 'repl_main_thread'
+  if ((querySource as any) === 'compact') return 'repl_main_thread'
   for (const prefix of TRACKED_SOURCE_PREFIXES) {
     if (querySource.startsWith(prefix)) return agentId || querySource
   }

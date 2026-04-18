@@ -31,14 +31,14 @@ export function getTransportForUrl(
     }
     sseUrl.pathname =
       sseUrl.pathname.replace(/\/$/, '') + '/worker/events/stream'
-    return new SSETransport(sseUrl, headers, sessionId, refreshHeaders)
+    return new SSETransport(sseUrl, headers, sessionId, refreshHeaders) as any
   }
 
   if (url.protocol === 'ws:' || url.protocol === 'wss:') {
     if (isEnvTruthy(process.env.ZY_CODE_)) {
-      return new HybridTransport(url, headers, sessionId, refreshHeaders)
+      return new HybridTransport(url, headers, sessionId, refreshHeaders) as any
     }
-    return new WebSocketTransport(url, headers, sessionId, refreshHeaders)
+    return new WebSocketTransport(url, headers, sessionId, refreshHeaders) as any
   } else {
     throw new Error(`Unsupported protocol: ${url.protocol}`)
   }

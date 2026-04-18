@@ -123,10 +123,10 @@ function RunningIDESelector({
   runningIDEs,
   onSelectIDE,
   onDone
-}: IDEOpenSelectionProps) {
+}: any) {
   const [selectedValue, setSelectedValue] = useState(runningIDEs[0] ?? "");
   const handleSelectIDE = value => {
-    onSelectIDE(value as IdeType);
+    onSelectIDE(value as any);
   };
   const options = runningIDEs.map(ide => ({
     label: toIDEDisplayName(ide),
@@ -145,7 +145,7 @@ function RunningIDESelector({
 function InstallOnMount({
   ide,
   onInstall
-}: IDEOpenSelectionProps) {
+}: any) {
   useEffect(() => {
     onInstall(ide);
   }, [ide, onInstall]);
@@ -223,13 +223,13 @@ export async function call(onDone: (result?: string, options?: {
     };
     if (runningIDEs.length > 1) {
       // Show selector when multiple IDEs are running
-      return <RunningIDESelector runningIDEs={runningIDEs} onSelectIDE={onInstall} onDone={() => {
+      return <RunningIDESelector runningIDEs={runningIDEs as any} onSelectIDE={onInstall as any} onDone={() => {
         onDone('No IDE selected.', {
           display: 'system'
         });
-      }} />;
+      }} as any />;
     } else if (runningIDEs.length === 1) {
-      return <InstallOnMount ide={runningIDEs[0]!} onInstall={onInstall} />;
+      return <InstallOnMount ide={runningIDEs[0]! as any} onInstall={onInstall as any} as any />;
     }
   }
   const availableIDEs = detectedIDEs.filter(ide => ide.isValid);

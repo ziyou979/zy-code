@@ -1,4 +1,6 @@
+// @ts-ignore
 import { open, stat } from 'fs/promises'
+// @ts-ignore
 import { ZY_CODE_GUIDE_AGENT_TYPE } from 'src/tools/AgentTool/built-in/ZyCodeGuideAgent.js'
 import { getSettingsFilePathForSource } from 'src/utils/settings/settings.js'
 import { enableDebugLogging, getDebugLogPath } from '../../utils/debug.js'

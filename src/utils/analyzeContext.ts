@@ -281,15 +281,17 @@ async function countSystemTokens(
 
   // Build named entries: system prompt parts + system context values
   // Skip empty strings and the global-cache boundary marker
+  // @ts-ignore
   const namedEntries: Array<{ name: string; content: string }> = [
     ...effectiveSystemPrompt
       .filter(
         content =>
-          content.length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
+          // @ts-ignore
+          (content as any).length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
       )
       .map(content => ({ name: extractSectionName(content), content })),
     ...Object.entries(systemContext)
-      .filter(([, content]) => content.length > 0)
+      .filter(([, content]) => (content as any).length > 0)
       .map(([name, content]) => ({ name, content })),
   ]
 

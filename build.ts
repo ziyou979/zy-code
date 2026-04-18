@@ -90,10 +90,6 @@ const result = await Bun.build({
     '@opentelemetry/exporter-trace-otlp-http',
     '@opentelemetry/exporter-trace-otlp-proto',
   ],
-  alias: {
-    // Resolve 'src/*' imports to the src directory
-    src: srcDir,
-  },
 })
 
 if (!result.success) {

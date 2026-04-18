@@ -51,11 +51,11 @@ export function MemoryStep() {
   }];
   const handleSelect = value => {
     const memory = value === "none" ? undefined : value as AgentMemoryScope;
-    const agentType = wizardData.finalAgent?.agentType;
+    const agentType = (wizardData.finalAgent as any)?.agentType;
     updateWizardData({
       selectedMemory: memory,
       finalAgent: wizardData.finalAgent ? {
-        ...wizardData.finalAgent,
+        ...(wizardData.finalAgent as any),
         memory,
         getSystemPrompt: isAutoMemoryEnabled() && memory && agentType ? () => wizardData.systemPrompt + "\n\n" + loadAgentMemoryPrompt(agentType, memory) : () => wizardData.systemPrompt
       } : undefined

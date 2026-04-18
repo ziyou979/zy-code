@@ -16,6 +16,7 @@ import type { AgentId } from '../../types/ids.js';
 import type { AssistantMessage } from '../../types/message.js';
 import { parseForSecurity } from '../../utils/bash/ast.js';
 import { splitCommand_DEPRECATED, splitCommandWithOperators } from '../../utils/bash/commands.js';
+// @ts-ignore
 import { extractZyCodeHints } from '../../utils/ZyCodeHints.js';
 import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js';
 import { isEnvTruthy } from '../../utils/envUtils.js';
@@ -390,7 +391,7 @@ async function applySedEdit(simulatedEdit: {
 
   // Track file history before making changes (for undo support)
   if (fileHistoryEnabled() && parentMessage) {
-    await fileHistoryTrackEdit(toolUseContext.updateFileHistoryState, absoluteFilePath, parentMessage.uuid);
+    await fileHistoryTrackEdit(toolUseContext.updateFileHistoryState, absoluteFilePath, parentMessage.uuid as any);
   }
 
   // Detect line endings and write new content

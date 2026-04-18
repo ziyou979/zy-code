@@ -1,5 +1,5 @@
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
-import type { StructuredPatchHunk } from 'diff';
+type StructuredPatchHunk = any;
 import { isAbsolute, relative, resolve } from 'path';
 import * as React from 'react';
 import { Suspense, use, useState } from 'react';
@@ -46,9 +46,9 @@ function FileWriteToolCreatedMessage({
   const contentWithFallback = content || "(No content)";
   const numLines = countLines(content);
   const plusLines = numLines - MAX_LINES_TO_RENDER;
-  const t2 = verbose ? filePath : relative(getCwd(), filePath);
-  const t5 = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
-  return <MessageResponse><Box flexDirection="column">{<Text>Wrote {<Text bold={true}>{numLines}</Text>} lines to{" "}{<Text bold={true}>{t2}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={t5} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
+  const displayPath = verbose ? filePath : relative(getCwd(), filePath);
+  const displayContent = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
+  return <MessageResponse><Box flexDirection="column">{<Text>Wrote {<Text bold={true}>{numLines}</Text>} lines to{" "}{<Text bold={true}>{displayPath}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={displayContent} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
 }
 export function userFacingName(input: Partial<{
   file_path: string;
@@ -149,7 +149,7 @@ function WriteRejectionBody({
   style,
   verbose
 }) {
-  const data = use(promise);
+  const data: any = use(promise);
   if (data.type === "create") {
     return createFallback;
   }

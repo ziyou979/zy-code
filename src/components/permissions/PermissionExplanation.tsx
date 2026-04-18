@@ -98,9 +98,9 @@ function ExplanationResult({
   if (!explanation) {
     return <Box marginTop={1}><Text dimColor={true}>Explanation unavailable</Text></Box>;
   }
-  const t3 = getRiskColor(explanation.riskLevel);
-  const t4 = getRiskLabel(explanation.riskLevel);
-  return <Box flexDirection="column" marginTop={1}>{<Text>{explanation.explanation}</Text>}{<Box marginTop={1}><Text>{explanation.reasoning}</Text></Box>}{<Box marginTop={1}><Text>{<Text color={t3}>{t4}:</Text>}{<Text> {explanation.risk}</Text>}</Text></Box>}</Box>;
+  const t3 = getRiskColor((explanation as any).riskLevel);
+  const t4 = getRiskLabel((explanation as any).riskLevel);
+  return <Box flexDirection="column" marginTop={1}>{<Text>{(explanation as any).explanation}</Text>}{<Box marginTop={1}><Text>{(explanation as any).reasoning}</Text></Box>}{<Box marginTop={1}><Text>{<Text color={t3}>{t4}:</Text>}{<Text> {(explanation as any).risk}</Text>}</Text></Box>}</Box>;
 }
 
 /**

@@ -158,7 +158,7 @@ export function useRemoteSession({
         const parts = [`type=${sdkMessage.type}`]
         if ('subtype' in sdkMessage) parts.push(`subtype=${sdkMessage.subtype}`)
         if (sdkMessage.type === 'user') {
-          const c = sdkMessage.message?.content
+          const c = (sdkMessage.message as any)?.content
           parts.push(
             `content=${Array.isArray(c) ? c.map(b => b.type).join(',') : typeof c}`,
           )
@@ -248,7 +248,7 @@ export function useRemoteSession({
         // and inProcessRunner.ts; without this the set grows unbounded for the
         // session lifetime (BQ: CCR cohort shows 5.2x higher RSS slope).
         if (setInProgressToolUseIDs && sdkMessage.type === 'user') {
-          const content = sdkMessage.message?.content
+          const content = (sdkMessage.message as any)?.content
           if (Array.isArray(content)) {
             const resultIds: string[] = []
             for (const block of content) {
@@ -348,7 +348,7 @@ export function useRemoteSession({
             request.description ?? `${request.tool_name} requires permission`,
           suggestions: request.permission_suggestions,
           blockedPath: request.blocked_path,
-        }
+        } as any
 
         const toolUseConfirm: ToolUseConfirm = {
           assistantMessage: syntheticMessage,
@@ -547,7 +547,7 @@ export function useRemoteSession({
             // Add a warning message to the conversation
             const warningMessage = createSystemMessage(
               'Remote session may be unresponsive. Attempting to reconnect…',
-              'warning',
+              'warning' as any,
             )
             setMessages(prev => [...prev, warningMessage])
 

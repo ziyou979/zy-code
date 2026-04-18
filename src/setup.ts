@@ -94,8 +94,9 @@ export async function setup(
     // (SessionStart in particular) can spawn and snapshot process.env.
     if (feature('UDS_INBOX')) {
       const m = await import('./utils/udsMessaging.js')
-      await m.startUdsMessaging(
-        messagingSocketPath ?? m.getDefaultUdsSocketPath(),
+      // @ts-ignore
+      await (m as any).startUdsMessaging(
+        messagingSocketPath ?? (m as any).getDefaultUdsSocketPath(),
         { isExplicit: messagingSocketPath !== undefined },
       )
     }
@@ -353,8 +354,8 @@ export async function setup(
       // rather than during the setup() microtask window.
       setImmediate(() => {
         void import('./utils/attributionHooks.js').then(
-          ({ registerAttributionHooks }) => {
-            registerAttributionHooks() // Register attribution tracking hooks (ant-only feature)
+          (m: any) => {
+            m.registerAttributionHooks() // Register attribution tracking hooks (ant-only feature)
           },
         )
       })

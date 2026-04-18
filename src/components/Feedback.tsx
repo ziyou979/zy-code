@@ -24,6 +24,7 @@ import { isEssentialTrafficOnly } from '../utils/privacyLevel.js';
 import { extractTeammateTranscriptsFromTasks, getTranscriptPath, loadAllSubagentTranscriptsFromDisk, MAX_TRANSCRIPT_READ_BYTES } from '../utils/sessionStorage.js';
 import { jsonStringify } from '../utils/slowOperations.js';
 import { asSystemPrompt } from '../utils/systemPromptType.js';
+import { isInternalBuild } from '../utils/envUtils.js';
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
 import { Byline } from './design-system/Byline.js';
 import { Dialog } from './design-system/Dialog.js';
@@ -32,7 +33,7 @@ import TextInput from './TextInput.js';
 
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250;
-const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/anthropics/zy-cli-internal/issues' : 'https://github.com/anthropics/zy-code/issues';
+const GITHUB_ISSUES_REPO_URL = isInternalBuild() ? 'https://github.com/anthropics/zy-cli-internal/issues' : 'https://github.com/anthropics/zy-code/issues';
 type Props = {
   abortSignal: AbortSignal;
   messages: Message[];
@@ -455,7 +456,7 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
         toolChoice: undefined,
         isNonInteractiveSession: false,
         agents: [],
-        querySource: 'feedback',
+        querySource: 'feedback' as any as any,
         mcpTools: []
       }
     });

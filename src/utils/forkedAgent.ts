@@ -536,7 +536,7 @@ export async function runForkedAgent({
     // 跟踪最后记录的消息 UUID 用于父级链连续性
     lastRecordedUuid =
       initialMessages.length > 0
-        ? initialMessages[initialMessages.length - 1]!.uuid
+        ? (initialMessages[initialMessages.length - 1]!.uuid as any)
         : null
   }
 
@@ -561,7 +561,7 @@ export async function runForkedAgent({
           message.event?.type === 'message_delta' &&
           message.event.usage
         ) {
-          const turnUsage = updateUsage({ ...EMPTY_USAGE }, message.event.usage)
+          const turnUsage = updateUsage({ ...EMPTY_USAGE }, message.event.usage as any)
           totalUsage = accumulateUsage(totalUsage, turnUsage)
         }
         continue
@@ -592,7 +592,7 @@ export async function runForkedAgent({
             ),
         )
         if (msg.type !== 'progress') {
-          lastRecordedUuid = msg.uuid
+          lastRecordedUuid = msg.uuid as any
         }
       }
     }
@@ -668,11 +668,11 @@ function logForkAgentQueryEvent({
     cacheReadInputTokens: totalUsage.cache_read_input_tokens,
     cacheCreationInputTokens: totalUsage.cache_creation_input_tokens,
     serviceTier:
-      totalUsage.service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      (totalUsage as any).service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     cacheCreationEphemeral1hTokens:
-      totalUsage.cache_creation.ephemeral_1h_input_tokens,
+      (totalUsage as any).cache_creation?.ephemeral_1h_input_tokens,
     cacheCreationEphemeral5mTokens:
-      totalUsage.cache_creation.ephemeral_5m_input_tokens,
+      (totalUsage as any).cache_creation?.ephemeral_5m_input_tokens,
 
     // 派生指标
     cacheHitRate,

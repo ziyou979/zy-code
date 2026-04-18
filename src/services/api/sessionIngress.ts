@@ -74,13 +74,14 @@ async function appendSessionLogImpl(
         requestHeaders['Last-Uuid'] = lastUuid
       }
 
+      // @ts-ignore
       const response = await axios.put(url, entry, {
         headers: requestHeaders,
         validateStatus: status => status < 500,
       })
 
       if (response.status === 200 || response.status === 201) {
-        lastUuidMap.set(sessionId, entry.uuid)
+        lastUuidMap.set(sessionId, entry.uuid as any)
         logForDebugging(
           `Successfully persisted session log entry for session ${sessionId}`,
         )
@@ -92,9 +93,11 @@ async function appendSessionLogImpl(
         // This handles the scenario where entry was stored but client received an error
         // response, causing lastUuidMap to be stale
         const serverLastUuid = response.headers['x-last-uuid']
-        if (serverLastUuid === entry.uuid) {
+        // @ts-ignore
+        if (serverLastUuid === entry.uuid as any) {
           // Our entry IS the last entry on server - it was stored successfully previously
-          lastUuidMap.set(sessionId, entry.uuid)
+          // @ts-ignore
+          lastUuidMap.set(sessionId, entry.uuid as any)
           logForDebugging(
             `Session entry ${entry.uuid} already present on server, recovering from stale state`,
           )
@@ -232,7 +235,8 @@ export async function getSessionLogs(
     // Update our lastUuid to the last entry's UUID
     const lastEntry = logs.at(-1)
     if (lastEntry && 'uuid' in lastEntry && lastEntry.uuid) {
-      lastUuidMap.set(sessionId, lastEntry.uuid)
+      // @ts-ignore
+      lastUuidMap.set(sessionId, lastEntry.uuid as any)
     }
   }
 

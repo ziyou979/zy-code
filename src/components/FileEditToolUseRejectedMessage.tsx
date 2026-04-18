@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { StructuredPatchHunk } from 'diff';
 import { relative } from 'path';
 import * as React from 'react';

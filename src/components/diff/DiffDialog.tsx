@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { StructuredPatchHunk } from 'diff';
 import React, { useEffect, useRef, useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
@@ -67,7 +68,7 @@ export function DiffDialog({
     turn
   }))];
   const currentSource = sources[sourceIndex];
-  const currentTurn = currentSource?.type === "turn" ? currentSource.turn : null;
+  const currentTurn = currentSource?.type === "turn" ? (currentSource as any).turn : null;
   const diffData = currentTurn ? turnDiffToDiffData(currentTurn) : gitDiffData;
   const selectedFile = diffData.files[selectedIndex];
   const selectedHunks = selectedFile ? diffData.hunks.get(selectedFile.path) || [] : [];
@@ -83,7 +84,9 @@ export function DiffDialog({
       prevSourceIndex.current = sourceIndex;
     }
   }, [sourceIndex]);
+  // @ts-ignore
   useRegisterOverlay("diff-dialog");
+  // @ts-ignore
   useKeybindings({
     "diff:previousSource": () => {
       if (viewMode === "detail") {
@@ -127,7 +130,7 @@ export function DiffDialog({
   const headerSubtitle = currentTurn ? currentTurn.userPromptPreview ? `"${currentTurn.userPromptPreview}"` : "" : "(git diff HEAD)";
   const sourceSelector = sources.length > 1 ? <Box>{sourceIndex > 0 && <Text dimColor={true}>◀ </Text>}{sources.map((source, i) => {
       const isSelected = i === sourceIndex;
-      const label = source.type === "current" ? "Current" : `T${source.turn.turnIndex}`;
+      const label = source.type === "current" ? "Current" : `T${(source as any).turn.turnIndex}`;
       return <Text key={i} dimColor={!isSelected} bold={isSelected}>{i > 0 ? " \xB7 " : ""}{label}</Text>;
     })}{sourceIndex < sources.length - 1 && <Text dimColor={true}> ▶</Text>}</Box> : null;
   const dismissShortcut = useShortcutDisplay("diff:dismiss", "DiffDialog", "esc");

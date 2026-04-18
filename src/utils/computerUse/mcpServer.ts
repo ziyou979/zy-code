@@ -1,5 +1,8 @@
+// @ts-ignore
 import {
+  // @ts-ignore
   buildComputerUseTools,
+  // @ts-ignore
   createComputerUseMcpServer,
 } from '@ant/computer-use-mcp'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'

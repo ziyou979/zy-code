@@ -55,7 +55,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
       const current = lastSuggestionRef.current
       if (!current) return
 
-      const applied = selected !== 'dismissed'
+      const applied = (selected as any) !== 'dismissed'
 
       logEvent('tengu_skill_improvement_survey', {
         event_type:
@@ -76,7 +76,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
               ...prev,
               createSystemMessage(
                 `Skill "${current.skillName}" updated with improvements.`,
-                'suggestion',
+                'suggestion' as any,
               ),
             ])
           },

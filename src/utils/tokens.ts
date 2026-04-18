@@ -251,11 +251,11 @@ export function tokenCountWithEstimation(messages: readonly Message[]): number {
         }
       }
       return (
-        getTokenCountFromUsage(usage) +
-        roughTokenCountEstimationForMessages(messages.slice(i + 1))
+        getTokenCountFromUsage(usage as any) +
+        roughTokenCountEstimationForMessages(messages.slice(i + 1) as any)
       )
     }
     i--
   }
-  return roughTokenCountEstimationForMessages(messages)
+  return roughTokenCountEstimationForMessages(messages as any)
 }

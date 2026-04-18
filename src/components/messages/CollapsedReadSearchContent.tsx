@@ -35,6 +35,8 @@ type Props = {
   lookups: ReturnType<typeof buildMessageLookups>;
   /** True if this is the currently active collapsed group (last one, still loading) */
   isActiveGroup?: boolean;
+  content?: any;
+  theme?: any;
 };
 
 /** 在 verbose 模式下渲染单个工具使用 */
@@ -44,7 +46,9 @@ function VerboseToolUse({
   lookups,
   inProgressToolUseIDs,
   shouldAnimate,
-  theme
+  theme,
+  message,
+  verbose
 }: Props) {
   const bg = useSelectedMessageBg();
   let boxElement;
@@ -65,13 +69,13 @@ function VerboseToolUse({
     const input = parsedInput.success ? parsedInput.data : undefined;
     const userFacingName = tool.userFacingName(input);
     const toolUseMessage = input ? tool.renderToolUseMessage(input, {
-      theme,
+      theme: theme as any,
       verbose: true
     }) : null;
-    boxElement = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}><Box flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate && isInProgress} isUnresolved={!isResolved} isError={isError} />}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
+    boxElement = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg as any}><Box flexDirection="row">{<ToolUseLoader shouldAnimate={shouldAnimate && isInProgress} isUnresolved={!isResolved} isError={isError} />}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
           verbose: true,
           tools,
-          theme
+          theme: theme as any
         })}</Box>}</Box>;
   }
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
@@ -98,7 +102,7 @@ export function CollapsedReadSearchContent({
     memoryReadCount,
     memoryWriteCount,
     messages: groupMessages
-  } = message;
+  } = message as any;
   const [theme] = useTheme();
   const toolUseIds = getToolUseIdsFromCollapsedGroup(message);
   const anyError = toolUseIds.some((id) => lookups.erroredToolUseIDs.has(id));
@@ -116,8 +120,8 @@ export function CollapsedReadSearchContent({
   maxReadCountRef.current = Math.max(maxReadCountRef.current, rawReadCount);
   maxSearchCountRef.current = Math.max(maxSearchCountRef.current, rawSearchCount);
   maxListCountRef.current = Math.max(maxListCountRef.current, rawListCount);
-  maxMcpCountRef.current = Math.max(maxMcpCountRef.current, message.mcpCallCount ?? 0);
-  maxBashCountRef.current = Math.max(maxBashCountRef.current, message.bashCount ?? 0);
+  maxMcpCountRef.current = Math.max(maxMcpCountRef.current, (message as any).mcpCallCount ?? 0);
+  maxBashCountRef.current = Math.max(maxBashCountRef.current, (message as any).bashCount ?? 0);
   const readCount = maxReadCountRef.current;
   const searchCount = maxSearchCountRef.current;
   const listCount = maxListCountRef.current;
@@ -125,12 +129,12 @@ export function CollapsedReadSearchContent({
   // 减去作为 "Committed …" / "Created PR …" 显示的命令，这样
   // 同一命令不会被计数两次。gitOpBashCount 是实时读取的（不需要 max-ref，
   // 在结果到达之前为 0，之后只增不减）。
-  const gitOpBashCount = message.gitOpBashCount ?? 0;
+  const gitOpBashCount = (message as any).gitOpBashCount ?? 0;
   const bashCount = isFullscreenEnvEnabled() ? Math.max(0, maxBashCountRef.current - gitOpBashCount) : 0;
   const hasNonMemoryOps = searchCount > 0 || readCount > 0 || listCount > 0 || replCount > 0 || mcpCallCount > 0 || bashCount > 0 || gitOpBashCount > 0;
-  const readPaths = message.readFilePaths;
-  const searchArgs = message.searchArgs;
-  let incomingHint = message.latestDisplayHint;
+  const readPaths = (message as any).readFilePaths;
+  const searchArgs = (message as any).searchArgs;
+  let incomingHint = (message as any).latestDisplayHint;
   if (incomingHint === undefined) {
     const lastSearchRaw = searchArgs?.at(-1);
     const lastSearch = lastSearchRaw !== undefined ? `"${lastSearchRaw}"` : undefined;
@@ -145,13 +149,13 @@ export function CollapsedReadSearchContent({
     for (const id_0 of toolUseIds) {
       if (!inProgressToolUseIDs.has(id_0)) continue;
       const latest = lookups.progressMessagesByToolUseID.get(id_0)?.at(-1)?.data;
-      if (latest?.type === 'repl_tool_call' && latest.phase === 'start') {
-        const input = latest.toolInput as {
+      if ((latest as any)?.type === 'repl_tool_call' && (latest as any).phase === 'start') {
+        const input = (latest as any).toolInput as {
           command?: string;
           pattern?: string;
           file_path?: string;
         };
-        incomingHint = input.file_path ?? (input.pattern ? `"${input.pattern}"` : undefined) ?? input.command ?? latest.toolName;
+        incomingHint = input.file_path ?? (input.pattern ? `"${input.pattern}"` : undefined) ?? input.command ?? (latest as any).toolName;
       }
     }
   }
@@ -171,20 +175,20 @@ export function CollapsedReadSearchContent({
         {toolUses.map((msg_0) => {
         const content = msg_0.message.content[0];
         if (content?.type !== 'tool_use') return null;
-        return <VerboseToolUse key={content.id} content={content} tools={tools} lookups={lookups} inProgressToolUseIDs={inProgressToolUseIDs} shouldAnimate={shouldAnimate} theme={theme} />;
+        return <VerboseToolUse key={content.id} content={content} tools={tools} lookups={lookups} inProgressToolUseIDs={inProgressToolUseIDs} shouldAnimate={shouldAnimate} theme={theme as any} message={msg_0.message as any} verbose={verbose} />;
       })}
-        {message.hookInfos && message.hookInfos.length > 0 && <>
+        {(message as any).hookInfos && (message as any).hookInfos.length > 0 && <>
             <Text dimColor>
-              {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
-              {message.hookCount === 1 ? 'hook' : 'hooks'} (
-              {formatSecondsShort(message.hookTotalMs ?? 0)})
+              {'  ⎿  '}Ran {(message as any).hookCount} PreToolUse{' '}
+              {(message as any).hookCount === 1 ? 'hook' : 'hooks'} (
+              {formatSecondsShort((message as any).hookTotalMs ?? 0)})
             </Text>
-            {message.hookInfos.map((info, idx) => <Text key={`hook-${idx}`} dimColor>
+            {(message as any).hookInfos.map((info: any, idx: any) => <Text key={`hook-${idx}`} dimColor>
                 {'     ⎿ '}
                 {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
               </Text>)}
           </>}
-        {message.relevantMemories?.map((m) => <Box key={m.path} flexDirection="column" marginTop={1}>
+        {(message as any).relevantMemories?.map((m: any) => <Box key={m.path} flexDirection="column" marginTop={1}>
             <Text dimColor>
               {'  ⎿  '}Recalled {basename(m.path)}
             </Text>
@@ -247,25 +251,25 @@ export function CollapsedReadSearchContent({
         {isFirst ? verb[0]!.toUpperCase() + verb.slice(1) : verb} {body}
       </Text>);
   }
-  if (isFullscreenEnvEnabled() && message.commits?.length) {
+  if (isFullscreenEnvEnabled() && (message as any).commits?.length) {
     for (const kind of ['committed', 'amended', 'cherryPicked'] as const) {
-      const shas = message.commits.filter((c) => c.kind === kind.replace('Picked', '-picked')).map((c_0) => c_0.sha);
+      const shas = (message as any).commits.filter((c: any) => c.kind === kind.replace('Picked', '-picked')).map((c_0: any) => c_0.sha);
       if (shas.length) {
         pushPart(kind, kind, <Text bold>{shas.join(', ')}</Text>);
       }
     }
   }
-  if (isFullscreenEnvEnabled() && message.pushes?.length) {
-    const branches = uniq(message.pushes.map((p) => p.branch));
+  if (isFullscreenEnvEnabled() && (message as any).pushes?.length) {
+    const branches = uniq((message as any).pushes.map((p: any) => p.branch));
     pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>);
   }
-  if (isFullscreenEnvEnabled() && message.branches?.length) {
-    for (const b of message.branches) {
+  if (isFullscreenEnvEnabled() && (message as any).branches?.length) {
+    for (const b of (message as any).branches) {
       pushPart(`br-${b.action}-${b.ref}`, b.action === 'merged' ? 'merged' : 'rebasedOnto', <Text bold>{b.ref}</Text>);
     }
   }
-  if (isFullscreenEnvEnabled() && message.prs?.length) {
-    for (const pr of message.prs) {
+  if (isFullscreenEnvEnabled() && (message as any).prs?.length) {
+    for (const pr of (message as any).prs) {
       const verbKey = pr.action === 'ready' ? 'prMarkedReady' : `pr${pr.action[0]!.toUpperCase()}${pr.action.slice(1)}`;
       pushPart(`pr-${pr.action}-${pr.number}`, verbKey, pr.url ? <PrBadge number={pr.number} url={pr.url} bold /> : <Text bold>PR #{pr.number}</Text>);
     }
@@ -340,7 +344,7 @@ export function CollapsedReadSearchContent({
       </Text>);
   }
   if (mcpCallCount > 0) {
-    const serverLabel = message.mcpServerNames?.map((n) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP';
+    const serverLabel = (message as any).mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP';
     const isFirst_3 = nonMemParts.length === 0;
     const phase = isActiveGroup ? 'active' : 'done';
     const position = isFirst_3 ? 'first' : 'sub';
@@ -428,14 +432,14 @@ export function CollapsedReadSearchContent({
       })}
       </Text>);
   }
-  return <Box flexDirection="column" marginTop={1} backgroundColor={bg}>
+  return <Box flexDirection="column" marginTop={1} backgroundColor={bg as any}>
       <Box flexDirection="row">
         {isActiveGroup ? <ToolUseLoader shouldAnimate isUnresolved isError={anyError} /> : <Box minWidth={2} />}
         <Text dimColor={!isActiveGroup}>
           {nonMemParts}
           {memParts}
           {feature('TEAMMEM') ? teamMemCollapsed!.TeamMemCountParts({
-          message,
+          message: message as any,
           isActiveGroup,
           hasPrecedingParts: hasPrecedingNonMem || memParts.length > 0
         }) : null}
@@ -457,10 +461,10 @@ export function CollapsedReadSearchContent({
               </Text>)}
           </Box>
         </Box>}
-      {message.hookTotalMs !== undefined && message.hookTotalMs > 0 && <Text dimColor>
-          {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
-          {message.hookCount === 1 ? 'hook' : 'hooks'} (
-          {formatSecondsShort(message.hookTotalMs)})
+      {(message as any).hookTotalMs !== undefined && (message as any).hookTotalMs > 0 && <Text dimColor>
+          {'  ⎿  '}Ran {(message as any).hookCount} PreToolUse{' '}
+          {(message as any).hookCount === 1 ? 'hook' : 'hooks'} (
+          {formatSecondsShort((message as any).hookTotalMs)})
         </Text>}
     </Box>;
 }

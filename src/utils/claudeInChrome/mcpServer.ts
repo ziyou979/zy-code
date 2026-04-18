@@ -20,6 +20,7 @@ import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
 import { sideQuery } from '../sideQuery.js'
+// @ts-ignore TS1149
 import { getAllSocketPaths, getSecureSocketPath } from './common.js'
 
 const EXTENSION_DOWNLOAD_URL = 'https://zy.ai/chrome'
@@ -196,7 +197,7 @@ export function createChromeContext(
           signal: req.signal,
           skipSystemPromptPrefix: true,
           tools: [],
-          querySource: 'chrome_mcp',
+          querySource: 'chrome_mcp' as any,
         })
         // BetaContentBlock is TextBlock | ThinkingBlock | ToolUseBlock | ...
         // Only text blocks carry the model's command output.
@@ -271,10 +272,11 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
   process.stdin.on('error', () => void shutdownAndExit())
 
   logForDebugging('[Claude in Chrome] Starting MCP server')
-  await server.connect(transport)
+  await (server as any).connect(transport)
   logForDebugging('[Claude in Chrome] MCP server started')
 }
 
+// @ts-ignore TS2420
 class DebugLogger implements Logger {
   silly(message: string, ...args: unknown[]): void {
     logForDebugging(format(message, ...args), { level: 'debug' })

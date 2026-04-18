@@ -116,6 +116,7 @@ export function getInitialAdvisorSetting(): string | undefined {
 export function getAdvisorUsage(
   usage: BetaUsage,
 ): Array<BetaUsage & { model: string }> {
+  // @ts-ignore
   const iterations = usage.iterations as
     | Array<{ type: string }>
     | null

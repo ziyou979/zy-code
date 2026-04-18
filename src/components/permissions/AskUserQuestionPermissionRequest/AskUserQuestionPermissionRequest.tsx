@@ -98,8 +98,8 @@ function AskUserQuestionPermissionRequestBody({
       filename: filename || "Pasted image",
       dimensions
     };
-    cacheImagePath(newContent);
-    storeImage(newContent);
+    cacheImagePath(newContent as any);
+    storeImage(newContent as any);
     setPastedContentsByQuestion(prev => ({
       ...prev,
       [questionText]: {
@@ -249,11 +249,11 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
       answer_2 = label.join(", ");
     } else {
       if (textInput) {
-        const questionImages = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(c_0 => c_0.type === "image");
+        const questionImages = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter((c_0: any) => c_0.type === "image");
         answer_2 = questionImages.length > 0 ? `${textInput} (Image attached)` : textInput;
       } else {
         if (label === "__other__") {
-          const questionImages_0 = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(c_1 => c_1.type === "image");
+          const questionImages_0 = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter((c_1: any) => c_1.type === "image");
           answer_2 = questionImages_0.length > 0 ? "(Image attached)" : label;
         } else {
           answer_2 = label;

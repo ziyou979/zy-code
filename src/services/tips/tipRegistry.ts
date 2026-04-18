@@ -55,6 +55,7 @@ import {
   getCachedReferrerReward,
 } from '../api/referral.js'
 import { getSessionsSinceLastShown } from './tipHistory.js'
+// @ts-ignore
 import type { Tip, TipContext } from './types.js'
 
 let _isOfficialMarketplaceInstalledCache: boolean | undefined

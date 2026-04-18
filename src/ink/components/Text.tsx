@@ -151,5 +151,6 @@ export default function Text({
       inverse
     })
   };
+  // @ts-ignore
   return <ink-text style={memoizedStylesForWrap[wrap]} textStyles={textStyles}>{children}</ink-text>;
 }

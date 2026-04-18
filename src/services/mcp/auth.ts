@@ -356,7 +356,7 @@ export function hasMcpDiscoveryButNoToken(
     return false
   }
   const serverKey = getServerKey(serverName, serverConfig)
-  const entry = getSecureStorage().read()?.mcpOAuth?.[serverKey]
+  const entry = (getSecureStorage() as any).read()?.mcpOAuth?.[serverKey]
   return entry !== undefined && !entry.accessToken && !entry.refreshToken
 }
 
@@ -467,7 +467,7 @@ export async function revokeServerTokens(
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
   { preserveStepUpState = false }: { preserveStepUpState?: boolean } = {},
 ): Promise<void> {
-  const storage = getSecureStorage()
+  const storage = getSecureStorage() as any
   const existingData = storage.read()
   if (!existingData?.mcpOAuth) return
 
@@ -619,7 +619,7 @@ export function clearServerTokensFromLocalStorage(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): void {
-  const storage = getSecureStorage()
+  const storage = getSecureStorage() as any
   const existingData = storage.read()
   if (!existingData?.mcpOAuth) return
 
@@ -692,7 +692,7 @@ async function performMCPXaaAuth(
     // 错误路径上计算，因此成功时无性能开销。
     const wantedKey = getServerKey(serverName, serverConfig)
     const haveKeys = Object.keys(
-      getSecureStorage().read()?.mcpOAuthClientConfig ?? {},
+      (getSecureStorage() as any).read()?.mcpOAuthClientConfig ?? {},
     )
     const headersForLogging = Object.fromEntries(
       Object.entries(serverConfig.headers ?? {}).map(([k, v]) =>
@@ -791,7 +791,7 @@ async function performMCPXaaAuth(
     // 通过与普通 OAuth 相同的存储路径保存 token。我们直接写入
     //（而非 ZyAuthProvider.saveTokens）以避免仅为写入相同键而
     // 实例化整个提供者。
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(serverName, serverConfig)
     const prev = existingData.mcpOAuth?.[serverKey]
@@ -901,7 +901,7 @@ export async function performMCPOAuthFlow(
   // 清除 token 前先检查缓存的 step-up scope 和资源元数据 URL。
   // 传输附加的认证提供者在收到 step-up 401 时持久化 scope，
   // 因此我们可以在此使用它而无需发出额外的探测请求。
-  const storage = getSecureStorage()
+  const storage = getSecureStorage() as any
   const serverKey = getServerKey(serverName, serverConfig)
   const cachedEntry = storage.read()?.mcpOAuth?.[serverKey]
   const cachedStepUpScope = cachedEntry?.stepUpScope
@@ -1305,7 +1305,7 @@ export async function performMCPOAuthFlow(
         error.errorCode === 'invalid_client' &&
         error.message.includes('Client not found')
       ) {
-        const storage = getSecureStorage()
+        const storage = getSecureStorage() as any
         const existingData = storage.read() || {}
         const serverKey = getServerKey(serverName, serverConfig)
         if (existingData.mcpOAuth?.[serverKey]) {
@@ -1478,7 +1478,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async clientInformation(): Promise<OAuthClientInformation | undefined> {
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const data = storage.read()
     const serverKey = getServerKey(this.serverName, this.serverConfig)
 
@@ -1511,7 +1511,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   async saveClientInformation(
     clientInformation: OAuthClientInformationFull,
   ): Promise<void> {
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(this.serverName, this.serverConfig)
 
@@ -1543,7 +1543,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     // _commonHeaders on every request, and forcing a cache miss would trigger
     // a blocking spawnSync(`security find-generic-password`) 30-40x/sec.
     // See CPU profile: spawnSync was 7.2% of total CPU after PR #19436.
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const data = await storage.readAsync()
     const serverKey = getServerKey(this.serverName, this.serverConfig)
 
@@ -1701,7 +1701,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
     this._pendingStepUpScope = undefined
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(this.serverName, this.serverConfig)
 
@@ -1804,7 +1804,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
       // 只展开现有数据；如果之前没有 performMCPXaaAuth 运行，
       // revokeServerTokens 稍后会读到 tokenData.clientId 为 undefined
       // 并发送缺少 client_id 的 RFC 7009 请求，严格 AS 会拒绝。
-      const storage = getSecureStorage()
+      const storage = getSecureStorage() as any
       const existingData = storage.read() || {}
       const serverKey = getServerKey(this.serverName, this.serverConfig)
       const prev = existingData.mcpOAuth?.[serverKey]
@@ -1886,7 +1886,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     // 用 !handleRedirection 守卫以避免在普通认证流程中持久化
     //（scope 可能来自元数据 scopes_supported 而非 401）。
     if (this._scopes && !this.handleRedirection) {
-      const storage = getSecureStorage()
+      const storage = getSecureStorage() as any
       const existingData = storage.read() || {}
       const serverKey = getServerKey(this.serverName, this.serverConfig)
       const existing = existingData.mcpOAuth?.[serverKey]
@@ -1958,7 +1958,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   async invalidateCredentials(
     scope: 'all' | 'client' | 'tokens' | 'verifier' | 'discovery',
   ): Promise<void> {
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const existingData = storage.read()
     if (!existingData?.mcpOAuth) return
 
@@ -1993,7 +1993,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async saveDiscoveryState(state: OAuthDiscoveryState): Promise<void> {
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(this.serverName, this.serverConfig)
 
@@ -2033,7 +2033,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async discoveryState(): Promise<OAuthDiscoveryState | undefined> {
-    const storage = getSecureStorage()
+    const storage = getSecureStorage() as any
     const data = storage.read()
     const serverKey = getServerKey(this.serverName, this.serverConfig)
 
@@ -2136,7 +2136,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     try {
       // 获取锁后重新读取 token — 另一个进程可能已刷新
       clearKeychainCache()
-      const storage = getSecureStorage()
+      const storage = getSecureStorage() as any
       const data = storage.read()
       const tokenData = data?.mcpOAuth?.[serverKey]
       if (tokenData) {
@@ -2290,7 +2290,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
             `Token refresh failed with invalid_grant: ${error.message}`,
           )
           clearKeychainCache()
-          const storage = getSecureStorage()
+          const storage = getSecureStorage() as any
           const data = storage.read()
           const serverKey = getServerKey(this.serverName, this.serverConfig)
           const tokenData = data?.mcpOAuth?.[serverKey]
@@ -2399,7 +2399,7 @@ export function saveMcpClientSecret(
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
   clientSecret: string,
 ): void {
-  const storage = getSecureStorage()
+  const storage = getSecureStorage() as any
   const existingData = storage.read() || {}
   const serverKey = getServerKey(serverName, serverConfig)
   storage.update({
@@ -2415,7 +2415,7 @@ export function clearMcpClientConfig(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): void {
-  const storage = getSecureStorage()
+  const storage = getSecureStorage() as any
   const existingData = storage.read()
   if (!existingData?.mcpOAuthClientConfig) return
   const serverKey = getServerKey(serverName, serverConfig)
@@ -2429,7 +2429,7 @@ export function getMcpClientConfig(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): { clientSecret?: string } | undefined {
-  const storage = getSecureStorage()
+  const storage = getSecureStorage() as any
   const data = storage.read()
   const serverKey = getServerKey(serverName, serverConfig)
   return data?.mcpOAuthClientConfig?.[serverKey]

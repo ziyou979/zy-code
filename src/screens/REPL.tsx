@@ -32,7 +32,7 @@ import { updateLastInteractionTime, getLastInteractionTime, getOriginalCwd, getP
 import { asSessionId, asAgentId } from '../types/ids.js';
 import { logForDebugging } from '../utils/debug.js';
 import { QueryGuard } from '../utils/QueryGuard.js';
-import { isEnvTruthy } from '../utils/envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js';
 import { formatTokens, truncateToWidth } from '../utils/format.js';
 import { consumeEarlyInput } from '../utils/earlyInput.js';
 import { setMemberActive } from '../utils/swarm/teamHelpers.js';
@@ -61,6 +61,7 @@ import { useDirectConnect } from '../hooks/useDirectConnect.js';
 import type { DirectConnectConfig } from '../server/directConnectManager.js';
 import { useSSHSession } from '../hooks/useSSHSession.js';
 import { useAssistantHistory } from '../hooks/useAssistantHistory.js';
+// @ts-ignore -- SSHSession export may be missing in some builds
 import type { SSHSession } from '../ssh/createSSHSession.js';
 import { SkillImprovementSurvey } from '../components/SkillImprovementSurvey.js';
 import { useSkillImprovementSurvey } from '../hooks/useSkillImprovementSurvey.js';
@@ -103,13 +104,15 @@ const VoiceKeybindingHandler: typeof import('../hooks/useVoiceIntegration.js').V
 // 挫败感检测仅限 ant 内部使用（dogfooding）。条件 require 以便外部
 // 构建完全消除该模块（包括其两个 O(n) useMemo，每次 messages 变化时运行，
 // 以及 GrowthBook 获取）。
-const useFrustrationDetection: typeof import('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection = "external" === 'ant' ? require('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection : () => ({
+// @ts-ignore -- ant-only: module exports are empty stubs in external builds
+const useFrustrationDetection: typeof import('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection = isInternalBuild() ? require('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection : () => ({
   state: 'closed',
   handleTranscriptSelect: () => {}
 });
 // Ant 专属组织警告。条件 require 以便从外部构建中消除组织 UUID 列表
 // （其中一个 UUID 在 excluded-strings 上）。
-const useAntOrgWarningNotification: typeof import('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification = "external" === 'ant' ? require('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification : () => {};
+// @ts-ignore -- ant-only: module exports are empty stubs in external builds
+const useAntOrgWarningNotification: typeof import('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification = isInternalBuild() ? require('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification : () => {};
 // 死代码消除：coordinator mode 的条件导入
 const getCoordinatorUserContext: (mcpClients: ReadonlyArray<{
   name: string;
@@ -217,9 +220,9 @@ import { EffortCallout, shouldShowEffortCallout } from '../components/EffortCall
 import type { EffortValue } from '../utils/effort.js';
 import { RemoteCallout } from '../components/RemoteCallout.js';
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const AntModelSwitchCallout = "external" === 'ant' ? require('../components/AntModelSwitchCallout.js').AntModelSwitchCallout : null;
-const shouldShowAntModelSwitch = "external" === 'ant' ? require('../components/AntModelSwitchCallout.js').shouldShowModelSwitchCallout : (): boolean => false;
-const UndercoverAutoCallout = "external" === 'ant' ? require('../components/UndercoverAutoCallout.js').UndercoverAutoCallout : null;
+const AntModelSwitchCallout = isInternalBuild() ? require('../components/AntModelSwitchCallout.js').AntModelSwitchCallout : null;
+const shouldShowAntModelSwitch = isInternalBuild() ? require('../components/AntModelSwitchCallout.js').shouldShowModelSwitchCallout : (): boolean => false;
+const UndercoverAutoCallout = isInternalBuild() ? require('../components/UndercoverAutoCallout.js').UndercoverAutoCallout : null;
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 import { activityManager } from '../utils/activityManager.js';
 import { createAbortController } from '../utils/abortController.js';
@@ -542,7 +545,7 @@ export function REPL({
   // 环境变量门控提升到挂载时 — isEnvTruthy 执行 toLowerCase+trim+
   // includes，这些在渲染路径上（PageUp 频繁操作时很热）。
   const titleDisabled = useMemo(() => isEnvTruthy(process.env.ZY_CODE_DISABLE_TERMINAL_TITLE), []);
-  const moreRightEnabled = useMemo(() => "external" === 'ant' && isEnvTruthy(process.env.CLAUDE_MORERIGHT), []);
+  const moreRightEnabled = useMemo(() => isInternalBuild() && isEnvTruthy(process.env.CLAUDE_MORERIGHT), []);
   const disableVirtualScroll = useMemo(() => isEnvTruthy(process.env.ZY_CODE_DISABLE_VIRTUAL_SCROLL), []);
   const disableMessageActions = feature('MESSAGE_ACTIONS') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
@@ -674,7 +677,7 @@ export function REPL({
   const [showIdeOnboarding, setShowIdeOnboarding] = useState(false);
   // 死代码消除：模型切换 callout state（ant 专属）
   const [showModelSwitchCallout, setShowModelSwitchCallout] = useState(() => {
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       return shouldShowAntModelSwitch();
     }
     return false;
@@ -949,7 +952,7 @@ export function REPL({
   }, []);
   const [showUndercoverCallout, setShowUndercoverCallout] = useState(false);
   useEffect(() => {
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       void (async () => {
         // 等待仓库分类稳定（记忆化，如果已预加载则无操作）。
         const {
@@ -1565,7 +1568,7 @@ export function REPL({
             autoPermissionsNotificationCount: prevCount + 1
           };
         });
-        setMessages(prev => [...prev, createSystemMessage(AUTO_MODE_DESCRIPTION, 'warning')]);
+        setMessages(prev => [...prev, createSystemMessage(AUTO_MODE_DESCRIPTION, 'warn')]);
       }, 800, safeYoloMessageShownRef, setMessages);
       return () => clearTimeout(timer);
     }
@@ -1620,7 +1623,7 @@ export function REPL({
   // 检查是否有任何权限或提问提示当前可见
   // 用于防止在提示活动时打开调查
   const hasActivePrompt = toolUseConfirmQueue.length > 0 || promptQueue.length > 0 || sandboxPermissionRequestQueue.length > 0 || elicitation.queue.length > 0 || workerSandboxPermissions.queue.length > 0;
-  const feedbackSurveyOriginal = useFeedbackSurvey(messages, isLoading, submitCount, 'session', hasActivePrompt);
+  const feedbackSurveyOriginal = useFeedbackSurvey(messages, isLoading, submitCount, 'feedback' as any, hasActivePrompt);
   const skillImprovementSurvey = useSkillImprovementSurvey(setMessages);
   const showIssueFlagBanner = useIssueFlagBanner(messages, submitCount);
 
@@ -1630,7 +1633,7 @@ export function REPL({
     handleSelect: (selected: 'dismissed' | 'bad' | 'fine' | 'good') => {
       // 新 survey 响应进来时重置 ref
       didAutoRunIssueRef.current = false;
-      const showedTranscriptPrompt = feedbackSurveyOriginal.handleSelect(selected);
+      const showedTranscriptPrompt = feedbackSurveyOriginal.handleSelect(selected as any);
       // 未显示转录提示时为 "bad" 自动运行 /issue
       if (selected === 'bad' && !showedTranscriptPrompt && shouldAutoRunIssue('feedback_survey_bad')) {
         setAutoRunIssueReason('feedback_survey_bad');
@@ -1696,7 +1699,7 @@ export function REPL({
               activeAgents: getActiveAgentsFromList(freshAgentDefs.allAgents)
             }
           }));
-          messages.push(createSystemMessage(warning, 'warning'));
+          messages.push(createSystemMessage(warning, 'warn'));
         }
       }
 
@@ -1883,12 +1886,9 @@ export function REPL({
   // 很昂贵（~170ms），所以我们使用 useState 的懒初始化器来
   // 精确创建一次，然后将稳定引用送入 useRef。
   const [initialReadFileState] = useState(() => createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE));
-  let readFileState;
-  readFileState = useRef(initialReadFileState);
-  let bashTools;
-  bashTools = useRef(new Set<string>());
-  let bashToolsProcessedIdx;
-  bashToolsProcessedIdx = useRef(0);
+  const readFileState = useRef(initialReadFileState);
+  const bashTools = useRef(new Set<string>());
+  const bashToolsProcessedIdx = useRef(0);
   // 会话级 skill 发现跟踪（为 tengu_skill_tool_invocation 提供
   // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
   // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
@@ -1902,8 +1902,7 @@ export function REPL({
 
   // 从消息中恢复读取文件状态的辅助函数（用于 resume 流程）
   // 这使 Zy 能够编辑在之前会话中读取的文件
-  let restoreReadFileState;
-  restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
+  const restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
     const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE);
     readFileState.current = mergeFileStateCaches(readFileState.current, extracted);
     for (const tool of extractBashToolsFromMessages(messages)) {
@@ -1935,8 +1934,7 @@ export function REPL({
   const [autoRunIssueReason, setAutoRunIssueReason] = useState<AutoRunIssueReason | null>(null);
   // Ref 跟踪此 survey 周期是否触发了 autoRunIssue，
   // 以便即使在 autoRunIssueReason 清除后也能抑制 [1] 后续提示。
-  let didAutoRunIssueRef;
-  didAutoRunIssueRef = useRef(false);
+  const didAutoRunIssueRef = useRef(false);
 
   // 退出反馈流程的 state
   const [exitFlow, setExitFlow] = useState<React.ReactNode>(null);
@@ -1976,10 +1974,10 @@ export function REPL({
     if (allowDialogsWithAnimation && showIdeOnboarding) return 'ide-onboarding';
 
     // 模型切换 callout（ant 专属，从外部构建中消除）
-    if ("external" === 'ant' && allowDialogsWithAnimation && showModelSwitchCallout) return 'model-switch';
+    if (isInternalBuild() && allowDialogsWithAnimation && showModelSwitchCallout) return 'model-switch';
 
     // Undercover 自动启用解释器（ant 专属，从外部构建中消除）
-    if ("external" === 'ant' && allowDialogsWithAnimation && showUndercoverCallout) return 'undercover-callout';
+    if (isInternalBuild() && allowDialogsWithAnimation && showUndercoverCallout) return 'undercover-callout';
 
     // Effort callout（启用 effort 时为 Opus 4.6 用户显示一次）
     if (allowDialogsWithAnimation && showEffortCallout) return 'effort-callout';
@@ -2416,7 +2414,7 @@ export function REPL({
       dynamicSkillDirTriggers: new Set<string>(),
       discoveredSkillNames: discoveredSkillNamesRef.current,
       setResponseLength,
-      pushApiMetricsEntry: "external" === 'ant' ? (ttftMs: number) => {
+      pushApiMetricsEntry: isInternalBuild() ? (ttftMs: number) => {
         const now = Date.now();
         const baseline = responseLengthRef.current;
         apiMetricsRef.current.push({
@@ -2485,18 +2483,18 @@ export function REPL({
       // 不传递 uuid），所以它始终为 undefined。
       const existingPrompts = new Set<string>();
       for (const m of messagesRef.current) {
-        if (m.type === 'attachment' && m.attachment.type === 'queued_command' && m.attachment.commandMode === 'task-notification' && typeof m.attachment.prompt === 'string') {
-          existingPrompts.add(m.attachment.prompt);
+        if (m.type === 'attachment' && (m.attachment as any).type === 'queued_command' && (m.attachment as any).commandMode === 'task-notification' && typeof (m.attachment as any).prompt === 'string') {
+          existingPrompts.add((m.attachment as any).prompt);
         }
       }
-      const uniqueNotifications = notificationMessages.filter(m => m.attachment.type === 'queued_command' && (typeof m.attachment.prompt !== 'string' || !existingPrompts.has(m.attachment.prompt)));
+      const uniqueNotifications = notificationMessages.filter(m => (m.attachment as any).type === 'queued_command' && (typeof (m.attachment as any).prompt !== 'string' || !existingPrompts.has((m.attachment as any).prompt)));
       startBackgroundSession({
         messages: [...messagesRef.current, ...uniqueNotifications],
         queryParams: {
           systemPrompt,
           userContext,
           systemContext,
-          canUseTool,
+          canUseTool: canUseTool as any,
           toolUseContext,
           querySource: getQuerySourceForREPL()
         },
@@ -2579,7 +2577,7 @@ export function REPL({
       setResponseLength(length => length + newContent.length);
     }, setStreamMode, setStreamingToolUses, tombstonedMessage => {
       setMessages(oldMessages => oldMessages.filter(m => m !== tombstonedMessage));
-      void removeTranscriptMessage(tombstonedMessage.uuid);
+      void removeTranscriptMessage(tombstonedMessage.uuid as any);
     }, setStreamingThinking, metrics => {
       const now = Date.now();
       const baseline = responseLengthRef.current;
@@ -2729,13 +2727,14 @@ export function REPL({
       systemPrompt,
       userContext,
       systemContext,
-      canUseTool,
+      canUseTool: canUseTool as any,
       toolUseContext,
       querySource: getQuerySourceForREPL()
     })) {
       onQueryEvent(event);
     }
     if (feature('BUDDY')) {
+      // @ts-ignore -- ant-only: fireCompanionObserver is conditionally imported
       void fireCompanionObserver(messagesRef.current, reaction => setAppState(prev => prev.companionReaction === reaction ? prev : {
         ...prev,
         companionReaction: reaction
@@ -2745,7 +2744,7 @@ export function REPL({
 
     // 在查询结束前捕获 ant 专属 API 指标。
     // 对于多请求回合（工具使用循环），计算所有请求的 P50。
-    if ("external" === 'ant' && apiMetricsRef.current.length > 0) {
+    if (isInternalBuild() && apiMetricsRef.current.length > 0) {
       const entries = apiMetricsRef.current;
       const ttfts = entries.map(e => e.ttftMs);
       // 使用仅活动流式时间计算每个请求的 OTPS 和
@@ -2873,7 +2872,7 @@ export function REPL({
         // 数分钟 — 擦除会话使 pill 完全消失，强制
         // 用户重新调用 Tmux 只是为了查看。中止时跳过以便面板
         // 保持打开以供检查（匹配下面的回合持续时间守卫）。
-        if ("external" === 'ant' && !abortController.signal.aborted) {
+        if (isInternalBuild() && !abortController.signal.aborted) {
           setAppState(prev => {
             if (prev.tungstenActiveSession === undefined) return prev;
             if (prev.tungstenPanelAutoHidden === true) return prev;
@@ -2996,7 +2995,7 @@ export function REPL({
       }
 
       // 原子操作：清除初始消息，设置权限模式和规则，并存储 plan 用于验证
-      const shouldStorePlanForVerification = initialMsg.message.planContent && "external" === 'ant' && isEnvTruthy(undefined);
+      const shouldStorePlanForVerification = initialMsg.message.planContent && isInternalBuild() && isEnvTruthy(undefined);
       setAppState(prev => {
         // 构建并应用权限更新（模式 + allowedPrompts 规则）
         let updatedToolPermissionContext = initialMsg.mode ? applyPermissionUpdates(prev.toolPermissionContext, buildPermissionUpdates(initialMsg.mode, initialMsg.allowedPrompts)) : prev.toolPermissionContext;
@@ -3072,8 +3071,7 @@ export function REPL({
     }
     void processInitialMessage(pending);
   }, [initialMessage, isLoading, setMessages, setAppState, onQuery, mainLoopModel, tools]);
-  let onSubmit;
-  onSubmit = useCallback(async (input: string, helpers: PromptInputHelpers, speculationAccept?: {
+  const onSubmit = useCallback(async (input: string, helpers: PromptInputHelpers, speculationAccept?: {
     state: ActiveSpeculationState;
     speculationSessionTimeSavedMs: number;
     setAppState: SetAppState;
@@ -3440,7 +3438,7 @@ export function REPL({
       setAppState,
       querySource: getQuerySourceForREPL(),
       onBeforeQuery,
-      canUseTool,
+      canUseTool: canUseTool as any,
       addNotification,
       setMessages,
       // 通过 ref 读取 streamMode 以便从 onSubmit 依赖中删除 —
@@ -3488,7 +3486,7 @@ export function REPL({
           agentId: task.id,
           prompt: input,
           toolUseContext: getToolUseContext(messagesRef.current, [], new AbortController(), mainLoopModel),
-          canUseTool
+          canUseTool: canUseTool as any
         }).catch(err => {
           logForDebugging(`resumeAgentBackground failed: ${errorMessage(err)}`);
           addNotification({
@@ -3526,7 +3524,7 @@ export function REPL({
 
   // 用户按下 survey 感谢屏幕上的 1 以分享详细信息的处理程序
   const handleSurveyRequestFeedback = useCallback(() => {
-    const command = "external" === 'ant' ? '/issue' : '/feedback';
+    const command = isInternalBuild() ? '/issue' : '/feedback';
     onSubmit(command, {
       setCursorOffset: () => {},
       clearBuffer: () => {},
@@ -3698,7 +3696,7 @@ export function REPL({
       const rawIdx = findRawIndex(msg.uuid);
       const raw = rawIdx >= 0 ? messages[rawIdx] : undefined;
       if (!raw || !selectableUserMessagesFilter(raw)) return;
-      const noFileChanges = !(await fileHistoryHasAnyChanges(fileHistory, raw.uuid));
+      const noFileChanges = !(await fileHistoryHasAnyChanges(fileHistory, raw.uuid as any));
       const onlySynthetic = messagesAfterAreOnlySynthetic(messages, rawIdx);
       if (noFileChanges && onlySynthetic) {
         // rewindConversationTo 的 setMessages 与流式追加竞争 —— 先取消（幂等）
@@ -3804,7 +3802,7 @@ export function REPL({
       setAppState,
       querySource: getQuerySourceForREPL(),
       onBeforeQuery,
-      canUseTool,
+      canUseTool: canUseTool as any,
       addNotification,
       setMessages,
       queuedCommands
@@ -3986,7 +3984,7 @@ export function REPL({
   // - Worker 通过邮箱消息接收权限响应
   // - Leader 通过邮箱消息接收权限请求
 
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     // Tasks 模式：监视任务并自动处理它们
     // eslint-disable-next-line react-hooks/rules-of-hooks
     // biome-ignore lint/correctness/useHookAtTopLevel: conditional for dead code elimination in external builds
@@ -4095,7 +4093,7 @@ export function REPL({
 
     // 回退到默认行为
     const hookType = currentHooks[0]?.data.hookEvent === 'SubagentStop' ? 'subagent stop' : 'stop';
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       const cmd = currentHooks[completedCount]?.data.command;
       const label = cmd ? ` '${truncateToWidth(cmd, 40)}'` : '';
       return total === 1 ? `running ${hookType} hook${label}` : `running ${hookType} hook${label}\u2026 ${completedCount}/${total}`;
@@ -4340,6 +4338,7 @@ export function REPL({
       // → 错误行获得黄色。下次 n/N 通过 step()→jump() 重新建立
       onScroll={() => jumpRef.current?.disarmSearch()} /> : null}
         <CancelRequestHandler {...cancelRequestProps} />
+        {/* @ts-ignore -- FullscreenLayout props may have been extended; transcript mode only uses a subset */}
         {transcriptScrollRef ? <FullscreenLayout scrollRef={scrollRef} scrollable={<>
                 {transcriptMessagesElement}
                 {transcriptToolJSX}
@@ -4382,7 +4381,7 @@ export function REPL({
             {transcriptMessagesElement}
             {transcriptToolJSX}
             <SandboxViolationExpandedView />
-            <TranscriptModeFooter showAllInTranscript={showAllInTranscript} virtualScroll={false} suppressShowAll={dumpMode} status={editorStatus || undefined} />
+            <TranscriptModeFooter showAllInTranscript={showAllInTranscript} virtualScroll={false} suppressShowAll={dumpMode} status={editorStatus || undefined} searchBadge={null as any} />
           </>}
       </KeybindingSetup>;
     // 虚拟滚动分支（上面的 FullscreenLayout）需要
@@ -4489,9 +4488,11 @@ export function REPL({
               {toolJSX && !(toolJSX.isLocalJSXCommand && toolJSX.isImmediate) && !toolJsxCentered && <Box flexDirection="column" width="100%">
                     {toolJSX.jsx}
                   </Box>}
-              {"external" === 'ant' && <TungstenLiveMonitor />}
-              {feature('WEB_BROWSER_TOOL') ? WebBrowserPanelModule && <WebBrowserPanelModule.WebBrowserPanel /> : null}
+              {/* @ts-ignore -- ant-only: TungstenLiveMonitor is conditionally imported */}
+              {isInternalBuild() && <TungstenLiveMonitor />}
+              {feature('WEB_BROWSER_TOOL') ? WebBrowserPanelModule && React.createElement((WebBrowserPanelModule as any).WebBrowserPanel) : null}
               <Box flexGrow={1} />
+              {/* @ts-ignore -- apiMetricsRef is an ant-only prop not in the external Props type */}
               {showSpinner && <SpinnerWithVerb mode={streamMode} spinnerTip={spinnerTip} responseLengthRef={responseLengthRef} apiMetricsRef={apiMetricsRef} overrideMessage={spinnerMessage} spinnerSuffix={stopHookSpinnerSuffix} verbose={verbose} loadingStartTimeRef={loadingStartTimeRef} totalPausedMsRef={totalPausedMsRef} pauseStartTimeRef={pauseStartTimeRef} overrideColor={spinnerColor} overrideShimmerColor={spinnerShimmerColor} hasActiveTools={inProgressToolUseIDs.size > 0} leaderIsIdle={!isLoading} />}
               {!showSpinner && !isLoading && !userInputOnProcessing && !hasRunningTeammates && isBriefOnly && !viewedAgentTask && <BriefIdleStatus />}
               {isFullscreenEnvEnabled() && <PromptInputQueuedCommands />}
@@ -4712,7 +4713,7 @@ export function REPL({
             });
           }} />}
                 {focusedInputDialog === 'ide-onboarding' && <IdeOnboardingDialog onDone={() => setShowIdeOnboarding(false)} installationStatus={ideInstallationStatus} />}
-                {"external" === 'ant' && focusedInputDialog === 'model-switch' && AntModelSwitchCallout && <AntModelSwitchCallout onDone={(selection: string, modelAlias?: string) => {
+                {isInternalBuild() && focusedInputDialog === 'model-switch' && AntModelSwitchCallout && <AntModelSwitchCallout onDone={(selection: string, modelAlias?: string) => {
             setShowModelSwitchCallout(false);
             if (selection === 'switch' && modelAlias) {
               setAppState(prev => ({
@@ -4722,7 +4723,7 @@ export function REPL({
               }));
             }
           }} />}
-                {"external" === 'ant' && focusedInputDialog === 'undercover-callout' && UndercoverAutoCallout && <UndercoverAutoCallout onDone={() => setShowUndercoverCallout(false)} />}
+                {isInternalBuild() && focusedInputDialog === 'undercover-callout' && UndercoverAutoCallout && <UndercoverAutoCallout onDone={() => setShowUndercoverCallout(false)} />}
                 {focusedInputDialog === 'effort-callout' && <EffortCallout model={mainLoopModel} onDone={selection => {
             setShowEffortCallout(false);
             if (selection !== 'dismiss') {
@@ -4755,8 +4756,10 @@ export function REPL({
 
                 {focusedInputDialog === 'desktop-upsell' && <DesktopUpsellStartup onDone={() => setShowDesktopUpsellStartup(false)} />}
 
+                {/* @ts-ignore -- ant-only: UltraplanChoiceDialog is conditionally imported */}
                 {feature('ULTRAPLAN') ? focusedInputDialog === 'ultraplan-choice' && ultraplanPendingChoice && <UltraplanChoiceDialog plan={ultraplanPendingChoice.plan} sessionId={ultraplanPendingChoice.sessionId} taskId={ultraplanPendingChoice.taskId} setMessages={setMessages} readFileState={readFileState.current} getAppState={() => store.getState()} setConversationId={setConversationId} /> : null}
 
+                {/* @ts-ignore -- ant-only: UltraplanLaunchDialog is conditionally imported */}
                 {feature('ULTRAPLAN') ? focusedInputDialog === 'ultraplan-launch' && ultraplanLaunchPending && <UltraplanLaunchDialog onChoice={(choice, opts) => {
             const blurb = ultraplanLaunchPending.blurb;
             setAppState(prev => prev.ultraplanLaunchPending ? {
@@ -4786,6 +4789,7 @@ export function REPL({
                 appendStdout(msg);
               });
             };
+            // @ts-ignore -- ant-only: launchUltraplan is conditionally imported
             void launchUltraplan({
               blurb,
               getAppState: () => store.getState(),
@@ -4800,11 +4804,11 @@ export function REPL({
 
                 {!toolJSX?.shouldHidePromptInput && !focusedInputDialog && !isExiting && !disabled && !cursor && <>
                       {autoRunIssueReason && <AutoRunIssueNotification onRun={handleAutoRunIssue} onCancel={handleCancelAutoRunIssue} reason={getAutoRunIssueReasonText(autoRunIssueReason)} />}
-                      {postCompactSurvey.state !== 'closed' ? <FeedbackSurvey state={postCompactSurvey.state} lastResponse={postCompactSurvey.lastResponse} handleSelect={postCompactSurvey.handleSelect} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={handleSurveyRequestFeedback} /> : memorySurvey.state !== 'closed' ? <FeedbackSurvey state={memorySurvey.state} lastResponse={memorySurvey.lastResponse} handleSelect={memorySurvey.handleSelect} handleTranscriptSelect={memorySurvey.handleTranscriptSelect} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={handleSurveyRequestFeedback} message="How well did Zy use its memory? (optional)" /> : <FeedbackSurvey state={feedbackSurvey.state} lastResponse={feedbackSurvey.lastResponse} handleSelect={feedbackSurvey.handleSelect} handleTranscriptSelect={feedbackSurvey.handleTranscriptSelect} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={didAutoRunIssueRef.current ? undefined : handleSurveyRequestFeedback} />}
+                      {postCompactSurvey.state !== 'closed' ? <FeedbackSurvey state={postCompactSurvey.state} lastResponse={postCompactSurvey.lastResponse} handleSelect={postCompactSurvey.handleSelect as any} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={handleSurveyRequestFeedback} /> : memorySurvey.state !== 'closed' ? <FeedbackSurvey state={memorySurvey.state} lastResponse={memorySurvey.lastResponse} handleSelect={memorySurvey.handleSelect as any} handleTranscriptSelect={memorySurvey.handleTranscriptSelect} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={handleSurveyRequestFeedback} message="How well did Zy use its memory? (optional)" /> : <FeedbackSurvey state={feedbackSurvey.state} lastResponse={feedbackSurvey.lastResponse} handleSelect={feedbackSurvey.handleSelect as any} handleTranscriptSelect={feedbackSurvey.handleTranscriptSelect} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={didAutoRunIssueRef.current ? undefined : handleSurveyRequestFeedback} />}
                       {/* 挫折触发的转录共享提示 */}
                       {frustrationDetection.state !== 'closed' && <FeedbackSurvey state={frustrationDetection.state} lastResponse={null} handleSelect={() => {}} handleTranscriptSelect={frustrationDetection.handleTranscriptSelect} inputValue={inputValue} setInputValue={setInputValue} />}
                       {/* 技能改进调查 —— 检测到改进时出现（仅 ant） */}
-                      {"external" === 'ant' && skillImprovementSurvey.suggestion && <SkillImprovementSurvey isOpen={skillImprovementSurvey.isOpen} skillName={skillImprovementSurvey.suggestion.skillName} updates={skillImprovementSurvey.suggestion.updates} handleSelect={skillImprovementSurvey.handleSelect} inputValue={inputValue} setInputValue={setInputValue} />}
+                      {isInternalBuild() && skillImprovementSurvey.suggestion && <SkillImprovementSurvey isOpen={skillImprovementSurvey.isOpen} skillName={skillImprovementSurvey.suggestion.skillName} updates={skillImprovementSurvey.suggestion.updates} handleSelect={skillImprovementSurvey.handleSelect} inputValue={inputValue} setInputValue={setInputValue} />}
                       {showIssueFlagBanner && <IssueFlagBanner />}
                       {}
                       <PromptInput debug={debug} ideSelection={ideSelection} hasSuppressedDialogs={!!hasSuppressedDialogs} isLocalJSXCommandActive={isShowingLocalJSXCommand} getToolUseContext={getToolUseContext} toolPermissionContext={toolPermissionContext} setToolPermissionContext={setToolPermissionContext} apiKeyStatus={apiKeyStatus} commands={commands} agents={agentDefinitions.activeAgents} isLoading={isLoading} onExit={handleExit} verbose={verbose} messages={messages} onAutoUpdaterResult={setAutoUpdaterResult} autoUpdaterResult={autoUpdaterResult} input={inputValue} onInputChange={setInputValue} mode={inputMode} onModeChange={setInputMode} stashedPrompt={stashedPrompt} setStashedPrompt={setStashedPrompt} submitCount={submitCount} onShowMessageSelector={handleShowMessageSelector} onMessageActionsEnter={
@@ -4821,8 +4825,8 @@ export function REPL({
                 ...prev,
                 fileHistory: updater(prev.fileHistory)
               }));
-            }, message.uuid);
-          }} onSummarize={async (message: UserMessage, feedback?: string, direction: PartialCompactDirection = 'from') => {
+            }, message.uuid as any);
+          }} onSummarize={async (message: UserMessage, feedback?: string, direction: PartialCompactDirection = 'from' as any) => {
             // 投影被裁剪的消息，这样 compact 模型
             // 就不会有意被移除的内容进行摘要
             const compactMessages = getMessagesAfterCompactBoundary(messages);
@@ -4831,13 +4835,13 @@ export function REPL({
               // 选择了被裁剪或 compact 前的消息，而选择器
               // 仍然显示（REPL 保留完整历史用于回滚）。
               // 显示为什么没有操作，而不是静默无操作
-              setMessages(prev => [...prev, createSystemMessage('That message is no longer in the active context (snipped or pre-compact). Choose a more recent message.', 'warning')]);
+              setMessages(prev => [...prev, createSystemMessage('That message is no longer in the active context (snipped or pre-compact). Choose a more recent message.', 'warn')]);
               return;
             }
             const newAbortController = createAbortController();
             const context = getToolUseContext(compactMessages, [], newAbortController, mainLoopModel);
             const appState = context.getAppState();
-            const defaultSysPrompt = await getSystemPrompt(context.options.tools, context.options.mainLoopModel, Array.from(appState.toolPermissionContext.additionalWorkingDirectories.keys()), context.options.mcpClients);
+            const defaultSysPrompt = await getSystemPrompt(context.options.tools, context.options.mainLoopModel, Array.from((appState.toolPermissionContext as any).additionalWorkingDirectories.keys()), context.options.mcpClients);
             const systemPrompt = buildEffectiveSystemPrompt({
               mainThreadAgentDefinition: undefined,
               toolUseContext: context,
@@ -4854,14 +4858,14 @@ export function REPL({
               forkContextMessages: compactMessages
             }, feedback, direction);
             const kept = result.messagesToKeep ?? [];
-            const ordered = direction === 'up_to' ? [...result.summaryMessages, ...kept] : [...kept, ...result.summaryMessages];
+            const ordered = (direction as any) === 'up_to' ? [...result.summaryMessages, ...kept] : [...kept, ...result.summaryMessages];
             const postCompact = [result.boundaryMarker, ...ordered, ...result.attachments, ...result.hookResults];
             // Fullscreen 的 'from' 保留回滚；'up_to' 不能
             // （old[0] 不变 + 数组增长意味着使用
             // useLogMessages 路径，因此边界从不持久化）。
             // 通过 uuid 查找，因为 old 是原始 REPL 历史，
             // 被裁剪的条目可能会改变投影的 messageIndex
-            if (isFullscreenEnvEnabled() && direction === 'from') {
+            if (isFullscreenEnvEnabled() && (direction as any) === 'from') {
               setMessages(old => {
                 const rawIdx = old.findIndex(m => m.uuid === message.uuid);
                 return [...old.slice(0, rawIdx === -1 ? 0 : rawIdx), ...postCompact];
@@ -4876,7 +4880,7 @@ export function REPL({
             }
             setConversationId(randomUUID());
             runPostCompactCleanup(context.options.querySource);
-            if (direction === 'from') {
+            if ((direction as any) === 'from') {
               const r = textForResubmit(message);
               if (r) {
                 setInputValue(r.text);
@@ -4896,7 +4900,7 @@ export function REPL({
             setIsMessageSelectorVisible(false);
             setMessageSelectorPreselect(undefined);
           }} />}
-                {"external" === 'ant' && <DevBar />}
+                {isInternalBuild() && <DevBar />}
               </Box>
               {feature('BUDDY') && !(companionNarrow && isFullscreenEnvEnabled()) && companionVisible ? <CompanionSprite /> : null}
             </Box>} />

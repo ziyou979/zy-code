@@ -75,6 +75,7 @@ export class WebSocketTransport implements Transport {
   private ws: WebSocketLike | null = null
   private lastSentId: string | null = null
   protected url: URL
+  // @ts-ignore
   protected state: WebSocketTransportState = 'idle'
   protected onData?: (data: string) => void
   private onCloseCallback?: (closeCode?: number) => void

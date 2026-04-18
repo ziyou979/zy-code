@@ -66,7 +66,7 @@ export const loadPluginOptions = memoize(
     // and the next hook/MCP-load after that eats a fresh spawn.
     const storage = getSecureStorage()
     const sensitive =
-      storage.read()?.pluginSecrets?.[pluginId] ??
+      (storage as any).read()?.pluginSecrets?.[pluginId] ??
       ({} as Record<string, string>)
 
     // secureStorage wins on collision — schema determines destination so
@@ -113,7 +113,7 @@ export function savePluginOptions(
   // settings.json so old plaintext (if any) stays as fallback.
   const storage = getSecureStorage()
   const existingInSecureStorage =
-    storage.read()?.pluginSecrets?.[pluginId] ?? undefined
+    (storage as any).read()?.pluginSecrets?.[pluginId] ?? undefined
   const secureScrubbed = existingInSecureStorage
     ? Object.fromEntries(
         Object.entries(existingInSecureStorage).filter(
@@ -127,7 +127,7 @@ export function savePluginOptions(
     Object.keys(secureScrubbed).length !==
       Object.keys(existingInSecureStorage).length
   if (Object.keys(sensitive).length > 0 || needSecureScrub) {
-    const existing = storage.read() ?? {}
+    const existing = (storage as any).read() ?? {}
     if (!existing.pluginSecrets) {
       existing.pluginSecrets = {}
     }
@@ -135,7 +135,7 @@ export function savePluginOptions(
       ...secureScrubbed,
       ...sensitive,
     }
-    const result = storage.update(existing)
+    const result = (storage as any).update(existing)
     if (!result.success) {
       const err = new Error(
         `Failed to save sensitive plugin options for ${pluginId} to secure storage`,
@@ -244,7 +244,7 @@ export function deletePluginOptions(pluginId: string): void {
   // plugin IDs are `name@marketplace`, never contain `/`, so
   // startsWith(`${id}/`) can't false-positive on a different plugin.
   const storage = getSecureStorage()
-  const existing = storage.read()
+  const existing = (storage as any).read()
   if (existing?.pluginSecrets) {
     const prefix = `${pluginId}/`
     const survivingEntries = Object.entries(existing.pluginSecrets).filter(
@@ -253,7 +253,7 @@ export function deletePluginOptions(pluginId: string): void {
     if (
       survivingEntries.length !== Object.keys(existing.pluginSecrets).length
     ) {
-      const result = storage.update({
+      const result = (storage as any).update({
         ...existing,
         pluginSecrets:
           survivingEntries.length > 0

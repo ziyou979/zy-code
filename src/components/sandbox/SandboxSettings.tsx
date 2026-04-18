@@ -17,6 +17,12 @@ type Props = {
   }) => void;
   depCheck: SandboxDependencyCheck;
 };
+type SandboxModeTabProps = {
+  showSocketWarning: boolean;
+  options: { label: string; value: string; }[];
+  onSelect: (value: any) => Promise<void>;
+  onComplete: (result?: string, options?: { display?: CommandResultDisplay; }) => void;
+};
 type SandboxMode = 'auto-allow' | 'regular' | 'disabled';
 export function SandboxSettings({
   onComplete,
@@ -100,7 +106,7 @@ function SandboxModeTab({
   options,
   onSelect,
   onComplete
-}: Props) {
+}: SandboxModeTabProps) {
   const {
     headerFocused,
     focusHeader

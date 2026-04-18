@@ -54,7 +54,7 @@ export function MCPAgentServerMenu({
     isActive: isAuthenticating
   });
   const handleAuthenticate = useCallback(async () => {
-    if (!agentServer.needsAuth || !agentServer.url) {
+    if (!(agentServer as any).needsAuth || !(agentServer as any).url) {
       return;
     }
     setIsAuthenticating(true);
@@ -64,11 +64,11 @@ export function MCPAgentServerMenu({
     try {
       // Create a temporary config for OAuth
       const tempConfig = {
-        type: agentServer.transport as 'http' | 'sse',
-        url: agentServer.url
+        type: (agentServer as any).transport as 'http' | 'sse',
+        url: (agentServer as any).url
       };
-      await performMCPOAuthFlow(agentServer.name, tempConfig, setAuthorizationUrl, controller.signal);
-      onComplete?.(`Authentication successful for ${agentServer.name}. The server will connect when the agent runs.`);
+      await performMCPOAuthFlow((agentServer as any).name, tempConfig, setAuthorizationUrl, controller.signal);
+      onComplete?.(`Authentication successful for ${(agentServer as any).name}. The server will connect when the agent runs.`);
     } catch (err) {
       // Don't show error if it was a cancellation
       if (err instanceof Error && !(err instanceof AuthenticationCancelledError)) {
@@ -79,10 +79,10 @@ export function MCPAgentServerMenu({
       authAbortControllerRef.current = null;
     }
   }, [agentServer, onComplete]);
-  const capitalizedServerName = capitalize(String(agentServer.name));
+  const capitalizedServerName = capitalize(String((agentServer as any).name));
   if (isAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">Authenticating with {agentServer.name}…</Text>
+        <Text color="zy">Authenticating with {(agentServer as any).name}…</Text>
         <Box>
           <Spinner />
           <Text> A browser window will open for authentication</Text>
@@ -105,9 +105,9 @@ export function MCPAgentServerMenu({
   const menuOptions = [];
 
   // Only show authenticate option for HTTP/SSE servers
-  if (agentServer.needsAuth) {
+  if ((agentServer as any).needsAuth) {
     menuOptions.push({
-      label: agentServer.isAuthenticated ? 'Re-authenticate' : 'Authenticate',
+      label: (agentServer as any).isAuthenticated ? 'Re-authenticate' : 'Authenticate',
       value: 'auth'
     });
   }
@@ -123,22 +123,22 @@ export function MCPAgentServerMenu({
       <Box flexDirection="column" gap={0}>
         <Box>
           <Text bold>Type: </Text>
-          <Text dimColor>{agentServer.transport}</Text>
+          <Text dimColor>{(agentServer as any).transport}</Text>
         </Box>
 
-        {agentServer.url && <Box>
+        {(agentServer as any).url && <Box>
             <Text bold>URL: </Text>
-            <Text dimColor>{agentServer.url}</Text>
+            <Text dimColor>{(agentServer as any).url}</Text>
           </Box>}
 
-        {agentServer.command && <Box>
+        {(agentServer as any).command && <Box>
             <Text bold>Command: </Text>
-            <Text dimColor>{agentServer.command}</Text>
+            <Text dimColor>{(agentServer as any).command}</Text>
           </Box>}
 
         <Box>
           <Text bold>Used by: </Text>
-          <Text dimColor>{agentServer.sourceAgents.join(', ')}</Text>
+          <Text dimColor>{(agentServer as any).sourceAgents.join(', ')}</Text>
         </Box>
 
         <Box marginTop={1}>
@@ -149,9 +149,9 @@ export function MCPAgentServerMenu({
           </Text>
         </Box>
 
-        {agentServer.needsAuth && <Box>
+        {(agentServer as any).needsAuth && <Box>
             <Text bold>Auth: </Text>
-            {agentServer.isAuthenticated ? <Text>{color('success', theme)(figures.tick)} authenticated</Text> : <Text>
+            {(agentServer as any).isAuthenticated ? <Text>{color('success', theme)(figures.tick)} authenticated</Text> : <Text>
                 {color('warning', theme)(figures.triangleUpOutline)} may need
                 authentication
               </Text>}

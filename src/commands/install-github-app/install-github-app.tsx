@@ -142,7 +142,7 @@ function InstallGitHubApp(props: {
           ...prev_4,
           currentWorkflowInstallStep: prev_4.currentWorkflowInstallStep + 1
         }));
-      }, state.workflowAction === 'skip', state.selectedWorkflows, state.authType, {
+      }, state.workflowAction === 'skip', state.selectedWorkflows, state.authType as any, {
         useCurrentRepo: state.useCurrentRepo,
         workflowExists: state.workflowExists,
         secretExists: state.secretExists

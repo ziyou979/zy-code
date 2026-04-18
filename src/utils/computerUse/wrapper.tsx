@@ -70,10 +70,10 @@ export function buildSessionContext(): ComputerUseSessionContext {
       const d = tuc().getAppState().computerUseMcpState?.lastScreenshotDims;
       return d ? {
         ...d,
-        displayId: d.displayId ?? 0,
-        originX: d.originX ?? 0,
-        originY: d.originY ?? 0
-      } : undefined;
+        displayId: (d as any).displayId ?? 0,
+        originX: (d as any).originX ?? 0,
+        originY: (d as any).originY ?? 0
+      } as any : undefined;
     },
     // ── Write-backs ────────────────────────────────────────────────────────
     // `setToolJSX` is guaranteed present — the gate in `main.tsx` excludes
@@ -232,7 +232,7 @@ function getOrBind(): Binding {
   const ctx = buildSessionContext();
   binding = {
     ctx,
-    dispatch: bindSessionContext(getComputerUseHostAdapter(), getChicagoCoordinateMode(), ctx)
+    dispatch: (bindSessionContext as any)(getComputerUseHostAdapter(), getChicagoCoordinateMode(), ctx)
   };
   return binding;
 }
@@ -251,10 +251,11 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     const {
       dispatch
     } = getOrBind();
+    const dispatchResult = await dispatch(toolName, args) as any;
     const {
       telemetry,
       ...result
-    } = await dispatch(toolName, args);
+    } = dispatchResult;
     if (telemetry?.error_kind) {
       logForDebugging(`[Computer Use MCP] ${toolName} error_kind=${telemetry.error_kind}`);
     }

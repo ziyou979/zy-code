@@ -22,6 +22,7 @@ export function SandboxOverridesTab({
   if (isLocked) {
     return <Box flexDirection="column" paddingY={1}>{<Text color="subtle">Override settings are managed by a higher-priority configuration and cannot be changed locally.</Text>}<Box marginTop={1}><Text dimColor={true}>Current setting:{" "}{currentAllowUnsandboxed ? "Allow unsandboxed fallback" : "Strict sandbox mode"}</Text></Box></Box>;
   }
+  // @ts-ignore
   return <OverridesSelect onComplete={onComplete} currentMode={currentAllowUnsandboxed ? "open" : "closed"} />;
 }
 
@@ -31,7 +32,7 @@ export function SandboxOverridesTab({
 function OverridesSelect({
   onComplete,
   currentMode
-}: Props) {
+}: any) {
   const [theme] = useTheme();
   const {
     headerFocused,

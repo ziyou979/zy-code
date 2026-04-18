@@ -95,8 +95,8 @@ export function createLSPServerManager(): LSPServerManager {
           )
         }
         if (
-          !config.extensionToLanguage ||
-          Object.keys(config.extensionToLanguage).length === 0
+          !(config as any).extensionToLanguage ||
+          Object.keys((config as any).extensionToLanguage).length === 0
         ) {
           throw new Error(
             `Server ${serverName} missing required 'extensionToLanguage' field`,
@@ -104,7 +104,7 @@ export function createLSPServerManager(): LSPServerManager {
         }
 
         // Map file extensions to this server (derive from extensionToLanguage)
-        const fileExtensions = Object.keys(config.extensionToLanguage)
+        const fileExtensions = Object.keys((config as any).extensionToLanguage)
         for (const ext of fileExtensions) {
           const normalized = ext.toLowerCase()
           if (!extensionMap.has(normalized)) {
@@ -283,7 +283,7 @@ export function createLSPServerManager(): LSPServerManager {
 
     // Get language ID from server's extensionToLanguage mapping
     const ext = path.extname(filePath).toLowerCase()
-    const languageId = server.config.extensionToLanguage[ext] || 'plaintext'
+    const languageId = (server.config as any).extensionToLanguage[ext] || 'plaintext'
 
     try {
       await server.sendNotification('textDocument/didOpen', {

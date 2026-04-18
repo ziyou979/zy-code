@@ -55,7 +55,7 @@ export function RateLimitMessage({
 }: RateLimitMessageProps) {
   const subscriptionType = getSubscriptionType();
   const rateLimitTier = getRateLimitTier();
-  const isTeamOrEnterprise = subscriptionType === "team" || subscriptionType === "enterprise";
+  const isTeamOrEnterprise = (subscriptionType as any) === "team" || subscriptionType === "enterprise";
   const isMax20x = rateLimitTier === "default_Zy_max_20x";
   const shouldShowUpsell = shouldProcessMockLimits() || isZyAISubscriber();
   const canSeeRateLimitOptionsUpsell = shouldShowUpsell && !isMax20x;

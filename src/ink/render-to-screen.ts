@@ -66,8 +66,7 @@ export function renderToScreen(
     stylePool = new StylePool()
     charPool = new CharPool()
     hyperlinkPool = new HyperlinkPool()
-    // @ts-expect-error react-reconciler 0.33 takes 10 args; @types says 11
-    container = reconciler.createContainer(
+    container = (reconciler as any).createContainer(
       root,
       LegacyRoot,
       null,
@@ -78,13 +77,11 @@ export function renderToScreen(
       noop,
       noop,
       noop,
-    )
+    ) as any
   }
 
   const reconcileStartMs = performance.now()
-  // @ts-expect-error updateContainerSync exists but not in @types
   reconciler.updateContainerSync(el, container, null, noop)
-  // @ts-expect-error flushSyncWork exists but not in @types
   reconciler.flushSyncWork()
   const reconcileEndMs = performance.now()
 
@@ -117,9 +114,7 @@ export function renderToScreen(
   const paintEndMs = performance.now()
 
   // 卸载以便下次调用获得全新的树。保留 root/container/pool。
-  // @ts-expect-error updateContainerSync exists but not in @types
   reconciler.updateContainerSync(null, container, null, noop)
-  // @ts-expect-error flushSyncWork exists but not in @types
   reconciler.flushSyncWork()
 
   timing.reconcile += reconcileEndMs - reconcileStartMs

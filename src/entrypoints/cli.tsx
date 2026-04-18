@@ -73,14 +73,15 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_Zy_in_chrome_mcp_path');
     const {
       runClaudeInChromeMcpServer
-    } = await import('../utils/ClaudeInChrome/mcpServer.js');
+    } = await import('../utils/claudeInChrome/mcpServer.js');
     await runClaudeInChromeMcpServer();
     return;
   } else if (process.argv[2] === '--chrome-native-host') {
     profileCheckpoint('cli_chrome_native_host_path');
+    // @ts-ignore
     const {
       runChromeNativeHost
-    } = await import('../utils/ClaudeInChrome/chromeNativeHost.js');
+    } = await import('../utils/claudeInChrome/chromeNativeHost.js');
     await runChromeNativeHost();
     return;
   } else if (feature('CHICAGO_MCP') && process.argv[2] === '--computer-use-mcp') {
@@ -98,10 +99,8 @@ async function main(): Promise<void> {
   // worker 是轻量级的。如果某种 worker 需要配置/认证（如 assistant），
   // 它会在自己的 run() 函数中调用。
   if (feature('DAEMON') && args[0] === '--daemon-worker') {
-    const {
-      runDaemonWorker
-    } = await import('../daemon/workerRegistry.js');
-    await runDaemonWorker(args[1]);
+    const workerRegistry = await import('../daemon/workerRegistry.js') as any;
+    await workerRegistry.runDaemonWorker(args[1]);
     return;
   }
 
@@ -172,10 +171,8 @@ async function main(): Promise<void> {
       initSinks
     } = await import('../utils/sinks.js');
     initSinks();
-    const {
-      daemonMain
-    } = await import('../daemon/main.js');
-    await daemonMain(args.slice(1));
+    const daemonModule = await import('../daemon/main.js') as any;
+    await daemonModule.daemonMain(args.slice(1));
     return;
   }
 
@@ -188,7 +185,7 @@ async function main(): Promise<void> {
       enableConfigs
     } = await import('../utils/config.js');
     enableConfigs();
-    const bg = await import('../cli/bg.js');
+    const bg = await import('../cli/bg.js') as any;
     switch (args[0]) {
       case 'ps':
         await bg.psHandler(args.slice(1));
@@ -213,8 +210,8 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_templates_path');
     const {
       templatesMain
-    } = await import('../cli/handlers/templateJobs.js');
-    await templatesMain(args);
+    } = await import('../cli/handlers/templateJobs.js') as any;
+    await (templatesMain as any)(args);
     // process.exit（非 return）—— mountFleetView 的 Ink TUI 可能留下事件
     // 循环句柄阻止自然退出。
     // eslint-disable-next-line custom-rules/no-process-exit
@@ -227,8 +224,8 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_environment_runner_path');
     const {
       environmentRunnerMain
-    } = await import('../environment-runner/main.js');
-    await environmentRunnerMain(args.slice(1));
+    } = await import('../environment-runner/main.js') as any;
+    await (environmentRunnerMain as any)(args.slice(1));
     return;
   }
 
@@ -239,8 +236,8 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_self_hosted_runner_path');
     const {
       selfHostedRunnerMain
-    } = await import('../self-hosted-runner/main.js');
-    await selfHostedRunnerMain(args.slice(1));
+    } = await import('../self-hosted-runner/main.js') as any;
+    await (selfHostedRunnerMain as any)(args.slice(1));
     return;
   }
 

@@ -34,7 +34,7 @@ export function SkillPermissionRequest(props) {
   const unaryEvent = {
     completion_type: "tool_use_single",
     language_name: "none"
-  };
+  } as any;
   usePermissionRequestLogging(toolUseConfirm, unaryEvent);
   const originalCwd = getOriginalCwd();
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions();

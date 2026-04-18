@@ -20,7 +20,9 @@ import {
   convertSDKMessage,
   isSessionEndMessage,
 } from '../remote/sdkMessageAdapter.js'
+// @ts-ignore
 import type { SSHSession } from '../ssh/createSSHSession.js'
+// @ts-ignore
 import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'
 import type { Tool } from '../Tool.js'
 import { findToolByName } from '../Tool.js'
@@ -175,6 +177,7 @@ export function useSSHSession({
           content: `SSH connection dropped — reconnecting (attempt ${attempt}/${max})...`,
           timestamp: new Date().toISOString(),
           uuid: randomUUID(),
+          // @ts-ignore
           level: 'warning',
         }
         setMessages(prev => [...prev, msg])

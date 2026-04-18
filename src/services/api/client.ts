@@ -47,7 +47,7 @@ import { getAWSRegion, getVertexRegionForModel, isEnvTruthy } from '../../utils/
  * 4. 回退区域 (us-east5)
  */
 
-function createStderrLogger(): ClientOptions['logger'] {
+function createStderrLogger(): any {
   return {
     error: (msg, ...args) =>
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
@@ -116,11 +116,11 @@ export async function getLLMClient({
     dangerouslyAllowBrowser: true,
     fetchOptions: getProxyFetchOptions({
       forAnthropicAPI: true
-    }) as ClientOptions['fetchOptions'],
+    }) as any,
     ...(resolvedFetch && {
       fetch: resolvedFetch
     })
-  };
+  } as any;
   if (isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)) {
     const {
       AnthropicBedrock
@@ -150,9 +150,9 @@ export async function getLLMClient({
       // 刷新认证并获取凭证，同时清除缓存
       const cachedCredentials = await refreshAndGetAwsCredentials();
       if (cachedCredentials) {
-        bedrockArgs.awsAccessKey = cachedCredentials.accessKeyId;
-        bedrockArgs.awsSecretKey = cachedCredentials.secretAccessKey;
-        bedrockArgs.awsSessionToken = cachedCredentials.sessionToken;
+        (bedrockArgs as any).awsAccessKey = cachedCredentials.accessKeyId;
+        (bedrockArgs as any).awsSecretKey = cachedCredentials.secretAccessKey;
+        (bedrockArgs as any).awsSessionToken = cachedCredentials.sessionToken;
       }
     }
     // 返回值类型一直是不准确的——这不支持 batching 或 models
@@ -161,7 +161,7 @@ export async function getLLMClient({
   if (isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)) {
     const {
       AnthropicFoundry
-    } = await import('@anthropic-ai/foundry-sdk');
+    } = await import('@anthropic-ai/foundry-sdk' as any) as any;
     // 根据配置确定 Azure AD token provider
     // SDK 默认读取 ANTHROPIC_FOUNDRY_API_KEY
     let azureADTokenProvider: (() => Promise<string>) | undefined;
@@ -413,7 +413,7 @@ function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | unde
   const injectClientRequestId = getAPIProvider() === 'anthropic' && isAnthropicBaseUrl();
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-    const headers = new Headers(init?.headers);
+    const headers = new Headers((init as any)?.headers);
     // 生成客户端侧请求 ID，以便超时（不返回服务器请求 ID）
     // 仍能被 API 团队与服务器日志关联。
     // 想要自行追踪 ID 的调用方可以预设此 header
@@ -428,8 +428,8 @@ function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | unde
     } catch {
       // 绝不让日志导致 fetch 崩溃
     }
-    return inner(input, {
-      ...init,
+    return (inner as any)(input, {
+      ...(init as any),
       headers
     });
   };

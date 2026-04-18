@@ -73,7 +73,7 @@ export function SelectMulti({
   onImagePaste,
   pastedContents,
   onRemoveImage
-}: SelectMultiProps) {
+}: SelectMultiProps<any>) {
   const defaultValue = t5;
   const state = useMultiSelectState({
     isDisabled,

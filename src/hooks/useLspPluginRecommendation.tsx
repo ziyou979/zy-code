@@ -42,8 +42,7 @@ export function useLspPluginRecommendation() {
   const {
     addNotification
   } = useNotifications();
-  const t0 = new Set();
-  const checkedFilesRef = React.useRef(t0);
+  const checkedFilesRef = React.useRef(new Set());
   const {
     recommendation,
     clearRecommendation,

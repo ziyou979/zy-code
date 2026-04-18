@@ -8,7 +8,7 @@ export function clearSessionsWithTungstenUsage(): void {}
 export function resetInitializationState(): void {}
 
 export const TungstenTool: Tool = {
-  inputSchema: z.object({}),
+  inputSchema: z.object({}) as any,
   async call() {
     return { data: '' }
   },
@@ -19,9 +19,9 @@ export const TungstenTool: Tool = {
   isEnabled: () => false,
   isReadOnly: () => true,
   toAutoClassifierInput: () => '',
-  mapToolResultToToolResultBlockParam: (_content, toolUseID) => ({
-    type: 'tool_result',
+  mapToolResultToToolResultBlockParam: (_content: unknown, toolUseID: string) => ({
+    type: 'tool_result' as const,
     tool_use_id: toolUseID,
     content: [],
   }),
-}
+} as any

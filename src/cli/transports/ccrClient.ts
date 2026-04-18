@@ -148,19 +148,19 @@ export function accumulateStreamEvents(
   // rewrite the same entry instead of emitting one event per delta.
   const touched = new Map<string[], CoalescedStreamEvent>()
   for (const msg of buffer) {
-    switch (msg.event.type) {
+    switch ((msg.event as any).type) {
       case 'message_start': {
-        const id = msg.event.message.id
+        const id = (msg.event as any).message.id
         const prevId = state.scopeToMessage.get(scopeKey(msg))
         if (prevId) state.byMessage.delete(prevId)
         state.scopeToMessage.set(scopeKey(msg), id)
         state.byMessage.set(id, [])
-        out.push(msg)
+        out.push(msg as any)
         break
       }
       case 'content_block_delta': {
-        if (msg.event.delta.type !== 'text_delta') {
-          out.push(msg)
+        if ((msg.event as any).delta.type !== 'text_delta') {
+          out.push(msg as any)
           break
         }
         const messageId = state.scopeToMessage.get(scopeKey(msg))
@@ -170,11 +170,11 @@ export function accumulateStreamEvents(
           // or message_start was in a prior buffer that got dropped). Pass
           // through raw — can't produce a full-so-far snapshot without the
           // prior chunks anyway.
-          out.push(msg)
+          out.push(msg as any)
           break
         }
-        const chunks = (blocks[msg.event.index] ??= [])
-        chunks.push(msg.event.delta.text)
+        const chunks = (blocks[(msg.event as any).index] ??= [])
+        chunks.push((msg.event as any).delta.text)
         const existing = touched.get(chunks)
         if (existing) {
           existing.event.delta.text = chunks.join('')
@@ -187,7 +187,7 @@ export function accumulateStreamEvents(
           parent_tool_use_id: msg.parent_tool_use_id,
           event: {
             type: 'content_block_delta',
-            index: msg.event.index,
+            index: (msg.event as any).index,
             delta: { type: 'text_delta', text: chunks.join('') },
           },
         }
@@ -196,7 +196,7 @@ export function accumulateStreamEvents(
         break
       }
       default:
-        out.push(msg)
+        out.push(msg as any)
     }
   }
   return out
@@ -375,7 +375,7 @@ export class CCRClient {
         if (!result.ok) {
           throw new RetryableError(
             'client event POST failed',
-            result.retryAfterMs,
+            (result as any).retryAfterMs,
           )
         }
       },
@@ -398,7 +398,7 @@ export class CCRClient {
         if (!result.ok) {
           throw new RetryableError(
             'internal event POST failed',
-            result.retryAfterMs,
+            (result as any).retryAfterMs,
           )
         }
       },
@@ -427,7 +427,7 @@ export class CCRClient {
           'delivery batch',
         )
         if (!result.ok) {
-          throw new RetryableError('delivery POST failed', result.retryAfterMs)
+          throw new RetryableError('delivery POST failed', (result as any).retryAfterMs)
         }
       },
       baseDelayMs: 500,
@@ -746,7 +746,7 @@ export class CCRClient {
     }
     await this.flushStreamEventBuffer()
     if (message.type === 'assistant') {
-      clearStreamAccumulatorForMessage(this.streamTextAccumulator, message)
+      clearStreamAccumulatorForMessage(this.streamTextAccumulator, message as any)
     }
     await this.eventUploader.enqueue(this.toClientEvent(message))
   }

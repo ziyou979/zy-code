@@ -35,7 +35,7 @@ export function ShowInIDEPrompt({
   focusedOption,
   yesInputMode,
   noInputMode
-}: Props) {
+}: Props<any>) {
   const t3 = isSupportedVSCodeTerminal() && <Text dimColor={true}>Save file to continue…</Text>;
   const t4 = basename(filePath);
   return <Pane color="permission"><Box flexDirection="column" gap={1}>{<Text bold={true} color="permission">Opened changes in {ideName} ⧉</Text>}{symlinkTarget && <Text color="warning">{relative(getCwd(), symlinkTarget).startsWith("..") ? `This will modify ${symlinkTarget} (outside working directory) via a symlink` : `Symlink target: ${symlinkTarget}`}</Text>}{t3}{<Box flexDirection="column">{<Text>Do you want to make this edit to{" "}<Text bold={true}>{t4}</Text>?</Text>}{<Select options={options} inlineDescriptions={true} onChange={value => {

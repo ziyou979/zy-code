@@ -165,21 +165,21 @@ async function getOtlpReaders() {
           // Lazy-import to keep @grpc/grpc-js (~700KB) out of the telemetry chunk
           // when the protocol is http/protobuf (ant default) or http/json.
           const { OTLPMetricExporter } = await import(
-            '@opentelemetry/exporter-metrics-otlp-grpc'
+            '@opentelemetry/exporter-metrics-otlp-grpc' as any
           )
           exporters.push(new OTLPMetricExporter())
           break
         }
         case 'http/json': {
           const { OTLPMetricExporter } = await import(
-            '@opentelemetry/exporter-metrics-otlp-http'
+            '@opentelemetry/exporter-metrics-otlp-http' as any
           )
           exporters.push(new OTLPMetricExporter(httpConfig))
           break
         }
         case 'http/protobuf': {
           const { OTLPMetricExporter } = await import(
-            '@opentelemetry/exporter-metrics-otlp-proto'
+            '@opentelemetry/exporter-metrics-otlp-proto' as any
           )
           exporters.push(new OTLPMetricExporter(httpConfig))
           break
@@ -191,7 +191,7 @@ async function getOtlpReaders() {
       }
     } else if (exporterType === 'prometheus') {
       const { PrometheusExporter } = await import(
-        '@opentelemetry/exporter-prometheus'
+        '@opentelemetry/exporter-prometheus' as any
       )
       exporters.push(new PrometheusExporter())
     } else {
@@ -234,21 +234,21 @@ async function getOtlpLogExporters() {
       switch (protocol) {
         case 'grpc': {
           const { OTLPLogExporter } = await import(
-            '@opentelemetry/exporter-logs-otlp-grpc'
+            '@opentelemetry/exporter-logs-otlp-grpc' as any
           )
           exporters.push(new OTLPLogExporter())
           break
         }
         case 'http/json': {
           const { OTLPLogExporter } = await import(
-            '@opentelemetry/exporter-logs-otlp-http'
+            '@opentelemetry/exporter-logs-otlp-http' as any
           )
           exporters.push(new OTLPLogExporter(httpConfig))
           break
         }
         case 'http/protobuf': {
           const { OTLPLogExporter } = await import(
-            '@opentelemetry/exporter-logs-otlp-proto'
+            '@opentelemetry/exporter-logs-otlp-proto' as any
           )
           exporters.push(new OTLPLogExporter(httpConfig))
           break
@@ -285,21 +285,21 @@ async function getOtlpTraceExporters() {
       switch (protocol) {
         case 'grpc': {
           const { OTLPTraceExporter } = await import(
-            '@opentelemetry/exporter-trace-otlp-grpc'
+            '@opentelemetry/exporter-trace-otlp-grpc' as any
           )
           exporters.push(new OTLPTraceExporter())
           break
         }
         case 'http/json': {
           const { OTLPTraceExporter } = await import(
-            '@opentelemetry/exporter-trace-otlp-http'
+            '@opentelemetry/exporter-trace-otlp-http' as any
           )
           exporters.push(new OTLPTraceExporter(httpConfig))
           break
         }
         case 'http/protobuf': {
           const { OTLPTraceExporter } = await import(
-            '@opentelemetry/exporter-trace-otlp-proto'
+            '@opentelemetry/exporter-trace-otlp-proto' as any
           )
           exporters.push(new OTLPTraceExporter(httpConfig))
           break
@@ -348,8 +348,11 @@ async function initializeBetaTracing(
     return
   }
 
+  // @ts-ignore
   const [{ OTLPTraceExporter }, { OTLPLogExporter }] = await Promise.all([
+    // @ts-ignore
     import('@opentelemetry/exporter-trace-otlp-http'),
+    // @ts-ignore
     import('@opentelemetry/exporter-logs-otlp-http'),
   ])
 
@@ -379,12 +382,13 @@ async function initializeBetaTracing(
   const logExporter = new OTLPLogExporter(logHttpConfig)
   const loggerProvider = new LoggerProvider({
     resource,
+    // @ts-ignore
     processors: [
       new BatchLogRecordProcessor(logExporter, {
         scheduledDelayMillis: DEFAULT_LOGS_EXPORT_INTERVAL_MS,
       }),
     ],
-  })
+  } as any)
 
   logs.setGlobalLoggerProvider(loggerProvider)
   setLoggerProvider(loggerProvider)
@@ -573,6 +577,7 @@ export async function initializeTelemetry() {
       const loggerProvider = new LoggerProvider({
         resource,
         // Add batch processors for each exporter
+        // @ts-ignore
         processors: logExporters.map(
           exporter =>
             new BatchLogRecordProcessor(exporter, {
@@ -582,7 +587,7 @@ export async function initializeTelemetry() {
               ),
             }),
         ),
-      })
+      } as any)
 
       // Register the logger provider globally
       logs.setGlobalLoggerProvider(loggerProvider)

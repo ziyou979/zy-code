@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { APIError } from '@anthropic-ai/sdk'
+// @ts-ignore
 import type {
-  BetaStopReason,
   BetaUsage as Usage,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import {
@@ -438,6 +438,7 @@ function logAPISuccess({
   attempt: number
   ttftMs: number | null
   requestId: string | null
+  // @ts-ignore
   stopReason: BetaStopReason | null
   costUSD: number
   didFallBackToNonStreaming: boolean
@@ -621,6 +622,7 @@ export function logAPISuccessAndDuration({
   messageCount: number
   messageTokens: number
   requestId: string | null
+  // @ts-ignore
   stopReason: BetaStopReason | null
   didFallBackToNonStreaming: boolean
   querySource: string
@@ -669,13 +671,14 @@ export function logAPISuccessAndDuration({
           connectorCount++
         } else if (block.type === 'thinking') {
           thinkingLen += block.thinking.length
+        // @ts-ignore
         } else if (
-          block.type === 'tool_use' ||
-          block.type === 'server_tool_use' ||
-          block.type === 'mcp_tool_use'
+          (block.type as any) === 'tool_use' ||
+          (block.type as any) === 'server_tool_use' ||
+          (block.type as any) === 'mcp_tool_use'
         ) {
-          const inputLen = jsonStringify(block.input).length
-          const sanitizedName = sanitizeToolNameForAnalytics(block.name)
+          const inputLen = jsonStringify((block as any).input).length
+          const sanitizedName = sanitizeToolNameForAnalytics((block as any).name)
           toolLengths[sanitizedName] =
             (toolLengths[sanitizedName] ?? 0) + inputLen
           hasToolUse = true

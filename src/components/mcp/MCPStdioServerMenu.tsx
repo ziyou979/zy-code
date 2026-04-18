@@ -42,7 +42,7 @@ export function MCPStdioServerMenu({
   const toggleMcpServer = useMcpToggleEnabled();
   const [isReconnecting, setIsReconnecting] = useState(false);
   const handleToggleEnabled = React.useCallback(async () => {
-    const wasEnabled = server.client.type !== 'disabled';
+    const wasEnabled = (server as any).client.type !== 'disabled';
     try {
       await toggleMcpServer(server.name);
       // Return to the server list so user can continue managing other servers
@@ -51,7 +51,7 @@ export function MCPStdioServerMenu({
       const action = wasEnabled ? 'disable' : 'enable';
       onComplete(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err)}`);
     }
-  }, [server.client.type, server.name, toggleMcpServer, onCancel, onComplete]);
+  }, [(server as any).client.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const capitalizedServerName = capitalize(String(server.name));
 
   // Count MCP prompts for this server (skills are shown in /skills, not here)
@@ -59,7 +59,7 @@ export function MCPStdioServerMenu({
   const menuOptions = [];
 
   // Only show "View tools" if server is not disabled and has tools
-  if (server.client.type !== 'disabled' && serverToolsCount > 0) {
+  if ((server as any).client.type !== 'disabled' && serverToolsCount > 0) {
     menuOptions.push({
       label: 'View tools',
       value: 'tools'
@@ -67,14 +67,14 @@ export function MCPStdioServerMenu({
   }
 
   // Only show reconnect option if the server is not disabled
-  if (server.client.type !== 'disabled') {
+  if ((server as any).client.type !== 'disabled') {
     menuOptions.push({
       label: 'Reconnect',
       value: 'reconnectMcpServer'
     });
   }
   menuOptions.push({
-    label: server.client.type !== 'disabled' ? 'Disable' : 'Enable',
+    label: (server as any).client.type !== 'disabled' ? 'Disable' : 'Enable',
     value: 'toggle-enabled'
   });
 
@@ -106,7 +106,7 @@ export function MCPStdioServerMenu({
         <Box flexDirection="column" gap={0}>
           <Box>
             <Text bold>Status: </Text>
-            {server.client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : server.client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : server.client.type === 'pending' ? <>
+            {(server as any).client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : (server as any).client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : (server as any).client.type === 'pending' ? <>
                 <Text dimColor>{figures.radioOff}</Text>
                 <Text> connecting…</Text>
               </> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
@@ -114,12 +114,12 @@ export function MCPStdioServerMenu({
 
           <Box>
             <Text bold>Command: </Text>
-            <Text dimColor>{server.config.command}</Text>
+            <Text dimColor>{(server as any).config.command}</Text>
           </Box>
 
-          {server.config.args && server.config.args.length > 0 && <Box>
+          {(server as any).config.args && (server as any).config.args.length > 0 && <Box>
               <Text bold>Args: </Text>
-              <Text dimColor>{server.config.args.join(' ')}</Text>
+              <Text dimColor>{(server as any).config.args.join(' ')}</Text>
             </Box>}
 
           <Box>
@@ -129,9 +129,9 @@ export function MCPStdioServerMenu({
             </Text>
           </Box>
 
-          {server.client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
+          {(server as any).client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
 
-          {server.client.type === 'connected' && serverToolsCount > 0 && <Box>
+          {(server as any).client.type === 'connected' && serverToolsCount > 0 && <Box>
               <Text bold>Tools: </Text>
               <Text dimColor>{serverToolsCount} tools</Text>
             </Box>}

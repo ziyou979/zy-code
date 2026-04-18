@@ -220,7 +220,8 @@ export async function createZipFromDirectory(
   const visited = new Set<string>()
   await collectFilesForZip(sourceDir, '', files, visited)
 
-  const { zipSync } = await import('fflate')
+  // @ts-ignore
+  const { zipSync } = await import('fflate') as any
   const zipData = zipSync(files, { level: 6 })
   logForDebugging(
     `Created ZIP from ${sourceDir}: ${Object.keys(files).length} files, ${zipData.length} bytes`,

@@ -122,7 +122,7 @@ const collectFromRemoteHost: (
           const projectsDir = join(tempDir, 'projects')
           let projectDirents: Awaited<ReturnType<typeof readdir>>
           try {
-            projectDirents = await readdir(projectsDir, { withFileTypes: true })
+            projectDirents = await readdir(projectsDir, { withFileTypes: true }) as any
           } catch {
             return result
           }
@@ -130,7 +130,7 @@ const collectFromRemoteHost: (
           // Merge into destination (parallel per project directory)
           await Promise.all(
             projectDirents.map(async dirent => {
-              const projectName = dirent.name
+              const projectName = (dirent as any).name
               const projectPath = join(projectsDir, projectName)
 
               // Skip if not a directory
@@ -148,17 +148,17 @@ const collectFromRemoteHost: (
               // Copy session files (skip existing)
               let files: Awaited<ReturnType<typeof readdir>>
               try {
-                files = await readdir(projectPath, { withFileTypes: true })
+                files = await readdir(projectPath, { withFileTypes: true }) as any
               } catch {
                 return
               }
               await Promise.all(
                 files.map(async fileDirent => {
-                  const fileName = fileDirent.name
-                  if (!fileName.endsWith('.jsonl')) return
+                  const fileName = (fileDirent as any).name
+                  if (!(fileName as any).endsWith('.jsonl')) return
 
-                  const srcFile = join(projectPath, fileName)
-                  const destFile = join(destProjectPath, fileName)
+                  const srcFile = join(projectPath, fileName as any)
+                  const destFile = join(destProjectPath, fileName as any)
 
                   try {
                     await copyFile(srcFile, destFile, fsConstants.COPYFILE_EXCL)
@@ -886,7 +886,7 @@ async function summarizeTranscriptChunk(chunk: string): Promise<string> {
       signal: new AbortController().signal,
       options: {
         model: getAnalysisModel(),
-        querySource: 'insights',
+        querySource: 'insights' as any,
         agents: [],
         isNonInteractiveSession: true,
         hasAppendSystemPrompt: false,
@@ -1029,7 +1029,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
       signal: new AbortController().signal,
       options: {
         model: getAnalysisModel(),
-        querySource: 'insights',
+        querySource: 'insights' as any,
         agents: [],
         isNonInteractiveSession: true,
         hasAppendSystemPrompt: false,
@@ -1580,7 +1580,7 @@ async function generateSectionInsight(
       signal: new AbortController().signal,
       options: {
         model: getInsightsModel(),
-        querySource: 'insights',
+        querySource: 'insights' as any,
         agents: [],
         isNonInteractiveSession: true,
         hasAppendSystemPrompt: false,
@@ -2757,14 +2757,14 @@ async function scanAllSessions(): Promise<LiteSessionInfo[]> {
 
   let dirents: Awaited<ReturnType<typeof readdir>>
   try {
-    dirents = await readdir(projectsDir, { withFileTypes: true })
+    dirents = await readdir(projectsDir, { withFileTypes: true }) as any
   } catch {
     return []
   }
 
   const projectDirs = dirents
     .filter(dirent => dirent.isDirectory())
-    .map(dirent => join(projectsDir, dirent.name))
+    .map(dirent => join(projectsDir, (dirent as any).name))
 
   const allSessions: LiteSessionInfo[] = []
 

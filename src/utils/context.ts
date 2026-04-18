@@ -90,6 +90,7 @@ export function getContextWindowForModel(
     return 1_000_000
   }
   if (isInternalBuild()) {
+    // @ts-ignore
     const antModel = resolveAntModel(model)
     if (antModel?.contextWindow) {
       return antModel.contextWindow
@@ -156,6 +157,7 @@ export function getModelMaxOutputTokens(model: string): {
   let upperLimit: number
 
   if (isInternalBuild()) {
+    // @ts-ignore
     const antModel = resolveAntModel(model.toLowerCase())
     if (antModel) {
       defaultTokens = antModel.defaultMaxTokens ?? MAX_OUTPUT_TOKENS_DEFAULT

@@ -12,7 +12,7 @@ export function LocationStep() {
     goNext,
     updateWizardData,
     cancel
-  } = useWizard();
+  } = useWizard() as any;
   const locationOptions = [{
     label: "Project (.zy/agents/)",
     value: "projectSettings" as SettingSource

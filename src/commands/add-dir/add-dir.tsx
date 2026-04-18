@@ -72,7 +72,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   if (!directoryPath) {
     return <AddWorkspaceDirectory permissionContext={appState.toolPermissionContext} onAddDirectory={handleAddDirectory} onCancel={() => {
       onDone('Did not add a working directory.');
-    }} />;
+    }} directoryPath={undefined as any} />;
   }
   const result = await validateDirectoryForWorkspace(directoryPath, appState.toolPermissionContext);
   if (result.resultType !== 'success') {

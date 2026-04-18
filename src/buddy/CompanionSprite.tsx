@@ -45,10 +45,9 @@ function SpeechBubble({
   tail
 }) {
   const lines = wrap(text, 30);
-  const T0 = Box;
   const borderColor = fading ? "inactive" : color;
-  const t6 = lines.map((l, i) => <Text key={i} italic={true} dimColor={!fading} color={fading ? "inactive" : undefined}>{l}</Text>);
-  const bubble = <T0 flexDirection={"column"} borderStyle={"round"} borderColor={borderColor} paddingX={1} width={34}>{t6}</T0>;
+  const lineElements = lines.map((l, i) => <Text key={i} italic={true} dimColor={!fading} color={fading ? "inactive" : undefined}>{l}</Text>);
+  const bubble = <Box flexDirection={"column"} borderStyle={"round"} borderColor={borderColor} paddingX={1} width={34}>{lineElements}</Box>;
   if (tail === "right") {
     return <Box flexDirection="row" alignItems="center">{bubble}{<Text color={borderColor}>─</Text>}</Box>;
   }
@@ -200,14 +199,14 @@ export function CompanionSprite(): React.ReactNode {
 // just reads companionReaction and renders the fade.
 export function CompanionFloatingBubble() {
   const reaction = useAppState(s => s.companionReaction);
-  const [t1, setTick] = useState({
+  const [tickState, setTick] = useState({
     tick: 0,
     forReaction: reaction
   });
   const {
     tick,
     forReaction
-  } = t1;
+  } = tickState;
   if (reaction !== forReaction) {
     setTick({
       tick: 0,

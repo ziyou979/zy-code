@@ -5,8 +5,8 @@ import {
 } from '@anthropic-ai/sdk'
 import type {
   BetaMessage,
-  BetaStopReason,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+type BetaStopReason = any;
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import type {
@@ -936,15 +936,15 @@ function get3PModelFallbackSuggestion(model: string): string | undefined {
   const m = model.toLowerCase()
   // 如果失败的模型看起来像 Opus 4.6 变体，建议默认 Opus（第三方用户为 4.1）
   if (m.includes('opus-4-6') || m.includes('opus_4_6')) {
-    return getModelStrings().opus41
+    return (getModelStrings() as any).opus41
   }
   // 如果失败的模型看起来像 Sonnet 4.6 变体，建议 Sonnet 4.5
   if (m.includes('sonnet-4-6') || m.includes('sonnet_4_6')) {
-    return getModelStrings().sonnet45
+    return (getModelStrings() as any).sonnet45
   }
   // 如果失败的模型看起来像 Sonnet 4.5 变体，建议 Sonnet 4
   if (m.includes('sonnet-4-5') || m.includes('sonnet_4_5')) {
-    return getModelStrings().sonnet40
+    return (getModelStrings() as any).sonnet40
   }
   return undefined
 }

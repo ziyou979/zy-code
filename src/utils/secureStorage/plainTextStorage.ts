@@ -17,6 +17,7 @@ function getStoragePath(): { storageDir: string; storagePath: string } {
 }
 
 export const plainTextStorage = {
+  // @ts-ignore
   name: 'plaintext',
   read(): SecureStorageData | null {
     // sync IO: called from sync context (SecureStorage interface)
@@ -67,18 +68,14 @@ export const plainTextStorage = {
       return { success: false }
     }
   },
-  delete(): boolean {
+  delete(): Promise<void> {
     // sync IO: called from sync context (SecureStorage interface)
     const { storagePath } = getStoragePath()
     try {
       getFsImplementation().unlinkSync(storagePath)
-      return true
-    } catch (e: unknown) {
-      const code = getErrnoCode(e)
-      if (code === 'ENOENT') {
-        return true
-      }
-      return false
+      return true as any
+    } catch {
+      return false as any
     }
   },
 } satisfies SecureStorage

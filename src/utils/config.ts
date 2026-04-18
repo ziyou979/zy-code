@@ -9,7 +9,9 @@ import { getAutoMemEntrypoint } from '../memdir/paths.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { McpServerConfig } from '../services/mcp/types.js'
 import type {
+  // @ts-ignore
   BillingType,
+  // @ts-ignore
   ReferralEligibilityResponse,
 } from '../services/oauth/types.js'
 import { getCwd } from '../utils/cwd.js'

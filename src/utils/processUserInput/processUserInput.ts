@@ -186,7 +186,7 @@ export async function processUserInput({
     context.requestPrompt,
   )) {
     // We only care about the result
-    if (hookResult.message?.type === 'progress') {
+    if ((hookResult.message as any)?.type === 'progress') {
       continue
     }
 
@@ -200,7 +200,7 @@ export async function processUserInput({
           // TODO: Make this an attachment message
           createSystemMessage(
             `${blockingMessage}\n\nOriginal prompt: ${input}`,
-            'warning',
+            'warning' as any,
           ),
         ],
         shouldQuery: false,
@@ -241,22 +241,22 @@ export async function processUserInput({
 
     // TODO: Clean this up
     if (hookResult.message) {
-      switch (hookResult.message.attachment.type) {
+      switch ((hookResult.message as any).attachment.type) {
         case 'hook_success':
-          if (!hookResult.message.attachment.content) {
+          if (!(hookResult.message as any).attachment.content) {
             // Skip if there is no content
             break
           }
           result.messages.push({
             ...hookResult.message,
             attachment: {
-              ...hookResult.message.attachment,
-              content: applyTruncation(hookResult.message.attachment.content),
+              ...(hookResult.message as any).attachment,
+              content: applyTruncation((hookResult.message as any).attachment.content),
             },
-          })
+          } as any)
           break
         default:
-          result.messages.push(hookResult.message)
+          result.messages.push(hookResult.message as any)
           break
       }
     }

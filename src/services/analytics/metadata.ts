@@ -842,10 +842,10 @@ export function toZyEventFormat(
     env.coworker_type = envContext.coworkerType
   }
   if (envContext.ZyCodeContainerId) {
-    env.zy_code_container_id = envContext.ZyCodeContainerId
+    (env as any).zy_code_container_id = envContext.ZyCodeContainerId
   }
   if (envContext.ZyCodeRemoteSessionId) {
-    env.zy_code_remote_session_id = envContext.ZyCodeRemoteSessionId
+    (env as any).zy_code_remote_session_id = envContext.ZyCodeRemoteSessionId
   }
   if (envContext.tags) {
     env.tags = envContext.tags

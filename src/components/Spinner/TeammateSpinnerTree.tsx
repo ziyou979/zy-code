@@ -52,10 +52,11 @@ export function TeammateSpinnerTree({
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
     return earlyReturn;
   }
-  return <BoxComponent flexDirection={"column"} marginTop={1}>{boxElement}{mappedItems}{isInSelectionMode && <HideRow isSelected={isHideSelected} />}</BoxComponent>;
+  // @ts-ignore
+  return <BoxComponent flexDirection={"column"} marginTop={1}>{(boxElement as any)}{mappedItems}{isInSelectionMode && <HideRow isSelected={isHideSelected} />}</BoxComponent>;
 }
 function HideRow({
   isSelected
-}: Props) {
+}: any) {
   return <Box paddingLeft={3}>{<Text color={isSelected ? "suggestion" : undefined} bold={isSelected}>{isSelected ? figures.pointer : " "}</Text>}{<Text dimColor={!isSelected} bold={isSelected}>{isSelected ? "\u2558\u2550" : "\u2514\u2500"}{" "}</Text>}{<Text dimColor={!isSelected} bold={isSelected}>hide</Text>}{isSelected && <Text dimColor={true}> · enter to collapse</Text>}</Box>;
 }

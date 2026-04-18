@@ -28,6 +28,7 @@ import Output from './output.js';
 import type { ParsedKey } from './parse-keypress.js';
 import reconciler, { dispatcher, getLastCommitMs, getLastYogaMs, isDebugRepaintsEnabled, recordYogaMs, resetProfileCounters } from './reconciler.js';
 import renderNodeToOutput, { consumeFollowScroll, didLayoutShift } from './render-node-to-output.js';
+import { isDevEnv } from '../utils/envUtils.js';
 import { applyPositionedHighlight, type MatchPosition, scanPositions } from './render-to-screen.js';
 import createRenderer, { type Renderer } from './renderer.js';
 import { CellWidth, CharPool, cellAt, createScreen, HyperlinkPool, isEmptyCellAt, migrateScreenPools, StylePool } from './screen.js';
@@ -244,10 +245,10 @@ export default class Ink {
         return;
       }
       if (this.rootNode.yogaNode) {
-        const t0 = performance.now();
+        const layoutStart = performance.now();
         this.rootNode.yogaNode.setWidth(this.terminalColumns);
         this.rootNode.yogaNode.calculateLayout(this.terminalColumns);
-        const ms = performance.now() - t0;
+        const ms = performance.now() - layoutStart;
         recordYogaMs(ms);
         const c = getYogaCounters();
         this.lastYogaCounters = {
@@ -257,9 +258,8 @@ export default class Ink {
       }
     };
 
-    // @ts-expect-error @types/react-reconciler@0.32.3 declares 11 args with transitionCallbacks,
-    // but react-reconciler 0.33.0 source only accepts 10 args (no transitionCallbacks)
-    this.container = reconciler.createContainer(this.rootNode, ConcurrentRoot, null, false, null, 'id', noop,
+    // react-reconciler runtime accepts 10 args but @types declares fewer
+    this.container = (reconciler as any).createContainer(this.rootNode, ConcurrentRoot, null, false, null, 'id', noop,
     // onUncaughtError
     noop,
     // onCaughtError
@@ -267,7 +267,7 @@ export default class Ink {
     // onRecoverableError
     noop // onDefaultTransitionIndicator
     );
-    if ("production" === 'development') {
+    if (isDevEnv()) {
       reconciler.injectIntoDevTools({
         bundleType: 0,
         // Reporting React DOM's version, not Ink's
@@ -789,7 +789,6 @@ export default class Ink {
   }
   pause(): void {
     // Flush pending React updates and render before pausing.
-    // @ts-expect-error flushSyncFromReconciler exists in react-reconciler 0.31 but not in @types/react-reconciler
     reconciler.flushSyncFromReconciler();
     this.onRender();
     this.isPaused = true;
@@ -1447,9 +1446,7 @@ export default class Ink {
         </TerminalWriteProvider>
       </App>;
 
-    // @ts-expect-error updateContainerSync exists in react-reconciler but not in @types/react-reconciler
     reconciler.updateContainerSync(tree, this.container, null, noop);
-    // @ts-expect-error flushSyncWork exists in react-reconciler but not in @types/react-reconciler
     reconciler.flushSyncWork();
   }
   unmount(error?: Error | number | null): void {
@@ -1514,9 +1511,7 @@ export default class Ink {
       this.drainTimer = null;
     }
 
-    // @ts-expect-error updateContainerSync exists in react-reconciler but not in @types/react-reconciler
     reconciler.updateContainerSync(null, this.container, null, noop);
-    // @ts-expect-error flushSyncWork exists in react-reconciler but not in @types/react-reconciler
     reconciler.flushSyncWork();
     instances.delete(this.options.stdout);
 
@@ -1718,7 +1713,5 @@ export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
 }
 /* eslint-enable custom-rules/no-sync-fs */
 
-let CONSOLE_STDOUT_METHODS;
-CONSOLE_STDOUT_METHODS = ['log', 'info', 'debug', 'dir', 'dirxml', 'count', 'countReset', 'group', 'groupCollapsed', 'groupEnd', 'table', 'time', 'timeEnd', 'timeLog'] as const;
-let CONSOLE_STDERR_METHODS;
-CONSOLE_STDERR_METHODS = ['warn', 'error', 'trace'] as const;
+const CONSOLE_STDOUT_METHODS = ['log', 'info', 'debug', 'dir', 'dirxml', 'count', 'countReset', 'group', 'groupCollapsed', 'groupEnd', 'table', 'time', 'timeEnd', 'timeLog'] as const;
+const CONSOLE_STDERR_METHODS = ['warn', 'error', 'trace'] as const;

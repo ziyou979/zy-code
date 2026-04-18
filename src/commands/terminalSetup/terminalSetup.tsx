@@ -15,6 +15,7 @@ import { setupShellCompletion } from '../../utils/completionCache.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { env } from '../../utils/env.js';
 import { isFsInaccessible } from '../../utils/errors.js';
+import { isInternalBuild } from '../../utils/envUtils.js';
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js';
 import { addItemToJSONCArray, safeParseJSONC } from '../../utils/json.js';
 import { logError } from '../../utils/log.js';
@@ -119,7 +120,7 @@ export async function setupTerminal(theme: ThemeName): Promise<string> {
   maybeMarkProjectOnboardingComplete();
 
   // Install shell completions (ant-only, since the completion command is ant-only)
-  if ("external" === 'ant') {
+  if (isInternalBuild()) {
     result += await setupShellCompletion(theme);
   }
   return result;

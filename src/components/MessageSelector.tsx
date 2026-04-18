@@ -25,6 +25,7 @@ import type { Output as FileWriteToolOutput } from 'src/tools/FileWriteTool/File
 import { BASH_STDERR_TAG, BASH_STDOUT_TAG, COMMAND_MESSAGE_TAG, LOCAL_COMMAND_STDERR_TAG, LOCAL_COMMAND_STDOUT_TAG, TASK_NOTIFICATION_TAG, TEAMMATE_MESSAGE_TAG, TICK_TAG } from '../constants/xml.js';
 import { count } from '../utils/array.js';
 import { formatRelativeTimeAgo, truncate } from '../utils/format.js';
+import { isInternalBuild } from '../utils/envUtils.js';
 import { Divider } from './design-system/Divider.js';
 type RestoreOption = 'both' | 'conversation' | 'code' | 'summarize' | 'summarize_up_to' | 'nevermind';
 function isSummarizeOption(option: RestoreOption | null): option is 'summarize' | 'summarize_up_to' {
@@ -72,7 +73,7 @@ export function MessageSelector({
   useEffect(() => {
     if (!preselectedMessage || !isFileHistoryEnabled) return;
     let cancelled = false;
-    void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid).then((stats) => {
+    void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid as any).then((stats) => {
       if (!cancelled) setDiffStatsForRestore(stats);
     });
     return () => {
@@ -116,7 +117,7 @@ export function MessageSelector({
       ...summarizeInputProps,
       onChange: setSummarizeFromFeedback
     });
-    if ("external" === 'ant') {
+    if (isInternalBuild()) {
       baseOptions.push({
         value: 'summarize_up_to',
         label: 'Summarize up to here',
@@ -168,7 +169,7 @@ export function MessageSelector({
       await restoreConversationDirectly(message_0);
       return;
     }
-    const diffStats = await fileHistoryGetDiffStats(fileHistory, message_0.uuid);
+    const diffStats = await fileHistoryGetDiffStats(fileHistory, message_0.uuid as any);
     setMessageToRestore(message_0);
     setDiffStatsForRestore(diffStats);
   }
@@ -192,7 +193,7 @@ export function MessageSelector({
       try {
         const direction = option === 'summarize_up_to' ? 'up_to' : 'from';
         const feedback = (direction === 'up_to' ? summarizeUpToFeedback : summarizeFromFeedback).trim() || undefined;
-        await onSummarize(messageToRestore, feedback, direction);
+        await onSummarize(messageToRestore, feedback, direction as any);
         setIsRestoring(false);
         setRestoringOption(null);
         setMessageToRestore(undefined);
@@ -289,9 +290,9 @@ export function MessageSelector({
       // Load file snapshot metadata
       void Promise.all(messageOptions.map(async (userMessage, itemIndex) => {
         if (userMessage.uuid !== currentUUID) {
-          const canRestore = fileHistoryCanRestore(fileHistory, userMessage.uuid);
+          const canRestore = fileHistoryCanRestore(fileHistory, userMessage.uuid as any);
           const nextUserMessage = messageOptions.at(itemIndex + 1);
-          const diffStats_0 = canRestore ? computeDiffStatsBetweenMessages(messages, userMessage.uuid, nextUserMessage?.uuid !== currentUUID ? nextUserMessage?.uuid : undefined) : undefined;
+          const diffStats_0 = canRestore ? computeDiffStatsBetweenMessages(messages, userMessage.uuid as any, nextUserMessage?.uuid as any !== currentUUID ? nextUserMessage?.uuid as any : undefined) : undefined;
           if (diffStats_0 !== undefined) {
             setFileHistoryMetadata((prev_1) => ({
               ...prev_1,
@@ -330,6 +331,7 @@ export function MessageSelector({
               you sent this message:
             </Text>
             <Box flexDirection="column" paddingLeft={1} borderStyle="single" borderRight={false} borderTop={false} borderBottom={false} borderLeft={true} borderLeftDimColor>
+              {/* @ts-ignore */}
               <UserMessageOption userMessage={messageToRestore} color="text" isCurrent={false} />
               <Text dimColor>
                 ({formatRelativeTimeAgo(new Date(messageToRestore.timestamp))})
@@ -369,6 +371,7 @@ export function MessageSelector({
                       </Box>
                       <Box flexDirection="column">
                         <Box flexShrink={1} height={1} overflow="hidden">
+                          {/* @ts-ignore */}
                           <UserMessageOption userMessage={msg} color={isSelected ? 'suggestion' : undefined} isCurrent={isCurrent} paddingRight={10} />
                         </Box>
                         {isFileHistoryEnabled && metadataLoaded && <Box height={1} flexDirection="row">
@@ -476,16 +479,17 @@ function UserMessageOption({
   let truncateResult;
 
 
-  let earlyReturn;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
+  let earlyReturn = Symbol.for("react.early_return_sentinel");
   const rawMessageText = typeof content === "string" ? content.trim() : lastBlock && isTextBlock(lastBlock) ? lastBlock.text.trim() : "(no prompt)";
   const messageText = stripDisplayTags(rawMessageText);
   if (isEmptyMessageText(messageText)) {
+    // @ts-ignore
     earlyReturn = <Box flexDirection="row" width="100%"><Text italic={true} color={color} dimColor={dimColor}>((empty message))</Text></Box>;
   } else {
     if (messageText.includes("<bash-input>")) {
       const input = extractTag(messageText, "bash-input");
       if (input) {
+        // @ts-ignore
         earlyReturn = <Box flexDirection="row" width="100%">{<Text color="bashBorder">!</Text>}<Text color={color} dimColor={dimColor}>{" "}{input}</Text></Box>;
       }
     }
@@ -495,8 +499,10 @@ function UserMessageOption({
       const isSkillFormat = extractTag(messageText, "skill-format") === "true";
       if (commandMessage) {
         if (isSkillFormat) {
+          // @ts-ignore
           earlyReturn = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>Skill({commandMessage})</Text></Box>;
         } else {
+          // @ts-ignore
           earlyReturn = <Box flexDirection="row" width="100%"><Text color={color} dimColor={dimColor}>/{commandMessage} {args}</Text></Box>;
         }
       }

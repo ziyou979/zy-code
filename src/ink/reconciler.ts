@@ -216,22 +216,7 @@ export function resetProfileCounters(): void {
 }
 // --- END ---
 
-const reconciler = createReconciler<
-  ElementNames,
-  Props,
-  DOMElement,
-  DOMElement,
-  TextNode,
-  DOMElement,
-  unknown,
-  unknown,
-  DOMElement,
-  HostContext,
-  null, // UpdatePayload - React 19 中未使用
-  NodeJS.Timeout,
-  -1,
-  null
->({
+const reconciler = (createReconciler as any)({
   getRootHostContext: () => ({ isInsideText: false }),
   prepareForCommit: () => {
     if (COMMIT_LOG) _prepareAt = performance.now()

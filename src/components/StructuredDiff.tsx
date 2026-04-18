@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { memo } from 'react';
@@ -91,15 +92,16 @@ function renderColorDiff(patch: StructuredPatchHunk, firstLine: string | null, f
   perHunk.set(key, entry);
   return entry;
 }
-export const StructuredDiff = memo(function StructuredDiff({
-  patch,
-  dim,
-  filePath,
-  firstLine,
-  fileContent,
-  width,
-  skipHighlighting = false
-}) {
+export const StructuredDiff = memo(function StructuredDiff(props: Props) {
+  const {
+    patch,
+    dim,
+    filePath,
+    firstLine,
+    fileContent,
+    width,
+    skipHighlighting = false
+  } = props;
   const [theme] = useTheme();
   const settings = useSettings();
   const syntaxHighlightingDisabled = settings.syntaxHighlightingDisabled ?? false;

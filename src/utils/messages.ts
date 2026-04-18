@@ -4462,6 +4462,7 @@ export function createMemorySavedMessage(
     timestamp: new Date().toISOString(),
     uuid: randomUUID(),
     isMeta: false as const,
+    teamCount: 0,
   }
 }
 

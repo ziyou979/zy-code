@@ -1,4 +1,5 @@
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// @ts-ignore TS2724
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { Suspense, use, useState } from 'react';
@@ -177,8 +178,8 @@ function EditRejectionBody({
     patch,
     firstLine,
     fileContent
-  } = use(promise);
-  return <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={patch} firstLine={firstLine} fileContent={fileContent} style={style} verbose={verbose} />;
+  } = use(promise as any) as any;
+  return <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={patch as any} firstLine={firstLine as any} fileContent={fileContent as any} style={style} verbose={verbose} />;
 }
 async function loadRejectionDiff(filePath: string, oldString: string, newString: string, replaceAll: boolean): Promise<RejectionDiffData> {
   try {

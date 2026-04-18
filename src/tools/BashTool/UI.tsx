@@ -135,6 +135,7 @@ export function renderToolResultMessage(content: Out, progressMessagesForMessage
 }): React.ReactNode {
   const lastProgress = progressMessagesForMessage.at(-1);
   const timeoutMs = lastProgress?.data?.timeoutMs;
+  // @ts-ignore
   return <BashToolResultMessage content={content} verbose={verbose} timeoutMs={timeoutMs} />;
 }
 export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {

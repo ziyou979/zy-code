@@ -442,7 +442,7 @@ function computeNewLimitsFromHeaders(
   let finalStatus: QuotaStatus = status
   if (status === 'allowed' || status === 'allowed_warning') {
     const earlyWarning = getEarlyWarningFromHeaders(
-      headers,
+      headers as any,
       unifiedRateLimitFallbackAvailable,
     )
     if (earlyWarning) {

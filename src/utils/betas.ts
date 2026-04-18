@@ -8,7 +8,6 @@ import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js';
 import { isInternalBuild } from './envUtils.js';
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js';
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js';
-import { getAPIProvider, providerHasCapability } from './model/providers.js';
 import { getInitialSettings } from './settings/settings.js';
 
 /**

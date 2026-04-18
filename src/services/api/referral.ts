@@ -8,12 +8,10 @@ import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
-import type {
-  ReferralCampaign,
-  ReferralEligibilityResponse,
-  ReferralRedemptionsResponse,
-  ReferrerRewardInfo,
-} from '../oauth/types.js'
+type ReferralCampaign = any
+type ReferralEligibilityResponse = any
+type ReferralRedemptionsResponse = any
+type ReferrerRewardInfo = any
 
 // Cache expiration time: 24 hours (eligibility changes only on subscription/experiment changes)
 const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000

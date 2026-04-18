@@ -606,7 +606,7 @@ async function performPostCreationSetup(
       hooksPath === huskyPath ? join(worktreePath, '.husky') : undefined
     void import('./postCommitAttribution.js')
       .then(m =>
-        m
+        (m as any)
           .installPrepareCommitMsgHook(worktreePath, worktreeHooksDir)
           .catch(error => {
             logForDebugging(
@@ -1294,7 +1294,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       if (!result.existed) {
         // biome-ignore lint/suspicious/noConsole: intentional console output
         console.log(
-          `Created worktree: ${worktreeDir} (based on ${result.baseBranch})`,
+          `Created worktree: ${worktreeDir} (based on ${(result as any).baseBranch})`,
         )
         await performPostCreationSetup(repoRoot, worktreeDir)
       }

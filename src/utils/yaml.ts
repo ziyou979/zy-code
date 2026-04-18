@@ -11,5 +11,6 @@ export function parseYaml(input: string): unknown {
     return Bun.YAML.parse(input)
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // @ts-ignore
   return (require('yaml') as typeof import('yaml')).parse(input)
 }

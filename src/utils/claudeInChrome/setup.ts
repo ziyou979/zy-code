@@ -22,13 +22,16 @@ import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { isInternalBuild } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 import { jsonStringify } from '../slowOperations.js'
+// @ts-ignore
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   getAllBrowserDataPaths,
   getAllNativeMessagingHostsDirs,
   getAllWindowsRegistryKeys,
   openInChrome,
+// @ts-ignore
 } from './common.js'
+// @ts-ignore
 import { getChromeSystemPrompt } from './prompt.js'
 import { isChromeExtensionInstalledPortable } from './setupPortable.js'
 
@@ -95,8 +98,10 @@ export function setupClaudeInChrome(): {
   systemPrompt: string
 } {
   const isNativeBuild = isInBundledMode()
+  // @ts-ignore
   const allowedTools = BROWSER_TOOLS.map(
-    tool => `mcp__claude-in-chrome__${tool.name}`,
+    // @ts-ignore
+    tool => `mcp__claude-in-chrome__${(tool as any).name}`,
   )
 
   const env: Record<string, string> = {}

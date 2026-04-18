@@ -108,7 +108,7 @@ export async function loadPluginLspServers(
   // 2. Check manifest.lspServers field
   if (plugin.manifest.lspServers) {
     const manifestServers = await loadLspServersFromManifest(
-      plugin.manifest.lspServers,
+      plugin.manifest.lspServers as any,
       plugin.path,
       plugin.name,
       errors,
@@ -202,7 +202,7 @@ async function loadLspServersFromManifest(
       for (const [serverName, config] of Object.entries(decl)) {
         const result = LspServerConfigSchema().safeParse(config)
         if (result.success) {
-          servers[serverName] = result.data
+          servers[serverName] = result.data as any
         } else {
           const errorMsg = `LSP config validation failed for inline server "${serverName}" in plugin ${pluginName}: ${result.error.message}`
           logError(new Error(errorMsg))
@@ -276,8 +276,8 @@ export function resolvePluginLspEnvironment(
   resolved.env = resolvedEnv
 
   // Resolve workspaceFolder if present
-  if (resolved.workspaceFolder) {
-    resolved.workspaceFolder = resolveValue(resolved.workspaceFolder)
+  if ((resolved as any).workspaceFolder) {
+    (resolved as any).workspaceFolder = resolveValue((resolved as any).workspaceFolder)
   }
 
   // Log missing variables if any were found
@@ -308,7 +308,7 @@ export function addPluginScopeToLspServers(
       ...config,
       scope: 'dynamic', // Use dynamic scope for plugin servers
       source: pluginName,
-    }
+    } as any
   }
 
   return scopedServers

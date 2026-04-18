@@ -23,7 +23,7 @@ export function MCPToolListView({
 }: Props) {
   const mcpTools = useAppState(s => s.mcp.tools);
   let serverTools;
-  if (server.client.type !== "connected") {
+  if ((server as any).client.type !== "connected") {
     serverTools = [];
   } else {
     serverTools = filterToolsByServer(mcpTools, server.name);

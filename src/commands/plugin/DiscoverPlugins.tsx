@@ -247,7 +247,7 @@ export function DiscoverPlugins({
         failureCount++;
         newFailedPlugins.push({
           name: plugin_0.entry.name,
-          reason: result.error
+          reason: (result as any).error
         });
       }
     }
@@ -305,7 +305,7 @@ export function DiscoverPlugins({
       });
     } else {
       setIsInstalling(false);
-      setInstallError(result_0.error);
+      setInstallError((result_0 as any).error);
     }
   };
 
@@ -644,13 +644,14 @@ export function DiscoverPlugins({
           </Text>
         </Box>}
 
-      <DiscoverPluginsKeyHint hasSelection={selectedForInstall.size > 0} canToggle={selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled} />
+      <DiscoverPluginsKeyHint {...({ hasSelection: selectedForInstall.size > 0, canToggle: selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled } as any)} />
     </Box>;
 }
+// @ts-ignore
 function DiscoverPluginsKeyHint({
   hasSelection,
   canToggle
-}: Props) {
+}: any) {
   return <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />}{<Text>type to search</Text>}{canToggle && <ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />}{<ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />}{<ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />}</Byline></Text></Box>;
 }
 
@@ -662,41 +663,17 @@ function EmptyStateMessage({
 }) {
   switch (reason) {
     case "git-not-installed":
-      {
-        let t1;
-        t1 = <><Text dimColor={true}>Git is required to install marketplaces.</Text><Text dimColor={true}>Please install git and restart ZY Code.</Text></>;
-        return t1;
-      }
+      return <><Text dimColor={true}>Git is required to install marketplaces.</Text><Text dimColor={true}>Please install git and restart ZY Code.</Text></>;
     case "all-blocked-by-policy":
-      {
-        let t1;
-        t1 = <><Text dimColor={true}>Your organization policy does not allow any external marketplaces.</Text><Text dimColor={true}>Contact your administrator.</Text></>;
-        return t1;
-      }
+      return <><Text dimColor={true}>Your organization policy does not allow any external marketplaces.</Text><Text dimColor={true}>Contact your administrator.</Text></>;
     case "policy-restricts-sources":
-      {
-        let t1;
-        t1 = <><Text dimColor={true}>Your organization restricts which marketplaces can be added.</Text><Text dimColor={true}>Switch to the Marketplaces tab to view allowed sources.</Text></>;
-        return t1;
-      }
+      return <><Text dimColor={true}>Your organization restricts which marketplaces can be added.</Text><Text dimColor={true}>Switch to the Marketplaces tab to view allowed sources.</Text></>;
     case "all-marketplaces-failed":
-      {
-        let t1;
-        t1 = <><Text dimColor={true}>Failed to load marketplace data.</Text><Text dimColor={true}>Check your network connection.</Text></>;
-        return t1;
-      }
+      return <><Text dimColor={true}>Failed to load marketplace data.</Text><Text dimColor={true}>Check your network connection.</Text></>;
     case "all-plugins-installed":
-      {
-        let t1;
-        t1 = <><Text dimColor={true}>All available plugins are already installed.</Text><Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text></>;
-        return t1;
-      }
+      return <><Text dimColor={true}>All available plugins are already installed.</Text><Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text></>;
     case "no-marketplaces-configured":
     default:
-      {
-        let t1;
-        t1 = <><Text dimColor={true}>No plugins available.</Text><Text dimColor={true}>Add a marketplace first using the Marketplaces tab.</Text></>;
-        return t1;
-      }
+      return <><Text dimColor={true}>No plugins available.</Text><Text dimColor={true}>Add a marketplace first using the Marketplaces tab.</Text></>;
   }
 }

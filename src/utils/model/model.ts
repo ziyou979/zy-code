@@ -172,7 +172,8 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
   // Ants default to defaultModel from flag config, or Opus 1M if not configured
   if (isInternalBuild()) {
     return (
-      getAntModelOverrideConfig()?.defaultModel ??
+      // @ts-ignore TS2304 getAntModelOverrideConfig is internal-only
+      (getAntModelOverrideConfig as any)?.defaultModel ??
       getDefaultOpusModel() + '[1m]'
     )
   }
@@ -296,6 +297,7 @@ export function renderModelName(model: ModelName): string {
   }
   if (isInternalBuild()) {
     const resolved = parseUserSpecifiedModel(model)
+    // @ts-ignore
     const antModel = resolveAntModel(model)
     if (antModel) {
       const baseName = antModel.model.replace(/\[1m\]$/i, '')

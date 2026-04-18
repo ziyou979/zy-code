@@ -21,7 +21,7 @@ import { normalizeApiKeyForConfig } from './utils/authPortable.js';
 import { getExternalzyMdIncludes, getMemoryFiles, shouldShowzyMdExternalIncludesWarning } from './utils/zymd.js';
 import { checkHasTrustDialogAccepted, getCustomApiKeyStatus, getGlobalConfig, saveGlobalConfig } from './utils/config.js';
 import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js';
-import { isEnvTruthy, isRunningOnHomespace } from './utils/envUtils.js';
+import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js';
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js';
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js';
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
@@ -102,7 +102,7 @@ export async function renderAndRun(root: Root, element: React.ReactNode): Promis
   await gracefulShutdown(0);
 }
 export async function showSetupScreens(root: Root, permissionMode: PermissionMode, allowDangerouslySkipPermissions: boolean, commands?: Command[], ClaudeInChrome?: boolean, devChannels?: ChannelEntry[]): Promise<boolean> {
-  if ("production" === 'test' || isEnvTruthy(false) || process.env.IS_DEMO // Skip onboarding in demo mode
+  if (isTestEnv() || isEnvTruthy(false) || process.env.IS_DEMO // Skip onboarding in demo mode
   ) {
     return false;
   }
@@ -165,7 +165,8 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
       const externalIncludes = getExternalzyMdIncludes(await getMemoryFiles(true));
       const {
         zyMdExternalIncludesDialog
-      } = await import('./components/zyMdExternalIncludesDialog.js');
+      } = await import('./components/ZyMdExternalIncludesDialog.js');
+      // @ts-ignore -- zyMdExternalIncludesDialog is a valid component but TS sees lowercase as intrinsic
       await showSetupDialog(root, done => <zyMdExternalIncludesDialog onDone={done} isStandaloneDialog externalIncludes={externalIncludes} />);
     }
   }

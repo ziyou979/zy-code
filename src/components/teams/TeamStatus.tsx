@@ -15,7 +15,7 @@ export function TeamStatus({
   showHint
 }: Props) {
   const teamContext = useAppState(s => s.teamContext);
-  const totalTeammates = teamContext ? Object.values(teamContext.teammates).filter(t => t.name !== "team-lead").length : 0;
+  const totalTeammates = teamContext ? Object.values((teamContext as any).teammates).filter((t: any) => t.name !== "team-lead").length : 0;
   if (totalTeammates === 0) {
     return null;
   }

@@ -136,8 +136,10 @@ export function AgentsList({
   const builtInAgents_0 = sortedAgents.filter((a_3) => a_3.source === "built-in");
   const hasNoAgents = !sortedAgents.length || source !== "built-in" && !sortedAgents.some((a_4) => a_4.source !== "built-in");
   if (hasNoAgents) {
+    // @ts-ignore
     const fragmentContent2 = source !== "built-in" && sortedAgents.some((a_5) => a_5.source === "built-in") && <><Divider />{renderBuiltInAgentsSection()}</>;
-    earlyReturn = <Dialog title={sourceTitle} subtitle="No agents found" onCancel={onBack} hideInputGuide={true}>{<Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{onCreateNew && <Box>{renderCreateNewOption()}</Box>}{<Text dimColor={true}>No agents found. Create specialized subagents that Zy can delegate to.</Text>}{<Text dimColor={true}>Each subagent has its own context window, custom system prompt, and specific tools.</Text>}{<Text dimColor={true}>Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.</Text>}{fragmentContent2}</Box>}</Dialog>;
+    // @ts-ignore
+    earlyReturn = <Dialog title={sourceTitle} subtitle="No agents found" onCancel={onBack} hideInputGuide={true}>{<Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{onCreateNew && <Box>{renderCreateNewOption()}</Box>}{<Text dimColor={true}>No agents found. Create specialized subagents that Zy can delegate to.</Text>}{<Text dimColor={true}>Each subagent has its own context window, custom system prompt, and specific tools.</Text>}{<Text dimColor={true}>Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.</Text>}{fragmentContent2}</Box>}</Dialog> as any;
   } else {
     DialogComponent = Dialog;
     t17 = sourceTitle;
@@ -158,10 +160,12 @@ export function AgentsList({
           source: groupSource_0
         } = t24;
         return <React.Fragment key={groupSource_0}>{renderAgentGroup(label, sortedAgents.filter((a_7) => a_7.source === groupSource_0))}</React.Fragment>;
+      // @ts-ignore
       })}{builtInAgents_0.length > 0 && <Box flexDirection="column" marginBottom={1} paddingLeft={2}><Text dimColor={true}><Text bold={true}>Built-in agents</Text> (always available)</Text>{builtInAgents_0.map(renderAgent)}</Box>}</> : source === "built-in" ? <><Text dimColor={true} italic={true}>Built-in agents are provided by default and cannot be modified.</Text><Box marginTop={1} flexDirection="column">{sortedAgents.map((agent_2) => renderAgent(agent_2))}</Box></> : <>{sortedAgents.filter((a_8) => a_8.source !== "built-in").map((agent_3) => renderAgent(agent_3))}{sortedAgents.some((a_9) => a_9.source === "built-in") && <><Divider />{renderBuiltInAgentsSection()}</>}</>;
   }
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
     return earlyReturn;
   }
+  // @ts-ignore
   return <DialogComponent title={t17} subtitle={t18} onCancel={t19} hideInputGuide={true}>{boxElement}{<BoxComponent flexDirection={"column"} tabIndex={0} autoFocus={true} onKeyDown={t14}>{boxElement2}{fragmentContent}</BoxComponent>}</DialogComponent>;
 }

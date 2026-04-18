@@ -19,6 +19,7 @@ type Props = {
 export function BridgeDialog({
   onDone
 }: Props) {
+  // @ts-ignore
   useRegisterOverlay("bridge-dialog");
   const connected = useAppState((s) => s.replBridgeConnected);
   const sessionActive = useAppState((s_0) => s_0.replBridgeSessionActive);
@@ -44,6 +45,7 @@ export function BridgeDialog({
       setQrText("");
       return;
     }
+    // @ts-ignore
     qrToString(displayUrl, {
       type: "utf8",
       errorCorrectionLevel: "L",

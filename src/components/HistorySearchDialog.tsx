@@ -24,11 +24,13 @@ type Item = {
   firstLine: string;
   age: string;
 };
+// @ts-ignore
 export function HistorySearchDialog({
   initialQuery,
   onSelect,
   onCancel
 }: Props): React.ReactNode {
+  // @ts-ignore
   useRegisterOverlay('history-search');
   const {
     columns

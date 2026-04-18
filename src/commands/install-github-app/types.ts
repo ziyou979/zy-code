@@ -1,18 +1,33 @@
 // Install GitHub App Types
 
-export interface State {
-  currentStep: number
-  isProcessing: boolean
-  error?: string
-}
+export type Workflow = 'zy' | 'zy-review'
 
 export interface Warning {
+  title: string
   message: string
-  details?: string
+  instructions: string[]
 }
 
-export interface Workflow {
-  name: string
-  path: string
-  exists: boolean
+export interface State {
+  step: string
+  selectedRepoName: string
+  currentRepo: string
+  useCurrentRepo: boolean
+  apiKeyOrOAuthToken: string
+  useExistingKey: boolean
+  currentWorkflowInstallStep: number
+  warnings: Warning[]
+  secretExists: boolean
+  secretName: string
+  useExistingSecret: boolean
+  workflowExists: boolean
+  selectedWorkflows: Workflow[]
+  selectedApiKeyOption: 'existing' | 'new' | 'oauth'
+  authType: string
+  workflowAction?: string
+  errorReason?: string
+  errorInstructions?: string[]
+  currentStep?: number
+  isProcessing?: boolean
+  error?: string
 }

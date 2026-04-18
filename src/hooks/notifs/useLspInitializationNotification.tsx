@@ -24,8 +24,7 @@ export function useLspInitializationNotification() {
   } = useNotifications();
   const setAppState = useSetAppState();
   const [shouldPoll, setShouldPoll] = React.useState(() => isEnvTruthy("true"));
-  const t0 = new Set();
-  const notifiedErrorsRef = React.useRef(t0);
+  const notifiedErrorsRef = React.useRef(new Set());
   const addError = (source, errorMessage) => {
     const errorKey = `${source}:${errorMessage}`;
     if (notifiedErrorsRef.current.has(errorKey)) {

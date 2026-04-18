@@ -64,8 +64,10 @@ export async function findModifiedFiles(
   outputsDir: string,
 ): Promise<string[]> {
   // Use recursive flag to get all entries in one call
+  // @ts-ignore
   let entries: Awaited<ReturnType<typeof fs.readdir>>
   try {
+    // @ts-ignore
     entries = await fs.readdir(outputsDir, {
       withFileTypes: true,
       recursive: true,
@@ -84,7 +86,7 @@ export async function findModifiedFiles(
     if (entry.isFile()) {
       // entry.parentPath is available in Node 20+, fallback to entry.path for older versions
       const parentPath = getEntryParentPath(entry, outputsDir)
-      filePaths.push(path.join(parentPath, entry.name))
+      filePaths.push(path.join(parentPath, (entry as any).name))
     }
   }
 
@@ -113,7 +115,8 @@ export async function findModifiedFiles(
   // Filter to files modified since turn start
   const modifiedFiles: string[] = []
   for (const result of statResults) {
-    if (result && result.mtimeMs >= turnStartTime) {
+    // @ts-ignore
+    if (result && result.mtimeMs >= (turnStartTime as any)) {
       modifiedFiles.push(result.filePath)
     }
   }

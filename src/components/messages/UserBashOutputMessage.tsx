@@ -8,6 +8,7 @@ export function UserBashOutputMessage({
   const rawStdout = extractTag(content, "bash-stdout") ?? "";
   const stdout = extractTag(rawStdout, "persisted-output") ?? rawStdout;
   const stderr = extractTag(content, "bash-stderr") ?? "";
+  // @ts-ignore
   return <BashToolResultMessage content={{
     stdout,
     stderr

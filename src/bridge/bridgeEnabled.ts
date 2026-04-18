@@ -71,7 +71,8 @@ function getOauthAccountInfo(): ReturnType<
  */
 export function isEnvLessBridgeEnabled(): boolean {
   return feature('BRIDGE_MODE')
-    ? getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_repl_v2', false)
+    ? // @ts-ignore
+      getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_repl_v2', false)
     : false
 }
 
@@ -86,7 +87,8 @@ export function isEnvLessBridgeEnabled(): boolean {
  */
 export function isCseShimEnabled(): boolean {
   return feature('BRIDGE_MODE')
-    ? getFeatureValue_CACHED_MAY_BE_STALE(
+    ? // @ts-ignore
+      getFeatureValue_CACHED_MAY_BE_STALE(
         'tengu_bridge_repl_v2_cse_shim_enabled',
         true,
       )

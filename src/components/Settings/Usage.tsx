@@ -125,7 +125,7 @@ export function Usage(): React.ReactNode {
   // Show for null (unknown plan) to stay consistent with rateLimitMessages.ts,
   // which labels it "Sonnet limit" in that case.
   const subscriptionType = getSubscriptionType();
-  const showSonnetBar = subscriptionType === 'max' || subscriptionType === 'team' || subscriptionType === null;
+  const showSonnetBar = (subscriptionType as any) === 'max' || (subscriptionType as any) === 'team' || subscriptionType === null;
   const limits = [{
     title: tSync('usage.currentSession'),
     limit: utilization.five_hour
@@ -165,7 +165,7 @@ function ExtraUsageSection({
   maxWidth
 }: ExtraUsageSectionProps) {
   const subscriptionType = getSubscriptionType();
-  const isProOrMax = subscriptionType === "pro" || subscriptionType === "max";
+  const isProOrMax = (subscriptionType as any) === "pro" || (subscriptionType as any) === "max";
   if (!isProOrMax) {
     return false;
   }

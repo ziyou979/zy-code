@@ -114,11 +114,11 @@ function ResumeCommand({
       }
 
       // Different project - show command instead of resuming
-      const raw = await setClipboard(crossProjectCheck.command);
+      const raw = await setClipboard((crossProjectCheck as any).command);
       if (raw) process.stdout.write(raw);
 
       // Format the output message
-      const message = ['', 'This conversation is from a different directory.', '', 'To resume, run:', `  ${crossProjectCheck.command}`, '', '(Command copied to clipboard)', ''].join('\n');
+      const message = ['', 'This conversation is from a different directory.', '', 'To resume, run:', `  ${(crossProjectCheck as any).command}`, '', '(Command copied to clipboard)', ''].join('\n');
       onDone(message, {
         display: 'user'
       });
@@ -146,7 +146,7 @@ function ResumeCommand({
         <Text> Resuming conversation…</Text>
       </Box>;
   }
-  return <LogSelector logs={logs} maxHeight={insideModal ? Math.floor(rows / 2) : rows - 2} onCancel={handleCancel} onSelect={handleSelect} onLogsChanged={() => loadLogs(showAllProjects, worktreePaths)} showAllProjects={showAllProjects} onToggleAllProjects={handleToggleAllProjects} onAgenticSearch={agenticSessionSearch} />;
+  return <LogSelector logs={logs} maxHeight={insideModal ? Math.floor(rows / 2) : rows - 2} onCancel={handleCancel} onSelect={handleSelect} onLogsChanged={() => loadLogs(showAllProjects, worktreePaths)} showAllProjects={showAllProjects} onToggleAllProjects={handleToggleAllProjects} onAgenticSearch={agenticSessionSearch} forceWidth={0} onLoadMore={() => {}} initialSearchQuery="" /> as any;
 }
 export function filterResumableSessions(logs: LogOption[], currentSessionId: string): LogOption[] {
   return logs.filter(l => !l.isSidechain && getSessionIdFromLog(l) !== currentSessionId);

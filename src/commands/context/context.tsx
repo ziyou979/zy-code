@@ -23,6 +23,7 @@ function toApiView(messages: Message[]): Message[] {
       projectView
     } = require('../../services/contextCollapse/operations.js') as typeof import('../../services/contextCollapse/operations.js');
     /* eslint-enable @typescript-eslint/no-require-imports */
+    // @ts-ignore
     view = projectView(view);
   }
   return view;
@@ -41,7 +42,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   // Apply microcompact to get accurate representation of messages sent to API
   const {
     messages: compactedMessages
-  } = await microcompactMessages(apiView);
+  } = (await microcompactMessages(apiView) as any) as { messages: Message[] };
 
   // Get terminal width for responsive sizing
   const terminalWidth = process.stdout.columns || 80;

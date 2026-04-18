@@ -523,10 +523,10 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
                   for (const [name, metadata] of Object.entries(
                     plugin.commandsMetadata,
                   )) {
-                    if (metadata.source) {
+                    if ((metadata as any).source) {
                       const fullMetadataPath = join(
                         plugin.path,
-                        metadata.source,
+                        (metadata as any).source,
                       )
                       if (commandPath === fullMetadataPath) {
                         commandName = `${plugin.name}:${name}`
@@ -609,29 +609,29 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
           plugin.commandsMetadata,
         )) {
           // Only process entries with inline content (no source)
-          if (metadata.content && !metadata.source) {
+          if ((metadata as any).content && !(metadata as any).source) {
             try {
               // Parse inline content for frontmatter
               const { frontmatter, content: markdownContent } =
                 parseFrontmatter(
-                  metadata.content,
+                  (metadata as any).content,
                   `<inline:${plugin.name}:${name}>`,
                 )
 
               // Apply metadata overrides to frontmatter
               const finalFrontmatter: FrontmatterData = {
                 ...frontmatter,
-                ...(metadata.description && {
-                  description: metadata.description,
+                ...((metadata as any).description && {
+                  description: (metadata as any).description,
                 }),
-                ...(metadata.argumentHint && {
-                  'argument-hint': metadata.argumentHint,
+                ...((metadata as any).argumentHint && {
+                  'argument-hint': (metadata as any).argumentHint,
                 }),
-                ...(metadata.model && {
-                  model: metadata.model,
+                ...((metadata as any).model && {
+                  model: (metadata as any).model,
                 }),
-                ...(metadata.allowedTools && {
-                  'allowed-tools': metadata.allowedTools.join(','),
+                ...((metadata as any).allowedTools && {
+                  'allowed-tools': (metadata as any).allowedTools.join(','),
                 }),
               }
 

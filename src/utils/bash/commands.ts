@@ -502,7 +502,7 @@ const getCommandPrefix = createCommandPrefixExtractor({
   toolName: 'Bash',
   policySpec: BASH_POLICY_SPEC,
   eventName: 'tengu_bash_prefix',
-  querySource: 'bash_extract_prefix',
+  querySource: 'bash_extract_prefix' as any,
   preCheck: command =>
     isHelpCommand(command) ? { commandPrefix: command } : null,
 })

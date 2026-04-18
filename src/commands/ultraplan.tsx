@@ -15,6 +15,7 @@ import { enqueuePendingNotification } from '../utils/messageQueueManager.js';
 import { ALL_MODEL_CONFIGS } from '../utils/model/configs.js';
 import { updateTaskState } from '../utils/task/framework.js';
 import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js';
+import { isInternalBuild } from '../utils/envUtils.js';
 import { pollForApprovedExitPlanMode, UltraplanPollError } from '../utils/ultraplan/ccrSession.js';
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
@@ -30,7 +31,7 @@ export const CCR_TERMS_URL = 'https://code.zy.com/docs/en/zy-code-on-the-web';
 // load: the GrowthBook cache is empty at import and `/config` Gates can flip
 // it between invocations.
 function getUltraplanModel(): string {
-  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_ultraplan_model', ALL_MODEL_CONFIGS.opus46.anthropic);
+  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_ultraplan_model', (ALL_MODEL_CONFIGS as any).opus46?.anthropic ?? Object.values(ALL_MODEL_CONFIGS)[0]?.anthropic);
 }
 
 // prompt.txt is wrapped in <system-reminder> so the CCR browser hides
@@ -53,7 +54,7 @@ const DEFAULT_INSTRUCTIONS: string = (typeof _rawPrompt === 'string' ? _rawPromp
 // Shell-set env only, so top-level process.env read is fine
 // — settings.env never injects this.
 /* eslint-disable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs -- ant-only dev override; eager top-level read is the point (crash at startup, not silently inside the slash-command try/catch) */
-const ULTRAPLAN_INSTRUCTIONS: string = "external" === 'ant' && process.env.ULTRAPLAN_PROMPT_FILE ? readFileSync(process.env.ULTRAPLAN_PROMPT_FILE, 'utf8').trimEnd() : DEFAULT_INSTRUCTIONS;
+const ULTRAPLAN_INSTRUCTIONS: string = isInternalBuild() && process.env.ULTRAPLAN_PROMPT_FILE ? readFileSync(process.env.ULTRAPLAN_PROMPT_FILE, 'utf8').trimEnd() : DEFAULT_INSTRUCTIONS;
 /* eslint-enable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs */
 
 /**
@@ -316,9 +317,9 @@ async function launchDetached(opts: {
     if (!eligibility.eligible) {
       logEvent('tengu_ultraplan_create_failed', {
         reason: 'precondition' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        precondition_errors: eligibility.errors.map(e => e.type).join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
+        precondition_errors: (eligibility as any).errors.map((e: any) => e.type).join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
-      const reasons = eligibility.errors.map(formatPreconditionError).join('\n');
+      const reasons = ((eligibility as any).errors as any[]).map(formatPreconditionError).join('\n');
       enqueuePendingNotification({
         value: `ultraplan: cannot launch remote session —\n${reasons}`,
         mode: 'task-notification'
@@ -463,7 +464,7 @@ export default {
   name: 'ultraplan',
   description: `~10–30 min · ZY Code on the web drafts an advanced plan you can edit and approve. See ${CCR_TERMS_URL}`,
   argumentHint: '<prompt>',
-  isEnabled: () => "external" === 'ant',
+  isEnabled: () => isInternalBuild(),
   load: () => Promise.resolve({
     call
   })

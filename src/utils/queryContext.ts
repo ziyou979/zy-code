@@ -118,11 +118,11 @@ export async function buildSideQuestionFallbackParams({
       tools,
       mainLoopModel,
       additionalWorkingDirectories: Array.from(
-        appState.toolPermissionContext.additionalWorkingDirectories.keys(),
+        (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
       ),
       mcpClients,
       customSystemPrompt,
-    })
+    }) as any
 
   const systemPrompt = asSystemPrompt([
     ...(customSystemPrompt !== undefined

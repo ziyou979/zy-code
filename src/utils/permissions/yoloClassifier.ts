@@ -302,7 +302,7 @@ export function buildTranscriptEntries(messages: Message[]): TranscriptEntry[] {
   const transcript: TranscriptEntry[] = []
   for (const msg of messages) {
     if (msg.type === 'attachment' && msg.attachment.type === 'queued_command') {
-      const prompt = msg.attachment.prompt
+      const prompt = (msg.attachment as any).prompt
       let text: string | null = null
       if (typeof prompt === 'string') {
         text = prompt
@@ -468,7 +468,7 @@ function buildzyMdMessage(): Anthropic.MessageParam | null {
           `instructions the user provided to the agent and should be treated ` +
           `as part of the user's intent when evaluating actions.\n\n` +
           `<user_Zy_md>\n${zyMd}\n</user_Zy_md>`,
-        cache_control: getCacheControl({ querySource: 'auto_mode' }),
+        cache_control: getCacheControl({ querySource: 'auto_mode' as any }),
       },
     ],
   }
@@ -740,7 +740,7 @@ async function classifyYoloActionXml(
     {
       type: 'text' as const,
       text: xmlSystemPrompt,
-      cache_control: getCacheControl({ querySource: 'auto_mode' }),
+      cache_control: getCacheControl({ querySource: 'auto_mode' as any }),
     },
   ]
   let stage1Usage: ClassifierUsage | undefined
@@ -787,9 +787,9 @@ async function classifyYoloActionXml(
         maxRetries: getDefaultMaxRetries(),
         signal,
         ...(mode !== 'fast' && { stop_sequences: ['</block>'] }),
-        querySource: 'auto_mode',
+        querySource: 'auto_mode' as any,
       }
-      const stage1Raw = await sideQuery(stage1Opts)
+      const stage1Raw = await sideQuery(stage1Opts as any)
       stage1DurationMs = Date.now() - stage1Start
       stage1Usage = extractUsage(stage1Raw)
       stage1RequestId = extractRequestId(stage1Raw)
@@ -873,9 +873,9 @@ async function classifyYoloActionXml(
       ],
       maxRetries: getDefaultMaxRetries(),
       signal,
-      querySource: 'auto_mode' as const,
+      querySource: 'auto_mode' as any,
     }
-    const stage2Raw = await sideQuery(stage2Opts)
+    const stage2Raw = await sideQuery(stage2Opts as any)
     const stage2DurationMs = Date.now() - stage2Start
     const stage2Usage = extractUsage(stage2Raw)
     const stage2RequestId = extractRequestId(stage2Raw)
@@ -1090,7 +1090,7 @@ export async function classifyYoloAction(
 
   // 为与主 agent 循环保持一致而使用 getCacheControl —
   // 遵循 GrowthBook TTL 允许列表和 query-source 门控。
-  const cacheControl = getCacheControl({ querySource: 'auto_mode' })
+  const cacheControl = getCacheControl({ querySource: 'auto_mode' as any })
   // 将 cache_control 放在操作块上。在两阶段分类器中，
   // 阶段 2 与阶段 1 共享相同的 transcript+操作前缀 — 此处的
   // 断点为阶段 2 在整个前缀上提供保证的缓存命中。
@@ -1135,7 +1135,7 @@ export async function classifyYoloAction(
         {
           type: 'text' as const,
           text: systemPrompt,
-          cache_control: getCacheControl({ querySource: 'auto_mode' }),
+          cache_control: getCacheControl({ querySource: 'auto_mode' as any }),
         },
       ],
       skipSystemPromptPrefix: true,
@@ -1152,9 +1152,9 @@ export async function classifyYoloAction(
       },
       maxRetries: getDefaultMaxRetries(),
       signal,
-      querySource: 'auto_mode' as const,
+      querySource: 'auto_mode' as any,
     }
-    const result = await sideQuery(sideQueryOpts)
+    const result = await sideQuery(sideQueryOpts as any)
     void maybeDumpAutoMode(sideQueryOpts, result, start)
     setLastClassifierRequests([sideQueryOpts])
     const durationMs = Date.now() - start

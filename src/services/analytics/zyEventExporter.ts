@@ -24,7 +24,6 @@ import { logError } from '../../utils/log.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { stripProtoFields } from './index.js'
 import { type EventMetadata, toZyEventFormat } from './metadata.js'
 
@@ -539,6 +538,7 @@ export class ZyEventExporter implements LogRecordExporter {
     // This prevents executing apiKeyHelper commands before the trust dialog
     // Non-interactive sessions implicitly have workspace trust
     const hasTrust =
+      // @ts-ignore
       checkHasTrustDialogAccepted() || getIsNonInteractiveSession()
     if (process.env.USER_TYPE === 'zy-super' && !hasTrust) {
       logForDebugging('ZY event logging: Trust not accepted')
@@ -654,7 +654,7 @@ export class ZyEventExporter implements LogRecordExporter {
         (attributes.event_name as string) || (log.body as string) || 'unknown'
 
       // Extract metadata objects directly (no JSON parsing needed)
-      const coreMetadata = attributes.core_metadata as EventMetadata | undefined
+      const coreMetadata = attributes.core_metadata as unknown as EventMetadata | undefined
       const userMetadata = attributes.user_metadata as CoreUserData
       const eventMetadata = (attributes.event_metadata || {}) as Record<
         string,

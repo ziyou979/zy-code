@@ -1,10 +1,10 @@
 import { BROWSER_TOOLS } from '@ant/claude-for-chrome-mcp'
-import { BASE_CHROME_PROMPT } from '../../utils/ClaudeInChrome/prompt.js'
-import { shouldAutoEnableClaudeInChrome } from '../../utils/ClaudeInChrome/setup.js'
+import { BASE_CHROME_PROMPT } from '../../utils/claudeInChrome/prompt.js'
+import { shouldAutoEnableClaudeInChrome } from '../../utils/claudeInChrome/setup.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 const CLAUDE_IN_CHROME_MCP_TOOLS = BROWSER_TOOLS.map(
-  tool => `mcp__claude-in-chrome__${tool.name}`,
+  tool => `mcp__claude-in-chrome__${(tool as any).name}`,
 )
 
 const SKILL_ACTIVATION_MESSAGE = `

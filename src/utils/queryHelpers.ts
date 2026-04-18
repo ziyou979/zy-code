@@ -113,7 +113,7 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
           parent_tool_use_id: null,
           session_id: getSessionId(),
           uuid: _.uuid,
-          error: _.error,
+          error: _.error as any,
         }
       }
       return
@@ -135,7 +135,7 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
                 parent_tool_use_id: message.parentToolUseID,
                 session_id: getSessionId(),
                 uuid: _.uuid,
-                error: _.error,
+                error: _.error as any,
               }
               break
             case 'user':

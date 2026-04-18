@@ -476,14 +476,17 @@ const MessagesImpl = ({
     // SendUserFile 传递文件而不替换文本，因此为纯文件 turn 丢弃
     // assistant 文本会让用户失去上下文。
     const dropTextToolNames = [BRIEF_TOOL_NAME].filter((n_0): n_0 is string => n_0 !== null);
-    const briefFiltered = briefToolNames.length > 0 && !isTranscriptMode ? isBriefOnly ? filterForBriefTool(messagesToShowNotTruncated, briefToolNames) : dropTextToolNames.length > 0 ? dropTextInBriefTurns(messagesToShowNotTruncated, dropTextToolNames) : messagesToShowNotTruncated : messagesToShowNotTruncated;
+    const briefFiltered = briefToolNames.length > 0 && !isTranscriptMode ? isBriefOnly ? filterForBriefTool(messagesToShowNotTruncated as any, briefToolNames) : dropTextToolNames.length > 0 ? dropTextInBriefTurns(messagesToShowNotTruncated as any, dropTextToolNames) : messagesToShowNotTruncated : messagesToShowNotTruncated;
     const messagesToShow = shouldTruncate ? briefFiltered.slice(-MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE) : briefFiltered;
     const hasTruncatedMessages = shouldTruncate && briefFiltered.length > MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE;
+    // @ts-ignore
     const {
       messages: groupedMessages
-    } = applyGrouping(messagesToShow, tools, verbose);
+    } = applyGrouping(messagesToShow as any, tools, verbose);
+    // @ts-ignore
     const collapsed = collapseBackgroundBashNotifications(collapseHookSummaries(collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools))), verbose);
-    const lookups = buildMessageLookups(normalizedMessages, messagesToShow);
+    // @ts-ignore
+    const lookups = buildMessageLookups(normalizedMessages, messagesToShow as any);
     const hiddenMessageCount = messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE;
     return {
       collapsed,

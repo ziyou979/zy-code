@@ -80,7 +80,7 @@ export function toSDKCompactMetadata(
 ): SDKCompactMetadata {
   const seg = meta.preservedSegment
   return {
-    trigger: meta.trigger,
+    trigger: meta.trigger as any,
     pre_tokens: meta.preTokens,
     ...(seg && {
       preserved_segment: {
@@ -100,7 +100,7 @@ export function fromSDKCompactMetadata(
 ): CompactMetadata {
   const seg = meta.preserved_segment
   return {
-    trigger: meta.trigger,
+    trigger: meta.trigger as any,
     preTokens: meta.pre_tokens,
     ...(seg && {
       preservedSegment: {
@@ -123,7 +123,8 @@ export function toSDKMessages(messages: Message[]): SDKMessage[] {
             session_id: getSessionId(),
             parent_tool_use_id: null,
             uuid: message.uuid,
-            error: message.error,
+            // @ts-ignore
+            error: _.error as any,
           },
         ]
       case 'user':
@@ -169,7 +170,7 @@ export function toSDKMessages(messages: Message[]): SDKMessage[] {
           return [
             localCommandOutputToSDKAssistantMessage(
               message.content,
-              message.uuid,
+              message.uuid as any,
             ),
           ]
         }

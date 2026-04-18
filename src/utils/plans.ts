@@ -305,10 +305,10 @@ function recoverPlanFromMessages(log: LogOption): string | null {
     if (msg.type === 'user') {
       const userMsg = msg as UserMessage
       if (
-        typeof userMsg.planContent === 'string' &&
-        userMsg.planContent.length > 0
+        typeof (userMsg as any).planContent === 'string' &&
+        (userMsg as any).planContent.length > 0
       ) {
-        return userMsg.planContent
+        return (userMsg as any).planContent
       }
     }
 
@@ -339,10 +339,10 @@ function findFileSnapshotEntry(
     if (
       msg?.type === 'system' &&
       'subtype' in msg &&
-      msg.subtype === 'file_snapshot' &&
+      (msg as any).subtype === ('file_snapshot' as any) &&
       'snapshotFiles' in msg
     ) {
-      const files = msg.snapshotFiles as Array<{
+      const files = (msg as any).snapshotFiles as Array<{
         key: string
         path: string
         content: string
@@ -379,7 +379,7 @@ export async function persistFileSnapshotIfRemote(): Promise<void> {
       return
     }
 
-    const message: SystemFileSnapshotMessage = {
+    const message = {
       type: 'system',
       subtype: 'file_snapshot',
       content: 'File snapshot',
@@ -388,10 +388,10 @@ export async function persistFileSnapshotIfRemote(): Promise<void> {
       timestamp: new Date().toISOString(),
       uuid: randomUUID(),
       snapshotFiles,
-    }
+    } as any
 
     const { recordTranscript } = await import('./sessionStorage.js')
-    await recordTranscript([message])
+    await recordTranscript([message] as any)
   } catch (error) {
     logError(error)
   }

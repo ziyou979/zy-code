@@ -39,11 +39,13 @@ import { getTaskListId, listTasks } from '../utils/tasks.js'
 import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const extractMemoriesModule = feature('EXTRACT_MEMORIES')
+const extractMemoriesModule = feature('MEMORY')
   ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
   : null
+// @ts-ignore
 const jobClassifierModule = feature('TEMPLATES')
-  ? (require('../jobs/classifier.js') as typeof import('../jobs/classifier.js'))
+  // @ts-ignore
+  ? (require('../jobs/classifier.js' as any) as typeof import('../jobs/classifier.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -93,7 +95,7 @@ export async function* handleStopHooks(
   // Outside the prompt-suggestion gate: the REPL /btw command and the
   // side_question SDK control_request both read this snapshot, and neither
   // depends on prompt suggestions being enabled.
-  if (querySource === 'repl_main_thread' || querySource === 'sdk') {
+  if ((querySource as any) === 'repl_main_thread' || querySource === 'sdk') {
     saveCacheSafeParams(createCacheSafeParams(stopHookContext))
   }
 
@@ -201,8 +203,8 @@ export async function* handleStopHooks(
       if (result.message) {
         yield result.message
         // Track toolUseID from progress messages and count hooks
-        if (result.message.type === 'progress' && result.message.toolUseID) {
-          stopHookToolUseID = result.message.toolUseID
+        if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
+          stopHookToolUseID = (result.message as any).toolUseID
           hookCount++
           // Extract hook command and prompt text from progress data
           const progressData = result.message.data as HookProgress
@@ -210,12 +212,12 @@ export async function* handleStopHooks(
             hookInfos.push({
               command: progressData.command,
               promptText: progressData.promptText,
-            })
+            } as any)
           }
         }
         // Track errors and output from attachments
-        if (result.message.type === 'attachment') {
-          const attachment = result.message.attachment
+        if ((result.message as any).type === 'attachment') {
+          const attachment = (result.message as any).attachment
           if (
             'hookEvent' in attachment &&
             (attachment.hookEvent === 'Stop' ||
@@ -244,11 +246,11 @@ export async function* handleStopHooks(
             if ('durationMs' in attachment && 'command' in attachment) {
               const info = hookInfos.find(
                 i =>
-                  i.command === attachment.command &&
-                  i.durationMs === undefined,
+                  (i as any).command === (attachment as any).command &&
+                  (i as any).durationMs === undefined,
               )
               if (info) {
-                info.durationMs = attachment.durationMs
+                (info as any).durationMs = (attachment as any).durationMs
               }
             }
           }
@@ -303,7 +305,7 @@ export async function* handleStopHooks(
         preventedContinuation,
         stopReason,
         hasOutput,
-        'suggestion',
+        'suggestion' as any,
         stopHookToolUseID,
       )
 
@@ -365,10 +367,10 @@ export async function* handleStopHooks(
         for await (const result of taskCompletedGenerator) {
           if (result.message) {
             if (
-              result.message.type === 'progress' &&
-              result.message.toolUseID
+              (result.message as any).type === 'progress' &&
+              (result.message as any).toolUseID
             ) {
-              teammateHookToolUseID = result.message.toolUseID
+              teammateHookToolUseID = (result.message as any).toolUseID
             }
             yield result.message
           }
@@ -409,8 +411,8 @@ export async function* handleStopHooks(
 
       for await (const result of teammateIdleGenerator) {
         if (result.message) {
-          if (result.message.type === 'progress' && result.message.toolUseID) {
-            teammateHookToolUseID = result.message.toolUseID
+          if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
+            teammateHookToolUseID = (result.message as any).toolUseID
           }
           yield result.message
         }
@@ -466,7 +468,7 @@ export async function* handleStopHooks(
     // to debug their hook.
     yield createSystemMessage(
       `Stop hook failed: ${errorMessage(error)}`,
-      'warning',
+      'warning' as any,
     )
     return { blockingErrors: [], preventContinuation: false }
   }

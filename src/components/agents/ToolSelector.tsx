@@ -25,6 +25,7 @@ import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { count } from '../../utils/array.js';
 import { plural } from '../../utils/stringUtils.js';
+import { isInternalBuild } from '../../utils/envUtils.js';
 import { Divider } from '../design-system/Divider.js';
 type Props = {
   tools: Tools;
@@ -56,7 +57,7 @@ function getToolBuckets(): ToolBuckets {
     },
     EXECUTION: {
       name: 'Execution tools',
-      toolNames: new Set([BashTool.name, "external" === 'ant' ? TungstenTool.name : undefined].filter(n => n !== undefined))
+      toolNames: new Set([BashTool.name, isInternalBuild() ? TungstenTool.name : undefined].filter(n => n !== undefined))
     },
     MCP: {
       name: 'MCP tools',
@@ -107,7 +108,7 @@ export function ToolSelector({
   const [selectedTools, setSelectedTools] = useState(expandedInitialTools);
   const [focusIndex, setFocusIndex] = useState(0);
   const [showIndividualTools, setShowIndividualTools] = useState(false);
-  const toolNames = new Set(customAgentTools.map(t_0 => t_0.name));
+  const toolNames = new Set(customAgentTools.map(tool => tool.name));
   const validSelectedTools = selectedTools.filter(name => toolNames.has(name));
   const selectedSet = new Set(validSelectedTools);
   const isAllSelected = validSelectedTools.length === customAgentTools.length && customAgentTools.length > 0;
@@ -115,20 +116,20 @@ export function ToolSelector({
     if (!toolName) {
       return;
     }
-    setSelectedTools(current => current.includes(toolName) ? current.filter(t_1 => t_1 !== toolName) : [...current, toolName]);
+    setSelectedTools(current => current.includes(toolName) ? current.filter(name => name !== toolName) : [...current, toolName]);
   };
   const handleToggleTools = (toolNames_0, select) => {
     setSelectedTools(current_0 => {
       if (select) {
-        const toolsToAdd = toolNames_0.filter(t_2 => !current_0.includes(t_2));
+        const toolsToAdd = toolNames_0.filter(name => !current_0.includes(name));
         return [...current_0, ...toolsToAdd];
       } else {
-        return current_0.filter(t_3 => !toolNames_0.includes(t_3));
+        return current_0.filter(name => !toolNames_0.includes(name));
       }
     });
   };
   const handleConfirm = () => {
-    const allToolNames = customAgentTools.map(t_4 => t_4.name);
+    const allToolNames = customAgentTools.map(tool => tool.name);
     const areAllToolsSelected = validSelectedTools.length === allToolNames.length && allToolNames.every(name_0 => validSelectedTools.includes(name_0));
     const finalTools = areAllToolsSelected ? undefined : validSelectedTools;
     onComplete(finalTools);
@@ -164,10 +165,10 @@ export function ToolSelector({
   });
   const toolsByBucket = buckets;
   const createBucketToggleAction = bucketTools => {
-    const selected = count(bucketTools, t_5 => selectedSet.has(t_5.name));
+    const selected = count(bucketTools, (tool: any) => selectedSet.has(tool.name));
     const needsSelection = selected < bucketTools.length;
     return () => {
-      const toolNames_1 = bucketTools.map(t_6 => t_6.name);
+      const toolNames_1 = bucketTools.map((tool: any) => tool.name);
       handleToggleTools(toolNames_1, needsSelection);
     };
   };
@@ -182,7 +183,7 @@ export function ToolSelector({
     id: "bucket-all",
     label: `${isAllSelected ? figures.checkboxOn : figures.checkboxOff} All tools`,
     action: () => {
-      const allToolNames_0 = customAgentTools.map(t_7 => t_7.name);
+      const allToolNames_0 = customAgentTools.map(tool => tool.name);
       handleToggleTools(allToolNames_0, !isAllSelected);
     }
   });
@@ -217,7 +218,7 @@ export function ToolSelector({
     if (bucketTools_0.length === 0) {
       return;
     }
-    const selected_0 = count(bucketTools_0, t_8 => selectedSet.has(t_8.name));
+    const selected_0 = count(bucketTools_0, tool => selectedSet.has(tool.name));
     const isFullySelected = selected_0 === bucketTools_0.length;
     navigableItems.push({
       id,
@@ -251,13 +252,13 @@ export function ToolSelector({
           serverName,
           tools: serverTools
         } = t13;
-        const selected_1 = count(serverTools, t_9 => selectedSet.has(t_9.name));
+        const selected_1 = count(serverTools, tool => selectedSet.has(tool.name));
         const isFullySelected_0 = selected_1 === serverTools.length;
         navigableItems.push({
           id: `mcp-server-${serverName}`,
           label: `${isFullySelected_0 ? figures.checkboxOn : figures.checkboxOff} ${serverName} (${serverTools.length} ${plural(serverTools.length, "tool")})`,
           action: () => {
-            const toolNames_2 = serverTools.map(t_10 => t_10.name);
+            const toolNames_2 = serverTools.map(tool => tool.name);
             handleToggleTools(toolNames_2, !isFullySelected_0);
           }
         });

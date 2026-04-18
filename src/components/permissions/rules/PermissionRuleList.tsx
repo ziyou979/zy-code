@@ -19,6 +19,7 @@ import { jsonStringify } from '../../../utils/slowOperations.js';
 import { Pane } from '../../design-system/Pane.js';
 import { Tab, Tabs, useTabHeaderFocus, useTabsWidth } from '../../design-system/Tabs.js';
 import { SearchBox } from '../../SearchBox.js';
+// @ts-ignore
 import type { Option } from '../../ui/option.js';
 import { AddPermissionRules } from './AddPermissionRules.js';
 import { AddWorkspaceDirectory } from './AddWorkspaceDirectory.js';
@@ -30,6 +31,8 @@ import { WorkspaceTab } from './WorkspaceTab.js';
 type TabType = 'recent' | 'allow' | 'ask' | 'deny' | 'workspace';
 type RuleSourceTextProps = {
   rule: PermissionRule;
+  onDelete?: () => void;
+  onCancel?: () => void;
 };
 function RuleSourceText({
   rule
@@ -86,6 +89,9 @@ type RulesTabContentProps = {
   lastFocusedRuleKey: string | undefined;
   cursorOffset?: number;
   onHeaderFocusChange?: (focused: boolean) => void;
+  tab?: TabType;
+  getRulesOptions?: any;
+  handleToolSelect?: any;
 };
 
 // Component for rendering rules tab content with full width support
@@ -289,6 +295,7 @@ export function PermissionRuleList({
   const handleToolSelect = (selectedValue, tab_0) => {
     const {
       rulesByKey: rulesByKey_0
+      // @ts-ignore
     } = getRulesOptions(tab_0);
     if (selectedValue === "add-new-rule") {
       setAddingRuleToTab(tab_0);
@@ -327,7 +334,7 @@ export function PermissionRuleList({
   const handleRequestRemoveDirectory = path => setRemovingDirectory(path);
   const handleRulesCancel = () => {
     const s_1 = denialStateRef.current;
-    const denialsFor = set => Array.from(set).map(idx => s_1.denials[idx]).filter(d => d !== undefined);
+    const denialsFor = set => Array.from(set).map(idx => s_1.denials[idx as any]).filter(d => d !== undefined);
     const retryDenials = denialsFor(s_1.retry);
     if (retryDenials.length > 0) {
       const commands = retryDenials.map(d_0 => d_0.display);
@@ -358,7 +365,8 @@ export function PermissionRuleList({
     }
     const {
       options: options_0
-    } = getRulesOptions(selectedRule.ruleBehavior as TabType);
+      // @ts-ignore
+    } = getRulesOptions((selectedRule as any).ruleBehavior as TabType);
     const selectedKey = jsonStringify(selectedRule);
     const ruleKeys = options_0.filter(opt => opt.value !== "add-new-rule").map(opt_0 => opt_0.value);
     const currentIndex = ruleKeys.indexOf(selectedKey);
@@ -383,7 +391,7 @@ export function PermissionRuleList({
         }));
       }
     });
-    setChanges(prev_2 => [...prev_2, `Deleted ${selectedRule.ruleBehavior} rule ${chalk.bold(permissionRuleValueToString(selectedRule.ruleValue))}`]);
+    setChanges(prev_2 => [...prev_2, `Deleted ${(selectedRule as any).ruleBehavior} rule ${chalk.bold(permissionRuleValueToString((selectedRule as any).ruleValue))}`]);
     setSelectedRule(undefined);
   };
   if (selectedRule) {
@@ -407,18 +415,18 @@ export function PermissionRuleList({
         type: "addDirectories" as const,
         directories: [path_0],
         destination
-      };
-      const updatedContext = applyPermissionUpdate(toolPermissionContext, permissionUpdate);
+      } as any;
+      const updatedContext = applyPermissionUpdate(toolPermissionContext, permissionUpdate as any);
       setAppState(prev_4 => ({
         ...prev_4,
         toolPermissionContext: updatedContext
       }));
       if (remember) {
-        persistPermissionUpdate(permissionUpdate);
+        persistPermissionUpdate(permissionUpdate as any);
       }
       setChanges(prev_5 => [...prev_5, `Added directory ${chalk.bold(path_0)} to workspace${remember ? " and saved to local settings" : " for this session"}`]);
       setIsAddingWorkspaceDirectory(false);
-    }} onCancel={() => setIsAddingWorkspaceDirectory(false)} permissionContext={toolPermissionContext} />;
+    }} onCancel={() => setIsAddingWorkspaceDirectory(false)} permissionContext={toolPermissionContext} directoryPath={undefined as any} />;
   }
   if (removingDirectory) {
     return <RemoveWorkspaceDirectory directoryPath={removingDirectory} onRemove={() => {
@@ -441,7 +449,7 @@ export function PermissionRuleList({
     getRulesOptions,
     handleToolSelect,
     onHeaderFocusChange: handleHeaderFocusChange
-  };
+  } as any;
   const isHidden = !!selectedRule || !!addingRuleToTab || !!validatedRule || isAddingWorkspaceDirectory || !!removingDirectory;
   return <Box flexDirection="column" onKeyDown={handleKeyDown}>{<Pane color="permission">{<Tabs title="Permissions:" color="permission" defaultTab={defaultTab} hidden={isHidden} initialHeaderFocused={!hasDenials} navFromContent={!isSearchMode}>{<Tab id="recent" title="Recently denied"><RecentDenialsTab onHeaderFocusChange={handleHeaderFocusChange} onStateChange={handleDenialStateChange} /></Tab>}{<Tab id="allow" title="Allow"><PermissionRulesTab tab="allow" {...sharedRulesProps} /></Tab>}{<Tab id="ask" title="Ask"><PermissionRulesTab tab="ask" {...sharedRulesProps} /></Tab>}{<Tab id="deny" title="Deny"><PermissionRulesTab tab="deny" {...sharedRulesProps} /></Tab>}{<Tab id="workspace" title="Workspace"><Box flexDirection="column">{<Text>ZY Code can read files in the workspace, and make edits when auto-accept edits is on.</Text>}<WorkspaceTab onExit={onExit} toolPermissionContext={toolPermissionContext} onRequestAddDirectory={handleRequestAddDirectory} onRequestRemoveDirectory={handleRequestRemoveDirectory} onHeaderFocusChange={handleHeaderFocusChange} /></Box></Tab>}</Tabs>}{<Box marginTop={1} paddingLeft={1}><Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : headerFocused ? <>←/→ tab switch · ↓ return · Esc cancel</> : isSearchMode ? <>Type to filter · Enter/↓ select · ↑ tabs · Esc clear</> : hasDenials && defaultTab === "recent" ? <>Enter approve · r retry · ↑↓ navigate · ←/→ switch · Esc cancel</> : <>↑↓ navigate · Enter select · Type to search · ←/→ switch · Esc cancel</>}</Text></Box>}</Pane>}</Box>;
 }

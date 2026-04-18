@@ -94,7 +94,7 @@ export class StreamingToolExecutor {
               },
             ],
             toolUseResult: `Error: No such tool available: ${block.name}`,
-            sourceToolAssistantUUID: assistantMessage.uuid,
+            sourceToolAssistantUUID: assistantMessage.uuid as any,
           }),
         ],
       })
@@ -168,7 +168,7 @@ export class StreamingToolExecutor {
           },
         ],
         toolUseResult: 'User rejected tool use',
-        sourceToolAssistantUUID: assistantMessage.uuid,
+        sourceToolAssistantUUID: assistantMessage.uuid as any,
       })
     }
     if (reason === 'streaming_fallback') {
@@ -183,7 +183,7 @@ export class StreamingToolExecutor {
           },
         ],
         toolUseResult: 'Streaming fallback - tool execution discarded',
-        sourceToolAssistantUUID: assistantMessage.uuid,
+        sourceToolAssistantUUID: assistantMessage.uuid as any,
       })
     }
     const desc = this.erroredToolDescription
@@ -200,7 +200,7 @@ export class StreamingToolExecutor {
         },
       ],
       toolUseResult: msg,
-      sourceToolAssistantUUID: assistantMessage.uuid,
+      sourceToolAssistantUUID: assistantMessage.uuid as any,
     })
   }
 

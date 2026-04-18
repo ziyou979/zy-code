@@ -16,7 +16,7 @@ import { UserImageMessage } from './UserImageMessage.js';
 import { toInkColor } from '../../utils/ink.js';
 import { jsonParse } from '../../utils/slowOperations.js';
 import { plural } from '../../utils/stringUtils.js';
-import { isEnvTruthy } from '../../utils/envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
 import { tryRenderPlanApprovalMessage, formatTeammateMessageContent } from './PlanApprovalMessage.js';
 import { BLACK_CIRCLE } from '../../constants/figures.js';
@@ -112,7 +112,7 @@ export function AttachmentMessage({
       // names — shortId is undefined outside ant builds anyway.
       const names = attachment.skills.map(s => s.shortId ? `${s.name} [${s.shortId}]` : s.name).join(', ');
       const firstId = attachment.skills[0]?.shortId;
-      const hint = "external" === 'ant' && !isDemoEnv && firstId ? ` · /skill-feedback ${firstId} 1=wrong 2=noisy 3=good [comment]` : '';
+      const hint = isInternalBuild() && !isDemoEnv && firstId ? ` · /skill-feedback ${firstId} 1=wrong 2=noisy 3=good [comment]` : '';
       return <Line>
           <Text bold>{attachment.skills.length}</Text> relevant{' '}
           {plural(attachment.skills.length, 'skill')}: {names}
@@ -170,7 +170,7 @@ export function AttachmentMessage({
       // 因此仅在前一个工具不可折叠（Edit、Write）且没有打开组时才渲染。
       // 匹配 CollapsedReadSearchContent 的样式：
       // 2 空格缩进、dim 文本、仅计数——文件名/内容在 ctrl+o 中查看。
-      return <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={bg}>
+      return <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any}>
           <Box flexDirection="row">
             <Box minWidth={2} />
             <Text dimColor>
@@ -331,9 +331,10 @@ export function AttachmentMessage({
         </Line>;
       }
     case 'task_status':
+      // @ts-ignore -- TaskStatusMessage props may differ between builds
       return <TaskStatusMessage attachment={attachment} />;
     case 'teammate_shutdown_batch':
-      return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>
+      return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg as any}>
           <Text dimColor>{BLACK_CIRCLE} </Text>
           <Text dimColor>
             {attachment.count} {plural(attachment.count, 'teammate')} shut down
@@ -350,7 +351,7 @@ export function AttachmentMessage({
       // skill_discovery 和 teammate_mailbox 在 switch 之前的
       // 运行时门控块中处理（feature() / isAgentSwarmsEnabled()），TS 无法
       // 对其进行窄化——在此处通过类型联合排除（仅编译时，无 emit）。
-      attachment.type satisfies NullRenderingAttachmentType | 'skill_discovery' | 'teammate_mailbox';
+      (attachment as any).type satisfies NullRenderingAttachmentType | 'skill_discovery' | 'teammate_mailbox';
       return null;
   }
 }
@@ -359,7 +360,7 @@ type TaskStatusAttachment = Extract<Attachment, {
 }>;
 function TaskStatusMessage({
   attachment
-}: Props) {
+}: any) {
   if (false && attachment.status === "killed") {
     return null;
   }
@@ -373,7 +374,7 @@ function GenericTaskStatus({
 }) {
   const bg = useSelectedMessageBg();
   const statusText = attachment.status === "completed" ? tSync('attachment.completed') : attachment.status === "killed" ? tSync('attachment.stopped') : attachment.status === "running" ? tSync('attachment.stillRunning') : attachment.status;
-  return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>{<Text dimColor={true}>{BLACK_CIRCLE} </Text>}{<Text dimColor={true}>Task "{<Text bold={true}>{attachment.description}</Text>}" {statusText}</Text>}</Box>;
+  return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg as any}>{<Text dimColor={true}>{BLACK_CIRCLE} </Text>}{<Text dimColor={true}>Task "{<Text bold={true}>{attachment.description}</Text>}" {statusText}</Text>}</Box>;
 }
 function TeammateTaskStatus({
   attachment
@@ -385,15 +386,15 @@ function TeammateTaskStatus({
   }
   const agentColor = toInkColor(task.identity.color);
   const statusText = attachment.status === "completed" ? "shut down gracefully" : attachment.status;
-  return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg}>{<Text dimColor={true}>{BLACK_CIRCLE} </Text>}{<Text dimColor={true}>Teammate{" "}{<Text color={agentColor} bold={true} dimColor={false}>@{task.identity.agentName}</Text>}{" "}{statusText}</Text>}</Box>;
+  return <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg as any}>{<Text dimColor={true}>{BLACK_CIRCLE} </Text>}{<Text dimColor={true}>Teammate{" "}{<Text color={agentColor} bold={true} dimColor={false}>@{task.identity.agentName}</Text>}{" "}{statusText}</Text>}</Box>;
 }
 // We allow setting dimColor to false here to help work around the dim-bold bug.
 // https://github.com/chalk/chalk/issues/290
 function Line({
   dimColor = true,
   children,
-  color
-}) {
+  color = undefined as any
+}: { dimColor?: boolean; children: any; color?: any }) {
   const bg = useSelectedMessageBg();
-  return <Box backgroundColor={bg}>{<MessageResponse><Text color={color} dimColor={dimColor} wrap="wrap">{children}</Text></MessageResponse>}</Box>;
+  return <Box backgroundColor={bg as any}>{<MessageResponse><Text color={color as any} dimColor={dimColor} wrap="wrap">{children}</Text></MessageResponse>}</Box>;
 }

@@ -23,15 +23,13 @@ export function NotebookEditPermissionRequest(props) {
   const T0 = Text;
   const T1 = Text;
   const T2 = FilePermissionDialog;
-  const language = cell_type === "markdown" ? "markdown" : "python";
-  const notebook_path = t11;
   const parsed = parseInput(props.toolUseConfirm.input);
-  const t1 = basename(notebook_path);
+  const t1 = basename(parsed.notebook_path);
   const {
-    notebook_path: t11,
-    edit_mode,
-    cell_type
+    edit_mode
   } = parsed;
+  const language = parsed.cell_type === "markdown" ? "markdown" : "python";
+  const notebook_path = parsed.notebook_path;
   const editTypeText = edit_mode === "insert" ? "insert this cell into" : edit_mode === "delete" ? "delete this cell from" : "make this edit to";
   return <T2 toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={"Edit notebook"} question={<T1>{"Do you want to "}{editTypeText}{" "}{<T0 bold={true}>{t1}</T0>}?</T1>} content={<NotebookEditToolDiff notebook_path={parsed.notebook_path} cell_id={parsed.cell_id} new_source={parsed.new_source} cell_type={parsed.cell_type} edit_mode={parsed.edit_mode} verbose={props.verbose} width={props.verbose ? 120 : 80} />} path={notebook_path} completionType="tool_use_single" languageName={language} parseInput={parseInput} />;
 }

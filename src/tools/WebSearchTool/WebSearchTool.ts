@@ -1,7 +1,8 @@
+// @ts-ignore
 import type {
   BetaContentBlock,
-  BetaWebSearchTool20250305,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+type BetaWebSearchTool20250305 = any
 import { getAPIProvider, providerHasCapability } from 'src/utils/model/providers.js'
 
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
@@ -101,7 +102,7 @@ function makeOutputFromSearchResponse(
   let textAcc = ''
   let inText = true
 
-  for (const block of result) {
+  for (const block of result as any[]) {
     if (block.type === 'server_tool_use') {
       if (inText) {
         inText = false
@@ -280,7 +281,7 @@ export const WebSearchTool = buildTool({
         isNonInteractiveSession: context.options.isNonInteractiveSession,
         hasAppendSystemPrompt: !!context.options.appendSystemPrompt,
         extraToolSchemas: [toolSchema],
-        querySource: 'web_search_tool',
+        querySource: 'web_search_tool' as any,
         agents: context.options.agentDefinitions.activeAgents,
         mcpTools: [],
         agentId: context.agentId,

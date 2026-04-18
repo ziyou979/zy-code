@@ -77,7 +77,7 @@ function MessageImpl({
     case "attachment":
       {
         let t2;
-        t2 = <AttachmentMessage addMargin={addMargin} attachment={message.attachment} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
+        t2 = <AttachmentMessage addMargin={addMargin} attachment={message.attachment as any} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
         return t2;
       }
     case "assistant":
@@ -85,7 +85,7 @@ function MessageImpl({
         const t2 = containerWidth ?? "100%";
         let t3;
         let t4;
-        t4 = (_, index_0) => <AssistantMessageBlock key={index_0} param={_} addMargin={addMargin} tools={tools} commands={commands} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={progressMessagesForMessage} shouldAnimate={shouldAnimate} shouldShowDot={shouldShowDot} width={width} inProgressToolCallCount={inProgressToolUseIDs.size} isTranscriptMode={isTranscriptMode} lookups={lookups} onOpenRateLimitOptions={onOpenRateLimitOptions} thinkingBlockId={`${message.uuid}:${index_0}`} lastThinkingBlockId={lastThinkingBlockId} advisorModel={message.advisorModel} />;
+        t4 = (_, index_0) => <AssistantMessageBlock key={index_0} param={_ as any} addMargin={addMargin} tools={tools} commands={commands} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={progressMessagesForMessage} shouldAnimate={shouldAnimate} shouldShowDot={shouldShowDot} width={width} inProgressToolCallCount={inProgressToolUseIDs.size as any} isTranscriptMode={isTranscriptMode} lookups={lookups} onOpenRateLimitOptions={onOpenRateLimitOptions} thinkingBlockId={`${message.uuid}:${index_0}` as any} lastThinkingBlockId={lastThinkingBlockId as any} advisorModel={(message as any).advisorModel} />;
         t3 = message.message.content.map(t4);
         let t5;
         t5 = <Box flexDirection="column" width={t2}>{t3}</Box>;
@@ -96,7 +96,7 @@ function MessageImpl({
         if (message.isCompactSummary) {
           const t2 = isTranscriptMode ? "transcript" : "prompt";
           let t3;
-          t3 = <CompactSummary message={message} screen={t2} />;
+          t3 = <CompactSummary message={message as any} screen={t2} />;
           return t3;
         }
         let imageIndices;
@@ -114,7 +114,7 @@ function MessageImpl({
         const isLatestBashOutput = latestBashOutputUUID === message.uuid;
         const t2 = containerWidth ?? "100%";
         let t3;
-        t3 = message.message.content.map((param_0, index) => <UserMessage key={index} message={message} addMargin={addMargin} tools={tools} progressMessagesForMessage={progressMessagesForMessage} param={param_0} style={style} verbose={verbose} imageIndex={imageIndices[index]} isUserContinuation={isUserContinuation} lookups={lookups} isTranscriptMode={isTranscriptMode} />);
+        t3 = message.message.content.map((param_0, index) => <UserMessage key={index} message={message as any} addMargin={addMargin} tools={tools} progressMessagesForMessage={progressMessagesForMessage} param={param_0 as any} style={style} verbose={verbose} imageIndex={imageIndices[index] as any} isUserContinuation={isUserContinuation} lookups={lookups} isTranscriptMode={isTranscriptMode} />);
         let t4;
         t4 = <Box flexDirection="column" width={t2}>{t3}</Box>;
         const content = t4;
@@ -197,7 +197,7 @@ function UserMessage({
   isUserContinuation,
   lookups,
   isTranscriptMode
-}: Props) {
+}: any) {
   const {
     columns
   } = useTerminalSize();
@@ -205,21 +205,21 @@ function UserMessage({
     case "text":
       {
         let t1;
-        t1 = <UserTextMessage addMargin={addMargin} param={param} verbose={verbose} planContent={message.planContent} isTranscriptMode={isTranscriptMode} timestamp={message.timestamp} />;
+        t1 = <UserTextMessage addMargin={addMargin} param={param as any} verbose={verbose} planContent={(message as any).planContent} isTranscriptMode={isTranscriptMode} timestamp={message.timestamp} />;
         return t1;
       }
     case "image":
       {
         const t1 = addMargin && !isUserContinuation;
         let t2;
-        t2 = <UserImageMessage imageId={imageIndex} addMargin={t1} />;
+        t2 = <UserImageMessage imageId={(imageIndex as any)} addMargin={t1} />;
         return t2;
       }
     case "tool_result":
       {
         const t1 = columns - 5;
         let t2;
-        t2 = <UserToolResultMessage param={param} message={message} lookups={lookups} progressMessagesForMessage={progressMessagesForMessage} style={style} tools={tools} verbose={verbose} width={t1} isTranscriptMode={isTranscriptMode} />;
+        t2 = <UserToolResultMessage param={param as any} message={message as any} lookups={lookups} progressMessagesForMessage={progressMessagesForMessage} style={style} tools={tools} verbose={verbose} width={t1} isTranscriptMode={isTranscriptMode} />;
         return t2;
       }
     default:
@@ -246,7 +246,7 @@ function AssistantMessageBlock({
   thinkingBlockId,
   lastThinkingBlockId,
   advisorModel
-}: Props) {
+}: any) {
   if (feature("CONNECTOR_TEXT")) {
     if (isConnectorTextBlock(param)) {
       return <AssistantTextMessage param={{
@@ -324,7 +324,7 @@ export function areMessagePropsEqual(prev: Props, next: Props): boolean {
   if (prev.message.uuid !== next.message.uuid) return false;
   // 仅在 lastThinkingBlockId 变更且该消息包含 thinking 内容时才重新渲染
   // 否则每次 streaming thinking 开始/停止时，scrollback 中的每条消息都会重新渲染 (CC-941)
-  if (prev.lastThinkingBlockId !== next.lastThinkingBlockId && hasThinkingContent(next.message)) {
+  if (prev.lastThinkingBlockId !== next.lastThinkingBlockId && hasThinkingContent(next.message as any)) {
     return false;
   }
   // verbose 切换会改变 thinking 块的可见性/展开状态

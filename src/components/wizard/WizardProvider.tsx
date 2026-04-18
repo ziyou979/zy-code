@@ -5,9 +5,10 @@ import type { WizardContextValue } from './types.js';
 // Use any here for the context since it will be cast properly when used
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const WizardContext = createContext<WizardContextValue<any> | null>(null);
+// @ts-ignore
 export function WizardProvider({
   steps,
-  initialData: t3 = {} as T,
+  initialData: t3 = {} as any,
   onComplete,
   onCancel,
   children,
@@ -88,5 +89,6 @@ export function WizardProvider({
   if (!CurrentStepComponent || isCompleted) {
     return null;
   }
+  // @ts-ignore
   return <WizardContext.Provider value={contextValue}>{children || <CurrentStepComponent />}</WizardContext.Provider>;
 }

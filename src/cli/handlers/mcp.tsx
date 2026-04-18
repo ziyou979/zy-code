@@ -178,9 +178,9 @@ export async function mcpListHandler(): Promise<void> {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(`${name}: ${server.url} - ${status}`);
       } else if (!server.type || server.type === 'stdio') {
-        const args = Array.isArray(server.args) ? server.args : [];
+        const args = Array.isArray((server as any).args) ? (server as any).args : [];
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(`${name}: ${server.command} ${args.join(' ')} - ${status}`);
+        console.log(`${name}: ${(server as any).command} ${args.join(' ')} - ${status}`);
       }
     }
   }
@@ -327,7 +327,7 @@ export async function mcpAddFromDesktopHandler(options: {
     });
     const {
       readZyDesktopMcpServers
-    } = await import('../../utils/ZyDesktop.js');
+    } = await import('../../utils/zyDesktop.js');
     const servers = await readZyDesktopMcpServers();
     if (Object.keys(servers).length === 0) {
       cliOk('No MCP servers found in Zy Desktop configuration or configuration file does not exist.');

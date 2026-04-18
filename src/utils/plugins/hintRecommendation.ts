@@ -20,6 +20,7 @@ import {
   type ZyCodeHint,
   hasShownHintThisSession,
   setPendingHint,
+// @ts-ignore
 } from '../ZyCodeHints.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'

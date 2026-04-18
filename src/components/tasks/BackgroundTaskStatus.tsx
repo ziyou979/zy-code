@@ -137,7 +137,7 @@ function SummaryPill({
   selected,
   onClick,
   children
-}: AgentPillProps) {
+}: any) {
   const [hover, setHover] = useState(false);
   const label = <Text color="background" inverse={selected || hover}>{children}</Text>;
   if (!onClick) {

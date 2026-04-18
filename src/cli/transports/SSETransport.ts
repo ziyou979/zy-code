@@ -160,6 +160,7 @@ export type StreamClientEvent = {
  * for resumption after disconnection.
  */
 export class SSETransport implements Transport {
+  // @ts-ignore
   private state: SSETransportState = 'idle'
   private onData?: (data: string) => void
   private onCloseCallback?: (closeCode?: number) => void
@@ -585,7 +586,7 @@ export class SSETransport implements Transport {
     }
 
     logForDebugging(
-      `SSETransport: POST body keys=${Object.keys(message as Record<string, unknown>).join(',')}`,
+      `SSETransport: POST body keys=${Object.keys(message as unknown as Record<string, unknown>).join(',')}`,
     )
 
     for (let attempt = 1; attempt <= POST_MAX_RETRIES; attempt++) {

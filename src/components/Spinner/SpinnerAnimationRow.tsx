@@ -209,7 +209,8 @@ export function SpinnerAnimationRow({
           </Text>] : []), ...(showTimer ? [<Text dimColor key="elapsedTime">
             {timerText}
           </Text>] : []), ...(showTokens ? [<Box flexDirection="row" key="tokens">
-            {!hasRunningTeammates && <SpinnerModeGlyph mode={mode} />}
+            {!hasRunningTeammates && // @ts-ignore
+            <SpinnerModeGlyph mode={mode} />}
             <Text dimColor>{tokenCount} tokens</Text>
           </Box>] : []), ...(showThinking && thinkingText ? [thinkingStatus === 'thinking' && !reducedMotion ? <Text key="thinking" color={thinkingShimmerColor}>
               {thinkingOnly ? `(${thinkingText})` : thinkingText}

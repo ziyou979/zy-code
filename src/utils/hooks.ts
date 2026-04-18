@@ -107,8 +107,10 @@ import type {
   SyncHookJSONOutput,
   AsyncHookJSONOutput,
 } from 'src/entrypoints/agentSdkTypes.js'
+// @ts-ignore
 import type { StatusLineCommandInput } from '../types/statusLine.js'
 import type { ElicitResult } from '@modelcontextprotocol/sdk/types.js'
+// @ts-ignore
 import type { FileSuggestionCommandInput } from '../types/fileSuggestion.js'
 import type { HookResultMessage } from 'src/types/message.js'
 import chalk from 'chalk'
@@ -386,7 +388,7 @@ function validateHookJson(
   const validation = hookJSONOutputSchema().safeParse(parsed)
   if (validation.success) {
     logForDebugging('Successfully parsed and validated hook JSON output')
-    return { json: validation.data }
+    return { json: validation.data as any }
   }
   const errors = validation.error.issues
     .map(err => `  - ${err.path.join('.')}: ${err.message}`)
@@ -462,7 +464,7 @@ function parseHttpHookOutput(body: string): {
       logForDebugging(
         'HTTP hook returned empty body, treating as empty JSON object',
       )
-      return { json: validation.data }
+      return { json: validation.data as any }
     }
   }
 
@@ -709,14 +711,14 @@ function processHookJSONOutput({
 
   return {
     ...result,
-    message: result.blockingError
+    message: (result.blockingError
       ? createAttachmentMessage({
           type: 'hook_blocking_error',
           hookName,
           toolUseID,
           hookEvent,
           blockingError: result.blockingError,
-        })
+        }) as any
       : createAttachmentMessage({
           type: 'hook_success',
           hookName,
@@ -732,7 +734,7 @@ function processHookJSONOutput({
           exitCode,
           command,
           durationMs,
-        }),
+        })),
   }
 }
 
@@ -2095,7 +2097,7 @@ async function* executeHooks({
   for (const { hook } of matchingHooks) {
     yield {
       message: {
-        type: 'progress',
+        type: 'progress' as any,
         data: {
           type: 'hook_progress',
           hookEvent,
@@ -2111,7 +2113,7 @@ async function* executeHooks({
         toolUseID,
         timestamp: new Date().toISOString(),
         uuid: randomUUID(),
-      },
+      } as any,
     }
   }
 
@@ -2171,7 +2173,7 @@ async function* executeHooks({
             toolUseID,
             hookEvent,
             content: 'Messages not provided for function hook',
-          }),
+          }) as any,
           outcome: 'non_blocking_error',
           hook,
         }
@@ -2209,10 +2211,10 @@ async function* executeHooks({
             hookName,
             toolUseID,
             hookEvent,
-            content: `Failed to prepare hook input: ${errorMessage(jsonInputRes.error)}`,
+            content: `Failed to prepare hook input: ${errorMessage((jsonInputRes as any).error)}`,
             command: hookCommand,
             durationMs: Date.now() - hookStartMs,
-          }),
+          }) as any,
           outcome: 'non_blocking_error',
           hook,
         }
@@ -2238,8 +2240,8 @@ async function* executeHooks({
           toolUseID,
         )
         // Inject timing fields for hook visibility
-        if (promptResult.message?.type === 'attachment') {
-          const att = promptResult.message.attachment
+        if ((promptResult.message as any)?.type === 'attachment') {
+          const att = (promptResult.message as any).attachment
           if (
             att.type === 'hook_success' ||
             att.type === 'hook_non_blocking_error'
@@ -2278,8 +2280,8 @@ async function* executeHooks({
             : undefined,
         )
         // Inject timing fields for hook visibility
-        if (agentResult.message?.type === 'attachment') {
-          const att = agentResult.message.attachment
+        if ((agentResult.message as any)?.type === 'attachment') {
+          const att = (agentResult.message as any).attachment
           if (
             att.type === 'hook_success' ||
             att.type === 'hook_non_blocking_error'
@@ -2324,7 +2326,7 @@ async function* executeHooks({
               hookName,
               toolUseID,
               hookEvent,
-            }),
+            }) as any,
             outcome: 'cancelled' as const,
             hook,
           }
@@ -2353,7 +2355,7 @@ async function* executeHooks({
               stderr,
               stdout: '',
               exitCode: httpResult.statusCode ?? 0,
-            }),
+            }) as any,
             outcome: 'non_blocking_error' as const,
             hook,
           }
@@ -2384,7 +2386,7 @@ async function* executeHooks({
               stderr: `JSON validation failed: ${httpValidationError}`,
               stdout: httpResult.body,
               exitCode: httpResult.statusCode ?? 0,
-            }),
+            }) as any,
             outcome: 'non_blocking_error' as const,
             hook,
           }
@@ -2412,7 +2414,7 @@ async function* executeHooks({
 
         if (httpJson) {
           const processed = processHookJSONOutput({
-            json: httpJson,
+            json: httpJson as any,
             command: hook.url,
             hookName,
             toolUseID,
@@ -2489,7 +2491,7 @@ async function* executeHooks({
             hookEvent,
             command: hookCommand,
             durationMs,
-          }),
+          }) as any,
           outcome: 'cancelled' as const,
           hook,
         }
@@ -2523,7 +2525,7 @@ async function* executeHooks({
             exitCode: 1,
             command: hookCommand,
             durationMs,
-          }),
+          }) as any,
           outcome: 'non_blocking_error' as const,
           hook,
         }
@@ -2576,7 +2578,7 @@ async function* executeHooks({
           yield {
             ...processed,
             message:
-              processed.message ||
+              ((processed.message ||
               createAttachmentMessage({
                 type: 'hook_success',
                 hookName,
@@ -2588,7 +2590,7 @@ async function* executeHooks({
                 exitCode: result.status,
                 command: hookCommand,
                 durationMs,
-              }),
+              })) as any),
             outcome: 'success' as const,
             hook,
           }
@@ -2637,7 +2639,7 @@ async function* executeHooks({
             exitCode: result.status,
             command: hookCommand,
             durationMs,
-          }),
+          }) as any,
           outcome: 'success' as const,
           hook,
         }
@@ -2690,7 +2692,7 @@ async function* executeHooks({
           exitCode: result.status,
           command: hookCommand,
           durationMs,
-        }),
+        }) as any,
         outcome: 'non_blocking_error' as const,
         hook,
       }
@@ -2722,7 +2724,7 @@ async function* executeHooks({
           exitCode: 1,
           command: hookCommand,
           durationMs: Date.now() - hookStartMs,
-        }),
+        }) as any,
         outcome: 'non_blocking_error' as const,
         hook,
       }
@@ -2775,7 +2777,7 @@ async function* executeHooks({
           hookName,
           toolUseID,
           hookEvent,
-        }),
+        }) as any,
       }
     }
 
@@ -3613,7 +3615,7 @@ export async function executeStopFailureHooks(
   const hookInput: StopFailureHookInput = {
     ...createBaseHookInput(undefined, undefined, toolUseContext),
     hook_event_name: 'StopFailure',
-    error,
+    error: error as any,
     error_details: lastMessage.errorDetails,
     last_assistant_message: lastAssistantText,
   }
@@ -3622,7 +3624,7 @@ export async function executeStopFailureHooks(
     getAppState: toolUseContext?.getAppState,
     hookInput,
     timeoutMs,
-    matchQuery: error,
+    matchQuery: error as any,
   })
 }
 
@@ -4414,24 +4416,24 @@ function parseElicitationHookOutput(
 
   try {
     const parsed = hookJSONOutputSchema().parse(JSON.parse(trimmed))
-    if (isAsyncHookJSONOutput(parsed)) {
+    if (isAsyncHookJSONOutput(parsed as any)) {
       return {}
     }
-    if (!isSyncHookJSONOutput(parsed)) {
+    if (!isSyncHookJSONOutput(parsed as any)) {
       return {}
     }
 
     // Check for top-level decision: 'block' (exit code 0 + JSON block)
-    if (parsed.decision === 'block' || result.blocked) {
+    if ((parsed as any).decision === 'block' || result.blocked) {
       return {
         blockingError: {
-          blockingError: parsed.reason || 'Elicitation blocked by hook',
+          blockingError: (parsed as any).reason || 'Elicitation blocked by hook',
           command: result.command,
         },
       }
     }
 
-    const specific = parsed.hookSpecificOutput
+    const specific = (parsed as any).hookSpecificOutput
     if (!specific || specific.hookEventName !== expectedEventName) {
       return {}
     }
@@ -4453,7 +4455,7 @@ function parseElicitationHookOutput(
     if (specific.action === 'decline') {
       out.blockingError = {
         blockingError:
-          parsed.reason ||
+          (parsed as any).reason ||
           (expectedEventName === 'Elicitation'
             ? 'Elicitation denied by hook'
             : 'Elicitation result blocked by hook'),
@@ -4830,7 +4832,7 @@ async function executeFunctionHook({
           error instanceof Error
             ? error.message
             : 'Function hook execution error',
-      }),
+      }) as any,
       outcome: 'non_blocking_error',
       hook,
     }

@@ -20,7 +20,7 @@ import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppSt
 import { ModelPicker } from '../ModelPicker.js';
 import { modelDisplayString, isOpus1mMergeEnabled } from '../../utils/model/model.js';
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
-import { zyMdExternalIncludesDialog } from '../zyMdExternalIncludesDialog.js';
+import { zyMdExternalIncludesDialog } from '../ZyMdExternalIncludesDialog.js';
 import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js';
 import { Dialog } from '../design-system/Dialog.js';
 import { Select } from '../CustomSelect/index.js';
@@ -37,7 +37,7 @@ import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../u
 import { getInitialSettings, getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js';
 import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/state.js';
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js';
-import { isEnvTruthy, isRunningOnHomespace } from 'src/utils/envUtils.js';
+import { isEnvTruthy, isRunningOnHomespace, isInternalBuild } from 'src/utils/envUtils.js';
 import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js';
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
@@ -391,7 +391,7 @@ export function Config({
     }
   }] : []),
   // Speculation toggle (ant-only)
-  ...("external" === 'ant' ? [{
+  ...(isInternalBuild() ? [{
     id: 'speculationEnabled',
     label: 'Speculative execution',
     value: globalConfig.speculationEnabled ?? true,
@@ -1518,6 +1518,7 @@ export function Config({
             </Byline>
           </Text>
         </> : showSubmenu === 'ExternalIncludes' ? <>
+          {/* @ts-ignore -- zyMdExternalIncludesDialog is a valid component but TS sees lowercase as intrinsic */}
           <zyMdExternalIncludesDialog onDone={() => {
         setShowSubmenu(null);
         setTabsHidden(false);
@@ -1762,29 +1763,13 @@ function NotifChannelLabel({
         return "Auto";
       }
     case "iterm2":
-      {
-        let t1;
-        t1 = <Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>;
-        return t1;
-      }
+      return <Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>;
     case "terminal_bell":
-      {
-        let t1;
-        t1 = <Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Text>;
-        return t1;
-      }
+      return <Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Text>;
     case "kitty":
-      {
-        let t1;
-        t1 = <Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>;
-        return t1;
-      }
+      return <Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>;
     case "ghostty":
-      {
-        let t1;
-        t1 = <Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Text>;
-        return t1;
-      }
+      return <Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Text>;
     case "iterm2_with_bell":
       {
         return "iTerm2 w/ Bell";

@@ -87,7 +87,7 @@ export function MCPRemoteServerMenu({
   // A server is effectively authenticated if:
   // 1. It has OAuth tokens (server.isAuthenticated), OR
   // 2. It's connected and has tools (meaning it's working via some auth mechanism)
-  const isEffectivelyAuthenticated = server.isAuthenticated || server.client.type === 'connected' && serverToolsCount > 0;
+  const isEffectivelyAuthenticated = (server as any).isAuthenticated || (server as any).client.type === 'connected' && serverToolsCount > 0;
   const reconnectMcpServer = useMcpReconnect();
   const handleZyAIAuthComplete = React.useCallback(async () => {
     setIsZyAIAuthenticating(false);
@@ -117,8 +117,8 @@ export function MCPRemoteServerMenu({
   }, [reconnectMcpServer, server.name, onComplete]);
   const handleZyAIClearAuthComplete = React.useCallback(async () => {
     await clearServerCache(server.name, {
-      ...server.config,
-      scope: server.scope
+      ...(server as any).config,
+      scope: (server as any).scope
     });
     setAppState(prev => {
       const newClients = prev.mcp.clients.map(c => c.name === server.name ? {
@@ -144,7 +144,7 @@ export function MCPRemoteServerMenu({
     setIsZyAIClearingAuth(false);
     setZyAIClearAuthUrl(null);
     setZyAIClearAuthBrowserOpened(false);
-  }, [server.name, server.config, server.scope, setAppState, onComplete]);
+  }, [server.name, (server as any).config, (server as any).scope, setAppState, onComplete]);
 
   // Escape to cancel authentication flow
   useKeybinding('confirm:no', () => {
@@ -217,10 +217,10 @@ export function MCPRemoteServerMenu({
     const accountInfo = getOauthAccountInfo();
     const orgUuid = accountInfo?.organizationUuid;
     let authUrl: string;
-    if (orgUuid && server.config.type === 'zyai-proxy' && server.config.id) {
+    if (orgUuid && (server as any).config.type === 'zyai-proxy' && (server as any).config.id) {
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
-      const serverId = server.config.id.startsWith('mcprs') ? 'mcpsrv' + server.config.id.slice(5) : server.config.id;
+      const serverId = (server as any).config.id.startsWith('mcprs') ? 'mcpsrv' + (server as any).config.id.slice(5) : (server as any).config.id;
       const productSurface = encodeURIComponent(process.env.ZY_CODE_ENTRYPOINT || 'cli');
       authUrl = `${zyAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
     } else {
@@ -231,16 +231,16 @@ export function MCPRemoteServerMenu({
     setIsZyAIAuthenticating(true);
     logEvent('tengu_Zyai_mcp_auth_started', {});
     await openBrowser(authUrl);
-  }, [server.config]);
+  }, [(server as any).config]);
   const handleZyAIClearAuth = React.useCallback(() => {
     setIsZyAIClearingAuth(true);
     logEvent('tengu_Zyai_mcp_clear_auth_started', {});
   }, []);
   const handleToggleEnabled = React.useCallback(async () => {
-    const wasEnabled = server.client.type !== 'disabled';
+    const wasEnabled = (server as any).client.type !== 'disabled';
     try {
       await toggleMcpServer(server.name);
-      if (server.config.type === 'zyai-proxy') {
+      if ((server as any).config.type === 'zyai-proxy') {
         logEvent('tengu_Zyai_mcp_toggle', {
           new_state: (wasEnabled ? 'disabled' : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
@@ -252,9 +252,9 @@ export function MCPRemoteServerMenu({
       const action = wasEnabled ? 'disable' : 'enable';
       onComplete?.(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err_0)}`);
     }
-  }, [server.client.type, server.config.type, server.name, toggleMcpServer, onCancel, onComplete]);
+  }, [(server as any).client.type, (server as any).config.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const handleAuthenticate = React.useCallback(async () => {
-    if (server.config.type === 'zyai-proxy') return;
+    if ((server as any).config.type === 'zyai-proxy') return;
     setIsAuthenticating(true);
     setError(null);
     const controller = new AbortController();
@@ -262,19 +262,19 @@ export function MCPRemoteServerMenu({
     try {
       // Revoke existing tokens if re-authenticating, but preserve step-up
       // auth state so the next OAuth flow can reuse cached scope/discovery.
-      if (server.isAuthenticated && server.config) {
-        await revokeServerTokens(server.name, server.config, {
+      if ((server as any).isAuthenticated && (server as any).config) {
+        await revokeServerTokens(server.name, (server as any).config, {
           preserveStepUpState: true
         });
       }
-      if (server.config) {
-        await performMCPOAuthFlow(server.name, server.config, setAuthorizationUrl, controller.signal, {
+      if ((server as any).config) {
+        await performMCPOAuthFlow(server.name, (server as any).config, setAuthorizationUrl, controller.signal, {
           onWaitingForCallback: submit => {
             setManualCallbackSubmit(() => submit);
           }
         });
         logEvent('tengu_mcp_auth_config_authenticate', {
-          wasAuthenticated: server.isAuthenticated
+          wasAuthenticated: (server as any).isAuthenticated
         });
         const result_0 = await reconnectMcpServer(server.name);
         if (result_0.client.type === 'connected') {
@@ -299,18 +299,18 @@ export function MCPRemoteServerMenu({
       setManualCallbackSubmit(null);
       setCallbackUrlInput('');
     }
-  }, [server.isAuthenticated, server.config, server.name, onComplete, reconnectMcpServer, isEffectivelyAuthenticated]);
+  }, [(server as any).isAuthenticated, (server as any).config, server.name, onComplete, reconnectMcpServer, isEffectivelyAuthenticated]);
   const handleClearAuth = async () => {
-    if (server.config.type === 'zyai-proxy') return;
-    if (server.config) {
+    if ((server as any).config.type === 'zyai-proxy') return;
+    if ((server as any).config) {
       // First revoke the authentication tokens and clear all auth state
-      await revokeServerTokens(server.name, server.config);
+      await revokeServerTokens(server.name, (server as any).config);
       logEvent('tengu_mcp_auth_config_clear', {});
 
       // Disconnect the client and clear the cache
       await clearServerCache(server.name, {
-        ...server.config,
-        scope: server.scope
+        ...(server as any).config,
+        scope: (server as any).scope
       });
 
       // Update app state to remove the disconnected server's tools, commands, and resources
@@ -342,7 +342,7 @@ export function MCPRemoteServerMenu({
     // XAA: silent exchange (cached id_token → no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy = server.config.type !== 'zyai-proxy' && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    const authCopy = (server as any).config.type !== 'zyai-proxy' && (server as any).config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="zy">Authenticating with {server.name}…</Text>
         <Box>
@@ -470,25 +470,25 @@ export function MCPRemoteServerMenu({
   const menuOptions = [];
 
   // If server is disabled, show Enable first as the primary action
-  if (server.client.type === 'disabled') {
+  if ((server as any).client.type === 'disabled') {
     menuOptions.push({
       label: 'Enable',
       value: 'toggle-enabled'
     });
   }
-  if (server.client.type === 'connected' && serverToolsCount > 0) {
+  if ((server as any).client.type === 'connected' && serverToolsCount > 0) {
     menuOptions.push({
       label: 'View tools',
       value: 'tools'
     });
   }
-  if (server.config.type === 'zyai-proxy') {
-    if (server.client.type === 'connected') {
+  if ((server as any).config.type === 'zyai-proxy') {
+    if ((server as any).client.type === 'connected') {
       menuOptions.push({
         label: 'Clear authentication',
         value: 'zyai-clear-auth'
       });
-    } else if (server.client.type !== 'disabled') {
+    } else if ((server as any).client.type !== 'disabled') {
       menuOptions.push({
         label: 'Authenticate',
         value: 'zyai-auth'
@@ -512,8 +512,8 @@ export function MCPRemoteServerMenu({
       });
     }
   }
-  if (server.client.type !== 'disabled') {
-    if (server.client.type !== 'needs-auth') {
+  if ((server as any).client.type !== 'disabled') {
+    if ((server as any).client.type !== 'needs-auth') {
       menuOptions.push({
         label: 'Reconnect',
         value: 'reconnectMcpServer'
@@ -541,16 +541,16 @@ export function MCPRemoteServerMenu({
         <Box flexDirection="column" gap={0}>
           <Box>
             <Text bold>Status: </Text>
-            {server.client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : server.client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : server.client.type === 'pending' ? <>
+            {(server as any).client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : (server as any).client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : (server as any).client.type === 'pending' ? <>
                 <Text dimColor>{figures.radioOff}</Text>
                 <Text> connecting…</Text>
-              </> : server.client.type === 'needs-auth' ? <Text>
+              </> : (server as any).client.type === 'needs-auth' ? <Text>
                 {color('warning', theme)(figures.triangleUpOutline)} needs
                 authentication
               </Text> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
           </Box>
 
-          {server.transport !== 'zyai-proxy' && <Box>
+          {(server as any).transport !== 'zyai-proxy' && <Box>
               <Text bold>Auth: </Text>
               {isEffectivelyAuthenticated ? <Text>
                   {color('success', theme)(figures.tick)} authenticated
@@ -561,17 +561,17 @@ export function MCPRemoteServerMenu({
 
           <Box>
             <Text bold>URL: </Text>
-            <Text dimColor>{server.config.url}</Text>
+            <Text dimColor>{(server as any).config.url}</Text>
           </Box>
 
           <Box>
             <Text bold>Config location: </Text>
-            <Text dimColor>{describeMcpConfigFilePath(server.scope)}</Text>
+            <Text dimColor>{describeMcpConfigFilePath((server as any).scope)}</Text>
           </Box>
 
-          {server.client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
+          {(server as any).client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
 
-          {server.client.type === 'connected' && serverToolsCount > 0 && <Box>
+          {(server as any).client.type === 'connected' && serverToolsCount > 0 && <Box>
               <Text bold>Tools: </Text>
               <Text dimColor>{serverToolsCount} tools</Text>
             </Box>}
@@ -604,7 +604,7 @@ export function MCPRemoteServerMenu({
               setIsReconnecting(true);
               try {
                 const result_1 = await reconnectMcpServer(server.name);
-                if (server.config.type === 'zyai-proxy') {
+                if ((server as any).config.type === 'zyai-proxy') {
                   logEvent('tengu_Zyai_mcp_reconnect', {
                     success: result_1.client.type === 'connected'
                   });
@@ -614,7 +614,7 @@ export function MCPRemoteServerMenu({
                 } = handleReconnectResult(result_1, server.name);
                 onComplete?.(message_0);
               } catch (err_2) {
-                if (server.config.type === 'zyai-proxy') {
+                if ((server as any).config.type === 'zyai-proxy') {
                   logEvent('tengu_Zyai_mcp_reconnect', {
                     success: false
                   });

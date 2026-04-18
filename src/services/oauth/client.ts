@@ -20,15 +20,17 @@ import type { AccountInfo } from '../../utils/config.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
+// @ts-ignore
 import type {
-  BillingType,
   OAuthProfileResponse,
-  OAuthTokenExchangeResponse,
   OAuthTokens,
-  RateLimitTier,
   SubscriptionType,
-  UserRolesResponse,
 } from './types.js'
+
+type OAuthTokenExchangeResponse = any;
+type UserRolesResponse = any;
+type RateLimitTier = any;
+type BillingType = any;
 
 /**
  * Check if the user has Zy.ai authentication scope
@@ -254,7 +256,7 @@ export async function refreshOAuthToken(
             organizationUuid: data.organization?.uuid,
           }
         : undefined,
-    }
+    } as any
   } catch (error) {
     const responseBody =
       axios.isAxiosError(error) && error.response?.data
@@ -362,22 +364,22 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
   rawProfile?: OAuthProfileResponse
 }> {
   const profile = await getOauthProfileFromOauthToken(accessToken)
-  const orgType = profile?.organization?.organization_type
+  const orgType = (profile as any)?.organization?.organization_type
 
   // Reuse the logic from fetchSubscriptionType
   let subscriptionType: SubscriptionType | null = null
   switch (orgType) {
     case 'zy_max':
-      subscriptionType = 'max'
+      subscriptionType = 'max' as any
       break
     case 'zy_pro':
-      subscriptionType = 'pro'
+      subscriptionType = 'pro' as any
       break
     case 'zy_enterprise':
-      subscriptionType = 'enterprise'
+      subscriptionType = 'enterprise' as any
       break
     case 'zy_team':
-      subscriptionType = 'team'
+      subscriptionType = 'team' as any
       break
     default:
       // Return null for unknown organization types
@@ -395,22 +397,22 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
     subscriptionCreatedAt?: string
   } = {
     subscriptionType,
-    rateLimitTier: profile?.organization?.rate_limit_tier ?? null,
+    rateLimitTier: (profile as any)?.organization?.rate_limit_tier ?? null,
     hasExtraUsageEnabled:
-      profile?.organization?.has_extra_usage_enabled ?? null,
-    billingType: profile?.organization?.billing_type ?? null,
+      (profile as any)?.organization?.has_extra_usage_enabled ?? null,
+    billingType: (profile as any)?.organization?.billing_type ?? null,
   }
 
-  if (profile?.account?.display_name) {
-    result.displayName = profile.account.display_name
+  if ((profile as any)?.account?.display_name) {
+    result.displayName = (profile as any).account.display_name
   }
 
-  if (profile?.account?.created_at) {
-    result.accountCreatedAt = profile.account.created_at
+  if ((profile as any)?.account?.created_at) {
+    result.accountCreatedAt = (profile as any).account.created_at
   }
 
-  if (profile?.organization?.subscription_created_at) {
-    result.subscriptionCreatedAt = profile.organization.subscription_created_at
+  if ((profile as any)?.organization?.subscription_created_at) {
+    result.subscriptionCreatedAt = (profile as any).organization.subscription_created_at
   }
 
   logEvent('tengu_oauth_profile_fetch_success', {})
@@ -436,7 +438,7 @@ export async function getOrganizationUUID(): Promise<string | null> {
     return null
   }
   const profile = await getOauthProfileFromOauthToken(accessToken)
-  const profileOrgUUID = profile?.organization?.uuid
+  const profileOrgUUID = (profile as any)?.organization?.uuid
   if (!profileOrgUUID) {
     return null
   }
@@ -478,10 +480,11 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
     // refreshOAuthToken already fetches and stores profile info
     await checkAndRefreshOAuthTokenIfNeeded()
   } catch (error) {
+    // @ts-ignore
     logForDebugging('OAuth token refresh skipped during init', {
       level: 'warn',
-      error: errorMessage(error as Error),
-    })
+      error: (error as any) as any,
+    } as any)
     return false
   }
 
@@ -503,24 +506,25 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
       const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
       if (profile) {
         storeOAuthAccountInfo({
-          accountUuid: profile.account.uuid,
-          emailAddress: profile.account.email,
-          organizationUuid: profile.organization.uuid,
-          displayName: profile.account.display_name || undefined,
+          accountUuid: (profile as any).account.uuid,
+          emailAddress: (profile as any).account.email,
+          organizationUuid: (profile as any).organization.uuid,
+          displayName: (profile as any).account.display_name || undefined,
           hasExtraUsageEnabled:
-            profile.organization.has_extra_usage_enabled ?? false,
-          billingType: profile.organization.billing_type ?? undefined,
-          accountCreatedAt: profile.account.created_at,
+            (profile as any).organization.has_extra_usage_enabled ?? false,
+          billingType: (profile as any).organization.billing_type ?? undefined,
+          accountCreatedAt: (profile as any).account.created_at,
           subscriptionCreatedAt:
-            profile.organization.subscription_created_at ?? undefined,
+            (profile as any).organization.subscription_created_at ?? undefined,
         })
         return true
       }
     } catch (error) {
+      // @ts-ignore
       logForDebugging('OAuth profile fetch skipped during init', {
         level: 'warn',
-        error: errorMessage(error as Error),
-      })
+        error: (error as any) as any,
+      } as any)
     }
   }
   return false

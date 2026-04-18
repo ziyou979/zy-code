@@ -23,7 +23,7 @@ const proactiveModule =
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 function isProactiveActive_SAFE_TO_CALL_ANYWHERE(): boolean {
-  return proactiveModule?.isProactiveActive() ?? false
+  return (proactiveModule as any)?.isProactiveActive() ?? false
 }
 
 /**

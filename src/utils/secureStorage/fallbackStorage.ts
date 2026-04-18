@@ -9,38 +9,38 @@ export function createFallbackStorage(
   secondary: SecureStorage,
 ): SecureStorage {
   return {
-    name: `${primary.name}-with-${secondary.name}-fallback`,
+    name: `${(primary as any).name}-with-${(secondary as any).name}-fallback`,
     read(): SecureStorageData {
-      const result = primary.read()
+      const result = (primary as any).read()
       if (result !== null && result !== undefined) {
         return result
       }
-      return secondary.read() || {}
+      return (secondary as any).read() || {}
     },
     async readAsync(): Promise<SecureStorageData | null> {
-      const result = await primary.readAsync()
+      const result = await (primary as any).readAsync()
       if (result !== null && result !== undefined) {
         return result
       }
-      return (await secondary.readAsync()) || {}
+      return (await (secondary as any).readAsync()) || {}
     },
     update(data: SecureStorageData): { success: boolean; warning?: string } {
       // Capture state before update
-      const primaryDataBefore = primary.read()
+      const primaryDataBefore = (primary as any).read()
 
-      const result = primary.update(data)
+      const result = (primary as any).update(data)
 
       if (result.success) {
         // Delete secondary when migrating to primary for the first time
         // This preserves credentials when sharing .zy between host and containers
         // See: https://github.com/anthropics/zy-code/issues/1414
         if (primaryDataBefore === null) {
-          secondary.delete()
+          (secondary as any).delete()
         }
         return result
       }
 
-      const fallbackResult = secondary.update(data)
+      const fallbackResult = (secondary as any).update(data)
 
       if (fallbackResult.success) {
         // Primary write failed but primary may still hold an *older* valid
@@ -50,7 +50,7 @@ export function createFallbackStorage(
         // /login loop (#30337). Best-effort delete; if this also fails the
         // user's keychain is in a bad state we can't fix from here.
         if (primaryDataBefore !== null) {
-          primary.delete()
+          (primary as any).delete()
         }
         return {
           success: true,
@@ -60,11 +60,12 @@ export function createFallbackStorage(
 
       return { success: false }
     },
+    // @ts-ignore
     delete(): boolean {
-      const primarySuccess = primary.delete()
-      const secondarySuccess = secondary.delete()
+      const primarySuccess = (primary as any).delete()
+      const secondarySuccess = (secondary as any).delete()
 
       return primarySuccess || secondarySuccess
     },
-  }
+  } as any
 }

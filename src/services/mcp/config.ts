@@ -6,7 +6,7 @@ import { dirname, join, parse } from 'path'
 import { getPlatform } from 'src/utils/platform.js'
 import type { PluginError } from '../../types/plugin.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
-import { isClaudeInChromeMCPServer } from '../../utils/ClaudeInChrome/common.js'
+import { isClaudeInChromeMCPServer } from '../../utils/claudeInChrome/common.js'
 import {
   getCurrentProjectConfig,
   getGlobalConfig,
@@ -1351,9 +1351,9 @@ export function parseMcpConfig(params: {
     if (
       getPlatform() === 'windows' &&
       (!configToCheck.type || configToCheck.type === 'stdio') &&
-      (configToCheck.command === 'npx' ||
-        configToCheck.command.endsWith('\\npx') ||
-        configToCheck.command.endsWith('/npx'))
+      ((configToCheck as any).command === 'npx' ||
+        (configToCheck as any).command.endsWith('\\npx') ||
+        (configToCheck as any).command.endsWith('/npx'))
     ) {
       errors.push({
         ...(filePath && { file: filePath }),

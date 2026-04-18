@@ -899,13 +899,13 @@ async function callInner(
         resolvedFilePath,
         parsedRange ?? undefined,
       )
-      if (!extractResult.success) {
-        throw new Error(extractResult.error.message)
+      if (!(extractResult as any).success) {
+        throw new Error((extractResult as any).error.message)
       }
       logEvent('tengu_pdf_page_extraction', {
         success: true,
-        pageCount: extractResult.data.file.count,
-        fileSize: extractResult.data.file.originalSize,
+        pageCount: (extractResult as any).data.file.count,
+        fileSize: (extractResult as any).data.file.originalSize,
         hasPageRange: true,
       })
       logFileOperation({
@@ -914,11 +914,11 @@ async function callInner(
         filePath: fullFilePath,
         content: `PDF pages ${pages}`,
       })
-      const entries = await readdir(extractResult.data.file.outputDir)
+      const entries = await readdir((extractResult as any).data.file.outputDir)
       const imageFiles = entries.filter(f => f.endsWith('.jpg')).sort()
       const imageBlocks = await Promise.all(
         imageFiles.map(async f => {
-          const imgPath = path.join(extractResult.data.file.outputDir, f)
+          const imgPath = path.join((extractResult as any).data.file.outputDir, f)
           const imgBuffer = await readFileAsync(imgPath)
           const resized = await maybeResizeAndDownsampleImageBuffer(
             imgBuffer,
@@ -937,7 +937,7 @@ async function callInner(
         }),
       )
       return {
-        data: extractResult.data,
+        data: (extractResult as any).data,
         ...(imageBlocks.length > 0 && {
           newMessages: [
             createUserMessage({ content: imageBlocks, isMeta: true }),
@@ -965,13 +965,13 @@ async function callInner(
       if (extractResult.success) {
         logEvent('tengu_pdf_page_extraction', {
           success: true,
-          pageCount: extractResult.data.file.count,
-          fileSize: extractResult.data.file.originalSize,
+          pageCount: (extractResult as any).data.file.count,
+          fileSize: (extractResult as any).data.file.originalSize,
         })
       } else {
         logEvent('tengu_pdf_page_extraction', {
           success: false,
-          available: extractResult.error.reason !== 'unavailable',
+          available: (extractResult as any).error.reason !== 'unavailable',
           fileSize: stats.size,
         })
       }
@@ -986,10 +986,10 @@ async function callInner(
     }
 
     const readResult = await readPDF(resolvedFilePath)
-    if (!readResult.success) {
-      throw new Error(readResult.error.message)
+    if (!(readResult as any).success) {
+      throw new Error((readResult as any).error.message)
     }
-    const pdfData = readResult.data
+    const pdfData = (readResult as any).data
     logFileOperation({
       operation: 'read',
       tool: 'FileReadTool',
@@ -1156,6 +1156,7 @@ export async function readImageWithTokenBudget(
       logError(e)
       // Fallback: heavily compressed version from the SAME buffer
       try {
+        // @ts-ignore TS2307
         const sharpModule = await import('sharp')
         const sharp =
           (

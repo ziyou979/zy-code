@@ -106,7 +106,7 @@ function tokensToUSDCost(modelCosts: ModelCosts, usage: Usage): number {
       modelCosts.promptCacheReadTokens +
     ((usage.cache_creation_input_tokens ?? 0) / 1_000_000) *
       modelCosts.promptCacheWriteTokens +
-    (usage.server_tool_use?.web_search_requests ?? 0) *
+    ((usage as any).server_tool_use?.web_search_requests ?? 0) *
       modelCosts.webSearchRequests
   )
 }

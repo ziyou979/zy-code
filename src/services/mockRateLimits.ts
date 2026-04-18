@@ -86,7 +86,7 @@ let mockSubscriptionType: SubscriptionType | null = null
 let mockFastModeRateLimitDurationMs: number | null = null
 let mockFastModeRateLimitExpiresAt: number | null = null
 // Default subscription type for mock testing
-const DEFAULT_MOCK_SUBSCRIPTION: SubscriptionType = 'max'
+const DEFAULT_MOCK_SUBSCRIPTION: SubscriptionType = 'max' as any
 
 // Track individual exceeded limits with their reset times
 type ExceededLimit = {

@@ -273,9 +273,11 @@ const NO_TOOLS_TRAILER =
 
 export function getPartialCompactPrompt(
   customInstructions?: string,
+  // @ts-ignore
   direction: PartialCompactDirection = 'from',
 ): string {
   const template =
+    // @ts-ignore
     direction === 'up_to'
       ? PARTIAL_COMPACT_UP_TO_PROMPT
       : PARTIAL_COMPACT_PROMPT
@@ -360,7 +362,8 @@ Continue the conversation from where it left off without asking the user any fur
 
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
-      proactiveModule?.isProactiveActive()
+      // @ts-ignore
+      (proactiveModule as any)?.isProactiveActive()
     ) {
       continuation += `
 

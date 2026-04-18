@@ -20,6 +20,7 @@ import type { Message, ProgressMessage } from '../../types/message.js';
 import type { AgentToolProgress } from '../../types/tools.js';
 import { count } from '../../utils/array.js';
 import { getSearchOrReadFromContent, getSearchReadSummaryText } from '../../utils/collapseReadSearch.js';
+import { isInternalBuild } from '../../utils/envUtils.js';
 import { getDisplayPath } from '../../utils/file.js';
 import { formatDuration, formatNumber } from '../../utils/format.js';
 import { buildSubagentLookups, createAssistantMessage, EMPTY_LOOKUPS } from '../../utils/messages.js';
@@ -63,6 +64,7 @@ function getSearchOrReadInfo(progressMessage: ProgressMessage<Progress>, tools: 
   const message = progressMessage.data.message;
 
   // 检查 tool_use（助手消息）
+  // @ts-ignore -- message type is narrowed at runtime; AgentToolProgress.message may be assistant after build-time transforms
   if (message.type === 'assistant') {
     return getSearchOrReadFromContent(message.message.content[0], tools);
   }
@@ -99,7 +101,7 @@ type ProcessedMessage = {
  */
 function processProgressMessages(messages: ProgressMessage<Progress>[], tools: Tools, isAgentRunning: boolean): ProcessedMessage[] {
   // 仅对 ant 进行处理
-  if ("external" !== 'ant') {
+  if (!isInternalBuild()) {
     return messages.filter((m): m is ProgressMessage<AgentToolProgress> => hasProgressMessage(m.data) && m.data.message.type !== 'user').map(m => ({
       type: 'original',
       message: m
@@ -131,8 +133,9 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
   const toolUseByID = new Map<string, ToolUseBlockParam>();
   for (const msg of agentMessages) {
     // 跟踪遇到的 tool_use 块
+    // @ts-ignore -- message type is narrowed at runtime
     if (msg.data.message.type === 'assistant') {
-      for (const c of msg.data.message.message.content) {
+      for (const c of (msg.data.message as any).message.content) {
         if (c.type === 'tool_use') {
           toolUseByID.set(c.id, c as ToolUseBlockParam);
         }
@@ -181,18 +184,25 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
 const ESTIMATED_LINES_PER_TOOL = 9;
 const TERMINAL_BUFFER_LINES = 7;
 type Output = z.input<ReturnType<typeof outputSchema>>;
+type AgentPromptDisplayProps = {
+  prompt: string;
+  dim?: boolean;
+  theme?: string;
+};
 export function AgentPromptDisplay({
   prompt,
-  dim: t1
-}) {
-  t1 === undefined ? false : t1;
+}: AgentPromptDisplayProps) {
   return <Box flexDirection="column">{<Text color="success" bold={true}>Prompt:</Text>}<Box paddingLeft={2}><Markdown>{prompt}</Markdown></Box></Box>;
 }
+type AgentResponseDisplayProps = {
+  content: Array<{ text: string }>;
+  theme?: string;
+};
 export function AgentResponseDisplay({
   content
-}) {
-  const t2 = content.map((block, index) => <Box key={index} paddingLeft={2} marginTop={index === 0 ? 0 : 1}><Markdown>{block.text}</Markdown></Box>);
-  return <Box flexDirection="column">{<Text color="success" bold={true}>Response:</Text>}{t2}</Box>;
+}: AgentResponseDisplayProps) {
+  const responseBlocks = content.map((block, index) => <Box key={index} paddingLeft={2} marginTop={index === 0 ? 0 : 1}><Markdown>{block.text}</Markdown></Box>);
+  return <Box flexDirection="column">{<Text color="success" bold={true}>Response:</Text>}{responseBlocks}</Box>;
 }
 type VerboseAgentTranscriptProps = {
   progressMessages: ProgressMessage<Progress>[];
@@ -207,6 +217,7 @@ function VerboseAgentTranscript({
   const {
     lookups: agentLookups,
     inProgressToolUseIDs
+  // @ts-ignore -- Progress union type narrowed by hasProgressMessage filter
   } = buildSubagentLookups(progressMessages.filter(pm => hasProgressMessage(pm.data)).map(pm_0 => pm_0.data));
   const filteredMessages = progressMessages.filter(pm_1 => {
     if (!hasProgressMessage(pm_1.data)) {
@@ -218,8 +229,9 @@ function VerboseAgentTranscript({
     }
     return true;
   });
-  const t2 = filteredMessages.map(progressMessage => <MessageResponse key={progressMessage.uuid} height={1}><MessageComponent message={progressMessage.data.message} lookups={agentLookups} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} isTranscriptMode={false} isStatic={true} /></MessageResponse>);
-  return <>{t2}</>;
+  // @ts-ignore -- Progress type narrowed by filter above
+  const transcriptElements = filteredMessages.map(progressMessage => <MessageResponse key={progressMessage.uuid} height={1}><MessageComponent message={progressMessage.data.message} lookups={agentLookups} addMargin={false} tools={tools} commands={[]} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} isTranscriptMode={false} isStatic={true} /></MessageResponse>);
+  return <>{transcriptElements}</>;
 }
 export function renderToolResultMessage(data: Output, progressMessagesForMessage: ProgressMessage<Progress>[], {
   tools,
@@ -290,10 +302,10 @@ export function renderToolResultMessage(data: Output, progressMessagesForMessage
       inference_geo: null,
       iterations: null,
       speed: null
-    }
+    } as any
   });
   return <Box flexDirection="column">
-      {"external" === 'ant' && <MessageResponse>
+      {isInternalBuild() && <MessageResponse>
           <Text color="warning">
             {tSync('agent.apiCallsOnly', { path: getDisplayPath(getDumpPromptsPath(agentId)) })}
           </Text>
@@ -384,10 +396,12 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
       const message = msg.data.message;
       return message.message.content.some(content => content.type === 'tool_use');
     });
+    // @ts-ignore -- message type is narrowed at runtime
     const latestAssistant = progressMessages.findLast((msg): msg is ProgressMessage<AgentToolProgress> => hasProgressMessage(msg.data) && msg.data.message.type === 'assistant');
     let tokens = null;
+    // @ts-ignore -- message type is narrowed at runtime
     if (latestAssistant?.data.message.type === 'assistant') {
-      const usage = latestAssistant.data.message.message.usage;
+      const usage = (latestAssistant.data.message as any).message.usage;
       tokens = (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + usage.input_tokens + usage.output_tokens;
     }
     return {
@@ -497,7 +511,7 @@ export function renderToolUseRejectedMessage(_input: {
   const firstData = progressMessagesForMessage[0]?.data;
   const agentId = firstData && hasProgressMessage(firstData) ? firstData.agentId : undefined;
   return <>
-      {"external" === 'ant' && agentId && <MessageResponse>
+      {isInternalBuild() && agentId && <MessageResponse>
           <Text color="warning">
             {tSync('agent.apiCallsOnly', { path: getDisplayPath(getDumpPromptsPath(agentId)) })}
           </Text>
@@ -541,10 +555,12 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
     const message = msg.data.message;
     return message.type === 'user' && message.message.content.some(content => content.type === 'tool_result');
   });
+  // @ts-ignore -- message type is narrowed at runtime
   const latestAssistant = progressMessages.findLast((msg): msg is ProgressMessage<AgentToolProgress> => hasProgressMessage(msg.data) && msg.data.message.type === 'assistant');
   let tokens = null;
+  // @ts-ignore -- message type is narrowed at runtime
   if (latestAssistant?.data.message.type === 'assistant') {
-    const usage = latestAssistant.data.message.message.usage;
+    const usage = (latestAssistant.data.message as any).message.usage;
     tokens = (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + usage.input_tokens + usage.output_tokens;
   }
   return {
@@ -698,8 +714,9 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
     if (!hasProgressMessage(pm.data)) {
       continue;
     }
+    // @ts-ignore -- message type is narrowed at runtime
     if (pm.data.message.type === 'assistant') {
-      for (const c of pm.data.message.message.content) {
+      for (const c of (pm.data.message as any).message.content) {
         if (c.type === 'tool_use') {
           toolUseByID.set(c.id, c as ToolUseBlockParam);
         }

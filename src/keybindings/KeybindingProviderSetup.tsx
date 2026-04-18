@@ -62,8 +62,8 @@ function useKeybindingWarnings(warnings, isReload) {
       removeNotification("keybinding-config-warning");
       return;
     }
-    const errorCount = count(warnings, w => w.severity === "error");
-    const warnCount = count(warnings, w_0 => w_0.severity === "warning");
+    const errorCount = count(warnings, (w: any) => w.severity === "error");
+    const warnCount = count(warnings, (w_0: any) => w_0.severity === "warning");
     let message;
     if (errorCount > 0 && warnCount > 0) {
       message = `Found ${errorCount} keybinding ${plural(errorCount, "error")} and ${warnCount} ${plural(warnCount, "warning")}`;

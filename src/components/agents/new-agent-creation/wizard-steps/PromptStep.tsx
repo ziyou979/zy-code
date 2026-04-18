@@ -15,14 +15,14 @@ export function PromptStep() {
     updateWizardData,
     wizardData
   } = useWizard();
-  const [systemPrompt, setSystemPrompt] = useState(wizardData.systemPrompt || "");
-  const [cursorOffset, setCursorOffset] = useState(systemPrompt.length);
+  const [systemPrompt, setSystemPrompt] = useState((wizardData.systemPrompt as any) || "");
+  const [cursorOffset, setCursorOffset] = useState((systemPrompt as any).length);
   const [error, setError] = useState(null);
   useKeybinding("confirm:no", goBack, {
     context: "Settings"
   });
   const handleExternalEditor = async () => {
-    const result = await editPromptInEditor(systemPrompt);
+    const result = await editPromptInEditor(systemPrompt as any);
     if (result.content !== null) {
       setSystemPrompt(result.content);
       setCursorOffset(result.content.length);
@@ -32,14 +32,14 @@ export function PromptStep() {
     context: "Chat"
   });
   const handleSubmit = () => {
-    const trimmedPrompt = systemPrompt.trim();
+    const trimmedPrompt = (systemPrompt as any).trim();
     if (!trimmedPrompt) {
       setError("System prompt is required");
       return;
     }
     setError(null);
     updateWizardData({
-      systemPrompt: trimmedPrompt
+      systemPrompt: trimmedPrompt as any
     });
     goNext();
   };

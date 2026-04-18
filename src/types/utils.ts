@@ -12,10 +12,12 @@ export type Permutations<T extends readonly unknown[]> = T extends []
   ? []
   : { [K in keyof T]: [T[K], ...Permutations<RemoveIndex<T, K>>] }[number]
 
-type RemoveIndex<T extends readonly unknown[], K extends number> = T extends [infer First, ...infer Rest]
-  ? K extends 0
-    ? Rest
-    : [First, ...RemoveIndex<Rest, Decrement<K>>]
+type RemoveIndex<T extends readonly unknown[], K extends number | string> = K extends number
+  ? T extends [infer First, ...infer Rest]
+    ? K extends 0
+      ? Rest
+      : [First, ...RemoveIndex<Rest, Decrement<K>>]
+    : []
   : []
 
 type Decrement<I extends number> = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][I]

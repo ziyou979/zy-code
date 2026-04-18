@@ -17,7 +17,7 @@ export function GroupedToolUseContent({
   inProgressToolUseIDs,
   shouldAnimate
 }: Props): React.ReactNode {
-  const tool = findToolByName(tools, message.toolName);
+  const tool = findToolByName(tools, (message as any).toolName);
   if (!tool?.renderGroupedToolUse) {
     return null;
   }
@@ -27,7 +27,7 @@ export function GroupedToolUseContent({
     param: ToolResultBlockParam;
     output: unknown;
   }>();
-  for (const resultMsg of message.results) {
+  for (const resultMsg of (message as any).results) {
     for (const content of resultMsg.message.content) {
       if (content.type === 'tool_result') {
         resultsByToolUseId.set(content.tool_use_id, {
@@ -37,7 +37,7 @@ export function GroupedToolUseContent({
       }
     }
   }
-  const toolUsesData = message.messages.map(msg => {
+  const toolUsesData = (message as any).messages.map(msg => {
     const content = msg.message.content[0];
     const result = resultsByToolUseId.get(content.id);
     return {

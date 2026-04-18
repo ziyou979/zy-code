@@ -96,7 +96,7 @@ export function AssistantToolUseMessage({
       inProgressToolCallCount,
       isTranscriptMode
     }, terminalSize);
-    return <Box flexDirection="column" width="100%" backgroundColor={bg}>{t4}</Box>;
+    return <Box flexDirection="column" width="100%" backgroundColor={bg as any}>{t4}</Box>;
   }
   if (userFacingToolName === "") {
     return null;
@@ -117,7 +117,7 @@ export function AssistantToolUseMessage({
     isTranscriptMode
   }, terminalSize));
   const t14 = !isResolved && isQueued && renderToolUseQueuedMessage(tool_0);
-  return <Box flexDirection="row" justifyContent="space-between" marginTop={addMargin ? 1 : 0} width="100%" backgroundColor={bg}>{<Box flexDirection="column">{<Box flexDirection="row" flexWrap="nowrap" minWidth={t6}>{shouldShowDot && (isQueued ? <Box minWidth={2}><Text dimColor={isQueued}>{BLACK_CIRCLE}</Text></Box> : <ToolUseLoader shouldAnimate={shouldAnimate} isUnresolved={!isResolved} isError={lookups.erroredToolUseIDs.has(param.id)} />)}{<Box flexShrink={0}><Text bold={true} wrap="truncate-end" backgroundColor={userFacingToolNameBackgroundColor} color={userFacingToolNameBackgroundColor ? "inverseText" : undefined}>{userFacingToolName}</Text></Box>}{renderedToolUseMessage !== "" && <Box flexWrap="nowrap"><Text>({renderedToolUseMessage})</Text></Box>}{t11}</Box>}{t13}{t14}</Box>}</Box>;
+  return <Box flexDirection="row" justifyContent="space-between" marginTop={addMargin ? 1 : 0} width="100%" backgroundColor={bg as any}>{<Box flexDirection="column">{<Box flexDirection="row" flexWrap="nowrap" minWidth={t6}>{shouldShowDot && (isQueued ? <Box minWidth={2}><Text dimColor={isQueued}>{BLACK_CIRCLE}</Text></Box> : <ToolUseLoader shouldAnimate={shouldAnimate} isUnresolved={!isResolved} isError={lookups.erroredToolUseIDs.has(param.id)} />)}{<Box flexShrink={0}><Text bold={true} wrap="truncate-end" backgroundColor={userFacingToolNameBackgroundColor as any} color={userFacingToolNameBackgroundColor ? "inverseText" : undefined}>{userFacingToolName}</Text></Box>}{renderedToolUseMessage !== "" && <Box flexWrap="nowrap"><Text>({renderedToolUseMessage})</Text></Box>}{t11}</Box>}{t13}{t14}</Box>}</Box>;
 }
 function renderToolUseMessage(tool: Tool, input: unknown, {
   theme,

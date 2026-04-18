@@ -35,12 +35,13 @@ export function WorkspaceTab({
   useEffect(() => {
     onHeaderFocusChange?.(headerFocused);
   }, [headerFocused, onHeaderFocusChange]);
-  const additionalDirectories = Array.from(toolPermissionContext.additionalWorkingDirectories.keys()).map(path => ({
+  // @ts-ignore
+  const additionalDirectories = (Array.from(toolPermissionContext.additionalWorkingDirectories.keys()) as string[]).map(path => ({
     path,
     isCurrent: false,
     isDeletable: true
   }));
-  const handleDirectorySelect = selectedValue => {
+  const handleDirectorySelect = (selectedValue: string) => {
     if (selectedValue === "add-directory") {
       onRequestAddDirectory();
       return;

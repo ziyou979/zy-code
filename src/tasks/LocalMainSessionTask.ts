@@ -378,7 +378,7 @@ export function startBackgroundSession({
       const recentActivities: ToolActivity[] = []
       let toolCount = 0
       let tokenCount = 0
-      let lastRecordedUuid: UUID | null = messages.at(-1)?.uuid ?? null
+      let lastRecordedUuid: UUID | null = (messages.at(-1)?.uuid as any) ?? null
 
       for await (const event of query({
         messages: bgMessages,
@@ -416,7 +416,7 @@ export function startBackgroundSession({
         void recordSidechainTranscript([event], taskId, lastRecordedUuid).catch(
           err => logForDebugging(`bg-session transcript write failed: ${err}`),
         )
-        lastRecordedUuid = event.uuid
+        lastRecordedUuid = event.uuid as any
 
         if (event.type === 'assistant') {
           for (const block of event.message.content) {

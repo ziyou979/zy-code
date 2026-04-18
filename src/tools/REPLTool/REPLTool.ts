@@ -79,7 +79,7 @@ export const REPLTool = buildTool({
       const { promisify } = await import('node:util')
       const execAsync = promisify(exec)
 
-      const cwd = context.cwd || process.cwd()
+      const cwd = (context as any).cwd || process.cwd()
       const { stdout, stderr } = await execAsync(commands, {
         cwd,
         maxBuffer: 10 * 1024 * 1024,

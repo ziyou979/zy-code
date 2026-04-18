@@ -502,7 +502,7 @@ export async function* runAgent({
     : resolveAgentTools(agentDefinition, availableTools, isAsync).resolvedTools
 
   const additionalWorkingDirectories = Array.from(
-    appState.toolPermissionContext.additionalWorkingDirectories.keys(),
+    (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
   )
 
   const agentSystemPrompt = override?.systemPrompt
@@ -512,7 +512,7 @@ export async function* runAgent({
           agentDefinition,
           toolUseContext,
           resolvedAgentModel,
-          additionalWorkingDirectories,
+          additionalWorkingDirectories as any,
           resolvedTools,
         ),
       )
@@ -742,7 +742,7 @@ export async function* runAgent({
   }).catch(_err => logForDebugging(`Failed to write agent metadata: ${_err}`))
 
   // Track the last recorded message UUID for parent chain continuity
-  let lastRecordedUuid: UUID | null = initialMessages.at(-1)?.uuid ?? null
+  let lastRecordedUuid: UUID | null = (initialMessages.at(-1)?.uuid as any) ?? null
 
   try {
     for await (const message of query({
@@ -799,7 +799,7 @@ export async function* runAgent({
           logForDebugging(`Failed to record sidechain transcript: ${err}`),
         )
         if (message.type !== 'progress') {
-          lastRecordedUuid = message.uuid
+          lastRecordedUuid = message.uuid as any
         }
         yield message
       }
@@ -849,7 +849,7 @@ export async function* runAgent({
     if (feature('MONITOR_TOOL')) {
       const mcpMod =
         require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js')
-      mcpMod.killMonitorMcpTasksForAgent(
+      (mcpMod as any).killMonitorMcpTasksForAgent(
         agentId,
         toolUseContext.getAppState,
         rootSetAppState,

@@ -209,6 +209,7 @@ function ScrollBox({
   // stickyScroll 作为 DOM 属性传递（通过 ink-box 直接传递），
   // 使其在首次渲染时可用 —— ref 回调在首次 commit 后才触发，
   // 对第一帧来说太晚了。
+  // @ts-ignore
   return <ink-box ref={el => {
     domRef.current = el;
     if (el) el.scrollTop ??= 0;
@@ -226,6 +227,7 @@ function ScrollBox({
       <Box flexDirection="column" flexGrow={1} flexShrink={0} width="100%">
         {children}
       </Box>
+    {/* @ts-ignore */}
     </ink-box>;
 }
 export default ScrollBox;

@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
@@ -26,8 +27,8 @@ export function FileEditToolUpdatedMessage({
   const {
     columns
   } = useTerminalSize();
-  const numAdditions = structuredPatch.reduce((acc, hunk) => acc + count(hunk.lines, _ => _.startsWith("+")), 0);
-  const numRemovals = structuredPatch.reduce((acc_0, hunk_0) => acc_0 + count(hunk_0.lines, __0 => __0.startsWith("-")), 0);
+  const numAdditions = structuredPatch.reduce((acc, hunk) => acc + count(hunk.lines, _ => (_ as any).startsWith("+")), 0);
+  const numRemovals = structuredPatch.reduce((acc_0, hunk_0) => acc_0 + count(hunk_0.lines, __0 => (__0 as any).startsWith("-")), 0);
   const text = <Text>{numAdditions > 0 ? <>Added <Text bold={true}>{numAdditions}</Text>{" "}{numAdditions > 1 ? "lines" : "line"}</> : null}{numAdditions > 0 && numRemovals > 0 ? ", " : null}{numRemovals > 0 ? <>{numAdditions === 0 ? "R" : "r"}emoved <Text bold={true}>{numRemovals}</Text>{" "}{numRemovals > 1 ? "lines" : "line"}</> : null}</Text>;
   if (previewHint) {
     if (style !== "condensed" && !verbose) {

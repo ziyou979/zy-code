@@ -160,8 +160,9 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           if (feature('KAIROS')) {
             const {
               isAssistantMode
-            } = await import('../assistant/index.js');
-            perpetual = isAssistantMode();
+            } = await import('../assistant/index.js' as any);
+            // @ts-ignore
+            perpetual = (isAssistantMode as any)();
           }
 
           // 当来自 zy.ai 的用户消息到达时，将其注入到 REPL 中。
@@ -185,11 +186,9 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               let sanitized = fields.content;
               if (feature('KAIROS_GITHUB_WEBHOOKS')) {
                 /* eslint-disable @typescript-eslint/no-require-imports */
-                const {
-                  sanitizeInboundWebhookContent
-                } = require('../bridge/webhookSanitizer.js') as typeof import('../bridge/webhookSanitizer.js');
+                const webhookModule = require('../bridge/webhookSanitizer.js' as any);
                 /* eslint-enable @typescript-eslint/no-require-imports */
-                sanitized = sanitizeInboundWebhookContent(fields.content);
+                sanitized = (webhookModule as any).sanitizeInboundWebhookContent(fields.content) as any;
               }
               const content = await resolveAndPrepend(msg, sanitized);
               const preview = typeof content === 'string' ? content.slice(0, 80) : `[${content.length} content blocks]`;
@@ -631,6 +630,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             });
           }, BRIDGE_FAILURE_DISMISS_MS);
           if (!outboundOnly) {
+            // @ts-ignore
             setMessages(prev_2 => [...prev_2, createSystemMessage(`Remote Control failed to connect: ${errMsg}`, 'warning')]);
           }
         }

@@ -42,13 +42,13 @@ const DEFAULT_PLACEHOLDERS: Record<FeedbackType, string> = {
  * - Analytics events for feedback interactions
  * - Transforming options to Select-compatible format
  */
-export function PermissionPrompt({
+export function PermissionPrompt<T extends string>({
   options,
   onSelect,
   onCancel,
   question = tSync('permission.doYouWantToProceed'),
   toolAnalyticsContext
-}: PermissionPromptProps) {
+}: PermissionPromptProps<T>) {
   const setAppState = useSetAppState();
   const [acceptFeedback, setAcceptFeedback] = useState("");
   const [rejectFeedback, setRejectFeedback] = useState("");

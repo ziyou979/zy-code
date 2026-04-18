@@ -19,9 +19,9 @@ export function TypeStep(_props) {
     updateWizardData,
     wizardData
   } = useWizard();
-  const [agentType, setAgentType] = useState(wizardData.agentType || "");
+  const [agentType, setAgentType] = useState((wizardData.agentType as any) || "");
   const [error, setError] = useState(null);
-  const [cursorOffset, setCursorOffset] = useState(agentType.length);
+  const [cursorOffset, setCursorOffset] = useState((agentType as any).length);
   useKeybinding("confirm:no", goBack, {
     context: "Settings"
   });

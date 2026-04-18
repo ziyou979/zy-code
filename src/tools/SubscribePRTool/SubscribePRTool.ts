@@ -80,7 +80,7 @@ export const SubscribePRTool = buildTool({
           | string[]
           | undefined ?? []
       if (!existingSubscriptions.includes(pr_url)) {
-        context.setAppState((prev: Record<string, unknown>) => ({
+        context.setAppState((prev: any) => ({
           ...prev,
           prSubscriptions: [...existingSubscriptions, pr_url],
         }))

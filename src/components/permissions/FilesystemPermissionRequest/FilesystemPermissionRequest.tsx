@@ -31,7 +31,7 @@ export function FilesystemPermissionRequest({
   const title = `${userFacingReadOrEdit} file`;
   const parseInput = input => input as ToolInput;
   if (!path) {
-    return <FallbackPermissionRequest toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} />;
+    return <FallbackPermissionRequest toolUseConfirm={toolUseConfirm} onDone={onDone} onReject={onReject} workerBadge={workerBadge} /> as any;
   }
   const t3 = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
     theme,

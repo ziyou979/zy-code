@@ -548,7 +548,8 @@ export function buildMissedTaskNotification(missed: CronTask[]): string {
     `First use the AskUserQuestion tool to ask whether to run ${plural ? 'each one' : 'it'} now. ` +
     `Only execute if the user confirms.`
 
-  const blocks = missed.map(t => {
+  // @ts-ignore
+  const blocks = missed.map((t: any) => {
     const meta = `[${cronToHuman(t.cron)}, created ${new Date(t.createdAt).toLocaleString()}]`
     // Use a fence one longer than any backtick run in the prompt so a
     // prompt containing ``` cannot close the fence early and un-wrap the

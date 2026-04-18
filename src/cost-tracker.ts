@@ -267,7 +267,7 @@ function addToTotalModelUsage(
   modelUsage.cacheReadInputTokens += usage.cache_read_input_tokens ?? 0
   modelUsage.cacheCreationInputTokens += usage.cache_creation_input_tokens ?? 0
   modelUsage.webSearchRequests +=
-    usage.server_tool_use?.web_search_requests ?? 0
+    (usage as any).server_tool_use?.web_search_requests ?? 0
   modelUsage.costUSD += cost
   modelUsage.contextWindow = getContextWindowForModel(model, getSdkBetas())
   modelUsage.maxOutputTokens = getModelMaxOutputTokens(model).default
@@ -283,7 +283,7 @@ export function addToTotalSessionCost(
   addToTotalCostState(cost, modelUsage, model)
 
   const attrs =
-    isFastModeEnabled() && usage.speed === 'fast'
+    isFastModeEnabled() && (usage as any).speed === 'fast'
       ? { model, speed: 'fast' }
       : { model }
 

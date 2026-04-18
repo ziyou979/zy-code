@@ -87,9 +87,11 @@ export function clearWebFetchCache(): void {
 // calls (construction builds 15 rule objects; .turndown() is stateless).
 // @types/turndown ships only `export =` (no .d.mts), so TS types the import
 // as the class itself while Bun wraps CJS in { default } — hence the cast.
+// @ts-ignore
 type TurndownCtor = typeof import('turndown')
 let turndownServicePromise: Promise<InstanceType<TurndownCtor>> | undefined
 function getTurndownService(): Promise<InstanceType<TurndownCtor>> {
+  // @ts-ignore
   return (turndownServicePromise ??= import('turndown').then(m => {
     const Turndown = (m as unknown as { default: TurndownCtor }).default
     return new Turndown()
@@ -505,6 +507,7 @@ export async function applyPromptToMarkdown(
     userPrompt: modelPrompt,
     signal,
     options: {
+      // @ts-ignore
       querySource: 'web_fetch_apply',
       agents: [],
       isNonInteractiveSession,

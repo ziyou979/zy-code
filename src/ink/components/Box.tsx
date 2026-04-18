@@ -1,5 +1,13 @@
 import '../global.d.ts';
 import React, { type Ref } from 'react';
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'ink-box': any
+    }
+  }
+}
 import type { Except } from 'type-fest';
 import type { DOMElement } from '../dom.js';
 import type { ClickEvent } from '../events/click-event.js';
@@ -96,7 +104,8 @@ function Box({
   warn.ifNotInteger(style.gap, "gap");
   warn.ifNotInteger(style.columnGap, "columnGap");
   warn.ifNotInteger(style.rowGap, "rowGap");
-  return <ink-box ref={ref} tabIndex={tabIndex} autoFocus={autoFocus} onClick={onClick} onFocus={onFocus} onFocusCapture={onFocusCapture} onBlur={onBlur} onBlurCapture={onBlurCapture} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onKeyDown={onKeyDown} onKeyDownCapture={onKeyDownCapture} style={{
+  const InkBox = 'ink-box' as any
+  return <InkBox ref={ref} tabIndex={tabIndex} autoFocus={autoFocus} onClick={onClick} onFocus={onFocus} onFocusCapture={onFocusCapture} onBlur={onBlur} onBlurCapture={onBlurCapture} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onKeyDown={onKeyDown} onKeyDownCapture={onKeyDownCapture} style={{
     flexWrap,
     flexDirection,
     flexGrow,
@@ -104,6 +113,6 @@ function Box({
     ...style,
     overflowX: style.overflowX ?? style.overflow ?? "visible",
     overflowY: style.overflowY ?? style.overflow ?? "visible"
-  }}>{children}</ink-box>;
+  }}>{children}</InkBox>;
 }
 export default Box;

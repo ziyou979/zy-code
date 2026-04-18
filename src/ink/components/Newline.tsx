@@ -14,6 +14,6 @@ export type Props = {
 export default function Newline({
   count = 1
 }: Props) {
-  const t2 = "\n".repeat(count);
-  return <ink-text>{t2}</ink-text>;
+  // @ts-ignore
+  return <ink-text>{"\n".repeat(count)}</ink-text>;
 }

@@ -214,7 +214,7 @@ async function handleSessionFileAccess(
       (input.tool_name === FILE_EDIT_TOOL_NAME ||
         input.tool_name === FILE_WRITE_TOOL_NAME)
     ) {
-      memoryShapeTelemetry!.logMemoryWriteShape(
+      (memoryShapeTelemetry as any)!.logMemoryWriteShape(
         input.tool_name,
         input.tool_input,
         filePath,

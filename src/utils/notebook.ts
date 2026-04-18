@@ -7,12 +7,14 @@ import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { formatOutput } from '../tools/BashTool/utils.js'
 import type {
   NotebookCell,
-  NotebookCellOutput,
-  NotebookCellSource,
-  NotebookCellSourceOutput,
   NotebookContent,
-  NotebookOutputImage,
 } from '../types/notebook.js'
+
+// Local type declarations for missing exports
+type NotebookCellOutput = any
+type NotebookCellSource = any
+type NotebookCellSourceOutput = any
+type NotebookOutputImage = any
 import { getFsImplementation } from './fsOperations.js'
 import { expandPath } from './path.js'
 import { jsonParse } from './slowOperations.js'
@@ -88,18 +90,18 @@ function processCell(
 ): NotebookCellSource {
   const cellId = cell.id ?? `cell-${index}`
   const cellData: NotebookCellSource = {
-    cellType: cell.cell_type,
+    cellType: (cell as any).cell_type,
     source: Array.isArray(cell.source) ? cell.source.join('') : cell.source,
     execution_count:
-      cell.cell_type === 'code' ? cell.execution_count || undefined : undefined,
+      (cell as any).cell_type === 'code' ? (cell as any).execution_count || undefined : undefined,
     cell_id: cellId,
   }
   // Avoid giving text cells the code language.
-  if (cell.cell_type === 'code') {
+  if ((cell as any).cell_type === 'code') {
     cellData.language = codeLanguage
   }
 
-  if (cell.cell_type === 'code' && cell.outputs?.length) {
+  if ((cell as any).cell_type === 'code' && cell.outputs?.length) {
     const outputs = cell.outputs.map(processOutput)
     if (!includeLargeOutputs && isLargeOutputs(outputs)) {
       cellData.outputs = [
@@ -169,7 +171,7 @@ export async function readNotebook(
   const buffer = await getFsImplementation().readFileBytes(fullPath)
   const content = buffer.toString('utf-8')
   const notebook = jsonParse(content) as NotebookContent
-  const language = notebook.metadata.language_info?.name ?? 'python'
+  const language = (notebook.metadata as any)?.language_info?.name ?? 'python'
   if (cellId) {
     const cell = notebook.cells.find(c => c.id === cellId)
     if (!cell) {

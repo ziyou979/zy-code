@@ -5,9 +5,12 @@ function isTeammateShutdownAttachment(
 ): msg is AttachmentMessage {
   return (
     msg.type === 'attachment' &&
-    msg.attachment.type === 'task_status' &&
-    msg.attachment.taskType === 'in_process_teammate' &&
-    msg.attachment.status === 'completed'
+    // @ts-ignore
+    (msg.attachment as any).type === 'task_status' &&
+    // @ts-ignore
+    (msg.attachment as any).taskType === 'in_process_teammate' &&
+    // @ts-ignore
+    (msg.attachment as any).status === 'completed'
   )
 }
 
@@ -35,6 +38,7 @@ export function collapseTeammateShutdowns(
       if (count === 1) {
         result.push(msg)
       } else {
+        // @ts-ignore
         result.push({
           type: 'attachment',
           uuid: msg.uuid,
@@ -42,7 +46,7 @@ export function collapseTeammateShutdowns(
           attachment: {
             type: 'teammate_shutdown_batch',
             count,
-          },
+          } as any,
         })
       }
     } else {

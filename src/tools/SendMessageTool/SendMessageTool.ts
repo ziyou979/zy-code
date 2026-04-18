@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
+// @ts-ignore
 import { isReplBridgeActive } from '../../bootstrap/state.js'
 import { getReplBridgeHandle } from '../../bridge/replBridgeHandle.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
@@ -755,10 +756,12 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
             }
           }
           /* eslint-disable @typescript-eslint/no-require-imports */
+          // @ts-ignore
           const { postInterZyMessage } =
-            require('../../bridge/peerSessions.js') as typeof import('../../bridge/peerSessions.js')
+            require('../../bridge/peerSessions.js')
           /* eslint-enable @typescript-eslint/no-require-imports */
-          const result = await postInterZyMessage(
+          // @ts-ignore
+          const result = await (postInterZyMessage as any)(
             addr.target,
             input.message,
           )
@@ -774,11 +777,13 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
         }
         if (addr.scheme === 'uds') {
           /* eslint-disable @typescript-eslint/no-require-imports */
+          // @ts-ignore
           const { sendToUdsSocket } =
-            require('../../utils/udsClient.js') as typeof import('../../utils/udsClient.js')
+            require('../../utils/udsClient.js')
           /* eslint-enable @typescript-eslint/no-require-imports */
           try {
-            await sendToUdsSocket(addr.target, input.message)
+            // @ts-ignore
+            await (sendToUdsSocket as any)(addr.target, input.message)
             const preview = input.summary || truncate(input.message, 50)
             return {
               data: {

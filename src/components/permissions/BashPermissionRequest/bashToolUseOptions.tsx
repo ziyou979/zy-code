@@ -6,6 +6,7 @@ import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpda
 import { shouldShowAlwaysAllowOptions } from '../../../utils/permissions/permissionsLoader.js';
 import type { OptionWithDescription } from '../../CustomSelect/select.js';
 import { generateShellSuggestionsLabel } from '../shellPermissionHelpers.js';
+import { isInternalBuild } from '../../../utils/envUtils.js';
 import { tSync } from 'src/i18n/index.js';
 export type BashToolUseOption = 'yes' | 'yes-apply-suggestions' | 'yes-prefix-edited' | 'yes-classifier-reviewed' | 'no';
 
@@ -113,7 +114,7 @@ export function bashToolUseOptions({
     // Skip when the editable prefix option is already shown — they serve the
     // same role and having two identical-looking "don't ask again" inputs is confusing.
     const editablePrefixShown = options.some(o => o.value === 'yes-prefix-edited');
-    if ("external" === 'ant' && !editablePrefixShown && isClassifierPermissionsEnabled() && onClassifierDescriptionChange && !initialClassifierDescriptionEmpty && !descriptionAlreadyExists(classifierDescription ?? '', existingAllowDescriptions) && decisionReason?.type !== 'classifier') {
+    if (isInternalBuild() && !editablePrefixShown && isClassifierPermissionsEnabled() && onClassifierDescriptionChange && !initialClassifierDescriptionEmpty && !descriptionAlreadyExists(classifierDescription ?? '', existingAllowDescriptions) && decisionReason?.type !== 'classifier') {
       options.push({
         type: 'input',
         label: 'Yes, and don\u2019t ask again for',

@@ -20,8 +20,8 @@ function SearchResultSummary({
   content,
   verbose
 }) {
-  const t2 = count === 0 || count > 1 ? countLabel : countLabel.slice(0, -1);
-  const primaryText = <Text>Found {<Text bold={true}>{count} </Text>}{t2}</Text>;
+  const pluralizedLabel = count === 0 || count > 1 ? countLabel : countLabel.slice(0, -1);
+  const primaryText = <Text>Found {<Text bold={true}>{count} </Text>}{pluralizedLabel}</Text>;
   const secondaryText = secondaryCount !== undefined && secondaryLabel ? <Text>{" "}across <Text bold={true}>{secondaryCount} </Text>{secondaryCount === 0 || secondaryCount > 1 ? secondaryLabel : secondaryLabel.slice(0, -1)}</Text> : null;
   if (verbose) {
     return <Box flexDirection="column">{<Box flexDirection="row"><Text>{<Text dimColor={true}>  ⎿  </Text>}{primaryText}{secondaryText}</Text></Box>}{<Box marginLeft={5}><Text>{content}</Text></Box>}</Box>;
@@ -87,7 +87,7 @@ export function renderToolResultMessage({
   verbose: boolean;
 }): React.ReactNode {
   if (mode === 'content') {
-    return <SearchResultSummary count={numLines ?? 0} countLabel="lines" content={content} verbose={verbose} />;
+    return <SearchResultSummary count={numLines ?? 0} countLabel="lines" secondaryCount={0} secondaryLabel="" content={content} verbose={verbose} />;
   }
   if (mode === 'count') {
     return <SearchResultSummary count={numMatches ?? 0} countLabel="matches" secondaryCount={numFiles} secondaryLabel="files" content={content} verbose={verbose} />;
@@ -95,7 +95,7 @@ export function renderToolResultMessage({
 
   // files_with_matches mode
   const fileListContent = filenames.map(filename => filename).join('\n');
-  return <SearchResultSummary count={numFiles} countLabel="files" content={fileListContent} verbose={verbose} />;
+  return <SearchResultSummary count={numFiles} countLabel="files" secondaryCount={0} secondaryLabel="" content={fileListContent} verbose={verbose} />;
 }
 export function getToolUseSummary(input: Partial<{
   pattern: string;

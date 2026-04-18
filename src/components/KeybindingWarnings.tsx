@@ -14,8 +14,7 @@ export function KeybindingWarnings() {
     return null;
   }
   let boxElement;
-  let earlyReturn;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
+  let earlyReturn = Symbol.for("react.early_return_sentinel");
   const warnings = getCachedKeybindingWarnings();
   if (warnings.length === 0) {
     earlyReturn = null;

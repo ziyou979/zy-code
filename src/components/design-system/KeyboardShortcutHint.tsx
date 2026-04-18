@@ -48,13 +48,13 @@ export function KeyboardShortcutHint({
   // Look up the action in the key map; fall back to raw action string
   const actionKey = actionKeyMap[action];
   const actionText = actionKey ? tSync(actionKey) : action;
-  const shortcutValue = bold ? <Text bold={true}>{shortcut}</Text> : shortcut;
+  const shortcutValue = bold ? <Text bold={true}>{shortcut as any}</Text> : shortcut as any;
   const template = parens ? tSync('shortcut.hintParens', {
     shortcut: shortcutValue,
     action: actionText
   }) : tSync('shortcut.hint', {
     shortcut: shortcutValue,
     action: actionText
-  });
+  }) as any;
   return <Text>{template}</Text>;
 }

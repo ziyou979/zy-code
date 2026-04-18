@@ -90,8 +90,8 @@ export function RemoteEnvironmentDialog({
 }
 function EnvironmentLabel({
   environment
-}: Props) {
-  return <Text>{figures.tick} Using {<Text bold={true}>{environment.name}</Text>}{" "}{<Text dimColor={true}>({environment.environment_id})</Text>}</Text>;
+}: any) {
+  return <Text>{figures.tick} Using {<Text bold={true}>{(environment as any).name}</Text>}{" "}{<Text dimColor={true}>({(environment as any).environment_id})</Text>}</Text>;
 }
 function SingleEnvironmentContent({
   environment,
@@ -100,6 +100,7 @@ function SingleEnvironmentContent({
   useKeybinding("confirm:yes", onDone, {
     context: "Confirmation"
   });
+  // @ts-ignore
   return <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{<EnvironmentLabel environment={environment} />}</Dialog>;
 }
 function MultipleEnvironmentsContent({

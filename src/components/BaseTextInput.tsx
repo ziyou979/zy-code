@@ -40,7 +40,7 @@ export function BaseTextInput({
   });
   const {
     wrappedOnInput,
-    isPasting: t3
+    isPasting
   } = usePasteHandler({
     onPaste: props.onPaste,
     onInput: (input, key) => {
@@ -51,8 +51,6 @@ export function BaseTextInput({
     },
     onImagePaste: props.onImagePaste
   });
-  let isPasting;
-  isPasting = t3;
   const {
     onIsPastingChange
   } = props;

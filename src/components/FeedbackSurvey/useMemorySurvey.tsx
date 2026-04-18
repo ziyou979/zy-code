@@ -7,7 +7,7 @@ import { isPolicyAllowed } from '../../services/policyLimits/index.js';
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js';
 import type { Message } from '../../types/message.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
-import { isEnvTruthy } from '../../utils/envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
 import { isAutoManagedMemoryFile } from '../../utils/memoryFileDetection.js';
 import { extractTextContent, getLastAssistantMessage } from '../../utils/messages.js';
 import { logOTelEvent } from '../../utils/telemetry/events.js';
@@ -82,14 +82,15 @@ export function useMemorySurvey(messages: Message[], isLoading: boolean, hasActi
     void logOTelEvent('feedback_survey', {
       event_type: 'responded',
       appearance_id: appearanceId_0,
-      response: selected,
+      response: selected as any,
       survey_type: 'memory'
     });
   }, []);
   const shouldShowTranscriptPrompt = useCallback((selected_0: FeedbackSurveyResponse) => {
-    if ("external" !== 'ant') {
+    if (!isInternalBuild()) {
       return false;
     }
+    // @ts-ignore -- FeedbackSurveyResponse enum comparison works at runtime
     if (selected_0 !== 'bad' && selected_0 !== 'good') {
       return false;
     }

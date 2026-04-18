@@ -515,35 +515,35 @@ export function extractAgentMcpServers(
     if (isStdioConfig(config)) {
       result.push({
         name,
-        sourceAgents,
+        sourceAgents: sourceAgents as any,
         transport: 'stdio',
         command: config.command,
         needsAuth: false,
-      })
+      } as any)
     } else if (isSSEConfig(config)) {
       result.push({
         name,
-        sourceAgents,
+        sourceAgents: sourceAgents as any,
         transport: 'sse',
         url: config.url,
         needsAuth: true,
-      })
+      } as any)
     } else if (isHTTPConfig(config)) {
       result.push({
         name,
-        sourceAgents,
+        sourceAgents: sourceAgents as any,
         transport: 'http',
         url: config.url,
         needsAuth: true,
-      })
+      } as any)
     } else if (isWebSocketConfig(config)) {
       result.push({
         name,
-        sourceAgents,
+        sourceAgents: sourceAgents as any,
         transport: 'ws',
         url: config.url,
         needsAuth: false,
-      })
+      } as any)
     }
     // Skip unsupported transport types (sdk, zyai-proxy, sse-ide, ws-ide)
     // These are internal types not meant for agent MCP server display

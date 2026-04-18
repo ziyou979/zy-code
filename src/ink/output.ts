@@ -392,12 +392,12 @@ export default class Output {
         }
 
         case 'shift': {
-          shiftRows(screen, operation.top, operation.bottom, operation.n)
+          shiftRows(screen, (operation as any).top, (operation as any).bottom, (operation as any).n)
         }
 
         case 'write': {
-          const { text, softWrap } = operation
-          let { x, y } = operation
+          const { text, softWrap } = operation as any
+          let { x, y } = operation as any
           let lines = text.split('\n')
           let swFrom = 0
           let prevContentEnd = 0

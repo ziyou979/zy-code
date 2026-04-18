@@ -98,8 +98,8 @@ export function SelectInputOption({
   selectedImageIndex = 0,
   onImagesSelectedChange,
   onSelectedImageIndexChange
-}: Props) {
-  const imageAttachments = pastedContents ? Object.values(pastedContents).filter(c => c.type === "image") : [];
+}: Props<any>) {
+  const imageAttachments = pastedContents ? Object.values(pastedContents).filter((c: any) => (c as any).type === "image") : [];
   const showLabel = showLabelProp || option.showLabelWithValue === true;
   const [cursorOffset, setCursorOffset] = useState(inputValue.length);
   const isUserEditing = useRef(false);
@@ -133,7 +133,7 @@ export function SelectInputOption({
   });
   useKeybinding("attachments:remove", () => {
     if (imageAttachments.length > 0 && onRemoveImage) {
-      onRemoveImage(imageAttachments.at(-1).id);
+      onRemoveImage((imageAttachments.at(-1) as any).id);
     }
   }, {
     context: "Attachments",
@@ -151,9 +151,9 @@ export function SelectInputOption({
       }
     },
     "attachments:remove": () => {
-      const img = imageAttachments[selectedImageIndex];
+      const img = imageAttachments[selectedImageIndex] as any;
       if (img && onRemoveImage) {
-        onRemoveImage(img.id);
+        onRemoveImage((img as any).id);
         if (imageAttachments.length <= 1) {
           onImagesSelectedChange?.(false);
         } else {
@@ -206,5 +206,5 @@ export function SelectInputOption({
           onInputChange(newValue_0);
           option.onChange(newValue_0);
           setCursorOffset(before_0.length + pastedText_0.length);
-        }} /> : <Text color={inputValue ? undefined : "inactive"}>{inputValue || option.placeholder || option.label}</Text>}</Box>}</SelectOption>}{option.description && <Box paddingLeft={descriptionPaddingLeft}><Text dimColor={option.dimDescription !== false} color={isSelected ? "success" : isFocused ? "suggestion" : undefined}>{option.description}</Text></Box>}{imageAttachments.length > 0 && <Box flexDirection="row" gap={1} paddingLeft={descriptionPaddingLeft}>{imageAttachments.map((img_0, idx) => <ClickableImageRef key={img_0.id} imageId={img_0.id} isSelected={!!imagesSelected && idx === selectedImageIndex} />)}<Box flexGrow={1} justifyContent="flex-start" flexDirection="row"><Text dimColor={true}>{imagesSelected ? <Byline>{imageAttachments.length > 1 && <><ConfigurableShortcutHint action="attachments:next" context="Attachments" fallback={"\u2192"} description="next" /><ConfigurableShortcutHint action="attachments:previous" context="Attachments" fallback={"\u2190"} description="prev" /></>}<ConfigurableShortcutHint action="attachments:remove" context="Attachments" fallback="backspace" description="remove" /><ConfigurableShortcutHint action="attachments:exit" context="Attachments" fallback="esc" description="cancel" /></Byline> : isFocused ? "(\u2193 to select)" : null}</Text></Box></Box>}{layout === "expanded" && <Text> </Text>}</Box>;
+        }} /> : <Text color={inputValue ? undefined : "inactive"}>{inputValue || option.placeholder || option.label}</Text>}</Box>}</SelectOption>}{option.description && <Box paddingLeft={descriptionPaddingLeft}><Text dimColor={option.dimDescription !== false} color={isSelected ? "success" : isFocused ? "suggestion" : undefined}>{option.description}</Text></Box>}{imageAttachments.length > 0 && <Box flexDirection="row" gap={1} paddingLeft={descriptionPaddingLeft}>{imageAttachments.map((img_0: any, idx) => <ClickableImageRef key={(img_0 as any).id} imageId={(img_0 as any).id} isSelected={!!imagesSelected && idx === selectedImageIndex} />)}<Box flexGrow={1} justifyContent="flex-start" flexDirection="row"><Text dimColor={true}>{imagesSelected ? <Byline>{imageAttachments.length > 1 && <><ConfigurableShortcutHint action="attachments:next" context="Attachments" fallback={"\u2192"} description="next" /><ConfigurableShortcutHint action="attachments:previous" context="Attachments" fallback={"\u2190"} description="prev" /></>}<ConfigurableShortcutHint action="attachments:remove" context="Attachments" fallback="backspace" description="remove" /><ConfigurableShortcutHint action="attachments:exit" context="Attachments" fallback="esc" description="cancel" /></Byline> : isFocused ? "(\u2193 to select)" : null}</Text></Box></Box>}{layout === "expanded" && <Text> </Text>}</Box>;
 }

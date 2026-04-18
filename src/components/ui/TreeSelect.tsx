@@ -120,8 +120,8 @@ export function TreeSelect({
   getParentPrefix,
   getChildPrefix,
   onUpFromFirstItem
-}: TreeSelectProps) {
-  const t4 = new Set();
+}: TreeSelectProps<any>) {
+  const t4 = new Set() as Set<string>;
   const [internalExpandedIds, setInternalExpandedIds] = React.useState(t4);
   const isProgrammaticFocusRef = React.useRef(false);
   const lastFocusedIdRef = React.useRef(null);
@@ -149,7 +149,7 @@ export function TreeSelect({
     }
   }
   for (const node_0 of nodes) {
-    traverse(node_0, 0);
+    traverse(node_0, 0, null);
   }
   const flattenedNodes = result;
   const defaultGetParentPrefix = isExpanded_0 => isExpanded_0 ? "\u25BC " : "\u25B6 ";

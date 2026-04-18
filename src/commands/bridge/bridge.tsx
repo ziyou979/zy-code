@@ -116,6 +116,7 @@ function BridgeToggle({
 function BridgeDisconnectDialog({
   onDone
 }: Props) {
+  // @ts-ignore
   useRegisterOverlay("bridge-disconnect-dialog");
   const setAppState = useSetAppState();
   const sessionUrl = useAppState(s => s.replBridgeSessionUrl);
@@ -130,6 +131,7 @@ function BridgeDisconnectDialog({
       setQrText("");
       return;
     }
+    // @ts-ignore
     qrToString(displayUrl, {
       type: "utf8",
       errorCorrectionLevel: "L",
@@ -181,11 +183,11 @@ function BridgeDisconnectDialog({
     context: "Select"
   });
   const qrLines = qrText ? qrText.split("\n").filter(l => l.length > 0) : [];
-  const t17 = displayUrl ? ` at ${displayUrl}` : "";
+  const t17_text = displayUrl ? ` at ${displayUrl}` : "";
   const T1 = Dialog;
   const T0 = Box;
-  const t17 = focusIndex === 0;
-  return <T1 title={"Remote Control"} onCancel={handleContinue} hideInputGuide={true}>{<T0 flexDirection={"column"} gap={1}>{<Text>This session is available via Remote Control{t17}.</Text>}{showQR && qrLines.length > 0 && <Box flexDirection="column">{qrLines.map((line, i_1) => <Text key={i_1}>{line}</Text>)}</Box>}{<Box flexDirection="column">{<ListItem isFocused={t17}>{<Text>Disconnect this session</Text>}</ListItem>}{<ListItem isFocused={focusIndex === 1}>{<Text>{showQR ? "Hide QR code" : "Show QR code"}</Text>}</ListItem>}{<ListItem isFocused={focusIndex === 2}>{<Text>Continue</Text>}</ListItem>}</Box>}{<Text dimColor={true}>Enter to select · Esc to continue</Text>}</T0>}</T1>;
+  const t17_focus = focusIndex === 0;
+  return <T1 title={"Remote Control"} onCancel={handleContinue} hideInputGuide={true}>{<T0 flexDirection={"column"} gap={1}>{<Text>This session is available via Remote Control{t17_text as any}.</Text>}{showQR && qrLines.length > 0 && <Box flexDirection="column">{qrLines.map((line, i_1) => <Text key={i_1}>{line}</Text>)}</Box>}{<Box flexDirection="column">{<ListItem isFocused={t17_focus as any}>{<Text>Disconnect this session</Text>}</ListItem>}{<ListItem isFocused={focusIndex === 1}>{<Text>{showQR ? "Hide QR code" : "Show QR code"}</Text>}</ListItem>}{<ListItem isFocused={focusIndex === 2}>{<Text>Continue</Text>}</ListItem>}</Box>}{<Text dimColor={true}>Enter to select · Esc to continue</Text>}</T0>}</T1>;
 }
 
 /**
@@ -216,10 +218,8 @@ async function checkBridgePrerequisites(): Promise<string | null> {
   // initReplBridge onto the v1 path — so the prerequisite check must match.
   let useV2 = isEnvLessBridgeEnabled();
   if (feature('KAIROS') && useV2) {
-    const {
-      isAssistantMode
-    } = await import('../../assistant/index.js');
-    if (isAssistantMode()) {
+    const assistantModule = await import('../../assistant/index.js');
+    if ((assistantModule as any).isAssistantMode?.()) {
       useV2 = false;
     }
   }

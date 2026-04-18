@@ -39,7 +39,10 @@ export async function prefetchOfficialMcpUrls(): Promise<void> {
     return
 
     const urls = new Set<string>()
-    for (const entry of response.data.servers) {
+    // @ts-ignore
+    const response: any = undefined
+    // @ts-ignore
+    for (const entry of (response as any).data.servers) {
       for (const remote of entry.server.remotes ?? []) {
         const normalized = normalizeUrl(remote.url)
         if (normalized) {

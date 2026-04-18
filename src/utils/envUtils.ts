@@ -11,6 +11,22 @@ export function isInternalBuild(): boolean {
   return process.env.USER_TYPE === 'zy-super'
 }
 
+/**
+ * Checks if the current environment is a test environment.
+ * NODE_ENV is replaced at build time by esbuild's define config.
+ */
+export function isTestEnv(): boolean {
+  return process.env.NODE_ENV === 'test'
+}
+
+/**
+ * Checks if the current environment is a development environment.
+ * NODE_ENV is replaced at build time by esbuild's define config.
+ */
+export function isDevEnv(): boolean {
+  return process.env.NODE_ENV === 'development'
+}
+
 // Memoized: 150+ callers, many on hot paths. Keyed off ZY_CONFIG_DIR so
 // tests that change the env var get a fresh value without explicit cache.clear.
 export const getZyConfigHomeDir = memoize(

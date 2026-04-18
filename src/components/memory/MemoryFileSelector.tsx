@@ -71,10 +71,10 @@ export function MemoryFileSelector({
     depths.set(file.path, depth);
     const indent = depth > 0 ? "  ".repeat(depth - 1) : "";
     let label;
-    if (file.type === "User" && !file.isNested && file.path === userMemoryPath) {
+    if (file.type === "User" && !(file as any).isNested && file.path === userMemoryPath) {
       label = "User memory";
     } else {
-      if (file.type === "Project" && !file.isNested && file.path === projectMemoryPath) {
+      if (file.type === "Project" && !(file as any).isNested && file.path === projectMemoryPath) {
         label = "Project memory";
       } else {
         if (depth > 0) {
@@ -86,16 +86,16 @@ export function MemoryFileSelector({
     }
     let description;
     const isGit = projectIsInGitRepo(getOriginalCwd());
-    if (file.type === "User" && !file.isNested) {
+    if (file.type === "User" && !(file as any).isNested) {
       description = "Saved in ~/.zy/CLAUDE.md";
     } else {
-      if (file.type === "Project" && !file.isNested && file.path === projectMemoryPath) {
+      if (file.type === "Project" && !(file as any).isNested && file.path === projectMemoryPath) {
         description = `${isGit ? "Checked in at" : "Saved in"} ./CLAUDE.md`;
       } else {
         if (file.parent) {
           description = "@-imported";
         } else {
-          if (file.isNested) {
+          if ((file as any).isNested) {
             description = "dynamically loaded";
           } else {
             description = "";
@@ -140,7 +140,7 @@ export function MemoryFileSelector({
   const [autoMemoryOn, setAutoMemoryOn] = useState(isAutoMemoryEnabled);
   const [autoDreamOn, setAutoDreamOn] = useState(isAutoDreamEnabled);
   const [showDreamRow] = useState(isAutoMemoryEnabled);
-  const isDreamRunning = useAppState(s_0 => Object.values(s_0.tasks).some(t => t.type === "dream" && t.status === "running"));
+  const isDreamRunning = useAppState(s_0 => Object.values(s_0.tasks).some((t: any) => (t as any).type === "dream" && (t as any).status === "running"));
   const [lastDreamAt, setLastDreamAt] = useState(null);
   useEffect(() => {
     if (!showDreamRow) {

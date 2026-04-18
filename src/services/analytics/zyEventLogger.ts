@@ -221,7 +221,8 @@ export function logEventToZy(
     return
   }
 
-  if (!zyEventLogger || isSinkKilled('zyEvent')) {
+  // @ts-ignore
+  if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
     return
   }
 
@@ -259,8 +260,8 @@ export function logGrowthBookExperimentToZy(
     return
   }
 
-  if (!zyEventLogger || isSinkKilled('zyEvent')) {
-    return
+  if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
+    return;
   }
 
   const userId = getOrCreateUserID()
@@ -359,7 +360,7 @@ export function initializeZyEventLogging(): void {
   // Events are written to ~/.zy/telemetry/zy_events.log
   // instead of being sent to the remote /api/event_logging/batch endpoint.
   const eventLoggingExporter = new LocalFileExporter()
-  zyEventLoggerProvider = new LoggerProvider({
+  zyEventLoggerProvider = new (LoggerProvider as any)({
     resource,
     processors: [
       new BatchLogRecordProcessor(eventLoggingExporter, {

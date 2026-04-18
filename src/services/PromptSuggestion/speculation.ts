@@ -254,9 +254,9 @@ export function prepareMessagesForInjection(messages: Message[]): Message[] {
 
   return messages
     .map(msg => {
-      if (!('message' in msg) || !Array.isArray(msg.message.content)) return msg
-      const content = msg.message.content.filter(keep)
-      if (content.length === msg.message.content.length) return msg
+      if (!('message' in msg) || !Array.isArray((msg.message as any).content)) return msg
+      const content = ((msg.message as any).content as any[]).filter(keep)
+      if (content.length === (msg.message as any).content.length) return msg
       if (content.length === 0) return null
       // Drop messages where all remaining blocks are whitespace-only text
       // (API rejects these with 400: "text content blocks must contain non-whitespace text")
@@ -303,7 +303,7 @@ function createSpeculationFeedbackMessage(
 
   return createSystemMessage(
     `[ANT-ONLY] ${parts.join(' · ')} · ${savedText}${sessionSuffix}`,
-    'warning',
+    'warning' as any,
   )
 }
 
@@ -630,8 +630,8 @@ export async function startSpeculation(
           'speculation_unknown_tool',
         )
       },
-      querySource: 'speculation',
-      forkLabel: 'speculation',
+      querySource: 'speculation' as any,
+      forkLabel: 'speculation' as any,
       maxTurns: MAX_SPECULATION_TURNS,
       overrides: { abortController, requireCanUseTool: true },
       onMessage: msg => {

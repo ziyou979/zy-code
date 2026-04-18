@@ -98,7 +98,7 @@ export function issuerKey(issuer: string): string {
  */
 export function getCachedIdpIdToken(idpIssuer: string): string | undefined {
   const storage = getSecureStorage()
-  const data = storage.read()
+  const data = (storage as any).read()
   const entry = data?.mcpXaaIdp?.[issuerKey(idpIssuer)]
   if (!entry) return undefined
   const remainingMs = entry.expiresAt - Date.now()
@@ -112,8 +112,8 @@ function saveIdpIdToken(
   expiresAt: number,
 ): void {
   const storage = getSecureStorage()
-  const existing = storage.read() || {}
-  storage.update({
+  const existing = (storage as any).read() || {}
+  ;(storage as any).update({
     ...existing,
     mcpXaaIdp: {
       ...existing.mcpXaaIdp,
@@ -142,11 +142,11 @@ export function saveIdpIdTokenFromJwt(
 
 export function clearIdpIdToken(idpIssuer: string): void {
   const storage = getSecureStorage()
-  const existing = storage.read()
+  const existing = (storage as any).read()
   const key = issuerKey(idpIssuer)
   if (!existing?.mcpXaaIdp?.[key]) return
-  delete existing.mcpXaaIdp[key]
-  storage.update(existing)
+  delete (existing as any).mcpXaaIdp[key]
+  ;(storage as any).update(existing)
 }
 
 /**
@@ -161,8 +161,8 @@ export function saveIdpClientSecret(
   clientSecret: string,
 ): { success: boolean; warning?: string } {
   const storage = getSecureStorage()
-  const existing = storage.read() || {}
-  return storage.update({
+  const existing = (storage as any).read() || {}
+  return (storage as any).update({
     ...existing,
     mcpXaaIdpConfig: {
       ...existing.mcpXaaIdpConfig,
@@ -176,7 +176,7 @@ export function saveIdpClientSecret(
  */
 export function getIdpClientSecret(idpIssuer: string): string | undefined {
   const storage = getSecureStorage()
-  const data = storage.read()
+  const data = (storage as any).read()
   return data?.mcpXaaIdpConfig?.[issuerKey(idpIssuer)]?.clientSecret
 }
 
@@ -186,11 +186,11 @@ export function getIdpClientSecret(idpIssuer: string): string | undefined {
  */
 export function clearIdpClientSecret(idpIssuer: string): void {
   const storage = getSecureStorage()
-  const existing = storage.read()
+  const existing = (storage as any).read()
   const key = issuerKey(idpIssuer)
   if (!existing?.mcpXaaIdpConfig?.[key]) return
-  delete existing.mcpXaaIdpConfig[key]
-  storage.update(existing)
+  delete (existing as any).mcpXaaIdpConfig[key]
+  ;(storage as any).update(existing)
 }
 
 // OIDC Discovery §4.1 says `{issuer}/.well-known/openid-configuration` — path

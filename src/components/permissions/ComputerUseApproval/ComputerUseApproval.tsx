@@ -29,7 +29,7 @@ export function ComputerUseApproval({
   request,
   onDone
 }: ComputerUseApprovalProps) {
-  return request.tccState ? <ComputerUseTccPanel tccState={request.tccState} onDone={() => onDone(DENY_ALL_RESPONSE)} /> : <ComputerUseAppListPanel request={request} onDone={onDone} />;
+  return (request as any).tccState ? <ComputerUseTccPanel tccState={(request as any).tccState} onDone={() => onDone(DENY_ALL_RESPONSE)} /> : <ComputerUseAppListPanel request={request} onDone={onDone} />;
 }
 
 // ── TCC panel ─────────────────────────────────────────────────────────────

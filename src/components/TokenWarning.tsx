@@ -18,9 +18,8 @@ type Props = {
  * (hooks-in-conditionals would violate React rules). The parent only
  * renders this when feature('CONTEXT_COLLAPSE') + isContextCollapseEnabled().
  */
-function CollapseLabel({
-  upgradeMessage
-}: Props) {
+function CollapseLabel(props: Props) {
+  const { upgradeMessage } = props as any;
   const t1 = require("../services/contextCollapse/index.js");
   const {
     getStats,
@@ -91,6 +90,7 @@ export function TokenWarning({
     displayPercentLeft = Math.max(0, t4);
   }
   if (collapseMode && feature("CONTEXT_COLLAPSE")) {
+    // @ts-ignore
     return <Box flexDirection="row"><CollapseLabel upgradeMessage={upgradeMessage} /></Box>;
   }
   const autocompactLabel = reactiveOnlyMode ? tSync('tokenWarning.contextUsed', {

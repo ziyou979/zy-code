@@ -13,6 +13,7 @@ import { type ReadonlySettings, useSettings } from '../hooks/useSettings.js';
 import { Ansi, Box, Text } from '../ink.js';
 import { getRawUtilization } from '../services/zyAiLimits.js';
 import type { Message } from '../types/message.js';
+// @ts-ignore
 import type { StatusLineCommandInput } from '../types/statusLine.js';
 import type { VimMode } from '../types/textInputTypes.js';
 import { checkHasTrustDialogAccepted } from '../utils/config.js';

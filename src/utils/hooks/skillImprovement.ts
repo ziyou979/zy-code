@@ -70,9 +70,10 @@ function createSkillImprovementHook() {
   let lastAnalyzedIndex = 0
 
   const config: ApiQueryHookConfig<SkillUpdate[]> = {
-    name: 'skill_improvement',
+    name: 'skill_improvement' as any,
 
     async shouldRun(context) {
+      // @ts-ignore
       if (context.querySource !== 'repl_main_thread') {
         return false
       }
@@ -148,6 +149,7 @@ Output <updates>[]</updates> if no updates are needed.`,
         const projectSkill = findProjectSkill()
         const skillName = projectSkill?.skillName ?? 'unknown'
 
+        // @ts-ignore
         logEvent('tengu_skill_improvement_detected', {
           updateCount: result.result
             .length as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -244,6 +246,7 @@ Rules:
       hasAppendSystemPrompt: false,
       temperatureOverride: 0,
       agents: [],
+      // @ts-ignore
       querySource: 'skill_improvement_apply',
       mcpTools: [],
     },
