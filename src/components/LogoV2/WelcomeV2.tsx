@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text, useTheme } from 'src/ink.js';
 import { env } from '../../utils/env.js';
 const WELCOME_V2_WIDTH = 58;
+
 export function WelcomeV2() {
   const [theme] = useTheme();
   if (env.terminal === "Apple_Terminal") {
@@ -9,11 +10,49 @@ export function WelcomeV2() {
   }
   // ── Light theme ──
   if (["light", "light-daltonized", "light-ansi"].includes(theme)) {
-    return <Box width={WELCOME_V2_WIDTH}><Text>{<Text><Text color="zy">{"Hello, ready to build?"} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>}{<Text>{"──────────────────────────────────────────────────────────"}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"            ░░░░░░                                        "}</Text>}{<Text>{"    ░░░   ░░░░░░░░░░                                      "}</Text>}{<Text>{"   ░░░░░░░░░░░░░░░░░░                                    "}</Text>}{<Text>{"                                                          "}</Text>}{<Text><Text dimColor={true}>{"                           ░░░░"}</Text><Text>{"                     ██    "}</Text></Text>}{<Text><Text dimColor={true}>{"                         ░░░░░░░░░░"}</Text><Text>{"               ██▒▒██  "}</Text></Text>}{<Text>{"                                            ▒▒      ██   ▒"}</Text>}{<Text>{"      "}<Text color="clawd_body">{"▀▀▀█▀▀▀"}</Text>{"                           ▒▒░░▒▒      ▒ ▒▒"}</Text>}{<Text>{"       "}<Text color="clawd_body" backgroundColor="clawd_background">{"▄▄█ █▄▄"}</Text>{"                          ▒▒         ▒▒ "}</Text>}{<Text>{"         "}<Text color="clawd_body">{"▄ ▄"}</Text>{"                            ░          ▒   "}</Text>}<Text>{"───────────"}<Text color="clawd_body">{"▐  ╱  ╲  ╱  ╲  ▌"}</Text>{"────────────────────────────────────░─────────────────────────────────▒────────────"}</Text></Text></Box>;
+    return (
+      <Box width={WELCOME_V2_WIDTH} flexDirection="column">
+        <Text><Text color="zy">{"Hello, ready to build?"} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>
+        <Text>{"──────────────────────────────────────────────────────────"}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text>{"            ░░░░░░                                        "}</Text>
+        <Text>{"    ░░░   ░░░░░░░░░░                                      "}</Text>
+        <Text>{"   ░░░░░░░░░░░░░░░░░░                                    "}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text><Text dimColor={true}>{"                           ░░░░"}</Text><Text>{"                     ██    "}</Text></Text>
+        <Text><Text dimColor={true}>{"                         ░░░░░░░░░░"}</Text><Text>{"               ██▒▒██  "}</Text></Text>
+        <Text>{"                                            ▒▒      ██   ▒"}</Text>
+        <Text>{"      "}<Text color="clawd_body">{"▀▀▀█▀▀▀"}</Text>{"                           ▒▒░░▒▒      ▒ ▒▒"}</Text>
+        <Text>{"       "}<Text color="clawd_body" backgroundColor="clawd_background">{"▄▄█ █▄▄"}</Text>{"                          ▒▒         ▒▒ "}</Text>
+        <Text>{"         "}<Text color="clawd_body">{"▄ ▄"}</Text>{"                            ░          ▒   "}</Text>
+        <Text>{"───────────"}<Text color="clawd_body">{"▐  ╱  ╲  ╱  ╲  ▌"}</Text>{"────────────────────────────────────░─────────────────────────────────▒────────────"}</Text>
+      </Box>
+    );
   }
   // ── Dark theme ──
 
-  return <Box width={WELCOME_V2_WIDTH}><Text>{<Text><Text color="zy">{"Hello, ready to build?"} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>}{<Text>{"……………………………………………………………………………………………………"}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"     *                                       ░▓▓░     "}</Text>}{<Text>{"                                 *         ░▓▓░░     ░░   "}</Text>}{<Text>{"            ░░░░░░                        ░▓▓░░           "}</Text>}{<Text>{"    ░░░   ░░░░░░░░░░                      ░▓▓░░           "}</Text>}{<Text><Text>{"   ░░░░░░░░░░░░░░░░░░    "}</Text><Text bold={true}>*</Text><Text>{"                ░▓░░░      ▓   "}</Text></Text>}{<Text>{"                                             ░▓▓░░░▓▓░    "}</Text>}{<Text dimColor={true}>{" *                                 ░░░░                   "}</Text>}{<Text dimColor={true}>{"                                 ░░░░░░░░                 "}</Text>}{<Text dimColor={true}>{"                               ░░░░░░░░░░░░░░░░░           "}</Text>}{<Text>{"      "}<Text color="clawd_body">{"▀▀▀█▀▀▀"}</Text>{"                                       "}<Text dimColor={true}>*</Text><Text> </Text></Text>}{<Text>{"       "}<Text color="clawd_body" backgroundColor="clawd_background">{"▄▄█ █▄▄"}</Text><Text>{"                        "}</Text><Text bold={true}>*</Text><Text>{"                "}</Text></Text>}{<Text>{"         "}<Text color="clawd_body">{"▄ ▄"}</Text>{"     *                                   "}</Text>}<Text>{"……………"}<Text color="clawd_body">{"▐  ╱  ╲  ╱  ╲  ▌"}</Text>{"………………………………………………………………………………░………………………………………………………………………▒………………………………"}</Text></Text></Box>;
+  return (
+    <Box width={WELCOME_V2_WIDTH} flexDirection="column">
+      <Text><Text color="zy">{"Hello, ready to build?"} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>
+      <Text>{"……………………………………………………………………………………………………"}</Text>
+      <Text>{"                                                          "}</Text>
+      <Text>{"     *                                       ░▓▓░     "}</Text>
+      <Text>{"                                 *         ░▓▓░░     ░░   "}</Text>
+      <Text>{"            ░░░░░░                        ░▓▓░░           "}</Text>
+      <Text>{"    ░░░   ░░░░░░░░░░                      ░▓▓░░           "}</Text>
+      <Text>{"   ░░░░░░░░░░░░░░░░░░    "}<Text bold={true}>*</Text>{"                ░▓░░░      ▓   "}</Text>
+      <Text>{"                                             ░▓▓░░░▓▓░    "}</Text>
+      <Text dimColor={true}>{" *                                 ░░░░                   "}</Text>
+      <Text dimColor={true}>{"                                 ░░░░░░░░                 "}</Text>
+      <Text dimColor={true}>{"                               ░░░░░░░░░░░░░░░░░           "}</Text>
+      <Text>{"      "}<Text color="clawd_body">{"▀▀▀█▀▀▀"}</Text>{"                                       "}<Text dimColor={true}>*</Text><Text> </Text></Text>
+      <Text>{"       "}<Text color="clawd_body" backgroundColor="clawd_background">{"▄▄█ █▄▄"}</Text><Text>{"                        "}</Text><Text bold={true}>*</Text><Text>{"                "}</Text></Text>
+      <Text>{"         "}<Text color="clawd_body">{"▄ ▄"}</Text>{"     *                                   "}</Text>
+      <Text>{"……………"}<Text color="clawd_body">{"▐  ╱  ╲  ╱  ╲  ▌"}</Text>{"………………………………………………………………………………░………………………………………………………………………▒………………………………"}</Text>
+    </Box>
+  );
 }
 type AppleTerminalWelcomeV2Props = {
   theme: string;
@@ -25,7 +64,45 @@ function AppleTerminalWelcomeV2({
 }: AppleTerminalWelcomeV2Props) {
   const isLightTheme = ["light", "light-daltonized", "light-ansi"].includes(theme);
   if (isLightTheme) {
-    return <Box width={WELCOME_V2_WIDTH}><Text>{<Text>{<Text color="zy">{welcomeMessage} </Text>}{<Text dimColor={true}>v{MACRO.VERSION} </Text>}</Text>}{<Text>{"──────────────────────────────────────────────────────────"}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"            ░░░░░░                                        "}</Text>}{<Text>{"    ░░░   ░░░░░░░░░░                                      "}</Text>}{<Text>{"   ░░░░░░░░░░░░░░░░░░                                    "}</Text>}{<Text>{"                                                          "}</Text>}{<Text><Text dimColor={true}>{"                           ░░░░"}</Text><Text>{"                     ██    "}</Text></Text>}{<Text><Text dimColor={true}>{"                         ░░░░░░░░░░"}</Text><Text>{"               ██▒▒██  "}</Text></Text>}{<Text>{"                                            ▒▒      ██   ▒"}</Text>}{<Text>{"                                          ▒▒░░▒▒      ▒ ▒▒"}</Text>}{<Text>{"      "}<Text color="clawd_body">▗</Text><Text color="clawd_background" backgroundColor="clawd_body">{" "}▗{"     "}▖{" "}</Text><Text color="clawd_body">▖</Text>{"                           ▒▒         ▒▒ "}</Text>}{<Text>{"       "}<Text backgroundColor="clawd_body">{" ".repeat(9)}</Text>{"                           ░          ▒   "}</Text>}{<Text>{"───────────"}<Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text><Text>{"   "}</Text><Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text>{"──────────────────────────────────────────────────────────░─────────────────────────────────▒────────────"}</Text>}</Text></Box>;
+    return (
+      <Box width={WELCOME_V2_WIDTH} flexDirection="column">
+        <Text><Text color="zy">{welcomeMessage} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>
+        <Text>{"──────────────────────────────────────────────────────────"}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text>{"            ░░░░░░                                        "}</Text>
+        <Text>{"    ░░░   ░░░░░░░░░░                                      "}</Text>
+        <Text>{"   ░░░░░░░░░░░░░░░░░░                                    "}</Text>
+        <Text>{"                                                          "}</Text>
+        <Text><Text dimColor={true}>{"                           ░░░░"}</Text><Text>{"                     ██    "}</Text></Text>
+        <Text><Text dimColor={true}>{"                         ░░░░░░░░░░"}</Text><Text>{"               ██▒▒██  "}</Text></Text>
+        <Text>{"                                            ▒▒      ██   ▒"}</Text>
+        <Text>{"                                          ▒▒░░▒▒      ▒ ▒▒"}</Text>
+        <Text>{"      "}<Text color="clawd_body">▗</Text><Text color="clawd_background" backgroundColor="clawd_body">{" "}▗{"     "}▖{" "}</Text><Text color="clawd_body">▖</Text>{"                           ▒▒         ▒▒ "}</Text>
+        <Text>{"       "}<Text backgroundColor="clawd_body">{" ".repeat(9)}</Text>{"                           ░          ▒   "}</Text>
+        <Text>{"───────────"}<Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text><Text>{"   "}</Text><Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text>{"──────────────────────────────────────────────────────────░─────────────────────────────────▒────────────"}</Text>
+      </Box>
+    );
   }
-  return <Box width={WELCOME_V2_WIDTH}><Text>{<Text>{<Text color="zy">{welcomeMessage} </Text>}{<Text dimColor={true}>v{MACRO.VERSION} </Text>}</Text>}{<Text>{"……………………………………………………………………………………………………"}</Text>}{<Text>{"                                                          "}</Text>}{<Text>{"     *                                       ░▓▓░     "}</Text>}{<Text>{"                                 *         ░▓▓░░     ░░   "}</Text>}{<Text>{"            ░░░░░░                        ░▓▓░░           "}</Text>}{<Text>{"    ░░░   ░░░░░░░░░░                      ░▓▓░░           "}</Text>}{<Text><Text>{"   ░░░░░░░░░░░░░░░░░░    "}</Text><Text bold={true}>*</Text><Text>{"                ░▓░░░      ▓   "}</Text></Text>}{<Text>{"                                             ░▓▓░░░▓▓░    "}</Text>}{<Text dimColor={true}>{" *                                 ░░░░                   "}</Text>}{<Text dimColor={true}>{"                                 ░░░░░░░░                 "}</Text>}{<Text dimColor={true}>{"                               ░░░░░░░░░░░░░░░░░           "}</Text>}{<Text>{"                                                      "}<Text dimColor={true}>*</Text><Text> </Text></Text>}{<Text>{"        "}<Text color="clawd_body">▗</Text><Text color="clawd_background" backgroundColor="clawd_body">{" "}▗{"     "}▖{" "}</Text><Text color="clawd_body">▖</Text><Text>{"                       "}</Text><Text bold={true}>*</Text><Text>{"                "}</Text></Text>}{<Text>{"        "}<Text backgroundColor="clawd_body">{" ".repeat(9)}</Text>{"      *                                   "}</Text>}{<Text>{"……………"}<Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text><Text>{"   "}</Text><Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text>{"………………………………………………………………………………………………………………░………………………………………………………………………▒………………………………"}</Text>}</Text></Box>;
+  return (
+    <Box width={WELCOME_V2_WIDTH} flexDirection="column">
+      <Text><Text color="zy">{welcomeMessage} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>
+      <Text>{"……………………………………………………………………………………………………"}</Text>
+      <Text>{"                                                          "}</Text>
+      <Text>{"     *                                       ░▓▓░     "}</Text>
+      <Text>{"                                 *         ░▓▓░░     ░░   "}</Text>
+      <Text>{"            ░░░░░░                        ░▓▓░░           "}</Text>
+      <Text>{"    ░░░   ░░░░░░░░░░                      ░▓▓░░           "}</Text>
+      <Text>{"   ░░░░░░░░░░░░░░░░░░    "}<Text bold={true}>*</Text>{"                ░▓░░░      ▓   "}</Text>
+      <Text>{"                                             ░▓▓░░░▓▓░    "}</Text>
+      <Text dimColor={true}>{" *                                 ░░░░                   "}</Text>
+      <Text dimColor={true}>{"                                 ░░░░░░░░                 "}</Text>
+      <Text dimColor={true}>{"                               ░░░░░░░░░░░░░░░░░           "}</Text>
+      <Text>{"                                                      "}<Text dimColor={true}>*</Text><Text> </Text></Text>
+      <Text>{"        "}<Text color="clawd_body">▗</Text><Text color="clawd_background" backgroundColor="clawd_body">{" "}▗{"     "}▖{" "}</Text><Text color="clawd_body">▖</Text><Text>{"                       "}</Text><Text bold={true}>*</Text><Text>{"                "}</Text></Text>
+      <Text>{"        "}<Text backgroundColor="clawd_body">{" ".repeat(9)}</Text>{"      *                                   "}</Text>
+      <Text>{"……………"}<Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text><Text>{"   "}</Text><Text backgroundColor="clawd_body"> </Text><Text> </Text><Text backgroundColor="clawd_body"> </Text>{"………………………………………………………………………………………………………………░………………………………………………………………………▒………………………………"}</Text>
+    </Box>
+  );
 }
