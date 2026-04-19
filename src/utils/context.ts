@@ -120,9 +120,9 @@ export function getSonnet1mExpTreatmentEnabled(model: string): boolean {
  */
 export function calculateContextPercentages(
   currentUsage: {
-    input_tokens: number
-    cache_creation_input_tokens: number
-    cache_read_input_tokens: number
+    inputTokens: number
+    cacheCreationInputTokens: number
+    cacheReadInputTokens: number
   } | null,
   contextWindowSize: number,
 ): { used: number | null; remaining: number | null } {
@@ -131,9 +131,9 @@ export function calculateContextPercentages(
   }
 
   const totalInputTokens =
-    currentUsage.input_tokens +
-    currentUsage.cache_creation_input_tokens +
-    currentUsage.cache_read_input_tokens
+    currentUsage.inputTokens +
+    currentUsage.cacheCreationInputTokens +
+    currentUsage.cacheReadInputTokens
 
   const usedPercentage = Math.round(
     (totalInputTokens / contextWindowSize) * 100,

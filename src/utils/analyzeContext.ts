@@ -225,10 +225,10 @@ export interface ContextData {
   }
   /** Actual token usage from last API response (if available) */
   readonly apiUsage: {
-    input_tokens: number
-    output_tokens: number
-    cache_creation_input_tokens: number
-    cache_read_input_tokens: number
+    inputTokens: number
+    outputTokens: number
+    cacheCreationInputTokens: number
+    cacheReadInputTokens: number
   } | null
 }
 
@@ -1165,11 +1165,11 @@ export async function analyzeContextUsage(
   const apiUsage = getCurrentUsage(originalMessages ?? messages)
 
   // When API usage is available, use it for total to match status line calculation
-  // Status line uses: input_tokens + cache_creation_input_tokens + cache_read_input_tokens
+  // Status line uses: inputTokens + cacheCreationInputTokens + cacheReadInputTokens
   const totalFromAPI = apiUsage
-    ? apiUsage.input_tokens +
-      apiUsage.cache_creation_input_tokens +
-      apiUsage.cache_read_input_tokens
+    ? apiUsage.inputTokens +
+      apiUsage.cacheCreationInputTokens +
+      apiUsage.cacheReadInputTokens
     : null
 
   // Use API total if available, otherwise fall back to estimated total

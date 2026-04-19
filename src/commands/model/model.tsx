@@ -7,7 +7,7 @@ import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEve
 import { useAppState, useSetAppState } from '../../state/AppState.js';
 import type { LocalJSXCommandCall } from '../../types/command.js';
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
-import { clearFastModeCooldown, isFastModeAvailable, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
+
 import { MODEL_ALIASES } from '../../utils/model/aliases.js';
 import { checkOpus1mAccess, checkSonnet1mAccess } from '../../utils/model/check1mAccess.js';
 import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting } from '../../utils/model/model.js';
@@ -18,7 +18,6 @@ function ModelPickerWrapper({
 }) {
   const mainLoopModel = useAppState(s => s.mainLoopModel);
   const mainLoopModelForSession = useAppState(s_0 => s_0.mainLoopModelForSession);
-  const isFastMode = useAppState(s_1 => s_1.fastMode);
   const setAppState = useSetAppState();
   const handleCancel = function handleCancel() {
     logEvent("tengu_model_command_menu", {
@@ -44,32 +43,12 @@ function ModelPickerWrapper({
     if (effort !== undefined) {
       message = message + ` with ${chalk.bold(effort)} effort`;
     }
-    let wasFastModeToggledOn = undefined;
-    if (isFastModeEnabled()) {
-      clearFastModeCooldown();
-      if (!isFastModeSupportedByModel(model) && isFastMode) {
-        setAppState(prev_0 => ({
-          ...prev_0,
-          fastMode: false
-        }));
-        wasFastModeToggledOn = false;
-      } else {
-        if (isFastModeSupportedByModel(model) && isFastModeAvailable() && isFastMode) {
-          message = message + " \xB7 Fast mode ON";
-          wasFastModeToggledOn = true;
-        }
-      }
-    }
-    if (isBilledAsExtraUsage(model, wasFastModeToggledOn === true, isOpus1mMergeEnabled())) {
+    if (isBilledAsExtraUsage(model, isOpus1mMergeEnabled())) {
       message = message + " \xB7 Billed as extra usage";
-    }
-    if (wasFastModeToggledOn === false) {
-      message = message + " \xB7 Fast mode OFF";
     }
     onDone(message);
   };
-  const t3 = isFastModeEnabled() && isFastMode && isFastModeSupportedByModel(mainLoopModel) && isFastModeAvailable();
-  return <ModelPicker initial={mainLoopModel} sessionModel={mainLoopModelForSession} onSelect={handleSelect} onCancel={handleCancel} isStandaloneCommand={true} showFastModeNotice={t3} />;
+  return <ModelPicker initial={mainLoopModel} sessionModel={mainLoopModelForSession} onSelect={handleSelect} onCancel={handleCancel} isStandaloneCommand={true} />;
 }
 function SetModelAndClose({
   args,
@@ -80,7 +59,6 @@ function SetModelAndClose({
     display?: CommandResultDisplay;
   }) => void;
 }): React.ReactNode {
-  const isFastMode = useAppState(s => s.fastMode);
   const setAppState = useSetAppState();
   const model = args === 'default' ? null : args;
   React.useEffect(() => {
@@ -146,27 +124,8 @@ function SetModelAndClose({
         mainLoopModelForSession: null
       }));
       let message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`;
-      let wasFastModeToggledOn = undefined;
-      if (isFastModeEnabled()) {
-        clearFastModeCooldown();
-        if (!isFastModeSupportedByModel(modelValue) && isFastMode) {
-          setAppState(prev_0 => ({
-            ...prev_0,
-            fastMode: false
-          }));
-          wasFastModeToggledOn = false;
-          // Do not update fast mode in settings since this is an automatic downgrade
-        } else if (isFastModeSupportedByModel(modelValue) && isFastMode) {
-          message += ` · Fast mode ON`;
-          wasFastModeToggledOn = true;
-        }
-      }
-      if (isBilledAsExtraUsage(modelValue, wasFastModeToggledOn === true, isOpus1mMergeEnabled())) {
+      if (isBilledAsExtraUsage(modelValue, isOpus1mMergeEnabled())) {
         message += ` · Billed as extra usage`;
-      }
-      if (wasFastModeToggledOn === false) {
-        // Fast mode was toggled off, show suffix after extra usage billing
-        message += ` · Fast mode OFF`;
       }
       onDone(message);
     }

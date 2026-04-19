@@ -21,14 +21,6 @@ import {
 } from '../../utils/auth.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import {
-  type CooldownReason,
-  handleFastModeOverageRejection,
-  handleFastModeRejectedByAPI,
-  isFastModeCooldown,
-  isFastModeEnabled,
-  triggerFastModeCooldown,
-} from '../../utils/fastMode.js'
 import { isNonCustomOpusModel } from '../../utils/model/model.js'
 import { disableKeepAlive } from '../../utils/proxy.js'
 import { sleep } from '../../utils/sleep.js'
@@ -116,7 +108,6 @@ export interface RetryContext {
   maxTokensOverride?: number
   model: string
   thinkingConfig: ThinkingConfig
-  fastMode?: boolean
 }
 
 interface RetryOptions {
@@ -124,7 +115,6 @@ interface RetryOptions {
   model: string
   fallbackModel?: string
   thinkingConfig: ThinkingConfig
-  fastMode?: boolean
   signal?: AbortSignal
   querySource?: QuerySource
   /**
@@ -174,7 +164,6 @@ export async function* withRetry<T>(
   const retryContext: RetryContext = {
     model: options.model,
     thinkingConfig: options.thinkingConfig,
-    ...(isFastModeEnabled() && { fastMode: options.fastMode }),
   }
   let client: Anthropic | null = null
   let consecutive529Errors = options.initialConsecutive529Errors ?? 0
@@ -185,18 +174,11 @@ export async function* withRetry<T>(
       throw new APIUserAbortError()
     }
 
-    // 捕获本次尝试前 fast mode 是否激活
-    // （回退可能在循环中途改变状态）
-    const wasFastModeActive = isFastModeEnabled()
-      ? retryContext.fastMode && !isFastModeCooldown()
-      : false
-
     try {
       // 检查模拟限速（供 Ant 员工使用 /mock-limits 命令）
       if (process.env.USER_TYPE === 'zy-super') {
         const mockError = checkMockRateLimitError(
           retryContext.model,
-          wasFastModeActive,
         )
         if (mockError) {
           throw mockError
@@ -251,59 +233,6 @@ export async function* withRetry<T>(
         `API error (attempt ${attempt}/${maxRetries + 1}): ${error instanceof APIError ? `${error.status} ${error.message}` : errorMessage(error)}`,
         { level: 'error' },
       )
-
-      // Fast mode 回退：遇到 429/529 时，要么等待并重试（短延迟），
-      // 要么回退到标准速度（长延迟）以避免缓存抖动。
-      // 在持久模式下跳过：下方的短重试路径循环时 fast mode 仍然活跃，
-      // 因此其 `continue` 永远不会到达尝试上限，for 循环会终止。
-      // 持久会话更需要分块 keep-alive 路径，而非 fast-mode 缓存保留。
-      if (
-        wasFastModeActive &&
-        !isPersistentRetryEnabled() &&
-        error instanceof APIError &&
-        (error.status === 429 || is529Error(error))
-      ) {
-        // 如果 429 专门是因为额外用量（overage）不可用，则永久禁用 fast mode 并显示特定消息。
-        // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
-        const overageReason = typeof error.headers?.get === 'function'
-          ? error.headers.get('anthropic-ratelimit-unified-overage-disabled-reason')
-          : (error.headers as Record<string, string>)?.['anthropic-ratelimit-unified-overage-disabled-reason']
-        if (overageReason !== null && overageReason !== undefined) {
-          handleFastModeOverageRejection(overageReason)
-          retryContext.fastMode = false
-          continue
-        }
-
-        const retryAfterMs = getRetryAfterMs(error)
-        if (retryAfterMs !== null && retryAfterMs < SHORT_RETRY_THRESHOLD_MS) {
-          // 短 retry-after：等待并重试，fast mode 仍然活跃
-          // 以保留 prompt cache（重试时使用相同的模型名称）
-          await sleep(retryAfterMs, options.signal, { abortError })
-          continue
-        }
-        // 长或未知的 retry-after：进入冷却期（切换到标准速度模型），
-        // 设置最小下限以避免频繁切换
-        const cooldownMs = Math.max(
-          retryAfterMs ?? DEFAULT_FAST_MODE_FALLBACK_HOLD_MS,
-          MIN_COOLDOWN_MS,
-        )
-        const cooldownReason: CooldownReason = is529Error(error)
-          ? 'overloaded'
-          : 'rate_limit'
-        triggerFastModeCooldown(Date.now() + cooldownMs, cooldownReason)
-        if (isFastModeEnabled()) {
-          retryContext.fastMode = false
-        }
-        continue
-      }
-
-      // Fast mode 回退：如果 API 拒绝了 fast mode 参数
-      // （例如，组织未启用 fast mode），则永久禁用 fast mode 并以标准速度重试
-      if (wasFastModeActive && isFastModeNotEnabledError(error)) {
-        handleFastModeRejectedByAPI()
-        retryContext.fastMode = false
-        continue
-      }
 
       // 非前台来源在 529 时立即放弃——容量级联期间不重试放大
       // 用户永远不会看到这些失败
@@ -584,18 +513,6 @@ export function parseMaxTokensContextOverflowError(error: APIError):
   }
 
   return { inputTokens, maxTokens, contextLimit }
-}
-
-// TODO: 一旦 API 添加了专用的 fast-mode 拒绝 header（例如 x-fast-mode-rejected），则替换为响应 header 检查。
-// 匹配错误消息是脆弱的，如果 API 措辞变更会导致中断。
-function isFastModeNotEnabledError(error: unknown): boolean {
-  if (!(error instanceof APIError)) {
-    return false
-  }
-  return (
-    error.status === 400 &&
-    (error.message?.includes('Fast mode is not enabled') ?? false)
-  )
 }
 
 export function is529Error(error: unknown): boolean {

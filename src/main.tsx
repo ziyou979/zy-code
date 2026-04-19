@@ -52,7 +52,6 @@ import { prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSaf
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
-import { getInitialFastModeSetting, isFastModeEnabled } from './utils/fastMode.js';
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
 import { createSystemMessage, createUserMessage } from './utils/messages.js';
 import { getPlatform } from './utils/platform.js';
@@ -2345,11 +2344,10 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // 在建立信任后检查配额状态、快速模式、passes 资格和引导数据
+    // 在建立信任后检查配额状态、passes 资格和引导数据
     // 这些进行 API 调用，可能触发 apiKeyHelper 执行。
     // --bare / SIMPLE：跳过 —— 这些是 REPL 首次响应性的缓存预热
-    //（配额、passes、fastMode、引导数据）。快速模式不适用于 Agent SDK
-    //（参见 getFastModeUnavailableReason）。
+    //（配额、passes、引导数据）。
     const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('tengu_cicada_nap_ms', 0);
     const lastPrefetched = getGlobalConfig().startupPrefetchedAt ?? 0;
     const skipStartupPrefetches = isBareMode() || bgRefreshThrottleMs > 0 && Date.now() - lastPrefetched < bgRefreshThrottleMs;
@@ -2631,9 +2629,6 @@ async function run(): Promise<CommanderCommand> {
         },
         toolPermissionContext,
         effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
-        ...(isFastModeEnabled() && {
-          fastMode: getInitialFastModeSetting(effectiveModel ?? null)
-        }),
         ...(isAdvisorEnabled() && advisorModel && {
           advisorModel
         }),
@@ -2660,7 +2655,7 @@ async function run(): Promise<CommanderCommand> {
       // 自动模式门的异步检查 —— 更正状态并在需要时禁用自动。
       // 门控在 TRANSCRIPT_CLASSIFIER（不是 USER_TYPE）以便 GrowthBook 终止开关也为外部构建运行。
       if (feature('TRANSCRIPT_CLASSIFIER')) {
-        void verifyAutoModeGateAccess(toolPermissionContext, headlessStore.getState().fastMode).then(({
+        void verifyAutoModeGateAccess(toolPermissionContext).then(({
           updateContext
         }) => {
           headlessStore.setState(prev => {
@@ -3020,7 +3015,6 @@ async function run(): Promise<CommanderCommand> {
       } : null,
       effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
       activeOverlays: new Set<string>(),
-      fastMode: getInitialFastModeSetting(resolvedInitialModel),
       ...(isAdvisorEnabled() && advisorModel && {
         advisorModel
       }),

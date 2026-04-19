@@ -6,7 +6,7 @@ import {
   createUserMessage,
   getAssistantMessageText,
 } from '../utils/messages.js'
-import { getSmallFastModel } from '../utils/model/model.js'
+import { getDefaultHaikuModel } from '../utils/model/model.js'
 import { asSystemPrompt } from '../utils/systemPromptType.js'
 import { queryModelWithoutStreaming } from './api/zy.js'
 import { getSessionMemoryContent } from './SessionMemory/sessionMemoryUtils.js'
@@ -46,7 +46,7 @@ export async function generateAwaySummary(
       signal,
       options: {
         getToolPermissionContext: async () => getEmptyToolPermissionContext(),
-        model: getSmallFastModel(),
+        model: getDefaultHaikuModel(),
         toolChoice: undefined,
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,

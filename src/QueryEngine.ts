@@ -46,7 +46,6 @@ import type { AttributionState } from './utils/commitAttribution.js'
 import { getGlobalConfig } from './utils/config.js'
 import { getCwd } from './utils/cwd.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
-import { getFastModeState } from './utils/fastMode.js'
 import {
   type FileHistoryState,
   fileHistoryEnabled,
@@ -536,7 +535,6 @@ export class QueryEngine {
       agents,
       skills,
       plugins: enabledPlugins,
-      fastMode: initialAppState.fastMode,
     })
 
     // 记录 system 消息产生的时机，用于 headless 延迟追踪
@@ -618,10 +616,6 @@ export class QueryEngine {
         usage: this.totalUsage,
         modelUsage: getModelUsage(),
         permission_denials: this.permissionDenials,
-        fast_mode_state: getFastModeState(
-          mainLoopModel,
-          initialAppState.fastMode,
-        ),
         uuid: randomUUID(),
       }
       return
@@ -846,10 +840,6 @@ export class QueryEngine {
               usage: this.totalUsage,
               modelUsage: getModelUsage(),
               permission_denials: this.permissionDenials,
-              fast_mode_state: getFastModeState(
-                mainLoopModel,
-                initialAppState.fastMode,
-              ),
               uuid: randomUUID(),
               errors: [
                 `Reached maximum number of turns (${((message as any).attachment as any).maxTurns})`,
@@ -973,10 +963,6 @@ export class QueryEngine {
           usage: this.totalUsage,
           modelUsage: getModelUsage(),
           permission_denials: this.permissionDenials,
-          fast_mode_state: getFastModeState(
-            mainLoopModel,
-            initialAppState.fastMode,
-          ),
           uuid: randomUUID(),
           errors: [`Reached maximum budget ($${maxBudgetUsd})`],
         }
@@ -1016,10 +1002,6 @@ export class QueryEngine {
             usage: this.totalUsage,
             modelUsage: getModelUsage(),
             permission_denials: this.permissionDenials,
-            fast_mode_state: getFastModeState(
-              mainLoopModel,
-              initialAppState.fastMode,
-            ),
             uuid: randomUUID(),
             errors: [
               `Failed to provide valid structured output after ${maxRetries} attempts`,
@@ -1074,10 +1056,6 @@ export class QueryEngine {
         usage: this.totalUsage,
         modelUsage: getModelUsage(),
         permission_denials: this.permissionDenials,
-        fast_mode_state: getFastModeState(
-          mainLoopModel,
-          initialAppState.fastMode,
-        ),
         uuid: randomUUID(),
         // 诊断前缀：这些是 isResultSuccessful() 检查的内容——如果
         // result 类型不是 assistant-with-text/thinking 或 user-with-tool_result，
@@ -1128,10 +1106,6 @@ export class QueryEngine {
       modelUsage: getModelUsage(),
       permission_denials: this.permissionDenials,
       structured_output: structuredOutputFromTool,
-      fast_mode_state: getFastModeState(
-        mainLoopModel,
-        initialAppState.fastMode,
-      ),
       uuid: randomUUID(),
     }
   }

@@ -225,7 +225,7 @@ export type GlobalConfig = {
   }
   primaryApiKey?: string // 未设置环境变量时的主 API key，通过 oauth 设置（TODO: 重命名）
   /** onboarding 期间配置的 API 提供商（如 'anthropic'、'dashscope'、'openrouter'、'generic'） */
-  configuredProvider?: 'anthropic' | 'dashscope' | 'openrouter' | 'generic'
+  configuredProvider?: 'anthropic' | 'dashscope' | 'openrouter' | 'openai' | 'ollama' | 'zhipu' | 'kimi' | 'generic'
   /** onboarding 期间配置的 API key */
   configuredApiKey?: string
   /** 对话默认模型，onboarding 期间配置 */
@@ -537,11 +537,11 @@ export type GlobalConfig = {
   // Tmux 实时面板可见性（ant-only，通过 tmux pill 上的 Enter 切换）
   tungstenPanelVisible?: boolean
 
-  // 从 API 缓存的组织级快速模式状态。
+  // 从 API 缓存的组织级状态。
   // 用于检测跨会话变更并通知用户。
   penguinModeOrgEnabled?: boolean
 
-  // 上次运行后台刷新的时间（毫秒，快速模式、配额、passes、客户端数据）。
+  // 上次运行后台刷新的时间（毫秒，配额、passes、客户端数据）。
   // 与 tengu_cicada_nap_ms 配合使用以限制 API 调用
   startupPrefetchedAt?: number
 

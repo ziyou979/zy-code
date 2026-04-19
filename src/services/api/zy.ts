@@ -94,7 +94,7 @@ import {
 import {
   getDefaultOpusModel,
   getDefaultSonnetModel,
-  getSmallFastModel,
+  getDefaultHaikuModel,
   isNonCustomOpusModel,
 } from '../../utils/model/model.js'
 import {
@@ -125,7 +125,6 @@ import {
 import {
   getAfkModeHeaderLatched,
   getCacheEditingHeaderLatched,
-  getFastModeHeaderLatched,
   getLastApiCompletionTimestamp,
   getPromptCache1hAllowlist,
   getPromptCache1hEligible,
@@ -133,7 +132,6 @@ import {
   getThinkingClearLatched,
   setAfkModeHeaderLatched,
   setCacheEditingHeaderLatched,
-  setFastModeHeaderLatched,
   setLastMainRequestId,
   setPromptCache1hAllowlist,
   setPromptCache1hEligible,
@@ -144,7 +142,6 @@ import {
   CONTEXT_1M_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
   EFFORT_BETA_HEADER,
-  FAST_MODE_BETA_HEADER,
   PROMPT_CACHING_SCOPE_BETA_HEADER,
   REDACT_THINKING_BETA_HEADER,
   STRUCTURED_OUTPUTS_BETA_HEADER,
@@ -177,12 +174,6 @@ import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
 import { type EffortValue, modelSupportsEffort } from 'src/utils/effort.js'
-import {
-  isFastModeAvailable,
-  isFastModeCooldown,
-  isFastModeEnabled,
-  isFastModeSupportedByModel,
-} from 'src/utils/fastMode.js'
 import { returnValue } from 'src/utils/generators.js'
 import { headlessProfilerCheckpoint } from 'src/utils/headlessProfiler.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/utils/mcpInstructionsDelta.js'
@@ -344,7 +335,7 @@ export function getPromptCachingEnabled(model: string): boolean {
 
   // 检查是否应对小型/快速模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_HAIKU)) {
-    const smallFastModel = getSmallFastModel()
+    const smallFastModel = getDefaultHaikuModel()
     if (model === smallFastModel) return false
   }
 
@@ -553,7 +544,7 @@ export async function verifyApiKey(
 
   try {
     // 警告：如果改用非 Haiku 模型，此请求在直接 API 调用中将失败，除非使用 getCLISyspromptPrefix。
-    const model = getSmallFastModel()
+    const model = getDefaultHaikuModel()
     const betas = getModelBetas(model)
     return await returnValue(
       withRetry(
@@ -721,7 +712,6 @@ export type Options = {
   queryTracking?: QueryChainTracking
   agentId?: AgentId // 仅子代理设置
   outputFormat?: BetaJSONOutputFormat
-  fastMode?: boolean
   advisorModel?: string
   addNotification?: (notif: Notification) => void
   // API 端任务预算（output_config.task_budget）。区别于
@@ -850,7 +840,6 @@ export async function* executeNonStreamingRequest(
     model: string
     fallbackModel?: string
     thinkingConfig: ThinkingConfig
-    fastMode?: boolean
     signal: AbortSignal
     initialConsecutive529Errors?: number
     querySource?: QuerySource
@@ -953,7 +942,6 @@ export async function* executeNonStreamingRequest(
       model: retryOptions.model,
       fallbackModel: retryOptions.fallbackModel,
       thinkingConfig: retryOptions.thinkingConfig,
-      ...(isFastModeEnabled() && { fastMode: retryOptions.fastMode }),
       signal: retryOptions.signal,
       initialConsecutive529Errors: retryOptions.initialConsecutive529Errors,
       querySource: retryOptions.querySource,
@@ -1453,13 +1441,6 @@ async function* queryModel(
   }
   const allTools = [...toolSchemas, ...extraToolSchemas]
 
-  const isFastMode =
-    isFastModeEnabled() &&
-    isFastModeAvailable() &&
-    !isFastModeCooldown() &&
-    isFastModeSupportedByModel(options.model) &&
-    !!options.fastMode
-
   // 动态 beta header 的 sticky-on 锁存。每个 header 一旦首次
   // 发送，就会在会话剩余时间内持续发送，这样会话中途的
   // 切换就不会改变服务端缓存键并破坏 ~50-70K 令牌。
@@ -1478,12 +1459,6 @@ async function* queryModel(
       afkHeaderLatched = true
       setAfkModeHeaderLatched(true)
     }
-  }
-
-  let fastModeHeaderLatched = getFastModeHeaderLatched() === true
-  if (!fastModeHeaderLatched && isFastMode) {
-    fastModeHeaderLatched = true
-    setFastModeHeaderLatched(true)
   }
 
   let cacheEditingHeaderLatched = getCacheEditingHeaderLatched() === true
@@ -1531,7 +1506,6 @@ async function* queryModel(
       querySource: options.querySource,
       model: options.model,
       agentId: options.agentId,
-      fastMode: fastModeHeaderLatched,
       globalCacheStrategy,
       betas,
       autoModeActive: afkHeaderLatched,
@@ -1556,7 +1530,6 @@ async function* queryModel(
     options.model,
     newContext,
     messagesForAPI,
-    isFastMode,
   )
 
   const startIncludingRetries = Date.now()
@@ -1696,23 +1669,6 @@ async function* queryModel(
     const enablePromptCaching =
       options.enablePromptCaching ?? getPromptCachingEnabled(retryContext.model)
 
-    // 快速模式：header 是会话稳定的锁存（缓存安全），但
-    // `speed='fast'` 保持动态，这样冷却期仍能抑制实际的
-    // 快速模式请求，而不会改变缓存键。
-    let speed: BetaMessageStreamParams['speed']
-    const isFastModeForRetry =
-      isFastModeEnabled() &&
-      isFastModeAvailable() &&
-      !isFastModeCooldown() &&
-      isFastModeSupportedByModel(options.model) &&
-      !!retryContext.fastMode
-    if (isFastModeForRetry) {
-      speed = 'fast'
-    }
-    if (fastModeHeaderLatched && !betasParams.includes(FAST_MODE_BETA_HEADER)) {
-      betasParams.push(FAST_MODE_BETA_HEADER)
-    }
-
     // AFK 模式 beta：自动模式首次激活时锁存一次。仍由
     // isAgenticQuery 每次调用门控，以便分类器/压缩不会获得它。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
@@ -1781,7 +1737,6 @@ async function* queryModel(
       ...(Object.keys(outputConfig).length > 0 && {
         output_config: outputConfig,
       }),
-      ...(speed !== undefined && { speed }),
     }
   }
 
@@ -1809,7 +1764,6 @@ async function* queryModel(
         queryTracking: options.queryTracking,
         thinkingType: logThinkingType,
         effortValue: logEffortValue,
-        fastMode: isFastMode,
         previousRequestId,
       })
     })
@@ -1827,7 +1781,6 @@ async function* queryModel(
   let maxOutputTokens = 0
   let responseHeaders: globalThis.Headers | undefined = undefined
   let research: unknown = undefined
-  let isFastModeRequest = isFastMode // Keep separate state as it may change if falling back
   let isAdvisorInProgress = false
 
   try {
@@ -1842,7 +1795,6 @@ async function* queryModel(
         }),
       async (anthropic, attempt, context) => {
         attemptNumber = attempt
-        isFastModeRequest = context.fastMode ?? false
         start = Date.now()
         attemptStartTimes.push(start)
         // withRetry 的 getClient() 调用已创建客户端。这在
@@ -1936,7 +1888,6 @@ async function* queryModel(
         model: options.model,
         fallbackModel: options.fallbackModel,
         thinkingConfig,
-        ...(isFastModeEnabled() ? { fastMode: isFastMode } : false),
         signal,
         querySource: options.querySource,
       },
@@ -2376,7 +2327,7 @@ async function* queryModel(
             if (stopReason === 'model_context_window_exceeded') {
               logEvent('tengu_context_window_exceeded', {
                 max_tokens: maxOutputTokens,
-                output_tokens: usage.output_tokens,
+                output_tokens: usage.outputTokens,
               })
               // Reuse the max_output_tokens recovery path — from the model's
               // perspective, both mean "response was cut off, continue from
@@ -2480,8 +2431,8 @@ async function* queryModel(
       if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
         void checkResponseForCacheBreak(
           options.querySource,
-          usage.cache_read_input_tokens,
-          usage.cache_creation_input_tokens,
+          usage.cacheReadInputTokens,
+          usage.cacheCreationInputTokens,
           messages,
           options.agentId,
           streamRequestId,
@@ -2651,7 +2602,6 @@ async function* queryModel(
           model: options.model,
           fallbackModel: options.fallbackModel,
           thinkingConfig,
-          ...(isFastModeEnabled() && { fastMode: isFastMode }),
           signal,
           initialConsecutive529Errors: is529Error(streamingError) ? 1 : 0,
           querySource: options.querySource,
@@ -2750,7 +2700,6 @@ async function* queryModel(
             model: options.model,
             fallbackModel: options.fallbackModel,
             thinkingConfig,
-            ...(isFastModeEnabled() && { fastMode: isFastMode }),
             signal,
           },
           paramsFromContext,
@@ -2828,7 +2777,6 @@ async function* queryModel(
           queryTracking: options.queryTracking,
           querySource: options.querySource,
           llmSpan,
-          fastMode: isFastModeRequest,
           previousRequestId,
         })
 
@@ -2884,7 +2832,6 @@ async function* queryModel(
         queryTracking: options.queryTracking,
         querySource: options.querySource,
         llmSpan,
-        fastMode: isFastModeRequest,
         previousRequestId,
       })
 
@@ -2978,7 +2925,6 @@ async function* queryModel(
       globalCacheStrategy,
       requestSetupMs: start - startIncludingRetries,
       attemptStartTimes,
-      fastMode: isFastModeRequest,
       previousRequestId,
       betas: lastRequestBetas,
     })
@@ -3026,21 +2972,21 @@ export function updateUsage(
     return { ...usage }
   }
   return {
-    input_tokens:
+    inputTokens:
       partUsage.input_tokens !== null && partUsage.input_tokens > 0
         ? partUsage.input_tokens
-        : usage.input_tokens,
-    cache_creation_input_tokens:
+        : usage.inputTokens,
+    cacheCreationInputTokens:
       partUsage.cache_creation_input_tokens !== null &&
       partUsage.cache_creation_input_tokens > 0
         ? partUsage.cache_creation_input_tokens
-        : usage.cache_creation_input_tokens,
-    cache_read_input_tokens:
+        : usage.cacheCreationInputTokens,
+    cacheReadInputTokens:
       partUsage.cache_read_input_tokens !== null &&
       partUsage.cache_read_input_tokens > 0
         ? partUsage.cache_read_input_tokens
-        : usage.cache_read_input_tokens,
-    output_tokens: partUsage.output_tokens ?? usage.output_tokens,
+        : usage.cacheReadInputTokens,
+    outputTokens: partUsage.output_tokens ?? usage.outputTokens,
     server_tool_use: {
       web_search_requests:
         partUsage.server_tool_use?.web_search_requests ??
@@ -3079,7 +3025,6 @@ export function updateUsage(
       : {}),
     inference_geo: usage.inference_geo,
     iterations: partUsage.iterations ?? usage.iterations,
-    speed: (partUsage as BetaUsage).speed ?? usage.speed,
   }
 }
 
@@ -3092,13 +3037,13 @@ export function accumulateUsage(
   messageUsage: Readonly<NonNullableUsage>,
 ): NonNullableUsage {
   return {
-    input_tokens: totalUsage.input_tokens + messageUsage.input_tokens,
-    cache_creation_input_tokens:
-      totalUsage.cache_creation_input_tokens +
-      messageUsage.cache_creation_input_tokens,
-    cache_read_input_tokens:
-      totalUsage.cache_read_input_tokens + messageUsage.cache_read_input_tokens,
-    output_tokens: totalUsage.output_tokens + messageUsage.output_tokens,
+    inputTokens: totalUsage.inputTokens + messageUsage.inputTokens,
+    cacheCreationInputTokens:
+      totalUsage.cacheCreationInputTokens +
+      messageUsage.cacheCreationInputTokens,
+    cacheReadInputTokens:
+      totalUsage.cacheReadInputTokens + messageUsage.cacheReadInputTokens,
+    outputTokens: totalUsage.outputTokens + messageUsage.outputTokens,
     server_tool_use: {
       web_search_requests:
         totalUsage.server_tool_use.web_search_requests +
@@ -3130,7 +3075,6 @@ export function accumulateUsage(
       : {}),
     inference_geo: messageUsage.inference_geo, // 使用最新的
     iterations: messageUsage.iterations, // 使用最新的
-    speed: messageUsage.speed, // 使用最新的
   }
 }
 
@@ -3371,7 +3315,7 @@ export async function queryHaiku({
         signal,
         options: {
           ...options,
-          model: getSmallFastModel(),
+          model: getDefaultHaikuModel(),
           enablePromptCaching: options.enablePromptCaching ?? false,
           outputFormat,
           async getToolPermissionContext() {

@@ -1063,11 +1063,6 @@ export function getAutoModeUnavailableNotification(
  */
 export async function verifyAutoModeGateAccess(
   currentContext: ToolPermissionContext,
-  // Runtime AppState.fastMode — passed from callers with AppState access so
-  // the disableFastMode circuit breaker reads current state, not stale
-  // settings.fastMode (which is intentionally sticky across /model auto-
-  // downgrades). Optional for callers without AppState (e.g. SDK init paths).
-  fastMode?: boolean,
 ): Promise<AutoModeGateCheckResult> {
   // auto 模式配置 — 在所有构建中运行（熔断器、轮播、踢出）
   // 重新读取 tengu_auto_mode_config.enabled — 此异步检查在 GrowthBook 初始化后运行一次，
@@ -1075,7 +1070,6 @@ export async function verifyAutoModeGateAccess(
   // 熔断器（enabled==='disabled'）在此生效。
   const autoModeConfig = await getDynamicConfig_BLOCKS_ON_INIT<{
     enabled?: AutoModeEnabledState
-    disableFastMode?: boolean
   }>('tengu_auto_mode_config', {})
   const enabledState = parseAutoModeEnabledState(autoModeConfig?.enabled)
   const disabledBySettings = isAutoModeDisabledBySettings()
@@ -1085,19 +1079,9 @@ export async function verifyAutoModeGateAccess(
     enabledState === 'disabled' || disabledBySettings,
   )
 
-  // 轮播可用性：未被熔断、未被设置禁用、模型支持、disableFastMode 熔断器未触发，且（已启用或已 opt-in）
+  // 轮播可用性：未被熔断、未被设置禁用、模型支持，且（已启用或已 opt-in）
   const mainModel = getMainLoopModel()
-  // 临时熔断器：tengu_auto_mode_config.disableFastMode 在 fast 模式开启时阻止 auto 模式。
-  // 检查运行时 AppState.fastMode（如果提供）以及 ant 的模型名称 '-fast' 子串
-  // （ant 内部 fast 模型如 capybara-v2-fast[1m] 在模型 ID 中编码速度信息）。
-  // 在 auto+fast 模式交互验证通过后移除此代码。
-  const disableFastModeBreakerFires =
-    !!autoModeConfig?.disableFastMode &&
-    (!!fastMode ||
-      (isInternalBuild() &&
-        mainModel.toLowerCase().includes('-fast')))
-  const modelSupported =
-    modelSupportsAutoMode(mainModel) && !disableFastModeBreakerFires
+  const modelSupported = modelSupportsAutoMode(mainModel)
   let carouselAvailable = false
   if (enabledState !== 'disabled' && !disabledBySettings && modelSupported) {
     carouselAvailable =
@@ -1108,7 +1092,7 @@ export async function verifyAutoModeGateAccess(
   const canEnterAuto =
     enabledState !== 'disabled' && !disabledBySettings && modelSupported
   logForDebugging(
-    `[auto-mode] verifyAutoModeGateAccess: enabledState=${enabledState} disabledBySettings=${disabledBySettings} model=${mainModel} modelSupported=${modelSupported} disableFastModeBreakerFires=${disableFastModeBreakerFires} carouselAvailable=${carouselAvailable} canEnterAuto=${canEnterAuto}`,
+    `[auto-mode] verifyAutoModeGateAccess: enabledState=${enabledState} disabledBySettings=${disabledBySettings} model=${mainModel} modelSupported=${modelSupported} carouselAvailable=${carouselAvailable} canEnterAuto=${canEnterAuto}`,
   )
 
   // 现在捕获 CLI 标志意图（不依赖于上下文）。

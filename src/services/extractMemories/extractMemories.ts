@@ -438,18 +438,18 @@ export function initExtractMemories(): void {
       const turnCount = count(result.messages, m => m.type === 'assistant')
 
       const totalInput =
-        result.totalUsage.input_tokens +
-        result.totalUsage.cache_creation_input_tokens +
-        result.totalUsage.cache_read_input_tokens
+        result.totalUsage.inputTokens +
+        result.totalUsage.cacheCreationInputTokens +
+        result.totalUsage.cacheReadInputTokens
       const hitPct =
         totalInput > 0
           ? (
-              (result.totalUsage.cache_read_input_tokens / totalInput) *
+              (result.totalUsage.cacheReadInputTokens / totalInput) *
               100
             ).toFixed(1)
           : '0.0'
       logForDebugging(
-        `[extractMemories] finished — ${writtenPaths.length} files written, cache: read=${result.totalUsage.cache_read_input_tokens} create=${result.totalUsage.cache_creation_input_tokens} input=${result.totalUsage.input_tokens} (${hitPct}% hit)`,
+        `[extractMemories] finished — ${writtenPaths.length} files written, cache: read=${result.totalUsage.cacheReadInputTokens} create=${result.totalUsage.cacheCreationInputTokens} input=${result.totalUsage.inputTokens} (${hitPct}% hit)`,
       )
 
       if (writtenPaths.length > 0) {
@@ -471,11 +471,11 @@ export function initExtractMemories(): void {
 
       // Log extraction event with usage from the forked agent
       logEvent('tengu_extract_memories_extraction', {
-        input_tokens: result.totalUsage.input_tokens,
-        output_tokens: result.totalUsage.output_tokens,
-        cache_read_input_tokens: result.totalUsage.cache_read_input_tokens,
+        input_tokens: result.totalUsage.inputTokens,
+        output_tokens: result.totalUsage.outputTokens,
+        cache_read_input_tokens: result.totalUsage.cacheReadInputTokens,
         cache_creation_input_tokens:
-          result.totalUsage.cache_creation_input_tokens,
+          result.totalUsage.cacheCreationInputTokens,
         message_count: newMessageCount,
         turn_count: turnCount,
         files_written: writtenPaths.length,

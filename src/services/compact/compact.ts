@@ -1194,16 +1194,16 @@ async function streamCompactSummary({
           if (!assistantText.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
             logEvent('tengu_compact_cache_sharing_success', {
               preCompactTokenCount,
-              outputTokens: result.totalUsage.output_tokens,
-              cacheReadInputTokens: result.totalUsage.cache_read_input_tokens,
+              outputTokens: result.totalUsage.outputTokens,
+              cacheReadInputTokens: result.totalUsage.cacheReadInputTokens,
               cacheCreationInputTokens:
-                result.totalUsage.cache_creation_input_tokens,
+                result.totalUsage.cacheCreationInputTokens,
               cacheHitRate:
-                result.totalUsage.cache_read_input_tokens > 0
-                  ? result.totalUsage.cache_read_input_tokens /
-                    (result.totalUsage.cache_read_input_tokens +
-                      result.totalUsage.cache_creation_input_tokens +
-                      result.totalUsage.input_tokens)
+                result.totalUsage.cacheReadInputTokens > 0
+                  ? result.totalUsage.cacheReadInputTokens /
+                    (result.totalUsage.cacheReadInputTokens +
+                      result.totalUsage.cacheCreationInputTokens +
+                      result.totalUsage.inputTokens)
                   : 0,
             })
           }

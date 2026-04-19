@@ -3,7 +3,6 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
-import { getFastModeModelDisplay, isFastModeAvailable, isFastModeCooldown, isFastModeEnabled } from 'src/utils/fastMode.js';
 import { Box, Text } from '../ink.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';
 import { useAppState, useSetAppState } from '../state/AppState.js';
@@ -23,7 +22,6 @@ export type Props = {
   onSelect: (model: string | null, effort: EffortLevel | undefined) => void;
   onCancel?: () => void;
   isStandaloneCommand?: boolean;
-  showFastModeNotice?: boolean;
   /** Overrides the dim header line below "Select model". */
   headerText?: string;
   /**
@@ -41,7 +39,6 @@ export function ModelPicker({
   onSelect,
   onCancel,
   isStandaloneCommand,
-  showFastModeNotice,
   headerText,
   skipSettingsWrite
 }: Props) {
@@ -49,12 +46,11 @@ export function ModelPicker({
   const exitState = useExitOnCtrlCDWithKeybindings();
   const initialValue = initial === null ? NO_PREFERENCE : initial;
   const [focusedValue, setFocusedValue] = useState(initialValue);
-  const isFastMode = useAppState(s => isFastModeEnabled() ? s.fastMode : false);
   const [hasToggledEffort, setHasToggledEffort] = useState(false);
   const effortValue = useAppState(s_0 => s_0.effortValue);
   const t1 = effortValue !== undefined ? convertEffortValueToLevel(effortValue) : undefined;
   const [effort, setEffort] = useState(t1);
-  const modelOptions = getModelOptions(isFastMode ?? false);
+  const modelOptions = getModelOptions();
   let optionsWithInitial;
   if (initial !== null && !modelOptions.some(opt => opt.value === initial)) {
     const t5 = modelDisplayString(initial);
@@ -123,8 +119,7 @@ export function ModelPicker({
     }
     onSelect(value_0, selectedEffort);
   };
-  const t25 = isFastModeEnabled() ? showFastModeNotice ? <Box marginBottom={1}><Text dimColor={true}>Fast mode is <Text bold={true}>ON</Text> and available with{" "}{getFastModeModelDisplay()} only (/fast). Switching to other models turn off fast mode.</Text></Box> : isFastModeAvailable() && !isFastModeCooldown() ? <Box marginBottom={1}><Text dimColor={true}>Use <Text bold={true}>/fast</Text> to turn on Fast mode ({getFastModeModelDisplay()} only).</Text></Box> : null : null;
-  const content = <Box flexDirection="column">{<Box flexDirection="column">{<Box marginBottom={1} flexDirection="column">{<Text color="remember" bold={true}>Select model</Text>}{<Text dimColor={true}>{headerText ?? "Switch between Zy models. Applies to this session and future ZY Code sessions. For other/previous model names, specify with --model."}</Text>}{sessionModel && <Text dimColor={true}>Currently using {modelDisplayString(sessionModel)} for this session (set by plan mode). Selecting a model will undo this.</Text>}</Box>}{<Box flexDirection="column" marginBottom={1}>{<Box flexDirection="column"><Select defaultValue={initialValue} defaultFocusValue={initialFocusValue} options={selectOptions} onChange={handleSelect} onFocus={handleFocus} onCancel={onCancel ?? _temp4} visibleOptionCount={visibleCount} /></Box>}{hiddenCount > 0 && <Box paddingLeft={3}><Text dimColor={true}>and {hiddenCount} more…</Text></Box>}</Box>}{<Box marginBottom={1} flexDirection="column">{focusedSupportsEffort ? <Text dimColor={true}><EffortLevelIndicator effort={displayEffort} />{" "}{capitalize(displayEffort)} effort{displayEffort === focusedDefaultEffort ? " (default)" : ""}{" "}<Text color="subtle">← → to adjust</Text></Text> : <Text color="subtle"><EffortLevelIndicator effort={undefined} /> Effort not supported{focusedModelName ? ` for ${focusedModelName}` : ""}</Text>}</Box>}{t25}</Box>}{isStandaloneCommand && <Text dimColor={true} italic={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Byline><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="select:cancel" context="Select" fallback="Esc" description="exit" /></Byline>}</Text>}</Box>;
+  const content = <Box flexDirection="column">{<Box flexDirection="column">{<Box marginBottom={1} flexDirection="column">{<Text color="remember" bold={true}>Select model</Text>}{<Text dimColor={true}>{headerText ?? "Switch between Zy models. Applies to this session and future ZY Code sessions. For other/previous model names, specify with --model."}</Text>}{sessionModel && <Text dimColor={true}>Currently using {modelDisplayString(sessionModel)} for this session (set by plan mode). Selecting a model will undo this.</Text>}</Box>}{<Box flexDirection="column" marginBottom={1}>{<Box flexDirection="column"><Select defaultValue={initialValue} defaultFocusValue={initialFocusValue} options={selectOptions} onChange={handleSelect} onFocus={handleFocus} onCancel={onCancel ?? _temp4} visibleOptionCount={visibleCount} /></Box>}{hiddenCount > 0 && <Box paddingLeft={3}><Text dimColor={true}>and {hiddenCount} more…</Text></Box>}</Box>}{<Box marginBottom={1} flexDirection="column">{focusedSupportsEffort ? <Text dimColor={true}><EffortLevelIndicator effort={displayEffort} />{" "}{capitalize(displayEffort)} effort{displayEffort === focusedDefaultEffort ? " (default)" : ""}{" "}<Text color="subtle">← → to adjust</Text></Text> : <Text color="subtle"><EffortLevelIndicator effort={undefined} /> Effort not supported{focusedModelName ? ` for ${focusedModelName}` : ""}</Text>}</Box>}</Box>}{isStandaloneCommand && <Text dimColor={true} italic={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Byline><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="select:cancel" context="Select" fallback="Esc" description="exit" /></Byline>}</Text>}</Box>;
   if (!isStandaloneCommand) {
     return content;
   }

@@ -23,6 +23,7 @@ const actionKeyMap: Record<string, string> = {
   'toggle': 'common.toggle',
   'manage': 'common.manage',
   'interrupt': 'shortcut.interrupt',
+  'run in background': 'bash.runInBackground',
   'background': 'shortcut.background',
   'amend': 'permission.amend',
   'explain': 'permission.explain',

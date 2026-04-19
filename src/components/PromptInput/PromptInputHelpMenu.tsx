@@ -5,7 +5,6 @@ import { getPlatform } from 'src/utils/platform.js';
 import { isKeybindingCustomizationEnabled } from '../../keybindings/loadUserBindings.js';
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
-import { isFastModeAvailable, isFastModeEnabled } from '../../utils/fastMode.js';
 import { getNewlineInstructions } from './utils.js';
 import { tSync } from '../../i18n/index.js';
 
@@ -32,8 +31,6 @@ export function PromptInputHelpMenu(props) {
   const cycleModeShortcut = formatShortcut(t8);
   const t10 = useShortcutDisplay("chat:modelPicker", "Chat", "alt+p");
   const modelPickerShortcut = formatShortcut(t10);
-  const t12 = useShortcutDisplay("chat:fastMode", "Chat", "alt+o");
-  const fastModeShortcut = formatShortcut(t12);
   const t14 = useShortcutDisplay("chat:externalEditor", "Chat", "ctrl+g");
   const externalEditorShortcut = formatShortcut(t14);
   const t16 = useShortcutDisplay("app:toggleTerminal", "Global", "meta+j");
@@ -43,7 +40,6 @@ export function PromptInputHelpMenu(props) {
   const terminalShortcutElement = feature("TERMINAL_PANEL") ? getFeatureValue_CACHED_MAY_BE_STALE("tengu_terminal_panel", false) ? <Box><Text dimColor={dimColor}>{tSync('help.terminal', { shortcut: terminalShortcut })}</Text></Box> : null : null;
   const t33 = getNewlineInstructions();
   const t37 = getPlatform() !== "windows" && <Box><Text dimColor={dimColor}>{tSync('help.suspend')}</Text></Box>;
-  const t40 = isFastModeEnabled() && isFastModeAvailable() && <Box><Text dimColor={dimColor}>{tSync('help.fastMode', { shortcut: fastModeShortcut })}</Text></Box>;
   const t43 = isKeybindingCustomizationEnabled() && <Box><Text dimColor={dimColor}>{tSync('help.customizeKeybindings')}</Text></Box>;
-  return <Box paddingX={paddingX} flexDirection="row" gap={gap}>{<Box flexDirection="column" width={fixedWidth ? 24 : undefined}>{<Box><Text dimColor={dimColor}>{tSync('help.bashMode')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.commands')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.filePaths')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.background')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.sideQuestion')}</Text></Box>}</Box>}{<Box flexDirection="column" width={fixedWidth ? 35 : undefined}>{<Box><Text dimColor={dimColor}>{tSync('help.clearInput')}</Text></Box>}{<Box><Text dimColor={dimColor}>{cycleModeShortcut}{" "}{tSync('help.cycleModeAction')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.verboseOutput', { shortcut: transcriptShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.toggleTasks', { shortcut: todosShortcut })}</Text></Box>}{terminalShortcutElement}{<Box><Text dimColor={dimColor}>{t33}</Text></Box>}</Box>}{<Box flexDirection="column">{<Box><Text dimColor={dimColor}>{tSync('help.undo', { shortcut: undoShortcut })}</Text></Box>}{t37}{<Box><Text dimColor={dimColor}>{tSync('help.pasteImages', { shortcut: imagePasteShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.switchModel', { shortcut: modelPickerShortcut })}</Text></Box>}{t40}{<Box><Text dimColor={dimColor}>{tSync('help.stashPrompt', { shortcut: stashShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.externalEditor', { shortcut: externalEditorShortcut })}</Text></Box>}{t43}</Box>}</Box>;
+  return <Box paddingX={paddingX} flexDirection="row" gap={gap}>{<Box flexDirection="column" width={fixedWidth ? 24 : undefined}>{<Box><Text dimColor={dimColor}>{tSync('help.bashMode')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.commands')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.filePaths')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.background')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.sideQuestion')}</Text></Box>}</Box>}{<Box flexDirection="column" width={fixedWidth ? 35 : undefined}>{<Box><Text dimColor={dimColor}>{tSync('help.clearInput')}</Text></Box>}{<Box><Text dimColor={dimColor}>{cycleModeShortcut}{" "}{tSync('help.cycleModeAction')}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.verboseOutput', { shortcut: transcriptShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.toggleTasks', { shortcut: todosShortcut })}</Text></Box>}{terminalShortcutElement}{<Box><Text dimColor={dimColor}>{t33}</Text></Box>}</Box>}{<Box flexDirection="column">{<Box><Text dimColor={dimColor}>{tSync('help.undo', { shortcut: undoShortcut })}</Text></Box>}{t37}{<Box><Text dimColor={dimColor}>{tSync('help.pasteImages', { shortcut: imagePasteShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.switchModel', { shortcut: modelPickerShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.stashPrompt', { shortcut: stashShortcut })}</Text></Box>}{<Box><Text dimColor={dimColor}>{tSync('help.externalEditor', { shortcut: externalEditorShortcut })}</Text></Box>}{t43}</Box>}</Box>;
 }

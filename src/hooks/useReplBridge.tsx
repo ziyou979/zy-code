@@ -303,7 +303,6 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                           agents: state_0.agentDefinitions.activeAgents,
                           skills,
                           plugins: [],
-                          fastMode: state_0.fastMode
                         })]);
                       } catch (err_0) {
                         logForDebugging(`[bridge:repl] Failed to send system/init: ${errorMessage(err_0)}`, {

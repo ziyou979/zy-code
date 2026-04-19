@@ -661,7 +661,7 @@ export async function startSpeculation(
       boundary: {
         type: 'complete' as const,
         completedAt: Date.now(),
-        outputTokens: result.totalUsage.output_tokens,
+        outputTokens: result.totalUsage.outputTokens,
       },
     }))
 

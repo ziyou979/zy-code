@@ -226,10 +226,6 @@ type State = {
   // 激活后，在会话剩余时间内持续发送该头，这样
   // Shift+Tab 切换就不会破坏约 50-70K token 的提示词缓存。
   afkModeHeaderLatched: boolean | null
-  // FAST_MODE_BETA_HEADER 的粘滞锁定。快速模式首次
-  // 启用后持续发送该头，使冷却期进入/退出不会
-  // 双重破坏提示词缓存。`speed` body 参数保持动态。
-  fastModeHeaderLatched: boolean | null
   // 缓存编辑 beta 头的粘滞锁定。缓存的
   // microcompact 首次启用后持续发送该头，使会话中
   // 的 GrowthBook/设置切换不会破坏提示词缓存。
@@ -411,7 +407,6 @@ function getInitialState(): State {
     promptCache1hEligible: null,
     // Beta 头锁定（null = 尚未触发）
     afkModeHeaderLatched: null,
-    fastModeHeaderLatched: null,
     cacheEditingHeaderLatched: null,
     thinkingClearLatched: null,
     // 当前提示词 ID
@@ -1713,14 +1708,6 @@ export function setAfkModeHeaderLatched(v: boolean): void {
   STATE.afkModeHeaderLatched = v
 }
 
-export function getFastModeHeaderLatched(): boolean | null {
-  return STATE.fastModeHeaderLatched
-}
-
-export function setFastModeHeaderLatched(v: boolean): void {
-  STATE.fastModeHeaderLatched = v
-}
-
 export function getCacheEditingHeaderLatched(): boolean | null {
   return STATE.cacheEditingHeaderLatched
 }
@@ -1743,7 +1730,6 @@ export function setThinkingClearLatched(v: boolean): void {
  */
 export function clearBetaHeaderLatches(): void {
   STATE.afkModeHeaderLatched = null
-  STATE.fastModeHeaderLatched = null
   STATE.cacheEditingHeaderLatched = null
   STATE.thinkingClearLatched = null
 }

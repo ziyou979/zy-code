@@ -760,9 +760,9 @@ function getContextUsedPercent(usage: {
   const {
     used
   } = calculateContextPercentages({
-    input_tokens: usage.input_tokens,
-    cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
-    cache_read_input_tokens: usage.cache_read_input_tokens ?? 0
+    inputTokens: usage.input_tokens,
+    cacheCreationInputTokens: usage.cache_creation_input_tokens ?? 0,
+    cacheReadInputTokens: usage.cache_read_input_tokens ?? 0
   }, contextWindowSize);
   return used;
 }

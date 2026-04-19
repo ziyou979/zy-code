@@ -842,24 +842,6 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe('Advisor model for the server-side advisor tool.'),
-      fastMode: z
-        .boolean()
-        .optional()
-        .describe(
-          'When true, fast mode is enabled. When absent or false, fast mode is off.',
-        ),
-      fastModePerSessionOptIn: z
-        .boolean()
-        .optional()
-        .describe(
-          'When true, fast mode does not persist across sessions. Each session starts with fast mode off.',
-        ),
-      fastModel: z
-        .string()
-        .optional()
-        .describe(
-          'Model to use when fast mode is enabled. When fast mode is toggled ON, the session switches to this model. When toggled OFF, it switches back to the previous model.',
-        ),
       promptSuggestionEnabled: z
         .boolean()
         .optional()

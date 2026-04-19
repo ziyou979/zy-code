@@ -604,7 +604,7 @@ export async function runForkedAgent({
   }
 
   logForDebugging(
-    `Forked agent [${forkLabel}] finished: ${outputMessages.length} messages, types=[${outputMessages.map(m => m.type).join(', ')}], totalUsage: input=${totalUsage.input_tokens} output=${totalUsage.output_tokens} cacheRead=${totalUsage.cache_read_input_tokens} cacheCreate=${totalUsage.cache_creation_input_tokens}`,
+    `Forked agent [${forkLabel}] finished: ${outputMessages.length} messages, types=[${outputMessages.map(m => m.type).join(', ')}], totalUsage: input=${totalUsage.inputTokens} output=${totalUsage.outputTokens} cacheRead=${totalUsage.cacheReadInputTokens} cacheCreate=${totalUsage.cacheCreationInputTokens}`,
   )
 
   const durationMs = Date.now() - startTime
@@ -645,12 +645,12 @@ function logForkAgentQueryEvent({
 }): void {
   // 计算缓存命中率
   const totalInputTokens =
-    totalUsage.input_tokens +
-    totalUsage.cache_creation_input_tokens +
-    totalUsage.cache_read_input_tokens
+    totalUsage.inputTokens +
+    totalUsage.cacheCreationInputTokens +
+    totalUsage.cacheReadInputTokens
   const cacheHitRate =
     totalInputTokens > 0
-      ? totalUsage.cache_read_input_tokens / totalInputTokens
+      ? totalUsage.cacheReadInputTokens / totalInputTokens
       : 0
 
   logEvent('tengu_fork_agent_query', {
@@ -663,10 +663,10 @@ function logForkAgentQueryEvent({
     messageCount,
 
     // NonNullableUsage 字段
-    inputTokens: totalUsage.input_tokens,
-    outputTokens: totalUsage.output_tokens,
-    cacheReadInputTokens: totalUsage.cache_read_input_tokens,
-    cacheCreationInputTokens: totalUsage.cache_creation_input_tokens,
+    inputTokens: totalUsage.inputTokens,
+    outputTokens: totalUsage.outputTokens,
+    cacheReadInputTokens: totalUsage.cacheReadInputTokens,
+    cacheCreationInputTokens: totalUsage.cacheCreationInputTokens,
     serviceTier:
       (totalUsage as any).service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     cacheCreationEphemeral1hTokens:

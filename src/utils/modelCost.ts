@@ -45,7 +45,7 @@ export const COST_HAIKU_45 = {
 } as const satisfies ModelCosts
 
 /** Back-compat shim — was Opus 4.6 specific, now returns generic high-cost tier */
-export function getOpus46CostTier(_fastMode: boolean): ModelCosts {
+export function getOpus46CostTier(): ModelCosts {
   return {
     inputTokens: 5,
     outputTokens: 25,

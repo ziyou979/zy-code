@@ -417,8 +417,6 @@ export type AppState = DeepImmutable<{
   denialTracking?: DenialTrackingState
   // 活跃的覆盖层（Select 对话框等），用于 Escape 键协调
   activeOverlays: ReadonlySet<string>
-  // 快速模式
-  fastMode?: boolean
   // 服务端 advisor tool 的 advisor 模型（undefined = 禁用）。
   advisorModel?: string
   // 投入程度值
@@ -560,6 +558,5 @@ export function getDefaultAppState(): AppState {
     initialMessage: null,
     effortValue: undefined,
     activeOverlays: new Set<string>(),
-    fastMode: false,
   }
 }

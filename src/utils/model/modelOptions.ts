@@ -6,7 +6,7 @@ import { getSettings_DEPRECATED } from '../settings/settings.js';
 import { checkOpus1mAccess, checkSonnet1mAccess } from './check1mAccess.js';
 import { getAPIProvider, providerHasCapability } from './providers.js';
 import { isModelAllowed } from './modelAllowlist.js';
-import { getDefaultHaikuModel, getDefaultMainLoopModelSetting, getMarketingNameForModel, getUserSpecifiedModelSetting, isOpus1mMergeEnabled, getOpus46PricingSuffix, renderDefaultModelSetting, type ModelSetting } from './model.js';
+import { getDefaultHaikuModel, getDefaultMainLoopModelSetting, getMarketingNameForModel, getUserSpecifiedModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting, type ModelSetting } from './model.js';
 import { has1mContext } from '../context.js';
 import { getGlobalConfig } from '../config.js';
 import { isInternalBuild } from '../envUtils.js';
@@ -19,7 +19,7 @@ export type ModelOption = {
   description: string;
   descriptionForModel?: string;
 };
-export function getDefaultOptionForUser(fastMode = false): ModelOption {
+export function getDefaultOptionForUser(): ModelOption {
   if (isInternalBuild()) {
     const currentModel = renderDefaultModelSetting(getDefaultMainLoopModelSetting());
     return {
@@ -86,12 +86,12 @@ function getOpus41Option(): ModelOption {
     descriptionForModel: 'Opus 4.1 - legacy version'
   };
 }
-function getOpus46Option(fastMode = false): ModelOption {
+function getOpus46Option(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
     value: is3P ? (getModelStrings() as any).opus46 : 'opus',
     label: 'Opus',
-    description: `Opus 4.6 · Most capable for complex work${getOpus46PricingSuffix(fastMode)}`,
+    description: `Opus 4.6 · Most capable for complex work`,
     descriptionForModel: 'Opus 4.6 - most capable for complex work'
   };
 }
@@ -104,12 +104,12 @@ export function getSonnet46_1MOption(): ModelOption {
     descriptionForModel: 'Sonnet 4.6 with 1M context window - for long sessions with large codebases'
   };
 }
-export function getOpus46_1MOption(fastMode = false): ModelOption {
+export function getOpus46_1MOption(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
     value: is3P ? (getModelStrings() as any).opus46 + '[1m]' : 'opus[1m]',
     label: 'Opus (1M context)',
-    description: `Opus 4.6 for long sessions${getOpus46PricingSuffix(fastMode)}`,
+    description: `Opus 4.6 for long sessions`,
     descriptionForModel: 'Opus 4.6 with 1M context window - for long sessions with large codebases'
   };
 }
@@ -149,11 +149,11 @@ function getHaikuOption(): ModelOption {
   const haikuModel = getDefaultHaikuModel();
   return haikuModel === (getModelStrings() as any).haiku45 ? getHaiku45Option() : getHaiku35Option();
 }
-function getMaxOpusOption(fastMode = false): ModelOption {
+function getMaxOpusOption(): ModelOption {
   return {
     value: 'opus',
     label: 'Opus',
-    description: `Opus 4.6 · Most capable for complex work${fastMode ? getOpus46PricingSuffix(true) : ''}`
+    description: `Opus 4.6 · Most capable for complex work`
   };
 }
 export function getMaxSonnet46_1MOption(): ModelOption {
@@ -164,19 +164,19 @@ export function getMaxSonnet46_1MOption(): ModelOption {
     description: `Sonnet 4.6 with 1M context${is3P ? '' : ` · ${formatModelPricing(COST_TIER_3_15)}`}`
   };
 }
-export function getMaxOpus46_1MOption(fastMode = false): ModelOption {
+export function getMaxOpus46_1MOption(): ModelOption {
   return {
     value: 'opus[1m]',
     label: 'Opus (1M context)',
-    description: `Opus 4.6 with 1M context${getOpus46PricingSuffix(fastMode)}`
+    description: `Opus 4.6 with 1M context`
   };
 }
-function getMergedOpus1MOption(fastMode = false): ModelOption {
+function getMergedOpus1MOption(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
   return {
     value: is3P ? (getModelStrings() as any).opus46 + '[1m]' : 'opus[1m]',
     label: 'Opus (1M context)',
-    description: `Opus 4.6 with 1M context · Most capable for complex work${!is3P && fastMode ? getOpus46PricingSuffix(fastMode) : ''}`,
+    description: `Opus 4.6 with 1M context · Most capable for complex work`,
     descriptionForModel: 'Opus 4.6 with 1M context - most capable for complex work'
   };
 }
@@ -200,7 +200,7 @@ function getOpusPlanOption(): ModelOption {
 
 // @[MODEL LAUNCH]: Update the model picker lists below to include/reorder options for the new model.
 // Each user tier (ant, Max/Team Premium, Pro/Team Standard/Enterprise, direct API, cloud provider API) has its own list.
-function getModelOptionsBase(fastMode = false): ModelOption[] {
+function getModelOptionsBase(): ModelOption[] {
   // If user has defined custom models in settings, use those exclusively
   const settings = getSettings_DEPRECATED() || {};
   if (settings.customModels && settings.customModels.length > 0) {
@@ -209,7 +209,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
       label: m.label ?? m.alias,
       description: m.description ?? `Custom model (${m.model})`
     }));
-    return [getDefaultOptionForUser(fastMode), ...customModelOptions];
+    return [getDefaultOptionForUser(), ...customModelOptions];
   }
   if (isInternalBuild()) {
     // Build options from antModels config
@@ -219,21 +219,21 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
       label: m.label,
       description: m.description ?? `[ANT-ONLY] ${m.label} (${m.model})`
     }));
-    return [getDefaultOptionForUser(), ...antModelOptions, getMergedOpus1MOption(fastMode), getSonnet46Option(), getSonnet46_1MOption(), getHaiku45Option()];
+    return [getDefaultOptionForUser(), ...antModelOptions, getMergedOpus1MOption(), getSonnet46Option(), getSonnet46_1MOption(), getHaiku45Option()];
   }
 
   // Direct API (PAYG): Default (Sonnet) + Sonnet 1M + Opus 4.6 + Opus 1M + Haiku
   if (providerHasCapability(getAPIProvider(), 'prompt_caching')) {
-    const payg1POptions = [getDefaultOptionForUser(fastMode)];
+    const payg1POptions = [getDefaultOptionForUser()];
     if (checkSonnet1mAccess()) {
       payg1POptions.push(getSonnet46_1MOption());
     }
     if (isOpus1mMergeEnabled()) {
-      payg1POptions.push(getMergedOpus1MOption(fastMode));
+      payg1POptions.push(getMergedOpus1MOption());
     } else {
-      payg1POptions.push(getOpus46Option(fastMode));
+      payg1POptions.push(getOpus46Option());
       if (checkOpus1mAccess()) {
-        payg1POptions.push(getOpus46_1MOption(fastMode));
+        payg1POptions.push(getOpus46_1MOption());
       }
     }
     payg1POptions.push(getHaiku45Option());
@@ -241,7 +241,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
   }
 
   // PAYG 3P: Default (Sonnet 4.5) + Sonnet (3P custom) or Sonnet 4.6/1M + Opus (3P custom) or Opus 4.1/Opus 4.6/Opus1M + Haiku + Opus 4.1
-  const payg3pOptions = [getDefaultOptionForUser(fastMode)];
+  const payg3pOptions = [getDefaultOptionForUser()];
   const customSonnet = getCustomSonnetOption();
   if (customSonnet !== undefined) {
     payg3pOptions.push(customSonnet);
@@ -258,9 +258,9 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
   } else {
     // Add Opus 4.1, Opus 4.6 and Opus 4.6 1M
     payg3pOptions.push(getOpus41Option()); // This is the default opus
-    payg3pOptions.push(getOpus46Option(fastMode));
+    payg3pOptions.push(getOpus46Option());
     if (checkOpus1mAccess()) {
-      payg3pOptions.push(getOpus46_1MOption(fastMode));
+      payg3pOptions.push(getOpus46_1MOption());
     }
   }
   const customHaiku = getCustomHaikuOption();
@@ -285,8 +285,8 @@ function getKnownModelOption(model: string): ModelOption | null {
     description: model
   };
 }
-export function getModelOptions(fastMode = false): ModelOption[] {
-  const options = getModelOptionsBase(fastMode);
+export function getModelOptions(): ModelOption[] {
+  const options = getModelOptionsBase();
 
   // Add the custom model from the ANTHROPIC_CUSTOM_MODEL_OPTION env var
   const envCustomModel = process.env.ANTHROPIC_CUSTOM_MODEL_OPTION;
@@ -320,9 +320,9 @@ export function getModelOptions(fastMode = false): ModelOption[] {
   } else if (customModel === 'opusplan') {
     return filterModelOptionsByAllowlist([...options, getOpusPlanOption()]);
   } else if (customModel === 'opus' && providerHasCapability(getAPIProvider(), 'interleaved_thinking')) {
-    return filterModelOptionsByAllowlist([...options, getMaxOpusOption(fastMode)]);
+    return filterModelOptionsByAllowlist([...options, getMaxOpusOption()]);
   } else if (customModel === 'opus[1m]' && providerHasCapability(getAPIProvider(), 'interleaved_thinking')) {
-    return filterModelOptionsByAllowlist([...options, getMergedOpus1MOption(fastMode)]);
+    return filterModelOptionsByAllowlist([...options, getMergedOpus1MOption()]);
   } else {
     // Try to show a human-readable label for known Anthropic models, with an
     // upgrade hint if the alias now resolves to a newer version.

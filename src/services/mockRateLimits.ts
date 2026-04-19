@@ -74,8 +74,6 @@ export type MockScenario =
   | 'opus-warning'
   | 'sonnet-limit'
   | 'sonnet-warning'
-  | 'fast-mode-limit'
-  | 'fast-mode-short-limit'
   | 'extra-usage-required'
   | 'clear'
 
@@ -83,8 +81,6 @@ let mockHeaders: MockHeaders = {}
 let mockEnabled = false
 let mockHeaderless429Message: string | null = null
 let mockSubscriptionType: SubscriptionType | null = null
-let mockFastModeRateLimitDurationMs: number | null = null
-let mockFastModeRateLimitExpiresAt: number | null = null
 // Default subscription type for mock testing
 const DEFAULT_MOCK_SUBSCRIPTION: SubscriptionType = 'max' as any
 
@@ -571,22 +567,6 @@ export function setMockRateLimitScenario(scenario: MockScenario): void {
       break
     }
 
-    case 'fast-mode-limit': {
-      updateRepresentativeClaim()
-      mockHeaders['anthropic-ratelimit-unified-status'] = 'rejected'
-      // Duration in ms (> 20s threshold to trigger cooldown)
-      mockFastModeRateLimitDurationMs = 10 * 60 * 1000
-      break
-    }
-
-    case 'fast-mode-short-limit': {
-      updateRepresentativeClaim()
-      mockHeaders['anthropic-ratelimit-unified-status'] = 'rejected'
-      // Duration in ms (< 20s threshold, won't trigger cooldown)
-      mockFastModeRateLimitDurationMs = 10 * 1000
-      break
-    }
-
     case 'extra-usage-required': {
       // Headerless 429 — exercises the entitlement-rejection path in errors.ts
       mockHeaderless429Message =
@@ -679,8 +659,6 @@ export function clearMockHeaders(): void {
   mockHeaders = {}
   exceededLimits = []
   mockSubscriptionType = null
-  mockFastModeRateLimitDurationMs = null
-  mockFastModeRateLimitExpiresAt = null
   mockHeaderless429Message = null
   setMockBillingAccessOverride(null)
   mockEnabled = false
@@ -789,10 +767,6 @@ export function getScenarioDescription(scenario: MockScenario): string {
       return 'Sonnet limit reached'
     case 'sonnet-warning':
       return 'Approaching Sonnet limit'
-    case 'fast-mode-limit':
-      return 'Fast mode rate limit'
-    case 'fast-mode-short-limit':
-      return 'Fast mode rate limit (short)'
     case 'extra-usage-required':
       return 'Headerless 429: Extra usage required for 1M context'
     case 'clear':
@@ -837,46 +811,4 @@ export function setMockBillingAccess(hasAccess: boolean | null): void {
   }
   mockEnabled = true
   setMockBillingAccessOverride(hasAccess)
-}
-
-// Mock fast mode rate limit handling
-export function isMockFastModeRateLimitScenario(): boolean {
-  return mockFastModeRateLimitDurationMs !== null
-}
-
-export function checkMockFastModeRateLimit(
-  isFastModeActive?: boolean,
-): MockHeaders | null {
-  if (mockFastModeRateLimitDurationMs === null) {
-    return null
-  }
-
-  // Only throw when fast mode is active
-  if (!isFastModeActive) {
-    return null
-  }
-
-  // Check if the rate limit has expired
-  if (
-    mockFastModeRateLimitExpiresAt !== null &&
-    Date.now() >= mockFastModeRateLimitExpiresAt
-  ) {
-    clearMockHeaders()
-    return null
-  }
-
-  // Set expiry on first error (not when scenario is configured)
-  if (mockFastModeRateLimitExpiresAt === null) {
-    mockFastModeRateLimitExpiresAt =
-      Date.now() + mockFastModeRateLimitDurationMs
-  }
-
-  // Compute dynamic retry-after based on remaining time
-  const remainingMs = mockFastModeRateLimitExpiresAt - Date.now()
-  const headersToSend = { ...mockHeaders }
-  headersToSend['retry-after'] = String(
-    Math.max(1, Math.ceil(remainingMs / 1000)),
-  )
-
-  return headersToSend
 }

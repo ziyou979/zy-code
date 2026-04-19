@@ -18,8 +18,8 @@ import {
 } from '../utils/model/bedrock.js'
 import {
   getDefaultSonnetModel,
+  getDefaultHaikuModel,
   getMainLoopModel,
-  getSmallFastModel,
   normalizeModelStringForAPI,
 } from '../utils/model/model.js'
 import { jsonStringify } from '../utils/slowOperations.js'
@@ -268,7 +268,7 @@ export async function countTokensViaHaikuFallback(
   // 如果我们在 Vertex 上并且使用全局区域，始终使用 Sonnet，因为 Haiku 在那里不可用。
   const isVertexGlobalEndpoint =
     isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) &&
-    getVertexRegionForModel(getSmallFastModel()) === 'global'
+    getVertexRegionForModel(getDefaultHaikuModel()) === 'global'
   // 如果我们在带思考块的 Bedrock 上，使用 Sonnet，因为 Haiku 3.5 不支持思考
   const isBedrockWithThinking =
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) && containsThinking
@@ -279,12 +279,10 @@ export async function countTokensViaHaikuFallback(
   // 警告：如果你将此更改为非 Haiku 模型，此请求将在直接 API 中失败，除非它使用 getCLISyspromptPrefix。
   // 注意：我们不需要 Sonnet 来处理 tool_reference 块，因为我们通过
   // stripToolSearchFieldsFromMessages() 在发送之前剥离它们。
-  // 使用 getSmallFastModel() 以尊重 ANTHROPIC_SMALL_FAST_MODEL 环境变量，供具有全局推理配置文件的 Bedrock 用户使用
-  // （参见 issue #10883）。
   const model =
     isVertexGlobalEndpoint || isBedrockWithThinking || isVertexWithThinking
       ? getDefaultSonnetModel()
-      : getSmallFastModel()
+      : getDefaultHaikuModel()
   const anthropic = await getLLMClient({
     maxRetries: 1,
     model,

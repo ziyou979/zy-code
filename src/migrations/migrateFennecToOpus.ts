@@ -7,8 +7,8 @@ import {
  * Migrate users on removed fennec model aliases to their new Opus 4.6 aliases.
  * - fennec-latest → opus
  * - fennec-latest[1m] → opus[1m]
- * - fennec-fast-latest → opus[1m] + fast mode
- * - opus-4-5-fast → opus + fast mode
+ * - fennec-fast-latest → opus[1m]
+ * - opus-4-5-fast → opus[1m]
  *
  * Only touches userSettings. Reading and writing the same source keeps this
  * idempotent without a completion flag. Fennec aliases in project/local/policy
@@ -38,7 +38,6 @@ export function migrateFennecToOpus(): void {
     ) {
       updateSettingsForSource('userSettings', {
         model: 'opus[1m]',
-        fastMode: true,
       })
     }
   }

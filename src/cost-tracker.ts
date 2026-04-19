@@ -41,7 +41,6 @@ import {
   getContextWindowForModel,
   getModelMaxOutputTokens,
 } from './utils/context.js'
-import { isFastModeEnabled } from './utils/fastMode.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
 import { calculateUSDCost } from './utils/modelCost.js'
@@ -282,10 +281,7 @@ export function addToTotalSessionCost(
   const modelUsage = addToTotalModelUsage(cost, usage, model)
   addToTotalCostState(cost, modelUsage, model)
 
-  const attrs =
-    isFastModeEnabled() && (usage as any).speed === 'fast'
-      ? { model, speed: 'fast' }
-      : { model }
+  const attrs = { model }
 
   getCostCounter()?.add(cost, attrs)
   getTokenCounter()?.add(usage.input_tokens, { ...attrs, type: 'input' })

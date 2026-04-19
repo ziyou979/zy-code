@@ -41,9 +41,6 @@ function getModelByTier(tier: ModelTier): ModelName {
   return 'qwen3.6-plus'
 }
 
-export function getSmallFastModel(): ModelName {
-  return getModelByTier('compact')
-}
 
 export function isNonCustomOpusModel(model: ModelName): boolean {
   return false
@@ -215,9 +212,7 @@ export function getCanonicalName(fullModelName: ModelName): ModelShortName {
 }
 
 // @[MODEL LAUNCH]: Update the default model description strings shown to users.
-export function getZyAiUserDefaultModelDescription(
-  fastMode = false,
-): string {
+export function getZyAiUserDefaultModelDescription(): string {
   return 'qwen3.6-plus · Default model'
 }
 
@@ -225,10 +220,6 @@ export function renderDefaultModelSetting(
   setting: ModelName | ModelAlias,
 ): string {
   return renderModelName(parseUserSpecifiedModel(setting))
-}
-
-export function getOpus46PricingSuffix(_fastMode: boolean): string {
-  return ''
 }
 
 export function isOpus1mMergeEnabled(): boolean {

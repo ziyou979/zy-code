@@ -129,13 +129,6 @@ ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源�
   // 快速模式使用的模型
   "fastModel": "claude-haiku-4-5-20250514",
 
-  // 环境变量
-  "env": {
-    "ANTHROPIC_AUTH_TOKEN": "your-api-key-here",
-    "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
-    "DISABLE_TELEMETRY": "1"
-  },
-
   // 语言设置
   "language": "Chinese",
 
