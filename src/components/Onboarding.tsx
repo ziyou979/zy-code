@@ -37,86 +37,93 @@ interface PlatformConfig {
   suggestedModels?: Array<{ label: string; value: string; description: string }>;
 }
 
-const PLATFORMS: PlatformConfig[] = [
-  {
-    provider: 'dashscope',
-    label: tSync('onboarding.platform.dashscope'),
-    description: tSync('onboarding.platform.dashscopeDesc'),
-    apiKeyLabel: 'DashScope API Key',
-    suggestedModels: [
-      { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: tSync('onboarding.model.qwen36plusDesc') },
-      { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: tSync('onboarding.model.qwen35plusDesc') },
-      { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: tSync('onboarding.model.qwen35flashDesc') },
-    ],
-  },
-  {
-    provider: 'openai',
-    label: tSync('onboarding.platform.openai'),
-    description: tSync('onboarding.platform.openaiDesc'),
-    apiKeyLabel: 'OpenAI API Key',
-    suggestedModels: [
-      { label: 'gpt-4o', value: 'gpt-4o', description: tSync('onboarding.model.gpt4oDesc') },
-      { label: 'gpt-4o-mini', value: 'gpt-4o-mini', description: tSync('onboarding.model.gpt4oMiniDesc') },
-    ],
-  },
-  {
-    provider: 'zhipu',
-    label: tSync('onboarding.platform.zhipu'),
-    description: tSync('onboarding.platform.zhipuDesc'),
-    apiKeyLabel: 'ZHIPU API Key',
-    suggestedModels: [
-      { label: 'glm-4-plus', value: 'glm-4-plus', description: tSync('onboarding.model.glm4PlusDesc') },
-      { label: 'glm-4-flash', value: 'glm-4-flash', description: tSync('onboarding.model.glm4FlashDesc') },
-    ],
-  },
-  {
-    provider: 'kimi',
-    label: tSync('onboarding.platform.kimi'),
-    description: tSync('onboarding.platform.kimiDesc'),
-    apiKeyLabel: 'Kimi API Key',
-    suggestedModels: [
-      { label: 'moonshot-v1', value: 'moonshot-v1', description: tSync('onboarding.model.kimiMoonDesc') },
-      { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', description: tSync('onboarding.model.kimiMoon8kDesc') },
-    ],
-  },
-  {
-    provider: 'ollama',
-    label: tSync('onboarding.platform.ollama'),
-    description: tSync('onboarding.platform.ollamaDesc'),
-    apiKeyLabel: tSync('onboarding.platform.ollamaApiKey'),
-    baseUrlHint: 'http://localhost:11434/v1',
-    suggestedModels: [
-      { label: 'qwen2.5-coder', value: 'qwen2.5-coder', description: 'Qwen2.5-Coder' },
-      { label: 'llama3.1', value: 'llama3.1', description: 'Llama 3.1' },
-    ],
-  },
-  {
-    provider: 'openrouter',
-    label: tSync('onboarding.platform.openrouter'),
-    description: tSync('onboarding.platform.openrouterDesc'),
-    apiKeyLabel: 'OpenRouter API Key',
-    baseUrlHint: 'https://openrouter.ai/api/v1',
-  },
-  {
-    provider: 'anthropic',
-    label: tSync('onboarding.platform.anthropic'),
-    description: tSync('onboarding.platform.anthropicDesc'),
-    apiKeyLabel: 'Anthropic API Key',
-  },
-  {
-    provider: 'generic',
-    label: 'Generic',
-    description: tSync('onboarding.platform.genericDesc'),
-    apiKeyLabel: 'API Key',
-  },
-];
-
 /**
- * Model options for providers without pre-configured suggestions (generic).
+ * Factory functions for platform/model options.
+ * Must be functions (not constants) so that tSync() reads the current
+ * language cache on each render — after a language switch during onboarding,
+ * the cached messages change but module-level constants would be stale.
  */
-const GENERIC_MODEL_OPTIONS: Array<{ label: string; value: string; description: string }> = [
-  { label: tSync('onboarding.model.custom'), value: '__custom__', description: tSync('onboarding.model.customDesc') },
-];
+function getPlatforms(): PlatformConfig[] {
+  return [
+    {
+      provider: 'dashscope',
+      label: tSync('onboarding.platform.dashscope'),
+      description: tSync('onboarding.platform.dashscopeDesc'),
+      apiKeyLabel: 'DashScope API Key',
+      suggestedModels: [
+        { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: tSync('onboarding.model.qwen36plusDesc') },
+        { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: tSync('onboarding.model.qwen35plusDesc') },
+        { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: tSync('onboarding.model.qwen35flashDesc') },
+      ],
+    },
+    {
+      provider: 'openai',
+      label: tSync('onboarding.platform.openai'),
+      description: tSync('onboarding.platform.openaiDesc'),
+      apiKeyLabel: 'OpenAI API Key',
+      suggestedModels: [
+        { label: 'gpt-4o', value: 'gpt-4o', description: tSync('onboarding.model.gpt4oDesc') },
+        { label: 'gpt-4o-mini', value: 'gpt-4o-mini', description: tSync('onboarding.model.gpt4oMiniDesc') },
+      ],
+    },
+    {
+      provider: 'zhipu',
+      label: tSync('onboarding.platform.zhipu'),
+      description: tSync('onboarding.platform.zhipuDesc'),
+      apiKeyLabel: 'ZHIPU API Key',
+      suggestedModels: [
+        { label: 'glm-4-plus', value: 'glm-4-plus', description: tSync('onboarding.model.glm4PlusDesc') },
+        { label: 'glm-4-flash', value: 'glm-4-flash', description: tSync('onboarding.model.glm4FlashDesc') },
+      ],
+    },
+    {
+      provider: 'kimi',
+      label: tSync('onboarding.platform.kimi'),
+      description: tSync('onboarding.platform.kimiDesc'),
+      apiKeyLabel: 'Kimi API Key',
+      suggestedModels: [
+        { label: 'moonshot-v1', value: 'moonshot-v1', description: tSync('onboarding.model.kimiMoonDesc') },
+        { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', description: tSync('onboarding.model.kimiMoon8kDesc') },
+      ],
+    },
+    {
+      provider: 'ollama',
+      label: tSync('onboarding.platform.ollama'),
+      description: tSync('onboarding.platform.ollamaDesc'),
+      apiKeyLabel: tSync('onboarding.platform.ollamaApiKey'),
+      baseUrlHint: 'http://localhost:11434/v1',
+      suggestedModels: [
+        { label: 'qwen2.5-coder', value: 'qwen2.5-coder', description: 'Qwen2.5-Coder' },
+        { label: 'llama3.1', value: 'llama3.1', description: 'Llama 3.1' },
+      ],
+    },
+    {
+      provider: 'openrouter',
+      label: tSync('onboarding.platform.openrouter'),
+      description: tSync('onboarding.platform.openrouterDesc'),
+      apiKeyLabel: 'OpenRouter API Key',
+      baseUrlHint: 'https://openrouter.ai/api/v1',
+    },
+    {
+      provider: 'anthropic',
+      label: tSync('onboarding.platform.anthropic'),
+      description: tSync('onboarding.platform.anthropicDesc'),
+      apiKeyLabel: 'Anthropic API Key',
+    },
+    {
+      provider: 'generic',
+      label: 'Generic',
+      description: tSync('onboarding.platform.genericDesc'),
+      apiKeyLabel: 'API Key',
+    },
+  ];
+}
+
+function getGenericModelOptions(): Array<{ label: string; value: string; description: string }> {
+  return [
+    { label: tSync('onboarding.model.custom'), value: '__custom__', description: tSync('onboarding.model.customDesc') },
+  ];
+}
 
 export function Onboarding({ onDone }: Props): React.ReactNode {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -379,7 +386,7 @@ function PlatformSetup({
         <Text bold>{tSync('onboarding.selectPlatform')}</Text>
         <Box flexDirection="column" width={60} gap={1}>
           <Select
-            options={PLATFORMS.map(p => ({
+            options={getPlatforms().map(p => ({
               label: p.label,
               description: p.description,
               value: p.provider,
@@ -414,7 +421,7 @@ function PlatformSetup({
   }
 
   // apiKey phase
-  const platform = PLATFORMS.find(p => p.provider === selectedProvider);
+  const platform = getPlatforms().find(p => p.provider === selectedProvider);
   return (
     <ApiKeyInput
       apiKeyLabel={platform?.apiKeyLabel ?? 'API Key'}
@@ -486,8 +493,8 @@ function ModelSetup({
 }): React.ReactNode {
   const [phase, setPhase] = useState<'select' | 'custom'>('select');
 
-  const platform = PLATFORMS.find(p => p.provider === provider);
-  const modelOptions = platform?.suggestedModels ?? GENERIC_MODEL_OPTIONS;
+  const platform = getPlatforms().find(p => p.provider === provider);
+  const modelOptions = platform?.suggestedModels ?? getGenericModelOptions();
   const hasCustomOption = platform?.provider === 'generic';
 
   const handleSelect = (value: string) => {
