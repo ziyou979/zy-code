@@ -10,6 +10,7 @@ import { useAppState, useSetAppState } from '../state/AppState.js';
 import { gracefulShutdown } from '../utils/gracefulShutdown.js';
 import { updateSettingsForSource } from '../utils/settings/settings.js';
 import type { ThemeSetting } from '../utils/theme.js';
+import { tSync } from '../i18n/index.js';
 import { Select } from './CustomSelect/index.js';
 import { Byline } from './design-system/Byline.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
@@ -71,28 +72,28 @@ export function ThemePicker({
   });
   const exitState = useExitOnCtrlCDWithKeybindings(skipExitHandling ? _temp2 : undefined);
   const themeOptions = [...(feature("AUTO_THEME") ? [{
-    label: "Auto (match terminal)",
+    label: tSync('themePicker.auto'),
     value: "auto" as const
   }] : []), {
-    label: "Dark mode",
+    label: tSync('themePicker.dark'),
     value: "dark"
   }, {
-    label: "Light mode",
+    label: tSync('themePicker.light'),
     value: "light"
   }, {
-    label: "Dark mode (colorblind-friendly)",
+    label: tSync('themePicker.darkDaltonized'),
     value: "dark-daltonized"
   }, {
-    label: "Light mode (colorblind-friendly)",
+    label: tSync('themePicker.lightDaltonized'),
     value: "light-daltonized"
   }, {
-    label: "Dark mode (ANSI colors only)",
+    label: tSync('themePicker.darkAnsi'),
     value: "dark-ansi"
   }, {
-    label: "Light mode (ANSI colors only)",
+    label: tSync('themePicker.lightAnsi'),
     value: "light-ansi"
   }];
-  const content = <Box flexDirection="column" gap={1}>{<Box flexDirection="column" gap={1}>{showIntroText ? <Text>Let's get started.</Text> : <Text bold={true} color="permission">Theme</Text>}{<Box flexDirection="column">{<Text bold={true}>Choose the text style that looks best with your terminal</Text>}{helpText && !showHelpTextBelow && <Text dimColor={true}>{helpText}</Text>}</Box>}{<Select options={themeOptions} onFocus={setting => {
+  const content = <Box flexDirection="column" gap={1}>{<Box flexDirection="column" gap={1}>{showIntroText ? <Text>{tSync('themePicker.intro')}</Text> : <Text bold={true} color="permission">{tSync('themePicker.title')}</Text>}{<Box flexDirection="column">{<Text bold={true}>{tSync('themePicker.chooseStyle')}</Text>}{helpText && !showHelpTextBelow && <Text dimColor={true}>{helpText}</Text>}</Box>}{<Select options={themeOptions} onFocus={setting => {
         setPreviewTheme(setting as ThemeSetting);
       }} onChange={setting_0 => {
         savePreview();
@@ -109,9 +110,9 @@ export function ThemePicker({
           oldLines: 3,
           newLines: 3,
           lines: [" function greet() {", "-  console.log(\"Hello, World!\");", "+  console.log(\"Hello, Zy!\");", " }"]
-        }} dim={false} filePath="demo.js" firstLine={null} width={columns} /></Box>}{<Text dimColor={true}>{" "}{colorModuleUnavailableReason === "env" ? `Syntax highlighting disabled (via ZY_CODE_SYNTAX_HIGHLIGHT=${process.env.ZY_CODE_SYNTAX_HIGHLIGHT})` : syntaxHighlightingDisabled ? `Syntax highlighting disabled (${syntaxToggleShortcut} to enable)` : syntaxTheme ? `Syntax theme: ${syntaxTheme.theme}${syntaxTheme.source ? ` (from ${syntaxTheme.source})` : ""} (${syntaxToggleShortcut} to disable)` : `Syntax highlighting enabled (${syntaxToggleShortcut} to disable)`}</Text>}</Box>}</Box>;
+        }} dim={false} filePath="demo.js" firstLine={null} width={columns} /></Box>}{<Text dimColor={true}>{" "}{colorModuleUnavailableReason === "env" ? tSync('themePicker.syntaxUnavailable', { envVar: `ZY_CODE_SYNTAX_HIGHLIGHT=${process.env.ZY_CODE_SYNTAX_HIGHLIGHT}` }) : syntaxHighlightingDisabled ? tSync('themePicker.syntaxDisabled', { shortcut: syntaxToggleShortcut }) : syntaxTheme ? (syntaxTheme.source ? tSync('themePicker.syntaxTheme', { themeName: syntaxTheme.theme, source: syntaxTheme.source, shortcut: syntaxToggleShortcut }) : tSync('themePicker.syntaxThemeSimple', { themeName: syntaxTheme.theme, shortcut: syntaxToggleShortcut })) : tSync('themePicker.syntaxEnabled', { shortcut: syntaxToggleShortcut })}</Text>}</Box>}</Box>;
   if (!showIntroText) {
-    return <>{<Box flexDirection="column">{content}</Box>}{<Box marginTop={1}>{showHelpTextBelow && helpText && <Box marginLeft={3}><Text dimColor={true}>{helpText}</Text></Box>}{!hideEscToCancel && <Box><Text dimColor={true} italic={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}</Text></Box>}</Box>}</>;
+    return <>{<Box flexDirection="column">{content}</Box>}{<Box marginTop={1}>{showHelpTextBelow && helpText && <Box marginLeft={3}><Text dimColor={true}>{helpText}</Text></Box>}{!hideEscToCancel && <Box><Text dimColor={true} italic={true}>{exitState.pending ? tSync('themePicker.exitAgain', { key: exitState.keyName }) : <Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}</Text></Box>}</Box>}</>;
   }
   return content;
 }

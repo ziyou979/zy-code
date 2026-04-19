@@ -188,7 +188,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       <ThemePicker
         onThemeSelect={handleThemeSelection}
         showIntroText={true}
-        helpText="To change this later, run /theme"
+        helpText={tSync('onboarding.themeHelpText')}
         hideEscToCancel={true}
         skipExitHandling={true}
       />
