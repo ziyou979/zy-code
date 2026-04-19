@@ -3,7 +3,8 @@ import type { BetaMessageParam as MessageParam } from '@anthropic-ai/sdk/resourc
 // 动态导入的最小值，用于计数令牌的 Bedrock 调用
 // 延迟约 ~279KB 的 AWS SDK 代码，直到实际需要 Bedrock 调用
 import type { CountTokensCommandInput } from '@aws-sdk/client-bedrock-runtime'
-import { getAPIProvider, isOpenAIFormatProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider, isNativeOpenAIProvider } from 'src/utils/model/providers.js'
+import { openAICreateMessage } from './api/openaiQuery.js'
 import { VERTEX_COUNT_TOKENS_ALLOWED_BETAS } from '../constants/betas.js'
 import type { Attachment } from '../utils/attachments.js'
 import { getModelBetas } from '../utils/betas.js'
@@ -302,6 +303,21 @@ export async function countTokensViaHaikuFallback(
   const betas = getModelBetas(model)
   const apiProvider = getAPIProvider()
   const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
+
+  // OpenAI 专用路径
+  if (isNativeOpenAIProvider(apiProvider)) {
+    const response = await openAICreateMessage({
+      model: normalizeModelStringForAPI(model),
+      max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
+      messages: messagesToSend,
+      tools: tools.length > 0 ? tools as any : undefined,
+      signal: undefined,
+    })
+    const usage = response.usage
+    const inputTokens = usage?.input_tokens ?? 0
+    return inputTokens
+  }
+
   // 为 Vertex 过滤 betas — 某些 betas（如 web-search）在某些
   // Vertex 端点上会导致 400 错误。参见 issue #10789。
   const filteredBetas =

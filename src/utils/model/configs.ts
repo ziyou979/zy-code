@@ -34,6 +34,7 @@ export const QWEN_3_6_PLUS_CONFIG: ModelConfigWithPricing = {
     ollama: 'qwen3.6-plus',
     zhipu: 'qwen3.6-plus',
     kimi: 'qwen3.6-plus',
+    openai: 'gpt-4o',
   },
   costs: {
     inputTokens: 5,

@@ -11,7 +11,8 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { logEvent } from './analytics/index.js'
 import { getAPIMetadata } from './api/zy.js'
 import { getLLMClient } from './api/client.js'
-import { getAPIProvider, isOpenAIFormatProvider } from '../utils/model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider, isNativeOpenAIProvider } from '../utils/model/providers.js'
+import { openAICreateMessage } from './api/openaiQuery.js'
 import {
   processRateLimitHeaders,
   shouldProcessRateLimits,
@@ -215,14 +216,28 @@ export function emitStatusChange(limits: ZyAILimits) {
 
 async function makeTestQuery() {
   const model = getSmallFastModel()
+  const messages: MessageParam[] = [{ role: 'user', content: 'quota' }]
+  const apiProvider = getAPIProvider()
+
+  // OpenAI 专用路径
+  if (isNativeOpenAIProvider(apiProvider)) {
+    const response = await openAICreateMessage({
+      model,
+      max_tokens: 1,
+      messages,
+    })
+    // 模拟 .asResponse() 返回
+    return new Response(null, {
+      headers: { 'x-request-id': response.id ?? '' },
+    })
+  }
+
   const anthropic = await getLLMClient({
     maxRetries: 0,
     model,
     source: 'quota_check',
   })
-  const messages: MessageParam[] = [{ role: 'user', content: 'quota' }]
   const betas = getModelBetas(model)
-  const apiProvider = getAPIProvider()
   const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
   // OpenAI 兼容格式不支持 beta API 和 betas 参数
@@ -232,7 +247,7 @@ async function makeTestQuery() {
   const createMessageFn = useOpenAIFormat
     ? anthropic.messages.create.bind(anthropic.messages)
     : anthropic.beta.messages.create.bind(anthropic.beta.messages)
-    
+
   return createMessageFn({
     model,
     max_tokens: 1,

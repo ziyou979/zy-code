@@ -232,7 +232,7 @@ function SpinnerWithVerbInner({
             {!allIdle && ` · ${tSync('spinner.teammatesRunning')}`}
           </Text>
         </Box>
-        {showSpinnerTree && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderTokenCount={leaderTokenCount} leaderIdleText={tSync('spinner.idle')} />}
+        {showSpinnerTree ? <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderTokenCount={leaderTokenCount} leaderIdleText={tSync('spinner.idle')} /> : <Box height={1} />}
       </Box>;
   }
 
@@ -245,7 +245,7 @@ function SpinnerWithVerbInner({
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>{idleText}</Text>
         </Box>
-        {showSpinnerTree && hasRunningTeammates && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? tSync('spinner.idle') : undefined} leaderTokenCount={leaderTokenCount} />}
+        {showSpinnerTree && hasRunningTeammates ? <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? tSync('spinner.idle') : undefined} leaderTokenCount={leaderTokenCount} /> : <Box height={1} />}
       </Box>;
   }
 
@@ -306,7 +306,13 @@ function SpinnerWithVerbInner({
           })}
               </Text>
             </MessageResponse>}
-        </Box> : null}
+        </Box> :
+    // 高度稳定化占位：当底部区域没有内容时，保持一个空行占位。
+    // 避免 spinner 区域高度在帧之间频繁波动（如 tip 出现/消失、
+    // TeammateSpinnerTree 显隐），导致 ink 主屏幕模式下的
+    // viewportY 计算在 growing/non-growing 分支之间翻转，
+    // 引起渲染重叠或 fullResetSequence 闪烁。
+    <Box height={1} />}
     </Box>;
 }
 

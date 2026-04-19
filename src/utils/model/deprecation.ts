@@ -44,6 +44,7 @@ const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
       ollama: null,
       zhipu: null,
       kimi: null,
+      openai: null,
     },
   },
   'zy-3-7-sonnet': {
@@ -59,6 +60,7 @@ const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
       ollama: null,
       zhipu: null,
       kimi: null,
+      openai: null,
     },
   },
   'zy-3-5-haiku': {

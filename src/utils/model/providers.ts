@@ -2,13 +2,13 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
 
-export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi'
+export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | 'openai'
 
 /**
  * Get the configured API provider from settings (zy.json).
  * Returns null if not configured in settings.
  */
-function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | null {
+function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | 'openai' | null {
   try {
     const { getSettings_DEPRECATED } = require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getSettings_DEPRECATED()
@@ -22,7 +22,7 @@ function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'gene
  * Get the configured API provider from onboarding config.
  * Returns null if config isn't ready yet (early startup) or not configured.
  */
-function getConfiguredProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | null {
+function getConfiguredProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | 'openai' | null {
   try {
     const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
     return getGlobalConfig().configuredProvider ?? null
@@ -64,6 +64,9 @@ export function getAPIProvider(): APIProvider {
   }
   if (isEnvTruthy(process.env.ZY_CODE_USE_KIMI)) {
     return 'kimi'
+  }
+  if (isEnvTruthy(process.env.ZY_CODE_USE_OPENAI)) {
+    return 'openai'
   }
   return isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)
     ? 'bedrock'
@@ -135,6 +138,10 @@ const PROVIDER_CAPABILITIES: Record<APIProvider, Set<ProviderCapability>> = {
     // Kimi (Moonshot) uses OpenAI-compatible API; capabilities depend on model.
     'thinking', 'structured_outputs', 'context_management', 'web_search',
   ]),
+  openai: new Set<ProviderCapability>([
+    // OpenAI uses OpenAI API; capabilities depend on model.
+    'thinking', 'structured_outputs', 'context_management', 'web_search',
+  ]),
   foundry: new Set<ProviderCapability>([
     'thinking', 'structured_outputs', 'context_management', 'web_search', 'interleaved_thinking',
   ]),
@@ -182,7 +189,18 @@ export function isAnthropicBaseUrl(): boolean {
  * request-ID logging.
  */
 export function isCompatibleProvider(provider: APIProvider): boolean {
-  return provider === 'anthropic' || provider === 'dashscope' || provider === 'openrouter' || provider === 'generic' || provider === 'ollama' || provider === 'zhipu' || provider === 'kimi'
+  return provider === 'anthropic' || provider === 'dashscope' || provider === 'openrouter' || provider === 'generic' || provider === 'ollama' || provider === 'zhipu' || provider === 'kimi' || provider === 'openai'
+}
+
+/** Providers that use native OpenAI API format (not Anthropic SDK at all) */
+export type NativeOpenAIProvider = 'openai'
+
+/**
+ * Returns true for providers that use the OpenAI SDK directly
+ * (chat completions API, not Anthropic messages API).
+ */
+export function isNativeOpenAIProvider(provider: APIProvider): provider is NativeOpenAIProvider {
+  return provider === 'openai'
 }
 
 /** OpenAI-compatible API format providers (use standard messages.create, no betas) */

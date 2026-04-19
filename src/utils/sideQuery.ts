@@ -14,7 +14,8 @@ import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
 import { getAPIMetadata } from '../services/api/zy.js'
 import { getLLMClient } from '../services/api/client.js'
-import { getAPIProvider, isOpenAIFormatProvider } from './model/providers.js'
+import { getAPIProvider, isOpenAIFormatProvider, isNativeOpenAIProvider } from './model/providers.js'
+import { openAICreateMessage } from '../services/api/openaiQuery.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
@@ -180,8 +181,41 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
 
   const normalizedModel = normalizeModelStringForAPI(model)
   const start = Date.now()
-  
-  // OpenAI 兼容格式的平台不支持 beta API，使用标准 API
+
+  // OpenAI 专用路径
+  if (isNativeOpenAIProvider(getAPIProvider())) {
+    const response = await openAICreateMessage({
+      model: normalizedModel,
+      max_tokens,
+      system: systemBlocks as any,
+      messages,
+      tools: tools as any,
+      tool_choice: tool_choice as any,
+      temperature,
+      signal,
+    })
+    const now = Date.now()
+    const lastCompletion = getLastApiCompletionTimestamp()
+    logEvent('tengu_api_success', {
+      requestId:
+        response.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      querySource:
+        opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      model:
+        normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      inputTokens: response.usage?.input_tokens ?? 0,
+      outputTokens: response.usage?.output_tokens ?? 0,
+      cachedInputTokens: 0,
+      uncachedInputTokens: 0,
+      durationMsIncludingRetries: now - start,
+      timeSinceLastApiCallMs:
+        lastCompletion !== null ? now - lastCompletion : undefined,
+    })
+    setLastApiCompletionTimestamp(now)
+    return response
+  }
+
+  // Anthropic / 其他 provider 路径
   const apiProvider = getAPIProvider()
   const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
   const filteredBetas = useOpenAIFormat ? [] : betas
@@ -199,14 +233,11 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
       messages,
       ...(tools && { tools }),
       ...(tool_choice && { tool_choice }),
-      // OpenAI 兼容格式不支持 output_config 参数
       ...(!useOpenAIFormat && output_format && { output_config: { format: output_format } }),
       ...(temperature !== undefined && { temperature }),
       ...(stop_sequences && { stop_sequences }),
-      // OpenAI 兼容格式不支持 thinking 参数
       ...(!useOpenAIFormat && thinkingConfig && { thinking: thinkingConfig }),
       ...(filteredBetas.length > 0 && { betas: filteredBetas }),
-      // OpenAI 兼容格式不支持 metadata 参数
       ...(!useOpenAIFormat && { metadata: getAPIMetadata() }),
     },
     { signal },

@@ -4,12 +4,15 @@ import type { GoogleAuth } from 'google-auth-library';
 import { getApiKey, getApiKeyFromApiKeyHelper, refreshAndGetAwsCredentials, refreshGcpCredentialsIfNeeded } from 'src/utils/auth.js';
 import { getUserAgent } from 'src/utils/http.js';
 import { getSmallFastModel } from 'src/utils/model/model.js';
-import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider } from 'src/utils/model/providers.js';
+import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider, isNativeOpenAIProvider } from 'src/utils/model/providers.js';
 import { getProxyFetchOptions } from 'src/utils/proxy.js';
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js';
 import { getOauthConfig } from '../../constants/oauth.js';
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js';
 import { getAWSRegion, getVertexRegionForModel, isEnvTruthy } from '../../utils/envUtils.js';
+import type { LLMProvider, StandardMessageRequest, StandardResponse, StandardStreamEvent } from './StandardMessageFormat.js';
+import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js';
+import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
 
 /**
  * 不同客户端类型的环境变量：
@@ -433,4 +436,27 @@ function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | unde
       headers
     });
   };
+}
+
+/**
+ * 统一的 LLM Provider 工厂函数。
+ * 根据当前 provider 自动选择对应的 Adapter 实现。
+ * 调用方使用 StandardMessageFormat 类型，不依赖任何 SDK。
+ */
+export function getLLMProvider(options?: {
+  apiKey?: string
+  baseURL?: string
+  timeout?: number
+}): LLMProvider {
+  const apiProvider = getAPIProvider()
+
+  if (isNativeOpenAIProvider(apiProvider)) {
+    return new OpenAIProviderAdapter({
+      apiKey: options?.apiKey,
+      baseURL: options?.baseURL || process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL,
+      timeout: options?.timeout,
+    })
+  }
+
+  return new AnthropicProviderAdapter()
 }

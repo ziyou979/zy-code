@@ -26,7 +26,12 @@ import {
   getAPIProvider,
   isAnthropicBaseUrl,
   isOpenAIFormatProvider,
+  isNativeOpenAIProvider,
 } from 'src/utils/model/providers.js'
+import {
+  openAICreateMessageStream,
+  openAICreateMessage,
+} from './openaiQuery.js'
 import {
   getAttributionHeader,
   getCLISyspromptPrefix,
@@ -537,6 +542,10 @@ export async function verifyApiKey(
   if (isOpenAIFormatProvider(getAPIProvider())) {
     return true
   }
+  // OpenAI provider: 跳过验证（使用 OPENAI_API_KEY）
+  if (isNativeOpenAIProvider(getAPIProvider())) {
+    return true
+  }
   // 如果在打印模式（非交互会话）下运行，跳过 API 验证
   if (isNonInteractiveSession) {
     return true
@@ -880,6 +889,18 @@ export async function* executeNonStreamingRequest(
         const apiProvider = getAPIProvider()
         const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
+        // OpenAI 专用路径
+        if (isNativeOpenAIProvider(apiProvider)) {
+          return await openAICreateMessage({
+            ...adjustedParams,
+            model: normalizeModelStringForAPI(adjustedParams.model),
+            betas: undefined,
+            thinking: undefined,
+            context_management: undefined,
+            signal: retryOptions.signal,
+          })
+        }
+
         // OpenAI 兼容格式的平台不支持 beta API
         const createMessageFn = useOpenAIFormat
           ? anthropic.messages.create.bind(anthropic.messages)
@@ -1059,6 +1080,12 @@ async function* queryModel(
   StreamEvent | AssistantMessage | SystemAPIErrorMessage,
   void
 > {
+  // OpenAI provider: 路由到专用实现
+  if (isNativeOpenAIProvider(getAPIProvider())) {
+    yield* queryModelOpenAI(messages, systemPrompt, thinkingConfig, tools, signal, options)
+    return
+  }
+
   // 首先检查廉价条件 — off-switch 的 await 会阻塞在 GrowthBook
   // 初始化上（~10ms）。对于非 Opus 模型（haiku、sonnet），这会完全跳过 await。
   // 订阅者根本不会走这条路径。
@@ -1850,6 +1877,27 @@ async function* queryModel(
         // since we handle tool input accumulation ourselves
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
         
+        // OpenAI 专用路径
+        if (isNativeOpenAIProvider(getAPIProvider())) {
+          const openAIParams = {
+            ...params,
+            stream: true,
+            betas: undefined,
+            thinking: undefined,
+            context_management: undefined,
+          }
+          // OpenAI 流式请求不需要 .withResponse()，直接返回可迭代对象
+          // 为了兼容下游处理，我们将其包装为与 Anthropic Stream 兼容的格式
+          const streamIterable = openAICreateMessageStream(openAIParams)
+          streamRequestId = randomUUID()
+          // 返回一个伪 Stream 对象，其 iterator 直接产出 Anthropic 格式事件
+          return (async function* () {
+            for await (const event of streamIterable) {
+              yield event
+            }
+          })() as any
+        }
+
         // OpenAI 兼容格式的平台不支持 beta API，需要使用标准的 messages.create
         const apiProvider = getAPIProvider()
         const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
