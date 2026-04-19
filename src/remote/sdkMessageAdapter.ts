@@ -8,6 +8,7 @@ import type {
   SDKSystemMessage,
   SDKToolProgressMessage,
 } from '../entrypoints/agentSdkTypes.js'
+import { tSync } from '../i18n/index.js'
 import type {
   AssistantMessage,
   Message,
@@ -97,7 +98,7 @@ function convertStatusMessage(msg: SDKStatusMessage): SystemMessage | null {
     subtype: 'informational',
     content:
       msg.status === 'compacting'
-        ? 'Compacting conversation…'
+        ? tSync('spinner.compacting')
         : `Status: ${msg.status}`,
     level: 'info',
     uuid: msg.uuid,

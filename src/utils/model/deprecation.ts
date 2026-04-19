@@ -1,80 +1,19 @@
 /**
  * Model deprecation utilities
- *
- * Contains information about deprecated models and their retirement dates.
  */
 
-import { type APIProvider, getAPIProvider } from './providers.js'
-
-type DeprecatedModelInfo = {
-  isDeprecated: true
-  modelName: string
-  retirementDate: string
-}
-
-type NotDeprecatedInfo = {
-  isDeprecated: false
-}
-
-type DeprecationInfo = DeprecatedModelInfo | NotDeprecatedInfo
-
-type DeprecationEntry = {
-  /** Human-readable model name */
-  modelName: string
-  /** Retirement dates by provider (null = not deprecated for that provider) */
-  retirementDates: Record<APIProvider, string | null>
+type DeprecationInfo = {
+  isDeprecated: boolean
+  modelName?: string
+  retirementDate?: string
 }
 
 /**
  * Deprecated models and their retirement dates by provider.
  * Keys are substrings to match in model IDs (case-insensitive).
- * To add a new deprecated model, add an entry to this object.
  */
-const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
-  'zy-3-opus': {
-    modelName: 'Zy 3 Opus',
-    retirementDates: {
-      anthropic: 'January 5, 2026',
-      bedrock: 'January 15, 2026',
-      vertex: 'January 5, 2026',
-      foundry: 'January 5, 2026',
-      dashscope: null,
-      openrouter: null,
-      generic: null,
-      ollama: null,
-      zhipu: null,
-      kimi: null,
-      openai: null,
-    },
-  },
-  'zy-3-7-sonnet': {
-    modelName: 'Zy 3.7 Sonnet',
-    retirementDates: {
-      anthropic: 'February 19, 2026',
-      bedrock: 'April 28, 2026',
-      vertex: 'May 11, 2026',
-      foundry: 'February 19, 2026',
-      dashscope: null,
-      openrouter: null,
-      generic: null,
-      ollama: null,
-      zhipu: null,
-      kimi: null,
-      openai: null,
-    },
-  },
-  'zy-3-5-haiku': {
-    modelName: 'Zy 3.5 Haiku',
-    retirementDates: {
-      anthropic: 'February 19, 2026',
-      bedrock: null,
-      vertex: null,
-      foundry: null,
-      dashscope: null,
-      openrouter: null,
-      generic: null,
-    } as any,
-  },
+const DEPRECATED_MODELS: Record<string, DeprecationInfo> = {
+  // No deprecated models configured
 }
 
 /**
@@ -82,17 +21,10 @@ const DEPRECATED_MODELS: Record<string, DeprecationEntry> = {
  */
 function getDeprecatedModelInfo(modelId: string): DeprecationInfo {
   const lowercaseModelId = modelId.toLowerCase()
-  const provider = getAPIProvider()
 
   for (const [key, value] of Object.entries(DEPRECATED_MODELS)) {
-    const retirementDate = value.retirementDates[provider]
-    if (!lowercaseModelId.includes(key) || !retirementDate) {
-      continue
-    }
-    return {
-      isDeprecated: true,
-      modelName: value.modelName,
-      retirementDate,
+    if (lowercaseModelId.includes(key)) {
+      return value
     }
   }
 

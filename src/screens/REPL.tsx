@@ -1,4 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { tSync } from '../i18n/index.js'
 import { feature } from 'bun:bundle';
 import { spawnSync } from 'child_process';
 import { snapshotOutputTokensForTurn, getCurrentTurnTokenBudget, getTurnOutputTokens, getBudgetContinuationCount, getTotalInputTokens } from '../bootstrap/state.js';
@@ -260,7 +261,6 @@ import { performStartupChecks } from 'src/utils/plugins/performStartupChecks.js'
 import { UserTextMessage } from 'src/components/messages/UserTextMessage.js';
 import { AwsAuthStatusBox } from '../components/AwsAuthStatusBox.js';
 import { useRateLimitWarningNotification } from 'src/hooks/notifs/useRateLimitWarningNotification.js';
-import { useDeprecationWarningNotification } from 'src/hooks/notifs/useDeprecationWarningNotification.js';
 import { useNpmDeprecationNotification } from 'src/hooks/notifs/useNpmDeprecationNotification.js';
 import { useIDEStatusIndicator } from 'src/hooks/notifs/useIDEStatusIndicator.js';
 import { useModelMigrationNotifications } from 'src/hooks/notifs/useModelMigrationNotifications.js';
@@ -700,7 +700,6 @@ export function REPL({
   usePluginAutoupdateNotification();
   useSettingsErrors();
   useRateLimitWarningNotification(mainLoopModel);
-  useDeprecationWarningNotification(mainLoopModel);
   useNpmDeprecationNotification();
   useAntOrgWarningNotification();
   useInstallMessages();
@@ -2429,10 +2428,10 @@ export function REPL({
           case 'hooks_start':
             setSpinnerColor('ZyBlue_FOR_SYSTEM_SPINNER');
             setSpinnerShimmerColor('ZyBlueShimmer_FOR_SYSTEM_SPINNER');
-            setSpinnerMessage(event.hookType === 'pre_compact' ? 'Running PreCompact hooks\u2026' : event.hookType === 'post_compact' ? 'Running PostCompact hooks\u2026' : 'Running SessionStart hooks\u2026');
+            setSpinnerMessage(tSync('spinner.hooksRunning', { hookType: event.hookType === 'pre_compact' ? 'PreCompact' : event.hookType === 'post_compact' ? 'PostCompact' : 'SessionStart' }));
             break;
           case 'compact_start':
-            setSpinnerMessage('Compacting conversation');
+            setSpinnerMessage(tSync('spinner.compacting'));
             break;
           case 'compact_end':
             setSpinnerMessage(null);

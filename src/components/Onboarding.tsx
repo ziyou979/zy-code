@@ -5,14 +5,16 @@ import { Box, Link, Newline, Text, useTheme } from '../ink.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js';
 import { saveGlobalConfig } from '../utils/config.js';
+import { warmI18n, tSync } from '../i18n/index.js';
+import type { UiLanguage } from '../i18n/types.js';
+import { updateSettingsForSource } from '../utils/settings/settings.js';
 import { Select } from './CustomSelect/select.js';
 import { WelcomeV2 } from './LogoV2/WelcomeV2.js';
 import { PressEnterToContinue } from './PressEnterToContinue.js';
 import { ThemePicker } from './ThemePicker.js';
 import { OrderedList } from './ui/OrderedList.js';
-import { tSync } from '../i18n/index.js';
 
-type StepId = 'preflight' | 'theme' | 'platform' | 'model' | 'security' | 'terminal-setup';
+type StepId = 'language' | 'theme' | 'platform' | 'model' | 'security' | 'terminal-setup';
 
 interface OnboardingStep {
   id: StepId;
@@ -134,12 +136,44 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     }
   }
 
+  async function handleLanguageSelection(lang: UiLanguage) {
+    // Save language to user settings
+    updateSettingsForSource('userSettings', { language: lang === 'en' ? undefined : lang });
+    // Re-warm i18n cache with the new language so subsequent steps render in the selected language
+    await warmI18n();
+    goToNextStep();
+  }
+
   function handleThemeSelection(newTheme: ReturnType<typeof useTheme>[0]) {
     setTheme(newTheme);
     goToNextStep();
   }
 
   const exitState = useExitOnCtrlCDWithKeybindings();
+
+  // Language selection step — must be first so all subsequent steps render in the chosen language
+  const languageStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <Text bold>{tSync('onboarding.selectLanguage')}</Text>
+      <Text dimColor>{tSync('onboarding.languageDescription')}</Text>
+      <Box flexDirection="column" width={60} gap={1}>
+        <Select
+          options={[
+            { label: 'English', value: 'en', description: tSync('onboarding.language.english') },
+            { label: '中文', value: 'zh-CN', description: tSync('onboarding.language.chinese') },
+          ]}
+          onChange={value => {
+            void handleLanguageSelection(value as UiLanguage);
+          }}
+          onCancel={() => {
+            // Default to English if skipped
+            void handleLanguageSelection('en');
+          }}
+        />
+        <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
+      </Box>
+    </Box>
+  );
 
   // Theme step
   const themeStep = (
@@ -155,12 +189,13 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   );
 
   // Platform setup step (replaces OAuth + API key approval)
-  function handlePlatformDone(provider: PlatformProvider, apiKey: string) {
+  function handlePlatformDone(provider: PlatformProvider, apiKey: string, apiFormat?: 'anthropic' | 'openai') {
     const normalizedKey = normalizeApiKeyForConfig(apiKey);
     saveGlobalConfig(current => ({
       ...current,
       configuredProvider: provider,
       configuredApiKey: apiKey,
+      configuredApiFormat: provider === 'generic' ? apiFormat : undefined,
       customApiKeyResponses: {
         ...current.customApiKeyResponses,
         approved: [...(current.customApiKeyResponses?.approved ?? []), normalizedKey],
@@ -220,8 +255,9 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     </Box>
   );
 
-  // Build steps array
+  // Build steps array — language must be first
   const steps = [];
+  steps.push({ id: 'language', component: languageStep });
   steps.push({ id: 'theme', component: themeStep });
   steps.push({ id: 'platform', component: platformStep });
   steps.push({ id: 'model', component: modelStep });
@@ -308,20 +344,32 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
 function PlatformSetup({
   onDone,
 }: {
-  onDone(provider: PlatformProvider, apiKey: string): void;
+  onDone(provider: PlatformProvider, apiKey: string, apiFormat?: 'anthropic' | 'openai'): void;
 }): React.ReactNode {
-  const [phase, setPhase] = useState<'provider' | 'apiKey'>('provider');
+  const [phase, setPhase] = useState<'provider' | 'apiFormat' | 'apiKey'>('provider');
   const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null);
 
   const handleProviderSelect = (value: string) => {
     const provider = value as PlatformProvider;
     setSelectedProvider(provider);
+    // For generic, ask about API format first
+    if (provider === 'generic') {
+      setPhase('apiFormat');
+    } else {
+      setPhase('apiKey');
+    }
+  };
+
+  const handleApiFormatDone = (format: 'anthropic' | 'openai') => {
     setPhase('apiKey');
+    // Store format temporarily; it will be passed through handleApiKeyDone
+    (handleApiKeyDone as any)._apiFormat = format;
   };
 
   const handleApiKeyDone = (apiKey: string) => {
     if (selectedProvider) {
-      onDone(selectedProvider, apiKey);
+      const apiFormat = (handleApiKeyDone as any)._apiFormat;
+      onDone(selectedProvider, apiKey, apiFormat);
     }
   };
 
@@ -345,6 +393,26 @@ function PlatformSetup({
     );
   }
 
+  if (phase === 'apiFormat') {
+    return (
+      <>
+        <Text bold>{tSync('onboarding.selectApiFormat')}</Text>
+        <Text dimColor>{tSync('onboarding.apiFormatDescription')}</Text>
+        <Box flexDirection="column" width={60} gap={1}>
+          <Select
+            options={[
+              { label: tSync('onboarding.apiFormat.anthropic'), value: 'anthropic', description: tSync('onboarding.apiFormat.anthropicDesc') },
+              { label: tSync('onboarding.apiFormat.openai'), value: 'openai', description: tSync('onboarding.apiFormat.openaiDesc') },
+            ]}
+            onChange={value => handleApiFormatDone(value as 'anthropic' | 'openai')}
+            onCancel={() => setPhase('provider')}
+          />
+          <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
+        </Box>
+      </>
+    );
+  }
+
   // apiKey phase
   const platform = PLATFORMS.find(p => p.provider === selectedProvider);
   return (
@@ -352,7 +420,13 @@ function PlatformSetup({
       apiKeyLabel={platform?.apiKeyLabel ?? 'API Key'}
       baseUrlHint={platform?.baseUrlHint}
       onDone={handleApiKeyDone}
-      onBack={() => setPhase('provider')}
+      onBack={() => {
+        if (selectedProvider === 'generic') {
+          setPhase('apiFormat');
+        } else {
+          setPhase('provider');
+        }
+      }}
     />
   );
 }

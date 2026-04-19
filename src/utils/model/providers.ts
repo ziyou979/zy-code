@@ -204,7 +204,7 @@ export function isNativeOpenAIProvider(provider: APIProvider): provider is Nativ
 }
 
 /** OpenAI-compatible API format providers (use standard messages.create, no betas) */
-export type OpenAIFormatProvider = 'dashscope'
+export type OpenAIFormatProvider = 'dashscope' | 'generic'
 
 /**
  * Returns true for providers that use an OpenAI-compatible API format
@@ -213,7 +213,17 @@ export type OpenAIFormatProvider = 'dashscope'
  * context_management, etc.
  */
 export function isOpenAIFormatProvider(provider: APIProvider): provider is OpenAIFormatProvider {
-  return provider === 'dashscope'
+  if (provider === 'dashscope') return true
+  // generic 平台由用户在 onboarding 时选择 API 格式
+  if (provider === 'generic') {
+    try {
+      const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
+      return getGlobalConfig().configuredApiFormat === 'openai'
+    } catch {
+      return false
+    }
+  }
+  return false
 }
 
 /** Providers that require custom endpoint configuration (base URL) but support full Anthropic format */

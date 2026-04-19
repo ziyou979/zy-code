@@ -226,6 +226,8 @@ export type GlobalConfig = {
   primaryApiKey?: string // 未设置环境变量时的主 API key，通过 oauth 设置（TODO: 重命名）
   /** onboarding 期间配置的 API 提供商（如 'anthropic'、'dashscope'、'openrouter'、'generic'） */
   configuredProvider?: 'anthropic' | 'dashscope' | 'openrouter' | 'openai' | 'ollama' | 'zhipu' | 'kimi' | 'generic'
+  /** onboarding 期间配置的 API 格式（仅 generic 平台有效） */
+  configuredApiFormat?: 'anthropic' | 'openai'
   /** onboarding 期间配置的 API key */
   configuredApiKey?: string
   /** 对话默认模型，onboarding 期间配置 */

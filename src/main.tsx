@@ -116,7 +116,6 @@ import { findGitRoot, getBranch, getIsGit, getWorktreeCount } from './utils/git.
 import { getGhAuthStatus } from './utils/github/ghAuthStatus.js';
 import { safeParseJSON } from './utils/json.js';
 import { logError } from './utils/log.js';
-import { getModelDeprecationWarning } from './utils/model/deprecation.js';
 import { getDefaultMainLoopModel, getUserSpecifiedModelSetting, normalizeModelStringForAPI, parseUserSpecifiedModel } from './utils/model/model.js';
 import { ensureModelStringsInitialized } from './utils/model/modelStrings.js';
 import { PERMISSION_MODES } from './utils/permissions/PermissionMode.js';
@@ -2861,9 +2860,6 @@ async function run(): Promise<CommanderCommand> {
       agent: agentSetting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
 
-    // 获取初始模型的弃用警告（resolvedInitialModel 早先为钩子并行化计算）
-    const deprecationWarning = getModelDeprecationWarning(resolvedInitialModel);
-
     // 构建初始通知队列
     const initialNotifications: Array<{
       key: string;
@@ -2875,14 +2871,6 @@ async function run(): Promise<CommanderCommand> {
       initialNotifications.push({
         key: 'permission-mode-notification',
         text: permissionModeNotification,
-        priority: 'high'
-      });
-    }
-    if (deprecationWarning) {
-      initialNotifications.push({
-        key: 'model-deprecation-warning',
-        text: deprecationWarning,
-        color: 'warning',
         priority: 'high'
       });
     }
