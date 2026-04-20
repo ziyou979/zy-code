@@ -262,26 +262,28 @@ export async function getLLMClient({
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic;
   }
   if (getAPIProvider() === 'dashscope') {
-    // 百炼 API 兼容 Anthropic 协议格式，通过 settings.json 配置
-    // 兼容旧的 DASHSCOPE_API_KEY 环境变量
+    // 百炼 API 支持 Anthropic 和 OpenAI 两种消息格式
+    // 根据用户在 onboarding 时选择的消息格式决定端点
+    const { isOpenAIFormatProvider } = await import('../../utils/model/providers.js');
     const dashscopeApiKey = getApiKey();
-    // 使用 Anthropic 兼容端点，而非 OpenAI 兼容端点
-    const dashscopeBaseURL = process.env.DASHSCOPE_BASE_URL || 'https://dashscope.aliyuncs.com/apps/anthropic/';
 
-    // 百炼 API 使用 OpenAI 兼容格式，需要清理不兼容的 headers
-    // 创建百炼专用的 headers，移除平台特定的 headers
+    // 根据用户选择的消息格式决定端点
+    let dashscopeBaseURL: string;
+    if (process.env.DASHSCOPE_BASE_URL) {
+      dashscopeBaseURL = process.env.DASHSCOPE_BASE_URL;
+    } else if (isOpenAIFormatProvider('dashscope')) {
+      // OpenAI 兼容端点
+      dashscopeBaseURL = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    } else {
+      // Anthropic 兼容端点（默认）
+      dashscopeBaseURL = 'https://dashscope.aliyuncs.com/apps/anthropic/';
+    }
+
+    // 创建百炼专用的 headers
     const dashscopeHeaders: Record<string, string> = {};
-
-    // 只保留必要的 headers，移除平台特定的 headers
     if (defaultHeaders['User-Agent']) {
       dashscopeHeaders['User-Agent'] = defaultHeaders['User-Agent'];
     }
-    // 移除可能导致不兼容的 headers
-    // - X-Zy-Code-Session-Id: 平台特定
-    // - x-app: 平台特定
-    // - x-zy-*: 平台特定
-    // - x-client-app: 平台特定
-    // - x-anthropic-*: 平台特定
 
     const dashscopeConfig: ConstructorParameters<typeof Anthropic>[0] = {
       apiKey: dashscopeApiKey,

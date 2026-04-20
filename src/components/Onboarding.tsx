@@ -35,6 +35,8 @@ interface PlatformConfig {
   baseUrlHint?: string;
   /** Default model suggestion and common models for this provider */
   suggestedModels?: Array<{ label: string; value: string; description: string }>;
+  /** Whether this provider supports choosing API format (Anthropic vs OpenAI) */
+  supportsApiFormat?: boolean;
 }
 
 /**
@@ -55,6 +57,8 @@ function getPlatforms(): PlatformConfig[] {
         { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: tSync('onboarding.model.qwen35plusDesc') },
         { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: tSync('onboarding.model.qwen35flashDesc') },
       ],
+      // 百炼支持 Anthropic 和 OpenAI 两种消息格式，类似 generic 平台
+      supportsApiFormat: true,
     },
     {
       provider: 'openai',
@@ -88,8 +92,8 @@ function getPlatforms(): PlatformConfig[] {
     },
     {
       provider: 'ollama',
-      label: tSync('onboarding.platform.ollama'),
-      description: tSync('onboarding.platform.ollamaDesc'),
+      label: tSync('onboarding.platform.local'),
+      description: tSync('onboarding.platform.localDesc'),
       apiKeyLabel: tSync('onboarding.platform.ollamaApiKey'),
       baseUrlHint: 'http://localhost:11434/v1',
       suggestedModels: [
@@ -202,7 +206,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       ...current,
       configuredProvider: provider,
       configuredApiKey: apiKey,
-      configuredApiFormat: provider === 'generic' ? apiFormat : undefined,
+      configuredApiFormat: (provider === 'generic' || provider === 'dashscope') ? apiFormat : undefined,
       customApiKeyResponses: {
         ...current.customApiKeyResponses,
         approved: [...(current.customApiKeyResponses?.approved ?? []), normalizedKey],
@@ -359,8 +363,9 @@ function PlatformSetup({
   const handleProviderSelect = (value: string) => {
     const provider = value as PlatformProvider;
     setSelectedProvider(provider);
-    // For generic, ask about API format first
-    if (provider === 'generic') {
+    // For generic or dashscope, ask about API format first
+    const platform = getPlatforms().find(p => p.provider === provider);
+    if (provider === 'generic' || platform?.supportsApiFormat) {
       setPhase('apiFormat');
     } else {
       setPhase('apiKey');
@@ -429,6 +434,8 @@ function PlatformSetup({
       onDone={handleApiKeyDone}
       onBack={() => {
         if (selectedProvider === 'generic') {
+          setPhase('apiFormat');
+        } else if (selectedProvider === 'dashscope') {
           setPhase('apiFormat');
         } else {
           setPhase('provider');

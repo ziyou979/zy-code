@@ -701,6 +701,9 @@ export function extractTag(html: string, tagName: string): string | null {
 }
 
 export function isNotEmptyMessage(message: Message): boolean {
+  if (!message) {
+    return false
+  }
   if (
     message.type === 'progress' ||
     message.type === 'attachment' ||

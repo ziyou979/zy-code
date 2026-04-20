@@ -213,7 +213,15 @@ export type OpenAIFormatProvider = 'dashscope' | 'generic'
  * context_management, etc.
  */
 export function isOpenAIFormatProvider(provider: APIProvider): provider is OpenAIFormatProvider {
-  if (provider === 'dashscope') return true
+  if (provider === 'dashscope') {
+    // 百炼支持 Anthropic 和 OpenAI 两种格式，根据用户选择决定
+    try {
+      const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
+      return getGlobalConfig().configuredApiFormat === 'openai'
+    } catch {
+      return false
+    }
+  }
   // generic 平台由用户在 onboarding 时选择 API 格式
   if (provider === 'generic') {
     try {

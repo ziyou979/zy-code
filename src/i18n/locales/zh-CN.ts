@@ -598,6 +598,8 @@ export const zhCN: TranslationResource = {
   'onboarding.platform.dashscopeDesc': '阿里云百炼平台',
   'onboarding.platform.openai': 'OpenAI',
   'onboarding.platform.openaiDesc': 'OpenAI API（GPT-4、o系列等）',
+  'onboarding.platform.local': '本地模型',
+  'onboarding.platform.localDesc': '本地部署的模型（Ollama、vLLM 等）',
   'onboarding.platform.ollama': 'Ollama',
   'onboarding.platform.ollamaDesc': '本地开源模型（本地运行）',
   'onboarding.platform.ollamaApiKey': 'Ollama 地址（可选）',

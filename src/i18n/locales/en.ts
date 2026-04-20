@@ -482,6 +482,8 @@ export const en: TranslationResource = {
   'onboarding.platform.dashscopeDesc': 'Alibaba Cloud Bailian Platform',
   'onboarding.platform.openai': 'OpenAI',
   'onboarding.platform.openaiDesc': 'OpenAI API (GPT-4, o-series, etc.)',
+  'onboarding.platform.local': 'Local Model',
+  'onboarding.platform.localDesc': 'Locally deployed models (Ollama, vLLM, etc.)',
   'onboarding.platform.ollama': 'Ollama',
   'onboarding.platform.ollamaDesc': 'Local open-source models (run locally)',
   'onboarding.platform.ollamaApiKey': 'Ollama URL (optional)',
