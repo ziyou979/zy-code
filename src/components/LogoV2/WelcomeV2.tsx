@@ -19,21 +19,21 @@ function WelcomeContent({ separator }: { separator: string }) {
       <Text><Text color="zy">{"Hello, ready to build?"} </Text><Text dimColor={true}>v{MACRO.VERSION}</Text></Text>
       <Text>{separator}</Text>
       <Text>{"                                                          "}</Text>
-      <Text>{"       "}<Text bold={true}>*</Text><Text>{"        ░░░░░░" + " ".repeat(36)}</Text>
+      <Text>{"       "}<Text bold={true}>*</Text>{"        ░░░░░░" + " ".repeat(36)}</Text>
       <Text>{"    ░░░░░░░░░░" + " ".repeat(22) + "███▓▓░░░░░░" + " ".repeat(11)}</Text>
-      <Text>{"   ░░░░░░░░░░░░░░░░░░      *        "}<Text dimColor={true}>{"███▓▓░" + " ".repeat(16)}</Text>
+      <Text>{"   ░░░░░░░░░░░░░░░░░░      *        "}<Text dimColor={true}>{"███▓▓░" + " ".repeat(16)}</Text></Text>
       <Text>{"                                                          "}</Text>
-      <Text>{" ".repeat(21)}<Text color="clawd_body">{zy1}</Text><Text>{" ".repeat(22)}</Text>
-      <Text>{" ".repeat(21)}<Text color="clawd_body">{zy2}</Text><Text>{" ".repeat(22)}</Text>
-      <Text>{" ".repeat(22)}<Text color="clawd_body">{zy3}</Text><Text>{" ".repeat(22)}</Text>
-      <Text>{" ".repeat(22)}<Text color="clawd_body">{zy4}</Text><Text>{" ".repeat(23)}</Text>
-      <Text>{" ".repeat(22)}<Text color="clawd_body">{zy5}</Text><Text>{" ".repeat(23)}</Text>
+      <Text>{" ".repeat(21)}<Text color="clawd_body">{zy1}</Text>{" ".repeat(22)}</Text>
+      <Text>{" ".repeat(21)}<Text color="clawd_body">{zy2}</Text>{" ".repeat(22)}</Text>
+      <Text>{" ".repeat(22)}<Text color="clawd_body">{zy3}</Text>{" ".repeat(22)}</Text>
+      <Text>{" ".repeat(22)}<Text color="clawd_body">{zy4}</Text>{" ".repeat(23)}</Text>
+      <Text>{" ".repeat(22)}<Text color="clawd_body">{zy5}</Text>{" ".repeat(23)}</Text>
       <Text>{"                                                          "}</Text>
-      <Text>{"              "}<Text color="clawd_body">▄▀▀▀▀▀▀▀▄</Text><Text>{"         "}<Text dimColor={true}>*</Text><Text>{" ".repeat(25)}</Text>
-      <Text>{"             "}<Text color="clawd_body">█  ●   ●  █</Text><Text>{" ".repeat(34)}</Text>
-      <Text>{"              "}<Text color="clawd_body">█  ▀▀▀  █</Text><Text>{" ".repeat(35)}</Text>
-      <Text>{"              "}<Text color="clawd_body">▀▄     ▄▀</Text><Text>{"      "}<Text bold={true}>*</Text><Text>{" ".repeat(28)}</Text>
-      <Text>{"               "}<Text color="clawd_body">▀▄▀▀▀▄▀</Text><Text>{" ".repeat(36)}</Text>
+      <Text>{"              "}<Text color="clawd_body">▄▀▀▀▀▀▀▀▄</Text>{"         "}<Text dimColor={true}>*</Text>{" ".repeat(25)}</Text>
+      <Text>{"             "}<Text color="clawd_body">█  ●   ●  █</Text>{" ".repeat(34)}</Text>
+      <Text>{"              "}<Text color="clawd_body">█  ▀▀▀  █</Text>{" ".repeat(35)}</Text>
+      <Text>{"              "}<Text color="clawd_body">▀▄     ▄▀</Text>{"      "}<Text bold={true}>*</Text>{" ".repeat(28)}</Text>
+      <Text>{"               "}<Text color="clawd_body">▀▄▀▀▀▄▀</Text>{" ".repeat(36)}</Text>
       <Text>{"                                                          "}</Text>
       <Text>{separator}</Text>
     </Box>

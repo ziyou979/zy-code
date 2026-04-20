@@ -953,50 +953,50 @@ export function Config({
   }] : []), ...(process.env.ZY_API_KEY && !isRunningOnHomespace() ? [{
     id: 'apiKey',
     label: <Text>
-                Use custom API key:{' '}
+                Use API key:{' '}
                 <Text bold>
                   {normalizeApiKeyForConfig(process.env.ZY_API_KEY)}
                 </Text>
               </Text>,
-    searchText: 'Use custom API key',
-    value: Boolean(process.env.ZY_API_KEY && globalConfig.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(process.env.ZY_API_KEY))),
+    searchText: 'Use API key',
+    value: Boolean(process.env.ZY_API_KEY && globalConfig.apiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(process.env.ZY_API_KEY))),
     type: 'boolean' as const,
     onChange(useCustomKey: boolean) {
       saveGlobalConfig(current_22 => {
         const updated = {
           ...current_22
         };
-        if (!updated.customApiKeyResponses) {
-          updated.customApiKeyResponses = {
+        if (!updated.apiKeyResponses) {
+          updated.apiKeyResponses = {
             approved: [],
             rejected: []
           };
         }
-        if (!updated.customApiKeyResponses.approved) {
-          updated.customApiKeyResponses = {
-            ...updated.customApiKeyResponses,
+        if (!updated.apiKeyResponses.approved) {
+          updated.apiKeyResponses = {
+            ...updated.apiKeyResponses,
             approved: []
           };
         }
-        if (!updated.customApiKeyResponses.rejected) {
-          updated.customApiKeyResponses = {
-            ...updated.customApiKeyResponses,
+        if (!updated.apiKeyResponses.rejected) {
+          updated.apiKeyResponses = {
+            ...updated.apiKeyResponses,
             rejected: []
           };
         }
         if (process.env.ZY_API_KEY) {
           const truncatedKey = normalizeApiKeyForConfig(process.env.ZY_API_KEY);
           if (useCustomKey) {
-            updated.customApiKeyResponses = {
-              ...updated.customApiKeyResponses,
-              approved: [...(updated.customApiKeyResponses.approved ?? []).filter(k => k !== truncatedKey), truncatedKey],
-              rejected: (updated.customApiKeyResponses.rejected ?? []).filter(k_0 => k_0 !== truncatedKey)
+            updated.apiKeyResponses = {
+              ...updated.apiKeyResponses,
+              approved: [...(updated.apiKeyResponses.approved ?? []).filter(k => k !== truncatedKey), truncatedKey],
+              rejected: (updated.apiKeyResponses.rejected ?? []).filter(k_0 => k_0 !== truncatedKey)
             };
           } else {
-            updated.customApiKeyResponses = {
-              ...updated.customApiKeyResponses,
-              approved: (updated.customApiKeyResponses.approved ?? []).filter(k_1 => k_1 !== truncatedKey),
-              rejected: [...(updated.customApiKeyResponses.rejected ?? []).filter(k_2 => k_2 !== truncatedKey), truncatedKey]
+            updated.apiKeyResponses = {
+              ...updated.apiKeyResponses,
+              approved: (updated.apiKeyResponses.approved ?? []).filter(k_1 => k_1 !== truncatedKey),
+              rejected: [...(updated.apiKeyResponses.rejected ?? []).filter(k_2 => k_2 !== truncatedKey), truncatedKey]
             };
           }
         }
@@ -1065,10 +1065,10 @@ export function Config({
     // On homespace, ZY_API_KEY is preserved in process.env for child
     // processes but ignored by ZY Code itself (see auth.ts).
     const effectiveApiKey = isRunningOnHomespace() ? undefined : process.env.ZY_API_KEY;
-    const initialUsingCustomKey = Boolean(effectiveApiKey && initialConfig.current.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
-    const currentUsingCustomKey = Boolean(effectiveApiKey && globalConfig.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
+    const initialUsingCustomKey = Boolean(effectiveApiKey && initialConfig.current.apiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
+    const currentUsingCustomKey = Boolean(effectiveApiKey && globalConfig.apiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
     if (initialUsingCustomKey !== currentUsingCustomKey) {
-      formattedChanges.push(`${currentUsingCustomKey ? 'Enabled' : 'Disabled'} custom API key`);
+      formattedChanges.push(`${currentUsingCustomKey ? 'Enabled' : 'Disabled'} API key`);
       logEvent('tengu_config_changed', {
         key: 'env.ZY_API_KEY' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: currentUsingCustomKey as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS

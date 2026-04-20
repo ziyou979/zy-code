@@ -36,9 +36,9 @@ export async function performLogout({
       updated.hasCompletedOnboarding = false;
       updated.subscriptionNoticeCount = 0;
       updated.hasAvailableSubscription = false;
-      if (updated.customApiKeyResponses?.approved) {
-        updated.customApiKeyResponses = {
-          ...updated.customApiKeyResponses,
+      if (updated.apiKeyResponses?.approved) {
+        updated.apiKeyResponses = {
+          ...updated.apiKeyResponses,
           approved: []
         };
       }

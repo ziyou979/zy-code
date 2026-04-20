@@ -784,7 +784,7 @@ export function getAssistantMessageFromError(
     // 环境变量仍保持活跃。这三个守卫确保我们仅在环境变量
     // 实际设置且实际在线路上时才归咎于环境变量。
     if (
-      source === 'customApiKey' &&
+      source === 'settingsApiKey' &&
       process.env.ZY_API_KEY &&
       true
     ) {
@@ -816,7 +816,7 @@ export function getAssistantMessageFromError(
     // 检查 API 密钥是否来自外部来源
     const { source } = getApiKeyWithSource()
     const isExternalSource =
-      source === 'customApiKey' || source === 'apiKeyHelper'
+      source === 'settingsApiKey' || source === 'apiKeyHelper'
 
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',

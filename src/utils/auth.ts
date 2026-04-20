@@ -172,7 +172,7 @@ export function getAuthTokenSource() {
 }
 
 export type ApiKeySource =
-  | 'customApiKey'
+  | 'settingsApiKey'
   | 'apiKeyHelper'
   | '/login managed key'
   | 'none'
@@ -198,13 +198,13 @@ export function getApiKeyWithSource(
   // 检查 settings.json (zy.json) 中配置的 API key
   const settings = getSettings_DEPRECATED()
   if (settings?.apiKey) {
-    return { key: settings.apiKey, source: 'customApiKey' }
+    return { key: settings.apiKey, source: 'settingsApiKey' }
   }
 
   // 检查 onboarding 时配置的 API key
   const config = getGlobalConfig()
   if (config.configuredApiKey) {
-    return { key: config.configuredApiKey, source: 'customApiKey' }
+    return { key: config.configuredApiKey, source: 'settingsApiKey' }
   }
 
   // --bare: hermetic auth. Only apiKeyHelper from the --settings flag.
@@ -226,7 +226,7 @@ export function getApiKeyWithSource(
   if (apiKeyFromFd) {
     return {
       key: apiKeyFromFd,
-      source: 'customApiKey',
+      source: 'settingsApiKey',
     }
   }
 
@@ -1053,17 +1053,17 @@ export async function saveApiKey(apiKey: string): Promise<void> {
 
   // Save config with all updates
   saveGlobalConfig(current => {
-    const approved = current.customApiKeyResponses?.approved ?? []
+    const approved = current.apiKeyResponses?.approved ?? []
     return {
       ...current,
       // Only save to config if keychain save failed or not on darwin
       primaryApiKey: savedToKeychain ? current.primaryApiKey : apiKey,
-      customApiKeyResponses: {
-        ...current.customApiKeyResponses,
+      apiKeyResponses: {
+        ...current.apiKeyResponses,
         approved: approved.includes(normalizedKey)
           ? approved
           : [...approved, normalizedKey],
-        rejected: current.customApiKeyResponses?.rejected ?? [],
+        rejected: current.apiKeyResponses?.rejected ?? [],
       },
     }
   })
@@ -1073,11 +1073,11 @@ export async function saveApiKey(apiKey: string): Promise<void> {
   clearLegacyApiKeyPrefetch()
 }
 
-export function isCustomApiKeyApproved(apiKey: string): boolean {
+export function isApiKeyApproved(apiKey: string): boolean {
   const config = getGlobalConfig()
   const normalizedKey = normalizeApiKeyForConfig(apiKey)
   return (
-    config.customApiKeyResponses?.approved?.includes(normalizedKey) ?? false
+    config.apiKeyResponses?.approved?.includes(normalizedKey) ?? false
   )
 }
 

@@ -84,7 +84,7 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
     } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true
     });
-    return !!getApiKeyFromConfigOrMacOSKeychain() && (apiKeySource === 'customApiKey' || apiKeySource === 'apiKeyHelper');
+    return !!getApiKeyFromConfigOrMacOSKeychain() && (apiKeySource === 'settingsApiKey' || apiKeySource === 'apiKeyHelper');
   },
   render: () => {
     const {
@@ -116,7 +116,8 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
       skipRetrievingKeyFromApiKeyHelper: true
     });
     const authTokenInfo = getAuthTokenSource();
-    return apiKeySource !== 'none' && authTokenInfo.source !== 'none' && !(apiKeySource === 'apiKeyHelper' && authTokenInfo.source === 'apiKeyHelper');
+    // 当两个函数都识别到同一个 settingsApiKey 时，不视为冲突
+    return apiKeySource !== 'none' && authTokenInfo.source !== 'none' && !(apiKeySource === 'apiKeyHelper' && authTokenInfo.source === 'apiKeyHelper') && !(apiKeySource === 'settingsApiKey' && authTokenInfo.source === 'settingsApiKey');
   },
   render: () => {
     const {
@@ -138,7 +139,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
             · Trying to use{' '}
             {authTokenInfo.source === 'zy.ai' ? 'zy.ai' : authTokenInfo.source}
             ?{' '}
-            {apiKeySource === 'customApiKey' ? 'Unset the ZY_API_KEY environment variable, or zy /logout then say "No" to the API key approval before login.' : apiKeySource === 'apiKeyHelper' ? 'Unset the apiKeyHelper setting.' : 'zy /logout'}
+            {apiKeySource === 'settingsApiKey' ? 'Unset the ZY_API_KEY environment variable, or zy /logout then say "No" to the API key approval before login.' : apiKeySource === 'apiKeyHelper' ? 'Unset the apiKeyHelper setting.' : 'zy /logout'}
           </Text>
           <Text color="warning">
             · Trying to use {apiKeySource}?{' '}

@@ -207,9 +207,9 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       configuredProvider: provider,
       configuredApiKey: apiKey,
       configuredApiFormat: (provider === 'generic' || provider === 'dashscope') ? apiFormat : undefined,
-      customApiKeyResponses: {
-        ...current.customApiKeyResponses,
-        approved: [...(current.customApiKeyResponses?.approved ?? []), normalizedKey],
+      apiKeyResponses: {
+        ...current.apiKeyResponses,
+        approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
       },
     }));
     setSelectedProvider(provider);

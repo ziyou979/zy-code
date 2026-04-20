@@ -19,7 +19,7 @@ import { AppStateProvider } from './state/AppState.js';
 import { onChangeAppState } from './state/onChangeAppState.js';
 import { normalizeApiKeyForConfig } from './utils/authPortable.js';
 import { getExternalzyMdIncludes, getMemoryFiles, shouldShowzyMdExternalIncludesWarning } from './utils/zymd.js';
-import { checkHasTrustDialogAccepted, getCustomApiKeyStatus, getGlobalConfig, saveGlobalConfig } from './utils/config.js';
+import { checkHasTrustDialogAccepted, getApiKeyStatus, getGlobalConfig, saveGlobalConfig } from './utils/config.js';
 import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js';
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js';
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js';
@@ -201,17 +201,17 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
     }
   }
 
-  // Check for custom API key
+  // Check for API key from environment variable
   // On homespace, ZY_API_KEY is preserved in process.env for child
   // processes but ignored by ZY Code itself (see auth.ts).
   if (process.env.ZY_API_KEY && !isRunningOnHomespace()) {
-    const customApiKeyTruncated = normalizeApiKeyForConfig(process.env.ZY_API_KEY);
-    const keyStatus = getCustomApiKeyStatus(customApiKeyTruncated);
+    const apiKeyTruncated = normalizeApiKeyForConfig(process.env.ZY_API_KEY);
+    const keyStatus = getApiKeyStatus(apiKeyTruncated);
     if (keyStatus === 'new') {
       const {
         ApproveApiKey
       } = await import('./components/ApproveApiKey.js');
-      await showSetupDialog<boolean>(root, done => <ApproveApiKey customApiKeyTruncated={customApiKeyTruncated} onDone={done} />, {
+      await showSetupDialog<boolean>(root, done => <ApproveApiKey apiKeyTruncated={apiKeyTruncated} onDone={done} />, {
         onChangeAppState
       });
     }

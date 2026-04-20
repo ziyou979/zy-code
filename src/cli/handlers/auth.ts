@@ -251,7 +251,7 @@ export async function authStatus(opts: {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
     authMethod = 'oauth_token'
-  } else if (apiKeySource === 'customApiKey' || hasApiKeyEnvVar) {
+  } else if (apiKeySource === 'settingsApiKey' || hasApiKeyEnvVar) {
     authMethod = 'api_key'
   } else if (apiKeySource === '/login managed key') {
     authMethod = 'zy.ai'
@@ -294,7 +294,7 @@ export async function authStatus(opts: {
       apiKeySource !== 'none'
         ? apiKeySource
         : hasApiKeyEnvVar
-          ? 'customApiKey'
+          ? 'settingsApiKey'
           : null
     const output: Record<string, string | boolean | null> = {
       loggedIn,

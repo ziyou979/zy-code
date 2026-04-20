@@ -219,7 +219,7 @@ export type GlobalConfig = {
    */
   customNotifyCommand?: string
   verbose: boolean
-  customApiKeyResponses?: {
+  apiKeyResponses?: {
     approved?: string[]
     rejected?: string[]
   }
@@ -601,7 +601,7 @@ function createDefaultGlobalConfig(): GlobalConfig {
     hasUsedBackgroundTask: false,
     queuedCommandUpHintCount: 0,
     diffTool: 'auto',
-    customApiKeyResponses: {
+    apiKeyResponses: {
       approved: [],
       rejected: [],
     },
@@ -1098,14 +1098,14 @@ export function getRemoteControlAtStartup(): boolean {
   return false
 }
 
-export function getCustomApiKeyStatus(
+export function getApiKeyStatus(
   truncatedApiKey: string,
 ): 'approved' | 'rejected' | 'new' {
   const config = getGlobalConfig()
-  if (config.customApiKeyResponses?.approved?.includes(truncatedApiKey)) {
+  if (config.apiKeyResponses?.approved?.includes(truncatedApiKey)) {
     return 'approved'
   }
-  if (config.customApiKeyResponses?.rejected?.includes(truncatedApiKey)) {
+  if (config.apiKeyResponses?.rejected?.includes(truncatedApiKey)) {
     return 'rejected'
   }
   return 'new'
