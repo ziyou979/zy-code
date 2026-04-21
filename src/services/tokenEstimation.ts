@@ -3,7 +3,7 @@ import type { BetaMessageParam as MessageParam } from '@anthropic-ai/sdk/resourc
 // 动态导入的最小值，用于计数令牌的 Bedrock 调用
 // 延迟约 ~279KB 的 AWS SDK 代码，直到实际需要 Bedrock 调用
 import type { CountTokensCommandInput } from '@aws-sdk/client-bedrock-runtime'
-import { getAPIProvider, isOpenAIFormatProvider, isNativeOpenAIProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { openAICreateMessage } from './api/openaiQuery.js'
 import { VERTEX_COUNT_TOKENS_ALLOWED_BETAS } from '../constants/betas.js'
 import type { Attachment } from '../utils/attachments.js'
@@ -166,18 +166,12 @@ export async function countMessagesTokensWithAPI(
       })
 
       const apiProvider = getAPIProvider()
-      const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
       const filteredBetas =
         apiProvider === 'vertex'
           ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-          : useOpenAIFormat
-            ? [] // OpenAI 兼容格式不支持 betas
-            : betas
+          : betas
 
-      // OpenAI 兼容格式不支持 beta API，使用标准 API
-      const countTokensFn = useOpenAIFormat
-        ? anthropic.messages.countTokens.bind(anthropic.messages)
-        : anthropic.beta.messages.countTokens.bind(anthropic.beta.messages)
+      const countTokensFn = anthropic.beta.messages.countTokens.bind(anthropic.beta.messages)
 
       const response = await countTokensFn({
         model: normalizeModelStringForAPI(model),
@@ -187,8 +181,7 @@ export async function countMessagesTokensWithAPI(
           messages.length > 0 ? messages : [{ role: 'user', content: 'foo' }],
         tools,
         ...(filteredBetas.length > 0 && { betas: filteredBetas }),
-        // OpenAI 兼容格式不支持 thinking 参数
-        ...(!useOpenAIFormat && containsThinking && {
+        ...(containsThinking && {
           thinking: {
             type: 'enabled',
             budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
@@ -300,10 +293,9 @@ export async function countTokensViaHaikuFallback(
 
   const betas = getModelBetas(model)
   const apiProvider = getAPIProvider()
-  const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
   // OpenAI 专用路径
-  if (isNativeOpenAIProvider(apiProvider)) {
+  if (isOpenAIProvider(apiProvider)) {
     const response = await openAICreateMessage({
       model: normalizeModelStringForAPI(model),
       max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
@@ -321,14 +313,9 @@ export async function countTokensViaHaikuFallback(
   const filteredBetas =
     apiProvider === 'vertex'
       ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-      : useOpenAIFormat
-        ? [] // OpenAI 兼容格式不支持 betas
-        : betas
+      : betas
 
-  // OpenAI 兼容格式不支持 beta API，使用标准 API
-  const createMessageFn = useOpenAIFormat
-    ? anthropic.messages.create.bind(anthropic.messages)
-    : anthropic.beta.messages.create.bind(anthropic.beta.messages)
+  const createMessageFn = anthropic.beta.messages.create.bind(anthropic.beta.messages)
 
   // biome-ignore lint/plugin: 令牌计数需要 sideQuery 不支持的专用参数（thinking、betas）
   const response = await createMessageFn({
@@ -340,7 +327,7 @@ export async function countTokensViaHaikuFallback(
     metadata: getAPIMetadata(),
     ...getExtraBodyParams(),
     // OpenAI 兼容格式不支持 thinking 参数
-    ...(!useOpenAIFormat && containsThinking && {
+    ...(containsThinking && {
       thinking: {
         type: 'enabled',
         budget_tokens: TOKEN_COUNT_THINKING_BUDGET,

@@ -31,7 +31,7 @@ import {
   handleOAuth401Error,
 } from '../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
-import { getAPIProvider, isOpenAIFormatProvider } from '../utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 import { logForDebugging } from '../utils/debug.js'
 import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
 import { errorMessage } from '../utils/errors.js'
@@ -145,8 +145,8 @@ export async function initReplBridge(
   // 2. Check OAuth — must be signed in with zy.ai. Runs before the
   // policy check so console-auth users get the actionable "/login" hint
   // instead of a misleading policy error from a stale/wrong-org cache.
-  // 支持 OpenAI 兼容格式的平台 - 通过 settings.json 配置时跳过 OAuth 检查
-  if (!getBridgeAccessToken() && !isOpenAIFormatProvider(getAPIProvider())) {
+  // 使用 OpenAI SDK 的平台 - 通过 settings.json 配置时跳过 OAuth 检查
+  if (!getBridgeAccessToken() && !isOpenAIProvider(getAPIProvider())) {
     logBridgeSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
     onStateChange?.('failed', '/login')
     return null

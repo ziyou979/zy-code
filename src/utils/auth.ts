@@ -10,7 +10,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
-import { getAPIProvider, isOpenAIFormatProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import {
   getIsNonInteractiveSession,
 } from '../bootstrap/state.js'
@@ -1742,8 +1742,8 @@ export type UserAccountInfo = {
 
 export function getAccountInformation() {
   const apiProvider = getAPIProvider()
-  // Only provide account info for direct API or OpenAI-compatible providers
-  if (apiProvider !== 'anthropic' && !isOpenAIFormatProvider(apiProvider)) {
+  // 仅为 Anthropic 直连或使用 OpenAI SDK 的 provider 提供账户信息
+  if (apiProvider !== 'anthropic' && !isOpenAIProvider(apiProvider)) {
     return undefined
   }
   const { source: authTokenSource } = getAuthTokenSource()

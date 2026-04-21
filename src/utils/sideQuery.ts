@@ -14,7 +14,7 @@ import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
 import { getAPIMetadata } from '../services/api/zy.js'
 import { getLLMClient } from '../services/api/client.js'
-import { getAPIProvider, isOpenAIFormatProvider, isNativeOpenAIProvider } from './model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
 import { openAICreateMessage } from '../services/api/openaiQuery.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { computeFingerprint } from './fingerprint.js'
@@ -183,7 +183,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
   const start = Date.now()
 
   // OpenAI 专用路径
-  if (isNativeOpenAIProvider(getAPIProvider())) {
+  if (isOpenAIProvider(getAPIProvider())) {
     const response = await openAICreateMessage({
       model: normalizedModel,
       max_tokens,
@@ -217,12 +217,8 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
 
   // Anthropic / 其他 provider 路径
   const apiProvider = getAPIProvider()
-  const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
-  const filteredBetas = useOpenAIFormat ? [] : betas
 
-  const createMessageFn = useOpenAIFormat
-    ? client.messages.create.bind(client.messages)
-    : client.beta.messages.create.bind(client.beta.messages)
+  const createMessageFn = client.beta.messages.create.bind(client.beta.messages)
 
   // biome-ignore lint/plugin: this IS the wrapper that handles OAuth attribution
   const response = await createMessageFn(
@@ -233,12 +229,12 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
       messages,
       ...(tools && { tools }),
       ...(tool_choice && { tool_choice }),
-      ...(!useOpenAIFormat && output_format && { output_config: { format: output_format } }),
+      ...(output_format && { output_config: { format: output_format } }),
       ...(temperature !== undefined && { temperature }),
       ...(stop_sequences && { stop_sequences }),
-      ...(!useOpenAIFormat && thinkingConfig && { thinking: thinkingConfig }),
-      ...(filteredBetas.length > 0 && { betas: filteredBetas }),
-      ...(!useOpenAIFormat && { metadata: getAPIMetadata() }),
+      ...(thinkingConfig && { thinking: thinkingConfig }),
+      ...(betas.length > 0 && { betas }),
+      ...({ metadata: getAPIMetadata() }),
     },
     { signal },
   )

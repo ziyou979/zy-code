@@ -1,14 +1,19 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
+import { PROVIDER_REGISTRY, getProviderEntry } from './providerRegistry.js'
 
-export type APIProvider = 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | 'openai'
+/**
+ * Union of all registered provider IDs.
+ * Derived from PROVIDER_REGISTRY — add new providers there, not here.
+ */
+export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
 
 /**
  * Get the configured API provider from settings (zy.json).
  * Returns null if not configured in settings.
  */
-function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | 'openai' | null {
+function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
   try {
     const { getSettings_DEPRECATED } = require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getSettings_DEPRECATED()
@@ -22,7 +27,7 @@ function getSettingsProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'gene
  * Get the configured API provider from onboarding config.
  * Returns null if config isn't ready yet (early startup) or not configured.
  */
-function getConfiguredProvider(): 'anthropic' | 'dashscope' | 'openrouter' | 'generic' | 'ollama' | 'zhipu' | 'kimi' | 'openai' | null {
+function getConfiguredProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
   try {
     const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
     return getGlobalConfig().configuredProvider ?? null
@@ -45,29 +50,14 @@ export function getAPIProvider(): APIProvider {
     return configured
   }
 
-  // 百炼 / DashScope API
-  if (isEnvTruthy(process.env.ZY_CODE_USE_DASHSCOPE)) {
-    return 'dashscope'
+  // 3. Check activation env vars from registry
+  for (const entry of PROVIDER_REGISTRY) {
+    if (entry.activationEnvVar && isEnvTruthy(process.env[entry.activationEnvVar])) {
+      return entry.id as APIProvider
+    }
   }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_OPENROUTER)) {
-    return 'openrouter'
-  }
-  // Generic Anthropic-compatible endpoint
-  if (process.env.ZY_CODE_USE_GENERIC) {
-    return 'generic'
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_OLLAMA)) {
-    return 'ollama'
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_ZHIPU)) {
-    return 'zhipu'
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_KIMI)) {
-    return 'kimi'
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_OPENAI)) {
-    return 'openai'
-  }
+
+  // 4. Cloud infrastructure providers (no activationEnvVar in registry)
   return isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)
     ? 'bedrock'
     : isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
@@ -82,13 +72,10 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
 }
 
 /**
- * Provider-level capabilities — declared per-provider, optionally refined per-model.
- * A capability being `true` here means the provider *can* support it; the final
- * decision for a specific model may still depend on the model itself (handled
- * by the per-model check functions in thinking.ts / effort.ts / betas.ts).
+ * Provider-level capabilities — declared per-provider in providerRegistry.ts,
+ * optionally refined per-model.
  *
- * When adding a new provider, update its capabilities here instead of adding
- * another `=== 'anthropic'` gate across the codebase.
+ * When adding a new provider, update providerRegistry.ts instead of this file.
  */
 export type ProviderCapability =
   | 'thinking'            // extended thinking (thinking blocks)
@@ -100,58 +87,10 @@ export type ProviderCapability =
   | 'web_search'          // web search tool
   | 'interleaved_thinking' // interleaved thinking (ISP) beta
 
-/** Per-provider capability declarations. Defaults to false. */
-const PROVIDER_CAPABILITIES: Record<APIProvider, Set<ProviderCapability>> = {
-  anthropic: new Set<ProviderCapability>([
-    'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-    'context_management', 'prompt_caching', 'web_search', 'interleaved_thinking',
-  ]),
-  dashscope: new Set<ProviderCapability>([
-    // DashScope models support all capabilities; disable prompt_caching since
-    // the DashScope Anthropic-compatible endpoint does not accept cache_control
-    'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-    'context_management', 'web_search', 'interleaved_thinking',
-  ]),
-  openrouter: new Set<ProviderCapability>([
-    // OpenRouter forwards Anthropic-format responses; capabilities depend on
-    // the underlying model. We declare support here and let per-model checks
-    // handle the fine-grained decisions.
-    'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-    'context_management', 'web_search', 'interleaved_thinking',
-  ]),
-  generic: new Set<ProviderCapability>([
-    // Generic Anthropic-compatible endpoint — assume full capability.
-    'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-    'context_management', 'prompt_caching', 'web_search', 'interleaved_thinking',
-  ]),
-  ollama: new Set<ProviderCapability>([
-    // Ollama uses OpenAI-compatible API; capabilities depend on the
-    // underlying model loaded locally.
-    'thinking', 'adaptive_thinking', 'structured_outputs',
-    'context_management', 'web_search', 'interleaved_thinking',
-  ]),
-  zhipu: new Set<ProviderCapability>([
-    // ZhiPu (GLM) uses OpenAI-compatible API; capabilities depend on model.
-    'thinking', 'structured_outputs', 'context_management', 'web_search',
-  ]),
-  kimi: new Set<ProviderCapability>([
-    // Kimi (Moonshot) uses OpenAI-compatible API; capabilities depend on model.
-    'thinking', 'structured_outputs', 'context_management', 'web_search',
-  ]),
-  openai: new Set<ProviderCapability>([
-    // OpenAI uses OpenAI API; capabilities depend on model.
-    'thinking', 'structured_outputs', 'context_management', 'web_search',
-  ]),
-  foundry: new Set<ProviderCapability>([
-    'thinking', 'structured_outputs', 'context_management', 'web_search', 'interleaved_thinking',
-  ]),
-  bedrock: new Set<ProviderCapability>([
-    'prompt_caching',
-  ]),
-  vertex: new Set<ProviderCapability>([
-    'prompt_caching',
-  ]),
-}
+/** Per-provider capability declarations — auto-generated from PROVIDER_REGISTRY. */
+const PROVIDER_CAPABILITIES: Record<string, Set<ProviderCapability>> = Object.fromEntries(
+  PROVIDER_REGISTRY.map(entry => [entry.id, new Set<ProviderCapability>(entry.capabilities)]),
+)
 
 export function providerHasCapability(
   provider: APIProvider,
@@ -189,60 +128,45 @@ export function isAnthropicBaseUrl(): boolean {
  * request-ID logging.
  */
 export function isCompatibleProvider(provider: APIProvider): boolean {
-  return provider === 'anthropic' || provider === 'dashscope' || provider === 'openrouter' || provider === 'generic' || provider === 'ollama' || provider === 'zhipu' || provider === 'kimi' || provider === 'openai'
+  const entry = getProviderEntry(provider)
+  if (!entry) return false
+  return entry.endpointType !== 'hardcoded' || !['bedrock', 'vertex', 'foundry'].includes(entry.id)
 }
 
-/** Providers that use native OpenAI API format (not Anthropic SDK at all) */
-export type NativeOpenAIProvider = 'openai'
-
 /**
- * Returns true for providers that use the OpenAI SDK directly
- * (chat completions API, not Anthropic messages API).
+ * 判断是否为使用 OpenAI SDK 直连的 provider。
+ * 这类 provider 不走 Anthropic SDK，而是直接使用 OpenAI 的 chat completions API。
  */
-export function isNativeOpenAIProvider(provider: APIProvider): provider is NativeOpenAIProvider {
-  return provider === 'openai'
+export function isOpenAIProvider(provider: APIProvider): boolean {
+  const entry = getProviderEntry(provider)
+  return entry?.supportedFormats.includes('openai') ?? false
 }
 
-/** OpenAI-compatible API format providers (use standard messages.create, no betas) */
-export type OpenAIFormatProvider = 'dashscope' | 'generic'
-
 /**
- * Returns true for providers that use an OpenAI-compatible API format
- * (translated through the Anthropic SDK). These providers do NOT support
- * Anthropic-specific beta features like extended thinking, cache_control,
- * context_management, etc.
+ * 判断是否为需要自定义端点配置的 provider（本地推理引擎等）。
+ * 这类 provider 使用用户提供的 base URL。
  */
-export function isOpenAIFormatProvider(provider: APIProvider): provider is OpenAIFormatProvider {
-  if (provider === 'dashscope') {
-    // 百炼支持 Anthropic 和 OpenAI 两种格式，根据用户选择决定
-    try {
-      const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
-      return getGlobalConfig().configuredApiFormat === 'openai'
-    } catch {
-      return false
-    }
-  }
-  // generic 平台由用户在 onboarding 时选择 API 格式
-  if (provider === 'generic') {
-    try {
-      const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
-      return getGlobalConfig().configuredApiFormat === 'openai'
-    } catch {
-      return false
-    }
-  }
-  return false
+export function isCustomEndpointProvider(provider: APIProvider): boolean {
+  const entry = getProviderEntry(provider)
+  return entry?.endpointType === 'custom' && entry.id !== 'generic'
 }
 
-/** Providers that require custom endpoint configuration (base URL) but support full Anthropic format */
-export type CustomEndpointProvider = 'ollama' | 'zhipu' | 'kimi'
+/**
+ * 判断是否为在 onboarding 时预配置 base URL 的 provider。
+ * 这类 provider 的 base URL 会在 onboarding 时保存到 configuredBaseUrl。
+ */
+export function isPreconfiguredEndpointProvider(provider: APIProvider): boolean {
+  const entry = getProviderEntry(provider)
+  return entry?.endpointType === 'preconfigured'
+}
 
 /**
- * Returns true for providers that require custom endpoint configuration
- * (custom base URL) but otherwise support the full Anthropic message format.
+ * 判断是否为从环境变量或默认值解析 base URL 的 provider。
+ * 这类 provider 有专门的客户端创建逻辑。
  */
-export function isCustomEndpointProvider(provider: APIProvider): provider is CustomEndpointProvider {
-  return provider === 'ollama' || provider === 'zhipu' || provider === 'kimi'
+export function isEnvOrDefaultProvider(provider: APIProvider): boolean {
+  const entry = getProviderEntry(provider)
+  return entry?.endpointType === 'env-or-default'
 }
 
 /**

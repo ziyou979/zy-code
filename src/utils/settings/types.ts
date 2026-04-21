@@ -264,9 +264,9 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe('Path to a script that outputs authentication values'),
-      /** API provider: 'anthropic', 'dashscope', 'openrouter', 'generic', 'ollama', 'zhipu', 'kimi' */
+      /** API provider: 'anthropic', 'dashscope', 'openrouter', 'generic', 'local', 'zhipu', 'kimi' */
       provider: z
-        .enum(['anthropic', 'dashscope', 'openrouter', 'generic', 'ollama', 'zhipu', 'kimi'])
+        .enum(['anthropic', 'dashscope', 'openrouter', 'generic', 'local', 'zhipu', 'kimi'])
         .optional()
         .describe('API provider to use. Overrides onboarding config and env vars.'),
       /** API key for the configured provider */

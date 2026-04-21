@@ -3,7 +3,7 @@
  */
 
 import axios from 'axios'
-import { getAPIProvider, isOpenAIFormatProvider } from './model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
 import {
   getApiKey,
   getZyAIOAuthTokens,
@@ -67,8 +67,8 @@ export type AuthHeaders = {
  * 支持百炼 DashScope API Key
  */
 export function getAuthHeaders(): AuthHeaders {
-  // 支持 OpenAI 兼容格式的平台（百炼、Ollama、智谱、Kimi 等）
-  if (isOpenAIFormatProvider(getAPIProvider())) {
+  // 使用 OpenAI SDK 的平台（百炼、Ollama、智谱、Kimi 等）
+  if (isOpenAIProvider(getAPIProvider())) {
     const apiKey = getApiKey()
     if (apiKey) {
       return {

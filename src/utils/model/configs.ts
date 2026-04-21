@@ -31,7 +31,7 @@ export const QWEN_3_6_PLUS_CONFIG: ModelConfigWithPricing = {
     dashscope: 'qwen3.6-plus',
     openrouter: 'qwen/qwen3.6-plus',
     generic: 'qwen3.6-plus',
-    ollama: 'qwen3.6-plus',
+    local: 'qwen3.6-plus',
     zhipu: 'qwen3.6-plus',
     kimi: 'qwen3.6-plus',
     openai: 'gpt-4o',

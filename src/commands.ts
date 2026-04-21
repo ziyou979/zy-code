@@ -1,4 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { tSync } from './i18n/index.js'
 import addDir from './commands/add-dir/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
 import backfillSessions from './commands/backfill-sessions/index.js'
@@ -711,35 +712,130 @@ export function getCommand(commandName: string, commands: Command[]): Command {
 }
 
 /**
+ * 命令名称到 i18n 翻译 key 的映射。
+ * 仅包含对用户可见的命令。
+ */
+const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
+  'add-dir': 'commands.addDir',
+  'advisor': 'commands.advisor',
+  'agents': 'commands.agents',
+  'branch': 'commands.branch',
+  'btw': 'commands.btw',
+  'chrome': 'commands.chrome',
+  'clear': 'commands.clear',
+  'color': 'commands.color',
+  'compact': 'commands.compact',
+  'config': 'commands.config',
+  'copy': 'commands.copy',
+  'desktop': 'commands.desktop',
+  'context': 'commands.context',
+  'context-noninteractive': 'commands.contextNonInteractive',
+  'cost': 'commands.cost',
+  'diff': 'commands.diff',
+  'doctor': 'commands.doctor',
+  'effort': 'commands.effort',
+  'exit': 'commands.exit',
+  'files': 'commands.files',
+  'help': 'commands.help',
+  'ide': 'commands.ide',
+  'init': 'commands.init',
+  'keybindings': 'commands.keybindings',
+  'install-github-app': 'commands.installGitHubApp',
+  'install-slack-app': 'commands.installSlackApp',
+  'mcp': 'commands.mcp',
+  'memory': 'commands.memory',
+  'mobile': 'commands.mobile',
+  'model': 'commands.model',
+  'output-style': 'commands.outputStyle',
+  'remote-env': 'commands.remoteEnv',
+  'plugin': 'commands.plugin',
+  'pr-comments': 'commands.prComments',
+  'release-notes': 'commands.releaseNotes',
+  'reload-plugins': 'commands.reloadPlugins',
+  'rename': 'commands.rename',
+  'resume': 'commands.resume',
+  'session': 'commands.session',
+  'skills': 'commands.skills',
+  'stats': 'commands.stats',
+  'status': 'commands.status',
+  'statusline': 'commands.statusline',
+  'stickers': 'commands.stickers',
+  'tag': 'commands.tag',
+  'theme': 'commands.theme',
+  'feedback': 'commands.feedback',
+  'review': 'commands.review',
+  'ultrareview': 'commands.ultrareview',
+  'rewind': 'commands.rewind',
+  'security-review': 'commands.securityReview',
+  'terminal-setup': 'commands.terminalSetup',
+  'upgrade': 'commands.upgrade',
+  'extra-usage': 'commands.extraUsage',
+  'rate-limit-options': 'commands.rateLimitOptions',
+  'usage': 'commands.usage',
+  'insights': 'commands.insights',
+  'vim': 'commands.vim',
+  'think-back': 'commands.thinkback',
+  'thinkback-play': 'commands.thinkbackPlay',
+  'permissions': 'commands.permissions',
+  'plan': 'commands.plan',
+  'privacy-settings': 'commands.privacySettings',
+  'hooks': 'commands.hooks',
+  'export': 'commands.export',
+  'sandbox': 'commands.sandbox',
+  'logout': 'commands.logout',
+  'login': 'commands.login',
+  'passes': 'commands.passes',
+  'tasks': 'commands.tasks',
+  'commit': 'commands.commit',
+  'commit-push-pr': 'commands.commitPushPr',
+  'init-verifiers': 'commands.initVerifiers',
+  'version': 'commands.version',
+  'heapdump': 'commands.heapdump',
+  'remote-setup': 'commands.remoteSetup',
+}
+
+/**
+ * 翻译命令描述。
+ * 如果存在翻译 key 则返回翻译后的字符串，否则返回原始 description。
+ */
+export function translateCommandDescription(cmd: Command): string {
+  const key = COMMAND_DESCRIPTION_I18N_KEYS[cmd.name]
+  if (key) return tSync(key)
+  return cmd.description
+}
+
+/**
  * 为面向用户的 UI 格式化命令描述，附带来源标注。
  * 在输入提示、帮助屏幕等用户需要查看命令来源的地方使用。
  *
  * 对于面向模型的提示（如 SkillTool），直接使用 cmd.description。
  */
 export function formatDescriptionWithSource(cmd: Command): string {
+  const translatedDesc = translateCommandDescription(cmd)
+
   if (cmd.type !== 'prompt') {
-    return cmd.description
+    return translatedDesc
   }
 
   if (cmd.kind === 'workflow') {
-    return `${cmd.description} (workflow)`
+    return `${translatedDesc} (workflow)`
   }
 
   if (cmd.source === 'plugin') {
     const pluginName = cmd.pluginInfo?.pluginManifest.name
     if (pluginName) {
-      return `(${pluginName}) ${cmd.description}`
+      return `(${pluginName}) ${translatedDesc}`
     }
-    return `${cmd.description} (plugin)`
+    return `${translatedDesc} (plugin)`
   }
 
   if (cmd.source === 'builtin' || cmd.source === 'mcp') {
-    return cmd.description
+    return translatedDesc
   }
 
   if (cmd.source === 'bundled') {
-    return `${cmd.description} (bundled)`
+    return `${translatedDesc} (bundled)`
   }
 
-  return `${cmd.description} (${getSettingSourceName(cmd.source)})`
+  return `${translatedDesc} (${getSettingSourceName(cmd.source)})`
 }

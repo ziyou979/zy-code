@@ -27,7 +27,7 @@ import {
   getDefaultMainLoopModelSetting,
 } from 'src/utils/model/model.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
-import { getAPIProvider, isOpenAIFormatProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import {
   API_PDF_MAX_PAGES,
@@ -159,7 +159,7 @@ export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL =
  * 导入时未加载的 settings.json。
  */
 export function getInvalidApiKeyErrorMessage(): string {
-  return isOpenAIFormatProvider(getAPIProvider()) ? '' : 'Not logged in · Please run /login'
+  return isOpenAIProvider(getAPIProvider()) ? '' : 'Not logged in · Please run /login'
 }
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
   'Your API key belongs to a disabled organization · Unset the environment variable to use your subscription instead'

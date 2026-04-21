@@ -7,6 +7,7 @@ import { normalizeApiKeyForConfig } from '../utils/authPortable.js';
 import { saveGlobalConfig } from '../utils/config.js';
 import { warmI18n, tSync } from '../i18n/index.js';
 import type { UiLanguage } from '../i18n/types.js';
+import { PROVIDER_REGISTRY } from '../utils/model/providerRegistry.js';
 import { updateSettingsForSource } from '../utils/settings/settings.js';
 import { Select } from './CustomSelect/select.js';
 import { WelcomeV2 } from './LogoV2/WelcomeV2.js';
@@ -25,102 +26,63 @@ type Props = {
   onDone(): void;
 };
 
-type PlatformProvider = 'anthropic' | 'dashscope' | 'openrouter' | 'openai' | 'ollama' | 'zhipu' | 'kimi' | 'generic';
+/** Provider id — derived from PROVIDER_REGISTRY */
+type PlatformProvider = (typeof PROVIDER_REGISTRY)[number]['id'];
 
 interface PlatformConfig {
+  /** Unique identifier for this platform entry (used as Select value) */
+  id: string;
   provider: PlatformProvider;
   label: string;
   description: string;
   apiKeyLabel: string;
   baseUrlHint?: string;
-  /** Default model suggestion and common models for this provider */
   suggestedModels?: Array<{ label: string; value: string; description: string }>;
-  /** Whether this provider supports choosing API format (Anthropic vs OpenAI) */
-  supportsApiFormat?: boolean;
+  defaultBaseUrls?: {
+    openai?: string;
+    anthropic?: string;
+  };
 }
 
 /**
- * Factory functions for platform/model options.
- * Must be functions (not constants) so that tSync() reads the current
+ * Build the onboarding platform list from PROVIDER_REGISTRY.
+ *
+ * This is a **function** (not a module-level constant) so it re-reads the
  * language cache on each render — after a language switch during onboarding,
  * the cached messages change but module-level constants would be stale.
  */
 function getPlatforms(): PlatformConfig[] {
-  return [
-    {
-      provider: 'dashscope',
-      label: tSync('onboarding.platform.dashscope'),
-      description: tSync('onboarding.platform.dashscopeDesc'),
-      apiKeyLabel: 'DashScope API Key',
-      suggestedModels: [
-        { label: 'qwen3.6-plus', value: 'qwen3.6-plus', description: tSync('onboarding.model.qwen36plusDesc') },
-        { label: 'qwen3.5-plus', value: 'qwen3.5-plus', description: tSync('onboarding.model.qwen35plusDesc') },
-        { label: 'qwen3.5-flash', value: 'qwen3.5-flash', description: tSync('onboarding.model.qwen35flashDesc') },
-      ],
-      // 百炼支持 Anthropic 和 OpenAI 两种消息格式，类似 generic 平台
-      supportsApiFormat: true,
-    },
-    {
-      provider: 'openai',
-      label: tSync('onboarding.platform.openai'),
-      description: tSync('onboarding.platform.openaiDesc'),
-      apiKeyLabel: 'OpenAI API Key',
-      suggestedModels: [
-        { label: 'gpt-4o', value: 'gpt-4o', description: tSync('onboarding.model.gpt4oDesc') },
-        { label: 'gpt-4o-mini', value: 'gpt-4o-mini', description: tSync('onboarding.model.gpt4oMiniDesc') },
-      ],
-    },
-    {
-      provider: 'zhipu',
-      label: tSync('onboarding.platform.zhipu'),
-      description: tSync('onboarding.platform.zhipuDesc'),
-      apiKeyLabel: 'ZHIPU API Key',
-      suggestedModels: [
-        { label: 'glm-4-plus', value: 'glm-4-plus', description: tSync('onboarding.model.glm4PlusDesc') },
-        { label: 'glm-4-flash', value: 'glm-4-flash', description: tSync('onboarding.model.glm4FlashDesc') },
-      ],
-    },
-    {
-      provider: 'kimi',
-      label: tSync('onboarding.platform.kimi'),
-      description: tSync('onboarding.platform.kimiDesc'),
-      apiKeyLabel: 'Kimi API Key',
-      suggestedModels: [
-        { label: 'moonshot-v1', value: 'moonshot-v1', description: tSync('onboarding.model.kimiMoonDesc') },
-        { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', description: tSync('onboarding.model.kimiMoon8kDesc') },
-      ],
-    },
-    {
-      provider: 'ollama',
-      label: tSync('onboarding.platform.local'),
-      description: tSync('onboarding.platform.localDesc'),
-      apiKeyLabel: tSync('onboarding.platform.ollamaApiKey'),
-      baseUrlHint: 'http://localhost:11434/v1',
-      suggestedModels: [
-        { label: 'qwen2.5-coder', value: 'qwen2.5-coder', description: 'Qwen2.5-Coder' },
-        { label: 'llama3.1', value: 'llama3.1', description: 'Llama 3.1' },
-      ],
-    },
-    {
-      provider: 'openrouter',
-      label: tSync('onboarding.platform.openrouter'),
-      description: tSync('onboarding.platform.openrouterDesc'),
-      apiKeyLabel: 'OpenRouter API Key',
-      baseUrlHint: 'https://openrouter.ai/api/v1',
-    },
-    {
-      provider: 'anthropic',
-      label: tSync('onboarding.platform.anthropic'),
-      description: tSync('onboarding.platform.anthropicDesc'),
-      apiKeyLabel: 'Anthropic API Key',
-    },
-    {
-      provider: 'generic',
-      label: 'Generic',
-      description: tSync('onboarding.platform.genericDesc'),
-      apiKeyLabel: 'API Key',
-    },
-  ];
+  return PROVIDER_REGISTRY
+    .filter(entry => entry.showInOnboarding !== false)
+    .map(entry => {
+      // Resolve i18n labels — convention: onboarding.platform.{id} / {id}Desc
+      const i18nLabel = tSync(`onboarding.platform.${entry.id}` as any);
+      const i18nDesc = tSync(`onboarding.platform.${entry.id}Desc` as any);
+      // For 'local' provider, apiKeyLabel is also i18n
+      const apiKeyLabel = entry.id === 'local'
+        ? tSync('onboarding.platform.localApiKey')
+        : entry.apiKeyLabel ?? 'API Key';
+
+      // 根据 tags 自动渲染模型描述
+      const suggestedModels = entry.suggestedModels?.map(model => ({
+        label: model.label,
+        value: model.value,
+        description: model.tags?.length
+          ? model.tags.map(tag => tSync(`model.tag.${tag}` as any)).join(' · ')
+          : '',
+      }));
+
+      return {
+        id: entry.id,
+        provider: entry.id,
+        label: i18nLabel,
+        description: i18nDesc,
+        apiKeyLabel,
+        baseUrlHint: entry.baseUrlHint,
+        suggestedModels,
+        defaultBaseUrls: entry.defaultBaseUrls,
+      };
+    });
 }
 
 function getGenericModelOptions(): Array<{ label: string; value: string; description: string }> {
@@ -200,19 +162,32 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   );
 
   // Platform setup step (replaces OAuth + API key approval)
-  function handlePlatformDone(provider: PlatformProvider, apiKey: string, apiFormat?: 'anthropic' | 'openai') {
+  function handlePlatformDone(platformId: string, apiKey: string) {
+    const platform = getPlatforms().find(p => p.id === platformId);
+    const provider = platform?.provider ?? 'generic';
     const normalizedKey = normalizeApiKeyForConfig(apiKey);
+
+    // Resolve base URL from platform defaults based on supported formats
+    let baseUrl: string | undefined;
+    if (platform?.defaultBaseUrls) {
+      // If provider supports openai, use openai base URL; otherwise use anthropic base URL
+      const supportsNativeOpenai = PROVIDER_REGISTRY.find(e => e.id === platform.provider)?.supportedFormats.includes('openai');
+      baseUrl = supportsNativeOpenai
+        ? platform.defaultBaseUrls.openai
+        : platform.defaultBaseUrls.anthropic;
+    }
+
     saveGlobalConfig(current => ({
       ...current,
       configuredProvider: provider,
       configuredApiKey: apiKey,
-      configuredApiFormat: (provider === 'generic' || provider === 'dashscope') ? apiFormat : undefined,
+      configuredBaseUrl: baseUrl,
       apiKeyResponses: {
         ...current.apiKeyResponses,
         approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
       },
     }));
-    setSelectedProvider(provider);
+    setSelectedProvider(provider as PlatformProvider);
     goToNextStep();
   }
 
@@ -355,33 +330,19 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
 function PlatformSetup({
   onDone,
 }: {
-  onDone(provider: PlatformProvider, apiKey: string, apiFormat?: 'anthropic' | 'openai'): void;
+  onDone(platformId: string, apiKey: string): void;
 }): React.ReactNode {
-  const [phase, setPhase] = useState<'provider' | 'apiFormat' | 'apiKey'>('provider');
-  const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null);
+  const [phase, setPhase] = useState<'provider' | 'apiKey'>('provider');
+  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null);
 
   const handleProviderSelect = (value: string) => {
-    const provider = value as PlatformProvider;
-    setSelectedProvider(provider);
-    // For generic or dashscope, ask about API format first
-    const platform = getPlatforms().find(p => p.provider === provider);
-    if (provider === 'generic' || platform?.supportsApiFormat) {
-      setPhase('apiFormat');
-    } else {
-      setPhase('apiKey');
-    }
-  };
-
-  const handleApiFormatDone = (format: 'anthropic' | 'openai') => {
+    setSelectedPlatformId(value);
     setPhase('apiKey');
-    // Store format temporarily; it will be passed through handleApiKeyDone
-    (handleApiKeyDone as any)._apiFormat = format;
   };
 
   const handleApiKeyDone = (apiKey: string) => {
-    if (selectedProvider) {
-      const apiFormat = (handleApiKeyDone as any)._apiFormat;
-      onDone(selectedProvider, apiKey, apiFormat);
+    if (selectedPlatformId) {
+      onDone(selectedPlatformId, apiKey);
     }
   };
 
@@ -394,7 +355,7 @@ function PlatformSetup({
             options={getPlatforms().map(p => ({
               label: p.label,
               description: p.description,
-              value: p.provider,
+              value: p.id,
             }))}
             onChange={handleProviderSelect}
             onCancel={() => onDone('anthropic', '')}
@@ -405,41 +366,15 @@ function PlatformSetup({
     );
   }
 
-  if (phase === 'apiFormat') {
-    return (
-      <>
-        <Text bold>{tSync('onboarding.selectApiFormat')}</Text>
-        <Text dimColor>{tSync('onboarding.apiFormatDescription')}</Text>
-        <Box flexDirection="column" width={60} gap={1}>
-          <Select
-            options={[
-              { label: tSync('onboarding.apiFormat.anthropic'), value: 'anthropic', description: tSync('onboarding.apiFormat.anthropicDesc') },
-              { label: tSync('onboarding.apiFormat.openai'), value: 'openai', description: tSync('onboarding.apiFormat.openaiDesc') },
-            ]}
-            onChange={value => handleApiFormatDone(value as 'anthropic' | 'openai')}
-            onCancel={() => setPhase('provider')}
-          />
-          <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
-        </Box>
-      </>
-    );
-  }
-
   // apiKey phase
-  const platform = getPlatforms().find(p => p.provider === selectedProvider);
+  const platform = getPlatforms().find(p => p.id === selectedPlatformId);
   return (
     <ApiKeyInput
       apiKeyLabel={platform?.apiKeyLabel ?? 'API Key'}
       baseUrlHint={platform?.baseUrlHint}
       onDone={handleApiKeyDone}
       onBack={() => {
-        if (selectedProvider === 'generic') {
-          setPhase('apiFormat');
-        } else if (selectedProvider === 'dashscope') {
-          setPhase('apiFormat');
-        } else {
-          setPhase('provider');
-        }
+        setPhase('provider');
       }}
     />
   );
@@ -500,9 +435,10 @@ function ModelSetup({
 }): React.ReactNode {
   const [phase, setPhase] = useState<'select' | 'custom'>('select');
 
+  // Find the platform by provider; for generic, multiple entries exist so pick the first match
   const platform = getPlatforms().find(p => p.provider === provider);
   const modelOptions = platform?.suggestedModels ?? getGenericModelOptions();
-  const hasCustomOption = platform?.provider === 'generic';
+  const hasCustomOption = !platform?.suggestedModels || platform.provider === 'generic';
 
   const handleSelect = (value: string) => {
     if (value === '__custom__') {

@@ -1,4 +1,5 @@
 import { logEvent } from 'src/services/analytics/index.js'
+import { tSync } from '../../i18n/index.js'
 import { extractHeredocs } from '../../utils/bash/heredoc.js'
 import { ParsedCommand } from '../../utils/bash/ParsedCommand.js'
 import {
@@ -14,30 +15,30 @@ const HEREDOC_IN_SUBSTITUTION = /\$\(.*<</
 // Note: Backtick pattern is handled separately in validateDangerousPatterns
 // to distinguish between escaped and unescaped backticks
 const COMMAND_SUBSTITUTION_PATTERNS = [
-  { pattern: /<\(/, message: 'process substitution <()' },
-  { pattern: />\(/, message: 'process substitution >()' },
-  { pattern: /=\(/, message: 'Zsh process substitution =()' },
+  { pattern: /<\(/, message: tSync('bashSecurity.processSubstitutionBefore') },
+  { pattern: />\(/, message: tSync('bashSecurity.processSubstitutionAfter') },
+  { pattern: /=\(/, message: tSync('bashSecurity.zshProcessSubstitution') },
   // Zsh EQUALS expansion: =cmd at word start expands to $(which cmd).
   // `=curl evil.com` → `/usr/bin/curl evil.com`, bypassing Bash(curl:*) deny
   // rules since the parser sees `=curl` as the base command, not `curl`.
   // Only matches word-initial = followed by a command-name char (not VAR=val).
   {
     pattern: /(?:^|[\s;&|])=[a-zA-Z_]/,
-    message: 'Zsh equals expansion (=cmd)',
+    message: tSync('bashSecurity.zshEqualsExpansion'),
   },
-  { pattern: /\$\(/, message: '$() command substitution' },
-  { pattern: /\$\{/, message: '${} parameter substitution' },
-  { pattern: /\$\[/, message: '$[] legacy arithmetic expansion' },
-  { pattern: /~\[/, message: 'Zsh-style parameter expansion' },
-  { pattern: /\(e:/, message: 'Zsh-style glob qualifiers' },
-  { pattern: /\(\+/, message: 'Zsh glob qualifier with command execution' },
+  { pattern: /\$\(/, message: tSync('bashSecurity.dollarCommandSubstitution') },
+  { pattern: /\$\{/, message: tSync('bashSecurity.parameterSubstitution') },
+  { pattern: /\$\[/, message: tSync('bashSecurity.legacyArithmeticExpansion') },
+  { pattern: /~\[/, message: tSync('bashSecurity.zshStyleParameterExpansion') },
+  { pattern: /\(e:/, message: tSync('bashSecurity.zshStyleGlobQualifiers') },
+  { pattern: /\(\+/, message: tSync('bashSecurity.zshGlobQualifierWithCommand') },
   {
     pattern: /\}\s*always\s*\{/,
-    message: 'Zsh always block (try/always construct)',
+    message: tSync('bashSecurity.zshAlwaysBlock'),
   },
   // Defense in depth: Block PowerShell comment syntax even though we don't execute in PowerShell
   // Added as protection against future changes that might introduce PowerShell execution
-  { pattern: /<#/, message: 'PowerShell comment syntax' },
+  { pattern: /<#/, message: tSync('bashSecurity.powerShellCommentSyntax') },
 ]
 
 // Zsh-specific dangerous commands that can bypass security checks.
@@ -238,7 +239,7 @@ function validateEmpty(context: ValidationContext): PermissionResult {
       decisionReason: { type: 'other', reason: 'Empty command is safe' },
     }
   }
-  return { behavior: 'passthrough', message: 'Command is not empty' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.empty') }
 }
 
 function validateIncompleteCommands(
@@ -254,7 +255,7 @@ function validateIncompleteCommands(
     })
     return {
       behavior: 'ask',
-      message: 'Command appears to be an incomplete fragment (starts with tab)',
+      message: tSync('bashSecurity.incompleteTab'),
     }
   }
 
@@ -265,8 +266,7 @@ function validateIncompleteCommands(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command appears to be an incomplete fragment (starts with flags)',
+      message: tSync('bashSecurity.incompleteFlags'),
     }
   }
 
@@ -277,12 +277,11 @@ function validateIncompleteCommands(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command appears to be a continuation line (starts with operator)',
+      message: tSync('bashSecurity.incompleteOperator'),
     }
   }
 
-  return { behavior: 'passthrough', message: 'Command appears complete' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.complete') }
 }
 
 /**
@@ -588,7 +587,7 @@ function validateSafeCommandSubstitution(
   const { originalCommand } = context
 
   if (!HEREDOC_IN_SUBSTITUTION.test(originalCommand)) {
-    return { behavior: 'passthrough', message: 'No heredoc in substitution' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.noHeredocInSubstitution') }
   }
 
   if (isSafeHeredoc(originalCommand)) {
@@ -605,7 +604,7 @@ function validateSafeCommandSubstitution(
 
   return {
     behavior: 'passthrough',
-    message: 'Command substitution needs validation',
+    message: tSync('bashSecurity.commandSubstitutionNeedsValidation'),
   }
 }
 
@@ -613,7 +612,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
   const { originalCommand, baseCommand } = context
 
   if (baseCommand !== 'git' || !/^git\s+commit\s+/.test(originalCommand)) {
-    return { behavior: 'passthrough', message: 'Not a git commit' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.notGitCommit') }
   }
 
   // SECURITY: Backslashes can cause our regex to mis-identify quote boundaries
@@ -622,7 +621,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
   if (originalCommand.includes('\\')) {
     return {
       behavior: 'passthrough',
-      message: 'Git commit contains backslash, needs full validation',
+      message: tSync('bashSecurity.gitBackslash'),
     }
   }
 
@@ -655,7 +654,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
       })
       return {
         behavior: 'ask',
-        message: 'Git commit message contains command substitution patterns',
+        message: tSync('bashSecurity.gitCommitSubstitution'),
       }
     }
 
@@ -679,7 +678,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
     if (remainder && /[;|&()`]|\$\(|\$\{/.test(remainder)) {
       return {
         behavior: 'passthrough',
-        message: 'Git commit remainder contains shell metacharacters',
+        message: tSync('bashSecurity.gitRemainderMetacharacters'),
       }
     }
     if (remainder) {
@@ -708,7 +707,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
       if (/[<>]/.test(unquoted)) {
         return {
           behavior: 'passthrough',
-          message: 'Git commit remainder contains unquoted redirect operator',
+          message: tSync('bashSecurity.gitRemainderRedirect'),
         }
       }
     }
@@ -722,7 +721,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
       })
       return {
         behavior: 'ask',
-        message: 'Command contains quoted characters in flag names',
+        message: tSync('bashSecurity.quotedInFlag'),
       }
     }
 
@@ -736,14 +735,14 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
     }
   }
 
-  return { behavior: 'passthrough', message: 'Git commit needs validation' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.gitCommitNeedsValidation') }
 }
 
 function validateJqCommand(context: ValidationContext): PermissionResult {
   const { originalCommand, baseCommand } = context
 
   if (baseCommand !== 'jq') {
-    return { behavior: 'passthrough', message: 'Not jq' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.notJq') }
   }
 
   if (/\bsystem\s*\(/.test(originalCommand)) {
@@ -753,8 +752,7 @@ function validateJqCommand(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'jq command contains system() function which executes arbitrary commands',
+      message: tSync('bashSecurity.jqSystemFunction'),
     }
   }
 
@@ -772,20 +770,18 @@ function validateJqCommand(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'jq command contains dangerous flags that could execute code or read arbitrary files',
+      message: tSync('bashSecurity.jqDangerousFlags'),
     }
   }
 
-  return { behavior: 'passthrough', message: 'jq command is safe' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.jqSafe') }
 }
 
 function validateShellMetacharacters(
   context: ValidationContext,
 ): PermissionResult {
   const { unquotedContent } = context
-  const message =
-    'Command contains shell metacharacters (;, |, or &) in arguments'
+  const message = tSync('bashSecurity.shellMetacharacters')
 
   if (/(?:^|\s)["'][^"']*[;&][^"']*["'](?:\s|$)/.test(unquotedContent)) {
     logEvent('tengu_bash_security_check_triggered', {
@@ -817,7 +813,7 @@ function validateShellMetacharacters(
     return { behavior: 'ask', message }
   }
 
-  return { behavior: 'passthrough', message: 'No metacharacters' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noMetacharacters') }
 }
 
 function validateDangerousVariables(
@@ -835,12 +831,11 @@ function validateDangerousVariables(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains variables in dangerous contexts (redirections or pipes)',
+      message: tSync('bashSecurity.dangerousVariables'),
     }
   }
 
-  return { behavior: 'passthrough', message: 'No dangerous variables' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noDangerousVariables') }
 }
 
 function validateDangerousPatterns(
@@ -853,7 +848,7 @@ function validateDangerousPatterns(
   if (hasUnescapedChar(unquotedContent, '`')) {
     return {
       behavior: 'ask',
-      message: 'Command contains backticks (`) for command substitution',
+      message: tSync('bashSecurity.backticks'),
     }
   }
 
@@ -865,11 +860,11 @@ function validateDangerousPatterns(
           BASH_SECURITY_CHECK_IDS.DANGEROUS_PATTERNS_COMMAND_SUBSTITUTION,
         subId: 1,
       })
-      return { behavior: 'ask', message: `Command contains ${message}` }
+      return { behavior: 'ask', message: tSync('bashSecurity.commandSubstitution', { pattern: message }) }
     }
   }
 
-  return { behavior: 'passthrough', message: 'No dangerous patterns' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noDangerousPatterns') }
 }
 
 function validateRedirections(context: ValidationContext): PermissionResult {
@@ -882,8 +877,7 @@ function validateRedirections(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains input redirection (<) which could read sensitive files',
+      message: tSync('bashSecurity.inputRedirection'),
     }
   }
 
@@ -894,12 +888,11 @@ function validateRedirections(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains output redirection (>) which could write to arbitrary files',
+      message: tSync('bashSecurity.outputRedirection'),
     }
   }
 
-  return { behavior: 'passthrough', message: 'No redirections' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noRedirections') }
 }
 
 function validateNewlines(context: ValidationContext): PermissionResult {
@@ -911,7 +904,7 @@ function validateNewlines(context: ValidationContext): PermissionResult {
 
   // Check for newlines in unquoted content
   if (!/[\n\r]/.test(fullyUnquotedPreStrip)) {
-    return { behavior: 'passthrough', message: 'No newlines' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.noNewlines') }
   }
 
   // Flag any newline/CR followed by non-whitespace, EXCEPT backslash-newline
@@ -929,14 +922,13 @@ function validateNewlines(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains newlines that could separate multiple commands',
+      message: tSync('bashSecurity.newlinesMultipleCommands'),
     }
   }
 
   return {
     behavior: 'passthrough',
-    message: 'Newlines appear to be within data',
+    message: tSync('bashSecurity.newlinesInData'),
   }
 }
 
@@ -972,7 +964,7 @@ function validateCarriageReturn(context: ValidationContext): PermissionResult {
   const { originalCommand } = context
 
   if (!originalCommand.includes('\r')) {
-    return { behavior: 'passthrough', message: 'No carriage return' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.noCarriageReturn') }
   }
 
   // Check if CR appears outside double quotes. CR outside DQ (including inside
@@ -1005,13 +997,12 @@ function validateCarriageReturn(context: ValidationContext): PermissionResult {
       })
       return {
         behavior: 'ask',
-        message:
-          'Command contains carriage return (\\r) which shell-quote and bash tokenize differently',
+        message: tSync('bashSecurity.carriageReturn'),
       }
     }
   }
 
-  return { behavior: 'passthrough', message: 'CR only inside double quotes' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.crOnlyInsideDoubleQuotes') }
 }
 
 function validateIFSInjection(context: ValidationContext): PermissionResult {
@@ -1027,12 +1018,11 @@ function validateIFSInjection(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains IFS variable usage which could bypass security validation',
+      message: tSync('bashSecurity.ifsVariable'),
     }
   }
 
-  return { behavior: 'passthrough', message: 'No IFS injection detected' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noIfsInjection') }
 }
 
 // Additional hardening against reading environment variables via /proc filesystem.
@@ -1055,14 +1045,13 @@ function validateProcEnvironAccess(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command accesses /proc/*/environ which could expose sensitive environment variables',
+      message: tSync('bashSecurity.procEnviron'),
     }
   }
 
   return {
     behavior: 'passthrough',
-    message: 'No /proc/environ access detected',
+    message: tSync('bashSecurity.noProcEnviron'),
   }
 }
 
@@ -1089,7 +1078,7 @@ function validateMalformedTokenInjection(
     // Parse failed - this is handled elsewhere (bashToolHasPermission checks this)
     return {
       behavior: 'passthrough',
-      message: 'Parse failed, handled elsewhere',
+      message: tSync('bashSecurity.parseFailed'),
     }
   }
 
@@ -1105,7 +1094,7 @@ function validateMalformedTokenInjection(
   )
 
   if (!hasCommandSeparator) {
-    return { behavior: 'passthrough', message: 'No command separators' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.noCommandSeparators') }
   }
 
   // Check for malformed tokens (unbalanced delimiters)
@@ -1116,14 +1105,13 @@ function validateMalformedTokenInjection(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains ambiguous syntax with command separators that could be misinterpreted',
+      message: tSync('bashSecurity.ambiguousSeparators'),
     }
   }
 
   return {
     behavior: 'passthrough',
-    message: 'No malformed token injection detected',
+    message: tSync('bashSecurity.noMalformedToken'),
   }
 }
 
@@ -1139,7 +1127,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
   if (baseCommand === 'echo' && !hasShellOperators) {
     return {
       behavior: 'passthrough',
-      message: 'echo command is safe and has no dangerous flags',
+      message: tSync('bashSecurity.echoSafe'),
     }
   }
 
@@ -1159,7 +1147,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message: 'Command contains ANSI-C quoting which can hide characters',
+      message: tSync('bashSecurity.ansiCQuoting'),
     }
   }
 
@@ -1172,7 +1160,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message: 'Command contains locale quoting which can hide characters',
+      message: tSync('bashSecurity.localeQuoting'),
     }
   }
 
@@ -1185,8 +1173,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains empty special quotes before dash (potential bypass)',
+      message: tSync('bashSecurity.emptySpecialQuotesBeforeDash'),
     }
   }
 
@@ -1200,7 +1187,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message: 'Command contains empty quotes before dash (potential bypass)',
+      message: tSync('bashSecurity.emptyQuotesBeforeDashAlt'),
     }
   }
 
@@ -1241,8 +1228,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains empty quote pair adjacent to quoted dash (potential flag obfuscation)',
+      message: tSync('bashSecurity.emptyQuotePairDash'),
     }
   }
 
@@ -1257,8 +1243,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains consecutive quote characters at word start (potential obfuscation)',
+      message: tSync('bashSecurity.consecutiveQuotes'),
     }
   }
 
@@ -1444,7 +1429,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
         })
         return {
           behavior: 'ask',
-          message: 'Command contains quoted characters in flag names',
+          message: tSync('bashSecurity.quotedInFlag'),
         }
       }
     }
@@ -1501,7 +1486,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
         })
         return {
           behavior: 'ask',
-          message: 'Command contains quoted characters in flag names',
+          message: tSync('bashSecurity.quotedInFlag'),
         }
       }
     }
@@ -1516,7 +1501,7 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message: 'Command contains quoted characters in flag names',
+      message: tSync('bashSecurity.quotedInFlag'),
     }
   }
 
@@ -1529,11 +1514,11 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message: 'Command contains quoted characters in flag names',
+      message: tSync('bashSecurity.quotedInFlag'),
     }
   }
 
-  return { behavior: 'passthrough', message: 'No obfuscated flags detected' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noObfuscatedFlags') }
 }
 
 /**
@@ -1589,14 +1574,13 @@ function validateBackslashEscapedWhitespace(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains backslash-escaped whitespace that could alter command parsing',
+      message: tSync('bashSecurity.backslashWhitespace'),
     }
   }
 
   return {
     behavior: 'passthrough',
-    message: 'No backslash-escaped whitespace',
+    message: tSync('bashSecurity.noBackslashWhitespace'),
   }
 }
 
@@ -1700,7 +1684,7 @@ function validateBackslashEscapedOperators(
   // in the AST, then any \; is just an escaped character in a word argument
   // (e.g., `find . -exec cmd {} \;`). Skip the expensive regex check.
   if (context.treeSitter && !context.treeSitter.hasActualOperatorNodes) {
-    return { behavior: 'passthrough', message: 'No operator nodes in AST' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.noOperatorNodes') }
   }
 
   if (hasBackslashEscapedOperator(context.originalCommand)) {
@@ -1709,14 +1693,13 @@ function validateBackslashEscapedOperators(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains a backslash before a shell operator (;, |, &, <, >) which can hide command structure',
+      message: tSync('bashSecurity.backslashOperator'),
     }
   }
 
   return {
     behavior: 'passthrough',
-    message: 'No backslash-escaped operators',
+    message: tSync('bashSecurity.noBackslashOperators'),
   }
 }
 
@@ -1794,8 +1777,7 @@ function validateBraceExpansion(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command has excess closing braces after quote stripping, indicating possible brace expansion obfuscation',
+      message: tSync('bashSecurity.braceExcessClosing'),
     }
   }
 
@@ -1821,8 +1803,7 @@ function validateBraceExpansion(context: ValidationContext): PermissionResult {
       })
       return {
         behavior: 'ask',
-        message:
-          'Command contains quoted brace character inside brace context (potential brace expansion obfuscation)',
+        message: tSync('bashSecurity.braceQuotedInside'),
       }
     }
   }
@@ -1875,8 +1856,7 @@ function validateBraceExpansion(context: ValidationContext): PermissionResult {
           })
           return {
             behavior: 'ask',
-            message:
-              'Command contains brace expansion that could alter command parsing',
+            message: tSync('bashSecurity.braceExpansion'),
           }
         }
       }
@@ -1887,7 +1867,7 @@ function validateBraceExpansion(context: ValidationContext): PermissionResult {
 
   return {
     behavior: 'passthrough',
-    message: 'No brace expansion detected',
+    message: tSync('bashSecurity.noBraceExpansion'),
   }
 }
 
@@ -1909,11 +1889,10 @@ function validateUnicodeWhitespace(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains Unicode whitespace characters that could cause parsing inconsistencies',
+      message: tSync('bashSecurity.unicodeWhitespace'),
     }
   }
-  return { behavior: 'passthrough', message: 'No Unicode whitespace' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noUnicodeWhitespace') }
 }
 
 function validateMidWordHash(context: ValidationContext): PermissionResult {
@@ -1954,11 +1933,10 @@ function validateMidWordHash(context: ValidationContext): PermissionResult {
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains mid-word # which is parsed differently by shell-quote vs bash',
+      message: tSync('bashSecurity.midWordHash'),
     }
   }
-  return { behavior: 'passthrough', message: 'No mid-word hash' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noMidWordHash') }
 }
 
 /**
@@ -1998,7 +1976,7 @@ function validateCommentQuoteDesync(
   if (context.treeSitter) {
     return {
       behavior: 'passthrough',
-      message: 'Tree-sitter quote context is authoritative',
+      message: tSync('bashSecurity.treeSitterAuthoritative'),
     }
   }
 
@@ -2060,8 +2038,7 @@ function validateCommentQuoteDesync(
         })
         return {
           behavior: 'ask',
-          message:
-            'Command contains quote characters inside a # comment which can desync quote tracking',
+          message: tSync('bashSecurity.commentQuoteDesync'),
         }
       }
       // Skip to end of line (rest is comment)
@@ -2070,7 +2047,7 @@ function validateCommentQuoteDesync(
     }
   }
 
-  return { behavior: 'passthrough', message: 'No comment quote desync' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noCommentQuoteDesync') }
 }
 
 /**
@@ -2113,7 +2090,7 @@ function validateQuotedNewline(context: ValidationContext): PermissionResult {
   // stripCommentLines only strips lines where trim().startsWith('#'), so
   // no # means no possible trigger.
   if (!originalCommand.includes('\n') || !originalCommand.includes('#')) {
-    return { behavior: 'passthrough', message: 'No newline or no hash' }
+    return { behavior: 'passthrough', message: tSync('bashSecurity.noNewlineOrHash') }
   }
 
   // Track quote state. Mirrors extractQuotedContent / validateCommentQuoteDesync:
@@ -2164,14 +2141,13 @@ function validateQuotedNewline(context: ValidationContext): PermissionResult {
         })
         return {
           behavior: 'ask',
-          message:
-            'Command contains a quoted newline followed by a #-prefixed line, which can hide arguments from line-based permission checks',
+          message: tSync('bashSecurity.quotedNewlineHash'),
         }
       }
     }
   }
 
-  return { behavior: 'passthrough', message: 'No quoted newline-hash pattern' }
+  return { behavior: 'passthrough', message: tSync('bashSecurity.noQuotedNewlineHash') }
 }
 
 /**
@@ -2216,7 +2192,7 @@ function validateZshDangerousCommands(
     })
     return {
       behavior: 'ask',
-      message: `Command uses Zsh-specific '${baseCmd}' which can bypass security checks`,
+      message: tSync('bashSecurity.zshDangerousCommand', { baseCmd }),
     }
   }
 
@@ -2230,14 +2206,13 @@ function validateZshDangerousCommands(
     })
     return {
       behavior: 'ask',
-      message:
-        "Command uses 'fc -e' which can execute arbitrary commands via editor",
+      message: tSync('bashSecurity.fcEditor'),
     }
   }
 
   return {
     behavior: 'passthrough',
-    message: 'No Zsh dangerous commands',
+    message: tSync('bashSecurity.noZshDangerousCommands'),
   }
 }
 
@@ -2266,8 +2241,7 @@ export function bashCommandIsSafe_DEPRECATED(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains non-printable control characters that could be used to bypass security checks',
+      message: tSync('bashSecurity.controlCharacters'),
       isBashSecurityCheckForMisparsing: true,
     }
   }
@@ -2277,8 +2251,7 @@ export function bashCommandIsSafe_DEPRECATED(
   if (hasShellQuoteSingleQuoteBug(command)) {
     return {
       behavior: 'ask',
-      message:
-        'Command contains single-quoted backslash pattern that could bypass security checks',
+      message: tSync('bashSecurity.singleQuotedBackslash'),
       isBashSecurityCheckForMisparsing: true,
     }
   }
@@ -2408,7 +2381,7 @@ export function bashCommandIsSafe_DEPRECATED(
 
   return {
     behavior: 'passthrough',
-    message: 'Command passed all security checks',
+    message: tSync('bashSecurity.allChecksPassed'),
   }
 }
 
@@ -2445,8 +2418,7 @@ export async function bashCommandIsSafeAsync_DEPRECATED(
     })
     return {
       behavior: 'ask',
-      message:
-        'Command contains non-printable control characters that could be used to bypass security checks',
+      message: tSync('bashSecurity.controlCharacters'),
       isBashSecurityCheckForMisparsing: true,
     }
   }
@@ -2454,8 +2426,7 @@ export async function bashCommandIsSafeAsync_DEPRECATED(
   if (hasShellQuoteSingleQuoteBug(command)) {
     return {
       behavior: 'ask',
-      message:
-        'Command contains single-quoted backslash pattern that could bypass security checks',
+      message: tSync('bashSecurity.singleQuotedBackslash'),
       isBashSecurityCheckForMisparsing: true,
     }
   }
@@ -2587,6 +2558,6 @@ export async function bashCommandIsSafeAsync_DEPRECATED(
 
   return {
     behavior: 'passthrough',
-    message: 'Command passed all security checks',
+    message: tSync('bashSecurity.allChecksPassed'),
   }
 }

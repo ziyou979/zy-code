@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { getIsNonInteractiveSession } from '../bootstrap/state.js';
 import { verifyApiKey } from '../services/api/zy.js';
 import { getApiKeyWithSource, getApiKeyFromApiKeyHelper, isAuthEnabled } from '../utils/auth.js';
-import { getAPIProvider, isOpenAIFormatProvider } from '../utils/model/providers.js';
+import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js';
 export type VerificationStatus = 'loading' | 'valid' | 'invalid' | 'missing' | 'error';
 export type ApiKeyVerificationResult = {
   status: VerificationStatus;
@@ -11,8 +11,8 @@ export type ApiKeyVerificationResult = {
 };
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    // 支持 OpenAI 兼容格式的平台
-    if (isOpenAIFormatProvider(getAPIProvider())) {
+    // 使用 OpenAI SDK 的平台
+    if (isOpenAIProvider(getAPIProvider())) {
       return 'valid';
     }
     if (!isAuthEnabled()) {
@@ -35,8 +35,8 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   });
   const [error, setError] = useState<Error | null>(null);
   const verify = useCallback(async (): Promise<void> => {
-    // 支持 OpenAI 兼容格式的平台 - 通过 settings.json 配置时跳过验证
-    if (isOpenAIFormatProvider(getAPIProvider())) {
+    // 使用 OpenAI SDK 的平台 - 通过 settings.json 配置时跳过验证
+    if (isOpenAIProvider(getAPIProvider())) {
       setStatus('valid');
       return;
     }

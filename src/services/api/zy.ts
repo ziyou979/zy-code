@@ -25,8 +25,7 @@ import { randomUUID } from 'crypto'
 import {
   getAPIProvider,
   isAnthropicBaseUrl,
-  isOpenAIFormatProvider,
-  isNativeOpenAIProvider,
+  isOpenAIProvider,
 } from 'src/utils/model/providers.js'
 import {
   openAICreateMessageStream,
@@ -529,12 +528,8 @@ export async function verifyApiKey(
   apiKey: string,
   isNonInteractiveSession: boolean,
 ): Promise<boolean> {
-  // 支持 OpenAI 兼容格式的平台（百炼、Ollama、智谱、Kimi 等）- 通过 settings.json 配置时跳过验证
-  if (isOpenAIFormatProvider(getAPIProvider())) {
-    return true
-  }
-  // OpenAI provider: 跳过验证（使用 OPENAI_API_KEY）
-  if (isNativeOpenAIProvider(getAPIProvider())) {
+  // 使用 OpenAI SDK 的平台（百炼、Ollama、智谱、Kimi、OpenAI 等）- 跳过验证
+  if (isOpenAIProvider(getAPIProvider())) {
     return true
   }
   // 如果在打印模式（非交互会话）下运行，跳过 API 验证
@@ -557,23 +552,14 @@ export async function verifyApiKey(
           }),
         async anthropic => {
           const messages: MessageParam[] = [{ role: 'user', content: 'test' }]
-          const apiProvider = getAPIProvider()
-          const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
-          // OpenAI 兼容格式的平台不支持 beta API 和 betas 参数
-          const filteredBetas = useOpenAIFormat ? [] : betas
-
-          const createMessageFn = useOpenAIFormat
-            ? anthropic.messages.create.bind(anthropic.messages)
-            : anthropic.beta.messages.create.bind(anthropic.beta.messages)
-          
           // biome-ignore lint/plugin: API key verification is intentionally a minimal direct call
-          await createMessageFn({
+          await anthropic.beta.messages.create({
             model,
             max_tokens: 1,
             messages,
             temperature: 1,
-            ...(filteredBetas.length > 0 && { betas: filteredBetas }),
+            ...(betas.length > 0 && { betas }),
             metadata: getAPIMetadata(),
             ...getExtraBodyParams(),
           })
@@ -876,10 +862,9 @@ export async function* executeNonStreamingRequest(
       try {
         // biome-ignore lint/plugin: non-streaming API call
         const apiProvider = getAPIProvider()
-        const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
-        // OpenAI 专用路径
-        if (isNativeOpenAIProvider(apiProvider)) {
+        // OpenAI SDK 路径
+        if (isOpenAIProvider(apiProvider)) {
           return await openAICreateMessage({
             ...adjustedParams,
             model: normalizeModelStringForAPI(adjustedParams.model),
@@ -890,26 +875,12 @@ export async function* executeNonStreamingRequest(
           })
         }
 
-        // OpenAI 兼容格式的平台不支持 beta API
-        const createMessageFn = useOpenAIFormat
-          ? anthropic.messages.create.bind(anthropic.messages)
-          : anthropic.beta.messages.create.bind(anthropic.beta.messages)
-
-        // 过滤掉 OpenAI 兼容格式平台不支持的参数
-        const filteredParams = useOpenAIFormat
-          ? {
-              ...adjustedParams,
-              model: normalizeModelStringForAPI(adjustedParams.model),
-              betas: undefined,
-              thinking: undefined,
-            }
-          : {
-              ...adjustedParams,
-              model: normalizeModelStringForAPI(adjustedParams.model),
-            }
-        
-        return await createMessageFn(
-          filteredParams,
+        // Anthropic SDK 路径
+        return await anthropic.beta.messages.create(
+          {
+            ...adjustedParams,
+            model: normalizeModelStringForAPI(adjustedParams.model),
+          },
           {
             signal: retryOptions.signal,
             timeout: fallbackTimeoutMs,
@@ -1069,7 +1040,7 @@ async function* queryModel(
   void
 > {
   // OpenAI provider: 路由到专用实现
-  if (isNativeOpenAIProvider(getAPIProvider())) {
+  if (isOpenAIProvider(getAPIProvider())) {
     yield* queryModelOpenAI(messages, systemPrompt, thinkingConfig, tools, signal, options)
     return
   }
@@ -1830,7 +1801,7 @@ async function* queryModel(
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
         
         // OpenAI 专用路径
-        if (isNativeOpenAIProvider(getAPIProvider())) {
+        if (isOpenAIProvider(getAPIProvider())) {
           const openAIParams = {
             ...params,
             stream: true,
@@ -1850,28 +1821,9 @@ async function* queryModel(
           })() as any
         }
 
-        // OpenAI 兼容格式的平台不支持 beta API，需要使用标准的 messages.create
-        const apiProvider = getAPIProvider()
-        const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
-
-        // 过滤掉 OpenAI 兼容格式平台不支持的参数
-        const filteredParams = useOpenAIFormat
-          ? {
-              ...params,
-              stream: true,
-              // 移除 OpenAI 兼容格式不支持的参数
-              betas: undefined,
-              thinking: undefined,
-              context_management: undefined,
-            }
-          : { ...params, stream: true }
-
-        const createMessage = useOpenAIFormat
-          ? anthropic.messages.create.bind(anthropic.messages)
-          : anthropic.beta.messages.create.bind(anthropic.beta.messages)
-        
-        const result = await createMessage(
-          filteredParams,
+        // Anthropic SDK 路径
+        const result = await anthropic.beta.messages.create(
+          { ...params, stream: true },
           {
             signal,
             ...(clientRequestId && {

@@ -11,7 +11,7 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { logEvent } from './analytics/index.js'
 import { getAPIMetadata } from './api/zy.js'
 import { getLLMClient } from './api/client.js'
-import { getAPIProvider, isOpenAIFormatProvider, isNativeOpenAIProvider } from '../utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 import { openAICreateMessage } from './api/openaiQuery.js'
 import {
   processRateLimitHeaders,
@@ -220,7 +220,7 @@ async function makeTestQuery() {
   const apiProvider = getAPIProvider()
 
   // OpenAI 专用路径
-  if (isNativeOpenAIProvider(apiProvider)) {
+  if (isOpenAIProvider(apiProvider)) {
     const response = await openAICreateMessage({
       model,
       max_tokens: 1,
@@ -238,22 +238,16 @@ async function makeTestQuery() {
     source: 'quota_check',
   })
   const betas = getModelBetas(model)
-  const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
-
-  // OpenAI 兼容格式不支持 beta API 和 betas 参数
-  const filteredBetas = useOpenAIFormat ? [] : betas
 
   // biome-ignore lint/plugin: quota check needs raw response access via asResponse()
-  const createMessageFn = useOpenAIFormat
-    ? anthropic.messages.create.bind(anthropic.messages)
-    : anthropic.beta.messages.create.bind(anthropic.beta.messages)
+  const createMessageFn = anthropic.beta.messages.create.bind(anthropic.beta.messages)
 
   return createMessageFn({
     model,
     max_tokens: 1,
     messages,
     metadata: getAPIMetadata(),
-    ...(filteredBetas.length > 0 ? { betas: filteredBetas } : {}),
+    ...(betas.length > 0 ? { betas } : {}),
   }).asResponse()
 }
 

@@ -4,7 +4,8 @@ import type { GoogleAuth } from 'google-auth-library';
 import { getApiKey, getApiKeyFromApiKeyHelper, refreshAndGetAwsCredentials, refreshGcpCredentialsIfNeeded } from 'src/utils/auth.js';
 import { getUserAgent } from 'src/utils/http.js';
 import { getDefaultHaikuModel } from 'src/utils/model/model.js';
-import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider, isNativeOpenAIProvider } from 'src/utils/model/providers.js';
+import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider, isEnvOrDefaultProvider, isOpenAIProvider, isPreconfiguredEndpointProvider } from 'src/utils/model/providers.js';
+import { getProviderEntry } from 'src/utils/model/providerRegistry.js';
 import { getProxyFetchOptions } from 'src/utils/proxy.js';
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js';
 import { getOauthConfig } from '../../constants/oauth.js';
@@ -261,70 +262,92 @@ export async function getLLMClient({
     // 返回值类型一直是不准确的——这不支持 batching 或 models
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic;
   }
-  if (getAPIProvider() === 'dashscope') {
-    // 百炼 API 支持 Anthropic 和 OpenAI 两种消息格式
-    // 根据用户在 onboarding 时选择的消息格式决定端点
-    const { isOpenAIFormatProvider } = await import('../../utils/model/providers.js');
-    const dashscopeApiKey = getApiKey();
-
-    // 根据用户选择的消息格式决定端点
-    let dashscopeBaseURL: string;
-    if (process.env.DASHSCOPE_BASE_URL) {
-      dashscopeBaseURL = process.env.DASHSCOPE_BASE_URL;
-    } else if (isOpenAIFormatProvider('dashscope')) {
-      // OpenAI 兼容端点
-      dashscopeBaseURL = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
-    } else {
-      // Anthropic 兼容端点（默认）
-      dashscopeBaseURL = 'https://dashscope.aliyuncs.com/apps/anthropic/';
-    }
-
-    // 创建百炼专用的 headers
-    const dashscopeHeaders: Record<string, string> = {};
-    if (defaultHeaders['User-Agent']) {
-      dashscopeHeaders['User-Agent'] = defaultHeaders['User-Agent'];
-    }
-
-    const dashscopeConfig: ConstructorParameters<typeof Anthropic>[0] = {
-      apiKey: dashscopeApiKey,
-      baseURL: dashscopeBaseURL,
-      defaultHeaders: dashscopeHeaders,
-      maxRetries: ARGS.maxRetries,
-      timeout: ARGS.timeout,
-      dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
-      ...(ARGS.fetch && {
-        fetch: ARGS.fetch
-      }),
-      ...(isDebugToStdErr() && {
-        logger: createStderrLogger()
-      })
-    };
-    return new Anthropic(dashscopeConfig);
-  }
-  // 自定义端点提供商（Ollama、ZhiPu、Kimi）
-  // 这些使用自定义 base URL，但支持完整的 Anthropic 消息格式
+  // ── Registry-driven providers ──────────────────────────────────────────
+  // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
+  // siliconflow, etc.), and generic — all share the same client creation logic.
   const apiProvider = getAPIProvider();
-  if (isCustomEndpointProvider(apiProvider)) {
-    const providerConfig = getCustomEndpointProviderConfig(apiProvider);
-    const providerApiKey = apiKey || providerConfig.apiKey || getApiKey();
-    const providerBaseURL = process.env.LLM_BASE_URL || providerConfig.baseURL;
+  const registryEntry = getProviderEntry(apiProvider);
+
+  if (registryEntry && (isEnvOrDefaultProvider(apiProvider) || isPreconfiguredEndpointProvider(apiProvider) || apiProvider === 'generic')) {
+    const resolvedApiKey = getApiKey();
+    let resolvedBaseURL: string | undefined;
+
+    // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
+    if (registryEntry.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
+      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar];
+    }
+    // 2. Generic env vars
+    if (!resolvedBaseURL && process.env.ANTHROPIC_BASE_URL) {
+      resolvedBaseURL = process.env.ANTHROPIC_BASE_URL;
+    }
+    if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
+      resolvedBaseURL = process.env.LLM_BASE_URL;
+    }
+    // 3. Onboarding config (configuredBaseUrl)
+    if (!resolvedBaseURL) {
+      try {
+        const { getGlobalConfig } = await import('../../utils/config.js');
+        resolvedBaseURL = getGlobalConfig().configuredBaseUrl;
+      } catch {
+        // config not ready
+      }
+    }
+    // 4. Registry defaults (use openai format as default)
+    if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
+      resolvedBaseURL = registryEntry.defaultBaseUrls.openai;
+    }
+
+    if (resolvedBaseURL) {
+      const providerHeaders: Record<string, string> = {};
+      if (defaultHeaders['User-Agent']) {
+        providerHeaders['User-Agent'] = defaultHeaders['User-Agent'];
+      }
+      const providerConfig: ConstructorParameters<typeof Anthropic>[0] = {
+        apiKey: resolvedApiKey,
+        baseURL: resolvedBaseURL,
+        defaultHeaders: providerHeaders,
+        maxRetries: ARGS.maxRetries,
+        timeout: ARGS.timeout,
+        dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
+        ...(ARGS.fetch && { fetch: ARGS.fetch }),
+        ...(isDebugToStdErr() && { logger: createStderrLogger() }),
+      };
+      return new Anthropic(providerConfig);
+    }
+  }
+
+  // 本地推理引擎（ollama、lmstudio、llamacpp、nvidia-nim 等）
+  if (isCustomEndpointProvider(apiProvider) && registryEntry) {
+    // 优先级：环境变量 > onboarding 配置 > registry 默认值
+    let customBaseURL: string | undefined;
+    if (process.env.LLM_BASE_URL) {
+      customBaseURL = process.env.LLM_BASE_URL;
+    } else {
+      try {
+        const { getGlobalConfig } = await import('../../utils/config.js');
+        customBaseURL = getGlobalConfig().configuredBaseUrl;
+      } catch {
+        // config not ready
+      }
+    }
+    if (!customBaseURL) {
+      customBaseURL = registryEntry.defaultBaseUrls?.openai;
+    }
+
+    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey();
     const customEndpointHeaders: Record<string, string> = {};
     if (defaultHeaders['User-Agent']) {
       customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent'];
     }
     const providerAnthropicConfig: ConstructorParameters<typeof Anthropic>[0] = {
-      apiKey: providerApiKey,
-      baseURL: providerBaseURL,
+      apiKey: customApiKey,
+      baseURL: customBaseURL,
       defaultHeaders: customEndpointHeaders,
       maxRetries: ARGS.maxRetries,
       timeout: ARGS.timeout,
       dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
-      ...(ARGS.fetch && {
-        fetch: ARGS.fetch
-      }),
-      ...(isDebugToStdErr() && {
-        logger: createStderrLogger()
-      })
+      ...(ARGS.fetch && { fetch: ARGS.fetch }),
+      ...(isDebugToStdErr() && { logger: createStderrLogger() }),
     };
     return new Anthropic(providerAnthropicConfig);
   }
@@ -374,42 +397,7 @@ function getCustomHeaders(): Record<string, string> {
 }
 export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id';
 
-/**
- * 自定义端点提供商（Ollama、ZhiPu、Kimi）的默认配置
- * 用户可以通过环境变量覆盖：
- * - LLM_BASE_URL：任何提供商的自定义 base URL
- * - LLM_API_KEY：自定义 API 密钥
- * - 特定提供商：OLLAMA_BASE_URL、ZHIPU_BASE_URL、KIMI_BASE_URL 等
- */
-function getCustomEndpointProviderConfig(provider: 'ollama' | 'zhipu' | 'kimi'): {
-  baseURL: string;
-  apiKey?: string;
-} {
-  const providerEnvMap: Record<string, {
-    baseURLEnv: string;
-  }> = {
-    ollama: {
-      baseURLEnv: 'OLLAMA_BASE_URL'
-    },
-    zhipu: {
-      baseURLEnv: 'ZHIPU_BASE_URL'
-    },
-    kimi: {
-      baseURLEnv: 'KIMI_BASE_URL'
-    }
-  };
-  const config = providerEnvMap[provider];
-  const providerBaseURL = process.env[config.baseURLEnv];
-  const defaultBaseURLs: Record<string, string> = {
-    ollama: 'http://localhost:11434/v1/',
-    zhipu: 'https://open.bigmodel.cn/api/paas/v4/',
-    kimi: 'https://api.moonshot.cn/v1/'
-  };
-  return {
-    baseURL: providerBaseURL || defaultBaseURLs[provider] || 'http://localhost:11434/v1/',
-    apiKey: process.env.LLM_API_KEY || process.env[`${provider.toUpperCase()}_API_KEY`]
-  };
-}
+
 function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | undefined): ClientOptions['fetch'] {
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   const inner = fetchOverride ?? globalThis.fetch;
@@ -452,7 +440,7 @@ export function getLLMProvider(options?: {
 }): LLMProvider {
   const apiProvider = getAPIProvider()
 
-  if (isNativeOpenAIProvider(apiProvider)) {
+  if (isOpenAIProvider(apiProvider)) {
     return new OpenAIProviderAdapter({
       apiKey: options?.apiKey,
       baseURL: options?.baseURL || process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL,

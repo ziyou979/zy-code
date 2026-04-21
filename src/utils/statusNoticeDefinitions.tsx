@@ -8,7 +8,7 @@ import { relative } from 'path';
 import { formatNumber } from './format.js';
 import type { getGlobalConfig } from './config.js';
 import { getApiKeyWithSource, getApiKeyFromConfigOrMacOSKeychain, getAuthTokenSource } from './auth.js';
-import { getAPIProvider, isOpenAIFormatProvider } from './model/providers.js';
+import { getAPIProvider, isOpenAIProvider } from './model/providers.js';
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js';
 import { getAgentDescriptionsTotalTokens, AGENT_DESCRIPTIONS_THRESHOLD } from './statusNoticeHelpers.js';
 import { isSupportedJetBrainsTerminal, toIDEDisplayName, getTerminalIdeType } from './ide.js';
@@ -74,8 +74,8 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
   id: 'api-key-conflict',
   type: 'warning',
   isActive: () => {
-    // OpenAI 兼容格式模式下忽略 ZY_API_KEY 的冲突检查
-    if (isOpenAIFormatProvider(getAPIProvider())) {
+    // 使用 OpenAI SDK 的平台忽略 ZY_API_KEY 的冲突检查
+    if (isOpenAIProvider(getAPIProvider())) {
       return false;
     }
     
@@ -105,8 +105,8 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
   id: 'both-auth-methods',
   type: 'warning',
   isActive: () => {
-    // OpenAI 兼容格式模式下忽略 ZY_API_KEY 的冲突检查
-    if (isOpenAIFormatProvider(getAPIProvider())) {
+    // 使用 OpenAI SDK 的平台忽略 ZY_API_KEY 的冲突检查
+    if (isOpenAIProvider(getAPIProvider())) {
       return false;
     }
     

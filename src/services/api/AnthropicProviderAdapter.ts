@@ -24,7 +24,7 @@ import type {
   StandardStopReason,
 } from './StandardMessageFormat.js'
 import { getLLMClient } from './client.js'
-import { getAPIProvider, isOpenAIFormatProvider } from '../../utils/model/providers.js'
+import { getAPIProvider } from '../../utils/model/providers.js'
 
 // ============================================================================
 // 标准格式 → Anthropic 格式
@@ -266,15 +266,11 @@ export class AnthropicProviderAdapter {
 
   async createMessage(request: StandardMessageRequest): Promise<StandardResponse> {
     const client = await this.getClient(request.model)
-    const apiProvider = getAPIProvider()
-    const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
     const anthropicMessages = standardMessagesToAnthropic(request.messages)
     const tools = standardToolsToAnthropic(request.tools)
 
-    const createFn = useOpenAIFormat
-      ? client.messages.create.bind(client.messages)
-      : (client as any).beta.messages.create.bind((client as any).beta.messages)
+    const createFn = (client as any).beta.messages.create.bind((client as any).beta.messages)
 
     const params: Record<string, unknown> = {
       model: request.model,
@@ -292,7 +288,7 @@ export class AnthropicProviderAdapter {
     if (request.toolChoice) {
       params.tool_choice = request.toolChoice
     }
-    if (!useOpenAIFormat && request.topP !== undefined) {
+    if (request.topP !== undefined) {
       params.top_p = request.topP
     }
 
@@ -304,15 +300,11 @@ export class AnthropicProviderAdapter {
     request: StandardMessageRequest,
   ): AsyncIterable<StandardStreamEvent> {
     const client = await this.getClient(request.model)
-    const apiProvider = getAPIProvider()
-    const useOpenAIFormat = isOpenAIFormatProvider(apiProvider)
 
     const anthropicMessages = standardMessagesToAnthropic(request.messages)
     const tools = standardToolsToAnthropic(request.tools)
 
-    const createFn = useOpenAIFormat
-      ? client.messages.create.bind(client.messages)
-      : (client as any).beta.messages.create.bind((client as any).beta.messages)
+    const createFn = (client as any).beta.messages.create.bind((client as any).beta.messages)
 
     const params: Record<string, unknown> = {
       model: request.model,
