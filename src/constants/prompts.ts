@@ -40,7 +40,7 @@ import {
   isScratchpadEnabled,
   getScratchpadDir,
 } from '../utils/permissions/filesystem.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { isReplModeEnabled } from '../tools/REPLTool/constants.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
@@ -122,7 +122,7 @@ function getSystemRemindersSection(): string {
 }
 
 function getAntModelOverrideSection(): string | null {
-  if (process.env.USER_TYPE !== 'zy-super') return null
+  if (!isInternalBuild()) return null
   if (isUndercover()) return null
   return getAntModelOverrideConfig()?.defaultSystemPromptSuffix || null
 }
@@ -133,7 +133,12 @@ function getLanguageSection(
   if (!languagePreference) return null
 
   return `# Language
-Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user, including intermediate operational text (e.g., before calling a tool). Technical terms and code identifiers should remain in their original form.`
+IMPORTANT: Always respond in ${languagePreference}. Use ${languagePreference} for ALL text output, including:
+- Explanations and communications with the user
+- Intermediate operational text before and after calling tools
+- Comments and descriptions inside tool call parameters (e.g., shell comments in Bash commands, commit messages, code comments)
+- Status updates and progress reports
+Technical terms, code identifiers, CLI commands, and file paths should remain in their original form (typically English), but all surrounding natural language text must be in ${languagePreference}.`
 }
 
 function getOutputStyleSection(
@@ -190,7 +195,7 @@ function getSimpleDoingTasksSection(): string {
     `Don't add error handling, fallbacks, or validation for scenarios that can't happen. Trust internal code and framework guarantees. Only validate at system boundaries (user input, external APIs). Don't use feature flags or backwards-compatibility shims when you can just change the code.`,
     `Don't create helpers, utilities, or abstractions for one-time operations. Don't design for hypothetical future requirements. The right amount of complexity is what the task actually requires—no speculative abstractions, but no half-finished implementations either. Three similar lines of code is better than a premature abstraction.`,
     // @[MODEL LAUNCH]: Update comment writing for Capybara — remove or soften once the model stops over-commenting by default
-    ...(process.env.USER_TYPE === 'zy-super'
+    ...(isInternalBuild()
       ? [
           `Default to writing no comments. Only add one when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader. If removing the comment wouldn't confuse a future reader, don't write it.`,
           `Don't explain WHAT the code does, since well-named identifiers already do that. Don't reference the current task, fix, or callers ("used by X", "added for the Y flow", "handles the case from issue #123"), since those belong in the PR description and rot as the codebase evolves.`,
@@ -210,7 +215,7 @@ function getSimpleDoingTasksSection(): string {
     `The user will primarily request you to perform software engineering tasks. These may include solving bugs, adding new functionality, refactoring code, explaining code, and more. When given an unclear or generic instruction, consider it in the context of these software engineering tasks and the current working directory. For example, if the user asks you to change "methodName" to snake case, do not reply with just "method_name", instead find the method in the code and modify the code.`,
     `You are highly capable and often allow users to complete ambitious tasks that would otherwise be too complex or take too long. You should defer to user judgement about whether a task is too large to attempt.`,
     // @[MODEL LAUNCH]: capy v8 assertiveness counterweight (PR #24302) — un-gate once validated on external via A/B
-    ...(process.env.USER_TYPE === 'zy-super'
+    ...(isInternalBuild()
       ? [
           `If you notice the user's request is based on a misconception, or spot a bug adjacent to what they asked about, say so. You're a collaborator, not just an executor—users benefit from your judgment, not just your compliance.`,
         ]
@@ -223,12 +228,12 @@ function getSimpleDoingTasksSection(): string {
     ...codeStyleSubitems,
     `Avoid backwards-compatibility hacks like renaming unused _vars, re-exporting types, adding // removed comments for removed code, etc. If you are certain that something is unused, you can delete it completely.`,
     // @[MODEL LAUNCH]: False-claims mitigation for Capybara v8 (29-30% FC rate vs v4's 16.7%)
-    ...(process.env.USER_TYPE === 'zy-super'
+    ...(isInternalBuild()
       ? [
           `Report outcomes faithfully: if tests fail, say so with the relevant output; if you did not run a verification step, say that rather than implying it succeeded. Never claim "all tests pass" when output shows failures, never suppress or simplify failing checks (tests, lints, type errors) to manufacture a green result, and never characterize incomplete or broken work as done. Equally, when a check did pass or a task is complete, state it plainly — do not hedge confirmed results with unnecessary disclaimers, downgrade finished work to "partial," or re-verify things you already checked. The goal is an accurate report, not a defensive one.`,
         ]
       : []),
-    ...(process.env.USER_TYPE === 'zy-super'
+    ...(isInternalBuild()
       ? [
           `If the user reports a bug, slowness, or unexpected behavior with ZY Code itself (as opposed to asking you to fix their own code), recommend the appropriate slash command: /issue for model-related problems (odd outputs, wrong tool choices, hallucinations, refusals), or /share to upload the full session transcript for product bugs, crashes, slowness, or general issues. Only recommend these when the user is describing a problem with ZY Code. After /share produces a ccshare link, if you have a Slack MCP tool available, offer to post the link to #zy-code-feedback (channel ID C07VBSHV7EV) for the user.`,
         ]
@@ -389,7 +394,7 @@ function getSessionSpecificGuidanceSection(
 
 // @[MODEL LAUNCH]: Remove this section when we launch numbat.
 function getOutputEfficiencySection(): string {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return `# Communicating with the user
 When sending user-facing text, you're writing for a person, not logging to a console. Assume users can't see most tool calls or thinking - only your text output. Before your first tool call, briefly state what you're about to do. While working, give short updates at key moments: when you find something load-bearing (a bug, a root cause), when changing direction, when you've made progress without an update.
 
@@ -418,7 +423,7 @@ If you can say it in one sentence, don't use three. Prefer short, direct sentenc
 function getSimpleToneAndStyleSection(): string {
   const items = [
     `Only use emojis if the user explicitly requests it. Avoid using emojis in all communication unless asked.`,
-    process.env.USER_TYPE === 'zy-super'
+    isInternalBuild()
       ? null
       : `Your responses should be short and concise.`,
     `When referencing specific functions or pieces of code include the pattern file_path:line_number to allow the user to easily navigate to the source code location.`,
@@ -514,7 +519,7 @@ ${CYBER_RISK_INSTRUCTION}`,
     ),
     // Numeric length anchors — research shows ~1.2% output token reduction vs
     // qualitative "be concise". Ant-only to measure quality impact first.
-    ...(process.env.USER_TYPE === 'zy-super'
+    ...(isInternalBuild()
       ? [
           systemPromptSection(
             'numeric_length_anchors',
@@ -607,7 +612,7 @@ export async function computeEnvInfo(
   // inlined at each callsite (not hoisted to a const) so the bundler can
   // constant-fold it to `false` in external builds and eliminate the branch.
   let modelDescription = ''
-  if (process.env.USER_TYPE === 'zy-super' && isUndercover()) {
+  if (isInternalBuild() && isUndercover()) {
     // suppress
   } else {
     const marketingName = getMarketingNameForModel(modelId)
@@ -646,7 +651,7 @@ export async function computeSimpleEnvInfo(
   // Undercover: strip all model name/ID references. See computeEnvInfo.
   // DCE: inline the USER_TYPE check at each site — do NOT hoist to a const.
   let modelDescription: string | null = null
-  if (process.env.USER_TYPE === 'zy-super' && isUndercover()) {
+  if (isInternalBuild() && isUndercover()) {
     // suppress
   } else {
     const marketingName = getMarketingNameForModel(modelId)
@@ -680,10 +685,10 @@ export async function computeSimpleEnvInfo(
     `OS Version: ${unameSR}`,
     modelDescription,
     knowledgeCutoffMessage,
-    process.env.USER_TYPE === 'zy-super' && isUndercover()
+    isInternalBuild() && isUndercover()
       ? null
       : `ZY Code is available as a CLI in the terminal, desktop app (Mac/Windows), web app (zy.ai/code), and IDE extensions (VS Code, JetBrains).`,
-    process.env.USER_TYPE === 'zy-super' && isUndercover()
+    isInternalBuild() && isUndercover()
       ? null
       : `Fast mode for ZY Code uses the same model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
   ].filter(item => item !== null)

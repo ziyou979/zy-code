@@ -23,7 +23,7 @@ import {
   getZyAIOAuthTokens,
   handleOAuth401Error,
 } from '../../utils/auth.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { isNonCustomOpusModel } from '../../utils/model/model.js'
 import { disableKeepAlive } from '../../utils/proxy.js'
@@ -180,7 +180,7 @@ export async function* withRetry<T, TClient = unknown>(
 
     try {
       // 检查模拟限速（供 Ant 员工使用 /mock-limits 命令）
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         const mockError = checkMockRateLimitError(
           retryContext.model,
         )
@@ -651,7 +651,7 @@ function shouldRetry(error: APIErrorLike): boolean {
   // 对于其他状态码（401、403、400、429 等），遵循 header。
   if (shouldRetryHeader === 'false') {
     const is5xxError = error.status !== undefined && error.status >= 500
-    if (!(process.env.USER_TYPE === 'zy-super' && is5xxError)) {
+    if (!(isInternalBuild() && is5xxError)) {
       return false
     }
   }

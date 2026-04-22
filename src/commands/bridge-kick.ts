@@ -1,6 +1,7 @@
 import { getBridgeDebugHandle } from '../bridge/bridgeDebug.js'
 import type { Command } from '../commands.js'
 import type { LocalCommandCall } from '../types/command.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 /**
  * Ant-only: inject bridge failure states to manually test recovery paths.
@@ -192,7 +193,7 @@ const bridgeKick = {
   type: 'local',
   name: 'bridge-kick',
   description: 'Inject bridge failure states for manual recovery testing',
-  isEnabled: () => process.env.USER_TYPE === 'zy-super',
+  isEnabled: () => isInternalBuild(),
   supportsNonInteractive: false,
   load: () => Promise.resolve({ call }),
 } satisfies Command

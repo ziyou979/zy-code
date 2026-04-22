@@ -8,6 +8,7 @@ import {
   PERMISSION_MODES,
   type PermissionMode,
 } from '../../types/permissions.js'
+import { isInternalBuild } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
 
 // Re-export for backwards compatibility
@@ -98,7 +99,7 @@ export function isExternalPermissionMode(
   mode: PermissionMode,
 ): mode is ExternalPermissionMode {
   // External users can't have auto, so always true for them
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return true
   }
   return mode !== 'auto' && mode !== 'bubble'

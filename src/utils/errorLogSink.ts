@@ -17,6 +17,7 @@ import { createBufferedWriter } from './bufferedWriter.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
+import { isInternalBuild } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { attachErrorLogSink, dateToFilename } from './log.js'
 import { jsonStringify } from './slowOperations.js'
@@ -109,7 +110,7 @@ function getLogWriter(path: string): JsonlWriter {
 }
 
 function appendToLog(path: string, message: object): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 
@@ -117,7 +118,7 @@ function appendToLog(path: string, message: object): void {
     timestamp: new Date().toISOString(),
     ...message,
     cwd: getFsImplementation().cwd(),
-    userType: process.env.USER_TYPE,
+    userType: isInternalBuild() ? 'internal' : 'external',
     sessionId: getSessionId(),
     version: MACRO.VERSION,
   }

@@ -16,6 +16,7 @@ import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { isPreapprovedHost } from './preapproved.js'
 import { makeSecondaryModelPrompt } from './prompt.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 // Custom error classes for domain blocking
 class DomainBlockedError extends Error {
@@ -399,7 +400,7 @@ export async function getURLMarkdownContent(
       }
     }
 
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logEvent('tengu_web_fetch_host', {
         hostname:
           hostname as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

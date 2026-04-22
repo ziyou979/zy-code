@@ -1,6 +1,6 @@
 import type { Command } from '../../commands.js'
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 
 const feedback = {
@@ -17,7 +17,7 @@ const feedback = {
       isEnvTruthy(process.env.DISABLE_FEEDBACK_COMMAND) ||
       isEnvTruthy(process.env.DISABLE_BUG_COMMAND) ||
       isEssentialTrafficOnly() ||
-      process.env.USER_TYPE === 'zy-super' ||
+      isInternalBuild() ||
       !isPolicyAllowed('allow_product_feedback')
     ),
   load: () => import('./feedback.js'),

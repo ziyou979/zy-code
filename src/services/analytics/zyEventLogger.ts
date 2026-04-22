@@ -17,6 +17,7 @@ import { getPlatform, getWslVersion } from '../../utils/platform.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { getCoreUserData } from '../../utils/user.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { isAnalyticsDisabled } from './config.js'
 import { LocalFileExporter } from './localFileExporter.js'
 import type { GrowthBookUserAttributes } from './growthbook.js'
@@ -119,7 +120,7 @@ export async function shutdownZyEventLogging(): Promise<void> {
   }
   try {
     await zyEventLoggerProvider.shutdown()
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging('ZY event logging: final shutdown complete')
     }
   } catch {
@@ -184,7 +185,7 @@ async function logEventToZyAsync(
     }
 
     // Debug logging when debug mode is enabled
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging(
         `[ANT-ONLY] ZY event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
       )
@@ -199,7 +200,7 @@ async function logEventToZyAsync(
     if (process.env.NODE_ENV === 'development') {
       throw e
     }
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logError(e as Error)
     }
     // swallow
@@ -286,7 +287,7 @@ export function logGrowthBookExperimentToZy(
     environment: getEnvironmentForGrowthBook(),
   }
 
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     logForDebugging(
       `[ANT-ONLY] ZY GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
     )
@@ -315,7 +316,7 @@ export function initializeZyEventLogging(): void {
   const enabled = isZyEventLoggingEnabled()
 
   if (!enabled) {
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging('ZY event logging not enabled')
     }
     return
@@ -408,7 +409,7 @@ export async function reinitializeZyEventLoggingIfConfigChanged(): Promise<void>
     return
   }
 
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     logForDebugging(
       `ZY event logging: ${BATCH_CONFIG_NAME} changed, reinitializing`,
     )

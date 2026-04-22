@@ -9,6 +9,7 @@ import {
 import type { BridgeConfig, BridgeApiClient } from './types.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -325,7 +326,7 @@ export async function initBridgeCore(
   // 仅 Ant：拦截以便 /bridge-kick 可以注入 poll/register/heartbeat
   // 故障。在外部构建中零成本（rawApi 直接传递不变）。
   const api =
-    process.env.USER_TYPE === 'zy-super' ? wrapApiForFaultInjection(rawApi) : rawApi
+    isInternalBuild() ? wrapApiForFaultInjection(rawApi) : rawApi
 
   const bridgeConfig: BridgeConfig = {
     dir,
@@ -938,7 +939,7 @@ export async function initBridgeCore(
   // 轮询等待——立即在调试日志中触发并观察。
   // Windows 没有 USR 信号；`process.on` 在那里会抛出异常。
   let sigusr2Handler: (() => void) | undefined
-  if (process.env.USER_TYPE === 'zy-super' && process.platform !== 'win32') {
+  if (isInternalBuild() && process.platform !== 'win32') {
     sigusr2Handler = () => {
       logForDebugging(
         '[bridge:repl] SIGUSR2 received — forcing doReconnect() for testing',
@@ -952,7 +953,7 @@ export async function initBridgeCore(
   // 并赋值到这个槽位，以便斜杠命令可以直接调用它——真正的 setOnClose 回调
   // 埋在 wireTransport 里面，而它本身又在 onWorkReceived 里面。
   let debugFireClose: ((code: number) => void) | null = null
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     registerBridgeDebugHandle({
       fireClose: code => {
         if (!debugFireClose) {
@@ -1499,7 +1500,7 @@ export async function initBridgeCore(
     if (sigusr2Handler) {
       process.off('SIGUSR2', sigusr2Handler)
     }
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       clearBridgeDebugHandle()
       debugFireClose = null
     }

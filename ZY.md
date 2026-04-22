@@ -14,7 +14,7 @@ bun run build:sdk       # Build SDK only
 bun run start           # Run built CLI (dist/cli.js)
 bun src/entrypoints/cli.tsx  # Run CLI directly without building (dev mode)
 
-# 格式校验
+# 格式校验，更改代码后必须通过此脚本进行验证
 bun tsc --noEmit
 ```
 

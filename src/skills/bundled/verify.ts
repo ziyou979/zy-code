@@ -1,4 +1,5 @@
 import { parseFrontmatter } from '../../utils/frontmatterParser.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 import { SKILL_FILES, SKILL_MD } from './verifyContent.js'
 
@@ -10,7 +11,7 @@ const DESCRIPTION =
     : 'Verify a code change does what it should by running the app.'
 
 export function registerVerifySkill(): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

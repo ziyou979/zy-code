@@ -42,6 +42,8 @@ export type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED = never
  *
  * Returns the input unchanged (same reference) when no _PROTO_ keys present.
  */
+import { isInternalBuild } from '../../utils/envUtils.js'
+
 export function stripProtoFields<V>(
   metadata: Record<string, V>,
 ): Record<string, V> {
@@ -104,7 +106,7 @@ export function attachAnalyticsSink(newSink: AnalyticsSink): void {
     eventQueue.length = 0
 
     // Log queue size for ants to help debug analytics initialization timing
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       sink.logEvent('analytics_sink_attached', {
         queued_event_count: queuedEvents.length,
       })

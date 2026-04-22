@@ -1,3 +1,4 @@
+import { isInternalBuild } from 'src/utils/envUtils.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -41,7 +42,7 @@ export function notifyVscodeFileUpdated(
   oldContent: string | null,
   newContent: string | null,
 ): void {
-  if (process.env.USER_TYPE !== 'zy-super' || !vscodeMcpClient) {
+  if (!isInternalBuild() || !vscodeMcpClient) {
     return
   }
 

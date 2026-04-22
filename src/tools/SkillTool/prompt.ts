@@ -16,6 +16,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { toError } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
 import { logError } from '../../utils/log.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 // Skill listing gets 1% of the context window (in characters)
 export const SKILL_BUDGET_CONTEXT_PERCENT = 0.01
@@ -122,7 +123,7 @@ export function formatCommandsWithinBudget(
 
   if (maxDescLen < MIN_DESC_LENGTH) {
     // Extreme case: non-bundled go names-only, bundled keep descriptions
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logEvent('tengu_skill_descriptions_truncated', {
         skill_count: commands.length,
         budget,
@@ -146,7 +147,7 @@ export function formatCommandsWithinBudget(
     restCommands,
     cmd => stringWidth(getCommandDescription(cmd)) > maxDescLen,
   )
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     logEvent('tengu_skill_descriptions_truncated', {
       skill_count: commands.length,
       budget,

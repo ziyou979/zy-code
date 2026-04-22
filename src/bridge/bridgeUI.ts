@@ -7,6 +7,7 @@ import {
 } from '../constants/figures.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { logForDebugging } from '../utils/debug.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import {
   buildActiveFooterText,
   buildBridgeConnectUrl,
@@ -221,7 +222,7 @@ export function createBridgeLogger(options: {
       suffix += chalk.dim(' \u00b7 ') + chalk.dim(branch)
     }
 
-    if (process.env.USER_TYPE === 'zy-super' && debugLogPath) {
+    if (isInternalBuild() && debugLogPath) {
       writeStatus(
         `${chalk.yellow('[ANT-ONLY] Logs:')} ${chalk.dim(debugLogPath)}\n`,
       )

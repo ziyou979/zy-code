@@ -28,6 +28,7 @@ import {
   validateFlags,
 } from '../../utils/shell/readOnlyCommandValidation.js'
 import { COMMON_PARAMETERS } from './commonParameters.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 const DOTNET_READ_ONLY_FLAGS = new Set([
   '--version',
@@ -1702,7 +1703,7 @@ function isGitSafe(args: string[]): boolean {
 
 function isGhSafe(args: string[]): boolean {
   // gh commands are network-dependent; only allow for ant users
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return false
   }
 

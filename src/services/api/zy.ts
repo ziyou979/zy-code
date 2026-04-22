@@ -82,7 +82,7 @@ import {
   getSonnet1mExpTreatmentEnabled,
 } from '../../utils/context.js'
 import { resolveAppliedEffort } from '../../utils/effort.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { computeFingerprintFromMessages } from '../../utils/fingerprint.js'
 import { captureAPIRequest, logError } from '../../utils/log.js'
@@ -407,7 +407,7 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
   let userEligible = getPromptCache1hEligible()
   if (userEligible === null) {
     userEligible =
-      process.env.USER_TYPE === 'zy-super'
+      isInternalBuild()
     setPromptCache1hEligible(userEligible)
   }
   if (!userEligible) return false
@@ -454,7 +454,7 @@ function configureEffortParams(
     // 发送字符串 effort 级别
     outputConfig.effort = effortValue
     betas.push(EFFORT_BETA_HEADER)
-  } else if (process.env.USER_TYPE === 'zy-super') {
+  } else if (isInternalBuild()) {
     // 数值 effort 覆盖 - 仅限 ant 用户（使用 anthropic_internal）
     const existingInternal =
       (extraBodyParams.anthropic_internal as Record<string, unknown>) || {}
@@ -1937,7 +1937,7 @@ async function* queryModel(
             // Capture research from message_start if available (internal only).
             // Always overwrite with the latest value.
             if (
-              process.env.USER_TYPE === 'zy-super' &&
+              isInternalBuild() &&
               'research' in (part.message as unknown as Record<string, unknown>)
             ) {
               research = (part.message as unknown as Record<string, unknown>)
@@ -2116,7 +2116,7 @@ async function* queryModel(
             }
             // Capture research from content_block_delta if available (internal only).
             // Always overwrite with the latest value.
-            if (process.env.USER_TYPE === 'zy-super' && 'research' in part) {
+            if (isInternalBuild() && 'research' in part) {
               research = (part as { research: unknown }).research
             }
             break
@@ -2155,7 +2155,7 @@ async function* queryModel(
               type: 'assistant',
               uuid: randomUUID(),
               timestamp: new Date().toISOString(),
-              ...(process.env.USER_TYPE === 'zy-super' &&
+              ...(isInternalBuild() &&
                 research !== undefined && { research }),
               ...(advisorModel && { advisorModel }),
             }
@@ -2170,7 +2170,7 @@ async function* queryModel(
             // already-yielded messages since message_delta arrives after
             // content_block_stop.
             if (
-              process.env.USER_TYPE === 'zy-super' &&
+              isInternalBuild() &&
               'research' in (part as unknown as Record<string, unknown>)
             ) {
               research = (part as unknown as Record<string, unknown>).research
@@ -2533,7 +2533,7 @@ async function* queryModel(
         type: 'assistant',
         uuid: randomUUID(),
         timestamp: new Date().toISOString(),
-        ...(process.env.USER_TYPE === 'zy-super' &&
+        ...(isInternalBuild() &&
           research !== undefined && {
             research,
           }),
@@ -2629,7 +2629,7 @@ async function* queryModel(
           type: 'assistant',
           uuid: randomUUID(),
           timestamp: new Date().toISOString(),
-          ...(process.env.USER_TYPE === 'zy-super' &&
+          ...(isInternalBuild() &&
             research !== undefined && { research }),
           ...(advisorModel && { advisorModel }),
         }

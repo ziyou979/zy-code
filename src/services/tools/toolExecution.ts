@@ -27,6 +27,7 @@ import {
   buildCodeEditToolAttributes,
   isCodeEditingTool,
 } from '../../hooks/toolPermission/permissionLogging.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
   findToolByName,
@@ -876,7 +877,7 @@ async function checkPermissionsAndCallTool(
 
   // Emit PreToolUse summary immediately so it's visible while the tool executes.
   // Use wall-clock time (not sum of individual durations) since hooks run in parallel.
-  if (process.env.USER_TYPE === 'zy-super' && preToolHookInfos.length > 0) {
+  if (isInternalBuild() && preToolHookInfos.length > 0) {
     if (preToolHookDurationMs > HOOK_TIMING_DISPLAY_THRESHOLD_MS) {
       resultingMessages.push({
         message: createStopHookSummaryMessage(
@@ -1548,7 +1549,7 @@ async function checkPermissionsAndCallTool(
 
     // Show PostToolUse hook timing inline below tool result when > 500ms.
     // Use wall-clock time (not sum of individual durations) since hooks run in parallel.
-    if (process.env.USER_TYPE === 'zy-super' && postToolHookInfos.length > 0) {
+    if (isInternalBuild() && postToolHookInfos.length > 0) {
       if (postToolHookDurationMs > HOOK_TIMING_DISPLAY_THRESHOLD_MS) {
         resultingMessages.push({
           message: createStopHookSummaryMessage(

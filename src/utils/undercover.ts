@@ -23,8 +23,7 @@
 
 import { getRepoClassCached } from './commitAttribution.js'
 import { getGlobalConfig } from './config.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isInternalBuild, isEnvTruthy } from './envUtils.js'
 
 export function isUndercover(): boolean {
   if (isInternalBuild()) {

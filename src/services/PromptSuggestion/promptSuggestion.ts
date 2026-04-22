@@ -3,7 +3,7 @@ import type { AppState } from '../../state/AppState.js'
 import type { Message } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { count } from '../../utils/array.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import {
   type CacheSafeParams,
@@ -487,7 +487,7 @@ export function logSuggestionOutcome(
     }),
     ...(!wasAccepted && { timeToIgnoreMs: timeMs }),
     similarity,
-    ...(process.env.USER_TYPE === 'zy-super' && {
+    ...(isInternalBuild() && {
       suggestion:
         suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       userInput:
@@ -514,7 +514,7 @@ export function logSuggestionSuppressed(
       reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     prompt_id:
       resolvedPromptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    ...(process.env.USER_TYPE === 'zy-super' &&
+    ...(isInternalBuild() &&
       suggestion && {
         suggestion:
           suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

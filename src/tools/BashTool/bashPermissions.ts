@@ -27,7 +27,7 @@ import { parseCommandRaw } from '../../utils/bash/parser.js'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import type {
   ClassifierBehavior,
@@ -120,7 +120,7 @@ function logClassifierResultForAnts(
   descriptions: string[],
   result: ClassifierResult,
 ): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 
@@ -171,7 +171,7 @@ export function getSimpleCommandPrefix(command: string): string | null {
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
     const isAntOnlySafe =
-      process.env.USER_TYPE === 'zy-super' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+      isInternalBuild() && ANT_ONLY_SAFE_ENV_VARS.has(varName)
     if (!SAFE_ENV_VARS.has(varName) && !isAntOnlySafe) {
       return null
     }
@@ -247,7 +247,7 @@ export function getFirstWordPrefix(command: string): string | null {
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
     const isAntOnlySafe =
-      process.env.USER_TYPE === 'zy-super' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+      isInternalBuild() && ANT_ONLY_SAFE_ENV_VARS.has(varName)
     if (!SAFE_ENV_VARS.has(varName) && !isAntOnlySafe) {
       return null
     }
@@ -326,7 +326,7 @@ function extractPrefixBeforeHeredoc(command: string): string | null {
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
     const isAntOnlySafe =
-      process.env.USER_TYPE === 'zy-super' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+      isInternalBuild() && ANT_ONLY_SAFE_ENV_VARS.has(varName)
     if (!SAFE_ENV_VARS.has(varName) && !isAntOnlySafe) {
       return null
     }
@@ -590,7 +590,7 @@ export function stripSafeWrappers(command: string): string {
     if (envVarMatch) {
       const varName = envVarMatch[1]!
       const isAntOnlySafe =
-        process.env.USER_TYPE === 'zy-super' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+        isInternalBuild() && ANT_ONLY_SAFE_ENV_VARS.has(varName)
       if (SAFE_ENV_VARS.has(varName) || isAntOnlySafe) {
         stripped = stripped.replace(ENV_VAR_PATTERN, '')
       }

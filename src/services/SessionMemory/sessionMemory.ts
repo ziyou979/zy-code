@@ -24,6 +24,7 @@ import {
   runForkedAgent,
 } from '../../utils/forkedAgent.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   type REPLHookContext,
   registerPostSamplingHook,
@@ -284,7 +285,7 @@ const extractSessionMemory = sequential(async function (
   // Check gate lazily when hook runs (cached, non-blocking)
   if (!isSessionMemoryGateEnabled()) {
     // Log gate failure once per session (ant-only)
-    if (process.env.USER_TYPE === 'zy-super' && !hasLoggedGateFailure) {
+    if (isInternalBuild() && !hasLoggedGateFailure) {
       hasLoggedGateFailure = true
       logEvent('tengu_session_memory_gate_disabled', {})
     }
@@ -362,7 +363,7 @@ export function initSessionMemory(): void {
   const autoCompactEnabled = isAutoCompactEnabled()
 
   // Log initialization state (ant-only to avoid noise in external logs)
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     logEvent('tengu_session_memory_init', {
       auto_compact_enabled: autoCompactEnabled,
     })

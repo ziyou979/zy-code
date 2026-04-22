@@ -17,6 +17,7 @@ import type { Message } from '../../types/message.js'
 import { createChildAbortController } from '../../utils/abortController.js'
 import { count } from '../../utils/array.js'
 import { getGlobalConfig } from '../../utils/config.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import {
@@ -276,7 +277,7 @@ function createSpeculationFeedbackMessage(
   timeSavedMs: number,
   sessionTotalMs: number,
 ): Message | null {
-  if (process.env.USER_TYPE !== 'zy-super') return null
+  if (!isInternalBuild()) return null
 
   if (messages.length === 0 || timeSavedMs === 0) return null
 
@@ -336,7 +337,7 @@ function resetSpeculationState(setAppState: SetAppState): void {
 
 export function isSpeculationEnabled(): boolean {
   const enabled =
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     (getGlobalConfig().speculationEnabled ?? true)
   logForDebugging(`[Speculation] enabled=${enabled}`)
   return enabled

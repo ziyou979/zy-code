@@ -20,6 +20,7 @@ import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import { useSetAppState } from '../../state/AppState.js'
 import { env } from '../../utils/env.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { type CompletionType, logUnaryEvent } from '../../utils/unaryLogging.js'
 
@@ -139,7 +140,7 @@ export function usePermissionRequestLogging(
       sandboxEnabled: SandboxManager.isSandboxingEnabled(),
     })
 
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       const permissionResult = toolUseConfirm.permissionResult
       if (
         toolUseConfirm.tool.name === BashTool.name &&
@@ -166,7 +167,7 @@ export function usePermissionRequestLogging(
 
     // [ANT-ONLY] Log bash tool calls, so we can categorize
     // & burn down calls that should have been allowed
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       const parsedInput = BashTool.inputSchema.safeParse(toolUseConfirm.input)
       if (
         toolUseConfirm.tool.name === BashTool.name &&

@@ -16,7 +16,7 @@ import {
 import { ZyCodeInternalEvent } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
 import { GrowthbookExperimentEvent } from '../../types/generated/events_mono/growthbook/v1/growthbook_experiment_event.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, isFsInaccessible, toError } from '../../utils/errors.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { readJSONLFile } from '../../utils/json.js'
@@ -244,7 +244,7 @@ export class ZyEventExporter implements LogRecordExporter {
       return
     }
 
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging(
         `ZY event logging: retrying ${events.length} events from previous batch`,
       )
@@ -253,13 +253,13 @@ export class ZyEventExporter implements LogRecordExporter {
     const failedEvents = await this.sendEventsInBatches(events)
     if (failedEvents.length === 0) {
       await this.deleteFile(filePath)
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         logForDebugging('ZY event logging: previous batch retry succeeded')
       }
     } else {
       // Save only the failed events back (not all original events)
       await this.saveEventsToFile(filePath, failedEvents)
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         logForDebugging(
           `ZY event logging: previous batch retry failed, ${failedEvents.length} events remain`,
         )
@@ -272,7 +272,7 @@ export class ZyEventExporter implements LogRecordExporter {
     resultCallback: (result: ExportResult) => void,
   ): Promise<void> {
     if (this.isShutdown) {
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         logForDebugging(
           'ZY event logging export failed: Exporter has been shutdown',
         )
@@ -356,7 +356,7 @@ export class ZyEventExporter implements LogRecordExporter {
       }
       resultCallback({ code: ExportResultCode.SUCCESS })
     } catch (error) {
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         logForDebugging(
           `ZY event logging export failed: ${errorMessage(error)}`,
         )
@@ -378,7 +378,7 @@ export class ZyEventExporter implements LogRecordExporter {
       batches.push(events.slice(i, i + this.maxBatchSize))
     }
 
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging(
         `ZY event logging: exporting ${events.length} events in ${batches.length} batch(es)`,
       )
@@ -399,7 +399,7 @@ export class ZyEventExporter implements LogRecordExporter {
         for (let j = i; j < batches.length; j++) {
           failedBatchEvents.push(...batches[j]!)
         }
-        if (process.env.USER_TYPE === 'zy-super') {
+        if (isInternalBuild()) {
           const skipped = batches.length - 1 - i
           logForDebugging(
             `ZY event logging: batch ${i + 1}/${batches.length} failed (${lastErrorContext}); short-circuiting ${skipped} remaining batch(es)`,
@@ -447,7 +447,7 @@ export class ZyEventExporter implements LogRecordExporter {
       this.maxBackoffDelayMs,
     )
 
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging(
         `ZY event logging: scheduling backoff retry in ${delay}ms (attempt ${this.attempts})`,
       )
@@ -468,7 +468,7 @@ export class ZyEventExporter implements LogRecordExporter {
       if (events.length === 0) break
 
       if (this.attempts >= this.maxAttempts) {
-        if (process.env.USER_TYPE === 'zy-super') {
+        if (isInternalBuild()) {
           logForDebugging(
             `ZY event logging: max attempts (${this.maxAttempts}) reached, dropping ${events.length} events`,
           )
@@ -483,7 +483,7 @@ export class ZyEventExporter implements LogRecordExporter {
       // Clear file before retry (we have events in memory now)
       await this.deleteFile(filePath)
 
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         logForDebugging(
           `ZY event logging: retrying ${events.length} failed events (attempt ${this.attempts + 1})`,
         )
@@ -503,7 +503,7 @@ export class ZyEventExporter implements LogRecordExporter {
 
       // Success - reset backoff and continue loop to drain any newly queued events
       this.resetBackoff()
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         logForDebugging('ZY event logging: backoff retry succeeded')
       }
     }
@@ -540,7 +540,7 @@ export class ZyEventExporter implements LogRecordExporter {
     const hasTrust =
       // @ts-ignore
       checkHasTrustDialogAccepted() || getIsNonInteractiveSession()
-    if (process.env.USER_TYPE === 'zy-super' && !hasTrust) {
+    if (isInternalBuild() && !hasTrust) {
       logForDebugging('ZY event logging: Trust not accepted')
     }
 
@@ -554,7 +554,7 @@ export class ZyEventExporter implements LogRecordExporter {
       : getAuthHeaders()
     const useAuth = !authResult.error
 
-    if (!useAuth && process.env.USER_TYPE === 'zy-super') {
+    if (!useAuth && isInternalBuild()) {
       logForDebugging(
         `ZY event logging: auth not available, sending without auth`,
       )
@@ -578,7 +578,7 @@ export class ZyEventExporter implements LogRecordExporter {
         axios.isAxiosError(error) &&
         error.response?.status === 401
       ) {
-        if (process.env.USER_TYPE === 'zy-super') {
+        if (isInternalBuild()) {
           logForDebugging(
             'ZY event logging: 401 auth error, retrying without auth',
           )
@@ -600,7 +600,7 @@ export class ZyEventExporter implements LogRecordExporter {
     withAuth: boolean,
     responseData: unknown,
   ): void {
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging(
         `ZY event logging: ${eventCount} events exported successfully${withAuth ? ' (with auth)' : ' (without auth)'}`,
       )
@@ -663,7 +663,7 @@ export class ZyEventExporter implements LogRecordExporter {
 
       if (!coreMetadata) {
         // Emit partial event if core metadata is missing
-        if (process.env.USER_TYPE === 'zy-super') {
+        if (isInternalBuild()) {
           logForDebugging(
             `ZY event logging: core_metadata missing for event ${eventName}`,
           )
@@ -746,14 +746,14 @@ export class ZyEventExporter implements LogRecordExporter {
     this.isShutdown = true
     this.resetBackoff()
     await this.forceFlush()
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging('ZY event logging exporter shutdown complete')
     }
   }
 
   async forceFlush(): Promise<void> {
     await Promise.all(this.pendingExports)
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging('ZY event logging exporter flush complete')
     }
   }

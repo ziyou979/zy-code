@@ -10,7 +10,7 @@ import { getProxyFetchOptions } from 'src/utils/proxy.js';
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js';
 import { getOauthConfig } from '../../constants/oauth.js';
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js';
-import { getAWSRegion, getVertexRegionForModel, isEnvTruthy } from '../../utils/envUtils.js';
+import { getAWSRegion, getVertexRegionForModel, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
 import type { LLMProvider, StandardMessageRequest, StandardResponse, StandardStreamEvent } from './StandardMessageFormat.js';
 import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js';
 import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
@@ -357,7 +357,7 @@ export async function getLLMClient({
     apiKey: apiKey || getApiKey(),
     authToken: undefined,
     // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
-    ...(process.env.USER_TYPE === 'zy-super' && isEnvTruthy(process.env.USE_STAGING_OAUTH) ? {
+    ...(isInternalBuild() && isEnvTruthy(process.env.USE_STAGING_OAUTH) ? {
       baseURL: getOauthConfig().BASE_API_URL
     } : {}),
     ...ARGS,

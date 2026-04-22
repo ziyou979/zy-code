@@ -5,6 +5,7 @@ import { dirname, join } from 'path'
 import { createInterface } from 'readline'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 import { debugTruncate } from './debugUtils.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import type {
   SessionActivity,
   SessionDoneStatus,
@@ -261,7 +262,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         } else {
           debugFile = `${deps.debugFile}-${safeId}`
         }
-      } else if (deps.verbose || process.env.USER_TYPE === 'zy-super') {
+      } else if (deps.verbose || isInternalBuild()) {
         debugFile = join(tmpdir(), 'zy', `bridge-session-${safeId}.log`)
       }
 

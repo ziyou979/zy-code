@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
 export function useAfterFirstRender(): void {
   useEffect(() => {
     if (
-      process.env.USER_TYPE === 'zy-super' &&
+      isInternalBuild() &&
       isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER)
     ) {
       process.stderr.write(

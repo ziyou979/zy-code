@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import type { ToolPermissionContext } from '../Tool.js'
 import { jsonStringify } from '../utils/slowOperations.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -15,7 +16,7 @@ import {
  * ...
  */
 const getKubernetesNamespace = memoize(async (): Promise<string | null> => {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return null
   }
   const namespacePath =
@@ -33,7 +34,7 @@ const getKubernetesNamespace = memoize(async (): Promise<string | null> => {
  * Get the OCI container ID from within a running container
  */
 export const getContainerId = memoize(async (): Promise<string | null> => {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return null
   }
   const containerIdPath = '/proc/self/mountinfo'
@@ -72,7 +73,7 @@ export async function logPermissionContextForAnts(
   toolPermissionContext: ToolPermissionContext | null,
   moment: 'summary' | 'initialization',
 ): Promise<void> {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

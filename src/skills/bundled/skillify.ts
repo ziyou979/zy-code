@@ -2,6 +2,7 @@ import { getSessionMemoryContent } from '../../services/SessionMemory/sessionMem
 import type { Message } from '../../types/message.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { registerBundledSkill } from '../bundledSkills.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 function extractUserMessages(messages: Message[]): string[] {
   return messages
@@ -156,7 +157,7 @@ After writing, tell the user:
 `
 
 export function registerSkillifySkill(): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

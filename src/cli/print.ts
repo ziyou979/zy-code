@@ -322,6 +322,7 @@ import {
   isBareMode,
   isEnvTruthy,
   isEnvDefinedFalsy,
+  isInternalBuild,
 } from '../utils/envUtils.js'
 import { installPluginsForHeadless } from '../utils/plugins/headlessPluginInstall.js'
 import { refreshActivePlugins } from '../utils/plugins/refresh.js'
@@ -487,7 +488,7 @@ export async function runHeadless(
   },
 ): Promise<void> {
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER)
   ) {
     process.stderr.write(

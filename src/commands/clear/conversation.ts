@@ -43,6 +43,7 @@ import {
   evictTaskOutput,
   initTaskOutputAsSymlink,
 } from '../../utils/task/diskOutput.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { clearSessionCaches } from './caches.js'
 
@@ -202,7 +203,7 @@ export async function clearConversation({
   // Set the old session as parent for analytics lineage tracking
   regenerateSessionId({ setCurrentAsParent: true })
   // Update the environment variable so subprocesses use the new session ID
-  if (process.env.USER_TYPE === 'zy-super' && process.env.ZY_CODE_SESSION_ID) {
+  if (isInternalBuild() && process.env.ZY_CODE_SESSION_ID) {
     process.env.ZY_CODE_SESSION_ID = getSessionId()
   }
   await resetSessionFilePointer()

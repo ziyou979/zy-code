@@ -1,6 +1,7 @@
 import type { ContentBlockParam } from '../types/llm.js'
 import type { Command } from '../commands.js'
 import type { ToolUseContext } from '../Tool.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 type Options = {
   name: string
@@ -41,7 +42,7 @@ export function createMovedToPluginCommand({
       args: string,
       context: ToolUseContext,
     ): Promise<ContentBlockParam[]> {
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         return [
           {
             type: 'text',

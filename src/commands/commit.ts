@@ -1,5 +1,6 @@
 import type { Command } from '../commands.js'
 import { getAttributionTexts } from '../utils/attribution.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
 import { getUndercoverInstructions, isUndercover } from '../utils/undercover.js'
 
@@ -13,7 +14,7 @@ function getPromptContent(): string {
   const { commit: commitAttribution } = getAttributionTexts()
 
   let prefix = ''
-  if (process.env.USER_TYPE === 'zy-super' && isUndercover()) {
+  if (isInternalBuild() && isUndercover()) {
     prefix = getUndercoverInstructions() + '\n'
   }
 

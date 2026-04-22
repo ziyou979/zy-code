@@ -1,4 +1,6 @@
-import type { BetaMessageStreamParams } from '../types/llm.js'
+import { isInternalBuild } from '../utils/envUtils.js'
+
+import type { LLMCreateParams } from '../types/llm.js'
 import type { Attributes, Meter, MetricOptions } from '@opentelemetry/api'
 import type { logs } from '@opentelemetry/api-logs'
 import type { LoggerProvider } from '@opentelemetry/sdk-logs'
@@ -110,11 +112,11 @@ type State = {
   agentColorMap: Map<string, AgentColorName>
   agentColorIndex: number
   // 最后一次 API 请求，用于 bug 报告
-  lastAPIRequest: Omit<BetaMessageStreamParams, 'messages'> | null
+  lastAPIRequest: Omit<LLMCreateParams, 'messages'> | null
   // 最后一次 API 请求的消息（仅 ant；引用而非克隆）。
   // 捕获压缩后、CLAUDE.md 注入后发送给 API 的完整消息集，
   // 以便 /share 的 serialized_conversation.json 反映真实情况。
-  lastAPIRequestMessages: BetaMessageStreamParams['messages'] | null
+  lastAPIRequestMessages: LLMCreateParams['messages'] | null
   // 最后一次自动模式分类器请求，用于 /share 转录
   lastClassifierRequests: unknown[] | null
   // 由 context.ts 缓存的 ZY.md 内容，供自动模式分类器使用。
@@ -383,7 +385,7 @@ function getInitialState(): State {
     mainThreadAgentType: undefined,
     // 远程模式
     isRemoteMode: false,
-    ...(process.env.USER_TYPE === 'zy-super'
+    ...(isInternalBuild()
       ? {
           replBridgeActive: false,
         }
@@ -1166,26 +1168,26 @@ export function setApiKeyFromFd(key: string | null): void {
 }
 
 export function setLastAPIRequest(
-  params: Omit<BetaMessageStreamParams, 'messages'> | null,
+  params: Omit<LLMCreateParams, 'messages'> | null,
 ): void {
   STATE.lastAPIRequest = params
 }
 
 export function getLastAPIRequest(): Omit<
-  BetaMessageStreamParams,
+  LLMCreateParams,
   'messages'
 > | null {
   return STATE.lastAPIRequest
 }
 
 export function setLastAPIRequestMessages(
-  messages: BetaMessageStreamParams['messages'] | null,
+  messages: LLMCreateParams['messages'] | null,
 ): void {
   STATE.lastAPIRequestMessages = messages
 }
 
 export function getLastAPIRequestMessages():
-  | BetaMessageStreamParams['messages']
+  | LLMCreateParams['messages']
   | null {
   return STATE.lastAPIRequestMessages
 }
@@ -1562,7 +1564,7 @@ const MAX_SLOW_OPERATIONS = 10
 const SLOW_OPERATION_TTL_MS = 10000
 
 export function addSlowOperation(operation: string, durationMs: number): void {
-  if (process.env.USER_TYPE !== 'zy-super') return
+  if (!isInternalBuild()) return
   // 跳过编辑器会话的追踪（用户在 $EDITOR 中编辑提示文件）
   // 这些是有意慢速的，因为用户在起草文本
   if (operation.includes('exec') && operation.includes('zy-prompt-')) {

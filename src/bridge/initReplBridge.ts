@@ -30,6 +30,7 @@ import {
   getZyAIOAuthTokens,
   handleOAuth401Error,
 } from '../utils/auth.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 import { logForDebugging } from '../utils/debug.js'
@@ -467,7 +468,7 @@ export async function initReplBridge(
   const branch = await getBranch()
   const gitRepoUrl = await getRemoteUrl()
   const sessionIngressUrl =
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       ? process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       : baseUrl

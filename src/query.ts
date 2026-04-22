@@ -1,4 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { isInternalBuild } from './utils/envUtils.js'
 import type {
   ToolResultBlockParam,
   ToolUseBlock,
@@ -909,7 +910,7 @@ async function* queryLoop(
             // Thinking 签名与模型绑定：将受保护 thinking 块
             // （例如 capybara）重播到不受保护的 fallback（例如 opus）会 400。
             // 在重试前剥离，以便 fallback 模型获得干净的历史。
-            if (process.env.USER_TYPE === 'zy-super') {
+            if (isInternalBuild()) {
               messagesForQuery = stripSignatureBlocks(messagesForQuery)
             }
 

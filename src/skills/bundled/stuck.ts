@@ -1,4 +1,5 @@
 import { registerBundledSkill } from '../bundledSkills.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 // Prompt text contains `ps` commands as instructions for Zy to run,
 // not commands this file executes.
@@ -59,7 +60,7 @@ If Slack MCP isn't available, format the report as a message the user can copy-p
 `
 
 export function registerStuckSkill(): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

@@ -4,7 +4,7 @@ import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import { createBufferedWriter } from './bufferedWriter.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { sanitizePath } from './path.js'
 import { jsonStringify } from './slowOperations.js'
@@ -25,7 +25,7 @@ export function getRecordFilePath(): string | null {
   if (recordingState.filePath !== null) {
     return recordingState.filePath
   }
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return null
   }
   if (!isEnvTruthy(process.env.ZY_CODE_TERMINAL_RECORDING)) {

@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { useTerminalFocus } from '../ink/hooks/use-terminal-focus.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -148,7 +149,7 @@ export function usePromptSuggestion({
           Math.round(
             (finalInput.length / (suggestionText?.length || 1)) * 100,
           ) / 100,
-        ...(process.env.USER_TYPE === 'zy-super' && {
+        ...(isInternalBuild() && {
           suggestion:
             suggestionText as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           userInput:

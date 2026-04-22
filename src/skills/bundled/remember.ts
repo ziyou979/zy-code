@@ -1,8 +1,9 @@
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import { registerBundledSkill } from '../bundledSkills.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 export function registerRememberSkill(): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

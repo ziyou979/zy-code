@@ -30,6 +30,7 @@ import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
 import { clearRepositoryCaches } from '../../utils/detectRepository.js'
 import { clearResolveGitDirCache } from '../../utils/git/gitFilesystem.js'
 import { clearStoredImagePaths } from '../../utils/imageStore.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
 
 /**
@@ -92,7 +93,7 @@ export function clearSessionCaches(
   if (!hasPreserved) clearAllPendingCallbacks()
 
   // Clear tungsten session usage tracking
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     void import('../../tools/TungstenTool/TungstenTool.js').then(
       ({ clearSessionsWithTungstenUsage, resetInitializationState }) => {
         clearSessionsWithTungstenUsage()

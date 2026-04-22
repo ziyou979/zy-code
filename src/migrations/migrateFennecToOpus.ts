@@ -2,6 +2,7 @@ import {
   getSettingsForSource,
   updateSettingsForSource,
 } from '../utils/settings/settings.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 /**
  * Migrate users on removed fennec model aliases to their new Opus 4.6 aliases.
@@ -16,7 +17,7 @@ import {
  * settings here would cause infinite re-runs + silent global promotion.
  */
 export function migrateFennecToOpus(): void {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return
   }
 

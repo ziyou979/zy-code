@@ -1,5 +1,6 @@
 import { join } from 'path'
 import type { LocalCommandResult } from '../../commands.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
 import { playAnimation } from '../thinkback/thinkback.js'
@@ -9,7 +10,7 @@ const SKILL_NAME = 'thinkback'
 
 function getPluginId(): string {
   const marketplaceName =
-    process.env.USER_TYPE === 'zy-super'
+    isInternalBuild()
       ? INTERNAL_MARKETPLACE_NAME
       : OFFICIAL_MARKETPLACE_NAME
   return `thinkback@${marketplaceName}`

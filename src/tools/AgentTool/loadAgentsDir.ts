@@ -19,7 +19,7 @@ import {
   type EffortValue,
   parseEffortValue,
 } from '../../utils/effort.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { parsePositiveIntFromFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
@@ -91,7 +91,7 @@ const AgentJsonSchema = lazySchema(() =>
     initialPrompt: z.string().optional(),
     memory: z.enum(['user', 'project', 'local']).optional(),
     background: z.boolean().optional(),
-    isolation: (process.env.USER_TYPE === 'zy-super'
+    isolation: (isInternalBuild()
       ? z.enum(['worktree', 'remote'])
       : z.enum(['worktree'])
     ).optional(),
@@ -607,7 +607,7 @@ export function parseAgentFromMarkdown(
     // Parse isolation mode. 'remote' is ant-only; external builds reject it at parse time.
     type IsolationMode = 'worktree' | 'remote'
     const VALID_ISOLATION_MODES: readonly IsolationMode[] =
-      process.env.USER_TYPE === 'zy-super' ? ['worktree', 'remote'] : ['worktree']
+      isInternalBuild() ? ['worktree', 'remote'] : ['worktree']
     const isolationRaw = frontmatter['isolation'] as string | undefined
     let isolation: IsolationMode | undefined
     if (isolationRaw !== undefined) {

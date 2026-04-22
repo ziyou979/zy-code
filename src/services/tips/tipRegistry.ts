@@ -21,6 +21,7 @@ import {
   modelSupportsEffort,
 } from '../../utils/effort.js'
 import { env } from '../../utils/env.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { cacheKeys } from '../../utils/fileStateCache.js'
 import { getWorktreeCount } from '../../utils/git.js'
 import {
@@ -110,7 +111,7 @@ const externalTips: Tip[] = [
       tSync('tip.planModeForComplexTasks', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
     cooldownSessions: 5,
     isRelevant: async () => {
-      if (process.env.USER_TYPE === 'zy-super') return false
+      if (isInternalBuild()) return false
       const config = getGlobalConfig()
       // Show to users who haven't used plan mode recently (7+ days)
       const daysSinceLastUse = config.lastPlanModeUse
@@ -478,7 +479,7 @@ const externalTips: Tip[] = [
       tSync('tip.opusPlanModeReminder', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
     cooldownSessions: 2,
     async isRelevant() {
-      if (process.env.USER_TYPE === 'zy-super') return false
+      if (isInternalBuild()) return false
       const config = getGlobalConfig()
       const modelSetting = getUserSpecifiedModelSetting()
       const hasOpusPlanMode = modelSetting === 'opusplan'
@@ -628,7 +629,7 @@ const externalTips: Tip[] = [
     content: async () => tSync('tip.feedbackCommand'),
     cooldownSessions: 15,
     async isRelevant() {
-      if (process.env.USER_TYPE === 'zy-super') {
+      if (isInternalBuild()) {
         return false
       }
       const config = getGlobalConfig()
@@ -637,7 +638,7 @@ const externalTips: Tip[] = [
   },
 ]
 const internalOnlyTips: Tip[] =
-  process.env.USER_TYPE === 'zy-super'
+  isInternalBuild()
     ? [
         {
           id: 'important-zymd',

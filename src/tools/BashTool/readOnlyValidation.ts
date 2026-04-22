@@ -1,5 +1,6 @@
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   extractOutputRedirections,
   splitCommand_DEPRECATED,
@@ -1208,7 +1209,7 @@ function getCommandAllowlist(): Record<string, CommandConfig> {
     const { xargs: _, ...rest } = allowlist
     allowlist = rest
   }
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return { ...allowlist, ...ANT_ONLY_COMMAND_ALLOWLIST }
   }
   return allowlist

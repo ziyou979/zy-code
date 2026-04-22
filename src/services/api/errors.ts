@@ -28,6 +28,7 @@ import {
   getDefaultMainLoopModelSetting,
 } from 'src/utils/model/model.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import {
@@ -692,7 +693,7 @@ export function getAssistantMessageFromError(
       }
     }
 
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       const baseMessage = `API Error: 400 ${error.message}\n\nRun /share and post the JSON file to ${MACRO.FEEDBACK_CHANNEL}.`
       const rewindInstruction = getIsNonInteractiveSession()
         ? ''
@@ -744,7 +745,7 @@ export function getAssistantMessageFromError(
   // 默认为 Ant 专用的内部模型，并且可能有
   // 使用新的或未知 org ID 的 Ant 尚未被门控。
   if (
-    process.env.USER_TYPE === 'zy-super' &&
+    isInternalBuild() &&
     !process.env.ANTHROPIC_MODEL &&
     error instanceof Error &&
     error.message.toLowerCase().includes('invalid model name')

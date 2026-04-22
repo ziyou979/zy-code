@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react'
+import { isInternalBuild } from '../utils/envUtils.js'
 import type { Command } from '../commands.js'
 import { useNotifications } from '../context/notifications.js'
 import {
@@ -211,7 +212,7 @@ export function useManagePlugins({
         // Kept separate from base metrics so it doesn't flow into
         // logForDiagnosticsNoPII.
         ant_enabled_names:
-          process.env.USER_TYPE === 'zy-super' && enabled.length > 0
+          isInternalBuild() && enabled.length > 0
             ? (enabled
                 .map(p => p.name)
                 .sort()

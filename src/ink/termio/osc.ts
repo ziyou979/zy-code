@@ -3,6 +3,7 @@
  */
 
 import { Buffer } from 'buffer'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { env } from '../../utils/env.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { BEL, ESC, ESC_TYPE, SEP } from './ansi.js'
@@ -465,7 +466,7 @@ export const CLEAR_TAB_STATUS = osc(
  * DCS 直通将序列传输到外部终端。
  */
 export function supportsTabStatus(): boolean {
-  return process.env.USER_TYPE === 'zy-super'
+  return isInternalBuild()
 }
 
 /**

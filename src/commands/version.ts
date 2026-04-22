@@ -1,4 +1,5 @@
 import type { Command, LocalCommandCall } from '../types/command.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 const call: LocalCommandCall = async () => {
   return {
@@ -14,7 +15,7 @@ const version = {
   name: 'version',
   description:
     'Print the version this session is running (not what autoupdate downloaded)',
-  isEnabled: () => process.env.USER_TYPE === 'zy-super',
+  isEnabled: () => isInternalBuild(),
   supportsNonInteractive: true,
   load: () => Promise.resolve({ call }),
 } satisfies Command

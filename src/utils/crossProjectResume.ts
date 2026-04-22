@@ -2,6 +2,7 @@ import { sep } from 'path'
 import { getOriginalCwd } from '../bootstrap/state.js'
 import type { LogOption } from '../types/logs.js'
 import { quote } from './bash/shellQuote.js'
+import { isInternalBuild } from './envUtils.js'
 import { getSessionIdFromLog } from './sessionStorage.js'
 
 export type CrossProjectResumeResult =
@@ -39,7 +40,7 @@ export function checkCrossProjectResume(
   }
 
   // Gate worktree detection to ants only for staged rollout
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     const sessionId = getSessionIdFromLog(log)
     const command = `cd ${quote([log.projectPath])} && zy --resume ${sessionId}`
     return {

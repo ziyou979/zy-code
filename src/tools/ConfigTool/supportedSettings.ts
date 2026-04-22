@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
 import {
   EDITOR_MODES,
@@ -177,7 +178,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
       'How to spawn teammates: "tmux" for traditional tmux, "in-process" for same process, "auto" to choose automatically',
     options: TEAMMATE_MODES,
   },
-  ...(process.env.USER_TYPE === 'zy-super'
+  ...(isInternalBuild()
     ? {
         classifierPermissionsEnabled: {
           source: 'settings' as const,

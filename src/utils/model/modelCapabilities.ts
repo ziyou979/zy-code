@@ -6,7 +6,7 @@ import { join } from 'path'
 import { z } from 'zod/v4'
 import { getLLMClient } from '../../services/api/client.js'
 import { logForDebugging } from '../debug.js'
-import { getZyConfigHomeDir } from '../envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import { isEssentialTrafficOnly } from '../privacyLevel.js'
@@ -49,7 +49,7 @@ function getCachePath(): string {
 }
 
 function isModelCapabilitiesEligible(): boolean {
-  if (process.env.USER_TYPE !== 'zy-super') return false
+  if (!isInternalBuild()) return false
   if (!providerHasCapability(getAPIProvider(), 'prompt_caching')) return false
   if (!isAnthropicBaseUrl()) return false
   return true

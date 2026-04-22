@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import type { Message } from '../types/message.js'
 import { getUserMessageText } from '../utils/messages.js'
@@ -93,7 +94,7 @@ export function useIssueFlagBanner(
   messages: Message[],
   submitCount: number,
 ): boolean {
-  if (process.env.USER_TYPE !== 'zy-super') {
+  if (!isInternalBuild()) {
     return false
   }
 

@@ -5,6 +5,7 @@ import memoize from 'lodash-es/memoize.js'
 import { getOrCreateUserID } from '../../utils/config.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { getStaticPricingForModel } from '../../utils/model/modelCapabilities.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getEventMetadata } from './metadata.js'
 
 // All events that were previously sent to Datadog are now written to a local
@@ -192,7 +193,7 @@ export async function trackDatadogEvent(
     }
 
     // Normalize model names for cardinality reduction (external users only)
-    if (process.env.USER_TYPE !== 'zy-super' && typeof allData.model === 'string') {
+    if (!isInternalBuild() && typeof allData.model === 'string') {
       const rawModel = allData.model.replace(/\[1m]$/i, '')
       allData.model = getStaticPricingForModel(rawModel) ? rawModel : 'other'
     }
@@ -241,7 +242,7 @@ export async function trackDatadogEvent(
       message: eventName,
       service: 'zy-code',
       hostname: 'zy-code',
-      env: process.env.USER_TYPE,
+      env: isInternalBuild() ? 'internal' : 'external',
     }
 
     // Add all fields as searchable attributes (not duplicated in tags)

@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { prependBullets } from '../../constants/prompts.js'
 import { getAttributionTexts } from '../../utils/attribution.js'
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { shouldIncludeGitInstructions } from '../../utils/gitSettings.js'
 import { getZyTempDir } from '../../utils/permissions/filesystem.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
@@ -46,14 +46,14 @@ function getCommitAndPRInstructions(): string {
   // your cover" instructions are the last line of defense against the model
   // volunteering an internal codename in a commit message.
   const undercoverSection =
-    process.env.USER_TYPE === 'zy-super' && isUndercover()
+    isInternalBuild() && isUndercover()
       ? getUndercoverInstructions() + '\n'
       : ''
 
   if (!shouldIncludeGitInstructions()) return undercoverSection
 
   // For ant users, use the short version pointing to skills
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     const skillsSection = !isEnvTruthy(process.env.ZY_CODE_SIMPLE)
       ? `For git commits and pull requests, use the \`/commit\` and \`/commit-push-pr\` skills:
 - \`/commit\` - Create a git commit with staged changes

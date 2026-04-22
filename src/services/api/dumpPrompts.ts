@@ -3,7 +3,7 @@ import { createHash } from 'crypto'
 import { promises as fs } from 'fs'
 import { dirname, join } from 'path'
 import { getSessionId } from 'src/bootstrap/state.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 function hashString(str: string): string {
@@ -46,7 +46,7 @@ export function clearAllDumpState(): void {
 }
 
 export function addApiRequestToCache(requestData: unknown): void {
-  if (process.env.USER_TYPE !== 'zy-super') return
+  if (!isInternalBuild()) return
   cachedApiRequests.push({
     timestamp: new Date().toISOString(),
     request: requestData,
@@ -97,7 +97,7 @@ function dumpRequest(
     const req = jsonParse(body) as Record<string, unknown>
     addApiRequestToCache(req)
 
-    if (process.env.USER_TYPE !== 'zy-super') return
+    if (!isInternalBuild()) return
     const entries: string[] = []
     const messages = (req.messages ?? []) as Array<{ role?: string }>
 
@@ -171,7 +171,7 @@ export function createDumpPromptsFetch(
     const response = await globalThis.fetch(input, init)
 
     // Save response async
-    if (timestamp && response.ok && process.env.USER_TYPE === 'zy-super') {
+    if (timestamp && response.ok && isInternalBuild()) {
       const cloned = response.clone()
       void (async () => {
         try {

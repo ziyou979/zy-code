@@ -1,4 +1,5 @@
 import { z } from 'zod/v4'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import type { TaskStateBase } from '../../Task.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { stopTask } from '../../tasks/stopTask.js'
@@ -43,7 +44,7 @@ export const TaskStopTool = buildTool({
   // with existing transcripts and SDK users
   aliases: ['KillShell'],
   maxResultSizeChars: 100_000,
-  userFacingName: () => (process.env.USER_TYPE === 'zy-super' ? '' : 'Stop Task'),
+  userFacingName: () => (isInternalBuild() ? '' : 'Stop Task'),
   get inputSchema(): InputSchema {
     return inputSchema()
   },

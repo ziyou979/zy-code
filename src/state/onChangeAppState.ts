@@ -1,4 +1,5 @@
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import {
   clearApiKeyHelperCache,
   clearAwsCredentialsCache,
@@ -140,7 +141,7 @@ export function onChangeAppState({
   }
 
   // tungstenPanelVisible (ant-only tmux panel sticky toggle)
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     if (
       newState.tungstenPanelVisible !== oldState.tungstenPanelVisible &&
       newState.tungstenPanelVisible !== undefined &&

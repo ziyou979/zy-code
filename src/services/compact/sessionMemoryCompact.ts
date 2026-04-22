@@ -5,7 +5,7 @@
 import type { AgentId } from '../../types/ids.js'
 import type { HookResultMessage, Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import {
   createCompactBoundaryMessage,
@@ -420,7 +420,7 @@ export function shouldUseSessionMemoryCompaction(): boolean {
   const shouldUse = sessionMemoryFlag && smCompactFlag
 
   // Log flag states for debugging (ant-only to avoid noise in external logs)
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     logEvent('tengu_sm_compact_flag_check', {
       tengu_session_memory: sessionMemoryFlag,
       tengu_sm_compact: smCompactFlag,
@@ -625,7 +625,7 @@ export async function trySessionMemoryCompaction(
     // Use logEvent instead of logError since errors here are expected
     // (e.g., file not found, path issues) and shouldn't go to error logs
     logEvent('tengu_sm_compact_error', {})
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       logForDebugging(`Session memory compaction error: ${errorMessage(error)}`)
     }
     return null

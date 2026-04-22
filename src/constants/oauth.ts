@@ -1,10 +1,11 @@
 import { isEnvTruthy } from 'src/utils/envUtils.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 // Default to prod config, override with test/staging if enabled
 type OauthConfigType = 'prod' | 'staging' | 'local'
 
 function getOauthConfigType(): OauthConfigType {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     if (isEnvTruthy(process.env.USE_LOCAL_OAUTH)) {
       return 'local'
     }
@@ -116,7 +117,7 @@ export const MCP_CLIENT_METADATA_URL =
 // Staging OAuth configuration - only included in ant builds with staging flag
 // Uses literal check for dead code elimination
 const STAGING_OAUTH_CONFIG =
-  process.env.USER_TYPE === 'zy-super'
+  isInternalBuild()
     ? ({
         BASE_API_URL: 'https://api-staging.anthropic.com',
         CONSOLE_AUTHORIZE_URL:

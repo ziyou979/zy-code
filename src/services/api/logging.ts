@@ -26,6 +26,7 @@ import {
 } from 'src/utils/telemetry/sessionTracing.js'
 import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -732,7 +733,7 @@ export function logAPISuccessAndDuration({
         .join('\n') || undefined
 
     // Thinking output - Ant-only (build-time gated)
-    if (process.env.USER_TYPE === 'zy-super') {
+    if (isInternalBuild()) {
       thinkingOutput =
         newMessages
           .flatMap(m =>

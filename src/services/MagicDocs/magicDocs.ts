@@ -26,6 +26,7 @@ import {
   hasToolCallsInLastAssistantTurn,
 } from '../../utils/messages.js'
 import { sequential } from '../../utils/sequential.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { buildMagicDocsUpdatePrompt } from './prompts.js'
 
 // Magic Doc header pattern: # MAGIC DOC: [title]
@@ -240,7 +241,7 @@ const updateMagicDocs = sequential(async function (
 })
 
 export async function initMagicDocs(): Promise<void> {
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     // Register listener to detect magic docs when files are read
     registerFileReadListener((filePath: string, content: string) => {
       const result = detectMagicDocHeader(content)

@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import { isInternalBuild } from 'src/utils/envUtils.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import {
   getLatestVersion,
@@ -294,7 +295,7 @@ export async function update() {
     process.stderr.write('  • Run with --debug flag for more details\n')
     const packageName =
       MACRO.PACKAGE_URL ||
-      (process.env.USER_TYPE === 'zy-super'
+      (isInternalBuild()
         ? '@anthropic-ai/zy-cli'
         : '@anthropic-ai/zy-code')
     process.stderr.write(

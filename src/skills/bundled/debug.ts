@@ -5,6 +5,7 @@ import { ZY_CODE_GUIDE_AGENT_TYPE } from 'src/tools/AgentTool/built-in/ZyCodeGui
 import { getSettingsFilePathForSource } from 'src/utils/settings/settings.js'
 import { enableDebugLogging, getDebugLogPath } from '../../utils/debug.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { formatFileSize } from '../../utils/format.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
@@ -15,7 +16,7 @@ export function registerDebugSkill(): void {
   registerBundledSkill({
     name: 'debug',
     description:
-      process.env.USER_TYPE === 'zy-super'
+      isInternalBuild()
         ? 'Debug your current ZY Code session by reading the session debug log. Includes all event logging'
         : 'Enable debug logging for this session and help diagnose issues',
     allowedTools: ['Read', 'Grep', 'Glob'],

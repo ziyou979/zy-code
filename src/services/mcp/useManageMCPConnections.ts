@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import { basename } from 'path'
 import { useCallback, useEffect, useRef } from 'react'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import type { Tool } from '../../Tool.js'
@@ -987,7 +988,7 @@ export function useManageMCPConnections(
         else if (serverConfig.scope === 'zyai') counts.zyai++
 
         if (
-          process.env.USER_TYPE === 'zy-super' &&
+          isInternalBuild() &&
           !isMcpServerDisabled(name) &&
           (serverConfig.type === undefined || serverConfig.type === 'stdio') &&
           'command' in serverConfig
@@ -997,7 +998,7 @@ export function useManageMCPConnections(
       }
       logEvent('tengu_mcp_servers', {
         ...counts,
-        ...(process.env.USER_TYPE === 'zy-super' && stdioCommands.length > 0
+        ...(isInternalBuild() && stdioCommands.length > 0
           ? {
               stdio_commands: stdioCommands
                 .sort()

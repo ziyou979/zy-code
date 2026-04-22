@@ -7,6 +7,7 @@ import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from 'src/tools/NotebookEditTool/constants.js'
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
+import { isInternalBuild } from '../../../utils/envUtils.js'
 import { AGENT_TOOL_NAME } from '../constants.js'
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
@@ -75,7 +76,7 @@ export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   baseDir: 'built-in',
   // Ants get inherit to use the main agent's model; external users get haiku for speed
   // Note: For ants, getAgentModel() checks tengu_explore_agent GrowthBook flag at runtime
-  model: process.env.USER_TYPE === 'zy-super' ? 'inherit' : 'haiku',
+  model: isInternalBuild() ? 'inherit' : 'haiku',
   // Explore is a fast read-only search agent — it doesn't need commit/PR/lint
   // rules from CLAUDE.md. The main agent has full context and interprets results.
   omitzyMd: true,

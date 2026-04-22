@@ -11,6 +11,7 @@ import {
 import { hasZyAiBillingAccess } from '../utils/billing.js'
 import { formatResetTime } from '../utils/format.js'
 import { tSync } from '../i18n/index.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import type { ZyAILimits } from './zyAiLimits.js'
 
 const FEEDBACK_CHANNEL_ANT = '#briarpatch-cc'
@@ -345,7 +346,7 @@ function formatLimitReachedText(
   _model: string,
 ): string {
   // Enhanced messaging for Ant users
-  if (process.env.USER_TYPE === 'zy-super') {
+  if (isInternalBuild()) {
     return tSync('rateLimit.hit', { limit }) + resetMessage + `. 如果对此限额有反馈，请发布到 ${FEEDBACK_CHANNEL_ANT}。你可以使用 /reset-limits 重置限额`
   }
 

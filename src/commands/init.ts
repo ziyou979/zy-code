@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { Command } from '../commands.js'
 import { maybeMarkProjectOnboardingComplete } from '../projectOnboardingState.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
 const OLD_INIT_PROMPT = `Please analyze this codebase and create a CLAUDE.md file, which will be given to future instances of ZY Code to operate in this repository.
 
@@ -228,7 +228,7 @@ const command = {
   name: 'init',
   get description() {
     return feature('NEW_INIT') &&
-      (process.env.USER_TYPE === 'zy-super' ||
+      (isInternalBuild() ||
         isEnvTruthy(process.env.ZY_CODE_NEW_INIT))
       ? 'Initialize new CLAUDE.md file(s) and optional skills/hooks with codebase documentation'
       : 'Initialize a new CLAUDE.md file with codebase documentation'
@@ -244,7 +244,7 @@ const command = {
         type: 'text',
         text:
           feature('NEW_INIT') &&
-          (process.env.USER_TYPE === 'zy-super' ||
+          (isInternalBuild() ||
             isEnvTruthy(process.env.ZY_CODE_NEW_INIT))
             ? NEW_INIT_PROMPT
             : OLD_INIT_PROMPT,

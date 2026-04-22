@@ -1,4 +1,5 @@
 import { isCompactLinePrefixEnabled } from '../../utils/file.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 
 function getPreReadInstruction(): string {
@@ -14,7 +15,7 @@ function getDefaultEditDescription(): string {
     ? 'line number + tab'
     : 'spaces + line number + arrow'
   const minimalUniquenessHint =
-    process.env.USER_TYPE === 'zy-super'
+    isInternalBuild()
       ? `\n- Use the smallest old_string that's clearly unique — usually 2-4 adjacent lines is sufficient. Avoid including 10+ lines of context when less uniquely identifies the target.`
       : ''
   return `Performs exact string replacements in files.

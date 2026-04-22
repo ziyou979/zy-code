@@ -1,10 +1,11 @@
 import type { Command } from '../../commands.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 const files = {
   type: 'local',
   name: 'files',
   description: 'List all files currently in context',
-  isEnabled: () => process.env.USER_TYPE === 'zy-super',
+  isEnabled: () => isInternalBuild(),
   supportsNonInteractive: true,
   load: () => import('./files.js'),
 } satisfies Command

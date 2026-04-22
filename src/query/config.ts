@@ -1,7 +1,7 @@
 import { getSessionId } from '../bootstrap/state.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import type { SessionId } from '../types/ids.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
 // -- config
 
@@ -35,7 +35,7 @@ export function buildQueryConfig(): QueryConfig {
       emitToolUseSummaries: isEnvTruthy(
         process.env.ZY_CODE_EMIT_TOOL_USE_SUMMARIES,
       ),
-      isAnt: process.env.USER_TYPE === 'zy-super',
+      isAnt: isInternalBuild(),
     },
   }
 }
