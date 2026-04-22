@@ -1,13 +1,17 @@
-import type { Anthropic } from '@anthropic-ai/sdk'
-import type { BetaMessageParam as MessageParam } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type {
+  LLMMessageParam,
+  ToolDefinition,
+  ToolUseBlockParam,
+  ToolResultBlockParam,
+} from '../types/llm.js'
 // 动态导入的最小值，用于计数令牌的 Bedrock 调用
 // 延迟约 ~279KB 的 AWS SDK 代码，直到实际需要 Bedrock 调用
 import type { CountTokensCommandInput } from '@aws-sdk/client-bedrock-runtime'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
-import { openAICreateMessage } from './api/openaiQuery.js'
 import { VERTEX_COUNT_TOKENS_ALLOWED_BETAS } from '../constants/betas.js'
 import type { Attachment } from '../utils/attachments.js'
 import { getModelBetas } from '../utils/betas.js'
+import { countTokensLocally } from '../utils/tokenizer/index.js'
 import { getVertexRegionForModel, isEnvTruthy } from '../utils/envUtils.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
@@ -37,7 +41,7 @@ const TOKEN_COUNT_MAX_TOKENS = 2048
  * 检查消息是否包含思考块
  */
 function hasThinkingBlocks(
-  messages: Anthropic.Beta.Messages.BetaMessageParam[],
+  messages: LLMMessageParam[],
 ): boolean {
   for (const message of messages) {
     if (message.role === 'assistant' && Array.isArray(message.content)) {
@@ -65,8 +69,8 @@ function hasThinkingBlocks(
  * 但在启用 tool search 时，这些字段可能在运行时从 API 响应中存在。
  */
 function stripToolSearchFieldsFromMessages(
-  messages: Anthropic.Beta.Messages.BetaMessageParam[],
-): Anthropic.Beta.Messages.BetaMessageParam[] {
+  messages: LLMMessageParam[],
+): LLMMessageParam[] {
   return messages.map(message => {
     if (!Array.isArray(message.content)) {
       return message
@@ -77,7 +81,7 @@ function stripToolSearchFieldsFromMessages(
       if (block.type === 'tool_use') {
         // 解构以排除 'caller' 等额外字段
         const toolUse =
-          block as Anthropic.Beta.Messages.BetaToolUseBlockParam & {
+          block as ToolUseBlockParam & {
             caller?: unknown
           }
         return {
@@ -91,7 +95,7 @@ function stripToolSearchFieldsFromMessages(
       // 从 tool_result 内容中剥离 tool_reference 块（用户消息）
       if (block.type === 'tool_result') {
         const toolResult =
-          block as Anthropic.Beta.Messages.BetaToolResultBlockParam
+          block as ToolResultBlockParam
         if (Array.isArray(toolResult.content)) {
           const filteredContent = (toolResult.content as unknown[]).filter(
             c => !isToolReferenceBlock(c),
@@ -130,7 +134,13 @@ export async function countTokensWithAPI(
     return 0
   }
 
-  const message: Anthropic.Beta.Messages.BetaMessageParam = {
+  // OpenAI SDK 路径：使用本地 tokenizer 计数，无需 API 调用
+  if (isOpenAIProvider(getAPIProvider())) {
+    const model = getMainLoopModel()
+    return countTokensLocally(content, model)
+  }
+
+  const message: LLMMessageParam = {
     role: 'user',
     content: content,
   }
@@ -139,14 +149,20 @@ export async function countTokensWithAPI(
 }
 
 export async function countMessagesTokensWithAPI(
-  messages: Anthropic.Beta.Messages.BetaMessageParam[],
-  tools: Anthropic.Beta.Messages.BetaToolUnion[],
+  messages: LLMMessageParam[],
+  tools: ToolDefinition[],
 ): Promise<number | null> {
   return withTokenCountVCR(messages, tools, async () => {
     try {
       const model = getMainLoopModel()
       const betas = getModelBetas(model)
       const containsThinking = hasThinkingBlocks(messages)
+
+      // OpenAI SDK 路径：使用本地 tokenizer 计数
+      // 将消息序列化为文本后用 js-tiktoken 计数，比发送 API 请求更快且免费
+      if (isOpenAIProvider(getAPIProvider())) {
+        return countMessagesTokensLocally(messages, tools, model)
+      }
 
       if (getAPIProvider() === 'bedrock') {
         // @anthropic-sdk/bedrock-sdk doesn't support countTokens currently
@@ -211,6 +227,90 @@ export function roughTokenCountEstimation(
 }
 
 /**
+ * 使用本地 tokenizer 对消息列表进行 token 计数。
+ * 将消息内容序列化为文本后用 js-tiktoken 计数。
+ * 这比 API 调用更快且不消耗配额，但对非 OpenAI 模型有 5-10% 的误差。
+ */
+function countMessagesTokensLocally(
+  messages: LLMMessageParam[],
+  tools: ToolDefinition[],
+  model: string,
+): number {
+  let totalTokens = 0
+
+  // 计算消息内容的 token 数
+  for (const message of messages) {
+    // 每条消息有固定的格式开销（role 标记等），约 4 token
+    totalTokens += 4
+
+    if (typeof message.content === 'string') {
+      totalTokens += countTokensLocally(message.content, model)
+    } else if (Array.isArray(message.content)) {
+      for (const block of message.content) {
+        totalTokens += countBlockTokensLocally(block, model)
+      }
+    }
+  }
+
+  // 计算工具定义的 token 数
+  if (tools.length > 0) {
+    const toolsText = jsonStringify(tools)
+    totalTokens += countTokensLocally(toolsText, model)
+  }
+
+  return totalTokens
+}
+
+/**
+ * 使用本地 tokenizer 计算单个内容块的 token 数。
+ */
+function countBlockTokensLocally(
+  block: unknown,
+  model: string,
+): number {
+  if (typeof block !== 'object' || block === null) return 0
+
+  const typedBlock = block as Record<string, unknown>
+
+  if (typedBlock.type === 'text' && typeof typedBlock.text === 'string') {
+    return countTokensLocally(typedBlock.text, model)
+  }
+
+  if (typedBlock.type === 'tool_use') {
+    const name = (typedBlock.name as string) ?? ''
+    const input = jsonStringify(typedBlock.input ?? {})
+    return countTokensLocally(name + input, model)
+  }
+
+  if (typedBlock.type === 'tool_result') {
+    const content = typedBlock.content
+    if (typeof content === 'string') {
+      return countTokensLocally(content, model)
+    }
+    if (Array.isArray(content)) {
+      let total = 0
+      for (const subBlock of content) {
+        total += countBlockTokensLocally(subBlock, model)
+      }
+      return total
+    }
+    return 0
+  }
+
+  if (typedBlock.type === 'thinking' && typeof typedBlock.thinking === 'string') {
+    return countTokensLocally(typedBlock.thinking, model)
+  }
+
+  if (typedBlock.type === 'image' || typedBlock.type === 'document') {
+    // 图片和文档使用固定估计值（与 roughTokenCountEstimationForBlock 一致）
+    return 2000
+  }
+
+  // 兜底：序列化后计数
+  return countTokensLocally(jsonStringify(typedBlock), model)
+}
+
+/**
  * 返回给定文件扩展名的估计字节/令牌比率。
  * 密集的 JSON 有许多单字符令牌（`{`、`}`、`:`、`,`、`"`）
  * 这使得实际比率更接近 2 而不是默认的 4。
@@ -252,8 +352,8 @@ export function roughTokenCountEstimationForFileType(
  * - 带思考块的 Bedrock：使用 Sonnet（Haiku 3.5 不支持思考）
  */
 export async function countTokensViaHaikuFallback(
-  messages: Anthropic.Beta.Messages.BetaMessageParam[],
-  tools: Anthropic.Beta.Messages.BetaToolUnion[],
+  messages: LLMMessageParam[],
+  tools: ToolDefinition[],
 ): Promise<number | null> {
   // 检查消息是否包含思考块
   const containsThinking = hasThinkingBlocks(messages)
@@ -286,26 +386,21 @@ export async function countTokensViaHaikuFallback(
   // 这些字段仅在带有 tool search beta 头时有效
   const normalizedMessages = stripToolSearchFieldsFromMessages(messages)
 
-  const messagesToSend: MessageParam[] =
+  const messagesToSend: LLMMessageParam[] =
     normalizedMessages.length > 0
-      ? (normalizedMessages as MessageParam[])
+      ? (normalizedMessages as LLMMessageParam[])
       : [{ role: 'user', content: 'count' }]
 
   const betas = getModelBetas(model)
   const apiProvider = getAPIProvider()
 
-  // OpenAI 专用路径
+  // OpenAI SDK 路径：使用本地 tokenizer 计数（比发送 API 请求更快且免费）
   if (isOpenAIProvider(apiProvider)) {
-    const response = await openAICreateMessage({
-      model: normalizeModelStringForAPI(model),
-      max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
-      messages: messagesToSend,
-      tools: tools.length > 0 ? tools as any : undefined,
-      signal: undefined,
-    })
-    const usage = response.usage
-    const inputTokens = usage?.input_tokens ?? 0
-    return inputTokens
+    return countMessagesTokensLocally(
+      messagesToSend as LLMMessageParam[],
+      tools,
+      normalizeModelStringForAPI(getMainLoopModel()),
+    )
   }
 
   // 为 Vertex 过滤 betas — 某些 betas（如 web-search）在某些
@@ -369,8 +464,8 @@ export function roughTokenCountEstimationForMessage(message: {
     return roughTokenCountEstimationForContent(
       message.message?.content as
         | string
-        | Array<Anthropic.ContentBlock>
-        | Array<Anthropic.ContentBlockParam>
+        | Array<import('../types/llm.js').ContentBlock>
+        | Array<import('../types/llm.js').ContentBlockParam>
         | undefined,
     )
   }
@@ -390,8 +485,8 @@ export function roughTokenCountEstimationForMessage(message: {
 function roughTokenCountEstimationForContent(
   content:
     | string
-    | Array<Anthropic.ContentBlock>
-    | Array<Anthropic.ContentBlockParam>
+    | Array<import('../types/llm.js').ContentBlock>
+    | Array<import('../types/llm.js').ContentBlockParam>
     | undefined,
 ): number {
   if (!content) {
@@ -408,7 +503,7 @@ function roughTokenCountEstimationForContent(
 }
 
 function roughTokenCountEstimationForBlock(
-  block: string | Anthropic.ContentBlock | Anthropic.ContentBlockParam,
+  block: string | import('../types/llm.js').ContentBlock | import('../types/llm.js').ContentBlockParam,
 ): number {
   if (typeof block === 'string') {
     return roughTokenCountEstimation(block)
@@ -461,8 +556,8 @@ async function countTokensWithBedrock({
   containsThinking,
 }: {
   model: string
-  messages: Anthropic.Beta.Messages.BetaMessageParam[]
-  tools: Anthropic.Beta.Messages.BetaToolUnion[]
+  messages: LLMMessageParam[]
+  tools: ToolDefinition[]
   betas: string[]
   containsThinking: boolean
 }): Promise<number | null> {

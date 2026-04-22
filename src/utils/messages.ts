@@ -1,20 +1,18 @@
 import { feature } from 'bun:bundle'
 import type {
-  BetaUsage as Usage,
-  BetaUsage,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+  TokenUsage as Usage,
+  TokenUsage,
+} from '../types/llm.js'
 import type {
-  ContentBlock,
   ContentBlockParam,
   RedactedThinkingBlock,
   RedactedThinkingBlockParam,
-  TextBlockParam,
   ThinkingBlock,
   ThinkingBlockParam,
   ToolResultBlockParam,
-  ToolUseBlock,
   ToolUseBlockParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+  TextBlockParam,
+} from '../types/llm.js'
 import { randomUUID, type UUID } from 'crypto'
 import isObject from 'lodash-es/isObject.js'
 import last from 'lodash-es/last.js'
@@ -95,14 +93,12 @@ type HookAttachmentWithName = Exclude<
   HookPermissionDecisionAttachment
 >
 
-import type { APIError } from '@anthropic-ai/sdk'
+import type { APIErrorLike } from '../types/llm.js'
 import type {
-  BetaContentBlock,
-  BetaMessage,
-  BetaRedactedThinkingBlock,
-  BetaThinkingBlock,
-  BetaToolUseBlock,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+  ContentBlock,
+  LLMMessage,
+  ToolUseBlock,
+} from '../types/llm.js'
 import type {
   HookEvent,
   SDKAssistantMessageError,
@@ -387,7 +383,7 @@ function baseCreateAssistantMessage({
     speed: null,
   } as BetaUsage,
 }: {
-  content: BetaContentBlock[]
+  content: ContentBlock[]
   isApiErrorMessage?: boolean
   apiError?: AssistantMessage['apiError']
   error?: SDKAssistantMessageError
@@ -425,7 +421,7 @@ export function createAssistantMessage({
   usage,
   isVirtual,
 }: {
-  content: string | BetaContentBlock[]
+  content: string | ContentBlock[]
   usage?: Usage
   isVirtual?: true
 }): AssistantMessage {
@@ -436,7 +432,7 @@ export function createAssistantMessage({
             {
               type: 'text' as const,
               text: content === '' ? NO_CONTENT_MESSAGE : content,
-            } as BetaContentBlock, // 注意：Bedrock API 不支持 citations 字段
+            } as ContentBlock, // 注意：Bedrock API 不支持 citations 字段
           ]
         : content,
     usage,
@@ -460,7 +456,7 @@ export function createAssistantAPIErrorMessage({
       {
         type: 'text' as const,
         text: content === '' ? NO_CONTENT_MESSAGE : content,
-      } as BetaContentBlock, // 注意：Bedrock API 不支持 citations 字段
+      } as ContentBlock, // 注意：Bedrock API 不支持 citations 字段
     ],
     isApiErrorMessage: true,
     apiError,
@@ -2660,10 +2656,10 @@ export function mergeUserContentBlocks(
 // 有时 API 会返回空消息（例如 "\n\n"）。我们需要过滤掉它们，
 // 否则下次调用 query() 发送到 API 时会产生 API 错误。
 export function normalizeContentFromAPI(
-  contentBlocks: BetaMessage['content'],
+  contentBlocks: LLMMessage['content'],
   tools: Tools,
   agentId?: AgentId,
-): BetaMessage['content'] {
+): LLMMessage['content'] {
   if (!contentBlocks) {
     return []
   }
@@ -2726,7 +2722,7 @@ export function normalizeContentFromAPI(
         return {
           ...contentBlock,
           input: normalizedInput,
-        } as BetaContentBlock
+        } as ContentBlock
       }
       case 'text':
         if ((block.text as string).trim().length === 0) {
@@ -2750,7 +2746,7 @@ export function normalizeContentFromAPI(
             input: (safeParseJSON(betaBlock.input) ?? {}) as {
               [key: string]: unknown
             },
-          } as BetaContentBlock
+          } as ContentBlock
         }
         return contentBlock
       default:
@@ -2895,7 +2891,7 @@ export function textForResubmit(
 
 /**
  * Extract text from an array of content blocks, joining text blocks with the
- * given separator. Works with ContentBlock, ContentBlockParam, BetaContentBlock,
+ * given separator. Works with ContentBlock, ContentBlockParam, ContentBlock,
  * and their readonly/DeepImmutable variants via structural typing.
  */
 export function extractTextContent(
@@ -2922,7 +2918,7 @@ export function getContentText(
 
 export type StreamingToolUse = {
   index: number
-  contentBlock: BetaToolUseBlock
+  contentBlock: ToolUseBlock
   unparsedToolInput: string
 }
 
@@ -4580,7 +4576,7 @@ export function createMicrocompactBoundaryMessage(
 }
 
 export function createSystemAPIErrorMessage(
-  error: APIError,
+  error: APIErrorLike,
   retryInMs: number,
   retryAttempt: number,
   maxRetries: number,
@@ -4589,8 +4585,8 @@ export function createSystemAPIErrorMessage(
     type: 'system',
     subtype: 'api_error',
     level: 'error',
-    cause: error.cause instanceof Error ? error.cause : undefined,
-    error,
+    cause: (error as any).cause instanceof Error ? (error as any).cause : undefined,
+    error: error as any,
     retryInMs,
     retryAttempt,
     maxRetries,
@@ -4761,11 +4757,9 @@ type ThinkingBlockType =
   | RedactedThinkingBlock
   | ThinkingBlockParam
   | RedactedThinkingBlockParam
-  | BetaThinkingBlock
-  | BetaRedactedThinkingBlock
 
 function isThinkingBlock(
-  block: ContentBlockParam | ContentBlock | BetaContentBlock,
+  block: ContentBlockParam | ContentBlock | ContentBlock,
 ): block is ThinkingBlockType {
   return block.type === 'thinking' || block.type === 'redacted_thinking'
 }
@@ -5344,7 +5338,7 @@ export function ensureToolResultPairing(
           ...nextMsg,
           message: {
             ...nextMsg.message,
-            content: patchedContent,
+            content: patchedContent as ContentBlockParam[],
           },
         }
         i++

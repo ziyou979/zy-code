@@ -1,12 +1,16 @@
 import { feature } from 'bun:bundle'
-import type Anthropic from '@anthropic-ai/sdk'
-import {
-  APIConnectionError,
-  APIError,
-  APIUserAbortError,
-} from '@anthropic-ai/sdk'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
+import {
+  isAPIError,
+  isConnectionError,
+  isAbortError,
+  createAbortError,
+  getErrorStatus,
+  getErrorMessage as getLLMErrorMessage,
+  getErrorHeader,
+  type APIErrorLike,
+} from '../../types/llm.js'
 import { isAwsCredentialsProviderError } from 'src/utils/aws.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
@@ -37,7 +41,7 @@ import {
 import { REPEATED_529_ERROR_MESSAGE } from './errors.js'
 import { extractConnectionErrorDetails } from './errorUtils.js'
 
-const abortError = () => new APIUserAbortError()
+const abortError = () => createAbortError()
 
 const DEFAULT_MAX_RETRIES = 10
 const FLOOR_OUTPUT_TOKENS = 3000
@@ -92,12 +96,12 @@ function isPersistentRetryEnabled(): boolean {
 
 function isTransientCapacityError(error: unknown): boolean {
   return (
-    is529Error(error) || (error instanceof APIError && error.status === 429)
+    is529Error(error) || (isAPIError(error) && error.status === 429)
   )
 }
 
 function isStaleConnectionError(error: unknown): boolean {
-  if (!(error instanceof APIConnectionError)) {
+  if (!isConnectionError(error)) {
     return false
   }
   const details = extractConnectionErrorDetails(error)
@@ -151,10 +155,10 @@ export class FallbackTriggeredError extends Error {
   }
 }
 
-export async function* withRetry<T>(
-  getClient: () => Promise<Anthropic>,
+export async function* withRetry<T, TClient = unknown>(
+  getClient: () => Promise<TClient>,
   operation: (
-    client: Anthropic,
+    client: TClient,
     attempt: number,
     context: RetryContext,
   ) => Promise<T>,
@@ -165,13 +169,13 @@ export async function* withRetry<T>(
     model: options.model,
     thinkingConfig: options.thinkingConfig,
   }
-  let client: Anthropic | null = null
+  let client: TClient | null = null
   let consecutive529Errors = options.initialConsecutive529Errors ?? 0
   let lastError: unknown
   let persistentAttempt = 0
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     if (options.signal?.aborted) {
-      throw new APIUserAbortError()
+      throw createAbortError()
     }
 
     try {
@@ -207,7 +211,7 @@ export async function* withRetry<T>(
 
       if (
         client === null ||
-        (lastError instanceof APIError && lastError.status === 401) ||
+        (isAPIError(lastError) && lastError.status === 401) ||
         isOAuthTokenRevokedError(lastError) ||
         isBedrockAuthError(lastError) ||
         isVertexAuthError(lastError) ||
@@ -215,7 +219,7 @@ export async function* withRetry<T>(
       ) {
         // 遇到 401 "token expired" 或 403 "token revoked" 时，强制刷新 token
         if (
-          (lastError instanceof APIError && lastError.status === 401) ||
+          (isAPIError(lastError) && lastError.status === 401) ||
           isOAuthTokenRevokedError(lastError)
         ) {
           const failedAccessToken = getZyAIOAuthTokens()?.accessToken
@@ -230,7 +234,7 @@ export async function* withRetry<T>(
     } catch (error) {
       lastError = error
       logForDebugging(
-        `API error (attempt ${attempt}/${maxRetries + 1}): ${error instanceof APIError ? `${error.status} ${error.message}` : errorMessage(error)}`,
+        `API error (attempt ${attempt}/${maxRetries + 1}): ${isAPIError(error) ? `${error.status} ${error.message}` : errorMessage(error)}`,
         { level: 'error' },
       )
 
@@ -297,7 +301,7 @@ export async function* withRetry<T>(
         handleAwsCredentialError(error) || handleGcpCredentialError(error)
       if (
         !handledCloudAuthError &&
-        (!(error instanceof APIError) || !shouldRetry(error))
+        (!isAPIError(error) || !shouldRetry(error))
       ) {
         throw new CannotRetryError(error, retryContext)
       }
@@ -306,7 +310,7 @@ export async function* withRetry<T>(
       // NOTE: 使用扩展上下文窗口 beta 后，此 400 错误不应再出现。
       // API 现在返回 'model_context_window_exceeded' stop_reason。
       // 保留以向后兼容。
-      if (error instanceof APIError) {
+      if (isAPIError(error)) {
         const overflowData = parseMaxTokensContextOverflowError(error)
         if (overflowData) {
           const { inputTokens, contextLimit } = overflowData
@@ -351,7 +355,7 @@ export async function* withRetry<T>(
       // 如果有 retry-after header 则获取
       const retryAfter = getRetryAfter(error)
       let delayMs: number
-      if (persistent && error instanceof APIError && error.status === 429) {
+      if (persistent && isAPIError(error) && error.status === 429) {
         persistentAttempt++
         // 基于窗口的限制（例如 5 小时 Max/Pro）包含重置时间戳。
         // 等待直到重置，而不是每 5 分钟无效轮询。
@@ -389,16 +393,15 @@ export async function* withRetry<T>(
       logEvent('tengu_api_retry', {
         attempt: reportedAttempt,
         delayMs: delayMs,
-        error: (error as APIError)
-          .message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        status: (error as APIError).status,
+        error: getLLMErrorMessage(error) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        status: getErrorStatus(error),
         provider: getAPIProviderForStatsig(),
       })
 
       if (persistent) {
         if (delayMs > 60_000) {
           logEvent('tengu_api_persistent_retry_wait', {
-            status: (error as APIError).status,
+            status: getErrorStatus(error),
             delayMs,
             attempt: reportedAttempt,
             provider: getAPIProviderForStatsig(),
@@ -409,10 +412,10 @@ export async function* withRetry<T>(
         // 以 {type:'system', subtype:'api_retry'} 的形式出现在 stdout 上。
         let remaining = delayMs
         while (remaining > 0) {
-          if (options.signal?.aborted) throw new APIUserAbortError()
-          if (error instanceof APIError) {
+          if (options.signal?.aborted) throw createAbortError()
+          if (isAPIError(error)) {
             yield createSystemAPIErrorMessage(
-              error,
+              error as any,
               remaining,
               reportedAttempt,
               maxRetries,
@@ -426,8 +429,8 @@ export async function* withRetry<T>(
         // persistentAttempt 计数器，持续增长到 5 分钟上限。
         if (attempt >= maxRetries) attempt = maxRetries
       } else {
-        if (error instanceof APIError) {
-          yield createSystemAPIErrorMessage(error, delayMs, attempt, maxRetries)
+        if (isAPIError(error)) {
+          yield createSystemAPIErrorMessage(error as any, delayMs, attempt, maxRetries)
         }
         await sleep(delayMs, options.signal, { abortError })
       }
@@ -468,7 +471,7 @@ export function getRetryDelay(
   return baseDelay + jitter
 }
 
-export function parseMaxTokensContextOverflowError(error: APIError):
+export function parseMaxTokensContextOverflowError(error: APIErrorLike):
   | {
       inputTokens: number
       maxTokens: number
@@ -516,7 +519,7 @@ export function parseMaxTokensContextOverflowError(error: APIError):
 }
 
 export function is529Error(error: unknown): boolean {
-  if (!(error instanceof APIError)) {
+  if (!isAPIError(error)) {
     return false
   }
 
@@ -530,7 +533,7 @@ export function is529Error(error: unknown): boolean {
 
 function isOAuthTokenRevokedError(error: unknown): boolean {
   return (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 403 &&
     (error.message?.includes('OAuth token has been revoked') ?? false)
   )
@@ -543,7 +546,7 @@ function isBedrockAuthError(error: unknown): boolean {
     // "The security token included in the request is invalid"
     if (
       isAwsCredentialsProviderError(error) ||
-      (error instanceof APIError && error.status === 403)
+      (isAPIError(error) && error.status === 403)
     ) {
       return true
     }
@@ -582,7 +585,7 @@ function isVertexAuthError(error: unknown): boolean {
       return true
     }
     // 服务器端：Vertex 对过期/无效 token 返回 401
-    if (error instanceof APIError && error.status === 401) {
+    if (isAPIError(error) && error.status === 401) {
       return true
     }
   }
@@ -601,9 +604,9 @@ function handleGcpCredentialError(error: unknown): boolean {
   return false
 }
 
-function shouldRetry(error: APIError): boolean {
+function shouldRetry(error: APIErrorLike): boolean {
   // 永不重试用例模拟错误——它们来自 /mock-limits 命令用于测试
-  if (isMockRateLimitError(error)) {
+  if (isMockRateLimitError(error as any)) {
     return false
   }
 
@@ -637,10 +640,7 @@ function shouldRetry(error: APIError): boolean {
   }
 
   // 注意这不是标准 header。
-  // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
-  const shouldRetryHeader = typeof error.headers?.get === 'function'
-    ? (error.headers.get as any)('x-should-retry')
-    : ((error.headers as any) as any)?.['x-should-retry']
+  const shouldRetryHeader = getErrorHeader(error, 'x-should-retry')
 
   // 如果服务器明确指示是否重试，则遵循。
   if ((shouldRetryHeader as any) === 'true') {
@@ -656,7 +656,7 @@ function shouldRetry(error: APIError): boolean {
     }
   }
 
-  if (error instanceof APIConnectionError) {
+  if (isConnectionError(error)) {
     return true
   }
 
@@ -708,7 +708,7 @@ SHORT_RETRY_THRESHOLD_MS = 20 * 1000 // 20 seconds
 let MIN_COOLDOWN_MS;
 MIN_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
 
-function getRetryAfterMs(error: APIError): number | null {
+function getRetryAfterMs(error: APIErrorLike): number | null {
   const retryAfter = getRetryAfter(error)
   if (retryAfter) {
     const seconds = parseInt(retryAfter, 10)
@@ -719,11 +719,8 @@ function getRetryAfterMs(error: APIError): number | null {
   return null
 }
 
-function getRateLimitResetDelayMs(error: APIError): number | null {
-  // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
-  const resetHeader = typeof error.headers?.get === 'function'
-    ? (error.headers.get as any)?.('anthropic-ratelimit-unified-reset')
-    : (error.headers as Record<string, string>)?.['anthropic-ratelimit-unified-reset']
+function getRateLimitResetDelayMs(error: APIErrorLike): number | null {
+  const resetHeader = getErrorHeader(error, 'anthropic-ratelimit-unified-reset')
   if (!resetHeader) return null
   const resetUnixSec = Number(resetHeader)
   if (!Number.isFinite(resetUnixSec)) return null

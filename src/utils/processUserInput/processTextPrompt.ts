@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources'
+import type { ContentBlockParam } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { setPromptId } from 'src/bootstrap/state.js'
 import type {

@@ -1,12 +1,13 @@
-import {
-  APIConnectionError,
-  APIConnectionTimeoutError,
-  APIError,
-} from '@anthropic-ai/sdk'
 import type {
-  BetaMessage,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-type BetaStopReason = any;
+  APIErrorLike,
+  LLMMessage,
+  StopReason,
+} from '../../types/llm.js'
+import {
+  isAPIError,
+  isConnectionError,
+  getErrorHeader,
+} from '../../types/llm.js'
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import type {
@@ -390,16 +391,16 @@ function logToolUseToolResultMismatch(
 /**
  * 类型守卫，检查值是否为来自 API 的有效 Message 响应
  */
-export function isValidAPIMessage(value: unknown): value is BetaMessage {
+export function isValidAPIMessage(value: unknown): value is LLMMessage {
   return (
     typeof value === 'object' &&
     value !== null &&
     'content' in value &&
     'model' in value &&
     'usage' in value &&
-    Array.isArray((value as BetaMessage).content) &&
-    typeof (value as BetaMessage).model === 'string' &&
-    typeof (value as BetaMessage).usage === 'object'
+    Array.isArray((value as LLMMessage).content) &&
+    typeof (value as LLMMessage).model === 'string' &&
+    typeof (value as LLMMessage).usage === 'object'
   )
 }
 
@@ -437,11 +438,7 @@ export function getAssistantMessageFromError(
   },
 ): AssistantMessage {
   // 检查 SDK 超时错误
-  if (
-    error instanceof APIConnectionTimeoutError ||
-    (error instanceof APIConnectionError &&
-      error.message.toLowerCase().includes('timeout'))
-  ) {
+  if (isConnectionError(error)) {
     return createAssistantAPIErrorMessage({
       content: API_TIMEOUT_ERROR_MESSAGE,
       error: 'unknown',
@@ -469,16 +466,18 @@ export function getAssistantMessageFromError(
   }
 
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 429 &&
     shouldProcessRateLimits(false)
   ) {
     // 检查这是否是带有多个限速 header 的新 API
-    const rateLimitType = error.headers?.get?.(
+    const rateLimitType = getErrorHeader(
+      error,
       'anthropic-ratelimit-unified-representative-claim',
     ) as 'five_hour' | 'seven_day' | 'seven_day_opus' | null
 
-    const overageStatus = error.headers?.get?.(
+    const overageStatus = getErrorHeader(
+      error,
       'anthropic-ratelimit-unified-overage-status',
     ) as 'allowed' | 'allowed_warning' | 'rejected' | null
 
@@ -492,7 +491,8 @@ export function getAssistantMessageFromError(
       }
 
       // 从错误 header 提取限速信息
-      const resetHeader = error.headers?.get?.(
+      const resetHeader = getErrorHeader(
+        error,
         'anthropic-ratelimit-unified-reset',
       )
       if (resetHeader) {
@@ -507,14 +507,16 @@ export function getAssistantMessageFromError(
         limits.overageStatus = overageStatus
       }
 
-      const overageResetHeader = error.headers?.get?.(
+      const overageResetHeader = getErrorHeader(
+        error,
         'anthropic-ratelimit-unified-overage-reset',
       )
       if (overageResetHeader) {
         limits.overageResetsAt = Number(overageResetHeader)
       }
 
-      const overageDisabledReason = error.headers?.get?.(
+      const overageDisabledReason = getErrorHeader(
+        error,
         'anthropic-ratelimit-unified-overage-disabled-reason',
       ) as OverageDisabledReason | null
       if (overageDisabledReason) {
@@ -617,7 +619,7 @@ export function getAssistantMessageFromError(
 
   // 检查图像大小错误（例如 "image exceeds 5 MB maximum: 5316852 bytes > 5242880 bytes"）
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('image exceeds') &&
     error.message.includes('maximum')
@@ -630,7 +632,7 @@ export function getAssistantMessageFromError(
 
   // 检查多图像尺寸错误（API 对多图像请求强制实施更严格的 2000px 限制）
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('image dimensions exceed') &&
     error.message.includes('many-image')
@@ -649,7 +651,7 @@ export function getAssistantMessageFromError(
   // 因此 truthy 守卫使其在那里保持无效。
   if (
     AFK_MODE_BETA_HEADER &&
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes(AFK_MODE_BETA_HEADER) &&
     error.message.includes('anthropic-beta')
@@ -662,7 +664,7 @@ export function getAssistantMessageFromError(
 
   // 检查请求过大错误（413 状态码）
   // 这通常在大型 PDF + 对话上下文超过 32MB API 限制时发生
-  if (error instanceof APIError && error.status === 413) {
+  if (isAPIError(error) && error.status === 413) {
     return createAssistantAPIErrorMessage({
       content: getRequestTooLargeErrorMessage(),
       error: 'invalid_request',
@@ -671,7 +673,7 @@ export function getAssistantMessageFromError(
 
   // 检查 tool_use/tool_result 并发错误
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes(
       '`tool_use` ids were found without `tool_result` blocks immediately after',
@@ -712,7 +714,7 @@ export function getAssistantMessageFromError(
   }
 
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('unexpected `tool_use_id` found in `tool_result`')
   ) {
@@ -723,7 +725,7 @@ export function getAssistantMessageFromError(
   // 因此遇到此错误意味着新的损坏路径漏过了。
   // 记录以追踪根本原因，并给用户提供恢复路径而非死锁。
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('`tool_use` ids must be unique')
   ) {
@@ -774,7 +776,7 @@ export function getAssistantMessageFromError(
   // apiKeyHelper 和 /login-managed 密钥意味着活跃认证的组织
   // 确实被禁用，且没有休眠回退可指向。
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.toLowerCase().includes('organization has been disabled')
   ) {
@@ -828,7 +830,7 @@ export function getAssistantMessageFromError(
 
   // 检查 OAuth token 撤销错误
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 403 &&
     error.message.includes('OAuth token has been revoked')
   ) {
@@ -840,7 +842,7 @@ export function getAssistantMessageFromError(
 
   // 检查 OAuth 组织不允许错误
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     (error.status === 401 || error.status === 403) &&
     error.message.includes(
       'OAuth authentication is currently not allowed for this organization',
@@ -854,7 +856,7 @@ export function getAssistantMessageFromError(
 
   // 其他 401/403 认证错误的通用处理
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     (error.status === 401 || error.status === 403)
   ) {
     // CCR 模式下认证通过 JWT——这可能是瞬时网络问题
@@ -893,7 +895,7 @@ export function getAssistantMessageFromError(
   // 404 未找到——通常意味着所选模型不存在或不可用。
   // 引导用户使用 /model 以便选择有效的模型。
   // 对于第三方用户，建议一个特定的回退模型。
-  if (error instanceof APIError && error.status === 404) {
+  if (isAPIError(error) && error.status === 404) {
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
     const fallbackSuggestion = get3PModelFallbackSuggestion(model)
     return createAssistantAPIErrorMessage({
@@ -905,9 +907,9 @@ export function getAssistantMessageFromError(
   }
 
   // 连接错误（非超时）——使用 formatAPIError 获取详细消息
-  if (error instanceof APIConnectionError) {
+  if (isConnectionError(error)) {
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error)}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error as any)}`,
       error: 'unknown',
     })
   }
@@ -960,11 +962,7 @@ export function classifyAPIError(error: unknown): string {
   }
 
   // 超时错误
-  if (
-    error instanceof APIConnectionTimeoutError ||
-    (error instanceof APIConnectionError &&
-      error.message.toLowerCase().includes('timeout'))
-  ) {
+  if (isConnectionError(error)) {
     return 'api_timeout'
   }
 
@@ -985,13 +983,13 @@ export function classifyAPIError(error: unknown): string {
   }
 
   // 限速
-  if (error instanceof APIError && error.status === 429) {
+  if (isAPIError(error) && error.status === 429) {
     return 'rate_limit'
   }
 
   // 服务器过载（529）
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     (error.status === 529 ||
       error.message?.includes('"type":"overloaded_error"'))
   ) {
@@ -1025,7 +1023,7 @@ export function classifyAPIError(error: unknown): string {
 
   // 图像大小错误
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('image exceeds') &&
     error.message.includes('maximum')
@@ -1035,7 +1033,7 @@ export function classifyAPIError(error: unknown): string {
 
   // 多图像尺寸错误
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('image dimensions exceed') &&
     error.message.includes('many-image')
@@ -1045,7 +1043,7 @@ export function classifyAPIError(error: unknown): string {
 
   // Tool use 错误 (400)
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes(
       '`tool_use` ids were found without `tool_result` blocks immediately after',
@@ -1055,7 +1053,7 @@ export function classifyAPIError(error: unknown): string {
   }
 
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('unexpected `tool_use_id` found in `tool_result`')
   ) {
@@ -1063,7 +1061,7 @@ export function classifyAPIError(error: unknown): string {
   }
 
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.includes('`tool_use` ids must be unique')
   ) {
@@ -1072,7 +1070,7 @@ export function classifyAPIError(error: unknown): string {
 
   // 无效模型错误 (400)
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 400 &&
     error.message.toLowerCase().includes('invalid model name')
   ) {
@@ -1098,7 +1096,7 @@ export function classifyAPIError(error: unknown): string {
   }
 
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     error.status === 403 &&
     error.message.includes('OAuth token has been revoked')
   ) {
@@ -1106,7 +1104,7 @@ export function classifyAPIError(error: unknown): string {
   }
 
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     (error.status === 401 || error.status === 403) &&
     error.message.includes(
       'OAuth authentication is currently not allowed for this organization',
@@ -1117,7 +1115,7 @@ export function classifyAPIError(error: unknown): string {
 
   // 通用认证错误
   if (
-    error instanceof APIError &&
+    isAPIError(error) &&
     (error.status === 401 || error.status === 403)
   ) {
     return 'auth_error'
@@ -1133,15 +1131,15 @@ export function classifyAPIError(error: unknown): string {
   }
 
   // 基于状态码的回退
-  if (error instanceof APIError) {
+  if (isAPIError(error)) {
     const status = error.status
     if (status >= 500) return 'server_error'
     if (status >= 400) return 'client_error'
   }
 
   // 连接错误——优先检查 SSL/TLS 问题
-  if (error instanceof APIConnectionError) {
-    const connectionDetails = extractConnectionErrorDetails(error)
+  if (isConnectionError(error)) {
+    const connectionDetails = extractConnectionErrorDetails(error as any)
     if (connectionDetails?.isSSLError) {
       return 'ssl_cert_error'
     }
@@ -1152,7 +1150,7 @@ export function classifyAPIError(error: unknown): string {
 }
 
 export function categorizeRetryableAPIError(
-  error: APIError,
+  error: APIErrorLike,
 ): SDKAssistantMessageError {
   if (
     error.status === 529 ||
@@ -1173,7 +1171,7 @@ export function categorizeRetryableAPIError(
 }
 
 export function getErrorMessageIfRefusal(
-  stopReason: BetaStopReason | null,
+  stopReason: StopReason | null,
   model: string,
 ): AssistantMessage | undefined {
   if (stopReason !== 'refusal') {

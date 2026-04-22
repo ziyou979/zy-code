@@ -1,5 +1,5 @@
-import { APIError } from '@anthropic-ai/sdk'
-import type { MessageParam } from '@anthropic-ai/sdk/resources/index.mjs'
+import { isAPIError } from '../types/llm.js'
+import type { LLMMessageParam } from '../types/llm.js'
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getModelBetas } from '../utils/betas.js'
@@ -12,7 +12,7 @@ import { logEvent } from './analytics/index.js'
 import { getAPIMetadata } from './api/zy.js'
 import { getLLMClient } from './api/client.js'
 import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
-import { openAICreateMessage } from './api/openaiQuery.js'
+import { createOpenAIMessage } from './api/streamAdapter.js'
 import {
   processRateLimitHeaders,
   shouldProcessRateLimits,
@@ -216,12 +216,12 @@ export function emitStatusChange(limits: ZyAILimits) {
 
 async function makeTestQuery() {
   const model = getDefaultHaikuModel()
-  const messages: MessageParam[] = [{ role: 'user', content: 'quota' }]
+  const messages: LLMMessageParam[] = [{ role: 'user', content: 'quota' }]
   const apiProvider = getAPIProvider()
 
   // OpenAI 专用路径
   if (isOpenAIProvider(apiProvider)) {
-    const response = await openAICreateMessage({
+    const response = await createOpenAIMessage({
       model,
       max_tokens: 1,
       messages,
@@ -276,7 +276,7 @@ export async function checkQuotaStatus(): Promise<void> {
     // Update limits based on the response
     extractQuotaStatusFromHeaders(raw.headers)
   } catch (error) {
-    if (error instanceof APIError) {
+    if (isAPIError(error)) {
       extractQuotaStatusFromError(error)
     }
   }

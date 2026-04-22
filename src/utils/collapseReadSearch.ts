@@ -21,7 +21,7 @@ import type {
   StopHookInfo,
   SystemStopHookSummaryMessage,
 } from '../types/message.js'
-import type { BetaContentBlockParam } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { ContentBlockParam } from '../types/llm.js'
 import { getDisplayPath } from './file.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
 import { tSync } from '../i18n/index.js'
@@ -435,7 +435,7 @@ function isCollapsibleToolResult(
   collapsibleToolUseIds: Set<string>,
 ): msg is CollapsibleMessage {
   if (msg.type === 'user') {
-    const toolResults = (msg.message.content as BetaContentBlockParam[]).filter(
+    const toolResults = (msg.message.content as ContentBlockParam[]).filter(
       (c): c is { type: 'tool_result'; tool_use_id: string } =>
         c.type === 'tool_result',
     )

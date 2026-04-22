@@ -2,8 +2,8 @@ import { feature } from 'bun:bundle'
 import type {
   Base64ImageSource,
   ContentBlockParam,
-  MessageParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+  LLMMessageParam,
+} from '../../types/llm.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {
   SSEClientTransport,
@@ -2541,7 +2541,7 @@ export async function transformResultContent(
             imageBuffer.length,
             ext,
           )
-          const content: MessageParam['content'] = []
+          const content: LLMMessageParam['content'] = []
           if (prefix) {
             content.push({
               type: 'text',

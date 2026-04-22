@@ -1,4 +1,4 @@
-import type { ContentBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { ContentBlockParam, TextBlockParam } from '../types/llm.js';
 import { randomUUID, type UUID } from 'crypto';
 import figures from 'figures';
 import * as React from 'react';

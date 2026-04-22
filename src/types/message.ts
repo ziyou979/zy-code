@@ -4,12 +4,12 @@
  */
 
 import type {
-  BetaContentBlock,
-  BetaContentBlockParam,
-  BetaMessage,
-  BetaToolUseBlock,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import type { APIError } from '@anthropic-ai/sdk'
+  ContentBlock,
+  ContentBlockParam,
+  LLMMessage,
+  LLMError,
+  ToolUseBlock,
+} from './llm.js'
 import type { UUID } from 'crypto'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import type { Progress } from '../Tool.js'
@@ -42,13 +42,13 @@ export interface BaseMessage {
 
 export interface AssistantMessage extends BaseMessage {
   type: 'assistant'
-  message: BetaMessage & {
+  message: LLMMessage & {
     container?: null
     context_management: null | Record<string, unknown>
   }
   requestId?: string
   isApiErrorMessage?: boolean
-  apiError?: APIError
+  apiError?: LLMError
   error?: unknown
   errorDetails?: string
   isVirtual?: true
@@ -57,13 +57,13 @@ export interface AssistantMessage extends BaseMessage {
 
 export interface NormalizedAssistantMessage extends BaseMessage {
   type: 'assistant'
-  message: Omit<BetaMessage, 'content'> & {
-    content: BetaContentBlock[]
+  message: Omit<LLMMessage, 'content'> & {
+    content: ContentBlock[]
     context_management: null | Record<string, unknown>
   }
   requestId?: string
   isApiErrorMessage?: boolean
-  apiError?: APIError
+  apiError?: LLMError
   error?: unknown
   isVirtual?: true
   isMeta?: true
@@ -78,7 +78,7 @@ export interface UserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: string | BetaContentBlockParam[]
+    content: string | ContentBlockParam[]
   }
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
@@ -105,7 +105,7 @@ export interface NormalizedUserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: BetaContentBlockParam[]
+    content: ContentBlockParam[]
   }
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
@@ -191,7 +191,7 @@ export interface SystemAPIErrorMessage extends BaseMessage {
   content?: string
   level: 'error'
   cause?: Error
-  error?: APIError
+  error?: LLMError
   retryInMs?: number
   retryAttempt?: number
   maxRetries?: number
@@ -403,7 +403,7 @@ export interface StopHookInfo {
 
 export interface GroupedToolUseMessage extends BaseMessage {
   type: 'grouped_tool_use'
-  toolUses: BetaToolUseBlock[]
+  toolUses: ToolUseBlock[]
 }
 
 export interface CollapsedReadSearchGroup extends BaseMessage {

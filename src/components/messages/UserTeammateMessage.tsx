@@ -1,4 +1,4 @@
-import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { TextBlockParam } from '../../types/llm.js';
 import figures from 'figures';
 import * as React from 'react';
 import { TEAMMATE_MESSAGE_TAG } from '../../constants/xml.js';

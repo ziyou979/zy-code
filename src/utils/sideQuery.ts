@@ -1,5 +1,11 @@
-import type Anthropic from '@anthropic-ai/sdk'
-import type { BetaToolUnion } from '@anthropic-ai/sdk/resources/beta/messages.js'
+import type {
+  ToolDefinition,
+  LLMMessage,
+  LLMMessageParam,
+  TextBlockParam,
+  ToolChoice,
+  ThinkingConfig,
+} from '../types/llm.js'
 import {
   getLastApiCompletionTimestamp,
   setLastApiCompletionTimestamp,
@@ -15,19 +21,13 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { getAPIMetadata } from '../services/api/zy.js'
 import { getLLMClient } from '../services/api/client.js'
 import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
-import { openAICreateMessage } from '../services/api/openaiQuery.js'
+import { createOpenAIMessage } from '../services/api/streamAdapter.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
 
-type MessageParam = Anthropic.MessageParam
-type TextBlockParam = Anthropic.TextBlockParam
-type Tool = Anthropic.Tool
-type ToolChoice = Anthropic.ToolChoice
-type BetaMessage = Anthropic.Beta.Messages.BetaMessage
-// @ts-ignore
-type BetaJSONOutputFormat = Anthropic.Beta.Messages.BetaJSONOutputFormat
-type BetaThinkingConfigParam = Anthropic.Beta.Messages.BetaThinkingConfigParam
+// BetaJSONOutputFormat can be inlined as a local type for structured output format
+type BetaJSONOutputFormat = { type: 'json_schema'; json_schema: unknown }
 
 export type SideQueryOptions = {
   /** Model to use for the query */
@@ -41,9 +41,9 @@ export type SideQueryOptions = {
    */
   system?: string | TextBlockParam[]
   /** Messages to send (supports cache_control on content blocks) */
-  messages: MessageParam[]
-  /** Optional tools (supports both standard Tool[] and BetaToolUnion[] for custom tool types) */
-  tools?: Tool[] | BetaToolUnion[]
+  messages: LLMMessageParam[]
+  /** Optional tools (supports both standard ToolDefinition[] for custom tool types) */
+  tools?: ToolDefinition[]
   /** Optional tool choice (use { type: 'tool', name: 'x' } for forced output) */
   tool_choice?: ToolChoice
   /** Optional JSON output format for structured responses */
@@ -69,7 +69,7 @@ export type SideQueryOptions = {
 /**
  * Extract text from first user message for fingerprint computation.
  */
-function extractFirstUserMessageText(messages: MessageParam[]): string {
+function extractFirstUserMessageText(messages: LLMMessageParam[]): string {
   const firstUserMessage = messages.find(m => m.role === 'user')
   if (!firstUserMessage) return ''
 
@@ -107,7 +107,7 @@ function extractFirstUserMessageText(messages: MessageParam[]): string {
  * // Model validation
  * await sideQuery({ querySource: 'model_validation', model, max_tokens: 1, messages: [{ role: 'user', content: 'Hi' }] })
  */
-export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
+export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
   const {
     model,
     system,
@@ -169,7 +169,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
         : []),
   ].filter((block): block is TextBlockParam => block !== null)
 
-  let thinkingConfig: BetaThinkingConfigParam | undefined
+  let thinkingConfig: ThinkingConfig | undefined
   if (thinking === false) {
     thinkingConfig = { type: 'disabled' }
   } else if (thinking !== undefined) {
@@ -184,7 +184,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
 
   // OpenAI 专用路径
   if (isOpenAIProvider(getAPIProvider())) {
-    const response = await openAICreateMessage({
+    const response = await createOpenAIMessage({
       model: normalizedModel,
       max_tokens,
       system: systemBlocks as any,

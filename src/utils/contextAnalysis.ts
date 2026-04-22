@@ -1,8 +1,7 @@
-import type { BetaContentBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import type {
   ContentBlock,
   ContentBlockParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+} from '../types/llm.js'
 import { roughTokenCountEstimation as countTokens } from '../services/tokenEstimation.js'
 import type {
   AssistantMessage,
@@ -97,7 +96,7 @@ export function analyzeContext(messages: Message[]): TokenStats {
 }
 
 function processBlock(
-  block: ContentBlockParam | ContentBlock | BetaContentBlock,
+  block: ContentBlockParam | ContentBlock,
   message: UserMessage | AssistantMessage,
   stats: TokenStats,
   toolIds: Map<string, string>,

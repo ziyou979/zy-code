@@ -1,4 +1,4 @@
-import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { TextBlockParam } from '../../types/llm.js';
 import * as React from 'react';
 import { CHANNEL_ARROW } from '../../constants/figures.js';
 import { CHANNEL_TAG } from '../../constants/xml.js';

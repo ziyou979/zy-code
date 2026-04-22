@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import type { ContentBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
+import type { ContentBlockParam, TextBlockParam } from '../../types/llm.js';
 import { randomUUID } from 'crypto';
 import { setPromptId } from 'src/bootstrap/state.js';
 import { builtInCommandNames, type Command, type CommandBase, findCommand, getCommand, getCommandName, hasCommand, type PromptCommand } from 'src/commands.js';
@@ -890,7 +890,7 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
   const additionalAllowedTools = parseToolListFromCLI(command.allowedTools ?? []);
 
   // Create content for the main message, including any pasted images
-  const mainMessageContent: ContentBlockParam[] = imageContentBlocks.length > 0 || precedingInputBlocks.length > 0 ? [...imageContentBlocks, ...precedingInputBlocks, ...result] : result;
+  const mainMessageContent: ContentBlockParam[] = (imageContentBlocks.length > 0 || precedingInputBlocks.length > 0 ? [...imageContentBlocks, ...precedingInputBlocks, ...result] : result) as any;
 
   // Extract attachments from command arguments (@-mentions, MCP resources,
   // agent mentions in SKILL.md). skipSkillDiscovery prevents the SKILL.md

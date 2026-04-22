@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { APIUserAbortError } from '@anthropic-ai/sdk'
+import { isAbortError } from '../../types/llm.js'
 import type { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
@@ -1629,7 +1629,7 @@ export async function executeAsyncClassifierCheck(
     // When the coordinator session is cancelled, the abort signal fires and the
     // classifier API call rejects with APIUserAbortError. This is expected and
     // should not surface as an unhandled promise rejection.
-    if (error instanceof APIUserAbortError || error instanceof AbortError) {
+    if (isAbortError(error) || error instanceof AbortError) {
       callbacks.onComplete?.()
       return
     }

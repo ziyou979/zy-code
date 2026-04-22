@@ -1,8 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk'
-import type {
-  BetaTool,
-  BetaToolUnion,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { ToolDefinition } from '../types/llm.js'
 import { createHash } from 'crypto'
 import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from 'src/constants/prompts.js'
 import { getSystemContext, getUserContext } from 'src/context.js'
@@ -62,12 +58,12 @@ import { getPlatform } from './platform.js'
 import { countFilesRoundedRg } from './ripgrep.js'
 import { jsonStringify } from './slowOperations.js'
 import type { SystemPrompt } from './systemPromptType.js'
-import { getToolSchemaCache } from './toolSchemaCache.js'
+import { getToolSchemaCache, type CachedSchema } from './toolSchemaCache.js'
 import { windowsPathToPosixPath } from './windowsPaths.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 
-// Extended BetaTool type with strict mode and defer_loading support
-type BetaToolWithExtras = BetaTool & {
+// Extended ToolDefinition type with strict mode and defer_loading support
+type ToolDefinitionWithExtras = ToolDefinition & {
   strict?: boolean
   defer_loading?: boolean
   cache_control?: {
@@ -96,8 +92,8 @@ const SWARM_FIELDS_BY_TOOL: Record<string, string[]> = {
  */
 function filterSwarmFieldsFromSchema(
   toolName: string,
-  schema: Anthropic.Tool.InputSchema,
-): Anthropic.Tool.InputSchema {
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
   const fieldsToRemove = SWARM_FIELDS_BY_TOOL[toolName]
   if (!fieldsToRemove || fieldsToRemove.length === 0) {
     return schema
@@ -133,7 +129,7 @@ export async function toolToAPISchema(
       ttl?: '5m' | '1h'
     }
   },
-): Promise<BetaToolUnion> {
+): Promise<ToolDefinition> {
   // Session-stable base schema: name, description, input_schema, strict,
   // eager_input_streaming. These are computed once per session and cached to
   // prevent mid-session GrowthBook flips (tengu_tool_pear, tengu_fgts) or
@@ -150,7 +146,7 @@ export async function toolToAPISchema(
       ? `${tool.name}:${jsonStringify(tool.inputJSONSchema)}`
       : tool.name
   const cache = getToolSchemaCache()
-  let base = cache.get(cacheKey)
+  let base: CachedSchema | undefined = cache.get(cacheKey)
   if (!base) {
     const strictToolsEnabled =
       checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_tool_pear')
@@ -159,7 +155,7 @@ export async function toolToAPISchema(
       'inputJSONSchema' in tool && tool.inputJSONSchema
         ? tool.inputJSONSchema
         : zodToJsonSchema(tool.inputSchema)
-    ) as Anthropic.Tool.InputSchema
+    ) as Record<string, unknown>
 
     // Filter out swarm-related fields when swarms are not enabled
     // This ensures external non-EAP users don't see swarm features in the schema
@@ -212,8 +208,8 @@ export async function toolToAPISchema(
   // Per-request overlay: defer_loading and cache_control vary by call
   // (tool search defers different tools per turn; cache markers move).
   // Explicit field copy avoids mutating the cached base and sidesteps
-  // BetaTool.cache_control's `| null` clashing with our narrower type.
-  const schema: BetaToolWithExtras = {
+  // ToolDefinition.cache_control's `| null` clashing with our narrower type.
+  const schema: ToolDefinitionWithExtras = {
     name: base.name,
     description: base.description,
     input_schema: base.input_schema,
@@ -260,10 +256,10 @@ export async function toolToAPISchema(
     }
   }
 
-  // Note: We cast to BetaTool but the extra fields are still present at runtime
-  // and will be serialized in the API request, even though they're not in the SDK's
-  // BetaTool type definition. This is intentional for beta features.
-  return schema as BetaTool
+  // Note: We cast to ToolDefinition but the extra fields are still present at runtime
+  // and will be serialized in the API request, even though they're not in the standard
+  // ToolDefinition type definition. This is intentional for beta features.
+  return schema as ToolDefinition
 }
 
 let loggedStrip = false

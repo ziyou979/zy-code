@@ -4,11 +4,10 @@ import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider, isOpenAIProvider } from './providers.js'
 import { sideQuery } from '../sideQuery.js'
 import {
-  NotFoundError,
-  APIError,
-  APIConnectionError,
-  AuthenticationError,
-} from '@anthropic-ai/sdk'
+  isAPIError,
+  isConnectionError,
+  getErrorStatus,
+} from '../../types/llm.js'
 import { getModelStrings } from './modelStrings.js'
 
 // Cache valid models to avoid repeated API calls
@@ -87,7 +86,7 @@ function handleValidationError(
   modelName: string,
 ): { valid: boolean; error: string } {
   // NotFoundError (404) means the model doesn't exist
-  if (error instanceof NotFoundError) {
+  if (isAPIError(error) && getErrorStatus(error) === 404) {
     const fallback = get3PFallbackSuggestion(modelName)
     const suggestion = fallback ? `. Try '${fallback}' instead` : ''
     return {
@@ -97,15 +96,15 @@ function handleValidationError(
   }
 
   // For other API errors, provide context-specific messages
-  if (error instanceof APIError) {
-    if (error instanceof AuthenticationError) {
+  if (isAPIError(error)) {
+    if (isAPIError(error) && getErrorStatus(error) === 401) {
       return {
         valid: false,
         error: 'Authentication failed. Please check your API credentials.',
       }
     }
 
-    if (error instanceof APIConnectionError) {
+    if (isConnectionError(error)) {
       return {
         valid: false,
         error: 'Network error. Please check your internet connection.',
@@ -113,7 +112,7 @@ function handleValidationError(
     }
 
     // Check error body for model-specific errors
-    const errorBody = error.error as unknown
+    const errorBody = (error as any).error as unknown
     if (
       errorBody &&
       typeof errorBody === 'object' &&

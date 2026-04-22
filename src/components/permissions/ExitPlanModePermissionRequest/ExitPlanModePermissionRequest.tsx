@@ -209,7 +209,7 @@ export function ExitPlanModePermissionRequest({
   const [currentPlan, setCurrentPlan] = useState(() => {
     if (inputPlan) return inputPlan;
     const plan = getPlan();
-    return plan ?? 'No plan found. Please write your plan to the plan file first.';
+    return plan ?? tSync('planMode.noPlanFound');
   });
   const [showSaveMessage, setShowSaveMessage] = useState(false);
   // Track Ctrl+G local edits so updatedInput can include the plan (the tool
@@ -288,7 +288,7 @@ export function ExitPlanModePermissionRequest({
       });
       onDone();
       onReject();
-      toolUseConfirm.onReject('Plan being refined via Ultraplan — please wait for the result.');
+      toolUseConfirm.onReject(tSync('planMode.ultraplanRefining'));
       void launchUltraplan({
         blurb: '',
         seedPlan: currentPlan,
@@ -534,19 +534,19 @@ export function ExitPlanModePermissionRequest({
   useLayoutEffect(() => {
     if (!useStickyFooter) return;
     setStickyFooter(<Box flexDirection="column" borderStyle="round" borderColor="planMode" borderLeft={false} borderRight={false} borderBottom={false} paddingX={1}>
-        <Text dimColor>Would you like to proceed?</Text>
+        <Text dimColor>{tSync('planMode.wouldYouProceed')}</Text>
         <Box marginTop={1}>
           <Select options={options} onChange={v => void handleResponseRef.current(v)} onCancel={() => handleCancelRef.current?.()} onImagePaste={onImagePaste} pastedContents={pastedContents} onRemoveImage={onRemoveImage} />
         </Box>
         {editorName && <Box flexDirection="row" gap={1} marginTop={1}>
-            <Text dimColor>ctrl-g to edit in </Text>
+            <Text dimColor>{tSync('planMode.ctrlGEditIn')} </Text>
             <Text bold dimColor>
               {editorName}
             </Text>
             {isV2 && planFilePath && <Text dimColor> · {getDisplayPath(planFilePath)}</Text>}
             {showSaveMessage && <>
                 <Text dimColor>{' · '}</Text>
-                <Text color="success">{figures.tick}Plan saved!</Text>
+                <Text color="success">{figures.tick}{tSync('planMode.planSaved')}</Text>
               </>}
           </Box>}
       </Box>);
@@ -599,9 +599,9 @@ export function ExitPlanModePermissionRequest({
         toolUseConfirm.onReject();
       }
     }
-    return <PermissionDialog color="planMode" title="Exit plan mode?" workerBadge={workerBadge}>
+    return <PermissionDialog color="planMode" title={tSync('planMode.exitPlanMode')} workerBadge={workerBadge}>
         <Box flexDirection="column" paddingX={1} marginTop={1}>
-          <Text>Zy wants to exit plan mode</Text>
+          <Text>{tSync('planMode.wantsExit')}</Text>
           <Box marginTop={1}>
             <Select options={[{
             label: tSync('permission.yes'),
@@ -625,10 +625,10 @@ export function ExitPlanModePermissionRequest({
       </PermissionDialog>;
   }
   return <Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
-      <PermissionDialog color="planMode" title="Ready to code?" innerPaddingX={0} workerBadge={workerBadge}>
+      <PermissionDialog color="planMode" title={tSync('planMode.readyToCode')} innerPaddingX={0} workerBadge={workerBadge}>
         <Box flexDirection="column" marginTop={1}>
           <Box paddingX={1} flexDirection="column">
-            <Text>Here is Zy&apos;s plan:</Text>
+            <Text>{tSync('planMode.hereIsPlan')}</Text>
           </Box>
           <Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false} paddingX={1} marginBottom={1}
         // Necessary for Windows Terminal to render properly
@@ -638,15 +638,14 @@ export function ExitPlanModePermissionRequest({
           <Box flexDirection="column" paddingX={1}>
             <PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />
             {isClassifierPermissionsEnabled() && allowedPrompts && allowedPrompts.length > 0 && <Box flexDirection="column" marginBottom={1}>
-                  <Text bold>Requested permissions:</Text>
+                  <Text bold>{tSync('planMode.requestedPermissions')}</Text>
                   {allowedPrompts.map((p, i) => <Text key={i} dimColor>
                       {'  '}· {p.tool}({PROMPT_PREFIX} {p.prompt})
                     </Text>)}
                 </Box>}
             {!useStickyFooter && <>
                 <Text dimColor>
-                  Zy has written up a plan and is ready to execute. Would
-                  you like to proceed?
+                  {tSync('planMode.planWrittenReady')}
                 </Text>
                 <Box marginTop={1}>
                   <Select options={options} onChange={handleResponse} onCancel={() => handleCancelRef.current?.()} onImagePaste={onImagePaste} pastedContents={pastedContents} onRemoveImage={onRemoveImage} />
@@ -657,7 +656,7 @@ export function ExitPlanModePermissionRequest({
       </PermissionDialog>
       {!useStickyFooter && editorName && <Box flexDirection="row" gap={1} paddingX={1} marginTop={1}>
           <Box>
-            <Text dimColor>ctrl-g to edit in </Text>
+            <Text dimColor>{tSync('planMode.ctrlGEditIn')} </Text>
             <Text bold dimColor>
               {editorName}
             </Text>
@@ -665,7 +664,7 @@ export function ExitPlanModePermissionRequest({
           </Box>
           {showSaveMessage && <Box>
               <Text dimColor>{' · '}</Text>
-              <Text color="success">{figures.tick}Plan saved!</Text>
+              <Text color="success">{figures.tick}{tSync('planMode.planSaved')}</Text>
             </Box>}
         </Box>}
     </Box>;
@@ -688,21 +687,21 @@ export function buildPlanApprovalOptions({
   onFeedbackChange: (v: string) => void;
 }): OptionWithDescription<ResponseValue>[] {
   const options: OptionWithDescription<ResponseValue>[] = [];
-  const usedLabel = usedPercent !== null ? ` (${usedPercent}% used)` : '';
+  const usedLabel = usedPercent !== null ? ` (${usedPercent}% ${tSync('planMode.usedLabel')})` : '';
   if (showClearContext) {
     if (feature('TRANSCRIPT_CLASSIFIER') && isAutoModeAvailable) {
       options.push({
-        label: `Yes, clear context${usedLabel} and use auto mode`,
+        label: tSync('planMode.yesClearContext', { usedLabel }),
         value: 'yes-auto-clear-context'
       });
     } else if (isBypassPermissionsModeAvailable) {
       options.push({
-        label: `Yes, clear context${usedLabel} and bypass permissions`,
+        label: tSync('planMode.yesClearContextBypass', { usedLabel }),
         value: 'yes-bypass-permissions'
       });
     } else {
       options.push({
-        label: `Yes, clear context${usedLabel} and auto-accept edits`,
+        label: tSync('planMode.yesClearContextEdits', { usedLabel }),
         value: 'yes-accept-edits'
       });
     }
@@ -711,36 +710,36 @@ export function buildPlanApprovalOptions({
   // Slot 2: keep-context with elevated mode (same priority: auto > bypass > edits).
   if (feature('TRANSCRIPT_CLASSIFIER') && isAutoModeAvailable) {
     options.push({
-      label: 'Yes, and use auto mode',
+      label: tSync('planMode.yesAutoMode'),
       value: 'yes-resume-auto-mode'
     });
   } else if (isBypassPermissionsModeAvailable) {
     options.push({
-      label: 'Yes, and bypass permissions',
+      label: tSync('planMode.yesBypassPermissions'),
       value: 'yes-accept-edits-keep-context'
     });
   } else {
     options.push({
-      label: 'Yes, auto-accept edits',
+      label: tSync('planMode.yesAutoAcceptEdits'),
       value: 'yes-accept-edits-keep-context'
     });
   }
   options.push({
-    label: 'Yes, manually approve edits',
+    label: tSync('planMode.yesManuallyApprove'),
     value: 'yes-default-keep-context'
   });
   if (showUltraplan) {
     options.push({
-      label: 'No, refine with Ultraplan on ZY Code on the web',
+      label: tSync('planMode.noUltraplan'),
       value: 'ultraplan'
     });
   }
   options.push({
     type: 'input',
-    label: 'No, keep planning',
+    label: tSync('planMode.noKeepPlanning'),
     value: 'no',
-    placeholder: 'Tell Zy what to change',
-    description: 'shift+tab to approve with this feedback',
+    placeholder: tSync('planMode.tellZyWhatToChange'),
+    description: tSync('planMode.shiftTabApprove'),
     onChange: onFeedbackChange
   });
   return options;

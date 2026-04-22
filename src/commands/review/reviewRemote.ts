@@ -9,7 +9,7 @@
  * pushed branches on repos with the Zy GitHub app installed.
  */
 
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.js'
+import type { ContentBlockParam } from '../../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

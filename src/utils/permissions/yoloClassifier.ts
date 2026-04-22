@@ -1,6 +1,11 @@
 import { feature } from 'bun:bundle'
-import type Anthropic from '@anthropic-ai/sdk'
-import type { BetaToolUnion } from '@anthropic-ai/sdk/resources/beta/messages.js'
+import type {
+  ToolDefinition,
+  LLMMessage,
+  LLMMessageParam,
+  TextBlockParam,
+  ImageBlockParam,
+} from '../../types/llm.js'
 import { mkdir, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { z } from 'zod/v4'
@@ -258,8 +263,7 @@ const yoloClassifierResponseSchema = lazySchema(() =>
 
 export const YOLO_CLASSIFIER_TOOL_NAME = 'classify_result'
 
-const YOLO_CLASSIFIER_TOOL_SCHEMA: BetaToolUnion = {
-  type: 'custom',
+const YOLO_CLASSIFIER_TOOL_SCHEMA: ToolDefinition = {
   name: YOLO_CLASSIFIER_TOOL_NAME,
   description: 'Report the security classification result for the agent action',
   input_schema: {
@@ -455,7 +459,7 @@ export function buildTranscriptForClassifier(
  * 如果缓存未填充（测试，或从未调用 getUserContext 的入口点），
  * 分类器在没有 CLAUDE.md 的情况下继续 — 与 PR 前的行为相同。
  */
-function buildzyMdMessage(): Anthropic.MessageParam | null {
+function buildzyMdMessage(): LLMMessageParam | null {
   const zyMd = getCachedZyMdContent()
   if (zyMd === null) return null
   return {
@@ -605,7 +609,7 @@ function parseXmlThinking(text: string): string | null {
  * 从 API 响应中提取使用统计。
  */
 function extractUsage(
-  result: Anthropic.Beta.Messages.BetaMessage,
+  result: LLMMessage,
 ): ClassifierUsage {
   return {
     inputTokens: result.usage.input_tokens,
@@ -620,7 +624,7 @@ function extractUsage(
  * 不可枚举 `_request_id` 属性中的 API request_id（req_xxx）。
  */
 function extractRequestId(
-  result: Anthropic.Beta.Messages.BetaMessage,
+  result: LLMMessage,
 ): string | undefined {
   return (result as { _request_id?: string | null })._request_id ?? undefined
 }
@@ -706,11 +710,11 @@ function getClassifierThinkingConfig(
  * 跨调用的 prompt 缓存（1h TTL）。
  */
 async function classifyYoloActionXml(
-  prefixMessages: Anthropic.MessageParam[],
+  prefixMessages: LLMMessageParam[],
   systemPrompt: string,
   userPrompt: string,
   userContentBlocks: Array<
-    Anthropic.TextBlockParam | Anthropic.ImageBlockParam
+    TextBlockParam | ImageBlockParam
   >,
   model: string,
   promptLengths: {
@@ -736,7 +740,7 @@ async function classifyYoloActionXml(
         ? 'xml_fast'
         : 'xml_thinking'
   const xmlSystemPrompt = replaceOutputFormatWithXml(systemPrompt)
-  const systemBlocks: Anthropic.TextBlockParam[] = [
+  const systemBlocks: TextBlockParam[] = [
     {
       type: 'text' as const,
       text: xmlSystemPrompt,
@@ -755,7 +759,7 @@ async function classifyYoloActionXml(
   // 用 <transcript> 标签包装所有内容（transcript + 操作）。
   // 操作是 transcript 中的最终 tool_use 块。
   const wrappedContent: Array<
-    Anthropic.TextBlockParam | Anthropic.ImageBlockParam
+    TextBlockParam | ImageBlockParam
   > = [
     { type: 'text' as const, text: '<transcript>\n' },
     ...userContentBlocks,
@@ -1028,13 +1032,13 @@ export async function classifyYoloAction(
   const systemPrompt = await buildYoloSystemPrompt(context)
   const transcriptEntries = buildTranscriptEntries(messages)
   const zyMdMessage = buildzyMdMessage()
-  const prefixMessages: Anthropic.MessageParam[] = zyMdMessage
+  const prefixMessages: LLMMessageParam[] = zyMdMessage
     ? [zyMdMessage]
     : []
 
   let toolCallsLength = actionCompact.length
   let userPromptsLength = 0
-  const userContentBlocks: Anthropic.TextBlockParam[] = []
+  const userContentBlocks: TextBlockParam[] = []
   for (const entry of transcriptEntries) {
     for (const block of entry.content) {
       const serialized = toCompactBlock(block, entry.role, lookup)
@@ -1188,7 +1192,7 @@ export async function classifyYoloAction(
 
     // 使用共享工具提取结果
     const toolUseBlock = extractToolUseBlock(
-      result.content,
+      result.content as any,
       YOLO_CLASSIFIER_TOOL_NAME,
     )
 

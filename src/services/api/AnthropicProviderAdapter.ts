@@ -5,14 +5,7 @@
  * 调用方只使用 StandardMessageFormat 中的类型。
  */
 import Anthropic from '@anthropic-ai/sdk'
-import type {
-  BetaMessage,
-  BetaMessageParam as MessageParam,
-  BetaRawMessageStreamEvent,
-  BetaToolUnion,
-  BetaContentBlock,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import type { Stream } from '@anthropic-ai/sdk/streaming.mjs'
+import type { ContentBlock, ToolDefinition } from '../../types/llm.js'
 import type {
   StandardMessage,
   StandardMessageRequest,
@@ -32,13 +25,13 @@ import { getAPIProvider } from '../../utils/model/providers.js'
 
 function standardMessagesToAnthropic(
   messages: StandardMessage[],
-): MessageParam[] {
+): any[] {
   return messages
     .filter((m): m is Extract<StandardMessage, { role: 'user' | 'assistant' }> => m.role !== 'system')
     .map((msg) => ({
       role: msg.role,
       content: standardContentToAnthropic(msg.content),
-    })) as unknown as MessageParam[]
+    })) as any[]
 }
 
 function standardContentToAnthropic(
@@ -88,14 +81,13 @@ function standardBlockToAnthropic(block: StandardContentBlock): Record<string, u
 
 function standardToolsToAnthropic(
   tools?: StandardToolDefinition[],
-): BetaToolUnion[] | undefined {
+): ToolDefinition[] | undefined {
   if (!tools?.length) return undefined
   return tools.map((t) => ({
-    type: 'function' as const,
     name: t.name,
     description: t.description,
     input_schema: t.inputSchema,
-  })) as unknown as BetaToolUnion[]
+  })) as unknown as ToolDefinition[]
 }
 
 // ============================================================================
@@ -103,19 +95,19 @@ function standardToolsToAnthropic(
 // ============================================================================
 
 function anthropicResponseToStandard(
-  response: BetaMessage,
+  response: any,
 ): StandardResponse {
   return {
     id: response.id,
     model: response.model,
     role: 'assistant',
-    content: response.content.map(anthropicBlockToStandard),
+    content: (response.content as unknown as ContentBlock[]).map(anthropicBlockToStandard),
     stopReason: anthropicStopReasonToStandard(response.stop_reason),
     usage: anthropicUsageToStandard(response.usage as unknown as Record<string, unknown>),
   }
 }
 
-function anthropicBlockToStandard(block: BetaContentBlock): StandardContentBlock {
+function anthropicBlockToStandard(block: ContentBlock): StandardContentBlock {
   if (block.type === 'text') {
     return { type: 'text', text: block.text }
   }
@@ -160,7 +152,7 @@ function anthropicUsageToStandard(usage: Record<string, unknown>): StandardUsage
 }
 
 function anthropicStreamEventToStandard(
-  event: BetaRawMessageStreamEvent,
+  event: any,
 ): StandardStreamEvent | null {
   switch (event.type) {
     case 'message_start':
@@ -292,7 +284,7 @@ export class AnthropicProviderAdapter {
       params.top_p = request.topP
     }
 
-    const response = await createFn(params) as BetaMessage
+    const response = await createFn(params) as any
     return anthropicResponseToStandard(response)
   }
 
@@ -324,7 +316,7 @@ export class AnthropicProviderAdapter {
       params.tool_choice = request.toolChoice
     }
 
-    const stream = await createFn(params) as AsyncIterable<BetaRawMessageStreamEvent>
+    const stream = await createFn(params) as AsyncIterable<any>
 
     for await (const event of stream) {
       const standardEvent = anthropicStreamEventToStandard(event)

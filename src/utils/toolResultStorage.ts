@@ -2,7 +2,7 @@
  * 将大型工具结果持久化到磁盘而非截断的工具。
  */
 
-import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+import type { ToolResultBlockParam } from '../types/llm.js'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'

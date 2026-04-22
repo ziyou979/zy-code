@@ -3,7 +3,7 @@
  * This isolates mock logic from production code
  */
 
-import { APIError } from '@anthropic-ai/sdk'
+import { LLMError } from '../types/llm.js'
 import {
   applyMockHeaders,
   getMockHeaderless429Message,
@@ -45,20 +45,16 @@ export function shouldProcessRateLimits(isSubscriber: boolean): boolean {
  */
 export function checkMockRateLimitError(
   currentModel: string,
-): APIError | null {
+): LLMError | null {
   if (!shouldProcessMockLimits()) {
     return null
   }
 
   const headerlessMessage = getMockHeaderless429Message()
   if (headerlessMessage) {
-    return new APIError(
-      429,
-      { error: { type: 'rate_limit_error', message: headerlessMessage } },
+    return new LLMError(
       headerlessMessage,
-      // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      // @ts-ignore
-      new globalThis.Headers(),
+      429,
     )
   }
 
@@ -95,18 +91,9 @@ export function checkMockRateLimitError(
 
   if (shouldThrow429) {
     // Create a mock 429 error with the appropriate headers
-    const error = new APIError(
-      429,
-      { error: { type: 'rate_limit_error', message: 'Rate limit exceeded' } },
+    const error = new LLMError(
       'Rate limit exceeded',
-      // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      // @ts-ignore
-      new globalThis.Headers(
-        Object.entries(mockHeaders).filter(([_, v]) => v !== undefined) as [
-          string,
-          string,
-        ][],
-      ),
+      429,
     )
     return error
   }
@@ -117,7 +104,7 @@ export function checkMockRateLimitError(
 /**
  * Check if this is a mock 429 error that shouldn't be retried
  */
-export function isMockRateLimitError(error: APIError): boolean {
+export function isMockRateLimitError(error: LLMError): boolean {
   return shouldProcessMockLimits() && error.status === 429
 }
 

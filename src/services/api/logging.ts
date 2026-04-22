@@ -1,9 +1,5 @@
 import { feature } from 'bun:bundle'
-import { APIError } from '@anthropic-ai/sdk'
-// @ts-ignore
-import type {
-  BetaUsage as Usage,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import {
   addToTotalDurationState,
   consumePostCompaction,
@@ -46,9 +42,8 @@ export { EMPTY_USAGE }
 export type GlobalCacheStrategy = 'tool_based' | 'system_prompt' | 'none'
 
 function getErrorMessage(error: unknown): string {
-  if (error instanceof APIError) {
-    const body = error.error as { error?: { message?: string } } | undefined
-    if (body?.error?.message) return body.error.message
+  if (isAPIError(error)) {
+    return error.message
   }
   return error instanceof Error ? error.message : String(error)
 }
@@ -273,13 +268,12 @@ export function logAPIError({
   previousRequestId?: string | null
 }): void {
   const gateway = detectGateway({
-    headers:
-      error instanceof APIError && error.headers ? error.headers : headers,
+    headers: headers,
     baseUrl: process.env.ANTHROPIC_BASE_URL,
   })
 
   const errStr = getErrorMessage(error)
-  const status = error instanceof APIError ? String(error.status) : undefined
+  const status = isAPIError(error) ? String(error.status) : undefined
   const errorType = classifyAPIError(error)
 
   // Log detailed connection error info to debug logs (visible via --debug)

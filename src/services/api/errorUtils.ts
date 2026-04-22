@@ -1,4 +1,4 @@
-import type { APIError } from '@anthropic-ai/sdk'
+import type { APIErrorLike } from '../../types/llm.js'
 
 // SSL/TLS error codes from OpenSSL (used by both Node.js and Bun)
 // See: https://www.openssl.org/docs/man3.1/man3/X509_STORE_CTX_get_error.html
@@ -119,7 +119,7 @@ function sanitizeMessageHTML(message: string): string {
  * Detects if an error message contains HTML content (e.g., CloudFlare error pages)
  * and returns a user-friendly message instead
  */
-export function sanitizeAPIError(apiError: APIError): string {
+export function sanitizeAPIError(apiError: APIErrorLike): string {
   const message = apiError.message
   if (!message) {
     // Sometimes message is undefined
@@ -166,7 +166,7 @@ function hasNestedError(value: unknown): value is NestedAPIError {
  * 1. `error.error.error.message` — standard Anthropic API shape
  * 2. `error.error.message` — Bedrock shape
  */
-function extractNestedErrorMessage(error: APIError): string | null {
+function extractNestedErrorMessage(error: APIErrorLike): string | null {
   if (!hasNestedError(error)) {
     return null
   }
@@ -197,7 +197,7 @@ function extractNestedErrorMessage(error: APIError): string | null {
   return null
 }
 
-export function formatAPIError(error: APIError): string {
+export function formatAPIError(error: APIErrorLike): string {
   // Extract connection error details from the cause chain
   const connectionDetails = extractConnectionErrorDetails(error)
 

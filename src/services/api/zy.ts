@@ -1,36 +1,42 @@
 // @ts-nocheck
 // @ts-ignore - Some types not exported in current SDK version
 import type {
-  BetaContentBlock,
-  BetaContentBlockParam,
-  BetaImageBlockParam,
-  BetaJSONOutputFormat,
-  BetaMessage,
-  BetaMessageDeltaUsage,
-  BetaMessageStreamParams,
-  BetaOutputConfig,
-  BetaRawMessageStreamEvent,
-  BetaRequestDocumentBlock,
-  BetaStopReason,
-  BetaToolChoiceAuto,
-  BetaToolChoiceTool,
-  BetaToolResultBlockParam,
-  BetaToolUnion,
-  BetaUsage,
-  BetaMessageParam as MessageParam,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
-import type { Stream } from '@anthropic-ai/sdk/streaming.mjs'
+  ContentBlock,
+  ContentBlockParam,
+  ImageBlockParam,
+  LLMMessage,
+  LLMStreamEvent,
+  TokenUsage,
+  DeltaUsage,
+  StopReason,
+  ToolResultBlockParam,
+  ToolDefinition,
+  LLMCreateParams,
+  ToolChoice,
+  ThinkingConfig as LLMThinkingConfig,
+  TextBlockParam,
+  LLMMessageParam,
+  DocumentBlockParam,
+} from '../../types/llm.js'
+import {
+  isAPIError,
+  isAbortError,
+  getErrorStatus,
+  getErrorMessage as getLLMErrorMessage,
+  isConnectionTimeoutError,
+} from '../../types/llm.js'
+
+// 以下类型仅用于 Anthropic SDK 请求构建，保留为局部类型
+type BetaOutputConfig = Record<string, unknown>
+type BetaJSONOutputFormat = { type: 'json_schema'; json_schema: unknown }
+
 import { randomUUID } from 'crypto'
 import {
   getAPIProvider,
   isAnthropicBaseUrl,
   isOpenAIProvider,
 } from 'src/utils/model/providers.js'
-import {
-  openAICreateMessageStream,
-  openAICreateMessage,
-} from './openaiQuery.js'
+import { getRequestAdapter } from './streamAdapter.js'
 import {
   getAttributionHeader,
   getCLISyspromptPrefix,
@@ -116,11 +122,8 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
 
 import { feature } from 'bun:bundle'
 import type { ClientOptions } from '@anthropic-ai/sdk'
-import {
-  APIConnectionTimeoutError,
-  APIError,
-  APIUserAbortError,
-} from '@anthropic-ai/sdk/error'
+// LLMConnectionError 用于流式超时回退时创建错误实例
+import { LLMConnectionError } from '../../types/llm.js'
 import {
   getAfkModeHeaderLatched,
   getCacheEditingHeaderLatched,
@@ -551,7 +554,7 @@ export async function verifyApiKey(
             source: 'verify_api_key',
           }),
         async anthropic => {
-          const messages: MessageParam[] = [{ role: 'user', content: 'test' }]
+          const messages: LLMMessageParam[] = [{ role: 'user', content: 'test' }]
 
           // biome-ignore lint/plugin: API key verification is intentionally a minimal direct call
           await anthropic.beta.messages.create({
@@ -592,7 +595,7 @@ export function userMessageToMessageParam(
   addCache = false,
   enablePromptCaching: boolean,
   querySource?: QuerySource,
-): MessageParam {
+): LLMMessageParam {
   if (addCache) {
     if (typeof message.message.content === 'string') {
       return {
@@ -637,7 +640,7 @@ export function assistantMessageToMessageParam(
   addCache = false,
   enablePromptCaching: boolean,
   querySource?: QuerySource,
-): MessageParam {
+): LLMMessageParam {
   if (addCache) {
     if (typeof message.message.content === 'string') {
       return {
@@ -678,9 +681,9 @@ export function assistantMessageToMessageParam(
 export type Options = {
   getToolPermissionContext: () => Promise<ToolPermissionContext>
   model: string
-  toolChoice?: BetaToolChoiceTool | BetaToolChoiceAuto | undefined
+  toolChoice?: ToolChoice | undefined
   isNonInteractiveSession: boolean
-  extraToolSchemas?: BetaToolUnion[]
+  extraToolSchemas?: ToolDefinition[]
   maxOutputTokensOverride?: number
   fallbackModel?: string
   onStreamingFallback?: () => void
@@ -740,10 +743,12 @@ export async function queryModelWithoutStreaming({
     }
   }
   if (!assistantMessage) {
-    // 如果信号被中止，抛出 APIUserAbortError 而非通用错误
+    // 如果信号被中止，抛出中止错误而非通用错误
     // 这允许调用方优雅地处理中止场景
     if (signal.aborted) {
-      throw new APIUserAbortError()
+      const abortErr = new Error('Request aborted')
+      abortErr.name = 'AbortError'
+      throw abortErr
     }
     throw new Error('No assistant message found')
   }
@@ -830,15 +835,15 @@ export async function* executeNonStreamingRequest(
     initialConsecutive529Errors?: number
     querySource?: QuerySource
   },
-  paramsFromContext: (context: RetryContext) => BetaMessageStreamParams,
+  paramsFromContext: (context: RetryContext) => any,
   onAttempt: (attempt: number, start: number, maxOutputTokens: number) => void,
-  captureRequest: (params: BetaMessageStreamParams) => void,
+  captureRequest: (params: any) => void,
   /**
    * 此回退正在恢复的失败流式尝试的请求 ID。
    * 在 tengu_nonstreaming_fallback_error 中发出，用于漏斗关联。
    */
   originatingRequestId?: string | null,
-): AsyncGenerator<SystemAPIErrorMessage, BetaMessage> {
+): AsyncGenerator<SystemAPIErrorMessage, LLMMessage> {
   const fallbackTimeoutMs = getNonstreamingFallbackTimeoutMs()
   const generator = withRetry(
     () =>
@@ -861,34 +866,16 @@ export async function* executeNonStreamingRequest(
 
       try {
         // biome-ignore lint/plugin: non-streaming API call
-        const apiProvider = getAPIProvider()
-
-        // OpenAI SDK 路径
-        if (isOpenAIProvider(apiProvider)) {
-          return await openAICreateMessage({
-            ...adjustedParams,
-            model: normalizeModelStringForAPI(adjustedParams.model),
-            betas: undefined,
-            thinking: undefined,
-            context_management: undefined,
-            signal: retryOptions.signal,
-          })
-        }
-
-        // Anthropic SDK 路径
-        return await anthropic.beta.messages.create(
-          {
-            ...adjustedParams,
-            model: normalizeModelStringForAPI(adjustedParams.model),
-          },
-          {
-            signal: retryOptions.signal,
-            timeout: fallbackTimeoutMs,
-          },
+        // 统一的非流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
+        const adapter = getRequestAdapter(anthropic)
+        return await adapter.createMessage(
+          adjustedParams,
+          retryOptions.signal,
+          fallbackTimeoutMs,
         )
       } catch (err) {
         // 用户中止不是错误 — 立即重新抛出，不记录日志
-        if (err instanceof APIUserAbortError) throw err
+        if (isAbortError(err)) throw err
 
         //  instrumentation：记录非流式请求出错（包括超时）的情况。
         // 让我们区分"回退卡在容器杀除之后"（无事件）
@@ -927,7 +914,7 @@ export async function* executeNonStreamingRequest(
     }
   } while (!e.done)
 
-  return e.value as BetaMessage
+  return e.value as LLMMessage
 }
 
 /**
@@ -952,14 +939,14 @@ function getPreviousRequestIdFromMessages(
 }
 
 function isMedia(
-  block: BetaContentBlockParam,
-): block is BetaImageBlockParam | BetaRequestDocumentBlock {
+  block: ContentBlockParam,
+): block is ImageBlockParam | DocumentBlockParam {
   return block.type === 'image' || block.type === 'document'
 }
 
 function isToolResult(
-  block: BetaContentBlockParam,
-): block is BetaToolResultBlockParam {
+  block: ContentBlockParam,
+): block is ToolResultBlockParam {
   return block.type === 'tool_result'
 }
 
@@ -1039,12 +1026,6 @@ async function* queryModel(
   StreamEvent | AssistantMessage | SystemAPIErrorMessage,
   void
 > {
-  // OpenAI provider: 路由到专用实现
-  if (isOpenAIProvider(getAPIProvider())) {
-    yield* queryModelOpenAI(messages, systemPrompt, thinkingConfig, tools, signal, options)
-    return
-  }
-
   // 首先检查廉价条件 — off-switch 的 await 会阻塞在 GrowthBook
   // 初始化上（~10ms）。对于非 Opus 模型（haiku、sonnet），这会完全跳过 await。
   // 订阅者根本不会走这条路径。
@@ -1408,7 +1389,7 @@ async function* queryModel(
       type: 'advisor_20260301',
       name: 'advisor',
       model: advisorModel,
-    } as unknown as BetaToolUnion)
+    } as unknown as ToolDefinition)
   }
   const allTools = [...toolSchemas, ...extraToolSchemas]
 
@@ -1507,7 +1488,7 @@ async function* queryModel(
   let start = Date.now()
   let attemptNumber = 0
   const attemptStartTimes: number[] = []
-  let stream: Stream<BetaRawMessageStreamEvent> | undefined = undefined
+  let stream: AsyncIterable<LLMStreamEvent> | undefined = undefined
   let streamRequestId: string | null | undefined = undefined
   let clientRequestId: string | undefined = undefined
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins -- Response is available in Node 18+ and is used by the SDK
@@ -1597,7 +1578,7 @@ async function* queryModel(
     const hasThinking =
       thinkingConfig.type !== 'disabled' &&
       !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
-    let thinking: BetaMessageStreamParams['thinking'] | undefined = undefined
+    let thinking: any | undefined = undefined
 
     // 重要：不要更改下面的自适应与预算 thinking 选择，
     // 除非通知模型发布 DRI 和研究团队。这是一个敏感的
@@ -1611,7 +1592,7 @@ async function* queryModel(
         // thinking without a budget.
         thinking = {
           type: 'adaptive',
-        } satisfies BetaMessageStreamParams['thinking']
+        } as any
       } else {
         // 对于不支持自适应 thinking 的模型，使用默认
         // thinking 预算，除非明确指定。
@@ -1626,7 +1607,7 @@ async function* queryModel(
         thinking = {
           budget_tokens: thinkingBudget,
           type: 'enabled',
-        } satisfies BetaMessageStreamParams['thinking']
+        } as any
       }
     }
 
@@ -1742,11 +1723,11 @@ async function* queryModel(
 
   const newMessages: AssistantMessage[] = []
   let ttftMs = 0
-  let partialMessage: BetaMessage | undefined = undefined
-  const contentBlocks: (BetaContentBlock | ConnectorTextBlock)[] = []
+  let partialMessage: LLMMessage | undefined = undefined
+  const contentBlocks: (ContentBlock | ConnectorTextBlock)[] = []
   let usage: NonNullableUsage = EMPTY_USAGE
   let costUSD = 0
-  let stopReason: BetaStopReason | null = null
+  let stopReason: StopReason | null = null
   let didFallBackToNonStreaming = false
   let fallbackMessage: AssistantMessage | undefined
   let maxOutputTokens = 0
@@ -1800,41 +1781,13 @@ async function* queryModel(
         // since we handle tool input accumulation ourselves
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
         
-        // OpenAI 专用路径
-        if (isOpenAIProvider(getAPIProvider())) {
-          const openAIParams = {
-            ...params,
-            stream: true,
-            betas: undefined,
-            thinking: undefined,
-            context_management: undefined,
-          }
-          // OpenAI 流式请求不需要 .withResponse()，直接返回可迭代对象
-          // 为了兼容下游处理，我们将其包装为与 Anthropic Stream 兼容的格式
-          const streamIterable = openAICreateMessageStream(openAIParams)
-          streamRequestId = randomUUID()
-          // 返回一个伪 Stream 对象，其 iterator 直接产出 Anthropic 格式事件
-          return (async function* () {
-            for await (const event of streamIterable) {
-              yield event
-            }
-          })() as any
-        }
-
-        // Anthropic SDK 路径
-        const result = await anthropic.beta.messages.create(
-          { ...params, stream: true },
-          {
-            signal,
-            ...(clientRequestId && {
-              headers: { [CLIENT_REQUEST_ID_HEADER]: clientRequestId },
-            }),
-          },
-        ).withResponse()
+        // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
+        const adapter = getRequestAdapter(anthropic)
+        const streamResult = await adapter.createStream(params, signal, clientRequestId)
         queryCheckpoint('query_response_headers_received')
-        streamRequestId = result.request_id
-        streamResponse = result.response
-        return result.data
+        streamRequestId = streamResult.requestId
+        streamResponse = streamResult.response
+        return streamResult.stream
       },
       {
         model: options.model,
@@ -1854,7 +1807,7 @@ async function* queryModel(
         yield e.value
       }
     } while (!e.done)
-    stream = e.value as Stream<BetaRawMessageStreamEvent>
+    stream = e.value as AsyncIterable<LLMStreamEvent>
 
     // reset state
     newMessages.length = 0
@@ -2193,7 +2146,7 @@ async function* queryModel(
               message: {
                 ...partialMessage,
                 content: normalizeContentFromAPI(
-                  [contentBlock] as BetaContentBlock[],
+                  [contentBlock] as ContentBlock[],
                   tools,
                   options.agentId,
                 ),
@@ -2431,7 +2384,7 @@ async function* queryModel(
         })
       }
 
-      if (streamingError instanceof APIUserAbortError) {
+      if (isAbortError(streamingError)) {
         // Check if the abort signal was triggered by the user (ESC key)
         // If the signal is aborted, it's a user-initiated abort
         // If not, it's likely a timeout from the SDK
@@ -2457,7 +2410,7 @@ async function* queryModel(
             { level: 'error' },
           )
           // Throw a more specific error for timeout
-          throw new APIConnectionTimeoutError({ message: 'Request timed out' })
+          throw new LLMConnectionError('Request timed out')
         }
       }
 
@@ -2611,7 +2564,7 @@ async function* queryModel(
     const is404StreamCreationError =
       !didFallBackToNonStreaming &&
       errorFromRetry instanceof CannotRetryError &&
-      errorFromRetry.originalError instanceof APIError &&
+      isAPIError(errorFromRetry.originalError) &&
       errorFromRetry.originalError.status === 404
 
     if (is404StreamCreationError) {
@@ -2619,7 +2572,7 @@ async function* queryModel(
       // and CannotRetryError means every retry failed — so grab the failed
       // request's ID from the error header instead.
       const failedRequestId =
-        (errorFromRetry.originalError as APIError).requestID ?? 'unknown'
+        (errorFromRetry.originalError as any).requestID ?? 'unknown'
       logForDebugging(
         'Streaming endpoint returned 404, falling back to non-streaming mode',
         { level: 'warn' },
@@ -2704,15 +2657,15 @@ async function* queryModel(
           errorModel = fallbackError.retryContext.model
         }
 
-        if (error instanceof APIError) {
+        if (isAPIError(error)) {
           extractQuotaStatusFromError(error)
         }
 
         const requestId =
           streamRequestId ||
-          (error instanceof APIError ? error.requestID : undefined) ||
-          (error instanceof APIError
-            ? (error.error as { request_id?: string })?.request_id
+          (isAPIError(error) ? (error as any).requestID : undefined) ||
+          (isAPIError(error)
+            ? ((error as any).error as { request_id?: string })?.request_id
             : undefined)
 
         logAPIError({
@@ -2732,7 +2685,7 @@ async function* queryModel(
           previousRequestId,
         })
 
-        if (error instanceof APIUserAbortError) {
+        if (isAbortError(error)) {
           releaseStreamResources()
           return
         }
@@ -2758,16 +2711,16 @@ async function* queryModel(
       }
 
       // 如果是限流错误，从错误头中提取配额状态
-      if (error instanceof APIError) {
+      if (isAPIError(error)) {
         extractQuotaStatusFromError(error)
       }
 
       // 从流、错误头或错误体中提取 requestId
       const requestId =
         streamRequestId ||
-        (error instanceof APIError ? error.requestID : undefined) ||
-        (error instanceof APIError
-          ? (error.error as { request_id?: string })?.request_id
+        (isAPIError(error) ? (error as any).requestID : undefined) ||
+        (isAPIError(error)
+          ? ((error as any).error as { request_id?: string })?.request_id
           : undefined)
 
       logAPIError({
@@ -2789,7 +2742,7 @@ async function* queryModel(
 
       // 用户中止不生成助手错误消息
       // 中断消息在 query.ts 中处理
-      if (error instanceof APIUserAbortError) {
+      if (isAbortError(error)) {
         releaseStreamResources()
         return
       }
@@ -2891,7 +2844,7 @@ async function* queryModel(
  * @internal 导出用于测试
  */
 export function cleanupStream(
-  stream: Stream<BetaRawMessageStreamEvent> | undefined,
+  stream: AsyncIterable<LLMStreamEvent> | undefined,
 ): void {
   if (!stream) {
     return
@@ -2918,7 +2871,7 @@ export function cleanupStream(
  */
 export function updateUsage(
   usage: Readonly<NonNullableUsage>,
-  partUsage: BetaMessageDeltaUsage | undefined,
+  partUsage: any | undefined,
 ): NonNullableUsage {
   if (!partUsage) {
     return { ...usage }
@@ -2949,12 +2902,12 @@ export function updateUsage(
     },
     service_tier: usage.service_tier,
     cache_creation: {
-      // SDK 类型 BetaMessageDeltaUsage 缺少 cache_creation，但实际存在！
+      // SDK 类型 DeltaUsage 缺少 cache_creation，但实际存在！
       ephemeral_1h_input_tokens:
-        (partUsage as BetaUsage).cache_creation?.ephemeral_1h_input_tokens ??
+        (partUsage as TokenUsage).cache_creation?.ephemeral_1h_input_tokens ??
         usage.cache_creation.ephemeral_1h_input_tokens,
       ephemeral_5m_input_tokens:
-        (partUsage as BetaUsage).cache_creation?.ephemeral_5m_input_tokens ??
+        (partUsage as TokenUsage).cache_creation?.ephemeral_5m_input_tokens ??
         usage.cache_creation.ephemeral_5m_input_tokens,
     },
     // cache_deleted_input_tokens：缓存编辑删除 KV 缓存内容时
@@ -3061,7 +3014,7 @@ export function addCacheBreakpoints(
   newCacheEdits?: CachedMCEditsBlock | null,
   pinnedEdits?: CachedMCPinnedEdits[],
   skipCacheWrite = false,
-): MessageParam[] {
+): LLMMessageParam[] {
   logEvent('tengu_api_cache_breakpoints', {
     totalMessageCount: messages.length,
     cachingEnabled: enablePromptCaching,
@@ -3357,7 +3310,7 @@ MAX_NON_STREAMING_TOKENS = 64_000
 export function adjustParamsForNonStreaming<
   T extends {
     max_tokens: number
-    thinking?: BetaMessageStreamParams['thinking']
+    thinking?: any
   },
 >(params: T, maxTokensCap: number): T {
   const cappedMaxTokens = Math.min(params.max_tokens, maxTokensCap)

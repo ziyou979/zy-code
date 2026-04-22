@@ -1,7 +1,6 @@
-// @ts-ignore
 import type {
-  BetaContentBlock,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+  ContentBlock,
+} from '../../types/llm.js'
 type BetaWebSearchTool20250305 = any
 import { getAPIProvider, providerHasCapability } from 'src/utils/model/providers.js'
 
@@ -86,7 +85,7 @@ function makeToolSchema(input: Input): BetaWebSearchTool20250305 {
 }
 
 function makeOutputFromSearchResponse(
-  result: BetaContentBlock[],
+  result: ContentBlock[],
   query: string,
   durationSeconds: number,
 ): Output {
@@ -289,7 +288,7 @@ export const WebSearchTool = buildTool({
       },
     })
 
-    const allContentBlocks: BetaContentBlock[] = []
+    const allContentBlocks: ContentBlock[] = []
     let currentToolUseId = null
     let currentToolUseJson = ''
     let progressCounter = 0

@@ -756,6 +756,7 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'resume': 'commands.resume',
   'session': 'commands.session',
   'skills': 'commands.skills',
+  'simplify': 'commands.simplify',
   'stats': 'commands.stats',
   'status': 'commands.status',
   'statusline': 'commands.statusline',
@@ -818,7 +819,7 @@ export function formatDescriptionWithSource(cmd: Command): string {
   }
 
   if (cmd.kind === 'workflow') {
-    return `${translatedDesc} (workflow)`
+    return `${translatedDesc} (${tSync('commands.source.workflow')})`
   }
 
   if (cmd.source === 'plugin') {
@@ -826,7 +827,7 @@ export function formatDescriptionWithSource(cmd: Command): string {
     if (pluginName) {
       return `(${pluginName}) ${translatedDesc}`
     }
-    return `${translatedDesc} (plugin)`
+    return `${translatedDesc} (${tSync('commands.source.plugin')})`
   }
 
   if (cmd.source === 'builtin' || cmd.source === 'mcp') {
@@ -834,7 +835,7 @@ export function formatDescriptionWithSource(cmd: Command): string {
   }
 
   if (cmd.source === 'bundled') {
-    return `${translatedDesc} (bundled)`
+    return `${translatedDesc} (${tSync('commands.source.bundled')})`
   }
 
   return `${translatedDesc} (${getSettingSourceName(cmd.source)})`

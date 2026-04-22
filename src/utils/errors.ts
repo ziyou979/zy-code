@@ -1,4 +1,4 @@
-import { APIUserAbortError } from '@anthropic-ai/sdk'
+import { isAbortError as isLlmAbortError } from '../types/llm.js'
 
 export class ZyError extends Error {
   constructor(message: string) {
@@ -27,7 +27,7 @@ export class AbortError extends Error {
 export function isAbortError(e: unknown): boolean {
   return (
     e instanceof AbortError ||
-    e instanceof APIUserAbortError ||
+    isLlmAbortError(e) ||
     (e instanceof Error && e.name === 'AbortError')
   )
 }

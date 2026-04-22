@@ -476,7 +476,7 @@ export const en: TranslationResource = {
   'onboarding.apiFormatDescription': 'Choose the request format for your custom API endpoint.',
   'onboarding.apiFormat.anthropic': 'Anthropic format',
   'onboarding.apiFormat.anthropicDesc': 'Uses Anthropic Messages API format (supports thinking, cache_control, etc.)',
-  'onboarding.apiFormat.openai': 'OpenAI compatible format',
+  'onboarding.apiFormat.openai': 'OpenAI format',
   'onboarding.apiFormat.openaiDesc': 'Uses OpenAI Chat Completions API format (for vLLM, LiteLLM, etc.)',
   'onboarding.platform.dashscope': 'Bailian DashScope',
   'onboarding.platform.dashscopeDesc': 'Alibaba Cloud Bailian Platform',
@@ -608,6 +608,29 @@ export const en: TranslationResource = {
   // Permission dialogs - mixed paths and commands
   'permission.allowAccessAndCommands': 'Yes, and allow access to {paths} and {commands} commands',
   'permission.allowPathsAccessAndCommands': 'Yes, and allow {paths} access and {commands} commands',
+
+  // Plan mode exit dialog
+  'planMode.readyToCode': 'Ready to code?',
+  'planMode.hereIsPlan': 'Here is Zy&apos;s plan:',
+  'planMode.planWrittenReady': 'Zy has written up a plan and is ready to execute. Would you like to proceed?',
+  'planMode.wouldYouProceed': 'Would you like to proceed?',
+  'planMode.exitPlanMode': 'Exit plan mode?',
+  'planMode.wantsExit': 'Zy wants to exit plan mode',
+  'planMode.requestedPermissions': 'Requested permissions:',
+  'planMode.ctrlGEditIn': 'ctrl-g to edit in',
+  'planMode.planSaved': 'Plan saved!',
+  'planMode.usedLabel': 'used',
+  'planMode.yesClearContext': 'Yes, clear context{usedLabel} and use auto mode',
+  'planMode.yesClearContextBypass': 'Yes, clear context{usedLabel} and bypass permissions',
+  'planMode.yesClearContextEdits': 'Yes, clear context{usedLabel} and auto-accept edits',
+  'planMode.yesAutoMode': 'Yes, and use auto mode',
+  'planMode.yesBypassPermissions': 'Yes, and bypass permissions',
+  'planMode.yesAutoAcceptEdits': 'Yes, auto-accept edits',
+  'planMode.yesManuallyApprove': 'Yes, manually approve edits',
+  'planMode.noUltraplan': 'No, refine with Ultraplan on ZY Code on the web',
+  'planMode.noKeepPlanning': 'No, keep planning',
+  'planMode.tellZyWhatToChange': 'Tell Zy what to change',
+  'planMode.shiftTabApprove': 'shift+tab to approve with this feedback',
 
   // Shortcut hints
   'shortcut.stopAgents': 'stop agents',
@@ -822,6 +845,7 @@ export const en: TranslationResource = {
   'commands.resume': 'Resume a previous conversation',
   'commands.session': 'Show remote session URL and QR code',
   'commands.skills': 'List available skills',
+  'commands.simplify': 'Review changed code for reuse, quality, and efficiency, then fix any issues found.',
   'commands.stats': 'Show your ZY Code usage statistics and activity',
   'commands.status': 'Show ZY Code status including version, model, account, API connectivity, and tool statuses',
   'commands.statusline': "Set up ZY Code's status line UI",
@@ -860,5 +884,10 @@ export const en: TranslationResource = {
   'commands.bridgeKick': 'Inject bridge failure states for debugging',
   'commands.heapdump': 'Dump the JS heap to ~/Desktop',
   'commands.remoteSetup': 'Configure remote environment setup',
+  'commands.source.bundled': 'bundled',
+  'commands.source.workflow': 'workflow',
+  'commands.source.plugin': 'plugin',
+  'planMode.noPlanFound': 'No plan found. Please write your plan to the plan file first.',
+  'planMode.ultraplanRefining': 'Plan being refined via Ultraplan — please wait for the result.',
 }
 

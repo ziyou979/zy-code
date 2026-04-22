@@ -7,7 +7,7 @@ const sessionTranscriptModule = feature('KAIROS')
   ? (require('../sessionTranscript/sessionTranscript.js') as typeof import('../sessionTranscript/sessionTranscript.js'))
   : null
 
-import { APIUserAbortError } from '@anthropic-ai/sdk'
+import { createAbortError } from '../../types/llm.js'
 import { markPostCompaction } from 'src/bootstrap/state.js'
 import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import type { QuerySource } from '../../constants/querySource.js'
@@ -1348,7 +1348,7 @@ async function streamCompactSummary({
           hasStartedStreaming,
         })
         await sleep(getRetryDelay(attempt), context.abortController.signal, {
-          abortError: () => new APIUserAbortError(),
+          abortError: () => createAbortError(),
         })
         continue
       }

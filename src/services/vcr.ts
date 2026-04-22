@@ -1,4 +1,4 @@
-import type { BetaContentBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { ContentBlock } from '../types/llm.js'
 import { createHash, randomUUID, type UUID } from 'crypto'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import isPlainObject from 'lodash-es/isPlainObject.js'
@@ -269,7 +269,7 @@ function mapAssistantMessage(
               return _ // Handle other block types unchanged
           }
         })
-        .filter(Boolean) as BetaContentBlock[],
+        .filter(Boolean) as ContentBlock[],
     },
     type: 'assistant',
   }

@@ -1,4 +1,4 @@
-import type { BetaTool } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { ToolDefinition } from '../types/llm.js'
 
 // Session-scoped cache of rendered tool schemas. Tool schemas render at server
 // position 2 (before system prompt), so any byte-level change busts the entire
@@ -10,7 +10,7 @@ import type { BetaTool } from '@anthropic-ai/sdk/resources/beta/messages/message
 // Lives in a leaf module so auth.ts can clear it without importing api.ts
 // (which would create a cycle via plans→settings→file→growthbook→config→
 // bridgeEnabled→auth).
-type CachedSchema = BetaTool & {
+export type CachedSchema = ToolDefinition & {
   strict?: boolean
   eager_input_streaming?: boolean
 }

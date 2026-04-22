@@ -32,7 +32,7 @@ import { type QueuedCommand, getImagePasteIds, isValidImagePaste } from 'src/typ
 import { randomUUID, type UUID } from 'crypto';
 import { getSettings_DEPRECATED } from './settings/settings.js';
 import { getSnippetForTwoFileDiff } from 'src/tools/FileEditTool/utils.js';
-import type { ContentBlockParam, ImageBlockParam, Base64ImageSource } from '@anthropic-ai/sdk/resources/messages.mjs';
+import type { ContentBlockParam, ImageBlockParam, Base64ImageSource } from '../types/llm.js';
 import { maybeResizeAndDownsampleImageBlock } from './imageResizer.js';
 import type { PastedContent } from './config.js';
 import type { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';

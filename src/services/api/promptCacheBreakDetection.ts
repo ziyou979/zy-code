@@ -1,5 +1,4 @@
-import type { BetaToolUnion } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+import type { ToolDefinition, TextBlockParam } from '../../types/llm.js'
 import { createPatch } from 'diff'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -203,7 +202,7 @@ function getSystemCharCount(system: TextBlockParam[]): number {
 
 function buildDiffableContent(
   system: TextBlockParam[],
-  tools: BetaToolUnion[],
+  tools: ToolDefinition[],
   model: string,
 ): string {
   const systemText = system.map(b => b.text).join('\n\n')
@@ -224,7 +223,7 @@ function buildDiffableContent(
  *  the call site can add incrementally; undefined fields compare as stable. */
 export type PromptStateSnapshot = {
   system: TextBlockParam[]
-  toolSchemas: BetaToolUnion[]
+  toolSchemas: ToolDefinition[]
   querySource: QuerySource
   model: string
   agentId?: AgentId

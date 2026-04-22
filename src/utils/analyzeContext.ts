@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { Anthropic } from '@anthropic-ai/sdk'
+import type { LLMMessageParam, ToolDefinition } from '../types/llm.js'
 import {
   getSystemPrompt,
   SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
@@ -76,8 +76,8 @@ const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'
 export const TOOL_TOKEN_COUNT_OVERHEAD = 500
 
 async function countTokensWithFallback(
-  messages: Anthropic.Beta.Messages.BetaMessageParam[],
-  tools: Anthropic.Beta.Messages.BetaToolUnion[],
+  messages: LLMMessageParam[],
+  tools: ToolDefinition[],
 ): Promise<number | null> {
   try {
     const result = await countMessagesTokensWithAPI(messages, tools)
@@ -248,7 +248,7 @@ export async function countToolDefinitionTokens(
       }),
     ),
   )
-  const result = await countTokensWithFallback([], toolSchemas)
+  const result = await countTokensWithFallback([], toolSchemas as any)
   if (result === null || result === 0) {
     const toolNames = tools.map(t => t.name).join(', ')
     logForDebugging(
@@ -910,8 +910,8 @@ async function approximateMessageTokens(
         }
       }
       return _.message
-    }),
-    [],
+    }) as any,
+    [] as any,
   )
 
   breakdown.totalTokens = approximateMessageTokens ?? 0
