@@ -889,5 +889,24 @@ export const en: TranslationResource = {
   'commands.source.plugin': 'plugin',
   'planMode.noPlanFound': 'No plan found. Please write your plan to the plan file first.',
   'planMode.ultraplanRefining': 'Plan being refined via Ultraplan — please wait for the result.',
+
+  // File edit tool message
+  'fileEdit.addedLine': 'Added {count} line',
+  'fileEdit.addedLines': 'Added {count} lines',
+  'fileEdit.removedLine': 'Removed {count} line',
+  'fileEdit.removedLines': 'removed {count} lines',
+  'fileEdit.removedLineOnly': 'Removed {count} line',
+  'fileEdit.removedLinesOnly': 'Removed {count} lines',
+
+  // Cost tracker summary
+  'costTracker.totalCost': 'Total cost',
+  'costTracker.totalDurationApi': 'Total duration (API)',
+  'costTracker.totalDurationWall': 'Total duration (wall)',
+  'costTracker.totalCodeChanges': 'Total code changes',
+  'costTracker.lineAdded': '{count} line added',
+  'costTracker.linesAdded': '{count} lines added',
+  'costTracker.lineRemoved': '{count} line removed',
+  'costTracker.linesRemoved': '{count} lines removed',
+  'costTracker.costsMayBeInaccurate': '(costs may be inaccurate due to usage of unknown models)',
 }
 

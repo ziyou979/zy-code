@@ -121,7 +121,7 @@ function convertAnthropicDelta(delta: any): ContentDelta {
     case 'text_delta':
       return { type: 'text_delta', text: delta.text }
     case 'input_json_delta':
-      return { type: 'input_json_delta', partial_json: delta.partial_json }
+      return { type: 'tool_input_delta', partial_json: delta.partial_json }
     case 'thinking_delta':
       return { type: 'thinking_delta', thinking: delta.thinking }
     case 'signature_delta':
@@ -529,7 +529,7 @@ async function* mapOpenAIStreamToStandard(
               type: 'content_block_delta',
               index: anthropicIdx,
               delta: {
-                type: 'input_json_delta',
+                type: 'tool_input_delta',
                 partial_json: tc.function.arguments,
               },
             }

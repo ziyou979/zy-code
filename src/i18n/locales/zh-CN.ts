@@ -1007,4 +1007,23 @@ export const zhCN: TranslationResource = {
   'commands.source.plugin': '插件',
   'planMode.noPlanFound': '未找到计划。请先将计划写入计划文件。',
   'planMode.ultraplanRefining': '正在通过 Ultraplan 细化计划，请稍候。',
+
+  // 文件编辑工具消息
+  'fileEdit.addedLine': '新增 {count} 行',
+  'fileEdit.addedLines': '新增 {count} 行',
+  'fileEdit.removedLine': '删除 {count} 行',
+  'fileEdit.removedLines': '删除 {count} 行',
+  'fileEdit.removedLineOnly': '删除 {count} 行',
+  'fileEdit.removedLinesOnly': '删除 {count} 行',
+
+  // 费用追踪汇总
+  'costTracker.totalCost': '总费用',
+  'costTracker.totalDurationApi': '总耗时（API）',
+  'costTracker.totalDurationWall': '总耗时（实际）',
+  'costTracker.totalCodeChanges': '代码变更总计',
+  'costTracker.lineAdded': '{count} 行新增',
+  'costTracker.linesAdded': '{count} 行新增',
+  'costTracker.lineRemoved': '{count} 行删除',
+  'costTracker.linesRemoved': '{count} 行删除',
+  'costTracker.costsMayBeInaccurate': '(由于使用了未知模型，费用可能不准确)',
 }

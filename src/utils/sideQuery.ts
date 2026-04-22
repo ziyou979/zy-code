@@ -27,7 +27,7 @@ import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
 
 // BetaJSONOutputFormat can be inlined as a local type for structured output format
-type BetaJSONOutputFormat = { type: 'json_schema'; json_schema: unknown }
+type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
 
 export type SideQueryOptions = {
   /** Model to use for the query */

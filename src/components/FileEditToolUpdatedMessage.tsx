@@ -2,6 +2,7 @@
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { count } from '../utils/array.js';
 import { MessageResponse } from './MessageResponse.js';
@@ -29,7 +30,7 @@ export function FileEditToolUpdatedMessage({
   } = useTerminalSize();
   const numAdditions = structuredPatch.reduce((acc, hunk) => acc + count(hunk.lines, _ => (_ as any).startsWith("+")), 0);
   const numRemovals = structuredPatch.reduce((acc_0, hunk_0) => acc_0 + count(hunk_0.lines, __0 => (__0 as any).startsWith("-")), 0);
-  const text = <Text>{numAdditions > 0 ? <>Added <Text bold={true}>{numAdditions}</Text>{" "}{numAdditions > 1 ? "lines" : "line"}</> : null}{numAdditions > 0 && numRemovals > 0 ? ", " : null}{numRemovals > 0 ? <>{numAdditions === 0 ? "R" : "r"}emoved <Text bold={true}>{numRemovals}</Text>{" "}{numRemovals > 1 ? "lines" : "line"}</> : null}</Text>;
+  const text = <Text>{numAdditions > 0 ? <>{tSync(numAdditions > 1 ? 'fileEdit.addedLines' : 'fileEdit.addedLine', { count: numAdditions })}</> : null}{numAdditions > 0 && numRemovals > 0 ? ", " : null}{numRemovals > 0 ? <>{tSync(numAdditions === 0 ? (numRemovals > 1 ? 'fileEdit.removedLinesOnly' : 'fileEdit.removedLineOnly') : (numRemovals > 1 ? 'fileEdit.removedLines' : 'fileEdit.removedLine'), { count: numRemovals })}</> : null}</Text>;
   if (previewHint) {
     if (style !== "condensed" && !verbose) {
       return <MessageResponse><Text dimColor={true}>{previewHint}</Text></MessageResponse>;

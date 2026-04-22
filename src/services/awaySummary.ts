@@ -1,4 +1,4 @@
-import { createAbortError } from '../types/llm.js'
+import { createAbortError, isAbortError } from '../types/llm.js'
 import { getEmptyToolPermissionContext } from '../Tool.js'
 import type { Message } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
@@ -65,7 +65,7 @@ export async function generateAwaySummary(
     }
     return getAssistantMessageText(response)
   } catch (err) {
-    if (err instanceof APIUserAbortError || signal.aborted) {
+    if (isAbortError(err) || signal.aborted) {
       return null
     }
     logForDebugging(`[awaySummary] generation failed: ${err}`)

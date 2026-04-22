@@ -27,6 +27,7 @@ import {
   setCostStateForRestore,
   setHasUnknownModelCost,
 } from './bootstrap/state.js'
+import { tSync } from './i18n/index.js'
 import type { ModelUsage } from './entrypoints/agentSdkTypes.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -227,16 +228,19 @@ export function formatTotalCost(): string {
   const costDisplay =
     formatCost(getTotalCostUSD()) +
     (hasUnknownModelCost()
-      ? ' (costs may be inaccurate due to usage of unknown models)'
+      ? ' ' + tSync('costTracker.costsMayBeInaccurate')
       : '')
 
   const modelUsageDisplay = formatModelUsage()
 
+  const linesAdded = getTotalLinesAdded()
+  const linesRemoved = getTotalLinesRemoved()
+
   return chalk.dim(
-    `Total cost:            ${costDisplay}\n` +
-      `Total duration (API):  ${formatDuration(getTotalAPIDuration())}
-Total duration (wall): ${formatDuration(getTotalDuration())}
-Total code changes:    ${getTotalLinesAdded()} ${getTotalLinesAdded() === 1 ? 'line' : 'lines'} added, ${getTotalLinesRemoved()} ${getTotalLinesRemoved() === 1 ? 'line' : 'lines'} removed
+    `${tSync('costTracker.totalCost')}            ${costDisplay}\n` +
+      `${tSync('costTracker.totalDurationApi')}  ${formatDuration(getTotalAPIDuration())}
+${tSync('costTracker.totalDurationWall')} ${formatDuration(getTotalDuration())}
+${tSync('costTracker.totalCodeChanges')}    ${tSync(linesAdded === 1 ? 'costTracker.lineAdded' : 'costTracker.linesAdded', { count: linesAdded })}, ${tSync(linesRemoved === 1 ? 'costTracker.lineRemoved' : 'costTracker.linesRemoved', { count: linesRemoved })}
 ${modelUsageDisplay}`,
   )
 }

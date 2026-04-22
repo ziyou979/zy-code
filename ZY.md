@@ -1,113 +1,122 @@
 # ZY.md
 
-This file provides guidance to ZY Code when working with code in this repository.
+本文件为 ZY Code 在本仓库中工作时提供指导与规范约束。
+
+## 规范约束（Spec）
+
+以下规则在修改代码时**必须**严格遵守，违反将视为错误：
+
+### 1. 语言与注释
+- 代码注释一律使用**中文**
+- 以下内容**允许保持英文**：
+  - TypeScript/编译器指令：`@ts-ignore`、`@ts-expect-error`、`@ts-nocheck` 等
+  - 专有名词与技术术语：React、Ink、MCP、OAuth、GrowthBook、REPL 等
+  - 代码示例中的标识符、API 名称、配置项
+- 变量名、函数名、类名等标识符保持英文，不使用中文命名
+- 日志输出（`console.log`/`console.error`）面向开发者，使用中文
+- 用户可见的所有文本**禁止硬编码**，必须走 i18n（见下文）
+
+### 2. 国际化（i18n）
+- **禁止**在组件中直接硬编码中文字符串
+- **必须**通过 `tSync()`（同步场景）或 `t()`（异步场景）读取翻译
+- 翻译 key 需同时写入 `src/i18n/locales/en.ts`（英文原文）和 `src/i18n/locales/zh-CN.ts`（中文译文）
+- 翻译 key 命名按功能模块分组：`shellProgress.xxx`、`backgroundTasks.xxx`、`shortcut.xxx`
+- 使用描述性名称，禁止缩写
+- 支持插值语法：`'key': '已使用 {count} 行'`
+- `KeyboardShortcutHint` 的 `action` 属性必须在 `actionKeyMap` 中注册映射
+
+### 3. 构建验证
+- 更改代码后**必须**执行 `bun tsc --noEmit` 验证类型检查通过
+- 添加翻译后**必须**尝试构建，保证构建成功
+- 禁止提交无法通过 `bun tsc --noEmit` 的代码
+
+### 4. 工具目录结构
+- 每个工具目录**必须**遵循三文件模式：
+  - `ToolName.ts` / `ToolName.tsx` — 实现与工具定义
+  - `UI.tsx` — Ink React 终端渲染组件
+  - `prompt.ts` — 描述工具的系统提示文本
+- 新增工具必须按此结构组织，禁止随意放置文件
+
+### 5. 状态管理
+- 应用状态通过 `src/state/AppStateStore.ts` / `store.ts` 集中管理
+- 禁止在组件中直接管理跨组件共享状态，应使用 store selectors
+
+### 6. 导入规范
+- 使用 `.js` 后缀进行相对路径导入（如 `import { foo } from './bar.js'`）
+- 禁止使用无后缀的相对路径导入
+
+### 7. 禁止事项
+- 禁止引入未经评估的新外部依赖
+- 禁止在构建路径 `dist/` 中手动放置文件
+- 禁止修改 `build.ts` 中的 `define` 宏值（`MACRO.*`）
+- 禁止绕过 `process.env.USER_TYPE = "external"` 的门控逻辑
 
 ## 启动/构建命令
 
 ```bash
 # 构建
-bun run build           # Full build (CLI + SDK) → dist/
-bun run build:cli       # Build CLI only
-bun run build:sdk       # Build SDK only
+bun run build           # 完整构建（CLI + SDK） → dist/
+bun run build:cli       # 仅构建 CLI
+bun run build:sdk       # 仅构建 SDK
 
 # 启动
-bun run start           # Run built CLI (dist/cli.js)
-bun src/entrypoints/cli.tsx  # Run CLI directly without building (dev mode)
+bun run start           # 运行已构建的 CLI（dist/cli.js）
+bun src/entrypoints/cli.tsx  # 直接运行 CLI，无需构建（开发模式）
 
-# 格式校验，更改代码后必须通过此脚本进行验证
+# 类型校验（更改代码后必须执行）
 bun tsc --noEmit
 ```
 
-There is no test runner configured. Testing is done by running the CLI directly.
+本项目未配置测试运行器，测试通过直接运行 CLI 进行。
 
 ## 架构
 
-This is a terminal UI application built with **TypeScript + React (Ink)**, bundled by **Bun**.
-当前项目的代码，若含有注释内容，一律使用中文
+本项目是一个基于 **TypeScript + React (Ink)** 的终端 UI 应用，由 **Bun** 打包。
 
-### Entrypoints
+### 入口（Entrypoints）
 
-- `src/entrypoints/cli.tsx` — CLI bootstrap: sets up environment, then delegates to `src/main.tsx`
-- `src/entrypoints/mcp.ts` — MCP server entrypoint
-- `src/entrypoints/sdk/` — SDK types for programmatic/external use
+- `src/entrypoints/cli.tsx` — CLI 启动入口：设置环境后委托给 `src/main.tsx`
+- `src/entrypoints/mcp.ts` — MCP 服务入口
+- `src/entrypoints/sdk/` — SDK 类型定义，供外部编程使用
 
-### Core
+### 核心（Core）
 
-- `src/main.tsx` — Primary startup: initializes feature flags (GrowthBook), OAuth, MCP, MDM config, keychain prefetch, then launches the REPL. Intentionally fires async prefetches in parallel at the top before heavy imports.
-- `src/QueryEngine.ts` — Main conversation/query engine; handles message streaming, tool calls, context management
-- `src/tools.ts` — Tool registry; aggregates all available tools
-- `src/commands.ts` — Slash command registry
+- `src/main.tsx` — 主启动流程：初始化功能开关（GrowthBook）、OAuth、MCP、MDM 配置、密钥预取，然后启动 REPL。在顶部并行触发异步预取后再执行重型导入
+- `src/QueryEngine.ts` — 主对话/查询引擎；处理消息流、工具调用、上下文管理
+- `src/tools.ts` — 工具注册表；聚合所有可用工具
+- `src/commands.ts` — 斜杠命令注册表
 
-### Tools (`src/tools/`)
+### 工具（Tools，`src/tools/`）
 
-Each tool follows a consistent three-file pattern within its own directory:
-- `ToolName.ts` / `ToolName.tsx` — Implementation and tool definition
-- `UI.tsx` — Ink React component for rendering in the terminal
-- `prompt.ts` — System prompt text describing the tool to the model
+每个工具遵循统一的三文件模式（见规范约束第 4 条）。
 
-### UI Layer (`src/components/`, `src/screens/`, `src/hooks/`)
+### UI 层（`src/components/`、`src/screens/`、`src/hooks/`）
 
-The terminal UI is entirely React components rendered via **Ink**. Top-level screens are in `src/screens/` (e.g., `REPL.tsx`, `Doctor.tsx`). React hooks in `src/hooks/` manage state, keybindings, permissions, clipboard, and history.
+终端 UI 全部由 React 组件通过 **Ink** 渲染。顶层页面在 `src/screens/`（如 `REPL.tsx`、`Doctor.tsx`）。React hooks 在 `src/hooks/` 中管理状态、快捷键、权限、剪贴板和历史。
 
-### Services (`src/services/`)
+### 服务层（Services，`src/services/`）
 
-- `api/` — API client, retries, usage tracking
-- `mcp/` — MCP server connection manager and OAuth
-- `lsp/` — LSP client for IDE-like diagnostics
-- `analytics/` — GrowthBook feature flags
-- `oauth/` — Auth flows
+- `api/` — API 客户端、重试、用量追踪
+- `mcp/` — MCP 服务连接管理器与 OAuth
+- `lsp/` — LSP 客户端，提供 IDE 级诊断
+- `analytics/` — GrowthBook 功能开关
+- `oauth/` — 认证流程
 
-### State (`src/state/`)
+### 状态（State，`src/state/`）
 
-Centralized app state via `AppStateStore.ts` / `store.ts` with selectors.
+通过 `AppStateStore.ts` / `store.ts` 集中管理应用状态，使用 selectors 读取。
 
-### Build system (`build.ts`)
+### 构建系统（`build.ts`）
 
-Uses `Bun.build()` with:
-- Entry: `src/entrypoints/cli.tsx` → `dist/`
-- Compile-time `define` macros: `MACRO.VERSION`, `MACRO.BUILD_TIME`, `MACRO.PACKAGE_URL`, `MACRO.FEEDBACK_CHANNEL`
-- `process.env.USER_TYPE = "external"` gates internal code paths (tree-shaken at build time)
-- External packages (not bundled): cloud SDKs (`bedrock`, `vertex`), native binaries, lazy-loaded packages (`sharp`, `yaml`, etc.)
-- Custom plugins: resolves `react/compiler-runtime` and maps `color-diff-napi` to a local TypeScript fallback in `src/native-ts/`
+使用 `Bun.build()`，配置如下：
+- 入口：`src/entrypoints/cli.tsx` → `dist/`
+- 编译时 `define` 宏：`MACRO.VERSION`、`MACRO.BUILD_TIME`、`MACRO.PACKAGE_URL`、`MACRO.FEEDBACK_CHANNEL`
+- `process.env.USER_TYPE = "external"` 控制内部代码路径（构建时 tree-shake）
+- 外部包（不打包）：云 SDK（`bedrock`、`vertex`）、原生二进制、懒加载包（`sharp`、`yaml` 等）
+- 自定义插件：解析 `react/compiler-runtime`，将 `color-diff-napi` 映射到 `src/native-ts/` 的本地 TypeScript 回退实现
 
-### Monorepo packages (`packages/`)
+### Monorepo 子包（`packages/`）
 
-- `packages/claude-for-chrome-mcp/` — MCP server for Chrome extension
-- `packages/computer-use-mcp/` — MCP server for computer-use (screenshots, input simulation)
-- `packages/computer-use-input/` — Input simulation
-
-## 汉化规则（i18n）
-
-本项目使用 `src/i18n/` 模块进行国际化。修改 UI 文本时**必须**遵循以下规则：
-
-### 核心原则
-- **禁止**在组件中直接硬编码中文字符串
-- **必须**通过 `tSync()`（同步场景）或 `t()`（异步场景）读取翻译
-- 翻译 key 需要同时写入 `src/i18n/locales/en.ts`（英文原文）和 `src/i18n/locales/zh-CN.ts`（中文译文）
-
-### 使用方式
-```tsx
-import { tSync } from '../i18n/index.js'
-
-// 组件中使用
-<Text>{tSync('shellProgress.timeout')}</Text>
-<Text>{tSync('shellProgress.lines', { count })}</Text>
-```
-
-### KeyboardShortcutHint 特殊处理
-对于 `KeyboardShortcutHint` 组件中的 `action` 属性，需要在 `actionKeyMap` 中注册映射：
-```tsx
-// src/components/design-system/KeyboardShortcutHint.tsx
-const actionKeyMap: Record<string, string> = {
-  'expand': 'common.expand',
-  'interrupt': 'shortcut.interrupt',
-  'background': 'shortcut.background',
-  // ...新增 action 在此添加
-}
-```
-
-### 翻译 key 命名规范
-- 按功能模块分组：`shellProgress.xxx`、`backgroundTasks.xxx`、`shortcut.xxx`
-- 使用描述性名称，不要缩写
-- 支持插值：`'key': '已使用 {count} 行'`
-- 翻译后必须尝试构建，必须保证能够构建成功
+- `packages/claude-for-chrome-mcp/` — Chrome 扩展的 MCP 服务
+- `packages/computer-use-mcp/` — 计算机使用 MCP 服务（截图、输入模拟）
+- `packages/computer-use-input/` — 输入模拟

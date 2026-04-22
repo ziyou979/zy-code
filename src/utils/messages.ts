@@ -381,7 +381,7 @@ function baseCreateAssistantMessage({
     inference_geo: null,
     iterations: null,
     speed: null,
-  } as BetaUsage,
+  } as TokenUsage,
 }: {
   content: ContentBlock[]
   isApiErrorMessage?: boolean

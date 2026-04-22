@@ -1,4 +1,4 @@
-import { isAPIError } from '../types/llm.js'
+import { isAPIError, type APIErrorLike } from '../types/llm.js'
 import type { LLMMessageParam } from '../types/llm.js'
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
@@ -520,7 +520,7 @@ export function extractQuotaStatusFromHeaders(
   }
 }
 
-export function extractQuotaStatusFromError(error: APIError): void {
+export function extractQuotaStatusFromError(error: APIErrorLike): void {
   if (
     !shouldProcessRateLimits(false) ||
     error.status !== 429
@@ -532,7 +532,7 @@ export function extractQuotaStatusFromError(error: APIError): void {
     let newLimits = { ...currentLimits }
     if (error.headers) {
       // Process headers (applies mocks from /mock-limits command if active)
-      const headersToUse = processRateLimitHeaders(error.headers)
+      const headersToUse = processRateLimitHeaders(error.headers as globalThis.Headers | Record<string, string>)
       rawUtilization = extractRawUtilization(headersToUse)
       newLimits = computeNewLimitsFromHeaders(headersToUse)
 

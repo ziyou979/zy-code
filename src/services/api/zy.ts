@@ -28,7 +28,7 @@ import {
 
 // 以下类型仅用于 Anthropic SDK 请求构建，保留为局部类型
 type BetaOutputConfig = Record<string, unknown>
-type BetaJSONOutputFormat = { type: 'json_schema'; json_schema: unknown }
+type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
 
 import { randomUUID } from 'crypto'
 import {
