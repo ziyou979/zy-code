@@ -1785,7 +1785,7 @@ async function* queryModel(
         const adapter = getRequestAdapter(anthropic)
         const streamResult = await adapter.createStream(params, signal, clientRequestId)
         queryCheckpoint('query_response_headers_received')
-        streamRequestId = streamResult.requestId
+        streamRequestId = streamResult.request_id
         streamResponse = streamResult.response
         return streamResult.stream
       },

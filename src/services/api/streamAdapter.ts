@@ -574,6 +574,9 @@ async function* mapOpenAIStreamToStandard(
       }
     }
   }
+
+  // 流结束后发送 message_stop，与 Anthropic SDK 行为对齐
+  yield { type: 'message_stop' }
 }
 
 // ============================================================================
@@ -657,7 +660,10 @@ class OpenAIRequestAdapter implements LLMRequestAdapter {
  * 从标准参数中移除 OpenAI 不支持的字段。
  */
 function stripAnthropicOnlyParams(params: LLMCreateParams) {
-  const { betas, thinking, context_management, system, ...rest } = params as any
+  const {
+    betas, thinking, context_management, system,
+    metadata, output_config, ...rest
+  } = params as any
   return {
     ...rest,
     model: normalizeModelStringForAPI(params.model),
