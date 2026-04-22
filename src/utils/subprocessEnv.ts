@@ -17,8 +17,7 @@ const GHA_SUBPROCESS_SCRUB = [
   'ZY_API_KEY',
   'ZY_CODE_OAUTH_TOKEN',
   'ANTHROPIC_AUTH_TOKEN',
-  'ANTHROPIC_FOUNDRY_API_KEY',
-  'ANTHROPIC_CUSTOM_HEADERS',
+  'ZY_CODE_CUSTOM_HEADERS',
 
   // OTLP exporter headers — documented to carry Authorization=Bearer tokens
   // for monitoring backends; read in-process by OTEL SDK, subprocesses never need them

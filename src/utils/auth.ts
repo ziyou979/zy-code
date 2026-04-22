@@ -1467,13 +1467,12 @@ export function isDirectApiClient(): boolean {
   // 1. ZY subscribers (Max, Pro, Enterprise, Team)
   // 2. Vertex AI users
   // 3. AWS Bedrock users
-  // 4. Foundry users
+  // 4. Cloud provider users
 
-  // Exclude Vertex, Bedrock, and Foundry customers
+  // Exclude Vertex and Bedrock customers
   if (
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) ||
-    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)
+    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
   ) {
     return false
   }
@@ -1607,12 +1606,11 @@ export function getSubscriptionName(): string {
   }
 }
 
-/** Check if using third-party services (Bedrock or Vertex or Foundry) */
+/** Check if using third-party services (Bedrock or Vertex) */
 export function isUsing3PServices(): boolean {
   return !!(
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) ||
-    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)
+    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
   )
 }
 

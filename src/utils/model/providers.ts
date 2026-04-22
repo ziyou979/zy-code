@@ -62,9 +62,7 @@ export function getAPIProvider(): APIProvider {
     ? 'bedrock'
     : isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
       ? 'vertex'
-      : isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)
-        ? 'foundry'
-        : 'anthropic'
+      : 'anthropic'
 }
 
 export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS {

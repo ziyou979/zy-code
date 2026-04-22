@@ -40,8 +40,8 @@ export async function validateModel(
     return { valid: true }
   }
 
-  // Check if it matches ANTHROPIC_CUSTOM_MODEL_OPTION (pre-validated by the user)
-  if (normalizedModel === process.env.ANTHROPIC_CUSTOM_MODEL_OPTION) {
+  // Check if it matches ZY_CODE_CUSTOM_MODEL_OPTION (pre-validated by the user)
+  if (normalizedModel === process.env.ZY_CODE_CUSTOM_MODEL_OPTION) {
     return { valid: true }
   }
 

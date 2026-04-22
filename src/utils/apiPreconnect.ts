@@ -35,8 +35,7 @@ export function preconnectAnthropicApi(): void {
   // Skip if using a cloud provider — different endpoint + auth
   if (
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) ||
-    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)
+    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
   ) {
     return
   }

@@ -26,18 +26,6 @@ import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
  * - AWS_REGION 或 AWS_DEFAULT_REGION：设置所有模型的 AWS 区域（默认：us-east-1）
  * - ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION：可选。专门用于 small fast model (Haiku) 的 AWS 区域覆盖
  *
- * Foundry (Azure)：
- * - ANTHROPIC_FOUNDRY_RESOURCE：你的 Azure 资源名称（例如 'my-resource'）
- *   完整端点：https://{resource}.services.ai.azure.com/anthropic/v1/messages
- * - ANTHROPIC_FOUNDRY_BASE_URL：可选。替代 resource，直接提供完整基础 URL
- *   （例如 'https://my-resource.services.ai.azure.com'）
- *
- * 认证（以下方式之一）：
- * - ANTHROPIC_FOUNDRY_API_KEY：你的 Microsoft Foundry API 密钥（如果使用 API 密钥认证）
- * - Azure AD 认证：如果未提供 API 密钥，则使用 DefaultAzureCredential
- *   支持多种认证方式（环境变量、托管标识、Azure CLI 等）
- *   参见：https://docs.microsoft.com/en-us/javascript/api/@azure/identity
- *
  * Vertex AI：
  * - CLOUD_ML_REGION：可选。用于所有模型的默认 GCP 区域
  *   如果未在上方指定特定模型区域，则使用此值
@@ -102,7 +90,7 @@ export async function getLLMClient({
   };
 
   // 记录 API 客户端配置，用于 HFI 调试
-  logForDebugging(`[API:request] Creating client, ANTHROPIC_CUSTOM_HEADERS present: ${!!process.env.ANTHROPIC_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders['Authorization']}`);
+  logForDebugging(`[API:request] Creating client, ZY_CODE_CUSTOM_HEADERS present: ${!!process.env.ZY_CODE_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders['Authorization']}`);
 
   // 如果通过环境变量启用了额外保护 header
   const additionalProtectionEnabled = isEnvTruthy(process.env.ZY_CODE_ADDITIONAL_PROTECTION);
@@ -161,38 +149,6 @@ export async function getLLMClient({
     }
     // 返回值类型一直是不准确的——这不支持 batching 或 models
     return new AnthropicBedrock(bedrockArgs) as unknown as Anthropic;
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY)) {
-    const {
-      AnthropicFoundry
-    } = await import('@anthropic-ai/foundry-sdk' as any) as any;
-    // 根据配置确定 Azure AD token provider
-    // SDK 默认读取 ANTHROPIC_FOUNDRY_API_KEY
-    let azureADTokenProvider: (() => Promise<string>) | undefined;
-    if (!process.env.ANTHROPIC_FOUNDRY_API_KEY) {
-      if (isEnvTruthy(process.env.ZY_CODE_SKIP_FOUNDRY_AUTH)) {
-        // 测试/代理场景下的模拟 token provider（类似于 Vertex 的模拟 GoogleAuth）
-        azureADTokenProvider = () => Promise.resolve('');
-      } else {
-        // 使用 DefaultAzureCredential 进行真实的 Azure AD 认证
-        const {
-          DefaultAzureCredential: AzureCredential,
-          getBearerTokenProvider
-        } = await import('@azure/identity');
-        azureADTokenProvider = getBearerTokenProvider(new AzureCredential(), 'https://cognitiveservices.azure.com/.default');
-      }
-    }
-    const foundryArgs: ConstructorParameters<typeof AnthropicFoundry>[0] = {
-      ...ARGS,
-      ...(azureADTokenProvider && {
-        azureADTokenProvider
-      }),
-      ...(isDebugToStdErr() && {
-        logger: createStderrLogger()
-      })
-    };
-    // 返回值类型一直是不准确的——这不支持 batching 或 models
-    return new AnthropicFoundry(foundryArgs) as unknown as Anthropic;
   }
   if (isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)) {
     // 如果配置了 gcpAuthRefresh 且凭证已过期，则刷新 GCP 凭证
@@ -375,7 +331,7 @@ async function configureApiKeyHeaders(headers: Record<string, string>, isNonInte
 }
 function getCustomHeaders(): Record<string, string> {
   const customHeaders: Record<string, string> = {};
-  const customHeadersEnv = process.env.ANTHROPIC_CUSTOM_HEADERS;
+  const customHeadersEnv = process.env.ZY_CODE_CUSTOM_HEADERS;
   if (!customHeadersEnv) return customHeaders;
 
   // 按换行符分割以支持多个 header

@@ -746,13 +746,13 @@ export function getAssistantMessageFromError(
   // 使用新的或未知 org ID 的 Ant 尚未被门控。
   if (
     isInternalBuild() &&
-    !process.env.ANTHROPIC_MODEL &&
+    !process.env.ZY_CODE_MODEL &&
     error instanceof Error &&
     error.message.toLowerCase().includes('invalid model name')
   ) {
     // 从配置获取组织 ID——仅在使用 OAuth 时使用 OAuth 账户数据
     const orgId = getOauthAccountInfo()?.organizationUuid
-    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`zy\` with \`ANTHROPIC_MODEL=${getDefaultMainLoopModelSetting()}\``
+    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`zy\` with \`ZY_CODE_MODEL=${getDefaultMainLoopModelSetting()}\``
     const msg = orgId
       ? `${baseMsg} or share your orgId (${orgId}) in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
       : `${baseMsg} or reach out in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`

@@ -2010,10 +2010,10 @@ async function run(): Promise<CommanderCommand> {
     // API 404，并且 -p 在异步写入落地之前退出 —— 新鲜 pod 上崩溃循环。
     // 在此等待 init 填充 _CACHED_MAY_BE_STALE 现在首先检查的内存负载映射。
     // 门控以便温暖路径保持非阻塞：
-    //  - 通过 --model 或 ANTHROPIC_MODEL 显式指定模型（两者都馈入别名解析）
+    //  - 通过 --model 或 ZY_CODE_MODEL 显式指定模型（两者都馈入别名解析）
     //  - 没有 env 覆盖（它在磁盘之前在 _CACHED_MAY_BE_STALE 之前短路）
     //  - 标志在磁盘上不存在（== null 也捕获 pre-#22279 中毒的 null）
-    const explicitModel = options.model || process.env.ANTHROPIC_MODEL;
+    const explicitModel = options.model || process.env.ZY_CODE_MODEL;
     if (isInternalBuild() && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
       await initializeGrowthBook();
     }
@@ -2855,7 +2855,7 @@ async function run(): Promise<CommanderCommand> {
     // 启动时记录模型配置
     logEvent('tengu_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      env_var: process.env.ANTHROPIC_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      env_var: process.env.ZY_CODE_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       settings_file: (getInitialSettings() || {}).model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       agent: agentSetting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });

@@ -98,7 +98,6 @@ const TEAMMATE_ENV_VARS = [
   // and send requests to the wrong endpoint (GitHub issue #23561)
   'ZY_CODE_USE_BEDROCK',
   'ZY_CODE_USE_VERTEX',
-  'ZY_CODE_USE_FOUNDRY',
   // Custom API endpoint
   'ANTHROPIC_BASE_URL',
   // Config directory override

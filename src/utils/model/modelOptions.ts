@@ -40,15 +40,15 @@ export function getDefaultOptionForUser(): ModelOption {
 }
 function getCustomSonnetOption(): ModelOption | undefined {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
-  const customSonnetModel = process.env.ANTHROPIC_DEFAULT_SONNET_MODEL;
+  const customSonnetModel = process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL;
   // When a 3P user has a custom sonnet model string, show it directly
   if (is3P && customSonnetModel) {
     const is1m = has1mContext(customSonnetModel);
     return {
       value: 'sonnet',
-      label: process.env.ANTHROPIC_DEFAULT_SONNET_MODEL_NAME ?? customSonnetModel,
-      description: process.env.ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' (1M context)' : ''}`,
-      descriptionForModel: `${process.env.ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' with 1M context' : ''}`} (${customSonnetModel})`
+      label: process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL_NAME ?? customSonnetModel,
+      description: process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' (1M context)' : ''}`,
+      descriptionForModel: `${process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' with 1M context' : ''}`} (${customSonnetModel})`
     };
   }
 }
@@ -66,15 +66,15 @@ function getSonnet46Option(): ModelOption {
 }
 function getCustomOpusOption(): ModelOption | undefined {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
-  const customOpusModel = process.env.ANTHROPIC_DEFAULT_OPUS_MODEL;
+  const customOpusModel = process.env.ZY_CODE_DEFAULT_BEST_MODEL;
   // When a 3P user has a custom opus model string, show it directly
   if (is3P && customOpusModel) {
     const is1m = has1mContext(customOpusModel);
     return {
       value: 'opus',
-      label: process.env.ANTHROPIC_DEFAULT_OPUS_MODEL_NAME ?? customOpusModel,
-      description: process.env.ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' (1M context)' : ''}`,
-      descriptionForModel: `${process.env.ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' with 1M context' : ''}`} (${customOpusModel})`
+      label: process.env.ZY_CODE_DEFAULT_BEST_MODEL_NAME ?? customOpusModel,
+      description: process.env.ZY_CODE_DEFAULT_BEST_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' (1M context)' : ''}`,
+      descriptionForModel: `${process.env.ZY_CODE_DEFAULT_BEST_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' with 1M context' : ''}`} (${customOpusModel})`
     };
   }
 }
@@ -115,14 +115,14 @@ export function getOpus46_1MOption(): ModelOption {
 }
 function getCustomHaikuOption(): ModelOption | undefined {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
-  const customHaikuModel = process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL;
+  const customHaikuModel = process.env.ZY_CODE_DEFAULT_COMPACT_MODEL;
   // When a 3P user has a custom haiku model string, show it directly
   if (is3P && customHaikuModel) {
     return {
       value: 'haiku',
-      label: process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME ?? customHaikuModel,
-      description: process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION ?? 'Custom Haiku model',
-      descriptionForModel: `${process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION ?? 'Custom Haiku model'} (${customHaikuModel})`
+      label: process.env.ZY_CODE_DEFAULT_COMPACT_MODEL_NAME ?? customHaikuModel,
+      description: process.env.ZY_CODE_DEFAULT_COMPACT_MODEL_DESCRIPTION ?? 'Custom Haiku model',
+      descriptionForModel: `${process.env.ZY_CODE_DEFAULT_COMPACT_MODEL_DESCRIPTION ?? 'Custom Haiku model'} (${customHaikuModel})`
     };
   }
 }
@@ -288,13 +288,13 @@ function getKnownModelOption(model: string): ModelOption | null {
 export function getModelOptions(): ModelOption[] {
   const options = getModelOptionsBase();
 
-  // Add the custom model from the ANTHROPIC_CUSTOM_MODEL_OPTION env var
-  const envCustomModel = process.env.ANTHROPIC_CUSTOM_MODEL_OPTION;
+  // Add the custom model from the ZY_CODE_CUSTOM_MODEL_OPTION env var
+  const envCustomModel = process.env.ZY_CODE_CUSTOM_MODEL_OPTION;
   if (envCustomModel && !options.some(existing => existing.value === envCustomModel)) {
     options.push({
       value: envCustomModel,
-      label: process.env.ANTHROPIC_CUSTOM_MODEL_OPTION_NAME ?? envCustomModel,
-      description: process.env.ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION ?? `Custom model (${envCustomModel})`
+      label: process.env.ZY_CODE_CUSTOM_MODEL_OPTION_NAME ?? envCustomModel,
+      description: process.env.ZY_CODE_CUSTOM_MODEL_OPTION_DESCRIPTION ?? `Custom model (${envCustomModel})`
     });
   }
 

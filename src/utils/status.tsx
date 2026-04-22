@@ -299,26 +299,6 @@ export function buildAPIProviderProperties(): Property[] {
         value: 'GCP auth skipped'
       });
     }
-  } else if (apiProvider === 'foundry') {
-    const foundryBaseUrl = process.env.ANTHROPIC_FOUNDRY_BASE_URL;
-    if (foundryBaseUrl) {
-      properties.push({
-        label: 'Microsoft Foundry base URL',
-        value: foundryBaseUrl
-      });
-    }
-    const foundryResource = process.env.ANTHROPIC_FOUNDRY_RESOURCE;
-    if (foundryResource) {
-      properties.push({
-        label: 'Microsoft Foundry resource',
-        value: foundryResource
-      });
-    }
-    if (isEnvTruthy(process.env.ZY_CODE_SKIP_FOUNDRY_AUTH)) {
-      properties.push({
-        value: 'Microsoft Foundry auth skipped'
-      });
-    }
   }
   const proxyUrl = getProxyUrl();
   if (proxyUrl) {

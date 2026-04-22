@@ -13,7 +13,6 @@ const feedback = {
     !(
       isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) ||
       isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) ||
-      isEnvTruthy(process.env.ZY_CODE_USE_FOUNDRY) ||
       isEnvTruthy(process.env.DISABLE_FEEDBACK_COMMAND) ||
       isEnvTruthy(process.env.DISABLE_BUG_COMMAND) ||
       isEssentialTrafficOnly() ||
