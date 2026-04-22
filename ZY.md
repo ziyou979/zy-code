@@ -85,6 +85,15 @@ bun tsc --noEmit
 - `src/QueryEngine.ts` — 主对话/查询引擎；处理消息流、工具调用、上下文管理
 - `src/tools.ts` — 工具注册表；聚合所有可用工具
 - `src/commands.ts` — 斜杠命令注册表
+- `src/types/llm.ts` — **标准 LLM 类型体系**，独立于任何 SDK，定义项目内部使用的统一类型：
+  - 流式事件：`LLMStreamEvent`（`message_start`、`content_block_delta`、`message_stop` 等）
+  - 内容类型：`ContentBlock`（响应）、`ContentBlockParam`（请求）
+  - 消息与参数：`LLMMessage`、`LLMMessageParam`、`LLMCreateParams`
+  - Token 计量：`TokenUsage`、`DeltaUsage`
+  - 错误体系：`LLMError`（基类）、`LLMConnectionError`、`LLMAbortError`、`LLMAuthenticationError`
+  - 鸭子类型错误判断：`isAPIError()`、`isAbortError()`、`isConnectionError()` 等工具函数
+  - 适配器接口：`LLMRequestAdapter`、`StreamResult`
+- `src/utils/envUtils.ts` — 环境判断工具函数，包括 `isInternalBuild()`、`getUserType()` 等构建时门控
 
 ### 工具（Tools，`src/tools/`）
 
@@ -94,9 +103,20 @@ bun tsc --noEmit
 
 终端 UI 全部由 React 组件通过 **Ink** 渲染。顶层页面在 `src/screens/`（如 `REPL.tsx`、`Doctor.tsx`）。React hooks 在 `src/hooks/` 中管理状态、快捷键、权限、剪贴板和历史。
 
+### LLM 适配器层（`src/services/api/streamAdapter.ts`）
+
+统一的 LLM 请求适配层，使 Anthropic 和 OpenAI 两种 Provider 完全平等：
+
+- **核心设计**：业务层通过 `src/types/llm.ts` 中的标准类型（`LLMCreateParams`、`LLMStreamEvent` 等）与 LLM 交互，不依赖任何特定 SDK 类型
+- **适配器模式**：`AnthropicRequestAdapter` 和 `OpenAIRequestAdapter` 各自实现 `LLMRequestAdapter` 接口，将 SDK 特有的请求/响应格式转换为标准类型
+- **流式处理**：适配器将 SDK 流转换为 `AsyncIterable<LLMStreamEvent>`，业务层通过 `for await` 统一消费
+- **请求转换**：`stripAnthropicOnlyParams()` 将 `LLMCreateParams` 中 Anthropic 特有字段（`betas`、`thinking`、`context_management`、`system`、`metadata`、`output_config`）剥离后传给 OpenAI
+- **Provider 选择**：运行时通过 `getRequestAdapter()` 根据当前模型配置返回对应适配器
+- **类型导入规范**：业务代码中的 `ContentBlockParam`、`TokenUsage`、`LLMCreateParams` 等类型**必须**从 `src/types/llm.ts` 导入，**禁止**从 `@anthropic-ai/sdk` 直接导入（避免 SDK 类型与标准类型不兼容导致编译错误）
+
 ### 服务层（Services，`src/services/`）
 
-- `api/` — API 客户端、重试、用量追踪
+- `api/` — API 客户端、重试、用量追踪（含 `streamAdapter.ts` 适配层）
 - `mcp/` — MCP 服务连接管理器与 OAuth
 - `lsp/` — LSP 客户端，提供 IDE 级诊断
 - `analytics/` — GrowthBook 功能开关
