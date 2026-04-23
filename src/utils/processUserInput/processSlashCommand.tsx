@@ -277,7 +277,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
 
   // Prepend debug log for ant users so it appears inside the command output
   if (isInternalBuild()) {
-    resultText = `[ANT-ONLY] API calls: ${getDisplayPath(getDumpPromptsPath(agentId))}\n${resultText}`;
+    resultText = `[INNER-ONLY] API calls: ${getDisplayPath(getDumpPromptsPath(agentId))}\n${resultText}`;
   }
 
   // Return the result as a user message (simulates the agent's output)

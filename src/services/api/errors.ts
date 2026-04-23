@@ -752,7 +752,7 @@ export function getAssistantMessageFromError(
   ) {
     // 从配置获取组织 ID——仅在使用 OAuth 时使用 OAuth 账户数据
     const orgId = getOauthAccountInfo()?.organizationUuid
-    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`zy\` with \`ZY_CODE_MODEL=${getDefaultMainLoopModelSetting()}\``
+    const baseMsg = `[INNER-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`zy\` with \`ZY_CODE_MODEL=${getDefaultMainLoopModelSetting()}\``
     const msg = orgId
       ? `${baseMsg} or share your orgId (${orgId}) in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
       : `${baseMsg} or reach out in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`

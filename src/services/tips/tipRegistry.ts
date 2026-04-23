@@ -643,14 +643,14 @@ const internalOnlyTips: Tip[] =
         {
           id: 'important-zymd',
           content: async () =>
-            '[ANT-ONLY] Use "IMPORTANT:" prefix for must-follow CLAUDE.md rules',
+            '[INNER-ONLY] Use "IMPORTANT:" prefix for must-follow CLAUDE.md rules',
           cooldownSessions: 30,
           isRelevant: async () => true,
         },
         {
           id: 'skillify',
           content: async () =>
-            '[ANT-ONLY] Use /skillify at the end of a workflow to turn it into a reusable skill',
+            '[INNER-ONLY] Use /skillify at the end of a workflow to turn it into a reusable skill',
           cooldownSessions: 15,
           isRelevant: async () => true,
         },

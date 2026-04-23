@@ -110,7 +110,7 @@ export const MAX_SUBCOMMANDS_FOR_SECURITY_CHECK = 50
 export const MAX_SUGGESTED_RULES_FOR_COMPOUND = 5
 
 /**
- * [ANT-ONLY] Log classifier evaluation results for analysis.
+ * [INNER-ONLY] Log classifier evaluation results for analysis.
  * This helps us understand which classifier rules are being evaluated
  * and how the classifier is deciding on commands.
  */

@@ -5004,7 +5004,7 @@ async function loadInitialMessages(
   }
 
   // Handle resume in print mode (accepts session ID or URL)
-  // URLs are [ANT-ONLY]
+  // URLs are [INNER-ONLY]
   if (options.resume) {
     try {
       logEvent('zy_resume_print', {})

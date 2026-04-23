@@ -351,7 +351,7 @@ export function groupHooksByEventAndMatcher(
               event: hookEvent,
               config: {
                 type: 'command',
-                command: '[ANT-ONLY] Built-in Hook',
+                command: '[INNER-ONLY] Built-in Hook',
               },
               matcher: matcher.matcher,
               source: 'builtinHook',

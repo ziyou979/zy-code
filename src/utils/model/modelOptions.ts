@@ -217,7 +217,7 @@ function getModelOptionsBase(): ModelOption[] {
     const antModelOptions: ModelOption[] = getAntModels().map(m => ({
       value: m.alias,
       label: m.label,
-      description: m.description ?? `[ANT-ONLY] ${m.label} (${m.model})`
+      description: m.description ?? `[INNER-ONLY] ${m.label} (${m.model})`
     }));
     return [getDefaultOptionForUser(), ...antModelOptions, getMergedOpus1MOption(), getSonnet46Option(), getSonnet46_1MOption(), getHaiku45Option()];
   }

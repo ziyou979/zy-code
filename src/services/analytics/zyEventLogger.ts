@@ -187,7 +187,7 @@ async function logEventToZyAsync(
     // Debug logging when debug mode is enabled
     if (isInternalBuild()) {
       logForDebugging(
-        `[ANT-ONLY] ZY event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
+        `[INNER-ONLY] ZY event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
       )
     }
 
@@ -289,7 +289,7 @@ export function logGrowthBookExperimentToZy(
 
   if (isInternalBuild()) {
     logForDebugging(
-      `[ANT-ONLY] ZY GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
+      `[INNER-ONLY] ZY GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
     )
   }
 

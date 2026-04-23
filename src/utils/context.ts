@@ -89,13 +89,6 @@ export function getContextWindowForModel(
   if (getSonnet1mExpTreatmentEnabled(model)) {
     return 1_000_000
   }
-  if (isInternalBuild()) {
-    // @ts-ignore
-    const antModel = resolveAntModel(model)
-    if (antModel?.contextWindow) {
-      return antModel.contextWindow
-    }
-  }
   return MODEL_CONTEXT_WINDOW_DEFAULT
 }
 

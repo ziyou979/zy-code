@@ -67,7 +67,7 @@ export function registerStuckSkill(): void {
   registerBundledSkill({
     name: 'stuck',
     description:
-      '[ANT-ONLY] Investigate frozen/stuck/slow ZY Code sessions on this machine and post a diagnostic report to #zy-code-feedback.',
+      '[INNER-ONLY] Investigate frozen/stuck/slow ZY Code sessions on this machine and post a diagnostic report to #zy-code-feedback.',
     userInvocable: true,
     async getPromptForCommand(args) {
       let prompt = STUCK_PROMPT

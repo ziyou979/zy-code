@@ -1026,7 +1026,7 @@ export async function analyzeContextUsage(
     cats.push({
       name:
         isInternalBuild()
-          ? '[ANT-ONLY] System tools'
+          ? '[INNER-ONLY] System tools'
           : 'System tools',
       tokens: systemToolsTokens,
       color: 'inactive',

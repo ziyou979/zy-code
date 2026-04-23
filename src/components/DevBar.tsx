@@ -17,5 +17,5 @@ export function DevBar() {
     return null;
   }
   const recentOps = slowOps.slice(-3).map(op => `${op.operation} (${Math.round(op.durationMs)}ms)`).join(" \xB7 ");
-  return <Text wrap="truncate-end" color="warning">[ANT-ONLY] slow sync: {recentOps}</Text>;
+  return <Text wrap="truncate-end" color="warning">[INNER-ONLY] slow sync: {recentOps}</Text>;
 }

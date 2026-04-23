@@ -165,7 +165,7 @@ export function usePermissionRequestLogging(
       }
     }
 
-    // [ANT-ONLY] Log bash tool calls, so we can categorize
+    // [INNER-ONLY] Log bash tool calls, so we can categorize
     // & burn down calls that should have been allowed
     if (isInternalBuild()) {
       const parsedInput = BashTool.inputSchema.safeParse(toolUseConfirm.input)

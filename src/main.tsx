@@ -176,7 +176,6 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/
 import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
 import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
 import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
-import { migrateFennecToOpus } from './migrations/migrateFennecToOpus.js';
 import { migrateLegacyOpusToCurrent } from './migrations/migrateLegacyOpusToCurrent.js';
 import { migrateOpusToOpus1m } from './migrations/migrateOpusToOpus1m.js';
 import { migrateReplBridgeEnabledToRemoteControlAtStartup } from './migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js';
@@ -339,9 +338,6 @@ function runMigrations(): void {
     migrateReplBridgeEnabledToRemoteControlAtStartup();
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       resetAutoModeOptInForDefaultOffer();
-    }
-    if (isInternalBuild()) {
-      migrateFennecToOpus();
     }
     saveGlobalConfig(prev => prev.migrationVersion === CURRENT_MIGRATION_VERSION ? prev : {
       ...prev,
@@ -3800,17 +3796,17 @@ async function run(): Promise<CommanderCommand> {
     program.addOption(new Option('--advisor <model>', 'Enable the server-side advisor tool with the specified model (alias or full ID).').hideHelp());
   }
   if (isInternalBuild()) {
-    program.addOption(new Option('--delegate-permissions', '[ANT-ONLY] Alias for --permission-mode auto.').implies({
+    program.addOption(new Option('--delegate-permissions', '[INNER-ONLY] Alias for --permission-mode auto.').implies({
       permissionMode: 'auto'
     }));
-    program.addOption(new Option('--dangerously-skip-permissions-with-classifiers', '[ANT-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
+    program.addOption(new Option('--dangerously-skip-permissions-with-classifiers', '[INNER-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
       permissionMode: 'auto'
     }));
-    program.addOption(new Option('--afk', '[ANT-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
+    program.addOption(new Option('--afk', '[INNER-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
       permissionMode: 'auto'
     }));
-    program.addOption(new Option('--tasks [id]', '[ANT-ONLY] Tasks mode: watch for tasks and auto-process them. Optional id is used as both the task list ID and agent ID (defaults to "tasklist").').argParser(String).hideHelp());
-    program.option('--agent-teams', '[ANT-ONLY] Force ZY to use multi-agent mode for solving problems', () => true);
+    program.addOption(new Option('--tasks [id]', '[INNER-ONLY] Tasks mode: watch for tasks and auto-process them. Optional id is used as both the task list ID and agent ID (defaults to "tasklist").').argParser(String).hideHelp());
+    program.option('--agent-teams', '[INNER-ONLY] Force ZY to use multi-agent mode for solving problems', () => true);
   }
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     program.addOption(new Option('--enable-auto-mode', 'Opt in to auto mode').hideHelp());
@@ -4365,7 +4361,7 @@ async function run(): Promise<CommanderCommand> {
 
   // zy up — run the project's CLAUDE.md "# zy up" setup instructions.
   if (isInternalBuild()) {
-    program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# zy up" section of the nearest CLAUDE.md').action(async () => {
+    program.command('up').description('[INNER-ONLY] Initialize or upgrade the local dev environment using the "# zy up" section of the nearest CLAUDE.md').action(async () => {
       const {
         // @ts-ignore
         up
@@ -4377,7 +4373,7 @@ async function run(): Promise<CommanderCommand> {
   // zy rollback（仅限 ant）
   // 回滚到之前的版本
   if (isInternalBuild()) {
-    program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  zy rollback                                    Go 1 version back from current\n  zy rollback 3                                  Go 3 versions back from current\n  zy rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
+    program.command('rollback [target]').description('[INNER-ONLY] Roll back to a previous release\n\nExamples:\n  zy rollback                                    Go 1 version back from current\n  zy rollback 3                                  Go 3 versions back from current\n  zy rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
       list?: boolean;
       dryRun?: boolean;
       safe?: boolean;
@@ -4408,7 +4404,7 @@ async function run(): Promise<CommanderCommand> {
       return Number(value);
     };
     // zy log
-    program.command('log').description('[ANT-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
+    program.command('log').description('[INNER-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
       const {
         // @ts-ignore
         logHandler
@@ -4417,7 +4413,7 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // zy error
-    program.command('error').description('[ANT-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
+    program.command('error').description('[INNER-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
       const {
         // @ts-ignore
         errorHandler
@@ -4426,7 +4422,7 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // zy export
-    program.command('export').description('[ANT-ONLY] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
+    program.command('export').description('[INNER-ONLY] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
 Examples:
   $ zy export 0 conversation.txt                Export conversation at log index 0
   $ zy export <uuid> conversation.txt           Export conversation by session ID
@@ -4439,7 +4435,7 @@ Examples:
       await exportHandler(source, outputFile);
     });
     if (isInternalBuild()) {
-      const taskCmd = program.command('task').description('[ANT-ONLY] Manage task list tasks');
+      const taskCmd = program.command('task').description('[INNER-ONLY] Manage task list tasks');
       taskCmd.command('create <subject>').description('Create a new task').option('-d, --description <text>', 'Task description').option('-l, --list <id>', 'Task list ID (defaults to "tasklist")').action(async (subject: string, opts: {
         description?: string;
         list?: string;

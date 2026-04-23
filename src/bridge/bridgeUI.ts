@@ -224,7 +224,7 @@ export function createBridgeLogger(options: {
 
     if (isInternalBuild() && debugLogPath) {
       writeStatus(
-        `${chalk.yellow('[ANT-ONLY] Logs:')} ${chalk.dim(debugLogPath)}\n`,
+        `${chalk.yellow('[INNER-ONLY] Logs:')} ${chalk.dim(debugLogPath)}\n`,
       )
     }
     writeStatus(`${indicatorColor(indicator)} ${stateText}${suffix}\n`)

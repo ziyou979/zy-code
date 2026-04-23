@@ -365,7 +365,7 @@ function OAuthStatusMessage({
         const heading = <Text bold={true}>{message}</Text>;
         const subtitle = <Text>Select login method:</Text>;
         const zyaiOption = {
-          label: <Text>Zy account with subscription ·{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[ANT-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
+          label: <Text>Zy account with subscription ·{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[INNER-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
           value: "zyai"
         };
         const consoleOption = {

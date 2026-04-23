@@ -243,7 +243,7 @@ export function getEffortLevelDescription(level: EffortLevel): string {
  */
 export function getEffortValueDescription(value: EffortValue): string {
   if (isInternalBuild() && typeof value === 'number') {
-    return `[ANT-ONLY] Numeric effort value of ${value}`
+    return `[INNER-ONLY] Numeric effort value of ${value}`
   }
 
   if (typeof value === 'string') {
