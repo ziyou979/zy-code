@@ -634,7 +634,7 @@ export const PowerShellTool = buildTool({
         }
       }
       const finalStderr = [result.stderr || '', stderrForShellReset].filter(Boolean).join('\n');
-      logEvent('tengu_powershell_tool_command_executed', {
+      logEvent('zy_powershell_tool_command_executed', {
         command_type: getCommandTypeForLogging(input.command),
         stdout_length: compressedStdout.length,
         stderr_length: finalStderr.length,
@@ -823,7 +823,7 @@ async function* runPowerShellCommand({
   // Set up auto-backgrounding on timeout if enabled
   if (shellCommand.onTimeout && shouldAutoBackground) {
     shellCommand.onTimeout(backgroundFn => {
-      startBackgrounding('tengu_powershell_command_timeout_backgrounded', backgroundFn);
+      startBackgrounding('zy_powershell_command_timeout_backgrounded', backgroundFn);
     });
   }
 
@@ -834,7 +834,7 @@ async function* runPowerShellCommand({
     setTimeout(() => {
       if (shellCommand.status === 'running' && backgroundShellId === undefined) {
         assistantAutoBackgrounded = true;
-        startBackgrounding('tengu_powershell_command_assistant_auto_backgrounded');
+        startBackgrounding('zy_powershell_command_assistant_auto_backgrounded');
       }
     }, ASSISTANT_BLOCKING_BUDGET_MS).unref();
   }
@@ -844,7 +844,7 @@ async function* runPowerShellCommand({
   // regardless of the command type (isAutobackgroundingAllowed only applies to automatic backgrounding)
   if (run_in_background === true && !isBackgroundTasksDisabled) {
     const shellId = await spawnBackgroundTask();
-    logEvent('tengu_powershell_command_explicitly_backgrounded', {
+    logEvent('zy_powershell_command_explicitly_backgrounded', {
       command_type: getCommandTypeForLogging(command)
     });
     return {
@@ -926,7 +926,7 @@ async function* runPowerShellCommand({
       if (abortController.signal.aborted && abortController.signal.reason === 'interrupt' && !interruptBackgroundingStarted) {
         interruptBackgroundingStarted = true;
         if (!isBackgroundTasksDisabled) {
-          startBackgrounding('tengu_powershell_command_interrupt_backgrounded');
+          startBackgrounding('zy_powershell_command_interrupt_backgrounded');
           // Reloop so the backgroundShellId check (above) catches the sync
           // foregroundTaskId→background path. Without this, we fall through
           // to the Ctrl+B check below, which matches status==='backgrounded'

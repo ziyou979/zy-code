@@ -1,6 +1,6 @@
 /**
- * Plugin and marketplace subcommand handlers — extracted from main.tsx for lazy loading.
- * These are dynamically imported only when `zy plugin *` or `zy plugin marketplace *` runs.
+ * 插件和 marketplace 子命令处理器 — 从 main.tsx 提取以便懒加载。
+ * 仅在运行 `zy plugin *` 或 `zy plugin marketplace *` 时动态导入。
  */
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
 import figures from 'figures'
@@ -58,23 +58,24 @@ import {
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { plural } from '../../utils/stringUtils.js'
 import { cliError, cliOk } from '../exit.js'
+import { tSync } from '../../i18n/index.js'
 
-// Re-export for main.tsx to reference in option definitions
+// 重新导出，供 main.tsx 在选项定义中引用
 export { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES }
 
 /**
- * Helper function to handle marketplace command errors consistently.
+ * 处理 marketplace 命令错误的辅助函数。
  */
 export function handleMarketplaceError(error: unknown, action: string): never {
   logError(error)
-  cliError(`${figures.cross} Failed to ${action}: ${errorMessage(error)}`)
+  cliError(`${figures.cross} ${tSync('plugins.marketplace.handleFailed', { action, error: errorMessage(error) })}`)
 }
 
 function printValidationResult(result: ValidationResult): void {
   if (result.errors.length > 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(
-      `${figures.cross} Found ${result.errors.length} ${plural(result.errors.length, 'error')}:\n`,
+      `${figures.cross} ${tSync('plugins.validate.foundErrors', { count: result.errors.length })}:\n`,
     )
     result.errors.forEach(error => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -86,7 +87,7 @@ function printValidationResult(result: ValidationResult): void {
   if (result.warnings.length > 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(
-      `${figures.warning} Found ${result.warnings.length} ${plural(result.warnings.length, 'warning')}:\n`,
+      `${figures.warning} ${tSync('plugins.validate.foundWarnings', { count: result.warnings.length })}:\n`,
     )
     result.warnings.forEach(warning => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -97,7 +98,7 @@ function printValidationResult(result: ValidationResult): void {
   }
 }
 
-// plugin validate
+// 插件验证
 export async function pluginValidateHandler(
   manifestPath: string,
   options: { cowork?: boolean },
@@ -107,13 +108,12 @@ export async function pluginValidateHandler(
     const result = await validateManifest(manifestPath)
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`Validating ${result.fileType} manifest: ${result.filePath}\n`)
+    console.log(`${tSync('plugins.validate.validatingManifest', { fileType: result.fileType, filePath: result.filePath })}\n`)
     printValidationResult(result)
 
-    // If this is a plugin manifest located inside a .zy-plugin directory,
-    // also validate the plugin's content files (skills, agents, commands,
-    // hooks). Works whether the user passed a directory or the plugin.json
-    // path directly.
+    // 如果是位于 .zy-plugin 目录内的插件清单，
+    // 还需验证插件的内容文件（skills、agents、commands、hooks）。
+    // 无论用户传入的是目录还是 plugin.json 路径均可工作。
     let contentResults: ValidationResult[] = []
     if (result.fileType === 'plugin') {
       const manifestDir = dirname(result.filePath)
@@ -121,7 +121,7 @@ export async function pluginValidateHandler(
         contentResults = await validatePluginContents(dirname(manifestDir))
         for (const r of contentResults) {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`Validating ${r.fileType}: ${r.filePath}\n`)
+          console.log(`${tSync('plugins.validate.validatingFile', { fileType: r.fileType, filePath: r.filePath })}\n`)
           printValidationResult(r)
         }
       }
@@ -135,32 +135,32 @@ export async function pluginValidateHandler(
     if (allSuccess) {
       cliOk(
         hasWarnings
-          ? `${figures.tick} Validation passed with warnings`
-          : `${figures.tick} Validation passed`,
+          ? `${figures.tick} ${tSync('plugins.validate.passedWithWarnings')}`
+          : `${figures.tick} ${tSync('plugins.validate.passed')}`,
       )
     } else {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`${figures.cross} Validation failed`)
+      console.log(`${figures.cross} ${tSync('plugins.validate.failed')}`)
       process.exit(1)
     }
   } catch (error) {
     logError(error)
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(
-      `${figures.cross} Unexpected error during validation: ${errorMessage(error)}`,
+      `${figures.cross} ${tSync('plugins.validate.unexpectedError', { error: errorMessage(error) })}`,
     )
     process.exit(2)
   }
 }
 
-// plugin list (lines 5217–5416)
+// 插件列表
 export async function pluginListHandler(options: {
   json?: boolean
   available?: boolean
   cowork?: boolean
 }): Promise<void> {
   if (options.cowork) setUseCoworkPlugins(true)
-  logEvent('tengu_plugin_list_command', {})
+  logEvent('zy_plugin_list_command', {})
 
   const installedData = loadInstalledPluginsV2()
   const { getPluginEditableScopes } = await import(
@@ -170,11 +170,11 @@ export async function pluginListHandler(options: {
 
   const pluginIds = Object.keys(installedData.plugins)
 
-  // Load all plugins once. The JSON and human paths both need:
-  //  - loadErrors (to show load failures per plugin)
-  //  - inline plugins (session-only via --plugin-dir, source='name@inline')
-  //    which are NOT in installedData.plugins (V2 bookkeeping) — they must
-  //    be surfaced separately or `plugin list` silently ignores --plugin-dir.
+  // 一次性加载所有插件。JSON 和人类可读路径都需要：
+  //  - loadErrors（显示每个插件的加载失败）
+  //  - inline 插件（通过 --plugin-dir 的会话级插件，source='name@inline'）
+  //    它们不在 installedData.plugins（V2 账簿）中 — 必须单独展示，
+  //    否则 `plugin list` 会静默忽略 --plugin-dir。
   const {
     enabled: loadedEnabled,
     disabled: loadedDisabled,
@@ -184,16 +184,16 @@ export async function pluginListHandler(options: {
   const inlinePlugins = allLoadedPlugins.filter(p =>
     p.source.endsWith('@inline'),
   )
-  // Path-level inline failures (dir doesn't exist, parse error before
-  // manifest is read) use source='inline[N]'. Plugin-level errors after
-  // manifest read use source='name@inline'. Collect both for the session
-  // section — these are otherwise invisible since they have no pluginId.
+  // 路径级 inline 失败（目录不存在、清单读取前的解析错误）
+  // 使用 source='inline[N]'。清单读取后的插件级错误使用
+  // source='name@inline'。两者都收集到会话部分 — 否则不可见，
+  // 因为它们没有 pluginId。
   const inlineLoadErrors = loadErrors.filter(
     e => e.source.endsWith('@inline') || e.source.startsWith('inline['),
   )
 
   if (options.json) {
-    // Create a map of plugin source to loaded plugin for quick lookup
+    // 创建插件 source 到已加载插件的映射，用于快速查找
     const loadedPluginMap = new Map(allLoadedPlugins.map(p => [p.source, p]))
 
     const plugins: Array<{
@@ -213,7 +213,7 @@ export async function pluginListHandler(options: {
       const installations = installedData.plugins[pluginId]
       if (!installations || installations.length === 0) continue
 
-      // Find loading errors for this plugin
+      // 查找此插件的加载错误
       const pluginName = parsePluginIdentifier(pluginId).name
       const pluginErrors = loadErrors
         .filter(
@@ -223,12 +223,12 @@ export async function pluginListHandler(options: {
         .map(getPluginErrorMessage)
 
       for (const installation of installations) {
-        // Try to find the loaded plugin to get MCP servers
+        // 尝试查找已加载的插件以获取 MCP 服务器
         const loadedPlugin = loadedPluginMap.get(pluginId)
         let mcpServers: Record<string, unknown> | undefined
 
         if (loadedPlugin) {
-          // Load MCP servers if not already cached
+          // 如果尚未缓存则加载 MCP 服务器
           const servers =
             loadedPlugin.mcpServers ||
             (await loadPluginMcpServers(loadedPlugin))
@@ -252,14 +252,13 @@ export async function pluginListHandler(options: {
       }
     }
 
-    // Session-only plugins: scope='session', no install metadata.
-    // Filter from inlineLoadErrors (not loadErrors) so an installed plugin
-    // with the same manifest name doesn't cross-contaminate via e.plugin.
-    // The e.plugin fallback catches the dirName≠manifestName case:
-    // createPluginFromPath tags errors with `${dirName}@inline` but
-    // plugin.source is reassigned to `${manifest.name}@inline` afterward
-    // (pluginLoader.ts loadInlinePlugins), so e.source !== p.source when
-    // a dev checkout dir like ~/code/my-fork/ has manifest name 'cool-plugin'.
+    // 会话级插件：scope='session'，无安装元数据。
+    // 从 inlineLoadErrors（而非 loadErrors）过滤，以避免同名已安装插件
+    // 通过 e.plugin 交叉污染。e.plugin 回退处理 dirName≠manifestName 的情况：
+    // createPluginFromPath 用 `${dirName}@inline` 标记错误，但之后
+    // plugin.source 被重新赋值为 `${manifest.name}@inline`
+    // （pluginLoader.ts loadInlinePlugins），因此当开发检出目录如
+    // ~/code/my-fork/ 的清单名为 'cool-plugin' 时，e.source !== p.source。
     for (const p of inlinePlugins) {
       const servers = p.mcpServers || (await loadPluginMcpServers(p))
       const pErrors = inlineLoadErrors
@@ -278,9 +277,9 @@ export async function pluginListHandler(options: {
         errors: pErrors.length > 0 ? pErrors : undefined,
       })
     }
-    // Path-level inline failures (--plugin-dir /nonexistent): no LoadedPlugin
-    // exists so the loop above can't surface them. Mirror the human-path
-    // handling so JSON consumers see the failure instead of silent omission.
+    // 路径级 inline 失败（--plugin-dir /nonexistent）：不存在 LoadedPlugin，
+    // 因此上面的循环无法展示它们。与人类可读路径的处理保持一致，
+    // 以便 JSON 消费者看到失败而非静默遗漏。
     for (const e of inlineLoadErrors.filter(e =>
       e.source.startsWith('inline['),
     )) {
@@ -294,7 +293,7 @@ export async function pluginListHandler(options: {
       })
     }
 
-    // If --available is set, also load available plugins from marketplaces
+    // 如果设置了 --available，还从 marketplace 加载可用插件
     if (options.available) {
       const available: Array<{
         pluginId: string
@@ -321,7 +320,7 @@ export async function pluginListHandler(options: {
           if (marketplace) {
             for (const entry of marketplace.plugins) {
               const pluginId = createPluginId(entry.name, marketplaceName)
-              // Only include plugins that are not already installed
+              // 仅包含尚未安装的插件
               if (!isPluginInstalled(pluginId)) {
                 available.push({
                   pluginId,
@@ -337,7 +336,7 @@ export async function pluginListHandler(options: {
           }
         }
       } catch {
-        // Silently ignore marketplace loading errors
+        // 静默忽略 marketplace 加载错误
       }
 
       cliOk(jsonStringify({ installed: plugins, available }, null, 2))
@@ -347,26 +346,26 @@ export async function pluginListHandler(options: {
   }
 
   if (pluginIds.length === 0 && inlinePlugins.length === 0) {
-    // inlineLoadErrors can exist with zero inline plugins (e.g. --plugin-dir
-    // points at a nonexistent path). Don't early-exit over them — fall
-    // through to the session section so the failure is visible.
+    // inlineLoadErrors 可能在零个 inline 插件时存在（例如 --plugin-dir
+    // 指向不存在的路径）。不要在此提前返回 — 继续进入会话部分
+    // 以使失败可见。
     if (inlineLoadErrors.length === 0) {
       cliOk(
-        'No plugins installed. Use `zy plugin install` to install a plugin.',
+        tSync('plugins.list.noPlugins'),
       )
     }
   }
 
   if (pluginIds.length > 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('Installed plugins:\n')
+    console.log('已安装的插件：\n')
   }
 
   for (const pluginId of pluginIds.sort()) {
     const installations = installedData.plugins[pluginId]
     if (!installations || installations.length === 0) continue
 
-    // Find loading errors for this plugin
+    // 查找此插件的加载错误
     const pluginName = parsePluginIdentifier(pluginId).name
     const pluginErrors = loadErrors.filter(
       e => e.source === pluginId || ('plugin' in e && e.plugin === pluginName),
@@ -376,24 +375,24 @@ export async function pluginListHandler(options: {
       const isEnabled = enabledPlugins.has(pluginId)
       const status =
         pluginErrors.length > 0
-          ? `${figures.cross} failed to load`
+          ? `${figures.cross} ${tSync('plugins.list.statusLoadFailed')}`
           : isEnabled
-            ? `${figures.tick} enabled`
-            : `${figures.cross} disabled`
+            ? `${figures.tick} ${tSync('plugins.list.statusEnabled')}`
+            : `${figures.cross} ${tSync('plugins.list.statusDisabled')}`
       const version = installation.version || 'unknown'
       const scope = installation.scope
 
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${figures.pointer} ${pluginId}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    Version: ${version}`)
+      console.log(`    ${tSync('plugins.list.version', { version })}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    Scope: ${scope}`)
+      console.log(`    ${tSync('plugins.list.scope', { scope })}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    Status: ${status}`)
+      console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
       for (const error of pluginErrors) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(`    Error: ${getPluginErrorMessage(error)}`)
+        console.log(`    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(error) })}`)
       }
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log('')
@@ -402,34 +401,34 @@ export async function pluginListHandler(options: {
 
   if (inlinePlugins.length > 0 || inlineLoadErrors.length > 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('Session-only plugins (--plugin-dir):\n')
+    console.log(`${tSync('plugins.list.sessionOnly')}\n`)
     for (const p of inlinePlugins) {
-      // Same dirName≠manifestName fallback as the JSON path above — error
-      // sources use the dir basename but p.source uses the manifest name.
+      // 与上方 JSON 路径相同的 dirName≠manifestName 回退处理 —
+      // 错误 source 使用目录基准名，但 p.source 使用清单名。
       const pErrors = inlineLoadErrors.filter(
         e => e.source === p.source || ('plugin' in e && e.plugin === p.name),
       )
       const status =
         pErrors.length > 0
-          ? `${figures.cross} loaded with errors`
-          : `${figures.tick} loaded`
+          ? `${figures.cross} ${tSync('plugins.list.statusLoadedWithErrors')}`
+          : `${figures.tick} ${tSync('plugins.list.statusLoaded')}`
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${figures.pointer} ${p.source}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    Version: ${p.manifest.version ?? 'unknown'}`)
+      console.log(`    ${tSync('plugins.list.version', { version: p.manifest.version ?? 'unknown' })}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    Path: ${p.path}`)
+      console.log(`    ${tSync('plugins.list.pathLabel', { path: p.path })}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    Status: ${status}`)
+      console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
       for (const e of pErrors) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(`    Error: ${getPluginErrorMessage(e)}`)
+        console.log(`    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(e) })}`)
       }
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log('')
     }
-    // Path-level failures: no LoadedPlugin object exists. Show them so
-    // `--plugin-dir /typo` doesn't just silently produce nothing.
+    // 路径级失败：不存在 LoadedPlugin 对象。展示它们，
+    // 以免 `--plugin-dir /typo` 静默无输出。
     for (const e of inlineLoadErrors.filter(e =>
       e.source.startsWith('inline['),
     )) {
@@ -443,7 +442,7 @@ export async function pluginListHandler(options: {
   cliOk()
 }
 
-// marketplace add (lines 5433–5487)
+// marketplace 添加
 export async function marketplaceAddHandler(
   source: string,
   options: { cowork?: boolean; sparse?: string[]; scope?: string },
@@ -454,7 +453,7 @@ export async function marketplaceAddHandler(
 
     if (!parsed) {
       cliError(
-        `${figures.cross} Invalid marketplace source format. Try: owner/repo, https://..., or ./path`,
+        `${figures.cross} ${tSync('plugins.marketplace.invalidSourceFormat')}`,
       )
     }
 
@@ -462,11 +461,11 @@ export async function marketplaceAddHandler(
       cliError(`${figures.cross} ${parsed.error}`)
     }
 
-    // Validate scope
+    // 验证作用域
     const scope = options.scope ?? 'user'
     if (scope !== 'user' && scope !== 'project' && scope !== 'local') {
       cliError(
-        `${figures.cross} Invalid scope '${scope}'. Use: user, project, or local`,
+        `${figures.cross} ${tSync('plugins.marketplace.invalidScope', { scope })}`,
       )
     }
     const settingSource = scopeToSettingSource(scope)
@@ -484,13 +483,13 @@ export async function marketplaceAddHandler(
         }
       } else {
         cliError(
-          `${figures.cross} --sparse is only supported for github and git marketplace sources (got: ${marketplaceSource.source})`,
+          `${figures.cross} ${tSync('plugins.marketplace.sparseNotSupported', { source: marketplaceSource.source })}`,
         )
       }
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('Adding marketplace...')
+    console.log(tSync('plugins.marketplace.adding'))
 
     const { name, alreadyMaterialized, resolvedSource } =
       await addMarketplaceSource(marketplaceSource, message => {
@@ -498,7 +497,7 @@ export async function marketplaceAddHandler(
         console.log(message)
       })
 
-    // Write intent to settings at the requested scope
+    // 将意图写入所请求作用域的设置中
     saveMarketplaceToSettings(name, { source: resolvedSource }, settingSource)
 
     clearAllCaches()
@@ -508,22 +507,22 @@ export async function marketplaceAddHandler(
       sourceType =
         marketplaceSource.repo as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     }
-    logEvent('tengu_marketplace_added', {
+    logEvent('zy_marketplace_added', {
       source_type:
         sourceType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     cliOk(
       alreadyMaterialized
-        ? `${figures.tick} Marketplace '${name}' already on disk — declared in ${scope} settings`
-        : `${figures.tick} Successfully added marketplace: ${name} (declared in ${scope} settings)`,
+        ? `${figures.tick} ${tSync('plugins.marketplace.alreadyOnDisk', { name, scope })}`
+        : `${figures.tick} ${tSync('plugins.marketplace.added', { name, scope })}`,
     )
   } catch (error) {
     handleMarketplaceError(error, 'add marketplace')
   }
 }
 
-// marketplace list (lines 5497–5565)
+// marketplace 列表
 export async function marketplaceListHandler(options: {
   json?: boolean
   cowork?: boolean
@@ -552,11 +551,11 @@ export async function marketplaceListHandler(options: {
     }
 
     if (names.length === 0) {
-      cliOk('No marketplaces configured')
+      cliOk(tSync('plugins.marketplace.noneConfigured'))
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('Configured marketplaces:\n')
+    console.log(`${tSync('plugins.marketplace.configured')}\n`)
     names.forEach(name => {
       const marketplace = config[name]
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -566,19 +565,19 @@ export async function marketplaceListHandler(options: {
         const src = marketplace.source
         if (src.source === 'github') {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`    Source: GitHub (${src.repo})`)
+          console.log(`    ${tSync('plugins.marketplace.sourceGithub', { repo: src.repo })}`)
         } else if (src.source === 'git') {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`    Source: Git (${src.url})`)
+          console.log(`    ${tSync('plugins.marketplace.sourceGit', { url: src.url })}`)
         } else if (src.source === 'url') {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`    Source: URL (${src.url})`)
+          console.log(`    ${tSync('plugins.marketplace.sourceUrl', { url: src.url })}`)
         } else if (src.source === 'directory') {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`    Source: Directory (${src.path})`)
+          console.log(`    ${tSync('plugins.marketplace.sourceDirectory', { path: src.path })}`)
         } else if (src.source === 'file') {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`    Source: File (${src.path})`)
+          console.log(`    ${tSync('plugins.marketplace.sourceFile', { path: src.path })}`)
         }
       }
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -591,7 +590,7 @@ export async function marketplaceListHandler(options: {
   }
 }
 
-// marketplace remove (lines 5576–5598)
+// marketplace 移除
 export async function marketplaceRemoveHandler(
   name: string,
   options: { cowork?: boolean },
@@ -601,18 +600,18 @@ export async function marketplaceRemoveHandler(
     await removeMarketplaceSource(name)
     clearAllCaches()
 
-    logEvent('tengu_marketplace_removed', {
+    logEvent('zy_marketplace_removed', {
       marketplace_name:
         name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
-    cliOk(`${figures.tick} Successfully removed marketplace: ${name}`)
+    cliOk(`${figures.tick} ${tSync('plugins.marketplace.removed', { name })}`)
   } catch (error) {
     handleMarketplaceError(error, 'remove marketplace')
   }
 }
 
-// marketplace update (lines 5609–5672)
+// marketplace 更新
 export async function marketplaceUpdateHandler(
   name: string | undefined,
   options: { cowork?: boolean },
@@ -621,7 +620,7 @@ export async function marketplaceUpdateHandler(
   try {
     if (name) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`Updating marketplace: ${name}...`)
+      console.log(tSync('plugins.marketplace.updating', { name }))
 
       await refreshMarketplace(name, message => {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -630,33 +629,33 @@ export async function marketplaceUpdateHandler(
 
       clearAllCaches()
 
-      logEvent('tengu_marketplace_updated', {
+      logEvent('zy_marketplace_updated', {
         marketplace_name:
           name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
-      cliOk(`${figures.tick} Successfully updated marketplace: ${name}`)
+      cliOk(`${figures.tick} ${tSync('plugins.marketplace.updated', { name })}`)
     } else {
       const config = await loadKnownMarketplacesConfig()
       const marketplaceNames = Object.keys(config)
 
       if (marketplaceNames.length === 0) {
-        cliOk('No marketplaces configured')
+        cliOk(tSync('plugins.marketplace.noneConfigured'))
       }
 
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`Updating ${marketplaceNames.length} marketplace(s)...`)
+      console.log(tSync('plugins.marketplace.updatingAll', { count: marketplaceNames.length }))
 
       await refreshAllMarketplaces()
       clearAllCaches()
 
-      logEvent('tengu_marketplace_updated_all', {
+      logEvent('zy_marketplace_updated_all', {
         count:
           marketplaceNames.length as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
       cliOk(
-        `${figures.tick} Successfully updated ${marketplaceNames.length} marketplace(s)`,
+        `${figures.tick} ${tSync('plugins.marketplace.updatedAll', { count: marketplaceNames.length })}`,
       )
     }
   } catch (error) {
@@ -664,7 +663,7 @@ export async function marketplaceUpdateHandler(
   }
 }
 
-// plugin install (lines 5690–5721)
+// 插件安装
 export async function pluginInstallHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean },
@@ -672,7 +671,7 @@ export async function pluginInstallHandler(
   if (options.cowork) setUseCoworkPlugins(true)
   const scope = options.scope || 'user'
   if (options.cowork && scope !== 'user') {
-    cliError('--cowork can only be used with user scope')
+    cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
   if (
     !VALID_INSTALLABLE_SCOPES.includes(
@@ -680,15 +679,15 @@ export async function pluginInstallHandler(
     )
   ) {
     cliError(
-      `Invalid scope: ${scope}. Must be one of: ${VALID_INSTALLABLE_SCOPES.join(', ')}.`,
+      tSync('plugins.common.invalidInstallScope', { scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
     )
   }
-  // _PROTO_* routes to PII-tagged plugin_name/marketplace_name BQ columns.
-  // Unredacted plugin arg was previously logged to general-access
-  // additional_metadata for all users — dropped in favor of the privileged
-  // column route. marketplace may be undefined (fires before resolution).
+  // _PROTO_* 路由到带 PII 标记的 plugin_name/marketplace_name BQ 列。
+  // 未脱敏的插件参数之前被记录到所有用户的 general-access
+  // additional_metadata 中 — 已删除，改用特权列路由。
+  // marketplace 可能为 undefined（在解析前触发）。
   const { name, marketplace } = parsePluginIdentifier(plugin)
-  logEvent('tengu_plugin_install_command', {
+  logEvent('zy_plugin_install_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
       _PROTO_marketplace_name:
@@ -700,7 +699,7 @@ export async function pluginInstallHandler(
   await installPlugin(plugin, scope as 'user' | 'project' | 'local')
 }
 
-// plugin uninstall (lines 5738–5769)
+// 插件卸载
 export async function pluginUninstallHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean; keepData?: boolean },
@@ -708,7 +707,7 @@ export async function pluginUninstallHandler(
   if (options.cowork) setUseCoworkPlugins(true)
   const scope = options.scope || 'user'
   if (options.cowork && scope !== 'user') {
-    cliError('--cowork can only be used with user scope')
+    cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
   if (
     !VALID_INSTALLABLE_SCOPES.includes(
@@ -716,11 +715,11 @@ export async function pluginUninstallHandler(
     )
   ) {
     cliError(
-      `Invalid scope: ${scope}. Must be one of: ${VALID_INSTALLABLE_SCOPES.join(', ')}.`,
+      tSync('plugins.common.invalidInstallScope', { scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
     )
   }
   const { name, marketplace } = parsePluginIdentifier(plugin)
-  logEvent('tengu_plugin_uninstall_command', {
+  logEvent('zy_plugin_uninstall_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
       _PROTO_marketplace_name:
@@ -736,7 +735,7 @@ export async function pluginUninstallHandler(
   )
 }
 
-// plugin enable (lines 5783–5818)
+// 插件启用
 export async function pluginEnableHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean },
@@ -750,22 +749,22 @@ export async function pluginEnableHandler(
       )
     ) {
       cliError(
-        `Invalid scope "${options.scope}". Valid scopes: ${VALID_INSTALLABLE_SCOPES.join(', ')}`,
+        tSync('plugins.common.invalidScope', { scope: options.scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
       )
     }
     scope = options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number]
   }
   if (options.cowork && scope !== undefined && scope !== 'user') {
-    cliError('--cowork can only be used with user scope')
+    cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
 
-  // --cowork always operates at user scope
+  // --cowork 始终在 user 作用域下操作
   if (options.cowork && scope === undefined) {
     scope = 'user'
   }
 
   const { name, marketplace } = parsePluginIdentifier(plugin)
-  logEvent('tengu_plugin_enable_command', {
+  logEvent('zy_plugin_enable_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
       _PROTO_marketplace_name:
@@ -778,29 +777,29 @@ export async function pluginEnableHandler(
   await enablePlugin(plugin, scope)
 }
 
-// plugin disable (lines 5833–5902)
+// 插件禁用
 export async function pluginDisableHandler(
   plugin: string | undefined,
   options: { scope?: string; cowork?: boolean; all?: boolean },
 ): Promise<void> {
   if (options.all && plugin) {
-    cliError('Cannot use --all with a specific plugin')
+    cliError(tSync('plugins.disable.allWithPlugin'))
   }
 
   if (!options.all && !plugin) {
-    cliError('Please specify a plugin name or use --all to disable all plugins')
+    cliError(tSync('plugins.disable.specifyPlugin'))
   }
 
   if (options.cowork) setUseCoworkPlugins(true)
 
   if (options.all) {
     if (options.scope) {
-      cliError('Cannot use --scope with --all')
+      cliError(tSync('plugins.disable.scopeWithAll'))
     }
 
-    // No _PROTO_plugin_name here — --all disables all plugins.
-    // Distinguishable from the specific-plugin branch by plugin_name IS NULL.
-    logEvent('tengu_plugin_disable_command', {})
+    // 此处无 _PROTO_plugin_name — --all 禁用所有插件。
+    // 通过 plugin_name IS NULL 与特定插件分支区分。
+    logEvent('zy_plugin_disable_command', {})
 
     await disableAllPlugins()
     return
@@ -814,22 +813,22 @@ export async function pluginDisableHandler(
       )
     ) {
       cliError(
-        `Invalid scope "${options.scope}". Valid scopes: ${VALID_INSTALLABLE_SCOPES.join(', ')}`,
+        tSync('plugins.common.invalidScope', { scope: options.scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
       )
     }
     scope = options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number]
   }
   if (options.cowork && scope !== undefined && scope !== 'user') {
-    cliError('--cowork can only be used with user scope')
+    cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
 
-  // --cowork always operates at user scope
+  // --cowork 始终在 user 作用域下操作
   if (options.cowork && scope === undefined) {
     scope = 'user'
   }
 
   const { name, marketplace } = parsePluginIdentifier(plugin!)
-  logEvent('tengu_plugin_disable_command', {
+  logEvent('zy_plugin_disable_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
       _PROTO_marketplace_name:
@@ -842,14 +841,14 @@ export async function pluginDisableHandler(
   await disablePlugin(plugin!, scope)
 }
 
-// plugin update (lines 5918–5948)
+// 插件更新
 export async function pluginUpdateHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean },
 ): Promise<void> {
   if (options.cowork) setUseCoworkPlugins(true)
   const { name, marketplace } = parsePluginIdentifier(plugin)
-  logEvent('tengu_plugin_update_command', {
+  logEvent('zy_plugin_update_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
       _PROTO_marketplace_name:
@@ -865,13 +864,13 @@ export async function pluginUpdateHandler(
       )
     ) {
       cliError(
-        `Invalid scope "${options.scope}". Valid scopes: ${VALID_UPDATE_SCOPES.join(', ')}`,
+        tSync('plugins.common.invalidScope', { scope: options.scope, valid: VALID_UPDATE_SCOPES.join(', ') }),
       )
     }
     scope = options.scope as (typeof VALID_UPDATE_SCOPES)[number]
   }
   if (options.cowork && scope !== 'user') {
-    cliError('--cowork can only be used with user scope')
+    cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
 
   await updatePluginCli(plugin, scope)

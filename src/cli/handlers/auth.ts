@@ -1,4 +1,4 @@
-/* eslint-disable custom-rules/no-process-exit -- CLI subcommand handler intentionally exits */
+/* eslint-disable custom-rules/no-process-exit -- CLI 子命令处理器有意退出 */
 
 import {
   clearAuthRelatedCaches,
@@ -33,6 +33,7 @@ import { saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
+import { tSync } from '../../i18n/index.js'
 import { logError } from '../../utils/log.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
@@ -43,14 +44,14 @@ import {
 } from '../../utils/status.js'
 
 /**
- * Shared post-token-acquisition logic. Saves tokens, fetches profile/roles,
- * and sets up the local auth state.
+ * 获取令牌后的共享逻辑。保存令牌、获取用户资料/角色，
+ * 并设置本地认证状态。
  */
 export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
-  // Clear old state before saving new credentials
+  // 在保存新凭据前清除旧状态
   await performLogout({ clearOnboarding: false })
 
-  // Reuse pre-fetched profile if available, otherwise fetch fresh
+  // 如果有预获取的用户资料则复用，否则重新获取
   const profile =
     (tokens as any).profile ?? (await getOauthProfileFromOauthToken(tokens.accessToken))
   if (profile) {
@@ -67,7 +68,7 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
       accountCreatedAt: profile.account.created_at,
     })
   } else if ((tokens as any).tokenAccount) {
-    // Fallback to token exchange account data when profile endpoint fails
+    // 当用户资料端点失败时，回退使用令牌交换的账户数据
     storeOAuthAccountInfo({
       accountUuid: (tokens as any).tokenAccount.uuid,
       emailAddress: (tokens as any).tokenAccount.emailAddress,
@@ -79,14 +80,14 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
   clearOAuthTokenCache()
 
   if (storageResult.warning) {
-    logEvent('tengu_oauth_storage_warning', {
+    logEvent('zy_oauth_storage_warning', {
       warning:
         storageResult.warning as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
 
-  // Roles and first-token-date may fail for limited-scope tokens (e.g.
-  // inference-only from setup-token). They're not required for core auth.
+  // 角色和首次令牌日期对于有限范围的令牌可能会失败（例如仅推理用途的 setup-token）。
+  // 它们不是核心认证所必需的。
   await fetchAndStoreUserRoles(tokens.accessToken).catch(err =>
     logForDebugging(String(err), { level: 'error' }),
   )
@@ -96,11 +97,11 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
       logForDebugging(String(err), { level: 'error' }),
     )
   } else {
-    // API key creation is critical for Console users — let it throw.
+    // API 密钥创建对控制台用户至关重要——允许抛出异常。
     const apiKey = await createAndStoreApiKey(tokens.accessToken)
     if (!apiKey) {
       throw new Error(
-        'Unable to create API key. The server accepted the request but did not return a key.',
+        tSync('auth.installOAuth.apiKeyCreationFailed'),
       )
     }
   }
@@ -121,29 +122,27 @@ export async function authLogin({
 }): Promise<void> {
   if (useConsole && zyai) {
     process.stderr.write(
-      'Error: --console and --zyai cannot be used together.\n',
+      tSync('auth.login.consoleZyaiMutualExclusive') + '\n',
     )
     process.exit(1)
   }
 
   const settings = getInitialSettings()
-  // forceLoginMethod is a hard constraint (enterprise setting) — matches ConsoleOAuthFlow behavior.
-  // Without it, --console selects Console; --zyai (or no flag) selects zy.ai.
+  // forceLoginMethod 是硬性约束（企业设置）——与 ConsoleOAuthFlow 行为一致。
+  // 若未设置，--console 选择控制台；--zyai（或无标志）选择 zy.ai。
   const loginWithZyAi = settings.forceLoginMethod
     ? settings.forceLoginMethod === 'zyai'
     : !useConsole
   const orgUUID = settings.forceLoginOrgUUID
 
-  // Fast path: if a refresh token is provided via env var, skip the browser
-  // OAuth flow and exchange it directly for tokens.
+  // 快速路径：如果通过环境变量提供了刷新令牌，则跳过浏览器
+  // OAuth 流程，直接用刷新令牌换取访问令牌。
   const envRefreshToken = process.env.ZY_CODE_OAUTH_REFRESH_TOKEN
   if (envRefreshToken) {
     const envScopes = process.env.ZY_CODE_OAUTH_SCOPES
     if (!envScopes) {
       process.stderr.write(
-        'ZY_CODE_OAUTH_SCOPES is required when using ZY_CODE_OAUTH_REFRESH_TOKEN.\n' +
-          'Set it to the space-separated scopes the refresh token was issued with\n' +
-          '(e.g. "user:inference" or "user:profile user:inference user:sessions:claude_code user:mcp_servers").\n',
+        tSync('auth.login.scopesRequired') + '\n',
       )
       process.exit(1)
     }
@@ -151,7 +150,7 @@ export async function authLogin({
     const scopes = envScopes.split(/\s+/).filter(Boolean)
 
     try {
-      logEvent('tengu_login_from_refresh_token', {})
+      logEvent('zy_login_from_refresh_token', {})
 
       const tokens = await refreshOAuthToken(envRefreshToken, { scopes })
       await installOAuthTokens(tokens)
@@ -162,23 +161,23 @@ export async function authLogin({
         process.exit(1)
       }
 
-      // Mark onboarding complete — interactive paths handle this via
-      // the Onboarding component, but the env var path skips it.
+      // 标记引导完成——交互式路径通过 Onboarding 组件处理此步骤，
+      // 但环境变量路径跳过了该组件。
       saveGlobalConfig(current => {
         if (current.hasCompletedOnboarding) return current
         return { ...current, hasCompletedOnboarding: true }
       })
 
-      logEvent('tengu_oauth_success', {
+      logEvent('zy_oauth_success', {
         loginWithZyAi: shouldUseZyAIAuth((tokens as any).scopes),
       })
-      process.stdout.write('Login successful.\n')
+      process.stdout.write(tSync('auth.login.successful') + '\n')
       process.exit(0)
     } catch (err) {
       logError(err)
       const sslHint = getSSLErrorHint(err)
       process.stderr.write(
-        `Login failed: ${errorMessage(err)}\n${sslHint ? sslHint + '\n' : ''}`,
+        tSync('auth.login.failed', { error: errorMessage(err) }) + '\n' + (sslHint ? sslHint + '\n' : ''),
       )
       process.exit(1)
     }
@@ -189,12 +188,12 @@ export async function authLogin({
   const oauthService = new OAuthService()
 
   try {
-    logEvent('tengu_oauth_flow_start', { loginWithZyAi })
+    logEvent('zy_oauth_flow_start', { loginWithZyAi })
 
     const result = await oauthService.startOAuthFlow(
       async url => {
-        process.stdout.write('Opening browser to sign in…\n')
-        process.stdout.write(`If the browser didn't open, visit: ${url}\n`)
+        process.stdout.write(tSync('auth.login.openingBrowser') + '\n')
+        process.stdout.write(tSync('auth.login.visitUrl', { url }) + '\n')
       },
       {
         loginWithZyAi,
@@ -212,15 +211,15 @@ export async function authLogin({
       process.exit(1)
     }
 
-    logEvent('tengu_oauth_success', { loginWithZyAi })
+    logEvent('zy_oauth_success', { loginWithZyAi })
 
-    process.stdout.write('Login successful.\n')
+    process.stdout.write(tSync('auth.login.successful') + '\n')
     process.exit(0)
   } catch (err) {
     logError(err)
     const sslHint = getSSLErrorHint(err)
     process.stderr.write(
-      `Login failed: ${errorMessage(err)}\n${sslHint ? sslHint + '\n' : ''}`,
+      tSync('auth.login.failed', { error: errorMessage(err) }) + '\n' + (sslHint ? sslHint + '\n' : ''),
     )
     process.exit(1)
   } finally {
@@ -241,7 +240,7 @@ export async function authStatus(opts: {
   const loggedIn =
     hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar || using3P
 
-  // Determine auth method
+  // 确定认证方式
   let authMethod: string = 'none'
   if (using3P) {
     authMethod = 'third_party'
@@ -281,11 +280,11 @@ export async function authStatus(opts: {
       }
     }
     if (!hasAuthProperty && hasApiKeyEnvVar) {
-      process.stdout.write('API key: ZY_API_KEY\n')
+      process.stdout.write(tSync('auth.status.apiKeyEnvVar') + '\n')
     }
     if (!loggedIn) {
       process.stdout.write(
-        'Not logged in. Run zy auth login to authenticate.\n',
+        tSync('auth.status.notLoggedIn') + '\n',
       )
     }
   } else {
@@ -319,9 +318,9 @@ export async function authLogout(): Promise<void> {
   try {
     await performLogout({ clearOnboarding: false })
   } catch {
-    process.stderr.write('Failed to log out.\n')
+    process.stderr.write(tSync('auth.logout.failed') + '\n')
     process.exit(1)
   }
-  process.stdout.write('Successfully logged out.\n')
+  process.stdout.write(tSync('auth.logout.successful') + '\n')
   process.exit(0)
 }

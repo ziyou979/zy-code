@@ -130,7 +130,7 @@ function createPermissionContext(
       )
     },
     logCancelled() {
-      logEvent('tengu_tool_use_cancelled', {
+      logEvent('zy_tool_use_cancelled', {
         messageID:
           messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         toolName: sanitizeToolNameForAnalytics(tool.name),

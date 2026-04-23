@@ -36,7 +36,7 @@ const ChannelAllowlistSchema = lazySchema(() =>
 
 export function getChannelAllowlist(): ChannelAllowlistEntry[] {
   const raw = getFeatureValue_CACHED_MAY_BE_STALE<unknown>(
-    'tengu_harbor_ledger',
+    'zy_harbor_ledger',
     [],
   )
   const parsed = ChannelAllowlistSchema().safeParse(raw)
@@ -49,7 +49,7 @@ export function getChannelAllowlist(): ChannelAllowlistEntry[] {
  * Default false; GrowthBook 5-min refresh.
  */
 export function isChannelsEnabled(): boolean {
-  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_harbor', false)
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_harbor', false)
 }
 
 /**

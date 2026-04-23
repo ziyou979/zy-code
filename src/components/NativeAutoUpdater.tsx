@@ -86,7 +86,7 @@ export function NativeAutoUpdater({
     const startTime = Date.now();
 
     // Log the start of an auto-update check for funnel analysis
-    logEvent('tengu_native_auto_updater_start', {});
+    logEvent('zy_native_auto_updater_start', {});
     try {
       // Check if current version is above the max allowed version
       const maxVersion = await getMaxVersion();
@@ -100,7 +100,7 @@ export function NativeAutoUpdater({
 
       // Handle lock contention gracefully - just return without treating as error
       if (result.lockFailed) {
-        logEvent('tengu_native_auto_updater_lock_contention', {
+        logEvent('zy_native_auto_updater_lock_contention', {
           latency_ms: latencyMs
         });
         return; // Silently skip this update check, will try again later
@@ -112,7 +112,7 @@ export function NativeAutoUpdater({
         latest: result.latestVersion
       });
       if (result.wasUpdated) {
-        logEvent('tengu_native_auto_updater_success', {
+        logEvent('zy_native_auto_updater_success', {
           latency_ms: latencyMs
         });
         onAutoUpdaterResult({
@@ -121,7 +121,7 @@ export function NativeAutoUpdater({
         });
       } else {
         // Already up to date
-        logEvent('tengu_native_auto_updater_up_to_date', {
+        logEvent('zy_native_auto_updater_up_to_date', {
           latency_ms: latencyMs
         });
       }
@@ -130,7 +130,7 @@ export function NativeAutoUpdater({
       const errorMessage = error instanceof Error ? error.message : String(error);
       logError(error);
       const errorType = getErrorType(errorMessage);
-      logEvent('tengu_native_auto_updater_fail', {
+      logEvent('zy_native_auto_updater_fail', {
         latency_ms: latencyMs,
         error_timeout: errorType === 'timeout',
         error_checksum: errorType === 'checksum_mismatch',

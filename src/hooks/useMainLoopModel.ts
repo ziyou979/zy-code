@@ -14,7 +14,7 @@ export function useMainLoopModel(): ModelName {
   const mainLoopModel = useAppState(s => s.mainLoopModel)
   const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession)
 
-  // parseUserSpecifiedModel reads tengu_ant_model_override via
+  // parseUserSpecifiedModel reads zy_ant_model_override via
   // _CACHED_MAY_BE_STALE (in resolveAntModel). Until GB init completes,
   // that's the stale disk cache; after, it's the in-memory remoteEval map.
   // AppState doesn't change when GB init finishes, so we subscribe to the

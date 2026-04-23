@@ -39,7 +39,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
     setIsOpen(true)
     if (!loggedAppearanceRef.current) {
       loggedAppearanceRef.current = true
-      logEvent('tengu_skill_improvement_survey', {
+      logEvent('zy_skill_improvement_survey', {
         event_type:
           'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         // _PROTO_skill_name routes to the privileged skill_name BQ column.
@@ -57,7 +57,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
 
       const applied = (selected as any) !== 'dismissed'
 
-      logEvent('tengu_skill_improvement_survey', {
+      logEvent('zy_skill_improvement_survey', {
         event_type:
           'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         response: (applied

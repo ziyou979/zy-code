@@ -292,10 +292,10 @@ function isProjectDirPath(absolutePath: string): boolean {
 /**
  * 检查暂存目录功能是否已启用。
  * 暂存目录是 Zy 写入临时文件的每会话目录。
- * 由 tengu_scratch Statsig 门控控制。
+ * 由 zy_scratch Statsig 门控控制。
  */
 export function isScratchpadEnabled(): boolean {
-  return checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_scratch')
+  return checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_scratch_dir')
 }
 
 /**

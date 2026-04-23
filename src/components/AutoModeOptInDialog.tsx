@@ -19,13 +19,13 @@ export function AutoModeOptInDialog({
   declineExits
 }: Props) {
   React.useEffect(() => {
-    logEvent("tengu_auto_mode_opt_in_dialog_shown", {});
+    logEvent("zy_auto_mode_opt_in_dialog_shown", {});
   }, []);
   const onChange = function onChange(value) {
     switch (value) {
       case "accept":
         {
-          logEvent("tengu_auto_mode_opt_in_dialog_accept", {});
+          logEvent("zy_auto_mode_opt_in_dialog_accept", {});
           updateSettingsForSource("userSettings", {
             skipAutoPermissionPrompt: true
           });
@@ -34,7 +34,7 @@ export function AutoModeOptInDialog({
         }
       case "accept-default":
         {
-          logEvent("tengu_auto_mode_opt_in_dialog_accept_default", {});
+          logEvent("zy_auto_mode_opt_in_dialog_accept_default", {});
           updateSettingsForSource("userSettings", {
             skipAutoPermissionPrompt: true,
             permissions: {
@@ -46,7 +46,7 @@ export function AutoModeOptInDialog({
         }
       case "decline":
         {
-          logEvent("tengu_auto_mode_opt_in_dialog_decline", {});
+          logEvent("zy_auto_mode_opt_in_dialog_decline", {});
           onDecline();
         }
     }

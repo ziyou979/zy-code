@@ -62,14 +62,14 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
     if (
       !feature('UPLOAD_USER_SETTINGS') ||
       !getFeatureValue_CACHED_MAY_BE_STALE(
-        'tengu_enable_settings_sync_push',
+        'zy_enable_settings_sync_push',
         false,
       ) ||
       !getIsInteractive() ||
       !isUsingOAuth()
     ) {
       logForDiagnosticsNoPII('info', 'settings_sync_upload_skipped')
-      logEvent('tengu_settings_sync_upload_skipped_ineligible', {})
+      logEvent('zy_settings_sync_upload_skipped_ineligible', {})
       return
     }
 
@@ -77,7 +77,7 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
     const result = await fetchUserSettings()
     if (!result.success) {
       logForDiagnosticsNoPII('warn', 'settings_sync_upload_fetch_failed')
-      logEvent('tengu_settings_sync_upload_fetch_failed', {})
+      logEvent('zy_settings_sync_upload_fetch_failed', {})
       return
     }
 
@@ -92,17 +92,17 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
     const entryCount = Object.keys(changedEntries).length
     if (entryCount === 0) {
       logForDiagnosticsNoPII('info', 'settings_sync_upload_no_changes')
-      logEvent('tengu_settings_sync_upload_skipped', {})
+      logEvent('zy_settings_sync_upload_skipped', {})
       return
     }
 
     const uploadResult = await uploadUserSettings(changedEntries)
     if (uploadResult.success) {
       logForDiagnosticsNoPII('info', 'settings_sync_upload_success')
-      logEvent('tengu_settings_sync_upload_success', { entryCount })
+      logEvent('zy_settings_sync_upload_success', { entryCount })
     } else {
       logForDiagnosticsNoPII('warn', 'settings_sync_upload_failed')
-      logEvent('tengu_settings_sync_upload_failed', { entryCount })
+      logEvent('zy_settings_sync_upload_failed', { entryCount })
     }
   } catch {
     // Fail-open: log unexpected errors but don't block startup
@@ -160,11 +160,11 @@ async function doDownloadUserSettings(
   if (feature('DOWNLOAD_USER_SETTINGS')) {
     try {
       if (
-        !getFeatureValue_CACHED_MAY_BE_STALE('tengu_strap_foyer', false) ||
+        !getFeatureValue_CACHED_MAY_BE_STALE('zy_strap_foyer', false) ||
         !isUsingOAuth()
       ) {
         logForDiagnosticsNoPII('info', 'settings_sync_download_skipped')
-        logEvent('tengu_settings_sync_download_skipped', {})
+        logEvent('zy_settings_sync_download_skipped', {})
         return false
       }
 
@@ -172,13 +172,13 @@ async function doDownloadUserSettings(
       const result = await fetchUserSettings(maxRetries)
       if (!result.success) {
         logForDiagnosticsNoPII('warn', 'settings_sync_download_fetch_failed')
-        logEvent('tengu_settings_sync_download_fetch_failed', {})
+        logEvent('zy_settings_sync_download_fetch_failed', {})
         return false
       }
 
       if (result.isEmpty) {
         logForDiagnosticsNoPII('info', 'settings_sync_download_empty')
-        logEvent('tengu_settings_sync_download_empty', {})
+        logEvent('zy_settings_sync_download_empty', {})
         return false
       }
 
@@ -189,12 +189,12 @@ async function doDownloadUserSettings(
         entryCount,
       })
       await applyRemoteEntriesToLocal(entries, projectId)
-      logEvent('tengu_settings_sync_download_success', { entryCount })
+      logEvent('zy_settings_sync_download_success', { entryCount })
       return true
     } catch {
       // Fail-open: log error but don't block CCR startup
       logForDiagnosticsNoPII('error', 'settings_sync_download_error')
-      logEvent('tengu_settings_sync_download_error', {})
+      logEvent('zy_settings_sync_download_error', {})
       return false
     }
   }

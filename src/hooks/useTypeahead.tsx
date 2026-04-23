@@ -219,7 +219,7 @@ async function generateBashSuggestions(input: string, cursorOffset: number): Pro
     return suggestions;
   } catch {
     // Silent failure - don't break UX
-    logEvent('tengu_shell_completion_failed', {});
+    logEvent('zy_shell_completion_failed', {});
     return [];
   }
 }

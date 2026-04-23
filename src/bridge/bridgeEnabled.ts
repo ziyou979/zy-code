@@ -63,7 +63,7 @@ function getOauthAccountInfo(): ReturnType<
 
 /**
  * Runtime check for the env-less (v2) REPL bridge path.
- * Returns true when the GrowthBook flag `tengu_bridge_repl_v2` is enabled.
+ * Returns true when the GrowthBook flag `zy_bridge_repl_v2` is enabled.
  *
  * This gates which implementation initReplBridge uses — NOT whether bridge
  * is available at all (see isBridgeEnabled above). Daemon/print paths stay
@@ -72,7 +72,7 @@ function getOauthAccountInfo(): ReturnType<
 export function isEnvLessBridgeEnabled(): boolean {
   return feature('BRIDGE_MODE')
     ? // @ts-ignore
-      getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_repl_v2', false)
+      getFeatureValue_CACHED_MAY_BE_STALE('zy_bridge_repl_v2', false)
     : false
 }
 
@@ -89,7 +89,7 @@ export function isCseShimEnabled(): boolean {
   return feature('BRIDGE_MODE')
     ? // @ts-ignore
       getFeatureValue_CACHED_MAY_BE_STALE(
-        'tengu_bridge_repl_v2_cse_shim_enabled',
+        'zy_bridge_repl_v2_cse_shim_enabled',
         true,
       )
     : true
@@ -112,7 +112,7 @@ export function checkBridgeMinVersion(): string | null {
 /**
  * Default for remoteControlAtStartup when the user hasn't explicitly set it.
  * When the CCR_AUTO_CONNECT build flag is present (ant-only) and the
- * tengu_cobalt_harbor GrowthBook gate is on, all sessions connect to CCR by
+ * zy_cobalt_harbor GrowthBook gate is on, all sessions connect to CCR by
  * default — the user can still opt out by setting remoteControlAtStartup=false
  * in config (explicit settings always win over this default).
  *

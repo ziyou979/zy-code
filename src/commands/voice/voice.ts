@@ -47,7 +47,7 @@ export const call: LocalCommandCall = async () => {
       }
     }
     settingsChangeDetector.notifyChange('userSettings')
-    logEvent('tengu_voice_toggled', { enabled: false })
+    logEvent('zy_voice_toggled', { enabled: false })
     return {
       type: 'text' as const,
       value: 'Voice mode disabled.',
@@ -121,7 +121,7 @@ export const call: LocalCommandCall = async () => {
     }
   }
   settingsChangeDetector.notifyChange('userSettings')
-  logEvent('tengu_voice_toggled', { enabled: true })
+  logEvent('zy_voice_toggled', { enabled: true })
   const key = getShortcutDisplay('voice:pushToTalk', 'Chat', 'Space')
   const stt = normalizeLanguageForSTT(currentSettings.language)
   const cfg = getGlobalConfig()

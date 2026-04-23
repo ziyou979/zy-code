@@ -158,7 +158,7 @@ export function MemoryFileSelector({
       autoMemoryEnabled: newValue
     });
     setAutoMemoryOn(newValue);
-    logEvent("tengu_auto_memory_toggled", {
+    logEvent("zy_auto_memory_toggled", {
       enabled: newValue
     });
   };
@@ -168,7 +168,7 @@ export function MemoryFileSelector({
       autoDreamEnabled: newValue_0
     });
     setAutoDreamOn(newValue_0);
-    logEvent("tengu_auto_dream_toggled", {
+    logEvent("zy_auto_dream_toggled", {
       enabled: newValue_0
     });
   };

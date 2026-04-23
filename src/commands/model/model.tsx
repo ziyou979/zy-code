@@ -20,7 +20,7 @@ function ModelPickerWrapper({
   const mainLoopModelForSession = useAppState(s_0 => s_0.mainLoopModelForSession);
   const setAppState = useSetAppState();
   const handleCancel = function handleCancel() {
-    logEvent("tengu_model_command_menu", {
+    logEvent("zy_model_command_menu", {
       action: "cancel" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
     const displayModel = renderModelLabel(mainLoopModel);
@@ -29,7 +29,7 @@ function ModelPickerWrapper({
     });
   };
   const handleSelect = function handleSelect(model, effort) {
-    logEvent("tengu_model_command_menu", {
+    logEvent("zy_model_command_menu", {
       action: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       from_model: mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       to_model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -165,7 +165,7 @@ function ShowModelAndClose(t0) {
 export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
   args = args?.trim() || '';
   if (COMMON_INFO_ARGS.includes(args)) {
-    logEvent('tengu_model_command_inline_help', {
+    logEvent('zy_model_command_inline_help', {
       args: args as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
     return <ShowModelAndClose onDone={onDone} />;
@@ -177,7 +177,7 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     return;
   }
   if (args) {
-    logEvent('tengu_model_command_inline', {
+    logEvent('zy_model_command_inline', {
       args: args as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
     return <SetModelAndClose args={args} onDone={onDone} />;

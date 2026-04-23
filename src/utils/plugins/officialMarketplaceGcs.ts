@@ -153,10 +153,10 @@ export async function fetchOfficialMarketplaceFromGcs(
     )
     return null
   } finally {
-    // tengu_plugin_remote_fetch schema shared with the telemetry PR
+    // zy_plugin_remote_fetch schema shared with the telemetry PR
     // (.daisy/inc-5046/index.md) — adds source:'marketplace_gcs'. All string
     // values below are static enums or a git SHA — not code/filepaths/PII.
-    logEvent('tengu_plugin_remote_fetch', {
+    logEvent('zy_plugin_remote_fetch', {
       source: 'marketplace_gcs' as SafeString,
       host: 'downloads.zy.ai' as SafeString,
       is_official: true,

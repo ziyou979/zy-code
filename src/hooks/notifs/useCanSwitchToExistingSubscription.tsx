@@ -27,7 +27,7 @@ async function _temp2() {
     return null;
   }
   saveGlobalConfig(_temp);
-  logEvent("tengu_switch_to_subscription_notice_shown", {});
+  logEvent("zy_switch_to_subscription_notice_shown", {});
   return {
     key: "switch-to-subscription",
     jsx: <Text color="suggestion">Use your existing Zy {subscriptionType} plan with ZY Code<Text color="text" dimColor={true}>{" "}· /login to activate</Text></Text>,

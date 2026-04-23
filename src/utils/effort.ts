@@ -267,7 +267,7 @@ const OPUS_DEFAULT_EFFORT_CONFIG_DEFAULT: OpusDefaultEffortConfig = {
 
 export function getOpusDefaultEffortConfig(): OpusDefaultEffortConfig {
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_grey_step2',
+    'zy_grey_step2',
     OPUS_DEFAULT_EFFORT_CONFIG_DEFAULT,
   )
   return {

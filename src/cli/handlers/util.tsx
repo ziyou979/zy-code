@@ -17,7 +17,7 @@ import { AppStateProvider } from '../../state/AppState.js';
 import { onChangeAppState } from '../../state/onChangeAppState.js';
 import { isAuthEnabled } from '../../utils/auth.js';
 export async function setupTokenHandler(root: Root): Promise<void> {
-  logEvent('tengu_setup_token_command', {});
+  logEvent('zy_setup_token_command', {});
   const showAuthWarning = !isAuthEnabled();
   const {
     ConsoleOAuthFlow
@@ -59,7 +59,7 @@ function DoctorWithPlugins({
   return <React.Suspense fallback={null}><DoctorLazy onDone={onDone} /></React.Suspense>;
 }
 export async function doctorHandler(root: Root): Promise<void> {
-  logEvent('tengu_doctor_command', {});
+  logEvent('zy_doctor_command', {});
   await new Promise<void>(resolve => {
     root.render(<AppStateProvider>
         <KeybindingSetup>

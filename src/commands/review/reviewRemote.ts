@@ -76,7 +76,7 @@ export async function checkOverageGate(): Promise<OverageGate> {
   // Free reviews exhausted — check Extra Usage setup.
   const extraUsage = utilization.extra_usage
   if (!extraUsage?.is_enabled) {
-    logEvent('tengu_review_overage_not_enabled', {})
+    logEvent('zy_review_overage_not_enabled', {})
     return { kind: 'not-enabled' }
   }
 
@@ -89,12 +89,12 @@ export async function checkOverageGate(): Promise<OverageGate> {
       : monthlyLimit - usedCredits
 
   if (available < 10) {
-    logEvent('tengu_review_overage_low_balance', { available })
+    logEvent('zy_review_overage_low_balance', { available })
     return { kind: 'low-balance', available }
   }
 
   if (!sessionOverageConfirmed) {
-    logEvent('tengu_review_overage_dialog_shown', {})
+    logEvent('zy_review_overage_dialog_shown', {})
     return { kind: 'needs-confirm' }
   }
 
@@ -132,7 +132,7 @@ export async function launchRemoteReview(
       e => e.type !== 'no_remote_environment',
     )
     if (blockers.length > 0) {
-      logEvent('tengu_review_remote_precondition_failed', {
+      logEvent('zy_review_remote_precondition_failed', {
         precondition_errors: blockers
           .map(e => e.type)
           .join(
@@ -169,7 +169,7 @@ export async function launchRemoteReview(
   const raw = getFeatureValue_CACHED_MAY_BE_STALE<Record<
     string,
     unknown
-  > | null>('tengu_review_bughunter_config', null)
+  > | null>('zy_review_bughunter_config', null)
   const posInt = (v: unknown, fallback: number, max?: number): number => {
     if (typeof v !== 'number' || !Number.isFinite(v)) return fallback
     const n = Math.floor(v)
@@ -201,7 +201,7 @@ export async function launchRemoteReview(
     // PR mode: refs/pull/N/head via github.com. Orchestrator --pr N.
     const repo = await detectCurrentRepositoryWithHost()
     if (!repo || repo.host !== 'github.com') {
-      logEvent('tengu_review_remote_precondition_failed', {})
+      logEvent('zy_review_remote_precondition_failed', {})
       return null
     }
     session = await teleportToRemote({
@@ -233,7 +233,7 @@ export async function launchRemoteReview(
     )
     const mergeBaseSha = mbOut.trim()
     if (mbCode !== 0 || !mergeBaseSha) {
-      logEvent('tengu_review_remote_precondition_failed', {})
+      logEvent('zy_review_remote_precondition_failed', {})
       return [
         {
           type: 'text',
@@ -250,7 +250,7 @@ export async function launchRemoteReview(
       { preserveOutputOnError: false },
     )
     if (diffCode === 0 && !diffStat.trim()) {
-      logEvent('tengu_review_remote_precondition_failed', {})
+      logEvent('zy_review_remote_precondition_failed', {})
       return [
         {
           type: 'text',
@@ -271,7 +271,7 @@ export async function launchRemoteReview(
       },
     })
     if (!session) {
-      logEvent('tengu_review_remote_teleport_failed', {})
+      logEvent('zy_review_remote_teleport_failed', {})
       return [
         {
           type: 'text',
@@ -284,7 +284,7 @@ export async function launchRemoteReview(
   }
 
   if (!session) {
-    logEvent('tengu_review_remote_teleport_failed', {})
+    logEvent('zy_review_remote_teleport_failed', {})
     return null
   }
   registerRemoteAgentTask({
@@ -294,7 +294,7 @@ export async function launchRemoteReview(
     context,
     isRemoteReview: true,
   })
-  logEvent('tengu_review_remote_launched', {})
+  logEvent('zy_review_remote_launched', {})
   const sessionUrl = getRemoteTaskSessionUrl(session.id)
   // Concise — the tool-output block is visible to the user, so the model
   // shouldn't echo the same info. Just enough for Zy to acknowledge the

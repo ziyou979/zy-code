@@ -58,7 +58,7 @@ export function processTextPrompt(
 
   const isNegative = matchesNegativeKeyword(userPromptText)
   const isKeepGoing = matchesKeepGoingKeyword(userPromptText)
-  logEvent('tengu_input_prompt', {
+  logEvent('zy_input_prompt', {
     is_negative: isNegative,
     is_keep_going: isKeepGoing,
   })

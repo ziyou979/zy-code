@@ -160,7 +160,7 @@ function CopyPicker({
           copyFullResponse: true
         }));
       }
-      logEvent("tengu_copy", {
+      logEvent("zy_copy", {
         block_count: codeBlocks.length,
         always: true,
         message_age: messageAge
@@ -169,7 +169,7 @@ function CopyPicker({
       onDone(`${result}\nPreference saved. Use /config to change copyFullResponse`);
       return;
     }
-    logEvent("tengu_copy", {
+    logEvent("zy_copy", {
       selected_block: content.blockIndex,
       block_count: codeBlocks.length,
       message_age: messageAge
@@ -179,7 +179,7 @@ function CopyPicker({
   };
   const handleWrite = async function handleWrite(selected_1) {
     const content_0 = getSelectionContent(selected_1);
-    logEvent("tengu_copy", {
+    logEvent("zy_copy", {
       selected_block: content_0.blockIndex,
       block_count: codeBlocks.length,
       message_age: messageAge,
@@ -234,7 +234,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   const codeBlocks = extractCodeBlocks(text);
   const config = getGlobalConfig();
   if (codeBlocks.length === 0 || config.copyFullResponse) {
-    logEvent('tengu_copy', {
+    logEvent('zy_copy', {
       always: config.copyFullResponse,
       block_count: codeBlocks.length,
       message_age: age

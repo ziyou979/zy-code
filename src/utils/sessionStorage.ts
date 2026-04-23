@@ -1318,7 +1318,7 @@ class Project {
           },
         )
       } catch {
-        logEvent('tengu_session_persistence_failed', {})
+        logEvent('zy_session_persistence_failed', {})
         logForDebugging('Failed to write transcript as internal event')
       }
       return
@@ -1339,7 +1339,7 @@ class Project {
     )
 
     if (!success) {
-      logEvent('tengu_session_persistence_failed', {})
+      logEvent('zy_session_persistence_failed', {})
       gracefulShutdownSync(1, 'other')
     }
   }
@@ -1893,7 +1893,7 @@ function applyPreservedSegmentRelinks(
       // the full pre-compact history. Known cause: mid-turn-yielded
       // attachment pushed to mutableMessages but never recordTranscript'd
       // (SDK subprocess restarted before next turn's qe:420 flush).
-      logEvent('tengu_relink_walk_broken', {
+      logEvent('zy_relink_walk_broken', {
         tailInTranscript: messages.has(lastSeg.tailUuid),
         headInTranscript: messages.has(lastSeg.headUuid),
         anchorInTranscript: messages.has(lastSeg.anchorUuid),
@@ -2034,7 +2034,7 @@ function applySnipRemovals(messages: Map<UUID, TranscriptMessage>): void {
     relinkedCount++
   }
 
-  logEvent('tengu_snip_resume_filtered', {
+  logEvent('zy_snip_resume_filtered', {
     removed_count: removedCount,
     relinked_count: relinkedCount,
   })
@@ -2082,7 +2082,7 @@ export function buildConversationChain(
           `Cycle detected in parentUuid chain at message ${currentMsg.uuid}. Returning partial transcript.`,
         ),
       )
-      logEvent('tengu_chain_parent_cycle', {})
+      logEvent('zy_chain_parent_cycle', {})
       break
     }
     seen.add(currentMsg.uuid)
@@ -2194,7 +2194,7 @@ function recoverOrphanedParallelToolResults(
   }
 
   if (recoveredCount === 0) return chain
-  logEvent('tengu_chain_parallel_tr_recovered', {
+  logEvent('zy_chain_parallel_tr_recovered', {
     recovered_count: recoveredCount,
   })
 
@@ -2210,7 +2210,7 @@ function recoverOrphanedParallelToolResults(
 /**
  * Find the latest turn_duration checkpoint in the reconstructed chain and
  * compare its recorded messageCount against the chain's position at that
- * point. Emits tengu_resume_consistency_delta for BigQuery monitoring of
+ * point. Emits zy_resume_consistency_delta for BigQuery monitoring of
  * write→load round-trip drift — the class of bugs where snip/compact/
  * parallel-TR operations mutate in-memory but the parentUuid walk on disk
  * reconstructs a different set (adamr-20260320-165831: 397K displayed →
@@ -2233,7 +2233,7 @@ export function checkResumeConsistency(chain: Message[]): void {
     // The checkpoint was appended AFTER messageCount messages, so its own
     // position should be messageCount (i.e., i === expected).
     const actual = i
-    logEvent('tengu_resume_consistency_delta', {
+    logEvent('zy_resume_consistency_delta', {
       expected,
       actual,
       delta: actual - expected,
@@ -2549,7 +2549,7 @@ async function trackSessionBranchingAnalytics(
   const sessionsWithBranches = branchCounts.length
   const totalBranches = branchCounts.reduce((sum, count) => sum + count, 0)
 
-  logEvent('tengu_session_forked_branches_fetched', {
+  logEvent('zy_session_forked_branches_fetched', {
     total_sessions: sessionIdCounts.size,
     sessions_with_branches: sessionsWithBranches,
     max_branches_per_session: Math.max(...branchCounts),
@@ -2633,7 +2633,7 @@ export async function saveCustomTitle(
   if (sessionId === getSessionId()) {
     getProject().currentSessionTitle = customTitle
   }
-  logEvent('tengu_session_renamed', {
+  logEvent('zy_session_renamed', {
     source:
       source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
@@ -2653,7 +2653,7 @@ export async function saveCustomTitle(
  * - CAS semantics: VS Code's `onlyIfNoCustomTitle` check scans for the
  *   `customTitle` field only, so AI can overwrite its own previous AI
  *   title but never a user title.
- * - Metrics: `tengu_session_renamed` is not fired for AI titles.
+ * - Metrics: `zy_session_renamed` is not fired for AI titles.
  *
  * Because the entry is never re-appended, it scrolls out of the 64KB tail
  * window once enough messages accumulate. Readers (`readLiteMetadata`,
@@ -2697,7 +2697,7 @@ export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) {
   if (sessionId === getSessionId()) {
     getProject().currentSessionTag = tag
   }
-  logEvent('tengu_session_tagged', {})
+  logEvent('zy_session_tagged', {})
 }
 
 /**
@@ -2727,7 +2727,7 @@ export async function linkSessionToPR(
     project.currentSessionPrUrl = prUrl
     project.currentSessionPrRepository = prRepository
   }
-  logEvent('tengu_session_linked_to_pr', { prNumber })
+  logEvent('zy_session_linked_to_pr', { prNumber })
 }
 
 export function getCurrentSessionTag(sessionId: UUID): string | undefined {
@@ -2831,7 +2831,7 @@ export async function saveAgentName(
     getProject().currentSessionAgentName = agentName
     void updateSessionName(agentName)
   }
-  logEvent('tengu_agent_name_set', {
+  logEvent('zy_agent_name_set', {
     source:
       source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
@@ -2852,7 +2852,7 @@ export async function saveAgentColor(
   if (sessionId === getSessionId()) {
     getProject().currentSessionAgentColor = agentColor
   }
-  logEvent('tengu_agent_color_set', {})
+  logEvent('zy_agent_color_set', {})
 }
 
 /**
@@ -3730,7 +3730,7 @@ export async function loadTranscriptFile(
   const leafUuids = new Set<UUID>()
   let hasCycle = false
 
-  if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_pebble_leaf_prune', false)) {
+  if (getFeatureValue_CACHED_MAY_BE_STALE('zy_pebble_leaf_prune', false)) {
     // Build a set of UUIDs that have user/assistant children
     // (these are mid-conversation nodes, not dead ends)
     const hasUserAssistantChild = new Set<UUID>()
@@ -3788,7 +3788,7 @@ export async function loadTranscriptFile(
   }
 
   if (hasCycle) {
-    logEvent('tengu_transcript_parent_cycle', {})
+    logEvent('zy_transcript_parent_cycle', {})
   }
 
   return {

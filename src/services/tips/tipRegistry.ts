@@ -524,7 +524,7 @@ const externalTips: Tip[] = [
       const cmd = blue('/effort high')
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
-      >('tengu_tide_elm', 'off')
+      >('zy_tide_elm', 'off')
       return variant === 'copy_b'
         ? tSync('tip.effortHighB', { cmd })
         : tSync('tip.effortHighA', { cmd })
@@ -541,7 +541,7 @@ const externalTips: Tip[] = [
       if (persisted === 'high' || persisted === 'max') return false
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
-          'tengu_tide_elm',
+          'zy_tide_elm',
           'off',
         ) !== 'off'
       )
@@ -553,7 +553,7 @@ const externalTips: Tip[] = [
       const blue = color('suggestion', ctx.theme)
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
-      >('tengu_tern_alloy', 'off')
+      >('zy_tern_alloy', 'off')
       return variant === 'copy_b'
         ? tSync('tip.subagentFanoutB', { cmd: blue('use subagents') })
         : tSync('tip.subagentFanoutA', { cmd: blue('"fan out subagents"') })
@@ -563,7 +563,7 @@ const externalTips: Tip[] = [
       if (!isDirectApiClient()) return false
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
-          'tengu_tern_alloy',
+          'zy_tern_alloy',
           'off',
         ) !== 'off'
       )
@@ -575,7 +575,7 @@ const externalTips: Tip[] = [
       const blue = color('suggestion', ctx.theme)
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
-      >('tengu_timber_lark', 'off')
+      >('zy_timber_lark', 'off')
       return variant === 'copy_b'
         ? tSync('tip.loopCommandB', { cmd: blue('/loop 5m check the deploy') })
         : tSync('tip.loopCommandA', { cmd: blue('/loop') })
@@ -586,7 +586,7 @@ const externalTips: Tip[] = [
       if (!isKairosCronEnabled()) return false
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
-          'tengu_timber_lark',
+          'zy_timber_lark',
           'off',
         ) !== 'off'
       )

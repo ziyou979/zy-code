@@ -260,7 +260,7 @@ export function useMessageActions(cursor: MessageActionsState | null, setCursor:
     return h;
   }, [setCursor, navRef]);
   const enter = useCallback(() => {
-    logEvent('tengu_message_actions_enter', {});
+    logEvent('zy_message_actions_enter', {});
     navRef.current?.enterCursor();
   }, [navRef]);
   return {

@@ -76,7 +76,7 @@ export const TodoWriteTool = buildTool({
     let verificationNudgeNeeded = false
     if (
       feature('VERIFICATION_AGENT') &&
-      getFeatureValue_CACHED_MAY_BE_STALE('tengu_hive_evidence', false) &&
+      getFeatureValue_CACHED_MAY_BE_STALE('zy_verify_agent', false) &&
       !context.agentId &&
       allDone &&
       todos.length >= 3 &&

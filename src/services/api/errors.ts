@@ -370,7 +370,7 @@ function logToolUseToolResultMismatch(
     }
 
     // 记录到 Statsig
-    logEvent('tengu_tool_use_tool_result_mismatch_error', {
+    logEvent('zy_tool_use_tool_result_mismatch_error', {
       toolUseId:
         toolUseId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       normalizedSequence: normalizedSeq.join(
@@ -719,7 +719,7 @@ export function getAssistantMessageFromError(
     error.status === 400 &&
     error.message.includes('unexpected `tool_use_id` found in `tool_result`')
   ) {
-    logEvent('tengu_unexpected_tool_result', {})
+    logEvent('zy_unexpected_tool_result', {})
   }
 
   // 重复的 tool_use ID（CC-1212）。ensureToolResultPairing 在发送前会剥离这些，
@@ -730,7 +730,7 @@ export function getAssistantMessageFromError(
     error.status === 400 &&
     error.message.includes('`tool_use` ids must be unique')
   ) {
-    logEvent('tengu_duplicate_tool_use_id', {})
+    logEvent('zy_duplicate_tool_use_id', {})
     const rewindInstruction = getIsNonInteractiveSession()
       ? ''
       : ' Run /rewind to recover the conversation.'
@@ -1179,7 +1179,7 @@ export function getErrorMessageIfRefusal(
     return
   }
 
-  logEvent('tengu_refusal_api_response', {})
+  logEvent('zy_refusal_api_response', {})
 
   const baseMessage = getIsNonInteractiveSession()
     ? `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Try rephrasing the request or attempting a different approach.`

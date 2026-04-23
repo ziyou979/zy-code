@@ -95,7 +95,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     // 优先级 1：如果有正在运行的 task，首先取消它
     // 这优先于队列管理，因此用户始终可以中断 ZY
     if (abortSignal !== undefined && !abortSignal.aborted) {
-      logEvent('tengu_cancel', cancelProps)
+      logEvent('zy_cancel', cancelProps)
       setToolUseConfirmQueue(() => [])
       onCancel()
       return
@@ -110,7 +110,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     }
 
     // 兜底：没有可取消或可弹出的内容（如果 isActive 正确，不应到达此处）
-    logEvent('tengu_cancel', cancelProps)
+    logEvent('zy_cancel', cancelProps)
     setToolUseConfirmQueue(() => [])
     onCancel()
   }, [
@@ -242,7 +242,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
       // 第二次在窗口内的按键——终止所有后台 agent
       lastKillAgentsPressRef.current = 0
       removeNotification('kill-agents-confirm')
-      logEvent('tengu_cancel', {
+      logEvent('zy_cancel', {
         source:
           'kill_agents' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })

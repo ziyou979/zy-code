@@ -19,7 +19,7 @@ import {
 import { logError } from '../../utils/log.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 
-// Cache expiration: 24 hours
+// 缓存过期：24 小时
 const GROVE_CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
 
 export type AccountSettings = {
@@ -35,23 +35,23 @@ export type GroveConfig = {
 }
 
 /**
- * Result type that distinguishes between API failure and success.
- * - success: true means API call succeeded (data may still contain null fields)
- * - success: false means API call failed after retry
+ * 区分 API 调用失败与成功的返回类型。
+ * - success: true 表示 API 调用成功（data 中可能仍包含 null 字段）
+ * - success: false 表示 API 调用在重试后仍然失败
  */
 export type ApiResult<T> = { success: true; data: T } | { success: false }
 
 /**
- * Get the current Grove settings for the user account.
- * Returns ApiResult to distinguish between API failure and success.
- * Uses existing OAuth 401 retry, then returns failure if that doesn't help.
+ * 获取用户账户当前的 Grove 设置。
+ * 返回 ApiResult 以区分 API 调用失败与成功。
+ * 使用已有的 OAuth 401 重试机制，若仍失败则返回 failure。
  *
- * Memoized for the session to avoid redundant per-render requests.
- * Cache is invalidated in updateGroveSettings() so post-toggle reads are fresh.
+ * 会话级别缓存，避免每次渲染重复请求。
+ * 缓存在 updateGroveSettings() 中会失效，确保切换后的读取值是最新的。
  */
 export const getGroveSettings = memoize(
   async (): Promise<ApiResult<AccountSettings>> => {
-    // Grove is a notification feature; during an outage, skipping it is correct.
+    // Grove 是通知功能；在服务中断期间跳过是正确的。
     if (isEssentialTrafficOnly()) {
       return { success: false }
     }
@@ -74,10 +74,9 @@ export const getGroveSettings = memoize(
       return { success: true, data: response.data }
     } catch (err) {
       logError(err)
-      // Don't cache failures — transient network issues would lock the user
-      // out of privacy settings for the entire session (deadlock: dialog needs
-      // success to render the toggle, toggle calls updateGroveSettings which
-      // is the only other place the cache is cleared).
+      // 不要缓存失败结果——瞬态网络问题会导致用户在整个会话中
+      // 无法访问隐私设置（死锁：对话框需要 success 才能渲染开关，
+      // 开关调用 updateGroveSettings，那是唯一另一个清除缓存的地方）。
       getGroveSettings.cache.clear?.()
       return { success: false }
     }
@@ -85,7 +84,7 @@ export const getGroveSettings = memoize(
 )
 
 /**
- * Mark that the Grove notice has been viewed by the user
+ * 标记用户已查看 Grove 通知
  */
 export async function markGroveNoticeViewed(): Promise<void> {
   try {
@@ -105,9 +104,9 @@ export async function markGroveNoticeViewed(): Promise<void> {
         },
       )
     })
-    // This mutates grove_notice_viewed_at server-side — Grove.tsx:87 reads it
-    // to decide whether to show the dialog. Without invalidation a same-session
-    // remount would read stale viewed_at:null and re-show the dialog.
+    // 此操作在服务端修改 grove_notice_viewed_at —— Grove.tsx:87 读取该字段
+    // 来决定是否展示对话框。如果不使缓存失效，同一会话内重新挂载时
+    // 会读到过期的 viewed_at:null，从而重复展示对话框。
     getGroveSettings.cache.clear?.()
   } catch (err) {
     logError(err)
@@ -115,7 +114,7 @@ export async function markGroveNoticeViewed(): Promise<void> {
 }
 
 /**
- * Update Grove settings for the user account
+ * 更新用户账户的 Grove 设置
  */
 export async function updateGroveSettings(
   groveEnabled: boolean,
@@ -139,8 +138,8 @@ export async function updateGroveSettings(
         },
       )
     })
-    // Invalidate memoized settings so the post-toggle confirmation
-    // read in privacy-settings.tsx picks up the new value.
+    // 使缓存的设置失效，确保 privacy-settings.tsx 中切换后的
+    // 确认读取能获取到最新值。
     getGroveSettings.cache.clear?.()
   } catch (err) {
     logError(err)
@@ -148,11 +147,11 @@ export async function updateGroveSettings(
 }
 
 /**
- * Check if user is qualified for Grove (non-blocking, cache-first).
+ * 检查用户是否符合 Grove 条件（非阻塞、缓存优先）。
  *
- * This function never blocks on network - it returns cached data immediately
- * and fetches in the background if needed. On cold start (no cache), it returns
- * false and the Grove dialog won't show until the next session.
+ * 此函数从不阻塞网络——它立即返回缓存数据，
+ * 如有需要则在后台获取。冷启动（无缓存）时返回 false，
+ * Grove 对话框要到下次会话才会显示。
  */
 export async function isQualifiedForGrove(): Promise<boolean> {
   if (!isConsumerSubscriber()) {
@@ -168,32 +167,32 @@ export async function isQualifiedForGrove(): Promise<boolean> {
   const cachedEntry = globalConfig.groveConfigCache?.[accountId]
   const now = Date.now()
 
-  // No cache - trigger background fetch and return false (non-blocking)
-  // The Grove dialog won't show this session, but will next time if eligible
+  // 无缓存——触发后台获取并返回 false（非阻塞）
+  // 本次会话不会显示 Grove 对话框，但下次符合条件时会显示
   if (!cachedEntry) {
     logForDebugging(
-      'Grove: No cache, fetching config in background (dialog skipped this session)',
+      'Grove: 无缓存，正在后台获取配置（本次会话跳过对话框）',
     )
     void fetchAndStoreGroveConfig(accountId)
     return false
   }
 
-  // Cache exists but is stale - return cached value and refresh in background
+  // 缓存存在但已过期——返回缓存值并在后台刷新
   if (now - cachedEntry.timestamp > GROVE_CACHE_EXPIRATION_MS) {
     logForDebugging(
-      'Grove: Cache stale, returning cached data and refreshing in background',
+      'Grove: 缓存已过期，返回缓存数据并在后台刷新',
     )
     void fetchAndStoreGroveConfig(accountId)
     return cachedEntry.grove_enabled
   }
 
-  // Cache is fresh - return it immediately
-  logForDebugging('Grove: Using fresh cached config')
+  // 缓存有效——直接返回
+  logForDebugging('Grove: 使用有效的缓存配置')
   return cachedEntry.grove_enabled
 }
 
 /**
- * Fetch Grove config from API and store in cache
+ * 从 API 获取 Grove 配置并存入缓存
  */
 async function fetchAndStoreGroveConfig(accountId: string): Promise<void> {
   try {
@@ -220,19 +219,19 @@ async function fetchAndStoreGroveConfig(accountId: string): Promise<void> {
       },
     }))
   } catch (err) {
-    logForDebugging(`Grove: Failed to fetch and store config: ${err}`)
+    logForDebugging(`Grove: 获取并存储配置失败: ${err}`)
   }
 }
 
 /**
- * Get Grove Statsig configuration from the API.
- * Returns ApiResult to distinguish between API failure and success.
- * Uses existing OAuth 401 retry, then returns failure if that doesn't help.
+ * 从 API 获取 Grove Statsig 配置。
+ * 返回 ApiResult 以区分 API 调用失败与成功。
+ * 使用已有的 OAuth 401 重试机制，若仍失败则返回 failure。
  */
 export let getGroveNoticeConfig;
 getGroveNoticeConfig = memoize(
   async (): Promise<ApiResult<GroveConfig>> => {
-    // Grove is a notification feature; during an outage, skipping it is correct.
+    // Grove 是通知功能；在服务中断期间跳过是正确的。
     if (isEssentialTrafficOnly()) {
       return { success: false }
     }
@@ -249,12 +248,12 @@ getGroveNoticeConfig = memoize(
               ...authHeaders.headers,
               'User-Agent': getUserAgent(),
             },
-            timeout: 3000, // Short timeout - if slow, skip Grove dialog
+            timeout: 3000, // 短超时——响应慢时跳过 Grove 对话框
           },
         )
       })
 
-      // Map the API response to the GroveConfig type
+      // 将 API 响应映射为 GroveConfig 类型
       const {
         grove_enabled,
         domain_excluded,
@@ -272,22 +271,22 @@ getGroveNoticeConfig = memoize(
         },
       }
     } catch (err) {
-      logForDebugging(`Failed to fetch Grove notice config: ${err}`)
+      logForDebugging(`获取 Grove 通知配置失败: ${err}`)
       return { success: false }
     }
   },
 )
 
 /**
- * Determines whether the Grove dialog should be shown.
- * Returns false if either API call failed (after retry) - we hide the dialog on API failure.
+ * 判断是否应显示 Grove 对话框。
+ * 如果任一 API 调用失败（重试后），返回 false——API 失败时隐藏对话框。
  */
 export function calculateShouldShowGrove(
   settingsResult: ApiResult<AccountSettings>,
   configResult: ApiResult<GroveConfig>,
   showIfAlreadyViewed: boolean,
 ): boolean {
-  // Hide dialog on API failure (after retry)
+  // API 失败时隐藏对话框（重试后）
   if (!settingsResult.success || !configResult.success) {
     return false
   }
@@ -305,8 +304,8 @@ export function calculateShouldShowGrove(
   if (!config.notice_is_grace_period) {
     return true
   }
-  // Check if we need to remind the user to accept the terms and choose
-  // whether to help improve Zy.
+  // 检查是否需要提醒用户接受条款并选择
+  // 是否帮助改进 Zy。
   const reminderFrequency = config.notice_reminder_frequency
   if (reminderFrequency !== null && settings.grove_notice_viewed_at) {
     const daysSinceViewed = Math.floor(
@@ -315,7 +314,7 @@ export function calculateShouldShowGrove(
     )
     return daysSinceViewed >= reminderFrequency
   } else {
-    // Show if never viewed before
+    // 从未查看过则显示
     const viewedAt = settings.grove_notice_viewed_at
     return viewedAt === null || viewedAt === undefined
   }
@@ -327,7 +326,7 @@ export async function checkGroveForNonInteractive(): Promise<void> {
     getGroveNoticeConfig(),
   ])
 
-  // Check if user hasn't made a choice yet (returns false on API failure)
+  // 检查用户是否尚未做出选择（API 失败时返回 false）
   const shouldShowGrove = calculateShouldShowGrove(
     settingsResult,
     configResult,
@@ -335,20 +334,22 @@ export async function checkGroveForNonInteractive(): Promise<void> {
   )
 
   if (shouldShowGrove) {
-    // shouldShowGrove is only true if both API calls succeeded
+    // shouldShowGrove 为 true 仅当两个 API 调用都成功
     const config = configResult.success ? configResult.data : null
-    logEvent('tengu_grove_print_viewed', {
+    logEvent('zy_grove_print_viewed', {
       dismissable:
         config?.notice_is_grace_period as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     if (config === null || config.notice_is_grace_period) {
-      // Grace period is still active - show informational message and continue
+      // 宽限期仍然有效——显示提示消息并继续
+      // TODO: writeToStderr 中的用户通知消息需要提取 i18n（需添加 tSync 导入和 i18n key）
       writeToStderr(
         '\nAn update to our Consumer Terms and Privacy Policy will take effect on October 8, 2025. Run `zy` to review the updated terms.\n\n',
       )
       await markGroveNoticeViewed()
     } else {
-      // Grace period has ended - show error message and exit
+      // 宽限期已结束——显示错误消息并退出
+      // TODO: writeToStderr 中的用户通知消息需要提取 i18n（需添加 tSync 导入和 i18n key）
       writeToStderr(
         '\n[ACTION REQUIRED] An update to our Consumer Terms and Privacy Policy has taken effect on October 8, 2025. You must run `zy` to review the updated terms.\n\n',
       )

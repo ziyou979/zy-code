@@ -25,7 +25,7 @@ function containsExcludedCommand(command: string): boolean {
     const disabledCommands = getFeatureValue_CACHED_MAY_BE_STALE<{
       commands: string[]
       substrings: string[]
-    }>('tengu_sandbox_disabled_commands', { commands: [], substrings: [] })
+    }>('zy_sandbox_disabled_commands', { commands: [], substrings: [] })
 
     // Check if command contains any disabled substrings
     for (const substring of disabledCommands.substrings) {

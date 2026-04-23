@@ -387,11 +387,11 @@ export async function* runAgent({
   // CLAUDE.md — the main agent has full context and interprets their output.
   // Dropping zyMd here saves ~5-15 Gtok/week across 34M+ Explore spawns.
   // Explicit override.userContext from callers is preserved untouched.
-  // Kill-switch defaults true; flip tengu_slim_subagent_Zymd=false to revert.
+  // Kill-switch defaults true; flip zy_slim_subagent_md=false to revert.
   const shouldOmitzyMd =
     agentDefinition.omitzyMd &&
     !override?.userContext &&
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_slim_subagent_Zymd', true)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_slim_subagent_md', true)
   const { zyMd: _omittedzyMd, ...userContextNozyMd } =
     baseUserContext
   const resolvedUserContext = shouldOmitzyMd

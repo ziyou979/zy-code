@@ -33,7 +33,7 @@ const POLL_INTERVAL_MS_AT_CAPACITY = 600_000
  * Multisession bridge (bridgeMain.ts) poll intervals. Defaults match the
  * single-session values so existing GrowthBook configs without these fields
  * preserve current behavior. Ops can tune these independently via the
- * tengu_bridge_poll_interval_config GB flag.
+ * zy_bridge_poll_interval_config GB flag.
  */
 const MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY =
   POLL_INTERVAL_MS_NOT_AT_CAPACITY

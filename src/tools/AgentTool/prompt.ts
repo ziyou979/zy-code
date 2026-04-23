@@ -59,7 +59,7 @@ export function shouldInjectAgentListInMessages(): boolean {
   if (isEnvTruthy(process.env.ZY_CODE_AGENT_LIST_IN_MESSAGES)) return true
   if (isEnvDefinedFalsy(process.env.ZY_CODE_AGENT_LIST_IN_MESSAGES))
     return false
-  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_agent_list_attach', false)
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_agent_list_attach', false)
 }
 
 export async function getPrompt(

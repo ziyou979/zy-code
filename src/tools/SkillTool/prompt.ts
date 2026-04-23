@@ -124,7 +124,7 @@ export function formatCommandsWithinBudget(
   if (maxDescLen < MIN_DESC_LENGTH) {
     // Extreme case: non-bundled go names-only, bundled keep descriptions
     if (isInternalBuild()) {
-      logEvent('tengu_skill_descriptions_truncated', {
+      logEvent('zy_skill_descriptions_truncated', {
         skill_count: commands.length,
         budget,
         full_total: fullTotal,
@@ -148,7 +148,7 @@ export function formatCommandsWithinBudget(
     cmd => stringWidth(getCommandDescription(cmd)) > maxDescLen,
   )
   if (isInternalBuild()) {
-    logEvent('tengu_skill_descriptions_truncated', {
+    logEvent('zy_skill_descriptions_truncated', {
       skill_count: commands.length,
       budget,
       full_total: fullTotal,

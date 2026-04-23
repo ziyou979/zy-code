@@ -176,7 +176,7 @@ export class RemoteIO extends StructuredIO {
     // remote control session. The keep_alive type is filtered before
     // reaching any client UI (Query.ts drops it; structuredIO.ts drops it;
     // web/iOS/Android never see it in their message loop). Interval comes
-    // from GrowthBook (tengu_bridge_poll_interval_config
+    // from GrowthBook (zy_bridge_poll_interval_config
     // session_keepalive_interval_v2_ms, default 120s); 0 = disabled.
     // Bridge-only: fixes Envoy idle timeout on bridge-topology sessions
     // (#21931). byoc workers ran without this before #21931 and do not

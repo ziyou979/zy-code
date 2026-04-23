@@ -51,7 +51,7 @@ export async function getLatestVersionFromArtifactory(
   const latencyMs = Date.now() - startTime
 
   if (code !== 0) {
-    logEvent('tengu_version_check_failure', {
+    logEvent('zy_version_check_failure', {
       latency_ms: latencyMs,
       source_npm: true,
       exit_code: code,
@@ -61,7 +61,7 @@ export async function getLatestVersionFromArtifactory(
     throw error
   }
 
-  logEvent('tengu_version_check_success', {
+  logEvent('zy_version_check_success', {
     latency_ms: latencyMs,
     source_npm: true,
   })
@@ -85,7 +85,7 @@ export async function getLatestVersionFromBinaryRepo(
       ...authConfig,
     })
     const latencyMs = Date.now() - startTime
-    logEvent('tengu_version_check_success', {
+    logEvent('zy_version_check_success', {
       latency_ms: latencyMs,
     })
     return response.data.trim()
@@ -97,7 +97,7 @@ export async function getLatestVersionFromBinaryRepo(
       httpStatus = error.response.status
     }
 
-    logEvent('tengu_version_check_failure', {
+    logEvent('zy_version_check_failure', {
       latency_ms: latencyMs,
       http_status: httpStatus,
       is_timeout: errorMessage.includes('timeout'),
@@ -399,7 +399,7 @@ export async function downloadVersionFromBinaryRepo(
   const startTime = Date.now()
 
   // Log download attempt start
-  logEvent('tengu_binary_download_attempt', {})
+  logEvent('zy_binary_download_attempt', {})
 
   // Fetch manifest to get checksum
   let manifest
@@ -421,7 +421,7 @@ export async function downloadVersionFromBinaryRepo(
       httpStatus = error.response.status
     }
 
-    logEvent('tengu_binary_manifest_fetch_failure', {
+    logEvent('zy_binary_manifest_fetch_failure', {
       latency_ms: latencyMs,
       http_status: httpStatus,
       is_timeout: errorMessage.includes('timeout'),
@@ -437,7 +437,7 @@ export async function downloadVersionFromBinaryRepo(
   const platformInfo = manifest.platforms[platform]
 
   if (!platformInfo) {
-    logEvent('tengu_binary_platform_not_found', {})
+    logEvent('zy_binary_platform_not_found', {})
     throw new Error(
       `Platform ${platform} not found in manifest for version ${version}`,
     )
@@ -461,7 +461,7 @@ export async function downloadVersionFromBinaryRepo(
       authConfig || {},
     )
     const latencyMs = Date.now() - startTime
-    logEvent('tengu_binary_download_success', {
+    logEvent('zy_binary_download_success', {
       latency_ms: latencyMs,
     })
   } catch (error) {
@@ -472,7 +472,7 @@ export async function downloadVersionFromBinaryRepo(
       httpStatus = error.response.status
     }
 
-    logEvent('tengu_binary_download_failure', {
+    logEvent('zy_binary_download_failure', {
       latency_ms: latencyMs,
       http_status: httpStatus,
       is_timeout: errorMessage.includes('timeout'),

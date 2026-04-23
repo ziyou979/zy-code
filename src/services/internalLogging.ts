@@ -77,7 +77,7 @@ export async function logPermissionContextForAnts(
     return
   }
 
-  void logEvent('tengu_internal_record_permission_context', {
+  void logEvent('zy_internal_record_permission_context', {
     moment:
       moment as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     namespace:

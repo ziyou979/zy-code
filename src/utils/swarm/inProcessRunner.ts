@@ -497,7 +497,7 @@ export type InProcessRunnerConfig = {
   /** 任务的简短描述（用作初始 prompt 头的摘要） */
   description?: string
   /** 创建此队友的 API 调用的 request_id，用于
-   *  tengu_api_* 事件的血统追踪。 */
+   *  zy_api_* 事件的血统追踪。 */
   invokingRequestId?: string
 }
 
@@ -946,7 +946,7 @@ export async function runInProcessTeammate(
 
       // 为进程内队友记录 agent memory loaded 事件
       if (agentDefinition.memory) {
-        logEvent('tengu_agent_memory_loaded', {
+        logEvent('zy_agent_memory_loaded', {
           ...(isInternalBuild()
             ? {
                 agent_type:

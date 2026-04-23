@@ -4,7 +4,7 @@
 let autoModeActive = false
 let autoModeFlagCli = false
 // Set by the async verifyAutoModeGateAccess check when it
-// reads a fresh tengu_auto_mode_config.enabled === 'disabled' from GrowthBook.
+// reads a fresh zy_auto_mode_config.enabled === 'disabled' from GrowthBook.
 // Used by isAutoModeGateEnabled() to block SDK/explicit re-entry after kick-out.
 let autoModeCircuitBroken = false
 

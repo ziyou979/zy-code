@@ -206,7 +206,7 @@ Explain this command in context.`
           risk: result.data.risk,
         }
 
-        logEvent('tengu_permission_explainer_generated', {
+        logEvent('zy_permission_explainer_generated', {
           tool_name: sanitizeToolNameForAnalytics(toolName),
           risk_level: RISK_LEVEL_NUMERIC[explanation.riskLevel],
           latency_ms: latencyMs,
@@ -219,7 +219,7 @@ Explain this command in context.`
     }
 
     // No valid JSON in response
-    logEvent('tengu_permission_explainer_error', {
+    logEvent('zy_permission_explainer_error', {
       tool_name: sanitizeToolNameForAnalytics(toolName),
       error_type: ERROR_TYPE_PARSE,
       latency_ms: latencyMs,
@@ -237,7 +237,7 @@ Explain this command in context.`
 
     logForDebugging(`Permission explainer error: ${errorMessage(error)}`)
     logError(error)
-    logEvent('tengu_permission_explainer_error', {
+    logEvent('zy_permission_explainer_error', {
       tool_name: sanitizeToolNameForAnalytics(toolName),
       error_type:
         error instanceof Error && error.name === 'AbortError'

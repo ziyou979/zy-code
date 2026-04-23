@@ -114,7 +114,7 @@ export async function getSessionMemoryContent(): Promise<string | null> {
   try {
     const content = await fs.readFile(memoryPath, { encoding: 'utf-8' })
 
-    logEvent('tengu_session_memory_loaded', {
+    logEvent('zy_session_memory_loaded', {
       content_length: content.length,
     })
 

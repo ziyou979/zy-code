@@ -25,7 +25,7 @@ export function migrateBypassPermissionsAcceptedToSettings(): void {
       })
     }
 
-    logEvent('tengu_migrate_bypass_permissions_accepted', {})
+    logEvent('zy_migrate_bypass_permissions_accepted', {})
 
     saveGlobalConfig(current => {
       if (!('bypassPermissionsModeAccepted' in current)) return current

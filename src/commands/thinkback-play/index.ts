@@ -8,7 +8,7 @@ const thinkbackPlay = {
   name: 'thinkback-play',
   description: 'Play the thinkback animation',
   isEnabled: () =>
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_thinkback'),
+    checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_thinkback'),
   isHidden: true,
   supportsNonInteractive: false,
   load: () => import('./thinkback-play.js'),

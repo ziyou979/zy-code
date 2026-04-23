@@ -16,7 +16,7 @@ export function ClaudeInChromeOnboarding({
 }: Props) {
   const [isExtensionInstalled, setIsExtensionInstalled] = React.useState(false);
   React.useEffect(() => {
-    logEvent("tengu_Zy_in_chrome_onboarding_shown", {});
+    logEvent("zy_Zy_in_chrome_onboarding_shown", {});
     isChromeExtensionInstalled().then(setIsExtensionInstalled);
     saveGlobalConfig(current => ({
       ...current,

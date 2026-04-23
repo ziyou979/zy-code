@@ -184,7 +184,7 @@ export function resetCwdIfOutsideProject(
     // Reset to original directory if maintaining project dir OR outside allowed working directory
     setCwd(originalCwd)
     if (!shouldMaintain) {
-      logEvent('tengu_bash_tool_reset_to_original_dir', {})
+      logEvent('zy_bash_tool_reset_to_original_dir', {})
       return true
     }
   }

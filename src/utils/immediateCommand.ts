@@ -11,6 +11,6 @@ import { isInternalBuild } from './envUtils.js'
 export function shouldInferenceConfigCommandBeImmediate(): boolean {
   return (
     isInternalBuild() ||
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_immediate_model_command', false)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_immediate_model_command', false)
   )
 }

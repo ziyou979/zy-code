@@ -92,7 +92,7 @@ export function isBriefEntitled(): boolean {
     ? getKairosActive() ||
         isEnvTruthy(process.env.ZY_CODE_BRIEF) ||
         getFeatureValue_CACHED_WITH_REFRESH(
-          'tengu_kairos_brief',
+          'zy_kairos_brief',
           false,
           KAIROS_BRIEF_REFRESH_MS,
         )
@@ -115,7 +115,7 @@ export function isBriefEntitled(): boolean {
  * hard-codes "you MUST use SendUserMessage" (systemPrompt.md:14).
  *
  * The GB gate is re-checked here as a kill-switch AND — flipping
- * tengu_kairos_brief off mid-session disables the tool on the next 5-min
+ * zy_kairos_brief off mid-session disables the tool on the next 5-min
  * refresh even for opted-in sessions. No opt-in → always false regardless
  * of GB (this is the fix for "brief defaults on for enrolled ants").
  *
@@ -185,7 +185,7 @@ export const BriefTool = buildTool({
   renderToolResultMessage,
   async call({ message, attachments, status }, context) {
     const sentAt = new Date().toISOString()
-    logEvent('tengu_brief_send', {
+    logEvent('zy_brief_send', {
       proactive: status === 'proactive',
       attachment_count: attachments?.length ?? 0,
     })

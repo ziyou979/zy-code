@@ -30,6 +30,7 @@ import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { env } from './utils/env.js'
 import { envDynamic } from './utils/envDynamic.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
+import { tSync } from './i18n/index.js'
 import { errorMessage } from './utils/errors.js'
 import { findCanonicalGitRoot, findGitRoot, getIsGit } from './utils/git.js'
 import { initializeFileChangedWatcher } from './utils/hooks/fileChangedWatcher.js'
@@ -66,32 +67,32 @@ export async function setup(
 ): Promise<void> {
   logForDiagnosticsNoPII('info', 'setup_started')
 
-  // Check for Node.js version < 18
+  // 检查 Node.js 版本是否低于 18
   const nodeVersion = process.version.match(/^v(\d+)\./)?.[1]
   if (!nodeVersion || parseInt(nodeVersion) < 18) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(
       chalk.bold.red(
-        'Error: ZY Code requires Node.js version 18 or higher.',
+        tSync('setup.errorNodeVersion'),
       ),
     )
     process.exit(1)
   }
 
-  // Set custom session ID if provided
+  // 如果提供了自定义会话 ID 则设置
   if (customSessionId) {
     switchSession(asSessionId(customSessionId))
   }
 
-  // --bare / SIMPLE: skip UDS messaging server and teammate snapshot.
-  // Scripted calls don't receive injected messages and don't use swarm teammates.
-  // Explicit --messaging-socket-path is the escape hatch (per #23222 gate pattern).
+  // --bare / SIMPLE：跳过 UDS 消息服务和队友快照。
+  // 脚本化调用不接收注入消息，也不使用 swarm 队友。
+  // 显式指定 --messaging-socket-path 是逃生通道（按 #23222 门控模式）。
   if (!isBareMode() || messagingSocketPath !== undefined) {
-    // Start UDS messaging server (Mac/Linux only).
-    // Enabled by default for ants — creates a socket in tmpdir if no
-    // --messaging-socket-path is passed. Awaited so the server is bound
-    // and $ZY_CODE_MESSAGING_SOCKET is exported before any hook
-    // (SessionStart in particular) can spawn and snapshot process.env.
+    // 启动 UDS 消息服务（仅 Mac/Linux）。
+    // 对 ants 默认启用 — 如果未传入 --messaging-socket-path，
+    // 则在 tmpdir 中创建 socket。使用 await 确保服务已绑定且
+    // $ZY_CODE_MESSAGING_SOCKET 已导出，然后任何 hook
+    // （特别是 SessionStart）才能派生并快照 process.env。
     if (feature('UDS_INBOX')) {
       const m = await import('./utils/udsMessaging.js')
       // @ts-ignore
@@ -102,7 +103,7 @@ export async function setup(
     }
   }
 
-  // Teammate snapshot — SIMPLE-only gate (no escape hatch, swarm not used in bare)
+  // 队友快照 — 仅 SIMPLE 门控（无逃生通道，bare 模式不使用 swarm）
   if (!isBareMode() && isAgentSwarmsEnabled()) {
     const { captureTeammateModeSnapshot } = await import(
       './utils/swarm/backends/teammateModeSnapshot.js'
@@ -110,80 +111,78 @@ export async function setup(
     captureTeammateModeSnapshot()
   }
 
-  // Terminal backup restoration — interactive only. Print mode doesn't
-  // interact with terminal settings; the next interactive session will
-  // detect and restore any interrupted setup.
+  // 终端配置备份恢复 — 仅交互模式。打印模式不会
+  // 修改终端设置；下次交互会话会检测并恢复中断的设置。
   if (!getIsNonInteractiveSession()) {
-    // iTerm2 backup check only when swarms enabled
+    // 仅在启用 swarms 时检查 iTerm2 备份
     if (isAgentSwarmsEnabled()) {
       const restoredIterm2Backup = await checkAndRestoreITerm2Backup()
       if (restoredIterm2Backup.status === 'restored') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(
           chalk.yellow(
-            'Detected an interrupted iTerm2 setup. Your original settings have been restored. You may need to restart iTerm2 for the changes to take effect.',
+            tSync('setup.iTerm2Restored'),
           ),
         )
       } else if (restoredIterm2Backup.status === 'failed') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
           chalk.red(
-            `Failed to restore iTerm2 settings. Please manually restore your original settings with: defaults import com.googlecode.iterm2 ${restoredIterm2Backup.backupPath}.`,
+            tSync('setup.iTerm2RestoreFailed', { backupPath: restoredIterm2Backup.backupPath }),
           ),
         )
       }
     }
 
-    // Check and restore Terminal.app backup if setup was interrupted
+    // 检查并恢复 Terminal.app 备份（如果设置过程中断）
     try {
       const restoredTerminalBackup = await checkAndRestoreTerminalBackup()
       if (restoredTerminalBackup.status === 'restored') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(
           chalk.yellow(
-            'Detected an interrupted Terminal.app setup. Your original settings have been restored. You may need to restart Terminal.app for the changes to take effect.',
+            tSync('setup.terminalRestored'),
           ),
         )
       } else if (restoredTerminalBackup.status === 'failed') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
           chalk.red(
-            `Failed to restore Terminal.app settings. Please manually restore your original settings with: defaults import com.apple.Terminal ${restoredTerminalBackup.backupPath}.`,
+            tSync('setup.terminalRestoreFailed', { backupPath: restoredTerminalBackup.backupPath }),
           ),
         )
       }
     } catch (error) {
-      // Log but don't crash if Terminal.app backup restoration fails
+      // 记录日志但不崩溃，即使 Terminal.app 备份恢复失败
       logError(error)
     }
   }
 
-  // IMPORTANT: setCwd() must be called before any other code that depends on the cwd
+  // 重要：setCwd() 必须在依赖 cwd 的其他代码之前调用
   setCwd(cwd)
 
-  // Capture hooks configuration snapshot to avoid hidden hook modifications.
-  // IMPORTANT: Must be called AFTER setCwd() so hooks are loaded from the correct directory
+  // 捕获 hooks 配置快照，防止隐藏的 hook 修改。
+  // 重要：必须在 setCwd() 之后调用，以确保从正确的目录加载 hooks
   const hooksStart = Date.now()
   captureHooksConfigSnapshot()
   logForDiagnosticsNoPII('info', 'setup_hooks_captured', {
     duration_ms: Date.now() - hooksStart,
   })
 
-  // Initialize FileChanged hook watcher — sync, reads hook config snapshot
+  // 初始化 FileChanged hook 监视器 — 同步操作，读取 hook 配置快照
   initializeFileChangedWatcher(cwd)
 
-  // Handle worktree creation if requested
-  // IMPORTANT: this must be called befiore getCommands(), otherwise /eject won't be available.
+  // 如果请求了 worktree 则处理创建
+  // 重要：必须在 getCommands() 之前调用，否则 /eject 将不可用。
   if (worktreeEnabled) {
-    // Mirrors bridgeMain.ts: hook-configured sessions can proceed without git
-    // so createWorktreeForSession() can delegate to the hook (non-git VCS).
+    // 与 bridgeMain.ts 对齐：配置了 hook 的会话可以在没有 git 的情况下继续，
+    // 因此 createWorktreeForSession() 可以委托给 hook（非 git VCS）。
     const hasHook = hasWorktreeCreateHook()
     const inGit = await getIsGit()
     if (!hasHook && !inGit) {
       process.stderr.write(
         chalk.red(
-          `Error: Can only use --worktree in a git repository, but ${chalk.bold(cwd)} is not a git repository. ` +
-            `Configure a WorktreeCreate hook in settings.json to use --worktree with other VCS systems.\n`,
+          tSync('setup.errorWorktreeNotGitRepo', { cwd: chalk.bold(cwd) }) + '\n',
         ),
       )
       process.exit(1)
@@ -193,25 +192,25 @@ export async function setup(
       ? `pr-${worktreePRNumber}`
       : (worktreeName ?? getPlanSlug())
 
-    // Git preamble runs whenever we're in a git repo — even if a hook is
-    // configured — so --tmux keeps working for git users who also have a
-    // WorktreeCreate hook. Only hook-only (non-git) mode skips it.
+    // Git 前置处理在 git 仓库中始终运行 — 即使配置了 hook —
+    // 这样 --tmux 对同时有 WorktreeCreate hook 的 git 用户仍然有效。
+    // 仅 hook-only（非 git）模式跳过此步骤。
     let tmuxSessionName: string | undefined
     if (inGit) {
-      // Resolve to main repo root (handles being invoked from within a worktree).
-      // findCanonicalGitRoot is sync/filesystem-only/memoized; the underlying
-      // findGitRoot cache was already warmed by getIsGit() above, so this is ~free.
+      // 解析到主仓库根目录（处理从 worktree 内部调用的情况）。
+      // findCanonicalGitRoot 是同步/仅文件系统/有缓存的；底层的
+      // findGitRoot 缓存已由上方 getIsGit() 预热，所以此处几乎无开销。
       const mainRepoRoot = findCanonicalGitRoot(getCwd())
       if (!mainRepoRoot) {
         process.stderr.write(
           chalk.red(
-            `Error: Could not determine the main git repository root.\n`,
+            tSync('setup.errorCannotDetermineGitRoot') + '\n',
           ),
         )
         process.exit(1)
       }
 
-      // If we're inside a worktree, switch to the main repo for worktree creation
+      // 如果当前在 worktree 内部，切换到主仓库以创建 worktree
       if (mainRepoRoot !== (findGitRoot(getCwd()) ?? getCwd())) {
         logForDiagnosticsNoPII('info', 'worktree_resolved_to_main_repo')
         process.chdir(mainRepoRoot)
@@ -222,8 +221,8 @@ export async function setup(
         ? generateTmuxSessionName(mainRepoRoot, worktreeBranchName(slug))
         : undefined
     } else {
-      // Non-git hook mode: no canonical root to resolve, so name the tmux
-      // session from cwd — generateTmuxSessionName only basenames the path.
+      // 非 git hook 模式：没有可解析的规范根目录，因此从 cwd
+      // 命名 tmux 会话 — generateTmuxSessionName 只取路径的 basename。
       tmuxSessionName = tmuxEnabled
         ? generateTmuxSessionName(getCwd(), worktreeBranchName(slug))
         : undefined
@@ -239,14 +238,14 @@ export async function setup(
       )
     } catch (error) {
       process.stderr.write(
-        chalk.red(`Error creating worktree: ${errorMessage(error)}\n`),
+        chalk.red(tSync('setup.errorCreatingWorktree', { error: errorMessage(error) }) + '\n'),
       )
       process.exit(1)
     }
 
-    logEvent('tengu_worktree_created', { tmux_enabled: tmuxEnabled })
+    logEvent('zy_worktree_created', { tmux_enabled: tmuxEnabled })
 
-    // Create tmux session for the worktree if enabled
+    // 如果启用了 tmux，为 worktree 创建 tmux 会话
     if (tmuxEnabled && tmuxSessionName) {
       const tmuxResult = await createTmuxSessionForWorktree(
         tmuxSessionName,
@@ -256,14 +255,14 @@ export async function setup(
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(
           chalk.green(
-            `Created tmux session: ${chalk.bold(tmuxSessionName)}\nTo attach: ${chalk.bold(`tmux attach -t ${tmuxSessionName}`)}`,
+            tSync('setup.tmuxSessionCreated', { sessionName: chalk.bold(tmuxSessionName), attachCmd: chalk.bold(`tmux attach -t ${tmuxSessionName}`) }),
           ),
         )
       } else {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
           chalk.yellow(
-            `Warning: Failed to create tmux session: ${tmuxResult.error}`,
+            tSync('setup.tmuxSessionCreateFailed', { error: tmuxResult.error }),
           ),
         )
       }
@@ -272,27 +271,27 @@ export async function setup(
     process.chdir(worktreeSession.worktreePath)
     setCwd(worktreeSession.worktreePath)
     setOriginalCwd(getCwd())
-    // --worktree means the worktree IS the session's project, so skills/hooks/
-    // cron/etc. should resolve here. (EnterWorktreeTool mid-session does NOT
-    // touch projectRoot — that's a throwaway worktree, project stays stable.)
+    // --worktree 表示 worktree 就是会话的项目，因此 skills/hooks/
+    // cron 等应在此处解析。（会话中 EnterWorktreeTool 不会
+    // 修改 projectRoot — 那是一次性 worktree，项目保持稳定。）
     setProjectRoot(getCwd())
     saveWorktreeState(worktreeSession)
-    // Clear memory files cache since originalCwd has changed
+    // 清除内存文件缓存，因为 originalCwd 已变更
     clearMemoryFileCaches()
-    // Settings cache was populated in init() (via applySafeConfigEnvironmentVariables)
-    // and again at captureHooksConfigSnapshot() above, both from the original dir's
-    // .zy/settings.json. Re-read from the worktree and re-capture hooks.
+    // 设置缓存已在 init() 中填充（通过 applySafeConfigEnvironmentVariables），
+    // 并在上方 captureHooksConfigSnapshot() 中再次填充，两次都来自原始目录的
+    // .zy/settings.json。从 worktree 重新读取并重新捕获 hooks。
     updateHooksConfigSnapshot()
   }
 
-  // Background jobs - only critical registrations that must happen before first query
+  // 后台任务 - 仅注册首次查询前必须完成的关键任务
   logForDiagnosticsNoPII('info', 'setup_background_jobs_starting')
-  // Bundled skills/plugins are registered in main.tsx before the parallel
-  // getCommands() kick — see comment there. Moved out of setup() because
-  // the await points above (startUdsMessaging, ~20ms) meant getCommands()
-  // raced ahead and memoized an empty bundledSkills list.
+  // 内置 skills/plugins 在 main.tsx 中注册，先于并行的
+  // getCommands() 启动 — 详见该处注释。已从 setup() 中移出，因为
+  // 上方的 await 点（startUdsMessaging，约 20ms）导致 getCommands()
+  // 抢先执行并缓存了空的 bundledSkills 列表。
   if (!isBareMode()) {
-    initSessionMemory() // Synchronous - registers hook, gate check happens lazily
+    initSessionMemory() // 同步操作 - 注册 hook，门控检查延迟执行
     if (feature('CONTEXT_COLLAPSE')) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       ;(
@@ -301,44 +300,42 @@ export async function setup(
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
   }
-  void lockCurrentVersion() // Lock current version to prevent deletion by other processes
+  void lockCurrentVersion() // 锁定当前版本，防止被其他进程删除
   logForDiagnosticsNoPII('info', 'setup_background_jobs_launched')
 
   profileCheckpoint('setup_before_prefetch')
-  // Pre-fetch promises - only items needed before render
+  // 预获取 Promise - 仅渲染前需要的项
   logForDiagnosticsNoPII('info', 'setup_prefetch_starting')
-  // When ZY_CODE_SYNC_PLUGIN_INSTALL is set, skip all plugin prefetch.
-  // The sync install path in print.ts calls refreshPluginState() after
-  // installing, which reloads commands, hooks, and agents. Prefetching here
-  // races with the install (concurrent copyPluginToVersionedCache / cachePlugin
-  // on the same directories), and the hot-reload handler fires clearPluginCache()
-  // mid-install when policySettings arrives.
+  // 当设置了 ZY_CODE_SYNC_PLUGIN_INSTALL 时，跳过所有插件预获取。
+  // print.ts 中的同步安装路径在安装后调用 refreshPluginState()，
+  // 重新加载 commands、hooks 和 agents。此处预获取会与安装竞争
+  // （并发 copyPluginToVersionedCache / cachePlugin 操作同一目录），
+  // 且热重载处理器在 policySettings 到达时会触发 clearPluginCache()。
   const skipPluginPrefetch =
     (getIsNonInteractiveSession() &&
       isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) ||
-    // --bare: loadPluginHooks → loadAllPlugins is filesystem work that's
-    // wasted when executeHooks early-returns under --bare anyway.
+    // --bare：loadPluginHooks → loadAllPlugins 是文件系统操作，
+    // 在 --bare 下 executeHooks 会提前返回，完全是浪费。
     isBareMode()
   if (!skipPluginPrefetch) {
     void getCommands(getProjectRoot())
   }
   void import('./utils/plugins/loadPluginHooks.js').then(m => {
     if (!skipPluginPrefetch) {
-      void m.loadPluginHooks() // Pre-load plugin hooks (consumed by processSessionStartHooks before render)
-      m.setupPluginHookHotReload() // Set up hot reload for plugin hooks when settings change
+      void m.loadPluginHooks() // 预加载插件 hooks（由 processSessionStartHooks 在渲染前消费）
+      m.setupPluginHookHotReload() // 设置插件 hooks 热重载，当设置变更时触发
     }
   })
-  // --bare: skip attribution hook install + repo classification +
-  // session-file-access analytics + team memory watcher. These are background
-  // bookkeeping for commit attribution + usage metrics — scripted calls don't
-  // commit code, and the 49ms attribution hook stat check (measured) is pure
-  // overhead. NOT an early-return: the --dangerously-skip-permissions safety
-  // gate, tengu_started beacon, and apiKeyHelper prefetch below must still run.
+  // --bare：跳过归因 hook 安装 + 仓库分类 + 会话文件访问分析 +
+  // 团队内存监视器。这些是提交归因和使用指标的后台记账 —
+  // 脚本化调用不会提交代码，而 49ms 的归因 hook stat 检查（实测）
+  // 是纯粹的开销。不是提前返回：下方 --dangerously-skip-permissions
+  // 安全门控、zy_started 信标和 apiKeyHelper 预获取仍需执行。
   if (!isBareMode()) {
     if (isInternalBuild()) {
-      // Prime repo classification cache for auto-undercover mode. Default is
-      // undercover ON until proven internal; if this resolves to internal, clear
-      // the prompt cache so the next turn picks up the OFF state.
+      // 预热仓库分类缓存，用于 auto-undercover 模式。默认
+      // undercover 开启，直到确认为内部仓库；如果解析为内部仓库，
+      // 清除 prompt 缓存使下一轮获取 OFF 状态。
       void import('./utils/commitAttribution.js').then(async m => {
         if (await m.isInternalModelRepo()) {
           const { clearSystemPromptSections } = await import(
@@ -349,41 +346,41 @@ export async function setup(
       })
     }
     if (feature('COMMIT_ATTRIBUTION')) {
-      // Dynamic import to enable dead code elimination (module contains excluded strings).
-      // Defer to next tick so the git subprocess spawn runs after first render
-      // rather than during the setup() microtask window.
+      // 动态导入以启用死代码消除（模块包含排除字符串）。
+      // 延迟到下一个 tick，使 git 子进程在首次渲染后运行，
+      // 而不是在 setup() 微任务窗口期间运行。
       setImmediate(() => {
         void import('./utils/attributionHooks.js').then(
           (m: any) => {
-            m.registerAttributionHooks() // Register attribution tracking hooks (ant-only feature)
+            m.registerAttributionHooks() // 注册归因追踪 hooks（仅 ant 功能）
           },
         )
       })
     }
     void import('./utils/sessionFileAccessHooks.js').then(m =>
       m.registerSessionFileAccessHooks(),
-    ) // Register session file access analytics hooks
+    ) // 注册会话文件访问分析 hooks
     if (feature('TEAMMEM')) {
       void import('./services/teamMemorySync/watcher.js').then(m =>
         m.startTeamMemoryWatcher(),
-      ) // Start team memory sync watcher
+      ) // 启动团队内存同步监视器
     }
   }
-  initSinks() // Attach error log + analytics sinks and drain queued events
+  initSinks() // 附加错误日志 + 分析 sink 并排空队列中的事件
 
-  // Session-success-rate denominator. Emit immediately after the analytics
-  // sink is attached — before any parsing, fetching, or I/O that could throw.
-  // inc-3694 (P0 CHANGELOG crash) threw at checkForReleaseNotes below; every
-  // event after this point was dead. This beacon is the earliest reliable
-  // "process started" signal for release health monitoring.
-  logEvent('tengu_started', {})
+  // 会话成功率分母。在 analytics sink 附加后立即发出 —
+  // 在任何可能抛出异常的解析、获取或 I/O 之前。
+  // inc-3694（P0 CHANGELOG 崩溃）在下方 checkForReleaseNotes 处抛出；
+  // 该点之后的所有事件均丢失。此信标是发布健康监控中
+  // 最早可靠的"进程已启动"信号。
+  logEvent('zy_session_started', {})
 
-  void prefetchApiKeyFromApiKeyHelperIfSafe(getIsNonInteractiveSession()) // Prefetch safely - only executes if trust already confirmed
+  void prefetchApiKeyFromApiKeyHelperIfSafe(getIsNonInteractiveSession()) // 安全预获取 - 仅在已确认信任时执行
   profileCheckpoint('setup_after_prefetch')
 
-  // Pre-fetch data for Logo v2 - await to ensure it's ready before logo renders.
-  // --bare / SIMPLE: skip — release notes are interactive-UI display data,
-  // and getRecentActivity() reads up to 10 session JSONL files.
+  // 预获取 Logo v2 数据 - await 确保在 logo 渲染前就绪。
+  // --bare / SIMPLE：跳过 — 发布说明是交互式 UI 显示数据，
+  // 且 getRecentActivity() 会读取最多 10 个会话 JSONL 文件。
   if (!isBareMode()) {
     const { hasReleaseNotes } = await checkForReleaseNotes(
       getGlobalConfig().lastReleaseNotesSeen,
@@ -393,13 +390,13 @@ export async function setup(
     }
   }
 
-  // If permission mode is set to bypass, verify we're in a safe environment
+  // 如果权限模式设置为绕过，验证是否在安全环境中
   if (
     permissionMode === 'bypassPermissions' ||
     allowDangerouslySkipPermissions
   ) {
-    // Check if running as root/sudo on Unix-like systems
-    // Allow root if in a sandbox (e.g., TPU devspaces that require root)
+    // 检查是否在类 Unix 系统上以 root/sudo 运行
+    // 如果在沙箱中则允许 root（例如需要 root 的 TPU devspaces）
     if (
       process.platform !== 'win32' &&
       typeof process.getuid === 'function' &&
@@ -409,22 +406,22 @@ export async function setup(
     ) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.error(
-        `--dangerously-skip-permissions cannot be used with root/sudo privileges for security reasons`,
+        tSync('setup.errorRootSudoNotAllowed'),
       )
       process.exit(1)
     }
 
     if (
       isInternalBuild() &&
-      // Skip for Desktop's local agent mode — same trust model as CCR/BYOC
-      // (trusted Anthropic-managed launcher intentionally pre-approving everything).
-      // Precedent: permissionSetup.ts:861, applySettingsChange.ts:55 (PR #19116)
+      // 跳过 Desktop 的本地代理模式 — 与 CCR/BYOC 信任模型相同
+      // （受信任的 Anthropic 管理启动器有意预批准所有操作）。
+      // 先例：permissionSetup.ts:861, applySettingsChange.ts:55 (PR #19116)
       process.env.ZY_CODE_ENTRYPOINT !== 'local-agent' &&
-      // Same for CCD (ZY Code in Desktop) — apps#29127 passes the flag
-      // unconditionally to unlock mid-session bypass switching
+      // CCD（Desktop 中的 ZY Code）同理 — apps#29127 无条件传递该标志
+      // 以解锁会话中绕过切换
       process.env.ZY_CODE_ENTRYPOINT !== 'zy-desktop'
     ) {
-      // Only await if permission mode is set to bypass
+      // 仅在权限模式设置为绕过时才 await
       const [isDocker, hasInternet] = await Promise.all([
         envDynamic.getIsDocker(),
         env.hasInternetAccess(),
@@ -435,7 +432,7 @@ export async function setup(
       if (!isSandboxed || hasInternet) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
-          `--dangerously-skip-permissions can only be used in Docker/sandbox containers with no internet access but got Docker: ${isDocker}, Bubblewrap: ${isBubblewrap}, IS_SANDBOX: ${isSandbox}, hasInternet: ${hasInternet}`,
+          tSync('setup.errorNotSandboxed', { isDocker: String(isDocker), isBubblewrap: String(isBubblewrap), isSandbox: String(isSandbox), hasInternet: String(hasInternet) }),
         )
         process.exit(1)
       }
@@ -446,13 +443,13 @@ export async function setup(
     return
   }
 
-  // Log tengu_exit event from the last session?
+  // 记录上次会话的 zy_exit 事件？
   const projectConfig = getCurrentProjectConfig()
   if (
     projectConfig.lastCost !== undefined &&
     projectConfig.lastDuration !== undefined
   ) {
-    logEvent('tengu_exit', {
+    logEvent('zy_session_exit', {
       last_session_cost: projectConfig.lastCost,
       last_session_api_duration: projectConfig.lastAPIDuration,
       last_session_tool_duration: projectConfig.lastToolDuration,
@@ -471,8 +468,8 @@ export async function setup(
         projectConfig.lastSessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       ...projectConfig.lastSessionMetrics,
     })
-    // Note: We intentionally don't clear these values after logging.
-    // They're needed for cost restoration when resuming sessions.
-    // The values will be overwritten when the next session exits.
+    // 注意：我们有意在记录日志后不清除这些值。
+    // 恢复会话时需要它们来还原费用数据。
+    // 这些值会在下次会话退出时被覆盖。
   }
 }

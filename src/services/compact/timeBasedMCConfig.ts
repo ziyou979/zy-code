@@ -36,7 +36,7 @@ export function getTimeBasedMCConfig(): TimeBasedMCConfig {
   // 提升 GB 读取，使曝光在每个求值路径上触发，而不仅是
   // 当调用者的其他条件（querySource、messages.length）通过时。
   return getFeatureValue_CACHED_MAY_BE_STALE<TimeBasedMCConfig>(
-    'tengu_slate_heron',
+    'zy_slate_heron',
     TIME_BASED_MC_CONFIG_DEFAULTS,
   )
 }

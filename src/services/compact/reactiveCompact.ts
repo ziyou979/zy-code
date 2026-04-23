@@ -71,7 +71,7 @@ import {
 export function isReactiveCompactEnabled(): boolean {
   return (
     isAutoCompactEnabled() &&
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_raccoon', false)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_raccoon', false)
   )
 }
 
@@ -276,7 +276,7 @@ export async function reactiveCompactOnPromptTooLong(
         trigger: options.trigger,
       })
 
-      logEvent('tengu_reactive_compact_success', {
+      logEvent('zy_reactive_compact_success', {
         trigger:
           options.trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
@@ -291,7 +291,7 @@ export async function reactiveCompactOnPromptTooLong(
         return { ok: false, reason: 'aborted' }
       }
       logError(error as Error)
-      logEvent('tengu_reactive_compact_error', {
+      logEvent('zy_reactive_compact_error', {
         error: String(error) as any,
         iteration,
       })

@@ -211,7 +211,7 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
       },
     }))
 
-    logEvent('tengu_team_created', {
+    logEvent('zy_team_created', {
       team_name:
         finalTeamName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       teammate_count: 1,

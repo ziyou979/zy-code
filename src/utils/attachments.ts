@@ -611,7 +611,7 @@ async function maybe<A>(label: string, f: () => Promise<A[]>): Promise<A[]> {
       const attachmentSizeBytes = result.filter(a => a !== undefined && a !== null).reduce((total, attachment) => {
         return total + jsonStringify(attachment).length;
       }, 0);
-      logEvent('tengu_attachment_compute_duration', {
+      logEvent('zy_attachment_compute_duration', {
         label,
         duration_ms: duration,
         attachment_size_bytes: attachmentSizeBytes,
@@ -623,7 +623,7 @@ async function maybe<A>(label: string, f: () => Promise<A[]>): Promise<A[]> {
     const duration = Date.now() - startTime;
     // 仅记录 5% 的事件以减少数据量
     if (Math.random() < 0.05) {
-      logEvent('tengu_attachment_compute_duration', {
+      logEvent('zy_attachment_compute_duration', {
         label,
         duration_ms: duration,
         error: true
@@ -971,7 +971,7 @@ function getUltrathinkEffortAttachment(input: string | null): Attachment[] {
   if (!isUltrathinkEnabled() || !input || !hasUltrathinkKeyword(input)) {
     return [];
   }
-  logEvent('tengu_ultrathink', {});
+  logEvent('zy_ultrathink', {});
   return [{
     type: 'ultrathink_effort',
     level: 'high'
@@ -984,7 +984,7 @@ export function getDeferredToolsDeltaAttachment(tools: Tools, model: string, mes
   // 这三个检查与 isToolSearchEnabled 的同步部分镜像 —
   // 附件文本说 "available via ToolSearch"，因此 ToolSearch
   // 必须实际存在于请求中。异步 auto-threshold 检查不复制
-  //（会重复触发 tengu_tool_search_mode_decision）；
+  //（会重复触发 zy_tool_search_mode_decision）；
   // 在 tst-auto 低于阈值时，附件可能在 ToolSearch 被过滤后触发，
   // 但这是窄情况，且宣布的工具无论如何都是可直接调用的。
   if (!isToolSearchEnabledOptimistic()) return [];
@@ -1273,7 +1273,7 @@ async function getNestedMemoryAttachmentsForFile(filePath: string, toolUseContex
       nestedDirs,
       cwdLevelDirs
     } = getDirectoriesToProcess(filePath, originalCwd);
-    const skipProjectLevel = getFeatureValue_CACHED_MAY_BE_STALE('tengu_paper_halyard', false);
+    const skipProjectLevel = getFeatureValue_CACHED_MAY_BE_STALE('zy_paper_halyard', false);
 
     // 阶段 3：处理嵌套目录（CWD → target）
     // 每个目录获取：CLAUDE.md + 无条件规则 + 条件规则
@@ -1342,7 +1342,7 @@ async function processAtMentionedFiles(input: string, toolUseContext: ToolUseCon
               names.push(`\u2026 and ${entries.length - MAX_DIR_ENTRIES} more entries`);
             }
             const stdout = names.join('\n');
-            logEvent('tengu_at_mention_extracting_directory_success', {});
+            logEvent('zy_at_mention_extracting_directory_success', {});
             return {
               type: 'directory' as const,
               path: absoluteFilename,
@@ -1356,12 +1356,12 @@ async function processAtMentionedFiles(input: string, toolUseContext: ToolUseCon
       } catch {
         // 如果 stat 失败，继续执行文件逻辑
       }
-      return await generateFileAttachment(absoluteFilename, toolUseContext, 'tengu_at_mention_extracting_filename_success', 'tengu_at_mention_extracting_filename_error', 'at-mention', {
+      return await generateFileAttachment(absoluteFilename, toolUseContext, 'zy_at_mention_extracting_filename_success', 'zy_at_mention_extracting_filename_error', 'at-mention', {
         offset: lineStart,
         limit: lineEnd && lineStart ? lineEnd - lineStart + 1 : undefined
       });
     } catch {
-      logEvent('tengu_at_mention_extracting_filename_error', {});
+      logEvent('zy_at_mention_extracting_filename_error', {});
     }
   }));
   return results.filter(Boolean) as Attachment[];
@@ -1373,10 +1373,10 @@ function processAgentMentions(input: string, agents: AgentDefinition[]): Attachm
     const agentType = mention.replace('agent-', '');
     const agentDef = agents.find(def => def.agentType === agentType);
     if (!agentDef) {
-      logEvent('tengu_at_mention_agent_not_found', {});
+      logEvent('zy_at_mention_agent_not_found', {});
       return null;
     }
-    logEvent('tengu_at_mention_agent_success', {});
+    logEvent('zy_at_mention_agent_success', {});
     return {
       type: 'agent_mention' as const,
       agentType: agentDef.agentType
@@ -1394,14 +1394,14 @@ async function processMcpResourceAttachments(input: string, toolUseContext: Tool
       const uri = uriParts.join(':'); // 重新连接，以防 URI 包含冒号
 
       if (!serverName || !uri) {
-        logEvent('tengu_at_mention_mcp_resource_error', {});
+        logEvent('zy_at_mention_mcp_resource_error', {});
         return null;
       }
 
       // 查找 MCP 客户端
       const client = mcpClients.find(c => c.name === serverName);
       if (!client || client.type !== 'connected') {
-        logEvent('tengu_at_mention_mcp_resource_error', {});
+        logEvent('zy_at_mention_mcp_resource_error', {});
         return null;
       }
 
@@ -1409,14 +1409,14 @@ async function processMcpResourceAttachments(input: string, toolUseContext: Tool
       const serverResources = toolUseContext.options.mcpResources?.[serverName] || [];
       const resourceInfo = serverResources.find(r => r.uri === uri);
       if (!resourceInfo) {
-        logEvent('tengu_at_mention_mcp_resource_error', {});
+        logEvent('zy_at_mention_mcp_resource_error', {});
         return null;
       }
       try {
         const result = await client.client.readResource({
           uri
         });
-        logEvent('tengu_at_mention_mcp_resource_success', {});
+        logEvent('zy_at_mention_mcp_resource_success', {});
         return {
           type: 'mcp_resource' as const,
           server: serverName,
@@ -1426,12 +1426,12 @@ async function processMcpResourceAttachments(input: string, toolUseContext: Tool
           content: result
         };
       } catch (error) {
-        logEvent('tengu_at_mention_mcp_resource_error', {});
+        logEvent('zy_at_mention_mcp_resource_error', {});
         logError(error);
         return null;
       }
     } catch {
-      logEvent('tengu_at_mention_mcp_resource_error', {});
+      logEvent('zy_at_mention_mcp_resource_error', {});
       return null;
     }
   }));
@@ -1496,7 +1496,7 @@ export async function getChangedFiles(toolUseContext: ToolUseContext): Promise<A
           };
         } catch (compressionError) {
           logError(compressionError);
-          logEvent('tengu_watched_file_compression_failed', {
+          logEvent('zy_watched_file_compression_failed', {
             file: normalizedPath
           } as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS);
           return null;
@@ -1675,7 +1675,7 @@ export type MemoryPrefetch = {
  * handle with settlement tracking. Bound with `using` in query.ts.
  */
 export function startRelevantMemoryPrefetch(messages: ReadonlyArray<Message>, toolUseContext: ToolUseContext): MemoryPrefetch | undefined {
-  if (!isAutoMemoryEnabled() || !getFeatureValue_CACHED_MAY_BE_STALE('tengu_moth_copse', false)) {
+  if (!isAutoMemoryEnabled() || !getFeatureValue_CACHED_MAY_BE_STALE('zy_moth_copse', false)) {
     return undefined;
   }
   const lastUserMessage = messages.findLast(m => m.type === 'user' && !m.isMeta);
@@ -1708,7 +1708,7 @@ export function startRelevantMemoryPrefetch(messages: ReadonlyArray<Message>, to
     consumedOnIteration: -1,
     [Symbol.dispose]() {
       controller.abort();
-      logEvent('tengu_memdir_prefetch_collected', {
+      logEvent('zy_memdir_prefetch_collected', {
         hidden_by_first_iteration: handle.settledAt !== null && handle.consumedOnIteration === 0,
         consumed_on_iteration: handle.consumedOnIteration,
         latency_ms: (handle.settledAt ?? Date.now()) - firedAt
@@ -2155,7 +2155,7 @@ export async function* getAttachmentMessages(input: string | null, toolUseContex
   if (attachments.length === 0) {
     return;
   }
-  logEvent('tengu_attachments', {
+  logEvent('zy_attachments', {
     attachment_types: attachments.map(_ => _.type) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
   });
   for (const attachment of attachments) {
@@ -2187,7 +2187,7 @@ export async function tryGetPDFReference(filename: string): Promise<PDFReference
     // 如果有页数则使用，否则回退到大小启发式（每页约 100KB）
     const effectivePageCount = pageCount ?? Math.ceil(stats.size / (100 * 1024));
     if (effectivePageCount > PDF_AT_MENTION_INLINE_THRESHOLD) {
-      logEvent('tengu_pdf_reference_attachment', {
+      logEvent('zy_pdf_reference_attachment', {
         pageCount: effectivePageCount,
         fileSize: stats.size,
         hadPdfinfo: pageCount !== null
@@ -2226,7 +2226,7 @@ export async function generateFileAttachment(filename: string, toolUseContext: T
     if (!isPDFExtension(ext)) {
       try {
         const stats = await getFsImplementation().stat(filename);
-        logEvent('tengu_attachment_file_too_large', {
+        logEvent('zy_attachment_file_too_large', {
           size_bytes: stats.size,
           mode
         } as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS);
@@ -2912,7 +2912,7 @@ async function getVerifyPlanReminderAttachment(messages: Message[] | undefined, 
   }];
 }
 export function getCompactionReminderAttachment(messages: Message[], model: string): Attachment[] {
-  if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_marble_fox', false)) {
+  if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_marble_fox', false)) {
     return [];
   }
   if (!isAutoCompactEnabled()) {

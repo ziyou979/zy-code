@@ -262,7 +262,7 @@ function StatusLineInner({
   useEffect(() => {
     const statusLine = settings?.statusLine;
     if (statusLine) {
-      logEvent('tengu_status_line_mount', {
+      logEvent('zy_status_line_mount', {
         command_length: statusLine.command.length,
         padding: statusLine.padding
       });
@@ -274,7 +274,7 @@ function StatusLineInner({
       }
       // executeStatusLineCommand（hooks.ts）在 trust 被阻止时返回 undefined——
       // statusLineText 会一直保持 undefined，用户看不到任何内容，
-      // 而上面的 tengu_status_line_mount 仍然会触发，所以遥测看起来正常。
+      // 而上面的 zy_status_line_mount 仍然会触发，所以遥测看起来正常。
       if (!checkHasTrustDialogAccepted()) {
         addNotification({
           key: 'statusline-trust-blocked',

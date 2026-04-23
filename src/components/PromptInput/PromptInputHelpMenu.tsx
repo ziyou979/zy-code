@@ -37,7 +37,7 @@ export function PromptInputHelpMenu(props) {
   const terminalShortcut = formatShortcut(t16);
   const t18 = useShortcutDisplay("chat:imagePaste", "Chat", "ctrl+v");
   const imagePasteShortcut = formatShortcut(t18);
-  const terminalShortcutElement = feature("TERMINAL_PANEL") ? getFeatureValue_CACHED_MAY_BE_STALE("tengu_terminal_panel", false) ? <Box><Text dimColor={dimColor}>{tSync('help.terminal', { shortcut: terminalShortcut })}</Text></Box> : null : null;
+  const terminalShortcutElement = feature("TERMINAL_PANEL") ? getFeatureValue_CACHED_MAY_BE_STALE("zy_terminal_panel", false) ? <Box><Text dimColor={dimColor}>{tSync('help.terminal', { shortcut: terminalShortcut })}</Text></Box> : null : null;
   const t33 = getNewlineInstructions();
   const t37 = getPlatform() !== "windows" && <Box><Text dimColor={dimColor}>{tSync('help.suspend')}</Text></Box>;
   const t43 = isKeybindingCustomizationEnabled() && <Box><Text dimColor={dimColor}>{tSync('help.customizeKeybindings')}</Text></Box>;

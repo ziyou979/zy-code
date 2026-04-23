@@ -130,7 +130,7 @@ function Install({
         }
 
         // Log success event
-        logEvent('tengu_Zy_install_command', {
+        logEvent('zy_Zy_install_command', {
           has_version: result.latestVersion ? 1 : 0,
           forced: force ? 1 : 0
         });

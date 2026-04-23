@@ -77,7 +77,7 @@ export async function clearConversation({
   // Signal to inference that this conversation's cache can be evicted.
   const lastRequestId = getLastMainRequestId()
   if (lastRequestId) {
-    logEvent('tengu_cache_eviction_hint', {
+    logEvent('zy_cache_eviction_hint', {
       scope:
         'conversation_clear' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       last_request_id:

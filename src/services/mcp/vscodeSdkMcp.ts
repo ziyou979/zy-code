@@ -14,7 +14,7 @@ import type { ConnectedMCPServer, MCPServerConnection } from './types.js'
 type AutoModeEnabledState = 'enabled' | 'disabled' | 'opt-in'
 function readAutoModeEnabledState(): AutoModeEnabledState | undefined {
   const v = getFeatureValue_CACHED_MAY_BE_STALE<{ enabled?: string }>(
-    'tengu_auto_mode_config',
+    'zy_auto_mode_config',
     {},
   )?.enabled
   return v === 'enabled' || v === 'disabled' || v === 'opt-in' ? v : undefined
@@ -74,7 +74,7 @@ export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
       async notification => {
         const { eventName, eventData } = notification.params
         logEvent(
-          `tengu_vscode_${eventName}`,
+          `zy_vscode_${eventName}`,
           eventData as { [key: string]: boolean | number | undefined },
         )
       },
@@ -82,20 +82,20 @@ export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
 
     // Send necessary experiment gates to VSCode immediately.
     const gates: Record<string, boolean | string> = {
-      tengu_vscode_review_upsell: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-        'tengu_vscode_review_upsell',
+      zy_vscode_review_upsell: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
+        'zy_vscode_review_upsell',
       ),
-      tengu_vscode_onboarding: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-        'tengu_vscode_onboarding',
+      zy_vscode_onboarding: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
+        'zy_vscode_onboarding',
       ),
       // Browser support.
-      tengu_quiet_fern: getFeatureValue_CACHED_MAY_BE_STALE(
-        'tengu_quiet_fern',
+      zy_quiet_fern: getFeatureValue_CACHED_MAY_BE_STALE(
+        'zy_quiet_fern',
         false,
       ),
       // In-band OAuth via zy_authenticate (vs. extension-native PKCE).
-      tengu_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE(
-        'tengu_vscode_cc_auth',
+      zy_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE(
+        'zy_vscode_cc_auth',
         false,
       ),
     }
@@ -103,7 +103,7 @@ export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
     // fails closed (treats absent as 'disabled').
     const autoModeState = readAutoModeEnabledState()
     if (autoModeState !== undefined) {
-      gates.tengu_auto_mode_state = autoModeState
+      gates.zy_auto_mode_state = autoModeState
     }
     void client.client.notification({
       method: 'experiment_gates',

@@ -205,7 +205,7 @@ function BashPermissionRequestInner({
     sandboxingEnabled: sandboxingEnabled_0,
     isSandboxed: isSandboxed_0
   } = useMemo(() => {
-    const destructiveWarning = getFeatureValue_CACHED_MAY_BE_STALE('tengu_destructive_command_warning', false) ? getDestructiveCommandWarning(command) : null;
+    const destructiveWarning = getFeatureValue_CACHED_MAY_BE_STALE('zy_destructive_command_warning', false) ? getDestructiveCommandWarning(command) : null;
     const sandboxingEnabled = SandboxManager.isSandboxingEnabled();
     const isSandboxed = sandboxingEnabled && shouldUseSandbox(toolUseConfirm.input);
     return {
@@ -268,7 +268,7 @@ function BashPermissionRequestInner({
         no: 4
       };
     }
-    logEvent('tengu_permission_request_option_selected', {
+    logEvent('zy_permission_request_option_selected', {
       option_index: optionIndex[value_0],
       explainer_visible: explainerState.visible
     });
@@ -319,7 +319,7 @@ function BashPermissionRequestInner({
           const trimmedFeedback_0 = acceptFeedback.trim();
           logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
           // Log accept submission with feedback context
-          logEvent('tengu_accept_submitted', {
+          logEvent('zy_accept_submitted', {
             toolName: toolNameForAnalytics,
             isMcp: toolUseConfirm.tool.isMcp ?? false,
             has_instructions: !!trimmedFeedback_0,
@@ -344,7 +344,7 @@ function BashPermissionRequestInner({
           const trimmedFeedback = rejectFeedback.trim();
 
           // Log reject submission with feedback context
-          logEvent('tengu_reject_submitted', {
+          logEvent('zy_reject_submitted', {
             toolName: toolNameForAnalytics,
             isMcp: toolUseConfirm.tool.isMcp ?? false,
             has_instructions: !!trimmedFeedback,

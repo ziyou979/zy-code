@@ -463,7 +463,7 @@ async function _executeApiKeyHelper(
         `Security: apiKeyHelper executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
       )
       logAntError('apiKeyHelper invoked before trust check', error)
-      logEvent('tengu_apiKeyHelper_missing_trust11', {})
+      logEvent('zy_apiKeyHelper_missing_trust11', {})
       return null
     }
   }
@@ -538,7 +538,7 @@ async function runAwsAuthRefresh(): Promise<boolean> {
         `Security: awsAuthRefresh executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
       )
       logAntError('awsAuthRefresh invoked before trust check', error)
-      logEvent('tengu_awsAuthRefresh_missing_trust', {})
+      logEvent('zy_awsAuthRefresh_missing_trust', {})
       return false
     }
   }
@@ -635,7 +635,7 @@ async function getAwsCredsFromCredentialExport(): Promise<{
         `Security: awsCredentialExport executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
       )
       logAntError('awsCredentialExport invoked before trust check', error)
-      logEvent('tengu_awsCredentialExport_missing_trust', {})
+      logEvent('zy_awsCredentialExport_missing_trust', {})
       return null
     }
   }
@@ -802,7 +802,7 @@ async function runGcpAuthRefresh(): Promise<boolean> {
         `Security: gcpAuthRefresh executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
       )
       logAntError('gcpAuthRefresh invoked before trust check', error)
-      logEvent('tengu_gcpAuthRefresh_missing_trust', {})
+      logEvent('zy_gcpAuthRefresh_missing_trust', {})
       return false
     }
   }
@@ -1034,19 +1034,19 @@ export async function saveApiKey(apiKey: string): Promise<void> {
         reject: false,
       })
 
-      logEvent('tengu_api_key_saved_to_keychain', {})
+      logEvent('zy_api_key_saved_to_keychain', {})
       savedToKeychain = true
     } catch (e) {
       logError(e)
-      logEvent('tengu_api_key_keychain_error', {
+      logEvent('zy_api_key_keychain_error', {
         error: errorMessage(
           e,
         ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-      logEvent('tengu_api_key_saved_to_config', {})
+      logEvent('zy_api_key_saved_to_config', {})
     }
   } else {
-    logEvent('tengu_api_key_saved_to_config', {})
+    logEvent('zy_api_key_saved_to_config', {})
   }
 
   const normalizedKey = normalizeApiKeyForConfig(apiKey)
@@ -1110,13 +1110,13 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
   warning?: string
 } {
   if (!shouldUseZyAIAuth((tokens as any).scopes)) {
-    logEvent('tengu_oauth_tokens_not_Zy_ai', {})
+    logEvent('zy_oauth_tokens_not_Zy_ai', {})
     return { success: true }
   }
 
   // Skip saving inference-only tokens (they come from env vars)
   if (!tokens.refreshToken || !(tokens as any).expiresAt) {
-    logEvent('tengu_oauth_tokens_inference_only', {})
+    logEvent('zy_oauth_tokens_inference_only', {})
     return { success: true }
   }
 
@@ -1145,9 +1145,9 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
     const updateStatus = (secureStorage as any).update(storageData)
 
     if (updateStatus.success) {
-      logEvent('tengu_oauth_tokens_saved', { storageBackend })
+      logEvent('zy_oauth_tokens_saved', { storageBackend })
     } else {
-      logEvent('tengu_oauth_tokens_save_failed', { storageBackend })
+      logEvent('zy_oauth_tokens_save_failed', { storageBackend })
     }
 
     getZyAIOAuthTokens.cache?.clear?.()
@@ -1156,7 +1156,7 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
     return updateStatus
   } catch (error) {
     logError(error)
-    logEvent('tengu_oauth_tokens_save_exception', {
+    logEvent('zy_oauth_tokens_save_exception', {
       storageBackend,
       error: errorMessage(
         error,
@@ -1285,7 +1285,7 @@ async function handleOAuth401ErrorImpl(
 
   // If keychain has a different token, another tab already refreshed - use it
   if (currentTokens.accessToken !== failedAccessToken) {
-    logEvent('tengu_oauth_401_recovered_from_keychain', {})
+    logEvent('zy_oauth_401_recovered_from_keychain', {})
     return true
   }
 
@@ -1374,27 +1374,27 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
 
   let release
   try {
-    logEvent('tengu_oauth_token_refresh_lock_acquiring', {})
+    logEvent('zy_oauth_token_refresh_lock_acquiring', {})
     release = await lockfile.lock(ZyDir)
-    logEvent('tengu_oauth_token_refresh_lock_acquired', {})
+    logEvent('zy_oauth_token_refresh_lock_acquired', {})
   } catch (err) {
     if ((err as { code?: string }).code === 'ELOCKED') {
       // Another process has the lock, let's retry if we haven't exceeded max retries
       if (retryCount < MAX_RETRIES) {
-        logEvent('tengu_oauth_token_refresh_lock_retry', {
+        logEvent('zy_oauth_token_refresh_lock_retry', {
           retryCount: retryCount + 1,
         })
         // Wait a bit before retrying
         await sleep(1000 + Math.random() * 1000)
         return checkAndRefreshOAuthTokenIfNeededImpl(retryCount + 1, force)
       }
-      logEvent('tengu_oauth_token_refresh_lock_retry_limit_reached', {
+      logEvent('zy_oauth_token_refresh_lock_retry_limit_reached', {
         maxRetries: MAX_RETRIES,
       })
       return false
     }
     logError(err)
-    logEvent('tengu_oauth_token_refresh_lock_error', {
+    logEvent('zy_oauth_token_refresh_lock_error', {
       error: errorMessage(
         err,
       ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1410,11 +1410,11 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
       !lockedTokens?.refreshToken ||
       !isOAuthTokenExpired((lockedTokens as any).expiresAt)
     ) {
-      logEvent('tengu_oauth_token_refresh_race_resolved', {})
+      logEvent('zy_oauth_token_refresh_race_resolved', {})
       return false
     }
 
-    logEvent('tengu_oauth_token_refresh_starting', {})
+    logEvent('zy_oauth_token_refresh_starting', {})
     const refreshedTokens = await refreshOAuthToken(lockedTokens.refreshToken, {
       // For Zy.ai subscribers, omit scopes so the default
       // CLAUDE_AI_OAUTH_SCOPES applies — this allows scope expansion
@@ -1436,15 +1436,15 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     clearKeychainCache()
     const currentTokens = await getZyAIOAuthTokensAsync()
     if (currentTokens && !isOAuthTokenExpired((currentTokens as any).expiresAt)) {
-      logEvent('tengu_oauth_token_refresh_race_recovered', {})
+      logEvent('zy_oauth_token_refresh_race_recovered', {})
       return true
     }
 
     return false
   } finally {
-    logEvent('tengu_oauth_token_refresh_lock_releasing', {})
+    logEvent('zy_oauth_token_refresh_lock_releasing', {})
     await release()
-    logEvent('tengu_oauth_token_refresh_lock_released', {})
+    logEvent('zy_oauth_token_refresh_lock_released', {})
   }
 }
 

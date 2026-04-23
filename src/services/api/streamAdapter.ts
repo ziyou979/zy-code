@@ -121,7 +121,7 @@ function convertAnthropicDelta(delta: any): ContentDelta {
     case 'text_delta':
       return { type: 'text_delta', text: delta.text }
     case 'input_json_delta':
-      return { type: 'tool_input_delta', partial_json: delta.partial_json }
+      return { type: 'input_json_delta', partial_json: delta.partial_json }
     case 'thinking_delta':
       return { type: 'thinking_delta', thinking: delta.thinking }
     case 'signature_delta':
@@ -310,7 +310,11 @@ function convertMessagesToOpenAI(
   for (const msg of messages) {
     const content = msg.content
     if (msg.role === 'user') {
-      result.push({ role: 'user', content: convertUserContent(content) })
+      // Anthropic 的 user 消息可能同时包含 tool_result 和普通内容。
+      // OpenAI 要求 tool response 是独立的 role:'tool' 消息。
+      // 因此需要拆分：tool_result 块 → role:'tool' 消息，其余 → role:'user' 消息。
+      const converted = convertUserMessageToOpenAI(content)
+      result.push(...converted)
     } else if (msg.role === 'assistant') {
       result.push(convertAssistantMessage(content))
     }
@@ -319,26 +323,38 @@ function convertMessagesToOpenAI(
   return result
 }
 
-function convertUserContent(
+/**
+ * 将 Anthropic 的 user 消息转换为 OpenAI 格式。
+ * Anthropic 把 tool_result 放在 user 消息的 content 数组里，
+ * 但 OpenAI 要求 tool response 必须是独立的 role:'tool' 消息并带 tool_call_id。
+ */
+function convertUserMessageToOpenAI(
   content: AnthropicContent,
-): string | Array<OpenAI.Chat.ChatCompletionContentPart> {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  if (typeof content === 'string') return [{ role: 'user', content }]
+  if (!Array.isArray(content)) return [{ role: 'user', content: '' }]
 
-  const parts: Array<OpenAI.Chat.ChatCompletionContentPart> = []
+  const toolMessages: OpenAI.Chat.ChatCompletionToolMessageParam[] = []
+  const userParts: Array<OpenAI.Chat.ChatCompletionContentPart> = []
+
   for (const block of content) {
-    if (block.type === 'text') {
-      parts.push({ type: 'text', text: block.text ?? '' })
-    } else if (block.type === 'tool_result') {
+    if (block.type === 'tool_result') {
+      // tool_result → 独立的 role:'tool' 消息
       const text =
         typeof block.content === 'string'
           ? block.content
           : Array.isArray(block.content)
             ? block.content.map((c: any) => c.text ?? '').join('\n')
             : ''
-      parts.push({ type: 'text', text })
+      toolMessages.push({
+        role: 'tool',
+        tool_call_id: (block as any).tool_use_id ?? block.id ?? '',
+        content: text || '(empty)',
+      })
+    } else if (block.type === 'text') {
+      userParts.push({ type: 'text', text: block.text ?? '' })
     } else if (block.type === 'image') {
-      parts.push({
+      userParts.push({
         type: 'image_url',
         image_url: {
           url: `data:${block.source?.media_type ?? 'image/png'};base64,${block.source?.data ?? ''}`,
@@ -346,9 +362,24 @@ function convertUserContent(
       })
     }
   }
-  return parts.length === 1 && parts[0]?.type === 'text'
-    ? parts[0].text
-    : parts
+
+  const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
+
+  // tool response 消息必须紧跟在 assistant 的 tool_calls 后面
+  if (toolMessages.length > 0) {
+    result.push(...toolMessages)
+  }
+
+  // 普通 user 内容（如果有）
+  if (userParts.length > 0) {
+    const userContent = userParts.length === 1 && userParts[0]?.type === 'text'
+      ? userParts[0].text
+      : userParts
+    result.push({ role: 'user', content: userContent })
+  }
+
+  // 如果消息中只有 tool_result 没有其他内容，不需要额外的 user 消息
+  return result.length > 0 ? result : [{ role: 'user', content: '' }]
 }
 
 function convertAssistantMessage(
@@ -529,7 +560,7 @@ async function* mapOpenAIStreamToStandard(
               type: 'content_block_delta',
               index: anthropicIdx,
               delta: {
-                type: 'tool_input_delta',
+                type: 'input_json_delta',
                 partial_json: tc.function.arguments,
               },
             }

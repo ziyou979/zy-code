@@ -66,14 +66,14 @@ const DEFAULTS: AutoDreamConfig = {
 }
 
 /**
- * Thresholds from tengu_onyx_plover. The enabled gate lives in config.ts
+ * Thresholds from zy_onyx_plover. The enabled gate lives in config.ts
  * (isAutoDreamEnabled); this returns only the scheduling knobs. Defensive
  * per-field validation since GB cache can return stale wrong-type values.
  */
 function getConfig(): AutoDreamConfig {
   const raw =
     getFeatureValue_CACHED_MAY_BE_STALE<Partial<AutoDreamConfig> | null>(
-      'tengu_onyx_plover',
+      'zy_onyx_plover',
       null,
     )
   return {
@@ -192,7 +192,7 @@ export function initAutoDream(): void {
     logForDebugging(
       `[autoDream] firing — ${hoursSince.toFixed(1)}h since last, ${sessionIds.length} sessions to review`,
     )
-    logEvent('tengu_auto_dream_fired', {
+    logEvent('zy_auto_dream_fired', {
       hours_since: Math.round(hoursSince),
       sessions_since: sessionIds.length,
     })
@@ -250,7 +250,7 @@ ${sessionIds.map(id => `- ${id}`).join('\n')}`
       logForDebugging(
         `[autoDream] completed — cache: read=${result.totalUsage.cacheReadInputTokens} created=${result.totalUsage.cacheCreationInputTokens}`,
       )
-      logEvent('tengu_auto_dream_completed', {
+      logEvent('zy_auto_dream_completed', {
         cache_read: result.totalUsage.cacheReadInputTokens,
         cache_created: result.totalUsage.cacheCreationInputTokens,
         output: result.totalUsage.outputTokens,
@@ -265,7 +265,7 @@ ${sessionIds.map(id => `- ${id}`).join('\n')}`
         return
       }
       logForDebugging(`[autoDream] fork failed: ${(e as Error).message}`)
-      logEvent('tengu_auto_dream_failed', {})
+      logEvent('zy_auto_dream_failed', {})
       failDreamTask(taskId, setAppState)
       // Rewind mtime so time-gate passes again. Scan throttle is the backoff.
       await rollbackConsolidationLock(priorMtime)

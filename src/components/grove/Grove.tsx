@@ -48,7 +48,7 @@ export function GroveDialog({
         return;
       }
       markGroveNoticeViewed();
-      logEvent("tengu_grove_policy_viewed", {
+      logEvent("zy_grove_policy_viewed", {
         location: location as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         dismissable: config?.notice_is_grace_period as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -66,7 +66,7 @@ export function GroveDialog({
       case "accept_opt_in":
         {
           await updateGroveSettings(true);
-          logEvent("tengu_grove_policy_submitted", {
+          logEvent("zy_grove_policy_submitted", {
             state: true,
             dismissable: groveConfig?.notice_is_grace_period as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
@@ -75,7 +75,7 @@ export function GroveDialog({
       case "accept_opt_out":
         {
           await updateGroveSettings(false);
-          logEvent("tengu_grove_policy_submitted", {
+          logEvent("zy_grove_policy_submitted", {
             state: false,
             dismissable: groveConfig?.notice_is_grace_period as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
@@ -83,14 +83,14 @@ export function GroveDialog({
         }
       case "defer":
         {
-          logEvent("tengu_grove_policy_dismissed", {
+          logEvent("zy_grove_policy_dismissed", {
             state: true
           });
           break;
         }
       case "escape":
         {
-          logEvent("tengu_grove_policy_escaped", {});
+          logEvent("zy_grove_policy_escaped", {});
         }
     }
     onDone(value);
@@ -130,7 +130,7 @@ export function PrivacySettingsDialog({
 }: PrivacySettingsDialogProps) {
   const [groveEnabled, setGroveEnabled] = useState(settings.grove_enabled);
   React.useEffect(() => {
-    logEvent("tengu_grove_privacy_settings_viewed", {});
+    logEvent("zy_grove_privacy_settings_viewed", {});
   }, []);
   useInput(async (input, key) => {
     if (!domainExcluded && (key.tab || key.return || input === " ")) {

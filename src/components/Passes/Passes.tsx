@@ -46,7 +46,7 @@ export function Passes({
     if (key.return && referralLink) {
       void setClipboard(referralLink).then(raw => {
         if (raw) process.stdout.write(raw);
-        logEvent('tengu_guest_passes_link_copied', {});
+        logEvent('zy_guest_passes_link_copied', {});
         onDone(`Referral link copied to clipboard!`);
       });
     }

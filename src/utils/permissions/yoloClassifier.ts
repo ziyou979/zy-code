@@ -77,7 +77,7 @@ const ANTHROPIC_PERMISSIONS_TEMPLATE: string =
 function isUsingExternalPermissions(): boolean {
   if (!isInternalBuild()) return true
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_auto_mode_config',
+    'zy_auto_mode_config',
     {} as AutoModeConfig,
   )
   return config?.forceExternalPermissions === true
@@ -405,7 +405,7 @@ function toCompactBlock(
       logForDebugging(
         `toAutoClassifierInput failed for ${block.name}: ${errorMessage(e)}`,
       )
-      logEvent('tengu_auto_mode_malformed_tool_input', {
+      logEvent('zy_auto_mode_malformed_tool_input', {
         toolName:
           block.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
@@ -671,7 +671,7 @@ function replaceOutputFormatWithXml(systemPrompt: string): string {
  *
  * 对于大多数模型：通过 sideQuery 的 `thinking: false` 发送 { type: 'disabled' }。
  *
- * 具有 alwaysOnThinking 的模型（在 tengu_ant_model_override 中声明）默认
+ * 具有 alwaysOnThinking 的模型（在 zy_ant_model_override 中声明）默认
  * 在服务器端使用自适应 thinking，并以 400 拒绝 `disabled`。对于这些模型：
  * 不传递 `thinking: false`，而是填充 max_tokens 以便自适应 thinking
  * （观察到的 0-1114 tokens，重放 go/ccshare/shawnm-20260310-202833）不会
@@ -1338,7 +1338,7 @@ function getClassifierModel(): string {
     if (envModel) return envModel
   }
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_auto_mode_config',
+    'zy_auto_mode_config',
     {} as AutoModeConfig,
   )
   if (config?.model) {
@@ -1363,7 +1363,7 @@ function resolveTwoStageClassifier():
     if (isEnvDefinedFalsy(env)) return false
   }
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_auto_mode_config',
+    'zy_auto_mode_config',
     {} as AutoModeConfig,
   )
   return config?.twoStageClassifier
@@ -1384,7 +1384,7 @@ function isJsonlTranscriptEnabled(): boolean {
     if (isEnvDefinedFalsy(env)) return false
   }
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_auto_mode_config',
+    'zy_auto_mode_config',
     {} as AutoModeConfig,
   )
   return config?.jsonlTranscript === true
@@ -1420,7 +1420,7 @@ type AutoModeOutcome =
   | 'transcript_too_long'
 
 /**
- * tengu_auto_mode_outcome 的遥测辅助函数。所有字符串字段都是
+ * zy_auto_mode_outcome 的遥测辅助函数。所有字符串字段都是
  * 类似枚举的值（结果、模型名称、分类器类型、失败类型）—
  * 绝非代码或文件路径，因此 AnalyticsMetadata 转换是安全的。
  */
@@ -1439,7 +1439,7 @@ function logAutoModeOutcome(
   },
 ): void {
   const { classifierType, failureKind, ...rest } = extra ?? {}
-  logEvent('tengu_auto_mode_outcome', {
+  logEvent('zy_auto_mode_outcome', {
     outcome:
       outcome as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     classifierModel:

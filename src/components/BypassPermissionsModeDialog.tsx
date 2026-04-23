@@ -12,13 +12,13 @@ export function BypassPermissionsModeDialog({
   onAccept
 }: Props) {
   React.useEffect(() => {
-    logEvent("tengu_bypass_permissions_mode_dialog_shown", {});
+    logEvent("zy_bypass_permissions_mode_dialog_shown", {});
   }, []);
   const onChange = function onChange(value) {
     switch (value) {
       case "accept":
         {
-          logEvent("tengu_bypass_permissions_mode_dialog_accept", {});
+          logEvent("zy_bypass_permissions_mode_dialog_accept", {});
           updateSettingsForSource("userSettings", {
             skipDangerousModePermissionPrompt: true
           });

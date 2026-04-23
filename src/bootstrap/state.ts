@@ -244,7 +244,7 @@ type State = {
   // 关闭时读取以向推理发送缓存驱逐提示。
   lastMainRequestId: string | undefined
   // 最后一次成功 API 调用完成的时间戳（Date.now()）。
-  // 用于在 tengu_api_success 中计算 timeSinceLastApiCallMs，
+  // 用于在 zy_api_success 中计算 timeSinceLastApiCallMs，
   // 将缓存未命中与空闲时间关联（缓存 TTL 约 5 分钟）。
   lastApiCompletionTimestamp: number | null
   // 压缩后设为 true（自动或手动 /compact）。由

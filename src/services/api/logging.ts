@@ -39,7 +39,7 @@ import { extractConnectionErrorDetails } from './errorUtils.js'
 export type { NonNullableUsage }
 export { EMPTY_USAGE }
 
-// Strategy used for global prompt caching
+// 用于全局提示缓存的策略
 export type GlobalCacheStrategy = 'tool_based' | 'system_prompt' | 'none'
 
 function getErrorMessage(error: unknown): string {
@@ -58,7 +58,7 @@ type KnownGateway =
   | 'braintrust'
   | 'databricks'
 
-// Gateway fingerprints for detecting AI gateways from response headers
+// 用于从响应头检测 AI 网关的网关指纹
 const GATEWAY_FINGERPRINTS: Partial<
   Record<KnownGateway, { prefixes: string[] }>
 > = {
@@ -88,9 +88,9 @@ const GATEWAY_FINGERPRINTS: Partial<
   },
 }
 
-// Gateways that use provider-owned domains (not self-hosted), so the
-// ANTHROPIC_BASE_URL hostname is a reliable signal even without a
-// distinctive response header.
+// 使用提供商自有域名（非自托管）的网关，因此
+// ANTHROPIC_BASE_URL 主机名是可靠的信号，即使没有
+// 特征性响应头也能识别。
 const GATEWAY_HOST_SUFFIXES: Partial<Record<KnownGateway, string[]>> = {
   // https://docs.databricks.com/aws/en/ai-gateway/
   databricks: [
@@ -108,7 +108,7 @@ function detectGateway({
   baseUrl?: string
 }): KnownGateway | undefined {
   if (headers) {
-    // Header names are already lowercase from the Headers API
+    // Headers API 返回的 header 名称已是小写
     // 兼容百炼 API：headers 可能是普通对象而非 Headers 实例
     const headerNames: string[] = []
     if (typeof headers.forEach === 'function') {
@@ -133,7 +133,7 @@ function detectGateway({
         }
       }
     } catch {
-      // malformed URL — ignore
+      // URL 格式错误 — 忽略
     }
   }
 
@@ -193,7 +193,7 @@ export function logAPIQuery({
   effortValue?: EffortLevel | null
   previousRequestId?: string | null
 }): void {
-  logEvent('tengu_api_query', {
+  logEvent('zy_api_query', {
     model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     messagesLength,
     temperature: temperature,
@@ -257,14 +257,14 @@ export function logAPIError({
   durationMsIncludingRetries: number
   attempt: number
   requestId?: string | null
-  /** Client-generated ID sent as x-client-request-id header (survives timeouts) */
+  /** 客户端生成的 ID，作为 x-client-request-id header 发送（在超时时仍可存活） */
   clientRequestId?: string
   didFallBackToNonStreaming?: boolean
   promptCategory?: string
   headers?: globalThis.Headers
   queryTracking?: QueryChainTracking
   querySource?: string
-  /** The span from startLLMRequestSpan - pass this to correctly match responses to requests */
+  /** 来自 startLLMRequestSpan 的 span，传递它以正确匹配请求和响应 */
   llmSpan?: Span
   previousRequestId?: string | null
 }): void {
@@ -277,12 +277,12 @@ export function logAPIError({
   const status = isAPIError(error) ? String(error.status) : undefined
   const errorType = classifyAPIError(error)
 
-  // Log detailed connection error info to debug logs (visible via --debug)
+  // 将详细连接错误信息记录到调试日志（通过 --debug 可见）
   const connectionDetails = extractConnectionErrorDetails(error)
   if (connectionDetails) {
-    const sslLabel = connectionDetails.isSSLError ? ' (SSL error)' : ''
+    const sslLabel = connectionDetails.isSSLError ? ' (SSL 错误)' : ''
     logForDebugging(
-      `Connection error details: code=${connectionDetails.code}${sslLabel}, message=${connectionDetails.message}`,
+      `连接错误详情：code=${connectionDetails.code}${sslLabel}, message=${connectionDetails.message}`,
       { level: 'error' },
     )
   }
@@ -291,13 +291,13 @@ export function logAPIError({
 
   if (clientRequestId) {
     logForDebugging(
-      `API error x-client-request-id=${clientRequestId} (give this to the API team for server-log lookup)`,
+      `API 错误 x-client-request-id=${clientRequestId}（提供给 API 团队用于服务端日志查找）`,
       { level: 'error' },
     )
   }
 
   logError(error as Error)
-  logEvent('tengu_api_error', {
+  logEvent('zy_api_error', {
     model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     error: errStr as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     status:
@@ -359,7 +359,7 @@ export function logAPIError({
     ...getAnthropicEnvMetadata(),
   })
 
-  // Log API error event for OTLP
+  // 记录 API 错误事件到 OTLP
   void logOTelEvent('api_error', {
     model: model,
     error: errStr,
@@ -368,7 +368,7 @@ export function logAPIError({
     attempt: String(attempt),
   })
 
-  // Pass the span to correctly match responses to requests when beta tracing is enabled
+  // 传递 span 以在启用 beta tracing 时正确匹配请求和响应
   endLLMRequestSpan(llmSpan, {
     success: false,
     statusCode: status ? parseInt(status) : undefined,
@@ -376,10 +376,10 @@ export function logAPIError({
     attempt,
   })
 
-  // Log first error for teleported sessions (reliability tracking)
+  // 记录远程传送会话的首次错误（可靠性跟踪）
   const teleportInfo = getTeleportedSessionInfo()
   if (teleportInfo?.isTeleported && !teleportInfo.hasLoggedFirstMessage) {
-    logEvent('tengu_teleport_first_message_error', {
+    logEvent('zy_teleport_first_message_error', {
       session_id:
         teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       error_type:
@@ -453,7 +453,7 @@ function logAPISuccess({
 
   const invocation = consumeInvokingRequestId()
 
-  logEvent('tengu_api_success', {
+  logEvent('zy_api_success', {
     model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(preNormalizedModel !== model
       ? {
@@ -544,9 +544,9 @@ function logAPISuccess({
           connectorTextBlockCount,
         } as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
       : {}),
-    // Log cache_deleted_input_tokens for cache editing analysis. Casts needed
-    // because the field is intentionally not on NonNullableUsage (excluded from
-    // external builds). Set by updateUsage() when cache editing is active.
+    // 记录 cache_deleted_input_tokens 用于缓存编辑分析。需要类型转换，
+    // 因为该字段有意不在 NonNullableUsage 上（外部构建已排除）。
+    // 在缓存编辑激活时由 updateUsage() 设置。
     ...(feature('CACHED_MICROCOMPACT') &&
     ((usage as unknown as { cache_deleted_input_tokens?: number })
       .cache_deleted_input_tokens ?? 0) > 0
@@ -614,18 +614,17 @@ export function logAPISuccessAndDuration({
   costUSD: number
   queryTracking?: QueryChainTracking
   permissionMode?: PermissionMode
-  /** Assistant messages from the response - used to extract model_output and thinking_output
-   *  when beta tracing is enabled */
+  /** 来自响应的助手消息 — 用于在启用 beta tracing 时提取 model_output 和 thinking_output */
   newMessages?: AssistantMessage[]
-  /** The span from startLLMRequestSpan - pass this to correctly match responses to requests */
+  /** 来自 startLLMRequestSpan 的 span，传递它以正确匹配请求和响应 */
   llmSpan?: Span
-  /** Strategy used for global prompt caching: 'tool_based', 'system_prompt', or 'none' */
+  /** 用于全局提示缓存的策略：'tool_based'、'system_prompt' 或 'none' */
   globalCacheStrategy?: GlobalCacheStrategy
-  /** Time spent in pre-request setup before the successful attempt */
+  /** 成功尝试前用于请求准备的时间 */
   requestSetupMs?: number
-  /** Timestamps (Date.now()) of each attempt start — used for retry sub-spans in Perfetto */
+  /** 每次尝试开始的时间戳 (Date.now()) — 用于 Perfetto 中的重试子 span */
   attemptStartTimes?: number[]
-  /** Request ID from the previous API call in this session */
+  /** 此会话中上一次 API 调用的请求 ID */
   previousRequestId?: string | null
   betas?: string[]
 }): void {
@@ -705,7 +704,7 @@ export function logAPISuccessAndDuration({
     previousRequestId,
     betas,
   })
-  // Log API request event for OTLP
+  // 记录 API 请求事件到 OTLP
   void logOTelEvent('api_request', {
     model,
     input_tokens: String(usage.inputTokens),
@@ -716,13 +715,13 @@ export function logAPISuccessAndDuration({
     duration_ms: String(durationMs),
   })
 
-  // Extract model output, thinking output, and tool call flag when beta tracing is enabled
+  // 提取模型输出、思考输出和工具调用标志（启用 beta tracing 时）
   let modelOutput: string | undefined
   let thinkingOutput: string | undefined
   let hasToolCall: boolean | undefined
 
   if (isBetaTracingEnabled() && newMessages) {
-    // Model output - visible to all users
+    // 模型输出 — 所有用户可见
     modelOutput =
       newMessages
         .flatMap(m =>
@@ -732,7 +731,7 @@ export function logAPISuccessAndDuration({
         )
         .join('\n') || undefined
 
-    // Thinking output - Ant-only (build-time gated)
+    // 思考输出 — 仅 Ant（构建时门控）
     if (isInternalBuild()) {
       thinkingOutput =
         newMessages
@@ -744,13 +743,13 @@ export function logAPISuccessAndDuration({
           .join('\n') || undefined
     }
 
-    // Check if any tool_use blocks were in the output
+    // 检查输出中是否包含 tool_use 块
     hasToolCall = newMessages.some(m =>
       m.message.content.some(c => c.type === 'tool_use'),
     )
   }
 
-  // Pass the span to correctly match responses to requests when beta tracing is enabled
+  // 传递 span 以在启用 beta tracing 时正确匹配请求和响应
   endLLMRequestSpan(llmSpan, {
     success: true,
     inputTokens: usage.inputTokens,
@@ -766,10 +765,10 @@ export function logAPISuccessAndDuration({
     attemptStartTimes,
   })
 
-  // Log first successful message for teleported sessions (reliability tracking)
+  // 记录远程传送会话的首次成功消息（可靠性跟踪）
   const teleportInfo = getTeleportedSessionInfo()
   if (teleportInfo?.isTeleported && !teleportInfo.hasLoggedFirstMessage) {
-    logEvent('tengu_teleport_first_message_success', {
+    logEvent('zy_teleport_first_message_success', {
       session_id:
         teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })

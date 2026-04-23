@@ -1106,7 +1106,7 @@ export function REPL({
   // 门控以便我们可以在侧边栏指示器与
   // 渲染两者的终端中标题 spinner 冲突时回滚。标志开启时，
   // 面向用户的配置设置控制其是否活动。
-  const tabStatusGateEnabled = getFeatureValue_CACHED_MAY_BE_STALE('tengu_terminal_sidebar', false);
+  const tabStatusGateEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_terminal_sidebar', false);
   const showStatusInTerminalTab = tabStatusGateEnabled && (getGlobalConfig().showStatusInTerminalTab ?? false);
   useTabStatus(titleDisabled || !showStatusInTerminalTab ? null : sessionStatus);
 
@@ -1864,13 +1864,13 @@ export function REPL({
 
       // 清除输入以确保没有残留状态
       setInputValue('');
-      logEvent('tengu_session_resumed', {
+      logEvent('zy_session_resumed', {
         entrypoint: entrypoint as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         success: true,
         resume_duration_ms: Math.round(performance.now() - resumeStart)
       });
     } catch (error) {
-      logEvent('tengu_session_resumed', {
+      logEvent('zy_session_resumed', {
         entrypoint: entrypoint as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         success: false
       });
@@ -1886,7 +1886,7 @@ export function REPL({
   const readFileState = useRef(initialReadFileState);
   const bashTools = useRef(new Set<string>());
   const bashToolsProcessedIdx = useRef(0);
-  // 会话级 skill 发现跟踪（为 tengu_skill_tool_invocation 提供
+  // 会话级 skill 发现跟踪（为 zy_skill_tool_invocation 提供
   // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
   // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
   // 写入，turn N 的发现仍必须在 turn N+k 时归属于 SkillTool 调用。
@@ -2133,7 +2133,7 @@ export function REPL({
   useEffect(() => {
     const totalCost = getTotalCost();
     if (totalCost >= 5 /* $5 */ && !showCostDialog && !haveShownCostDialog) {
-      logEvent('tengu_cost_threshold_reached', {});
+      logEvent('zy_cost_threshold_reached', {});
       // 即使对话框不会渲染（无控制台计费
       // 访问）也标记为已显示。否则此 effect 会在会话剩余时间
       // 的每次消息更改时重新触发 — 观察到 200k+ 次虚假事件。
@@ -2604,7 +2604,7 @@ export function REPL({
     void maybeMarkProjectOnboardingComplete();
 
     // 从第一个真实用户消息中提取会话标题。单次
-    // 通过 ref（曾是 tengu_birch_mist 实验：仅第一条消息以节省
+    // 通过 ref（曾是 zy_birch_mist 实验：仅第一条消息以节省
     // Haiku 调用）。ref 替换了旧的 `messages.length <= 1` 检查，
     // 该检查被 SessionStart hook 消息（通过
     // useDeferredHookMessages 前置）和附件消息（通过
@@ -2798,7 +2798,7 @@ export function REPL({
     // 如果已在运行则返回 null — 无需单独的 check-then-set。
     const thisGeneration = queryGuard.tryStart();
     if (thisGeneration === null) {
-      logEvent('tengu_concurrent_onquery_detected', {});
+      logEvent('zy_concurrent_onquery_detected', {});
 
       // 提取用户消息文本并入队，跳过元消息
       // （例如扩展的 skill 内容、tick 提示）不应作为
@@ -2809,7 +2809,7 @@ export function REPL({
           mode: 'prompt'
         });
         if (i === 0) {
-          logEvent('tengu_concurrent_onquery_enqueued', {});
+          logEvent('zy_concurrent_onquery_enqueued', {});
         }
       });
       return;
@@ -3100,7 +3100,7 @@ export function REPL({
       // 2. 命令通过键绑定触发（fromKeybinding 选项）
       const matchingCommand = commands.find(cmd => isCommandEnabled(cmd) && (cmd.name === commandName || cmd.aliases?.includes(commandName) || getCommandName(cmd) === commandName));
       if (matchingCommand?.name === 'clear' && idleHintShownRef.current) {
-        logEvent('tengu_idle_return_action', {
+        logEvent('zy_idle_return_action', {
           action: 'hint_converted' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           variant: idleHintShownRef.current as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           idleMinutes: Math.round((Date.now() - lastQueryCompletionTimeRef.current) / 60_000),
@@ -3123,11 +3123,11 @@ export function REPL({
         const pastedTextRefs = parseReferences(input).filter(r => pastedContents[r.id]?.type === 'text');
         const pastedTextCount = pastedTextRefs.length;
         const pastedTextBytes = pastedTextRefs.reduce((sum, r) => sum + (pastedContents[r.id]?.content.length ?? 0), 0);
-        logEvent('tengu_paste_text', {
+        logEvent('zy_paste_text', {
           pastedTextCount,
           pastedTextBytes
         });
-        logEvent('tengu_immediate_command_executed', {
+        logEvent('zy_immediate_command_executed', {
           commandName: matchingCommand.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           fromKeybinding: options?.fromKeybinding ?? false
         });
@@ -3215,9 +3215,9 @@ export function REPL({
     }
 
     // 空闲返回：当对话很大且缓存冷时提示用户重新开始。
-    // tengu_willow_mode 控制处理："dialog"（阻塞），"hint"（通知），"off"。
+    // zy_willow_mode 控制处理："dialog"（阻塞），"hint"（通知），"off"。
     {
-      const willowMode = getFeatureValue_CACHED_MAY_BE_STALE('tengu_willow_mode', 'off');
+      const willowMode = getFeatureValue_CACHED_MAY_BE_STALE('zy_willow_mode', 'off');
       const idleThresholdMin = Number(process.env.ZY_CODE_IDLE_THRESHOLD_MINUTES ?? 75);
       const tokenThreshold = Number(process.env.ZY_CODE_IDLE_TOKEN_THRESHOLD ?? 100_000);
       if (willowMode !== 'off' && !getGlobalConfig().idleReturnDismissed && !skipIdleCheckRef.current && !speculationAccept && !input.trim().startsWith('/') && lastQueryCompletionTimeRef.current > 0 && getTotalInputTokens() >= tokenThreshold) {
@@ -3587,7 +3587,7 @@ export function REPL({
     const prev = messagesRef.current;
     const messageIndex = prev.lastIndexOf(message);
     if (messageIndex === -1) return;
-    logEvent('tengu_conversation_rewind', {
+    logEvent('zy_conversation_rewind', {
       preRewindMessageCount: prev.length,
       postRewindMessageCount: messageIndex,
       messagesRemoved: prev.length - messageIndex,
@@ -3865,7 +3865,7 @@ export function REPL({
   useEffect(() => {
     if (lastQueryCompletionTime === 0) return;
     if (isLoading) return;
-    const willowMode: string = getFeatureValue_CACHED_MAY_BE_STALE('tengu_willow_mode', 'off');
+    const willowMode: string = getFeatureValue_CACHED_MAY_BE_STALE('zy_willow_mode', 'off');
     if (willowMode !== 'hint' && willowMode !== 'hint_v2') return;
     if (getGlobalConfig().idleReturnDismissed) return;
     const tokenThreshold = Number(process.env.ZY_CODE_IDLE_TOKEN_THRESHOLD ?? 100_000);
@@ -3895,7 +3895,7 @@ export function REPL({
         timeoutMs: 0x7fffffff
       });
       hintRef.current = mode;
-      logEvent('tengu_idle_return_action', {
+      logEvent('zy_idle_return_action', {
         action: 'hint_shown' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         variant: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         idleMinutes: Math.round(idleMinutes),
@@ -3965,7 +3965,7 @@ export function REPL({
     // Assistant 模式绕过 isLoading 门控（主动 tick →
     // Sleep → tick 循环否则会饿死调度器）。
     // kairosEnabled 在 initialState（main.tsx）中设置一次且从不改变 —— 无需
-    // 订阅。tengu_kairos_cron 运行时门控在
+    // 订阅。zy_kairos_cron 运行时门控在
     // useScheduledTasks 的 effect 内部检查（不在此处），因为将 hook 调用包装在动态
     // 条件中会破坏 rules-of-hooks
     const assistantMode = store.getState().kairosEnabled;
@@ -4660,12 +4660,12 @@ export function REPL({
               ...current,
               hasAcknowledgedCostThreshold: true
             }));
-            logEvent('tengu_cost_threshold_acknowledged', {});
+            logEvent('zy_cost_threshold_acknowledged', {});
           }} />}
                 {focusedInputDialog === 'idle-return' && idleReturnPending && <IdleReturnDialog idleMinutes={idleReturnPending.idleMinutes} totalInputTokens={getTotalInputTokens()} onDone={async action => {
             const pending = idleReturnPending;
             setIdleReturnPending(null);
-            logEvent('tengu_idle_return_action', {
+            logEvent('zy_idle_return_action', {
               action: action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               idleMinutes: Math.round(pending.idleMinutes),
               messageCount: messagesRef.current.length,

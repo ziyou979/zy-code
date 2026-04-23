@@ -95,7 +95,7 @@ export function ModelPicker({
     context: "ModelPicker"
   });
   const handleSelect = function handleSelect(value_0) {
-    logEvent("tengu_model_command_menu_effort", {
+    logEvent("zy_model_command_menu_effort", {
       effort: effort as any
     });
     if (!skipSettingsWrite) {

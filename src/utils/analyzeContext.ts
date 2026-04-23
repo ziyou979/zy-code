@@ -1114,7 +1114,7 @@ export async function analyzeContextUsage(
   let reservedTokens = 0
   let skipReservedBuffer = false
   if (feature('REACTIVE_COMPACT')) {
-    if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_raccoon', false)) {
+    if (getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_raccoon', false)) {
       skipReservedBuffer = true
     }
   }

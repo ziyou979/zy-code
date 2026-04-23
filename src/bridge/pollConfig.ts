@@ -101,7 +101,7 @@ const pollIntervalConfigSchema = lazySchema(() =>
  */
 export function getPollIntervalConfig(): PollIntervalConfig {
   const raw = getFeatureValue_CACHED_WITH_REFRESH<unknown>(
-    'tengu_bridge_poll_interval_config',
+    'zy_bridge_poll_interval_config',
     DEFAULT_POLL_CONFIG,
     5 * 60 * 1000,
   )

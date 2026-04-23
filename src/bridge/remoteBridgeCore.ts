@@ -24,7 +24,7 @@
  * layer could mint. Server PR #292605 (renamed in #293280) adds the /bridge endpoint as a direct
  * OAuth→worker_jwt exchange, making the env layer optional for REPL sessions.
  *
- * Gated by `tengu_bridge_repl_v2` GrowthBook flag in initReplBridge.ts.
+ * Gated by `zy_bridge_repl_v2` GrowthBook flag in initReplBridge.ts.
  * REPL-only — daemon/print stay on env-based.
  */
 
@@ -300,7 +300,7 @@ export async function initEnvLessBridgeCore(
   let connectDeadline: ReturnType<typeof setTimeout> | undefined
   function onConnectTimeout(cause: ConnectCause): void {
     if (tornDown) return
-    logEvent('tengu_bridge_repl_connect_timeout', {
+    logEvent('zy_bridge_repl_connect_timeout', {
       v2: true,
       elapsed_ms: cfg.connect_timeout_ms,
       cause:
@@ -382,7 +382,7 @@ export async function initEnvLessBridgeCore(
       clearTimeout(connectDeadline)
       logForDebugging('[remote-bridge] v2 transport connected')
       logForDiagnosticsNoPII('info', 'bridge_repl_v2_transport_connected')
-      logEvent('tengu_bridge_repl_ws_connected', {
+      logEvent('zy_bridge_repl_ws_connected', {
         v2: true,
         cause:
           connectCause as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -451,7 +451,7 @@ export async function initEnvLessBridgeCore(
       clearTimeout(connectDeadline)
       if (tornDown) return
       logForDebugging(`[remote-bridge] v2 transport closed (code=${code})`)
-      logEvent('tengu_bridge_repl_ws_closed', { code, v2: true })
+      logEvent('zy_bridge_repl_ws_closed', { code, v2: true })
       // onClose fires only for TERMINAL failures: 401 (JWT invalid),
       // 4090 (CCR epoch mismatch), 4091 (CCR init failed), or SSE 10-min
       // reconnect budget exhausted. Transient disconnects are handled
@@ -730,8 +730,8 @@ export async function initEnvLessBridgeCore(
     logForDiagnosticsNoPII('info', 'bridge_repl_v2_teardown')
     logEvent(
       feature('CCR_MIRROR') && outboundOnly
-        ? 'tengu_ccr_mirror_teardown'
-        : 'tengu_bridge_repl_teardown',
+        ? 'zy_ccr_mirror_teardown'
+        : 'zy_bridge_repl_teardown',
       {
         v2: true,
         archive_status:
@@ -746,12 +746,12 @@ export async function initEnvLessBridgeCore(
   const unregister = registerCleanup(teardown)
 
   if (feature('CCR_MIRROR') && outboundOnly) {
-    logEvent('tengu_ccr_mirror_started', {
+    logEvent('zy_ccr_mirror_started', {
       v2: true,
       expires_in_s: credentials.expires_in,
     })
   } else {
-    logEvent('tengu_bridge_repl_started', {
+    logEvent('zy_bridge_repl_started', {
       has_initial_messages: !!(initialMessages && initialMessages.length > 0),
       v2: true,
       expires_in_s: credentials.expires_in,

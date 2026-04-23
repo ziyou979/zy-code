@@ -19,7 +19,7 @@ import {
 } from './imageResizer.js'
 import { logError } from './log.js'
 
-// Native NSPasteboard reader. GrowthBook gate tengu_collage_kaleidoscope is
+// Native NSPasteboard reader. GrowthBook gate zy_collage_kaleidoscope is
 // a kill switch (default on). Falls through to osascript when off.
 // The gate string is inlined at each callsite INSIDE the feature() condition
 // — module-scope helpers are NOT tree-shaken (see docs/feature-gating.md).
@@ -99,7 +99,7 @@ export async function hasImageInClipboard(): Promise<boolean> {
   }
   if (
     feature('NATIVE_CLIPBOARD_IMAGE') &&
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_collage_kaleidoscope', true)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_collage_kaleidoscope', true)
   ) {
     // Native NSPasteboard check (~0.03ms warm). Fall through to osascript
     // when the module/export is missing. Catch a throw too: it would surface
@@ -132,7 +132,7 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
   if (
     feature('NATIVE_CLIPBOARD_IMAGE') &&
     process.platform === 'darwin' &&
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_collage_kaleidoscope', true)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_collage_kaleidoscope', true)
   ) {
     try {
       // @ts-ignore

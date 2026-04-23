@@ -41,7 +41,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
     try {
       if (isEnvDefinedFalsy(process.env.ENABLE_CLAUDEAI_MCP_SERVERS)) {
         logForDebugging('[zyai-mcp] Disabled via env var')
-        logEvent('tengu_Zyai_mcp_eligibility', {
+        logEvent('zy_Zyai_mcp_eligibility', {
           state:
             'disabled_env_var' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -51,7 +51,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
       const tokens = getZyAIOAuthTokens()
       if (!tokens?.accessToken) {
         logForDebugging('[zyai-mcp] No access token')
-        logEvent('tengu_Zyai_mcp_eligibility', {
+        logEvent('zy_Zyai_mcp_eligibility', {
           state:
             'no_oauth_token' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -63,7 +63,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
         logForDebugging(
           `[zyai-mcp] Missing user:mcp_servers scope (scopes=${tokens.scopes?.join(',') || 'none'})`,
         )
-        logEvent('tengu_Zyai_mcp_eligibility', {
+        logEvent('zy_Zyai_mcp_eligibility', {
           state:
             'missing_scope' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -117,7 +117,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
       logForDebugging(
         `[zyai-mcp] Fetched ${Object.keys(configs).length} servers`,
       )
-      logEvent('tengu_Zyai_mcp_eligibility', {
+      logEvent('zy_Zyai_mcp_eligibility', {
         state:
           'eligible' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })

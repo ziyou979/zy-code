@@ -30,7 +30,7 @@ import { jsonStringify } from '../utils/slowOperations.js'
  * #295987 (B2 Python routes), #307150 (C1' CCR v2 gate).
  */
 
-const TRUSTED_DEVICE_GATE = 'tengu_sessions_elevated_auth_enforcement'
+const TRUSTED_DEVICE_GATE = 'zy_sessions_elevated_auth_enforcement'
 
 function isGateEnabled(): boolean {
   return getFeatureValue_CACHED_MAY_BE_STALE(TRUSTED_DEVICE_GATE, false)

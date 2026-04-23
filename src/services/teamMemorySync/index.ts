@@ -654,7 +654,7 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
       `team-memory-sync: ${keys.length} local entries exceeds server cap of ${maxEntries}; ${dropped.length} file(s) will NOT sync: ${dropped.join(', ')}. Consider consolidating or removing some team memory files.`,
       { level: 'warn' },
     )
-    logEvent('tengu_team_mem_entries_capped', {
+    logEvent('zy_team_mem_entries_capped', {
       total_entries: keys.length,
       dropped_count: dropped.length,
       max_entries: maxEntries,
@@ -928,7 +928,7 @@ export async function pushTeamMemory(
       `team-memory-sync: ${skippedSecrets.length} file(s) skipped due to detected secrets: ${summary}. Remove the secret(s) to enable sync for these files.`,
       { level: 'warn' },
     )
-    logEvent('tengu_team_mem_secret_skipped', {
+    logEvent('zy_team_mem_secret_skipped', {
       file_count: skippedSecrets.length,
       // 只记录 gitleaks 规则 ID（不记录值，不记录路径 —— 路径可能
       // 泄漏仓库结构）。逗号连接以压缩为单个 analytics 字段。
@@ -1197,7 +1197,7 @@ function logPull(
     status?: number
   },
 ): void {
-  logEvent('tengu_team_mem_sync_pull', {
+  logEvent('zy_team_mem_sync_pull', {
     success: outcome.success,
     files_written: outcome.filesWritten ?? 0,
     not_modified: outcome.notModified ?? false,
@@ -1225,7 +1225,7 @@ function logPush(
     serverReceivedEntries?: number
   },
 ): void {
-  logEvent('tengu_team_mem_sync_push', {
+  logEvent('zy_team_mem_sync_push', {
     success: outcome.success,
     files_uploaded: outcome.filesUploaded ?? 0,
     conflict: outcome.conflict ?? false,

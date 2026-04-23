@@ -236,7 +236,7 @@ export function useVoice({
   // connectionRef mid-way through the next session.
   const sessionGenRef = useRef(0)
   // True if the early-error retry fired during this session.
-  // Tracked for the tengu_voice_recording_completed analytics event.
+  // Tracked for the zy_voice_recording_completed analytics event.
   const retryUsedRef = useRef(false)
   // Full audio captured this session, kept for silent-drop replay. ~1% of
   // sessions get a sticky-broken CE pod that accepts audio but returns zero
@@ -390,7 +390,7 @@ export function useVoice({
           logForDebugging(
             `[voice] Silent-drop detected (no_data_timeout, ${String(fullAudioRef.current.length)} chunks); replaying on fresh connection`,
           )
-          logEvent('tengu_voice_silent_drop_replay', {
+          logEvent('zy_voice_silent_drop_replay', {
             recordingDurationMs,
             chunkCount: fullAudioRef.current.length,
           })
@@ -468,7 +468,7 @@ export function useVoice({
         // fallthrough and !conn (no-OAuth) paths bypass this → don't compute
         // COUNT(completed)/COUNT(started) as a success rate; the silent-drop
         // denominator (completed events only) is internally consistent.
-        logEvent('tengu_voice_recording_completed', {
+        logEvent('zy_voice_recording_completed', {
           transcriptChars: text.length + focusFlushedChars,
           recordingDurationMs,
           hadAudioSignal,
@@ -746,7 +746,7 @@ export function useVoice({
 
     const rawLanguage = getInitialSettings().language
     const stt = normalizeLanguageForSTT(rawLanguage)
-    logEvent('tengu_voice_recording_started', {
+    logEvent('zy_voice_recording_started', {
       focusTriggered: focusTriggeredRef.current,
       sttLanguage:
         stt.code as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -873,7 +873,7 @@ export function useVoice({
                 logForDebugging(
                   `[voice] early voice_stream error (pre-transcript), retrying once: ${error}`,
                 )
-                logEvent('tengu_voice_stream_early_retry', {})
+                logEvent('zy_voice_stream_early_retry', {})
                 connectionRef.current = null
                 attemptGenRef.current++
                 setTimeout(

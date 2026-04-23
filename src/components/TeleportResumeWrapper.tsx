@@ -32,7 +32,7 @@ export function TeleportResumeWrapper({
     selectedSession
   } = useTeleportResume(source);
   useEffect(() => {
-    logEvent("tengu_teleport_started", {
+    logEvent("zy_teleport_started", {
       source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
   }, [source]);
@@ -49,7 +49,7 @@ export function TeleportResumeWrapper({
     }
   };
   const handleCancel = () => {
-    logEvent("tengu_teleport_cancelled", {});
+    logEvent("zy_teleport_cancelled", {});
     onCancel();
   };
   useKeybinding("app:interrupt", handleCancel, {

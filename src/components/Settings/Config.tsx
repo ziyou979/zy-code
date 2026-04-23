@@ -199,7 +199,7 @@ export function Config({
   const autoUpdaterDisabledReason = getAutoUpdaterDisabledReason();
   function onChangeMainModelConfig(value: string | null): void {
     const previousModel = mainLoopModel;
-    logEvent('tengu_config_model_changed', {
+    logEvent('zy_config_model_changed', {
       from_model: previousModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       to_model: value as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
@@ -274,7 +274,7 @@ export function Config({
         ...getGlobalConfig(),
         autoCompactEnabled
       });
-      logEvent('tengu_auto_compact_setting_changed', {
+      logEvent('zy_auto_compact_setting_changed', {
         enabled: autoCompactEnabled
       });
     }
@@ -292,7 +292,7 @@ export function Config({
         ...prev_3,
         spinnerTipsEnabled
       }));
-      logEvent('tengu_tips_setting_changed', {
+      logEvent('zy_tips_setting_changed', {
         enabled: spinnerTipsEnabled
       });
     }
@@ -317,7 +317,7 @@ export function Config({
           prefersReducedMotion
         }
       }));
-      logEvent('tengu_reduce_motion_setting_changed', {
+      logEvent('zy_reduce_motion_setting_changed', {
         enabled: prefersReducedMotion
       });
     }
@@ -334,11 +334,11 @@ export function Config({
       updateSettingsForSource('userSettings', {
         alwaysThinkingEnabled: enabled ? undefined : false
       });
-      logEvent('tengu_thinking_toggled', {
+      logEvent('zy_thinking_toggled', {
         enabled
       });
     }
-  }, ...(getFeatureValue_CACHED_MAY_BE_STALE('tengu_chomp_inflection', false) ? [{
+  }, ...(getFeatureValue_CACHED_MAY_BE_STALE('zy_chomp_inflection', false) ? [{
     id: 'promptSuggestionEnabled',
     label: 'Prompt suggestions',
     value: promptSuggestionEnabled,
@@ -371,7 +371,7 @@ export function Config({
         ...getGlobalConfig(),
         speculationEnabled: enabled_2
       });
-      logEvent('tengu_speculation_setting_changed', {
+      logEvent('zy_speculation_setting_changed', {
         enabled: enabled_2
       });
     }
@@ -389,7 +389,7 @@ export function Config({
         ...getGlobalConfig(),
         fileCheckpointingEnabled: enabled_3
       });
-      logEvent('tengu_file_history_snapshots_setting_changed', {
+      logEvent('zy_file_history_snapshots_setting_changed', {
         enabled: enabled_3
       });
     }
@@ -413,11 +413,11 @@ export function Config({
         ...getGlobalConfig(),
         terminalProgressBarEnabled
       });
-      logEvent('tengu_terminal_progress_bar_setting_changed', {
+      logEvent('zy_terminal_progress_bar_setting_changed', {
         enabled: terminalProgressBarEnabled
       });
     }
-  }, ...(getFeatureValue_CACHED_MAY_BE_STALE('tengu_terminal_sidebar', false) ? [{
+  }, ...(getFeatureValue_CACHED_MAY_BE_STALE('zy_terminal_sidebar', false) ? [{
     id: 'showStatusInTerminalTab',
     label: 'Show status in terminal tab',
     value: globalConfig.showStatusInTerminalTab ?? false,
@@ -431,7 +431,7 @@ export function Config({
         ...getGlobalConfig(),
         showStatusInTerminalTab
       });
-      logEvent('tengu_terminal_tab_status_setting_changed', {
+      logEvent('zy_terminal_tab_status_setting_changed', {
         enabled: showStatusInTerminalTab
       });
     }
@@ -449,7 +449,7 @@ export function Config({
         ...getGlobalConfig(),
         showTurnDuration
       });
-      logEvent('tengu_show_turn_duration_setting_changed', {
+      logEvent('zy_show_turn_duration_setting_changed', {
         enabled: showTurnDuration
       });
     }
@@ -498,7 +498,7 @@ export function Config({
         ...prev_13,
         defaultPermissionMode: mode
       }));
-      logEvent('tengu_config_changed', {
+      logEvent('zy_config_changed', {
         setting: 'defaultPermissionMode' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -548,7 +548,7 @@ export function Config({
         ...getGlobalConfig(),
         respectGitignore
       });
-      logEvent('tengu_respect_gitignore_setting_changed', {
+      logEvent('zy_respect_gitignore_setting_changed', {
         enabled: respectGitignore
       });
     }
@@ -566,7 +566,7 @@ export function Config({
         ...getGlobalConfig(),
         copyFullResponse
       });
-      logEvent('tengu_config_changed', {
+      logEvent('zy_config_changed', {
         setting: 'copyFullResponse' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: String(copyFullResponse) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -588,7 +588,7 @@ export function Config({
         ...getGlobalConfig(),
         copyOnSelect
       });
-      logEvent('tengu_config_changed', {
+      logEvent('zy_config_changed', {
         setting: 'copyOnSelect' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: String(copyOnSelect) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -717,7 +717,7 @@ export function Config({
         ...prev_19,
         'Default view': selected
       }));
-      logEvent('tengu_default_view_setting_changed', {
+      logEvent('zy_default_view_setting_changed', {
         value: (defaultView ?? 'unset') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
     }
@@ -743,7 +743,7 @@ export function Config({
         ...getGlobalConfig(),
         editorMode: value_1 as GlobalConfig['editorMode']
       });
-      logEvent('tengu_editor_mode_changed', {
+      logEvent('zy_editor_mode_changed', {
         mode: value_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -765,7 +765,7 @@ export function Config({
         ...getGlobalConfig(),
         prStatusFooterEnabled: enabled_4
       });
-      logEvent('tengu_pr_status_footer_setting_changed', {
+      logEvent('zy_pr_status_footer_setting_changed', {
         enabled: enabled_4
       });
     }
@@ -790,7 +790,7 @@ export function Config({
         ...getGlobalConfig(),
         diffTool: diffTool as GlobalConfig['diffTool']
       });
-      logEvent('tengu_diff_tool_changed', {
+      logEvent('zy_diff_tool_changed', {
         tool: diffTool as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -809,7 +809,7 @@ export function Config({
         ...getGlobalConfig(),
         autoConnectIde
       });
-      logEvent('tengu_auto_connect_ide_changed', {
+      logEvent('zy_auto_connect_ide_changed', {
         enabled: autoConnectIde,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -828,7 +828,7 @@ export function Config({
         ...getGlobalConfig(),
         autoInstallIdeExtension
       });
-      logEvent('tengu_auto_install_ide_extension_changed', {
+      logEvent('zy_auto_install_ide_extension_changed', {
         enabled: autoInstallIdeExtension,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -847,7 +847,7 @@ export function Config({
         ...getGlobalConfig(),
         ClaudeInChromeDefaultEnabled: enabled_5
       });
-      logEvent('tengu_Zy_in_chrome_setting_changed', {
+      logEvent('zy_Zy_in_chrome_setting_changed', {
         enabled: enabled_5
       });
     }
@@ -876,7 +876,7 @@ export function Config({
           ...getGlobalConfig(),
           teammateMode: mode_0
         });
-        logEvent('tengu_teammate_mode_changed', {
+        logEvent('zy_teammate_mode_changed', {
           mode: mode_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -1055,7 +1055,7 @@ export function Config({
     // Log any changes that were made
     // TODO: Make these proper messages
     const formattedChanges: string[] = Object.entries(changes).map(([key, value_2]) => {
-      logEvent('tengu_config_changed', {
+      logEvent('zy_config_changed', {
         key: key as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: value_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -1069,7 +1069,7 @@ export function Config({
     const currentUsingCustomKey = Boolean(effectiveApiKey && globalConfig.apiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
     if (initialUsingCustomKey !== currentUsingCustomKey) {
       formattedChanges.push(`${currentUsingCustomKey ? 'Enabled' : 'Disabled'} API key`);
-      logEvent('tengu_config_changed', {
+      logEvent('zy_config_changed', {
         key: 'env.ZY_API_KEY' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: currentUsingCustomKey as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -1311,7 +1311,7 @@ export function Config({
           autoUpdatesChannel: 'latest',
           minimumVersion: undefined
         }));
-        logEvent('tengu_autoupdate_channel_changed', {
+        logEvent('zy_autoupdate_channel_changed', {
           channel: 'latest' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -1465,7 +1465,7 @@ export function Config({
           ...prev_25,
           teammateDefaultModel: teammateModelDisplayString(model_1)
         }));
-        logEvent('tengu_teammate_default_model_changed', {
+        logEvent('zy_teammate_default_model_changed', {
           model: model_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }} onCancel={() => {
@@ -1501,7 +1501,7 @@ export function Config({
         updateSettingsForSource('localSettings', {
           outputStyle: style
         });
-        void logEvent('tengu_output_style_changed', {
+        void logEvent('zy_output_style_changed', {
           style: (style ?? DEFAULT_OUTPUT_STYLE_NAME) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           settings_source: 'localSettings' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -1529,7 +1529,7 @@ export function Config({
         });
         // Warm i18n so UI text updates immediately
         void import('src/i18n/index.js').then(m => m.warmI18n());
-        void logEvent('tengu_language_changed', {
+        void logEvent('zy_language_changed', {
           language: (language ?? 'default') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
@@ -1582,7 +1582,7 @@ export function Config({
           autoUpdatesChannel: channel as 'latest' | 'stable',
           minimumVersion: undefined
         }));
-        logEvent('tengu_autoupdate_enabled', {
+        logEvent('zy_autoupdate_enabled', {
           channel: channel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }} />}
@@ -1610,7 +1610,7 @@ export function Config({
         ...prev_27,
         ...newSettings
       }));
-      logEvent('tengu_autoupdate_channel_changed', {
+      logEvent('zy_autoupdate_channel_changed', {
         channel: 'stable' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         minimum_version_set: choice === 'stay'
       });

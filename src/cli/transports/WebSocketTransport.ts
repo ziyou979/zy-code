@@ -50,7 +50,7 @@ export type WebSocketTransportOptions = {
    *  disconnect. Use this when the caller has its own recovery mechanism
    *  (e.g. the REPL bridge poll loop). Defaults to true. */
   autoReconnect?: boolean
-  /** Gates the tengu_ws_transport_* telemetry events. Set true at the
+  /** Gates the zy_ws_transport_* telemetry events. Set true at the
    *  REPL-bridge construction site so only Remote Control sessions (the
    *  Cloudflare-idle-timeout population) emit; print-mode workers stay
    *  silent. Defaults to false. */
@@ -304,7 +304,7 @@ export class WebSocketTransport implements Transport {
     // Reconnect success — capture attempt count + downtime before resetting.
     // reconnectStartTime is null on first connect, non-null on reopen.
     if (this.isBridge && this.reconnectStartTime !== null) {
-      logEvent('tengu_ws_transport_reconnected', {
+      logEvent('zy_ws_transport_reconnected', {
         attempts: this.reconnectAttempts,
         downtimeMs: Date.now() - this.reconnectStartTime,
       })
@@ -406,7 +406,7 @@ export class WebSocketTransport implements Transport {
       // storm (those never surface to the onCloseCallback consumer). For the
       // Cloudflare-5min-idle hypothesis: cluster msSinceLastActivity; if the
       // peak sits at ~300s with closeCode 1006, that's the proxy RST.
-      logEvent('tengu_ws_transport_closed', {
+      logEvent('zy_ws_transport_closed', {
         closeCode,
         msSinceLastActivity:
           this.lastActivityTime > 0 ? Date.now() - this.lastActivityTime : -1,
@@ -525,7 +525,7 @@ export class WebSocketTransport implements Transport {
         reconnectAttempts: this.reconnectAttempts,
       })
       if (this.isBridge) {
-        logEvent('tengu_ws_transport_reconnecting', {
+        logEvent('zy_ws_transport_reconnecting', {
           attempt: this.reconnectAttempts,
           elapsedMs: elapsed,
           delayMs: Math.round(delay),

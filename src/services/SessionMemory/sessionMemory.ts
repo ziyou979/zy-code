@@ -79,7 +79,7 @@ import {
  * Uses cached gate value - returns immediately without blocking.
  */
 function isSessionMemoryGateEnabled(): boolean {
-  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_session_memory', false)
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_session_memory', false)
 }
 
 /**
@@ -88,7 +88,7 @@ function isSessionMemoryGateEnabled(): boolean {
  */
 function getSessionMemoryRemoteConfig(): Partial<SessionMemoryConfig> {
   return getDynamicConfig_CACHED_MAY_BE_STALE<Partial<SessionMemoryConfig>>(
-    'tengu_sm_config',
+    'zy_sm_config',
     {},
   )
 }
@@ -226,7 +226,7 @@ async function setupSessionMemoryFile(
     currentMemory = output.file.content
   }
 
-  logEvent('tengu_session_memory_file_read', {
+  logEvent('zy_session_memory_file_read', {
     content_length: currentMemory.length,
   })
 
@@ -287,7 +287,7 @@ const extractSessionMemory = sequential(async function (
     // Log gate failure once per session (ant-only)
     if (isInternalBuild() && !hasLoggedGateFailure) {
       hasLoggedGateFailure = true
-      logEvent('tengu_session_memory_gate_disabled', {})
+      logEvent('zy_session_memory_gate_disabled', {})
     }
     return
   }
@@ -332,7 +332,7 @@ const extractSessionMemory = sequential(async function (
   const lastMessage = messages[messages.length - 1]
   const usage = lastMessage ? getTokenUsage(lastMessage) : undefined
   const config = getSessionMemoryConfig()
-  logEvent('tengu_session_memory_extraction', {
+  logEvent('zy_session_memory_extraction', {
     input_tokens: usage?.input_tokens,
     output_tokens: usage?.output_tokens,
     cache_read_input_tokens: usage?.cache_read_input_tokens ?? undefined,
@@ -364,7 +364,7 @@ export function initSessionMemory(): void {
 
   // Log initialization state (ant-only to avoid noise in external logs)
   if (isInternalBuild()) {
-    logEvent('tengu_session_memory_init', {
+    logEvent('zy_session_memory_init', {
       auto_compact_enabled: autoCompactEnabled,
     })
   }
@@ -437,7 +437,7 @@ export async function manuallyExtractSessionMemory(
     })
 
     // Log manual extraction event
-    logEvent('tengu_session_memory_manual_extraction', {})
+    logEvent('zy_session_memory_manual_extraction', {})
 
     // Record the context size at extraction for tracking minimumTokensBetweenUpdate
     recordExtractionTokenCount(tokenCountWithEstimation(messages))

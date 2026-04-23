@@ -53,7 +53,7 @@ function isAttributionHeaderEnabled(): boolean {
   if (isEnvDefinedFalsy(process.env.ZY_CODE_ATTRIBUTION_HEADER)) {
     return false
   }
-  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_attribution_header', true)
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_attribution_header', true)
 }
 
 /**

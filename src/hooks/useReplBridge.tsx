@@ -278,7 +278,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   // 因此这是将 system/init 放到 REPL-bridge 线上的唯一路径。
                   // Skills 加载是异步的（memoized，REPL 启动后开销小）；
                   // fire-and-forget 以免阻塞连接状态转换。
-                  if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_system_init', false)) {
+                  if (getFeatureValue_CACHED_MAY_BE_STALE('zy_bridge_system_init', false)) {
                     void (async () => {
                       try {
                         const skills = await getSlashCommandToolSkills(getCwd());

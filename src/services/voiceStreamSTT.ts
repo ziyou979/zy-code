@@ -155,13 +155,13 @@ export async function connectVoiceStream(
   // side is anthropics/anthropic#278327 + #281372; this lets us ramp
   // clients independently.
   const isNova3 = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_cobalt_frost',
+    'zy_cobalt_frost',
     false,
   )
   if (isNova3) {
     params.set('use_conversation_engine', 'true')
     params.set('stt_provider', 'deepgram-nova3')
-    logForDebugging('[voice_stream] Nova 3 gate enabled (tengu_cobalt_frost)')
+    logForDebugging('[voice_stream] Nova 3 gate enabled (zy_cobalt_frost)')
   }
 
   // Append keyterms as query params — the voice_stream proxy forwards

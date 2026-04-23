@@ -190,13 +190,13 @@ export function LogSelector({
     isActive: viewMode === "search" && agenticSearchState.status !== "searching",
     onExit: () => {
       setViewMode("list");
-      logEvent("tengu_session_search_toggled", {
+      logEvent("zy_session_search_toggled", {
         enabled: false
       });
     },
     onExitUp: () => {
       setViewMode("list");
-      logEvent("tengu_session_search_toggled", {
+      logEvent("zy_session_search_toggled", {
         enabled: false
       });
     },
@@ -467,13 +467,13 @@ export function LogSelector({
   };
   const exitSearchMode = () => {
     setViewMode("list");
-    logEvent("tengu_session_search_toggled", {
+    logEvent("zy_session_search_toggled", {
       enabled: false
     });
   };
   const enterSearchMode = () => {
     setViewMode("search");
-    logEvent("tengu_session_search_toggled", {
+    logEvent("zy_session_search_toggled", {
       enabled: true
     });
   };
@@ -487,7 +487,7 @@ export function LogSelector({
     setAgenticSearchState({
       status: "searching"
     });
-    logEvent("tengu_agentic_search_started", {
+    logEvent("zy_agentic_search_started", {
       query_length: searchQuery.length
     });
     try {
@@ -500,7 +500,7 @@ export function LogSelector({
         results: results_0,
         query: searchQuery
       });
-      logEvent("tengu_agentic_search_completed", {
+      logEvent("zy_agentic_search_completed", {
         query_length: searchQuery.length,
         results_count: results_0.length
       });
@@ -512,7 +512,7 @@ export function LogSelector({
         status: "error",
         message: error instanceof Error ? error.message : tSync('logSelector.searchFailed')
       });
-      logEvent("tengu_agentic_search_error", {
+      logEvent("zy_agentic_search_error", {
         query_length: searchQuery.length
       });
     }
@@ -580,7 +580,7 @@ export function LogSelector({
     setAgenticSearchState({
       status: "idle"
     });
-    logEvent("tengu_agentic_search_cancelled", {});
+    logEvent("zy_agentic_search_cancelled", {});
   }, {
     context: "Confirmation",
     isActive: viewMode !== "preview" && agenticSearchState.status === "searching"
@@ -643,7 +643,7 @@ export function LogSelector({
             const current = prev < tagTabs.length ? prev : 0;
             const newIndex = (current + tagTabs.length + offset) % tagTabs.length;
             const newTab = tagTabs[newIndex];
-            logEvent("tengu_session_tag_filter_changed", {
+            logEvent("zy_session_tag_filter_changed", {
               is_all: newTab === "All",
               tag_count: uniqueTags.length
             });
@@ -655,46 +655,46 @@ export function LogSelector({
         const lowerInput = input.toLowerCase();
         if (lowerInput === "a" && key.ctrl && onToggleAllProjects) {
           onToggleAllProjects();
-          logEvent("tengu_session_all_projects_toggled", {
+          logEvent("zy_session_all_projects_toggled", {
             enabled: !showAllProjects
           });
         } else {
           if (lowerInput === "b" && key.ctrl) {
             const newEnabled = !branchFilterEnabled;
             setBranchFilterEnabled(newEnabled);
-            logEvent("tengu_session_branch_filter_toggled", {
+            logEvent("zy_session_branch_filter_toggled", {
               enabled: newEnabled
             });
           } else {
             if (lowerInput === "w" && key.ctrl && hasMultipleWorktrees) {
               const newValue = !showAllWorktrees;
               setShowAllWorktrees(newValue);
-              logEvent("tengu_session_worktree_filter_toggled", {
+              logEvent("zy_session_worktree_filter_toggled", {
                 enabled: newValue
               });
             } else {
               if (lowerInput === "/" && keyIsNotCtrlOrMeta) {
                 setViewMode("search");
-                logEvent("tengu_session_search_toggled", {
+                logEvent("zy_session_search_toggled", {
                   enabled: true
                 });
               } else {
                 if (lowerInput === "r" && key.ctrl && focusedLog) {
                   setViewMode("rename");
                   setRenameValue("");
-                  logEvent("tengu_session_rename_started", {});
+                  logEvent("zy_session_rename_started", {});
                 } else {
                   if (lowerInput === "v" && key.ctrl && focusedLog) {
                     setPreviewLog(focusedLog);
                     setViewMode("preview");
-                    logEvent("tengu_session_preview_opened", {
+                    logEvent("zy_session_preview_opened", {
                       messageCount: focusedLog.messageCount
                     });
                   } else {
                     if (focusedLog && keyIsNotCtrlOrMeta && input.length > 0 && !/^\s+$/.test(input)) {
                       setViewMode("search");
                       setSearchQuery(input);
-                      logEvent("tengu_session_search_toggled", {
+                      logEvent("zy_session_search_toggled", {
                         enabled: true
                       });
                     }
@@ -750,7 +750,7 @@ export function LogSelector({
       const sessionId_3 = typeof nodeId_0 === "string" && nodeId_0.startsWith("group:") ? nodeId_0.substring(6) : null;
       if (sessionId_3) {
         setExpandedGroupSessionIds((prev_0) => new Set(prev_0).add(sessionId_3));
-        logEvent("tengu_session_group_expanded", {});
+        logEvent("zy_session_group_expanded", {});
       }
     }} onCollapse={(nodeId_1) => {
       const sessionId_4 = typeof nodeId_1 === "string" && nodeId_1.startsWith("group:") ? nodeId_1.substring(6) : null;

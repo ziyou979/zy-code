@@ -40,7 +40,7 @@ export const TOOL_RESULT_CLEARED_MESSAGE = '[Old tool result content cleared]'
  * 不在映射中的工具使用硬编码的后备值。
  * Flag 默认为 {}（无覆盖 == 行为不变）。
  */
-const PERSIST_THRESHOLD_OVERRIDE_FLAG = 'tengu_satin_quoll'
+const PERSIST_THRESHOLD_OVERRIDE_FLAG = 'zy_satin_quoll'
 
 /**
  * 解析工具的有效持久化阈值。
@@ -58,7 +58,7 @@ export function getPersistenceThreshold(
 ): number {
   // Infinity = 硬关闭。通过 maxTokens 读取自限制；将其
   // 输出持久到文件再让模型通过 Read 回读是循环的。
-  // 在 GB 覆盖之前检查，因此 tengu_satin_quoll 无法强制重新启用。
+  // 在 GB 覆盖之前检查，因此 zy_satin_quoll 无法强制重新启用。
   if (!Number.isFinite(declaredMaxResultSizeChars)) {
     return declaredMaxResultSizeChars
   }
@@ -283,7 +283,7 @@ async function maybePersistLargeToolResult(
   // 返回 content:[] 的 MCP 服务器、REPL 语句等）。
   // 注入一个短标记，让模型总有东西可以响应。
   if (isToolResultContentEmpty(content)) {
-    logEvent('tengu_tool_empty_result', {
+    logEvent('zy_tool_empty_result', {
       toolName: sanitizeToolNameForAnalytics(toolName),
     })
     return {
@@ -319,7 +319,7 @@ async function maybePersistLargeToolResult(
   const message = buildLargeToolResultMessage(result)
 
   // 记录分析数据
-  logEvent('tengu_tool_result_persisted', {
+  logEvent('zy_tool_result_persisted', {
     toolName: sanitizeToolNameForAnalytics(toolName),
     originalSizeBytes: result.originalSize,
     persistedSizeBytes: message.length,
@@ -409,14 +409,14 @@ export function cloneContentReplacementState(
 
 /**
  * 解析每条消息的聚合预算限制。GrowthBook 覆盖
- * (tengu_hawthorn_window) 在存在且为有限正数时优先；
+ * (zy_hawthorn_window) 在存在且为有限正数时优先；
  * 否则回退到硬编码常量。防御性 typeof/finite
  * 检查：GrowthBook 的缓存返回 `cached !== undefined ? cached : default`，
  * 因此 flag 为 null/string/NaN 时会泄漏。
  */
 export function getPerMessageBudgetLimit(): number {
   const override = getFeatureValue_CACHED_MAY_BE_STALE<number | null>(
-    'tengu_hawthorn_window',
+    'zy_hawthorn_window',
     null,
   )
   if (
@@ -445,7 +445,7 @@ export function provisionContentReplacementState(
   initialContentReplacements?: ContentReplacementRecord[],
 ): ContentReplacementState | undefined {
   const enabled = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_hawthorn_steeple',
+    'zy_hawthorn_steeple',
     false,
   )
   if (!enabled) return undefined
@@ -863,7 +863,7 @@ export async function enforceToolResultBudget(
       toolUseId: candidate.toolUseId,
       replacement: replacement.content,
     })
-    logEvent('tengu_tool_result_persisted_message_budget', {
+    logEvent('zy_tool_result_persisted_message_budget', {
       originalSizeBytes: replacement.originalSize,
       persistedSizeBytes: replacement.content.length,
       estimatedOriginalTokens: Math.ceil(
@@ -885,7 +885,7 @@ export async function enforceToolResultBudget(
         `across ${messagesOverBudget} over-budget message(s), ` +
         `shed ~${formatFileSize(replacedSize)}, ${reappliedCount} re-applied`,
     )
-    logEvent('tengu_message_level_tool_result_budget_enforced', {
+    logEvent('zy_message_level_tool_result_budget_enforced', {
       resultsPersisted: newlyReplaced.length,
       messagesOverBudget,
       replacedSizeBytes: replacedSize,

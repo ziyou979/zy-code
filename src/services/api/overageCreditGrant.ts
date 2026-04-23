@@ -19,12 +19,12 @@ type CachedGrantEntry = {
   timestamp: number
 }
 
-const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
+const CACHE_TTL_MS = 60 * 60 * 1000 // 1 小时
 
 /**
- * Fetch the current user's overage credit grant eligibility from the backend.
- * The backend resolves tier-specific amounts and role-based claim permission,
- * so the CLI just reads the response without replicating that logic.
+ * 从后端获取当前用户的超额信用赠予资格。
+ * 后端解析层级特定的金额和基于角色的领取权限，
+ * 因此 CLI 只读取响应而不复制该逻辑。
  */
 async function fetchOverageCreditGrant(): Promise<OverageCreditGrantInfo | null> {
   try {
@@ -41,9 +41,9 @@ async function fetchOverageCreditGrant(): Promise<OverageCreditGrantInfo | null>
 }
 
 /**
- * Get cached grant info. Returns null if no cache or cache is stale.
- * Callers should render nothing (not block) when this returns null —
- * refreshOverageCreditGrantCache fires lazily to populate it.
+ * 获取缓存的赠予信息。无缓存或缓存过期时返回 null。
+ * 调用方在此返回 null 时不应渲染任何内容（不阻塞） —
+ * refreshOverageCreditGrantCache 会懒触发以填充缓存。
  */
 export function getCachedOverageCreditGrant(): OverageCreditGrantInfo | null {
   const orgId = getOauthAccountInfo()?.organizationUuid
@@ -55,8 +55,8 @@ export function getCachedOverageCreditGrant(): OverageCreditGrantInfo | null {
 }
 
 /**
- * Drop the current org's cached entry so the next read refetches.
- * Leaves other orgs' entries intact.
+ * 丢弃当前组织的缓存条目，以便下次读取时重新获取。
+ * 保留其他组织的条目不变。
  */
 export function invalidateOverageCreditGrantCache(): void {
   const orgId = getOauthAccountInfo()?.organizationUuid
@@ -71,8 +71,8 @@ export function invalidateOverageCreditGrantCache(): void {
 }
 
 /**
- * Fetch and cache grant info. Fire-and-forget; call when an upsell surface
- * is about to render and the cache is empty.
+ * 获取并缓存赠予信息。即发即弃；在增售界面即将渲染
+ * 且缓存为空时调用。
  */
 export async function refreshOverageCreditGrantCache(): Promise<void> {
   if (isEssentialTrafficOnly()) return
@@ -80,15 +80,14 @@ export async function refreshOverageCreditGrantCache(): Promise<void> {
   if (!orgId) return
   const info = await fetchOverageCreditGrant()
   if (!info) return
-  // Skip rewriting info if grant data is unchanged — avoids config write
-  // amplification (inc-4552 pattern). Still refresh the timestamp so the
-  // TTL-based staleness check in getCachedOverageCreditGrant doesn't keep
-  // re-triggering API calls on every component mount.
+  // 赠予数据未变更时跳过重写 — 避免配置写入放大
+  //（inc-4552 模式）。仍刷新时间戳，以免
+  // getCachedOverageCreditGrant 中基于 TTL 的过期检查
+  // 在每次组件挂载时重复触发 API 调用。
   saveGlobalConfig(prev => {
-    // Derive from prev (lock-fresh) rather than a pre-lock getGlobalConfig()
-    // read — saveConfigWithLock re-reads config from disk under the file lock,
-    // so another CLI instance may have written between any outer read and lock
-    // acquire.
+    // 从 prev（锁内新鲜）派生，而非锁前的 getGlobalConfig()
+    // 读取 — saveConfigWithLock 在文件锁下从磁盘重新读取配置，
+    // 所以另一个 CLI 实例可能在外部读取和锁获取之间写入了数据。
     const prevCached = prev.overageCreditGrantCache?.[orgId]
     const existing = prevCached?.info
     const dataUnchanged =
@@ -98,7 +97,7 @@ export async function refreshOverageCreditGrantCache(): Promise<void> {
       existing.granted === info.granted &&
       existing.amount_minor_units === info.amount_minor_units &&
       existing.currency === info.currency
-    // When data is unchanged and timestamp is still fresh, skip the write entirely
+    // 数据未变更且时间戳仍新鲜时，完全跳过写入
     if (
       dataUnchanged &&
       prevCached &&
@@ -121,12 +120,12 @@ export async function refreshOverageCreditGrantCache(): Promise<void> {
 }
 
 /**
- * Format the grant amount for display. Returns null if amount isn't available
- * (not eligible, or currency we don't know how to format).
+ * 格式化赠予金额用于显示。金额不可用时返回 null
+ *（不符合资格，或我们不支持其货币格式化）。
  */
 export function formatGrantAmount(info: OverageCreditGrantInfo): string | null {
   if (info.amount_minor_units == null || !info.currency) return null
-  // For now only USD; backend may expand later
+  // 目前仅支持 USD；后端未来可能扩展
   if (info.currency.toUpperCase() === 'USD') {
     const dollars = info.amount_minor_units / 100
     return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`

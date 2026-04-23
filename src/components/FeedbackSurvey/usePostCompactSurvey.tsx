@@ -9,7 +9,7 @@ import { isCompactBoundaryMessage } from '../../utils/messages.js';
 import { logOTelEvent } from '../../utils/telemetry/events.js';
 import { useSurveyState } from './useSurveyState.js';
 const HIDE_THANKS_AFTER_MS = 3000;
-const POST_COMPACT_SURVEY_GATE = 'tengu_post_compact_survey';
+const POST_COMPACT_SURVEY_GATE = 'zy_post_compact_survey';
 const SURVEY_PROBABILITY = 0.2; // Show survey 20% of the time after compaction
 
 function hasMessageAfterBoundary(messages: Message[], boundaryUuid: string): boolean {
@@ -39,7 +39,7 @@ export function usePostCompactSurvey(messages, isLoading, t0, t1) {
   const pendingCompactBoundaryUuid = useRef(null);
   const onOpen = appearanceId => {
     const smCompactionEnabled = shouldUseSessionMemoryCompaction();
-    logEvent("tengu_post_compact_survey_event", {
+    logEvent("zy_post_compact_survey_event", {
       event_type: "appeared" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       session_memory_compaction_enabled: smCompactionEnabled as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -52,7 +52,7 @@ export function usePostCompactSurvey(messages, isLoading, t0, t1) {
   };
   const onSelect = (appearanceId_0, selected) => {
     const smCompactionEnabled_0 = shouldUseSessionMemoryCompaction();
-    logEvent("tengu_post_compact_survey_event", {
+    logEvent("zy_post_compact_survey_event", {
       event_type: "responded" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       response: selected as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

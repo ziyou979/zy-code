@@ -39,7 +39,7 @@ export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNo
     const groveStatus = updatedSettings.grove_enabled ? 'true' : 'false';
     onDone(`"Help improve Zy" set to ${groveStatus}.`);
     if (settings.grove_enabled !== null && settings.grove_enabled !== updatedSettings.grove_enabled) {
-      logEvent('tengu_grove_policy_toggled', {
+      logEvent('zy_grove_policy_toggled', {
         state: updatedSettings.grove_enabled as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         location: 'settings' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });

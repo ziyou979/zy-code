@@ -463,7 +463,7 @@ export type Tool<
   /**
    * 当为 true 时，为此工具启用严格模式，使 API
    * 更严格地遵守工具指令和参数 schema。
-   * 仅在 tengu_tool_pear 启用时生效。
+   * 仅在 zy_strict_tools 启用时生效。
    */
   readonly strict?: boolean
 

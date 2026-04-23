@@ -29,13 +29,13 @@ const bootstrapResponseSchema = lazySchema(() =>
 type BootstrapResponse = z.infer<ReturnType<typeof bootstrapResponseSchema>>
 
 async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
-  // 跳过 Bootstrap API 调用（国内无法访问）
-  logForDebugging('[Bootstrap] Skipped: API not accessible in current region')
+  // 跳过 Bootstrap API 调用（当前区域无法访问）
+  logForDebugging('[Bootstrap] 已跳过：API 在当前区域不可访问')
   return null
 }
 
 /**
- * Fetch bootstrap data from the API and persist to disk cache.
+ * 从 API 获取引导数据并持久化到磁盘缓存。
  */
 export async function fetchBootstrapData(): Promise<void> {
   try {
@@ -45,17 +45,17 @@ export async function fetchBootstrapData(): Promise<void> {
     const clientData = response.client_data ?? null
     const additionalModelOptions = response.additional_model_options ?? []
 
-    // Only persist if data actually changed — avoids a config write on every startup.
+    // 仅在数据实际变更时持久化 — 避免每次启动都写入配置。
     const config = getGlobalConfig()
     if (
       isEqual(config.clientDataCache, clientData) &&
       isEqual(config.additionalModelOptionsCache, additionalModelOptions)
     ) {
-      logForDebugging('[Bootstrap] Cache unchanged, skipping write')
+      logForDebugging('[Bootstrap] 缓存未变更，跳过写入')
       return
     }
 
-    logForDebugging('[Bootstrap] Cache updated, persisting to disk')
+    logForDebugging('[Bootstrap] 缓存已更新，持久化到磁盘')
     saveGlobalConfig(current => ({
       ...current,
       clientDataCache: clientData,

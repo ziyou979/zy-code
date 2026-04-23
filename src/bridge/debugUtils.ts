@@ -121,7 +121,7 @@ export function extractErrorDetail(data: unknown): string | undefined {
 }
 
 /**
- * Log a bridge init skip — debug message + `tengu_bridge_repl_skipped`
+ * Log a bridge init skip — debug message + `zy_bridge_repl_skipped`
  * analytics event. Centralizes the event name and the AnalyticsMetadata
  * cast so call sites don't each repeat the 5-line boilerplate.
  */
@@ -133,7 +133,7 @@ export function logBridgeSkip(
   if (debugMsg) {
     logForDebugging(debugMsg)
   }
-  logEvent('tengu_bridge_repl_skipped', {
+  logEvent('zy_bridge_repl_skipped', {
     reason:
       reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(v2 !== undefined && { v2 }),

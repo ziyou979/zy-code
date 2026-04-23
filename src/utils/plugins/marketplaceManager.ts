@@ -2323,7 +2323,7 @@ export async function refreshAllMarketplaces(): Promise<void> {
       }
       if (
         !getFeatureValue_CACHED_MAY_BE_STALE(
-          'tengu_plugin_official_mkt_git_fallback',
+          'zy_plugin_official_mkt_git_fallback',
           true,
         )
       ) {
@@ -2446,7 +2446,7 @@ export async function refreshMarketplace(
       // clients NEVER hit GitHub for the official marketplace.
       if (
         !getFeatureValue_CACHED_MAY_BE_STALE(
-          'tengu_plugin_official_mkt_git_fallback',
+          'zy_plugin_official_mkt_git_fallback',
           true,
         )
       ) {

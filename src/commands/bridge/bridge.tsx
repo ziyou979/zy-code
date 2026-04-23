@@ -55,7 +55,7 @@ function BridgeToggle({
         return;
       }
       if (error) {
-        logEvent("tengu_bridge_command", {
+        logEvent("zy_bridge_command", {
           action: "preflight_failed" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         onDone(error, {
@@ -79,7 +79,7 @@ function BridgeToggle({
         });
         return;
       }
-      logEvent("tengu_bridge_command", {
+      logEvent("zy_bridge_command", {
         action: "connect" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
       setAppState(prev_0 => {
@@ -150,7 +150,7 @@ function BridgeDisconnectDialog({
         replBridgeOutboundOnly: false
       };
     });
-    logEvent("tengu_bridge_command", {
+    logEvent("zy_bridge_command", {
       action: "disconnect" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
     onDone(REMOTE_CONTROL_DISCONNECTED_MSG, {

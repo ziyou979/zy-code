@@ -36,7 +36,7 @@ export async function checkManagedSettingsSecurity(cachedSettings: SettingsJson 
   }
 
   // 记录对话框已显示
-  logEvent('tengu_managed_settings_security_dialog_shown', {});
+  logEvent('zy_managed_settings_security_dialog_shown', {});
 
   // 显示阻塞对话框
   return new Promise<SecurityCheckResult>(resolve => {
@@ -46,11 +46,11 @@ export async function checkManagedSettingsSecurity(cachedSettings: SettingsJson 
       } = await render(<AppStateProvider>
           <KeybindingSetup>
             <ManagedSettingsSecurityDialog settings={newSettings} onAccept={() => {
-            logEvent('tengu_managed_settings_security_dialog_accepted', {});
+            logEvent('zy_managed_settings_security_dialog_accepted', {});
             unmount();
             void resolve('approved');
           }} onReject={() => {
-            logEvent('tengu_managed_settings_security_dialog_rejected', {});
+            logEvent('zy_managed_settings_security_dialog_rejected', {});
             unmount();
             void resolve('rejected');
           }} />

@@ -220,13 +220,13 @@ function logManagedSettings(): void {
     const policySettings = getSettingsForSource('policySettings');
     if (policySettings) {
       const allKeys = getManagedSettingsKeysForLogging(policySettings);
-      logEvent('tengu_managed_settings_loaded', {
+      logEvent('zy_managed_settings_loaded', {
         keyCount: allKeys.length,
         keys: allKeys.join(',') as unknown as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
     }
   } catch {
-    // Silently ignore errors - this is just for analytics
+    // 静默忽略错误 —— 这仅用于分析
   }
 }
 
@@ -234,32 +234,33 @@ function logManagedSettings(): void {
 function isBeingDebugged() {
   const isBun = isRunningWithBun();
 
-  // Check for inspect flags in process arguments (including all variants)
+  // 检查进程参数中的 inspect 标志（包括所有变体）
   const hasInspectArg = process.execArgv.some(arg => {
     if (isBun) {
-      // Note: Bun has an issue with single-file executables where application arguments
-      // from process.argv leak into process.execArgv (similar to https://github.com/oven-sh/bun/issues/11673)
-      // This breaks use of --debug mode if we omit this branch
-      // We're fine to skip that check, because Bun doesn't support Node.js legacy --debug or --debug-brk flags
+      // 注意：Bun 在单文件可执行模式下存在问题，process.argv 中的
+      // 应用参数会泄漏到 process.execArgv 中（类似
+      // https://github.com/oven-sh/bun/issues/11673）。如果省略此分支，
+      // 会导致 --debug 模式不可用。跳过该检查没问题，因为 Bun
+      // 不支持 Node.js 旧版 --debug 或 --debug-brk 标志
       return /--inspect(-brk)?/.test(arg);
     } else {
-      // In Node.js, check for both --inspect and legacy --debug flags
+      // 在 Node.js 中，同时检查 --inspect 和旧版 --debug 标志
       return /--inspect(-brk)?|--debug(-brk)?/.test(arg);
     }
   });
 
-  // Check if NODE_OPTIONS contains inspect flags
+  // 检查 NODE_OPTIONS 是否包含 inspect 标志
   const hasInspectEnv = process.env.NODE_OPTIONS && /--inspect(-brk)?|--debug(-brk)?/.test(process.env.NODE_OPTIONS);
 
-  // Check if inspector is available and active (indicates debugging)
+  // 检查 inspector 是否可用且活跃（表示正在调试）
   try {
-    // Dynamic import would be better but is async - use global object instead
+    // 动态导入更好但是异步的 —— 改用全局对象
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const inspector = (global as any).require('inspector');
     const hasInspectorUrl = !!inspector.url();
     return hasInspectorUrl || hasInspectArg || hasInspectEnv;
   } catch {
-    // Ignore error and fall back to argument detection
+    // 忽略错误，回退到参数检测
     return hasInspectArg || hasInspectEnv;
   }
 }
@@ -309,7 +310,7 @@ function getCertEnvVarTelemetry(): Record<string, boolean> {
 async function logStartupTelemetry(): Promise<void> {
   if (isAnalyticsDisabled()) return;
   const [isGit, worktreeCount, ghAuthStatus] = await Promise.all([getIsGit(), getWorktreeCount(), getGhAuthStatus()]);
-  logEvent('tengu_startup_telemetry', {
+  logEvent('zy_startup_telemetry', {
     is_git: isGit,
     worktree_count: worktreeCount,
     gh_auth_status: ghAuthStatus as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -437,22 +438,22 @@ function loadSettingsFromFlag(settingsFile: string): void {
     const looksLikeJson = trimmedSettings.startsWith('{') && trimmedSettings.endsWith('}');
     let settingsPath: string;
     if (looksLikeJson) {
-      // It's a JSON string - validate and create temp file
+      // 这是 JSON 字符串 —— 验证并创建临时文件
       const parsedJson = safeParseJSON(trimmedSettings);
       if (!parsedJson) {
-        process.stderr.write(chalk.red('Error: Invalid JSON provided to --settings\n'));
+        process.stderr.write(chalk.red('错误：提供给 --settings 的 JSON 无效\n'));
         process.exit(1);
       }
 
-      // Create a temporary file and write the JSON to it.
-      // Use a content-hash-based path instead of random UUID to avoid
-      // busting the Anthropic API prompt cache. The settings path ends up
-      // in the Bash tool's sandbox denyWithinAllow list, which is part of
-      // the tool description sent to the API. A random UUID per subprocess
-      // changes the tool description on every query() call, invalidating
-      // the cache prefix and causing a 12x input token cost penalty.
-      // The content hash ensures identical settings produce the same path
-      // across process boundaries (each SDK query() spawns a new process).
+      // 创建临时文件并写入 JSON。
+      // 使用基于内容哈希的路径而非随机 UUID，以避免破坏
+      // Anthropic API 提示缓存。settings 路径最终会出现在
+      // Bash 工具的 sandbox denyWithinAllow 列表中，该列表是
+      // 发送给 API 的工具描述的一部分。每个子进程使用随机 UUID
+      // 会在每次 query() 调用时更改工具描述，使缓存前缀失效，
+      // 导致 12 倍的输入 token 成本惩罚。
+      // 内容哈希确保相同的设置在进程边界之间生成相同路径
+      //（每个 SDK query() 都会生成一个新进程）。
       settingsPath = generateTempFilePath('zy-settings', '.json', {
         contentHash: trimmedSettings
       });
@@ -466,7 +467,7 @@ function loadSettingsFromFlag(settingsFile: string): void {
         readFileSync(resolvedSettingsPath, 'utf8');
       } catch (e) {
         if (isENOENT(e)) {
-          process.stderr.write(chalk.red(`Error: Settings file not found: ${resolvedSettingsPath}\n`));
+          process.stderr.write(chalk.red(`错误：找不到设置文件：${resolvedSettingsPath}\n`));
           process.exit(1);
         }
         throw e;
@@ -479,7 +480,7 @@ function loadSettingsFromFlag(settingsFile: string): void {
     if (error instanceof Error) {
       logError(error);
     }
-    process.stderr.write(chalk.red(`Error processing settings: ${errorMessage(error)}\n`));
+    process.stderr.write(chalk.red(`处理设置时出错：${errorMessage(error)}\n`));
     process.exit(1);
   }
 }
@@ -492,7 +493,7 @@ function loadSettingSourcesFromFlag(settingSourcesArg: string): void {
     if (error instanceof Error) {
       logError(error);
     }
-    process.stderr.write(chalk.red(`Error processing --setting-sources: ${errorMessage(error)}\n`));
+    process.stderr.write(chalk.red(`处理 --setting-sources 时出错：${errorMessage(error)}\n`));
     process.exit(1);
   }
 }
@@ -1023,7 +1024,7 @@ async function run(): Promise<CommanderCommand> {
 
     // 忽略 "code" 作为提示 —— 与没有提示一样处理
     if (prompt === 'code') {
-      logEvent('tengu_code_prompt_ignored', {});
+      logEvent('zy_code_prompt_ignored', {});
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.warn(chalk.yellow('Tip: You can launch ZY Code with just `zy`'));
       prompt = undefined;
@@ -1031,13 +1032,13 @@ async function run(): Promise<CommanderCommand> {
 
     // 记录任何单字提示的事件
     if (prompt && typeof prompt === 'string' && !/\s/.test(prompt) && prompt.length > 0) {
-      logEvent('tengu_single_word_prompt', {
+      logEvent('zy_single_word_prompt', {
         length: prompt.length
       });
     }
 
     // 助手模式：当 .zy/settings.json 有 assistant: true 且
-    // tengu_kairos GrowthBook 门开启时，强制 brief 开启。权限
+    // zy_kairos GrowthBook 门开启时，强制 brief 开启。权限
     // 模式留给用户 —— 设置 defaultMode 或 --permission-mode
     // 正常应用。REPL 输入的消息默认为 'next'
     // 优先级（messageQueueManager.enqueue），以便它们在工具调用之间
@@ -1058,7 +1059,7 @@ async function run(): Promise<CommanderCommand> {
     }).assistant && assistantModule) {
       // --assistant（Agent SDK 守护进程模式）：在
       // isAssistantMode() 在下面运行之前强制锁定。守护进程已经检查过
-      // 权限 —— 不要让子进程重新检查 tengu_kairos。
+      // 权限 —— 不要让子进程重新检查 zy_kairos。
       (assistantModule as any).markAssistantForced();
     }
     if (feature('KAIROS') && (assistantModule as any)?.isAssistantMode() &&
@@ -1408,7 +1409,7 @@ async function run(): Promise<CommanderCommand> {
       // 模式是 auto，或设置 defaultMode 是 auto 但门拒绝它
       //（permissionMode 解析为默认，没有明确的 CLI 覆盖）。
       // 由 verifyAutoModeGateAccess 决定是否在
-      // auto-unavailable 时通知，以及由 tengu_auto_mode_config opt-in carousel 使用。
+      // auto-unavailable 时通知，以及由 zy_auto_mode_config opt-in carousel 使用。
       if ((options as {
         enableAutoMode?: boolean;
       }).enableAutoMode || permissionModeCli === 'auto' || permissionMode === 'auto' || !permissionModeCli && isDefaultPermissionModeAuto()) {
@@ -1538,7 +1539,7 @@ async function run(): Promise<CommanderCommand> {
     if (enableClaudeInChrome) {
       const platform = getPlatform();
       try {
-        logEvent('tengu_Zy_in_chrome_setup', {
+        logEvent('zy_Zy_in_chrome_setup', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         const {
@@ -1555,7 +1556,7 @@ async function run(): Promise<CommanderCommand> {
           appendSystemPrompt = appendSystemPrompt ? `${chromeSystemPrompt}\n\n${appendSystemPrompt}` : chromeSystemPrompt;
         }
       } catch (error) {
-        logEvent('tengu_Zy_in_chrome_setup_failed', {
+        logEvent('zy_Zy_in_chrome_setup_failed', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         logForDebugging(`[Claude in Chrome] Error: ${error}`);
@@ -1705,9 +1706,9 @@ async function run(): Promise<CommanderCommand> {
         }
       }
       // 标志使用遥测。记录插件标识符（与
-      // tengu_plugin_installed 相同层级 —— 公共注册表式名称）；server-kind
+      // zy_plugin_installed 相同层级 —— 公共注册表式名称）；server-kind
       // 不记录（MCP 服务器名称层级，仅在其他地方选择加入）。
-      // 每个服务器的门结果进入 tengu_mcp_channel_gate 一旦
+      // 每个服务器的门结果进入 zy_mcp_channel_gate 一旦
       // 服务器连接。dev 条目经过确认对话框后
       // —— dev_plugins 捕获输入的内容，而不是接受的内容。
       if (channelEntries.length > 0 || (devChannels?.length ?? 0) > 0) {
@@ -1715,7 +1716,7 @@ async function run(): Promise<CommanderCommand> {
           const ids = entries.flatMap(e => e.kind === 'plugin' ? [`${e.name}@${e.marketplace}`] : []);
           return ids.length > 0 ? ids.sort().join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS : undefined;
         };
-        logEvent('tengu_mcp_channel_flags', {
+        logEvent('zy_mcp_channel_flags', {
           channels_count: channelEntries.length,
           dev_count: devChannels?.length ?? 0,
           plugins: joinPluginIds(channelEntries),
@@ -1895,12 +1896,12 @@ async function run(): Promise<CommanderCommand> {
         // 此工具从正常过滤中排除（参见 tools.ts），因为它是
         // 结构化输出的实现细节，不是用户控制的工具。
         tools = [...tools, syntheticOutputResult.tool];
-        logEvent('tengu_structured_output_enabled', {
+        logEvent('zy_structured_output_enabled', {
           schema_property_count: Object.keys(jsonSchema.properties as Record<string, unknown> || {}).length as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           has_required_fields: Boolean(jsonSchema.required) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       } else {
-        logEvent('tengu_structured_output_failure', {
+        logEvent('zy_structured_output_failure', {
           error: 'Invalid JSON schema' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -2004,7 +2005,7 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Ant 模型别名（capybara-fast 等）通过
-    // tengu_ant_model_override GrowthBook 标志解析。_CACHED_MAY_BE_STALE
+    // zy_ant_model_override GrowthBook 标志解析。_CACHED_MAY_BE_STALE
     // 同步读取磁盘；磁盘由 fire-and-forget 写入填充。在
     // 冷缓存上，parseUserSpecifiedModel 返回未解析的别名，
     // API 404，并且 -p 在异步写入落地之前退出 —— 新鲜 pod 上崩溃循环。
@@ -2014,7 +2015,7 @@ async function run(): Promise<CommanderCommand> {
     //  - 没有 env 覆盖（它在磁盘之前在 _CACHED_MAY_BE_STALE 之前短路）
     //  - 标志在磁盘上不存在（== null 也捕获 pre-#22279 中毒的 null）
     const explicitModel = options.model || process.env.ZY_CODE_MODEL;
-    if (isInternalBuild() && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
+    if (isInternalBuild() && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('zy_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['zy_ant_model_override'] == null) {
       await initializeGrowthBook();
     }
 
@@ -2071,7 +2072,7 @@ async function run(): Promise<CommanderCommand> {
 
     // 记录代理标志使用情况 —— 仅为内置代理记录代理名称，以避免泄露自定义代理名称
     if (mainThreadAgentDefinition) {
-      logEvent('tengu_agent_flag', {
+      logEvent('zy_agent_flag', {
         agentType: isBuiltInAgent(mainThreadAgentDefinition) ? mainThreadAgentDefinition.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS : 'custom' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...(agentCli && {
           source: 'cli' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -2160,7 +2161,7 @@ async function run(): Promise<CommanderCommand> {
 
         // 为 tmux 队友记录代理内存加载事件
         if (customAgent.memory) {
-          logEvent('tengu_agent_memory_loaded', {
+          logEvent('zy_agent_memory_loaded', {
             ...(isInternalBuild() && {
               agent_type: customAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
             }),
@@ -2239,7 +2240,7 @@ async function run(): Promise<CommanderCommand> {
       // REPL 首次渲染（旧位置）记录包括了用户坐在
       // 信任/OAuth/入门/恢复选择器上的时间 —— p99 约 70s
       // 由对话框等待时间主导，而不是代码路径启动时间。
-      logEvent('tengu_timer', {
+      logEvent('zy_timer', {
         event: 'startup' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         durationMs: Math.round(process.uptime() * 1000)
       });
@@ -2296,7 +2297,7 @@ async function run(): Promise<CommanderCommand> {
         // 登录后刷新 GrowthBook 以获取更新的功能标志（例如用于 zy.ai MCP）
         refreshGrowthBookAfterAuthChange();
         // 清除任何过时的受信任设备令牌，然后注册远程控制。
-        // 两者都在内部通过 tengu_sessions_elevated_auth_enforcement 自门控
+        // 两者都在内部通过 zy_sessions_elevated_auth_enforcement 自门控
         // —— enrollTrustedDevice() 通过 checkGate_CACHED_OR_BLOCKING（等待
         // 上方的 GrowthBook 重新初始化），clearTrustedDeviceToken() 通过
         // 同步缓存检查（可接受，因为清除是幂等的）。
@@ -2347,7 +2348,7 @@ async function run(): Promise<CommanderCommand> {
     // 这些进行 API 调用，可能触发 apiKeyHelper 执行。
     // --bare / SIMPLE：跳过 —— 这些是 REPL 首次响应性的缓存预热
     //（配额、passes、引导数据）。
-    const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('tengu_cicada_nap_ms', 0);
+    const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('zy_cicada_nap_ms', 0);
     const lastPrefetched = getGlobalConfig().startupPrefetchedAt ?? 0;
     const skipStartupPrefetches = isBareMode() || bgRefreshThrottleMs > 0 && Date.now() - lastPrefetched < bgRefreshThrottleMs;
     if (!skipStartupPrefetches) {
@@ -2531,7 +2532,7 @@ async function run(): Promise<CommanderCommand> {
       }
       void countConcurrentSessions().then(count => {
         if (count >= 2) {
-          logEvent('tengu_concurrent_sessions', {
+          logEvent('zy_concurrent_sessions', {
             num_sessions: count
           });
         }
@@ -2724,7 +2725,7 @@ async function run(): Promise<CommanderCommand> {
       // 去重：抑制重复 zy.ai 连接器的插件 MCP 服务器
       //（连接器获胜），然后连接 zy.ai 服务器。
       // 有界等待 —— #23725 使其阻塞以便单次 -p 看到
-      // 连接器，但有 40+ 慢速连接器时 tengu_startup_perf p99
+      // 连接器，但有 40+ 慢速连接器时 zy_startup_perf p99
       // 攀升到 76 秒。如果获取+连接没有及时完成，继续；
       // promise 继续运行并在后台更新 headlessStore
       // 以便第 2+ 轮仍然看到连接器。
@@ -2853,7 +2854,7 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // 启动时记录模型配置
-    logEvent('tengu_startup_manual_model_config', {
+    logEvent('zy_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       env_var: process.env.ZY_CODE_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       settings_file: (getInitialSettings() || {}).model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -3090,7 +3091,7 @@ async function run(): Promise<CommanderCommand> {
         clearSessionCaches();
         const result = await loadConversationForResume(undefined /* sessionId */, undefined /* sourceFile */);
         if (!result) {
-          logEvent('tengu_continue', {
+          logEvent('zy_continue', {
             success: false
           });
           return await exitWithError(root, 'No conversation found to continue');
@@ -3105,7 +3106,7 @@ async function run(): Promise<CommanderCommand> {
         }
         maybeActivateProactive(options);
         maybeActivateBrief(options);
-        logEvent('tengu_continue', {
+        logEvent('zy_continue', {
           success: true,
           resume_duration_ms: Math.round(performance.now() - resumeStart)
         });
@@ -3125,7 +3126,7 @@ async function run(): Promise<CommanderCommand> {
         }, renderAndRun);
       } catch (error) {
         if (!resumeSucceeded) {
-          logEvent('tengu_continue', {
+          logEvent('zy_continue', {
             success: false
           });
         }
@@ -3393,11 +3394,11 @@ async function run(): Promise<CommanderCommand> {
         const hasInitialPrompt = remote.length > 0;
 
         // 检查是否启用了 TUI 模式 —— 描述仅在 TUI 模式下是可选的
-        const isRemoteTuiEnabled = getFeatureValue_CACHED_MAY_BE_STALE('tengu_remote_backend', false);
+        const isRemoteTuiEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_remote_backend', false);
         if (!isRemoteTuiEnabled && !hasInitialPrompt) {
           return await exitWithError(root, 'Error: --remote requires a description.\nUsage: zy --remote "your task description"', () => gracefulShutdown(1));
         }
-        logEvent('tengu_remote_create_session', {
+        logEvent('zy_remote_create_session', {
           has_initial_prompt: String(hasInitialPrompt) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
 
@@ -3405,12 +3406,12 @@ async function run(): Promise<CommanderCommand> {
         const currentBranch = await getBranch();
         const createdSession = await teleportToRemoteWithErrorHandling(root, hasInitialPrompt ? remote : null, new AbortController().signal, currentBranch || undefined);
         if (!createdSession) {
-          logEvent('tengu_remote_create_session_error', {
+          logEvent('zy_remote_create_session_error', {
             error: 'unable_to_create_session' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
           return await exitWithError(root, 'Error: Unable to create remote session', () => gracefulShutdown(1));
         }
-        logEvent('tengu_remote_create_session_success', {
+        logEvent('zy_remote_create_session_success', {
           session_id: createdSession.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
 
@@ -3486,7 +3487,7 @@ async function run(): Promise<CommanderCommand> {
       } else if (teleport) {
         if (teleport === true || teleport === '') {
           // 交互模式：显示任务选择器并处理恢复
-          logEvent('tengu_teleport_interactive_mode', {});
+          logEvent('zy_teleport_interactive_mode', {});
           logForDebugging('selectAndResumeTeleportTask: Starting teleport flow...');
           const teleportResult = await launchTeleportResumeWrapper(root);
           if (!teleportResult) {
@@ -3499,7 +3500,7 @@ async function run(): Promise<CommanderCommand> {
           } = await checkOutTeleportedSessionBranch(teleportResult.branch);
           messages = processMessagesForTeleportResume(teleportResult.log, branchError);
         } else if (typeof teleport === 'string') {
-          logEvent('tengu_teleport_resume_session', {
+          logEvent('zy_teleport_resume_session', {
             mode: 'direct' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
           try {
@@ -3583,19 +3584,19 @@ async function run(): Promise<CommanderCommand> {
                 if (processedResume.restoredAgentDef) {
                   mainThreadAgentDefinition = processedResume.restoredAgentDef;
                 }
-                logEvent('tengu_session_resumed', {
+                logEvent('zy_session_resumed', {
                   entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                   success: true,
                   resume_duration_ms: Math.round(performance.now() - resumeStart)
                 });
               } else {
-                logEvent('tengu_session_resumed', {
+                logEvent('zy_session_resumed', {
                   entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                   success: false
                 });
               }
             } catch (error) {
-              logEvent('tengu_session_resumed', {
+              logEvent('zy_session_resumed', {
                 entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 success: false
               });
@@ -3624,20 +3625,20 @@ async function run(): Promise<CommanderCommand> {
                   if (processedResume.restoredAgentDef) {
                     mainThreadAgentDefinition = processedResume.restoredAgentDef;
                   }
-                  logEvent('tengu_session_resumed', {
+                  logEvent('zy_session_resumed', {
                     entrypoint: 'file' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     success: true,
                     resume_duration_ms: Math.round(performance.now() - resumeStart)
                   });
                 } else {
-                  logEvent('tengu_session_resumed', {
+                  logEvent('zy_session_resumed', {
                     entrypoint: 'file' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     success: false
                   });
                 }
               }
             } catch (error) {
-              logEvent('tengu_session_resumed', {
+              logEvent('zy_session_resumed', {
                 entrypoint: 'file' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 success: false
               });
@@ -3658,7 +3659,7 @@ async function run(): Promise<CommanderCommand> {
           // 否则回退到 sessionId 字符串（用于直接 UUID 恢复）
           const result = await loadConversationForResume(matchedLog ?? sessionId, undefined);
           if (!result) {
-            logEvent('tengu_session_resumed', {
+            logEvent('zy_session_resumed', {
               entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               success: false
             });
@@ -3673,13 +3674,13 @@ async function run(): Promise<CommanderCommand> {
           if (processedResume.restoredAgentDef) {
             mainThreadAgentDefinition = processedResume.restoredAgentDef;
           }
-          logEvent('tengu_session_resumed', {
+          logEvent('zy_session_resumed', {
             entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             success: true,
             resume_duration_ms: Math.round(performance.now() - resumeStart)
           });
         } catch (error) {
-          logEvent('tengu_session_resumed', {
+          logEvent('zy_session_resumed', {
             entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             success: false
           });
@@ -3765,7 +3766,7 @@ async function run(): Promise<CommanderCommand> {
       let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null;
       if (feature('LODESTONE')) {
         if (options.deepLinkOrigin) {
-          logEvent('tengu_deep_link_opened', {
+          logEvent('zy_deep_link_opened', {
             has_prefill: Boolean(options.prefill),
             has_repo: Boolean(options.deepLinkRepo)
           });
@@ -4279,7 +4280,7 @@ async function run(): Promise<CommanderCommand> {
     process.exit(0);
   });
   if (feature('TRANSCRIPT_CLASSIFIER')) {
-    // Skip when tengu_auto_mode_config.enabled === 'disabled' (circuit breaker).
+    // Skip when zy_auto_mode_config.enabled === 'disabled' (circuit breaker).
     // Reads from disk cache — GrowthBook isn't initialized at registration time.
     if (getAutoModeEnabledStateIfCached() !== 'disabled') {
       const autoModeCmd = program.command('auto-mode').description('Inspect auto mode classifier configuration');
@@ -4568,7 +4569,7 @@ async function logTenguInit({
   assistantActivationPath: string | undefined;
 }): Promise<void> {
   try {
-    logEvent('tengu_init', {
+    logEvent('zy_init', {
       entrypoint: 'zy' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       hasInitialPrompt,
       hasStdin,
@@ -4653,7 +4654,7 @@ function maybeActivateBrief(options: unknown): void {
   }
   // 一旦看到意图就无条件触发：enabled=false 在 Datadog 中捕获
   // "用户尝试但被门控"的失败模式。
-  logEvent('tengu_brief_mode_enabled', {
+  logEvent('zy_brief_mode_enabled', {
     enabled: entitled,
     gated: !entitled,
     source: (briefEnv ? 'env' : 'flag') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS

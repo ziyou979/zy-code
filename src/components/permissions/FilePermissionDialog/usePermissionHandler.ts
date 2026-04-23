@@ -70,7 +70,7 @@ function handleAcceptOnce(
   logPermissionEvent('accept', completionType, languageName, messageId)
 
   // Log accept submission with feedback context
-  logEvent('tengu_accept_submitted', {
+  logEvent('zy_accept_submitted', {
     toolName: sanitizeToolNameForAnalytics(
       toolUseConfirm.tool.name,
     ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -160,7 +160,7 @@ function handleReject(
   )
 
   // Log reject submission with feedback context
-  logEvent('tengu_reject_submitted', {
+  logEvent('zy_reject_submitted', {
     toolName: sanitizeToolNameForAnalytics(
       toolUseConfirm.tool.name,
     ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

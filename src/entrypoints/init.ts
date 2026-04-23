@@ -96,7 +96,7 @@ export const init = memoize(async (): Promise<void> => {
       import('../services/analytics/growthbook.js'),
     ]).then(([fp, gb]) => {
       fp.initializeZyEventLogging()
-      // 如果 tengu_1p_event_batch_config 在会话中
+      // 如果 zy_1p_event_batch_config 在会话中
       // 途变化，重新初始化日志 provider。变化检测（isEqual）在
       // handler 内部，因此未变化的刷新是空操作。
       gb.onGrowthBookRefresh(() => {

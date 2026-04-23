@@ -69,7 +69,7 @@ export function usePermissionExplainerUI(props) {
   const [promise, setPromise] = useState(null);
   useKeybinding("confirm:toggleExplanation", () => {
     if (!visible) {
-      logEvent("tengu_permission_explainer_shortcut_used", {});
+      logEvent("zy_permission_explainer_shortcut_used", {});
       if (!promise) {
         setPromise(createExplanationPromise(props));
       }

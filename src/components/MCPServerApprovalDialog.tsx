@@ -13,7 +13,7 @@ export function MCPServerApprovalDialog({
   onDone
 }: Props) {
   const onChange = function onChange(value) {
-    logEvent("tengu_mcp_dialog_choice", {
+    logEvent("zy_mcp_dialog_choice", {
       choice: value as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
     switch (value) {

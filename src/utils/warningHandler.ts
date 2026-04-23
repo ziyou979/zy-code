@@ -95,7 +95,7 @@ export function initializeWarningHandler(): void {
 
       // Always log to Statsig for monitoring
       // Include full details for ant users only, since they may contain code or filepaths
-      logEvent('tengu_node_warning', {
+      logEvent('zy_node_warning', {
         is_internal: isInternal ? 1 : 0,
         occurrence_count: count + 1,
         classname:

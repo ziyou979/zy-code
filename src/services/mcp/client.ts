@@ -235,7 +235,7 @@ const ClaudeInChromeToolRendering =
     require('../../utils/claudeInChrome/toolRendering.js')
 // 惰性加载：wrapper.tsx → hostAdapter.ts → executor.ts 引入两个原生模块
 //（@ant/computer-use-input + @ant/computer-use-swift）。由
-// GrowthBook tengu_malort_pedway 运行时门控（见 gates.ts）。
+// GrowthBook zy_malort_pedway 运行时门控（见 gates.ts）。
 const computerUseWrapper = feature('CHICAGO_MCP')
   ? (): typeof import('../../utils/computerUse/wrapper.js') =>
       require('../../utils/computerUse/wrapper.js')
@@ -332,7 +332,7 @@ function mcpBaseUrlAnalytics(serverRef: ScopedMcpServerConfig): {
 
 /**
  * Shared handler for sse/http/zyai-proxy auth failures during connect:
- * emits tengu_mcp_server_needs_auth, caches the needs-auth entry, and returns
+ * emits zy_mcp_server_needs_auth, caches the needs-auth entry, and returns
  * the needs-auth connection result.
  */
 function handleRemoteAuthFailure(
@@ -340,7 +340,7 @@ function handleRemoteAuthFailure(
   serverRef: ScopedMcpServerConfig,
   transportType: 'sse' | 'http' | 'zyai-proxy',
 ): MCPServerConnection {
-  logEvent('tengu_mcp_server_needs_auth', {
+  logEvent('zy_mcp_server_needs_auth', {
     transportType:
       transportType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...mcpBaseUrlAnalytics(serverRef),
@@ -397,7 +397,7 @@ export function createZyAiProxyFetch(innerFetch: FetchLike): FetchLike {
     // 否则每个需要认证的下游连接器都会双倍往返时间
     //（常见情况：30+ 服务器显示"MCP 服务器需要认证但未配置 OAuth token"）。
     const tokenChanged = await handleOAuth401Error(sentToken).catch(() => false)
-    logEvent('tengu_mcp_Zyai_proxy_401', {
+    logEvent('zy_mcp_Zyai_proxy_401', {
       tokenChanged:
         tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
@@ -1134,7 +1134,7 @@ export const connectToServer = memoize(
           serverRef.type === 'sse-ide' ||
           serverRef.type === 'ws-ide'
         ) {
-          logEvent('tengu_mcp_ide_server_connection_failed', {
+          logEvent('zy_mcp_ide_server_connection_failed', {
             connectionDurationMs: elapsed,
           })
         }
@@ -1192,7 +1192,7 @@ export const connectToServer = memoize(
 
       if (serverRef.type === 'sse-ide' || serverRef.type === 'ws-ide') {
         const ideConnectionDurationMs = Date.now() - connectStartTime
-        logEvent('tengu_mcp_ide_server_connection_succeeded', {
+        logEvent('zy_mcp_ide_server_connection_succeeded', {
           connectionDurationMs: ideConnectionDurationMs,
           serverVersion:
             serverVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1575,7 +1575,7 @@ export const connectToServer = memoize(
       }
 
       const connectionDurationMs = Date.now() - connectStartTime
-      logEvent('tengu_mcp_server_connection_succeeded', {
+      logEvent('zy_mcp_server_connection_succeeded', {
         connectionDurationMs,
         transportType: (serverRef.type ??
           'stdio') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1599,7 +1599,7 @@ export const connectToServer = memoize(
       }
     } catch (error) {
       const connectionDurationMs = Date.now() - connectStartTime
-      logEvent('tengu_mcp_server_connection_failed', {
+      logEvent('zy_mcp_server_connection_failed', {
         connectionDurationMs,
         totalServers: serverStats?.totalServers || 1,
         stdioCount:
@@ -2442,7 +2442,7 @@ export function prefetchAllMcpResources(
             (command.argumentHint ?? '').length
           return sum + commandMetadataLength
         }, 0)
-        logEvent('tengu_mcp_tools_commands_loaded', {
+        logEvent('zy_mcp_tools_commands_loaded', {
           tools_count: tools.length,
           commands_count: commands.length,
           commands_metadata_length: commandsMetadataLength,
@@ -2736,7 +2736,7 @@ export async function processMCPResult(
 
   // 如果大输出文件功能已禁用，回退到旧的截断行为
   if (isEnvDefinedFalsy(process.env.ENABLE_MCP_LARGE_OUTPUT_FILES)) {
-    logEvent('tengu_mcp_large_result_handled', {
+    logEvent('zy_mcp_large_result_handled', {
       outcome: 'truncated',
       reason: 'env_disabled',
       sizeEstimateTokens,
@@ -2753,7 +2753,7 @@ export async function processMCPResult(
   // 如果内容包含图像，回退到截断 — 将图像持久化为 JSON
   // 会破坏图像压缩逻辑并使其不可查看
   if (contentContainsImages(content)) {
-    logEvent('tengu_mcp_large_result_handled', {
+    logEvent('zy_mcp_large_result_handled', {
       outcome: 'truncated',
       reason: 'contains_images',
       sizeEstimateTokens,
@@ -2772,7 +2772,7 @@ export async function processMCPResult(
   if (isPersistError(persistResult)) {
     // 如果文件保存失败，回退到返回截断的内容信息
     const contentLength = contentStr.length
-    logEvent('tengu_mcp_large_result_handled', {
+    logEvent('zy_mcp_large_result_handled', {
       outcome: 'truncated',
       reason: 'persist_failed',
       sizeEstimateTokens,
@@ -2780,7 +2780,7 @@ export async function processMCPResult(
     return `Error: result (${contentLength.toLocaleString()} characters) exceeds maximum allowed tokens. Failed to save output to file: ${persistResult.error}. If this MCP server provides pagination or filtering tools, use them to retrieve specific portions of the data.`
   }
 
-  logEvent('tengu_mcp_large_result_handled', {
+  logEvent('zy_mcp_large_result_handled', {
     outcome: 'persisted',
     reason: 'file_saved',
     sizeEstimateTokens,
@@ -3157,7 +3157,7 @@ async function callMCPTool({
     // 记录代码索引工具使用情况
     const codeIndexingTool = detectCodeIndexingFromMcpServerName(name)
     if (codeIndexingTool) {
-      logEvent('tengu_code_indexing_tool_used', {
+      logEvent('zy_code_indexing_tool_used', {
         tool: codeIndexingTool as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         source:
           'mcp' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -3197,7 +3197,7 @@ async function callMCPTool({
           name,
           `Tool call returned 401 Unauthorized - token may have expired`,
         )
-        logEvent('tengu_mcp_tool_call_auth_error', {})
+        logEvent('zy_mcp_tool_call_auth_error', {})
         throw new McpAuthError(
           name,
           `MCP server "${name}" requires re-authorization (token expired)`,
@@ -3222,7 +3222,7 @@ async function callMCPTool({
           name,
           `MCP session expired during tool call (${isSessionExpired ? '404/-32001' : 'connection closed'}), clearing connection cache for re-initialization`,
         )
-        logEvent('tengu_mcp_session_expired', {})
+        logEvent('zy_mcp_session_expired', {})
         await clearServerCache(name, config)
         throw new McpSessionExpiredError(name)
       }

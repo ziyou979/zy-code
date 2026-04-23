@@ -101,7 +101,7 @@ export function Notifications({
   const shouldShowExternalEditorHint = isInputWrapped && !isShowingCompactMessage && apiKeyStatus !== "invalid" && apiKeyStatus !== "missing" && editor !== undefined;
   useEffect(() => {
     if (shouldShowExternalEditorHint && editor) {
-      logEvent("tengu_external_editor_hint_shown", {});
+      logEvent("zy_external_editor_hint_shown", {});
       addNotification({
         key: "external-editor-hint",
         jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={`edit in ${toIDEDisplayName(editor)}`} /></Text>,

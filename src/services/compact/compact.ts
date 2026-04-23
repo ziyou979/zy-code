@@ -303,7 +303,7 @@ export interface CompactionResult {
 
 /**
  * 从 autoCompactIfNeeded 传递给 compactConversation 的诊断上下文。
- * 让 tengu_compact 事件能够在不 join 的情况下区分同链循环（H2）、
+ * 让 zy_compact 事件能够在不 join 的情况下区分同链循环（H2）、
  * 跨 agent（H1/H5）以及手动与自动（H3）压缩。
  */
 export type RecompactionInfo = {
@@ -424,7 +424,7 @@ export async function compactConversation(
     // 集群 cache_creation（约 38B token/天），集中在临时环境（CCR/GHA/SDK），
     // 这些环境中 GB cache 是冷的，且 GB 被禁用的第三方提供商。GB gate 作为 kill-switch 保留。
     const promptCacheSharingEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-      'tengu_compact_cache_prefix',
+      'zy_compact_cache_prefix',
       true,
     )
 
@@ -458,7 +458,7 @@ export async function compactConversation(
           ? truncateHeadForPTLRetry(messagesToSummarize, summaryResponse)
           : null
       if (!truncated) {
-        logEvent('tengu_compact_failed', {
+        logEvent('zy_compact_failed', {
           reason:
             'prompt_too_long' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           preCompactTokenCount,
@@ -467,7 +467,7 @@ export async function compactConversation(
         })
         throw new Error(ERROR_MESSAGE_PROMPT_TOO_LONG)
       }
-      logEvent('tengu_compact_ptl_retry', {
+      logEvent('zy_compact_ptl_retry', {
         attempt: ptlAttempts,
         droppedMessages: messagesToSummarize.length - truncated.length,
         remainingMessages: truncated.length,
@@ -486,7 +486,7 @@ export async function compactConversation(
         `Compact failed: no summary text in response. Response: ${jsonStringify(summaryResponse)}`,
         { level: 'error' },
       )
-      logEvent('tengu_compact_failed', {
+      logEvent('zy_compact_failed', {
         reason:
           'no_summary' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
@@ -496,7 +496,7 @@ export async function compactConversation(
         `Failed to generate conversation summary - response did not contain valid text content`,
       )
     } else if (startsWithApiErrorPrefix(summary)) {
-      logEvent('tengu_compact_failed', {
+      logEvent('zy_compact_failed', {
         reason:
           'api_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
@@ -635,7 +635,7 @@ export async function compactConversation(
     const querySourceForEvent =
       recompactionInfo?.querySource ?? context.options.querySource ?? 'unknown'
 
-    logEvent('tengu_compact', {
+    logEvent('zy_compact', {
       preCompactTokenCount,
       // 保留以维持连续性 — 语义上是压缩 API 调用的总用量
       postCompactTokenCount: compactionCallTotalTokens,
@@ -863,7 +863,7 @@ export async function partialCompactConversation(
           ? truncateHeadForPTLRetry(apiMessages, summaryResponse)
           : null
       if (!truncated) {
-        logEvent('tengu_partial_compact_failed', {
+        logEvent('zy_partial_compact_failed', {
           reason:
             'prompt_too_long' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           ...failureMetadata,
@@ -871,7 +871,7 @@ export async function partialCompactConversation(
         })
         throw new Error(ERROR_MESSAGE_PROMPT_TOO_LONG)
       }
-      logEvent('tengu_compact_ptl_retry', {
+      logEvent('zy_compact_ptl_retry', {
         attempt: ptlAttempts,
         droppedMessages: apiMessages.length - truncated.length,
         remainingMessages: truncated.length,
@@ -884,7 +884,7 @@ export async function partialCompactConversation(
       }
     }
     if (!summary) {
-      logEvent('tengu_partial_compact_failed', {
+      logEvent('zy_partial_compact_failed', {
         reason:
           'no_summary' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...failureMetadata,
@@ -893,7 +893,7 @@ export async function partialCompactConversation(
         'Failed to generate conversation summary - response did not contain valid text content',
       )
     } else if (startsWithApiErrorPrefix(summary)) {
-      logEvent('tengu_partial_compact_failed', {
+      logEvent('zy_partial_compact_failed', {
         reason:
           'api_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...failureMetadata,
@@ -972,7 +972,7 @@ export async function partialCompactConversation(
     ])
     const compactionUsage = getTokenUsage(summaryResponse)
 
-    logEvent('tengu_partial_compact', {
+    logEvent('zy_partial_compact', {
       preCompactTokenCount,
       postCompactTokenCount,
       messagesKept: messagesToKeep.length,
@@ -1136,9 +1136,9 @@ async function streamCompactSummary({
   // 启用 prompt cache 共享时，使用 forked agent 复用
   // 主对话已缓存的前缀（system prompt、tools、context 消息）。
   // 失败时回退到常规流式路径。
-  // 第三方默认：true — 参见上方另一处 tengu_compact_cache_prefix 读取的注释。
+  // 第三方默认：true — 参见上方另一处 zy_compact_cache_prefix 读取的注释。
   const promptCacheSharingEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_compact_cache_prefix',
+    'zy_compact_cache_prefix',
     true,
   )
   // 压缩期间发送保活信号，防止远程 session WebSocket 因空闲超时而断开桥接连接。
@@ -1192,7 +1192,7 @@ async function streamCompactSummary({
           // PTL 错误文本不记录成功日志 — 它被返回以便调用者的重试循环捕获它，
           // 但它不是成功的摘要。
           if (!assistantText.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
-            logEvent('tengu_compact_cache_sharing_success', {
+            logEvent('zy_compact_cache_sharing_success', {
               preCompactTokenCount,
               outputTokens: result.totalUsage.outputTokens,
               cacheReadInputTokens: result.totalUsage.cacheReadInputTokens,
@@ -1213,14 +1213,14 @@ async function streamCompactSummary({
           `Compact cache sharing: no text in response, falling back. Response: ${jsonStringify(assistantMsg)}`,
           { level: 'warn' },
         )
-        logEvent('tengu_compact_cache_sharing_fallback', {
+        logEvent('zy_compact_cache_sharing_fallback', {
           reason:
             'no_text_response' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           preCompactTokenCount,
         })
       } catch (error) {
         logError(error)
-        logEvent('tengu_compact_cache_sharing_fallback', {
+        logEvent('zy_compact_cache_sharing_fallback', {
           reason:
             'error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           preCompactTokenCount,
@@ -1230,7 +1230,7 @@ async function streamCompactSummary({
 
     // 常规流式路径（cache 共享失败或被禁用时的回退）
     const retryEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-      'tengu_compact_streaming_retry',
+      'zy_compact_streaming_retry',
       false,
     )
     const maxAttempts = retryEnabled ? MAX_COMPACT_STREAMING_RETRIES : 1
@@ -1342,7 +1342,7 @@ async function streamCompactSummary({
       }
 
       if (attempt < maxAttempts) {
-        logEvent('tengu_compact_streaming_retry', {
+        logEvent('zy_compact_streaming_retry', {
           attempt,
           preCompactTokenCount,
           hasStartedStreaming,
@@ -1357,7 +1357,7 @@ async function streamCompactSummary({
         `Compact streaming failed after ${attempt} attempts. hasStartedStreaming=${hasStartedStreaming}`,
         { level: 'error' },
       )
-      logEvent('tengu_compact_failed', {
+      logEvent('zy_compact_failed', {
         reason:
           'no_streaming_response' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
@@ -1421,8 +1421,8 @@ export async function createPostCompactFileAttachments(
             maxTokens: POST_COMPACT_MAX_TOKENS_PER_FILE,
           },
         },
-        'tengu_post_compact_file_restore_success',
-        'tengu_post_compact_file_restore_error',
+        'zy_post_compact_file_restore_success',
+        'zy_post_compact_file_restore_error',
         'compact',
       )
       return attachment ? createAttachmentMessage(attachment) : null

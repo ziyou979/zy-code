@@ -9,8 +9,8 @@ import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'
 
 export type RateLimit = {
-  utilization: number | null // a percentage from 0 to 100
-  resets_at: string | null // ISO 8601 timestamp
+  utilization: number | null // 0 到 100 的百分比
+  resets_at: string | null // ISO 8601 时间戳
 }
 
 export type ExtraUsage = {
@@ -30,12 +30,12 @@ export type Utilization = {
 }
 
 export async function fetchUtilization(): Promise<Utilization | null> {
-  // No subscription context — skip API call
+  // 无订阅上下文 — 跳过 API 调用
   if (!hasProfileScope()) {
     return {}
   }
 
-  // Skip API call if OAuth token is expired to avoid 401 errors
+  // OAuth 令牌过期时跳过 API 调用，避免 401 错误
   const tokens = getZyAIOAuthTokens()
   if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {
     return null
@@ -43,7 +43,7 @@ export async function fetchUtilization(): Promise<Utilization | null> {
 
   const authResult = getAuthHeaders()
   if (authResult.error) {
-    throw new Error(`Auth error: ${authResult.error}`)
+    throw new Error(`认证错误：${authResult.error}`)
   }
 
   const headers = {
@@ -56,7 +56,7 @@ export async function fetchUtilization(): Promise<Utilization | null> {
 
   const response = await axios.get<Utilization>(url, {
     headers,
-    timeout: 5000, // 5 second timeout
+    timeout: 5000, // 5 秒超时
   })
 
   return response.data

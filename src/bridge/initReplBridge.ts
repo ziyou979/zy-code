@@ -140,8 +140,8 @@ export async function initReplBridge(
   }
 
   // 1b. Minimum version check — deferred to after the v1/v2 branch below,
-  // since each implementation has its own floor (tengu_bridge_min_version
-  // for v1, tengu_bridge_repl_v2_config.min_version for v2).
+  // since each implementation has its own floor (zy_bridge_min_version
+  // for v1, zy_bridge_repl_v2_config.min_version for v2).
 
   // 2. Check OAuth — must be signed in with zy.ai. Runs before the
   // policy check so console-auth users get the actionable "/login" hint
@@ -381,7 +381,7 @@ export async function initReplBridge(
   }
 
   const initialHistoryCap = getFeatureValue_CACHED_WITH_REFRESH(
-    'tengu_bridge_initial_history_cap',
+    'zy_bridge_initial_history_cap',
     200,
     5 * 60 * 1000,
   )
@@ -405,7 +405,7 @@ export async function initReplBridge(
   //
   // NAMING: "env-less" is distinct from "CCR v2" (the /worker/* transport).
   // The env-based path below can ALSO use CCR v2 via ZY_CODE_.
-  // tengu_bridge_repl_v2 gates env-less (no poll loop), not transport version.
+  // zy_bridge_repl_v2 gates env-less (no poll loop), not transport version.
   //
   // perpetual (assistant-mode session continuity via bridge-pointer.json) is
   // env-coupled and not yet implemented here — fall back to env-based when set
@@ -422,7 +422,7 @@ export async function initReplBridge(
       return null
     }
     logForDebugging(
-      '[bridge:repl] Using env-less bridge path (tengu_bridge_repl_v2)',
+      '[bridge:repl] Using env-less bridge path (zy_bridge_repl_v2)',
     )
     const { initEnvLessBridgeCore } = await import('./remoteBridgeCore.js')
     return initEnvLessBridgeCore({

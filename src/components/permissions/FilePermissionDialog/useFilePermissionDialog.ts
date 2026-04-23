@@ -178,20 +178,20 @@ export function useFilePermissionDialog<T extends ToolInput>({
       if (value === 'yes') {
         if (yesInputMode) {
           setYesInputMode(false)
-          logEvent('tengu_accept_feedback_mode_collapsed', analyticsProps)
+          logEvent('zy_accept_feedback_mode_collapsed', analyticsProps)
         } else {
           setYesInputMode(true)
           setYesFeedbackModeEntered(true)
-          logEvent('tengu_accept_feedback_mode_entered', analyticsProps)
+          logEvent('zy_accept_feedback_mode_entered', analyticsProps)
         }
       } else if (value === 'no') {
         if (noInputMode) {
           setNoInputMode(false)
-          logEvent('tengu_reject_feedback_mode_collapsed', analyticsProps)
+          logEvent('zy_reject_feedback_mode_collapsed', analyticsProps)
         } else {
           setNoInputMode(true)
           setNoFeedbackModeEntered(true)
-          logEvent('tengu_reject_feedback_mode_entered', analyticsProps)
+          logEvent('zy_reject_feedback_mode_entered', analyticsProps)
         }
       }
     },

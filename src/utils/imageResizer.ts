@@ -385,7 +385,7 @@ export async function maybeResizeAndDownsampleImageBuffer(
     logError(error as Error)
     const errorType = classifyImageError(error)
     const errorMsg = errorMessage(error)
-    logEvent('tengu_image_resize_failed', {
+    logEvent('zy_image_resize_failed', {
       original_size_bytes: originalSize,
       error_type: errorType,
       error_message_hash: hashString(errorMsg),
@@ -412,7 +412,7 @@ export async function maybeResizeAndDownsampleImageBuffer(
 
     // If original image's base64 encoding is within API limit, allow it through uncompressed
     if (base64Size <= API_IMAGE_MAX_BASE64_SIZE && !overDim) {
-      logEvent('tengu_image_resize_fallback', {
+      logEvent('zy_image_resize_fallback', {
         original_size_bytes: originalSize,
         base64_size_bytes: base64Size,
         error_type: errorType,
@@ -550,7 +550,7 @@ export async function compressImageBuffer(
     logError(error as Error)
     const errorType = classifyImageError(error)
     const errorMsg = errorMessage(error)
-    logEvent('tengu_image_compress_failed', {
+    logEvent('zy_image_compress_failed', {
       original_size_bytes: imageBuffer.length,
       max_bytes: maxBytes,
       error_type: errorType,

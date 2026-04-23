@@ -305,7 +305,7 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
       ? process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
         shouldIncludeExperimentalBetas() &&
         getFeatureValue_CACHED_MAY_BE_STALE(
-          'tengu_anti_distill_fake_tool_injection',
+          'zy_anti_distill_fake_tool_injection',
           false,
         )
       : false
@@ -418,7 +418,7 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
   if (allowlist === null) {
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
       allowlist?: string[]
-    }>('tengu_prompt_cache_1h_config', {})
+    }>('zy_prompt_cache_1h_config', {})
     allowlist = config.allowlist ?? []
     setPromptCache1hAllowlist(allowlist)
   }
@@ -840,7 +840,7 @@ export async function* executeNonStreamingRequest(
   captureRequest: (params: any) => void,
   /**
    * 此回退正在恢复的失败流式尝试的请求 ID。
-   * 在 tengu_nonstreaming_fallback_error 中发出，用于漏斗关联。
+   * 在 zy_nonstreaming_fallback_error 中发出，用于漏斗关联。
    */
   originatingRequestId?: string | null,
 ): AsyncGenerator<SystemAPIErrorMessage, LLMMessage> {
@@ -881,7 +881,7 @@ export async function* executeNonStreamingRequest(
         // 让我们区分"回退卡在容器杀除之后"（无事件）
         // 和"回退触发了有界超时"（此事件）。
         logForDiagnosticsNoPII('error', 'cli_nonstreaming_fallback_error')
-        logEvent('tengu_nonstreaming_fallback_error', {
+        logEvent('zy_nonstreaming_fallback_error', {
           model:
             clientOptions.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           error:
@@ -1040,7 +1040,7 @@ async function* queryModel(
       )
     ).activated
   ) {
-    logEvent('tengu_off_switch_query', {})
+    logEvent('zy_off_switch_query', {})
     yield getAssistantMessageFromError(
       new Error(CUSTOM_OFF_SWITCH_MESSAGE),
       options.model,
@@ -1256,7 +1256,7 @@ async function* queryModel(
 
   // 在构建系统提示之前规范化消息（指纹识别需要）
   //  instrumentation：跟踪规范化前的消息数量
-  logEvent('tengu_api_before_normalize', {
+  logEvent('zy_api_before_normalize', {
     preNormalizedMessageCount: messages.length,
   })
 
@@ -1313,7 +1313,7 @@ async function* queryModel(
   )
 
   //  instrumentation：跟踪规范化后的消息数量
-  logEvent('tengu_api_after_normalize', {
+  logEvent('zy_api_after_normalize', {
     postNormalizedMessageCount: messagesForAPI.length,
   })
 
@@ -1520,7 +1520,7 @@ async function* queryModel(
   const paramsFromContext = (retryContext: RetryContext) => {
     const betasParams = [...betas]
 
-    // Append 1M beta dynamically for the Sonnet 1M experiment.
+    // 为 Sonnet 1M 实验动态追加 1M beta header。
     if (
       !betasParams.includes(CONTEXT_1M_BETA_HEADER) &&
       getSonnet1mExpTreatmentEnabled(retryContext.model)
@@ -1588,8 +1588,8 @@ async function* queryModel(
         !isEnvTruthy(process.env.ZY_CODE_DISABLE_ADAPTIVE_THINKING) &&
         modelSupportsAdaptiveThinking(options.model)
       ) {
-        // For models that support adaptive thinking, always use adaptive
-        // thinking without a budget.
+        // 对于支持自适应 thinking 的模型，始终使用自适应
+        // thinking 而不设预算。
         thinking = {
           type: 'adaptive',
         } as any
@@ -1760,25 +1760,25 @@ async function* queryModel(
 
         maxOutputTokens = params.max_tokens
 
-        // Fire immediately before the fetch is dispatched. .withResponse() below
-        // awaits until response headers arrive, so this MUST be before the await
-        // or the "Network TTFB" phase measurement is wrong.
+        // 在 fetch 发出前立即触发。下方的 .withResponse()
+        // 会等到响应头到达，所以这必须在 await 之前，
+        // 否则"网络 TTFB"阶段测量就不准确。
         queryCheckpoint('query_api_request_sent')
         if (!options.agentId) {
           headlessProfilerCheckpoint('api_request_sent')
         }
 
-        // Generate and track client request ID so timeouts (which return no
-        // server request ID) can still be correlated with server logs.
-        // First-party only — 3P providers don't log it (inc-4029 class).
+        // 生成并跟踪客户端请求 ID，使超时（不返回服务端请求 ID）
+        // 仍可与服务端日志关联。仅限第一方 — 第三方提供商不记录它
+        //（inc-4029 类）。
         clientRequestId =
           getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
             ? randomUUID()
             : undefined
 
-        // Use raw stream instead of BetaMessageStream to avoid O(n²) partial JSON parsing
-        // BetaMessageStream calls partialParse() on every input_json_delta, which we don't need
-        // since we handle tool input accumulation ourselves
+        // 使用原始流而非 BetaMessageStream，避免 O(n²) 的部分 JSON 解析
+        // BetaMessageStream 在每个 input_json_delta 上调用 partialParse()，我们不需要它
+        // 因为我们自己处理工具输入累积
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
         
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
@@ -1818,12 +1818,11 @@ async function* queryModel(
     stopReason = null
     isAdvisorInProgress = false
 
-    // Streaming idle timeout watchdog: abort the stream if no chunks arrive
-    // for STREAM_IDLE_TIMEOUT_MS. Unlike the stall detection below (which only
-    // fires when the *next* chunk arrives), this uses setTimeout to actively
-    // kill hung streams. Without this, a silently dropped connection can hang
-    // the session indefinitely since the SDK's request timeout only covers the
-    // initial fetch(), not the streaming body.
+    // 流式空闲超时看门狗：如果 STREAM_IDLE_TIMEOUT_MS 内没有数据块到达，
+    // 中止流。与下方的停顿检测（仅在*下一个*数据块到达时触发）不同，
+    // 此机制使用 setTimeout 主动杀死挂起的流。没有这个，静默断开的
+    // 连接会无限期挂起会话，因为 SDK 的请求超时仅覆盖初始 fetch()，
+    // 不覆盖流式响应体。
     const streamWatchdogEnabled = isEnvTruthy(
       process.env.CLAUDE_ENABLE_STREAM_WATCHDOG,
     )
@@ -1831,7 +1830,7 @@ async function* queryModel(
       parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000
     const STREAM_IDLE_WARNING_MS = STREAM_IDLE_TIMEOUT_MS / 2
     let streamIdleAborted = false
-    // performance.now() snapshot when watchdog fires, for measuring abort propagation delay
+    // 看门狗触发时的 performance.now() 快照，用于测量中止传播延迟
     let streamWatchdogFiredAt: number | null = null
     let streamIdleWarningTimer: ReturnType<typeof setTimeout> | null = null
     let streamIdleTimer: ReturnType<typeof setTimeout> | null = null
@@ -1869,7 +1868,7 @@ async function* queryModel(
           { level: 'error' },
         )
         logForDiagnosticsNoPII('error', 'cli_streaming_idle_timeout')
-        logEvent('tengu_streaming_idle_timeout', {
+        logEvent('zy_streaming_idle_timeout', {
           model:
             options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           request_id: (streamRequestId ??
@@ -1885,8 +1884,8 @@ async function* queryModel(
     try {
       // stream in and accumulate state
       let isFirstChunk = true
-      let lastEventTime: number | null = null // Set after first chunk to avoid measuring TTFB as a stall
-      const STALL_THRESHOLD_MS = 30_000 // 30 seconds
+      let lastEventTime: number | null = null // 在首个数据块后设置，避免将 TTFB 计为停顿
+      const STALL_THRESHOLD_MS = 30_000 // 30 秒
       let totalStallTime = 0
       let stallCount = 0
 
@@ -1894,7 +1893,7 @@ async function* queryModel(
         resetStreamIdleTimer()
         const now = Date.now()
 
-        // Detect and log streaming stalls (only after first event to avoid counting TTFB)
+        // 检测并记录流式停顿（仅在首个事件后，避免将 TTFB 计为停顿）
         if (lastEventTime !== null) {
           const timeSinceLastEvent = now - lastEventTime
           if (timeSinceLastEvent > STALL_THRESHOLD_MS) {
@@ -1904,7 +1903,7 @@ async function* queryModel(
               `Streaming stall detected: ${(timeSinceLastEvent / 1000).toFixed(1)}s gap between events (stall #${stallCount})`,
               { level: 'warn' },
             )
-            logEvent('tengu_streaming_stall', {
+            logEvent('zy_streaming_stall', {
               stall_duration_ms: timeSinceLastEvent,
               stall_count: stallCount,
               total_stall_time_ms: totalStallTime,
@@ -1961,7 +1960,7 @@ async function* queryModel(
                 if ((part.content_block.name as string) === 'advisor') {
                   isAdvisorInProgress = true
                   logForDebugging(`[AdvisorTool] Advisor tool called`)
-                  logEvent('tengu_advisor_tool_call', {
+                  logEvent('zy_advisor_tool_call', {
                     model:
                       options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     advisor_model: (advisorModel ??
@@ -2007,7 +2006,7 @@ async function* queryModel(
             const contentBlock = contentBlocks[part.index]
             const delta = part.delta as typeof part.delta | ConnectorTextDelta
             if (!contentBlock) {
-              logEvent('tengu_streaming_error', {
+              logEvent('zy_streaming_error', {
                 error_type:
                   'content_block_not_found_delta' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_type:
@@ -2021,7 +2020,7 @@ async function* queryModel(
               delta.type === 'connector_text_delta'
             ) {
               if (contentBlock.type !== 'connector_text') {
-                logEvent('tengu_streaming_error', {
+                logEvent('zy_streaming_error', {
                   error_type:
                     'content_block_type_mismatch_connector_text' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                   expected_type:
@@ -2042,7 +2041,7 @@ async function* queryModel(
                     contentBlock.type !== 'tool_use' &&
                     contentBlock.type !== 'server_tool_use'
                   ) {
-                    logEvent('tengu_streaming_error', {
+                    logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_type_mismatch_input_json' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       expected_type:
@@ -2053,7 +2052,7 @@ async function* queryModel(
                     throw new Error('Content block is not a input_json block')
                   }
                   if (typeof contentBlock.input !== 'string') {
-                    logEvent('tengu_streaming_error', {
+                    logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_input_not_string' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       input_type:
@@ -2065,7 +2064,7 @@ async function* queryModel(
                   break
                 case 'text_delta':
                   if (contentBlock.type !== 'text') {
-                    logEvent('tengu_streaming_error', {
+                    logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_type_mismatch_text' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       expected_type:
@@ -2086,7 +2085,7 @@ async function* queryModel(
                     break
                   }
                   if (contentBlock.type !== 'thinking') {
-                    logEvent('tengu_streaming_error', {
+                    logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_type_mismatch_thinking_signature' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       expected_type:
@@ -2100,7 +2099,7 @@ async function* queryModel(
                   break
                 case 'thinking_delta':
                   if (contentBlock.type !== 'thinking') {
-                    logEvent('tengu_streaming_error', {
+                    logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_type_mismatch_thinking_delta' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       expected_type:
@@ -2124,7 +2123,7 @@ async function* queryModel(
           case 'content_block_stop': {
             const contentBlock = contentBlocks[part.index]
             if (!contentBlock) {
-              logEvent('tengu_streaming_error', {
+              logEvent('zy_streaming_error', {
                 error_type:
                   'content_block_not_found_stop' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_type:
@@ -2134,7 +2133,7 @@ async function* queryModel(
               throw new RangeError('Content block not found')
             }
             if (!partialMessage) {
-              logEvent('tengu_streaming_error', {
+              logEvent('zy_streaming_error', {
                 error_type:
                   'partial_message_not_found' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_type:
@@ -2217,7 +2216,7 @@ async function* queryModel(
             }
 
             if (stopReason === 'max_tokens') {
-              logEvent('tengu_max_tokens_reached', {
+              logEvent('zy_max_tokens_reached', {
                 max_tokens: maxOutputTokens,
               })
               yield createAssistantAPIErrorMessage({
@@ -2230,7 +2229,7 @@ async function* queryModel(
             }
 
             if (stopReason === 'model_context_window_exceeded') {
-              logEvent('tengu_context_window_exceeded', {
+              logEvent('zy_context_window_exceeded', {
                 max_tokens: maxOutputTokens,
                 output_tokens: usage.outputTokens,
               })
@@ -2272,7 +2271,7 @@ async function* queryModel(
           'info',
           'cli_stream_loop_exited_after_watchdog_clean',
         )
-        logEvent('tengu_stream_loop_exited_after_watchdog', {
+        logEvent('zy_stream_loop_exited_after_watchdog', {
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           exit_delay_ms: exitDelayMs,
@@ -2307,7 +2306,7 @@ async function* queryModel(
             : 'Stream completed with message_start but no content blocks completed - triggering non-streaming fallback',
           { level: 'error' },
         )
-        logEvent('tengu_stream_no_events', {
+        logEvent('zy_stream_no_events', {
           model:
             options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           request_id: (streamRequestId ??
@@ -2322,7 +2321,7 @@ async function* queryModel(
           `Streaming completed with ${stallCount} stall(s), total stall time: ${(totalStallTime / 1000).toFixed(1)}s`,
           { level: 'warn' },
         )
-        logEvent('tengu_streaming_stall_summary', {
+        logEvent('zy_streaming_stall_summary', {
           stall_count: stallCount,
           total_stall_time_ms: totalStallTime,
           model:
@@ -2369,7 +2368,7 @@ async function* queryModel(
           'info',
           'cli_stream_loop_exited_after_watchdog_error',
         )
-        logEvent('tengu_stream_loop_exited_after_watchdog', {
+        logEvent('zy_stream_loop_exited_after_watchdog', {
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           exit_delay_ms: exitDelayMs,
@@ -2394,7 +2393,7 @@ async function* queryModel(
             `Streaming aborted by user: ${errorMessage(streamingError)}`,
           )
           if (isAdvisorInProgress) {
-            logEvent('tengu_advisor_tool_interrupted', {
+            logEvent('zy_advisor_tool_interrupted', {
               model:
                 options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               advisor_model: (advisorModel ??
@@ -2422,7 +2421,7 @@ async function* queryModel(
       const disableFallback =
         isEnvTruthy(process.env.ZY_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
         getFeatureValue_CACHED_MAY_BE_STALE(
-          'tengu_disable_streaming_to_non_streaming_fallback',
+          'zy_disable_streaming_to_non_streaming_fallback',
           false,
         )
 
@@ -2431,7 +2430,7 @@ async function* queryModel(
           `Error streaming (non-streaming fallback disabled): ${errorMessage(streamingError)}`,
           { level: 'error' },
         )
-        logEvent('tengu_streaming_fallback_to_non_streaming', {
+        logEvent('zy_streaming_fallback_to_non_streaming', {
           model:
             options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           error:
@@ -2463,7 +2462,7 @@ async function* queryModel(
         options.onStreamingFallback()
       }
 
-      logEvent('tengu_streaming_fallback_to_non_streaming', {
+      logEvent('zy_streaming_fallback_to_non_streaming', {
         model:
           options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         error:
@@ -2492,7 +2491,7 @@ async function* queryModel(
       // Instrumentation: proves executeNonStreamingRequest was entered (vs. the
       // fallback event firing but the call itself hanging at dispatch).
       logForDiagnosticsNoPII('info', 'cli_nonstreaming_fallback_started')
-      logEvent('tengu_nonstreaming_fallback_started', {
+      logEvent('zy_nonstreaming_fallback_started', {
         request_id: (streamRequestId ??
           'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         model:
@@ -2582,7 +2581,7 @@ async function* queryModel(
         options.onStreamingFallback()
       }
 
-      logEvent('tengu_streaming_fallback_to_non_streaming', {
+      logEvent('zy_streaming_fallback_to_non_streaming', {
         model:
           options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         error:
@@ -3015,7 +3014,7 @@ export function addCacheBreakpoints(
   pinnedEdits?: CachedMCPinnedEdits[],
   skipCacheWrite = false,
 ): LLMMessageParam[] {
-  logEvent('tengu_api_cache_breakpoints', {
+  logEvent('zy_api_cache_breakpoints', {
     totalMessageCount: messages.length,
     cachingEnabled: enablePromptCaching,
     skipCacheWrite,
@@ -3339,7 +3338,7 @@ export function adjustParamsForNonStreaming<
 
 function isMaxTokensCapEnabled(): boolean {
   // 第三方默认值：false（Bedrock/Vertex 上不验证）
-  return getFeatureValue_CACHED_MAY_BE_STALE('tengu_otk_slot_v1', false)
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_otk_slot_v1', false)
 }
 
 export function getMaxOutputTokensForModel(model: string): number {

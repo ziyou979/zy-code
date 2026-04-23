@@ -38,13 +38,13 @@ export type AdminRequest = {
 )
 
 /**
- * Create an admin request (limit increase or seat upgrade).
+ * 创建管理员请求（限额提升或座位升级）。
  *
- * For Team/Enterprise users who don't have billing/admin permissions,
- * this creates a request that their admin can act on.
+ * 对于没有账单/管理员权限的 Team/Enterprise 用户，
+ * 此操作创建一个请求供其管理员处理。
  *
- * If a pending request of the same type already exists for this user,
- * returns the existing request instead of creating a new one.
+ * 如果同一类型的待处理请求已存在，
+ * 返回现有请求而非创建新请求。
  */
 export async function createAdminRequest(
   params: AdminRequestCreateParams,
@@ -64,9 +64,9 @@ export async function createAdminRequest(
 }
 
 /**
- * Get pending admin request of a specific type for the current user.
+ * 获取当前用户特定类型的待处理管理员请求。
  *
- * Returns the pending request if one exists, otherwise null.
+ * 如存在待处理请求则返回，否则返回 null。
  */
 export async function getMyAdminRequests(
   requestType: AdminRequestType,
@@ -97,7 +97,7 @@ type AdminRequestEligibilityResponse = {
 }
 
 /**
- * Check if a specific admin request type is allowed for this org.
+ * 检查此组织是否允许特定类型的管理员请求。
  */
 export async function checkAdminRequestEligibility(
   requestType: AdminRequestType,

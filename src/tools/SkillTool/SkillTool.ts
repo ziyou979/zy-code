@@ -150,7 +150,7 @@ async function executeForkedSkill(
     : undefined
   const queryDepth = context.queryTracking?.depth ?? 0
   const parentAgentId = getAgentContext()?.agentId
-  logEvent('tengu_skill_tool_invocation', {
+  logEvent('zy_skill_tool_invocation', {
     command_name:
       forkedSanitizedName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     // _PROTO_skill_name routes to the privileged skill_name BQ column
@@ -366,7 +366,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // Remove leading slash if present (for compatibility)
     const hasLeadingSlash = trimmed.startsWith('/')
     if (hasLeadingSlash) {
-      logEvent('tengu_skill_tool_slash_prefix', {})
+      logEvent('zy_skill_tool_slash_prefix', {})
     }
     const normalizedCommandName = hasLeadingSlash
       ? trimmed.substring(1)
@@ -673,7 +673,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
         : undefined
     const queryDepth = context.queryTracking?.depth ?? 0
     const parentAgentId = getAgentContext()?.agentId
-    logEvent('tengu_skill_tool_invocation', {
+    logEvent('zy_skill_tool_invocation', {
       command_name:
         sanitizedCommandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       // _PROTO_skill_name routes to the privileged skill_name BQ column
@@ -1027,7 +1027,7 @@ async function executeRemoteSkill(
   // remote from local invocations without joining on skill name prefixes.
   const queryDepth = context.queryTracking?.depth ?? 0
   const parentAgentId = getAgentContext()?.agentId
-  logEvent('tengu_skill_tool_invocation', {
+  logEvent('zy_skill_tool_invocation', {
     command_name:
       'remote_skill' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     // _PROTO_skill_name routes to the privileged skill_name BQ column

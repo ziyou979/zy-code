@@ -155,28 +155,29 @@ function* yieldMissingToolResultBlocks(
 }
 
 /**
- * The rules of thinking are lengthy and fortuitous. They require plenty of thinking
- * of most long duration and deep meditation for a wizard to wrap one's noggin around.
+ * 思维的规则漫长而玄妙。需要长时间的深思熟虑
+ * 和深度冥想，方能参透其中奥义。
  *
- * The rules follow:
- * 1. A message that contains a thinking or redacted_thinking block must be part of a query whose max_thinking_length > 0
- * 2. A thinking block may not be the last message in a block
- * 3. Thinking blocks must be preserved for the duration of an assistant trajectory (a single turn, or if that turn includes a tool_use block then also its subsequent tool_result and the following assistant message)
+ * 规则如下：
+ * 1. 包含 thinking 或 redacted_thinking 块的消息必须属于 max_thinking_length > 0 的查询
+ * 2. thinking 块不能是块中的最后一条消息
+ * 3. thinking 块必须在助手轨迹期间保留（单轮，或如果该轮包含 tool_use 块，
+ *    则还包括其后续的 tool_result 和下一个助手消息）
  *
- * Heed these rules well, young wizard. For they are the rules of thinking, and
- * the rules of thinking are the rules of the universe. If ye does not heed these
- * rules, ye will be punished with an entire day of debugging and hair pulling.
+ * 年轻的巫师，请牢记这些规则。因为它们是思维的规则，
+ * 而思维的规则即是宇宙的规则。若你不遵守这些规则，
+ * 你将受到一整天调试和抓头发的惩罚。
  */
 const MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3
 
 /**
- * Is this a max_output_tokens error message? If so, the streaming loop should
- * withhold it from SDK callers until we know whether the recovery loop can
- * continue. Yielding early leaks an intermediate error to SDK callers (e.g.
- * cowork/desktop) that terminate the session on any `error` field — the
- * recovery loop keeps running but nobody is listening.
+ * 是否为 max_output_tokens 错误消息？如果是，流式循环应
+ * 对 SDK 调用方暂缓输出，直到确认恢复循环能否继续。
+ * 提前产出会将中间错误泄漏给 SDK 调用方（如
+ * cowork/desktop），它们在任何 `error` 字段上终止会话 ——
+ * 而恢复循环仍在运行但已无人监听。
  *
- * Mirrors reactiveCompact.isWithheldPromptTooLong.
+ * 与 reactiveCompact.isWithheldPromptTooLong 对应。
  */
 function isWithheldMaxOutputTokens(
   msg: Message | StreamEvent | undefined,
@@ -473,7 +474,7 @@ async function* queryLoop(
         compactionUsage,
       } = compactionResult
 
-      logEvent('tengu_auto_compact_succeeded', {
+      logEvent('zy_auto_compact_succeeded', {
         originalMessageCount: messages.length,
         compactedMessageCount:
           compactionResult.summaryMessages.length +
@@ -708,7 +709,7 @@ async function* queryLoop(
               for (const msg of assistantMessages) {
                 yield { type: 'tombstone' as any, message: msg } as any
               }
-              logEvent('tengu_orphaned_messages_tombstoned', {
+              logEvent('zy_orphaned_messages_tombstoned', {
                 orphanedMessageCount: assistantMessages.length,
                 queryChainId: queryChainIdForAnalytics,
                 queryDepth: queryTracking.depth,
@@ -915,7 +916,7 @@ async function* queryLoop(
             }
 
             // 记录 fallback 事件
-            logEvent('tengu_model_fallback_triggered', {
+            logEvent('zy_model_fallback_triggered', {
               original_model:
                 innerError.originalModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               fallback_model:
@@ -942,7 +943,7 @@ async function* queryLoop(
       logError(error)
       const errorMessage =
         error instanceof Error ? error.message : String(error)
-      logEvent('tengu_query_error', {
+      logEvent('zy_query_error', {
         assistantMessages: assistantMessages.length,
         toolUses: assistantMessages.flatMap(_ =>
           _.message.content.filter(content => content.type === 'tool_use'),
@@ -1176,7 +1177,7 @@ async function* queryLoop(
         // 然后如果 64k 也触及上限则落入多轮恢复。
         // 第三方默认值：false（未在 Bedrock/Vertex 上验证）
         const capEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-          'tengu_otk_slot_v1',
+          'zy_otk_slot_v1',
           false,
         )
         if (
@@ -1184,7 +1185,7 @@ async function* queryLoop(
           maxOutputTokensOverride === undefined &&
           !process.env.ZY_CODE_MAX_OUTPUT_TOKENS
         ) {
-          logEvent('tengu_max_tokens_escalate', {
+          logEvent('zy_max_tokens_escalate', {
             escalatedTo: ESCALATED_MAX_TOKENS,
           })
           const next: State = {
@@ -1329,7 +1330,7 @@ async function* queryLoop(
               `Token budget early stop: diminishing returns at ${decision.completionEvent.pct}%`,
             )
           }
-          logEvent('tengu_token_budget_completed', {
+          logEvent('zy_token_budget_completed', {
             ...decision.completionEvent,
             queryChainId: queryChainIdForAnalytics,
             queryDepth: queryTracking.depth,
@@ -1347,13 +1348,13 @@ async function* queryLoop(
 
 
     if (streamingToolExecutor) {
-      logEvent('tengu_streaming_tool_execution_used', {
+      logEvent('zy_streaming_tool_execution_used', {
         tool_count: toolUseBlocks.length,
         queryChainId: queryChainIdForAnalytics,
         queryDepth: queryTracking.depth,
       })
     } else {
-      logEvent('tengu_streaming_tool_execution_not_used', {
+      logEvent('zy_streaming_tool_execution_not_used', {
         tool_count: toolUseBlocks.length,
         queryChainId: queryChainIdForAnalytics,
         queryDepth: queryTracking.depth,
@@ -1505,7 +1506,7 @@ async function* queryLoop(
 
     if (tracking?.compacted) {
       tracking.turnCounter++
-      logEvent('tengu_post_autocompact_turn', {
+      logEvent('zy_post_autocompact_turn', {
         turnId:
           tracking.turnId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         turnCounter: tracking.turnCounter,
@@ -1519,7 +1520,7 @@ async function* queryLoop(
     // 会在我们交错 tool_result 消息和普通用户消息时报错。
 
     //  instrumentation：跟踪附件前的消息计数
-    logEvent('tengu_query_before_attachments', {
+    logEvent('zy_query_before_attachments', {
       messagesForQueryCount: messagesForQuery.length,
       assistantMessagesCount: assistantMessages.length,
       toolResultsCount: toolResults.length,
@@ -1633,7 +1634,7 @@ async function* queryLoop(
         tr.type === 'attachment' && tr.attachment.type === 'edited_text_file',
     )
 
-    logEvent('tengu_query_after_attachments', {
+    logEvent('zy_query_after_attachments', {
       totalToolResultsCount: toolResults.length,
       fileChangeAttachmentCount,
       queryChainId: queryChainIdForAnalytics,

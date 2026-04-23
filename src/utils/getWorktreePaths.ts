@@ -30,7 +30,7 @@ export async function getWorktreePaths(cwd: string): Promise<string[]> {
   const durationMs = Date.now() - startTime
 
   if (code !== 0) {
-    logEvent('tengu_worktree_detection', {
+    logEvent('zy_worktree_detection', {
       duration_ms: durationMs,
       worktree_count: 0,
       success: false,
@@ -52,7 +52,7 @@ export async function getWorktreePaths(cwd: string): Promise<string[]> {
     .filter(line => line.startsWith('worktree '))
     .map(line => line.slice('worktree '.length).normalize('NFC'))
 
-  logEvent('tengu_worktree_detection', {
+  logEvent('zy_worktree_detection', {
     duration_ms: durationMs,
     worktree_count: worktreePaths.length,
     success: true,

@@ -689,7 +689,7 @@ export function initialPermissionModeFromCLI({
   // 首先检查 GrowthBook 门控 — 最高优先级
   const growthBookDisableBypassPermissionsMode =
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-      'tengu_disable_bypass_permissions_mode',
+      'zy_disable_bypass_permissions_mode',
     )
 
   // 然后检查设置 — 较低优先级
@@ -743,7 +743,7 @@ export function initialPermissionModeFromCLI({
         `settings defaultMode "${settingsMode}" is not supported in ZY_CODE_REMOTE — only acceptEdits and plan are allowed`,
         { level: 'warn' },
       )
-      logEvent('tengu_ccr_unsupported_default_mode_ignored', {
+      logEvent('zy_ccr_unsupported_default_mode_ignored', {
         mode: settingsMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
     }
@@ -921,7 +921,7 @@ export async function initializeToolPermissionContext({
   // 使用缓存值以避免阻塞启动
   const growthBookDisableBypassPermissionsMode =
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-      'tengu_disable_bypass_permissions_mode',
+      'zy_disable_bypass_permissions_mode',
     )
   const settings = getSettings_DEPRECATED() || {}
   const settingsDisableBypassPermissionsMode =
@@ -1065,12 +1065,12 @@ export async function verifyAutoModeGateAccess(
   currentContext: ToolPermissionContext,
 ): Promise<AutoModeGateCheckResult> {
   // auto 模式配置 — 在所有构建中运行（熔断器、轮播、踢出）
-  // 重新读取 tengu_auto_mode_config.enabled — 此异步检查在 GrowthBook 初始化后运行一次，
+  // 重新读取 zy_auto_mode_config.enabled — 此异步检查在 GrowthBook 初始化后运行一次，
   // 是 isAutoModeAvailable 的权威来源。同步启动路径使用过时缓存；此检查进行修正。
   // 熔断器（enabled==='disabled'）在此生效。
   const autoModeConfig = await getDynamicConfig_BLOCKS_ON_INIT<{
     enabled?: AutoModeEnabledState
-  }>('tengu_auto_mode_config', {})
+  }>('zy_auto_mode_config', {})
   const enabledState = parseAutoModeEnabledState(autoModeConfig?.enabled)
   const disabledBySettings = isAutoModeDisabledBySettings()
   // 将设置禁用在熔断器语义上与 GrowthBook 'disabled' 同等对待 —
@@ -1133,7 +1133,7 @@ export async function verifyAutoModeGateAccess(
   } else if (enabledState === 'disabled') {
     reason = 'circuit-breaker'
     logForDebugging(
-      'auto mode disabled: tengu_auto_mode_config.enabled === "disabled" (circuit breaker)',
+      'auto mode disabled: zy_auto_mode_config.enabled === "disabled" (circuit breaker)',
       { level: 'warn' },
     )
   } else {
@@ -1223,7 +1223,7 @@ export async function verifyAutoModeGateAccess(
  * 核心逻辑：根据 Statsig 门控检查是否应禁用 bypassPermissions
  */
 export function shouldDisableBypassPermissions(): Promise<boolean> {
-  return checkSecurityRestrictionGate('tengu_disable_bypass_permissions_mode')
+  return checkSecurityRestrictionGate('zy_disable_bypass_permissions_mode')
 }
 
 function isAutoModeDisabledBySettings(): boolean {
@@ -1260,7 +1260,7 @@ export function getAutoModeUnavailableReason(): AutoModeUnavailableReason | null
 }
 
 /**
- * tengu_auto_mode_config GrowthBook JSON 配置中的 `enabled` 字段。
+ * zy_auto_mode_config GrowthBook JSON 配置中的 `enabled` 字段。
  * 控制 auto 模式在 UI 表面（CLI、IDE、Desktop）中的可用性。
  * - 'enabled'：auto 模式在 shift-tab 轮播（或等效物）中可用
  * - 'disabled'：auto 模式完全不可用 — 用于事件响应的熔断器
@@ -1279,14 +1279,14 @@ function parseAutoModeEnabledState(value: unknown): AutoModeEnabledState {
 }
 
 /**
- * 读取 tengu_auto_mode_config 中的 `enabled` 字段（缓存，可能过时）。
+ * 读取 zy_auto_mode_config 中的 `enabled` 字段（缓存，可能过时）。
  * 如果 GrowthBook 不可用或字段未设置，默认为 'disabled'。
  * 其他表面（IDE、Desktop）应调用此函数来决定是否在其模式选择器中展示 auto 模式。
  */
 export function getAutoModeEnabledState(): AutoModeEnabledState {
   const config = getFeatureValue_CACHED_MAY_BE_STALE<{
     enabled?: AutoModeEnabledState
-  }>('tengu_auto_mode_config', {})
+  }>('zy_auto_mode_config', {})
   return parseAutoModeEnabledState(config?.enabled)
 }
 
@@ -1303,7 +1303,7 @@ export function getAutoModeEnabledStateIfCached():
   | undefined {
   const config = getFeatureValue_CACHED_MAY_BE_STALE<
     { enabled?: AutoModeEnabledState } | typeof NO_CACHED_AUTO_MODE_CONFIG
-  >('tengu_auto_mode_config', NO_CACHED_AUTO_MODE_CONFIG)
+  >('zy_auto_mode_config', NO_CACHED_AUTO_MODE_CONFIG)
   if (config === NO_CACHED_AUTO_MODE_CONFIG) return undefined
   return parseAutoModeEnabledState(config?.enabled)
 }
@@ -1327,7 +1327,7 @@ export function hasAutoModeOptInAnySource(): boolean {
 export function isBypassPermissionsModeDisabled(): boolean {
   const growthBookDisableBypassPermissionsMode =
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-      'tengu_disable_bypass_permissions_mode',
+      'zy_disable_bypass_permissions_mode',
     )
   const settings = getSettings_DEPRECATED() || {}
   const settingsDisableBypassPermissionsMode =

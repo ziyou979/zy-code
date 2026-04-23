@@ -124,7 +124,7 @@ function logClassifierResultForAnts(
     return
   }
 
-  logEvent('tengu_internal_bash_classifier_result', {
+  logEvent('zy_internal_bash_classifier_result', {
     behavior:
       behavior as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     descriptions: jsonStringify(
@@ -443,7 +443,7 @@ SAFE_ENV_VARS = new Set([
  * similarly controls which cluster kubectl talks to. These are convenience
  * strippings for internal power users who accept the risk.
  *
- * Based on analysis of 30 days of tengu_internal_bash_tool_use_permission_request events.
+ * Based on analysis of 30 days of zy_internal_bash_tool_use_permission_request events.
  */
 let ANT_ONLY_SAFE_ENV_VARS;
 ANT_ONLY_SAFE_ENV_VARS = new Set([
@@ -1683,7 +1683,7 @@ export async function bashToolHasPermission(
   // GrowthBook killswitch for shadow mode — when off, skip the native parse
   // entirely. Computed once; feature() must stay inline in the ternary below.
   const shadowEnabled = feature('TREE_SITTER_BASH_SHADOW')
-    ? getFeatureValue_CACHED_MAY_BE_STALE('tengu_birch_trellis', true)
+    ? getFeatureValue_CACHED_MAY_BE_STALE('zy_birch_trellis', true)
     : false
   // Parse once here; the resulting AST feeds both parseForSecurityFromAst
   // and bashToolCheckCommandOperatorPermissions.
@@ -1705,7 +1705,7 @@ export async function bashToolHasPermission(
   // TREE_SITTER_BASH (not SHADOW) so legacy internals remain pure regex.
   // One event per bash call captures both divergence AND unavailability
   // reasons; module-load failures are separately covered by the
-  // session-scoped tengu_tree_sitter_load event.
+  // session-scoped zy_tree_sitter_load event.
   if (feature('TREE_SITTER_BASH_SHADOW')) {
     const available = astResult.kind !== 'parse-unavailable'
     let tooComplex = false
@@ -1726,7 +1726,7 @@ export async function bashToolHasPermission(
         (tsSubs.length !== legacySubs.length ||
           tsSubs.some((s, i) => s !== legacySubs[i]))
     }
-    logEvent('tengu_tree_sitter_shadow', {
+    logEvent('zy_tree_sitter_shadow', {
       available,
       astTooComplex: tooComplex,
       astSemanticFail: semanticFail,
@@ -1751,7 +1751,7 @@ export async function bashToolHasPermission(
       type: 'other' as const,
       reason: astResult.reason,
     }
-    logEvent('tengu_bash_ast_too_complex', {
+    logEvent('zy_bash_ast_too_complex', {
       nodeTypeId: nodeTypeId(astResult.nodeType),
     })
     return {
@@ -2361,7 +2361,7 @@ export async function bashToolHasPermission(
       r => r.behavior !== 'passthrough',
     )
     if (divergenceCount > 0) {
-      logEvent('tengu_tree_sitter_security_divergence', {
+      logEvent('zy_tree_sitter_security_divergence', {
         quoteContextDivergence: true,
         count: divergenceCount,
       })

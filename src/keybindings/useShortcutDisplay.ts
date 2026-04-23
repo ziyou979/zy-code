@@ -42,7 +42,7 @@ export function useShortcutDisplay(
   useEffect(() => {
     if (isFallback && !hasLoggedRef.current) {
       hasLoggedRef.current = true
-      logEvent('tengu_keybinding_fallback_used', {
+      logEvent('zy_keybinding_fallback_used', {
         action:
           action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         context:

@@ -92,7 +92,7 @@ export function QuickOpenDialog({
   const previewWidth = previewOnRight ? Math.max(40, columns - maxPathWidth - 14) : columns - 6;
   const handleOpen = p_1 => {
     const opened = openFileInExternalEditor(path.resolve(getCwd(), p_1));
-    logEvent("tengu_quick_open_select", {
+    logEvent("zy_quick_open_select", {
       result_count: results.length,
       opened_editor: opened
     });
@@ -100,7 +100,7 @@ export function QuickOpenDialog({
   };
   const handleInsert = (p_2, mention) => {
     onInsert(mention ? `@${p_2} ` : `${p_2} `);
-    logEvent("tengu_quick_open_insert", {
+    logEvent("zy_quick_open_insert", {
       result_count: results.length,
       mention
     });

@@ -80,7 +80,7 @@ export interface TextDelta {
 
 /** 工具输入增量（JSON 片段） */
 export interface ToolInputDelta {
-  type: 'tool_input_delta'
+  type: 'input_json_delta'
   partial_json: string
 }
 

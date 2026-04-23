@@ -24,7 +24,7 @@ export async function processBashCommand(inputString: string, precedingInputBloc
   // tool-list visibility. Computed up front so telemetry records the
   // actual shell, not the raw setting.
   const usePowerShell = isPowerShellToolEnabled() && resolveDefaultShell() === 'powershell';
-  logEvent('tengu_input_bash', {
+  logEvent('zy_input_bash', {
     powershell: usePowerShell
   });
   const userMessage = createUserMessage({

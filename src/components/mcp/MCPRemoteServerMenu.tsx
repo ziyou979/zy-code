@@ -96,7 +96,7 @@ export function MCPRemoteServerMenu({
     try {
       const result = await reconnectMcpServer(server.name);
       const success = result.client.type === 'connected';
-      logEvent('tengu_Zyai_mcp_auth_completed', {
+      logEvent('zy_Zyai_mcp_auth_completed', {
         success
       });
       if (success) {
@@ -107,7 +107,7 @@ export function MCPRemoteServerMenu({
         onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart ZY Code for the changes to take effect.');
       }
     } catch (err) {
-      logEvent('tengu_Zyai_mcp_auth_completed', {
+      logEvent('zy_Zyai_mcp_auth_completed', {
         success: false
       });
       onComplete?.(handleReconnectError(err, server.name));
@@ -139,7 +139,7 @@ export function MCPRemoteServerMenu({
         }
       };
     });
-    logEvent('tengu_Zyai_mcp_clear_auth_completed', {});
+    logEvent('zy_Zyai_mcp_clear_auth_completed', {});
     onComplete?.(`Disconnected from ${server.name}.`);
     setIsZyAIClearingAuth(false);
     setZyAIClearAuthUrl(null);
@@ -229,19 +229,19 @@ export function MCPRemoteServerMenu({
     }
     setZyAIAuthUrl(authUrl);
     setIsZyAIAuthenticating(true);
-    logEvent('tengu_Zyai_mcp_auth_started', {});
+    logEvent('zy_Zyai_mcp_auth_started', {});
     await openBrowser(authUrl);
   }, [(server as any).config]);
   const handleZyAIClearAuth = React.useCallback(() => {
     setIsZyAIClearingAuth(true);
-    logEvent('tengu_Zyai_mcp_clear_auth_started', {});
+    logEvent('zy_Zyai_mcp_clear_auth_started', {});
   }, []);
   const handleToggleEnabled = React.useCallback(async () => {
     const wasEnabled = (server as any).client.type !== 'disabled';
     try {
       await toggleMcpServer(server.name);
       if ((server as any).config.type === 'zyai-proxy') {
-        logEvent('tengu_Zyai_mcp_toggle', {
+        logEvent('zy_Zyai_mcp_toggle', {
           new_state: (wasEnabled ? 'disabled' : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -273,7 +273,7 @@ export function MCPRemoteServerMenu({
             setManualCallbackSubmit(() => submit);
           }
         });
-        logEvent('tengu_mcp_auth_config_authenticate', {
+        logEvent('zy_mcp_auth_config_authenticate', {
           wasAuthenticated: (server as any).isAuthenticated
         });
         const result_0 = await reconnectMcpServer(server.name);
@@ -305,7 +305,7 @@ export function MCPRemoteServerMenu({
     if ((server as any).config) {
       // First revoke the authentication tokens and clear all auth state
       await revokeServerTokens(server.name, (server as any).config);
-      logEvent('tengu_mcp_auth_config_clear', {});
+      logEvent('zy_mcp_auth_config_clear', {});
 
       // Disconnect the client and clear the cache
       await clearServerCache(server.name, {
@@ -605,7 +605,7 @@ export function MCPRemoteServerMenu({
               try {
                 const result_1 = await reconnectMcpServer(server.name);
                 if ((server as any).config.type === 'zyai-proxy') {
-                  logEvent('tengu_Zyai_mcp_reconnect', {
+                  logEvent('zy_Zyai_mcp_reconnect', {
                     success: result_1.client.type === 'connected'
                   });
                 }
@@ -615,7 +615,7 @@ export function MCPRemoteServerMenu({
                 onComplete?.(message_0);
               } catch (err_2) {
                 if ((server as any).config.type === 'zyai-proxy') {
-                  logEvent('tengu_Zyai_mcp_reconnect', {
+                  logEvent('zy_Zyai_mcp_reconnect', {
                     success: false
                   });
                 }

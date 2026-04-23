@@ -13,5 +13,5 @@ export function resetProToOpusDefault(): void {
     ...current,
     opusProMigrationComplete: true,
   }))
-  logEvent('tengu_reset_pro_to_opus_default', { skipped: true })
+  logEvent('zy_reset_pro_to_opus_default', { skipped: true })
 }

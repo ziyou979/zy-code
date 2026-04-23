@@ -308,7 +308,7 @@ export function nextCronRunMs(cron: string, fromMs: number): number | null {
 
 /**
  * Cron scheduler tuning knobs. Sourced at runtime from the
- * `tengu_kairos_cron_config` GrowthBook JSON config (see cronJitterConfig.ts)
+ * `zy_kairos_cron_config` GrowthBook JSON config (see cronJitterConfig.ts)
  * so ops can adjust behavior fleet-wide without shipping a client build.
  * Defaults here preserve the pre-config behavior exactly.
  */
@@ -408,7 +408,7 @@ export function jitteredNextCronRunMs(
  * At defaults (mod 30, max 90 s, floor 0) only :00 and :30 get jitter,
  * because humans round to the half-hour.
  *
- * During an incident, ops can push `tengu_kairos_cron_config` with e.g.
+ * During an incident, ops can push `zy_kairos_cron_config` with e.g.
  * `{oneShotMinuteMod: 15, oneShotMaxMs: 300000, oneShotFloorMs: 30000}` to
  * spread :00/:15/:30/:45 fires across a [t-5min, t-30s] window — every task
  * gets at least 30 s of lead, so nobody lands on the exact mark.

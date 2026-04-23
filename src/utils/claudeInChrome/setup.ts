@@ -82,7 +82,7 @@ export function shouldAutoEnableClaudeInChrome(): boolean {
     getIsInteractive() &&
     isChromeExtensionInstalled_CACHED_MAY_BE_STALE() &&
     (isInternalBuild() ||
-      getFeatureValue_CACHED_MAY_BE_STALE('tengu_chrome_auto_enable', false))
+      getFeatureValue_CACHED_MAY_BE_STALE('zy_chrome_auto_enable', false))
 
   return shouldAutoEnable
 }

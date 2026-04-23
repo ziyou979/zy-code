@@ -199,7 +199,7 @@ export async function* withRetry<T, TClient = unknown>(
       if (
         isStaleConnection &&
         getFeatureValue_CACHED_MAY_BE_STALE(
-          'tengu_disable_keepalive_on_econnreset',
+          'zy_disable_keepalive_on_econnreset',
           false,
         )
       ) {
@@ -241,7 +241,7 @@ export async function* withRetry<T, TClient = unknown>(
       // 非前台来源在 529 时立即放弃——容量级联期间不重试放大
       // 用户永远不会看到这些失败
       if (is529Error(error) && !shouldRetry529(options.querySource)) {
-        logEvent('tengu_api_529_background_dropped', {
+        logEvent('zy_api_529_background_dropped', {
           query_source:
             options.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -260,7 +260,7 @@ export async function* withRetry<T, TClient = unknown>(
         if (consecutive529Errors >= MAX_529_RETRIES) {
           // Check if fallback model is specified
           if (options.fallbackModel) {
-            logEvent('tengu_api_opus_fallback_triggered', {
+            logEvent('zy_api_opus_fallback_triggered', {
               original_model:
                 options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               fallback_model:
@@ -280,7 +280,7 @@ export async function* withRetry<T, TClient = unknown>(
             !process.env.IS_SANDBOX &&
             !isPersistentRetryEnabled()
           ) {
-            logEvent('tengu_api_custom_529_overloaded_error', {})
+            logEvent('zy_api_custom_529_overloaded_error', {})
             throw new CannotRetryError(
               new Error(REPEATED_529_ERROR_MESSAGE),
               retryContext,
@@ -340,7 +340,7 @@ export async function* withRetry<T, TClient = unknown>(
           )
           retryContext.maxTokensOverride = adjustedMaxTokens
 
-          logEvent('tengu_max_tokens_context_overflow_adjustment', {
+          logEvent('zy_max_tokens_context_overflow_adjustment', {
             inputTokens,
             contextLimit,
             adjustedMaxTokens,
@@ -390,7 +390,7 @@ export async function* withRetry<T, TClient = unknown>(
       // 在持久模式下，for 循环的 `attempt` 被限制在 maxRetries+1；
       // 使用 persistentAttempt 进行遥测/yield，以显示真实计数。
       const reportedAttempt = persistent ? persistentAttempt : attempt
-      logEvent('tengu_api_retry', {
+      logEvent('zy_api_retry', {
         attempt: reportedAttempt,
         delayMs: delayMs,
         error: getLLMErrorMessage(error) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -400,7 +400,7 @@ export async function* withRetry<T, TClient = unknown>(
 
       if (persistent) {
         if (delayMs > 60_000) {
-          logEvent('tengu_api_persistent_retry_wait', {
+          logEvent('zy_api_persistent_retry_wait', {
             status: getErrorStatus(error),
             delayMs,
             attempt: reportedAttempt,

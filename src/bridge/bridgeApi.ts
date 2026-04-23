@@ -30,7 +30,7 @@ type BridgeApiDeps = {
    * ConnectBridgeWorker requires a trusted device at JWT-issuance.
    * Optional — when absent or returning undefined, the header is omitted
    * and the server falls through to its flag-off/no-op path. The CLI-side
-   * gate is tengu_sessions_elevated_auth_enforcement (see trustedDevice.ts).
+   * gate is zy_sessions_elevated_auth_enforcement (see trustedDevice.ts).
    */
   getTrustedDeviceToken?: () => string | undefined
 }

@@ -1,9 +1,10 @@
 import type { APIErrorLike } from '../../types/llm.js'
+import { tSync } from '../../i18n/index.js'
 
-// SSL/TLS error codes from OpenSSL (used by both Node.js and Bun)
-// See: https://www.openssl.org/docs/man3.1/man3/X509_STORE_CTX_get_error.html
+// 来自 OpenSSL 的 SSL/TLS 错误码（Node.js 和 Bun 均使用）
+// 参见：https://www.openssl.org/docs/man3.1/man3/X509_STORE_CTX_get_error.html
 const SSL_ERROR_CODES = new Set([
-  // Certificate verification errors
+  // 证书验证错误
   'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
   'UNABLE_TO_GET_ISSUER_CERT',
   'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
@@ -13,16 +14,16 @@ const SSL_ERROR_CODES = new Set([
   'CERT_REVOKED',
   'CERT_REJECTED',
   'CERT_UNTRUSTED',
-  // Self-signed certificate errors
+  // 自签名证书错误
   'DEPTH_ZERO_SELF_SIGNED_CERT',
   'SELF_SIGNED_CERT_IN_CHAIN',
-  // Chain errors
+  // 证书链错误
   'CERT_CHAIN_TOO_LONG',
   'PATH_LENGTH_EXCEEDED',
-  // Hostname/altname errors
+  // 主机名/altname 错误
   'ERR_TLS_CERT_ALTNAME_INVALID',
   'HOSTNAME_MISMATCH',
-  // TLS handshake errors
+  // TLS 握手错误
   'ERR_TLS_HANDSHAKE_TIMEOUT',
   'ERR_SSL_WRONG_VERSION_NUMBER',
   'ERR_SSL_DECRYPTION_FAILED_OR_BAD_RECORD_MAC',
@@ -35,9 +36,9 @@ export type ConnectionErrorDetails = {
 }
 
 /**
- * Extracts connection error details from the error cause chain.
- * The Anthropic SDK wraps underlying errors in the `cause` property.
- * This function walks the cause chain to find the root error code/message.
+ * 从错误的 cause 链中提取连接错误详情。
+ * Anthropic SDK 将底层错误包装在 `cause` 属性中。
+ * 此函数遍历 cause 链以找到根错误码/消息。
  */
 export function extractConnectionErrorDetails(
   error: unknown,
@@ -46,9 +47,9 @@ export function extractConnectionErrorDetails(
     return null
   }
 
-  // Walk the cause chain to find the root error with a code
+  // 遍历 cause 链以找到带有 code 的根错误
   let current: unknown = error
-  const maxDepth = 5 // Prevent infinite loops
+  const maxDepth = 5 // 防止无限循环
   let depth = 0
 
   while (current && depth < maxDepth) {
@@ -66,7 +67,7 @@ export function extractConnectionErrorDetails(
       }
     }
 
-    // Move to the next cause in the chain
+    // 移动到链中的下一个 cause
     if (
       current instanceof Error &&
       'cause' in current &&
@@ -83,26 +84,25 @@ export function extractConnectionErrorDetails(
 }
 
 /**
- * Returns an actionable hint for SSL/TLS errors, intended for contexts outside
- * the main API client (OAuth token exchange, preflight connectivity checks)
- * where `formatAPIError` doesn't apply.
+ * 返回 SSL/TLS 错误的可操作提示，适用于主 API 客户端之外的上下文
+ * （OAuth 令牌交换、预连接性检查），这些场景不适用 `formatAPIError`。
  *
- * Motivation: enterprise users behind TLS-intercepting proxies (Zscaler et al.)
- * see OAuth complete in-browser but the CLI's token exchange silently fails
- * with a raw SSL code. Surfacing the likely fix saves a support round-trip.
+ * 动机：使用 TLS 拦截代理（Zscaler 等）的企业用户在浏览器中完成 OAuth，
+ * 但 CLI 的令牌交换因原始 SSL 错误码而静默失败。展示可能的修复方案
+ * 可以节省一次支持往返。
  */
 export function getSSLErrorHint(error: unknown): string | null {
   const details = extractConnectionErrorDetails(error)
   if (!details?.isSSLError) {
     return null
   }
-  return `SSL certificate error (${details.code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist *.anthropic.com. Run /doctor for details.`
+  return tSync('errorUtils.ssl.hint', { code: details.code })
 }
 
 /**
- * Strips HTML content (e.g., CloudFlare error pages) from a message string,
- * returning a user-friendly title or empty string if HTML is detected.
- * Returns the original message unchanged if no HTML is found.
+ * 从消息字符串中去除 HTML 内容（如 CloudFlare 错误页面），
+ * 如果检测到 HTML 则返回用户友好的标题或空字符串。
+ * 如果未检测到 HTML，则原样返回消息。
  */
 function sanitizeMessageHTML(message: string): string {
   if (message.includes('<!DOCTYPE html') || message.includes('<html')) {
@@ -116,30 +116,30 @@ function sanitizeMessageHTML(message: string): string {
 }
 
 /**
- * Detects if an error message contains HTML content (e.g., CloudFlare error pages)
- * and returns a user-friendly message instead
+ * 检测错误消息是否包含 HTML 内容（如 CloudFlare 错误页面），
+ * 并返回用户友好的消息替代
  */
 export function sanitizeAPIError(apiError: APIErrorLike): string {
   const message = apiError.message
   if (!message) {
-    // Sometimes message is undefined
-    // TODO: figure out why
+    // 有时 message 为 undefined
+    // TODO: 查明原因
     return ''
   }
   return sanitizeMessageHTML(message)
 }
 
 /**
- * Shapes of deserialized API errors from session JSONL.
+ * 从会话 JSONL 反序列化的 API 错误的形状。
  *
- * After JSON round-tripping, the SDK's APIError loses its `.message` property.
- * The actual message lives at different nesting levels depending on the provider:
+ * 经过 JSON 往返后，SDK 的 APIError 会丢失其 `.message` 属性。
+ * 实际消息根据提供商位于不同的嵌套层级：
  *
- * - Bedrock/proxy: `{ error: { message: "..." } }`
- * - Standard Anthropic API: `{ error: { error: { message: "..." } } }`
- *   (the outer `.error` is the response body, the inner `.error` is the API error)
+ * - Bedrock/代理：`{ error: { message: "..." } }`
+ * - 标准 Anthropic API：`{ error: { error: { message: "..." } } }`
+ *   （外层 `.error` 是响应体，内层 `.error` 是 API 错误）
  *
- * See also: `getErrorMessage` in `logging.ts` which handles the same shapes.
+ * 另见：`logging.ts` 中的 `getErrorMessage`，它处理相同的形状。
  */
 type NestedAPIError = {
   error?: {
@@ -159,24 +159,23 @@ function hasNestedError(value: unknown): value is NestedAPIError {
 }
 
 /**
- * Extract a human-readable message from a deserialized API error that lacks
- * a top-level `.message`.
+ * 从缺少顶层 `.message` 的反序列化 API 错误中提取可读消息。
  *
- * Checks two nesting levels (deeper first for specificity):
- * 1. `error.error.error.message` — standard Anthropic API shape
- * 2. `error.error.message` — Bedrock shape
+ * 检查两个嵌套层级（更深的优先，以提高特异性）：
+ * 1. `error.error.error.message` — 标准 Anthropic API 形状
+ * 2. `error.error.message` — Bedrock 形状
  */
 function extractNestedErrorMessage(error: APIErrorLike): string | null {
   if (!hasNestedError(error)) {
     return null
   }
 
-  // Access `.error` via the narrowed type so TypeScript sees the nested shape
-  // instead of the SDK's `Object | undefined`.
+  // 通过收窄类型访问 `.error`，使 TypeScript 能看到嵌套形状
+  // 而非 SDK 的 `Object | undefined`。
   const narrowed: NestedAPIError = error
   const nested = narrowed.error
 
-  // Standard Anthropic API shape: { error: { error: { message } } }
+  // 标准 Anthropic API 形状：{ error: { error: { message } } }
   const deepMsg = nested?.error?.message
   if (typeof deepMsg === 'string' && deepMsg.length > 0) {
     const sanitized = sanitizeMessageHTML(deepMsg)
@@ -185,7 +184,7 @@ function extractNestedErrorMessage(error: APIErrorLike): string | null {
     }
   }
 
-  // Bedrock shape: { error: { message } }
+  // Bedrock 形状：{ error: { message } }
   const msg = nested?.message
   if (typeof msg === 'string' && msg.length > 0) {
     const sanitized = sanitizeMessageHTML(msg)
@@ -198,62 +197,62 @@ function extractNestedErrorMessage(error: APIErrorLike): string | null {
 }
 
 export function formatAPIError(error: APIErrorLike): string {
-  // Extract connection error details from the cause chain
+  // 从 cause 链中提取连接错误详情
   const connectionDetails = extractConnectionErrorDetails(error)
 
   if (connectionDetails) {
     const { code, isSSLError } = connectionDetails
 
-    // Handle timeout errors
+    // 处理超时错误
     if (code === 'ETIMEDOUT') {
-      return 'Request timed out. Check your internet connection and proxy settings'
+      return tSync('errorUtils.connection.timeout')
     }
 
-    // Handle SSL/TLS errors with specific messages
+    // 处理 SSL/TLS 错误，返回特定消息
     if (isSSLError) {
       switch (code) {
         case 'UNABLE_TO_VERIFY_LEAF_SIGNATURE':
         case 'UNABLE_TO_GET_ISSUER_CERT':
         case 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY':
-          return 'Unable to connect to API: SSL certificate verification failed. Check your proxy or corporate SSL certificates'
+          return tSync('errorUtils.ssl.certVerificationFailed')
         case 'CERT_HAS_EXPIRED':
-          return 'Unable to connect to API: SSL certificate has expired'
+          return tSync('errorUtils.ssl.certExpired')
         case 'CERT_REVOKED':
-          return 'Unable to connect to API: SSL certificate has been revoked'
+          return tSync('errorUtils.ssl.certRevoked')
         case 'DEPTH_ZERO_SELF_SIGNED_CERT':
         case 'SELF_SIGNED_CERT_IN_CHAIN':
-          return 'Unable to connect to API: Self-signed certificate detected. Check your proxy or corporate SSL certificates'
+          return tSync('errorUtils.ssl.selfSigned')
         case 'ERR_TLS_CERT_ALTNAME_INVALID':
         case 'HOSTNAME_MISMATCH':
-          return 'Unable to connect to API: SSL certificate hostname mismatch'
+          return tSync('errorUtils.ssl.hostnameMismatch')
         case 'CERT_NOT_YET_VALID':
-          return 'Unable to connect to API: SSL certificate is not yet valid'
+          return tSync('errorUtils.ssl.certNotYetValid')
         default:
-          return `Unable to connect to API: SSL error (${code})`
+          return tSync('errorUtils.ssl.genericError', { code })
       }
     }
   }
 
   if (error.message === 'Connection error.') {
-    // If we have a code but it's not SSL, include it for debugging
+    // 如果有错误码但不是 SSL 错误，包含在消息中供调试
     if (connectionDetails?.code) {
-      return `Unable to connect to API (${connectionDetails.code})`
+      return tSync('errorUtils.connection.withCode', { code: connectionDetails.code })
     }
-    return 'Unable to connect to API. Check your internet connection'
+    return tSync('errorUtils.connection.failed')
   }
 
-  // Guard: when deserialized from JSONL (e.g. --resume), the error object may
-  // be a plain object without a `.message` property.  Return a safe fallback
-  // instead of undefined, which would crash callers that access `.length`.
+  // 防护：从 JSONL 反序列化时（如 --resume），错误对象可能是
+  // 没有 `.message` 属性的普通对象。返回安全的回退值，
+  // 而非 undefined，否则访问 `.length` 的调用方会崩溃。
   if (!error.message) {
     return (
       extractNestedErrorMessage(error) ??
-      `API error (status ${error.status ?? 'unknown'})`
+      tSync('errorUtils.api.errorWithStatus', { status: String(error.status ?? 'unknown') })
     )
   }
 
   const sanitizedMessage = sanitizeAPIError(error)
-  // Use sanitized message if it's different from the original (i.e., HTML was sanitized)
+  // 如果清理后的消息与原始消息不同（即 HTML 被清理了），使用清理后的消息
   return sanitizedMessage !== error.message && sanitizedMessage.length > 0
     ? sanitizedMessage
     : error.message

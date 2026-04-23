@@ -119,11 +119,11 @@ export function modelSupportsAutoMode(model: string): boolean {
     if (!isInternalBuild() && getAPIProvider() !== 'anthropic') {
       return false;
     }
-    // GrowthBook override: tengu_auto_mode_config.allowModels force-enables
+    // GrowthBook override: zy_auto_mode_config.allowModels force-enables
     // auto mode for listed models, bypassing the denylist/allowlist below.
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
       allowModels?: string[];
-    }>('tengu_auto_mode_config', {});
+    }>('zy_auto_mode_config', {});
     const rawLower = model.toLowerCase();
     if (config?.allowModels?.some(am => am.toLowerCase() === rawLower || am.toLowerCase() === model.toLowerCase())) {
       return true;
@@ -201,13 +201,13 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // API buffers assistant text between tool calls, summarizes it, and returns
   // the summary with a signature so the original can be restored on subsequent
   // turns — same mechanism as thinking blocks. Ant-only while we measure
-  // TTFT/TTLT/capacity; betas already flow to tengu_api_success for splitting.
+  // TTFT/TTLT/capacity; betas already flow to zy_api_success for splitting.
   // Backend independently requires Capability.ANTHROPIC_INTERNAL_RESEARCH.
   //
   // USE_CONNECTOR_TEXT_SUMMARIZATION is tri-state: =1 forces on (opt-in even
   // if GB is off), =0 forces off (opt-out of a GB rollout you were bucketed
   // into), unset defers to GB.
-  if (SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER && isInternalBuild() && includeExperimentalBetas && !isEnvDefinedFalsy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) && (isEnvTruthy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) || getFeatureValue_CACHED_MAY_BE_STALE('tengu_slate_prism', false))) {
+  if (SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER && isInternalBuild() && includeExperimentalBetas && !isEnvDefinedFalsy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) && (isEnvTruthy(process.env.USE_CONNECTOR_TEXT_SUMMARIZATION) || getFeatureValue_CACHED_MAY_BE_STALE('zy_slate_prism', false))) {
     betaHeaders.push(SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER);
   }
 
@@ -223,10 +223,10 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // this header was escaping that kill switch. Proxy gateways that look like
   // anthropic but forward to Vertex reject this header with 400.
   // github.com/deshaw/anthropic-issues/issues/5
-  const strictToolsEnabled = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_tool_pear');
+  const strictToolsEnabled = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_strict_tools');
   // 3P default: false. API rejects strict + token-efficient-tools together
   // (tool_use.py:139), so these are mutually exclusive — strict wins.
-  const tokenEfficientToolsEnabled = !strictToolsEnabled && getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_json_tools', false);
+  const tokenEfficientToolsEnabled = !strictToolsEnabled && getFeatureValue_CACHED_MAY_BE_STALE('zy_json_tools_beta', false);
   if (includeExperimentalBetas && modelSupportsStructuredOutputs(model) && strictToolsEnabled) {
     betaHeaders.push(STRUCTURED_OUTPUTS_BETA_HEADER);
   }

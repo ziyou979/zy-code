@@ -53,7 +53,7 @@ function isPermissionMode(raw: string): raw is PermissionMode {
 function getChromeBridgeUrl(): string | undefined {
   const bridgeEnabled =
     isInternalBuild() ||
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_copper_bridge', false)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_copper_bridge', false)
 
   if (!bridgeEnabled) {
     return undefined

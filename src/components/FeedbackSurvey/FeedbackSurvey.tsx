@@ -74,7 +74,7 @@ function FeedbackSurveyThanks({
     enabled: t1,
     once: true,
     onDigit: () => {
-      logEvent("tengu_feedback_survey_event", {
+      logEvent("zy_feedback_survey_event", {
         event_type: "followup_accepted" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         response: lastResponse as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });

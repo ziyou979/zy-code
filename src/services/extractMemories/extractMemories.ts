@@ -154,7 +154,7 @@ function hasMemoryWritesSince(
 
 function denyAutoMemTool(tool: Tool, reason: string) {
   logForDebugging(`[autoMem] denied ${tool.name}: ${reason}`)
-  logEvent('tengu_auto_mem_tool_denied', {
+  logEvent('zy_auto_mem_tool_denied', {
     tool_name: sanitizeToolNameForAnalytics(tool.name),
   })
   return {
@@ -354,7 +354,7 @@ export function initExtractMemories(): void {
       if (lastMessage?.uuid) {
         lastMemoryMessageUuid = lastMessage.uuid
       }
-      logEvent('tengu_extract_memories_skipped_direct_write', {
+      logEvent('zy_extract_memories_skipped_direct_write', {
         message_count: newMessageCount,
       })
       return
@@ -365,21 +365,21 @@ export function initExtractMemories(): void {
       : false
 
     const skipIndex = getFeatureValue_CACHED_MAY_BE_STALE(
-      'tengu_moth_copse',
+      'zy_moth_copse',
       false,
     )
 
     const canUseTool = createAutoMemCanUseTool(memoryDir)
     const cacheSafeParams = createCacheSafeParams(context)
 
-    // Only run extraction every N eligible turns (tengu_bramble_lintel, default 1).
+    // Only run extraction every N eligible turns (zy_bramble_lintel, default 1).
     // Trailing extractions (from stashed contexts) skip this check since they
     // process already-committed work that should not be throttled.
     if (!isTrailingRun) {
       turnsSinceLastExtraction++
       if (
         turnsSinceLastExtraction <
-        (getFeatureValue_CACHED_MAY_BE_STALE('tengu_bramble_lintel', null) ?? 1)
+        (getFeatureValue_CACHED_MAY_BE_STALE('zy_bramble_lintel', null) ?? 1)
       ) {
         return
       }
@@ -471,7 +471,7 @@ export function initExtractMemories(): void {
         : 0
 
       // Log extraction event with usage from the forked agent
-      logEvent('tengu_extract_memories_extraction', {
+      logEvent('zy_extract_memories_extraction', {
         input_tokens: result.totalUsage.inputTokens,
         output_tokens: result.totalUsage.outputTokens,
         cache_read_input_tokens: result.totalUsage.cacheReadInputTokens,
@@ -498,7 +498,7 @@ export function initExtractMemories(): void {
     } catch (error) {
       // Extraction is best-effort — log but don't notify on error
       logForDebugging(`[extractMemories] error: ${error}`)
-      logEvent('tengu_extract_memories_error', {
+      logEvent('zy_extract_memories_error', {
         duration_ms: Date.now() - startTime,
       })
     } finally {
@@ -534,10 +534,10 @@ export function initExtractMemories(): void {
       return
     }
 
-    if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_passport_quail', false)) {
+    if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_passport_quail', false)) {
       if (isInternalBuild() && !hasLoggedGateFailure) {
         hasLoggedGateFailure = true
-        logEvent('tengu_extract_memories_gate_disabled', {})
+        logEvent('zy_extract_memories_gate_disabled', {})
       }
       return
     }
@@ -559,7 +559,7 @@ export function initExtractMemories(): void {
       logForDebugging(
         '[extractMemories] extraction in progress — stashing for trailing run',
       )
-      logEvent('tengu_extract_memories_coalesced', {})
+      logEvent('zy_extract_memories_coalesced', {})
       pendingContext = { context, appendSystemMessage }
       return
     }

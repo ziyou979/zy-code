@@ -73,7 +73,7 @@ export function SpinnerWithVerb(props: Props): React.ReactNode {
   // 运行时 gate 镜像 isBriefEnabled() 但内联——从 BriefTool.ts 导入会
   // 将 tool 名称字符串泄漏到 external build 中。单个 spinner 实例 →
   // hook 保持无条件（两个订阅，可忽略不计）。
-  if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && (getKairosActive() || getUserMsgOptIn() && (briefEnvEnabled || getFeatureValue_CACHED_MAY_BE_STALE('tengu_kairos_brief', false))) && isBriefOnly && !viewingAgentTaskId) {
+  if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && (getKairosActive() || getUserMsgOptIn() && (briefEnvEnabled || getFeatureValue_CACHED_MAY_BE_STALE('zy_kairos_brief', false))) && isBriefOnly && !viewingAgentTaskId) {
     return <BriefSpinner mode={props.mode} overrideMessage={props.overrideMessage} />;
   }
   return <SpinnerWithVerbInner {...props} />;

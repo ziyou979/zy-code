@@ -213,7 +213,7 @@ async function getCommandPrefixImpl(
     )
 
     const useSystemPromptPolicySpec = getFeatureValue_CACHED_MAY_BE_STALE(
-      'tengu_cork_m4q',
+      'zy_cork_m4q',
       false,
     )
 

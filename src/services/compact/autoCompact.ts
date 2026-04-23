@@ -192,7 +192,7 @@ export async function shouldAutoCompact(
   // 查询循环中的 trySessionMemoryCompaction — /compact 调用站点
   // 仍然首先尝试会话内存。如果响应式模式毕业则重新审视。
   if (feature('REACTIVE_COMPACT')) {
-    if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_raccoon', false)) {
+    if (getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_raccoon', false)) {
       return false
     }
   }
@@ -296,7 +296,7 @@ export async function autoCompactIfNeeded(
     runPostCompactCleanup(querySource)
     // 重置缓存读取基线，以便压缩后的下降不被标记为
     // 中断。compactConversation 在内部执行此操作；SM 压缩不执行。
-    // BQ 2026-03-01：缺少此项使 20% 的 tengu_prompt_cache_break 事件
+    // BQ 2026-03-01：缺少此项使 20% 的 zy_prompt_cache_break 事件
     // 成为误报（systemPromptChanged=true, timeSinceLastAssistantMsg=-1）。
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
       notifyCompaction((querySource ?? 'compact') as any, toolUseContext.agentId)

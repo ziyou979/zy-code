@@ -140,7 +140,7 @@ export async function exchangeCodeForTokens(
         : `Token exchange failed (${response.status}): ${response.statusText}`,
     )
   }
-  logEvent('tengu_oauth_token_exchange_success', {})
+  logEvent('zy_oauth_token_exchange_success', {})
   return response.data
 }
 
@@ -183,7 +183,7 @@ export async function refreshOAuthToken(
     const expiresAt = Date.now() + expiresIn * 1000
     const scopes = parseScopes(data.scope)
 
-    logEvent('tengu_oauth_token_refresh_success', {})
+    logEvent('zy_oauth_token_refresh_success', {})
 
     // Skip the extra /api/oauth/profile round-trip when we already have both
     // the global-config profile fields AND the secure-storage subscription data.
@@ -262,7 +262,7 @@ export async function refreshOAuthToken(
       axios.isAxiosError(error) && error.response?.data
         ? JSON.stringify(error.response.data)
         : undefined
-    logEvent('tengu_oauth_token_refresh_failure', {
+    logEvent('zy_oauth_token_refresh_failure', {
       error: (error as Error)
         .message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       ...(responseBody && {
@@ -303,7 +303,7 @@ export async function fetchAndStoreUserRoles(
       : current.oauthAccount,
   }))
 
-  logEvent('tengu_oauth_roles_stored', {
+  logEvent('zy_oauth_roles_stored', {
     org_role:
       data.organization_role as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
@@ -320,7 +320,7 @@ export async function createAndStoreApiKey(
     const apiKey = response.data?.raw_key
     if (apiKey) {
       await saveApiKey(apiKey)
-      logEvent('tengu_oauth_api_key', {
+      logEvent('zy_oauth_api_key', {
         status:
           'success' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         statusCode: response.status,
@@ -329,7 +329,7 @@ export async function createAndStoreApiKey(
     }
     return null
   } catch (error) {
-    logEvent('tengu_oauth_api_key', {
+    logEvent('zy_oauth_api_key', {
       status:
         'failure' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       error: (error instanceof Error
@@ -415,7 +415,7 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
     result.subscriptionCreatedAt = (profile as any).organization.subscription_created_at
   }
 
-  logEvent('tengu_oauth_profile_fetch_success', {})
+  logEvent('zy_oauth_profile_fetch_success', {})
 
   return { ...result, rawProfile: profile }
 }

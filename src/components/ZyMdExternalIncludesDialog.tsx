@@ -16,18 +16,18 @@ export function zyMdExternalIncludesDialog({
   externalIncludes
 }: Props) {
   React.useEffect(() => {
-    logEvent("tengu_Zy_md_includes_dialog_shown", {});
+    logEvent("zy_Zy_md_includes_dialog_shown", {});
   }, []);
   const handleSelection = value => {
     if (value === "no") {
-      logEvent("tengu_Zy_md_external_includes_dialog_declined", {});
+      logEvent("zy_Zy_md_external_includes_dialog_declined", {});
       saveCurrentProjectConfig(current => ({
         ...current,
         haszyMdExternalIncludesApproved: false,
         haszyMdExternalIncludesWarningShown: true
       }));
     } else {
-      logEvent("tengu_Zy_md_external_includes_dialog_accepted", {});
+      logEvent("zy_Zy_md_external_includes_dialog_accepted", {});
       saveCurrentProjectConfig(current_0 => ({
         ...current_0,
         haszyMdExternalIncludesApproved: true,

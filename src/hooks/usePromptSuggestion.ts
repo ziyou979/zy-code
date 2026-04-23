@@ -118,7 +118,7 @@ export function usePromptSuggestion({
       const wasAccepted = tabWasPressed || finalInput === suggestionText
       const timeMs = wasAccepted ? acceptedAt || Date.now() : Date.now()
 
-      logEvent('tengu_prompt_suggestion', {
+      logEvent('zy_prompt_suggestion', {
         source:
           'cli' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         outcome: (wasAccepted

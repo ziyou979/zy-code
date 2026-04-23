@@ -256,7 +256,7 @@ export async function performHeapDump(
     await writeHeapSnapshot(heapPath)
     logForDebugging(`[HeapDump] Heap dump written to ${heapPath}`)
 
-    logEvent('tengu_heap_dump', {
+    logEvent('zy_heap_dump', {
       triggerManual: trigger === 'manual',
       triggerAuto15GB: trigger === 'auto-1.5GB',
       dumpNumber,
@@ -267,7 +267,7 @@ export async function performHeapDump(
   } catch (err) {
     const error = toError(err)
     logError(error)
-    logEvent('tengu_heap_dump', {
+    logEvent('zy_heap_dump', {
       triggerManual: trigger === 'manual',
       triggerAuto15GB: trigger === 'auto-1.5GB',
       dumpNumber,

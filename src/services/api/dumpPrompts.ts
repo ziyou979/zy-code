@@ -10,7 +10,7 @@ function hashString(str: string): string {
   return createHash('sha256').update(str).digest('hex')
 }
 
-// Cache last few API requests for ant users (e.g., for /issue command)
+// 为 ant 用户缓存最近几次 API 请求（例如用于 /issue 命令）
 const MAX_CACHED_REQUESTS = 5
 const cachedApiRequests: Array<{ timestamp: string; request: unknown }> = []
 
@@ -18,12 +18,12 @@ type DumpState = {
   initialized: boolean
   messageCountSeen: number
   lastInitDataHash: string
-  // Cheap proxy for change detection — skips the expensive stringify+hash
-  // when model/tools/system are structurally identical to the last call.
+  // 变更检测的廉价代理 — 当 model/tools/system
+  // 与上次调用结构相同时跳过昂贵的 stringify+hash。
   lastInitFingerprint: string
 }
 
-// Track state per session to avoid duplicating data
+// 按会话跟踪状态，避免重复数据
 const dumpState = new Map<string, DumpState>()
 
 export function getLastApiRequests(): Array<{
@@ -101,10 +101,10 @@ function dumpRequest(
     const entries: string[] = []
     const messages = (req.messages ?? []) as Array<{ role?: string }>
 
-    // Write init data (system, tools, metadata) on first request,
-    // and a system_update entry whenever it changes.
-    // Cheap fingerprint first: system+tools don't change between turns,
-    // so skip the 300ms stringify when the shape is unchanged.
+    // 在首次请求时写入初始化数据（system、tools、metadata），
+    // 并在变更时写入 system_update 条目。
+    // 先做廉价指纹检测：system+tools 在回合间不会变化，
+    // 因此当结构未变时跳过 300ms 的 stringify。
     const fingerprint = initFingerprint(req)
     if (!state.initialized || fingerprint !== state.lastInitFingerprint) {
       const { messages: _, ...initData } = req
@@ -114,8 +114,8 @@ function dumpRequest(
       if (!state.initialized) {
         state.initialized = true
         state.lastInitDataHash = initDataHash
-        // Reuse initDataStr rather than re-serializing initData inside a wrapper.
-        // timestamp from toISOString() contains no chars needing JSON escaping.
+        // 复用 initDataStr 而非在包装器中重新序列化 initData。
+        // toISOString() 的时间戳不包含需要 JSON 转义的字符。
         entries.push(
           `{"type":"init","timestamp":"${ts}","data":${initDataStr}}`,
         )
@@ -127,7 +127,7 @@ function dumpRequest(
       }
     }
 
-    // Write only new user messages (assistant messages captured in response)
+    // 仅写入新的用户消息（助手消息在响应中捕获）
     for (const msg of messages.slice(state.messageCountSeen)) {
       if (msg.role === 'user') {
         entries.push(
@@ -139,7 +139,7 @@ function dumpRequest(
 
     appendToFile(filePath, entries)
   } catch {
-    // Ignore parsing errors
+    // 忽略解析错误
   }
 }
 
@@ -161,16 +161,16 @@ export function createDumpPromptsFetch(
 
     if (init?.method === 'POST' && init.body) {
       timestamp = new Date().toISOString()
-      // Parsing + stringifying the request (system prompt + tool schemas = MBs)
-      // takes hundreds of ms. Defer so it doesn't block the actual API call —
-      // this is debug tooling for /issue, not on the critical path.
+      // 解析 + 序列化请求（系统提示 + 工具 schema = MB 级）
+      // 需要数百毫秒。延迟执行以免阻塞实际 API 调用 —
+      // 这是 /issue 的调试工具，不在关键路径上。
       setImmediate(dumpRequest, init.body as string, timestamp, state, filePath)
     }
 
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const response = await globalThis.fetch(input, init)
 
-    // Save response async
+    // 异步保存响应
     if (timestamp && response.ok && isInternalBuild()) {
       const cloned = response.clone()
       void (async () => {
@@ -181,7 +181,7 @@ export function createDumpPromptsFetch(
 
           let data: unknown
           if (isStreaming && cloned.body) {
-            // Parse SSE stream into chunks
+            // 将 SSE 流解析为数据块
             const reader = cloned.body.getReader()
             const decoder = new TextDecoder()
             let buffer = ''
@@ -201,7 +201,7 @@ export function createDumpPromptsFetch(
                   try {
                     chunks.push(jsonParse(line.slice(6)))
                   } catch {
-                    // Ignore parse errors
+                    // 忽略解析错误
                   }
                 }
               }
@@ -216,7 +216,7 @@ export function createDumpPromptsFetch(
             jsonStringify({ type: 'response', timestamp, data }) + '\n',
           )
         } catch {
-          // Best effort
+          // 尽力而为
         }
       })()
     }

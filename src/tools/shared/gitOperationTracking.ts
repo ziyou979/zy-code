@@ -197,12 +197,12 @@ export function trackGitOperations(
   }
 
   if (GIT_COMMIT_RE.test(command)) {
-    logEvent('tengu_git_operation', {
+    logEvent('zy_git_operation', {
       operation:
         'commit' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     if (command.match(/--amend\b/)) {
-      logEvent('tengu_git_operation', {
+      logEvent('zy_git_operation', {
         operation:
           'commit_amend' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
@@ -210,14 +210,14 @@ export function trackGitOperations(
     getCommitCounter()?.add(1)
   }
   if (GIT_PUSH_RE.test(command)) {
-    logEvent('tengu_git_operation', {
+    logEvent('zy_git_operation', {
       operation:
         'push' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
   const prHit = GH_PR_ACTIONS.find(a => a.re.test(command))
   if (prHit) {
-    logEvent('tengu_git_operation', {
+    logEvent('zy_git_operation', {
       operation:
         prHit.op as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
@@ -248,7 +248,7 @@ export function trackGitOperations(
     }
   }
   if (command.match(/\bglab\s+mr\s+create\b/)) {
-    logEvent('tengu_git_operation', {
+    logEvent('zy_git_operation', {
       operation:
         'pr_create' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
@@ -268,7 +268,7 @@ export function trackGitOperations(
     /https?:\/\/[^\s'"]*\/(pulls|pull-requests|merge[-_]requests)(?!\/\d)/i,
   )
   if (isCurlPost && isPrEndpoint) {
-    logEvent('tengu_git_operation', {
+    logEvent('zy_git_operation', {
       operation:
         'pr_create' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })

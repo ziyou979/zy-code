@@ -53,7 +53,7 @@ type AdvisorConfig = {
 
 function getAdvisorConfig(): AdvisorConfig {
   return getFeatureValue_CACHED_MAY_BE_STALE<AdvisorConfig>(
-    'tengu_sage_compass',
+    'zy_sage_compass',
     {},
   )
 }

@@ -15,7 +15,7 @@ export function EnterPlanModePermissionRequest({
   const toolPermissionContextMode = useAppState(s => s.toolPermissionContext.mode);
   const handleResponse = function handleResponse(value) {
     if (value === "yes") {
-      logEvent("tengu_plan_enter", {
+      logEvent("zy_plan_enter", {
         interviewPhaseEnabled: isPlanModeInterviewPhaseEnabled(),
         entryMethod: "tool" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });

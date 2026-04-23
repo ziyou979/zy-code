@@ -51,7 +51,7 @@ export function recordShownTip(tip: Tip): void {
   recordTipShown(tip.id)
 
   // Log event for analytics
-  logEvent('tengu_tip_shown', {
+  logEvent('zy_tip_shown', {
     tipIdLength:
       tip.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     cooldownSessions: tip.cooldownSessions,

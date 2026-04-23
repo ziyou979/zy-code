@@ -65,7 +65,7 @@ import {
 const AUTH_REQUEST_TIMEOUT_MS = 30000
 
 /**
- * Failure reasons for the `tengu_mcp_oauth_refresh_failure` event. Values
+ * Failure reasons for the `zy_mcp_oauth_refresh_failure` event. Values
  * are emitted to analytics — keep them stable (do not rename; add new ones).
  */
 type MCPRefreshFailureReason =
@@ -77,7 +77,7 @@ type MCPRefreshFailureReason =
   | 'request_failed'
 
 /**
- * Failure reasons for the `tengu_mcp_oauth_flow_error` event. Values are
+ * Failure reasons for the `zy_mcp_oauth_flow_error` event. Values are
  * emitted to analytics for attribution in BigQuery. Keep stable (do not
  * rename; add new ones).
  */
@@ -821,7 +821,7 @@ async function performMCPXaaAuth(
     })
 
     logMCPDebug(serverName, 'XAA: tokens saved')
-    logEvent('tengu_mcp_oauth_flow_success', {
+    logEvent('zy_mcp_oauth_flow_success', {
       authMethod:
         'xaa' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       idTokenCacheHit,
@@ -831,7 +831,7 @@ async function performMCPXaaAuth(
     if (e instanceof AuthenticationCancelledError) {
       throw e
     }
-    logEvent('tengu_mcp_oauth_flow_failure', {
+    logEvent('zy_mcp_oauth_flow_failure', {
       authMethod:
         'xaa' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       xaaFailureStage:
@@ -872,7 +872,7 @@ export async function performMCPOAuthFlow(
         `XAA is not enabled (set ZY_CODE_ENABLE_XAA=1). Remove 'oauth.xaa' from server '${serverName}' to use the standard consent flow.`,
       )
     }
-    logEvent('tengu_mcp_oauth_flow_start', {
+    logEvent('zy_mcp_oauth_flow_start', {
       isOAuthFlow: true,
       authMethod:
         'xaa' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -934,7 +934,7 @@ export async function performMCPOAuthFlow(
 
   const flowAttemptId = randomUUID()
 
-  logEvent('tengu_mcp_oauth_flow_start', {
+  logEvent('zy_mcp_oauth_flow_start', {
     flowAttemptId:
       flowAttemptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     isOAuthFlow: true,
@@ -1238,7 +1238,7 @@ export async function performMCPOAuthFlow(
         logMCPDebug(serverName, `Token expires_in: ${savedTokens.expires_in}`)
       }
 
-      logEvent('tengu_mcp_oauth_flow_success', {
+      logEvent('zy_mcp_oauth_flow_success', {
         flowAttemptId:
           flowAttemptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         transportType:
@@ -1316,7 +1316,7 @@ export async function performMCPOAuthFlow(
       }
     }
 
-    logEvent('tengu_mcp_oauth_flow_error', {
+    logEvent('zy_mcp_oauth_flow_error', {
       flowAttemptId:
         flowAttemptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       reason:
@@ -2184,8 +2184,8 @@ export class ZyAuthProvider implements OAuthClientProvider {
     ): void => {
       logEvent(
         outcome === 'success'
-          ? 'tengu_mcp_oauth_refresh_success'
-          : 'tengu_mcp_oauth_refresh_failure',
+          ? 'zy_mcp_oauth_refresh_success'
+          : 'zy_mcp_oauth_refresh_failure',
         {
           transportType: this.serverConfig
             .type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

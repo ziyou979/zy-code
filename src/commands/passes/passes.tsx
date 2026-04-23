@@ -16,7 +16,7 @@ export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNo
       passesLastSeenRemaining: remaining ?? current.passesLastSeenRemaining
     }));
   }
-  logEvent('tengu_guest_passes_visited', {
+  logEvent('zy_guest_passes_visited', {
     is_first_visit: isFirstVisit
   });
   return <Passes onDone={onDone} />;

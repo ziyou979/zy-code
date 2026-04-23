@@ -4,7 +4,7 @@
  * 此工具确保分叉代理：
  * 1. 与父级共享相同的缓存关键参数，以保证提示词缓存命中
  * 2. 在整个查询循环中跟踪完整的用量指标
- * 3. 完成时通过 tengu_fork_agent_query 事件记录指标
+ * 3. 完成时通过 zy_fork_agent_query 事件记录指标
  * 4. 隔离可变状态，防止干扰主代理循环
  */
 
@@ -467,7 +467,7 @@ export function createSubagentContext(
  * 此函数：
  * 1. 使用与父级相同的缓存安全参数以启用提示词缓存
  * 2. 累积所有查询迭代的用量
- * 3. 完成时记录 tengu_fork_agent_query 及完整用量
+ * 3. 完成时记录 zy_fork_agent_query 及完整用量
  *
  * @example
  * ```typescript
@@ -626,7 +626,7 @@ export async function runForkedAgent({
 }
 
 /**
- * 记录 tengu_fork_agent_query 事件，包含完整的 NonNullableUsage 字段。
+ * 记录 zy_fork_agent_query 事件，包含完整的 NonNullableUsage 字段。
  */
 function logForkAgentQueryEvent({
   forkLabel,
@@ -653,7 +653,7 @@ function logForkAgentQueryEvent({
       ? totalUsage.cacheReadInputTokens / totalInputTokens
       : 0
 
-  logEvent('tengu_fork_agent_query', {
+  logEvent('zy_fork_agent_query', {
     // 元数据
     forkLabel:
       forkLabel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

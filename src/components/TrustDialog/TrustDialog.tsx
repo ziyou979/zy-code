@@ -48,7 +48,7 @@ export function TrustDialog({
   const hasTrustDialogAccepted = checkHasTrustDialogAccepted();
   React.useEffect(() => {
     const isHomeDir = homedir() === getCwd();
-    logEvent("tengu_trust_dialog_shown", {
+    logEvent("zy_trust_dialog_shown", {
       isHomeDir,
       hasMcpServers,
       hasHooks,
@@ -66,7 +66,7 @@ export function TrustDialog({
       return;
     }
     const isHomeDir_0 = homedir() === getCwd();
-    logEvent("tengu_trust_dialog_accept", {
+    logEvent("zy_trust_dialog_accept", {
       isHomeDir: isHomeDir_0,
       hasMcpServers,
       hasHooks,

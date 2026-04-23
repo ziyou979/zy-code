@@ -165,7 +165,7 @@ export function GlobalSearchDialog({
   const previewWidth = previewOnRight ? Math.max(40, columns - listWidth - 14) : columns - 6;
   const handleOpen = m_3 => {
     const opened = openFileInExternalEditor(resolvePath(getCwd(), m_3.file), m_3.line);
-    logEvent("tengu_global_search_select", {
+    logEvent("zy_global_search_select", {
       result_count: matches.length,
       opened_editor: opened
     });
@@ -173,7 +173,7 @@ export function GlobalSearchDialog({
   };
   const handleInsert = (m_4, mention) => {
     onInsert(mention ? `@${m_4.file}#L${m_4.line} ` : `${m_4.file}:${m_4.line} `);
-    logEvent("tengu_global_search_insert", {
+    logEvent("zy_global_search_insert", {
       result_count: matches.length,
       mention
     });

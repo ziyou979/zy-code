@@ -27,12 +27,12 @@ export type EnvLessBridgeConfig = {
   // request that forceExit will kill anyway.
   teardown_archive_timeout_ms: number
   // Deadline for onConnect after transport.connect(). If neither onConnect
-  // nor onClose fires before this, emit tengu_bridge_repl_connect_timeout
+  // nor onClose fires before this, emit zy_bridge_repl_connect_timeout
   // — the only telemetry for the ~1% of sessions that emit `started` then
   // go silent (no error, no event, just nothing).
   connect_timeout_ms: number
   // Semver floor for the env-less bridge path. Separate from the v1
-  // tengu_bridge_min_version config so a v2-specific bug can force upgrades
+  // zy_bridge_min_version config so a v2-specific bug can force upgrades
   // without blocking v1 (env-based) clients, and vice versa.
   min_version: string
   // When true, tell users their zy.ai app may be too old to see v2
@@ -129,7 +129,7 @@ const envLessBridgeConfigSchema = lazySchema(() =>
  */
 export async function getEnvLessBridgeConfig(): Promise<EnvLessBridgeConfig> {
   const raw = await getFeatureValue_DEPRECATED<unknown>(
-    'tengu_bridge_repl_v2_config',
+    'zy_bridge_repl_v2_config',
     DEFAULT_ENV_LESS_BRIDGE_CONFIG,
   )
   const parsed = envLessBridgeConfigSchema().safeParse(raw)
@@ -140,8 +140,8 @@ export async function getEnvLessBridgeConfig(): Promise<EnvLessBridgeConfig> {
  * Returns an error message if the current CLI version is below the minimum
  * required for the env-less (v2) bridge path, or null if the version is fine.
  *
- * v2 analogue of checkBridgeMinVersion() — reads from tengu_bridge_repl_v2_config
- * instead of tengu_bridge_min_version so the two implementations can enforce
+ * v2 analogue of checkBridgeMinVersion() — reads from zy_bridge_repl_v2_config
+ * instead of zy_bridge_min_version so the two implementations can enforce
  * independent floors.
  */
 export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {

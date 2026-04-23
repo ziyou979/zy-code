@@ -116,14 +116,14 @@ export async function generateSessionTitle(
     const parsed = titleSchema().safeParse(safeParseJSON(text))
     const title = parsed.success ? parsed.data.title.trim() || null : null
 
-    logEvent('tengu_session_title_generated', { success: title !== null })
+    logEvent('zy_session_title_generated', { success: title !== null })
 
     return title
   } catch (error) {
     logForDebugging(`generateSessionTitle failed: ${error}`, {
       level: 'error',
     })
-    logEvent('tengu_session_title_generated', { success: false })
+    logEvent('zy_session_title_generated', { success: false })
     return null
   }
 }

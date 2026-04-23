@@ -30,7 +30,7 @@ function RateLimitOptionsMenu({
   const hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true;
   const isMax20x = false;
   const isTeamOrEnterprise = false;
-  const buyFirst = getFeatureValue_CACHED_MAY_BE_STALE("tengu_jade_anvil_4", false);
+  const buyFirst = getFeatureValue_CACHED_MAY_BE_STALE("zy_jade_anvil_4", false);
   let options;
   const actionOptions = [];
   if (extraUsage.isEnabled()) {
@@ -67,14 +67,14 @@ function RateLimitOptionsMenu({
     options = [cancelOption, ...actionOptions];
   }
   const handleCancel = function handleCancel() {
-    logEvent("tengu_rate_limit_options_menu_cancel", {});
+    logEvent("zy_rate_limit_options_menu_cancel", {});
     onDone(undefined, {
       display: "skip"
     });
   };
   const handleSelect = function handleSelect(value) {
     if (value === "upgrade") {
-      logEvent("tengu_rate_limit_options_menu_select_upgrade", {});
+      logEvent("zy_rate_limit_options_menu_select_upgrade", {});
       upgradeCall(onDone, context).then(jsx => {
         if (jsx) {
           setSubCommandJSX(jsx);
@@ -82,7 +82,7 @@ function RateLimitOptionsMenu({
       });
     } else {
       if (value === "extra-usage") {
-        logEvent("tengu_rate_limit_options_menu_select_extra_usage", {});
+        logEvent("zy_rate_limit_options_menu_select_extra_usage", {});
         extraUsageCall(onDone, context).then(jsx_0 => {
           if (jsx_0) {
             setSubCommandJSX(jsx_0);

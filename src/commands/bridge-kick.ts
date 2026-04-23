@@ -34,8 +34,8 @@ import { isInternalBuild } from '../utils/envUtils.js'
  *
  *   # Dead gate: poll 404/not_found_error → does onEnvironmentLost fire?
  *   /bridge-kick poll 404
- *   → expect: tengu_bridge_repl_fatal_error (gate is dead — 147K/wk)
- *     after fix: tengu_bridge_repl_env_lost → doReconnect
+ *   → expect: zy_bridge_repl_fatal_error (gate is dead — 147K/wk)
+ *     after fix: zy_bridge_repl_env_lost → doReconnect
  */
 
 const USAGE = `/bridge-kick <subcommand>

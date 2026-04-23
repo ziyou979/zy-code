@@ -38,7 +38,7 @@ export function getPlanModeV2ExploreAgentCount(): number {
 /**
  * Check if plan mode interview phase is enabled.
  *
- * Config: ant=always_on, external=tengu_plan_mode_interview_phase gate, envVar=true
+ * Config: ant=always_on, external=zy_plan_mode_interview_phase gate, envVar=true
  */
 export function isPlanModeInterviewPhaseEnabled(): boolean {
   // Always on for ants
@@ -49,7 +49,7 @@ export function isPlanModeInterviewPhaseEnabled(): boolean {
   if (isEnvDefinedFalsy(env)) return false
 
   return getFeatureValue_CACHED_MAY_BE_STALE(
-    'tengu_plan_mode_interview_phase',
+    'zy_plan_mode_interview_phase',
     false,
   )
 }
@@ -57,7 +57,7 @@ export function isPlanModeInterviewPhaseEnabled(): boolean {
 export type PewterLedgerVariant = 'trim' | 'cut' | 'cap' | null
 
 /**
- * tengu_pewter_ledger — plan file structure prompt experiment.
+ * zy_pewter_ledger — plan file structure prompt experiment.
  *
  * Controls the Phase 4 "Final Plan" bullets in the 5-phase plan mode
  * workflow (messages.ts getPlanPhase4Section). 5-phase is 99% of plan
@@ -72,7 +72,7 @@ export type PewterLedgerVariant = 'trim' | 'cut' | 'cap' | null
  *
  * Primary: session-level Avg Cost (fact__201omjcij85f) — Opus output is
  *   5× input price so cost is an output-weighted proxy. planLengthChars
- *   on tengu_plan_exit is the mechanism but NOT the goal — the cap arm
+ *   on zy_plan_exit is the mechanism but NOT the goal — the cap arm
  *   could shrink the plan file while increasing total output via
  *   write→count→edit cycles.
  * Guardrail: feedback-bad rate, requests/session (too-thin plans →
@@ -80,7 +80,7 @@ export type PewterLedgerVariant = 'trim' | 'cut' | 'cap' | null
  */
 export function getPewterLedgerVariant(): PewterLedgerVariant {
   const raw = getFeatureValue_CACHED_MAY_BE_STALE<string | null>(
-    'tengu_pewter_ledger',
+    'zy_pewter_ledger',
     null,
   )
   if (raw === 'trim' || raw === 'cut' || raw === 'cap') return raw

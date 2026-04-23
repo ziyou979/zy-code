@@ -142,7 +142,7 @@ function AskUserQuestionPermissionRequestBody({
   const hideSubmitTab = questions.length === 1 && !questions[0]?.multiSelect;
   const handleCancel = () => {
     if (metadataSource) {
-      logEvent("tengu_ask_user_question_rejected", {
+      logEvent("zy_ask_user_question_rejected", {
         source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         questionCount: questions.length,
         isInPlanMode,
@@ -168,7 +168,7 @@ function AskUserQuestionPermissionRequestBody({
 
     Questions asked:\n${questionsWithAnswers}`;
     if (metadataSource) {
-      logEvent("tengu_ask_user_question_respond_to_Zy", {
+      logEvent("zy_ask_user_question_respond_to_Zy", {
         source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         questionCount: questions.length,
         isInPlanMode,
@@ -192,7 +192,7 @@ Stop asking clarifying questions and proceed to finish the plan with the informa
 
 Questions asked and answers provided:\n${questionsWithAnswers_0}`;
     if (metadataSource) {
-      logEvent("tengu_ask_user_question_finish_plan_interview", {
+      logEvent("zy_ask_user_question_finish_plan_interview", {
         source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         questionCount: questions.length,
         isInPlanMode,
@@ -205,7 +205,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
   };
   const submitAnswers = async answersToSubmit => {
     if (metadataSource) {
-      logEvent("tengu_ask_user_question_accepted", {
+      logEvent("zy_ask_user_question_accepted", {
         source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         questionCount: questions.length,
         answerCount: Object.keys(answersToSubmit).length,

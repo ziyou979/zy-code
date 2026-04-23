@@ -479,7 +479,7 @@ export function useManageMCPConnections(
             )
             const entry = findChannelEntry(client.name, getAllowedChannels())
             // Plugin identifier for telemetry — log name@marketplace for any
-            // plugin-kind entry (same tier as tengu_plugin_installed, which
+            // plugin-kind entry (same tier as zy_plugin_installed, which
             // logs arbitrary plugin_id+marketplace_name ungated). server-kind
             // names are MCP-server-name tier; those are opt-in-only elsewhere
             // (see isAnalyticsToolDetailsLoggingEnabled in metadata.ts) and
@@ -490,7 +490,7 @@ export function useManageMCPConnections(
                 : undefined
             // Skip capability-miss — every non-channel MCP server trips it.
             if (gate.action === 'register' || gate.kind !== 'capability') {
-              logEvent('tengu_mcp_channel_gate', {
+              logEvent('zy_mcp_channel_gate', {
                 registered: gate.action === 'register',
                 skip_kind:
                   gate.action === 'skip'
@@ -513,7 +513,7 @@ export function useManageMCPConnections(
                       client.name,
                       `notifications/zy/channel: ${content.slice(0, 80)}`,
                     )
-                    logEvent('tengu_mcp_channel_message', {
+                    logEvent('zy_mcp_channel_message', {
                       content_length: content.length,
                       meta_key_count: Object.keys(meta ?? {}).length,
                       entry_kind:
@@ -636,21 +636,21 @@ export function useManageMCPConnections(
                   if (previousToolsPromise) {
                     previousToolsPromise.then(
                       (previousTools: Tool[]) => {
-                        logEvent('tengu_mcp_list_changed', {
+                        logEvent('zy_mcp_list_changed', {
                           type: 'tools' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                           previousCount: previousTools.length,
                           newCount,
                         })
                       },
                       () => {
-                        logEvent('tengu_mcp_list_changed', {
+                        logEvent('zy_mcp_list_changed', {
                           type: 'tools' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                           newCount,
                         })
                       },
                     )
                   } else {
-                    logEvent('tengu_mcp_list_changed', {
+                    logEvent('zy_mcp_list_changed', {
                       type: 'tools' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       newCount,
                     })
@@ -674,7 +674,7 @@ export function useManageMCPConnections(
                   client.name,
                   `Received prompts/list_changed notification, refreshing prompts`,
                 )
-                logEvent('tengu_mcp_list_changed', {
+                logEvent('zy_mcp_list_changed', {
                   type: 'prompts' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 })
                 try {
@@ -712,7 +712,7 @@ export function useManageMCPConnections(
                   client.name,
                   `Received resources/list_changed notification, refreshing resources`,
                 )
-                logEvent('tengu_mcp_list_changed', {
+                logEvent('zy_mcp_list_changed', {
                   type: 'resources' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 })
                 try {
@@ -996,7 +996,7 @@ export function useManageMCPConnections(
           stdioCommands.push(basename(serverConfig.command))
         }
       }
-      logEvent('tengu_mcp_servers', {
+      logEvent('zy_mcp_servers', {
         ...counts,
         ...(isInternalBuild() && stdioCommands.length > 0
           ? {

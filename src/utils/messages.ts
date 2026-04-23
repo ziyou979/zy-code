@@ -185,7 +185,7 @@ const TOOL_REFERENCE_TURN_BOUNDARY = 'Tool loaded.'
 export function withMemoryCorrectionHint(message: string): string {
   if (
     isAutoMemoryEnabled() &&
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_prism', false)
+    getFeatureValue_CACHED_MAY_BE_STALE('zy_amber_prism', false)
   ) {
     return message + MEMORY_CORRECTION_HINT
   }
@@ -2168,7 +2168,7 @@ export function normalizeMessagesForAPI(
           // 会从下方的 appendMessageTag 获得 \n[id:xxx] 后缀，
           // 因此 startsWith 匹配裸格式和带标签格式。
           //
-          // 当 tengu_toolref_defer_j8m 激活时关闭 — 该 gate
+          // 当 zy_toolref_defer_j8m 激活时关闭 — 该 gate
           // 启用下方的 relocateToolReferenceSiblings 进行后处理，
           // 它将现有同级移动到后面的非引用消息而不是
           // 在此添加一个。此注入本身会被 relocated，
@@ -2176,7 +2176,7 @@ export function normalizeMessagesForAPI(
           // 这是回退方案（与 pre-#21049 main 相同）。
           if (
             !checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-              'tengu_toolref_defer_j8m',
+              'zy_toolref_defer_j8m',
             )
           ) {
             const contentAfterStrip = normalizedMessage.message.content
@@ -2287,7 +2287,7 @@ export function normalizeMessagesForAPI(
             message.attachment as any,
           )
           const attachmentMessage = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-            'tengu_chair_sermon',
+            'zy_chair_sermon',
           )
             ? rawAttachmentMessage.map(ensureSystemReminderWrap)
             : rawAttachmentMessage
@@ -2315,7 +2315,7 @@ export function normalizeMessagesForAPI(
   // 标记反映最终位置）。gate 关闭时，这是空操作，
   // 上方的 TOOL_REFERENCE_TURN_BOUNDARY 注入作为回退。
   const relocated = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-    'tengu_toolref_defer_j8m',
+    'zy_toolref_defer_j8m',
   )
     ? relocateToolReferenceSiblings(result)
     : result
@@ -2346,7 +2346,7 @@ export function normalizeMessagesForAPI(
   // （相邻 [prompt, attachment] user）的 VCR fixture 哈希，而当 smoosh 关闭时
   // 没有任何好处。
   const smooshed = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-    'tengu_chair_sermon',
+    'zy_chair_sermon',
   )
     ? smooshSystemReminderSiblings(mergeAdjacentUserMessages(withNonEmpty))
     : withNonEmpty
@@ -2620,7 +2620,7 @@ export function mergeUserContentBlocks(
     return [...a, ...b]
   }
 
-  if (!checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_chair_sermon')) {
+  if (!checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_sysreminder_smoosh')) {
     // 旧版（非门控）smoosh：仅 string-content tool_result + 全 text 兄弟节点 → 连接字符串。
     // 与通用 smoosh 之前的 main 行为一致。
     // 前置条件保证 smooshIntoToolResult 命中其字符串路径
@@ -2686,7 +2686,7 @@ export function normalizeContentFromAPI(
             // TET/FC-v3 诊断：流式 tool 输入 JSON 解析失败。我们回退到 {}，
             // 这意味着下游校验会看到空输入。原始前缀仅写入调试日志 — 尚无
             // 带 PII 标记的 proto 列可用于存储。
-            logEvent('tengu_tool_input_json_parse_fail', {
+            logEvent('zy_tool_input_json_parse_fail', {
               toolName: sanitizeToolNameForAnalytics(block.name),
               inputLen: block.input.length,
             })
@@ -2726,7 +2726,7 @@ export function normalizeContentFromAPI(
       }
       case 'text':
         if ((block.text as string).trim().length === 0) {
-          logEvent('tengu_model_whitespace_response', {
+          logEvent('zy_model_whitespace_response', {
             length: (block.text as string).length,
           })
         }
@@ -4793,7 +4793,7 @@ function filterTrailingThinkingFromLastAssistant(
     lastValidIndex--
   }
 
-  logEvent('tengu_filtered_trailing_thinking_block', {
+  logEvent('zy_filtered_trailing_thinking_block', {
     messageUUID:
       lastMessage.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     blocksRemoved: content.length - lastValidIndex - 1,
@@ -4880,7 +4880,7 @@ export function filterWhitespaceOnlyAssistantMessages(
 
     if (hasOnlyWhitespaceTextContent(content)) {
       hasChanges = true
-      logEvent('tengu_filtered_whitespace_only_assistant', {
+      logEvent('zy_filtered_whitespace_only_assistant', {
         messageUUID:
           message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
@@ -4943,7 +4943,7 @@ function ensureNonEmptyAssistantContent(
     const content = message.message.content
     if (Array.isArray(content) && content.length === 0) {
       hasChanges = true
-      logEvent('tengu_fixed_empty_assistant_content', {
+      logEvent('zy_fixed_empty_assistant_content', {
         messageUUID:
           message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         messageIndex: index,
@@ -5034,7 +5034,7 @@ export function filterOrphanedThinkingOnlyMessages(
     }
 
     // 真正孤立 — 没有相同 id 的其他消息有内容可合并
-    logEvent('tengu_filtered_orphaned_thinking_message', {
+    logEvent('zy_filtered_orphaned_thinking_message', {
       messageUUID:
         msg.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       messageId: msg.message
@@ -5346,7 +5346,7 @@ export function ensureToolResultPairing(
         // normalize 内的 smoosh 从未处理过（配对在 normalize 之后运行）。
         // 对此单条消息重新 smoosh。
         result.push(
-          checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_chair_sermon')
+          checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_sysreminder_smoosh')
             ? smooshSystemReminderSiblings([patchedNext])[0]!
             : patchedNext,
         )
@@ -5418,7 +5418,7 @@ export function ensureToolResultPairing(
       )
     }
 
-    logEvent('tengu_tool_result_pairing_repaired', {
+    logEvent('zy_tool_result_pairing_repaired', {
       messageCount: messages.length,
       repairedMessageCount: result.length,
       messageTypes: messageTypes.join(
