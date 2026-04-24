@@ -138,6 +138,14 @@ export const zhCN: TranslationResource = {
   'permission.feedbackReject': '告诉 ZY Code 哪里需要改进',
   'permission.showDebugInfo': 'Ctrl+d 显示调试信息',
   'permission.hideDebugInfo': 'Ctrl-D 隐藏调试信息',
+  'permission.editFile': '编辑文件',
+  'permission.doYouWantToMakeThisEdit': '是否要对 {filename} 进行此编辑？',
+  'permission.sedFileDoesNotExist': '文件不存在',
+  'permission.sedPatternDidNotMatch': '模式未匹配到任何内容',
+  'permission.saveFileToContinue': '保存文件以继续…',
+  'permission.openedChangesInIDE': '已在 {ideName} 中打开更改',
+  'permission.symlinkModifyOutside': '这将在工作目录之外通过符号链接修改 {symlinkTarget}',
+  'permission.symlinkTarget': '符号链接目标：{symlinkTarget}',
 
   // 信任对话框 Trust dialog
   'trustDialog.title': '正在访问工作区：',

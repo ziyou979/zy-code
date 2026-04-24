@@ -1,6 +1,7 @@
 import { basename, relative } from 'path';
 import React from 'react';
 import { Box, Text } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { getCwd } from '../utils/cwd.js';
 import { isSupportedVSCodeTerminal } from '../utils/ide.js';
 import { Select } from './CustomSelect/index.js';
@@ -36,9 +37,10 @@ export function ShowInIDEPrompt({
   yesInputMode,
   noInputMode
 }: Props<any>) {
-  const t3 = isSupportedVSCodeTerminal() && <Text dimColor={true}>Save file to continue…</Text>;
+  const t3 = isSupportedVSCodeTerminal() && <Text dimColor={true}>{tSync('permission.saveFileToContinue')}</Text>;
   const t4 = basename(filePath);
-  return <Pane color="permission"><Box flexDirection="column" gap={1}>{<Text bold={true} color="permission">Opened changes in {ideName} ⧉</Text>}{symlinkTarget && <Text color="warning">{relative(getCwd(), symlinkTarget).startsWith("..") ? `This will modify ${symlinkTarget} (outside working directory) via a symlink` : `Symlink target: ${symlinkTarget}`}</Text>}{t3}{<Box flexDirection="column">{<Text>Do you want to make this edit to{" "}<Text bold={true}>{t4}</Text>?</Text>}{<Select options={options} inlineDescriptions={true} onChange={value => {
+  const symlinkWarningText = symlinkTarget && (relative(getCwd(), symlinkTarget).startsWith("..") ? tSync('permission.symlinkModifyOutside', { symlinkTarget }) : tSync('permission.symlinkTarget', { symlinkTarget }));
+  return <Pane color="permission"><Box flexDirection="column" gap={1}>{<Text bold={true} color="permission">{tSync('permission.openedChangesInIDE', { ideName })} ⧉</Text>}{symlinkWarningText && <Text color="warning">{symlinkWarningText}</Text>}{t3}{<Box flexDirection="column">{<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: t4 })}</Text>}{<Select options={options} inlineDescriptions={true} onChange={value => {
           const selected = options.find(opt => opt.value === value);
           if (selected) {
             if (selected.option.type === "reject") {
@@ -55,5 +57,5 @@ export function ShowInIDEPrompt({
           }
         }} onCancel={() => onChange({
           type: "reject"
-        }, input)} onFocus={value_0 => setFocusedOption(value_0)} onInputModeToggle={onInputModeToggle} />}</Box>}{<Box marginTop={1}><Text dimColor={true}>Esc to cancel{(focusedOption === "yes" && !yesInputMode || focusedOption === "no" && !noInputMode) && " \xB7 Tab to amend"}</Text></Box>}</Box></Pane>;
+        }, input)} onFocus={value_0 => setFocusedOption(value_0)} onInputModeToggle={onInputModeToggle} />}</Box>}{<Box marginTop={1}><Text dimColor={true}>{tSync('permission.escToCancel', { cancel: tSync('permission.cancel') })}{(focusedOption === "yes" && !yesInputMode || focusedOption === "no" && !noInputMode) && ` · ${tSync('permission.tabToAmend', { amend: tSync('permission.amend') })}`}</Text></Box>}</Box></Pane>;
 }

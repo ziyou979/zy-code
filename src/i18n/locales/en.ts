@@ -183,6 +183,14 @@ export const en: TranslationResource = {
   'permission.feedbackReject': 'tell Zy what to do differently',
   'permission.showDebugInfo': 'Ctrl+d to show debug info',
   'permission.hideDebugInfo': 'Ctrl-D to hide debug info',
+  'permission.editFile': 'Edit file',
+  'permission.doYouWantToMakeThisEdit': 'Do you want to make this edit to {filename}?',
+  'permission.sedFileDoesNotExist': 'File does not exist',
+  'permission.sedPatternDidNotMatch': 'Pattern did not match any content',
+  'permission.saveFileToContinue': 'Save file to continue…',
+  'permission.openedChangesInIDE': 'Opened changes in {ideName}',
+  'permission.symlinkModifyOutside': 'This will modify {symlinkTarget} (outside working directory) via a symlink',
+  'permission.symlinkTarget': 'Symlink target: {symlinkTarget}',
 
   // Trust dialog
   'trustDialog.title': 'Accessing workspace:',

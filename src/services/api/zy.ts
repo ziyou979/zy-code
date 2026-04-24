@@ -2105,6 +2105,20 @@ async function* queryModel(
                   }
                   contentBlock.thinking += delta.thinking
                   break
+                default:
+                  logForDebugging(
+                    `Unknown delta type received: ${(delta as { type: string }).type}`,
+                    { level: 'warn' },
+                  )
+                  logEvent('zy_streaming_unknown_delta', {
+                    delta_type: (delta as { type: string })
+                      .type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                    model:
+                      options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                    request_id: (streamRequestId ??
+                      'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                  })
+                  break
               }
             }
             break
@@ -2252,6 +2266,20 @@ async function* queryModel(
             break
           }
           case 'response_stop':
+            break
+          default:
+            logForDebugging(
+              `Unknown stream event type received: ${(part as { type: string }).type}`,
+              { level: 'warn' },
+            )
+            logEvent('zy_streaming_unknown_event', {
+              event_type: (part as { type: string })
+                .type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              model:
+                options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              request_id: (streamRequestId ??
+                'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            })
             break
         }
 

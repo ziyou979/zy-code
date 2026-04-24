@@ -6,6 +6,7 @@ import { isENOENT } from 'src/utils/errors.js';
 import { detectEncodingForResolvedPath } from 'src/utils/fileRead.js';
 import { getFsImplementation } from 'src/utils/fsOperations.js';
 import { Text } from '../../../ink.js';
+import { tSync } from '../../../i18n/index.js';
 import { BashTool } from '../../../tools/BashTool/BashTool.js';
 import { applySedSubstitution, type SedEditInfo } from '../../../tools/BashTool/sedEditParser.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
@@ -70,9 +71,9 @@ function SedEditPermissionRequestInner({
   }
   let noChangesMessage;
   if (!fileExists) {
-    noChangesMessage = "File does not exist";
+    noChangesMessage = tSync('permission.sedFileDoesNotExist');
   } else {
-    noChangesMessage = "Pattern did not match any content";
+    noChangesMessage = tSync('permission.sedPatternDidNotMatch');
   }
   const parseInput = input => {
     const parsed = BashTool.inputSchema.parse(input);
@@ -86,5 +87,5 @@ function SedEditPermissionRequestInner({
   };
   const t9 = relative(getCwd(), filePath);
   const t10 = basename(filePath);
-  return <FilePermissionDialog toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} title="Edit file" subtitle={t9} question={<Text>Do you want to make this edit to{" "}<Text bold={true}>{t10}</Text>?</Text>} content={edits.length > 0 ? <FileEditToolDiff file_path={filePath} edits={edits} /> : <Text dimColor={true}>{noChangesMessage}</Text>} path={filePath} completionType="str_replace_single" parseInput={parseInput} workerBadge={props.workerBadge} />;
+  return <FilePermissionDialog toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} title={tSync('permission.editFile')} subtitle={t9} question={<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: t10 })}</Text>} content={edits.length > 0 ? <FileEditToolDiff file_path={filePath} edits={edits} /> : <Text dimColor={true}>{noChangesMessage}</Text>} path={filePath} completionType="str_replace_single" parseInput={parseInput} workerBadge={props.workerBadge} />;
 }

@@ -4,6 +4,7 @@ import { FileEditToolDiff } from 'src/components/FileEditToolDiff.js';
 import { getCwd } from 'src/utils/cwd.js';
 import type { z } from 'zod/v4';
 import { Text } from '../../../ink.js';
+import { tSync } from '../../../i18n/index.js';
 import { FileEditTool } from '../../../tools/FileEditTool/FileEditTool.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
 import { createSingleEditDiffConfig, type FileEdit, type IDEDiffSupport } from '../FilePermissionDialog/ideDiffConfig.js';
@@ -64,7 +65,7 @@ export function FileEditPermissionRequest(props) {
   TextComponent = Text;
 
   basenameResult = basename(file_path);
-  return <FilePermissionDialogComponent toolUseConfirm={toolUseConfirm2} toolUseContext={toolUseContext2} onDone={onDone2} onReject={onReject2} workerBadge={workerBadge2} title={"Edit file"} subtitle={relativeResult} question={<TextComponent2>{"Do you want to make this edit to"}{" "}{<TextComponent bold={true}>{basenameResult}</TextComponent>}?</TextComponent2>} content={<FileEditToolDiff file_path={file_path} edits={[{
+  return <FilePermissionDialogComponent toolUseConfirm={toolUseConfirm2} toolUseContext={toolUseContext2} onDone={onDone2} onReject={onReject2} workerBadge={workerBadge2} title={tSync('permission.editFile')} subtitle={relativeResult} question={<TextComponent2>{tSync('permission.doYouWantToMakeThisEdit', { filename: basenameResult })}</TextComponent2>} content={<FileEditToolDiff file_path={file_path} edits={[{
     old_string,
     new_string,
     replace_all: replace_all || false
