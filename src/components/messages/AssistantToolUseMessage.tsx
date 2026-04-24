@@ -1,4 +1,4 @@
-import type { ToolUseBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { ToolUseBlockParam } from '../../types/llm.js';
 import React from 'react';
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
 import type { ThemeName } from 'src/utils/theme.js';

@@ -11,7 +11,7 @@ import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.
 import { getOauthConfig } from '../../constants/oauth.js';
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js';
 import { getAWSRegion, getVertexRegionForModel, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
-import type { LLMProvider, StandardMessageRequest, StandardResponse, StandardStreamEvent } from './StandardMessageFormat.js';
+import type { LLMAdapter } from '../../types/llm.js';
 import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js';
 import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
 
@@ -385,15 +385,15 @@ function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | unde
 }
 
 /**
- * 统一的 LLM Provider 工厂函数。
+ * 统一的 LLM Adapter 工厂函数（使用 llm.ts 中立标准类型）。
  * 根据当前 provider 自动选择对应的 Adapter 实现。
- * 调用方使用 StandardMessageFormat 类型，不依赖任何 SDK。
+ * 调用方使用 llm.ts 类型，完全不依赖任何 SDK。
  */
-export function getLLMProvider(options?: {
+export function getLLMAdapter(options?: {
   apiKey?: string
   baseURL?: string
   timeout?: number
-}): LLMProvider {
+}): LLMAdapter {
   const apiProvider = getAPIProvider()
 
   if (isOpenAIProvider(apiProvider)) {

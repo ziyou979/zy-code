@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { ToolResultBlockParam } from '../../types/llm.js';
 // @ts-ignore TS2724
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';

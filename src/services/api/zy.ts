@@ -1929,35 +1929,38 @@ async function* queryModel(
         }
 
         switch (part.type) {
-          case 'message_start': {
-            partialMessage = part.message
+          case 'response_start': {
+            // response_start 不包含完整 message，需要构造 partialMessage
+            partialMessage = {
+              id: (part as any).responseId ?? '',
+              type: 'message',
+              role: 'assistant',
+              content: [],
+              model: (part as any).model ?? resolvedModel,
+              stop_reason: null,
+              stop_sequence: null,
+              usage: { input_tokens: 0, output_tokens: 0 },
+            } as any
             ttftMs = Date.now() - start
-            usage = updateUsage(usage, part.message?.usage)
-            // Capture research from message_start if available (internal only).
-            // Always overwrite with the latest value.
-            if (
-              isInternalBuild() &&
-              'research' in (part.message as unknown as Record<string, unknown>)
-            ) {
-              research = (part.message as unknown as Record<string, unknown>)
-                .research
-            }
             break
           }
-          case 'content_block_start':
-            switch (part.content_block.type) {
+          case 'chunk_start': {
+            // v2: part.chunk 替代了 part.content_block
+            const startChunk = (part as any).chunk ?? (part as any).content_block
+            switch (startChunk.type) {
               case 'tool_use':
-                contentBlocks[part.index] = {
-                  ...part.content_block,
+              case 'tool_call':
+                contentBlocks[(part as any).index] = {
+                  ...startChunk,
                   input: '',
                 }
                 break
               case 'server_tool_use':
-                contentBlocks[part.index] = {
-                  ...part.content_block,
+                contentBlocks[(part as any).index] = {
+                  ...startChunk,
                   input: '' as unknown as { [key: string]: unknown },
                 }
-                if ((part.content_block.name as string) === 'advisor') {
+                if ((startChunk.name as string) === 'advisor') {
                   isAdvisorInProgress = true
                   logForDebugging(`[AdvisorTool] Advisor tool called`)
                   logEvent('zy_advisor_tool_call', {
@@ -1969,32 +1972,22 @@ async function* queryModel(
                 }
                 break
               case 'text':
-                contentBlocks[part.index] = {
-                  ...part.content_block,
-                  // awkwardly, the sdk sometimes returns text as part of a
-                  // content_block_start message, then returns the same text
-                  // again in a content_block_delta message. we ignore it here
-                  // since there doesn't seem to be a way to detect when a
-                  // content_block_delta message duplicates the text.
+                contentBlocks[(part as any).index] = {
+                  ...startChunk,
                   text: '',
                 }
                 break
               case 'thinking':
-                contentBlocks[part.index] = {
-                  ...part.content_block,
-                  // also awkward
+                contentBlocks[(part as any).index] = {
+                  ...startChunk,
                   thinking: '',
-                  // initialize signature to ensure field exists even if signature_delta never arrives
                   signature: '',
                 }
                 break
               default:
-                // even more awkwardly, the sdk mutates the contents of text blocks
-                // as it works. we want the blocks to be immutable, so that we can
-                // accumulate state ourselves.
-                contentBlocks[part.index] = { ...part.content_block }
+                contentBlocks[(part as any).index] = { ...startChunk }
                 if (
-                  (part.content_block.type as string) === 'advisor_tool_result'
+                  (startChunk.type as string) === 'advisor_tool_result'
                 ) {
                   isAdvisorInProgress = false
                   logForDebugging(`[AdvisorTool] Advisor tool result received`)
@@ -2002,7 +1995,8 @@ async function* queryModel(
                 break
             }
             break
-          case 'content_block_delta': {
+          }
+          case 'chunk_delta': {
             const contentBlock = contentBlocks[part.index]
             const delta = part.delta as typeof part.delta | ConnectorTextDelta
             if (!contentBlock) {
@@ -2113,14 +2107,13 @@ async function* queryModel(
                   break
               }
             }
-            // Capture research from content_block_delta if available (internal only).
+            break
+          }
+          case 'chunk_stop': {
             // Always overwrite with the latest value.
             if (isInternalBuild() && 'research' in part) {
               research = (part as { research: unknown }).research
             }
-            break
-          }
-          case 'content_block_stop': {
             const contentBlock = contentBlocks[part.index]
             if (!contentBlock) {
               logEvent('zy_streaming_error', {
@@ -2162,9 +2155,23 @@ async function* queryModel(
             yield m
             break
           }
-          case 'message_delta': {
-            usage = updateUsage(usage, part.usage)
-            // Capture research from message_delta if available (internal only).
+          case 'response_delta': {
+            // v2: part.stopReason / part.usage 替代了 part.delta.stop_reason / part.usage
+            const v2Delta = part as any
+            const stopReasonV2 = v2Delta.stopReason ?? v2Delta.delta?.stop_reason
+            // v2 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
+            const rawUsage = v2Delta.usage
+            const usageForUpdate = rawUsage
+              ? {
+                  output_tokens: rawUsage.outputTokens ?? rawUsage.output_tokens ?? 0,
+                  input_tokens: rawUsage.inputTokens ?? rawUsage.input_tokens,
+                  cache_creation_input_tokens: rawUsage.extras?.cacheCreationInputTokens ?? rawUsage.cache_creation_input_tokens,
+                  cache_read_input_tokens: rawUsage.extras?.cacheReadInputTokens ?? rawUsage.cache_read_input_tokens,
+                }
+              : undefined
+
+            usage = updateUsage(usage, usageForUpdate)
+            // Capture research from response_delta if available (internal only).
             // Always overwrite with the latest value. Also write back to
             // already-yielded messages since message_delta arrives after
             // content_block_stop.
@@ -2191,7 +2198,7 @@ async function* queryModel(
             // replacement ({ ...lastMsg.message, usage }) would disconnect
             // the queued reference; direct mutation ensures the transcript
             // captures the final values.
-            stopReason = part.delta.stop_reason
+            stopReason = stopReasonV2
 
             const lastMsg = newMessages.at(-1)
             if (lastMsg) {
@@ -2208,7 +2215,7 @@ async function* queryModel(
             )
 
             const refusalMessage = getErrorMessageIfRefusal(
-              part.delta.stop_reason,
+              stopReasonV2,
               options.model,
             )
             if (refusalMessage) {
@@ -2244,14 +2251,14 @@ async function* queryModel(
             }
             break
           }
-          case 'message_stop':
+          case 'response_stop':
             break
         }
 
         yield {
           type: 'stream_event',
           event: part,
-          ...(part.type === 'message_start' ? { ttftMs } : undefined),
+          ...(part.type === 'response_start' ? { ttftMs } : undefined),
         }
       }
       // Clear the idle timeout watchdog now that the stream loop has exited

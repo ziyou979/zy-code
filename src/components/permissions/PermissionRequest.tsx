@@ -44,7 +44,7 @@ const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS') ? (require('../../
 const MonitorTool = feature('MONITOR_TOOL') ? (require('../../tools/MonitorTool/MonitorTool.js') as any).MonitorTool : null;
 // @ts-ignore
 const MonitorPermissionRequest = feature('MONITOR_TOOL') ? require('./MonitorPermissionRequest/MonitorPermissionRequest.js') : null;
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs';
+import type { ContentBlockParam } from '../../types/llm.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { z } from 'zod/v4';
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js';

@@ -1,76 +1,198 @@
 /**
- * 标准 LLM 类型定义。
+ * 标准 LLM 类型体系 — 真正独立于任何 SDK 的中间格式。
  *
- * 独立于任何 SDK（Anthropic、OpenAI 等），定义项目内部使用的统一类型。
- * Anthropic 和 OpenAI 完全平等，各自通过适配器将 SDK 类型转换为这些标准类型。
+ * 重构目标（v2）：
+ * - 不偏向 Anthropic 或 OpenAI，各适配器平等承担转换成本
+ * - 消息模型采用 4 角色分离（system/user/assistant/tool）
+ * - 内容块只保留通用概念（text/image/tool_call）
+ * - 流式事件使用通用命名（response_start/chunk_start 等）
+ * - 请求参数只包含通用字段，provider 专属字段通过 providerExtras 传递
+ * - 字段命名统一驼峰（inputTokens 替代 input_tokens）
  *
- * 命名原则：参考两种 SDK 的命名，取最能表示抽象概念的名称。
+ * 兼容性：
+ * - 旧名称保留为 @deprecated type alias，确保渐进迁移
+ * - 旧 snake_case 字段通过 getter 兼容
  */
 
 // ============================================================================
-// 流式事件类型
+// 内容块类型
 // ============================================================================
 
-/** 流式事件的联合类型 */
-export type LLMStreamEvent =
-  | MessageStartEvent
-  | ContentBlockStartEvent
-  | ContentBlockDeltaEvent
-  | ContentBlockStopEvent
-  | MessageDeltaEvent
-  | MessageStopEvent
+/** 用户消息中可用的内容块 */
+export type UserContentBlock = TextBlock | ImageBlock
 
-/** 消息开始事件 — 流的第一个事件，包含消息元数据和初始 usage */
-export interface MessageStartEvent {
-  type: 'message_start'
-  message: LLMMessage
+/** 助手消息中可用的内容块 — 包含兼容类型以支持旧代码中的 block.type === 'tool_use' 等判断 */
+export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ToolUseBlock | ThinkingBlock | RedactedThinkingBlock | ServerToolUseBlock
+
+// ---- 通用内容块 ----
+
+/** 文本块 */
+export interface TextBlock {
+  type: 'text'
+  text: string
+  /** @deprecated v2 不再使用 cache_control */
+  cache_control?: CacheControl | null
+  /** @deprecated Anthropic 特有字段，v2 适配器应转换为纯文本 */
+  citations?: Array<{ type: string; cited_text: string }>
 }
 
-/** 内容块开始事件 — 一个新的内容块（文本、工具调用、思考等）开始 */
-export interface ContentBlockStartEvent {
-  type: 'content_block_start'
-  index: number
-  content_block: ContentBlock
+/** 图片块 — v2 平铺格式，兼容旧嵌套 source 结构 */
+export interface ImageBlock {
+  type: 'image'
+  /** MIME 类型，如 'image/jpeg'、'image/png'（与 source.media_type 二选一） */
+  mimeType?: string
+  /** base64 编码的图片数据（与 source.data 二选一） */
+  data?: string
+  /** @deprecated 兼容旧嵌套结构 — 旧代码访问 .source.media_type / .source.data */
+  source?: { type: 'base64'; media_type: string; data: string }
 }
 
-/** 内容块增量事件 — 内容块的增量更新 */
-export interface ContentBlockDeltaEvent {
-  type: 'content_block_delta'
-  index: number
-  delta: ContentDelta
+/**
+ * 内联工具调用块。
+ * 用于 Anthropic 流式场景（tool_use 作为 content block 逐步输出）。
+ * OpenAI 的 tool_calls 通过 AssistantMessage.toolCalls 独立字段传递。
+ */
+export interface ToolCallInlineBlock {
+  type: 'tool_call'
+  id: string
+  name: string
+  input: Record<string, unknown>
 }
 
-/** 内容块结束事件 — 一个内容块完成 */
-export interface ContentBlockStopEvent {
-  type: 'content_block_stop'
-  index: number
+// ============================================================================
+// 消息类型 — 4 角色分离
+// ============================================================================
+
+/** system 消息 — 纯文本系统提示 */
+export interface SystemMessage {
+  role: 'system'
+  content: string
 }
 
-/** 消息增量事件 — 消息级别的增量更新（stop_reason、usage 等） */
-export interface MessageDeltaEvent {
-  type: 'message_delta'
-  delta: {
-    stop_reason: StopReason
+/** user 消息 — 用户输入，可包含文本和多模态内容 */
+export interface UserMessage {
+  role: 'user'
+  content: string | UserContentBlock[]
+}
+
+/** assistant 消息 — 模型响应，可包含文本和工具调用 */
+export interface AssistantMessage {
+  role: 'assistant'
+  content: string | AssistantContentBlock[]
+  /** 工具调用列表（OpenAI 风格独立字段，流式场景也可能使用 ToolCallInlineBlock） */
+  toolCalls?: ToolCall[]
+  /** 模型使用的 token 用量 */
+  usage?: TokenUsage
+}
+
+/** tool 消息 — 工具执行结果，独立角色 */
+export interface ToolMessage {
+  role: 'tool'
+  /** 对应的工具调用 ID */
+  toolCallId: string
+  /** 工具执行结果文本 */
+  content: string
+  /** 是否执行出错 */
+  isError?: boolean
+}
+
+/** 请求中的消息联合类型 */
+export type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage
+
+/** 消息角色 */
+export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
+
+// ============================================================================
+// 工具定义
+// ============================================================================
+
+/** 标准工具定义 */
+export interface ToolDefinition {
+  name: string
+  description?: string
+  /** v2 驼峰命名 — 与 input_schema 二选一提供 */
+  inputSchema?: {
+    type: 'object'
+    properties: Record<string, unknown>
+    required?: string[]
   }
-  usage: DeltaUsage
+  /** @deprecated 使用 inputSchema — 保留以兼容旧代码（宽类型以接收 Record<string, unknown>） */
+  input_schema?: Record<string, unknown>
 }
 
-/** 消息结束事件 — 流的最后一个事件 */
-export interface MessageStopEvent {
-  type: 'message_stop'
+/** 工具选择策略 */
+export type ToolChoice =
+  | { type: 'auto' }
+  | { type: 'none' }
+  | { type: 'tool'; name: string }
+
+// ============================================================================
+// 工具调用
+// ============================================================================
+
+/** 工具调用（独立于消息内容） */
+export interface ToolCall {
+  id: string
+  name: string
+  arguments: string // JSON string
 }
 
 // ============================================================================
-// 内容增量类型
+// 流式事件 — 通用命名
 // ============================================================================
 
-/** 内容增量的联合类型 */
-export type ContentDelta =
-  | TextDelta
-  | ToolInputDelta
-  | ThinkingDelta
-  | SignatureDelta
-  | ConnectorTextDelta
+/** 流式事件联合类型 */
+export type StreamEvent =
+  | ResponseStartEvent
+  | ChunkStartEvent
+  | ChunkDeltaEvent
+  | ChunkStopEvent
+  | ResponseDeltaEvent
+  | ResponseStopEvent
+
+/** 响应开始 — 流的第一个事件 */
+export interface ResponseStartEvent {
+  type: 'response_start'
+  responseId: string
+  model: string
+}
+
+/** 内容块开始 — 新的内容块开始输出 */
+export interface ChunkStartEvent {
+  type: 'chunk_start'
+  index: number
+  chunk: AssistantContentBlock
+}
+
+/** 内容增量 — 内容块的增量更新 */
+export interface ChunkDeltaEvent {
+  type: 'chunk_delta'
+  index: number
+  delta: ChunkDelta
+}
+
+/** 内容块结束 — 一个内容块完成 */
+export interface ChunkStopEvent {
+  type: 'chunk_stop'
+  index: number
+}
+
+/** 响应增量 — 响应级别的增量更新 */
+export interface ResponseDeltaEvent {
+  type: 'response_delta'
+  stopReason: StopReason
+  usage?: DeltaUsage
+}
+
+/** 响应结束 — 流的最后一个事件 */
+export interface ResponseStopEvent {
+  type: 'response_stop'
+}
+
+// ---- 增量类型 ----
+
+/** 内容增量联合类型 */
+export type ChunkDelta = TextDelta | ToolCallInputDelta | ThinkingDelta | SignatureDelta | ConnectorTextDelta
 
 /** 文本增量 */
 export interface TextDelta {
@@ -79,9 +201,11 @@ export interface TextDelta {
 }
 
 /** 工具输入增量（JSON 片段） */
-export interface ToolInputDelta {
+export interface ToolCallInputDelta {
   type: 'input_json_delta'
-  partial_json: string
+  partialJson: string
+  /** @deprecated 使用 partialJson */
+  partial_json?: string
 }
 
 /** 思考增量 */
@@ -90,241 +214,158 @@ export interface ThinkingDelta {
   thinking: string
 }
 
-/** 签名增量（用于 redacted thinking 验证） */
+/** 签名增量 */
 export interface SignatureDelta {
   type: 'signature_delta'
   signature: string
 }
 
-/** 连接文本增量（advisor 等场景） */
+/** 连接文本增量 */
 export interface ConnectorTextDelta {
   type: 'connector_text_delta'
   connector_text: string
 }
 
 // ============================================================================
-// 内容块类型（响应中的内容）
+// 停止原因 — 统一枚举
 // ============================================================================
 
-/** 响应中的内容块联合类型 */
-export type ContentBlock =
-  | TextBlock
-  | ToolUseBlock
-  | ThinkingBlock
-  | RedactedThinkingBlock
-  | ServerToolUseBlock
-
-/** 文本块 */
-export interface TextBlock {
-  type: 'text'
-  text: string
-  citations?: unknown[]
-}
-
-/** 工具调用块 */
-export interface ToolUseBlock {
-  type: 'tool_use'
-  id: string
-  name: string
-  input: Record<string, unknown>
-}
-
-/** 思考块 */
-export interface ThinkingBlock {
-  type: 'thinking'
-  thinking: string
-  signature: string
-}
-
-/** 已编辑的思考块 */
-export interface RedactedThinkingBlock {
-  type: 'redacted_thinking'
-  data: string
-}
-
-/** 服务端工具调用块（如 web_search、advisor 等） */
-export interface ServerToolUseBlock {
-  type: 'server_tool_use'
-  id: string
-  name: string
-  input: Record<string, unknown>
-}
-
-// ============================================================================
-// 内容块参数类型（请求中的内容）
-// ============================================================================
-
-/** 请求中的内容块参数联合类型 */
-export type ContentBlockParam =
-  | TextBlockParam
-  | ImageBlockParam
-  | ToolUseBlockParam
-  | ToolResultBlockParam
-  | DocumentBlockParam
-  | ThinkingBlockParam
-  | RedactedThinkingBlockParam
-
-/** 文本块参数 */
-export interface TextBlockParam {
-  type: 'text'
-  text: string
-  cache_control?: CacheControl | null
-}
-
-/** 图片块参数 */
-export interface ImageBlockParam {
-  type: 'image'
-  source: Base64ImageSource | URLImageSource
-  cache_control?: CacheControl | null
-}
-
-/** 工具调用块参数 */
-export interface ToolUseBlockParam {
-  type: 'tool_use'
-  id: string
-  name: string
-  input: unknown
-}
-
-/** 工具结果块参数 */
-export interface ToolResultBlockParam {
-  type: 'tool_result'
-  tool_use_id: string
-  content?: string | Array<TextBlockParam | ImageBlockParam>
-  is_error?: boolean
-  cache_control?: CacheControl | null
-}
-
-/** 文档块参数 */
-export interface DocumentBlockParam {
-  type: 'document'
-  source: Base64PDFSource | URLPDFSource | ContentSource
-  title?: string | null
-  context?: string | null
-  cache_control?: CacheControl | null
-}
-
-/** 思考块参数 */
-export interface ThinkingBlockParam {
-  type: 'thinking'
-  thinking: string
-  signature: string
-}
-
-/** 已编辑的思考块参数 */
-export interface RedactedThinkingBlockParam {
-  type: 'redacted_thinking'
-  data: string
-}
-
-// ============================================================================
-// 媒体源类型
-// ============================================================================
-
-/** Base64 图片源 */
-export interface Base64ImageSource {
-  type: 'base64'
-  media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
-  data: string
-}
-
-/** URL 图片源 */
-export interface URLImageSource {
-  type: 'url'
-  url: string
-}
-
-/** Base64 PDF 源 */
-export interface Base64PDFSource {
-  type: 'base64'
-  media_type: 'application/pdf'
-  data: string
-}
-
-/** URL PDF 源 */
-export interface URLPDFSource {
-  type: 'url'
-  url: string
-}
-
-/** 内容源 */
-export interface ContentSource {
-  type: 'content'
-  content: string | Array<TextBlockParam | ImageBlockParam>
-}
-
-/** 缓存控制 */
-export interface CacheControl {
-  type: 'ephemeral'
-}
-
-// ============================================================================
-// 消息类型
-// ============================================================================
-
-/** 标准 LLM 消息（替代 BetaMessage） */
-export interface LLMMessage {
-  /** 消息唯一 ID */
-  id: string
-  /** 消息角色，始终为 'assistant' */
-  role: 'assistant'
-  /** 消息内容块数组 */
-  content: ContentBlock[]
-  /** 使用的模型名称 */
-  model: string
-  /** 停止原因 */
-  stop_reason: StopReason
-  /** token 使用量 */
-  usage: TokenUsage
-  /** 消息类型标识 */
-  type?: 'message'
-  /** 停止序列 */
-  stop_sequence?: string | null
-}
-
-/** 消息参数（请求中的消息） */
-export interface LLMMessageParam {
-  role: 'user' | 'assistant'
-  content: string | ContentBlockParam[]
-}
-
-/** 停止原因 */
+/**
+ * 停止原因。
+ * 合并 Anthropic stop_reason 和 OpenAI finish_reason 为统一枚举。
+ */
 export type StopReason =
-  | 'end_turn'
-  | 'max_tokens'
-  | 'stop_sequence'
-  | 'tool_use'
-  | 'refusal'
+  | 'end_turn'       // 自然结束（Anthropic end_turn / OpenAI stop）
+  | 'max_tokens'     // 达到 token 上限（Anthropic max_tokens / OpenAI length）
+  | 'tool_use'       // 模型发起工具调用（Anthropic tool_use / OpenAI tool_calls）
+  | 'content_filter' // 内容安全过滤（OpenAI content_filter）
+  | 'refusal'        // 模型拒绝（OpenAI refusal）
+  | 'stop_sequence'  // @deprecated 匹配 stop_sequences 触发，归入 end_turn
   | null
 
 // ============================================================================
-// Token 使用量
+// Token 用量
 // ============================================================================
 
-/** 完整的 token 使用量 */
+/** 完整的 token 用量 */
 export interface TokenUsage {
+  inputTokens: number
+  outputTokens: number
+  /** provider 特定计量（如 Anthropic 的 cache tokens） */
+  extras?: Record<string, number>
+  /** @deprecated 使用 inputTokens — 保留 required 以兼容旧代码类型断言 */
   input_tokens: number
+  /** @deprecated 使用 outputTokens — 保留 required 以兼容旧代码类型断言 */
   output_tokens: number
+  /** @deprecated 使用 extras.cacheCreationInputTokens */
   cache_creation_input_tokens?: number
+  /** @deprecated 使用 extras.cacheReadInputTokens */
   cache_read_input_tokens?: number
+  /** @deprecated 使用 extras.serverToolUseInputTokens */
   server_tool_use_input_tokens?: number
 }
 
-/** 增量 token 使用量（流式事件中） */
+/** 增量 token 用量（流式事件中） */
 export interface DeltaUsage {
-  output_tokens: number
+  outputTokens: number
+  /** provider 特定增量计量 */
+  extras?: Record<string, number>
+  /** @deprecated 使用 outputTokens */
+  output_tokens?: number
 }
 
 // ============================================================================
-// 工具定义类型
+// 响应
 // ============================================================================
 
-/** 标准工具定义（替代 BetaToolUnion） */
-export interface ToolDefinition {
-  name: string
-  description?: string
-  input_schema: Record<string, unknown>
-  cache_control?: CacheControl | null
+/** 完整响应（非流式返回） */
+export interface Response {
+  id: string
+  model: string
+  role: 'assistant'
+  content: AssistantContentBlock[]
+  stopReason: StopReason
+  usage: TokenUsage
+  /** @deprecated 使用 stopReason */
+  stop_reason?: StopReason
+  /** @deprecated Anthropic 特有字段 */
+  stop_sequence?: string | null
+  /** @deprecated Anthropic 特有字段（type: 'message'） */
+  type?: string
+}
+
+// ============================================================================
+// 请求参数
+// ============================================================================
+
+/** 创建请求参数 — 只包含通用字段 */
+export interface CreateParams {
+  model: string
+  messages: Message[]
+  maxTokens: number
+  temperature?: number
+  topP?: number
+  stopSequences?: string[]
+  tools?: ToolDefinition[]
+  toolChoice?: ToolChoice
+  stream?: boolean
+  /** provider 专属扩展（各适配器自行解析，互不干扰） */
+  providerExtras?: ProviderExtras
+}
+
+/**
+ * Provider 专属扩展字段。
+ * 每个 provider 只读取自己的 namespace。
+ */
+export interface ProviderExtras {
+  /** Anthropic 专属：thinking 配置、beta headers、context management 等 */
+  anthropic?: {
+    thinking?: { type: 'disabled' } | { type: 'enabled'; budget_tokens: number } | { type: 'adaptive' }
+    betas?: string[]
+    contextManagement?: Record<string, unknown>
+    outputConfig?: Record<string, unknown>
+  }
+  /** OpenAI 专属：structured outputs、parallel tool calls 等 */
+  openai?: Record<string, unknown>
+  /** 其他 provider 的扩展空间 */
+  [key: string]: unknown
+}
+
+// ============================================================================
+// 适配器接口
+// ============================================================================
+
+/** 流式请求的返回结果 */
+export interface StreamResult {
+  /** 标准格式的事件流 */
+  stream: AsyncIterable<StreamEvent>
+  /** 服务端返回的请求 ID */
+  requestId: string | undefined
+  /** 原始 HTTP 响应对象 */
+  response: Response | undefined
+}
+
+/**
+ * 统一的 LLM 请求适配器接口。
+ * 各 provider 各自实现，平等承担转换成本。
+ */
+export interface LLMAdapter {
+  /** 创建流式请求 */
+  createStream(
+    params: CreateParams,
+    signal: AbortSignal,
+    clientRequestId?: string,
+  ): Promise<StreamResult>
+
+  /** 创建非流式请求 */
+  createMessage(
+    params: CreateParams,
+    signal: AbortSignal,
+    timeout?: number,
+  ): Promise<Response>
+
+  /** 验证 API key 是否有效 */
+  verifyApiKey(apiKey: string): Promise<boolean>
 }
 
 // ============================================================================
@@ -333,12 +374,10 @@ export interface ToolDefinition {
 
 /**
  * 标准 LLM API 错误。
- * 统一 Anthropic 的 APIError 和 OpenAI 的错误类型。
+ * 统一所有 provider 的错误类型。
  */
 export class LLMError extends Error {
-  /** HTTP 状态码 */
   readonly status: number | undefined
-  /** 响应头 */
   readonly headers: Record<string, string> | undefined
 
   constructor(
@@ -355,7 +394,6 @@ export class LLMError extends Error {
 
 /** LLM 连接错误 */
 export class LLMConnectionError extends LLMError {
-  /** 底层错误代码（如 ECONNRESET、EPIPE） */
   readonly code: string | undefined
 
   constructor(message: string, code?: string) {
@@ -395,7 +433,7 @@ export class LLMNotFoundError extends LLMError {
 
 /**
  * 鸭子类型的 API 错误接口。
- * 同时匹配 LLMError 和 Anthropic APIError（它们都有 status、message、headers）。
+ * 匹配 LLMError 和任何有 status + message 的错误对象。
  */
 export interface APIErrorLike {
   status: number | undefined
@@ -419,7 +457,7 @@ export function getHeader(error: APIErrorLike, name: string): string | null {
 }
 
 /**
- * 判断一个 error 是否是 API 错误（LLMError 或 Anthropic APIError 等）。
+ * 判断一个 error 是否是 API 错误。
  * 使用鸭子类型：只要有 status 和 message 字段就视为 API 错误。
  */
 export function isAPIError(error: unknown): error is APIErrorLike {
@@ -432,8 +470,7 @@ export function isAPIError(error: unknown): error is APIErrorLike {
 }
 
 /**
- * 判断一个 error 是否是连接错误（LLMConnectionError 或 Anthropic APIConnectionError 等）。
- * 使用鸭子类型：检查 error.name 或 constructor.name 是否包含 'Connection'。
+ * 判断一个 error 是否是连接错误。
  */
 export function isConnectionError(error: unknown): boolean {
   return (
@@ -469,12 +506,197 @@ export function isAbortError(error: unknown): boolean {
 
 /**
  * 创建一个中止错误实例。
- * 优先使用 LLMAbortError，但如果 Anthropic SDK 可用则使用 APIUserAbortError
- * 以保持与现有 catch 逻辑的兼容性。
  */
 export function createAbortError(): LLMAbortError {
   return new LLMAbortError()
 }
+
+// ============================================================================
+// 兼容性导出 — 在迁移期间保留，逐步删除
+// ============================================================================
+
+/** @deprecated 使用 TextBlock */
+export type TextBlockParam = TextBlock
+
+/** @deprecated 使用 ImageBlock */
+export type ImageBlockParam = ImageBlock
+
+/**
+ * @deprecated 使用 ToolCallInlineBlock 或 ToolUseBlock。
+ * 注意：旧代码中 ToolUseBlockParam 的 type 为 'tool_use'，与 ToolCallInlineBlock 的 'tool_call' 不同。
+ * 此处保留为独立的 'tool_use' 接口以兼容旧代码。
+ */
+export interface ToolUseBlockParam {
+  type: 'tool_use'
+  id: string
+  name: string
+  input: Record<string, unknown>
+}
+
+/**
+ * @deprecated v2 中工具调用使用 ToolCallInlineBlock（type: 'tool_call'）。
+ * 保留此接口用于渐进迁移，type 仍为 'tool_use' 以兼容旧代码中的 block.type === 'tool_use' 判断。
+ */
+export interface ToolUseBlock {
+  type: 'tool_use'
+  id: string
+  name: string
+  input: Record<string, unknown>
+}
+
+/**
+ * @deprecated v2 不再有独立的 tool_result 内容块。
+ * 工具结果现在是独立的 ToolMessage（role: 'tool'）。
+ * 此处保留为类型别名，在迁移期间保持编译通过。
+ * 实际类型是一个通用 Record，因为旧代码广泛使用了 tool_use_id、is_error 等字段。
+ */
+export interface ToolResultBlockParam {
+  type: 'tool_result'
+  tool_use_id: string
+  content?: string | Array<TextBlockParam | ImageBlockParam>
+  is_error?: boolean
+  cache_control?: CacheControl | null
+}
+
+/** @deprecated 缓存控制，v2 不再使用 */
+export interface CacheControl {
+  type: 'ephemeral'
+}
+
+/** @deprecated v2 不再有 document 块，PDF 通过其他方式处理 */
+export interface DocumentBlockParam {
+  type: 'document'
+  source: Base64PDFSource | URLPDFSource | ContentSource
+  title?: string | null
+  context?: string | null
+  cache_control?: CacheControl | null
+}
+
+/** @deprecated v2 不再有 thinking 内容块（移至 providerExtras） */
+export interface ThinkingBlock {
+  type: 'thinking'
+  thinking: string
+  signature: string
+}
+
+/** @deprecated v2 不再有 thinking 请求参数（移至 providerExtras） */
+export interface ThinkingBlockParam {
+  type: 'thinking'
+  thinking: string
+  signature: string
+}
+
+/** @deprecated v2 不再有 redacted_thinking（移至 providerExtras） */
+export interface RedactedThinkingBlock {
+  type: 'redacted_thinking'
+  data: string
+}
+
+/** @deprecated v2 不再有 redacted_thinking 参数 */
+export interface RedactedThinkingBlockParam {
+  type: 'redacted_thinking'
+  data: string
+}
+
+/** @deprecated v2 不再有 server_tool_use */
+export interface ServerToolUseBlock {
+  type: 'server_tool_use'
+  id: string
+  name: string
+  input: Record<string, unknown>
+}
+
+/** @deprecated 使用 ImageBlock 的 mimeType/data 字段 */
+export interface Base64ImageSource {
+  type: 'base64'
+  media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+  data: string
+}
+
+/** @deprecated 使用 ImageBlock 的 mimeType/data 字段 */
+export interface URLImageSource {
+  type: 'url'
+  url: string
+}
+
+/** @deprecated v2 不再使用 PDF 源类型 */
+export interface Base64PDFSource {
+  type: 'base64'
+  media_type: 'application/pdf'
+  data: string
+}
+
+/** @deprecated v2 不再使用 PDF 源类型 */
+export interface URLPDFSource {
+  type: 'url'
+  url: string
+}
+
+/** @deprecated v2 不再使用内容源类型 */
+export interface ContentSource {
+  type: 'content'
+  content: string | Array<TextBlockParam | ImageBlockParam>
+}
+
+/**
+ * @deprecated v2 中 content 块类型已按角色分离。
+ * 使用 UserContentBlock 或 AssistantContentBlock。
+ */
+export type ContentBlockParam = TextBlock | ImageBlock | ToolUseBlockParam | ToolCallInlineBlock | ToolResultBlockParam | DocumentBlockParam | ThinkingBlockParam | RedactedThinkingBlockParam | ServerToolUseBlock
+
+/**
+ * @deprecated v2 中响应内容块已简化。
+ * 使用 AssistantContentBlock。
+ * 此联合类型保留旧的 type 字符串值以兼容 block.type === 'tool_use' 等判断。
+ */
+export type ContentBlock = TextBlock | ToolUseBlock | ToolCallInlineBlock | ThinkingBlock | RedactedThinkingBlock | ServerToolUseBlock
+
+/** @deprecated 使用 Message */
+export type LLMMessageParam = Message
+
+/** @deprecated 使用 Response */
+export type LLMMessage = Response
+
+/**
+ * @deprecated v1 内容块增量类型。
+ * v2 使用 ChunkDelta（TextDelta | ToolCallInputDelta）。
+ * 此类型保留用于渐进迁移。
+ */
+export type ContentDelta =
+  | TextDelta
+  | ToolCallInputDelta
+  | { type: 'thinking_delta'; thinking: string }
+  | { type: 'signature_delta'; signature: string }
+  | { type: 'connector_text_delta'; connector_text: string }
+
+/** @deprecated 使用 LLMAdapter */
+export type LLMRequestAdapter = LLMAdapter
+
+/** @deprecated 使用 CreateParams（注意：字段名已从 snake_case 改为 camelCase） */
+export type LLMCreateParams = CreateParams
+
+/** @deprecated 使用 StreamResult */
+export type StreamResultV1 = StreamResult
+
+/** @deprecated 使用 TokenUsage（驼峰命名） */
+export interface TokenUsageV1 {
+  input_tokens: number
+  output_tokens: number
+  cache_creation_input_tokens?: number
+  cache_read_input_tokens?: number
+  server_tool_use_input_tokens?: number
+}
+
+/** @deprecated 使用 DeltaUsage（驼峰命名） */
+export interface DeltaUsageV1 {
+  output_tokens: number
+}
+
+/** @deprecated 使用 ThinkingConfig from utils/thinking.js */
+export type ThinkingConfig =
+  | { type: 'disabled' }
+  | { type: 'enabled'; budget_tokens: number }
+  | { type: 'adaptive' }
 
 /**
  * 安全地获取错误的 status 码。
@@ -511,83 +733,4 @@ export function getErrorHeader(error: unknown, name: string): string | null {
     return headers[name] ?? null
   }
   return null
-}
-
-// ============================================================================
-// 请求参数类型
-// ============================================================================
-
-/** 标准的消息创建请求参数 */
-export interface LLMCreateParams {
-  model: string
-  messages: LLMMessageParam[]
-  max_tokens: number
-  system?: string | TextBlockParam[]
-  tools?: ToolDefinition[]
-  tool_choice?: ToolChoice
-  temperature?: number
-  top_p?: number
-  metadata?: Record<string, unknown>
-  /** 流式请求 */
-  stream?: boolean
-  /** Anthropic 特有：thinking 配置 */
-  thinking?: ThinkingConfig
-  /** Anthropic 特有：beta headers */
-  betas?: string[]
-  /** Anthropic 特有：上下文管理 */
-  context_management?: Record<string, unknown>
-  /** Anthropic 特有：输出配置 */
-  output_config?: Record<string, unknown>
-  /** 额外的 provider 特定参数 */
-  extra_body?: Record<string, unknown>
-}
-
-/** 工具选择策略 */
-export type ToolChoice =
-  | { type: 'auto' }
-  | { type: 'any' }
-  | { type: 'none' }
-  | { type: 'tool'; name: string }
-
-/** 思考配置 */
-export type ThinkingConfig =
-  | { type: 'disabled' }
-  | { type: 'enabled'; budget_tokens: number }
-  | { type: 'adaptive' }
-
-// ============================================================================
-// 适配器接口
-// ============================================================================
-
-/** 流式请求的返回结果 */
-export interface StreamResult {
-  /** 标准格式的事件流 */
-  stream: AsyncIterable<LLMStreamEvent>
-  /** 服务端返回的请求 ID */
-  request_id: string | undefined
-  /** 原始 HTTP 响应对象 */
-  response: Response | undefined
-}
-
-/**
- * 统一的 LLM 请求适配器接口。
- * Anthropic 和 OpenAI 各自实现此接口。
- */
-export interface LLMRequestAdapter {
-  /** 创建流式请求 */
-  createStream(
-    params: LLMCreateParams,
-    signal: AbortSignal,
-    client_request_id?: string,
-  ): Promise<StreamResult>
-
-  /** 创建非流式请求 */
-  createMessage(
-    params: LLMCreateParams,
-    signal: AbortSignal,
-    timeout?: number,
-  ): Promise<LLMMessage>
-
-  /** 验证 API key 是否有效 */
-  verifyApiKey(apiKey: string): Promise<boolean>
 }

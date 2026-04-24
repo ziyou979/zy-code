@@ -1,98 +1,114 @@
 /**
- * OpenAI Provider Adapter — 将标准消息格式转换为 OpenAI SDK 格式。
+ * OpenAI Provider Adapter — 将中立标准格式转换为 OpenAI SDK 格式。
  *
  * 此文件是唯一引用 openai 包类型的 adapter。
- * 调用方只使用 StandardMessageFormat 中的类型。
+ * 调用方只使用 llm.ts 中的标准类型。
  */
 import OpenAI from 'openai'
 import { randomUUID } from 'crypto'
 import type {
-  StandardMessage,
-  StandardMessageRequest,
-  StandardResponse,
-  StandardStreamEvent,
-  StandardContentBlock,
-  StandardToolDefinition,
-  StandardUsage,
-  StandardStopReason,
-} from './StandardMessageFormat.js'
+  LLMAdapter,
+  CreateParams,
+  StreamResult,
+  StreamEvent,
+  Message,
+  AssistantContentBlock,
+  TokenUsage,
+  DeltaUsage,
+  StopReason,
+  ToolDefinition,
+  ToolChoice,
+  UserContentBlock,
+} from '../../types/llm.js'
+import type { Response as LLMResponse } from '../../types/llm.js'
 import { getUserAgent } from '../../utils/http.js'
+import { getApiKey } from '../../utils/auth.js'
+import { getAPIProvider, isOpenAIProvider } from '../../utils/model/providers.js'
+import { getProviderEntry } from '../../utils/model/providerRegistry.js'
 
 // ============================================================================
 // 标准格式 → OpenAI 格式
 // ============================================================================
 
-function standardMessagesToOpenAI(
-  messages: StandardMessage[],
-): OpenAI.Chat.ChatCompletionMessageParam[] {
+function messagesToOpenAI(messages: Message[]): OpenAI.Chat.ChatCompletionMessageParam[] {
   const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
   for (const msg of messages) {
-    if (msg.role === 'system') {
-      result.push({ role: 'system', content: msg.content })
-    } else if (msg.role === 'user') {
-      result.push({
-        role: 'user',
-        content: standardUserContentToOpenAI(msg.content),
-      })
-    } else if (msg.role === 'assistant') {
-      result.push(standardAssistantContentToOpenAI(msg.content))
+    switch (msg.role) {
+      case 'system':
+        result.push({ role: 'system', content: msg.content })
+        break
+      case 'user':
+        result.push({
+          role: 'user',
+          content: userContentToOpenAI(msg.content),
+        })
+        break
+      case 'assistant':
+        result.push(assistantContentToOpenAI(msg.content, msg.toolCalls))
+        break
+      case 'tool':
+        result.push({
+          role: 'tool',
+          tool_call_id: msg.toolCallId,
+          content: msg.content,
+        })
+        break
     }
   }
 
   return result
 }
 
-function standardUserContentToOpenAI(
-  content: string | StandardContentBlock[],
+function userContentToOpenAI(
+  content: string | UserContentBlock[],
 ): string | Array<OpenAI.Chat.ChatCompletionContentPart> {
   if (typeof content === 'string') return content
   const parts: Array<OpenAI.Chat.ChatCompletionContentPart> = []
   for (const block of content) {
-    switch (block.type) {
-      case 'text':
-        parts.push({ type: 'text', text: block.text })
-        break
-      case 'image':
-        parts.push({
-          type: 'image_url',
-          image_url: {
-            url: `data:${block.mimeType};base64,${block.data}`,
-          },
-        })
-        break
-      case 'tool_result': {
-        const text = typeof block.content === 'string'
-          ? block.content
-          : block.content.map(b => b.type === 'text' ? (b as any).text : '').join('\n')
-        parts.push({ type: 'text', text })
-        break
-      }
+    if (block.type === 'text') {
+      parts.push({ type: 'text', text: block.text })
+    } else if (block.type === 'image') {
+      parts.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:${block.mimeType};base64,${block.data}`,
+        },
+      })
     }
   }
   return parts.length === 1 && parts[0]?.type === 'text' ? parts[0].text : parts
 }
 
-function standardAssistantContentToOpenAI(
-  content: string | StandardContentBlock[],
+function assistantContentToOpenAI(
+  content: string | AssistantContentBlock[],
+  toolCalls?: Array<{ id: string; name: string; arguments: string }>,
 ): OpenAI.Chat.ChatCompletionAssistantMessageParam {
   const msg: OpenAI.Chat.ChatCompletionAssistantMessageParam = { role: 'assistant' }
 
   if (typeof content === 'string') {
     msg.content = content
+    if (toolCalls?.length) {
+      msg.tool_calls = toolCalls.map(tc => ({
+        id: tc.id,
+        type: 'function',
+        function: {
+          name: tc.name,
+          arguments: tc.arguments,
+        },
+      }))
+    }
     return msg
   }
 
   const textParts: string[] = []
-  const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
+  const toolCallBlocks: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
 
   for (const block of content) {
     if (block.type === 'text') {
       textParts.push(block.text)
-    } else if (block.type === 'thinking') {
-      textParts.push(`<thinking>${block.thinking}</thinking>`)
-    } else if (block.type === 'tool_use') {
-      toolCalls.push({
+    } else if (block.type === 'tool_call') {
+      toolCallBlocks.push({
         id: block.id,
         type: 'function',
         function: {
@@ -104,13 +120,24 @@ function standardAssistantContentToOpenAI(
   }
 
   if (textParts.length > 0) msg.content = textParts.join('\n\n')
-  if (toolCalls.length > 0) msg.tool_calls = toolCalls
+  if (toolCallBlocks.length > 0) msg.tool_calls = toolCallBlocks
+  // 也使用 toolCalls 字段
+  if (toolCalls?.length && !msg.tool_calls) {
+    msg.tool_calls = toolCalls.map(tc => ({
+      id: tc.id,
+      type: 'function',
+      function: {
+        name: tc.name,
+        arguments: tc.arguments,
+      },
+    }))
+  }
 
   return msg
 }
 
-function standardToolsToOpenAI(
-  tools?: StandardToolDefinition[],
+function toolsToOpenAI(
+  tools?: ToolDefinition[],
 ): OpenAI.Chat.ChatCompletionTool[] | undefined {
   if (!tools?.length) return undefined
   return tools.map((t) => ({
@@ -123,15 +150,25 @@ function standardToolsToOpenAI(
   }))
 }
 
+function toolChoiceToOpenAI(choice?: ToolChoice): OpenAI.Chat.ChatCompletionToolChoiceOption | undefined {
+  if (!choice) return undefined
+  switch (choice.type) {
+    case 'auto': return 'auto'
+    case 'none': return 'none'
+    case 'tool': return { type: 'function', function: { name: choice.name } }
+    default: return undefined
+  }
+}
+
 // ============================================================================
 // OpenAI 格式 → 标准格式
 // ============================================================================
 
 function openAIResponseToStandard(
   completion: OpenAI.Chat.Completions.ChatCompletion,
-): StandardResponse {
+): LLMResponse {
   const choice = completion.choices[0]
-  const contentBlocks: StandardContentBlock[] = []
+  const contentBlocks: AssistantContentBlock[] = []
 
   if (choice?.message.content) {
     contentBlocks.push({ type: 'text', text: choice.message.content })
@@ -139,7 +176,7 @@ function openAIResponseToStandard(
   if (choice?.message.tool_calls) {
     for (const tc of choice.message.tool_calls) {
       contentBlocks.push({
-        type: 'tool_use',
+        type: 'tool_call',
         id: tc.id,
         name: tc.function.name,
         input: JSON.parse(tc.function.arguments ?? '{}'),
@@ -159,30 +196,77 @@ function openAIResponseToStandard(
 
 function openAIFinishReasonToStandard(
   reason: string | null | undefined,
-): StandardStopReason {
+): StopReason {
   switch (reason) {
     case 'stop': return 'end_turn'
     case 'length': return 'max_tokens'
     case 'tool_calls': return 'tool_use'
-    case 'content_filter': return 'stop_sequence'
+    case 'content_filter': return 'content_filter'
     default: return null
   }
 }
 
 function openAIUsageToStandard(
   usage: OpenAI.CompletionUsage | undefined | null,
-): StandardUsage {
+): TokenUsage {
+  const inputTokens = usage?.prompt_tokens ?? 0
+  const outputTokens = usage?.completion_tokens ?? 0
   return {
-    inputTokens: usage?.prompt_tokens ?? 0,
+    inputTokens,
+    outputTokens,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+  }
+}
+
+function openAIDeltaUsageToStandard(usage: OpenAI.CompletionUsage | undefined | null): DeltaUsage {
+  return {
     outputTokens: usage?.completion_tokens ?? 0,
   }
+}
+
+// ============================================================================
+// OpenAI 客户端创建
+// ============================================================================
+
+function getOpenAIClient(options?: {
+  apiKey?: string
+  baseURL?: string
+  timeout?: number
+}): OpenAI {
+  const apiKey = options?.apiKey || getApiKey() || ''
+
+  let baseURL: string | undefined = options?.baseURL
+  if (!baseURL) {
+    try {
+      const { getGlobalConfig } = require('../../utils/config.js')
+      baseURL = getGlobalConfig().configuredBaseUrl
+    } catch {
+      // config not ready
+    }
+  }
+  if (!baseURL) {
+    const entry = getProviderEntry(getAPIProvider())
+    baseURL = entry?.defaultBaseUrls?.openai
+  }
+  if (!baseURL) {
+    baseURL = 'https://api.openai.com/v1'
+  }
+
+  return new OpenAI({
+    apiKey,
+    baseURL,
+    timeout: options?.timeout ?? parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10),
+    maxRetries: 3,
+    defaultHeaders: { 'User-Agent': getUserAgent() },
+  })
 }
 
 // ============================================================================
 // Provider 实现
 // ============================================================================
 
-export class OpenAIProviderAdapter {
+export class OpenAIProviderAdapter implements LLMAdapter {
   readonly name = 'openai'
 
   private client: OpenAI
@@ -192,50 +276,71 @@ export class OpenAIProviderAdapter {
     baseURL?: string
     timeout?: number
   }) {
-    this.client = new OpenAI({
-      apiKey: options?.apiKey || process.env.OPENAI_API_KEY || '',
-      baseURL: options?.baseURL || process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1',
-      timeout: options?.timeout ?? parseInt(process.env.API_TIMEOUT_MS || '600000', 10),
-      maxRetries: 3,
-      defaultHeaders: { 'User-Agent': getUserAgent() },
-    })
+    this.client = getOpenAIClient(options)
   }
 
-  async createMessage(request: StandardMessageRequest): Promise<StandardResponse> {
-    const messages = standardMessagesToOpenAI(request.messages)
+  async createStream(
+    params: CreateParams,
+    signal: AbortSignal,
+    _clientRequestId?: string,
+  ): Promise<StreamResult> {
+    const openAIParams = buildOpenAIParams(params)
 
-    const completion = await this.client.chat.completions.create({
-      model: request.model,
-      messages,
-      max_tokens: request.maxTokens,
-      temperature: request.temperature ?? 1,
-      ...(request.topP !== undefined && { top_p: request.topP }),
-      ...(request.tools && { tools: standardToolsToOpenAI(request.tools) }),
-      ...(request.toolChoice && { tool_choice: request.toolChoice as any }),
-      stream: false,
-    })
+    const stream = await this.client.chat.completions.create(
+      {
+        ...openAIParams,
+        stream: true,
+        stream_options: { include_usage: true },
+      },
+      { signal },
+    ) as unknown as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
+
+    return {
+      stream: convertOpenAIStream(stream, params.model),
+      requestId: randomUUID(),
+      response: undefined,
+    }
+  }
+
+  async createMessage(
+    params: CreateParams,
+    signal: AbortSignal,
+    _timeout?: number,
+  ): Promise<LLMResponse> {
+    const openAIParams = buildOpenAIParams(params)
+
+    const completion = await this.client.chat.completions.create(
+      {
+        ...openAIParams,
+        stream: false,
+      },
+      { signal },
+    )
 
     return openAIResponseToStandard(completion)
   }
 
-  async *createMessageStream(
-    request: StandardMessageRequest,
-  ): AsyncIterable<StandardStreamEvent> {
-    const messages = standardMessagesToOpenAI(request.messages)
+  async verifyApiKey(_apiKey: string): Promise<boolean> {
+    return true
+  }
+}
 
-    const stream = await this.client.chat.completions.create({
-      model: request.model,
-      messages,
-      max_tokens: request.maxTokens,
-      temperature: request.temperature ?? 1,
-      ...(request.topP !== undefined && { top_p: request.topP }),
-      ...(request.tools && { tools: standardToolsToOpenAI(request.tools) }),
-      ...(request.toolChoice && { tool_choice: request.toolChoice as any }),
-      stream: true,
-      stream_options: { include_usage: true },
-    }) as unknown as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
+function buildOpenAIParams(params: CreateParams) {
+  const openAIMessages = messagesToOpenAI(params.messages)
+  const openAITools = toolsToOpenAI(params.tools)
+  const openAIToolChoice = toolChoiceToOpenAI(params.toolChoice)
+  const openAIExtras = params.providerExtras?.openai
 
-    yield* openAIStreamToStandard(stream, request.model)
+  return {
+    model: params.model,
+    messages: openAIMessages,
+    max_tokens: params.maxTokens,
+    temperature: params.temperature ?? 1,
+    ...(params.topP !== undefined && { top_p: params.topP }),
+    ...(params.stopSequences?.length && { stop: params.stopSequences }),
+    ...(openAITools && { tools: openAITools }),
+    ...(openAIToolChoice && { tool_choice: openAIToolChoice }),
+    ...(openAIExtras as Record<string, unknown>),
   }
 }
 
@@ -243,10 +348,10 @@ export class OpenAIProviderAdapter {
 // OpenAI SSE → 标准流式事件
 // ============================================================================
 
-async function* openAIStreamToStandard(
+async function* convertOpenAIStream(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
-): AsyncIterable<StandardStreamEvent> {
+): AsyncIterable<StreamEvent> {
   const messageId = randomUUID()
   let textBlockIndex = 0
   let toolBlockCounter = 0
@@ -254,8 +359,8 @@ async function* openAIStreamToStandard(
   let openToolBlocks = 0
 
   yield {
-    type: 'message_start',
-    messageId,
+    type: 'response_start',
+    responseId: messageId,
     model,
   }
 
@@ -267,16 +372,16 @@ async function* openAIStreamToStandard(
       if (delta.content && delta.content !== '') {
         if (!textBlockStarted) {
           yield {
-            type: 'content_block_start',
+            type: 'chunk_start',
             index: textBlockIndex,
-            contentBlock: { type: 'text', text: '' },
+            chunk: { type: 'text', text: '' },
           }
           textBlockStarted = true
         }
         yield {
-          type: 'content_block_delta',
+          type: 'chunk_delta',
           index: textBlockIndex,
-          delta: { type: 'text', text: delta.content },
+          delta: { type: 'text_delta', text: delta.content },
         }
       }
 
@@ -289,10 +394,10 @@ async function* openAIStreamToStandard(
             toolBlockCounter++
             openToolBlocks++
             yield {
-              type: 'content_block_start',
+              type: 'chunk_start',
               index: textBlockStarted ? textBlockIndex + openToolBlocks : tcIdx,
-              contentBlock: {
-                type: 'tool_use',
+              chunk: {
+                type: 'tool_call',
                 id: tc.id ?? randomUUID(),
                 name: tc.function.name,
                 input: {},
@@ -301,9 +406,9 @@ async function* openAIStreamToStandard(
           }
           if (tc.function?.arguments) {
             yield {
-              type: 'content_block_delta',
+              type: 'chunk_delta',
               index: textBlockStarted ? textBlockIndex + openToolBlocks : tcIdx,
-              delta: { type: 'input_json', partialJson: tc.function.arguments },
+              delta: { type: 'input_json_delta', partialJson: tc.function.arguments },
             }
           }
         }
@@ -312,21 +417,24 @@ async function* openAIStreamToStandard(
       // 结束
       if (choice.finish_reason) {
         if (textBlockStarted) {
-          yield { type: 'content_block_stop', index: textBlockIndex }
+          yield { type: 'chunk_stop', index: textBlockIndex }
         }
         for (let i = 0; i < openToolBlocks; i++) {
           yield {
-            type: 'content_block_stop',
+            type: 'chunk_stop',
             index: textBlockStarted ? textBlockIndex + 1 + i : i,
           }
         }
 
         yield {
-          type: 'message_delta',
+          type: 'response_delta',
           stopReason: openAIFinishReasonToStandard(choice.finish_reason),
-          usage: chunk.usage ? openAIUsageToStandard(chunk.usage) : undefined,
+          usage: chunk.usage ? openAIDeltaUsageToStandard(chunk.usage) : undefined,
         }
       }
     }
   }
+
+  // 流结束后发送 response_stop
+  yield { type: 'response_stop' }
 }

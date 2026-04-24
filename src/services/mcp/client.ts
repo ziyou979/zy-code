@@ -2541,7 +2541,7 @@ export async function transformResultContent(
             imageBuffer.length,
             ext,
           )
-          const content: LLMMessageParam['content'] = []
+          const content: ContentBlockParam[] = []
           if (prefix) {
             content.push({
               type: 'text',

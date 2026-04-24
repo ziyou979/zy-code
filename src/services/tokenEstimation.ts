@@ -122,7 +122,7 @@ function stripToolSearchFieldsFromMessages(
     return {
       ...message,
       content: normalizedContent,
-    }
+    } as LLMMessageParam
   })
 }
 

@@ -1,6 +1,7 @@
 import type {
   ContentBlockParam,
   ImageBlockParam,
+  LLMMessageParam,
   TextBlockParam,
 } from '../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -166,9 +167,9 @@ export async function mcpContentNeedsTruncation(
     const messages =
       typeof content === 'string'
         ? [{ role: 'user' as const, content }]
-        : [{ role: 'user' as const, content }]
+        : [{ role: 'user' as const, content: content as ContentBlockParam[] }]
 
-    const tokenCount = await countMessagesTokensWithAPI(messages, [])
+    const tokenCount = await countMessagesTokensWithAPI(messages as LLMMessageParam[], [])
     return !!(tokenCount && tokenCount > getMaxMcpOutputTokens())
   } catch (error) {
     logError(error)

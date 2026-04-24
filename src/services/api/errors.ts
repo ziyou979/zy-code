@@ -173,7 +173,7 @@ export const CCR_AUTH_ERROR_MESSAGE =
   'Authentication error · This may be a temporary network issue, please try again'
 export const REPEATED_529_ERROR_MESSAGE = 'Repeated 529 Overloaded errors'
 export const CUSTOM_OFF_SWITCH_MESSAGE =
-  'Opus is experiencing high load, please use /model to switch to Sonnet'
+  '当前模型负载较高，请使用 /model 切换到其他模型'
 export const API_TIMEOUT_ERROR_MESSAGE = 'Request timed out'
 export function getPdfTooLargeErrorMessage(): string {
   const limits = `max ${API_PDF_MAX_PAGES} pages, ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
@@ -455,7 +455,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // 检查 Opus PAYG 用户的紧急容量关闭开关
+  // 检查紧急容量关闭开关
   if (
     error instanceof Error &&
     error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)
@@ -534,7 +534,7 @@ export function getAssistantMessageFromError(
       }
 
       // 如果 getRateLimitErrorMessage 返回 null，表示回退机制
-      // 将静默处理此情况（例如，符合条件的用户的 Opus -> Sonnet 回退）。
+      // 将静默处理此情况（例如，符合条件的用户会自动回退）。
       // 返回 NO_RESPONSE_REQUESTED 以便不向用户显示错误，但
       // 消息仍会记录在对话历史中供 Zy 查看。
       return createAssistantAPIErrorMessage({
@@ -561,7 +561,7 @@ export function getAssistantMessageFromError(
     const innerMessage = stripped.match(/"message"\s*:\s*"([^"]*)"/)?.[1]
     const detail = innerMessage || stripped
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) · ${detail || 'this may be a temporary capacity issue — check status.anthropic.com'}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) · ${detail || '这可能是临时容量问题，请稍后重试'}`,
       error: 'rate_limit',
     })
   }
@@ -937,15 +937,15 @@ function get3PModelFallbackSuggestion(model: string): string | undefined {
   }
   // @[MODEL LAUNCH]: 为新模型 → 之前版本添加第三方用户的回退建议链
   const m = model.toLowerCase()
-  // 如果失败的模型看起来像 Opus 4.6 变体，建议默认 Opus（第三方用户为 4.1）
+  // 如果失败的模型看起来像 Opus 4.6 变体，建议回退到前一版本
   if (m.includes('opus-4-6') || m.includes('opus_4_6')) {
     return (getModelStrings() as any).opus41
   }
-  // 如果失败的模型看起来像 Sonnet 4.6 变体，建议 Sonnet 4.5
+  // 如果失败的模型看起来像 Sonnet 4.6 变体，建议回退到 4.5
   if (m.includes('sonnet-4-6') || m.includes('sonnet_4_6')) {
     return (getModelStrings() as any).sonnet45
   }
-  // 如果失败的模型看起来像 Sonnet 4.5 变体，建议 Sonnet 4
+  // 如果失败的模型看起来像 Sonnet 4.5 变体，建议回退到 4.0
   if (m.includes('sonnet-4-5') || m.includes('sonnet_4_5')) {
     return (getModelStrings() as any).sonnet40
   }
@@ -1182,8 +1182,8 @@ export function getErrorMessageIfRefusal(
   logEvent('zy_refusal_api_response', {})
 
   const baseMessage = getIsNonInteractiveSession()
-    ? `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Try rephrasing the request or attempting a different approach.`
-    : `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Please double press esc to edit your last message or start a new session for ZY Code to assist with a different task.`
+    ? `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy. Try rephrasing the request or attempting a different approach.`
+    : `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy. Please double press esc to edit your last message or start a new session for ZY Code to assist with a different task.`
 
   const modelSuggestion = ''
 

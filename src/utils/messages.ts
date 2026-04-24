@@ -368,6 +368,8 @@ function baseCreateAssistantMessage({
   errorDetails,
   isVirtual,
   usage = {
+    inputTokens: 0,
+    outputTokens: 0,
     input_tokens: 0,
     output_tokens: 0,
     cache_creation_input_tokens: 0,
@@ -400,6 +402,7 @@ function baseCreateAssistantMessage({
       container: null,
       model: SYNTHETIC_MODEL,
       role: 'assistant',
+      stopReason: 'stop_sequence',
       stop_reason: 'stop_sequence',
       stop_sequence: '',
       type: 'message',

@@ -961,8 +961,7 @@ export const en: TranslationResource = {
   'costTracker.cacheRead': 'cache read',
   'costTracker.cacheWrite': 'cache write',
   'costTracker.webSearch': 'web search',
-
-   be one of: {valid}.',
+  'plugins.common.invalidVersion': 'Version must be one of: {valid}',
   'plugins.common.invalidScope': 'Invalid scope "{scope}". Valid scopes: {valid}',
   'plugins.disable.allWithPlugin': 'Cannot use --all with a specific plugin',
   'plugins.disable.specifyPlugin': 'Please specify a plugin name or use --all to disable all plugins',

@@ -13,7 +13,7 @@
   - 专有名词与技术术语：React、Ink、MCP、OAuth、GrowthBook、REPL 等
   - 代码示例中的标识符、API 名称、配置项
 - 变量名、函数名、类名等标识符保持英文，不使用中文命名
-- 日志输出（`console.log`/`console.error`）面向开发者，使用中文
+- 日志输出（`console.log`/`console.error`）面向开发者，使用 i18n
 - 用户可见的所有文本**禁止硬编码**，必须走 i18n（见下文）
 
 ### 2. 国际化（i18n）

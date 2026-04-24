@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import { APIUserAbortError } from '@anthropic-ai/sdk';
+import { LLMAbortError } from '../types/llm.js';
 import * as React from 'react';
 import { Text } from '../ink.js';
 import type { Tool as ToolType, ToolUseContext } from '../Tool.js';
@@ -165,7 +165,7 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
           }
       }
     }).catch(error => {
-      if (error instanceof AbortError || error instanceof APIUserAbortError) {
+      if (error instanceof AbortError || error instanceof LLMAbortError) {
         logForDebugging(`Permission check threw ${error.constructor.name} for tool=${tool.name}: ${error.message}`);
         ctx.logCancelled();
         resolve(ctx.cancelAndAbort(undefined, true));

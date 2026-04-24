@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { ToolResultBlockParam } from '../../types/llm.js';
 type StructuredPatchHunk = any;
 import { isAbsolute, relative, resolve } from 'path';
 import * as React from 'react';

@@ -12,17 +12,18 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { randomUUID } from 'crypto'
 import type {
-  LLMStreamEvent,
-  LLMMessage,
-  LLMRequestAdapter,
+  StreamEvent,
+  Message,
+  LLMAdapter,
   StreamResult,
-  LLMCreateParams,
-  ContentBlock,
-  ContentDelta,
-  TokenUsage,
-  DeltaUsage,
+  CreateParams,
+  Response as LLMResponse,
   StopReason,
   ToolDefinition,
+  DeltaUsage,
+  AssistantContentBlock,
+  ChunkDelta,
+  TokenUsage,
 } from '../../types/llm.js'
 import { getAPIProvider, isOpenAIProvider } from '../../utils/model/providers.js'
 import { normalizeModelStringForAPI } from '../../utils/model/model.js'
@@ -33,120 +34,138 @@ import { getApiKey } from '../../utils/auth.js'
 import { getProviderEntry } from '../../utils/model/providerRegistry.js'
 
 // Re-export for consumers that import from streamAdapter
-export type { LLMRequestAdapter, StreamResult } from '../../types/llm.js'
+export type { LLMAdapter, StreamResult } from '../../types/llm.js'
 
 // ============================================================================
-// Anthropic 事件转换
+// Anthropic SDK → 标准流式事件转换
 // ============================================================================
 
-/** 将 Anthropic SDK 的流式事件转换为标准 LLMStreamEvent */
-function convertAnthropicStreamEvent(event: any): LLMStreamEvent {
+/** 将 Anthropic SDK 的流式事件转换为标准 StreamEvent */
+function convertAnthropicStreamEvent(event: any): StreamEvent {
   switch (event.type) {
-    case 'message_start':
+    case 'message_start': {
+      const msg = event.message
       return {
-        type: 'message_start',
-        message: convertAnthropicMessage(event.message),
+        type: 'response_start',
+        responseId: msg.id,
+        model: msg.model,
       }
-    case 'content_block_start':
+    }
+    case 'content_block_start': {
+      const block = event.content_block
+      let chunk: AssistantContentBlock
+      switch (block.type) {
+        case 'text':
+          chunk = { type: 'text', text: block.text ?? '' }
+          break
+        case 'tool_use':
+          // 保留 tool_use type，让 zy.ts 等消费者能正确判断
+          chunk = { type: 'tool_call' as any, id: block.id, name: block.name, input: block.input ?? {} }
+          break
+        case 'thinking':
+          // 保留 thinking type
+          chunk = { type: 'thinking' as any, thinking: block.thinking ?? '', signature: block.signature ?? '' }
+          break
+        case 'redacted_thinking':
+          chunk = { type: 'redacted_thinking' as any, data: block.data ?? '' }
+          break
+        case 'server_tool_use':
+          chunk = { type: 'server_tool_use' as any, id: block.id, name: block.name, input: block.input ?? {} }
+          break
+        default:
+          chunk = { type: 'text', text: '' }
+      }
       return {
-        type: 'content_block_start',
+        type: 'chunk_start',
         index: event.index,
-        content_block: convertAnthropicContentBlock(event.content_block),
+        chunk,
       }
-    case 'content_block_delta':
+    }
+    case 'content_block_delta': {
+      const delta = event.delta
+      let chunkDelta: ChunkDelta
+      switch (delta.type) {
+        case 'text_delta':
+          chunkDelta = { type: 'text_delta', text: delta.text }
+          break
+        case 'input_json_delta':
+          // 保留 partial_json 字段名（snake_case），zy.ts 直接读取
+          chunkDelta = { type: 'input_json_delta', partial_json: delta.partial_json } as any
+          break
+        case 'thinking_delta':
+          // 保留 thinking_delta 类型，让 zy.ts 能正确处理 thinking
+          chunkDelta = { type: 'thinking_delta' as any, thinking: delta.thinking }
+          break
+        case 'signature_delta':
+          chunkDelta = { type: 'signature_delta' as any, signature: delta.signature }
+          break
+        default:
+          chunkDelta = { type: 'text_delta', text: '' }
+      }
       return {
-        type: 'content_block_delta',
+        type: 'chunk_delta',
         index: event.index,
-        delta: convertAnthropicDelta(event.delta),
+        delta: chunkDelta,
       }
+    }
     case 'content_block_stop':
       return {
-        type: 'content_block_stop',
+        type: 'chunk_stop',
         index: event.index,
       }
-    case 'message_delta':
+    case 'message_delta': {
+      const usage: DeltaUsage | undefined = event.usage
+        ? {
+            outputTokens: event.usage.output_tokens ?? 0,
+            ...(event.usage.cache_creation_input_tokens !== undefined && {
+              extras: { cacheCreationInputTokens: event.usage.cache_creation_input_tokens },
+            }),
+            ...(event.usage.cache_read_input_tokens !== undefined && {
+              extras: {
+                ...(event.usage.cache_creation_input_tokens !== undefined && {
+                  cacheCreationInputTokens: event.usage.cache_creation_input_tokens,
+                }),
+                cacheReadInputTokens: event.usage.cache_read_input_tokens,
+              },
+            }),
+          }
+        : undefined
       return {
-        type: 'message_delta',
-        delta: {
-          stop_reason: event.delta.stop_reason as StopReason,
-        },
-        usage: convertAnthropicDeltaUsage(event.usage),
+        type: 'response_delta',
+        stopReason: event.delta.stop_reason as StopReason,
+        usage,
       }
+    }
     case 'message_stop':
       return {
-        type: 'message_stop',
+        type: 'response_stop',
       }
     default:
-      // 未知事件类型，透传为 message_stop（安全降级）
-      return { type: 'message_stop' }
-  }
-}
-
-/** 将 Anthropic SDK 的消息转换为标准 LLMMessage */
-function convertAnthropicMessage(msg: any): LLMMessage {
-  return {
-    id: msg.id,
-    role: msg.role,
-    content: (msg.content || []).map(convertAnthropicContentBlock),
-    model: msg.model,
-    stop_reason: msg.stop_reason as StopReason,
-    usage: convertAnthropicUsage(msg.usage),
-    type: msg.type,
-    stop_sequence: msg.stop_sequence ?? null,
-  }
-}
-
-/** 将 Anthropic SDK 的内容块转换为标准 ContentBlock */
-function convertAnthropicContentBlock(block: any): ContentBlock {
-  switch (block.type) {
-    case 'text':
-      return { type: 'text', text: block.text ?? '' }
-    case 'tool_use':
-      return { type: 'tool_use', id: block.id, name: block.name, input: block.input ?? {} }
-    case 'thinking':
-      return { type: 'thinking', thinking: block.thinking ?? '', signature: block.signature }
-    case 'redacted_thinking':
-      return { type: 'redacted_thinking', data: block.data ?? '' }
-    case 'server_tool_use':
-      return { type: 'server_tool_use', id: block.id, name: block.name, input: block.input ?? {} }
-    default:
-      // 未知块类型，作为文本块处理
-      return { type: 'text', text: '' }
-  }
-}
-
-/** 将 Anthropic SDK 的增量转换为标准 ContentDelta */
-function convertAnthropicDelta(delta: any): ContentDelta {
-  switch (delta.type) {
-    case 'text_delta':
-      return { type: 'text_delta', text: delta.text }
-    case 'input_json_delta':
-      return { type: 'input_json_delta', partial_json: delta.partial_json }
-    case 'thinking_delta':
-      return { type: 'thinking_delta', thinking: delta.thinking }
-    case 'signature_delta':
-      return { type: 'signature_delta', signature: delta.signature }
-    default:
-      // 未知增量类型，作为文本增量处理
-      return { type: 'text_delta', text: '' }
+      // 未知事件类型，透传为 response_stop（安全降级）
+      return { type: 'response_stop' }
   }
 }
 
 /** 将 Anthropic SDK 的 usage 转换为标准 TokenUsage */
 function convertAnthropicUsage(usage: any): TokenUsage {
-  return {
-    input_tokens: usage?.input_tokens ?? 0,
-    output_tokens: usage?.output_tokens ?? 0,
-    cache_creation_input_tokens: usage?.cache_creation_input_tokens,
-    cache_read_input_tokens: usage?.cache_read_input_tokens,
-    server_tool_use_input_tokens: usage?.server_tool_use_input_tokens,
+  const extras: Record<string, number> = {}
+  if (usage?.cache_creation_input_tokens !== undefined) {
+    extras.cacheCreationInputTokens = usage.cache_creation_input_tokens
   }
-}
-
-/** 将 Anthropic SDK 的增量 usage 转换为标准 DeltaUsage */
-function convertAnthropicDeltaUsage(usage: any): DeltaUsage {
+  if (usage?.cache_read_input_tokens !== undefined) {
+    extras.cacheReadInputTokens = usage.cache_read_input_tokens
+  }
+  if (usage?.server_tool_use_input_tokens !== undefined) {
+    extras.serverToolUseInputTokens = usage.server_tool_use_input_tokens
+  }
+  const inputTokens = usage?.input_tokens ?? 0
+  const outputTokens = usage?.output_tokens ?? 0
   return {
-    output_tokens: usage?.output_tokens ?? 0,
+    inputTokens,
+    outputTokens,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
 
@@ -154,13 +173,13 @@ function convertAnthropicDeltaUsage(usage: any): DeltaUsage {
 // Anthropic 实现
 // ============================================================================
 
-class AnthropicRequestAdapter implements LLMRequestAdapter {
+class AnthropicRequestAdapter implements LLMAdapter {
   constructor(private readonly client: Anthropic) {}
 
   async createStream(
-    params: LLMCreateParams,
+    params: CreateParams,
     signal: AbortSignal,
-    client_request_id?: string,
+    clientRequestId?: string,
   ): Promise<StreamResult> {
     const anthropicParams = convertToAnthropicParams(params)
     // @ts-ignore - anthropicParams is Record<string, any>, SDK types are internal
@@ -168,8 +187,8 @@ class AnthropicRequestAdapter implements LLMRequestAdapter {
       { ...anthropicParams, stream: true },
       {
         signal,
-        ...(client_request_id && {
-          headers: { 'anthropic-client-request-id': client_request_id },
+        ...(clientRequestId && {
+          headers: { 'anthropic-client-request-id': clientRequestId },
         }),
       },
     ).withResponse()
@@ -178,16 +197,16 @@ class AnthropicRequestAdapter implements LLMRequestAdapter {
 
     return {
       stream: convertAnthropicStream(rawStream),
-      request_id: result.request_id,
-      response: result.response,
+      requestId: result.request_id,
+      response: undefined,
     }
   }
 
   async createMessage(
-    params: LLMCreateParams,
+    params: CreateParams,
     signal: AbortSignal,
     timeout?: number,
-  ): Promise<LLMMessage> {
+  ): Promise<LLMResponse> {
     const anthropicParams = convertToAnthropicParams(params)
     // @ts-ignore - anthropicParams is Record<string, any>, SDK types are internal
     const result = await this.client.beta.messages.create(
@@ -201,7 +220,7 @@ class AnthropicRequestAdapter implements LLMRequestAdapter {
         timeout,
       },
     )
-    return convertAnthropicMessage(result)
+    return convertAnthropicResponse(result, params.model)
   }
 
   async verifyApiKey(_apiKey: string): Promise<boolean> {
@@ -210,40 +229,104 @@ class AnthropicRequestAdapter implements LLMRequestAdapter {
   }
 }
 
-/** 将标准 LLMCreateParams 转换为 Anthropic SDK 参数 */
-function convertToAnthropicParams(params: LLMCreateParams): Record<string, any> {
+/** 将参数转换为 Anthropic SDK 参数。兼容 v1 (snake_case) 和 v2 (camelCase) 格式。 */
+function convertToAnthropicParams(params: CreateParams): Record<string, any> {
+  // 兼容 v1 snake_case 和 v2 camelCase 字段
+  const p = params as any
+  const maxTokens = p.maxTokens ?? p.max_tokens
+  const model = p.model
+  const temperature = p.temperature
+  const topP = p.topP ?? p.top_p
+  const stopSequences = p.stopSequences ?? p.stop_sequences
+
+  // 从 providerExtras 或顶层字段中提取 Anthropic 专属字段
+  const anthropicExtras = p.providerExtras?.anthropic
+  const thinking = anthropicExtras?.thinking ?? p.thinking
+  const betas = anthropicExtras?.betas ?? p.betas
+  const contextManagement = anthropicExtras?.contextManagement ?? p.context_management
+  const outputConfig = anthropicExtras?.outputConfig ?? p.output_config
+  const metadata = p.metadata
+
+  // 消息：兼容 v1 LLMMessageParam[] (只有 user/assistant) 和 v2 Message[] (4 角色分离)
+  const rawMessages = p.messages ?? []
+  const systemMessages = rawMessages.filter((m: any) => m.role === 'system')
+  const nonSystemMessages = rawMessages.filter((m: any) => m.role !== 'system')
+
+  // 构建 system 提示
+  let systemContent: string | Array<Record<string, unknown>> | undefined
+  if (systemMessages.length > 0) {
+    systemContent = systemMessages.map((m: any) => m.content as string).join('\n\n')
+  } else if (p.system !== undefined) {
+    // v1 的 system 是顶层字段
+    systemContent = p.system
+  }
+
+  // 工具定义：兼容 v1 (input_schema) 和 v2 (inputSchema)
+  const rawTools = p.tools
+  const tools = rawTools?.map((t: any) => ({
+    name: t.name,
+    description: t.description,
+    input_schema: t.input_schema ?? t.inputSchema,
+  }))
+
   return {
-    model: params.model,
-    max_tokens: params.max_tokens,
-    messages: params.messages as any,
-    ...(params.system !== undefined && { system: params.system as any }),
-    ...(params.tools !== undefined && { tools: params.tools as any }),
-    ...(params.tool_choice !== undefined && { tool_choice: params.tool_choice as any }),
-    ...(params.temperature !== undefined && { temperature: params.temperature }),
-    ...(params.top_p !== undefined && { top_p: params.top_p }),
-    ...(params.metadata !== undefined && { metadata: params.metadata as any }),
-    ...(params.thinking !== undefined && { thinking: params.thinking as any }),
-    ...(params.betas !== undefined && { betas: params.betas as any }),
-    ...(params.context_management !== undefined && { context_management: params.context_management as any }),
-    ...(params.output_config !== undefined && { output_config: params.output_config as any }),
+    model,
+    max_tokens: maxTokens,
+    messages: nonSystemMessages as any,
+    ...(systemContent !== undefined && { system: systemContent }),
+    ...(tools !== undefined && { tools }),
+    ...(p.tool_choice !== undefined && { tool_choice: p.tool_choice }),
+    ...(p.toolChoice !== undefined && { tool_choice: p.toolChoice as any }),
+    ...(temperature !== undefined && { temperature }),
+    ...(topP !== undefined && { top_p: topP }),
+    ...(stopSequences !== undefined && { stop_sequences: stopSequences }),
+    ...(metadata !== undefined && { metadata }),
+    ...(thinking !== undefined && { thinking }),
+    ...(betas !== undefined && { betas }),
+    ...(contextManagement !== undefined && { context_management: contextManagement }),
+    ...(outputConfig !== undefined && { output_config: outputConfig }),
+    // 透传 extra_body 中的其他字段
+    ...(p.extra_body ? (p.extra_body as any) : {}),
   }
 }
 
 /** 将 Anthropic 原始事件流转换为标准事件流 */
 async function* convertAnthropicStream(
   rawStream: AsyncIterable<any>,
-): AsyncIterable<LLMStreamEvent> {
+): AsyncIterable<StreamEvent> {
   for await (const event of rawStream) {
     yield convertAnthropicStreamEvent(event)
+  }
+}
+
+/** 将 Anthropic SDK 非流式响应转换为标准 Response */
+function convertAnthropicResponse(result: any, model: string): LLMResponse {
+  const content: AssistantContentBlock[] = (result.content || []).map((block: any) => {
+    switch (block.type) {
+      case 'text':
+        return { type: 'text', text: block.text ?? '' }
+      case 'tool_use':
+        return { type: 'tool_call', id: block.id, name: block.name, input: block.input ?? {} }
+      case 'thinking':
+        return { type: 'text', text: block.thinking ?? '' }
+      default:
+        return { type: 'text', text: '' }
+    }
+  })
+
+  return {
+    id: result.id,
+    model: result.model ?? model,
+    role: 'assistant',
+    content,
+    stopReason: result.stop_reason as StopReason,
+    usage: convertAnthropicUsage(result.usage),
   }
 }
 
 // ============================================================================
 // OpenAI 工具函数
 // ============================================================================
-
-/** 停止原因类型（OpenAI → 标准） */
-type OpenAIStopReason = 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use' | null
 
 function getOpenAIClient(options: {
   apiKey?: string
@@ -278,7 +361,7 @@ function getOpenAIClient(options: {
 }
 
 // ============================================================================
-// Anthropic → OpenAI 格式转换
+// CreateParams 消息 → OpenAI 格式转换
 // ============================================================================
 
 type AnthropicContent = string | Array<{
@@ -291,148 +374,126 @@ type AnthropicContent = string | Array<{
   input?: unknown
 }>
 
+/** 将 4 角色分离消息转换为 OpenAI 格式 */
+/**
+ * 将消息转换为 OpenAI 格式。兼容 v1 (LLMMessageParam[]) 和 v2 (Message[]) 格式。
+ * v1: user 消息中嵌有 tool_result 块，需要拆分为独立的 role:'tool' 消息
+ * v2: tool 消息是独立的 role:'tool' 角色
+ */
 function convertMessagesToOpenAI(
   messages: any[],
-  system?: string | Array<Record<string, unknown>>,
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
-  if (typeof system === 'string' && system) {
-    result.push({ role: 'system', content: system })
-  } else if (Array.isArray(system)) {
-    const text = system
-      .map((b) => (b.type === 'text' ? (b as any).text : ''))
-      .filter(Boolean)
-      .join('\n\n')
-    if (text) result.push({ role: 'system', content: text })
-  }
-
   for (const msg of messages) {
-    const content = msg.content
-    if (msg.role === 'user') {
-      // Anthropic 的 user 消息可能同时包含 tool_result 和普通内容。
-      // OpenAI 要求 tool response 是独立的 role:'tool' 消息。
-      // 因此需要拆分：tool_result 块 → role:'tool' 消息，其余 → role:'user' 消息。
-      const converted = convertUserMessageToOpenAI(content)
-      result.push(...converted)
-    } else if (msg.role === 'assistant') {
-      result.push(convertAssistantMessage(content))
+    switch (msg.role) {
+      case 'system':
+        if (msg.content) {
+          result.push({ role: 'system', content: msg.content })
+        }
+        break
+      case 'user':
+        if (typeof msg.content === 'string') {
+          result.push({ role: 'user', content: msg.content })
+        } else if (Array.isArray(msg.content)) {
+          // v1: user 消息中可能包含 tool_result 块，需要拆分为独立的 tool 消息
+          const toolResults: any[] = []
+          const parts: Array<OpenAI.Chat.ChatCompletionContentPart> = []
+          for (const block of msg.content) {
+            if (block.type === 'tool_result') {
+              // v1 tool_result → 独立的 role:'tool' 消息
+              const text = typeof block.content === 'string'
+                ? block.content
+                : (Array.isArray(block.content)
+                    ? block.content.map((c: any) => c.type === 'text' ? c.text : '').join('\n')
+                    : '')
+              toolResults.push({
+                role: 'tool',
+                tool_call_id: block.tool_use_id ?? '',
+                content: text || '(empty)',
+              })
+            } else if (block.type === 'text') {
+              parts.push({ type: 'text', text: block.text })
+            } else if (block.type === 'image') {
+              // 兼容 v1 嵌套 source 和 v2 平铺格式
+              const mimeType = block.mimeType ?? block.source?.media_type ?? 'image/png'
+              const data = block.data ?? block.source?.data ?? ''
+              parts.push({
+                type: 'image_url',
+                image_url: { url: `data:${mimeType};base64,${data}` },
+              })
+            }
+          }
+          // 先发送 tool 消息（紧跟在 assistant tool_calls 后面）
+          result.push(...toolResults)
+          // 再发送 user 消息
+          if (parts.length > 0) {
+            result.push({
+              role: 'user',
+              content: parts.length === 1 && parts[0]?.type === 'text' ? parts[0].text : parts,
+            })
+          } else if (toolResults.length === 0) {
+            result.push({ role: 'user', content: '' })
+          }
+        } else {
+          result.push({ role: 'user', content: '' })
+        }
+        break
+      case 'assistant':
+        if (typeof msg.content === 'string') {
+          result.push({ role: 'assistant', content: msg.content })
+        } else if (Array.isArray(msg.content)) {
+          const textParts: string[] = []
+          const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
+          for (const block of msg.content) {
+            if (block.type === 'text') {
+              textParts.push(block.text)
+            } else if (block.type === 'tool_use' || block.type === 'tool_call') {
+              // 兼容 v1 (tool_use) 和 v2 (tool_call)
+              toolCalls.push({
+                id: block.id,
+                type: 'function',
+                function: {
+                  name: block.name,
+                  arguments: JSON.stringify(block.input ?? {}),
+                },
+              })
+            } else if (block.type === 'thinking') {
+              textParts.push(`<thinking>${block.thinking ?? ''}</thinking>`)
+            }
+            // redacted_thinking / server_tool_use: OpenAI 不支持，忽略
+          }
+          const assistantMsg: OpenAI.Chat.ChatCompletionAssistantMessageParam = {
+            role: 'assistant',
+          }
+          if (textParts.length > 0) assistantMsg.content = textParts.join('\n\n')
+          if (toolCalls.length > 0) assistantMsg.tool_calls = toolCalls
+          result.push(assistantMsg)
+        }
+        break
+      case 'tool':
+        result.push({
+          role: 'tool',
+          tool_call_id: msg.toolCallId,
+          content: msg.content || '(empty)',
+        })
+        break
     }
   }
 
   return result
 }
 
-/**
- * 将 Anthropic 的 user 消息转换为 OpenAI 格式。
- * Anthropic 把 tool_result 放在 user 消息的 content 数组里，
- * 但 OpenAI 要求 tool response 必须是独立的 role:'tool' 消息并带 tool_call_id。
- */
-function convertUserMessageToOpenAI(
-  content: AnthropicContent,
-): OpenAI.Chat.ChatCompletionMessageParam[] {
-  if (typeof content === 'string') return [{ role: 'user', content }]
-  if (!Array.isArray(content)) return [{ role: 'user', content: '' }]
-
-  const toolMessages: OpenAI.Chat.ChatCompletionToolMessageParam[] = []
-  const userParts: Array<OpenAI.Chat.ChatCompletionContentPart> = []
-
-  for (const block of content) {
-    if (block.type === 'tool_result') {
-      // tool_result → 独立的 role:'tool' 消息
-      const text =
-        typeof block.content === 'string'
-          ? block.content
-          : Array.isArray(block.content)
-            ? block.content.map((c: any) => c.text ?? '').join('\n')
-            : ''
-      toolMessages.push({
-        role: 'tool',
-        tool_call_id: (block as any).tool_use_id ?? block.id ?? '',
-        content: text || '(empty)',
-      })
-    } else if (block.type === 'text') {
-      userParts.push({ type: 'text', text: block.text ?? '' })
-    } else if (block.type === 'image') {
-      userParts.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${block.source?.media_type ?? 'image/png'};base64,${block.source?.data ?? ''}`,
-        },
-      })
-    }
-  }
-
-  const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
-
-  // tool response 消息必须紧跟在 assistant 的 tool_calls 后面
-  if (toolMessages.length > 0) {
-    result.push(...toolMessages)
-  }
-
-  // 普通 user 内容（如果有）
-  if (userParts.length > 0) {
-    const userContent = userParts.length === 1 && userParts[0]?.type === 'text'
-      ? userParts[0].text
-      : userParts
-    result.push({ role: 'user', content: userContent })
-  }
-
-  // 如果消息中只有 tool_result 没有其他内容，不需要额外的 user 消息
-  return result.length > 0 ? result : [{ role: 'user', content: '' }]
-}
-
-function convertAssistantMessage(
-  content: AnthropicContent,
-): OpenAI.Chat.ChatCompletionAssistantMessageParam {
-  const msg: OpenAI.Chat.ChatCompletionAssistantMessageParam = {
-    role: 'assistant',
-  }
-
-  if (typeof content === 'string') {
-    msg.content = content
-    return msg
-  }
-  if (!Array.isArray(content)) return msg
-
-  const textParts: string[] = []
-  const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
-
-  for (const block of content) {
-    if (block.type === 'text') {
-      textParts.push(block.text ?? '')
-    } else if (block.type === 'thinking') {
-      textParts.push(`<thinking>${block.text ?? ''}</thinking>`)
-    } else if (block.type === 'tool_use') {
-      toolCalls.push({
-        id: block.id ?? randomUUID(),
-        type: 'function',
-        function: {
-          name: block.name ?? '',
-          arguments: typeof block.input === 'string'
-            ? block.input
-            : JSON.stringify(block.input ?? {}),
-        },
-      })
-    }
-  }
-
-  if (textParts.length > 0) msg.content = textParts.join('\n\n')
-  if (toolCalls.length > 0) msg.tool_calls = toolCalls
-
-  return msg
-}
-
 function convertToolsToOpenAI(
   tools?: ToolDefinition[],
 ): OpenAI.Chat.ChatCompletionTool[] | undefined {
   if (!tools || tools.length === 0) return undefined
-  return tools.map((tool: any) => ({
+  return tools.map((tool) => ({
     type: 'function' as const,
     function: {
       name: tool.name ?? '',
       description: tool.description ?? '',
-      parameters: tool.input_schema ?? { type: 'object', properties: {} },
+      parameters: tool.inputSchema ?? { type: 'object', properties: {} },
     },
   }))
 }
@@ -441,21 +502,29 @@ function convertToolsToOpenAI(
 // OpenAI → 标准格式转换
 // ============================================================================
 
-/** 将 OpenAI 响应直接转换为标准 LLMMessage */
+const OPENAI_STOP_REASON_MAP: Record<string, StopReason> = {
+  stop: 'end_turn',
+  length: 'max_tokens',
+  tool_calls: 'tool_use',
+  content_filter: 'content_filter',
+  refusal: 'refusal',
+}
+
+/** 将 OpenAI 响应直接转换为标准 Response */
 function convertOpenAIResponseToStandard(
   completion: OpenAI.Chat.Completions.ChatCompletion,
   model: string,
-): LLMMessage {
+): LLMResponse {
   const choice = completion.choices[0]
-  const contentBlocks: ContentBlock[] = []
+  const contentBlocks: AssistantContentBlock[] = []
 
   if (choice?.message.content) {
-    contentBlocks.push({ type: 'text', text: choice.message.content, citations: [] })
+    contentBlocks.push({ type: 'text', text: choice.message.content })
   }
   if (choice?.message.tool_calls) {
     for (const tc of choice.message.tool_calls) {
       contentBlocks.push({
-        type: 'tool_use',
+        type: 'tool_call',
         id: tc.id,
         name: tc.function.name,
         input: JSON.parse(tc.function.arguments ?? '{}'),
@@ -463,56 +532,44 @@ function convertOpenAIResponseToStandard(
     }
   }
 
-  const stopReasonMap: Record<string, StopReason> = {
-    stop: 'end_turn',
-    length: 'max_tokens',
-    tool_calls: 'tool_use',
-    content_filter: 'stop_sequence',
-  }
-
   return {
     id: completion.id ?? randomUUID(),
-    type: 'message',
+    model: completion.model ?? model,
     role: 'assistant',
     content: contentBlocks,
-    model: completion.model ?? model,
-    stop_reason: choice?.finish_reason
-      ? stopReasonMap[choice.finish_reason] ?? 'end_turn'
+    stopReason: choice?.finish_reason
+      ? OPENAI_STOP_REASON_MAP[choice.finish_reason] ?? 'end_turn'
       : null,
-    stop_sequence: null,
     usage: {
+      inputTokens: completion.usage?.prompt_tokens ?? 0,
+      outputTokens: completion.usage?.completion_tokens ?? 0,
       input_tokens: completion.usage?.prompt_tokens ?? 0,
       output_tokens: completion.usage?.completion_tokens ?? 0,
     },
   }
 }
 
-/** 将 OpenAI 流式响应直接映射为标准 LLMStreamEvent */
+/** 将 OpenAI 流式响应直接映射为标准 StreamEvent */
 async function* mapOpenAIStreamToStandard(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
-): AsyncIterable<LLMStreamEvent> {
+): AsyncIterable<StreamEvent> {
   const messageId = randomUUID()
   let textBlockIndex = 0
   let toolBlockIndices = new Map<number, number>()
   let textBlockStarted = false
   let toolBlocksStarted = new Map<number, boolean>()
+  let currentModel = model
 
   yield {
-    type: 'message_start',
-    message: {
-      id: messageId,
-      type: 'message',
-      role: 'assistant',
-      content: [],
-      model,
-      stop_reason: null,
-      stop_sequence: null,
-      usage: { input_tokens: 0, output_tokens: 0 },
-    },
+    type: 'response_start',
+    responseId: messageId,
+    model,
   }
 
   for await (const chunk of stream) {
+    if (chunk.model) currentModel = chunk.model
+
     for (const choice of chunk.choices ?? []) {
       const delta = choice.delta
 
@@ -520,33 +577,33 @@ async function* mapOpenAIStreamToStandard(
       if (delta.content && delta.content !== '') {
         if (!textBlockStarted) {
           yield {
-            type: 'content_block_start',
+            type: 'chunk_start',
             index: textBlockIndex,
-            content_block: { type: 'text', text: '' },
+            chunk: { type: 'text', text: '' },
           }
           textBlockStarted = true
         }
         yield {
-          type: 'content_block_delta',
+          type: 'chunk_delta',
           index: textBlockIndex,
           delta: { type: 'text_delta', text: delta.content },
         }
       }
 
-      // tool_calls delta
+      // tool_calls delta — 使用 tool_use type 让 zy.ts 等消费者能正确判断
       if (delta.tool_calls) {
         for (const tc of delta.tool_calls) {
           const tcIdx = tc.index ?? 0
           if (!toolBlocksStarted.has(tcIdx)) {
-            const anthropicIdx = textBlockStarted
+            const blockIndex = textBlockStarted
               ? textBlockIndex + 1 + toolBlocksStarted.size
               : tcIdx
-            toolBlockIndices.set(tcIdx, anthropicIdx)
+            toolBlockIndices.set(tcIdx, blockIndex)
             toolBlocksStarted.set(tcIdx, true)
             yield {
-              type: 'content_block_start',
-              index: anthropicIdx,
-              content_block: {
+              type: 'chunk_start',
+              index: blockIndex,
+              chunk: {
                 type: 'tool_use',
                 id: tc.id ?? randomUUID(),
                 name: tc.function?.name ?? '',
@@ -555,14 +612,14 @@ async function* mapOpenAIStreamToStandard(
             }
           }
           if (tc.function?.arguments) {
-            const anthropicIdx = toolBlockIndices.get(tcIdx) ?? tcIdx
+            const blockIndex = toolBlockIndices.get(tcIdx) ?? tcIdx
             yield {
-              type: 'content_block_delta',
-              index: anthropicIdx,
+              type: 'chunk_delta',
+              index: blockIndex,
               delta: {
                 type: 'input_json_delta',
                 partial_json: tc.function.arguments,
-              },
+              } as any,
             }
           }
         }
@@ -573,113 +630,113 @@ async function* mapOpenAIStreamToStandard(
         // 关闭已打开的 content blocks
         if (textBlockStarted) {
           yield {
-            type: 'content_block_stop',
+            type: 'chunk_stop',
             index: textBlockIndex,
           }
         }
-        for (const [, anthropicIdx] of toolBlockIndices) {
+        for (const [, blockIndex] of toolBlockIndices) {
           yield {
-            type: 'content_block_stop',
-            index: anthropicIdx,
+            type: 'chunk_stop',
+            index: blockIndex,
           }
         }
 
-        const stopReasonMap: Record<string, StopReason> = {
-          stop: 'end_turn',
-          length: 'max_tokens',
-          tool_calls: 'tool_use',
-          content_filter: 'stop_sequence',
-        }
-
         const usage: DeltaUsage = {
-          output_tokens: chunk.usage?.completion_tokens ?? 0,
+          outputTokens: chunk.usage?.completion_tokens ?? 0,
         }
 
         yield {
-          type: 'message_delta',
-          delta: {
-            stop_reason: stopReasonMap[choice.finish_reason] ?? 'end_turn',
-          },
+          type: 'response_delta',
+          stopReason: OPENAI_STOP_REASON_MAP[choice.finish_reason] ?? 'end_turn',
           usage,
         }
       }
     }
   }
 
-  // 流结束后发送 message_stop，与 Anthropic SDK 行为对齐
-  yield { type: 'message_stop' }
+  // 流结束后发送 response_stop
+  yield { type: 'response_stop' }
 }
 
 // ============================================================================
 // OpenAI 实现
 // ============================================================================
 
-class OpenAIRequestAdapter implements LLMRequestAdapter {
+class OpenAIRequestAdapter implements LLMAdapter {
   async createStream(
-    params: LLMCreateParams,
+    params: CreateParams,
     signal: AbortSignal,
-    _client_request_id?: string,
+    _clientRequestId?: string,
   ): Promise<StreamResult> {
-    const client = getOpenAIClient({ model: params.model })
-    const openAIParams = stripAnthropicOnlyParams(params)
-    const openAIMessages = convertMessagesToOpenAI(openAIParams.messages, openAIParams.system)
+    const p = params as any
+    const client = getOpenAIClient({ model: p.model })
+    // 兼容 v1 LLMMessageParam[] 和 v2 Message[]
+    const rawMessages = p.messages ?? []
+    const openAIMessages = convertMessagesToOpenAI(rawMessages)
+    const openaiExtras = p.providerExtras?.openai
 
     logForDebugging(
-      `[OpenAI] Streaming request: model=${params.model}, messages=${openAIMessages.length}, max_tokens=${params.max_tokens}`,
+      `[OpenAI] Streaming request: model=${p.model}, messages=${openAIMessages.length}`,
     )
 
     const stream = await client.chat.completions.create(
       {
-        model: params.model,
+        model: normalizeModelStringForAPI(p.model),
         messages: openAIMessages,
-        max_tokens: params.max_tokens,
-        temperature: params.temperature ?? 1,
-        ...(params.top_p !== undefined && { top_p: params.top_p }),
-        ...(params.tools && { tools: convertToolsToOpenAI(params.tools) }),
-        ...(params.tool_choice && { tool_choice: params.tool_choice as any }),
+        max_tokens: p.maxTokens ?? p.max_tokens,
+        temperature: p.temperature ?? 1,
+        ...((p.topP ?? p.top_p) !== undefined && { top_p: p.topP ?? p.top_p }),
+        ...((p.stopSequences ?? p.stop_sequences) && { stop: p.stopSequences ?? p.stop_sequences }),
+        ...(p.tools && { tools: convertToolsToOpenAI(p.tools) }),
+        ...((p.toolChoice ?? p.tool_choice) && { tool_choice: (p.toolChoice ?? p.tool_choice) as any }),
         stream: true,
         stream_options: { include_usage: true },
-        ...(params.extra_body ? (params.extra_body as any) : {}),
+        ...(openaiExtras ? (openaiExtras as any) : {}),
+        ...(p.extra_body ? (p.extra_body as any) : {}),
       },
       { signal },
     ) as unknown as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
 
     return {
-      stream: mapOpenAIStreamToStandard(stream, params.model),
-      request_id: randomUUID(),
+      stream: mapOpenAIStreamToStandard(stream, p.model),
+      requestId: randomUUID(),
       response: undefined,
     }
   }
 
   async createMessage(
-    params: LLMCreateParams,
+    params: CreateParams,
     signal: AbortSignal,
     _timeout?: number,
-  ): Promise<LLMMessage> {
-    const client = getOpenAIClient({ model: params.model })
-    const openAIParams = stripAnthropicOnlyParams(params)
-    const openAIMessages = convertMessagesToOpenAI(openAIParams.messages, openAIParams.system)
+  ): Promise<LLMResponse> {
+    const p = params as any
+    const client = getOpenAIClient({ model: p.model })
+    const rawMessages = p.messages ?? []
+    const openAIMessages = convertMessagesToOpenAI(rawMessages)
+    const openaiExtras = p.providerExtras?.openai
 
     logForDebugging(
-      `[OpenAI] Non-streaming request: model=${params.model}, messages=${openAIMessages.length}, max_tokens=${params.max_tokens}`,
+      `[OpenAI] Non-streaming request: model=${p.model}, messages=${openAIMessages.length}`,
     )
 
     const completion = await client.chat.completions.create(
       {
-        model: params.model,
+        model: normalizeModelStringForAPI(p.model),
         messages: openAIMessages,
-        max_tokens: params.max_tokens,
-        temperature: params.temperature ?? 1,
-        ...(params.top_p !== undefined && { top_p: params.top_p }),
-        ...(params.tools && { tools: convertToolsToOpenAI(params.tools) }),
-        ...(params.tool_choice && { tool_choice: params.tool_choice as any }),
+        max_tokens: p.maxTokens ?? p.max_tokens,
+        temperature: p.temperature ?? 1,
+        ...((p.topP ?? p.top_p) !== undefined && { top_p: p.topP ?? p.top_p }),
+        ...((p.stopSequences ?? p.stop_sequences) && { stop: p.stopSequences ?? p.stop_sequences }),
+        ...(p.tools && { tools: convertToolsToOpenAI(p.tools) }),
+        ...((p.toolChoice ?? p.tool_choice) && { tool_choice: (p.toolChoice ?? p.tool_choice) as any }),
         stream: false,
-        ...(params.extra_body ? (params.extra_body as any) : {}),
+        ...(openaiExtras ? (openaiExtras as any) : {}),
+        ...(p.extra_body ? (p.extra_body as any) : {}),
       },
       { signal },
     )
 
-    return convertOpenAIResponseToStandard(completion, params.model)
+    return convertOpenAIResponseToStandard(completion, p.model)
   }
 
   async verifyApiKey(_apiKey: string): Promise<boolean> {
@@ -688,22 +745,9 @@ class OpenAIRequestAdapter implements LLMRequestAdapter {
 }
 
 /**
- * 从标准参数中移除 OpenAI 不支持的字段。
- */
-function stripAnthropicOnlyParams(params: LLMCreateParams) {
-  const {
-    betas, thinking, context_management, system,
-    metadata, output_config, ...rest
-  } = params as any
-  return {
-    ...rest,
-    model: normalizeModelStringForAPI(params.model),
-    ...(system !== undefined && { system: system as string | Record<string, unknown>[] }),
-  }
-}
-
-/**
  * 供外部使用的 OpenAI 消息创建函数（替代 openaiQuery.ts 中的 openAICreateMessage）。
+ * 注意：此函数保留为向后兼容，调用方仍在使用旧的 v1 类型。
+ * 参数使用 any 类型以兼容旧代码，返回标准 Response。
  */
 export async function createOpenAIMessage(params: {
   model: string
@@ -715,9 +759,73 @@ export async function createOpenAIMessage(params: {
   tools?: ToolDefinition[]
   tool_choice?: Record<string, unknown>
   signal?: AbortSignal
-}): Promise<LLMMessage> {
+}): Promise<LLMResponse> {
   const client = getOpenAIClient({ model: params.model })
-  const openAIMessages = convertMessagesToOpenAI(params.messages, params.system)
+
+  // 将旧格式消息转换为标准 4 角色分离格式
+  const messages: Message[] = []
+
+  // 如果 system 存在，作为 system 消息
+  if (params.system) {
+    if (typeof params.system === 'string') {
+      messages.push({ role: 'system', content: params.system })
+    } else {
+      // TextBlockParam[] → 拼接为纯文本
+      messages.push({
+        role: 'system',
+        content: params.system.map(b => (b as any).text).join('\n\n'),
+      })
+    }
+  }
+
+  // 转换旧格式消息为新的 4 角色分离格式
+  for (const msg of params.messages) {
+    if (msg.role === 'user') {
+      // 旧 user 消息可能包含 tool_result，需要拆分
+      if (typeof msg.content === 'string') {
+        messages.push({ role: 'user', content: msg.content })
+      } else if (Array.isArray(msg.content)) {
+        // 检查是否有 tool_result 块
+        const hasToolResult = msg.content.some((b: any) => b.type === 'tool_result')
+        if (hasToolResult) {
+          // 拆分 tool_result 为独立的 tool 消息
+          for (const block of msg.content) {
+            if (block.type === 'tool_result') {
+              const content = typeof block.content === 'string'
+                ? block.content
+                : (block.content || []).map((b: any) => b.type === 'text' ? b.text : '').join('\n')
+              messages.push({
+                role: 'tool',
+                toolCallId: block.tool_use_id,
+                content,
+                isError: block.is_error,
+              })
+            }
+          }
+          // 非 tool_result 块作为 user 消息
+          const userBlocks = msg.content.filter((b: any) => b.type !== 'tool_result')
+          if (userBlocks.length > 0) {
+            messages.push({
+              role: 'user',
+              content: userBlocks.length === 1 && userBlocks[0]?.type === 'text'
+                ? userBlocks[0].text
+                : userBlocks,
+            })
+          }
+        } else {
+          messages.push({ role: 'user', content: msg.content })
+        }
+      }
+    } else if (msg.role === 'assistant') {
+      if (typeof msg.content === 'string') {
+        messages.push({ role: 'assistant', content: msg.content })
+      } else {
+        messages.push({ role: 'assistant', content: msg.content })
+      }
+    }
+  }
+
+  const openAIMessages = convertMessagesToOpenAI(messages)
 
   logForDebugging(
     `[OpenAI] Non-streaming request: model=${params.model}, messages=${openAIMessages.length}, max_tokens=${params.max_tokens}`,
@@ -750,7 +858,7 @@ export async function createOpenAIMessage(params: {
  * @param anthropicClient - Anthropic SDK 客户端实例（由 withRetry 提供）
  * @returns 对应 provider 的请求适配器
  */
-export function getRequestAdapter(anthropicClient: Anthropic): LLMRequestAdapter {
+export function getRequestAdapter(anthropicClient: Anthropic): LLMAdapter {
   if (isOpenAIProvider(getAPIProvider())) {
     return new OpenAIRequestAdapter()
   }

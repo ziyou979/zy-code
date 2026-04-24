@@ -9,6 +9,7 @@ import {
 import { queryModelWithoutStreaming } from '../../services/api/zy.js'
 import { getEmptyToolPermissionContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
+import type { TextBlock } from '../../types/llm.js'
 import { createAbortController } from '../abortController.js'
 import { count } from '../array.js'
 import { getCwd } from '../cwd.js'
@@ -46,9 +47,9 @@ function formatRecentMessages(messages: Message[]): string {
         return `${role}: ${content.slice(0, 500)}`
       const text = content
         .filter(
-          (b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text',
+          (b): b is TextBlock => b.type === 'text',
         )
-        .map(b => b.text)
+        .map((b: TextBlock) => b.text)
         .join('\n')
       return `${role}: ${text.slice(0, 500)}`
     })

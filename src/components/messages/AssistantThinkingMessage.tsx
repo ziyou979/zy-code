@@ -1,4 +1,4 @@
-import type { ThinkingBlock, ThinkingBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { ThinkingBlock, ThinkingBlockParam } from '../../types/llm.js';
 import React from 'react';
 import { Box, Text } from '../../ink.js';
 import { tSync } from '../../i18n/index.js';
