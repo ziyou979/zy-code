@@ -14,10 +14,11 @@ type Props = {
   shimmerColor: keyof Theme;
   stalledIntensity?: number;
 };
-const ERROR_RED = {
-  r: 171,
-  g: 43,
-  b: 63
+// 停滞状态颜色：蓝紫色，与天蓝色主题协调但有明显区分
+const STALLED_COLOR = {
+  r: 130,
+  g: 80,
+  b: 210
 };
 export function GlimmerMessage({
   message,
@@ -57,7 +58,7 @@ export function GlimmerMessage({
     const baseColorStr = theme[messageColor];
     const baseRGB = baseColorStr ? parseRGB(baseColorStr) : null;
     if (baseRGB) {
-      const interpolated = interpolateColor(baseRGB, ERROR_RED, stalledIntensity);
+      const interpolated = interpolateColor(baseRGB, STALLED_COLOR, stalledIntensity);
       const color = toRGBColor(interpolated);
       earlyReturn = <><Text color={color}>{message}</Text>{<Text color={color}> </Text>}</>;
     } else {

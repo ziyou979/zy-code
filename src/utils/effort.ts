@@ -3,7 +3,7 @@ import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
-import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
+import { localModelHasCapability, getLocalModelCapability } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
 import type { EffortLevel } from 'src/entrypoints/sdk/runtimeTypes.js'
@@ -19,43 +19,26 @@ export const EFFORT_LEVELS = [
 
 export type EffortValue = EffortLevel | number
 
-// @[MODEL LAUNCH]: Add the new model to the allowlist if it supports the effort parameter.
+// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsEffort(model: string): boolean {
-  const m = model.toLowerCase()
   if (isEnvTruthy(process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT)) {
     return true
   }
-  const supported3P = get3PModelCapabilityOverride(model, 'effort')
-  if (supported3P !== undefined) {
-    return supported3P
-  }
-  // Supported by a subset of Zy 4 models
-  if (m.includes('opus-4-6') || m.includes('sonnet-4-6')) {
+  // ~/.zy/model-capabilities.json 本地配置优先
+  if (localModelHasCapability(model, 'effort')) {
     return true
   }
-  // Exclude any other known legacy models (haiku, older opus/sonnet variants)
-  if (m.includes('haiku') || m.includes('sonnet') || m.includes('opus')) {
-    return false
-  }
-
-  // IMPORTANT: Do not change the default effort support without notifying
-  // the model launch DRI and research. This is a sensitive setting that can
-  // greatly affect model quality and bashing.
 
   // Default to true for unknown model strings on direct API.
   // Do not default to true for 3P as they have different formats for their
-  // model strings (ex. anthropics/zy-code#30795)
+  // model strings.
   return providerHasCapability(getAPIProvider(), 'effort')
 }
 
-// @[MODEL LAUNCH]: Add the new model to the allowlist if it supports 'max' effort.
-// Per API docs, 'max' is Opus 4.6 only for public models — other models return an error.
+// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsMaxEffort(model: string): boolean {
-  const supported3P = get3PModelCapabilityOverride(model, 'max_effort')
-  if (supported3P !== undefined) {
-    return supported3P
-  }
-  if (model.toLowerCase().includes('opus-4-6')) {
+  // ~/.zy/model-capabilities.json 本地配置优先
+  if (localModelHasCapability(model, 'max_effort')) {
     return true
   }
   // @ts-ignore

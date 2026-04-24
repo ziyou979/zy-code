@@ -2,7 +2,6 @@
  * 统一的 LLM 请求适配器。
  *
  * 将 Anthropic SDK 和 OpenAI SDK 的调用统一为相同的接口，
- * 使 zy.ts 中的核心逻辑不再需要 isOpenAIProvider 分支判断。
  *
  * 设计原则：
  * - 使用 src/types/llm.ts 中定义的标准类型作为内部格式

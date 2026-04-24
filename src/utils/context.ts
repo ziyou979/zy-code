@@ -3,8 +3,9 @@ import { CONTEXT_1M_BETA_HEADER } from '../constants/betas.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
-import { modelHasCapability } from './model/providers.js'
+import { modelHasCapability, getModelMaxOutputTokensFromSettings } from './model/providers.js'
 import { getModelCapability } from './model/modelCapabilities.js'
+import { getLocalMaxOutputTokens } from './settings/localModelCapabilities.js'
 
 // Model context window size (200k tokens for all models right now)
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
@@ -141,66 +142,35 @@ export function calculateContextPercentages(
 
 /**
  * Returns the model's default and upper limit for max output tokens.
+ *
+ * 优先级：
+ * 1. settings.json modelCapabilities 配置（用户自定义，优先）
+ * 2. ~/.zy/model-capabilities.json 本地模型能力配置
+ * 3. 通用默认值
+ * 4. API 缓存的 max_tokens 覆盖
  */
 export function getModelMaxOutputTokens(model: string): {
   default: number
   upperLimit: number
 } {
-  let defaultTokens: number
-  let upperLimit: number
-
-  if (isInternalBuild()) {
-    // @ts-ignore
-    const antModel = resolveAntModel(model.toLowerCase())
-    if (antModel) {
-      defaultTokens = antModel.defaultMaxTokens ?? MAX_OUTPUT_TOKENS_DEFAULT
-      upperLimit = antModel.upperMaxTokensLimit ?? MAX_OUTPUT_TOKENS_UPPER_LIMIT
-      return { default: defaultTokens, upperLimit }
-    }
+  // 1. settings.json 用户自定义配置优先
+  const settingsValue = getModelMaxOutputTokensFromSettings(model)
+  if (settingsValue) {
+    return settingsValue
   }
 
-  const m = model.toLowerCase()
+  // 2. ~/.zy/model-capabilities.json 本地配置
+  const localTokens = getLocalMaxOutputTokens(model)
+  const defaultTokens = localTokens?.default ?? MAX_OUTPUT_TOKENS_DEFAULT
+  let upperLimit = localTokens?.upperLimit ?? MAX_OUTPUT_TOKENS_UPPER_LIMIT
 
-  if (m.includes('opus-4-6')) {
-    defaultTokens = 64_000
-    upperLimit = 128_000
-  } else if (m.includes('sonnet-4-6')) {
-    defaultTokens = 32_000
-    upperLimit = 128_000
-  } else if (
-    m.includes('opus-4-5') ||
-    m.includes('sonnet-4') ||
-    m.includes('haiku-4')
-  ) {
-    defaultTokens = 32_000
-    upperLimit = 64_000
-  } else if (m.includes('opus-4-1') || m.includes('opus-4')) {
-    defaultTokens = 32_000
-    upperLimit = 32_000
-  } else if (m.includes('zy-3-opus')) {
-    defaultTokens = 4_096
-    upperLimit = 4_096
-  } else if (m.includes('zy-3-sonnet')) {
-    defaultTokens = 8_192
-    upperLimit = 8_192
-  } else if (m.includes('zy-3-haiku')) {
-    defaultTokens = 4_096
-    upperLimit = 4_096
-  } else if (m.includes('3-5-sonnet') || m.includes('3-5-haiku')) {
-    defaultTokens = 8_192
-    upperLimit = 8_192
-  } else if (m.includes('3-7-sonnet')) {
-    defaultTokens = 32_000
-    upperLimit = 64_000
-  } else {
-    defaultTokens = MAX_OUTPUT_TOKENS_DEFAULT
-    upperLimit = MAX_OUTPUT_TOKENS_UPPER_LIMIT
-  }
-
+  // 3. API 缓存覆盖
   const cap = getModelCapability(model)
   if (cap?.max_tokens && cap.max_tokens >= 4_096) {
     upperLimit = cap.max_tokens
-    defaultTokens = Math.min(defaultTokens, upperLimit)
+    if (defaultTokens > upperLimit) {
+      return { default: upperLimit, upperLimit }
+    }
   }
 
   return { default: defaultTokens, upperLimit }

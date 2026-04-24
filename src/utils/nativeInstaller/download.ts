@@ -25,8 +25,8 @@ import { getBinaryName, getPlatform } from './installer.js'
 
 const GCS_BUCKET_URL =
   'https://storage.googleapis.com/zy-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/zy-code-releases'
-export const ARTIFACTORY_REGISTRY_URL =
-  'https://artifactory.infra.ant.dev/artifactory/api/npm/npm-all/'
+// TODO: 替换为自建 npm registry URL（原 Anthropic Artifactory 已移除，ant.dev 不可访问）
+const ARTIFACTORY_REGISTRY_URL = ''
 
 export async function getLatestVersionFromArtifactory(
   tag: string = 'latest',
@@ -139,13 +139,13 @@ export async function getLatestVersion(
   }
 
   // Route to appropriate source
-  if (isInternalBuild()) {
-    // Use Artifactory for ant users
-    const npmTag = channel === 'stable' ? 'stable' : 'latest'
-    return getLatestVersionFromArtifactory(npmTag)
-  }
+  // TODO: 自建 npm registry 后恢复内部构建的 Artifactory 路由
+  // if (isInternalBuild()) {
+  //   const npmTag = channel === 'stable' ? 'stable' : 'latest'
+  //   return getLatestVersionFromArtifactory(npmTag)
+  // }
 
-  // Use GCS for external users
+  // Use GCS for all users (internal Artifactory removed - ant.dev inaccessible)
   return getLatestVersionFromBinaryRepo(channel, GCS_BUCKET_URL)
 }
 
@@ -507,13 +507,13 @@ export async function downloadVersion(
     return 'binary'
   }
 
-  if (isInternalBuild()) {
-    // Use Artifactory for ant users
-    await downloadVersionFromArtifactory(version, stagingPath)
-    return 'npm'
-  }
+  // TODO: 自建 npm registry 后恢复内部构建的 Artifactory 路由
+  // if (isInternalBuild()) {
+  //   await downloadVersionFromArtifactory(version, stagingPath)
+  //   return 'npm'
+  // }
 
-  // Use GCS for external users
+  // Use GCS for all users (internal Artifactory removed - ant.dev inaccessible)
   await downloadVersionFromBinaryRepo(version, stagingPath, GCS_BUCKET_URL)
   return 'binary'
 }

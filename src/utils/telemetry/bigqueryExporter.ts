@@ -10,6 +10,7 @@ import {
 import axios from 'axios'
 import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import { getOauthConfig } from '../../constants/oauth.js'
 import { checkHasTrustDialogAccepted } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage, toError } from '../errors.js'
@@ -44,17 +45,17 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
   private isShutdown = false
 
   constructor(options: { timeout?: number } = {}) {
-    const defaultEndpoint = 'https://api.anthropic.com/api/claude_code/metrics'
+    // TODO: 替换为 ZY Code 自建服务端点（当前通过 getOauthConfig().BASE_API_URL 动态拼接，等待自建服务就绪）
+    const metricsPath = '/api/claude_code/metrics'
 
     if (
       isInternalBuild() &&
       process.env.ANT_ZY_CODE_METRICS_ENDPOINT
     ) {
       this.endpoint =
-        process.env.ANT_ZY_CODE_METRICS_ENDPOINT +
-        '/api/claude_code/metrics'
+        process.env.ANT_ZY_CODE_METRICS_ENDPOINT + metricsPath
     } else {
-      this.endpoint = defaultEndpoint
+      this.endpoint = getOauthConfig().BASE_API_URL + metricsPath
     }
 
     this.timeout = options.timeout || 5000

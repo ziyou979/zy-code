@@ -5,6 +5,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { queryHaiku } from '../../services/api/zy.js'
+import { getOauthConfig } from '../../constants/oauth.js'
 import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
@@ -183,8 +184,9 @@ export async function checkDomainBlocklist(
     return { status: 'allowed' }
   }
   try {
+    // TODO: 替换为 ZY Code 自建服务端点（当前通过 getOauthConfig().BASE_API_URL 动态拼接，等待自建服务就绪）
     const response = await axios.get(
-      `https://api.anthropic.com/api/web/domain_info?domain=${encodeURIComponent(domain)}`,
+      `${getOauthConfig().BASE_API_URL}/api/web/domain_info?domain=${encodeURIComponent(domain)}`,
       { timeout: DOMAIN_CHECK_TIMEOUT_MS },
     )
     if (response.status === 200) {

@@ -6,10 +6,11 @@ const DEFAULT_CHARACTERS = getDefaultCharacters();
 const SPINNER_FRAMES = [...DEFAULT_CHARACTERS, ...[...DEFAULT_CHARACTERS].reverse()];
 const REDUCED_MOTION_DOT = '●';
 const REDUCED_MOTION_CYCLE_MS = 2000; // 2-second cycle: 1s visible, 1s dim
-const ERROR_RED = {
-  r: 171,
-  g: 43,
-  b: 63
+// 停滞状态颜色：蓝紫色，与天蓝色主题协调但有明显区分
+const STALLED_COLOR = {
+  r: 130,
+  g: 80,
+  b: 210
 };
 type Props = {
   frame: number;
@@ -36,7 +37,7 @@ export function SpinnerGlyph({
     const baseColorStr = theme[messageColor];
     const baseRGB = baseColorStr ? parseRGB(baseColorStr) : null;
     if (baseRGB) {
-      const interpolated = interpolateColor(baseRGB, ERROR_RED, stalledIntensity);
+      const interpolated = interpolateColor(baseRGB, STALLED_COLOR, stalledIntensity);
       return <Box flexWrap="wrap" height={1} width={2}><Text color={toRGBColor(interpolated)}>{spinnerChar}</Text></Box>;
     }
     const color = stalledIntensity > 0.5 ? "error" : messageColor;

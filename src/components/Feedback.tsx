@@ -3,6 +3,7 @@ import { readFile, stat } from 'fs/promises';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { getLastAPIRequest } from 'src/bootstrap/state.js';
+import { getOauthConfig } from 'src/constants/oauth.js';
 import { logEventToZy } from 'src/services/analytics/zyEventLogger.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { getLastAssistantMessage, normalizeMessagesForAPI } from 'src/utils/messages.js';
@@ -541,7 +542,8 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       'User-Agent': getUserAgent(),
       ...authResult.headers
     };
-    const response = await axios.post('https://api.anthropic.com/api/claude_cli_feedback', {
+    // TODO: 替换为 ZY Code 自建服务端点（当前通过 getOauthConfig().BASE_API_URL 动态拼接，等待自建服务就绪）
+    const response = await axios.post(`${getOauthConfig().BASE_API_URL}/api/claude_cli_feedback`, {
       content: jsonStringify(data)
     }, {
       headers,

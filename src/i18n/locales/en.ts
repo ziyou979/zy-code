@@ -72,11 +72,11 @@ export const en: TranslationResource = {
   'tip.agentFlag':
     'Use --agent <agent_name> to directly start a conversation with a subagent',
   'tip.desktopApp':
-    'Run ZY Code locally or remotely using the Zy desktop app: clau.de/desktop',
+    'Run ZY Code locally or remotely using the Zy desktop app',
   'tip.desktopShortcut':
     'Continue your session in ZY Code Desktop with {shortcut}',
   'tip.webApp':
-    'Run tasks in the cloud while you keep coding locally · clau.de/web',
+    'Run tasks in the cloud while you keep coding locally',
   'tip.mobileApp':
     '/mobile to use ZY Code from the Zy app on your phone',
   'tip.opusPlanModeReminder':
@@ -581,8 +581,9 @@ export const en: TranslationResource = {
   'permission.yesAllowEditsThisSession': 'Yes, allow all edits during this session ({shortcut})',
   'permission.yesAllowReadThisSession': 'Yes, during this session',
   'permission.yesAllowReadFromDir': 'Yes, allow reading from {dir}/ during this session',
-  'permission.yesAllowReadSinglePath': 'Yes, allow reading from {dir}/',
+  'permission.yesAllowReadSinglePath': 'Yes, allow reading from {dir}/ in this project',
   'permission.yesAllowReadMultiplePathsStart': 'Yes, allow reading from',
+  'permission.yesAllowReadMultiplePathsEnd': 'in this project',
   'permission.fromThisProject': 'from this project',
   'permission.yesAllowEditsInDir': 'Yes, allow all edits in {dir}/ during this session ({shortcut})',
   'permission.yesAllowZyFolderEdits': 'Yes, and allow Zy to edit its own settings for this session',
@@ -603,7 +604,7 @@ export const en: TranslationResource = {
   'permission.deleteAskTool': 'Delete ask tool?',
 
   // Permission dialogs - directory access (persist across sessions)
-  'permission.alwaysAllowAccessToDir': 'Yes, and always allow access to {dir}',
+  'permission.alwaysAllowAccessToDir': 'Yes, and always allow access to {dir} in this project',
   'permission.alwaysAllowAccessToDirs': 'Yes, and always allow access to {dirs} from this project',
 
   // Permission dialogs - commands only (don't ask again)
@@ -905,6 +906,12 @@ export const en: TranslationResource = {
   'fileEdit.removedLines': 'removed {count} lines',
   'fileEdit.removedLineOnly': 'Removed {count} line',
   'fileEdit.removedLinesOnly': 'Removed {count} lines',
+
+  // Grove terms notice
+  'grove.termsNotice':
+    'An update to our Consumer Terms and Privacy Policy will take effect on {date}. Run `{command}` to review the updated terms.',
+  'grove.termsNoticeActionRequired':
+    '[ACTION REQUIRED] An update to our Consumer Terms and Privacy Policy has taken effect on {date}. You must run `{command}` to review the updated terms.',
 
   // Cost tracker summary
   'costTracker.totalCost': 'Total cost',

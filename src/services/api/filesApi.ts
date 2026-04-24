@@ -29,12 +29,14 @@ const FILES_API_BETA_HEADER = 'files-api-2025-04-14,oauth-2025-04-20'
 const ANTHROPIC_VERSION = '2023-06-01'
 
 // API 基础 URL — 使用 env-manager 设置的 ANTHROPIC_BASE_URL 以匹配对应环境
-// 独立使用时回退到公共 API
+// 独立使用时回退到 ZY Code 自有文件服务
+// TODO: 替换为 ZY Code 自有文件服务 URL（当前暂用环境变量兜底，等待自建服务就绪）
 function getDefaultApiBaseUrl(): string {
   return (
     process.env.ANTHROPIC_BASE_URL ||
     process.env.ZY_CODE_API_BASE_URL ||
-    'https://api.anthropic.com'
+    process.env.ZY_CODE_FILES_API_BASE_URL ||
+    ''
   )
 }
 

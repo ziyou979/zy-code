@@ -462,69 +462,7 @@ export const SettingsSchema = lazySchema(() =>
             'the built-in Zy models in the /model selector. Each entry defines an alias ' +
             '(used in settings), the actual model ID (sent to the API), and display metadata.',
         ),
-      modelCapabilities: z
-        .array(
-          z.object({
-            model: z
-              .string()
-              .describe(
-                'Model ID or alias to match (e.g., "qwen3.6-plus", "qwen-max"). ' +
-                  'Case-insensitive substring match against the active model name.',
-              ),
-            capabilities: z
-              .array(
-                z.enum([
-                  'thinking',
-                  'adaptive_thinking',
-                  'effort',
-                  'structured_outputs',
-                  'context_management',
-                  'prompt_caching',
-                  'web_search',
-                  'interleaved_thinking',
-                  '1m_context',
-                  'auto_mode',
-                ]),
-              )
-              .describe('List of capabilities this model supports.'),
-            maxInputTokens: z
-              .number()
-              .optional()
-              .describe('Maximum input tokens. Defaults to 200000.'),
-            costs: z
-              .object({
-                inputTokens: z
-                  .number()
-                  .describe('每百万输入 token 费用（元）'),
-                outputTokens: z
-                  .number()
-                  .describe('每百万输出 token 费用（元）'),
-                promptCacheWriteTokens: z
-                  .number()
-                  .optional()
-                  .describe('每百万缓存写入 token 费用（元），不支持缓存时可不填'),
-                promptCacheReadTokens: z
-                  .number()
-                  .optional()
-                  .describe('每百万缓存读取 token 费用（元），不支持缓存时可不填'),
-                webSearchRequests: z
-                  .number()
-                  .optional()
-                  .describe('每次网络搜索费用（元），不支持搜索时可不填'),
-              })
-              .optional()
-              .describe(
-                '模型定价配置（单位：元）。' +
-                  '当设置时，覆盖内置定价用于费用计算和展示。',
-              ),
-          }),
-        )
-        .optional()
-        .describe(
-          'User-defined model capabilities. Used to declare what features ' +
-            'your custom/non-Zy model supports, replacing hardcoded Zy-only checks. ' +
-            'Matched by case-insensitive substring against the active model name.',
-        ),
+      // 模型能力配置已迁移至 ~/.zy/model-capabilities.json，settings.json 不再包含此字段
       // Whether to automatically approve all MCP servers in the project
       enableAllProjectMcpServers: z
         .boolean()

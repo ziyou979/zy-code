@@ -18,6 +18,7 @@ import {
 } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { tSync } from '../../i18n/index.js'
 
 // 缓存过期：24 小时
 const GROVE_CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
@@ -342,16 +343,14 @@ export async function checkGroveForNonInteractive(): Promise<void> {
     })
     if (config === null || config.notice_is_grace_period) {
       // 宽限期仍然有效——显示提示消息并继续
-      // TODO: writeToStderr 中的用户通知消息需要提取 i18n（需添加 tSync 导入和 i18n key）
       writeToStderr(
-        '\nAn update to our Consumer Terms and Privacy Policy will take effect on October 8, 2025. Run `zy` to review the updated terms.\n\n',
+        `\n${tSync('grove.termsNotice', { date: 'October 8, 2025', command: 'zy' })}\n\n`,
       )
       await markGroveNoticeViewed()
     } else {
       // 宽限期已结束——显示错误消息并退出
-      // TODO: writeToStderr 中的用户通知消息需要提取 i18n（需添加 tSync 导入和 i18n key）
       writeToStderr(
-        '\n[ACTION REQUIRED] An update to our Consumer Terms and Privacy Policy has taken effect on October 8, 2025. You must run `zy` to review the updated terms.\n\n',
+        `\n${tSync('grove.termsNoticeActionRequired', { date: 'October 8, 2025', command: 'zy' })}\n\n`,
       )
       await gracefulShutdown(1)
     }

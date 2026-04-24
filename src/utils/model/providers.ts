@@ -1,6 +1,12 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
+import {
+  localModelHasCapability,
+  getLocalModelCapability,
+  getLocalModelCosts,
+  getLocalMaxOutputTokens,
+} from '../settings/localModelCapabilities.js'
 import { PROVIDER_REGISTRY, getProviderEntry } from './providerRegistry.js'
 
 /**
@@ -79,6 +85,8 @@ export type ProviderCapability =
   | 'thinking'            // extended thinking (thinking blocks)
   | 'adaptive_thinking'   // adaptive thinking mode
   | 'effort'              // effort parameter (low/medium/high/max)
+  | 'max_effort'          // max effort level support
+  | 'advisor'             // advisor tool support
   | 'structured_outputs'  // strict tool schema / structured outputs beta
   | 'context_management'  // context management beta (thinking preservation)
   | 'prompt_caching'      // cache_control / prompt caching beta
@@ -168,8 +176,8 @@ export function isEnvOrDefaultProvider(provider: APIProvider): boolean {
 }
 
 /**
- * Model capability — resolved from settings.json `modelCapabilities`.
- * Settings take priority over hardcoded provider-level declarations.
+ * 从 ~/.zy/model-capabilities.json 读取模型能力配置。
+ * 模型能力配置已从 settings.json 独立出来。
  *
  * Usage: replace hardcoded model checks with
  * `modelHasCapability(model, 'thinking')`.
@@ -178,29 +186,12 @@ export function modelHasCapability(
   model: string,
   capability: ProviderCapability | '1m_context' | 'auto_mode',
 ): boolean {
-  const settings = readSettings()
-  if (settings?.modelCapabilities) {
-    const m = model.toLowerCase()
-    for (const mc of settings.modelCapabilities) {
-      if (m.includes(mc.model.toLowerCase())) {
-        if (mc.capabilities.includes(capability as never)) return true
-      }
-    }
-  }
+  if (localModelHasCapability(model, capability)) return true
   return providerHasCapability(getAPIProvider(), capability as ProviderCapability)
 }
 
 export function getModelMaxInputTokens(model: string): number | undefined {
-  const settings = readSettings()
-  if (settings?.modelCapabilities) {
-    const m = model.toLowerCase()
-    for (const mc of settings.modelCapabilities) {
-      if (m.includes(mc.model.toLowerCase())) {
-        return mc.maxInputTokens
-      }
-    }
-  }
-  return undefined
+  return getLocalModelCapability(model)?.maxInputTokens
 }
 
 export function getModelCostsFromSettings(model: string): {
@@ -210,44 +201,16 @@ export function getModelCostsFromSettings(model: string): {
   promptCacheReadTokens: number
   webSearchRequests: number
 } | undefined {
-  const settings = readSettings()
-  if (settings?.modelCapabilities) {
-    const m = model.toLowerCase()
-    for (const mc of settings.modelCapabilities) {
-      if (m.includes(mc.model.toLowerCase())) {
-        if (mc.costs) {
-          return {
-            inputTokens: mc.costs.inputTokens,
-            outputTokens: mc.costs.outputTokens,
-            promptCacheWriteTokens: mc.costs.promptCacheWriteTokens ?? 0,
-            promptCacheReadTokens: mc.costs.promptCacheReadTokens ?? 0,
-            webSearchRequests: mc.costs.webSearchRequests ?? 0,
-          }
-        }
-      }
-    }
-  }
-  return undefined
+  return getLocalModelCosts(model)
 }
 
-function readSettings(): {
-  modelCapabilities?: Array<{
-    model: string
-    capabilities: string[]
-    maxInputTokens?: number
-    costs?: {
-      inputTokens: number
-      outputTokens: number
-      promptCacheWriteTokens?: number
-      promptCacheReadTokens?: number
-      webSearchRequests?: number
-    }
-  }>
-} | null {
-  try {
-    const { getSettings_DEPRECATED } = require('../settings/settings.js')
-    return getSettings_DEPRECATED()
-  } catch {
-    return null
-  }
+/**
+ * 从 ~/.zy/model-capabilities.json 获取 maxOutputTokens 配置。
+ * 返回 undefined 表示未配置，调用方应回退到默认值。
+ */
+export function getModelMaxOutputTokensFromSettings(model: string): {
+  default: number
+  upperLimit: number
+} | undefined {
+  return getLocalMaxOutputTokens(model)
 }

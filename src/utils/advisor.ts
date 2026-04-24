@@ -3,6 +3,8 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { shouldIncludeExperimentalBetas } from './betas.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
+import { modelHasCapability } from './model/providers.js'
+import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 
 // The SDK does not yet have types for advisor blocks.
@@ -85,25 +87,32 @@ export function getExperimentAdvisorModels():
     : undefined
 }
 
-// @[MODEL LAUNCH]: Add the new model if it supports the advisor tool.
-// Checks whether the main loop model supports calling the advisor tool.
+// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdvisor(model: string): boolean {
-  const m = model.toLowerCase()
-  return (
-    m.includes('opus-4-6') ||
-    m.includes('sonnet-4-6') ||
-    isInternalBuild()
-  )
+  // settings.json 配置优先
+  if (modelHasCapability(model, 'advisor')) {
+    return true
+  }
+  // ~/.zy/model-capabilities.json 本地配置
+  if (localModelHasCapability(model, 'advisor')) {
+    return true
+  }
+  // 内部构建默认开启
+  return isInternalBuild()
 }
 
-// @[MODEL LAUNCH]: Add the new model if it can serve as an advisor model.
+// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function isValidAdvisorModel(model: string): boolean {
-  const m = model.toLowerCase()
-  return (
-    m.includes('opus-4-6') ||
-    m.includes('sonnet-4-6') ||
-    isInternalBuild()
-  )
+  // settings.json 配置优先
+  if (modelHasCapability(model, 'advisor')) {
+    return true
+  }
+  // ~/.zy/model-capabilities.json 本地配置
+  if (localModelHasCapability(model, 'advisor')) {
+    return true
+  }
+  // 内部构建默认开启
+  return isInternalBuild()
 }
 
 export function getInitialAdvisorSetting(): string | undefined {

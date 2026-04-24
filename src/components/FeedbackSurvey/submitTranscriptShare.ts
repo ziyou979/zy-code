@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { readFile, stat } from 'fs/promises'
+import { getOauthConfig } from '../../constants/oauth.js'
 import type { Message } from '../../types/message.js'
 import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -84,8 +85,9 @@ export async function submitTranscriptShare(
       ...authResult.headers,
     }
 
+    // TODO: 替换为 ZY Code 自建服务端点（当前通过 getOauthConfig().BASE_API_URL 动态拼接，等待自建服务就绪）
     const response = await axios.post(
-      'https://api.anthropic.com/api/claude_code_shared_session_transcripts',
+      `${getOauthConfig().BASE_API_URL}/api/claude_code_shared_session_transcripts`,
       { content, appearance_id: appearanceId },
       {
         headers,

@@ -2,9 +2,8 @@
 import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
-import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
-import { isInternalBuild } from './envUtils.js'
+import { getAPIProvider, providerHasCapability } from './model/providers.js'
+import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
 export type ThinkingConfig =
@@ -87,63 +86,20 @@ export function getRainbowColor(
 
 // TODO(inigo): add support for probing unknown models via API error detection
 // Provider-aware thinking support detection (aligns with modelSupportsISP in betas.ts)
+// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsThinking(model: string): boolean {
-  const supported3P = get3PModelCapabilityOverride(model, 'thinking')
-  if (supported3P !== undefined) {
-    return supported3P
-  }
-  // Check settings-based capabilities first
-  if (modelHasCapability(model, 'thinking')) return true
-  if (isInternalBuild()) {
-    // @ts-ignore
-    if (resolveAntModel(model.toLowerCase())) {
-      return true
-    }
-  }
-  // IMPORTANT: Do not change thinking support without notifying the model
-  // launch DRI and research. This can greatly affect model quality and bashing.
+  // ~/.zy/model-capabilities.json 本地配置优先
+  if (localModelHasCapability(model, 'thinking')) return true
+  // 未知模型：根据 Provider 能力决定
   const provider = getAPIProvider()
-  // Direct API and Foundry: all Zy 4+ models (including Haiku 4.5)
-  if (providerHasCapability(provider, 'thinking')) {
-    return !model.toLowerCase().includes('zy-3-')
-  }
-  // 3P (Bedrock/Vertex): only Opus 4+ and Sonnet 4+
-  const m = model.toLowerCase()
-  return m.includes('sonnet-4') || m.includes('opus-4')
+  return providerHasCapability(provider, 'thinking')
 }
 
-// @[MODEL LAUNCH]: Add the new model to the allowlist if it supports adaptive thinking.
+// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdaptiveThinking(model: string): boolean {
-  const supported3P = get3PModelCapabilityOverride(model, 'adaptive_thinking')
-  if (supported3P !== undefined) {
-    return supported3P
-  }
-  // Check settings-based capabilities first
-  if (modelHasCapability(model, 'adaptive_thinking')) return true
-  const m = model.toLowerCase()
-  // Supported by a subset of Zy 4 models
-  if (m.includes('opus-4-6') || m.includes('sonnet-4-6')) {
-    return true
-  }
-  // Exclude any other known legacy models (allowlist above catches 4-6 variants first)
-  if (
-    m.includes('opus') ||
-    m.includes('sonnet') ||
-    m.includes('haiku')
-  ) {
-    return false
-  }
-  // IMPORTANT: Do not change adaptive thinking support without notifying the
-  // model launch DRI and research. This can greatly affect model quality and
-  // bashing.
-
-  // Newer models (4.6+) are all trained on adaptive thinking and MUST have it
-  // enabled for model testing. DO NOT default to false for first party, otherwise
-  // we may silently degrade model quality.
-
-  // Default to true for unknown model strings on direct API and Foundry (because Foundry
-  // is a proxy). Do not default to true for other 3P as they have different formats
-  // for their model strings.
+  // ~/.zy/model-capabilities.json 本地配置优先
+  if (localModelHasCapability(model, 'adaptive_thinking')) return true
+  // 未知模型：根据 Provider 能力决定
   const provider = getAPIProvider()
   return providerHasCapability(provider, 'adaptive_thinking')
 }

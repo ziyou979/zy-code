@@ -44,10 +44,10 @@ export const zhCN: TranslationResource = {
   'tip.imagePaste': '使用 {shortcut} 从剪贴板粘贴图片',
   'tip.customAgents': '使用 /agents 优化特定任务，例如：软件架构师、代码编写者、代码审查者',
   'tip.agentFlag': '使用 --agent <agent_name> 直接以指定子智能体开始对话',
-  // 'tip.desktopApp': '使用 ZY code 桌面应用在本地或远程运行 ZY Code：clau.de/desktop',
+  // 'tip.desktopApp': '使用 ZY code 桌面应用在本地或远程运行 ZY Code',
   'tip.desktopApp': 'ZY code 桌面应用开发中，敬请期待',
   'tip.desktopShortcut': '使用 {shortcut} 在 ZY Code 桌面版中继续你的会话',
-  'tip.webApp': '在云端运行任务，本地继续编码 · clau.de/web',
+  'tip.webApp': '在云端运行任务，本地继续编码',
   // 'tip.mobileApp': '/mobile 在手机上的 ZY code  应用中使用 ZY Code',
   'tip.mobileApp': 'ZY code 桌面应用开发中，敬请期待',
   'tip.opusPlanModeReminder':
@@ -700,8 +700,9 @@ export const zhCN: TranslationResource = {
   'permission.yesAllowEditsThisSession': '是，允许本次会话中的所有编辑 ({shortcut})',
   'permission.yesAllowReadThisSession': '是，本次会话期间允许读取',
   'permission.yesAllowReadFromDir': '是，允许本次会话中从 {dir}/ 读取',
-  'permission.yesAllowReadSinglePath': '是，允许读取 {dir}/',
-  'permission.yesAllowReadMultiplePathsStart': '是，允许读取',
+  'permission.yesAllowReadSinglePath': '是，允许本项目从 {dir}/ 读取',
+  'permission.yesAllowReadMultiplePathsStart': '是，允许从本项目读取',
+  'permission.yesAllowReadMultiplePathsEnd': '在本项目中',
   'permission.fromThisProject': '从此项目中',
   'permission.yesAllowEditsInDir': '是，允许本次会话中对 {dir}/ 的所有编辑 ({shortcut})',
   'permission.yesAllowZyFolderEdits': '是，允许 ZY 在本次会话中编辑自己的设置',
@@ -718,7 +719,7 @@ export const zhCN: TranslationResource = {
   'permission.deleteAskTool': '删除需确认的工具？',
 
   // 权限对话框 - 目录访问（跨会话持续允许）
-  'permission.alwaysAllowAccessToDir': '是，并始终允许访问 {dir}',
+  'permission.alwaysAllowAccessToDir': '是，并始终允许从本项目访问 {dir}',
   'permission.alwaysAllowAccessToDirs': '是，并始终允许从本项目访问 {dirs}',
 
   // 权限对话框 - 仅命令（不再询问）
@@ -1023,6 +1024,12 @@ export const zhCN: TranslationResource = {
   'fileEdit.removedLines': '删除 {count} 行',
   'fileEdit.removedLineOnly': '删除 {count} 行',
   'fileEdit.removedLinesOnly': '删除 {count} 行',
+
+  // Grove 条款通知
+  'grove.termsNotice':
+    '我们的消费者条款和隐私政策将于 {date} 更新生效。运行 `{command}` 查看更新后的条款。',
+  'grove.termsNoticeActionRequired':
+    '[需要操作] 我们的消费者条款和隐私政策已于 {date} 更新生效。你必须运行 `{command}` 查看更新后的条款。',
 
   // 费用追踪汇总
   'costTracker.totalCost': '总费用',

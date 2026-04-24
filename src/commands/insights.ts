@@ -3072,32 +3072,30 @@ const usageReport: Command = {
     let reportUrl = `file://${htmlPath}`
     let uploadHint = ''
 
-    if (isInternalBuild()) {
-      // Try to upload to S3
-      const timestamp = new Date()
-        .toISOString()
-        .replace(/[-:]/g, '')
-        .replace('T', '_')
-        .slice(0, 15)
-      const username = process.env.SAFEUSER || process.env.USER || 'unknown'
-      const filename = `${username}_insights_${timestamp}.html`
-      const s3Path = `s3://anthropic-serve/atamkin/cc-user-reports/${filename}`
-      const s3Url = `https://s3-frontend.infra.ant.dev/anthropic-serve/atamkin/cc-user-reports/${filename}`
-
-      reportUrl = s3Url
-      try {
-        execFileSync('ff', ['cp', htmlPath, s3Path], {
-          timeout: 60000,
-          stdio: 'pipe', // Suppress output
-        })
-      } catch {
-        // Upload failed - fall back to local file and show upload command
-        reportUrl = `file://${htmlPath}`
-        uploadHint = `\nAutomatic upload failed. Are you on the boron namespace? Try \`use-bo\` and ensure you've run \`sso\`.
-To share, run: ff cp ${htmlPath} ${s3Path}
-Then access at: ${s3Url}`
-      }
-    }
+    // TODO: 自建报告存储服务后恢复内部上传逻辑（原 ant.dev S3 不可访问）
+    // if (isInternalBuild()) {
+    //   const timestamp = new Date()
+    //     .toISOString()
+    //     .replace(/[-:]/g, '')
+    //     .replace('T', '_')
+    //     .slice(0, 15)
+    //   const username = process.env.SAFEUSER || process.env.USER || 'unknown'
+    //   const filename = `${username}_insights_${timestamp}.html`
+    //   const s3Path = `s3://anthropic-serve/atamkin/cc-user-reports/${filename}`
+    //   const s3Url = `https://s3-frontend.infra.ant.dev/anthropic-serve/atamkin/cc-user-reports/${filename}`
+    //   reportUrl = s3Url
+    //   try {
+    //     execFileSync('ff', ['cp', htmlPath, s3Path], {
+    //       timeout: 60000,
+    //       stdio: 'pipe',
+    //     })
+    //   } catch {
+    //     reportUrl = `file://${htmlPath}`
+    //     uploadHint = `\nAutomatic upload failed. Are you on the boron namespace? Try \`use-bo\` and ensure you've run \`sso\`.
+    // To share, run: ff cp ${htmlPath} ${s3Path}
+    // Then access at: ${s3Url}`
+    //   }
+    // }
 
     // Build header with stats
     const sessionLabel =

@@ -7,7 +7,6 @@ import { has1mContext } from './context.js';
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js';
 import { isInternalBuild } from './envUtils.js';
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js';
-import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js';
 import { getInitialSettings } from './settings/settings.js';
 
 /**
@@ -63,11 +62,7 @@ export function filterAllowedSdkBetas(sdkBetas: string[] | undefined): string[] 
 // however out of an abundance of caution, we do not enable any which are behind an experiment
 
 export function modelSupportsISP(model: string): boolean {
-  const supported3P = get3PModelCapabilityOverride(model, 'interleaved_thinking');
-  if (supported3P !== undefined) {
-    return supported3P;
-  }
-  // Check settings-based capabilities first
+  // 模型能力配置优先
   if (modelHasCapability(model, 'interleaved_thinking')) return true;
   const provider = getAPIProvider();
   // Foundry supports interleaved thinking for all models

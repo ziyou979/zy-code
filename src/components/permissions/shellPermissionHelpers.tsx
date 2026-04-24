@@ -115,13 +115,12 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
       const dirName = basename(firstPath) || firstPath;
       return <Text>
           {tSync('permission.yesAllowReadSinglePath', { dir: dirName })}
-          {sep} {tSync('permission.fromThisProject')}
         </Text>;
     }
 
     // Multiple read paths
     return <Text>
-        {tSync('permission.yesAllowReadMultiplePathsStart')} {formatPathList(readPaths)} {tSync('permission.fromThisProject')}
+        {tSync('permission.yesAllowReadMultiplePathsStart')} {formatPathList(readPaths)} {tSync('permission.yesAllowReadMultiplePathsEnd')}
       </Text>;
   }
   if (hasDirectories && !hasReadPaths && !hasCommands) {
@@ -131,7 +130,6 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
       const dirName = basename(firstDir) || firstDir;
       return <Text>
           {tSync('permission.alwaysAllowAccessToDir', { dir: dirName })}
-          {sep} {tSync('permission.fromThisProject')}
         </Text>;
     }
 

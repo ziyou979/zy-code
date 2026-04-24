@@ -3,6 +3,7 @@ import { getInitialMainLoopModel } from '../../bootstrap/state.js';
 import { getModelStrings } from './modelStrings.js';
 import { COST_TIER_3_15, COST_HAIKU_35, COST_HAIKU_45, formatModelPricing } from '../modelCost.js';
 import { getSettings_DEPRECATED } from '../settings/settings.js';
+import { getLocalModelCapability } from '../settings/localModelCapabilities.js';
 import { checkOpus1mAccess, checkSonnet1mAccess } from './check1mAccess.js';
 import { getAPIProvider, providerHasCapability } from './providers.js';
 import { isModelAllowed } from './modelAllowlist.js';
@@ -38,19 +39,32 @@ export function getDefaultOptionForUser(): ModelOption {
     description: `Use the default model (currently ${renderDefaultModelSetting(getDefaultMainLoopModelSetting())})${is3P ? '' : ` · ${formatModelPricing(COST_TIER_3_15)}`}`
   };
 }
+
+/**
+ * 为 3P Provider 用户构建 tier 对应的自定义模型选项。
+ * 从 settings.json 的 models tier 映射读取实际模型 ID，
+ * label 从 model-capabilities.json 的 pattern 获取（或直接用模型 ID）。
+ */
+function getCustomTierOption(tier: string, alias: ModelSetting): ModelOption | undefined {
+  const settings = getSettings_DEPRECATED()
+  const tierModel = settings?.models?.[tier]
+  if (!tierModel) return undefined
+
+  // 从 model-capabilities.json 获取配置信息（如果有）
+  const cap = getLocalModelCapability(tierModel)
+
+  return {
+    value: alias,
+    label: cap?.pattern ?? tierModel,
+    description: `${tierModel}`,
+    descriptionForModel: `${tierModel}`,
+  }
+}
+
 function getCustomSonnetOption(): ModelOption | undefined {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
-  const customSonnetModel = process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL;
-  // When a 3P user has a custom sonnet model string, show it directly
-  if (is3P && customSonnetModel) {
-    const is1m = has1mContext(customSonnetModel);
-    return {
-      value: 'sonnet',
-      label: process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL_NAME ?? customSonnetModel,
-      description: process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' (1M context)' : ''}`,
-      descriptionForModel: `${process.env.ZY_CODE_DEFAULT_ADVANCED_MODEL_DESCRIPTION ?? `Custom Sonnet model${is1m ? ' with 1M context' : ''}`} (${customSonnetModel})`
-    };
-  }
+  if (!is3P) return undefined;
+  return getCustomTierOption('advanced', 'sonnet');
 }
 
 // @[MODEL LAUNCH]: Update or add model option functions (getSonnetXXOption, getOpusXXOption, etc.)
@@ -66,17 +80,8 @@ function getSonnet46Option(): ModelOption {
 }
 function getCustomOpusOption(): ModelOption | undefined {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
-  const customOpusModel = process.env.ZY_CODE_DEFAULT_BEST_MODEL;
-  // When a 3P user has a custom opus model string, show it directly
-  if (is3P && customOpusModel) {
-    const is1m = has1mContext(customOpusModel);
-    return {
-      value: 'opus',
-      label: process.env.ZY_CODE_DEFAULT_BEST_MODEL_NAME ?? customOpusModel,
-      description: process.env.ZY_CODE_DEFAULT_BEST_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' (1M context)' : ''}`,
-      descriptionForModel: `${process.env.ZY_CODE_DEFAULT_BEST_MODEL_DESCRIPTION ?? `Custom Opus model${is1m ? ' with 1M context' : ''}`} (${customOpusModel})`
-    };
-  }
+  if (!is3P) return undefined;
+  return getCustomTierOption('best', 'opus');
 }
 function getOpus41Option(): ModelOption {
   return {
@@ -115,16 +120,8 @@ export function getOpus46_1MOption(): ModelOption {
 }
 function getCustomHaikuOption(): ModelOption | undefined {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');
-  const customHaikuModel = process.env.ZY_CODE_DEFAULT_COMPACT_MODEL;
-  // When a 3P user has a custom haiku model string, show it directly
-  if (is3P && customHaikuModel) {
-    return {
-      value: 'haiku',
-      label: process.env.ZY_CODE_DEFAULT_COMPACT_MODEL_NAME ?? customHaikuModel,
-      description: process.env.ZY_CODE_DEFAULT_COMPACT_MODEL_DESCRIPTION ?? 'Custom Haiku model',
-      descriptionForModel: `${process.env.ZY_CODE_DEFAULT_COMPACT_MODEL_DESCRIPTION ?? 'Custom Haiku model'} (${customHaikuModel})`
-    };
-  }
+  if (!is3P) return undefined;
+  return getCustomTierOption('compact', 'haiku');
 }
 function getHaiku45Option(): ModelOption {
   const is3P = !providerHasCapability(getAPIProvider(), 'interleaved_thinking');

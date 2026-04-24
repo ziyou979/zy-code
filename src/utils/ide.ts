@@ -882,9 +882,10 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
     const command = await getVSCodeIDECommand(ideType)
 
     if (command) {
-      if (isInternalBuild()) {
-        return await installFromArtifactory(command)
-      }
+      // TODO: 自建 VSIX 分发后恢复 Artifactory 安装路径（原 ant.dev 不可访问）
+      // if (isInternalBuild()) {
+      //   return await installFromArtifactory(command)
+      // }
       let version = await getInstalledVSCodeExtensionVersion(command)
       // If it's not installed or the version is older than the one we have bundled,
       if (!version || lt(version, getZyCodeVersion())) {
