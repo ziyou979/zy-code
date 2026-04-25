@@ -2,6 +2,7 @@ import type { TokenUsage as Usage } from '../types/llm.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
+import { getUiLanguage } from '../i18n/index.js'
 import {
   getStaticPricingForModel,
 } from './model/modelCapabilities.js'
@@ -57,9 +58,14 @@ export function getOpus46CostTier(): ModelCosts {
 
 /**
  * Resolve costs for a model. Falls back to the default model's costs if unknown.
+ * 对于阶梯费用模型，usage.input_tokens 用于确定当前所在阶梯。
  */
-export function getModelCosts(model: string, _usage: Usage): ModelCosts {
-  const pricing = getStaticPricingForModel(model)
+export function getModelCosts(model: string, usage: Usage): ModelCosts {
+  // 传入当前累计输入 token 总量，用于阶梯费用定价
+  const currentInput = (usage.cache_read_input_tokens ?? 0) +
+    (usage.cache_creation_input_tokens ?? 0) +
+    usage.input_tokens
+  const pricing = getStaticPricingForModel(model, currentInput)
   if (pricing) {
     return {
       inputTokens: pricing.cost_input,
@@ -96,9 +102,21 @@ function trackUnknownModelCost(model: string): void {
 }
 
 /**
- * Calculates the USD cost based on token usage and model cost configuration
+ * 根据当前 UI 语言返回货币符号。
+ * 中文 → ¥（人民币），其他 → $（美元）。
+ * 注意：配置中的单价单位始终是 RMB（元/百万token），
+ * 此函数仅影响展示层的符号，不影响内部数值计算。
  */
-function tokensToUSDCost(modelCosts: ModelCosts, usage: Usage): number {
+export function getCurrencySymbol(): string {
+  const lang = getUiLanguage()
+  return lang === 'zh-CN' ? '￥' : '$'
+}
+
+/**
+ * 根据 token 用量和模型定价配置计算费用。
+ * 返回值单位与配置中的单价单位一致（RMB 元）。
+ */
+function calculateTokenCost(modelCosts: ModelCosts, usage: Usage): number {
   return (
     (usage.input_tokens / 1_000_000) * modelCosts.inputTokens +
     (usage.output_tokens / 1_000_000) * modelCosts.outputTokens +
@@ -111,11 +129,13 @@ function tokensToUSDCost(modelCosts: ModelCosts, usage: Usage): number {
   )
 }
 
-// Calculate the cost of a query in US dollars.
-// If the model's costs are not found, use the default model's costs.
+/**
+ * 计算单次请求的费用。
+ * 返回值单位与配置中的单价单位一致（RMB 元）。
+ */
 export function calculateUSDCost(resolvedModel: string, usage: Usage): number {
   const modelCosts = getModelCosts(resolvedModel, usage)
-  return tokensToUSDCost(modelCosts, usage)
+  return calculateTokenCost(modelCosts, usage)
 }
 
 /**
@@ -141,15 +161,16 @@ export function calculateCostFromTokens(
 }
 
 function formatPrice(price: number): string {
+  const symbol = getCurrencySymbol()
   if (Number.isInteger(price)) {
-    return `¥${price}`
+    return `${symbol}${price}`
   }
-  return `¥${price.toFixed(2)}`
+  return `${symbol}${price.toFixed(2)}`
 }
 
 /**
- * Format model costs as a pricing string for display
- * e.g., "¥5/¥25 per Mtok"
+ * 将模型定价格式化为字符串展示
+ * 例如：中文 "¥5/¥25 per Mtok"，英文 "$5/$25 per Mtok"
  */
 export function formatModelPricing(costs: ModelCosts): string {
   return `${formatPrice(costs.inputTokens)}/${formatPrice(costs.outputTokens)} per Mtok`

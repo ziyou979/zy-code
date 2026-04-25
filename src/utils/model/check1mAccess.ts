@@ -1,27 +1,13 @@
-import { is1mContextDisabled } from '../context.js';
-
 /**
- * Check if extra usage is enabled based on the cached disabled reason.
- * Extra usage is never enabled since there is no subscription context.
+ * 1M 上下文权限检查。
+ * 现在上下文窗口统一通过 model-capabilities.json 的 contextWindow 配置管理，
+ * 这些函数保留仅为兼容旧的调用方，始终返回 false。
  */
-function isExtraUsageEnabled(): boolean {
-  return false;
-}
 
-// @[MODEL LAUNCH]: Add check if the new model supports 1M context
 export function checkOpus1mAccess(): boolean {
-  if (is1mContextDisabled()) {
-    return false;
-  }
-
-  // No subscription context, so extra usage is never enabled
   return false;
 }
-export function checkSonnet1mAccess(): boolean {
-  if (is1mContextDisabled()) {
-    return false;
-  }
 
-  // No subscription context, so extra usage is never enabled
+export function checkSonnet1mAccess(): boolean {
   return false;
 }

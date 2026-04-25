@@ -44,7 +44,7 @@ import {
 } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import { calculateUSDCost } from './utils/modelCost.js'
+import { calculateUSDCost, getCurrencySymbol } from './utils/modelCost.js'
 export {
   getTotalCostUSD as getTotalCost,
   getTotalDuration,
@@ -101,7 +101,7 @@ export function getStoredSessionCosts(
         model,
         {
           ...usage,
-          contextWindow: getContextWindowForModel(model, getSdkBetas()),
+          contextWindow: getContextWindowForModel(model),
           maxOutputTokens: getModelMaxOutputTokens(model).default,
         },
       ]),
@@ -174,7 +174,8 @@ export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
 }
 
 function formatCost(cost: number, maxDecimalPlaces: number = 4): string {
-  return `$${cost > 0.5 ? round(cost, 100).toFixed(2) : cost.toFixed(maxDecimalPlaces)}`
+  const symbol = getCurrencySymbol()
+  return `${symbol}${cost > 0.5 ? round(cost, 100).toFixed(2) : cost.toFixed(maxDecimalPlaces)}`
 }
 
 function formatModelUsage(): string {
@@ -272,7 +273,7 @@ function addToTotalModelUsage(
   modelUsage.webSearchRequests +=
     (usage as any).server_tool_use?.web_search_requests ?? 0
   modelUsage.costUSD += cost
-  modelUsage.contextWindow = getContextWindowForModel(model, getSdkBetas())
+  modelUsage.contextWindow = getContextWindowForModel(model)
   modelUsage.maxOutputTokens = getModelMaxOutputTokens(model).default
   return modelUsage
 }

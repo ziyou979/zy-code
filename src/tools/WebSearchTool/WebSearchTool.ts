@@ -2,7 +2,7 @@ import type {
   ContentBlock,
 } from '../../types/llm.js'
 type BetaWebSearchTool20250305 = any
-import { getAPIProvider, providerHasCapability } from 'src/utils/model/providers.js'
+import { modelHasCapability } from 'src/utils/model/providers.js'
 
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
 import { z } from 'zod/v4'
@@ -167,27 +167,9 @@ export const WebSearchTool = buildTool({
     return summary ? `Searching for ${summary}` : 'Searching the web'
   },
   isEnabled() {
-    const provider = getAPIProvider()
     const model = getMainLoopModel()
-
-    // Enable for providers with web_search capability
-    if (providerHasCapability(provider, 'web_search')) {
-      return true
-    }
-
-    // Enable for Vertex AI with supported models
-    if (provider === 'vertex') {
-      const supportsWebSearch = model.includes('qwen3.6-plus')
-
-      return supportsWebSearch
-    }
-
-    // Foundry only ships models that already support Web Search
-    if (provider === 'foundry') {
-      return true
-    }
-
-    return false
+    // 优先检查本地 model-capabilities.json 配置，其次回退到 provider 能力
+    return modelHasCapability(model, 'web_search')
   },
   get inputSchema(): InputSchema {
     return inputSchema()

@@ -795,6 +795,13 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'version': 'commands.version',
   'heapdump': 'commands.heapdump',
   'remote-setup': 'commands.remoteSetup',
+  'update-config': 'commands.updateConfig',
+  'keybindings-help': 'commands.keybindingsHelp',
+  'claude-in-chrome': 'commands.claudeInChrome',
+  'zy-api': 'commands.zyApi',
+  'debug': 'commands.debug',
+  'schedule': 'commands.schedule',
+  'loop': 'commands.loop',
 }
 
 /**

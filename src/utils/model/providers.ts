@@ -5,7 +5,7 @@ import {
   localModelHasCapability,
   getLocalModelCapability,
   getLocalModelCosts,
-  getLocalMaxOutputTokens,
+  parseTokenCount,
 } from '../settings/localModelCapabilities.js'
 import { PROVIDER_REGISTRY, getProviderEntry } from './providerRegistry.js'
 
@@ -184,33 +184,28 @@ export function isEnvOrDefaultProvider(provider: APIProvider): boolean {
  */
 export function modelHasCapability(
   model: string,
-  capability: ProviderCapability | '1m_context' | 'auto_mode',
+  capability: ProviderCapability | 'auto_mode',
 ): boolean {
   if (localModelHasCapability(model, capability)) return true
   return providerHasCapability(getAPIProvider(), capability as ProviderCapability)
 }
 
 export function getModelMaxInputTokens(model: string): number | undefined {
-  return getLocalModelCapability(model)?.maxInputTokens
+  const entry = getLocalModelCapability(model)
+  if (!entry?.maxInputTokens) return undefined
+  return parseTokenCount(entry.maxInputTokens)
 }
 
-export function getModelCostsFromSettings(model: string): {
+export function getModelCostsFromSettings(
+  model: string,
+  currentInputTokens?: number,
+): {
   inputTokens: number
   outputTokens: number
   promptCacheWriteTokens: number
   promptCacheReadTokens: number
   webSearchRequests: number
 } | undefined {
-  return getLocalModelCosts(model)
+  return getLocalModelCosts(model, currentInputTokens)
 }
 
-/**
- * 从 ~/.zy/model-capabilities.json 获取 maxOutputTokens 配置。
- * 返回 undefined 表示未配置，调用方应回退到默认值。
- */
-export function getModelMaxOutputTokensFromSettings(model: string): {
-  default: number
-  upperLimit: number
-} | undefined {
-  return getLocalMaxOutputTokens(model)
-}

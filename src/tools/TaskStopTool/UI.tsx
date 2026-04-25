@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { stringWidth } from '../../ink/stringWidth.js';
+import { tSync } from '../../i18n/index.js';
 import { Text } from '../../ink.js';
 import { isInternalBuild } from '../../utils/envUtils.js';
 import { truncateToWidthNoEllipsis } from '../../utils/format.js';
@@ -31,7 +32,7 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
   }
   const rawCommand = output.command ?? '';
   const command = verbose ? rawCommand : truncateCommand(rawCommand);
-  const suffix = command !== rawCommand ? '… · stopped' : ' · stopped';
+  const suffix = command !== rawCommand ? `… · ${tSync('taskStop.stopped')}` : ` · ${tSync('taskStop.stopped')}`;
   return <MessageResponse>
       <Text>
         {command}

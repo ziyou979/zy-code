@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Suspense, use, useState } from 'react';
 import { MessageResponse } from 'src/components/MessageResponse.js';
 import { extractTag } from 'src/utils/messages.js';
+import { tSync } from '../../i18n/index.js';
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js';
@@ -23,13 +24,12 @@ import { getPlansDirectory } from '../../utils/plans.js';
 import { openForScan, readCapped } from '../../utils/readEditContext.js';
 import type { Output } from './FileWriteTool.js';
 const MAX_LINES_TO_RENDER = 10;
-// Model output uses \n regardless of platform, so always split on \n.
-// os.EOL is \r\n on Windows, which would give numLines=1 for all files.
+// 模型输出始终使用 \n，与平台无关，因此始终按 \n 分割。
+// Windows 上 os.EOL 为 \r\n，这会导致所有文件的 numLines=1。
 const EOL = '\n';
 
 /**
- * Count visible lines in file content. A trailing newline is treated as a
- * line terminator (not a new empty line), matching editor line numbering.
+ * 统计文件内容中的可见行数。尾随换行符被视为行终止符（而非新的空行），与编辑器行号一致。
  */
 export function countLines(content: string): number {
   const parts = content.split(EOL);
@@ -48,7 +48,7 @@ function FileWriteToolCreatedMessage({
   const plusLines = numLines - MAX_LINES_TO_RENDER;
   const displayPath = verbose ? filePath : relative(getCwd(), filePath);
   const displayContent = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
-  return <MessageResponse><Box flexDirection="column">{<Text>Wrote {<Text bold={true}>{numLines}</Text>} lines to{" "}{<Text bold={true}>{displayPath}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={displayContent} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
+  return <MessageResponse><Box flexDirection="column">{<Text>{tSync('fileWrite.wrote')} {<Text bold={true}>{numLines}</Text>} {tSync('fileWrite.linesTo')}{" "}{<Text bold={true}>{displayPath}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={displayContent} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
 }
 export function userFacingName(input: Partial<{
   file_path: string;
@@ -60,10 +60,7 @@ export function userFacingName(input: Partial<{
   return 'Write';
 }
 
-/** Gates fullscreen click-to-expand. Only `create` truncates (to
- *  MAX_LINES_TO_RENDER); `update` renders the full diff regardless of verbose.
- *  Called per visible message on hover/scroll, so early-exit after finding the
- *  (MAX+1)th line instead of splitting the whole (possibly huge) content. */
+/** 控制全屏点击展开。只有 `create` 会截断（至 MAX_LINES_TO_RENDER）；`update` 无论 verbose 如何都渲染完整 diff。在悬停/滚动时对每个可见消息调用，因此找到第 (MAX+1) 行后即提前退出，而不是拆分整个（可能很大的）内容。 */
 export function isResultTruncated({
   type,
   content
@@ -98,7 +95,7 @@ export function renderToolUseMessage(input: Partial<{
   if (!input.file_path) {
     return null;
   }
-  // For plan files, path is already in userFacingName
+  // 对于 Plan 文件，路径已包含在 userFacingName 中
   if (input.file_path.startsWith(getPlansDirectory())) {
     return '';
   }
@@ -154,7 +151,7 @@ function WriteRejectionBody({
     return createFallback;
   }
   if (data.type === "error") {
-    return <MessageResponse><Text>(No changes)</Text></MessageResponse>;
+    return <MessageResponse><Text>{tSync('fileWrite.noChanges')}</Text></MessageResponse>;
   }
   return <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={data.patch} firstLine={firstLine} fileContent={data.oldContent} style={style} verbose={verbose} />;
 }
@@ -171,8 +168,7 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
     } finally {
       await handle.close();
     }
-    // File exceeds MAX_SCAN_BYTES — fall back to the create view rather than
-    // OOMing on a diff of a multi-GB file.
+    // 文件超过 MAX_SCAN_BYTES — 回退到创建视图，避免对多 GB 文件做 diff 导致内存溢出。
     if (oldContent === null) return {
       type: 'create'
     };
@@ -191,7 +187,7 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
       oldContent
     };
   } catch (e) {
-    // User may have manually applied the change while the diff was shown.
+    // 用户可能在显示 diff 时手动应用了更改。
     logError(e as Error);
     return {
       type: 'error'
@@ -205,7 +201,7 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
 }): React.ReactNode {
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
     return <MessageResponse>
-        <Text color="error">Error writing file</Text>
+        <Text color="error">{tSync('fileWrite.errorWriting')}</Text>
       </MessageResponse>;
   }
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
@@ -228,19 +224,19 @@ export function renderToolResultMessage({
       {
         const isPlanFile = filePath.startsWith(getPlansDirectory());
 
-        // Plan files: invert condensed behavior
-        // - Regular mode: just show hint (user can type /plan to see full content)
-        // - Condensed mode (subagent view): show full content
+        // 计划文件：反转压缩行为
+        // - 常规模式：仅显示提示（用户可以输入 /plan 查看完整内容）
+        // - 压缩模式（子代理视图）：显示完整内容
         if (isPlanFile && !verbose) {
           if (style !== 'condensed') {
             return <MessageResponse>
-              <Text dimColor>/plan to preview</Text>
+              <Text dimColor>{tSync('fileWrite.planToPreview')}</Text>
             </MessageResponse>;
           }
         } else if (style === 'condensed' && !verbose) {
           const numLines = countLines(content);
           return <Text>
-            Wrote <Text bold>{numLines}</Text> lines to{' '}
+            {tSync('fileWrite.wrote')} <Text bold>{numLines}</Text> {tSync('fileWrite.linesTo')}{' '}
             <Text bold>{relative(getCwd(), filePath)}</Text>
           </Text>;
         }
@@ -249,7 +245,7 @@ export function renderToolResultMessage({
     case 'update':
       {
         const isPlanFile = filePath.startsWith(getPlansDirectory());
-        return <FileEditToolUpdatedMessage filePath={filePath} structuredPatch={structuredPatch} firstLine={content.split('\n')[0] ?? null} fileContent={originalFile ?? undefined} style={style} verbose={verbose} previewHint={isPlanFile ? '/plan to preview' : undefined} />;
+        return <FileEditToolUpdatedMessage filePath={filePath} structuredPatch={structuredPatch} firstLine={content.split('\n')[0] ?? null} fileContent={originalFile ?? undefined} style={style} verbose={verbose} previewHint={isPlanFile ? tSync('fileWrite.planToPreview') : undefined} />;
       }
   }
 }

@@ -4,6 +4,10 @@
     {
       "pattern": "qwen3.6-max-preview",
       "capabilities": ["thinking", "structured_outputs", "context_management", "interleaved_thinking"],
+      "contextWindow": "200k",
+      "maxInputTokens": "200k",
+      "maxOutputTokens": "64k",
+      "maxThinkingTokens": "32k",
       "costs": {
         "inputTokens": 9,
         "outputTokens": 54,
@@ -14,19 +18,35 @@
     {
       "pattern": "qwen3.6-plus",
       "capabilities": ["thinking", "structured_outputs", "context_management", "interleaved_thinking"],
+      "contextWindow": "200k",
+      "maxInputTokens": "200k",
+      "maxOutputTokens": 64000,
       "costs": {
-        "inputTokens": 2,
-        "outputTokens": 12,
-        "promptCacheWriteTokens": 2.5,
-        "promptCacheReadTokens": 0.2,
+        "tiers": [
+          {
+            "upTo": "128k",
+            "inputTokens": 2,
+            "outputTokens": 8,
+            "promptCacheWriteTokens": 2.5,
+            "promptCacheReadTokens": 0.2
+          },
+          {
+            "upTo": "200k",
+            "inputTokens": 4,
+            "outputTokens": 12,
+            "promptCacheWriteTokens": 5,
+            "promptCacheReadTokens": 0.4
+          }
+        ],
         "webSearchRequests": 0.004
       }
     },
     {
       "pattern": "gpt-4o",
       "capabilities": ["structured_outputs"],
-      "maxOutputTokens": { "default": 16384, "upperLimit": 16384 },
-      "maxInputTokens": 128000,
+      "contextWindow": "128k",
+      "maxInputTokens": "128k",
+      "maxOutputTokens": "16k",
       "costs": { "inputTokens": 2.5, "outputTokens": 10 }
     }
   ]

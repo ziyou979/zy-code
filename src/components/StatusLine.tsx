@@ -44,7 +44,7 @@ function buildStatusLineCommandInput(permissionMode: PermissionMode, exceeds200k
   });
   const outputStyleName = settings?.outputStyle || DEFAULT_OUTPUT_STYLE_NAME;
   const currentUsage = getCurrentUsage(messages);
-  const contextWindowSize = getContextWindowForModel(runtimeModel, getSdkBetas());
+  const contextWindowSize = getContextWindowForModel(runtimeModel);
   const contextPercentages = calculateContextPercentages(currentUsage, contextWindowSize);
   const sessionId = getSessionId();
   const sessionName = getCurrentSessionTitle(sessionId);

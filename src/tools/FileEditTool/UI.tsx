@@ -10,6 +10,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js';
 import { FilePathLink } from '../../components/FilePathLink.js';
 import { Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import type { Tools } from '../../Tool.js';
 import type { Message, ProgressMessage } from '../../types/message.js';
 import { adjustHunkLineNumbers, CONTEXT_LINES } from '../../utils/diff.js';
@@ -66,7 +67,7 @@ export function renderToolUseMessage({
   if (!file_path) {
     return null;
   }
-  // For plan files, path is already in userFacingName
+  // 对于 Plan 文件，路径已包含在 userFacingName 中
   if (file_path.startsWith(getPlansDirectory())) {
     return '';
   }
@@ -113,13 +114,13 @@ export function renderToolUseRejectedMessage(input: {
   const newString = input.new_string ?? '';
   const replaceAll = input.replace_all ?? false;
 
-  // Defensive: if input has an unexpected shape, show a simple rejection message
+  // 防御性处理：如果输入结构不符合预期，显示简单的拒绝消息
   if ('edits' in input && input.edits != null) {
     return <FileEditToolUseRejectedMessage file_path={filePath} operation="update" firstLine={null} verbose={verbose} />;
   }
   const isNewFile = oldString === '';
 
-  // For new file creation, show content preview instead of diff
+  // 对于新文件创建，显示内容预览而非 diff
   if (isNewFile) {
     return <FileEditToolUseRejectedMessage file_path={filePath} operation="write" content={newString} firstLine={firstLineOf(newString)} verbose={verbose} />;
   }
@@ -135,19 +136,19 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
   } = options;
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
     const errorMessage = extractTag(result, 'tool_use_error');
-    // Show a less scary message for intended behavior
+    // 为预期行为显示更友好的提示
     if (errorMessage?.includes('File has not been read yet')) {
       return <MessageResponse>
-          <Text dimColor>File must be read first</Text>
+          <Text dimColor>{tSync('fileEdit.mustReadFirst')}</Text>
         </MessageResponse>;
     }
     if (errorMessage?.includes(FILE_NOT_FOUND_CWD_NOTE)) {
       return <MessageResponse>
-          <Text color="error">File not found</Text>
+          <Text color="error">{tSync('fileEdit.fileNotFound')}</Text>
         </MessageResponse>;
     }
     return <MessageResponse>
-        <Text color="error">Error editing file</Text>
+        <Text color="error">{tSync('fileEdit.errorEditing')}</Text>
       </MessageResponse>;
   }
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
@@ -183,12 +184,10 @@ function EditRejectionBody({
 }
 async function loadRejectionDiff(filePath: string, oldString: string, newString: string, replaceAll: boolean): Promise<RejectionDiffData> {
   try {
-    // Chunked read — context window around the first occurrence. replaceAll
-    // still shows matches *within* the window via getPatchForEdit; we accept
-    // losing the all-occurrences view to keep the read bounded.
+    // 分块读取 — 围绕首次匹配的上下文窗口。replaceAll 仍然通过 getPatchForEdit 显示窗口内的匹配项；我们允许丢失所有匹配的视图以保持读取有界。
     const ctx = await readEditContext(filePath, oldString, CONTEXT_LINES);
     if (ctx === null || ctx.truncated || ctx.content === '') {
-      // ENOENT / not found / truncated — diff just the tool inputs.
+      // ENOENT / 未找到 / 被截断 — 仅对工具输入做 diff。
       const {
         patch
       } = getPatchForEdit({
@@ -220,7 +219,7 @@ async function loadRejectionDiff(filePath: string, oldString: string, newString:
       fileContent: ctx.content
     };
   } catch (e) {
-    // User may have manually applied the change while the diff was shown.
+    // 用户可能在显示 diff 时手动应用了更改。
     logError(e as Error);
     return {
       patch: [],

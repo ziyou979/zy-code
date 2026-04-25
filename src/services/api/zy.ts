@@ -76,11 +76,7 @@ import {
   getModelBetas,
 } from '../../utils/betas.js'
 import { getOrCreateUserID } from '../../utils/config.js'
-import {
-  CAPPED_DEFAULT_MAX_TOKENS,
-  getModelMaxOutputTokens,
-  getSonnet1mExpTreatmentEnabled,
-} from '../../utils/context.js'
+import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { resolveAppliedEffort } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -1519,14 +1515,6 @@ async function* queryModel(
 
   const paramsFromContext = (retryContext: RetryContext) => {
     const betasParams = [...betas]
-
-    // 为 Sonnet 1M 实验动态追加 1M beta header。
-    if (
-      !betasParams.includes(CONTEXT_1M_BETA_HEADER) &&
-      getSonnet1mExpTreatmentEnabled(retryContext.model)
-    ) {
-      betasParams.push(CONTEXT_1M_BETA_HEADER)
-    }
 
     // 对于 Bedrock，包含基于模型的 beta 和动态添加的工具搜索 header
     const bedrockBetas =
@@ -3371,28 +3359,18 @@ export function adjustParamsForNonStreaming<
   }
 }
 
-function isMaxTokensCapEnabled(): boolean {
-  // 第三方默认值：false（Bedrock/Vertex 上不验证）
-  return getFeatureValue_CACHED_MAY_BE_STALE('zy_otk_slot_v1', false)
-}
-
+/**
+ * 获取模型的默认 max_output_tokens。
+ * 允许通过环境变量 ZY_CODE_MAX_OUTPUT_TOKENS 覆盖。
+ * default/upperLimit 的计算逻辑已由 getModelMaxOutputTokens() 处理。
+ */
 export function getMaxOutputTokensForModel(model: string): number {
   const maxOutputTokens = getModelMaxOutputTokens(model)
-
-  // 槽位预留上限：将所有模型的默认值降至 8k。BQ p99 输出
-  // = 4,911 令牌；32k/64k 默认值超量预留 8-16 倍槽位容量。
-  // 触达上限的请求可获得一次干净的 64k 重试（query.ts
-  // max_output_tokens_escalate）。Math.min 保留原生默认值较低的模型
-  //（例如 zy-3-opus 为 4k）在其原值。应用于环境变量覆盖之前，
-  // 因此 ZY_CODE_MAX_OUTPUT_TOKENS 仍然优先。
-  const defaultTokens = isMaxTokensCapEnabled()
-    ? Math.min(maxOutputTokens.default, CAPPED_DEFAULT_MAX_TOKENS)
-    : maxOutputTokens.default
 
   const result = validateBoundedIntEnvVar(
     'ZY_CODE_MAX_OUTPUT_TOKENS',
     process.env.ZY_CODE_MAX_OUTPUT_TOKENS,
-    defaultTokens,
+    maxOutputTokens.default,
     maxOutputTokens.upperLimit,
   )
   return result.effective

@@ -368,6 +368,9 @@ export const en: TranslationResource = {
   'bash.imageDetected': '[Image data detected and sent to ZY]',
   'bash.runningCommand': 'Running command',
   'bash.runningActivity': 'Running {desc}',
+  'bash.sedRequiresApproval': 'sed command requires approval (contains potentially dangerous operations)',
+  'bash.sedDangerousOperations': 'sed command contains operations that require explicit approval (e.g., write commands, execute commands)',
+  'bash.sedNoDangerousOperations': 'No dangerous sed operations detected',
 
   // File read tool
   'fileRead.readImage': 'Read image ({size})',
@@ -904,11 +907,107 @@ export const en: TranslationResource = {
   'commands.bridgeKick': 'Inject bridge failure states for debugging',
   'commands.heapdump': 'Dump the JS heap to ~/Desktop',
   'commands.remoteSetup': 'Configure remote environment setup',
+  'commands.updateConfig': 'Configure the ZY Code harness via settings.json. Set up automated behaviors with hooks, manage permissions, env vars, plugins, and MCP servers.',
+  'commands.keybindingsHelp': 'Customize keyboard shortcuts, rebind keys, add chord bindings, or modify ~/.zy/keybindings.json.',
+  'commands.claudeInChrome': 'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
+  'commands.claudeInChrome.whenToUse': 'When the user wants to interact with web pages, automate browser tasks, or perform browser-based actions.',
+  'commands.zyApi': 'Build apps with the Zy API or Anthropic SDK. Trigger when code imports anthropic SDK or user asks about Zy API.',
+  'commands.debug': 'Enable debug logging for this session and help diagnose issues.',
+  'commands.schedule': 'Create, update, list, or run scheduled remote agents that execute on a cron schedule.',
+  'commands.schedule.whenToUse': 'When the user wants to schedule a recurring remote agent, set up automated tasks, or manage scheduled agents.',
+  'commands.schedule.authRequired': 'You need to authenticate with a zy.ai account first. API accounts are not supported. Run /login, then try /schedule again.',
+  'commands.schedule.connectionError': "We're having trouble connecting with your remote zy.ai account to set up a scheduled task. Please try /schedule again in a few minutes.",
+  'commands.schedule.noEnvironments': 'No remote environments found, and we could not create one automatically. Visit https://zy.ai/code to set one up, then run /schedule again.',
+  'commands.schedule.noConnectors': 'No connected MCP connectors found. The user may need to connect servers at https://zy.ai/settings/connectors',
+  'commands.loop': 'Run a prompt or slash command on a recurring interval (e.g. /loop 5m /foo, defaults to 10m).',
+  'commands.loop.whenToUse': 'When the user wants to set up a recurring task, poll for status, or run something repeatedly on an interval.',
   'commands.source.bundled': 'bundled',
   'commands.source.workflow': 'workflow',
   'commands.source.plugin': 'plugin',
   'planMode.noPlanFound': 'No plan found. Please write your plan to the plan file first.',
   'planMode.ultraplanRefining': 'Plan being refined via Ultraplan — please wait for the result.',
+
+  // File tool error messages
+  'fileEdit.mustReadFirst': 'File must be read first',
+  'fileWrite.planToPreview': '/plan to preview',
+  'fileWrite.planToEdit': '/plan to edit',
+  'fileWrite.wrote': 'Wrote',
+  'fileWrite.linesTo': 'lines to',
+  'grep.fileNotFound': 'File not found',
+  'grep.errorSearching': 'Error searching files',
+  'glob.fileNotFound': 'File not found',
+  'glob.errorSearching': 'Error searching files',
+
+  // Skill tool messages
+  'skill.initializing': 'Initializing…',
+  'skill.done': 'Done',
+  'skill.successfullyLoaded': 'Successfully loaded skill',
+  'skill.toolAllowed': '{count} {unit} allowed',
+  'skill.toolAllowed_one': 'tool',
+  'skill.toolAllowed_other': 'tools',
+  'skill.moreToolUse': '+{count} more tool {unit}',
+  'skill.moreToolUse_one': 'use',
+  'skill.moreToolUse_other': 'uses',
+
+  // MCP tool messages
+  'mcp.processing': 'Processing… {progress}',
+  'mcp.sentMessageTo': 'Sent a message to',
+  'mcp.image': '[Image]',
+  'mcp.noContent': '(No content)',
+  'mcp.largeResponseWarning': '{warning} Large MCP response (~{tokens} tokens), this can fill up context quickly',
+
+  // Read MCP resource messages
+  'readMcpResource.readFromServer': 'Read resource "{uri}" from server "{server}"',
+  'readMcpResource.noContent': '(No content)',
+
+  // List MCP resources messages
+  'listMcpResources.listFromServer': 'List MCP resources from server "{server}"',
+  'listMcpResources.listAll': 'List all MCP resources',
+  'listMcpResources.noResourcesFound': '(No resources found)',
+
+  // Web fetch tool messages
+  'webFetch.fetching': 'Fetching…',
+  'webFetch.received': 'Received',
+
+  // Web search tool messages
+  'webSearch.searching': 'Searching:',
+  'webSearch.found': 'Found',
+  'webSearch.resultsFor': 'results for',
+  'webSearch.did': 'Did',
+  'webSearch.search': '{count} {unit} in {time}',
+  'webSearch.search_one': 'search',
+  'webSearch.search_other': 'searches',
+
+  // Exit plan mode messages
+  'exitPlanMode.exitedPlanMode': 'Exited plan mode',
+  'exitPlanMode.planSubmitted': 'Plan submitted for team lead approval',
+  'exitPlanMode.planFile': 'Plan file: {path}',
+  'exitPlanMode.waitingForApproval': 'Waiting for team lead to review and approve...',
+  'exitPlanMode.userApprovedPlan': "User approved ZY's plan",
+  'exitPlanMode.planSavedTo': 'Plan saved to: {path} · /plan to edit',
+
+  // Exit worktree messages
+  'exitWorktree.exiting': 'Exiting worktree…',
+  'exitWorktree.keptWorktree': 'Kept worktree',
+  'exitWorktree.removedWorktree': 'Removed worktree',
+  'exitWorktree.branch': 'branch',
+  'exitWorktree.returnedTo': 'Returned to',
+
+  // Task stop messages
+  'taskStop.stopped': 'stopped',
+
+  // Notebook edit messages
+  'notebook.errorEditing': 'Error editing notebook',
+
+  // PowerShell tool messages
+  'powershell.imageDetected': '[Image data detected and sent to ZY]',
+  'powershell.runningInBackground': 'Running in the background',
+  'powershell.manage': 'manage',
+  'powershell.interrupted': 'Interrupted',
+  'powershell.noOutput': '(No output)',
+
+  // LSP tool messages
+  'lsp.operationFailed': 'LSP operation failed',
 
   // File edit tool message
   'fileEdit.addedLine': 'Added {count} line',

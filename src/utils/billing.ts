@@ -4,25 +4,29 @@ import {
 } from './auth.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
+import { isInternalBuild } from './envUtils.js'
 
 export function hasConsoleBillingAccess(): boolean {
-  // Check if cost reporting is disabled via environment variable
+  // Check if cost reporting is disabled via environment变量
   if (isEnvTruthy(process.env.DISABLE_COST_WARNINGS)) {
     return false
   }
 
-  // No subscription context, so this is always false
-  const isSubscriber = false
+  // 外部构建始终显示费用（API key 用户需要看到自己的花费）
+  if (!isInternalBuild()) {
+    const authSource = getAuthTokenSource()
+    const hasApiKey = getApiKey() !== null
+    // 只要有认证就显示费用
+    return authSource.hasToken || hasApiKey
+  }
 
-  // This might be wrong if user is signed into Max but also using an API key, but
-  // we already show a warning on launch in that case
+  // 内部构建：检查 OAuth 角色
+  const isSubscriber = false
   if (isSubscriber) return false
 
-  // Check if user has any form of authentication
   const authSource = getAuthTokenSource()
   const hasApiKey = getApiKey() !== null
 
-  // If user has no authentication at all (logged out), don't show costs
   if (!authSource.hasToken && !hasApiKey) {
     return false
   }
@@ -32,10 +36,9 @@ export function hasConsoleBillingAccess(): boolean {
   const workspaceRole = config.oauthAccount?.workspaceRole
 
   if (!orgRole || !workspaceRole) {
-    return false // hide cost for grandfathered users who have not re-authed since we've added roles
+    return false
   }
 
-  // Users have billing access if they are admins or billing roles at either workspace or organization level
   return (
     ['admin', 'billing'].includes(orgRole) ||
     ['workspace_admin', 'workspace_billing'].includes(workspaceRole)

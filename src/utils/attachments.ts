@@ -1983,7 +1983,7 @@ async function getSkillListingAttachments(toolUseContext: ToolUseContext): Promi
   logForDebugging(`Sending ${newSkills.length} skills via attachment (${isInitial ? 'initial' : 'dynamic'}, ${sent.size} total sent)`);
 
   // 使用现有逻辑在预算内格式化
-  const contextWindowTokens = getContextWindowForModel(toolUseContext.options.mainLoopModel, getSdkBetas());
+  const contextWindowTokens = getContextWindowForModel(toolUseContext.options.mainLoopModel);
   const content = formatCommandsWithinBudget(newSkills, contextWindowTokens);
   return [{
     type: 'skill_listing',
@@ -2918,7 +2918,7 @@ export function getCompactionReminderAttachment(messages: Message[], model: stri
   if (!isAutoCompactEnabled()) {
     return [];
   }
-  const contextWindow = getContextWindowForModel(model, getSdkBetas());
+  const contextWindow = getContextWindowForModel(model);
   if (contextWindow < 1_000_000) {
     return [];
   }

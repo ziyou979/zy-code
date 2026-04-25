@@ -35,7 +35,7 @@ export function getEffectiveContextWindowSize(model: string): number {
     getMaxOutputTokensForModel(model),
     MAX_OUTPUT_TOKENS_FOR_SUMMARY,
   )
-  let contextWindow = getContextWindowForModel(model, getSdkBetas())
+  let contextWindow = getContextWindowForModel(model)
 
   const autoCompactWindow = process.env.ZY_CODE_AUTO_COMPACT_WINDOW
   if (autoCompactWindow) {

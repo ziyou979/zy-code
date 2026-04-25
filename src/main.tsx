@@ -280,7 +280,7 @@ if (!isInternalBuild() && isBeingDebugged()) {
  */
 function logSessionTelemetry(): void {
   const model = parseUserSpecifiedModel(getInitialMainLoopModel() ?? getDefaultMainLoopModel());
-  void logSkillsLoaded(getCwd(), getContextWindowForModel(model, getSdkBetas()));
+  void logSkillsLoaded(getCwd(), getContextWindowForModel(model));
   void loadAllPluginsCacheOnly().then(({
     enabled,
     errors

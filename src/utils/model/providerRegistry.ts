@@ -163,7 +163,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
       openai: 'https://open.bigmodel.cn/api/paas/v4/',
-      anthropic: 'https://open.bigmodel.cn/api/anthropic/',
+      anthropic: 'https://open.bigmodel.cn/api/anthropic',
     },
     baseUrlEnvVar: 'ZHIPU_BASE_URL',
     activationEnvVar: 'ZY_CODE_USE_ZHIPU',
@@ -179,8 +179,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: 'env-or-default',
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.kimi.com/coding/v1',
-      anthropic: 'https://api.kimi.com/coding/',
+      openai: 'https://api.moonshot.cn/v1',
+      anthropic: 'https://api.moonshot.cn/anthropic',
     },
     baseUrlEnvVar: 'KIMI_BASE_URL',
     activationEnvVar: 'ZY_CODE_USE_KIMI',
@@ -275,7 +275,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.modelarts-maas.com/openai/v1' },
     apiKeyLabel: 'Huawei Cloud API Key',
     suggestedModels: [
-      { label: 'DeepSeek-V3', value: 'DeepSeek-V3', tags: ['recommended', 'balanced'] },
+      { label: 'DeepSeek-V4-pro', value: 'DeepSeek-V4-pro', tags: ['recommended', 'balanced'] },
       { label: 'DeepSeek-R1', value: 'DeepSeek-R1', tags: ['reasoning'] },
     ],
   },
@@ -289,7 +289,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     ],
     activationEnvVar: 'ZY_CODE_USE_OPENROUTER',
     apiKeyLabel: 'OpenRouter API Key',
-    baseUrlHint: 'https://openrouter.ai/api/v1',
+    defaultBaseUrls: {
+      openai: 'https://openrouter.ai/api/v1',
+      anthropic: 'https://openrouter.ai/api',
+    },
     suggestedModels: [
       { label: 'anthropic/claude-sonnet-4', value: 'anthropic/claude-sonnet-4', tags: ['recommended', 'balanced'] },
       { label: 'anthropic/claude-opus-4', value: 'anthropic/claude-opus-4', tags: ['flagship'] },

@@ -22,12 +22,12 @@ import BashToolResultMessage from './BashToolResultMessage.js';
 import { extractBashCommentLabel } from './commentLabel.js';
 import { parseSedEditCommand } from './sedEditParser.js';
 
-// Constants for command display
+// 命令显示常量
 const MAX_COMMAND_DISPLAY_LINES = 2;
 const MAX_COMMAND_DISPLAY_CHARS = 160;
 
-// Simple component to show background hint and handle ctrl+b
-// When ctrl+b is pressed, backgrounds ALL running foreground commands
+// 显示后台提示并处理 ctrl+b 的简单组件
+// 按下 ctrl+b 时，将所有运行中的前台命令置于后台
 export function BackgroundHint(t0) {
   const {
     onBackground
@@ -46,7 +46,7 @@ export function BackgroundHint(t0) {
   if (isEnvTruthy(process.env.ZY_CODE_DISABLE_BACKGROUND_TASKS)) {
     return null;
   }
-  return <Box paddingLeft={5}><Text dimColor={true}><KeyboardShortcutHint shortcut={shortcut} action="run in background" parens={true} /></Text></Box>;
+  return <Box paddingLeft={5}><Text dimColor={true}><KeyboardShortcutHint shortcut={shortcut} action={tSync('bash.runInBackground')} parens={true} /></Text></Box>;
 }
 export function renderToolUseMessage(input: Partial<BashToolInput>, {
   verbose,
@@ -62,7 +62,7 @@ export function renderToolUseMessage(input: Partial<BashToolInput>, {
     return null;
   }
 
-  // Render sed in-place edits like file edits (show file path only)
+  // 像文件编辑一样渲染 sed 原地编辑（仅显示文件路径）
   const sedInfo = parseSedEditCommand(command);
   if (sedInfo) {
     return verbose ? sedInfo.filePath : getDisplayPath(sedInfo.filePath);
@@ -80,12 +80,12 @@ export function renderToolUseMessage(input: Partial<BashToolInput>, {
     if (needsLineTruncation || needsCharTruncation) {
       let truncated = command;
 
-      // First truncate by lines if needed
+      // 如果需要，先按行截断
       if (needsLineTruncation) {
         truncated = lines.slice(0, MAX_COMMAND_DISPLAY_LINES).join('\n');
       }
 
-      // Then truncate by chars if still too long
+      // 如果仍然太长，再按字符截断
       if (truncated.length > MAX_COMMAND_DISPLAY_CHARS) {
         truncated = truncated.slice(0, MAX_COMMAND_DISPLAY_CHARS);
       }
@@ -119,7 +119,7 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
 }
 export function renderToolUseQueuedMessage(): React.ReactNode {
   return <MessageResponse height={1}>
-      <Text dimColor>Waiting…</Text>
+      <Text dimColor>{tSync('bash.waiting')}</Text>
     </MessageResponse>;
 }
 export function renderToolResultMessage(content: Out, progressMessagesForMessage: ProgressMessage<BashProgress>[], {

@@ -2,6 +2,7 @@ import type { ToolResultBlockParam } from '../../types/llm.js';
 import * as React from 'react';
 import type { Message, ProgressMessage } from 'src/types/message.js';
 import { extractTag } from 'src/utils/messages.js';
+import { tSync } from '../../i18n/index.js';
 import type { ThemeName } from 'src/utils/theme.js';
 import type { z } from 'zod/v4';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
@@ -64,7 +65,7 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
 }): React.ReactNode {
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
     return <MessageResponse>
-        <Text color="error">Error editing notebook</Text>
+        <Text color="error">{tSync('notebook.errorEditing')}</Text>
       </MessageResponse>;
   }
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;

@@ -82,16 +82,21 @@ const loadCache = memoize(
  * 1. User-defined modelCapabilities costs in settings.json
  * 2. Static config registry (ALL_MODEL_CONFIGS_WITH_COSTS)
  * Returns null if neither has pricing.
+ *
+ * @param currentInputTokens 当前累计输入 token 总量（用于阶梯费用定价）
  */
-export function getStaticPricingForModel(model: string): {
+export function getStaticPricingForModel(
+  model: string,
+  currentInputTokens?: number,
+): {
   cost_input: number
   cost_output: number
   cost_cache_write: number
   cost_cache_read: number
   cost_web_search: number
 } | null {
-  // Priority 1: user settings
-  const userCosts = getModelCostsFromSettings(model)
+  // Priority 1: user settings（支持阶梯费用）
+  const userCosts = getModelCostsFromSettings(model, currentInputTokens)
   if (userCosts) {
     return {
       cost_input: userCosts.inputTokens,

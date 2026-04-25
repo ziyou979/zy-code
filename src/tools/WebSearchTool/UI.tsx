@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import type { ProgressMessage } from '../../types/message.js';
 import { truncate } from '../../utils/format.js';
@@ -64,12 +65,12 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<W
   switch (data.type) {
     case 'query_update':
       return <MessageResponse>
-          <Text dimColor>Searching: {data.query}</Text>
+          <Text dimColor>{tSync('webSearch.searching')} {data.query}</Text>
         </MessageResponse>;
     case 'search_results_received':
       return <MessageResponse>
           <Text dimColor>
-            Found {data.resultCount} results for &quot;{data.query}&quot;
+            {tSync('webSearch.found')} {data.resultCount} {tSync('webSearch.resultsFor')} &quot;{data.query}&quot;
           </Text>
         </MessageResponse>;
     default:
@@ -84,8 +85,7 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
   return <Box justifyContent="space-between" width="100%">
       <MessageResponse height={1}>
         <Text>
-          Did {searchCount} search
-          {searchCount !== 1 ? 'es' : ''} in {timeDisplay}
+          {tSync('webSearch.did')} {searchCount} {searchCount !== 1 ? tSync('webSearch.search_other') : tSync('webSearch.search_one')} in {timeDisplay}
         </Text>
       </MessageResponse>
     </Box>;

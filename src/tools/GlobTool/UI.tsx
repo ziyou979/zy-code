@@ -4,6 +4,7 @@ import { MessageResponse } from 'src/components/MessageResponse.js';
 import { extractTag } from 'src/utils/messages.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
+import { tSync } from '../../i18n/index.js';
 import { Text } from '../../ink.js';
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js';
 import { truncate } from '../../utils/format.js';
@@ -39,17 +40,17 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
     const errorMessage = extractTag(result, 'tool_use_error');
     if (errorMessage?.includes(FILE_NOT_FOUND_CWD_NOTE)) {
       return <MessageResponse>
-          <Text color="error">File not found</Text>
+          <Text color="error">{tSync('glob.fileNotFound')}</Text>
         </MessageResponse>;
     }
     return <MessageResponse>
-        <Text color="error">Error searching files</Text>
+        <Text color="error">{tSync('glob.errorSearching')}</Text>
       </MessageResponse>;
   }
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
 }
 
-// Note: GlobTool reuses GrepTool's renderToolResultMessage
+// 注意：GlobTool 复用 GrepTool 的 renderToolResultMessage
 export const renderToolResultMessage = GrepTool.renderToolResultMessage;
 export function getToolUseSummary(input: Partial<{
   pattern: string;

@@ -1,14 +1,14 @@
 import type { ToolPermissionContext } from '../../Tool.js'
+import { tSync } from '../../i18n/index.js'
 import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 
 /**
- * Helper: Validate flags against an allowlist
- * Handles both single flags and combined flags (e.g., -nE)
- * @param flags Array of flags to validate
- * @param allowedFlags Array of allowed single-character and long flags
- * @returns true if all flags are valid, false otherwise
+ * 辅助函数：根据允许列表验证标志。处理单个标志和组合标志（例如 -nE）。
+ * @param flags 要验证的标志数组
+ * @param allowedFlags 允许的单字符和长标志数组
+ * @returns 如果所有标志都有效则返回 true，否则返回 false
  */
 function validateFlagsAgainstAllowlist(
   flags: string[],
@@ -35,11 +35,8 @@ function validateFlagsAgainstAllowlist(
 }
 
 /**
- * Pattern 1: Check if this is a line printing command with -n flag
- * Allows: sed -n 'N' | sed -n 'N,M' with optional -E, -r, -z flags
- * Allows semicolon-separated print commands like: sed -n '1p;2p;3p'
- * File arguments are ALLOWED for this pattern
- * @internal Exported for testing
+ * 模式 1：检查是否为带 -n 标志的行打印命令。允许：sed -n 'N' | sed -n 'N,M'，可搭配 -E、-r、-z 标志。允许分号分隔的打印命令。此模式允许文件参数。
+ * @internal 导出用于测试
  */
 export function isLinePrintingCommand(
   command: string,
@@ -117,13 +114,8 @@ export function isLinePrintingCommand(
 }
 
 /**
- * Helper: Check if a single command is a valid print command
- * STRICT ALLOWLIST - only these exact forms are allowed:
- * - p (print all)
- * - Np (print line N, where N is digits)
- * - N,Mp (print lines N through M)
- * Anything else (including w, W, e, E commands) is rejected.
- * @internal Exported for testing
+ * 辅助函数：检查单个命令是否为有效的打印命令。严格允许列表 - 仅允许以下形式：- p（打印全部）- Np（打印第 N 行）- N,Mp（打印第 N 到 M 行）。其他内容（包括 w、W、e、E 命令）均被拒绝。
+ * @internal 导出用于测试
  */
 export function isPrintCommand(cmd: string): boolean {
   if (!cmd) return false
@@ -133,11 +125,8 @@ export function isPrintCommand(cmd: string): boolean {
 }
 
 /**
- * Pattern 2: Check if this is a substitution command
- * Allows: sed 's/pattern/replacement/flags' where flags are only: g, p, i, I, m, M, 1-9
- * When allowFileWrites is true, allows -i flag and file arguments for in-place editing
- * When allowFileWrites is false (default), requires stdout-only (no file arguments, no -i flag)
- * @internal Exported for testing
+ * 模式 2：检查是否为替换命令。允许：sed 's/pattern/replacement/flags'，标志仅限：g、p、i、I、m、M、1-9。allowFileWrites 为 true 时允许 -i 标志和文件参数进行原地编辑。默认为 false 时要求仅 stdout。
+ * @internal 导出用于测试
  */
 function isSubstitutionCommand(
   command: string,
@@ -238,11 +227,10 @@ function isSubstitutionCommand(
 }
 
 /**
- * Checks if a sed command is allowed by the allowlist.
- * The allowlist patterns themselves are strict enough to reject dangerous operations.
- * @param command The sed command to check
- * @param options.allowFileWrites When true, allows -i flag and file arguments for substitution commands
- * @returns true if the command is allowed (matches allowlist and passes denylist check), false otherwise
+ * 检查 sed 命令是否被允许列表所允许。允许列表模式本身足够严格以拒绝危险操作。
+ * @param command 要检查的 sed 命令
+ * @param options.allowFileWrites 为 true 时，允许替换命令使用 -i 标志和文件参数
+ * @returns 如果命令被允许（匹配允许列表并通过拒绝列表检查）则返回 true，否则返回 false
  */
 export function sedCommandIsAllowedByAllowlist(
   command: string,
@@ -250,30 +238,30 @@ export function sedCommandIsAllowedByAllowlist(
 ): boolean {
   const allowFileWrites = options?.allowFileWrites ?? false
 
-  // Extract sed expressions (content inside quotes where actual sed commands live)
+  // 提取 sed 表达式（引号内实际 sed 命令所在的内容）
   let expressions: string[]
   try {
     expressions = extractSedExpressions(command)
   } catch (_error) {
-    // If parsing failed, treat as not allowed
+    // 如果解析失败，视为不允许
     return false
   }
 
-  // Check if sed command has file arguments
+  // 检查 sed 命令是否有文件参数
   const hasFileArguments = hasFileArgs(command)
 
-  // Check if command matches allowlist patterns
+  // 检查命令是否匹配允许列表模式
   let isPattern1 = false
   let isPattern2 = false
 
   if (allowFileWrites) {
-    // When allowing file writes, only check substitution commands (Pattern 2 variant)
-    // Pattern 1 (line printing) doesn't need file writes
+    // 允许文件写入时，仅检查替换命令（模式 2 变体）
+    // 模式 1（行打印）不需要文件写入
     isPattern2 = isSubstitutionCommand(command, expressions, hasFileArguments, {
       allowFileWrites: true,
     })
   } else {
-    // Standard read-only mode: check both patterns
+    // 标准只读模式：检查两种模式
     isPattern1 = isLinePrintingCommand(command, expressions)
     isPattern2 = isSubstitutionCommand(command, expressions, hasFileArguments)
   }
@@ -282,15 +270,15 @@ export function sedCommandIsAllowedByAllowlist(
     return false
   }
 
-  // Pattern 2 does not allow semicolons (command separators)
-  // Pattern 1 allows semicolons for separating print commands
+  // 模式 2 不允许分号（命令分隔符）
+  // 模式 1 允许分号分隔打印命令
   for (const expr of expressions) {
     if (isPattern2 && expr.includes(';')) {
       return false
     }
   }
 
-  // Defense-in-depth: Even if allowlist matches, check denylist
+  // 纵深防御：即使允许列表匹配，也要检查拒绝列表
   for (const expr of expressions) {
     if (containsDangerousOperations(expr)) {
       return false
@@ -301,8 +289,8 @@ export function sedCommandIsAllowedByAllowlist(
 }
 
 /**
- * Check if a sed command has file arguments (not just stdin)
- * @internal Exported for testing
+ * 检查 sed 命令是否有文件参数（不仅仅是 stdin）。
+ * @internal 导出用于测试
  */
 export function hasFileArgs(command: string): boolean {
   const sedMatch = command.match(/^\s*sed\s+/)
@@ -665,20 +653,18 @@ export function checkSedConstraints(
     if (!isAllowed) {
       return {
         behavior: 'ask',
-        message:
-          'sed command requires approval (contains potentially dangerous operations)',
+        message: tSync('bash.sedRequiresApproval'),
         decisionReason: {
           type: 'other',
-          reason:
-            'sed command contains operations that require explicit approval (e.g., write commands, execute commands)',
+          reason: tSync('bash.sedDangerousOperations'),
         },
       }
     }
   }
 
-  // No dangerous sed commands found (or no sed commands at all)
+  // 未发现危险的 sed 命令（或完全不包含 sed 命令）
   return {
     behavior: 'passthrough',
-    message: 'No dangerous sed operations detected',
+    message: tSync('bash.sedNoDangerousOperations'),
   }
 }

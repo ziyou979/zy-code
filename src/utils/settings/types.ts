@@ -767,6 +767,27 @@ export const SettingsSchema = lazySchema(() =>
           'When false, thinking is disabled. When absent or true, thinking is ' +
             'enabled automatically for supported models.',
         ),
+      defaultMaxOutputTokenRatio: z
+        .number()
+        .min(0)
+        .max(1)
+        .optional()
+        .describe(
+          'Ratio (0–1) for calculating the default max output tokens from the model\'s ' +
+            'maxOutputTokens. The default request uses min(maxOutputTokens * ratio, minDefaultMaxOutputTokens). ' +
+            'If the response gets truncated, it retries with the full maxOutputTokens as upper limit. ' +
+            'Defaults to 0.75.',
+        ),
+      minDefaultMaxOutputTokens: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe(
+          'Upper bound (cap) for the default max output tokens per request. ' +
+            'The effective default is min(maxOutputTokens * defaultMaxOutputTokenRatio, minDefaultMaxOutputTokens). ' +
+            'Defaults to 8000.',
+        ),
       effortLevel: z
         .enum(
           isInternalBuild()

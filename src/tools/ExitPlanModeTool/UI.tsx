@@ -4,6 +4,7 @@ import { MessageResponse } from 'src/components/MessageResponse.js';
 import { RejectedPlanMessage } from 'src/components/messages/UserToolResultMessage/RejectedPlanMessage.js';
 import { BLACK_CIRCLE } from 'src/constants/figures.js';
 import { getModeColor } from 'src/utils/permissions/PermissionMode.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import type { ToolProgressData } from '../../Tool.js';
 import type { ProgressMessage } from '../../types/message.js';
@@ -32,7 +33,7 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
     return <Box flexDirection="column" marginTop={1}>
         <Box flexDirection="row">
           <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
-          <Text> Exited plan mode</Text>
+          <Text> {tSync('exitPlanMode.exitedPlanMode')}</Text>
         </Box>
       </Box>;
   }
@@ -42,12 +43,12 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
     return <Box flexDirection="column" marginTop={1}>
         <Box flexDirection="row">
           <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
-          <Text> Plan submitted for team lead approval</Text>
+          <Text> {tSync('exitPlanMode.planSubmitted')}</Text>
         </Box>
         <MessageResponse>
           <Box flexDirection="column">
-            {filePath && <Text dimColor>Plan file: {displayPath}</Text>}
-            <Text dimColor>Waiting for team lead to review and approve...</Text>
+            {filePath && <Text dimColor>{tSync('exitPlanMode.planFile', { path: displayPath })}</Text>}
+            <Text dimColor>{tSync('exitPlanMode.waitingForApproval')}</Text>
           </Box>
         </MessageResponse>
       </Box>;
@@ -55,11 +56,11 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
   return <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
         <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
-        <Text> User approved ZY&apos;s plan</Text>
+        <Text> {tSync('exitPlanMode.userApprovedPlan')}</Text>
       </Box>
       <MessageResponse>
         <Box flexDirection="column">
-          {filePath && <Text dimColor>Plan saved to: {displayPath} · /plan to edit</Text>}
+          {filePath && <Text dimColor>{tSync('exitPlanMode.planSavedTo', { path: displayPath })}</Text>}
           <Markdown>{plan}</Markdown>
         </Box>
       </MessageResponse>

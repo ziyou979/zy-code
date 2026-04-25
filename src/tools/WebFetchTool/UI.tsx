@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import type { ToolProgressData } from '../../Tool.js';
 import type { ProgressMessage } from '../../types/message.js';
@@ -28,7 +29,7 @@ export function renderToolUseMessage({
 }
 export function renderToolUseProgressMessage(): React.ReactNode {
   return <MessageResponse height={1}>
-      <Text dimColor>Fetching…</Text>
+      <Text dimColor>{tSync('webFetch.fetching')}</Text>
     </MessageResponse>;
 }
 export function renderToolResultMessage({
@@ -46,7 +47,7 @@ export function renderToolResultMessage({
     return <Box flexDirection="column">
         <MessageResponse height={1}>
           <Text>
-            Received <Text bold>{formattedSize}</Text> ({code} {codeText})
+            {tSync('webFetch.received')} <Text bold>{formattedSize}</Text> ({code} {codeText})
           </Text>
         </MessageResponse>
         <Box flexDirection="column">
@@ -56,7 +57,7 @@ export function renderToolResultMessage({
   }
   return <MessageResponse height={1}>
       <Text>
-        Received <Text bold>{formattedSize}</Text> ({code} {codeText})
+        {tSync('webFetch.received')} <Text bold>{formattedSize}</Text> ({code} {codeText})
       </Text>
     </MessageResponse>;
 }

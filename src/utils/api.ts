@@ -1,6 +1,6 @@
 import type { ToolDefinition } from '../types/llm.js'
 import { createHash } from 'crypto'
-import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from 'src/constants/prompts.js'
+import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY, getLanguageSection } from 'src/constants/prompts.js'
 import { getSystemContext, getUserContext } from 'src/context.js'
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js'
 import {
@@ -61,8 +61,9 @@ import type { SystemPrompt } from './systemPromptType.js'
 import { getToolSchemaCache, type CachedSchema } from './toolSchemaCache.js'
 import { windowsPathToPosixPath } from './windowsPaths.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
+import { getInitialSettings } from './settings/settings.js'
 
-// Extended ToolDefinition type with strict mode and defer_loading support
+// 扩展的 ToolDefinition 类型，支持 strict 模式和 defer_loading
 type ToolDefinitionWithExtras = ToolDefinition & {
   strict?: boolean
   defer_loading?: boolean
@@ -80,15 +81,15 @@ export type SystemPromptBlock = {
   cacheScope: CacheScope | null
 }
 
-// Fields to filter from tool schemas when swarms are not enabled
+// 当智能体集群未启用时，需要从工具模式中过滤的字段
 const SWARM_FIELDS_BY_TOOL: Record<string, string[]> = {
   [EXIT_PLAN_MODE_V2_TOOL_NAME]: ['launchSwarm', 'teammateCount'],
   [AGENT_TOOL_NAME]: ['name', 'team_name', 'mode'],
 }
 
 /**
- * Filter swarm-related fields from a tool's input schema.
- * Called at runtime when isAgentSwarmsEnabled() returns false.
+ * 从工具输入模式中过滤与智能体集群相关的字段。
+ * 当 isAgentSwarmsEnabled() 返回 false 时在运行时调用。
  */
 function filterSwarmFieldsFromSchema(
   toolName: string,
@@ -121,7 +122,7 @@ export async function toolToAPISchema(
     agents: AgentDefinition[]
     allowedAgentTypes?: string[]
     model?: string
-    /** When true, mark this tool with defer_loading for tool search */
+    /** 当为 true 时，将此工具标记为 defer_loading 以用于工具搜索 */
     deferLoading?: boolean
     cacheControl?: {
       type: 'ephemeral'
@@ -130,17 +131,17 @@ export async function toolToAPISchema(
     }
   },
 ): Promise<ToolDefinition> {
-  // Session-stable base schema: name, description, input_schema, strict,
-  // eager_input_streaming. These are computed once per session and cached to
-  // prevent mid-session GrowthBook flips (zy_tool_pear, zy_fgts) or
-  // tool.prompt() drift from churning the serialized tool array bytes.
-  // See toolSchemaCache.ts for rationale.
+  // 会话稳定的基础模式：name、description、input_schema、strict、
+  // eager_input_streaming。这些在每个会话中计算一次并缓存，
+  // 以防止会话中途的 GrowthBook 翻转（zy_tool_pear、zy_fgts）或
+  // tool.prompt() 漂移导致序列化工具数组字节频繁变化。
+  // 详见 toolSchemaCache.ts 的设计理由。
   //
-  // Cache key includes inputJSONSchema when present. StructuredOutput instances
-  // share the name 'StructuredOutput' but carry different schemas per workflow
-  // call — name-only keying returned a stale schema (5.4% → 51% err rate, see
-  // PR#25424). MCP tools also set inputJSONSchema but each has a stable schema,
-  // so including it preserves their GB-flip cache stability.
+  // 缓存键在存在 inputJSONSchema 时包含该字段。StructuredOutput 实例
+  // 共享名称 'StructuredOutput'，但每次工作流调用携带不同的模式 ——
+  // 仅使用名称作为键会返回过时的模式（错误率从 5.4% 升至 51%，见
+  // PR#25424）。MCP 工具也设置 inputJSONSchema，但每个都有稳定的模式，
+  // 因此包含它可以保持其 GB 翻转缓存稳定性。
   const cacheKey =
     'inputJSONSchema' in tool && tool.inputJSONSchema
       ? `${tool.name}:${jsonStringify(tool.inputJSONSchema)}`
@@ -150,35 +151,44 @@ export async function toolToAPISchema(
   if (!base) {
     const strictToolsEnabled =
       checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_strict_tools')
-    // Use tool's JSON schema directly if provided, otherwise convert Zod schema
+    // 如果提供了工具的 JSON 模式则直接使用，否则转换 Zod 模式
     let input_schema = (
       'inputJSONSchema' in tool && tool.inputJSONSchema
         ? tool.inputJSONSchema
         : zodToJsonSchema(tool.inputSchema)
     ) as Record<string, unknown>
 
-    // Filter out swarm-related fields when swarms are not enabled
-    // This ensures external non-EAP users don't see swarm features in the schema
+    // 当智能体集群未启用时过滤相关字段
+    // 这确保外部非 EAP 用户在模式中看不到智能体集群功能
     if (!isAgentSwarmsEnabled()) {
       input_schema = filterSwarmFieldsFromSchema(tool.name, input_schema)
     }
 
+    const toolPrompt = await tool.prompt({
+      getToolPermissionContext: options.getToolPermissionContext,
+      tools: options.tools,
+      agents: options.agents,
+      allowedAgentTypes: options.allowedAgentTypes,
+    })
+
+    // 将语言偏好附加到工具提示中，以便模型尊重
+    // 用户的配置语言，即使在工具相关输出期间也是如此。
+    const languageSection = getLanguageSection(getInitialSettings().language)
+    const description = languageSection
+      ? `${toolPrompt}\n\n${languageSection}`
+      : toolPrompt
+
     base = {
       name: tool.name,
-      description: await tool.prompt({
-        getToolPermissionContext: options.getToolPermissionContext,
-        tools: options.tools,
-        agents: options.agents,
-        allowedAgentTypes: options.allowedAgentTypes,
-      }),
+      description,
       input_schema,
     }
 
-    // Only add strict if:
-    // 1. Feature flag is enabled
-    // 2. Tool has strict: true
-    // 3. Model is provided and supports it (not all models support it right now)
-    //    (if model is not provided, assume we can't use strict tools)
+    // 仅在以下情况下添加 strict：
+    // 1. 功能标志已启用
+    // 2. 工具具有 strict: true
+    // 3. 提供了模型且支持它（并非所有模型都支持）
+    //    （如果未提供模型，假设我们无法使用 strict 工具）
     if (
       strictToolsEnabled &&
       tool.strict === true &&
@@ -188,11 +198,11 @@ export async function toolToAPISchema(
       base.strict = true
     }
 
-    // Enable fine-grained tool streaming via per-tool API field.
-    // Without FGTS, the API buffers entire tool input parameters before sending
-    // input_json_delta events, causing multi-minute hangs on large tool inputs.
-    // Gated to direct api.anthropic.com: proxies (LiteLLM etc.) and Bedrock/Vertex
-    // with Zy 4.5 reject this field with 400. See GH#32742, PR #21729.
+    // 通过每个工具的 API 字段启用细粒度工具流式传输。
+    // 如果没有 FGTS，API 会在发送 input_json_delta 事件之前缓冲整个工具输入参数，
+    // 导致大型工具输入时出现数分钟的挂起。
+    // 仅限于直接 api.anthropic.com：代理（LiteLLM 等）和 Bedrock/Vertex
+    // 在 Zy 4.5 中以 400 错误拒绝此字段。见 GH#32742，PR #21729。
     if (
       providerHasCapability(getAPIProvider(), 'prompt_caching') &&
       isAnthropicBaseUrl() &&
@@ -205,10 +215,10 @@ export async function toolToAPISchema(
     cache.set(cacheKey, base)
   }
 
-  // Per-request overlay: defer_loading and cache_control vary by call
-  // (tool search defers different tools per turn; cache markers move).
-  // Explicit field copy avoids mutating the cached base and sidesteps
-  // ToolDefinition.cache_control's `| null` clashing with our narrower type.
+  // 每个请求的覆盖层：defer_loading 和 cache_control 因调用而异
+  // （工具搜索每轮延迟不同的工具；缓存标记移动）。
+  // 显式字段复制避免改变缓存的基础，并规避
+  // ToolDefinition.cache_control 的 `| null` 与我们更窄类型的冲突。
   const schema: ToolDefinitionWithExtras = {
     name: base.name,
     description: base.description,
@@ -217,7 +227,7 @@ export async function toolToAPISchema(
     ...(base.eager_input_streaming && { eager_input_streaming: true }),
   }
 
-  // Add defer_loading if requested (for tool search feature)
+  // 如果请求则添加 defer_loading（用于工具搜索功能）
   if (options.deferLoading) {
     schema.defer_loading = true
   }
@@ -226,16 +236,16 @@ export async function toolToAPISchema(
     schema.cache_control = options.cacheControl
   }
 
-  // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS is the kill switch for beta API
-  // shapes. Proxy gateways (ANTHROPIC_BASE_URL → LiteLLM → Bedrock) reject
-  // fields like defer_loading with "Extra inputs are not permitted". The gates
-  // above each field are scattered and not all provider-aware, so this strips
-  // everything not in the base-tool allowlist at the one choke point all tool
-  // schemas pass through — including fields added in the future.
-  // cache_control is allowlisted: the base {type: 'ephemeral'} shape is
-  // standard prompt caching (Bedrock/Vertex supported); the beta sub-fields
-  // (scope, ttl) are already gated upstream by shouldIncludeExperimentalBetas
-  // which independently respects this kill switch.
+  // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS 是实验性 API 形状的总开关。
+  // 代理网关（ANTHROPIC_BASE_URL → LiteLLM → Bedrock）会以
+  // "Extra inputs are not permitted" 拒绝像 defer_loading 这样的字段。
+  // 每个字段上方的门控分散且并非所有提供商都知道，因此这在所有工具
+  // 模式经过的唯一瓶颈点处剥离不在基础工具允许列表中的所有内容
+  // —— 包括未来添加的字段。
+  // cache_control 在允许列表中：基础 {type: 'ephemeral'} 形状是
+  // 标准提示缓存（Bedrock/Vertex 支持）；beta 子字段
+  // （scope、ttl）已由 shouldIncludeExperimentalBetas 在上游进行门控，
+  // 它独立尊重此总开关。
   // github.com/anthropics/zy-code/issues/20031
   if (isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
     const allowed = new Set([
@@ -256,9 +266,9 @@ export async function toolToAPISchema(
     }
   }
 
-  // Note: We cast to ToolDefinition but the extra fields are still present at runtime
-  // and will be serialized in the API request, even though they're not in the standard
-  // ToolDefinition type definition. This is intentional for beta features.
+  // 注意：我们转换为 ToolDefinition，但额外字段在运行时仍然存在
+  // 并将在 API 请求中序列化，即使它们不在标准的
+  // ToolDefinition 类型定义中。这对于 beta 功能是有意为之的。
   return schema as ToolDefinition
 }
 
@@ -272,8 +282,8 @@ function logStripOnce(stripped: string[]): void {
 }
 
 /**
- * Log stats about first block for analyzing prefix matching config
- * (see https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_system_prompt_prefixes)
+ * 记录关于首个块的统计信息以分析前缀匹配配置
+ * （见 https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_system_prompt_prefixes）
  */
 export function logAPIPrefix(systemPrompt: SystemPrompt): void {
   const [firstSyspromptBlock] = splitSysPromptPrefix(systemPrompt)
@@ -291,29 +301,29 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
 }
 
 /**
- * Split system prompt blocks by content type for API matching and cache control.
- * See https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_system_prompt_prefixes
+ * 按内容类型拆分系统提示块以进行 API 匹配和缓存控制。
+ * 见 https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_system_prompt_prefixes
  *
- * Behavior depends on feature flags and options:
+ * 行为取决于功能标志和选项：
  *
- * 1. MCP tools present (skipGlobalCacheForSystemPrompt=true):
- *    Returns up to 3 blocks with org-level caching (no global cache on system prompt):
- *    - Attribution header (cacheScope=null)
- *    - System prompt prefix (cacheScope='org')
- *    - Everything else concatenated (cacheScope='org')
+ * 1. 存在 MCP 工具（skipGlobalCacheForSystemPrompt=true）：
+ *    返回最多 3 个带有组织级缓存的块（系统提示上无全局缓存）：
+ *    - 归属标头（cacheScope=null）
+ *    - 系统提示前缀（cacheScope='org'）
+ *    - 其余内容连接（cacheScope='org'）
  *
- * 2. Global cache mode with boundary marker (direct API only, boundary found):
- *    Returns up to 4 blocks:
- *    - Attribution header (cacheScope=null)
- *    - System prompt prefix (cacheScope=null)
- *    - Static content before boundary (cacheScope='global')
- *    - Dynamic content after boundary (cacheScope=null)
+ * 2. 带有边界标记的全局缓存模式（仅限直接 API，找到边界）：
+ *    返回最多 4 个块：
+ *    - 归属标头（cacheScope=null）
+ *    - 系统提示前缀（cacheScope=null）
+ *    - 边界前的静态内容（cacheScope='global'）
+ *    - 边界后的动态内容（cacheScope=null）
  *
- * 3. Default mode (3P providers, or boundary missing):
- *    Returns up to 3 blocks with org-level caching:
- *    - Attribution header (cacheScope=null)
- *    - System prompt prefix (cacheScope='org')
- *    - Everything else concatenated (cacheScope='org')
+ * 3. 默认模式（第三方提供商，或缺少边界）：
+ *    返回最多 3 个带有组织级缓存的块：
+ *    - 归属标头（cacheScope=null）
+ *    - 系统提示前缀（cacheScope='org'）
+ *    - 其余内容连接（cacheScope='org'）
  */
 export function splitSysPromptPrefix(
   systemPrompt: SystemPrompt,
@@ -471,13 +481,13 @@ export function prependUserContext(
 }
 
 /**
- * Log metrics about context and system prompt size
+ * 记录关于上下文和系统提示大小的指标
  */
 export async function logContextMetrics(
   mcpConfigs: Record<string, ScopedMcpServerConfig>,
   toolPermissionContext: ToolPermissionContext,
 ): Promise<void> {
-  // Early return if logging is disabled
+  // 如果日志记录被禁用则提前返回
   if (isAnalyticsDisabled()) {
     return
   }
@@ -559,7 +569,7 @@ export async function logContextMetrics(
   })
 }
 
-// TODO: Generalize this to all tools
+// TODO: 将此推广到所有工具
 export function normalizeToolInput<T extends Tool>(
   tool: T,
   input: z.infer<T['inputSchema']>,
@@ -567,8 +577,8 @@ export function normalizeToolInput<T extends Tool>(
 ): z.infer<T['inputSchema']> {
   switch (tool.name) {
     case EXIT_PLAN_MODE_V2_TOOL_NAME: {
-      // Always inject plan content and file path for ExitPlanModeV2 so hooks/SDK get the plan.
-      // The V2 tool reads plan from file instead of input, but hooks/SDK
+      // 始终为 ExitPlanModeV2 注入计划内容和文件路径，以便 hooks/SDK 获取计划。
+      // V2 工具从文件而非输入中读取计划，但 hooks/SDK
       const plan = getPlan(agentId)
       const planFilePath = getPlanFilePath(agentId)
       // Persist file snapshot for CCR sessions so the plan survives pod recycling
@@ -588,22 +598,22 @@ export function normalizeToolInput<T extends Tool>(
         )
       }
 
-      // Replace \\; with \; (commonly needed for find -exec commands)
+      // 将 \\; 替换为 \;（find -exec 命令通常需要）
       normalizedCommand = normalizedCommand.replace(/\\\\;/g, '\\;')
 
-      // Logging for commands that are only echoing a string. This is to help us understand how often  Zy talks via bash
+      // 记录仅回显字符串的命令。这有助于我们了解 Zy 通过 bash 通信的频率
       if (/^echo\s+["']?[^|&;><]*["']?$/i.test(normalizedCommand.trim())) {
         logEvent('zy_bash_tool_simple_echo', {})
       }
 
-      // Check for run_in_background (may not exist in schema if ZY_CODE_DISABLE_BACKGROUND_TASKS is set)
+      // 检查 run_in_background（如果设置了 ZY_CODE_DISABLE_BACKGROUND_TASKS，模式中可能不存在）
       const run_in_background =
         'run_in_background' in parsed ? parsed.run_in_background : undefined
 
-      // SAFETY: Cast is safe because input was validated by .parse() above.
-      // TypeScript can't narrow the generic T based on switch(tool.name), so it
-      // doesn't know the return type matches T['inputSchema']. This is a fundamental
-      // TS limitation with generics, not bypassable without major refactoring.
+      // 安全：转换是安全的，因为输入已通过上面的 .parse() 验证。
+      // TypeScript 无法基于 switch(tool.name) 缩小泛型 T 的范围，因此它
+      // 不知道返回类型匹配 T['inputSchema']。这是泛型的根本性
+      // TS 限制，不进行重大重构无法绕过。
       return {
         command: normalizedCommand,
         description,
@@ -620,7 +630,7 @@ export function normalizeToolInput<T extends Tool>(
       // Validated upstream, won't throw
       const parsedInput = FileEditTool.inputSchema.parse(input)
 
-      // This is a workaround for tokens zy can't see
+      // 这是 zy 无法看到的 token 的变通方法
       const { file_path, edits } = normalizeFileEditInput({
         file_path: parsedInput.file_path,
         edits: [
@@ -632,7 +642,7 @@ export function normalizeToolInput<T extends Tool>(
         ],
       })
 
-      // SAFETY: See comment in BashTool case above
+      // 安全：参见上面 BashTool 中的注释
       return {
         replace_all: edits[0]!.replace_all,
         file_path,
@@ -644,10 +654,10 @@ export function normalizeToolInput<T extends Tool>(
       // Validated upstream, won't throw
       const parsedInput = FileWriteTool.inputSchema.parse(input)
 
-      // Markdown uses two trailing spaces as a hard line break — don't strip.
+      // Markdown 使用两个尾随空格作为硬换行符 — 不要去除。
       const isMarkdown = /\.(md|mdx)$/i.test(parsedInput.file_path)
 
-      // SAFETY: See comment in BashTool case above
+      // 安全：参见上面 BashTool 中的注释
       return {
         file_path: parsedInput.file_path,
         content: isMarkdown
@@ -656,7 +666,7 @@ export function normalizeToolInput<T extends Tool>(
       } as z.infer<T['inputSchema']>
     }
     case TASK_OUTPUT_TOOL_NAME: {
-      // Normalize legacy parameter names from AgentOutputTool/BashOutputTool
+      // 规范化来自 AgentOutputTool/BashOutputTool 的遗留参数名
       const legacyInput = input as Record<string, unknown>
       const taskId =
         legacyInput.task_id ?? legacyInput.agentId ?? legacyInput.bash_id
@@ -665,7 +675,7 @@ export function normalizeToolInput<T extends Tool>(
         (typeof legacyInput.wait_up_to === 'number'
           ? legacyInput.wait_up_to * 1000
           : undefined)
-      // SAFETY: See comment in BashTool case above
+      // 安全：参见上面 BashTool 中的注释
       return {
         task_id: taskId ?? '',
         block: legacyInput.block ?? true,
@@ -677,15 +687,15 @@ export function normalizeToolInput<T extends Tool>(
   }
 }
 
-// Strips fields that were added by normalizeToolInput before sending to API
-// (e.g., plan field from ExitPlanModeV2 which has an empty input schema)
+// 去除 normalizeToolInput 在发送到 API 前添加的字段
+// （例如，ExitPlanModeV2 的 plan 字段，它具有空的输入模式）
 export function normalizeToolInputForAPI<T extends Tool>(
   tool: T,
   input: z.infer<T['inputSchema']>,
 ): z.infer<T['inputSchema']> {
   switch (tool.name) {
     case EXIT_PLAN_MODE_V2_TOOL_NAME: {
-      // Strip injected fields before sending to API (schema expects empty object)
+      // 发送到 API 前去除注入的字段（模式期望空对象）
       if (
         input &&
         typeof input === 'object' &&
@@ -697,11 +707,11 @@ export function normalizeToolInputForAPI<T extends Tool>(
       return input
     }
     case FileEditTool.name: {
-      // Strip synthetic old_string/new_string/replace_all from OLD sessions
-      // that were resumed from transcripts written before PR #20357, where
-      // normalizeToolInput used to synthesize these. Needed so old --resume'd
-      // transcripts don't send whole-file copies to the API. New sessions
-      // don't need this (synthesis moved to emission time).
+      // 从旧会话中去除合成的 old_string/new_string/replace_all
+      // 这些会话是从 PR #20357 之前编写的转录文件中恢复的，当时
+      // normalizeToolInput 曾合成这些字段。需要这样做，以便旧的 --resume
+      // 转录文件不会向 API 发送整个文件的副本。新会话
+      // 不需要这个（合成已移至发射时）。
       if (input && typeof input === 'object' && 'edits' in input) {
         const { old_string, new_string, replace_all, ...rest } =
           input as Record<string, unknown>

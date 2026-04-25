@@ -14,7 +14,7 @@ import type { PowerShellProgress } from '../../types/tools.js';
 import type { ThemeName } from '../../utils/theme.js';
 import type { Out, PowerShellToolInput } from './PowerShellTool.js';
 
-// Constants for command display
+// 命令显示常量
 const MAX_COMMAND_DISPLAY_LINES = 2;
 const MAX_COMMAND_DISPLAY_CHARS = 160;
 export function renderToolUseMessage(input: Partial<PowerShellToolInput>, {
@@ -73,7 +73,7 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
 }
 export function renderToolUseQueuedMessage(): React.ReactNode {
   return <MessageResponse height={1}>
-      <Text dimColor>Waiting…</Text>
+      <Text dimColor>{tSync('bash.waiting')}</Text>
     </MessageResponse>;
 }
 export function renderToolResultMessage(content: Out, progressMessagesForMessage: ProgressMessage<PowerShellProgress>[], {
@@ -99,7 +99,7 @@ export function renderToolResultMessage(content: Out, progressMessagesForMessage
   } = content;
   if (isImage) {
     return <MessageResponse height={1}>
-        <Text dimColor>[Image data detected and sent to ZY]</Text>
+        <Text dimColor>{tSync('powershell.imageDetected')}</Text>
       </MessageResponse>;
   }
   return <Box flexDirection="column">
@@ -108,9 +108,9 @@ export function renderToolResultMessage(content: Out, progressMessagesForMessage
       {stdout === '' && stderr.trim() === '' ? <MessageResponse height={1}>
           <Text dimColor>
             {backgroundTaskId ? <>
-                Running in the background{' '}
-                <KeyboardShortcutHint shortcut="↓" action="manage" parens />
-              </> : interrupted ? 'Interrupted' : returnCodeInterpretation || '(No output)'}
+                {tSync('powershell.runningInBackground')}{' '}
+                <KeyboardShortcutHint shortcut="↓" action={tSync('powershell.manage')} parens />
+              </> : interrupted ? tSync('powershell.interrupted') : returnCodeInterpretation || tSync('powershell.noOutput')}
           </Text>
         </MessageResponse> : null}
       {timeoutMs ? <MessageResponse>

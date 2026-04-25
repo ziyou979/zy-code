@@ -2,8 +2,7 @@ import { feature } from 'bun:bundle';
 import memoize from 'lodash-es/memoize.js';
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE, getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js';
-import { BEDROCK_EXTRA_PARAMS_HEADERS, ZY_CODE_, CLI_INTERNAL_BETA_HEADER, CONTEXT_1M_BETA_HEADER, CONTEXT_MANAGEMENT_BETA_HEADER, INTERLEAVED_THINKING_BETA_HEADER, PROMPT_CACHING_SCOPE_BETA_HEADER, REDACT_THINKING_BETA_HEADER, STRUCTURED_OUTPUTS_BETA_HEADER, SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER, TOKEN_EFFICIENT_TOOLS_BETA_HEADER, TOOL_SEARCH_BETA_HEADER_1P, TOOL_SEARCH_BETA_HEADER_3P, WEB_SEARCH_BETA_HEADER } from '../constants/betas.js';
-import { has1mContext } from './context.js';
+import { BEDROCK_EXTRA_PARAMS_HEADERS, ZY_CODE_, CLI_INTERNAL_BETA_HEADER, CONTEXT_MANAGEMENT_BETA_HEADER, INTERLEAVED_THINKING_BETA_HEADER, PROMPT_CACHING_SCOPE_BETA_HEADER, REDACT_THINKING_BETA_HEADER, STRUCTURED_OUTPUTS_BETA_HEADER, SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER, TOKEN_EFFICIENT_TOOLS_BETA_HEADER, TOOL_SEARCH_BETA_HEADER_1P, TOOL_SEARCH_BETA_HEADER_3P, WEB_SEARCH_BETA_HEADER } from '../constants/betas.js';
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js';
 import { isInternalBuild } from './envUtils.js';
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js';
@@ -13,7 +12,7 @@ import { getInitialSettings } from './settings/settings.js';
  * SDK-provided betas that are allowed for API key users.
  * Only betas in this list can be passed via SDK options.
  */
-const ALLOWED_SDK_BETAS = [CONTEXT_1M_BETA_HEADER];
+const ALLOWED_SDK_BETAS: string[] = [];
 
 /**
  * Filter betas to only include those in the allowlist.
@@ -174,9 +173,6 @@ export const getAllModelBetas = memoize((model: string): string[] => {
         betaHeaders.push(CLI_INTERNAL_BETA_HEADER);
       }
     }
-  }
-  if (has1mContext(model)) {
-    betaHeaders.push(CONTEXT_1M_BETA_HEADER);
   }
   if (!isEnvTruthy(process.env.DISABLE_INTERLEAVED_THINKING) && modelSupportsISP(model)) {
     betaHeaders.push(INTERLEAVED_THINKING_BETA_HEADER);

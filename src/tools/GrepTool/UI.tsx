@@ -7,11 +7,12 @@ import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
 import { Box, Text } from '../../ink.js';
 import type { ToolProgressData } from '../../Tool.js';
 import type { ProgressMessage } from '../../types/message.js';
+import { tSync } from '../../i18n/index.js';
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js';
 import { truncate } from '../../utils/format.js';
 import { extractTag } from '../../utils/messages.js';
 
-// Reusable component for search result summaries
+// 用于搜索结果摘要的可复用组件
 function SearchResultSummary({
   count,
   countLabel,
@@ -65,11 +66,11 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
     const errorMessage = extractTag(result, 'tool_use_error');
     if (errorMessage?.includes(FILE_NOT_FOUND_CWD_NOTE)) {
       return <MessageResponse>
-          <Text color="error">File not found</Text>
+          <Text color="error">{tSync('grep.fileNotFound')}</Text>
         </MessageResponse>;
     }
     return <MessageResponse>
-        <Text color="error">Error searching files</Text>
+        <Text color="error">{tSync('grep.errorSearching')}</Text>
       </MessageResponse>;
   }
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;

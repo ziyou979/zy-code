@@ -4,11 +4,9 @@ import { getModelStrings } from './modelStrings.js';
 import { COST_TIER_3_15, COST_HAIKU_35, COST_HAIKU_45, formatModelPricing } from '../modelCost.js';
 import { getSettings_DEPRECATED } from '../settings/settings.js';
 import { getLocalModelCapability } from '../settings/localModelCapabilities.js';
-import { checkOpus1mAccess, checkSonnet1mAccess } from './check1mAccess.js';
 import { getAPIProvider, providerHasCapability } from './providers.js';
 import { isModelAllowed } from './modelAllowlist.js';
 import { getDefaultHaikuModel, getDefaultMainLoopModelSetting, getMarketingNameForModel, getUserSpecifiedModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting, type ModelSetting } from './model.js';
-import { has1mContext } from '../context.js';
 import { getGlobalConfig } from '../config.js';
 import { isInternalBuild } from '../envUtils.js';
 
@@ -219,46 +217,28 @@ function getModelOptionsBase(): ModelOption[] {
     return [getDefaultOptionForUser(), ...antModelOptions, getMergedOpus1MOption(), getSonnet46Option(), getSonnet46_1MOption(), getHaiku45Option()];
   }
 
-  // Direct API (PAYG): Default (Sonnet) + Sonnet 1M + Opus 4.6 + Opus 1M + Haiku
+  // Direct API (PAYG): Default (Sonnet) + Opus 4.6 + Haiku
   if (providerHasCapability(getAPIProvider(), 'prompt_caching')) {
     const payg1POptions = [getDefaultOptionForUser()];
-    if (checkSonnet1mAccess()) {
-      payg1POptions.push(getSonnet46_1MOption());
-    }
-    if (isOpus1mMergeEnabled()) {
-      payg1POptions.push(getMergedOpus1MOption());
-    } else {
-      payg1POptions.push(getOpus46Option());
-      if (checkOpus1mAccess()) {
-        payg1POptions.push(getOpus46_1MOption());
-      }
-    }
+    payg1POptions.push(getOpus46Option());
     payg1POptions.push(getHaiku45Option());
     return payg1POptions;
   }
 
-  // PAYG 3P: Default (Sonnet 4.5) + Sonnet (3P custom) or Sonnet 4.6/1M + Opus (3P custom) or Opus 4.1/Opus 4.6/Opus1M + Haiku + Opus 4.1
+  // PAYG 3P: Default (Sonnet 4.5) + Sonnet (3P custom) or Sonnet 4.6 + Opus (3P custom) or Opus 4.1/Opus 4.6 + Haiku
   const payg3pOptions = [getDefaultOptionForUser()];
   const customSonnet = getCustomSonnetOption();
   if (customSonnet !== undefined) {
     payg3pOptions.push(customSonnet);
   } else {
-    // Add Sonnet 4.6 since Sonnet 4.5 is the default
     payg3pOptions.push(getSonnet46Option());
-    if (checkSonnet1mAccess()) {
-      payg3pOptions.push(getSonnet46_1MOption());
-    }
   }
   const customOpus = getCustomOpusOption();
   if (customOpus !== undefined) {
     payg3pOptions.push(customOpus);
   } else {
-    // Add Opus 4.1, Opus 4.6 and Opus 4.6 1M
-    payg3pOptions.push(getOpus41Option()); // This is the default opus
+    payg3pOptions.push(getOpus41Option());
     payg3pOptions.push(getOpus46Option());
-    if (checkOpus1mAccess()) {
-      payg3pOptions.push(getOpus46_1MOption());
-    }
   }
   const customHaiku = getCustomHaikuOption();
   if (customHaiku !== undefined) {

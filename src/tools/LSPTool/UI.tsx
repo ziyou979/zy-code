@@ -4,12 +4,13 @@ import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { getDisplayPath } from '../../utils/file.js';
 import { extractTag } from '../../utils/messages.js';
 import type { Input, Output } from './LSPTool.js';
 import { getSymbolAtPosition } from './symbolContext.js';
 
-// Lookup map for operation-specific labels
+// 操作特定标签的查找映射
 const OPERATION_LABELS: Record<Input['operation'], {
   singular: string;
   plural: string;
@@ -55,7 +56,7 @@ const OPERATION_LABELS: Record<Input['operation'], {
 };
 
 /**
- * Reusable component for LSP result summaries with collapsed/expanded views
+ * 用于 LSP 结果摘要的可复用组件，支持折叠/展开视图
  */
 function LSPResultSummary({
   operation,
@@ -89,10 +90,9 @@ export function renderToolUseMessage(input: Partial<Input>, {
   }
   const parts: string[] = [];
 
-  // For position-based operations (goToDefinition, findReferences, hover, goToImplementation),
-  // show the symbol at the position for better context
+  // 对于基于位置的操作（goToDefinition、findReferences、hover、goToImplementation），显示该位置的符号以提供更好的上下文
   if ((input.operation === 'goToDefinition' || input.operation === 'findReferences' || input.operation === 'hover' || input.operation === 'goToImplementation') && input.filePath && input.line !== undefined && input.character !== undefined) {
-    // Convert from 1-based (user input) to 0-based (internal file reading)
+    // 从基于 1 的索引（用户输入）转换为基于 0 的索引（内部文件读取）
     const symbol = getSymbolAtPosition(input.filePath, input.line - 1, input.character - 1);
     const displayPath = verbose ? input.filePath : getDisplayPath(input.filePath);
     if (symbol) {
@@ -107,8 +107,7 @@ export function renderToolUseMessage(input: Partial<Input>, {
     return parts.join(', ');
   }
 
-  // For other operations (documentSymbol, workspaceSymbol),
-  // show operation and file without position details
+  // 对于其他操作（documentSymbol、workspaceSymbol），显示操作和文件，不显示位置详情
   parts.push(`operation: "${input.operation}"`);
   if (input.filePath) {
     const displayPath = verbose ? input.filePath : getDisplayPath(input.filePath);
@@ -123,7 +122,7 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
 }): React.ReactNode {
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
     return <MessageResponse>
-        <Text color="error">LSP operation failed</Text>
+        <Text color="error">{tSync('lsp.operationFailed')}</Text>
       </MessageResponse>;
   }
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
@@ -138,8 +137,7 @@ export function renderToolResultMessage(output: Output, _progressMessages: unkno
     return <LSPResultSummary operation={output.operation} resultCount={output.resultCount} fileCount={output.fileCount} content={output.result} verbose={verbose} />;
   }
 
-  // Fallback for error cases where counts aren't available
-  // (e.g., LSP server initialization failures, request errors)
+  // 计数不可用时的错误情况回退（例如 LSP 服务器初始化失败、请求错误）
   return <MessageResponse>
       <Text>{output.result}</Text>
     </MessageResponse>;

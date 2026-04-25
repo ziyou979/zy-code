@@ -6,10 +6,6 @@
  * during dead code elimination
  */
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
-import {
-  has1mContext,
-  modelSupports1M,
-} from '../context.js'
 import { getGlobalConfig } from '../config.js'
 import { resolveOverriddenModel } from './modelStrings.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
@@ -291,10 +287,7 @@ export function renderModelName(model: ModelName): string {
     // @ts-ignore
     const antModel = resolveAntModel(model)
     if (antModel) {
-      const baseName = antModel.model.replace(/\[1m\]$/i, '')
-      const masked = maskModelCodename(baseName)
-      const suffix = has1mContext(resolved) ? '[1m]' : ''
-      return masked + suffix
+      return maskModelCodename(antModel.model)
     }
     if (resolved !== model) {
       return `${model} (${resolved})`
@@ -332,15 +325,10 @@ export function parseUserSpecifiedModel(
   const modelInputTrimmed = modelInput.trim()
   const normalizedModel = modelInputTrimmed.toLowerCase()
 
-  const has1mTag = has1mContext(normalizedModel)
-  const modelString = has1mTag
-    ? normalizedModel.replace(/\[1m]$/i, '').trim()
-    : normalizedModel
-
-  if (isModelAlias(modelString)) {
-    const tier = ALIAS_TO_TIER[modelString]
+  if (isModelAlias(normalizedModel)) {
+    const tier = ALIAS_TO_TIER[normalizedModel]
     if (tier) {
-      return getModelByTier(tier) + (has1mTag ? '[1m]' : '')
+      return getModelByTier(tier)
     }
   }
 
@@ -348,47 +336,27 @@ export function parseUserSpecifiedModel(
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
-      m => m.alias.toLowerCase() === modelString,
+      m => m.alias.toLowerCase() === normalizedModel,
     )
     if (customModel) {
-      return customModel.model + (has1mTag ? '[1m]' : '')
+      return customModel.model
     }
   }
 
-  // Preserve original case for custom model names (e.g., Azure Foundry deployment IDs)
-  // Only strip [1m] suffix if present, maintaining case of the base model
-  if (has1mTag) {
-    return modelInputTrimmed.replace(/\[1m\]$/i, '').trim() + '[1m]'
-  }
   return modelInputTrimmed
 }
 
 /**
- * Resolves a skill's `model:` frontmatter against the current model, carrying
- * the `[1m]` suffix over when the target family supports it.
- *
- * A skill author writing `model: opus` means "use opus-class reasoning" — not
- * "downgrade to 200K". If the user is on opus[1m] at 230K tokens and invokes a
- * skill with `model: opus`, passing the bare alias through drops the effective
- * context window from 1M to 200K, which trips autocompact at 23% apparent usage
- * and surfaces "Context limit reached" even though nothing overflowed.
- *
- * We only carry [1m] when the target actually supports it (sonnet/opus). A skill
- * with `model: haiku` on a 1M session still downgrades — haiku has no 1M variant,
- * so the autocompact that follows is correct. Skills that already specify [1m]
- * are left untouched.
+ * Resolves a skill's `model:` frontmatter against the current model.
+ * Skill authors can specify a model alias (e.g., `model: opus`) which gets
+ * resolved to the actual model name.
  */
 export function resolveSkillModelOverride(
   skillModel: string,
   currentModel: string,
 ): string {
-  if (has1mContext(skillModel) || !has1mContext(currentModel)) {
-    return skillModel
-  }
-  // modelSupports1M checks settings and raw model name. Resolve alias first.
-  if (modelSupports1M(parseUserSpecifiedModel(skillModel))) {
-    return skillModel + '[1m]'
-  }
+  // 上下文窗口统一通过 model-capabilities.json 中的 contextWindow 配置管理，
+  // skill 指定的模型会使用其自身配置的 contextWindow，无需后缀传递
   return skillModel
 }
 

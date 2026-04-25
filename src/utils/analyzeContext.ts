@@ -935,7 +935,7 @@ export async function analyzeContextUsage(
     mainLoopModel: model,
   })
   // Get context window size
-  const contextWindow = getContextWindowForModel(runtimeModel, getSdkBetas())
+  const contextWindow = getContextWindowForModel(runtimeModel)
 
   // Build the effective system prompt using the shared utility
   const defaultSystemPrompt = await getSystemPrompt(tools, runtimeModel)

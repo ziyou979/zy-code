@@ -524,6 +524,9 @@ export const zhCN: TranslationResource = {
   'bash.imageDetected': '[检测到图片数据并已发送]',
   'bash.runningCommand': '正在运行命令',
   'bash.runningActivity': '正在运行 {desc}',
+  'bash.sedRequiresApproval': 'sed 命令需要审批（包含潜在危险操作）',
+  'bash.sedDangerousOperations': 'sed 命令包含需要明确审批的操作（如：写入命令、执行命令）',
+  'bash.sedNoDangerousOperations': '未检测到危险的 sed 操作',
 
   // File read tool
   'fileRead.readImage': '读取图片 ({size})',
@@ -1022,11 +1025,100 @@ export const zhCN: TranslationResource = {
   'commands.bridgeKick': '注入桥接失败状态用于调试',
   'commands.heapdump': '将 JS 堆转储到 ~/Desktop',
   'commands.remoteSetup': '配置远程环境设置',
+  'commands.updateConfig': '通过 settings.json 配置 ZY Code。使用钩子设置自动化行为，管理权限、环境变量、插件和 MCP 服务器。',
+  'commands.keybindingsHelp': '自定义键盘快捷键、重新绑定按键、添加组合键绑定或修改 ~/.zy/keybindings.json。',
+  'commands.claudeInChrome': '自动化 Chrome 浏览器与网页交互——点击元素、填写表单、截图等。',
+  'commands.claudeInChrome.whenToUse': '当用户想要与网页交互、自动化浏览器任务或执行基于浏览器的操作时使用。',
+  'commands.zyApi': '使用 Zy API 或 Anthropic SDK 构建应用。当代码导入 anthropic SDK 或用户询问 Zy API 时触发。',
+  'commands.debug': '为本次会话启用调试日志并帮助诊断问题。',
+  'commands.schedule': '创建、更新、列出或运行按计划执行的远程 agent（基于 cron 调度）。',
+  'commands.schedule.whenToUse': '当用户想要设置定期运行的远程 agent、创建自动化任务或管理计划 agent 时使用。',
+  'commands.schedule.authRequired': '你需要先使用 zy.ai 账户进行认证。不支持 API 账户。运行 /login 后再试 /schedule。',
+  'commands.schedule.connectionError': '连接到你的远程 zy.ai 账户时出现问题。请稍后再试 /schedule。',
+  'commands.schedule.noEnvironments': '未找到远程环境，且无法自动创建。访问 https://zy.ai/code 设置后再运行 /schedule。',
+  'commands.schedule.noConnectors': '未找到已连接的 MCP 连接器。如有需要，用户可以在 https://zy.ai/settings/connectors 连接服务器',
+  'commands.loop': '按固定间隔运行提示或斜杠命令（例如 /loop 5m /foo，默认 10 分钟）。',
+  'commands.loop.whenToUse': '当用户想要设置定期任务、轮询状态或按间隔重复运行某项操作时使用。',
   'commands.source.bundled': '内置',
   'commands.source.workflow': '工作流',
   'commands.source.plugin': '插件',
   'planMode.noPlanFound': '未找到计划。请先将计划写入计划文件。',
   'planMode.ultraplanRefining': '正在通过 Ultraplan 细化计划，请稍候。',
+
+  // 文件工具错误消息
+  'fileEdit.mustReadFirst': '需要先读取文件',
+  'fileEdit.fileNotFound': '文件未找到',
+  'fileEdit.errorEditing': '编辑文件出错',
+  'fileWrite.linesTo': '行到',
+  'grep.fileNotFound': '文件未找到',
+  'grep.errorSearching': '搜索文件出错',
+  'glob.fileNotFound': '文件未找到',
+  'glob.errorSearching': '搜索文件出错',
+
+  // 技能工具消息
+  'skill.initializing': '初始化中…',
+  'skill.done': '完成',
+  'skill.successfullyLoaded': '成功加载技能',
+  'skill.toolAllowed': '{count} 个{unit}已允许',
+  'skill.toolAllowed_one': '工具',
+  'skill.toolAllowed_other': '工具',
+  'skill.moreToolUse': '+{count} 个工具{unit}',
+  'skill.moreToolUse_one': '调用',
+  'skill.moreToolUse_other': '调用',
+
+  // MCP 工具消息
+  'mcp.processing': '处理中… {progress}',
+  'mcp.sentMessageTo': '已发送消息到',
+  'mcp.image': '[图片]',
+  'mcp.noContent': '（无内容）',
+  'mcp.largeResponseWarning': '{warning} MCP 响应过大（约 {tokens} 个 token），可能会很快占满上下文',
+
+  // 读取 MCP 资源消息
+  'readMcpResource.readFromServer': '从服务器 "{server}" 读取资源 "{uri}"',
+  'readMcpResource.noContent': '（无内容）',
+
+  // 列出 MCP 资源消息
+  'listMcpResources.listFromServer': '列出服务器 "{server}" 的 MCP 资源',
+  'listMcpResources.listAll': '列出所有 MCP 资源',
+  'listMcpResources.noResourcesFound': '（未找到资源）',
+
+  // 网页获取工具消息
+  'webFetch.fetching': '获取中…',
+  'webFetch.received': '已接收',
+
+  // 网页搜索工具消息
+  'webSearch.searching': '搜索中：',
+  'webSearch.found': '找到',
+  'webSearch.resultsFor': '条结果，关键词：',
+  'webSearch.did': '执行了',
+  'webSearch.search': '{count} 次{unit}，用时 {time}',
+  'webSearch.search_one': '搜索',
+  'webSearch.search_other': '搜索',
+
+  // 退出计划模式消息
+  'exitPlanMode.exitedPlanMode': '已退出计划模式',
+  'exitPlanMode.planSubmitted': '计划已提交，等待团队负责人审批',
+  'exitPlanMode.planFile': '计划文件：{path}',
+  'exitPlanMode.waitingForApproval': '等待团队负责人审核并批准…',
+  'exitPlanMode.userApprovedPlan': '用户已批准 ZY 的计划',
+  'exitPlanMode.planSavedTo': '计划已保存到：{path} · /plan 编辑',
+
+  // 退出工作树消息
+  'exitWorktree.exiting': '正在退出工作树…',
+  'exitWorktree.keptWorktree': '已保留工作树',
+  'exitWorktree.removedWorktree': '已移除工作树',
+  'exitWorktree.branch': '分支',
+  'exitWorktree.returnedTo': '已返回到',
+
+  // 任务停止消息
+  'taskStop.stopped': '已停止',
+
+  // 笔记本编辑消息
+  'notebook.errorEditing': '编辑笔记本出错',
+
+
+  // LSP 工具消息
+  'lsp.operationFailed': 'LSP 操作失败',
 
   // 文件编辑工具消息
   'fileEdit.addedLine': '新增 {count} 行',

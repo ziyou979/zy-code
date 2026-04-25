@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { OutputLine } from '../../components/shell/OutputLine.js';
+import { tSync } from '../../i18n/index.js';
 import { Text } from '../../ink.js';
 import type { ToolProgressData } from '../../Tool.js';
 import type { ProgressMessage } from '../../types/message.js';
@@ -9,7 +10,7 @@ import type { Output } from './ListMcpResourcesTool.js';
 export function renderToolUseMessage(input: Partial<{
   server?: string;
 }>): React.ReactNode {
-  return input.server ? `List MCP resources from server "${input.server}"` : `List all MCP resources`;
+  return input.server ? tSync('listMcpResources.listFromServer', { server: input.server }) : tSync('listMcpResources.listAll');
 }
 export function renderToolResultMessage(output: Output, _progressMessagesForMessage: ProgressMessage<ToolProgressData>[], {
   verbose
@@ -18,7 +19,7 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
 }): React.ReactNode {
   if (!output || output.length === 0) {
     return <MessageResponse height={1}>
-        <Text dimColor>(No resources found)</Text>
+        <Text dimColor>{tSync('listMcpResources.noResourcesFound')}</Text>
       </MessageResponse>;
   }
 
