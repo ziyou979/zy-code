@@ -525,8 +525,8 @@ export const FileEditTool = buildTool({
     })
 
     // 7. Log events
-    if (absoluteFilePath.endsWith(`${sep}CLAUDE.md`)) {
-      logEvent('zy_write_Zymd', {})
+    if (absoluteFilePath.endsWith(`${sep}ZY.md`)) {
+      logEvent('zy_write_ZYmd', {})
     }
     countLinesChanged(patch)
 

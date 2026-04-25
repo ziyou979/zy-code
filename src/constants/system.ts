@@ -88,6 +88,7 @@ export function getAttributionHeader(fingerprint: string): string {
   // fields so old API deploys silently ignore this.
   const workload = getWorkload()
   const workloadPair = workload ? ` cc_workload=${workload};` : ''
+  // todo 待梳理，是否专用
   const header = `x-anthropic-billing-header: cc_version=${version}; cc_entrypoint=${entrypoint};${cch}${workloadPair}`
 
   logForDebugging(`attribution header ${header}`)

@@ -4,6 +4,8 @@ import { useTerminalFocus } from '../hooks/use-terminal-focus.js';
 export type Clock = {
   subscribe: (onChange: () => void, keepAlive: boolean) => () => void;
   now: () => number;
+  /** 返回当前绝对 Unix 时间戳（ms），与 tick 同步。用于需要同步时间读取的场景（如 useElapsedTime）。 */
+  absoluteNow: () => number;
   setTickInterval: (ms: number) => void;
 };
 export function createClock(tickIntervalMs: number): Clock {
@@ -13,8 +15,12 @@ export function createClock(tickIntervalMs: number): Clock {
   let startTime = 0;
   // 当前 tick 时间的快照，确保同一 tick 中的所有订阅者看到相同的值（保持动画同步）
   let tickTime = 0;
+  // 当前 tick 对应的绝对 Unix 时间戳快照
+  let absoluteTickTime = 0;
   function tick(): void {
-    tickTime = Date.now() - startTime;
+    const now = Date.now();
+    tickTime = now - startTime;
+    absoluteTickTime = now;
     for (const onChange of subscribers.keys()) {
       onChange();
     }
@@ -54,6 +60,13 @@ export function createClock(tickIntervalMs: number): Clock {
         return tickTime;
       }
       return Date.now() - startTime;
+    },
+    absoluteNow() {
+      // 当时钟运行时，返回与 tick 同步的绝对时间戳；否则实时读取。
+      if (interval && absoluteTickTime) {
+        return absoluteTickTime;
+      }
+      return Date.now();
     },
     setTickInterval(ms) {
       if (ms === currentTickIntervalMs) return;

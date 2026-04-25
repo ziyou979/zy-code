@@ -729,6 +729,13 @@ export const zhCN: TranslationResource = {
   'permission.powershellPrefixPlaceholder': '命令前缀（例如：Get-Process:*）',
   'permission.classifierDescriptionPlaceholder': '描述要允许的内容...',
 
+  // 权限助手 — 命令和路径列表连接词
+  'permission.and': '和',
+  'permission.commaAnd': '，和',
+  'permission.similar': '类似命令',
+  'permission.morePaths': '个更多路径',
+  'permission.commaAndMore': '，还有 {count} 个更多路径',
+
   // 权限对话框 - 混合路径和命令
   'permission.allowAccessAndCommands': '是，并允许访问 {paths} 和执行 {commands} 命令',
   'permission.allowPathsAccessAndCommands': '是，并允许 {paths} 访问权限和 {commands} 命令',

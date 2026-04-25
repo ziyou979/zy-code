@@ -13,11 +13,11 @@ function commandListDisplay(commands: string[]): ReactNode {
       return <Text bold>{commands[0]}</Text>;
     case 2:
       return <Text>
-          <Text bold>{commands[0]}</Text> and <Text bold>{commands[1]}</Text>
+          <Text bold>{commands[0]}</Text> {tSync('permission.and')} <Text bold>{commands[1]}</Text>
         </Text>;
     default:
       return <Text>
-          <Text bold>{commands.slice(0, -1).join(', ')}</Text>, and{' '}
+          <Text bold>{commands.slice(0, -1).join(', ')}</Text>{tSync('permission.commaAnd')}{' '}
           <Text bold>{commands.slice(-1)[0]}</Text>
         </Text>;
   }
@@ -26,7 +26,7 @@ function commandListDisplayTruncated(commands: string[]): ReactNode {
   // Check if the plain text representation would be too long
   const plainText = commands.join(', ');
   if (plainText.length > 50) {
-    return 'similar';
+    return tSync('permission.similar');
   }
   return commandListDisplay(commands);
 }
@@ -44,7 +44,7 @@ function formatPathList(paths: string[]): ReactNode {
   if (names.length === 2) {
     return <Text>
         <Text bold>{names[0]}</Text>
-        {sep} and <Text bold>{names[1]}</Text>
+        {sep} {tSync('permission.and')} <Text bold>{names[1]}</Text>
         {sep}
       </Text>;
   }
@@ -53,26 +53,31 @@ function formatPathList(paths: string[]): ReactNode {
   return <Text>
       <Text bold>{names[0]}</Text>
       {sep}, <Text bold>{names[1]}</Text>
-      {sep} and {paths.length - 2} more
+      {sep} {tSync('permission.and')} {paths.length - 2} {tSync('permission.morePaths')}
     </Text>;
 }
 
 /** Plain-text variant of formatPathList for use in i18n interpolation */
 function formatPathListPlain(paths: string[]): string {
   const names = paths.map(p => basename(p) || p);
+  const andWord = tSync('permission.and');
+  const commaAnd = tSync('permission.commaAnd');
+  const morePaths = tSync('permission.morePaths');
   if (names.length === 1) return `${names[0]}${sep}`;
-  if (names.length === 2) return `${names[0]}${sep} and ${names[1]}${sep}`;
-  return `${names[0]}${sep}, ${names[1]}${sep} and ${paths.length - 2} more`;
+  if (names.length === 2) return `${names[0]}${sep} ${andWord} ${names[1]}${sep}`;
+  return `${names[0]}${sep}${commaAnd} ${names[1]}${sep} ${andWord} ${paths.length - 2} ${morePaths}`;
 }
 
 /** Plain-text command list for i18n interpolation */
 function formatCommandsPlain(commands: string[]): string {
   if (commands.length === 0) return '';
   const plainText = commands.join(', ');
-  if (plainText.length > 50) return 'similar';
+  if (plainText.length > 50) return tSync('permission.similar');
+  const andWord = tSync('permission.and');
+  const commaAnd = tSync('permission.commaAnd');
   if (commands.length === 1) return commands[0]!;
-  if (commands.length === 2) return `${commands[0]} and ${commands[1]}`;
-  return `${commands.slice(0, -1).join(', ')}, and ${commands[commands.length - 1]}`;
+  if (commands.length === 2) return `${commands[0]} ${andWord} ${commands[1]}`;
+  return `${commands.slice(0, -1).join(', ')}${commaAnd} ${commands[commands.length - 1]}`;
 }
 
 /**

@@ -97,8 +97,6 @@ import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
 import {getAntModelOverrideConfig} from "src/utils/model/antModels.ts";
 
-export const ZY_CODE_DOCS_MAP_URL =
-  'https://code.zy.com/docs/en/zy_code_docs_map.md'
 
 /**
  * Boundary marker separating static (cross-org cacheable) content from dynamic content.
@@ -127,18 +125,13 @@ function getAntModelOverrideSection(): string | null {
   return getAntModelOverrideConfig()?.defaultSystemPromptSuffix || null
 }
 
-function getLanguageSection(
+export function getLanguageSection(
   languagePreference: string | undefined,
 ): string | null {
   if (!languagePreference) return null
 
   return `# Language
-IMPORTANT: Always respond in ${languagePreference}. Use ${languagePreference} for ALL text output, including:
-- Explanations and communications with the user
-- Intermediate operational text before and after calling tools
-- Comments and descriptions inside tool call parameters (e.g., shell comments in Bash commands, commit messages, code comments)
-- Status updates and progress reports
-Technical terms, code identifiers, CLI commands, and file paths should remain in their original form (typically English), but all surrounding natural language text must be in ${languagePreference}.`
+Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user, including intermediate operational text (e.g., before calling a tool). Technical terms and code identifiers should remain in their original form.`
 }
 
 function getOutputStyleSection(

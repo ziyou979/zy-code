@@ -1010,7 +1010,7 @@ async function run(): Promise<CommanderCommand> {
     profileCheckpoint('action_handler_start');
 
     // --bare = 一键最小模式。设置 SIMPLE 以便所有现有的
-    // 门控触发（CLAUDE.md、skills、hooks 在 executeHooks 中、agent
+    // 门控触发（ZY.md、skills、hooks 在 executeHooks 中、agent
     // 目录遍历）。必须在 setup() / 任何门控工作运行之前设置。
     if ((options as {
       bare?: boolean;

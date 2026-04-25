@@ -6,13 +6,13 @@ import type { TranslationResource } from './resourceTypes.js'
 export const en: TranslationResource = {
   // Tips
   'tip.newUserWarmup':
-    'Start with small features or bug fixes, tell Zy to propose a plan, and verify its suggested edits',
+    'Start with small features or bug fixes, tell ZY code to propose a plan, and verify its suggested edits',
   'tip.planModeForComplexTasks':
     'Use Plan Mode to prepare for a complex request before making changes. Press {shortcut} twice to enable.',
   'tip.defaultPermissionModeConfig':
     'Use /config to change your default permission mode (including Plan Mode)',
   'tip.gitWorktrees':
-    'Use git worktrees to run multiple Zy sessions in parallel.',
+    'Use git worktrees to run multiple ZY code sessions in parallel.',
   'tip.colorWhenMultiSessions':
     'Running multiple ZY Code sessions? Use /color and /rename to tell them apart at a glance.',
   'tip.terminalSetupApple':
@@ -613,6 +613,13 @@ export const en: TranslationResource = {
   'permission.commandPrefixPlaceholder': 'command prefix (e.g., npm run:*)',
   'permission.powershellPrefixPlaceholder': 'command prefix (e.g., Get-Process:*)',
   'permission.classifierDescriptionPlaceholder': 'describe what to allow...',
+
+  // Permission helpers — command and path list joiners
+  'permission.and': 'and',
+  'permission.commaAnd': ', and',
+  'permission.similar': 'similar',
+  'permission.morePaths': 'more',
+  'permission.commaAndMore': ', and {count} more',
 
   // Permission dialogs - mixed paths and commands
   'permission.allowAccessAndCommands': 'Yes, and allow access to {paths} and {commands} commands',
