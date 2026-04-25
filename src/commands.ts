@@ -720,6 +720,7 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'add-dir': 'commands.addDir',
   'advisor': 'commands.advisor',
   'agents': 'commands.agents',
+  'batch': 'commands.batch',
   'branch': 'commands.branch',
   'btw': 'commands.btw',
   'chrome': 'commands.chrome',

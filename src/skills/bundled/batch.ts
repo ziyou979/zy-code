@@ -3,6 +3,7 @@ import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/pro
 import { ENTER_PLAN_MODE_TOOL_NAME } from '../../tools/EnterPlanModeTool/constants.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import { SKILL_TOOL_NAME } from '../../tools/SkillTool/constants.js'
+import { tSync } from '../../i18n/index.js'
 import { getIsGit } from '../../utils/git.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
@@ -88,34 +89,23 @@ When all agents have reported, render the final table and a one-line summary (e.
 `
 }
 
-const NOT_A_GIT_REPO_MESSAGE = `This is not a git repository. The \`/batch\` command requires a git repo because it spawns agents in isolated git worktrees and creates PRs from each. Initialize a repo first, or run this from inside an existing one.`
-
-const MISSING_INSTRUCTION_MESSAGE = `Provide an instruction describing the batch change you want to make.
-
-Examples:
-  /batch migrate from react to vue
-  /batch replace all uses of lodash with native equivalents
-  /batch add type annotations to all untyped function parameters`
-
 export function registerBatchSkill(): void {
   registerBundledSkill({
     name: 'batch',
-    description:
-      'Research and plan a large-scale change, then execute it in parallel across 5–30 isolated worktree agents that each open a PR.',
-    whenToUse:
-      'Use when the user wants to make a sweeping, mechanical change across many files (migrations, refactors, bulk renames) that can be decomposed into independent parallel units.',
+    description: tSync('commands.batch'),
+    whenToUse: tSync('commands.batch.whenToUse'),
     argumentHint: '<instruction>',
     userInvocable: true,
     disableModelInvocation: true,
     async getPromptForCommand(args) {
       const instruction = args.trim()
       if (!instruction) {
-        return [{ type: 'text', text: MISSING_INSTRUCTION_MESSAGE }]
+        return [{ type: 'text', text: tSync('commands.batch.missingInstruction') }]
       }
 
       const isGit = await getIsGit()
       if (!isGit) {
-        return [{ type: 'text', text: NOT_A_GIT_REPO_MESSAGE }]
+        return [{ type: 'text', text: tSync('commands.batch.notAGitRepo') }]
       }
 
       return [{ type: 'text', text: buildPrompt(instruction) }]
