@@ -1,0 +1,33 @@
+{
+  "$schema": "https://zy-code-settings-schema.zy.ai/model-capabilities.json",
+  "models": [
+    {
+      "pattern": "qwen3.6-max-preview",
+      "capabilities": ["thinking", "structured_outputs", "context_management", "interleaved_thinking"],
+      "costs": {
+        "inputTokens": 9,
+        "outputTokens": 54,
+        "promptCacheWriteTokens": 11.25,
+        "promptCacheReadTokens": 0.9
+      }
+    },
+    {
+      "pattern": "qwen3.6-plus",
+      "capabilities": ["thinking", "structured_outputs", "context_management", "interleaved_thinking"],
+      "costs": {
+        "inputTokens": 2,
+        "outputTokens": 12,
+        "promptCacheWriteTokens": 2.5,
+        "promptCacheReadTokens": 0.2,
+        "webSearchRequests": 0.004
+      }
+    },
+    {
+      "pattern": "gpt-4o",
+      "capabilities": ["structured_outputs"],
+      "maxOutputTokens": { "default": 16384, "upperLimit": 16384 },
+      "maxInputTokens": 128000,
+      "costs": { "inputTokens": 2.5, "outputTokens": 10 }
+    }
+  ]
+}
