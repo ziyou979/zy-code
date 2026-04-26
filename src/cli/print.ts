@@ -3768,12 +3768,12 @@ function runHeadlessStreaming(
             sendControlResponseError(message, errorMessage(error))
           }
         } else if ((message.request as any).subtype === 'generate_session_title') {
-          // Fire-and-forget so the Haiku call does not block the stdin loop
+          // Fire-and-forget so the compact model call does not block the stdin loop
           // (which would delay processing of subsequent user messages /
           // interrupts for the duration of the API roundtrip).
           const { description, persist } = message.request as any
           // Reuse the live controller only if it has not already been aborted
-          // (e.g. by interrupt()); an aborted signal would cause queryHaiku to
+          // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
           // immediately throw APIUserAbortError → {title: null}.
           const titleSignal = (
             abortController && !abortController.signal.aborted

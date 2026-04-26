@@ -20,7 +20,7 @@ import {
   extractTag,
   extractTextContent,
 } from '../messages.js'
-import { getDefaultHaikuModel } from '../model/model.js'
+import { getDefaultCompactModel } from '../model/model.js'
 import { jsonParse } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 import {
@@ -169,7 +169,7 @@ Output <updates>[]</updates> if no updates are needed.`,
       }
     },
 
-    getModel: getDefaultHaikuModel,
+    getModel: getDefaultCompactModel,
   }
 
   return createApiQueryHook(config)
@@ -241,7 +241,7 @@ Rules:
     signal: createAbortController().signal,
     options: {
       getToolPermissionContext: async () => getEmptyToolPermissionContext(),
-      model: getDefaultHaikuModel(),
+      model: getDefaultCompactModel(),
       toolChoice: undefined,
       isNonInteractiveSession: false,
       hasAppendSystemPrompt: false,

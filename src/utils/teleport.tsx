@@ -12,7 +12,7 @@ import { getOauthConfig } from '../constants/oauth.js';
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js';
 import type { Root } from '../ink.js';
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
-import { queryHaiku } from '../services/api/zy.js';
+import { queryCompactModel } from '../services/api/zy.js';
 import { getSessionLogsViaOAuth, getTeleportEvents } from '../services/api/sessionIngress.js';
 import { getOrganizationUUID } from '../services/oauth/client.js';
 import { AppStateProvider } from '../state/AppState.js';
@@ -104,7 +104,7 @@ async function generateTitleAndBranch(description: string, signal: AbortSignal):
   const fallbackBranch = 'zy/task';
   try {
     const userPrompt = SESSION_TITLE_AND_BRANCH_PROMPT.replace('{description}', description);
-    const response = await queryHaiku({
+    const response = await queryCompactModel({
       systemPrompt: asSystemPrompt([]),
       userPrompt,
       outputFormat: {

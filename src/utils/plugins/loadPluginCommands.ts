@@ -268,7 +268,7 @@ function createPluginCommand(
     const version = frontmatter.version as string | undefined
     const displayName = frontmatter.name as string | undefined
 
-    // Handle model configuration, resolving aliases like 'haiku', 'sonnet', 'opus'
+    // Handle model configuration, resolving tier aliases like 'advanced', 'standard', 'compact'
     const model =
       frontmatter.model === 'inherit'
         ? undefined

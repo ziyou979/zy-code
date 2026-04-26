@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import type { GoogleAuth } from 'google-auth-library';
 import { getApiKey, getApiKeyFromApiKeyHelper, refreshAndGetAwsCredentials, refreshGcpCredentialsIfNeeded } from 'src/utils/auth.js';
 import { getUserAgent } from 'src/utils/http.js';
-import { getDefaultHaikuModel } from 'src/utils/model/model.js';
+import { getDefaultCompactModel } from 'src/utils/model/model.js';
 import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider, isEnvOrDefaultProvider, isOpenAIProvider, isPreconfiguredEndpointProvider } from 'src/utils/model/providers.js';
 import { getProviderEntry } from 'src/utils/model/providerRegistry.js';
 import { getProxyFetchOptions } from 'src/utils/proxy.js';
@@ -118,7 +118,7 @@ export async function getLLMClient({
       AnthropicBedrock
     } = await import('@anthropic-ai/bedrock-sdk');
     // 如果指定了 Haiku 模型的 AWS 区域覆盖，则使用
-    const awsRegion = model === getDefaultHaikuModel() && process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION ? process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION : getAWSRegion();
+    const awsRegion = model === getDefaultCompactModel() && process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION ? process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION : getAWSRegion();
     const bedrockArgs: ConstructorParameters<typeof AnthropicBedrock>[0] = {
       ...ARGS,
       awsRegion,

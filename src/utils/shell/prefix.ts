@@ -1,9 +1,9 @@
 /**
- * Shared command prefix extraction using Haiku LLM
+ * Shared command prefix extraction using a compact model
  *
  * This module provides a factory for creating command prefix extractors
  * that can be used by different shell tools. The core logic
- * (Haiku query, response validation) is shared, while tool-specific
+ * (compact model query, response validation) is shared, while tool-specific
  * aspects (examples, pre-checks) are configurable.
  */
 
@@ -14,7 +14,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { queryHaiku } from '../../services/api/zy.js'
+import { queryCompactModel } from '../../services/api/zy.js'
 import { startsWithApiErrorPrefix } from '../../services/api/errors.js'
 import { memoizeWithLRU } from '../memoize.js'
 import { jsonStringify } from '../slowOperations.js'
@@ -217,7 +217,7 @@ async function getCommandPrefixImpl(
       false,
     )
 
-    const response = await queryHaiku({
+    const response = await queryCompactModel({
       systemPrompt: asSystemPrompt(
         useSystemPromptPolicySpec
           ? [

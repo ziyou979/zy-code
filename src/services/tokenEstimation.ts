@@ -21,8 +21,8 @@ import {
   isFoundationModel,
 } from '../utils/model/bedrock.js'
 import {
-  getDefaultSonnetModel,
-  getDefaultHaikuModel,
+  getDefaultStandardModel,
+  getDefaultCompactModel,
   getMainLoopModel,
   normalizeModelStringForAPI,
 } from '../utils/model/model.js'
@@ -358,24 +358,24 @@ export async function countTokensViaHaikuFallback(
   // 检查消息是否包含思考块
   const containsThinking = hasThinkingBlocks(messages)
 
-  // 如果我们在 Vertex 上并且使用全局区域，始终使用 Sonnet，因为 Haiku 在那里不可用。
+  // 如果我们在 Vertex 上并且使用全局区域，始终使用 standard 模型，因为 compact 在那里不可用。
   const isVertexGlobalEndpoint =
     isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) &&
-    getVertexRegionForModel(getDefaultHaikuModel()) === 'global'
-  // 如果我们在带思考块的 Bedrock 上，使用 Sonnet，因为 Haiku 3.5 不支持思考
+    getVertexRegionForModel(getDefaultCompactModel()) === 'global'
+  // 如果我们在带思考块的 Bedrock 上，使用 standard 模型，因为 compact 3.5 不支持思考
   const isBedrockWithThinking =
     isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) && containsThinking
-  // 如果我们在带思考块的 Vertex 上，使用 Sonnet，因为 Haiku 3.5 不支持思考
+  // 如果我们在带思考块的 Vertex 上，使用 standard 模型，因为 compact 3.5 不支持思考
   const isVertexWithThinking =
     isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) && containsThinking
-  // 否则始终使用 Haiku — Haiku 4.5 支持思考块。
-  // 警告：如果你将此更改为非 Haiku 模型，此请求将在直接 API 中失败，除非它使用 getCLISyspromptPrefix。
-  // 注意：我们不需要 Sonnet 来处理 tool_reference 块，因为我们通过
+  // 否则始终使用 compact — compact 4.5 支持思考块。
+  // 警告：如果你将此更改为非 compact 模型，此请求将在直接 API 中失败，除非它使用 getCLISyspromptPrefix。
+  // 注意：我们不需要 standard 来处理 tool_reference 块，因为我们通过
   // stripToolSearchFieldsFromMessages() 在发送之前剥离它们。
   const model =
     isVertexGlobalEndpoint || isBedrockWithThinking || isVertexWithThinking
-      ? getDefaultSonnetModel()
-      : getDefaultHaikuModel()
+      ? getDefaultStandardModel()
+      : getDefaultCompactModel()
   const anthropic = await getLLMClient({
     maxRetries: 1,
     model,

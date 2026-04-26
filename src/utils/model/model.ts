@@ -6,7 +6,6 @@
  * during dead code elimination
  */
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
-import { getGlobalConfig } from '../config.js'
 import { resolveOverriddenModel } from './modelStrings.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 import type { PermissionMode } from '../permissions/PermissionMode.js'
@@ -21,19 +20,23 @@ export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
 /** Tier-based model resolution: all tiers use qwen3.6-plus */
-type ModelTier = 'best' | 'advanced' | 'standard' | 'compact'
+type ModelTier = 'advanced' | 'standard' | 'compact'
 
+/**
+ * 从 settings.models 中读取指定 tier 的模型。
+ * 未配置时回退到 standard tier。
+ * standard 也未配置则使用内置默认值。
+ */
 function getModelByTier(tier: ModelTier): ModelName {
   const settings = getSettings_DEPRECATED() || {}
-  // 1. Tier-specific model
-  if (settings.models?.[tier]) {
-    return settings.models[tier]
+  const tierModel = settings.models?.[tier]
+  if (tierModel) return tierModel
+  // non-standard tiers fall back to standard
+  if (tier !== 'standard') {
+    const standard = settings.models?.standard
+    if (standard) return standard
   }
-  // 2. Global default
-  if (settings.defaultModel) {
-    return settings.defaultModel
-  }
-  // 3. Built-in fallback
+  // 内置默认值
   return 'qwen3.6-plus'
 }
 
@@ -76,8 +79,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
  * Priority:
  * 1. Model override during session (from /model command)
  * 2. Model override at startup (from --model flag)
- * 3. Settings (from user's saved settings)
- * 4. Built-in default (from defaultModel in settings)
+ * 3. models.standard from settings
  */
 export function getMainLoopModel(): ModelName {
   const model = getUserSpecifiedModelSetting()
@@ -87,29 +89,21 @@ export function getMainLoopModel(): ModelName {
   return getDefaultMainLoopModel()
 }
 
-export function getBestModel(): ModelName {
-  return getModelByTier('best')
-}
-
-// Maps legacy Zy aliases to capability tiers
-const ALIAS_TO_TIER: Record<string, ModelTier> = {
-  opus: 'advanced',
-  sonnet: 'standard',
-  haiku: 'compact',
-  best: 'best',
-}
-
-export function getDefaultOpusModel(): ModelName {
+/** 获取 advanced 能力层级的默认模型 */
+export function getDefaultAdvancedModel(): ModelName {
   return getModelByTier('advanced')
 }
 
-export function getDefaultSonnetModel(): ModelName {
+/** 获取 standard 能力层级的默认模型 */
+export function getDefaultStandardModel(): ModelName {
   return getModelByTier('standard')
 }
 
-export function getDefaultHaikuModel(): ModelName {
+/** 获取 compact 能力层级的默认模型 */
+export function getDefaultCompactModel(): ModelName {
   return getModelByTier('compact')
 }
+
 
 /**
  * Get the model to use for runtime, depending on the runtime context.
@@ -121,58 +115,19 @@ export function getRuntimeMainLoopModel(params: {
   mainLoopModel: string
   exceeds200kTokens?: boolean
 }): ModelName {
-  const { permissionMode, mainLoopModel, exceeds200kTokens = false } = params
-
-  // opusplan: advanced tier in plan mode
-  if (
-    getUserSpecifiedModelSetting() === 'opusplan' &&
-    permissionMode === 'plan' &&
-    !exceeds200kTokens
-  ) {
-    return getModelByTier('advanced')
-  }
-
-  // haiku → standard tier in plan mode
-  if (getUserSpecifiedModelSetting() === 'haiku' && permissionMode === 'plan') {
-    return getModelByTier('standard')
-  }
-
+  const { mainLoopModel } = params
   return mainLoopModel
 }
 
 /**
  * Get the default main loop model setting.
- *
- * Priority for settings-configured users: mainLoopModel → defaultModel → models.standard.
- * For Zy subscription users: Opus for Max/Team Premium, Sonnet for others.
+ * 从 settings.mainLoopModel 读取 tier 名（advanced/standard/compact），
+ * 再解析到实际模型。默认为 standard。
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
   const settings = getSettings_DEPRECATED()
-  // Non-subscription users: use mainLoopModel → defaultModel → models.standard → built-in fallback
-  if (settings?.mainLoopModel) {
-    return settings.mainLoopModel
-  }
-  if (settings?.defaultModel || settings?.models) {
-    return getModelByTier('standard')
-  }
-
-  // Check onboarding-configured model (configuredModel from globalConfig)
-  const config = getGlobalConfig()
-  if (config.configuredModel) {
-    return config.configuredModel
-  }
-
-  // Ants default to defaultModel from flag config, or Opus 1M if not configured
-  if (isInternalBuild()) {
-    return (
-      // @ts-ignore TS2304 getAntModelOverrideConfig is internal-only
-      (getAntModelOverrideConfig as any)?.defaultModel ??
-      getDefaultOpusModel() + '[1m]'
-    )
-  }
-
-  // PAYG, Enterprise, Team Standard, and Pro get Sonnet as default
-  return getDefaultSonnetModel()
+  const tier = settings?.mainLoopModel ?? 'standard'
+  return getModelByTier(tier)
 }
 
 /**
@@ -196,10 +151,8 @@ export function canonicalNameToShort(name: ModelName): ModelShortName {
 
 /**
  * Maps a full model string to a shorter canonical version that's unified across providers.
- * For example, 'zy-3-5-haiku-20241022' and 'us.anthropic.zy-3-5-haiku-20241022-v1:0'
- * would both be mapped to 'zy-3-5-haiku'.
- * @param fullModelName The full model name (e.g., 'zy-3-5-haiku-20241022')
- * @returns The short name (e.g., 'zy-3-5-haiku') if found, or the original name if no mapping exists
+ * @param fullModelName The full model name
+ * @returns The short name if found, or the original name if no mapping exists
  */
 export function getCanonicalName(fullModelName: ModelName): ModelShortName {
   // Resolve overridden model IDs (e.g. Bedrock ARNs) back to canonical names.
@@ -325,12 +278,10 @@ export function parseUserSpecifiedModel(
   const modelInputTrimmed = modelInput.trim()
   const normalizedModel = modelInputTrimmed.toLowerCase()
 
-  if (isModelAlias(normalizedModel)) {
-    const tier = ALIAS_TO_TIER[normalizedModel]
-    if (tier) {
-      return getModelByTier(tier)
-    }
-  }
+  // 直接解析 tier 别名到对应模型
+  if (normalizedModel === 'advanced') return getModelByTier('advanced')
+  if (normalizedModel === 'standard') return getModelByTier('standard')
+  if (normalizedModel === 'compact') return getModelByTier('compact')
 
   // Resolve custom model aliases from settings
   const settings = getSettings_DEPRECATED() || {}
@@ -348,7 +299,7 @@ export function parseUserSpecifiedModel(
 
 /**
  * Resolves a skill's `model:` frontmatter against the current model.
- * Skill authors can specify a model alias (e.g., `model: opus`) which gets
+ * Skill authors can specify a tier alias (e.g., `model: advanced`) which gets
  * resolved to the actual model name.
  */
 export function resolveSkillModelOverride(

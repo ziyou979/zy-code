@@ -29,7 +29,7 @@ export function getDefaultSubagentModel(): string {
  * Get the effective model string for an agent.
  *
  * For Bedrock, if the parent model uses a cross-region inference prefix (e.g., "eu.", "us."),
- * that prefix is inherited by subagents using alias models (e.g., "sonnet", "haiku", "opus").
+ * that prefix is inherited by subagents using tier alias models (e.g., "standard", "compact", "advanced").
  * This ensures subagents use the same region as the parent, which is necessary when
  * IAM permissions are scoped to specific cross-region inference profiles.
  */
@@ -78,7 +78,7 @@ export function getAgentModel(
 
   if (agentModelWithExp === 'inherit') {
     // Apply runtime model resolution for inherit to get the effective model
-    // This ensures agents using 'inherit' get opusplan→Opus resolution in plan mode
+    // This ensures agents using 'inherit' get the effective runtime model
     return getRuntimeMainLoopModel({
       permissionMode: permissionMode ?? 'default',
       mainLoopModel: parentModel,
@@ -94,27 +94,27 @@ export function getAgentModel(
 }
 
 /**
- * Check if a bare family alias (opus/sonnet/haiku) matches the parent model's
+ * Check if a tier alias (advanced/standard/compact) matches the parent model's
  * tier. When it does, the subagent inherits the parent's exact model string
  * instead of resolving the alias to a provider default.
  *
- * Prevents surprising downgrades: a Vertex user on Opus 4.6 (via /model) who
- * spawns a subagent with `model: opus` should get Opus 4.6, not whatever
- * getDefaultOpusModel() returns for 3P.
+ * Prevents surprising downgrades: a user on a custom advanced-tier model (via /model) who
+ * spawns a subagent with `model: advanced` should get that same advanced model, not whatever
+ * getDefaultAdvancedModel() returns.
  * See https://github.com/anthropics/zy-code/issues/30815.
  *
- * Only bare family aliases match. `opus[1m]`, `best`, `opusplan` fall through
+ * Only bare tier aliases match. `advanced[1m]`, `best` fall through
  * since they carry semantics beyond "same tier as parent".
  */
 function aliasMatchesParentTier(alias: string, parentModel: string): boolean {
   const m = parentModel.toLowerCase()
   switch (alias.toLowerCase()) {
-    case 'opus':
-      return m.includes('opus')
-    case 'sonnet':
-      return m.includes('sonnet')
-    case 'haiku':
-      return m.includes('haiku')
+    case 'advanced':
+      return m.includes('advanced')
+    case 'standard':
+      return m.includes('standard')
+    case 'compact':
+      return m.includes('compact')
     default:
       return false
   }
@@ -133,18 +133,18 @@ export function getAgentModelDisplay(model: string | undefined): string {
 export function getAgentModelOptions(): AgentModelOption[] {
   return [
     {
-      value: 'sonnet',
-      label: 'Sonnet',
+      value: 'standard',
+      label: 'Standard',
       description: 'Balanced performance - best for most agents',
     },
     {
-      value: 'opus',
-      label: 'Opus',
+      value: 'advanced',
+      label: 'Advanced',
       description: 'Most capable for complex reasoning tasks',
     },
     {
-      value: 'haiku',
-      label: 'Haiku',
+      value: 'compact',
+      label: 'Compact',
       description: 'Fast and efficient for simple tasks',
     },
     {

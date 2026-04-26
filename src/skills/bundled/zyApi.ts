@@ -61,7 +61,7 @@ function getFilesForLanguage(
   )
 }
 
-function processContent(md: string, content: SkillContent): string {
+function processContent(md: string, _content: SkillContent): string {
   // Strip HTML comments. Loop to handle nested comments.
   let out = md
   let prev
@@ -70,11 +70,6 @@ function processContent(md: string, content: SkillContent): string {
     out = out.replace(/<!--[\s\S]*?-->\n?/g, '')
   } while (out !== prev)
 
-  out = out.replace(
-    /\{\{(\w+)\}\}/g,
-    (match, key: string) =>
-      (content.SKILL_MODEL_VARS as Record<string, string>)[key] ?? match,
-  )
   return out
 }
 

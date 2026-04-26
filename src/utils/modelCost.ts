@@ -18,50 +18,12 @@ export type ModelCosts = {
   webSearchRequests: number
 }
 
-// Standard pricing tier for Sonnet models: ¥3 input / ¥15 output per Mtok
-export const COST_TIER_3_15 = {
-  inputTokens: 3,
-  outputTokens: 15,
-  promptCacheWriteTokens: 3.75,
-  promptCacheReadTokens: 0.3,
-  webSearchRequests: 0.01,
-} as const satisfies ModelCosts
-
-// Pricing for Haiku 3.5: ¥0.80 input / ¥4 output per Mtok
-export const COST_HAIKU_35 = {
-  inputTokens: 0.8,
-  outputTokens: 4,
-  promptCacheWriteTokens: 1,
-  promptCacheReadTokens: 0.08,
-  webSearchRequests: 0.01,
-} as const satisfies ModelCosts
-
-// Pricing for Haiku 4.5: ¥1 input / ¥5 output per Mtok
-export const COST_HAIKU_45 = {
-  inputTokens: 1,
-  outputTokens: 5,
-  promptCacheWriteTokens: 1.25,
-  promptCacheReadTokens: 0.1,
-  webSearchRequests: 0.01,
-} as const satisfies ModelCosts
-
-/** Back-compat shim — was Opus 4.6 specific, now returns generic high-cost tier */
-export function getOpus46CostTier(): ModelCosts {
-  return {
-    inputTokens: 5,
-    outputTokens: 25,
-    promptCacheWriteTokens: 6.25,
-    promptCacheReadTokens: 0.5,
-    webSearchRequests: 0.01,
-  } as const satisfies ModelCosts
-}
-
 /**
- * Resolve costs for a model. Falls back to the default model's costs if unknown.
+ * 解析模型的定价。
+ * 优先从 model-capabilities.json 读取，未配置则回退到默认模型定价。
  * 对于阶梯费用模型，usage.input_tokens 用于确定当前所在阶梯。
  */
 export function getModelCosts(model: string, usage: Usage): ModelCosts {
-  // 传入当前累计输入 token 总量，用于阶梯费用定价
   const currentInput = (usage.cache_read_input_tokens ?? 0) +
     (usage.cache_creation_input_tokens ?? 0) +
     usage.input_tokens
@@ -76,7 +38,6 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
     }
   }
 
-  // Try default model
   const defaultModel = getDefaultMainLoopModelSetting()
   const defaultPricing = getStaticPricingForModel(defaultModel)
   if (defaultPricing) {
@@ -89,9 +50,15 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
     }
   }
 
-  // Absolute fallback
   trackUnknownModelCost(model)
-  return COST_TIER_3_15
+  // 无定价信息时返回零费用
+  return {
+    inputTokens: 0,
+    outputTokens: 0,
+    promptCacheWriteTokens: 0,
+    promptCacheReadTokens: 0,
+    webSearchRequests: 0,
+  }
 }
 
 function trackUnknownModelCost(model: string): void {
@@ -160,35 +127,3 @@ export function calculateCostFromTokens(
   return calculateUSDCost(model, usage)
 }
 
-function formatPrice(price: number): string {
-  const symbol = getCurrencySymbol()
-  if (Number.isInteger(price)) {
-    return `${symbol}${price}`
-  }
-  return `${symbol}${price.toFixed(2)}`
-}
-
-/**
- * 将模型定价格式化为字符串展示
- * 例如：中文 "¥5/¥25 per Mtok"，英文 "$5/$25 per Mtok"
- */
-export function formatModelPricing(costs: ModelCosts): string {
-  return `${formatPrice(costs.inputTokens)}/${formatPrice(costs.outputTokens)} per Mtok`
-}
-
-/**
- * Get formatted pricing string for a model
- * Accepts either a short name or full model name
- * Returns undefined if model is not found
- */
-export function getModelPricingString(model: string): string | undefined {
-  const pricing = getStaticPricingForModel(model)
-  if (!pricing) return undefined
-  return formatModelPricing({
-    inputTokens: pricing.cost_input,
-    outputTokens: pricing.cost_output,
-    promptCacheWriteTokens: pricing.cost_cache_write,
-    promptCacheReadTokens: pricing.cost_cache_read,
-    webSearchRequests: pricing.cost_web_search,
-  })
-}

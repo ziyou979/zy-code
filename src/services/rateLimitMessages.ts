@@ -24,9 +24,9 @@ function getLimitNameTranslation(rateLimitType: string, model: string): string {
     const subscriptionType = getSubscriptionType()
     const isProOrEnterprise =
       subscriptionType === 'pro' || subscriptionType === 'enterprise'
-    return isProOrEnterprise ? tSync('rateLimit.weeklyLimit') : tSync('rateLimit.sonnetLimit')
+    return isProOrEnterprise ? tSync('rateLimit.weeklyLimit') : tSync('rateLimit.standardLimit')
   }
-  if (rateLimitType === 'seven_day_opus') return tSync('rateLimit.opusLimit')
+  if (rateLimitType === 'seven_day_opus') return tSync('rateLimit.advancedLimit')
   if (rateLimitType === 'seven_day') return tSync('rateLimit.weeklyLimit')
   if (rateLimitType === 'five_hour') return tSync('rateLimit.sessionLimit')
   return tSync('rateLimit.usageLimit')
@@ -196,7 +196,7 @@ function getLimitReachedText(limits: ZyAILimits, model: string): string {
   }
 
   if (limits.rateLimitType === 'seven_day_opus') {
-    return formatLimitReachedText(tSync('rateLimit.opusLimit'), resetMessage, model)
+    return formatLimitReachedText(tSync('rateLimit.advancedLimit'), resetMessage, model)
   }
 
   if (limits.rateLimitType === 'seven_day') {
@@ -220,7 +220,7 @@ function getEarlyWarningText(limits: ZyAILimits): string | null {
       limitName = tSync('rateLimit.sessionLimit')
       break
     case 'seven_day_opus':
-      limitName = tSync('rateLimit.opusLimit')
+      limitName = tSync('rateLimit.advancedLimit')
       break
     case 'seven_day_sonnet':
       limitName = getLimitNameTranslation(limits.rateLimitType, '')
@@ -325,7 +325,7 @@ export function getUsingOverageText(limits: ZyAILimits): string {
   } else if (limits.rateLimitType === 'seven_day') {
     limitName = tSync('rateLimit.weeklyLimit')
   } else if (limits.rateLimitType === 'seven_day_opus') {
-    limitName = tSync('rateLimit.opusLimit')
+    limitName = tSync('rateLimit.advancedLimit')
   } else if (limits.rateLimitType === 'seven_day_sonnet') {
     limitName = getLimitNameTranslation(limits.rateLimitType, '')
   }

@@ -357,6 +357,9 @@ async function* convertOpenAIStream(
   let toolBlockCounter = 0
   let textBlockStarted = false
   let openToolBlocks = 0
+  // 百炼深度思考：reasoning_content 需要独立的 thinking block
+  let thinkingBlockStarted = false
+  let thinkingBlockIndex = 0
 
   yield {
     type: 'response_start',
@@ -366,11 +369,33 @@ async function* convertOpenAIStream(
 
   for await (const chunk of stream) {
     for (const choice of chunk.choices ?? []) {
-      const delta = choice.delta
+      const delta = choice.delta as any
+
+      // 思考过程（百炼等 OpenAI 兼容平台的 reasoning_content）
+      // 思考内容必须在独立的 thinking block 中，不能和 text block 混用 index
+      if (delta.reasoning_content && delta.reasoning_content !== '') {
+        if (!thinkingBlockStarted) {
+          // 首次收到 reasoning_content 时创建 thinking block（index 0）
+          yield {
+            type: 'chunk_start',
+            index: thinkingBlockIndex,
+            chunk: { type: 'thinking', thinking: '', signature: '' } as any,
+          }
+          thinkingBlockStarted = true
+        }
+        yield {
+          type: 'chunk_delta',
+          index: thinkingBlockIndex,
+          delta: { type: 'thinking_delta', thinking: delta.reasoning_content } as any,
+        }
+      }
 
       // 文本
       if (delta.content && delta.content !== '') {
         if (!textBlockStarted) {
+          // 思考结束后才开始的 text block，index 要在 thinking 之后
+          const newTextBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : textBlockIndex
+          textBlockIndex = newTextBlockIndex
           yield {
             type: 'chunk_start',
             index: textBlockIndex,

@@ -430,19 +430,6 @@ export type GlobalConfig = {
   // 空闲返回弹窗追踪
   idleReturnDismissed?: boolean // 已选择"不再询问"
 
-  // Opus 4.5 Pro 迁移追踪
-  opusProMigrationComplete?: boolean
-  opusProMigrationTimestamp?: number
-
-  // Sonnet 4.5 1m 迁移追踪
-  sonnet1m45MigrationComplete?: boolean
-
-  // Opus 4.0/4.1 → 当前 Opus 迁移（展示一次性通知）
-  legacyOpusMigrationTimestamp?: number
-
-  // Sonnet 4.5 → 4.6 迁移（pro/max/team premium）
-  sonnet45To46MigrationTimestamp?: number
-
   // 缓存的 statsig gate 值
   cachedStatsigGates: {
     [gateName: string]: boolean

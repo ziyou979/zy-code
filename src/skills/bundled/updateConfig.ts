@@ -58,7 +58,7 @@ Settings load in order: user → project → local (later overrides earlier).
 ### Model & Agent
 \`\`\`json
 {
-  "model": "sonnet",  // or "opus", "haiku", full model ID
+  "model": "standard",  // or "advanced", "compact", or full model ID
   "agent": "agent-name",
   "alwaysThinkingEnabled": true
 }

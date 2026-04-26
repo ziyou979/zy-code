@@ -1,4 +1,4 @@
-import { queryHaiku } from '../../services/api/zy.js'
+import { queryCompactModel } from '../../services/api/zy.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -17,7 +17,7 @@ export async function generateSessionName(
   }
 
   try {
-    const result = await queryHaiku({
+    const result = await queryCompactModel({
       systemPrompt: asSystemPrompt([
         'Generate a short kebab-case name (2-4 words) that captures the main topic of this conversation. Use lowercase words separated by hyphens. Examples: "fix-login-bug", "add-auth-feature", "refactor-api-client", "debug-test-failures". Return JSON with a "name" field.',
       ]),
@@ -56,7 +56,7 @@ export async function generateSessionName(
     }
     return null
   } catch (error) {
-    // Haiku timeout/rate-limit/network are expected operational failures —
+    // Compact model timeout/rate-limit/network are expected operational failures —
     // logForDebugging, not logError. Called automatically on every 3rd bridge
     // message (initReplBridge.ts), so errors here would flood the error file.
     logForDebugging(`generateSessionName failed: ${errorMessage(error)}`, {

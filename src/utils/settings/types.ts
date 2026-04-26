@@ -274,28 +274,23 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe('API key for authentication. Overrides environment variables.'),
-      /** Default model when no tier-specific model is configured */
-      defaultModel: z
-        .string()
-        .optional()
-        .describe(
-          'Default model used as fallback for aliases and when no tier-specific model is set.',
-        ),
-      /** Main loop model for conversation (overrides tier-based defaults) */
+      /** Main loop tier: which capability tier the main conversation loop uses */
       mainLoopModel: z
-        .string()
+        .enum(['advanced', 'standard', 'compact'])
         .optional()
         .describe(
-          'Default model for the main conversation loop. Overrides tier-based model resolution.',
+          'Capability tier for the main conversation loop. "advanced" for complex reasoning, ' +
+            '"standard" for everyday tasks, "compact" for fast/lightweight tasks. ' +
+            'Defaults to "standard". The actual model is resolved from the "models" configuration.',
         ),
-      /** Tier-based model configuration (best > advanced > standard > compact) */
+      /** Tier-based model configuration (advanced > standard > compact) */
       models: z
         .record(z.string(), z.string())
         .optional()
         .describe(
-          'Model configuration by capability tier. Keys: "best" (most capable), ' +
+          'Model configuration by capability tier. Keys: ' +
             '"advanced" (complex reasoning), "standard" (everyday tasks), "compact" (fast/cheap). ' +
-            'Unconfigured tiers fall back to defaultModel.',
+            'At least the tier referenced by "mainLoopModel" must be configured.',
         ),
       awsCredentialExport: z
         .string()
@@ -416,9 +411,8 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Allowlist of models that users can select. ' +
-            'Accepts family aliases ("opus" allows any opus version), ' +
-            'version prefixes ("opus-4-5" allows only that version), ' +
-            'and full model IDs. ' +
+            'Accepts tier aliases ("advanced" allows any advanced-tier model), ' +
+            'version prefixes, and full model IDs. ' +
             'If undefined, all models are available. If empty array, only the default model is available. ' +
             'Typically set in managed settings by enterprise administrators.',
         ),

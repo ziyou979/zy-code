@@ -116,7 +116,7 @@ import { findGitRoot, getBranch, getIsGit, getWorktreeCount } from './utils/git.
 import { getGhAuthStatus } from './utils/github/ghAuthStatus.js';
 import { safeParseJSON } from './utils/json.js';
 import { logError } from './utils/log.js';
-import { getDefaultMainLoopModel, getUserSpecifiedModelSetting, normalizeModelStringForAPI, parseUserSpecifiedModel } from './utils/model/model.js';
+import { getDefaultMainLoopModel, getDefaultMainLoopModelSetting, getUserSpecifiedModelSetting, normalizeModelStringForAPI, parseUserSpecifiedModel, type ModelSetting } from './utils/model/model.js';
 import { ensureModelStringsInitialized } from './utils/model/modelStrings.js';
 import { PERMISSION_MODES } from './utils/permissions/PermissionMode.js';
 import { checkAndDisableBypassPermissions, getAutoModeEnabledStateIfCached, initializeToolPermissionContext, initialPermissionModeFromCLI, isDefaultPermissionModeAuto, parseToolListFromCLI, removeDangerousPermissions, stripDangerousPermissionsForAutoMode, verifyAutoModeGateAccess } from './utils/permissions/permissionSetup.js';
@@ -173,16 +173,6 @@ import { type ChannelEntry, getInitialMainLoopModel, getIsNonInteractiveSession,
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/permissions/autoModeState.js') as typeof import('./utils/permissions/autoModeState.js') : null;
 
 // TeleportRepoMismatchDialog、TeleportResumeWrapper 在调用处动态导入
-import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
-import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
-import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
-import { migrateLegacyOpusToCurrent } from './migrations/migrateLegacyOpusToCurrent.js';
-import { migrateOpusToOpus1m } from './migrations/migrateOpusToOpus1m.js';
-import { migrateReplBridgeEnabledToRemoteControlAtStartup } from './migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js';
-import { migrateSonnet1mToSonnet45 } from './migrations/migrateSonnet1mToSonnet45.js';
-import { migrateSonnet45ToSonnet46 } from './migrations/migrateSonnet45ToSonnet46.js';
-import { resetAutoModeOptInForDefaultOffer } from './migrations/resetAutoModeOptInForDefaultOffer.js';
-import { resetProToOpusDefault } from './migrations/resetProToOpusDefault.js';
 import { createRemoteSessionConfig } from './remote/RemoteSessionManager.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 // teleportWithProgress 在调用处动态导入
@@ -322,23 +312,10 @@ async function logStartupTelemetry(): Promise<void> {
   });
 }
 
-// @[MODEL LAUNCH]：考虑为模型字符串添加必要的迁移。参见 migrateSonnet1mToSonnet45.ts 示例。
 // 添加新的同步迁移时递增此值，以便现有用户重新运行迁移集。
-const CURRENT_MIGRATION_VERSION = 11;
+const CURRENT_MIGRATION_VERSION = 13;
 function runMigrations(): void {
   if (getGlobalConfig().migrationVersion !== CURRENT_MIGRATION_VERSION) {
-    migrateAutoUpdatesToSettings();
-    migrateBypassPermissionsAcceptedToSettings();
-    migrateEnableAllProjectMcpServersToSettings();
-    resetProToOpusDefault();
-    migrateSonnet1mToSonnet45();
-    migrateLegacyOpusToCurrent();
-    migrateSonnet45ToSonnet46();
-    migrateOpusToOpus1m();
-    migrateReplBridgeEnabledToRemoteControlAtStartup();
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      resetAutoModeOptInForDefaultOffer();
-    }
     saveGlobalConfig(prev => prev.migrationVersion === CURRENT_MIGRATION_VERSION ? prev : {
       ...prev,
       migrationVersion: CURRENT_MIGRATION_VERSION
@@ -2301,6 +2278,11 @@ async function run(): Promise<CommanderCommand> {
           m.clearTrustedDeviceToken();
           return m.enrollTrustedDevice();
         });
+        // Onboarding 写入了 settings.json（包括 models 和 mainLoopModel），
+        // 需要刷新 settings 缓存并重新解析模型。
+        resetSettingsCache();
+        const postOnboardingModel = getDefaultMainLoopModelSetting();
+        setInitialMainLoopModel(postOnboardingModel as ModelSetting);
       }
 
       // 验证活动令牌的 org 是否匹配 forceLoginOrgUUID（如果在托管设置中设置）。

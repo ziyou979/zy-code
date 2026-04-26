@@ -1132,7 +1132,7 @@ export const AgentDefinitionSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          "Model alias (e.g. 'sonnet', 'opus', 'haiku') or full model ID (e.g. 'qwen3.6-plus'). If omitted or 'inherit', uses the main model",
+          "Model tier (e.g. 'standard', 'advanced', 'compact') or full model ID (e.g. 'qwen3.6-plus'). If omitted or 'inherit', uses the main model",
         ),
       mcpServers: z.array(AgentMcpServerSpecSchema()).optional(),
       criticalSystemReminder_EXPERIMENTAL: z

@@ -82,10 +82,11 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
     searchCount
   } = getSearchSummary(output.results ?? []);
   const timeDisplay = output.durationSeconds >= 1 ? `${Math.round(output.durationSeconds)}s` : `${Math.round(output.durationSeconds * 1000)}ms`;
+  const unit = searchCount !== 1 ? tSync('webSearch.search_other') : tSync('webSearch.search_one');
   return <Box justifyContent="space-between" width="100%">
       <MessageResponse height={1}>
         <Text>
-          {tSync('webSearch.did')} {searchCount} {searchCount !== 1 ? tSync('webSearch.search_other') : tSync('webSearch.search_one')} in {timeDisplay}
+          {tSync('webSearch.search', { count: searchCount, unit, time: timeDisplay })}
         </Text>
       </MessageResponse>
     </Box>;

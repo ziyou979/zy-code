@@ -92,24 +92,35 @@ export function onChangeAppState({
     notifyPermissionModeChanged(newMode)
   }
 
-  // mainLoopModel: remove it from settings?
+  // mainLoopModel: persist to settings
+  // 如果值是 tier 名（advanced/standard/compact），写入 mainLoopModel 字段
+  // 否则写入 model 字段并清除 mainLoopModel（覆盖模式）
   if (
-    newState.mainLoopModel !== oldState.mainLoopModel &&
-    newState.mainLoopModel === null
+    newState.mainLoopModel !== oldState.mainLoopModel
   ) {
-    // Remove from settings
-    updateSettingsForSource('userSettings', { model: undefined })
-    setMainLoopModelOverride(null)
-  }
-
-  // mainLoopModel: add it to settings?
-  if (
-    newState.mainLoopModel !== oldState.mainLoopModel &&
-    newState.mainLoopModel !== null
-  ) {
-    // Save to settings
-    updateSettingsForSource('userSettings', { model: newState.mainLoopModel })
-    setMainLoopModelOverride(newState.mainLoopModel)
+    const TIER_NAMES = ['advanced', 'standard', 'compact'] as const
+    if (newState.mainLoopModel === null) {
+      // 恢复默认：清除覆盖字段
+      updateSettingsForSource('userSettings', {
+        model: undefined,
+        mainLoopModel: undefined,
+      })
+      setMainLoopModelOverride(null)
+    } else if (TIER_NAMES.includes(newState.mainLoopModel as typeof TIER_NAMES[number])) {
+      // tier 名 → 写入 mainLoopModel，清除 model 覆盖
+      updateSettingsForSource('userSettings', {
+        model: undefined,
+        mainLoopModel: newState.mainLoopModel as 'advanced' | 'standard' | 'compact',
+      })
+      setMainLoopModelOverride(newState.mainLoopModel)
+    } else {
+      // 具体模型名 → 写入 model 覆盖字段，清除 mainLoopModel
+      updateSettingsForSource('userSettings', {
+        model: newState.mainLoopModel,
+        mainLoopModel: undefined,
+      })
+      setMainLoopModelOverride(newState.mainLoopModel)
+    }
   }
 
   // expandedView → persist as showExpandedTodos + showSpinnerTree for backwards compat

@@ -4,7 +4,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { queryHaiku } from '../../services/api/zy.js'
+import { queryCompactModel } from '../../services/api/zy.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../utils/http.js'
@@ -505,7 +505,7 @@ export async function applyPromptToMarkdown(
     prompt,
     isPreapprovedDomain,
   )
-  const assistantMessage = await queryHaiku({
+  const assistantMessage = await queryCompactModel({
     systemPrompt: asSystemPrompt([]),
     userPrompt: modelPrompt,
     signal,

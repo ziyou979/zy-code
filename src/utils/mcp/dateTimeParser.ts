@@ -1,4 +1,4 @@
-import { queryHaiku } from '../../services/api/zy.js'
+import { queryCompactModel } from '../../services/api/zy.js'
 import { logError } from '../log.js'
 import { extractTextContent } from '../messages.js'
 import { asSystemPrompt } from '../systemPromptType.js'
@@ -8,7 +8,7 @@ export type DateTimeParseResult =
   | { success: false; error: string }
 
 /**
- * Parse natural language date/time input into ISO 8601 format using Haiku.
+ * Parse natural language date/time input into ISO 8601 format using a compact model.
  *
  * Examples:
  * - "tomorrow at 3pm" → "2025-10-15T15:00:00-07:00"
@@ -65,7 +65,7 @@ Output format: ${formatDescription}
 Parse the user's input into ISO 8601 format. Return ONLY the formatted string, or "INVALID" if the input is incomplete or unparseable.`
 
   try {
-    const result = await queryHaiku({
+    const result = await queryCompactModel({
       systemPrompt,
       userPrompt,
       signal,

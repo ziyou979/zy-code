@@ -498,6 +498,52 @@ function convertToolsToOpenAI(
 }
 
 // ============================================================================
+// OpenAI response_format 转换
+// ============================================================================
+
+/**
+ * 将 Anthropic 风格的 output_config.format 转换为 OpenAI 的 response_format。
+ * Anthropic: { format: { type: 'json_schema', json_schema: { ... } | schema: { ... } } }
+ * OpenAI:    { type: 'json_schema', json_schema: { ... } }
+ *
+ * 如果已经是 OpenAI 格式（顶层有 type 字段），直接返回。
+ * 如果是 'json_object' 格式，也直接返回。
+ */
+function convertOutputFormatToResponseFormat(
+  outputConfig: Record<string, unknown> | undefined,
+): OpenAI.Chat.Completions.ChatCompletionCreateParams['response_format'] | undefined {
+  if (!outputConfig) return undefined
+
+  // output_config 可能是 Anthropic 格式：{ format: { type: 'json_schema', ... } }
+  const format = outputConfig.format as Record<string, unknown> | undefined
+  if (!format) return undefined
+
+  // 如果已经是 OpenAI 原生格式（顶层有 type）
+  if (format.type === 'json_object') {
+    return { type: 'json_object' }
+  }
+
+  if (format.type === 'json_schema') {
+    // json_schema 可能在内嵌的 json_schema 字段中，也可能在 schema 字段中
+    const jsonSchema = (format.json_schema as Record<string, unknown>) ??
+      (format.schema as Record<string, unknown>)
+    if (jsonSchema) {
+      return {
+        type: 'json_schema',
+        json_schema: jsonSchema as unknown as OpenAI.ResponseFormatJSONSchema['json_schema'],
+      }
+    }
+  }
+
+  // 兜底：如果 format 本身看起来像 OpenAI 格式
+  if (format.type) {
+    return format as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParams['response_format']
+  }
+
+  return undefined
+}
+
+// ============================================================================
 // OpenAI → 标准格式转换
 // ============================================================================
 
@@ -559,6 +605,9 @@ async function* mapOpenAIStreamToStandard(
   let textBlockStarted = false
   let toolBlocksStarted = new Map<number, boolean>()
   let currentModel = model
+  // 百炼深度思考：reasoning_content 需要独立的 thinking block
+  let thinkingBlockStarted = false
+  let thinkingBlockIndex = 0
 
   yield {
     type: 'response_start',
@@ -570,11 +619,33 @@ async function* mapOpenAIStreamToStandard(
     if (chunk.model) currentModel = chunk.model
 
     for (const choice of chunk.choices ?? []) {
-      const delta = choice.delta
+      const delta = choice.delta as any
+
+      // 思考过程（百炼等 OpenAI 兼容平台的 reasoning_content）
+      // 思考内容必须在独立的 thinking block 中，不能和 text block 混用 index
+      if (delta.reasoning_content && delta.reasoning_content !== '') {
+        if (!thinkingBlockStarted) {
+          // 首次收到 reasoning_content 时创建 thinking block（index 0）
+          yield {
+            type: 'chunk_start',
+            index: thinkingBlockIndex,
+            chunk: { type: 'thinking', thinking: '', signature: '' } as any,
+          }
+          thinkingBlockStarted = true
+        }
+        yield {
+          type: 'chunk_delta',
+          index: thinkingBlockIndex,
+          delta: { type: 'thinking_delta', thinking: delta.reasoning_content } as any,
+        }
+      }
 
       // 文本 delta
       if (delta.content && delta.content !== '') {
         if (!textBlockStarted) {
+          // 思考结束后才开始的 text block，index 要在 thinking 之后
+          const newTextBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : textBlockIndex
+          textBlockIndex = newTextBlockIndex
           yield {
             type: 'chunk_start',
             index: textBlockIndex,
@@ -678,6 +749,11 @@ class OpenAIRequestAdapter implements LLMAdapter {
       `[OpenAI] Streaming request: model=${p.model}, messages=${openAIMessages.length}`,
     )
 
+    // 从 providerExtras.openai 中提取 response_format（如果已转换）
+    const openaiResponseFormat = openaiExtras?.response_format
+    // 从 output_config 中提取并转换为 OpenAI 的 response_format
+    const outputConfigResponseFormat = convertOutputFormatToResponseFormat(p.output_config)
+
     const stream = await client.chat.completions.create(
       {
         model: normalizeModelStringForAPI(p.model),
@@ -690,6 +766,8 @@ class OpenAIRequestAdapter implements LLMAdapter {
         ...((p.toolChoice ?? p.tool_choice) && { tool_choice: (p.toolChoice ?? p.tool_choice) as any }),
         stream: true,
         stream_options: { include_usage: true },
+        ...(openaiResponseFormat ? { response_format: openaiResponseFormat as any } : {}),
+        ...(outputConfigResponseFormat && !openaiResponseFormat ? { response_format: outputConfigResponseFormat } : {}),
         ...(openaiExtras ? (openaiExtras as any) : {}),
         ...(p.extra_body ? (p.extra_body as any) : {}),
       },
@@ -718,6 +796,11 @@ class OpenAIRequestAdapter implements LLMAdapter {
       `[OpenAI] Non-streaming request: model=${p.model}, messages=${openAIMessages.length}`,
     )
 
+    // 从 providerExtras.openai 中提取 response_format（如果已转换）
+    const openaiResponseFormat = openaiExtras?.response_format
+    // 从 output_config 中提取并转换为 OpenAI 的 response_format
+    const outputConfigResponseFormat = convertOutputFormatToResponseFormat(p.output_config)
+
     const completion = await client.chat.completions.create(
       {
         model: normalizeModelStringForAPI(p.model),
@@ -729,6 +812,8 @@ class OpenAIRequestAdapter implements LLMAdapter {
         ...(p.tools && { tools: convertToolsToOpenAI(p.tools) }),
         ...((p.toolChoice ?? p.tool_choice) && { tool_choice: (p.toolChoice ?? p.tool_choice) as any }),
         stream: false,
+        ...(openaiResponseFormat ? { response_format: openaiResponseFormat as any } : {}),
+        ...(outputConfigResponseFormat && !openaiResponseFormat ? { response_format: outputConfigResponseFormat } : {}),
         ...(openaiExtras ? (openaiExtras as any) : {}),
         ...(p.extra_body ? (p.extra_body as any) : {}),
       },

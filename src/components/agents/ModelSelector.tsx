@@ -23,6 +23,6 @@ export function ModelSelector({
   } else {
     modelOptions = base;
   }
-  const defaultModel = initialModel ?? "sonnet";
+  const defaultModel = initialModel ?? "standard";
   return <Box flexDirection="column">{<Box marginBottom={1}><Text dimColor={true}>Model determines the agent's reasoning capabilities and speed.</Text></Box>}<Select options={modelOptions} defaultValue={defaultModel} onChange={onComplete} onCancel={() => onCancel ? onCancel() : onComplete(undefined)} /></Box>;
 }

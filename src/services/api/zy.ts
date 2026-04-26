@@ -17,6 +17,7 @@ import type {
   TextBlockParam,
   LLMMessageParam,
   DocumentBlockParam,
+  ProviderExtras,
 } from '../../types/llm.js'
 import {
   isAPIError,
@@ -93,9 +94,9 @@ import {
   stripToolReferenceBlocksFromUserMessage,
 } from '../../utils/messages.js'
 import {
-  getDefaultOpusModel,
-  getDefaultSonnetModel,
-  getDefaultHaikuModel,
+  getDefaultAdvancedModel,
+  getDefaultStandardModel,
+  getDefaultCompactModel,
   isNonCustomOpusModel,
 } from '../../utils/model/model.js'
 import {
@@ -331,22 +332,22 @@ export function getPromptCachingEnabled(model: string): boolean {
   // 全局禁用优先
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING)) return false
 
-  // 检查是否应对小型/快速模型禁用
+  // 检查是否应对 compact 模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_HAIKU)) {
-    const smallFastModel = getDefaultHaikuModel()
-    if (model === smallFastModel) return false
+    const compactModel = getDefaultCompactModel()
+    if (model === compactModel) return false
   }
 
-  // 检查是否应对默认 Sonnet 禁用
+  // 检查是否应对 standard 模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_SONNET)) {
-    const defaultSonnet = getDefaultSonnetModel()
-    if (model === defaultSonnet) return false
+    const standardModel = getDefaultStandardModel()
+    if (model === standardModel) return false
   }
 
-  // 检查是否应对默认 Opus 禁用
+  // 检查是否应对 advanced 模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_OPUS)) {
-    const defaultOpus = getDefaultOpusModel()
-    if (model === defaultOpus) return false
+    const advancedModel = getDefaultAdvancedModel()
+    if (model === advancedModel) return false
   }
 
   return true
@@ -537,8 +538,8 @@ export async function verifyApiKey(
   }
 
   try {
-    // 警告：如果改用非 Haiku 模型，此请求在直接 API 调用中将失败，除非使用 getCLISyspromptPrefix。
-    const model = getDefaultHaikuModel()
+    // 警告：如果改用非 compact 模型，此请求在直接 API 调用中将失败，除非使用 getCLISyspromptPrefix。
+    const model = getDefaultCompactModel()
     const betas = getModelBetas(model)
     return await returnValue(
       withRetry(
@@ -699,6 +700,8 @@ export type Options = {
   outputFormat?: BetaJSONOutputFormat
   advisorModel?: string
   addNotification?: (notif: Notification) => void
+  /** Provider 专属扩展参数，用于传递非标准参数（如百炼的 enable_search） */
+  providerExtras?: ProviderExtras
   // API 端任务预算（output_config.task_budget）。区别于
   // tokenBudget.ts 的 +500k 自动续传功能 — 这个会发送给 API，
   // 让模型自行控制节奏。`remaining` 由调用方计算
@@ -1677,6 +1680,8 @@ async function* queryModel(
       ...(Object.keys(outputConfig).length > 0 && {
         output_config: outputConfig,
       }),
+      // 透传调用方传入的 providerExtras（如百炼的 enable_search）
+      ...(options.providerExtras && { providerExtras: options.providerExtras }),
     }
   }
 
@@ -3203,9 +3208,13 @@ export function buildSystemPromptBlocks(
   })
 }
 
-type HaikuOptions = Omit<Options, 'model' | 'getToolPermissionContext'>
+type CompactModelOptions = Omit<Options, 'model' | 'getToolPermissionContext'>
 
-export async function queryHaiku({
+/**
+ * 使用 compact 能力层级的模型进行非流式查询。
+ * 适用于轻量级任务：标题生成、摘要、日期解析等。
+ */
+export async function queryCompactModel({
   systemPrompt = asSystemPrompt([]),
   userPrompt,
   outputFormat,
@@ -3216,7 +3225,7 @@ export async function queryHaiku({
   userPrompt: string
   outputFormat?: BetaJSONOutputFormat
   signal: AbortSignal
-  options: HaikuOptions
+  options: CompactModelOptions
 }): Promise<AssistantMessage> {
   const result = await withVCR(
     [
@@ -3242,7 +3251,7 @@ export async function queryHaiku({
         signal,
         options: {
           ...options,
-          model: getDefaultHaikuModel(),
+          model: getDefaultCompactModel(),
           enablePromptCaching: options.enablePromptCaching ?? false,
           outputFormat,
           async getToolPermissionContext() {
@@ -3253,9 +3262,10 @@ export async function queryHaiku({
       return [result]
     },
   )
-  // Haiku 不使用流式，所以这里是安全的
+  // compact 模型不使用流式，所以这里是安全的
   return result[0]! as AssistantMessage
 }
+
 
 type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
 

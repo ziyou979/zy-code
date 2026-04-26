@@ -54,22 +54,6 @@ import typescriptZyApiStreaming from './zy-api/typescript/zy-api/streaming.md'
 // @ts-ignore
 import typescriptZyApiToolUse from './zy-api/typescript/zy-api/tool-use.md'
 
-// @[MODEL LAUNCH]: Update the model IDs/names below. These are substituted into {{VAR}}
-// placeholders in the .md files at runtime before the skill prompt is sent.
-// After updating these constants, manually update the two files that still hardcode models:
-//   - zy-api/SKILL.md (Current Models pricing table)
-//   - zy-api/shared/models.md (full model catalog with legacy versions and alias mappings)
-export const SKILL_MODEL_VARS = {
-  OPUS_ID: 'qwen3.6-plus',
-  OPUS_NAME: 'qwen3.6-plus',
-  SONNET_ID: 'qwen3.6-plus',
-  SONNET_NAME: 'qwen3.6-plus',
-  HAIKU_ID: 'qwen3.6-plus',
-  HAIKU_NAME: 'qwen3.6-plus',
-  // Previous Sonnet ID — used in "do not append date suffixes" example in SKILL.md.
-  PREV_SONNET_ID: 'qwen3.6-plus',
-} satisfies Record<string, string>
-
 export const SKILL_PROMPT: string = skillPrompt
 
 export const SKILL_FILES: Record<string, string> = {

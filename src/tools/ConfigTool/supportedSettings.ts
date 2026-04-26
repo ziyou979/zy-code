@@ -105,7 +105,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
           .filter(o => o.value !== null)
           .map(o => o.value as string)
       } catch {
-        return ['sonnet', 'opus', 'haiku']
+        return ['advanced', 'standard', 'compact']
       }
     },
     validateOnWrite: v => validateModel(String(v)),
@@ -114,42 +114,23 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
   mainLoopModel: {
     source: 'settings',
     type: 'string',
-    description: 'Default model for the main conversation loop (persisted in settings.json)',
-    getOptions: () => {
-      try {
-        return getModelOptions()
-          .filter(o => o.value !== null)
-          .map(o => o.value as string)
-      } catch {
-        return ['sonnet', 'opus', 'haiku']
-      }
-    },
-    validateOnWrite: v => validateModel(String(v)),
-  },
-  defaultModel: {
-    source: 'settings',
-    type: 'string',
-    description: 'Default model fallback for all aliases and when no model is configured',
-  },
-  'models.best': {
-    source: 'settings',
-    type: 'string',
-    description: 'Most capable model (used by getBestModel and /best)',
+    description: 'Main loop tier: "advanced", "standard" (default), or "compact"',
+    options: ['advanced', 'standard', 'compact'],
   },
   'models.advanced': {
     source: 'settings',
     type: 'string',
-    description: 'Complex reasoning model (maps to opus alias)',
+    description: 'Complex reasoning model (advanced tier)',
   },
   'models.standard': {
     source: 'settings',
     type: 'string',
-    description: 'Everyday tasks model (maps to sonnet alias)',
+    description: 'Everyday tasks model (standard tier)',
   },
   'models.compact': {
     source: 'settings',
     type: 'string',
-    description: 'Fast/cheap model (maps to haiku alias)',
+    description: 'Fast/cheap model (compact tier)',
   },
   alwaysThinkingEnabled: {
     source: 'settings',

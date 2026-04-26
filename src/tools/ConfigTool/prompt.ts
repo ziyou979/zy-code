@@ -71,7 +71,7 @@ ${modelSection}
 - Set dark theme: { "setting": "theme", "value": "dark" }
 - Enable vim mode: { "setting": "editorMode", "value": "vim" }
 - Enable verbose: { "setting": "verbose", "value": true }
-- Change model: { "setting": "model", "value": "opus" }
+- Change model: { "setting": "model", "value": "advanced" }
 - Change permission mode: { "setting": "permissions.defaultMode", "value": "plan" }
 `
 }
@@ -88,6 +88,6 @@ function generateModelSection(): string {
 ${lines.join('\n')}`
   } catch {
     return `## Model
-- model - Override the default model (sonnet, opus, haiku, best, or full model ID)`
+- model - Override the default model (advanced, standard, compact, or full model ID)`
   }
 }

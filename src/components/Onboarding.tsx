@@ -15,7 +15,7 @@ import { PressEnterToContinue } from './PressEnterToContinue.js';
 import { ThemePicker } from './ThemePicker.js';
 import { OrderedList } from './ui/OrderedList.js';
 
-type StepId = 'language' | 'theme' | 'platform' | 'model' | 'security' | 'terminal-setup';
+type StepId = 'language' | 'theme' | 'platform' | 'model' | 'model-advanced' | 'model-compact' | 'model-tier' | 'security' | 'terminal-setup';
 
 interface OnboardingStep {
   id: StepId;
@@ -197,18 +197,103 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     </Box>
   );
 
-  // Model selection step
-  function handleModelDone(model: string) {
-    saveGlobalConfig(current => ({
-      ...current,
-      configuredModel: model,
-    }));
+  // Tier-based model configuration steps
+  const [tierModels, setTierModels] = useState<{
+    standard: string;
+    advanced?: string;
+    compact?: string;
+  }>({ standard: '' });
+
+  // standard tier — required
+  function handleStandardDone(model: string) {
+    setTierModels(prev => ({ ...prev, standard: model }));
     goToNextStep();
   }
-
-  const modelStep = (
+  const standardStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <ModelSetup provider={selectedProvider} onDone={handleModelDone} />
+      <TierModelSetup
+        tier="standard"
+        provider={selectedProvider}
+        title={tSync('onboarding.tier.standard.title')}
+        description={tSync('onboarding.tier.standard.desc')}
+        onDone={handleStandardDone}
+        allowSkip={false}
+      />
+    </Box>
+  );
+
+  // advanced tier — optional, skip → fallback to standard
+  function handleAdvancedDone(model: string) {
+    if (model) {
+      setTierModels(prev => ({ ...prev, advanced: model }));
+    }
+    goToNextStep();
+  }
+  const advancedStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <TierModelSetup
+        tier="advanced"
+        provider={selectedProvider}
+        title={tSync('onboarding.tier.advanced.title')}
+        description={tSync('onboarding.tier.advanced.desc')}
+        onDone={handleAdvancedDone}
+        allowSkip={true}
+      />
+    </Box>
+  );
+
+  // compact tier — optional, skip → fallback to standard
+  function handleCompactDone(model: string) {
+    if (model) {
+      setTierModels(prev => ({ ...prev, compact: model }));
+    }
+    goToNextStep();
+  }
+  const compactStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <TierModelSetup
+        tier="compact"
+        provider={selectedProvider}
+        title={tSync('onboarding.tier.compact.title')}
+        description={tSync('onboarding.tier.compact.desc')}
+        onDone={handleCompactDone}
+        allowSkip={true}
+      />
+    </Box>
+  );
+
+  // mainLoopModel tier selection — choose which tier is the default
+  function handleTierDone(tier: string) {
+    // Build models object
+    const models: Record<string, string> = { standard: tierModels.standard };
+    if (tierModels.advanced) models.advanced = tierModels.advanced;
+    if (tierModels.compact) models.compact = tierModels.compact;
+
+    const mainLoopModel = (['advanced', 'standard', 'compact'] as const)
+      .includes(tier as 'advanced' | 'standard' | 'compact')
+      ? tier as 'advanced' | 'standard' | 'compact'
+      : 'standard';
+
+    // Write to settings.json
+    updateSettingsForSource('userSettings', { models, mainLoopModel });
+    goToNextStep();
+  }
+  const tierStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <Text bold>{tSync('onboarding.tier.mainLoop.title')}</Text>
+      <Text dimColor>{tSync('onboarding.tier.mainLoop.desc')}</Text>
+      <Box flexDirection="column" width={60} gap={1}>
+        <Select
+          options={[
+            { label: tSync('onboarding.tier.option.advanced'), value: 'advanced' },
+            { label: tSync('onboarding.tier.option.standard'), value: 'standard' },
+            { label: tSync('onboarding.tier.option.compact'), value: 'compact' },
+          ]}
+          onChange={handleTierDone}
+          onCancel={() => handleTierDone('standard')}
+        />
+        <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
+      </Box>
     </Box>
   );
 
@@ -246,7 +331,10 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   steps.push({ id: 'language', component: languageStep });
   steps.push({ id: 'theme', component: themeStep });
   steps.push({ id: 'platform', component: platformStep });
-  steps.push({ id: 'model', component: modelStep });
+  steps.push({ id: 'model', component: standardStep });
+  steps.push({ id: 'model-advanced', component: advancedStep });
+  steps.push({ id: 'model-compact', component: compactStep });
+  steps.push({ id: 'model-tier', component: tierStep });
   steps.push({ id: 'security', component: securityStep });
 
   if (shouldOfferTerminalSetup()) {
@@ -423,25 +511,56 @@ function ApiKeyInput({
 }
 
 /**
- * Model selection step during onboarding.
- * Shows provider-suggested models, or a custom input for generic providers.
+ * Tier-based model selection step during onboarding.
+ * Shows provider-suggested models for each tier, with optional skip for non-required tiers.
  */
-function ModelSetup({
+function TierModelSetup({
+  tier,
   provider,
+  title,
+  description,
   onDone,
+  allowSkip,
 }: {
+  tier: 'standard' | 'advanced' | 'compact';
   provider: PlatformProvider | null;
+  title: string;
+  description: string;
   onDone(model: string): void;
+  allowSkip: boolean;
 }): React.ReactNode {
   const [phase, setPhase] = useState<'select' | 'custom'>('select');
 
-  // Find the platform by provider; for generic, multiple entries exist so pick the first match
   const platform = getPlatforms().find(p => p.provider === provider);
   const modelOptions = platform?.suggestedModels ?? getGenericModelOptions();
   const hasCustomOption = !platform?.suggestedModels || platform.provider === 'generic';
 
+  // Build select options — add skip and custom options
+  const selectOptions = modelOptions.map(m => ({
+    label: m.label,
+    description: m.description,
+    value: m.value,
+  }));
+
+  if (allowSkip) {
+    selectOptions.push({
+      label: tSync('onboarding.tier.skip'),
+      value: '__skip__',
+      description: '',
+    });
+  }
+  if (hasCustomOption) {
+    selectOptions.push({
+      label: tSync('onboarding.tier.custom'),
+      value: '__custom__',
+      description: tSync('onboarding.tier.customDesc'),
+    });
+  }
+
   const handleSelect = (value: string) => {
-    if (value === '__custom__') {
+    if (value === '__skip__') {
+      onDone('');
+    } else if (value === '__custom__') {
       setPhase('custom');
     } else {
       onDone(value);
@@ -479,22 +598,15 @@ function ModelSetup({
 
   return (
     <>
-      <Text bold>{tSync('onboarding.selectDefaultModel')}</Text>
-      <Text dimColor>{tSync('onboarding.modelDescription')}</Text>
+      <Text bold>{title}</Text>
+      <Text dimColor>{description}</Text>
       <Box flexDirection="column" width={60} gap={1}>
         <Select
-          options={modelOptions.map(m => ({
-            label: m.label,
-            description: m.description,
-            value: m.value,
-          }))}
+          options={selectOptions}
           onChange={handleSelect}
-          onCancel={() => onDone('')}
+          onCancel={() => allowSkip ? onDone('') : undefined}
         />
-        {hasCustomOption && (
-          <Text dimColor>{tSync('onboarding.orCustomModel')}</Text>
-        )}
-        <Text dimColor>{tSync('onboarding.enterToConfirmSkip')}</Text>
+        <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
       </Box>
     </>
   );

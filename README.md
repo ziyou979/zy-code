@@ -118,9 +118,8 @@ ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源�
   // 默认模型（作为 fallback）
   "defaultModel": "claude-sonnet-4-20250514",
 
-  // 按能力层级配置模型（best > advanced > standard > compact）
+  // 按能力层级配置模型（advanced > standard > compact）
   "models": {
-    "best": "claude-opus-4-20250514",
     "advanced": "claude-sonnet-4-20250514",
     "standard": "claude-sonnet-4-20250514",
     "compact": "claude-haiku-4-5-20250514"

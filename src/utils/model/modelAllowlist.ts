@@ -48,9 +48,9 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
 
 /**
  * Check if a family alias is narrowed by more specific entries in the allowlist.
- * When the allowlist contains both "opus" and "opus-4-5", the specific entry
- * takes precedence — "opus" alone would be a wildcard, but "opus-4-5" narrows
- * it to only that version.
+ * When the allowlist contains both "advanced" and "advanced-1m", the specific entry
+ * takes precedence — "advanced" alone would be a wildcard, but "advanced-1m" narrows
+ * it to only that variant.
  */
 function familyHasSpecificEntries(
   family: string,
@@ -60,9 +60,9 @@ function familyHasSpecificEntries(
     if (isModelFamilyAlias(entry)) {
       continue
     }
-    // Check if entry is a version-qualified variant of this family
+    // Check if entry is a variant-qualified version of this family
     // Must match at a segment boundary (followed by '-' or end) to avoid
-    // false positives like "opusplan" matching "opus"
+    // false positives
     const idx = entry.indexOf(family)
     if (idx === -1) {
       continue
@@ -80,7 +80,7 @@ function familyHasSpecificEntries(
  * If availableModels is not set, all models are allowed.
  *
  * Matching tiers:
- * 1. Family aliases ("opus", "sonnet", "haiku") — wildcard for the entire family,
+ * 1. Tier aliases ("advanced", "standard", "compact") — wildcard for the entire tier,
  *    UNLESS more specific entries for that family also exist.
  *    In that case, the family wildcard is ignored and only the specific entries apply.
  * 2. Version prefixes — any build of that version
@@ -101,9 +101,9 @@ export function isModelAllowed(model: string): boolean {
   const normalizedAllowlist = availableModels.map(m => m.trim().toLowerCase())
 
   // Direct match (alias-to-alias or full-name-to-full-name)
-  // Skip family aliases that have been narrowed by specific entries —
-  // e.g., "opus" in ["opus", "opus-4-5"] should NOT directly match,
-  // because the admin intends to restrict to opus 4.5 only.
+  // Skip tier aliases that have been narrowed by specific entries —
+  // e.g., "advanced" in ["advanced", "advanced-1m"] should NOT directly match,
+  // because the admin intends to restrict to advanced-1m only.
   if (normalizedAllowlist.includes(normalizedModel)) {
     if (
       !isModelFamilyAlias(normalizedModel) ||
@@ -113,9 +113,9 @@ export function isModelAllowed(model: string): boolean {
     }
   }
 
-  // Family-level aliases in the allowlist match any model in that family,
-  // but only if no more specific entries exist for that family.
-  // e.g., ["opus"] allows all opus, but ["opus", "opus-4-5"] only allows opus 4.5.
+  // Tier-level aliases in the allowlist match any model in that tier,
+  // but only if no more specific entries exist for that tier.
+  // e.g., ["advanced"] allows all advanced models, but ["advanced", "advanced-1m"] only allows advanced-1m.
   for (const entry of normalizedAllowlist) {
     if (
       isModelFamilyAlias(entry) &&

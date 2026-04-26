@@ -5,7 +5,7 @@ import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getModelBetas } from '../utils/betas.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { logError } from '../utils/log.js'
-import { getDefaultHaikuModel } from '../utils/model/model.js'
+import { getDefaultCompactModel } from '../utils/model/model.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from './analytics/index.js'
 import { logEvent } from './analytics/index.js'
@@ -96,8 +96,8 @@ import { tSync } from '../i18n/index.js'
 const RATE_LIMIT_DISPLAY_NAMES: Record<RateLimitType, string> = {
   five_hour: tSync('rateLimit.sessionLimit'),
   seven_day: tSync('rateLimit.weeklyLimit'),
-  seven_day_opus: tSync('rateLimit.opusLimit'),
-  seven_day_sonnet: tSync('rateLimit.sonnetLimit'),
+  seven_day_opus: tSync('rateLimit.advancedLimit'),
+  seven_day_sonnet: tSync('rateLimit.standardLimit'),
   overage: 'extra usage limit',
 }
 
@@ -215,7 +215,7 @@ export function emitStatusChange(limits: ZyAILimits) {
 }
 
 async function makeTestQuery() {
-  const model = getDefaultHaikuModel()
+  const model = getDefaultCompactModel()
   const messages: LLMMessageParam[] = [{ role: 'user', content: 'quota' }]
   const apiProvider = getAPIProvider()
 

@@ -1,19 +1,7 @@
 export const MODEL_ALIASES = [
-  'best',
   'advanced',
   'standard',
   'compact',
-  'opus',
-  'sonnet',
-  'haiku',
-  'opusplan',
-  'best[1m]',
-  'advanced[1m]',
-  'standard[1m]',
-  'compact[1m]',
-  'opus[1m]',
-  'sonnet[1m]',
-  'haiku[1m]',
 ] as const
 export type ModelAlias = (typeof MODEL_ALIASES)[number]
 
