@@ -85,14 +85,17 @@ bun tsc --noEmit
 - `src/QueryEngine.ts` — 主对话/查询引擎；处理消息流、工具调用、上下文管理
 - `src/tools.ts` — 工具注册表；聚合所有可用工具
 - `src/commands.ts` — 斜杠命令注册表
-- `src/types/llm.ts` — **标准 LLM 类型体系**，独立于任何 SDK，定义项目内部使用的统一类型：
-  - 流式事件：`LLMStreamEvent`（`message_start`、`content_block_delta`、`message_stop` 等）
-  - 内容类型：`ContentBlock`（响应）、`ContentBlockParam`（请求）
-  - 消息与参数：`LLMMessage`、`LLMMessageParam`、`LLMCreateParams`
-  - Token 计量：`TokenUsage`、`DeltaUsage`
-  - 错误体系：`LLMError`（基类）、`LLMConnectionError`、`LLMAbortError`、`LLMAuthenticationError`
-  - 鸭子类型错误判断：`isAPIError()`、`isAbortError()`、`isConnectionError()` 等工具函数
-  - 适配器接口：`LLMRequestAdapter`、`StreamResult`
+- `src/types/llm.ts` — **标准 LLM 类型体系 v2**，独立于任何 SDK，定义项目内部使用的统一类型：
+  - 流式事件：`StreamEvent`（`response_start`、`chunk_start`、`chunk_delta`、`chunk_stop`、`response_delta`、`response_stop`）
+  - 内容块按角色分离：`UserContentBlock`（text/image）、`AssistantContentBlock`（text/tool_call/thinking 等）
+  - 消息模型：4 角色分离的 `Message`（system/user/assistant/tool），替代旧版 `LLMMessage`/`LLMMessageParam`
+  - 请求参数：`CreateParams`（驼峰字段，通过 `providerExtras` 传递 provider 专属扩展）
+  - Token 计量：`TokenUsage`、`DeltaUsage`（驼峰命名：`inputTokens`/`outputTokens`，通过 `extras` 扩展 provider 特定指标）
+  - 响应：`Response`（替代旧版 `LLMMessage`）
+  - 错误体系：`LLMError`（基类）、`LLMConnectionError`、`LLMAbortError`、`LLMAuthenticationError`、`LLMNotFoundError`
+  - 鸭子类型错误判断：`isAPIError()`、`isAbortError()`、`isConnectionError()`、`isConnectionTimeoutError()` 等工具函数
+  - 适配器接口：`LLMAdapter`、`StreamResult`
+  - v1 兼容导出：`LLMStreamEvent`、`ContentBlock`、`ContentBlockParam`、`LLMMessage`、`LLMCreateParams`、`LLMRequestAdapter` 等均标记为 `@deprecated`，保留为渐进迁移
 - `src/utils/envUtils.ts` — 环境判断工具函数，包括 `isInternalBuild()`、`getUserType()` 等构建时门控
 
 ### 工具（Tools，`src/tools/`）
@@ -107,12 +110,17 @@ bun tsc --noEmit
 
 统一的 LLM 请求适配层，使 Anthropic 和 OpenAI 两种 Provider 完全平等：
 
-- **核心设计**：业务层通过 `src/types/llm.ts` 中的标准类型（`LLMCreateParams`、`LLMStreamEvent` 等）与 LLM 交互，不依赖任何特定 SDK 类型
-- **适配器模式**：`AnthropicRequestAdapter` 和 `OpenAIRequestAdapter` 各自实现 `LLMRequestAdapter` 接口，将 SDK 特有的请求/响应格式转换为标准类型
-- **流式处理**：适配器将 SDK 流转换为 `AsyncIterable<LLMStreamEvent>`，业务层通过 `for await` 统一消费
-- **请求转换**：`stripAnthropicOnlyParams()` 将 `LLMCreateParams` 中 Anthropic 特有字段（`betas`、`thinking`、`context_management`、`system`、`metadata`、`output_config`）剥离后传给 OpenAI
-- **Provider 选择**：运行时通过 `getRequestAdapter()` 根据当前模型配置返回对应适配器
-- **类型导入规范**：业务代码中的 `ContentBlockParam`、`TokenUsage`、`LLMCreateParams` 等类型**必须**从 `src/types/llm.ts` 导入，**禁止**从 `@anthropic-ai/sdk` 直接导入（避免 SDK 类型与标准类型不兼容导致编译错误）
+- **核心设计**：业务层通过 `src/types/llm.ts` 中的标准类型（`CreateParams`、`StreamEvent` 等）与 LLM 交互，不依赖任何特定 SDK 类型
+- **适配器模式**：`AnthropicRequestAdapter` 和 `OpenAIRequestAdapter` 各自实现 `LLMAdapter` 接口，将 SDK 特有的请求/响应格式转换为标准类型
+- **流式处理**：适配器将 SDK 流转换为 `AsyncIterable<StreamEvent>`，业务层通过 `for await` 统一消费
+  - Anthropic 流：`message_start`/`content_block_start`/`content_block_delta`/`message_stop` → 标准事件
+  - OpenAI 流：`ChatCompletionChunk` delta → 标准事件（含百炼 `reasoning_content` → `thinking` block 映射）
+- **Provider 专属字段**：v2 通过 `CreateParams.providerExtras` namespace 传递（如 `providerExtras.anthropic.thinking`、`providerExtras.openai.response_format`），各适配器自行解析，互不干扰
+- **消息格式**：统一为 4 角色分离模型（system/user/assistant/tool），适配器负责转换为各自 SDK 格式
+  - OpenAI 适配器将 v1 `tool_result` 块拆分为独立的 `role:'tool'` 消息
+  - 工具调用统一为标准 `ToolDefinition` + `ToolCall` 结构
+- **Provider 选择**：运行时通过 `getRequestAdapter()` 根据当前 provider 的 `supportedFormats` 返回对应适配器
+- **类型导入规范**：业务代码中的 `Message`、`TokenUsage`、`CreateParams` 等类型**必须**从 `src/types/llm.ts` 导入，**禁止**从 `@anthropic-ai/sdk` 或 `openai` 直接导入（避免 SDK 类型与标准类型不兼容导致编译错误）
 
 ### 服务层（Services，`src/services/`）
 

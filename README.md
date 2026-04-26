@@ -102,31 +102,26 @@ TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目
 
 ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源（用户、项目、本地、策略），按优先级合并。
 
-### 配置示例
+### 配置示例（百炼 DashScope）
 
 ```json
 {
-  // API 提供商（可选值：anthropic, dashscope, openrouter, generic, ollama, zhipu, kimi）
-  "provider": "anthropic",
+  // API 提供商：百炼（支持 anthropic 或 openai 两种消息格式）
+  "provider": "dashscope",
 
-  // API 密钥（优先级高于环境变量）
-  // "apiKey": "sk-xxx",
+  // API 密钥（百炼 API Key，优先级高于环境变量）
+  "apiKey": "sk-xxxxxxxxxxxxxxxxxxxxxxxx",
 
-  // 主对话模型
-  "mainLoopModel": "claude-sonnet-4-20250514",
-
-  // 默认模型（作为 fallback）
-  "defaultModel": "claude-sonnet-4-20250514",
+  // 主对话 tier（advanced / standard / compact，默认 standard）
+  // 实际模型从 models.{tier} 中解析
+  "mainLoopModel": "standard",
 
   // 按能力层级配置模型（advanced > standard > compact）
   "models": {
-    "advanced": "claude-sonnet-4-20250514",
-    "standard": "claude-sonnet-4-20250514",
-    "compact": "claude-haiku-4-5-20250514"
+    "advanced": "qwen3.6-plus",
+    "standard": "qwen3.5-plus",
+    "compact": "qwen3.5-flash"
   },
-
-  // 快速模式使用的模型
-  "fastModel": "claude-haiku-4-5-20250514",
 
   // 语言设置
   "language": "Chinese",
@@ -170,7 +165,7 @@ ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源�
   // 快速模式
   "fastMode": false,
 
-  // 思考模式
+  // 思考模式（百炼深度思考，reasoning_content 自动映射为 thinking block）
   "alwaysThinkingEnabled": true,
 
   // 努力程度（low / medium / high）
@@ -178,16 +173,22 @@ ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源�
 }
 ```
 
+> **百炼配置说明**：
+> - `provider: "dashscope"` 自动使用百炼默认 base URL：
+>   - OpenAI 格式：`https://dashscope.aliyuncs.com/compatible-mode/v1`
+>   - Anthropic 格式：`https://dashscope.aliyuncs.com/apps/anthropic/`
+> - 如需自定义 base URL，设置环境变量 `DASHSCOPE_BASE_URL`
+> - 百炼支持的模型：`qwen3.6-plus`（推荐）、`qwen3.5-plus`（深度思考）、`qwen3.5-flash`（快速）
+> - 百炼深度思考模型的 `reasoning_content` 会自动映射为标准 `thinking` 块
+
 ### 常用配置项
 
 | 配置项 | 类型 | 说明 |
 |---|---|---|
 | `provider` | string | API 提供商 |
 | `apiKey` | string | API 密钥 |
-| `mainLoopModel` | string | 主对话模型 |
-| `defaultModel` | string | 默认模型 |
+| `mainLoopModel` | string | 主对话 tier（advanced / standard / compact） |
 | `models` | object | 按能力层级配置模型 |
-| `fastModel` | string | 快速模式模型 |
 | `language` | string | 语言偏好 |
 | `outputStyle` | string | 输出风格 |
 | `permissions` | object | 权限配置 |
