@@ -426,9 +426,6 @@ export function createSubagentContext(
     setResponseLength: overrides?.shareSetResponseLength
       ? parentContext.setResponseLength
       : () => {},
-    pushApiMetricsEntry: overrides?.shareSetResponseLength
-      ? parentContext.pushApiMetricsEntry
-      : undefined,
     updateFileHistoryState: () => {},
     // 归属范围限定且功能化（prev => next）——即使
     // setAppState 被存根化也可以安全共享。并发调用通过 React 状态队列组合。

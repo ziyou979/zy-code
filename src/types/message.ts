@@ -296,23 +296,6 @@ export interface TombstoneMessage extends BaseMessage {
   message: Message
 }
 
-export interface SystemApiMetricsMessage extends BaseMessage {
-  type: 'system'
-  subtype: 'api_metrics'
-  content?: string
-  ttftMs?: number
-  otps?: number
-  isP50?: boolean
-  hookDurationMs?: number
-  turnDurationMs?: number
-  toolDurationMs?: number
-  classifierDurationMs?: number
-  toolCount?: number
-  hookCount?: number
-  classifierCount?: number
-  configWriteCount?: number
-}
-
 export interface SystemStopHookSummaryMessage extends BaseMessage {
   type: 'system'
   subtype: 'stop_hook_summary'
@@ -351,7 +334,6 @@ export type SystemMessage =
   | SystemAgentsKilledMessage
   | ToolUseSummaryMessage
   | TombstoneMessage
-  | SystemApiMetricsMessage
   | SystemStopHookSummaryMessage
   | SystemMemorySavedMessage
 

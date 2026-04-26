@@ -5,7 +5,6 @@ import { getAPIProvider } from './providers.js';
 import { isModelAllowed } from './modelAllowlist.js';
 import { getDefaultMainLoopModelSetting, getMarketingNameForModel, getUserSpecifiedModelSetting, renderDefaultModelSetting, type ModelSetting } from './model.js';
 import { getGlobalConfig } from '../config.js';
-import { isInternalBuild } from '../envUtils.js';
 
 export type ModelOption = {
   value: ModelSetting;
@@ -15,16 +14,6 @@ export type ModelOption = {
 };
 
 export function getDefaultOptionForUser(): ModelOption {
-  if (isInternalBuild()) {
-    const currentModel = renderDefaultModelSetting(getDefaultMainLoopModelSetting());
-    return {
-      value: null,
-      label: 'Default (recommended)',
-      description: `Use the default model for Ants (currently ${currentModel})`,
-      descriptionForModel: `Default model (currently ${currentModel})`
-    };
-  }
-
   return {
     value: null,
     label: 'Default (recommended)',
@@ -89,16 +78,6 @@ function getModelOptionsBase(): ModelOption[] {
       description: m.description ?? `Custom model (${m.model})`
     }));
     return [getDefaultOptionForUser(), ...customModelOptions];
-  }
-
-  if (isInternalBuild()) {
-    // @ts-ignore
-    const antModelOptions: ModelOption[] = getAntModels().map(m => ({
-      value: m.alias,
-      label: m.label,
-      description: m.description ?? `[INNER-ONLY] ${m.label} (${m.model})`
-    }));
-    return [getDefaultOptionForUser(), ...antModelOptions, getAdvancedOption(), getStandardOption(), getCompactOption()];
   }
 
   // 外部用户：Default + 三个 tier

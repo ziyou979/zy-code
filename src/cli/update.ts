@@ -284,7 +284,7 @@ export async function update() {
     process.stderr.write('  • Network connectivity issues\n')
     process.stderr.write('  • npm registry is unreachable\n')
     process.stderr.write('  • Corporate proxy/firewall blocking npm\n')
-    if (MACRO.PACKAGE_URL && !MACRO.PACKAGE_URL.startsWith('@anthropic')) {
+    if (MACRO.PACKAGE_URL && !MACRO.PACKAGE_URL.startsWith('@zy')) {
       process.stderr.write(
         '  • Internal/development build not published to npm\n',
       )
@@ -296,8 +296,8 @@ export async function update() {
     const packageName =
       MACRO.PACKAGE_URL ||
       (isInternalBuild()
-        ? '@anthropic-ai/zy-cli'
-        : '@anthropic-ai/zy-code')
+        ? '@zy-ai/zy-cli'
+        : '@zy-ai/zy-code')
     process.stderr.write(
       `  • Manually check: npm view ${packageName} version\n`,
     )

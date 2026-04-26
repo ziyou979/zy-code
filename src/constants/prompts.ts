@@ -95,7 +95,6 @@ const skillSearchFeatureCheck = feature('EXPERIMENTAL_SKILL_SEARCH')
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
-import {getAntModelOverrideConfig} from "src/utils/model/antModels.ts";
 
 
 /**
@@ -117,12 +116,6 @@ function getHooksSection(): string {
 function getSystemRemindersSection(): string {
   return `- Tool results and user messages may include <system-reminder> tags. <system-reminder> tags contain useful information and reminders. They are automatically added by the system, and bear no direct relation to the specific tool results or user messages in which they appear.
 - The conversation has unlimited context through automatic summarization.`
-}
-
-function getAntModelOverrideSection(): string | null {
-  if (!isInternalBuild()) return null
-  if (isUndercover()) return null
-  return getAntModelOverrideConfig()?.defaultSystemPromptSuffix || null
 }
 
 export function getLanguageSection(
@@ -479,9 +472,6 @@ ${CYBER_RISK_INSTRUCTION}`,
       getSessionSpecificGuidanceSection(enabledTools, skillToolCommands),
     ),
     systemPromptSection('memory', () => loadMemoryPrompt()),
-    systemPromptSection('ant_model_override', () =>
-      getAntModelOverrideSection(),
-    ),
     systemPromptSection('env_info_simple', () =>
       computeSimpleEnvInfo(model, additionalWorkingDirectories),
     ),

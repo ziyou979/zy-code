@@ -1242,8 +1242,8 @@ function isAutoModeDisabledBySettings(): boolean {
 export function isAutoModeGateEnabled(): boolean {
   if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) return false
   if (isAutoModeDisabledBySettings()) return false
-  if (!modelSupportsAutoMode(getMainLoopModel())) return false
-  return true
+  return modelSupportsAutoMode(getMainLoopModel());
+
 }
 
 /**

@@ -215,11 +215,6 @@ function SpinnerWithVerbInner({
   // 我们在父组件约 25 次/turn 的重新渲染节奏上获取更新，
   // 与旧的 ApiMetricsLine 相同。
   let ttftText: string | null = null;
-  // @ts-ignore -- ant-only: apiMetricsRef and computeTtftText are only available in internal builds
-  if (isInternalBuild() && apiMetricsRef?.current && apiMetricsRef.current.length > 0) {
-    // @ts-ignore -- ant-only
-    ttftText = computeTtftText(apiMetricsRef.current);
-  }
 
   // 当 leader 空闲但 teammates 在运行（且我们正在查看 leader）时，
   // 显示静态的暗色空闲显示而不是动画 spinner——否则

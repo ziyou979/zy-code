@@ -9,7 +9,7 @@ import type { LocalJSXCommandCall } from '../../types/command.js';
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
 
 import { MODEL_ALIASES } from '../../utils/model/aliases.js';
-import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting } from '../../utils/model/model.js';
+import { getDefaultMainLoopModelSetting, renderDefaultModelSetting } from '../../utils/model/model.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
 function ModelPickerWrapper({
@@ -42,7 +42,7 @@ function ModelPickerWrapper({
     if (effort !== undefined) {
       message = message + ` with ${chalk.bold(effort)} effort`;
     }
-    if (isBilledAsExtraUsage(model, isOpus1mMergeEnabled())) {
+    if (isBilledAsExtraUsage(model)) {
       message = message + " \xB7 Billed as extra usage";
     }
     onDone(message);
@@ -109,7 +109,7 @@ function SetModelAndClose({
         mainLoopModelForSession: null
       }));
       let message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`;
-      if (isBilledAsExtraUsage(modelValue, isOpus1mMergeEnabled())) {
+      if (isBilledAsExtraUsage(modelValue)) {
         message += ` · Billed as extra usage`;
       }
       onDone(message);

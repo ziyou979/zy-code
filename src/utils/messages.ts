@@ -54,7 +54,6 @@ import type {
   StreamEvent,
   SystemAgentsKilledMessage,
   SystemAPIErrorMessage,
-  SystemApiMetricsMessage,
   SystemAwaySummaryMessage,
   SystemBridgeStatusMessage,
   SystemCompactBoundaryMessage,
@@ -2951,7 +2950,6 @@ export function handleMessageFromStream(
   onStreamingThinking?: (
     f: (current: StreamingThinking | null) => StreamingThinking | null,
   ) => void,
-  onApiMetrics?: (metrics: { ttftMs: number }) => void,
   onStreamingText?: (f: (current: string | null) => string | null) => void,
 ): void {
   if (
@@ -2992,12 +2990,6 @@ export function handleMessageFromStream(
   if (message.type === 'stream_request_start') {
     onSetStreamMode('requesting')
     return
-  }
-
-  if (message.event.type === 'message_start') {
-    if (message.ttftMs != null) {
-      onApiMetrics?.({ ttftMs: message.ttftMs })
-    }
   }
 
   if (message.event.type === 'message_stop') {
@@ -4472,37 +4464,6 @@ export function createAgentsKilledMessage(): SystemAgentsKilledMessage {
   return {
     type: 'system',
     subtype: 'agents_killed',
-    timestamp: new Date().toISOString(),
-    uuid: randomUUID(),
-    isMeta: false as const,
-  }
-}
-
-export function createApiMetricsMessage(metrics: {
-  ttftMs: number
-  otps: number
-  isP50?: boolean
-  hookDurationMs?: number
-  turnDurationMs?: number
-  toolDurationMs?: number
-  classifierDurationMs?: number
-  toolCount?: number
-  hookCount?: number
-  classifierCount?: number
-  configWriteCount?: number
-}): SystemApiMetricsMessage {
-  return {
-    type: 'system',
-    subtype: 'api_metrics',
-    ttftMs: metrics.ttftMs,
-    otps: metrics.otps,
-    isP50: metrics.isP50,
-    hookDurationMs: metrics.hookDurationMs,
-    turnDurationMs: metrics.turnDurationMs,
-    toolDurationMs: metrics.toolDurationMs,
-    classifierDurationMs: metrics.classifierDurationMs,
-    toolCount: metrics.toolCount,
-    hookCount: metrics.hookCount,
     timestamp: new Date().toISOString(),
     uuid: randomUUID(),
     isMeta: false as const,

@@ -226,9 +226,6 @@ export type ToolUseContext = {
   /** 仅在交互式（REPL）上下文中有效；SDK/QueryEngine 不设置此项。 */
   setHasInterruptibleToolInProgress?: (v: boolean) => void
   setResponseLength: (f: (prev: number) => number) => void
-  /** 仅内部使用：推送新的 API 指标条目以用于 OTPS 追踪。
-   *  当子 agent 流式处理启动新的 API 请求时调用。 */
-  pushApiMetricsEntry?: (ttftMs: number) => void
   setStreamMode?: (mode: SpinnerMode) => void
   onCompactProgress?: (event: CompactProgressEvent) => void
   setSDKStatus?: (status: SDKStatus) => void

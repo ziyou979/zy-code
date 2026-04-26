@@ -3,7 +3,6 @@ import { capitalize } from '../stringUtils.js'
 import { MODEL_ALIASES, type ModelAlias } from './aliases.js'
 import { applyBedrockRegionPrefix, getBedrockRegionPrefix } from './bedrock.js'
 import {
-  getRuntimeMainLoopModel,
   parseUserSpecifiedModel,
 } from './model.js'
 import { getAPIProvider } from './providers.js'
@@ -77,13 +76,7 @@ export function getAgentModel(
   const agentModelWithExp = agentModel ?? getDefaultSubagentModel()
 
   if (agentModelWithExp === 'inherit') {
-    // Apply runtime model resolution for inherit to get the effective model
-    // This ensures agents using 'inherit' get the effective runtime model
-    return getRuntimeMainLoopModel({
-      permissionMode: permissionMode ?? 'default',
-      mainLoopModel: parentModel,
-      exceeds200kTokens: false,
-    })
+    return parentModel
   }
 
   if (aliasMatchesParentTier(agentModelWithExp, parentModel)) {

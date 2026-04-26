@@ -56,7 +56,6 @@ import { isInternalBuild } from './envUtils.js'
 import { errorMessage, toError } from './errors.js'
 import { logError } from './log.js'
 import { normalizeMessagesForAPI } from './messages.js'
-import { getRuntimeMainLoopModel } from './model/model.js'
 import type { SettingSource } from './settings/constants.js'
 import { jsonStringify } from './slowOperations.js'
 import { buildEffectiveSystemPrompt } from './systemPrompt.js'
@@ -930,10 +929,7 @@ export async function analyzeContextUsage(
   /** Original messages before microcompact, used to extract API usage */
   originalMessages?: Message[],
 ): Promise<ContextData> {
-  const runtimeModel = getRuntimeMainLoopModel({
-    permissionMode: (await getToolPermissionContext()).mode,
-    mainLoopModel: model,
-  })
+  const runtimeModel = model
   // Get context window size
   const contextWindow = getContextWindowForModel(runtimeModel)
 

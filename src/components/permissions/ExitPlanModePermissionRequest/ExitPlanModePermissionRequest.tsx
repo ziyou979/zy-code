@@ -23,7 +23,7 @@ import { toIDEDisplayName } from '../../../utils/ide.js';
 import { logError } from '../../../utils/log.js';
 import { enqueuePendingNotification } from '../../../utils/messageQueueManager.js';
 import { createUserMessage } from '../../../utils/messages.js';
-import { getMainLoopModel, getRuntimeMainLoopModel } from '../../../utils/model/model.js';
+import { getMainLoopModel } from '../../../utils/model/model.js';
 import { createPromptRuleContent, isClassifierPermissionsEnabled, PROMPT_PREFIX } from '../../../utils/permissions/bashClassifier.js';
 import { type PermissionMode, toExternalPermissionMode } from '../../../utils/permissions/PermissionMode.js';
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js';
@@ -750,11 +750,7 @@ function getContextUsedPercent(usage: {
   cache_read_input_tokens?: number | null;
 } | undefined, permissionMode: PermissionMode): number | null {
   if (!usage) return null;
-  const runtimeModel = getRuntimeMainLoopModel({
-    permissionMode,
-    mainLoopModel: getMainLoopModel(),
-    exceeds200kTokens: false
-  });
+  const runtimeModel = getMainLoopModel();
   const contextWindowSize = getContextWindowForModel(runtimeModel);
   const {
     used

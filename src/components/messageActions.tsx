@@ -37,7 +37,6 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
     case 'system':
       // biome-ignore lint/nursery/useExhaustiveSwitchCases: blocklist — fallthrough return-true is the design
       switch (msg.subtype) {
-        case 'api_metrics':
         case 'stop_hook_summary':
         case 'turn_duration':
         case 'memory_saved':

@@ -107,12 +107,6 @@ export function modelSupportsAutoMode(model: string): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     // Check settings-based auto_mode capability
     if (modelHasCapability(model, 'auto_mode')) return true;
-    // External: direct API-only at launch (PI probes not wired for
-    // Bedrock/Vertex/Foundry yet). Checked before allowModels so the GB
-    // override can't enable auto mode on unsupported providers.
-    if (!isInternalBuild() && getAPIProvider() !== 'anthropic') {
-      return false;
-    }
     // GrowthBook override: zy_auto_mode_config.allowModels force-enables
     // auto mode for listed models, bypassing the denylist/allowlist below.
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
@@ -125,8 +119,8 @@ export function modelSupportsAutoMode(model: string): boolean {
     if (isInternalBuild()) {
       return true;
     }
-    // External allowlist (direct API already checked above).
-    return model.toLowerCase().includes('qwen3.6-plus');
+    // 外部构建：仅通过 settings capability 或 GrowthBook allowModels 启用
+    return false;
   }
   return false;
 }

@@ -26,16 +26,20 @@ const result = await Bun.build({
   sourcemap: 'none',
   minify: false,
   splitting: false,
+  features: [
+    // 启用 transcript classifier（auto mode）
+    'TRANSCRIPT_CLASSIFIER',
+  ],
   define: {
-    // Treat as external build (not Anthropic-internal)
+    // Treat as external build (notinternal)
     'process.env.USER_TYPE': '"external"',
     // Build-time macros (replace MACRO.* at bundle time)
     'MACRO.VERSION': '"1.0.0"',
     'MACRO.BUILD_TIME': `"${buildTime}"`,
-    'MACRO.PACKAGE_URL': '"@anthropic-ai/claude-code"',
+    'MACRO.PACKAGE_URL': '"@zy-ai/zy-code"',
     'MACRO.NATIVE_PACKAGE_URL': 'null',
-    'MACRO.FEEDBACK_CHANNEL': '"https://github.com/anthropics/claude-code/issues"',
-    'MACRO.ISSUES_EXPLAINER': '"report the issue at https://github.com/anthropics/claude-code/issues"',
+    'MACRO.FEEDBACK_CHANNEL': '"https://github.com/ziyou979/zy-code/issues"',
+    'MACRO.ISSUES_EXPLAINER': '"report the issue at https://github.com/ziyou979/zy-code/issues"',
     'MACRO.VERSION_CHANGELOG': '""',
   },
   plugins: [

@@ -1,21 +1,8 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-/**
- * Ensure that any model codenames introduced here are also added to
- * scripts/excluded-strings.txt to avoid leaking them. Wrap any codename string
- * literals with isInternalBuild() for Bun to remove the codenames
- * during dead code elimination
- */
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
-import { resolveOverriddenModel } from './modelStrings.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
-import type { PermissionMode } from '../permissions/PermissionMode.js'
-import { getAPIProvider } from './providers.js'
 import { isModelAllowed } from './modelAllowlist.js'
-import { type ModelAlias, isModelAlias } from './aliases.js'
-import { isInternalBuild } from '../envUtils.js'
-import { capitalize } from '../stringUtils.js'
+import type { ModelAlias } from './aliases.js'
 
-export type ModelShortName = string
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
@@ -40,10 +27,6 @@ function getModelByTier(tier: ModelTier): ModelName {
   return 'qwen3.6-plus'
 }
 
-
-export function isNonCustomOpusModel(model: ModelName): boolean {
-  return false
-}
 
 /**
  * Helper to get the model from /model (including via /config), the --model flag,
@@ -106,20 +89,6 @@ export function getDefaultCompactModel(): ModelName {
 
 
 /**
- * Get the model to use for runtime, depending on the runtime context.
- * @param params Subset of the runtime context to determine the model to use.
- * @returns The model to use
- */
-export function getRuntimeMainLoopModel(params: {
-  permissionMode: PermissionMode
-  mainLoopModel: string
-  exceeds200kTokens?: boolean
-}): ModelName {
-  const { mainLoopModel } = params
-  return mainLoopModel
-}
-
-/**
  * Get the default main loop model setting.
  * 从 settings.mainLoopModel 读取 tier 名（advanced/standard/compact），
  * 再解析到实际模型。默认为 standard。
@@ -138,48 +107,13 @@ export function getDefaultMainLoopModel(): ModelName {
   return parseUserSpecifiedModel(getDefaultMainLoopModelSetting())
 }
 
-// @[MODEL LAUNCH]: Add a canonical name mapping for the new model below.
-export function canonicalNameToShort(name: ModelName): ModelShortName {
-  name = name.toLowerCase()
-  // Qwen models
-  if (name.includes('qwen3.6-plus')) {
-    return 'qwen3.6-plus'
-  }
-  // Fall back to the original name if no pattern matches
-  return name
-}
-
-/**
- * Maps a full model string to a shorter canonical version that's unified across providers.
- * @param fullModelName The full model name
- * @returns The short name if found, or the original name if no mapping exists
- */
-export function getCanonicalName(fullModelName: ModelName): ModelShortName {
-  // Resolve overridden model IDs (e.g. Bedrock ARNs) back to canonical names.
-  // resolved is always a canonical-format ID, so canonicalNameToShort can handle it.
-  return canonicalNameToShort(resolveOverriddenModel(fullModelName))
-}
-
-// @[MODEL LAUNCH]: Update the default model description strings shown to users.
-export function getZyAiUserDefaultModelDescription(): string {
-  return 'qwen3.6-plus · Default model'
-}
-
 export function renderDefaultModelSetting(
   setting: ModelName | ModelAlias,
 ): string {
   return renderModelName(parseUserSpecifiedModel(setting))
 }
 
-export function isOpus1mMergeEnabled(): boolean {
-  return false
-}
-
 export function renderModelSetting(setting: ModelName | ModelAlias): string {
-  if (isModelAlias(setting)) {
-    return capitalize(setting)
-  }
-  // Check custom models for display label
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
@@ -209,45 +143,12 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
       return (customModel.label ?? customModel.alias) + (has1m ? ' (1M context)' : '')
     }
   }
-
-  if (model === 'qwen3.6-plus') {
-    return 'qwen3.6-plus'
-  }
   return null
 }
 
-function maskModelCodename(baseName: string): string {
-  // Mask only the first dash-separated segment (the codename), preserve the rest
-  // e.g. capybara-v2-fast → cap*****-v2-fast
-  const [codename = '', ...rest] = baseName.split('-')
-  const masked =
-    codename.slice(0, 3) + '*'.repeat(Math.max(0, codename.length - 3))
-  return [masked, ...rest].join('-')
-}
-
 export function renderModelName(model: ModelName): string {
-  // For non-Anthropic providers, show the actual model string instead of
-  // mapping to Zy marketing names (e.g. qwen3.6-plus should not show as "Opus 4.6")
-  if (getAPIProvider() !== 'anthropic') {
-    return model
-  }
   const publicName = getPublicModelDisplayName(model)
-  if (publicName) {
-    return publicName
-  }
-  if (isInternalBuild()) {
-    const resolved = parseUserSpecifiedModel(model)
-    // @ts-ignore
-    const antModel = resolveAntModel(model)
-    if (antModel) {
-      return maskModelCodename(antModel.model)
-    }
-    if (resolved !== model) {
-      return `${model} (${resolved})`
-    }
-    return resolved
-  }
-  return model
+  return publicName ?? model
 }
 
 /**
@@ -313,23 +214,13 @@ export function resolveSkillModelOverride(
 
 export function modelDisplayString(model: ModelSetting): string {
   if (model === null) {
-    if (isInternalBuild()) {
-      return `Default for Ants (${renderDefaultModelSetting(getDefaultMainLoopModelSetting())})`
-    }
     return `Default (${getDefaultMainLoopModel()})`
   }
   const resolvedModel = parseUserSpecifiedModel(model)
   return model === resolvedModel ? resolvedModel : `${model} (${resolvedModel})`
 }
 
-// @[MODEL LAUNCH]: Add a marketing name mapping for the new model below.
 export function getMarketingNameForModel(modelId: string): string | undefined {
-  if (getAPIProvider() === 'foundry') {
-    // deployment ID is user-defined in Foundry, so it may have no relation to the actual model
-    return undefined
-  }
-
-  // Check custom models first
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
@@ -340,11 +231,6 @@ export function getMarketingNameForModel(modelId: string): string | undefined {
       return customModel.label ?? (has1m ? `${customModel.alias} (1M context)` : customModel.alias)
     }
   }
-
-  if (modelId.toLowerCase().includes('qwen3.6-plus')) {
-    return 'qwen3.6-plus'
-  }
-
   return undefined
 }
 

@@ -100,10 +100,6 @@ export function filterForBriefTool<T extends {
   return messages.filter(msg => {
     // System 消息（附件确认、远程错误、compact boundary）
     // 必须保持可见——丢弃它们会让用户看不到任何反馈。
-    // 例外：api_metrics 是每个 turn 的调试噪声（TTFT、配置写入、
-    // hook 计时），会破坏 brief 模式的意义。在 transcript 模式下仍然可见
-    // （ctrl+o），因为它会绕过此过滤器。
-    if (msg.type === 'system') return msg.subtype !== 'api_metrics';
     const block = msg.message?.content[0];
     if (msg.type === 'assistant') {
       // API 错误消息（认证失败、限流等）必须保持可见

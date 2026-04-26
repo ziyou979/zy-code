@@ -45,12 +45,6 @@ import skills from './commands/skills/index.js'
 import status from './commands/status/index.js'
 import tasks from './commands/tasks/index.js'
 import teleport from './commands/teleport/index.js'
-/* eslint-disable @typescript-eslint/no-require-imports */
-const agentsPlatform =
-  isInternalBuild()
-    ? require('./commands/agents-platform/index.js').default
-    : null
-/* eslint-enable @typescript-eslint/no-require-imports */
 import securityReview from './commands/security-review.js'
 import bughunter from './commands/bughunter/index.js'
 import terminalSetup from './commands/terminalSetup/index.js'
@@ -247,7 +241,6 @@ export const INTERNAL_ONLY_COMMANDS = [
   env,
   oauthRefresh,
   debugToolCall,
-  agentsPlatform,
   autofixPr,
 ].filter(Boolean)
 

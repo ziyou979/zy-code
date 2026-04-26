@@ -82,7 +82,6 @@ import {
 import { notifyCommandLifecycle } from './utils/commandLifecycle.js'
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
 import {
-  getRuntimeMainLoopModel,
   renderModelName,
 } from './utils/model/model.js'
 import {
@@ -567,13 +566,7 @@ async function* queryLoop(
 
     const appState = toolUseContext.getAppState()
     const permissionMode = appState.toolPermissionContext.mode
-    let currentModel = getRuntimeMainLoopModel({
-      permissionMode,
-      mainLoopModel: toolUseContext.options.mainLoopModel,
-      exceeds200kTokens:
-        permissionMode === 'plan' &&
-        doesMostRecentAssistantMessageExceed200k(messagesForQuery),
-    })
+    let currentModel = toolUseContext.options.mainLoopModel
 
     queryCheckpoint('query_setup_end')
 

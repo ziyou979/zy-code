@@ -25,7 +25,6 @@ import {
 } from '../../utils/auth.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { isNonCustomOpusModel } from '../../utils/model/model.js'
 import { disableKeepAlive } from '../../utils/proxy.js'
 import { sleep } from '../../utils/sleep.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
@@ -249,13 +248,7 @@ export async function* withRetry<T, TClient = unknown>(
       }
 
       // 跟踪连续 529 错误
-      if (
-        is529Error(error) &&
-        // 如果未设置 FALLBACK_FOR_ALL_PRIMARY_MODELS，则仅在主模型为非自定义 Opus 模型时才回退。
-        // TODO: 重新审视 isNonCustomOpusModel 检查是否仍然需要，或者它是否是 ZY Code 硬编码 Opus 时期的遗留产物。
-        (process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS ||
-          isNonCustomOpusModel(options.model))
-      ) {
+      if (is529Error(error)) {
         consecutive529Errors++
         if (consecutive529Errors >= MAX_529_RETRIES) {
           // Check if fallback model is specified

@@ -97,7 +97,6 @@ import {
   getDefaultAdvancedModel,
   getDefaultStandardModel,
   getDefaultCompactModel,
-  isNonCustomOpusModel,
 } from '../../utils/model/model.js'
 import {
   asSystemPrompt,
@@ -1025,28 +1024,6 @@ async function* queryModel(
   StreamEvent | AssistantMessage | SystemAPIErrorMessage,
   void
 > {
-  // 首先检查廉价条件 — off-switch 的 await 会阻塞在 GrowthBook
-  // 初始化上（~10ms）。对于非 Opus 模型（haiku、sonnet），这会完全跳过 await。
-  // 订阅者根本不会走这条路径。
-  if (
-    isNonCustomOpusModel(options.model) &&
-    (
-      await getDynamicConfig_BLOCKS_ON_INIT<{ activated: boolean }>(
-        'tengu-off-switch',
-        {
-          activated: false,
-        },
-      )
-    ).activated
-  ) {
-    logEvent('zy_off_switch_query', {})
-    yield getAssistantMessageFromError(
-      new Error(CUSTOM_OFF_SWITCH_MESSAGE),
-      options.model,
-    )
-    return
-  }
-
   // 从此查询链中最后的助手消息派生之前的请求 ID。
   // 每个消息数组作用域独立（主线程、子代理、队友各有自己的），
   // 因此并发代理不会互相覆盖请求链跟踪。
