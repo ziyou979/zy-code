@@ -337,7 +337,8 @@ const externalTips: Tip[] = [
     id: 'install-slack-app',
     content: async () => tSync('tip.installSlackApp'),
     cooldownSessions: 10,
-    isRelevant: async () => !getGlobalConfig().slackAppInstallCount,
+    // ZY Code 暂未提供 Slack 集成，禁用此 tip
+    isRelevant: async () => false,
   },
   {
     id: 'permissions',
@@ -436,12 +437,12 @@ const externalTips: Tip[] = [
       return config.numStartups > 5
     },
   },
+  // ZY Code 当前仅提供 CLI 入口，desktop/web/mobile 相关 tip 全部禁用
   {
     id: 'desktop-app',
-    content: async () =>
-      tSync('tip.desktopApp'),
+    content: async () => tSync('tip.desktopApp'),
     cooldownSessions: 15,
-    isRelevant: async () => getPlatform() !== 'linux',
+    isRelevant: async () => false,
   },
   {
     id: 'desktop-shortcut',
@@ -451,27 +452,19 @@ const externalTips: Tip[] = [
       return text.replace('/desktop', blue('/desktop'))
     },
     cooldownSessions: 15,
-    isRelevant: async () => {
-      if (!getDesktopUpsellConfig().enable_shortcut_tip) return false
-      return (
-        process.platform === 'darwin' ||
-        (process.platform === 'win32' && process.arch === 'x64')
-      )
-    },
+    isRelevant: async () => false,
   },
   {
     id: 'web-app',
-    content: async () =>
-      tSync('tip.webApp'),
+    content: async () => tSync('tip.webApp'),
     cooldownSessions: 15,
-    isRelevant: async () => true,
+    isRelevant: async () => false,
   },
   {
     id: 'mobile-app',
-    content: async () =>
-      tSync('tip.mobileApp'),
+    content: async () => tSync('tip.mobileApp'),
     cooldownSessions: 15,
-    isRelevant: async () => true,
+    isRelevant: async () => false,
   },
   {
     id: 'opusplan-mode-reminder',
