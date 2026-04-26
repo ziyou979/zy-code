@@ -318,12 +318,14 @@ export interface CreateParams {
  * 每个 provider 只读取自己的 namespace。
  */
 export interface ProviderExtras {
-  /** Anthropic 专属：thinking 配置、beta headers、context management 等 */
+  /** Anthropic 专属：thinking 配置、beta headers、context management、原生工具（web_search_20260209）等 */
   anthropic?: {
     thinking?: { type: 'disabled' } | { type: 'enabled'; budget_tokens: number } | { type: 'adaptive' }
     betas?: string[]
     contextManagement?: Record<string, unknown>
     outputConfig?: Record<string, unknown>
+    /** Anthropic 原生工具 schema（如 web_search_20260209），直接透传到 tools 数组 */
+    _extraToolSchemas?: Record<string, unknown>[]
   }
   /** OpenAI 专属：structured outputs、parallel tool calls 等 */
   openai?: Record<string, unknown>

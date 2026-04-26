@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import { isAbortError } from '../../types/llm.js'
+import { tSync } from '../../i18n/index.js'
 import type { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
@@ -1002,7 +1003,7 @@ export const bashToolCheckExactMatchPermission = (
   if (matchingDenyRules[0] !== undefined) {
     return {
       behavior: 'deny',
-      message: `Permission to use ${BashTool.name} with command ${command} has been denied.`,
+      message: tSync('bash.permission.denied', { tool: BashTool.name, command }),
       decisionReason: {
         type: 'rule',
         rule: matchingDenyRules[0],
@@ -1037,7 +1038,7 @@ export const bashToolCheckExactMatchPermission = (
   // 4. Otherwise, passthrough
   const decisionReason = {
     type: 'other' as const,
-    reason: 'This command requires approval',
+    reason: tSync('bash.permission.requiresApproval'),
   }
   return {
     behavior: 'passthrough',
@@ -1085,7 +1086,7 @@ export const bashToolCheckPermission = (
   if (matchingDenyRules[0] !== undefined) {
     return {
       behavior: 'deny',
-      message: `Permission to use ${BashTool.name} with command ${command} has been denied.`,
+      message: tSync('bash.permission.denied', { tool: BashTool.name, command }),
       decisionReason: {
         type: 'rule',
         rule: matchingDenyRules[0],
@@ -1159,7 +1160,7 @@ export const bashToolCheckPermission = (
       updatedInput: input,
       decisionReason: {
         type: 'other',
-        reason: 'Read-only command is allowed',
+        reason: tSync('bash.permission.readOnlyAllowed'),
       },
     }
   }
@@ -1167,7 +1168,7 @@ export const bashToolCheckPermission = (
   // 8. Passthrough since no rules match, will trigger permission prompt
   const decisionReason = {
     type: 'other' as const,
-    reason: 'This command requires approval',
+    reason: tSync('bash.permission.requiresApproval'),
   }
   return {
     behavior: 'passthrough',
@@ -1286,7 +1287,7 @@ function checkSandboxAutoAllow(
   if (matchingDenyRules[0] !== undefined) {
     return {
       behavior: 'deny',
-      message: `Permission to use ${BashTool.name} with command ${command} has been denied.`,
+      message: tSync('bash.permission.denied', { tool: BashTool.name, command }),
       decisionReason: {
         type: 'rule',
         rule: matchingDenyRules[0],
@@ -1315,7 +1316,7 @@ function checkSandboxAutoAllow(
       if (subResult.matchingDenyRules[0] !== undefined) {
         return {
           behavior: 'deny',
-          message: `Permission to use ${BashTool.name} with command ${command} has been denied.`,
+          message: tSync('bash.permission.denied', { tool: BashTool.name, command }),
           decisionReason: {
             type: 'rule',
             rule: subResult.matchingDenyRules[0],
@@ -1355,7 +1356,7 @@ function checkSandboxAutoAllow(
     updatedInput: input,
     decisionReason: {
       type: 'other',
-      reason: 'Auto-allowed with sandbox (autoAllowBashIfSandboxed enabled)',
+      reason: tSync('bash.permission.sandboxAutoAllow'),
     },
   }
 }
@@ -1409,7 +1410,7 @@ function checkEarlyExitDeny(
   if (denyMatch !== undefined) {
     return {
       behavior: 'deny',
-      message: `Permission to use ${BashTool.name} with command ${input.command} has been denied.`,
+      message: tSync('bash.permission.denied', { tool: BashTool.name, command: input.command }),
       decisionReason: { type: 'rule', rule: denyMatch },
     }
   }
@@ -1446,7 +1447,7 @@ function checkSemanticsDeny(
     if (subDeny !== undefined) {
       return {
         behavior: 'deny',
-        message: `Permission to use ${BashTool.name} with command ${input.command} has been denied.`,
+        message: tSync('bash.permission.denied', { tool: BashTool.name, command: input.command }),
         decisionReason: { type: 'rule', rule: subDeny },
       }
     }
@@ -1582,7 +1583,7 @@ export async function awaitClassifierAutoApproval(
     return {
       type: 'classifier',
       classifier: 'bash_allow',
-      reason: `Allowed by prompt rule: "${classifierResult.matchedDescription}"`,
+      reason: tSync('bash.permission.allowedByPromptRule', { rule: classifierResult.matchedDescription }),
     }
   }
   return undefined
@@ -1651,7 +1652,7 @@ export async function executeAsyncClassifierCheck(
     callbacks.onAllow({
       type: 'classifier',
       classifier: 'bash_allow',
-      reason: `Allowed by prompt rule: "${classifierResult.matchedDescription}"`,
+      reason: tSync('bash.permission.allowedByPromptRule', { rule: classifierResult.matchedDescription }),
     })
   } else {
     // No match — notify so the checking indicator is cleared
@@ -1818,7 +1819,7 @@ export async function bashToolHasPermission(
     if (!parseResult.success) {
       const decisionReason = {
         type: 'other' as const,
-        reason: `Command contains malformed syntax that cannot be parsed: ${(parseResult as any).error}`,
+        reason: tSync('bash.permission.malformedSyntax', { error: (parseResult as any).error }),
       }
       return {
         behavior: 'ask',
@@ -1926,7 +1927,7 @@ export async function bashToolHasPermission(
           message: `Denied by Bash prompt rule: "${denyResult.matchedDescription}"`,
           decisionReason: {
             type: 'other',
-            reason: `Denied by Bash prompt rule: "${denyResult.matchedDescription}"`,
+            reason: tSync('bash.permission.deniedByPromptRule', { rule: denyResult.matchedDescription }),
           },
         }
       }
@@ -1956,7 +1957,7 @@ export async function bashToolHasPermission(
           message: createPermissionRequestMessage(BashTool.name),
           decisionReason: {
             type: 'other',
-            reason: `Required by Bash prompt rule: "${askResult.matchedDescription}"`,
+            reason: tSync('bash.permission.requiredByPromptRule', { rule: askResult.matchedDescription }),
           },
           suggestions,
           ...(feature('BASH_CLASSIFIER')
@@ -2018,13 +2019,13 @@ export async function bashToolHasPermission(
             type: 'other',
             reason:
               safetyResult.message ??
-              'Command contains patterns that require approval',
+              tSync('bash.permission.patternsRequireApproval'),
           }),
           decisionReason: {
             type: 'other',
             reason:
               safetyResult.message ??
-              'Command contains patterns that require approval',
+              tSync('bash.permission.patternsRequireApproval'),
           },
           ...(feature('BASH_CLASSIFIER')
             ? {
@@ -2171,7 +2172,7 @@ export async function bashToolHasPermission(
     )
     const decisionReason = {
       type: 'other' as const,
-      reason: `Command splits into ${subcommands.length} subcommands, too many to safety-check individually`,
+      reason: tSync('bash.permission.tooManySubcommands', { count: subcommands.length }),
     }
     return {
       behavior: 'ask',
@@ -2215,8 +2216,7 @@ export async function bashToolHasPermission(
     if (hasGitCommand) {
       const decisionReason = {
         type: 'other' as const,
-        reason:
-          'Compound commands with cd and git require approval to prevent bare repository attacks',
+        reason: tSync('bash.permission.cdAndGit'),
       }
       return {
         behavior: 'ask',
@@ -2254,7 +2254,7 @@ export async function bashToolHasPermission(
   if (deniedSubresult !== undefined) {
     return {
       behavior: 'deny',
-      message: `Permission to use ${BashTool.name} with command ${input.command} has been denied.`,
+      message: tSync('bash.permission.denied', { tool: BashTool.name, command: input.command }),
       decisionReason: {
         type: 'subcommandResults',
         reasons: new Map(

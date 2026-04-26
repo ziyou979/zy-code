@@ -3,6 +3,7 @@ import { diffWordsWithSpace, type StructuredPatchHunk } from 'diff';
 import * as React from 'react';
 import type { ThemeName } from 'src/utils/theme.js';
 import { stringWidth } from '../../ink/stringWidth.js';
+import sliceAnsi from '../../utils/sliceAnsi.js';
 import { Box, NoSelect, Text, useTheme, wrapText } from '../../ink.js';
 
 /*
@@ -297,8 +298,8 @@ function generateWordDiffElements(item: DiffLine, width: number, maxWidth: numbe
     const lineBgColor = type === 'add' ? dim ? 'diffAddedDimmed' : 'diffAdded' : dim ? 'diffRemovedDimmed' : 'diffRemoved';
     const lineNum = lineIndex === 0 ? i : undefined;
     const lineNumStr = (lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)) + ' ';
-    // Calculate padding to fill the entire terminal width
-    const usedWidth = lineNumStr.length + diffPrefixWidth + contentWidth;
+    // Calculate padding to fill the entire terminal width (clamp contentWidth to prevent overflow)
+    const usedWidth = lineNumStr.length + diffPrefixWidth + Math.min(contentWidth, availableContentWidth);
     const padding = Math.max(0, width - usedWidth);
     return <Box key={key} flexDirection="row">
         <NoSelect fromLeftEdge>
@@ -365,8 +366,13 @@ function formatDiff(lines: string[], startingLineNumber: number, width: number, 
       const lineNum = lineIndex === 0 ? i : undefined;
       const lineNumStr = (lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)) + ' ';
       const sigil = type === 'add' ? '+' : type === 'remove' ? '-' : ' ';
+      // wrapAnsi 在边界处可能产生比 availableContentWidth 宽 1-2 个字符的行
+      //（特别是 ANSI 转义序列干扰宽度计算时）。强制截断以防止 Yoga 布局溢出，
+      // 否则后续组件（Divider、footer）会被挤到错误的位置。
+      const lineVisibleWidth = stringWidth(line);
+      const clampedLine = lineVisibleWidth > availableContentWidth ? sliceAnsi(line, 0, availableContentWidth) : line;
       // Calculate padding to fill the entire terminal width
-      const contentWidth = lineNumStr.length + 1 + stringWidth(line); // lineNum + sigil + code
+      const contentWidth = lineNumStr.length + 1 + Math.min(lineVisibleWidth, availableContentWidth); // lineNum + sigil + code
       const padding = Math.max(0, safeWidth - contentWidth);
       const bgColor = type === 'add' ? dim ? 'diffAddedDimmed' : 'diffAdded' : type === 'remove' ? dim ? 'diffRemovedDimmed' : 'diffRemoved' : undefined;
 
@@ -381,7 +387,7 @@ function formatDiff(lines: string[], startingLineNumber: number, width: number, 
             </Text>
           </NoSelect>
           <Text color={overrideTheme ? 'text' : undefined} backgroundColor={bgColor} dimColor={dim}>
-            {line}
+            {clampedLine}
             {' '.repeat(padding)}
           </Text>
         </Box>;

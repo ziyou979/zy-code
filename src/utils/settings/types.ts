@@ -1138,6 +1138,19 @@ export const SettingsSchema = lazySchema(() =>
             'Useful for enterprise administrators to add organization-specific context ' +
             '(e.g., "All plugins from our internal marketplace are vetted and approved.").',
         ),
+      webSearch: z
+        .object({
+          region: z
+            .string()
+            .optional()
+            .describe(
+              'Region code for the DuckDuckGo fallback search (e.g., "us-en", "zh-cn"). ' +
+                'Most providers (dashscope, openai) use native API-level web search and ignore this. ' +
+                'Only applies when falling back to DuckDuckGo Lite.',
+            ),
+        })
+        .optional()
+        .describe('Web search fallback configuration. Native API search (dashscope/openai) is used automatically when available.'),
     })
     .passthrough(),
 )

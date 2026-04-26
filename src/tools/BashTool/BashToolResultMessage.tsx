@@ -4,6 +4,7 @@ import { KeyboardShortcutHint } from '../../components/design-system/KeyboardSho
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { OutputLine } from '../../components/shell/OutputLine.js';
 import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import type { Out as BashOut } from './BashTool.js';
 type Props = {
@@ -93,7 +94,7 @@ export default function BashToolResultMessage({
   let outputLineElement2;
   if (isImage) {
     // @ts-ignore
-    earlyReturn = <MessageResponse height={1}><Text dimColor={true}>[Image data detected and sent to ZY]</Text></MessageResponse>;
+    earlyReturn = <MessageResponse height={1}><Text dimColor={true}>{tSync('bash.imageDetected')}</Text></MessageResponse>;
   } else {
     BoxComponent = Box;
 
@@ -103,6 +104,6 @@ export default function BashToolResultMessage({
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
     return earlyReturn;
   }
-  const messageResponseElement = stdout === "" && stderr.trim() === "" && !cwdResetWarning ? <MessageResponse height={1}><Text dimColor={true}>{backgroundTaskId ? <>Running in the background{" "}<KeyboardShortcutHint shortcut={"\u2193"} action="manage" parens={true} /></> : returnCodeInterpretation || (noOutputExpected ? "Done" : "(No output)")}</Text></MessageResponse> : null;
+  const messageResponseElement = stdout === "" && stderr.trim() === "" && !cwdResetWarning ? <MessageResponse height={1}><Text dimColor={true}>{backgroundTaskId ? <>{tSync('bash.runningInBackground')}{" "}<KeyboardShortcutHint shortcut={"\u2193"} action="manage" parens={true} /></> : returnCodeInterpretation || (noOutputExpected ? tSync('bash.done') : tSync('bash.noOutput'))}</Text></MessageResponse> : null;
   return <BoxComponent flexDirection={"column"}>{outputLineElement2}{outputLineElement}{cwdResetWarning ? <MessageResponse><Text dimColor={true}>{cwdResetWarning}</Text></MessageResponse> : null}{messageResponseElement}{timeoutMs && <MessageResponse><ShellTimeDisplay timeoutMs={timeoutMs} /></MessageResponse>}</BoxComponent>;
 }

@@ -1,6 +1,7 @@
 import { homedir } from 'os'
 import { isAbsolute, resolve } from 'path'
 import type { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import type { ToolPermissionContext } from '../../Tool.js'
 import type { Redirect, SimpleCommand } from '../../utils/bash/ast.js'
 import {
@@ -92,7 +93,7 @@ function checkDangerousRemovalPaths(
         message: `Dangerous ${command} operation detected: '${absolutePath}'\n\nThis command would remove a critical system directory. This requires explicit approval and cannot be auto-allowed by permission rules.`,
         decisionReason: {
           type: 'other',
-          reason: `Dangerous ${command} operation on critical path: ${absolutePath}`,
+          reason: tSync('bash.permission.dangerousOperationOnPath', { command, path: absolutePath }),
         },
         // Don't provide suggestions - we don't want to encourage saving dangerous commands
         suggestions: [],
@@ -1029,11 +1030,12 @@ export function checkPathConstraints(
   if (!astCommands && />>\s*>\s*\(|>\s*>\s*\(|<\s*\(/.test(input.command)) {
     return {
       behavior: 'ask',
-      message:
-        'Process substitution (>(...) or <(...)) can execute arbitrary commands and requires manual approval',
+      message: tSync('bash.permission.processSubstitutionFull', {
+        pattern: '>(...) or <(...)',
+      }),
       decisionReason: {
         type: 'other',
-        reason: 'Process substitution requires manual approval',
+        reason: tSync('bash.permission.processSubstitution'),
       },
     }
   }
@@ -1053,10 +1055,10 @@ export function checkPathConstraints(
   if (hasDangerousRedirection) {
     return {
       behavior: 'ask',
-      message: 'Shell expansion syntax in paths requires manual approval',
+      message: tSync('bash.permission.shellExpansionInPathsFull'),
       decisionReason: {
         type: 'other',
-        reason: 'Shell expansion syntax in paths requires manual approval',
+        reason: tSync('bash.permission.shellExpansionInPaths'),
       },
     }
   }

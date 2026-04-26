@@ -31,6 +31,8 @@ type Props = {
   isForegrounded?: boolean;
   allIdle?: boolean;
   showPreview?: boolean;
+  /** 当 leader 在前台时，抑制 randomVerb（主 spinner 已在显示 leader 的 verb）。 */
+  leaderIsForegrounded?: boolean;
 };
 
 /**
@@ -86,7 +88,8 @@ export function TeammateSpinnerLine({
   isSelected,
   isForegrounded,
   allIdle,
-  showPreview
+  showPreview,
+  leaderIsForegrounded
 }: Props): React.ReactNode {
   const [randomVerb] = useState(() => teammate.spinnerVerb ?? sample(getSpinnerVerbs()));
   const [pastTenseVerb] = useState(() => teammate.pastTenseVerb ?? sample(getTurnCompletionVerbs()));
@@ -176,6 +179,9 @@ export function TeammateSpinnerLine({
     }
     const desc = teammate.progress?.lastActivity?.activityDescription;
     if (desc) return truncateToWidth(desc, activityMaxWidth);
+    // 当 leader 在前台时，主 spinner 已显示 leader 的 verb，
+    // 子 agent 行不应再用自己的 randomVerb 抢占视觉焦点。
+    if (leaderIsForegrounded) return null;
     return randomVerb;
   })();
 
@@ -207,8 +213,12 @@ export function TeammateSpinnerLine({
     if (isHighlighted) {
       return null;
     }
+    // 当 leader 在前台且没有实际活动描述时，不显示随机 verb
+    if (activityText === null) {
+      return null;
+    }
     return <Text dimColor>
-        {activityText?.endsWith('…') ? activityText : `${activityText}…`}
+        {activityText.endsWith('…') ? activityText : `${activityText}…`}
       </Text>;
   };
 

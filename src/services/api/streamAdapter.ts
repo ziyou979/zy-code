@@ -262,18 +262,22 @@ function convertToAnthropicParams(params: CreateParams): Record<string, any> {
 
   // 工具定义：兼容 v1 (input_schema) 和 v2 (inputSchema)
   const rawTools = p.tools
-  const tools = rawTools?.map((t: any) => ({
+  const convertedTools = rawTools?.map((t: any) => ({
     name: t.name,
     description: t.description,
     input_schema: t.input_schema ?? t.inputSchema,
   }))
+
+  // Anthropic 原生工具（如 web_search_20260209），直接透传原始 schema
+  const anthropicNativeTools = anthropicExtras?._extraToolSchemas ?? []
+  const allTools = [...anthropicNativeTools, ...(convertedTools ?? [])]
 
   return {
     model,
     max_tokens: maxTokens,
     messages: nonSystemMessages as any,
     ...(systemContent !== undefined && { system: systemContent }),
-    ...(tools !== undefined && { tools }),
+    ...(allTools.length > 0 && { tools: allTools }),
     ...(p.tool_choice !== undefined && { tool_choice: p.tool_choice }),
     ...(p.toolChoice !== undefined && { tool_choice: p.toolChoice as any }),
     ...(temperature !== undefined && { temperature }),
@@ -544,6 +548,88 @@ function convertOutputFormatToResponseFormat(
 }
 
 // ============================================================================
+// OpenAI thinking/reasoning 参数转换
+// ============================================================================
+
+/**
+ * 将 Anthropic 格式的 thinking 参数转换为各 OpenAI 兼容平台所需的格式。
+ * 参考 Open Code (sst/opencode) 的 transform.ts 实现。
+ *
+ * 数据源：
+ * - thinking 对象：决定"是否启用 thinking"（disabled/enabled/adaptive）
+ * - output_config.effort：决定 thinking 的 effort 级别（low/medium/high），
+ *   由 zy.ts 的 configureEffortParams() 设置，受 /effort 命令和 settings.effortLevel 控制
+ *
+ * 各平台参数格式：
+ * - 百炼（dashscope）: `enable_thinking: true`
+ * - 智谱（zhipu）: `thinking: { type: 'enabled', clear_thinking: false }`
+ * - Kimi（moonshot）: `chat_template_args: { enable_thinking: true }`（kimi-k2-thinking）
+ * - DeepSeek: `reasoning_effort: "low"|"medium"|"high"`
+ * - OpenRouter: `reasoning: { effort: "low"|"medium"|"high" }`
+ * - OpenAI 官方: `reasoning_effort: "low"|"medium"|"high"`
+ * - 其他（模型名含 reasoning/r1 等）: `enable_thinking: true`
+ */
+function convertThinkingForOpenAI(
+  thinking: { type: string; budget_tokens?: number } | undefined,
+  model: string,
+  outputConfig?: Record<string, unknown>,
+): Record<string, unknown> {
+  // thinking 未设置或已禁用，不传递任何参数
+  if (!thinking || thinking.type === 'disabled') {
+    return {}
+  }
+
+  const provider = getAPIProvider()
+  const modelLower = model.toLowerCase()
+
+  // 从 output_config 中读取 effort 级别（由 zy.ts configureEffortParams 设置）
+  const effort = outputConfig?.effort as string | undefined
+
+  // 百炼（DashScope）：enable_thinking: true
+  if (provider === 'dashscope') {
+    return { enable_thinking: true }
+  }
+
+  // 智谱：thinking: { type: 'enabled', clear_thinking: false }
+  if (provider === 'zhipu') {
+    return { thinking: { type: 'enabled', clear_thinking: false } }
+  }
+
+  // Kimi（Moonshot）：chat_template_args: { enable_thinking: true }
+  // kimi-k2-thinking 模型使用 chat_template_args，其他 kimi 模型使用 enable_thinking
+  if (provider === 'kimi') {
+    if (modelLower.includes('kimi-k2-thinking') || modelLower.includes('k2-thinking')) {
+      return { chat_template_args: { enable_thinking: true } }
+    }
+    return { enable_thinking: true }
+  }
+
+  // DeepSeek：reasoning_effort
+  if (provider === 'deepseek') {
+    return { reasoning_effort: effort ?? 'medium' }
+  }
+
+  // OpenRouter：reasoning: { effort: "low"|"medium"|"high" }
+  if (provider === 'openrouter') {
+    return { reasoning: { effort: effort ?? 'medium' } }
+  }
+
+  // OpenAI 官方：reasoning_effort
+  if (provider === 'openai') {
+    return { reasoning_effort: effort ?? 'medium' }
+  }
+
+  // SiliconFlow 等通用 OpenAI 兼容平台：
+  // 如果模型名包含 reasoning/thinking/r1 等关键词，传 enable_thinking: true
+  if (modelLower.includes('reasoning') || modelLower.includes('r1') ||
+      modelLower.includes('thinking') || modelLower.includes('deepseek')) {
+    return { enable_thinking: true }
+  }
+
+  return {}
+}
+
+// ============================================================================
 // OpenAI → 标准格式转换
 // ============================================================================
 
@@ -754,6 +840,20 @@ class OpenAIRequestAdapter implements LLMAdapter {
     // 从 output_config 中提取并转换为 OpenAI 的 response_format
     const outputConfigResponseFormat = convertOutputFormatToResponseFormat(p.output_config)
 
+    // 提取 OpenAI 原生工具（如 web_search_preview），注入到 tools 数组
+    const openaiNativeTools = openaiExtras?._web_search_tool
+      ? [openaiExtras._web_search_tool]
+      : []
+    // 从 openaiExtras 中移除内部字段，避免作为顶层参数传递
+    const openaiExtrasCleaned = openaiExtras ? { ...openaiExtras } : {}
+    delete (openaiExtrasCleaned as any)._web_search_tool
+
+    // 将 Anthropic 格式的 thinking 转换为 OpenAI 兼容格式的 thinking 参数
+    // - 百炼: enable_thinking: true
+    // - 智谱: thinking: { type: 'enabled' }
+    // 其他 OpenAI 兼容平台通过 extra_body 自行传递
+    const thinkingParams = convertThinkingForOpenAI(p.thinking, p.model, p.output_config)
+
     const stream = await client.chat.completions.create(
       {
         model: normalizeModelStringForAPI(p.model),
@@ -762,13 +862,21 @@ class OpenAIRequestAdapter implements LLMAdapter {
         temperature: p.temperature ?? 1,
         ...((p.topP ?? p.top_p) !== undefined && { top_p: p.topP ?? p.top_p }),
         ...((p.stopSequences ?? p.stop_sequences) && { stop: p.stopSequences ?? p.stop_sequences }),
-        ...(p.tools && { tools: convertToolsToOpenAI(p.tools) }),
+        ...((p.tools && p.tools.length > 0) || openaiNativeTools.length > 0
+          ? {
+              tools: [
+                ...openaiNativeTools,
+                ...(p.tools ? convertToolsToOpenAI(p.tools) : []),
+              ],
+            }
+          : {}),
         ...((p.toolChoice ?? p.tool_choice) && { tool_choice: (p.toolChoice ?? p.tool_choice) as any }),
         stream: true,
         stream_options: { include_usage: true },
         ...(openaiResponseFormat ? { response_format: openaiResponseFormat as any } : {}),
         ...(outputConfigResponseFormat && !openaiResponseFormat ? { response_format: outputConfigResponseFormat } : {}),
-        ...(openaiExtras ? (openaiExtras as any) : {}),
+        ...thinkingParams,
+        ...(Object.keys(openaiExtrasCleaned).length > 0 ? (openaiExtrasCleaned as any) : {}),
         ...(p.extra_body ? (p.extra_body as any) : {}),
       },
       { signal },
@@ -801,6 +909,16 @@ class OpenAIRequestAdapter implements LLMAdapter {
     // 从 output_config 中提取并转换为 OpenAI 的 response_format
     const outputConfigResponseFormat = convertOutputFormatToResponseFormat(p.output_config)
 
+    // 提取 OpenAI 原生工具（如 web_search_preview），注入到 tools 数组
+    const openaiNativeTools = openaiExtras?._web_search_tool
+      ? [openaiExtras._web_search_tool]
+      : []
+    const openaiExtrasCleanedNonStream = openaiExtras ? { ...openaiExtras } : {}
+    delete (openaiExtrasCleanedNonStream as any)._web_search_tool
+
+    // 将 Anthropic 格式的 thinking 转换为 OpenAI 兼容格式
+    const thinkingParams = convertThinkingForOpenAI(p.thinking, p.model, p.output_config)
+
     const completion = await client.chat.completions.create(
       {
         model: normalizeModelStringForAPI(p.model),
@@ -809,12 +927,20 @@ class OpenAIRequestAdapter implements LLMAdapter {
         temperature: p.temperature ?? 1,
         ...((p.topP ?? p.top_p) !== undefined && { top_p: p.topP ?? p.top_p }),
         ...((p.stopSequences ?? p.stop_sequences) && { stop: p.stopSequences ?? p.stop_sequences }),
-        ...(p.tools && { tools: convertToolsToOpenAI(p.tools) }),
+        ...((p.tools && p.tools.length > 0) || openaiNativeTools.length > 0
+          ? {
+              tools: [
+                ...openaiNativeTools,
+                ...(p.tools ? convertToolsToOpenAI(p.tools) : []),
+              ],
+            }
+          : {}),
         ...((p.toolChoice ?? p.tool_choice) && { tool_choice: (p.toolChoice ?? p.tool_choice) as any }),
         stream: false,
+        ...thinkingParams,
         ...(openaiResponseFormat ? { response_format: openaiResponseFormat as any } : {}),
         ...(outputConfigResponseFormat && !openaiResponseFormat ? { response_format: outputConfigResponseFormat } : {}),
-        ...(openaiExtras ? (openaiExtras as any) : {}),
+        ...(Object.keys(openaiExtrasCleanedNonStream).length > 0 ? (openaiExtrasCleanedNonStream as any) : {}),
         ...(p.extra_body ? (p.extra_body as any) : {}),
       },
       { signal },

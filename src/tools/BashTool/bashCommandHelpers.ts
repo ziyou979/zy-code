@@ -1,4 +1,5 @@
 import type { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import {
   isUnsafeCompoundCommand_DEPRECATED,
   splitCommand_DEPRECATED,
@@ -36,8 +37,7 @@ async function segmentedCommandPermissionResult(
   if (cdCommands.length > 1) {
     const decisionReason = {
       type: 'other' as const,
-      reason:
-        'Multiple directory changes in one command require approval for clarity',
+      reason: tSync('bash.permission.multipleCd'),
     }
     return {
       behavior: 'ask',
@@ -70,8 +70,7 @@ async function segmentedCommandPermissionResult(
     if (hasCd && hasGit) {
       const decisionReason = {
         type: 'other' as const,
-        reason:
-          'Compound commands with cd and git require approval to prevent bare repository attacks',
+        reason: tSync('bash.permission.cdAndGit'),
       }
       return {
         behavior: 'ask',
@@ -191,7 +190,7 @@ export async function checkCommandOperatorPermissions(
       ? buildParsedCommandFromRoot(input.command, astRoot)
       : await ParsedCommand.parse(input.command)
   if (!parsed) {
-    return { behavior: 'passthrough', message: 'Failed to parse command' }
+    return { behavior: 'passthrough', message: tSync('bash.permission.parseFailed') }
   }
   return bashToolCheckCommandOperatorPermissions(
     input,
@@ -229,7 +228,7 @@ async function bashToolCheckCommandOperatorPermissions(
       reason:
         safetyResult.behavior === 'ask' && safetyResult.message
           ? safetyResult.message
-          : 'This command uses shell operators that require approval for safety',
+          : tSync('bash.permission.shellOperators'),
     }
     return {
       behavior: 'ask',
@@ -246,7 +245,7 @@ async function bashToolCheckCommandOperatorPermissions(
   if (pipeSegments.length <= 1) {
     return {
       behavior: 'passthrough',
-      message: 'No pipes found in command',
+      message: tSync('bash.permission.noPipes'),
     }
   }
 
