@@ -1013,7 +1013,9 @@ function runHeadlessStreaming(
   const sigintHandler = () => {
     logForDiagnosticsNoPII('info', 'shutdown_signal', { signal: 'SIGINT' })
     if (abortController && !abortController.signal.aborted) {
-      abortController.abort()
+      // 带明确 reason，配合 query.ts 主循环的白名单过滤，
+      // 区分用户主动中断和 GC race 等隐式 abort。
+      abortController.abort('sigint')
     }
     void gracefulShutdown(0)
   }
@@ -2827,7 +2829,9 @@ function runHeadlessStreaming(
             }))
           }
           if (abortController) {
-            abortController.abort()
+            // 用户按 ESC（或等价的取消控制信号）— 用 'interrupt' reason，
+            // 与 cli/print.ts:1845 的 'now' 优先级新消息路径保持一致语义。
+            abortController.abort('interrupt')
           }
           suggestionState.abortController?.abort()
           suggestionState.abortController = null
@@ -2839,7 +2843,9 @@ function runHeadlessStreaming(
             `[print.ts] end_session received, reason=${(message.request as any).reason ?? 'unspecified'}`,
           )
           if (abortController) {
-            abortController.abort()
+            // 会话被外部要求结束（SDK end_session 控制消息），
+            // 用专门的 reason 区分于其他用户中断路径。
+            abortController.abort('end_session')
           }
           suggestionState.abortController?.abort()
           suggestionState.abortController = null

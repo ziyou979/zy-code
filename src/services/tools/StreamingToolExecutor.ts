@@ -304,14 +304,26 @@ export class StreamingToolExecutor {
       toolAbortController.signal.addEventListener(
         'abort',
         () => {
+          // 白名单：只有明确的 user-driven 中断 reason 才向上冒泡到 query 主 controller。
+          // 历史上这里只排除了 'sibling_error'，但 createChildAbortController 内部
+          // 用 WeakRef 传播 abort，当父 controller 已被 GC 时 reason 会变成 undefined，
+          // 这种"幽灵 abort"也会通过原过滤器，导致 query.ts 在工具正常完成后
+          // 误判主 controller 已 abort，静默结束 turn（UI 渲染 "弄好了/算完了" 但模型没回复）。
+          // 现在反过来用白名单：只有明确表示"用户/hook 主动想终止 turn"的 reason
+          // 才冒泡，其他（'sibling_error'、undefined、其他清理类 reason）一律忽略。
+          const reason = toolAbortController.signal.reason
+          const shouldBubble =
+            reason === 'user_rejected_permission' ||
+            reason === 'hook_interrupt' ||
+            reason === 'interrupt' ||
+            reason === 'sigint' ||
+            reason === 'end_session'
           if (
-            toolAbortController.signal.reason !== 'sibling_error' &&
+            shouldBubble &&
             !this.toolUseContext.abortController.signal.aborted &&
             !this.discarded
           ) {
-            this.toolUseContext.abortController.abort(
-              toolAbortController.signal.reason,
-            )
+            this.toolUseContext.abortController.abort(reason)
           }
         },
         { once: true },

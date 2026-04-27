@@ -167,7 +167,10 @@ function createPermissionContext(
         logForDebugging(
           `Aborting: tool=${tool.name} isAbort=${isAbort} hasFeedback=${!!feedback} isSubagent=${sub}`,
         )
-        toolUseContext.abortController.abort()
+        // 带上明确 reason，配合 StreamingToolExecutor 的白名单冒泡机制，
+        // 让 query.ts 主循环知道这是"用户拒绝权限"导致的 turn 终止，
+        // 而不是被 GC 触发的隐式 abort（reason=undefined）误判。
+        toolUseContext.abortController.abort('user_rejected_permission')
       }
       return { behavior: 'ask', message, contentBlocks }
     },
@@ -246,7 +249,9 @@ function createPermissionContext(
               logForDebugging(
                 `Hook interrupt: tool=${tool.name} hookMessage=${decision.message}`,
               )
-              toolUseContext.abortController.abort()
+              // 带 reason 区分 hook 主动中断和 GC race，
+              // 见 StreamingToolExecutor 的 BUBBLE_ABORT_REASONS 白名单。
+              toolUseContext.abortController.abort('hook_interrupt')
             }
             return this.buildDeny(
               decision.message || 'Permission denied by hook',

@@ -1460,6 +1460,40 @@ async function* queryLoop(
 
     // 我们在工具调用期间被中止
     if (toolUseContext.abortController.signal.aborted) {
+      // 双重保险：只有"已知的 user-driven 中断 reason"才结束 turn。
+      // 配合 StreamingToolExecutor 的白名单冒泡机制，避免 GC race 等
+      // 隐式 abort（reason=undefined）导致 turn 被静默结束。
+      // 已知的合法中断 reason（与 StreamingToolExecutor 的白名单保持一致）：
+      //   - 'interrupt': 用户在 REPL 中按 ESC / 发送 'now' 优先级新消息
+      //   - 'user_rejected_permission': 用户在权限对话框中拒绝
+      //   - 'hook_interrupt': PermissionRequest hook 返回 decision.interrupt
+      //   - 'sigint': cli/print.ts 收到 SIGINT 信号
+      //   - 'end_session': SDK end_session 控制消息
+      const abortReason = toolUseContext.abortController.signal.reason
+      const isKnownUserAbort =
+        abortReason === 'interrupt' ||
+        abortReason === 'user_rejected_permission' ||
+        abortReason === 'hook_interrupt' ||
+        abortReason === 'sigint' ||
+        abortReason === 'end_session'
+      if (!isKnownUserAbort) {
+        // 非预期的 abort（很可能是 GC race / WeakRef propagateAbort 残留）。
+        // 记录诊断信息但不结束 turn——清掉 aborted 标记是不可能的（AbortSignal 不可逆），
+        // 但我们可以选择不响应这个 abort，让循环继续。
+        logForDebugging(
+          `[query] Ignoring spurious abort with unknown reason: ${String(abortReason)} (turnCount=${turnCount}). ` +
+            `This is likely a GC race in createChildAbortController and not a real user interrupt.`,
+          { level: 'warn' },
+        )
+        // 由于 abortController 已经 aborted 且不可重置，我们需要为后续 turn
+        // 创建一个新的 AbortController 来取代它。这里直接 yield 一条系统消息
+        // 告知用户发生了什么，然后结束当前 turn（避免下游工具拿到坏 signal）。
+        yield createUserInterruptionMessage({
+          toolUse: true,
+        })
+        return { reason: 'aborted_tools' }
+      }
+
       // chicago MCP：在工具调用中间被中止时自动取消隐藏 + 释放锁。
       // 这是 CU 最可能的 Ctrl+C 路径（例如慢速截图）。
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 的理由。
@@ -1475,7 +1509,7 @@ async function* queryLoop(
       }
       // 为提交中断跳过中断消息 — 随后的排队
       // 用户消息提供足够的上下文。
-      if (toolUseContext.abortController.signal.reason !== 'interrupt') {
+      if (abortReason !== 'interrupt') {
         yield createUserInterruptionMessage({
           toolUse: true,
         })
