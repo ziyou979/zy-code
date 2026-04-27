@@ -1,7 +1,6 @@
 /**
- * 标准 LLM 类型体系 — 真正独立于任何 SDK 的中间格式。
+ * 标准 LLM 类型体系 — 独立于任何 SDK 的中间格式。
  *
- * 重构目标（v2）：
  * - 不偏向 Anthropic 或 OpenAI，各适配器平等承担转换成本
  * - 消息模型采用 4 角色分离（system/user/assistant/tool）
  * - 内容块只保留通用概念（text/image/tool_call）
@@ -22,7 +21,7 @@
 export type UserContentBlock = TextBlock | ImageBlock
 
 /** 助手消息中可用的内容块 — 包含兼容类型以支持旧代码中的 block.type === 'tool_use' 等判断 */
-export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ToolUseBlock | ThinkingBlock | RedactedThinkingBlock | ServerToolUseBlock
+export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ToolUseBlock | ThinkingBlock | RedactedThinkingBlock
 
 // ---- 通用内容块 ----
 
@@ -600,13 +599,6 @@ export interface RedactedThinkingBlockParam {
   data: string
 }
 
-/** @deprecated v2 不再有 server_tool_use */
-export interface ServerToolUseBlock {
-  type: 'server_tool_use'
-  id: string
-  name: string
-  input: Record<string, unknown>
-}
 
 /** @deprecated 使用 ImageBlock 的 mimeType/data 字段 */
 export interface Base64ImageSource {
@@ -615,43 +607,18 @@ export interface Base64ImageSource {
   data: string
 }
 
-/** @deprecated 使用 ImageBlock 的 mimeType/data 字段 */
-export interface URLImageSource {
-  type: 'url'
-  url: string
-}
-
-/** @deprecated v2 不再使用 PDF 源类型 */
-export interface Base64PDFSource {
-  type: 'base64'
-  media_type: 'application/pdf'
-  data: string
-}
-
-/** @deprecated v2 不再使用 PDF 源类型 */
-export interface URLPDFSource {
-  type: 'url'
-  url: string
-}
-
-/** @deprecated v2 不再使用内容源类型 */
-export interface ContentSource {
-  type: 'content'
-  content: string | Array<TextBlockParam | ImageBlockParam>
-}
-
 /**
  * @deprecated v2 中 content 块类型已按角色分离。
  * 使用 UserContentBlock 或 AssistantContentBlock。
  */
-export type ContentBlockParam = TextBlock | ImageBlock | ToolUseBlockParam | ToolCallInlineBlock | ToolResultBlockParam | DocumentBlockParam | ThinkingBlockParam | RedactedThinkingBlockParam | ServerToolUseBlock
+export type ContentBlockParam = TextBlock | ImageBlock | ToolUseBlockParam | ToolCallInlineBlock | ToolResultBlockParam | DocumentBlockParam | ThinkingBlockParam | RedactedThinkingBlockParam
 
 /**
  * @deprecated v2 中响应内容块已简化。
  * 使用 AssistantContentBlock。
  * 此联合类型保留旧的 type 字符串值以兼容 block.type === 'tool_use' 等判断。
  */
-export type ContentBlock = TextBlock | ToolUseBlock | ToolCallInlineBlock | ThinkingBlock | RedactedThinkingBlock | ServerToolUseBlock
+export type ContentBlock = TextBlock | ToolUseBlock | ToolCallInlineBlock | ThinkingBlock | RedactedThinkingBlock
 
 /** @deprecated 使用 Message */
 export type LLMMessageParam = Message

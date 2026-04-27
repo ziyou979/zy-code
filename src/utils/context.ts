@@ -22,23 +22,12 @@ export const ESCALATED_MAX_TOKENS = 64_000
 
 /**
  * 获取模型的上下文窗口大小。
- *
- * 优先级：
- * 1. ~/.zy/model-capabilities.json 中配置的 contextWindow
- * 2. 回退到 maxInputTokens（大多数模型 contextWindow ≈ maxInputTokens）
- * 3. 默认值 200k
+ * 仅读取 contextWindow 配置，未配置时返回默认值 200k。
  */
 export function getContextWindowForModel(model: string): number {
-  // 1. 优先从本地配置读取 contextWindow
   const localContextWindow = getLocalContextWindow(model)
-  if (localContextWindow) {
+  if (localContextWindow >= 100_000) {
     return localContextWindow
-  }
-
-  // 2. 回退到 maxInputTokens
-  const localInputTokens = getLocalMaxInputTokens(model)
-  if (localInputTokens && localInputTokens >= 100_000) {
-    return localInputTokens
   }
 
   return MODEL_CONTEXT_WINDOW_DEFAULT
@@ -99,7 +88,7 @@ export function getModelMaxOutputTokens(model: string): {
 
   // 确定 upperLimit（优先本地配置，其次 API 缓存，最后通用默认值）
   let upperLimit: number
-  if (localValue) {
+  if (Number.isFinite(localValue) && localValue >= 4_096) {
     upperLimit = localValue
   } else {
     const cap = getModelCapability(model)
@@ -137,6 +126,6 @@ export function getModelMaxOutputTokens(model: string): {
  */
 export function getMaxThinkingTokensForModel(model: string): number {
   const localThinkingTokens = getLocalMaxThinkingTokens(model)
-  if (localThinkingTokens !== undefined) return localThinkingTokens
+  if (Number.isFinite(localThinkingTokens)) return localThinkingTokens
   return getModelMaxOutputTokens(model).upperLimit - 1
 }

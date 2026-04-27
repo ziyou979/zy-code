@@ -315,7 +315,16 @@ function TranscriptModeFooter({
 }) {
   const toggleShortcut = useShortcutDisplay("app:toggleTranscript", "Global", "ctrl+o");
   const showAllShortcut = useShortcutDisplay("transcript:toggleShowAll", "Transcript", "ctrl+e");
-  return <Box noSelect={true} alignItems="center" alignSelf="center" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" marginTop={1} paddingLeft={2} width="100%">{<Text dimColor={true}>Showing detailed transcript · {toggleShortcut} to toggle{searchBadge ? " \xB7 n/N to navigate" : virtualScroll ? ` · ${figures.arrowUp}${figures.arrowDown} scroll · home/end top/bottom` : suppressShowAll ? "" : ` · ${showAllShortcut} to ${showAllInTranscript ? "collapse" : "show all"}`}</Text>}{status ? <><Box flexGrow={1} /><Text>{status} </Text></> : searchBadge ? <><Box flexGrow={1} /><Text dimColor={true}>{searchBadge.current}/{searchBadge.count}{"  "}</Text></> : null}</Box>;
+  const transcriptLabel = tSync('transcript.showingDetailedTranscript')
+  const toggleLabel = tSync('transcript.toToggle')
+  const navigateLabel = tSync('transcript.toNavigate')
+  const scrollLabel = tSync('transcript.scroll')
+  const topLabel = tSync('transcript.top')
+  const bottomLabel = tSync('transcript.bottom')
+  const collapseOrShowLabel = showAllInTranscript
+    ? tSync('transcript.toCollapse')
+    : tSync('transcript.toShowAll')
+  return <Box noSelect={true} alignItems="center" alignSelf="center" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" marginTop={1} paddingLeft={2} width="100%">{<Text dimColor={true}>{transcriptLabel} \xB7 {toggleShortcut} {toggleLabel}{searchBadge ? ` \xB7 n/N ${navigateLabel}` : virtualScroll ? ` \xB7 ${figures.arrowUp}${figures.arrowDown} ${scrollLabel} \xB7 home/end ${topLabel}/${bottomLabel}` : suppressShowAll ? "" : ` \xB7 ${showAllShortcut} ${collapseOrShowLabel}`}</Text>}{status ? <><Box flexGrow={1} /><Text>{status} </Text></> : searchBadge ? <><Box flexGrow={1} /><Text dimColor={true}>{searchBadge.current}/{searchBadge.count}{"  "}</Text></> : null}</Box>;
 }
 
 /** less 风格 / bar。1 行，与 TranscriptModeFooter 相同的 border-top 样式

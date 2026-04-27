@@ -1,11 +1,11 @@
 import { feature } from 'bun:bundle'
 import { markPostCompaction } from 'src/bootstrap/state.js'
-import { getSdkBetas } from '../../bootstrap/state.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { getContextWindowForModel } from '../../utils/context.js'
+import { getLocalMaxInputTokens } from '../../utils/settings/localModelCapabilities.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
@@ -69,21 +69,42 @@ export const MANUAL_COMPACT_BUFFER_TOKENS = 3_000
 // 在单个会话中，全球每天浪费约 250K API 调用。
 const MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3
 
-export function getAutoCompactThreshold(model: string): number {
-  const effectiveContextWindow = getEffectiveContextWindowSize(model)
+// maxInputTokens 是 API 硬性输入上限，自动压缩需在此之前触发。
+// 留出安全余量应对：
+// 1. 配置偏差：用户配置的 maxInputTokens 可能与 API 实际限制有差距
+// 2. Token 估算误差：客户端估算与 API 实际计数不完全一致
+// 默认 90%：若 maxInputTokens=240K，触发点约 216K，距 224K 的 API 限制有 8K 余量。
+const MAX_INPUT_AUTOCOMPACT_RATIO = 0.90
 
-  const autocompactThreshold =
-    effectiveContextWindow - AUTOCOMPACT_BUFFER_TOKENS
+export function getAutoCompactThreshold(model: string): number {
+  // 第一重保障：基于 contextWindow，留出 buffer 避免压缩过程本身超限
+  const effectiveContextWindow = getEffectiveContextWindowSize(model)
+  const contextBasedThreshold = effectiveContextWindow - AUTOCOMPACT_BUFFER_TOKENS
+
+  // 第二重保障：基于 maxInputTokens（API 硬性输入上限），留出安全余量
+  const maxInputTokens = getLocalMaxInputTokens(model)
+  const inputBasedThreshold = maxInputTokens >= 100_000
+    ? Math.floor(maxInputTokens * MAX_INPUT_AUTOCOMPACT_RATIO)
+    : Infinity
+
+  // 两重保障取更严格的（更早触发的）
+  let autocompactThreshold = Math.min(
+    contextBasedThreshold,
+    inputBasedThreshold,
+  )
 
   // 便于测试自动压缩的覆盖
-  const envPercent = process.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+  const envPercent = process.env.AUTOCOMPACT_PCT_OVERRIDE
   if (envPercent) {
     const parsed = parseFloat(envPercent)
     if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
       const percentageThreshold = Math.floor(
         effectiveContextWindow * (parsed / 100),
       )
-      return Math.min(percentageThreshold, autocompactThreshold)
+      autocompactThreshold = Math.min(
+        autocompactThreshold,
+        percentageThreshold,
+      )
     }
   }
 
@@ -119,9 +140,16 @@ export function calculateTokenWarningState(
   const isAboveAutoCompactThreshold =
     isAutoCompactEnabled() && tokenUsage >= autoCompactThreshold
 
-  const actualContextWindow = getEffectiveContextWindowSize(model)
-  const defaultBlockingLimit =
-    actualContextWindow - MANUAL_COMPACT_BUFFER_TOKENS
+  // blockingLimit：两重保障取更严格的。
+  // 1. contextWindow - 3K（保留手动压缩空间）
+  // 2. maxInputTokens（API 硬性输入上限）
+  const contextBasedLimit =
+    getEffectiveContextWindowSize(model) - MANUAL_COMPACT_BUFFER_TOKENS
+  const maxInputTokens = getLocalMaxInputTokens(model)
+  const inputBasedLimit = maxInputTokens >= 100_000
+    ? maxInputTokens
+      : Infinity
+  const defaultBlockingLimit = Math.min(contextBasedLimit, inputBasedLimit)
 
   // Allow override for testing
   const blockingLimitOverride = process.env.ZY_CODE_BLOCKING_LIMIT_OVERRIDE

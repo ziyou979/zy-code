@@ -25,25 +25,25 @@ type ModelCapabilityKind =
  * 解析 token 数量字符串，支持 "256k"、"1m"、"4096" 等格式。
  * k = 1024, m = 1024 * 1024
  * 如果是纯数字字符串直接解析，如果是 number 直接返回。
- * 解析失败返回 undefined。
+ * 解析失败返回 NaN（区分"未配置"的 undefined 和"配置格式错误"的 NaN）。
  */
-export function parseTokenCount(value: string | number): number | undefined {
+export function parseTokenCount(value: string | number): number {
   if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined
+    return Number.isFinite(value) ? value : NaN
   }
   const trimmed = value.trim().toLowerCase()
-  if (!trimmed) return undefined
+  if (!trimmed) return NaN
 
   const multipliers: Record<string, number> = { k: 1024, m: 1024 * 1024 }
   const suffix = trimmed.at(-1)
 
   if (suffix && suffix in multipliers) {
     const num = parseFloat(trimmed.slice(0, -1))
-    return Number.isFinite(num) ? Math.round(num * multipliers[suffix]) : undefined
+    return Number.isFinite(num) ? Math.round(num * multipliers[suffix]) : NaN
   }
 
   const num = parseFloat(trimmed)
-  return Number.isFinite(num) ? num : undefined
+  return Number.isFinite(num) ? num : NaN
 }
 
 /** 用于 Schema 验证的 token 数量类型：number 或 string */
@@ -195,44 +195,45 @@ export function localModelHasCapability(
 
 /**
  * 从本地配置获取模型的最大输出 tokens（单次响应上限）。
- * 返回 undefined 表示该模型未配置。
+ * 未配置或格式错误时返回 NaN。
  * 支持 "256k"、"1m" 等字符串格式。
  */
-export function getLocalMaxOutputTokens(model: string): number | undefined {
+export function getLocalMaxOutputTokens(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxOutputTokens) return undefined
+  if (!entry?.maxOutputTokens) return NaN
   return parseTokenCount(entry.maxOutputTokens)
 }
 
 /**
  * 从本地配置获取 maxInputTokens（API 允许的最大输入 tokens）。
+ * 未配置或格式错误时返回 NaN。
  * 支持 "256k"、"1m" 等字符串格式。
  */
-export function getLocalMaxInputTokens(model: string): number | undefined {
+export function getLocalMaxInputTokens(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxInputTokens) return undefined
+  if (!entry?.maxInputTokens) return NaN
   return parseTokenCount(entry.maxInputTokens)
 }
 
 /**
  * 从本地配置获取上下文窗口大小（用于自动压缩和用量计算）。
+ * 未配置或格式错误时返回 NaN。
  * 支持 "200k"、"1m" 等字符串格式。
- * 未配置时返回 undefined，调用方应回退到 maxInputTokens 或默认值。
  */
-export function getLocalContextWindow(model: string): number | undefined {
+export function getLocalContextWindow(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.contextWindow) return undefined
+  if (!entry?.contextWindow) return NaN
   return parseTokenCount(entry.contextWindow)
 }
 
 /**
  * 从本地配置获取思维链最大 token 数（budget_tokens）。
+ * 未配置或格式错误时返回 NaN。
  * 支持 "16k" 等字符串格式。
- * 未配置时返回 undefined，调用方应回退到 maxOutputTokens - 1。
  */
-export function getLocalMaxThinkingTokens(model: string): number | undefined {
+export function getLocalMaxThinkingTokens(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxThinkingTokens) return undefined
+  if (!entry?.maxThinkingTokens) return NaN
   return parseTokenCount(entry.maxThinkingTokens)
 }
 
