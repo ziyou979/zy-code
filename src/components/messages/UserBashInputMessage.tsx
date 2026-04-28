@@ -1,10 +1,10 @@
-import type { TextBlockParam } from '../../types/llm.js';
+import type { TextBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { Box, Text } from '../../ink.js';
 import { extractTag } from '../../utils/messages.js';
 type Props = {
   addMargin: boolean;
-  param: TextBlockParam;
+  param: TextBlock;
 };
 export function UserBashInputMessage({
   param,

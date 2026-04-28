@@ -1,4 +1,4 @@
-import type { TextBlockParam } from '../../types/llm.js';
+import type { TextBlock } from '../../types/llm.js';
 import React, { useContext } from 'react';
 import { ERROR_MESSAGE_USER_ABORT } from 'src/services/compact/compact.js';
 import { isRateLimitErrorMessage } from 'src/services/rateLimitMessages.js';
@@ -17,7 +17,7 @@ import { MessageActionsSelectedContext } from '../messageActions.js';
 import { RateLimitMessage } from './RateLimitMessage.js';
 const MAX_API_ERROR_CHARS = 1000;
 type Props = {
-  param: TextBlockParam;
+  param: TextBlock;
   addMargin: boolean;
   shouldShowDot: boolean;
   verbose: boolean;

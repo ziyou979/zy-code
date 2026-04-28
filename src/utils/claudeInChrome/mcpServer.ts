@@ -199,7 +199,7 @@ export function createChromeContext(
           tools: [],
           querySource: 'chrome_mcp' as any,
         })
-        // BetaContentBlock is TextBlock | ThinkingBlock | ToolUseBlock | ...
+        // BetaContentBlock is TextBlock | ThinkingBlock | ToolCallInlineBlock | ...
         // Only text blocks carry the model's command output.
         const textBlocks: Array<{ type: 'text'; text: string }> = []
         for (const b of response.content) {

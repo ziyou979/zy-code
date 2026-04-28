@@ -67,9 +67,9 @@ export const MCPTool = buildTool({
   isResultTruncated(output: Output): boolean {
     return isOutputLineTruncated(output)
   },
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content,
     }

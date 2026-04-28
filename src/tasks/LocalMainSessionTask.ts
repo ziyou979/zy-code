@@ -422,7 +422,7 @@ export function startBackgroundSession({
           for (const block of event.message.content) {
             if (block.type === 'text') {
               tokenCount += roughTokenCountEstimation(block.text)
-            } else if (block.type === 'tool_use') {
+            } else if (block.type === 'tool_call') {
               toolCount++
               const activity: ToolActivity = {
                 toolName: block.name,

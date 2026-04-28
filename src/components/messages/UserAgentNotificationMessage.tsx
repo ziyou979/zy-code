@@ -1,11 +1,11 @@
-import type { TextBlockParam } from '../../types/llm.js';
+import type { TextBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { BLACK_CIRCLE } from '../../constants/figures.js';
 import { Box, Text, type TextProps } from '../../ink.js';
 import { extractTag } from '../../utils/messages.js';
 type Props = {
   addMargin: boolean;
-  param: TextBlockParam;
+  param: TextBlock;
 };
 function getStatusColor(status: string | null): TextProps['color'] {
   switch (status) {

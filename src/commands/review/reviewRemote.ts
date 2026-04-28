@@ -9,7 +9,7 @@
  * pushed branches on repos with the Zy GitHub app installed.
  */
 
-import type { ContentBlockParam } from '../../types/llm.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -105,11 +105,11 @@ export async function checkOverageGate(): Promise<OverageGate> {
 }
 
 /**
- * Launch a teleported review session. Returns ContentBlockParam[] describing
+ * Launch a teleported review session. Returns ContentBlock[] describing
  * the launch outcome for injection into the local conversation (model is then
  * queried with this content, so it can narrate the launch to the user).
  *
- * Returns ContentBlockParam[] with user-facing error messages on recoverable
+ * Returns ContentBlock[] with user-facing error messages on recoverable
  * failures (missing merge-base, empty diff, bundle too large), or null on
  * other failures so the caller falls through to the local-review prompt.
  * Reason is captured in analytics.
@@ -121,7 +121,7 @@ export async function launchRemoteReview(
   args: string,
   context: ToolUseContext,
   billingNote?: string,
-): Promise<ContentBlockParam[] | null> {
+): Promise<ContentBlock[] | null> {
   const eligibility = await checkRemoteAgentEligibility()
   // Synthetic DEFAULT_CODE_REVIEW_ENVIRONMENT_ID works without per-org CCR
   // setup, so no_remote_environment isn't a blocker. Server-side quota

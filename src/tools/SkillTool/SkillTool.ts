@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ToolResultBlockParam } from '../../types/llm.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { dirname } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'
@@ -245,7 +245,7 @@ async function executeForkedSkill(
         const normalizedNew = normalizeMessages([message])
         for (const m of normalizedNew) {
           const hasToolContent = m.message.content.some(
-            c => c.type === 'tool_use' || c.type === 'tool_result',
+            c => c.type === 'tool_call' || c.type === 'tool_result',
           )
           if (hasToolContent) {
             onProgress({
@@ -841,15 +841,15 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     }
   },
 
-  mapToolResultToToolResultBlockParam(
+  mapToolResultToToolResultBlock(
     result: Output,
     toolUseID: string,
-  ): ToolResultBlockParam {
+  ): ToolResultBlock {
     // Handle forked skill result
     if ('status' in result && result.status === 'forked') {
       return {
         type: 'tool_result' as const,
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         content: `Skill "${result.commandName}" completed (forked execution).\n\nResult:\n${result.result}`,
       }
     }
@@ -857,7 +857,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // Inline skill result (default)
     return {
       type: 'tool_result' as const,
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       content: `Launching skill: ${result.commandName}`,
     }
   },

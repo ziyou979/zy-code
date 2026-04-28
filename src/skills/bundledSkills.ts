@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '../types/llm.js'
+import type { ContentBlock } from '../types/llm.js'
 import { constants as fsConstants } from 'fs'
 import { mkdir, open } from 'fs/promises'
 import { dirname, isAbsolute, join, normalize, sep as pathSep } from 'path'
@@ -37,7 +37,7 @@ export type BundledSkillDefinition = {
   getPromptForCommand: (
     args: string,
     context: ToolUseContext,
-  ) => Promise<ContentBlockParam[]>
+  ) => Promise<ContentBlock[]>
 }
 
 // Internal registry for bundled skills
@@ -206,9 +206,9 @@ function resolveSkillFilePath(baseDir: string, relPath: string): string {
 }
 
 function prependBaseDir(
-  blocks: ContentBlockParam[],
+  blocks: ContentBlock[],
   baseDir: string,
-): ContentBlockParam[] {
+): ContentBlock[] {
   const prefix = `Base directory for this skill: ${baseDir}\n\n`
   if (blocks.length > 0 && blocks[0]!.type === 'text') {
     return [

@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from './llm.js'
+import type { ContentBlock } from './llm.js'
 import type { UUID } from 'crypto'
 import type React from 'react'
 import type { PermissionResult } from '../entrypoints/agentSdkTypes.js'
@@ -297,7 +297,7 @@ export type QueuePriority = 'now' | 'next' | 'later'
  * Queued command type
  */
 export type QueuedCommand = {
-  value: string | Array<ContentBlockParam>
+  value: string | Array<ContentBlock>
   mode: PromptInputMode
   /** Defaults to the priority implied by `mode` when enqueued. */
   priority?: QueuePriority
@@ -361,7 +361,7 @@ export type QueuedCommand = {
  * Type guard for image PastedContent with non-empty data. Empty-content
  * images (e.g. from a 0-byte file drag) yield empty base64 strings that
  * the API rejects with `image cannot be empty`. Use this at every site
- * that converts PastedContent → ImageBlockParam so the filter and the
+ * that converts PastedContent → ImageBlock so the filter and the
  * ID list stay in sync.
  */
 export function isValidImagePaste(c: PastedContent): boolean {

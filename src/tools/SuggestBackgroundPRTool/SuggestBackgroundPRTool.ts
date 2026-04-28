@@ -63,9 +63,9 @@ export const SuggestBackgroundPRTool = buildTool({
   renderToolResultMessage() {
     return null
   },
-  mapToolResultToToolResultBlockParam({ title, branch_name }, toolUseID) {
+  mapToolResultToToolResultBlock({ title, branch_name }, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: `PR suggestion: "${title}" for branch "${branch_name}".`,
     }

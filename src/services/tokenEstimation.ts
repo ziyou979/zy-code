@@ -1,8 +1,8 @@
 import type {
-  LLMMessageParam,
+  Message as LLMMessageParam,
   ToolDefinition,
-  ToolUseBlockParam,
-  ToolResultBlockParam,
+  ToolCallInlineBlock,
+  ToolResultBlock,
 } from '../types/llm.js'
 // 动态导入的最小值，用于计数令牌的 Bedrock 调用
 // 延迟约 ~279KB 的 AWS SDK 代码，直到实际需要 Bedrock 调用
@@ -78,14 +78,14 @@ function stripToolSearchFieldsFromMessages(
 
     const normalizedContent = message.content.map(block => {
       // 从 tool_use 块中剥离 'caller'（助手消息）
-      if (block.type === 'tool_use') {
+      if (block.type === 'tool_call') {
         // 解构以排除 'caller' 等额外字段
         const toolUse =
-          block as ToolUseBlockParam & {
+          block as ToolCallInlineBlock & {
             caller?: unknown
           }
         return {
-          type: 'tool_use' as const,
+          type: 'tool_call' as const,
           id: toolUse.id,
           name: toolUse.name,
           input: toolUse.input,
@@ -95,7 +95,7 @@ function stripToolSearchFieldsFromMessages(
       // 从 tool_result 内容中剥离 tool_reference 块（用户消息）
       if (block.type === 'tool_result') {
         const toolResult =
-          block as ToolResultBlockParam
+          block as ToolResultBlock
         if (Array.isArray(toolResult.content)) {
           const filteredContent = (toolResult.content as unknown[]).filter(
             c => !isToolReferenceBlock(c),
@@ -276,7 +276,7 @@ function countBlockTokensLocally(
     return countTokensLocally(typedBlock.text, model)
   }
 
-  if (typedBlock.type === 'tool_use') {
+  if (typedBlock.type === 'tool_call') {
     const name = (typedBlock.name as string) ?? ''
     const input = jsonStringify(typedBlock.input ?? {})
     return countTokensLocally(name + input, model)
@@ -465,7 +465,7 @@ export function roughTokenCountEstimationForMessage(message: {
       message.message?.content as
         | string
         | Array<import('../types/llm.js').ContentBlock>
-        | Array<import('../types/llm.js').ContentBlockParam>
+        | Array<import('../types/llm.js').ContentBlock>
         | undefined,
     )
   }
@@ -486,7 +486,7 @@ function roughTokenCountEstimationForContent(
   content:
     | string
     | Array<import('../types/llm.js').ContentBlock>
-    | Array<import('../types/llm.js').ContentBlockParam>
+    | Array<import('../types/llm.js').ContentBlock>
     | undefined,
 ): number {
   if (!content) {
@@ -503,7 +503,7 @@ function roughTokenCountEstimationForContent(
 }
 
 function roughTokenCountEstimationForBlock(
-  block: string | import('../types/llm.js').ContentBlock | import('../types/llm.js').ContentBlockParam,
+  block: string | import('../types/llm.js').ContentBlock | import('../types/llm.js').ContentBlock,
 ): number {
   if (typeof block === 'string') {
     return roughTokenCountEstimation(block)
@@ -527,7 +527,7 @@ function roughTokenCountEstimationForBlock(
   if (block.type === 'tool_result') {
     return roughTokenCountEstimationForContent(block.content)
   }
-  if (block.type === 'tool_use') {
+  if (block.type === 'tool_call') {
     // input 是模型生成的 JSON — 任意大小（bash
     // 命令、Edit 差异、文件内容）。字符串化一次以获取
     // 字符计数；API 无论如何都会重新序列化，所以这就是它看到的。

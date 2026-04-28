@@ -42,7 +42,7 @@ import { tSync } from 'src/i18n/index.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('../../../utils/permissions/autoModeState.js') as typeof import('../../../utils/permissions/autoModeState.js') : null;
-import type { Base64ImageSource, ImageBlockParam } from '../../../types/llm.js';
+import type { ImageSource, ImageBlock } from '../../../types/llm.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { PastedContent } from '../../../utils/config.js';
 import type { ImageDimensions } from '../../../utils/imageResizer.js';
@@ -486,15 +486,15 @@ export function ExitPlanModePermissionRequest({
         planStructureVariant
       });
 
-      // Convert pasted images to ImageBlockParam[] with resizing
-      let imageBlocks: ImageBlockParam[] | undefined;
+      // Convert pasted images to ImageBlock[] with resizing
+      let imageBlocks: ImageBlock[] | undefined;
       if (hasImages) {
         imageBlocks = await Promise.all(imageAttachments.map(async img => {
-          const block: ImageBlockParam = {
+          const block: ImageBlock = {
             type: 'image',
             source: {
               type: 'base64',
-              media_type: (img.mediaType || 'image/png') as Base64ImageSource['media_type'],
+              mediaType: (img.mediaType || 'image/png') as ImageSource['mediaType'],
               data: img.content
             }
           };

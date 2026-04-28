@@ -655,7 +655,7 @@ export function logAPISuccessAndDuration({
           thinkingLen += block.thinking.length
         // @ts-ignore
         } else if (
-          (block.type as any) === 'tool_use' ||
+          (block.type as any) === 'tool_call' ||
           (block.type as any) === 'server_tool_use' ||
           (block.type as any) === 'mcp_tool_use'
         ) {
@@ -745,7 +745,7 @@ export function logAPISuccessAndDuration({
 
     // 检查输出中是否包含 tool_use 块
     hasToolCall = newMessages.some(m =>
-      m.message.content.some(c => c.type === 'tool_use'),
+      m.message.content.some(c => c.type === 'tool_call'),
     )
   }
 

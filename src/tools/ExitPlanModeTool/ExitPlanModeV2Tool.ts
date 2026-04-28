@@ -416,7 +416,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam(
+  mapToolResultToToolResultBlock(
     {
       isAgent,
       plan,
@@ -445,7 +445,7 @@ Plan file: ${filePath}
 **Important:** Do NOT proceed until you receive approval. Check your inbox for response.
 
 Request ID: ${requestId}`,
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
       }
     }
 
@@ -454,7 +454,7 @@ Request ID: ${requestId}`,
         type: 'tool_result',
         content:
           'User has approved the plan. There is nothing else needed from you now. Please respond with "ok"',
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
       }
     }
 
@@ -463,7 +463,7 @@ Request ID: ${requestId}`,
       return {
         type: 'tool_result',
         content: 'User has approved exiting plan mode. You can now proceed.',
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
       }
     }
 
@@ -487,7 +487,7 @@ You can refer back to it if needed during implementation.${teamHint}
 
 ## ${planLabel}:
 ${plan}`,
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

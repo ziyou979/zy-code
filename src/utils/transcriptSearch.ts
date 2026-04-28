@@ -43,7 +43,7 @@ function computeSearchText(msg: RenderableMessage): string {
             if (!RENDERED_AS_SENTINEL.has(b.text)) parts.push(b.text)
           } else if (b.type === 'tool_result') {
             // b.content is the MODEL-facing serialization (from each tool's
-            // mapToolResultToToolResultBlockParam) — adds system-reminders,
+            // mapToolResultToToolResultBlock) — adds system-reminders,
             // <persisted-output> wrappers, backgroundInfo strings,
             // CYBER_RISK_MITIGATION_REMINDER. The UI
             // renders msg.toolUseResult (the tool's native Out) via
@@ -72,7 +72,7 @@ function computeSearchText(msg: RenderableMessage): string {
         raw = c
           .flatMap(b => {
             if (b.type === 'text') return [b.text]
-            if (b.type === 'tool_use') return [toolUseSearchText(b.input)]
+            if (b.type === 'tool_call') return [toolUseSearchText(b.input)]
             return []
           })
           .join('\n')

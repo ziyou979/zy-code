@@ -361,7 +361,7 @@ export const TaskUpdateTool = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     const {
       success,
       taskId,
@@ -375,7 +375,7 @@ export const TaskUpdateTool = buildTool({
       // in StreamingToolExecutor. "Task not found" is a benign condition
       // (e.g., task list already cleaned up) that the model can handle.
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: error || `Task #${taskId} not found`,
       }
@@ -398,7 +398,7 @@ export const TaskUpdateTool = buildTool({
     }
 
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: resultContent,
     }

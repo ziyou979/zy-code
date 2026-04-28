@@ -1,12 +1,12 @@
-import type { ThinkingBlock, ThinkingBlockParam } from '../../types/llm.js';
+import type { ThinkingBlock } from '../../types/llm.js';
 import React from 'react';
 import { Box, Text } from '../../ink.js';
 import { tSync } from '../../i18n/index.js';
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
 import { Markdown } from '../Markdown.js';
 type Props = {
-  // Accept either full ThinkingBlock/ThinkingBlockParam or a minimal shape with just type and thinking
-  param: ThinkingBlock | ThinkingBlockParam | {
+  // Accept either full ThinkingBlock/ThinkingBlock or a minimal shape with just type and thinking
+  param: ThinkingBlock | ThinkingBlock | {
     type: 'thinking';
     thinking: string;
   };

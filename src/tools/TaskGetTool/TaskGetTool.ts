@@ -96,11 +96,11 @@ export const TaskGetTool = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     const { task } = content as Output
     if (!task) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: 'Task not found',
       }
@@ -120,7 +120,7 @@ export const TaskGetTool = buildTool({
     }
 
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: lines.join('\n'),
     }

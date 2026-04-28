@@ -1,6 +1,5 @@
 import type {
   ContentBlock,
-  ContentBlockParam,
 } from '../types/llm.js'
 import { roughTokenCountEstimation as countTokens } from '../services/tokenEstimation.js'
 import type {
@@ -96,7 +95,7 @@ export function analyzeContext(messages: Message[]): TokenStats {
 }
 
 function processBlock(
-  block: ContentBlockParam | ContentBlock,
+  block: ContentBlock,
   message: UserMessage | AssistantMessage,
   stats: TokenStats,
   toolIds: Map<string, string>,
@@ -146,13 +145,13 @@ function processBlock(
     }
 
     case 'tool_result': {
-      if ('tool_use_id' in block) {
-        const toolName = toolIds.get(block.tool_use_id) || 'unknown'
+      if ('toolCallId' in block) {
+        const toolName = toolIds.get(block.toolCallId) || 'unknown'
         increment(stats.toolResults, toolName, tokens)
 
         // Track file read tokens
         if (toolName === 'Read') {
-          const path = readToolPaths.get(block.tool_use_id)
+          const path = readToolPaths.get(block.toolCallId)
           if (path) {
             const current = fileReads.get(path) || { count: 0, totalTokens: 0 }
             fileReads.set(path, {

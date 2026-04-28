@@ -88,11 +88,11 @@ export const TaskListTool = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     const { tasks } = content as Output
     if (tasks.length === 0) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: 'No tasks found',
       }
@@ -108,7 +108,7 @@ export const TaskListTool = buildTool({
     })
 
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: lines.join('\n'),
     }

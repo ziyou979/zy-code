@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import type {
-  Base64ImageSource,
-  ContentBlockParam,
-  ImageBlockParam,
+  ImageSource,
+  ContentBlock,
+  ImageBlock,
 } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import type { QuerySource } from 'src/constants/querySource.js'
@@ -101,7 +101,7 @@ export async function processUserInput({
   isMeta,
   skipAttachments,
 }: {
-  input: string | Array<ContentBlockParam>
+  input: string | Array<ContentBlock>
   /**
    * Input before [Pasted text #N] expansion. Used for ultraplan keyword
    * detection so pasted content containing the word cannot trigger. Falls
@@ -279,7 +279,7 @@ function applyTruncation(content: string): string {
 }
 
 async function processUserInputBase(
-  input: string | Array<ContentBlockParam>,
+  input: string | Array<ContentBlock>,
   mode: PromptInputMode,
   setToolJSX: SetToolJSXFn,
   context: ProcessUserInputContext,
@@ -298,7 +298,7 @@ async function processUserInputBase(
   preExpansionInput?: string,
 ): Promise<ProcessUserInputBaseResult> {
   let inputString: string | null = null
-  let precedingInputBlocks: ContentBlockParam[] = []
+  let precedingInputBlocks: ContentBlock[] = []
 
   // Collect image metadata texts for isMeta message
   const imageMetadataTexts: string[] = []
@@ -309,13 +309,13 @@ async function processUserInputBase(
   // blocks actually reach the API — otherwise the resize work above is
   // discarded for the regular prompt path. Also normalizes bridge inputs
   // where iOS may send `mediaType` instead of `media_type` (mobile-apps#5825).
-  let normalizedInput: string | ContentBlockParam[] = input
+  let normalizedInput: string | ContentBlock[] = input
 
   if (typeof input === 'string') {
     inputString = input
   } else if (input.length > 0) {
     queryCheckpoint('query_image_processing_start')
-    const processedBlocks: ContentBlockParam[] = []
+    const processedBlocks: ContentBlock[] = []
     for (const block of input) {
       if (block.type === 'image') {
         const resized = await maybeResizeAndDownsampleImageBlock(block)
@@ -365,12 +365,12 @@ async function processUserInputBase(
   queryCheckpoint('query_pasted_image_processing_start')
   const imageProcessingResults = await Promise.all(
     imageContents.map(async pastedImage => {
-      const imageBlock: ImageBlockParam = {
+      const imageBlock: ImageBlock = {
         type: 'image',
         source: {
           type: 'base64',
-          media_type: (pastedImage.mediaType ||
-            'image/png') as Base64ImageSource['media_type'],
+          mediaType: (pastedImage.mediaType ||
+            'image/png') as ImageSource['mediaType'],
           data: pastedImage.content,
         },
       }
@@ -387,7 +387,7 @@ async function processUserInputBase(
     }),
   )
   // Collect results preserving order
-  const imageContentBlocks: ContentBlockParam[] = []
+  const imageContentBlocks: ContentBlock[] = []
   for (const {
     resized,
     originalDimensions,

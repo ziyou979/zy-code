@@ -163,7 +163,7 @@ function getToolResultIds(message: Message): string[] {
   const ids: string[] = []
   for (const block of content) {
     if (block.type === 'tool_result') {
-      ids.push(block.tool_use_id)
+      ids.push(block.toolCallId)
     }
   }
   return ids
@@ -181,7 +181,7 @@ function hasToolUseWithIds(message: Message, toolUseIds: Set<string>): boolean {
     return false
   }
   return content.some(
-    block => block.type === 'tool_use' && toolUseIds.has(block.id),
+    block => block.type === 'tool_call' && toolUseIds.has(block.id),
   )
 }
 
@@ -253,7 +253,7 @@ export function adjustIndexToPreserveAPIInvariants(
       const msg = messages[i]!
       if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
         for (const block of msg.message.content) {
-          if (block.type === 'tool_use') {
+          if (block.type === 'tool_call') {
             toolUseIdsInKeptRange.add(block.id)
           }
         }
@@ -276,7 +276,7 @@ export function adjustIndexToPreserveAPIInvariants(
           Array.isArray(message.message.content)
         ) {
           for (const block of message.message.content) {
-            if (block.type === 'tool_use' && neededToolUseIds.has(block.id)) {
+            if (block.type === 'tool_call' && neededToolUseIds.has(block.id)) {
               neededToolUseIds.delete(block.id)
             }
           }

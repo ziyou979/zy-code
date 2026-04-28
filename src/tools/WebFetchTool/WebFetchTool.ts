@@ -298,9 +298,9 @@ To complete your request, I need to fetch content from the redirected URL. Pleas
       data: output,
     }
   },
-  mapToolResultToToolResultBlockParam({ result }, toolUseID) {
+  mapToolResultToToolResultBlock({ result }, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: result,
     }

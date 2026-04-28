@@ -1,7 +1,7 @@
 import type {
-  Base64ImageSource,
-  ContentBlockParam,
-  ImageBlockParam,
+  ImageSource,
+  ContentBlock,
+  ImageBlock,
 } from '../types/llm.js'
 import type { UUID } from 'crypto'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
@@ -10,7 +10,7 @@ import { detectImageFormatFromBase64 } from '../utils/imageResizer.js'
 /**
  * Process an inbound user message from the bridge, extracting content
  * and UUID for enqueueing. Supports both string content and
- * ContentBlockParam[] (e.g. messages containing images).
+ * ContentBlock[] (e.g. messages containing images).
  *
  * Normalizes image blocks from bridge clients that may use camelCase
  * `mediaType` instead of snake_case `media_type` (mobile-apps#5825).
@@ -21,7 +21,7 @@ import { detectImageFormatFromBase64 } from '../utils/imageResizer.js'
 export function extractInboundMessageFields(
   msg: SDKMessage,
 ):
-  | { content: string | Array<ContentBlockParam>; uuid: UUID | undefined }
+  | { content: string | Array<ContentBlock>; uuid: UUID | undefined }
   | undefined {
   if (msg.type !== 'user') return undefined
   const content = (msg.message as any)?.content
@@ -44,14 +44,14 @@ export function extractInboundMessageFields(
  * send `mediaType` (camelCase) instead of `media_type` (snake_case), or
  * omit the field entirely. Without normalization, the bad block poisons
  * the session — every subsequent API call fails with
- * "media_type: Field required".
+ * "mediaType: Field required".
  *
  * Fast-path scan returns the original array reference when no
  * normalization is needed (zero allocation on the happy path).
  */
 export function normalizeImageBlocks(
-  blocks: Array<ContentBlockParam>,
-): Array<ContentBlockParam> {
+  blocks: Array<ContentBlock>,
+): Array<ContentBlock> {
   if (!blocks.some(isMalformedBase64Image)) return blocks
 
   return blocks.map(block => {
@@ -65,7 +65,7 @@ export function normalizeImageBlocks(
       ...block,
       source: {
         type: 'base64' as const,
-        media_type: mediaType as Base64ImageSource['media_type'],
+        mediaType: mediaType as ImageSource['mediaType'],
         data: block.source.data,
       },
     }
@@ -73,8 +73,8 @@ export function normalizeImageBlocks(
 }
 
 function isMalformedBase64Image(
-  block: ContentBlockParam,
-): block is ImageBlockParam & { source: Base64ImageSource } {
+  block: ContentBlock,
+): block is ImageBlock & { source: ImageSource } {
   if (block.type !== 'image' || block.source?.type !== 'base64') return false
-  return !(block.source as unknown as Record<string, unknown>).media_type
+  return !(block.source as unknown as Record<string, unknown>).mediaType
 }

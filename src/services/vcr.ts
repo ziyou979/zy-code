@@ -1,4 +1,4 @@
-import type { ContentBlock } from '../types/llm.js'
+import type { AssistantContentBlock } from '../types/llm.js'
 import { createHash, randomUUID, type UUID } from 'crypto'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import isPlainObject from 'lodash-es/isPlainObject.js'
@@ -204,7 +204,7 @@ function mapMessages(
           return _
         case 'text':
           return { ..._, text: f(_.text) }
-        case 'tool_use':
+        case 'tool_call':
           return {
             ..._,
             input: mapValuesDeep(_.input as Record<string, unknown>, f),
@@ -258,9 +258,8 @@ function mapAssistantMessage(
               return {
                 ..._,
                 text: f(_.text) as string,
-                citations: _.citations || [],
-              } // Ensure citations
-            case 'tool_use':
+              }
+            case 'tool_call':
               return {
                 ..._,
                 input: mapValuesDeep(_.input as Record<string, unknown>, f),
@@ -269,7 +268,7 @@ function mapAssistantMessage(
               return _ // Handle other block types unchanged
           }
         })
-        .filter(Boolean) as ContentBlock[],
+        .filter(Boolean) as AssistantContentBlock[],
     },
     type: 'assistant',
   }

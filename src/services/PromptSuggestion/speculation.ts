@@ -239,7 +239,7 @@ export function prepareMessagesForInjection(messages: Message[]): Message[] {
   }) =>
     b.type !== 'thinking' &&
     b.type !== 'redacted_thinking' &&
-    !(b.type === 'tool_use' && !toolIdsWithSuccessfulResults.has(b.id!)) &&
+    !(b.type === 'tool_call' && !toolIdsWithSuccessfulResults.has(b.id!)) &&
     !(
       b.type === 'tool_result' &&
       !toolIdsWithSuccessfulResults.has(b.tool_use_id!)

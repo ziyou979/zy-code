@@ -535,7 +535,7 @@ function extractToolStats(log: LogOption): {
       const content = msg.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
-          if (block.type === 'tool_use' && 'name' in block) {
+          if (block.type === 'tool_call' && 'name' in block) {
             const toolName = block.name as string
             toolCounts[toolName] = (toolCounts[toolName] || 0) + 1
 
@@ -856,7 +856,7 @@ function formatTranscriptForFacets(log: LogOption): string {
         for (const block of content) {
           if (block.type === 'text' && 'text' in block) {
             lines.push(`[Assistant]: ${(block.text as string).slice(0, 300)}`)
-          } else if (block.type === 'tool_use' && 'name' in block) {
+          } else if (block.type === 'tool_call' && 'name' in block) {
             lines.push(`[Tool: ${block.name}]`)
           }
         }

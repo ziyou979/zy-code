@@ -7,7 +7,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from './llm.js'
+import type { ContentBlock } from './llm.js'
 
 // ============================================================================
 // Permission Modes
@@ -180,7 +180,7 @@ export type PermissionAllowDecision<
   decisionReason?: PermissionDecisionReason
   toolUseID?: string
   acceptFeedback?: string
-  contentBlocks?: ContentBlockParam[]
+  contentBlocks?: ContentBlock[]
 }
 
 /**
@@ -222,7 +222,7 @@ export type PermissionAskDecision<
    * Optional content blocks (e.g., images) to include alongside the rejection
    * message in the tool result. Used when users paste images as feedback.
    */
-  contentBlocks?: ContentBlockParam[]
+  contentBlocks?: ContentBlock[]
 }
 
 /**

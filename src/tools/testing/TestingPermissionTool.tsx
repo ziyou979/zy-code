@@ -64,11 +64,11 @@ export const TestingPermissionTool: Tool<InputSchema, string> = buildTool({
       data: `${NAME} executed successfully`
     };
   },
-  mapToolResultToToolResultBlockParam(result, toolUseID) {
+  mapToolResultToToolResultBlock(result, toolUseID) {
     return {
       type: 'tool_result',
       content: String(result),
-      tool_use_id: toolUseID
+      toolCallId: toolUseID
     };
   }
 } satisfies ToolDef<InputSchema, string>);

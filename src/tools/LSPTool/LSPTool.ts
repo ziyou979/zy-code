@@ -412,9 +412,9 @@ export const LSPTool = buildTool({
       }
     }
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: output.result,
     }

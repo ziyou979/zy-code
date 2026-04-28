@@ -5,8 +5,8 @@
 // teleportToRemote's CreateSession events array.
 
 import type {
-  ToolResultBlockParam,
-  ToolUseBlock,
+  ToolResultBlock,
+  ToolCallInlineBlock,
 } from '../../types/llm.js'
 import type { SDKMessage } from '../../entrypoints/agentSdkTypes.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
@@ -79,7 +79,7 @@ export type UltraplanPhase = 'running' | 'needs_input' | 'plan_ready'
  */
 export class ExitPlanModeScanner {
   private exitPlanCalls: string[] = []
-  private results = new Map<string, ToolResultBlockParam>()
+  private results = new Map<string, ToolResultBlock>()
   private rejectedIds = new Set<string>()
   private terminated: { subtype: string } | null = null
   private rescanAfterRejection = false
@@ -102,8 +102,8 @@ export class ExitPlanModeScanner {
     for (const m of newEvents) {
       if (m.type === 'assistant') {
         for (const block of (m.message as any).content) {
-          if (block.type !== 'tool_use') continue
-          const tu = block as ToolUseBlock
+          if (block.type !== 'tool_call') continue
+          const tu = block as ToolCallInlineBlock
           if (tu.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
             this.exitPlanCalls.push(tu.id)
           }
@@ -113,7 +113,7 @@ export class ExitPlanModeScanner {
         if (!Array.isArray(content)) continue
         for (const block of content) {
           if (block.type === 'tool_result') {
-            this.results.set(block.tool_use_id, block)
+            this.results.set(block.toolCallId, block)
           }
         }
       } else if (m.type === 'result' && m.subtype !== 'success') {
@@ -145,7 +145,7 @@ export class ExitPlanModeScanner {
         const tr = this.results.get(id)
         if (!tr) {
           found = { kind: 'pending' }
-        } else if (tr.is_error === true) {
+        } else if (tr.isError === true) {
           const teleportPlan = extractTeleportPlan(tr.content)
           found =
             teleportPlan !== null
@@ -307,7 +307,7 @@ export async function pollForApprovedExitPlanMode(
 
 // tool_result content may be string or [{type:'text',text}] depending on
 // threadstore encoding.
-function contentToText(content: ToolResultBlockParam['content']): string {
+function contentToText(content: ToolResultBlock['content']): string {
   return typeof content === 'string'
     ? content
     : Array.isArray(content)
@@ -319,7 +319,7 @@ function contentToText(content: ToolResultBlockParam['content']): string {
 // Returns null when the sentinel is absent — callers treat null as a normal
 // user rejection (scanner falls through to { kind: 'rejected' }).
 function extractTeleportPlan(
-  content: ToolResultBlockParam['content'],
+  content: ToolResultBlock['content'],
 ): string | null {
   const text = contentToText(content)
   const marker = `${ULTRAPLAN_TELEPORT_SENTINEL}\n`
@@ -330,7 +330,7 @@ function extractTeleportPlan(
 
 // Plan is echoed in tool_result content as "## Approved Plan:\n<text>" or
 // "## Approved Plan (edited by user):\n<text>" (ExitPlanModeV2Tool).
-function extractApprovedPlan(content: ToolResultBlockParam['content']): string {
+function extractApprovedPlan(content: ToolResultBlock['content']): string {
   const text = contentToText(content)
   // Try both markers — edited plans use a different label.
   const markers = [

@@ -1,4 +1,4 @@
-import type { Base64ImageSource, ImageBlockParam } from '../../../types/llm.js';
+import type { ImageSource, ImageBlock } from '../../../types/llm.js';
 import React, { Suspense, use, useRef, useState } from 'react';
 import { useSettings } from '../../../hooks/useSettings.js';
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js';
@@ -306,14 +306,14 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
   }
   return null;
 }
-async function convertImagesToBlocks(images: PastedContent[]): Promise<ImageBlockParam[] | undefined> {
+async function convertImagesToBlocks(images: PastedContent[]): Promise<ImageBlock[] | undefined> {
   if (images.length === 0) return undefined;
   return Promise.all(images.map(async img => {
-    const block: ImageBlockParam = {
+    const block: ImageBlock = {
       type: 'image',
       source: {
         type: 'base64',
-        media_type: (img.mediaType || 'image/png') as Base64ImageSource['media_type'],
+        mediaType: (img.mediaType || 'image/png') as ImageSource['mediaType'],
         data: img.content
       }
     };

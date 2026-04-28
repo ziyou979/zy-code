@@ -1,4 +1,4 @@
-import type { ToolUseBlock } from '../types/llm.js'
+import type { ToolCallInlineBlock } from '../types/llm.js'
 import last from 'lodash-es/last.js'
 import {
   getSessionId,
@@ -236,11 +236,11 @@ export async function* handleOrphanedPermission(
   }
 
   const content = assistantMessage.message.content
-  let toolUseBlock: ToolUseBlock | undefined
+  let toolUseBlock: ToolCallInlineBlock | undefined
   if (Array.isArray(content)) {
     for (const block of content) {
-      if (block.type === 'tool_use' && block.id === toolUseID) {
-        toolUseBlock = block as ToolUseBlock
+      if (block.type === 'tool_call' && block.id === toolUseID) {
+        toolUseBlock = block as ToolCallInlineBlock
         break
       }
     }
@@ -258,7 +258,7 @@ export async function* handleOrphanedPermission(
     return
   }
 
-  // Create ToolUseBlock with the updated input if permission was allowed
+  // Create ToolCallInlineBlock with the updated input if permission was allowed
   let finalInput = toolInput
   if (permissionResult.behavior === 'allow') {
     if (permissionResult.updatedInput !== undefined) {
@@ -270,7 +270,7 @@ export async function* handleOrphanedPermission(
       )
     }
   }
-  const finalToolUseBlock: ToolUseBlock = {
+  const finalToolCallInlineBlock: ToolCallInlineBlock = {
     ...toolUseBlock,
     input: finalInput,
   }
@@ -301,7 +301,7 @@ export async function* handleOrphanedPermission(
       m.type === 'assistant' &&
       Array.isArray(m.message.content) &&
       m.message.content.some(
-        b => b.type === 'tool_use' && 'id' in b && b.id === toolUseID,
+        b => b.type === 'tool_call' && 'id' in b && b.id === toolUseID,
       ),
   )
   if (!alreadyPresent) {
@@ -320,7 +320,7 @@ export async function* handleOrphanedPermission(
 
   // Execute the tool - errors are handled internally by runToolUse
   for await (const update of runTools(
-    [finalToolUseBlock],
+    [finalToolCallInlineBlock],
     [assistantMessage],
     canUseTool,
     processUserInputContext,
@@ -365,7 +365,7 @@ export function extractReadFilesFromMessages(
     ) {
       for (const content of message.message.content) {
         if (
-          content.type === 'tool_use' &&
+          content.type === 'tool_call' &&
           content.name === FILE_READ_TOOL_NAME
         ) {
           // Extract file_path from the tool use input
@@ -381,7 +381,7 @@ export function extractReadFilesFromMessages(
             fileReadToolUseIds.set(content.id, absolutePath)
           }
         } else if (
-          content.type === 'tool_use' &&
+          content.type === 'tool_call' &&
           content.name === FILE_WRITE_TOOL_NAME
         ) {
           // Extract file_path and content from the Write tool use input
@@ -397,7 +397,7 @@ export function extractReadFilesFromMessages(
             })
           }
         } else if (
-          content.type === 'tool_use' &&
+          content.type === 'tool_call' &&
           content.name === FILE_EDIT_TOOL_NAME
         ) {
           // Edit's input has old_string/new_string, not the resulting content.
@@ -416,9 +416,9 @@ export function extractReadFilesFromMessages(
   for (const message of messages) {
     if (message.type === 'user' && Array.isArray(message.message.content)) {
       for (const content of message.message.content) {
-        if (content.type === 'tool_result' && content.tool_use_id) {
+        if (content.type === 'tool_result' && content.toolCallId) {
           // Handle Read tool results
-          const readFilePath = fileReadToolUseIds.get(content.tool_use_id)
+          const readFilePath = fileReadToolUseIds.get(content.toolCallId)
           if (
             readFilePath &&
             typeof content.content === 'string' &&
@@ -454,7 +454,7 @@ export function extractReadFilesFromMessages(
           }
 
           // Handle Write tool results - use content from the tool input
-          const writeToolData = fileWriteToolUseIds.get(content.tool_use_id)
+          const writeToolData = fileWriteToolUseIds.get(content.toolCallId)
           if (writeToolData && message.timestamp) {
             const timestamp = new Date(message.timestamp).getTime()
             cache.set(writeToolData.filePath, {
@@ -474,8 +474,8 @@ export function extractReadFilesFromMessages(
           // Cowork cold-restart per turn), so disk content at extraction time
           // IS the post-edit state. No dedup: processing every Edit preserves
           // last-wins semantics when Read/Write interleave (Edit→Read→Edit).
-          const editFilePath = fileEditToolUseIds.get(content.tool_use_id)
-          if (editFilePath && content.is_error !== true) {
+          const editFilePath = fileEditToolUseIds.get(content.toolCallId)
+          if (editFilePath && content.isError !== true) {
             try {
               const { content: diskContent } =
                 readFileSyncWithMetadata(editFilePath)
@@ -512,7 +512,7 @@ export function extractBashToolsFromMessages(messages: Message[]): Set<string> {
       Array.isArray(message.message.content)
     ) {
       for (const content of message.message.content) {
-        if (content.type === 'tool_use' && content.name === BASH_TOOL_NAME) {
+        if (content.type === 'tool_call' && content.name === BASH_TOOL_NAME) {
           const { input } = content
           if (
             typeof input !== 'object' ||

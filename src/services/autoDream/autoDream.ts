@@ -291,7 +291,7 @@ function makeDreamProgressWatcher(
     for (const block of msg.message.content) {
       if (block.type === 'text') {
         text += block.text
-      } else if (block.type === 'tool_use') {
+      } else if (block.type === 'tool_call') {
         toolUseCount++
         if (
           block.name === FILE_EDIT_TOOL_NAME ||

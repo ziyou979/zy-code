@@ -21,7 +21,7 @@ import type {
   StopHookInfo,
   SystemStopHookSummaryMessage,
 } from '../types/message.js'
-import type { ContentBlockParam } from '../types/llm.js'
+import type { ContentBlock } from '../types/llm.js'
 import { getDisplayPath } from './file.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
 import { tSync } from '../i18n/index.js'
@@ -256,7 +256,7 @@ export function getSearchOrReadFromContent(
   mcpServerName?: string
   isBash?: boolean
 } | null {
-  if (content?.type === 'tool_use' && content.name) {
+  if (content?.type === 'tool_call' && content.name) {
     const info = getToolSearchOrReadInfo(content.name, content.input, tools)
     if (info.isCollapsible || info.isREPL) {
       return {
@@ -307,7 +307,7 @@ function getCollapsibleToolInfo(
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
     const info = getSearchOrReadFromContent(content, tools)
-    if (info && content?.type === 'tool_use') {
+    if (info && content?.type === 'tool_call') {
       return { name: content.name, input: content.input, ...info }
     }
   }
@@ -316,11 +316,11 @@ function getCollapsibleToolInfo(
     const firstContent = (msg as any).messages[0]?.message.content[0]
     const info = getSearchOrReadFromContent(
       firstContent
-        ? { type: 'tool_use', name: (msg as any).toolName, input: firstContent.input }
+        ? { type: 'tool_call', name: (msg as any).toolName, input: firstContent.input }
         : undefined,
       tools,
     )
-    if (info && firstContent?.type === 'tool_use') {
+    if (info && firstContent?.type === 'tool_call') {
       return { name: (msg as any).toolName, input: firstContent.input, ...info }
     }
   }
@@ -351,7 +351,7 @@ function isNonCollapsibleToolUse(
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
     if (
-      content?.type === 'tool_use' &&
+      content?.type === 'tool_call' &&
       !isToolSearchOrRead(content.name, content.input, tools)
     ) {
       return true
@@ -360,7 +360,7 @@ function isNonCollapsibleToolUse(
   if (msg.type === 'grouped_tool_use') {
     const firstContent = (msg as any).messages[0]?.message.content[0]
     if (
-      firstContent?.type === 'tool_use' &&
+      firstContent?.type === 'tool_call' &&
       !isToolSearchOrRead((msg as any).toolName, firstContent.input, tools)
     ) {
       return true
@@ -412,14 +412,14 @@ function isCollapsibleToolUse(
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
     return (
-      content?.type === 'tool_use' &&
+      content?.type === 'tool_call' &&
       isToolSearchOrRead(content.name, content.input, tools)
     )
   }
   if (msg.type === 'grouped_tool_use') {
     const firstContent = (msg as any).messages[0]?.message.content[0]
     return (
-      firstContent?.type === 'tool_use' &&
+      firstContent?.type === 'tool_call' &&
       isToolSearchOrRead((msg as any).toolName, firstContent.input, tools)
     )
   }
@@ -435,14 +435,14 @@ function isCollapsibleToolResult(
   collapsibleToolUseIds: Set<string>,
 ): msg is CollapsibleMessage {
   if (msg.type === 'user') {
-    const toolResults = (msg.message.content as ContentBlockParam[]).filter(
-      (c): c is { type: 'tool_result'; tool_use_id: string } =>
+    const toolResults = (msg.message.content as ContentBlock[]).filter(
+      (c): c is { type: 'tool_result'; toolCallId: string } =>
         c.type === 'tool_result',
     )
     // Only return true if there are tool results AND all of them are for collapsible tools
     return (
       toolResults.length > 0 &&
-      toolResults.every(r => collapsibleToolUseIds.has(r.tool_use_id))
+      toolResults.every(r => collapsibleToolUseIds.has(r.toolCallId))
     )
   }
   return false
@@ -454,7 +454,7 @@ function isCollapsibleToolResult(
 function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
-    if (content?.type === 'tool_use') {
+    if (content?.type === 'tool_call') {
       return [content.id]
     }
   }
@@ -462,7 +462,7 @@ function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
     return (msg as any).messages
       .map(m => {
         const content = m.message.content[0]
-        return content.type === 'tool_use' ? content.id : ''
+        return content.type === 'tool_call' ? content.id : ''
       })
       .filter(Boolean)
   }
@@ -528,7 +528,7 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
 
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
-    if (content?.type === 'tool_use') {
+    if (content?.type === 'tool_call') {
       const input = content.input as { file_path?: string } | undefined
       if (input?.file_path) {
         paths.push(input.file_path)
@@ -537,7 +537,7 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
   } else if (msg.type === 'grouped_tool_use') {
     for (const m of (msg as any).messages) {
       const content = m.message.content[0]
-      if (content?.type === 'tool_use') {
+      if (content?.type === 'tool_call') {
         const input = content.input as { file_path?: string } | undefined
         if (input?.file_path) {
           paths.push(input.file_path)
@@ -567,7 +567,7 @@ function scanBashResultForGitOps(
   const combined = (out.stdout ?? '') + '\n' + (out.stderr ?? '')
   for (const c of (msg as any).message.content) {
     if (c.type !== 'tool_result') continue
-    const command = group.bashCommands?.get(c.tool_use_id)
+    const command = group.bashCommands?.get(c.toolCallId)
     if (!command) continue
     const { commit, push, branch, pr } = detectGitOperation(command, combined)
     if (commit) group.commits?.push(commit)

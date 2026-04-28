@@ -1,4 +1,4 @@
-import type { ToolUseBlock } from '../../types/llm.js'
+import type { ToolCallInlineBlock } from '../../types/llm.js'
 import {
   createUserMessage,
   REJECT_MESSAGE,
@@ -20,7 +20,7 @@ type ToolStatus = 'queued' | 'executing' | 'completed' | 'yielded'
 
 type TrackedTool = {
   id: string
-  block: ToolUseBlock
+  block: ToolCallInlineBlock
   assistantMessage: AssistantMessage
   status: ToolStatus
   isConcurrencySafe: boolean
@@ -73,7 +73,7 @@ export class StreamingToolExecutor {
   /**
    * Add a tool to the execution queue. Will start executing immediately if conditions allow.
    */
-  addTool(block: ToolUseBlock, assistantMessage: AssistantMessage): void {
+  addTool(block: ToolCallInlineBlock, assistantMessage: AssistantMessage): void {
     const toolDefinition = findToolByName(this.toolDefinitions, block.name)
     if (!toolDefinition) {
       this.tools.push({
@@ -89,8 +89,8 @@ export class StreamingToolExecutor {
               {
                 type: 'tool_result',
                 content: `<tool_use_error>Error: No such tool available: ${block.name}</tool_use_error>`,
-                is_error: true,
-                tool_use_id: block.id,
+                isError: true,
+                toolCallId: block.id,
               },
             ],
             toolUseResult: `Error: No such tool available: ${block.name}`,
@@ -163,8 +163,8 @@ export class StreamingToolExecutor {
           {
             type: 'tool_result',
             content: withMemoryCorrectionHint(REJECT_MESSAGE),
-            is_error: true,
-            tool_use_id: toolUseId,
+            isError: true,
+            toolCallId: toolUseId,
           },
         ],
         toolUseResult: 'User rejected tool use',
@@ -178,8 +178,8 @@ export class StreamingToolExecutor {
             type: 'tool_result',
             content:
               '<tool_use_error>Error: Streaming fallback - tool execution discarded</tool_use_error>',
-            is_error: true,
-            tool_use_id: toolUseId,
+            isError: true,
+            toolCallId: toolUseId,
           },
         ],
         toolUseResult: 'Streaming fallback - tool execution discarded',
@@ -195,8 +195,8 @@ export class StreamingToolExecutor {
         {
           type: 'tool_result',
           content: `<tool_use_error>${msg}</tool_use_error>`,
-          is_error: true,
-          tool_use_id: toolUseId,
+          isError: true,
+          toolCallId: toolUseId,
         },
       ],
       toolUseResult: msg,
@@ -360,7 +360,7 @@ export class StreamingToolExecutor {
           update.message.type === 'user' &&
           Array.isArray(update.message.message.content) &&
           update.message.message.content.some(
-            _ => _.type === 'tool_result' && _.is_error === true,
+            _ => _.type === 'tool_result' && _.isError === true,
           )
 
         if (isErrorResult) {

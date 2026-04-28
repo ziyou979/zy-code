@@ -1,4 +1,4 @@
-import type { ToolUseBlock, ToolResultBlockParam } from '../types/llm.js'
+import type { ToolCallInlineBlock, ToolResultBlock } from '../types/llm.js'
 import type { Tools } from '../Tool.js'
 import type {
   GroupedToolUseMessage,
@@ -33,7 +33,7 @@ function getToolsWithGrouping(tools: Tools): Set<string> {
 function getToolUseInfo(
   msg: MessageWithoutProgress,
 ): { messageId: string; toolUseId: string; toolName: string } | null {
-  if (msg.type === 'assistant' && msg.message.content[0]?.type === 'tool_use') {
+  if (msg.type === 'assistant' && msg.message.content[0]?.type === 'tool_call') {
     const content = msg.message.content[0]
     return {
       messageId: msg.message.id,
@@ -107,9 +107,9 @@ export function applyGrouping(
       for (const content of msg.message.content) {
         if (
           content.type === 'tool_result' &&
-          groupedToolUseIds.has(content.tool_use_id)
+          groupedToolUseIds.has(content.toolCallId)
         ) {
-          resultsByToolUseId.set(content.tool_use_id, msg)
+          resultsByToolUseId.set(content.toolCallId, msg)
         }
       }
     }
@@ -162,11 +162,11 @@ export function applyGrouping(
     // Skip user messages whose tool_results are all grouped
     if (msg.type === 'user') {
       const toolResults = msg.message.content.filter(
-        (c): c is ToolResultBlockParam => c.type === 'tool_result',
+        (c): c is ToolResultBlock => c.type === 'tool_result',
       )
       if (toolResults.length > 0) {
         const allGrouped = toolResults.every(tr =>
-          groupedToolUseIds.has(tr.tool_use_id),
+          groupedToolUseIds.has(tr.toolCallId),
         )
         if (allGrouped) {
           continue

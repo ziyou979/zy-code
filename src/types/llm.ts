@@ -1,3 +1,5 @@
+import type { ConnectorTextBlock } from './connectorText.js'
+
 /**
  * 标准 LLM 类型体系 — 独立于任何 SDK 的中间格式。
  *
@@ -7,10 +9,6 @@
  * - 流式事件使用通用命名（response_start/chunk_start 等）
  * - 请求参数只包含通用字段，provider 专属字段通过 providerExtras 传递
  * - 字段命名统一驼峰（inputTokens 替代 input_tokens）
- *
- * 兼容性：
- * - 旧名称保留为 @deprecated type alias，确保渐进迁移
- * - 旧 snake_case 字段通过 getter 兼容
  */
 
 // ============================================================================
@@ -20,8 +18,8 @@
 /** 用户消息中可用的内容块 */
 export type UserContentBlock = TextBlock | ImageBlock
 
-/** 助手消息中可用的内容块 — 包含兼容类型以支持旧代码中的 block.type === 'tool_use' 等判断 */
-export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ToolUseBlock | ThinkingBlock | RedactedThinkingBlock
+/** 助手消息中可用的内容块 */
+export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ThinkingBlock | RedactedThinkingBlock
 
 // ---- 通用内容块 ----
 
@@ -29,21 +27,17 @@ export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ToolUseBlo
 export interface TextBlock {
   type: 'text'
   text: string
-  /** @deprecated v2 不再使用 cache_control */
-  cache_control?: CacheControl | null
-  /** @deprecated Anthropic 特有字段，v2 适配器应转换为纯文本 */
-  citations?: Array<{ type: string; cited_text: string }>
 }
 
 /** 图片块 — v2 平铺格式，兼容旧嵌套 source 结构 */
 export interface ImageBlock {
   type: 'image'
-  /** MIME 类型，如 'image/jpeg'、'image/png'（与 source.media_type 二选一） */
+  /** MIME 类型，如 'image/jpeg'、'image/png'（与 source.mediaType 二选一） */
   mimeType?: string
   /** base64 编码的图片数据（与 source.data 二选一） */
   data?: string
-  /** @deprecated 兼容旧嵌套结构 — 旧代码访问 .source.media_type / .source.data */
-  source?: { type: 'base64'; media_type: string; data: string }
+  /** @deprecated 兼容旧嵌套结构 */
+  source?: ImageSource
 }
 
 /**
@@ -513,159 +507,52 @@ export function createAbortError(): LLMAbortError {
 }
 
 // ============================================================================
-// 兼容性导出 — 在迁移期间保留，逐步删除
+// 额外内容块类型
 // ============================================================================
 
-/** @deprecated 使用 TextBlock */
-export type TextBlockParam = TextBlock
-
-/** @deprecated 使用 ImageBlock */
-export type ImageBlockParam = ImageBlock
-
 /**
- * @deprecated 使用 ToolCallInlineBlock 或 ToolUseBlock。
- * 注意：旧代码中 ToolUseBlockParam 的 type 为 'tool_use'，与 ToolCallInlineBlock 的 'tool_call' 不同。
- * 此处保留为独立的 'tool_use' 接口以兼容旧代码。
+ * 工具结果内容块。
+ * 注意：v2 推荐使用独立的 ToolMessage（role: 'tool'）。
+ * 此类型保留用于兼容 Anthropic 格式的消息内容。
  */
-export interface ToolUseBlockParam {
-  type: 'tool_use'
-  id: string
-  name: string
-  input: Record<string, unknown>
-}
-
-/**
- * @deprecated v2 中工具调用使用 ToolCallInlineBlock（type: 'tool_call'）。
- * 保留此接口用于渐进迁移，type 仍为 'tool_use' 以兼容旧代码中的 block.type === 'tool_use' 判断。
- */
-export interface ToolUseBlock {
-  type: 'tool_use'
-  id: string
-  name: string
-  input: Record<string, unknown>
-}
-
-/**
- * @deprecated v2 不再有独立的 tool_result 内容块。
- * 工具结果现在是独立的 ToolMessage（role: 'tool'）。
- * 此处保留为类型别名，在迁移期间保持编译通过。
- * 实际类型是一个通用 Record，因为旧代码广泛使用了 tool_use_id、is_error 等字段。
- */
-export interface ToolResultBlockParam {
+export interface ToolResultBlock {
   type: 'tool_result'
-  tool_use_id: string
-  content?: string | Array<TextBlockParam | ImageBlockParam>
-  is_error?: boolean
-  cache_control?: CacheControl | null
+  toolCallId: string
+  content?: string | Array<TextBlock | ImageBlock>
+  isError?: boolean
 }
 
-/** @deprecated 缓存控制，v2 不再使用 */
-export interface CacheControl {
-  type: 'ephemeral'
-}
-
-/** @deprecated v2 不再有 document 块，PDF 通过其他方式处理 */
-export interface DocumentBlockParam {
+/** 文档块 — 用于 PDF 等多模态文档 */
+export interface DocumentBlock {
   type: 'document'
-  source: Base64PDFSource | URLPDFSource | ContentSource
+  source: unknown
   title?: string | null
   context?: string | null
-  cache_control?: CacheControl | null
 }
 
-/** @deprecated v2 不再有 thinking 内容块（移至 providerExtras） */
+/** 思考块 — 模型的推理过程 */
 export interface ThinkingBlock {
   type: 'thinking'
   thinking: string
   signature: string
 }
 
-/** @deprecated v2 不再有 thinking 请求参数（移至 providerExtras） */
-export interface ThinkingBlockParam {
-  type: 'thinking'
-  thinking: string
-  signature: string
-}
-
-/** @deprecated v2 不再有 redacted_thinking（移至 providerExtras） */
+/** 加密思考块 — 模型加密的推理内容 */
 export interface RedactedThinkingBlock {
   type: 'redacted_thinking'
   data: string
 }
 
-/** @deprecated v2 不再有 redacted_thinking 参数 */
-export interface RedactedThinkingBlockParam {
-  type: 'redacted_thinking'
-  data: string
-}
 
-
-/** @deprecated 使用 ImageBlock 的 mimeType/data 字段 */
-export interface Base64ImageSource {
+/** base64 图片源。ImageBlock.source 使用此类型。 */
+export interface ImageSource {
   type: 'base64'
-  media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+  mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
   data: string
 }
 
-/**
- * @deprecated v2 中 content 块类型已按角色分离。
- * 使用 UserContentBlock 或 AssistantContentBlock。
- */
-export type ContentBlockParam = TextBlock | ImageBlock | ToolUseBlockParam | ToolCallInlineBlock | ToolResultBlockParam | DocumentBlockParam | ThinkingBlockParam | RedactedThinkingBlockParam
-
-/**
- * @deprecated v2 中响应内容块已简化。
- * 使用 AssistantContentBlock。
- * 此联合类型保留旧的 type 字符串值以兼容 block.type === 'tool_use' 等判断。
- */
-export type ContentBlock = TextBlock | ToolUseBlock | ToolCallInlineBlock | ThinkingBlock | RedactedThinkingBlock
-
-/** @deprecated 使用 Message */
-export type LLMMessageParam = Message
-
-/** @deprecated 使用 Response */
-export type LLMMessage = Response
-
-/**
- * @deprecated v1 内容块增量类型。
- * v2 使用 ChunkDelta（TextDelta | ToolCallInputDelta）。
- * 此类型保留用于渐进迁移。
- */
-export type ContentDelta =
-  | TextDelta
-  | ToolCallInputDelta
-  | { type: 'thinking_delta'; thinking: string }
-  | { type: 'signature_delta'; signature: string }
-  | { type: 'connector_text_delta'; connector_text: string }
-
-/** @deprecated 使用 LLMAdapter */
-export type LLMRequestAdapter = LLMAdapter
-
-/** @deprecated 使用 CreateParams（注意：字段名已从 snake_case 改为 camelCase） */
-export type LLMCreateParams = CreateParams
-
-/** @deprecated 使用 StreamResult */
-export type StreamResultV1 = StreamResult
-
-/** @deprecated 使用 TokenUsage（驼峰命名） */
-export interface TokenUsageV1 {
-  input_tokens: number
-  output_tokens: number
-  cache_creation_input_tokens?: number
-  cache_read_input_tokens?: number
-  server_tool_use_input_tokens?: number
-}
-
-/** @deprecated 使用 DeltaUsage（驼峰命名） */
-export interface DeltaUsageV1 {
-  output_tokens: number
-}
-
-/** @deprecated 使用 ThinkingConfig from utils/thinking.js */
-export type ThinkingConfig =
-  | { type: 'disabled' }
-  | { type: 'enabled'; budget_tokens: number }
-  | { type: 'adaptive' }
+/** 所有内容块的联合类型（用户内容 + 助手内容 + 工具结果等）。 */
+export type ContentBlock = TextBlock | ImageBlock | ToolCallInlineBlock | ToolResultBlock | DocumentBlock | ThinkingBlock | RedactedThinkingBlock | ConnectorTextBlock
 
 /**
  * 安全地获取错误的 status 码。

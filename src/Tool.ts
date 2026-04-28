@@ -1,6 +1,6 @@
 import type {
-  ToolResultBlockParam,
-  ToolUseBlockParam,
+  ToolResultBlock,
+  ToolCallInlineBlock,
 } from './types/llm.js'
 import type {
   ElicitRequestURLParams,
@@ -547,10 +547,10 @@ export type Tool<
    * 调用者 JSON 包装时重复编码。
    */
   toAutoClassifierInput(input: z.infer<Input>): unknown
-  mapToolResultToToolResultBlockParam(
+  mapToolResultToToolResultBlock(
     content: Output,
     toolUseID: string,
-  ): ToolResultBlockParam
+  ): ToolResultBlock
   /**
    * 可选。省略时，工具结果不渲染任何内容（与返回 null 相同）。
    * 对结果在其他地方展示的工具省略此项（例如 TodoWrite
@@ -575,7 +575,7 @@ export type Tool<
    * renderToolResultMessage 在转录模式（verbose=true, isTranscriptMode=true）
    * 下显示内容的扁平化文本。用于转录搜索索引：索引统计此字符串中的
    * 出现次数，高亮覆盖扫描实际屏幕缓冲区。要使 count ≡ highlight，
-   * 这必须返回最终可见的文本 — 而非 mapToolResultToToolResultBlockParam
+   * 这必须返回最终可见的文本 — 而非 mapToolResultToToolResultBlock
    * 中面向模型的序列化（它添加了系统提醒、持久化输出包装器）。
    *
    * 可以忽略 Chrome（统计不足没关系）。"Found 3 files in 12ms"
@@ -647,7 +647,7 @@ export type Tool<
    * "File not found" 而非原始错误的搜索工具）。
    */
   renderToolUseErrorMessage?(
-    result: ToolResultBlockParam['content'],
+    result: ToolResultBlock['content'],
     options: {
       progressMessagesForMessage: ProgressMessage<P>[]
       tools: Tools
@@ -667,13 +667,13 @@ export type Tool<
    */
   renderGroupedToolUse?(
     toolUses: Array<{
-      param: ToolUseBlockParam
+      param: ToolCallInlineBlock
       isResolved: boolean
       isError: boolean
       isInProgress: boolean
       progressMessages: ProgressMessage<P>[]
       result?: {
-        param: ToolResultBlockParam
+        param: ToolResultBlock
         output: unknown
       }
     }>,

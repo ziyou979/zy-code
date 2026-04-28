@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '../types/llm.js';
+import type { ContentBlock } from '../types/llm.js';
 import type { Command } from '../commands.js';
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js';
 const statusline = {
@@ -12,7 +12,7 @@ const statusline = {
   allowedTools: [AGENT_TOOL_NAME, 'Read(~/**)', 'Edit(~/.zy/settings.json)'],
   source: 'builtin',
   disableNonInteractive: true,
-  async getPromptForCommand(args): Promise<ContentBlockParam[]> {
+  async getPromptForCommand(args): Promise<ContentBlock[]> {
     const prompt = args.trim() || 'Configure my statusLine from my shell PS1 configuration';
     return [{
       type: 'text',

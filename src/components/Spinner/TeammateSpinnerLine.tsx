@@ -55,7 +55,7 @@ function getMessagePreview(messages: InProcessTeammateTaskState['messages']): st
     for (const block of content) {
       if (allLines.length >= 3) break;
       if (!block || typeof block !== 'object') continue;
-      if ('type' in block && block.type === 'tool_use' && 'name' in block) {
+      if ('type' in block && block.type === 'tool_call' && 'name' in block) {
         // Try to show meaningful info from tool input
         const input = 'input' in block ? block.input as Record<string, unknown> : null;
         let toolLine = `Using ${block.name}…`;

@@ -2,21 +2,19 @@
 // @ts-ignore - Some types not exported in current SDK version
 import type {
   ContentBlock,
-  ContentBlockParam,
-  ImageBlockParam,
-  LLMMessage,
-  LLMStreamEvent,
+  ImageBlock,
+  Response as LLMMessage,
+  StreamEvent as LLMStreamEvent,
   TokenUsage,
   DeltaUsage,
   StopReason,
-  ToolResultBlockParam,
+  ToolResultBlock,
   ToolDefinition,
-  LLMCreateParams,
+  CreateParams,
   ToolChoice,
-  ThinkingConfig as LLMThinkingConfig,
-  TextBlockParam,
-  LLMMessageParam,
-  DocumentBlockParam,
+  TextBlock,
+  Message as LLMMessageParam,
+  DocumentBlock,
   ProviderExtras,
 } from '../../types/llm.js'
 import {
@@ -937,14 +935,14 @@ function getPreviousRequestIdFromMessages(
 }
 
 function isMedia(
-  block: ContentBlockParam,
-): block is ImageBlockParam | DocumentBlockParam {
+  block: ContentBlock,
+): block is ImageBlock | DocumentBlock {
   return block.type === 'image' || block.type === 'document'
 }
 
 function isToolResult(
-  block: ContentBlockParam,
-): block is ToolResultBlockParam {
+  block: ContentBlock,
+): block is ToolResultBlock {
   return block.type === 'tool_result'
 }
 
@@ -1464,7 +1462,7 @@ async function* queryModel(
   let start = Date.now()
   let attemptNumber = 0
   const attemptStartTimes: number[] = []
-  let stream: AsyncIterable<LLMStreamEvent> | undefined = undefined
+  let stream: AsyncIterable<StreamEvent> | undefined = undefined
   let streamRequestId: string | null | undefined = undefined
   let clientRequestId: string | undefined = undefined
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins -- Response is available in Node 18+ and is used by the SDK
@@ -1777,7 +1775,7 @@ async function* queryModel(
         yield e.value
       }
     } while (!e.done)
-    stream = e.value as AsyncIterable<LLMStreamEvent>
+    stream = e.value as AsyncIterable<StreamEvent>
 
     // reset state
     newMessages.length = 0
@@ -2002,7 +2000,7 @@ async function* queryModel(
                   break
                 case 'input_json_delta':
                   if (
-                    contentBlock.type !== 'tool_use' &&
+                    contentBlock.type !== 'tool_call' &&
                     contentBlock.type !== 'server_tool_use'
                   ) {
                     logEvent('zy_streaming_error', {
@@ -2848,7 +2846,7 @@ async function* queryModel(
  * @internal 导出用于测试
  */
 export function cleanupStream(
-  stream: AsyncIterable<LLMStreamEvent> | undefined,
+  stream: AsyncIterable<StreamEvent> | undefined,
 ): void {
   if (!stream) {
     return
@@ -2989,7 +2987,7 @@ export function accumulateUsage(
 
 function isToolResultBlock(
   block: unknown,
-): block is { type: 'tool_result'; tool_use_id: string } {
+): block is { type: 'tool_result'; toolCallId: string } {
   return (
     block !== null &&
     typeof block === 'object' &&
@@ -3148,7 +3146,7 @@ export function addCacheBreakpoints(
               cloned = true
             }
             msg.content[j] = Object.assign({}, block, {
-              cache_reference: block.tool_use_id,
+              cache_reference: block.toolCallId,
             })
           }
         }
@@ -3166,7 +3164,7 @@ export function buildSystemPromptBlocks(
     skipGlobalCacheForSystemPrompt?: boolean
     querySource?: QuerySource
   },
-): TextBlockParam[] {
+): TextBlock[] {
   // 重要：不要再添加任何用于缓存的块，否则会收到 400 错误
   return splitSysPromptPrefix(systemPrompt, {
     skipGlobalCacheForSystemPrompt: options?.skipGlobalCacheForSystemPrompt,

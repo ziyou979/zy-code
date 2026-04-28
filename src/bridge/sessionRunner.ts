@@ -39,7 +39,7 @@ export type PermissionRequest = {
     subtype: 'can_use_tool'
     tool_name: string
     input: Record<string, unknown>
-    tool_use_id: string
+    toolCallId: string
   }
 }
 
@@ -136,7 +136,7 @@ function extractActivities(
         if (!block || typeof block !== 'object') continue
         const b = block as Record<string, unknown>
 
-        if (b.type === 'tool_use') {
+        if (b.type === 'tool_call') {
           const name = (b.name as string) ?? 'Tool'
           const input = (b.input as Record<string, unknown>) ?? {}
           const summary = toolSummary(name, input)

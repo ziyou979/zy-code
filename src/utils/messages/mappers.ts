@@ -1,4 +1,4 @@
-import type { ContentBlock } from '../../types/llm.js'
+import type { AssistantContentBlock } from '../../types/llm.js'
 import { randomUUID, type UUID } from 'crypto'
 import { getSessionId } from 'src/bootstrap/state.js'
 import {
@@ -266,8 +266,8 @@ function normalizeAssistantMessageForSDK(
     return message.message
   }
 
-  const normalizedContent = content.map((block): ContentBlock => {
-    if (block.type !== 'tool_use') {
+  const normalizedContent = content.map((block): AssistantContentBlock => {
+    if (block.type !== 'tool_call') {
       return block
     }
 

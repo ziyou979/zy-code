@@ -18,7 +18,7 @@ export type AdvisorServerToolUseBlock = {
 
 export type AdvisorToolResultBlock = {
   type: 'advisor_tool_result'
-  tool_use_id: string
+  toolCallId: string
   content:
     | {
         type: 'advisor_result'

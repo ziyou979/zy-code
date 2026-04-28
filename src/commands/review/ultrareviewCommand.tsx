@@ -1,9 +1,9 @@
-import type { ContentBlockParam } from '../../types/llm.js';
+import type { ContentBlock } from '../../types/llm.js';
 import React from 'react';
 import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js';
 import { checkOverageGate, confirmOverage, launchRemoteReview } from './reviewRemote.js';
 import { UltrareviewOverageDialog } from './UltrareviewOverageDialog.js';
-function contentBlocksToString(blocks: ContentBlockParam[]): string {
+function contentBlocksToString(blocks: ContentBlock[]): string {
   return blocks.map(b => b.type === 'text' ? b.text : '').filter(Boolean).join('\n');
 }
 async function launchAndDone(args: string, context: Parameters<LocalJSXCommandCall>[1], onDone: LocalJSXCommandOnDone, billingNote: string, signal?: AbortSignal): Promise<void> {
@@ -17,7 +17,7 @@ async function launchAndDone(args: string, context: Parameters<LocalJSXCommandCa
       shouldQuery: true
     });
   } else {
-    // Precondition failures now return specific ContentBlockParam[] above.
+    // Precondition failures now return specific ContentBlock[] above.
     // null only reaches here on teleport failure (PR mode) or non-github
     // repo — both are CCR/repo connectivity issues.
     onDone('Ultrareview failed to launch the remote session. Check that this is a GitHub repo and try again.', {

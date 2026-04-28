@@ -91,9 +91,9 @@ export const SyntheticOutputTool = buildTool({
   renderToolResultMessage(output: string) {
     return output
   },
-  mapToolResultToToolResultBlockParam(content: string, toolUseID: string) {
+  mapToolResultToToolResultBlock(content: string, toolUseID: string) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result' as const,
       content,
     }

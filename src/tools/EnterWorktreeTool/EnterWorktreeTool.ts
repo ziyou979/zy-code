@@ -117,11 +117,11 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam({ message }, toolUseID) {
+  mapToolResultToToolResultBlock({ message }, toolUseID) {
     return {
       type: 'tool_result',
       content: message,
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

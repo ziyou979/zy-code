@@ -236,7 +236,7 @@ function getWrittenFilePath(block: {
   input?: unknown
 }): string | undefined {
   if (
-    block.type !== 'tool_use' ||
+    block.type !== 'tool_call' ||
     (block.name !== FILE_EDIT_TOOL_NAME && block.name !== FILE_WRITE_TOOL_NAME)
   ) {
     return undefined

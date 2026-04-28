@@ -53,7 +53,7 @@ export function isSessionContainerCompatible(messages: Message[]): boolean {
       continue
     }
     for (const block of content) {
-      if (block.type !== 'tool_use' || !('name' in block)) {
+      if (block.type !== 'tool_call' || !('name' in block)) {
         continue
       }
       const toolName = block.name as string

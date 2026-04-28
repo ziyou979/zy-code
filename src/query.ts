@@ -1,8 +1,8 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { isInternalBuild } from './utils/envUtils.js'
 import type {
-  ToolResultBlockParam,
-  ToolUseBlock,
+  ToolResultBlock,
+  ToolCallInlineBlock,
 } from './types/llm.js'
 import type { CanUseToolFn } from './hooks/useCanUseTool.js'
 import { FallbackTriggeredError } from './services/api/withRetry.js'
@@ -132,8 +132,8 @@ function* yieldMissingToolResultBlocks(
   for (const assistantMessage of assistantMessages) {
     // 从此助手消息中提取所有工具使用块
     const toolUseBlocks = assistantMessage.message.content.filter(
-      content => content.type === 'tool_use',
-    ) as ToolUseBlock[]
+      content => content.type === 'tool_call',
+    ) as ToolCallInlineBlock[]
 
     // 为每个工具使用发送中断消息
     for (const toolUse of toolUseBlocks) {
@@ -142,8 +142,8 @@ function* yieldMissingToolResultBlocks(
           {
             type: 'tool_result',
             content: errorMessage,
-            is_error: true,
-            tool_use_id: toolUse.id,
+            isError: true,
+            toolCallId: toolUse.id,
           },
         ],
         toolUseResult: errorMessage,
@@ -179,9 +179,9 @@ const MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3
  * 与 reactiveCompact.isWithheldPromptTooLong 对应。
  */
 function isWithheldMaxOutputTokens(
-  msg: Message | StreamEvent | undefined,
+  msg: unknown,
 ): msg is AssistantMessage {
-  return msg?.type === 'assistant' && (msg.apiError as any) === 'max_output_tokens'
+  return (msg as any)?.type === 'assistant' && (msg as any).apiError === 'max_output_tokens'
 }
 
 export type QueryParams = {
@@ -548,10 +548,10 @@ async function* queryLoop(
     const assistantMessages: AssistantMessage[] = []
     const toolResults: (UserMessage | AttachmentMessage)[] = []
     // @see https://docs.zy.com/en/docs/build-with-zy/tool-use
-    // 注意：stop_reason === 'tool_use' 不可靠 — 它并不总是正确设置。
+    // 注意：stop_reason === 'tool_call' 不可靠 — 它并不总是正确设置。
     // 流式传输期间每当 tool_use 块到达时设置 — 唯一的循环退出信号。
     // 流式传输后如果为 false，我们就完成了（除非 stop-hook 重试）。
-    const toolUseBlocks: ToolUseBlock[] = []
+    const toolUseBlocks: ToolCallInlineBlock[] = []
     let needsFollowUp = false
 
     queryCheckpoint('query_setup_start')
@@ -735,7 +735,7 @@ async function* queryLoop(
               for (let i = 0; i < message.message.content.length; i++) {
                 const block = message.message.content[i]!
                 if (
-                  block.type === 'tool_use' &&
+                  block.type === 'tool_call' &&
                   typeof block.input === 'object' &&
                   block.input !== null
                 ) {
@@ -808,8 +808,8 @@ async function* queryLoop(
               assistantMessages.push(message)
 
               const msgToolUseBlocks = message.message.content.filter(
-                content => content.type === 'tool_use',
-              ) as ToolUseBlock[]
+                content => content.type === 'tool_call',
+              ) as ToolCallInlineBlock[]
               if (msgToolUseBlocks.length > 0) {
                 toolUseBlocks.push(...msgToolUseBlocks)
                 needsFollowUp = true
@@ -939,7 +939,7 @@ async function* queryLoop(
       logEvent('zy_query_error', {
         assistantMessages: assistantMessages.length,
         toolUses: assistantMessages.flatMap(_ =>
-          _.message.content.filter(content => content.type === 'tool_use'),
+          _.message.content.filter(content => content.type === 'tool_call'),
         ).length,
 
         queryChainId: queryChainIdForAnalytics,
@@ -1421,15 +1421,15 @@ async function* queryLoop(
             result.message.content.some(
               content =>
                 content.type === 'tool_result' &&
-                content.tool_use_id === block.id,
+                content.toolCallId === block.id,
             ),
         )
         const resultContent =
           toolResult?.type === 'user' &&
           Array.isArray(toolResult.message.content)
             ? toolResult.message.content.find(
-                (c): c is ToolResultBlockParam =>
-                  c.type === 'tool_result' && c.tool_use_id === block.id,
+                (c): c is ToolResultBlock =>
+                  c.type === 'tool_result' && c.toolCallId === block.id,
               )
             : undefined
         return {
@@ -1574,7 +1574,7 @@ async function* queryLoop(
     // 发给它的内容 — 主线程排出 agentId===undefined，
     // 子 agent 排出它们自己的 agentId。用户提示（mode:'prompt'）
     // 仍然只去主线程；子 agent 永远不会看到提示流。
-    // eslint-disable-next-line custom-rules/require-tool-match-name -- ToolUseBlock.name has no aliases
+    // eslint-disable-next-line custom-rules/require-tool-match-name -- ToolCallInlineBlock.name has no aliases
     const sleepRan = toolUseBlocks.some(b => b.name === SLEEP_TOOL_NAME)
     const isMainThread =
       querySource.startsWith('repl_main_thread') || querySource === 'sdk'

@@ -289,7 +289,7 @@ function recoverPlanFromMessages(log: LogOption): string | null {
       if (Array.isArray(content)) {
         for (const block of content) {
           if (
-            block.type === 'tool_use' &&
+            block.type === 'tool_call' &&
             block.name === EXIT_PLAN_MODE_V2_TOOL_NAME
           ) {
             const input = block.input as Record<string, unknown> | undefined

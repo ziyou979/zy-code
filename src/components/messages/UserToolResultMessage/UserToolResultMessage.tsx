@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../../types/llm.js';
+import type { ToolResultBlock } from '../../../types/llm.js';
 import * as React from 'react';
 import type { Tools } from '../../../Tool.js';
 import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js';
@@ -9,7 +9,7 @@ import { UserToolRejectMessage } from './UserToolRejectMessage.js';
 import { UserToolSuccessMessage } from './UserToolSuccessMessage.js';
 import { useGetToolFromMessages } from './utils.js';
 type Props = {
-  param: ToolResultBlockParam;
+  param: ToolResultBlock;
   message: NormalizedUserMessage;
   lookups: ReturnType<typeof buildMessageLookups>;
   progressMessagesForMessage: ProgressMessage[];
@@ -30,7 +30,7 @@ export function UserToolResultMessage({
   width,
   isTranscriptMode
 }: Props) {
-  const toolUse = useGetToolFromMessages(param.tool_use_id, tools, lookups as any);
+  const toolUse = useGetToolFromMessages(param.toolCallId, tools, lookups as any);
   if (!toolUse) {
     return null;
   }
@@ -43,7 +43,7 @@ export function UserToolResultMessage({
     };
     return <UserToolRejectMessage input={t1} progressMessagesForMessage={progressMessagesForMessage} tool={toolUse.tool} tools={tools} lookups={lookups} style={style} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
   }
-  if (param.is_error) {
+  if (param.isError) {
     return <UserToolErrorMessage progressMessagesForMessage={progressMessagesForMessage} tool={toolUse.tool} tools={tools} param={param} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
   }
   return <UserToolSuccessMessage message={message} lookups={lookups} toolUseID={toolUse.toolUse.id} progressMessagesForMessage={progressMessagesForMessage} style={style} tool={toolUse.tool} tools={tools} verbose={verbose} width={width} isTranscriptMode={isTranscriptMode} />;

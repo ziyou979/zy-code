@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import type {
-  Base64ImageSource,
-  ContentBlockParam,
-  LLMMessageParam,
+  ImageSource,
+  ContentBlock,
+  Message as LLMMessageParam,
 } from '../../types/llm.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {
@@ -2115,7 +2115,7 @@ export async function callIdeRpc(
   toolName: string,
   args: Record<string, unknown>,
   client: ConnectedMCPServer,
-): Promise<string | ContentBlockParam[] | undefined> {
+): Promise<string | ContentBlock[] | undefined> {
   const result = await callMCPTool({
     client,
     tool: toolName,
@@ -2475,7 +2475,7 @@ export function prefetchAllMcpResources(
 export async function transformResultContent(
   resultContent: PromptMessage['content'],
   serverName: string,
-): Promise<Array<ContentBlockParam>> {
+): Promise<Array<ContentBlock>> {
   switch (resultContent.type) {
     case 'text':
       return [
@@ -2511,8 +2511,8 @@ export async function transformResultContent(
           type: 'image',
           source: {
             data: resized.buffer.toString('base64'),
-            media_type:
-              `image/${resized.mediaType}` as Base64ImageSource['media_type'],
+            mediaType:
+              `image/${resized.mediaType}` as ImageSource['mediaType'],
             type: 'base64',
           },
         },
@@ -2541,7 +2541,7 @@ export async function transformResultContent(
             imageBuffer.length,
             ext,
           )
-          const content: ContentBlockParam[] = []
+          const content: ContentBlock[] = []
           if (prefix) {
             content.push({
               type: 'text',
@@ -2552,8 +2552,8 @@ export async function transformResultContent(
             type: 'image',
             source: {
               data: resized.buffer.toString('base64'),
-              media_type:
-                `image/${resized.mediaType}` as Base64ImageSource['media_type'],
+              mediaType:
+                `image/${resized.mediaType}` as ImageSource['mediaType'],
               type: 'base64',
             },
           })
@@ -2597,7 +2597,7 @@ async function persistBlobToTextBlock(
   mimeType: string | undefined,
   serverName: string,
   sourceDescription: string,
-): Promise<Array<ContentBlockParam>> {
+): Promise<Array<ContentBlock>> {
   const persistId = `mcp-${normalizeNameForMCP(serverName)}-blob-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const result = await persistBinaryContent(bytes, mimeType, persistId)
 
@@ -3242,7 +3242,7 @@ async function callMCPTool({
 }
 
 function extractToolUseId(message: AssistantMessage): string | undefined {
-  if (message.message.content[0]?.type !== 'tool_use') {
+  if (message.message.content[0]?.type !== 'tool_call') {
     return undefined
   }
   return message.message.content[0].id

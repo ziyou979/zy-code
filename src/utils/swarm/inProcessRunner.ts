@@ -10,7 +10,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '../../types/llm.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { TEAMMATE_MESSAGE_TAG } from '../../constants/xml.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
@@ -252,7 +252,7 @@ function createInProcessCanUseTool(
               updatedInput: Record<string, unknown>,
               permissionUpdates: PermissionUpdate[],
               feedback?: string,
-              contentBlocks?: ContentBlockParam[],
+              contentBlocks?: ContentBlock[],
             ) {
               if (decisionMade) return
               decisionMade = true
@@ -289,7 +289,7 @@ function createInProcessCanUseTool(
                   contentBlocks.length > 0 && { contentBlocks }),
               })
             },
-            onReject(feedback?: string, contentBlocks?: ContentBlockParam[]) {
+            onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
               if (decisionMade) return
               decisionMade = true
               abortController.signal.removeEventListener(
@@ -355,7 +355,7 @@ function createInProcessCanUseTool(
           updatedInput: Record<string, unknown> | undefined,
           permissionUpdates: PermissionUpdate[],
           _feedback?: string,
-          contentBlocks?: ContentBlockParam[],
+          contentBlocks?: ContentBlock[],
         ) {
           cleanup()
           persistPermissionUpdates(permissionUpdates)
@@ -370,7 +370,7 @@ function createInProcessCanUseTool(
             ...(contentBlocks && contentBlocks.length > 0 && { contentBlocks }),
           })
         },
-        onReject(feedback?: string, contentBlocks?: ContentBlockParam[]) {
+        onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
           cleanup()
           const message = feedback
             ? `${SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX}${feedback}`
@@ -1236,7 +1236,7 @@ export async function runInProcessTeammate(
                 let inProgressToolUseIDs = task.inProgressToolUseIDs
                 if (message.type === 'assistant') {
                   for (const block of message.message.content) {
-                    if (block.type === 'tool_use') {
+                    if (block.type === 'tool_call') {
                       inProgressToolUseIDs = new Set([
                         ...(inProgressToolUseIDs ?? []),
                         block.id,
@@ -1254,7 +1254,7 @@ export async function runInProcessTeammate(
                       ) {
                         if (inProgressToolUseIDs) {
                           inProgressToolUseIDs = new Set(inProgressToolUseIDs)
-                          inProgressToolUseIDs.delete(block.tool_use_id)
+                          inProgressToolUseIDs.delete(block.toolCallId)
                         }
                       }
                     }

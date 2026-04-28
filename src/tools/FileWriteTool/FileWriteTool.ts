@@ -415,17 +415,17 @@ export const FileWriteTool = buildTool({
       data,
     }
   },
-  mapToolResultToToolResultBlockParam({ filePath, type }, toolUseID) {
+  mapToolResultToToolResultBlock({ filePath, type }, toolUseID) {
     switch (type) {
       case 'create':
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `File created successfully at: ${filePath}`,
         }
       case 'update':
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `The file ${filePath} has been updated successfully.`,
         }

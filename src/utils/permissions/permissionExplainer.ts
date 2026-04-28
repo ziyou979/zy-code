@@ -191,8 +191,8 @@ Explain this command in context.`
     )
 
     // Extract structured data from tool use block
-    const toolUseBlock = response.content.find(c => c.type === 'tool_use')
-    if (toolUseBlock && toolUseBlock.type === 'tool_use') {
+    const toolUseBlock = response.content.find(c => c.type === 'tool_call')
+    if (toolUseBlock && toolUseBlock.type === 'tool_call') {
       logForDebugging(
         `Permission explainer: tool input: ${jsonStringify(toolUseBlock.input).slice(0, 500)}`,
       )

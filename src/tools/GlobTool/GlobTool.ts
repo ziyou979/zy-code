@@ -174,16 +174,16 @@ export const GlobTool = buildTool({
       data: output,
     }
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     if (output.filenames.length === 0) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: 'No files found',
       }
     }
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: [
         ...output.filenames,

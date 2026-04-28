@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '../types/llm.js'
+import type { ContentBlock } from '../types/llm.js'
 import type { Command } from '../commands.js'
 import { isUltrareviewEnabled } from './review/ultrareviewEnabled.js'
 
@@ -37,7 +37,7 @@ const review: Command = {
   progressMessage: 'reviewing pull request',
   contentLength: 0,
   source: 'builtin',
-  async getPromptForCommand(args): Promise<ContentBlockParam[]> {
+  async getPromptForCommand(args): Promise<ContentBlock[]> {
     return [{ type: 'text', text: LOCAL_REVIEW_PROMPT(args) }]
   },
 }

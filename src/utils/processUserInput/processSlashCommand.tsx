@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import type { ContentBlockParam, TextBlockParam } from '../../types/llm.js';
+import type { ContentBlock, TextBlock } from '../../types/llm.js';
 import { randomUUID } from 'crypto';
 import { setPromptId } from 'src/bootstrap/state.js';
 import { builtInCommandNames, type Command, type CommandBase, findCommand, getCommand, getCommandName, hasCommand, type PromptCommand } from 'src/commands.js';
@@ -59,7 +59,7 @@ const MCP_SETTLE_TIMEOUT_MS = 10_000;
 /**
  * Executes a slash command with context: fork in a sub-agent.
  */
-async function executeForkedSlashCommand(command: CommandBase & PromptCommand, args: string, context: ProcessUserInputContext, precedingInputBlocks: ContentBlockParam[], setToolJSX: SetToolJSXFn, canUseTool: CanUseToolFn): Promise<SlashCommandResult> {
+async function executeForkedSlashCommand(command: CommandBase & PromptCommand, args: string, context: ProcessUserInputContext, precedingInputBlocks: ContentBlock[], setToolJSX: SetToolJSXFn, canUseTool: CanUseToolFn): Promise<SlashCommandResult> {
   const agentId = createAgentId();
   const pluginMarketplace = command.pluginInfo ? parsePluginIdentifier(command.pluginInfo.repository).marketplace : undefined;
   logEvent('zy_slash_command_forked', {
@@ -309,7 +309,7 @@ export function looksLikeCommand(commandName: string): boolean {
   // If it contains other characters, it's probably a file path or other input
   return !/[^a-zA-Z0-9:\-_]/.test(commandName);
 }
-export async function processSlashCommand(inputString: string, precedingInputBlocks: ContentBlockParam[], imageContentBlocks: ContentBlockParam[], attachmentMessages: AttachmentMessage[], context: ProcessUserInputContext, setToolJSX: SetToolJSXFn, uuid?: string, isAlreadyProcessing?: boolean, canUseTool?: CanUseToolFn): Promise<ProcessUserInputBaseResult> {
+export async function processSlashCommand(inputString: string, precedingInputBlocks: ContentBlock[], imageContentBlocks: ContentBlock[], attachmentMessages: AttachmentMessage[], context: ProcessUserInputContext, setToolJSX: SetToolJSXFn, uuid?: string, isAlreadyProcessing?: boolean, canUseTool?: CanUseToolFn): Promise<ProcessUserInputBaseResult> {
   const parsed = parseSlashCommand(inputString);
   if (!parsed) {
     logEvent('zy_input_slash_missing', {});
@@ -525,7 +525,7 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
     submitNextInput
   };
 }
-async function getMessagesForSlashCommand(commandName: string, args: string, setToolJSX: SetToolJSXFn, context: ProcessUserInputContext, precedingInputBlocks: ContentBlockParam[], imageContentBlocks: ContentBlockParam[], _isAlreadyProcessing?: boolean, canUseTool?: CanUseToolFn, uuid?: string): Promise<SlashCommandResult> {
+async function getMessagesForSlashCommand(commandName: string, args: string, setToolJSX: SetToolJSXFn, context: ProcessUserInputContext, precedingInputBlocks: ContentBlock[], imageContentBlocks: ContentBlock[], _isAlreadyProcessing?: boolean, canUseTool?: CanUseToolFn, uuid?: string): Promise<SlashCommandResult> {
   const command = getCommand(commandName, context.options.commands);
 
   // Track skill usage for ranking (only for prompt commands that are user-invocable)
@@ -817,7 +817,7 @@ function formatCommandLoadingMetadata(command: CommandBase & PromptCommand, args
   }
   return formatSlashCommandLoadingMetadata(command.name, args);
 }
-export async function processPromptSlashCommand(commandName: string, args: string, commands: Command[], context: ToolUseContext, imageContentBlocks: ContentBlockParam[] = []): Promise<SlashCommandResult> {
+export async function processPromptSlashCommand(commandName: string, args: string, commands: Command[], context: ToolUseContext, imageContentBlocks: ContentBlock[] = []): Promise<SlashCommandResult> {
   const command = findCommand(commandName, commands);
   if (!command) {
     throw new MalformedCommandError(`Unknown command: ${commandName}`);
@@ -827,7 +827,7 @@ export async function processPromptSlashCommand(commandName: string, args: strin
   }
   return getMessagesForPromptSlashCommand(command, args, context, [], imageContentBlocks);
 }
-async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCommand, args: string, context: ToolUseContext, precedingInputBlocks: ContentBlockParam[] = [], imageContentBlocks: ContentBlockParam[] = [], uuid?: string): Promise<SlashCommandResult> {
+async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCommand, args: string, context: ToolUseContext, precedingInputBlocks: ContentBlock[] = [], imageContentBlocks: ContentBlock[] = [], uuid?: string): Promise<SlashCommandResult> {
   // In coordinator mode (main thread only), skip loading the full skill content
   // and permissions. The coordinator only has Agent + TaskStop tools, so the
   // skill content and allowedTools are useless. Instead, send a brief summary
@@ -851,7 +851,7 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
       parts.push(`This skill grants workers additional tool permissions: ${skillAllowedTools.join(', ')}`);
     }
     parts.push(`\nInstruct a worker to use this skill by including "Use the /${command.name} skill" in your Agent prompt. The worker has access to the Skill tool and will receive the skill's content and permissions when it invokes it.`);
-    const summaryContent: ContentBlockParam[] = [{
+    const summaryContent: ContentBlock[] = [{
       type: 'text',
       text: parts.join('\n')
     }];
@@ -884,20 +884,20 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
   // Skills are tagged with their agentId so only skills belonging to the current
   // agent are restored during compaction (preventing cross-agent leaks).
   const skillPath = command.source ? `${command.source}:${command.name}` : command.name;
-  const skillContent = result.filter((b): b is TextBlockParam => b.type === 'text').map(b => b.text).join('\n\n');
+  const skillContent = result.filter((b): b is TextBlock => b.type === 'text').map(b => b.text).join('\n\n');
   addInvokedSkill(command.name, skillPath, skillContent, getAgentContext()?.agentId ?? null);
   const metadata = formatCommandLoadingMetadata(command, args);
   const additionalAllowedTools = parseToolListFromCLI(command.allowedTools ?? []);
 
   // Create content for the main message, including any pasted images
-  const mainMessageContent: ContentBlockParam[] = (imageContentBlocks.length > 0 || precedingInputBlocks.length > 0 ? [...imageContentBlocks, ...precedingInputBlocks, ...result] : result) as any;
+  const mainMessageContent: ContentBlock[] = (imageContentBlocks.length > 0 || precedingInputBlocks.length > 0 ? [...imageContentBlocks, ...precedingInputBlocks, ...result] : result) as any;
 
   // Extract attachments from command arguments (@-mentions, MCP resources,
   // agent mentions in SKILL.md). skipSkillDiscovery prevents the SKILL.md
   // content itself from triggering discovery — it's meta-content, not user
   // intent, and a large SKILL.md (e.g. 110KB) would fire chunked AKI queries
   // adding seconds of latency to every skill invocation.
-  const attachmentMessages = await toArray(getAttachmentMessages(result.filter((block): block is TextBlockParam => block.type === 'text').map(block => block.text).join(' '), context, null, [],
+  const attachmentMessages = await toArray(getAttachmentMessages(result.filter((block): block is TextBlock => block.type === 'text').map(block => block.text).join(' '), context, null, [],
   // queuedCommands - handled by query.ts for mid-turn attachments
   context.messages, 'repl_main_thread' as any, {
     skipSkillDiscovery: true

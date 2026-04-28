@@ -22,7 +22,7 @@ export function createSyntheticAssistantMessage(
       role: 'assistant',
       content: [
         {
-          type: 'tool_use',
+          type: 'tool_call',
           id: request.tool_use_id,
           name: request.tool_name,
           input: request.input,

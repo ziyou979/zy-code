@@ -1,6 +1,6 @@
 import { isInternalBuild } from '../utils/envUtils.js'
 
-import type { LLMCreateParams } from '../types/llm.js'
+import type { CreateParams } from '../types/llm.js'
 import type { Attributes, Meter, MetricOptions } from '@opentelemetry/api'
 import type { logs } from '@opentelemetry/api-logs'
 import type { LoggerProvider } from '@opentelemetry/sdk-logs'
@@ -112,11 +112,11 @@ type State = {
   agentColorMap: Map<string, AgentColorName>
   agentColorIndex: number
   // 最后一次 API 请求，用于 bug 报告
-  lastAPIRequest: Omit<LLMCreateParams, 'messages'> | null
+  lastAPIRequest: Omit<CreateParams, 'messages'> | null
   // 最后一次 API 请求的消息（仅 ant；引用而非克隆）。
   // 捕获压缩后、CLAUDE.md 注入后发送给 API 的完整消息集，
   // 以便 /share 的 serialized_conversation.json 反映真实情况。
-  lastAPIRequestMessages: LLMCreateParams['messages'] | null
+  lastAPIRequestMessages: CreateParams['messages'] | null
   // 最后一次自动模式分类器请求，用于 /share 转录
   lastClassifierRequests: unknown[] | null
   // 由 context.ts 缓存的 ZY.md 内容，供自动模式分类器使用。
@@ -1168,26 +1168,26 @@ export function setApiKeyFromFd(key: string | null): void {
 }
 
 export function setLastAPIRequest(
-  params: Omit<LLMCreateParams, 'messages'> | null,
+  params: Omit<CreateParams, 'messages'> | null,
 ): void {
   STATE.lastAPIRequest = params
 }
 
 export function getLastAPIRequest(): Omit<
-  LLMCreateParams,
+  CreateParams,
   'messages'
 > | null {
   return STATE.lastAPIRequest
 }
 
 export function setLastAPIRequestMessages(
-  messages: LLMCreateParams['messages'] | null,
+  messages: CreateParams['messages'] | null,
 ): void {
   STATE.lastAPIRequestMessages = messages
 }
 
 export function getLastAPIRequestMessages():
-  | LLMCreateParams['messages']
+  | CreateParams['messages']
   | null {
   return STATE.lastAPIRequestMessages
 }

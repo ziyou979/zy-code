@@ -51,12 +51,12 @@ export const SleepTool = buildTool({
   renderToolResultMessage() {
     return null
   },
-  mapToolResultToToolResultBlockParam({ slept, interrupted }, toolUseID) {
+  mapToolResultToToolResultBlock({ slept, interrupted }, toolUseID) {
     const content = interrupted
       ? `Slept for ${slept}s before being interrupted.`
       : `Slept for ${slept}s successfully.`
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content,
     }

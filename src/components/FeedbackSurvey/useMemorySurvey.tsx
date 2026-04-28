@@ -31,7 +31,7 @@ function hasMemoryFileRead(messages: Message[]): boolean {
       continue;
     }
     for (const block of content) {
-      if (block.type !== 'tool_use' || block.name !== FILE_READ_TOOL_NAME) {
+      if (block.type !== 'tool_call' || block.name !== FILE_READ_TOOL_NAME) {
         continue;
       }
       const input = block.input as {

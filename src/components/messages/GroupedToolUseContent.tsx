@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam, ToolUseBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock, ToolCallInlineBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { filterToolProgressMessages, findToolByName, type Tools } from '../../Tool.js';
 import type { GroupedToolUseMessage } from '../../types/message.js';
@@ -24,13 +24,13 @@ export function GroupedToolUseContent({
 
   // 构建从 tool_use_id 到结果数据的映射
   const resultsByToolUseId = new Map<string, {
-    param: ToolResultBlockParam;
+    param: ToolResultBlock;
     output: unknown;
   }>();
   for (const resultMsg of (message as any).results) {
     for (const content of resultMsg.message.content) {
       if (content.type === 'tool_result') {
-        resultsByToolUseId.set(content.tool_use_id, {
+        resultsByToolUseId.set(content.toolCallId, {
           param: content,
           output: resultMsg.toolUseResult
         });
@@ -41,7 +41,7 @@ export function GroupedToolUseContent({
     const content = msg.message.content[0];
     const result = resultsByToolUseId.get(content.id);
     return {
-      param: content as ToolUseBlockParam,
+      param: content as ToolCallInlineBlock,
       isResolved: lookups.resolvedToolUseIDs.has(content.id),
       isError: lookups.erroredToolUseIDs.has(content.id),
       isInProgress: inProgressToolUseIDs.has(content.id),

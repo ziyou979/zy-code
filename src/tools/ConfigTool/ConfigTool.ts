@@ -409,26 +409,26 @@ export const ConfigTool = buildTool({
       }
     }
   },
-  mapToolResultToToolResultBlockParam(content: Output, toolUseID: string) {
+  mapToolResultToToolResultBlock(content: Output, toolUseID: string) {
     if (content.success) {
       if (content.operation === 'get') {
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result' as const,
           content: `${content.setting} = ${jsonStringify(content.value)}`,
         }
       }
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result' as const,
         content: `Set ${content.setting} to ${jsonStringify(content.newValue)}`,
       }
     }
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result' as const,
       content: `Error: ${content.error}`,
-      is_error: true,
+      isError: true,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

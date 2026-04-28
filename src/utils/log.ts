@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { LLMCreateParams } from '../types/llm.js'
+import type { CreateParams } from '../types/llm.js'
 import { readdir, readFile, stat } from 'fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
@@ -330,7 +330,7 @@ export function logMCPDebug(serverName: string, message: string): void {
  * Captures the last API request for inclusion in bug reports.
  */
 export function captureAPIRequest(
-  params: LLMCreateParams,
+  params: CreateParams,
   querySource?: QuerySource,
 ): void {
   // startsWith, not exact match — users with non-default output styles get

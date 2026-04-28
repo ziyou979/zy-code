@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '../../types/llm.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { setPromptId } from 'src/bootstrap/state.js'
 import type {
@@ -17,8 +17,8 @@ import {
 } from '../userPromptKeywords.js'
 
 export function processTextPrompt(
-  input: string | Array<ContentBlockParam>,
-  imageContentBlocks: ContentBlockParam[],
+  input: string | Array<ContentBlock>,
+  imageContentBlocks: ContentBlock[],
   imagePasteIds: number[],
   attachmentMessages: AttachmentMessage[],
   uuid?: string,

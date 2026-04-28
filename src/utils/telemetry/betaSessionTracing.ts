@@ -197,7 +197,7 @@ function formatMessagesForContext(messages: UserMessage[]): FormattedMessages {
             systemReminders.push(reminderContent)
           } else {
             contextParts.push(
-              `[TOOL RESULT: ${block.tool_use_id}]\n${resultContent}`,
+              `[TOOL RESULT: ${block.toolCallId}]\n${resultContent}`,
             )
           }
         }

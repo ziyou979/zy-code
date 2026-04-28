@@ -191,7 +191,7 @@ export function getAssistantMessageContentLength(
       contentLength += block.thinking.length
     } else if (block.type === 'redacted_thinking') {
       contentLength += block.data.length
-    } else if (block.type === 'tool_use') {
+    } else if (block.type === 'tool_call') {
       contentLength += jsonStringify(block.input).length
     }
   }

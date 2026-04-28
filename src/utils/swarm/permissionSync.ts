@@ -690,7 +690,7 @@ export async function sendPermissionRequestViaMailbox(
       request_id: request.id,
       agent_id: request.workerName,
       tool_name: request.toolName,
-      tool_use_id: request.toolUseId,
+      toolCallId: request.toolUseId,
       description: request.description,
       input: request.input,
       permission_suggestions: request.permissionSuggestions,

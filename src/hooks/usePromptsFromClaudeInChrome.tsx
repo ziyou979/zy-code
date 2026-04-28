@@ -12,7 +12,7 @@ const ClaudeInChromePromptNotificationSchema = lazySchema(() => z.object({
     prompt: z.string(),
     image: z.object({
       type: z.literal('base64'),
-      media_type: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
+      mediaType: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
       data: z.string()
     }).optional(),
     tabId: z.number().optional()

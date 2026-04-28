@@ -41,7 +41,7 @@ type Input = z.infer<InputSchema>
 
 /** 搜索结果对象 — 与旧版格式兼容 */
 export interface SearchResult {
-  tool_use_id: string
+  toolCallId: string
   content: Array<{ title: string; url: string }>
 }
 
@@ -180,7 +180,7 @@ export const WebSearchTool = buildTool({
 
       if (searchResults.length > 0) {
         results.push({
-          tool_use_id: `search-${Date.now()}`,
+          toolCallId: `search-${Date.now()}`,
           content: searchResults.map(r => ({ title: r.title, url: r.url })),
         })
       } else {
@@ -212,7 +212,7 @@ export const WebSearchTool = buildTool({
       }
     }
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     const { query, results } = output
 
     let formattedOutput = `Web search results for query: "${query}"\n\n`
@@ -236,7 +236,7 @@ export const WebSearchTool = buildTool({
       '\nREMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.'
 
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: formattedOutput.trim(),
     }

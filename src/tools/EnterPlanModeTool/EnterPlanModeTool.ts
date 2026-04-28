@@ -100,7 +100,7 @@ export const EnterPlanModeTool: Tool<InputSchema, Output> = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam({ message }, toolUseID) {
+  mapToolResultToToolResultBlock({ message }, toolUseID) {
     const instructions = isPlanModeInterviewPhaseEnabled()
       ? `${message}
 
@@ -120,7 +120,7 @@ Remember: DO NOT write or edit any files yet. This is a read-only exploration an
     return {
       type: 'tool_result',
       content: instructions,
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

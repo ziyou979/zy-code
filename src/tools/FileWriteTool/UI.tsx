@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 type StructuredPatchHunk = any;
 import { isAbsolute, relative, resolve } from 'path';
 import * as React from 'react';
@@ -194,7 +194,7 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
     };
   }
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   verbose
 }: {
   verbose: boolean;

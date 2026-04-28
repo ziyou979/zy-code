@@ -1598,7 +1598,7 @@ function collectReadToolFilePaths(messages: Message[]): Set<string> {
         typeof block.content === 'string' &&
         block.content.startsWith(FILE_UNCHANGED_STUB)
       ) {
-        stubIds.add(block.tool_use_id)
+        stubIds.add(block.toolCallId)
       }
     }
   }
@@ -1613,7 +1613,7 @@ function collectReadToolFilePaths(messages: Message[]): Set<string> {
     }
     for (const block of message.message.content) {
       if (
-        block.type !== 'tool_use' ||
+        block.type !== 'tool_call' ||
         block.name !== FILE_READ_TOOL_NAME ||
         stubIds.has(block.id)
       ) {

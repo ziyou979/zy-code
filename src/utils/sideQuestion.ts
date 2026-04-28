@@ -134,7 +134,7 @@ function extractSideQuestionResponse(messages: Message[]): string | null {
     if (text) return text
 
     // No text — check if the model tried to call a tool despite instructions.
-    const toolUse = assistantBlocks.find(b => b.type === 'tool_use')
+    const toolUse = assistantBlocks.find(b => b.type === 'tool_call')
     if (toolUse) {
       const toolName = 'name' in toolUse ? toolUse.name : 'a tool'
       return `(The model tried to call ${toolName} instead of answering directly. Try rephrasing or ask in the main conversation.)`

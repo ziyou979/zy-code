@@ -1,10 +1,10 @@
-import type { TextBlockParam } from '../../types/llm.js';
+import type { TextBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { REFRESH_ARROW } from '../../constants/figures.js';
 import { Box, Text } from '../../ink.js';
 type Props = {
   addMargin: boolean;
-  param: TextBlockParam;
+  param: TextBlock;
 };
 type ParsedUpdate = {
   kind: 'resource' | 'polling';

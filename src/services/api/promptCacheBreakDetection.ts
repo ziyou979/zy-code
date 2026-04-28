@@ -1,4 +1,4 @@
-import type { ToolDefinition, TextBlockParam } from '../../types/llm.js'
+import type { ToolDefinition, TextBlock } from '../../types/llm.js'
 import { createPatch } from 'diff'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -192,7 +192,7 @@ function computePerToolHashes(
   return hashes
 }
 
-function getSystemCharCount(system: TextBlockParam[]): number {
+function getSystemCharCount(system: TextBlock[]): number {
   let total = 0
   for (const block of system) {
     total += block.text.length
@@ -201,7 +201,7 @@ function getSystemCharCount(system: TextBlockParam[]): number {
 }
 
 function buildDiffableContent(
-  system: TextBlockParam[],
+  system: TextBlock[],
   tools: ToolDefinition[],
   model: string,
 ): string {
@@ -222,7 +222,7 @@ function buildDiffableContent(
  *  cache key that we can observe from the client. All fields are optional so
  *  the call site can add incrementally; undefined fields compare as stable. */
 export type PromptStateSnapshot = {
-  system: TextBlockParam[]
+  system: TextBlock[]
   toolSchemas: ToolDefinition[]
   querySource: QuerySource
   model: string

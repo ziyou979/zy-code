@@ -253,7 +253,7 @@ export function useRemoteSession({
             const resultIds: string[] = []
             for (const block of content) {
               if (block.type === 'tool_result') {
-                resultIds.push(block.tool_use_id)
+                resultIds.push(block.toolCallId)
               }
             }
             if (resultIds.length > 0) {
@@ -291,7 +291,7 @@ export function useRemoteSession({
             converted.message.type === 'assistant'
           ) {
             const toolUseIds = converted.message.message.content
-              .filter(block => block.type === 'tool_use')
+              .filter(block => block.type === 'tool_call')
               .map(block => block.id)
             if (toolUseIds.length > 0) {
               setInProgressToolUseIDs(prev => {

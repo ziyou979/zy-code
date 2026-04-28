@@ -16,7 +16,7 @@ export type RequiresActionDetails = {
   tool_name: string
   /** Human-readable summary, e.g. "Editing src/foo.ts", "Running npm test" */
   action_description: string
-  tool_use_id: string
+  toolCallId: string
   request_id: string
   /** Raw tool input — the frontend reads from external_metadata.pending_action.input
    * to parse question options / plan content without scanning the event stream. */

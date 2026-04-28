@@ -1,11 +1,11 @@
 import type {
   ToolDefinition,
-  LLMMessage,
-  LLMMessageParam,
-  TextBlockParam,
+  Response as LLMMessage,
+  Message as LLMMessageParam,
+  TextBlock,
   ToolChoice,
-  ThinkingConfig,
 } from '../types/llm.js'
+import type { ThinkingConfig } from './thinking.js'
 import {
   getLastApiCompletionTimestamp,
   setLastApiCompletionTimestamp,
@@ -35,11 +35,11 @@ export type SideQueryOptions = {
   /**
    * System prompt - string or array of text blocks (will be prefixed with CLI attribution).
    *
-   * The attribution header is always placed in its own TextBlockParam block to ensure
+   * The attribution header is always placed in its own TextBlock block to ensure
    * server-side parsing correctly extracts the cc_entrypoint value without including
    * system prompt content.
    */
-  system?: string | TextBlockParam[]
+  system?: string | TextBlock[]
   /** Messages to send (supports cache_control on content blocks) */
   messages: LLMMessageParam[]
   /** Optional tools (supports both standard ToolDefinition[] for custom tool types) */
@@ -148,7 +148,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
 
   // Build system as array to keep attribution header in its own block
   // (prevents server-side parsing from including system content in cc_entrypoint)
-  const systemBlocks: TextBlockParam[] = [
+  const systemBlocks: TextBlock[] = [
     attributionHeader ? { type: 'text', text: attributionHeader } : null,
     // Skip CLI system prompt prefix for internal classifiers that provide their own prompt
     ...(skipSystemPromptPrefix
@@ -167,7 +167,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
       : system
         ? [{ type: 'text' as const, text: system }]
         : []),
-  ].filter((block): block is TextBlockParam => block !== null)
+  ].filter((block): block is TextBlock => block !== null)
 
   let thinkingConfig: ThinkingConfig | undefined
   if (thinking === false) {
@@ -175,7 +175,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
   } else if (thinking !== undefined) {
     thinkingConfig = {
       type: 'enabled',
-      budget_tokens: Math.min(thinking, max_tokens - 1),
+      budgetTokens: Math.min(thinking, max_tokens - 1),
     }
   }
 

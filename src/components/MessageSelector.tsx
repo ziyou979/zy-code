@@ -1,4 +1,4 @@
-import type { ContentBlockParam, TextBlockParam } from '../types/llm.js';
+import type { ContentBlock, TextBlock } from '../types/llm.js';
 import { randomUUID, type UUID } from 'crypto';
 import figures from 'figures';
 import * as React from 'react';
@@ -15,7 +15,7 @@ import { stripDisplayTags } from '../utils/displayTags.js';
 import { createUserMessage, extractTag, isEmptyMessageText, isSyntheticMessage, isToolUseResultMessage } from '../utils/messages.js';
 import { type OptionWithDescription, Select } from './CustomSelect/select.js';
 import { Spinner } from './Spinner.js';
-function isTextBlock(block: ContentBlockParam): block is TextBlockParam {
+function isTextBlock(block: ContentBlock): block is TextBlock {
   return block.type === 'text';
 }
 import * as path from 'path';
@@ -618,7 +618,7 @@ export function messagesAfterAreOnlySynthetic(messages: Message[], fromIndex: nu
     if (msg.type === 'assistant') {
       const content = msg.message.content;
       if (Array.isArray(content)) {
-        const hasMeaningfulContent = content.some((block) => block.type === 'text' && block.text.trim() || block.type === 'tool_use');
+        const hasMeaningfulContent = content.some((block) => block.type === 'text' && block.text.trim() || block.type === 'tool_call');
         if (hasMeaningfulContent) return false;
       }
       continue;

@@ -292,7 +292,7 @@ import {
 import { runWithWorkload, WORKLOAD_CRON } from 'src/utils/workloadContext.js'
 import type { UUID } from 'crypto'
 import { randomUUID } from 'crypto'
-import type { ContentBlockParam } from '../types/llm.js'
+import type { ContentBlock } from '../types/llm.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import {
   fileHistoryRewind,
@@ -410,9 +410,9 @@ function trackReceivedMessageUuid(uuid: UUID): boolean {
   return true // new UUID
 }
 
-type PromptValue = string | ContentBlockParam[]
+type PromptValue = string | ContentBlock[]
 
-function toBlocks(v: PromptValue): ContentBlockParam[] {
+function toBlocks(v: PromptValue): ContentBlock[] {
   return typeof v === 'string' ? [{ type: 'text', text: v }] : v
 }
 
@@ -955,7 +955,7 @@ export async function runHeadless(
   }
 
   gracefulShutdownSync(
-    lastMessage?.type === 'result' && lastMessage?.is_error ? 1 : 0,
+    lastMessage?.type === 'result' && lastMessage?.isError ? 1 : 0,
   )
 }
 
@@ -2096,7 +2096,7 @@ function runHeadlessStreaming(
           suggestionState.pendingLastEmittedEntry = null
           if (suggestionState.lastEmitted) {
             if (command.mode === 'prompt') {
-              // SDK user messages enqueue ContentBlockParam[], not a plain string
+              // SDK user messages enqueue ContentBlock[], not a plain string
               const inputText =
                 typeof input === 'string'
                   ? input
@@ -2418,7 +2418,7 @@ function runHeadlessStreaming(
           subtype: 'error_during_execution',
           duration_ms: 0,
           duration_api_ms: 0,
-          is_error: true,
+          isError: true,
           num_turns: 0,
           stop_reason: null,
           session_id: getSessionId(),
@@ -4205,7 +4205,7 @@ export function createCanUseToolWithPermissionPrompt(
       {
         tool_name: tool.name,
         input,
-        tool_use_id: toolUseId,
+        toolCallId: toolUseId,
       },
       toolUseContext,
       canUseTool,
@@ -4230,14 +4230,14 @@ export function createCanUseToolWithPermissionPrompt(
     // TypeScript narrowing: after the abort check, raceResult must be ToolResult
     const result = raceResult as Awaited<typeof toolCallPromise>
 
-    const permissionToolResultBlockParam =
-      permissionPromptTool.mapToolResultToToolResultBlockParam(result.data, '1')
+    const permissionToolResultBlock =
+      permissionPromptTool.mapToolResultToToolResultBlock(result.data, '1')
     if (
-      !permissionToolResultBlockParam.content ||
-      !Array.isArray(permissionToolResultBlockParam.content) ||
-      !permissionToolResultBlockParam.content[0] ||
-      permissionToolResultBlockParam.content[0].type !== 'text' ||
-      typeof permissionToolResultBlockParam.content[0].text !== 'string'
+      !permissionToolResultBlock.content ||
+      !Array.isArray(permissionToolResultBlock.content) ||
+      !permissionToolResultBlock.content[0] ||
+      permissionToolResultBlock.content[0].type !== 'text' ||
+      typeof permissionToolResultBlock.content[0].text !== 'string'
     ) {
       throw new Error(
         'Permission prompt tool returned an invalid result. Expected a single text block param with type="text" and a string text value.',
@@ -4245,7 +4245,7 @@ export function createCanUseToolWithPermissionPrompt(
     }
     return permissionPromptToolResultToPermissionDecision(
       permissionToolOutputSchema().parse(
-        safeParseJSON(permissionToolResultBlockParam.content[0].text),
+        safeParseJSON(permissionToolResultBlock.content[0].text),
       ),
       permissionPromptTool,
       input,
@@ -4833,7 +4833,7 @@ function emitLoadError(
       subtype: 'error_during_execution',
       duration_ms: 0,
       duration_api_ms: 0,
-      is_error: true,
+      isError: true,
       num_turns: 0,
       stop_reason: null,
       session_id: getSessionId(),

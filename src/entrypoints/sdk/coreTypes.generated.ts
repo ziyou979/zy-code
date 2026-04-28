@@ -810,7 +810,7 @@ export interface SDKResultSuccess {
   subtype: 'success'
   duration_ms: number
   duration_api_ms: number
-  is_error: boolean
+  isError: boolean
   num_turns: number
   result: string
   stop_reason: string | null
@@ -829,7 +829,7 @@ export interface SDKResultError {
   subtype: 'error_during_execution' | 'error_max_turns' | 'error_max_budget_usd' | 'error_max_structured_output_retries'
   duration_ms: number
   duration_api_ms: number
-  is_error: boolean
+  isError: boolean
   num_turns: number
   stop_reason: string | null
   total_cost_usd: number

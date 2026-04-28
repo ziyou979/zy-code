@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../types/llm.js';
+import type { ToolResultBlock } from '../types/llm.js';
 import * as React from 'react';
 import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js';
 import { extractTag } from 'src/utils/messages.js';
@@ -10,7 +10,7 @@ import { countCharInString } from '../utils/stringUtils.js';
 import { MessageResponse } from './MessageResponse.js';
 const MAX_RENDERED_LINES = 10;
 type Props = {
-  result: ToolResultBlockParam['content'];
+  result: ToolResultBlock['content'];
   verbose: boolean;
 };
 export function FallbackToolUseErrorMessage({

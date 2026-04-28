@@ -455,7 +455,7 @@ export type PermissionRequestMessage = {
   request_id: string
   agent_id: string
   tool_name: string
-  tool_use_id: string
+  toolCallId: string
   description: string
   input: Record<string, unknown>
   permission_suggestions: unknown[]
@@ -489,7 +489,7 @@ export function createPermissionRequestMessage(params: {
   request_id: string
   agent_id: string
   tool_name: string
-  tool_use_id: string
+  toolCallId: string
   description: string
   input: Record<string, unknown>
   permission_suggestions?: unknown[]
@@ -499,7 +499,7 @@ export function createPermissionRequestMessage(params: {
     request_id: params.request_id,
     agent_id: params.agent_id,
     tool_name: params.tool_name,
-    tool_use_id: params.tool_use_id,
+    toolCallId: params.toolCallId,
     description: params.description,
     input: params.input,
     permission_suggestions: params.permission_suggestions || [],
@@ -1159,7 +1159,7 @@ export function getLastPeerDmSummary(messages: Message[]): string | undefined {
     if (msg.type !== 'assistant') continue
     for (const block of msg.message.content) {
       if (
-        block.type === 'tool_use' &&
+        block.type === 'tool_call' &&
         block.name === SEND_MESSAGE_TOOL_NAME &&
         typeof block.input === 'object' &&
         block.input !== null &&

@@ -171,7 +171,7 @@ import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js';
 import { resumeAgentBackground } from '../tools/AgentTool/resumeAgent.js';
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js';
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js';
-import type { ContentBlockParam, ImageBlockParam } from '../types/llm.js';
+import type { ContentBlock, ImageBlock } from '../types/llm.js';
 import type { ProcessUserInputContext } from '../utils/processUserInput/processUserInput.js';
 import type { PastedContent } from '../utils/config.js';
 import { copyPlanForFork, copyPlanForResume, getPlanSlug, setPlanSlug } from '../utils/plans.js';
@@ -1530,8 +1530,8 @@ export function REPL({
   const onlySleepToolActive = useMemo(() => {
     const lastAssistant = messages.findLast(m => m.type === 'assistant');
     if (lastAssistant?.type !== 'assistant') return false;
-    const inProgressToolUses = lastAssistant.message.content.filter(b => b.type === 'tool_use' && inProgressToolUseIDs.has(b.id));
-    return inProgressToolUses.length > 0 && inProgressToolUses.every(b => b.type === 'tool_use' && b.name === SLEEP_TOOL_NAME);
+    const inProgressToolUses = lastAssistant.message.content.filter(b => b.type === 'tool_call' && inProgressToolUseIDs.has(b.id));
+    return inProgressToolUses.length > 0 && inProgressToolUses.every(b => b.type === 'tool_call' && b.name === SLEEP_TOOL_NAME);
   }, [messages, inProgressToolUseIDs]);
   const {
     onBeforeQuery: mrOnBeforeQuery,
@@ -2909,7 +2909,7 @@ export function REPL({
       await awaitPendingHooks();
 
       // 将所有初始提示通过 onSubmit 路由以确保 UserPromptSubmit hooks 触发
-      // TODO: 一旦它支持 ContentBlockParam 数组（图像）作为输入，简化为始终通过 onSubmit 路由
+      // TODO: 一旦它支持 ContentBlock 数组（图像）作为输入，简化为始终通过 onSubmit 路由
       const content = initialMsg.message.message.content;
 
       // 通过 onSubmit 路由所有字符串内容以确保 hooks 触发
@@ -2925,7 +2925,7 @@ export function REPL({
       } else {
         // Plan 消息或复杂内容（图像等）- 直接发送到模型
         // Plan 消息使用 onQuery 以保留 planContent 元数据用于渲染
-        // TODO: 一旦 onSubmit 支持 ContentBlockParam 数组，移除此分支
+        // TODO: 一旦 onSubmit 支持 ContentBlock 数组，移除此分支
         const newAbortController = createAbortController();
         setAbortController(newAbortController);
         void onQuery([initialMsg.message], newAbortController, true,
@@ -3221,10 +3221,10 @@ export function REPL({
       const pastedValues = Object.values(pastedContents);
       const imageContents = pastedValues.filter(c => c.type === 'image');
       const imagePasteIds = imageContents.length > 0 ? imageContents.map(c => c.id) : undefined;
-      let messageContent: string | ContentBlockParam[] = input.trim();
+      let messageContent: string | ContentBlock[] = input.trim();
       let remoteContent: RemoteMessageContent = input.trim();
       if (pastedValues.length > 0) {
-        const contentBlocks: ContentBlockParam[] = [];
+        const contentBlocks: ContentBlock[] = [];
         const remoteBlocks: Array<{
           type: string;
           [key: string]: unknown;
@@ -3244,7 +3244,7 @@ export function REPL({
           if (pasted.type === 'image') {
             const source = {
               type: 'base64' as const,
-              media_type: (pasted.mediaType ?? 'image/png') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+              mediaType: (pasted.mediaType ?? 'image/png') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
               data: pasted.content
             };
             contentBlocks.push({
@@ -3516,7 +3516,7 @@ export function REPL({
 
     // 恢复粘贴的图片
     if (Array.isArray(message.message.content) && message.message.content.some(block => block.type === 'image')) {
-      const imageBlocks: Array<ImageBlockParam> = message.message.content.filter(block => block.type === 'image');
+      const imageBlocks: Array<ImageBlock> = message.message.content.filter(block => block.type === 'image');
       if (imageBlocks.length > 0) {
         const newPastedContents: Record<number, PastedContent> = {};
         imageBlocks.forEach((block, index) => {
@@ -3526,7 +3526,7 @@ export function REPL({
               id,
               type: 'image',
               content: block.source.data,
-              mediaType: block.source.media_type
+              mediaType: block.source.mediaType
             };
           }
         });

@@ -572,7 +572,7 @@ export const FileEditTool = buildTool({
       data,
     }
   },
-  mapToolResultToToolResultBlockParam(data: FileEditOutput, toolUseID) {
+  mapToolResultToToolResultBlock(data: FileEditOutput, toolUseID) {
     const { filePath, userModified, replaceAll } = data
     const modifiedNote = userModified
       ? '.  The user modified your proposed changes before accepting them. '
@@ -580,14 +580,14 @@ export const FileEditTool = buildTool({
 
     if (replaceAll) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: `The file ${filePath} has been updated${modifiedNote}. All occurrences were successfully replaced.`,
       }
     }
 
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: `The file ${filePath} has been updated successfully${modifiedNote}.`,
     }

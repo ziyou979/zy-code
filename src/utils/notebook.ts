@@ -1,7 +1,7 @@
 import type {
-  ImageBlockParam,
-  TextBlockParam,
-  ToolResultBlockParam,
+  ImageBlock,
+  TextBlock,
+  ToolResultBlock,
 } from '../types/llm.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { formatOutput } from '../tools/BashTool/utils.js'
@@ -46,13 +46,13 @@ function extractImage(
   if (typeof data['image/png'] === 'string') {
     return {
       image_data: data['image/png'].replace(/\s/g, ''),
-      media_type: 'image/png',
+      mediaType: 'image/png',
     }
   }
   if (typeof data['image/jpeg'] === 'string') {
     return {
       image_data: data['image/jpeg'].replace(/\s/g, ''),
-      media_type: 'image/jpeg',
+      mediaType: 'image/jpeg',
     }
   }
   return undefined
@@ -118,7 +118,7 @@ function processCell(
   return cellData
 }
 
-function cellContentToToolResult(cell: NotebookCellSource): TextBlockParam {
+function cellContentToToolResult(cell: NotebookCellSource): TextBlock {
   const metadata = []
   if (cell.cellType !== 'code') {
     metadata.push(`<cell_type>${cell.cellType}</cell_type>`)
@@ -134,7 +134,7 @@ function cellContentToToolResult(cell: NotebookCellSource): TextBlockParam {
 }
 
 function cellOutputToToolResult(output: NotebookCellSourceOutput) {
-  const outputs: (TextBlockParam | ImageBlockParam)[] = []
+  const outputs: (TextBlock | ImageBlock)[] = []
   if (output.text) {
     outputs.push({
       text: `\n${output.text}`,
@@ -146,7 +146,7 @@ function cellOutputToToolResult(output: NotebookCellSourceOutput) {
       type: 'image',
       source: {
         data: output.image.image_data,
-        media_type: output.image.media_type,
+        mediaType: output.image.mediaType,
         type: 'base64',
       },
     })
@@ -190,14 +190,14 @@ export async function readNotebook(
 export function mapNotebookCellsToToolResult(
   data: NotebookCellSource[],
   toolUseID: string,
-): ToolResultBlockParam {
+): ToolResultBlock {
   const allResults = data.flatMap(getToolResultFromCell)
 
   // Merge adjacent text blocks
   return {
-    tool_use_id: toolUseID,
+    toolCallId: toolUseID,
     type: 'tool_result' as const,
-    content: allResults.reduce<(TextBlockParam | ImageBlockParam)[]>(
+    content: allResults.reduce<(TextBlock | ImageBlock)[]>(
       (acc, curr) => {
         if (acc.length === 0) return [curr]
 

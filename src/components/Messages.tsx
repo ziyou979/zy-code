@@ -106,7 +106,7 @@ export function filterForBriefTool<T extends {
       if (msg.isApiErrorMessage) return true;
       // 保留 Brief tool_use 块（使用标准 tool call 样式渲染，
       // 并且必须在列表中以便 buildMessageLookups 可以解析 tool result）
-      if (block?.type === 'tool_use' && block.name && nameSet.has(block.name)) {
+      if (block?.type === 'tool_call' && block.name && nameSet.has(block.name)) {
         if ('id' in block) {
           briefToolUseIDs.add((block as {
             id: string;
@@ -170,7 +170,7 @@ export function dropTextInBriefTurns<T extends {
     if (msg.type === 'assistant') {
       if (block?.type === 'text') {
         textIndexToTurn[i] = turn;
-      } else if (block?.type === 'tool_use' && block.name && nameSet.has(block.name)) {
+      } else if (block?.type === 'tool_call' && block.name && nameSet.has(block.name)) {
         turnsWithBrief.add(turn);
       }
     }
@@ -551,8 +551,8 @@ const MessagesImpl = ({
     const content = msg_6.message.content;
     if (!Array.isArray(content)) return false;
     const b_0 = content[0];
-    if (b_0?.type !== 'tool_result' || b_0.is_error || !msg_6.toolUseResult) return false;
-    const name = lookupsRef.current.toolUseByToolUseID.get(b_0.tool_use_id)?.name;
+    if (b_0?.type !== 'tool_result' || b_0.isError || !msg_6.toolUseResult) return false;
+    const name = lookupsRef.current.toolUseByToolUseID.get(b_0.toolCallId)?.name;
     const tool = name ? findToolByName(tools, name) : undefined;
     return tool?.isResultTruncated?.(msg_6.toolUseResult as never) ?? false;
   }, [tools]);
@@ -621,7 +621,7 @@ const MessagesImpl = ({
     if (msg_9.type === 'user' && msg_9.toolUseResult && Array.isArray(msg_9.message.content)) {
       const tr = msg_9.message.content.find(b_1 => b_1.type === 'tool_result');
       if (tr && 'tool_use_id' in tr) {
-        const tu = lookups_0.toolUseByToolUseID.get(tr.tool_use_id);
+        const tu = lookups_0.toolUseByToolUseID.get(tr.toolCallId);
         const tool_0 = tu && findToolByName(tools, tu.name);
         const extracted = tool_0?.extractSearchText?.(msg_9.toolUseResult as never);
         // undefined = tool 未实现 → 保留启发式。空字符串 = tool
@@ -781,7 +781,7 @@ export function shouldRenderStatically(message: RenderableMessage, streamingTool
       {
         const allResolved = (message as any).messages.every((msg: any) => {
           const content = msg.message.content[0];
-          return content?.type === 'tool_use' && lookups.resolvedToolUseIDs.has(content.id);
+          return content?.type === 'tool_call' && lookups.resolvedToolUseIDs.has(content.id);
         });
         return allResolved;
       }

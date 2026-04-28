@@ -1,6 +1,6 @@
 import type {
   APIErrorLike,
-  LLMMessage,
+  Response as LLMMessage,
   StopReason,
 } from '../../types/llm.js'
 import {
@@ -242,7 +242,7 @@ function logToolUseToolResultMismatch(
       if (Array.isArray(content)) {
         for (const block of content) {
           if (
-            block.type === 'tool_use' &&
+            block.type === 'tool_call' &&
             'id' in block &&
             block.id === toolUseId
           ) {
@@ -264,7 +264,7 @@ function logToolUseToolResultMismatch(
         if (Array.isArray(content)) {
           for (const block of content) {
             if (
-              block.type === 'tool_use' &&
+              block.type === 'tool_call' &&
               'id' in block &&
               block.id === toolUseId
             ) {
@@ -286,10 +286,10 @@ function logToolUseToolResultMismatch(
       if (Array.isArray(content)) {
         for (const block of content) {
           const role = msg.message.role
-          if (block.type === 'tool_use' && 'id' in block) {
+          if (block.type === 'tool_call' && 'id' in block) {
             normalizedSeq.push(`${role}:tool_use:${block.id}`)
           } else if (block.type === 'tool_result' && 'tool_use_id' in block) {
-            normalizedSeq.push(`${role}:tool_result:${block.tool_use_id}`)
+            normalizedSeq.push(`${role}:tool_result:${block.toolCallId}`)
           } else if (block.type === 'text') {
             normalizedSeq.push(`${role}:text`)
           } else if (block.type === 'thinking') {
@@ -319,14 +319,14 @@ function logToolUseToolResultMismatch(
             if (Array.isArray(content)) {
               for (const block of content) {
                 const role = msg.message.role
-                if (block.type === 'tool_use' && 'id' in block) {
+                if (block.type === 'tool_call' && 'id' in block) {
                   preNormalizedSeq.push(`${role}:tool_use:${block.id}`)
                 } else if (
                   block.type === 'tool_result' &&
                   'tool_use_id' in block
                 ) {
                   preNormalizedSeq.push(
-                    `${role}:tool_result:${block.tool_use_id}`,
+                    `${role}:tool_result:${block.toolCallId}`,
                   )
                 } else if (block.type === 'text') {
                   preNormalizedSeq.push(`${role}:text`)

@@ -1,8 +1,8 @@
 import type {
-  ContentBlockParam,
-  ImageBlockParam,
-  LLMMessageParam,
-  TextBlockParam,
+  ContentBlock,
+  ImageBlock,
+  Message as LLMMessageParam,
+  TextBlock,
 } from '../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
@@ -47,13 +47,13 @@ export function getMaxMcpOutputTokens(): number {
   return DEFAULT_MAX_MCP_OUTPUT_TOKENS
 }
 
-export type MCPToolResult = string | ContentBlockParam[] | undefined
+export type MCPToolResult = string | ContentBlock[] | undefined
 
-function isTextBlock(block: ContentBlockParam): block is TextBlockParam {
+function isTextBlock(block: ContentBlock): block is TextBlock {
   return block.type === 'text'
 }
 
-function isImageBlock(block: ContentBlockParam): block is ImageBlockParam {
+function isImageBlock(block: ContentBlock): block is ImageBlock {
   return block.type === 'image'
 }
 
@@ -93,10 +93,10 @@ function truncateString(content: string, maxChars: number): string {
 }
 
 async function truncateContentBlocks(
-  blocks: ContentBlockParam[],
+  blocks: ContentBlock[],
   maxChars: number,
-): Promise<ContentBlockParam[]> {
-  const result: ContentBlockParam[] = []
+): Promise<ContentBlock[]> {
+  const result: ContentBlock[] = []
   let currentChars = 0
 
   for (const block of blocks) {
@@ -167,7 +167,7 @@ export async function mcpContentNeedsTruncation(
     const messages =
       typeof content === 'string'
         ? [{ role: 'user' as const, content }]
-        : [{ role: 'user' as const, content: content as ContentBlockParam[] }]
+        : [{ role: 'user' as const, content: content as ContentBlock[] }]
 
     const tokenCount = await countMessagesTokensWithAPI(messages as LLMMessageParam[], [])
     return !!(tokenCount && tokenCount > getMaxMcpOutputTokens())
@@ -190,7 +190,7 @@ export async function truncateMcpContent(
     return truncateString(content, maxChars) + truncationMsg
   } else {
     const truncatedBlocks = await truncateContentBlocks(
-      content as ContentBlockParam[],
+      content as ContentBlock[],
       maxChars,
     )
     truncatedBlocks.push({ type: 'text', text: truncationMsg })

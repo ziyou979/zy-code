@@ -1,5 +1,5 @@
 import { isAPIError, type APIErrorLike } from '../types/llm.js'
-import type { LLMMessageParam } from '../types/llm.js'
+import type { Message as LLMMessageParam } from '../types/llm.js'
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getModelBetas } from '../utils/betas.js'

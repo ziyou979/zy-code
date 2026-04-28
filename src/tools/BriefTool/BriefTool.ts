@@ -172,11 +172,11 @@ export const BriefTool = buildTool({
   async prompt() {
     return BRIEF_TOOL_PROMPT
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     const n = output.attachments?.length ?? 0
     const suffix = n === 0 ? '' : ` (${n} ${plural(n, 'attachment')} included)`
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: `Message delivered to user.${suffix}`,
     }

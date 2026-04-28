@@ -1,7 +1,7 @@
 import type {
-  Base64ImageSource,
-  ContentBlockParam,
-  ToolResultBlockParam,
+  ImageSource,
+  ContentBlock,
+  ToolResultBlock,
 } from '../../types/llm.js'
 import { readFile, stat } from 'fs/promises'
 import { getOriginalCwd } from 'src/bootstrap/state.js'
@@ -71,18 +71,18 @@ export function parseDataUri(
 export function buildImageToolResult(
   stdout: string,
   toolUseID: string,
-): ToolResultBlockParam | null {
+): ToolResultBlock | null {
   const parsed = parseDataUri(stdout)
   if (!parsed) return null
   return {
-    tool_use_id: toolUseID,
+    toolCallId: toolUseID,
     type: 'tool_result',
     content: [
       {
         type: 'image',
         source: {
           type: 'base64',
-          media_type: parsed.mediaType as Base64ImageSource['media_type'],
+          mediaType: parsed.mediaType as ImageSource['mediaType'],
           data: parsed.data,
         },
       },
@@ -195,7 +195,7 @@ export function resetCwdIfOutsideProject(
  * Creates a human-readable summary of structured content blocks.
  * Used to display MCP results with images and text in the UI.
  */
-export function createContentSummary(content: ContentBlockParam[]): string {
+export function createContentSummary(content: ContentBlock[]): string {
   const parts: string[] = []
   let textCount = 0
   let imageCount = 0

@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '../../../types/llm.js'
+import type { ContentBlock } from '../../../types/llm.js'
 import type { PendingClassifierCheck } from '../../../types/permissions.js'
 import { isAgentSwarmsEnabled } from '../../../utils/agentSwarmsEnabled.js'
 import { toError } from '../../../utils/errors.js'
@@ -85,7 +85,7 @@ async function handleSwarmWorkerPermission(
           allowedInput: Record<string, unknown> | undefined,
           permissionUpdates: PermissionUpdate[],
           feedback?: string,
-          contentBlocks?: ContentBlockParam[],
+          contentBlocks?: ContentBlock[],
         ) {
           if (!claim()) return // atomic check-and-mark before await
           clearPendingRequest()
@@ -106,7 +106,7 @@ async function handleSwarmWorkerPermission(
             ),
           )
         },
-        onReject(feedback?: string, contentBlocks?: ContentBlockParam[]) {
+        onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
           if (!claim()) return
           clearPendingRequest()
 

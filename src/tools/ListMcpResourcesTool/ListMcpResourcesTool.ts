@@ -105,17 +105,17 @@ export const ListMcpResourcesTool = buildTool({
   isResultTruncated(output: Output): boolean {
     return isOutputLineTruncated(jsonStringify(output))
   },
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     if (!content || content.length === 0) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content:
           'No resources found. MCP servers may still provide tools even if they have no resources.',
       }
     }
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: jsonStringify(content),
     }

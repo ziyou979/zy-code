@@ -4,11 +4,11 @@
  */
 
 import type {
+  AssistantContentBlock,
   ContentBlock,
-  ContentBlockParam,
-  LLMMessage,
+  Response as LLMMessage,
   LLMError,
-  ToolUseBlock,
+  ToolCallInlineBlock,
 } from './llm.js'
 import type { UUID } from 'crypto'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
@@ -58,7 +58,7 @@ export interface AssistantMessage extends BaseMessage {
 export interface NormalizedAssistantMessage extends BaseMessage {
   type: 'assistant'
   message: Omit<LLMMessage, 'content'> & {
-    content: ContentBlock[]
+    content: AssistantContentBlock[]
     context_management: null | Record<string, unknown>
   }
   requestId?: string
@@ -78,7 +78,7 @@ export interface UserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: string | ContentBlockParam[]
+    content: string | ContentBlock[]
   }
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
@@ -105,7 +105,7 @@ export interface NormalizedUserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: ContentBlockParam[]
+    content: ContentBlock[]
   }
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
@@ -385,7 +385,7 @@ export interface StopHookInfo {
 
 export interface GroupedToolUseMessage extends BaseMessage {
   type: 'grouped_tool_use'
-  toolUses: ToolUseBlock[]
+  toolUses: ToolCallInlineBlock[]
 }
 
 export interface CollapsedReadSearchGroup extends BaseMessage {

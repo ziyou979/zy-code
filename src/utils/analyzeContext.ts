@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { LLMMessageParam, ToolDefinition } from '../types/llm.js'
+import type { Message as LLMMessageParam, ToolDefinition } from '../types/llm.js'
 import {
   getSystemPrompt,
   SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
@@ -451,7 +451,7 @@ async function countBuiltInToolTokens(
           for (const block of msg.message.content) {
             if (
               'type' in block &&
-              block.type === 'tool_use' &&
+              block.type === 'tool_call' &&
               'name' in block &&
               typeof block.name === 'string' &&
               deferredToolNameSet.has(block.name)
@@ -688,7 +688,7 @@ export async function countMcpToolTokens(
         for (const block of msg.message.content) {
           if (
             'type' in block &&
-            block.type === 'tool_use' &&
+            block.type === 'tool_call' &&
             'name' in block &&
             typeof block.name === 'string' &&
             mcpToolNameSet.has(block.name)
@@ -790,7 +790,7 @@ function processAssistantMessage(
     const blockStr = jsonStringify(block)
     const blockTokens = roughTokenCountEstimation(blockStr)
 
-    if ('type' in block && block.type === 'tool_use') {
+    if ('type' in block && block.type === 'tool_call') {
       breakdown.toolCallTokens += blockTokens
       const toolName = ('name' in block ? block.name : undefined) || 'unknown'
       breakdown.toolCallsByType.set(
@@ -824,7 +824,7 @@ function processUserMessage(
 
     if ('type' in block && block.type === 'tool_result') {
       breakdown.toolResultTokens += blockTokens
-      const toolUseId = 'tool_use_id' in block ? block.tool_use_id : undefined
+      const toolUseId = 'tool_use_id' in block ? block.toolCallId : undefined
       const toolName =
         (toolUseId ? toolUseIdToName.get(toolUseId) : undefined) || 'unknown'
       breakdown.toolResultsByType.set(
@@ -875,7 +875,7 @@ async function approximateMessageTokens(
   for (const msg of microcompactResult.messages) {
     if (msg.type === 'assistant') {
       for (const block of msg.message.content) {
-        if ('type' in block && block.type === 'tool_use') {
+        if ('type' in block && block.type === 'tool_call') {
           const toolUseId = 'id' in block ? block.id : undefined
           const toolName =
             ('name' in block ? block.name : undefined) || 'unknown'

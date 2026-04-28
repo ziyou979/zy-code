@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import React from 'react';
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
@@ -115,7 +115,7 @@ export function renderToolUseMessage(input: Partial<Input>, {
   }
   return parts.join(', ');
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   verbose
 }: {
   verbose: boolean;

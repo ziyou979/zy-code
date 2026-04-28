@@ -4374,7 +4374,7 @@ function collectReplIds(messages: readonly Message[]): Set<string> {
   for (const m of messages) {
     if (m.type === 'assistant' && Array.isArray(m.message.content)) {
       for (const b of m.message.content) {
-        if (b.type === 'tool_use' && b.name === REPL_TOOL_NAME) {
+        if (b.type === 'tool_call' && b.name === REPL_TOOL_NAME) {
           ids.add(b.id)
         }
       }
@@ -4404,11 +4404,11 @@ function transformMessagesForExternalTranscript(
     if (m.type === 'assistant' && Array.isArray(m.message.content)) {
       const content = m.message.content
       const hasRepl = content.some(
-        b => b.type === 'tool_use' && b.name === REPL_TOOL_NAME,
+        b => b.type === 'tool_call' && b.name === REPL_TOOL_NAME,
       )
       const filtered = hasRepl
         ? content.filter(
-            b => !(b.type === 'tool_use' && b.name === REPL_TOOL_NAME),
+            b => !(b.type === 'tool_call' && b.name === REPL_TOOL_NAME),
           )
         : content
       if (filtered.length === 0) return []
@@ -4424,11 +4424,11 @@ function transformMessagesForExternalTranscript(
     if (m.type === 'user' && Array.isArray(m.message.content)) {
       const content = m.message.content
       const hasRepl = content.some(
-        b => b.type === 'tool_result' && replIds.has(b.tool_use_id),
+        b => b.type === 'tool_result' && replIds.has(b.toolCallId),
       )
       const filtered = hasRepl
         ? content.filter(
-            b => !(b.type === 'tool_result' && replIds.has(b.tool_use_id)),
+            b => !(b.type === 'tool_result' && replIds.has(b.toolCallId)),
           )
         : content
       if (filtered.length === 0) return []
@@ -4493,7 +4493,7 @@ export async function findUnresolvedToolUse(
         const content = message.message.content
         if (Array.isArray(content)) {
           for (const block of content) {
-            if (block.type === 'tool_use' && block.id === toolUseId) {
+            if (block.type === 'tool_call' && block.id === toolUseId) {
               toolUseMessage = message
               break
             }
@@ -4505,7 +4505,7 @@ export async function findUnresolvedToolUse(
           for (const block of content) {
             if (
               block.type === 'tool_result' &&
-              block.tool_use_id === toolUseId
+              block.toolCallId === toolUseId
             ) {
               // Found tool result, bail out
               return null

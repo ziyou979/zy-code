@@ -66,9 +66,9 @@ export const REPLTool = buildTool({
   renderToolResultMessage() {
     return null
   },
-  mapToolResultToToolResultBlockParam({ output, success }, toolUseID) {
+  mapToolResultToToolResultBlock({ output, success }, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: success ? output : `Error executing REPL: ${output}`,
     }

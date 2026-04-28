@@ -2,7 +2,7 @@
  * 将大型工具结果持久化到磁盘而非截断的工具。
  */
 
-import type { ToolResultBlockParam } from '../types/llm.js'
+import type { ToolResultBlock } from '../types/llm.js'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
@@ -135,7 +135,7 @@ export async function ensureToolResultsDir(): Promise<void> {
  * @returns 关于持久化文件的信息，包括文件路径和预览
  */
 export async function persistToolResult(
-  content: NonNullable<ToolResultBlockParam['content']>,
+  content: NonNullable<ToolResultBlock['content']>,
   toolUseId: string,
 ): Promise<PersistedToolResult | PersistToolResultError> {
   const isJson = Array.isArray(content)
@@ -205,15 +205,15 @@ export async function processToolResultBlock<T>(
   tool: {
     name: string
     maxResultSizeChars: number
-    mapToolResultToToolResultBlockParam: (
+    mapToolResultToToolResultBlock: (
       result: T,
       toolUseID: string,
-    ) => ToolResultBlockParam
+    ) => ToolResultBlock
   },
   toolUseResult: T,
   toolUseID: string,
-): Promise<ToolResultBlockParam> {
-  const toolResultBlock = tool.mapToolResultToToolResultBlockParam(
+): Promise<ToolResultBlock> {
+  const toolResultBlock = tool.mapToolResultToToolResultBlock(
     toolUseResult,
     toolUseID,
   )
@@ -226,13 +226,13 @@ export async function processToolResultBlock<T>(
 
 /**
  * 处理已映射的工具结果块。对大型结果应用持久化，
- * 无需重新调用 mapToolResultToToolResultBlockParam。
+ * 无需重新调用 mapToolResultToToolResultBlock。
  */
 export async function processPreMappedToolResultBlock(
-  toolResultBlock: ToolResultBlockParam,
+  toolResultBlock: ToolResultBlock,
   toolName: string,
   maxResultSizeChars: number,
-): Promise<ToolResultBlockParam> {
+): Promise<ToolResultBlock> {
   return maybePersistLargeToolResult(
     toolResultBlock,
     toolName,
@@ -246,7 +246,7 @@ export async function processPreMappedToolResultBlock(
  * 空/空白文本块的数组。非文本块（图片、tool_reference）视为非空。
  */
 export function isToolResultContentEmpty(
-  content: ToolResultBlockParam['content'],
+  content: ToolResultBlock['content'],
 ): boolean {
   if (!content) return true
   if (typeof content === 'string') return content.trim() === ''
@@ -268,10 +268,10 @@ export function isToolResultContentEmpty(
  * 内容被替换为对持久化文件的引用。
  */
 async function maybePersistLargeToolResult(
-  toolResultBlock: ToolResultBlockParam,
+  toolResultBlock: ToolResultBlock,
   toolName: string,
   persistenceThreshold?: number,
-): Promise<ToolResultBlockParam> {
+): Promise<ToolResultBlock> {
   // 先检查大小再进行任何异步工作 - 大多数工具结果都很小
   const content = toolResultBlock.content
 
@@ -310,7 +310,7 @@ async function maybePersistLargeToolResult(
   }
 
   // 将整个内容作为一个单元进行持久化
-  const result = await persistToolResult(content, toolResultBlock.tool_use_id)
+  const result = await persistToolResult(content, toolResultBlock.toolCallId)
   if (isPersistError(result)) {
     // 如果持久化失败，返回原始块不变
     return toolResultBlock
@@ -481,7 +481,7 @@ export type ToolResultReplacementRecord = Extract<
 
 type ToolResultCandidate = {
   toolUseId: string
-  content: NonNullable<ToolResultBlockParam['content']>
+  content: NonNullable<ToolResultBlock['content']>
   size: number
 }
 
@@ -492,7 +492,7 @@ type CandidatePartition = {
 }
 
 function isContentAlreadyCompacted(
-  content: ToolResultBlockParam['content'],
+  content: ToolResultBlock['content'],
 ): boolean {
   // 所有预算生成的内容都以标签开头（buildLargeToolResultMessage）。
   // `.startsWith()` 避免标签出现在内容其他位置时的误报
@@ -501,7 +501,7 @@ function isContentAlreadyCompacted(
 }
 
 function hasImageBlock(
-  content: NonNullable<ToolResultBlockParam['content']>,
+  content: NonNullable<ToolResultBlock['content']>,
 ): boolean {
   return (
     Array.isArray(content) &&
@@ -512,7 +512,7 @@ function hasImageBlock(
 }
 
 function contentSize(
-  content: NonNullable<ToolResultBlockParam['content']>,
+  content: NonNullable<ToolResultBlock['content']>,
 ): number {
   if (typeof content === 'string') return content.length
   // 直接对文本块长度求和。与序列化相比略微少计
@@ -536,7 +536,7 @@ function buildToolNameMap(messages: Message[]): Map<string, string> {
     const content = message.message.content
     if (!Array.isArray(content)) continue
     for (const block of content) {
-      if (block.type === 'tool_use') {
+      if (block.type === 'tool_call') {
         map.set(block.id, block.name)
       }
     }
@@ -560,7 +560,7 @@ function collectCandidatesFromMessage(message: Message): ToolResultCandidate[] {
     if (hasImageBlock(block.content)) return []
     return [
       {
-        toolUseId: block.tool_use_id,
+        toolUseId: block.toolCallId,
         content: block.content,
         size: contentSize(block.content),
       },
@@ -700,7 +700,7 @@ function replaceToolResultContents(
     }
     const content = message.message.content
     const needsReplace = content.some(
-      b => b.type === 'tool_result' && replacementMap.has(b.tool_use_id),
+      b => b.type === 'tool_result' && replacementMap.has(b.toolCallId),
     )
     if (!needsReplace) return message
     return {
@@ -709,7 +709,7 @@ function replaceToolResultContents(
         ...message.message,
         content: content.map(block => {
           if (block.type !== 'tool_result') return block
-          const replacement = replacementMap.get(block.tool_use_id)
+          const replacement = replacementMap.get(block.toolCallId)
           return replacement === undefined
             ? block
             : { ...block, content: replacement }

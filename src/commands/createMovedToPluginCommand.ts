@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '../types/llm.js'
+import type { ContentBlock } from '../types/llm.js'
 import type { Command } from '../commands.js'
 import type { ToolUseContext } from '../Tool.js'
 import { isInternalBuild } from '../utils/envUtils.js'
@@ -17,7 +17,7 @@ type Options = {
   getPromptWhileMarketplaceIsPrivate: (
     args: string,
     context: ToolUseContext,
-  ) => Promise<ContentBlockParam[]>
+  ) => Promise<ContentBlock[]>
 }
 
 export function createMovedToPluginCommand({
@@ -41,7 +41,7 @@ export function createMovedToPluginCommand({
     async getPromptForCommand(
       args: string,
       context: ToolUseContext,
-    ): Promise<ContentBlockParam[]> {
+    ): Promise<ContentBlock[]> {
       if (isInternalBuild()) {
         return [
           {

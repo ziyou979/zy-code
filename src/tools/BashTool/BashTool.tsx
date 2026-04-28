@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises';
 import * as React from 'react';
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js';
@@ -554,7 +554,7 @@ export const BashTool = buildTool({
   }) {
     return stderr ? `${stdout}\n${stderr}` : stdout;
   },
-  mapToolResultToToolResultBlockParam({
+  mapToolResultToToolResultBlock({
     interrupted,
     stdout,
     stderr,
@@ -565,11 +565,11 @@ export const BashTool = buildTool({
     structuredContent,
     persistedOutputPath,
     persistedOutputSize
-  }, toolUseID): ToolResultBlockParam {
+  }, toolUseID): ToolResultBlock {
     // Handle structured content
     if (structuredContent && structuredContent.length > 0) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: structuredContent
       };
@@ -617,10 +617,10 @@ export const BashTool = buildTool({
       }
     }
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: [processedStdout, errorMessage, backgroundInfo].filter(Boolean).join('\n'),
-      is_error: interrupted
+      isError: interrupted
     };
   },
   async call(input: BashToolInput, toolUseContext, _canUseTool?: CanUseToolFn, parentMessage?: AssistantMessage, onProgress?: ToolCallProgress<BashProgress>) {
@@ -797,7 +797,7 @@ export const BashTool = buildTool({
       } else {
         // Parse failed or file too large (e.g. exceeds MAX_IMAGE_FILE_SIZE).
         // Keep isImage in sync with what we actually send so the UI label stays
-        // accurate — mapToolResultToToolResultBlockParam's defensive
+        // accurate — mapToolResultToToolResultBlock's defensive
         // fallthrough will send text, not an image block.
         isImage = false;
       }

@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from './types/llm.js'
+import type { ContentBlock } from './types/llm.js'
 import { randomUUID } from 'crypto'
 import last from 'lodash-es/last.js'
 import {
@@ -200,7 +200,7 @@ export class QueryEngine {
   }
 
   async *submitMessage(
-    prompt: string | ContentBlockParam[],
+    prompt: string | ContentBlock[],
     options?: { uuid?: string; isMeta?: boolean },
   ): AsyncGenerator<SDKMessage, void, unknown> {
     const {
@@ -605,7 +605,7 @@ export class QueryEngine {
       yield {
         type: 'result',
         subtype: 'success',
-        is_error: false,
+        isError: false,
         duration_ms: Date.now() - startTime,
         duration_api_ms: getTotalAPIDuration(),
         num_turns: messages.length - 1,
@@ -832,7 +832,7 @@ export class QueryEngine {
               subtype: 'error_max_turns',
               duration_ms: Date.now() - startTime,
               duration_api_ms: getTotalAPIDuration(),
-              is_error: true,
+              isError: true,
               num_turns: ((message as any).attachment as any).turnCount,
               stop_reason: lastStopReason,
               session_id: getSessionId(),
@@ -955,7 +955,7 @@ export class QueryEngine {
           subtype: 'error_max_budget_usd',
           duration_ms: Date.now() - startTime,
           duration_api_ms: getTotalAPIDuration(),
-          is_error: true,
+          isError: true,
           num_turns: turnCount,
           stop_reason: lastStopReason,
           session_id: getSessionId(),
@@ -994,7 +994,7 @@ export class QueryEngine {
             subtype: 'error_max_structured_output_retries',
             duration_ms: Date.now() - startTime,
             duration_api_ms: getTotalAPIDuration(),
-            is_error: true,
+            isError: true,
             num_turns: turnCount,
             stop_reason: lastStopReason,
             session_id: getSessionId(),
@@ -1048,7 +1048,7 @@ export class QueryEngine {
         subtype: 'error_during_execution',
         duration_ms: Date.now() - startTime,
         duration_api_ms: getTotalAPIDuration(),
-        is_error: true,
+        isError: true,
         num_turns: turnCount,
         stop_reason: lastStopReason,
         session_id: getSessionId(),
@@ -1094,7 +1094,7 @@ export class QueryEngine {
     yield {
       type: 'result',
       subtype: 'success',
-      is_error: isApiError,
+      isError: isApiError,
       duration_ms: Date.now() - startTime,
       duration_api_ms: getTotalAPIDuration(),
       num_turns: turnCount,
@@ -1170,7 +1170,7 @@ export async function* ask({
   orphanedPermission,
 }: {
   commands: Command[]
-  prompt: string | Array<ContentBlockParam>
+  prompt: string | Array<ContentBlock>
   promptUuid?: string
   isMeta?: boolean
   cwd: string

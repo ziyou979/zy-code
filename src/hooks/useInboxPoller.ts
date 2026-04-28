@@ -281,7 +281,7 @@ export function useInboxPoller({
             description: parsed.description,
             input: parsed.input,
             toolUseContext: {} as ToolUseConfirm['toolUseContext'],
-            toolUseID: parsed.tool_use_id,
+            toolUseID: parsed.toolCallId,
             permissionResult: {
               behavior: 'ask',
               message: parsed.description,
@@ -338,7 +338,7 @@ export function useInboxPoller({
           // Deduplicate: if markMessagesAsRead failed on a prior poll,
           // the same message will be re-read — skip if already queued.
           setToolUseConfirmQueue(queue => {
-            if (queue.some(q => q.toolUseID === parsed.tool_use_id)) {
+            if (queue.some(q => q.toolUseID === parsed.toolCallId)) {
               return queue
             }
             return [...queue, entry]

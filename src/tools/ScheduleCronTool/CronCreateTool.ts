@@ -140,12 +140,12 @@ export const CronCreateTool = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     const where = output.durable
       ? 'Persisted to .zy/scheduled_tasks.json'
       : 'Session-only (not written to disk, dies when ZY exits)'
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: output.recurring
         ? `Scheduled recurring job ${output.id} (${output.humanSchedule}). ${where}. Auto-expires after ${DEFAULT_MAX_AGE_DAYS} days. Use CronDelete to cancel sooner.`

@@ -19,9 +19,9 @@ export const TungstenTool: Tool = {
   isEnabled: () => false,
   isReadOnly: () => true,
   toAutoClassifierInput: () => '',
-  mapToolResultToToolResultBlockParam: (_content: unknown, toolUseID: string) => ({
+  mapToolResultToToolResultBlock: (_content: unknown, toolUseID: string) => ({
     type: 'tool_result' as const,
-    tool_use_id: toolUseID,
+    toolCallId: toolUseID,
     content: [],
   }),
 } as any

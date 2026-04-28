@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
 import type {
   ToolDefinition,
-  LLMMessage,
-  LLMMessageParam,
-  TextBlockParam,
-  ImageBlockParam,
+  Response as LLMMessage,
+  Message as LLMMessageParam,
+  TextBlock,
+  ImageBlock,
 } from '../../types/llm.js'
 import { mkdir, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
@@ -43,7 +43,7 @@ import {
   getBashPromptDenyDescriptions,
 } from './bashClassifier.js'
 import {
-  extractToolUseBlock,
+  extractToolCallInlineBlock,
   parseClassifierResponse,
 } from './classifierShared.js'
 import { getZyTempDir } from './filesystem.js'
@@ -288,7 +288,7 @@ const YOLO_CLASSIFIER_TOOL_SCHEMA: ToolDefinition = {
 
 type TranscriptBlock =
   | { type: 'text'; text: string }
-  | { type: 'tool_use'; name: string; input: unknown }
+  | { type: 'tool_call'; name: string; input: unknown }
 
 export type TranscriptEntry = {
   role: 'user' | 'assistant'
@@ -345,9 +345,9 @@ export function buildTranscriptEntries(messages: Message[]): TranscriptEntry[] {
       for (const block of msg.message.content) {
         // 仅包括 tool_use 块 — 助手文本是模型撰写的
         // 可能被精心制作以影响分类器的决定。
-        if (block.type === 'tool_use') {
+        if (block.type === 'tool_call') {
           blocks.push({
-            type: 'tool_use',
+            type: 'tool_call',
             name: block.name,
             input: block.input,
           })
@@ -388,7 +388,7 @@ function toCompactBlock(
   role: TranscriptEntry['role'],
   lookup: ToolLookup,
 ): string {
-  if (block.type === 'tool_use') {
+  if (block.type === 'tool_call') {
     const tool = lookup.get(block.name)
     if (!tool) return ''
     const input = (block.input ?? {}) as Record<string, unknown>
@@ -471,7 +471,6 @@ function buildzyMdMessage(): LLMMessageParam | null {
           `instructions the user provided to the agent and should be treated ` +
           `as part of the user's intent when evaluating actions.\n\n` +
           `<user_Zy_md>\n${zyMd}\n</user_Zy_md>`,
-        cache_control: getCacheControl({ querySource: 'auto_mode' as any }),
       },
     ],
   }
@@ -707,7 +706,7 @@ async function classifyYoloActionXml(
   systemPrompt: string,
   userPrompt: string,
   userContentBlocks: Array<
-    TextBlockParam | ImageBlockParam
+    TextBlock | ImageBlock
   >,
   model: string,
   promptLengths: {
@@ -733,11 +732,10 @@ async function classifyYoloActionXml(
         ? 'xml_fast'
         : 'xml_thinking'
   const xmlSystemPrompt = replaceOutputFormatWithXml(systemPrompt)
-  const systemBlocks: TextBlockParam[] = [
+  const systemBlocks: TextBlock[] = [
     {
       type: 'text' as const,
       text: xmlSystemPrompt,
-      cache_control: getCacheControl({ querySource: 'auto_mode' as any }),
     },
   ]
   let stage1Usage: ClassifierUsage | undefined
@@ -752,7 +750,7 @@ async function classifyYoloActionXml(
   // 用 <transcript> 标签包装所有内容（transcript + 操作）。
   // 操作是 transcript 中的最终 tool_use 块。
   const wrappedContent: Array<
-    TextBlockParam | ImageBlockParam
+    TextBlock | ImageBlock
   > = [
     { type: 'text' as const, text: '<transcript>\n' },
     ...userContentBlocks,
@@ -1031,7 +1029,7 @@ export async function classifyYoloAction(
 
   let toolCallsLength = actionCompact.length
   let userPromptsLength = 0
-  const userContentBlocks: TextBlockParam[] = []
+  const userContentBlocks: TextBlock[] = []
   for (const entry of transcriptEntries) {
     for (const block of entry.content) {
       const serialized = toCompactBlock(block, entry.role, lookup)
@@ -1087,16 +1085,10 @@ export async function classifyYoloAction(
 
   // 为与主 agent 循环保持一致而使用 getCacheControl —
   // 遵循 GrowthBook TTL 允许列表和 query-source 门控。
-  const cacheControl = getCacheControl({ querySource: 'auto_mode' as any })
-  // 将 cache_control 放在操作块上。在两阶段分类器中，
-  // 阶段 2 与阶段 1 共享相同的 transcript+操作前缀 — 此处的
-  // 断点为阶段 2 在整个前缀上提供保证的缓存命中。
-  // 预算：系统 (1) + CLAUDE.md (0-1) + 操作 (1) = 2-3，低于
-  // API 限制的 4 个 cache_control 块。
+  // 将操作块添加到用户内容中
   userContentBlocks.push({
     type: 'text' as const,
     text: actionCompact,
-    cache_control: cacheControl,
   })
 
   const model = getClassifierModel()
@@ -1132,7 +1124,6 @@ export async function classifyYoloAction(
         {
           type: 'text' as const,
           text: systemPrompt,
-          cache_control: getCacheControl({ querySource: 'auto_mode' as any }),
         },
       ],
       skipSystemPromptPrefix: true,
@@ -1184,19 +1175,19 @@ export async function classifyYoloAction(
     }
 
     // 使用共享工具提取结果
-    const toolUseBlock = extractToolUseBlock(
+    const toolCallInlineBlock = extractToolCallInlineBlock(
       result.content as any,
       YOLO_CLASSIFIER_TOOL_NAME,
     )
 
-    if (!toolUseBlock) {
-      logForDebugging('Auto mode classifier: No tool use block found', {
+    if (!toolCallInlineBlock) {
+      logForDebugging('Auto mode classifier: No tool call block found', {
         level: 'warn',
       })
       logAutoModeOutcome('parse_failure', model, { failureKind: 'no_tool_use' })
       return {
         shouldBlock: true,
-        reason: 'Classifier returned no tool use block - blocking for safety',
+        reason: 'Classifier returned no tool call block - blocking for safety',
         model,
         usage,
         durationMs,
@@ -1208,7 +1199,7 @@ export async function classifyYoloAction(
 
     // 使用共享工具解析响应
     const parsed = parseClassifierResponse(
-      toolUseBlock,
+      toolCallInlineBlock,
       yoloClassifierResponseSchema(),
     )
     if (!parsed) {
@@ -1485,6 +1476,6 @@ export function formatActionForClassifier(
 ): TranscriptEntry {
   return {
     role: 'assistant',
-    content: [{ type: 'tool_use', name: toolName, input: toolInput }],
+    content: [{ type: 'tool_call', name: toolName, input: toolInput }],
   }
 }

@@ -10,7 +10,7 @@
  * skips that attachment. The message still reaches ZY, just without @path.
  */
 
-import type { ContentBlockParam } from '../types/llm.js'
+import type { ContentBlock } from '../types/llm.js'
 import axios from 'axios'
 import { randomUUID } from 'crypto'
 import { mkdir, writeFile } from 'fs/promises'
@@ -140,9 +140,9 @@ export async function resolveInboundAttachments(
  * block[0] means they're silently ignored for [text, image] content.
  */
 export function prependPathRefs(
-  content: string | Array<ContentBlockParam>,
+  content: string | Array<ContentBlock>,
   prefix: string,
-): string | Array<ContentBlockParam> {
+): string | Array<ContentBlock> {
   if (!prefix) return content
   if (typeof content === 'string') return prefix + content
   const i = content.findLastIndex(b => b.type === 'text')
@@ -166,8 +166,8 @@ export function prependPathRefs(
  */
 export async function resolveAndPrepend(
   msg: unknown,
-  content: string | Array<ContentBlockParam>,
-): Promise<string | Array<ContentBlockParam>> {
+  content: string | Array<ContentBlock>,
+): Promise<string | Array<ContentBlock>> {
   const attachments = extractInboundAttachments(msg)
   if (attachments.length === 0) return content
   const prefix = await resolveInboundAttachments(attachments)

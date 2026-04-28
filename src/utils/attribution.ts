@@ -233,7 +233,7 @@ function countMemoryFileAccessFromEntries(
     if (!Array.isArray(content)) continue
     for (const block of content) {
       if (
-        block.type !== 'tool_use' ||
+        block.type !== 'tool_call' ||
         !MEMORY_ACCESS_TOOL_NAMES.has(block.name)
       )
         continue

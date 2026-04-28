@@ -32,7 +32,7 @@ import { type QueuedCommand, getImagePasteIds, isValidImagePaste } from 'src/typ
 import { randomUUID, type UUID } from 'crypto';
 import { getSettings_DEPRECATED } from './settings/settings.js';
 import { getSnippetForTwoFileDiff } from 'src/tools/FileEditTool/utils.js';
-import type { ContentBlockParam, ImageBlockParam, Base64ImageSource } from '../types/llm.js';
+import type { ContentBlock, ImageBlock, ImageSource } from '../types/llm.js';
 import { maybeResizeAndDownsampleImageBlock } from './imageResizer.js';
 import type { PastedContent } from './config.js';
 import type { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
@@ -363,7 +363,7 @@ FileAttachment | CompactFileReferenceAttachment | PDFReferenceAttachment | Alrea
   source: 'native' | 'aki' | 'both';
 } | {
   type: 'queued_command';
-  prompt: string | Array<ContentBlockParam>;
+  prompt: string | Array<ContentBlock>;
   source_uuid?: UUID;
   imagePasteIds?: number[];
   /** 原始队列模式 — 用户消息为 'prompt'，系统事件为 'task-notification' */
@@ -648,7 +648,7 @@ export async function getQueuedCommandAttachments(queuedCommands: QueuedCommand[
   const filtered = queuedCommands.filter(_ => INLINE_NOTIFICATION_MODES.has(_.mode));
   return Promise.all(filtered.map(async _ => {
     const imageBlocks = await buildImageContentBlocks(_.pastedContents);
-    let prompt: string | Array<ContentBlockParam> = _.value;
+    let prompt: string | Array<ContentBlock> = _.value;
     if (imageBlocks.length > 0) {
       // 构建包含文本 + 图像的内容块数组，使模型能看到它们
       const textValue = typeof _.value === 'string' ? _.value : extractTextContent(_.value, '\n');
@@ -681,7 +681,7 @@ export function getAgentPendingMessageAttachments(toolUseContext: ToolUseContext
     isMeta: true
   }));
 }
-async function buildImageContentBlocks(pastedContents: Record<number, PastedContent> | undefined): Promise<ImageBlockParam[]> {
+async function buildImageContentBlocks(pastedContents: Record<number, PastedContent> | undefined): Promise<ImageBlock[]> {
   if (!pastedContents) {
     return [];
   }
@@ -690,11 +690,11 @@ async function buildImageContentBlocks(pastedContents: Record<number, PastedCont
     return [];
   }
   const results = await Promise.all(imageContents.map(async img => {
-    const imageBlock: ImageBlockParam = {
+    const imageBlock: ImageBlock = {
       type: 'image',
       source: {
         type: 'base64',
-        media_type: (img.mediaType || 'image/png') as Base64ImageSource['media_type'],
+        mediaType: (img.mediaType || 'image/png') as ImageSource['mediaType'],
         data: img.content
       }
     };
@@ -1722,11 +1722,11 @@ export function startRelevantMemoryPrefetch(messages: ReadonlyArray<Message>, to
 }
 type ToolResultBlock = {
   type: 'tool_result';
-  tool_use_id: string;
+  toolCallId: string;
   is_error?: boolean;
 };
 function isToolResultBlock(b: unknown): b is ToolResultBlock {
-  return typeof b === 'object' && b !== null && (b as ToolResultBlock).type === 'tool_result' && typeof (b as ToolResultBlock).tool_use_id === 'string';
+  return typeof b === 'object' && b !== null && (b as ToolResultBlock).type === 'tool_result' && typeof (b as ToolResultBlock).toolCallId === 'string';
 }
 
 /**
@@ -1762,12 +1762,12 @@ export function collectRecentSuccessfulTools(messages: ReadonlyArray<Message>, l
     if (isHumanTurn(m) && m !== lastUserMessage) break;
     if (m.type === 'assistant' && typeof m.message.content !== 'string') {
       for (const block of m.message.content) {
-        if (block.type === 'tool_use') useIdToName.set(block.id, block.name);
+        if (block.type === 'tool_call') useIdToName.set(block.id, block.name);
       }
     } else if (m.type === 'user' && 'message' in m && Array.isArray(m.message.content)) {
       for (const block of m.message.content) {
         if (isToolResultBlock(block)) {
-          resultByUseId.set(block.tool_use_id, block.is_error === true);
+          resultByUseId.set(block.toolCallId, block.is_error === true);
         }
       }
     }
@@ -2380,7 +2380,7 @@ function getTodoReminderTurnCounts(messages: Message[]): {
 
       // 在计数器递增之前检查 TodoWrite 使用情况
       //（我们不希望将 TodoWrite 消息本身计为"写入后 1 轮"）
-      if (lastTodoWriteIndex === -1 && 'message' in message && Array.isArray(message.message?.content) && message.message.content.some(block => block.type === 'tool_use' && block.name === 'TodoWrite')) {
+      if (lastTodoWriteIndex === -1 && 'message' in message && Array.isArray(message.message?.content) && message.message.content.some(block => block.type === 'tool_call' && block.name === 'TodoWrite')) {
         lastTodoWriteIndex = i;
       }
 
@@ -2454,7 +2454,7 @@ function getTaskReminderTurnCounts(messages: Message[]): {
       }
 
       // 在计数器递增之前检查 TaskCreate 或 TaskUpdate 使用情况
-      if (lastTaskManagementIndex === -1 && 'message' in message && Array.isArray(message.message?.content) && message.message.content.some(block => block.type === 'tool_use' && (block.name === TASK_CREATE_TOOL_NAME || block.name === TASK_UPDATE_TOOL_NAME))) {
+      if (lastTaskManagementIndex === -1 && 'message' in message && Array.isArray(message.message?.content) && message.message.content.some(block => block.type === 'tool_call' && (block.name === TASK_CREATE_TOOL_NAME || block.name === TASK_UPDATE_TOOL_NAME))) {
         lastTaskManagementIndex = i;
       }
 

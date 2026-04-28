@@ -1,4 +1,4 @@
-import type { ToolUseBlock } from '../../types/llm.js'
+import type { ToolCallInlineBlock } from '../../types/llm.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { findToolByName, type ToolUseContext } from '../../Tool.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
@@ -17,7 +17,7 @@ export type MessageUpdate = {
 }
 
 export async function* runTools(
-  toolUseMessages: ToolUseBlock[],
+  toolUseMessages: ToolCallInlineBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -81,7 +81,7 @@ export async function* runTools(
   }
 }
 
-type Batch = { isConcurrencySafe: boolean; blocks: ToolUseBlock[] }
+type Batch = { isConcurrencySafe: boolean; blocks: ToolCallInlineBlock[] }
 
 /**
  * Partition tool calls into batches where each batch is either:
@@ -89,7 +89,7 @@ type Batch = { isConcurrencySafe: boolean; blocks: ToolUseBlock[] }
  * 2. Multiple consecutive read-only tools
  */
 function partitionToolCalls(
-  toolUseMessages: ToolUseBlock[],
+  toolUseMessages: ToolCallInlineBlock[],
   toolUseContext: ToolUseContext,
 ): Batch[] {
   return toolUseMessages.reduce((acc: Batch[], toolUse) => {
@@ -116,7 +116,7 @@ function partitionToolCalls(
 }
 
 async function* runToolsSerially(
-  toolUseMessages: ToolUseBlock[],
+  toolUseMessages: ToolCallInlineBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -131,7 +131,7 @@ async function* runToolsSerially(
       toolUse,
       assistantMessages.find(_ =>
         _.message.content.some(
-          _ => _.type === 'tool_use' && _.id === toolUse.id,
+          _ => _.type === 'tool_call' && _.id === toolUse.id,
         ),
       )!,
       canUseTool,
@@ -150,7 +150,7 @@ async function* runToolsSerially(
 }
 
 async function* runToolsConcurrently(
-  toolUseMessages: ToolUseBlock[],
+  toolUseMessages: ToolCallInlineBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -164,7 +164,7 @@ async function* runToolsConcurrently(
         toolUse,
         assistantMessages.find(_ =>
           _.message.content.some(
-            _ => _.type === 'tool_use' && _.id === toolUse.id,
+            _ => _.type === 'tool_call' && _.id === toolUse.id,
           ),
         )!,
         canUseTool,

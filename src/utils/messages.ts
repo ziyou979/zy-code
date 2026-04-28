@@ -4,14 +4,13 @@ import type {
   TokenUsage,
 } from '../types/llm.js'
 import type {
-  ContentBlockParam,
+  AssistantContentBlock,
+  ContentBlock,
   RedactedThinkingBlock,
-  RedactedThinkingBlockParam,
   ThinkingBlock,
-  ThinkingBlockParam,
-  ToolResultBlockParam,
-  ToolUseBlockParam,
-  TextBlockParam,
+  ToolResultBlock,
+  ToolCallInlineBlock,
+  TextBlock,
 } from '../types/llm.js'
 import { randomUUID, type UUID } from 'crypto'
 import isObject from 'lodash-es/isObject.js'
@@ -92,12 +91,7 @@ type HookAttachmentWithName = Exclude<
   HookPermissionDecisionAttachment
 >
 
-import type { APIErrorLike } from '../types/llm.js'
-import type {
-  ContentBlock,
-  LLMMessage,
-  ToolUseBlock,
-} from '../types/llm.js'
+import type { APIErrorLike, Response as LLMMessage } from '../types/llm.js'
 import type {
   HookEvent,
   SDKAssistantMessageError,
@@ -352,7 +346,7 @@ export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean {
       const assistantMessage = message as AssistantMessage
       const content = assistantMessage.message.content
       if (Array.isArray(content)) {
-        return content.some(block => block.type === 'tool_use')
+        return content.some(block => block.type === 'tool_call')
       }
     }
   }
@@ -384,7 +378,7 @@ function baseCreateAssistantMessage({
     speed: null,
   } as TokenUsage,
 }: {
-  content: ContentBlock[]
+  content: AssistantContentBlock[]
   isApiErrorMessage?: boolean
   apiError?: AssistantMessage['apiError']
   error?: SDKAssistantMessageError
@@ -423,7 +417,7 @@ export function createAssistantMessage({
   usage,
   isVirtual,
 }: {
-  content: string | ContentBlock[]
+  content: string | AssistantContentBlock[]
   usage?: Usage
   isVirtual?: true
 }): AssistantMessage {
@@ -434,7 +428,7 @@ export function createAssistantMessage({
             {
               type: 'text' as const,
               text: content === '' ? NO_CONTENT_MESSAGE : content,
-            } as ContentBlock, // 注意：Bedrock API 不支持 citations 字段
+            } as AssistantContentBlock, // 注意：Bedrock API 不支持 citations 字段
           ]
         : content,
     usage,
@@ -458,7 +452,7 @@ export function createAssistantAPIErrorMessage({
       {
         type: 'text' as const,
         text: content === '' ? NO_CONTENT_MESSAGE : content,
-      } as ContentBlock, // 注意：Bedrock API 不支持 citations 字段
+      } as AssistantContentBlock, // 注意：Bedrock API 不支持 citations 字段
     ],
     isApiErrorMessage: true,
     apiError,
@@ -483,7 +477,7 @@ export function createUserMessage({
   permissionMode,
   origin,
 }: {
-  content: string | ContentBlockParam[]
+  content: string | ContentBlock[]
   isMeta?: true
   isVisibleInTranscriptOnly?: true
   isVirtual?: true
@@ -537,8 +531,8 @@ export function prepareUserContent({
   precedingInputBlocks,
 }: {
   inputString: string
-  precedingInputBlocks: ContentBlockParam[]
-}): string | ContentBlockParam[] {
+  precedingInputBlocks: ContentBlock[]
+}): string | ContentBlock[] {
   if (precedingInputBlocks.length === 0) {
     return inputString
   }
@@ -633,12 +627,12 @@ export function createProgressMessage<P extends Progress>({
 
 export function createToolResultStopMessage(
   toolUseID: string,
-): ToolResultBlockParam {
+): ToolResultBlock {
   return {
     type: 'tool_result',
     content: CANCEL_MESSAGE,
-    is_error: true,
-    tool_use_id: toolUseID,
+    isError: true,
+    toolCallId: toolUseID,
   }
 }
 
@@ -842,7 +836,7 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
 }
 
 type ToolUseRequestMessage = NormalizedAssistantMessage & {
-  message: { content: [ToolUseBlock] }
+  message: { content: [ToolCallInlineBlock] }
 }
 
 export function isToolUseRequestMessage(
@@ -850,13 +844,13 @@ export function isToolUseRequestMessage(
 ): message is ToolUseRequestMessage {
   return (
     message.type === 'assistant' &&
-    // 注意：stop_reason === 'tool_use' 不可靠 — 并不总是正确设置
-    message.message.content.some(_ => _.type === 'tool_use')
+    // 注意：stop_reason === 'tool_call' 不可靠 — 并不总是正确设置
+    message.message.content.some(_ => _.type === 'tool_call')
   )
 }
 
 type ToolUseResultMessage = NormalizedUserMessage & {
-  message: { content: [ToolResultBlockParam] }
+  message: { content: [ToolResultBlock] }
 }
 
 export function isToolUseResultMessage(
@@ -938,7 +932,7 @@ export function reorderMessagesInUI(
       message.type === 'user' &&
       message.message.content[0]?.type === 'tool_result'
     ) {
-      const toolUseID = message.message.content[0].tool_use_id
+      const toolUseID = message.message.content[0].toolCallId
       if (!toolUseGroups.has(toolUseID)) {
         toolUseGroups.set(toolUseID, {
           toolUse: null,
@@ -1122,8 +1116,8 @@ export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
       _.type === 'user' && _.message.content[0]?.type === 'tool_result'
         ? [
             [
-              _.message.content[0].tool_use_id,
-              _.message.content[0].is_error ?? false,
+              _.message.content[0].toolCallId,
+              _.message.content[0].isError ?? false,
             ],
           ]
         : ([] as [string, boolean][]),
@@ -1143,7 +1137,7 @@ export function getSiblingToolUseIDs(
   const unnormalizedMessage = messages.find(
     (_): _ is AssistantMessage =>
       _.type === 'assistant' &&
-      _.message.content.some(_ => _.type === 'tool_use' && _.id === toolUseID),
+      _.message.content.some(_ => _.type === 'tool_call' && _.id === toolUseID),
   )
   if (!unnormalizedMessage) {
     return new Set()
@@ -1157,7 +1151,7 @@ export function getSiblingToolUseIDs(
 
   return new Set(
     siblingMessages.flatMap(_ =>
-      _.message.content.filter(_ => _.type === 'tool_use').map(_ => _.id),
+      _.message.content.filter(_ => _.type === 'tool_call').map(_ => _.id),
     ),
   )
 }
@@ -1169,8 +1163,8 @@ export type MessageLookups = {
   resolvedHookCounts: Map<string, Map<HookEvent, number>>
   /** 将 tool_use_id 映射到包含其 tool_result 的用户消息 */
   toolResultByToolUseID: Map<string, NormalizedMessage>
-  /** 将 tool_use_id 映射到 ToolUseBlockParam */
-  toolUseByToolUseID: Map<string, ToolUseBlockParam>
+  /** 将 tool_use_id 映射到 ToolCallInlineBlock */
+  toolUseByToolUseID: Map<string, ToolCallInlineBlock>
   /** 标准化消息的总计数（用于截断指示文本） */
   normalizedMessageCount: number
   /** 有对应 tool_result 的工具使用 ID 集合 */
@@ -1193,7 +1187,7 @@ export function buildMessageLookups(
   // 第一遍：按 ID 分组 assistant 消息并收集每条消息的所有工具使用 ID
   const toolUseIDsByMessageID = new Map<string, Set<string>>()
   const toolUseIDToMessageID = new Map<string, string>()
-  const toolUseByToolUseID = new Map<string, ToolUseBlockParam>()
+  const toolUseByToolUseID = new Map<string, ToolCallInlineBlock>()
   for (const msg of messages) {
     if (msg.type === 'assistant') {
       const id = msg.message.id
@@ -1203,7 +1197,7 @@ export function buildMessageLookups(
         toolUseIDsByMessageID.set(id, toolUseIDs)
       }
       for (const content of msg.message.content) {
-        if (content.type === 'tool_use') {
+        if (content.type === 'tool_call') {
           toolUseIDs.add(content.id)
           toolUseIDToMessageID.set(content.id, id)
           toolUseByToolUseID.set(content.id, content)
@@ -1257,10 +1251,10 @@ export function buildMessageLookups(
     if (msg.type === 'user') {
       for (const content of msg.message.content) {
         if (content.type === 'tool_result') {
-          toolResultByToolUseID.set(content.tool_use_id, msg)
-          resolvedToolUseIDs.add(content.tool_use_id)
-          if (content.is_error) {
-            erroredToolUseIDs.add(content.tool_use_id)
+          toolResultByToolUseID.set(content.toolCallId, msg)
+          resolvedToolUseIDs.add(content.toolCallId)
+          if (content.isError) {
+            erroredToolUseIDs.add(content.toolCallId)
           }
         }
       }
@@ -1269,22 +1263,22 @@ export function buildMessageLookups(
     if (msg.type === 'assistant') {
       for (const content of msg.message.content) {
         // 追踪所有服务端侧 *_tool_result 块（advisor、web_search、
-        // code_execution、mcp 等）— 任何带 tool_use_id 的块都是结果。
+        // code_execution、mcp 等）— 任何带 toolCallId 的块都是结果。
         if (
-          'tool_use_id' in content &&
-          typeof (content as { tool_use_id: string }).tool_use_id === 'string'
+          'toolCallId' in content &&
+          typeof (content as { toolCallId: string }).toolCallId === 'string'
         ) {
           resolvedToolUseIDs.add(
-            (content as { tool_use_id: string }).tool_use_id,
+            (content as { toolCallId: string }).toolCallId,
           )
         }
         if ((content.type as string) === 'advisor_tool_result') {
           const result = (content as unknown) as {
-            tool_use_id: string
+            toolCallId: string
             content: { type: string }
           }
           if (result.content.type === 'advisor_tool_result_error') {
-            erroredToolUseIDs.add(result.tool_use_id)
+            erroredToolUseIDs.add(result.toolCallId)
           }
         }
       }
@@ -1393,7 +1387,7 @@ export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(
 export function buildSubagentLookups(
   messages: { message: AssistantMessage | NormalizedUserMessage }[],
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } {
-  const toolUseByToolUseID = new Map<string, ToolUseBlockParam>()
+  const toolUseByToolUseID = new Map<string, ToolCallInlineBlock>()
   const resolvedToolUseIDs = new Set<string>()
   const toolResultByToolUseID = new Map<
     string,
@@ -1403,15 +1397,15 @@ export function buildSubagentLookups(
   for (const { message: msg } of messages) {
     if (msg.type === 'assistant') {
       for (const content of msg.message.content) {
-        if (content.type === 'tool_use') {
-          toolUseByToolUseID.set(content.id, content as ToolUseBlockParam)
+        if (content.type === 'tool_call') {
+          toolUseByToolUseID.set(content.id, content as ToolCallInlineBlock)
         }
       }
     } else if (msg.type === 'user') {
       for (const content of msg.message.content) {
         if (content.type === 'tool_result') {
-          resolvedToolUseIDs.add(content.tool_use_id)
-          toolResultByToolUseID.set(content.tool_use_id, msg)
+          resolvedToolUseIDs.add(content.toolCallId)
+          toolResultByToolUseID.set(content.toolCallId, msg)
         }
       }
     }
@@ -1487,7 +1481,7 @@ export function getToolUseIDs(
         (_): _ is NormalizedAssistantMessage =>
           _.type === 'assistant' &&
           Array.isArray(_.message.content) &&
-          _.message.content[0]?.type === 'tool_use',
+          _.message.content[0]?.type === 'tool_call',
       )
       .map(_ => (_.message.content[0] as { id: string }).id),
   )
@@ -1674,7 +1668,7 @@ function appendMessageTagToUserMessage(message: UserMessage): UserMessage {
   }
 
   const newContent = [...content]
-  const textBlock = newContent[lastTextIdx] as TextBlockParam
+  const textBlock = newContent[lastTextIdx] as TextBlock
   newContent[lastTextIdx] = {
     ...textBlock,
     text: textBlock.text + tag,
@@ -1764,7 +1758,7 @@ export function stripCallerFieldFromAssistantMessage(
 ): AssistantMessage {
   const hasCallerField = message.message.content.some(
     block =>
-      block.type === 'tool_use' && 'caller' in block && block.caller !== null,
+      block.type === 'tool_call' && 'caller' in block && block.caller !== null,
   )
 
   if (!hasCallerField) {
@@ -1776,12 +1770,12 @@ export function stripCallerFieldFromAssistantMessage(
     message: {
       ...message.message,
       content: message.message.content.map(block => {
-        if (block.type !== 'tool_use') {
+        if (block.type !== 'tool_call') {
           return block
         }
         // 仅用标准 API 字段显式构造
         return {
-          type: 'tool_use' as const,
+          type: 'tool_call' as const,
           id: block.id,
           name: block.name,
           input: block.input,
@@ -1796,7 +1790,7 @@ export function stripCallerFieldFromAssistantMessage(
  * 包含 tool_reference（ToolSearch 加载的工具）？
  */
 function contentHasToolReference(
-  content: ReadonlyArray<ContentBlockParam>,
+  content: ReadonlyArray<ContentBlock>,
 ): boolean {
   return content.some(
     block =>
@@ -1863,8 +1857,8 @@ function smooshSystemReminderSiblings(
     const hasToolResult = content.some(b => b.type === 'tool_result')
     if (!hasToolResult) return msg
 
-    const srText: TextBlockParam[] = []
-    const kept: ContentBlockParam[] = []
+    const srText: TextBlock[] = []
+    const kept: ContentBlock[] = []
     for (const b of content) {
       if (b.type === 'text' && b.text.startsWith('<system-reminder>')) {
         srText.push(b)
@@ -1876,7 +1870,7 @@ function smooshSystemReminderSiblings(
 
     // 合并到最后一个 tool_result（在渲染的 prompt 中位置相邻）
     const lastTrIdx = kept.findLastIndex(b => b.type === 'tool_result')
-    const lastTr = kept[lastTrIdx] as ToolResultBlockParam
+    const lastTr = kept[lastTrIdx] as ToolResultBlock
     const smooshed = smooshIntoToolResult(lastTr, srText)
     if (smooshed === null) return msg // tool_ref 约束 — 保持不动
 
@@ -1911,13 +1905,13 @@ function sanitizeErrorToolResultContent(
 
     let changed = false
     const newContent = content.map(b => {
-      if (b.type !== 'tool_result' || !b.is_error) return b
+      if (b.type !== 'tool_result' || !b.isError) return b
       const trContent = b.content
       if (!Array.isArray(trContent)) return b
       if (trContent.every(c => c.type === 'text')) return b
       changed = true
       const texts = trContent.filter(c => c.type === 'text').map(c => c.text)
-      const textOnly: TextBlockParam[] =
+      const textOnly: TextBlock[] =
         texts.length > 0 ? [{ type: 'text', text: texts.join('\n\n') }] : []
       return { ...b, content: textOnly }
     })
@@ -1996,7 +1990,7 @@ function relocateToolReferenceSiblings(
       message: {
         ...target.message,
         content: [
-          ...(target.message.content as ContentBlockParam[]),
+          ...(target.message.content as ContentBlock[]),
           ...textSiblings,
         ],
       },
@@ -2228,7 +2222,7 @@ export function normalizeMessagesForAPI(
             message: {
               ...message.message,
               content: message.message.content.map(block => {
-                if (block.type === 'tool_use') {
+                if (block.type === 'tool_call') {
                   const tool = tools.find(t => toolMatchesName(t, block.name))
                   const normalizedInput = tool
                     ? normalizeToolInputForAPI(
@@ -2250,7 +2244,7 @@ export function normalizeMessagesForAPI(
                   // 工具搜索未启用时，显式构造仅含标准 API 字段的 tool_use
                   // 块，避免发送 'caller' 等字段（这些可能来自工具搜索运行的会话存储）
                   return {
-                    type: 'tool_use' as const,
+                    type: 'tool_call' as const,
                     id: block.id,
                     name: canonicalName,
                     input: normalizedInput,
@@ -2480,9 +2474,9 @@ function mergeAdjacentUserMessages(
  * In thecontent[] list on a UserMessage, tool_result blocks much come first
  * to avoid "tool result must follow tool use" API errors.
  */
-function hoistToolResults(content: ContentBlockParam[]): ContentBlockParam[] {
-  const toolResults: ContentBlockParam[] = []
-  const otherBlocks: ContentBlockParam[] = []
+function hoistToolResults(content: ContentBlock[]): ContentBlock[] {
+  const toolResults: ContentBlock[] = []
+  const otherBlocks: ContentBlock[] = []
 
   for (const block of content) {
     if (block.type === 'tool_result') {
@@ -2496,8 +2490,8 @@ function hoistToolResults(content: ContentBlockParam[]): ContentBlockParam[] {
 }
 
 function normalizeUserTextContent(
-  a: string | ContentBlockParam[],
-): ContentBlockParam[] {
+  a: string | ContentBlock[],
+): ContentBlock[] {
   if (typeof a === 'string') {
     return [{ type: 'text', text: a }]
   }
@@ -2516,9 +2510,9 @@ function normalizeUserTextContent(
  * when b is an SR-wrapped attachment.
  */
 function joinTextAtSeam(
-  a: ContentBlockParam[],
-  b: ContentBlockParam[],
-): ContentBlockParam[] {
+  a: ContentBlock[],
+  b: ContentBlock[],
+): ContentBlock[] {
   const lastA = a.at(-1)
   const firstB = b[0]
   if (lastA?.type === 'text' && firstB?.type === 'text') {
@@ -2528,7 +2522,7 @@ function joinTextAtSeam(
 }
 
 type ToolResultContentItem = Extract<
-  ToolResultBlockParam['content'],
+  ToolResultBlock['content'],
   readonly unknown[]
 >[number]
 
@@ -2545,9 +2539,9 @@ type ToolResultContentItem = Extract<
  * - otherwise → array, with adjacent text merged (notebook.ts idiom)
  */
 function smooshIntoToolResult(
-  tr: ToolResultBlockParam,
-  blocks: ContentBlockParam[],
-): ToolResultBlockParam | null {
+  tr: ToolResultBlock,
+  blocks: ContentBlock[],
+): ToolResultBlock | null {
   if (blocks.length === 0) return tr
 
   const existing = tr.content
@@ -2559,7 +2553,7 @@ function smooshIntoToolResult(
   // 队列命令的兄弟节点可能携带图片（粘贴的截图） — 将它们 smoosh 到
   // 错误结果会产生一个每次后续调用都 400 且无法通过 /fork 恢复的记录。
   // 图片不会丢失：它会作为正常的 user 轮次到达。
-  if (tr.is_error) {
+  if (tr.isError) {
     blocks = blocks.filter(b => b.type === 'text')
     if (blocks.length === 0) return tr
   }
@@ -2571,7 +2565,7 @@ function smooshIntoToolResult(
   if (allText && (existing === undefined || typeof existing === 'string')) {
     const joined = [
       ((existing as string) ?? '').trim(),
-      ...blocks.map(b => (b as TextBlockParam).text.trim()),
+      ...blocks.map(b => (b as TextBlock).text.trim()),
     ]
       .filter(Boolean)
       .join('\n\n')
@@ -2609,9 +2603,9 @@ function smooshIntoToolResult(
 }
 
 export function mergeUserContentBlocks(
-  a: ContentBlockParam[],
-  b: ContentBlockParam[],
-): ContentBlockParam[] {
+  a: ContentBlock[],
+  b: ContentBlock[],
+): ContentBlock[] {
   // 见 https://anthropic.slack.com/archives/C06FE2FP0Q2/p1747586370117479 和
   // https://anthropic.slack.com/archives/C0AHK9P0129/p1773159663856279：
   // tool_result 之后的任何兄弟节点在线上都会渲染为 </function_results>\n\nHuman:<...>。
@@ -2658,10 +2652,10 @@ export function mergeUserContentBlocks(
 // 有时 API 会返回空消息（例如 "\n\n"）。我们需要过滤掉它们，
 // 否则下次调用 query() 发送到 API 时会产生 API 错误。
 export function normalizeContentFromAPI(
-  contentBlocks: LLMMessage['content'],
+  contentBlocks: ContentBlock[],
   tools: Tools,
   agentId?: AgentId,
-): LLMMessage['content'] {
+): ContentBlock[] {
   if (!contentBlocks) {
     return []
   }
@@ -2724,7 +2718,7 @@ export function normalizeContentFromAPI(
         return {
           ...contentBlock,
           input: normalizedInput,
-        } as ContentBlock
+        } as AssistantContentBlock
       }
       case 'text':
         if ((block.text as string).trim().length === 0) {
@@ -2777,7 +2771,7 @@ export function getToolUseID(message: NormalizedMessage): string | null {
       }
       return null
     case 'assistant':
-      if (message.message.content[0]?.type !== 'tool_use') {
+      if (message.message.content[0]?.type !== 'tool_call') {
         return null
       }
       return message.message.content[0].id
@@ -2789,7 +2783,7 @@ export function getToolUseID(message: NormalizedMessage): string | null {
       if (message.message.content[0]?.type !== 'tool_result') {
         return null
       }
-      return message.message.content[0].tool_use_id
+      return message.message.content[0].toolCallId
     case 'progress':
       return message.toolUseID
     case 'system':
@@ -2812,11 +2806,11 @@ export function filterUnresolvedToolUses(messages: Message[]): Message[] {
     const content = msg.message.content
     if (!Array.isArray(content)) continue
     for (const block of content) {
-      if (block.type === 'tool_use') {
+      if (block.type === 'tool_call') {
         toolUseIds.add(block.id)
       }
       if (block.type === 'tool_result') {
-        toolResultIds.add(block.tool_use_id)
+        toolResultIds.add(block.toolCallId)
       }
     }
   }
@@ -2836,7 +2830,7 @@ export function filterUnresolvedToolUses(messages: Message[]): Message[] {
     if (!Array.isArray(content)) return true
     const toolUseBlockIds: string[] = []
     for (const b of content) {
-      if (b.type === 'tool_use') {
+      if (b.type === 'tool_call') {
         toolUseBlockIds.push(b.id)
       }
     }
@@ -2893,7 +2887,7 @@ export function textForResubmit(
 
 /**
  * Extract text from an array of content blocks, joining text blocks with the
- * given separator. Works with ContentBlock, ContentBlockParam, ContentBlock,
+ * given separator. Works with ContentBlock, ContentBlock, ContentBlock,
  * and their readonly/DeepImmutable variants via structural typing.
  */
 export function extractTextContent(
@@ -2907,7 +2901,7 @@ export function extractTextContent(
 }
 
 export function getContentText(
-  content: string | DeepImmutable<Array<ContentBlockParam>>,
+  content: string | DeepImmutable<Array<ContentBlock>>,
 ): string | null {
   if (typeof content === 'string') {
     return content
@@ -2920,7 +2914,7 @@ export function getContentText(
 
 export type StreamingToolUse = {
   index: number
-  contentBlock: ToolUseBlock
+  contentBlock: ToolCallInlineBlock
   unparsedToolInput: string
 }
 
@@ -3750,7 +3744,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       if (Array.isArray(attachment.prompt)) {
         // 处理内容块（可能包含图片）
         const textContent = attachment.prompt
-          .filter((block): block is TextBlockParam => block.type === 'text')
+          .filter((block): block is TextBlock => block.type === 'text')
           .map(block => block.text)
           .join('\n')
 
@@ -3758,7 +3752,7 @@ Read the team config to discover your teammates' names. Check the task list peri
           block => block.type === 'image',
         )
 
-        const content: ContentBlockParam[] = [
+        const content: ContentBlock[] = [
           {
             type: 'text',
             text: wrapCommandText(textContent, origin),
@@ -3879,7 +3873,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       }
 
       // 使用 MCP 转换函数转换每个内容项
-      const transformedBlocks: ContentBlockParam[] = []
+      const transformedBlocks: ContentBlock[] = []
 
       // 处理资源内容 — 仅处理 text 内容
       for (const item of content.contents) {
@@ -4279,7 +4273,7 @@ function createToolResultMessage<Output>(
   toolUseResult: Output,
 ): UserMessage {
   try {
-    const result = tool.mapToolResultToToolResultBlockParam(toolUseResult, '1')
+    const result = tool.mapToolResultToToolResultBlock(toolUseResult, '1')
 
     // 如果结果包含图片内容块，原样保留
     if (
@@ -4287,7 +4281,7 @@ function createToolResultMessage<Output>(
       result.content.some(block => block.type === 'image')
     ) {
       return createUserMessage({
-        content: result.content as ContentBlockParam[],
+        content: result.content as ContentBlock[],
         isMeta: true,
       })
     }
@@ -4654,8 +4648,8 @@ export function countToolCalls(
     if (!msg) continue
     if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
       const hasToolUse = msg.message.content.some(
-        (block): block is ToolUseBlock =>
-          block.type === 'tool_use' && block.name === toolName,
+        (block): block is ToolCallInlineBlock =>
+          block.type === 'tool_call' && block.name === toolName,
       )
       if (hasToolUse) {
         count++
@@ -4683,8 +4677,8 @@ export function hasSuccessfulToolCall(
     if (!msg) continue
     if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
       const toolUse = msg.message.content.find(
-        (block): block is ToolUseBlock =>
-          block.type === 'tool_use' && block.name === toolName,
+        (block): block is ToolCallInlineBlock =>
+          block.type === 'tool_call' && block.name === toolName,
       )
       if (toolUse) {
         mostRecentToolUseId = toolUse.id
@@ -4701,13 +4695,13 @@ export function hasSuccessfulToolCall(
     if (!msg) continue
     if (msg.type === 'user' && Array.isArray(msg.message.content)) {
       const toolResult = msg.message.content.find(
-        (block): block is ToolResultBlockParam =>
+        (block): block is ToolResultBlock =>
           block.type === 'tool_result' &&
-          block.tool_use_id === mostRecentToolUseId,
+          block.toolCallId === mostRecentToolUseId,
       )
       if (toolResult) {
         // is_error 为 false 或未定义时视为成功
-        return toolResult.is_error !== true
+        return toolResult.isError !== true
       }
     }
   }
@@ -4719,11 +4713,11 @@ export function hasSuccessfulToolCall(
 type ThinkingBlockType =
   | ThinkingBlock
   | RedactedThinkingBlock
-  | ThinkingBlockParam
-  | RedactedThinkingBlockParam
+  | ThinkingBlock
+  | RedactedThinkingBlock
 
 function isThinkingBlock(
-  block: ContentBlockParam | ContentBlock | ContentBlock,
+  block: ContentBlock | ContentBlock | ContentBlock,
 ): block is ThinkingBlockType {
   return block.type === 'thinking' || block.type === 'redacted_thinking'
 }
@@ -5150,11 +5144,11 @@ export function ensureToolResultPairing(
       continue
     }
 
-    // 收集服务端 tool result ID（*_tool_result 块包含 tool_use_id）。
+    // 收集服务端 tool result ID（*_tool_result 块包含 toolCallId）。
     const serverResultIds = new Set<string>()
     for (const c of msg.message.content) {
-      if ('tool_use_id' in c && typeof c.tool_use_id === 'string') {
-        serverResultIds.add(c.tool_use_id)
+      if ('toolCallId' in c && typeof c.toolCallId === 'string') {
+        serverResultIds.add(c.toolCallId)
       }
     }
 
@@ -5169,7 +5163,7 @@ export function ensureToolResultPairing(
     // corresponding advisor_tool_result" 拒绝。
     const seenToolUseIds = new Set<string>()
     const finalContent = msg.message.content.filter(block => {
-      if (block.type === 'tool_use') {
+      if (block.type === 'tool_call') {
         if (allSeenToolUseIds.has(block.id)) {
           repaired = true
           return false
@@ -5195,7 +5189,6 @@ export function ensureToolResultPairing(
       finalContent.push({
         type: 'text' as const,
         text: '[Tool use interrupted]',
-        citations: [],
       })
     }
 
@@ -5230,7 +5223,7 @@ export function ensureToolResultPairing(
             'type' in block &&
             block.type === 'tool_result'
           ) {
-            const trId = (block as ToolResultBlockParam).tool_use_id
+            const trId = (block as ToolResultBlock).toolCallId
             if (existingToolResultIds.has(trId)) {
               hasDuplicateToolResults = true
             }
@@ -5260,16 +5253,16 @@ export function ensureToolResultPairing(
     repaired = true
 
     // 为缺失 ID 构建合成错误 tool_result 块
-    const syntheticBlocks: ToolResultBlockParam[] = missingIds.map(id => ({
+    const syntheticBlocks: ToolResultBlock[] = missingIds.map(id => ({
       type: 'tool_result' as const,
-      tool_use_id: id,
+      toolCallId: id,
       content: SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
-      is_error: true,
+      isError: true,
     }))
 
     if (nextMsg?.type === 'user') {
       // 下一条消息已经是 user 消息 — 修补它
-      let content: (ContentBlockParam | ContentBlock)[] = Array.isArray(
+      let content: (ContentBlock | ContentBlock)[] = Array.isArray(
         nextMsg.message.content,
       )
         ? nextMsg.message.content
@@ -5285,7 +5278,7 @@ export function ensureToolResultPairing(
             'type' in block &&
             block.type === 'tool_result'
           ) {
-            const trId = (block as ToolResultBlockParam).tool_use_id
+            const trId = (block as ToolResultBlock).toolCallId
             if (orphanedSet.has(trId)) return false
             if (seenTrIds.has(trId)) return false
             seenTrIds.add(trId)
@@ -5302,7 +5295,7 @@ export function ensureToolResultPairing(
           ...nextMsg,
           message: {
             ...nextMsg.message,
-            content: patchedContent as ContentBlockParam[],
+            content: patchedContent as ContentBlock[],
           },
         }
         i++
@@ -5344,8 +5337,8 @@ export function ensureToolResultPairing(
     const messageTypes = messages.map((m, idx) => {
       if (m.type === 'assistant') {
         const toolUses = m.message.content
-          .filter(b => b.type === 'tool_use')
-          .map(b => (b as ToolUseBlock | ToolUseBlockParam).id)
+          .filter(b => b.type === 'tool_call')
+          .map(b => (b as ToolCallInlineBlock | ToolCallInlineBlock).id)
         const serverToolUses = m.message.content
           .filter(
             b => (b.type as string) === 'server_tool_use' || (b.type as string) === 'mcp_tool_use',
@@ -5366,7 +5359,7 @@ export function ensureToolResultPairing(
             b =>
               typeof b === 'object' && 'type' in b && b.type === 'tool_result',
           )
-          .map(b => (b as ToolResultBlockParam).tool_use_id)
+          .map(b => (b as ToolResultBlock).toolCallId)
         if (toolResults.length > 0) {
           return `[${idx}] user(tool_results=[${toolResults.join(',')}])`
         }
@@ -5425,7 +5418,6 @@ export function stripAdvisorBlocks(
       filtered.push({
         type: 'text' as const,
         text: '[Advisor response]',
-        citations: [],
       })
     }
     return { ...msg, message: { ...msg.message, content: filtered } }

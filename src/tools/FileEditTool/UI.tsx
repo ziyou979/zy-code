@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 // @ts-ignore TS2724
 import type { StructuredPatchHunk } from 'diff';
 import * as React from 'react';
@@ -126,7 +126,7 @@ export function renderToolUseRejectedMessage(input: {
   }
   return <EditRejectionDiff filePath={filePath} oldString={oldString} newString={newString} replaceAll={replaceAll} style={style} verbose={verbose} />;
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], options: {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], options: {
   progressMessagesForMessage: ProgressMessage[];
   tools: Tools;
   verbose: boolean;

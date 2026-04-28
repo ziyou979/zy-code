@@ -1103,7 +1103,7 @@ export const AgentTool = buildTool({
             const normalizedNew: any[] = normalizeMessages([message as any]) as any;
             for (const m of normalizedNew) {
               for (const content of m.message.content) {
-                if (content.type !== 'tool_use' && content.type !== 'tool_result') {
+                if (content.type !== 'tool_call' && content.type !== 'tool_result') {
                   continue;
                 }
 
@@ -1295,13 +1295,13 @@ export const AgentTool = buildTool({
       updatedInput: input
     };
   },
-  mapToolResultToToolResultBlockParam(data, toolUseID) {
+  mapToolResultToToolResultBlock(data, toolUseID) {
     // Multi-agent spawn result
     const internalData = data as InternalOutput;
     if (typeof internalData === 'object' && internalData !== null && 'status' in internalData && internalData.status === 'teammate_spawned') {
       const spawnData = internalData as TeammateSpawnedOutput;
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: [{
           type: 'text',
@@ -1316,7 +1316,7 @@ The agent is now running and will receive instructions via mailbox.`
     if ('status' in internalData && internalData.status === 'remote_launched') {
       const r = internalData;
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: [{
           type: 'text',
@@ -1329,7 +1329,7 @@ The agent is now running and will receive instructions via mailbox.`
       const instructions = data.canReadOutputFile ? `Do not duplicate this agent's work — avoid working with the same files or topics it is using. Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.\noutput_file: ${data.outputFile}\nIf asked, you can check progress before completion by using ${FILE_READ_TOOL_NAME} or ${BASH_TOOL_NAME} tail on the output file.` : `Briefly tell the user what you launched and end your response. Do not generate any other text — agent results will arrive in a subsequent message.`;
       const text = `${prefix}\n${instructions}`;
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: [{
           type: 'text',
@@ -1355,13 +1355,13 @@ The agent is now running and will receive instructions via mailbox.`
       // agentType is optional for resume compat — missing means show trailer.
       if (data.agentType && ONE_SHOT_BUILTIN_AGENT_TYPES.has(data.agentType) && !worktreeInfoText) {
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: contentOrMarker
         };
       }
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: [...contentOrMarker, {
           type: 'text',

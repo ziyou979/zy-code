@@ -202,7 +202,7 @@ export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({
       }
     };
   },
-  mapToolResultToToolResultBlockParam({
+  mapToolResultToToolResultBlock({
     answers,
     annotations
   }, toolUseID) {
@@ -220,7 +220,7 @@ export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({
     return {
       type: 'tool_result',
       content: `User has answered your questions: ${answersText}. You can now continue with the user's answers in mind.`,
-      tool_use_id: toolUseID
+      toolCallId: toolUseID
     };
   }
 } satisfies ToolDef<InputSchema, Output>);

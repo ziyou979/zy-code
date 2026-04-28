@@ -174,7 +174,7 @@ export function CollapsedReadSearchContent({
     return <Box flexDirection="column">
         {toolUses.map((msg_0) => {
         const content = msg_0.message.content[0];
-        if (content?.type !== 'tool_use') return null;
+        if (content?.type !== 'tool_call') return null;
         return <VerboseToolUse key={content.id} content={content} tools={tools} lookups={lookups} inProgressToolUseIDs={inProgressToolUseIDs} shouldAnimate={shouldAnimate} theme={theme as any} message={msg_0.message as any} verbose={verbose} />;
       })}
         {(message as any).hookInfos && (message as any).hookInfos.length > 0 && <>

@@ -77,9 +77,9 @@ export const CronListTool = buildTool({
     }))
     return { data: { jobs } }
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content:
         output.jobs.length > 0

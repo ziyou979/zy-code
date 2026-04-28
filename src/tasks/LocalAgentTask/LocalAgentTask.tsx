@@ -74,7 +74,7 @@ export function updateProgressFromMessage(tracker: ProgressTracker, message: Mes
   tracker.latestInputTokens = usage.input_tokens + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0);
   tracker.cumulativeOutputTokens += usage.output_tokens;
   for (const content of message.message.content) {
-    if (content.type === 'tool_use') {
+    if (content.type === 'tool_call') {
       tracker.toolUseCount++;
       // Omit StructuredOutput from preview - it's an internal tool
       if (content.name !== SYNTHETIC_OUTPUT_TOOL_NAME) {

@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { extractTag } from 'src/utils/messages.js';
 import { tSync } from '../../i18n/index.js';
@@ -141,7 +141,7 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
       }
   }
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   verbose
 }: {
   verbose: boolean;

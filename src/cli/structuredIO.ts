@@ -110,7 +110,7 @@ function buildRequiresActionDetails(
   return {
     tool_name: tool.name,
     action_description: description,
-    tool_use_id: toolUseID,
+    toolCallId: toolUseID,
     request_id: requestId,
     input,
   }

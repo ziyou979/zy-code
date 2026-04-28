@@ -18,7 +18,7 @@ export const inputSchema = lazySchema(() =>
       .string()
       .describe('The name of the tool requesting permission'),
     input: z.record(z.string(), z.unknown()).describe('The input for the tool'),
-    tool_use_id: z
+    toolCallId: z
       .string()
       .optional()
       .describe('The unique tool use request ID'),

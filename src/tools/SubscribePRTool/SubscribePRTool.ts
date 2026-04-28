@@ -61,12 +61,12 @@ export const SubscribePRTool = buildTool({
   renderToolResultMessage() {
     return null
   },
-  mapToolResultToToolResultBlockParam({ subscribed, pr_url }, toolUseID) {
+  mapToolResultToToolResultBlock({ subscribed, pr_url }, toolUseID) {
     const content = subscribed
       ? `Successfully subscribed to PR: ${pr_url}`
       : `Failed to subscribe to PR: ${pr_url}`
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content,
     }

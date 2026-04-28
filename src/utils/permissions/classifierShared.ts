@@ -10,14 +10,14 @@ import type { ContentBlock } from '../../types/llm.js'
 import type { z } from 'zod/v4'
 
 /**
- * Extract tool use block from message content by tool name.
+ * Extract tool call block from message content by tool name.
  */
-export function extractToolUseBlock(
+export function extractToolCallInlineBlock(
   content: ContentBlock[],
   toolName: string,
-): Extract<ContentBlock, { type: 'tool_use' }> | null {
-  const block = content.find(b => b.type === 'tool_use' && b.name === toolName)
-  if (!block || block.type !== 'tool_use') {
+): Extract<ContentBlock, { type: 'tool_call' }> | null {
+  const block = content.find(b => b.type === 'tool_call' && b.name === toolName)
+  if (!block || block.type !== 'tool_call') {
     return null
   }
   return block
@@ -28,10 +28,10 @@ export function extractToolUseBlock(
  * Returns null if parsing fails.
  */
 export function parseClassifierResponse<T extends z.ZodTypeAny>(
-  toolUseBlock: Extract<ContentBlock, { type: 'tool_use' }>,
+  toolCallInlineBlock: Extract<ContentBlock, { type: 'tool_call' }>,
   schema: T,
 ): z.infer<T> | null {
-  const parseResult = schema.safeParse(toolUseBlock.input)
+  const parseResult = schema.safeParse(toolCallInlineBlock.input)
   if (!parseResult.success) {
     return null
   }

@@ -50,10 +50,10 @@ export const ReviewArtifactTool: Tool = {
     return null;
   },
   
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     return {
       type: 'tool_result',
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       content: [{ type: 'text', text: JSON.stringify(content) }]
     };
   },

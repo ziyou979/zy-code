@@ -63,9 +63,9 @@ function mergeToolMessagesIntoUserMessages(messages: Message[]): any[] {
     if (msg.role === 'tool') {
       pendingToolResults.push({
         type: 'tool_result',
-        tool_use_id: msg.toolCallId,
+        toolCallId: msg.toolCallId,
         content: msg.content,
-        is_error: msg.isError ?? false,
+        isError: msg.isError ?? false,
       })
     } else if (msg.role === 'user') {
       // 如果有待发送的 tool_result，作为 user 消息一起发送
@@ -132,7 +132,7 @@ function assistantContentToAnthropic(
       const blocks: Array<Record<string, unknown>> = [{ type: 'text', text: content }]
       for (const tc of toolCalls) {
         blocks.push({
-          type: 'tool_use',
+          type: 'tool_call',
           id: tc.id,
           name: tc.name,
           input: JSON.parse(tc.arguments || '{}'),
@@ -151,7 +151,7 @@ function blockToRecord(block: AssistantContentBlock | UserContentBlock): Record<
   }
   if (block.type === 'tool_call') {
     return {
-      type: 'tool_use',
+      type: 'tool_call',
       id: block.id,
       name: block.name,
       input: block.input,
@@ -162,7 +162,7 @@ function blockToRecord(block: AssistantContentBlock | UserContentBlock): Record<
       type: 'image',
       source: {
         type: 'base64',
-        media_type: block.mimeType,
+        mediaType: block.mimeType,
         data: block.data,
       },
     }
@@ -272,7 +272,7 @@ function anthropicStreamEventToStandard(
       let chunk: AssistantContentBlock
       if (block.type === 'text') {
         chunk = { type: 'text', text: (block.text as string) ?? '' }
-      } else if (block.type === 'tool_use') {
+      } else if (block.type === 'tool_call') {
         // 保留 tool_use type，让 zy.ts 等消费者能正确判断
         chunk = {
           type: 'tool_call' as any,

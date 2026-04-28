@@ -246,7 +246,7 @@ function convertToAnthropicParams(params: CreateParams): Record<string, any> {
   const outputConfig = anthropicExtras?.outputConfig ?? p.output_config
   const metadata = p.metadata
 
-  // 消息：兼容 v1 LLMMessageParam[] (只有 user/assistant) 和 v2 Message[] (4 角色分离)
+  // 消息：兼容旧版消息格式（只有 user/assistant）和当前 Message[]（4 角色分离）
   const rawMessages = p.messages ?? []
   const systemMessages = rawMessages.filter((m: any) => m.role === 'system')
   const nonSystemMessages = rawMessages.filter((m: any) => m.role !== 'system')
@@ -379,7 +379,7 @@ type AnthropicContent = string | Array<{
 
 /** 将 4 角色分离消息转换为 OpenAI 格式 */
 /**
- * 将消息转换为 OpenAI 格式。兼容 v1 (LLMMessageParam[]) 和 v2 (Message[]) 格式。
+ * 将消息转换为 OpenAI 格式。兼容旧版消息格式和当前 Message[]（4 角色分离）格式。
  * v1: user 消息中嵌有 tool_result 块，需要拆分为独立的 role:'tool' 消息
  * v2: tool 消息是独立的 role:'tool' 角色
  */
@@ -412,14 +412,14 @@ function convertMessagesToOpenAI(
                     : '')
               toolResults.push({
                 role: 'tool',
-                tool_call_id: block.tool_use_id ?? '',
+                tool_call_id: block.toolCallId ?? '',
                 content: text || '(empty)',
               })
             } else if (block.type === 'text') {
               parts.push({ type: 'text', text: block.text })
             } else if (block.type === 'image') {
               // 兼容 v1 嵌套 source 和 v2 平铺格式
-              const mimeType = block.mimeType ?? block.source?.media_type ?? 'image/png'
+              const mimeType = block.mimeType ?? block.source?.mediaType ?? 'image/png'
               const data = block.data ?? block.source?.data ?? ''
               parts.push({
                 type: 'image_url',
@@ -451,7 +451,7 @@ function convertMessagesToOpenAI(
           for (const block of msg.content) {
             if (block.type === 'text') {
               textParts.push(block.text)
-            } else if (block.type === 'tool_use' || block.type === 'tool_call') {
+            } else if (block.type === 'tool_call' || block.type === 'tool_call') {
               // 兼容 v1 (tool_use) 和 v2 (tool_call)
               toolCalls.push({
                 id: block.id,
@@ -760,7 +760,7 @@ async function* mapOpenAIStreamToStandard(
               type: 'chunk_start',
               index: blockIndex,
               chunk: {
-                type: 'tool_use',
+                type: 'tool_call',
                 id: tc.id ?? randomUUID(),
                 name: tc.function?.name ?? '',
                 input: {},
@@ -826,7 +826,7 @@ class OpenAIRequestAdapter implements LLMAdapter {
   ): Promise<StreamResult> {
     const p = params as any
     const client = getOpenAIClient({ model: p.model })
-    // 兼容 v1 LLMMessageParam[] 和 v2 Message[]
+    // 兼容旧版消息格式和当前 Message[]
     const rawMessages = p.messages ?? []
     const openAIMessages = convertMessagesToOpenAI(rawMessages)
     const openaiExtras = p.providerExtras?.openai
@@ -980,7 +980,7 @@ export async function createOpenAIMessage(params: {
     if (typeof params.system === 'string') {
       messages.push({ role: 'system', content: params.system })
     } else {
-      // TextBlockParam[] → 拼接为纯文本
+      // TextBlock[] → 拼接为纯文本
       messages.push({
         role: 'system',
         content: params.system.map(b => (b as any).text).join('\n\n'),
@@ -1006,9 +1006,9 @@ export async function createOpenAIMessage(params: {
                 : (block.content || []).map((b: any) => b.type === 'text' ? b.text : '').join('\n')
               messages.push({
                 role: 'tool',
-                toolCallId: block.tool_use_id,
+                toolCallId: block.toolCallId,
                 content,
-                isError: block.is_error,
+                isError: block.isError,
               })
             }
           }

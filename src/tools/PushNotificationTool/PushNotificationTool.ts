@@ -59,12 +59,12 @@ export const PushNotificationTool = buildTool({
   renderToolResultMessage() {
     return null
   },
-  mapToolResultToToolResultBlockParam({ sent }, toolUseID) {
+  mapToolResultToToolResultBlock({ sent }, toolUseID) {
     const content = sent
       ? 'Push notification sent successfully.'
       : 'Failed to send push notification.'
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content,
     }

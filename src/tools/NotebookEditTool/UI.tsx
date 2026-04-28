@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import * as React from 'react';
 import type { Message, ProgressMessage } from 'src/types/message.js';
 import { extractTag } from 'src/utils/messages.js';
@@ -58,7 +58,7 @@ export function renderToolUseRejectedMessage(input: z.infer<ReturnType<typeof in
 }): React.ReactNode {
   return <NotebookEditToolUseRejectedMessage notebook_path={input.notebook_path} cell_id={input.cell_id} new_source={input.new_source} cell_type={input.cell_type} edit_mode={input.edit_mode} verbose={verbose} />;
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   verbose
 }: {
   verbose: boolean;

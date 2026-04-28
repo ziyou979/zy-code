@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { SubAgentProvider } from 'src/components/CtrlOToExpand.js';
 import { FallbackToolUseErrorMessage } from 'src/components/FallbackToolUseErrorMessage.js';
@@ -109,7 +109,7 @@ export function renderToolUseRejectedMessage(_input: Input, {
       <FallbackToolUseRejectedMessage />
     </>;
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   progressMessagesForMessage,
   tools,
   verbose

@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '../../../types/llm.js'
+import type { ContentBlock } from '../../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getAllowedChannels } from '../../../bootstrap/state.js'
@@ -155,7 +155,7 @@ function handleInteractivePermission(
       updatedInput,
       permissionUpdates: PermissionUpdate[],
       feedback?: string,
-      contentBlocks?: ContentBlockParam[],
+      contentBlocks?: ContentBlock[],
     ) {
       if (!claim()) return // atomic check-and-mark before await
 
@@ -180,7 +180,7 @@ function handleInteractivePermission(
         ),
       )
     },
-    onReject(feedback?: string, contentBlocks?: ContentBlockParam[]) {
+    onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
       if (!claim()) return
 
       if (bridgeCallbacks && bridgeRequestId) {

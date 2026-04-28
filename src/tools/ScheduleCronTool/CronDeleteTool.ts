@@ -83,9 +83,9 @@ export const CronDeleteTool = buildTool({
     await removeCronTasks([id])
     return { data: { id } }
   },
-  mapToolResultToToolResultBlockParam(output, toolUseID) {
+  mapToolResultToToolResultBlock(output, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: `Cancelled job ${output.id}.`,
     }

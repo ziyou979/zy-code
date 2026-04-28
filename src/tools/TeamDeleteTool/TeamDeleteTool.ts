@@ -55,9 +55,9 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
     return getPrompt()
   },
 
-  mapToolResultToToolResultBlockParam(data, toolUseID) {
+  mapToolResultToToolResultBlock(data, toolUseID) {
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result' as const,
       content: [
         {

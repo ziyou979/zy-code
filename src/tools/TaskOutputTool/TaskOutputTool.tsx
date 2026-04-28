@@ -280,7 +280,7 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
       }
     };
   },
-  mapToolResultToToolResultBlockParam(data, toolUseID) {
+  mapToolResultToToolResultBlock(data, toolUseID) {
     const parts: string[] = [];
     parts.push(`<retrieval_status>${data.retrieval_status}</retrieval_status>`);
     if (data.task) {
@@ -301,7 +301,7 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
       }
     }
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result' as const,
       content: parts.join('\n\n')
     };

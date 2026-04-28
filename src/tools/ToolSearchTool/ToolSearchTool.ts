@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import memoize from 'lodash-es/memoize.js'
 import { z } from 'zod/v4'
 import {
@@ -441,10 +441,10 @@ export const ToolSearchTool = buildTool({
    * This format works on direct API/Foundry. Bedrock/Vertex may not support
    * client-side tool_reference expansion yet.
    */
-  mapToolResultToToolResultBlockParam(
+  mapToolResultToToolResultBlock(
     content: Output,
     toolUseID: string,
-  ): ToolResultBlockParam {
+  ): ToolResultBlock {
     if (content.matches.length === 0) {
       let text = 'No matching deferred tools found'
       if (
@@ -455,17 +455,17 @@ export const ToolSearchTool = buildTool({
       }
       return {
         type: 'tool_result',
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         content: text,
       }
     }
     return {
       type: 'tool_result',
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       content: content.matches.map(name => ({
         type: 'tool_reference' as const,
         tool_name: name,
       })),
-    } as unknown as ToolResultBlockParam
+    } as unknown as ToolResultBlock
   },
 } satisfies ToolDef<InputSchema, Output>)

@@ -62,12 +62,12 @@ export const SendUserFileTool = buildTool({
   renderToolResultMessage() {
     return null
   },
-  mapToolResultToToolResultBlockParam({ file_name, success }, toolUseID) {
+  mapToolResultToToolResultBlock({ file_name, success }, toolUseID) {
     const content = success
       ? `File "${file_name}" sent to user successfully.`
       : `Failed to send file "${file_name}".`
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content,
     }

@@ -296,7 +296,7 @@ async function processSessionFiles(
           const content = message.message?.content
           if (Array.isArray(content)) {
             for (const block of content) {
-              if (block.type === 'tool_use') {
+              if (block.type === 'tool_call') {
                 const activity = dailyActivityMap.get(dateKey)
                 if (activity) {
                   activity.toolCallCount++
@@ -946,7 +946,7 @@ function extractShotCountFromMessages(
     if (!Array.isArray(content)) continue
     for (const block of content) {
       if (
-        block.type !== 'tool_use' ||
+        block.type !== 'tool_call' ||
         !SHELL_TOOL_NAMES.includes(block.name) ||
         typeof block.input !== 'object' ||
         block.input === null ||

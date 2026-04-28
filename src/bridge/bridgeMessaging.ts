@@ -402,7 +402,7 @@ export function makeResultMessage(sessionId: string): SDKResultSuccess {
     subtype: 'success',
     duration_ms: 0,
     duration_api_ms: 0,
-    is_error: false,
+    isError: false,
     num_turns: 0,
     result: '',
     stop_reason: null,

@@ -127,10 +127,10 @@ export const TaskCreateTool = buildTool({
       },
     }
   },
-  mapToolResultToToolResultBlockParam(content, toolUseID) {
+  mapToolResultToToolResultBlock(content, toolUseID) {
     const { task } = content as Output
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: `Task #${task.id} created successfully: ${task.subject}`,
     }

@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam, ToolUseBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock, ToolCallInlineBlock } from '../../types/llm.js';
 import * as React from 'react';
 import { ConfigurableShortcutHint } from 'src/components/ConfigurableShortcutHint.js';
 import { CtrlOToExpand, SubAgentProvider } from 'src/components/CtrlOToExpand.js';
@@ -53,7 +53,7 @@ function hasProgressMessage(data: Progress): data is AgentToolProgress {
  * 对于 tool_result 消息，使用提供的 `toolUseByID` 映射来查找对应的
  * tool_use 块，而不是依赖 `normalizedMessages`。
  */
-function getSearchOrReadInfo(progressMessage: ProgressMessage<Progress>, tools: Tools, toolUseByID: Map<string, ToolUseBlockParam>): {
+function getSearchOrReadInfo(progressMessage: ProgressMessage<Progress>, tools: Tools, toolUseByID: Map<string, ToolCallInlineBlock>): {
   isSearch: boolean;
   isRead: boolean;
   isREPL: boolean;
@@ -73,7 +73,7 @@ function getSearchOrReadInfo(progressMessage: ProgressMessage<Progress>, tools: 
   if (message.type === 'user') {
     const content = message.message.content[0];
     if (content?.type === 'tool_result') {
-      const toolUse = toolUseByID.get(content.tool_use_id);
+      const toolUse = toolUseByID.get(content.toolCallId);
       if (toolUse) {
         return getSearchOrReadFromContent(toolUse, tools);
       }
@@ -130,14 +130,14 @@ function processProgressMessages(messages: ProgressMessage<Progress>[], tools: T
   const agentMessages = messages.filter((m): m is ProgressMessage<AgentToolProgress> => hasProgressMessage(m.data));
 
   // 在迭代过程中逐步构建 tool_use 查找表
-  const toolUseByID = new Map<string, ToolUseBlockParam>();
+  const toolUseByID = new Map<string, ToolCallInlineBlock>();
   for (const msg of agentMessages) {
     // 跟踪遇到的 tool_use 块
     // @ts-ignore -- message type is narrowed at runtime
     if (msg.data.message.type === 'assistant') {
       for (const c of (msg.data.message as any).message.content) {
-        if (c.type === 'tool_use') {
-          toolUseByID.set(c.id, c as ToolUseBlockParam);
+        if (c.type === 'tool_call') {
+          toolUseByID.set(c.id, c as ToolCallInlineBlock);
         }
       }
     }
@@ -394,7 +394,7 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
         return false;
       }
       const message = msg.data.message;
-      return message.message.content.some(content => content.type === 'tool_use');
+      return message.message.content.some(content => content.type === 'tool_call');
     });
     // @ts-ignore -- message type is narrowed at runtime
     const latestAssistant = progressMessages.findLast((msg): msg is ProgressMessage<AgentToolProgress> => hasProgressMessage(msg.data) && msg.data.message.type === 'assistant');
@@ -443,7 +443,7 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
     if (!hasProgressMessage(data)) {
       return false;
     }
-    return data.message.message.content.some(content => content.type === 'tool_use');
+    return data.message.message.content.some(content => content.type === 'tool_call');
   });
   const firstData = progressMessages[0]?.data;
   const prompt = firstData && hasProgressMessage(firstData) ? firstData.prompt : undefined;
@@ -524,7 +524,7 @@ export function renderToolUseRejectedMessage(_input: {
       <FallbackToolUseRejectedMessage />
     </>;
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   progressMessagesForMessage,
   tools,
   verbose,
@@ -569,13 +569,13 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
   };
 }
 export function renderGroupedAgentToolUse(toolUses: Array<{
-  param: ToolUseBlockParam;
+  param: ToolCallInlineBlock;
   isResolved: boolean;
   isError: boolean;
   isInProgress: boolean;
   progressMessages: ProgressMessage<Progress>[];
   result?: {
-    param: ToolResultBlockParam;
+    param: ToolResultBlock;
     output: Output;
   };
 }>, options: {
@@ -709,7 +709,7 @@ export function userFacingNameBackgroundColor(input: Partial<{
 }
 export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[], tools: Tools): string | null {
   // 从所有 progress 消息中构建 tool_use 查找表（反向迭代需要）
-  const toolUseByID = new Map<string, ToolUseBlockParam>();
+  const toolUseByID = new Map<string, ToolCallInlineBlock>();
   for (const pm of progressMessages) {
     if (!hasProgressMessage(pm.data)) {
       continue;
@@ -717,8 +717,8 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
     // @ts-ignore -- message type is narrowed at runtime
     if (pm.data.message.type === 'assistant') {
       for (const c of (pm.data.message as any).message.content) {
-        if (c.type === 'tool_use') {
-          toolUseByID.set(c.id, c as ToolUseBlockParam);
+        if (c.type === 'tool_call') {
+          toolUseByID.set(c.id, c as ToolCallInlineBlock);
         }
       }
     }
@@ -762,7 +762,7 @@ export function extractLastToolInfo(progressMessages: ProgressMessage<Progress>[
     const toolResultBlock = lastToolResult.data.message.message.content.find(c => c.type === 'tool_result');
     if (toolResultBlock?.type === 'tool_result') {
       // 查找对应的 tool_use — 已在上面索引
-      const toolUseBlock = toolUseByID.get(toolResultBlock.tool_use_id);
+      const toolUseBlock = toolUseByID.get(toolResultBlock.toolCallId);
       if (toolUseBlock) {
         const tool = findToolByName(tools, toolUseBlock.name);
         if (!tool) {

@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ToolUseBlock } from '../../types/llm.js'
+import type { ToolCallInlineBlock } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import {
@@ -121,7 +121,7 @@ export function buildForkedMessages(
 
   // Collect all tool_use blocks from the assistant message
   const toolUseBlocks = assistantMessage.message.content.filter(
-    (block): block is ToolUseBlock => block.type === 'tool_use',
+    (block): block is ToolCallInlineBlock => block.type === 'tool_call',
   )
 
   if (toolUseBlocks.length === 0) {
@@ -141,7 +141,7 @@ export function buildForkedMessages(
   // Build tool_result blocks for every tool_use, all with identical placeholder text
   const toolResultBlocks = toolUseBlocks.map(block => ({
     type: 'tool_result' as const,
-    tool_use_id: block.id,
+    toolCallId: block.id,
     content: [
       {
         type: 'text' as const,

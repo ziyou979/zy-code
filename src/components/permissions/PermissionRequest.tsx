@@ -44,7 +44,7 @@ const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS') ? (require('../../
 const MonitorTool = feature('MONITOR_TOOL') ? (require('../../tools/MonitorTool/MonitorTool.js') as any).MonitorTool : null;
 // @ts-ignore
 const MonitorPermissionRequest = feature('MONITOR_TOOL') ? require('./MonitorPermissionRequest/MonitorPermissionRequest.js') : null;
-import type { ContentBlockParam } from '../../types/llm.js';
+import type { ContentBlock } from '../../types/llm.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { z } from 'zod/v4';
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js';
@@ -126,8 +126,8 @@ export type ToolUseConfirm<Input extends AnyObject = AnyObject> = {
   onUserInteraction(): void;
   onAbort(): void;
   onDismissCheckmark?(): void;
-  onAllow(updatedInput: z.infer<Input>, permissionUpdates: PermissionUpdate[], feedback?: string, contentBlocks?: ContentBlockParam[]): void;
-  onReject(feedback?: string, contentBlocks?: ContentBlockParam[]): void;
+  onAllow(updatedInput: z.infer<Input>, permissionUpdates: PermissionUpdate[], feedback?: string, contentBlocks?: ContentBlock[]): void;
+  onReject(feedback?: string, contentBlocks?: ContentBlock[]): void;
   recheckPermission(): Promise<void>;
 };
 function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {

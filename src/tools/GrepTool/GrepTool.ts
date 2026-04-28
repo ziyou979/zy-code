@@ -251,7 +251,7 @@ export const GrepTool = buildTool({
     if (mode === 'content' && content) return content
     return filenames.join('\n')
   },
-  mapToolResultToToolResultBlockParam(
+  mapToolResultToToolResultBlock(
     {
       mode = 'files_with_matches',
       numFiles,
@@ -271,7 +271,7 @@ export const GrepTool = buildTool({
         ? `${resultContent}\n\n[Showing results with pagination = ${limitInfo}]`
         : resultContent
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: finalContent,
       }
@@ -284,7 +284,7 @@ export const GrepTool = buildTool({
       const files = numFiles ?? 0
       const summary = `\n\nFound ${matches} total ${matches === 1 ? 'occurrence' : 'occurrences'} across ${files} ${files === 1 ? 'file' : 'files'}.${limitInfo ? ` with pagination = ${limitInfo}` : ''}`
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: rawContent + summary,
       }
@@ -294,7 +294,7 @@ export const GrepTool = buildTool({
     const limitInfo = formatLimitInfo(appliedLimit, appliedOffset)
     if (numFiles === 0) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: 'No files found',
       }
@@ -302,7 +302,7 @@ export const GrepTool = buildTool({
     // head_limit has already been applied in call() method, so just show all filenames
     const result = `Found ${numFiles} ${plural(numFiles, 'file')}${limitInfo ? ` ${limitInfo}` : ''}\n${filenames.join('\n')}`
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result',
       content: result,
     }

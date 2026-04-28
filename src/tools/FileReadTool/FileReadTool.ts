@@ -1,4 +1,4 @@
-import type { Base64ImageSource } from '../../types/llm.js'
+import type { ImageSource } from '../../types/llm.js'
 import { readdir, readFile as readFileAsync } from 'fs/promises'
 import * as path from 'path'
 import { posix, win32 } from 'path'
@@ -649,11 +649,11 @@ export const FileReadTool = buildTool({
       throw error
     }
   },
-  mapToolResultToToolResultBlockParam(data, toolUseID) {
+  mapToolResultToToolResultBlock(data, toolUseID) {
     switch (data.type) {
       case 'image': {
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: [
             {
@@ -661,7 +661,7 @@ export const FileReadTool = buildTool({
               source: {
                 type: 'base64',
                 data: data.file.base64,
-                media_type: data.file.type,
+                mediaType: data.file.type,
               },
             },
           ],
@@ -670,22 +670,22 @@ export const FileReadTool = buildTool({
       case 'notebook':
         return mapNotebookCellsToToolResult(data.file.cells, toolUseID)
       case 'pdf':
-        // Return PDF metadata only - the actual content is sent as a supplemental DocumentBlockParam
+        // Return PDF metadata only - the actual content is sent as a supplemental DocumentBlock
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `PDF file read: ${data.file.filePath} (${formatFileSize(data.file.originalSize)})`,
         }
       case 'parts':
         // Extracted page images are read and sent as image blocks in mapToolResultToAPIMessage
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `PDF pages extracted: ${data.file.count} page(s) from ${data.file.filePath} (${formatFileSize(data.file.originalSize)})`,
         }
       case 'file_unchanged':
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: FILE_UNCHANGED_STUB,
         }
@@ -708,7 +708,7 @@ export const FileReadTool = buildTool({
         }
 
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content,
         }
@@ -739,7 +739,7 @@ function shouldIncludeFileReadMitigation(): boolean {
 }
 
 /**
- * Side-channel from call() to mapToolResultToToolResultBlockParam: mtime
+ * Side-channel from call() to mapToolResultToToolResultBlock: mtime
  * of auto-memory files, keyed by the `data` object identity. Avoids
  * adding a presentation-only field to the output schema (which flows
  * into SDK types) and avoids sync fs in the mapper. WeakMap auto-GCs
@@ -776,7 +776,7 @@ type ImageResult = {
   type: 'image'
   file: {
     base64: string
-    type: Base64ImageSource['media_type']
+    type: ImageSource['mediaType']
     originalSize: number
     dimensions?: ImageDimensions
   }
@@ -792,7 +792,7 @@ function createImageResponse(
     type: 'image',
     file: {
       base64: buffer.toString('base64'),
-      type: `image/${mediaType}` as Base64ImageSource['media_type'],
+      type: `image/${mediaType}` as ImageSource['mediaType'],
       originalSize,
       dimensions,
     },
@@ -929,8 +929,8 @@ async function callInner(
             type: 'image' as const,
             source: {
               type: 'base64' as const,
-              media_type:
-                `image/${resized.mediaType}` as Base64ImageSource['media_type'],
+              mediaType:
+                `image/${resized.mediaType}` as ImageSource['mediaType'],
               data: resized.buffer.toString('base64'),
             },
           }
@@ -1006,7 +1006,7 @@ async function callInner(
               type: 'document',
               source: {
                 type: 'base64',
-                media_type: 'application/pdf',
+                mediaType: 'application/pdf',
                 data: pdfData.file.base64,
               },
             },

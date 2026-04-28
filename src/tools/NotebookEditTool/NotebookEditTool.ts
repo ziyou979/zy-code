@@ -130,40 +130,40 @@ export const NotebookEditTool = buildTool({
       appState.toolPermissionContext,
     )
   },
-  mapToolResultToToolResultBlockParam(
+  mapToolResultToToolResultBlock(
     { cell_id, edit_mode, new_source, error },
     toolUseID,
   ) {
     if (error) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: error,
-        is_error: true,
+        isError: true,
       }
     }
     switch (edit_mode) {
       case 'replace':
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `Updated cell ${cell_id} with ${new_source}`,
         }
       case 'insert':
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `Inserted cell ${cell_id} with ${new_source}`,
         }
       case 'delete':
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: `Deleted cell ${cell_id}`,
         }
       default:
         return {
-          tool_use_id: toolUseID,
+          toolCallId: toolUseID,
           type: 'tool_result',
           content: 'Unknown edit mode',
         }

@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import React from 'react';
 import { MessageResponse } from 'src/components/MessageResponse.js';
 import { extractTag } from 'src/utils/messages.js';
@@ -31,7 +31,7 @@ export function renderToolUseMessage({
   }
   return `pattern: "${pattern}", path: "${verbose ? path : getDisplayPath(path)}"`;
 }
-export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
+export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
   verbose
 }: {
   verbose: boolean;

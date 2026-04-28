@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import type {
-  ContentBlockParam,
-  ToolResultBlockParam,
-  ToolUseBlock,
+  ContentBlock,
+  ToolResultBlock,
+  ToolCallInlineBlock,
 } from '../../types/llm.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -336,7 +336,7 @@ function getMcpServerBaseUrlFromToolName(
 }
 
 export async function* runToolUse(
-  toolUse: ToolUseBlock,
+  toolUse: ToolCallInlineBlock,
   assistantMessage: AssistantMessage,
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -400,8 +400,8 @@ export async function* runToolUse(
           {
             type: 'tool_result',
             content: `<tool_use_error>Error: No such tool available: ${toolName}</tool_use_error>`,
-            is_error: true,
-            tool_use_id: toolUse.id,
+            isError: true,
+            toolCallId: toolUse.id,
           },
         ],
         toolUseResult: `Error: No such tool available: ${toolName}`,
@@ -479,8 +479,8 @@ export async function* runToolUse(
           {
             type: 'tool_result',
             content: `<tool_use_error>${detailedError}</tool_use_error>`,
-            is_error: true,
-            tool_use_id: toolUse.id,
+            isError: true,
+            toolCallId: toolUse.id,
           },
         ],
         toolUseResult: detailedError,
@@ -674,8 +674,8 @@ async function checkPermissionsAndCallTool(
             {
               type: 'tool_result',
               content: `<tool_use_error>InputValidationError: ${errorContent}</tool_use_error>`,
-              is_error: true,
-              tool_use_id: toolUseID,
+              isError: true,
+              toolCallId: toolUseID,
             },
           ],
           toolUseResult: `InputValidationError: ${parsedInput.error.message}`,
@@ -727,8 +727,8 @@ async function checkPermissionsAndCallTool(
             {
               type: 'tool_result',
               content: `<tool_use_error>${isValidCall.message}</tool_use_error>`,
-              is_error: true,
-              tool_use_id: toolUseID,
+              isError: true,
+              toolCallId: toolUseID,
             },
           ],
           toolUseResult: `Error: ${isValidCall.message}`,
@@ -1033,12 +1033,12 @@ async function checkPermissionsAndCallTool(
     }
 
     // Build top-level content: tool_result (text-only for is_error compatibility) + images alongside
-    const messageContent: ContentBlockParam[] = [
+    const messageContent: ContentBlock[] = [
       {
         type: 'tool_result',
         content: errorMessage,
-        is_error: true,
-        tool_use_id: toolUseID,
+        isError: true,
+        toolCallId: toolUseID,
       },
     ]
 
@@ -1056,7 +1056,7 @@ async function checkPermissionsAndCallTool(
     if (rejectContentBlocks?.length) {
       const imageCount = count(
         rejectContentBlocks,
-        (b: ContentBlockParam) => b.type === 'image',
+        (b: ContentBlock) => b.type === 'image',
       )
       if (imageCount > 0) {
         const startId = getNextImagePasteId(toolUseContext.messages)
@@ -1295,7 +1295,7 @@ async function checkPermissionsAndCallTool(
 
     // Map the tool result to API format once and cache it. This block is reused
     // by addToolResult (skipping the remap) and measured here for analytics.
-    const mappedToolResultBlock = tool.mapToolResultToToolResultBlockParam(
+    const mappedToolResultBlock = tool.mapToolResultToToolResultBlock(
       result.data,
       toolUseID,
     )
@@ -1408,7 +1408,7 @@ async function checkPermissionsAndCallTool(
 
     async function addToolResult(
       toolUseResult: unknown,
-      preMappedBlock?: ToolResultBlockParam,
+      preMappedBlock?: ToolResultBlock,
     ) {
       // Use the pre-mapped block when available (non-MCP tools where hooks
       // don't modify the output), otherwise map from scratch.
@@ -1421,7 +1421,7 @@ async function checkPermissionsAndCallTool(
         : await processToolResultBlock(tool, toolUseResult, toolUseID)
 
       // Build content blocks - tool result first, then optional feedback
-      const contentBlocks: ContentBlockParam[] = [toolResultBlock]
+      const contentBlocks: ContentBlock[] = [toolResultBlock]
       // Add accept feedback if user provided feedback when approving
       // (acceptFeedback only exists on PermissionAllowDecision, which is guaranteed here)
       if (
@@ -1448,7 +1448,7 @@ async function checkPermissionsAndCallTool(
       if (allowContentBlocks?.length) {
         const imageCount = count(
           allowContentBlocks,
-          (b: ContentBlockParam) => b.type === 'image',
+          (b: ContentBlock) => b.type === 'image',
         )
         if (imageCount > 0) {
           const startId = getNextImagePasteId(toolUseContext.messages)
@@ -1725,8 +1725,8 @@ async function checkPermissionsAndCallTool(
             {
               type: 'tool_result',
               content,
-              is_error: true,
-              tool_use_id: toolUseID,
+              isError: true,
+              toolCallId: toolUseID,
             },
           ],
           toolUseResult: `Error: ${content}`,

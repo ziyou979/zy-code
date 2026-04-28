@@ -204,9 +204,9 @@ export function createMcpAuthTool(
         }
       }
     },
-    mapToolResultToToolResultBlockParam(data, toolUseID) {
+    mapToolResultToToolResultBlock(data, toolUseID) {
       return {
-        tool_use_id: toolUseID,
+        toolCallId: toolUseID,
         type: 'tool_result',
         content: data.message,
       }

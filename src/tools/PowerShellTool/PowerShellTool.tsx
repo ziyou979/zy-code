@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import type { ToolResultBlockParam } from '../../types/llm.js';
+import type { ToolResultBlock } from '../../types/llm.js';
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises';
 import * as React from 'react';
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js';
@@ -380,7 +380,7 @@ export const PowerShellTool = buildTool({
   renderToolUseQueuedMessage,
   renderToolResultMessage,
   renderToolUseErrorMessage,
-  mapToolResultToToolResultBlockParam({
+  mapToolResultToToolResultBlock({
     interrupted,
     stdout,
     stderr,
@@ -390,7 +390,7 @@ export const PowerShellTool = buildTool({
     backgroundTaskId,
     backgroundedByUser,
     assistantAutoBackgrounded
-  }: Out, toolUseID: string): ToolResultBlockParam {
+  }: Out, toolUseID: string): ToolResultBlock {
     // For image data, format as image content block for ZY
     if (isImage) {
       const block = buildImageToolResult(stdout, toolUseID);
@@ -428,10 +428,10 @@ export const PowerShellTool = buildTool({
       }
     }
     return {
-      tool_use_id: toolUseID,
+      toolCallId: toolUseID,
       type: 'tool_result' as const,
       content: [processedStdout, errorMessage, backgroundInfo].filter(Boolean).join('\n'),
-      is_error: interrupted
+      isError: interrupted
     };
   },
   async call(input: PowerShellToolInput, toolUseContext: Parameters<Tool['call']>[1], _canUseTool?: CanUseToolFn, _parentMessage?: AssistantMessage, onProgress?: ToolCallProgress<PowerShellProgress>): Promise<{
@@ -628,7 +628,7 @@ export const PowerShellTool = buildTool({
         } else {
           // Parse failed (e.g. multi-line stdout after the data URL). Keep
           // isImage in sync with what we actually send so the UI label stays
-          // accurate — mapToolResultToToolResultBlockParam's defensive
+          // accurate — mapToolResultToToolResultBlock's defensive
           // fallthrough will send text, not an image block.
           isImage = false;
         }

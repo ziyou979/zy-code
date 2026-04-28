@@ -54,7 +54,7 @@ export function hasContentAfterIndex(messages: RenderableMessage[], index: numbe
       if (content?.type === 'thinking' || content?.type === 'redacted_thinking') {
         continue;
       }
-      if (content?.type === 'tool_use') {
+      if (content?.type === 'tool_call') {
         if (getToolSearchOrReadInfo(content.name, content.input, tools).isCollapsible) {
           continue;
         }
@@ -147,7 +147,7 @@ export function isMessageStreaming(msg: RenderableMessage, streamingToolUseIDs: 
   if ((msg as any).type === 'grouped_tool_use') {
     return (msg as any).messages.some((m: any) => {
       const content = m.message.content[0];
-      return content?.type === 'tool_use' && streamingToolUseIDs.has(content.id);
+      return content?.type === 'tool_call' && streamingToolUseIDs.has(content.id);
     });
   }
   if ((msg as any).type === 'collapsed_read_search') {
@@ -166,7 +166,7 @@ export function allToolsResolved(msg: RenderableMessage, resolvedToolUseIDs: Set
   if ((msg as any).type === 'grouped_tool_use') {
     return (msg as any).messages.every((m: any) => {
       const content = m.message.content[0];
-      return content?.type === 'tool_use' && resolvedToolUseIDs.has(content.id);
+      return content?.type === 'tool_call' && resolvedToolUseIDs.has(content.id);
     });
   }
   if ((msg as any).type === 'collapsed_read_search') {

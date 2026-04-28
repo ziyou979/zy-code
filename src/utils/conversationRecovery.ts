@@ -354,13 +354,13 @@ function isTerminalToolResult(
   if (!Array.isArray(content)) return false
   const block = content[0]
   if (block?.type !== 'tool_result') return false
-  const toolUseId = block.tool_use_id
+  const toolUseId = block.toolCallId
 
   for (let i = resultIdx - 1; i >= 0; i--) {
     const msg = messages[i]!
     if (msg.type !== 'assistant') continue
     for (const b of msg.message.content) {
-      if (b.type === 'tool_use' && b.id === toolUseId) {
+      if (b.type === 'tool_call' && b.id === toolUseId) {
         return (
           b.name === BRIEF_TOOL_NAME ||
           b.name === LEGACY_BRIEF_TOOL_NAME ||

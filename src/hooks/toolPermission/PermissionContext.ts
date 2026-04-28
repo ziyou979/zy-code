@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '../../types/llm.js'
+import type { ContentBlock } from '../../types/llm.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -154,7 +154,7 @@ function createPermissionContext(
     cancelAndAbort(
       feedback?: string,
       isAbort?: boolean,
-      contentBlocks?: ContentBlockParam[],
+      contentBlocks?: ContentBlock[],
     ): PermissionDecision {
       const sub = !!toolUseContext.agentId
       const baseMessage = feedback
@@ -272,7 +272,7 @@ function createPermissionContext(
         userModified?: boolean
         decisionReason?: PermissionDecisionReason
         acceptFeedback?: string
-        contentBlocks?: ContentBlockParam[]
+        contentBlocks?: ContentBlock[]
       },
     ): PermissionAllowDecision {
       return {
@@ -298,7 +298,7 @@ function createPermissionContext(
       permissionUpdates: PermissionUpdate[],
       feedback?: string,
       permissionPromptStartTimeMs?: number,
-      contentBlocks?: ContentBlockParam[],
+      contentBlocks?: ContentBlock[],
       decisionReason?: PermissionDecisionReason,
     ): Promise<PermissionAllowDecision> {
       const acceptedPermanentUpdates =
