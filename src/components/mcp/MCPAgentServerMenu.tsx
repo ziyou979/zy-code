@@ -1,5 +1,6 @@
 import figures from 'figures';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -68,7 +69,7 @@ export function MCPAgentServerMenu({
         url: (agentServer as any).url
       };
       await performMCPOAuthFlow((agentServer as any).name, tempConfig, setAuthorizationUrl, controller.signal);
-      onComplete?.(`Authentication successful for ${(agentServer as any).name}. The server will connect when the agent runs.`);
+      onComplete?.(tSync('mcp.authSuccessfulConnected', { serverName: (agentServer as any).name }));
     } catch (err) {
       // Don't show error if it was a cancellation
       if (err instanceof Error && !(err instanceof AuthenticationCancelledError)) {
@@ -82,22 +83,20 @@ export function MCPAgentServerMenu({
   const capitalizedServerName = capitalize(String((agentServer as any).name));
   if (isAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">Authenticating with {(agentServer as any).name}…</Text>
+        <Text color="zy">{tSync('mcp.authenticatingWith', { serverName: (agentServer as any).name })}</Text>
         <Box>
           <Spinner />
-          <Text> A browser window will open for authentication</Text>
+          <Text> {tSync('mcp.browserWillOpen')}</Text>
         </Box>
         {authorizationUrl && <Box flexDirection="column">
             <Text dimColor>
-              If your browser doesn&apos;t open automatically, copy this URL
-              manually:
+              {tSync('mcp.copyUrlManually')}{' '}
             </Text>
             <Link url={authorizationUrl} />
           </Box>}
         <Box marginLeft={3}>
           <Text dimColor>
-            Return here after authenticating in your browser.{' '}
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
+            {tSync('mcp.returnAfterAuth')}
           </Text>
         </Box>
       </Box>;
@@ -107,63 +106,61 @@ export function MCPAgentServerMenu({
   // Only show authenticate option for HTTP/SSE servers
   if ((agentServer as any).needsAuth) {
     menuOptions.push({
-      label: (agentServer as any).isAuthenticated ? 'Re-authenticate' : 'Authenticate',
+      label: (agentServer as any).isAuthenticated ? tSync('mcp.reauthenticate') : tSync('mcp.authenticate'),
       value: 'auth'
     });
   }
   menuOptions.push({
-    label: 'Back',
+    label: tSync('mcp.back'),
     value: 'back'
   });
-  return <Dialog title={`${capitalizedServerName} MCP Server`} subtitle="agent-only" onCancel={onCancel} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
+  return <Dialog title={tSync('mcp.agentServerTitle', { serverName: capitalizedServerName })} subtitle={tSync('mcp.agentOnly')} onCancel={onCancel} inputGuide={exitState => exitState.pending ? <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text> : <Byline>
             <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
             <KeyboardShortcutHint shortcut="Enter" action="confirm" />
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
+            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.goBack')} />
           </Byline>}>
       <Box flexDirection="column" gap={0}>
         <Box>
-          <Text bold>Type: </Text>
+          <Text bold>{tSync('mcp.typeLabel')} </Text>
           <Text dimColor>{(agentServer as any).transport}</Text>
         </Box>
 
         {(agentServer as any).url && <Box>
-            <Text bold>URL: </Text>
+            <Text bold>{tSync('mcp.urlLabel')} </Text>
             <Text dimColor>{(agentServer as any).url}</Text>
           </Box>}
 
         {(agentServer as any).command && <Box>
-            <Text bold>Command: </Text>
+            <Text bold>{tSync('mcp.commandLabel')} </Text>
             <Text dimColor>{(agentServer as any).command}</Text>
           </Box>}
 
         <Box>
-          <Text bold>Used by: </Text>
+          <Text bold>{tSync('mcp.usedByLabel')} </Text>
           <Text dimColor>{(agentServer as any).sourceAgents.join(', ')}</Text>
         </Box>
 
         <Box marginTop={1}>
-          <Text bold>Status: </Text>
+          <Text bold>{tSync('mcp.statusLabel')} </Text>
           <Text>
-            {color('inactive', theme)(figures.radioOff)} not connected
-            (agent-only)
+            {color('inactive', theme)(figures.radioOff)} {tSync('mcp.notConnectedAgentOnly')}
           </Text>
         </Box>
 
         {(agentServer as any).needsAuth && <Box>
-            <Text bold>Auth: </Text>
-            {(agentServer as any).isAuthenticated ? <Text>{color('success', theme)(figures.tick)} authenticated</Text> : <Text>
-                {color('warning', theme)(figures.triangleUpOutline)} may need
-                authentication
+            <Text bold>{tSync('mcp.authLabel')} </Text>
+            {(agentServer as any).isAuthenticated ? <Text>{color('success', theme)(figures.tick)} {tSync('mcp.authenticated')}</Text> : <Text>
+                {color('warning', theme)(figures.triangleUpOutline)} {tSync('mcp.mayNeedAuthentication')}
               </Text>}
           </Box>}
       </Box>
 
       <Box>
-        <Text dimColor>This server connects only when running the agent.</Text>
+        <Text dimColor>{tSync('mcp.agentOnlyConnects')}</Text>
       </Box>
 
       {error && <Box>
-          <Text color="error">Error: {error}</Text>
+          <Text color="error">{tSync('mcp.errorLabelMenu')} {error}</Text>
         </Box>}
 
       <Box>

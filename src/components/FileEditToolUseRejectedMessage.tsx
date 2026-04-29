@@ -4,6 +4,7 @@ import { relative } from 'path';
 import * as React from 'react';
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
 import { getCwd } from 'src/utils/cwd.js';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { HighlightedCode } from './HighlightedCode.js';
 import { MessageResponse } from './MessageResponse.js';
@@ -35,7 +36,7 @@ export function FileEditToolUseRejectedMessage({
     columns
   } = useTerminalSize();
   const t2 = verbose ? file_path : relative(getCwd(), file_path);
-  const text = <Box flexDirection="row">{<Text color="subtle">User rejected {operation} to </Text>}{<Text bold={true} color="subtle">{t2}</Text>}</Box>;
+  const text = <Box flexDirection="row">{<Text color="subtle">{operation === "write" ? tSync('fileEdit.rejectedWrite') : tSync('fileEdit.rejectedUpdate')} </Text>}{<Text bold={true} color="subtle">{t2}</Text>}</Box>;
   if (style === "condensed" && !verbose) {
     return <MessageResponse>{text}</MessageResponse>;
   }
@@ -44,7 +45,7 @@ export function FileEditToolUseRejectedMessage({
     const numLines = lines.length;
     const plusLines = numLines - MAX_LINES_TO_RENDER;
     const truncatedContent = verbose ? content : lines.slice(0, MAX_LINES_TO_RENDER).join("\n");
-    return <MessageResponse><Box flexDirection="column">{text}{<HighlightedCode code={truncatedContent || "(No content)"} filePath={file_path} width={columns - 12} dim={true} />}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} lines</Text>}</Box></MessageResponse>;
+    return <MessageResponse><Box flexDirection="column">{text}{<HighlightedCode code={truncatedContent || tSync('fileEdit.noContent')} filePath={file_path} width={columns - 12} dim={true} />}{!verbose && plusLines > 0 && <Text dimColor={true}>{tSync('fileEdit.plusLines', { count: plusLines })}</Text>}</Box></MessageResponse>;
   }
   if (!patch || patch.length === 0) {
     return <MessageResponse>{text}</MessageResponse>;

@@ -9,6 +9,7 @@ import { Box, Text } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
 import type { Message } from '../../types/message.js';
+import { tSync } from '../../i18n/index.js';
 import { plural } from '../../utils/stringUtils.js';
 import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
@@ -125,24 +126,24 @@ export function DiffDialog({
   }, {
     context: "DiffDialog"
   });
-  const subtitle = diffData.stats ? <Text dimColor={true}>{diffData.stats.filesCount} {plural(diffData.stats.filesCount, "file")}{" "}changed{diffData.stats.linesAdded > 0 && <Text color="diffAddedWord"> +{diffData.stats.linesAdded}</Text>}{diffData.stats.linesRemoved > 0 && <Text color="diffRemovedWord"> -{diffData.stats.linesRemoved}</Text>}</Text> : null;
-  const headerTitle = currentTurn ? `Turn ${currentTurn.turnIndex}` : "Uncommitted changes";
-  const headerSubtitle = currentTurn ? currentTurn.userPromptPreview ? `"${currentTurn.userPromptPreview}"` : "" : "(git diff HEAD)";
+  const subtitle = diffData.stats ? <Text dimColor={true}>{diffData.stats.filesCount} {plural(diffData.stats.filesCount, tSync('diffDialog.file'), tSync('diffDialog.files'))}{" "}{tSync('diffDialog.changed')}{diffData.stats.linesAdded > 0 && <Text color="diffAddedWord"> +{diffData.stats.linesAdded}</Text>}{diffData.stats.linesRemoved > 0 && <Text color="diffRemovedWord"> -{diffData.stats.linesRemoved}</Text>}</Text> : null;
+  const headerTitle = currentTurn ? `${tSync('diffDialog.turn')} ${currentTurn.turnIndex}` : tSync('diffDialog.uncommittedChanges');
+  const headerSubtitle = currentTurn ? currentTurn.userPromptPreview ? `"${currentTurn.userPromptPreview}"` : "" : tSync('diffDialog.gitDiffHead');
   const sourceSelector = sources.length > 1 ? <Box>{sourceIndex > 0 && <Text dimColor={true}>◀ </Text>}{sources.map((source, i) => {
       const isSelected = i === sourceIndex;
-      const label = source.type === "current" ? "Current" : `T${(source as any).turn.turnIndex}`;
+      const label = source.type === "current" ? tSync('diffDialog.current') : `T${(source as any).turn.turnIndex}`;
       return <Text key={i} dimColor={!isSelected} bold={isSelected}>{i > 0 ? " \xB7 " : ""}{label}</Text>;
     })}{sourceIndex < sources.length - 1 && <Text dimColor={true}> ▶</Text>}</Box> : null;
   const dismissShortcut = useShortcutDisplay("diff:dismiss", "DiffDialog", "esc");
   let emptyMessage;
   if (diffData.loading) {
-    emptyMessage = "Loading diff\u2026";
+    emptyMessage = tSync('diffDialog.loadingDiff');
   } else if (currentTurn) {
-    emptyMessage = "No file changes in this turn";
+    emptyMessage = tSync('diffDialog.noFileChangesInTurn');
   } else if (diffData.stats && diffData.stats.filesCount > 0 && diffData.files.length === 0) {
-    emptyMessage = "Too many files to display details";
+    emptyMessage = tSync('diffDialog.tooManyFilesToDisplay');
   } else {
-    emptyMessage = "Working tree is clean";
+    emptyMessage = tSync('diffDialog.workingTreeIsClean');
   }
   const title = <Text>{headerTitle}{headerSubtitle && <Text dimColor={true}> {headerSubtitle}</Text>}</Text>;
   const handleCancel = function handleCancel() {
@@ -154,5 +155,5 @@ export function DiffDialog({
       });
     }
   };
-  return <Dialog title={title} onCancel={handleCancel} color="background" inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : viewMode === "list" ? <Byline>{sources.length > 1 && <Text>←/→ source</Text>}<Text>↑/↓ select</Text><Text>Enter view</Text><Text>{dismissShortcut} close</Text></Byline> : <Byline><Text>← back</Text><Text>{dismissShortcut} close</Text></Byline>}>{sourceSelector}{subtitle}{diffData.files.length === 0 ? <Box marginTop={1}><Text dimColor={true}>{emptyMessage}</Text></Box> : viewMode === "list" ? <Box flexDirection="column" marginTop={1}><DiffFileList files={diffData.files} selectedIndex={selectedIndex} /></Box> : <Box flexDirection="column" marginTop={1}><DiffDetailView filePath={selectedFile?.path || ""} hunks={selectedHunks} isLargeFile={selectedFile?.isLargeFile} isBinary={selectedFile?.isBinary} isTruncated={selectedFile?.isTruncated} isUntracked={selectedFile?.isUntracked} /></Box>}</Dialog>;
+  return <Dialog title={title} onCancel={handleCancel} color="background" inputGuide={exitState => exitState.pending ? <Text>{tSync('diffDialog.pressAgainToExit', { keyName: exitState.keyName })}</Text> : viewMode === "list" ? <Byline>{sources.length > 1 && <Text>{tSync('diffDialog.sourceNav')}</Text>}<Text>{tSync('diffDialog.select')}</Text><Text>{tSync('diffDialog.enterView')}</Text><Text>{dismissShortcut} {tSync('diffDialog.close')}</Text></Byline> : <Byline><Text>{tSync('diffDialog.back')}</Text><Text>{dismissShortcut} {tSync('diffDialog.close')}</Text></Byline>}>{sourceSelector}{subtitle}{diffData.files.length === 0 ? <Box marginTop={1}><Text dimColor={true}>{emptyMessage}</Text></Box> : viewMode === "list" ? <Box flexDirection="column" marginTop={1}><DiffFileList files={diffData.files} selectedIndex={selectedIndex} /></Box> : <Box flexDirection="column" marginTop={1}><DiffDetailView filePath={selectedFile?.path || ""} hunks={selectedHunks} isLargeFile={selectedFile?.isLargeFile} isBinary={selectedFile?.isBinary} isTruncated={selectedFile?.isTruncated} isUntracked={selectedFile?.isUntracked} /></Box>}</Dialog>;
 }

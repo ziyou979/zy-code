@@ -25,6 +25,7 @@ import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
 import { Message } from '../Message.js';
+import { tSync } from '../../i18n/index.js';
 import { formatReviewStageCounts, RemoteSessionProgress } from './RemoteSessionProgress.js';
 type Props = {
   session: DeepImmutable<RemoteAgentTaskState>;
@@ -43,7 +44,7 @@ type Props = {
 export function formatToolUseSummary(name: string, input: unknown): string {
   // plan_ready phase is only reached via ExitPlanMode tool
   if (name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
-    return 'Review the plan in ZY Code on the web';
+    return tSync('backgroundTasks.reviewPlanOnWeb');
   }
   if (!input || typeof input !== 'object') return name;
   // AskUserQuestion: show the question text as a CTA, not the tool name.
@@ -57,7 +58,7 @@ export function formatToolUseSummary(name: string, input: unknown): string {
       const q = 'question' in qs[0] && typeof qs[0].question === 'string' && qs[0].question ? qs[0].question : 'header' in qs[0] && typeof qs[0].header === 'string' ? qs[0].header : null;
       if (q) {
         const oneLine = q.replace(/\s+/g, ' ').trim();
-        return `Answer in browser: ${truncateToWidth(oneLine, 50)}`;
+        return `${tSync('backgroundTasks.answerInBrowser')}: ${truncateToWidth(oneLine, 50)}`;
       }
     }
   }
@@ -70,12 +71,12 @@ export function formatToolUseSummary(name: string, input: unknown): string {
   return name;
 }
 const PHASE_LABEL = {
-  needs_input: 'input required',
-  plan_ready: 'ready'
+  needs_input: tSync('backgroundTasks.inputRequired'),
+  plan_ready: tSync('backgroundTasks.ready')
 } as const;
 const AGENT_VERB = {
-  needs_input: 'waiting',
-  plan_ready: 'done'
+  needs_input: tSync('backgroundTasks.waiting'),
+  plan_ready: tSync('backgroundTasks.done')
 } as const;
 function UltraplanSessionDetail({
   session,
@@ -121,11 +122,11 @@ function UltraplanSessionDetail({
   }));
   const [confirmingStop, setConfirmingStop] = useState(false);
   if (confirmingStop) {
-    return <Dialog title="Stop ultraplan?" onCancel={() => setConfirmingStop(false)} color="background"><Box flexDirection="column" gap={1}>{<Text dimColor={true}>This will terminate the ZY Code on the web session.</Text>}<Select options={[{
-          label: "Terminate session",
+    return <Dialog title={tSync('backgroundTasks.stopUltraplan')} onCancel={() => setConfirmingStop(false)} color="background"><Box flexDirection="column" gap={1}>{<Text dimColor={true}>{tSync('backgroundTasks.stopUltraplanConfirm')}</Text>}<Select options={[{
+          label: tSync('backgroundTasks.terminateSession'),
           value: "stop" as const
         }, {
-          label: "Back",
+          label: tSync('backgroundTasks.back'),
           value: "back" as const
         }]} onChange={v => {
           if (v === "stop") {
@@ -138,14 +139,14 @@ function UltraplanSessionDetail({
   }
   const t12 = plural(agentsWorking, "agent");
   const t14 = plural(toolCalls, "call");
-  return <Dialog title={<Text>{<Text color="background">{phase === "plan_ready" ? DIAMOND_FILLED : DIAMOND_OPEN}{" "}</Text>}{<Text bold={true}>ultraplan</Text>}{<Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{statusText}</Text>}</Text>} onCancel={goBackOrClose} color="background">{<Box flexDirection="column" gap={1}>{<Text>{phase === "plan_ready" && <Text color="success">{figures.tick} </Text>}{agentsWorking} {t12}{" "}{phase ? AGENT_VERB[phase] : "working"} · {toolCalls} tool{" "}{t14}</Text>}{lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>}{<Link url={sessionUrl}>{<Text dimColor={true}>{sessionUrl}</Text>}</Link>}{<Select options={[{
-        label: "Review in ZY Code on the web",
+  return <Dialog title={<Text>{<Text color="background">{phase === "plan_ready" ? DIAMOND_FILLED : DIAMOND_OPEN}{" "}</Text>}{<Text bold={true}>ultraplan</Text>}{<Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{statusText}</Text>}</Text>} onCancel={goBackOrClose} color="background">{<Box flexDirection="column" gap={1}>{<Text>{phase === "plan_ready" && <Text color="success">{figures.tick} </Text>}{agentsWorking} {t12}{" "}{phase ? AGENT_VERB[phase] : tSync('backgroundTasks.working')} · {toolCalls} tool{" "}{t14}</Text>}{lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>}{<Link url={sessionUrl}>{<Text dimColor={true}>{sessionUrl}</Text>}</Link>}{<Select options={[{
+        label: tSync('backgroundTasks.reviewOnWeb'),
         value: "open" as const
       }, ...(onKill && running ? [{
-        label: "Stop ultraplan",
+        label: tSync('backgroundTasks.stopUltraplanLabel'),
         value: "stop" as const
       }] : []), {
-        label: "Back",
+        label: tSync('backgroundTasks.back'),
         value: "back" as const
       }]} onChange={v_0 => {
         switch (v_0) {
@@ -170,9 +171,9 @@ function UltraplanSessionDetail({
 }
 const STAGES = ['finding', 'verifying', 'synthesizing'] as const;
 const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
-  finding: 'Find',
-  verifying: 'Verify',
-  synthesizing: 'Dedupe'
+  finding: tSync('backgroundTasks.stageFind'),
+  verifying: tSync('backgroundTasks.stageVerify'),
+  synthesizing: tSync('backgroundTasks.stageDedupe')
 };
 
 // Setup → Find → Verify → Dedupe pipeline. Current stage in cloud teal,
@@ -191,7 +192,7 @@ function StagePipeline({
     const isCurrent = !completed && !inSetup && i === currentIdx;
     return <React.Fragment key={s}>{i > 0 && <Text dimColor={true}> → </Text>}{isCurrent ? <Text color="background">{STAGE_LABELS[s]}</Text> : <Text dimColor={true}>{STAGE_LABELS[s]}</Text>}</React.Fragment>;
   });
-  return <Text>{inSetup ? <Text color="background">Setup</Text> : <Text dimColor={true}>Setup</Text>}{<Text dimColor={true}> → </Text>}{t4}{completed && <Text color="success"> ✓</Text>}</Text>;
+  return <Text>{inSetup ? <Text color="background">{tSync('backgroundTasks.stageSetup')}</Text> : <Text dimColor={true}>{tSync('backgroundTasks.stageSetup')}</Text>}{<Text dimColor={true}> → </Text>}{t4}{completed && <Text color="success"> ✓</Text>}</Text>;
 }
 
 // Stage-appropriate counts line. Running-state formatting delegates to
@@ -201,7 +202,7 @@ function reviewCountsLine(session: DeepImmutable<RemoteAgentTaskState>): string 
   const p = session.reviewProgress;
   // No progress data — the orchestrator never wrote a snapshot. Don't
   // claim "0 findings" when completed; we just don't know.
-  if (!p) return session.status === 'completed' ? 'done' : 'setting up';
+  if (!p) return session.status === 'completed' ? tSync('backgroundTasks.done') : tSync('backgroundTasks.settingUp');
   const verified = p.bugsVerified;
   const refuted = p.bugsRefuted ?? 0;
   if (session.status === 'completed') {
@@ -227,13 +228,13 @@ function ReviewSessionDetail({
   });
   const goBackOrClose = onBack ?? handleClose;
   const sessionUrl = getRemoteTaskSessionUrl(session.sessionId);
-  const statusLabel = completed ? "ready" : running ? "running" : session.status;
+  const statusLabel = completed ? tSync('backgroundTasks.ready') : running ? tSync('backgroundTasks.running') : session.status;
   if (confirmingStop) {
-    return <Dialog title="Stop ultrareview?" onCancel={() => setConfirmingStop(false)} color="background"><Box flexDirection="column" gap={1}>{<Text dimColor={true}>This archives the remote session and stops local tracking. The review will not complete and any findings so far are discarded.</Text>}<Select options={[{
-          label: "Stop ultrareview",
+    return <Dialog title={tSync('backgroundTasks.stopUltrareview')} onCancel={() => setConfirmingStop(false)} color="background"><Box flexDirection="column" gap={1}>{<Text dimColor={true}>{tSync('backgroundTasks.stopUltrareviewConfirm')}</Text>}<Select options={[{
+          label: tSync('backgroundTasks.stopUltrareviewLabel'),
           value: "stop" as const
         }, {
-          label: "Back",
+          label: tSync('backgroundTasks.back'),
           value: "back" as const
         }]} onChange={v => {
           if (v === "stop") {
@@ -245,19 +246,19 @@ function ReviewSessionDetail({
         }} /></Box></Dialog>;
   }
   const options = completed ? [{
-    label: "Open in ZY Code on the web",
+    label: tSync('backgroundTasks.openOnWeb'),
     value: "open"
   }, {
-    label: "Dismiss",
+    label: tSync('backgroundTasks.dismiss'),
     value: "dismiss"
   }] : [{
-    label: "Open in ZY Code on the web",
+    label: tSync('backgroundTasks.openOnWeb'),
     value: "open"
   }, ...(onKill && running ? [{
-    label: "Stop ultrareview",
+    label: tSync('backgroundTasks.stopUltrareviewLabel'),
     value: "stop" as const
   }] : []), {
-    label: "Back",
+    label: tSync('backgroundTasks.back'),
     value: "back"
   }];
   const handleSelect = action => {
@@ -357,31 +358,31 @@ export function RemoteSessionDetailDialog({
   const displayTitle = truncateToWidth(session.title, 50);
 
   // Map TaskStatus to display status (handle 'pending')
-  const displayStatus = session.status === 'pending' ? 'starting' : session.status;
+  const displayStatus = session.status === 'pending' ? tSync('backgroundTasks.starting') : session.status;
   return <Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
-      <Dialog title="Remote session details" onCancel={handleClose} color="background" inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
+      <Dialog title={tSync('backgroundTasks.remoteSessionDetails')} onCancel={handleClose} color="background" inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
               {onBack && <KeyboardShortcutHint shortcut="←" action="go back" />}
               <KeyboardShortcutHint shortcut="Esc/Enter/Space" action="close" />
               {!isTeleporting && <KeyboardShortcutHint shortcut="t" action="teleport" />}
             </Byline>}>
         <Box flexDirection="column">
           <Text>
-            <Text bold>Status</Text>:{' '}
+            <Text bold>{tSync('backgroundTasks.status')}</Text>:{' '}
             {displayStatus === 'running' || displayStatus === 'starting' ? <Text color="background">{displayStatus}</Text> : displayStatus === 'completed' ? <Text color="success">{displayStatus}</Text> : <Text color="error">{displayStatus}</Text>}
           </Text>
           <Text>
-            <Text bold>Runtime</Text>:{' '}
+            <Text bold>{tSync('backgroundTasks.runtime')}</Text>:{' '}
             {formatDuration((session.endTime ?? Date.now()) - session.startTime)}
           </Text>
           <Text wrap="truncate-end">
-            <Text bold>Title</Text>: {displayTitle}
+            <Text bold>{tSync('backgroundTasks.titleLabel')}</Text>: {displayTitle}
           </Text>
           <Text>
-            <Text bold>Progress</Text>:{' '}
+            <Text bold>{tSync('backgroundTasks.progress')}</Text>:{' '}
             <RemoteSessionProgress session={session} />
           </Text>
           <Text>
-            <Text bold>Session URL</Text>:{' '}
+            <Text bold>{tSync('backgroundTasks.sessionUrl')}</Text>:{' '}
             <Link url={getRemoteTaskSessionUrl(session.sessionId)}>
               <Text dimColor>{getRemoteTaskSessionUrl(session.sessionId)}</Text>
             </Link>
@@ -391,26 +392,25 @@ export function RemoteSessionDetailDialog({
         {/* Remote session messages section */}
         {session.log.length > 0 && <Box flexDirection="column" marginTop={1}>
             <Text>
-              <Text bold>Recent messages</Text>:
+              <Text bold>{tSync('backgroundTasks.recentMessages')}</Text>:
             </Text>
             <Box flexDirection="column" height={10} overflowY="hidden">
               {lastMessages.map((msg, i) => <Message key={i} message={msg} lookups={EMPTY_LOOKUPS} addMargin={i > 0} tools={toolUseContext.options.tools} commands={toolUseContext.options.commands} verbose={toolUseContext.options.verbose} inProgressToolUseIDs={new Set()} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} style="condensed" isTranscriptMode={false} isStatic={true} />)}
             </Box>
             <Box marginTop={1}>
               <Text dimColor italic>
-                Showing last {lastMessages.length} of {session.log.length}{' '}
-                messages
+                {tSync('backgroundTasks.showingLastMessages', { shown: lastMessages.length, total: session.log.length })}
               </Text>
             </Box>
           </Box>}
 
         {/* Teleport error message */}
         {teleportError && <Box marginTop={1}>
-            <Text color="error">Teleport failed: {teleportError}</Text>
+            <Text color="error">{tSync('backgroundTasks.teleportFailed', { error: teleportError })}</Text>
           </Box>}
 
         {/* Teleporting status */}
-        {isTeleporting && <Text color="background">Teleporting to session…</Text>}
+        {isTeleporting && <Text color="background">{tSync('backgroundTasks.teleporting')}</Text>}
       </Dialog>
     </Box>;
 }

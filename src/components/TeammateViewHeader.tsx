@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { useAppState } from '../state/AppState.js';
 import { getViewedTeammateTask } from '../state/selectors.js';
@@ -16,5 +17,5 @@ export function TeammateViewHeader() {
     return null;
   }
   const nameColor = toInkColor(viewedTeammate.identity.color);
-  return <OffscreenFreeze><Box flexDirection="column" marginBottom={1}>{<Box>{<Text>Viewing </Text>}{<Text color={nameColor} bold={true}>@{viewedTeammate.identity.agentName}</Text>}{<Text dimColor={true}>{" \xB7 "}<KeyboardShortcutHint shortcut="esc" action="return" /></Text>}</Box>}{<Text dimColor={true}>{viewedTeammate.prompt}</Text>}</Box></OffscreenFreeze>;
+  return <OffscreenFreeze><Box flexDirection="column" marginBottom={1}>{<Box>{<Text>{tSync('teammateView.viewing')} </Text>}{<Text color={nameColor} bold={true}>@{viewedTeammate.identity.agentName}</Text>}{<Text dimColor={true}>{" \xB7 "}<KeyboardShortcutHint shortcut="esc" action={tSync('teammateView.return')} /></Text>}</Box>}{<Text dimColor={true}>{viewedTeammate.prompt}</Text>}</Box></OffscreenFreeze>;
 }

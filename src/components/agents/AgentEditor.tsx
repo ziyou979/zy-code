@@ -3,6 +3,7 @@ import figures from 'figures';
 import * as React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useSetAppState } from 'src/state/AppState.js';
+import { tSync } from '../../i18n/index.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -44,7 +45,7 @@ export function AgentEditor({
     if (result.error) {
       setError(result.error);
     } else {
-      onSaved(`Opened ${agent.agentType} in editor. If you made edits, restart to load the latest version.`);
+      onSaved(tSync('agents.openedInEditor', { name: agent.agentType }));
     }
   }, [agent, onSaved]);
   const handleSave = useCallback(async (changes: SaveChanges = {}) => {
@@ -86,24 +87,24 @@ export function AgentEditor({
           }
         };
       });
-      onSaved(`Updated agent: ${chalk.bold(agent.agentType)}`);
+      onSaved(tSync('agents.updatedAgent', { name: chalk.bold(agent.agentType) }));
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save agent');
+      setError(err instanceof Error ? err.message : tSync('agents.failedToSave'));
       return false;
     }
   }, [agent, selectedColor, onSaved, setAppState]);
   const menuItems = useMemo(() => [{
-    label: 'Open in editor',
+    label: tSync('agents.editor.openInEditor'),
     action: handleOpenInEditor
   }, {
-    label: 'Edit tools',
+    label: tSync('agents.editor.editTools'),
     action: () => setEditMode('edit-tools')
   }, {
-    label: 'Edit model',
+    label: tSync('agents.editor.editModel'),
     action: () => setEditMode('edit-model')
   }, {
-    label: 'Edit color',
+    label: tSync('agents.editor.editColor'),
     action: () => setEditMode('edit-color')
   }], [handleOpenInEditor]);
   const handleEscape = useCallback(() => {
@@ -133,7 +134,7 @@ export function AgentEditor({
     context: 'Confirmation'
   });
   const renderMenu = (): React.ReactNode => <Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleMenuKeyDown}>
-      <Text dimColor>Source: {getAgentSourceDisplayName(agent.source)}</Text>
+      <Text dimColor>{tSync('agents.editor.source', { source: getAgentSourceDisplayName(agent.source) })}</Text>
 
       <Box marginTop={1} flexDirection="column">
         {menuItems.map((item, index_1) => <Text key={item.label} color={index_1 === selectedMenuIndex ? 'suggestion' : undefined}>

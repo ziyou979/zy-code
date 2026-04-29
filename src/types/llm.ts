@@ -8,7 +8,7 @@ import type { ConnectorTextBlock } from './connectorText.js'
  * - 内容块只保留通用概念（text/image/tool_call）
  * - 流式事件使用通用命名（response_start/chunk_start 等）
  * - 请求参数只包含通用字段，provider 专属字段通过 providerExtras 传递
- * - 字段命名统一驼峰（inputTokens 替代 input_tokens）
+ * - 字段命名统一驼峰
  */
 
 // ============================================================================
@@ -197,8 +197,6 @@ export interface TextDelta {
 export interface ToolCallInputDelta {
   type: 'input_json_delta'
   partialJson: string
-  /** @deprecated 使用 partialJson */
-  partial_json?: string
 }
 
 /** 思考增量 */

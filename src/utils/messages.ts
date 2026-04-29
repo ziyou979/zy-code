@@ -2662,7 +2662,13 @@ export function normalizeContentFromAPI(
   return contentBlocks.map(contentBlock => {
     const block = contentBlock as { type: string; input?: unknown; id?: string; name?: string; text?: string; [key: string]: unknown }
     switch (block.type) {
-      case 'tool_use': {
+      case 'tool_use':
+      case 'tool_call': {
+        // 同时覆盖 'tool_use'（v1 / Anthropic 路径）和 'tool_call'（v2 / OpenAI 路径）。
+        // OpenAI 适配器（mapOpenAIStreamToStandard）在流式累积阶段产出
+        // chunk.type === 'tool_call'，input 以字符串形式累积，必须在此 parse 回 object，
+        // 否则下一轮 messagesToOpenAI 会对字符串 JSON.stringify 产生双重转义，
+        // 触发 DashScope 400: "function.arguments parameter must be in JSON format"。
         if (
           typeof block.input !== 'string' &&
           !isObject(block.input)
@@ -2680,8 +2686,7 @@ export function normalizeContentFromAPI(
           const parsed = safeParseJSON(block.input)
           if (parsed === null && block.input.length > 0) {
             // TET/FC-v3 诊断：流式 tool 输入 JSON 解析失败。我们回退到 {}，
-            // 这意味着下游校验会看到空输入。原始前缀仅写入调试日志 — 尚无
-            // 带 PII 标记的 proto 列可用于存储。
+            // 这意味着下游校验会看到空输入。
             logEvent('zy_tool_input_json_parse_fail', {
               toolName: sanitizeToolNameForAnalytics(block.name),
               inputLen: block.input.length,
@@ -3048,7 +3053,8 @@ export function handleMessageFromStream(
           return
         }
         case 'input_json_delta': {
-          const delta = message.event.delta.partial_json
+          // 标准层统一使用驼峰 partialJson（见 types/llm.ts ToolCallInputDelta）
+          const delta = message.event.delta.partialJson ?? ''
           const index = message.event.index
           onUpdateLength(delta)
           onStreamingToolUses(_ => {

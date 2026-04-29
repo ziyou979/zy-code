@@ -2,6 +2,7 @@ import figures from 'figures';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useDebounceCallback } from 'usehooks-ts';
+import { tSync } from 'src/i18n/index.js';
 import { addDirHelpMessage, validateDirectoryForWorkspace } from '../../../commands/add-dir/validation.js';
 import TextInput from '../../../components/TextInput.js';
 import { Box, Text } from '../../../ink.js';
@@ -26,16 +27,16 @@ const REMEMBER_DIRECTORY_OPTIONS: Array<{
   label: string;
 }> = [{
   value: 'yes-session',
-  label: 'Yes, for this session'
+  label: tSync('permissionRules.yesForThisSession')
 }, {
   value: 'yes-remember',
-  label: 'Yes, and remember this directory'
+  label: tSync('permissionRules.yesAndRememberDirectory')
 }, {
   value: 'no',
-  label: 'No'
+  label: tSync('permission.no')
 }];
 function PermissionDescription() {
-  return <Text dimColor={true}>ZY Code will be able to read files in this directory and make edits when auto-accept edits is on.</Text>;
+  return <Text dimColor={true}>{tSync('permissionRules.workspacePermissionDescription')}</Text>;
 }
 function DirectoryDisplay({
   path
@@ -50,7 +51,7 @@ function DirectoryInput({
   suggestions,
   selectedSuggestion
 }) {
-  return <Box flexDirection="column">{<Text>Enter the path to the directory:</Text>}{<Box borderDimColor={true} borderStyle="round" marginY={1} paddingLeft={1}><TextInput showCursor={true} placeholder={`Directory path${figures.ellipsis}`} value={value} onChange={onChange} onSubmit={onSubmit} columns={80} cursorOffset={value.length} onChangeCursorOffset={_temp} /></Box>}{suggestions.length > 0 && <Box marginBottom={1}><PromptInputFooterSuggestions suggestions={suggestions} selectedSuggestion={selectedSuggestion} /></Box>}{error && <Text color="error">{error}</Text>}</Box>;
+  return <Box flexDirection="column">{<Text>{tSync('permissionRules.enterDirectoryPath')}</Text>}{<Box borderDimColor={true} borderStyle="round" marginY={1} paddingLeft={1}><TextInput showCursor={true} placeholder={tSync('permissionRules.directoryPathPlaceholder')} value={value} onChange={onChange} onSubmit={onSubmit} columns={80} cursorOffset={value.length} onChangeCursorOffset={_temp} /></Box>}{suggestions.length > 0 && <Box marginBottom={1}><PromptInputFooterSuggestions suggestions={suggestions} selectedSuggestion={selectedSuggestion} /></Box>}{error && <Text color="error">{error}</Text>}</Box>;
 }
 function _temp() {}
 export function AddWorkspaceDirectory({
@@ -145,5 +146,5 @@ export function AddWorkspaceDirectory({
         }
     }
   };
-  return <Box flexDirection="column" tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Dialog title="Add directory to workspace" onCancel={onCancel} color="permission" isCancelActive={false} inputGuide={directoryPath ? undefined : exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut="Tab" action="complete" /><KeyboardShortcutHint shortcut="Enter" action="add" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" /></Byline>}>{directoryPath ? <Box flexDirection="column" gap={1}><DirectoryDisplay path={directoryPath} /><Select options={REMEMBER_DIRECTORY_OPTIONS} onChange={handleSelect} onCancel={() => handleSelect("no")} /></Box> : <Box flexDirection="column" gap={1} marginX={2}><PermissionDescription /><DirectoryInput value={directoryInput} onChange={setDirectoryInput} onSubmit={handleSubmit} error={error} suggestions={suggestions} selectedSuggestion={selectedSuggestion} /></Box>}</Dialog>}</Box>;
+  return <Box flexDirection="column" tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Dialog title={tSync('permissionRules.addDirectoryToWorkspace')} onCancel={onCancel} color="permission" isCancelActive={false} inputGuide={directoryPath ? undefined : exitState => exitState.pending ? <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text> : <Byline><KeyboardShortcutHint shortcut="Tab" action="complete" /><KeyboardShortcutHint shortcut="Enter" action="add" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description={tSync('permissionRules.cancel')} /></Byline>}>{directoryPath ? <Box flexDirection="column" gap={1}><DirectoryDisplay path={directoryPath} /><Select options={REMEMBER_DIRECTORY_OPTIONS} onChange={handleSelect} onCancel={() => handleSelect("no")} /></Box> : <Box flexDirection="column" gap={1} marginX={2}><PermissionDescription /><DirectoryInput value={directoryInput} onChange={setDirectoryInput} onSubmit={handleSubmit} error={error} suggestions={suggestions} selectedSuggestion={selectedSuggestion} /></Box>}</Dialog>}</Box>;
 }

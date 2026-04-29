@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -33,11 +34,11 @@ export function ManagedSettingsSecurityDialog({
   const T1 = Box;
   const T2 = Box;
   const t12 = settingsList.map((item, index) => <Box key={index} paddingLeft={2}><Text><Text dimColor={true}>· </Text><Text>{item}</Text></Text></Box>);
-  return <T0 color={"warning"} titleColor={"warning"} title={"Managed settings require approval"}>{<T1 flexDirection={"column"} gap={1} paddingTop={1}>{<Text>Your organization has configured managed settings that could allow execution of arbitrary code or interception of your prompts and responses.</Text>}{<T2 flexDirection={"column"}>{<Text dimColor={true}>Settings requiring approval:</Text>}{t12}</T2>}{<Text>Only accept if you trust your organization's IT administration and expect these settings to be configured.</Text>}{<Select options={[{
-        label: "Yes, I trust these settings",
+  return <T0 color={"warning"} titleColor={"warning"} title={tSync('managedSettings.requireApproval')}>{<T1 flexDirection={"column"} gap={1} paddingTop={1}>{<Text>{tSync('managedSettings.orgConfiguredWarning')}</Text>}{<T2 flexDirection={"column"}>{<Text dimColor={true}>{tSync('managedSettings.requiringApproval')}</Text>}{t12}</T2>}{<Text>{tSync('managedSettings.onlyAcceptIfTrust')}</Text>}{<Select options={[{
+        label: tSync('managedSettings.yesTrust'),
         value: "accept"
       }, {
-        label: "No, exit ZY Code",
+        label: tSync('managedSettings.noExit'),
         value: "exit"
-      }]} onChange={value_0 => onChange(value_0 as 'accept' | 'exit')} onCancel={() => onChange("exit")} />}{<Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to confirm · Esc to exit</>}</Text>}</T1>}</T0>;
+      }]} onChange={value_0 => onChange(value_0 as 'accept' | 'exit')} onCancel={() => onChange("exit")} />}{<Text dimColor={true}>{exitState.pending ? <>{tSync('managedSettings.pressAgainToExit', { keyName: exitState.keyName })}</> : <>{tSync('managedSettings.enterConfirmEscExit')}</>}</Text>}</T1>}</T0>;
 }

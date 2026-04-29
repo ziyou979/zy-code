@@ -11,6 +11,7 @@ import { logEvent } from '../../services/analytics/index.js';
 import { fetchReferralRedemptions, formatCreditAmount, getCachedOrFetchPassesEligibility } from '../../services/api/referral.js';
 // @ts-ignore
 import type { ReferralRedemptionsResponse, ReferrerRewardInfo } from '../../services/oauth/types.js';
+import { tSync } from 'src/i18n/index.js';
 import { count } from '../../utils/array.js';
 import { logError } from '../../utils/log.js';
 import { Pane } from '../design-system/Pane.js';
@@ -31,11 +32,11 @@ export function Passes({
   const [isAvailable, setIsAvailable] = useState(false);
   const [referralLink, setReferralLink] = useState<string | null>(null);
   const [referrerReward, setReferrerReward] = useState<ReferrerRewardInfo | null | undefined>(undefined);
-  const exitState = useExitOnCtrlCDWithKeybindings(() => onDone('Guest passes dialog dismissed', {
+  const exitState = useExitOnCtrlCDWithKeybindings(() => onDone(tSync('passes.dialogDismissed'), {
     display: 'system'
   }));
   const handleCancel = useCallback(() => {
-    onDone('Guest passes dialog dismissed', {
+    onDone(tSync('passes.dialogDismissed'), {
       display: 'system'
     });
   }, [onDone]);
@@ -47,7 +48,7 @@ export function Passes({
       void setClipboard(referralLink).then(raw => {
         if (raw) process.stdout.write(raw);
         logEvent('zy_guest_passes_link_copied', {});
-        onDone(`Referral link copied to clipboard!`);
+        onDone(tSync('passes.linkCopied'));
       });
     }
   });
@@ -110,9 +111,9 @@ export function Passes({
   if (loading) {
     return <Pane>
         <Box flexDirection="column" gap={1}>
-          <Text dimColor>Loading guest pass information…</Text>
+          <Text dimColor>{tSync('passes.loadingInfo')}</Text>
           <Text dimColor italic>
-            {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Esc to cancel</>}
+            {exitState.pending ? <>{tSync('passes.pressAgainToExit', { keyName: exitState.keyName })}</> : <>{tSync('passes.escToCancel')}</>}
           </Text>
         </Box>
       </Pane>;
@@ -120,9 +121,9 @@ export function Passes({
   if (!isAvailable) {
     return <Pane>
         <Box flexDirection="column" gap={1}>
-          <Text>Guest passes are not currently available.</Text>
+          <Text>{tSync('passes.notAvailable')}</Text>
           <Text dimColor italic>
-            {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Esc to cancel</>}
+            {exitState.pending ? <>{tSync('passes.pressAgainToExit', { keyName: exitState.keyName })}</> : <>{tSync('passes.escToCancel')}</>}
           </Text>
         </Box>
       </Pane>;
@@ -155,7 +156,7 @@ export function Passes({
   };
   return <Pane>
       <Box flexDirection="column" gap={1}>
-        <Text color="permission">Guest passes · {availableCount} left</Text>
+        <Text color="permission">{tSync('passes.title', { availableCount })}</Text>
 
         <Box flexDirection="row" marginLeft={2}>
           {sortedPasses.slice(0, 3).map(pass_0 => renderTicket(pass_0))}
@@ -167,16 +168,16 @@ export function Passes({
 
         <Box flexDirection="column" marginLeft={2}>
           <Text dimColor>
-            {referrerReward ? `Share a free week of ZY Code with friends. If they love it and subscribe, you'll get ${formatCreditAmount(referrerReward)} of extra usage to keep building. ` : 'Share a free week of ZY Code with friends. '}
+            {referrerReward ? tSync('passes.shareWithReward', { creditAmount: formatCreditAmount(referrerReward) }) : tSync('passes.shareWithFriends')}
             <Link url={referrerReward ? 'https://support.zy.com/en/articles/13456702-zy-code-guest-passes' : 'https://support.zy.com/en/articles/12875061-zy-code-guest-passes'}>
-              Terms apply.
+              {tSync('passes.termsApply')}
             </Link>
           </Text>
         </Box>
 
         <Box>
           <Text dimColor italic>
-            {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to copy link · Esc to cancel</>}
+            {exitState.pending ? <>{tSync('passes.pressAgainToExit', { keyName: exitState.keyName })}</> : <>{tSync('passes.enterCopyEscCancel')}</>}
           </Text>
         </Box>
       </Box>

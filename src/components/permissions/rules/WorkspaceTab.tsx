@@ -1,6 +1,7 @@
 import figures from 'figures';
 import * as React from 'react';
 import { useEffect } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { getOriginalCwd } from '../../../bootstrap/state.js';
 import type { CommandResultDisplay } from '../../../commands.js';
 import { Select } from '../../../components/CustomSelect/select.js';
@@ -51,7 +52,7 @@ export function WorkspaceTab({
       onRequestRemoveDirectory(directory.path);
     }
   };
-  const handleCancel = () => onExit("Workspace dialog dismissed", {
+  const handleCancel = () => onExit(tSync('permissionRules.workspaceDialogDismissed'), {
     display: "system"
   });
   const opts = additionalDirectories.map(dir => ({
@@ -59,10 +60,10 @@ export function WorkspaceTab({
     value: dir.path
   }));
   opts.push({
-    label: `Add directory${figures.ellipsis}`,
+    label: `${tSync('permissionRules.addDirectoryEllipsis')}`,
     value: "add-directory"
   });
   const options = opts;
   const t7 = Math.min(10, options.length);
-  return <Box flexDirection="column" marginBottom={1}>{<Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}><Text>{`-  ${getOriginalCwd()}`}</Text><Text dimColor={true}>(Original working directory)</Text></Box>}<Select options={options} onChange={handleDirectorySelect} onCancel={handleCancel} visibleOptionCount={t7} onUpFromFirstItem={focusHeader} isDisabled={headerFocused} /></Box>;
+  return <Box flexDirection="column" marginBottom={1}>{<Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}><Text>{`-  ${getOriginalCwd()}`}</Text><Text dimColor={true}>({tSync('permissionRules.originalWorkingDirectory')})</Text></Box>}<Select options={options} onChange={handleDirectorySelect} onCancel={handleCancel} visibleOptionCount={t7} onUpFromFirstItem={focusHeader} isDisabled={headerFocused} /></Box>;
 }

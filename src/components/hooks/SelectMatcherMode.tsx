@@ -5,6 +5,7 @@
  * and simply lets the user drill into each matcher to see its hooks.
  */
 import * as React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js';
 import { Box, Text } from '../../ink.js';
 import { type HookSource, hookSourceInlineDisplayString, type IndividualHookConfig } from '../../utils/hooks/hooksSettings.js';
@@ -42,7 +43,7 @@ export function SelectMatcherMode({
     };
   });
   if (matchersForSelectedEvent.length === 0) {
-    return <Dialog title={`${selectedEvent} - Matchers`} subtitle={eventDescription} onCancel={onCancel} inputGuide={() => <Text>Esc to go back</Text>}>{<Box flexDirection="column" gap={1}><Text dimColor={true}>No hooks configured for this event.</Text><Text dimColor={true}>To add hooks, edit settings.json directly or ask Zy.</Text></Box>}</Dialog>;
+    return <Dialog title={`${selectedEvent} - ${tSync('hooks.matchersLabel')}`} subtitle={eventDescription} onCancel={onCancel} inputGuide={() => <Text>{tSync('hooks.escToGoBack')}</Text>}>{<Box flexDirection="column" gap={1}><Text dimColor={true}>{tSync('hooks.noHooksForEvent')}</Text><Text dimColor={true}>{tSync('hooks.editToAddHooks')}</Text></Box>}</Dialog>;
   }
   const t3 = matchersWithSources.map(item => {
     const sourceText = item.sources.map(hookSourceInlineDisplayString).join(", ");
@@ -53,7 +54,7 @@ export function SelectMatcherMode({
       description: `${item.hookCount} ${plural(item.hookCount, "hook")}`
     };
   });
-  return <Dialog title={`${selectedEvent} - Matchers`} subtitle={eventDescription} onCancel={onCancel}>{<Box flexDirection="column"><Select options={t3} onChange={value => {
+  return <Dialog title={`${selectedEvent} - ${tSync('hooks.matchersLabel')}`} subtitle={eventDescription} onCancel={onCancel}>{<Box flexDirection="column"><Select options={t3} onChange={value => {
         onSelect(value);
       }} onCancel={onCancel} /></Box>}</Dialog>;
 }

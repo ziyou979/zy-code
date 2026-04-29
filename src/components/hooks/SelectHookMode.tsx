@@ -6,6 +6,7 @@
  * confirmation.
  */
 import * as React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js';
 import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager.js';
 import { Box, Text } from '../../ink.js';
@@ -30,7 +31,7 @@ export function SelectHookMode({
 }: Props) {
   const title = hookEventMetadata.matcherMetadata !== undefined ? `${selectedEvent} - Matcher: ${selectedMatcher || "(all)"}` : selectedEvent;
   if (hooksForSelectedMatcher.length === 0) {
-    return <Dialog title={title} subtitle={hookEventMetadata.description} onCancel={onCancel} inputGuide={() => <Text>Esc to go back</Text>}>{<Box flexDirection="column" gap={1}><Text dimColor={true}>No hooks configured for this event.</Text><Text dimColor={true}>To add hooks, edit settings.json directly or ask Zy.</Text></Box>}</Dialog>;
+    return <Dialog title={title} subtitle={hookEventMetadata.description} onCancel={onCancel} inputGuide={() => <Text>{tSync('hooks.escToGoBack')}</Text>}>{<Box flexDirection="column" gap={1}><Text dimColor={true}>{tSync('hooks.noHooksForEvent')}</Text><Text dimColor={true}>{tSync('hooks.editToAddHooks')}</Text></Box>}</Dialog>;
   }
   const t2 = hooksForSelectedMatcher.map((hook, index) => ({
     label: `[${hook.config.type}] ${getHookDisplayText(hook.config)}`,

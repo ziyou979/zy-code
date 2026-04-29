@@ -5,6 +5,7 @@ import { removePathFromRepo, validateRepoAtPath } from '../utils/githubRepoPathM
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
 import { Spinner } from './Spinner.js';
+import { tSync } from 'src/i18n/index.js';
 type Props = {
   targetRepo: string;
   initialPaths: string[];
@@ -36,14 +37,14 @@ export function TeleportRepoMismatchDialog({
     const updatedPaths = availablePaths.filter(p => p !== value);
     setAvailablePaths(updatedPaths);
     setValidating(false);
-    setErrorMessage(`${getDisplayPath(value)} no longer contains the correct repository. Select another path.`);
+    setErrorMessage(tSync('teleport.pathNoLongerValid', { path: getDisplayPath(value) }));
   };
   const options = [...availablePaths.map(path => ({
-    label: <Text>Use <Text bold={true}>{getDisplayPath(path)}</Text></Text>,
+    label: <Text>{tSync('teleport.usePath', { path: getDisplayPath(path) })}</Text>,
     value: path
   })), {
-    label: "Cancel",
+    label: tSync('teleport.cancel'),
     value: "cancel"
   }];
-  return <Dialog title="Teleport to Repo" onCancel={onCancel} color="background">{availablePaths.length > 0 ? <><Box flexDirection="column" gap={1}>{errorMessage && <Text color="error">{errorMessage}</Text>}<Text>Open ZY Code in <Text bold={true}>{targetRepo}</Text>:</Text></Box>{validating ? <Box><Spinner /><Text> Validating repository…</Text></Box> : <Select options={options} onChange={value_0 => void handleChange(value_0)} />}</> : <Box flexDirection="column" gap={1}>{errorMessage && <Text color="error">{errorMessage}</Text>}<Text dimColor={true}>Run zy --teleport from a checkout of {targetRepo}</Text></Box>}</Dialog>;
+  return <Dialog title={tSync('teleport.repoMismatchTitle')} onCancel={onCancel} color="background">{availablePaths.length > 0 ? <><Box flexDirection="column" gap={1}>{errorMessage && <Text color="error">{errorMessage}</Text>}<Text>{tSync('teleport.openInRepo', { repo: targetRepo })}</Text></Box>{validating ? <Box><Spinner /><Text> {tSync('teleport.validatingRepo')}</Text></Box> : <Select options={options} onChange={value_0 => void handleChange(value_0)} />}</> : <Box flexDirection="column" gap={1}>{errorMessage && <Text color="error">{errorMessage}</Text>}<Text dimColor={true}>{tSync('teleport.runFromCheckout', { repo: targetRepo })}</Text></Box>}</Dialog>;
 }

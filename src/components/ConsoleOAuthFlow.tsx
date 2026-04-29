@@ -16,6 +16,7 @@ import { Select } from './CustomSelect/select.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { Spinner } from './Spinner.js';
 import TextInput from './TextInput.js';
+import { tSync } from 'src/i18n/index.js';
 type Props = {
   onDone(): void;
   startingMessage?: string;
@@ -158,7 +159,7 @@ export function ConsoleOAuthFlow({
       if (!authorizationCode || !state) {
         setOAuthStatus({
           state: 'error',
-          message: 'Invalid code. Please make sure the full code was copied',
+          message: tSync('oauth.invalidCode'),
           toRetry: {
             state: 'waiting_for_login',
             url
@@ -296,9 +297,9 @@ export function ConsoleOAuthFlow({
       {oauthStatus.state === 'waiting_for_login' && showPastePrompt && <Box flexDirection="column" key="urlToCopy" gap={1} paddingBottom={1}>
           <Box paddingX={1}>
             <Text dimColor>
-              Browser didn&apos;t open? Use the url below to sign in{' '}
+              {tSync('oauth.browserNotOpened')}{' '}
             </Text>
-            {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+            {urlCopied ? <Text color="success">{tSync('oauth.copiedLabel')}</Text> : <Text dimColor>
                 <KeyboardShortcutHint shortcut="c" action="copy" parens />
               </Text>}
           </Box>
@@ -308,18 +309,16 @@ export function ConsoleOAuthFlow({
         </Box>}
       {mode === 'setup-token' && oauthStatus.state === 'success' && oauthStatus.token && <Box key="tokenOutput" flexDirection="column" gap={1} paddingTop={1}>
             <Text color="success">
-              ✓ Long-lived authentication token created successfully!
+              {tSync('oauth.tokenCreatedSuccess')}
             </Text>
             <Box flexDirection="column" gap={1}>
-              <Text>Your OAuth token (valid for 1 year):</Text>
+              <Text>{tSync('oauth.yourTokenLabel')}</Text>
               <Text color="warning">{oauthStatus.token}</Text>
               <Text dimColor>
-                Store this token securely. You won&apos;t be able to see it
-                again.
+                {tSync('oauth.storeTokenSecurely')}
               </Text>
               <Text dimColor>
-                Use this token by setting: export
-                ZY_CODE_OAUTH_TOKEN=&lt;token&gt;
+                {tSync('oauth.useTokenBySetting')}
               </Text>
             </Box>
           </Box>}
@@ -361,19 +360,19 @@ function OAuthStatusMessage({
   switch (oauthStatus.state) {
     case "idle":
       {
-        const message = startingMessage ? startingMessage : "ZY Code can be used with your Zy subscription or billed based on API usage through your Console account.";
+        const message = startingMessage ? startingMessage : tSync('oauth.introMessage');
         const heading = <Text bold={true}>{message}</Text>;
-        const subtitle = <Text>Select login method:</Text>;
+        const subtitle = <Text>{tSync('oauth.selectLoginMethod')}</Text>;
         const zyaiOption = {
-          label: <Text>Zy account with subscription ·{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[INNER-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
+          label: <Text>{tSync('oauth.zyaiOptionLabel')}{" "}<Text dimColor={true}>{tSync('oauth.zyaiOptionDesc')}</Text>{"\n"}</Text>,
           value: "zyai"
         };
         const consoleOption = {
-          label: <Text>Anthropic Console account ·{" "}<Text dimColor={true}>API usage billing</Text>{"\n"}</Text>,
+          label: <Text>{tSync('oauth.consoleOptionLabel')}{" "}<Text dimColor={true}>{tSync('oauth.consoleOptionDesc')}</Text>{"\n"}</Text>,
           value: "console"
         };
         const options = [zyaiOption, consoleOption, {
-          label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
+          label: <Text>{tSync('oauth.platformOptionLabel')}{" "}<Text dimColor={true}>{tSync('oauth.platformOptionDesc')}</Text>{"\n"}</Text>,
           value: "platform"
         }];
         const selectBox = <Box><Select options={options} onChange={value_0 => {
@@ -399,35 +398,35 @@ function OAuthStatusMessage({
       }
     case "platform_setup":
       {
-        const heading = <Text bold={true}>Using 3rd-party platforms</Text>;
-        const description1 = <Text>ZY Code supports Amazon Bedrock, Microsoft Foundry, and Vertex AI. Set the required environment variables, then restart ZY Code.</Text>;
-        const description2 = <Text>If you are part of an enterprise organization, contact your administrator for setup instructions.</Text>;
-        const docHeading = <Text bold={true}>Documentation:</Text>;
-        const bedrockLink = <Text>· Amazon Bedrock:{" "}<Link url="https://code.zy.com/docs/en/amazon-bedrock">https://code.zy.com/docs/en/amazon-bedrock</Link></Text>;
-        const foundryLink = <Text>· Microsoft Foundry:{" "}<Link url="https://code.zy.com/docs/en/microsoft-foundry">https://code.zy.com/docs/en/microsoft-foundry</Link></Text>;
-        const linksBox = <Box flexDirection="column" marginTop={1}>{docHeading}{bedrockLink}{foundryLink}<Text>· Vertex AI:{" "}<Link url="https://code.zy.com/docs/en/google-vertex-ai">https://code.zy.com/docs/en/google-vertex-ai</Link></Text></Box>;
-        return <Box flexDirection="column" gap={1} marginTop={1}>{heading}<Box flexDirection="column" gap={1}>{description1}{description2}{linksBox}<Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to go back to login options.</Text></Box></Box></Box>;
+        const heading = <Text bold={true}>{tSync('oauth.usingThirdPartyPlatforms')}</Text>;
+        const description1 = <Text>{tSync('oauth.thirdPartyPlatformsDesc')}</Text>;
+        const description2 = <Text>{tSync('oauth.thirdPartyPlatformsEnterpriseHint')}</Text>;
+        const docHeading = <Text bold={true}>{tSync('oauth.documentation')}</Text>;
+        const bedrockLink = <Text>· {tSync('oauth.bedrockLabel')}:{" "}<Link url="https://code.zy.com/docs/en/amazon-bedrock">https://code.zy.com/docs/en/amazon-bedrock</Link></Text>;
+        const foundryLink = <Text>· {tSync('oauth.foundryLabel')}:{" "}<Link url="https://code.zy.com/docs/en/microsoft-foundry">https://code.zy.com/docs/en/microsoft-foundry</Link></Text>;
+        const linksBox = <Box flexDirection="column" marginTop={1}>{docHeading}{bedrockLink}{foundryLink}<Text>· {tSync('oauth.vertexLabel')}:{" "}<Link url="https://code.zy.com/docs/en/google-vertex-ai">https://code.zy.com/docs/en/google-vertex-ai</Link></Text></Box>;
+        return <Box flexDirection="column" gap={1} marginTop={1}>{heading}<Box flexDirection="column" gap={1}>{description1}{description2}{linksBox}<Box marginTop={1}><Text dimColor={true}>{tSync('oauth.pressEnterToGoBack')}</Text></Box></Box></Box>;
       }
     case "waiting_for_login":
       {
         const forcedMsgBox = forcedMethodMessage && <Box><Text dimColor={true}>{forcedMethodMessage}</Text></Box>;
-        const openingBrowserBox = !showPastePrompt && <Box><Spinner /><Text>Opening browser to sign in…</Text></Box>;
+        const openingBrowserBox = !showPastePrompt && <Box><Spinner /><Text>{tSync('oauth.openingBrowserToSignIn')}</Text></Box>;
         const pasteInputBox = showPastePrompt && <Box><Text>{PASTE_HERE_MSG}</Text><TextInput value={pastedCode} onChange={setPastedCode} onSubmit={value => handleSubmitCode(value, oauthStatus.url)} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} columns={textInputColumns} mask="*" /></Box>;
         return <Box flexDirection="column" gap={1}>{forcedMsgBox}{openingBrowserBox}{pasteInputBox}</Box>;
       }
     case "creating_api_key":
-      return <Box flexDirection="column" gap={1}><Box><Spinner /><Text>Creating API key for ZY Code…</Text></Box></Box>;
+      return <Box flexDirection="column" gap={1}><Box><Spinner /><Text>{tSync('oauth.creatingApiKey')}</Text></Box></Box>;
     case "about_to_retry":
-      return <Box flexDirection="column" gap={1}><Text color="permission">Retrying…</Text></Box>;
+      return <Box flexDirection="column" gap={1}><Text color="permission">{tSync('oauth.retrying')}</Text></Box>;
     case "success":
       {
-        const loginInfo = mode === "setup-token" && oauthStatus.token ? null : <>{getOauthAccountInfo()?.emailAddress ? <Text dimColor={true}>Logged in as{" "}<Text>{getOauthAccountInfo()?.emailAddress}</Text></Text> : null}<Text color="success">Login successful. Press <Text bold={true}>Enter</Text> to continue…</Text></>;
+        const loginInfo = mode === "setup-token" && oauthStatus.token ? null : <>{getOauthAccountInfo()?.emailAddress ? <Text dimColor={true}>{tSync('oauth.loggedInAs')}{" "}<Text>{getOauthAccountInfo()?.emailAddress}</Text></Text> : null}<Text color="success">{tSync('oauth.loginSuccessful')}</Text></>;
         return <Box flexDirection="column">{loginInfo}</Box>;
       }
     case "error":
       {
-        const errorMsg = <Text color="error">OAuth error: {oauthStatus.message}</Text>;
-        const retryBox = oauthStatus.toRetry && <Box marginTop={1}><Text color="permission">Press <Text bold={true}>Enter</Text> to retry.</Text></Box>;
+        const errorMsg = <Text color="error">{tSync('oauth.errorPrefix')} {oauthStatus.message}</Text>;
+        const retryBox = oauthStatus.toRetry && <Box marginTop={1}><Text color="permission">{tSync('oauth.pressEnterToRetry')}</Text></Box>;
         return <Box flexDirection="column" gap={1}>{errorMsg}{retryBox}</Box>;
       }
     default:

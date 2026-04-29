@@ -35,7 +35,7 @@ import {
   isAnthropicBaseUrl,
   isOpenAIProvider,
 } from 'src/utils/model/providers.js'
-import { getRequestAdapter } from './streamAdapter.js'
+import { getLLMAdapter } from './client.js'
 import {
   getAttributionHeader,
   getCLISyspromptPrefix,
@@ -863,7 +863,7 @@ export async function* executeNonStreamingRequest(
       try {
         // biome-ignore lint/plugin: non-streaming API call
         // 统一的非流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
-        const adapter = getRequestAdapter(anthropic)
+        const adapter = getLLMAdapter({ anthropicClient: anthropic })
         return await adapter.createMessage(
           adjustedParams,
           retryOptions.signal,
@@ -1750,7 +1750,7 @@ async function* queryModel(
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
         
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
-        const adapter = getRequestAdapter(anthropic)
+        const adapter = getLLMAdapter({ anthropicClient: anthropic })
         const streamResult = await adapter.createStream(params, signal, clientRequestId)
         queryCheckpoint('query_response_headers_received')
         streamRequestId = streamResult.request_id
@@ -2022,7 +2022,8 @@ async function* queryModel(
                     })
                     throw new Error('Content block input is not a string')
                   }
-                  contentBlock.input += delta.partial_json
+                  // 标准层统一使用驼峰 partialJson（见 types/llm.ts ToolCallInputDelta）
+                  contentBlock.input += (delta as any).partialJson ?? ''
                   break
                 case 'text_delta':
                   if (contentBlock.type !== 'text') {

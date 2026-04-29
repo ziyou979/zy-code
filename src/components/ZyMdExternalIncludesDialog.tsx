@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { logEvent } from 'src/services/analytics/index.js';
 import { Box, Link, Text } from '../ink.js';
 import type { ExternalzyMdInclude } from '../utils/zymd.js';
@@ -39,11 +40,11 @@ export function zyMdExternalIncludesDialog({
   const handleEscape = () => {
     handleSelection("no");
   };
-  return <Dialog title="Allow external CLAUDE.md file imports?" color="warning" onCancel={handleEscape} hideBorder={!isStandaloneDialog} hideInputGuide={!isStandaloneDialog}>{<Text>This project's CLAUDE.md imports files outside the current working directory. Never allow this for third-party repositories.</Text>}{externalIncludes && externalIncludes.length > 0 && <Box flexDirection="column"><Text dimColor={true}>External imports:</Text>{externalIncludes.map((include, i) => <Text key={i} dimColor={true}>{"  "}{include.path}</Text>)}</Box>}{<Text dimColor={true}>Important: Only use ZY Code with files you trust. Accessing untrusted files may pose security risks{" "}<Link url="https://code.zy.com/docs/en/security" />{" "}</Text>}{<Select options={[{
-      label: "Yes, allow external imports",
+  return <Dialog title={tSync('zyMd.allowExternalTitle')} color="warning" onCancel={handleEscape} hideBorder={!isStandaloneDialog} hideInputGuide={!isStandaloneDialog}>{<Text>{tSync('zyMd.importsOutsideWarning')}</Text>}{externalIncludes && externalIncludes.length > 0 && <Box flexDirection="column"><Text dimColor={true}>{tSync('zyMd.externalImports')}</Text>{externalIncludes.map((include, i) => <Text key={i} dimColor={true}>{"  "}{include.path}</Text>)}</Box>}{<Text dimColor={true}>{tSync('zyMd.securityWarning')}{" "}<Link url="https://code.zy.com/docs/en/security" />{" "}</Text>}{<Select options={[{
+      label: tSync('zyMd.yesAllow'),
       value: "yes"
     }, {
-      label: "No, disable external imports",
+      label: tSync('zyMd.noDisable'),
       value: "no"
     }]} onChange={value_0 => handleSelection(value_0 as 'yes' | 'no')} />}</Dialog>;
 }

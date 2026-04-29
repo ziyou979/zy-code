@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { getMcpConfigsByScope } from 'src/services/mcp/config.js';
 import type { ConfigScope } from 'src/services/mcp/types.js';
 import { describeMcpConfigFilePath, getScopeLabel } from 'src/services/mcp/utils.js';
@@ -18,13 +19,13 @@ function McpConfigErrorSection({
   const t6 = describeMcpConfigFilePath(scope);
   const t8 = parsingErrors.map((error, i) => {
     const serverName = error.mcpErrorMetadata?.serverName;
-    return <Box key={`error-${i}`}><Text><Text dimColor={true}>└ </Text><Text color="error">[Error]</Text><Text dimColor={true}>{" "}{serverName && `[${serverName}] `}{error.path && error.path !== "" ? `${error.path}: ` : ""}{error.message}</Text></Text></Box>;
+    return <Box key={`error-${i}`}><Text><Text dimColor={true}>└ </Text><Text color="error">{tSync('mcp.errorLabel')}</Text><Text dimColor={true}>{" "}{serverName && `[${serverName}] `}{error.path && error.path !== "" ? `${error.path}: ` : ""}{error.message}</Text></Text></Box>;
   });
   const t9 = warnings.map((warning, i_0) => {
     const serverName_0 = warning.mcpErrorMetadata?.serverName;
-    return <Box key={`warning-${i_0}`}><Text><Text dimColor={true}>└ </Text><Text color="warning">[Warning]</Text><Text dimColor={true}>{" "}{serverName_0 && `[${serverName_0}] `}{warning.path && warning.path !== "" ? `${warning.path}: ` : ""}{warning.message}</Text></Text></Box>;
+    return <Box key={`warning-${i_0}`}><Text><Text dimColor={true}>└ </Text><Text color="warning">{tSync('mcp.warningLabel')}</Text><Text dimColor={true}>{" "}{serverName_0 && `[${serverName_0}] `}{warning.path && warning.path !== "" ? `${warning.path}: ` : ""}{warning.message}</Text></Text></Box>;
   });
-  return <Box flexDirection="column" marginTop={1}>{<Box>{(hasErrors || hasWarnings) && <Text color={hasErrors ? "error" : "warning"}>[{hasErrors ? "Failed to parse" : "Contains warnings"}]{" "}</Text>}{<Text>{t2}</Text>}</Box>}{<Box>{<Text dimColor={true}>Location: </Text>}<Text dimColor={true}>{t6}</Text></Box>}{<Box marginLeft={1} flexDirection="column">{t8}{t9}</Box>}</Box>;
+  return <Box flexDirection="column" marginTop={1}>{<Box>{(hasErrors || hasWarnings) && <Text color={hasErrors ? "error" : "warning"}>[{hasErrors ? tSync('mcp.failedToParse') : tSync('mcp.containsWarnings')}]{" "}</Text>}{<Text>{t2}</Text>}</Box>}{<Box>{<Text dimColor={true}>{tSync('mcp.locationLabel')}{" "}</Text>}<Text dimColor={true}>{t6}</Text></Box>}{<Box marginLeft={1} flexDirection="column">{t8}{t9}</Box>}</Box>;
 }
 export function McpParsingWarnings() {
   const scopes = [{
@@ -60,7 +61,7 @@ export function McpParsingWarnings() {
   if (!hasParsingErrors && !hasWarnings) {
     return null;
   }
-  return <Box flexDirection="column" marginTop={1} marginBottom={1}>{<Text bold={true}>MCP Config Diagnostics</Text>}<Box marginTop={1}><Text dimColor={true}>For help configuring MCP servers, see:{" "}<Link url="https://code.zy.com/docs/en/mcp">https://code.zy.com/docs/en/mcp</Link></Text></Box>{scopes.map(t0 => {
+  return <Box flexDirection="column" marginTop={1} marginBottom={1}>{<Text bold={true}>{tSync('mcp.configDiagnostics')}</Text>}<Box marginTop={1}><Text dimColor={true}>{tSync('mcp.configDiagnosticsHelp')}{" "}<Link url="https://code.zy.com/docs/en/mcp">https://code.zy.com/docs/en/mcp</Link></Text></Box>{scopes.map(t0 => {
       const {
         scope,
         config: config_1

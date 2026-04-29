@@ -1,8 +1,9 @@
 import React from 'react';
+import { tSync } from '../../i18n/index.js';
 import { jsonParse } from '../../utils/slowOperations.js';
 import type { Output } from './TeamDeleteTool.js';
 export function renderToolUseMessage(_input: Record<string, unknown>): React.ReactNode {
-  return 'cleanup team: current';
+  return `${tSync('toolTeamDelete.cleanupTeam')} current`;
 }
 export function renderToolResultMessage(content: Output | string, _progressMessages: unknown, {
   verbose: _verbose

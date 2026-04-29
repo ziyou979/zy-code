@@ -48,27 +48,26 @@ export function PluginHintMenu({
     label: tSync('permission.noDontShowPluginAgain'),
     value: 'disable'
   }];
-  return <PermissionDialog title="Plugin Recommendation">
+  return <PermissionDialog title={tSync('pluginHint.title')}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Box marginBottom={1}>
           <Text dimColor>
-            The <Text bold>{sourceCommand}</Text> command suggests installing a
-            plugin.
+            {tSync('pluginHint.suggestsInstalling', { command: sourceCommand })}
           </Text>
         </Box>
         <Box>
-          <Text dimColor>Plugin:</Text>
+          <Text dimColor>{tSync('pluginHint.pluginLabel')}</Text>
           <Text> {pluginName}</Text>
         </Box>
         <Box>
-          <Text dimColor>Marketplace:</Text>
+          <Text dimColor>{tSync('pluginHint.marketplaceLabel')}</Text>
           <Text> {marketplaceName}</Text>
         </Box>
         {pluginDescription && <Box>
             <Text dimColor>{pluginDescription}</Text>
           </Box>}
         <Box marginTop={1}>
-          <Text>Would you like to install it?</Text>
+          <Text>{tSync('pluginHint.wouldYouInstall')}</Text>
         </Box>
         <Box>
           <Select options={options} onChange={onSelect} onCancel={() => onResponse('no')} />

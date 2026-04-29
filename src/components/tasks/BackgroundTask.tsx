@@ -6,6 +6,7 @@ import { truncate } from 'src/utils/format.js';
 import { toInkColor } from 'src/utils/ink.js';
 import { plural } from 'src/utils/stringUtils.js';
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js';
+import { tSync } from '../../i18n/index.js';
 import { RemoteSessionProgress } from './RemoteSessionProgress.js';
 import { ShellProgress, TaskStatusText } from './ShellProgress.js';
 import { describeTeammateActivity } from './taskStatusUtils.js';
@@ -55,8 +56,8 @@ export function BackgroundTask({
       {
         let t1;
         t1 = truncate(task.description, activityLimit, true);
-        const t2 = task.status === "completed" ? "done" : undefined;
-        const t3 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        const t2 = task.status === "completed" ? tSync('backgroundTasks.done') : undefined;
+        const t3 = task.status === "completed" && !task.notified ? tSync('backgroundTasks.unread') : undefined;
         let t4;
         t4 = <TaskStatusText status={task.status} label={t2} suffix={t3} />;
         let t5;
@@ -91,8 +92,8 @@ export function BackgroundTask({
         let t2;
         t2 = truncate(t1, activityLimit, true);
         let t3;
-        t3 = task.status === "running" ? `${task.agentCount} ${plural(task.agentCount, "agent")}` : task.status === "completed" ? "done" : undefined;
-        const t4 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        t3 = task.status === "running" ? `${task.agentCount} ${plural(task.agentCount, "agent")}` : task.status === "completed" ? tSync('backgroundTasks.done') : undefined;
+        const t4 = task.status === "completed" && !task.notified ? tSync('backgroundTasks.unread') : undefined;
         let t5;
         t5 = <TaskStatusText status={task.status} label={t3} suffix={t4} />;
         let t6;
@@ -103,8 +104,8 @@ export function BackgroundTask({
       {
         let t1;
         t1 = truncate(task.description, activityLimit, true);
-        const t2 = task.status === "completed" ? "done" : undefined;
-        const t3 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        const t2 = task.status === "completed" ? tSync('backgroundTasks.done') : undefined;
+        const t3 = task.status === "completed" && !task.notified ? tSync('backgroundTasks.unread') : undefined;
         let t4;
         t4 = <TaskStatusText status={task.status} label={t2} suffix={t3} />;
         let t5;
@@ -119,8 +120,8 @@ export function BackgroundTask({
         const detail = t1;
         let t2;
         t2 = <Text dimColor={true}>· {task.phase} · {detail}</Text>;
-        const t3 = task.status === "completed" ? "done" : undefined;
-        const t4 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        const t3 = task.status === "completed" ? tSync('backgroundTasks.done') : undefined;
+        const t4 = task.status === "completed" && !task.notified ? tSync('backgroundTasks.unread') : undefined;
         let t5;
         t5 = <TaskStatusText status={task.status} label={t3} suffix={t4} />;
         let t6;

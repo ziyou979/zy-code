@@ -1,5 +1,6 @@
 import React from 'react';
 import { logEvent } from 'src/services/analytics/index.js';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Link, Text } from '../ink.js';
 import { updateSettingsForSource } from '../utils/settings/settings.js';
 import { Select } from './CustomSelect/index.js';
@@ -51,7 +52,7 @@ export function AutoModeOptInDialog({
         }
     }
   };
-  return <Dialog title="Enable auto mode?" color="warning" onCancel={onDecline}>{<Box flexDirection="column" gap={1}><Text>{AUTO_MODE_DESCRIPTION}</Text><Link url="https://code.zy.com/docs/en/security" /></Box>}{<Select options={[...(true ? [{
+  return <Dialog title={tSync('autoMode.title')} color="warning" onCancel={onDecline}>{<Box flexDirection="column" gap={1}><Text>{AUTO_MODE_DESCRIPTION}</Text><Link url="https://code.zy.com/docs/en/security" /></Box>}{<Select options={[...(true ? [{
       label: "Yes, and make it my default mode",
       value: "accept-default" as const
     }] : []), {

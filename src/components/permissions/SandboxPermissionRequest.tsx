@@ -56,7 +56,7 @@ export function SandboxPermissionRequest({
     label: tSync('permission.noAndTell'),
     value: "no"
   }];
-  return <PermissionDialog title="Network request outside of sandbox"><Box flexDirection="column" paddingX={2} paddingY={1}>{<Box>{<Text dimColor={true}>Host:</Text>}<Text> {host}</Text></Box>}{<Box marginTop={1}><Text>{tSync('permission.allowNetworkConnection')}</Text></Box>}{<Box><Select options={options} onChange={onSelect} onCancel={() => {
+  return <PermissionDialog title={tSync('permissionRules.networkRequestOutsideSandbox')}><Box flexDirection="column" paddingX={2} paddingY={1}>{<Box>{<Text dimColor={true}>{tSync('permissionRules.hostLabel')}</Text>}<Text> {host}</Text></Box>}{<Box marginTop={1}><Text>{tSync('permission.allowNetworkConnection')}</Text></Box>}{<Box><Select options={options} onChange={onSelect} onCancel={() => {
           onUserResponse({
             allow: false,
             persistToSettings: false

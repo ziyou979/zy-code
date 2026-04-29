@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from '../../i18n/index.js';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { Text } from '../../ink.js';
 import { jsonParse } from '../../utils/slowOperations.js';
@@ -8,7 +9,7 @@ export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
     return null;
   }
   if (input.message.type === 'plan_approval_response') {
-    return input.message.approve ? `approve plan from: ${input.to}` : `reject plan from: ${input.to}`;
+    return input.message.approve ? tSync('toolSendMessage.approvePlan', { from: input.to }) : tSync('toolSendMessage.rejectPlan', { from: input.to });
   }
   return null;
 }

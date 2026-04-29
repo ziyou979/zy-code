@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import figures from 'figures';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { tSync } from '../i18n/index.js';
 import { Text } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { toError } from '../utils/errors.js';
@@ -15,8 +16,6 @@ import { Byline } from './design-system/Byline.js';
 import { Dialog } from './design-system/Dialog.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { LoadingState } from './design-system/LoadingState.js';
-const DIALOG_TITLE = 'Select Remote Environment';
-const SETUP_HINT = `Configure environments at: https://zy.ai/code`;
 type Props = {
   onDone: (message?: string) => void;
 };
@@ -64,7 +63,7 @@ export function RemoteEnvironmentDialog({
     setLoadingState("updating");
     const selectedEnv = environments.find(env => env.environment_id === value);
     if (!selectedEnv) {
-      onDone("Error: Selected environment not found");
+      onDone(tSync('remoteEnv.errorLabel', { error: 'Selected environment not found' }));
       return;
     }
     updateSettingsForSource("localSettings", {
@@ -75,13 +74,13 @@ export function RemoteEnvironmentDialog({
     onDone(`Set default remote environment to ${chalk.bold(selectedEnv.name)} (${selectedEnv.environment_id})`);
   };
   if (loadingState === "loading") {
-    return <Dialog title={DIALOG_TITLE} onCancel={onDone} hideInputGuide={true}>{<LoadingState message={"Loading environments\u2026"} />}</Dialog>;
+    return <Dialog title={tSync('remoteEnv.title')} onCancel={onDone} hideInputGuide={true}>{<LoadingState message={tSync('remoteEnv.loading')} />}</Dialog>;
   }
   if (error) {
-    return <Dialog title={DIALOG_TITLE} onCancel={onDone}>{<Text color="error">Error: {error}</Text>}</Dialog>;
+    return <Dialog title={tSync('remoteEnv.title')} onCancel={onDone}>{<Text color="error">{tSync('remoteEnv.errorLabel', { error })}</Text>}</Dialog>;
   }
   if (!selectedEnvironment) {
-    return <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{<Text>No remote environments available.</Text>}</Dialog>;
+    return <Dialog title={tSync('remoteEnv.title')} subtitle={tSync('remoteEnv.configHint')} onCancel={onDone}>{<Text>{tSync('remoteEnv.noEnvironments')}</Text>}</Dialog>;
   }
   if (environments.length === 1) {
     return <SingleEnvironmentContent environment={selectedEnvironment} onDone={onDone} />;
@@ -101,7 +100,7 @@ function SingleEnvironmentContent({
     context: "Confirmation"
   });
   // @ts-ignore
-  return <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{<EnvironmentLabel environment={environment} />}</Dialog>;
+  return <Dialog title={tSync('remoteEnv.title')} subtitle={tSync('remoteEnv.configHint')} onCancel={onDone}>{<EnvironmentLabel environment={environment} />}</Dialog>;
 }
 function MultipleEnvironmentsContent({
   environments,
@@ -111,10 +110,10 @@ function MultipleEnvironmentsContent({
   onSelect,
   onCancel
 }) {
-  const sourceSuffix = selectedEnvironmentSource && selectedEnvironmentSource !== "localSettings" ? ` (from ${getSettingSourceName(selectedEnvironmentSource)} settings)` : "";
-  const subtitle = <Text>Currently using: {<Text bold={true}>{selectedEnvironment.name}</Text>}{sourceSuffix}</Text>;
-  return <Dialog title={DIALOG_TITLE} subtitle={subtitle} onCancel={onCancel} hideInputGuide={true}>{<Text dimColor={true}>{SETUP_HINT}</Text>}{loadingState === "updating" ? <LoadingState message={"Updating\u2026"} /> : <Select options={environments.map(env => ({
+  const sourceSuffix = selectedEnvironmentSource && selectedEnvironmentSource !== "localSettings" ? ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource) })}` : "";
+  const subtitle = <Text>{tSync('remoteEnv.currentlyUsing')}: {<Text bold={true}>{selectedEnvironment.name}</Text>}{sourceSuffix}</Text>;
+  return <Dialog title={tSync('remoteEnv.title')} subtitle={subtitle} onCancel={onCancel} hideInputGuide={true}>{<Text dimColor={true}>{tSync('remoteEnv.configHint')}</Text>}{loadingState === "updating" ? <LoadingState message={tSync('remoteEnv.updating')} /> : <Select options={environments.map(env => ({
       label: <Text>{env.name} <Text dimColor={true}>({env.environment_id})</Text></Text>,
       value: env.environment_id
-    }))} defaultValue={selectedEnvironment.environment_id} onChange={onSelect} onCancel={() => onSelect("cancel")} layout="compact-vertical" />}{<Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text>}</Dialog>;
+    }))} defaultValue={selectedEnvironment.environment_id} onChange={onSelect} onCancel={() => onSelect("cancel")} layout="compact-vertical" />}{<Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action={tSync('remoteEnv.select')} /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('remoteEnv.cancel')} /></Byline></Text>}</Dialog>;
 }

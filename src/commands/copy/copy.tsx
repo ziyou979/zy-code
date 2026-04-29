@@ -8,6 +8,7 @@ import { Select } from '../../components/CustomSelect/select.js';
 import { Byline } from '../../components/design-system/Byline.js';
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js';
 import { Pane } from '../../components/design-system/Pane.js';
+import { tSync } from '../../i18n/index.js';
 import { stringWidth } from '../../ink/stringWidth.js';
 import { setClipboard } from '../../ink/termio/osc.js';
 import { Box, Text } from '../../ink.js';
@@ -84,9 +85,9 @@ async function copyOrWriteToFile(text: string, filename: string): Promise<string
   // terminal support), so the file provides a reliable fallback.
   try {
     const filePath = await writeToFile(text, filename);
-    return `Copied to clipboard (${charCount} characters, ${lineCount} lines)\nAlso written to ${filePath}`;
+    return tSync('copy.copiedToClipboard', {charCount, lineCount}) + '\n' + tSync('copy.alsoWritten', {filePath});
   } catch {
-    return `Copied to clipboard (${charCount} characters, ${lineCount} lines)`;
+    return tSync('copy.copiedToClipboard', {charCount, lineCount});
   }
 }
 function truncateLine(text: string, maxLen: number): string {
@@ -122,20 +123,20 @@ function CopyPicker({
 }: PickerProps) {
   const focusedRef = useRef("full");
   const options = [{
-    label: "Full response",
+    label: tSync('copy.fullResponse'),
     value: "full" as const,
-    description: `${fullText.length} chars, ${countCharInString(fullText, "\n") + 1} lines`
+    description: tSync('copy.charsLines', {charCount: fullText.length, lineCount: countCharInString(fullText, "\n") + 1})
   }, ...codeBlocks.map((block, index) => {
     const blockLines = countCharInString(block.code, "\n") + 1;
     return {
       label: truncateLine(block.code, 60),
       value: index,
-      description: [block.lang, blockLines > 1 ? `${blockLines} lines` : undefined].filter(Boolean).join(", ") || undefined
+      description: [block.lang, blockLines > 1 ? tSync('copy.lines', {count: blockLines}) : undefined].filter(Boolean).join(", ") || undefined
     };
   }), {
-    label: "Always copy full response",
+    label: tSync('copy.alwaysCopy'),
     value: "always" as const,
-    description: "Skip this picker in the future (revert via /config)"
+    description: tSync('copy.alwaysCopyDesc')
   }];
   const getSelectionContent = function getSelectionContent(selected) {
     if (selected === "full" || selected === "always") {
@@ -166,7 +167,7 @@ function CopyPicker({
         message_age: messageAge
       });
       const result = await copyOrWriteToFile(content.text, content.filename);
-      onDone(`${result}\nPreference saved. Use /config to change copyFullResponse`);
+      onDone(result + '\n' + tSync('copy.preferenceSaved'));
       return;
     }
     logEvent("zy_copy", {
@@ -187,9 +188,9 @@ function CopyPicker({
     });
     try {
       const filePath = await writeToFile(content_0.text, content_0.filename);
-      onDone(`Written to ${filePath}`);
+      onDone(tSync('copy.writtenTo', {filePath}));
     } catch (e) {
-      onDone(`Failed to write file: ${e instanceof Error ? e.message : e}`);
+      onDone(tSync('copy.writeFailed', {error: e instanceof Error ? e.message : e}));
     }
   };
   const handleKeyDown = function handleKeyDown(e_0) {
@@ -198,12 +199,12 @@ function CopyPicker({
       handleWrite(focusedRef.current);
     }
   };
-  return <Pane><Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Text dimColor={true}>Select content to copy:</Text>}{<Select options={options} hideIndexes={false} onFocus={value => {
+  return <Pane><Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Text dimColor={true}>{tSync('copy.selectContent')}</Text>}{<Select options={options} hideIndexes={false} onFocus={value => {
         focusedRef.current = value;
       }} onChange={selected_2 => {
         handleSelect(selected_2);
       }} onCancel={() => {
-        onDone("Copy cancelled", {
+        onDone(tSync('copy.cancelled'), {
           display: "system"
         });
       }} />}{<Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="enter" action="copy" /><KeyboardShortcutHint shortcut="w" action="write to file" /><KeyboardShortcutHint shortcut="esc" action="cancel" /></Byline></Text>}</Box></Pane>;
@@ -211,7 +212,7 @@ function CopyPicker({
 export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   const texts = collectRecentAssistantTexts(context.messages);
   if (texts.length === 0) {
-    onDone('No assistant message to copy');
+    onDone(tSync('copy.noAssistantMessage'));
     return null;
   }
 
@@ -221,11 +222,11 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   if (arg) {
     const n = Number(arg);
     if (!Number.isInteger(n) || n < 1) {
-      onDone(`Usage: /copy [N] where N is 1 (latest), 2, 3, \u2026 Got: ${arg}`);
+      onDone(tSync('copy.usage', {arg}));
       return null;
     }
     if (n > texts.length) {
-      onDone(`Only ${texts.length} assistant ${texts.length === 1 ? 'message' : 'messages'} available to copy`);
+      onDone(tSync('copy.onlyMessages', {count: texts.length, messageLabel: tSync(texts.length === 1 ? 'copy.message_one' : 'copy.message_other')}));
       return null;
     }
     age = n - 1;

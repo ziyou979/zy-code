@@ -124,7 +124,7 @@ export function getLanguageSection(
   if (!languagePreference) return null
 
   return `# Language
-Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user, including intermediate operational text (e.g., before calling a tool). Technical terms and code identifiers should remain in their original form.`
+Always think and respond in ${languagePreference} natively, not by translating. This includes reasoning, explanations, and tool-call narration. Keep code, identifiers, file paths, and quoted text unchanged.`
 }
 
 function getOutputStyleSection(

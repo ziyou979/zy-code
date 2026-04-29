@@ -4,6 +4,7 @@ import type {
   AgentDefinition,
   CustomAgentDefinition,
 } from '../../tools/AgentTool/loadAgentsDir.js'
+import { tSync } from '../../i18n/index.js'
 import { getAgentSourceDisplayName } from './utils.js'
 
 export type AgentValidationResult = {
@@ -14,19 +15,19 @@ export type AgentValidationResult = {
 
 export function validateAgentType(agentType: string): string | null {
   if (!agentType) {
-    return 'Agent type is required'
+    return tSync('agents.validation.typeRequired')
   }
 
   if (!/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(agentType)) {
-    return 'Agent type must start and end with alphanumeric characters and contain only letters, numbers, and hyphens'
+    return tSync('agents.validation.typeFormat')
   }
 
   if (agentType.length < 3) {
-    return 'Agent type must be at least 3 characters long'
+    return tSync('agents.validation.typeMinLength')
   }
 
   if (agentType.length > 50) {
-    return 'Agent type must be less than 50 characters'
+    return tSync('agents.validation.typeMaxLength')
   }
 
   return null
@@ -40,65 +41,68 @@ export function validateAgent(
   const errors: string[] = []
   const warnings: string[] = []
 
-  // Validate agent type
+  // 验证 agent 类型
   if (!agent.agentType) {
-    errors.push('Agent type is required')
+    errors.push(tSync('agents.validation.typeRequired'))
   } else {
     const typeError = validateAgentType(agent.agentType)
     if (typeError) {
       errors.push(typeError)
     }
 
-    // Check for duplicates (excluding self for editing)
+    // 检查重复（编辑时排除自身）
     const duplicate = existingAgents.find(
       a => a.agentType === agent.agentType && a.source !== agent.source,
     )
     if (duplicate) {
       errors.push(
-        `Agent type "${agent.agentType}" already exists in ${getAgentSourceDisplayName(duplicate.source)}`,
+        tSync('agents.validation.typeDuplicate', {
+          name: agent.agentType,
+          source: getAgentSourceDisplayName(duplicate.source),
+        }),
       )
     }
   }
 
-  // Validate description
+  // 验证描述
   if (!agent.whenToUse) {
-    errors.push('Description (description) is required')
+    errors.push(tSync('agents.validation.descriptionRequired'))
   } else if (agent.whenToUse.length < 10) {
-    warnings.push(
-      'Description should be more descriptive (at least 10 characters)',
-    )
+    warnings.push(tSync('agents.validation.descriptionTooShort'))
   } else if (agent.whenToUse.length > 5000) {
-    warnings.push('Description is very long (over 5000 characters)')
+    warnings.push(tSync('agents.validation.descriptionTooLong'))
   }
 
-  // Validate tools
+  // 验证工具
   if (agent.tools !== undefined && !Array.isArray(agent.tools)) {
-    errors.push('Tools must be an array')
+    errors.push(tSync('agents.validation.toolsInvalid'))
   } else {
     if (agent.tools === undefined) {
-      warnings.push('Agent has access to all tools')
+      warnings.push(tSync('agents.validation.toolsAllWarning'))
     } else if (agent.tools.length === 0) {
-      warnings.push(
-        'No tools selected - agent will have very limited capabilities',
-      )
+      warnings.push(tSync('agents.validation.toolsNoneWarning'))
     }
 
-    // Check for invalid tools
+    // 检查无效工具
     const resolvedTools = resolveAgentTools(agent, availableTools, false)
 
     if (resolvedTools.invalidTools.length > 0) {
-      errors.push(`Invalid tools: ${resolvedTools.invalidTools.join(', ')}`)
+      errors.push(
+        tSync('agents.validation.toolsInvalidList', {
+          tools: resolvedTools.invalidTools.join(', '),
+        }),
+      )
     }
   }
 
-  // Validate system prompt
+  // 验证系统提示
   const systemPrompt = agent.getSystemPrompt()
   if (!systemPrompt) {
-    errors.push('System prompt is required')
+    errors.push(tSync('agents.validation.promptRequired'))
   } else if (systemPrompt.length < 20) {
-    errors.push('System prompt is too short (minimum 20 characters)')
+    errors.push(tSync('agents.validation.promptTooShort'))
   } else if (systemPrompt.length > 10000) {
-    warnings.push('System prompt is very long (over 10,000 characters)')
+    warnings.push(tSync('agents.validation.promptTooLong'))
   }
 
   return {

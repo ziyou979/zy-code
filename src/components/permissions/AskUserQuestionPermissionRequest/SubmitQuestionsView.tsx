@@ -1,5 +1,6 @@
 import figures from 'figures';
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Text } from '../../../ink.js';
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js';
 import type { PermissionDecision } from '../../../utils/permissions/PermissionResult.js';
@@ -26,16 +27,16 @@ export function SubmitQuestionsView({
   minContentHeight,
   onFinalResponse
 }: Props) {
-  return <Box flexDirection="column" marginTop={1}>{<Divider color="inactive" />}<Box flexDirection="column" borderTop={true} borderColor="inactive" paddingTop={0}>{<QuestionNavigationBar questions={questions} currentQuestionIndex={currentQuestionIndex} answers={answers} />}{<PermissionRequestTitle title="Review your answers" color="text" />}{<Box flexDirection="column" marginTop={1} minHeight={minContentHeight}>{!allQuestionsAnswered && <Box marginBottom={1}><Text color="warning">{figures.warning} You have not answered all questions</Text></Box>}{Object.keys(answers).length > 0 && <Box flexDirection="column" marginBottom={1}>{questions.filter(q => q?.question && answers[q.question]).map(q_0 => {
+  return <Box flexDirection="column" marginTop={1}>{<Divider color="inactive" />}<Box flexDirection="column" borderTop={true} borderColor="inactive" paddingTop={0}>{<QuestionNavigationBar questions={questions} currentQuestionIndex={currentQuestionIndex} answers={answers} />}{<PermissionRequestTitle title={tSync('permissionRules.reviewYourAnswers')} color="text" />}{<Box flexDirection="column" marginTop={1} minHeight={minContentHeight}>{!allQuestionsAnswered && <Box marginBottom={1}><Text color="warning">{figures.warning} {tSync('permissionRules.notAnsweredAllQuestions')}</Text></Box>}{Object.keys(answers).length > 0 && <Box flexDirection="column" marginBottom={1}>{questions.filter(q => q?.question && answers[q.question]).map(q_0 => {
             const answer = answers[q_0?.question];
-            return <Box key={q_0?.question || "answer"} flexDirection="column" marginLeft={1}><Text>{figures.bullet} {q_0?.question || "Question"}</Text><Box marginLeft={2}><Text color="success">{figures.arrowRight} {answer}</Text></Box></Box>;
-          })}</Box>}{<PermissionRuleExplanation permissionResult={permissionResult} toolType="tool" />}{<Text color="inactive">Ready to submit your answers?</Text>}{<Box marginTop={1}><Select options={[{
+            return <Box key={q_0?.question || "answer"} flexDirection="column" marginLeft={1}><Text>{figures.bullet} {q_0?.question || tSync('permissionRules.questionLabel')}</Text><Box marginLeft={2}><Text color="success">{figures.arrowRight} {answer}</Text></Box></Box>;
+          })}</Box>}{<PermissionRuleExplanation permissionResult={permissionResult} toolType="tool" />}{<Text color="inactive">{tSync('permissionRules.readyToSubmitAnswers')}</Text>}{<Box marginTop={1}><Select options={[{
             type: "text" as const,
-            label: "Submit answers",
+            label: tSync('permissionRules.submitAnswers'),
             value: "submit"
           }, {
             type: "text" as const,
-            label: "Cancel",
+            label: tSync('permissionRules.cancel'),
             value: "cancel"
           }]} onChange={value => onFinalResponse(value as 'submit' | 'cancel')} onCancel={() => onFinalResponse("cancel")} /></Box>}</Box>}</Box></Box>;
 }

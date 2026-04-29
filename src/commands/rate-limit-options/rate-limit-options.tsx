@@ -9,6 +9,7 @@ import type { ToolUseContext } from '../../Tool.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
 import { getOauthAccountInfo, getRateLimitTier } from '../../utils/auth.js';
 import { hasZyAiBillingAccess } from '../../utils/billing.js';
+import { tSync } from '../../i18n/index.js';
 import { call as extraUsageCall } from '../extra-usage/extra-usage.js';
 import { extraUsage } from '../extra-usage/index.js';
 import upgrade from '../upgrade/index.js';
@@ -41,9 +42,9 @@ function RateLimitOptionsMenu({
       const isOverageState = zyAiLimits.overageStatus === "rejected" || zyAiLimits.overageStatus === "allowed_warning";
       let label;
       if (needsToRequestFromAdmin) {
-        label = isOverageState ? "Request more" : "Request extra usage";
+        label = isOverageState ? tSync('rateLimit.requestMore') : tSync('rateLimit.requestExtraUsage');
       } else {
-        label = hasExtraUsageEnabled ? "Add funds to continue with extra usage" : "Switch to extra usage";
+        label = hasExtraUsageEnabled ? tSync('rateLimit.addFunds') : tSync('rateLimit.switchToExtraUsage');
       }
       actionOptions.push({
         label,
@@ -53,12 +54,12 @@ function RateLimitOptionsMenu({
   }
   if (!isMax20x && !isTeamOrEnterprise && upgrade.isEnabled()) {
     actionOptions.push({
-      label: "Upgrade your plan",
+      label: tSync('rateLimit.upgradePlan'),
       value: "upgrade"
     });
   }
   const cancelOption = {
-    label: "Stop and wait for limit to reset",
+    label: tSync('rateLimit.stopAndWait'),
     value: "cancel"
   };
   if (buyFirst) {
@@ -98,7 +99,7 @@ function RateLimitOptionsMenu({
   if (subCommandJSX) {
     return subCommandJSX;
   }
-  return <Dialog title="What do you want to do?" onCancel={handleCancel} color="suggestion">{<Select options={options} onChange={handleSelect} visibleOptionCount={options.length} />}</Dialog>;
+  return <Dialog title={tSync('rateLimit.whatDoYouWant')} onCancel={handleCancel} color="suggestion">{<Select options={options} onChange={handleSelect} visibleOptionCount={options.length} />}</Dialog>;
 }
 export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContext & LocalJSXCommandContext): Promise<React.ReactNode> {
   return <RateLimitOptionsMenu onDone={onDone} context={context} />;

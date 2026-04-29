@@ -10,6 +10,7 @@ import { Spinner } from '../../components/Spinner.js';
 import instances from '../../ink/instances.js';
 import { Box, Text } from '../../ink.js';
 import { enablePluginOp } from '../../services/plugins/pluginOperations.js';
+import { tSync } from '../../i18n/index.js';
 import { logForDebugging } from '../../utils/debug.js';
 import { isENOENT, toError } from '../../utils/errors.js';
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js';
@@ -77,7 +78,7 @@ export async function playAnimation(skillDir: string): Promise<{
     if (isENOENT(e)) {
       return {
         success: false,
-        message: 'No animation found. Run /think-back first to generate one.'
+        message: tSync('thinkback.noAnimationFound')
       };
     }
     logError(e);
@@ -92,7 +93,7 @@ export async function playAnimation(skillDir: string): Promise<{
     if (isENOENT(e)) {
       return {
         success: false,
-        message: 'Player script not found. The player.js file is missing from the thinkback skill.'
+        message: tSync('thinkback.playerNotFound')
       };
     }
     logError(e);
@@ -252,13 +253,13 @@ function ThinkbackInstaller({
   }, [onReady, onError]);
   if (state.phase === 'error') {
     return <Box flexDirection="column">
-        <Text color="error">Error: {state.message}</Text>
+        <Text color="error">{tSync('thinkback.errorPrefix')} {state.message}</Text>
       </Box>;
   }
   if (state.phase === 'ready') {
     return null;
   }
-  const statusMessage = state.phase === 'checking' ? 'Checking thinkback installation…' : state.phase === 'installing-marketplace' ? 'Installing marketplace…' : state.phase === 'enabling-plugin' ? 'Enabling thinkback plugin…' : 'Installing thinkback plugin…';
+  const statusMessage = state.phase === 'checking' ? tSync('thinkback.checkingInstallation') : state.phase === 'installing-marketplace' ? tSync('thinkback.installingMarketplace') : state.phase === 'enabling-plugin' ? tSync('thinkback.enablingPlugin') : tSync('thinkback.installingPlugin');
   return <Box flexDirection="column">
       <Box>
         <Spinner />
@@ -276,25 +277,25 @@ function ThinkbackMenu({
 }) {
   const [hasSelected, setHasSelected] = useState(false);
   const options = hasGenerated ? [{
-    label: "Play animation",
+    label: tSync("thinkback.playAnimation"),
     value: "play" as const,
-    description: "Watch your year in review"
+    description: tSync("thinkback.playAnimationDesc")
   }, {
-    label: "Edit content",
+    label: tSync("thinkback.editContent"),
     value: "edit" as const,
-    description: "Modify the animation"
+    description: tSync("thinkback.editContentDesc")
   }, {
-    label: "Fix errors",
+    label: tSync("thinkback.fixErrors"),
     value: "fix" as const,
-    description: "Fix validation or rendering issues"
+    description: tSync("thinkback.fixErrorsDesc")
   }, {
-    label: "Regenerate",
+    label: tSync("thinkback.regenerate"),
     value: "regenerate" as const,
-    description: "Create a new animation from scratch"
+    description: tSync("thinkback.regenerateDesc")
   }] : [{
-    label: "Let's go!",
+    label: tSync("thinkback.letsGo"),
     value: "regenerate" as const,
-    description: "Generate your personalized animation"
+    description: tSync("thinkback.generateAnimation")
   }];
   const handleSelect = function handleSelect(value) {
     setHasSelected(true);
@@ -316,7 +317,7 @@ function ThinkbackMenu({
   if (hasSelected) {
     return null;
   }
-  return <Dialog title="Think Back on 2025 with ZY Code" subtitle="Generate your 2025 ZY Code Think Back (takes a few minutes to run)" onCancel={handleCancel} color="zy">{<Box flexDirection="column" gap={1}>{!hasGenerated && <Box flexDirection="column"><Text>Relive your year of coding with Zy.</Text><Text dimColor={true}>{"We'll create a personalized ASCII animation celebrating your journey."}</Text></Box>}{<Select options={options} onChange={handleSelect} visibleOptionCount={5} />}</Box>}</Dialog>;
+  return <Dialog title={tSync('thinkback.dialogTitle')} subtitle={tSync('thinkback.dialogSubtitle')} onCancel={handleCancel} color="zy">{<Box flexDirection="column" gap={1}>{!hasGenerated && <Box flexDirection="column"><Text>{tSync('thinkback.reliveYear')}</Text><Text dimColor={true}>{tSync('thinkback.personalizedAnimation')}</Text></Box>}{<Select options={options} onChange={handleSelect} visibleOptionCount={5} />}</Box>}</Dialog>;
 }
 const EDIT_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=edit to modify my existing ZY Code year in review animation. Ask me what I want to change. When the animation is ready, tell the user to run /think-back again to play it.';
 const FIX_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=fix to fix validation or rendering errors in my existing ZY Code year in review animation. Run the validator, identify errors, and fix them. When the animation is ready, tell the user to run /think-back again to play it.';
@@ -333,7 +334,7 @@ function ThinkbackFlow({
   };
   const handleError = message => {
     setInstallError(message);
-    onDone(`Error with thinkback: ${message}. Try running /plugin to manually install the think-back plugin.`, {
+    onDone(tSync('thinkback.errorWithThinkback', { message }), {
       display: "system"
     });
   };
@@ -344,7 +345,7 @@ function ThinkbackFlow({
           logForDebugging(`Thinkback skill directory: ${dir}`);
           setSkillDir(dir);
         } else {
-          handleError("Could not find thinkback skill directory");
+          handleError(tSync('thinkback.skillDirNotFound'));
         }
       });
     }
@@ -371,13 +372,13 @@ function ThinkbackFlow({
     });
   };
   if (installError) {
-    return <Box flexDirection="column">{<Text color="error">Error: {installError}</Text>}{<Text dimColor={true}>Try running /plugin to manually install the think-back plugin.</Text>}</Box>;
+    return <Box flexDirection="column">{<Text color="error">{tSync('thinkback.errorPrefix')} {installError}</Text>}{<Text dimColor={true}>{tSync('thinkback.tryManualInstall')}</Text>}</Box>;
   }
   if (!installComplete) {
     return <ThinkbackInstaller onReady={handleReady} onError={handleError} />;
   }
   if (!skillDir || hasGenerated === null) {
-    return <Box><Spinner /><Text>Loading thinkback skill…</Text></Box>;
+    return <Box><Spinner /><Text>{tSync('thinkback.loadingSkill')}</Text></Box>;
   }
   return <ThinkbackMenu onDone={onDone} onAction={handleAction} skillDir={skillDir} hasGenerated={hasGenerated} />;
 }

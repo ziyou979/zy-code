@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Select } from '../../../components/CustomSelect/select.js';
 import { Box, Text } from '../../../ink.js';
 import type { ToolPermissionContext } from '../../../Tool.js';
@@ -17,20 +18,20 @@ export function optionForPermissionSaveDestination(saveDestination: EditableSett
   switch (saveDestination) {
     case 'localSettings':
       return {
-        label: 'Project settings (local)',
-        description: `Saved in ${getRelativeSettingsFilePathForSource('localSettings')}`,
+        label: tSync('permissionRules.projectSettingsLocal'),
+        description: tSync('permissionRules.savedIn', { path: getRelativeSettingsFilePathForSource('localSettings') }),
         value: saveDestination
       };
     case 'projectSettings':
       return {
-        label: 'Project settings',
-        description: `Checked in at ${getRelativeSettingsFilePathForSource('projectSettings')}`,
+        label: tSync('permissionRules.projectSettings'),
+        description: tSync('permissionRules.checkedInAt', { path: getRelativeSettingsFilePathForSource('projectSettings') }),
         value: saveDestination
       };
     case 'userSettings':
       return {
-        label: 'User settings',
-        description: `Saved in at ~/.zy/settings.json`,
+        label: tSync('permissionRules.userSettings'),
+        description: tSync('permissionRules.savedInAtUser'),
         value: saveDestination
       };
   }
@@ -87,7 +88,7 @@ export function AddPermissionRules({
     }
   };
   const t3 = plural(ruleValues.length, "rule");
-  const title = `Add ${ruleBehavior} permission ${t3}`;
+  const title = tSync('permissionRules.addPermissionRuleTitle', { behavior: ruleBehavior, ruleCount: t3 });
   const t4 = ruleValues.map(ruleValue_0 => <Box flexDirection="column" key={permissionRuleValueToString(ruleValue_0)}><Text bold={true}>{permissionRuleValueToString(ruleValue_0)}</Text><PermissionRuleDescription ruleValue={ruleValue_0} /></Box>);
-  return <Dialog title={title} onCancel={onCancel} color="permission">{<Box flexDirection="column" paddingX={2}>{t4}</Box>}{<Box flexDirection="column" marginY={1}>{<Text>{ruleValues.length === 1 ? "Where should this rule be saved?" : "Where should these rules be saved?"}</Text>}{<Select options={allOptions} onChange={onSelect} />}</Box>}</Dialog>;
+  return <Dialog title={title} onCancel={onCancel} color="permission">{<Box flexDirection="column" paddingX={2}>{t4}</Box>}{<Box flexDirection="column" marginY={1}>{<Text>{ruleValues.length === 1 ? tSync('permissionRules.whereSaveSingleRule') : tSync('permissionRules.whereSaveMultipleRules')}</Text>}{<Select options={allOptions} onChange={onSelect} />}</Box>}</Dialog>;
 }

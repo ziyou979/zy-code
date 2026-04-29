@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRegisterOverlay } from '../context/overlayContext.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { Text } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { logEvent } from '../services/analytics/index.js';
 import { getCwd } from '../utils/cwd.js';
 import { openFileInExternalEditor } from '../utils/editor.js';
@@ -85,7 +86,7 @@ export function GlobalSearchDialog({
       setPreview({
         file: focused.file,
         line: focused.line,
-        content: "(preview unavailable)"
+        content: tSync('globalSearch.previewUnavailable')
       });
     });
     return () => controller.abort();
@@ -179,14 +180,14 @@ export function GlobalSearchDialog({
     });
     onDone();
   };
-  const matchLabel = matches.length > 0 ? `${matches.length}${truncated ? "+" : ""} matches${isSearching ? "\u2026" : ""}` : " ";
-  return <FuzzyPicker title="Global Search" placeholder={"Type to search\u2026"} items={matches} getKey={matchKey} visibleCount={visibleResults} direction="up" previewPosition={previewOnRight ? "right" : "bottom"} onQueryChange={handleQueryChange} onFocus={setFocused} onSelect={handleOpen} onTab={{
-    action: "mention",
+  const matchLabel = matches.length > 0 ? `${matches.length}${truncated ? tSync('globalSearch.matchesTruncated') : ""} ${tSync('globalSearch.matches', { count: matches.length })}${isSearching ? "\u2026" : ""}` : " ";
+  return <FuzzyPicker title={tSync('globalSearch.title')} placeholder={tSync('globalSearch.placeholder')} items={matches} getKey={matchKey} visibleCount={visibleResults} direction="up" previewPosition={previewOnRight ? "right" : "bottom"} onQueryChange={handleQueryChange} onFocus={setFocused} onSelect={handleOpen} onTab={{
+    action: tSync('globalSearch.mention'),
     handler: m_5 => handleInsert(m_5, true)
   }} onShiftTab={{
-    action: "insert path",
+    action: tSync('globalSearch.insertPath'),
     handler: m_6 => handleInsert(m_6, false)
-  }} onCancel={onDone} emptyMessage={q_0 => isSearching ? "Searching\u2026" : q_0 ? "No matches" : "Type to search\u2026"} matchLabel={matchLabel} selectAction="open in editor" renderItem={(m_7, isFocused) => <Text color={isFocused ? "suggestion" : undefined}><Text dimColor={true}>{truncatePathMiddle(m_7.file, maxPathWidth)}:{m_7.line}</Text>{" "}{highlightMatch(truncateToWidth(m_7.text.trimStart(), maxTextWidth), query)}</Text>} renderPreview={m_8 => preview?.file === m_8.file && preview.line === m_8.line ? <><Text dimColor={true}>{truncatePathMiddle(m_8.file, previewWidth)}:{m_8.line}</Text>{preview.content.split("\n").map((line_0, i) => <Text key={i}>{highlightMatch(truncateToWidth(line_0, previewWidth), query)}</Text>)}</> : <LoadingState message={"Loading\u2026"} dimColor={true} />} />;
+  }} onCancel={onDone} emptyMessage={q_0 => isSearching ? tSync('globalSearch.searching') : q_0 ? tSync('globalSearch.noMatches') : tSync('globalSearch.typeToSearch')} matchLabel={matchLabel} selectAction={tSync('globalSearch.openInEditor')} renderItem={(m_7, isFocused) => <Text color={isFocused ? "suggestion" : undefined}><Text dimColor={true}>{truncatePathMiddle(m_7.file, maxPathWidth)}:{m_7.line}</Text>{" "}{highlightMatch(truncateToWidth(m_7.text.trimStart(), maxTextWidth), query)}</Text>} renderPreview={m_8 => preview?.file === m_8.file && preview.line === m_8.line ? <><Text dimColor={true}>{truncatePathMiddle(m_8.file, previewWidth)}:{m_8.line}</Text>{preview.content.split("\n").map((line_0, i) => <Text key={i}>{highlightMatch(truncateToWidth(line_0, previewWidth), query)}</Text>)}</> : <LoadingState message={tSync('globalSearch.loading')} dimColor={true} />} />;
 }
 function _temp2() {}
 function matchKey(m: Match): string {

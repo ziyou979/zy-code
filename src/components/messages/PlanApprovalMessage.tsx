@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Markdown } from '../../components/Markdown.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from 'src/i18n/index.js';
 import { jsonParse } from '../../utils/slowOperations.js';
 import { type IdleNotificationMessage, isIdleNotification, isPlanApprovalRequest, isPlanApprovalResponse, type PlanApprovalRequestMessage, type PlanApprovalResponseMessage } from '../../utils/teammateMailbox.js';
 import { getShutdownMessageSummary } from './ShutdownMessage.js';
@@ -16,7 +17,7 @@ type PlanApprovalRequestProps = {
 export function PlanApprovalRequestDisplay({
   request
 }: PlanApprovalRequestProps) {
-  return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="planMode" flexDirection="column" paddingX={1}>{<Box marginBottom={1}><Text color="planMode" bold={true}>Plan Approval Request from {request.from}</Text></Box>}{<Box borderStyle="dashed" borderColor="subtle" borderLeft={false} borderRight={false} flexDirection="column" paddingX={1} marginBottom={1}><Markdown>{request.planContent}</Markdown></Box>}{<Text dimColor={true}>Plan file: {request.planFilePath}</Text>}</Box></Box>;
+  return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="planMode" flexDirection="column" paddingX={1}>{<Box marginBottom={1}><Text color="planMode" bold={true}>{tSync('planApproval.requestFrom', { from: request.from })}</Text></Box>}{<Box borderStyle="dashed" borderColor="subtle" borderLeft={false} borderRight={false} flexDirection="column" paddingX={1} marginBottom={1}><Markdown>{request.planContent}</Markdown></Box>}{<Text dimColor={true}>{tSync('planApproval.planFile', { filePath: request.planFilePath })}</Text>}</Box></Box>;
 }
 type PlanApprovalResponseProps = {
   response: PlanApprovalResponseMessage;
@@ -31,9 +32,9 @@ export function PlanApprovalResponseDisplay({
   senderName
 }: PlanApprovalResponseProps) {
   if (response.approved) {
-    return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="success" flexDirection="column" paddingX={1} paddingY={1}>{<Box><Text color="success" bold={true}>✓ Plan Approved by {senderName}</Text></Box>}{<Box marginTop={1}><Text>You can now proceed with implementation. Your plan mode restrictions have been lifted.</Text></Box>}</Box></Box>;
+    return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="success" flexDirection="column" paddingX={1} paddingY={1}>{<Box><Text color="success" bold={true}>{tSync('planApproval.approvedBy', { senderName })}</Text></Box>}{<Box marginTop={1}><Text>{tSync('planApproval.proceedWithImplementation')}</Text></Box>}</Box></Box>;
   }
-  return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="error" flexDirection="column" paddingX={1} paddingY={1}>{<Box><Text color="error" bold={true}>✗ Plan Rejected by {senderName}</Text></Box>}{response.feedback && <Box marginTop={1} borderStyle="dashed" borderColor="subtle" borderLeft={false} borderRight={false} paddingX={1}><Text>Feedback: {response.feedback}</Text></Box>}{<Box marginTop={1}><Text dimColor={true}>Please revise your plan based on the feedback and call ExitPlanMode again.</Text></Box>}</Box></Box>;
+  return <Box flexDirection="column" marginY={1}><Box borderStyle="round" borderColor="error" flexDirection="column" paddingX={1} paddingY={1}>{<Box><Text color="error" bold={true}>{tSync('planApproval.rejectedBy', { senderName })}</Text></Box>}{response.feedback && <Box marginTop={1} borderStyle="dashed" borderColor="subtle" borderLeft={false} borderRight={false} paddingX={1}><Text>{tSync('planApproval.feedbackLabel')} {response.feedback}</Text></Box>}{<Box marginTop={1}><Text dimColor={true}>{tSync('planApproval.reviseAndCallAgain')}</Text></Box>}</Box></Box>;
 }
 
 /**
@@ -60,14 +61,14 @@ export function tryRenderPlanApprovalMessage(content: string, senderName: string
 function getPlanApprovalSummary(content: string): string | null {
   const request = isPlanApprovalRequest(content);
   if (request) {
-    return `[Plan Approval Request from ${request.from}]`;
+    return tSync('planApproval.summaryRequestFrom', { from: request.from });
   }
   const response = isPlanApprovalResponse(content);
   if (response) {
     if (response.approved) {
-      return '[Plan Approved] You can now proceed with implementation';
+      return tSync('planApproval.summaryApproved');
     } else {
-      return `[Plan Rejected] ${response.feedback || 'Please revise your plan'}`;
+      return tSync('planApproval.summaryRejected', { feedback: response.feedback || tSync('planApproval.revisePlanFallback') });
     }
   }
   return null;

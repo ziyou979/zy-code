@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box } from '../../../../ink.js';
 import type { SettingSource } from '../../../../utils/settings/constants.js';
+import { tSync } from '../../../../i18n/index.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Select } from '../../../CustomSelect/select.js';
 import { Byline } from '../../../design-system/Byline.js';
@@ -14,13 +15,13 @@ export function LocationStep() {
     cancel
   } = useWizard() as any;
   const locationOptions = [{
-    label: "Project (.zy/agents/)",
+    label: tSync('wizard.locationProject'),
     value: "projectSettings" as SettingSource
   }, {
-    label: "Personal (~/.zy/agents/)",
+    label: tSync('wizard.locationPersonal'),
     value: "userSettings" as SettingSource
   }];
-  return <WizardDialogLayout subtitle="Choose location" footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline>}><Box><Select key="location-select" options={locationOptions} onChange={value => {
+  return <WizardDialogLayout subtitle={tSync('wizard.chooseLocation')} footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline>}><Box><Select key="location-select" options={locationOptions} onChange={value => {
         updateWizardData({
           location: value as SettingSource
         });

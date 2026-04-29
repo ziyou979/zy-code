@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { useDebouncedDigitInput } from './useDebouncedDigitInput.js';
 import type { FeedbackSurveyResponse } from './utils.js';
@@ -17,7 +18,7 @@ const inputToResponse: Record<ResponseInput, FeedbackSurveyResponse> = {
   '3': 'good' as any
 } as const;
 export const isValidResponseInput = (input: string): input is ResponseInput => (RESPONSE_INPUTS as readonly string[]).includes(input);
-const DEFAULT_MESSAGE = 'How is Zy doing this session? (optional)';
+const DEFAULT_MESSAGE = tSync('feedbackSurvey.defaultMessage');
 export function FeedbackSurveyView({
   onSelect,
   inputValue,
@@ -30,5 +31,5 @@ export function FeedbackSurveyView({
     isValidDigit: isValidResponseInput,
     onDigit: digit => onSelect(inputToResponse[digit])
   });
-  return <Box flexDirection="column" marginTop={1}>{<Box>{<Text color="ansi:cyan">● </Text>}<Text bold={true}>{message}</Text></Box>}{<Box marginLeft={2}>{<Box width={10}><Text><Text color="ansi:cyan">1</Text>: Bad</Text></Box>}{<Box width={10}><Text><Text color="ansi:cyan">2</Text>: Fine</Text></Box>}{<Box width={10}><Text><Text color="ansi:cyan">3</Text>: Good</Text></Box>}<Box><Text><Text color="ansi:cyan">0</Text>: Dismiss</Text></Box></Box>}</Box>;
+  return <Box flexDirection="column" marginTop={1}>{<Box>{<Text color="ansi:cyan">● </Text>}<Text bold={true}>{message}</Text></Box>}{<Box marginLeft={2}>{<Box width={10}><Text><Text color="ansi:cyan">1</Text>: {tSync('feedbackSurvey.bad')}</Text></Box>}{<Box width={10}><Text><Text color="ansi:cyan">2</Text>: {tSync('feedbackSurvey.fine')}</Text></Box>}{<Box width={10}><Text><Text color="ansi:cyan">3</Text>: {tSync('feedbackSurvey.good')}</Text></Box>}<Box><Text><Text color="ansi:cyan">0</Text>: {tSync('feedbackSurvey.dismiss')}</Text></Box></Box>}</Box>;
 }

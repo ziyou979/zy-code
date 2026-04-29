@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { useMergedTools } from '../../hooks/useMergedTools.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { useAppState, useSetAppState } from '../../state/AppState.js';
 import type { Tools } from '../../Tool.js';
@@ -94,7 +95,7 @@ export function AgentsMenu({
           }
         };
       });
-      setChanges(prev_0 => [...prev_0, `Deleted agent: ${chalk.bold(agent.agentType)}`]);
+      setChanges(prev_0 => [...prev_0, tSync('agents.deletedAgent', { name: chalk.bold(agent.agentType) })]);
       setModeState({
         mode: "list-agents",
         source: "all"
@@ -115,8 +116,8 @@ export function AgentsMenu({
         const resolvedAgents = allResolved;
         let t15;
         t15 = () => {
-          const exitMessage = changes.length > 0 ? `Agent changes:\n${changes.join("\n")}` : undefined;
-          onExit(exitMessage ?? "Agents dialog dismissed", {
+          const exitMessage = changes.length > 0 ? tSync('agents.changes', { changes: changes.join("\n") }) : undefined;
+          onExit(exitMessage ?? tSync('agents.dialogDismissed'), {
             display: changes.length === 0 ? "system" : undefined
           });
         };
@@ -160,19 +161,19 @@ export function AgentsMenu({
         const agentToUse = freshAgent_1 || modeState.agent;
         const isEditable = agentToUse.source !== "built-in" && agentToUse.source !== "plugin" && agentToUse.source !== "flagSettings";
         t14 = {
-          label: "View agent",
+          label: tSync('agents.viewAgent'),
           value: "view"
         };
         t15 = isEditable ? [{
-          label: "Edit agent",
+          label: tSync('agents.editAgent'),
           value: "edit"
         }, {
-          label: "Delete agent",
+          label: tSync('agents.deleteAgent'),
           value: "delete"
         }] : [];
         let t16;
         t16 = {
-          label: "Back",
+          label: tSync('agents.back'),
           value: "back"
         };
         let t17;
@@ -257,7 +258,7 @@ export function AgentsMenu({
         let t17;
         t17 = <Dialog title={agentToDisplay.agentType} onCancel={t14} hideInputGuide={true}>{t16}</Dialog>;
         let t18;
-        t18 = <AgentNavigationFooter instructions="Press Enter or Esc to go back" />;
+        t18 = <AgentNavigationFooter instructions={tSync('agents.pressEnterEscBack')} />;
         let t19;
         t19 = <>{t17}{t18}</>;
         return t19;
@@ -266,10 +267,10 @@ export function AgentsMenu({
       {
         let t13;
         t13 = [{
-          label: "Yes, delete",
+          label: tSync('agents.deleteYes'),
           value: "yes"
         }, {
-          label: "No, cancel",
+          label: tSync('agents.deleteNo'),
           value: "no"
         }];
         const deleteOptions = t13;
@@ -280,9 +281,9 @@ export function AgentsMenu({
           }
         };
         let t15;
-        t15 = <Text>Are you sure you want to delete the agent{" "}<Text bold={true}>{modeState.agent.agentType}</Text>?</Text>;
+        t15 = <Text>{tSync('agents.deleteConfirmQuestion', { name: modeState.agent.agentType })}</Text>;
         let t16;
-        t16 = <Box marginTop={1}><Text dimColor={true}>Source: {modeState.agent.source}</Text></Box>;
+        t16 = <Box marginTop={1}><Text dimColor={true}>{tSync('agents.editor.source', { source: modeState.agent.source })}</Text></Box>;
         let t17;
         t17 = value => {
           if (value === "yes") {
@@ -302,9 +303,9 @@ export function AgentsMenu({
         let t19;
         t19 = <Box marginTop={1}><Select options={deleteOptions} onChange={t17} onCancel={t18} /></Box>;
         let t20;
-        t20 = <Dialog title="Delete agent" onCancel={t14} color="error">{t15}{t16}{t19}</Dialog>;
+        t20 = <Dialog title={tSync('agents.deleteConfirmTitle')} onCancel={t14} color="error">{t15}{t16}{t19}</Dialog>;
         let t21;
-        t21 = <AgentNavigationFooter instructions={"Press \u2191\u2193 to navigate, Enter to select, Esc to cancel"} />;
+        t21 = <AgentNavigationFooter instructions={tSync('agents.navInstructions')} />;
         let t22;
         t22 = <>{t20}{t21}</>;
         return t22;
@@ -318,7 +319,7 @@ export function AgentsMenu({
         const freshAgent = t13;
         const agentToEdit = freshAgent || modeState.agent;
         let t15;
-        t15 = `Edit agent: ${agentToEdit.agentType}`;
+        const editTitle = tSync('agents.editAgentTitle', { name: agentToEdit.agentType });
         t15 = () => setModeState(modeState.previousMode);
         let t16;
         let t17;
@@ -330,7 +331,7 @@ export function AgentsMenu({
         let t18;
         t18 = <AgentEditor agent={agentToEdit} tools={mergedTools} onSaved={t16} onBack={t17} />;
         let t19;
-        t19 = <Dialog title={t14} onCancel={t15} hideInputGuide={true}>{t18}</Dialog>;
+        t19 = <Dialog title={editTitle} onCancel={t15} hideInputGuide={true}>{t18}</Dialog>;
         let t20;
         t20 = <AgentNavigationFooter />;
         let t21;

@@ -7,6 +7,7 @@ import { getFileStatus, stashToCleanState } from '../utils/git.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
 import { Spinner } from './Spinner.js';
+import { tSync } from 'src/i18n/index.js';
 type TeleportStashProps = {
   onStashAndContinue: () => void;
   onCancel: () => void;
@@ -32,7 +33,7 @@ export function TeleportStash({
         logForDebugging(`Error getting changed files: ${errorMessage}`, {
           level: 'error'
         });
-        setError('Failed to get changed files');
+        setError(tSync('teleport.getGitStatusFailed'));
       } finally {
         setLoading(false);
       }
@@ -48,14 +49,14 @@ export function TeleportStash({
         logForDebugging('Successfully stashed changes');
         onStashAndContinue();
       } else {
-        setError('Failed to stash changes');
+        setError(tSync('teleport.stashFailed'));
       }
     } catch (err_0) {
       const errorMessage_0 = err_0 instanceof Error ? err_0.message : String(err_0);
       logForDebugging(`Error stashing changes: ${errorMessage_0}`, {
         level: 'error'
       });
-      setError('Failed to stash changes');
+      setError(tSync('teleport.stashFailed'));
     } finally {
       setStashing(false);
     }
@@ -71,44 +72,42 @@ export function TeleportStash({
     return <Box flexDirection="column" padding={1}>
         <Box marginBottom={1}>
           <Spinner />
-          <Text> Checking git status{figures.ellipsis}</Text>
+          <Text> {tSync('teleport.checkingGitStatus')}{figures.ellipsis}</Text>
         </Box>
       </Box>;
   }
   if (error) {
     return <Box flexDirection="column" padding={1}>
         <Text bold color="error">
-          Error: {error}
+          {tSync('teleport.errorPrefix', { error })}
         </Text>
         <Box marginTop={1}>
-          <Text dimColor>Press </Text>
-          <Text bold>Escape</Text>
-          <Text dimColor> to cancel</Text>
+          <Text dimColor>{tSync('teleport.pressEscapeToCancel')}</Text>
         </Box>
       </Box>;
   }
   const showFileCount = changedFiles.length > 8;
-  return <Dialog title="Working Directory Has Changes" onCancel={onCancel}>
+  return <Dialog title={tSync('teleport.workingDirHasChanges')} onCancel={onCancel}>
       <Text>
-        Teleport will switch git branches. The following changes were found:
+        {tSync('teleport.willSwitchBranches')}
       </Text>
 
       <Box flexDirection="column" paddingLeft={2}>
-        {changedFiles.length > 0 ? showFileCount ? <Text>{changedFiles.length} files changed</Text> : changedFiles.map((file: string, index: number) => <Text key={index}>{file}</Text>) : <Text dimColor>No changes detected</Text>}
+        {changedFiles.length > 0 ? showFileCount ? <Text>{tSync('teleport.filesChanged', { count: changedFiles.length })}</Text> : changedFiles.map((file: string, index: number) => <Text key={index}>{file}</Text>) : <Text dimColor>{tSync('teleport.noChangesDetected')}</Text>}
       </Box>
 
       <Text>
-        Would you like to stash these changes and continue with teleport?
+        {tSync('teleport.stashAndContinue')}
       </Text>
 
       {stashing ? <Box>
           <Spinner />
-          <Text> Stashing changes...</Text>
+          <Text> {tSync('teleport.stashingChanges')}</Text>
         </Box> : <Select options={[{
-      label: 'Stash changes and continue',
+      label: tSync('teleport.stashChangesAndContinue'),
       value: 'stash'
     }, {
-      label: 'Exit',
+      label: tSync('teleport.exit'),
       value: 'exit'
     }]} onChange={handleSelectChange} />}
     </Dialog>;

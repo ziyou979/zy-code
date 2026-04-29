@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Text } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import { editPromptInEditor } from '../../../../utils/promptEditor.js';
+import { tSync } from '../../../../i18n/index.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Byline } from '../../../design-system/Byline.js';
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
@@ -34,7 +35,7 @@ export function DescriptionStep() {
   const handleSubmit = value => {
     const trimmedValue = value.trim();
     if (!trimmedValue) {
-      setError("Description is required");
+      setError(tSync('wizard.descriptionRequired'));
       return;
     }
     setError(null);
@@ -43,5 +44,5 @@ export function DescriptionStep() {
     });
     goNext();
   };
-  return <WizardDialogLayout subtitle="Description (tell Zy when to use this agent)" footerText={<Byline><KeyboardShortcutHint shortcut="Type" action="enter text" /><KeyboardShortcutHint shortcut="Enter" action="continue" /><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description="open in editor" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="go back" /></Byline>}><Box flexDirection="column">{<Text>When should Zy use this agent?</Text>}{<Box marginTop={1}><TextInput value={whenToUse} onChange={setWhenToUse} onSubmit={handleSubmit} placeholder="e.g., use this agent after you're done writing code..." columns={80} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} focus={true} showCursor={true} /></Box>}{error && <Box marginTop={1}><Text color="error">{error}</Text></Box>}</Box></WizardDialogLayout>;
+  return <WizardDialogLayout subtitle={tSync('wizard.description')} footerText={<Byline><KeyboardShortcutHint shortcut="Type" action="enter text" /><KeyboardShortcutHint shortcut="Enter" action="continue" /><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description="open in editor" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="go back" /></Byline>}><Box flexDirection="column">{<Text>{tSync('wizard.whenUseAgent')}</Text>}{<Box marginTop={1}><TextInput value={whenToUse} onChange={setWhenToUse} onSubmit={handleSubmit} placeholder={tSync('wizard.descriptionPlaceholder')} columns={80} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} focus={true} showCursor={true} /></Box>}{error && <Box marginTop={1}><Text color="error">{error}</Text></Box>}</Box></WizardDialogLayout>;
 }

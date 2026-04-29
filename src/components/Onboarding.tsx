@@ -61,7 +61,7 @@ function getPlatforms(): PlatformConfig[] {
       // For 'local' provider, apiKeyLabel is also i18n
       const apiKeyLabel = entry.id === 'local'
         ? tSync('onboarding.platform.localApiKey')
-        : entry.apiKeyLabel ?? 'API Key';
+        : entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel');
 
       // 根据 tags 自动渲染模型描述
       const suggestedModels = entry.suggestedModels?.map(model => ({
@@ -458,7 +458,7 @@ function PlatformSetup({
   const platform = getPlatforms().find(p => p.id === selectedPlatformId);
   return (
     <ApiKeyInput
-      apiKeyLabel={platform?.apiKeyLabel ?? 'API Key'}
+      apiKeyLabel={platform?.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel')}
       baseUrlHint={platform?.baseUrlHint}
       onDone={handleApiKeyDone}
       onBack={() => {
@@ -502,7 +502,7 @@ function ApiKeyInput({
           onCancel={onBack}
         />
         {baseUrlHint && (
-          <Text dimColor>Base URL: {baseUrlHint}</Text>
+          <Text dimColor>{tSync('onboarding.baseUrlLabel')}: {baseUrlHint}</Text>
         )}
         <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
       </Box>
@@ -576,9 +576,9 @@ function TierModelSetup({
             options={[
               {
                 type: 'input',
-                label: 'Model name',
+                label: tSync('onboarding.modelNameLabel'),
                 value: 'input',
-                placeholder: 'e.g. qwen-max, qwen3.6-plus...',
+                placeholder: tSync('onboarding.modelNamePlaceholder'),
                 onChange: value => {
                   if (value.trim().length > 0) {
                     onDone(value.trim());

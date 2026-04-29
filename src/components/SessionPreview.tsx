@@ -1,5 +1,6 @@
 import type { UUID } from 'crypto';
 import React from 'react';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { getAllBaseTools } from '../tools.js';
@@ -42,9 +43,9 @@ export function SessionPreview({
     context: "Confirmation"
   });
   if (isLoading) {
-    return <Box flexDirection="column" padding={1}>{<LoadingState message={"Loading session\u2026"} />}<Text dimColor={true}><Byline><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text></Box>;
+    return <Box flexDirection="column" padding={1}>{<LoadingState message={tSync('sessionPreview.loading')} />}<Text dimColor={true}><Byline><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('sessionPreview.cancel')} /></Byline></Text></Box>;
   }
   const t10 = new Set() as Set<string>;
   const t13 = formatRelativeTimeAgo(displayLog.modified);
-  return <Box flexDirection="column">{<Messages messages={displayLog.messages} tools={tools} commands={[]} verbose={true} toolJSX={null} toolUseConfirmQueue={[]} inProgressToolUseIDs={t10} isMessageSelectorVisible={false} conversationId={conversationId} screen="transcript" streamingToolUses={[]} showAllInTranscript={true} isLoading={false} />}{<Box flexShrink={0} flexDirection="column" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" paddingLeft={2}>{<Text>{t13} ·{" "}{displayLog.messageCount} messages{displayLog.gitBranch ? ` · ${displayLog.gitBranch}` : ""}</Text>}{<Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="resume" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text>}</Box>}</Box>;
+  return <Box flexDirection="column">{<Messages messages={displayLog.messages} tools={tools} commands={[]} verbose={true} toolJSX={null} toolUseConfirmQueue={[]} inProgressToolUseIDs={t10} isMessageSelectorVisible={false} conversationId={conversationId} screen="transcript" streamingToolUses={[]} showAllInTranscript={true} isLoading={false} />}{<Box flexShrink={0} flexDirection="column" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" paddingLeft={2}>{<Text>{t13} ·{" "}{tSync('sessionPreview.messages', { count: displayLog.messageCount })}{displayLog.gitBranch ? ` · ${displayLog.gitBranch}` : ""}</Text>}{<Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action={tSync('sessionPreview.resume')} /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('sessionPreview.cancel')} /></Byline></Text>}</Box>}</Box>;
 }

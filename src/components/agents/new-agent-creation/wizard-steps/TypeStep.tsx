@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Text } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js';
+import { tSync } from '../../../../i18n/index.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Byline } from '../../../design-system/Byline.js';
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
@@ -38,5 +39,5 @@ export function TypeStep(_props) {
     });
     goNext();
   };
-  return <WizardDialogLayout subtitle="Agent type (identifier)" footerText={<Byline><KeyboardShortcutHint shortcut="Type" action="enter text" /><KeyboardShortcutHint shortcut="Enter" action="continue" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="go back" /></Byline>}><Box flexDirection="column">{<Text>Enter a unique identifier for your agent:</Text>}{<Box marginTop={1}><TextInput value={agentType} onChange={setAgentType} onSubmit={handleSubmit} placeholder="e.g., test-runner, tech-lead, etc" columns={60} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} focus={true} showCursor={true} /></Box>}{error && <Box marginTop={1}><Text color="error">{error}</Text></Box>}</Box></WizardDialogLayout>;
+  return <WizardDialogLayout subtitle={tSync('wizard.agentType')} footerText={<Byline><KeyboardShortcutHint shortcut="Type" action="enter text" /><KeyboardShortcutHint shortcut="Enter" action="continue" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="go back" /></Byline>}><Box flexDirection="column">{<Text>{tSync('wizard.enterIdentifier')}</Text>}{<Box marginTop={1}><TextInput value={agentType} onChange={setAgentType} onSubmit={handleSubmit} placeholder={tSync('wizard.agentTypePlaceholder')} columns={60} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} focus={true} showCursor={true} /></Box>}{error && <Box marginTop={1}><Text color="error">{error}</Text></Box>}</Box></WizardDialogLayout>;
 }

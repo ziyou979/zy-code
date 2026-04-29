@@ -388,11 +388,16 @@ function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | unde
  * 统一的 LLM Adapter 工厂函数（使用 llm.ts 中立标准类型）。
  * 根据当前 provider 自动选择对应的 Adapter 实现。
  * 调用方使用 llm.ts 类型，完全不依赖任何 SDK。
+ *
+ * @param options.anthropicClient 可选。Anthropic SDK client 实例，用于复用
+ *   withRetry 等基础设施提供的 retry/auth 配置。仅在 Anthropic 路径生效。
+ *   未提供时 AnthropicProviderAdapter 会自取 client。
  */
 export function getLLMAdapter(options?: {
   apiKey?: string
   baseURL?: string
   timeout?: number
+  anthropicClient?: Anthropic
 }): LLMAdapter {
   const apiProvider = getAPIProvider()
 
@@ -404,5 +409,5 @@ export function getLLMAdapter(options?: {
     })
   }
 
-  return new AnthropicProviderAdapter()
+  return new AnthropicProviderAdapter(options?.anthropicClient)
 }

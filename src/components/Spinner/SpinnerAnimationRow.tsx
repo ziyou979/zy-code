@@ -228,7 +228,7 @@ export function SpinnerAnimationRow({
           <Byline>{parts}</Byline>
           <Text dimColor>)</Text>
         </> : null;
-  return <Box ref={viewportRef} flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
+  return <Box ref={viewportRef} flexDirection="row" overflow="hidden" marginTop={1} width="100%">
       <SpinnerGlyph frame={frame} messageColor={messageColor} stalledIntensity={overrideColor ? 0 : stalledIntensity} reducedMotion={reducedMotion} time={time} />
       <GlimmerMessage message={message} mode={mode} messageColor={messageColor} glimmerIndex={glimmerIndex} flashOpacity={flashOpacity} shimmerColor={shimmerColor} stalledIntensity={overrideColor ? 0 : stalledIntensity} />
       {status}

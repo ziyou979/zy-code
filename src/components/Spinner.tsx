@@ -292,7 +292,7 @@ function SpinnerWithVerbInner({
           {budgetText && <MessageResponse>
               <Text dimColor>{budgetText}</Text>
             </MessageResponse>}
-          {(nextTask || effectiveTip) && <MessageResponse>
+          {(nextTask || effectiveTip) && <MessageResponse height={1}>
               <Text dimColor>
                 {nextTask ? tSync('spinner.next', {
             subject: nextTask.subject

@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from '../ink.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
+import { tSync } from 'src/i18n/index.js';
 export type ChannelDowngradeChoice = 'downgrade' | 'stay' | 'cancel';
 type Props = {
   currentVersion: string;
@@ -22,11 +23,11 @@ export function ChannelDowngradeDialog({
   const handleCancel = function handleCancel() {
     onChoice("cancel");
   };
-  return <Dialog title="Switch to Stable Channel" onCancel={handleCancel} color="permission" hideBorder={true} hideInputGuide={true}>{<Text>The stable channel may have an older version than what you're currently running ({currentVersion}).</Text>}{<Text dimColor={true}>How would you like to handle this?</Text>}{<Select options={[{
-      label: "Allow possible downgrade to stable version",
+  return <Dialog title={tSync('channel.downgradeTitle')} onCancel={handleCancel} color="permission" hideBorder={true} hideInputGuide={true}>{<Text>{tSync('channel.downgradeDescription', { currentVersion })}</Text>}{<Text dimColor={true}>{tSync('channel.howToHandle')}</Text>}{<Select options={[{
+      label: tSync('channel.allowDowngrade'),
       value: "downgrade" as ChannelDowngradeChoice
     }, {
-      label: `Stay on current version (${currentVersion}) until stable catches up`,
+      label: tSync('channel.stayOnCurrent', { currentVersion }),
       value: "stay" as ChannelDowngradeChoice
     }]} onChange={handleSelect} />}</Dialog>;
 }

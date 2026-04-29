@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { Byline } from '../design-system/Byline.js';
 type Props = {
@@ -13,13 +14,13 @@ export function CapabilitiesSection({
 }: Props) {
   const capabilities = [];
   if (serverToolsCount > 0) {
-    capabilities.push("tools");
+    capabilities.push(tSync('mcp.capabilityTools'));
   }
   if (serverResourcesCount > 0) {
-    capabilities.push("resources");
+    capabilities.push(tSync('mcp.capabilityResources'));
   }
   if (serverPromptsCount > 0) {
-    capabilities.push("prompts");
+    capabilities.push(tSync('mcp.capabilityPrompts'));
   }
-  return <Box>{<Text bold={true}>Capabilities: </Text>}<Text color="text">{capabilities.length > 0 ? <Byline>{capabilities}</Byline> : "none"}</Text></Box>;
+  return <Box>{<Text bold={true}>{tSync('mcp.capabilitiesLabel')}</Text>}<Text color="text">{capabilities.length > 0 ? <Byline>{capabilities}</Byline> : tSync('mcp.capabilitiesNone')}</Text></Box>;
 }

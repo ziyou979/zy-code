@@ -7,6 +7,7 @@ import { getCwd } from '../utils/cwd.js';
 import type { OptionWithDescription } from './CustomSelect/select.js';
 import { Select } from './CustomSelect/select.js';
 import { Dialog } from './design-system/Dialog.js';
+import { tSync } from 'src/i18n/index.js';
 const DEFAULT_OUTPUT_STYLE_LABEL = 'Default';
 const DEFAULT_OUTPUT_STYLE_DESCRIPTION = 'Zy completes coding tasks efficiently and provides concise responses';
 function mapConfigsToOptions(styles: {
@@ -47,5 +48,5 @@ export function OutputStylePicker({
     const outputStyle = style as OutputStyle;
     onComplete(outputStyle);
   };
-  return <Dialog title="Preferred output style" onCancel={onCancel} hideInputGuide={!isStandaloneCommand} hideBorder={!isStandaloneCommand}>{<Box flexDirection="column" gap={1}>{<Box marginTop={1}><Text dimColor={true}>This changes how ZY Code communicates with you</Text></Box>}{isLoading ? <Text dimColor={true}>Loading output styles…</Text> : <Select options={styleOptions} onChange={handleStyleSelect} visibleOptionCount={10} defaultValue={initialStyle} />}</Box>}</Dialog>;
+  return <Dialog title={tSync('outputStyle.title')} onCancel={onCancel} hideInputGuide={!isStandaloneCommand} hideBorder={!isStandaloneCommand}>{<Box flexDirection="column" gap={1}>{<Box marginTop={1}><Text dimColor={true}>{tSync('outputStyle.hint')}</Text></Box>}{isLoading ? <Text dimColor={true}>{tSync('outputStyle.loading')}</Text> : <Select options={styleOptions} onChange={handleStyleSelect} visibleOptionCount={10} defaultValue={initialStyle} />}</Box>}</Dialog>;
 }

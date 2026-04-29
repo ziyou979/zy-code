@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Link, Text, useInput } from '../../ink.js';
 import { type AccountSettings, calculateShouldShowGrove, getGroveNoticeConfig, getGroveSettings, markGroveNoticeViewed, updateGroveSettings } from '../../services/api/grove.js';
 import { Select } from '../CustomSelect/index.js';
@@ -24,10 +25,10 @@ const NEW_TERMS_ASCII = ` _____________
  |              |
  |______________|`;
 function GracePeriodContentBody() {
-  return <>{<Text>An update to our Consumer Terms and Privacy Policy will take effect on{" "}<Text bold={true}>October 8, 2025</Text>. You can accept the updated terms today.</Text>}{<Box flexDirection="column">{<Text>What's changing?</Text>}{<Box paddingLeft={1}><Text>{<Text>· </Text>}{<Text bold={true}>You can help improve Zy </Text>}<Text>— Allow the use of your chats and coding sessions to train and improve Anthropic AI models. Change anytime in your Privacy Settings (<Link url="https://zy.ai/settings/data-privacy-controls" />).</Text></Text></Box>}<Box paddingLeft={1}><Text><Text>· </Text><Text bold={true}>Updates to data retention </Text><Text>— To help us improve our AI models and safety protections, we're extending data retention to 5 years.</Text></Text></Box></Box>}<Text>Learn more ({<Link url="https://www.anthropic.com/news/updates-to-our-consumer-terms" />}) or read the updated Consumer Terms ({<Link url="https://anthropic.com/legal/terms" />}) and Privacy Policy (<Link url="https://anthropic.com/legal/privacy" />)</Text></>;
+  return <>{<Text>{tSync('grove.termsUpdateNotice', { date: 'October 8, 2025' })}</Text>}{<Box flexDirection="column">{<Text>{tSync('grove.whatsChanging')}</Text>}{<Box paddingLeft={1}><Text>{<Text>· </Text>}{<Text bold={true}>{tSync('grove.helpImproveZy')} </Text>}<Text>{tSync('grove.helpImproveDesc')} (<Link url="https://zy.ai/settings/data-privacy-controls" />).</Text></Text></Box>}<Box paddingLeft={1}><Text><Text>· </Text><Text bold={true}>{tSync('grove.dataRetentionUpdate')} </Text><Text>{tSync('grove.dataRetentionDesc')}</Text></Text></Box></Box>}<Text>{tSync('grove.learnMore')} ({<Link url="https://www.anthropic.com/news/updates-to-our-consumer-terms" />}) {tSync('grove.orReadTerms')} ({<Link url="https://anthropic.com/legal/terms" />}) {tSync('grove.andPrivacyPolicy')} (<Link url="https://anthropic.com/legal/privacy" />)</Text></>;
 }
 function PostGracePeriodContentBody() {
-  return <>{<Text>We've updated our Consumer Terms and Privacy Policy.</Text>}{<Box flexDirection="column" gap={1}>{<Text>What's changing?</Text>}{<Box flexDirection="column"><Text bold={true}>Help improve Zy</Text><Text>Allow the use of your chats and coding sessions to train and improve Anthropic AI models. You can change this anytime in Privacy Settings</Text><Link url="https://zy.ai/settings/data-privacy-controls" /></Box>}<Box flexDirection="column"><Text bold={true}>How this affects data retention</Text><Text>Turning ON the improve Zy setting extends data retention from 30 days to 5 years. Turning it OFF keeps the default 30-day data retention. Delete data anytime.</Text></Box></Box>}<Text>Learn more ({<Link url="https://www.anthropic.com/news/updates-to-our-consumer-terms" />}) or read the updated Consumer Terms ({<Link url="https://anthropic.com/legal/terms" />}) and Privacy Policy (<Link url="https://anthropic.com/legal/privacy" />)</Text></>;
+  return <>{<Text>{tSync('grove.termsUpdated')}</Text>}{<Box flexDirection="column" gap={1}>{<Text>{tSync('grove.whatsChanging')}</Text>}{<Box flexDirection="column"><Text bold={true}>{tSync('grove.helpImproveZy')}</Text><Text>{tSync('grove.helpImprovePostDesc')}</Text><Link url="https://zy.ai/settings/data-privacy-controls" /></Box>}<Box flexDirection="column"><Text bold={true}>{tSync('grove.howAffectsRetention')}</Text><Text>{tSync('grove.howAffectsRetentionDesc')}</Text></Box></Box>}<Text>{tSync('grove.learnMore')} ({<Link url="https://www.anthropic.com/news/updates-to-our-consumer-terms" />}) {tSync('grove.orReadTerms')} ({<Link url="https://anthropic.com/legal/terms" />}) {tSync('grove.andPrivacyPolicy')} (<Link url="https://anthropic.com/legal/privacy" />)</Text></>;
 }
 export function GroveDialog({
   showIfAlreadyViewed,
@@ -96,13 +97,13 @@ export function GroveDialog({
     onDone(value);
   };
   const acceptOptions = groveConfig?.domain_excluded ? [{
-    label: "Accept terms \xB7 Help improve Zy: OFF (for emails with your domain)",
+    label: tSync('grove.acceptTermsOptOutDomain'),
     value: "accept_opt_out"
   }] : [{
-    label: "Accept terms \xB7 Help improve Zy: ON",
+    label: tSync('grove.acceptTermsOptIn'),
     value: "accept_opt_in"
   }, {
-    label: "Accept terms \xB7 Help improve Zy: OFF",
+    label: tSync('grove.acceptTermsOptOut'),
     value: "accept_opt_out"
   }];
   const handleCancel = function handleCancel() {
@@ -113,10 +114,10 @@ export function GroveDialog({
     onChange("escape");
   };
   const t10 = groveConfig?.notice_is_grace_period ? [{
-    label: "Not now",
+    label: tSync('grove.notNow'),
     value: "defer"
   }] : [];
-  return <Dialog title="Updates to Consumer Terms and Policies" color="professionalBlue" onCancel={handleCancel} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut="Enter" action="confirm" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}>{<Box flexDirection="row">{<Box flexDirection="column" gap={1} flexGrow={1}>{groveConfig?.notice_is_grace_period ? <GracePeriodContentBody /> : <PostGracePeriodContentBody />}</Box>}{<Box flexShrink={0}><Text color="professionalBlue">{NEW_TERMS_ASCII}</Text></Box>}</Box>}{<Box flexDirection="column" gap={1}>{<Box flexDirection="column"><Text bold={true}>Please select how you'd like to continue</Text><Text>Your choice takes effect immediately upon confirmation.</Text></Box>}<Select options={[...acceptOptions, ...t10]} onChange={value_0 => onChange(value_0 as 'accept_opt_in' | 'accept_opt_out' | 'defer')} onCancel={handleCancel} /></Box>}</Dialog>;
+  return <Dialog title={tSync('grove.dialogTitle')} color="professionalBlue" onCancel={handleCancel} inputGuide={exitState => exitState.pending ? <Text>{tSync('grove.pressAgainToExit', { keyName: exitState.keyName })}</Text> : <Byline><KeyboardShortcutHint shortcut="Enter" action="confirm" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}>{<Box flexDirection="row">{<Box flexDirection="column" gap={1} flexGrow={1}>{groveConfig?.notice_is_grace_period ? <GracePeriodContentBody /> : <PostGracePeriodContentBody />}</Box>}{<Box flexShrink={0}><Text color="professionalBlue">{NEW_TERMS_ASCII}</Text></Box>}</Box>}{<Box flexDirection="column" gap={1}>{<Box flexDirection="column"><Text bold={true}>{tSync('grove.selectHowToContinue')}</Text><Text>{tSync('grove.choiceTakesEffect')}</Text></Box>}<Select options={[...acceptOptions, ...t10]} onChange={value_0 => onChange(value_0 as 'accept_opt_in' | 'accept_opt_out' | 'defer')} onCancel={handleCancel} /></Box>}</Dialog>;
 }
 type PrivacySettingsDialogProps = {
   settings: AccountSettings;
@@ -147,5 +148,5 @@ export function PrivacySettingsDialog({
       valueComponent = <Text color="success">true</Text>;
     }
   }
-  return <Dialog title="Data Privacy" color="professionalBlue" onCancel={onDone} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : domainExcluded ? <KeyboardShortcutHint shortcut="Esc" action="cancel" /> : <Byline><KeyboardShortcutHint shortcut="Enter/Tab/Space" action="toggle" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}>{<Text>Review and manage your privacy settings at{" "}<Link url="https://zy.ai/settings/data-privacy-controls" /></Text>}{<Box>{<Box width={44}><Text bold={true}>Help improve Zy</Text></Box>}<Box>{valueComponent}</Box></Box>}</Dialog>;
+  return <Dialog title={tSync('grove.dataPrivacyTitle')} color="professionalBlue" onCancel={onDone} inputGuide={exitState => exitState.pending ? <Text>{tSync('grove.pressAgainToExit', { keyName: exitState.keyName })}</Text> : domainExcluded ? <KeyboardShortcutHint shortcut="Esc" action="cancel" /> : <Byline><KeyboardShortcutHint shortcut="Enter/Tab/Space" action="toggle" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}>{<Text>{tSync('grove.reviewPrivacySettings')}{" "}<Link url="https://zy.ai/settings/data-privacy-controls" /></Text>}{<Box>{<Box width={44}><Text bold={true}>{tSync('grove.helpImproveZy')}</Text></Box>}<Box>{valueComponent}</Box></Box>}</Dialog>;
 }

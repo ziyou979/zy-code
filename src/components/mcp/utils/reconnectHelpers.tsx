@@ -1,3 +1,4 @@
+import { tSync } from 'src/i18n/index.js';
 import type { Command } from '../../../commands.js';
 import type { MCPServerConnection, ServerResource } from '../../../services/mcp/types.js';
 import type { Tool } from '../../../Tool.js';
@@ -7,7 +8,7 @@ export interface ReconnectResult {
 }
 
 /**
- * Handles the result of a reconnect attempt and returns an appropriate user message
+ * 处理重新连接尝试的结果并返回适当的用户消息
  */
 export function handleReconnectResult(result: {
   client: MCPServerConnection;
@@ -18,31 +19,31 @@ export function handleReconnectResult(result: {
   switch (result.client.type) {
     case 'connected':
       return {
-        message: `Reconnected to ${serverName}.`,
+        message: tSync('mcp.reconnectedTo', { serverName }),
         success: true
       };
     case 'needs-auth':
       return {
-        message: `${serverName} requires authentication. Use the 'Authenticate' option.`,
+        message: tSync('mcp.requiresAuthOption', { serverName }),
         success: false
       };
     case 'failed':
       return {
-        message: `Failed to reconnect to ${serverName}.`,
+        message: tSync('mcp.failedToReconnectTo', { serverName }),
         success: false
       };
     default:
       return {
-        message: `Unknown result when reconnecting to ${serverName}.`,
+        message: tSync('mcp.unknownReconnectResult', { serverName }),
         success: false
       };
   }
 }
 
 /**
- * Handles errors from reconnect attempts
+ * 处理重新连接尝试的错误
  */
 export function handleReconnectError(error: unknown, serverName: string): string {
   const errorMessage = error instanceof Error ? error.message : String(error);
-  return `Error reconnecting to ${serverName}: ${errorMessage}`;
+  return tSync('mcp.errorReconnecting', { serverName, error: errorMessage });
 }

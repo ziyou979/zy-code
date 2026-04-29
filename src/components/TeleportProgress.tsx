@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Root } from '../ink.js';
 import { Box, Text, useAnimationFrame } from '../ink.js';
+import { tSync } from 'src/i18n/index.js';
 import { AppStateProvider } from '../state/AppState.js';
 import { checkOutTeleportedSessionBranch, processMessagesForTeleportResume, type TeleportProgressStep, type TeleportResult, teleportResumeCodeSession } from '../utils/teleport.js';
 type Props = {
@@ -10,21 +11,21 @@ type Props = {
   sessionId?: string;
 };
 const SPINNER_FRAMES = ['◐', '◓', '◑', '◒'];
-const STEPS: {
+const STEP_KEYS: {
   key: TeleportProgressStep;
-  label: string;
+  i18nKey: string;
 }[] = [{
   key: 'validating',
-  label: 'Validating session'
+  i18nKey: 'teleport.validatingSession'
 }, {
   key: 'fetching_logs',
-  label: 'Fetching session logs'
+  i18nKey: 'teleport.fetchingSessionLogs'
 }, {
   key: 'fetching_branch',
-  label: 'Getting branch info'
+  i18nKey: 'teleport.gettingBranchInfo'
 }, {
   key: 'checking_out',
-  label: 'Checking out branch'
+  i18nKey: 'teleport.checkingOutBranch'
 }];
 export function TeleportProgress({
   currentStep,
@@ -32,8 +33,8 @@ export function TeleportProgress({
 }: Props) {
   const [ref, time] = useAnimationFrame(100);
   const frame = Math.floor(time / 100) % SPINNER_FRAMES.length;
-  const currentStepIndex = STEPS.findIndex(s => s.key === currentStep);
-  const t5 = STEPS.map((step, index) => {
+  const currentStepIndex = STEP_KEYS.findIndex(s => s.key === currentStep);
+  const t5 = STEP_KEYS.map((step, index) => {
     const isComplete = index < currentStepIndex;
     const isCurrent = index === currentStepIndex;
     const isPending = index > currentStepIndex;
@@ -51,9 +52,9 @@ export function TeleportProgress({
         color = undefined;
       }
     }
-    return <Box key={step.key} flexDirection="row"><Box width={2}><Text color={color as never} dimColor={isPending}>{icon}</Text></Box><Text dimColor={isPending} bold={isCurrent}>{step.label}</Text></Box>;
+    return <Box key={step.key} flexDirection="row"><Box width={2}><Text color={color as never} dimColor={isPending}>{icon}</Text></Box><Text dimColor={isPending} bold={isCurrent}>{tSync(step.i18nKey as any)}</Text></Box>;
   });
-  return <Box ref={ref} flexDirection="column" paddingX={1} paddingY={1}>{<Box marginBottom={1}><Text bold={true} color="zy">{SPINNER_FRAMES[frame]} Teleporting session…</Text></Box>}{sessionId && <Box marginBottom={1}><Text dimColor={true}>{sessionId}</Text></Box>}{<Box flexDirection="column" marginLeft={2}>{t5}</Box>}</Box>;
+  return <Box ref={ref} flexDirection="column" paddingX={1} paddingY={1}>{<Box marginBottom={1}><Text bold={true} color="zy">{SPINNER_FRAMES[frame]} {tSync('teleport.teleportingSession')}</Text></Box>}{sessionId && <Box marginBottom={1}><Text dimColor={true}>{sessionId}</Text></Box>}{<Box flexDirection="column" marginLeft={2}>{t5}</Box>}</Box>;
 }
 
 /**

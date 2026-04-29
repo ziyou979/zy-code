@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js';
 import type { Tool } from '../../Tool.js';
@@ -41,16 +42,16 @@ export function MCPToolDetailView({
         });
         setToolDescription(desc);
       } catch {
-        setToolDescription("Failed to load description");
+        setToolDescription(tSync("mcp.failedToLoadDescription"));
       }
     };
     loadDescription();
   }, [tool]);
-  const titleContent = <>{displayName}{isReadOnly && <Text color="success"> [read-only]</Text>}{isDestructive && <Text color="error"> [destructive]</Text>}{isOpenWorld && <Text dimColor={true}> [open-world]</Text>}</>;
-  return <Dialog title={titleContent} subtitle={server.name} onCancel={onBack} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />}>{<Box flexDirection="column">{<Box>{<Text bold={true}>Tool name: </Text>}<Text dimColor={true}>{toolName}</Text></Box>}{<Box>{<Text bold={true}>Full name: </Text>}<Text dimColor={true}>{tool.name}</Text></Box>}{toolDescription && <Box flexDirection="column" marginTop={1}><Text bold={true}>Description:</Text><Text wrap="wrap">{toolDescription}</Text></Box>}{tool.inputJSONSchema && tool.inputJSONSchema.properties && Object.keys(tool.inputJSONSchema.properties).length > 0 && <Box flexDirection="column" marginTop={1}><Text bold={true}>Parameters:</Text><Box marginLeft={2} flexDirection="column">{Object.entries(tool.inputJSONSchema.properties).map(t17 => {
+  const titleContent = <>{displayName}{isReadOnly && <Text color="success"> [{tSync('mcp.readOnly')}]</Text>}{isDestructive && <Text color="error"> [{tSync('mcp.destructive')}]</Text>}{isOpenWorld && <Text dimColor={true}> [{tSync('mcp.openWorld')}]</Text>}</>;
+  return <Dialog title={titleContent} subtitle={server.name} onCancel={onBack} inputGuide={exitState => exitState.pending ? <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.goBack')} />}>{<Box flexDirection="column">{<Box>{<Text bold={true}>{tSync('mcp.toolNameLabel')}{" "}</Text>}<Text dimColor={true}>{toolName}</Text></Box>}{<Box>{<Text bold={true}>{tSync('mcp.fullNameLabel')}{" "}</Text>}<Text dimColor={true}>{tool.name}</Text></Box>}{toolDescription && <Box flexDirection="column" marginTop={1}><Text bold={true}>{tSync('mcp.descriptionLabel')}</Text><Text wrap="wrap">{toolDescription}</Text></Box>}{tool.inputJSONSchema && tool.inputJSONSchema.properties && Object.keys(tool.inputJSONSchema.properties).length > 0 && <Box flexDirection="column" marginTop={1}><Text bold={true}>{tSync('mcp.parametersLabel')}</Text><Box marginLeft={2} flexDirection="column">{Object.entries(tool.inputJSONSchema.properties).map(t17 => {
             const [key, value] = t17;
             const required = tool.inputJSONSchema?.required as string[] | undefined;
             const isRequired = required?.includes(key);
-            return <Text key={key}>• {key}{isRequired && <Text dimColor={true}> (required)</Text>}:{" "}<Text dimColor={true}>{typeof value === "object" && value && "type" in value ? String(value.type) : "unknown"}</Text>{typeof value === "object" && value && "description" in value && <Text dimColor={true}> - {String(value.description)}</Text>}</Text>;
+            return <Text key={key}>• {key}{isRequired && <Text dimColor={true}> ({tSync('mcp.required')})</Text>}:{" "}<Text dimColor={true}>{typeof value === "object" && value && "type" in value ? String(value.type) : "unknown"}</Text>{typeof value === "object" && value && "description" in value && <Text dimColor={true}> - {String(value.description)}</Text>}</Text>;
           })}</Box></Box>}</Box>}</Dialog>;
 }

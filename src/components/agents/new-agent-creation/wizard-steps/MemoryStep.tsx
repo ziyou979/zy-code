@@ -3,6 +3,7 @@ import { Box } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js';
 import { type AgentMemoryScope, loadAgentMemoryPrompt } from '../../../../tools/AgentTool/agentMemory.js';
+import { tSync } from '../../../../i18n/index.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Select } from '../../../CustomSelect/select.js';
 import { Byline } from '../../../design-system/Byline.js';
@@ -25,28 +26,28 @@ export function MemoryStep() {
   });
   const isUserScope = wizardData.location === "userSettings";
   const memoryOptions = isUserScope ? [{
-    label: "User scope (~/.zy/agent-memory/) (Recommended)",
+    label: tSync('wizard.memoryUserScopeRec'),
     value: "user"
   }, {
-    label: "None (no persistent memory)",
+    label: tSync('wizard.memoryNone'),
     value: "none"
   }, {
-    label: "Project scope (.zy/agent-memory/)",
+    label: tSync('wizard.memoryProjectScopePlain'),
     value: "project"
   }, {
-    label: "Local scope (.zy/agent-memory-local/)",
+    label: tSync('wizard.memoryLocalScope'),
     value: "local"
   }] : [{
-    label: "Project scope (.zy/agent-memory/) (Recommended)",
+    label: tSync('wizard.memoryProjectScopeRec'),
     value: "project"
   }, {
-    label: "None (no persistent memory)",
+    label: tSync('wizard.memoryNone'),
     value: "none"
   }, {
-    label: "User scope (~/.zy/agent-memory/)",
+    label: tSync('wizard.memoryUserScopePlain'),
     value: "user"
   }, {
-    label: "Local scope (.zy/agent-memory-local/)",
+    label: tSync('wizard.memoryLocalScope'),
     value: "local"
   }];
   const handleSelect = value => {
@@ -62,5 +63,5 @@ export function MemoryStep() {
     });
     goNext();
   };
-  return <WizardDialogLayout subtitle="Configure agent memory" footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><Box><Select key="memory-select" options={memoryOptions} onChange={handleSelect} onCancel={goBack} /></Box></WizardDialogLayout>;
+  return <WizardDialogLayout subtitle={tSync('wizard.configureMemory')} footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><Box><Select key="memory-select" options={memoryOptions} onChange={handleSelect} onCancel={goBack} /></Box></WizardDialogLayout>;
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { isAutoMemoryEnabled } from '../../../memdir/paths.js';
 import type { Tools } from '../../../Tool.js';
 import type { AgentDefinition } from '../../../tools/AgentTool/loadAgentsDir.js';
+import { tSync } from '../../../i18n/index.js';
 import { WizardProvider } from '../../wizard/index.js';
 import { ColorStep } from './wizard-steps/ColorStep.js';
 import { ConfirmStepWrapper } from './wizard-steps/ConfirmStepWrapper.js';
@@ -28,6 +29,6 @@ export function CreateAgentWizard({
 }: Props) {
   const t3 = isAutoMemoryEnabled() ? [MemoryStep] : [];
   const steps = [LocationStep, MethodStep, GenerateStep, () => <TypeStep existingAgents={existingAgents} />, PromptStep, DescriptionStep, () => <ToolsStep tools={tools} />, ModelStep, ColorStep, ...t3, () => <ConfirmStepWrapper tools={tools} existingAgents={existingAgents} onComplete={onComplete} />];
-  return <WizardProvider steps={steps} initialData={{}} onComplete={_temp} onCancel={onCancel} title="Create new agent" showStepCounter={false}><></></WizardProvider>;
+  return <WizardProvider steps={steps} initialData={{}} onComplete={_temp} onCancel={onCancel} title={tSync('wizard.createAgentTitle')} showStepCounter={false}><></></WizardProvider>;
 }
 function _temp() {}

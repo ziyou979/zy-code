@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { tSync } from '../../i18n/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { ZyAuthProvider } from '../../services/mcp/auth.js';
 import type { McpZyAIProxyServerConfig, McpHTTPServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
@@ -97,7 +98,7 @@ export function MCPSettings({
       return;
     }
     if (servers.length === 0 && agentMcpServers.length === 0) {
-      onComplete("No MCP servers configured. Please run /doctor if this is unexpected. Otherwise, run `zy mcp --help` or visit https://code.zy.com/docs/en/mcp to learn more.");
+      onComplete(tSync("mcp.noServersConfigured"));
     }
   }, [servers.length, filteredClients.length, agentMcpServers.length, onComplete]);
   switch (viewState.type) {

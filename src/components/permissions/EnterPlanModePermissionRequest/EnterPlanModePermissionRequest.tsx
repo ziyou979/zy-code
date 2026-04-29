@@ -1,5 +1,6 @@
 import React from 'react';
 import { handlePlanModeTransition } from '../../../bootstrap/state.js';
+import { tSync } from '../../../i18n/index.js';
 import { Box, Text } from '../../../ink.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../../services/analytics/index.js';
 import { useAppState } from '../../../state/AppState.js';
@@ -32,11 +33,11 @@ export function EnterPlanModePermissionRequest({
       toolUseConfirm.onReject();
     }
   };
-  return <PermissionDialog color="planMode" title="Enter plan mode?" workerBadge={workerBadge}>{<Box flexDirection="column" marginTop={1} paddingX={1}>{<Text>Zy wants to enter plan mode to explore and design an implementation approach.</Text>}{<Box marginTop={1} flexDirection="column"><Text dimColor={true}>In plan mode, Zy will:</Text><Text dimColor={true}> · Explore the codebase thoroughly</Text><Text dimColor={true}> · Identify existing patterns</Text><Text dimColor={true}> · Design an implementation strategy</Text><Text dimColor={true}> · Present a plan for your approval</Text></Box>}{<Box marginTop={1}><Text dimColor={true}>No code changes will be made until you approve the plan.</Text></Box>}<Box marginTop={1}><Select options={[{
-          label: "Yes, enter plan mode",
+  return <PermissionDialog color="planMode" title={tSync('planMode.enterTitle')} workerBadge={workerBadge}>{<Box flexDirection="column" marginTop={1} paddingX={1}>{<Text>{tSync('planMode.wantsEnter')}</Text>}{<Box marginTop={1} flexDirection="column"><Text dimColor={true}>{tSync('planMode.inPlanModeWill')}</Text><Text dimColor={true}>{tSync('planMode.exploreCodebase')}</Text><Text dimColor={true}>{tSync('planMode.identifyPatterns')}</Text><Text dimColor={true}>{tSync('planMode.designStrategy')}</Text><Text dimColor={true}>{tSync('planMode.presentPlan')}</Text></Box>}{<Box marginTop={1}><Text dimColor={true}>{tSync('planMode.noCodeChanges')}</Text></Box>}<Box marginTop={1}><Select options={[{
+          label: tSync('planMode.yesEnter'),
           value: "yes" as const
         }, {
-          label: "No, start implementing now",
+          label: tSync('planMode.noStartImpl'),
           value: "no" as const
         }]} onChange={handleResponse} onCancel={() => handleResponse("no")} /></Box></Box>}</PermissionDialog>;
 }

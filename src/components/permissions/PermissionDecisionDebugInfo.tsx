@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle';
 import chalk from 'chalk';
 import figures from 'figures';
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Ansi, Box, color, Text, useTheme } from '../../ink.js';
 import { useAppState } from '../../state/AppState.js';
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js';
@@ -29,7 +30,7 @@ function decisionReasonDisplayString(decisionReason: PermissionDecisionReason & 
     case 'mode':
       return `${permissionModeTitle(decisionReason.mode)} mode`;
     case 'sandboxOverride':
-      return 'Requires permission to bypass sandbox';
+      return tSync('permissionDebug.requiresBypassSandbox');
     case 'workingDir':
       return decisionReason.reason;
     case 'safetyCheck':
@@ -129,7 +130,7 @@ function SuggestionDisplay({
   width
 }: Props) {
   if (!suggestions || suggestions.length === 0) {
-    return <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestions </Text>}</Box>}{<Text>None</Text>}</Box>;
+    return <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>{tSync('permissionDebug.suggestions')} </Text>}</Box>}{<Text>{tSync('permissionDebug.none')}</Text>}</Box>;
   }
   let boxElement;
   let earlyReturn;
@@ -138,9 +139,9 @@ function SuggestionDisplay({
   const directories = extractDirectories(suggestions);
   const mode = extractMode(suggestions);
   if (rules.length === 0 && directories.length === 0 && !mode) {
-    earlyReturn = <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestion </Text>}</Box>}{<Text>None</Text>}</Box>;
+    earlyReturn = <Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>{tSync('permissionDebug.suggestion')} </Text>}</Box>}{<Text>{tSync('permissionDebug.none')}</Text>}</Box>;
   } else {
-    boxElement = <Box flexDirection="column">{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>Suggestions </Text>}</Box>}{<Text> </Text>}</Box>}{rules.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Rules </Text></Box><Box flexDirection="column">{rules.map((rule, index) => <Text key={index}>{figures.bullet} {permissionRuleValueToString(rule)}</Text>)}</Box></Box>}{directories.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Directories </Text></Box><Box flexDirection="column">{directories.map((dir, index_0) => <Text key={index_0}>{figures.bullet} {dir}</Text>)}</Box></Box>}{mode && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Mode </Text></Box><Text>{permissionModeTitle(mode)}</Text></Box>}</Box>;
+    boxElement = <Box flexDirection="column">{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={width}>{<Text dimColor={true}>{tSync('permissionDebug.suggestions')} </Text>}</Box>}{<Text> </Text>}</Box>}{rules.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> {tSync('permissionDebug.rules')} </Text></Box><Box flexDirection="column">{rules.map((rule, index) => <Text key={index}>{figures.bullet} {permissionRuleValueToString(rule)}</Text>)}</Box></Box>}{directories.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> {tSync('permissionDebug.directories')} </Text></Box><Box flexDirection="column">{directories.map((dir, index_0) => <Text key={index_0}>{figures.bullet} {dir}</Text>)}</Box></Box>}{mode && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> {tSync('permissionDebug.mode')} </Text></Box><Text>{permissionModeTitle(mode)}</Text></Box>}</Box>;
   }
   if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
     return earlyReturn;
@@ -167,5 +168,5 @@ export function PermissionDecisionDebugInfo({
   } else {
     unreachableRules = all;
   }
-  return <Box flexDirection="column">{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>Behavior </Text></Box>}<Text>{(permissionResult as any).behavior}</Text></Box>}{(permissionResult as any).behavior !== "allow" && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>Message </Text></Box><Text>{(permissionResult as any).message}</Text></Box>}{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>Reason </Text></Box>}{decisionReason === undefined ? <Text>undefined</Text> : <PermissionDecisionInfoItem decisionReason={decisionReason} />}</Box>}{<SuggestionDisplay suggestions={suggestions as any} width={10} permissionResult={permissionResult as any} />}{unreachableRules.length > 0 && <Box flexDirection="column" marginTop={1}><Text color="warning">{figures.warning} Unreachable Rules ({unreachableRules.length})</Text>{unreachableRules.map((u_1, i) => <Box key={i} flexDirection="column" marginLeft={2}><Text color="warning">{permissionRuleValueToString(u_1.rule.ruleValue)}</Text><Text dimColor={true}>{"  "}{u_1.reason}</Text><Text dimColor={true}>{"  "}Fix: {u_1.fix}</Text></Box>)}</Box>}</Box>;
+  return <Box flexDirection="column">{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>{tSync('permissionDebug.behavior')} </Text></Box>}<Text>{(permissionResult as any).behavior}</Text></Box>}{(permissionResult as any).behavior !== "allow" && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>{tSync('permissionDebug.message')} </Text></Box><Text>{(permissionResult as any).message}</Text></Box>}{<Box flexDirection="row">{<Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>{tSync('permissionDebug.reason')} </Text></Box>}{decisionReason === undefined ? <Text>undefined</Text> : <PermissionDecisionInfoItem decisionReason={decisionReason} />}</Box>}{<SuggestionDisplay suggestions={suggestions as any} width={10} permissionResult={permissionResult as any} />}{unreachableRules.length > 0 && <Box flexDirection="column" marginTop={1}><Text color="warning">{figures.warning} {tSync('permissionDebug.unreachableRules', { count: unreachableRules.length })}</Text>{unreachableRules.map((u_1, i) => <Box key={i} flexDirection="column" marginLeft={2}><Text color="warning">{permissionRuleValueToString(u_1.rule.ruleValue)}</Text><Text dimColor={true}>{"  "}{u_1.reason}</Text><Text dimColor={true}>{"  "}Fix: {u_1.fix}</Text></Box>)}</Box>}</Box>;
 }

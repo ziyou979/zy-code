@@ -1,5 +1,6 @@
 import figures from 'figures';
 import React, { useEffect, useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { Box, color, Text, useTheme } from '../../ink.js';
 import { useMcpReconnect } from '../../services/mcp/MCPConnectionManager.js';
@@ -25,9 +26,9 @@ export function MCPReconnect({
       try {
         const server = store.getState().mcp.clients.find(c => c.name === serverName);
         if (!server) {
-          setError(`MCP server "${serverName}" not found`);
+          setError(tSync('mcp.serverNotFound', { serverName }));
           setIsReconnecting(false);
-          onComplete(`MCP server "${serverName}" not found`);
+          onComplete(tSync('mcp.serverNotFound', { serverName }));
           return;
         }
         const result = await reconnectMcpServer(serverName);
@@ -35,40 +36,40 @@ export function MCPReconnect({
           case "connected":
             {
               setIsReconnecting(false);
-              onComplete(`Successfully reconnected to ${serverName}`);
+              onComplete(tSync('mcp.successfullyReconnected', { serverName }));
               break;
             }
           case "needs-auth":
             {
-              setError(`${serverName} requires authentication`);
+              setError(tSync('mcp.requiresAuthentication', { serverName }));
               setIsReconnecting(false);
-              onComplete(`${serverName} requires authentication. Use /mcp to authenticate.`);
+              onComplete(tSync('mcp.requiresAuthUseMcp', { serverName }));
               break;
             }
           case "pending":
           case "failed":
           case "disabled":
             {
-              setError(`Failed to reconnect to ${serverName}`);
+              setError(tSync('mcp.failedToReconnectShort', { serverName }));
               setIsReconnecting(false);
-              onComplete(`Failed to reconnect to ${serverName}`);
+              onComplete(tSync('mcp.reconnectToFailed', { serverName }));
             }
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         setError(errorMessage);
         setIsReconnecting(false);
-        onComplete(`Error: ${errorMessage}`);
+        onComplete(tSync('mcp.errorGeneric', { error: errorMessage }));
       }
     };
     attemptReconnect();
   }, [serverName, reconnectMcpServer, store, onComplete]);
   if (isReconnecting) {
-    return <Box flexDirection="column" gap={1} padding={1}>{<Text color="text">Reconnecting to <Text bold={true}>{serverName}</Text></Text>}{<Box><Spinner /><Text> Establishing connection to MCP server</Text></Box>}</Box>;
+    return <Box flexDirection="column" gap={1} padding={1}>{<Text color="text">{tSync('mcp.reconnectingTo', { serverName })} <Text bold={true}>{serverName}</Text></Text>}{<Box><Spinner /><Text> {tSync('mcp.establishingConnection')}</Text></Box>}</Box>;
   }
   if (error) {
     const t3 = color("error", theme)(figures.cross);
-    return <Box flexDirection="column" gap={1} padding={1}>{<Box>{<Text>{t3} </Text>}{<Text color="error">Failed to reconnect to {serverName}</Text>}</Box>}{<Text dimColor={true}>Error: {error}</Text>}</Box>;
+    return <Box flexDirection="column" gap={1} padding={1}>{<Box>{<Text>{t3} </Text>}{<Text color="error">{tSync('mcp.failedToReconnect', { serverName })}</Text>}</Box>}{<Text dimColor={true}>{tSync('mcp.reconnectError', { error })}</Text>}</Box>;
   }
   return null;
 }

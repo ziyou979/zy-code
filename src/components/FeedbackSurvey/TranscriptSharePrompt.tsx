@@ -1,5 +1,6 @@
 import React from 'react';
 import { BLACK_CIRCLE } from '../../constants/figures.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { useDebouncedDigitInput } from './useDebouncedDigitInput.js';
 export type TranscriptShareResponse = 'yes' | 'no' | 'dont_ask_again';
@@ -27,5 +28,5 @@ export function TranscriptSharePrompt({
     isValidDigit: isValidResponseInput,
     onDigit: digit => onSelect(inputToResponse[digit])
   });
-  return <Box flexDirection="column" marginTop={1}>{<Box><Text color="ansi:cyan">{BLACK_CIRCLE} </Text><Text bold={true}>Can Anthropic look at your session transcript to help us improve ZY Code?</Text></Box>}{<Box marginLeft={2}><Text dimColor={true}>Learn more: https://code.zy.com/docs/en/data-usage#session-quality-surveys</Text></Box>}<Box marginLeft={2}>{<Box width={10}><Text><Text color="ansi:cyan">1</Text>: Yes</Text></Box>}{<Box width={10}><Text><Text color="ansi:cyan">2</Text>: No</Text></Box>}<Box><Text><Text color="ansi:cyan">3</Text>: Don't ask again</Text></Box></Box></Box>;
+  return <Box flexDirection="column" marginTop={1}>{<Box><Text color="ansi:cyan">{BLACK_CIRCLE} </Text><Text bold={true}>{tSync('transcriptShare.title')}</Text></Box>}{<Box marginLeft={2}><Text dimColor={true}>{tSync('transcriptShare.learnMore')}</Text></Box>}<Box marginLeft={2}>{<Box width={10}><Text><Text color="ansi:cyan">1</Text>: {tSync('transcriptShare.yes')}</Text></Box>}{<Box width={10}><Text><Text color="ansi:cyan">2</Text>: {tSync('transcriptShare.no')}</Text></Box>}<Box><Text><Text color="ansi:cyan">3</Text>: {tSync('transcriptShare.dontAskAgain')}</Text></Box></Box></Box>;
 }

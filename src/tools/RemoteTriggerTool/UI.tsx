@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from '../../i18n/index.js';
 import { MessageResponse } from '../../components/MessageResponse.js';
 import { Text } from '../../ink.js';
 import { countCharInString } from '../../utils/stringUtils.js';
@@ -10,7 +11,7 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
   const lines = countCharInString(output.json, '\n') + 1;
   return <MessageResponse>
       <Text>
-        HTTP {output.status} <Text dimColor>({lines} lines)</Text>
+        HTTP {output.status} <Text dimColor>({lines} {tSync('toolRemoteTrigger.lines')})</Text>
       </Text>
     </MessageResponse>;
 }

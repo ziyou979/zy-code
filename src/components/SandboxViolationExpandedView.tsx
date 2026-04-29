@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { SandboxManager } from '../utils/sandbox/sandbox-adapter.js';
 
@@ -34,5 +35,5 @@ export function SandboxViolationExpandedView() {
   }
   const t5 = violations.map((v, i) => <Box key={`${v.timestamp.getTime()}-${i}`} paddingLeft={2}><Text dimColor={true}>{formatTime(v.timestamp)}{v.command ? ` ${v.command}:` : ""} {v.line}</Text></Box>);
   const t6 = Math.min(10, violations.length);
-  return <Box flexDirection="column" marginTop={1}>{<Box marginLeft={0}><Text color="permission">⧈ Sandbox blocked {totalCount} total{" "}{totalCount === 1 ? "operation" : "operations"}</Text></Box>}{t5}{<Box paddingLeft={2}><Text dimColor={true}>… showing last {t6} of {totalCount}</Text></Box>}</Box>;
+  return <Box flexDirection="column" marginTop={1}>{<Box marginLeft={0}><Text color="permission">⧈ {tSync('sandboxViolation.blockedOperations', { count: totalCount, operationLabel: tSync(totalCount === 1 ? 'sandboxViolation.operation_one' : 'sandboxViolation.operation_other') })}</Text></Box>}{t5}{<Box paddingLeft={2}><Text dimColor={true}>{tSync('sandboxViolation.showingLast', { shown: t6, total: totalCount })}</Text></Box>}</Box>;
 }

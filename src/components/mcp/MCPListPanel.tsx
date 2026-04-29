@@ -1,5 +1,6 @@
 import figures from 'figures';
 import React, { useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
@@ -43,27 +44,27 @@ function getScopeHeading(scope: ConfigScope): {
   switch (scope) {
     case 'project':
       return {
-        label: 'Project MCPs',
+        label: tSync('mcp.projectMCPs'),
         path: describeMcpConfigFilePath(scope)
       };
     case 'user':
       return {
-        label: 'User MCPs',
+        label: tSync('mcp.userMCPs'),
         path: describeMcpConfigFilePath(scope)
       };
     case 'local':
       return {
-        label: 'Local MCPs',
+        label: tSync('mcp.localMCPs'),
         path: describeMcpConfigFilePath(scope)
       };
     case 'enterprise':
       return {
-        label: 'Enterprise MCPs'
+        label: tSync('mcp.enterpriseMCPs')
       };
     case 'dynamic':
       return {
-        label: 'Built-in MCPs',
-        path: 'always available'
+        label: tSync('mcp.builtInMCPs'),
+        path: tSync('mcp.alwaysAvailable')
       };
     default:
       return {
@@ -133,7 +134,7 @@ export function MCPListPanel({
   }
   const selectableItems = items;
   const handleCancel = () => {
-    onComplete("MCP dialog dismissed", {
+    onComplete(tSync('mcp.dialogDismissed'), {
       display: "system"
     });
   };
@@ -172,11 +173,11 @@ export function MCPListPanel({
     let statusText;
     if (server_3.client.type === "disabled") {
       statusIcon = color("inactive", theme)(figures.radioOff);
-      statusText = "disabled";
+      statusText = tSync('mcp.disabled');
     } else {
       if (server_3.client.type === "connected") {
         statusIcon = color("success", theme)(figures.tick);
-        statusText = "connected";
+        statusText = tSync('mcp.connected');
       } else {
         if (server_3.client.type === "pending") {
           statusIcon = color("inactive", theme)(figures.radioOff);
@@ -185,17 +186,17 @@ export function MCPListPanel({
             maxReconnectAttempts
           } = server_3.client;
           if (reconnectAttempt && maxReconnectAttempts) {
-            statusText = `reconnecting (${reconnectAttempt}/${maxReconnectAttempts})…`;
+            statusText = tSync('mcp.reconnectingWithProgress', { current: reconnectAttempt, max: maxReconnectAttempts });
           } else {
-            statusText = "connecting\u2026";
+            statusText = tSync('mcp.connecting');
           }
         } else {
           if (server_3.client.type === "needs-auth") {
             statusIcon = color("warning", theme)(figures.triangleUpOutline);
-            statusText = "needs authentication";
+            statusText = tSync('mcp.needsAuthentication');
           } else {
             statusIcon = color("error", theme)(figures.cross);
-            statusText = "failed";
+            statusText = tSync('mcp.failed');
           }
         }
       }
@@ -206,7 +207,7 @@ export function MCPListPanel({
     const index_0 = getAgentServerIndex(agentServer_1);
     const isSelected_0 = selectedIndex === index_0;
     const statusIcon_0 = agentServer_1.needsAuth ? color("warning", theme)(figures.triangleUpOutline) : color("inactive", theme)(figures.radioOff);
-    const statusText_0 = agentServer_1.needsAuth ? "may need auth" : "agent-only";
+    const statusText_0 = agentServer_1.needsAuth ? tSync('mcp.mayNeedAuth') : tSync('mcp.agentOnly');
     return <Box key={`agent-${agentServer_1.name}-${index_0}`}><Text color={isSelected_0 ? "suggestion" : undefined}>{isSelected_0 ? `${figures.pointer} ` : "  "}</Text><Text color={isSelected_0 ? "suggestion" : undefined}>{agentServer_1.name}</Text><Text dimColor={!isSelected_0}> · {statusIcon_0} </Text><Text dimColor={!isSelected_0}>{statusText_0}</Text></Box>;
   };
   const totalServers = servers.length + agentServers.length;
@@ -219,5 +220,5 @@ export function MCPListPanel({
     const heading = getScopeHeading(scope_0);
     return <Box key={scope_0} flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>{heading.label}</Text>{heading.path && <Text dimColor={true}> ({heading.path})</Text>}</Box>{scopeServers_0.map(server_4 => renderServerItem(server_4))}</Box>;
   });
-  return <Box flexDirection="column">{<McpParsingWarnings />}{<Dialog title="Manage MCP servers" subtitle={`${totalServers} ${t20}`} onCancel={handleCancel} hideInputGuide={true}>{<Box flexDirection="column">{t22}{zyAiServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>zy.ai</Text></Box>{zyAiServers.map(server_5 => renderServerItem(server_5))}</Box>}{agentServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>Agent MCPs</Text></Box>{[...new Set(agentServers.flatMap(s_2 => s_2.sourceAgents))].map(agentName => <Box key={agentName} flexDirection="column" marginTop={1}><Box paddingLeft={2}><Text dimColor={true}>@{agentName}</Text></Box>{agentServers.filter(s_3 => s_3.sourceAgents.includes(agentName)).map(agentServer_2 => renderAgentServerItem(agentServer_2))}</Box>)}</Box>}{dynamicServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>{dynamicHeading.label}</Text>{dynamicHeading.path && <Text dimColor={true}> ({dynamicHeading.path})</Text>}</Box>{dynamicServers.map(server_6 => renderServerItem(server_6))}</Box>}{<Box flexDirection="column">{hasFailedClients && <Text dimColor={true}>{debugMode ? "\u203B Error logs shown inline with --debug" : "\u203B Run zy --debug to see error logs"}</Text>}{<Text dimColor={true}><Link url="https://code.zy.com/docs/en/mcp">https://code.zy.com/docs/en/mcp</Link>{" "}for help</Text>}</Box>}</Box>}</Dialog>}{<Box paddingX={1}><Text dimColor={true} italic={true}><Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text></Box>}</Box>;
+  return <Box flexDirection="column">{<McpParsingWarnings />}{<Dialog title={tSync('mcp.manageServers')} subtitle={`${totalServers} ${t20}`} onCancel={handleCancel} hideInputGuide={true}>{<Box flexDirection="column">{t22}{zyAiServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>zy.ai</Text></Box>{zyAiServers.map(server_5 => renderServerItem(server_5))}</Box>}{agentServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>{tSync('mcp.agentMCPs')}</Text></Box>{[...new Set(agentServers.flatMap(s_2 => s_2.sourceAgents))].map(agentName => <Box key={agentName} flexDirection="column" marginTop={1}><Box paddingLeft={2}><Text dimColor={true}>@{agentName}</Text></Box>{agentServers.filter(s_3 => s_3.sourceAgents.includes(agentName)).map(agentServer_2 => renderAgentServerItem(agentServer_2))}</Box>)}</Box>}{dynamicServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>{dynamicHeading.label}</Text>{dynamicHeading.path && <Text dimColor={true}> ({dynamicHeading.path})</Text>}</Box>{dynamicServers.map(server_6 => renderServerItem(server_6))}</Box>}{<Box flexDirection="column">{hasFailedClients && <Text dimColor={true}>{debugMode ? tSync('mcp.errorLogsInline') : tSync('mcp.runDebugForLogs')}</Text>}{<Text dimColor={true}><Link url="https://code.zy.com/docs/en/mcp">https://code.zy.com/docs/en/mcp</Link>{" "}{tSync('mcp.forHelp')}</Text>}</Box>}</Box>}</Dialog>}{<Box paddingX={1}><Text dimColor={true} italic={true}><Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('common.cancel')} /></Byline></Text></Box>}</Box>;
 }

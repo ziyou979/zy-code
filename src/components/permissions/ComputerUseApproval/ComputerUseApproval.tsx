@@ -4,6 +4,7 @@ import { DEFAULT_GRANT_FLAGS } from '@ant/computer-use-mcp/types';
 import figures from 'figures';
 import * as React from 'react';
 import { useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Text } from '../../../ink.js';
 import { execFileNoThrow } from '../../../utils/execFileNoThrow.js';
 import { plural } from '../../../utils/stringUtils.js';
@@ -42,18 +43,18 @@ function ComputerUseTccPanel({
   const opts = [];
   if (!tccState.accessibility) {
     opts.push({
-      label: "Open System Settings \u2192 Accessibility",
+      label: tSync('computerUse.openSystemSettingsAccessibility'),
       value: "open_accessibility"
     });
   }
   if (!tccState.screenRecording) {
     opts.push({
-      label: "Open System Settings \u2192 Screen Recording",
+      label: tSync('computerUse.openSystemSettingsScreenRecording'),
       value: "open_screen_recording"
     });
   }
   opts.push({
-    label: "Try again",
+    label: tSync('computerUse.tryAgain'),
     value: "retry"
   });
   const options = opts;
@@ -80,16 +81,16 @@ function ComputerUseTccPanel({
         }
     }
   };
-  return <Dialog title="Computer Use needs macOS permissions" onCancel={onDone}>{<Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>{<Box flexDirection="column">{<Text>Accessibility:{" "}{tccState.accessibility ? `${figures.tick} granted` : `${figures.cross} not granted`}</Text>}{<Text>Screen Recording:{" "}{tccState.screenRecording ? `${figures.tick} granted` : `${figures.cross} not granted`}</Text>}</Box>}{<Text dimColor={true}>Grant the missing permissions in System Settings, then select "Try again". macOS may require you to restart ZY Code after granting Screen Recording.</Text>}{<Select options={options} onChange={onChange} onCancel={onDone} />}</Box>}</Dialog>;
+  return <Dialog title={tSync('computerUse.needsMacOSPermissions')} onCancel={onDone}>{<Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>{<Box flexDirection="column">{<Text>{tSync('computerUse.accessibilityLabel')}{" "}{tccState.accessibility ? `${figures.tick} ${tSync('computerUse.granted')}` : `${figures.cross} ${tSync('computerUse.notGranted')}`}</Text>}{<Text>{tSync('computerUse.screenRecordingLabel')}{" "}{tccState.screenRecording ? `${figures.tick} ${tSync('computerUse.granted')}` : `${figures.cross} ${tSync('computerUse.notGranted')}`}</Text>}</Box>}{<Text dimColor={true}>{tSync('computerUse.grantMissingPermissions')}</Text>}{<Select options={options} onChange={onChange} onCancel={onDone} />}</Box>}</Dialog>;
 }
 
 // ── App allowlist panel ───────────────────────────────────────────────────
 
 type AppListOption = 'allow_all' | 'deny';
 const SENTINEL_WARNING: Record<NonNullable<ReturnType<typeof getSentinelCategory>>, string> = {
-  shell: 'equivalent to shell access',
-  filesystem: 'can read/write any file',
-  system_settings: 'can change system settings'
+  shell: tSync('computerUse.equivalentToShellAccess'),
+  filesystem: tSync('computerUse.canReadWriteAnyFile'),
+  system_settings: tSync('computerUse.canChangeSystemSettings')
 };
 function ComputerUseAppListPanel({
   request,
@@ -100,10 +101,10 @@ function ComputerUseAppListPanel({
   const requestedFlagKeys = ALL_FLAG_KEYS.filter(k => request.requestedFlags[k]);
   const t5 = plural(checked.size, "app");
   const options = [{
-    label: `Allow for this session (${checked.size} ${t5})`,
+    label: tSync('computerUse.allowForThisSession', { count: checked.size, app: t5 }),
     value: "allow_all"
   }, {
-    label: <Text>Deny, and tell Zy what to do differently <Text bold={true}>(esc)</Text></Text>,
+    label: <Text>{tSync('computerUse.denyAndTellZy')} <Text bold={true}>(esc)</Text></Text>,
     value: "deny"
   }];
   const respond = function respond(allow) {
@@ -134,14 +135,14 @@ function ComputerUseAppListPanel({
   const t13 = request.apps.map(a_3 => {
     const resolved = a_3.resolved;
     if (!resolved) {
-      return <Text key={a_3.requestedName} dimColor={true}>{"  "}{figures.circle} {a_3.requestedName}{" "}<Text dimColor={true}>(not installed)</Text></Text>;
+      return <Text key={a_3.requestedName} dimColor={true}>{"  "}{figures.circle} {a_3.requestedName}{" "}<Text dimColor={true}>({tSync('computerUse.notInstalled')})</Text></Text>;
     }
     if (a_3.alreadyGranted) {
-      return <Text key={resolved.bundleId} dimColor={true}>{"  "}{figures.tick} {resolved.displayName}{" "}<Text dimColor={true}>(already granted)</Text></Text>;
+      return <Text key={resolved.bundleId} dimColor={true}>{"  "}{figures.tick} {resolved.displayName}{" "}<Text dimColor={true}>({tSync('computerUse.alreadyGranted')})</Text></Text>;
     }
     const sentinel = getSentinelCategory(resolved.bundleId);
     const isChecked = checked.has(resolved.bundleId);
     return <Box key={resolved.bundleId} flexDirection="column"><Text>{"  "}{isChecked ? figures.circleFilled : figures.circle}{" "}{resolved.displayName}</Text>{sentinel ? <Text bold={true}>{"    "}{figures.warning} {SENTINEL_WARNING[sentinel]}</Text> : null}</Box>;
   });
-  return <Dialog title="Computer Use wants to control these apps" onCancel={() => respond(false)}>{<Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>{request.reason ? <Text dimColor={true}>{request.reason}</Text> : null}{<Box flexDirection="column">{t13}</Box>}{requestedFlagKeys.length > 0 ? <Box flexDirection="column"><Text dimColor={true}>Also requested:</Text>{requestedFlagKeys.map(flag => <Text key={flag} dimColor={true}>{"  "}· {flag}</Text>)}</Box> : null}{request.willHide && request.willHide.length > 0 ? <Text dimColor={true}>{request.willHide.length} other{" "}{plural(request.willHide.length, "app")} will be hidden while Zy works.</Text> : null}{<Select options={options} onChange={v => respond(v === "allow_all")} onCancel={() => respond(false)} />}</Box>}</Dialog>;
+  return <Dialog title={tSync('computerUse.wantsToControlApps')} onCancel={() => respond(false)}>{<Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>{request.reason ? <Text dimColor={true}>{request.reason}</Text> : null}{<Box flexDirection="column">{t13}</Box>}{requestedFlagKeys.length > 0 ? <Box flexDirection="column"><Text dimColor={true}>{tSync('computerUse.alsoRequested')}</Text>{requestedFlagKeys.map(flag => <Text key={flag} dimColor={true}>{"  "}· {flag}</Text>)}</Box> : null}{request.willHide && request.willHide.length > 0 ? <Text dimColor={true}>{tSync('computerUse.otherAppsHidden', { count: request.willHide.length, app: plural(request.willHide.length, "app") })}</Text> : null}{<Select options={options} onChange={v => respond(v === "allow_all")} onCancel={() => respond(false)} />}</Box>}</Dialog>;
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { checkIsGitClean, checkNeedsZyAiLogin } from 'src/utils/background/remote/preconditions.js';
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
 import { Box, Text } from '../ink.js';
+import { tSync } from 'src/i18n/index.js';
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
@@ -79,13 +80,13 @@ export function TeleportError({
           return t9;
         }
         let t9;
-        t9 = <Box flexDirection="column"><Text dimColor={true}>Teleport requires a Zy.ai account.</Text><Text dimColor={true}>Your Zy Pro/Max subscription will be used by ZY Code.</Text></Box>;
+        t9 = <Box flexDirection="column"><Text dimColor={true}>{tSync('teleport.requiresAccount')}</Text><Text dimColor={true}>{tSync('teleport.subscriptionInfo')}</Text></Box>;
         let t10;
-        t10 = <Dialog title="Log in to Zy" onCancel={onCancel}>{t9}<Select options={[{
-            label: "Login with Zy account",
+        t10 = <Dialog title={tSync('teleport.loginTitle')} onCancel={onCancel}>{t9}<Select options={[{
+            label: tSync('teleport.loginWithZy'),
             value: "login"
           }, {
-            label: "Exit",
+            label: tSync('teleport.exit'),
             value: "exit"
           }]} onChange={handleLoginDialogSelect} /></Dialog>;
         return t10;

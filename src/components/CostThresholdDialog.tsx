@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Link, Text } from '../ink.js';
+import { tSync } from 'src/i18n/index.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
 type Props = {
@@ -8,8 +9,8 @@ type Props = {
 export function CostThresholdDialog({
   onDone
 }: Props) {
-  return <Dialog title="You've spent $5 on the Anthropic API this session." onCancel={onDone}>{<Box flexDirection="column"><Text>Learn more about how to monitor your spending:</Text><Link url="https://code.zy.com/docs/en/costs" /></Box>}{<Select options={[{
+  return <Dialog title={tSync('costThreshold.title')} onCancel={onDone}>{<Box flexDirection="column"><Text>{tSync('costThreshold.learnMore')}</Text><Link url="https://code.zy.com/docs/en/costs" /></Box>}{<Select options={[{
       value: "ok",
-      label: "Got it, thanks!"
+      label: tSync('costThreshold.gotIt')
     }]} onChange={onDone} />}</Dialog>;
 }

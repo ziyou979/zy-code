@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useMemoryUsage } from '../hooks/useMemoryUsage.js';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { isInternalBuild } from '../utils/envUtils.js';
 import { formatFileSize } from '../utils/format.js';
@@ -31,7 +32,7 @@ export function MemoryUsageIndicator(): React.ReactNode {
   const color = status === 'critical' ? 'error' : 'warning';
   return <Box>
       <Text color={color} wrap="truncate">
-        High memory usage ({formattedSize}) · /heapdump
+        {tSync('memoryUsage.high', { size: formattedSize })}
       </Text>
     </Box>;
 }

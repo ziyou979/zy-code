@@ -10,6 +10,7 @@ import figures from 'figures';
 import * as React from 'react';
 import { BLACK_CIRCLE, PAUSE_ICON, PLAY_ICON } from '../constants/figures.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+import { tSync } from '../i18n/index.js';
 import { stringWidth } from '../ink/stringWidth.js';
 import { Box, Text, wrapText } from '../ink.js';
 import { type AppState, useAppState, useSetAppState } from '../state/AppState.js';
@@ -93,7 +94,7 @@ function MainLine({
   const [hover, setHover] = React.useState(false);
   const prefix = isSelected || hover ? figures.pointer + " " : "  ";
   const bullet = isViewed ? BLACK_CIRCLE : figures.circle;
-  return <Box onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>{<Text dimColor={!isSelected && !isViewed && !hover} bold={isViewed}>{prefix}{bullet} main</Text>}</Box>;
+  return <Box onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>{<Text dimColor={!isSelected && !isViewed && !hover} bold={isViewed}>{prefix}{bullet} {tSync('coordinator.main')}</Text>}</Box>;
 }
 type AgentLineProps = {
   task: LocalAgentTaskState;
@@ -120,9 +121,9 @@ function AgentLine({
   const tokenCount = task.progress?.tokenCount;
   const lastActivity = task.progress?.lastActivity;
   const arrow = lastActivity ? figures.arrowDown : figures.arrowUp;
-  const tokenText = tokenCount !== undefined && tokenCount > 0 ? ` · ${arrow} ${formatNumber(tokenCount)} tokens` : "";
+  const tokenText = tokenCount !== undefined && tokenCount > 0 ? tSync('coordinator.tokens', { arrow, count: formatNumber(tokenCount) }) : "";
   const queuedCount = task.pendingMessages.length;
-  const queuedText = queuedCount > 0 ? ` · ${queuedCount} queued` : "";
+  const queuedText = queuedCount > 0 ? tSync('coordinator.queued', { count: queuedCount }) : "";
   const displayDescription = task.progress?.summary || task.description;
   const highlighted = isSelected || hover;
   const prefix = highlighted ? figures.pointer + " " : "  ";
@@ -130,7 +131,7 @@ function AgentLine({
   const dim = !highlighted && !isViewed;
   const sep = isRunning ? PLAY_ICON : PAUSE_ICON;
   const namePart = name ? `${name}: ` : "";
-  const hintPart = isSelected && !isViewed ? ` · x to ${isRunning ? "stop" : "clear"}` : "";
+  const hintPart = isSelected && !isViewed ? (isRunning ? tSync('coordinator.xToStop') : tSync('coordinator.xToClear')) : "";
   const suffixPart = ` ${sep} ${elapsed}${tokenText}${queuedText}${hintPart}`;
   const availableForDesc = columns - stringWidth(prefix) - stringWidth(`${bullet} `) - stringWidth(namePart) - stringWidth(suffixPart);
   const maxResult = Math.max(0, availableForDesc);

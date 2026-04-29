@@ -1,6 +1,7 @@
 import figures from 'figures';
 import React, { useEffect, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+import { tSync } from 'src/i18n/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { getOauthConfig } from '../../constants/oauth.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
@@ -100,11 +101,11 @@ export function MCPRemoteServerMenu({
         success
       });
       if (success) {
-        onComplete?.(`Authentication successful. Connected to ${server.name}.`);
+        onComplete?.(tSync('mcp.authSuccessfulConnected', { serverName: server.name }));
       } else if (result.client.type === 'needs-auth') {
-        onComplete?.('Authentication successful, but server still requires authentication. You may need to manually restart ZY Code.');
+        onComplete?.(tSync('mcp.authSuccessfulNeedsAuth'));
       } else {
-        onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart ZY Code for the changes to take effect.');
+        onComplete?.(tSync('mcp.authSuccessfulReconnectFailed'));
       }
     } catch (err) {
       logEvent('zy_Zyai_mcp_auth_completed', {
@@ -140,7 +141,7 @@ export function MCPRemoteServerMenu({
       };
     });
     logEvent('zy_Zyai_mcp_clear_auth_completed', {});
-    onComplete?.(`Disconnected from ${server.name}.`);
+    onComplete?.(tSync('mcp.disconnectedFrom', { serverName: server.name }));
     setIsZyAIClearingAuth(false);
     setZyAIClearAuthUrl(null);
     setZyAIClearAuthBrowserOpened(false);
@@ -249,8 +250,8 @@ export function MCPRemoteServerMenu({
       // Return to the server list so user can continue managing other servers
       onCancel();
     } catch (err_0) {
-      const action = wasEnabled ? 'disable' : 'enable';
-      onComplete?.(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err_0)}`);
+      const action = wasEnabled ? tSync('mcp.disable') : tSync('mcp.enable');
+      onComplete?.(tSync('mcp.failedToToggle', { action, serverName: server.name, error: errorMessage(err_0) }));
     }
   }, [(server as any).client.type, (server as any).config.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const handleAuthenticate = React.useCallback(async () => {
@@ -278,14 +279,14 @@ export function MCPRemoteServerMenu({
         });
         const result_0 = await reconnectMcpServer(server.name);
         if (result_0.client.type === 'connected') {
-          const message = isEffectivelyAuthenticated ? `Authentication successful. Reconnected to ${server.name}.` : `Authentication successful. Connected to ${server.name}.`;
+          const message = isEffectivelyAuthenticated ? tSync('mcp.authSuccessfulReconnected', { serverName: server.name }) : tSync('mcp.authSuccessfulConnected', { serverName: server.name });
           onComplete?.(message);
         } else if (result_0.client.type === 'needs-auth') {
-          onComplete?.('Authentication successful, but server still requires authentication. You may need to manually restart ZY Code.');
+          onComplete?.(tSync('mcp.authSuccessfulNeedsAuth'));
         } else {
           // result.client.type === 'failed'
           logMCPDebug(server.name, `Reconnection failed after authentication`);
-          onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart ZY Code for the changes to take effect.');
+          onComplete?.(tSync('mcp.authSuccessfulReconnectFailed'));
         }
       }
     } catch (err_1) {
@@ -335,16 +336,16 @@ export function MCPRemoteServerMenu({
           }
         };
       });
-      onComplete?.(`Authentication cleared for ${server.name}.`);
+      onComplete?.(tSync('mcp.authCleared', { serverName: server.name }));
     }
   };
   if (isAuthenticating) {
     // XAA: silent exchange (cached id_token → no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy = (server as any).config.type !== 'zyai-proxy' && (server as any).config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    const authCopy = (server as any).config.type !== 'zyai-proxy' && (server as any).config.oauth?.xaa ? ` ${tSync('mcp.authViaIdentityProvider')}` : ` ${tSync('mcp.browserWillOpen')}`;
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">Authenticating with {server.name}…</Text>
+        <Text color="zy">{tSync('mcp.authenticatingWith', { serverName: server.name })}</Text>
         <Box>
           <Spinner />
           <Text>{authCopy}</Text>
@@ -352,10 +353,9 @@ export function MCPRemoteServerMenu({
         {authorizationUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
-                If your browser doesn&apos;t open automatically, copy this URL
-                manually{' '}
+                {tSync('mcp.copyUrlManually')}{' '}
               </Text>
-              {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+              {urlCopied ? <Text color="success">({tSync('mcp.copied')})</Text> : <Text dimColor>
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
@@ -363,8 +363,7 @@ export function MCPRemoteServerMenu({
           </Box>}
         {isAuthenticating && authorizationUrl && manualCallbackSubmit && <Box flexDirection="column" marginTop={1}>
             <Text dimColor>
-              If the redirect page shows a connection error, paste the URL from
-              your browser&apos;s address bar:
+              {tSync('mcp.pasteUrlFromBrowser')}
             </Text>
             <Box>
               <Text dimColor>URL {'>'} </Text>
@@ -376,26 +375,24 @@ export function MCPRemoteServerMenu({
           </Box>}
         <Box marginLeft={3}>
           <Text dimColor>
-            Return here after authenticating in your browser. Press Esc to go
-            back.
+            {tSync('mcp.returnAfterAuth')}
           </Text>
         </Box>
       </Box>;
   }
   if (isZyAIAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">Authenticating with {server.name}…</Text>
+        <Text color="zy">{tSync('mcp.authenticatingWith', { serverName: server.name })}</Text>
         <Box>
           <Spinner />
-          <Text> A browser window will open for authentication</Text>
+          <Text> {tSync('mcp.browserWillOpen')}</Text>
         </Box>
         {ZyAIAuthUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
-                If your browser doesn&apos;t open automatically, copy this URL
-                manually{' '}
+                {tSync('mcp.copyUrlManually')}{' '}
               </Text>
-              {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+              {urlCopied ? <Text color="success">({tSync('mcp.copied')})</Text> : <Text dimColor>
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
@@ -403,29 +400,27 @@ export function MCPRemoteServerMenu({
           </Box>}
         <Box marginLeft={3} flexDirection="column">
           <Text color="permission">
-            Press <Text bold>Enter</Text> after authenticating in your browser.
+            {tSync('mcp.pressEnterAfterAuth')}
           </Text>
           <Text dimColor italic>
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
+            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.back')} />
           </Text>
         </Box>
       </Box>;
   }
   if (isZyAIClearingAuth) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">Clear authentication for {server.name}</Text>
+        <Text color="zy">{tSync('mcp.clearAuthTitle', { serverName: server.name })}</Text>
         {ZyAIClearAuthBrowserOpened ? <>
             <Text>
-              Find the MCP server in the browser and click
-              &quot;Disconnect&quot;.
+              {tSync('mcp.findServerAndDisconnect')}
             </Text>
             {ZyAIClearAuthUrl && <Box flexDirection="column">
                 <Box>
                   <Text dimColor>
-                    If your browser didn&apos;t open automatically, copy this
-                    URL manually{' '}
+                    {tSync('mcp.copyUrlManually')}{' '}
                   </Text>
-                  {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+                  {urlCopied ? <Text color="success">({tSync('mcp.copied')})</Text> : <Text dimColor>
                       <KeyboardShortcutHint shortcut="c" action="copy" parens />
                     </Text>}
                 </Box>
@@ -433,23 +428,22 @@ export function MCPRemoteServerMenu({
               </Box>}
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
-                Press <Text bold>Enter</Text> when done.
+                {tSync('mcp.pressEnterWhenDone')}
               </Text>
               <Text dimColor italic>
-                <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
+                <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.back')} />
               </Text>
             </Box>
           </> : <>
             <Text>
-              This will open zy.ai in the browser. Find the MCP server in
-              the list and click &quot;Disconnect&quot;.
+              {tSync('mcp.willOpenZyAi')}
             </Text>
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
-                Press <Text bold>Enter</Text> to open the browser.
+                {tSync('mcp.pressEnterToOpenBrowser')}
               </Text>
               <Text dimColor italic>
-                <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
+                <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.back')} />
               </Text>
             </Box>
           </>}
@@ -458,13 +452,13 @@ export function MCPRemoteServerMenu({
   if (isReconnecting) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="text">
-          Connecting to <Text bold>{server.name}</Text>…
+          {tSync('mcp.connectingTo', { serverName: server.name })}
         </Text>
         <Box>
           <Spinner />
-          <Text> Establishing connection to MCP server</Text>
+          <Text> {tSync('mcp.establishingConnection')}</Text>
         </Box>
-        <Text dimColor>This may take a few moments.</Text>
+        <Text dimColor>{tSync('mcp.mayTakeAMoment')}</Text>
       </Box>;
   }
   const menuOptions = [];
@@ -472,42 +466,42 @@ export function MCPRemoteServerMenu({
   // If server is disabled, show Enable first as the primary action
   if ((server as any).client.type === 'disabled') {
     menuOptions.push({
-      label: 'Enable',
+      label: tSync('mcp.enable'),
       value: 'toggle-enabled'
     });
   }
   if ((server as any).client.type === 'connected' && serverToolsCount > 0) {
     menuOptions.push({
-      label: 'View tools',
+      label: tSync('mcp.viewTools'),
       value: 'tools'
     });
   }
   if ((server as any).config.type === 'zyai-proxy') {
     if ((server as any).client.type === 'connected') {
       menuOptions.push({
-        label: 'Clear authentication',
+        label: tSync('mcp.clearAuthentication'),
         value: 'zyai-clear-auth'
       });
     } else if ((server as any).client.type !== 'disabled') {
       menuOptions.push({
-        label: 'Authenticate',
+        label: tSync('mcp.authenticate'),
         value: 'zyai-auth'
       });
     }
   } else {
     if (isEffectivelyAuthenticated) {
       menuOptions.push({
-        label: 'Re-authenticate',
+        label: tSync('mcp.reauthenticate'),
         value: 'reauth'
       });
       menuOptions.push({
-        label: 'Clear authentication',
+        label: tSync('mcp.clearAuthentication'),
         value: 'clear-auth'
       });
     }
     if (!isEffectivelyAuthenticated) {
       menuOptions.push({
-        label: 'Authenticate',
+        label: tSync('mcp.authenticate'),
         value: 'auth'
       });
     }
@@ -515,12 +509,12 @@ export function MCPRemoteServerMenu({
   if ((server as any).client.type !== 'disabled') {
     if ((server as any).client.type !== 'needs-auth') {
       menuOptions.push({
-        label: 'Reconnect',
+        label: tSync('mcp.reconnect'),
         value: 'reconnectMcpServer'
       });
     }
     menuOptions.push({
-      label: 'Disable',
+      label: tSync('mcp.disable'),
       value: 'toggle-enabled'
     });
   }
@@ -528,57 +522,56 @@ export function MCPRemoteServerMenu({
   // If there are no other options, add a back option so Select handles escape
   if (menuOptions.length === 0) {
     menuOptions.push({
-      label: 'Back',
+      label: tSync('mcp.back'),
       value: 'back'
     });
   }
   return <Box flexDirection="column">
       <Box flexDirection="column" paddingX={1} borderStyle={borderless ? undefined : 'round'}>
         <Box marginBottom={1}>
-          <Text bold>{capitalizedServerName} MCP Server</Text>
+          <Text bold>{tSync('mcp.serverTitle', { serverName: capitalizedServerName })}</Text>
         </Box>
 
         <Box flexDirection="column" gap={0}>
           <Box>
-            <Text bold>Status: </Text>
-            {(server as any).client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : (server as any).client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : (server as any).client.type === 'pending' ? <>
+            <Text bold>{tSync('mcp.statusLabel')} </Text>
+            {(server as any).client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} {tSync('mcp.disabled')}</Text> : (server as any).client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} {tSync('mcp.connected')}</Text> : (server as any).client.type === 'pending' ? <>
                 <Text dimColor>{figures.radioOff}</Text>
-                <Text> connecting…</Text>
+                <Text> {tSync('mcp.connecting')}</Text>
               </> : (server as any).client.type === 'needs-auth' ? <Text>
-                {color('warning', theme)(figures.triangleUpOutline)} needs
-                authentication
-              </Text> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
+                {color('warning', theme)(figures.triangleUpOutline)} {tSync('mcp.needsAuthentication')}
+              </Text> : <Text>{color('error', theme)(figures.cross)} {tSync('mcp.failed')}</Text>}
           </Box>
 
           {(server as any).transport !== 'zyai-proxy' && <Box>
-              <Text bold>Auth: </Text>
+              <Text bold>{tSync('mcp.authLabel')} </Text>
               {isEffectivelyAuthenticated ? <Text>
-                  {color('success', theme)(figures.tick)} authenticated
+                  {color('success', theme)(figures.tick)} {tSync('mcp.authenticated')}
                 </Text> : <Text>
-                  {color('error', theme)(figures.cross)} not authenticated
+                  {color('error', theme)(figures.cross)} {tSync('mcp.notAuthenticated')}
                 </Text>}
             </Box>}
 
           <Box>
-            <Text bold>URL: </Text>
+            <Text bold>{tSync('mcp.urlLabel')} </Text>
             <Text dimColor>{(server as any).config.url}</Text>
           </Box>
 
           <Box>
-            <Text bold>Config location: </Text>
+            <Text bold>{tSync('mcp.configLocationLabel')} </Text>
             <Text dimColor>{describeMcpConfigFilePath((server as any).scope)}</Text>
           </Box>
 
           {(server as any).client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
 
           {(server as any).client.type === 'connected' && serverToolsCount > 0 && <Box>
-              <Text bold>Tools: </Text>
-              <Text dimColor>{serverToolsCount} tools</Text>
+              <Text bold>{tSync('mcp.toolsLabel')} </Text>
+              <Text dimColor>{tSync('mcp.toolsCount', { count: serverToolsCount })}</Text>
             </Box>}
         </Box>
 
         {error && <Box marginTop={1}>
-            <Text color="error">Error: {error}</Text>
+            <Text color="error">{tSync('mcp.errorLabelMenu')} {error}</Text>
           </Box>}
 
         {menuOptions.length > 0 && <Box marginTop={1}>
@@ -637,10 +630,10 @@ export function MCPRemoteServerMenu({
 
       <Box marginTop={1}>
         <Text dimColor italic>
-          {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Byline>
+          {exitState.pending ? <>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</> : <Byline>
               <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
               <KeyboardShortcutHint shortcut="Enter" action="select" />
-              <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
+              <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.back')} />
             </Byline>}
         </Text>
       </Box>

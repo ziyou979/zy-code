@@ -1,10 +1,10 @@
 import * as React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Select } from '../../../components/CustomSelect/select.js';
 import { Box, Text } from '../../../ink.js';
 import type { ToolPermissionContext } from '../../../Tool.js';
 import { applyPermissionUpdate } from '../../../utils/permissions/PermissionUpdate.js';
 import { Dialog } from '../../design-system/Dialog.js';
-import { tSync } from 'src/i18n/index.js';
 type Props = {
   directoryPath: string;
   onRemove: () => void;
@@ -35,7 +35,7 @@ export function RemoveWorkspaceDirectory({
       onCancel();
     }
   };
-  return <Dialog title="Remove directory from workspace?" onCancel={onCancel} color="error">{<Box marginX={2} flexDirection="column"><Text bold={true}>{directoryPath}</Text></Box>}{<Text>ZY Code will no longer have access to files in this directory.</Text>}{<Select onChange={handleSelect} onCancel={onCancel} options={[{
+  return <Dialog title={tSync('permissionRules.removeDirectoryFromWorkspace')} onCancel={onCancel} color="error">{<Box marginX={2} flexDirection="column"><Text bold={true}>{directoryPath}</Text></Box>}{<Text>{tSync('permissionRules.directoryRemovedWarning')}</Text>}{<Select onChange={handleSelect} onCancel={onCancel} options={[{
       label: tSync('permission.yes'),
       value: "yes"
     }, {

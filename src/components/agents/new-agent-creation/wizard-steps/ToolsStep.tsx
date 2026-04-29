@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Tools } from '../../../../Tool.js';
+import { tSync } from '../../../../i18n/index.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Byline } from '../../../design-system/Byline.js';
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
@@ -25,5 +26,5 @@ export function ToolsStep({
     goNext();
   };
   const initialTools = wizardData.selectedTools;
-  return <WizardDialogLayout subtitle="Select tools" footerText={<Byline><KeyboardShortcutHint shortcut="Enter" action="toggle selection" /><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><ToolSelector tools={tools} initialTools={initialTools} onComplete={handleComplete} onCancel={goBack} /></WizardDialogLayout>;
+  return <WizardDialogLayout subtitle={tSync('wizard.selectTools')} footerText={<Byline><KeyboardShortcutHint shortcut="Enter" action="toggle selection" /><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><ToolSelector tools={tools} initialTools={initialTools} onComplete={handleComplete} onCancel={goBack} /></WizardDialogLayout>;
 }

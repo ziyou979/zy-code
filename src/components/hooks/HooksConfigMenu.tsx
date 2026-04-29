@@ -12,6 +12,7 @@
  */
 import * as React from 'react';
 import { useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes';
 import { useAppState, useAppStateStore } from 'src/state/AppState.js';
 import type { CommandResultDisplay } from '../../commands.js';
@@ -78,7 +79,7 @@ export function HooksConfigMenu({
   const sortedMatchersForSelectedEvent = getSortedMatchersForEvent(hooksByEventAndMatcher, selectedEvent);
   const hooksForSelectedMatcher = getHooksForMatcher(hooksByEventAndMatcher, selectedEvent, selectedMatcher);
   const handleExit = () => {
-    onExit("Hooks dialog dismissed", {
+    onExit(tSync('hooks.dialogDismissed'), {
       display: "system"
     });
   };
@@ -147,7 +148,7 @@ export function HooksConfigMenu({
   if (hooksDisabled_1) {
     const pluralResult = plural(totalHooksCount, "hook");
     const pluralResult2 = plural(totalHooksCount, "is", "are");
-    return <Dialog title="Hook Configuration - Disabled" onCancel={handleExit} inputGuide={() => <Text>Esc to close</Text>}>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text>All hooks are currently {<Text bold={true}>disabled</Text>}{disabledByPolicy && " by a managed settings file"}. You have{" "}{<Text bold={true}>{totalHooksCount}</Text>} configured{" "}{pluralResult} that{" "}{pluralResult2} not running.</Text>}{<Box marginTop={1}><Text dimColor={true}>When hooks are disabled:</Text></Box>}{<Text dimColor={true}>· No hook commands will execute</Text>}{<Text dimColor={true}>· StatusLine will not be displayed</Text>}{<Text dimColor={true}>· Tool operations will proceed without hook validation</Text>}</Box>}{!disabledByPolicy && <Text dimColor={true}>To re-enable hooks, remove "disableAllHooks" from settings.json or ask Zy.</Text>}</Box>}</Dialog>;
+    return <Dialog title={tSync('hooks.configDisabled')} onCancel={handleExit} inputGuide={() => <Text>{tSync('hooks.escToClose')}</Text>}>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text>{tSync('hooks.allHooksDisabled')}{disabledByPolicy && tSync('hooks.byManagedSettings')}. {tSync('hooks.configuredHooksNotRunning', { count: totalHooksCount, hook: pluralResult, verb: pluralResult2 })}</Text>}{<Box marginTop={1}><Text dimColor={true}>{tSync('hooks.whenDisabled')}</Text></Box>}{<Text dimColor={true}>{tSync('hooks.noHookCommands')}</Text>}{<Text dimColor={true}>{tSync('hooks.noStatusLine')}</Text>}{<Text dimColor={true}>{tSync('hooks.noHookValidation')}</Text>}</Box>}{!disabledByPolicy && <Text dimColor={true}>{tSync('hooks.reenableInstructions')}</Text>}</Box>}</Dialog>;
   }
   switch (modeState.mode) {
     case "select-event":

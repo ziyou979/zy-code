@@ -135,5 +135,5 @@ export function FallbackPermissionRequest({
   const t12 = originalUserFacingName.endsWith(" (MCP)") ? <Text dimColor={true}> (MCP)</Text> : "";
   const t14 = truncateToLines(toolUseConfirm.description, 3);
   // @ts-ignore
-  return <PermissionDialog title="Tool use" workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{userFacingName}({t11}){t12}</Text>}{<Text dimColor={true}>{t14}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<PermissionPrompt options={options} onSelect={handleSelect} onCancel={handleCancel} toolAnalyticsContext={toolAnalyticsContext} />}</Box>}</PermissionDialog>;
+  return <PermissionDialog title={tSync('permissionRules.toolUse')} workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{userFacingName}({t11}){t12}</Text>}{<Text dimColor={true}>{t14}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<PermissionPrompt options={options} onSelect={handleSelect} onCancel={handleCancel} toolAnalyticsContext={toolAnalyticsContext} />}</Box>}</PermissionDialog>;
 }

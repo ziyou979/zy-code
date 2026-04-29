@@ -3,6 +3,7 @@ import React, { type ReactNode, useCallback, useRef, useState } from 'react';
 import { useMainLoopModel } from '../../../../hooks/useMainLoopModel.js';
 import { Box, Text } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
+import { tSync } from '../../../../i18n/index.js';
 import { createAbortController } from '../../../../utils/abortController.js';
 import { editPromptInEditor } from '../../../../utils/promptEditor.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
@@ -33,7 +34,7 @@ export function GenerateStep(): ReactNode {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsGenerating(false);
-      setError('Generation cancelled');
+      setError(tSync('wizard.generationCancelled'));
     }
   }, []);
 
@@ -77,7 +78,7 @@ export function GenerateStep(): ReactNode {
   const handleGenerate = async (): Promise<void> => {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
-      setError('Please describe what the agent should do');
+      setError(tSync('wizard.pleaseDescribe'));
       return;
     }
     setError(null);
@@ -108,7 +109,7 @@ export function GenerateStep(): ReactNode {
       if (err instanceof LLMAbortError) {
         // User cancelled - no error to show
       } else if (err instanceof Error && !err.message.includes('No assistant message found')) {
-        setError(err.message || 'Failed to generate agent');
+        setError(err.message || tSync('wizard.failedToGenerate'));
       }
       updateWizardData({
         isGenerating: false
@@ -118,12 +119,12 @@ export function GenerateStep(): ReactNode {
       abortControllerRef.current = null;
     }
   };
-  const subtitle = 'Describe what this agent should do and when it should be used (be comprehensive for best results)';
+  const subtitle = tSync('wizard.generateSubtitle');
   if (isGenerating) {
     return <WizardDialogLayout subtitle={subtitle} footerText={<ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />}>
         <Box flexDirection="row" alignItems="center">
           <Spinner />
-          <Text color="suggestion"> Generating agent from description...</Text>
+          <Text color="suggestion">{tSync('wizard.generatingAgent')}</Text>
         </Box>
       </WizardDialogLayout>;
   }

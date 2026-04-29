@@ -5,6 +5,7 @@ import { getSessionId } from '../../bootstrap/state.js';
 import { Select } from '../../components/CustomSelect/select.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { logEvent } from '../../services/analytics/index.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
@@ -15,11 +16,11 @@ function ConfirmRemoveTag({
   onConfirm,
   onCancel
 }) {
-  return <Dialog title="Remove tag?" subtitle={`Current tag: #${tagName}`} onCancel={onCancel} color="warning">{<Box flexDirection="column" gap={1}>{<Text>This will remove the tag from the current session.</Text>}<Select onChange={value => value === "yes" ? onConfirm() : onCancel()} options={[{
-        label: "Yes, remove tag",
+  return <Dialog title={tSync('tag.removeTitle')} subtitle={tSync('tag.currentTag', {tagName})} onCancel={onCancel} color="warning">{<Box flexDirection="column" gap={1}>{<Text>{tSync('tag.removeDesc')}</Text>}<Select onChange={value => value === "yes" ? onConfirm() : onCancel()} options={[{
+        label: tSync('tag.yesRemove'),
         value: "yes"
       }, {
-        label: "No, keep tag",
+        label: tSync('tag.noKeep'),
         value: "no"
       }]} /></Box>}</Dialog>;
 }
@@ -33,13 +34,13 @@ function ToggleTagAndClose({
   React.useEffect(() => {
     const id = getSessionId() as UUID;
     if (!id) {
-      onDone("No active session to tag", {
+      onDone(tSync('tag.noActiveSession'), {
         display: "system"
       });
       return;
     }
     if (!normalizedTag) {
-      onDone("Tag name cannot be empty", {
+      onDone(tSync('tag.emptyName'), {
         display: "system"
       });
       return;
@@ -57,7 +58,7 @@ function ToggleTagAndClose({
       (async () => {
         const fullPath = getTranscriptPath();
         await saveTag(id, normalizedTag, fullPath);
-        onDone(`Tagged session with ${chalk.cyan(`#${normalizedTag}`)}`, {
+        onDone(tSync('tag.sessionTagged', {tagName: normalizedTag}), {
           display: "system"
         });
       })();
@@ -68,12 +69,12 @@ function ToggleTagAndClose({
       logEvent("zy_tag_command_remove_confirmed", {});
       const fullPath_0 = getTranscriptPath();
       await saveTag(sessionId, "", fullPath_0);
-      onDone(`Removed tag ${chalk.cyan(`#${normalizedTag}`)}`, {
+      onDone(tSync('tag.tagRemoved', {tagName: normalizedTag}), {
         display: "system"
       });
     }} onCancel={() => {
       logEvent("zy_tag_command_remove_cancelled", {});
-      onDone(`Kept tag ${chalk.cyan(`#${normalizedTag}`)}`, {
+      onDone(tSync('tag.tagKept', {tagName: normalizedTag}), {
         display: "system"
       });
     }} />;
@@ -84,7 +85,7 @@ function ShowHelp({
   onDone
 }) {
   React.useEffect(() => {
-    onDone("Usage: /tag <tag-name>\n\nToggle a searchable tag on the current session.\nRun the same command again to remove the tag.\nTags are displayed after the branch name in /resume and can be searched with /.\n\nExamples:\n  /tag bugfix        # Add tag\n  /tag bugfix        # Remove tag (toggle)\n  /tag feature-auth\n  /tag wip", {
+    onDone(tSync('tag.usage'), {
       display: "system"
     });
   }, [onDone]);

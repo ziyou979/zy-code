@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { useSettings } from '../../hooks/useSettings.js';
 import { Box, Text, useAnimationFrame } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { interpolateColor, toRGBColor } from '../Spinner/utils.js';
 type Props = {
   voiceState: 'idle' | 'recording' | 'processing';

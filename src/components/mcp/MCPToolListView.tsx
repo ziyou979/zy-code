@@ -1,4 +1,5 @@
 import React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Text } from '../../ink.js';
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js';
 import { filterToolsByServer } from '../../services/mcp/utils.js';
@@ -37,13 +38,13 @@ export function MCPToolListView({
     const isOpenWorld = tool.isOpenWorld?.({}) ?? false;
     const annotations = [];
     if (isReadOnly) {
-      annotations.push("read-only");
+      annotations.push(tSync("mcp.readOnly"));
     }
     if (isDestructive) {
-      annotations.push("destructive");
+      annotations.push(tSync("mcp.destructive"));
     }
     if (isOpenWorld) {
-      annotations.push("open-world");
+      annotations.push(tSync("mcp.openWorld"));
     }
     return {
       label: displayName,
@@ -53,7 +54,7 @@ export function MCPToolListView({
     };
   });
   const t5 = plural(serverTools.length, "tool");
-  return <Dialog title={`Tools for ${server.name}`} subtitle={`${serverTools.length} ${t5}`} onCancel={onBack} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" /></Byline>}>{serverTools.length === 0 ? <Text dimColor={true}>No tools available</Text> : <Select options={toolOptions} onChange={value => {
+  return <Dialog title={tSync('mcp.toolsFor', { serverName: server.name })} subtitle={`${serverTools.length} ${t5}`} onCancel={onBack} inputGuide={exitState => exitState.pending ? <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text> : <Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('mcp.back')} /></Byline>}>{serverTools.length === 0 ? <Text dimColor={true}>{tSync('mcp.noToolsAvailable')}</Text> : <Select options={toolOptions} onChange={value => {
       const index_0 = parseInt(value);
       const tool_0 = serverTools[index_0];
       if (tool_0) {

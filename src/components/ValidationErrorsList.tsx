@@ -1,5 +1,6 @@
 import setWith from 'lodash-es/setWith.js';
 import * as React from 'react';
+import { tSync } from '../i18n/index.js';
 import { Box, Text, useTheme } from '../ink.js';
 import type { ValidationError } from '../utils/settings/validation.js';
 import { type TreeNode, treeify } from '../utils/treeify.js';
@@ -66,7 +67,7 @@ export function ValidationErrorsList({
     return null;
   }
   const errorsByFile = errors.reduce((acc, error) => {
-    const file = error.file || "(file not specified)";
+    const file = error.file || tSync('validationErrors.fileNotSpecified');
     if (!acc[file]) {
       acc[file] = [];
     }
@@ -108,7 +109,7 @@ export function ValidationErrorsList({
         value: "inactive"
       }
     });
-    return <Box key={file_0} flexDirection="column"><Text>{file_0}</Text><Box marginLeft={1}><Text dimColor={true}>{treeOutput}</Text></Box>{suggestionPairs.size > 0 && <Box flexDirection="column" marginTop={1}>{Array.from(suggestionPairs.values()).map((pair, index) => <Box key={`suggestion-pair-${index}`} flexDirection="column" marginBottom={1}>{pair.suggestion && <Text dimColor={true} wrap="wrap">{pair.suggestion}</Text>}{pair.docLink && <Text dimColor={true} wrap="wrap">Learn more: {pair.docLink}</Text>}</Box>)}</Box>}</Box>;
+    return <Box key={file_0} flexDirection="column"><Text>{file_0}</Text><Box marginLeft={1}><Text dimColor={true}>{treeOutput}</Text></Box>{suggestionPairs.size > 0 && <Box flexDirection="column" marginTop={1}>{Array.from(suggestionPairs.values()).map((pair, index) => <Box key={`suggestion-pair-${index}`} flexDirection="column" marginBottom={1}>{pair.suggestion && <Text dimColor={true} wrap="wrap">{pair.suggestion}</Text>}{pair.docLink && <Text dimColor={true} wrap="wrap">{tSync('validationErrors.learnMore', { link: pair.docLink })}</Text>}</Box>)}</Box>}</Box>;
   });
   return <T0 flexDirection={"column"}>{t2}</T0>;
 }

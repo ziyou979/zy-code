@@ -21,6 +21,7 @@ import { TodoWriteTool } from 'src/tools/TodoWriteTool/TodoWriteTool.js';
 import { TungstenTool } from 'src/tools/TungstenTool/TungstenTool.js';
 import { WebFetchTool } from 'src/tools/WebFetchTool/WebFetchTool.js';
 import { WebSearchTool } from 'src/tools/WebSearchTool/WebSearchTool.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { count } from '../../utils/array.js';
@@ -48,25 +49,25 @@ type ToolBuckets = {
 function getToolBuckets(): ToolBuckets {
   return {
     READ_ONLY: {
-      name: 'Read-only tools',
+      name: tSync('agents.toolSelector.readOnlyTools'),
       toolNames: new Set([GlobTool.name, GrepTool.name, ExitPlanModeV2Tool.name, FileReadTool.name, WebFetchTool.name, TodoWriteTool.name, WebSearchTool.name, TaskStopTool.name, TaskOutputTool.name, ListMcpResourcesTool.name, ReadMcpResourceTool.name])
     },
     EDIT: {
-      name: 'Edit tools',
+      name: tSync('agents.toolSelector.editTools'),
       toolNames: new Set([FileEditTool.name, FileWriteTool.name, NotebookEditTool.name])
     },
     EXECUTION: {
-      name: 'Execution tools',
+      name: tSync('agents.toolSelector.executionTools'),
       toolNames: new Set([BashTool.name, isInternalBuild() ? TungstenTool.name : undefined].filter(n => n !== undefined))
     },
     MCP: {
-      name: 'MCP tools',
+      name: tSync('agents.toolSelector.mcpTools'),
       toolNames: new Set(),
       // Dynamic - no static list
       isMcp: true
     },
     OTHER: {
-      name: 'Other tools',
+      name: tSync('agents.toolSelector.otherTools'),
       toolNames: new Set() // Dynamic - catch-all for uncategorized tools
     }
   };
@@ -175,13 +176,13 @@ export function ToolSelector({
   const navigableItems = [];
   navigableItems.push({
     id: "continue",
-    label: "Continue",
+    label: tSync('agents.toolSelector.continue'),
     action: handleConfirm,
     isContinue: true
   });
   navigableItems.push({
     id: "bucket-all",
-    label: `${isAllSelected ? figures.checkboxOn : figures.checkboxOff} All tools`,
+    label: `${isAllSelected ? figures.checkboxOn : figures.checkboxOff} ${tSync('agents.toolSelector.allTools')}`,
     action: () => {
       const allToolNames_0 = customAgentTools.map(tool => tool.name);
       handleToggleTools(allToolNames_0, !isAllSelected);
@@ -229,7 +230,7 @@ export function ToolSelector({
   const toggleButtonIndex = navigableItems.length;
   navigableItems.push({
     id: "toggle-individual",
-    label: showIndividualTools ? "Hide advanced options" : "Show advanced options",
+    label: showIndividualTools ? tSync('agents.toolSelector.hideAdvanced') : tSync('agents.toolSelector.showAdvanced'),
     action: () => {
       setShowIndividualTools(!showIndividualTools);
       if (showIndividualTools && focusIndex > toggleButtonIndex) {
@@ -243,7 +244,7 @@ export function ToolSelector({
     if (mcpServerBuckets.length > 0) {
       navigableItems.push({
         id: "mcp-servers-header",
-        label: "MCP Servers:",
+        label: tSync('agents.toolSelector.mcpServersHeader'),
         action: _temp6,
         isHeader: true
       });
@@ -256,7 +257,7 @@ export function ToolSelector({
         const isFullySelected_0 = selected_1 === serverTools.length;
         navigableItems.push({
           id: `mcp-server-${serverName}`,
-          label: `${isFullySelected_0 ? figures.checkboxOn : figures.checkboxOff} ${serverName} (${serverTools.length} ${plural(serverTools.length, "tool")})`,
+          label: `${isFullySelected_0 ? figures.checkboxOn : figures.checkboxOff} ${serverName} (${serverTools.length} ${tSync('agents.toolSelector.toolCount', { count: serverTools.length })})`,
           action: () => {
             const toolNames_2 = serverTools.map(tool => tool.name);
             handleToggleTools(toolNames_2, !isFullySelected_0);
@@ -265,7 +266,7 @@ export function ToolSelector({
       });
       navigableItems.push({
         id: "tools-header",
-        label: "Individual Tools:",
+        label: tSync('agents.toolSelector.individualToolsHeader'),
         action: _temp8,
         isHeader: true
       });
@@ -327,7 +328,7 @@ export function ToolSelector({
     const isHeader = item_0.isHeader;
     return <React.Fragment key={item_0.id}>{isToggleButton && <Divider width={40} />}{isHeader && index > 0 && <Box marginTop={1} />}<Text color={isHeader ? undefined : isCurrentlyFocused ? "suggestion" : undefined} dimColor={isHeader} bold={isToggleButton && isCurrentlyFocused}>{isHeader ? "" : isCurrentlyFocused ? `${figures.pointer} ` : "  "}{isToggleButton ? `[ ${item_0.label} ]` : item_0.label}</Text></React.Fragment>;
   });
-  return <Box flexDirection="column" marginTop={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Text color={focusIndex === 0 ? "suggestion" : undefined} bold={focusIndex === 0}>{focusIndex === 0 ? `${figures.pointer} ` : "  "}[ Continue ]</Text>}{<Divider width={40} />}{t19}{<Box marginTop={1} flexDirection="column"><Text dimColor={true}>{isAllSelected ? "All tools selected" : `${selectedSet.size} of ${customAgentTools.length} tools selected`}</Text></Box>}</Box>;
+  return <Box flexDirection="column" marginTop={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Text color={focusIndex === 0 ? "suggestion" : undefined} bold={focusIndex === 0}>{focusIndex === 0 ? `${figures.pointer} ` : "  "}[ {tSync('agents.toolSelector.continue')} ]</Text>}{<Divider width={40} />}{t19}{<Box marginTop={1} flexDirection="column"><Text dimColor={true}>{isAllSelected ? tSync('agents.toolSelector.allSelected') : tSync('agents.toolSelector.selectedCount', { selected: selectedSet.size, total: customAgentTools.length })}</Text></Box>}</Box>;
 }
 function _temp8() {}
 function _temp6() {}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { FeedbackSurveyView, isValidResponseInput } from './FeedbackSurveyView.js';
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js';
@@ -33,10 +34,10 @@ export function FeedbackSurvey({
     return <FeedbackSurveyThanks lastResponse={lastResponse} inputValue={inputValue} setInputValue={setInputValue} onRequestFeedback={onRequestFeedback} />;
   }
   if (state === "submitted") {
-    return <Box marginTop={1}><Text color="success">{"\u2713"} Thanks for sharing your transcript!</Text></Box>;
+    return <Box marginTop={1}><Text color="success">{"\u2713"} {tSync('feedbackSurvey.thanksTranscript')}</Text></Box>;
   }
   if (state === "submitting") {
-    return <Box marginTop={1}><Text dimColor={true}>Sharing transcript{"\u2026"}</Text></Box>;
+    return <Box marginTop={1}><Text dimColor={true}>{tSync('feedbackSurvey.sharingTranscript')}</Text></Box>;
   }
   if (state === "transcript_prompt") {
     if (!handleTranscriptSelect) {
@@ -82,5 +83,5 @@ function FeedbackSurveyThanks({
     }
   });
   const feedbackCommand = false ? "/issue" : "/feedback";
-  return <Box marginTop={1} flexDirection="column">{<Text color="success">Thanks for the feedback!</Text>}{showFollowUp ? <Text dimColor={true}>(Optional) Press [<Text color="ansi:cyan">1</Text>] to tell us what went well {" \xB7 "}{feedbackCommand}</Text> : (lastResponse as any) === "bad" ? <Text dimColor={true}>Use /issue to report model behavior issues.</Text> : <Text dimColor={true}>Use {feedbackCommand} to share detailed feedback anytime.</Text>}</Box>;
+  return <Box marginTop={1} flexDirection="column">{<Text color="success">{tSync('feedbackSurvey.thanksFeedback')}</Text>}{showFollowUp ? <Text dimColor={true}>{tSync('feedbackSurvey.tellUsWhatWentWell', { command: feedbackCommand })}</Text> : (lastResponse as any) === "bad" ? <Text dimColor={true}>{tSync('feedbackSurvey.useIssueToReport')}</Text> : <Text dimColor={true}>{tSync('feedbackSurvey.useCommandToShare', { command: feedbackCommand })}</Text>}</Box>;
 }

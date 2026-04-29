@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import * as path from 'path';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { logEvent } from 'src/services/analytics/index.js';
 import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js';
 import { Select } from '../../components/CustomSelect/index.js';
@@ -28,15 +29,15 @@ function IDEScreen({
   onClose,
   onSelect
 }: IDEScreenProps) {
-  const t1 = selectedIDE?.port?.toString() ?? "None";
+  const t1 = selectedIDE?.port?.toString() ?? tSync('ide.none');
   const [selectedValue, setSelectedValue] = useState(t1);
   const [showAutoConnectDialog, setShowAutoConnectDialog] = useState(false);
   const [showDisableAutoConnectDialog, setShowDisableAutoConnectDialog] = useState(false);
   const handleSelectIDE = value => {
-    if (value !== "None" && shouldShowAutoConnectDialog()) {
+    if (value !== tSync('ide.none') && shouldShowAutoConnectDialog()) {
       setShowAutoConnectDialog(true);
     } else {
-      if (value === "None" && shouldShowDisableAutoConnectDialog()) {
+      if (value === tSync('ide.none') && shouldShowDisableAutoConnectDialog()) {
         setShowDisableAutoConnectDialog(true);
       } else {
         onSelect(availableIDEs.find(ide => ide.port === parseInt(value)));
@@ -56,8 +57,8 @@ function IDEScreen({
       description: showWorkspace ? formatWorkspaceFolders(ide_1.workspaceFolders) : undefined
     };
   }).concat([{
-    label: "None",
-    value: "None",
+    label: tSync('ide.none'),
+    value: tSync('ide.none'),
     description: undefined
   }]);
   if (showAutoConnectDialog) {
@@ -68,12 +69,12 @@ function IDEScreen({
       onSelect(undefined);
     }} />;
   }
-  const t7 = availableIDEs.length !== 0 && availableIDEs.some(ide_2 => ide_2.name === "VS Code" || ide_2.name === "Visual Studio Code") && <Box marginTop={1}><Text color="warning">Note: Only one ZY Code instance can be connected to VS Code at a time.</Text></Box>;
-  const t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && <Box marginTop={1}><Text dimColor={true}>Tip: You can enable auto-connect to IDE in /config or with the --ide flag</Text></Box>;
-  return <Dialog title="Select IDE" subtitle="Connect to an IDE for integrated development features." onCancel={onClose} color="ide">{<Box flexDirection="column">{availableIDEs.length === 0 && <Text dimColor={true}>{isSupportedJetBrainsTerminal() ? "No available IDEs detected. Please install the plugin and restart your IDE:\nhttps://docs.zy.com/s/zy-code-jetbrains" : "No available IDEs detected. Make sure your IDE has the ZY Code extension or plugin installed and is running."}</Text>}{availableIDEs.length !== 0 && <Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
+  const t7 = availableIDEs.length !== 0 && availableIDEs.some(ide_2 => ide_2.name === "VS Code" || ide_2.name === "Visual Studio Code") && <Box marginTop={1}><Text color="warning">{tSync('ide.vscodeSingleInstance')}</Text></Box>;
+  const t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && <Box marginTop={1}><Text dimColor={true}>{tSync('ide.autoConnectTip')}</Text></Box>;
+  return <Dialog title={tSync('ide.selectTitle')} subtitle={tSync('ide.selectSubtitle')} onCancel={onClose} color="ide">{<Box flexDirection="column">{availableIDEs.length === 0 && <Text dimColor={true}>{isSupportedJetBrainsTerminal() ? tSync('ide.noAvailableJetBrains') : tSync('ide.noAvailable')}</Text>}{availableIDEs.length !== 0 && <Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
         setSelectedValue(value_0);
         handleSelectIDE(value_0);
-      }} />}{t7}{t8}{unavailableIDEs.length > 0 && <Box marginTop={1} flexDirection="column"><Text dimColor={true}>Found {unavailableIDEs.length} other running IDE(s). However, their workspace/project directories do not match the current cwd.</Text><Box marginTop={1} flexDirection="column">{unavailableIDEs.map((ide_3, index) => <Box key={index} paddingLeft={3}><Text dimColor={true}>• {ide_3.name}: {formatWorkspaceFolders(ide_3.workspaceFolders)}</Text></Box>)}</Box></Box>}</Box>}</Dialog>;
+      }} />}{t7}{t8}{unavailableIDEs.length > 0 && <Box marginTop={1} flexDirection="column"><Text dimColor={true}>{tSync('ide.unavailableCount', {count: unavailableIDEs.length})}</Text><Box marginTop={1} flexDirection="column">{unavailableIDEs.map((ide_3, index) => <Box key={index} paddingLeft={3}><Text dimColor={true}>• {ide_3.name}: {formatWorkspaceFolders(ide_3.workspaceFolders)}</Text></Box>)}</Box></Box>}</Box>}</Dialog>;
 }
 async function findCurrentIDE(availableIDEs: DetectedIDEInfo[], dynamicMcpConfig?: Record<string, ScopedMcpServerConfig>): Promise<DetectedIDEInfo | null> {
   const currentConfig = dynamicMcpConfig?.ide;
@@ -110,11 +111,11 @@ function IDEOpenSelection({
     value: ide_0.port.toString()
   }));
   const handleCancel = function handleCancel() {
-    onDone("IDE selection cancelled", {
+    onDone(tSync('ide.selectionCancelled'), {
       display: "system"
     });
   };
-  return <Dialog title="Select an IDE to open the project" onCancel={handleCancel} color="ide">{<Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
+  return <Dialog title={tSync('ide.selectToOpen')} onCancel={handleCancel} color="ide">{<Select defaultValue={selectedValue} defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
       setSelectedValue(value_0);
       handleSelectIDE(value_0);
     }} />}</Dialog>;
@@ -133,11 +134,11 @@ function RunningIDESelector({
     value: ide
   }));
   const handleCancel = function handleCancel() {
-    onDone("IDE selection cancelled", {
+    onDone(tSync('ide.selectionCancelled'), {
       display: "system"
     });
   };
-  return <Dialog title="Select IDE to install extension" onCancel={handleCancel} color="ide">{<Select defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
+  return <Dialog title={tSync('ide.selectToInstall')} onCancel={handleCancel} color="ide">{<Select defaultFocusValue={selectedValue} options={options} onChange={value_0 => {
       setSelectedValue(value_0);
       handleSelectIDE(value_0);
     }} />}</Dialog>;
@@ -171,14 +172,14 @@ export async function call(onDone: (result?: string, options?: {
     const detectedIDEs = await detectIDEs(true);
     const availableIDEs = detectedIDEs.filter(ide => ide.isValid);
     if (availableIDEs.length === 0) {
-      onDone('No IDEs with ZY Code extension detected.');
+      onDone(tSync('ide.noIdeDetected'));
       return null;
     }
 
     // Return IDE selection component
     return <IDEOpenSelection availableIDEs={availableIDEs} onSelectIDE={async (selectedIDE?: DetectedIDEInfo) => {
       if (!selectedIDE) {
-        onDone('No IDE selected.');
+        onDone(tSync('ide.noIdeSelected'));
         return;
       }
 
@@ -189,18 +190,18 @@ export async function call(onDone: (result?: string, options?: {
           code
         } = await execFileNoThrow('code', [targetPath]);
         if (code === 0) {
-          onDone(`Opened ${worktreeSession ? 'worktree' : 'project'} in ${chalk.bold(selectedIDE.name)}`);
+          onDone(tSync('ide.openedIn', {name: selectedIDE.name, location: worktreeSession ? tSync('ide.worktree') : tSync('ide.project')}));
         } else {
-          onDone(`Failed to open in ${selectedIDE.name}. Try opening manually: ${targetPath}`);
+          onDone(tSync('ide.openFailed', {name: selectedIDE.name, path: targetPath}));
         }
       } else if (isSupportedJetBrainsTerminal()) {
         // JetBrains IDEs - they usually open via their CLI tools
-        onDone(`Please open the ${worktreeSession ? 'worktree' : 'project'} manually in ${chalk.bold(selectedIDE.name)}: ${targetPath}`);
+        onDone(tSync('ide.openManually', {name: selectedIDE.name, location: worktreeSession ? tSync('ide.worktree') : tSync('ide.project'), path: targetPath}));
       } else {
-        onDone(`Please open the ${worktreeSession ? 'worktree' : 'project'} manually in ${chalk.bold(selectedIDE.name)}: ${targetPath}`);
+        onDone(tSync('ide.openManually', {name: selectedIDE.name, location: worktreeSession ? tSync('ide.worktree') : tSync('ide.project'), path: targetPath}));
       }
     }} onDone={() => {
-      onDone('Exited without opening IDE', {
+      onDone(tSync('ide.exitedWithoutOpening'), {
         display: 'system'
       });
     }} />;
@@ -215,16 +216,16 @@ export async function call(onDone: (result?: string, options?: {
         context.onInstallIDEExtension(ide);
         // The completion message will be shown after installation
         if (isJetBrainsIde(ide)) {
-          onDone(`Installed plugin to ${chalk.bold(toIDEDisplayName(ide))}\n` + `Please ${chalk.bold('restart your IDE')} completely for it to take effect`);
+          onDone(tSync('ide.installedPlugin', {name: toIDEDisplayName(ide)}));
         } else {
-          onDone(`Installed extension to ${chalk.bold(toIDEDisplayName(ide))}`);
+          onDone(tSync('ide.installedExtension', {name: toIDEDisplayName(ide)}));
         }
       }
     };
     if (runningIDEs.length > 1) {
       // Show selector when multiple IDEs are running
       return <RunningIDESelector runningIDEs={runningIDEs as any} onSelectIDE={onInstall as any} onDone={() => {
-        onDone('No IDE selected.', {
+        onDone(tSync('ide.noIdeSelected'), {
           display: 'system'
         });
       }} as any />;
@@ -274,21 +275,21 @@ function IDECommandFlow({
     }
     if (!ideClient || ideClient.type === 'pending') return;
     if (ideClient.type === 'connected') {
-      onDone(`Connected to ${connectingIDE.name}.`);
+      onDone(tSync('ide.connected', {name: connectingIDE.name}));
     } else if (ideClient.type === 'failed') {
-      onDone(`Failed to connect to ${connectingIDE.name}.`);
+      onDone(tSync('ide.connectFailed', {name: connectingIDE.name}));
     }
   }, [ideClient, connectingIDE, onDone]);
 
   // Timeout fallback
   useEffect(() => {
     if (!connectingIDE) return;
-    const timer = setTimeout(onDone, IDE_CONNECTION_TIMEOUT_MS, `Connection to ${connectingIDE.name} timed out.`);
+    const timer = setTimeout(onDone, IDE_CONNECTION_TIMEOUT_MS, tSync('ide.connectionTimeout', {name: connectingIDE.name}));
     return () => clearTimeout(timer);
   }, [connectingIDE, onDone]);
   const handleSelectIDE = useCallback((selectedIDE?: DetectedIDEInfo) => {
     if (!onChangeDynamicMcpConfig) {
-      onDone('Error connecting to IDE.');
+      onDone(tSync('ide.errorConnecting'));
       return;
     }
     const newConfig = {
@@ -314,7 +315,7 @@ function IDECommandFlow({
         }));
       }
       onChangeDynamicMcpConfig(newConfig);
-      onDone(currentIDE ? `Disconnected from ${currentIDE.name}.` : 'No IDE selected.');
+      onDone(currentIDE ? tSync('ide.disconnected', {name: currentIDE.name}) : tSync('ide.noIdeSelected'));
       return;
     }
     const url = selectedIDE.url;
@@ -331,9 +332,9 @@ function IDECommandFlow({
     onChangeDynamicMcpConfig(newConfig);
   }, [dynamicMcpConfig, currentIDE, ideClient, setAppState, onChangeDynamicMcpConfig, onDone]);
   if (connectingIDE) {
-    return <Text dimColor>Connecting to {connectingIDE.name}…</Text>;
+    return <Text dimColor>{tSync('ide.connecting', {name: connectingIDE.name})}</Text>;
   }
-  return <IDEScreen availableIDEs={availableIDEs} unavailableIDEs={unavailableIDEs} selectedIDE={currentIDE} onClose={() => onDone('IDE selection cancelled', {
+  return <IDEScreen availableIDEs={availableIDEs} unavailableIDEs={unavailableIDEs} selectedIDE={currentIDE} onClose={() => onDone(tSync('ide.selectionCancelled'), {
     display: 'system'
   })} onSelect={handleSelectIDE} />;
 }

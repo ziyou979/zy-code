@@ -1,5 +1,6 @@
 import figures from 'figures';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js';
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../../ink.js';
@@ -282,15 +283,15 @@ export function PreviewQuestionView({
 
             {/* Right panel: preview + notes */}
             <Box flexDirection="column" flexGrow={1}>
-              <PreviewBox content={previewContent || 'No preview available'} maxLines={previewMaxLines} minWidth={minContentWidth} maxWidth={previewMaxWidth} />
+              <PreviewBox content={previewContent || tSync('permissionRules.noPreviewAvailable')} maxLines={previewMaxLines} minWidth={minContentWidth} maxWidth={previewMaxWidth} />
               <Box marginTop={1} flexDirection="row" gap={1}>
-                <Text color="suggestion">Notes:</Text>
-                {isInNotesInput ? <TextInput value={notesValue} placeholder="Add notes on this design…" onChange={value => {
+                <Text color="suggestion">{tSync('permissionRules.notesLabel')}</Text>
+                {isInNotesInput ? <TextInput value={notesValue} placeholder={tSync('permissionRules.addNotesPlaceholder')} onChange={value => {
                 onUpdateQuestionState(questionText, {
                   textInputValue: value
                 }, false);
               }} onSubmit={handleNotesExit} onExit={handleNotesExit} focus={true} showCursor={true} columns={60} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} /> : <Text dimColor italic>
-                    {notesValue || 'press n to add notes'}
+                    {notesValue || tSync('permissionRules.pressNToAddNotes')}
                   </Text>}
               </Box>
             </Box>
@@ -302,23 +303,23 @@ export function PreviewQuestionView({
             <Box flexDirection="row" gap={1}>
               {isFooterFocused && footerIndex === 0 ? <Text color="suggestion">{figures.pointer}</Text> : <Text> </Text>}
               <Text color={isFooterFocused && footerIndex === 0 ? 'suggestion' : undefined}>
-                Chat about this
+                {tSync('permissionRules.chatAboutThis')}
               </Text>
             </Box>
             {isInPlanMode && <Box flexDirection="row" gap={1}>
                 {isFooterFocused && footerIndex === 1 ? <Text color="suggestion">{figures.pointer}</Text> : <Text> </Text>}
                 <Text color={isFooterFocused && footerIndex === 1 ? 'suggestion' : undefined}>
-                  Skip interview and plan immediately
+                  {tSync('permissionRules.skipInterviewAndPlan')}
                 </Text>
               </Box>}
           </Box>
           <Box marginTop={1}>
             <Text color="inactive" dimColor>
-              Enter to select · {figures.arrowUp}/{figures.arrowDown} to
-              navigate · n to add notes
-              {questions.length > 1 && <> · Tab to switch questions</>}
-              {isInNotesInput && editorName && <> · ctrl+g to edit in {editorName}</>}{' '}
-              · Esc to cancel
+              {tSync('permissionRules.enterToSelect')} · {figures.arrowUp}/{figures.arrowDown}{' '}
+              {tSync('permissionRules.arrowToNavigate')} · {tSync('permissionRules.nToAddNotes')}
+              {questions.length > 1 && <> · {tSync('permissionRules.tabToSwitchQuestions')}</>}
+              {isInNotesInput && editorName && <> · {tSync('permissionRules.ctrlGToEditIn', { editorName })}</>}{' '}
+              · {tSync('permissionRules.escToCancelHint')}
             </Text>
           </Box>
         </Box>

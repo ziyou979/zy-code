@@ -1,6 +1,7 @@
 import React from 'react';
 import { type ExitState, useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import type { Theme } from '../../utils/theme.js';
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
@@ -42,7 +43,7 @@ export function Dialog({
     context: "Confirmation",
     isActive: isCancelActive
   });
-  const defaultInputGuide = exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline>;
+  const defaultInputGuide = exitState.pending ? <Text>{tSync('dialog.pressAgainToExit', { keyName: exitState.keyName })}</Text> : <Byline><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline>;
   const content = <>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text bold={true} color={color}>{title}</Text>}{subtitle && <Text dimColor={true}>{subtitle}</Text>}</Box>}{children}</Box>}{!hideInputGuide && <Box marginTop={1}><Text dimColor={true} italic={true}>{inputGuide ? inputGuide(exitState) : defaultInputGuide}</Text></Box>}</>;
   if (hideBorder) {
     return content;

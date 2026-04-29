@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js';
 import { writeToStdout } from 'src/utils/process.js';
 import { Box, color, Text, useTheme } from '../ink.js';
@@ -54,9 +55,9 @@ export function MCPServerDesktopImportDialog({
   let done;
   done = importedCount_0 => {
     if (importedCount_0 > 0) {
-      writeToStdout(`\n${color("success", theme)(`Successfully imported ${importedCount_0} MCP ${plural(importedCount_0, "server")} to ${scope} config.`)}\n`);
+      writeToStdout(`\n${color("success", theme)(tSync('mcp.importSuccess', {count: importedCount_0, unit: tSync(importedCount_0 === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other'), scope}))}\n`);
     } else {
-      writeToStdout("\nNo servers were imported.");
+      writeToStdout(tSync('mcp.importNoneImported'));
     }
     onDone();
     gracefulShutdown();
@@ -64,11 +65,11 @@ export function MCPServerDesktopImportDialog({
   const handleEscCancel = () => {
     done(0);
   };
-  const t9 = plural(serverNames.length, "server");
+  const t9 = tSync(serverNames.length === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other');
   const t13 = serverNames.map(server => ({
-    label: `${server}${collisions.includes(server) ? " (already exists)" : ""}`,
+    label: `${server}${collisions.includes(server) ? tSync('mcp.importAlreadyExists') : ""}`,
     value: server
   }));
   const t14 = serverNames.filter(name_0 => !collisions.includes(name_0));
-  return <>{<Dialog title="Import MCP Servers from Zy Desktop" subtitle={`Found ${serverNames.length} MCP ${t9} in Zy Desktop.`} color="success" onCancel={handleEscCancel} hideInputGuide={true}>{collisions.length > 0 && <Text color="warning">Note: Some servers already exist with the same name. If selected, they will be imported with a numbered suffix.</Text>}{<Text>Please select the servers you want to import:</Text>}{<SelectMulti options={t13} defaultValue={t14} onSubmit={onSubmit} onCancel={handleEscCancel} hideIndexes={true} />}</Dialog>}{<Box paddingX={1}><Text dimColor={true} italic={true}><Byline><KeyboardShortcutHint shortcut="Space" action="select" /><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text></Box>}</>;
+  return <>{<Dialog title={tSync('mcp.importDesktopTitle')} subtitle={tSync('mcp.importDesktopSubtitle', {count: serverNames.length, unit: t9})} color="success" onCancel={handleEscCancel} hideInputGuide={true}>{collisions.length > 0 && <Text color="warning">{tSync('mcp.importCollisionNote')}</Text>}{<Text>{tSync('mcp.importSelectServers')}</Text>}{<SelectMulti options={t13} defaultValue={t14} onSubmit={onSubmit} onCancel={handleEscCancel} hideIndexes={true} />}</Dialog>}{<Box paddingX={1}><Text dimColor={true} italic={true}><Byline><KeyboardShortcutHint shortcut="Space" action="select" /><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text></Box>}</>;
 }

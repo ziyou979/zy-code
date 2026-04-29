@@ -27,7 +27,7 @@ export function IdeAutoConnectDialog({
     label: tSync('permission.no'),
     value: "no"
   }];
-  return <Dialog title="Do you wish to enable auto-connect to IDE?" color="ide" onCancel={onComplete}>{<Select options={options} onChange={handleSelect} defaultValue="yes" />}{<Text dimColor={true}>You can also configure this in /config or with the --ide flag</Text>}</Dialog>;
+  return <Dialog title={tSync('ide.autoConnectTitle')} color="ide" onCancel={onComplete}>{<Select options={options} onChange={handleSelect} defaultValue="yes" />}{<Text dimColor={true}>{tSync('ide.autoConnectHint')}</Text>}</Dialog>;
 }
 export function shouldShowAutoConnectDialog(): boolean {
   const config = getGlobalConfig();
@@ -59,7 +59,7 @@ export function IdeDisableAutoConnectDialog({
     label: tSync('permission.yes'),
     value: "yes"
   }];
-  return <Dialog title="Do you wish to disable auto-connect to IDE?" subtitle="You can also configure this in /config" onCancel={handleCancel} color="ide">{<Select options={options} onChange={handleSelect} defaultValue="no" />}</Dialog>;
+  return <Dialog title={tSync('ide.disableAutoConnectTitle')} subtitle={tSync('ide.disableAutoConnectHint')} onCancel={handleCancel} color="ide">{<Select options={options} onChange={handleSelect} defaultValue="no" />}</Dialog>;
 }
 export function shouldShowDisableAutoConnectDialog(): boolean {
   const config = getGlobalConfig();

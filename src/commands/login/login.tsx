@@ -7,6 +7,7 @@ import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutH
 import { ConsoleOAuthFlow } from '../../components/ConsoleOAuthFlow.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
+import { tSync } from '../../i18n/index.js';
 import { Text } from '../../ink.js';
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js';
 import { refreshPolicyLimits } from '../../services/policyLimits/index.js';
@@ -53,10 +54,10 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
         authVersion: prev.authVersion + 1
       }));
     }
-    onDone(success ? 'Login successful' : 'Login interrupted');
+    onDone(success ? tSync('login.successful') : tSync('login.interrupted'));
   }} />;
 }
 export function Login(props) {
   const mainLoopModel = useMainLoopModel();
-  return <Dialog title="Login" onCancel={() => props.onDone(false, mainLoopModel)} color="permission" inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />}>{<ConsoleOAuthFlow onDone={() => props.onDone(true, mainLoopModel)} startingMessage={props.startingMessage} />}</Dialog>;
+  return <Dialog title={tSync('login.title')} onCancel={() => props.onDone(false, mainLoopModel)} color="permission" inputGuide={exitState => exitState.pending ? <Text>{tSync('login.pressAgainExit', {keyName: exitState.keyName})}</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />}>{<ConsoleOAuthFlow onDone={() => props.onDone(true, mainLoopModel)} startingMessage={props.startingMessage} />}</Dialog>;
 }

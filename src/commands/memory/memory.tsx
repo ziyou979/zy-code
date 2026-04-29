@@ -4,6 +4,7 @@ import type { CommandResultDisplay } from '../../commands.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { MemoryFileSelector } from '../../components/memory/MemoryFileSelector.js';
 import { getRelativeMemoryPath } from '../../components/memory/MemoryUpdateNotification.js';
+import { tSync } from '../../i18n/index.js';
 import { Box, Link, Text } from '../../ink.js';
 import type { LocalJSXCommandCall } from '../../types/command.js';
 import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/zymd.js';
@@ -51,22 +52,22 @@ function MemoryCommand({
         editorSource = '$EDITOR';
         editorValue = process.env.EDITOR;
       }
-      const editorInfo = editorSource !== 'default' ? `Using ${editorSource}="${editorValue}".` : '';
-      const editorHint = editorInfo ? `> ${editorInfo} To change editor, set $EDITOR or $VISUAL environment variable.` : `> To use a different editor, set the $EDITOR or $VISUAL environment variable.`;
-      onDone(`Opened memory file at ${getRelativeMemoryPath(memoryPath)}\n\n${editorHint}`, {
+      const editorInfo = editorSource !== 'default' ? tSync('memory.usingEditor', {editorSource, editorValue}) : '';
+      const editorHint = editorInfo ? `> ${tSync('memory.usingEditorHint', {editorSource, editorValue})}` : `> ${tSync('memory.editorHint')}`;
+      onDone(tSync('memory.openedAt', {path: getRelativeMemoryPath(memoryPath)}) + `\n\n${editorHint}`, {
         display: 'system'
       });
     } catch (error) {
       logError(error);
-      onDone(`Error opening memory file: ${error}`);
+      onDone(tSync('memory.openError', {error: String(error)}));
     }
   };
   const handleCancel = () => {
-    onDone('Cancelled memory editing', {
+    onDone(tSync('memory.cancelled'), {
       display: 'system'
     });
   };
-  return <Dialog title="Memory" onCancel={handleCancel} color="remember">
+  return <Dialog title={tSync('memory.title')} onCancel={handleCancel} color="remember">
       <Box flexDirection="column">
         <React.Suspense fallback={null}>
           <MemoryFileSelector onSelect={handleSelectMemoryFile} onCancel={handleCancel} />
@@ -74,7 +75,7 @@ function MemoryCommand({
 
         <Box marginTop={1}>
           <Text dimColor>
-            Learn more: <Link url="https://code.zy.com/docs/en/memory" />
+            {tSync('memory.learnMore', {link: 'https://code.zy.com/docs/en/memory'})}
           </Text>
         </Box>
       </Box>

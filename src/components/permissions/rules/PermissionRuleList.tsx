@@ -2,8 +2,8 @@ import chalk from 'chalk';
 import figures from 'figures';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useAppState, useSetAppState } from 'src/state/AppState.js';
 import { tSync } from 'src/i18n/index.js';
+import { useAppState, useSetAppState } from 'src/state/AppState.js';
 import { applyPermissionUpdate, persistPermissionUpdate } from 'src/utils/permissions/PermissionUpdate.js';
 import type { CommandResultDisplay } from '../../../commands.js';
 import { Select } from '../../../components/CustomSelect/select.js';
@@ -38,7 +38,7 @@ function RuleSourceText({
   rule
 }: RuleSourceTextProps) {
   const t1 = permissionRuleSourceDisplayString(rule.source);
-  return <Text dimColor={true}>{`From ${t1}`}</Text>;
+  return <Text dimColor={true}>{tSync('permissionRules.fromSource', { source: t1 })}</Text>;
 }
 
 // Helper function to get the appropriate label for rule behavior
@@ -67,7 +67,7 @@ function RuleDetails({
   const ruleDescription = <Box flexDirection="column" marginX={2}>{<Text bold={true}>{t2}</Text>}{<PermissionRuleDescription ruleValue={rule.ruleValue} />}{<RuleSourceText rule={rule} />}</Box>;
   const footer = <Box marginLeft={3}>{exitState.pending ? <Text dimColor={true}>Press {exitState.keyName} again to exit</Text> : <Text dimColor={true}>Esc to cancel</Text>}</Box>;
   if (rule.source === "policySettings") {
-    return <>{<Box flexDirection="column" gap={1} borderStyle="round" paddingLeft={1} paddingRight={1} borderColor="permission">{<Text bold={true} color="permission">Rule details</Text>}{ruleDescription}{<Text italic={true}>This rule is configured by managed settings and cannot be modified.{"\n"}Contact your system administrator for more information.</Text>}</Box>}{footer}</>;
+    return <>{<Box flexDirection="column" gap={1} borderStyle="round" paddingLeft={1} paddingRight={1} borderColor="permission">{<Text bold={true} color="permission">{tSync('permissionRules.ruleDetails')}</Text>}{ruleDescription}{<Text italic={true}>{tSync('permissionRules.managedByPolicy')}</Text>}</Box>}{footer}</>;
   }
   const t8 = getRuleBehaviorLabel(rule.ruleBehavior);
   const deleteTitle = rule.ruleBehavior === 'allow' ? tSync('permission.deleteAllowedTool') : rule.ruleBehavior === 'deny' ? tSync('permission.deleteDeniedTool') : tSync('permission.deleteAskTool');
@@ -139,9 +139,9 @@ function PermissionRulesTab({
   const T0 = RulesTabContent;
   const t1 = getRulesOptions(tab, rulesProps.searchQuery);
   return <T1 flexDirection={"column"} flexShrink={tab === "allow" ? 0 : undefined}>{<Text>{{
-        allow: "ZY Code won't ask before using allowed tools.",
-        ask: "ZY Code will always ask for confirmation before using these tools.",
-        deny: "ZY Code will always reject requests to use denied tools."
+        allow: tSync('permissionRules.allowedToolsSubtitle'),
+        ask: tSync('permissionRules.askToolsSubtitle'),
+        deny: tSync('permissionRules.deniedToolsSubtitle')
       }[tab]}</Text>}{<T0 options={t1.options} onSelect={v => handleToolSelect(v, tab)} {...rulesProps} />}</T1>;
 }
 type Props = {
@@ -225,7 +225,7 @@ export function PermissionRuleList({
     const options = [];
     if (tab !== "workspace" && tab !== "recent" && !query) {
       options.push({
-        label: `Add a new rule${figures.ellipsis}`,
+        label: tSync('permissionRules.addNewRule'),
         value: "add-new-rule"
       });
     }
@@ -451,5 +451,5 @@ export function PermissionRuleList({
     onHeaderFocusChange: handleHeaderFocusChange
   } as any;
   const isHidden = !!selectedRule || !!addingRuleToTab || !!validatedRule || isAddingWorkspaceDirectory || !!removingDirectory;
-  return <Box flexDirection="column" onKeyDown={handleKeyDown}>{<Pane color="permission">{<Tabs title="Permissions:" color="permission" defaultTab={defaultTab} hidden={isHidden} initialHeaderFocused={!hasDenials} navFromContent={!isSearchMode}>{<Tab id="recent" title="Recently denied"><RecentDenialsTab onHeaderFocusChange={handleHeaderFocusChange} onStateChange={handleDenialStateChange} /></Tab>}{<Tab id="allow" title="Allow"><PermissionRulesTab tab="allow" {...sharedRulesProps} /></Tab>}{<Tab id="ask" title="Ask"><PermissionRulesTab tab="ask" {...sharedRulesProps} /></Tab>}{<Tab id="deny" title="Deny"><PermissionRulesTab tab="deny" {...sharedRulesProps} /></Tab>}{<Tab id="workspace" title="Workspace"><Box flexDirection="column">{<Text>ZY Code can read files in the workspace, and make edits when auto-accept edits is on.</Text>}<WorkspaceTab onExit={onExit} toolPermissionContext={toolPermissionContext} onRequestAddDirectory={handleRequestAddDirectory} onRequestRemoveDirectory={handleRequestRemoveDirectory} onHeaderFocusChange={handleHeaderFocusChange} /></Box></Tab>}</Tabs>}{<Box marginTop={1} paddingLeft={1}><Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : headerFocused ? <>←/→ tab switch · ↓ return · Esc cancel</> : isSearchMode ? <>Type to filter · Enter/↓ select · ↑ tabs · Esc clear</> : hasDenials && defaultTab === "recent" ? <>Enter approve · r retry · ↑↓ navigate · ←/→ switch · Esc cancel</> : <>↑↓ navigate · Enter select · Type to search · ←/→ switch · Esc cancel</>}</Text></Box>}</Pane>}</Box>;
+  return <Box flexDirection="column" onKeyDown={handleKeyDown}>{<Pane color="permission">{<Tabs title="Permissions:" color="permission" defaultTab={defaultTab} hidden={isHidden} initialHeaderFocused={!hasDenials} navFromContent={!isSearchMode}>{<Tab id="recent" title={tSync('permissionRules.recentlyDenied')}><RecentDenialsTab onHeaderFocusChange={handleHeaderFocusChange} onStateChange={handleDenialStateChange} /></Tab>}{<Tab id="allow" title={tSync('permissionRules.allowTab')}><PermissionRulesTab tab="allow" {...sharedRulesProps} /></Tab>}{<Tab id="ask" title={tSync('permissionRules.askTab')}><PermissionRulesTab tab="ask" {...sharedRulesProps} /></Tab>}{<Tab id="deny" title={tSync('permissionRules.denyTab')}><PermissionRulesTab tab="deny" {...sharedRulesProps} /></Tab>}{<Tab id="workspace" title={tSync('permissionRules.workspaceTab')}><Box flexDirection="column">{<Text>{tSync('permissionRules.workspaceDescription')}</Text>}<WorkspaceTab onExit={onExit} toolPermissionContext={toolPermissionContext} onRequestAddDirectory={handleRequestAddDirectory} onRequestRemoveDirectory={handleRequestRemoveDirectory} onHeaderFocusChange={handleHeaderFocusChange} /></Box></Tab>}</Tabs>}{<Box marginTop={1} paddingLeft={1}><Text dimColor={true}>{exitState.pending ? <>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</> : headerFocused ? <>←/→ tab switch · ↓ return · Esc cancel</> : isSearchMode ? <>Type to filter · Enter/↓ select · ↑ tabs · Esc clear</> : hasDenials && defaultTab === "recent" ? <>Enter approve · r retry · ↑↓ navigate · ←/→ switch · Esc cancel</> : <>↑↓ navigate · Enter select · Type to search · ←/→ switch · Esc cancel</>}</Text></Box>}</Pane>}</Box>;
 }

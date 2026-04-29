@@ -35,7 +35,7 @@ function InvalidConfigDialog({
       onReset();
     }
   };
-  return <Dialog title={tSync('invalidConfig.title')} color="error" onCancel={onExit}>{<Box flexDirection="column" gap={1}>{<Text>The configuration file at <Text bold={true}>{filePath}</Text> contains invalid JSON.</Text>}{<Text>{errorDescription}</Text>}</Box>}{<Box flexDirection="column">{<Text bold={true}>{tSync('invalidConfig.prompt')}</Text>}<Select options={[{
+  return <Dialog title={tSync('invalidConfig.title')} color="error" onCancel={onExit}>{<Box flexDirection="column" gap={1}>{<Text>{tSync('invalidConfig.body', { filePath })}</Text>}{<Text>{errorDescription}</Text>}</Box>}{<Box flexDirection="column">{<Text bold={true}>{tSync('invalidConfig.prompt')}</Text>}<Select options={[{
         label: tSync('invalidConfig.exit'),
         value: "exit"
       }, {

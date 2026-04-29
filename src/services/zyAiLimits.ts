@@ -12,7 +12,7 @@ import { logEvent } from './analytics/index.js'
 import { getAPIMetadata } from './api/zy.js'
 import { getLLMClient } from './api/client.js'
 import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
-import { createOpenAIMessage } from './api/streamAdapter.js'
+import { getLLMAdapter } from './api/client.js'
 import {
   processRateLimitHeaders,
   shouldProcessRateLimits,
@@ -221,11 +221,15 @@ async function makeTestQuery() {
 
   // OpenAI 专用路径
   if (isOpenAIProvider(apiProvider)) {
-    const response = await createOpenAIMessage({
-      model,
-      max_tokens: 1,
-      messages,
-    })
+    const adapter = getLLMAdapter()
+    const response = await adapter.createMessage(
+      {
+        model,
+        messages,
+        maxTokens: 1,
+      } as any,
+      new AbortController().signal,
+    )
     // 模拟 .asResponse() 返回
     return new Response(null, {
       headers: { 'x-request-id': response.id ?? '' },

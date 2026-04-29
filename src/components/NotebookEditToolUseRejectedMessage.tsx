@@ -1,6 +1,7 @@
 import { relative } from 'path';
 import * as React from 'react';
 import { getCwd } from 'src/utils/cwd.js';
+import { tSync } from '../i18n/index.js';
 import { Box, Text } from '../ink.js';
 import { HighlightedCode } from './HighlightedCode.js';
 import { MessageResponse } from './MessageResponse.js';
@@ -20,7 +21,7 @@ export function NotebookEditToolUseRejectedMessage({
   edit_mode = "replace",
   verbose
 }: Props) {
-  const operation = edit_mode === "delete" ? "delete" : `${edit_mode} cell in`;
+  const operation = edit_mode === "delete" ? tSync('notebookEdit.rejectedDelete') : tSync('notebookEdit.rejectedEditCell', { mode: edit_mode });
   const t3 = verbose ? notebook_path : relative(getCwd(), notebook_path);
-  return <MessageResponse><Box flexDirection="column">{<Box flexDirection="row">{<Text color="subtle">User rejected {operation} </Text>}{<Text bold={true} color="subtle">{t3}</Text>}{<Text color="subtle"> at cell {cell_id}</Text>}</Box>}{edit_mode !== "delete" && <Box marginTop={1} flexDirection="column"><HighlightedCode code={new_source} filePath={cell_type === "markdown" ? "file.md" : "file.py"} dim={true} /></Box>}</Box></MessageResponse>;
+  return <MessageResponse><Box flexDirection="column">{<Box flexDirection="row">{<Text color="subtle">{operation} </Text>}{<Text bold={true} color="subtle">{t3}</Text>}{<Text color="subtle"> {tSync('notebookEdit.atCell', { cellId: cell_id })}</Text>}</Box>}{edit_mode !== "delete" && <Box marginTop={1} flexDirection="column"><HighlightedCode code={new_source} filePath={cell_type === "markdown" ? "file.md" : "file.py"} dim={true} /></Box>}</Box></MessageResponse>;
 }

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- 'r' is a view-specific key, not a global keybinding
 import { Box, Text, useInput } from '../../../ink.js';
+import { tSync } from 'src/i18n/index.js';
 import { type AutoModeDenial, getAutoModeDenials } from '../../../utils/autoModeDenials.js';
 import { Select } from '../../CustomSelect/select.js';
 import { StatusIcon } from '../../design-system/StatusIcon.js';
@@ -76,16 +77,16 @@ export function RecentDenialsTab({
     isActive: denials.length > 0
   });
   if (denials.length === 0) {
-    return <Text dimColor={true}>No recent denials. Commands denied by the auto mode classifier will appear here.</Text>;
+    return <Text dimColor={true}>{tSync('permissionRules.noRecentDenials')}</Text>;
   }
   const options = denials.map((d, idx_0) => {
     const isApproved = approved.has(idx_0);
-    const suffix = retry.has(idx_0) ? " (retry)" : "";
+    const suffix = retry.has(idx_0) ? tSync('permissionRules.retrySuffix') : "";
     return {
       label: <Text><StatusIcon status={isApproved ? "success" : "error"} withSpace={true} />{d.display}<Text dimColor={true}>{suffix}</Text></Text>,
       value: String(idx_0)
     };
   });
   const t12 = Math.min(10, options.length);
-  return <Box flexDirection="column">{<Text>Commands recently denied by the auto mode classifier.</Text>}<Box marginTop={1}><Select options={options} onChange={handleSelect} onFocus={handleFocus} visibleOptionCount={t12} isDisabled={headerFocused} onUpFromFirstItem={focusHeader} /></Box></Box>;
+  return <Box flexDirection="column">{<Text>{tSync('permissionRules.recentlyDeniedDescription')}</Text>}<Box marginTop={1}><Select options={options} onChange={handleSelect} onFocus={handleFocus} visibleOptionCount={t12} isDisabled={headerFocused} onUpFromFirstItem={focusHeader} /></Box></Box>;
 }

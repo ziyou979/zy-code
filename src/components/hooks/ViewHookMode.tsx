@@ -5,6 +5,7 @@
  * confirmation screen and directs users to settings.json or Zy for edits.
  */
 import * as React from 'react';
+import { tSync } from 'src/i18n/index.js';
 import { Box, Text } from '../../ink.js';
 import { hookSourceDescriptionDisplayString, type IndividualHookConfig } from '../../utils/hooks/hooksSettings.js';
 import { Dialog } from '../design-system/Dialog.js';
@@ -21,7 +22,7 @@ export function ViewHookMode({
   const t4 = hookSourceDescriptionDisplayString(selectedHook.source);
   const t8 = getContentFieldLabel(selectedHook.config);
   const t10 = getContentFieldValue(selectedHook.config);
-  return <Dialog title="Hook details" onCancel={onCancel} inputGuide={() => <Text>Esc to go back</Text>}>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text>Event: <Text bold={true}>{selectedHook.event}</Text></Text>}{eventSupportsMatcher && <Text>Matcher: <Text bold={true}>{selectedHook.matcher || "(all)"}</Text></Text>}{<Text>Type: <Text bold={true}>{selectedHook.config.type}</Text></Text>}{<Text>Source:{" "}<Text dimColor={true}>{t4}</Text></Text>}{selectedHook.pluginName && <Text>Plugin: <Text dimColor={true}>{selectedHook.pluginName}</Text></Text>}</Box>}{<Box flexDirection="column">{<Text dimColor={true}>{t8}:</Text>}{<Box borderStyle="round" borderDimColor={true} paddingLeft={1} paddingRight={1}><Text>{t10}</Text></Box>}</Box>}{"statusMessage" in selectedHook.config && selectedHook.config.statusMessage && <Text>Status message:{" "}<Text dimColor={true}>{selectedHook.config.statusMessage}</Text></Text>}{<Text dimColor={true}>To modify or remove this hook, edit settings.json directly or ask Zy to help.</Text>}</Box>}</Dialog>;
+  return <Dialog title={tSync('hooks.viewDetails')} onCancel={onCancel} inputGuide={() => <Text>{tSync('hooks.escToGoBack')}</Text>}>{<Box flexDirection="column" gap={1}>{<Box flexDirection="column">{<Text>{tSync('hooks.eventLabel')} <Text bold={true}>{selectedHook.event}</Text></Text>}{eventSupportsMatcher && <Text>{tSync('hooks.matcherLabel')} <Text bold={true}>{selectedHook.matcher || tSync('hooks.allMatcher')}</Text></Text>}{<Text>{tSync('hooks.typeLabel')} <Text bold={true}>{selectedHook.config.type}</Text></Text>}{<Text>{tSync('hooks.sourceLabel')}{" "}<Text dimColor={true}>{t4}</Text></Text>}{selectedHook.pluginName && <Text>{tSync('hooks.pluginLabel')} <Text dimColor={true}>{selectedHook.pluginName}</Text></Text>}</Box>}{<Box flexDirection="column">{<Text dimColor={true}>{t8}:</Text>}{<Box borderStyle="round" borderDimColor={true} paddingLeft={1} paddingRight={1}><Text>{t10}</Text></Box>}</Box>}{"statusMessage" in selectedHook.config && selectedHook.config.statusMessage && <Text>{tSync('hooks.statusMessageLabel')}{" "}<Text dimColor={true}>{selectedHook.config.statusMessage}</Text></Text>}{<Text dimColor={true}>{tSync('hooks.editInstructions')}</Text>}</Box>}</Dialog>;
 }
 
 /**
@@ -32,13 +33,13 @@ export function ViewHookMode({
 function getContentFieldLabel(config: IndividualHookConfig['config']): string {
   switch (config.type) {
     case 'command':
-      return 'Command';
+      return tSync('hooks.commandLabel');
     case 'prompt':
-      return 'Prompt';
+      return tSync('hooks.promptLabel');
     case 'agent':
-      return 'Prompt';
+      return tSync('hooks.promptLabel');
     case 'http':
-      return 'URL';
+      return tSync('hooks.urlLabel');
   }
 }
 

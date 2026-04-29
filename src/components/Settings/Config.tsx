@@ -47,6 +47,7 @@ import { useSearchInput } from '../../hooks/useSearchInput.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+import { tSync } from 'src/i18n/index.js';
 type Props = {
   onClose: (result?: string, options?: {
     display?: CommandResultDisplay;
@@ -723,8 +724,8 @@ export function Config({
     }
   }] : []), {
     id: 'language',
-    label: 'Language',
-    value: currentLanguage ?? 'Default (English)',
+    label: tSync('settings.languageLabel'),
+    value: currentLanguage ?? tSync('settings.defaultEnglish'),
     type: 'managedEnum' as const,
     onChange: () => {} // handled by LanguagePicker submenu
   }, {
@@ -771,8 +772,8 @@ export function Config({
     }
   }, {
     id: 'model',
-    label: 'Model',
-    value: mainLoopModel === null ? 'Default (recommended)' : mainLoopModel,
+    label: tSync('settings.modelLabel'),
+    value: mainLoopModel === null ? tSync('settings.defaultRecommended') : mainLoopModel,
     type: 'managedEnum' as const,
     onChange: onChangeMainModelConfig
   }, ...(isConnectedToIde ? [{
@@ -1615,13 +1616,13 @@ export function Config({
         minimum_version_set: choice === 'stay'
       });
     }} /> : <Box flexDirection="column" gap={1} marginY={insideModal ? undefined : 1}>
-          <SearchBox query={searchQuery} isFocused={isSearchMode && !headerFocused} isTerminalFocused={isTerminalFocused} cursorOffset={searchCursorOffset} placeholder="Search settings…" />
+          <SearchBox query={searchQuery} isFocused={isSearchMode && !headerFocused} isTerminalFocused={isTerminalFocused} cursorOffset={searchCursorOffset} placeholder={tSync('settings.searchSettings')} />
           <Box flexDirection="column">
             {filteredSettingsItems.length === 0 ? <Text dimColor italic>
-                No settings match &quot;{searchQuery}&quot;
+                {tSync('settings.noSettingsMatch', { searchQuery })}
               </Text> : <>
                 {scrollOffset > 0 && <Text dimColor>
-                    {figures.arrowUp} {scrollOffset} more above
+                    {figures.arrowUp} {tSync('settings.moreAbove', { count: scrollOffset })}
                   </Text>}
                 {filteredSettingsItems.slice(scrollOffset, scrollOffset + maxVisible).map((setting_2, i) => {
             const actualIndex = scrollOffset + i;
@@ -1669,8 +1670,7 @@ export function Config({
           })}
                 {scrollOffset + maxVisible < filteredSettingsItems.length && <Text dimColor>
                     {figures.arrowDown}{' '}
-                    {filteredSettingsItems.length - scrollOffset - maxVisible}{' '}
-                    more below
+                    {tSync('settings.moreBelow', { count: filteredSettingsItems.length - scrollOffset - maxVisible })}
                   </Text>}
               </>}
           </Box>
@@ -1682,7 +1682,7 @@ export function Config({
               </Byline>
             </Text> : isSearchMode ? <Text dimColor>
               <Byline>
-                <Text>Type to filter</Text>
+                <Text>{tSync('settings.typeToFilter')}</Text>
                 <KeyboardShortcutHint shortcut="Enter/↓" action="select" />
                 <KeyboardShortcutHint shortcut="↑" action="tabs" />
                 <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="clear" />

@@ -3,6 +3,7 @@ import React from 'react';
 import { Markdown } from '../../components/Markdown.js';
 import { BLACK_CIRCLE } from '../../constants/figures.js';
 import { Box, Text } from '../../ink.js';
+import { tSync } from '../../i18n/index.js';
 import type { ProgressMessage } from '../../types/message.js';
 import { getDisplayPath } from '../../utils/file.js';
 import { formatFileSize } from '../../utils/format.js';
@@ -74,6 +75,6 @@ export function AttachmentList({
   if (!attachments || attachments.length === 0) {
     return null;
   }
-  const attachmentItems = attachments.map(att => <Box key={att.path} flexDirection="row"><Text dimColor={true}>{figures.pointerSmall} {att.isImage ? "[image]" : "[file]"}{" "}</Text><Text>{getDisplayPath(att.path)}</Text><Text dimColor={true}> ({formatFileSize(att.size)})</Text></Box>);
+  const attachmentItems = attachments.map(att => <Box key={att.path} flexDirection="row"><Text dimColor={true}>{figures.pointerSmall} {att.isImage ? tSync('toolBrief.image') : tSync('toolBrief.file')}{" "}</Text><Text>{getDisplayPath(att.path)}</Text><Text dimColor={true}> ({formatFileSize(att.size)})</Text></Box>);
   return <Box flexDirection="column" marginTop={1}>{attachmentItems}</Box>;
 }

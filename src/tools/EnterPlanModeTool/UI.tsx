@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { BLACK_CIRCLE } from 'src/constants/figures.js';
+import { tSync } from '../../i18n/index.js';
 import { getModeColor } from 'src/utils/permissions/PermissionMode.js';
 import { Box, Text } from '../../ink.js';
 import type { ToolProgressData } from '../../Tool.js';
@@ -15,11 +16,11 @@ export function renderToolResultMessage(_output: Output, _progressMessagesForMes
   return <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
         <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
-        <Text> Entered plan mode</Text>
+        <Text> {tSync('toolEnterPlanMode.entered')}</Text>
       </Box>
       <Box paddingLeft={2}>
         <Text dimColor>
-          ZY is now exploring and designing an implementation approach.
+          {tSync('toolEnterPlanMode.exploring')}
         </Text>
       </Box>
     </Box>;
@@ -27,6 +28,6 @@ export function renderToolResultMessage(_output: Output, _progressMessagesForMes
 export function renderToolUseRejectedMessage(): React.ReactNode {
   return <Box flexDirection="row" marginTop={1}>
       <Text color={getModeColor('default')}>{BLACK_CIRCLE}</Text>
-      <Text> User declined to enter plan mode</Text>
+      <Text> {tSync('toolEnterPlanMode.declined')}</Text>
     </Box>;
 }

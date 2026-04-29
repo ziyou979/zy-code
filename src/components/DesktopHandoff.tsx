@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { CommandResultDisplay } from '../commands.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw input for "any key" dismiss and y/n prompt
 import { Box, Text, useInput } from '../ink.js';
+import { tSync } from '../i18n/index.js';
 import { openBrowser } from '../utils/browser.js';
 import { getDesktopInstallStatus, openCurrentSessionInDesktop } from '../utils/desktopDeepLink.js';
 import { errorMessage } from '../utils/errors.js';
@@ -31,7 +32,7 @@ export function DesktopHandoff({
   const [downloadMessage, setDownloadMessage] = useState("");
   useInput(input => {
     if (state === "error") {
-      onDone(error ?? "Unknown error", {
+      onDone(error ?? tSync('desktopHandoff.unknownError'), {
         display: "system"
       });
       return;
@@ -39,12 +40,12 @@ export function DesktopHandoff({
     if (state === "prompt-download") {
       if (input === "y" || input === "Y") {
         openBrowser(getDownloadUrl()).catch(_temp);
-        onDone(`Starting download. Re-run /desktop once you\u2019ve installed the app.\nLearn more at ${DESKTOP_DOCS_URL}`, {
+        onDone(tSync('desktopHandoff.startingDownload', { url: DESKTOP_DOCS_URL }), {
           display: "system"
         });
       } else {
         if (input === "n" || input === "N") {
-          onDone(`The desktop app is required for /desktop. Learn more at ${DESKTOP_DOCS_URL}`, {
+          onDone(tSync('desktopHandoff.desktopRequired', { url: DESKTOP_DOCS_URL }), {
             display: "system"
           });
         }
@@ -56,12 +57,12 @@ export function DesktopHandoff({
       setState("checking");
       const installStatus = await getDesktopInstallStatus();
       if (installStatus.status === "not-installed") {
-        setDownloadMessage("Zy Desktop is not installed.");
+        setDownloadMessage(tSync('desktopHandoff.notInstalled'));
         setState("prompt-download");
         return;
       }
       if (installStatus.status === "version-too-old") {
-        setDownloadMessage(`Zy Desktop needs to be updated (found v${installStatus.version}, need v1.1.2396+).`);
+        setDownloadMessage(tSync('desktopHandoff.needsUpdate', { version: installStatus.version }));
         setState("prompt-download");
         return;
       }
@@ -70,13 +71,13 @@ export function DesktopHandoff({
       setState("opening");
       const result = await openCurrentSessionInDesktop();
       if (!result.success) {
-        setError(result.error ?? "Failed to open Zy Desktop");
+        setError(result.error ?? tSync('desktopHandoff.openFailed'));
         setState("error");
         return;
       }
       setState("success");
       setTimeout(async onDone_0 => {
-        onDone_0("Session transferred to Zy Desktop", {
+        onDone_0(tSync('desktopHandoff.sessionTransferred'), {
           display: "system"
         });
         await gracefulShutdown(0, "other");
@@ -88,16 +89,16 @@ export function DesktopHandoff({
     });
   }, [onDone]);
   if (state === "error") {
-    return <Box flexDirection="column" paddingX={2}>{<Text color="error">Error: {error}</Text>}{<Text dimColor={true}>Press any key to continue…</Text>}</Box>;
+    return <Box flexDirection="column" paddingX={2}>{<Text color="error">{tSync('desktopHandoff.errorLabel', { error })}</Text>}{<Text dimColor={true}>{tSync('desktopHandoff.pressAnyKey')}</Text>}</Box>;
   }
   if (state === "prompt-download") {
-    return <Box flexDirection="column" paddingX={2}>{<Text>{downloadMessage}</Text>}{<Text>Download now? (y/n)</Text>}</Box>;
+    return <Box flexDirection="column" paddingX={2}>{<Text>{downloadMessage}</Text>}{<Text>{tSync('desktopHandoff.downloadNow')}</Text>}</Box>;
   }
   const messages = {
-    checking: "Checking for Zy Desktop\u2026",
-    flushing: "Saving session\u2026",
-    opening: "Opening Zy Desktop\u2026",
-    success: "Opening in Zy Desktop\u2026"
+    checking: tSync('desktopHandoff.checking'),
+    flushing: tSync('desktopHandoff.savingSession'),
+    opening: tSync('desktopHandoff.opening'),
+    success: tSync('desktopHandoff.openingInDesktop')
   };
   return <LoadingState message={messages[state]} />;
 }

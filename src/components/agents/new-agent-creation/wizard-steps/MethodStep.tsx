@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '../../../../ink.js';
+import { tSync } from '../../../../i18n/index.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Select } from '../../../CustomSelect/select.js';
 import { Byline } from '../../../design-system/Byline.js';
@@ -14,13 +15,13 @@ export function MethodStep() {
     goToStep
   } = useWizard() as any;
   const methodOptions = [{
-    label: "Generate with Zy (recommended)",
+    label: tSync('wizard.generateWithZy'),
     value: "generate"
   }, {
-    label: "Manual configuration",
+    label: tSync('wizard.manualConfig'),
     value: "manual"
   }];
-  return <WizardDialogLayout subtitle="Creation method" footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><Box><Select key="method-select" options={methodOptions} onChange={value => {
+  return <WizardDialogLayout subtitle={tSync('wizard.creationMethod')} footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><Box><Select key="method-select" options={methodOptions} onChange={value => {
         const method = value as 'generate' | 'manual';
         updateWizardData({
           method,

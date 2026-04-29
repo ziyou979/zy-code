@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import React, { type ReactNode, useCallback, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { useSetAppState } from 'src/state/AppState.js';
+import { tSync } from '../../../../i18n/index.js';
 import type { Tools } from '../../../../Tool.js';
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js';
 import { getActiveAgentsFromList } from '../../../../tools/AgentTool/loadAgentsDir.js';
@@ -61,10 +62,10 @@ export function ConfirmStepWrapper({
           opened_in_editor: true
         } : {})
       } as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS);
-      const message = openInEditor ? `Created agent: ${chalk.bold(wizardData.finalAgent.agentType)} and opened in editor. ` + `If you made edits, restart to load the latest version.` : `Created agent: ${chalk.bold(wizardData.finalAgent.agentType)}`;
+      const message = openInEditor ? tSync('agents.createdAgentAndOpened', { name: chalk.bold(wizardData.finalAgent.agentType) }) : tSync('agents.createdAgent', { name: chalk.bold(wizardData.finalAgent.agentType) });
       onComplete(message);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save agent');
+      setSaveError(err instanceof Error ? err.message : tSync('agents.failedToSave'));
     }
   }, [wizardData, onComplete, setAppState]);
   const handleSave = useCallback(() => saveAgent(false), [saveAgent]);

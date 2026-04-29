@@ -31,6 +31,7 @@ import { Byline } from './design-system/Byline.js';
 import { Dialog } from './design-system/Dialog.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import TextInput from './TextInput.js';
+import { tSync } from 'src/i18n/index.js';
 
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250;
@@ -242,9 +243,9 @@ export function Feedback({
       setStep('done');
     } else {
       if (result.isZdrOrg) {
-        setError('Feedback collection is not available for organizations with custom data retention policies.');
+        setError(tSync('feedback.errorZdrOrg'));
       } else {
-        setError('Could not submit feedback. Please try again later.');
+        setError(tSync('feedback.errorGeneric'));
       }
       // Stay on userInput step so user can retry with their content preserved
       setStep('userInput');
@@ -256,17 +257,17 @@ export function Feedback({
     // Don't cancel when done - let other keys close the dialog
     if (step === 'done') {
       if (error) {
-        onDone('Error submitting feedback / bug report', {
+        onDone(tSync('feedback.errorSubmitting'), {
           display: 'system'
         });
       } else {
-        onDone('Feedback / bug report submitted', {
+        onDone(tSync('feedback.submitted'), {
           display: 'system'
         });
       }
       return;
     }
-    onDone('Feedback / bug report cancelled', {
+    onDone(tSync('feedback.cancelled'), {
       display: 'system'
     });
   }, [step, error, onDone]);
@@ -286,11 +287,11 @@ export function Feedback({
         void openBrowser(issueUrl);
       }
       if (error) {
-        onDone('Error submitting feedback / bug report', {
+        onDone(tSync('feedback.errorSubmitting'), {
           display: 'system'
         });
       } else {
-        onDone('Feedback / bug report submitted', {
+        onDone(tSync('feedback.submitted'), {
           display: 'system'
         });
       }
@@ -300,7 +301,7 @@ export function Feedback({
     // When in userInput step with error, allow user to edit and retry
     // (don't close on any keypress - they can still press Esc to cancel)
     if (error && step !== 'userInput') {
-      onDone('Error submitting feedback / bug report', {
+      onDone(tSync('feedback.errorSubmitting'), {
         display: 'system'
       });
       return;
@@ -309,47 +310,47 @@ export function Feedback({
       void submitReport();
     }
   });
-  return <Dialog title="Submit Feedback / Bug Report" onCancel={handleCancel} isCancelActive={step !== 'userInput'} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : step === 'userInput' ? <Byline>
+  return <Dialog title={tSync('feedback.title')} onCancel={handleCancel} isCancelActive={step !== 'userInput'} inputGuide={exitState => exitState.pending ? <Text>{tSync('export.pressAgainToExit', { key: exitState.keyName })}</Text> : step === 'userInput' ? <Byline>
             <KeyboardShortcutHint shortcut="Enter" action="continue" />
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
+            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('feedback.cancelAction')} />
           </Byline> : step === 'consent' ? <Byline>
             <KeyboardShortcutHint shortcut="Enter" action="submit" />
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
+            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={tSync('feedback.cancelAction')} />
           </Byline> : null}>
       {step === 'userInput' && <Box flexDirection="column" gap={1}>
-          <Text>Describe the issue below:</Text>
+          <Text>{tSync('feedback.describeIssue')}</Text>
           <TextInput value={description} onChange={value => {
         setDescription(value);
         // Clear error when user starts editing to allow retry
         if (error) {
           setError(null);
         }
-      }} columns={textInputColumns} onSubmit={() => setStep('consent')} onExitMessage={() => onDone('Feedback cancelled', {
+      }} columns={textInputColumns} onSubmit={() => setStep('consent')} onExitMessage={() => onDone(tSync('feedback.cancelledShort'), {
         display: 'system'
       })} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} showCursor />
           {error && <Box flexDirection="column" gap={1}>
               <Text color="error">{error}</Text>
               <Text dimColor>
-                Edit and press Enter to retry, or Esc to cancel
+                {tSync('feedback.editAndRetry')}
               </Text>
             </Box>}
         </Box>}
 
       {step === 'consent' && <Box flexDirection="column">
-          <Text>This report will include:</Text>
+          <Text>{tSync('feedback.reportIncludes')}</Text>
           <Box marginLeft={2} flexDirection="column">
             <Text>
-              - Your feedback / bug description:{' '}
+              {tSync('feedback.reportDescription')}
               <Text dimColor>{description}</Text>
             </Text>
             <Text>
-              - Environment info:{' '}
+              {tSync('feedback.reportEnvironment')}
               <Text dimColor>
                 {env.platform}, {env.terminal}, v{MACRO.VERSION}
               </Text>
             </Text>
             {envInfo.gitState && <Text>
-                - Git repo metadata:{' '}
+                {tSync('feedback.reportGit')}
                 <Text dimColor>
                   {envInfo.gitState.branchName}
                   {envInfo.gitState.commitHash ? `, ${envInfo.gitState.commitHash.slice(0, 7)}` : ''}
@@ -358,36 +359,29 @@ export function Feedback({
                   {!envInfo.gitState.isClean && ', has local changes'}
                 </Text>
               </Text>}
-            <Text>- Current session transcript</Text>
+            <Text>{tSync('feedback.reportTranscript')}</Text>
           </Box>
           <Box marginTop={1}>
             <Text wrap="wrap" dimColor>
-              We will use your feedback to debug related issues or to improve{' '}
-              ZY Code&apos;s functionality (eg. to reduce the risk of bugs
-              occurring in the future).
+              {tSync('feedback.reportUsage')}
             </Text>
           </Box>
           <Box marginTop={1}>
             <Text>
-              Press <Text bold>Enter</Text> to confirm and submit.
+              {tSync('feedback.pressEnterToSubmit')}
             </Text>
           </Box>
         </Box>}
 
       {step === 'submitting' && <Box flexDirection="row" gap={1}>
-          <Text>Submitting report…</Text>
+          <Text>{tSync('feedback.submitting')}</Text>
         </Box>}
 
       {step === 'done' && <Box flexDirection="column">
-          {error ? <Text color="error">{error}</Text> : <Text color="success">Thank you for your report!</Text>}
-          {feedbackId && <Text dimColor>Feedback ID: {feedbackId}</Text>}
+          {error ? <Text color="error">{error}</Text> : <Text color="success">{tSync('feedback.thankYou')}</Text>}
+          {feedbackId && <Text dimColor>{tSync('feedback.feedbackId', { feedbackId })}</Text>}
           <Box marginTop={1}>
-            <Text>Press </Text>
-            <Text bold>Enter </Text>
-            <Text>
-              to open your browser and draft a GitHub issue, or any other key to
-              close.
-            </Text>
+            <Text>{tSync('feedback.openGitHubOrClose')}</Text>
           </Box>
         </Box>}
     </Dialog>;

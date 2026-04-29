@@ -21,7 +21,7 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { getAPIMetadata } from '../services/api/zy.js'
 import { getLLMClient } from '../services/api/client.js'
 import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
-import { createOpenAIMessage } from '../services/api/streamAdapter.js'
+import { getLLMAdapter } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
@@ -184,16 +184,28 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
 
   // OpenAI 专用路径
   if (isOpenAIProvider(getAPIProvider())) {
-    const response = await createOpenAIMessage({
-      model: normalizedModel,
-      max_tokens,
-      system: systemBlocks as any,
-      messages,
-      tools: tools as any,
-      tool_choice: tool_choice as any,
-      temperature,
-      signal,
-    })
+    const adapter = getLLMAdapter()
+    // 把 v1 风格的 systemBlocks (TextBlock[]) + messages 拼成标准 messages
+    const stdMessages: any[] = []
+    if (systemBlocks && systemBlocks.length > 0) {
+      stdMessages.push({
+        role: 'system',
+        content: systemBlocks.map(b => b.text).join('\n\n'),
+      })
+    }
+    for (const m of messages) stdMessages.push(m)
+
+    const response = await adapter.createMessage(
+      {
+        model: normalizedModel,
+        messages: stdMessages,
+        maxTokens: max_tokens,
+        temperature,
+        tools: tools as any,
+        toolChoice: tool_choice as any,
+      } as any,
+      signal ?? new AbortController().signal,
+    )
     const now = Date.now()
     const lastCompletion = getLastApiCompletionTimestamp()
     logEvent('zy_api_success', {
