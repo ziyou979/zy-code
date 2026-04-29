@@ -225,7 +225,49 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     ])
   })
 
-  test('assistant 含 thinking 块：被包成 <thinking>...</thinking> 并入 content', () => {
+  test('DeepSeek + tool_call + 具备 thinking 能力：走 reasoning_content 独立字段', async () => {
+    // DeepSeek 协议：两轮之间有 tool_call 时必须回传 reasoning_content
+    // 参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
+    const { mock } = await import('bun:test')
+    mock.module(
+      '../../../src/utils/settings/localModelCapabilities.js',
+      () => ({
+        localModelHasCapability: (model: string, cap: string) =>
+          model.toLowerCase().includes('deepseek') && cap === 'thinking',
+      }),
+    )
+    const { messagesToOpenAI: fn } = await import(
+      '../../../src/services/api/conversions/openai.js'
+    )
+    const messages = [
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'reasoning here', signature: 'sig' },
+          { type: 'tool_call', id: 'c1', name: 'search', input: { q: 'x' } },
+        ],
+      },
+    ]
+    const result = fn(messages as any, 'deepseek-reasoner')
+    const a = result[0] as any
+    expect(a.reasoning_content).toBe('reasoning here')
+    expect(a.content).toBeUndefined()
+    expect(a.tool_calls).toHaveLength(1)
+    mock.restore()
+  })
+
+  test('DeepSeek + 纯文本轮次：thinking 被丢弃', async () => {
+    const { mock } = await import('bun:test')
+    mock.module(
+      '../../../src/utils/settings/localModelCapabilities.js',
+      () => ({
+        localModelHasCapability: (model: string, cap: string) =>
+          model.toLowerCase().includes('deepseek') && cap === 'thinking',
+      }),
+    )
+    const { messagesToOpenAI: fn } = await import(
+      '../../../src/services/api/conversions/openai.js'
+    )
     const messages = [
       {
         role: 'assistant',
@@ -235,9 +277,70 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
-    const result = messagesToOpenAI(messages as any)
+    const result = fn(messages as any, 'deepseek-reasoner')
+    const a = result[0] as any
+    expect(a.content).toBe('final answer')
+    expect(a.reasoning_content).toBeUndefined()
+    mock.restore()
+  })
+
+  test('DeepSeek 但不具备 thinking 能力（model-capabilities 未声明）：走普通 <thinking> 兜底', async () => {
+    const { mock } = await import('bun:test')
+    mock.module(
+      '../../../src/utils/settings/localModelCapabilities.js',
+      () => ({
+        localModelHasCapability: () => false, // 未声明 thinking 能力
+      }),
+    )
+    const { messagesToOpenAI: fn } = await import(
+      '../../../src/services/api/conversions/openai.js'
+    )
+    const messages = [
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'r', signature: 'sig' },
+          { type: 'tool_call', id: 'c1', name: 'n', input: {} },
+        ],
+      },
+    ]
+    const result = fn(messages as any, 'deepseek-chat')
+    const a = result[0] as any
+    // 没声明 thinking 能力 → 按非 DeepSeek 处理，<thinking> 入 content
+    expect(a.content).toBe('<thinking>r</thinking>')
+    expect(a.reasoning_content).toBeUndefined()
+    mock.restore()
+  })
+
+  test('非 DeepSeek 模型：thinking 包成 <thinking>...</thinking> 并入 content', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'reasoning here', signature: 'sig' },
+          { type: 'text', text: 'final answer' },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any, 'qwen-plus')
     const a = result[0] as any
     expect(a.content).toBe('<thinking>reasoning here</thinking>\n\nfinal answer')
+    expect(a.reasoning_content).toBeUndefined()
+  })
+
+  test('未传 model 参数：按非 DeepSeek 处理（保守 fallback）', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'r', signature: 'sig' },
+          { type: 'text', text: 'ans' },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    const a = result[0] as any
+    expect(a.content).toBe('<thinking>r</thinking>\n\nans')
   })
 
   test('完整多轮：user → assistant(tool_call) → tool → assistant(text)', () => {

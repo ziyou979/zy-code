@@ -32,6 +32,7 @@ import type {
 } from '../../../types/llm.js'
 import { getAPIProvider } from '../../../utils/model/providers.js'
 import { normalizeModelStringForAPI } from '../../../utils/model/model.js'
+import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
 
 // ============================================================================
 // 工具：tool_call.arguments 安全序列化
@@ -101,8 +102,22 @@ type AnyMessage = Message | Record<string, unknown>
  * - image 块按平铺 { mimeType, data } 转 image_url
  * - thinking 块包装为 <thinking>...</thinking> 文本
  */
+/**
+ * 判断是否走 DeepSeek reasoning 协议。
+ * DeepSeek 要求：两轮之间有 tool_call 时必须回传 reasoning_content。
+ * 参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
+ *
+ * 判定条件：模型名含 'deepseek' 且具备 thinking 能力（由 model-capabilities 声明）。
+ */
+function isDeepSeekReasoningModel(model: string | undefined): boolean {
+  if (!model) return false
+  if (!model.toLowerCase().includes('deepseek')) return false
+  return localModelHasCapability(model, 'thinking')
+}
+
 export function messagesToOpenAI(
   messages: AnyMessage[],
+  model?: string,
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
@@ -192,12 +207,12 @@ export function messagesToOpenAI(
         if (!Array.isArray(msg.content)) break
 
         const textParts: string[] = []
+        const thinkingParts: string[] = []
         const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
         for (const block of msg.content) {
           if (block.type === 'text') {
             textParts.push(block.text)
           } else if (block.type === 'tool_call' || block.type === 'tool_use') {
-            // 同时识别 v2 'tool_call' 和 v1 'tool_use'
             toolCalls.push({
               id: block.id,
               type: 'function',
@@ -207,12 +222,30 @@ export function messagesToOpenAI(
               },
             })
           } else if (block.type === 'thinking') {
-            textParts.push(`<thinking>${block.thinking ?? ''}</thinking>`)
+            thinkingParts.push(block.thinking ?? '')
           }
           // redacted_thinking / server_tool_use 等：OpenAI 不支持，忽略
         }
         const am: OpenAI.Chat.ChatCompletionAssistantMessageParam = {
           role: 'assistant',
+        }
+        // 思考内容回传策略：
+        // - DeepSeek 协议（deepseek-reasoner 等）规定：两轮之间存在 tool_call 时，
+        //   上一轮的 reasoning_content 必须作为独立字段回传，否则 400 ReasoningContentMissError。
+        //   参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
+        //   纯文本轮次无需回传（回传反而可能触发平台拒绝）。
+        // - 其他 provider：统一包成 <thinking> 文本 prepend 到 content 兜底。
+        if (thinkingParts.length > 0) {
+          const thinkingText = thinkingParts.join('\n\n')
+          const isDeepSeek = isDeepSeekReasoningModel(model)
+          if (isDeepSeek && toolCalls.length > 0) {
+            // DeepSeek 协议：两轮之间有 tool_call 时，必须回传 reasoning_content
+            ;(am as any).reasoning_content = thinkingText
+          } else if (!isDeepSeek) {
+            // 非 DeepSeek：包成 <thinking> 文本 prepend 到 content
+            textParts.unshift(`<thinking>${thinkingText}</thinking>`)
+          }
+          // DeepSeek 纯文本轮次：thinking 丢弃（官方要求）
         }
         if (textParts.length > 0) am.content = textParts.join('\n\n')
         if (toolCalls.length > 0) am.tool_calls = toolCalls
@@ -588,7 +621,7 @@ export function buildOpenAIRequestParams(
   params: CreateParams,
 ): Record<string, unknown> {
   const p = params as any
-  const openAIMessages = messagesToOpenAI(p.messages ?? [])
+  const openAIMessages = messagesToOpenAI(p.messages ?? [], p.model)
   const openaiExtras = p.providerExtras?.openai
 
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
