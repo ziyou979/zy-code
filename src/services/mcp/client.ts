@@ -2509,12 +2509,9 @@ export async function transformResultContent(
       return [
         {
           type: 'image',
-          source: {
-            data: resized.buffer.toString('base64'),
-            mediaType:
-              `image/${resized.mediaType}` as ImageSource['mediaType'],
-            type: 'base64',
-          },
+          mimeType:
+            `image/${resized.mediaType}` as ImageSource['mediaType'],
+          data: resized.buffer.toString('base64'),
         },
       ]
     }
@@ -2550,12 +2547,9 @@ export async function transformResultContent(
           }
           content.push({
             type: 'image',
-            source: {
-              data: resized.buffer.toString('base64'),
-              mediaType:
-                `image/${resized.mediaType}` as ImageSource['mediaType'],
-              type: 'base64',
-            },
+            mimeType:
+              `image/${resized.mediaType}` as ImageSource['mediaType'],
+            data: resized.buffer.toString('base64'),
           })
           return content
         } else {

@@ -84,7 +84,7 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
         } = output.file;
         const formattedSize = formatFileSize(originalSize);
         return <MessageResponse height={1}>
-          <Text>Read image ({formattedSize})</Text>
+          <Text>{tSync('fileRead.readImage', { size: formattedSize })}</Text>
         </MessageResponse>;
       }
     case 'notebook':
@@ -93,11 +93,11 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
           cells
         } = output.file;
         if (!cells || cells.length < 1) {
-          return <Text color="error">No cells found in notebook</Text>;
+          return <Text color="error">{tSync('fileRead.noCellsFound')}</Text>;
         }
         return <MessageResponse height={1}>
           <Text>
-            Read <Text bold>{cells.length}</Text> cells
+            {tSync('fileRead.readCells', { count: cells.length })}
           </Text>
         </MessageResponse>;
       }
@@ -108,15 +108,15 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
         } = output.file;
         const formattedSize = formatFileSize(originalSize);
         return <MessageResponse height={1}>
-          <Text>Read PDF ({formattedSize})</Text>
+          <Text>{tSync('fileRead.readPdf', { size: formattedSize })}</Text>
         </MessageResponse>;
       }
     case 'parts':
       {
         return <MessageResponse height={1}>
           <Text>
-            Read <Text bold>{output.file.count}</Text>{' '}
-            {output.file.count === 1 ? 'page' : 'pages'} (
+            {tSync('fileRead.read')} <Text bold>{output.file.count}</Text>{' '}
+            {tSync(output.file.count === 1 ? 'fileRead.readPages_one' : 'fileRead.readPages_other')} (
             {formatFileSize(output.file.originalSize)})
           </Text>
         </MessageResponse>;
@@ -128,15 +128,15 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
         } = output.file;
         return <MessageResponse height={1}>
           <Text>
-            Read <Text bold>{numLines}</Text>{' '}
-            {numLines === 1 ? 'line' : 'lines'}
+            {tSync('fileRead.read')} <Text bold>{numLines}</Text>{' '}
+            {tSync(numLines === 1 ? 'fileRead.readLines_one' : 'fileRead.readLines_other')}
           </Text>
         </MessageResponse>;
       }
     case 'file_unchanged':
       {
         return <MessageResponse height={1}>
-          <Text dimColor>Unchanged since last read</Text>
+          <Text dimColor>{tSync('fileRead.unchanged')}</Text>
         </MessageResponse>;
       }
   }
@@ -163,12 +163,12 @@ export function renderToolUseErrorMessage(result: ToolResultBlock['content'], {
 }
 export function userFacingName(input: Partial<Input> | undefined): string {
   if (input?.file_path?.startsWith(getPlansDirectory())) {
-    return 'Reading Plan';
+    return tSync('fileRead.readingPlan');
   }
   if (input?.file_path && getAgentOutputTaskId(input.file_path)) {
-    return 'Read agent output';
+    return tSync('fileRead.readAgentOutput');
   }
-  return 'Read';
+  return tSync('fileRead.read');
 }
 export function getToolUseSummary(input: Partial<Input> | undefined): string | null {
   if (!input?.file_path) {

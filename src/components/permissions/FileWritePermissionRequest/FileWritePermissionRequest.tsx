@@ -2,6 +2,7 @@ import { basename, relative } from 'path';
 import React from 'react';
 import type { z } from 'zod/v4';
 import { Text } from '../../../ink.js';
+import { tSync } from '../../../i18n/index.js';
 import { FileWriteTool } from '../../../tools/FileWriteTool/FileWriteTool.js';
 import { getCwd } from '../../../utils/cwd.js';
 import { isENOENT } from '../../../utils/errors.js';
@@ -60,8 +61,8 @@ export function FileWritePermissionRequest(props) {
     fileExists,
     oldContent
   } = t1;
-  const actionText = fileExists ? "overwrite" : "create";
+  const actionText = fileExists ? tSync('permission.overwriteAction') : tSync('permission.createAction');
   const relativeResult = relative(getCwd(), file_path);
   const basenameResult = basename(file_path);
-  return <FilePermissionDialog toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={fileExists ? "Overwrite file" : "Create file"} subtitle={relativeResult} question={<Text>Do you want to {actionText} {<Text bold={true}>{basenameResult}</Text>}?</Text>} content={<FileWriteToolDiff file_path={file_path} content={content} fileExists={fileExists} oldContent={oldContent} />} path={file_path} completionType="write_file_single" parseInput={parseInput} ideDiffSupport={ideDiffSupport} />;
+  return <FilePermissionDialog toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={fileExists ? tSync('permission.overwriteFile') : tSync('permission.createFile')} subtitle={relativeResult} question={<Text>{tSync('permission.doYouWantToAction', { action: actionText, filename: basenameResult })}</Text>} content={<FileWriteToolDiff file_path={file_path} content={content} fileExists={fileExists} oldContent={oldContent} />} path={file_path} completionType="write_file_single" parseInput={parseInput} ideDiffSupport={ideDiffSupport} />;
 }

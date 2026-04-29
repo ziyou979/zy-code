@@ -38,17 +38,17 @@ function getAssistantMessageId(message: Message): string | undefined {
 
 /**
  * Calculate total context window tokens from an API response's usage data.
- * Includes input_tokens + cache tokens + output_tokens.
+ * Includes inputTokens + cache tokens + outputTokens.
  *
  * This represents the full context size at the time of that API call.
  * Use tokenCountWithEstimation() when you need context size from messages.
  */
 export function getTokenCountFromUsage(usage: Usage): number {
   return (
-    usage.input_tokens +
-    (usage.cache_creation_input_tokens ?? 0) +
-    (usage.cache_read_input_tokens ?? 0) +
-    usage.output_tokens
+    usage.inputTokens +
+    (usage.extras?.cacheCreationInputTokens ?? 0) +
+    (usage.extras?.cacheReadInputTokens ?? 0) +
+    usage.outputTokens
   )
 }
 
@@ -72,7 +72,7 @@ export function tokenCountFromLastAPIResponse(messages: Message[]): number {
  * the pre-compact final window, not billing spend. See monorepo
  * api/api/sampling/prompt/renderer.py:292 for the server-side computation.
  *
- * Falls back to top-level input_tokens + output_tokens when iterations is
+ * Falls back to top-level inputTokens + outputTokens when iterations is
  * absent (no server-side tool loops, so top-level usage IS the final window).
  * Both paths exclude cache tokens to match #304930's formula.
  */
@@ -88,14 +88,18 @@ export function finalContextTokensFromLastResponse(
       const iterations = (
         usage as {
           iterations?: Array<{
-            input_tokens: number
-            output_tokens: number
+            input_tokens?: number
+            output_tokens?: number
+            inputTokens?: number
+            outputTokens?: number
           }> | null
         }
       ).iterations
       if (iterations && iterations.length > 0) {
         const last = iterations.at(-1)!
-        return last.input_tokens + last.output_tokens
+        const lastIn = last.inputTokens ?? last.input_tokens ?? 0
+        const lastOut = last.outputTokens ?? last.output_tokens ?? 0
+        return lastIn + lastOut
       }
       // No iterations → no server tool loop → top-level usage IS the final
       // window. Match the iterations path's formula (input + output, no cache)
@@ -104,7 +108,7 @@ export function finalContextTokensFromLastResponse(
       // (renderer.py:292 calculate_context_tokens) counts cache the same way
       // is an open question; aligning with the iterations path keeps the two
       // branches consistent until that's resolved.
-      return usage.input_tokens + usage.output_tokens
+      return usage.inputTokens + usage.outputTokens
     }
     i--
   }
@@ -112,7 +116,7 @@ export function finalContextTokensFromLastResponse(
 }
 
 /**
- * Get only the output_tokens from the last API response.
+ * Get only the outputTokens from the last API response.
  * This excludes input context (system prompt, tools, prior messages).
  *
  * WARNING: Do NOT use this for threshold comparisons (autocompact, session memory).
@@ -128,7 +132,7 @@ export function messageTokenCountFromLastAPIResponse(
     const message = messages[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
-      return usage.output_tokens
+      return usage.outputTokens
     }
     i--
   }
@@ -146,10 +150,10 @@ export function getCurrentUsage(messages: Message[]): {
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
       return {
-        inputTokens: usage.input_tokens,
-        outputTokens: usage.output_tokens,
-        cacheCreationInputTokens: usage.cache_creation_input_tokens ?? 0,
-        cacheReadInputTokens: usage.cache_read_input_tokens ?? 0,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        cacheCreationInputTokens: usage.extras?.cacheCreationInputTokens ?? 0,
+        cacheReadInputTokens: usage.extras?.cacheReadInputTokens ?? 0,
       }
     }
   }

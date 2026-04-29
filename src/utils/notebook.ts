@@ -144,11 +144,8 @@ function cellOutputToToolResult(output: NotebookCellSourceOutput) {
   if (output.image) {
     outputs.push({
       type: 'image',
-      source: {
-        data: output.image.image_data,
-        mediaType: output.image.mediaType,
-        type: 'base64',
-      },
+      mimeType: output.image.mediaType,
+      data: output.image.image_data,
     })
   }
   return outputs

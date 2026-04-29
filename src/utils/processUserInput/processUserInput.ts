@@ -367,12 +367,9 @@ async function processUserInputBase(
     imageContents.map(async pastedImage => {
       const imageBlock: ImageBlock = {
         type: 'image',
-        source: {
-          type: 'base64',
-          mediaType: (pastedImage.mediaType ||
-            'image/png') as ImageSource['mediaType'],
-          data: pastedImage.content,
-        },
+        mimeType: (pastedImage.mediaType ||
+          'image/png') as ImageSource['mediaType'],
+        data: pastedImage.content,
       }
       logEvent('zy_pasted_image_resize_attempt', {
         original_size_bytes: pastedImage.content.length,

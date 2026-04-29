@@ -445,17 +445,13 @@ export interface ImageBlockWithDimensions {
 export async function maybeResizeAndDownsampleImageBlock(
   imageBlock: ImageBlock,
 ): Promise<ImageBlockWithDimensions> {
-  // Only process base64 images
-  if (imageBlock.source.type !== 'base64') {
-    return { block: imageBlock }
-  }
-
+  // v2 平铺格式
   // Decode base64 to buffer
-  const imageBuffer = Buffer.from(imageBlock.source.data, 'base64')
+  const imageBuffer = Buffer.from(imageBlock.data, 'base64')
   const originalSize = imageBuffer.length
 
   // Extract extension from media type
-  const mediaType = imageBlock.source.mediaType
+  const mediaType = imageBlock.mimeType
   const ext = mediaType?.split('/')[1] || 'png'
 
   // Resize if needed
@@ -469,12 +465,9 @@ export async function maybeResizeAndDownsampleImageBlock(
   return {
     block: {
       type: 'image',
-      source: {
-        type: 'base64',
-        mediaType:
-          `image/${resized.mediaType}` as ImageSource['mediaType'],
-        data: resized.buffer.toString('base64'),
-      },
+      mimeType:
+        `image/${resized.mediaType}` as ImageSource['mediaType'],
+      data: resized.buffer.toString('base64'),
     },
     dimensions: resized.dimensions,
   }
@@ -601,13 +594,9 @@ export async function compressImageBlock(
   imageBlock: ImageBlock,
   maxBytes: number = IMAGE_TARGET_RAW_SIZE,
 ): Promise<ImageBlock> {
-  // Only process base64 images
-  if (imageBlock.source.type !== 'base64') {
-    return imageBlock
-  }
-
+  // v2 平铺格式
   // Decode base64 to buffer
-  const imageBuffer = Buffer.from(imageBlock.source.data, 'base64')
+  const imageBuffer = Buffer.from(imageBlock.data, 'base64')
 
   // Check if already within size limit
   if (imageBuffer.length <= maxBytes) {
@@ -619,11 +608,8 @@ export async function compressImageBlock(
 
   return {
     type: 'image',
-    source: {
-      type: 'base64',
-      mediaType: compressed.mediaType,
-      data: compressed.base64,
-    },
+    mimeType: compressed.mediaType,
+    data: compressed.base64,
   }
 }
 

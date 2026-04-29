@@ -30,19 +30,19 @@ export function userFacingName(input: Partial<{
   edits: unknown[];
 }> | undefined): string {
   if (!input) {
-    return 'Update';
+    return tSync('fileEdit.update');
   }
   if (input.file_path?.startsWith(getPlansDirectory())) {
-    return 'Updated plan';
+    return tSync('fileWrite.updatedPlan');
   }
   // Hashline edits always modify an existing file (line-ref based)
   if (input.edits != null) {
-    return 'Update';
+    return tSync('fileEdit.update');
   }
   if (input.old_string === '') {
-    return 'Create';
+    return tSync('fileEdit.create');
   }
-  return 'Update';
+  return tSync('fileEdit.update');
 }
 export function getToolUseSummary(input: Partial<{
   file_path: string;
@@ -88,7 +88,7 @@ export function renderToolResultMessage({
 }): React.ReactNode {
   // For plan files, show /plan hint above the diff
   const isPlanFile = filePath.startsWith(getPlansDirectory());
-  return <FileEditToolUpdatedMessage filePath={filePath} structuredPatch={structuredPatch} firstLine={originalFile.split('\n')[0] ?? null} fileContent={originalFile} style={style} verbose={verbose} previewHint={isPlanFile ? '/plan to preview' : undefined} />;
+  return <FileEditToolUpdatedMessage filePath={filePath} structuredPatch={structuredPatch} firstLine={originalFile.split('\n')[0] ?? null} fileContent={originalFile} style={style} verbose={verbose} previewHint={isPlanFile ? tSync('fileWrite.planHint') : undefined} />;
 }
 export function renderToolUseRejectedMessage(input: {
   file_path: string;

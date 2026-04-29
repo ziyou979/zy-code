@@ -1,5 +1,4 @@
 import type {
-  ImageSource,
   ContentBlock,
   ImageBlock,
 } from '../types/llm.js'
@@ -40,11 +39,12 @@ export function extractInboundMessageFields(
 }
 
 /**
- * Normalize image content blocks from bridge clients. iOS/web clients may
- * send `mediaType` (camelCase) instead of `media_type` (snake_case), or
- * omit the field entirely. Without normalization, the bad block poisons
- * the session — every subsequent API call fails with
- * "mediaType: Field required".
+ * Normalize image content blocks from bridge clients.
+ *
+ * 兼容三种历史/客户端形态，统一转换成 v2 平铺格式 { type:'image', mimeType, data }：
+ *   - v2 平铺缺 mimeType（iOS/web bridge 可能漏送）
+ *   - v1 嵌套 source: { type:'base64', mediaType, data }
+ *   - v1 嵌套但 mediaType 也缺失（兜底用 magic byte 探测）
  *
  * Fast-path scan returns the original array reference when no
  * normalization is needed (zero allocation on the happy path).
@@ -52,29 +52,29 @@ export function extractInboundMessageFields(
 export function normalizeImageBlocks(
   blocks: Array<ContentBlock>,
 ): Array<ContentBlock> {
-  if (!blocks.some(isMalformedBase64Image)) return blocks
+  if (!blocks.some(needsNormalize)) return blocks
 
   return blocks.map(block => {
-    if (!isMalformedBase64Image(block)) return block
-    const src = block.source as unknown as Record<string, unknown>
+    if (!needsNormalize(block)) return block
+    const b = block as ImageBlock & { source?: { mediaType?: string; data?: string } }
+    const data = b.data ?? b.source?.data ?? ''
     const mediaType =
-      typeof src.mediaType === 'string' && src.mediaType
-        ? src.mediaType
-        : detectImageFormatFromBase64(block.source.data)
+      b.mimeType ??
+      b.source?.mediaType ??
+      detectImageFormatFromBase64(data)
     return {
-      ...block,
-      source: {
-        type: 'base64' as const,
-        mediaType: mediaType as ImageSource['mediaType'],
-        data: block.source.data,
-      },
-    }
+      type: 'image',
+      mimeType: mediaType,
+      data,
+    } as ImageBlock
   })
 }
 
-function isMalformedBase64Image(
-  block: ContentBlock,
-): block is ImageBlock & { source: ImageSource } {
-  if (block.type !== 'image' || block.source?.type !== 'base64') return false
-  return !(block.source as unknown as Record<string, unknown>).mediaType
+function needsNormalize(block: ContentBlock): boolean {
+  if (block.type !== 'image') return false
+  const b = block as ImageBlock & { source?: { mediaType?: string; data?: string } }
+  // 缺 mimeType / 缺 data / 还在用 v1 嵌套 source —— 都需要归一
+  if (!b.mimeType || !b.data) return true
+  if ('source' in b && b.source) return true
+  return false
 }

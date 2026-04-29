@@ -209,10 +209,10 @@ export function createChromeContext(
         }
         return {
           content: textBlocks,
-          stop_reason: response.stop_reason,
+          stop_reason: response.stopReason,
           usage: {
-            input_tokens: response.usage.input_tokens,
-            output_tokens: response.usage.output_tokens,
+            input_tokens: response.usage.inputTokens,
+            output_tokens: response.usage.outputTokens,
           },
         }
       },

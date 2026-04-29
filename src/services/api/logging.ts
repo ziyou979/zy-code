@@ -470,10 +470,22 @@ function logAPISuccess({
       : {}),
     messageCount,
     messageTokens,
-    inputTokens: 'input_tokens' in usage ? usage.input_tokens : usage.inputTokens,
-    outputTokens: 'input_tokens' in usage ? usage.output_tokens : usage.outputTokens,
-    cachedInputTokens: ('input_tokens' in usage ? (usage.cache_read_input_tokens ?? 0) : (usage.cacheReadInputTokens ?? 0)),
-    uncachedInputTokens: ('input_tokens' in usage ? (usage.cache_creation_input_tokens ?? 0) : (usage.cacheCreationInputTokens ?? 0)),
+    inputTokens: 'inputTokens' in usage
+      ? (usage as any).inputTokens
+      : (usage as any).input_tokens,
+    outputTokens: 'outputTokens' in usage
+      ? (usage as any).outputTokens
+      : (usage as any).output_tokens,
+    cachedInputTokens:
+      (usage as any).extras?.cacheReadInputTokens
+        ?? (usage as any).cacheReadInputTokens
+        ?? (usage as any).cache_read_input_tokens
+        ?? 0,
+    uncachedInputTokens:
+      (usage as any).extras?.cacheCreationInputTokens
+        ?? (usage as any).cacheCreationInputTokens
+        ?? (usage as any).cache_creation_input_tokens
+        ?? 0,
     durationMs: durationMs,
     durationMsIncludingRetries: durationMsIncludingRetries,
     attempt: attempt,

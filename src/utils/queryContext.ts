@@ -131,11 +131,11 @@ export async function buildSideQuestionFallbackParams({
     ...(appendSystemPrompt ? [appendSystemPrompt] : []),
   ])
 
-  // Strip in-progress assistant message (stop_reason === null) — same guard
+  // Strip in-progress assistant message (stopReason === null) — same guard
   // as btw.tsx. The SDK can fire side_question mid-turn.
   const last = messages.at(-1)
   const forkContextMessages =
-    last?.type === 'assistant' && last.message.stop_reason === null
+    last?.type === 'assistant' && last.message.stopReason === null
       ? messages.slice(0, -1)
       : messages
 

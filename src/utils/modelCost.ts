@@ -21,12 +21,12 @@ export type ModelCosts = {
 /**
  * 解析模型的定价。
  * 优先从 model-capabilities.json 读取，未配置则回退到默认模型定价。
- * 对于阶梯费用模型，usage.input_tokens 用于确定当前所在阶梯。
+ * 对于阶梯费用模型，usage.inputTokens 用于确定当前所在阶梯。
  */
 export function getModelCosts(model: string, usage: Usage): ModelCosts {
-  const currentInput = (usage.cache_read_input_tokens ?? 0) +
-    (usage.cache_creation_input_tokens ?? 0) +
-    usage.input_tokens
+  const currentInput = (usage.extras?.cacheReadInputTokens ?? 0) +
+    (usage.extras?.cacheCreationInputTokens ?? 0) +
+    usage.inputTokens
   const pricing = getStaticPricingForModel(model, currentInput)
   if (pricing) {
     return {
@@ -85,13 +85,13 @@ export function getCurrencySymbol(): string {
  */
 function calculateTokenCost(modelCosts: ModelCosts, usage: Usage): number {
   return (
-    (usage.input_tokens / 1_000_000) * modelCosts.inputTokens +
-    (usage.output_tokens / 1_000_000) * modelCosts.outputTokens +
-    ((usage.cache_read_input_tokens ?? 0) / 1_000_000) *
+    (usage.inputTokens / 1_000_000) * modelCosts.inputTokens +
+    (usage.outputTokens / 1_000_000) * modelCosts.outputTokens +
+    ((usage.extras?.cacheReadInputTokens ?? 0) / 1_000_000) *
       modelCosts.promptCacheReadTokens +
-    ((usage.cache_creation_input_tokens ?? 0) / 1_000_000) *
+    ((usage.extras?.cacheCreationInputTokens ?? 0) / 1_000_000) *
       modelCosts.promptCacheWriteTokens +
-    ((usage as any).server_tool_use?.web_search_requests ?? 0) *
+    ((usage.extras?.webSearchRequests ?? 0)) *
       modelCosts.webSearchRequests
   )
 }
@@ -119,11 +119,13 @@ export function calculateCostFromTokens(
   },
 ): number {
   const usage: Usage = {
-    input_tokens: tokens.inputTokens,
-    output_tokens: tokens.outputTokens,
-    cache_read_input_tokens: tokens.cacheReadInputTokens,
-    cache_creation_input_tokens: tokens.cacheCreationInputTokens,
-  } as Usage
+    inputTokens: tokens.inputTokens,
+    outputTokens: tokens.outputTokens,
+    extras: {
+      cacheReadInputTokens: tokens.cacheReadInputTokens,
+      cacheCreationInputTokens: tokens.cacheCreationInputTokens,
+    },
+  }
   return calculateUSDCost(model, usage)
 }
 

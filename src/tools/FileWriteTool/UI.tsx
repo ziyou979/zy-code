@@ -43,21 +43,21 @@ function FileWriteToolCreatedMessage({
   const {
     columns
   } = useTerminalSize();
-  const contentWithFallback = content || "(No content)";
+  const contentWithFallback = content || tSync('fileWrite.noContent');
   const numLines = countLines(content);
   const plusLines = numLines - MAX_LINES_TO_RENDER;
   const displayPath = verbose ? filePath : relative(getCwd(), filePath);
   const displayContent = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
-  return <MessageResponse><Box flexDirection="column">{<Text>{tSync('fileWrite.wrote')} {<Text bold={true}>{numLines}</Text>} {tSync('fileWrite.linesTo')}{" "}{<Text bold={true}>{displayPath}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={displayContent} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
+  return <MessageResponse><Box flexDirection="column">{<Text>{tSync('fileWrite.wrote')} {<Text bold={true}>{numLines}</Text>} {tSync('fileWrite.linesTo')}{" "}{<Text bold={true}>{displayPath}</Text>}</Text>}{<Box flexDirection="column"><HighlightedCode code={displayContent} filePath={filePath} width={columns - 12} /></Box>}{!verbose && plusLines > 0 && <Text dimColor={true}>… {tSync('fileWrite.plusLines', { count: plusLines, unit: tSync(plusLines === 1 ? 'fileWrite.plusLines_one' : 'fileWrite.plusLines_other') })}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>}</Box></MessageResponse>;
 }
 export function userFacingName(input: Partial<{
   file_path: string;
   content: string;
 }> | undefined): string {
   if (input?.file_path?.startsWith(getPlansDirectory())) {
-    return 'Updated plan';
+    return tSync('fileWrite.updatedPlan');
   }
-  return 'Write';
+  return tSync('fileWrite.write');
 }
 
 /** 控制全屏点击展开。只有 `create` 会截断（至 MAX_LINES_TO_RENDER）；`update` 无论 verbose 如何都渲染完整 diff。在悬停/滚动时对每个可见消息调用，因此找到第 (MAX+1) 行后即提前退出，而不是拆分整个（可能很大的）内容。 */

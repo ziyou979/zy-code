@@ -30,6 +30,7 @@ import { NotebookEditPermissionRequest } from './NotebookEditPermissionRequest/N
 import { PowerShellPermissionRequest } from './PowerShellPermissionRequest/PowerShellPermissionRequest.js';
 import { SkillPermissionRequest } from './SkillPermissionRequest/SkillPermissionRequest.js';
 import { WebFetchPermissionRequest } from './WebFetchPermissionRequest/WebFetchPermissionRequest.js';
+import { tSync } from '../../i18n/index.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 // @ts-ignore
@@ -133,18 +134,18 @@ export type ToolUseConfirm<Input extends AnyObject = AnyObject> = {
 function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
   const toolName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never);
   if (toolUseConfirm.tool === ExitPlanModeV2Tool) {
-    return 'ZY Code needs your approval for the plan';
+    return tSync('permission.planApprovalNeeded');
   }
   if (toolUseConfirm.tool === EnterPlanModeTool) {
-    return 'ZY Code wants to enter plan mode';
+    return tSync('permission.wantsToEnterPlanMode');
   }
   if (feature('REVIEW_ARTIFACT') && toolUseConfirm.tool === ReviewArtifactTool) {
-    return 'Zy needs your approval for a review artifact';
+    return tSync('permission.reviewArtifactApprovalNeeded');
   }
   if (!toolName || toolName.trim() === '') {
-    return 'ZY Code needs your attention';
+    return tSync('permission.needsAttention');
   }
-  return `Zy needs your permission to use ${toolName}`;
+  return tSync('permission.needsPermissionFor', { toolName });
 }
 
 // TODO: Move this to Tool.renderPermissionRequest

@@ -103,5 +103,5 @@ export function WebFetchPermissionRequest({
     theme,
     verbose
   });
-  return <PermissionDialog title="Fetch" workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{t6}</Text>}{<Text dimColor={true}>{toolUseConfirm.description}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<Text>{tSync('permission.allowWebFetch')}</Text>}{<Select options={options} onChange={onChange} onCancel={() => onChange("no")} />}</Box>}</PermissionDialog>;
+  return <PermissionDialog title={tSync('permission.fetch')} workerBadge={workerBadge}>{<Box flexDirection="column" paddingX={2} paddingY={1}>{<Text>{t6}</Text>}{<Text dimColor={true}>{toolUseConfirm.description}</Text>}</Box>}{<Box flexDirection="column">{<PermissionRuleExplanation permissionResult={toolUseConfirm.permissionResult} toolType="tool" />}{<Text>{tSync('permission.allowWebFetch')}</Text>}{<Select options={options} onChange={onChange} onCancel={() => onChange("no")} />}</Box>}</PermissionDialog>;
 }

@@ -5,7 +5,7 @@
  * 重点关注：
  * - tool_calls 的 arguments 字符串被 JSON.parse 成对象（input 是 object）
  * - finish_reason 映射
- * - usage 同步赋值 inputTokens/outputTokens 与 deprecated input_tokens/output_tokens
+ * - usage 赋值 inputTokens/outputTokens（驼峰）
  */
 import { describe, test, expect } from 'bun:test'
 import { openAIResponseToStandard } from '../../../src/services/api/conversions/openai.js'
@@ -108,15 +108,13 @@ describe('openAIResponseToStandard: 入站 OpenAI 非流式', () => {
     expect((r.content[0] as any).input).toEqual({})
   })
 
-  test('usage：inputTokens / outputTokens 与 input_tokens / output_tokens 都赋值', () => {
+  test('usage：inputTokens / outputTokens 驼峰赋值', () => {
     const r = openAIResponseToStandard(
       makeCompletion({ content: 'x', promptTokens: 11, completionTokens: 22 }),
       'gpt-4',
     )
     expect(r.usage.inputTokens).toBe(11)
     expect(r.usage.outputTokens).toBe(22)
-    expect(r.usage.input_tokens).toBe(11)
-    expect(r.usage.output_tokens).toBe(22)
   })
 
   test('finish_reason 全部分支映射', () => {

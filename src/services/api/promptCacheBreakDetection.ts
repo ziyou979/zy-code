@@ -210,8 +210,8 @@ function buildDiffableContent(
     .map(t => {
       if (!('name' in t)) return 'unknown'
       const desc = 'description' in t ? t.description : ''
-      const schema = 'input_schema' in t ? jsonStringify(t.input_schema) : ''
-      return `${t.name}\n  description: ${desc}\n  input_schema: ${schema}`
+      const schema = 'inputSchema' in t ? jsonStringify(t.inputSchema) : ''
+      return `${t.name}\n  description: ${desc}\n  inputSchema: ${schema}`
     })
     .sort()
     .join('\n\n')

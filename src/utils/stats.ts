@@ -328,16 +328,16 @@ async function processSessionFiles(
               }
             }
 
-            modelUsageAgg[model]!.inputTokens += usage.input_tokens || 0
-            modelUsageAgg[model]!.outputTokens += usage.output_tokens || 0
+            modelUsageAgg[model]!.inputTokens += usage.inputTokens || 0
+            modelUsageAgg[model]!.outputTokens += usage.outputTokens || 0
             modelUsageAgg[model]!.cacheReadInputTokens +=
-              usage.cache_read_input_tokens || 0
+              usage.extras?.cacheReadInputTokens || 0
             modelUsageAgg[model]!.cacheCreationInputTokens +=
-              usage.cache_creation_input_tokens || 0
+              usage.extras?.cacheCreationInputTokens || 0
 
             // Track daily tokens per model
             const totalTokens =
-              (usage.input_tokens || 0) + (usage.output_tokens || 0)
+              (usage.inputTokens || 0) + (usage.outputTokens || 0)
             if (totalTokens > 0) {
               const dayTokens = dailyModelTokensMap.get(dateKey) || {}
               dayTokens[model] = (dayTokens[model] || 0) + totalTokens

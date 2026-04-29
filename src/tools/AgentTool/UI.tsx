@@ -192,7 +192,7 @@ type AgentPromptDisplayProps = {
 export function AgentPromptDisplay({
   prompt,
 }: AgentPromptDisplayProps) {
-  return <Box flexDirection="column">{<Text color="success" bold={true}>Prompt:</Text>}<Box paddingLeft={2}><Markdown>{prompt}</Markdown></Box></Box>;
+  return <Box flexDirection="column">{<Text color="success" bold={true}>{tSync('agent.prompt')}</Text>}<Box paddingLeft={2}><Markdown>{prompt}</Markdown></Box></Box>;
 }
 type AgentResponseDisplayProps = {
   content: Array<{ text: string }>;
@@ -202,7 +202,7 @@ export function AgentResponseDisplay({
   content
 }: AgentResponseDisplayProps) {
   const responseBlocks = content.map((block, index) => <Box key={index} paddingLeft={2} marginTop={index === 0 ? 0 : 1}><Markdown>{block.text}</Markdown></Box>);
-  return <Box flexDirection="column">{<Text color="success" bold={true}>Response:</Text>}{responseBlocks}</Box>;
+  return <Box flexDirection="column">{<Text color="success" bold={true}>{tSync('agent.response')}</Text>}{responseBlocks}</Box>;
 }
 type VerboseAgentTranscriptProps = {
   progressMessages: ProgressMessage<Progress>[];
@@ -293,8 +293,8 @@ export function renderToolResultMessage(data: Output, progressMessagesForMessage
     content,
     prompt
   } = data;
-  const result = [totalToolUseCount === 1 ? '1 tool use' : `${totalToolUseCount} tool uses`, formatNumber(totalTokens) + ' tokens', formatDuration(totalDurationMs)];
-  const completionMessage = `Done (${result.join(' · ')})`;
+  const result = [totalToolUseCount === 1 ? `1 ${tSync('agent.toolUse_one')}` : `${totalToolUseCount} ${tSync('agent.toolUse_other')}`, `${formatNumber(totalTokens)} ${tSync('agent.unitTokens')}`, formatDuration(totalDurationMs)];
+  const completionMessage = `${tSync('agent.done')} (${result.join(' · ')})`;
   const finalAssistantMessage = createAssistantMessage({
     content: completionMessage,
     usage: {
@@ -361,7 +361,7 @@ export function renderToolUseTag(input: Partial<{
   }
   return <>{tags}</>;
 }
-const INITIALIZING_TEXT = 'Initializing…';
+const INITIALIZING_TEXT = tSync('agent.initializing');
 export function renderToolUseProgressMessage(progressMessages: ProgressMessage<Progress>[], {
   tools,
   verbose,
@@ -617,7 +617,7 @@ export function renderGroupedAgentToolUse(toolUses: Array<{
       // 在类型上使用自定义代理定义的颜色，而不是名称
       descriptionColor = isCustomSubagentType(subagentType) ? getAgentColor(subagentType) as keyof Theme | undefined : undefined;
     } else {
-      agentType = parsedInput.success ? userFacingName(parsedInput.data) : 'Agent';
+      agentType = parsedInput.success ? userFacingName(parsedInput.data) : tSync('agent.defaultName');
       description = parsedInput.success ? parsedInput.data.description : undefined;
       color = parsedInput.success ? userFacingNameBackgroundColor(parsedInput.data) : undefined;
       taskDescription = undefined;
@@ -689,11 +689,11 @@ export function userFacingName(input: Partial<{
   if (input?.subagent_type && input.subagent_type !== GENERAL_PURPOSE_AGENT.agentType) {
     // 将 "worker" 代理显示为 "Agent"，使 UI 更简洁
     if (input.subagent_type === 'worker') {
-      return 'Agent';
+      return tSync('agent.defaultName');
     }
     return input.subagent_type;
   }
-  return 'Agent';
+  return tSync('agent.defaultName');
 }
 export function userFacingNameBackgroundColor(input: Partial<{
   description: string;

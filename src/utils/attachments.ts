@@ -692,11 +692,8 @@ async function buildImageContentBlocks(pastedContents: Record<number, PastedCont
   const results = await Promise.all(imageContents.map(async img => {
     const imageBlock: ImageBlock = {
       type: 'image',
-      source: {
-        type: 'base64',
-        mediaType: (img.mediaType || 'image/png') as ImageSource['mediaType'],
-        data: img.content
-      }
+      mimeType: (img.mediaType || 'image/png') as ImageSource['mediaType'],
+      data: img.content,
     };
     const resized = await maybeResizeAndDownsampleImageBlock(imageBlock);
     return resized.block;

@@ -29,15 +29,13 @@ export interface TextBlock {
   text: string
 }
 
-/** 图片块 — v2 平铺格式，兼容旧嵌套 source 结构 */
+/** 图片块 — v2 平铺格式 */
 export interface ImageBlock {
   type: 'image'
-  /** MIME 类型，如 'image/jpeg'、'image/png'（与 source.mediaType 二选一） */
-  mimeType?: string
-  /** base64 编码的图片数据（与 source.data 二选一） */
-  data?: string
-  /** @deprecated 兼容旧嵌套结构 */
-  source?: ImageSource
+  /** MIME 类型，如 'image/jpeg'、'image/png' */
+  mimeType: string
+  /** base64 编码的图片数据 */
+  data: string
 }
 
 /**
@@ -103,14 +101,11 @@ export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
 export interface ToolDefinition {
   name: string
   description?: string
-  /** v2 驼峰命名 — 与 input_schema 二选一提供 */
   inputSchema?: {
     type: 'object'
     properties: Record<string, unknown>
     required?: string[]
   }
-  /** @deprecated 使用 inputSchema — 保留以兼容旧代码（宽类型以接收 Record<string, unknown>） */
-  input_schema?: Record<string, unknown>
 }
 
 /** 工具选择策略 */
@@ -226,12 +221,11 @@ export interface ConnectorTextDelta {
  * 合并 Anthropic stop_reason 和 OpenAI finish_reason 为统一枚举。
  */
 export type StopReason =
-  | 'end_turn'       // 自然结束（Anthropic end_turn / OpenAI stop）
+  | 'end_turn'       // 自然结束（Anthropic end_turn / stop_sequence / OpenAI stop）
   | 'max_tokens'     // 达到 token 上限（Anthropic max_tokens / OpenAI length）
   | 'tool_use'       // 模型发起工具调用（Anthropic tool_use / OpenAI tool_calls）
   | 'content_filter' // 内容安全过滤（OpenAI content_filter）
   | 'refusal'        // 模型拒绝（OpenAI refusal）
-  | 'stop_sequence'  // @deprecated 匹配 stop_sequences 触发，归入 end_turn
   | null
 
 // ============================================================================
@@ -244,16 +238,6 @@ export interface TokenUsage {
   outputTokens: number
   /** provider 特定计量（如 Anthropic 的 cache tokens） */
   extras?: Record<string, number>
-  /** @deprecated 使用 inputTokens — 保留 required 以兼容旧代码类型断言 */
-  input_tokens: number
-  /** @deprecated 使用 outputTokens — 保留 required 以兼容旧代码类型断言 */
-  output_tokens: number
-  /** @deprecated 使用 extras.cacheCreationInputTokens */
-  cache_creation_input_tokens?: number
-  /** @deprecated 使用 extras.cacheReadInputTokens */
-  cache_read_input_tokens?: number
-  /** @deprecated 使用 extras.serverToolUseInputTokens */
-  server_tool_use_input_tokens?: number
 }
 
 /** 增量 token 用量（流式事件中） */
@@ -261,8 +245,6 @@ export interface DeltaUsage {
   outputTokens: number
   /** provider 特定增量计量 */
   extras?: Record<string, number>
-  /** @deprecated 使用 outputTokens */
-  output_tokens?: number
 }
 
 // ============================================================================
@@ -277,12 +259,6 @@ export interface Response {
   content: AssistantContentBlock[]
   stopReason: StopReason
   usage: TokenUsage
-  /** @deprecated 使用 stopReason */
-  stop_reason?: StopReason
-  /** @deprecated Anthropic 特有字段 */
-  stop_sequence?: string | null
-  /** @deprecated Anthropic 特有字段（type: 'message'） */
-  type?: string
 }
 
 // ============================================================================

@@ -656,7 +656,7 @@ export async function countMcpToolTokens(
             tools,
             agents: agentInfo?.activeAgents ?? [],
           }),
-          input_schema: t.inputJSONSchema ?? {},
+          inputSchema: t.inputJSONSchema ?? {},
         }),
       ),
     ),

@@ -524,12 +524,12 @@ function extractToolStats(log: LogOption): {
 
       const usage = (
         msg.message as {
-          usage?: { input_tokens?: number; output_tokens?: number }
+          usage?: { inputTokens?: number; outputTokens?: number }
         }
       ).usage
       if (usage) {
-        inputTokens += usage.input_tokens || 0
-        outputTokens += usage.output_tokens || 0
+        inputTokens += usage.inputTokens || 0
+        outputTokens += usage.outputTokens || 0
       }
 
       const content = msg.message.content

@@ -8,7 +8,7 @@
  * 重点关注：
  * - tool_use → tool_call 类型映射
  * - input_json_delta → partialJson（驼峰）
- * - usage 字段映射，特别是 cache_creation/cache_read 进 extras
+ * - usage 字段映射：inputTokens/outputTokens 驼峰，cache_creation/cache_read 进 extras
  */
 import { describe, test, expect } from 'bun:test'
 import {
@@ -189,8 +189,6 @@ describe('anthropicResponseToStandard: 非流式响应映射', () => {
     expect(r.stopReason).toBe('tool_use')
     expect(r.usage.inputTokens).toBe(4)
     expect(r.usage.outputTokens).toBe(5)
-    expect(r.usage.input_tokens).toBe(4)
-    expect(r.usage.output_tokens).toBe(5)
   })
 
   test('thinking 块：在非流式响应中被降级为 text 块', () => {

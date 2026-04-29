@@ -131,7 +131,7 @@ export async function toolToAPISchema(
     }
   },
 ): Promise<ToolDefinition> {
-  // 会话稳定的基础模式：name、description、input_schema、strict、
+  // 会话稳定的基础模式：name、description、inputSchema、strict、
   // eager_input_streaming。这些在每个会话中计算一次并缓存，
   // 以防止会话中途的 GrowthBook 翻转（zy_tool_pear、zy_fgts）或
   // tool.prompt() 漂移导致序列化工具数组字节频繁变化。
@@ -152,7 +152,7 @@ export async function toolToAPISchema(
     const strictToolsEnabled =
       checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_strict_tools')
     // 如果提供了工具的 JSON 模式则直接使用，否则转换 Zod 模式
-    let input_schema = (
+    let inputSchema = (
       'inputJSONSchema' in tool && tool.inputJSONSchema
         ? tool.inputJSONSchema
         : zodToJsonSchema(tool.inputSchema)
@@ -161,7 +161,7 @@ export async function toolToAPISchema(
     // 当智能体集群未启用时过滤相关字段
     // 这确保外部非 EAP 用户在模式中看不到智能体集群功能
     if (!isAgentSwarmsEnabled()) {
-      input_schema = filterSwarmFieldsFromSchema(tool.name, input_schema)
+      inputSchema = filterSwarmFieldsFromSchema(tool.name, inputSchema)
     }
 
     const toolPrompt = await tool.prompt({
@@ -181,7 +181,7 @@ export async function toolToAPISchema(
     base = {
       name: tool.name,
       description,
-      input_schema,
+      inputSchema,
     }
 
     // 仅在以下情况下添加 strict：
@@ -222,7 +222,7 @@ export async function toolToAPISchema(
   const schema: ToolDefinitionWithExtras = {
     name: base.name,
     description: base.description,
-    input_schema: base.input_schema,
+    inputSchema: base.inputSchema,
     ...(base.strict && { strict: true }),
     ...(base.eager_input_streaming && { eager_input_streaming: true }),
   }
@@ -251,7 +251,7 @@ export async function toolToAPISchema(
     const allowed = new Set([
       'name',
       'description',
-      'input_schema',
+      'inputSchema',
       'cache_control',
     ])
     const stripped = Object.keys(schema).filter(k => !allowed.has(k))
@@ -260,7 +260,7 @@ export async function toolToAPISchema(
       return {
         name: schema.name,
         description: schema.description,
-        input_schema: schema.input_schema,
+        inputSchema: schema.inputSchema,
         ...(schema.cache_control && { cache_control: schema.cache_control }),
       }
     }

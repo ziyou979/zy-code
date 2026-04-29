@@ -265,7 +265,7 @@ export const YOLO_CLASSIFIER_TOOL_NAME = 'classify_result'
 const YOLO_CLASSIFIER_TOOL_SCHEMA: ToolDefinition = {
   name: YOLO_CLASSIFIER_TOOL_NAME,
   description: 'Report the security classification result for the agent action',
-  input_schema: {
+  inputSchema: {
     type: 'object',
     properties: {
       thinking: {
@@ -610,10 +610,10 @@ function extractUsage(
   result: LLMMessage,
 ): ClassifierUsage {
   return {
-    inputTokens: result.usage.input_tokens,
-    outputTokens: result.usage.output_tokens,
-    cacheReadInputTokens: result.usage.cache_read_input_tokens ?? 0,
-    cacheCreationInputTokens: result.usage.cache_creation_input_tokens ?? 0,
+    inputTokens: result.usage.inputTokens,
+    outputTokens: result.usage.outputTokens,
+    cacheReadInputTokens: result.usage.extras?.cacheReadInputTokens ?? 0,
+    cacheCreationInputTokens: result.usage.extras?.cacheCreationInputTokens ?? 0,
   }
 }
 
@@ -1151,10 +1151,10 @@ export async function classifyYoloAction(
 
     // 提取使用统计以获取开销遥测
     const usage = {
-      inputTokens: result.usage.input_tokens,
-      outputTokens: result.usage.output_tokens,
-      cacheReadInputTokens: result.usage.cache_read_input_tokens ?? 0,
-      cacheCreationInputTokens: result.usage.cache_creation_input_tokens ?? 0,
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens,
+      cacheReadInputTokens: result.usage.extras?.cacheReadInputTokens ?? 0,
+      cacheCreationInputTokens: result.usage.extras?.cacheCreationInputTokens ?? 0,
     }
     // 分类器 API 实际消耗的总输入 tokens（未缓存 + 缓存）
     const classifierInputTokens =

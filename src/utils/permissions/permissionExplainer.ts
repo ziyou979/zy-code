@@ -46,7 +46,7 @@ const SYSTEM_PROMPT = `Analyze shell commands and explain what they do, why you'
 const EXPLAIN_COMMAND_TOOL = {
   name: 'explain_command',
   description: 'Provide an explanation of a shell command',
-  input_schema: {
+  inputSchema: {
     type: 'object' as const,
     properties: {
       explanation: {
@@ -187,7 +187,7 @@ Explain this command in context.`
 
     const latencyMs = Date.now() - startTime
     logForDebugging(
-      `Permission explainer: API returned in ${latencyMs}ms, stop_reason=${response.stop_reason}`,
+      `Permission explainer: API returned in ${latencyMs}ms, stopReason=${response.stopReason}`,
     )
 
     // Extract structured data from tool use block

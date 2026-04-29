@@ -134,10 +134,50 @@ export const zhCN: TranslationResource = {
   'shortcut.shortcutsHint': '? 查看快捷键',
 
   // 权限提示
+  // 权限通知消息
+  'permission.planApprovalNeeded': 'ZY Code 需要你批准此计划',
+  'permission.wantsToEnterPlanMode': 'ZY Code 想要进入计划模式',
+  'permission.reviewArtifactApprovalNeeded': 'Zy 需要你批准审核产物',
+  'permission.needsAttention': 'ZY Code 需要你的关注',
+  'permission.needsPermissionFor': 'Zy 需要你授权使用 {toolName}',
+
   'permission.cancel': '取消',
   'permission.amend': '修改',
   'permission.explain': '解释',
   'permission.hide': '隐藏',
+  // Bash / PowerShell / WebFetch 权限对话框标题
+  'permission.attemptingAutoApprove': '正在尝试自动批准…',
+  'permission.autoApproved': '已自动批准',
+  'permission.matchedRule': '匹配 "{rule}"',
+  'permission.requiresManualApproval': '需要手动批准',
+  'permission.bashCommandUnsandboxed': 'Bash 命令（未沙箱化）',
+  'permission.bashCommand': 'Bash 命令',
+  'permission.powershellCommand': 'PowerShell 命令',
+  'permission.fetch': '获取网络内容',
+
+  // Worker / swarm 权限字符串
+  'permission.waitingTeamLeadApproval': '等待团队负责人批准',
+  'permission.toolLabel': '工具：',
+  'permission.actionLabel': '操作：',
+  'permission.permissionRequestSentToTeam': '权限请求已发送给团队 "{teamName}" 负责人',
+
+  // 文件写入 / Notebook 编辑操作标签
+  'permission.overwriteAction': '覆盖',
+  'permission.createAction': '创建',
+  'permission.overwriteFile': '覆盖文件',
+  'permission.createFile': '创建文件',
+  'permission.doYouWantToAction': '是否要{action} {filename}？',
+  'permission.editNotebook': '编辑 Notebook',
+  'permission.insertCellInto': '将此单元格插入',
+  'permission.deleteCellFrom': '从此处删除此单元格',
+  'permission.makeEditTo': '对此文件进行此编辑',
+  'permission.doYouWantToNotebookAction': '是否要{action} {filename}？',
+
+  // 文件系统权限读取/编辑标签
+  'permission.read': '读取',
+  'permission.edit': '编辑',
+  'permission.readFileTitle': '读取文件',
+
   'permission.doYouWantToProceed': '是否继续？',
   'permission.escToCancel': 'Esc {cancel}',
   'permission.tabToAmend': 'Tab {amend}',
@@ -147,6 +187,13 @@ export const zhCN: TranslationResource = {
   'permission.feedbackReject': '告诉 ZY Code 哪里需要改进',
   'permission.showDebugInfo': 'Ctrl+d 显示调试信息',
   'permission.hideDebugInfo': 'Ctrl-D 隐藏调试信息',
+  // 权限解释说明
+  'permission.loadingExplanation': '正在加载解释…',
+  'permission.lowRisk': '低风险',
+  'permission.medRisk': '中风险',
+  'permission.highRisk': '高风险',
+  'permission.explanationUnavailable': '解释不可用',
+
   'permission.editFile': '编辑文件',
   'permission.doYouWantToMakeThisEdit': '是否要对 {filename} 进行此编辑？',
   'permission.sedFileDoesNotExist': '文件不存在',
@@ -663,6 +710,9 @@ export const zhCN: TranslationResource = {
   'fileWrite.planHint': '/plan 预览',
   'fileWrite.updatedPlan': '更新计划文件',
   'fileWrite.write': '写入',
+  'fileWrite.wrote': '写入',
+  'fileWrite.planToPreview': '/plan 预览',
+  'fileWrite.planToEdit': '/plan 编辑',
 
   // Help menu
   'help.bashMode': '! 进入 bash 模式',
@@ -690,8 +740,11 @@ export const zhCN: TranslationResource = {
   'help.newlineBackslashFull': '反斜杠 (\\) + 回车 (\u23CE) 换行',
 
   // System message
+  // 注意：tasksStillRunning 的 {count} 槽实际传入的是带量词的短语
+  // （如 "2 个本地 agent"），所以不能再写 "{count} 个任务"，否则会出现
+  // "2 个本地 agent 个任务仍在运行" 的重复量词。
   'systemMessage.verbWithDuration': '{verb}，耗时 {duration}',
-  'systemMessage.tasksStillRunning': '{count} 个任务仍在运行',
+  'systemMessage.tasksStillRunning': '，{count} 仍在运行',
 
   // Attachment
   'attachment.completed': '后台已完成',
@@ -948,6 +1001,12 @@ export const zhCN: TranslationResource = {
   'agent.moreToolUses_one': '+{count} 次额外工具使用',
   'agent.moreToolUses_other': '+{count} 次额外工具使用',
   'agent.apiCallsOnly': '[INNER-ONLY] API 调用：{path}',
+  'agent.prompt': '提示：',
+  'agent.response': '响应：',
+  'agent.done': '完成',
+  'agent.initializing': '初始化中…',
+  'agent.unitTokens': '个token',
+  'agent.defaultName': 'Agent',
 
   // Pill 标签（后台任务状态）
   'pill.shell_one': '1 个 shell',
@@ -1221,6 +1280,19 @@ export const zhCN: TranslationResource = {
   'glob.fileNotFound': '文件未找到',
   'glob.errorSearching': '搜索文件出错',
 
+  // Grep 工具标签
+  'grep.found': '找到',
+  'grep.across': '，交叉于',
+  'grep.lines_one': '行',
+  'grep.lines_other': '行',
+  'grep.matches_one': '个匹配',
+  'grep.matches_other': '个匹配',
+  'grep.files_one': '个文件',
+  'grep.files_other': '个文件',
+
+  // Glob 工具标签
+  'glob.search': '搜索',
+
   // 技能工具消息
   'skill.initializing': '初始化中…',
   'skill.done': '完成',
@@ -1286,6 +1358,13 @@ export const zhCN: TranslationResource = {
 
   // LSP 工具消息
   'lsp.operationFailed': 'LSP 操作失败',
+  'lsp.search': 'LSP',
+  'lsp.found': '找到',
+  'lsp.across': '，交叉于',
+  'lsp.hoverAvailable': '悬停信息可用',
+  'lsp.files': '个文件',
+  'lsp.result_one': '个结果',
+  'lsp.result_other': '个结果',
 
   // 文件编辑工具消息
   'fileEdit.addedLine': '新增 {count} 行',
@@ -1294,6 +1373,8 @@ export const zhCN: TranslationResource = {
   'fileEdit.removedLines': '删除 {count} 行',
   'fileEdit.removedLineOnly': '删除 {count} 行',
   'fileEdit.removedLinesOnly': '删除 {count} 行',
+  'fileEdit.update': '更新',
+  'fileEdit.create': '创建',
 
   // Grove 条款通知
   'grove.termsNotice':
@@ -1637,6 +1718,8 @@ export const zhCN: TranslationResource = {
   'permissionDebug.mode': '模式',
   'permissionDebug.unreachableRules': '不可达的规则（{count}）',
   'permissionDebug.requiresBypassSandbox': '需要绕过沙箱的权限',
+  'permissionDebug.suggestedRules': '建议的规则：',
+  'permissionDebug.fix': '修复：',
 
   // MCP 重连
   'mcp.reconnectingTo': '正在重新连接到 {serverName}',
@@ -2324,6 +2407,7 @@ export const zhCN: TranslationResource = {
   'notebookEdit.rejectedDelete': '用户拒绝了删除',
   'notebookEdit.rejectedEditCell': '用户拒绝了{mode}单元格',
   'notebookEdit.atCell': '在单元格 {cellId}',
+  'notebookEdit.updatedCell': '已更新单元格 {cellId}：',
 
   // File edit rejected
   'fileEdit.rejectedWrite': '用户拒绝了写入',

@@ -2,6 +2,7 @@ import { basename } from 'path';
 import React from 'react';
 import type { z } from 'zod/v4';
 import { Text } from '../../../ink.js';
+import { tSync } from '../../../i18n/index.js';
 import { NotebookEditTool } from '../../../tools/NotebookEditTool/NotebookEditTool.js';
 import { logError } from '../../../utils/log.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
@@ -30,6 +31,6 @@ export function NotebookEditPermissionRequest(props) {
   } = parsed;
   const language = parsed.cell_type === "markdown" ? "markdown" : "python";
   const notebook_path = parsed.notebook_path;
-  const editTypeText = edit_mode === "insert" ? "insert this cell into" : edit_mode === "delete" ? "delete this cell from" : "make this edit to";
-  return <T2 toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={"Edit notebook"} question={<T1>{"Do you want to "}{editTypeText}{" "}{<T0 bold={true}>{t1}</T0>}?</T1>} content={<NotebookEditToolDiff notebook_path={parsed.notebook_path} cell_id={parsed.cell_id} new_source={parsed.new_source} cell_type={parsed.cell_type} edit_mode={parsed.edit_mode} verbose={props.verbose} width={props.verbose ? 120 : 80} />} path={notebook_path} completionType="tool_use_single" languageName={language} parseInput={parseInput} />;
+  const editTypeText = edit_mode === "insert" ? tSync('permission.insertCellInto') : edit_mode === "delete" ? tSync('permission.deleteCellFrom') : tSync('permission.makeEditTo');
+  return <T2 toolUseConfirm={props.toolUseConfirm} toolUseContext={props.toolUseContext} onDone={props.onDone} onReject={props.onReject} workerBadge={props.workerBadge} title={tSync('permission.editNotebook')} question={<T1>{tSync('permission.doYouWantToNotebookAction', { action: editTypeText, filename: t1 })}</T1>} content={<NotebookEditToolDiff notebook_path={parsed.notebook_path} cell_id={parsed.cell_id} new_source={parsed.new_source} cell_type={parsed.cell_type} edit_mode={parsed.edit_mode} verbose={props.verbose} width={props.verbose ? 120 : 80} />} path={notebook_path} completionType="tool_use_single" languageName={language} parseInput={parseInput} />;
 }

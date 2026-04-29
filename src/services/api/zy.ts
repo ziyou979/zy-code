@@ -2186,7 +2186,7 @@ async function* queryModel(
             const lastMsg = newMessages.at(-1)
             if (lastMsg) {
               lastMsg.message.usage = usage
-              lastMsg.message.stop_reason = stopReason
+              lastMsg.message.stopReason = stopReason
             }
 
             // Update cost
@@ -2772,7 +2772,7 @@ async function* queryModel(
     if (fallbackMessage) {
       const fallbackUsage = fallbackMessage.message.usage
       usage = updateUsage(EMPTY_USAGE, fallbackUsage)
-      stopReason = fallbackMessage.message.stop_reason
+      stopReason = fallbackMessage.message.stopReason
       const fallbackCost = calculateUSDCost(resolvedModel, fallbackUsage)
       costUSD += addToTotalSessionCost(
         fallbackCost,

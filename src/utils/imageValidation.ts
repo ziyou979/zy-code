@@ -35,17 +35,15 @@ export class ImageSizeError extends Error {
 }
 
 /**
- * Type guard to check if a block is a base64 image block
+ * Type guard to check if a block is a base64 image block (v2 平铺格式)
  */
 function isBase64ImageBlock(
   block: unknown,
-): block is { type: 'image'; source: { type: 'base64'; data: string } } {
+): block is { type: 'image'; data: string } {
   if (typeof block !== 'object' || block === null) return false
   const b = block as Record<string, unknown>
   if (b.type !== 'image') return false
-  if (typeof b.source !== 'object' || b.source === null) return false
-  const source = b.source as Record<string, unknown>
-  return source.type === 'base64' && typeof source.data === 'string'
+  return typeof b.data === 'string'
 }
 
 /**
@@ -86,7 +84,7 @@ export function validateImagesForAPI(messages: unknown[]): void {
         imageIndex++
         // Check the base64-encoded string length directly (not decoded bytes)
         // The API limit applies to the base64 payload size
-        const base64Size = block.source.data.length
+        const base64Size = block.data.length
         if (base64Size > API_IMAGE_MAX_BASE64_SIZE) {
           logEvent('zy_image_api_validation_failed', {
             base64_size_bytes: base64Size,

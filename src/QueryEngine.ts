@@ -739,11 +739,11 @@ export class QueryEngine {
           // Tombstone 消息 是用于删除消息的控制信号，跳过它们
           break
         case 'assistant':
-          // 如果已设置则捕获 stop_reason（合成消息）。对于流式响应，
+          // 如果已设置则捕获 stopReason（合成消息）。对于流式响应，
           // 在 content_block_stop 时该值为 null；真实值会在下方通过
           // message_delta 到达（见 zy.ts 的 message_delta 处理器）。
-          if ((message as any).message.stop_reason != null) {
-            lastStopReason = (message as any).message.stop_reason
+          if ((message as any).message.stopReason != null) {
+            lastStopReason = (message as any).message.stopReason
           }
           this.mutableMessages.push(message)
           yield* normalizeMessage(message)
@@ -778,12 +778,15 @@ export class QueryEngine {
               currentMessageUsage,
               (message as any).event.usage as any,
             )
-            // 从 message_delta 捕获 stop_reason。assistant 消息在
-            // content_block_stop 时产生，stop_reason=null；真实值仅在此处到达
+            // 从 message_delta 捕获 stopReason。assistant 消息在
+            // content_block_stop 时产生，stopReason=null；真实值仅在此处到达
             //（见 zy.ts 的 message_delta 处理器）。没有这一步，
-            // result.stop_reason 将始终为 null。
-            if ((message as any).event.delta.stop_reason != null) {
-              lastStopReason = (message as any).event.delta.stop_reason
+            // result.stopReason 将始终为 null。
+            // 兼容入站事件可能仍带 snake_case stop_reason（部分上游 SDK 透传）。
+            const evt = (message as any).event
+            const evtStopReason = evt.delta?.stopReason ?? evt.delta?.stop_reason
+            if (evtStopReason != null) {
+              lastStopReason = evtStopReason
             }
           }
           if ((message as any).event.type === 'message_stop') {

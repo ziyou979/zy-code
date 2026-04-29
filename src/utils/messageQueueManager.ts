@@ -398,12 +398,12 @@ function extractImagesFromValue(
   const images: PastedContent[] = []
   let imageIndex = 0
   for (const block of value) {
-    if (block.type === 'image' && block.source.type === 'base64') {
+    if (block.type === 'image') {
       images.push({
         id: startId + imageIndex,
         type: 'image',
-        content: block.source.data,
-        mediaType: block.source.mediaType,
+        content: block.data,
+        mediaType: block.mimeType,
         filename: `image${imageIndex + 1}`,
       })
       imageIndex++

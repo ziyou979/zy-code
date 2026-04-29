@@ -66,19 +66,19 @@ function LSPResultSummary({
   verbose
 }) {
   const labelConfig = OPERATION_LABELS[operation] || {
-    singular: "result",
-    plural: "results"
+    singular: tSync('lsp.result_one'),
+    plural: tSync('lsp.result_other')
   };
   const countLabel = resultCount === 1 ? labelConfig.singular : labelConfig.plural;
-  const primaryText = operation === "hover" && resultCount > 0 && labelConfig.special ? <Text>Hover info {labelConfig.special}</Text> : <Text>Found <Text bold={true}>{resultCount} </Text>{countLabel}</Text>;
-  const secondaryText = fileCount > 1 ? <Text>{" "}across <Text bold={true}>{fileCount} </Text>files</Text> : null;
+  const primaryText = operation === "hover" && resultCount > 0 && labelConfig.special ? <Text>{tSync('lsp.hoverAvailable')}</Text> : <Text>{tSync('lsp.found')} <Text bold={true}>{resultCount} </Text>{countLabel}</Text>;
+  const secondaryText = fileCount > 1 ? <Text>{" "}{tSync('lsp.across')} <Text bold={true}>{fileCount} </Text>{tSync('lsp.files')}</Text> : null;
   if (verbose) {
     return <Box flexDirection="column">{<Box flexDirection="row"><Text>{<Text dimColor={true}>  ⎿  </Text>}{primaryText}{secondaryText}</Text></Box>}{<Box marginLeft={5}><Text>{content}</Text></Box>}</Box>;
   }
   return <MessageResponse height={1}><Text>{primaryText}{secondaryText} {resultCount > 0 && <CtrlOToExpand />}</Text></MessageResponse>;
 }
 export function userFacingName(): string {
-  return 'LSP';
+  return tSync('lsp.search');
 }
 export function renderToolUseMessage(input: Partial<Input>, {
   verbose

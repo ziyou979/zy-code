@@ -6,7 +6,8 @@ import type { Message } from '../../types/message.js';
 import { generatePermissionExplanation, isPermissionExplainerEnabled, type PermissionExplanation as PermissionExplanationType, type RiskLevel } from '../../utils/permissions/permissionExplainer.js';
 import { ShimmerChar } from '../Spinner/ShimmerChar.js';
 import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js';
-const LOADING_MESSAGE = 'Loading explanation…';
+import { tSync } from '../../i18n/index.js';
+const LOADING_MESSAGE = tSync('permission.loadingExplanation');
 function ShimmerLoadingText() {
   const [ref, glimmerIndex] = useShimmerAnimation("responding", LOADING_MESSAGE, false);
   const t0 = LOADING_MESSAGE.split("").map((char, index) => <ShimmerChar key={index} char={char} index={index} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="text" />);
@@ -25,11 +26,11 @@ function getRiskColor(riskLevel: RiskLevel): 'success' | 'warning' | 'error' {
 function getRiskLabel(riskLevel: RiskLevel): string {
   switch (riskLevel) {
     case 'LOW':
-      return 'Low risk';
+      return tSync('permission.lowRisk');
     case 'MEDIUM':
-      return 'Med risk';
+      return tSync('permission.medRisk');
     case 'HIGH':
-      return 'High risk';
+      return tSync('permission.highRisk');
   }
 }
 type PermissionExplanationProps = {
@@ -96,7 +97,7 @@ function ExplanationResult({
 }) {
   const explanation = use(promise);
   if (!explanation) {
-    return <Box marginTop={1}><Text dimColor={true}>Explanation unavailable</Text></Box>;
+    return <Box marginTop={1}><Text dimColor={true}>{tSync('permission.explanationUnavailable')}</Text></Box>;
   }
   const t3 = getRiskColor((explanation as any).riskLevel);
   const t4 = getRiskLabel((explanation as any).riskLevel);

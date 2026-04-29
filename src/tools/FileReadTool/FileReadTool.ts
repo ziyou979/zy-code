@@ -927,12 +927,9 @@ async function callInner(
           )
           return {
             type: 'image' as const,
-            source: {
-              type: 'base64' as const,
-              mediaType:
-                `image/${resized.mediaType}` as ImageSource['mediaType'],
-              data: resized.buffer.toString('base64'),
-            },
+            mimeType:
+              `image/${resized.mediaType}` as ImageSource['mediaType'],
+            data: resized.buffer.toString('base64'),
           }
         }),
       )

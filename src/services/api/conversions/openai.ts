@@ -145,9 +145,10 @@ export function messagesToOpenAI(
           } else if (block.type === 'text') {
             parts.push({ type: 'text', text: block.text })
           } else if (block.type === 'image') {
-            // v1 嵌套 source / v2 平铺
-            const mimeType = block.mimeType ?? block.source?.mediaType ?? 'image/png'
-            const data = block.data ?? block.source?.data ?? ''
+            // v2 平铺：兼容历史 v1 嵌套 source 已在入站 normalize 阶段抹平
+            const b = block as any
+            const mimeType = b.mimeType ?? b.source?.mediaType ?? 'image/png'
+            const data = b.data ?? b.source?.data ?? ''
             parts.push({
               type: 'image_url',
               image_url: { url: `data:${mimeType};base64,${data}` },
@@ -401,8 +402,6 @@ export function openAIUsageToStandard(
   return {
     inputTokens,
     outputTokens,
-    input_tokens: inputTokens,
-    output_tokens: outputTokens,
   }
 }
 

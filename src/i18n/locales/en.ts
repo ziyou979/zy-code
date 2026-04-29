@@ -179,10 +179,50 @@ export const en: TranslationResource = {
   'shortcut.background': 'run in background',
 
   // Permission prompts
+  // Permission notification messages
+  'permission.planApprovalNeeded': 'ZY Code needs your approval for the plan',
+  'permission.wantsToEnterPlanMode': 'ZY Code wants to enter plan mode',
+  'permission.reviewArtifactApprovalNeeded': 'Zy needs your approval for a review artifact',
+  'permission.needsAttention': 'ZY Code needs your attention',
+  'permission.needsPermissionFor': 'Zy needs your permission to use {toolName}',
+
   'permission.cancel': 'cancel',
   'permission.amend': 'amend',
   'permission.explain': 'explain',
   'permission.hide': 'hide',
+  // Permission Bash / PowerShell / WebFetch dialog titles
+  'permission.attemptingAutoApprove': 'Attempting to auto-approve…',
+  'permission.autoApproved': 'Auto-approved',
+  'permission.matchedRule': 'matched "{rule}"',
+  'permission.requiresManualApproval': 'Requires manual approval',
+  'permission.bashCommandUnsandboxed': 'Bash command (unsandboxed)',
+  'permission.bashCommand': 'Bash command',
+  'permission.powershellCommand': 'PowerShell command',
+  'permission.fetch': 'Fetch',
+
+  // Worker / swarm permission strings
+  'permission.waitingTeamLeadApproval': 'Waiting for team lead approval',
+  'permission.toolLabel': 'Tool: ',
+  'permission.actionLabel': 'Action: ',
+  'permission.permissionRequestSentToTeam': 'Permission request sent to team "{teamName}" leader',
+
+  // File write / notebook edit action labels
+  'permission.overwriteAction': 'overwrite',
+  'permission.createAction': 'create',
+  'permission.overwriteFile': 'Overwrite file',
+  'permission.createFile': 'Create file',
+  'permission.doYouWantToAction': 'Do you want to {action} {filename}?',
+  'permission.editNotebook': 'Edit notebook',
+  'permission.insertCellInto': 'insert this cell into',
+  'permission.deleteCellFrom': 'delete this cell from',
+  'permission.makeEditTo': 'make this edit to',
+  'permission.doYouWantToNotebookAction': 'Do you want to {action} {filename}?',
+
+  // Filesystem permission read/edit labels
+  'permission.read': 'Read',
+  'permission.edit': 'Edit',
+  'permission.readFileTitle': 'Read file',
+
   'permission.doYouWantToProceed': 'Do you want to proceed?',
   'permission.escToCancel': 'Esc to {cancel}',
   'permission.tabToAmend': 'Tab to {amend}',
@@ -192,6 +232,13 @@ export const en: TranslationResource = {
   'permission.feedbackReject': 'tell Zy what to do differently',
   'permission.showDebugInfo': 'Ctrl+d to show debug info',
   'permission.hideDebugInfo': 'Ctrl-D to hide debug info',
+  // Permission Explanation
+  'permission.loadingExplanation': 'Loading explanation…',
+  'permission.lowRisk': 'Low risk',
+  'permission.medRisk': 'Med risk',
+  'permission.highRisk': 'High risk',
+  'permission.explanationUnavailable': 'Explanation unavailable',
+
   'permission.editFile': 'Edit file',
   'permission.doYouWantToMakeThisEdit': 'Do you want to make this edit to {filename}?',
   'permission.sedFileDoesNotExist': 'File does not exist',
@@ -496,8 +543,10 @@ export const en: TranslationResource = {
   'permissionMode.on': 'on',
 
   // System message
+  // Note: tasksStillRunning {count} slot is filled with a phrase that already
+  // contains the unit (e.g. "2 local agents"), so do not add another noun here.
   'systemMessage.verbWithDuration': '{verb} for {duration}',
-  'systemMessage.tasksStillRunning': '{count} still running',
+  'systemMessage.tasksStillRunning': ', {count} still running',
 
   // Attachment
   'attachment.completed': 'completed in background',
@@ -767,6 +816,12 @@ export const en: TranslationResource = {
   'agent.moreToolUses_one': '+{count} more tool use',
   'agent.moreToolUses_other': '+{count} more tool uses',
   'agent.apiCallsOnly': '[ANT-ONLY] API calls: {path}',
+  'agent.prompt': 'Prompt:',
+  'agent.response': 'Response:',
+  'agent.done': 'Done',
+  'agent.initializing': 'Initializing…',
+  'agent.unitTokens': 'tokens',
+  'agent.defaultName': 'Agent',
 
   // Skills
   'skills.menu.title': 'Skills',
@@ -1153,6 +1208,19 @@ export const en: TranslationResource = {
   'glob.fileNotFound': 'File not found',
   'glob.errorSearching': 'Error searching files',
 
+  // Grep tool labels
+  'grep.found': 'Found',
+  'grep.across': 'across',
+  'grep.lines_one': 'line',
+  'grep.lines_other': 'lines',
+  'grep.matches_one': 'match',
+  'grep.matches_other': 'matches',
+  'grep.files_one': 'file',
+  'grep.files_other': 'files',
+
+  // Glob tool labels
+  'glob.search': 'Search',
+
   // Skill tool messages
   'skill.initializing': 'Initializing…',
   'skill.done': 'Done',
@@ -1224,6 +1292,13 @@ export const en: TranslationResource = {
 
   // LSP tool messages
   'lsp.operationFailed': 'LSP operation failed',
+  'lsp.search': 'LSP',
+  'lsp.found': 'Found',
+  'lsp.across': 'across',
+  'lsp.hoverAvailable': 'Hover info available',
+  'lsp.files': 'files',
+  'lsp.result_one': 'result',
+  'lsp.result_other': 'results',
 
   // File edit tool message
   'fileEdit.addedLine': 'Added {count} line',
@@ -1232,6 +1307,8 @@ export const en: TranslationResource = {
   'fileEdit.removedLines': 'removed {count} lines',
   'fileEdit.removedLineOnly': 'Removed {count} line',
   'fileEdit.removedLinesOnly': 'Removed {count} lines',
+  'fileEdit.update': 'Update',
+  'fileEdit.create': 'Create',
 
   // Grove terms notice
   'grove.termsNotice':
@@ -1581,6 +1658,8 @@ export const en: TranslationResource = {
   'permissionDebug.mode': 'Mode',
   'permissionDebug.unreachableRules': 'Unreachable Rules ({count})',
   'permissionDebug.requiresBypassSandbox': 'Requires permission to bypass sandbox',
+  'permissionDebug.suggestedRules': 'Suggested rules:',
+  'permissionDebug.fix': 'Fix: ',
 
   // MCP reconnect
   'mcp.reconnectingTo': 'Reconnecting to {serverName}',
@@ -2280,6 +2359,7 @@ export const en: TranslationResource = {
   'notebookEdit.rejectedDelete': 'User rejected delete',
   'notebookEdit.rejectedEditCell': 'User rejected {mode} cell in',
   'notebookEdit.atCell': 'at cell {cellId}',
+  'notebookEdit.updatedCell': 'Updated cell {cellId}:',
 
   // File edit rejected
   'fileEdit.rejectedWrite': 'User rejected write to',
