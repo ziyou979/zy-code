@@ -197,22 +197,19 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     })
   })
 
-  test('user 消息含图片：v2 平铺与 v1 嵌套都能转 image_url', () => {
+  test('user 消息含图片：平铺 ImageBlock 转 image_url', () => {
     const messages = [
       {
         role: 'user',
         content: [
           { type: 'text', text: 'see this' },
-          { type: 'image', mimeType: 'image/png', data: 'AAA' }, // v2
+          { type: 'image', mimeType: 'image/png', data: 'AAA' },
         ],
       },
       {
         role: 'user',
         content: [
-          {
-            type: 'image',
-            source: { mediaType: 'image/jpeg', data: 'BBB' },
-          }, // v1
+          { type: 'image', mimeType: 'image/jpeg', data: 'BBB' },
         ],
       },
     ]

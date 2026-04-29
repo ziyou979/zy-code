@@ -35,7 +35,7 @@ export class ImageSizeError extends Error {
 }
 
 /**
- * Type guard to check if a block is a base64 image block (v2 平铺格式)
+ * Type guard to check if a block is a base64 image block.
  */
 function isBase64ImageBlock(
   block: unknown,

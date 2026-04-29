@@ -69,7 +69,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
         {
           name: 't2',
           description: 'desc2',
-          input_schema: { type: 'object', properties: { b: { type: 'number' } } },
+          inputSchema: { type: 'object', properties: { b: { type: 'number' } } },
         },
       ] as any,
     } as any)

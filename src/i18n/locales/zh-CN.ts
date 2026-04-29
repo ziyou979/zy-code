@@ -932,7 +932,6 @@ export const zhCN: TranslationResource = {
   'planMode.yesBypassPermissions': '是，并跳过权限检查',
   'planMode.yesAutoAcceptEdits': '是，自动接受编辑',
   'planMode.yesManuallyApprove': '是，手动批准编辑',
-  'planMode.noUltraplan': '否，通过 ZY Code 网页版使用 Ultraplan 细化',
   'planMode.noKeepPlanning': '否，继续规划',
   'planMode.tellZyWhatToChange': '告诉 ZY 需要修改什么',
   'planMode.shiftTabApprove': 'shift+tab 使用此反馈批准',
@@ -1268,7 +1267,6 @@ export const zhCN: TranslationResource = {
   'commands.source.workflow': '工作流',
   'commands.source.plugin': '插件',
   'planMode.noPlanFound': '未找到计划。请先将计划写入计划文件。',
-  'planMode.ultraplanRefining': '正在通过 Ultraplan 细化计划，请稍候。',
 
   // 文件工具错误消息
   'fileEdit.mustReadFirst': '需要先读取文件',

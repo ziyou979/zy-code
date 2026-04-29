@@ -445,7 +445,6 @@ export interface ImageBlockWithDimensions {
 export async function maybeResizeAndDownsampleImageBlock(
   imageBlock: ImageBlock,
 ): Promise<ImageBlockWithDimensions> {
-  // v2 平铺格式
   // Decode base64 to buffer
   const imageBuffer = Buffer.from(imageBlock.data, 'base64')
   const originalSize = imageBuffer.length
@@ -594,7 +593,6 @@ export async function compressImageBlock(
   imageBlock: ImageBlock,
   maxBytes: number = IMAGE_TARGET_RAW_SIZE,
 ): Promise<ImageBlock> {
-  // v2 平铺格式
   // Decode base64 to buffer
   const imageBuffer = Buffer.from(imageBlock.data, 'base64')
 

@@ -93,12 +93,12 @@ export function safeStringifyToolArguments(input: unknown): string {
 type AnyMessage = Message | Record<string, unknown>
 
 /**
- * 将标准消息（含 v1 / v2 兼容）转换为 OpenAI ChatCompletionMessageParam[]。
+ * 将标准消息转换为 OpenAI ChatCompletionMessageParam[]。
  *
- * 兼容点：
- * - v1 user 消息内嵌 tool_result 块 → 拆为独立 role:'tool' 消息
- * - v1 assistant 块 type 为 'tool_use' → 当 'tool_call' 处理
- * - v1 image 块嵌套 source（mediaType/data）与 v2 平铺（mimeType/data）
+ * 转换点：
+ * - user 消息内嵌的 tool_result 块 → 拆为独立 role:'tool' 消息
+ * - assistant 块 type 为 'tool_use' → 当 'tool_call' 处理
+ * - image 块按平铺 { mimeType, data } 转 image_url
  * - thinking 块包装为 <thinking>...</thinking> 文本
  */
 export function messagesToOpenAI(
@@ -124,7 +124,7 @@ export function messagesToOpenAI(
           result.push({ role: 'user', content: '' })
           break
         }
-        // v1: user 消息中可能包含 tool_result 块，需要拆为独立 tool 消息
+        // user 消息中可能内嵌 tool_result 块，需要拆为独立 role:'tool' 消息
         const toolResults: OpenAI.Chat.ChatCompletionToolMessageParam[] = []
         const parts: Array<OpenAI.Chat.ChatCompletionContentPart> = []
         for (const block of msg.content) {
@@ -145,10 +145,8 @@ export function messagesToOpenAI(
           } else if (block.type === 'text') {
             parts.push({ type: 'text', text: block.text })
           } else if (block.type === 'image') {
-            // v2 平铺：兼容历史 v1 嵌套 source 已在入站 normalize 阶段抹平
-            const b = block as any
-            const mimeType = b.mimeType ?? b.source?.mediaType ?? 'image/png'
-            const data = b.data ?? b.source?.data ?? ''
+            const mimeType = block.mimeType ?? 'image/png'
+            const data = block.data ?? ''
             parts.push({
               type: 'image_url',
               image_url: { url: `data:${mimeType};base64,${data}` },

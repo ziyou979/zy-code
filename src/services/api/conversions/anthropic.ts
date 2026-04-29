@@ -160,9 +160,8 @@ function blockToAnthropic(
     return { type: 'redacted_thinking', data: b.data ?? '' }
   }
   if (b.type === 'image') {
-    // v2 平铺 / v1 嵌套 source
-    const mediaType = b.mimeType ?? b.source?.mediaType ?? 'image/png'
-    const data = b.data ?? b.source?.data ?? ''
+    const mediaType = b.mimeType ?? 'image/png'
+    const data = b.data ?? ''
     return {
       type: 'image',
       source: { type: 'base64', media_type: mediaType, data },
@@ -192,7 +191,7 @@ export function toolsToAnthropic(
   return tools.map((t) => ({
     name: t.name,
     description: t.description,
-    input_schema: t.inputSchema ?? (t as any).input_schema,
+    input_schema: t.inputSchema,
   }))
 }
 

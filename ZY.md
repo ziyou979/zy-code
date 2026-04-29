@@ -45,11 +45,30 @@
 - 使用 `.js` 后缀进行相对路径导入（如 `import { foo } from './bar.js'`）
 - 禁止使用无后缀的相对路径导入
 
-### 7. 禁止事项
+### 7. LLM 标准类型（`src/types/llm.ts`）
+业务代码一律使用驼峰、平铺，禁止 snake_case 与嵌套。
+
+- 字段名：`inputTokens` / `outputTokens` / `stopReason` / `inputSchema`，**禁止**下划线写法
+- `ImageBlock`：`{ type:'image', mimeType, data }`，**禁止** `source` 嵌套
+- `TokenUsage`：`{ inputTokens, outputTokens, extras? }`，cache/web 等 provider 特定计量放 `extras`
+- `StopReason`：`'end_turn' | 'max_tokens' | 'tool_use' | 'content_filter' | 'refusal' | null`
+- `CreateParams`：通用字段直接放，provider 专属走 `providerExtras.{anthropic|openai}`
+- 消息 4 角色分离，工具结果优先用 `ToolMessage`
+- 错误抛/接 `LLMError` 系列，判断用 `isAPIError` / `isAbortError` / `isConnectionError`
+- 类型必须从 `src/types/llm.ts` 导入，**禁止**从 `@anthropic-ai/sdk` / `openai` 直接导入
+- snake_case 双取写法只允许出现在适配层入口（`src/services/api/conversions/*`、`src/bridge/inboundMessages.ts`），业务层禁止
+
+### 8. 测试规范
+- 用 `bun test`（`bun:test`），测试放 `tests/`，路径镜像 `src/`，公共辅助放 `tests/_helpers/`
+- 优先测纯函数 / 转换层 / 归一化函数 / 错误工具；UI 不强制
+- 流式断言用 `tests/_helpers/streamAccumulator.ts` 累积后整体校验；大块 fixture 放 `tests/_helpers/*Fixtures.ts`
+- `describe` 写模块/函数名，`test` 用中文描述行为
+- 改 llm 类型或适配器后必须：`bun test` 全绿 + `read_lints` 无新错
+
+### 9. 禁止事项
 - 禁止引入未经评估的新外部依赖
 - 禁止在构建路径 `dist/` 中手动放置文件
 - 禁止修改 `build.ts` 中的 `define` 宏值（`MACRO.*`）
-- 禁止绕过 `process.env.USER_TYPE = "external"` 的门控逻辑
 
 ## 启动/构建命令
 

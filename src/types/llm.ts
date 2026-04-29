@@ -29,7 +29,7 @@ export interface TextBlock {
   text: string
 }
 
-/** 图片块 — v2 平铺格式 */
+/** 图片块 — 平铺格式 */
 export interface ImageBlock {
   type: 'image'
   /** MIME 类型，如 'image/jpeg'、'image/png' */
@@ -486,7 +486,7 @@ export function createAbortError(): LLMAbortError {
 
 /**
  * 工具结果内容块。
- * 注意：v2 推荐使用独立的 ToolMessage（role: 'tool'）。
+ * 注意：推荐使用独立的 ToolMessage（role: 'tool'）。
  * 此类型保留用于兼容 Anthropic 格式的消息内容。
  */
 export interface ToolResultBlock {

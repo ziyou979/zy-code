@@ -2139,17 +2139,17 @@ async function* queryModel(
             break
           }
           case 'response_delta': {
-            // v2: part.stopReason / part.usage 替代了 part.delta.stop_reason / part.usage
+            // v2: part.stopReason / part.usage（驼峰）
             const v2Delta = part as any
-            const stopReasonV2 = v2Delta.stopReason ?? v2Delta.delta?.stop_reason
+            const stopReasonV2 = v2Delta.stopReason
             // v2 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
             const rawUsage = v2Delta.usage
             const usageForUpdate = rawUsage
               ? {
-                  output_tokens: rawUsage.outputTokens ?? rawUsage.output_tokens ?? 0,
-                  input_tokens: rawUsage.inputTokens ?? rawUsage.input_tokens,
-                  cache_creation_input_tokens: rawUsage.extras?.cacheCreationInputTokens ?? rawUsage.cache_creation_input_tokens,
-                  cache_read_input_tokens: rawUsage.extras?.cacheReadInputTokens ?? rawUsage.cache_read_input_tokens,
+                  output_tokens: rawUsage.outputTokens ?? 0,
+                  input_tokens: rawUsage.inputTokens,
+                  cache_creation_input_tokens: rawUsage.extras?.cacheCreationInputTokens,
+                  cache_read_input_tokens: rawUsage.extras?.cacheReadInputTokens,
                 }
               : undefined
 

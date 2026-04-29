@@ -88,8 +88,6 @@ export function finalContextTokensFromLastResponse(
       const iterations = (
         usage as {
           iterations?: Array<{
-            input_tokens?: number
-            output_tokens?: number
             inputTokens?: number
             outputTokens?: number
           }> | null
@@ -97,8 +95,8 @@ export function finalContextTokensFromLastResponse(
       ).iterations
       if (iterations && iterations.length > 0) {
         const last = iterations.at(-1)!
-        const lastIn = last.inputTokens ?? last.input_tokens ?? 0
-        const lastOut = last.outputTokens ?? last.output_tokens ?? 0
+        const lastIn = last.inputTokens ?? 0
+        const lastOut = last.outputTokens ?? 0
         return lastIn + lastOut
       }
       // No iterations → no server tool loop → top-level usage IS the final

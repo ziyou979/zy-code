@@ -130,7 +130,7 @@ async function truncateContentBlocks(
               remainingBytes,
             )
             result.push(compressedBlock)
-            // Update currentChars based on compressed image size (v2 平铺)
+            // Update currentChars based on compressed image size
             currentChars += compressedBlock.data?.length ?? imageChars
           } catch {
             // If compression fails, skip the image

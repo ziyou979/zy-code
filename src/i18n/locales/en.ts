@@ -765,7 +765,6 @@ export const en: TranslationResource = {
   'planMode.yesBypassPermissions': 'Yes, and bypass permissions',
   'planMode.yesAutoAcceptEdits': 'Yes, auto-accept edits',
   'planMode.yesManuallyApprove': 'Yes, manually approve edits',
-  'planMode.noUltraplan': 'No, refine with Ultraplan on ZY Code on the web',
   'planMode.noKeepPlanning': 'No, keep planning',
   'planMode.tellZyWhatToChange': 'Tell Zy what to change',
   'planMode.shiftTabApprove': 'shift+tab to approve with this feedback',
@@ -1195,7 +1194,6 @@ export const en: TranslationResource = {
   'commands.source.workflow': 'workflow',
   'commands.source.plugin': 'plugin',
   'planMode.noPlanFound': 'No plan found. Please write your plan to the plan file first.',
-  'planMode.ultraplanRefining': 'Plan being refined via Ultraplan — please wait for the result.',
 
   // File tool error messages
   'fileEdit.mustReadFirst': 'File must be read first',
