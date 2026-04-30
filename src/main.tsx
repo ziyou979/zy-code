@@ -48,7 +48,7 @@ import { canUserConfigureAdvisor, getInitialAdvisorSetting, isAdvisorEnabled, is
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js';
 import { count, uniq } from './utils/array.js';
 import { installAsciicastRecorder } from './utils/asciicast.js';
-import { prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
+import { validateForceLoginOrg } from './utils/auth.js';
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
@@ -381,12 +381,6 @@ export function startDeferredPrefetches(): void {
   prefetchSystemContextIfSafe();
   void getRelevantTips();
   void warmI18n();
-  if (isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) && !isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH)) {
-    void prefetchAwsCredentialsAndBedRockInfoIfSafe();
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) && !isEnvTruthy(process.env.ZY_CODE_SKIP_VERTEX_AUTH)) {
-    void prefetchGcpCredentialsIfSafe();
-  }
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
 
   // 分析数据和功能标志初始化

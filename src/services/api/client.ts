@@ -1,16 +1,15 @@
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { randomUUID } from 'crypto';
-import type { GoogleAuth } from 'google-auth-library';
-import { getApiKey, getApiKeyFromApiKeyHelper, refreshAndGetAwsCredentials, refreshGcpCredentialsIfNeeded } from 'src/utils/auth.js';
+import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js';
 import { getUserAgent } from 'src/utils/http.js';
-import { getDefaultCompactModel } from 'src/utils/model/model.js';
 import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider, isEnvOrDefaultProvider, isOpenAIProvider, isPreconfiguredEndpointProvider } from 'src/utils/model/providers.js';
 import { getProviderEntry } from 'src/utils/model/providerRegistry.js';
 import { getProxyFetchOptions } from 'src/utils/proxy.js';
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js';
 import { getOauthConfig } from '../../constants/oauth.js';
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js';
-import { getAWSRegion, getVertexRegionForModel, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
 import type { LLMAdapter } from '../../types/llm.js';
 import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js';
 import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
@@ -20,23 +19,6 @@ import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
  *
  * 直接 API：
  * - ZY_API_KEY：直接 API 访问所需
- *
- * AWS Bedrock：
- * - 通过 aws-sdk 默认配置 AWS 凭证
- * - AWS_REGION 或 AWS_DEFAULT_REGION：设置所有模型的 AWS 区域（默认：us-east-1）
- * - ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION：可选。专门用于 small fast model (Haiku) 的 AWS 区域覆盖
- *
- * Vertex AI：
- * - CLOUD_ML_REGION：可选。用于所有模型的默认 GCP 区域
- *   如果未在上方指定特定模型区域，则使用此值
- * - ANTHROPIC_VERTEX_PROJECT_ID：必填。你的 GCP 项目 ID
- * - 通过 google-auth-library 配置标准 GCP 凭证
- *
- * 确定区域的优先级：
- * 1. 硬编码的模型特定环境变量
- * 2. 全局 CLOUD_ML_REGION 变量
- * 3. 配置中的默认区域
- * 4. 回退区域 (us-east5)
  */
 
 function createStderrLogger(): any {
@@ -53,7 +35,7 @@ function createStderrLogger(): any {
     console.error('[SDK DEBUG]', msg, ...args)
   };
 }
-export async function getLLMClient({
+export async function getAnthropicClient({
   apiKey,
   maxRetries,
   model,
@@ -75,13 +57,13 @@ export async function getLLMClient({
   } = {
     'x-app': 'cli',
     'User-Agent': getUserAgent(),
-    'X-Zy-Code-Session-Id': getSessionId(),
+    'X-Claude-Code-Session-Id': getSessionId(),
     ...customHeaders,
     ...(containerId ? {
-      'x-zy-remote-container-id': containerId
+      'x-claude-remote-container-id': containerId
     } : {}),
     ...(remoteSessionId ? {
-      'x-zy-remote-session-id': remoteSessionId
+      'x-claude-remote-session-id': remoteSessionId
     } : {}),
     // SDK 消费者可以通过此标识在 SDK 请求上设置他们的 app/library，用于后端分析
     ...(clientApp ? {
@@ -113,111 +95,6 @@ export async function getLLMClient({
       fetch: resolvedFetch
     })
   } as any;
-  if (isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)) {
-    const {
-      AnthropicBedrock
-    } = await import('@anthropic-ai/bedrock-sdk');
-    // 如果指定了 Haiku 模型的 AWS 区域覆盖，则使用
-    const awsRegion = model === getDefaultCompactModel() && process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION ? process.env.ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION : getAWSRegion();
-    const bedrockArgs: ConstructorParameters<typeof AnthropicBedrock>[0] = {
-      ...ARGS,
-      awsRegion,
-      ...(isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH) && {
-        skipAuth: true
-      }),
-      ...(isDebugToStdErr() && {
-        logger: createStderrLogger()
-      })
-    };
-
-    // 添加 API 密钥认证（如果可用）
-    if (process.env.AWS_BEARER_TOKEN_BEDROCK) {
-      bedrockArgs.skipAuth = true;
-      // 为 Bedrock API 密钥认证添加 Bearer token
-      bedrockArgs.defaultHeaders = {
-        ...bedrockArgs.defaultHeaders,
-        Authorization: `Bearer ${process.env.AWS_BEARER_TOKEN_BEDROCK}`
-      };
-    } else if (!isEnvTruthy(process.env.ZY_CODE_SKIP_BEDROCK_AUTH)) {
-      // 刷新认证并获取凭证，同时清除缓存
-      const cachedCredentials = await refreshAndGetAwsCredentials();
-      if (cachedCredentials) {
-        (bedrockArgs as any).awsAccessKey = cachedCredentials.accessKeyId;
-        (bedrockArgs as any).awsSecretKey = cachedCredentials.secretAccessKey;
-        (bedrockArgs as any).awsSessionToken = cachedCredentials.sessionToken;
-      }
-    }
-    // 返回值类型一直是不准确的——这不支持 batching 或 models
-    return new AnthropicBedrock(bedrockArgs) as unknown as Anthropic;
-  }
-  if (isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)) {
-    // 如果配置了 gcpAuthRefresh 且凭证已过期，则刷新 GCP 凭证
-    // 这与我们处理 Bedrock 的 AWS 凭证刷新类似
-    if (!isEnvTruthy(process.env.ZY_CODE_SKIP_VERTEX_AUTH)) {
-      await refreshGcpCredentialsIfNeeded();
-    }
-    const [{
-      AnthropicVertex
-    }, {
-      GoogleAuth
-    }] = await Promise.all([import('@anthropic-ai/vertex-sdk'), import('google-auth-library')]);
-    // TODO: 缓存 GoogleAuth 实例或 AuthClient 以提升性能
-    // 目前每次调用 getLLMClient() 都会创建新的 GoogleAuth 实例
-    // 这可能导致重复的认证流程和元数据服务器检查
-    // 但是，缓存需要仔细处理：
-    // - 凭证刷新/过期
-    // - 环境变量变更（GOOGLE_APPLICATION_CREDENTIALS、项目变量等）
-    // - 跨请求的认证状态管理
-    // 缓存的难点参见：https://github.com/googleapis/google-auth-library-nodejs/issues/390
-
-    // 提供 projectId 作为回退，防止元数据服务器超时
-    // google-auth-library 按以下顺序检查项目 ID：
-    // 1. 环境变量（GCLOUD_PROJECT、GOOGLE_CLOUD_PROJECT 等）
-    // 2. 凭证文件（服务账号 JSON、ADC 文件）
-    // 3. gcloud config
-    // 4. GCE 元数据服务器（在 GCP 外部会导致 12 秒超时）
-    //
-    // 仅在用户未配置其他发现方法时设置 projectId
-    // 以免干扰其现有的认证配置
-
-    // 按 google-auth-library 相同的顺序检查项目环境变量
-    // 参见：https://github.com/googleapis/google-auth-library-nodejs/blob/main/src/auth/googleauth.ts
-    const hasProjectEnvVar = process.env['GCLOUD_PROJECT'] || process.env['GOOGLE_CLOUD_PROJECT'] || process.env['gcloud_project'] || process.env['google_cloud_project'];
-
-    // 检查凭证文件路径（服务账号或 ADC）
-    // 注：同时检查标准和小写变体以确保安全
-    // 但我们应验证 google-auth-library 实际检查的是哪些
-    const hasKeyFile = process.env['GOOGLE_APPLICATION_CREDENTIALS'] || process.env['google_application_credentials'];
-    const googleAuth = isEnvTruthy(process.env.ZY_CODE_SKIP_VERTEX_AUTH) ? {
-      // 测试/代理场景下模拟 GoogleAuth
-      getClient: () => ({
-        getRequestHeaders: () => ({})
-      })
-    } as unknown as GoogleAuth : new GoogleAuth({
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      // 仅将 ANTHROPIC_VERTEX_PROJECT_ID 作为最后的回退方案
-      // 这可以防止在以下情况时出现 12 秒元数据服务器超时：
-      // - 未设置项目环境变量 且
-      // - 未指定凭证 keyfile 且
-      // - ADC 文件存在但缺少 project_id 字段
-      //
-      // 风险：如果认证项目与 API 目标项目不一致，可能导致计费/审计问题
-      // 缓解措施：用户可以设置 GOOGLE_CLOUD_PROJECT 来覆盖
-      ...(hasProjectEnvVar || hasKeyFile ? {} : {
-        projectId: process.env.ANTHROPIC_VERTEX_PROJECT_ID
-      })
-    });
-    const vertexArgs: ConstructorParameters<typeof AnthropicVertex>[0] = {
-      ...ARGS,
-      region: getVertexRegionForModel(model),
-      googleAuth,
-      ...(isDebugToStdErr() && {
-        logger: createStderrLogger()
-      })
-    };
-    // 返回值类型一直是不准确的——这不支持 batching 或 models
-    return new AnthropicVertex(vertexArgs) as unknown as Anthropic;
-  }
   // ── Registry-driven providers ──────────────────────────────────────────
   // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
   // siliconflow, etc.), and generic — all share the same client creation logic.
@@ -323,6 +200,108 @@ export async function getLLMClient({
   };
   return new Anthropic(clientConfig);
 }
+
+// ============================================================================
+// OpenAI SDK 客户端创建
+// ============================================================================
+
+/**
+ * 创建 OpenAI SDK 客户端实例。
+ *
+ * 与 getAnthropicClient 共享相同的基础设施：
+ * - 共享 headers（X-Claude-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
+ * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
+ *   → configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
+ * - proxy 配置（getProxyFetchOptions）
+ * - debug logger（isDebugToStdErr）
+ * - timeout 配置（API_TIMEOUT_MS）
+ */
+export async function getOpenAIClient(options?: {
+  apiKey?: string
+  baseURL?: string
+  timeout?: number
+  maxRetries?: number
+}): Promise<OpenAI> {
+  const apiProvider = getAPIProvider()
+  const registryEntry = getProviderEntry(apiProvider)
+
+  // ── Headers（与 getAnthropicClient 保持一致）──────────────────────────────────
+  const containerId = process.env.ZY_CODE_CONTAINER_ID
+  const remoteSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID
+  const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP
+  const customHeaders = getCustomHeaders()
+  const defaultHeaders: Record<string, string> = {
+    'x-app': 'cli',
+    'User-Agent': getUserAgent(),
+    'X-Claude-Code-Session-Id': getSessionId(),
+    ...customHeaders,
+    ...(containerId ? { 'x-zy-remote-container-id': containerId } : {}),
+    ...(remoteSessionId ? { 'x-zy-remote-session-id': remoteSessionId } : {}),
+    ...(clientApp ? { 'x-client-app': clientApp } : {}),
+  }
+
+  // ── API Key ────────────────────────────────────────────────────────────
+  let resolvedApiKey = options?.apiKey
+  if (!resolvedApiKey) {
+    // custom-endpoint provider（ollama 等）优先取 LLM_API_KEY
+    if (isCustomEndpointProvider(apiProvider)) {
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey()
+    } else {
+      resolvedApiKey = getApiKey()
+    }
+  }
+
+  // ── Base URL（与 getAnthropicClient registry-driven 段保持一致）──────────────
+  let resolvedBaseURL = options?.baseURL
+  if (!resolvedBaseURL) {
+    // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
+    if (registryEntry?.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
+      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
+    }
+    // 2. OpenAI / Generic env vars
+    if (!resolvedBaseURL && process.env.OPENAI_BASE_URL) {
+      resolvedBaseURL = process.env.OPENAI_BASE_URL
+    }
+    if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
+      resolvedBaseURL = process.env.LLM_BASE_URL
+    }
+    // 3. Onboarding config (configuredBaseUrl)
+    if (!resolvedBaseURL) {
+      try {
+        const { getGlobalConfig } = await import('../../utils/config.js')
+        resolvedBaseURL = getGlobalConfig().configuredBaseUrl
+      } catch {
+        // config not ready
+      }
+    }
+    // 4. Registry defaults
+    if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
+      resolvedBaseURL = registryEntry.defaultBaseUrls.openai
+    }
+    // 5. Fallback
+    if (!resolvedBaseURL) {
+      resolvedBaseURL = 'https://api.openai.com/v1'
+    }
+  }
+
+  const timeout = options?.timeout
+    ?? parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10)
+
+  logForDebugging(
+    `[API:request] Creating OpenAI client, baseURL=${resolvedBaseURL}, ` +
+    `provider=${apiProvider}, customHeaders=${!!process.env.ZY_CODE_CUSTOM_HEADERS}`,
+  )
+
+  return new OpenAI({
+    apiKey: resolvedApiKey || '',
+    baseURL: resolvedBaseURL,
+    timeout,
+    maxRetries: options?.maxRetries ?? 3,
+    defaultHeaders,
+    ...(isDebugToStdErr() && { logger: createStderrLogger() }),
+  })
+}
+
 async function configureApiKeyHeaders(headers: Record<string, string>, isNonInteractiveSession: boolean): Promise<void> {
   const token = process.env.ANTHROPIC_AUTH_TOKEN || (await getApiKeyFromApiKeyHelper(isNonInteractiveSession));
   if (token) {
@@ -402,11 +381,8 @@ export function getLLMAdapter(options?: {
   const apiProvider = getAPIProvider()
 
   if (isOpenAIProvider(apiProvider)) {
-    return new OpenAIProviderAdapter({
-      apiKey: options?.apiKey,
-      baseURL: options?.baseURL || process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL,
-      timeout: options?.timeout,
-    })
+    // 客户端创建委托给 getOpenAIClient()（懒加载），不再手动传参
+    return new OpenAIProviderAdapter()
   }
 
   return new AnthropicProviderAdapter(options?.anthropicClient)

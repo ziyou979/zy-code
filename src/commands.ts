@@ -161,7 +161,7 @@ import {
   clearPluginSkillsCache,
 } from './utils/plugins/loadPluginCommands.js'
 import memoize from 'lodash-es/memoize.js'
-import { isUsing3PServices } from './utils/auth.js'
+
 import { isAnthropicBaseUrl } from './utils/model/providers.js'
 import env from './commands/env/index.js'
 import exit from './commands/exit/index.js'
@@ -324,7 +324,7 @@ const COMMANDS = memoize((): Command[] => [
   hooks,
   exportCommand,
   sandboxToggle,
-  ...(!isUsing3PServices() ? [logout, login()] : []),
+  ...[logout, login()],
   passes,
   ...(peersCmd ? [peersCmd] : []),
   tasks,
@@ -414,11 +414,7 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
         // Console API key user = direct API customer (not 3P, not zy.ai).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
         // and gateway users who proxy through a custom base URL.
-        if (
-          !isUsing3PServices() &&
-          isAnthropicBaseUrl()
-        )
-          return true
+        if (isAnthropicBaseUrl()) return true
         break
       default: {
         const _exhaustive: never = a

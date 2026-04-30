@@ -67,15 +67,9 @@ const result = await Bun.build({
     'modifiers-napi',
     'image-processor-napi',
     // Dynamic-import-only SDK extensions
-    '@anthropic-ai/bedrock-sdk',
-    '@anthropic-ai/vertex-sdk',
-    '@anthropic-ai/foundry-sdk',
     '@azure/identity',
     // Lazy-loaded packages (dynamic import only)
     '@anthropic-ai/mcpb',
-    '@aws-sdk/client-bedrock',
-    '@aws-sdk/client-sts',
-    '@aws-sdk/credential-provider-node',
     '@smithy/core',
     '@smithy/node-http-handler',
     'sharp',

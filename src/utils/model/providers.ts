@@ -63,12 +63,8 @@ export function getAPIProvider(): APIProvider {
     }
   }
 
-  // 4. Cloud infrastructure providers (no activationEnvVar in registry)
-  return isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)
-    ? 'bedrock'
-    : isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)
-      ? 'vertex'
-      : 'anthropic'
+  // 4. Default to anthropic
+  return 'anthropic'
 }
 
 export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS {

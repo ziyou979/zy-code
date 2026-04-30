@@ -19,7 +19,7 @@ import {
 import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
 import { getAPIMetadata } from '../services/api/zy.js'
-import { getLLMClient } from '../services/api/client.js'
+import { getAnthropicClient } from '../services/api/client.js'
 import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
 import { getLLMAdapter } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
@@ -124,7 +124,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
     stop_sequences,
   } = opts
 
-  const client = await getLLMClient({
+  const client = await getAnthropicClient({
     maxRetries,
     model,
     source: 'side_query',

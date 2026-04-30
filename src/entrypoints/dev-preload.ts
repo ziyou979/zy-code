@@ -1,7 +1,8 @@
 // Dev-mode preload: defines build-time macros that Bun.build() normally injects.
 // Loaded via `bun --preload` before cli.tsx — never shipped in production builds.
 
-process.env.USER_TYPE = 'external'
+process.env.USER_TYPE = 'zy-super'
+process.env.ZY_CODE_NO_FLICKER = 'false'
 
 Object.assign(globalThis, {
   MACRO: {

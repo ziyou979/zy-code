@@ -876,23 +876,6 @@ export function getAssistantMessageFromError(
     })
   }
 
-  // Bedrock 错误如 "403 You don't have access to the model with the specified model ID."
-  // 不包含实际的模型 ID
-  if (
-    isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) &&
-    error instanceof Error &&
-    error.message.toLowerCase().includes('model id')
-  ) {
-    const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
-    const fallbackSuggestion = get3PModelFallbackSuggestion(model)
-    return createAssistantAPIErrorMessage({
-      content: fallbackSuggestion
-        ? `${API_ERROR_MESSAGE_PREFIX} (${model}): ${error.message}. Try ${switchCmd} to switch to ${fallbackSuggestion}.`
-        : `${API_ERROR_MESSAGE_PREFIX} (${model}): ${error.message}. Run ${switchCmd} to pick a different model.`,
-      error: 'invalid_request',
-    })
-  }
-
   // 404 未找到——通常意味着所选模型不存在或不可用。
   // 引导用户使用 /model 以便选择有效的模型。
   // 对于第三方用户，建议一个特定的回退模型。
@@ -1120,15 +1103,6 @@ export function classifyAPIError(error: unknown): string {
     (error.status === 401 || error.status === 403)
   ) {
     return 'auth_error'
-  }
-
-  // Bedrock 特定错误
-  if (
-    isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) &&
-    error instanceof Error &&
-    error.message.toLowerCase().includes('model id')
-  ) {
-    return 'bedrock_model_access'
   }
 
   // 基于状态码的回退

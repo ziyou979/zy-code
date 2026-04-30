@@ -4,7 +4,7 @@ import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
 import { z } from 'zod/v4'
-import { getLLMClient } from '../../services/api/client.js'
+import { getAnthropicClient } from '../../services/api/client.js'
 import { logForDebugging } from '../debug.js'
 import { getZyConfigHomeDir, isInternalBuild } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
@@ -159,7 +159,7 @@ export async function refreshModelCapabilities(): Promise<void> {
   if (isEssentialTrafficOnly()) return
 
   try {
-    const anthropic = await getLLMClient({ maxRetries: 1 })
+    const anthropic = await getAnthropicClient({ maxRetries: 1 })
     const parsed: ModelCapability[] = []
     for await (const entry of anthropic.models.list({})) {
       const result = ModelCapabilitySchema().safeParse(entry)

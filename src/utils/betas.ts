@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle';
 import memoize from 'lodash-es/memoize.js';
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE, getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js';
-import { BEDROCK_EXTRA_PARAMS_HEADERS, ZY_CODE_, CLI_INTERNAL_BETA_HEADER, CONTEXT_MANAGEMENT_BETA_HEADER, INTERLEAVED_THINKING_BETA_HEADER, PROMPT_CACHING_SCOPE_BETA_HEADER, REDACT_THINKING_BETA_HEADER, STRUCTURED_OUTPUTS_BETA_HEADER, SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER, TOKEN_EFFICIENT_TOOLS_BETA_HEADER, TOOL_SEARCH_BETA_HEADER_1P, TOOL_SEARCH_BETA_HEADER_3P, WEB_SEARCH_BETA_HEADER } from '../constants/betas.js';
+import { ZY_CODE_, CLI_INTERNAL_BETA_HEADER, CONTEXT_MANAGEMENT_BETA_HEADER, INTERLEAVED_THINKING_BETA_HEADER, PROMPT_CACHING_SCOPE_BETA_HEADER, REDACT_THINKING_BETA_HEADER, STRUCTURED_OUTPUTS_BETA_HEADER, SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER, TOKEN_EFFICIENT_TOOLS_BETA_HEADER, TOOL_SEARCH_BETA_HEADER_1P, TOOL_SEARCH_BETA_HEADER_3P, WEB_SEARCH_BETA_HEADER } from '../constants/betas.js';
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js';
 import { isInternalBuild } from './envUtils.js';
 import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js';
@@ -131,10 +131,6 @@ export function modelSupportsAutoMode(model: string): boolean {
  * - Vertex AI / Bedrock: tool-search-tool-2025-10-19
  */
 export function getToolSearchBetaHeader(): string {
-  const provider = getAPIProvider();
-  if (provider === 'vertex' || provider === 'bedrock') {
-    return TOOL_SEARCH_BETA_HEADER_3P;
-  }
   return TOOL_SEARCH_BETA_HEADER_1P;
 }
 
@@ -245,15 +241,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   return betaHeaders;
 });
 export const getModelBetas = memoize((model: string): string[] => {
-  const modelBetas = getAllModelBetas(model);
-  if (getAPIProvider() === 'bedrock') {
-    return modelBetas.filter(b => !BEDROCK_EXTRA_PARAMS_HEADERS.has(b));
-  }
-  return modelBetas;
-});
-export const getBedrockExtraBodyParamsBetas = memoize((model: string): string[] => {
-  const modelBetas = getAllModelBetas(model);
-  return modelBetas.filter(b => BEDROCK_EXTRA_PARAMS_HEADERS.has(b));
+  return getAllModelBetas(model);
 });
 
 /**
@@ -294,5 +282,4 @@ export function getMergedBetas(model: string, options?: {
 export function clearBetasCaches(): void {
   getAllModelBetas.cache?.clear?.();
   getModelBetas.cache?.clear?.();
-  getBedrockExtraBodyParamsBetas.cache?.clear?.();
 }

@@ -1,8 +1,9 @@
 /**
  * OpenAI Provider Adapter — 唯一与 openai SDK 客户端交互的入口。
  *
- * 所有标准格式 ↔ OpenAI 格式的转换都委托给 conversions/openai.ts，
- * 本文件只负责创建 client、发起请求、把结果交回。
+ * 所有标准格式 ↔ OpenAI 格式的转换都委托给 conversions/openai.ts。
+ * 客户端创建统一走 client.ts 的 getOpenAIClient()，与 Anthropic 路径共享
+ * headers/baseUrl/proxy/debug 等基础设施。
  */
 import OpenAI from 'openai'
 import { randomUUID } from 'crypto'
@@ -12,71 +13,30 @@ import type {
   Response as LLMResponse,
   StreamResult,
 } from '../../types/llm.js'
-import { getApiKey } from '../../utils/auth.js'
-import { getUserAgent } from '../../utils/http.js'
-import { getAPIProvider } from '../../utils/model/providers.js'
-import { getProviderEntry } from '../../utils/model/providerRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { getOpenAIClient } from './client.js'
 import {
   buildOpenAIRequestParams,
   mapOpenAIStreamToStandard,
   openAIResponseToStandard,
 } from './conversions/openai.js'
 
-// ============================================================================
-// 客户端创建
-// ============================================================================
-
-function getOpenAIClient(options?: {
-  apiKey?: string
-  baseURL?: string
-  timeout?: number
-}): OpenAI {
-  const apiKey = options?.apiKey || getApiKey() || ''
-
-  let baseURL: string | undefined = options?.baseURL
-  if (!baseURL) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getGlobalConfig } = require('../../utils/config.js')
-      baseURL = getGlobalConfig().configuredBaseUrl
-    } catch {
-      // config not ready
-    }
-  }
-  if (!baseURL) {
-    const entry = getProviderEntry(getAPIProvider())
-    baseURL = entry?.defaultBaseUrls?.openai
-  }
-  if (!baseURL) {
-    baseURL = 'https://api.openai.com/v1'
-  }
-
-  return new OpenAI({
-    apiKey,
-    baseURL,
-    timeout:
-      options?.timeout ?? parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10),
-    maxRetries: 3,
-    defaultHeaders: { 'User-Agent': getUserAgent() },
-  })
-}
-
-// ============================================================================
-// Provider 实现
-// ============================================================================
-
 export class OpenAIProviderAdapter implements LLMAdapter {
   readonly name = 'openai'
 
-  private client: OpenAI
+  /**
+   * 可选注入的 client（测试或外部复用场景）。
+   * 未注入时通过 getOpenAIClient 懒加载。
+   */
+  private injectedClient: OpenAI | null
 
-  constructor(options?: {
-    apiKey?: string
-    baseURL?: string
-    timeout?: number
-  }) {
-    this.client = getOpenAIClient(options)
+  constructor(client?: OpenAI) {
+    this.injectedClient = client ?? null
+  }
+
+  private async getClient(): Promise<OpenAI> {
+    if (this.injectedClient) return this.injectedClient
+    return getOpenAIClient()
   }
 
   async createStream(
@@ -84,6 +44,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     _clientRequestId?: string,
   ): Promise<StreamResult> {
+    const client = await this.getClient()
     const requestParams = buildOpenAIRequestParams(params)
     logForDebugging(
       `[OpenAI] Streaming request: model=${(params as any).model}, messages=${
@@ -91,7 +52,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
       }`,
     )
 
-    const stream = (await this.client.chat.completions.create(
+    const stream = (await client.chat.completions.create(
       {
         ...(requestParams as any),
         stream: true,
@@ -112,6 +73,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     _timeout?: number,
   ): Promise<LLMResponse> {
+    const client = await this.getClient()
     const requestParams = buildOpenAIRequestParams(params)
     logForDebugging(
       `[OpenAI] Non-streaming request: model=${(params as any).model}, messages=${
@@ -119,7 +81,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
       }`,
     )
 
-    const completion = await this.client.chat.completions.create(
+    const completion = await client.chat.completions.create(
       {
         ...(requestParams as any),
         stream: false,

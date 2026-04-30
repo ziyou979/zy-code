@@ -25,7 +25,7 @@ import {
   getApiKeyWithSource,
   getAuthTokenSource,
   getOauthAccountInfo,
-  isUsing3PServices,
+
   saveOAuthTokensIfNeeded,
   validateForceLoginOrg,
 } from '../../utils/auth.js'
@@ -236,7 +236,7 @@ export async function authStatus(opts: {
   const hasApiKeyEnvVar =
     !!process.env.ZY_API_KEY && !isRunningOnHomespace()
   const oauthAccount = getOauthAccountInfo()
-  const using3P = isUsing3PServices()
+  const using3P = false
   const loggedIn =
     hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar || using3P
 

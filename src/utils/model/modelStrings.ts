@@ -5,7 +5,7 @@ import {
 import { logError } from '../log.js'
 import { sequential } from '../sequential.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { findFirstMatch, getBedrockInferenceProfiles } from './bedrock.js'
+
 import {
   ALL_MODEL_CONFIGS,
   CANONICAL_ID_TO_KEY,
@@ -30,28 +30,7 @@ function getBuiltinModelStrings(provider: APIProvider): ModelStrings {
   return out
 }
 
-async function getBedrockModelStrings(): Promise<ModelStrings> {
-  const fallback = getBuiltinModelStrings('bedrock')
-  let profiles: string[] | undefined
-  try {
-    profiles = await getBedrockInferenceProfiles()
-  } catch (error) {
-    logError(error as Error)
-    return fallback
-  }
-  if (!profiles?.length) {
-    return fallback
-  }
-  // Each config's anthropic ID is the canonical substring we search for in the
-  // user's inference profile list. Fall back to the hardcoded bedrock ID
-  // when no matching profile is found.
-  const out = {} as ModelStrings
-  for (const key of MODEL_KEYS) {
-    const needle = ALL_MODEL_CONFIGS[key].anthropic
-    out[key] = findFirstMatch(profiles, needle) || fallback[key]
-  }
-  return out
-}
+
 
 /**
  * Layer user-configured modelOverrides (from settings.json) on top of the
@@ -97,21 +76,7 @@ export function resolveOverriddenModel(modelId: string): string {
   return modelId
 }
 
-const updateBedrockModelStrings = sequential(async () => {
-  if (getModelStringsState() !== null) {
-    // Already initialized. Doing the check here, combined with
-    // `sequential`, allows the test suite to reset the state
-    // between tests while still preventing multiple API calls
-    // in production.
-    return
-  }
-  try {
-    const ms = await getBedrockModelStrings()
-    setModelStringsState(ms)
-  } catch (error) {
-    logError(error as Error)
-  }
-})
+
 
 function initModelStrings(): void {
   const ms = getModelStringsState()
@@ -119,24 +84,13 @@ function initModelStrings(): void {
     // Already initialized
     return
   }
-  // Initial with default values for non-Bedrock providers
-  if (getAPIProvider() !== 'bedrock') {
-    setModelStringsState(getBuiltinModelStrings(getAPIProvider()))
-    return
-  }
-  // On Bedrock, update model strings in the background without blocking.
-  // Don't set the state in this case so that we can use `sequential` on
-  // `updateBedrockModelStrings` and check for existing state on multiple
-  // calls.
-  void updateBedrockModelStrings()
+  setModelStringsState(getBuiltinModelStrings(getAPIProvider()))
 }
 
 export function getModelStrings(): ModelStrings {
   const ms = getModelStringsState()
   if (ms === null) {
     initModelStrings()
-    // Bedrock path falls through here while the profile fetch runs in the
-    // background — still honor overrides on the interim defaults.
     return applyModelOverrides(getBuiltinModelStrings(getAPIProvider()))
   }
   return applyModelOverrides(ms)
@@ -144,7 +98,6 @@ export function getModelStrings(): ModelStrings {
 
 /**
  * Ensure model strings are fully initialized.
- * For Bedrock users, this waits for the profile fetch to complete.
  * Call this before generating model options to ensure correct region strings.
  */
 export async function ensureModelStringsInitialized(): Promise<void> {
@@ -152,13 +105,5 @@ export async function ensureModelStringsInitialized(): Promise<void> {
   if (ms !== null) {
     return
   }
-
-  // For non-Bedrock, initialize synchronously
-  if (getAPIProvider() !== 'bedrock') {
-    setModelStringsState(getBuiltinModelStrings(getAPIProvider()))
-    return
-  }
-
-  // For Bedrock, wait for the profile fetch
-  await updateBedrockModelStrings()
+  setModelStringsState(getBuiltinModelStrings(getAPIProvider()))
 }

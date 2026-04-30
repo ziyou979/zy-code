@@ -122,20 +122,7 @@ export function parseEnvVars(
   return parsedEnv
 }
 
-/**
- * Get the AWS region with fallback to default
- * Matches the Anthropic Bedrock SDK's region behavior
- */
-export function getAWSRegion(): string {
-  return process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
-}
 
-/**
- * Get the default Vertex AI region
- */
-export function getDefaultVertexRegion(): string {
-  return process.env.CLOUD_ML_REGION || 'us-east5'
-}
 
 /**
  * Check if bash commands should maintain project working directory (reset to original after each command)
@@ -179,27 +166,4 @@ export function isInProtectedNamespace(): boolean {
   return false
 }
 
-// @[MODEL LAUNCH]: Add a Vertex region override env var for the new model.
-/**
- * Model prefix → env var for Vertex region overrides.
- * Order matters: more specific prefixes must come before less specific ones.
- */
-const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = []
 
-/**
- * Get the Vertex AI region for a specific model.
- * Different models may be available in different regions.
- */
-export function getVertexRegionForModel(
-  model: string | undefined,
-): string | undefined {
-  if (model) {
-    const match = VERTEX_REGION_OVERRIDES.find(([prefix]) =>
-      model.startsWith(prefix),
-    )
-    if (match) {
-      return process.env[match[1]] || getDefaultVertexRegion()
-    }
-  }
-  return getDefaultVertexRegion()
-}

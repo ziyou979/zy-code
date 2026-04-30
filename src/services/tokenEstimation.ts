@@ -4,24 +4,13 @@ import type {
   ToolCallInlineBlock,
   ToolResultBlock,
 } from '../types/llm.js'
-// 动态导入的最小值，用于计数令牌的 Bedrock 调用
-// 延迟约 ~279KB 的 AWS SDK 代码，直到实际需要 Bedrock 调用
-import type { CountTokensCommandInput } from '@aws-sdk/client-bedrock-runtime'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
-import { VERTEX_COUNT_TOKENS_ALLOWED_BETAS } from '../constants/betas.js'
 import type { Attachment } from '../utils/attachments.js'
 import { getModelBetas } from '../utils/betas.js'
 import { countTokensLocally } from '../utils/tokenizer/index.js'
-import { getVertexRegionForModel, isEnvTruthy } from '../utils/envUtils.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
 import {
-  createBedrockRuntimeClient,
-  getInferenceProfileBackingModel,
-  isFoundationModel,
-} from '../utils/model/bedrock.js'
-import {
-  getDefaultStandardModel,
   getDefaultCompactModel,
   getMainLoopModel,
   normalizeModelStringForAPI,
@@ -29,7 +18,7 @@ import {
 import { jsonStringify } from '../utils/slowOperations.js'
 import { isToolReferenceBlock } from '../utils/toolSearch.js'
 import { getAPIMetadata, getExtraBodyParams } from './api/zy.js'
-import { getLLMClient } from './api/client.js'
+import { getAnthropicClient } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
 
 // 启用思考时的令牌计数最小值
@@ -164,28 +153,11 @@ export async function countMessagesTokensWithAPI(
         return countMessagesTokensLocally(messages, tools, model)
       }
 
-      if (getAPIProvider() === 'bedrock') {
-        // @anthropic-sdk/bedrock-sdk doesn't support countTokens currently
-        return countTokensWithBedrock({
-          model: normalizeModelStringForAPI(model),
-          messages,
-          tools,
-          betas,
-          containsThinking,
-        })
-      }
-
-      const anthropic = await getLLMClient({
+      const anthropic = await getAnthropicClient({
         maxRetries: 1,
         model,
         source: 'count_tokens',
       })
-
-      const apiProvider = getAPIProvider()
-      const filteredBetas =
-        apiProvider === 'vertex'
-          ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-          : betas
 
       const countTokensFn = anthropic.beta.messages.countTokens.bind(anthropic.beta.messages)
 
@@ -196,7 +168,7 @@ export async function countMessagesTokensWithAPI(
           // to get an accurate tool token count.
           messages.length > 0 ? messages : [{ role: 'user', content: 'foo' }],
         tools,
-        ...(filteredBetas.length > 0 && { betas: filteredBetas }),
+        ...(betas.length > 0 && { betas }),
         ...(containsThinking && {
           thinking: {
             type: 'enabled',
@@ -347,9 +319,6 @@ export function roughTokenCountEstimationForFileType(
 /**
  * 通过提取和分析其文本内容来估计 Message 对象的令牌计数。
  * 这比 getTokenUsage 对可能已被压缩的消息提供更可靠的估计。
- * 使用 Haiku 进行令牌计数（Haiku 4.5 支持思考块），除了：
- * - Vertex 全局区域：使用 Sonnet（Haiku 不可用）
- * - 带思考块的 Bedrock：使用 Sonnet（Haiku 3.5 不支持思考）
  */
 export async function countTokensViaHaikuFallback(
   messages: LLMMessageParam[],
@@ -358,25 +327,9 @@ export async function countTokensViaHaikuFallback(
   // 检查消息是否包含思考块
   const containsThinking = hasThinkingBlocks(messages)
 
-  // 如果我们在 Vertex 上并且使用全局区域，始终使用 standard 模型，因为 compact 在那里不可用。
-  const isVertexGlobalEndpoint =
-    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) &&
-    getVertexRegionForModel(getDefaultCompactModel()) === 'global'
-  // 如果我们在带思考块的 Bedrock 上，使用 standard 模型，因为 compact 3.5 不支持思考
-  const isBedrockWithThinking =
-    isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK) && containsThinking
-  // 如果我们在带思考块的 Vertex 上，使用 standard 模型，因为 compact 3.5 不支持思考
-  const isVertexWithThinking =
-    isEnvTruthy(process.env.ZY_CODE_USE_VERTEX) && containsThinking
-  // 否则始终使用 compact — compact 4.5 支持思考块。
-  // 警告：如果你将此更改为非 compact 模型，此请求将在直接 API 中失败，除非它使用 getCLISyspromptPrefix。
-  // 注意：我们不需要 standard 来处理 tool_reference 块，因为我们通过
-  // stripToolSearchFieldsFromMessages() 在发送之前剥离它们。
-  const model =
-    isVertexGlobalEndpoint || isBedrockWithThinking || isVertexWithThinking
-      ? getDefaultStandardModel()
-      : getDefaultCompactModel()
-  const anthropic = await getLLMClient({
+  // 始终使用 compact 模型
+  const model = getDefaultCompactModel()
+  const anthropic = await getAnthropicClient({
     maxRetries: 1,
     model,
     source: 'count_tokens',
@@ -403,13 +356,6 @@ export async function countTokensViaHaikuFallback(
     )
   }
 
-  // 为 Vertex 过滤 betas — 某些 betas（如 web-search）在某些
-  // Vertex 端点上会导致 400 错误。参见 issue #10789。
-  const filteredBetas =
-    apiProvider === 'vertex'
-      ? betas.filter(b => VERTEX_COUNT_TOKENS_ALLOWED_BETAS.has(b))
-      : betas
-
   const createMessageFn = anthropic.beta.messages.create.bind(anthropic.beta.messages)
 
   // biome-ignore lint/plugin: 令牌计数需要 sideQuery 不支持的专用参数（thinking、betas）
@@ -418,7 +364,7 @@ export async function countTokensViaHaikuFallback(
     max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
     messages: messagesToSend,
     tools: tools.length > 0 ? tools : undefined,
-    ...(filteredBetas.length > 0 && { betas: filteredBetas }),
+    ...(betas.length > 0 && { betas }),
     metadata: getAPIMetadata(),
     ...getExtraBodyParams(),
     // OpenAI 兼容格式不支持 thinking 参数
@@ -548,62 +494,4 @@ function roughTokenCountEstimationForBlock(
   return roughTokenCountEstimation(jsonStringify(block))
 }
 
-async function countTokensWithBedrock({
-  model,
-  messages,
-  tools,
-  betas,
-  containsThinking,
-}: {
-  model: string
-  messages: LLMMessageParam[]
-  tools: ToolDefinition[]
-  betas: string[]
-  containsThinking: boolean
-}): Promise<number | null> {
-  try {
-    const client = await createBedrockRuntimeClient()
-    // Bedrock CountTokens 需要模型 ID，而不是推理配置文件 / ARN
-    const modelId = isFoundationModel(model)
-      ? model
-      : await getInferenceProfileBackingModel(model)
-    if (!modelId) {
-      return null
-    }
 
-    const requestBody = {
-      anthropic_version: 'bedrock-2023-05-31',
-      // 当我们传递工具且没有消息时，我们需要传递一个虚拟消息
-      // 以获得准确的工具令牌计数。
-      messages:
-        messages.length > 0 ? messages : [{ role: 'user', content: 'foo' }],
-      max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
-      ...(tools.length > 0 && { tools }),
-      ...(betas.length > 0 && { anthropic_beta: betas }),
-      ...(containsThinking && {
-        thinking: {
-          type: 'enabled',
-          budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
-        },
-      }),
-    }
-
-    const { CountTokensCommand } = await import(
-      '@aws-sdk/client-bedrock-runtime'
-    )
-    const input: CountTokensCommandInput = {
-      modelId,
-      input: {
-        invokeModel: {
-          body: new TextEncoder().encode(jsonStringify(requestBody)),
-        },
-      },
-    }
-    const response = await client.send(new CountTokensCommand(input))
-    const tokenCount = response.inputTokens ?? null
-    return tokenCount
-  } catch (error) {
-    logError(error)
-    return null
-  }
-}

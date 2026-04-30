@@ -11,7 +11,7 @@ import type {
   Response as LLMResponse,
   StreamResult,
 } from '../../types/llm.js'
-import { getLLMClient } from './client.js'
+import { getAnthropicClient } from './client.js'
 import { normalizeModelStringForAPI } from '../../utils/model/model.js'
 import {
   anthropicResponseToStandard,
@@ -24,7 +24,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
 
   /**
    * 可选注入的 client（由 withRetry 等基础设施提供，便于复用 retry/auth 逻辑）。
-   * 未注入时通过 getLLMClient 自取。
+   * 未注入时通过 getAnthropicClient 自取。
    */
   private injectedClient: Anthropic | null
 
@@ -34,7 +34,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
 
   private async getClient(model?: string): Promise<Anthropic> {
     if (this.injectedClient) return this.injectedClient
-    return getLLMClient({ maxRetries: 0, model, source: 'standard_provider' })
+    return getAnthropicClient({ maxRetries: 0, model, source: 'standard_provider' })
   }
 
   async createStream(

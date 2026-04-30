@@ -14,23 +14,12 @@
 const PROVIDER_MANAGED_ENV_VARS = new Set([
   // The flag itself — settings can't unset it once the host set it
   'ZY_CODE_PROVIDER_MANAGED_BY_HOST',
-  // Provider selection
-  'ZY_CODE_USE_BEDROCK',
-  'ZY_CODE_USE_VERTEX',
   // Endpoint config (base URLs, project/resource identifiers)
   'ANTHROPIC_BASE_URL',
-  'ANTHROPIC_BEDROCK_BASE_URL',
-  'ANTHROPIC_VERTEX_BASE_URL',
-  'ANTHROPIC_VERTEX_PROJECT_ID',
-  // Region routing (per-model VERTEX_REGION_CLAUDE_* handled by prefix below)
-  'CLOUD_ML_REGION',
   // Auth
   'ZY_API_KEY',
   'ANTHROPIC_AUTH_TOKEN',
   'ZY_CODE_OAUTH_TOKEN',
-  'AWS_BEARER_TOKEN_BEDROCK',
-  'ZY_CODE_SKIP_BEDROCK_AUTH',
-  'ZY_CODE_SKIP_VERTEX_AUTH',
   // Model defaults — often set to provider-specific ID formats
   'ZY_CODE_MODEL',
   'ZY_CODE_DEFAULT_COMPACT_MODEL',
@@ -112,11 +101,7 @@ export const SAFE_ENV_VARS = new Set([
   'ZY_CODE_EXPERIMENTAL_AGENT_TEAMS',
   'ZY_CODE_IDE_SKIP_AUTO_INSTALL',
   'ZY_CODE_MAX_OUTPUT_TOKENS',
-  'ZY_CODE_SKIP_BEDROCK_AUTH',
-  'ZY_CODE_SKIP_VERTEX_AUTH',
   'ZY_CODE_SUBAGENT_MODEL',
-  'ZY_CODE_USE_BEDROCK',
-  'ZY_CODE_USE_VERTEX',
   'DISABLE_AUTOUPDATER',
   'DISABLE_BUG_COMMAND',
   'DISABLE_COST_WARNINGS',

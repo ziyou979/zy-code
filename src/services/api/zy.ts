@@ -4,13 +4,10 @@ import type {
   ContentBlock,
   ImageBlock,
   Response as LLMMessage,
-  StreamEvent as LLMStreamEvent,
   TokenUsage,
-  DeltaUsage,
   StopReason,
   ToolResultBlock,
   ToolDefinition,
-  CreateParams,
   ToolChoice,
   TextBlock,
   Message as LLMMessageParam,
@@ -19,10 +16,7 @@ import type {
 } from '../../types/llm.js'
 import {
   isAPIError,
-  isAbortError,
-  getErrorStatus,
-  getErrorMessage as getLLMErrorMessage,
-  isConnectionTimeoutError,
+  isAbortError
 } from '../../types/llm.js'
 
 // 以下类型仅用于 Anthropic SDK 请求构建，保留为局部类型
@@ -70,7 +64,6 @@ import {
 } from '../../utils/api.js'
 import { getOauthAccountInfo } from '../../utils/auth.js'
 import {
-  getBedrockExtraBodyParamsBetas,
   getMergedBetas,
   getModelBetas,
 } from '../../utils/betas.js'
@@ -196,7 +189,7 @@ import { count } from '../../utils/array.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { getInferenceProfileBackingModel } from '../../utils/model/bedrock.js'
+
 import {
   normalizeModelStringForAPI,
   parseUserSpecifiedModel,
@@ -225,10 +218,9 @@ import {
 import { getInitializationStatus } from '../lsp/manager.js'
 import { isToolFromMcpServer } from '../mcp/utils.js'
 import { withStreamingVCR, withVCR } from '../vcr.js'
-import { CLIENT_REQUEST_ID_HEADER, getLLMClient } from './client.js'
+import { getAnthropicClient } from './client.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
-  CUSTOM_OFF_SWITCH_MESSAGE,
   getAssistantMessageFromError,
   getErrorMessageIfRefusal,
 } from './errors.js'
@@ -541,7 +533,7 @@ export async function verifyApiKey(
     return await returnValue(
       withRetry(
         () =>
-          getLLMClient({
+          getAnthropicClient({
             apiKey,
             maxRetries: 3,
             model,
@@ -843,7 +835,7 @@ export async function* executeNonStreamingRequest(
   const fallbackTimeoutMs = getNonstreamingFallbackTimeoutMs()
   const generator = withRetry(
     () =>
-      getLLMClient({
+      getAnthropicClient({
         maxRetries: 0,
         model: clientOptions.model,
         fetchOverride: clientOptions.fetchOverride,
@@ -1028,12 +1020,7 @@ async function* queryModel(
   // 同时天然处理回滚/撤销，因为被移除的消息不在数组中。
   const previousRequestId = getPreviousRequestIdFromMessages(messages)
 
-  const resolvedModel =
-    getAPIProvider() === 'bedrock' &&
-    options.model.includes('application-inference-profile')
-      ? ((await getInferenceProfileBackingModel(options.model)) ??
-        options.model)
-      : options.model
+  const resolvedModel = options.model
 
   queryCheckpoint('query_tool_schema_build_start')
   const isAgenticQuery =
@@ -1494,15 +1481,7 @@ async function* queryModel(
   const paramsFromContext = (retryContext: RetryContext) => {
     const betasParams = [...betas]
 
-    // 对于 Bedrock，包含基于模型的 beta 和动态添加的工具搜索 header
-    const bedrockBetas =
-      getAPIProvider() === 'bedrock'
-        ? [
-            ...getBedrockExtraBodyParamsBetas(retryContext.model),
-            ...(toolSearchHeader ? [toolSearchHeader] : []),
-          ]
-        : []
-    const extraBodyParams = getExtraBodyParams(bedrockBetas)
+    const extraBodyParams = getExtraBodyParams([])
 
     const outputConfig: BetaOutputConfig = {
       ...((extraBodyParams.output_config as BetaOutputConfig) ?? {}),
@@ -1707,7 +1686,7 @@ async function* queryModel(
     queryCheckpoint('query_client_creation_start')
     const generator = withRetry(
       () =>
-        getLLMClient({
+        getAnthropicClient({
           maxRetries: 0, // 禁用自动重试，改用手动实现
           model: options.model,
           fetchOverride: options.fetchOverride,

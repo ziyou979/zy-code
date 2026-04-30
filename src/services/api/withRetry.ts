@@ -11,15 +11,13 @@ import {
   getErrorHeader,
   type APIErrorLike,
 } from '../../types/llm.js'
-import { isAwsCredentialsProviderError } from 'src/utils/aws.js'
+
 import { logForDebugging } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
 import { createSystemAPIErrorMessage } from 'src/utils/messages.js'
 import { getAPIProviderForStatsig } from 'src/utils/model/providers.js'
 import {
   clearApiKeyHelperCache,
-  clearAwsCredentialsCache,
-  clearGcpCredentialsCache,
   getZyAIOAuthTokens,
   handleOAuth401Error,
 } from '../../utils/auth.js'
@@ -212,8 +210,6 @@ export async function* withRetry<T, TClient = unknown>(
         client === null ||
         (isAPIError(lastError) && lastError.status === 401) ||
         isOAuthTokenRevokedError(lastError) ||
-        isBedrockAuthError(lastError) ||
-        isVertexAuthError(lastError) ||
         isStaleConnection
       ) {
         // 遇到 401 "token expired" 或 403 "token revoked" 时，强制刷新 token
@@ -289,13 +285,7 @@ export async function* withRetry<T, TClient = unknown>(
         throw new CannotRetryError(error, retryContext)
       }
 
-      // AWS/GCP 错误不总是 APIError，但可以重试
-      const handledCloudAuthError =
-        handleAwsCredentialError(error) || handleGcpCredentialError(error)
-      if (
-        !handledCloudAuthError &&
-        (!isAPIError(error) || !shouldRetry(error))
-      ) {
+      if (!isAPIError(error) || !shouldRetry(error)) {
         throw new CannotRetryError(error, retryContext)
       }
 
@@ -532,70 +522,7 @@ function isOAuthTokenRevokedError(error: unknown): boolean {
   )
 }
 
-function isBedrockAuthError(error: unknown): boolean {
-  if (isEnvTruthy(process.env.ZY_CODE_USE_BEDROCK)) {
-    // AWS 库如果 .aws 包含过去的 Expiration 值会拒绝，不调用 API
-    // 否则，收到过期 token 的 API 调用会返回通用的 403
-    // "The security token included in the request is invalid"
-    if (
-      isAwsCredentialsProviderError(error) ||
-      (isAPIError(error) && error.status === 403)
-    ) {
-      return true
-    }
-  }
-  return false
-}
 
-/**
- * 如果适当，清除 AWS 认证缓存。
- * @returns true 表示已采取行动。
- */
-function handleAwsCredentialError(error: unknown): boolean {
-  if (isBedrockAuthError(error)) {
-    clearAwsCredentialsCache()
-    return true
-  }
-  return false
-}
-
-// google-auth-library 抛出普通 Error（没有像 AWS 的 CredentialsProviderError 那样的类型化名称）。
-// 匹配常见的 SDK 级凭证失败消息。
-function isGoogleAuthLibraryCredentialError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  const msg = error.message
-  return (
-    msg.includes('Could not load the default credentials') ||
-    msg.includes('Could not refresh access token') ||
-    msg.includes('invalid_grant')
-  )
-}
-
-function isVertexAuthError(error: unknown): boolean {
-  if (isEnvTruthy(process.env.ZY_CODE_USE_VERTEX)) {
-    // SDK 层：google-auth-library 在 HTTP 调用前的 prepareOptions() 中失败
-    if (isGoogleAuthLibraryCredentialError(error)) {
-      return true
-    }
-    // 服务器端：Vertex 对过期/无效 token 返回 401
-    if (isAPIError(error) && error.status === 401) {
-      return true
-    }
-  }
-  return false
-}
-
-/**
- * 如果适当，清除 GCP 认证缓存。
- * @returns true 表示已采取行动。
- */
-function handleGcpCredentialError(error: unknown): boolean {
-  if (isVertexAuthError(error)) {
-    clearGcpCredentialsCache()
-    return true
-  }
-  return false
-}
 
 function shouldRetry(error: APIErrorLike): boolean {
   // 永不重试用例模拟错误——它们来自 /mock-limits 命令用于测试

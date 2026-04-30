@@ -26,7 +26,7 @@ export function getUserAgent(): string {
   // Turn-/process-scoped workload tag for cron-initiated requests. Direct API-only
   // observability — proxies strip HTTP headers; QoS routing uses cc_workload
   // in the billing-header attribution block instead (see constants/system.ts).
-  // getLLMClient (client.ts:98) calls this per-request inside withRetry,
+  // getAnthropicClient (client.ts:98) calls this per-request inside withRetry,
   // so the read picks up the same setWorkload() value as getAttributionHeader.
   const workload = getWorkload()
   const workloadSuffix = workload ? `, workload/${workload}` : ''
