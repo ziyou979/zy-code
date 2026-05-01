@@ -158,7 +158,7 @@ const externalTips: Tip[] = [
     },
   },
   {
-    id: 'color-when-multi-clauding',
+    id: 'color-when-multi-sessions',
     content: async () =>
       tSync('tip.colorWhenMultiSessions'),
     cooldownSessions: 10,

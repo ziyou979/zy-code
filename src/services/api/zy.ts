@@ -10,7 +10,7 @@ import type {
   ToolDefinition,
   ToolChoice,
   TextBlock,
-  Message as LLMMessageParam,
+  LLMMessage,
   DocumentBlock,
   ProviderExtras,
 } from '../../types/llm.js'
@@ -31,7 +31,6 @@ import {
 } from 'src/utils/model/providers.js'
 import { getLLMAdapter } from './client.js'
 import {
-  getAttributionHeader,
   getCLISyspromptPrefix,
 } from '../../constants/system.js'
 import {
@@ -72,7 +71,6 @@ import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { resolveAppliedEffort } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { computeFingerprintFromMessages } from '../../utils/fingerprint.js'
 import { captureAPIRequest, logError } from '../../utils/log.js'
 import {
   createAssistantAPIErrorMessage,
@@ -540,7 +538,7 @@ export async function verifyApiKey(
             source: 'verify_api_key',
           }),
         async anthropic => {
-          const messages: LLMMessageParam[] = [{ role: 'user', content: 'test' }]
+          const messages: LLMMessage[] = [{ role: 'user', content: 'test' }]
 
           // biome-ignore lint/plugin: API key verification is intentionally a minimal direct call
           await anthropic.beta.messages.create({
@@ -581,7 +579,7 @@ export function userMessageToMessageParam(
   addCache = false,
   enablePromptCaching: boolean,
   querySource?: QuerySource,
-): LLMMessageParam {
+): LLMMessage {
   if (addCache) {
     if (typeof message.message.content === 'string') {
       return {
@@ -626,7 +624,7 @@ export function assistantMessageToMessageParam(
   addCache = false,
   enablePromptCaching: boolean,
   querySource?: QuerySource,
-): LLMMessageParam {
+): LLMMessage {
   if (addCache) {
     if (typeof message.message.content === 'string') {
       return {
@@ -1278,11 +1276,6 @@ async function* queryModel(
     postNormalizedMessageCount: messagesForAPI.length,
   })
 
-  // 从第一个用户消息计算指纹以用于归属。
-  // 必须在注入合成消息（例如延迟工具名称）之前运行，
-  // 以便指纹反映实际的用户输入。
-  const fingerprint = computeFingerprintFromMessages(messagesForAPI)
-
   // 启用延迟附件时，延迟工具通过持久化的
   // deferred_tools_delta 附件宣布，而非此临时前置
   //（每当工具池变化时会破坏缓存）。
@@ -1316,7 +1309,6 @@ async function* queryModel(
   // filter(Boolean) 通过将每个元素转换为布尔值来工作 - 空字符串变为 false 并被过滤掉。
   systemPrompt = asSystemPrompt(
     [
-      getAttributionHeader(fingerprint),
       getCLISyspromptPrefix({
         isNonInteractive: options.isNonInteractiveSession,
         hasAppendSystemPrompt: options.hasAppendSystemPrompt,
@@ -2996,7 +2988,7 @@ export function addCacheBreakpoints(
   newCacheEdits?: CachedMCEditsBlock | null,
   pinnedEdits?: CachedMCPinnedEdits[],
   skipCacheWrite = false,
-): LLMMessageParam[] {
+): LLMMessage[] {
   logEvent('zy_api_cache_breakpoints', {
     totalMessageCount: messages.length,
     cachingEnabled: enablePromptCaching,

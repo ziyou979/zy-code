@@ -482,17 +482,17 @@ async function* queryLoop(
         preCompactTokenCount,
         postCompactTokenCount,
         truePostCompactTokenCount,
-        compactionInputTokens: compactionUsage?.input_tokens,
-        compactionOutputTokens: compactionUsage?.output_tokens,
+        compactionInputTokens: compactionUsage?.inputTokens,
+        compactionOutputTokens: compactionUsage?.outputTokens,
         compactionCacheReadTokens:
-          compactionUsage?.cache_read_input_tokens ?? 0,
+          compactionUsage?.extras?.cacheReadInputTokens ?? 0,
         compactionCacheCreationTokens:
-          compactionUsage?.cache_creation_input_tokens ?? 0,
+          compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
         compactionTotalTokens: compactionUsage
-          ? compactionUsage.input_tokens +
-            (compactionUsage.cache_creation_input_tokens ?? 0) +
-            (compactionUsage.cache_read_input_tokens ?? 0) +
-            compactionUsage.output_tokens
+          ? compactionUsage.inputTokens +
+            (compactionUsage.extras?.cacheCreationInputTokens ?? 0) +
+            (compactionUsage.extras?.cacheReadInputTokens ?? 0) +
+            compactionUsage.outputTokens
           : 0,
 
         queryChainId: queryChainIdForAnalytics,

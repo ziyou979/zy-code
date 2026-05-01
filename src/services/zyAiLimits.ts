@@ -1,5 +1,5 @@
 import { isAPIError, type APIErrorLike } from '../types/llm.js'
-import type { Message as LLMMessageParam } from '../types/llm.js'
+import type { LLMMessage } from '../types/llm.js'
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getModelBetas } from '../utils/betas.js'
@@ -216,7 +216,7 @@ export function emitStatusChange(limits: ZyAILimits) {
 
 async function makeTestQuery() {
   const model = getDefaultCompactModel()
-  const messages: LLMMessageParam[] = [{ role: 'user', content: 'quota' }]
+  const messages: LLMMessage[] = [{ role: 'user', content: 'quota' }]
   const apiProvider = getAPIProvider()
 
   // OpenAI 专用路径

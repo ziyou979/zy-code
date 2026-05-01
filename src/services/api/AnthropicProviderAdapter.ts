@@ -8,15 +8,24 @@ import type Anthropic from '@anthropic-ai/sdk'
 import type {
   CreateParams,
   LLMAdapter,
-  Response as LLMResponse,
+  LLMMessage,
+  LLMResponse,
   StreamResult,
+  ToolDefinition,
 } from '../../types/llm.js'
 import { getAnthropicClient } from './client.js'
-import { normalizeModelStringForAPI } from '../../utils/model/model.js'
+import {
+  getMainLoopModel,
+  normalizeModelStringForAPI,
+} from '../../utils/model/model.js'
+import { getModelBetas } from '../../utils/betas.js'
+import { logError } from '../../utils/log.js'
 import {
   anthropicResponseToStandard,
   anthropicStreamToStandard,
   buildAnthropicCreateParams,
+  messagesToAnthropic,
+  toolsToAnthropic,
 } from './conversions/anthropic.js'
 
 export class AnthropicProviderAdapter implements LLMAdapter {
@@ -26,7 +35,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
    * 可选注入的 client（由 withRetry 等基础设施提供，便于复用 retry/auth 逻辑）。
    * 未注入时通过 getAnthropicClient 自取。
    */
-  private injectedClient: Anthropic | null
+  private readonly injectedClient: Anthropic | null
 
   constructor(client?: Anthropic) {
     this.injectedClient = client ?? null
@@ -48,7 +57,6 @@ export class AnthropicProviderAdapter implements LLMAdapter {
     const headers: Record<string, string> = {}
     if (clientRequestId) headers['anthropic-client-request-id'] = clientRequestId
 
-    // @ts-ignore - SDK 内部类型，参数已是 Anthropic 期望的对象
     const result = await client.beta.messages
       .create(
         { ...anthropicParams, stream: true },
@@ -76,7 +84,6 @@ export class AnthropicProviderAdapter implements LLMAdapter {
     const client = await this.getClient(params.model)
     const anthropicParams = buildAnthropicCreateParams(params)
 
-    // @ts-ignore - SDK 内部类型
     const result = await client.beta.messages.create(
       {
         ...anthropicParams,
@@ -86,6 +93,71 @@ export class AnthropicProviderAdapter implements LLMAdapter {
       { signal, timeout },
     )
     return anthropicResponseToStandard(result, params.model)
+  }
+
+  /**
+   * 检查消息是否包含思考块
+   */
+  private hasThinkingBlocks(messages: LLMMessage[]): boolean {
+    for (const message of messages) {
+      if (message.role === 'assistant' && Array.isArray(message.content)) {
+        for (const block of message.content) {
+          if (
+            typeof block === 'object' &&
+            block !== null &&
+            'type' in block &&
+            (block.type === 'thinking' || block.type === 'redacted_thinking')
+          ) {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  async countTokens(
+    messages: LLMMessage[],
+    tools: ToolDefinition[],
+  ): Promise<number | null> {
+    try {
+      const model = getMainLoopModel()
+      const betas = getModelBetas(model)
+      const containsThinking = this.hasThinkingBlocks(messages)
+
+      const client = await this.getClient(model)
+
+      // 转换为 Anthropic SDK 接受的格式
+      const anthropicMessages = messagesToAnthropic(messages)
+      const anthropicTools = toolsToAnthropic(tools)
+
+      const response = await client.beta.messages.countTokens({
+        model: normalizeModelStringForAPI(model),
+        messages:
+          anthropicMessages.length > 0
+            ? anthropicMessages
+            : [{ role: 'user', content: 'foo' }],
+        ...(anthropicTools && anthropicTools.length > 0 && {
+          tools: anthropicTools as any,
+        }),
+        ...(betas.length > 0 && { betas }),
+        ...(containsThinking && {
+          thinking: {
+            type: 'enabled',
+            budget_tokens: 1024,
+          },
+        }),
+      })
+
+      if (typeof response.input_tokens !== 'number') {
+        return null
+      }
+
+      return response.input_tokens
+    } catch (error) {
+      logError(error)
+      return null
+    }
   }
 
   async verifyApiKey(_apiKey: string): Promise<boolean> {

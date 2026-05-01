@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import type {
   ToolDefinition,
-  Response as LLMMessage,
-  Message as LLMMessageParam,
+  LLMResponse,
+  LLMMessage,
   TextBlock,
   ImageBlock,
 } from '../../types/llm.js'
@@ -458,7 +458,7 @@ export function buildTranscriptForClassifier(
  * 如果缓存未填充（测试，或从未调用 getUserContext 的入口点），
  * 分类器在没有 CLAUDE.md 的情况下继续 — 与 PR 前的行为相同。
  */
-function buildzyMdMessage(): LLMMessageParam | null {
+function buildzyMdMessage(): LLMMessage | null {
   const zyMd = getCachedZyMdContent()
   if (zyMd === null) return null
   return {
@@ -607,7 +607,7 @@ function parseXmlThinking(text: string): string | null {
  * 从 API 响应中提取使用统计。
  */
 function extractUsage(
-  result: LLMMessage,
+  result: LLMResponse,
 ): ClassifierUsage {
   return {
     inputTokens: result.usage.inputTokens,
@@ -622,7 +622,7 @@ function extractUsage(
  * 不可枚举 `_request_id` 属性中的 API request_id（req_xxx）。
  */
 function extractRequestId(
-  result: LLMMessage,
+  result: LLMResponse,
 ): string | undefined {
   return (result as { _request_id?: string | null })._request_id ?? undefined
 }
@@ -702,7 +702,7 @@ function getClassifierThinkingConfig(
  * 跨调用的 prompt 缓存（1h TTL）。
  */
 async function classifyYoloActionXml(
-  prefixMessages: LLMMessageParam[],
+  prefixMessages: LLMMessage[],
   systemPrompt: string,
   userPrompt: string,
   userContentBlocks: Array<
@@ -1023,7 +1023,7 @@ export async function classifyYoloAction(
   const systemPrompt = await buildYoloSystemPrompt(context)
   const transcriptEntries = buildTranscriptEntries(messages)
   const zyMdMessage = buildzyMdMessage()
-  const prefixMessages: LLMMessageParam[] = zyMdMessage
+  const prefixMessages: LLMMessage[] = zyMdMessage
     ? [zyMdMessage]
     : []
 

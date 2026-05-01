@@ -1,11 +1,9 @@
 import {
   type ClaudeForChromeContext,
   createZyForChromeMcpServer,
-  type Logger,
   type PermissionMode,
 } from '@ant/claude-for-chrome-mcp'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { format } from 'util'
 import { shutdownDatadog } from '../../services/analytics/datadog.js'
 import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -16,16 +14,16 @@ import {
 import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
 import { getZyAIOAuthTokens } from '../auth.js'
 import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config.js'
-import { logForDebugging } from '../debug.js'
+import { DebugLogger, logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
 import { sideQuery } from '../sideQuery.js'
 // @ts-ignore TS1149
 import { getAllSocketPaths, getSecureSocketPath } from './common.js'
 
-const EXTENSION_DOWNLOAD_URL = 'https://zy.ai/chrome'
+const EXTENSION_DOWNLOAD_URL = 'https://claude.ai/chrome'
 const BUG_REPORT_URL =
-  'https://github.com/anthropics/zy-code/issues/new?labels=bug,claude-in-chrome'
+  'https://github.com/anthropics/claude-code/issues/new?labels=bug,claude-in-chrome'
 
 // String metadata keys safe to forward to analytics. Keys like error_message
 // are excluded because they could contain page content or user data.
@@ -276,21 +274,4 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
   logForDebugging('[Claude in Chrome] MCP server started')
 }
 
-// @ts-ignore TS2420
-class DebugLogger implements Logger {
-  silly(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'debug' })
-  }
-  debug(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'debug' })
-  }
-  info(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'info' })
-  }
-  warn(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'warn' })
-  }
-  error(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'error' })
-  }
-}
+

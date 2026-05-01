@@ -88,10 +88,7 @@ export interface ToolMessage {
 }
 
 /** 请求中的消息联合类型 */
-export type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage
-
-/** 消息角色 */
-export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
+export type LLMMessage = SystemMessage | UserMessage | AssistantMessage | ToolMessage
 
 // ============================================================================
 // 工具定义
@@ -252,7 +249,7 @@ export interface DeltaUsage {
 // ============================================================================
 
 /** 完整响应（非流式返回） */
-export interface Response {
+export interface LLMResponse {
   id: string
   model: string
   role: 'assistant'
@@ -268,7 +265,7 @@ export interface Response {
 /** 创建请求参数 — 只包含通用字段 */
 export interface CreateParams {
   model: string
-  messages: Message[]
+  messages: LLMMessage[]
   maxTokens: number
   temperature?: number
   topP?: number
@@ -331,7 +328,17 @@ export interface LLMAdapter {
     params: CreateParams,
     signal: AbortSignal,
     timeout?: number,
-  ): Promise<Response>
+  ): Promise<LLMResponse>
+
+  /**
+   * 估算消息 + 工具定义的 token 数量。
+   * 各 provider 使用自己的方式：Anthropic 调 countTokens API，OpenAI 用本地 tokenizer。
+   * 返回 null 表示当前 provider 不支持或调用失败。
+   */
+  countTokens?(
+    messages: LLMMessage[],
+    tools: ToolDefinition[],
+  ): Promise<number | null>
 
   /** 验证 API key 是否有效 */
   verifyApiKey(apiKey: string): Promise<boolean>

@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type {
   ImageSource,
   ContentBlock,
-  Message as LLMMessageParam,
+  LLMMessage,
 } from '../../types/llm.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {

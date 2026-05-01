@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { Message as LLMMessageParam, ToolDefinition } from '../types/llm.js'
+import type { LLMMessage, ToolDefinition } from '../types/llm.js'
 import {
   getSystemPrompt,
   SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
@@ -75,7 +75,7 @@ const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'
 export const TOOL_TOKEN_COUNT_OVERHEAD = 500
 
 async function countTokensWithFallback(
-  messages: LLMMessageParam[],
+  messages: LLMMessage[],
   tools: ToolDefinition[],
 ): Promise<number | null> {
   try {

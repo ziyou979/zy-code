@@ -2,30 +2,11 @@ import type {} from '@ant/computer-use-mcp/types'
 
 type ComputerUseHostAdapter = any
 type Logger = any
-import { format } from 'util'
-import { logForDebugging } from '../debug.js'
+import { DebugLogger } from '../debug.js'
 import { COMPUTER_USE_MCP_SERVER_NAME } from './common.js'
 import { createCliExecutor } from './executor.js'
 import { getChicagoEnabled, getChicagoSubGates } from './gates.js'
 import { requireComputerUseSwift } from './swiftLoader.js'
-
-class DebugLogger implements Logger {
-  silly(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'debug' })
-  }
-  debug(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'debug' })
-  }
-  info(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'info' })
-  }
-  warn(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'warn' })
-  }
-  error(message: string, ...args: unknown[]): void {
-    logForDebugging(format(message, ...args), { level: 'error' })
-  }
-}
 
 let cached: ComputerUseHostAdapter | undefined
 

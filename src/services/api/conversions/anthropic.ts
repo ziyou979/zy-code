@@ -6,13 +6,14 @@
  * - 不直接调用任何 Anthropic client
  * - 兼容 v1 (snake_case / 顶层 system / _extraToolSchemas) 与 v2
  */
+import type { MessageCreateParamsBase } from '@anthropic-ai/sdk/resources/beta/messages/messages'
 import type {
   AssistantContentBlock,
   ChunkDelta,
   CreateParams,
   DeltaUsage,
-  Message,
-  Response as LLMResponse,
+  LLMMessage,
+  LLMResponse,
   StopReason,
   StreamEvent,
   TokenUsage,
@@ -21,11 +22,21 @@ import type {
   UserContentBlock,
 } from '../../../types/llm.js'
 
+/**
+ * buildAnthropicCreateParams 的返回类型。
+ * 继承 SDK 的 MessageCreateParamsBase（保证 client.beta.messages.create 类型匹配），
+ * 并追加 SDK 类型中尚未声明的实验性/扩展字段。
+ */
+export interface AnthropicCreateParams extends MessageCreateParamsBase {
+  context_management?: Record<string, unknown>
+  output_config?: Record<string, unknown>
+}
+
 // ============================================================================
 // 出站：标准 → Anthropic
 // ============================================================================
 
-type AnyMessage = Message | Record<string, unknown>
+type AnyMessage = LLMMessage | Record<string, unknown>
 
 /**
  * 把标准 Message[] 转换为 Anthropic 的 messages 字段。
@@ -250,8 +261,6 @@ export function anthropicUsageToStandard(usage: any): TokenUsage {
   return {
     inputTokens,
     outputTokens,
-    input_tokens: inputTokens,
-    output_tokens: outputTokens,
     ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
@@ -427,7 +436,7 @@ export function anthropicResponseToStandard(
  */
 export function buildAnthropicCreateParams(
   params: CreateParams,
-): Record<string, any> {
+): AnthropicCreateParams {
   const p = params as any
 
   const maxTokens = p.maxTokens ?? p.max_tokens
@@ -446,7 +455,7 @@ export function buildAnthropicCreateParams(
   const systemMessages = rawMessages.filter((m) => m.role === 'system')
   const anthropicMessages = messagesToAnthropic(rawMessages)
 
-  let systemContent: string | Array<Record<string, unknown>> | undefined
+  let systemContent: MessageCreateParamsBase['system'] | undefined
   if (systemMessages.length > 0) {
     systemContent = systemMessages.map((m) => m.content as string).join('\n\n')
   } else if (p.system !== undefined) {
@@ -459,7 +468,7 @@ export function buildAnthropicCreateParams(
   const nativeTools = anthropicExtras?._extraToolSchemas ?? []
   const allTools = [...nativeTools, ...(convertedTools ?? [])]
 
-  const out: Record<string, any> = {
+  const out: AnthropicCreateParams = {
     model: p.model,
     max_tokens: maxTokens,
     messages: anthropicMessages,

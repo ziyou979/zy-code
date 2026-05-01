@@ -1,12 +1,10 @@
 import type {
-  Message as LLMMessageParam,
+  LLMMessage,
   ToolDefinition,
   ToolCallInlineBlock,
   ToolResultBlock,
 } from '../types/llm.js'
-import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import type { Attachment } from '../utils/attachments.js'
-import { getModelBetas } from '../utils/betas.js'
 import { countTokensLocally } from '../utils/tokenizer/index.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
@@ -18,7 +16,7 @@ import {
 import { jsonStringify } from '../utils/slowOperations.js'
 import { isToolReferenceBlock } from '../utils/toolSearch.js'
 import { getAPIMetadata, getExtraBodyParams } from './api/zy.js'
-import { getAnthropicClient } from './api/client.js'
+import { getLLMAdapter } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
 
 // 启用思考时的令牌计数最小值
@@ -30,7 +28,7 @@ const TOKEN_COUNT_MAX_TOKENS = 2048
  * 检查消息是否包含思考块
  */
 function hasThinkingBlocks(
-  messages: LLMMessageParam[],
+  messages: LLMMessage[],
 ): boolean {
   for (const message of messages) {
     if (message.role === 'assistant' && Array.isArray(message.content)) {
@@ -58,8 +56,8 @@ function hasThinkingBlocks(
  * 但在启用 tool search 时，这些字段可能在运行时从 API 响应中存在。
  */
 function stripToolSearchFieldsFromMessages(
-  messages: LLMMessageParam[],
-): LLMMessageParam[] {
+  messages: LLMMessage[],
+): LLMMessage[] {
   return messages.map(message => {
     if (!Array.isArray(message.content)) {
       return message
@@ -111,7 +109,7 @@ function stripToolSearchFieldsFromMessages(
     return {
       ...message,
       content: normalizedContent,
-    } as LLMMessageParam
+    } as LLMMessage
   })
 }
 
@@ -123,13 +121,7 @@ export async function countTokensWithAPI(
     return 0
   }
 
-  // OpenAI SDK 路径：使用本地 tokenizer 计数，无需 API 调用
-  if (isOpenAIProvider(getAPIProvider())) {
-    const model = getMainLoopModel()
-    return countTokensLocally(content, model)
-  }
-
-  const message: LLMMessageParam = {
+  const message: LLMMessage = {
     role: 'user',
     content: content,
   }
@@ -138,52 +130,17 @@ export async function countTokensWithAPI(
 }
 
 export async function countMessagesTokensWithAPI(
-  messages: LLMMessageParam[],
+  messages: LLMMessage[],
   tools: ToolDefinition[],
 ): Promise<number | null> {
   return withTokenCountVCR(messages, tools, async () => {
     try {
-      const model = getMainLoopModel()
-      const betas = getModelBetas(model)
-      const containsThinking = hasThinkingBlocks(messages)
-
-      // OpenAI SDK 路径：使用本地 tokenizer 计数
-      // 将消息序列化为文本后用 js-tiktoken 计数，比发送 API 请求更快且免费
-      if (isOpenAIProvider(getAPIProvider())) {
-        return countMessagesTokensLocally(messages, tools, model)
+      const adapter = getLLMAdapter()
+      if (adapter.countTokens) {
+        return adapter.countTokens(messages, tools)
       }
-
-      const anthropic = await getAnthropicClient({
-        maxRetries: 1,
-        model,
-        source: 'count_tokens',
-      })
-
-      const countTokensFn = anthropic.beta.messages.countTokens.bind(anthropic.beta.messages)
-
-      const response = await countTokensFn({
-        model: normalizeModelStringForAPI(model),
-        messages:
-          // When we pass tools and no messages, we need to pass a dummy message
-          // to get an accurate tool token count.
-          messages.length > 0 ? messages : [{ role: 'user', content: 'foo' }],
-        tools,
-        ...(betas.length > 0 && { betas }),
-        ...(containsThinking && {
-          thinking: {
-            type: 'enabled',
-            budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
-          },
-        }),
-      })
-
-      if (typeof response.input_tokens !== 'number') {
-        // Vertex 客户端抛出异常
-        // Bedrock 客户端成功返回 { Output: { __type: 'com.amazon.coral.service#UnknownOperationException' }, Version: '1.0' }
-        return null
-      }
-
-      return response.input_tokens
+      // Fallback to rough estimation if adapter doesn't support countTokens
+      return null
     } catch (error) {
       logError(error)
       return null
@@ -203,8 +160,8 @@ export function roughTokenCountEstimation(
  * 将消息内容序列化为文本后用 js-tiktoken 计数。
  * 这比 API 调用更快且不消耗配额，但对非 OpenAI 模型有 5-10% 的误差。
  */
-function countMessagesTokensLocally(
-  messages: LLMMessageParam[],
+export function countMessagesTokensLocally(
+  messages: LLMMessage[],
   tools: ToolDefinition[],
   model: string,
 ): number {
@@ -317,71 +274,23 @@ export function roughTokenCountEstimationForFileType(
 }
 
 /**
- * 通过提取和分析其文本内容来估计 Message 对象的令牌计数。
- * 这比 getTokenUsage 对可能已被压缩的消息提供更可靠的估计。
+ * 通过 adapter 进行 token 计数。
+ * 如果 adapter 不支持 countTokens，则返回 null。
  */
 export async function countTokensViaHaikuFallback(
-  messages: LLMMessageParam[],
+  messages: LLMMessage[],
   tools: ToolDefinition[],
 ): Promise<number | null> {
-  // 检查消息是否包含思考块
-  const containsThinking = hasThinkingBlocks(messages)
-
-  // 始终使用 compact 模型
-  const model = getDefaultCompactModel()
-  const anthropic = await getAnthropicClient({
-    maxRetries: 1,
-    model,
-    source: 'count_tokens',
-  })
-
-  // 在发送之前剥离 tool search 专用字段（caller、tool_reference）
-  // 这些字段仅在带有 tool search beta 头时有效
-  const normalizedMessages = stripToolSearchFieldsFromMessages(messages)
-
-  const messagesToSend: LLMMessageParam[] =
-    normalizedMessages.length > 0
-      ? (normalizedMessages as LLMMessageParam[])
-      : [{ role: 'user', content: 'count' }]
-
-  const betas = getModelBetas(model)
-  const apiProvider = getAPIProvider()
-
-  // OpenAI SDK 路径：使用本地 tokenizer 计数（比发送 API 请求更快且免费）
-  if (isOpenAIProvider(apiProvider)) {
-    return countMessagesTokensLocally(
-      messagesToSend as LLMMessageParam[],
-      tools,
-      normalizeModelStringForAPI(getMainLoopModel()),
-    )
+  try {
+    const adapter = getLLMAdapter()
+    if (adapter.countTokens) {
+      return adapter.countTokens(messages, tools)
+    }
+    return null
+  } catch (error) {
+    logError(error)
+    return null
   }
-
-  const createMessageFn = anthropic.beta.messages.create.bind(anthropic.beta.messages)
-
-  // biome-ignore lint/plugin: 令牌计数需要 sideQuery 不支持的专用参数（thinking、betas）
-  const response = await createMessageFn({
-    model: normalizeModelStringForAPI(model),
-    max_tokens: containsThinking ? TOKEN_COUNT_MAX_TOKENS : 1,
-    messages: messagesToSend,
-    tools: tools.length > 0 ? tools : undefined,
-    ...(betas.length > 0 && { betas }),
-    metadata: getAPIMetadata(),
-    ...getExtraBodyParams(),
-    // OpenAI 兼容格式不支持 thinking 参数
-    ...(containsThinking && {
-      thinking: {
-        type: 'enabled',
-        budget_tokens: TOKEN_COUNT_THINKING_BUDGET,
-      },
-    }),
-  })
-
-  const usage = response.usage
-  const inputTokens = usage.input_tokens
-  const cacheCreationTokens = usage.cache_creation_input_tokens || 0
-  const cacheReadTokens = usage.cache_read_input_tokens || 0
-
-  return inputTokens + cacheCreationTokens + cacheReadTokens
 }
 
 export function roughTokenCountEstimationForMessages(

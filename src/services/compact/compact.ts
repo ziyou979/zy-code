@@ -620,7 +620,7 @@ export async function compactConversation(
 
     // 对压缩后上下文的消息载荷估算。下一次迭代的 shouldAutoCompact
     // 会看到这个值再加上约 20-40K 的 system prompt + tools + userContext
-    //（通过 API usage.input_tokens）。所以 `willRetriggerNextTurn: true`
+    //（通过 API usage.inputTokens）。所以 `willRetriggerNextTurn: true`
     // 是强信号；`false` 在接近阈值时仍可能重新触发。
     const truePostCompactTokenCount = roughTokenCountEstimationForMessages([
       boundaryMarker,
@@ -655,16 +655,16 @@ export async function compactConversation(
         recompactionInfo?.turnsSincePreviousCompact ?? -1,
       previousCompactTurnId: (recompactionInfo?.previousCompactTurnId ??
         '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      compactionInputTokens: compactionUsage?.input_tokens,
-      compactionOutputTokens: compactionUsage?.output_tokens,
-      compactionCacheReadTokens: compactionUsage?.cache_read_input_tokens ?? 0,
+      compactionInputTokens: compactionUsage?.inputTokens,
+      compactionOutputTokens: compactionUsage?.outputTokens,
+      compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
       compactionCacheCreationTokens:
-        compactionUsage?.cache_creation_input_tokens ?? 0,
+        compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
       compactionTotalTokens: compactionUsage
-        ? compactionUsage.input_tokens +
-          (compactionUsage.cache_creation_input_tokens ?? 0) +
-          (compactionUsage.cache_read_input_tokens ?? 0) +
-          compactionUsage.output_tokens
+        ? compactionUsage.inputTokens +
+          (compactionUsage.extras?.cacheCreationInputTokens ?? 0) +
+          (compactionUsage.extras?.cacheReadInputTokens ?? 0) +
+          compactionUsage.outputTokens
         : 0,
       promptCacheSharingEnabled,
       // analyzeContext 遍历每个内容块（4.5K 消息的会话约 11ms），
@@ -982,11 +982,11 @@ export async function partialCompactConversation(
       hasUserFeedback: !!userFeedback,
       trigger:
         'message_selector' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      compactionInputTokens: compactionUsage?.input_tokens,
-      compactionOutputTokens: compactionUsage?.output_tokens,
-      compactionCacheReadTokens: compactionUsage?.cache_read_input_tokens ?? 0,
+      compactionInputTokens: compactionUsage?.inputTokens,
+      compactionOutputTokens: compactionUsage?.outputTokens,
+      compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
       compactionCacheCreationTokens:
-        compactionUsage?.cache_creation_input_tokens ?? 0,
+        compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
     })
 
     // progress 消息无法记录日志，所以 forkSessionImpl 会将

@@ -15,14 +15,15 @@
  * - 出站 messagesToOpenAI 内对 string input 兜底为 {}
  */
 import OpenAI from 'openai'
+import type { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions/completions'
 import { randomUUID } from 'crypto'
 import type {
   AssistantContentBlock,
   ChunkDelta,
   CreateParams,
   DeltaUsage,
-  Message,
-  Response as LLMResponse,
+  LLMMessage,
+  LLMResponse,
   StopReason,
   StreamEvent,
   TokenUsage,
@@ -30,6 +31,15 @@ import type {
   ToolDefinition,
   UserContentBlock,
 } from '../../../types/llm.js'
+
+/**
+ * buildOpenAIRequestParams 的返回类型。
+ * 继承 SDK 的 ChatCompletionCreateParamsBase（保证 client.chat.completions.create 类型匹配），
+ * 并用 index signature 兜底 thinking / providerExtras / extra_body 等动态扩展字段。
+ */
+export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
+  [key: string]: unknown
+}
 import { getAPIProvider } from '../../../utils/model/providers.js'
 import { normalizeModelStringForAPI } from '../../../utils/model/model.js'
 import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
@@ -91,17 +101,9 @@ export function safeStringifyToolArguments(input: unknown): string {
 // 出站：标准 → OpenAI
 // ============================================================================
 
-type AnyMessage = Message | Record<string, unknown>
+type AnyMessage = LLMMessage | Record<string, unknown>
 
-/**
- * 将标准消息转换为 OpenAI ChatCompletionMessageParam[]。
- *
- * 转换点：
- * - user 消息内嵌的 tool_result 块 → 拆为独立 role:'tool' 消息
- * - assistant 块 type 为 'tool_use' → 当 'tool_call' 处理
- * - image 块按平铺 { mimeType, data } 转 image_url
- * - thinking 块包装为 <thinking>...</thinking> 文本
- */
+
 /**
  * 判断是否走 DeepSeek reasoning 协议。
  * DeepSeek 要求：两轮之间有 tool_call 时必须回传 reasoning_content。
@@ -115,6 +117,15 @@ function isDeepSeekReasoningModel(model: string | undefined): boolean {
   return localModelHasCapability(model, 'thinking')
 }
 
+/**
+ * 将标准消息转换为 OpenAI ChatCompletionMessageParam[]。
+ *
+ * 转换点：
+ * - user 消息内嵌的 tool_result 块 → 拆为独立 role:'tool' 消息
+ * - assistant 块 type 为 'tool_use' → 当 'tool_call' 处理
+ * - image 块按平铺 { mimeType, data } 转 image_url
+ * - thinking 块包装为 <thinking>...</thinking> 文本
+ */
 export function messagesToOpenAI(
   messages: AnyMessage[],
   model?: string,
@@ -619,7 +630,7 @@ export async function* mapOpenAIStreamToStandard(
  */
 export function buildOpenAIRequestParams(
   params: CreateParams,
-): Record<string, unknown> {
+): OpenAICreateParams {
   const p = params as any
   const openAIMessages = messagesToOpenAI(p.messages ?? [], p.model)
   const openaiExtras = p.providerExtras?.openai
@@ -649,7 +660,7 @@ export function buildOpenAIRequestParams(
         ]
       : undefined
 
-  const out: Record<string, unknown> = {
+  const out: OpenAICreateParams = {
     model: normalizeModelStringForAPI(p.model),
     messages: openAIMessages,
     max_tokens: p.maxTokens ?? p.max_tokens,

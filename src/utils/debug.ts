@@ -1,4 +1,5 @@
 import { appendFile, mkdir, symlink, unlink } from 'fs/promises'
+import { format } from 'util'
 import memoize from 'lodash-es/memoize.js'
 import { dirname, join } from 'path'
 import { getSessionId } from 'src/bootstrap/state.js'
@@ -268,5 +269,27 @@ export function logAntError(context: string, error: unknown): void {
     logForDebugging(`[INNER-ONLY] ${context} stack trace:\n${error.stack}`, {
       level: 'error',
     })
+  }
+}
+
+/**
+ * 通用的 Logger 适配器，将标准 Logger 接口桥接到 logForDebugging。
+ * 适用于需要 Logger 实例的第三方库（MCP server、computer-use 等）。
+ */
+export class DebugLogger {
+  silly(message: string, ...args: unknown[]): void {
+    logForDebugging(format(message, ...args), { level: 'debug' })
+  }
+  debug(message: string, ...args: unknown[]): void {
+    logForDebugging(format(message, ...args), { level: 'debug' })
+  }
+  info(message: string, ...args: unknown[]): void {
+    logForDebugging(format(message, ...args), { level: 'info' })
+  }
+  warn(message: string, ...args: unknown[]): void {
+    logForDebugging(format(message, ...args), { level: 'warn' })
+  }
+  error(message: string, ...args: unknown[]): void {
+    logForDebugging(format(message, ...args), { level: 'error' })
   }
 }

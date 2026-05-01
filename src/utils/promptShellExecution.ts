@@ -8,12 +8,9 @@ import { createAssistantMessage } from './messages.js'
 import { hasPermissionsToUseTool } from './permissions/permissions.js'
 import { processToolResultBlock } from './toolResultStorage.js'
 
-// Narrow structural slice both BashTool and PowerShellTool satisfy. We can't
-// use the base Tool type: it marks call()'s canUseTool/parentMessage as
-// required, but both concrete tools have them optional and the original code
-// called BashTool.call({ command }, ctx) with just 2 args. We can't use
-// `typeof BashTool` either: BashTool's input schema has fields (e.g.
-// _simulatedSedEdit) that PowerShellTool's does not.
+// Narrow structural slice both BashTool and PowerShellTool satisfy.
+// We can't use `typeof BashTool` directly: BashTool's input schema has
+// fields (e.g. _simulatedSedEdit) that PowerShellTool's does not.
 // NOTE: call() is invoked directly here, bypassing validateInput — any
 // load-bearing check must live in call() itself (see PR #23311).
 type ShellOut = { stdout: string; stderr: string; interrupted: boolean }
@@ -112,7 +109,7 @@ export async function executeShellCommandsInPrompt(
             )
           }
 
-          const { data } = await shellTool.call({ command }, context)
+          const { data } = (await shellTool.call({ command }, context)) as { data: ShellOut }
           // Reuse the same persistence flow as regular Bash tool calls
           const toolResultBlock = await processToolResultBlock(
             shellTool,

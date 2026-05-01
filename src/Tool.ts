@@ -374,8 +374,8 @@ export type Tool<
   call(
     args: z.infer<Input>,
     context: ToolUseContext,
-    canUseTool: CanUseToolFn,
-    parentMessage: AssistantMessage,
+    canUseTool?: CanUseToolFn,
+    parentMessage?: AssistantMessage,
     onProgress?: ToolCallProgress<P>,
   ): Promise<ToolResult<Output>>
   description(

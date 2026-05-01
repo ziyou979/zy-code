@@ -657,12 +657,9 @@ export const FileReadTool = buildTool({
           type: 'tool_result',
           content: [
             {
-              type: 'image',
-              source: {
-                type: 'base64',
-                data: data.file.base64,
-                mediaType: data.file.type,
-              },
+              type: 'image' as const,
+              mimeType: data.file.type,
+              data: data.file.base64,
             },
           ],
         }

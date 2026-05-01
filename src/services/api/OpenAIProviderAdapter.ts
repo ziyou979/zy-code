@@ -10,11 +10,19 @@ import { randomUUID } from 'crypto'
 import type {
   CreateParams,
   LLMAdapter,
-  Response as LLMResponse,
+  LLMMessage,
+  LLMResponse,
   StreamResult,
+  ToolDefinition,
 } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getOpenAIClient } from './client.js'
+import {
+  getMainLoopModel,
+  normalizeModelStringForAPI,
+} from '../../utils/model/model.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { countMessagesTokensLocally } from '../tokenEstimation.js'
 import {
   buildOpenAIRequestParams,
   mapOpenAIStreamToStandard,
@@ -28,7 +36,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
    * 可选注入的 client（测试或外部复用场景）。
    * 未注入时通过 getOpenAIClient 懒加载。
    */
-  private injectedClient: OpenAI | null
+  private readonly injectedClient: OpenAI | null
 
   constructor(client?: OpenAI) {
     this.injectedClient = client ?? null
@@ -54,7 +62,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
 
     const stream = (await client.chat.completions.create(
       {
-        ...(requestParams as any),
+        ...requestParams,
         stream: true,
         stream_options: { include_usage: true },
       },
@@ -83,13 +91,27 @@ export class OpenAIProviderAdapter implements LLMAdapter {
 
     const completion = await client.chat.completions.create(
       {
-        ...(requestParams as any),
+        ...requestParams,
         stream: false,
       },
       { signal },
     )
 
     return openAIResponseToStandard(completion, params.model)
+  }
+
+  async countTokens(
+    messages: LLMMessage[],
+    tools: ToolDefinition[],
+  ): Promise<number | null> {
+    try {
+      const model = getMainLoopModel()
+      const normalizedModel = normalizeModelStringForAPI(model)
+      return countMessagesTokensLocally(messages, tools, normalizedModel)
+    } catch (error) {
+      logForDebugging(`[OpenAI] countTokens error: ${error}`)
+      return null
+    }
   }
 
   async verifyApiKey(_apiKey: string): Promise<boolean> {

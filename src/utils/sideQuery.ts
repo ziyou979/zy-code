@@ -1,7 +1,7 @@
 import type {
   ToolDefinition,
-  Response as LLMMessage,
-  Message as LLMMessageParam,
+  LLMResponse,
+  LLMMessage,
   TextBlock,
   ToolChoice,
 } from '../types/llm.js'
@@ -13,7 +13,6 @@ import {
 import { STRUCTURED_OUTPUTS_BETA_HEADER } from '../constants/betas.js'
 import type { QuerySource } from '../constants/querySource.js'
 import {
-  getAttributionHeader,
   getCLISyspromptPrefix,
 } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'
@@ -23,7 +22,6 @@ import { getAnthropicClient } from '../services/api/client.js'
 import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
 import { getLLMAdapter } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
-import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
 
 // BetaJSONOutputFormat can be inlined as a local type for structured output format
@@ -41,7 +39,7 @@ export type SideQueryOptions = {
    */
   system?: string | TextBlock[]
   /** Messages to send (supports cache_control on content blocks) */
-  messages: LLMMessageParam[]
+  messages: LLMMessage[]
   /** Optional tools (supports both standard ToolDefinition[] for custom tool types) */
   tools?: ToolDefinition[]
   /** Optional tool choice (use { type: 'tool', name: 'x' } for forced output) */
@@ -66,20 +64,6 @@ export type SideQueryOptions = {
   querySource: QuerySource
 }
 
-/**
- * Extract text from first user message for fingerprint computation.
- */
-function extractFirstUserMessageText(messages: LLMMessageParam[]): string {
-  const firstUserMessage = messages.find(m => m.role === 'user')
-  if (!firstUserMessage) return ''
-
-  const content = firstUserMessage.content
-  if (typeof content === 'string') return content
-
-  // Array of content blocks - find first text block
-  const textBlock = content.find(block => block.type === 'text')
-  return textBlock?.type === 'text' ? textBlock.text : ''
-}
 
 /**
  * Lightweight API wrapper for "side queries" outside the main conversation loop.
@@ -107,7 +91,7 @@ function extractFirstUserMessageText(messages: LLMMessageParam[]): string {
  * // Model validation
  * await sideQuery({ querySource: 'model_validation', model, max_tokens: 1, messages: [{ role: 'user', content: 'Hi' }] })
  */
-export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
+export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   const {
     model,
     system,
@@ -139,17 +123,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
     betas.push(STRUCTURED_OUTPUTS_BETA_HEADER)
   }
 
-  // Extract first user message text for fingerprint
-  const messageText = extractFirstUserMessageText(messages)
-
-  // Compute fingerprint for OAuth attribution
-  const fingerprint = computeFingerprint(messageText, MACRO.VERSION)
-  const attributionHeader = getAttributionHeader(fingerprint)
-
-  // Build system as array to keep attribution header in its own block
-  // (prevents server-side parsing from including system content in cc_entrypoint)
   const systemBlocks: TextBlock[] = [
-    attributionHeader ? { type: 'text', text: attributionHeader } : null,
     // Skip CLI system prompt prefix for internal classifiers that provide their own prompt
     ...(skipSystemPromptPrefix
       ? []
@@ -262,10 +236,10 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMMessage> {
       opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     model:
       normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    inputTokens: response.usage.input_tokens ?? response.usage.inputTokens ?? 0,
-    outputTokens: response.usage.output_tokens ?? response.usage.outputTokens ?? 0,
-    cachedInputTokens: response.usage.cache_read_input_tokens ?? 0,
-    uncachedInputTokens: response.usage.cache_creation_input_tokens ?? 0,
+    inputTokens: response.usage.inputTokens,
+    outputTokens: response.usage.outputTokens,
+    cachedInputTokens: response.usage.extras?.cacheReadInputTokens ?? 0,
+    uncachedInputTokens: response.usage.extras?.cacheCreationInputTokens ?? 0,
     durationMsIncludingRetries: now - start,
     timeSinceLastApiCallMs:
       lastCompletion !== null ? now - lastCompletion : undefined,
