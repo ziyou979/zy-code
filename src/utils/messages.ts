@@ -91,7 +91,7 @@ type HookAttachmentWithName = Exclude<
   HookPermissionDecisionAttachment
 >
 
-import type { APIErrorLike, Response as LLMMessage } from '../types/llm.js'
+import type { APIErrorLike } from '../types/llm.js'
 import type {
   HookEvent,
   SDKAssistantMessageError,
@@ -759,8 +759,10 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
   return messages.flatMap(message => {
     switch (message.type) {
       case 'assistant': {
-        isNewChain = isNewChain || message.message.content.length > 1
-        return message.message.content.map((_, index) => {
+        const content = message.message.content
+        if (!Array.isArray(content)) return []
+        isNewChain = isNewChain || content.length > 1
+        return content.map((_, index) => {
           const uuid = isNewChain
             ? deriveUUID(message.uuid as UUID, index)
             : message.uuid
@@ -842,7 +844,7 @@ export function isToolUseRequestMessage(
   return (
     message.type === 'assistant' &&
     // 注意：stop_reason === 'tool_call' 不可靠 — 并不总是正确设置
-    message.message.content.some(_ => _.type === 'tool_call')
+    Array.isArray(message.message.content) && message.message.content.some(_ => _.type === 'tool_call')
   )
 }
 
@@ -1134,7 +1136,7 @@ export function getSiblingToolUseIDs(
   const unnormalizedMessage = messages.find(
     (_): _ is AssistantMessage =>
       _.type === 'assistant' &&
-      _.message.content.some(_ => _.type === 'tool_call' && _.id === toolUseID),
+      Array.isArray(_.message.content) && _.message.content.some(_ => _.type === 'tool_call' && _.id === toolUseID),
   )
   if (!unnormalizedMessage) {
     return new Set()
@@ -1148,7 +1150,7 @@ export function getSiblingToolUseIDs(
 
   return new Set(
     siblingMessages.flatMap(_ =>
-      _.message.content.filter(_ => _.type === 'tool_call').map(_ => _.id),
+      (Array.isArray(_.message.content) ? _.message.content : []).filter(_ => _.type === 'tool_call').map(_ => _.id),
     ),
   )
 }
@@ -1193,6 +1195,7 @@ export function buildMessageLookups(
         toolUseIDs = new Set()
         toolUseIDsByMessageID.set(id, toolUseIDs)
       }
+      if (!Array.isArray(msg.message.content)) continue
       for (const content of msg.message.content) {
         if (content.type === 'tool_call') {
           toolUseIDs.add(content.id)
@@ -1393,6 +1396,7 @@ export function buildSubagentLookups(
 
   for (const { message: msg } of messages) {
     if (msg.type === 'assistant') {
+      if (!Array.isArray(msg.message.content)) continue
       for (const content of msg.message.content) {
         if (content.type === 'tool_call') {
           toolUseByToolUseID.set(content.id, content as ToolCallInlineBlock)
@@ -1753,6 +1757,7 @@ export function stripToolReferenceBlocksFromUserMessage(
 export function stripCallerFieldFromAssistantMessage(
   message: AssistantMessage,
 ): AssistantMessage {
+  if (!Array.isArray(message.message.content)) return message
   const hasCallerField = message.message.content.some(
     block =>
       block.type === 'tool_call' && 'caller' in block && block.caller !== null,
@@ -2218,37 +2223,39 @@ export function normalizeMessagesForAPI(
             ...message,
             message: {
               ...message.message,
-              content: message.message.content.map(block => {
-                if (block.type === 'tool_call') {
-                  const tool = tools.find(t => toolMatchesName(t, block.name))
-                  const normalizedInput = tool
-                    ? normalizeToolInputForAPI(
-                        tool,
-                        block.input as Record<string, unknown>,
-                      )
-                    : block.input
-                  const canonicalName = tool?.name ?? block.name
+              content: Array.isArray(message.message.content)
+                ? message.message.content.map(block => {
+                    if (block.type === 'tool_call') {
+                      const tool = tools.find(t => toolMatchesName(t, block.name))
+                      const normalizedInput = tool
+                        ? normalizeToolInputForAPI(
+                            tool,
+                            block.input as Record<string, unknown>,
+                          )
+                        : block.input
+                      const canonicalName = tool?.name ?? block.name
 
-                  // 工具搜索启用时，保留所有字段包括 'caller'
-                  if (toolSearchEnabled) {
-                    return {
-                      ...block,
-                      name: canonicalName,
-                      input: normalizedInput,
+                      // 工具搜索启用时，保留所有字段包括 'caller'
+                      if (toolSearchEnabled) {
+                        return {
+                          ...block,
+                          name: canonicalName,
+                          input: normalizedInput,
+                        }
+                      }
+
+                      // 工具搜索未启用时，显式构造仅含标准 API 字段的 tool_use
+                      // 块，避免发送 'caller' 等字段（这些可能来自工具搜索运行的会话存储）
+                      return {
+                        type: 'tool_call' as const,
+                        id: block.id,
+                        name: canonicalName,
+                        input: normalizedInput,
+                      }
                     }
-                  }
-
-                  // 工具搜索未启用时，显式构造仅含标准 API 字段的 tool_use
-                  // 块，避免发送 'caller' 等字段（这些可能来自工具搜索运行的会话存储）
-                  return {
-                    type: 'tool_call' as const,
-                    id: block.id,
-                    name: canonicalName,
-                    input: normalizedInput,
-                  }
-                }
-                return block
-              }),
+                    return block
+                  })
+                : message.message.content,
             },
           }
 
@@ -2399,7 +2406,10 @@ export function mergeAssistantMessages(
     ...a,
     message: {
       ...a.message,
-      content: [...a.message.content, ...b.message.content],
+      content: [
+        ...(Array.isArray(a.message.content) ? a.message.content : []),
+        ...(Array.isArray(b.message.content) ? b.message.content : []),
+      ],
     },
   }
 }
@@ -2964,9 +2974,10 @@ export function handleMessageFromStream(
     }
     // 在 transcript 模式下捕获完整的 thinking 块用于实时显示
     if (message.type === 'assistant') {
-      const thinkingBlock = message.message.content.find(
-        block => block.type === 'thinking',
-      )
+      const content = message.message.content
+      const thinkingBlock = Array.isArray(content)
+        ? content.find(block => block.type === 'thinking')
+        : undefined
       if (thinkingBlock && thinkingBlock.type === 'thinking') {
         onStreamingThinking?.(() => ({
           thinking: thinkingBlock.thinking,
@@ -2988,13 +2999,112 @@ export function handleMessageFromStream(
     return
   }
 
-  if (message.event.type === 'message_stop') {
+  if (message.event.type === 'message_stop' || message.event.type === 'response_stop') {
     onSetStreamMode('tool-use')
     onStreamingToolUses(() => [])
     return
   }
 
   switch (message.event.type) {
+    // 标准格式（adapter 转换后）
+    case 'chunk_start': {
+      onStreamingText?.(() => null)
+      const startEvent = message.event as unknown as import('../types/llm.js').ChunkStartEvent
+      const chunk = startEvent.chunk
+      if (!chunk) return
+      if (
+        feature('CONNECTOR_TEXT') &&
+        isConnectorTextBlock(chunk)
+      ) {
+        onSetStreamMode('responding')
+        return
+      }
+      // chunk.type 可能包含扩展类型（server_tool_use 等），用 string 避免穷举
+      const chunkType: string = chunk.type
+      switch (chunkType) {
+        case 'thinking':
+        case 'redacted_thinking':
+          onSetStreamMode('thinking')
+          return
+        case 'text':
+          onSetStreamMode('responding')
+          return
+        case 'tool_use':
+        case 'tool_call': {
+          onSetStreamMode('tool-input')
+          onStreamingToolUses(_ => [
+            ..._,
+            {
+              index: startEvent.index,
+              contentBlock: chunk as import('../types/llm.js').ToolCallInlineBlock,
+              unparsedToolInput: '',
+            },
+          ])
+          return
+        }
+        case 'server_tool_use':
+        case 'web_search_tool_result':
+        case 'code_execution_tool_result':
+        case 'mcp_tool_use':
+        case 'mcp_tool_result':
+        case 'container_upload':
+        case 'web_fetch_tool_result':
+        case 'bash_code_execution_tool_result':
+        case 'text_editor_code_execution_tool_result':
+        case 'tool_search_tool_result':
+        case 'compaction':
+          onSetStreamMode('tool-input')
+          return
+      }
+      return
+    }
+    case 'chunk_delta': {
+      const deltaEvent = message.event as unknown as import('../types/llm.js').ChunkDeltaEvent
+      const delta = deltaEvent.delta
+      if (!delta) return
+      switch (delta.type) {
+        case 'text_delta': {
+          const deltaText = delta.text
+          onUpdateLength(deltaText)
+          onStreamingText?.(text => (text ?? '') + deltaText)
+          return
+        }
+        case 'input_json_delta': {
+          const partialJson = delta.partialJson ?? ''
+          onUpdateLength(partialJson)
+          onStreamingToolUses(_ => {
+            const element = _.find(_ => _.index === deltaEvent.index)
+            if (!element) {
+              return _
+            }
+            return [
+              ..._.filter(_ => _ !== element),
+              {
+                ...element,
+                unparsedToolInput: element.unparsedToolInput + partialJson,
+              },
+            ]
+          })
+          return
+        }
+        case 'thinking_delta':
+          onUpdateLength(delta.thinking)
+          return
+        case 'signature_delta':
+          return
+        default:
+          return
+      }
+    }
+    case 'chunk_stop':
+      return
+    case 'response_delta':
+      onSetStreamMode('responding')
+      return
+    case 'response_start':
+      return
+
+    // 旧格式（向后兼容）
     case 'content_block_start':
       onStreamingText?.(() => null)
       if (
@@ -4739,6 +4849,7 @@ function filterTrailingThinkingFromLastAssistant(
   }
 
   const content = lastMessage.message.content
+  if (!Array.isArray(content)) return messages
   const lastBlock = content.at(-1)
   if (!lastBlock || !isThinkingBlock(lastBlock)) {
     return messages
@@ -5149,9 +5260,11 @@ export function ensureToolResultPairing(
 
     // 收集服务端 tool result ID（*_tool_result 块包含 toolCallId）。
     const serverResultIds = new Set<string>()
-    for (const c of msg.message.content) {
-      if ('toolCallId' in c && typeof c.toolCallId === 'string') {
-        serverResultIds.add(c.toolCallId)
+    if (Array.isArray(msg.message.content)) {
+      for (const c of msg.message.content) {
+        if ('toolCallId' in c && typeof c.toolCallId === 'string') {
+          serverResultIds.add(c.toolCallId)
+        }
       }
     }
 
@@ -5165,17 +5278,18 @@ export function ensureToolResultPairing(
     // use 块没有匹配的 *_tool_result，API 会以例如 "advisor tool use without
     // corresponding advisor_tool_result" 拒绝。
     const seenToolUseIds = new Set<string>()
-    const finalContent = msg.message.content.filter(block => {
-      if (block.type === 'tool_call') {
-        if (allSeenToolUseIds.has(block.id)) {
-          repaired = true
-          return false
-        }
-        allSeenToolUseIds.add(block.id)
-        seenToolUseIds.add(block.id)
-      }
-      if (
-        ((block.type as string) === 'server_tool_use' || (block.type as string) === 'mcp_tool_use') &&
+    const finalContent = Array.isArray(msg.message.content)
+      ? msg.message.content.filter(block => {
+          if (block.type === 'tool_call') {
+            if (allSeenToolUseIds.has(block.id)) {
+              repaired = true
+              return false
+            }
+            allSeenToolUseIds.add(block.id)
+            seenToolUseIds.add(block.id)
+          }
+          if (
+            ((block.type as string) === 'server_tool_use' || (block.type as string) === 'mcp_tool_use') &&
         !serverResultIds.has((block as { id: string }).id)
       ) {
         repaired = true
@@ -5183,12 +5297,13 @@ export function ensureToolResultPairing(
       }
       return true
     })
+      : msg.message.content
 
     const assistantContentChanged =
       finalContent.length !== msg.message.content.length
 
     // 如果剥离孤立服务端 tool use 后内容数组为空，插入占位符使 API 不拒绝空 assistant 内容。
-    if (finalContent.length === 0) {
+    if (Array.isArray(finalContent) && finalContent.length === 0) {
       finalContent.push({
         type: 'text' as const,
         text: '[Tool use interrupted]',
@@ -5339,14 +5454,19 @@ export function ensureToolResultPairing(
     // 捕获诊断信息以帮助识别根本原因
     const messageTypes = messages.map((m, idx) => {
       if (m.type === 'assistant') {
-        const toolUses = m.message.content
-          .filter(b => b.type === 'tool_call')
-          .map(b => (b as ToolCallInlineBlock | ToolCallInlineBlock).id)
-        const serverToolUses = m.message.content
-          .filter(
-            b => (b.type as string) === 'server_tool_use' || (b.type as string) === 'mcp_tool_use',
-          )
-          .map(b => (b as { id: string }).id)
+        const content = m.message.content
+        const toolUses = Array.isArray(content)
+          ? content
+              .filter(b => b.type === 'tool_call')
+              .map(b => (b as ToolCallInlineBlock | ToolCallInlineBlock).id)
+          : []
+        const serverToolUses = Array.isArray(content)
+          ? content
+              .filter(
+                b => (b.type as string) === 'server_tool_use' || (b.type as string) === 'mcp_tool_use',
+              )
+              .map(b => (b as { id: string }).id)
+          : []
         const parts = [
           `id=${m.message.id}`,
           `tool_uses=[${toolUses.join(',')}]`,
@@ -5406,6 +5526,7 @@ export function stripAdvisorBlocks(
   const result = messages.map(msg => {
     if (msg.type !== 'assistant') return msg
     const content = msg.message.content
+    if (!Array.isArray(content)) return msg
     const filtered = content.filter(b => !isAdvisorBlock(b))
     if (filtered.length === content.length) return msg
     changed = true

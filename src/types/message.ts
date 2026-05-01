@@ -5,8 +5,8 @@
 
 import type {
   AssistantContentBlock,
+  AssistantMessage as LLMAssistantMessage,
   ContentBlock,
-  Response as LLMMessage,
   LLMError,
   ToolCallInlineBlock,
 } from './llm.js'
@@ -42,7 +42,7 @@ export interface BaseMessage {
 
 export interface AssistantMessage extends BaseMessage {
   type: 'assistant'
-  message: LLMMessage & {
+  message: LLMAssistantMessage & {
     container?: null
     context_management: null | Record<string, unknown>
   }
@@ -57,7 +57,7 @@ export interface AssistantMessage extends BaseMessage {
 
 export interface NormalizedAssistantMessage extends BaseMessage {
   type: 'assistant'
-  message: Omit<LLMMessage, 'content'> & {
+  message: Omit<LLMAssistantMessage, 'content'> & {
     content: AssistantContentBlock[]
     context_management: null | Record<string, unknown>
   }

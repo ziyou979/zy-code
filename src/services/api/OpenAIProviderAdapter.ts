@@ -55,7 +55,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     const client = await this.getClient()
     const requestParams = buildOpenAIRequestParams(params)
     logForDebugging(
-      `[OpenAI] Streaming request: model=${(params as any).model}, messages=${
+      `[OpenAI] Streaming request: model=${params.model}, messages=${
         (requestParams.messages as unknown[] | undefined)?.length ?? 0
       }`,
     )
@@ -84,7 +84,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     const client = await this.getClient()
     const requestParams = buildOpenAIRequestParams(params)
     logForDebugging(
-      `[OpenAI] Non-streaming request: model=${(params as any).model}, messages=${
+      `[OpenAI] Non-streaming request: model=${params.model}, messages=${
         (requestParams.messages as unknown[] | undefined)?.length ?? 0
       }`,
     )

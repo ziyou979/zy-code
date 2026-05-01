@@ -5,7 +5,7 @@ import type {
   TextBlock,
   ToolChoice,
 } from '../types/llm.js'
-import type { ThinkingConfig } from './thinking.js'
+
 import {
   getLastApiCompletionTimestamp,
   setLastApiCompletionTimestamp,
@@ -17,9 +17,7 @@ import {
 } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
-import { getAPIMetadata } from '../services/api/zy.js'
-import { getAnthropicClient } from '../services/api/client.js'
-import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
+
 import { getLLMAdapter } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { normalizeModelStringForAPI } from './model/model.js'
@@ -108,11 +106,6 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
     stop_sequences,
   } = opts
 
-  const client = await getAnthropicClient({
-    maxRetries,
-    model,
-    source: 'side_query',
-  })
   const betas = [...getModelBetas(model)]
   // Add structured-outputs beta if using output_format and provider supports it
   if (
@@ -143,103 +136,65 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
         : []),
   ].filter((block): block is TextBlock => block !== null)
 
-  let thinkingConfig: ThinkingConfig | undefined
+  let thinkingConfig: { type: 'disabled' } | { type: 'enabled'; budget_tokens: number } | undefined
   if (thinking === false) {
     thinkingConfig = { type: 'disabled' }
   } else if (thinking !== undefined) {
     thinkingConfig = {
       type: 'enabled',
-      budgetTokens: Math.min(thinking, max_tokens - 1),
+      budget_tokens: Math.min(thinking, max_tokens - 1),
     }
   }
 
   const normalizedModel = normalizeModelStringForAPI(model)
   const start = Date.now()
 
-  // OpenAI 专用路径
-  if (isOpenAIProvider(getAPIProvider())) {
-    const adapter = getLLMAdapter()
-    // 把 v1 风格的 systemBlocks (TextBlock[]) + messages 拼成标准 messages
-    const stdMessages: any[] = []
-    if (systemBlocks && systemBlocks.length > 0) {
-      stdMessages.push({
-        role: 'system',
-        content: systemBlocks.map(b => b.text).join('\n\n'),
-      })
-    }
-    for (const m of messages) stdMessages.push(m)
+  // 统一通过 adapter 分派（OpenAI / Anthropic 等 provider 由 adapter 自行处理）
+  const adapter = getLLMAdapter()
 
-    const response = await adapter.createMessage(
-      {
-        model: normalizedModel,
-        messages: stdMessages,
-        maxTokens: max_tokens,
-        temperature,
-        tools: tools as any,
-        toolChoice: tool_choice as any,
-      } as any,
-      signal ?? new AbortController().signal,
-    )
-    const now = Date.now()
-    const lastCompletion = getLastApiCompletionTimestamp()
-    logEvent('zy_api_success', {
-      requestId:
-        response.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      querySource:
-        opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      model:
-        normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      inputTokens: response.usage?.inputTokens ?? 0,
-      outputTokens: response.usage?.outputTokens ?? 0,
-      cachedInputTokens: 0,
-      uncachedInputTokens: 0,
-      durationMsIncludingRetries: now - start,
-      timeSinceLastApiCallMs:
-        lastCompletion !== null ? now - lastCompletion : undefined,
-    })
-    setLastApiCompletionTimestamp(now)
-    return response
+  // 把 systemBlocks 拼成 system role 消息放在 messages 前面
+  const allMessages: LLMMessage[] = []
+  if (systemBlocks.length > 0) {
+    allMessages.push({
+      role: 'system',
+      content: systemBlocks.map(b => b.text).join('\n\n'),
+    } as any)
   }
+  for (const m of messages) allMessages.push(m)
 
-  // Anthropic / 其他 provider 路径
-  const apiProvider = getAPIProvider()
-
-  const createMessageFn = client.beta.messages.create.bind(client.beta.messages)
-
-  // biome-ignore lint/plugin: this IS the wrapper that handles OAuth attribution
-  const response = await createMessageFn(
+  const response = await adapter.createMessage(
     {
       model: normalizedModel,
-      max_tokens,
-      system: systemBlocks,
-      messages,
-      ...(tools && { tools }),
-      ...(tool_choice && { tool_choice }),
-      ...(output_format && { output_config: { format: output_format } }),
-      ...(temperature !== undefined && { temperature }),
-      ...(stop_sequences && { stop_sequences }),
-      ...(thinkingConfig && { thinking: thinkingConfig }),
-      ...(betas.length > 0 && { betas }),
-      ...({ metadata: getAPIMetadata() }),
+      messages: allMessages,
+      maxTokens: max_tokens,
+      temperature,
+      stopSequences: stop_sequences,
+      tools: tools as any,
+      toolChoice: tool_choice as any,
+      providerExtras: {
+        anthropic: {
+          thinking: thinkingConfig,
+          betas: betas.length > 0 ? betas : undefined,
+          outputConfig: output_format ? { format: output_format } : undefined,
+        },
+      },
     },
-    { signal },
+    signal ?? new AbortController().signal,
   )
 
-  const requestId =
-    (response as { _request_id?: string | null })._request_id ?? undefined
   const now = Date.now()
   const lastCompletion = getLastApiCompletionTimestamp()
   logEvent('zy_api_success', {
     requestId:
-      requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      response.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     querySource:
       opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     model:
       normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    inputTokens: response.usage.inputTokens,
-    outputTokens: response.usage.outputTokens,
-    cachedInputTokens: response.usage.extras?.cacheReadInputTokens ?? 0,
-    uncachedInputTokens: response.usage.extras?.cacheCreationInputTokens ?? 0,
+    inputTokens: response.usage?.inputTokens ?? 0,
+    outputTokens: response.usage?.outputTokens ?? 0,
+    cachedInputTokens: response.usage?.extras?.cacheReadInputTokens ?? 0,
+    uncachedInputTokens: response.usage?.extras?.cacheCreationInputTokens ?? 0,
     durationMsIncludingRetries: now - start,
     timeSinceLastApiCallMs:
       lastCompletion !== null ? now - lastCompletion : undefined,

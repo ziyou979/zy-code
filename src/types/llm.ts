@@ -69,11 +69,19 @@ export interface UserMessage {
 /** assistant 消息 — 模型响应，可包含文本和工具调用 */
 export interface AssistantMessage {
   role: 'assistant'
+  /** 消息唯一标识 */
+  id?: string
+  /** 生成此消息的模型名称 */
+  model?: string
+  /** 停止原因 */
+  stopReason?: StopReason | null
   content: string | AssistantContentBlock[]
   /** 工具调用列表（OpenAI 风格独立字段，流式场景也可能使用 ToolCallInlineBlock） */
   toolCalls?: ToolCall[]
   /** 模型使用的 token 用量 */
   usage?: TokenUsage
+  /** 允许运行时附加额外属性（如 stop_reason 等兼容字段） */
+  [key: string]: unknown
 }
 
 /** tool 消息 — 工具执行结果，独立角色 */
@@ -239,6 +247,8 @@ export interface TokenUsage {
 
 /** 增量 token 用量（流式事件中） */
 export interface DeltaUsage {
+  /** 输入 token 数（OpenAI 在最后一个 chunk 中包含，Anthropic 在 message_start 中） */
+  inputTokens?: number
   outputTokens: number
   /** provider 特定增量计量 */
   extras?: Record<string, number>
@@ -339,6 +349,21 @@ export interface LLMAdapter {
     messages: LLMMessage[],
     tools: ToolDefinition[],
   ): Promise<number | null>
+
+  /**
+   * 列出当前 provider 可用的模型列表。
+   * 返回 null 表示当前 provider 不支持此功能。
+   */
+  listModels?(): Promise<Record<string, unknown>[] | null>
+
+  /**
+   * 发送一个最小请求并返回原始 HTTP Response 对象。
+   * 用于需要访问响应头（如速率限制信息）的场景。
+   * 返回 null 表示当前 provider 不支持此功能。
+   */
+  createRawRequest?(
+    params: CreateParams,
+  ): Promise<Response | null>
 
   /** 验证 API key 是否有效 */
   verifyApiKey(apiKey: string): Promise<boolean>

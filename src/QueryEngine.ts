@@ -765,31 +765,43 @@ export class QueryEngine {
           yield* normalizeMessage(message)
           break
         case 'stream_event':
-          if ((message as any).event.type === 'message_start') {
+          if ((message as any).event.type === 'message_start' || (message as any).event.type === 'response_start') {
             // 重置新消息的当前 usage
             currentMessageUsage = EMPTY_USAGE
-            currentMessageUsage = updateUsage(
-              currentMessageUsage,
-              ((message as any).event.message as any).usage,
-            )
+            const startMsg = (message as any).event.message
+            if (startMsg?.usage) {
+              currentMessageUsage = updateUsage(
+                currentMessageUsage,
+                startMsg.usage,
+              )
+            }
           }
-          if ((message as any).event.type === 'message_delta') {
+          if ((message as any).event.type === 'message_delta' || (message as any).event.type === 'response_delta') {
+            const evt = (message as any).event
+            // response_delta 的 usage 是标准格式（camelCase），转为 snake_case 供 updateUsage
+            const deltaUsage = evt.usage
+              ? {
+                  output_tokens: evt.usage.outputTokens ?? evt.usage.output_tokens ?? 0,
+                  input_tokens: evt.usage.inputTokens ?? evt.usage.input_tokens,
+                  cache_creation_input_tokens: evt.usage.extras?.cacheCreationInputTokens ?? evt.usage.cache_creation_input_tokens,
+                  cache_read_input_tokens: evt.usage.extras?.cacheReadInputTokens ?? evt.usage.cache_read_input_tokens,
+                }
+              : evt.usage
             currentMessageUsage = updateUsage(
               currentMessageUsage,
-              (message as any).event.usage as any,
+              deltaUsage as any,
             )
-            // 从 message_delta 捕获 stopReason。assistant 消息在
-            // content_block_stop 时产生，stopReason=null；真实值仅在此处到达
-            //（见 zy.ts 的 message_delta 处理器）。没有这一步，
+            // 从 message_delta/response_delta 捕获 stopReason。assistant 消息在
+            // content_block_stop/chunk_stop 时产生，stopReason=null；真实值仅在此处到达
+            //（见 zy.ts 的处理器）。没有这一步，
             // result.stopReason 将始终为 null。
             // 兼容入站事件可能仍带 snake_case stop_reason（部分上游 SDK 透传）。
-            const evt = (message as any).event
-            const evtStopReason = evt.delta?.stopReason ?? evt.delta?.stop_reason
+            const evtStopReason = evt.stopReason ?? evt.delta?.stopReason ?? evt.delta?.stop_reason
             if (evtStopReason != null) {
               lastStopReason = evtStopReason
             }
           }
-          if ((message as any).event.type === 'message_stop') {
+          if ((message as any).event.type === 'message_stop' || (message as any).event.type === 'response_stop') {
             // 将当前消息的 usage 累积到总计中
             this.totalUsage = accumulateUsage(
               this.totalUsage,
@@ -1029,8 +1041,8 @@ export class QueryEngine {
     // 这些访问无法通过类型检查。
     const edeResultType = result?.type ?? 'undefined'
     const edeLastContentType =
-      result?.type === 'assistant'
-        ? (last(result.message.content)?.type ?? 'none')
+      result?.type === 'assistant' && Array.isArray(result.message.content)
+        ? (result.message.content.at(-1)?.type ?? 'none')
         : 'n/a'
 
     // 在产生 result 之前刷新缓冲的 transcript 写入。
@@ -1083,8 +1095,8 @@ export class QueryEngine {
     let textResult = ''
     let isApiError = false
 
-    if (result.type === 'assistant') {
-      const lastContent = last(result.message.content)
+    if (result.type === 'assistant' && Array.isArray(result.message.content)) {
+      const lastContent = result.message.content.at(-1)
       if (
         lastContent?.type === 'text' &&
         !SYNTHETIC_MESSAGES.has(lastContent.text)

@@ -9,9 +9,6 @@ import { getDefaultCompactModel } from '../utils/model/model.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from './analytics/index.js'
 import { logEvent } from './analytics/index.js'
-import { getAPIMetadata } from './api/zy.js'
-import { getAnthropicClient } from './api/client.js'
-import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 import { getLLMAdapter } from './api/client.js'
 import {
   processRateLimitHeaders,
@@ -217,42 +214,36 @@ export function emitStatusChange(limits: ZyAILimits) {
 async function makeTestQuery() {
   const model = getDefaultCompactModel()
   const messages: LLMMessage[] = [{ role: 'user', content: 'quota' }]
-  const apiProvider = getAPIProvider()
-
-  // OpenAI 专用路径
-  if (isOpenAIProvider(apiProvider)) {
-    const adapter = getLLMAdapter()
-    const response = await adapter.createMessage(
-      {
-        model,
-        messages,
-        maxTokens: 1,
-      } as any,
-      new AbortController().signal,
-    )
-    // 模拟 .asResponse() 返回
-    return new Response(null, {
-      headers: { 'x-request-id': response.id ?? '' },
-    })
-  }
-
-  const anthropic = await getAnthropicClient({
-    maxRetries: 0,
-    model,
-    source: 'quota_check',
-  })
+  const adapter = getLLMAdapter()
   const betas = getModelBetas(model)
 
-  // biome-ignore lint/plugin: quota check needs raw response access via asResponse()
-  const createMessageFn = anthropic.beta.messages.create.bind(anthropic.beta.messages)
+  // 优先使用 adapter.createRawRequest（Anthropic 等需要原始响应头的 provider）
+  if (adapter.createRawRequest) {
+    const rawResponse = await adapter.createRawRequest({
+      model,
+      messages,
+      maxTokens: 1,
+      providerExtras: {
+        anthropic: {
+          betas: betas.length > 0 ? betas : undefined,
+        },
+      },
+    })
+    if (rawResponse) return rawResponse
+  }
 
-  return createMessageFn({
-    model,
-    max_tokens: 1,
-    messages,
-    metadata: getAPIMetadata(),
-    ...(betas.length > 0 ? { betas } : {}),
-  }).asResponse()
+  // 回退路径（OpenAI 等不支持 createRawRequest 的 provider）
+  const response = await adapter.createMessage(
+    {
+      model,
+      messages,
+      maxTokens: 1,
+    },
+    new AbortController().signal,
+  )
+  return new Response(null, {
+    headers: { 'x-request-id': response.id ?? '' },
+  })
 }
 
 export async function checkQuotaStatus(): Promise<void> {

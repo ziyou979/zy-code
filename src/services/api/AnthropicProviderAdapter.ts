@@ -160,7 +160,63 @@ export class AnthropicProviderAdapter implements LLMAdapter {
     }
   }
 
-  async verifyApiKey(_apiKey: string): Promise<boolean> {
-    return true
+  async createRawRequest(params: CreateParams): Promise<Response | null> {
+    try {
+      const client = await this.getClient(params.model)
+      const anthropicParams = buildAnthropicCreateParams(params)
+      // .asResponse() 必须在 APIPromise 上调用（链式），不能在 await 后的结果上调用
+      const apiPromise = client.beta.messages.create({
+        ...anthropicParams,
+        stream: false as const,
+        model: normalizeModelStringForAPI(params.model),
+      })
+      return await (apiPromise as any).asResponse()
+    } catch (error) {
+      logError(error)
+      return null
+    }
+  }
+
+  async listModels(): Promise<Record<string, unknown>[] | null> {
+    try {
+      const client = await this.getClient()
+      const results: Record<string, unknown>[] = []
+      for await (const entry of client.models.list({})) {
+        results.push(entry as unknown as Record<string, unknown>)
+      }
+      return results
+    } catch (error) {
+      logError(error)
+      return null
+    }
+  }
+
+  async verifyApiKey(apiKey: string): Promise<boolean> {
+    try {
+      const model = getMainLoopModel()
+      const betas = getModelBetas(model)
+      const client = await getAnthropicClient({
+        apiKey,
+        maxRetries: 3,
+        model,
+        source: 'verify_api_key',
+      })
+      await client.beta.messages.create({
+        model: normalizeModelStringForAPI(model),
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'test' }],
+        temperature: 1,
+        ...(betas.length > 0 && { betas }),
+      })
+      return true
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('authentication_error')
+      ) {
+        return false
+      }
+      throw error
+    }
   }
 }

@@ -450,7 +450,10 @@ export function openAIUsageToStandard(
 export function openAIDeltaUsageToStandard(
   usage: OpenAI.CompletionUsage | undefined | null,
 ): DeltaUsage {
-  return { outputTokens: usage?.completion_tokens ?? 0 }
+  return {
+    inputTokens: usage?.prompt_tokens,
+    outputTokens: usage?.completion_tokens ?? 0,
+  }
 }
 
 export function openAIResponseToStandard(

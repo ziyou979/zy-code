@@ -524,54 +524,8 @@ export async function verifyApiKey(
     return true
   }
 
-  try {
-    // 警告：如果改用非 compact 模型，此请求在直接 API 调用中将失败，除非使用 getCLISyspromptPrefix。
-    const model = getDefaultCompactModel()
-    const betas = getModelBetas(model)
-    return await returnValue(
-      withRetry(
-        () =>
-          getAnthropicClient({
-            apiKey,
-            maxRetries: 3,
-            model,
-            source: 'verify_api_key',
-          }),
-        async anthropic => {
-          const messages: LLMMessage[] = [{ role: 'user', content: 'test' }]
-
-          // biome-ignore lint/plugin: API key verification is intentionally a minimal direct call
-          await anthropic.beta.messages.create({
-            model,
-            max_tokens: 1,
-            messages,
-            temperature: 1,
-            ...(betas.length > 0 && { betas }),
-            metadata: getAPIMetadata(),
-            ...getExtraBodyParams(),
-          })
-          return true
-        },
-        { maxRetries: 2, model, thinkingConfig: { type: 'disabled' } }, // API 密钥验证使用较少重试
-      ),
-    )
-  } catch (errorFromRetry) {
-    let error = errorFromRetry
-    if (errorFromRetry instanceof CannotRetryError) {
-      error = errorFromRetry.originalError
-    }
-    logError(error)
-    // 检查认证错误
-    if (
-      error instanceof Error &&
-      error.message.includes(
-        '{"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}}',
-      )
-    ) {
-      return false
-    }
-    throw error
-  }
+  const adapter = getLLMAdapter()
+  return adapter.verifyApiKey(apiKey)
 }
 
 export function userMessageToMessageParam(
@@ -1867,15 +1821,18 @@ async function* queryModel(
           isFirstChunk = false
         }
 
-        switch (part.type) {
+        // 显式标注为 string 以保留 default 分支可达性（实际 stream 可能返回扩展事件类型）
+        const eventType: string = part.type
+        switch (eventType) {
           case 'response_start': {
             // response_start 不包含完整 message，需要构造 partialMessage
+            const startEvent = part as import('../../types/llm.js').ResponseStartEvent
             partialMessage = {
-              id: (part as any).responseId ?? '',
+              id: startEvent.responseId ?? '',
               type: 'message',
               role: 'assistant',
               content: [],
-              model: (part as any).model ?? resolvedModel,
+              model: startEvent.model ?? resolvedModel,
               stop_reason: null,
               stop_sequence: null,
               usage: { input_tokens: 0, output_tokens: 0 },
@@ -1884,21 +1841,25 @@ async function* queryModel(
             break
           }
           case 'chunk_start': {
-            // v2: part.chunk 替代了 part.content_block
-            const startChunk = (part as any).chunk ?? (part as any).content_block
+            // chunk 可能包含标准类型（text/tool_call/thinking）以及 Anthropic 内部扩展类型
+            // （server_tool_use/advisor_tool_result 等），所以类型标注需要足够宽泛
+            const chunkStartEvent = part as import('../../types/llm.js').ChunkStartEvent
+            const startChunk: Record<string, unknown> & { type: string } =
+              chunkStartEvent.chunk as Record<string, unknown> & { type: string }
+            const chunkIndex = chunkStartEvent.index
             switch (startChunk.type) {
               case 'tool_use':
               case 'tool_call':
-                contentBlocks[(part as any).index] = {
+                contentBlocks[chunkIndex] = {
                   ...startChunk,
                   input: '',
-                }
+                } as ContentBlock
                 break
               case 'server_tool_use':
-                contentBlocks[(part as any).index] = {
+                contentBlocks[chunkIndex] = {
                   ...startChunk,
                   input: '' as unknown as { [key: string]: unknown },
-                }
+                } as ContentBlock
                 if ((startChunk.name as string) === 'advisor') {
                   isAdvisorInProgress = true
                   logForDebugging(`[AdvisorTool] Advisor tool called`)
@@ -1911,22 +1872,22 @@ async function* queryModel(
                 }
                 break
               case 'text':
-                contentBlocks[(part as any).index] = {
+                contentBlocks[chunkIndex] = {
                   ...startChunk,
                   text: '',
-                }
+                } as ContentBlock
                 break
               case 'thinking':
-                contentBlocks[(part as any).index] = {
+                contentBlocks[chunkIndex] = {
                   ...startChunk,
                   thinking: '',
                   signature: '',
-                }
+                } as ContentBlock
                 break
               default:
-                contentBlocks[(part as any).index] = { ...startChunk }
+                contentBlocks[chunkIndex] = { ...startChunk } as ContentBlock
                 if (
-                  (startChunk.type as string) === 'advisor_tool_result'
+                  startChunk.type === 'advisor_tool_result'
                 ) {
                   isAdvisorInProgress = false
                   logForDebugging(`[AdvisorTool] Advisor tool result received`)
@@ -2110,11 +2071,11 @@ async function* queryModel(
             break
           }
           case 'response_delta': {
-            // v2: part.stopReason / part.usage（驼峰）
-            const v2Delta = part as any
-            const stopReasonV2 = v2Delta.stopReason
-            // v2 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
-            const rawUsage = v2Delta.usage
+            // 标准格式：part.stopReason / part.usage（驼峰）
+            const responseDelta = part as import('../../types/llm.js').ResponseDeltaEvent
+            const stopReasonV2 = responseDelta.stopReason
+            // 标准 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
+            const rawUsage = responseDelta.usage
             const usageForUpdate = rawUsage
               ? {
                   output_tokens: rawUsage.outputTokens ?? 0,
