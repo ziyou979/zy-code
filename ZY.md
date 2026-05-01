@@ -4,71 +4,51 @@
 
 ## 规范约束（Spec）
 
-以下规则在修改代码时**必须**严格遵守，违反将视为错误：
+以下规则**必须**严格遵守：
 
 ### 1. 语言与注释
-- 代码注释一律使用**中文**
-- 以下内容**允许保持英文**：
-  - TypeScript/编译器指令：`@ts-ignore`、`@ts-expect-error`、`@ts-nocheck` 等
-  - 专有名词与技术术语：React、Ink、MCP、OAuth、GrowthBook、REPL 等
-  - 代码示例中的标识符、API 名称、配置项
-- 变量名、函数名、类名等标识符保持英文，不使用中文命名
-- 日志输出（`console.log`/`console.error`）面向开发者，使用 i18n
-- 用户可见的所有文本**禁止硬编码**，必须走 i18n（见下文）
+- 注释用**中文**，标识符用英文
+- 编译器指令（`@ts-ignore` 等）、专有名词（React/Ink/MCP 等）允许英文
+- 用户可见文本**禁止硬编码**，必须走 i18n
 
 ### 2. 国际化（i18n）
-- **禁止**在组件中直接硬编码中文字符串
-- **必须**通过 `tSync()`（同步场景）或 `t()`（异步场景）读取翻译
-- 翻译 key 需同时写入 `src/i18n/locales/en.ts`（英文原文）和 `src/i18n/locales/zh-CN.ts`（中文译文）
-- 翻译 key 命名按功能模块分组：`shellProgress.xxx`、`backgroundTasks.xxx`、`shortcut.xxx`
-- 使用描述性名称，禁止缩写
-- 支持插值语法：`'key': '已使用 {count} 行'`
-- `KeyboardShortcutHint` 的 `action` 属性必须在 `actionKeyMap` 中注册映射
+- 通过 `tSync()`/`t()` 读取翻译，翻译 key 同时写入 `en.ts` 和 `zh-CN.ts`
+- key 按模块分组（`shellProgress.xxx`），使用描述性名称，支持 `{count}` 插值
+- `KeyboardShortcutHint.action` 必须在 `actionKeyMap` 中注册
 
 ### 3. 构建验证
-- 更改代码后**必须**执行 `bun tsc --noEmit` 验证类型检查通过
-- 添加翻译后**必须**尝试构建，保证构建成功
-- 禁止提交无法通过 `bun tsc --noEmit` 的代码
+- 改代码后必须 `bun tsc --noEmit` 通过，禁止提交类型错误的代码
 
 ### 4. 工具目录结构
-- 每个工具目录**必须**遵循三文件模式：
-  - `ToolName.ts` / `ToolName.tsx` — 实现与工具定义
-  - `UI.tsx` — Ink React 终端渲染组件
-  - `prompt.ts` — 描述工具的系统提示文本
-- 新增工具必须按此结构组织，禁止随意放置文件
+- 三文件模式：`ToolName.ts(x)` + `UI.tsx` + `prompt.ts`
 
 ### 5. 状态管理
-- 应用状态通过 `src/state/AppStateStore.ts` / `store.ts` 集中管理
-- 禁止在组件中直接管理跨组件共享状态，应使用 store selectors
+- 通过 `src/state/AppStateStore.ts` 集中管理，禁止组件内管理共享状态
 
 ### 6. 导入规范
-- 使用 `.js` 后缀进行相对路径导入（如 `import { foo } from './bar.js'`）
-- 禁止使用无后缀的相对路径导入
+- 相对路径必须带 `.js` 后缀
 
 ### 7. LLM 标准类型（`src/types/llm.ts`）
-业务代码一律使用驼峰、平铺，禁止 snake_case 与嵌套。
+- 业务代码一律驼峰平铺（`inputTokens`/`outputTokens`/`stopReason`），**禁止** snake_case
+- 类型必须从 `src/types/llm.ts` 导入，**禁止**从 SDK 包直接导入
+- snake_case 仅限适配层（`conversions/*`、`bridge/inboundMessages.ts`）
+- 消息 4 角色分离，错误用 `LLMError` 系列 + `isAPIError`/`isAbortError` 判断
 
-- 字段名：`inputTokens` / `outputTokens` / `stopReason` / `inputSchema`，**禁止**下划线写法
-- `ImageBlock`：`{ type:'image', mimeType, data }`，**禁止** `source` 嵌套
-- `TokenUsage`：`{ inputTokens, outputTokens, extras? }`，cache/web 等 provider 特定计量放 `extras`
-- `StopReason`：`'end_turn' | 'max_tokens' | 'tool_use' | 'content_filter' | 'refusal' | null`
-- `CreateParams`：通用字段直接放，provider 专属走 `providerExtras.{anthropic|openai}`
-- 消息 4 角色分离，工具结果优先用 `ToolMessage`
-- 错误抛/接 `LLMError` 系列，判断用 `isAPIError` / `isAbortError` / `isConnectionError`
-- 类型必须从 `src/types/llm.ts` 导入，**禁止**从 `@anthropic-ai/sdk` / `openai` 直接导入
-- snake_case 双取写法只允许出现在适配层入口（`src/services/api/conversions/*`、`src/bridge/inboundMessages.ts`），业务层禁止
+### 8. 类型安全
+- **禁止滥用 `as any`**：优先运行时守卫窄化，必须断言时用具体类型；`as any` 仅限适配层处理 SDK 扩展字段、构造中间对象、第三方类型不完善
+- 联合类型调数组方法前必须 `Array.isArray()` 守卫
+- switch 需保留 `default` 时，提取鉴别字段为 `const x: string` 避免 unreachable
+- `message.ts` 中 `AssistantMessage.message` 必须引用 `LLMAssistantMessage`，禁止用 `LLMMessage` 联合
+- 旧格式断言为标准事件类型时，必须 `as unknown as TargetType` 双步断言
 
-### 8. 测试规范
-- 用 `bun test`（`bun:test`），测试放 `tests/`，路径镜像 `src/`，公共辅助放 `tests/_helpers/`
-- 优先测纯函数 / 转换层 / 归一化函数 / 错误工具；UI 不强制
-- 流式断言用 `tests/_helpers/streamAccumulator.ts` 累积后整体校验；大块 fixture 放 `tests/_helpers/*Fixtures.ts`
-- `describe` 写模块/函数名，`test` 用中文描述行为
-- 改 llm 类型或适配器后必须：`bun test` 全绿 + `read_lints` 无新错
+### 9. 测试规范
+- `bun test`，测试放 `tests/`（路径镜像 `src/`），`describe` 写模块名，`test` 用中文描述
+- 改 llm 类型/适配器后必须全绿 + `read_lints` 无新错
 
-### 9. 禁止事项
-- 禁止引入未经评估的新外部依赖
-- 禁止在构建路径 `dist/` 中手动放置文件
-- 禁止修改 `build.ts` 中的 `define` 宏值（`MACRO.*`）
+### 10. 禁止事项
+- 禁止引入未评估的新外部依赖
+- 禁止在 `dist/` 中手动放文件
+- 禁止修改 `build.ts` 的 `define` 宏值
 
 ## 启动/构建命令
 
@@ -104,17 +84,16 @@ bun tsc --noEmit
 - `src/QueryEngine.ts` — 主对话/查询引擎；处理消息流、工具调用、上下文管理
 - `src/tools.ts` — 工具注册表；聚合所有可用工具
 - `src/commands.ts` — 斜杠命令注册表
-- `src/types/llm.ts` — **标准 LLM 类型体系 v2**，独立于任何 SDK，定义项目内部使用的统一类型：
-  - 流式事件：`StreamEvent`（`response_start`、`chunk_start`、`chunk_delta`、`chunk_stop`、`response_delta`、`response_stop`）
-  - 内容块按角色分离：`UserContentBlock`（text/image）、`AssistantContentBlock`（text/tool_call/thinking 等）
-  - 消息模型：4 角色分离的 `Message`（system/user/assistant/tool），替代旧版 `LLMMessage`/`LLMMessageParam`
-  - 请求参数：`CreateParams`（驼峰字段，通过 `providerExtras` 传递 provider 专属扩展）
-  - Token 计量：`TokenUsage`、`DeltaUsage`（驼峰命名：`inputTokens`/`outputTokens`，通过 `extras` 扩展 provider 特定指标）
-  - 响应：`Response`（替代旧版 `LLMMessage`）
-  - 错误体系：`LLMError`（基类）、`LLMConnectionError`、`LLMAbortError`、`LLMAuthenticationError`、`LLMNotFoundError`
-  - 鸭子类型错误判断：`isAPIError()`、`isAbortError()`、`isConnectionError()`、`isConnectionTimeoutError()` 等工具函数
-  - 适配器接口：`LLMAdapter`、`StreamResult`
-  - v1 兼容导出：`LLMStreamEvent`、`ContentBlock`、`ContentBlockParam`、`LLMMessage`、`LLMCreateParams`、`LLMRequestAdapter` 等均标记为 `@deprecated`，保留为渐进迁移
+- `src/types/llm.ts` — **标准 LLM 类型体系**，独立于任何 SDK，定义项目内部使用的统一类型：
+  - 流式事件：`StreamEvent`（`response_start`/`chunk_start`/`chunk_delta`/`chunk_stop`/`response_delta`/`response_stop`）
+  - 内容块：`UserContentBlock`（text/image）、`AssistantContentBlock`（text/tool_call/thinking 等）
+  - 消息：4 角色分离 `Message`（system/user/assistant/tool）
+  - 请求：`CreateParams`（驼峰字段，provider 专属走 `providerExtras`）
+  - 计量：`TokenUsage`/`DeltaUsage`（`inputTokens`/`outputTokens`，provider 扩展走 `extras`）
+  - 响应：`LLMResponse`
+  - 错误：`LLMError` 系列 + `isAPIError()`/`isAbortError()` 等判断函数
+  - 适配器：`LLMAdapter`、`StreamResult`
+  - **SDK 隔离**：`@anthropic-ai/sdk`、`openai` 等 SDK 包**只允许**在适配层（`src/services/api/conversions/*`、`src/services/api/*ProviderAdapter.ts`）中导入，业务代码**禁止**直接导入 SDK 类型
 - `src/utils/envUtils.ts` — 环境判断工具函数，包括 `isInternalBuild()`、`getUserType()` 等构建时门控
 
 ### 工具（Tools，`src/tools/`）
