@@ -29,6 +29,11 @@ const result = await Bun.build({
   features: [
     // 启用 transcript classifier（auto mode）
     'TRANSCRIPT_CLASSIFIER',
+    // ZY Code 启用以下 Claude Code 功能
+    'FORK_SUBAGENT',
+    'REACTIVE_COMPACT',
+    'TOKEN_BUDGET',
+    'CONTEXT_COLLAPSE',
   ],
   define: {
     // Treat as external build (notinternal)

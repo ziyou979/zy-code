@@ -1,8 +1,9 @@
 import type { TokenUsage as Usage } from '../types/llm.js'
-import { roughTokenCountEstimationForMessages } from '../services/tokenEstimation.js'
+import { roughTokenCountEstimationForMessages, getBytesPerTokenForLanguage } from '../services/tokenEstimation.js'
 import type { AssistantMessage, Message } from '../types/message.js'
 import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages.js'
 import { jsonStringify } from './slowOperations.js'
+import { getInitialSettings } from './settings/settings.js'
 
 export function getTokenUsage(message: Message): Usage | undefined {
   if (
@@ -226,6 +227,11 @@ export function getAssistantMessageContentLength(
  * so every interleaved tool_result is included in the rough estimate.
  */
 export function tokenCountWithEstimation(messages: readonly Message[]): number {
+  // 获取语言感知的 token 估算比率
+  const settings = getInitialSettings()
+  const languageBpt = getBytesPerTokenForLanguage(settings.language)
+  const correctionFactor = 4.0 / languageBpt // 默认比率(4) / 语言实际比率
+
   let i = messages.length - 1
   while (i >= 0) {
     const message = messages[i]
@@ -254,10 +260,15 @@ export function tokenCountWithEstimation(messages: readonly Message[]): number {
       }
       return (
         getTokenCountFromUsage(usage as any) +
-        roughTokenCountEstimationForMessages(messages.slice(i + 1) as any)
+        Math.round(
+          roughTokenCountEstimationForMessages(messages.slice(i + 1) as any) *
+            correctionFactor,
+        )
       )
     }
     i--
   }
-  return roughTokenCountEstimationForMessages(messages as any)
+  return Math.round(
+    roughTokenCountEstimationForMessages(messages as any) * correctionFactor,
+  )
 }

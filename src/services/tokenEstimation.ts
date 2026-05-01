@@ -156,6 +156,46 @@ export function roughTokenCountEstimation(
 }
 
 /**
+ * 根据用户配置的自然语言返回 token 估算的 bytes-per-token 比率。
+ *
+ * 不同语言的 token 密度不同：
+ * - 中文：每个字符约 1.5-2 个 token（UTF-8 每字符 3 字节 + BPE 粒度粗）
+ * - 日文：与中文类似，约 2 个字节/token
+ * - 韩文：约 2.5 字节/token
+ * - 拉丁语系（英语等）：约 4 字节/token
+ *
+ * @param language - settings.json 中的 language 字段值
+ * @returns 适合该语言的 bytesPerToken 估算值
+ */
+export function getBytesPerTokenForLanguage(language?: string): number {
+  if (!language) return 4
+  const lang = language.toLowerCase().trim()
+  if (
+    lang.includes('chinese') ||
+    lang.includes('中文') ||
+    lang === 'zh' ||
+    lang.startsWith('zh-')
+  ) {
+    return 1.5
+  }
+  if (
+    lang.includes('japanese') ||
+    lang.includes('日本語') ||
+    lang.startsWith('ja-')
+  ) {
+    return 2
+  }
+  if (
+    lang.includes('korean') ||
+    lang.includes('한국어') ||
+    lang.startsWith('ko-')
+  ) {
+    return 2.5
+  }
+  return 4
+}
+
+/**
  * 使用本地 tokenizer 对消息列表进行 token 计数。
  * 将消息内容序列化为文本后用 js-tiktoken 计数。
  * 这比 API 调用更快且不消耗配额，但对非 OpenAI 模型有 5-10% 的误差。
