@@ -1,6 +1,5 @@
 import chalk from 'chalk'
 import { marked, type Token, type Tokens } from 'marked'
-import { pathToFileURL } from 'node:url'
 import stripAnsi from 'strip-ansi'
 import { color } from '../components/design-system/color.js'
 import { BLOCKQUOTE_BAR } from '../constants/figures.js'
@@ -192,9 +191,9 @@ export function formatToken(
         return token.text
       }
       if (parent?.type === 'list_item') {
-        return `${orderedListNumber === null ? '-' : getListNumber(listDepth, orderedListNumber) + '.'} ${token.tokens ? token.tokens.map((_) => formatToken(_, theme, listDepth, orderedListNumber, token, highlight)).join('') : linkifyFilePaths(linkifyIssueReferences(token.text))}${EOL}`
+        return `${orderedListNumber === null ? '-' : getListNumber(listDepth, orderedListNumber) + '.'} ${token.tokens ? token.tokens.map((_) => formatToken(_, theme, listDepth, orderedListNumber, token, highlight)).join('') : linkifyIssueReferences(token.text)}${EOL}`
       }
-      return linkifyFilePaths(linkifyIssueReferences(token.text))
+      return linkifyIssueReferences(token.text)
     case 'table': {
       const tableToken = token as Tokens.Table
 
@@ -271,11 +270,6 @@ export function formatToken(
 // 避免使用 lookbehind——会导致 JSC 中 YARR JIT 失效。
 const ISSUE_REF_PATTERN = /(^|[^\w./-])([A-Za-z0-9][\w-]*\/[A-Za-z0-9][\w.-]*)#(\d+)\b/g
 
-// 匹配 相对/绝对 文件路径 + 行号: src/foo.ts:123 或 /abs/path.ts:10-20
-// 要求文件名带扩展名以避免误匹配时间、端口号等
-const FILE_PATH_PATTERN =
-  /(^|[^\w.\/-])((?:(?:\.\.\/|\.\/|\/)?(?:[\w.-]+\/)*)[\w.-]+\.\w{1,10}):(\d+)(?:-(\d+))?/g
-
 /**
  * 将 owner/repo#123 格式的引用替换为指向 GitHub 的可点击超链接。
  */
@@ -288,21 +282,6 @@ function linkifyIssueReferences(text: string): string {
     (_match, prefix, repo, num) =>
       prefix + createHyperlink(`https://github.com/${repo}/issues/${num}`, `${repo}#${num}`),
   )
-}
-
-/**
- * 将形如 src/foo.ts:123 或 /abs/path.ts:10-20 的文件引用替换为可点击的 file:// 超链接。
- * 终端支持 OSC 8 时，用户可点击文件路径跳转到 IDE 对应文件和行号。
- */
-function linkifyFilePaths(text: string): string {
-  if (!supportsHyperlinks()) {
-    return text
-  }
-  return text.replace(FILE_PATH_PATTERN, (_match, prefix, filePath, line, endLine) => {
-    const url = pathToFileURL(filePath).href
-    const display = `${filePath}:${line}${endLine ? `-${endLine}` : ''}`
-    return prefix + createHyperlink(url, display)
-  })
 }
 
 function numberToLetter(n: number): string {
