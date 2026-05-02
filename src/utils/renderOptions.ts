@@ -65,9 +65,7 @@ function getStdinOverride(): ReadStream | undefined {
  *
  * @param exitOnCtrlC - Whether to exit on Ctrl+C (usually false for dialogs)
  */
-export function getBaseRenderOptions(
-  exitOnCtrlC: boolean = false,
-): RenderOptions {
+export function getBaseRenderOptions(exitOnCtrlC: boolean = false): RenderOptions {
   const stdin = getStdinOverride()
   const options: RenderOptions = { exitOnCtrlC }
   if (stdin) {

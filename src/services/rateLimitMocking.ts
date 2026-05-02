@@ -43,19 +43,14 @@ export function shouldProcessRateLimits(isSubscriber: boolean): boolean {
  * Returns the error to throw, or null if no error should be thrown
  * @param currentModel The model being used for the current request
  */
-export function checkMockRateLimitError(
-  currentModel: string,
-): LLMError | null {
+export function checkMockRateLimitError(currentModel: string): LLMError | null {
   if (!shouldProcessMockLimits()) {
     return null
   }
 
   const headerlessMessage = getMockHeaderless429Message()
   if (headerlessMessage) {
-    return new LLMError(
-      headerlessMessage,
-      429,
-    )
+    return new LLMError(headerlessMessage, 429)
   }
 
   const mockHeaders = getMockHeaders()
@@ -69,10 +64,8 @@ export function checkMockRateLimitError(
   // 2. Either no overage headers OR overage is also rejected
   // 3. For Opus-specific limits, only throw if actually using an Opus model
   const status = mockHeaders['anthropic-ratelimit-unified-status']
-  const overageStatus =
-    mockHeaders['anthropic-ratelimit-unified-overage-status']
-  const rateLimitType =
-    mockHeaders['anthropic-ratelimit-unified-representative-claim']
+  const overageStatus = mockHeaders['anthropic-ratelimit-unified-overage-status']
+  const rateLimitType = mockHeaders['anthropic-ratelimit-unified-representative-claim']
 
   // Check if this is an Opus-specific rate limit
   const isOpusLimit = rateLimitType === 'seven_day_opus'
@@ -86,15 +79,11 @@ export function checkMockRateLimitError(
     return null
   }
 
-  const shouldThrow429 =
-    status === 'rejected' && (!overageStatus || overageStatus === 'rejected')
+  const shouldThrow429 = status === 'rejected' && (!overageStatus || overageStatus === 'rejected')
 
   if (shouldThrow429) {
     // Create a mock 429 error with the appropriate headers
-    const error = new LLMError(
-      'Rate limit exceeded',
-      429,
-    )
+    const error = new LLMError('Rate limit exceeded', 429)
     return error
   }
 

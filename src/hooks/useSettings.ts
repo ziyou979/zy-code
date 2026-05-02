@@ -13,5 +13,5 @@ export type ReadonlySettings = AppState['settings']
  * 在 React 组件中，请使用此 hook 替代 getSettings_DEPRECATED() 以获得响应式更新。
  */
 export function useSettings(): ReadonlySettings {
-  return useAppState(s => s.settings)
+  return useAppState((s) => s.settings)
 }

@@ -116,11 +116,7 @@ function findFirstPipeOperator(parsed: ParseEntry[]): number {
  * Builds command parts from parsed entries, handling strings and operators.
  * Special handling for file descriptor redirections to preserve them as single units.
  */
-function buildCommandParts(
-  parsed: ParseEntry[],
-  start: number,
-  end: number,
-): string[] {
+function buildCommandParts(parsed: ParseEntry[], start: number, end: number): string[] {
   const parts: string[] = []
   // Track if we've seen a non-env-var string token yet
   // Environment variables are only valid at the start of a command
@@ -140,11 +136,7 @@ function buildCommandParts(
       const target = parsed[i + 2]
 
       // Handle 2>&1 style redirections
-      if (
-        op.op === '>&' &&
-        typeof target === 'string' &&
-        /^[012]$/.test(target)
-      ) {
+      if (op.op === '>&' && typeof target === 'string' && /^[012]$/.test(target)) {
         parts.push(`${entry}>&${target}`)
         i += 2
         continue
@@ -158,11 +150,7 @@ function buildCommandParts(
       }
 
       // Handle 2> &1 style (space between > and &1)
-      if (
-        op.op === '>' &&
-        typeof target === 'string' &&
-        target.startsWith('&')
-      ) {
+      if (op.op === '>' && typeof target === 'string' && target.startsWith('&')) {
         const fd = target.slice(1)
         if (/^[012]$/.test(fd)) {
           parts.push(`${entry}>&${fd}`)
@@ -281,7 +269,7 @@ function singleQuoteForEval(s: string): string {
  * sequences and the newline remains a separator.
  */
 function joinContinuationLines(command: string): string {
-  return command.replace(/\\+\n/g, match => {
+  return command.replace(/\\+\n/g, (match) => {
     const backslashCount = match.length - 1 // -1 for the newline
     if (backslashCount % 2 === 1) {
       // Odd number: last backslash escapes the newline (line continuation)

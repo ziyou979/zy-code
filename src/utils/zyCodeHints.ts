@@ -81,22 +81,18 @@ export function extractZyCodeHints(
   const sourceCommand = firstCommandToken(command)
   const hints: ZyCodeHint[] = []
 
-  const stripped = output.replace(HINT_TAG_RE, rawLine => {
+  const stripped = output.replace(HINT_TAG_RE, (rawLine) => {
     const attrs = parseAttrs(rawLine)
     const v = Number(attrs.v)
     const type = attrs.type
     const value = attrs.value
 
     if (!SUPPORTED_VERSIONS.has(v)) {
-      logForDebugging(
-        `[ZyCodeHints] dropped hint with unsupported v=${attrs.v}`,
-      )
+      logForDebugging(`[ZyCodeHints] dropped hint with unsupported v=${attrs.v}`)
       return ''
     }
     if (!type || !SUPPORTED_TYPES.has(type)) {
-      logForDebugging(
-        `[ZyCodeHints] dropped hint with unsupported type=${type}`,
-      )
+      logForDebugging(`[ZyCodeHints] dropped hint with unsupported type=${type}`)
       return ''
     }
     if (!value) {
@@ -112,9 +108,7 @@ export function extractZyCodeHints(
   // remain). Collapse runs of blank lines introduced by the replace so the
   // model-visible output doesn't grow vertical whitespace.
   const collapsed =
-    hints.length > 0 || stripped !== output
-      ? stripped.replace(/\n{3,}/g, '\n\n')
-      : stripped
+    hints.length > 0 || stripped !== output ? stripped.replace(/\n{3,}/g, '\n\n') : stripped
 
   return { hints, stripped: collapsed }
 }

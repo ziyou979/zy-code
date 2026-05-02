@@ -1,40 +1,16 @@
-import type {
-  APIErrorLike,
-  Response as LLMMessage,
-  StopReason,
-} from '../../types/llm.js'
-import {
-  isAPIError,
-  isConnectionError,
-  getErrorHeader,
-} from '../../types/llm.js'
+import type { APIErrorLike, Response as LLMMessage, StopReason } from '../../types/llm.js'
+import { isAPIError, isConnectionError, getErrorHeader } from '../../types/llm.js'
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
-import type {
-  AssistantMessage,
-  Message,
-  UserMessage,
-} from 'src/types/message.js'
-import {
-  getApiKeyWithSource,
-  getZyAIOAuthTokens,
-  getOauthAccountInfo,
-} from 'src/utils/auth.js'
-import {
-  createAssistantAPIErrorMessage,
-  NO_RESPONSE_REQUESTED,
-} from 'src/utils/messages.js'
-import {
-  getDefaultMainLoopModelSetting,
-} from 'src/utils/model/model.js'
+import type { AssistantMessage, Message, UserMessage } from 'src/types/message.js'
+import { getApiKeyWithSource, getZyAIOAuthTokens, getOauthAccountInfo } from 'src/utils/auth.js'
+import { createAssistantAPIErrorMessage, NO_RESPONSE_REQUESTED } from 'src/utils/messages.js'
+import { getDefaultMainLoopModelSetting } from 'src/utils/model/model.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import {
-  API_PDF_MAX_PAGES,
-  PDF_TARGET_RAW_SIZE,
-} from '../../constants/apiLimits.js'
+import { API_PDF_MAX_PAGES, PDF_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { formatFileSize } from '../../utils/format.js'
 import { ImageResizeError } from '../../utils/imageResizer.js'
@@ -70,9 +46,7 @@ export function isPromptTooLongMessage(msg: AssistantMessage): boolean {
     return false
   }
   return content.some(
-    block =>
-      block.type === 'text' &&
-      block.text.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE),
+    (block) => block.type === 'text' && block.text.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE),
   )
 }
 
@@ -86,9 +60,7 @@ export function parsePromptTooLongTokenCounts(rawMessage: string): {
   actualTokens: number | undefined
   limitTokens: number | undefined
 } {
-  const match = rawMessage.match(
-    /prompt is too long[^0-9]*(\d+)\s*tokens?\s*>\s*(\d+)/i,
-  )
+  const match = rawMessage.match(/prompt is too long[^0-9]*(\d+)\s*tokens?\s*>\s*(\d+)/i)
   return {
     actualTokens: match ? parseInt(match[1]!, 10) : undefined,
     limitTokens: match ? parseInt(match[2]!, 10) : undefined,
@@ -101,15 +73,11 @@ export function parsePromptTooLongTokenCounts(rawMessage: string): {
  * 响应式 compact 使用此差值在一次重试中跳过多个组，
  * 而非逐个剥离。
  */
-export function getPromptTooLongTokenGap(
-  msg: AssistantMessage,
-): number | undefined {
+export function getPromptTooLongTokenGap(msg: AssistantMessage): number | undefined {
   if (!isPromptTooLongMessage(msg) || !msg.errorDetails) {
     return undefined
   }
-  const { actualTokens, limitTokens } = parsePromptTooLongTokenCounts(
-    msg.errorDetails,
-  )
+  const { actualTokens, limitTokens } = parsePromptTooLongTokenCounts(msg.errorDetails)
   if (actualTokens === undefined || limitTokens === undefined) {
     return undefined
   }
@@ -152,8 +120,7 @@ export function isMediaSizeErrorMessage(msg: AssistantMessage): boolean {
   )
 }
 export const CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE = 'Credit balance is too low'
-export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL =
-  'Invalid API key · Fix external API key'
+export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL = 'Invalid API key · Fix external API key'
 
 /**
  * 运行时检查无效 API 密钥消息。
@@ -167,13 +134,11 @@ export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
   'Your API key belongs to a disabled organization · Unset the environment variable to use your subscription instead'
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY =
   'Your API key belongs to a disabled organization · Update or unset the environment variable'
-export const TOKEN_REVOKED_ERROR_MESSAGE =
-  'OAuth token revoked · Please run /login'
+export const TOKEN_REVOKED_ERROR_MESSAGE = 'OAuth token revoked · Please run /login'
 export const CCR_AUTH_ERROR_MESSAGE =
   'Authentication error · This may be a temporary network issue, please try again'
 export const REPEATED_529_ERROR_MESSAGE = 'Repeated 529 Overloaded errors'
-export const CUSTOM_OFF_SWITCH_MESSAGE =
-  '当前模型负载较高，请使用 /model 切换到其他模型'
+export const CUSTOM_OFF_SWITCH_MESSAGE = '当前模型负载较高，请使用 /model 切换到其他模型'
 export const API_TIMEOUT_ERROR_MESSAGE = 'Request timed out'
 export function getPdfTooLargeErrorMessage(): string {
   const limits = `max ${API_PDF_MAX_PAGES} pages, ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
@@ -241,11 +206,7 @@ function logToolUseToolResultMismatch(
       const content = msg.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
-          if (
-            block.type === 'tool_call' &&
-            'id' in block &&
-            block.id === toolUseId
-          ) {
+          if (block.type === 'tool_call' && 'id' in block && block.id === toolUseId) {
             normalizedIndex = i
             break
           }
@@ -263,11 +224,7 @@ function logToolUseToolResultMismatch(
         const content = msg.message.content
         if (Array.isArray(content)) {
           for (const block of content) {
-            if (
-              block.type === 'tool_call' &&
-              'id' in block &&
-              block.id === toolUseId
-            ) {
+            if (block.type === 'tool_call' && 'id' in block && block.id === toolUseId) {
               originalIndex = i
               break
             }
@@ -321,13 +278,8 @@ function logToolUseToolResultMismatch(
                 const role = msg.message.role
                 if (block.type === 'tool_call' && 'id' in block) {
                   preNormalizedSeq.push(`${role}:tool_use:${block.id}`)
-                } else if (
-                  block.type === 'tool_result' &&
-                  'tool_use_id' in block
-                ) {
-                  preNormalizedSeq.push(
-                    `${role}:tool_result:${block.toolCallId}`,
-                  )
+                } else if (block.type === 'tool_result' && 'tool_use_id' in block) {
+                  preNormalizedSeq.push(`${role}:tool_result:${block.toolCallId}`)
                 } else if (block.type === 'text') {
                   preNormalizedSeq.push(`${role}:text`)
                 } else if (block.type === 'thinking') {
@@ -371,8 +323,7 @@ function logToolUseToolResultMismatch(
 
     // 记录到 Statsig
     logEvent('zy_tool_use_tool_result_mismatch_error', {
-      toolUseId:
-        toolUseId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      toolUseId: toolUseId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       normalizedSequence: normalizedSeq.join(
         ', ',
       ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -456,31 +407,25 @@ export function getAssistantMessageFromError(
   }
 
   // 检查紧急容量关闭开关
-  if (
-    error instanceof Error &&
-    error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)
-  ) {
+  if (error instanceof Error && error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)) {
     return createAssistantAPIErrorMessage({
       content: CUSTOM_OFF_SWITCH_MESSAGE,
       error: 'rate_limit',
     })
   }
 
-  if (
-    isAPIError(error) &&
-    error.status === 429 &&
-    shouldProcessRateLimits(false)
-  ) {
+  if (isAPIError(error) && error.status === 429 && shouldProcessRateLimits(false)) {
     // 检查这是否是带有多个限速 header 的新 API
     const rateLimitType = getErrorHeader(
       error,
       'anthropic-ratelimit-unified-representative-claim',
     ) as 'five_hour' | 'seven_day' | 'seven_day_opus' | null
 
-    const overageStatus = getErrorHeader(
-      error,
-      'anthropic-ratelimit-unified-overage-status',
-    ) as 'allowed' | 'allowed_warning' | 'rejected' | null
+    const overageStatus = getErrorHeader(error, 'anthropic-ratelimit-unified-overage-status') as
+      | 'allowed'
+      | 'allowed_warning'
+      | 'rejected'
+      | null
 
     // 如果有新 header，使用新的消息生成
     if (rateLimitType || overageStatus) {
@@ -492,10 +437,7 @@ export function getAssistantMessageFromError(
       }
 
       // 从错误 header 提取限速信息
-      const resetHeader = getErrorHeader(
-        error,
-        'anthropic-ratelimit-unified-reset',
-      )
+      const resetHeader = getErrorHeader(error, 'anthropic-ratelimit-unified-reset')
       if (resetHeader) {
         limits.resetsAt = Number(resetHeader)
       }
@@ -508,10 +450,7 @@ export function getAssistantMessageFromError(
         limits.overageStatus = overageStatus
       }
 
-      const overageResetHeader = getErrorHeader(
-        error,
-        'anthropic-ratelimit-unified-overage-reset',
-      )
+      const overageResetHeader = getErrorHeader(error, 'anthropic-ratelimit-unified-overage-reset')
       if (overageResetHeader) {
         limits.overageResetsAt = Number(overageResetHeader)
       }
@@ -568,10 +507,7 @@ export function getAssistantMessageFromError(
 
   // 处理 prompt 过长错误（Vertex 返回 413，直接 API 返回 400）
   // 使用不区分大小写的检查，因为 Vertex 返回 "Prompt is too long"（大写）
-  if (
-    error instanceof Error &&
-    error.message.toLowerCase().includes('prompt is too long')
-  ) {
+  if (error instanceof Error && error.message.toLowerCase().includes('prompt is too long')) {
     // 内容保持通用（UI 匹配精确字符串）。带有 token 计数的原始错误
     // 进入 errorDetails——响应式 compact 的重试循环通过
     // getPromptTooLongTokenGap 从那里解析差值。
@@ -583,10 +519,7 @@ export function getAssistantMessageFromError(
   }
 
   // 检查 PDF 页数限制错误
-  if (
-    error instanceof Error &&
-    /maximum of \d+ PDF pages/.test(error.message)
-  ) {
+  if (error instanceof Error && /maximum of \d+ PDF pages/.test(error.message)) {
     return createAssistantAPIErrorMessage({
       content: getPdfTooLargeErrorMessage(),
       error: 'invalid_request',
@@ -595,10 +528,7 @@ export function getAssistantMessageFromError(
   }
 
   // 检查密码保护的 PDF 错误
-  if (
-    error instanceof Error &&
-    error.message.includes('The PDF specified is password protected')
-  ) {
+  if (error instanceof Error && error.message.includes('The PDF specified is password protected')) {
     return createAssistantAPIErrorMessage({
       content: getPdfPasswordProtectedErrorMessage(),
       error: 'invalid_request',
@@ -608,10 +538,7 @@ export function getAssistantMessageFromError(
   // 检查无效 PDF 错误（例如，HTML 文件重命名为 .pdf）
   // 没有此处理程序，无效的 PDF 文档块会持续存在于对话
   // 上下文中，导致每次后续 API 调用都以 400 失败。
-  if (
-    error instanceof Error &&
-    error.message.includes('The PDF specified was not valid')
-  ) {
+  if (error instanceof Error && error.message.includes('The PDF specified was not valid')) {
     return createAssistantAPIErrorMessage({
       content: getPdfInvalidErrorMessage(),
       error: 'invalid_request',
@@ -685,11 +612,7 @@ export function getAssistantMessageFromError(
       const toolUseIdMatch = error.message.match(/toolu_[a-zA-Z0-9]+/)
       const toolUseId = toolUseIdMatch ? toolUseIdMatch[0] : null
       if (toolUseId) {
-        logToolUseToolResultMismatch(
-          toolUseId,
-          options.messages,
-          options.messagesForAPI,
-        )
+        logToolUseToolResultMismatch(toolUseId, options.messages, options.messagesForAPI)
       }
     }
 
@@ -763,10 +686,7 @@ export function getAssistantMessageFromError(
     })
   }
 
-  if (
-    error instanceof Error &&
-    error.message.includes('Your credit balance is too low')
-  ) {
+  if (error instanceof Error && error.message.includes('Your credit balance is too low')) {
     return createAssistantAPIErrorMessage({
       content: CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE,
       error: 'billing_error',
@@ -786,11 +706,7 @@ export function getAssistantMessageFromError(
     // 合并到同一个 source 值下，且在 CCR 模式下 OAuth 尽管有
     // 环境变量仍保持活跃。这三个守卫确保我们仅在环境变量
     // 实际设置且实际在线路上时才归咎于环境变量。
-    if (
-      source === 'settingsApiKey' &&
-      process.env.ZY_API_KEY &&
-      true
-    ) {
+    if (source === 'settingsApiKey' && process.env.ZY_API_KEY && true) {
       const hasStoredOAuth = getZyAIOAuthTokens()?.accessToken != null
       // 不是 'authentication_failed'——这会触发 VS Code 的 showLogin()，但
       // 登录无法修复此问题（已批准的环境变量会持续覆盖 OAuth）。修复
@@ -804,10 +720,7 @@ export function getAssistantMessageFromError(
     }
   }
 
-  if (
-    error instanceof Error &&
-    error.message.toLowerCase().includes('x-api-key')
-  ) {
+  if (error instanceof Error && error.message.toLowerCase().includes('x-api-key')) {
     // CCR 模式下认证通过 JWT——这可能是瞬时网络问题
     if (isCCRMode()) {
       return createAssistantAPIErrorMessage({
@@ -818,8 +731,7 @@ export function getAssistantMessageFromError(
 
     // 检查 API 密钥是否来自外部来源
     const { source } = getApiKeyWithSource()
-    const isExternalSource =
-      source === 'settingsApiKey' || source === 'apiKeyHelper'
+    const isExternalSource = source === 'settingsApiKey' || source === 'apiKeyHelper'
 
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',
@@ -845,9 +757,7 @@ export function getAssistantMessageFromError(
   if (
     isAPIError(error) &&
     (error.status === 401 || error.status === 403) &&
-    error.message.includes(
-      'OAuth authentication is currently not allowed for this organization',
-    )
+    error.message.includes('OAuth authentication is currently not allowed for this organization')
   ) {
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',
@@ -856,10 +766,7 @@ export function getAssistantMessageFromError(
   }
 
   // 其他 401/403 认证错误的通用处理
-  if (
-    isAPIError(error) &&
-    (error.status === 401 || error.status === 403)
-  ) {
+  if (isAPIError(error) && (error.status === 401 || error.status === 403)) {
     // CCR 模式下认证通过 JWT——这可能是瞬时网络问题
     if (isCCRMode()) {
       return createAssistantAPIErrorMessage({
@@ -951,18 +858,12 @@ export function classifyAPIError(error: unknown): string {
   }
 
   // 检查重复的 529 错误
-  if (
-    error instanceof Error &&
-    error.message.includes(REPEATED_529_ERROR_MESSAGE)
-  ) {
+  if (error instanceof Error && error.message.includes(REPEATED_529_ERROR_MESSAGE)) {
     return 'repeated_529'
   }
 
   // 检查紧急容量关闭开关
-  if (
-    error instanceof Error &&
-    error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)
-  ) {
+  if (error instanceof Error && error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)) {
     return 'capacity_off_switch'
   }
 
@@ -974,8 +875,7 @@ export function classifyAPIError(error: unknown): string {
   // 服务器过载（529）
   if (
     isAPIError(error) &&
-    (error.status === 529 ||
-      error.message?.includes('"type":"overloaded_error"'))
+    (error.status === 529 || error.message?.includes('"type":"overloaded_error"'))
   ) {
     return 'server_overload'
   }
@@ -983,25 +883,17 @@ export function classifyAPIError(error: unknown): string {
   // Prompt/内容大小错误
   if (
     error instanceof Error &&
-    error.message
-      .toLowerCase()
-      .includes(PROMPT_TOO_LONG_ERROR_MESSAGE.toLowerCase())
+    error.message.toLowerCase().includes(PROMPT_TOO_LONG_ERROR_MESSAGE.toLowerCase())
   ) {
     return 'prompt_too_long'
   }
 
   // PDF 错误
-  if (
-    error instanceof Error &&
-    /maximum of \d+ PDF pages/.test(error.message)
-  ) {
+  if (error instanceof Error && /maximum of \d+ PDF pages/.test(error.message)) {
     return 'pdf_too_large'
   }
 
-  if (
-    error instanceof Error &&
-    error.message.includes('The PDF specified is password protected')
-  ) {
+  if (error instanceof Error && error.message.includes('The PDF specified is password protected')) {
     return 'pdf_password_protected'
   }
 
@@ -1064,18 +956,13 @@ export function classifyAPIError(error: unknown): string {
   // 积分/计费错误
   if (
     error instanceof Error &&
-    error.message
-      .toLowerCase()
-      .includes(CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE.toLowerCase())
+    error.message.toLowerCase().includes(CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE.toLowerCase())
   ) {
     return 'credit_balance_low'
   }
 
   // 认证错误
-  if (
-    error instanceof Error &&
-    error.message.toLowerCase().includes('x-api-key')
-  ) {
+  if (error instanceof Error && error.message.toLowerCase().includes('x-api-key')) {
     return 'invalid_api_key'
   }
 
@@ -1090,18 +977,13 @@ export function classifyAPIError(error: unknown): string {
   if (
     isAPIError(error) &&
     (error.status === 401 || error.status === 403) &&
-    error.message.includes(
-      'OAuth authentication is currently not allowed for this organization',
-    )
+    error.message.includes('OAuth authentication is currently not allowed for this organization')
   ) {
     return 'oauth_org_not_allowed'
   }
 
   // 通用认证错误
-  if (
-    isAPIError(error) &&
-    (error.status === 401 || error.status === 403)
-  ) {
+  if (isAPIError(error) && (error.status === 401 || error.status === 403)) {
     return 'auth_error'
   }
 
@@ -1124,13 +1006,8 @@ export function classifyAPIError(error: unknown): string {
   return 'unknown'
 }
 
-export function categorizeRetryableAPIError(
-  error: APIErrorLike,
-): SDKAssistantMessageError {
-  if (
-    error.status === 529 ||
-    error.message?.includes('"type":"overloaded_error"')
-  ) {
+export function categorizeRetryableAPIError(error: APIErrorLike): SDKAssistantMessageError {
+  if (error.status === 529 || error.message?.includes('"type":"overloaded_error"')) {
     return 'rate_limit'
   }
   if (error.status === 429) {

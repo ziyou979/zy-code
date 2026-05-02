@@ -59,9 +59,7 @@ type KnownGateway =
   | 'databricks'
 
 // 用于从响应头检测 AI 网关的网关指纹
-const GATEWAY_FINGERPRINTS: Partial<
-  Record<KnownGateway, { prefixes: string[] }>
-> = {
+const GATEWAY_FINGERPRINTS: Partial<Record<KnownGateway, { prefixes: string[] }>> = {
   // https://docs.litellm.ai/docs/proxy/response_headers
   litellm: {
     prefixes: ['x-litellm-'],
@@ -93,11 +91,7 @@ const GATEWAY_FINGERPRINTS: Partial<
 // 特征性响应头也能识别。
 const GATEWAY_HOST_SUFFIXES: Partial<Record<KnownGateway, string[]>> = {
   // https://docs.databricks.com/aws/en/ai-gateway/
-  databricks: [
-    '.cloud.databricks.com',
-    '.azuredatabricks.net',
-    '.gcp.databricks.com',
-  ],
+  databricks: ['.cloud.databricks.com', '.azuredatabricks.net', '.gcp.databricks.com'],
 }
 
 function detectGateway({
@@ -115,10 +109,10 @@ function detectGateway({
       headers.forEach((_, key) => headerNames.push(key))
     } else {
       // headers 是普通对象，使用 Object.keys 获取键名
-      Object.keys(headers).forEach(key => headerNames.push(key))
+      Object.keys(headers).forEach((key) => headerNames.push(key))
     }
     for (const [gw, { prefixes }] of Object.entries(GATEWAY_FINGERPRINTS)) {
-      if (prefixes.some(p => headerNames.some(h => h.startsWith(p)))) {
+      if (prefixes.some((p) => headerNames.some((h) => h.startsWith(p)))) {
         return gw as KnownGateway
       }
     }
@@ -128,7 +122,7 @@ function detectGateway({
     try {
       const host = new URL(baseUrl).hostname.toLowerCase()
       for (const [gw, suffixes] of Object.entries(GATEWAY_HOST_SUFFIXES)) {
-        if (suffixes.some(s => host.endsWith(s))) {
+        if (suffixes.some((s) => host.endsWith(s))) {
           return gw as KnownGateway
         }
       }
@@ -201,15 +195,11 @@ export function logAPIQuery({
     buildAgeMins: getBuildAgeMinutes(),
     ...(betas?.length
       ? {
-          betas: betas.join(
-            ',',
-          ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          betas: betas.join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    permissionMode:
-      permissionMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    querySource:
-      querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    permissionMode: permissionMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    querySource: querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(queryTracking
       ? {
           queryChainId:
@@ -217,10 +207,8 @@ export function logAPIQuery({
           queryDepth: queryTracking.depth,
         }
       : {}),
-    thinkingType:
-      thinkingType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    effortValue:
-      effortValue as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    thinkingType: thinkingType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    effortValue: effortValue as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(previousRequestId
       ? {
           previousRequestId:
@@ -300,10 +288,8 @@ export function logAPIError({
   logEvent('zy_api_error', {
     model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     error: errStr as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    status:
-      status as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    errorType:
-      errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    status: status as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    errorType: errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     messageCount,
     messageTokens,
     durationMs,
@@ -311,8 +297,7 @@ export function logAPIError({
     attempt,
     provider: getAPIProviderForStatsig(),
     requestId:
-      (requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ||
-      undefined,
+      (requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) || undefined,
     ...(invocation
       ? {
           invokingRequestId:
@@ -322,8 +307,7 @@ export function logAPIError({
         }
       : {}),
     clientRequestId:
-      (clientRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ||
-      undefined,
+      (clientRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) || undefined,
     didFallBackToNonStreaming,
     ...(promptCategory
       ? {
@@ -333,8 +317,7 @@ export function logAPIError({
       : {}),
     ...(gateway
       ? {
-          gateway:
-            gateway as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          gateway: gateway as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
     ...(queryTracking
@@ -346,8 +329,7 @@ export function logAPIError({
       : {}),
     ...(querySource
       ? {
-          querySource:
-            querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          querySource: querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
     ...(previousRequestId
@@ -382,8 +364,7 @@ export function logAPIError({
     logEvent('zy_teleport_first_message_error', {
       session_id:
         teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      error_type:
-        errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_type: errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     markFirstTeleportMessageLogged()
   }
@@ -443,13 +424,11 @@ function logAPISuccess({
 }): void {
   const isNonInteractiveSession = getIsNonInteractiveSession()
   const isPostCompaction = consumePostCompaction()
-  const hasPrintFlag =
-    process.argv.includes('-p') || process.argv.includes('--print')
+  const hasPrintFlag = process.argv.includes('-p') || process.argv.includes('--print')
 
   const now = Date.now()
   const lastCompletion = getLastApiCompletionTimestamp()
-  const timeSinceLastApiCallMs =
-    lastCompletion !== null ? now - lastCompletion : undefined
+  const timeSinceLastApiCallMs = lastCompletion !== null ? now - lastCompletion : undefined
 
   const invocation = consumeInvokingRequestId()
 
@@ -463,17 +442,21 @@ function logAPISuccess({
       : {}),
     ...(betas?.length
       ? {
-          betas: betas.join(
-            ',',
-          ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          betas: betas.join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
     messageCount,
     messageTokens,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
-    cachedInputTokens: 'extras' in usage ? usage.extras?.cacheReadInputTokens ?? 0 : (usage as NonNullableUsage).cacheReadInputTokens ?? 0,
-    uncachedInputTokens: 'extras' in usage ? usage.extras?.cacheCreationInputTokens ?? 0 : (usage as NonNullableUsage).cacheCreationInputTokens ?? 0,
+    cachedInputTokens:
+      'extras' in usage
+        ? (usage.extras?.cacheReadInputTokens ?? 0)
+        : ((usage as NonNullableUsage).cacheReadInputTokens ?? 0),
+    uncachedInputTokens:
+      'extras' in usage
+        ? (usage.extras?.cacheCreationInputTokens ?? 0)
+        : ((usage as NonNullableUsage).cacheCreationInputTokens ?? 0),
     durationMs: durationMs,
     durationMsIncludingRetries: durationMsIncludingRetries,
     attempt: attempt,
@@ -481,8 +464,7 @@ function logAPISuccess({
     buildAgeMins: getBuildAgeMinutes(),
     provider: getAPIProviderForStatsig(),
     requestId:
-      (requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ??
-      undefined,
+      (requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ?? undefined,
     ...(invocation
       ? {
           invokingRequestId:
@@ -492,19 +474,16 @@ function logAPISuccess({
         }
       : {}),
     stop_reason:
-      (stopReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ??
-      undefined,
+      (stopReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ?? undefined,
     costUSD,
     didFallBackToNonStreaming,
     isNonInteractiveSession,
     print: hasPrintFlag,
     isTTY: process.stdout.isTTY ?? false,
-    querySource:
-      querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    querySource: querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(gateway
       ? {
-          gateway:
-            gateway as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          gateway: gateway as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
     ...(queryTracking
@@ -514,8 +493,7 @@ function logAPISuccess({
           queryDepth: queryTracking.depth,
         }
       : {}),
-    permissionMode:
-      permissionMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    permissionMode: permissionMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(globalCacheStrategy
       ? {
           globalCacheStrategy:
@@ -548,12 +526,11 @@ function logAPISuccess({
     // 因为该字段有意不在 NonNullableUsage 上（外部构建已排除）。
     // 在缓存编辑激活时由 updateUsage() 设置。
     ...(feature('CACHED_MICROCOMPACT') &&
-    ((usage as unknown as { cache_deleted_input_tokens?: number })
-      .cache_deleted_input_tokens ?? 0) > 0
+    ((usage as unknown as { cache_deleted_input_tokens?: number }).cache_deleted_input_tokens ??
+      0) > 0
       ? {
-          cacheDeletedInputTokens: (
-            usage as unknown as { cache_deleted_input_tokens: number }
-          ).cache_deleted_input_tokens,
+          cacheDeletedInputTokens: (usage as unknown as { cache_deleted_input_tokens: number })
+            .cache_deleted_input_tokens,
         }
       : {}),
     ...(previousRequestId
@@ -653,7 +630,7 @@ export function logAPISuccessAndDuration({
           connectorCount++
         } else if (block.type === 'thinking') {
           thinkingLen += block.thinking.length
-        // @ts-ignore
+          // @ts-ignore
         } else if (
           (block.type as any) === 'tool_call' ||
           (block.type as any) === 'server_tool_use' ||
@@ -661,8 +638,7 @@ export function logAPISuccessAndDuration({
         ) {
           const inputLen = jsonStringify((block as any).input).length
           const sanitizedName = sanitizeToolNameForAnalytics((block as any).name)
-          toolLengths[sanitizedName] =
-            (toolLengths[sanitizedName] ?? 0) + inputLen
+          toolLengths[sanitizedName] = (toolLengths[sanitizedName] ?? 0) + inputLen
           hasToolUse = true
         }
       }
@@ -724,10 +700,10 @@ export function logAPISuccessAndDuration({
     // 模型输出 — 所有用户可见
     modelOutput =
       newMessages
-        .flatMap(m =>
+        .flatMap((m) =>
           m.message.content
-            .filter(c => c.type === 'text')
-            .map(c => (c as { type: 'text'; text: string }).text),
+            .filter((c) => c.type === 'text')
+            .map((c) => (c as { type: 'text'; text: string }).text),
         )
         .join('\n') || undefined
 
@@ -735,18 +711,16 @@ export function logAPISuccessAndDuration({
     if (isInternalBuild()) {
       thinkingOutput =
         newMessages
-          .flatMap(m =>
+          .flatMap((m) =>
             m.message.content
-              .filter(c => c.type === 'thinking')
-              .map(c => (c as { type: 'thinking'; thinking: string }).thinking),
+              .filter((c) => c.type === 'thinking')
+              .map((c) => (c as { type: 'thinking'; thinking: string }).thinking),
           )
           .join('\n') || undefined
     }
 
     // 检查输出中是否包含 tool_use 块
-    hasToolCall = newMessages.some(m =>
-      m.message.content.some(c => c.type === 'tool_call'),
-    )
+    hasToolCall = newMessages.some((m) => m.message.content.some((c) => c.type === 'tool_call'))
   }
 
   // 传递 span 以在启用 beta tracing 时正确匹配请求和响应

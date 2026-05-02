@@ -24,11 +24,7 @@ import { jsonParse } from '../utils/slowOperations.js'
 import { DEFAULT_BINDINGS } from './defaultBindings.js'
 import { parseBindings } from './parser.js'
 import type { KeybindingBlock, ParsedBinding } from './types.js'
-import {
-  checkDuplicateKeysInJson,
-  type KeybindingWarning,
-  validateBindings,
-} from './validate.js'
+import { checkDuplicateKeysInJson, type KeybindingWarning, validateBindings } from './validate.js'
 
 /**
  * Check if keybinding customization is enabled.
@@ -39,10 +35,7 @@ import {
  * can check the same condition consistently.
  */
 export function isKeybindingCustomizationEnabled(): boolean {
-  return getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_keybinding_customization_release',
-    false,
-  )
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_keybinding_customization_release', false)
 }
 
 /**
@@ -95,11 +88,7 @@ function logCustomBindingsLoadedOncePerDay(userBindingCount: number): void {
 function isKeybindingBlock(obj: unknown): obj is KeybindingBlock {
   if (typeof obj !== 'object' || obj === null) return false
   const b = obj as Record<string, unknown>
-  return (
-    typeof b.context === 'string' &&
-    typeof b.bindings === 'object' &&
-    b.bindings !== null
-  )
+  return typeof b.context === 'string' && typeof b.bindings === 'object' && b.bindings !== null
 }
 
 /**
@@ -189,9 +178,7 @@ export async function loadKeybindings(): Promise<KeybindingsLoadResult> {
     }
 
     const userParsed = parseBindings(userBlocks)
-    logForDebugging(
-      `[keybindings] Loaded ${userParsed.length} user bindings from ${userPath}`,
-    )
+    logForDebugging(`[keybindings] Loaded ${userParsed.length} user bindings from ${userPath}`)
 
     // User bindings come after defaults, so they override
     const mergedBindings = [...defaultBindings, ...userParsed]
@@ -201,15 +188,10 @@ export async function loadKeybindings(): Promise<KeybindingsLoadResult> {
     // Run validation on user config
     // First check for duplicate keys in raw JSON (JSON.parse silently drops earlier values)
     const duplicateKeyWarnings = checkDuplicateKeysInJson(content)
-    const warnings = [
-      ...duplicateKeyWarnings,
-      ...validateBindings(userBlocks, mergedBindings),
-    ]
+    const warnings = [...duplicateKeyWarnings, ...validateBindings(userBlocks, mergedBindings)]
 
     if (warnings.length > 0) {
-      logForDebugging(
-        `[keybindings] Found ${warnings.length} validation issue(s)`,
-      )
+      logForDebugging(`[keybindings] Found ${warnings.length} validation issue(s)`)
     }
 
     return { bindings: mergedBindings, warnings }
@@ -220,9 +202,7 @@ export async function loadKeybindings(): Promise<KeybindingsLoadResult> {
     }
 
     // Other error - log and return defaults with warning
-    logForDebugging(
-      `[keybindings] Error loading ${userPath}: ${errorMessage(error)}`,
-    )
+    logForDebugging(`[keybindings] Error loading ${userPath}: ${errorMessage(error)}`)
     return {
       bindings: defaultBindings,
       warnings: [
@@ -316,23 +296,16 @@ export function loadKeybindingsSyncWithWarnings(): KeybindingsLoadResult {
     }
 
     const userParsed = parseBindings(userBlocks)
-    logForDebugging(
-      `[keybindings] Loaded ${userParsed.length} user bindings from ${userPath}`,
-    )
+    logForDebugging(`[keybindings] Loaded ${userParsed.length} user bindings from ${userPath}`)
     cachedBindings = [...defaultBindings, ...userParsed]
 
     logCustomBindingsLoadedOncePerDay(userParsed.length)
 
     // Run validation - check for duplicate keys in raw JSON first
     const duplicateKeyWarnings = checkDuplicateKeysInJson(content)
-    cachedWarnings = [
-      ...duplicateKeyWarnings,
-      ...validateBindings(userBlocks, cachedBindings),
-    ]
+    cachedWarnings = [...duplicateKeyWarnings, ...validateBindings(userBlocks, cachedBindings)]
     if (cachedWarnings.length > 0) {
-      logForDebugging(
-        `[keybindings] Found ${cachedWarnings.length} validation issue(s)`,
-      )
+      logForDebugging(`[keybindings] Found ${cachedWarnings.length} validation issue(s)`)
     }
 
     return { bindings: cachedBindings, warnings: cachedWarnings }
@@ -355,9 +328,7 @@ export async function initializeKeybindingWatcher(): Promise<void> {
 
   // Skip file watching for external users
   if (!isKeybindingCustomizationEnabled()) {
-    logForDebugging(
-      '[keybindings] Skipping file watcher - user customization disabled',
-    )
+    logForDebugging('[keybindings] Skipping file watcher - user customization disabled')
     return
   }
 
@@ -368,9 +339,7 @@ export async function initializeKeybindingWatcher(): Promise<void> {
   try {
     const stats = await stat(watchDir)
     if (!stats.isDirectory()) {
-      logForDebugging(
-        `[keybindings] Not watching: ${watchDir} is not a directory`,
-      )
+      logForDebugging(`[keybindings] Not watching: ${watchDir} is not a directory`)
       return
     }
   } catch {

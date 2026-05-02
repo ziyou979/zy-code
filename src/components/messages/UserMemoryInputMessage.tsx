@@ -1,23 +1,41 @@
-import sample from 'lodash-es/sample.js';
-import * as React from 'react';
-import { Box, Text } from '../../ink.js';
-import { extractTag } from '../../utils/messages.js';
-import { MessageResponse } from '../MessageResponse.js';
+import sample from 'lodash-es/sample.js'
+import * as React from 'react'
+import { Box, Text } from '../../ink.js'
+import { extractTag } from '../../utils/messages.js'
+import { MessageResponse } from '../MessageResponse.js'
 function getSavingMessage(): string {
-  return sample(['Got it.', 'Good to know.', 'Noted.']);
+  return sample(['Got it.', 'Good to know.', 'Noted.'])
 }
 type Props = {
-  addMargin: boolean;
-  text: string;
-};
-export function UserMemoryInputMessage({
-  text,
-  addMargin
-}: Props) {
-  const input = extractTag(text, "user-memory-input");
-  const savingText = getSavingMessage();
+  addMargin: boolean
+  text: string
+}
+export function UserMemoryInputMessage({ text, addMargin }: Props) {
+  const input = extractTag(text, 'user-memory-input')
+  const savingText = getSavingMessage()
   if (!input) {
-    return null;
+    return null
   }
-  return <Box flexDirection="column" marginTop={addMargin ? 1 : 0} width="100%">{<Box>{<Text color="remember" backgroundColor="memoryBackgroundColor">#</Text>}<Text backgroundColor="memoryBackgroundColor" color="text">{" "}{input}{" "}</Text></Box>}{<MessageResponse height={1}><Text dimColor={true}>{savingText}</Text></MessageResponse>}</Box>;
+  return (
+    <Box flexDirection="column" marginTop={addMargin ? 1 : 0} width="100%">
+      {
+        <Box>
+          {
+            <Text color="remember" backgroundColor="memoryBackgroundColor">
+              #
+            </Text>
+          }
+          <Text backgroundColor="memoryBackgroundColor" color="text">
+            {' '}
+            {input}{' '}
+          </Text>
+        </Box>
+      }
+      {
+        <MessageResponse height={1}>
+          <Text dimColor={true}>{savingText}</Text>
+        </MessageResponse>
+      }
+    </Box>
+  )
 }

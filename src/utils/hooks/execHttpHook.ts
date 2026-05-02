@@ -86,10 +86,7 @@ function sanitizeHeaderValue(value: string): string {
  *
  * The result is sanitized to strip CR/LF/NUL bytes to prevent header injection.
  */
-function interpolateEnvVars(
-  value: string,
-  allowedEnvVars: ReadonlySet<string>,
-): string {
+function interpolateEnvVars(value: string, allowedEnvVars: ReadonlySet<string>): string {
   const interpolated = value.replace(
     /\$\{([A-Z_][A-Z0-9_]*)\}|\$([A-Z_][A-Z0-9_]*)/g,
     (_, braced, unbraced) => {
@@ -136,7 +133,7 @@ export async function execHttpHook(
   // undefined → no restriction; [] → block all; non-empty → must match a pattern.
   const policy = getHttpHookPolicy()
   if (policy.allowedUrls !== undefined) {
-    const matched = policy.allowedUrls.some(p => urlMatchesPattern(hook.url, p))
+    const matched = policy.allowedUrls.some((p) => urlMatchesPattern(hook.url, p))
     if (!matched) {
       const msg = `HTTP hook blocked: ${hook.url} does not match any pattern in allowedHttpHookUrls`
       logForDebugging(msg, { level: 'warn' })
@@ -144,14 +141,9 @@ export async function execHttpHook(
     }
   }
 
-  const timeoutMs = hook.timeout
-    ? hook.timeout * 1000
-    : DEFAULT_HTTP_HOOK_TIMEOUT_MS
+  const timeoutMs = hook.timeout ? hook.timeout * 1000 : DEFAULT_HTTP_HOOK_TIMEOUT_MS
 
-  const { signal: combinedSignal, cleanup } = createCombinedAbortSignal(
-    signal,
-    { timeoutMs },
-  )
+  const { signal: combinedSignal, cleanup } = createCombinedAbortSignal(signal, { timeoutMs })
 
   try {
     // Build headers with env var interpolation in values
@@ -163,7 +155,7 @@ export async function execHttpHook(
       const hookVars = hook.allowedEnvVars ?? []
       const effectiveVars =
         policy.allowedEnvVars !== undefined
-          ? hookVars.filter(v => policy.allowedEnvVars!.includes(v))
+          ? hookVars.filter((v) => policy.allowedEnvVars!.includes(v))
           : hookVars
       const allowedEnvVars = new Set(effectiveVars)
       for (const [name, value] of Object.entries(hook.headers)) {
@@ -182,18 +174,14 @@ export async function execHttpHook(
     // as we do for the sandbox proxy, so that we don't accidentally block
     // a corporate proxy sitting on a private IP (e.g. 10.0.0.1:3128).
     const envProxyActive =
-      !sandboxProxy &&
-      getProxyUrl() !== undefined &&
-      !shouldBypassProxy(hook.url)
+      !sandboxProxy && getProxyUrl() !== undefined && !shouldBypassProxy(hook.url)
 
     if (sandboxProxy) {
       logForDebugging(
         `Hooks: HTTP hook POST to ${hook.url} (via sandbox proxy :${sandboxProxy.port})`,
       )
     } else if (envProxyActive) {
-      logForDebugging(
-        `Hooks: HTTP hook POST to ${hook.url} (via env-var proxy)`,
-      )
+      logForDebugging(`Hooks: HTTP hook POST to ${hook.url} (via env-var proxy)`)
     } else {
       logForDebugging(`Hooks: HTTP hook POST to ${hook.url}`)
     }

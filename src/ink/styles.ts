@@ -397,9 +397,7 @@ export type Styles = {
 const applyPositionStyles = (node: LayoutNode, style: Styles): void => {
   if ('position' in style) {
     node.setPositionType(
-      style.position === 'absolute'
-        ? LayoutPositionType.Absolute
-        : LayoutPositionType.Relative,
+      style.position === 'absolute' ? LayoutPositionType.Absolute : LayoutPositionType.Relative,
     )
   }
   if ('top' in style) applyPositionEdge(node, 'top', style.top)
@@ -433,11 +431,7 @@ const applyOverflowStyles = (node: LayoutNode, style: Styles): void => {
     node.setOverflow(LayoutOverflow.Scroll)
   } else if (y === 'hidden' || x === 'hidden') {
     node.setOverflow(LayoutOverflow.Hidden)
-  } else if (
-    'overflow' in style ||
-    'overflowX' in style ||
-    'overflowY' in style
-  ) {
+  } else if ('overflow' in style || 'overflowX' in style || 'overflowY' in style) {
     node.setOverflow(LayoutOverflow.Visible)
   }
 }
@@ -508,9 +502,7 @@ const applyFlexStyles = (node: LayoutNode, style: Styles): void => {
   }
 
   if ('flexShrink' in style) {
-    node.setFlexShrink(
-      typeof style.flexShrink === 'number' ? style.flexShrink : 1,
-    )
+    node.setFlexShrink(typeof style.flexShrink === 'number' ? style.flexShrink : 1)
   }
 
   if ('flexWrap' in style) {
@@ -674,17 +666,11 @@ const applyDimensionStyles = (node: LayoutNode, style: Styles): void => {
 
 const applyDisplayStyles = (node: LayoutNode, style: Styles): void => {
   if ('display' in style) {
-    node.setDisplay(
-      style.display === 'flex' ? LayoutDisplay.Flex : LayoutDisplay.None,
-    )
+    node.setDisplay(style.display === 'flex' ? LayoutDisplay.Flex : LayoutDisplay.None)
   }
 }
 
-const applyBorderStyles = (
-  node: LayoutNode,
-  style: Styles,
-  resolvedStyle?: Styles,
-): void => {
+const applyBorderStyles = (node: LayoutNode, style: Styles, resolvedStyle?: Styles): void => {
   // resolvedStyle 是完整的当前样式（已设置在 DOM 节点上）。
   // style 可能是一个只包含变更属性的 diff。对于边框侧边属性，
   // 我们需要解析后的值，因为 diff 中的 `borderStyle` 可能不包含
@@ -694,22 +680,10 @@ const applyBorderStyles = (
   if ('borderStyle' in style) {
     const borderWidth = style.borderStyle ? 1 : 0
 
-    node.setBorder(
-      LayoutEdge.Top,
-      resolved.borderTop !== false ? borderWidth : 0,
-    )
-    node.setBorder(
-      LayoutEdge.Bottom,
-      resolved.borderBottom !== false ? borderWidth : 0,
-    )
-    node.setBorder(
-      LayoutEdge.Left,
-      resolved.borderLeft !== false ? borderWidth : 0,
-    )
-    node.setBorder(
-      LayoutEdge.Right,
-      resolved.borderRight !== false ? borderWidth : 0,
-    )
+    node.setBorder(LayoutEdge.Top, resolved.borderTop !== false ? borderWidth : 0)
+    node.setBorder(LayoutEdge.Bottom, resolved.borderBottom !== false ? borderWidth : 0)
+    node.setBorder(LayoutEdge.Left, resolved.borderLeft !== false ? borderWidth : 0)
+    node.setBorder(LayoutEdge.Right, resolved.borderRight !== false ? borderWidth : 0)
   } else {
     // 处理单个边框属性的变更（仅修改 borderX 而不修改 borderStyle 时）。
     // 跳过 undefined 值 —— 它们表示属性被移除或从未设置，
@@ -743,11 +717,7 @@ const applyGapStyles = (node: LayoutNode, style: Styles): void => {
   }
 }
 
-const styles = (
-  node: LayoutNode,
-  style: Styles = {},
-  resolvedStyle?: Styles,
-): void => {
+const styles = (node: LayoutNode, style: Styles = {}, resolvedStyle?: Styles): void => {
   applyPositionStyles(node, style)
   applyOverflowStyles(node, style)
   applyMarginStyles(node, style)

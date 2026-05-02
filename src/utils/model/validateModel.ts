@@ -3,11 +3,7 @@ import { MODEL_ALIASES } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider, isOpenAIProvider } from './providers.js'
 import { sideQuery } from '../sideQuery.js'
-import {
-  isAPIError,
-  isConnectionError,
-  getErrorStatus,
-} from '../../types/llm.js'
+import { isAPIError, isConnectionError, getErrorStatus } from '../../types/llm.js'
 import { getModelStrings } from './modelStrings.js'
 
 // Cache valid models to avoid repeated API calls
@@ -16,9 +12,7 @@ const validModelCache = new Map<string, boolean>()
 /**
  * Validates a model by attempting an actual API call.
  */
-export async function validateModel(
-  model: string,
-): Promise<{ valid: boolean; error?: string }> {
+export async function validateModel(model: string): Promise<{ valid: boolean; error?: string }> {
   const normalizedModel = model.trim()
 
   // Empty model is invalid
@@ -50,7 +44,6 @@ export async function validateModel(
     return { valid: true }
   }
 
-
   // Try to make an actual API call with minimal parameters
   try {
     const apiProvider = getAPIProvider()
@@ -59,7 +52,7 @@ export async function validateModel(
     const messageContent = isOpenAIProvider(apiProvider)
       ? [{ type: 'text' as const, text: 'Hi' }]
       : [{ type: 'text' as const, text: 'Hi', cache_control: { type: 'ephemeral' as const } }]
-    
+
     await sideQuery({
       model: normalizedModel,
       max_tokens: 1,

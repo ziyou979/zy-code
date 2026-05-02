@@ -22,11 +22,7 @@ import {
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isOfficialMcpUrl } from '../mcp/officialRegistry.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
-import {
-  getWslVersion,
-  getLinuxDistroInfo,
-  detectVcs,
-} from '../../utils/platform.js'
+import { getWslVersion, getLinuxDistroInfo, detectVcs } from '../../utils/platform.js'
 import type { CoreUserData } from 'src/utils/user.js'
 import { getAgentContext } from '../../utils/agentContext.js'
 import type { EnvironmentMetadata } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
@@ -197,10 +193,8 @@ export function extractMcpToolDetails(toolName: string):
   }
 
   return {
-    serverName:
-      serverName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    mcpToolName:
-      mcpToolName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    serverName: serverName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    mcpToolName: mcpToolName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   }
 }
 
@@ -259,7 +253,7 @@ function truncateToolInputValue(value: unknown, depth = 0): unknown {
   if (Array.isArray(value)) {
     const mapped = value
       .slice(0, TOOL_INPUT_MAX_COLLECTION_ITEMS)
-      .map(v => truncateToolInputValue(v, depth + 1))
+      .map((v) => truncateToolInputValue(v, depth + 1))
     if (value.length > TOOL_INPUT_MAX_COLLECTION_ITEMS) {
       mapped.push(`…[${value.length} items]`)
     }
@@ -287,9 +281,7 @@ function truncateToolInputValue(value: unknown, depth = 0): unknown {
  * preserving forensically useful fields like file paths, URLs, and MCP args.
  * Returns undefined when OTEL_LOG_TOOL_DETAILS is not enabled.
  */
-export function extractToolInputForTelemetry(
-  input: unknown,
-): string | undefined {
+export function extractToolInputForTelemetry(input: unknown): string | undefined {
   if (!isToolDetailsLoggingEnabled()) {
     return undefined
   }
@@ -624,9 +616,7 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
       githubEventName: process.env.GITHUB_EVENT_NAME,
       githubActionsRunnerEnvironment: process.env.RUNNER_ENVIRONMENT,
       githubActionsRunnerOs: process.env.RUNNER_OS,
-      githubActionRef: process.env.GITHUB_ACTION_PATH?.includes(
-        'zy-code-action/',
-      )
+      githubActionRef: process.env.GITHUB_ACTION_PATH?.includes('zy-code-action/')
         ? process.env.GITHUB_ACTION_PATH.split('zy-code-action/')[1]
         : undefined,
     }),
@@ -656,8 +646,7 @@ function buildProcessMetrics(): ProcessMetrics | undefined {
       if (wallDeltaMs > 0) {
         const userDeltaUs = cpu.user - prevCpuUsage.user
         const systemDeltaUs = cpu.system - prevCpuUsage.system
-        cpuPercent =
-          ((userDeltaUs + systemDeltaUs) / (wallDeltaMs * 1000)) * 100
+        cpuPercent = ((userDeltaUs + systemDeltaUs) / (wallDeltaMs * 1000)) * 100
       }
     }
     prevCpuUsage = cpu
@@ -693,14 +682,8 @@ export async function getEventMetadata(
   options: EnrichMetadataOptions = {},
 ): Promise<EventMetadata> {
   const model = options.model ? String(options.model) : getMainLoopModel()
-  const betas =
-    typeof options.betas === 'string'
-      ? options.betas
-      : getModelBetas(model).join(',')
-  const [envContext, repoRemoteHash] = await Promise.all([
-    buildEnvContext(),
-    getRepoRemoteHash(),
-  ])
+  const betas = typeof options.betas === 'string' ? options.betas : getModelBetas(model).join(',')
+  const [envContext, repoRemoteHash] = await Promise.all([buildEnvContext(), getRepoRemoteHash()])
   const processMetrics = buildProcessMetrics()
 
   const metadata: EventMetadata = {
@@ -727,16 +710,13 @@ export async function getEventMetadata(
     // Assistant mode tag — lives outside memoized buildEnvContext() because
     // setKairosActive() runs at main.tsx:~1648, after the first event may
     // have already fired and memoized the env. Read fresh per-event instead.
-    ...(feature('KAIROS') && getKairosActive()
-      ? { kairosActive: true as const }
-      : {}),
+    ...(feature('KAIROS') && getKairosActive() ? { kairosActive: true as const } : {}),
     // Repo remote hash for joining with server-side repo bundle data
     ...(repoRemoteHash && { rh: repoRemoteHash }),
   }
 
   return metadata
 }
-
 
 /**
  * Core event metadata for direct API event logging (snake_case format).
@@ -793,15 +773,8 @@ export function toZyEventFormat(
   userMetadata: CoreUserData,
   additionalMetadata: Record<string, unknown> = {},
 ): ZyEventLoggingMetadata {
-  const {
-    envContext,
-    processMetrics,
-    rh,
-    kairosActive,
-    skillMode,
-    observerMode,
-    ...coreFields
-  } = metadata
+  const { envContext, processMetrics, rh, kairosActive, skillMode, observerMode, ...coreFields } =
+    metadata
 
   // Convert envContext to snake_case.
   // IMPORTANT: env is typed as the proto-generated EnvironmentMetadata so that
@@ -842,23 +815,22 @@ export function toZyEventFormat(
     env.coworker_type = envContext.coworkerType
   }
   if (envContext.ZyCodeContainerId) {
-    (env as any).zy_code_container_id = envContext.ZyCodeContainerId
+    ;(env as any).zy_code_container_id = envContext.ZyCodeContainerId
   }
   if (envContext.ZyCodeRemoteSessionId) {
-    (env as any).zy_code_remote_session_id = envContext.ZyCodeRemoteSessionId
+    ;(env as any).zy_code_remote_session_id = envContext.ZyCodeRemoteSessionId
   }
   if (envContext.tags) {
     env.tags = envContext.tags
       .split(',')
-      .map(t => t.trim())
+      .map((t) => t.trim())
       .filter(Boolean)
   }
   if (envContext.githubEventName) {
     env.github_event_name = envContext.githubEventName
   }
   if (envContext.githubActionsRunnerEnvironment) {
-    env.github_actions_runner_environment =
-      envContext.githubActionsRunnerEnvironment
+    env.github_actions_runner_environment = envContext.githubActionsRunnerEnvironment
   }
   if (envContext.githubActionsRunnerOs) {
     env.github_actions_runner_os = envContext.githubActionsRunnerOs

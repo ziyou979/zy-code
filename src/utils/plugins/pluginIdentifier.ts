@@ -1,11 +1,5 @@
-import type {
-  EditableSettingSource,
-  SettingSource,
-} from '../settings/constants.js'
-import {
-  ALLOWED_OFFICIAL_MARKETPLACE_NAMES,
-  type PluginScope,
-} from './schemas.js'
+import type { EditableSettingSource, SettingSource } from '../settings/constants.js'
+import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES, type PluginScope } from './schemas.js'
 
 /**
  * Extended scope type that includes 'flag' for session-only plugins.
@@ -72,12 +66,9 @@ export function buildPluginId(name: string, marketplace?: string): string {
  * general-access additional_metadata; third-party identifiers go only to the
  * PII-tagged _PROTO_* BQ columns.
  */
-export function isOfficialMarketplaceName(
-  marketplace: string | undefined,
-): boolean {
+export function isOfficialMarketplaceName(marketplace: string | undefined): boolean {
   return (
-    marketplace !== undefined &&
-    ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(marketplace.toLowerCase())
+    marketplace !== undefined && ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(marketplace.toLowerCase())
   )
 }
 
@@ -86,10 +77,7 @@ export function isOfficialMarketplaceName(
  * This is the inverse of SETTING_SOURCE_TO_SCOPE for editable scopes only.
  * Note: 'managed' scope cannot be installed to, so it's not included here.
  */
-const SCOPE_TO_EDITABLE_SOURCE: Record<
-  Exclude<PluginScope, 'managed'>,
-  EditableSettingSource
-> = {
+const SCOPE_TO_EDITABLE_SOURCE: Record<Exclude<PluginScope, 'managed'>, EditableSettingSource> = {
   user: 'userSettings',
   project: 'projectSettings',
   local: 'localSettings',
@@ -101,9 +89,7 @@ const SCOPE_TO_EDITABLE_SOURCE: Record<
  * @returns The corresponding setting source for reading/writing settings
  * @throws Error if scope is 'managed' (cannot install plugins to managed scope)
  */
-export function scopeToSettingSource(
-  scope: PluginScope,
-): EditableSettingSource {
+export function scopeToSettingSource(scope: PluginScope): EditableSettingSource {
   if (scope === 'managed') {
     throw new Error('Cannot install plugins to managed scope')
   }

@@ -25,9 +25,7 @@ export const BUILTIN_MARKETPLACE_NAME = 'builtin'
 /**
  * Register a built-in plugin. Call this from initBuiltinPlugins() at startup.
  */
-export function registerBuiltinPlugin(
-  definition: BuiltinPluginDefinition,
-): void {
+export function registerBuiltinPlugin(definition: BuiltinPluginDefinition): void {
   BUILTIN_PLUGINS.set(definition.name, definition)
 }
 
@@ -43,9 +41,7 @@ export function isBuiltinPluginId(pluginId: string): boolean {
  * Useful for the /plugin UI to show the skills/hooks/MCP list without
  * a marketplace lookup.
  */
-export function getBuiltinPluginDefinition(
-  name: string,
-): BuiltinPluginDefinition | undefined {
+export function getBuiltinPluginDefinition(name: string): BuiltinPluginDefinition | undefined {
   return BUILTIN_PLUGINS.get(name)
 }
 
@@ -71,9 +67,7 @@ export function getBuiltinPlugins(): {
     const userSetting = settings?.enabledPlugins?.[pluginId]
     // Enabled state: user preference > plugin default > true
     const isEnabled =
-      userSetting !== undefined
-        ? userSetting === true
-        : (definition.defaultEnabled ?? true)
+      userSetting !== undefined ? userSetting === true : (definition.defaultEnabled ?? true)
 
     const plugin: LoadedPlugin = {
       name,

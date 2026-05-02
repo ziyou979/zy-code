@@ -29,22 +29,10 @@ import { feature } from 'bun:bundle'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
 import { Lexer } from 'marked'
-import {
-  basename,
-  dirname,
-  extname,
-  isAbsolute,
-  join,
-  parse,
-  relative,
-  sep,
-} from 'path'
+import { basename, dirname, extname, isAbsolute, join, parse, relative, sep } from 'path'
 import picomatch from 'picomatch'
 import { logEvent } from 'src/services/analytics/index.js'
-import {
-  getAdditionalDirectoriesForzyMd,
-  getOriginalCwd,
-} from '../bootstrap/state.js'
+import { getAdditionalDirectoriesForzyMd, getOriginalCwd } from '../bootstrap/state.js'
 import { truncateEntrypointContent } from '../memdir/memdir.js'
 import { getAutoMemEntrypoint, isAutoMemoryEnabled } from '../memdir/paths.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -60,10 +48,7 @@ import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { getErrnoCode } from './errors.js'
 import { normalizePathForComparison } from './file.js'
 import { cacheKeys, type FileStateCache } from './fileStateCache.js'
-import {
-  parseFrontmatter,
-  splitPathInFrontmatter,
-} from './frontmatterParser.js'
+import { parseFrontmatter, splitPathInFrontmatter } from './frontmatterParser.js'
 import { getFsImplementation, safeResolvePath } from './fsOperations.js'
 import { findCanonicalGitRoot, findGitRoot } from './git.js'
 import {
@@ -262,7 +247,7 @@ function parseFrontmatterPaths(rawContent: string): {
   }
 
   const patterns = splitPathInFrontmatter(frontmatter.paths)
-    .map(pattern => {
+    .map((pattern) => {
       // Remove /** suffix - ignore library treats 'path' as matching both
       // the path itself and everything inside it
       return pattern.endsWith('/**') ? pattern.slice(0, -3) : pattern
@@ -353,8 +338,7 @@ function parseMemoryFileContent(
     return { info: null, includePaths: [] }
   }
 
-  const { content: withoutFrontmatter, paths } =
-    parseFrontmatterPaths(rawContent)
+  const { content: withoutFrontmatter, paths } = parseFrontmatterPaths(rawContent)
 
   // Lex once so strip and @include-extract share the same tokens. gfm:false
   // is required by extract (so ~/path doesn't tokenize as strikethrough) and
@@ -369,9 +353,7 @@ function parseMemoryFileContent(
   // marked normalises \r\n during lex, so round-tripping a CRLF file
   // through token.raw would spuriously flip contentDiffersFromDisk.
   const strippedContent =
-    hasComment && tokens
-      ? stripHtmlCommentsFromTokens(tokens).content
-      : withoutFrontmatter
+    hasComment && tokens ? stripHtmlCommentsFromTokens(tokens).content : withoutFrontmatter
 
   const includePaths =
     tokens && includeBasePath !== undefined
@@ -478,9 +460,7 @@ function extractIncludePathsFromTokens(
           path.startsWith('./') ||
           path.startsWith('~/') ||
           (path.startsWith('/') && path !== '/') ||
-          (!path.startsWith('@') &&
-            !path.match(/^[#%^&*()]+/) &&
-            path.match(/^[a-zA-Z0-9._-]/))
+          (!path.startsWith('@') && !path.match(/^[#%^&*()]+/) && path.match(/^[a-zA-Z0-9._-]/))
 
         if (isValidPath) {
           const resolvedPath = expandPath(path, dirname(basePath))
@@ -562,9 +542,7 @@ function iszyMdExcluded(filePath: string, type: MemoryType): boolean {
   // the user writes "/tmp/project/ZY.md" in their exclude, but the system
   // resolves the CWD to "/private/tmp/project/...", so the file path uses the
   // real path. By resolving the patterns too, both sides match.
-  const expandedPatterns = resolveExcludePatterns(patterns).filter(
-    p => p.length > 0,
-  )
+  const expandedPatterns = resolveExcludePatterns(patterns).filter((p) => p.length > 0)
   if (expandedPatterns.length === 0) {
     return false
   }
@@ -580,7 +558,7 @@ function iszyMdExcluded(filePath: string, type: MemoryType): boolean {
  */
 function resolveExcludePatterns(patterns: string[]): string[] {
   const fs = getFsImplementation()
-  const expanded: string[] = patterns.map(p => p.replaceAll('\\', '/'))
+  const expanded: string[] = patterns.map((p) => p.replaceAll('\\', '/'))
 
   for (const normalized of expanded) {
     // Only resolve absolute patterns — glob-only patterns like "**/*.md" don't have
@@ -591,16 +569,14 @@ function resolveExcludePatterns(patterns: string[]): string[] {
 
     // Find the static prefix before any glob characters
     const globStart = normalized.search(/[*?{[]/)
-    const staticPrefix =
-      globStart === -1 ? normalized : normalized.slice(0, globStart)
+    const staticPrefix = globStart === -1 ? normalized : normalized.slice(0, globStart)
     const dirToResolve = dirname(staticPrefix)
 
     try {
       // sync IO: called from sync context (iszyMdExcluded -> processMemoryFile -> getMemoryFiles)
       const resolvedDir = fs.realpathSync(dirToResolve).replaceAll('\\', '/')
       if (resolvedDir !== dirToResolve) {
-        const resolvedPattern =
-          resolvedDir + normalized.slice(dirToResolve.length)
+        const resolvedPattern = resolvedDir + normalized.slice(dirToResolve.length)
         expanded.push(resolvedPattern)
       }
     } catch {
@@ -637,18 +613,18 @@ export async function processMemoryFile(
   }
 
   // Resolve symlink path early for @import resolution
-  const { resolvedPath, isSymlink } = safeResolvePath(
-    getFsImplementation(),
-    filePath,
-  )
+  const { resolvedPath, isSymlink } = safeResolvePath(getFsImplementation(), filePath)
 
   processedPaths.add(normalizedPath)
   if (isSymlink) {
     processedPaths.add(normalizePathForComparison(resolvedPath))
   }
 
-  const { info: memoryFile, includePaths: resolvedIncludePaths } =
-    await safelyReadMemoryFileAsync(filePath, type, resolvedPath)
+  const { info: memoryFile, includePaths: resolvedIncludePaths } = await safelyReadMemoryFileAsync(
+    filePath,
+    type,
+    resolvedPath,
+  )
   if (!memoryFile || !memoryFile.content.trim()) {
     return []
   }
@@ -716,10 +692,7 @@ export async function processMdRules({
   try {
     const fs = getFsImplementation()
 
-    const { resolvedPath: resolvedRulesDir, isSymlink } = safeResolvePath(
-      fs,
-      rulesDir,
-    )
+    const { resolvedPath: resolvedRulesDir, isSymlink } = safeResolvePath(fs, rulesDir)
 
     visitedDirs.add(rulesDir)
     if (isSymlink) {
@@ -740,10 +713,7 @@ export async function processMdRules({
 
     for (const entry of entries) {
       const entryPath = join(rulesDir, entry.name)
-      const { resolvedPath: resolvedEntryPath, isSymlink } = safeResolvePath(
-        fs,
-        entryPath,
-      )
+      const { resolvedPath: resolvedEntryPath, isSymlink } = safeResolvePath(fs, entryPath)
 
       // Use Dirent methods for non-symlinks to avoid extra stat calls.
       // For symlinks, we need stat to determine what the target is.
@@ -769,9 +739,7 @@ export async function processMdRules({
           processedPaths,
           includeExternal,
         )
-        result.push(
-          ...files.filter(f => (conditionalRule ? f.globs : !f.globs)),
-        )
+        result.push(...files.filter((f) => (conditionalRule ? f.globs : !f.globs)))
       }
     }
 
@@ -795,20 +763,12 @@ export const getMemoryFiles = memoize(
     const result: MemoryFileInfo[] = []
     const processedPaths = new Set<string>()
     const config = getCurrentProjectConfig()
-    const includeExternal =
-      forceIncludeExternal ||
-      config.haszyMdExternalIncludesApproved ||
-      false
+    const includeExternal = forceIncludeExternal || config.haszyMdExternalIncludesApproved || false
 
     // Process Managed file first (always loaded - policy settings)
     const managedzyMd = getMemoryPath('Managed')
     result.push(
-      ...(await processMemoryFile(
-        managedzyMd,
-        'Managed',
-        processedPaths,
-        includeExternal,
-      )),
+      ...(await processMemoryFile(managedzyMd, 'Managed', processedPaths, includeExternal)),
     )
     // Process Managed .zy/rules/*.md files
     const managedZyRulesDir = getManagedZyRulesDir()
@@ -870,8 +830,7 @@ export const getMemoryFiles = memoize(
     const isNestedWorktree =
       gitRoot !== null &&
       canonicalRoot !== null &&
-      normalizePathForComparison(gitRoot) !==
-        normalizePathForComparison(canonicalRoot) &&
+      normalizePathForComparison(gitRoot) !== normalizePathForComparison(canonicalRoot) &&
       pathInWorkingPath(gitRoot, canonicalRoot)
 
     // Process from root downward to CWD
@@ -887,23 +846,13 @@ export const getMemoryFiles = memoize(
       if (isSettingSourceEnabled('projectSettings') && !skipProject) {
         const projectPath = join(dir, 'ZY.md')
         result.push(
-          ...(await processMemoryFile(
-            projectPath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
+          ...(await processMemoryFile(projectPath, 'Project', processedPaths, includeExternal)),
         )
 
         // Try reading .zy/ZY.md (Project)
         const dotZyPath = join(dir, '.zy', 'ZY.md')
         result.push(
-          ...(await processMemoryFile(
-            dotZyPath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
+          ...(await processMemoryFile(dotZyPath, 'Project', processedPaths, includeExternal)),
         )
 
         // Try reading .zy/rules/*.md files (Project)
@@ -923,12 +872,7 @@ export const getMemoryFiles = memoize(
       if (isSettingSourceEnabled('localSettings')) {
         const localPath = join(dir, 'ZY.local.md')
         result.push(
-          ...(await processMemoryFile(
-            localPath,
-            'Local',
-            processedPaths,
-            includeExternal,
-          )),
+          ...(await processMemoryFile(localPath, 'Local', processedPaths, includeExternal)),
         )
       }
     }
@@ -943,23 +887,13 @@ export const getMemoryFiles = memoize(
         // Try reading ZY.md from the additional directory
         const projectPath = join(dir, 'ZY.md')
         result.push(
-          ...(await processMemoryFile(
-            projectPath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
+          ...(await processMemoryFile(projectPath, 'Project', processedPaths, includeExternal)),
         )
 
         // Try reading .zy/ZY.md from the additional directory
         const dotZyPath = join(dir, '.zy', 'ZY.md')
         result.push(
-          ...(await processMemoryFile(
-            dotZyPath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
+          ...(await processMemoryFile(dotZyPath, 'Project', processedPaths, includeExternal)),
         )
 
         // Try reading .zy/rules/*.md files from the additional directory
@@ -1006,10 +940,7 @@ export const getMemoryFiles = memoize(
       }
     }
 
-    const totalContentLength = result.reduce(
-      (sum, f) => sum + f.content.length,
-      0,
-    )
+    const totalContentLength = result.reduce((sum, f) => sum + f.content.length, 0)
 
     logForDiagnosticsNoPII('info', 'memory_files_completed', {
       duration_ms: Date.now() - startTime,
@@ -1032,9 +963,7 @@ export const getMemoryFiles = memoize(
         local_count: typeCounts['Local'] ?? 0,
         managed_count: typeCounts['Managed'] ?? 0,
         automem_count: typeCounts['AutoMem'] ?? 0,
-        ...(feature('TEAMMEM')
-          ? { teammem_count: typeCounts['TeamMem'] ?? 0 }
-          : {}),
+        ...(feature('TEAMMEM') ? { teammem_count: typeCounts['TeamMem'] ?? 0 } : {}),
         duration_ms: Date.now() - startTime,
       })
     }
@@ -1057,15 +986,10 @@ export const getMemoryFiles = memoize(
         for (const file of result) {
           if (!isInstructionsMemoryType(file.type)) continue
           const loadReason = file.parent ? 'include' : eagerLoadReason
-          void executeInstructionsLoadedHooks(
-            file.path,
-            file.type,
-            loadReason,
-            {
-              globs: file.globs,
-              parentFilePath: file.parent,
-            },
-          )
+          void executeInstructionsLoadedHooks(file.path, file.type, loadReason, {
+            globs: file.globs,
+            parentFilePath: file.parent,
+          })
         }
       }
     }
@@ -1074,15 +998,8 @@ export const getMemoryFiles = memoize(
   },
 )
 
-function isInstructionsMemoryType(
-  type: MemoryType,
-): type is InstructionsMemoryType {
-  return (
-    type === 'User' ||
-    type === 'Project' ||
-    type === 'Local' ||
-    type === 'Managed'
-  )
+function isInstructionsMemoryType(type: MemoryType): type is InstructionsMemoryType {
+  return type === 'User' || type === 'Project' || type === 'Local' || type === 'Managed'
 }
 
 // Load reason to report for top-level (non-included) files on the next eager
@@ -1121,16 +1038,14 @@ export function clearMemoryFileCaches(): void {
   getMemoryFiles.cache?.clear?.()
 }
 
-export function resetGetMemoryFilesCache(
-  reason: InstructionsLoadReason = 'session_start',
-): void {
+export function resetGetMemoryFilesCache(reason: InstructionsLoadReason = 'session_start'): void {
   nextEagerLoadReason = reason
   shouldFireHook = true
   clearMemoryFileCaches()
 }
 
 export function getLargeMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
-  return files.filter(f => f.content.length > MAX_MEMORY_CHARACTER_COUNT)
+  return files.filter((f) => f.content.length > MAX_MEMORY_CHARACTER_COUNT)
 }
 
 /**
@@ -1139,15 +1054,10 @@ export function getLargeMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
  * into the system prompt. Callsites that care about "what's actually in
  * context" (context builder, /context viz) should filter through this.
  */
-export function filterInjectedMemoryFiles(
-  files: MemoryFileInfo[],
-): MemoryFileInfo[] {
-  const skipMemoryIndex = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_moth_copse',
-    false,
-  )
+export function filterInjectedMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
+  const skipMemoryIndex = getFeatureValue_CACHED_MAY_BE_STALE('zy_moth_copse', false)
   if (!skipMemoryIndex) return files
-  return files.filter(f => f.type !== 'AutoMem' && f.type !== 'TeamMem')
+  return files.filter((f) => f.type !== 'AutoMem' && f.type !== 'TeamMem')
 }
 
 export const getzyMds = (
@@ -1155,15 +1065,11 @@ export const getzyMds = (
   filter?: (type: MemoryType) => boolean,
 ): string => {
   const memories: string[] = []
-  const skipProjectLevel = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_paper_halyard',
-    false,
-  )
+  const skipProjectLevel = getFeatureValue_CACHED_MAY_BE_STALE('zy_paper_halyard', false)
 
   for (const file of memoryFiles) {
     if (filter && !filter(file.type)) continue
-    if (skipProjectLevel && (file.type === 'Project' || file.type === 'Local'))
-      continue
+    if (skipProjectLevel && (file.type === 'Project' || file.type === 'Local')) continue
     if (file.content) {
       const description =
         file.type === 'Project'
@@ -1256,31 +1162,15 @@ export async function getMemoryFilesForNestedDirectory(
   // Process project memory files (ZY.md and .zy/ZY.md)
   if (isSettingSourceEnabled('projectSettings')) {
     const projectPath = join(dir, 'ZY.md')
-    result.push(
-      ...(await processMemoryFile(
-        projectPath,
-        'Project',
-        processedPaths,
-        false,
-      )),
-    )
+    result.push(...(await processMemoryFile(projectPath, 'Project', processedPaths, false)))
     const dotZyPath = join(dir, '.zy', 'ZY.md')
-    result.push(
-      ...(await processMemoryFile(
-        dotZyPath,
-        'Project',
-        processedPaths,
-        false,
-      )),
-    )
+    result.push(...(await processMemoryFile(dotZyPath, 'Project', processedPaths, false)))
   }
 
   // Process local memory file (ZY.local.md)
   if (isSettingSourceEnabled('localSettings')) {
     const localPath = join(dir, 'ZY.local.md')
-    result.push(
-      ...(await processMemoryFile(localPath, 'Local', processedPaths, false)),
-    )
+    result.push(...(await processMemoryFile(localPath, 'Local', processedPaths, false)))
   }
 
   const rulesDir = join(dir, '.zy', 'rules')
@@ -1300,13 +1190,7 @@ export async function getMemoryFilesForNestedDirectory(
 
   // Process project conditional .zy/rules/*.md files
   result.push(
-    ...(await processConditionedMdRules(
-      targetPath,
-      rulesDir,
-      'Project',
-      processedPaths,
-      false,
-    )),
+    ...(await processConditionedMdRules(targetPath, rulesDir, 'Project', processedPaths, false)),
   )
 
   // processedPaths must be seeded with unconditional paths for subsequent directories
@@ -1332,13 +1216,7 @@ export async function getConditionalRulesForCwdLevelDirectory(
   processedPaths: Set<string>,
 ): Promise<MemoryFileInfo[]> {
   const rulesDir = join(dir, '.zy', 'rules')
-  return processConditionedMdRules(
-    targetPath,
-    rulesDir,
-    'Project',
-    processedPaths,
-    false,
-  )
+  return processConditionedMdRules(targetPath, rulesDir, 'Project', processedPaths, false)
 }
 
 /**
@@ -1367,7 +1245,7 @@ export async function processConditionedMdRules(
   })
 
   // Filter to only include files whose globs patterns match the targetPath
-  return conditionedRuleMdFiles.filter(file => {
+  return conditionedRuleMdFiles.filter((file) => {
     if (!file.globs || file.globs.length === 0) {
       return false
     }
@@ -1379,17 +1257,11 @@ export async function processConditionedMdRules(
         ? dirname(dirname(rulesDir)) // Parent of .zy
         : getOriginalCwd() // Project root for managed/user rules
 
-    const relativePath = isAbsolute(targetPath)
-      ? relative(baseDir, targetPath)
-      : targetPath
+    const relativePath = isAbsolute(targetPath) ? relative(baseDir, targetPath) : targetPath
     // ignore() throws on empty strings, paths escaping the base (../),
     // and absolute paths (Windows cross-drive relative() returns absolute).
     // Files outside baseDir can't match baseDir-relative globs anyway.
-    if (
-      !relativePath ||
-      relativePath.startsWith('..') ||
-      isAbsolute(relativePath)
-    ) {
+    if (!relativePath || relativePath.startsWith('..') || isAbsolute(relativePath)) {
       return false
     }
     return ignore().add(file.globs).ignores(relativePath)
@@ -1401,9 +1273,7 @@ export type ExternalzyMdInclude = {
   parent: string
 }
 
-export function getExternalzyMdIncludes(
-  files: MemoryFileInfo[],
-): ExternalzyMdInclude[] {
+export function getExternalzyMdIncludes(files: MemoryFileInfo[]): ExternalzyMdInclude[] {
   const externals: ExternalzyMdInclude[] = []
   for (const file of files) {
     if (file.type !== 'User' && file.parent && !pathInOriginalCwd(file.path)) {
@@ -1419,10 +1289,7 @@ export function hasExternalzyMdIncludes(files: MemoryFileInfo[]): boolean {
 
 export async function shouldShowzyMdExternalIncludesWarning(): Promise<boolean> {
   const config = getCurrentProjectConfig()
-  if (
-    config.haszyMdExternalIncludesApproved ||
-    config.haszyMdExternalIncludesWarningShown
-  ) {
+  if (config.haszyMdExternalIncludesApproved || config.haszyMdExternalIncludesWarningShown) {
     return false
   }
 
@@ -1441,10 +1308,7 @@ export function isMemoryFilePath(filePath: string): boolean {
   }
 
   // .md files in .zy/rules/ directories
-  if (
-    name.endsWith('.md') &&
-    filePath.includes(`${sep}.zy${sep}rules${sep}`)
-  ) {
+  if (name.endsWith('.md') && filePath.includes(`${sep}.zy${sep}rules${sep}`)) {
     return true
   }
 

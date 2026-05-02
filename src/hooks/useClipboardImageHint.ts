@@ -16,10 +16,7 @@ const HINT_COOLDOWN_MS = 30000
  * @param isFocused - Whether the terminal is currently focused
  * @param enabled - Whether image paste is enabled (onImagePaste is defined)
  */
-export function useClipboardImageHint(
-  isFocused: boolean,
-  enabled: boolean,
-): void {
+export function useClipboardImageHint(isFocused: boolean, enabled: boolean): void {
   const { addNotification } = useNotifications()
   const lastFocusedRef = useRef(isFocused)
   const lastHintTimeRef = useRef(0)

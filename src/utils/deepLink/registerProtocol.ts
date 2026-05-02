@@ -39,11 +39,7 @@ const MACOS_APP_NAME = 'ZY Code URL Handler.app'
 // isProtocolHandlerCurrent (reads them back). Keep the writer and reader
 // in lockstep — drift here means the check returns a perpetual false.
 const MACOS_APP_DIR = path.join(os.homedir(), 'Applications', MACOS_APP_NAME)
-const MACOS_SYMLINK_PATH = path.join(
-  MACOS_APP_DIR,
-  'Contents',
-  'MacOS',
-  'zy',)
+const MACOS_SYMLINK_PATH = path.join(MACOS_APP_DIR, 'Contents', 'MacOS', 'zy')
 function linuxDesktopPath(): string {
   return path.join(getXDGDataHome(), 'applications', DESKTOP_FILE_NAME)
 }
@@ -131,9 +127,7 @@ async function registerMacos(ZyPath: string): Promise<void> {
     '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister'
   await execFileNoThrow(lsregister, ['-R', MACOS_APP_DIR], { useCwd: false })
 
-  logForDebugging(
-    `Registered ${DEEP_LINK_PROTOCOL}:// protocol handler at ${MACOS_APP_DIR}`,
-  )
+  logForDebugging(`Registered ${DEEP_LINK_PROTOCOL}:// protocol handler at ${MACOS_APP_DIR}`)
 }
 
 /**
@@ -173,9 +167,7 @@ MimeType=x-scheme-handler/${DEEP_LINK_PROTOCOL};
     }
   }
 
-  logForDebugging(
-    `Registered ${DEEP_LINK_PROTOCOL}:// protocol handler at ${linuxDesktopPath()}`,
-  )
+  logForDebugging(`Registered ${DEEP_LINK_PROTOCOL}:// protocol handler at ${linuxDesktopPath()}`)
 }
 
 /**
@@ -185,14 +177,7 @@ async function registerWindows(ZyPath: string): Promise<void> {
   for (const args of [
     ['add', WINDOWS_REG_KEY, '/ve', '/d', `URL:${APP_NAME}`, '/f'],
     ['add', WINDOWS_REG_KEY, '/v', 'URL Protocol', '/d', '', '/f'],
-    [
-      'add',
-      WINDOWS_COMMAND_KEY,
-      '/ve',
-      '/d',
-      windowsCommandValue(ZyPath),
-      '/f',
-    ],
+    ['add', WINDOWS_COMMAND_KEY, '/ve', '/d', windowsCommandValue(ZyPath), '/f'],
   ]) {
     const { code } = await execFileNoThrow('reg', args, { useCwd: false })
     if (code !== 0) {
@@ -202,18 +187,14 @@ async function registerWindows(ZyPath: string): Promise<void> {
     }
   }
 
-  logForDebugging(
-    `Registered ${DEEP_LINK_PROTOCOL}:// protocol handler in Windows registry`,
-  )
+  logForDebugging(`Registered ${DEEP_LINK_PROTOCOL}:// protocol handler in Windows registry`)
 }
 
 /**
  * Register the `zy-cli://` protocol handler with the operating system.
  * After registration, clicking a `zy-cli://` link will invoke zy.
  */
-export async function registerProtocolHandler(
-  ZyPath?: string,
-): Promise<void> {
+export async function registerProtocolHandler(ZyPath?: string): Promise<void> {
   const resolved = ZyPath ?? (await resolveZyPath())
 
   switch (process.platform) {
@@ -259,9 +240,7 @@ async function resolveZyPath(): Promise<string> {
  *
  * Any read error (ENOENT, EACCES, reg nonzero) → false → re-register.
  */
-export async function isProtocolHandlerCurrent(
-  ZyPath: string,
-): Promise<boolean> {
+export async function isProtocolHandlerCurrent(ZyPath: string): Promise<boolean> {
   try {
     switch (process.platform) {
       case 'darwin': {
@@ -311,10 +290,7 @@ export async function ensureDeepLinkProtocolRegistered(): Promise<void> {
   // Throttle to once per 24h so a read-only ~/.local/share/applications
   // doesn't generate a failure event on every startup. Marker lives in
   // ~/.zy (per-machine, not synced) rather than ~/.zy.json (can sync).
-  const failureMarkerPath = path.join(
-    getZyConfigHomeDir(),
-    '.deep-link-register-failed',
-  )
+  const failureMarkerPath = path.join(getZyConfigHomeDir(), '.deep-link-register-failed')
   try {
     const stat = await fs.stat(failureMarkerPath)
     if (Date.now() - stat.mtimeMs < FAILURE_BACKOFF_MS) {
@@ -333,8 +309,7 @@ export async function ensureDeepLinkProtocolRegistered(): Promise<void> {
     const code = getErrnoCode(error)
     logEvent('zy_deep_link_registered', {
       success: false,
-      error_code:
-        code as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_code: code as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     logForDebugging(
       `Failed to auto-register deep link protocol handler: ${error instanceof Error ? error.message : String(error)}`,

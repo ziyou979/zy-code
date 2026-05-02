@@ -35,11 +35,7 @@ export function isRunningFromLocalInstallation(): boolean {
  * Write `content` to `path` only if the file does not already exist.
  * Uses O_EXCL ('wx') for atomic create-if-missing.
  */
-async function writeIfMissing(
-  path: string,
-  content: string,
-  mode?: number,
-): Promise<boolean> {
+async function writeIfMissing(path: string, content: string, mode?: number): Promise<boolean> {
   try {
     await writeFile(path, content, { encoding: 'utf8', flag: 'wx', mode })
     return true
@@ -63,11 +59,7 @@ export async function ensureLocalPackageEnvironment(): Promise<boolean> {
     // Create package.json if it doesn't exist
     await writeIfMissing(
       join(localInstallDir, 'package.json'),
-      jsonStringify(
-        { name: 'zy-local', version: '0.0.1', private: true },
-        null,
-        2,
-      ),
+      jsonStringify({ name: 'zy-local', version: '0.0.1', private: true }, null, 2),
     )
 
     // Create the wrapper script if it doesn't exist
@@ -117,15 +109,13 @@ export async function installOrUpdateZyPackage(
     )
 
     if (result.code !== 0) {
-      const error = new Error(
-        `Failed to install Zy CLI package: ${result.stderr}`,
-      )
+      const error = new Error(`Failed to install Zy CLI package: ${result.stderr}`)
       logError(error)
       return result.code === 190 ? 'in_progress' : 'install_failed'
     }
 
     // Set installMethod to 'local' to prevent npm permission warnings
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       installMethod: 'local',
     }))

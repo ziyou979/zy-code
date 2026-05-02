@@ -42,27 +42,18 @@ export function applySettingsChange(
   const updatedRules = loadAllPermissionRulesFromDisk()
   updateHooksConfigSnapshot()
 
-  setAppState(prev => {
-    let newContext = syncPermissionRulesFromDisk(
-      prev.toolPermissionContext,
-      updatedRules,
-    ) as any
+  setAppState((prev) => {
+    let newContext = syncPermissionRulesFromDisk(prev.toolPermissionContext, updatedRules) as any
 
     // Ant-only: re-strip overly broad Bash allow rules after settings sync
-    if (
-      isInternalBuild() &&
-      process.env.ZY_CODE_ENTRYPOINT !== 'local-agent'
-    ) {
+    if (isInternalBuild() && process.env.ZY_CODE_ENTRYPOINT !== 'local-agent') {
       const overlyBroad = findOverlyBroadBashPermissions(updatedRules, [])
       if (overlyBroad.length > 0) {
         newContext = removeDangerousPermissions(newContext, overlyBroad)
       }
     }
 
-    if (
-      newContext.isBypassPermissionsModeAvailable &&
-      isBypassPermissionsModeDisabled()
-    ) {
+    if (newContext.isBypassPermissionsModeAvailable && isBypassPermissionsModeDisabled()) {
       newContext = createDisabledBypassPermissionsContext(newContext)
     }
 
@@ -85,9 +76,7 @@ export function applySettingsChange(
       // prev.settings.effortLevel can be stale (internal writes suppress the
       // watcher that would resync AppState), so effortChanged would
       // be true and we'd wipe a session-scoped value held in effortValue.
-      ...(effortChanged && newEffort !== undefined
-        ? { effortValue: newEffort }
-        : {}),
+      ...(effortChanged && newEffort !== undefined ? { effortValue: newEffort } : {}),
     } as any
   })
 }

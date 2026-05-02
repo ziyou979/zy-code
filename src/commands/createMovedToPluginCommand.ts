@@ -38,10 +38,7 @@ export function createMovedToPluginCommand({
       return name
     },
     source: 'builtin',
-    async getPromptForCommand(
-      args: string,
-      context: ToolUseContext,
-    ): Promise<ContentBlock[]> {
+    async getPromptForCommand(args: string, context: ToolUseContext): Promise<ContentBlock[]> {
       if (isInternalBuild()) {
         return [
           {

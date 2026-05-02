@@ -95,10 +95,9 @@ export async function initUpstreamProxy(opts?: {
 
   const sessionId = process.env.ZY_CODE_REMOTE_SESSION_ID
   if (!sessionId) {
-    logForDebugging(
-      '[upstreamproxy] ZY_CODE_REMOTE_SESSION_ID unset; proxy disabled',
-      { level: 'warn' },
-    )
+    logForDebugging('[upstreamproxy] ZY_CODE_REMOTE_SESSION_ID unset; proxy disabled', {
+      level: 'warn',
+    })
     return state
   }
 
@@ -115,18 +114,10 @@ export async function initUpstreamProxy(opts?: {
   // sessionHandler.ts). getOauthConfig() is wrong here: it keys off
   // USER_TYPE + USE_{LOCAL,STAGING}_OAUTH, none of which the container sets,
   // so it always returned the prod URL and the CA fetch 404'd.
-  const baseUrl =
-    opts?.ccrBaseUrl ??
-    process.env.ANTHROPIC_BASE_URL ??
-    'https://api.anthropic.com'
-  const caBundlePath =
-    opts?.caBundlePath ?? join(homedir(), '.ccr', 'ca-bundle.crt')
+  const baseUrl = opts?.ccrBaseUrl ?? process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com'
+  const caBundlePath = opts?.caBundlePath ?? join(homedir(), '.ccr', 'ca-bundle.crt')
 
-  const caOk = await downloadCaBundle(
-    baseUrl,
-    opts?.systemCaPath ?? SYSTEM_CA_BUNDLE,
-    caBundlePath,
-  )
+  const caOk = await downloadCaBundle(baseUrl, opts?.systemCaPath ?? SYSTEM_CA_BUNDLE, caBundlePath)
   if (!caOk) return state
 
   try {
@@ -236,12 +227,9 @@ function setNonDumpable(): void {
     const PR_SET_DUMPABLE = 4
     const rc = lib.symbols.prctl(PR_SET_DUMPABLE, 0n, 0n, 0n, 0n)
     if (rc !== 0) {
-      logForDebugging(
-        '[upstreamproxy] prctl(PR_SET_DUMPABLE,0) returned nonzero',
-        {
-          level: 'warn',
-        },
-      )
+      logForDebugging('[upstreamproxy] prctl(PR_SET_DUMPABLE,0) returned nonzero', {
+        level: 'warn',
+      })
     }
   } catch (err) {
     logForDebugging(
@@ -264,10 +252,9 @@ async function downloadCaBundle(
       signal: AbortSignal.timeout(5000),
     })
     if (!resp.ok) {
-      logForDebugging(
-        `[upstreamproxy] ca-cert fetch ${resp.status}; proxy disabled`,
-        { level: 'warn' },
-      )
+      logForDebugging(`[upstreamproxy] ca-cert fetch ${resp.status}; proxy disabled`, {
+        level: 'warn',
+      })
       return false
     }
     const ccrCa = await resp.text()

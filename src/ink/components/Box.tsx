@@ -1,5 +1,5 @@
-import '../global.d.ts';
-import React, { type Ref } from 'react';
+import '../global.d.ts'
+import React, { type Ref } from 'react'
 
 declare global {
   namespace JSX {
@@ -8,55 +8,55 @@ declare global {
     }
   }
 }
-import type { Except } from 'type-fest';
-import type { DOMElement } from '../dom.js';
-import type { ClickEvent } from '../events/click-event.js';
-import type { FocusEvent } from '../events/focus-event.js';
-import type { KeyboardEvent } from '../events/keyboard-event.js';
-import type { Styles } from '../styles.js';
-import * as warn from '../warn.js';
+import type { Except } from 'type-fest'
+import type { DOMElement } from '../dom.js'
+import type { ClickEvent } from '../events/click-event.js'
+import type { FocusEvent } from '../events/focus-event.js'
+import type { KeyboardEvent } from '../events/keyboard-event.js'
+import type { Styles } from '../styles.js'
+import * as warn from '../warn.js'
 export type Props = Except<Styles, 'textWrap'> & {
-  children?: React.ReactNode;
-  ref?: Ref<DOMElement>;
+  children?: React.ReactNode
+  ref?: Ref<DOMElement>
   /**
    * Tab 顺序索引。`tabIndex >= 0` 的节点参与 Tab/Shift+Tab 循环；
    * `-1` 表示仅可编程聚焦。
    */
-  tabIndex?: number;
+  tabIndex?: number
   /**
    * 元素挂载时自动聚焦。类似 HTML `autofocus` 属性——FocusManager
    * 在 reconciler 的 `commitMount` 阶段调用 `focus(node)`。
    */
-  autoFocus?: boolean;
+  autoFocus?: boolean
   /**
    * 左键点击时触发（按下 + 释放，无拖拽）。仅在启用鼠标追踪的
    * `<AlternateScreen>` 内有效——否则无作用。事件从最深的命中 Box
    * 向上冒泡到祖先；调用 `event.stopImmediatePropagation()` 可阻止冒泡。
    */
-  onClick?: (event: ClickEvent) => void;
-  onFocus?: (event: FocusEvent) => void;
-  onFocusCapture?: (event: FocusEvent) => void;
-  onBlur?: (event: FocusEvent) => void;
-  onBlurCapture?: (event: FocusEvent) => void;
-  onKeyDown?: (event: KeyboardEvent) => void;
-  onKeyDownCapture?: (event: KeyboardEvent) => void;
+  onClick?: (event: ClickEvent) => void
+  onFocus?: (event: FocusEvent) => void
+  onFocusCapture?: (event: FocusEvent) => void
+  onBlur?: (event: FocusEvent) => void
+  onBlurCapture?: (event: FocusEvent) => void
+  onKeyDown?: (event: KeyboardEvent) => void
+  onKeyDownCapture?: (event: KeyboardEvent) => void
   /**
    * 鼠标移入此 Box 的渲染区域时触发。类似 DOM `mouseenter`，
    * 不会冒泡——在子元素之间移动不会在父元素上重新触发。
    * 仅在启用 mode-1003 鼠标追踪的 `<AlternateScreen>` 内有效。
    */
-  onMouseEnter?: () => void;
+  onMouseEnter?: () => void
   /** 鼠标移出此 Box 的渲染区域时触发。 */
-  onMouseLeave?: () => void;
-};
+  onMouseLeave?: () => void
+}
 
 /**
  * `<Box>` 是构建布局的核心 Ink 组件。类似于浏览器中的 `<div style="display: flex">`。
  */
 function Box({
   children: t1,
-  flexWrap = "nowrap",
-  flexDirection = "row",
+  flexWrap = 'nowrap',
+  flexDirection = 'row',
   flexGrow = 0,
   flexShrink = 1,
   ref: t6,
@@ -73,46 +73,64 @@ function Box({
   onKeyDownCapture: t17,
   ...t18
 }: Props) {
-  const autoFocus = t8;
-  const children = t1;
-  const onBlur = t12;
-  const onBlurCapture = t13;
-  const onClick = t9;
-  const onFocus = t10;
-  const onFocusCapture = t11;
-  const onKeyDown = t16;
-  const onKeyDownCapture = t17;
-  const onMouseEnter = t14;
-  const onMouseLeave = t15;
-  const ref = t6;
-  const style = t18;
-  const tabIndex = t7;
-  warn.ifNotInteger(style.margin, "margin");
-  warn.ifNotInteger(style.marginX, "marginX");
-  warn.ifNotInteger(style.marginY, "marginY");
-  warn.ifNotInteger(style.marginTop, "marginTop");
-  warn.ifNotInteger(style.marginBottom, "marginBottom");
-  warn.ifNotInteger(style.marginLeft, "marginLeft");
-  warn.ifNotInteger(style.marginRight, "marginRight");
-  warn.ifNotInteger(style.padding, "padding");
-  warn.ifNotInteger(style.paddingX, "paddingX");
-  warn.ifNotInteger(style.paddingY, "paddingY");
-  warn.ifNotInteger(style.paddingTop, "paddingTop");
-  warn.ifNotInteger(style.paddingBottom, "paddingBottom");
-  warn.ifNotInteger(style.paddingLeft, "paddingLeft");
-  warn.ifNotInteger(style.paddingRight, "paddingRight");
-  warn.ifNotInteger(style.gap, "gap");
-  warn.ifNotInteger(style.columnGap, "columnGap");
-  warn.ifNotInteger(style.rowGap, "rowGap");
+  const autoFocus = t8
+  const children = t1
+  const onBlur = t12
+  const onBlurCapture = t13
+  const onClick = t9
+  const onFocus = t10
+  const onFocusCapture = t11
+  const onKeyDown = t16
+  const onKeyDownCapture = t17
+  const onMouseEnter = t14
+  const onMouseLeave = t15
+  const ref = t6
+  const style = t18
+  const tabIndex = t7
+  warn.ifNotInteger(style.margin, 'margin')
+  warn.ifNotInteger(style.marginX, 'marginX')
+  warn.ifNotInteger(style.marginY, 'marginY')
+  warn.ifNotInteger(style.marginTop, 'marginTop')
+  warn.ifNotInteger(style.marginBottom, 'marginBottom')
+  warn.ifNotInteger(style.marginLeft, 'marginLeft')
+  warn.ifNotInteger(style.marginRight, 'marginRight')
+  warn.ifNotInteger(style.padding, 'padding')
+  warn.ifNotInteger(style.paddingX, 'paddingX')
+  warn.ifNotInteger(style.paddingY, 'paddingY')
+  warn.ifNotInteger(style.paddingTop, 'paddingTop')
+  warn.ifNotInteger(style.paddingBottom, 'paddingBottom')
+  warn.ifNotInteger(style.paddingLeft, 'paddingLeft')
+  warn.ifNotInteger(style.paddingRight, 'paddingRight')
+  warn.ifNotInteger(style.gap, 'gap')
+  warn.ifNotInteger(style.columnGap, 'columnGap')
+  warn.ifNotInteger(style.rowGap, 'rowGap')
   const InkBox = 'ink-box' as any
-  return <InkBox ref={ref} tabIndex={tabIndex} autoFocus={autoFocus} onClick={onClick} onFocus={onFocus} onFocusCapture={onFocusCapture} onBlur={onBlur} onBlurCapture={onBlurCapture} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onKeyDown={onKeyDown} onKeyDownCapture={onKeyDownCapture} style={{
-    flexWrap,
-    flexDirection,
-    flexGrow,
-    flexShrink,
-    ...style,
-    overflowX: style.overflowX ?? style.overflow ?? "visible",
-    overflowY: style.overflowY ?? style.overflow ?? "visible"
-  }}>{children}</InkBox>;
+  return (
+    <InkBox
+      ref={ref}
+      tabIndex={tabIndex}
+      autoFocus={autoFocus}
+      onClick={onClick}
+      onFocus={onFocus}
+      onFocusCapture={onFocusCapture}
+      onBlur={onBlur}
+      onBlurCapture={onBlurCapture}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onKeyDown={onKeyDown}
+      onKeyDownCapture={onKeyDownCapture}
+      style={{
+        flexWrap,
+        flexDirection,
+        flexGrow,
+        flexShrink,
+        ...style,
+        overflowX: style.overflowX ?? style.overflow ?? 'visible',
+        overflowY: style.overflowY ?? style.overflow ?? 'visible',
+      }}
+    >
+      {children}
+    </InkBox>
+  )
 }
-export default Box;
+export default Box

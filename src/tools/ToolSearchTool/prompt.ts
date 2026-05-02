@@ -10,14 +10,11 @@ import { isInternalBuild } from '../../utils/envUtils.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? (
-        require('../BriefTool/prompt.js') as typeof import('../BriefTool/prompt.js')
-      ).BRIEF_TOOL_NAME
+    ? (require('../BriefTool/prompt.js') as typeof import('../BriefTool/prompt.js')).BRIEF_TOOL_NAME
     : null
 const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
-  ? (
-      require('../SendUserFileTool/prompt.js') as typeof import('../SendUserFileTool/prompt.js')
-    ).SEND_USER_FILE_TOOL_NAME
+  ? (require('../SendUserFileTool/prompt.js') as typeof import('../SendUserFileTool/prompt.js'))
+      .SEND_USER_FILE_TOOL_NAME
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -36,8 +33,7 @@ const PROMPT_HEAD = `Fetches full schema definitions for deferred tools so they 
 // <available-deferred-tools> block (pre-gate behavior).
 function getToolLocationHint(): string {
   const deltaEnabled =
-    isInternalBuild() ||
-    getFeatureValue_CACHED_MAY_BE_STALE('zy_deferred_tool_reminder', false)
+    isInternalBuild() || getFeatureValue_CACHED_MAY_BE_STALE('zy_deferred_tool_reminder', false)
   return deltaEnabled
     ? 'Deferred tools appear by name in <system-reminder> messages.'
     : 'Deferred tools appear by name in <available-deferred-tools> messages.'

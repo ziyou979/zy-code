@@ -78,17 +78,12 @@ async function loadMagicDocsPrompt(): Promise<string> {
 /**
  * Substitute variables in the prompt template using {{variable}} syntax
  */
-function substituteVariables(
-  template: string,
-  variables: Record<string, string>,
-): string {
+function substituteVariables(template: string, variables: Record<string, string>): string {
   // Single-pass replacement avoids two bugs: (1) $ backreference corruption
   // (replacer fn treats $ literally), and (2) double-substitution when user
   // content happens to contain {{varName}} matching a later variable.
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>
-    Object.prototype.hasOwnProperty.call(variables, key)
-      ? variables[key]!
-      : match,
+    Object.prototype.hasOwnProperty.call(variables, key) ? variables[key]! : match,
   )
 }
 

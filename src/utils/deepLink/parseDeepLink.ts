@@ -90,9 +90,7 @@ export function parseDeepLink(uri: string): DeepLinkAction {
       : null
 
   if (!normalized) {
-    throw new Error(
-      `Invalid deep link: expected ${DEEP_LINK_PROTOCOL}:// scheme, got "${uri}"`,
-    )
+    throw new Error(`Invalid deep link: expected ${DEEP_LINK_PROTOCOL}:// scheme, got "${uri}"`)
   }
 
   let url: URL
@@ -112,9 +110,7 @@ export function parseDeepLink(uri: string): DeepLinkAction {
 
   // Validate cwd if present — must be an absolute path
   if (cwd && !cwd.startsWith('/') && !/^[a-zA-Z]:[/\\]/.test(cwd)) {
-    throw new Error(
-      `Invalid cwd in deep link: must be an absolute path, got "${cwd}"`,
-    )
+    throw new Error(`Invalid cwd in deep link: must be an absolute path, got "${cwd}"`)
   }
 
   // Reject control characters in cwd (newlines, etc.) but allow path chars like backslash.
@@ -122,17 +118,13 @@ export function parseDeepLink(uri: string): DeepLinkAction {
     throw new Error('Deep link cwd contains disallowed control characters')
   }
   if (cwd && cwd.length > MAX_CWD_LENGTH) {
-    throw new Error(
-      `Deep link cwd exceeds ${MAX_CWD_LENGTH} characters (got ${cwd.length})`,
-    )
+    throw new Error(`Deep link cwd exceeds ${MAX_CWD_LENGTH} characters (got ${cwd.length})`)
   }
 
   // Validate repo slug format. Resolution happens later (protocolHandler.ts) —
   // this parser stays pure with no config/filesystem access.
   if (repo && !REPO_SLUG_PATTERN.test(repo)) {
-    throw new Error(
-      `Invalid repo in deep link: expected "owner/repo", got "${repo}"`,
-    )
+    throw new Error(`Invalid repo in deep link: expected "owner/repo", got "${repo}"`)
   }
 
   let query: string | undefined

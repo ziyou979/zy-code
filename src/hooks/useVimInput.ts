@@ -35,9 +35,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
   const vimStateRef = React.useRef<VimState>(createInitialVimState())
   const [mode, setMode] = useState<VimMode>('INSERT')
 
-  const persistentRef = React.useRef<PersistentState>(
-    createInitialPersistentState(),
-  )
+  const persistentRef = React.useRef<PersistentState>(createInitialPersistentState())
 
   // inputFilter is applied once at the top of handleVimInput (not here) so
   // vim-handled paths that return without calling textInput.onInput still
@@ -79,10 +77,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
     onModeChange?.('NORMAL')
   }, [onModeChange, textInput, props.value])
 
-  function createOperatorContext(
-    cursor: Cursor,
-    isReplay: boolean = false,
-  ): OperatorContext {
+  function createOperatorContext(cursor: Cursor, isReplay: boolean = false): OperatorContext {
     return {
       cursor,
       text: props.value,
@@ -151,23 +146,11 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         break
 
       case 'operatorFind':
-        executeOperatorFind(
-          change.op,
-          change.find,
-          change.char,
-          change.count,
-          ctx,
-        )
+        executeOperatorFind(change.op, change.find, change.char, change.count, ctx)
         break
 
       case 'operatorTextObj':
-        executeOperatorTextObj(
-          change.op,
-          change.scope,
-          change.objType,
-          change.count,
-          ctx,
-        )
+        executeOperatorTextObj(change.op, change.scope, change.objType, change.count, ctx)
         break
     }
   }
@@ -267,8 +250,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
     else if (key.upArrow) vimInput = 'k'
     else if (key.downArrow) vimInput = 'j'
     else if (expectsMotion && key.backspace) vimInput = 'h'
-    else if (expectsMotion && state.command.type !== 'count' && key.delete)
-      vimInput = 'x'
+    else if (expectsMotion && state.command.type !== 'count' && key.delete) vimInput = 'x'
 
     const result = transition(state.command, vimInput, ctx)
 
@@ -285,11 +267,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       }
     }
 
-    if (
-      input === '?' &&
-      state.mode === 'NORMAL' &&
-      state.command.type === 'idle'
-    ) {
+    if (input === '?' && state.mode === 'NORMAL' && state.command.type === 'idle') {
       props.onChange('?')
     }
   }

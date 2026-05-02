@@ -38,7 +38,7 @@ export function isProviderManagedEnvVar(key: string): boolean {
   const upper = key.toUpperCase()
   return (
     PROVIDER_MANAGED_ENV_VARS.has(upper) ||
-    PROVIDER_MANAGED_ENV_PREFIXES.some(p => upper.startsWith(p))
+    PROVIDER_MANAGED_ENV_PREFIXES.some((p) => upper.startsWith(p))
   )
 }
 

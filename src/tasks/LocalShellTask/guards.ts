@@ -32,10 +32,5 @@ export type LocalShellTaskState = TaskStateBase & {
 }
 
 export function isLocalShellTask(task: unknown): task is LocalShellTaskState {
-  return (
-    typeof task === 'object' &&
-    task !== null &&
-    'type' in task &&
-    task.type === 'local_bash'
-  )
+  return typeof task === 'object' && task !== null && 'type' in task && task.type === 'local_bash'
 }

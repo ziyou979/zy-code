@@ -1,11 +1,7 @@
 import { feature } from 'bun:bundle'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
-import {
-  EDITOR_MODES,
-  NOTIFICATION_CHANNELS,
-  TEAMMATE_MODES,
-} from '../../utils/configConstants.js'
+import { EDITOR_MODES, NOTIFICATION_CHANNELS, TEAMMATE_MODES } from '../../utils/configConstants.js'
 import { getModelOptions } from '../../utils/model/modelOptions.js'
 import { validateModel } from '../../utils/model/validateModel.js'
 import { THEME_NAMES, THEME_SETTINGS } from '../../utils/theme.js'
@@ -81,8 +77,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
   showTurnDuration: {
     source: 'global',
     type: 'boolean',
-    description:
-      'Show turn duration message after responses (e.g., "Cooked for 1m 6s")',
+    description: 'Show turn duration message after responses (e.g., "Cooked for 1m 6s")',
   },
   terminalProgressBarEnabled: {
     source: 'global',
@@ -102,14 +97,14 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     getOptions: () => {
       try {
         return getModelOptions()
-          .filter(o => o.value !== null)
-          .map(o => o.value as string)
+          .filter((o) => o.value !== null)
+          .map((o) => o.value as string)
       } catch {
         return ['advanced', 'standard', 'compact']
       }
     },
-    validateOnWrite: v => validateModel(String(v)),
-    formatOnRead: v => (v === null ? 'default' : v),
+    validateOnWrite: (v) => validateModel(String(v)),
+    formatOnRead: (v) => (v === null ? 'default' : v),
   },
   mainLoopModel: {
     source: 'settings',
@@ -164,8 +159,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
         classifierPermissionsEnabled: {
           source: 'settings' as const,
           type: 'boolean' as const,
-          description:
-            'Enable AI-based classification for Bash(prompt:...) permission rules',
+          description: 'Enable AI-based classification for Bash(prompt:...) permission rules',
         },
       }
     : {}),
@@ -183,8 +177,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
         remoteControlAtStartup: {
           source: 'global' as const,
           type: 'boolean' as const,
-          description:
-            'Enable Remote Control for all sessions (true | false | default)',
+          description: 'Enable Remote Control for all sessions (true | false | default)',
           formatOnRead: () => getRemoteControlAtStartup(),
         },
       }

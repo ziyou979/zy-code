@@ -38,10 +38,7 @@ export function useAnimationTimer(intervalMs: number): number {
  * 这个 hook 依赖单个共享时钟，所有定时器合并为一次唤醒。
  * 传入 `null` 作为 intervalMs 可暂停。
  */
-export function useInterval(
-  callback: () => void,
-  intervalMs: number | null,
-): void {
+export function useInterval(callback: () => void, intervalMs: number | null): void {
   const callbackRef = useRef(callback)
   callbackRef.current = callback
 

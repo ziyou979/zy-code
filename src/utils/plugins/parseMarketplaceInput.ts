@@ -29,9 +29,7 @@ export async function parseMarketplaceInput(
   // Handle git SSH URLs with any valid username (not just 'git')
   // Supports: user@host:path, user@host:path.git, and with #ref suffix
   // Username can contain: alphanumeric, dots, underscores, hyphens
-  const sshMatch = trimmed.match(
-    /^([a-zA-Z0-9._-]+@[^:]+:.+?(?:\.git)?)(#(.+))?$/,
-  )
+  const sshMatch = trimmed.match(/^([a-zA-Z0-9._-]+@[^:]+:.+?(?:\.git)?)(#(.+))?$/)
   if (sshMatch?.[1]) {
     const url = sshMatch[1]
     const ref = sshMatch[3]
@@ -53,10 +51,7 @@ export async function parseMarketplaceInput(
     // through to source:'url' below, which tries to fetch it as a raw
     // marketplace.json — the HTML response parses as "expected object,
     // received string". (gh-31256 / CC-299)
-    if (
-      urlWithoutFragment.endsWith('.git') ||
-      urlWithoutFragment.includes('/_git/')
-    ) {
+    if (urlWithoutFragment.endsWith('.git') || urlWithoutFragment.includes('/_git/')) {
       return ref
         ? { source: 'git', url: urlWithoutFragment, ref }
         : { source: 'git', url: urlWithoutFragment }
@@ -79,9 +74,7 @@ export async function parseMarketplaceInput(
         const gitUrl = urlWithoutFragment.endsWith('.git')
           ? urlWithoutFragment
           : `${urlWithoutFragment}.git`
-        return ref
-          ? { source: 'git', url: gitUrl, ref }
-          : { source: 'git', url: gitUrl }
+        return ref ? { source: 'git', url: gitUrl, ref } : { source: 'git', url: gitUrl }
       }
     }
     return { source: 'url', url: urlWithoutFragment }
@@ -93,9 +86,7 @@ export async function parseMarketplaceInput(
   const isWindows = process.platform === 'win32'
   const isWindowsPath =
     isWindows &&
-    (trimmed.startsWith('.\\') ||
-      trimmed.startsWith('..\\') ||
-      /^[a-zA-Z]:[/\\]/.test(trimmed))
+    (trimmed.startsWith('.\\') || trimmed.startsWith('..\\') || /^[a-zA-Z]:[/\\]/.test(trimmed))
   if (
     trimmed.startsWith('./') ||
     trimmed.startsWith('../') ||

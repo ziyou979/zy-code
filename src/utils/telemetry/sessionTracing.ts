@@ -127,8 +127,7 @@ function ensureCleanupInterval(): void {
 export function isEnhancedTelemetryEnabled(): boolean {
   if (feature('ENHANCED_TELEMETRY_BETA')) {
     const env =
-      process.env.ZY_CODE_ENHANCED_TELEMETRY_BETA ??
-      process.env.ENABLE_ENHANCED_TELEMETRY_BETA
+      process.env.ZY_CODE_ENHANCED_TELEMETRY_BETA ?? process.env.ENABLE_ENHANCED_TELEMETRY_BETA
     if (isEnvTruthy(env)) {
       return true
     }
@@ -136,8 +135,7 @@ export function isEnhancedTelemetryEnabled(): boolean {
       return false
     }
     return (
-isInternalBuild() ||
-      getFeatureValue_CACHED_MAY_BE_STALE('enhanced_telemetry_beta', false)
+      isInternalBuild() || getFeatureValue_CACHED_MAY_BE_STALE('enhanced_telemetry_beta', false)
     )
   }
   return false
@@ -201,9 +199,7 @@ export function startInteractionSpan(userPrompt: string): Span {
   }
 
   const tracer = getTracer()
-  const isUserPromptLoggingEnabled = isEnvTruthy(
-    process.env.OTEL_LOG_USER_PROMPTS,
-  )
+  const isUserPromptLoggingEnabled = isEnvTruthy(process.env.OTEL_LOG_USER_PROMPTS)
   const promptToLog = isUserPromptLoggingEnabled ? userPrompt : '<REDACTED>'
 
   interactionSequence++
@@ -385,12 +381,9 @@ export function endLLMRequestSpan(
     // Legacy fallback: find the most recent llm_request span
     // WARNING: This can cause mismatched responses when multiple requests are in flight
     llmSpanContext = Array.from(activeSpans.values())
-      .findLast(r => {
+      .findLast((r) => {
         const ctx = r.deref()
-        return (
-          ctx?.attributes['span.type'] === 'llm_request' ||
-          ctx?.attributes['model']
-        )
+        return ctx?.attributes['span.type'] === 'llm_request' || ctx?.attributes['model']
       })
       ?.deref()
   }
@@ -430,25 +423,19 @@ export function endLLMRequestSpan(
   }
 
   if (metadata) {
-    if (metadata.inputTokens !== undefined)
-      endAttributes['input_tokens'] = metadata.inputTokens
-    if (metadata.outputTokens !== undefined)
-      endAttributes['output_tokens'] = metadata.outputTokens
+    if (metadata.inputTokens !== undefined) endAttributes['input_tokens'] = metadata.inputTokens
+    if (metadata.outputTokens !== undefined) endAttributes['output_tokens'] = metadata.outputTokens
     if (metadata.cacheReadTokens !== undefined)
       endAttributes['cache_read_tokens'] = metadata.cacheReadTokens
     if (metadata.cacheCreationTokens !== undefined)
       endAttributes['cache_creation_tokens'] = metadata.cacheCreationTokens
-    if (metadata.success !== undefined)
-      endAttributes['success'] = metadata.success
-    if (metadata.statusCode !== undefined)
-      endAttributes['status_code'] = metadata.statusCode
+    if (metadata.success !== undefined) endAttributes['success'] = metadata.success
+    if (metadata.statusCode !== undefined) endAttributes['status_code'] = metadata.statusCode
     if (metadata.error !== undefined) endAttributes['error'] = metadata.error
-    if (metadata.attempt !== undefined)
-      endAttributes['attempt'] = metadata.attempt
+    if (metadata.attempt !== undefined) endAttributes['attempt'] = metadata.attempt
     if (metadata.hasToolCall !== undefined)
       endAttributes['response.has_tool_call'] = metadata.hasToolCall
-    if (metadata.ttftMs !== undefined)
-      endAttributes['ttft_ms'] = metadata.ttftMs
+    if (metadata.ttftMs !== undefined) endAttributes['ttft_ms'] = metadata.ttftMs
 
     // Add experimental response attributes (model_output, thinking_output)
     addBetaLLMResponseAttributes(endAttributes, metadata)
@@ -554,11 +541,7 @@ export function startToolBlockedOnUserSpan(): Span {
   const ctx = parentSpanCtx
     ? trace.setSpan(otelContext.active(), parentSpanCtx.span)
     : otelContext.active()
-  const span = tracer.startSpan(
-    'zy_code.tool.blocked_on_user',
-    { attributes },
-    ctx,
-  )
+  const span = tracer.startSpan('zy_code.tool.blocked_on_user', { attributes }, ctx)
 
   const spanId = getSpanId(span)
   const spanContextObj: SpanContext = {
@@ -573,14 +556,9 @@ export function startToolBlockedOnUserSpan(): Span {
   return span
 }
 
-export function endToolBlockedOnUserSpan(
-  decision?: string,
-  source?: string,
-): void {
+export function endToolBlockedOnUserSpan(decision?: string, source?: string): void {
   const blockedSpanContext = Array.from(activeSpans.values())
-    .findLast(
-      r => r.deref()?.attributes['span.type'] === 'tool.blocked_on_user',
-    )
+    .findLast((r) => r.deref()?.attributes['span.type'] === 'tool.blocked_on_user')
     ?.deref()
 
   if (!blockedSpanContext) {
@@ -635,11 +613,7 @@ export function startToolExecutionSpan(): Span {
   const ctx = parentSpanCtx
     ? trace.setSpan(otelContext.active(), parentSpanCtx.span)
     : otelContext.active()
-  const span = tracer.startSpan(
-    'zy_code.tool.execution',
-    { attributes },
-    ctx,
-  )
+  const span = tracer.startSpan('zy_code.tool.execution', { attributes }, ctx)
 
   const spanId = getSpanId(span)
   const spanContextObj: SpanContext = {
@@ -653,16 +627,13 @@ export function startToolExecutionSpan(): Span {
   return span
 }
 
-export function endToolExecutionSpan(metadata?: {
-  success?: boolean
-  error?: string
-}): void {
+export function endToolExecutionSpan(metadata?: { success?: boolean; error?: string }): void {
   if (!isAnyTracingEnabled()) {
     return
   }
 
   const executionSpanContext = Array.from(activeSpans.values())
-    .findLast(r => r.deref()?.attributes['span.type'] === 'tool.execution')
+    .findLast((r) => r.deref()?.attributes['span.type'] === 'tool.execution')
     ?.deref()
 
   if (!executionSpanContext) {
@@ -779,9 +750,7 @@ export function getCurrentSpan(): Span | null {
     return null
   }
 
-  return (
-    toolContext.getStore()?.span ?? interactionContext.getStore()?.span ?? null
-  )
+  return toolContext.getStore()?.span ?? interactionContext.getStore()?.span ?? null
 }
 
 export async function executeInSpan<T>(
@@ -909,14 +878,11 @@ export function endHookSpan(
   }
 
   if (metadata) {
-    if (metadata.numSuccess !== undefined)
-      endAttributes['num_success'] = metadata.numSuccess
-    if (metadata.numBlocking !== undefined)
-      endAttributes['num_blocking'] = metadata.numBlocking
+    if (metadata.numSuccess !== undefined) endAttributes['num_success'] = metadata.numSuccess
+    if (metadata.numBlocking !== undefined) endAttributes['num_blocking'] = metadata.numBlocking
     if (metadata.numNonBlockingError !== undefined)
       endAttributes['num_non_blocking_error'] = metadata.numNonBlockingError
-    if (metadata.numCancelled !== undefined)
-      endAttributes['num_cancelled'] = metadata.numCancelled
+    if (metadata.numCancelled !== undefined) endAttributes['num_cancelled'] = metadata.numCancelled
   }
 
   spanContext.span.setAttributes(endAttributes)

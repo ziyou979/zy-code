@@ -9,10 +9,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import {
-  readClientSecret,
-  saveMcpClientSecret,
-} from '../../services/mcp/auth.js'
+import { readClientSecret, saveMcpClientSecret } from '../../services/mcp/auth.js'
 import { addMcpConfig } from '../../services/mcp/config.js'
 import {
   describeMcpConfigFilePath,
@@ -20,10 +17,7 @@ import {
   ensureTransport,
   parseHeaders,
 } from '../../services/mcp/utils.js'
-import {
-  getXaaIdpSettings,
-  isXaaEnabled,
-} from '../../services/mcp/xaaIdpLogin.js'
+import { getXaaIdpSettings, isXaaEnabled } from '../../services/mcp/xaaIdpLogin.js'
 import { parseEnvVars } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
@@ -45,28 +39,18 @@ export function registerMcpAddCommand(mcp: Command): void {
         '  # Add stdio server with subprocess flags:\n' +
         '  zy mcp add my-server -- my-command --some-flag arg1',
     )
-    .option(
-      '-s, --scope <scope>',
-      'Configuration scope (local, user, or project)',
-      'local',
-    )
+    .option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local')
     .option(
       '-t, --transport <transport>',
       'Transport type (stdio, sse, http). Defaults to stdio if not specified.',
     )
-    .option(
-      '-e, --env <env...>',
-      'Set environment variables (e.g. -e KEY=value)',
-    )
+    .option('-e, --env <env...>', 'Set environment variables (e.g. -e KEY=value)')
     .option(
       '-H, --header <header...>',
       'Set WebSocket headers (e.g. -H "X-Api-Key: abc123" -H "X-Custom: value")',
     )
     .option('--client-id <clientId>', 'OAuth client ID for HTTP/SSE servers')
-    .option(
-      '--client-secret',
-      'Prompt for OAuth client secret (or set MCP_CLIENT_SECRET env var)',
-    )
+    .option('--client-secret', 'Prompt for OAuth client secret (or set MCP_CLIENT_SECRET env var)')
     .option(
       '--callback-port <port>',
       'Fixed port for OAuth callback (for servers requiring pre-registered redirect URIs)',
@@ -86,8 +70,7 @@ export function registerMcpAddCommand(mcp: Command): void {
       // If no name is provided, error
       if (!name) {
         cliError(
-          'Error: Server name is required.\n' +
-            'Usage: zy mcp add <name> <command> [args...]',
+          'Error: Server name is required.\n' + 'Usage: zy mcp add <name> <command> [args...]',
         )
       } else if (!actualCommand) {
         cliError(
@@ -102,9 +85,7 @@ export function registerMcpAddCommand(mcp: Command): void {
 
         // XAA fail-fast: validate at add-time, not auth-time.
         if (options.xaa && !isXaaEnabled()) {
-          cliError(
-            'Error: --xaa requires ZY_CODE_ENABLE_XAA=1 in your environment',
-          )
+          cliError('Error: --xaa requires ZY_CODE_ENABLE_XAA=1 in your environment')
         }
         const xaa = Boolean(options.xaa)
         if (xaa) {
@@ -112,9 +93,7 @@ export function registerMcpAddCommand(mcp: Command): void {
           if (!options.clientId) missing.push('--client-id')
           if (!options.clientSecret) missing.push('--client-secret')
           if (!getXaaIdpSettings()) {
-            missing.push(
-              "'zy mcp xaa setup' (settings.xaaIdp not configured)",
-            )
+            missing.push("'zy mcp xaa setup' (settings.xaaIdp not configured)")
           }
           if (missing.length) {
             cliError(`Error: --xaa requires: ${missing.join(', ')}`)
@@ -134,12 +113,9 @@ export function registerMcpAddCommand(mcp: Command): void {
 
         logEvent('zy_mcp_add', {
           type: transport as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          scope:
-            scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          source:
-            'command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          transport:
-            transport as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          scope: scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          source: 'command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          transport: transport as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           transportExplicit: transportExplicit,
           looksLikeUrl: looksLikeUrl,
         })
@@ -149,13 +125,9 @@ export function registerMcpAddCommand(mcp: Command): void {
             cliError('Error: URL is required for SSE transport.')
           }
 
-          const headers = options.header
-            ? parseHeaders(options.header)
-            : undefined
+          const headers = options.header ? parseHeaders(options.header) : undefined
 
-          const callbackPort = options.callbackPort
-            ? parseInt(options.callbackPort, 10)
-            : undefined
+          const callbackPort = options.callbackPort ? parseInt(options.callbackPort, 10) : undefined
           const oauth =
             options.clientId || callbackPort || xaa
               ? {
@@ -166,9 +138,7 @@ export function registerMcpAddCommand(mcp: Command): void {
               : undefined
 
           const clientSecret =
-            options.clientSecret && options.clientId
-              ? await readClientSecret()
-              : undefined
+            options.clientSecret && options.clientId ? await readClientSecret() : undefined
 
           const serverConfig = {
             type: 'sse' as const,
@@ -186,22 +156,16 @@ export function registerMcpAddCommand(mcp: Command): void {
             `Added SSE MCP server ${name} with URL: ${actualCommand} to ${scope} config\n`,
           )
           if (headers) {
-            process.stdout.write(
-              `Headers: ${jsonStringify(headers, null, 2)}\n`,
-            )
+            process.stdout.write(`Headers: ${jsonStringify(headers, null, 2)}\n`)
           }
         } else if (transport === 'http') {
           if (!actualCommand) {
             cliError('Error: URL is required for HTTP transport.')
           }
 
-          const headers = options.header
-            ? parseHeaders(options.header)
-            : undefined
+          const headers = options.header ? parseHeaders(options.header) : undefined
 
-          const callbackPort = options.callbackPort
-            ? parseInt(options.callbackPort, 10)
-            : undefined
+          const callbackPort = options.callbackPort ? parseInt(options.callbackPort, 10) : undefined
           const oauth =
             options.clientId || callbackPort || xaa
               ? {
@@ -212,9 +176,7 @@ export function registerMcpAddCommand(mcp: Command): void {
               : undefined
 
           const clientSecret =
-            options.clientSecret && options.clientId
-              ? await readClientSecret()
-              : undefined
+            options.clientSecret && options.clientId ? await readClientSecret() : undefined
 
           const serverConfig = {
             type: 'http' as const,
@@ -232,17 +194,10 @@ export function registerMcpAddCommand(mcp: Command): void {
             `Added HTTP MCP server ${name} with URL: ${actualCommand} to ${scope} config\n`,
           )
           if (headers) {
-            process.stdout.write(
-              `Headers: ${jsonStringify(headers, null, 2)}\n`,
-            )
+            process.stdout.write(`Headers: ${jsonStringify(headers, null, 2)}\n`)
           }
         } else {
-          if (
-            options.clientId ||
-            options.clientSecret ||
-            options.callbackPort ||
-            options.xaa
-          ) {
+          if (options.clientId || options.clientSecret || options.callbackPort || options.xaa) {
             process.stderr.write(
               `Warning: --client-id, --client-secret, --callback-port, and --xaa are only supported for HTTP/SSE transports and will be ignored for stdio.\n`,
             )

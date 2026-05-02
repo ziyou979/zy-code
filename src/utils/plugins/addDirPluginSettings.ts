@@ -10,14 +10,9 @@ import { join } from 'path'
 import type { z } from 'zod/v4'
 import { getAdditionalDirectoriesForzyMd } from '../../bootstrap/state.js'
 import { parseSettingsFile } from '../settings/settings.js'
-import type {
-  ExtraKnownMarketplaceSchema,
-  SettingsJson,
-} from '../settings/types.js'
+import type { ExtraKnownMarketplaceSchema, SettingsJson } from '../settings/types.js'
 
-type ExtraKnownMarketplace = z.infer<
-  ReturnType<typeof ExtraKnownMarketplaceSchema>
->
+type ExtraKnownMarketplace = z.infer<ReturnType<typeof ExtraKnownMarketplaceSchema>>
 
 const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
 
@@ -31,9 +26,7 @@ const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
  * This has the lowest priority — callers must spread their standard settings
  * on top to let user/project/local/flag/policy override.
  */
-export function getAddDirEnabledPlugins(): NonNullable<
-  SettingsJson['enabledPlugins']
-> {
+export function getAddDirEnabledPlugins(): NonNullable<SettingsJson['enabledPlugins']> {
   const result: NonNullable<SettingsJson['enabledPlugins']> = {}
   for (const dir of getAdditionalDirectoriesForzyMd()) {
     for (const file of SETTINGS_FILES) {
@@ -53,10 +46,7 @@ export function getAddDirEnabledPlugins(): NonNullable<
  * Same priority rules as getAddDirEnabledPlugins: settings.local.json wins
  * within each dir, and callers spread standard settings on top.
  */
-export function getAddDirExtraMarketplaces(): Record<
-  string,
-  ExtraKnownMarketplace
-> {
+export function getAddDirExtraMarketplaces(): Record<string, ExtraKnownMarketplace> {
   const result: Record<string, ExtraKnownMarketplace> = {}
   for (const dir of getAdditionalDirectoriesForzyMd()) {
     for (const file of SETTINGS_FILES) {

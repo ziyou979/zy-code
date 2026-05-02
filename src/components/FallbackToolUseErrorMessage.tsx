@@ -1,48 +1,75 @@
-import type { ToolResultBlock } from '../types/llm.js';
-import * as React from 'react';
-import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js';
-import { extractTag } from 'src/utils/messages.js';
-import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js';
-import { Box, Text } from '../ink.js';
-import { tSync } from '../i18n/index.js';
-import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
-import { countCharInString } from '../utils/stringUtils.js';
-import { MessageResponse } from './MessageResponse.js';
-const MAX_RENDERED_LINES = 10;
+import type { ToolResultBlock } from '../types/llm.js'
+import * as React from 'react'
+import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js'
+import { extractTag } from 'src/utils/messages.js'
+import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js'
+import { Box, Text } from '../ink.js'
+import { tSync } from '../i18n/index.js'
+import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
+import { countCharInString } from '../utils/stringUtils.js'
+import { MessageResponse } from './MessageResponse.js'
+const MAX_RENDERED_LINES = 10
 type Props = {
-  result: ToolResultBlock['content'];
-  verbose: boolean;
-};
-export function FallbackToolUseErrorMessage({
-  result,
-  verbose
-}: Props) {
-  const transcriptShortcut = useShortcutDisplay("app:toggleTranscript", "Global", "ctrl+o");
-  let error;
-  if (typeof result !== "string") {
-    error = tSync('fallbackToolError.executionFailed');
+  result: ToolResultBlock['content']
+  verbose: boolean
+}
+export function FallbackToolUseErrorMessage({ result, verbose }: Props) {
+  const transcriptShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
+  let error
+  if (typeof result !== 'string') {
+    error = tSync('fallbackToolError.executionFailed')
   } else {
-    const extractedError = extractTag(result, "tool_use_error") ?? result;
-    const withoutSandboxViolations = removeSandboxViolationTags(extractedError);
-    const withoutErrorTags = withoutSandboxViolations.replace(/<\/?error>/g, "");
-    const trimmed = withoutErrorTags.trim();
-    if (!verbose && trimmed.includes("InputValidationError: ")) {
-      error = tSync('fallbackToolError.invalidParams');
+    const extractedError = extractTag(result, 'tool_use_error') ?? result
+    const withoutSandboxViolations = removeSandboxViolationTags(extractedError)
+    const withoutErrorTags = withoutSandboxViolations.replace(/<\/?error>/g, '')
+    const trimmed = withoutErrorTags.trim()
+    if (!verbose && trimmed.includes('InputValidationError: ')) {
+      error = tSync('fallbackToolError.invalidParams')
     } else {
-      if (trimmed.startsWith("Error: ") || trimmed.startsWith("Cancelled: ")) {
-        error = trimmed;
+      if (trimmed.startsWith('Error: ') || trimmed.startsWith('Cancelled: ')) {
+        error = trimmed
       } else {
-        error = `Error: ${trimmed}`;
+        error = `Error: ${trimmed}`
       }
     }
   }
-  const T0 = Text;
-  const T1 = Box;
-  const T2 = MessageResponse;
-  const plusLines = countCharInString(error, "\n") + 1 - MAX_RENDERED_LINES;
-  const t2 = stripUnderlineAnsi(verbose ? error : error.split("\n").slice(0, MAX_RENDERED_LINES).join("\n"));
-  return <T2>{<T1 flexDirection={"column"}>{<T0 color={"error"}>{t2}</T0>}{!verbose && plusLines > 0 && <Box><Text dimColor={true}>… +{plusLines} {plusLines === 1 ? tSync('fallbackToolError.lineSingular') : tSync('fallbackToolError.linePlural')} (</Text><Text dimColor={true} bold={true}>{transcriptShortcut}</Text><Text> </Text><Text dimColor={true}>{tSync('fallbackToolError.moreLines', {
-            n: plusLines,
-            shortcut: transcriptShortcut
-          }).split(' ')[0]}</Text></Box>}</T1>}</T2>;
+  const T0 = Text
+  const T1 = Box
+  const T2 = MessageResponse
+  const plusLines = countCharInString(error, '\n') + 1 - MAX_RENDERED_LINES
+  const t2 = stripUnderlineAnsi(
+    verbose ? error : error.split('\n').slice(0, MAX_RENDERED_LINES).join('\n'),
+  )
+  return (
+    <T2>
+      {
+        <T1 flexDirection={'column'}>
+          {<T0 color={'error'}>{t2}</T0>}
+          {!verbose && plusLines > 0 && (
+            <Box>
+              <Text dimColor={true}>
+                … +{plusLines}{' '}
+                {plusLines === 1
+                  ? tSync('fallbackToolError.lineSingular')
+                  : tSync('fallbackToolError.linePlural')}{' '}
+                (
+              </Text>
+              <Text dimColor={true} bold={true}>
+                {transcriptShortcut}
+              </Text>
+              <Text> </Text>
+              <Text dimColor={true}>
+                {
+                  tSync('fallbackToolError.moreLines', {
+                    n: plusLines,
+                    shortcut: transcriptShortcut,
+                  }).split(' ')[0]
+                }
+              </Text>
+            </Box>
+          )}
+        </T1>
+      }
+    </T2>
+  )
 }

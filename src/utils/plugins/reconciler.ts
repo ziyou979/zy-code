@@ -111,9 +111,7 @@ export type ReconcileResult = {
  * Make known_marketplaces.json consistent with declared intent.
  * Idempotent. Additive only (never deletes). Does not touch AppState.
  */
-export async function reconcileMarketplaces(
-  opts?: ReconcileOptions,
-): Promise<ReconcileResult> {
+export async function reconcileMarketplaces(opts?: ReconcileOptions): Promise<ReconcileResult> {
   const declared = getDeclaredMarketplaces()
   if (Object.keys(declared).length === 0) {
     return { installed: [], updated: [], failed: [], upToDate: [], skipped: [] }
@@ -191,7 +189,7 @@ export async function reconcileMarketplaces(
   }
 
   logForDebugging(
-    `[reconcile] ${toProcess.length} marketplace(s): ${toProcess.map(w => `${w.name}(${w.action})`).join(', ')}`,
+    `[reconcile] ${toProcess.length} marketplace(s): ${toProcess.map((w) => `${w.name}(${w.action})`).join(', ')}`,
   )
 
   const installed: string[] = []
@@ -246,14 +244,8 @@ export async function reconcileMarketplaces(
  * its own absolute path, and deleting the worktree leaves a dead
  * installLocation. The canonical root is stable across all worktrees.
  */
-function normalizeSource(
-  source: MarketplaceSource,
-  projectRoot?: string,
-): MarketplaceSource {
-  if (
-    (source.source === 'directory' || source.source === 'file') &&
-    !isAbsolute(source.path)
-  ) {
+function normalizeSource(source: MarketplaceSource, projectRoot?: string): MarketplaceSource {
+  if ((source.source === 'directory' || source.source === 'file') && !isAbsolute(source.path)) {
     const base = projectRoot ?? getOriginalCwd()
     const canonicalRoot = findCanonicalGitRoot(base)
     return {

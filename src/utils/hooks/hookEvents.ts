@@ -48,19 +48,14 @@ export type HookResponseEvent = {
   outcome: 'success' | 'error' | 'cancelled'
 }
 
-export type HookExecutionEvent =
-  | HookStartedEvent
-  | HookProgressEvent
-  | HookResponseEvent
+export type HookExecutionEvent = HookStartedEvent | HookProgressEvent | HookResponseEvent
 export type HookEventHandler = (event: HookExecutionEvent) => void
 
 const pendingEvents: HookExecutionEvent[] = []
 let eventHandler: HookEventHandler | null = null
 let allHookEventsEnabled = false
 
-export function registerHookEventHandler(
-  handler: HookEventHandler | null,
-): void {
+export function registerHookEventHandler(handler: HookEventHandler | null): void {
   eventHandler = handler
   if (handler && pendingEvents.length > 0) {
     for (const event of pendingEvents.splice(0)) {
@@ -84,17 +79,10 @@ function shouldEmit(hookEvent: string): boolean {
   if ((ALWAYS_EMITTED_HOOK_EVENTS as readonly string[]).includes(hookEvent)) {
     return true
   }
-  return (
-    allHookEventsEnabled &&
-    (HOOK_EVENTS as readonly string[]).includes(hookEvent)
-  )
+  return allHookEventsEnabled && (HOOK_EVENTS as readonly string[]).includes(hookEvent)
 }
 
-export function emitHookStarted(
-  hookId: string,
-  hookName: string,
-  hookEvent: string,
-): void {
+export function emitHookStarted(hookId: string, hookName: string, hookEvent: string): void {
   if (!shouldEmit(hookEvent)) return
 
   emit({
@@ -163,9 +151,7 @@ export function emitHookResponse(data: {
   // Always log full hook output to debug log for verbose mode debugging
   const outputToLog = data.stdout || data.stderr || data.output
   if (outputToLog) {
-    logForDebugging(
-      `Hook ${data.hookName} (${data.hookEvent}) ${data.outcome}:\n${outputToLog}`,
-    )
+    logForDebugging(`Hook ${data.hookName} (${data.hookEvent}) ${data.outcome}:\n${outputToLog}`)
   }
 
   if (!shouldEmit(data.hookEvent)) return

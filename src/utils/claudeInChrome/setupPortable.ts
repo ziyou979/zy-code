@@ -19,14 +19,7 @@ function getExtensionIds(): string[] {
 }
 
 // Must match ChromiumBrowser from common.ts
-export type ChromiumBrowser =
-  | 'chrome'
-  | 'brave'
-  | 'arc'
-  | 'chromium'
-  | 'edge'
-  | 'vivaldi'
-  | 'opera'
+export type ChromiumBrowser = 'chrome' | 'brave' | 'arc' | 'chromium' | 'edge' | 'vivaldi' | 'opera'
 
 export type BrowserPath = {
   browser: ChromiumBrowser
@@ -174,33 +167,22 @@ export async function detectExtensionInstallationPortable(
     }
 
     const profileDirs = browserProfileEntries
-      .filter(entry => entry.isDirectory())
-      .filter(
-        entry => entry.name === 'Default' || entry.name.startsWith('Profile '),
-      )
-      .map(entry => entry.name)
+      .filter((entry) => entry.isDirectory())
+      .filter((entry) => entry.name === 'Default' || entry.name.startsWith('Profile '))
+      .map((entry) => entry.name)
 
     if (profileDirs.length > 0) {
-      log?.(
-        `[Claude in Chrome] Found ${browser} profiles: ${profileDirs.join(', ')}`,
-      )
+      log?.(`[Claude in Chrome] Found ${browser} profiles: ${profileDirs.join(', ')}`)
     }
 
     // Check each profile for any of the extension IDs
     for (const profile of profileDirs) {
       for (const extensionId of extensionIds) {
-        const extensionPath = join(
-          browserBasePath,
-          profile,
-          'Extensions',
-          extensionId,
-        )
+        const extensionPath = join(browserBasePath, profile, 'Extensions', extensionId)
 
         try {
           await readdir(extensionPath)
-          log?.(
-            `[Claude in Chrome] Extension ${extensionId} found in ${browser} ${profile}`,
-          )
+          log?.(`[Claude in Chrome] Extension ${extensionId} found in ${browser} ${profile}`)
           return { isInstalled: true, browser }
         } catch {
           // Extension not found in this profile, continue checking

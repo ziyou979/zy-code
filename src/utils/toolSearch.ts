@@ -13,11 +13,7 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import type { Tool } from '../Tool.js'
-import {
-  type ToolPermissionContext,
-  type Tools,
-  toolMatchesName,
-} from '../Tool.js'
+import { type ToolPermissionContext, type Tools, toolMatchesName } from '../Tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import {
   formatDeferredToolLine,
@@ -25,19 +21,13 @@ import {
   TOOL_SEARCH_TOOL_NAME,
 } from '../tools/ToolSearchTool/prompt.js'
 import type { Message } from '../types/message.js'
-import {
-  countToolDefinitionTokens,
-  TOOL_TOKEN_COUNT_OVERHEAD,
-} from './analyzeContext.js'
+import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from './analyzeContext.js'
 import { count } from './array.js'
 import { getMergedBetas } from './betas.js'
 import { getContextWindowForModel } from './context.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-} from './model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl } from './model/providers.js'
 import { isInternalBuild } from './envUtils.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
@@ -128,7 +118,7 @@ const getDeferredToolTokenCount = memoize(
     agents: AgentDefinition[],
     model: string,
   ): Promise<number | null> => {
-    const deferredTools = tools.filter(t => isDeferredTool(t))
+    const deferredTools = tools.filter((t) => isDeferredTool(t))
     if (deferredTools.length === 0) return 0
 
     try {
@@ -146,8 +136,8 @@ const getDeferredToolTokenCount = memoize(
   },
   (tools: Tools) =>
     tools
-      .filter(t => isDeferredTool(t))
-      .map(t => t.name)
+      .filter((t) => isDeferredTool(t))
+      .map((t) => t.name)
       .join(','),
 )
 
@@ -327,10 +317,8 @@ export function isToolSearchEnabledOptimistic(): boolean {
  * @param tools Array of tools with a 'name' property
  * @returns true if ToolSearchTool is in the tools list, false otherwise
  */
-export function isToolSearchToolAvailable(
-  tools: readonly { name: string }[],
-): boolean {
-  return tools.some(tool => toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME))
+export function isToolSearchToolAvailable(tools: readonly { name: string }[]): boolean {
+  return tools.some((tool) => toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME))
 }
 
 /**
@@ -342,11 +330,11 @@ async function calculateDeferredToolDescriptionChars(
   getToolPermissionContext: () => Promise<ToolPermissionContext>,
   agents: AgentDefinition[],
 ): Promise<number> {
-  const deferredTools = tools.filter(t => isDeferredTool(t))
+  const deferredTools = tools.filter((t) => isDeferredTool(t))
   if (deferredTools.length === 0) return 0
 
   const sizes = await Promise.all(
-    deferredTools.map(async tool => {
+    deferredTools.map(async (tool) => {
       const description = await tool.prompt({
         getToolPermissionContext,
         tools,
@@ -389,7 +377,7 @@ export async function isToolSearchEnabled(
   agents: AgentDefinition[],
   source?: string,
 ): Promise<boolean> {
-  const mcpToolCount = count(tools, t => t.isMcp)
+  const mcpToolCount = count(tools, (t) => t.isMcp)
 
   // Helper to log the mode decision event
   function logModeDecision(
@@ -401,13 +389,11 @@ export async function isToolSearchEnabled(
     logEvent('zy_tool_search_mode_decision', {
       enabled,
       mode: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      reason:
-        reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      reason: reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       // Log the actual model being checked, not the session's main model.
       // This is important for debugging subagent tool search decisions where
       // the subagent model (e.g., haiku) differs from the session model (e.g., opus).
-      checkedModel:
-        model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      checkedModel: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       mcpToolCount,
       userType: (process.env.USER_TYPE ??
         'external') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -451,16 +437,14 @@ export async function isToolSearchEnabled(
 
       if (enabled) {
         logForDebugging(
-          `Auto tool search enabled: ${debugDescription}` +
-            (source ? ` [source: ${source}]` : ''),
+          `Auto tool search enabled: ${debugDescription}` + (source ? ` [source: ${source}]` : ''),
         )
         logModeDecision(true, mode, 'auto_above_threshold', metrics)
         return true
       }
 
       logForDebugging(
-        `Auto tool search disabled: ${debugDescription}` +
-          (source ? ` [source: ${source}]` : ''),
+        `Auto tool search disabled: ${debugDescription}` + (source ? ` [source: ${source}]` : ''),
       )
       logModeDecision(false, mode, 'auto_below_threshold', metrics)
       return false
@@ -582,9 +566,7 @@ export function extractDiscoveredToolNames(messages: Message[]): Set<string> {
   if (discoveredTools.size > 0) {
     logForDebugging(
       `Dynamic tool loading: found ${discoveredTools.size} discovered tools in message history` +
-        (carriedFromBoundary > 0
-          ? ` (${carriedFromBoundary} carried from compact boundary)`
-          : ''),
+        (carriedFromBoundary > 0 ? ` (${carriedFromBoundary} carried from compact boundary)` : ''),
     )
   }
 
@@ -627,10 +609,7 @@ export type DeferredToolsDeltaScanContext = {
  * header prepend (the attachment does not fire).
  */
 export function isDeferredToolsDeltaEnabled(): boolean {
-  return (
-    isInternalBuild() ||
-    getFeatureValue_CACHED_MAY_BE_STALE('zy_glacier_2xr', false)
-  )
+  return isInternalBuild() || getFeatureValue_CACHED_MAY_BE_STALE('zy_glacier_2xr', false)
 }
 
 /**
@@ -663,10 +642,10 @@ export function getDeferredToolsDelta(
   }
 
   const deferred: Tool[] = tools.filter(isDeferredTool)
-  const deferredNames = new Set(deferred.map(t => t.name))
-  const poolNames = new Set(tools.map(t => t.name))
+  const deferredNames = new Set(deferred.map((t) => t.name))
+  const poolNames = new Set(tools.map((t) => t.name))
 
-  const added = deferred.filter(t => !announced.has(t.name))
+  const added = deferred.filter((t) => !announced.has(t.name))
   const removed: string[] = []
   for (const n of announced) {
     if (deferredNames.has(n)) continue
@@ -699,7 +678,7 @@ export function getDeferredToolsDelta(
   })
 
   return {
-    addedNames: added.map(t => t.name).sort(),
+    addedNames: added.map((t) => t.name).sort(),
     addedLines: added.map(formatDeferredToolLine).sort(),
     removedNames: removed.sort(),
   }
@@ -739,12 +718,11 @@ async function checkAutoThreshold(
   }
 
   // Fallback: character-based heuristic when token API is unavailable
-  const deferredToolDescriptionChars =
-    await calculateDeferredToolDescriptionChars(
-      tools,
-      getToolPermissionContext,
-      agents,
-    )
+  const deferredToolDescriptionChars = await calculateDeferredToolDescriptionChars(
+    tools,
+    getToolPermissionContext,
+    agents,
+  )
   const charThreshold = getAutoToolSearchCharThreshold(model)
   return {
     enabled: deferredToolDescriptionChars >= charThreshold,

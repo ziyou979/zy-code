@@ -5,8 +5,7 @@ import { isPolicyAllowed } from '../../services/policyLimits/index.js'
 const web = {
   type: 'local-jsx',
   name: 'web-setup',
-  description:
-    'Setup ZY Code on the web (requires connecting your GitHub account)',
+  description: 'Setup ZY Code on the web (requires connecting your GitHub account)',
   availability: ['zy-ai'],
   isEnabled: () =>
     getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_lantern', false) &&

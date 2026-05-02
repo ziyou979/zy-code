@@ -7,24 +7,14 @@ import type {
 } from '../entrypoints/sdk/controlTypes.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
-import {
-  type RemoteMessageContent,
-  sendEventToRemoteSession,
-} from '../utils/teleport/api.js'
-import {
-  SessionsWebSocket,
-  type SessionsWebSocketCallbacks,
-} from './SessionsWebSocket.js'
+import { type RemoteMessageContent, sendEventToRemoteSession } from '../utils/teleport/api.js'
+import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWebSocket.js'
 
 /**
  * Type guard to check if a message is an SDKMessage (not a control message)
  */
 function isSDKMessage(
-  message:
-    | SDKMessage
-    | SDKControlRequest
-    | SDKControlResponse
-    | SDKControlCancelRequest,
+  message: SDKMessage | SDKControlRequest | SDKControlResponse | SDKControlCancelRequest,
 ): message is SDKMessage {
   return (
     message.type !== 'control_request' &&
@@ -65,15 +55,9 @@ export type RemoteSessionCallbacks = {
   /** Called when an SDKMessage is received from the session */
   onMessage: (message: SDKMessage) => void
   /** Called when a permission request is received from CCR */
-  onPermissionRequest: (
-    request: SDKControlPermissionRequest,
-    requestId: string,
-  ) => void
+  onPermissionRequest: (request: SDKControlPermissionRequest, requestId: string) => void
   /** Called when the server cancels a pending permission request */
-  onPermissionCancelled?: (
-    requestId: string,
-    toolUseId: string | undefined,
-  ) => void
+  onPermissionCancelled?: (requestId: string, toolUseId: string | undefined) => void
   /** Called when connection is established */
   onConnected?: () => void
   /** Called when connection is lost and cannot be restored */
@@ -94,8 +78,7 @@ export type RemoteSessionCallbacks = {
  */
 export class RemoteSessionManager {
   private websocket: SessionsWebSocket | null = null
-  private pendingPermissionRequests: Map<string, SDKControlPermissionRequest> =
-    new Map()
+  private pendingPermissionRequests: Map<string, SDKControlPermissionRequest> = new Map()
 
   constructor(
     private readonly config: RemoteSessionConfig,
@@ -106,12 +89,10 @@ export class RemoteSessionManager {
    * Connect to the remote session via WebSocket
    */
   connect(): void {
-    logForDebugging(
-      `[RemoteSessionManager] Connecting to session ${this.config.sessionId}`,
-    )
+    logForDebugging(`[RemoteSessionManager] Connecting to session ${this.config.sessionId}`)
 
     const wsCallbacks: SessionsWebSocketCallbacks = {
-      onMessage: message => this.handleMessage(message),
+      onMessage: (message) => this.handleMessage(message),
       onConnected: () => {
         logForDebugging('[RemoteSessionManager] Connected')
         this.callbacks.onConnected?.()
@@ -124,7 +105,7 @@ export class RemoteSessionManager {
         logForDebugging('[RemoteSessionManager] Reconnecting')
         this.callbacks.onReconnecting?.()
       },
-      onError: error => {
+      onError: (error) => {
         logError(error)
         this.callbacks.onError?.(error)
       },
@@ -144,11 +125,7 @@ export class RemoteSessionManager {
    * Handle messages from WebSocket
    */
   private handleMessage(
-    message:
-      | SDKMessage
-      | SDKControlRequest
-      | SDKControlResponse
-      | SDKControlCancelRequest,
+    message: SDKMessage | SDKControlRequest | SDKControlResponse | SDKControlCancelRequest,
   ): void {
     // Handle control requests (permission prompts from CCR)
     if (message.type === 'control_request') {
@@ -160,14 +137,9 @@ export class RemoteSessionManager {
     if (message.type === 'control_cancel_request') {
       const { request_id } = message
       const pendingRequest = this.pendingPermissionRequests.get(request_id)
-      logForDebugging(
-        `[RemoteSessionManager] Permission request cancelled: ${request_id}`,
-      )
+      logForDebugging(`[RemoteSessionManager] Permission request cancelled: ${request_id}`)
       this.pendingPermissionRequests.delete(request_id)
-      this.callbacks.onPermissionCancelled?.(
-        request_id,
-        pendingRequest?.tool_use_id,
-      )
+      this.callbacks.onPermissionCancelled?.(request_id, pendingRequest?.tool_use_id)
       return
     }
 
@@ -190,9 +162,7 @@ export class RemoteSessionManager {
     const { request_id, request: inner } = request
 
     if (inner.subtype === 'can_use_tool') {
-      logForDebugging(
-        `[RemoteSessionManager] Permission request for tool: ${inner.tool_name}`,
-      )
+      logForDebugging(`[RemoteSessionManager] Permission request for tool: ${inner.tool_name}`)
       this.pendingPermissionRequests.set(request_id, inner)
       this.callbacks.onPermissionRequest(inner, request_id)
     } else {
@@ -216,19 +186,10 @@ export class RemoteSessionManager {
   /**
    * Send a user message to the remote session via HTTP POST
    */
-  async sendMessage(
-    content: RemoteMessageContent,
-    opts?: { uuid?: string },
-  ): Promise<boolean> {
-    logForDebugging(
-      `[RemoteSessionManager] Sending message to session ${this.config.sessionId}`,
-    )
+  async sendMessage(content: RemoteMessageContent, opts?: { uuid?: string }): Promise<boolean> {
+    logForDebugging(`[RemoteSessionManager] Sending message to session ${this.config.sessionId}`)
 
-    const success = await sendEventToRemoteSession(
-      this.config.sessionId,
-      content,
-      opts,
-    )
+    const success = await sendEventToRemoteSession(this.config.sessionId, content, opts)
 
     if (!success) {
       logError(
@@ -244,16 +205,11 @@ export class RemoteSessionManager {
   /**
    * Respond to a permission request from CCR
    */
-  respondToPermissionRequest(
-    requestId: string,
-    result: RemotePermissionResponse,
-  ): void {
+  respondToPermissionRequest(requestId: string, result: RemotePermissionResponse): void {
     const pendingRequest = this.pendingPermissionRequests.get(requestId)
     if (!pendingRequest) {
       logError(
-        new Error(
-          `[RemoteSessionManager] No pending permission request with ID: ${requestId}`,
-        ),
+        new Error(`[RemoteSessionManager] No pending permission request with ID: ${requestId}`),
       )
       return
     }
@@ -274,9 +230,7 @@ export class RemoteSessionManager {
       },
     }
 
-    logForDebugging(
-      `[RemoteSessionManager] Sending permission response: ${result.behavior}`,
-    )
+    logForDebugging(`[RemoteSessionManager] Sending permission response: ${result.behavior}`)
 
     this.websocket?.sendControlResponse(response)
   }

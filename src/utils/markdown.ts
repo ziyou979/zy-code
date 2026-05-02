@@ -42,7 +42,7 @@ export function applyMarkdown(
   configureMarked()
   return marked
     .lexer(stripPromptXMLTags(content))
-    .map(_ => formatToken(_, theme, 0, null, null, highlight))
+    .map((_) => formatToken(_, theme, 0, null, null, highlight))
     .join('')
     .trim()
 }
@@ -58,15 +58,13 @@ export function formatToken(
   switch (token.type) {
     case 'blockquote': {
       const inner = (token.tokens ?? [])
-        .map(_ => formatToken(_, theme, 0, null, null, highlight))
+        .map((_) => formatToken(_, theme, 0, null, null, highlight))
         .join('')
       // 每行前缀一个暗色竖线。保持文字斜体但维持正常亮度——chalk.dim 在深色主题下几乎不可见。
       const bar = chalk.dim(BLOCKQUOTE_BAR)
       return inner
         .split(EOL)
-        .map(line =>
-          stripAnsi(line).trim() ? `${bar} ${chalk.italic(line)}` : line,
-        )
+        .map((line) => (stripAnsi(line).trim() ? `${bar} ${chalk.italic(line)}` : line))
         .join(EOL)
     }
     case 'code': {
@@ -91,15 +89,11 @@ export function formatToken(
     }
     case 'em':
       return chalk.italic(
-        (token.tokens ?? [])
-          .map(_ => formatToken(_, theme, 0, null, parent, highlight))
-          .join(''),
+        (token.tokens ?? []).map((_) => formatToken(_, theme, 0, null, parent, highlight)).join(''),
       )
     case 'strong':
       return chalk.bold(
-        (token.tokens ?? [])
-          .map(_ => formatToken(_, theme, 0, null, parent, highlight))
-          .join(''),
+        (token.tokens ?? []).map((_) => formatToken(_, theme, 0, null, parent, highlight)).join(''),
       )
     case 'heading':
       switch (token.depth) {
@@ -107,7 +101,7 @@ export function formatToken(
           return (
             chalk.bold.italic.underline(
               (token.tokens ?? [])
-                .map(_ => formatToken(_, theme, 0, null, null, highlight))
+                .map((_) => formatToken(_, theme, 0, null, null, highlight))
                 .join(''),
             ) +
             EOL +
@@ -117,7 +111,7 @@ export function formatToken(
           return (
             chalk.bold(
               (token.tokens ?? [])
-                .map(_ => formatToken(_, theme, 0, null, null, highlight))
+                .map((_) => formatToken(_, theme, 0, null, null, highlight))
                 .join(''),
             ) +
             EOL +
@@ -127,7 +121,7 @@ export function formatToken(
           return (
             chalk.bold(
               (token.tokens ?? [])
-                .map(_ => formatToken(_, theme, 0, null, null, highlight))
+                .map((_) => formatToken(_, theme, 0, null, null, highlight))
                 .join(''),
             ) +
             EOL +
@@ -147,7 +141,7 @@ export function formatToken(
       }
       // 从链接的子 token 中提取显示文本
       const linkText = (token.tokens ?? [])
-        .map(_ => formatToken(_, theme, 0, null, token, highlight))
+        .map((_) => formatToken(_, theme, 0, null, token, highlight))
         .join('')
       const plainLinkText = stripAnsi(linkText)
       // 若链接有有意义的显示文本（与 URL 不同），
@@ -176,15 +170,14 @@ export function formatToken(
     case 'list_item':
       return (token.tokens ?? [])
         .map(
-          _ =>
+          (_) =>
             `${'  '.repeat(listDepth)}${formatToken(_, theme, listDepth + 1, orderedListNumber, token, highlight)}`,
         )
         .join('')
     case 'paragraph':
       return (
-        (token.tokens ?? [])
-          .map(_ => formatToken(_, theme, 0, null, null, highlight))
-          .join('') + EOL
+        (token.tokens ?? []).map((_) => formatToken(_, theme, 0, null, null, highlight)).join('') +
+        EOL
       )
     case 'space':
       return EOL
@@ -199,7 +192,7 @@ export function formatToken(
         return token.text
       }
       if (parent?.type === 'list_item') {
-        return `${orderedListNumber === null ? '-' : getListNumber(listDepth, orderedListNumber) + '.'} ${token.tokens ? token.tokens.map(_ => formatToken(_, theme, listDepth, orderedListNumber, token, highlight)).join('') : linkifyFilePaths(linkifyIssueReferences(token.text))}${EOL}`
+        return `${orderedListNumber === null ? '-' : getListNumber(listDepth, orderedListNumber) + '.'} ${token.tokens ? token.tokens.map((_) => formatToken(_, theme, listDepth, orderedListNumber, token, highlight)).join('') : linkifyFilePaths(linkifyIssueReferences(token.text))}${EOL}`
       }
       return linkifyFilePaths(linkifyIssueReferences(token.text))
     case 'table': {
@@ -208,9 +201,7 @@ export function formatToken(
       // 辅助函数：获取最终显示的文本内容（经 stripAnsi 处理后）
       function getDisplayText(tokens: Token[] | undefined): string {
         return stripAnsi(
-          tokens
-            ?.map(_ => formatToken(_, theme, 0, null, null, highlight))
-            .join('') ?? '',
+          tokens?.map((_) => formatToken(_, theme, 0, null, null, highlight)).join('') ?? '',
         )
       }
 
@@ -228,20 +219,17 @@ export function formatToken(
       let tableOutput = '| '
       tableToken.header.forEach((header, index) => {
         const content =
-          header.tokens
-            ?.map(_ => formatToken(_, theme, 0, null, null, highlight))
-            .join('') ?? ''
+          header.tokens?.map((_) => formatToken(_, theme, 0, null, null, highlight)).join('') ?? ''
         const displayText = getDisplayText(header.tokens)
         const width = columnWidths[index]!
         const align = tableToken.align?.[index]
-        tableOutput +=
-          padAligned(content, stringWidth(displayText), width, align) + ' | '
+        tableOutput += padAligned(content, stringWidth(displayText), width, align) + ' | '
       })
       tableOutput = tableOutput.trimEnd() + EOL
 
       // 添加分隔行
       tableOutput += '|'
-      columnWidths.forEach(width => {
+      columnWidths.forEach((width) => {
         // 始终使用短横线，输出中不显示对齐冒号
         const separator = '-'.repeat(width + 2) // +2 为两侧空格
         tableOutput += separator + '|'
@@ -249,18 +237,15 @@ export function formatToken(
       tableOutput += EOL
 
       // 格式化数据行
-      tableToken.rows.forEach(row => {
+      tableToken.rows.forEach((row) => {
         tableOutput += '| '
         row.forEach((cell, index) => {
           const content =
-            cell.tokens
-              ?.map(_ => formatToken(_, theme, 0, null, null, highlight))
-              .join('') ?? ''
+            cell.tokens?.map((_) => formatToken(_, theme, 0, null, null, highlight)).join('') ?? ''
           const displayText = getDisplayText(cell.tokens)
           const width = columnWidths[index]!
           const align = tableToken.align?.[index]
-          tableOutput +=
-            padAligned(content, stringWidth(displayText), width, align) + ' | '
+          tableOutput += padAligned(content, stringWidth(displayText), width, align) + ' | '
         })
         tableOutput = tableOutput.trimEnd() + EOL
       })
@@ -284,8 +269,7 @@ export function formatToken(
 // owner 段不允许点号（GitHub 用户名仅含字母数字和连字符），
 // 以防 docs.github.io/guide#42 等域名误匹配。repo 段允许点号（如 cc.kurs.web）。
 // 避免使用 lookbehind——会导致 JSC 中 YARR JIT 失效。
-const ISSUE_REF_PATTERN =
-  /(^|[^\w./-])([A-Za-z0-9][\w-]*\/[A-Za-z0-9][\w.-]*)#(\d+)\b/g
+const ISSUE_REF_PATTERN = /(^|[^\w./-])([A-Za-z0-9][\w-]*\/[A-Za-z0-9][\w.-]*)#(\d+)\b/g
 
 // 匹配 相对/绝对 文件路径 + 行号: src/foo.ts:123 或 /abs/path.ts:10-20
 // 要求文件名带扩展名以避免误匹配时间、端口号等
@@ -302,11 +286,7 @@ function linkifyIssueReferences(text: string): string {
   return text.replace(
     ISSUE_REF_PATTERN,
     (_match, prefix, repo, num) =>
-      prefix +
-      createHyperlink(
-        `https://github.com/${repo}/issues/${num}`,
-        `${repo}#${num}`,
-      ),
+      prefix + createHyperlink(`https://github.com/${repo}/issues/${num}`, `${repo}#${num}`),
   )
 }
 
@@ -318,14 +298,11 @@ function linkifyFilePaths(text: string): string {
   if (!supportsHyperlinks()) {
     return text
   }
-  return text.replace(
-    FILE_PATH_PATTERN,
-    (_match, prefix, filePath, line, endLine) => {
-      const url = pathToFileURL(filePath).href
-      const display = `${filePath}:${line}${endLine ? `-${endLine}` : ''}`
-      return prefix + createHyperlink(url, display)
-    },
-  )
+  return text.replace(FILE_PATH_PATTERN, (_match, prefix, filePath, line, endLine) => {
+    const url = pathToFileURL(filePath).href
+    const display = `${filePath}:${line}${endLine ? `-${endLine}` : ''}`
+    return prefix + createHyperlink(url, display)
+  })
 }
 
 function numberToLetter(n: number): string {

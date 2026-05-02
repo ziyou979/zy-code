@@ -39,9 +39,7 @@ export async function agentsHandler(): Promise<void> {
   let totalActive = 0
 
   for (const { label, source } of AGENT_SOURCE_GROUPS) {
-    const groupAgents = resolvedAgents
-      .filter(a => a.source === source)
-      .sort(compareAgentsByName)
+    const groupAgents = resolvedAgents.filter((a) => a.source === source).sort(compareAgentsByName)
 
     if (groupAgents.length === 0) continue
 

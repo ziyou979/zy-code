@@ -27,9 +27,7 @@ export type Option = {
   isRequired?: boolean
 }
 
-export async function loadFigSpec(
-  command: string,
-): Promise<CommandSpec | null> {
+export async function loadFigSpec(command: string): Promise<CommandSpec | null> {
   if (!command || command.includes('/') || command.includes('\\')) return null
   if (command.includes('..')) return null
   if (command.startsWith('-') && command !== '-') return null
@@ -43,10 +41,7 @@ export async function loadFigSpec(
 }
 export const getCommandSpec = memoizeWithLRU(
   async (command: string): Promise<CommandSpec | null> => {
-    const spec =
-      specs.find(s => s.name === command) ||
-      (await loadFigSpec(command)) ||
-      null
+    const spec = specs.find((s) => s.name === command) || (await loadFigSpec(command)) || null
     return spec
   },
   (command: string) => command,

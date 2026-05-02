@@ -44,7 +44,7 @@ export function getHooksSources(): string[] {
 
 function hasBashPermission(rules: PermissionRule[]): boolean {
   return rules.some(
-    rule =>
+    (rule) =>
       rule.ruleBehavior === 'allow' &&
       (rule.ruleValue.toolName === BASH_TOOL_NAME ||
         rule.ruleValue.toolName.startsWith(BASH_TOOL_NAME + '(')),
@@ -219,9 +219,7 @@ function hasDangerousEnvVars(settings: SettingsJson | null): boolean {
   if (!settings?.env) {
     return false
   }
-  return Object.keys(settings.env).some(
-    key => !SAFE_ENV_VARS.has(key.toUpperCase()),
-  )
+  return Object.keys(settings.env).some((key) => !SAFE_ENV_VARS.has(key.toUpperCase()))
 }
 
 /**

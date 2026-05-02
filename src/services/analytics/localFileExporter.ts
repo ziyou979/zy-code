@@ -1,8 +1,5 @@
 import { ExportResultCode, type ExportResult } from '@opentelemetry/core'
-import type {
-  LogRecordExporter,
-  ReadableLogRecord,
-} from '@opentelemetry/sdk-logs'
+import type { LogRecordExporter, ReadableLogRecord } from '@opentelemetry/sdk-logs'
 import { appendFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
@@ -15,19 +12,12 @@ export class LocalFileExporter implements LogRecordExporter {
   private isShutdown = false
 
   constructor() {
-    const logDir = join(
-      process.env.HOME || process.env.USERPROFILE || '~',
-      '.zy',
-      'telemetry',
-    )
+    const logDir = join(process.env.HOME || process.env.USERPROFILE || '~', '.zy', 'telemetry')
     this.logFile = join(logDir, 'zy_events.log')
     mkdirSync(logDir, { recursive: true })
   }
 
-  export(
-    logs: ReadableLogRecord[],
-    resultCallback: (result: ExportResult) => void,
-  ): void {
+  export(logs: ReadableLogRecord[], resultCallback: (result: ExportResult) => void): void {
     if (this.isShutdown) {
       resultCallback({
         code: ExportResultCode.FAILED,
@@ -40,9 +30,7 @@ export class LocalFileExporter implements LogRecordExporter {
       for (const log of logs) {
         const entry = {
           timestamp: log.hrTime
-            ? new Date(
-                log.hrTime[0] * 1000 + log.hrTime[1] / 1000000,
-              ).toISOString()
+            ? new Date(log.hrTime[0] * 1000 + log.hrTime[1] / 1000000).toISOString()
             : new Date().toISOString(),
           scope: log.instrumentationScope?.name,
           body: log.body,

@@ -1,23 +1,40 @@
-import React from 'react';
-import { tSync } from '../../../../i18n/index.js';
-import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
-import { Byline } from '../../../design-system/Byline.js';
-import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
-import { useWizard } from '../../../wizard/index.js';
-import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
-import { ModelSelector } from '../../ModelSelector.js';
+import React from 'react'
+import { tSync } from '../../../../i18n/index.js'
+import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
+import { Byline } from '../../../design-system/Byline.js'
+import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
+import { useWizard } from '../../../wizard/index.js'
+import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
+import { ModelSelector } from '../../ModelSelector.js'
 export function ModelStep() {
-  const {
-    goNext,
-    goBack,
-    updateWizardData,
-    wizardData
-  } = useWizard();
-  const handleComplete = model => {
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard()
+  const handleComplete = (model) => {
     updateWizardData({
-      selectedModel: model
-    });
-    goNext();
-  };
-  return <WizardDialogLayout subtitle={tSync('wizard.selectModel')} footerText={<Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><ModelSelector initialModel={wizardData.selectedModel as any} onComplete={handleComplete} onCancel={goBack} /></WizardDialogLayout>;
+      selectedModel: model,
+    })
+    goNext()
+  }
+  return (
+    <WizardDialogLayout
+      subtitle={tSync('wizard.selectModel')}
+      footerText={
+        <Byline>
+          <KeyboardShortcutHint shortcut={'\u2191\u2193'} action="navigate" />
+          <KeyboardShortcutHint shortcut="Enter" action="select" />
+          <ConfigurableShortcutHint
+            action="confirm:no"
+            context="Confirmation"
+            fallback="Esc"
+            description="go back"
+          />
+        </Byline>
+      }
+    >
+      <ModelSelector
+        initialModel={wizardData.selectedModel as any}
+        onComplete={handleComplete}
+        onCancel={goBack}
+      />
+    </WizardDialogLayout>
+  )
 }

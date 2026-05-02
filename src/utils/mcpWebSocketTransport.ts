@@ -1,8 +1,5 @@
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import {
-  type JSONRPCMessage,
-  JSONRPCMessageSchema,
-} from '@modelcontextprotocol/sdk/types.js'
+import { type JSONRPCMessage, JSONRPCMessageSchema } from '@modelcontextprotocol/sdk/types.js'
 import type WsWebSocket from 'ws'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { toError } from './errors.js'
@@ -35,7 +32,7 @@ export class WebSocketTransport implements Transport {
           nws.removeEventListener('error', onError)
           resolve()
         }
-        let onError;
+        let onError
         onError = (event: Event) => {
           nws.removeEventListener('open', onOpen)
           nws.removeEventListener('error', onError)
@@ -49,7 +46,7 @@ export class WebSocketTransport implements Transport {
         nws.on('open', () => {
           resolve()
         })
-        nws.on('error', error => {
+        nws.on('error', (error) => {
           logForDiagnosticsNoPII('error', 'mcp_websocket_connect_fail')
           reject(error)
         })
@@ -77,8 +74,7 @@ export class WebSocketTransport implements Transport {
   // Bun (native WebSocket) event handlers
   private onBunMessage = (event: MessageEvent) => {
     try {
-      const data =
-        typeof event.data === 'string' ? event.data : String(event.data)
+      const data = typeof event.data === 'string' ? event.data : String(event.data)
       const messageObj = jsonParse(data)
       const message = JSONRPCMessageSchema.parse(messageObj)
       this.onmessage?.(message)
@@ -158,10 +154,7 @@ export class WebSocketTransport implements Transport {
    * Closes the WebSocket connection.
    */
   async close(): Promise<void> {
-    if (
-      this.ws.readyState === WS_OPEN ||
-      this.ws.readyState === WS_CONNECTING
-    ) {
+    if (this.ws.readyState === WS_OPEN || this.ws.readyState === WS_CONNECTING) {
       this.ws.close()
     }
     // Ensure listeners are removed even if close was called externally or connection was already closed
@@ -184,7 +177,7 @@ export class WebSocketTransport implements Transport {
         this.ws.send(json)
       } else {
         await new Promise<void>((resolve, reject) => {
-          ;(this.ws as unknown as WsWebSocket).send(json, error => {
+          ;(this.ws as unknown as WsWebSocket).send(json, (error) => {
             if (error) {
               reject(error)
             } else {

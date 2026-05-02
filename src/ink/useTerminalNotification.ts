@@ -25,9 +25,7 @@ export type TerminalNotification = {
 export function useTerminalNotification(): TerminalNotification {
   const writeRaw = useContext(TerminalWriteContext)
   if (!writeRaw) {
-    throw new Error(
-      'useTerminalNotification must be used within TerminalWriteProvider',
-    )
+    throw new Error('useTerminalNotification must be used within TerminalWriteProvider')
   }
 
   const notifyITerm2 = useCallback(
@@ -39,15 +37,7 @@ export function useTerminalNotification(): TerminalNotification {
   )
 
   const notifyKitty = useCallback(
-    ({
-      message,
-      title,
-      id,
-    }: {
-      message: string
-      title: string
-      id: number
-    }) => {
+    ({ message, title, id }: { message: string; title: string; id: number }) => {
       writeRaw(wrapForMultiplexer(osc(OSC.KITTY, `i=${id}:d=0:p=title`, title)))
       writeRaw(wrapForMultiplexer(osc(OSC.KITTY, `i=${id}:p=body`, message)))
       writeRaw(wrapForMultiplexer(osc(OSC.KITTY, `i=${id}:d=1:a=focus`, '')))
@@ -74,42 +64,22 @@ export function useTerminalNotification(): TerminalNotification {
         return
       }
       if (!state) {
-        writeRaw(
-          wrapForMultiplexer(
-            osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.CLEAR, ''),
-          ),
-        )
+        writeRaw(wrapForMultiplexer(osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.CLEAR, '')))
         return
       }
       const pct = Math.max(0, Math.min(100, Math.round(percentage ?? 0)))
       switch (state) {
         case 'completed':
-          writeRaw(
-            wrapForMultiplexer(
-              osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.CLEAR, ''),
-            ),
-          )
+          writeRaw(wrapForMultiplexer(osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.CLEAR, '')))
           break
         case 'error':
-          writeRaw(
-            wrapForMultiplexer(
-              osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.ERROR, pct),
-            ),
-          )
+          writeRaw(wrapForMultiplexer(osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.ERROR, pct)))
           break
         case 'indeterminate':
-          writeRaw(
-            wrapForMultiplexer(
-              osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.INDETERMINATE, ''),
-            ),
-          )
+          writeRaw(wrapForMultiplexer(osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.INDETERMINATE, '')))
           break
         case 'running':
-          writeRaw(
-            wrapForMultiplexer(
-              osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.SET, pct),
-            ),
-          )
+          writeRaw(wrapForMultiplexer(osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.SET, pct)))
           break
         case null:
           // Handled by the if guard above

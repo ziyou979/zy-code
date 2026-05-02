@@ -43,7 +43,7 @@ let prefetchPromise: Promise<void> | null = null
 type SpawnResult = { stdout: string | null; timedOut: boolean }
 
 function spawnSecurity(serviceName: string): Promise<SpawnResult> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     execFile(
       'security',
       ['find-generic-password', '-a', getUsername(), '-w', '-s', serviceName],
@@ -72,20 +72,16 @@ export function startKeychainPrefetch(): void {
   // Fire both subprocesses immediately (non-blocking). They run in parallel
   // with each other AND with main.tsx imports. The await in Promise.all
   // happens later via ensureKeychainPrefetchCompleted().
-  const oauthSpawn = spawnSecurity(
-    getMacOsKeychainStorageServiceName(CREDENTIALS_SERVICE_SUFFIX),
-  )
+  const oauthSpawn = spawnSecurity(getMacOsKeychainStorageServiceName(CREDENTIALS_SERVICE_SUFFIX))
   const legacySpawn = spawnSecurity(getMacOsKeychainStorageServiceName())
 
-  prefetchPromise = Promise.all([oauthSpawn, legacySpawn]).then(
-    ([oauth, legacy]) => {
-      // Timed-out prefetch: don't prime. Sync read/spawn will retry with its
-      // own (longer) timeout. Priming null here would shadow a key that the
-      // sync path might successfully fetch.
-      if (!oauth.timedOut) primeKeychainCacheFromPrefetch(oauth.stdout)
-      if (!legacy.timedOut) legacyApiKeyPrefetch = { stdout: legacy.stdout }
-    },
-  )
+  prefetchPromise = Promise.all([oauthSpawn, legacySpawn]).then(([oauth, legacy]) => {
+    // Timed-out prefetch: don't prime. Sync read/spawn will retry with its
+    // own (longer) timeout. Priming null here would shadow a key that the
+    // sync path might successfully fetch.
+    if (!oauth.timedOut) primeKeychainCacheFromPrefetch(oauth.stdout)
+    if (!legacy.timedOut) legacyApiKeyPrefetch = { stdout: legacy.stdout }
+  })
 }
 
 /**

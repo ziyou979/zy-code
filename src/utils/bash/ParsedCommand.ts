@@ -1,13 +1,7 @@
 import memoize from 'lodash-es/memoize.js'
-import {
-  extractOutputRedirections,
-  splitCommandWithOperators,
-} from './commands.js'
+import { extractOutputRedirections, splitCommandWithOperators } from './commands.js'
 import type { Node } from './parser.js'
-import {
-  analyzeCommand,
-  type TreeSitterAnalysis,
-} from './treeSitterAnalysis.js'
+import { analyzeCommand, type TreeSitterAnalysis } from './treeSitterAnalysis.js'
 
 export type OutputRedirection = {
   target: string
@@ -81,11 +75,10 @@ export class RegexParsedCommand_DEPRECATED implements IParsedCommand {
     if (!this.originalCommand.includes('>')) {
       return this.originalCommand
     }
-    const { commandWithoutRedirections, redirections } =
-      extractOutputRedirections(this.originalCommand)
-    return redirections.length > 0
-      ? commandWithoutRedirections
-      : this.originalCommand
+    const { commandWithoutRedirections, redirections } = extractOutputRedirections(
+      this.originalCommand,
+    )
+    return redirections.length > 0 ? commandWithoutRedirections : this.originalCommand
   }
 
   getOutputRedirections(): OutputRedirection[] {
@@ -112,7 +105,7 @@ function visitNodes(node: Node, visitor: (node: Node) => void): void {
 
 function extractPipePositions(rootNode: Node): number[] {
   const pipePositions: number[] = []
-  visitNodes(rootNode, node => {
+  visitNodes(rootNode, (node) => {
     if (node.type === 'pipeline') {
       for (const child of node.children) {
         if (child.type === '|') {
@@ -130,11 +123,11 @@ function extractPipePositions(rootNode: Node): number[] {
 
 function extractRedirectionNodes(rootNode: Node): RedirectionNode[] {
   const redirections: RedirectionNode[] = []
-  visitNodes(rootNode, node => {
+  visitNodes(rootNode, (node) => {
     if (node.type === 'file_redirect') {
       const children = node.children
-      const op = children.find(c => c.type === '>' || c.type === '>>')
-      const target = children.find(c => c.type === 'word')
+      const op = children.find((c) => c.type === '>' || c.type === '>>')
+      const target = children.find((c) => c.type === 'word')
       if (op && target) {
         redirections.push({
           startIndex: node.startIndex,
@@ -187,20 +180,14 @@ class TreeSitterParsedCommand implements IParsedCommand {
     let currentStart = 0
 
     for (const pipePos of this.pipePositions) {
-      const segment = this.commandBytes
-        .subarray(currentStart, pipePos)
-        .toString('utf8')
-        .trim()
+      const segment = this.commandBytes.subarray(currentStart, pipePos).toString('utf8').trim()
       if (segment) {
         segments.push(segment)
       }
       currentStart = pipePos + 1
     }
 
-    const lastSegment = this.commandBytes
-      .subarray(currentStart)
-      .toString('utf8')
-      .trim()
+    const lastSegment = this.commandBytes.subarray(currentStart).toString('utf8').trim()
     if (lastSegment) {
       segments.push(lastSegment)
     }
@@ -211,9 +198,7 @@ class TreeSitterParsedCommand implements IParsedCommand {
   withoutOutputRedirections(): string {
     if (this.redirectionNodes.length === 0) return this.originalCommand
 
-    const sorted = [...this.redirectionNodes].sort(
-      (a, b) => b.startIndex - a.startIndex,
-    )
+    const sorted = [...this.redirectionNodes].sort((a, b) => b.startIndex - a.startIndex)
 
     let result = this.commandBytes
     for (const redir of sorted) {
@@ -252,19 +237,11 @@ const getTreeSitterAvailable = memoize(async (): Promise<boolean> => {
  * that already have the tree skip the redundant native.parse that
  * ParsedCommand.parse would do.
  */
-export function buildParsedCommandFromRoot(
-  command: string,
-  root: Node,
-): IParsedCommand {
+export function buildParsedCommandFromRoot(command: string, root: Node): IParsedCommand {
   const pipePositions = extractPipePositions(root)
   const redirectionNodes = extractRedirectionNodes(root)
   const analysis = analyzeCommand(root, command)
-  return new TreeSitterParsedCommand(
-    command,
-    pipePositions,
-    redirectionNodes,
-    analysis,
-  )
+  return new TreeSitterParsedCommand(command, pipePositions, redirectionNodes, analysis)
 }
 
 async function doParse(command: string): Promise<IParsedCommand | null> {

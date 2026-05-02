@@ -1,11 +1,7 @@
 import type { LspServerConfig } from '../services/lsp/types.js'
 import type { McpServerConfig } from '../services/mcp/types.js'
 import type { BundledSkillDefinition } from '../skills/bundledSkills.js'
-import type {
-  CommandMetadata,
-  PluginAuthor,
-  PluginManifest,
-} from '../utils/plugins/schemas.js'
+import type { CommandMetadata, PluginAuthor, PluginManifest } from '../utils/plugins/schemas.js'
 import type { HooksSettings } from '../utils/settings/types.js'
 
 export type { PluginAuthor, PluginManifest, CommandMetadata }
@@ -69,12 +65,7 @@ export type LoadedPlugin = {
   settings?: Record<string, unknown>
 }
 
-export type PluginComponent =
-  | 'commands'
-  | 'agents'
-  | 'skills'
-  | 'hooks'
-  | 'output-styles'
+export type PluginComponent = 'commands' | 'agents' | 'skills' | 'hooks' | 'output-styles'
 
 /**
  * Discriminated union of plugin error types.

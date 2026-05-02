@@ -204,10 +204,7 @@ export type AnsiToSvgOptions = {
  * Uses <tspan> elements within a single <text> per line so the renderer
  * handles character spacing natively (no manual charWidth calculation)
  */
-export function ansiToSvg(
-  ansiText: string,
-  options: AnsiToSvgOptions = {},
-): string {
+export function ansiToSvg(ansiText: string, options: AnsiToSvgOptions = {}): string {
   const {
     fontFamily = 'Menlo, Monaco, monospace',
     fontSize = 14,
@@ -221,10 +218,7 @@ export function ansiToSvg(
   const lines = parseAnsi(ansiText)
 
   // Trim trailing empty lines
-  while (
-    lines.length > 0 &&
-    lines[lines.length - 1]!.every(span => span.text.trim() === '')
-  ) {
+  while (lines.length > 0 && lines[lines.length - 1]!.every((span) => span.text.trim() === '')) {
     lines.pop()
   }
 
@@ -232,7 +226,7 @@ export function ansiToSvg(
   // For monospace fonts, character width is roughly 0.6 * fontSize
   const charWidthEstimate = fontSize * 0.6
   const maxLineLength = Math.max(
-    ...lines.map(spans => spans.reduce((acc, s) => acc + s.text.length, 0)),
+    ...lines.map((spans) => spans.reduce((acc, s) => acc + s.text.length, 0)),
   )
   const width = Math.ceil(maxLineLength * charWidthEstimate + paddingX * 2)
   const height = lines.length * lineHeight + paddingY * 2
@@ -247,8 +241,7 @@ export function ansiToSvg(
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const spans = lines[lineIndex]!
-    const y =
-      paddingY + (lineIndex + 1) * lineHeight - (lineHeight - fontSize) / 2
+    const y = paddingY + (lineIndex + 1) * lineHeight - (lineHeight - fontSize) / 2
 
     // Build a single <text> element with <tspan> children for each colored segment
     // xml:space="preserve" prevents SVG from collapsing whitespace

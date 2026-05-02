@@ -1,10 +1,4 @@
-import {
-  CellWidth,
-  cellAtIndex,
-  type Screen,
-  type StylePool,
-  setCellStyleId,
-} from './screen.js'
+import { CellWidth, cellAtIndex, type Screen, type StylePool, setCellStyleId } from './screen.js'
 
 /**
  * 在屏幕缓冲区中反转为 `query` 匹配的所有可见单元格，
@@ -23,11 +17,7 @@ import {
  * 返回 true 表示有任何匹配被高亮（损伤门控——调用者在为 true 时
  * 强制全屏损伤）。
  */
-export function applySearchHighlight(
-  screen: Screen,
-  query: string,
-  stylePool: StylePool,
-): boolean {
+export function applySearchHighlight(screen: Screen, query: string, stylePool: StylePool): boolean {
   if (!query) return false
   const lq = query.toLowerCase()
   const qlen = lq.length

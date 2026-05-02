@@ -20,7 +20,7 @@ let paneCreationLock: Promise<void> = Promise.resolve()
  */
 function acquirePaneCreationLock(): Promise<() => void> {
   let release: () => void
-  const newLock = new Promise<void>(resolve => {
+  const newLock = new Promise<void>((resolve) => {
     release = resolve
   })
 
@@ -33,9 +33,7 @@ function acquirePaneCreationLock(): Promise<() => void> {
 /**
  * Runs an it2 CLI command and returns the result.
  */
-function runIt2(
-  args: string[],
-): Promise<{ stdout: string; stderr: string; code: number }> {
+function runIt2(args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
   return execFileNoThrow(IT2_COMMAND, args)
 }
 
@@ -147,15 +145,11 @@ export class ITermBackend implements PaneBackend {
           const leaderSessionId = getLeaderSessionId()
           if (leaderSessionId) {
             splitArgs = ['session', 'split', '-v', '-s', leaderSessionId]
-            logForDebugging(
-              `[ITermBackend] First split from leader session: ${leaderSessionId}`,
-            )
+            logForDebugging(`[ITermBackend] First split from leader session: ${leaderSessionId}`)
           } else {
             // Fallback to active session if we can't get leader's ID
             splitArgs = ['session', 'split', '-v']
-            logForDebugging(
-              '[ITermBackend] First split from active session (no leader ID)',
-            )
+            logForDebugging('[ITermBackend] First split from active session (no leader ID)')
           }
         } else {
           // Split from the last teammate's session to stack vertically
@@ -168,9 +162,7 @@ export class ITermBackend implements PaneBackend {
           } else {
             // Fallback to active session
             splitArgs = ['session', 'split']
-            logForDebugging(
-              '[ITermBackend] Subsequent split from active session (no teammate ID)',
-            )
+            logForDebugging('[ITermBackend] Subsequent split from active session (no teammate ID)')
           }
         }
 
@@ -183,10 +175,7 @@ export class ITermBackend implements PaneBackend {
           // Pruning on systemic failure would drain all live IDs → state corrupted.
           if (targetedTeammateId) {
             const listResult = await runIt2(['session', 'list'])
-            if (
-              listResult.code === 0 &&
-              !listResult.stdout.includes(targetedTeammateId)
-            ) {
+            if (listResult.code === 0 && !listResult.stdout.includes(targetedTeammateId)) {
               // Confirmed dead — prune and retry with next-to-last (or leader).
               logForDebugging(
                 `[ITermBackend] Split failed targeting dead session ${targetedTeammateId}, pruning and retrying: ${splitResult.stderr}`,
@@ -202,9 +191,7 @@ export class ITermBackend implements PaneBackend {
             }
             // Target is alive or we can't tell — don't corrupt state, surface the error.
           }
-          throw new Error(
-            `Failed to create iTerm2 split pane: ${splitResult.stderr}`,
-          )
+          throw new Error(`Failed to create iTerm2 split pane: ${splitResult.stderr}`)
         }
 
         if (isFirstTeammate) {
@@ -217,13 +204,9 @@ export class ITermBackend implements PaneBackend {
         const paneId = parseSplitOutput(splitResult.stdout)
 
         if (!paneId) {
-          throw new Error(
-            `Failed to parse session ID from split output: ${splitResult.stdout}`,
-          )
+          throw new Error(`Failed to parse session ID from split output: ${splitResult.stdout}`)
         }
-        logForDebugging(
-          `[ITermBackend] Created teammate pane for ${name}: ${paneId}`,
-        )
+        logForDebugging(`[ITermBackend] Created teammate pane for ${name}: ${paneId}`)
 
         teammateSessionIds.push(paneId)
 
@@ -250,16 +233,12 @@ export class ITermBackend implements PaneBackend {
     // Use it2 session run to execute command (adds newline automatically)
     // Always use -s flag to target specific session - this ensures the command
     // goes to the right pane even if user switches windows
-    const args = paneId
-      ? ['session', 'run', '-s', paneId, command]
-      : ['session', 'run', command]
+    const args = paneId ? ['session', 'run', '-s', paneId, command] : ['session', 'run', command]
 
     const result = await runIt2(args)
 
     if (result.code !== 0) {
-      throw new Error(
-        `Failed to send command to iTerm2 pane ${paneId}: ${result.stderr}`,
-      )
+      throw new Error(`Failed to send command to iTerm2 pane ${paneId}: ${result.stderr}`)
     }
   }
 
@@ -302,14 +281,9 @@ export class ITermBackend implements PaneBackend {
   /**
    * No-op for iTerm2 - pane balancing is handled automatically.
    */
-  async rebalancePanes(
-    _windowTarget: string,
-    _hasLeader: boolean,
-  ): Promise<void> {
+  async rebalancePanes(_windowTarget: string, _hasLeader: boolean): Promise<void> {
     // iTerm2 handles pane balancing automatically
-    logForDebugging(
-      '[ITermBackend] Pane rebalancing not implemented for iTerm2',
-    )
+    logForDebugging('[ITermBackend] Pane rebalancing not implemented for iTerm2')
   }
 
   /**
@@ -317,10 +291,7 @@ export class ITermBackend implements PaneBackend {
    * Also removes the pane from tracked session IDs so subsequent spawns
    * don't try to split from a dead session.
    */
-  async killPane(
-    paneId: PaneId,
-    _useExternalSession?: boolean,
-  ): Promise<boolean> {
+  async killPane(paneId: PaneId, _useExternalSession?: boolean): Promise<boolean> {
     // -f (force) is required: without it, iTerm2 respects the "Confirm before
     // closing" preference and either shows a dialog or refuses when the session
     // still has a running process (the shell always is). tmux kill-pane has no
@@ -342,10 +313,7 @@ export class ITermBackend implements PaneBackend {
    * Stub for hiding a pane - not supported in iTerm2 backend.
    * iTerm2 doesn't have a direct equivalent to tmux's break-pane.
    */
-  async hidePane(
-    _paneId: PaneId,
-    _useExternalSession?: boolean,
-  ): Promise<boolean> {
+  async hidePane(_paneId: PaneId, _useExternalSession?: boolean): Promise<boolean> {
     logForDebugging('[ITermBackend] hidePane not supported in iTerm2')
     return false
   }

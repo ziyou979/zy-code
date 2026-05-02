@@ -1,5 +1,9 @@
-import * as React from 'react';
-import { Text } from '../ink.js';
+import * as React from 'react'
+import { Text } from '../ink.js'
 export function PressEnterToContinue() {
-  return <Text color="permission">Press <Text bold={true}>Enter</Text> to continue…</Text>;
+  return (
+    <Text color="permission">
+      Press <Text bold={true}>Enter</Text> to continue…
+    </Text>
+  )
 }

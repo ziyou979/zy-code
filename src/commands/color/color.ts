@@ -1,18 +1,9 @@
 import type { UUID } from 'crypto'
 import { getSessionId } from '../../bootstrap/state.js'
 import type { ToolUseContext } from '../../Tool.js'
-import {
-  AGENT_COLORS,
-  type AgentColorName,
-} from '../../tools/AgentTool/agentColorManager.js'
-import type {
-  LocalJSXCommandContext,
-  LocalJSXCommandOnDone,
-} from '../../types/command.js'
-import {
-  getTranscriptPath,
-  saveAgentColor,
-} from '../../utils/sessionStorage.js'
+import { AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
+import { getTranscriptPath, saveAgentColor } from '../../utils/sessionStorage.js'
 import { isTeammate } from '../../utils/teammate.js'
 
 const RESET_ALIASES = ['default', 'reset', 'none', 'gray', 'grey'] as const
@@ -50,7 +41,7 @@ export async function call(
     // in sessionStorage.ts persist the reset across session restarts
     await saveAgentColor(sessionId, 'default', fullPath)
 
-    context.setAppState(prev => ({
+    context.setAppState((prev) => ({
       ...prev,
       standaloneAgentContext: {
         ...prev.standaloneAgentContext,
@@ -65,10 +56,9 @@ export async function call(
 
   if (!AGENT_COLORS.includes(colorArg as AgentColorName)) {
     const colorList = AGENT_COLORS.join(', ')
-    onDone(
-      `Invalid color "${colorArg}". Available colors: ${colorList}, default`,
-      { display: 'system' },
-    )
+    onDone(`Invalid color "${colorArg}". Available colors: ${colorList}, default`, {
+      display: 'system',
+    })
     return null
   }
 
@@ -79,7 +69,7 @@ export async function call(
   await saveAgentColor(sessionId, colorArg, fullPath)
 
   // Update AppState for immediate effect
-  context.setAppState(prev => ({
+  context.setAppState((prev) => ({
     ...prev,
     standaloneAgentContext: {
       ...prev.standaloneAgentContext,

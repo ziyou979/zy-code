@@ -1,11 +1,11 @@
-import type { Command } from '../../commands.js';
+import type { Command } from '../../commands.js'
 export default {
   type: 'local-jsx',
   name: 'remote-env',
   description: 'Configure the default remote environment for teleport sessions',
   isEnabled: () => false,
   get isHidden() {
-    return true;
+    return true
   },
-  load: () => import('./remote-env.js')
-} satisfies Command;
+  load: () => import('./remote-env.js'),
+} satisfies Command

@@ -25,8 +25,7 @@ type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 // `{sha}.zip` is content-addressed so CDN can cache it indefinitely;
 // `latest` has Cache-Control: max-age=300 so CDN staleness is bounded.
 // Backend (anthropic#317037) populates this prefix.
-const GCS_BASE =
-  'https://downloads.zy.ai/zy-code-releases/plugins/zy-plugins-official'
+const GCS_BASE = 'https://downloads.zy.ai/zy-code-releases/plugins/zy-plugins-official'
 
 // Zip arc paths are seed-dir-relative (marketplaces/zy-plugins-official/…)
 // so the titanium seed machinery can use the same zip. Strip this prefix when
@@ -93,7 +92,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     //    extracted SHA. Matching means we already have this content.
     const sentinelPath = join(installLocation, '.gcs-sha')
     const currentSha = await readFile(sentinelPath, 'utf8').then(
-      s => s.trim(),
+      (s) => s.trim(),
       () => null, // ENOENT — first fetch, proceed to download
     )
     if (currentSha === sha) {
@@ -147,10 +146,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     return sha
   } catch (e) {
     errKind = classifyGcsError(e)
-    logForDebugging(
-      `Official marketplace GCS fetch failed: ${errorMessage(e)}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`Official marketplace GCS fetch failed: ${errorMessage(e)}`, { level: 'warn' })
     return null
   } finally {
     // zy_plugin_remote_fetch schema shared with the telemetry PR

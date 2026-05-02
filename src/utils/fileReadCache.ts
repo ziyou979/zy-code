@@ -45,9 +45,7 @@ class FileReadCache {
 
     // Cache miss or stale data - read the file
     const encoding = detectFileEncoding(filePath)
-    const content = fs
-      .readFileSync(filePath, { encoding })
-      .replaceAll('\r\n', '\n')
+    const content = fs.readFileSync(filePath, { encoding }).replaceAll('\r\n', '\n')
 
     // Update cache
     this.cache.set(cacheKey, {

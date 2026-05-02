@@ -43,17 +43,13 @@ export async function calculatePluginVersion(
 ): Promise<string> {
   // 1. Use explicit version from plugin.json if available
   if (manifest?.version) {
-    logForDebugging(
-      `Using manifest version for ${pluginId}: ${manifest.version}`,
-    )
+    logForDebugging(`Using manifest version for ${pluginId}: ${manifest.version}`)
     return manifest.version
   }
 
   // 2. Use provided version (typically from marketplace entry)
   if (providedVersion) {
-    logForDebugging(
-      `Using provided version for ${pluginId}: ${providedVersion}`,
-    )
+    logForDebugging(`Using provided version for ${pluginId}: ${providedVersion}`)
     return providedVersion
   }
 
@@ -72,18 +68,10 @@ export async function calculatePluginVersion(
       //   3. strip all trailing `/`
       //   4. UTF-8 sha256, first 8 hex chars
       // See api/…/plugins_official_squashfs/job.py _validate_subdir().
-      const normPath = source.path
-        .replace(/\\/g, '/')
-        .replace(/^\.\//, '')
-        .replace(/\/+$/, '')
-      const pathHash = createHash('sha256')
-        .update(normPath)
-        .digest('hex')
-        .substring(0, 8)
+      const normPath = source.path.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '')
+      const pathHash = createHash('sha256').update(normPath).digest('hex').substring(0, 8)
       const v = `${shortSha}-${pathHash}`
-      logForDebugging(
-        `Using git-subdir SHA+path version for ${pluginId}: ${v} (path=${normPath})`,
-      )
+      logForDebugging(`Using git-subdir SHA+path version for ${pluginId}: ${v} (path=${normPath})`)
       return v
     }
     logForDebugging(`Using pre-resolved git SHA for ${pluginId}: ${shortSha}`)
@@ -129,9 +117,7 @@ export function getVersionFromPath(installPath: string): string | null {
   const parts = installPath.split('/').filter(Boolean)
 
   // Find 'cache' index to determine depth
-  const cacheIndex = parts.findIndex(
-    (part, i) => part === 'cache' && parts[i - 1] === 'plugins',
-  )
+  const cacheIndex = parts.findIndex((part, i) => part === 'cache' && parts[i - 1] === 'plugins')
 
   if (cacheIndex === -1) {
     return null

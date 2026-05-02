@@ -69,11 +69,10 @@ function probeTmuxControlModeSync(): void {
   if (process.env.TERM_PROGRAM) return
   let result
   try {
-    result = spawnSync(
-      'tmux',
-      ['display-message', '-p', '#{client_control_mode}'],
-      { encoding: 'utf8', timeout: 2000 },
-    )
+    result = spawnSync('tmux', ['display-message', '-p', '#{client_control_mode}'], {
+      encoding: 'utf8',
+      timeout: 2000,
+    })
   } catch {
     // spawnSync can throw on some platforms (e.g. ENOENT on Windows if tmux
     // is absent and the runtime surfaces it as an exception rather than in
@@ -187,11 +186,10 @@ export async function maybeGetTmuxMouseHint(): Promise<string | null> {
   // -A includes inherited values: `show -v mouse` returns empty when the
   // option is set globally (`set -g mouse on` in .tmux.conf) but not at
   // session level — which is the common case. -A gives the effective value.
-  const { stdout, code } = await execFileNoThrow(
-    'tmux',
-    ['show', '-Av', 'mouse'],
-    { useCwd: false, timeout: 2000 },
-  )
+  const { stdout, code } = await execFileNoThrow('tmux', ['show', '-Av', 'mouse'], {
+    useCwd: false,
+    timeout: 2000,
+  })
   if (code !== 0 || stdout.trim() === 'on') return null
   return "tmux detected · scroll with PgUp/PgDn · or add 'set -g mouse on' to ~/.tmux.conf for wheel scroll"
 }

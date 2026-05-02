@@ -16,10 +16,7 @@ import { addFunctionHook } from './sessionHooks.js'
 export const hookResponseSchema = lazySchema(() =>
   z.object({
     ok: z.boolean().describe('Whether the condition was met'),
-    reason: z
-      .string()
-      .describe('Reason, if the condition was not met')
-      .optional(),
+    reason: z.string().describe('Reason, if the condition was not met').optional(),
   }),
 )
 
@@ -27,10 +24,7 @@ export const hookResponseSchema = lazySchema(() =>
  * Add hook input JSON to prompt, either replacing $ARGUMENTS placeholder or appending.
  * Also supports indexed arguments like $ARGUMENTS[0], $ARGUMENTS[1], or shorthand $0, $1, etc.
  */
-export function addArgumentsToPrompt(
-  prompt: string,
-  jsonInput: string,
-): string {
+export function addArgumentsToPrompt(prompt: string, jsonInput: string): string {
   return substituteArguments(prompt, jsonInput)
 }
 
@@ -76,7 +70,7 @@ export function registerStructuredOutputEnforcement(
     sessionId,
     'Stop',
     '', // No matcher - applies to all stops
-    messages => hasSuccessfulToolCall(messages, SYNTHETIC_OUTPUT_TOOL_NAME),
+    (messages) => hasSuccessfulToolCall(messages, SYNTHETIC_OUTPUT_TOOL_NAME),
     `You MUST call the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool to complete this request. Call this tool now.`,
     { timeout: 5000 },
   )

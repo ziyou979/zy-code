@@ -2,9 +2,7 @@
  * Fetches MCP skills for a given client by discovering skill:// resources.
  * This is a stub implementation for external builds.
  */
-export async function fetchMcpSkillsForClient(
-  client: unknown,
-): Promise<unknown[]> {
+export async function fetchMcpSkillsForClient(client: unknown): Promise<unknown[]> {
   // Stub: returns empty array in external builds
   return []
 }

@@ -43,11 +43,7 @@ import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { execFileNoThrow } from '../execFileNoThrow.js'
 import { sleep } from '../sleep.js'
-import {
-  CLI_CU_CAPABILITIES,
-  CLI_HOST_BUNDLE_ID,
-  getTerminalBundleId,
-} from './common.js'
+import { CLI_CU_CAPABILITIES, CLI_HOST_BUNDLE_ID, getTerminalBundleId } from './common.js'
 import { drainRunLoop } from './drainRunLoop.js'
 import { notifyExpectedEscape } from './escHotkey.js'
 import { requireComputerUseInput } from './inputLoader.js'
@@ -111,11 +107,7 @@ function isBareEscape(parts: readonly string[]): boolean {
  */
 const MOVE_SETTLE_MS = 50
 
-async function moveAndSettle(
-  input: Input,
-  x: number,
-  y: number,
-): Promise<void> {
+async function moveAndSettle(input: Input, x: number, y: number): Promise<void> {
   await input.moveMouse(x, y, false)
   await sleep(MOVE_SETTLE_MS)
 }
@@ -148,11 +140,7 @@ async function releasePressed(input: Input, pressed: string[]): Promise<void> {
  * Caller must already be inside drainRunLoop() — key() dispatches to the
  * main queue and needs the pump to resolve.
  */
-async function withModifiers<T>(
-  input: Input,
-  mods: string[],
-  fn: () => Promise<T>,
-): Promise<T> {
+async function withModifiers<T>(input: Input, mods: string[], fn: () => Promise<T>): Promise<T> {
   const pressed: string[] = []
   try {
     for (const m of mods) {
@@ -183,9 +171,7 @@ async function typeViaClipboard(input: Input, text: string): Promise<void> {
   try {
     saved = await readClipboardViaPbpaste()
   } catch {
-    logForDebugging(
-      '[computer-use] pbpaste before paste failed; proceeding without restore',
-    )
+    logForDebugging('[computer-use] pbpaste before paste failed; proceeding without restore')
   }
 
   try {
@@ -282,9 +268,7 @@ export function createCliExecutor(opts: {
   // the package ever passes it through we strip it here so the terminal never
   // photobombs a screenshot.
   const withoutTerminal = (allowed: readonly string[]): string[] =>
-    terminalBundleId === null
-      ? [...allowed]
-      : allowed.filter(id => id !== terminalBundleId)
+    terminalBundleId === null ? [...allowed] : allowed.filter((id) => id !== terminalBundleId)
 
   logForDebugging(
     terminalBundleId
@@ -300,10 +284,7 @@ export function createCliExecutor(opts: {
 
     // ── Pre-action sequence (hide + defocus) ────────────────────────────
 
-    async prepareForAction(
-      allowlistBundleIds: string[],
-      displayId?: number,
-    ): Promise<string[]> {
+    async prepareForAction(allowlistBundleIds: string[], displayId?: number): Promise<string[]> {
       if (!getHideBeforeActionEnabled()) {
         return []
       }
@@ -319,15 +300,9 @@ export function createCliExecutor(opts: {
       // frontmost gate in toolCalls.ts catches any actual unsafe state.
       return drainRunLoop(async () => {
         try {
-          const result = await cu.apps.prepareDisplay(
-            allowlistBundleIds,
-            surrogateHost,
-            displayId,
-          )
+          const result = await cu.apps.prepareDisplay(allowlistBundleIds, surrogateHost, displayId)
           if (result.activated) {
-            logForDebugging(
-              `[computer-use] prepareForAction: activated ${result.activated}`,
-            )
+            logForDebugging(`[computer-use] prepareForAction: activated ${result.activated}`)
           }
           return result.hidden
         } catch (err) {
@@ -344,10 +319,7 @@ export function createCliExecutor(opts: {
       allowlistBundleIds: string[],
       displayId?: number,
     ): Promise<Array<{ bundleId: string; displayName: string }>> {
-      return cu.apps.previewHideSet(
-        [...allowlistBundleIds, surrogateHost],
-        displayId,
-      )
+      return cu.apps.previewHideSet([...allowlistBundleIds, surrogateHost], displayId)
     },
 
     // ── Display ──────────────────────────────────────────────────────────
@@ -373,11 +345,7 @@ export function createCliExecutor(opts: {
       doHide?: boolean
     }): Promise<ResolvePrepareCaptureResult> {
       const d = cu.display.getSize(opts.preferredDisplayId)
-      const [targetW, targetH] = computeTargetDims(
-        d.width,
-        d.height,
-        d.scaleFactor,
-      )
+      const [targetW, targetH] = computeTargetDims(d.width, d.height, d.scaleFactor)
       return drainRunLoop(() =>
         cu.resolvePrepareCapture(
           withoutTerminal(opts.allowedBundleIds),
@@ -402,11 +370,7 @@ export function createCliExecutor(opts: {
       displayId?: number
     }): Promise<ScreenshotResult> {
       const d = cu.display.getSize(opts.displayId)
-      const [targetW, targetH] = computeTargetDims(
-        d.width,
-        d.height,
-        d.scaleFactor,
-      )
+      const [targetW, targetH] = computeTargetDims(d.width, d.height, d.scaleFactor)
       return drainRunLoop(() =>
         cu.screenshot.captureExcluding(
           withoutTerminal(opts.allowedBundleIds),
@@ -424,11 +388,7 @@ export function createCliExecutor(opts: {
       displayId?: number,
     ): Promise<{ base64: string; width: number; height: number }> {
       const d = cu.display.getSize(displayId)
-      const [outW, outH] = computeTargetDims(
-        regionLogical.w,
-        regionLogical.h,
-        d.scaleFactor,
-      )
+      const [outW, outH] = computeTargetDims(regionLogical.w, regionLogical.h, d.scaleFactor)
       return drainRunLoop(() =>
         cu.screenshot.captureRegion(
           withoutTerminal(allowedBundleIds),
@@ -455,7 +415,7 @@ export function createCliExecutor(opts: {
      */
     async key(keySequence: string, repeat?: number): Promise<void> {
       const input = requireComputerUseInput()
-      const parts = keySequence.split('+').filter(p => p.length > 0)
+      const parts = keySequence.split('+').filter((p) => p.length > 0)
       // Bare-only: the CGEventTap checks event.flags.isEmpty so ctrl+escape
       // etc. pass through without aborting.
       const isEsc = isBareEscape(parts)
@@ -547,9 +507,7 @@ export function createCliExecutor(opts: {
       await moveAndSettle(input, x, y)
       if (modifiers && modifiers.length > 0) {
         await drainRunLoop(() =>
-          withModifiers(input, modifiers, () =>
-            input.mouseButton(button, 'click', count),
-          ),
+          withModifiers(input, modifiers, () => input.mouseButton(button, 'click', count)),
         )
       } else {
         await input.mouseButton(button, 'click', count)
@@ -650,9 +608,7 @@ export function createCliExecutor(opts: {
  * `stopHooks.ts` / `query.ts`, outside the executor lifecycle. Fire-and-forget
  * at the call site; the caller `.catch()`es.
  */
-export async function unhideComputerUseApps(
-  bundleIds: readonly string[],
-): Promise<void> {
+export async function unhideComputerUseApps(bundleIds: readonly string[]): Promise<void> {
   if (bundleIds.length === 0) return
   const cu = requireComputerUseSwift()
   await cu.apps.unhide([...bundleIds])

@@ -14,7 +14,7 @@ import { isLocalShellTask } from './guards.js'
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void
 
 export function killTask(taskId: string, setAppState: SetAppStateFn): void {
-  updateTaskState(taskId, setAppState, task => {
+  updateTaskState(taskId, setAppState, (task) => {
     if (task.status !== 'running' || !isLocalShellTask(task)) {
       return task
     }
@@ -57,11 +57,7 @@ export function killShellTasksForAgent(
 ): void {
   const tasks = getAppState().tasks ?? {}
   for (const [taskId, task] of Object.entries(tasks)) {
-    if (
-      isLocalShellTask(task) &&
-      task.agentId === agentId &&
-      task.status === 'running'
-    ) {
+    if (isLocalShellTask(task) && task.agentId === agentId && task.status === 'running') {
       logForDebugging(
         `killShellTasksForAgent: killing orphaned shell task ${taskId} (agent ${agentId} exiting)`,
       )
@@ -72,5 +68,5 @@ export function killShellTasksForAgent(
   // has exited and won't drain them. killTask fires 'killed' notifications
   // asynchronously; drop the ones already queued and any that land later sit
   // harmlessly (no consumer matches a dead agentId).
-  dequeueAllMatching(cmd => cmd.agentId === agentId)
+  dequeueAllMatching((cmd) => cmd.agentId === agentId)
 }

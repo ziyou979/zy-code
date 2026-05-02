@@ -14,8 +14,8 @@ import { resolveUiLanguage, SUPPORTED_UI_LANGUAGES } from './types.js'
 // 懒加载的语言环境映射 — 启动时从不导入
 type LocaleLoader = () => Promise<Record<string, string>>
 const localeLoaders: Record<string, LocaleLoader> = {
-  en: () => import('./locales/en.js').then(m => m.en),
-  'zh-CN': () => import('./locales/zh-CN.js').then(m => m.zhCN),
+  en: () => import('./locales/en.js').then((m) => m.en),
+  'zh-CN': () => import('./locales/zh-CN.js').then((m) => m.zhCN),
 }
 
 let _cachedLang: UiLanguage | undefined
@@ -70,10 +70,7 @@ function getSyncMessages(): Record<string, string> {
 /**
  * 将 `{key}` 占位符替换为 vars 中的值
  */
-function interpolate(
-  template: string,
-  vars?: Record<string, string | number>,
-): string {
+function interpolate(template: string, vars?: Record<string, string | number>): string {
   if (!vars) return template
   return template.replace(/\{(\w+)}/g, (_, k: string) => {
     const v = vars[k]
@@ -113,10 +110,7 @@ export function getUiLanguage(): UiLanguage {
 /**
  * 异步翻译 — 首次调用时加载语言环境。
  */
-export async function t(
-  key: string,
-  vars?: Record<string, string | number>,
-): Promise<string> {
+export async function t(key: string, vars?: Record<string, string | number>): Promise<string> {
   const lang = getUiLanguage()
   const messages = await loadMessages(lang)
   const template = messages[key] ?? getSyncMessages()[key] ?? key
@@ -126,13 +120,9 @@ export async function t(
 /**
  * 同步翻译 — 使用预热的缓存或同步加载当前语言环境。适用于如旋转动画等热路径。
  */
-export function tSync(
-  key: string,
-  vars?: Record<string, string | number>,
-): string {
+export function tSync(key: string, vars?: Record<string, string | number>): string {
   const lang = getUiLanguage()
-  const messages =
-    _cachedLang === lang ? _cachedMessages : getSyncMessages()
+  const messages = _cachedLang === lang ? _cachedMessages : getSyncMessages()
   const template = messages?.[key] ?? getSyncMessages()[key] ?? key
   return interpolate(template, vars)
 }

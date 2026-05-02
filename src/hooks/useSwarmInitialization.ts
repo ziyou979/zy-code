@@ -53,9 +53,7 @@ export function useSwarmInitialization(
 
         // Get agentId from team file for hook initialization
         const teamFile = readTeamFile(teamName)
-        const member = teamFile?.members.find(
-          (m: { name: string }) => m.name === agentName,
-        )
+        const member = teamFile?.members.find((m: { name: string }) => m.name === agentName)
         if (member) {
           initializeTeammateHooks(setAppState, getSessionId(), {
             teamName,

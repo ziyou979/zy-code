@@ -1,34 +1,52 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import * as React from 'react';
-import { Box, Text, color } from '../../ink.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { stringWidth } from '../../ink/stringWidth.js';
-import { getLayoutMode, calculateLayoutDimensions, calculateOptimalLeftWidth, formatWelcomeMessage, truncatePath, getRecentActivitySync, getRecentReleaseNotesSync, getLogoDisplayData } from '../../utils/logoV2Utils.js';
-import { truncate } from '../../utils/format.js';
-import { getDisplayPath } from '../../utils/file.js';
-import { Zy } from './Zy.js';
-import { FeedColumn } from './FeedColumn.js';
-import { createRecentActivityFeed, createWhatsNewFeed, createProjectOnboardingFeed, createGuestPassesFeed } from './feedConfigs.js';
-import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config.js';
-import { resolveThemeSetting } from 'src/utils/systemTheme.js';
-import { getInitialSettings } from 'src/utils/settings/settings.js';
-import { isDebugMode, isDebugToStdErr, getDebugLogPath } from 'src/utils/debug.js';
-import { useEffect, useState } from 'react';
-import { getSteps, shouldShowProjectOnboarding, incrementProjectOnboardingSeenCount } from '../../projectOnboardingState.js';
-import { CondensedLogo } from './CondensedLogo.js';
-import { OffscreenFreeze } from '../OffscreenFreeze.js';
-import { checkForReleaseNotesSync } from '../../utils/releaseNotes.js';
-import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js';
-import { isEnvTruthy } from 'src/utils/envUtils.js';
-import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/utils/startupProfiler.js';
-import { EmergencyTip } from './EmergencyTip.js';
-import { VoiceModeNotice } from './VoiceModeNotice.js';
-import { Opus1mMergeNotice } from './Opus1mMergeNotice.js';
-import { feature } from 'bun:bundle';
+import * as React from 'react'
+import { Box, Text, color } from '../../ink.js'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { stringWidth } from '../../ink/stringWidth.js'
+import {
+  getLayoutMode,
+  calculateLayoutDimensions,
+  calculateOptimalLeftWidth,
+  formatWelcomeMessage,
+  truncatePath,
+  getRecentActivitySync,
+  getRecentReleaseNotesSync,
+  getLogoDisplayData,
+} from '../../utils/logoV2Utils.js'
+import { truncate } from '../../utils/format.js'
+import { getDisplayPath } from '../../utils/file.js'
+import { Zy } from './Zy.js'
+import { FeedColumn } from './FeedColumn.js'
+import {
+  createRecentActivityFeed,
+  createWhatsNewFeed,
+  createProjectOnboardingFeed,
+  createGuestPassesFeed,
+} from './feedConfigs.js'
+import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config.js'
+import { resolveThemeSetting } from 'src/utils/systemTheme.js'
+import { getInitialSettings } from 'src/utils/settings/settings.js'
+import { isDebugMode, isDebugToStdErr, getDebugLogPath } from 'src/utils/debug.js'
+import { useEffect, useState } from 'react'
+import {
+  getSteps,
+  shouldShowProjectOnboarding,
+  incrementProjectOnboardingSeenCount,
+} from '../../projectOnboardingState.js'
+import { CondensedLogo } from './CondensedLogo.js'
+import { OffscreenFreeze } from '../OffscreenFreeze.js'
+import { checkForReleaseNotesSync } from '../../utils/releaseNotes.js'
+import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js'
+import { isEnvTruthy } from 'src/utils/envUtils.js'
+import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/utils/startupProfiler.js'
+import { EmergencyTip } from './EmergencyTip.js'
+import { VoiceModeNotice } from './VoiceModeNotice.js'
+import { Opus1mMergeNotice } from './Opus1mMergeNotice.js'
+import { feature } from 'bun:bundle'
 
 // Type declarations for missing components
-const GateOverridesWarning: any = null;
-const ExperimentEnrollmentNotice: any = null;
+const GateOverridesWarning: any = null
+const ExperimentEnrollmentNotice: any = null
 
 // Conditional require so ChannelsNotice.tsx tree-shakes when both flags are
 // false. A module-scope helper component inside a feature() ternary does NOT
@@ -36,125 +54,343 @@ const ExperimentEnrollmentNotice: any = null;
 // whole file. VoiceModeNotice uses the unsafe helper pattern but VOICE_MODE
 // is external: true so it's moot there.
 /* eslint-disable @typescript-eslint/no-require-imports */
-const ChannelsNoticeModule = feature('KAIROS') || feature('KAIROS_CHANNELS') ? require('./ChannelsNotice.js') as typeof import('./ChannelsNotice.js') : null;
+const ChannelsNoticeModule =
+  feature('KAIROS') || feature('KAIROS_CHANNELS')
+    ? (require('./ChannelsNotice.js') as typeof import('./ChannelsNotice.js'))
+    : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js';
-import { useShowGuestPassesUpsell, incrementGuestPassesSeenCount } from './GuestPassesUpsell.js';
-import { useShowOverageCreditUpsell, incrementOverageCreditUpsellSeenCount, createOverageCreditFeed } from './OverageCreditUpsell.js';
-import { useAppState } from '../../state/AppState.js';
-import { getEffortSuffix } from '../../utils/effort.js';
-import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
-import { renderModelSetting } from '../../utils/model/model.js';
-const LEFT_PANEL_MAX_WIDTH = 50;
+import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
+import { useShowGuestPassesUpsell, incrementGuestPassesSeenCount } from './GuestPassesUpsell.js'
+import {
+  useShowOverageCreditUpsell,
+  incrementOverageCreditUpsellSeenCount,
+  createOverageCreditFeed,
+} from './OverageCreditUpsell.js'
+import { useAppState } from '../../state/AppState.js'
+import { getEffortSuffix } from '../../utils/effort.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import { renderModelSetting } from '../../utils/model/model.js'
+const LEFT_PANEL_MAX_WIDTH = 50
 export function LogoV2() {
-  const activities = getRecentActivitySync();
-  const username = getGlobalConfig().oauthAccount?.displayName ?? "";
-  const {
-    columns
-  } = useTerminalSize();
-  const showOnboarding = shouldShowProjectOnboarding();
-  const showSandboxStatus = SandboxManager.isSandboxingEnabled();
-  const showGuestPassesUpsell = useShowGuestPassesUpsell();
-  const showOverageCreditUpsell = useShowOverageCreditUpsell();
-  const agent = useAppState(s => s.agent);
-  const effortValue = useAppState(s_0 => s_0.effortValue);
-  const config = getGlobalConfig();
-  let changelog;
+  const activities = getRecentActivitySync()
+  const username = getGlobalConfig().oauthAccount?.displayName ?? ''
+  const { columns } = useTerminalSize()
+  const showOnboarding = shouldShowProjectOnboarding()
+  const showSandboxStatus = SandboxManager.isSandboxingEnabled()
+  const showGuestPassesUpsell = useShowGuestPassesUpsell()
+  const showOverageCreditUpsell = useShowOverageCreditUpsell()
+  const agent = useAppState((s) => s.agent)
+  const effortValue = useAppState((s_0) => s_0.effortValue)
+  const config = getGlobalConfig()
+  let changelog
   try {
-    changelog = getRecentReleaseNotesSync(3);
+    changelog = getRecentReleaseNotesSync(3)
   } catch {
-    changelog = [];
+    changelog = []
   }
   const [announcement] = useState(() => {
-    const announcements = getInitialSettings().companyAnnouncements;
+    const announcements = getInitialSettings().companyAnnouncements
     if (!announcements || announcements.length === 0) {
-      return;
+      return
     }
-    return config.numStartups === 1 ? announcements[0] : announcements[Math.floor(Math.random() * announcements.length)];
-  });
-  const {
-    hasReleaseNotes
-  } = checkForReleaseNotesSync(config.lastReleaseNotesSeen);
+    return config.numStartups === 1
+      ? announcements[0]
+      : announcements[Math.floor(Math.random() * announcements.length)]
+  })
+  const { hasReleaseNotes } = checkForReleaseNotesSync(config.lastReleaseNotesSeen)
   useEffect(() => {
-    const currentConfig = getGlobalConfig();
+    const currentConfig = getGlobalConfig()
     if (currentConfig.lastReleaseNotesSeen === MACRO.VERSION) {
-      return;
+      return
     }
-    saveGlobalConfig(current => {
+    saveGlobalConfig((current) => {
       if (current.lastReleaseNotesSeen === MACRO.VERSION) {
-        return current;
+        return current
       }
       return {
         ...current,
-        lastReleaseNotesSeen: MACRO.VERSION
-      };
-    });
+        lastReleaseNotesSeen: MACRO.VERSION,
+      }
+    })
     if (showOnboarding) {
-      incrementProjectOnboardingSeenCount();
+      incrementProjectOnboardingSeenCount()
     }
-  }, [config, showOnboarding]);
-  const isCondensedMode = !hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO);
+  }, [config, showOnboarding])
+  const isCondensedMode =
+    !hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)
   useEffect(() => {
     if (showGuestPassesUpsell && !showOnboarding && !isCondensedMode) {
-      incrementGuestPassesSeenCount();
+      incrementGuestPassesSeenCount()
     }
-  }, [showGuestPassesUpsell, showOnboarding, isCondensedMode]);
+  }, [showGuestPassesUpsell, showOnboarding, isCondensedMode])
   useEffect(() => {
     if (showOverageCreditUpsell && !showOnboarding && !showGuestPassesUpsell && !isCondensedMode) {
-      incrementOverageCreditUpsellSeenCount();
+      incrementOverageCreditUpsellSeenCount()
     }
-  }, [showOverageCreditUpsell, showOnboarding, showGuestPassesUpsell, isCondensedMode]);
-  const model = useMainLoopModel();
-  const fullModelDisplayName = renderModelSetting(model);
-  const {
-    version,
-    cwd,
-    billingType,
-    agentName: agentNameFromSettings
-  } = getLogoDisplayData();
-  const agentName = agent ?? agentNameFromSettings;
-  const effortSuffix = getEffortSuffix(model, effortValue);
-  const modelDisplayName = truncate(fullModelDisplayName + effortSuffix, LEFT_PANEL_MAX_WIDTH - 20);
+  }, [showOverageCreditUpsell, showOnboarding, showGuestPassesUpsell, isCondensedMode])
+  const model = useMainLoopModel()
+  const fullModelDisplayName = renderModelSetting(model)
+  const { version, cwd, billingType, agentName: agentNameFromSettings } = getLogoDisplayData()
+  const agentName = agent ?? agentNameFromSettings
+  const effortSuffix = getEffortSuffix(model, effortValue)
+  const modelDisplayName = truncate(fullModelDisplayName + effortSuffix, LEFT_PANEL_MAX_WIDTH - 20)
   if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)) {
-    const t15 = isDebugMode() && <Box paddingLeft={2} flexDirection="column"><Text color="warning">Debug mode enabled</Text><Text dimColor={true}>Logging to: {isDebugToStdErr() ? "stderr" : getDebugLogPath()}</Text></Box>;
-    return <>{<CondensedLogo />}{<VoiceModeNotice />}{<Opus1mMergeNotice />}{ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}{t15}{<EmergencyTip />}{process.env.ZY_CODE_TMUX_SESSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>tmux session: {process.env.ZY_CODE_TMUX_SESSION}</Text><Text dimColor={true}>{process.env.ZY_CODE_TMUX_PREFIX_CONFLICTS ? `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} ${process.env.ZY_CODE_TMUX_PREFIX} d (press prefix twice - Zy uses ${process.env.ZY_CODE_TMUX_PREFIX})` : `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} d`}</Text></Box>}{announcement && <Box paddingLeft={2} flexDirection="column">{!process.env.IS_DEMO && config.oauthAccount?.organizationName && <Text dimColor={true}>Message from {config.oauthAccount.organizationName}:</Text>}<Text>{announcement}</Text></Box>}{false && !process.env.DEMO_VERSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>Use /issue to report model behavior issues</Text></Box>}{false && !process.env.DEMO_VERSION && <Box paddingLeft={2} flexDirection="column"><Text color="warning">[INNER-ONLY] Logs:</Text><Text dimColor={true}>API calls: {getDisplayPath(getDumpPromptsPath())}</Text><Text dimColor={true}>Debug logs: {getDisplayPath(getDebugLogPath())}</Text>{isDetailedProfilingEnabled() && <Text dimColor={true}>Startup Perf: {getDisplayPath(getStartupPerfLogPath())}</Text>}</Box>}{false && <GateOverridesWarning />}{false && <ExperimentEnrollmentNotice />}</>;
+    const t15 = isDebugMode() && (
+      <Box paddingLeft={2} flexDirection="column">
+        <Text color="warning">Debug mode enabled</Text>
+        <Text dimColor={true}>Logging to: {isDebugToStdErr() ? 'stderr' : getDebugLogPath()}</Text>
+      </Box>
+    )
+    return (
+      <>
+        {<CondensedLogo />}
+        {<VoiceModeNotice />}
+        {<Opus1mMergeNotice />}
+        {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
+        {t15}
+        {<EmergencyTip />}
+        {process.env.ZY_CODE_TMUX_SESSION && (
+          <Box paddingLeft={2} flexDirection="column">
+            <Text dimColor={true}>tmux session: {process.env.ZY_CODE_TMUX_SESSION}</Text>
+            <Text dimColor={true}>
+              {process.env.ZY_CODE_TMUX_PREFIX_CONFLICTS
+                ? `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} ${process.env.ZY_CODE_TMUX_PREFIX} d (press prefix twice - Zy uses ${process.env.ZY_CODE_TMUX_PREFIX})`
+                : `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} d`}
+            </Text>
+          </Box>
+        )}
+        {announcement && (
+          <Box paddingLeft={2} flexDirection="column">
+            {!process.env.IS_DEMO && config.oauthAccount?.organizationName && (
+              <Text dimColor={true}>Message from {config.oauthAccount.organizationName}:</Text>
+            )}
+            <Text>{announcement}</Text>
+          </Box>
+        )}
+        {false && !process.env.DEMO_VERSION && (
+          <Box paddingLeft={2} flexDirection="column">
+            <Text dimColor={true}>Use /issue to report model behavior issues</Text>
+          </Box>
+        )}
+        {false && !process.env.DEMO_VERSION && (
+          <Box paddingLeft={2} flexDirection="column">
+            <Text color="warning">[INNER-ONLY] Logs:</Text>
+            <Text dimColor={true}>API calls: {getDisplayPath(getDumpPromptsPath())}</Text>
+            <Text dimColor={true}>Debug logs: {getDisplayPath(getDebugLogPath())}</Text>
+            {isDetailedProfilingEnabled() && (
+              <Text dimColor={true}>Startup Perf: {getDisplayPath(getStartupPerfLogPath())}</Text>
+            )}
+          </Box>
+        )}
+        {false && <GateOverridesWarning />}
+        {false && <ExperimentEnrollmentNotice />}
+      </>
+    )
   }
-  const layoutMode = getLayoutMode(columns);
-  const userTheme = resolveThemeSetting(getGlobalConfig().theme);
-  const borderTitle = ` ${color("zy", userTheme)("ZY Code")} ${color("inactive", userTheme)(`v${version}`)} `;
-  const compactBorderTitle = color("zy", userTheme)(" ZY Code ");
-  if (layoutMode === "compact") {
-    let welcomeMessage = formatWelcomeMessage(username);
+  const layoutMode = getLayoutMode(columns)
+  const userTheme = resolveThemeSetting(getGlobalConfig().theme)
+  const borderTitle = ` ${color('zy', userTheme)('ZY Code')} ${color('inactive', userTheme)(`v${version}`)} `
+  const compactBorderTitle = color('zy', userTheme)(' ZY Code ')
+  if (layoutMode === 'compact') {
+    let welcomeMessage = formatWelcomeMessage(username)
     if (stringWidth(welcomeMessage) > columns - 4) {
-      welcomeMessage = formatWelcomeMessage(null);
+      welcomeMessage = formatWelcomeMessage(null)
     }
-    const cwdAvailableWidth = agentName ? columns - 4 - 1 - stringWidth(agentName) - 3 : columns - 4;
-    const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10));
-    return <><OffscreenFreeze><Box flexDirection="column" borderStyle="round" borderColor="zy" borderText={{
-          content: compactBorderTitle,
-          position: "top",
-          align: "start",
-          offset: 1
-        }} paddingX={1} paddingY={1} alignItems="center" width={columns}><Text bold={true}>{welcomeMessage}</Text>{<Box marginY={1}><Zy /></Box>}{<Text dimColor={true}>{modelDisplayName}</Text>}<Text dimColor={true}>{billingType}</Text><Text dimColor={true}>{agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd}</Text></Box></OffscreenFreeze>{<VoiceModeNotice />}{<Opus1mMergeNotice />}{ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}{showSandboxStatus && <Box marginTop={1} flexDirection="column"><Text color="warning">Your bash commands will be sandboxed. Disable with /sandbox.</Text></Box>}{false && <GateOverridesWarning />}{false && <ExperimentEnrollmentNotice />}</>;
+    const cwdAvailableWidth = agentName ? columns - 4 - 1 - stringWidth(agentName) - 3 : columns - 4
+    const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10))
+    return (
+      <>
+        <OffscreenFreeze>
+          <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor="zy"
+            borderText={{
+              content: compactBorderTitle,
+              position: 'top',
+              align: 'start',
+              offset: 1,
+            }}
+            paddingX={1}
+            paddingY={1}
+            alignItems="center"
+            width={columns}
+          >
+            <Text bold={true}>{welcomeMessage}</Text>
+            {
+              <Box marginY={1}>
+                <Zy />
+              </Box>
+            }
+            {<Text dimColor={true}>{modelDisplayName}</Text>}
+            <Text dimColor={true}>{billingType}</Text>
+            <Text dimColor={true}>
+              {agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd}
+            </Text>
+          </Box>
+        </OffscreenFreeze>
+        {<VoiceModeNotice />}
+        {<Opus1mMergeNotice />}
+        {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
+        {showSandboxStatus && (
+          <Box marginTop={1} flexDirection="column">
+            <Text color="warning">
+              Your bash commands will be sandboxed. Disable with /sandbox.
+            </Text>
+          </Box>
+        )}
+        {false && <GateOverridesWarning />}
+        {false && <ExperimentEnrollmentNotice />}
+      </>
+    )
   }
-  const welcomeMessage_0 = formatWelcomeMessage(username);
-  const modelLine = !process.env.IS_DEMO && config.oauthAccount?.organizationName ? `${modelDisplayName} · ${billingType} · ${config.oauthAccount.organizationName}` : `${modelDisplayName} · ${billingType}`;
-  const cwdAvailableWidth_0 = agentName ? LEFT_PANEL_MAX_WIDTH - 1 - stringWidth(agentName) - 3 : LEFT_PANEL_MAX_WIDTH;
-  const truncatedCwd_0 = truncatePath(cwd, Math.max(cwdAvailableWidth_0, 10));
-  const cwdLine = agentName ? `@${agentName} · ${truncatedCwd_0}` : truncatedCwd_0;
-  const optimalLeftWidth = calculateOptimalLeftWidth(welcomeMessage_0, cwdLine, modelLine);
-  const {
-    leftWidth,
-    rightWidth
-  } = calculateLayoutDimensions(columns, layoutMode, optimalLeftWidth);
-  const T0 = OffscreenFreeze;
-  const T1 = Box;
-  const T2 = Box;
-  const t32 = isDebugMode() && <Box paddingLeft={2} flexDirection="column"><Text color="warning">Debug mode enabled</Text><Text dimColor={true}>Logging to: {isDebugToStdErr() ? "stderr" : getDebugLogPath()}</Text></Box>;
-  return <>{<T0>{<T1 flexDirection={"column"} borderStyle={"round"} borderColor={"zy"} borderText={{
-        content: borderTitle,
-        position: "top",
-        align: "start",
-        offset: 3
-      }}>{<T2 flexDirection={layoutMode === "horizontal" ? "row" : "column"} paddingX={1} gap={1}>{<Box flexDirection="column" width={leftWidth} justifyContent="space-between" alignItems="center" minHeight={9}>{<Box marginTop={1}><Text bold={true}>{welcomeMessage_0}</Text></Box>}{<Zy />}{<Box flexDirection="column" alignItems="center">{<Text dimColor={true}>{modelLine}</Text>}{<Text dimColor={true}>{cwdLine}</Text>}</Box>}</Box>}{layoutMode === "horizontal" && <Box height="100%" borderStyle="single" borderColor="zy" borderDimColor={true} borderTop={false} borderBottom={false} borderLeft={false} />}{layoutMode === "horizontal" && <FeedColumn feeds={showOnboarding ? [createProjectOnboardingFeed(getSteps()), createRecentActivityFeed(activities)] : showGuestPassesUpsell ? [createRecentActivityFeed(activities), createGuestPassesFeed()] : showOverageCreditUpsell ? [createRecentActivityFeed(activities), createOverageCreditFeed()] : [createRecentActivityFeed(activities), createWhatsNewFeed(changelog)]} maxWidth={rightWidth} />}</T2>}</T1>}</T0>}{<VoiceModeNotice />}{<Opus1mMergeNotice />}{ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}{t32}{<EmergencyTip />}{process.env.ZY_CODE_TMUX_SESSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>tmux session: {process.env.ZY_CODE_TMUX_SESSION}</Text><Text dimColor={true}>{process.env.ZY_CODE_TMUX_PREFIX_CONFLICTS ? `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} ${process.env.ZY_CODE_TMUX_PREFIX} d (press prefix twice - Zy uses ${process.env.ZY_CODE_TMUX_PREFIX})` : `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} d`}</Text></Box>}{announcement && <Box paddingLeft={2} flexDirection="column">{!process.env.IS_DEMO && config.oauthAccount?.organizationName && <Text dimColor={true}>Message from {config.oauthAccount.organizationName}:</Text>}<Text>{announcement}</Text></Box>}{showSandboxStatus && <Box paddingLeft={2} flexDirection="column"><Text color="warning">Your bash commands will be sandboxed. Disable with /sandbox.</Text></Box>}{false && !process.env.DEMO_VERSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>Use /issue to report model behavior issues</Text></Box>}{false && !process.env.DEMO_VERSION && <Box paddingLeft={2} flexDirection="column"><Text color="warning">[INNER-ONLY] Logs:</Text><Text dimColor={true}>API calls: {getDisplayPath(getDumpPromptsPath())}</Text><Text dimColor={true}>Debug logs: {getDisplayPath(getDebugLogPath())}</Text>{isDetailedProfilingEnabled() && <Text dimColor={true}>Startup Perf: {getDisplayPath(getStartupPerfLogPath())}</Text>}</Box>}{false && <GateOverridesWarning />}{false && <ExperimentEnrollmentNotice />}</>;
+  const welcomeMessage_0 = formatWelcomeMessage(username)
+  const modelLine =
+    !process.env.IS_DEMO && config.oauthAccount?.organizationName
+      ? `${modelDisplayName} · ${billingType} · ${config.oauthAccount.organizationName}`
+      : `${modelDisplayName} · ${billingType}`
+  const cwdAvailableWidth_0 = agentName
+    ? LEFT_PANEL_MAX_WIDTH - 1 - stringWidth(agentName) - 3
+    : LEFT_PANEL_MAX_WIDTH
+  const truncatedCwd_0 = truncatePath(cwd, Math.max(cwdAvailableWidth_0, 10))
+  const cwdLine = agentName ? `@${agentName} · ${truncatedCwd_0}` : truncatedCwd_0
+  const optimalLeftWidth = calculateOptimalLeftWidth(welcomeMessage_0, cwdLine, modelLine)
+  const { leftWidth, rightWidth } = calculateLayoutDimensions(columns, layoutMode, optimalLeftWidth)
+  const T0 = OffscreenFreeze
+  const T1 = Box
+  const T2 = Box
+  const t32 = isDebugMode() && (
+    <Box paddingLeft={2} flexDirection="column">
+      <Text color="warning">Debug mode enabled</Text>
+      <Text dimColor={true}>Logging to: {isDebugToStdErr() ? 'stderr' : getDebugLogPath()}</Text>
+    </Box>
+  )
+  return (
+    <>
+      {
+        <T0>
+          {
+            <T1
+              flexDirection={'column'}
+              borderStyle={'round'}
+              borderColor={'zy'}
+              borderText={{
+                content: borderTitle,
+                position: 'top',
+                align: 'start',
+                offset: 3,
+              }}
+            >
+              {
+                <T2
+                  flexDirection={layoutMode === 'horizontal' ? 'row' : 'column'}
+                  paddingX={1}
+                  gap={1}
+                >
+                  {
+                    <Box
+                      flexDirection="column"
+                      width={leftWidth}
+                      justifyContent="space-between"
+                      alignItems="center"
+                      minHeight={9}
+                    >
+                      {
+                        <Box marginTop={1}>
+                          <Text bold={true}>{welcomeMessage_0}</Text>
+                        </Box>
+                      }
+                      {<Zy />}
+                      {
+                        <Box flexDirection="column" alignItems="center">
+                          {<Text dimColor={true}>{modelLine}</Text>}
+                          {<Text dimColor={true}>{cwdLine}</Text>}
+                        </Box>
+                      }
+                    </Box>
+                  }
+                  {layoutMode === 'horizontal' && (
+                    <Box
+                      height="100%"
+                      borderStyle="single"
+                      borderColor="zy"
+                      borderDimColor={true}
+                      borderTop={false}
+                      borderBottom={false}
+                      borderLeft={false}
+                    />
+                  )}
+                  {layoutMode === 'horizontal' && (
+                    <FeedColumn
+                      feeds={
+                        showOnboarding
+                          ? [
+                              createProjectOnboardingFeed(getSteps()),
+                              createRecentActivityFeed(activities),
+                            ]
+                          : showGuestPassesUpsell
+                            ? [createRecentActivityFeed(activities), createGuestPassesFeed()]
+                            : showOverageCreditUpsell
+                              ? [createRecentActivityFeed(activities), createOverageCreditFeed()]
+                              : [
+                                  createRecentActivityFeed(activities),
+                                  createWhatsNewFeed(changelog),
+                                ]
+                      }
+                      maxWidth={rightWidth}
+                    />
+                  )}
+                </T2>
+              }
+            </T1>
+          }
+        </T0>
+      }
+      {<VoiceModeNotice />}
+      {<Opus1mMergeNotice />}
+      {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
+      {t32}
+      {<EmergencyTip />}
+      {process.env.ZY_CODE_TMUX_SESSION && (
+        <Box paddingLeft={2} flexDirection="column">
+          <Text dimColor={true}>tmux session: {process.env.ZY_CODE_TMUX_SESSION}</Text>
+          <Text dimColor={true}>
+            {process.env.ZY_CODE_TMUX_PREFIX_CONFLICTS
+              ? `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} ${process.env.ZY_CODE_TMUX_PREFIX} d (press prefix twice - Zy uses ${process.env.ZY_CODE_TMUX_PREFIX})`
+              : `Detach: ${process.env.ZY_CODE_TMUX_PREFIX} d`}
+          </Text>
+        </Box>
+      )}
+      {announcement && (
+        <Box paddingLeft={2} flexDirection="column">
+          {!process.env.IS_DEMO && config.oauthAccount?.organizationName && (
+            <Text dimColor={true}>Message from {config.oauthAccount.organizationName}:</Text>
+          )}
+          <Text>{announcement}</Text>
+        </Box>
+      )}
+      {showSandboxStatus && (
+        <Box paddingLeft={2} flexDirection="column">
+          <Text color="warning">Your bash commands will be sandboxed. Disable with /sandbox.</Text>
+        </Box>
+      )}
+      {false && !process.env.DEMO_VERSION && (
+        <Box paddingLeft={2} flexDirection="column">
+          <Text dimColor={true}>Use /issue to report model behavior issues</Text>
+        </Box>
+      )}
+      {false && !process.env.DEMO_VERSION && (
+        <Box paddingLeft={2} flexDirection="column">
+          <Text color="warning">[INNER-ONLY] Logs:</Text>
+          <Text dimColor={true}>API calls: {getDisplayPath(getDumpPromptsPath())}</Text>
+          <Text dimColor={true}>Debug logs: {getDisplayPath(getDebugLogPath())}</Text>
+          {isDetailedProfilingEnabled() && (
+            <Text dimColor={true}>Startup Perf: {getDisplayPath(getStartupPerfLogPath())}</Text>
+          )}
+        </Box>
+      )}
+      {false && <GateOverridesWarning />}
+      {false && <ExperimentEnrollmentNotice />}
+    </>
+  )
 }

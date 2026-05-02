@@ -32,9 +32,7 @@ export function buildQueryConfig(): QueryConfig {
       streamingToolExecution: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
         'zy_streaming_tool_execution2',
       ),
-      emitToolUseSummaries: isEnvTruthy(
-        process.env.ZY_CODE_EMIT_TOOL_USE_SUMMARIES,
-      ),
+      emitToolUseSummaries: isEnvTruthy(process.env.ZY_CODE_EMIT_TOOL_USE_SUMMARIES),
       isAnt: isInternalBuild(),
     },
   }

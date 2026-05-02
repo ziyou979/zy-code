@@ -106,10 +106,7 @@ function processChunk(str: string): void {
     if (code === 27) {
       i++ // Skip the ESC character
       // Skip until the terminating byte (@ to ~) or end of string
-      while (
-        i < str.length &&
-        !(str.charCodeAt(i) >= 64 && str.charCodeAt(i) <= 126)
-      ) {
+      while (i < str.length && !(str.charCodeAt(i) >= 64 && str.charCodeAt(i) <= 126)) {
         i++
       }
       if (i < str.length) i++ // Skip the terminating byte

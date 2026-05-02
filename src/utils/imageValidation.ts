@@ -24,9 +24,7 @@ export class ImageSizeError extends Error {
     } else {
       message =
         `${oversizedImages.length} images exceed the API limit (${formatFileSize(maxSize)}): ` +
-        oversizedImages
-          .map(img => `Image ${img.index}: ${formatFileSize(img.size)}`)
-          .join(', ') +
+        oversizedImages.map((img) => `Image ${img.index}: ${formatFileSize(img.size)}`).join(', ') +
         `. Please resize these images before sending.`
     }
     super(message)
@@ -37,9 +35,7 @@ export class ImageSizeError extends Error {
 /**
  * Type guard to check if a block is a base64 image block.
  */
-function isBase64ImageBlock(
-  block: unknown,
-): block is { type: 'image'; data: string } {
+function isBase64ImageBlock(block: unknown): block is { type: 'image'; data: string } {
   if (typeof block !== 'object' || block === null) return false
   const b = block as Record<string, unknown>
   if (b.type !== 'image') return false

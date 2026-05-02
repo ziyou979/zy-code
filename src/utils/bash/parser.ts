@@ -1,11 +1,7 @@
 import { feature } from 'bun:bundle'
 import { logEvent } from '../../services/analytics/index.js'
 import { logForDebugging } from '../debug.js'
-import {
-  ensureParserInitialized,
-  getParserModule,
-  type TsNode,
-} from './bashParser.js'
+import { ensureParserInitialized, getParserModule, type TsNode } from './bashParser.js'
 
 export type Node = TsNode
 
@@ -27,19 +23,14 @@ const DECLARATION_COMMANDS = new Set([
   'unsetenv',
 ])
 const ARGUMENT_TYPES = new Set(['word', 'string', 'raw_string', 'number'])
-const SUBSTITUTION_TYPES = new Set([
-  'command_substitution',
-  'process_substitution',
-])
+const SUBSTITUTION_TYPES = new Set(['command_substitution', 'process_substitution'])
 const COMMAND_TYPES = new Set(['command', 'declaration_command'])
 
 let logged = false
 function logLoadOnce(success: boolean): void {
   if (logged) return
   logged = true
-  logForDebugging(
-    success ? 'tree-sitter: native module loaded' : 'tree-sitter: unavailable',
-  )
+  logForDebugging(success ? 'tree-sitter: native module loaded' : 'tree-sitter: unavailable')
   logEvent('zy_tree_sitter_load', { success })
 }
 
@@ -53,9 +44,7 @@ export async function ensureInitialized(): Promise<void> {
   }
 }
 
-export async function parseCommand(
-  command: string,
-): Promise<ParsedCommandData | null> {
+export async function parseCommand(command: string): Promise<ParsedCommandData | null> {
   if (!command || command.length > MAX_COMMAND_LENGTH) return null
 
   // Gate: ant-only until pentest. External builds fall back to legacy
@@ -143,9 +132,8 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
   // Variable assignment followed by command
   if (type === 'variable_assignment' && parent) {
     return (
-      parent.children.find(
-        c => COMMAND_TYPES.has(c.type) && c.startIndex > node.startIndex,
-      ) ?? null
+      parent.children.find((c) => COMMAND_TYPES.has(c.type) && c.startIndex > node.startIndex) ??
+      null
     )
   }
 
@@ -160,7 +148,7 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
 
   // Redirected statement: find the command inside
   if (type === 'redirected_statement') {
-    return children.find(c => COMMAND_TYPES.has(c.type)) ?? null
+    return children.find((c) => COMMAND_TYPES.has(c.type)) ?? null
   }
 
   // Recursive search
@@ -190,9 +178,7 @@ export function extractCommandArguments(commandNode: Node): string[] {
   // Declaration commands
   if (commandNode.type === 'declaration_command') {
     const firstChild = commandNode.children[0]
-    return firstChild && DECLARATION_COMMANDS.has(firstChild.text)
-      ? [firstChild.text]
-      : []
+    return firstChild && DECLARATION_COMMANDS.has(firstChild.text) ? [firstChild.text] : []
   }
 
   const args: string[] = []
@@ -202,10 +188,7 @@ export function extractCommandArguments(commandNode: Node): string[] {
     if (child.type === 'variable_assignment') continue
 
     // Command name
-    if (
-      child.type === 'command_name' ||
-      (!foundCommandName && child.type === 'word')
-    ) {
+    if (child.type === 'command_name' || (!foundCommandName && child.type === 'word')) {
       foundCommandName = true
       args.push(child.text)
       continue
@@ -223,8 +206,7 @@ export function extractCommandArguments(commandNode: Node): string[] {
 
 function stripQuotes(text: string): string {
   return text.length >= 2 &&
-    ((text[0] === '"' && text.at(-1) === '"') ||
-      (text[0] === "'" && text.at(-1) === "'"))
+    ((text[0] === '"' && text.at(-1) === '"') || (text[0] === "'" && text.at(-1) === "'"))
     ? text.slice(1, -1)
     : text
 }

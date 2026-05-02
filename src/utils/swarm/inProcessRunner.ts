@@ -57,10 +57,7 @@ import { TEAM_CREATE_TOOL_NAME } from '../../tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '../../tools/TeamDeleteTool/constants.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
-import {
-  createAssistantAPIErrorMessage,
-  createUserMessage,
-} from '../../utils/messages.js'
+import { createAssistantAPIErrorMessage, createUserMessage } from '../../utils/messages.js'
 import { evictTaskOutput } from '../../utils/task/diskOutput.js'
 import { evictTerminalTask } from '../../utils/task/framework.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
@@ -69,10 +66,7 @@ import { type AgentContext, runWithAgentContext } from '../agentContext.js'
 import { count } from '../array.js'
 import { logForDebugging } from '../debug.js'
 import { cloneFileStateCache } from '../fileStateCache.js'
-import {
-  SUBAGENT_REJECT_MESSAGE,
-  SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
-} from '../messages.js'
+import { SUBAGENT_REJECT_MESSAGE, SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX } from '../messages.js'
 import type { ModelAlias } from '../model/aliases.js'
 import {
   applyPermissionUpdates,
@@ -104,10 +98,7 @@ import {
   getLeaderSetToolPermissionContext,
   getLeaderToolUseConfirmQueue,
 } from './leaderPermissionBridge.js'
-import {
-  createPermissionRequest,
-  sendPermissionRequestViaMailbox,
-} from './permissionSync.js'
+import { createPermissionRequest, sendPermissionRequestViaMailbox } from './permissionSync.js'
 import { TEAMMATE_SYSTEM_PROMPT_ADDENDUM } from './teammatePromptAddendum.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void
@@ -131,23 +122,10 @@ function createInProcessCanUseTool(
   abortController: AbortController,
   onPermissionWaitMs?: (waitMs: number) => void,
 ): CanUseToolFn {
-  return async (
-    tool,
-    input,
-    toolUseContext,
-    assistantMessage,
-    toolUseID,
-    forceDecision,
-  ) => {
+  return async (tool, input, toolUseContext, assistantMessage, toolUseID, forceDecision) => {
     const result =
       forceDecision ??
-      (await hasPermissionsToUseTool(
-        tool,
-        input,
-        toolUseContext,
-        assistantMessage,
-        toolUseID,
-      ))
+      (await hasPermissionsToUseTool(tool, input, toolUseContext, assistantMessage, toolUseID))
 
     // 直接传递 allow/deny 决定
     if (result.behavior !== 'ask') {
@@ -197,7 +175,7 @@ function createInProcessCanUseTool(
 
     // 标准路径：使用带 worker 徽章的 ToolUseConfirm 对话框
     if (setToolUseConfirmQueue) {
-      return new Promise<PermissionDecision>(resolve => {
+      return new Promise<PermissionDecision>((resolve) => {
         let decisionMade = false
         const permissionStartMs = Date.now()
 
@@ -212,16 +190,14 @@ function createInProcessCanUseTool(
           decisionMade = true
           reportPermissionWait()
           resolve({ behavior: 'ask', message: SUBAGENT_REJECT_MESSAGE })
-          setToolUseConfirmQueue(queue =>
-            queue.filter(item => item.toolUseID !== toolUseID),
-          )
+          setToolUseConfirmQueue((queue) => queue.filter((item) => item.toolUseID !== toolUseID))
         }
 
         abortController.signal.addEventListener('abort', onAbortListener, {
           once: true,
         })
 
-        setToolUseConfirmQueue(queue => [
+        setToolUseConfirmQueue((queue) => [
           ...queue,
           {
             assistantMessage,
@@ -241,10 +217,7 @@ function createInProcessCanUseTool(
             onAbort() {
               if (decisionMade) return
               decisionMade = true
-              abortController.signal.removeEventListener(
-                'abort',
-                onAbortListener,
-              )
+              abortController.signal.removeEventListener('abort', onAbortListener)
               reportPermissionWait()
               resolve({ behavior: 'ask', message: SUBAGENT_REJECT_MESSAGE })
             },
@@ -256,16 +229,12 @@ function createInProcessCanUseTool(
             ) {
               if (decisionMade) return
               decisionMade = true
-              abortController.signal.removeEventListener(
-                'abort',
-                onAbortListener,
-              )
+              abortController.signal.removeEventListener('abort', onAbortListener)
               reportPermissionWait()
               persistPermissionUpdates(permissionUpdates)
               // 将权限更新写回 leader 的共享上下文
               if (permissionUpdates.length > 0) {
-                const setToolPermissionContext =
-                  getLeaderSetToolPermissionContext()
+                const setToolPermissionContext = getLeaderSetToolPermissionContext()
                 if (setToolPermissionContext) {
                   const currentAppState = toolUseContext.getAppState()
                   const updatedContext = applyPermissionUpdates(
@@ -285,17 +254,13 @@ function createInProcessCanUseTool(
                 updatedInput,
                 userModified: false,
                 acceptFeedback: trimmedFeedback || undefined,
-                ...(contentBlocks &&
-                  contentBlocks.length > 0 && { contentBlocks }),
+                ...(contentBlocks && contentBlocks.length > 0 && { contentBlocks }),
               })
             },
             onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
               if (decisionMade) return
               decisionMade = true
-              abortController.signal.removeEventListener(
-                'abort',
-                onAbortListener,
-              )
+              abortController.signal.removeEventListener('abort', onAbortListener)
               reportPermissionWait()
               const message = feedback
                 ? `${SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX}${feedback}`
@@ -313,13 +278,10 @@ function createInProcessCanUseTool(
               )
               if (freshResult.behavior === 'allow') {
                 decisionMade = true
-                abortController.signal.removeEventListener(
-                  'abort',
-                  onAbortListener,
-                )
+                abortController.signal.removeEventListener('abort', onAbortListener)
                 reportPermissionWait()
-                setToolUseConfirmQueue(queue =>
-                  queue.filter(item => item.toolUseID !== toolUseID),
+                setToolUseConfirmQueue((queue) =>
+                  queue.filter((item) => item.toolUseID !== toolUseID),
                 )
                 resolve({
                   ...freshResult,
@@ -334,7 +296,7 @@ function createInProcessCanUseTool(
     }
 
     // 回退：当 leader UI 队列不可用时使用邮箱系统
-    return new Promise<PermissionDecision>(resolve => {
+    return new Promise<PermissionDecision>((resolve) => {
       const request = createPermissionRequest({
         toolName: (tool as Tool).name,
         toolUseId: toolUseID,
@@ -360,9 +322,7 @@ function createInProcessCanUseTool(
           cleanup()
           persistPermissionUpdates(permissionUpdates)
           const finalInput =
-            updatedInput && Object.keys(updatedInput).length > 0
-              ? updatedInput
-              : input
+            updatedInput && Object.keys(updatedInput).length > 0 ? updatedInput : input
           resolve({
             behavior: 'allow',
             updatedInput: finalInput,
@@ -391,20 +351,13 @@ function createInProcessCanUseTool(
             return
           }
 
-          const allMessages = await readMailbox(
-            identity.agentName,
-            identity.teamName,
-          )
+          const allMessages = await readMailbox(identity.agentName, identity.teamName)
           for (let i = 0; i < allMessages.length; i++) {
             const msg = allMessages[i]
             if (msg && !msg.read) {
               const parsed = isPermissionResponse(msg.text)
               if (parsed && parsed.request_id === request.id) {
-                await markMessageAsReadByIndex(
-                  identity.agentName,
-                  identity.teamName,
-                  i,
-                )
+                await markMessageAsReadByIndex(identity.agentName, identity.teamName, i)
                 if (parsed.subtype === 'success') {
                   processMailboxPermissionResponse({
                     requestId: parsed.request_id,
@@ -521,7 +474,7 @@ function updateTaskState(
   updater: (task: InProcessTeammateTaskState) => InProcessTeammateTaskState,
   setAppState: SetAppStateFn,
 ): void {
-  setAppState(prev => {
+  setAppState((prev) => {
     const task = prev.tasks[taskId]
     if (!task || task.type !== 'in_process_teammate') {
       return prev
@@ -580,12 +533,7 @@ async function sendIdleNotification(
 ): Promise<void> {
   const notification = createIdleNotification(agentName, options)
 
-  await sendMessageToLeader(
-    agentName,
-    jsonStringify(notification),
-    agentColor,
-    teamName,
-  )
+  await sendMessageToLeader(agentName, jsonStringify(notification), agentColor, teamName)
 }
 
 /**
@@ -593,14 +541,12 @@ async function sendIdleNotification(
  * 任务可用的条件是：状态为 pending、没有 owner、且未被阻塞。
  */
 function findAvailableTask(tasks: Task[]): Task | undefined {
-  const unresolvedTaskIds = new Set(
-    tasks.filter(t => t.status !== 'completed').map(t => t.id),
-  )
+  const unresolvedTaskIds = new Set(tasks.filter((t) => t.status !== 'completed').map((t) => t.id))
 
-  return tasks.find(task => {
+  return tasks.find((task) => {
     if (task.status !== 'pending') return false
     if (task.owner) return false
-    return task.blockedBy.every(id => !unresolvedTaskIds.has(id))
+    return task.blockedBy.every((id) => !unresolvedTaskIds.has(id))
   })
 }
 
@@ -645,9 +591,7 @@ async function tryClaimNextTask(
     // 同时设置状态为 in_progress，使 UI 立即反映
     await updateTask(taskListId, availableTask.id, { status: 'in_progress' })
 
-    logForDebugging(
-      `[inProcessRunner] Claimed task #${availableTask.id}: ${availableTask.subject}`,
-    )
+    logForDebugging(`[inProcessRunner] Claimed task #${availableTask.id}: ${availableTask.subject}`)
 
     return formatTaskAsPrompt(availableTask)
   } catch (err) {
@@ -705,14 +649,10 @@ async function waitForNextPromptOrShutdown(
     // 每次迭代都检查内存中的 pending 消息（来自查看 transcript）
     const appState = getAppState()
     const task = appState.tasks[taskId]
-    if (
-      task &&
-      task.type === 'in_process_teammate' &&
-      task.pendingUserMessages.length > 0
-    ) {
+    if (task && task.type === 'in_process_teammate' && task.pendingUserMessages.length > 0) {
       const message = task.pendingUserMessages[0]! // 安全：已经检查过 length > 0
       // 从队列中弹出消息
-      setAppState(prev => {
+      setAppState((prev) => {
         const prevTask = prev.tasks[taskId]
         if (!prevTask || prevTask.type !== 'in_process_teammate') {
           return prev
@@ -753,17 +693,12 @@ async function waitForNextPromptOrShutdown(
     }
 
     // 检查邮箱中的消息
-    logForDebugging(
-      `[inProcessRunner] ${identity.agentName} poll #${pollCount}: checking mailbox`,
-    )
+    logForDebugging(`[inProcessRunner] ${identity.agentName} poll #${pollCount}: checking mailbox`)
     try {
       // 读取所有消息并首先扫描未读的 shutdown 请求。
       // shutdown 请求优先于普通消息，以防止
       // 点对点消息淹没队列时饥饿。
-      const allMessages = await readMailbox(
-        identity.agentName,
-        identity.teamName,
-      )
+      const allMessages = await readMailbox(identity.agentName, identity.teamName)
 
       // 扫描所有未读消息以查找 shutdown 请求（最高优先级）。
       // readMailbox() 已经从磁盘读取了所有消息，因此此扫描
@@ -784,18 +719,11 @@ async function waitForNextPromptOrShutdown(
 
       if (shutdownIndex !== -1) {
         const msg = allMessages[shutdownIndex]!
-        const skippedUnread = count(
-          allMessages.slice(0, shutdownIndex),
-          m => !m.read,
-        )
+        const skippedUnread = count(allMessages.slice(0, shutdownIndex), (m) => !m.read)
         logForDebugging(
           `[inProcessRunner] ${identity.agentName} received shutdown request from ${shutdownParsed?.from} (prioritized over ${skippedUnread} unread messages)`,
         )
-        await markMessageAsReadByIndex(
-          identity.agentName,
-          identity.teamName,
-          shutdownIndex,
-        )
+        await markMessageAsReadByIndex(identity.agentName, identity.teamName, shutdownIndex)
         return {
           type: 'shutdown_request',
           request: shutdownParsed,
@@ -820,7 +748,7 @@ async function waitForNextPromptOrShutdown(
 
       // 回退到第一条未读消息（任何发送者）
       if (selectedIndex === -1) {
-        selectedIndex = allMessages.findIndex(m => !m.read)
+        selectedIndex = allMessages.findIndex((m) => !m.read)
       }
 
       if (selectedIndex !== -1) {
@@ -829,11 +757,7 @@ async function waitForNextPromptOrShutdown(
           logForDebugging(
             `[inProcessRunner] ${identity.agentName} received new message from ${msg.from} (index ${selectedIndex})`,
           )
-          await markMessageAsReadByIndex(
-            identity.agentName,
-            identity.teamName,
-            selectedIndex,
-          )
+          await markMessageAsReadByIndex(identity.agentName, identity.teamName, selectedIndex)
           return {
             type: 'new_message',
             message: msg.text,
@@ -844,9 +768,7 @@ async function waitForNextPromptOrShutdown(
         }
       }
     } catch (err) {
-      logForDebugging(
-        `[inProcessRunner] ${identity.agentName} poll error: ${err}`,
-      )
+      logForDebugging(`[inProcessRunner] ${identity.agentName} poll error: ${err}`)
       // 即使某次读取失败也继续轮询
     }
 
@@ -901,9 +823,7 @@ export async function runInProcessTeammate(
   } = config
   const { setAppState } = toolUseContext
 
-  logForDebugging(
-    `[inProcessRunner] Starting agent loop for ${identity.agentId}`,
-  )
+  logForDebugging(`[inProcessRunner] Starting agent loop for ${identity.agentId}`)
 
   // 为 analytics 归因创建 AgentContext
   const agentContext: AgentContext = {
@@ -932,10 +852,7 @@ export async function runInProcessTeammate(
       toolUseContext.options.mcpClients,
     )
 
-    const systemPromptParts = [
-      ...fullSystemPromptParts,
-      TEAMMATE_SYSTEM_PROMPT_ADDENDUM,
-    ]
+    const systemPromptParts = [...fullSystemPromptParts, TEAMMATE_SYSTEM_PROMPT_ADDENDUM]
 
     // 如果提供了自定义 agent 定义，追加其 prompt
     if (agentDefinition) {
@@ -1003,12 +920,7 @@ export async function runInProcessTeammate(
   // 所有 prompt 的所有消息
   const allMessages: Message[] = []
   // 用 XML 包装初始 prompt，以便在 transcript 视图中正确显示
-  const wrappedInitialPrompt = formatAsTeammateMessage(
-    'team-lead',
-    prompt,
-    undefined,
-    description,
-  )
+  const wrappedInitialPrompt = formatAsTeammateMessage('team-lead', prompt, undefined, description)
   let currentPrompt = wrappedInitialPrompt
   let shouldExit = false
 
@@ -1022,7 +934,7 @@ export async function runInProcessTeammate(
     // 将初始 prompt 添加到 task.messages 用于显示（用 XML 包装）
     updateTaskState(
       taskId,
-      task => ({
+      (task) => ({
         ...task,
         messages: appendCappedMessage(
           task.messages,
@@ -1056,11 +968,7 @@ export async function runInProcessTeammate(
       const currentWorkAbortController = createAbortController()
 
       // 将工作控制器存储在任务状态中，以便 UI 可以中止它
-      updateTaskState(
-        taskId,
-        task => ({ ...task, currentWorkAbortController }),
-        setAppState,
-      )
+      updateTaskState(taskId, (task) => ({ ...task, currentWorkAbortController }), setAppState)
 
       // 为此迭代准备 prompt 消息
       // 第一次迭代时，从头开始
@@ -1071,10 +979,7 @@ export async function runInProcessTeammate(
       // 检查在构建上下文之前是否需要压缩
       let contextMessages = allMessages
       const tokenCount = tokenCountWithEstimation(allMessages)
-      if (
-        tokenCount >
-        getAutoCompactThreshold(toolUseContext.options.mainLoopModel)
-      ) {
+      if (tokenCount > getAutoCompactThreshold(toolUseContext.options.mainLoopModel)) {
         logForDebugging(
           `[inProcessRunner] ${identity.agentId} compacting history (${tokenCount} tokens)`,
         )
@@ -1120,15 +1025,14 @@ export async function runInProcessTeammate(
         // 用压缩后的消息替换，匹配 allMessages。
         updateTaskState(
           taskId,
-          task => ({ ...task, messages: [...contextMessages, userMessage] }),
+          (task) => ({ ...task, messages: [...contextMessages, userMessage] }),
           setAppState,
         )
       }
 
       // 传递之前的消息作为上下文以保留对话历史
       // allMessages 累积之前迭代的所有消息（用户 + 助手）
-      const forkContextMessages =
-        contextMessages.length > 0 ? [...contextMessages] : undefined
+      const forkContextMessages = contextMessages.length > 0 ? [...contextMessages] : undefined
 
       // 将用户消息添加到 allMessages，以便包含在未来的上下文中
       // 这确保完整的对话（用户 + 助手轮次）被保留
@@ -1136,9 +1040,7 @@ export async function runInProcessTeammate(
 
       // 为此 prompt 创建新的进度跟踪器
       const tracker = createProgressTracker()
-      const resolveActivity = createActivityDescriptionResolver(
-        toolUseContext.options.tools,
-      )
+      const resolveActivity = createActivityDescriptionResolver(toolUseContext.options.tools)
       const iterationMessages: Message[] = []
 
       // 从任务状态读取当前权限模式（可能已被 leader 通过 Shift+Tab 切换）
@@ -1162,7 +1064,7 @@ export async function runInProcessTeammate(
           // 将任务标记为运行（非空闲）
           updateTaskState(
             taskId,
-            task => ({ ...task, status: 'running', isIdle: false }),
+            (task) => ({ ...task, status: 'running', isIdle: false }),
             setAppState,
           )
 
@@ -1182,7 +1084,7 @@ export async function runInProcessTeammate(
               (waitMs: number) => {
                 updateTaskState(
                   taskId,
-                  task => ({
+                  (task) => ({
                     ...task,
                     totalPausedMs: (task.totalPausedMs ?? 0) + waitMs,
                   }),
@@ -1203,9 +1105,7 @@ export async function runInProcessTeammate(
           })) {
             // 首先检查生命周期中止（杀死整个队友）
             if (abortController.signal.aborted) {
-              logForDebugging(
-                `[inProcessRunner] ${identity.agentId} lifecycle aborted`,
-              )
+              logForDebugging(`[inProcessRunner] ${identity.agentId} lifecycle aborted`)
               break
             }
 
@@ -1231,16 +1131,13 @@ export async function runInProcessTeammate(
 
             updateTaskState(
               taskId,
-              task => {
+              (task) => {
                 // 为 transcript 视图跟踪进行中的工具使用 ID
                 let inProgressToolUseIDs = task.inProgressToolUseIDs
                 if (message.type === 'assistant') {
                   for (const block of message.message.content) {
                     if (block.type === 'tool_call') {
-                      inProgressToolUseIDs = new Set([
-                        ...(inProgressToolUseIDs ?? []),
-                        block.id,
-                      ])
+                      inProgressToolUseIDs = new Set([...(inProgressToolUseIDs ?? []), block.id])
                     }
                   }
                 } else if (message.type === 'user') {
@@ -1279,7 +1176,7 @@ export async function runInProcessTeammate(
       // 从状态中清除工作控制器（它已不再有效）
       updateTaskState(
         taskId,
-        task => ({ ...task, currentWorkAbortController: undefined }),
+        (task) => ({ ...task, currentWorkAbortController: undefined }),
         setAppState,
       )
 
@@ -1290,9 +1187,7 @@ export async function runInProcessTeammate(
 
       // 如果工作中止（Escape），记录它并添加中断消息，然后继续到空闲状态
       if (workWasAborted) {
-        logForDebugging(
-          `[inProcessRunner] ${identity.agentId} work interrupted, returning to idle`,
-        )
+        logForDebugging(`[inProcessRunner] ${identity.agentId} work interrupted, returning to idle`)
 
         // 向队友的消息添加中断消息，使其出现在其回滚中
         const interruptMessage = createAssistantAPIErrorMessage({
@@ -1300,7 +1195,7 @@ export async function runInProcessTeammate(
         })
         updateTaskState(
           taskId,
-          task => ({
+          (task) => ({
             ...task,
             messages: appendCappedMessage(task.messages, interruptMessage),
           }),
@@ -1311,15 +1206,14 @@ export async function runInProcessTeammate(
       // 在更新之前检查是否已经空闲（以跳过重复通知）
       const prevAppState = toolUseContext.getAppState()
       const prevTask = prevAppState.tasks[taskId]
-      const wasAlreadyIdle =
-        prevTask?.type === 'in_process_teammate' && prevTask.isIdle
+      const wasAlreadyIdle = prevTask?.type === 'in_process_teammate' && prevTask.isIdle
 
       // 将任务标记为空闲（不是完成）并通知任何等待者
       updateTaskState(
         taskId,
-        task => {
+        (task) => {
           // 调用任何已注册的空闲回调
-          task.onIdleCallbacks?.forEach(cb => cb())
+          task.onIdleCallbacks?.forEach((cb) => cb())
           return { ...task, isIdle: true, onIdleCallbacks: [] }
         },
         setAppState,
@@ -1331,24 +1225,17 @@ export async function runInProcessTeammate(
 
       // 仅在转换到空闲时发送空闲通知（不是已经空闲时）
       if (!wasAlreadyIdle) {
-        await sendIdleNotification(
-          identity.agentName,
-          identity.color,
-          identity.teamName,
-          {
-            idleReason: workWasAborted ? 'interrupted' : 'available',
-            summary: getLastPeerDmSummary(allMessages),
-          },
-        )
+        await sendIdleNotification(identity.agentName, identity.color, identity.teamName, {
+          idleReason: workWasAborted ? 'interrupted' : 'available',
+          summary: getLastPeerDmSummary(allMessages),
+        })
       } else {
         logForDebugging(
           `[inProcessRunner] Skipping duplicate idle notification for ${identity.agentName}`,
         )
       }
 
-      logForDebugging(
-        `[inProcessRunner] ${identity.agentId} finished prompt, waiting for next`,
-      )
+      logForDebugging(`[inProcessRunner] ${identity.agentId} finished prompt, waiting for next`)
 
       // 等待下一个消息或 shutdown
       const waitResult = await waitForNextPromptOrShutdown(
@@ -1373,11 +1260,7 @@ export async function runInProcessTeammate(
             waitResult.originalMessage,
           )
           // 将 shutdown 请求添加到 task.messages 用于 transcript 显示
-          appendTeammateMessage(
-            taskId,
-            createUserMessage({ content: currentPrompt }),
-            setAppState,
-          )
+          appendTeammateMessage(taskId, createUserMessage({ content: currentPrompt }), setAppState)
           break
 
         case 'new_message':
@@ -1408,9 +1291,7 @@ export async function runInProcessTeammate(
           break
 
         case 'aborted':
-          logForDebugging(
-            `[inProcessRunner] ${identity.agentId} aborted while waiting`,
-          )
+          logForDebugging(`[inProcessRunner] ${identity.agentId} aborted while waiting`)
           shouldExit = true
           break
       }
@@ -1421,7 +1302,7 @@ export async function runInProcessTeammate(
     let toolUseId: string | undefined
     updateTaskState(
       taskId,
-      task => {
+      (task) => {
         // killInProcessTeammate 可能已经设置了 status:killed +
         // notified:true + 清除了字段。不要覆盖（否则会将
         // killed 翻转为 completed 并重复发送 SDK 收尾事件）。
@@ -1430,7 +1311,7 @@ export async function runInProcessTeammate(
           return task
         }
         toolUseId = task.toolUseId
-        task.onIdleCallbacks?.forEach(cb => cb())
+        task.onIdleCallbacks?.forEach((cb) => cb())
         task.unregisterCleanup?.()
         return {
           ...task,
@@ -1463,25 +1344,22 @@ export async function runInProcessTeammate(
     unregisterPerfettoAgent(identity.agentId)
     return { success: true, messages: allMessages }
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    logForDebugging(
-      `[inProcessRunner] Agent ${identity.agentId} failed: ${errorMessage}`,
-    )
+    logForDebugging(`[inProcessRunner] Agent ${identity.agentId} failed: ${errorMessage}`)
 
     // Mark task as failed and notify any waiters
     let alreadyTerminal = false
     let toolUseId: string | undefined
     updateTaskState(
       taskId,
-      task => {
+      (task) => {
         if (task.status !== 'running') {
           alreadyTerminal = true
           return task
         }
         toolUseId = task.toolUseId
-        task.onIdleCallbacks?.forEach(cb => cb())
+        task.onIdleCallbacks?.forEach((cb) => cb())
         task.unregisterCleanup?.()
         return {
           ...task,
@@ -1513,16 +1391,11 @@ export async function runInProcessTeammate(
     }
 
     // 通过基于文件的邮箱发送空闲通知（包含失败信息）
-    await sendIdleNotification(
-      identity.agentName,
-      identity.color,
-      identity.teamName,
-      {
-        idleReason: 'failed',
-        completedStatus: 'failed',
-        failureReason: errorMessage,
-      },
-    )
+    await sendIdleNotification(identity.agentName, identity.color, identity.teamName, {
+      idleReason: 'failed',
+      completedStatus: 'failed',
+      failureReason: errorMessage,
+    })
 
     unregisterPerfettoAgent(identity.agentId)
     return {
@@ -1546,7 +1419,7 @@ export function startInProcessTeammate(config: InProcessRunnerConfig): void {
   // 挂起时保留完整的 config 对象（包括 toolUseContext）——
   // 对于长时间运行的队友来说可能是数小时。
   const agentId = config.identity.agentId
-  void runInProcessTeammate(config).catch(error => {
+  void runInProcessTeammate(config).catch((error) => {
     logForDebugging(`[inProcessRunner] Unhandled error in ${agentId}: ${error}`)
   })
 }

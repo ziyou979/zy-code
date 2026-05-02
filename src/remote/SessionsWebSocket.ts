@@ -37,11 +37,7 @@ const PERMANENT_CLOSE_CODES = new Set([
 
 type WebSocketState = 'connecting' | 'connected' | 'closed'
 
-type SessionsMessage =
-  | SDKMessage
-  | SDKControlRequest
-  | SDKControlResponse
-  | SDKControlCancelRequest
+type SessionsMessage = SDKMessage | SDKControlRequest | SDKControlResponse | SDKControlCancelRequest
 
 function isSessionsMessage(value: unknown): value is SessionsMessage {
   if (typeof value !== 'object' || value === null || !('type' in value)) {
@@ -128,9 +124,7 @@ export class SessionsWebSocket {
       this.ws = ws
 
       ws.addEventListener('open', () => {
-        logForDebugging(
-          '[SessionsWebSocket] Connection opened, authenticated via headers',
-        )
+        logForDebugging('[SessionsWebSocket] Connection opened, authenticated via headers')
         this.state = 'connected'
         this.reconnectAttempts = 0
         this.sessionNotFoundRetries = 0
@@ -139,8 +133,7 @@ export class SessionsWebSocket {
       })
 
       ws.addEventListener('message', (event: MessageEvent) => {
-        const data =
-          typeof event.data === 'string' ? event.data : String(event.data)
+        const data = typeof event.data === 'string' ? event.data : String(event.data)
         this.handleMessage(data)
       })
 
@@ -152,9 +145,7 @@ export class SessionsWebSocket {
 
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       ws.addEventListener('close', (event: CloseEvent) => {
-        logForDebugging(
-          `[SessionsWebSocket] Closed: code=${event.code} reason=${event.reason}`,
-        )
+        logForDebugging(`[SessionsWebSocket] Closed: code=${event.code} reason=${event.reason}`)
         this.handleClose(event.code)
       })
 
@@ -171,9 +162,7 @@ export class SessionsWebSocket {
       this.ws = ws
 
       ws.on('open', () => {
-        logForDebugging(
-          '[SessionsWebSocket] Connection opened, authenticated via headers',
-        )
+        logForDebugging('[SessionsWebSocket] Connection opened, authenticated via headers')
         // Auth is handled via headers, so we're immediately connected
         this.state = 'connected'
         this.reconnectAttempts = 0
@@ -192,9 +181,7 @@ export class SessionsWebSocket {
       })
 
       ws.on('close', (code: number, reason: Buffer) => {
-        logForDebugging(
-          `[SessionsWebSocket] Closed: code=${code} reason=${reason.toString()}`,
-        )
+        logForDebugging(`[SessionsWebSocket] Closed: code=${code} reason=${reason.toString()}`)
         this.handleClose(code)
       })
 
@@ -220,11 +207,7 @@ export class SessionsWebSocket {
         )
       }
     } catch (error) {
-      logError(
-        new Error(
-          `[SessionsWebSocket] Failed to parse message: ${errorMessage(error)}`,
-        ),
-      )
+      logError(new Error(`[SessionsWebSocket] Failed to parse message: ${errorMessage(error)}`))
     }
   }
 
@@ -245,9 +228,7 @@ export class SessionsWebSocket {
 
     // Permanent codes: stop reconnecting — server has definitively ended the session
     if (PERMANENT_CLOSE_CODES.has(closeCode)) {
-      logForDebugging(
-        `[SessionsWebSocket] Permanent close code ${closeCode}, not reconnecting`,
-      )
+      logForDebugging(`[SessionsWebSocket] Permanent close code ${closeCode}, not reconnecting`)
       this.callbacks.onClose?.()
       return
     }
@@ -272,10 +253,7 @@ export class SessionsWebSocket {
     }
 
     // Attempt reconnection if we were connected
-    if (
-      previousState === 'connected' &&
-      this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS
-    ) {
+    if (previousState === 'connected' && this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts++
       this.scheduleReconnect(
         RECONNECT_DELAY_MS,
@@ -289,9 +267,7 @@ export class SessionsWebSocket {
 
   private scheduleReconnect(delay: number, label: string): void {
     this.callbacks.onReconnecting?.()
-    logForDebugging(
-      `[SessionsWebSocket] Scheduling reconnect (${label}) in ${delay}ms`,
-    )
+    logForDebugging(`[SessionsWebSocket] Scheduling reconnect (${label}) in ${delay}ms`)
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       void this.connect()
@@ -350,9 +326,7 @@ export class SessionsWebSocket {
       request,
     }
 
-    logForDebugging(
-      `[SessionsWebSocket] Sending control request: ${request.subtype}`,
-    )
+    logForDebugging(`[SessionsWebSocket] Sending control request: ${request.subtype}`)
     this.ws.send(jsonStringify(controlRequest))
   }
 

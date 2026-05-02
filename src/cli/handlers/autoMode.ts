@@ -4,10 +4,7 @@
  */
 
 import { errorMessage } from '../../utils/errors.js'
-import {
-  getMainLoopModel,
-  parseUserSpecifiedModel,
-} from '../../utils/model/model.js'
+import { getMainLoopModel, parseUserSpecifiedModel } from '../../utils/model/model.js'
 import {
   type AutoModeRules,
   buildDefaultExternalSystemPrompt,
@@ -37,12 +34,8 @@ export function autoModeConfigHandler(): void {
   const defaults = getDefaultExternalAutoModeRules()
   writeRules({
     allow: config?.allow?.length ? config.allow : defaults.allow,
-    soft_deny: config?.soft_deny?.length
-      ? config.soft_deny
-      : defaults.soft_deny,
-    environment: config?.environment?.length
-      ? config.environment
-      : defaults.environment,
+    soft_deny: config?.soft_deny?.length ? config.soft_deny : defaults.soft_deny,
+    environment: config?.environment?.length ? config.environment : defaults.environment,
   })
 }
 
@@ -70,9 +63,7 @@ const CRITIQUE_SYSTEM_PROMPT =
   'Be concise and constructive. Only comment on rules that could be improved. ' +
   'If all rules look good, say so.'
 
-export async function autoModeCritiqueHandler(options: {
-  model?: string
-}): Promise<void> {
+export async function autoModeCritiqueHandler(options: { model?: string }): Promise<void> {
   const config = getAutoModeConfig()
   const hasCustomRules =
     (config?.allow?.length ?? 0) > 0 ||
@@ -88,25 +79,15 @@ export async function autoModeCritiqueHandler(options: {
     return
   }
 
-  const model = options.model
-    ? parseUserSpecifiedModel(options.model)
-    : getMainLoopModel()
+  const model = options.model ? parseUserSpecifiedModel(options.model) : getMainLoopModel()
 
   const defaults = getDefaultExternalAutoModeRules()
   const classifierPrompt = buildDefaultExternalSystemPrompt()
 
   const userRulesSummary =
     formatRulesForCritique('allow', config?.allow ?? [], defaults.allow) +
-    formatRulesForCritique(
-      'soft_deny',
-      config?.soft_deny ?? [],
-      defaults.soft_deny,
-    ) +
-    formatRulesForCritique(
-      'environment',
-      config?.environment ?? [],
-      defaults.environment,
-    )
+    formatRulesForCritique('soft_deny', config?.soft_deny ?? [], defaults.soft_deny) +
+    formatRulesForCritique('environment', config?.environment ?? [], defaults.environment)
 
   process.stdout.write('Analyzing your auto mode rules…\n\n')
 
@@ -133,14 +114,12 @@ export async function autoModeCritiqueHandler(options: {
       ],
     })
   } catch (error) {
-    process.stderr.write(
-      'Failed to analyze rules: ' + errorMessage(error) + '\n',
-    )
+    process.stderr.write('Failed to analyze rules: ' + errorMessage(error) + '\n')
     process.exitCode = 1
     return
   }
 
-  const textBlock = response.content.find(block => block.type === 'text')
+  const textBlock = response.content.find((block) => block.type === 'text')
   if (textBlock?.type === 'text') {
     process.stdout.write(textBlock.text + '\n')
   } else {
@@ -154,8 +133,8 @@ function formatRulesForCritique(
   defaultRules: string[],
 ): string {
   if (userRules.length === 0) return ''
-  const customLines = userRules.map(r => '- ' + r).join('\n')
-  const defaultLines = defaultRules.map(r => '- ' + r).join('\n')
+  const customLines = userRules.map((r) => '- ' + r).join('\n')
+  const defaultLines = defaultRules.map((r) => '- ' + r).join('\n')
   return (
     '## ' +
     section +

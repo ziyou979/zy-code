@@ -12,12 +12,12 @@
  * The hook automatically registers on mount and unregisters on unmount,
  * so no manual cleanup or state management is needed.
  */
-import { useContext, useEffect, useLayoutEffect } from 'react';
-import instances from '../ink/instances.js';
-import { AppStoreContext, useAppState } from '../state/AppState.js';
+import { useContext, useEffect, useLayoutEffect } from 'react'
+import instances from '../ink/instances.js'
+import { AppStoreContext, useAppState } from '../state/AppState.js'
 
 // Non-modal overlays that shouldn't disable TextInput focus
-const NON_MODAL_OVERLAYS = new Set(['autocomplete']);
+const NON_MODAL_OVERLAYS = new Set(['autocomplete'])
 
 /**
  * Hook to register a component as an active overlay.
@@ -35,44 +35,44 @@ const NON_MODAL_OVERLAYS = new Set(['autocomplete']);
  * }
  */
 export function useRegisterOverlay(id, t0) {
-  const enabled = t0 === undefined ? true : t0;
-  const store = useContext(AppStoreContext);
-  const setAppState = store?.setState;
+  const enabled = t0 === undefined ? true : t0
+  const store = useContext(AppStoreContext)
+  const setAppState = store?.setState
   useEffect(() => {
     if (!enabled || !setAppState) {
-      return;
+      return
     }
-    setAppState(prev => {
+    setAppState((prev) => {
       if (prev.activeOverlays.has(id)) {
-        return prev;
+        return prev
       }
-      const next = new Set(prev.activeOverlays);
-      next.add(id);
+      const next = new Set(prev.activeOverlays)
+      next.add(id)
       return {
         ...prev,
-        activeOverlays: next
-      };
-    });
+        activeOverlays: next,
+      }
+    })
     return () => {
-      setAppState(prev_0 => {
+      setAppState((prev_0) => {
         if (!prev_0.activeOverlays.has(id)) {
-          return prev_0;
+          return prev_0
         }
-        const next_0 = new Set(prev_0.activeOverlays);
-        next_0.delete(id);
+        const next_0 = new Set(prev_0.activeOverlays)
+        next_0.delete(id)
         return {
           ...prev_0,
-          activeOverlays: next_0
-        };
-      });
-    };
-  }, [id, enabled, setAppState]);
+          activeOverlays: next_0,
+        }
+      })
+    }
+  }, [id, enabled, setAppState])
   useLayoutEffect(() => {
     if (!enabled) {
-      return;
+      return
     }
-    return () => instances.get(process.stdout)?.invalidatePrevFrame();
-  }, [enabled]);
+    return () => instances.get(process.stdout)?.invalidatePrevFrame()
+  }, [enabled])
 }
 
 /**
@@ -90,7 +90,7 @@ export function useRegisterOverlay(id, t0) {
  */
 
 export function useIsOverlayActive() {
-  return useAppState(s => s.activeOverlays.size > 0);
+  return useAppState((s) => s.activeOverlays.size > 0)
 }
 
 /**
@@ -106,12 +106,12 @@ export function useIsOverlayActive() {
  */
 
 export function useIsModalOverlayActive() {
-  return useAppState(s => {
+  return useAppState((s) => {
     for (const id of s.activeOverlays) {
       if (!NON_MODAL_OVERLAYS.has(id)) {
-        return true;
+        return true
       }
     }
-    return false;
-  });
+    return false
+  })
 }

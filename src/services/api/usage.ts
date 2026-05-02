@@ -1,9 +1,6 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import {
-  getZyAIOAuthTokens,
-  hasProfileScope,
-} from '../../utils/auth.js'
+import { getZyAIOAuthTokens, hasProfileScope } from '../../utils/auth.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'

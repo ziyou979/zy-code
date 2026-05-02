@@ -8,10 +8,7 @@ import { isInternalBuild } from '../envUtils.js'
  */
 export const getManagedFilePath = memoize(function (): string {
   // Allow override for testing/demos (Ant-only, eliminated from external builds)
-  if (
-    isInternalBuild() &&
-    process.env.ZY_CODE_MANAGED_SETTINGS_PATH
-  ) {
+  if (isInternalBuild() && process.env.ZY_CODE_MANAGED_SETTINGS_PATH) {
     return process.env.ZY_CODE_MANAGED_SETTINGS_PATH
   }
 

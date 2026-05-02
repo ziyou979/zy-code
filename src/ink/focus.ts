@@ -18,9 +18,7 @@ export class FocusManager {
   private enabled = true
   private focusStack: DOMElement[] = []
 
-  constructor(
-    dispatchFocusEvent: (target: DOMElement, event: FocusEvent) => boolean,
-  ) {
+  constructor(dispatchFocusEvent: (target: DOMElement, event: FocusEvent) => boolean) {
     this.dispatchFocusEvent = dispatchFocusEvent
   }
 
@@ -56,9 +54,7 @@ export class FocusManager {
    */
   handleNodeRemoved(node: DOMElement, root: DOMElement): void {
     // 从栈中移除该节点及其任何后代
-    this.focusStack = this.focusStack.filter(
-      n => n !== node && isInTree(n, root),
-    )
+    this.focusStack = this.focusStack.filter((n) => n !== node && isInTree(n, root))
 
     // 检查 activeElement 是否是被移除的节点或是其后代
     if (!this.activeElement) return
@@ -113,9 +109,7 @@ export class FocusManager {
     const tabbable = collectTabbable(root)
     if (tabbable.length === 0) return
 
-    const currentIndex = this.activeElement
-      ? tabbable.indexOf(this.activeElement)
-      : -1
+    const currentIndex = this.activeElement ? tabbable.indexOf(this.activeElement) : -1
 
     const nextIndex =
       currentIndex === -1

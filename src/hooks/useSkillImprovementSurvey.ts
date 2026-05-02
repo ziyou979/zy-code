@@ -23,7 +23,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
   suggestion: SkillImprovementSuggestion | null
   handleSelect: (selected: FeedbackSurveyResponse) => void
 } {
-  const suggestion = useAppState(s => s.skillImprovement.suggestion)
+  const suggestion = useAppState((s) => s.skillImprovement.suggestion)
   const setAppState = useSetAppState()
   const [isOpen, setIsOpen] = useState(false)
   const lastSuggestionRef = useRef(suggestion)
@@ -40,8 +40,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
     if (!loggedAppearanceRef.current) {
       loggedAppearanceRef.current = true
       logEvent('zy_skill_improvement_survey', {
-        event_type:
-          'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        event_type: 'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         // _PROTO_skill_name routes to the privileged skill_name BQ column.
         // Unredacted names don't go in additional_metadata.
         _PROTO_skill_name: (suggestion.skillName ??
@@ -58,35 +57,31 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
       const applied = (selected as any) !== 'dismissed'
 
       logEvent('zy_skill_improvement_survey', {
-        event_type:
-          'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        event_type: 'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         response: (applied
           ? 'applied'
           : 'dismissed') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         // _PROTO_skill_name routes to the privileged skill_name BQ column.
         // Unredacted names don't go in additional_metadata.
-        _PROTO_skill_name:
-          current.skillName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+        _PROTO_skill_name: current.skillName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
       })
 
       if (applied) {
-        void applySkillImprovement(current.skillName, current.updates).then(
-          () => {
-            setMessages(prev => [
-              ...prev,
-              createSystemMessage(
-                `Skill "${current.skillName}" updated with improvements.`,
-                'suggestion' as any,
-              ),
-            ])
-          },
-        )
+        void applySkillImprovement(current.skillName, current.updates).then(() => {
+          setMessages((prev) => [
+            ...prev,
+            createSystemMessage(
+              `Skill "${current.skillName}" updated with improvements.`,
+              'suggestion' as any,
+            ),
+          ])
+        })
       }
 
       // Close and clear
       setIsOpen(false)
       loggedAppearanceRef.current = false
-      setAppState(prev => {
+      setAppState((prev) => {
         if (!prev.skillImprovement.suggestion) return prev
         return {
           ...prev,

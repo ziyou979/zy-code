@@ -31,10 +31,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import {
-  checkMockRateLimitError,
-  isMockRateLimitError,
-} from '../rateLimitMocking.js'
+import { checkMockRateLimitError, isMockRateLimitError } from '../rateLimitMocking.js'
 import { REPEATED_529_ERROR_MESSAGE } from './errors.js'
 import { extractConnectionErrorDetails } from './errorUtils.js'
 
@@ -72,9 +69,7 @@ const FOREGROUND_529_RETRY_SOURCES = new Set<QuerySource>([
 
 function shouldRetry529(querySource: QuerySource | undefined): boolean {
   // undefined → 重试（对未标记的调用路径保守处理）
-  return (
-    querySource === undefined || FOREGROUND_529_RETRY_SOURCES.has(querySource)
-  )
+  return querySource === undefined || FOREGROUND_529_RETRY_SOURCES.has(querySource)
 }
 
 // ZY_CODE_UNATTENDED_RETRY：用于无人值守会话（仅 ant）。以更高的退避和定期
@@ -86,15 +81,11 @@ const PERSISTENT_RESET_CAP_MS = 6 * 60 * 60 * 1000
 const HEARTBEAT_INTERVAL_MS = 30_000
 
 function isPersistentRetryEnabled(): boolean {
-  return feature('UNATTENDED_RETRY')
-    ? isEnvTruthy(process.env.ZY_CODE_UNATTENDED_RETRY)
-    : false
+  return feature('UNATTENDED_RETRY') ? isEnvTruthy(process.env.ZY_CODE_UNATTENDED_RETRY) : false
 }
 
 function isTransientCapacityError(error: unknown): boolean {
-  return (
-    is529Error(error) || (isAPIError(error) && error.status === 429)
-  )
+  return is529Error(error) || (isAPIError(error) && error.status === 429)
 }
 
 function isStaleConnectionError(error: unknown): boolean {
@@ -154,11 +145,7 @@ export class FallbackTriggeredError extends Error {
 
 export async function* withRetry<T, TClient = unknown>(
   getClient: () => Promise<TClient>,
-  operation: (
-    client: TClient,
-    attempt: number,
-    context: RetryContext,
-  ) => Promise<T>,
+  operation: (client: TClient, attempt: number, context: RetryContext) => Promise<T>,
   options: RetryOptions,
 ): AsyncGenerator<SystemAPIErrorMessage, T> {
   const maxRetries = getMaxRetries(options)
@@ -178,9 +165,7 @@ export async function* withRetry<T, TClient = unknown>(
     try {
       // 检查模拟限速（供 Ant 员工使用 /mock-limits 命令）
       if (isInternalBuild()) {
-        const mockError = checkMockRateLimitError(
-          retryContext.model,
-        )
+        const mockError = checkMockRateLimitError(retryContext.model)
         if (mockError) {
           throw mockError
         }
@@ -195,14 +180,9 @@ export async function* withRetry<T, TClient = unknown>(
       const isStaleConnection = isStaleConnectionError(lastError)
       if (
         isStaleConnection &&
-        getFeatureValue_CACHED_MAY_BE_STALE(
-          'zy_disable_keepalive_on_econnreset',
-          false,
-        )
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_keepalive_on_econnreset', false)
       ) {
-        logForDebugging(
-          'Stale connection (ECONNRESET/EPIPE) — disabling keep-alive for retry',
-        )
+        logForDebugging('Stale connection (ECONNRESET/EPIPE) — disabling keep-alive for retry')
         disableKeepAlive()
       }
 
@@ -258,10 +238,7 @@ export async function* withRetry<T, TClient = unknown>(
             })
 
             // 抛出特殊错误以指示回退已触发
-            throw new FallbackTriggeredError(
-              options.model,
-              options.fallbackModel,
-            )
+            throw new FallbackTriggeredError(options.model, options.fallbackModel)
           }
 
           if (
@@ -270,17 +247,13 @@ export async function* withRetry<T, TClient = unknown>(
             !isPersistentRetryEnabled()
           ) {
             logEvent('zy_api_custom_529_overloaded_error', {})
-            throw new CannotRetryError(
-              new Error(REPEATED_529_ERROR_MESSAGE),
-              retryContext,
-            )
+            throw new CannotRetryError(new Error(REPEATED_529_ERROR_MESSAGE), retryContext)
           }
         }
       }
 
       // 仅在错误表明应该重试时才重试
-      const persistent =
-        isPersistentRetryEnabled() && isTransientCapacityError(error)
+      const persistent = isPersistentRetryEnabled() && isTransientCapacityError(error)
       if (attempt > maxRetries && !persistent) {
         throw new CannotRetryError(error, retryContext)
       }
@@ -299,10 +272,7 @@ export async function* withRetry<T, TClient = unknown>(
           const { inputTokens, contextLimit } = overflowData
 
           const safetyBuffer = 1000
-          const availableContext = Math.max(
-            0,
-            contextLimit - inputTokens - safetyBuffer,
-          )
+          const availableContext = Math.max(0, contextLimit - inputTokens - safetyBuffer)
           if (availableContext < FLOOR_OUTPUT_TOKENS) {
             logError(
               new Error(
@@ -316,11 +286,7 @@ export async function* withRetry<T, TClient = unknown>(
             (retryContext.thinkingConfig.type === 'enabled'
               ? retryContext.thinkingConfig.budgetTokens
               : 0) + 1
-          const adjustedMaxTokens = Math.max(
-            FLOOR_OUTPUT_TOKENS,
-            availableContext,
-            minRequired,
-          )
+          const adjustedMaxTokens = Math.max(FLOOR_OUTPUT_TOKENS, availableContext, minRequired)
           retryContext.maxTokensOverride = adjustedMaxTokens
 
           logEvent('zy_max_tokens_context_overflow_adjustment', {
@@ -346,11 +312,7 @@ export async function* withRetry<T, TClient = unknown>(
         delayMs =
           resetDelay ??
           Math.min(
-            getRetryDelay(
-              persistentAttempt,
-              retryAfter,
-              PERSISTENT_MAX_BACKOFF_MS,
-            ),
+            getRetryDelay(persistentAttempt, retryAfter, PERSISTENT_MAX_BACKOFF_MS),
             PERSISTENT_RESET_CAP_MS,
           )
       } else if (persistent) {
@@ -359,11 +321,7 @@ export async function* withRetry<T, TClient = unknown>(
         //（这是有意为之——遵循它是正确的）。在此处以 6 小时重置上限封顶，
         // 这样病态的 header 不会导致无限等待。
         delayMs = Math.min(
-          getRetryDelay(
-            persistentAttempt,
-            retryAfter,
-            PERSISTENT_MAX_BACKOFF_MS,
-          ),
+          getRetryDelay(persistentAttempt, retryAfter, PERSISTENT_MAX_BACKOFF_MS),
           PERSISTENT_RESET_CAP_MS,
         )
       } else {
@@ -376,7 +334,9 @@ export async function* withRetry<T, TClient = unknown>(
       logEvent('zy_api_retry', {
         attempt: reportedAttempt,
         delayMs: delayMs,
-        error: getLLMErrorMessage(error) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        error: getLLMErrorMessage(
+          error,
+        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         status: getErrorStatus(error),
         provider: getAPIProviderForStatsig(),
       })
@@ -397,12 +357,7 @@ export async function* withRetry<T, TClient = unknown>(
         while (remaining > 0) {
           if (options.signal?.aborted) throw createAbortError()
           if (isAPIError(error)) {
-            yield createSystemAPIErrorMessage(
-              error as any,
-              remaining,
-              reportedAttempt,
-              maxRetries,
-            )
+            yield createSystemAPIErrorMessage(error as any, remaining, reportedAttempt, maxRetries)
           }
           const chunk = Math.min(remaining, HEARTBEAT_INTERVAL_MS)
           await sleep(chunk, options.signal, { abortError })
@@ -425,9 +380,7 @@ export async function* withRetry<T, TClient = unknown>(
 
 function getRetryAfter(error: unknown): string | null {
   return (
-    ((error as { headers?: { 'retry-after'?: string } }).headers?.[
-      'retry-after'
-    ] ||
+    ((error as { headers?: { 'retry-after'?: string } }).headers?.['retry-after'] ||
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       ((error as any).headers as any)?.get?.('retry-after')) ??
     null
@@ -446,10 +399,7 @@ export function getRetryDelay(
     }
   }
 
-  const baseDelay = Math.min(
-    BASE_DELAY_MS * Math.pow(2, attempt - 1),
-    maxDelayMs,
-  )
+  const baseDelay = Math.min(BASE_DELAY_MS * Math.pow(2, attempt - 1), maxDelayMs)
   const jitter = Math.random() * 0.25 * baseDelay
   return baseDelay + jitter
 }
@@ -465,17 +415,12 @@ export function parseMaxTokensContextOverflowError(error: APIErrorLike):
     return undefined
   }
 
-  if (
-    !error.message.includes(
-      'input length and `max_tokens` exceed context limit',
-    )
-  ) {
+  if (!error.message.includes('input length and `max_tokens` exceed context limit')) {
     return undefined
   }
 
   // Example format: "input length and `max_tokens` exceed context limit: 188059 + 20000 > 200000"
-  const regex =
-    /input length and `max_tokens` exceed context limit: (\d+) \+ (\d+) > (\d+)/
+  const regex = /input length and `max_tokens` exceed context limit: (\d+) \+ (\d+) > (\d+)/
   const match = error.message.match(regex)
 
   if (!match || match.length !== 4) {
@@ -484,9 +429,7 @@ export function parseMaxTokensContextOverflowError(error: APIErrorLike):
 
   if (!match[1] || !match[2] || !match[3]) {
     logError(
-      new Error(
-        'Unable to parse max_tokens from max_tokens exceed context limit error message',
-      ),
+      new Error('Unable to parse max_tokens from max_tokens exceed context limit error message'),
     )
     return undefined
   }
@@ -522,8 +465,6 @@ function isOAuthTokenRevokedError(error: unknown): boolean {
   )
 }
 
-
-
 function shouldRetry(error: APIErrorLike): boolean {
   // 永不重试用例模拟错误——它们来自 /mock-limits 命令用于测试
   if (isMockRateLimitError(error as any)) {
@@ -540,10 +481,7 @@ function shouldRetry(error: APIErrorLike): boolean {
   // 瞬时问题（认证服务抖动、网络小故障）而非错误凭证。
   // 绕过 x-should-retry:false——服务器假设我们会重试相同的坏 key，
   // 但我们的 key 没问题。
-  if (
-    isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
-    (error.status === 401 || error.status === 403)
-  ) {
+  if (isEnvTruthy(process.env.ZY_CODE_REMOTE) && (error.status === 401 || error.status === 403)) {
     return true
   }
 
@@ -621,11 +559,11 @@ function getMaxRetries(options: RetryOptions): number {
   return options.maxRetries ?? getDefaultMaxRetries()
 }
 
-let DEFAULT_FAST_MODE_FALLBACK_HOLD_MS;
+let DEFAULT_FAST_MODE_FALLBACK_HOLD_MS
 DEFAULT_FAST_MODE_FALLBACK_HOLD_MS = 30 * 60 * 1000 // 30 minutes
-let SHORT_RETRY_THRESHOLD_MS;
+let SHORT_RETRY_THRESHOLD_MS
 SHORT_RETRY_THRESHOLD_MS = 20 * 1000 // 20 seconds
-let MIN_COOLDOWN_MS;
+let MIN_COOLDOWN_MS
 MIN_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
 
 function getRetryAfterMs(error: APIErrorLike): number | null {

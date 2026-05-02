@@ -70,8 +70,7 @@ type Rgb = { r: number; g: number; b: number }
 function parseOscRgb(data: string): Rgb | undefined {
   // rgb:RRRR/GGGG/BBBB — each component is 1–4 hex digits.
   // Some terminals append an alpha component (rgba:…/…/…/…); ignore it.
-  const rgbMatch =
-    /^rgba?:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})/i.exec(data)
+  const rgbMatch = /^rgba?:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})/i.exec(data)
   if (rgbMatch) {
     return {
       r: hexComponent(rgbMatch[1]!),

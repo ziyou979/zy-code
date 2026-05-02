@@ -6,15 +6,10 @@ import type {
   ToolChoice,
 } from '../types/llm.js'
 
-import {
-  getLastApiCompletionTimestamp,
-  setLastApiCompletionTimestamp,
-} from '../bootstrap/state.js'
+import { getLastApiCompletionTimestamp, setLastApiCompletionTimestamp } from '../bootstrap/state.js'
 import { STRUCTURED_OUTPUTS_BETA_HEADER } from '../constants/betas.js'
 import type { QuerySource } from '../constants/querySource.js'
-import {
-  getCLISyspromptPrefix,
-} from '../constants/system.js'
+import { getCLISyspromptPrefix } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
 
@@ -61,7 +56,6 @@ export type SideQueryOptions = {
   /** Attributes this call in zy_api_success for COGS joining against reporting.sampling_calls. */
   querySource: QuerySource
 }
-
 
 /**
  * Lightweight API wrapper for "side queries" outside the main conversation loop.
@@ -129,11 +123,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
             }),
           },
         ]),
-    ...(Array.isArray(system)
-      ? system
-      : system
-        ? [{ type: 'text' as const, text: system }]
-        : []),
+    ...(Array.isArray(system) ? system : system ? [{ type: 'text' as const, text: system }] : []),
   ].filter((block): block is TextBlock => block !== null)
 
   let thinkingConfig: { type: 'disabled' } | { type: 'enabled'; budget_tokens: number } | undefined
@@ -157,7 +147,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   if (systemBlocks.length > 0) {
     allMessages.push({
       role: 'system',
-      content: systemBlocks.map(b => b.text).join('\n\n'),
+      content: systemBlocks.map((b) => b.text).join('\n\n'),
     } as any)
   }
   for (const m of messages) allMessages.push(m)
@@ -185,19 +175,15 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   const now = Date.now()
   const lastCompletion = getLastApiCompletionTimestamp()
   logEvent('zy_api_success', {
-    requestId:
-      response.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    querySource:
-      opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    model:
-      normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    requestId: response.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    querySource: opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    model: normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     inputTokens: response.usage?.inputTokens ?? 0,
     outputTokens: response.usage?.outputTokens ?? 0,
     cachedInputTokens: response.usage?.extras?.cacheReadInputTokens ?? 0,
     uncachedInputTokens: response.usage?.extras?.cacheCreationInputTokens ?? 0,
     durationMsIncludingRetries: now - start,
-    timeSinceLastApiCallMs:
-      lastCompletion !== null ? now - lastCompletion : undefined,
+    timeSinceLastApiCallMs: lastCompletion !== null ? now - lastCompletion : undefined,
   })
   setLastApiCompletionTimestamp(now)
 

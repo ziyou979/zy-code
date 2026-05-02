@@ -1,10 +1,7 @@
 import type { HistoryMode } from 'src/hooks/useArrowKeyHistory.js'
 import type { PromptInputMode } from 'src/types/textInputTypes.js'
 
-export function prependModeCharacterToInput(
-  input: string,
-  mode: PromptInputMode,
-): string {
+export function prependModeCharacterToInput(input: string, mode: PromptInputMode): string {
   switch (mode) {
     case 'bash':
       return `!${input}`

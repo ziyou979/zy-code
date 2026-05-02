@@ -26,8 +26,7 @@ export const NON_REBINDABLE: ReservedShortcut[] = [
   },
   {
     key: 'ctrl+m',
-    reason:
-      'Cannot be rebound - identical to Enter in terminals (both send CR)',
+    reason: 'Cannot be rebound - identical to Enter in terminals (both send CR)',
     severity: 'error',
   },
 ]
@@ -100,17 +99,7 @@ function normalizeStep(step: string): string {
   for (const part of parts) {
     const lower = part.trim().toLowerCase()
     if (
-      [
-        'ctrl',
-        'control',
-        'alt',
-        'opt',
-        'option',
-        'meta',
-        'cmd',
-        'command',
-        'shift',
-      ].includes(lower)
+      ['ctrl', 'control', 'alt', 'opt', 'option', 'meta', 'cmd', 'command', 'shift'].includes(lower)
     ) {
       // Normalize modifier names
       if (lower === 'control') modifiers.push('ctrl')

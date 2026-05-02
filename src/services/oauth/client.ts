@@ -21,16 +21,12 @@ import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
 // @ts-ignore
-import type {
-  OAuthProfileResponse,
-  OAuthTokens,
-  SubscriptionType,
-} from './types.js'
+import type { OAuthProfileResponse, OAuthTokens, SubscriptionType } from './types.js'
 
-type OAuthTokenExchangeResponse = any;
-type UserRolesResponse = any;
-type RateLimitTier = any;
-type BillingType = any;
+type OAuthTokenExchangeResponse = any
+type UserRolesResponse = any
+type RateLimitTier = any
+type BillingType = any
 
 /**
  * Check if the user has Zy.ai authentication scope
@@ -75,9 +71,7 @@ export function buildAuthUrl({
   authUrl.searchParams.append('response_type', 'code')
   authUrl.searchParams.append(
     'redirect_uri',
-    isManual
-      ? getOauthConfig().MANUAL_REDIRECT_URL
-      : `http://localhost:${port}/callback`,
+    isManual ? getOauthConfig().MANUAL_REDIRECT_URL : `http://localhost:${port}/callback`,
   )
   const scopesToUse = inferenceOnly
     ? [CLAUDE_AI_INFERENCE_SCOPE] // Long-lived inference-only tokens
@@ -157,10 +151,7 @@ export async function refreshOAuthToken(
     // initial authorize granted (see ALLOWED_SCOPE_EXPANSIONS), so this is
     // safe even for tokens issued before scopes were added to the app's
     // registered oauth_scope.
-    scope: (requestedScopes?.length
-      ? requestedScopes
-      : CLAUDE_AI_OAUTH_SCOPES
-    ).join(' '),
+    scope: (requestedScopes?.length ? requestedScopes : CLAUDE_AI_OAUTH_SCOPES).join(' '),
   }
 
   try {
@@ -207,9 +198,7 @@ export async function refreshOAuthToken(
       existing?.subscriptionType != null &&
       existing?.rateLimitTier != null
 
-    const profileInfo = haveProfileAlready
-      ? null
-      : await fetchProfileInfo(accessToken)
+    const profileInfo = haveProfileAlready ? null : await fetchProfileInfo(accessToken)
 
     // Update the stored properties if they have changed
     if (profileInfo && config.oauthAccount) {
@@ -230,7 +219,7 @@ export async function refreshOAuthToken(
         updates.subscriptionCreatedAt = profileInfo.subscriptionCreatedAt
       }
       if (Object.keys(updates).length > 0) {
-        saveGlobalConfig(current => ({
+        saveGlobalConfig((current) => ({
           ...current,
           oauthAccount: current.oauthAccount
             ? { ...current.oauthAccount, ...updates }
@@ -244,10 +233,8 @@ export async function refreshOAuthToken(
       refreshToken: newRefreshToken,
       expiresAt,
       scopes,
-      subscriptionType:
-        profileInfo?.subscriptionType ?? existing?.subscriptionType ?? null,
-      rateLimitTier:
-        profileInfo?.rateLimitTier ?? existing?.rateLimitTier ?? null,
+      subscriptionType: profileInfo?.subscriptionType ?? existing?.subscriptionType ?? null,
+      rateLimitTier: profileInfo?.rateLimitTier ?? existing?.rateLimitTier ?? null,
       profile: profileInfo?.rawProfile,
       tokenAccount: data.account
         ? {
@@ -263,20 +250,16 @@ export async function refreshOAuthToken(
         ? JSON.stringify(error.response.data)
         : undefined
     logEvent('zy_oauth_token_refresh_failure', {
-      error: (error as Error)
-        .message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error: (error as Error).message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       ...(responseBody && {
-        responseBody:
-          responseBody as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        responseBody: responseBody as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }),
     })
     throw error
   }
 }
 
-export async function fetchAndStoreUserRoles(
-  accessToken: string,
-): Promise<void> {
+export async function fetchAndStoreUserRoles(accessToken: string): Promise<void> {
   const response = await axios.get(getOauthConfig().ROLES_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
@@ -291,7 +274,7 @@ export async function fetchAndStoreUserRoles(
     throw new Error('OAuth account information not found in config')
   }
 
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     oauthAccount: current.oauthAccount
       ? {
@@ -304,14 +287,11 @@ export async function fetchAndStoreUserRoles(
   }))
 
   logEvent('zy_oauth_roles_stored', {
-    org_role:
-      data.organization_role as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    org_role: data.organization_role as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 }
 
-export async function createAndStoreApiKey(
-  accessToken: string,
-): Promise<string | null> {
+export async function createAndStoreApiKey(accessToken: string): Promise<string | null> {
   try {
     const response = await axios.post(getOauthConfig().API_KEY_URL, null, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -321,8 +301,7 @@ export async function createAndStoreApiKey(
     if (apiKey) {
       await saveApiKey(apiKey)
       logEvent('zy_oauth_api_key', {
-        status:
-          'success' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        status: 'success' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         statusCode: response.status,
       })
       return apiKey
@@ -330,13 +309,10 @@ export async function createAndStoreApiKey(
     return null
   } catch (error) {
     logEvent('zy_oauth_api_key', {
-      status:
-        'failure' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      status: 'failure' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       error: (error instanceof Error
         ? error.message
-        : String(
-            error,
-          )) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        : String(error)) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     throw error
   }
@@ -398,8 +374,7 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
   } = {
     subscriptionType,
     rateLimitTier: (profile as any)?.organization?.rate_limit_tier ?? null,
-    hasExtraUsageEnabled:
-      (profile as any)?.organization?.has_extra_usage_enabled ?? null,
+    hasExtraUsageEnabled: (profile as any)?.organization?.has_extra_usage_enabled ?? null,
     billingType: (profile as any)?.organization?.billing_type ?? null,
   }
 
@@ -458,9 +433,7 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
   const envAccountUuid = process.env.ZY_CODE_ACCOUNT_UUID
   const envUserEmail = process.env.ZY_CODE_USER_EMAIL
   const envOrganizationUuid = process.env.ZY_CODE_ORGANIZATION_UUID
-  const hasEnvVars = Boolean(
-    envAccountUuid && envUserEmail && envOrganizationUuid,
-  )
+  const hasEnvVars = Boolean(envAccountUuid && envUserEmail && envOrganizationUuid)
   if (envAccountUuid && envUserEmail && envOrganizationUuid) {
     if (!getGlobalConfig().oauthAccount) {
       storeOAuthAccountInfo({
@@ -483,7 +456,7 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
     // @ts-ignore
     logForDebugging('OAuth token refresh skipped during init', {
       level: 'warn',
-      error: (error as any) as any,
+      error: error as any as any,
     } as any)
     return false
   }
@@ -510,12 +483,10 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
           emailAddress: (profile as any).account.email,
           organizationUuid: (profile as any).organization.uuid,
           displayName: (profile as any).account.display_name || undefined,
-          hasExtraUsageEnabled:
-            (profile as any).organization.has_extra_usage_enabled ?? false,
+          hasExtraUsageEnabled: (profile as any).organization.has_extra_usage_enabled ?? false,
           billingType: (profile as any).organization.billing_type ?? undefined,
           accountCreatedAt: (profile as any).account.created_at,
-          subscriptionCreatedAt:
-            (profile as any).organization.subscription_created_at ?? undefined,
+          subscriptionCreatedAt: (profile as any).organization.subscription_created_at ?? undefined,
         })
         return true
       }
@@ -523,7 +494,7 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
       // @ts-ignore
       logForDebugging('OAuth profile fetch skipped during init', {
         level: 'warn',
-        error: (error as any) as any,
+        error: error as any as any,
       } as any)
     }
   }
@@ -561,19 +532,17 @@ export function storeOAuthAccountInfo({
   if (displayName) {
     accountInfo.displayName = displayName
   }
-  saveGlobalConfig(current => {
+  saveGlobalConfig((current) => {
     // For oauthAccount we need to compare content since it's an object
     if (
       current.oauthAccount?.accountUuid === accountInfo.accountUuid &&
       current.oauthAccount?.emailAddress === accountInfo.emailAddress &&
       current.oauthAccount?.organizationUuid === accountInfo.organizationUuid &&
       current.oauthAccount?.displayName === accountInfo.displayName &&
-      current.oauthAccount?.hasExtraUsageEnabled ===
-        accountInfo.hasExtraUsageEnabled &&
+      current.oauthAccount?.hasExtraUsageEnabled === accountInfo.hasExtraUsageEnabled &&
       current.oauthAccount?.billingType === accountInfo.billingType &&
       current.oauthAccount?.accountCreatedAt === accountInfo.accountCreatedAt &&
-      current.oauthAccount?.subscriptionCreatedAt ===
-        accountInfo.subscriptionCreatedAt
+      current.oauthAccount?.subscriptionCreatedAt === accountInfo.subscriptionCreatedAt
     ) {
       return current
     }

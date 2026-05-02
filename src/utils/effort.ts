@@ -3,19 +3,17 @@ import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
-import { localModelHasCapability, getLocalModelCapability } from './settings/localModelCapabilities.js'
+import {
+  localModelHasCapability,
+  getLocalModelCapability,
+} from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
 import type { EffortLevel } from 'src/entrypoints/sdk/runtimeTypes.js'
 
 export type { EffortLevel }
 
-export const EFFORT_LEVELS = [
-  'low',
-  'medium',
-  'high',
-  'max',
-] as const as any
+export const EFFORT_LEVELS = ['low', 'medium', 'high', 'max'] as const as any
 
 export type EffortValue = EffortLevel | number
 
@@ -76,9 +74,7 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
  * Write sites call this before saving to settings so the Zod schema
  * (which only accepts string levels) never rejects a write.
  */
-export function toPersistableEffort(
-  value: EffortValue | undefined,
-): EffortLevel | undefined {
+export function toPersistableEffort(value: EffortValue | undefined): EffortLevel | undefined {
   if (value === 'low' || value === 'medium' || value === 'high') {
     return value
   }
@@ -119,8 +115,7 @@ export function resolvePickerEffortPersistence(
 
 export function getEffortEnvOverride(): EffortValue | null | undefined {
   const envOverride = process.env.ZY_CODE_EFFORT_LEVEL
-  return envOverride?.toLowerCase() === 'unset' ||
-    envOverride?.toLowerCase() === 'auto'
+  return envOverride?.toLowerCase() === 'unset' || envOverride?.toLowerCase() === 'auto'
     ? null
     : parseEffortValue(envOverride)
 }
@@ -141,8 +136,7 @@ export function resolveAppliedEffort(
   if (envOverride === null) {
     return undefined
   }
-  const resolved =
-    envOverride ?? appStateEffortValue ?? getDefaultEffortForModel(model)
+  const resolved = envOverride ?? appStateEffortValue ?? getDefaultEffortForModel(model)
   // API rejects 'max' on non-Opus-4.6 models — downgrade to 'high'.
   if ((resolved as any) === 'max' && !modelSupportsMaxEffort(model)) {
     return 'high'
@@ -169,10 +163,7 @@ export function getDisplayedEffortLevel(
  * Delegates to resolveAppliedEffort() so the displayed level matches what
  * the API actually receives (including max→high clamp for non-Opus models).
  */
-export function getEffortSuffix(
-  model: string,
-  effortValue: EffortValue | undefined,
-): string {
+export function getEffortSuffix(model: string, effortValue: EffortValue | undefined): string {
   if (effortValue === undefined) return ''
   const resolved = resolveAppliedEffort(model, effortValue)
   if (resolved === undefined) return ''
@@ -260,9 +251,7 @@ export function getOpusDefaultEffortConfig(): OpusDefaultEffortConfig {
 }
 
 // @[MODEL LAUNCH]: Update the default effort levels for new models
-export function getDefaultEffortForModel(
-  model: string,
-): EffortValue | undefined {
+export function getDefaultEffortForModel(model: string): EffortValue | undefined {
   // IMPORTANT: Do not change the default effort level without notifying
   // the model launch DRI and research. Default effort is a sensitive setting
   // that can greatly affect model quality and bashing.

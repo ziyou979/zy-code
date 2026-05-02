@@ -9,10 +9,7 @@
  * sdk/controlTypes.ts directly.
  */
 
-import type {
-  CallToolResult,
-  ToolAnnotations,
-} from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js'
 
 // Control protocol types for SDK builders (bridge subpath consumers)
 /** @alpha */
@@ -76,10 +73,7 @@ export function tool<Schema extends AnyZodRawShape>(
   _name: string,
   _description: string,
   _inputSchema: Schema,
-  _handler: (
-    args: InferShape<Schema>,
-    extra: unknown,
-  ) => Promise<CallToolResult>,
+  _handler: (args: InferShape<Schema>, extra: unknown) => Promise<CallToolResult>,
   _extras?: {
     annotations?: ToolAnnotations
     searchHint?: string
@@ -128,9 +122,7 @@ export function query(): Query {
  * Create a persistent session for multi-turn conversations.
  * @alpha
  */
-export function unstable_v2_createSession(
-  _options: SDKSessionOptions,
-): SDKSession {
+export function unstable_v2_createSession(_options: SDKSessionOptions): SDKSession {
   throw new Error('unstable_v2_createSession is not implemented in the SDK')
 }
 
@@ -203,9 +195,7 @@ export async function getSessionMessages(
  * const page2 = await listSessions({ limit: 50, offset: 50 })
  * ```
  */
-export async function listSessions(
-  _options?: ListSessionsOptions,
-): Promise<SDKSessionInfo[]> {
+export async function listSessions(_options?: ListSessionsOptions): Promise<SDKSessionInfo[]> {
   throw new Error('listSessions is not implemented in the SDK')
 }
 
@@ -410,10 +400,7 @@ export type RemoteControlHandle = {
   controlRequests(): AsyncGenerator<unknown>
   permissionResponses(): AsyncGenerator<unknown>
   onStateChange(
-    cb: (
-      state: 'ready' | 'connected' | 'reconnecting' | 'failed',
-      detail?: string,
-    ) => void,
+    cb: (state: 'ready' | 'connected' | 'reconnecting' | 'failed', detail?: string) => void,
   ): void
   teardown(): Promise<void>
 }

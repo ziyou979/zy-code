@@ -9,6 +9,8 @@ type Props = {
 }
 
 export function AssistantSessionChooser({ onCancel }: Props): React.ReactElement {
-  React.useEffect(() => { onCancel() }, [])
+  React.useEffect(() => {
+    onCancel()
+  }, [])
   return React.createElement('div', null)
 }

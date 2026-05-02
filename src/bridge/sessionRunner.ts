@@ -60,11 +60,7 @@ type SessionSpawnerDeps = {
   permissionMode?: string
   onDebug: (msg: string) => void
   onActivity?: (sessionId: string, activity: SessionActivity) => void
-  onPermissionRequest?: (
-    sessionId: string,
-    request: PermissionRequest,
-    accessToken: string,
-  ) => void
+  onPermissionRequest?: (sessionId: string, request: PermissionRequest, accessToken: string) => void
 }
 
 /** Map tool names to human-readable verbs for the status display. */
@@ -156,9 +152,7 @@ function extractActivities(
               summary: text.slice(0, 80),
               timestamp: now,
             })
-            onDebug(
-              `[bridge:activity] sessionId=${sessionId} text "${text.slice(0, 100)}"`,
-            )
+            onDebug(`[bridge:activity] sessionId=${sessionId} text "${text.slice(0, 100)}"`)
           }
         }
       }
@@ -172,9 +166,7 @@ function extractActivities(
           summary: 'Session completed',
           timestamp: now,
         })
-        onDebug(
-          `[bridge:activity] sessionId=${sessionId} result subtype=success`,
-        )
+        onDebug(`[bridge:activity] sessionId=${sessionId} result subtype=success`)
       } else if (subtype) {
         const errors = msg.errors as string[] | undefined
         const errorSummary = errors?.[0] ?? `Error: ${subtype}`
@@ -187,9 +179,7 @@ function extractActivities(
           `[bridge:activity] sessionId=${sessionId} result subtype=${subtype} error="${errorSummary}"`,
         )
       } else {
-        onDebug(
-          `[bridge:activity] sessionId=${sessionId} result subtype=undefined`,
-        )
+        onDebug(`[bridge:activity] sessionId=${sessionId} result subtype=undefined`)
       }
       break
     }
@@ -205,13 +195,10 @@ function extractActivities(
  * trimmed text if this looks like a real human-authored message, otherwise
  * undefined so the caller keeps waiting for the first real message.
  */
-function extractUserMessageText(
-  msg: Record<string, unknown>,
-): string | undefined {
+function extractUserMessageText(msg: Record<string, unknown>): string | undefined {
   // Skip tool-result user messages (wrapped subagent results) and synthetic
   // caveat messages — neither is human-authored.
-  if (msg.parent_tool_use_id != null || msg.isSynthetic || msg.isReplay)
-    return undefined
+  if (msg.parent_tool_use_id != null || msg.isSynthetic || msg.isReplay) return undefined
 
   const message = msg.message as Record<string, unknown> | undefined
   const content = message?.content
@@ -271,15 +258,10 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
       let transcriptStream: WriteStream | null = null
       let transcriptPath: string | undefined
       if (deps.debugFile) {
-        transcriptPath = join(
-          dirname(deps.debugFile),
-          `bridge-transcript-${safeId}.jsonl`,
-        )
+        transcriptPath = join(dirname(deps.debugFile), `bridge-transcript-${safeId}.jsonl`)
         transcriptStream = createWriteStream(transcriptPath, { flags: 'a' })
-        transcriptStream.on('error', err => {
-          deps.onDebug(
-            `[bridge:session] Transcript write error: ${err.message}`,
-          )
+        transcriptStream.on('error', (err) => {
+          deps.onDebug(`[bridge:session] Transcript write error: ${err.message}`)
           transcriptStream = null
         })
         deps.onDebug(`[bridge:session] Transcript log: ${transcriptPath}`)
@@ -299,9 +281,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         '--replay-user-messages',
         ...(deps.verbose ? ['--verbose'] : []),
         ...(debugFile ? ['--debug-file', debugFile] : []),
-        ...(deps.permissionMode
-          ? ['--permission-mode', deps.permissionMode]
-          : []),
+        ...(deps.permissionMode ? ['--permission-mode', deps.permissionMode] : []),
       ]
 
       const env: NodeJS.ProcessEnv = {
@@ -340,9 +320,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         windowsHide: true,
       })
 
-      deps.onDebug(
-        `[bridge:session] sessionId=${opts.sessionId} pid=${child.pid}`,
-      )
+      deps.onDebug(`[bridge:session] sessionId=${opts.sessionId} pid=${child.pid}`)
 
       const activities: SessionActivity[] = []
       let currentActivity: SessionActivity | null = null
@@ -353,7 +331,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
       // Buffer stderr for error diagnostics
       if (child.stderr) {
         const stderrRl = createInterface({ input: child.stderr })
-        stderrRl.on('line', line => {
+        stderrRl.on('line', (line) => {
           // Forward stderr to bridge's stderr in verbose mode
           if (deps.verbose) {
             process.stderr.write(line + '\n')
@@ -369,27 +347,21 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
       // Parse NDJSON from child stdout
       if (child.stdout) {
         const rl = createInterface({ input: child.stdout })
-        rl.on('line', line => {
+        rl.on('line', (line) => {
           // Write raw NDJSON to transcript file
           if (transcriptStream) {
             transcriptStream.write(line + '\n')
           }
 
           // Log all messages flowing from the child CLI to the bridge
-          deps.onDebug(
-            `[bridge:ws] sessionId=${opts.sessionId} <<< ${debugTruncate(line)}`,
-          )
+          deps.onDebug(`[bridge:ws] sessionId=${opts.sessionId} <<< ${debugTruncate(line)}`)
 
           // In verbose mode, forward raw output to stderr
           if (deps.verbose) {
             process.stderr.write(line + '\n')
           }
 
-          const extracted = extractActivities(
-            line,
-            opts.sessionId,
-            deps.onDebug,
-          )
+          const extracted = extractActivities(line, opts.sessionId, deps.onDebug)
           for (const activity of extracted) {
             // Maintain ring buffer
             if (activities.length >= MAX_ACTIVITIES) {
@@ -416,13 +388,8 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
               const msg = parsed as Record<string, unknown>
 
               if (msg.type === 'control_request') {
-                const request = msg.request as
-                  | Record<string, unknown>
-                  | undefined
-                if (
-                  request?.subtype === 'can_use_tool' &&
-                  deps.onPermissionRequest
-                ) {
+                const request = msg.request as Record<string, unknown> | undefined
+                if (request?.subtype === 'can_use_tool' && deps.onPermissionRequest) {
                   deps.onPermissionRequest(
                     opts.sessionId,
                     parsed as PermissionRequest,
@@ -430,11 +397,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
                   )
                 }
                 // interrupt is turn-level; the child handles it internally (print.ts)
-              } else if (
-                msg.type === 'user' &&
-                !firstUserMessageSeen &&
-                opts.onFirstUserMessage
-              ) {
+              } else if (msg.type === 'user' && !firstUserMessageSeen && opts.onFirstUserMessage) {
                 const text = extractUserMessageText(msg)
                 if (text) {
                   firstUserMessageSeen = true
@@ -446,7 +409,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         })
       }
 
-      const done = new Promise<SessionDoneStatus>(resolve => {
+      const done = new Promise<SessionDoneStatus>((resolve) => {
         child.on('close', (code, signal) => {
           // Close transcript stream on exit
           if (transcriptStream) {
@@ -472,10 +435,8 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
           }
         })
 
-        child.on('error', err => {
-          deps.onDebug(
-            `[bridge:session] sessionId=${opts.sessionId} spawn error: ${err.message}`,
-          )
+        child.on('error', (err) => {
+          deps.onDebug(`[bridge:session] sessionId=${opts.sessionId} spawn error: ${err.message}`)
           resolve('failed')
         })
       })
@@ -519,9 +480,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         },
         writeStdin(data: string): void {
           if (child.stdin && !child.stdin.destroyed) {
-            deps.onDebug(
-              `[bridge:ws] sessionId=${opts.sessionId} >>> ${debugTruncate(data)}`,
-            )
+            deps.onDebug(`[bridge:ws] sessionId=${opts.sessionId} >>> ${debugTruncate(data)}`)
             child.stdin.write(data)
           }
         },

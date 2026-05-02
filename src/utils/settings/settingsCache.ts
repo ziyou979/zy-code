@@ -19,9 +19,7 @@ export function setSessionSettingsCache(value: SettingsWithErrors): void {
  */
 const perSourceCache = new Map<SettingSource, SettingsJson | null>()
 
-export function getCachedSettingsForSource(
-  source: SettingSource,
-): SettingsJson | null | undefined {
+export function getCachedSettingsForSource(source: SettingSource): SettingsJson | null | undefined {
   // undefined = cache miss; null = cached "no settings for this source"
   return perSourceCache.has(source) ? perSourceCache.get(source) : undefined
 }
@@ -69,9 +67,7 @@ export function getPluginSettingsBase(): Record<string, unknown> | undefined {
   return pluginSettingsBase
 }
 
-export function setPluginSettingsBase(
-  settings: Record<string, unknown> | undefined,
-): void {
+export function setPluginSettingsBase(settings: Record<string, unknown> | undefined): void {
   pluginSettingsBase = settings
 }
 

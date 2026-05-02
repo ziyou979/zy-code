@@ -26,16 +26,13 @@ export function useIdeLogging(mcpClients: MCPServerConnection[]): void {
     const ideClient = getConnectedIdeClient(mcpClients)
     if (ideClient) {
       // Register the log event handler
-      ideClient.client.setNotificationHandler(
-        LogEventSchema(),
-        notification => {
-          const { eventName, eventData } = notification.params
-          logEvent(
-            `zy_ide_${eventName}`,
-            eventData as { [key: string]: boolean | number | undefined },
-          )
-        },
-      )
+      ideClient.client.setNotificationHandler(LogEventSchema(), (notification) => {
+        const { eventName, eventData } = notification.params
+        logEvent(
+          `zy_ide_${eventName}`,
+          eventData as { [key: string]: boolean | number | undefined },
+        )
+      })
     }
   }, [mcpClients])
 }

@@ -1,7 +1,4 @@
-import {
-  getApiKey,
-  getAuthTokenSource,
-} from './auth.js'
+import { getApiKey, getAuthTokenSource } from './auth.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'

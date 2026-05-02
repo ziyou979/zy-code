@@ -20,17 +20,9 @@ export {
 }
 
 export const permissionModeSchema = lazySchema(() => z.enum(PERMISSION_MODES))
-export const externalPermissionModeSchema = lazySchema(() =>
-  z.enum(EXTERNAL_PERMISSION_MODES),
-)
+export const externalPermissionModeSchema = lazySchema(() => z.enum(EXTERNAL_PERMISSION_MODES))
 
-type ModeColorKey =
-  | 'text'
-  | 'planMode'
-  | 'permission'
-  | 'autoAccept'
-  | 'error'
-  | 'warning'
+type ModeColorKey = 'text' | 'planMode' | 'permission' | 'autoAccept' | 'error' | 'warning'
 
 type PermissionModeConfig = {
   title: string
@@ -40,9 +32,7 @@ type PermissionModeConfig = {
   external: ExternalPermissionMode
 }
 
-const PERMISSION_MODE_CONFIG: Partial<
-  Record<PermissionMode, PermissionModeConfig>
-> = {
+const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfig>> = {
   default: {
     title: 'Default',
     shortTitle: 'Default',
@@ -95,9 +85,7 @@ const PERMISSION_MODE_CONFIG: Partial<
  * Type guard to check if a PermissionMode is an ExternalPermissionMode.
  * auto is ant-only and excluded from external modes.
  */
-export function isExternalPermissionMode(
-  mode: PermissionMode,
-): mode is ExternalPermissionMode {
+export function isExternalPermissionMode(mode: PermissionMode): mode is ExternalPermissionMode {
   // External users can't have auto, so always true for them
   if (!isInternalBuild()) {
     return true
@@ -109,16 +97,12 @@ function getModeConfig(mode: PermissionMode): PermissionModeConfig {
   return PERMISSION_MODE_CONFIG[mode] ?? PERMISSION_MODE_CONFIG.default!
 }
 
-export function toExternalPermissionMode(
-  mode: PermissionMode,
-): ExternalPermissionMode {
+export function toExternalPermissionMode(mode: PermissionMode): ExternalPermissionMode {
   return getModeConfig(mode).external
 }
 
 export function permissionModeFromString(str: string): PermissionMode {
-  return (PERMISSION_MODES as readonly string[]).includes(str)
-    ? (str as PermissionMode)
-    : 'default'
+  return (PERMISSION_MODES as readonly string[]).includes(str) ? (str as PermissionMode) : 'default'
 }
 
 export function permissionModeTitle(mode: PermissionMode): string {

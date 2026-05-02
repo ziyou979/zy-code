@@ -16,10 +16,7 @@ const getIsDocker = memoize(async (): Promise<boolean> => {
 })
 
 function getIsBubblewrapSandbox(): boolean {
-  return (
-    process.platform === 'linux' &&
-    isEnvTruthy(process.env.ZY_CODE_BUBBLEWRAP)
-  )
+  return process.platform === 'linux' && isEnvTruthy(process.env.ZY_CODE_BUBBLEWRAP)
 }
 
 // Cache for the runtime musl detection fallback (node/unbundled only).
@@ -61,9 +58,7 @@ function isMuslEnvironment(): boolean {
 // Cache for async JetBrains detection
 let jetBrainsIDECache: string | null | undefined
 
-async function detectJetBrainsIDEFromParentProcessAsync(): Promise<
-  string | null
-> {
+async function detectJetBrainsIDEFromParentProcessAsync(): Promise<string | null> {
   if (jetBrainsIDECache !== undefined) {
     return jetBrainsIDECache
   }
@@ -95,9 +90,7 @@ async function detectJetBrainsIDEFromParentProcessAsync(): Promise<
   return null
 }
 
-export async function getTerminalWithJetBrainsDetectionAsync(): Promise<
-  string | null
-> {
+export async function getTerminalWithJetBrainsDetectionAsync(): Promise<string | null> {
   // Check for JetBrains terminal on Linux/Windows
   if (process.env.TERMINAL_EMULATOR === 'JetBrains-JediTerm') {
     // For macOS, bundle ID detection above already handles JetBrains IDEs

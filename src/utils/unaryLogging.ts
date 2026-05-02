@@ -22,16 +22,14 @@ type LogEvent = {
 
 export async function logUnaryEvent(event: LogEvent): Promise<void> {
   logEvent('zy_unary_event', {
-    event:
-      event.event as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    event: event.event as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     completion_type:
       event.completion_type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     language_name: (await event.metadata
       .language_name) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     message_id: event.metadata
       .message_id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    platform: event.metadata
-      .platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    platform: event.metadata.platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(event.metadata.hasFeedback !== undefined && {
       hasFeedback: event.metadata.hasFeedback,
     }),

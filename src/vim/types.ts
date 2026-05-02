@@ -155,9 +155,7 @@ export const TEXT_OBJ_SCOPES = {
   a: 'around',
 } as const satisfies Record<string, TextObjScope>
 
-export function isTextObjScopeKey(
-  key: string,
-): key is keyof typeof TEXT_OBJ_SCOPES {
+export function isTextObjScopeKey(key: string): key is keyof typeof TEXT_OBJ_SCOPES {
   return key in TEXT_OBJ_SCOPES
 }
 

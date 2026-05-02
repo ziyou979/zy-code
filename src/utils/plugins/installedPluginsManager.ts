@@ -18,11 +18,7 @@ import { logForDebugging } from '../debug.js'
 import { errorMessage, isENOENT, toError } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
-import {
-  jsonParse,
-  jsonStringify,
-  writeFileSync_DEPRECATED,
-} from '../slowOperations.js'
+import { jsonParse, jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
 import { getPluginsDirectory } from './pluginDirectories.js'
 import {
   type InstalledPlugin,
@@ -44,15 +40,9 @@ import { getOriginalCwd } from '../../bootstrap/state.js'
 import { getCwd } from '../cwd.js'
 import { getHeadForDir } from '../git/gitFilesystem.js'
 import type { EditableSettingSource } from '../settings/constants.js'
-import {
-  getSettings_DEPRECATED,
-  getSettingsForSource,
-} from '../settings/settings.js'
+import { getSettings_DEPRECATED, getSettingsForSource } from '../settings/settings.js'
 import { getPluginById } from './marketplaceManager.js'
-import {
-  parsePluginIdentifier,
-  settingSourceToScope,
-} from './pluginIdentifier.js'
+import { parsePluginIdentifier, settingSourceToScope } from './pluginIdentifier.js'
 import { getPluginCachePath, getVersionedCachePath } from './pluginLoader.js'
 
 // Migration state to prevent running migration multiple times per session
@@ -125,9 +115,7 @@ export function migrateToSinglePluginFile(): void {
     // Case 1: Try renaming v2→main directly; ENOENT = v2 doesn't exist
     try {
       fs.renameSync(v2FilePath, mainFilePath)
-      logForDebugging(
-        `Renamed installed_plugins_v2.json to installed_plugins.json`,
-      )
+      logForDebugging(`Renamed installed_plugins_v2.json to installed_plugins.json`)
       // Clean up legacy cache directories
       const v2Data = loadInstalledPluginsV2()
       cleanupLegacyCache(v2Data)
@@ -215,12 +203,12 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
       // Check if this is a versioned cache (marketplace dir with plugin/version subdirs)
       // or a legacy cache (flat plugin directory)
       const subEntries = fs.readdirSync(entryPath)
-      const hasVersionedStructure = subEntries.some(subDirent => {
+      const hasVersionedStructure = subEntries.some((subDirent) => {
         if (!subDirent.isDirectory()) return false
         const subPath = join(entryPath, subDirent.name)
         // Check if subdir contains version directories (semver-like or hash)
         const versionEntries = fs.readdirSync(subPath)
-        return versionEntries.some(vDirent => vDirent.isDirectory())
+        return versionEntries.some((vDirent) => vDirent.isDirectory())
       })
 
       if (hasVersionedStructure) {
@@ -345,9 +333,7 @@ export function loadInstalledPluginsV2(): InstalledPluginsFileV2 {
     }
 
     // File doesn't exist - return empty V2
-    logForDebugging(
-      `installed_plugins.json doesn't exist, returning empty V2 object`,
-    )
+    logForDebugging(`installed_plugins.json doesn't exist, returning empty V2 object`)
     installedPluginsCacheV2 = { version: 2, plugins: {} }
     return installedPluginsCacheV2
   } catch (error) {
@@ -383,9 +369,7 @@ function saveInstalledPluginsV2(data: InstalledPluginsFileV2): void {
     // Update cache
     installedPluginsCacheV2 = data
 
-    logForDebugging(
-      `Saved ${Object.keys(data.plugins).length} installed plugins to ${filePath}`,
-    )
+    logForDebugging(`Saved ${Object.keys(data.plugins).length} installed plugins to ${filePath}`)
   } catch (error) {
     const _errorMsg = errorMessage(error)
     logError(toError(error))
@@ -417,7 +401,7 @@ export function addPluginInstallation(
 
   // Find existing entry for this scope+projectPath
   const existingIndex = installations.findIndex(
-    entry => entry.scope === scope && entry.projectPath === projectPath,
+    (entry) => entry.scope === scope && entry.projectPath === projectPath,
   )
 
   const newEntry: PluginInstallationEntry = {
@@ -462,7 +446,7 @@ export function removePluginInstallation(
   }
 
   data.plugins[pluginId] = installations.filter(
-    entry => !(entry.scope === scope && entry.projectPath === projectPath),
+    (entry) => !(entry.scope === scope && entry.projectPath === projectPath),
   )
 
   // Remove plugin entirely if no installations left
@@ -546,15 +530,11 @@ export function updateInstallationPathOnDisk(
   const installations = diskData.plugins[pluginId]
 
   if (!installations) {
-    logForDebugging(
-      `Cannot update ${pluginId} on disk: plugin not found in installed plugins`,
-    )
+    logForDebugging(`Cannot update ${pluginId} on disk: plugin not found in installed plugins`)
     return
   }
 
-  const entry = installations.find(
-    e => e.scope === scope && e.projectPath === projectPath,
-  )
+  const entry = installations.find((e) => e.scope === scope && e.projectPath === projectPath)
 
   if (entry) {
     entry.installPath = newPath
@@ -575,13 +555,9 @@ export function updateInstallationPathOnDisk(
     // Clear cache since disk changed, but do NOT update inMemoryInstalledPlugins
     installedPluginsCacheV2 = null
 
-    logForDebugging(
-      `Updated ${pluginId} on disk to version ${newVersion} at ${newPath}`,
-    )
+    logForDebugging(`Updated ${pluginId} on disk to version ${newVersion} at ${newPath}`)
   } else {
-    logForDebugging(
-      `Cannot update ${pluginId} on disk: no installation for scope ${scope}`,
-    )
+    logForDebugging(`Cannot update ${pluginId} on disk: no installation for scope ${scope}`)
   }
   // Note: inMemoryInstalledPlugins is NOT updated
 }
@@ -596,17 +572,13 @@ export function hasPendingUpdates(): boolean {
   const memoryState = getInMemoryInstalledPlugins()
   const diskState = loadInstalledPluginsFromDisk()
 
-  for (const [pluginId, diskInstallations] of Object.entries(
-    diskState.plugins,
-  )) {
+  for (const [pluginId, diskInstallations] of Object.entries(diskState.plugins)) {
     const memoryInstallations = memoryState.plugins[pluginId]
     if (!memoryInstallations) continue
 
     for (const diskEntry of diskInstallations) {
       const memoryEntry = memoryInstallations.find(
-        m =>
-          m.scope === diskEntry.scope &&
-          m.projectPath === diskEntry.projectPath,
+        (m) => m.scope === diskEntry.scope && m.projectPath === diskEntry.projectPath,
       )
       if (memoryEntry && memoryEntry.installPath !== diskEntry.installPath) {
         return true // Disk has different version than memory
@@ -627,17 +599,13 @@ export function getPendingUpdateCount(): number {
   const memoryState = getInMemoryInstalledPlugins()
   const diskState = loadInstalledPluginsFromDisk()
 
-  for (const [pluginId, diskInstallations] of Object.entries(
-    diskState.plugins,
-  )) {
+  for (const [pluginId, diskInstallations] of Object.entries(diskState.plugins)) {
     const memoryInstallations = memoryState.plugins[pluginId]
     if (!memoryInstallations) continue
 
     for (const diskEntry of diskInstallations) {
       const memoryEntry = memoryInstallations.find(
-        m =>
-          m.scope === diskEntry.scope &&
-          m.projectPath === diskEntry.projectPath,
+        (m) => m.scope === diskEntry.scope && m.projectPath === diskEntry.projectPath,
       )
       if (memoryEntry && memoryEntry.installPath !== diskEntry.installPath) {
         count++
@@ -669,17 +637,13 @@ export function getPendingUpdatesDetails(): Array<{
   const memoryState = getInMemoryInstalledPlugins()
   const diskState = loadInstalledPluginsFromDisk()
 
-  for (const [pluginId, diskInstallations] of Object.entries(
-    diskState.plugins,
-  )) {
+  for (const [pluginId, diskInstallations] of Object.entries(diskState.plugins)) {
     const memoryInstallations = memoryState.plugins[pluginId]
     if (!memoryInstallations) continue
 
     for (const diskEntry of diskInstallations) {
       const memoryEntry = memoryInstallations.find(
-        m =>
-          m.scope === diskEntry.scope &&
-          m.projectPath === diskEntry.projectPath,
+        (m) => m.scope === diskEntry.scope && m.projectPath === diskEntry.projectPath,
       )
       if (memoryEntry && memoryEntry.installPath !== diskEntry.installPath) {
         updates.push({
@@ -769,9 +733,7 @@ export function removeAllPluginsForMarketplace(marketplaceName: string): {
 
     delete data.plugins[pluginId]
     removedPluginIds.push(pluginId)
-    logForDebugging(
-      `Removed installed plugin for marketplace removal: ${pluginId}`,
-    )
+    logForDebugging(`Removed installed plugin for marketplace removal: ${pluginId}`)
   }
 
   if (removedPluginIds.length > 0) {
@@ -797,14 +759,8 @@ export function removeAllPluginsForMarketplace(marketplaceName: string): {
  * getOriginalCwd() (not getCwd()) because "current project" is where ZY Code
  * Code was launched from, not wherever the working directory has drifted to.
  */
-export function isInstallationRelevantToCurrentProject(
-  inst: PluginInstallationEntry,
-): boolean {
-  return (
-    inst.scope === 'user' ||
-    inst.scope === 'managed' ||
-    inst.projectPath === getOriginalCwd()
-  )
+export function isInstallationRelevantToCurrentProject(inst: PluginInstallationEntry): boolean {
+  return inst.scope === 'user' || inst.scope === 'managed' || inst.projectPath === getOriginalCwd()
 }
 
 /**
@@ -853,7 +809,7 @@ export function isPluginGloballyInstalled(pluginId: string): boolean {
     return false
   }
   const hasGlobalEntry = installations.some(
-    entry => entry.scope === 'user' || entry.scope === 'managed',
+    (entry) => entry.scope === 'user' || entry.scope === 'managed',
   )
   if (!hasGlobalEntry) return false
   // Same settings divergence guard as isPluginInstalled — if enabledPlugins
@@ -893,7 +849,7 @@ export function addInstalledPlugin(
 
   // Find existing entry for this scope+projectPath
   const existingIndex = installations.findIndex(
-    entry => entry.scope === scope && entry.projectPath === projectPath,
+    (entry) => entry.scope === scope && entry.projectPath === projectPath,
   )
 
   const isUpdate = existingIndex >= 0
@@ -921,9 +877,7 @@ export function addInstalledPlugin(
  * @param pluginId - Plugin ID in "plugin@marketplace" format
  * @returns The removed plugin metadata, or undefined if it wasn't installed
  */
-export function removeInstalledPlugin(
-  pluginId: string,
-): InstalledPlugin | undefined {
+export function removeInstalledPlugin(pluginId: string): InstalledPlugin | undefined {
   const v2Data = loadInstalledPluginsFromDisk()
   const installations = v2Data.plugins[pluginId]
 
@@ -989,9 +943,7 @@ export function deletePluginCache(installPath: string): void {
   } catch (error) {
     const errorMsg = errorMessage(error)
     logError(toError(error))
-    throw new Error(
-      `Failed to delete plugin cache at ${installPath}: ${errorMsg}`,
-    )
+    throw new Error(`Failed to delete plugin cache at ${installPath}: ${errorMsg}`)
   }
 }
 
@@ -1007,10 +959,7 @@ async function getGitCommitSha(dirPath: string): Promise<string | undefined> {
 /**
  * Try to read version from plugin manifest
  */
-function getPluginVersionFromManifest(
-  pluginCachePath: string,
-  pluginId: string,
-): string {
+function getPluginVersionFromManifest(pluginCachePath: string, pluginId: string): string {
   const fs = getFsImplementation()
   const manifestPath = join(pluginCachePath, '.zy-plugin', 'plugin.json')
 
@@ -1064,15 +1013,13 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
   if (isV2Format && rawFileData) {
     // Check if all plugins from settings already exist
     // (The expensive getPluginById/getGitCommitSha only runs for missing plugins)
-    const existingData = InstalledPluginsFileSchemaV2().safeParse(
-      rawFileData.data,
-    )
+    const existingData = InstalledPluginsFileSchemaV2().safeParse(rawFileData.data)
 
     if (existingData?.success) {
       const plugins = existingData.data.plugins
       const allPluginsExist = Object.keys(enabledPlugins)
-        .filter(id => id.includes('@'))
-        .every(id => {
+        .filter((id) => id.includes('@'))
+        .every((id) => {
           const installations = plugins[id]
           return installations && installations.length > 0
         })
@@ -1173,14 +1120,10 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
       }
 
       try {
-        logForDebugging(
-          `Looking up plugin ${pluginId} in marketplace ${marketplace}`,
-        )
+        logForDebugging(`Looking up plugin ${pluginId} in marketplace ${marketplace}`)
         const pluginInfo = await getPluginById(pluginId)
         if (!pluginInfo) {
-          logForDebugging(
-            `Plugin ${pluginId} not found in any marketplace, skipping`,
-          )
+          logForDebugging(`Plugin ${pluginId} not found in any marketplace, skipping`)
           continue
         }
 
@@ -1207,14 +1150,12 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
           // version='unknown', not a crash.
           let dirEntries: string[]
           try {
-            dirEntries = (
-              await getFsImplementation().readdir(pluginCachePath)
-            ).map(e => (typeof e === 'string' ? e : e.name))
+            dirEntries = (await getFsImplementation().readdir(pluginCachePath)).map((e) =>
+              typeof e === 'string' ? e : e.name,
+            )
           } catch (e) {
             if (!isENOENT(e)) throw e
-            logForDebugging(
-              `External plugin ${pluginId} not in cache, skipping`,
-            )
+            logForDebugging(`External plugin ${pluginId} not in cache, skipping`)
             continue
           }
 

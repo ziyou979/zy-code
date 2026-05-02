@@ -1,18 +1,10 @@
-import {
-  getZyAiBaseUrl,
-  getRemoteSessionUrl,
-} from '../constants/product.js'
+import { getZyAiBaseUrl, getRemoteSessionUrl } from '../constants/product.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { formatDuration, truncateToWidth } from '../utils/format.js'
 import { getGraphemeSegmenter } from '../utils/intl.js'
 
 /** Bridge status state machine states. */
-export type StatusState =
-  | 'idle'
-  | 'attached'
-  | 'titled'
-  | 'reconnecting'
-  | 'failed'
+export type StatusState = 'idle' | 'attached' | 'titled' | 'reconnecting' | 'failed'
 
 /** How long a tool activity line stays visible after last tool_start (ms). */
 export const TOOL_DISPLAY_EXPIRY_MS = 30_000
@@ -36,10 +28,7 @@ export function abbreviateActivity(summary: string): string {
 }
 
 /** Build the connect URL shown when the bridge is idle. */
-export function buildBridgeConnectUrl(
-  environmentId: string,
-  ingressUrl?: string,
-): string {
+export function buildBridgeConnectUrl(environmentId: string, ingressUrl?: string): string {
   const baseUrl = getZyAiBaseUrl(undefined, ingressUrl)
   return `${baseUrl}/code?bridge=${environmentId}`
 }
@@ -58,10 +47,7 @@ export function buildBridgeSessionUrl(
 }
 
 /** Compute the glimmer index for a reverse-sweep shimmer animation. */
-export function computeGlimmerIndex(
-  tick: number,
-  messageWidth: number,
-): number {
+export function computeGlimmerIndex(tick: number, messageWidth: number): number {
   const cycleLength = messageWidth + 20
   return messageWidth + 10 - (tick % cycleLength)
 }
@@ -133,10 +119,8 @@ export function getBridgeStatus({
   reconnecting: boolean
 }): BridgeStatusInfo {
   if (error) return { label: 'Remote Control failed', color: 'error' }
-  if (reconnecting)
-    return { label: 'Remote Control reconnecting', color: 'warning' }
-  if (sessionActive || connected)
-    return { label: 'Remote Control active', color: 'success' }
+  if (reconnecting) return { label: 'Remote Control reconnecting', color: 'warning' }
+  if (sessionActive || connected) return { label: 'Remote Control active', color: 'success' }
   return { label: 'Remote Control connecting\u2026', color: 'warning' }
 }
 

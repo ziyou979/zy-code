@@ -69,9 +69,7 @@ export function notifyTasksUpdated(): void {
 
 export const TASK_STATUSES = ['pending', 'in_progress', 'completed'] as const
 
-export const TaskStatusSchema = lazySchema(() =>
-  z.enum(['pending', 'in_progress', 'completed']),
-)
+export const TaskStatusSchema = lazySchema(() => z.enum(['pending', 'in_progress', 'completed']))
 export type TaskStatus = z.infer<ReturnType<typeof TaskStatusSchema>>
 
 export const TaskSchema = lazySchema(() =>
@@ -123,10 +121,7 @@ async function readHighWaterMark(taskListId: string): Promise<number> {
   }
 }
 
-async function writeHighWaterMark(
-  taskListId: string,
-  value: number,
-): Promise<void> {
+async function writeHighWaterMark(taskListId: string, value: number): Promise<void> {
   const path = getHighWaterMarkPath(taskListId)
   await writeFile(path, String(value))
 }
@@ -220,11 +215,7 @@ export function sanitizePathComponent(input: string): string {
 }
 
 export function getTasksDir(taskListId: string): string {
-  return join(
-    getZyConfigHomeDir(),
-    'tasks',
-    sanitizePathComponent(taskListId),
-  )
+  return join(getZyConfigHomeDir(), 'tasks', sanitizePathComponent(taskListId))
 }
 
 export function getTaskPath(taskListId: string, taskId: string): string {
@@ -282,10 +273,7 @@ async function findHighestTaskId(taskListId: string): Promise<number> {
  * Uses file locking to prevent race conditions when multiple processes
  * create tasks concurrently.
  */
-export async function createTask(
-  taskListId: string,
-  taskData: Omit<Task, 'id'>,
-): Promise<string> {
+export async function createTask(taskListId: string, taskData: Omit<Task, 'id'>): Promise<string> {
   const lockPath = await ensureTaskListLockFile(taskListId)
 
   let release: (() => Promise<void>) | undefined
@@ -308,10 +296,7 @@ export async function createTask(
   }
 }
 
-export async function getTask(
-  taskListId: string,
-  taskId: string,
-): Promise<Task | null> {
+export async function getTask(taskListId: string, taskId: string): Promise<Task | null> {
   const path = getTaskPath(taskListId, taskId)
   try {
     const content = await readFile(path, 'utf-8')
@@ -324,18 +309,14 @@ export async function getTask(
       // Migrate development task statuses to in_progress
       else if (
         data.status &&
-        ['planning', 'implementing', 'reviewing', 'verifying'].includes(
-          data.status,
-        )
+        ['planning', 'implementing', 'reviewing', 'verifying'].includes(data.status)
       ) {
         data.status = 'in_progress'
       }
     }
     const parsed = TaskSchema().safeParse(data)
     if (!parsed.success) {
-      logForDebugging(
-        `[Tasks] Task ${taskId} failed schema validation: ${parsed.error.message}`,
-      )
+      logForDebugging(`[Tasks] Task ${taskId} failed schema validation: ${parsed.error.message}`)
       return null
     }
     return parsed.data
@@ -391,10 +372,7 @@ export async function updateTask(
   }
 }
 
-export async function deleteTask(
-  taskListId: string,
-  taskId: string,
-): Promise<boolean> {
+export async function deleteTask(taskListId: string, taskId: string): Promise<boolean> {
   const path = getTaskPath(taskListId, taskId)
 
   try {
@@ -421,8 +399,8 @@ export async function deleteTask(
     // Remove references to this task from other tasks
     const allTasks = await listTasks(taskListId)
     for (const task of allTasks) {
-      const newBlocks = task.blocks.filter(id => id !== taskId)
-      const newBlockedBy = task.blockedBy.filter(id => id !== taskId)
+      const newBlocks = task.blocks.filter((id) => id !== taskId)
+      const newBlockedBy = task.blockedBy.filter((id) => id !== taskId)
       if (
         newBlocks.length !== task.blocks.length ||
         newBlockedBy.length !== task.blockedBy.length
@@ -449,10 +427,8 @@ export async function listTasks(taskListId: string): Promise<Task[]> {
   } catch {
     return []
   }
-  const taskIds = files
-    .filter(f => f.endsWith('.json'))
-    .map(f => f.replace('.json', ''))
-  const results = await Promise.all(taskIds.map(id => getTask(taskListId, id)))
+  const taskIds = files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''))
+  const results = await Promise.all(taskIds.map((id) => getTask(taskListId, id)))
   return results.filter((t): t is Task => t !== null)
 }
 
@@ -488,12 +464,7 @@ export async function blockTask(
 
 export type ClaimTaskResult = {
   success: boolean
-  reason?:
-    | 'task_not_found'
-    | 'already_claimed'
-    | 'already_resolved'
-    | 'blocked'
-    | 'agent_busy'
+  reason?: 'task_not_found' | 'already_claimed' | 'already_resolved' | 'blocked' | 'agent_busy'
   task?: Task
   busyWithTasks?: string[] // task IDs the agent is busy with (when reason is 'agent_busy')
   blockedByTasks?: string[] // task IDs blocking this task (when reason is 'blocked')
@@ -585,11 +556,9 @@ export async function claimTask(
     // Check for unresolved blockers (open or in_progress tasks block)
     const allTasks = await listTasks(taskListId)
     const unresolvedTaskIds = new Set(
-      allTasks.filter(t => t.status !== 'completed').map(t => t.id),
+      allTasks.filter((t) => t.status !== 'completed').map((t) => t.id),
     )
-    const blockedByTasks = task.blockedBy.filter(id =>
-      unresolvedTaskIds.has(id),
-    )
+    const blockedByTasks = task.blockedBy.filter((id) => unresolvedTaskIds.has(id))
     if (blockedByTasks.length > 0) {
       return { success: false, reason: 'blocked', task, blockedByTasks }
     }
@@ -600,9 +569,7 @@ export async function claimTask(
     })
     return { success: true, task: updated! }
   } catch (error) {
-    logForDebugging(
-      `[Tasks] Failed to claim task ${taskId}: ${errorMessage(error)}`,
-    )
+    logForDebugging(`[Tasks] Failed to claim task ${taskId}: ${errorMessage(error)}`)
     logError(error)
     return { success: false, reason: 'task_not_found' }
   } finally {
@@ -632,7 +599,7 @@ async function claimTaskWithBusyCheck(
     const allTasks = await listTasks(taskListId)
 
     // Find the task we want to claim
-    const task = allTasks.find(t => t.id === taskId)
+    const task = allTasks.find((t) => t.id === taskId)
     if (!task) {
       return { success: false, reason: 'task_not_found' }
     }
@@ -649,28 +616,23 @@ async function claimTaskWithBusyCheck(
 
     // Check for unresolved blockers (open or in_progress tasks block)
     const unresolvedTaskIds = new Set(
-      allTasks.filter(t => t.status !== 'completed').map(t => t.id),
+      allTasks.filter((t) => t.status !== 'completed').map((t) => t.id),
     )
-    const blockedByTasks = task.blockedBy.filter(id =>
-      unresolvedTaskIds.has(id),
-    )
+    const blockedByTasks = task.blockedBy.filter((id) => unresolvedTaskIds.has(id))
     if (blockedByTasks.length > 0) {
       return { success: false, reason: 'blocked', task, blockedByTasks }
     }
 
     // Check if agent is busy with other unresolved tasks
     const agentOpenTasks = allTasks.filter(
-      t =>
-        t.status !== 'completed' &&
-        t.owner === claimantAgentId &&
-        t.id !== taskId,
+      (t) => t.status !== 'completed' && t.owner === claimantAgentId && t.id !== taskId,
     )
     if (agentOpenTasks.length > 0) {
       return {
         success: false,
         reason: 'agent_busy',
         task,
-        busyWithTasks: agentOpenTasks.map(t => t.id),
+        busyWithTasks: agentOpenTasks.map((t) => t.id),
       }
     }
 
@@ -735,7 +697,7 @@ async function readTeamMembers(
     }
     return {
       leadAgentId: teamFile.leadAgentId,
-      members: teamFile.members.map(m => ({
+      members: teamFile.members.map((m) => ({
         agentId: m.agentId,
         name: m.name,
         agentType: m.agentType,
@@ -746,9 +708,7 @@ async function readTeamMembers(
     if (code === 'ENOENT') {
       return null
     }
-    logForDebugging(
-      `[Tasks] Failed to read team file for ${teamName}: ${errorMessage(e)}`,
-    )
+    logForDebugging(`[Tasks] Failed to read team file for ${teamName}: ${errorMessage(e)}`)
     return null
   }
 }
@@ -761,9 +721,7 @@ async function readTeamMembers(
  * @param teamName - The name of the team (also used as taskListId)
  * @returns Array of agent statuses, or null if team not found
  */
-export async function getAgentStatuses(
-  teamName: string,
-): Promise<AgentStatus[] | null> {
+export async function getAgentStatuses(teamName: string): Promise<AgentStatus[] | null> {
   const teamData = await readTeamMembers(teamName)
   if (!teamData) {
     return null
@@ -783,7 +741,7 @@ export async function getAgentStatuses(
   }
 
   // Build status for each agent (leader is already in members)
-  return teamData.members.map(member => {
+  return teamData.members.map((member) => {
     // Check both name (new) and agentId (legacy) for backwards compatibility
     const tasksByName = unresolvedTasksByOwner.get(member.name) || []
     const tasksById = unresolvedTasksByOwner.get(member.agentId) || []
@@ -824,9 +782,7 @@ export async function unassignTeammateTasks(
 ): Promise<UnassignTasksResult> {
   const tasks = await listTasks(teamName)
   const unresolvedAssignedTasks = tasks.filter(
-    t =>
-      t.status !== 'completed' &&
-      (t.owner === teammateId || t.owner === teammateName),
+    (t) => t.status !== 'completed' && (t.owner === teammateId || t.owner === teammateName),
   )
 
   // Unassign each task and reset status to open
@@ -841,18 +797,15 @@ export async function unassignTeammateTasks(
   }
 
   // Build notification message
-  const actionVerb =
-    reason === 'terminated' ? 'was terminated' : 'has shut down'
+  const actionVerb = reason === 'terminated' ? 'was terminated' : 'has shut down'
   let notificationMessage = `${teammateName} ${actionVerb}.`
   if (unresolvedAssignedTasks.length > 0) {
-    const taskList = unresolvedAssignedTasks
-      .map(t => `#${t.id} "${t.subject}"`)
-      .join(', ')
+    const taskList = unresolvedAssignedTasks.map((t) => `#${t.id} "${t.subject}"`).join(', ')
     notificationMessage += ` ${unresolvedAssignedTasks.length} task(s) were unassigned: ${taskList}. Use TaskList to check availability and TaskUpdate with owner to reassign them to idle teammates.`
   }
 
   return {
-    unassignedTasks: unresolvedAssignedTasks.map(t => ({
+    unassignedTasks: unresolvedAssignedTasks.map((t) => ({
       id: t.id,
       subject: t.subject,
     })),

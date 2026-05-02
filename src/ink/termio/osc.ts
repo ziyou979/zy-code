@@ -63,8 +63,7 @@ export function wrapForMultiplexer(sequence: string): string {
 export type ClipboardPath = 'native' | 'tmux-buffer' | 'osc52'
 
 export function getClipboardPath(): ClipboardPath {
-  const nativeAvailable =
-    process.platform === 'darwin' && !process.env['SSH_CONNECTION']
+  const nativeAvailable = process.platform === 'darwin' && !process.env['SSH_CONNECTION']
   if (nativeAvailable) return 'native'
   if (process.env['TMUX']) return 'tmux-buffer'
   return 'osc52'
@@ -91,9 +90,7 @@ function tmuxPassthrough(payload: string): string {
 export async function tmuxLoadBuffer(text: string): Promise<boolean> {
   if (!process.env['TMUX']) return false
   const args =
-    process.env['LC_TERMINAL'] === 'iTerm2'
-      ? ['load-buffer', '-']
-      : ['load-buffer', '-w', '-']
+    process.env['LC_TERMINAL'] === 'iTerm2' ? ['load-buffer', '-'] : ['load-buffer', '-w', '-']
   const { code } = await execFileNoThrow('tmux', args, {
     input: text,
     useCwd: false,
@@ -189,24 +186,20 @@ function copyNative(text: string): void {
         return
       }
       // 首次调用：探测 wl-copy（Wayland）然后 xclip/xsel（X11），缓存赢家。
-      void execFileNoThrow('wl-copy', [], opts).then(r => {
+      void execFileNoThrow('wl-copy', [], opts).then((r) => {
         if (r.code === 0) {
           linuxCopy = 'wl-copy'
           return
         }
-        void execFileNoThrow('xclip', ['-selection', 'clipboard'], opts).then(
-          r2 => {
-            if (r2.code === 0) {
-              linuxCopy = 'xclip'
-              return
-            }
-            void execFileNoThrow('xsel', ['--clipboard', '--input'], opts).then(
-              r3 => {
-                linuxCopy = r3.code === 0 ? 'xsel' : null
-              },
-            )
-          },
-        )
+        void execFileNoThrow('xclip', ['-selection', 'clipboard'], opts).then((r2) => {
+          if (r2.code === 0) {
+            linuxCopy = 'xclip'
+            return
+          }
+          void execFileNoThrow('xsel', ['--clipboard', '--input'], opts).then((r3) => {
+            linuxCopy = r3.code === 0 ? 'xsel' : null
+          })
+        })
       })
       return
     }
@@ -226,7 +219,7 @@ export function _resetLinuxCopyCache(): void {
 /**
  * OSC 命令编号
  */
-export let OSC;
+export let OSC
 OSC = {
   SET_TITLE_AND_ICON: 0,
   SET_ICON: 1,
@@ -325,13 +318,10 @@ export function parseOscColor(spec: string): Color | null {
       b: parseInt(hex[3]!, 16),
     }
   }
-  const rgb = spec.match(
-    /^rgb:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})$/i,
-  )
+  const rgb = spec.match(/^rgb:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})$/i)
   if (rgb) {
     // XParseColor：N 个十六进制数字 → 值 / (16^N - 1)，缩放到 0-255
-    const scale = (s: string) =>
-      Math.round((parseInt(s, 16) / (16 ** s.length - 1)) * 255)
+    const scale = (s: string) => Math.round((parseInt(s, 16) / (16 ** s.length - 1)) * 255)
     return {
       type: 'rgb',
       r: scale(rgb[1]!),
@@ -411,13 +401,12 @@ export function link(url: string, params?: Record<string, string>): string {
 
 function osc8Id(url: string): string {
   let h = 0
-  for (let i = 0; i < url.length; i++)
-    h = ((h << 5) - h + url.charCodeAt(i)) | 0
+  for (let i = 0; i < url.length; i++) h = ((h << 5) - h + url.charCodeAt(i)) | 0
   return (h >>> 0).toString(36)
 }
 
 /** 结束超链接（OSC 8） */
-export let LINK_END;
+export let LINK_END
 LINK_END = osc(OSC.HYPERLINK, '', '')
 
 // iTerm2 OSC 9 子命令
@@ -451,10 +440,7 @@ export const CLEAR_ITERM2_PROGRESS = `${OSC_PREFIX}${OSC.ITERM2};${ITERM2.PROGRE
 export const CLEAR_TERMINAL_TITLE = `${OSC_PREFIX}${OSC.SET_TITLE_AND_ICON};${BEL}`
 
 /** 清除所有三个 OSC 21337 标签状态字段。在退出时使用。 */
-export const CLEAR_TAB_STATUS = osc(
-  OSC.TAB_STATUS,
-  'indicator=;status=;status-color=',
-)
+export const CLEAR_TAB_STATUS = osc(OSC.TAB_STATUS, 'indicator=;status=;status-color=')
 
 /**
  * OSC 21337（标签状态指示器）的发射门控。在规范
@@ -478,17 +464,13 @@ export function tabStatus(fields: TabStatusAction): string {
   const parts: string[] = []
   const rgb = (c: Color) =>
     c.type === 'rgb'
-      ? `#${[c.r, c.g, c.b].map(n => n.toString(16).padStart(2, '0')).join('')}`
+      ? `#${[c.r, c.g, c.b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
       : ''
   if ('indicator' in fields)
     parts.push(`indicator=${fields.indicator ? rgb(fields.indicator) : ''}`)
   if ('status' in fields)
-    parts.push(
-      `status=${fields.status?.replaceAll('\\', '\\\\').replaceAll(';', '\\;') ?? ''}`,
-    )
+    parts.push(`status=${fields.status?.replaceAll('\\', '\\\\').replaceAll(';', '\\;') ?? ''}`)
   if ('statusColor' in fields)
-    parts.push(
-      `status-color=${fields.statusColor ? rgb(fields.statusColor) : ''}`,
-    )
+    parts.push(`status-color=${fields.statusColor ? rgb(fields.statusColor) : ''}`)
   return osc(OSC.TAB_STATUS, parts.join(';'))
 }

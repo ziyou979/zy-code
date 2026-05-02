@@ -57,8 +57,6 @@ export function registerSkillHooks(
   }
 
   if (registeredCount > 0) {
-    logForDebugging(
-      `Registered ${registeredCount} hooks from skill '${skillName}'`,
-    )
+    logForDebugging(`Registered ${registeredCount} hooks from skill '${skillName}'`)
   }
 }

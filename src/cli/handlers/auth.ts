@@ -1,9 +1,6 @@
 /* eslint-disable custom-rules/no-process-exit -- CLI 子命令处理器有意退出 */
 
-import {
-  clearAuthRelatedCaches,
-  performLogout,
-} from '../../commands/logout/logout.js'
+import { clearAuthRelatedCaches, performLogout } from '../../commands/logout/logout.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -25,7 +22,6 @@ import {
   getApiKeyWithSource,
   getAuthTokenSource,
   getOauthAccountInfo,
-
   saveOAuthTokensIfNeeded,
   validateForceLoginOrg,
 } from '../../utils/auth.js'
@@ -38,10 +34,7 @@ import { logError } from '../../utils/log.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import {
-  buildAccountProperties,
-  buildAPIProviderProperties,
-} from '../../utils/status.js'
+import { buildAccountProperties, buildAPIProviderProperties } from '../../utils/status.js'
 
 /**
  * 获取令牌后的共享逻辑。保存令牌、获取用户资料/角色，
@@ -60,11 +53,9 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
       emailAddress: profile.account.email,
       organizationUuid: profile.organization.uuid,
       displayName: profile.account.display_name || undefined,
-      hasExtraUsageEnabled:
-        profile.organization.has_extra_usage_enabled ?? undefined,
+      hasExtraUsageEnabled: profile.organization.has_extra_usage_enabled ?? undefined,
       billingType: profile.organization.billing_type ?? undefined,
-      subscriptionCreatedAt:
-        profile.organization.subscription_created_at ?? undefined,
+      subscriptionCreatedAt: profile.organization.subscription_created_at ?? undefined,
       accountCreatedAt: profile.account.created_at,
     })
   } else if ((tokens as any).tokenAccount) {
@@ -81,28 +72,25 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
 
   if (storageResult.warning) {
     logEvent('zy_oauth_storage_warning', {
-      warning:
-        storageResult.warning as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      warning: storageResult.warning as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
 
   // 角色和首次令牌日期对于有限范围的令牌可能会失败（例如仅推理用途的 setup-token）。
   // 它们不是核心认证所必需的。
-  await fetchAndStoreUserRoles(tokens.accessToken).catch(err =>
+  await fetchAndStoreUserRoles(tokens.accessToken).catch((err) =>
     logForDebugging(String(err), { level: 'error' }),
   )
 
   if (shouldUseZyAIAuth((tokens as any).scopes)) {
-    await fetchAndStoreZyCodeFirstTokenDate().catch(err =>
+    await fetchAndStoreZyCodeFirstTokenDate().catch((err) =>
       logForDebugging(String(err), { level: 'error' }),
     )
   } else {
     // API 密钥创建对控制台用户至关重要——允许抛出异常。
     const apiKey = await createAndStoreApiKey(tokens.accessToken)
     if (!apiKey) {
-      throw new Error(
-        tSync('auth.installOAuth.apiKeyCreationFailed'),
-      )
+      throw new Error(tSync('auth.installOAuth.apiKeyCreationFailed'))
     }
   }
 
@@ -121,9 +109,7 @@ export async function authLogin({
   zyai?: boolean
 }): Promise<void> {
   if (useConsole && zyai) {
-    process.stderr.write(
-      tSync('auth.login.consoleZyaiMutualExclusive') + '\n',
-    )
+    process.stderr.write(tSync('auth.login.consoleZyaiMutualExclusive') + '\n')
     process.exit(1)
   }
 
@@ -141,9 +127,7 @@ export async function authLogin({
   if (envRefreshToken) {
     const envScopes = process.env.ZY_CODE_OAUTH_SCOPES
     if (!envScopes) {
-      process.stderr.write(
-        tSync('auth.login.scopesRequired') + '\n',
-      )
+      process.stderr.write(tSync('auth.login.scopesRequired') + '\n')
       process.exit(1)
     }
 
@@ -163,7 +147,7 @@ export async function authLogin({
 
       // 标记引导完成——交互式路径通过 Onboarding 组件处理此步骤，
       // 但环境变量路径跳过了该组件。
-      saveGlobalConfig(current => {
+      saveGlobalConfig((current) => {
         if (current.hasCompletedOnboarding) return current
         return { ...current, hasCompletedOnboarding: true }
       })
@@ -177,7 +161,9 @@ export async function authLogin({
       logError(err)
       const sslHint = getSSLErrorHint(err)
       process.stderr.write(
-        tSync('auth.login.failed', { error: errorMessage(err) }) + '\n' + (sslHint ? sslHint + '\n' : ''),
+        tSync('auth.login.failed', { error: errorMessage(err) }) +
+          '\n' +
+          (sslHint ? sslHint + '\n' : ''),
       )
       process.exit(1)
     }
@@ -191,7 +177,7 @@ export async function authLogin({
     logEvent('zy_oauth_flow_start', { loginWithZyAi })
 
     const result = await oauthService.startOAuthFlow(
-      async url => {
+      async (url) => {
         process.stdout.write(tSync('auth.login.openingBrowser') + '\n')
         process.stdout.write(tSync('auth.login.visitUrl', { url }) + '\n')
       },
@@ -219,7 +205,9 @@ export async function authLogin({
     logError(err)
     const sslHint = getSSLErrorHint(err)
     process.stderr.write(
-      tSync('auth.login.failed', { error: errorMessage(err) }) + '\n' + (sslHint ? sslHint + '\n' : ''),
+      tSync('auth.login.failed', { error: errorMessage(err) }) +
+        '\n' +
+        (sslHint ? sslHint + '\n' : ''),
     )
     process.exit(1)
   } finally {
@@ -227,18 +215,13 @@ export async function authLogin({
   }
 }
 
-export async function authStatus(opts: {
-  json?: boolean
-  text?: boolean
-}): Promise<void> {
+export async function authStatus(opts: { json?: boolean; text?: boolean }): Promise<void> {
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
   const { source: apiKeySource } = getApiKeyWithSource()
-  const hasApiKeyEnvVar =
-    !!process.env.ZY_API_KEY && !isRunningOnHomespace()
+  const hasApiKeyEnvVar = !!process.env.ZY_API_KEY && !isRunningOnHomespace()
   const oauthAccount = getOauthAccountInfo()
   const using3P = false
-  const loggedIn =
-    hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar || using3P
+  const loggedIn = hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar || using3P
 
   // 确定认证方式
   let authMethod: string = 'none'
@@ -257,10 +240,7 @@ export async function authStatus(opts: {
   }
 
   if (opts.text) {
-    const properties = [
-      ...buildAccountProperties(),
-      ...buildAPIProviderProperties(),
-    ]
+    const properties = [...buildAccountProperties(), ...buildAPIProviderProperties()]
     let hasAuthProperty = false
     for (const prop of properties) {
       const value =
@@ -283,18 +263,12 @@ export async function authStatus(opts: {
       process.stdout.write(tSync('auth.status.apiKeyEnvVar') + '\n')
     }
     if (!loggedIn) {
-      process.stdout.write(
-        tSync('auth.status.notLoggedIn') + '\n',
-      )
+      process.stdout.write(tSync('auth.status.notLoggedIn') + '\n')
     }
   } else {
     const apiProvider = getAPIProvider()
     const resolvedApiKeySource =
-      apiKeySource !== 'none'
-        ? apiKeySource
-        : hasApiKeyEnvVar
-          ? 'settingsApiKey'
-          : null
+      apiKeySource !== 'none' ? apiKeySource : hasApiKeyEnvVar ? 'settingsApiKey' : null
     const output: Record<string, string | boolean | null> = {
       loggedIn,
       authMethod,

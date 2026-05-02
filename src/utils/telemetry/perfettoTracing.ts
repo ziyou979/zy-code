@@ -29,11 +29,7 @@ import { dirname, join } from 'path'
 import { getSessionId } from '../../bootstrap/state.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { logForDebugging } from '../debug.js'
-import {
-  getZyConfigHomeDir,
-  isEnvDefinedFalsy,
-  isEnvTruthy,
-} from '../envUtils.js'
+import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
 import { errorMessage } from '../errors.js'
 import { djb2Hash } from '../hash.js'
 import { jsonStringify } from '../slowOperations.js'
@@ -241,9 +237,7 @@ function evictOldestEvents(): void {
     tid: 0,
     args: { dropped_events: dropped.length },
   })
-  logForDebugging(
-    `[Perfetto] Evicted ${dropped.length} oldest events (cap ${MAX_EVENTS})`,
-  )
+  logForDebugging(`[Perfetto] Evicted ${dropped.length} oldest events (cap ${MAX_EVENTS})`)
 }
 
 /**
@@ -252,16 +246,12 @@ function evictOldestEvents(): void {
  */
 export function initializePerfettoTracing(): void {
   const envValue = process.env.ZY_CODE_PERFETTO_TRACE
-  logForDebugging(
-    `[Perfetto] initializePerfettoTracing called, env value: ${envValue}`,
-  )
+  logForDebugging(`[Perfetto] initializePerfettoTracing called, env value: ${envValue}`)
 
   // Wrap in feature() for dead code elimination - entire block removed from external builds
   if (feature('PERFETTO_TRACING')) {
     if (!envValue || isEnvDefinedFalsy(envValue)) {
-      logForDebugging(
-        '[Perfetto] Tracing disabled (env var not set or disabled)',
-      )
+      logForDebugging('[Perfetto] Tracing disabled (env var not set or disabled)')
       return
     }
 
@@ -282,19 +272,14 @@ export function initializePerfettoTracing(): void {
     )
 
     // Start periodic full-trace write if ZY_CODE_PERFETTO_WRITE_INTERVAL_S is a positive integer
-    const intervalSec = parseInt(
-      process.env.ZY_CODE_PERFETTO_WRITE_INTERVAL_S ?? '',
-      10,
-    )
+    const intervalSec = parseInt(process.env.ZY_CODE_PERFETTO_WRITE_INTERVAL_S ?? '', 10)
     if (intervalSec > 0) {
       writeIntervalId = setInterval(() => {
         void periodicWrite()
       }, intervalSec * 1000)
       // Don't let the interval keep the process alive on its own
       if (writeIntervalId.unref) writeIntervalId.unref()
-      logForDebugging(
-        `[Perfetto] Periodic write enabled, interval: ${intervalSec}s`,
-      )
+      logForDebugging(`[Perfetto] Periodic write enabled, interval: ${intervalSec}s`)
     }
 
     // Start stale span cleanup interval
@@ -321,9 +306,7 @@ export function initializePerfettoTracing(): void {
     // This is the final fallback to ensure trace is written before process exits
     process.on('exit', () => {
       if (!traceWritten) {
-        logForDebugging(
-          '[Perfetto] exit handler invoked, writing trace synchronously',
-        )
+        logForDebugging('[Perfetto] exit handler invoked, writing trace synchronously')
         writePerfettoTraceSync()
       }
     })
@@ -389,11 +372,7 @@ export function isPerfettoTracingEnabled(): boolean {
  * Register a new agent in the trace
  * Call this when a subagent/teammate is spawned
  */
-export function registerAgent(
-  agentId: string,
-  agentName: string,
-  parentAgentId?: string,
-): void {
+export function registerAgent(agentId: string, agentName: string, parentAgentId?: string): void {
   if (!isEnabled) return
 
   const info: AgentInfo = {
@@ -491,8 +470,7 @@ export function endLLMRequestPerfettoSpan(
   const endTime = getTimestamp()
   const duration = endTime - pending.startTime
 
-  const promptTokens =
-    metadata.promptTokens ?? (pending.args.prompt_tokens as number | undefined)
+  const promptTokens = metadata.promptTokens ?? (pending.args.prompt_tokens as number | undefined)
   const ttftMs = metadata.ttftMs
   const ttltMs = metadata.ttltMs
   const outputTokens = metadata.outputTokens
@@ -506,8 +484,7 @@ export function endLLMRequestPerfettoSpan(
       : undefined
 
   // OTPS: output tokens per second (sampling speed)
-  const samplingMs =
-    ttltMs !== undefined && ttftMs !== undefined ? ttltMs - ttftMs : undefined
+  const samplingMs = ttltMs !== undefined && ttftMs !== undefined ? ttltMs - ttftMs : undefined
   const otps =
     samplingMs !== undefined && outputTokens !== undefined && samplingMs > 0
       ? Math.round((outputTokens / (samplingMs / 1000)) * 100) / 100
@@ -515,9 +492,7 @@ export function endLLMRequestPerfettoSpan(
 
   // Cache hit rate: percentage of prompt tokens from cache
   const cacheHitRate =
-    cacheReadTokens !== undefined &&
-    promptTokens !== undefined &&
-    promptTokens > 0
+    cacheReadTokens !== undefined && promptTokens !== undefined && promptTokens > 0
       ? Math.round((cacheReadTokens / promptTokens) * 10000) / 100
       : undefined
 
@@ -546,10 +521,7 @@ export function endLLMRequestPerfettoSpan(
 
   // Emit Request Setup sub-span when there was measurable setup time
   // (client creation, param building, retries before the successful attempt)
-  const setupUs =
-    requestSetupMs !== undefined && requestSetupMs > 0
-      ? requestSetupMs * 1000
-      : 0
+  const setupUs = requestSetupMs !== undefined && requestSetupMs > 0 ? requestSetupMs * 1000 : 0
   if (setupUs > 0) {
     const setupEndTs = pending.startTime + setupUs
 
@@ -573,10 +545,8 @@ export function endLLMRequestPerfettoSpan(
       // Convert wall-clock deltas into Perfetto-relative microseconds.
       const baseWallMs = attemptStartTimes[0]!
       for (let i = 0; i < attemptStartTimes.length - 1; i++) {
-        const attemptStartUs =
-          pending.startTime + (attemptStartTimes[i]! - baseWallMs) * 1000
-        const attemptEndUs =
-          pending.startTime + (attemptStartTimes[i + 1]! - baseWallMs) * 1000
+        const attemptStartUs = pending.startTime + (attemptStartTimes[i]! - baseWallMs) * 1000
+        const attemptEndUs = pending.startTime + (attemptStartTimes[i + 1]! - baseWallMs) * 1000
 
         events.push({
           name: `Attempt ${i + 1} (retry)`,
@@ -643,8 +613,7 @@ export function endLLMRequestPerfettoSpan(
     // Note: samplingMs = ttltMs - ttftMs still includes setup time in ttltMs,
     // so we compute the actual sampling duration for the span as the time from
     // first token to API call end (endTime), not samplingMs directly.
-    const actualSamplingMs =
-      ttltMs !== undefined ? ttltMs - ttftMs - setupUs / 1000 : undefined
+    const actualSamplingMs = ttltMs !== undefined ? ttltMs - ttftMs - setupUs / 1000 : undefined
     if (actualSamplingMs !== undefined && actualSamplingMs > 0) {
       events.push({
         name: 'Sampling',
@@ -687,10 +656,7 @@ export function endLLMRequestPerfettoSpan(
 /**
  * Start a tool execution span
  */
-export function startToolPerfettoSpan(
-  toolName: string,
-  args?: Record<string, unknown>,
-): string {
+export function startToolPerfettoSpan(toolName: string, args?: Record<string, unknown>): string {
   if (!isEnabled) return ''
 
   const spanId = generateSpanId()
@@ -860,10 +826,7 @@ export function emitPerfettoInstant(
 /**
  * Emit a counter event for tracking metrics over time
  */
-export function emitPerfettoCounter(
-  name: string,
-  values: Record<string, number>,
-): void {
+export function emitPerfettoCounter(name: string, values: Record<string, number>): void {
   if (!isEnabled) return
 
   const agentInfo = getCurrentAgentInfo()
@@ -993,14 +956,9 @@ async function periodicWrite(): Promise<void> {
   try {
     await mkdir(dirname(tracePath), { recursive: true })
     await writeFile(tracePath, buildTraceDocument())
-    logForDebugging(
-      `[Perfetto] Periodic write: ${events.length} events to ${tracePath}`,
-    )
+    logForDebugging(`[Perfetto] Periodic write: ${events.length} events to ${tracePath}`)
   } catch (error) {
-    logForDebugging(
-      `[Perfetto] Periodic write failed: ${errorMessage(error)}`,
-      { level: 'error' },
-    )
+    logForDebugging(`[Perfetto] Periodic write failed: ${errorMessage(error)}`, { level: 'error' })
   }
 }
 
@@ -1019,9 +977,7 @@ async function writePerfettoTrace(): Promise<void> {
   stopWriteInterval()
   closeOpenSpans()
 
-  logForDebugging(
-    `[Perfetto] writePerfettoTrace called: events=${events.length}`,
-  )
+  logForDebugging(`[Perfetto] writePerfettoTrace called: events=${events.length}`)
 
   try {
     await mkdir(dirname(tracePath), { recursive: true })
@@ -1029,10 +985,9 @@ async function writePerfettoTrace(): Promise<void> {
     traceWritten = true
     logForDebugging(`[Perfetto] Trace finalized at: ${tracePath}`)
   } catch (error) {
-    logForDebugging(
-      `[Perfetto] Failed to write final trace: ${errorMessage(error)}`,
-      { level: 'error' },
-    )
+    logForDebugging(`[Perfetto] Failed to write final trace: ${errorMessage(error)}`, {
+      level: 'error',
+    })
   }
 }
 
@@ -1050,9 +1005,7 @@ function writePerfettoTraceSync(): void {
   stopWriteInterval()
   closeOpenSpans()
 
-  logForDebugging(
-    `[Perfetto] writePerfettoTraceSync called: events=${events.length}`,
-  )
+  logForDebugging(`[Perfetto] writePerfettoTraceSync called: events=${events.length}`)
 
   try {
     const dir = dirname(tracePath)

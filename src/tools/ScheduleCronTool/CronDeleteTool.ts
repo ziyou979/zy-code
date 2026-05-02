@@ -1,11 +1,7 @@
 import { z } from 'zod/v4'
 import type { ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
-import {
-  getCronFilePath,
-  listAllCronTasks,
-  removeCronTasks,
-} from '../../utils/cronTasks.js'
+import { getCronFilePath, listAllCronTasks, removeCronTasks } from '../../utils/cronTasks.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getTeammateContext } from '../../utils/teammateContext.js'
 import {
@@ -60,7 +56,7 @@ export const CronDeleteTool = buildTool({
   },
   async validateInput(input): Promise<ValidationResult> {
     const tasks = await listAllCronTasks()
-    const task = tasks.find(t => t.id === input.id)
+    const task = tasks.find((t) => t.id === input.id)
     if (!task) {
       return {
         result: false,

@@ -3,10 +3,7 @@ import type { ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
-import {
-  FILE_NOT_FOUND_CWD_NOTE,
-  suggestPathUnderCwd,
-} from '../../utils/file.js'
+import { FILE_NOT_FOUND_CWD_NOTE, suggestPathUnderCwd } from '../../utils/file.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath, toRelativePath } from '../../utils/path.js'
@@ -32,23 +29,15 @@ import {
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
-    pattern: z
-      .string()
-      .describe(
-        'The regular expression pattern to search for in file contents',
-      ),
+    pattern: z.string().describe('The regular expression pattern to search for in file contents'),
     path: z
       .string()
       .optional()
-      .describe(
-        'File or directory to search in (rg PATH). Defaults to current working directory.',
-      ),
+      .describe('File or directory to search in (rg PATH). Defaults to current working directory.'),
     glob: z
       .string()
       .optional()
-      .describe(
-        'Glob pattern to filter files (e.g. "*.js", "*.{ts,tsx}") - maps to rg --glob',
-      ),
+      .describe('Glob pattern to filter files (e.g. "*.js", "*.{ts,tsx}") - maps to rg --glob'),
     output_mode: z
       .enum(['content', 'files_with_matches', 'count'])
       .optional()
@@ -68,9 +57,7 @@ const inputSchema = lazySchema(() =>
     '-n': semanticBoolean(z.boolean().optional()).describe(
       'Show line numbers in output (rg -n). Requires output_mode: "content", ignored otherwise. Defaults to true.',
     ),
-    '-i': semanticBoolean(z.boolean().optional()).describe(
-      'Case insensitive search (rg -i)',
-    ),
+    '-i': semanticBoolean(z.boolean().optional()).describe('Case insensitive search (rg -i)'),
     type: z
       .string()
       .optional()
@@ -92,14 +79,7 @@ type InputSchema = ReturnType<typeof inputSchema>
 
 // Version control system directories to exclude from searches
 // These are excluded automatically because they create noise in search results
-const VCS_DIRECTORIES_TO_EXCLUDE = [
-  '.git',
-  '.svn',
-  '.hg',
-  '.bzr',
-  '.jj',
-  '.sl',
-] as const
+const VCS_DIRECTORIES_TO_EXCLUDE = ['.git', '.svn', '.hg', '.bzr', '.jj', '.sl'] as const
 
 // Default cap on grep results when head_limit is unspecified. Unbounded content-mode
 // greps can fill up to the 20KB persist threshold (~6-24K tokens/grep-heavy session).
@@ -196,7 +176,7 @@ export const GrepTool = buildTool({
     return path || getCwd()
   },
   async preparePermissionMatcher({ pattern }) {
-    return rulePattern => matchWildcardPattern(rulePattern, pattern)
+    return (rulePattern) => matchWildcardPattern(rulePattern, pattern)
   },
   async validateInput({ path }): Promise<ValidationResult> {
     // If path is provided, validate that it exists
@@ -232,11 +212,7 @@ export const GrepTool = buildTool({
   },
   async checkPermissions(input, context): Promise<PermissionDecision> {
     const appState = context.getAppState()
-    return checkReadPermissionForTool(
-      GrepTool,
-      input,
-      appState.toolPermissionContext,
-    )
+    return checkReadPermissionForTool(GrepTool, input, appState.toolPermissionContext)
   },
   async prompt() {
     return getDescription()
@@ -427,9 +403,7 @@ export const GrepTool = buildTool({
     }
 
     // Exclude orphaned plugin version directories
-    for (const exclusion of await getGlobExclusionsForPluginCache(
-      absolutePath,
-    )) {
+    for (const exclusion of await getGlobExclusionsForPluginCache(absolutePath)) {
       args.push('--glob', exclusion)
     }
 
@@ -447,13 +421,9 @@ export const GrepTool = buildTool({
       // Apply head_limit first — relativize is per-line work, so
       // avoid processing lines that will be discarded (broad patterns can
       // return 10k+ lines with head_limit keeping only ~30-100).
-      const { items: limitedResults, appliedLimit } = applyHeadLimit(
-        results,
-        head_limit,
-        offset,
-      )
+      const { items: limitedResults, appliedLimit } = applyHeadLimit(results, head_limit, offset)
 
-      const finalLines = limitedResults.map(line => {
+      const finalLines = limitedResults.map((line) => {
         // Lines have format: /absolute/path:line_content or /absolute/path:num:content
         const colonIndex = line.indexOf(':')
         if (colonIndex > 0) {
@@ -478,14 +448,10 @@ export const GrepTool = buildTool({
     if (output_mode === 'count') {
       // For count mode, pass through raw ripgrep output (filename:count format)
       // Apply head_limit first to avoid relativizing entries that will be discarded.
-      const { items: limitedResults, appliedLimit } = applyHeadLimit(
-        results,
-        head_limit,
-        offset,
-      )
+      const { items: limitedResults, appliedLimit } = applyHeadLimit(results, head_limit, offset)
 
       // Convert absolute paths to relative paths to save tokens
-      const finalCountLines = limitedResults.map(line => {
+      const finalCountLines = limitedResults.map((line) => {
         // Lines have format: /absolute/path:count
         const colonIndex = line.lastIndexOf(':')
         if (colonIndex > 0) {
@@ -526,17 +492,12 @@ export const GrepTool = buildTool({
     // For files_with_matches mode (default)
     // Use allSettled so a single ENOENT (file deleted between ripgrep's scan
     // and this stat) does not reject the whole batch. Failed stats sort as mtime 0.
-    const stats = await Promise.allSettled(
-      results.map(_ => getFsImplementation().stat(_)),
-    )
+    const stats = await Promise.allSettled(results.map((_) => getFsImplementation().stat(_)))
     const sortedMatches = results
       // Sort by modification time
       .map((_, i) => {
         const r = stats[i]!
-        return [
-          _,
-          r.status === 'fulfilled' ? (r.value.mtimeMs ?? 0) : 0,
-        ] as const
+        return [_, r.status === 'fulfilled' ? (r.value.mtimeMs ?? 0) : 0] as const
       })
       .sort((a, b) => {
         if (process.env.NODE_ENV === 'test') {
@@ -550,14 +511,10 @@ export const GrepTool = buildTool({
         }
         return timeComparison
       })
-      .map(_ => _[0])
+      .map((_) => _[0])
 
     // Apply head_limit to sorted file list (like "| head -N")
-    const { items: finalMatches, appliedLimit } = applyHeadLimit(
-      sortedMatches,
-      head_limit,
-      offset,
-    )
+    const { items: finalMatches, appliedLimit } = applyHeadLimit(sortedMatches, head_limit, offset)
 
     // Convert absolute paths to relative paths to save tokens
     const relativeMatches = finalMatches.map(toRelativePath)

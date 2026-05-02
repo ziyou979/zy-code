@@ -6,11 +6,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
-import type {
-  ToolPermissionContext,
-  Tool as ToolType,
-  ToolUseContext,
-} from '../../Tool.js'
+import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../../Tool.js'
 import { awaitClassifierAutoApproval } from '../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import type { AssistantMessage } from '../../types/message.js'
@@ -37,10 +33,7 @@ import {
   supportsPersistence,
 } from '../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
-import {
-  logPermissionDecision,
-  type PermissionDecisionArgs,
-} from './permissionLogging.js'
+import { logPermissionDecision, type PermissionDecisionArgs } from './permissionLogging.js'
 
 type PermissionApprovalSource =
   | { type: 'hook'; permanent?: boolean }
@@ -131,8 +124,7 @@ function createPermissionContext(
     },
     logCancelled() {
       logEvent('zy_tool_use_cancelled', {
-        messageID:
-          messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         toolName: sanitizeToolNameForAnalytics(tool.name),
       })
     },
@@ -140,10 +132,8 @@ function createPermissionContext(
       if (updates.length === 0) return false
       persistPermissionUpdates(updates)
       const appState = toolUseContext.getAppState()
-      setToolPermissionContext(
-        applyPermissionUpdates(appState.toolPermissionContext, updates),
-      )
-      return updates.some(update => supportsPersistence(update.destination))
+      setToolPermissionContext(applyPermissionUpdates(appState.toolPermissionContext, updates))
+      return updates.some((update) => supportsPersistence(update.destination))
     },
     resolveIfAborted(resolve: (decision: PermissionDecision) => void) {
       if (!toolUseContext.abortController.signal.aborted) return false
@@ -191,10 +181,7 @@ function createPermissionContext(
             if (!classifierDecision) {
               return null
             }
-            if (
-              feature('TRANSCRIPT_CLASSIFIER') &&
-              classifierDecision.type === 'classifier'
-            ) {
+            if (feature('TRANSCRIPT_CLASSIFIER') && classifierDecision.type === 'classifier') {
               const matchedRule = classifierDecision.reason.match(
                 /^Allowed by prompt rule: "(.+)"$/,
               )?.[1]
@@ -246,21 +233,16 @@ function createPermissionContext(
               { permissionPromptStartTimeMs },
             )
             if (decision.interrupt) {
-              logForDebugging(
-                `Hook interrupt: tool=${tool.name} hookMessage=${decision.message}`,
-              )
+              logForDebugging(`Hook interrupt: tool=${tool.name} hookMessage=${decision.message}`)
               // 带 reason 区分 hook 主动中断和 GC race，
               // 见 StreamingToolExecutor 的 BUBBLE_ABORT_REASONS 白名单。
               toolUseContext.abortController.abort('hook_interrupt')
             }
-            return this.buildDeny(
-              decision.message || 'Permission denied by hook',
-              {
-                type: 'hook',
-                hookName: 'PermissionRequest',
-                reason: decision.message,
-              },
-            )
+            return this.buildDeny(decision.message || 'Permission denied by hook', {
+              type: 'hook',
+              hookName: 'PermissionRequest',
+              reason: decision.message,
+            })
           }
         }
       }
@@ -287,10 +269,7 @@ function createPermissionContext(
           }),
       }
     },
-    buildDeny(
-      message: string,
-      decisionReason: PermissionDecisionReason,
-    ): PermissionDenyDecision {
+    buildDeny(message: string, decisionReason: PermissionDecisionReason): PermissionDenyDecision {
       return { behavior: 'deny' as const, message, decisionReason }
     },
     async handleUserAllow(
@@ -301,8 +280,7 @@ function createPermissionContext(
       contentBlocks?: ContentBlock[],
       decisionReason?: PermissionDecisionReason,
     ): Promise<PermissionAllowDecision> {
-      const acceptedPermanentUpdates =
-        await this.persistPermissions(permissionUpdates)
+      const acceptedPermanentUpdates = await this.persistPermissions(permissionUpdates)
       this.logDecision(
         {
           decision: 'accept',
@@ -326,8 +304,7 @@ function createPermissionContext(
       permissionUpdates: PermissionUpdate[],
       permissionPromptStartTimeMs?: number,
     ): Promise<PermissionAllowDecision> {
-      const acceptedPermanentUpdates =
-        await this.persistPermissions(permissionUpdates)
+      const acceptedPermanentUpdates = await this.persistPermissions(permissionUpdates)
       this.logDecision(
         {
           decision: 'accept',
@@ -360,24 +337,18 @@ type PermissionContext = ReturnType<typeof createPermissionContext>
  * generic queue interface used by PermissionContext.
  */
 function createPermissionQueueOps(
-  setToolUseConfirmQueue: React.Dispatch<
-    React.SetStateAction<ToolUseConfirm[]>
-  >,
+  setToolUseConfirmQueue: React.Dispatch<React.SetStateAction<ToolUseConfirm[]>>,
 ): PermissionQueueOps {
   return {
     push(item: ToolUseConfirm) {
-      setToolUseConfirmQueue(queue => [...queue, item])
+      setToolUseConfirmQueue((queue) => [...queue, item])
     },
     remove(toolUseID: string) {
-      setToolUseConfirmQueue(queue =>
-        queue.filter(item => item.toolUseID !== toolUseID),
-      )
+      setToolUseConfirmQueue((queue) => queue.filter((item) => item.toolUseID !== toolUseID))
     },
     update(toolUseID: string, patch: Partial<ToolUseConfirm>) {
-      setToolUseConfirmQueue(queue =>
-        queue.map(item =>
-          item.toolUseID === toolUseID ? { ...item, ...patch } : item,
-        ),
+      setToolUseConfirmQueue((queue) =>
+        queue.map((item) => (item.toolUseID === toolUseID ? { ...item, ...patch } : item)),
       )
     },
   }

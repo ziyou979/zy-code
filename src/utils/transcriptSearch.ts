@@ -1,18 +1,12 @@
 import type { RenderableMessage } from '../types/message.js'
-import {
-  INTERRUPT_MESSAGE,
-  INTERRUPT_MESSAGE_FOR_TOOL_USE,
-} from './messages.js'
+import { INTERRUPT_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE } from './messages.js'
 
 const SYSTEM_REMINDER_CLOSE = '</system-reminder>'
 
 // UserTextMessage.tsx:~84 replaces these with <InterruptedByUser />
 // (renders 'Interrupted · /issue...'). Raw text never appears on screen;
 // searching it yields phantom matches — /terr → in[terr]upted.
-const RENDERED_AS_SENTINEL = new Set([
-  INTERRUPT_MESSAGE,
-  INTERRUPT_MESSAGE_FOR_TOOL_USE,
-])
+const RENDERED_AS_SENTINEL = new Set([INTERRUPT_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE])
 
 const searchTextCache = new WeakMap<RenderableMessage, string>()
 
@@ -70,7 +64,7 @@ function computeSearchText(msg: RenderableMessage): string {
         // — the command/pattern/path is visible and searchable-expected.
         // Skip thinking (hidden by hidePastThinking in transcript mount).
         raw = c
-          .flatMap(b => {
+          .flatMap((b) => {
             if (b.type === 'text') return [b.text]
             if (b.type === 'tool_call') return [toolUseSearchText(b.input)]
             return []
@@ -97,7 +91,7 @@ function computeSearchText(msg: RenderableMessage): string {
         raw =
           typeof p === 'string'
             ? p
-            : p.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('\n')
+            : p.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('\n')
       }
       break
     }
@@ -156,7 +150,7 @@ export function toolUseSearchText(input: unknown): string {
   // renders the joined array as the primary display. Under-count > skip.
   for (const k of ['args', 'files']) {
     const v = o[k]
-    if (Array.isArray(v) && v.every(x => typeof x === 'string')) {
+    if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
       parts.push((v as string[]).join(' '))
     }
   }
@@ -194,7 +188,7 @@ export function toolResultSearchText(r: unknown): string {
   }
   for (const k of ['filenames', 'lines', 'results']) {
     const v = o[k]
-    if (Array.isArray(v) && v.every(x => typeof x === 'string')) {
+    if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
       parts.push((v as string[]).join('\n'))
     }
   }

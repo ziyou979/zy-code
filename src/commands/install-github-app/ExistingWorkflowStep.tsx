@@ -1,29 +1,62 @@
-import React from 'react';
-import { Select } from 'src/components/CustomSelect/index.js';
-import { Box, Text } from '../../ink.js';
+import React from 'react'
+import { Select } from 'src/components/CustomSelect/index.js'
+import { Box, Text } from '../../ink.js'
 interface ExistingWorkflowStepProps {
-  repoName: string;
-  onSelectAction: (action: 'update' | 'skip' | 'exit') => void;
+  repoName: string
+  onSelectAction: (action: 'update' | 'skip' | 'exit') => void
 }
-export function ExistingWorkflowStep({
-  repoName,
-  onSelectAction
-}: ExistingWorkflowStepProps) {
-  const options = [{
-    label: "Update workflow file with latest version",
-    value: "update"
-  }, {
-    label: "Skip workflow update (configure secrets only)",
-    value: "skip"
-  }, {
-    label: "Exit without making changes",
-    value: "exit"
-  }];
-  const handleSelect = value => {
-    onSelectAction(value as 'update' | 'skip' | 'exit');
-  };
+export function ExistingWorkflowStep({ repoName, onSelectAction }: ExistingWorkflowStepProps) {
+  const options = [
+    {
+      label: 'Update workflow file with latest version',
+      value: 'update',
+    },
+    {
+      label: 'Skip workflow update (configure secrets only)',
+      value: 'skip',
+    },
+    {
+      label: 'Exit without making changes',
+      value: 'exit',
+    },
+  ]
+  const handleSelect = (value) => {
+    onSelectAction(value as 'update' | 'skip' | 'exit')
+  }
   const handleCancel = () => {
-    onSelectAction("exit");
-  };
-  return <Box flexDirection="column" borderStyle="round" borderDimColor={true} paddingX={1}>{<Box flexDirection="column" marginBottom={1}>{<Text bold={true}>Existing Workflow Found</Text>}<Text dimColor={true}>Repository: {repoName}</Text></Box>}{<Box flexDirection="column" marginBottom={1}><Text>A Zy workflow file already exists at{" "}<Text color="zy">.github/workflows/zy.yml</Text></Text><Text dimColor={true}>What would you like to do?</Text></Box>}{<Box flexDirection="column"><Select options={options} onChange={handleSelect} onCancel={handleCancel} /></Box>}{<Box marginTop={1}><Text dimColor={true}>View the latest workflow template at:{" "}<Text color="zy">https://github.com/anthropics/zy-code-action/blob/main/examples/zy.yml</Text></Text></Box>}</Box>;
+    onSelectAction('exit')
+  }
+  return (
+    <Box flexDirection="column" borderStyle="round" borderDimColor={true} paddingX={1}>
+      {
+        <Box flexDirection="column" marginBottom={1}>
+          {<Text bold={true}>Existing Workflow Found</Text>}
+          <Text dimColor={true}>Repository: {repoName}</Text>
+        </Box>
+      }
+      {
+        <Box flexDirection="column" marginBottom={1}>
+          <Text>
+            A Zy workflow file already exists at <Text color="zy">.github/workflows/zy.yml</Text>
+          </Text>
+          <Text dimColor={true}>What would you like to do?</Text>
+        </Box>
+      }
+      {
+        <Box flexDirection="column">
+          <Select options={options} onChange={handleSelect} onCancel={handleCancel} />
+        </Box>
+      }
+      {
+        <Box marginTop={1}>
+          <Text dimColor={true}>
+            View the latest workflow template at:{' '}
+            <Text color="zy">
+              https://github.com/anthropics/zy-code-action/blob/main/examples/zy.yml
+            </Text>
+          </Text>
+        </Box>
+      }
+    </Box>
+  )
 }

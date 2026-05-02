@@ -11,10 +11,7 @@ import type {
   PermissionDecisionReason,
   PermissionResult,
 } from 'src/utils/permissions/PermissionResult.js'
-import {
-  extractRules,
-  hasRules,
-} from 'src/utils/permissions/PermissionUpdate.js'
+import { extractRules, hasRules } from 'src/utils/permissions/PermissionUpdate.js'
 import { permissionRuleValueToString } from 'src/utils/permissions/permissionRuleParser.js'
 import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
@@ -36,9 +33,7 @@ function permissionResultToLog(permissionResult: PermissionResult): string {
     case 'ask': {
       const rules = extractRules(permissionResult.suggestions)
       const suggestions =
-        rules.length > 0
-          ? rules.map(r => permissionRuleValueToString(r)).join(', ')
-          : 'none'
+        rules.length > 0 ? rules.map((r) => permissionRuleValueToString(r)).join(', ') : 'none'
       return `ask: ${permissionResult.message}, 
 suggestions: ${suggestions}
 reason: ${decisionReasonToString(permissionResult.decisionReason)}`
@@ -49,9 +44,7 @@ reason: ${decisionReasonToString(permissionResult.decisionReason)}`
     case 'passthrough': {
       const rules = extractRules(permissionResult.suggestions)
       const suggestions =
-        rules.length > 0
-          ? rules.map(r => permissionRuleValueToString(r)).join(', ')
-          : 'none'
+        rules.length > 0 ? rules.map((r) => permissionRuleValueToString(r)).join(', ') : 'none'
       return `passthrough: ${permissionResult.message},
 suggestions: ${suggestions}
 reason: ${decisionReasonToString(permissionResult.decisionReason)}`
@@ -59,9 +52,7 @@ reason: ${decisionReasonToString(permissionResult.decisionReason)}`
   }
 }
 
-function decisionReasonToString(
-  decisionReason: PermissionDecisionReason | undefined,
-): string {
+function decisionReasonToString(decisionReason: PermissionDecisionReason | undefined): string {
   if (!decisionReason) {
     return 'No decision reason'
   }
@@ -121,7 +112,7 @@ export function usePermissionRequestLogging(
     loggedToolUseID.current = toolUseConfirm.toolUseID
 
     // Increment permission prompt count for attribution tracking
-    setAppState(prev => ({
+    setAppState((prev) => ({
       ...prev,
       attribution: {
         ...prev.attribution,
@@ -158,9 +149,7 @@ export function usePermissionRequestLogging(
           sandboxEnabled: SandboxManager.isSandboxingEnabled(),
 
           // This DOES contain code/filepaths and should not be logged in the public build!
-          decisionReasonDetails: decisionReasonToString(
-            permissionResult.decisionReason,
-          ) as never,
+          decisionReasonDetails: decisionReasonToString(permissionResult.decisionReason) as never,
         })
       }
     }
@@ -182,9 +171,7 @@ export function usePermissionRequestLogging(
           // Ignore parse errors here - just log the full command
         }
         logEvent('zy_internal_bash_tool_use_permission_request', {
-          parts: jsonStringify(
-            split,
-          ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          parts: jsonStringify(split) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           input: jsonStringify(
             toolUseConfirm.input,
           ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

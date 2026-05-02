@@ -91,9 +91,7 @@ export async function readMailbox(
   try {
     const content = await readFile(inboxPath, 'utf-8')
     const messages = jsonParse(content) as TeammateMessage[]
-    logForDebugging(
-      `[TeammateMailbox] readMailbox: read ${messages.length} message(s)`,
-    )
+    logForDebugging(`[TeammateMailbox] readMailbox: read ${messages.length} message(s)`)
     return messages
   } catch (error) {
     const code = getErrnoCode(error)
@@ -117,7 +115,7 @@ export async function readUnreadMessages(
   teamName?: string,
 ): Promise<TeammateMessage[]> {
   const messages = await readMailbox(agentName, teamName)
-  const unread = messages.filter(m => !m.read)
+  const unread = messages.filter((m) => !m.read)
   logForDebugging(
     `[TeammateMailbox] readUnreadMessages: ${unread.length} unread of ${messages.length} total`,
   )
@@ -152,9 +150,7 @@ export async function writeToMailbox(
   } catch (error) {
     const code = getErrnoCode(error)
     if (code !== 'EEXIST') {
-      logForDebugging(
-        `[TeammateMailbox] writeToMailbox: failed to create inbox file: ${error}`,
-      )
+      logForDebugging(`[TeammateMailbox] writeToMailbox: failed to create inbox file: ${error}`)
       logError(error)
       return
     }
@@ -212,9 +208,7 @@ export async function markMessageAsReadByIndex(
 
   let release: (() => Promise<void>) | undefined
   try {
-    logForDebugging(
-      `[TeammateMailbox] markMessageAsReadByIndex: acquiring lock...`,
-    )
+    logForDebugging(`[TeammateMailbox] markMessageAsReadByIndex: acquiring lock...`)
     release = await lockfile.lock(inboxPath, {
       lockfilePath: lockFilePath,
       ...LOCK_OPTIONS,
@@ -236,9 +230,7 @@ export async function markMessageAsReadByIndex(
 
     const message = messages[messageIndex]
     if (!message || message.read) {
-      logForDebugging(
-        `[TeammateMailbox] markMessageAsReadByIndex: message already read or missing`,
-      )
+      logForDebugging(`[TeammateMailbox] markMessageAsReadByIndex: message already read or missing`)
       return
     }
 
@@ -256,16 +248,12 @@ export async function markMessageAsReadByIndex(
       )
       return
     }
-    logForDebugging(
-      `[TeammateMailbox] markMessageAsReadByIndex FAILED for ${agentName}: ${error}`,
-    )
+    logForDebugging(`[TeammateMailbox] markMessageAsReadByIndex FAILED for ${agentName}: ${error}`)
     logError(error)
   } finally {
     if (release) {
       await release()
-      logForDebugging(
-        `[TeammateMailbox] markMessageAsReadByIndex: lock released`,
-      )
+      logForDebugging(`[TeammateMailbox] markMessageAsReadByIndex: lock released`)
     }
   }
 }
@@ -276,10 +264,7 @@ export async function markMessageAsReadByIndex(
  * @param agentName - The agent name to mark messages as read for
  * @param teamName - Optional team name
  */
-export async function markMessagesAsRead(
-  agentName: string,
-  teamName?: string,
-): Promise<void> {
+export async function markMessagesAsRead(agentName: string, teamName?: string): Promise<void> {
   const inboxPath = getInboxPath(agentName, teamName)
   logForDebugging(
     `[TeammateMailbox] markMessagesAsRead called: agentName=${agentName}, teamName=${teamName}, path=${inboxPath}`,
@@ -303,13 +288,11 @@ export async function markMessagesAsRead(
     )
 
     if (messages.length === 0) {
-      logForDebugging(
-        `[TeammateMailbox] markMessagesAsRead: no messages to mark`,
-      )
+      logForDebugging(`[TeammateMailbox] markMessagesAsRead: no messages to mark`)
       return
     }
 
-    const unreadCount = count(messages, m => !m.read)
+    const unreadCount = count(messages, (m) => !m.read)
     logForDebugging(
       `[TeammateMailbox] markMessagesAsRead: ${unreadCount} unread of ${messages.length} total`,
     )
@@ -324,14 +307,10 @@ export async function markMessagesAsRead(
   } catch (error) {
     const code = getErrnoCode(error)
     if (code === 'ENOENT') {
-      logForDebugging(
-        `[TeammateMailbox] markMessagesAsRead: file does not exist at ${inboxPath}`,
-      )
+      logForDebugging(`[TeammateMailbox] markMessagesAsRead: file does not exist at ${inboxPath}`)
       return
     }
-    logForDebugging(
-      `[TeammateMailbox] markMessagesAsRead FAILED for ${agentName}: ${error}`,
-    )
+    logForDebugging(`[TeammateMailbox] markMessagesAsRead FAILED for ${agentName}: ${error}`)
     logError(error)
   } finally {
     if (release) {
@@ -346,10 +325,7 @@ export async function markMessagesAsRead(
  * @param agentName - The agent name to clear inbox for
  * @param teamName - Optional team name
  */
-export async function clearMailbox(
-  agentName: string,
-  teamName?: string,
-): Promise<void> {
+export async function clearMailbox(agentName: string, teamName?: string): Promise<void> {
   const inboxPath = getInboxPath(agentName, teamName)
 
   try {
@@ -380,7 +356,7 @@ export function formatTeammateMessages(
   }>,
 ): string {
   return messages
-    .map(m => {
+    .map((m) => {
       const colorAttr = m.color ? ` color="${m.color}"` : ''
       const summaryAttr = m.summary ? ` summary="${m.summary}"` : ''
       return `<${TEAMMATE_MESSAGE_TAG} teammate_id="${m.from}"${colorAttr}${summaryAttr}>\n${m.text}\n</${TEAMMATE_MESSAGE_TAG}>`
@@ -432,9 +408,7 @@ export function createIdleNotification(
 /**
  * Checks if a message text contains an idle notification
  */
-export function isIdleNotification(
-  messageText: string,
-): IdleNotificationMessage | null {
+export function isIdleNotification(messageText: string): IdleNotificationMessage | null {
   try {
     const parsed = jsonParse(messageText)
     if (parsed && parsed.type === 'idle_notification') {
@@ -538,9 +512,7 @@ export function createPermissionResponseMessage(params: {
 /**
  * Checks if a message text contains a permission request
  */
-export function isPermissionRequest(
-  messageText: string,
-): PermissionRequestMessage | null {
+export function isPermissionRequest(messageText: string): PermissionRequestMessage | null {
   try {
     const parsed = jsonParse(messageText)
     if (parsed && parsed.type === 'permission_request') {
@@ -555,9 +527,7 @@ export function isPermissionRequest(
 /**
  * Checks if a message text contains a permission response
  */
-export function isPermissionResponse(
-  messageText: string,
-): PermissionResponseMessage | null {
+export function isPermissionResponse(messageText: string): PermissionResponseMessage | null {
   try {
     const parsed = jsonParse(messageText)
     if (parsed && parsed.type === 'permission_response') {
@@ -727,9 +697,7 @@ export const ShutdownRequestMessageSchema = lazySchema(() =>
   }),
 )
 
-export type ShutdownRequestMessage = z.infer<
-  ReturnType<typeof ShutdownRequestMessageSchema>
->
+export type ShutdownRequestMessage = z.infer<ReturnType<typeof ShutdownRequestMessageSchema>>
 
 /**
  * Shutdown approved message sent from teammate to leader via mailbox
@@ -745,9 +713,7 @@ export const ShutdownApprovedMessageSchema = lazySchema(() =>
   }),
 )
 
-export type ShutdownApprovedMessage = z.infer<
-  ReturnType<typeof ShutdownApprovedMessageSchema>
->
+export type ShutdownApprovedMessage = z.infer<ReturnType<typeof ShutdownApprovedMessageSchema>>
 
 /**
  * Shutdown rejected message sent from teammate to leader via mailbox
@@ -762,9 +728,7 @@ export const ShutdownRejectedMessageSchema = lazySchema(() =>
   }),
 )
 
-export type ShutdownRejectedMessage = z.infer<
-  ReturnType<typeof ShutdownRejectedMessageSchema>
->
+export type ShutdownRejectedMessage = z.infer<ReturnType<typeof ShutdownRejectedMessageSchema>>
 
 /**
  * Creates a shutdown request message to send to a teammate
@@ -865,13 +829,9 @@ export async function sendShutdownRequestToMailbox(
 /**
  * Checks if a message text contains a shutdown request
  */
-export function isShutdownRequest(
-  messageText: string,
-): ShutdownRequestMessage | null {
+export function isShutdownRequest(messageText: string): ShutdownRequestMessage | null {
   try {
-    const result = ShutdownRequestMessageSchema().safeParse(
-      jsonParse(messageText),
-    )
+    const result = ShutdownRequestMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
     // Not JSON
@@ -882,13 +842,9 @@ export function isShutdownRequest(
 /**
  * Checks if a message text contains a plan approval request
  */
-export function isPlanApprovalRequest(
-  messageText: string,
-): PlanApprovalRequestMessage | null {
+export function isPlanApprovalRequest(messageText: string): PlanApprovalRequestMessage | null {
   try {
-    const result = PlanApprovalRequestMessageSchema().safeParse(
-      jsonParse(messageText),
-    )
+    const result = PlanApprovalRequestMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
     // Not JSON
@@ -899,13 +855,9 @@ export function isPlanApprovalRequest(
 /**
  * Checks if a message text contains a shutdown approved message
  */
-export function isShutdownApproved(
-  messageText: string,
-): ShutdownApprovedMessage | null {
+export function isShutdownApproved(messageText: string): ShutdownApprovedMessage | null {
   try {
-    const result = ShutdownApprovedMessageSchema().safeParse(
-      jsonParse(messageText),
-    )
+    const result = ShutdownApprovedMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
     // Not JSON
@@ -916,13 +868,9 @@ export function isShutdownApproved(
 /**
  * Checks if a message text contains a shutdown rejected message
  */
-export function isShutdownRejected(
-  messageText: string,
-): ShutdownRejectedMessage | null {
+export function isShutdownRejected(messageText: string): ShutdownRejectedMessage | null {
   try {
-    const result = ShutdownRejectedMessageSchema().safeParse(
-      jsonParse(messageText),
-    )
+    const result = ShutdownRejectedMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
     // Not JSON
@@ -933,13 +881,9 @@ export function isShutdownRejected(
 /**
  * Checks if a message text contains a plan approval response
  */
-export function isPlanApprovalResponse(
-  messageText: string,
-): PlanApprovalResponseMessage | null {
+export function isPlanApprovalResponse(messageText: string): PlanApprovalResponseMessage | null {
   try {
-    const result = PlanApprovalResponseMessageSchema().safeParse(
-      jsonParse(messageText),
-    )
+    const result = PlanApprovalResponseMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
     // Not JSON
@@ -962,9 +906,7 @@ export type TaskAssignmentMessage = {
 /**
  * Checks if a message text contains a task assignment
  */
-export function isTaskAssignment(
-  messageText: string,
-): TaskAssignmentMessage | null {
+export function isTaskAssignment(messageText: string): TaskAssignmentMessage | null {
   try {
     const parsed = jsonParse(messageText)
     if (parsed && parsed.type === 'task_assignment') {
@@ -998,9 +940,7 @@ export type TeamPermissionUpdateMessage = {
 /**
  * Checks if a message text contains a team permission update
  */
-export function isTeamPermissionUpdate(
-  messageText: string,
-): TeamPermissionUpdateMessage | null {
+export function isTeamPermissionUpdate(messageText: string): TeamPermissionUpdateMessage | null {
   try {
     const parsed = jsonParse(messageText)
     if (parsed && parsed.type === 'team_permission_update') {
@@ -1024,9 +964,7 @@ export const ModeSetRequestMessageSchema = lazySchema(() =>
   }),
 )
 
-export type ModeSetRequestMessage = z.infer<
-  ReturnType<typeof ModeSetRequestMessageSchema>
->
+export type ModeSetRequestMessage = z.infer<ReturnType<typeof ModeSetRequestMessageSchema>>
 
 /**
  * Creates a mode set request message to send to a teammate
@@ -1045,13 +983,9 @@ export function createModeSetRequestMessage(params: {
 /**
  * Checks if a message text contains a mode set request
  */
-export function isModeSetRequest(
-  messageText: string,
-): ModeSetRequestMessage | null {
+export function isModeSetRequest(messageText: string): ModeSetRequestMessage | null {
   try {
-    const parsed = ModeSetRequestMessageSchema().safeParse(
-      jsonParse(messageText),
-    )
+    const parsed = ModeSetRequestMessageSchema().safeParse(jsonParse(messageText))
     if (parsed.success) {
       return parsed.data
     }
@@ -1119,7 +1053,7 @@ export async function markMessagesAsReadByPredicate(
       return
     }
 
-    const updatedMessages = messages.map(m =>
+    const updatedMessages = messages.map((m) =>
       !m.read && predicate(m) ? { ...m, read: true } : m,
     )
 

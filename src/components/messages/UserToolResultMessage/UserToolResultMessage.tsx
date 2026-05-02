@@ -1,24 +1,29 @@
-import type { ToolResultBlock } from '../../../types/llm.js';
-import * as React from 'react';
-import type { Tools } from '../../../Tool.js';
-import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js';
-import { type buildMessageLookups, CANCEL_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE, REJECT_MESSAGE } from '../../../utils/messages.js';
-import { UserToolCanceledMessage } from './UserToolCanceledMessage.js';
-import { UserToolErrorMessage } from './UserToolErrorMessage.js';
-import { UserToolRejectMessage } from './UserToolRejectMessage.js';
-import { UserToolSuccessMessage } from './UserToolSuccessMessage.js';
-import { useGetToolFromMessages } from './utils.js';
+import type { ToolResultBlock } from '../../../types/llm.js'
+import * as React from 'react'
+import type { Tools } from '../../../Tool.js'
+import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js'
+import {
+  type buildMessageLookups,
+  CANCEL_MESSAGE,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE,
+  REJECT_MESSAGE,
+} from '../../../utils/messages.js'
+import { UserToolCanceledMessage } from './UserToolCanceledMessage.js'
+import { UserToolErrorMessage } from './UserToolErrorMessage.js'
+import { UserToolRejectMessage } from './UserToolRejectMessage.js'
+import { UserToolSuccessMessage } from './UserToolSuccessMessage.js'
+import { useGetToolFromMessages } from './utils.js'
 type Props = {
-  param: ToolResultBlock;
-  message: NormalizedUserMessage;
-  lookups: ReturnType<typeof buildMessageLookups>;
-  progressMessagesForMessage: ProgressMessage[];
-  style?: 'condensed';
-  tools: Tools;
-  verbose: boolean;
-  width: number | string;
-  isTranscriptMode?: boolean;
-};
+  param: ToolResultBlock
+  message: NormalizedUserMessage
+  lookups: ReturnType<typeof buildMessageLookups>
+  progressMessagesForMessage: ProgressMessage[]
+  style?: 'condensed'
+  tools: Tools
+  verbose: boolean
+  width: number | string
+  isTranscriptMode?: boolean
+}
 export function UserToolResultMessage({
   param,
   message,
@@ -28,23 +33,59 @@ export function UserToolResultMessage({
   tools,
   verbose,
   width,
-  isTranscriptMode
+  isTranscriptMode,
 }: Props) {
-  const toolUse = useGetToolFromMessages(param.toolCallId, tools, lookups as any);
+  const toolUse = useGetToolFromMessages(param.toolCallId, tools, lookups as any)
   if (!toolUse) {
-    return null;
+    return null
   }
-  if (typeof param.content === "string" && param.content.startsWith(CANCEL_MESSAGE)) {
-    return <UserToolCanceledMessage />;
+  if (typeof param.content === 'string' && param.content.startsWith(CANCEL_MESSAGE)) {
+    return <UserToolCanceledMessage />
   }
-  if (typeof param.content === "string" && param.content.startsWith(REJECT_MESSAGE) || param.content === INTERRUPT_MESSAGE_FOR_TOOL_USE) {
+  if (
+    (typeof param.content === 'string' && param.content.startsWith(REJECT_MESSAGE)) ||
+    param.content === INTERRUPT_MESSAGE_FOR_TOOL_USE
+  ) {
     const t1 = toolUse.toolUse.input as {
-      [key: string]: unknown;
-    };
-    return <UserToolRejectMessage input={t1} progressMessagesForMessage={progressMessagesForMessage} tool={toolUse.tool} tools={tools} lookups={lookups} style={style} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
+      [key: string]: unknown
+    }
+    return (
+      <UserToolRejectMessage
+        input={t1}
+        progressMessagesForMessage={progressMessagesForMessage}
+        tool={toolUse.tool}
+        tools={tools}
+        lookups={lookups}
+        style={style}
+        verbose={verbose}
+        isTranscriptMode={isTranscriptMode}
+      />
+    )
   }
   if (param.isError) {
-    return <UserToolErrorMessage progressMessagesForMessage={progressMessagesForMessage} tool={toolUse.tool} tools={tools} param={param} verbose={verbose} isTranscriptMode={isTranscriptMode} />;
+    return (
+      <UserToolErrorMessage
+        progressMessagesForMessage={progressMessagesForMessage}
+        tool={toolUse.tool}
+        tools={tools}
+        param={param}
+        verbose={verbose}
+        isTranscriptMode={isTranscriptMode}
+      />
+    )
   }
-  return <UserToolSuccessMessage message={message} lookups={lookups} toolUseID={toolUse.toolUse.id} progressMessagesForMessage={progressMessagesForMessage} style={style} tool={toolUse.tool} tools={tools} verbose={verbose} width={width} isTranscriptMode={isTranscriptMode} />;
+  return (
+    <UserToolSuccessMessage
+      message={message}
+      lookups={lookups}
+      toolUseID={toolUse.toolUse.id}
+      progressMessagesForMessage={progressMessagesForMessage}
+      style={style}
+      tool={toolUse.tool}
+      tools={tools}
+      verbose={verbose}
+      width={width}
+      isTranscriptMode={isTranscriptMode}
+    />
+  )
 }

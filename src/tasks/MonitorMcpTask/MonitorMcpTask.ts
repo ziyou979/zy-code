@@ -1,15 +1,15 @@
 // Monitor MCP Task module stub implementation
 // This module provides monitor task functionality for MONITOR_TOOL feature
 
-import type { SetAppState, Task, TaskStateBase } from '../../Task.js';
-import type { AgentId } from '../../types/ids.js';
+import type { SetAppState, Task, TaskStateBase } from '../../Task.js'
+import type { AgentId } from '../../types/ids.js'
 
 export type MonitorMcpTaskState = TaskStateBase & {
-  type: 'monitor_mcp';
-  agentId?: AgentId;
-  mcpServerName?: string;
-  error?: string;
-};
+  type: 'monitor_mcp'
+  agentId?: AgentId
+  mcpServerName?: string
+  error?: string
+}
 
 /**
  * MonitorMcpTask class implementing the Task interface
@@ -20,18 +20,15 @@ export const MonitorMcpTask: Task = {
   async kill(taskId: string, setAppState: SetAppState): Promise<void> {
     // Stub implementation - update task status to killed
     // In real implementation, this would terminate the monitor process
-  }
-};
+  },
+}
 
 /**
  * Kill a monitor MCP task
  * @param taskId - The task ID to kill
  * @param setAppState - State setter function
  */
-export async function killMonitorMcp(
-  taskId: string,
-  setAppState: SetAppState
-): Promise<void> {
+export async function killMonitorMcp(taskId: string, setAppState: SetAppState): Promise<void> {
   // Stub implementation
 }
 
@@ -44,7 +41,7 @@ export async function killMonitorMcp(
 export function killMonitorMcpTasksForAgent(
   agentId: AgentId,
   getAppState: () => unknown,
-  setAppState: SetAppState
+  setAppState: SetAppState,
 ): void {
   // Stub implementation
 }

@@ -90,9 +90,7 @@ export function unescapeRuleContent(content: string): string {
  * permissionRuleValueFromString('Bash(npm install)') // => { toolName: 'Bash', ruleContent: 'npm install' }
  * permissionRuleValueFromString('Bash(python -c "print\\(1\\)")') // => { toolName: 'Bash', ruleContent: 'python -c "print(1)"' }
  */
-export function permissionRuleValueFromString(
-  ruleString: string,
-): PermissionRuleValue {
+export function permissionRuleValueFromString(ruleString: string): PermissionRuleValue {
   // Find the first unescaped opening parenthesis
   const openParenIndex = findFirstUnescapedChar(ruleString, '(')
   if (openParenIndex === -1) {
@@ -141,9 +139,7 @@ export function permissionRuleValueFromString(
  * permissionRuleValueToString({ toolName: 'Bash', ruleContent: 'npm install' }) // => 'Bash(npm install)'
  * permissionRuleValueToString({ toolName: 'Bash', ruleContent: 'python -c "print(1)"' }) // => 'Bash(python -c "print\\(1\\)")'
  */
-export function permissionRuleValueToString(
-  ruleValue: PermissionRuleValue,
-): string {
+export function permissionRuleValueToString(ruleValue: PermissionRuleValue): string {
   if (!ruleValue.ruleContent) {
     return ruleValue.toolName
   }

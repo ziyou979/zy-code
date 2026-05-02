@@ -12,10 +12,7 @@
 
 import { randomUUID } from 'crypto'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type {
-  SDKControlRequest,
-  SDKControlResponse,
-} from '../entrypoints/sdk/controlTypes.js'
+import type { SDKControlRequest, SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
 import type { SDKResultSuccess } from '../entrypoints/sdk/coreTypes.js'
 import { logEvent } from '../services/analytics/index.js'
 import { EMPTY_USAGE } from '../services/api/emptyUsage.js'
@@ -35,17 +32,12 @@ import type { ReplBridgeTransport } from './replBridgeTransport.js'
  *  sufficient for the predicate; callers narrow further via the union. */
 export function isSDKMessage(value: unknown): value is SDKMessage {
   return (
-    value !== null &&
-    typeof value === 'object' &&
-    'type' in value &&
-    typeof value.type === 'string'
+    value !== null && typeof value === 'object' && 'type' in value && typeof value.type === 'string'
   )
 }
 
 /** Type predicate for control_response messages from the server. */
-export function isSDKControlResponse(
-  value: unknown,
-): value is SDKControlResponse {
+export function isSDKControlResponse(value: unknown): value is SDKControlResponse {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -56,9 +48,7 @@ export function isSDKControlResponse(
 }
 
 /** Type predicate for control_request messages from the server. */
-export function isSDKControlRequest(
-  value: unknown,
-): value is SDKControlRequest {
+export function isSDKControlRequest(value: unknown): value is SDKControlRequest {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -101,8 +91,7 @@ export function isEligibleBridgeMessage(m: Message): boolean {
  * implausible (an interrupt implies a prior prompt already flowed through).
  */
 export function extractTitleText(m: Message): string | undefined {
-  if (m.type !== 'user' || m.isMeta || m.toolUseResult || m.isCompactSummary)
-    return undefined
+  if (m.type !== 'user' || m.isMeta || m.toolUseResult || m.isCompactSummary) return undefined
   if (m.origin && m.origin.kind !== 'human') return undefined
   const content = m.message.content
   let raw: string | undefined
@@ -150,9 +139,7 @@ export function handleIngressMessage(
     // control_request from the server (initialize, set_model, can_use_tool).
     // Must respond promptly or the server kills the WS (~10-14s timeout).
     if (isSDKControlRequest(parsed)) {
-      logForDebugging(
-        `[bridge:repl] Inbound control_request subtype=${parsed.request.subtype}`,
-      )
+      logForDebugging(`[bridge:repl] Inbound control_request subtype=${parsed.request.subtype}`)
       onControlRequest?.(parsed)
       return
     }
@@ -160,15 +147,10 @@ export function handleIngressMessage(
     if (!isSDKMessage(parsed)) return
 
     // Check for UUID to detect echoes of our own messages
-    const uuid =
-      'uuid' in parsed && typeof parsed.uuid === 'string'
-        ? parsed.uuid
-        : undefined
+    const uuid = 'uuid' in parsed && typeof parsed.uuid === 'string' ? parsed.uuid : undefined
 
     if (uuid && recentPostedUUIDs.has(uuid)) {
-      logForDebugging(
-        `[bridge:repl] Ignoring echo: type=${parsed.type} uuid=${uuid}`,
-      )
+      logForDebugging(`[bridge:repl] Ignoring echo: type=${parsed.type} uuid=${uuid}`)
       return
     }
 
@@ -196,14 +178,10 @@ export function handleIngressMessage(
       // Fire-and-forget — handler may be async (attachment resolution).
       void onInboundMessage?.(parsed)
     } else {
-      logForDebugging(
-        `[bridge:repl] Ignoring non-user inbound message: type=${parsed.type}`,
-      )
+      logForDebugging(`[bridge:repl] Ignoring non-user inbound message: type=${parsed.type}`)
     }
   } catch (err) {
-    logForDebugging(
-      `[bridge:repl] Failed to parse ingress message: ${errorMessage(err)}`,
-    )
+    logForDebugging(`[bridge:repl] Failed to parse ingress message: ${errorMessage(err)}`)
   }
 }
 
@@ -223,9 +201,7 @@ export type ServerControlRequestHandlers = {
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
-  onSetPermissionMode?: (
-    mode: PermissionMode,
-  ) => { ok: true } | { ok: false; error: string }
+  onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
 }
 
 const OUTBOUND_ONLY_ERROR =
@@ -254,9 +230,7 @@ export function handleServerControlRequest(
     onSetPermissionMode,
   } = handlers
   if (!transport) {
-    logForDebugging(
-      '[bridge:repl] Cannot respond to control_request: transport not configured',
-    )
+    logForDebugging('[bridge:repl] Cannot respond to control_request: transport not configured')
     return
   }
 

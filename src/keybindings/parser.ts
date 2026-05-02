@@ -1,9 +1,4 @@
-import type {
-  Chord,
-  KeybindingBlock,
-  ParsedBinding,
-  ParsedKeystroke,
-} from './types.js'
+import type { Chord, KeybindingBlock, ParsedBinding, ParsedKeystroke } from './types.js'
 
 /**
  * Parse a keystroke string like "ctrl+shift+k" into a ParsedKeystroke.
@@ -178,11 +173,8 @@ export function keystrokeToDisplayString(
 /**
  * Convert a Chord to a platform-appropriate display string.
  */
-export function chordToDisplayString(
-  chord: Chord,
-  platform: DisplayPlatform = 'linux',
-): string {
-  return chord.map(ks => keystrokeToDisplayString(ks, platform)).join(' ')
+export function chordToDisplayString(chord: Chord, platform: DisplayPlatform = 'linux'): string {
+  return chord.map((ks) => keystrokeToDisplayString(ks, platform)).join(' ')
 }
 
 /**

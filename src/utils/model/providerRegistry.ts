@@ -12,7 +12,15 @@ import type { ProviderCapability } from './providers.js'
  * 模型能力标签 — 用于 onboarding 中统一渲染模型描述。
  * 新增标签时需同步在 i18n 中添加 'model.tag.{tag}' 的翻译。
  */
-export type ModelTag = 'recommended' | 'fast' | 'lightweight' | 'reasoning' | 'balanced' | 'coding' | 'flagship' | 'budget'
+export type ModelTag =
+  | 'recommended'
+  | 'fast'
+  | 'lightweight'
+  | 'reasoning'
+  | 'balanced'
+  | 'coding'
+  | 'flagship'
+  | 'budget'
 
 // ---------------------------------------------------------------------------
 // 类型定义
@@ -95,14 +103,24 @@ export interface ProviderEntry {
 
 /** 完整能力集 — 适用于 Anthropic 官方 API、generic 等 */
 const FULL_CAPABILITIES: ProviderCapability[] = [
-  'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-  'context_management', 'prompt_caching', 'web_search', 'interleaved_thinking',
+  'thinking',
+  'adaptive_thinking',
+  'effort',
+  'structured_outputs',
+  'context_management',
+  'prompt_caching',
+  'web_search',
+  'interleaved_thinking',
 ]
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
 const STANDARD_CAPABILITIES: ProviderCapability[] = [
-  'thinking', 'adaptive_thinking', 'structured_outputs',
-  'context_management', 'web_search', 'interleaved_thinking',
+  'thinking',
+  'adaptive_thinking',
+  'structured_outputs',
+  'context_management',
+  'web_search',
+  'interleaved_thinking',
 ]
 
 // ---------------------------------------------------------------------------
@@ -116,8 +134,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'env-or-default',
     capabilities: [
-      'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-      'context_management', 'web_search', 'interleaved_thinking',
+      'thinking',
+      'adaptive_thinking',
+      'effort',
+      'structured_outputs',
+      'context_management',
+      'web_search',
+      'interleaved_thinking',
     ],
     defaultBaseUrls: {
       openai: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
@@ -202,7 +225,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'SiliconFlow API Key',
     suggestedModels: [
       { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tags: ['flagship'] },
-      { label: 'deepseek-ai/DeepSeek-V3', value: 'deepseek-ai/DeepSeek-V3', tags: ['recommended', 'balanced'] },
+      {
+        label: 'deepseek-ai/DeepSeek-V3',
+        value: 'deepseek-ai/DeepSeek-V3',
+        tags: ['recommended', 'balanced'],
+      },
       { label: 'deepseek-ai/DeepSeek-R1', value: 'deepseek-ai/DeepSeek-R1', tags: ['reasoning'] },
       { label: 'Qwen/Qwen3-30B-A3B', value: 'Qwen/Qwen3-30B-A3B', tags: ['fast', 'budget'] },
     ],
@@ -218,7 +245,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'ARK API Key',
     suggestedModels: [
-      { label: 'doubao-1.5-pro-256k', value: 'doubao-1.5-pro-256k', tags: ['recommended', 'balanced'] },
+      {
+        label: 'doubao-1.5-pro-256k',
+        value: 'doubao-1.5-pro-256k',
+        tags: ['recommended', 'balanced'],
+      },
       { label: 'doubao-1.5-lite-32k', value: 'doubao-1.5-lite-32k', tags: ['fast', 'budget'] },
       { label: 'deepseek-r1', value: 'deepseek-r1', tags: ['reasoning'] },
     ],
@@ -284,8 +315,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['anthropic'],
     endpointType: 'hardcoded',
     capabilities: [
-      'thinking', 'adaptive_thinking', 'effort', 'structured_outputs',
-      'context_management', 'web_search', 'interleaved_thinking',
+      'thinking',
+      'adaptive_thinking',
+      'effort',
+      'structured_outputs',
+      'context_management',
+      'web_search',
+      'interleaved_thinking',
     ],
     activationEnvVar: 'ZY_CODE_USE_OPENROUTER',
     apiKeyLabel: 'OpenRouter API Key',
@@ -294,10 +330,18 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       anthropic: 'https://openrouter.ai/api',
     },
     suggestedModels: [
-      { label: 'anthropic/claude-sonnet-4', value: 'anthropic/claude-sonnet-4', tags: ['recommended', 'balanced'] },
+      {
+        label: 'anthropic/claude-sonnet-4',
+        value: 'anthropic/claude-sonnet-4',
+        tags: ['recommended', 'balanced'],
+      },
       { label: 'anthropic/claude-opus-4', value: 'anthropic/claude-opus-4', tags: ['flagship'] },
       { label: 'google/gemini-2.5-pro', value: 'google/gemini-2.5-pro', tags: ['reasoning'] },
-      { label: 'anthropic/claude-haiku-3.5', value: 'anthropic/claude-haiku-3.5', tags: ['fast', 'budget'] },
+      {
+        label: 'anthropic/claude-haiku-3.5',
+        value: 'anthropic/claude-haiku-3.5',
+        tags: ['fast', 'budget'],
+      },
     ],
   },
   {
@@ -310,7 +354,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     suggestedModels: [
       { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tags: ['flagship'] },
       { label: 'deepseek-ai/DeepSeek-R1', value: 'deepseek-ai/DeepSeek-R1', tags: ['reasoning'] },
-      { label: 'meta-llama/Llama-4-Maverick-17B-128E', value: 'meta-llama/Llama-4-Maverick-17B-128E', tags: ['recommended', 'balanced'] },
+      {
+        label: 'meta-llama/Llama-4-Maverick-17B-128E',
+        value: 'meta-llama/Llama-4-Maverick-17B-128E',
+        tags: ['recommended', 'balanced'],
+      },
     ],
   },
   {
@@ -321,8 +369,16 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.groq.com/openai/v1' },
     apiKeyLabel: 'Groq API Key',
     suggestedModels: [
-      { label: 'llama-3.3-70b-versatile', value: 'llama-3.3-70b-versatile', tags: ['recommended', 'balanced'] },
-      { label: 'deepseek-r1-distill-llama-70b', value: 'deepseek-r1-distill-llama-70b', tags: ['reasoning'] },
+      {
+        label: 'llama-3.3-70b-versatile',
+        value: 'llama-3.3-70b-versatile',
+        tags: ['recommended', 'balanced'],
+      },
+      {
+        label: 'deepseek-r1-distill-llama-70b',
+        value: 'deepseek-r1-distill-llama-70b',
+        tags: ['reasoning'],
+      },
       { label: 'llama-3.1-8b-instant', value: 'llama-3.1-8b-instant', tags: ['fast', 'budget'] },
     ],
   },
@@ -337,9 +393,21 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'Fireworks API Key',
     suggestedModels: [
-      { label: 'accounts/fireworks/models/qwen3-235b-a22b', value: 'accounts/fireworks/models/qwen3-235b-a22b', tags: ['flagship'] },
-      { label: 'accounts/fireworks/models/deepseek-r1', value: 'accounts/fireworks/models/deepseek-r1', tags: ['reasoning'] },
-      { label: 'accounts/fireworks/models/llama4-maverick-instruct-basic', value: 'accounts/fireworks/models/llama4-maverick-instruct-basic', tags: ['recommended', 'balanced'] },
+      {
+        label: 'accounts/fireworks/models/qwen3-235b-a22b',
+        value: 'accounts/fireworks/models/qwen3-235b-a22b',
+        tags: ['flagship'],
+      },
+      {
+        label: 'accounts/fireworks/models/deepseek-r1',
+        value: 'accounts/fireworks/models/deepseek-r1',
+        tags: ['reasoning'],
+      },
+      {
+        label: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
+        value: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
+        tags: ['recommended', 'balanced'],
+      },
     ],
   },
   {
@@ -435,7 +503,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     id: 'foundry',
     supportedFormats: ['anthropic'],
     endpointType: 'hardcoded',
-    capabilities: ['thinking', 'structured_outputs', 'context_management', 'web_search', 'interleaved_thinking'],
+    capabilities: [
+      'thinking',
+      'structured_outputs',
+      'context_management',
+      'web_search',
+      'interleaved_thinking',
+    ],
     showInOnboarding: false,
   },
 ] as const
@@ -446,7 +520,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
 
 /** provider id → entry 的映射，O(1) 查找 */
 const REGISTRY_MAP = new Map<string, ProviderEntry>(
-  PROVIDER_REGISTRY.map(entry => [entry.id, entry]),
+  PROVIDER_REGISTRY.map((entry) => [entry.id, entry]),
 )
 
 /** 根据 id 获取 provider 配置，未找到返回 undefined */
@@ -456,12 +530,12 @@ export function getProviderEntry(id: string): ProviderEntry | undefined {
 
 /** 获取所有应在 onboarding 平台列表中显示的 provider ID */
 export function getOnboardingProviderIds(): string[] {
-  return PROVIDER_REGISTRY
-    .filter(entry => entry.showInOnboarding !== false)
-    .map(entry => entry.id)
+  return PROVIDER_REGISTRY.filter((entry) => entry.showInOnboarding !== false).map(
+    (entry) => entry.id,
+  )
 }
 
 /** 获取所有已注册的 provider ID */
 export function getAllProviderIds(): string[] {
-  return PROVIDER_REGISTRY.map(entry => entry.id)
+  return PROVIDER_REGISTRY.map((entry) => entry.id)
 }

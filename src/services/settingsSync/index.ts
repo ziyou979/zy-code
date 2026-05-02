@@ -20,19 +20,13 @@ import {
   getOauthConfig,
   OAUTH_BETA_HEADER,
 } from '../../constants/oauth.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getZyAIOAuthTokens,
-} from '../../utils/auth.js'
+import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
 import { clearMemoryFileCaches } from '../../utils/zymd.js'
 import { getMemoryPath } from '../../utils/config.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-} from '../../utils/model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl } from '../../utils/model/providers.js'
 import { markInternalWrite } from '../../utils/settings/internalWrites.js'
 import { getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
@@ -61,10 +55,7 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
   try {
     if (
       !feature('UPLOAD_USER_SETTINGS') ||
-      !getFeatureValue_CACHED_MAY_BE_STALE(
-        'zy_enable_settings_sync_push',
-        false,
-      ) ||
+      !getFeatureValue_CACHED_MAY_BE_STALE('zy_enable_settings_sync_push', false) ||
       !getIsInteractive() ||
       !isUsingOAuth()
     ) {
@@ -84,10 +75,7 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
     const projectId = await getRepoRemoteHash()
     const localEntries = await buildEntriesFromLocalFiles(projectId)
     const remoteEntries = result.isEmpty ? {} : result.data!.content.entries
-    const changedEntries = pickBy(
-      localEntries,
-      (value, key) => remoteEntries[key] !== value,
-    )
+    const changedEntries = pickBy(localEntries, (value, key) => remoteEntries[key] !== value)
 
     const entryCount = Object.keys(changedEntries).length
     if (entryCount === 0) {
@@ -154,15 +142,10 @@ export function redownloadUserSettings(): Promise<boolean> {
   return downloadPromise
 }
 
-async function doDownloadUserSettings(
-  maxRetries = DEFAULT_MAX_RETRIES,
-): Promise<boolean> {
+async function doDownloadUserSettings(maxRetries = DEFAULT_MAX_RETRIES): Promise<boolean> {
   if (feature('DOWNLOAD_USER_SETTINGS')) {
     try {
-      if (
-        !getFeatureValue_CACHED_MAY_BE_STALE('zy_strap_foyer', false) ||
-        !isUsingOAuth()
-      ) {
+      if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_strap_foyer', false) || !isUsingOAuth()) {
         logForDiagnosticsNoPII('info', 'settings_sync_download_skipped')
         logEvent('zy_settings_sync_download_skipped', {})
         return false
@@ -215,9 +198,7 @@ function isUsingOAuth(): boolean {
   }
 
   const tokens = getZyAIOAuthTokens()
-  return Boolean(
-    tokens?.accessToken && tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE),
-  )
+  return Boolean(tokens?.accessToken && tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE))
 }
 
 function getSettingsSyncEndpoint(): string {
@@ -266,7 +247,7 @@ async function fetchUserSettingsOnce(): Promise<SettingsSyncFetchResult> {
     const response = await axios.get(endpoint, {
       headers,
       timeout: SETTINGS_SYNC_TIMEOUT_MS,
-      validateStatus: status => status === 200 || status === 404,
+      validateStatus: (status) => status === 200 || status === 404,
     })
 
     // 404 means no settings exist yet
@@ -458,10 +439,7 @@ async function buildEntriesFromLocalFiles(
   return entries
 }
 
-async function writeFileForSync(
-  filePath: string,
-  content: string,
-): Promise<boolean> {
+async function writeFileForSync(filePath: string, content: string): Promise<boolean> {
   try {
     const parentDir = dirname(filePath)
     if (parentDir) {
@@ -510,10 +488,7 @@ async function applyRemoteEntriesToLocal(
   const userSettingsContent = entries[SYNC_KEYS.USER_SETTINGS]
   if (userSettingsContent) {
     const userSettingsPath = getSettingsFilePathForSource('userSettings')
-    if (
-      userSettingsPath &&
-      !exceedsSizeLimit(userSettingsContent, userSettingsPath)
-    ) {
+    if (userSettingsPath && !exceedsSizeLimit(userSettingsContent, userSettingsPath)) {
       // Mark as internal write to prevent spurious change detection
       markInternalWrite(userSettingsPath)
       if (await writeFileForSync(userSettingsPath, userSettingsContent)) {
@@ -541,10 +516,7 @@ async function applyRemoteEntriesToLocal(
     const projectSettingsContent = entries[projectSettingsKey]
     if (projectSettingsContent) {
       const localSettingsPath = getSettingsFilePathForSource('localSettings')
-      if (
-        localSettingsPath &&
-        !exceedsSizeLimit(projectSettingsContent, localSettingsPath)
-      ) {
+      if (localSettingsPath && !exceedsSizeLimit(projectSettingsContent, localSettingsPath)) {
         // Mark as internal write to prevent spurious change detection
         markInternalWrite(localSettingsPath)
         if (await writeFileForSync(localSettingsPath, projectSettingsContent)) {

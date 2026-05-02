@@ -68,7 +68,9 @@ export { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES }
  */
 export function handleMarketplaceError(error: unknown, action: string): never {
   logError(error)
-  cliError(`${figures.cross} ${tSync('plugins.marketplace.handleFailed', { action, error: errorMessage(error) })}`)
+  cliError(
+    `${figures.cross} ${tSync('plugins.marketplace.handleFailed', { action, error: errorMessage(error) })}`,
+  )
 }
 
 function printValidationResult(result: ValidationResult): void {
@@ -77,7 +79,7 @@ function printValidationResult(result: ValidationResult): void {
     console.log(
       `${figures.cross} ${tSync('plugins.validate.foundErrors', { count: result.errors.length })}:\n`,
     )
-    result.errors.forEach(error => {
+    result.errors.forEach((error) => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${figures.pointer} ${error.path}: ${error.message}`)
     })
@@ -89,7 +91,7 @@ function printValidationResult(result: ValidationResult): void {
     console.log(
       `${figures.warning} ${tSync('plugins.validate.foundWarnings', { count: result.warnings.length })}:\n`,
     )
-    result.warnings.forEach(warning => {
+    result.warnings.forEach((warning) => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${figures.pointer} ${warning.path}: ${warning.message}`)
     })
@@ -108,7 +110,9 @@ export async function pluginValidateHandler(
     const result = await validateManifest(manifestPath)
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${tSync('plugins.validate.validatingManifest', { fileType: result.fileType, filePath: result.filePath })}\n`)
+    console.log(
+      `${tSync('plugins.validate.validatingManifest', { fileType: result.fileType, filePath: result.filePath })}\n`,
+    )
     printValidationResult(result)
 
     // 如果是位于 .zy-plugin 目录内的插件清单，
@@ -121,16 +125,17 @@ export async function pluginValidateHandler(
         contentResults = await validatePluginContents(dirname(manifestDir))
         for (const r of contentResults) {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
-          console.log(`${tSync('plugins.validate.validatingFile', { fileType: r.fileType, filePath: r.filePath })}\n`)
+          console.log(
+            `${tSync('plugins.validate.validatingFile', { fileType: r.fileType, filePath: r.filePath })}\n`,
+          )
           printValidationResult(r)
         }
       }
     }
 
-    const allSuccess = result.success && contentResults.every(r => r.success)
+    const allSuccess = result.success && contentResults.every((r) => r.success)
     const hasWarnings =
-      result.warnings.length > 0 ||
-      contentResults.some(r => r.warnings.length > 0)
+      result.warnings.length > 0 || contentResults.some((r) => r.warnings.length > 0)
 
     if (allSuccess) {
       cliOk(
@@ -163,9 +168,7 @@ export async function pluginListHandler(options: {
   logEvent('zy_plugin_list_command', {})
 
   const installedData = loadInstalledPluginsV2()
-  const { getPluginEditableScopes } = await import(
-    '../../utils/plugins/pluginStartupCheck.js'
-  )
+  const { getPluginEditableScopes } = await import('../../utils/plugins/pluginStartupCheck.js')
   const enabledPlugins = getPluginEditableScopes()
 
   const pluginIds = Object.keys(installedData.plugins)
@@ -181,20 +184,18 @@ export async function pluginListHandler(options: {
     errors: loadErrors,
   } = await loadAllPlugins()
   const allLoadedPlugins = [...loadedEnabled, ...loadedDisabled]
-  const inlinePlugins = allLoadedPlugins.filter(p =>
-    p.source.endsWith('@inline'),
-  )
+  const inlinePlugins = allLoadedPlugins.filter((p) => p.source.endsWith('@inline'))
   // 路径级 inline 失败（目录不存在、清单读取前的解析错误）
   // 使用 source='inline[N]'。清单读取后的插件级错误使用
   // source='name@inline'。两者都收集到会话部分 — 否则不可见，
   // 因为它们没有 pluginId。
   const inlineLoadErrors = loadErrors.filter(
-    e => e.source.endsWith('@inline') || e.source.startsWith('inline['),
+    (e) => e.source.endsWith('@inline') || e.source.startsWith('inline['),
   )
 
   if (options.json) {
     // 创建插件 source 到已加载插件的映射，用于快速查找
-    const loadedPluginMap = new Map(allLoadedPlugins.map(p => [p.source, p]))
+    const loadedPluginMap = new Map(allLoadedPlugins.map((p) => [p.source, p]))
 
     const plugins: Array<{
       id: string
@@ -216,10 +217,7 @@ export async function pluginListHandler(options: {
       // 查找此插件的加载错误
       const pluginName = parsePluginIdentifier(pluginId).name
       const pluginErrors = loadErrors
-        .filter(
-          e =>
-            e.source === pluginId || ('plugin' in e && e.plugin === pluginName),
-        )
+        .filter((e) => e.source === pluginId || ('plugin' in e && e.plugin === pluginName))
         .map(getPluginErrorMessage)
 
       for (const installation of installations) {
@@ -229,9 +227,7 @@ export async function pluginListHandler(options: {
 
         if (loadedPlugin) {
           // 如果尚未缓存则加载 MCP 服务器
-          const servers =
-            loadedPlugin.mcpServers ||
-            (await loadPluginMcpServers(loadedPlugin))
+          const servers = loadedPlugin.mcpServers || (await loadPluginMcpServers(loadedPlugin))
           if (servers && Object.keys(servers).length > 0) {
             mcpServers = servers
           }
@@ -262,9 +258,7 @@ export async function pluginListHandler(options: {
     for (const p of inlinePlugins) {
       const servers = p.mcpServers || (await loadPluginMcpServers(p))
       const pErrors = inlineLoadErrors
-        .filter(
-          e => e.source === p.source || ('plugin' in e && e.plugin === p.name),
-        )
+        .filter((e) => e.source === p.source || ('plugin' in e && e.plugin === p.name))
         .map(getPluginErrorMessage)
       plugins.push({
         id: p.source,
@@ -272,17 +266,14 @@ export async function pluginListHandler(options: {
         scope: 'session',
         enabled: p.enabled !== false,
         installPath: p.path,
-        mcpServers:
-          servers && Object.keys(servers).length > 0 ? servers : undefined,
+        mcpServers: servers && Object.keys(servers).length > 0 ? servers : undefined,
         errors: pErrors.length > 0 ? pErrors : undefined,
       })
     }
     // 路径级 inline 失败（--plugin-dir /nonexistent）：不存在 LoadedPlugin，
     // 因此上面的循环无法展示它们。与人类可读路径的处理保持一致，
     // 以便 JSON 消费者看到失败而非静默遗漏。
-    for (const e of inlineLoadErrors.filter(e =>
-      e.source.startsWith('inline['),
-    )) {
+    for (const e of inlineLoadErrors.filter((e) => e.source.startsWith('inline['))) {
       plugins.push({
         id: e.source,
         version: 'unknown',
@@ -310,13 +301,9 @@ export async function pluginListHandler(options: {
           loadKnownMarketplacesConfig(),
           getInstallCounts(),
         ])
-        const { marketplaces } =
-          await loadMarketplacesWithGracefulDegradation(config)
+        const { marketplaces } = await loadMarketplacesWithGracefulDegradation(config)
 
-        for (const {
-          name: marketplaceName,
-          data: marketplace,
-        } of marketplaces) {
+        for (const { name: marketplaceName, data: marketplace } of marketplaces) {
           if (marketplace) {
             for (const entry of marketplace.plugins) {
               const pluginId = createPluginId(entry.name, marketplaceName)
@@ -350,9 +337,7 @@ export async function pluginListHandler(options: {
     // 指向不存在的路径）。不要在此提前返回 — 继续进入会话部分
     // 以使失败可见。
     if (inlineLoadErrors.length === 0) {
-      cliOk(
-        tSync('plugins.list.noPlugins'),
-      )
+      cliOk(tSync('plugins.list.noPlugins'))
     }
   }
 
@@ -368,7 +353,7 @@ export async function pluginListHandler(options: {
     // 查找此插件的加载错误
     const pluginName = parsePluginIdentifier(pluginId).name
     const pluginErrors = loadErrors.filter(
-      e => e.source === pluginId || ('plugin' in e && e.plugin === pluginName),
+      (e) => e.source === pluginId || ('plugin' in e && e.plugin === pluginName),
     )
 
     for (const installation of installations) {
@@ -392,7 +377,9 @@ export async function pluginListHandler(options: {
       console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
       for (const error of pluginErrors) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(`    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(error) })}`)
+        console.log(
+          `    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(error) })}`,
+        )
       }
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log('')
@@ -406,7 +393,7 @@ export async function pluginListHandler(options: {
       // 与上方 JSON 路径相同的 dirName≠manifestName 回退处理 —
       // 错误 source 使用目录基准名，但 p.source 使用清单名。
       const pErrors = inlineLoadErrors.filter(
-        e => e.source === p.source || ('plugin' in e && e.plugin === p.name),
+        (e) => e.source === p.source || ('plugin' in e && e.plugin === p.name),
       )
       const status =
         pErrors.length > 0
@@ -415,7 +402,9 @@ export async function pluginListHandler(options: {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${figures.pointer} ${p.source}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.version', { version: p.manifest.version ?? 'unknown' })}`)
+      console.log(
+        `    ${tSync('plugins.list.version', { version: p.manifest.version ?? 'unknown' })}`,
+      )
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`    ${tSync('plugins.list.pathLabel', { path: p.path })}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -429,9 +418,7 @@ export async function pluginListHandler(options: {
     }
     // 路径级失败：不存在 LoadedPlugin 对象。展示它们，
     // 以免 `--plugin-dir /typo` 静默无输出。
-    for (const e of inlineLoadErrors.filter(e =>
-      e.source.startsWith('inline['),
-    )) {
+    for (const e of inlineLoadErrors.filter((e) => e.source.startsWith('inline['))) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(
         `  ${figures.pointer} ${e.source}: ${figures.cross} ${getPluginErrorMessage(e)}\n`,
@@ -452,9 +439,7 @@ export async function marketplaceAddHandler(
     const parsed = await parseMarketplaceInput(source)
 
     if (!parsed) {
-      cliError(
-        `${figures.cross} ${tSync('plugins.marketplace.invalidSourceFormat')}`,
-      )
+      cliError(`${figures.cross} ${tSync('plugins.marketplace.invalidSourceFormat')}`)
     }
 
     if ('error' in parsed) {
@@ -464,19 +449,14 @@ export async function marketplaceAddHandler(
     // 验证作用域
     const scope = options.scope ?? 'user'
     if (scope !== 'user' && scope !== 'project' && scope !== 'local') {
-      cliError(
-        `${figures.cross} ${tSync('plugins.marketplace.invalidScope', { scope })}`,
-      )
+      cliError(`${figures.cross} ${tSync('plugins.marketplace.invalidScope', { scope })}`)
     }
     const settingSource = scopeToSettingSource(scope)
 
     let marketplaceSource = parsed
 
     if (options.sparse && options.sparse.length > 0) {
-      if (
-        marketplaceSource.source === 'github' ||
-        marketplaceSource.source === 'git'
-      ) {
+      if (marketplaceSource.source === 'github' || marketplaceSource.source === 'git') {
         marketplaceSource = {
           ...marketplaceSource,
           sparsePaths: options.sparse,
@@ -491,11 +471,13 @@ export async function marketplaceAddHandler(
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(tSync('plugins.marketplace.adding'))
 
-    const { name, alreadyMaterialized, resolvedSource } =
-      await addMarketplaceSource(marketplaceSource, message => {
+    const { name, alreadyMaterialized, resolvedSource } = await addMarketplaceSource(
+      marketplaceSource,
+      (message) => {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(message)
-      })
+      },
+    )
 
     // 将意图写入所请求作用域的设置中
     saveMarketplaceToSettings(name, { source: resolvedSource }, settingSource)
@@ -508,8 +490,7 @@ export async function marketplaceAddHandler(
         marketplaceSource.repo as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     }
     logEvent('zy_marketplace_added', {
-      source_type:
-        sourceType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source_type: sourceType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     cliOk(
@@ -533,7 +514,7 @@ export async function marketplaceListHandler(options: {
     const names = Object.keys(config)
 
     if (options.json) {
-      const marketplaces = names.sort().map(name => {
+      const marketplaces = names.sort().map((name) => {
         const marketplace = config[name]
         const source = marketplace?.source
         return {
@@ -556,7 +537,7 @@ export async function marketplaceListHandler(options: {
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(`${tSync('plugins.marketplace.configured')}\n`)
-    names.forEach(name => {
+    names.forEach((name) => {
       const marketplace = config[name]
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${figures.pointer} ${name}`)
@@ -601,8 +582,7 @@ export async function marketplaceRemoveHandler(
     clearAllCaches()
 
     logEvent('zy_marketplace_removed', {
-      marketplace_name:
-        name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      marketplace_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     cliOk(`${figures.tick} ${tSync('plugins.marketplace.removed', { name })}`)
@@ -622,7 +602,7 @@ export async function marketplaceUpdateHandler(
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(tSync('plugins.marketplace.updating', { name }))
 
-      await refreshMarketplace(name, message => {
+      await refreshMarketplace(name, (message) => {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(message)
       })
@@ -630,8 +610,7 @@ export async function marketplaceUpdateHandler(
       clearAllCaches()
 
       logEvent('zy_marketplace_updated', {
-        marketplace_name:
-          name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        marketplace_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
       cliOk(`${figures.tick} ${tSync('plugins.marketplace.updated', { name })}`)
@@ -673,13 +652,12 @@ export async function pluginInstallHandler(
   if (options.cowork && scope !== 'user') {
     cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
-  if (
-    !VALID_INSTALLABLE_SCOPES.includes(
-      scope as (typeof VALID_INSTALLABLE_SCOPES)[number],
-    )
-  ) {
+  if (!VALID_INSTALLABLE_SCOPES.includes(scope as (typeof VALID_INSTALLABLE_SCOPES)[number])) {
     cliError(
-      tSync('plugins.common.invalidInstallScope', { scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
+      tSync('plugins.common.invalidInstallScope', {
+        scope,
+        valid: VALID_INSTALLABLE_SCOPES.join(', '),
+      }),
     )
   }
   // _PROTO_* 路由到带 PII 标记的 plugin_name/marketplace_name BQ 列。
@@ -690,8 +668,7 @@ export async function pluginInstallHandler(
   logEvent('zy_plugin_install_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
-      _PROTO_marketplace_name:
-        marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     }),
     scope: scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
@@ -709,30 +686,24 @@ export async function pluginUninstallHandler(
   if (options.cowork && scope !== 'user') {
     cliError(tSync('plugins.common.coworkUserScopeOnly'))
   }
-  if (
-    !VALID_INSTALLABLE_SCOPES.includes(
-      scope as (typeof VALID_INSTALLABLE_SCOPES)[number],
-    )
-  ) {
+  if (!VALID_INSTALLABLE_SCOPES.includes(scope as (typeof VALID_INSTALLABLE_SCOPES)[number])) {
     cliError(
-      tSync('plugins.common.invalidInstallScope', { scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
+      tSync('plugins.common.invalidInstallScope', {
+        scope,
+        valid: VALID_INSTALLABLE_SCOPES.join(', '),
+      }),
     )
   }
   const { name, marketplace } = parsePluginIdentifier(plugin)
   logEvent('zy_plugin_uninstall_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
-      _PROTO_marketplace_name:
-        marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     }),
     scope: scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
-  await uninstallPlugin(
-    plugin,
-    scope as 'user' | 'project' | 'local',
-    options.keepData,
-  )
+  await uninstallPlugin(plugin, scope as 'user' | 'project' | 'local', options.keepData)
 }
 
 // 插件启用
@@ -744,12 +715,13 @@ export async function pluginEnableHandler(
   let scope: (typeof VALID_INSTALLABLE_SCOPES)[number] | undefined
   if (options.scope) {
     if (
-      !VALID_INSTALLABLE_SCOPES.includes(
-        options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number],
-      )
+      !VALID_INSTALLABLE_SCOPES.includes(options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number])
     ) {
       cliError(
-        tSync('plugins.common.invalidScope', { scope: options.scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
+        tSync('plugins.common.invalidScope', {
+          scope: options.scope,
+          valid: VALID_INSTALLABLE_SCOPES.join(', '),
+        }),
       )
     }
     scope = options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number]
@@ -767,11 +739,9 @@ export async function pluginEnableHandler(
   logEvent('zy_plugin_enable_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
-      _PROTO_marketplace_name:
-        marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     }),
-    scope: (scope ??
-      'auto') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    scope: (scope ?? 'auto') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
   await enablePlugin(plugin, scope)
@@ -808,12 +778,13 @@ export async function pluginDisableHandler(
   let scope: (typeof VALID_INSTALLABLE_SCOPES)[number] | undefined
   if (options.scope) {
     if (
-      !VALID_INSTALLABLE_SCOPES.includes(
-        options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number],
-      )
+      !VALID_INSTALLABLE_SCOPES.includes(options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number])
     ) {
       cliError(
-        tSync('plugins.common.invalidScope', { scope: options.scope, valid: VALID_INSTALLABLE_SCOPES.join(', ') }),
+        tSync('plugins.common.invalidScope', {
+          scope: options.scope,
+          valid: VALID_INSTALLABLE_SCOPES.join(', '),
+        }),
       )
     }
     scope = options.scope as (typeof VALID_INSTALLABLE_SCOPES)[number]
@@ -831,11 +802,9 @@ export async function pluginDisableHandler(
   logEvent('zy_plugin_disable_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
-      _PROTO_marketplace_name:
-        marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     }),
-    scope: (scope ??
-      'auto') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    scope: (scope ?? 'auto') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
   await disablePlugin(plugin!, scope)
@@ -851,20 +820,18 @@ export async function pluginUpdateHandler(
   logEvent('zy_plugin_update_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     ...(marketplace && {
-      _PROTO_marketplace_name:
-        marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     }),
   })
 
   let scope: (typeof VALID_UPDATE_SCOPES)[number] = 'user'
   if (options.scope) {
-    if (
-      !VALID_UPDATE_SCOPES.includes(
-        options.scope as (typeof VALID_UPDATE_SCOPES)[number],
-      )
-    ) {
+    if (!VALID_UPDATE_SCOPES.includes(options.scope as (typeof VALID_UPDATE_SCOPES)[number])) {
       cliError(
-        tSync('plugins.common.invalidScope', { scope: options.scope, valid: VALID_UPDATE_SCOPES.join(', ') }),
+        tSync('plugins.common.invalidScope', {
+          scope: options.scope,
+          valid: VALID_UPDATE_SCOPES.join(', '),
+        }),
       )
     }
     scope = options.scope as (typeof VALID_UPDATE_SCOPES)[number]

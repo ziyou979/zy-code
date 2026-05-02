@@ -197,8 +197,7 @@ Your final reply must contain the markdown report and nothing else.`
 
 export default createMovedToPluginCommand({
   name: 'security-review',
-  description:
-    'Complete a security review of the pending changes on the current branch',
+  description: 'Complete a security review of the pending changes on the current branch',
   progressMessage: 'analyzing code changes for security risks',
   pluginName: 'security-review',
   pluginCommand: 'security-review',
@@ -207,9 +206,7 @@ export default createMovedToPluginCommand({
     const parsed = parseFrontmatter(SECURITY_REVIEW_MARKDOWN)
 
     // Parse allowed tools from frontmatter
-    const allowedTools = parseSlashCommandToolsFromFrontmatter(
-      parsed.frontmatter['allowed-tools'],
-    )
+    const allowedTools = parseSlashCommandToolsFromFrontmatter(parsed.frontmatter['allowed-tools'])
 
     // Execute bash commands in the prompt
     const processedContent = await executeShellCommandsInPrompt(

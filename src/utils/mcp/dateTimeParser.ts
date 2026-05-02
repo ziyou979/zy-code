@@ -104,8 +104,7 @@ Parse the user's input into ISO 8601 format. Return ONLY the formatted string, o
     logError(error)
     return {
       success: false,
-      error:
-        'Unable to parse date/time. Please enter in ISO 8601 format manually.',
+      error: 'Unable to parse date/time. Please enter in ISO 8601 format manually.',
     }
   }
 }

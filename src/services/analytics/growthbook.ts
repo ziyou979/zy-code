@@ -1,9 +1,6 @@
 import { GrowthBook } from '@growthbook/growthbook'
 import { isEqual, memoize } from 'lodash-es'
-import {
-  getIsNonInteractiveSession,
-  getSessionTrustAccepted,
-} from '../../bootstrap/state.js'
+import { getIsNonInteractiveSession, getSessionTrustAccepted } from '../../bootstrap/state.js'
 import { getGrowthBookClientKey } from '../../constants/keys.js'
 import {
   checkHasTrustDialogAccepted,
@@ -16,15 +13,9 @@ import { getAuthHeaders } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
 import { createSignal } from '../../utils/signal.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import {
-  type GitHubActionsMetadata,
-  getUserForGrowthBook,
-} from '../../utils/user.js'
+import { type GitHubActionsMetadata, getUserForGrowthBook } from '../../utils/user.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import {
-  isZyEventLoggingEnabled,
-  logGrowthBookExperimentToZy,
-} from './zyEventLogger.js'
+import { isZyEventLoggingEnabled, logGrowthBookExperimentToZy } from './zyEventLogger.js'
 
 /**
  * User attributes sent to GrowthBook for targeting.
@@ -115,7 +106,7 @@ function callSafe(listener: GrowthBookRefreshListener): void {
     // by .catch) hit logError. Without the .catch, an async listener
     // that rejects becomes an unhandled rejection — the try/catch
     // only sees the Promise, not its eventual rejection.
-    void Promise.resolve(listener()).catch(e => {
+    void Promise.resolve(listener()).catch((e) => {
       logError(e)
     })
   } catch (e) {
@@ -137,9 +128,7 @@ function callSafe(listener: GrowthBookRefreshListener): void {
  * Change detection is on the subscriber: the callback fires on every refresh;
  * use isEqual against your last-seen config to decide whether to act.
  */
-export function onGrowthBookRefresh(
-  listener: GrowthBookRefreshListener,
-): () => void {
+export function onGrowthBookRefresh(listener: GrowthBookRefreshListener): () => void {
   let subscribed = true
   const unsubscribe = refreshed.subscribe(() => callSafe(listener))
   if (remoteEvalFeatureValues.size > 0) {
@@ -180,11 +169,7 @@ function getEnvOverrides(): Record<string, unknown> | null {
             `GrowthBook: Using env var overrides for ${Object.keys(envOverrides!).length} features: ${Object.keys(envOverrides!).join(', ')}`,
           )
         } catch {
-          logError(
-            new Error(
-              `GrowthBook: Failed to parse CLAUDE_INTERNAL_FC_OVERRIDES: ${raw}`,
-            ),
-          )
+          logError(new Error(`GrowthBook: Failed to parse CLAUDE_INTERNAL_FC_OVERRIDES: ${raw}`))
         }
       }
     }
@@ -243,13 +228,10 @@ export function getGrowthBookConfigOverrides(): Record<string, unknown> {
  * otherwise overriding e.g. zy_ant_model_override wouldn't actually
  * change the model until the next periodic refresh.
  */
-export function setGrowthBookConfigOverride(
-  feature: string,
-  value: unknown,
-): void {
+export function setGrowthBookConfigOverride(feature: string, value: unknown): void {
   if (!isInternalBuild()) return
   try {
-    saveGlobalConfig(c => {
+    saveGlobalConfig((c) => {
       const current = c.growthBookOverrides ?? {}
       if (value === undefined) {
         if (!(feature in current)) return c
@@ -274,11 +256,8 @@ export function setGrowthBookConfigOverride(
 export function clearGrowthBookConfigOverrides(): void {
   if (!isInternalBuild()) return
   try {
-    saveGlobalConfig(c => {
-      if (
-        !c.growthBookOverrides ||
-        Object.keys(c.growthBookOverrides).length === 0
-      ) {
+    saveGlobalConfig((c) => {
+      if (!c.growthBookOverrides || Object.keys(c.growthBookOverrides).length === 0) {
         return c
       }
       const { growthBookOverrides: _, ...rest } = c
@@ -325,9 +304,7 @@ function logExposureForFeature(feature: string): void {
  * for the entire process lifetime — which broke the zy_max_version_config
  * kill switch for long-running sessions.
  */
-async function processRemoteEvalPayload(
-  gbClient: GrowthBook,
-): Promise<boolean> {
+async function processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean> {
   // WORKAROUND: Transform remote eval response format
   // The API returns { "value": ... } but SDK expects { "defaultValue": ... }
   // TODO: Remove this once the API is fixed to return correct format
@@ -411,7 +388,7 @@ function syncRemoteEvalToDisk(): void {
   if (isEqual(config.cachedGrowthBookFeatures, fresh)) {
     return
   }
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     cachedGrowthBookFeatures: fresh,
   }))
@@ -510,9 +487,7 @@ const getGrowthBookClient = memoize(
     // without persisting trust for the specific CWD (e.g., home directory) —
     // showSetupScreens() sets this after the trust dialog flow completes.
     const hasTrust =
-      checkHasTrustDialogAccepted() ||
-      getSessionTrustAccepted() ||
-      getIsNonInteractiveSession()
+      checkHasTrustDialogAccepted() || getSessionTrustAccepted() || getIsNonInteractiveSession()
     const authHeaders = hasTrust
       ? getAuthHeaders()
       : { headers: {}, error: 'trust not established' }
@@ -529,9 +504,7 @@ const getGrowthBookClient = memoize(
       // Re-fetch when user ID or org changes (org change = login to different org)
       cacheKeyAttributes: ['id', 'organizationUUID'],
       // Add auth headers if available
-      ...(authHeaders.error
-        ? {}
-        : { apiHostRequestHeaders: authHeaders.headers }),
+      ...(authHeaders.error ? {} : { apiHostRequestHeaders: authHeaders.headers }),
       // Debug logging for Ants
       ...(isInternalBuild()
         ? {
@@ -551,13 +524,11 @@ const getGrowthBookClient = memoize(
 
     const initialized = thisClient
       .init({ timeout: 5000 })
-      .then(async result => {
+      .then(async (result) => {
         // Guard: if this client was replaced by a newer one, skip processing
         if (client !== thisClient) {
           if (isInternalBuild()) {
-            logForDebugging(
-              'GrowthBook: Skipping init callback for replaced client',
-            )
+            logForDebugging('GrowthBook: Skipping init callback for replaced client')
           }
           return
         }
@@ -598,7 +569,7 @@ const getGrowthBookClient = memoize(
           }
         }
       })
-      .catch(error => {
+      .catch((error) => {
         if (isInternalBuild()) {
           logError(toError(error))
         }
@@ -617,49 +588,43 @@ const getGrowthBookClient = memoize(
 /**
  * Initialize GrowthBook client (blocks until ready)
  */
-export const initializeGrowthBook = memoize(
-  async (): Promise<GrowthBook | null> => {
-    let clientWrapper = getGrowthBookClient()
-    if (!clientWrapper) {
-      return null
-    }
+export const initializeGrowthBook = memoize(async (): Promise<GrowthBook | null> => {
+  let clientWrapper = getGrowthBookClient()
+  if (!clientWrapper) {
+    return null
+  }
 
-    // Check if auth has become available since the client was created
-    // If so, we need to recreate the client with fresh auth headers
-    // Only check if trust is established to avoid triggering apiKeyHelper before trust dialog
-    if (!clientCreatedWithAuth) {
-      const hasTrust =
-        checkHasTrustDialogAccepted() ||
-        getSessionTrustAccepted() ||
-        getIsNonInteractiveSession()
-      if (hasTrust) {
-        const currentAuth = getAuthHeaders()
-        if (!currentAuth.error) {
-          if (isInternalBuild()) {
-            logForDebugging(
-              'GrowthBook: Auth became available after client creation, reinitializing',
-            )
-          }
-          // Use resetGrowthBook to properly destroy old client and stop periodic refresh
-          // This prevents double-init where old client's init promise continues running
-          resetGrowthBook()
-          clientWrapper = getGrowthBookClient()
-          if (!clientWrapper) {
-            return null
-          }
+  // Check if auth has become available since the client was created
+  // If so, we need to recreate the client with fresh auth headers
+  // Only check if trust is established to avoid triggering apiKeyHelper before trust dialog
+  if (!clientCreatedWithAuth) {
+    const hasTrust =
+      checkHasTrustDialogAccepted() || getSessionTrustAccepted() || getIsNonInteractiveSession()
+    if (hasTrust) {
+      const currentAuth = getAuthHeaders()
+      if (!currentAuth.error) {
+        if (isInternalBuild()) {
+          logForDebugging('GrowthBook: Auth became available after client creation, reinitializing')
+        }
+        // Use resetGrowthBook to properly destroy old client and stop periodic refresh
+        // This prevents double-init where old client's init promise continues running
+        resetGrowthBook()
+        clientWrapper = getGrowthBookClient()
+        if (!clientWrapper) {
+          return null
         }
       }
     }
+  }
 
-    await clientWrapper.initialized
+  await clientWrapper.initialized
 
-    // Set up periodic refresh after successful initialization
-    // This is called here (not separately) so it's always re-established after any reinit
-    setupPeriodicGrowthBookRefresh()
+  // Set up periodic refresh after successful initialization
+  // This is called here (not separately) so it's always re-established after any reinit
+  setupPeriodicGrowthBookRefresh()
 
-    return clientWrapper.client
-  },
-)
+  return clientWrapper.client
+})
 
 /**
  * Get a feature value with a default fallback - blocks until initialized.
@@ -703,9 +668,7 @@ async function getFeatureValueInternal<T>(
   }
 
   if (isInternalBuild()) {
-    logForDebugging(
-      `GrowthBook: getFeatureValue("${feature}") = ${jsonStringify(result)}`,
-    )
+    logForDebugging(`GrowthBook: getFeatureValue("${feature}") = ${jsonStringify(result)}`)
   }
   return result
 }
@@ -714,10 +677,7 @@ async function getFeatureValueInternal<T>(
  * @deprecated Use getFeatureValue_CACHED_MAY_BE_STALE instead, which is non-blocking.
  * This function blocks on GrowthBook initialization which can slow down startup.
  */
-export async function getFeatureValue_DEPRECATED<T>(
-  feature: string,
-  defaultValue: T,
-): Promise<T> {
+export async function getFeatureValue_DEPRECATED<T>(feature: string, defaultValue: T): Promise<T> {
   return getFeatureValueInternal(feature, defaultValue, true)
 }
 
@@ -729,10 +689,7 @@ export async function getFeatureValue_DEPRECATED<T>(
  * This is the preferred method for startup-critical paths and sync contexts.
  * The value may be stale if the cache was written by a previous process.
  */
-export function getFeatureValue_CACHED_MAY_BE_STALE<T>(
-  feature: string,
-  defaultValue: T,
-): T {
+export function getFeatureValue_CACHED_MAY_BE_STALE<T>(feature: string, defaultValue: T): T {
   // Check env var overrides first (for eval harnesses)
   const overrides = getEnvOverrides()
   if (overrides && feature in overrides) {
@@ -799,9 +756,7 @@ export function getFeatureValue_CACHED_WITH_REFRESH<T>(
  * @deprecated Use getFeatureValue_CACHED_MAY_BE_STALE() for new code. This function
  * exists only to support migration of existing Statsig gates.
  */
-export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-  gate: string,
-): boolean {
+export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(gate: string): boolean {
   // Check env var overrides first (for eval harnesses)
   const overrides = getEnvOverrides()
   if (overrides && gate in overrides) {
@@ -846,9 +801,7 @@ export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
  * Statsig cache is checked first as a safety measure for security-related checks:
  * if the Statsig cache indicates the gate is enabled, we honor it.
  */
-export async function checkSecurityRestrictionGate(
-  gate: string,
-): Promise<boolean> {
+export async function checkSecurityRestrictionGate(gate: string): Promise<boolean> {
   // Check env var overrides first (for eval harnesses)
   const overrides = getEnvOverrides()
   if (overrides && gate in overrides) {
@@ -899,9 +852,7 @@ export async function checkSecurityRestrictionGate(
  * subscription/org, where a stale `false` would unfairly block access but a
  * stale `true` is acceptable (the server is the real gatekeeper).
  */
-export async function checkGate_CACHED_OR_BLOCKING(
-  gate: string,
-): Promise<boolean> {
+export async function checkGate_CACHED_OR_BLOCKING(gate: string): Promise<boolean> {
   // Check env var overrides first (for eval harnesses)
   const overrides = getEnvOverrides()
   if (overrides && gate in overrides) {
@@ -964,7 +915,7 @@ export function refreshGrowthBookAfterAuthChange(): void {
     // and .finally re-settles with the original rejection — the sync
     // try/catch below cannot catch async rejections.
     reinitializingPromise = initializeGrowthBook()
-      .catch(error => {
+      .catch((error) => {
         logError(toError(error))
         return null
       })
@@ -1008,10 +959,9 @@ export function resetGrowthBook(): void {
 }
 
 // Periodic refresh interval (matches Statsig's 6-hour interval)
-const GROWTHBOOK_REFRESH_INTERVAL_MS =
-  !isInternalBuild()
-    ? 6 * 60 * 60 * 1000 // 6 hours
-    : 20 * 60 * 1000 // 20 min (for ants)
+const GROWTHBOOK_REFRESH_INTERVAL_MS = !isInternalBuild()
+  ? 6 * 60 * 60 * 1000 // 6 hours
+  : 20 * 60 * 1000 // 20 min (for ants)
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 let beforeExitListener: (() => void) | null = null
 
@@ -1040,9 +990,7 @@ export async function refreshGrowthBookFeatures(): Promise<void> {
     // stale payload. Mirrors the init-callback guard above.
     if (growthBookClient !== client) {
       if (isInternalBuild()) {
-        logForDebugging(
-          'GrowthBook: Skipping refresh processing for replaced client',
-        )
+        logForDebugging('GrowthBook: Skipping refresh processing for replaced client')
       }
       return
     }
@@ -1145,9 +1093,6 @@ export async function getDynamicConfig_BLOCKS_ON_INIT<T>(
  *
  * In GrowthBook, dynamic configs are just features with object values.
  */
-export function getDynamicConfig_CACHED_MAY_BE_STALE<T>(
-  configName: string,
-  defaultValue: T,
-): T {
+export function getDynamicConfig_CACHED_MAY_BE_STALE<T>(configName: string, defaultValue: T): T {
   return getFeatureValue_CACHED_MAY_BE_STALE(configName, defaultValue)
 }

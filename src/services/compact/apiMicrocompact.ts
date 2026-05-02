@@ -25,11 +25,7 @@ const TOOLS_CLEARABLE_RESULTS = [
   WEB_SEARCH_TOOL_NAME,
 ]
 
-const TOOLS_CLEARABLE_USES = [
-  FILE_EDIT_TOOL_NAME,
-  FILE_WRITE_TOOL_NAME,
-  NOTEBOOK_EDIT_TOOL_NAME,
-]
+const TOOLS_CLEARABLE_USES = [FILE_EDIT_TOOL_NAME, FILE_WRITE_TOOL_NAME, NOTEBOOK_EDIT_TOOL_NAME]
 
 // 匹配 API 文档的上下文管理策略类型
 export type ContextEditStrategy =
@@ -91,9 +87,7 @@ export function getAPIContextManagement(options?: {
     return strategies.length > 0 ? { edits: strategies } : undefined
   }
 
-  const useClearToolResults = isEnvTruthy(
-    process.env.USE_API_CLEAR_TOOL_RESULTS,
-  )
+  const useClearToolResults = isEnvTruthy(process.env.USE_API_CLEAR_TOOL_RESULTS)
   const useClearToolUses = isEnvTruthy(process.env.USE_API_CLEAR_TOOL_USES)
 
   // 如果未启用任何工具清除策略，提前返回

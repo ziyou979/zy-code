@@ -1,22 +1,22 @@
-import * as React from 'react';
-import { useTerminalSize } from '../../../hooks/useTerminalSize.js';
-import { useTheme } from '../../../ink.js';
-import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js';
-import type { ProgressMessage } from '../../../types/message.js';
-import type { buildMessageLookups } from '../../../utils/messages.js';
-import { FallbackToolUseRejectedMessage } from '../../FallbackToolUseRejectedMessage.js';
+import * as React from 'react'
+import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
+import { useTheme } from '../../../ink.js'
+import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
+import type { ProgressMessage } from '../../../types/message.js'
+import type { buildMessageLookups } from '../../../utils/messages.js'
+import { FallbackToolUseRejectedMessage } from '../../FallbackToolUseRejectedMessage.js'
 type Props = {
   input: {
-    [key: string]: unknown;
-  };
-  progressMessagesForMessage: ProgressMessage[];
-  style?: 'condensed';
-  tool?: Tool;
-  tools: Tools;
-  lookups: ReturnType<typeof buildMessageLookups>;
-  verbose: boolean;
-  isTranscriptMode?: boolean;
-};
+    [key: string]: unknown
+  }
+  progressMessagesForMessage: ProgressMessage[]
+  style?: 'condensed'
+  tool?: Tool
+  tools: Tools
+  lookups: ReturnType<typeof buildMessageLookups>
+  verbose: boolean
+  isTranscriptMode?: boolean
+}
 export function UserToolRejectMessage({
   input,
   progressMessagesForMessage,
@@ -24,21 +24,19 @@ export function UserToolRejectMessage({
   tool,
   tools,
   verbose,
-  isTranscriptMode
+  isTranscriptMode,
 }: Props) {
-  const {
-    columns
-  } = useTerminalSize();
-  const [theme] = useTheme();
+  const { columns } = useTerminalSize()
+  const [theme] = useTheme()
   if (!tool || !tool.renderToolUseRejectedMessage) {
-    return <FallbackToolUseRejectedMessage />;
+    return <FallbackToolUseRejectedMessage />
   }
-  let fallbackToolUseRejectedMessageElement;
-  let earlyReturn;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
-  const parsedInput = tool.inputSchema.safeParse(input);
+  let fallbackToolUseRejectedMessageElement
+  let earlyReturn
+  earlyReturn = Symbol.for('react.early_return_sentinel')
+  const parsedInput = tool.inputSchema.safeParse(input)
   if (!parsedInput.success) {
-    earlyReturn = <FallbackToolUseRejectedMessage />;
+    earlyReturn = <FallbackToolUseRejectedMessage />
   } else {
     fallbackToolUseRejectedMessageElement = tool.renderToolUseRejectedMessage(parsedInput.data, {
       columns,
@@ -48,11 +46,11 @@ export function UserToolRejectMessage({
       progressMessagesForMessage: filterToolProgressMessages(progressMessagesForMessage),
       style,
       theme,
-      isTranscriptMode
-    }) ?? <FallbackToolUseRejectedMessage />;
+      isTranscriptMode,
+    }) ?? <FallbackToolUseRejectedMessage />
   }
-  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn;
+  if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
+    return earlyReturn
   }
-  return fallbackToolUseRejectedMessageElement;
+  return fallbackToolUseRejectedMessageElement
 }

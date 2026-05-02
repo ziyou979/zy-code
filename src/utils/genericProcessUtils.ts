@@ -1,7 +1,4 @@
-import {
-  execFileNoThrowWithCwd,
-  execSyncWithDefaults_DEPRECATED,
-} from './execFileNoThrow.js'
+import { execFileNoThrowWithCwd, execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
 
 // This file contains platform-agnostic implementations of common `ps` type commands.
 // When adding new code to this file, make sure to handle:
@@ -33,10 +30,7 @@ export function isProcessRunning(pid: number): boolean {
  * @param maxDepth - Maximum number of ancestors to fetch (default: 10)
  * @returns Array of ancestor PIDs from immediate parent to furthest ancestor
  */
-export async function getAncestorPidsAsync(
-  pid: string | number,
-  maxDepth = 10,
-): Promise<number[]> {
+export async function getAncestorPidsAsync(pid: string | number, maxDepth = 10): Promise<number[]> {
   if (process.platform === 'win32') {
     // For Windows, use a PowerShell script that walks the process tree
     const script = `
@@ -63,8 +57,8 @@ export async function getAncestorPidsAsync(
       .trim()
       .split(',')
       .filter(Boolean)
-      .map(p => parseInt(p, 10))
-      .filter(p => !isNaN(p))
+      .map((p) => parseInt(p, 10))
+      .filter((p) => !isNaN(p))
   }
 
   // For Unix, use a shell command that walks up the process tree
@@ -81,8 +75,8 @@ export async function getAncestorPidsAsync(
     .trim()
     .split('\n')
     .filter(Boolean)
-    .map(p => parseInt(p, 10))
-    .filter(p => !isNaN(p))
+    .map((p) => parseInt(p, 10))
+    .filter((p) => !isNaN(p))
 }
 
 /**
@@ -176,8 +170,8 @@ export function getChildPids(pid: string | number): number[] {
       .trim()
       .split('\n')
       .filter(Boolean)
-      .map(p => parseInt(p, 10))
-      .filter(p => !isNaN(p))
+      .map((p) => parseInt(p, 10))
+      .filter((p) => !isNaN(p))
   } catch {
     return []
   }

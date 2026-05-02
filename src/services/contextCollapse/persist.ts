@@ -6,10 +6,7 @@
  *   recordContextCollapseCommit / recordContextCollapseSnapshot 完成）
  */
 
-import type {
-  ContextCollapseCommitEntry,
-  ContextCollapseSnapshotEntry,
-} from '../../types/logs.js'
+import type { ContextCollapseCommitEntry, ContextCollapseSnapshotEntry } from '../../types/logs.js'
 
 /** 与 index.ts 共享的类型定义（持久化层的最小版本） */
 export type ContextCollapseEntry = {
@@ -52,10 +49,7 @@ export async function restoreFromEntries(
     }
 
     // 从最大 collapseId 恢复计数器
-    const maxId = entries.reduce(
-      (max, e) => Math.max(max, parseInt(e.collapseId, 10) || 0),
-      0,
-    )
+    const maxId = entries.reduce((max, e) => Math.max(max, parseInt(e.collapseId, 10) || 0), 0)
     ;(indexModule as any)._reseedIdCounter(maxId + 1)
   }
 

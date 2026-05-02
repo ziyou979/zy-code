@@ -85,11 +85,7 @@ type QuoteSpans = {
  * raw_string / ansi_c_string / quoted-heredoc bodies are literal text
  * in bash (no expansion), so no nested quote nodes exist — return early.
  */
-function collectQuoteSpans(
-  node: TreeSitterNode,
-  out: QuoteSpans,
-  inDouble: boolean,
-): void {
+function collectQuoteSpans(node: TreeSitterNode, out: QuoteSpans, inDouble: boolean): void {
   switch (node.type) {
     case 'raw_string':
       out.raw.push([node.startIndex, node.endIndex])
@@ -156,17 +152,12 @@ function buildPositionSet(spans: Array<[number, number]>): Set<number> {
  * Processing overlapping spans corrupts indices since removing/replacing the
  * outer span shifts the inner span's start/end into stale positions.
  */
-function dropContainedSpans<T extends readonly [number, number, ...unknown[]]>(
-  spans: T[],
-): T[] {
+function dropContainedSpans<T extends readonly [number, number, ...unknown[]]>(spans: T[]): T[] {
   return spans.filter(
     (s, i) =>
       !spans.some(
         (other, j) =>
-          j !== i &&
-          other[0] <= s[0] &&
-          other[1] >= s[1] &&
-          (other[0] < s[0] || other[1] > s[1]),
+          j !== i && other[0] <= s[0] && other[1] >= s[1] && (other[0] < s[0] || other[1] > s[1]),
       ),
   )
 }
@@ -221,10 +212,7 @@ function replaceSpansKeepQuotes(
  *   inside them, and validators need to see those patterns. Matches the
  *   sync path's extractHeredocs({ quotedOnly: true }).
  */
-export function extractQuoteContext(
-  rootNode: unknown,
-  command: string,
-): QuoteContext {
+export function extractQuoteContext(rootNode: unknown, command: string): QuoteContext {
   // Single walk collects all quote span types at once.
   const spans: QuoteSpans = { raw: [], ansiC: [], double: [], heredoc: [] }
   collectQuoteSpans(rootNode as TreeSitterNode, spans, false)
@@ -281,10 +269,7 @@ export function extractQuoteContext(
     // Heredoc redirect spans have no inline quote delimiters — strip entirely.
     spansWithQuoteChars.push([start, end, '', ''])
   }
-  const unquotedKeepQuoteChars = replaceSpansKeepQuotes(
-    command,
-    spansWithQuoteChars,
-  )
+  const unquotedKeepQuoteChars = replaceSpansKeepQuotes(command, spansWithQuoteChars)
 
   return { withDoubleQuotes, fullyUnquoted, unquotedKeepQuoteChars }
 }
@@ -293,10 +278,7 @@ export function extractQuoteContext(
  * Extract compound command structure from the AST.
  * Replaces isUnsafeCompoundCommand() and splitCommand() for tree-sitter path.
  */
-export function extractCompoundStructure(
-  rootNode: unknown,
-  command: string,
-): CompoundStructure {
+export function extractCompoundStructure(rootNode: unknown, command: string): CompoundStructure {
   const n = rootNode as TreeSitterNode
   const operators: string[] = []
   const segments: string[] = []
@@ -315,10 +297,7 @@ export function extractCompoundStructure(
           if (!listChild) continue
           if (listChild.type === '&&' || listChild.type === '||') {
             operators.push(listChild.type)
-          } else if (
-            listChild.type === 'list' ||
-            listChild.type === 'redirected_statement'
-          ) {
+          } else if (listChild.type === 'list' || listChild.type === 'redirected_statement') {
             // Nested list, or redirected_statement wrapping a list/pipeline —
             // recurse so inner operators/pipelines are detected. For
             // `cmd1 && cmd2 2>/dev/null && cmd3`, the redirected_statement
@@ -493,10 +472,7 @@ export function extractDangerousPatterns(rootNode: unknown): DangerousPatterns {
  * Extracts all security-relevant data from the AST in one pass.
  * This data must be extracted before tree.delete() is called.
  */
-export function analyzeCommand(
-  rootNode: unknown,
-  command: string,
-): TreeSitterAnalysis {
+export function analyzeCommand(rootNode: unknown, command: string): TreeSitterAnalysis {
   return {
     quoteContext: extractQuoteContext(rootNode, command),
     compoundStructure: extractCompoundStructure(rootNode, command),

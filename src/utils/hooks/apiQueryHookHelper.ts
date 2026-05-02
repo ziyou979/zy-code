@@ -28,10 +28,7 @@ export type ApiQueryHookConfig<TResult> = {
   useTools?: boolean
 
   parseResponse: (content: string, context: ApiQueryHookContext) => TResult
-  logResult: (
-    result: ApiQueryResult<TResult>,
-    context: ApiQueryHookContext,
-  ) => void
+  logResult: (result: ApiQueryResult<TResult>, context: ApiQueryHookContext) => void
   // Must be a function to ensure lazy loading (config is accessed before allowed)
   // Receives context so callers can inherit the main loop model if desired.
   getModel: (context: ApiQueryHookContext) => string
@@ -53,9 +50,7 @@ export type ApiQueryResult<TResult> =
       uuid: string
     }
 
-export function createApiQueryHook<TResult>(
-  config: ApiQueryHookConfig<TResult>,
-) {
+export function createApiQueryHook<TResult>(config: ApiQueryHookConfig<TResult>) {
   return async (context: ApiQueryHookContext): Promise<void> => {
     try {
       const shouldRun = await config.shouldRun(context)
@@ -95,10 +90,8 @@ export function createApiQueryHook<TResult>(
           },
           model,
           toolChoice: undefined,
-          isNonInteractiveSession:
-            context.toolUseContext.options.isNonInteractiveSession,
-          hasAppendSystemPrompt:
-            !!context.toolUseContext.options.appendSystemPrompt,
+          isNonInteractiveSession: context.toolUseContext.options.isNonInteractiveSession,
+          hasAppendSystemPrompt: !!context.toolUseContext.options.appendSystemPrompt,
           temperatureOverride: 0,
           agents: context.toolUseContext.options.agentDefinitions.activeAgents,
           querySource: config.name,

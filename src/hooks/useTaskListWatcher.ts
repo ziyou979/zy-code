@@ -31,11 +31,7 @@ type Props = {
  * This enables "tasks mode" where Zy watches for externally-created
  * tasks and processes them one at a time.
  */
-export function useTaskListWatcher({
-  taskListId,
-  isLoading,
-  onSubmitTask,
-}: Props): void {
+export function useTaskListWatcher({ taskListId, isLoading, onSubmitTask }: Props): void {
   const currentTaskRef = useRef<string | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -71,7 +67,7 @@ export function useTaskListWatcher({
 
     // If we have a current task, check if it's been resolved
     if (currentTaskRef.current !== null) {
-      const currentTask = tasks.find(t => t.id === currentTaskRef.current)
+      const currentTask = tasks.find((t) => t.id === currentTaskRef.current)
       if (!currentTask || currentTask.status === 'completed') {
         logForDebugging(
           `[TaskListWatcher] Task #${currentTaskRef.current} is marked complete, ready for next task`,
@@ -109,9 +105,7 @@ export function useTaskListWatcher({
     // Format the task as a prompt
     const prompt = formatTaskAsPrompt(availableTask)
 
-    logForDebugging(
-      `[TaskListWatcher] Submitting task #${availableTask.id} as prompt`,
-    )
+    logForDebugging(`[TaskListWatcher] Submitting task #${availableTask.id} as prompt`)
 
     const submitted = onSubmitTaskRef.current(prompt)
     if (!submitted) {
@@ -143,7 +137,7 @@ export function useTaskListWatcher({
         clearTimeout(debounceTimerRef.current)
       }
       debounceTimerRef.current = setTimeout(
-        ref => void ref.current(),
+        (ref) => void ref.current(),
         DEBOUNCE_MS,
         checkForTasksRef,
       )
@@ -195,15 +189,13 @@ export function useTaskListWatcher({
  * - Not blocked by any unresolved tasks
  */
 function findAvailableTask(tasks: Task[]): Task | undefined {
-  const unresolvedTaskIds = new Set(
-    tasks.filter(t => t.status !== 'completed').map(t => t.id),
-  )
+  const unresolvedTaskIds = new Set(tasks.filter((t) => t.status !== 'completed').map((t) => t.id))
 
-  return tasks.find(task => {
+  return tasks.find((task) => {
     if (task.status !== 'pending') return false
     if (task.owner) return false
     // Check all blockers are completed
-    return task.blockedBy.every(id => !unresolvedTaskIds.has(id))
+    return task.blockedBy.every((id) => !unresolvedTaskIds.has(id))
   })
 }
 

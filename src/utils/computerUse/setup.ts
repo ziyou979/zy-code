@@ -24,20 +24,16 @@ export function setupComputerUseMCP(): {
   mcpConfig: Record<string, ScopedMcpServerConfig>
   allowedTools: string[]
 } {
-  const allowedTools = buildComputerUseTools(
-    CLI_CU_CAPABILITIES,
-    getChicagoCoordinateMode(),
-  ).map(t => buildMcpToolName(COMPUTER_USE_MCP_SERVER_NAME, (t as any).name))
+  const allowedTools = buildComputerUseTools(CLI_CU_CAPABILITIES, getChicagoCoordinateMode()).map(
+    (t) => buildMcpToolName(COMPUTER_USE_MCP_SERVER_NAME, (t as any).name),
+  )
 
   // command/args are never spawned — client.ts intercepts by name and
   // uses the in-process server. The config just needs to exist with
   // type 'stdio' to hit the right branch. Mirrors Chrome's setup.
   const args = isInBundledMode()
     ? ['--computer-use-mcp']
-    : [
-        join(fileURLToPath(import.meta.url), '..', 'cli.js'),
-        '--computer-use-mcp',
-      ]
+    : [join(fileURLToPath(import.meta.url), '..', 'cli.js'), '--computer-use-mcp']
 
   return {
     mcpConfig: {

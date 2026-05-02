@@ -51,9 +51,7 @@ function hasProfileScope(): boolean {
     return false
   }
 }
-function getOauthAccountInfo(): ReturnType<
-  typeof authModule.getOauthAccountInfo
-> {
+function getOauthAccountInfo(): ReturnType<typeof authModule.getOauthAccountInfo> {
   try {
     return authModule.getOauthAccountInfo()
   } catch {
@@ -88,10 +86,7 @@ export function isEnvLessBridgeEnabled(): boolean {
 export function isCseShimEnabled(): boolean {
   return feature('BRIDGE_MODE')
     ? // @ts-ignore
-      getFeatureValue_CACHED_MAY_BE_STALE(
-        'zy_bridge_repl_v2_cse_shim_enabled',
-        true,
-      )
+      getFeatureValue_CACHED_MAY_BE_STALE('zy_bridge_repl_v2_cse_shim_enabled', true)
     : true
 }
 
@@ -130,7 +125,5 @@ export function getCcrAutoConnectDefault(): boolean {
  * local opt-in; GrowthBook controls rollout.
  */
 export function isCcrMirrorEnabled(): boolean {
-  return feature('CCR_MIRROR')
-    ? isEnvTruthy(process.env.ZY_CODE_CCR_MIRROR)
-    : false
+  return feature('CCR_MIRROR') ? isEnvTruthy(process.env.ZY_CODE_CCR_MIRROR) : false
 }

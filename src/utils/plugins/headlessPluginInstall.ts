@@ -42,9 +42,7 @@ import { syncMarketplacesToZipCache } from './zipCacheAdapters.js'
  */
 export async function installPluginsForHeadless(): Promise<boolean> {
   const zipCacheMode = isPluginZipCacheEnabled()
-  logForDebugging(
-    `installPluginsForHeadless: starting${zipCacheMode ? ' (zip cache mode)' : ''}`,
-  )
+  logForDebugging(`installPluginsForHeadless: starting${zipCacheMode ? ' (zip cache mode)' : ''}`)
 
   // Register seed marketplaces (ZY_CODE_PLUGIN_SEED_DIR) before diffing.
   // Idempotent; no-op if seed not configured. Without this, findMissingMarketplaces
@@ -96,14 +94,11 @@ export async function installPluginsForHeadless(): Promise<boolean> {
         () =>
           reconcileMarketplaces({
             skip: zipCacheMode
-              ? (_name, source) =>
-                  !isMarketplaceSourceSupportedByZipCache(source)
+              ? (_name, source) => !isMarketplaceSourceSupportedByZipCache(source)
               : undefined,
-            onProgress: event => {
+            onProgress: (event) => {
               if (event.type === 'installed') {
-                logForDebugging(
-                  `installPluginsForHeadless: installed marketplace ${event.name}`,
-                )
+                logForDebugging(`installPluginsForHeadless: installed marketplace ${event.name}`)
               } else if (event.type === 'failed') {
                 logForDebugging(
                   `installPluginsForHeadless: failed to install marketplace ${event.name}: ${event.error}`,
@@ -111,7 +106,7 @@ export async function installPluginsForHeadless(): Promise<boolean> {
               }
             },
           }),
-        r => ({
+        (r) => ({
           installed_count: r.installed.length,
           updated_count: r.updated.length,
           failed_count: r.failed.length,
@@ -125,8 +120,7 @@ export async function installPluginsForHeadless(): Promise<boolean> {
         )
       }
 
-      const marketplacesChanged =
-        reconcileResult.installed.length + reconcileResult.updated.length
+      const marketplacesChanged = reconcileResult.installed.length + reconcileResult.updated.length
 
       // Clear caches so newly-installed marketplace plugins are discoverable.
       // Plugin caching is the loader's job — after caches clear, the caller's

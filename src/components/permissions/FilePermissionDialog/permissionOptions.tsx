@@ -1,30 +1,35 @@
-import { homedir } from 'os';
-import { basename, join, sep } from 'path';
-import React, { type ReactNode } from 'react';
-import { getOriginalCwd } from '../../../bootstrap/state.js';
-import { Text } from '../../../ink.js';
-import { getShortcutDisplay } from '../../../keybindings/shortcutFormat.js';
-import type { ToolPermissionContext } from '../../../Tool.js';
-import { expandPath, getDirectoryForPath } from '../../../utils/path.js';
-import { normalizeCaseForComparison, pathInAllowedWorkingPath } from '../../../utils/permissions/filesystem.js';
-import type { OptionWithDescription } from '../../CustomSelect/select.js';
-import { tSync } from 'src/i18n/index.js';
+import { homedir } from 'os'
+import { basename, join, sep } from 'path'
+import React, { type ReactNode } from 'react'
+import { getOriginalCwd } from '../../../bootstrap/state.js'
+import { Text } from '../../../ink.js'
+import { getShortcutDisplay } from '../../../keybindings/shortcutFormat.js'
+import type { ToolPermissionContext } from '../../../Tool.js'
+import { expandPath, getDirectoryForPath } from '../../../utils/path.js'
+import {
+  normalizeCaseForComparison,
+  pathInAllowedWorkingPath,
+} from '../../../utils/permissions/filesystem.js'
+import type { OptionWithDescription } from '../../CustomSelect/select.js'
+import { tSync } from 'src/i18n/index.js'
 /**
  * Check if a path is within the project's .zy/ folder.
  * This is used to determine whether to show the special ".zy folder" permission option.
  */
 export function isInZyFolder(filePath: string): boolean {
-  const absolutePath = expandPath(filePath);
-  const ZyFolderPath = expandPath(`${getOriginalCwd()}/.zy`);
+  const absolutePath = expandPath(filePath)
+  const ZyFolderPath = expandPath(`${getOriginalCwd()}/.zy`)
 
   // Check if the path is within the project's .zy folder
-  const normalizedAbsolutePath = normalizeCaseForComparison(absolutePath);
-  const normalizedZyFolderPath = normalizeCaseForComparison(ZyFolderPath);
+  const normalizedAbsolutePath = normalizeCaseForComparison(absolutePath)
+  const normalizedZyFolderPath = normalizeCaseForComparison(ZyFolderPath)
 
   // Path must start with the .zy folder path (and be inside it, not just the folder itself)
-  return normalizedAbsolutePath.startsWith(normalizedZyFolderPath + sep.toLowerCase()) ||
-  // Also match case where sep is / on posix systems
-  normalizedAbsolutePath.startsWith(normalizedZyFolderPath + '/');
+  return (
+    normalizedAbsolutePath.startsWith(normalizedZyFolderPath + sep.toLowerCase()) ||
+    // Also match case where sep is / on posix systems
+    normalizedAbsolutePath.startsWith(normalizedZyFolderPath + '/')
+  )
 }
 
 /**
@@ -33,24 +38,30 @@ export function isInZyFolder(filePath: string): boolean {
  * for files in the user's home directory.
  */
 export function isInGlobalZyFolder(filePath: string): boolean {
-  const absolutePath = expandPath(filePath);
-  const globalZyFolderPath = join(homedir(), '.zy');
-  const normalizedAbsolutePath = normalizeCaseForComparison(absolutePath);
-  const normalizedGlobalZyFolderPath = normalizeCaseForComparison(globalZyFolderPath);
-  return normalizedAbsolutePath.startsWith(normalizedGlobalZyFolderPath + sep.toLowerCase()) || normalizedAbsolutePath.startsWith(normalizedGlobalZyFolderPath + '/');
+  const absolutePath = expandPath(filePath)
+  const globalZyFolderPath = join(homedir(), '.zy')
+  const normalizedAbsolutePath = normalizeCaseForComparison(absolutePath)
+  const normalizedGlobalZyFolderPath = normalizeCaseForComparison(globalZyFolderPath)
+  return (
+    normalizedAbsolutePath.startsWith(normalizedGlobalZyFolderPath + sep.toLowerCase()) ||
+    normalizedAbsolutePath.startsWith(normalizedGlobalZyFolderPath + '/')
+  )
 }
-export type PermissionOption = {
-  type: 'accept-once';
-} | {
-  type: 'accept-session';
-  scope?: 'zy-folder' | 'global-zy-folder';
-} | {
-  type: 'reject';
-};
+export type PermissionOption =
+  | {
+      type: 'accept-once'
+    }
+  | {
+      type: 'accept-session'
+      scope?: 'zy-folder' | 'global-zy-folder'
+    }
+  | {
+      type: 'reject'
+    }
 export type PermissionOptionWithLabel = OptionWithDescription<string> & {
-  option: PermissionOption;
-};
-export type FileOperationType = 'read' | 'write' | 'create';
+  option: PermissionOption
+}
+export type FileOperationType = 'read' | 'write' | 'create'
 export function getFilePermissionOptions({
   filePath,
   toolPermissionContext,
@@ -58,18 +69,18 @@ export function getFilePermissionOptions({
   onRejectFeedbackChange,
   onAcceptFeedbackChange,
   yesInputMode = false,
-  noInputMode = false
+  noInputMode = false,
 }: {
-  filePath: string;
-  toolPermissionContext: ToolPermissionContext;
-  operationType?: FileOperationType;
-  onRejectFeedbackChange?: (value: string) => void;
-  onAcceptFeedbackChange?: (value: string) => void;
-  yesInputMode?: boolean;
-  noInputMode?: boolean;
+  filePath: string
+  toolPermissionContext: ToolPermissionContext
+  operationType?: FileOperationType
+  onRejectFeedbackChange?: (value: string) => void
+  onAcceptFeedbackChange?: (value: string) => void
+  yesInputMode?: boolean
+  noInputMode?: boolean
 }): PermissionOptionWithLabel[] {
-  const options: PermissionOptionWithLabel[] = [];
-  const modeCycleShortcut = getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab');
+  const options: PermissionOptionWithLabel[] = []
+  const modeCycleShortcut = getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')
 
   // When in input mode, show input field
   if (yesInputMode && onAcceptFeedbackChange) {
@@ -81,23 +92,23 @@ export function getFilePermissionOptions({
       onChange: onAcceptFeedbackChange,
       allowEmptySubmitToCancel: true,
       option: {
-        type: 'accept-once'
-      }
-    });
+        type: 'accept-once',
+      },
+    })
   } else {
     options.push({
       label: tSync('permission.yes'),
       value: 'yes',
       option: {
-        type: 'accept-once'
-      }
-    });
+        type: 'accept-once',
+      },
+    })
   }
-  const inAllowedPath = pathInAllowedWorkingPath(filePath, toolPermissionContext);
+  const inAllowedPath = pathInAllowedWorkingPath(filePath, toolPermissionContext)
 
   // Check if this is a .zy/ folder path (project or global)
-  const inZyFolder = isInZyFolder(filePath);
-  const inGlobalZyFolder = isInGlobalZyFolder(filePath);
+  const inZyFolder = isInZyFolder(filePath)
+  const inGlobalZyFolder = isInGlobalZyFolder(filePath)
 
   // Option 2: For .zy/ folder, show special option instead of generic session option
   // Note: Session-level options are always shown since they only affect in-memory state,
@@ -109,42 +120,44 @@ export function getFilePermissionOptions({
       value: 'yes-zy-folder',
       option: {
         type: 'accept-session',
-        scope: inGlobalZyFolder ? 'global-zy-folder' : 'zy-folder'
-      }
-    });
+        scope: inGlobalZyFolder ? 'global-zy-folder' : 'zy-folder',
+      },
+    })
   } else {
     // Option 2: Allow all changes/reads during session
-    let sessionLabel: ReactNode;
+    let sessionLabel: ReactNode
     if (inAllowedPath) {
       // Inside working directory
       if (operationType === 'read') {
-        sessionLabel = tSync('permission.yesAllowReadThisSession');
+        sessionLabel = tSync('permission.yesAllowReadThisSession')
       } else {
-        sessionLabel = <Text>
+        sessionLabel = (
+          <Text>
             {tSync('permission.yesAllowEditsThisSession', { shortcut: modeCycleShortcut })}
-          </Text>;
+          </Text>
+        )
       }
     } else {
       // Outside working directory - include directory name
-      const dirPath = getDirectoryForPath(filePath);
-      const dirName = basename(dirPath) || 'this directory';
+      const dirPath = getDirectoryForPath(filePath)
+      const dirName = basename(dirPath) || 'this directory'
       if (operationType === 'read') {
-        sessionLabel = <Text>
-            {tSync('permission.yesAllowReadFromDir', { dir: dirName })}
-          </Text>;
+        sessionLabel = <Text>{tSync('permission.yesAllowReadFromDir', { dir: dirName })}</Text>
       } else {
-        sessionLabel = <Text>
+        sessionLabel = (
+          <Text>
             {tSync('permission.yesAllowEditsInDir', { dir: dirName, shortcut: modeCycleShortcut })}
-          </Text>;
+          </Text>
+        )
       }
     }
     options.push({
       label: sessionLabel,
       value: 'yes-session',
       option: {
-        type: 'accept-session'
-      }
-    });
+        type: 'accept-session',
+      },
+    })
   }
 
   // When in input mode, show input field for reject
@@ -157,18 +170,18 @@ export function getFilePermissionOptions({
       onChange: onRejectFeedbackChange,
       allowEmptySubmitToCancel: true,
       option: {
-        type: 'reject'
-      }
-    });
+        type: 'reject',
+      },
+    })
   } else {
     // Not in input mode - simple option
     options.push({
       label: tSync('permission.no'),
       value: 'no',
       option: {
-        type: 'reject'
-      }
-    });
+        type: 'reject',
+      },
+    })
   }
-  return options;
+  return options
 }

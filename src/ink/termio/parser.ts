@@ -80,7 +80,7 @@ function* segmentGraphemes(str: string): Generator<Grapheme> {
 
 function parseCSIParams(paramStr: string): number[] {
   if (paramStr === '') return []
-  return paramStr.split(/[;:]/).map(s => (s === '' ? 0 : parseInt(s, 10)))
+  return paramStr.split(/[;:]/).map((s) => (s === '' ? 0 : parseInt(s, 10)))
 }
 
 /** 解析原始 CSI 序列（例如 "\x1b[31m"）为动作 */
@@ -242,9 +242,7 @@ function parseCSI(rawSequence: string): Action | null {
 /**
  * 从原始形式识别转义序列类型。
  */
-function identifySequence(
-  seq: string,
-): 'csi' | 'osc' | 'esc' | 'ss3' | 'unknown' {
+function identifySequence(seq: string): 'csi' | 'osc' | 'esc' | 'ss3' | 'unknown' {
   if (seq.length < 2) return 'unknown'
   if (seq.charCodeAt(0) !== C0.ESC) return 'unknown'
 

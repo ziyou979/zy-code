@@ -18,15 +18,8 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
 } from '../../services/analytics/index.js'
-import type {
-  LoadedPlugin,
-  PluginError,
-  PluginManifest,
-} from '../../types/plugin.js'
-import {
-  isOfficialMarketplaceName,
-  parsePluginIdentifier,
-} from '../plugins/pluginIdentifier.js'
+import type { LoadedPlugin, PluginError, PluginManifest } from '../../types/plugin.js'
+import { isOfficialMarketplaceName, parsePluginIdentifier } from '../plugins/pluginIdentifier.js'
 
 // builtinPlugins.ts:BUILTIN_MARKETPLACE_NAME — inlined to avoid the cycle
 // through commands.js. Marketplace schemas.ts enforces 'builtin' is reserved.
@@ -63,11 +56,7 @@ export function hashPluginId(name: string, marketplace?: string): string {
  * - org: enterprise admin-pushed via managed settings (policySettings)
  * - user-local: user added marketplace or local plugin
  */
-export type TelemetryPluginScope =
-  | 'official'
-  | 'org'
-  | 'user-local'
-  | 'default-bundle'
+export type TelemetryPluginScope = 'official' | 'org' | 'user-local' | 'default-bundle'
 
 export function getTelemetryPluginScope(
   name: string,
@@ -85,27 +74,16 @@ export function getTelemetryPluginScope(
  * — plugin_scope alone doesn't (an official plugin can be user-installed OR
  * org-pushed; both are scope='official').
  */
-export type EnabledVia =
-  | 'user-install'
-  | 'org-policy'
-  | 'default-enable'
-  | 'seed-mount'
+export type EnabledVia = 'user-install' | 'org-policy' | 'default-enable' | 'seed-mount'
 
 /** How a skill/command invocation was triggered. */
-export type InvocationTrigger =
-  | 'user-slash'
-  | 'zy-proactive'
-  | 'nested-skill'
+export type InvocationTrigger = 'user-slash' | 'zy-proactive' | 'nested-skill'
 
 /** Where a skill invocation executes. */
 export type SkillExecutionContext = 'fork' | 'inline' | 'remote'
 
 /** How a plugin install was initiated. */
-export type InstallSource =
-  | 'cli-explicit'
-  | 'ui-discover'
-  | 'ui-suggestion'
-  | 'deep-link'
+export type InstallSource = 'cli-explicit' | 'ui-discover' | 'ui-suggestion' | 'deep-link'
 
 export function getEnabledVia(
   plugin: LoadedPlugin,
@@ -115,11 +93,7 @@ export function getEnabledVia(
   if (plugin.isBuiltin) return 'default-enable'
   if (managedNames?.has(plugin.name)) return 'org-policy'
   // Trailing sep: /opt/plugins must not match /opt/plugins-extra
-  if (
-    seedDirs.some(dir =>
-      plugin.path.startsWith(dir.endsWith(sep) ? dir : dir + sep),
-    )
-  ) {
+  if (seedDirs.some((dir) => plugin.path.startsWith(dir.endsWith(sep) ? dir : dir + sep))) {
     return 'seed-mount'
   }
   return 'user-install'
@@ -144,15 +118,13 @@ export function buildPluginTelemetryFields(
   const scope = getTelemetryPluginScope(name, marketplace, managedNames)
   // Both official marketplaces and builtin plugins are Anthropic-controlled
   // — safe to expose real names in the redacted columns.
-  const isAnthropicControlled =
-    scope === 'official' || scope === 'default-bundle'
+  const isAnthropicControlled = scope === 'official' || scope === 'default-bundle'
   return {
     plugin_id_hash: hashPluginId(
       name,
       marketplace,
     ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    plugin_scope:
-      scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    plugin_scope: scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     plugin_name_redacted: (isAnthropicControlled
       ? name
       : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -175,11 +147,7 @@ export function buildPluginCommandTelemetryFields(
   managedNames: Set<string> | null = null,
 ): ReturnType<typeof buildPluginTelemetryFields> {
   const { marketplace } = parsePluginIdentifier(pluginInfo.repository)
-  return buildPluginTelemetryFields(
-    pluginInfo.pluginManifest.name,
-    marketplace,
-    managedNames,
-  )
+  return buildPluginTelemetryFields(pluginInfo.pluginManifest.name, marketplace, managedNames)
 }
 
 /**
@@ -197,11 +165,9 @@ export function logPluginsEnabledForSession(
     const { marketplace } = parsePluginIdentifier(plugin.repository)
 
     logEvent('zy_plugin_enabled_for_session', {
-      _PROTO_plugin_name:
-        plugin.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_plugin_name: plugin.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
       ...(marketplace && {
-        _PROTO_marketplace_name:
-          marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+        _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
       }),
       ...buildPluginTelemetryFields(plugin.name, marketplace, managedNames),
       enabled_via: getEnabledVia(
@@ -209,10 +175,8 @@ export function logPluginsEnabledForSession(
         managedNames,
         seedDirs,
       ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      skill_path_count:
-        (plugin.skillsPath ? 1 : 0) + (plugin.skillsPaths?.length ?? 0),
-      command_path_count:
-        (plugin.commandsPath ? 1 : 0) + (plugin.commandsPaths?.length ?? 0),
+      skill_path_count: (plugin.skillsPath ? 1 : 0) + (plugin.skillsPaths?.length ?? 0),
+      command_path_count: (plugin.commandsPath ? 1 : 0) + (plugin.commandsPaths?.length ?? 0),
       has_mcp: plugin.manifest.mcpServers !== undefined,
       has_hooks: plugin.hooksConfig !== undefined,
       ...(plugin.manifest.version && {
@@ -235,9 +199,7 @@ export type PluginCommandErrorCategory =
   | 'validation'
   | 'unknown'
 
-export function classifyPluginCommandError(
-  error: unknown,
-): PluginCommandErrorCategory {
+export function classifyPluginCommandError(error: unknown): PluginCommandErrorCategory {
   const msg = String((error as { message?: unknown })?.message ?? error)
   if (
     /ENOTFOUND|ECONNREFUSED|EAI_AGAIN|ETIMEDOUT|ECONNRESET|network|Could not resolve|Connection refused|timed out/i.test(
@@ -264,10 +226,7 @@ export function classifyPluginCommandError(
  * can compute a load-success rate. PluginError.type is already a bounded
  * enum — use it directly as error_category.
  */
-export function logPluginLoadErrors(
-  errors: PluginError[],
-  managedNames: Set<string> | null,
-): void {
+export function logPluginLoadErrors(errors: PluginError[], managedNames: Set<string> | null): void {
   for (const err of errors) {
     const { name, marketplace } = parsePluginIdentifier(err.source)
     // Not all PluginError variants carry a plugin name (some have pluginId,
@@ -275,13 +234,10 @@ export function logPluginLoadErrors(
     // fall back to the name parsed from err.source.
     const pluginName = 'plugin' in err && err.plugin ? err.plugin : name
     logEvent('zy_plugin_load_failed', {
-      error_category:
-        err.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      _PROTO_plugin_name:
-        pluginName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      error_category: err.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      _PROTO_plugin_name: pluginName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
       ...(marketplace && {
-        _PROTO_marketplace_name:
-          marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+        _PROTO_marketplace_name: marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
       }),
       ...buildPluginTelemetryFields(pluginName, marketplace, managedNames),
     })

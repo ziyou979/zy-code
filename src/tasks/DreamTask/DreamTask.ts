@@ -41,12 +41,7 @@ export type DreamTaskState = TaskStateBase & {
 }
 
 export function isDreamTask(task: unknown): task is DreamTaskState {
-  return (
-    typeof task === 'object' &&
-    task !== null &&
-    'type' in task &&
-    task.type === 'dream'
-  )
+  return typeof task === 'object' && task !== null && 'type' in task && task.type === 'dream'
 }
 
 export function registerDreamTask(
@@ -79,38 +74,29 @@ export function addDreamTurn(
   touchedPaths: string[],
   setAppState: SetAppState,
 ): void {
-  updateTaskState<DreamTaskState>(taskId, setAppState, task => {
+  updateTaskState<DreamTaskState>(taskId, setAppState, (task) => {
     const seen = new Set(task.filesTouched)
-    const newTouched = touchedPaths.filter(p => !seen.has(p) && seen.add(p))
+    const newTouched = touchedPaths.filter((p) => !seen.has(p) && seen.add(p))
     // Skip the update entirely if the turn is empty AND nothing new was
     // touched. Avoids re-rendering on pure no-ops.
-    if (
-      turn.text === '' &&
-      turn.toolUseCount === 0 &&
-      newTouched.length === 0
-    ) {
+    if (turn.text === '' && turn.toolUseCount === 0 && newTouched.length === 0) {
       return task
     }
     return {
       ...task,
       phase: newTouched.length > 0 ? 'updating' : task.phase,
       filesTouched:
-        newTouched.length > 0
-          ? [...task.filesTouched, ...newTouched]
-          : task.filesTouched,
+        newTouched.length > 0 ? [...task.filesTouched, ...newTouched] : task.filesTouched,
       turns: task.turns.slice(-(MAX_TURNS - 1)).concat(turn),
     }
   })
 }
 
-export function completeDreamTask(
-  taskId: string,
-  setAppState: SetAppState,
-): void {
+export function completeDreamTask(taskId: string, setAppState: SetAppState): void {
   // notified: true immediately — dream has no model-facing notification path
   // (it's UI-only), and eviction requires terminal + notified. The inline
   // appendSystemMessage completion note IS the user surface.
-  updateTaskState<DreamTaskState>(taskId, setAppState, task => ({
+  updateTaskState<DreamTaskState>(taskId, setAppState, (task) => ({
     ...task,
     status: 'completed',
     endTime: Date.now(),
@@ -120,7 +106,7 @@ export function completeDreamTask(
 }
 
 export function failDreamTask(taskId: string, setAppState: SetAppState): void {
-  updateTaskState<DreamTaskState>(taskId, setAppState, task => ({
+  updateTaskState<DreamTaskState>(taskId, setAppState, (task) => ({
     ...task,
     status: 'failed',
     endTime: Date.now(),
@@ -135,7 +121,7 @@ export const DreamTask: Task = {
 
   async kill(taskId, setAppState) {
     let priorMtime: number | undefined
-    updateTaskState<DreamTaskState>(taskId, setAppState, task => {
+    updateTaskState<DreamTaskState>(taskId, setAppState, (task) => {
       if (task.status !== 'running') return task
       task.abortController?.abort()
       priorMtime = task.priorMtime

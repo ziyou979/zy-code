@@ -1,6 +1,6 @@
-import type { ContentBlock } from '../types/llm.js';
-import type { Command } from '../commands.js';
-import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js';
+import type { ContentBlock } from '../types/llm.js'
+import type { Command } from '../commands.js'
+import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 const statusline = {
   type: 'prompt',
   description: "Set up ZY Code's status line UI",
@@ -13,11 +13,13 @@ const statusline = {
   source: 'builtin',
   disableNonInteractive: true,
   async getPromptForCommand(args): Promise<ContentBlock[]> {
-    const prompt = args.trim() || 'Configure my statusLine from my shell PS1 configuration';
-    return [{
-      type: 'text',
-      text: `Create an ${AGENT_TOOL_NAME} with subagent_type "statusline-setup" and the prompt "${prompt}"`
-    }];
-  }
-} satisfies Command;
-export default statusline;
+    const prompt = args.trim() || 'Configure my statusLine from my shell PS1 configuration'
+    return [
+      {
+        type: 'text',
+        text: `Create an ${AGENT_TOOL_NAME} with subagent_type "statusline-setup" and the prompt "${prompt}"`,
+      },
+    ]
+  },
+} satisfies Command
+export default statusline

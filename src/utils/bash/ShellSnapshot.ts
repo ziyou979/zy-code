@@ -7,10 +7,7 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'
-import {
-  embeddedSearchToolsBinaryPath,
-  hasEmbeddedSearchTools,
-} from '../embeddedTools.js'
+import { embeddedSearchToolsBinaryPath, hasEmbeddedSearchTools } from '../embeddedTools.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { pathExists } from '../file.js'
 import { getFsImplementation } from '../fsOperations.js'
@@ -39,8 +36,7 @@ function createArgv0ShellFunction(
   prependArgs: string[] = [],
 ): string {
   const quotedPath = quote([binaryPath])
-  const argSuffix =
-    prependArgs.length > 0 ? `${prependArgs.join(' ')} "$@"` : '"$@"'
+  const argSuffix = prependArgs.length > 0 ? `${prependArgs.join(' ')} "$@"` : '"$@"'
   return [
     `function ${funcName} {`,
     '  if [[ -n $ZSH_VERSION ]]; then',
@@ -72,21 +68,15 @@ export function createRipgrepShellIntegration(): {
   if (rgCommand.argv0) {
     return {
       type: 'function',
-      snippet: createArgv0ShellFunction(
-        'rg',
-        rgCommand.argv0,
-        rgCommand.rgPath,
-      ),
+      snippet: createArgv0ShellFunction('rg', rgCommand.argv0, rgCommand.rgPath),
     }
   }
 
   // For regular ripgrep, use a simple alias target
   const quotedPath = quote([rgCommand.rgPath])
-  const quotedArgs = rgCommand.rgArgs.map(arg => quote([arg]))
+  const quotedArgs = rgCommand.rgArgs.map((arg) => quote([arg]))
   const aliasTarget =
-    rgCommand.rgArgs.length > 0
-      ? `${quotedPath} ${quotedArgs.join(' ')}`
-      : quotedPath
+    rgCommand.rgArgs.length > 0 ? `${quotedPath} ${quotedArgs.join(' ')}` : quotedPath
 
   return { type: 'alias', snippet: aliasTarget }
 }
@@ -95,14 +85,7 @@ export function createRipgrepShellIntegration(): {
  * VCS directories to exclude from grep searches. Matches the list in
  * GrepTool (see GrepTool.ts: VCS_DIRECTORIES_TO_EXCLUDE).
  */
-const VCS_DIRECTORIES_TO_EXCLUDE = [
-  '.git',
-  '.svn',
-  '.hg',
-  '.bzr',
-  '.jj',
-  '.sl',
-] as const
+const VCS_DIRECTORIES_TO_EXCLUDE = ['.git', '.svn', '.hg', '.bzr', '.jj', '.sl'] as const
 
 /**
  * Creates shell integration for `find` and `grep`, backed by bfs and ugrep
@@ -164,16 +147,13 @@ export function createFindGrepShellIntegration(): string | null {
     // (same fix the rg integration uses).
     'unalias find 2>/dev/null || true',
     'unalias grep 2>/dev/null || true',
-    createArgv0ShellFunction('find', 'bfs', binaryPath, [
-      '-regextype',
-      'findutils-default',
-    ]),
+    createArgv0ShellFunction('find', 'bfs', binaryPath, ['-regextype', 'findutils-default']),
     createArgv0ShellFunction('grep', 'ugrep', binaryPath, [
       '-G',
       '--ignore-files',
       '--hidden',
       '-I',
-      ...VCS_DIRECTORIES_TO_EXCLUDE.map(d => `--exclude-dir=${d}`),
+      ...VCS_DIRECTORIES_TO_EXCLUDE.map((d) => `--exclude-dir=${d}`),
     ]),
   ].join('\n')
 }
@@ -410,18 +390,12 @@ async function getSnapshotScript(
  *
  * @returns Promise that resolves to the snapshot file path or undefined if creation failed
  */
-export const createAndSaveSnapshot = async (
-  binShell: string,
-): Promise<string | undefined> => {
-  const shellType = binShell.includes('zsh')
-    ? 'zsh'
-    : binShell.includes('bash')
-      ? 'bash'
-      : 'sh'
+export const createAndSaveSnapshot = async (binShell: string): Promise<string | undefined> => {
+  const shellType = binShell.includes('zsh') ? 'zsh' : binShell.includes('bash') ? 'bash' : 'sh'
 
   logForDebugging(`Creating shell snapshot for ${shellType} (${binShell})`)
 
-  return new Promise(async resolve => {
+  return new Promise(async (resolve) => {
     try {
       const configFile = getConfigFile(binShell)
       logForDebugging(`Looking for shell config file: ${configFile}`)
@@ -446,11 +420,7 @@ export const createAndSaveSnapshot = async (
       // Ensure snapshots directory exists
       await mkdir(snapshotsDir, { recursive: true })
 
-      const snapshotScript = await getSnapshotScript(
-        binShell,
-        shellSnapshotPath,
-        configFileExists,
-      )
+      const snapshotScript = await getSnapshotScript(binShell, shellSnapshotPath, configFileExists)
       logForDebugging(`Creating snapshot at: ${shellSnapshotPath}`)
       logForDebugging(`Execution timeout: ${SNAPSHOT_CREATION_TIMEOUT}ms`)
       execFile(
@@ -488,27 +458,19 @@ export const createAndSaveSnapshot = async (
             logForDebugging(`  - Zy home: ${getZyConfigHomeDir()}`)
             logForDebugging(`Full snapshot script:\n${snapshotScript}`)
             if (stdout) {
-              logForDebugging(
-                `stdout output (${stdout.length} chars):\n${stdout}`,
-              )
+              logForDebugging(`stdout output (${stdout.length} chars):\n${stdout}`)
             } else {
               logForDebugging(`No stdout output captured`)
             }
             if (stderr) {
-              logForDebugging(
-                `stderr output (${stderr.length} chars): ${stderr}`,
-              )
+              logForDebugging(`stderr output (${stderr.length} chars): ${stderr}`)
             } else {
               logForDebugging(`No stderr output captured`)
             }
-            logError(
-              new Error(`Failed to create shell snapshot: ${error.message}`),
-            )
+            logError(new Error(`Failed to create shell snapshot: ${error.message}`))
             // Convert signal name to number if present
             const signalNumber = execError?.signal
-              ? os.constants.signals[
-                  execError.signal as keyof typeof os.constants.signals
-                ]
+              ? os.constants.signals[execError.signal as keyof typeof os.constants.signals]
               : undefined
             logEvent('zy_shell_snapshot_failed', {
               stderr_length: stderr?.length || 0,
@@ -526,38 +488,25 @@ export const createAndSaveSnapshot = async (
             }
 
             if (snapshotSize !== undefined) {
-              logForDebugging(
-                `Shell snapshot created successfully (${snapshotSize} bytes)`,
-              )
+              logForDebugging(`Shell snapshot created successfully (${snapshotSize} bytes)`)
 
               // Register cleanup to remove snapshot on graceful shutdown
               registerCleanup(async () => {
                 try {
                   await getFsImplementation().unlink(shellSnapshotPath)
-                  logForDebugging(
-                    `Cleaned up session snapshot: ${shellSnapshotPath}`,
-                  )
+                  logForDebugging(`Cleaned up session snapshot: ${shellSnapshotPath}`)
                 } catch (error) {
-                  logForDebugging(
-                    `Error cleaning up session snapshot: ${error}`,
-                  )
+                  logForDebugging(`Error cleaning up session snapshot: ${error}`)
                 }
               })
 
               resolve(shellSnapshotPath)
             } else {
-              logForDebugging(
-                `Shell snapshot file not found after creation: ${shellSnapshotPath}`,
-              )
-              logForDebugging(
-                `Checking if parent directory still exists: ${snapshotsDir}`,
-              )
+              logForDebugging(`Shell snapshot file not found after creation: ${shellSnapshotPath}`)
+              logForDebugging(`Checking if parent directory still exists: ${snapshotsDir}`)
               try {
-                const dirContents =
-                  await getFsImplementation().readdir(snapshotsDir)
-                logForDebugging(
-                  `Directory contains ${dirContents.length} files`,
-                )
+                const dirContents = await getFsImplementation().readdir(snapshotsDir)
+                logForDebugging(`Directory contains ${dirContents.length} files`)
               } catch {
                 logForDebugging(
                   `Parent directory does not exist or is not accessible: ${snapshotsDir}`,

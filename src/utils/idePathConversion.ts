@@ -30,9 +30,7 @@ export class WindowsToWSLConverter implements IDEPathConverter {
 
     // Check if this is a path from a different WSL distro
     if (this.wslDistroName) {
-      const wslUncMatch = windowsPath.match(
-        /^\\\\wsl(?:\.localhost|\$)\\([^\\]+)(.*)$/,
-      )
+      const wslUncMatch = windowsPath.match(/^\\\\wsl(?:\.localhost|\$)\\([^\\]+)(.*)$/)
       if (wslUncMatch && wslUncMatch[1] !== this.wslDistroName) {
         // Different distro - wslpath will fail, so return original path
         return windowsPath
@@ -76,13 +74,8 @@ export class WindowsToWSLConverter implements IDEPathConverter {
 /**
  * Check if distro names match for WSL UNC paths
  */
-export function checkWSLDistroMatch(
-  windowsPath: string,
-  wslDistroName: string,
-): boolean {
-  const wslUncMatch = windowsPath.match(
-    /^\\\\wsl(?:\.localhost|\$)\\([^\\]+)(.*)$/,
-  )
+export function checkWSLDistroMatch(windowsPath: string, wslDistroName: string): boolean {
+  const wslUncMatch = windowsPath.match(/^\\\\wsl(?:\.localhost|\$)\\([^\\]+)(.*)$/)
   if (wslUncMatch) {
     return wslUncMatch[1] === wslDistroName
   }

@@ -63,16 +63,12 @@ export async function createDirectConnectSession({
   }
 
   if (!resp.ok) {
-    throw new DirectConnectError(
-      `Failed to create session: ${resp.status} ${resp.statusText}`,
-    )
+    throw new DirectConnectError(`Failed to create session: ${resp.status} ${resp.statusText}`)
   }
 
   const result = connectResponseSchema().safeParse(await resp.json())
   if (!result.success) {
-    throw new DirectConnectError(
-      `Invalid session response: ${result.error.message}`,
-    )
+    throw new DirectConnectError(`Invalid session response: ${result.error.message}`)
   }
 
   const data = result.data

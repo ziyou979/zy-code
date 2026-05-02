@@ -1,9 +1,6 @@
 import type { Tools } from '../../Tool.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
-import type {
-  AgentDefinition,
-  CustomAgentDefinition,
-} from '../../tools/AgentTool/loadAgentsDir.js'
+import type { AgentDefinition, CustomAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { tSync } from '../../i18n/index.js'
 import { getAgentSourceDisplayName } from './utils.js'
 
@@ -52,7 +49,7 @@ export function validateAgent(
 
     // 检查重复（编辑时排除自身）
     const duplicate = existingAgents.find(
-      a => a.agentType === agent.agentType && a.source !== agent.source,
+      (a) => a.agentType === agent.agentType && a.source !== agent.source,
     )
     if (duplicate) {
       errors.push(

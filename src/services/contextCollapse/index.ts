@@ -84,7 +84,7 @@ const MIN_KEPT_ROUNDS = 4
  * 用于 projectView 中定位折叠 span 的边界。
  */
 function findMessageIndex(messages: readonly Message[], uuid: string): number {
-  return messages.findIndex(m => m.uuid === uuid)
+  return messages.findIndex((m) => m.uuid === uuid)
 }
 
 /**
@@ -99,7 +99,7 @@ function nextCollapseId(): string {
  * 完整摘要由 recoverFromOverflow 中的 fork agent 生成。
  */
 function generateLightSummary(msgs: readonly Message[]): string {
-  const userMsgs = msgs.filter(m => m.type === 'user')
+  const userMsgs = msgs.filter((m) => m.type === 'user')
   const textParts: string[] = []
   for (const m of userMsgs) {
     if (typeof m.message.content === 'string') {
@@ -121,7 +121,11 @@ function generateLightSummary(msgs: readonly Message[]): string {
  */
 function notifySubscribers(): void {
   for (const fn of subscribers) {
-    try { fn() } catch { /* 订阅者错误不应影响折叠流程 */ }
+    try {
+      fn()
+    } catch {
+      /* 订阅者错误不应影响折叠流程 */
+    }
   }
 }
 
@@ -221,7 +225,7 @@ export async function applyCollapsesIfNeeded(
 
         // 避免重复暂存同一个 span
         const alreadyStaged = staged.some(
-          s => s.startUuid === first.uuid && s.endUuid === last.uuid,
+          (s) => s.startUuid === first.uuid && s.endUuid === last.uuid,
         )
         if (!alreadyStaged) {
           staged.push({
@@ -237,12 +241,10 @@ export async function applyCollapsesIfNeeded(
 
   // 持久化快照
   try {
-    const { recordContextCollapseSnapshot } = await import(
-      '../../utils/sessionStorage.js'
-    )
+    const { recordContextCollapseSnapshot } = await import('../../utils/sessionStorage.js')
     // 排除 sessionId——由 recordContextCollapseSnapshot 内部添加
     await recordContextCollapseSnapshot({
-      staged: staged.map(s => ({
+      staged: staged.map((s) => ({
         startUuid: s.startUuid,
         endUuid: s.endUuid,
         summary: s.summary,
@@ -309,9 +311,7 @@ export async function recoverFromOverflow(
 
   // 持久化提交
   try {
-    const { recordContextCollapseCommit } = await import(
-      '../../utils/sessionStorage.js'
-    )
+    const { recordContextCollapseCommit } = await import('../../utils/sessionStorage.js')
     await recordContextCollapseCommit({
       collapseId,
       summaryUuid,

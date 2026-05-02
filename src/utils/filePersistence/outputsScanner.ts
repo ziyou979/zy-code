@@ -30,9 +30,7 @@ export function getEnvironmentKind(): EnvironmentKind | null {
   return null
 }
 
-function hasParentPath(
-  entry: object,
-): entry is { parentPath: string; name: string } {
+function hasParentPath(entry: object): entry is { parentPath: string; name: string } {
   return 'parentPath' in entry && typeof entry.parentPath === 'string'
 }
 
@@ -97,7 +95,7 @@ export async function findModifiedFiles(
 
   // Parallelize stat calls for all files
   const statResults = await Promise.all(
-    filePaths.map(async filePath => {
+    filePaths.map(async (filePath) => {
       try {
         const stat = await fs.lstat(filePath)
         // Skip if it became a symlink between readdir and stat (race condition)

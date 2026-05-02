@@ -26,13 +26,7 @@ import { basename, dirname, isAbsolute, join, resolve, sep } from 'path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
-import {
-  ConfigParseError,
-  errorMessage,
-  getErrnoCode,
-  isENOENT,
-  toError,
-} from '../errors.js'
+import { ConfigParseError, errorMessage, getErrnoCode, isENOENT, toError } from '../errors.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { gitExe } from '../git.js'
@@ -43,15 +37,8 @@ import {
   updateSettingsForSource,
 } from '../settings/settings.js'
 import type { SettingsJson } from '../settings/types.js'
-import {
-  jsonParse,
-  jsonStringify,
-  writeFileSync_DEPRECATED,
-} from '../slowOperations.js'
-import {
-  getAddDirEnabledPlugins,
-  getAddDirExtraMarketplaces,
-} from './addDirPluginSettings.js'
+import { jsonParse, jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
+import { getAddDirEnabledPlugins, getAddDirExtraMarketplaces } from './addDirPluginSettings.js'
 import { markPluginVersionOrphaned } from './cacheUtils.js'
 import { classifyFetchError, logPluginFetch } from './fetchTelemetry.js'
 import { removeAllPluginsForMarketplace } from './installedPluginsManager.js'
@@ -63,16 +50,9 @@ import {
   isSourceAllowedByPolicy,
   isSourceInBlocklist,
 } from './marketplaceHelpers.js'
-import {
-  OFFICIAL_MARKETPLACE_NAME,
-  OFFICIAL_MARKETPLACE_SOURCE,
-} from './officialMarketplace.js'
+import { OFFICIAL_MARKETPLACE_NAME, OFFICIAL_MARKETPLACE_SOURCE } from './officialMarketplace.js'
 import { fetchOfficialMarketplaceFromGcs } from './officialMarketplaceGcs.js'
-import {
-  deletePluginDataDir,
-  getPluginSeedDirs,
-  getPluginsDirectory,
-} from './pluginDirectories.js'
+import { deletePluginDataDir, getPluginSeedDirs, getPluginsDirectory } from './pluginDirectories.js'
 import { parsePluginIdentifier } from './pluginIdentifier.js'
 import { deletePluginOptions } from './pluginOptionsStorage.js'
 import {
@@ -169,10 +149,7 @@ export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
     ...(getInitialSettings().enabledPlugins ?? {}),
   }
   for (const [pluginId, value] of Object.entries(enabledPlugins)) {
-    if (
-      value &&
-      parsePluginIdentifier(pluginId).marketplace === OFFICIAL_MARKETPLACE_NAME
-    ) {
+    if (value && parsePluginIdentifier(pluginId).marketplace === OFFICIAL_MARKETPLACE_NAME) {
       implicit[OFFICIAL_MARKETPLACE_NAME] = {
         source: OFFICIAL_MARKETPLACE_SOURCE,
         sourceIsFallback: true,
@@ -202,9 +179,11 @@ export function getMarketplaceDeclaringSource(
 ): 'userSettings' | 'projectSettings' | 'localSettings' | null {
   // Check highest-precedence editable sources first — the one that wins
   // in the merged view is the one we should write back to.
-  const editableSources: Array<
-    'localSettings' | 'projectSettings' | 'userSettings'
-  > = ['localSettings', 'projectSettings', 'userSettings']
+  const editableSources: Array<'localSettings' | 'projectSettings' | 'userSettings'> = [
+    'localSettings',
+    'projectSettings',
+    'userSettings',
+  ]
 
   for (const source of editableSources) {
     const settings = getSettingsForSource(source)
@@ -226,10 +205,7 @@ export function getMarketplaceDeclaringSource(
 export function saveMarketplaceToSettings(
   name: string,
   entry: DeclaredMarketplace,
-  settingSource:
-    | 'userSettings'
-    | 'projectSettings'
-    | 'localSettings' = 'userSettings',
+  settingSource: 'userSettings' | 'projectSettings' | 'localSettings' = 'userSettings',
 ): void {
   const existing = getSettingsForSource(settingSource) ?? {}
   const current = { ...existing.extraKnownMarketplaces }
@@ -273,7 +249,7 @@ export async function loadKnownMarketplacesConfig(): Promise<KnownMarketplacesCo
     // Validate against schema
     const parsed = KnownMarketplacesFileSchema().safeParse(data)
     if (!parsed.success) {
-      const errorMsg = `Marketplace configuration file is corrupted: ${parsed.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+      const errorMsg = `Marketplace configuration file is corrupted: ${parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
       logForDebugging(errorMsg, {
         level: 'error',
       })
@@ -324,9 +300,7 @@ export async function loadKnownMarketplacesConfigSafe(): Promise<KnownMarketplac
  *
  * @param config - The marketplace configuration to save
  */
-export async function saveKnownMarketplacesConfig(
-  config: KnownMarketplacesConfig,
-): Promise<void> {
+export async function saveKnownMarketplacesConfig(config: KnownMarketplacesConfig): Promise<void> {
   // Validate before saving
   const parsed = KnownMarketplacesFileSchema().safeParse(config)
   const configFile = getKnownMarketplacesFile()
@@ -433,9 +407,7 @@ export async function registerSeedMarketplaces(): Promise<boolean> {
   return false
 }
 
-async function readSeedKnownMarketplaces(
-  seedDir: string,
-): Promise<KnownMarketplacesConfig | null> {
+async function readSeedKnownMarketplaces(seedDir: string): Promise<KnownMarketplacesConfig | null> {
   const seedJsonPath = join(seedDir, 'known_marketplaces.json')
   try {
     const content = await getFsImplementation().readFile(seedJsonPath, {
@@ -452,10 +424,9 @@ async function readSeedKnownMarketplaces(
     return parsed.data
   } catch (e) {
     if (!isENOENT(e)) {
-      logForDebugging(
-        `Failed to read seed known_marketplaces.json at ${seedDir}: ${e}`,
-        { level: 'warn' },
-      )
+      logForDebugging(`Failed to read seed known_marketplaces.json at ${seedDir}: ${e}`, {
+        level: 'warn',
+      })
     }
     return null
   }
@@ -470,10 +441,7 @@ async function readSeedKnownMarketplaces(
  *
  * @returns Readable location, or null if neither format exists/validates
  */
-async function findSeedMarketplaceLocation(
-  seedDir: string,
-  name: string,
-): Promise<string | null> {
+async function findSeedMarketplaceLocation(seedDir: string, name: string): Promise<string | null> {
   const dirCandidate = join(seedDir, 'marketplaces', name)
   const jsonCandidate = join(seedDir, 'marketplaces', `${name}.json`)
   for (const candidate of [dirCandidate, jsonCandidate]) {
@@ -495,7 +463,7 @@ async function findSeedMarketplaceLocation(
  */
 function seedDirFor(installLocation: string): string | undefined {
   return getPluginSeedDirs().find(
-    d => installLocation === d || installLocation.startsWith(d + sep),
+    (d) => installLocation === d || installLocation.startsWith(d + sep),
   )
 }
 
@@ -532,9 +500,7 @@ export async function gitPull(
 ): Promise<{ code: number; stderr: string }> {
   logForDebugging(`git pull: cwd=${cwd} ref=${ref ?? 'default'}`)
   const env = { ...process.env, ...GIT_NO_PROMPT_ENV }
-  const credentialArgs = options?.disableCredentialHelper
-    ? ['-c', 'credential.helper=']
-    : []
+  const credentialArgs = options?.disableCredentialHelper ? ['-c', 'credential.helper='] : []
 
   if (ref) {
     const fetchResult = await execFileNoThrowWithCwd(
@@ -636,21 +602,17 @@ async function gitSubmoduleUpdate(
     { cwd, timeout: getPluginGitTimeoutMs(), stdin: 'ignore', env },
   )
   if (result.code !== 0) {
-    logForDebugging(
-      `git submodule update failed (non-fatal): ${result.stderr}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`git submodule update failed (non-fatal): ${result.stderr}`, { level: 'warn' })
   }
 }
 
 /**
  * Enhance error messages for git pull failures
  */
-function enhanceGitPullErrorMessages(result: {
+function enhanceGitPullErrorMessages(result: { code: number; stderr: string; error?: string }): {
   code: number
   stderr: string
-  error?: string
-}): { code: number; stderr: string } {
+} {
   if (result.code === 0) {
     return result
   }
@@ -695,10 +657,7 @@ function enhanceGitPullErrorMessages(result: {
   }
 
   // Detect network issues
-  if (
-    result.stderr.includes('timed out') ||
-    result.stderr.includes('Could not resolve host')
-  ) {
+  if (result.stderr.includes('timed out') || result.stderr.includes('Could not resolve host')) {
     return {
       ...result,
       stderr: `Network error while updating marketplace. Please check your internet connection.\n\nOriginal error: ${result.stderr}`,
@@ -747,9 +706,7 @@ async function isGitHubSshLikelyConfigured(): Promise<boolean> {
       result.code === 1 &&
       (result.stderr?.includes('successfully authenticated') ||
         result.stdout?.includes('successfully authenticated'))
-    logForDebugging(
-      `SSH config check: code=${result.code} configured=${configured}`,
-    )
+    logForDebugging(`SSH config check: code=${result.code} configured=${configured}`)
     return configured
   } catch (error) {
     // Any error means SSH isn't configured properly
@@ -849,8 +806,7 @@ export async function gitClone(
   const redacted = redactUrlCredentials(gitUrl)
   if (gitUrl !== redacted) {
     if (result.error) result.error = result.error.replaceAll(gitUrl, redacted)
-    if (result.stderr)
-      result.stderr = result.stderr.replaceAll(gitUrl, redacted)
+    if (result.stderr) result.stderr = result.stderr.replaceAll(gitUrl, redacted)
   }
 
   if (result.code === 0) {
@@ -1045,11 +1001,11 @@ export async function reconcileSparseCheckout(
     )
   }
 
-  const check = await execFileNoThrowWithCwd(
-    gitExe(),
-    ['config', '--get', 'core.sparseCheckout'],
-    { cwd, stdin: 'ignore', env },
-  )
+  const check = await execFileNoThrowWithCwd(gitExe(), ['config', '--get', 'core.sparseCheckout'], {
+    cwd,
+    stdin: 'ignore',
+    env,
+  })
   if (check.code === 0 && check.stdout.trim() === 'true') {
     return {
       code: 1,
@@ -1095,10 +1051,7 @@ async function cacheMarketplaceFromGit(
   // stale, or otherwise not updatable. Using pull-first avoids a stat-before-operate
   // TOCTOU check: gitPull returns non-zero when cachePath is missing or has no .git.
   const timeoutSec = Math.round(getPluginGitTimeoutMs() / 1000)
-  safeCallProgress(
-    onProgress,
-    `Refreshing marketplace cache (timeout: ${timeoutSec}s)…`,
-  )
+  safeCallProgress(onProgress, `Refreshing marketplace cache (timeout: ${timeoutSec}s)…`)
 
   // Reconcile sparse-checkout config before pulling. If this requires a re-clone
   // (Sparse→Full transition) or fails (missing dir, not a repo), skip straight
@@ -1122,9 +1075,7 @@ async function cacheMarketplaceFromGit(
       level: 'warn',
     })
   } else {
-    logForDebugging(
-      `sparse-checkout reconcile requires re-clone: ${reconcileResult.stderr}`,
-    )
+    logForDebugging(`sparse-checkout reconcile requires re-clone: ${reconcileResult.stderr}`)
   }
 
   try {
@@ -1134,10 +1085,7 @@ async function cacheMarketplaceFromGit(
       `Found stale marketplace directory at ${cachePath}, cleaning up to allow re-clone`,
       { level: 'warn' },
     )
-    safeCallProgress(
-      onProgress,
-      'Found stale directory, cleaning up and re-cloning…',
-    )
+    safeCallProgress(onProgress, 'Found stale directory, cleaning up and re-cloning…')
   } catch (rmError) {
     if (!isENOENT(rmError)) {
       const rmErrorMsg = errorMessage(rmError)
@@ -1183,12 +1131,8 @@ async function cacheMarketplaceFromGit(
  * @param headers - Headers to redact
  * @returns Headers with values replaced by '***REDACTED***'
  */
-function redactHeaders(
-  headers: Record<string, string>,
-): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(headers).map(([key]) => [key, '***REDACTED***']),
-  )
+function redactHeaders(headers: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(headers).map(([key]) => [key, '***REDACTED***']))
 }
 
 /**
@@ -1265,9 +1209,7 @@ async function cacheMarketplaceFromUrl(
   safeCallProgress(onProgress, `Downloading marketplace from ${redactedUrl}`)
   logForDebugging(`Downloading marketplace from URL: ${redactedUrl}`)
   if (customHeaders && Object.keys(customHeaders).length > 0) {
-    logForDebugging(
-      `Using custom headers: ${jsonStringify(redactHeaders(customHeaders))}`,
-    )
+    logForDebugging(`Using custom headers: ${jsonStringify(redactHeaders(customHeaders))}`)
   }
 
   const headers = {
@@ -1308,9 +1250,7 @@ async function cacheMarketplaceFromUrl(
         )
       }
     }
-    throw new Error(
-      `Failed to download marketplace from ${redactedUrl}: ${errorMessage(error)}`,
-    )
+    throw new Error(`Failed to download marketplace from ${redactedUrl}: ${errorMessage(error)}`)
   }
 
   safeCallProgress(onProgress, 'Validating marketplace data')
@@ -1325,17 +1265,12 @@ async function cacheMarketplaceFromUrl(
       'invalid_schema',
     )
     throw new ConfigParseError(
-      `Invalid marketplace schema from URL: ${result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      `Invalid marketplace schema from URL: ${result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
       redactedUrl,
       response.data,
     )
   }
-  logPluginFetch(
-    'marketplace_url',
-    url,
-    'success',
-    performance.now() - fetchStarted,
-  )
+  logPluginFetch('marketplace_url', url, 'success', performance.now() - fetchStarted)
 
   safeCallProgress(onProgress, 'Saving marketplace to cache')
   // Ensure cache directory exists
@@ -1396,7 +1331,7 @@ async function parseFileWithSchema<T>(
   const result = schema.safeParse(data)
   if (!result.success) {
     throw new ConfigParseError(
-      `Invalid schema: ${filePath} ${result.error?.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      `Invalid schema: ${filePath} ${result.error?.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
       filePath,
       data,
     )
@@ -1453,12 +1388,7 @@ async function loadAndCacheMarketplace(
         // Direct URL to marketplace.json
         temporaryCachePath = join(cacheDir, `${tempName}.json`)
         cleanupNeeded = true
-        await cacheMarketplaceFromUrl(
-          source.url,
-          temporaryCachePath,
-          source.headers,
-          onProgress,
-        )
+        await cacheMarketplaceFromUrl(source.url, temporaryCachePath, source.headers, onProgress)
         marketplacePath = temporaryCachePath
         break
       }
@@ -1494,10 +1424,7 @@ async function loadAndCacheMarketplace(
             logError(lastError)
 
             // SSH failed despite being configured, try HTTPS fallback
-            safeCallProgress(
-              onProgress,
-              `SSH clone failed, retrying with HTTPS: ${httpsUrl}`,
-            )
+            safeCallProgress(onProgress, `SSH clone failed, retrying with HTTPS: ${httpsUrl}`)
 
             logForDebugging(
               `SSH clone failed for ${source.repo} despite SSH being configured, falling back to HTTPS`,
@@ -1527,15 +1454,11 @@ async function loadAndCacheMarketplace(
           }
         } else {
           // SSH not configured, go straight to HTTPS
-          safeCallProgress(
-            onProgress,
-            `SSH not configured, cloning via HTTPS: ${httpsUrl}`,
-          )
+          safeCallProgress(onProgress, `SSH not configured, cloning via HTTPS: ${httpsUrl}`)
 
-          logForDebugging(
-            `SSH not configured for GitHub, using HTTPS for ${source.repo}`,
-            { level: 'info' },
-          )
+          logForDebugging(`SSH not configured for GitHub, using HTTPS for ${source.repo}`, {
+            level: 'info',
+          })
 
           try {
             await cacheMarketplaceFromGit(
@@ -1553,10 +1476,7 @@ async function loadAndCacheMarketplace(
             logError(lastError)
 
             // HTTPS failed, try SSH as fallback
-            safeCallProgress(
-              onProgress,
-              `HTTPS clone failed, retrying with SSH: ${sshUrl}`,
-            )
+            safeCallProgress(onProgress, `HTTPS clone failed, retrying with SSH: ${sshUrl}`)
 
             logForDebugging(
               `HTTPS clone failed for ${source.repo} (${lastError.message}), falling back to SSH`,
@@ -1591,10 +1511,7 @@ async function loadAndCacheMarketplace(
           throw lastError
         }
 
-        marketplacePath = join(
-          temporaryCachePath,
-          source.path || '.zy-plugin/marketplace.json',
-        )
+        marketplacePath = join(temporaryCachePath, source.path || '.zy-plugin/marketplace.json')
         break
       }
 
@@ -1608,10 +1525,7 @@ async function loadAndCacheMarketplace(
           source.sparsePaths,
           onProgress,
         )
-        marketplacePath = join(
-          temporaryCachePath,
-          source.path || '.zy-plugin/marketplace.json',
-        )
+        marketplacePath = join(temporaryCachePath, source.path || '.zy-plugin/marketplace.json')
         break
       }
 
@@ -1658,11 +1572,7 @@ async function loadAndCacheMarketplace(
         // diffMarketplaces detects settings edits via isEqual — no special
         // dirty-tracking needed.
         temporaryCachePath = join(cacheDir, source.name)
-        marketplacePath = join(
-          temporaryCachePath,
-          '.zy-plugin',
-          'marketplace.json',
-        )
+        marketplacePath = join(temporaryCachePath, '.zy-plugin', 'marketplace.json')
         cleanupNeeded = false
         await fs.mkdir(dirname(marketplacePath))
         // No `satisfies PluginMarketplace` here: source.plugins is the narrow
@@ -1692,17 +1602,12 @@ async function loadAndCacheMarketplace(
     logForDebugging(`Reading marketplace from ${marketplacePath}`)
     let marketplace: PluginMarketplace
     try {
-      marketplace = await parseFileWithSchema(
-        marketplacePath,
-        PluginMarketplaceSchema(),
-      )
+      marketplace = await parseFileWithSchema(marketplacePath, PluginMarketplaceSchema())
     } catch (e) {
       if (isENOENT(e)) {
         throw new Error(`Marketplace file not found at ${marketplacePath}`)
       }
-      throw new Error(
-        `Failed to parse marketplace file at ${marketplacePath}: ${errorMessage(e)}`,
-      )
+      throw new Error(`Failed to parse marketplace file at ${marketplacePath}: ${errorMessage(e)}`)
     }
 
     // Now rename the cache path to use the marketplace's actual name
@@ -1719,19 +1624,15 @@ async function loadAndCacheMarketplace(
       )
     }
     // Don't rename if it's a local file or directory, or already has the right name
-    if (
-      temporaryCachePath !== finalCachePath &&
-      !isLocalMarketplaceSource(source)
-    ) {
+    if (temporaryCachePath !== finalCachePath && !isLocalMarketplaceSource(source)) {
       try {
         // Remove the destination if it already exists, then rename
         try {
           onProgress?.('Cleaning up old marketplace cache…')
         } catch (callbackError) {
-          logForDebugging(
-            `Progress callback error: ${errorMessage(callbackError)}`,
-            { level: 'warn' },
-          )
+          logForDebugging(`Progress callback error: ${errorMessage(callbackError)}`, {
+            level: 'warn',
+          })
         }
         await fs.rm(finalCachePath, { recursive: true, force: true })
         // Rename temp cache to final name
@@ -1749,11 +1650,7 @@ async function loadAndCacheMarketplace(
     return { marketplace, cachePath: temporaryCachePath }
   } catch (error) {
     // Clean up any temporary files/directories on error
-    if (
-      cleanupNeeded &&
-      temporaryCachePath! &&
-      !isLocalMarketplaceSource(source)
-    ) {
+    if (cleanupNeeded && temporaryCachePath! && !isLocalMarketplaceSource(source)) {
       try {
         await fs.rm(temporaryCachePath!, { recursive: true, force: true })
       } catch (cleanupError) {
@@ -1814,7 +1711,7 @@ export async function addMarketplaceSource(
     errorMessage += ' is blocked by enterprise policy.'
 
     if (allowlist.length > 0) {
-      errorMessage += ` Allowed sources: ${allowlist.map(s => formatSourceForDisplay(s)).join(', ')}`
+      errorMessage += ` Allowed sources: ${allowlist.map((s) => formatSourceForDisplay(s)).join(', ')}`
     } else {
       errorMessage += ' No external marketplaces are allowed.'
     }
@@ -1834,24 +1731,16 @@ export async function addMarketplaceSource(
   const existingConfig = await loadKnownMarketplacesConfig()
   for (const [existingName, existingEntry] of Object.entries(existingConfig)) {
     if (isEqual(existingEntry.source, resolvedSource)) {
-      logForDebugging(
-        `Source already materialized as '${existingName}', skipping clone`,
-      )
+      logForDebugging(`Source already materialized as '${existingName}', skipping clone`)
       return { name: existingName, alreadyMaterialized: true, resolvedSource }
     }
   }
 
   // Load and cache the marketplace to validate it and get its name
-  const { marketplace, cachePath } = await loadAndCacheMarketplace(
-    resolvedSource,
-    onProgress,
-  )
+  const { marketplace, cachePath } = await loadAndCacheMarketplace(resolvedSource, onProgress)
 
   // Validate that reserved names come from official sources
-  const sourceValidationError = validateOfficialNameSource(
-    marketplace.name,
-    resolvedSource,
-  )
+  const sourceValidationError = validateOfficialNameSource(marketplace.name, resolvedSource)
   if (sourceValidationError) {
     throw new Error(sourceValidationError)
   }
@@ -1870,9 +1759,7 @@ export async function addMarketplaceSource(
           `or use a different marketplace name.`,
       )
     }
-    logForDebugging(
-      `Marketplace '${marketplace.name}' exists with different source — overwriting`,
-    )
+    logForDebugging(`Marketplace '${marketplace.name}' exists with different source — overwriting`)
     // Clean up the old cache if it's not a user-owned local path AND it
     // actually differs from the new cachePath. loadAndCacheMarketplace writes
     // to cachePath BEFORE we get here — rm-ing the same dir deletes the fresh
@@ -1893,10 +1780,7 @@ export async function addMarketplaceSource(
       if (resolvedOld === resolvedNew) {
         // Same dir — loadAndCacheMarketplace already overwrote in place.
         // Nothing to clean.
-      } else if (
-        resolvedOld === cacheDir ||
-        resolvedOld.startsWith(cacheDir + sep)
-      ) {
+      } else if (resolvedOld === cacheDir || resolvedOld.startsWith(cacheDir + sep)) {
         const fs = getFsImplementation()
         await fs.rm(oldEntry.installLocation, { recursive: true, force: true })
       } else {
@@ -1970,9 +1854,11 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
   // and remove related plugin entries from enabledPlugins
 
   // Check each editable settings source
-  const editableSources: Array<
-    'userSettings' | 'projectSettings' | 'localSettings'
-  > = ['userSettings', 'projectSettings', 'localSettings']
+  const editableSources: Array<'userSettings' | 'projectSettings' | 'localSettings'> = [
+    'userSettings',
+    'projectSettings',
+    'localSettings',
+  ]
 
   for (const source of editableSources) {
     const settings = getSettingsForSource(source)
@@ -1986,13 +1872,12 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
 
     // Remove from extraKnownMarketplaces if present
     if (settings.extraKnownMarketplaces?.[name]) {
-      const updatedMarketplaces: Partial<
-        SettingsJson['extraKnownMarketplaces']
-      > = { ...settings.extraKnownMarketplaces }
+      const updatedMarketplaces: Partial<SettingsJson['extraKnownMarketplaces']> = {
+        ...settings.extraKnownMarketplaces,
+      }
       // Use undefined values (NOT delete) to signal key removal via mergeWith
       updatedMarketplaces[name] = undefined
-      updates.extraKnownMarketplaces =
-        updatedMarketplaces as SettingsJson['extraKnownMarketplaces']
+      updates.extraKnownMarketplaces = updatedMarketplaces as SettingsJson['extraKnownMarketplaces']
       needsUpdate = true
     }
 
@@ -2024,9 +1909,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
           `Failed to clean up marketplace '${name}' from ${source} settings: ${result.error.message}`,
         )
       } else {
-        logForDebugging(
-          `Cleaned up marketplace '${name}' from ${source} settings`,
-        )
+        logForDebugging(`Cleaned up marketplace '${name}' from ${source} settings`)
       }
     }
   }
@@ -2035,8 +1918,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
   // Also wipe their stored options/secrets — after marketplace removal
   // zero installations remain, same "last scope gone" condition as
   // uninstallPluginOp.
-  const { orphanedPaths, removedPluginIds } =
-    removeAllPluginsForMarketplace(name)
+  const { orphanedPaths, removedPluginIds } = removeAllPluginsForMarketplace(name)
   for (const installPath of orphanedPaths) {
     await markPluginVersionOrphaned(installPath)
   }
@@ -2055,9 +1937,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
  * @returns The marketplace object
  * @throws If marketplace file not found or invalid
  */
-async function readCachedMarketplace(
-  installLocation: string,
-): Promise<PluginMarketplace> {
+async function readCachedMarketplace(installLocation: string): Promise<PluginMarketplace> {
   // For git-sourced directories, the manifest lives at .zy-plugin/marketplace.json.
   // For url/file/directory sources it is the installLocation itself.
   // Try the nested path first; fall back to installLocation when it is a plain file
@@ -2078,9 +1958,7 @@ async function readCachedMarketplace(
  * Returns null if cache is missing or corrupted.
  * Use this for startup paths that should never block on network.
  */
-export async function getMarketplaceCacheOnly(
-  name: string,
-): Promise<PluginMarketplace | null> {
+export async function getMarketplaceCacheOnly(name: string): Promise<PluginMarketplace | null> {
   const fs = getFsImplementation()
   const configFile = getKnownMarketplacesFile()
 
@@ -2098,10 +1976,9 @@ export async function getMarketplaceCacheOnly(
     if (isENOENT(error)) {
       return null
     }
-    logForDebugging(
-      `Failed to read cached marketplace ${name}: ${errorMessage(error)}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`Failed to read cached marketplace ${name}: ${errorMessage(error)}`, {
+      level: 'warn',
+    })
     return null
   }
 }
@@ -2119,64 +1996,59 @@ export async function getMarketplaceCacheOnly(
  * @param name - The marketplace name to fetch
  * @returns The marketplace object or null if not found/failed
  */
-export let getMarketplace;
-getMarketplace = memoize(
-  async (name: string): Promise<PluginMarketplace> => {
-    const config = await loadKnownMarketplacesConfig()
-    const entry = config[name]
+export let getMarketplace
+getMarketplace = memoize(async (name: string): Promise<PluginMarketplace> => {
+  const config = await loadKnownMarketplacesConfig()
+  const entry = config[name]
 
-    if (!entry) {
-      throw new Error(
-        `Marketplace '${name}' not found in configuration. Available marketplaces: ${Object.keys(config).join(', ')}`,
-      )
-    }
+  if (!entry) {
+    throw new Error(
+      `Marketplace '${name}' not found in configuration. Available marketplaces: ${Object.keys(config).join(', ')}`,
+    )
+  }
 
-    // Legacy entries (pre-#19708) may have relative paths in global config.
-    // These are meaningless outside the project that wrote them — resolving
-    // against process.cwd() produces the wrong path. Give actionable guidance
-    // instead of a misleading ENOENT.
-    if (
-      isLocalMarketplaceSource(entry.source) &&
-      !isAbsolute(entry.source.path)
-    ) {
-      throw new Error(
-        `Marketplace "${name}" has a relative source path (${entry.source.path}) ` +
-          `in known_marketplaces.json — this is stale state from an older ` +
-          `ZY Code version. Run 'zy marketplace remove ${name}' and ` +
-          `re-add it from the original project directory.`,
-      )
-    }
+  // Legacy entries (pre-#19708) may have relative paths in global config.
+  // These are meaningless outside the project that wrote them — resolving
+  // against process.cwd() produces the wrong path. Give actionable guidance
+  // instead of a misleading ENOENT.
+  if (isLocalMarketplaceSource(entry.source) && !isAbsolute(entry.source.path)) {
+    throw new Error(
+      `Marketplace "${name}" has a relative source path (${entry.source.path}) ` +
+        `in known_marketplaces.json — this is stale state from an older ` +
+        `ZY Code version. Run 'zy marketplace remove ${name}' and ` +
+        `re-add it from the original project directory.`,
+    )
+  }
 
-    // Try to read from disk cache
-    try {
-      return await readCachedMarketplace(entry.installLocation)
-    } catch (error) {
-      // Log cache corruption before re-fetching
-      logForDebugging(
-        `Cache corrupted or missing for marketplace ${name}, re-fetching from source: ${errorMessage(error)}`,
-        {
-          level: 'warn',
-        },
-      )
-    }
+  // Try to read from disk cache
+  try {
+    return await readCachedMarketplace(entry.installLocation)
+  } catch (error) {
+    // Log cache corruption before re-fetching
+    logForDebugging(
+      `Cache corrupted or missing for marketplace ${name}, re-fetching from source: ${errorMessage(error)}`,
+      {
+        level: 'warn',
+      },
+    )
+  }
 
-    // Cache doesn't exist or is invalid, fetch from source
-    let marketplace: PluginMarketplace
-    try {
-      ;({ marketplace } = await loadAndCacheMarketplace(entry.source))
-    } catch (error) {
-      throw new Error(
-        `Failed to load marketplace "${name}" from source (${entry.source.source}): ${errorMessage(error)}`,
-      )
-    }
+  // Cache doesn't exist or is invalid, fetch from source
+  let marketplace: PluginMarketplace
+  try {
+    ;({ marketplace } = await loadAndCacheMarketplace(entry.source))
+  } catch (error) {
+    throw new Error(
+      `Failed to load marketplace "${name}" from source (${entry.source.source}): ${errorMessage(error)}`,
+    )
+  }
 
-    // Update lastUpdated only when we actually fetch
-    config[name]!.lastUpdated = new Date().toISOString()
-    await saveKnownMarketplacesConfig(config)
+  // Update lastUpdated only when we actually fetch
+  config[name]!.lastUpdated = new Date().toISOString()
+  await saveKnownMarketplacesConfig(config)
 
-    return marketplace
-  },
-)
+  return marketplace
+})
 
 /**
  * Get plugin by ID from cache only (no network calls).
@@ -2190,8 +2062,7 @@ export async function getPluginByIdCacheOnly(pluginId: string): Promise<{
   entry: PluginMarketplaceEntry
   marketplaceInstallLocation: string
 } | null> {
-  const { name: pluginName, marketplace: marketplaceName } =
-    parsePluginIdentifier(pluginId)
+  const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(pluginId)
   if (!pluginName || !marketplaceName) {
     return null
   }
@@ -2213,7 +2084,7 @@ export async function getPluginByIdCacheOnly(pluginId: string): Promise<{
       return null
     }
 
-    const plugin = marketplace.plugins.find(p => p.name === pluginName)
+    const plugin = marketplace.plugins.find((p) => p.name === pluginName)
     if (!plugin) {
       return null
     }
@@ -2247,8 +2118,7 @@ export async function getPluginById(pluginId: string): Promise<{
   }
 
   // Cache miss - try fetching from source
-  const { name: pluginName, marketplace: marketplaceName } =
-    parsePluginIdentifier(pluginId)
+  const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(pluginId)
   if (!pluginName || !marketplaceName) {
     return null
   }
@@ -2261,7 +2131,7 @@ export async function getPluginById(pluginId: string): Promise<{
     }
 
     const marketplace = await getMarketplace(marketplaceName)
-    const plugin = marketplace.plugins.find(p => p.name === pluginName)
+    const plugin = marketplace.plugins.find((p) => p.name === pluginName)
 
     if (!plugin) {
       return null
@@ -2272,10 +2142,7 @@ export async function getPluginById(pluginId: string): Promise<{
       marketplaceInstallLocation: marketplaceConfig.installLocation,
     }
   } catch (error) {
-    logForDebugging(
-      `Could not find plugin ${pluginId}: ${errorMessage(error)}`,
-      { level: 'debug' },
-    )
+    logForDebugging(`Could not find plugin ${pluginId}: ${errorMessage(error)}`, { level: 'debug' })
     return null
   }
 }
@@ -2301,9 +2168,7 @@ export async function refreshAllMarketplaces(): Promise<void> {
     // Seed-managed marketplaces are controlled by the seed image — refreshing
     // them is pointless (registerSeedMarketplaces overwrites on next startup).
     if (seedDirFor(entry.installLocation)) {
-      logForDebugging(
-        `Skipping seed-managed marketplace '${name}' in bulk refresh`,
-      )
+      logForDebugging(`Skipping seed-managed marketplace '${name}' in bulk refresh`)
       continue
     }
     // settings-sourced marketplaces have no upstream — see refreshMarketplace.
@@ -2321,12 +2186,7 @@ export async function refreshAllMarketplaces(): Promise<void> {
         config[name]!.lastUpdated = new Date().toISOString()
         continue
       }
-      if (
-        !getFeatureValue_CACHED_MAY_BE_STALE(
-          'zy_plugin_official_mkt_git_fallback',
-          true,
-        )
-      ) {
+      if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_plugin_official_mkt_git_fallback', true)) {
         logForDebugging(
           `Skipping official marketplace bulk refresh: GCS failed, git fallback disabled`,
         )
@@ -2339,12 +2199,9 @@ export async function refreshAllMarketplaces(): Promise<void> {
       config[name]!.lastUpdated = new Date().toISOString()
       config[name]!.installLocation = cachePath
     } catch (error) {
-      logForDebugging(
-        `Failed to refresh marketplace ${name}: ${errorMessage(error)}`,
-        {
-          level: 'error',
-        },
-      )
+      logForDebugging(`Failed to refresh marketplace ${name}: ${errorMessage(error)}`, {
+        level: 'error',
+      })
     }
   }
 
@@ -2384,9 +2241,7 @@ export async function refreshMarketplace(
   // inline plugins array surface as sourceChanged in the reconciler, which
   // re-materializes via addMarketplaceSource — refresh is not the vehicle.
   if (entry.source.source === 'settings') {
-    logForDebugging(
-      `Skipping refresh for settings-sourced marketplace '${name}' — no upstream`,
-    )
+    logForDebugging(`Skipping refresh for settings-sourced marketplace '${name}' — no upstream`)
     return
   }
 
@@ -2431,10 +2286,7 @@ export async function refreshMarketplace(
     // no data migration is needed — existing known_marketplaces.json entries
     // still say source:'github', which is true (GCS is a mirror).
     if (name === OFFICIAL_MARKETPLACE_NAME) {
-      const sha = await fetchOfficialMarketplaceFromGcs(
-        installLocation,
-        getMarketplacesCacheDir(),
-      )
+      const sha = await fetchOfficialMarketplaceFromGcs(installLocation, getMarketplacesCacheDir())
       if (sha !== null) {
         config[name] = { ...entry, lastUpdated: new Date().toISOString() }
         await saveKnownMarketplacesConfig(config)
@@ -2444,19 +2296,12 @@ export async function refreshMarketplace(
       // Default true (backend write perms are pending as of inc-5046); flip
       // to false via GrowthBook once the backend is confirmed live so new
       // clients NEVER hit GitHub for the official marketplace.
-      if (
-        !getFeatureValue_CACHED_MAY_BE_STALE(
-          'zy_plugin_official_mkt_git_fallback',
-          true,
-        )
-      ) {
+      if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_plugin_official_mkt_git_fallback', true)) {
         // Throw, don't return — every other failure path in this function
         // throws, and callers like ManageMarketplaces.tsx:259 increment
         // updatedCount on any non-throwing return. A silent return would
         // report "Updated 1 marketplace" when nothing was refreshed.
-        throw new Error(
-          'Official marketplace GCS fetch failed and git fallback is disabled',
-        )
+        throw new Error('Official marketplace GCS fetch failed and git fallback is disabled')
       }
       logForDebugging('Official marketplace GCS failed; falling back to git', {
         level: 'warn',
@@ -2530,9 +2375,7 @@ export async function refreshMarketplace(
         await readCachedMarketplace(installLocation)
       } catch {
         const sourceDisplay =
-          source.source === 'github'
-            ? source.repo
-            : redactUrlCredentials(source.url)
+          source.source === 'github' ? source.repo : redactUrlCredentials(source.url)
         const reason =
           name === 'zy-code-plugins'
             ? `We've deprecated "zy-code-plugins" in favor of "zy-plugins-official".`
@@ -2546,12 +2389,7 @@ export async function refreshMarketplace(
       }
     } else if (source.source === 'url') {
       // URL sources: re-download to existing file
-      await cacheMarketplaceFromUrl(
-        source.url,
-        installLocation,
-        source.headers,
-        onProgress,
-      )
+      await cacheMarketplaceFromUrl(source.url, installLocation, source.headers, onProgress)
     } else if (isLocalMarketplaceSource(source)) {
       // Local sources: no remote to update from, but validate the file still exists and is valid
       safeCallProgress(onProgress, 'Validating local marketplace')
@@ -2585,10 +2423,7 @@ export async function refreshMarketplace(
  * @param autoUpdate - Whether to enable auto-update
  * @throws If marketplace not found
  */
-export async function setMarketplaceAutoUpdate(
-  name: string,
-  autoUpdate: boolean,
-): Promise<void> {
+export async function setMarketplaceAutoUpdate(name: string, autoUpdate: boolean): Promise<void> {
   const config = await loadKnownMarketplacesConfig()
   const entry = config[name]
 
@@ -2625,14 +2460,9 @@ export async function setMarketplaceAutoUpdate(
   // source that declared it to avoid creating duplicates at wrong scope
   const declaringSource = getMarketplaceDeclaringSource(name)
   if (declaringSource) {
-    const declared =
-      getSettingsForSource(declaringSource)?.extraKnownMarketplaces?.[name]
+    const declared = getSettingsForSource(declaringSource)?.extraKnownMarketplaces?.[name]
     if (declared) {
-      saveMarketplaceToSettings(
-        name,
-        { source: declared.source, autoUpdate },
-        declaringSource,
-      )
+      saveMarketplaceToSettings(name, { source: declared.source, autoUpdate }, declaringSource)
     }
   }
 

@@ -76,10 +76,7 @@ const RAINBOW_SHIMMER_COLORS: Array<keyof Theme> = [
   'rainbow_violet_shimmer',
 ]
 
-export function getRainbowColor(
-  charIndex: number,
-  shimmer: boolean = false,
-): keyof Theme {
+export function getRainbowColor(charIndex: number, shimmer: boolean = false): keyof Theme {
   const colors = shimmer ? RAINBOW_SHIMMER_COLORS : RAINBOW_COLORS
   return colors[charIndex % colors.length]!
 }

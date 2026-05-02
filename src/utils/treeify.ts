@@ -78,7 +78,7 @@ export function treeify(obj: TreeNode, options: TreeifyOptions = {}): string {
     }
     visited.add(node)
 
-    const keys = Object.keys(node).filter(key => {
+    const keys = Object.keys(node).filter((key) => {
       const value = node[key]
       if (hideFunctions && typeof value === 'function') return false
       return true
@@ -90,15 +90,11 @@ export function treeify(obj: TreeNode, options: TreeifyOptions = {}): string {
       const nodePrefix = depth === 0 && index === 0 ? '' : prefix
 
       // Determine which tree character to use
-      const treeChar = isLastKey
-        ? DEFAULT_TREE_CHARS.lastBranch
-        : DEFAULT_TREE_CHARS.branch
+      const treeChar = isLastKey ? DEFAULT_TREE_CHARS.lastBranch : DEFAULT_TREE_CHARS.branch
       const coloredTreeChar = colorize(treeChar, treeCharColors.treeChar)
-      const coloredKey =
-        key.trim() === '' ? '' : colorize(key, treeCharColors.key)
+      const coloredKey = key.trim() === '' ? '' : colorize(key, treeCharColors.key)
 
-      let line =
-        nodePrefix + coloredTreeChar + (coloredKey ? ' ' + coloredKey : '')
+      let line = nodePrefix + coloredTreeChar + (coloredKey ? ' ' + coloredKey : '')
 
       // Check if we should add a colon (not for empty/whitespace keys)
       const shouldAddColon = key.trim() !== ''
@@ -106,34 +102,22 @@ export function treeify(obj: TreeNode, options: TreeifyOptions = {}): string {
       // Check for circular reference before recursing
       if (value && typeof value === 'object' && visited.has(value)) {
         const coloredValue = colorize('[Circular]', treeCharColors.value)
-        lines.push(
-          line + (shouldAddColon ? ': ' : line ? ' ' : '') + coloredValue,
-        )
+        lines.push(line + (shouldAddColon ? ': ' : line ? ' ' : '') + coloredValue)
       } else if (value && typeof value === 'object' && !Array.isArray(value)) {
         lines.push(line)
         // Calculate the continuation prefix for nested items
-        const continuationChar = isLastKey
-          ? DEFAULT_TREE_CHARS.empty
-          : DEFAULT_TREE_CHARS.line
-        const coloredContinuation = colorize(
-          continuationChar,
-          treeCharColors.treeChar,
-        )
+        const continuationChar = isLastKey ? DEFAULT_TREE_CHARS.empty : DEFAULT_TREE_CHARS.line
+        const coloredContinuation = colorize(continuationChar, treeCharColors.treeChar)
         const nextPrefix = nodePrefix + coloredContinuation + ' '
         growBranch(value, nextPrefix, isLastKey, depth + 1)
       } else if (Array.isArray(value)) {
         // Handle arrays
         lines.push(
-          line +
-            (shouldAddColon ? ': ' : line ? ' ' : '') +
-            '[Array(' +
-            value.length +
-            ')]',
+          line + (shouldAddColon ? ': ' : line ? ' ' : '') + '[Array(' + value.length + ')]',
         )
       } else if (showValues) {
         // Add value if showValues is true
-        const valueStr =
-          typeof value === 'function' ? '[Function]' : String(value)
+        const valueStr = typeof value === 'function' ? '[Function]' : String(value)
         const coloredValue = colorize(valueStr, treeCharColors.value)
         line += (shouldAddColon ? ': ' : line ? ' ' : '') + coloredValue
         lines.push(line)
@@ -157,10 +141,7 @@ export function treeify(obj: TreeNode, options: TreeifyOptions = {}): string {
     typeof obj[keys[0]] === 'string'
   ) {
     const firstKey = keys[0]
-    const coloredTreeChar = colorize(
-      DEFAULT_TREE_CHARS.lastBranch,
-      treeCharColors.treeChar,
-    )
+    const coloredTreeChar = colorize(DEFAULT_TREE_CHARS.lastBranch, treeCharColors.treeChar)
     const coloredValue = colorize(obj[firstKey] as string, treeCharColors.value)
     return coloredTreeChar + ' ' + coloredValue
   }

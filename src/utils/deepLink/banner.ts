@@ -52,14 +52,10 @@ export type DeepLinkBannerInfo = {
  * and whether its CLAUDE.md may be stale relative to upstream.
  */
 export function buildDeepLinkBanner(info: DeepLinkBannerInfo): string {
-  const lines = [
-    `This session was opened by an external deep link in ${tildify(info.cwd)}`,
-  ]
+  const lines = [`This session was opened by an external deep link in ${tildify(info.cwd)}`]
   if (info.repo) {
     const age = info.lastFetch ? formatRelativeTimeAgo(info.lastFetch) : 'never'
-    const stale =
-      !info.lastFetch ||
-      Date.now() - info.lastFetch.getTime() > STALE_FETCH_WARN_MS
+    const stale = !info.lastFetch || Date.now() - info.lastFetch.getTime() > STALE_FETCH_WARN_MS
     lines.push(
       `Resolved ${info.repo} from local clones · last fetched ${age}${stale ? ' — CLAUDE.md may be stale' : ''}`,
     )
@@ -85,17 +81,13 @@ export function buildDeepLinkBanner(info: DeepLinkBannerInfo): string {
  * doesn't read as "never fetched" just because the deep link landed in
  * a worktree.
  */
-export async function readLastFetchTime(
-  cwd: string,
-): Promise<Date | undefined> {
+export async function readLastFetchTime(cwd: string): Promise<Date | undefined> {
   const gitDir = await getGitDir(cwd)
   if (!gitDir) return undefined
   const commonDir = await getCommonDir(gitDir)
   const [local, common] = await Promise.all([
     mtimeOrUndefined(join(gitDir, 'FETCH_HEAD')),
-    commonDir
-      ? mtimeOrUndefined(join(commonDir, 'FETCH_HEAD'))
-      : Promise.resolve(undefined),
+    commonDir ? mtimeOrUndefined(join(commonDir, 'FETCH_HEAD')) : Promise.resolve(undefined),
   ])
   if (local && common) return local > common ? local : common
   return local ?? common

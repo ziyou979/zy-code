@@ -131,9 +131,7 @@ export async function connectVoiceStream(
   // browser-class JA3 fingerprint, so CF lets it through).
   const wsBaseUrl =
     process.env.VOICE_STREAM_BASE_URL ||
-    getOauthConfig()
-      .BASE_API_URL.replace('https://', 'wss://')
-      .replace('http://', 'ws://')
+    getOauthConfig().BASE_API_URL.replace('https://', 'wss://').replace('http://', 'ws://')
 
   if (process.env.VOICE_STREAM_BASE_URL) {
     logForDebugging(
@@ -154,10 +152,7 @@ export async function connectVoiceStream(
   // the server's project_bell_v2_config GrowthBook gate). The server
   // side is anthropics/anthropic#278327 + #281372; this lets us ramp
   // clients independently.
-  const isNova3 = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_cobalt_frost',
-    false,
-  )
+  const isNova3 = getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_frost', false)
   if (isNova3) {
     params.set('use_conversation_engine', 'true')
     params.set('stt_provider', 'deepgram-nova3')
@@ -225,9 +220,7 @@ export async function connectVoiceStream(
         )
         return
       }
-      logForDebugging(
-        `[voice_stream] Sending audio chunk: ${String(audioChunk.length)} bytes`,
-      )
+      logForDebugging(`[voice_stream] Sending audio chunk: ${String(audioChunk.length)} bytes`)
       // Copy the buffer before sending: NAPI Buffer objects from native
       // modules may share a pooled ArrayBuffer.  Creating a view with
       // `new Uint8Array(buf.buffer, offset, len)` can reference stale or
@@ -243,7 +236,7 @@ export async function connectVoiceStream(
       }
       finalizing = true
 
-      return new Promise<FinalizeSource>(resolve => {
+      return new Promise<FinalizeSource>((resolve) => {
         const safetyTimer = setTimeout(
           () => resolveFinalize?.('safety_timeout'),
           FINALIZE_TIMEOUTS_MS.safety,
@@ -268,9 +261,7 @@ export async function connectVoiceStream(
           // channel items). All resolve triggers must promote it;
           // centralize here. No-op when the close handler already did.
           if (lastTranscriptText) {
-            logForDebugging(
-              `[voice_stream] Promoting unreported interim before ${source} resolve`,
-            )
+            logForDebugging(`[voice_stream] Promoting unreported interim before ${source} resolve`)
             const t = lastTranscriptText
             lastTranscriptText = ''
             callbacks.onTranscript(t, true)
@@ -280,10 +271,7 @@ export async function connectVoiceStream(
         }
 
         // If the WebSocket is already closed, resolve immediately.
-        if (
-          ws.readyState === WebSocket.CLOSED ||
-          ws.readyState === WebSocket.CLOSING
-        ) {
+        if (ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
           resolveFinalize('ws_already_closed')
           return
         }
@@ -331,7 +319,7 @@ export async function connectVoiceStream(
 
     // Send periodic keepalive to prevent idle timeout
     keepaliveTimer = setInterval(
-      ws => {
+      (ws) => {
         if (ws.readyState === WebSocket.OPEN) {
           logForDebugging('[voice_stream] Sending periodic KeepAlive')
           ws.send(KEEPALIVE_MSG)
@@ -396,12 +384,7 @@ export async function connectVoiceStream(
           if (!isNova3 && lastTranscriptText) {
             const prev = lastTranscriptText.trimStart()
             const next = transcript.trimStart()
-            if (
-              prev &&
-              next &&
-              !next.startsWith(prev) &&
-              !prev.startsWith(next)
-            ) {
+            if (prev && next && !next.startsWith(prev) && !prev.startsWith(next)) {
               logForDebugging(
                 `[voice_stream] Auto-finalizing previous segment (new segment detected): "${lastTranscriptText}"`,
               )
@@ -439,8 +422,7 @@ export async function connectVoiceStream(
         break
       }
       case 'TranscriptError': {
-        const desc =
-          msg.description ?? msg.error_code ?? 'unknown transcription error'
+        const desc = msg.description ?? msg.error_code ?? 'unknown transcription error'
         logForDebugging(`[voice_stream] TranscriptError: ${desc}`)
         if (!finalizing) {
           callbacks.onError(desc)
@@ -462,9 +444,7 @@ export async function connectVoiceStream(
 
   ws.on('close', (code, reason) => {
     const reasonStr = reason?.toString() ?? ''
-    logForDebugging(
-      `[voice_stream] WebSocket closed: code=${String(code)} reason="${reasonStr}"`,
-    )
+    logForDebugging(`[voice_stream] WebSocket closed: code=${String(code)} reason="${reasonStr}"`)
     connected = false
     if (keepaliveTimer) {
       clearInterval(keepaliveTimer)
@@ -473,9 +453,7 @@ export async function connectVoiceStream(
     // If the server closed the connection before sending TranscriptEndpoint,
     // promote the last interim transcript to final so no text is lost.
     if (lastTranscriptText) {
-      logForDebugging(
-        '[voice_stream] Promoting unreported interim transcript to final on close',
-      )
+      logForDebugging('[voice_stream] Promoting unreported interim transcript to final on close')
       const finalText = lastTranscriptText
       lastTranscriptText = ''
       callbacks.onTranscript(finalText, true)
@@ -514,9 +492,7 @@ export async function connectVoiceStream(
     // successful 101 Switching Protocols response (anthropics/zy-code#40510).
     // 101 is never a rejection — bail before we destroy a working upgrade.
     if (status === 101) {
-      logForDebugging(
-        '[voice_stream] unexpected-response fired with 101; ignoring',
-      )
+      logForDebugging('[voice_stream] unexpected-response fired with 101; ignoring')
       return
     }
     logForDebugging(
@@ -526,10 +502,9 @@ export async function connectVoiceStream(
     res.resume()
     req.destroy()
     if (finalizing) return
-    callbacks.onError(
-      `WebSocket upgrade rejected with HTTP ${String(status)}`,
-      { fatal: status >= 400 && status < 500 },
-    )
+    callbacks.onError(`WebSocket upgrade rejected with HTTP ${String(status)}`, {
+      fatal: status >= 400 && status < 500,
+    })
   })
 
   ws.on('error', (err: Error) => {

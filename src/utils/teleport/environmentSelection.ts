@@ -1,8 +1,5 @@
 import { SETTING_SOURCES, type SettingSource } from '../settings/constants.js'
-import {
-  getSettings_DEPRECATED,
-  getSettingsForSource,
-} from '../settings/settings.js'
+import { getSettings_DEPRECATED, getSettingsForSource } from '../settings/settings.js'
 import { type EnvironmentResource, fetchEnvironments } from './environments.js'
 
 export type EnvironmentSelectionInfo = {
@@ -39,12 +36,12 @@ export async function getEnvironmentSelectionInfo(): Promise<EnvironmentSelectio
 
   // Find which environment would be selected
   let selectedEnvironment: EnvironmentResource =
-    environments.find(env => env.kind !== 'bridge') ?? environments[0]!
+    environments.find((env) => env.kind !== 'bridge') ?? environments[0]!
   let selectedEnvironmentSource: SettingSource | null = null
 
   if (defaultEnvironmentId) {
     const matchingEnvironment = environments.find(
-      env => env.environment_id === defaultEnvironmentId,
+      (env) => env.environment_id === defaultEnvironmentId,
     )
 
     if (matchingEnvironment) {
@@ -59,9 +56,7 @@ export async function getEnvironmentSelectionInfo(): Promise<EnvironmentSelectio
           continue
         }
         const sourceSettings = getSettingsForSource(source)
-        if (
-          sourceSettings?.remote?.defaultEnvironmentId === defaultEnvironmentId
-        ) {
+        if (sourceSettings?.remote?.defaultEnvironmentId === defaultEnvironmentId) {
           selectedEnvironmentSource = source
           break
         }

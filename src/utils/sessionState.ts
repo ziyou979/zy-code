@@ -44,28 +44,19 @@ export type SessionExternalMetadata = {
   task_summary?: string | null
 }
 
-type SessionStateChangedListener = (
-  state: SessionState,
-  details?: RequiresActionDetails,
-) => void
-type SessionMetadataChangedListener = (
-  metadata: SessionExternalMetadata,
-) => void
+type SessionStateChangedListener = (state: SessionState, details?: RequiresActionDetails) => void
+type SessionMetadataChangedListener = (metadata: SessionExternalMetadata) => void
 type PermissionModeChangedListener = (mode: PermissionMode) => void
 
 let stateListener: SessionStateChangedListener | null = null
 let metadataListener: SessionMetadataChangedListener | null = null
 let permissionModeListener: PermissionModeChangedListener | null = null
 
-export function setSessionStateChangedListener(
-  cb: SessionStateChangedListener | null,
-): void {
+export function setSessionStateChangedListener(cb: SessionStateChangedListener | null): void {
   stateListener = cb
 }
 
-export function setSessionMetadataChangedListener(
-  cb: SessionMetadataChangedListener | null,
-): void {
+export function setSessionMetadataChangedListener(cb: SessionMetadataChangedListener | null): void {
   metadataListener = cb
 }
 
@@ -76,9 +67,7 @@ export function setSessionMetadataChangedListener(
  * toolPermissionContext.mode (Shift+Tab, ExitPlanMode dialog, slash command,
  * bridge set_permission_mode, etc.).
  */
-export function setPermissionModeChangedListener(
-  cb: PermissionModeChangedListener | null,
-): void {
+export function setPermissionModeChangedListener(cb: PermissionModeChangedListener | null): void {
   permissionModeListener = cb
 }
 
@@ -133,9 +122,7 @@ export function notifySessionStateChanged(
   }
 }
 
-export function notifySessionMetadataChanged(
-  metadata: SessionExternalMetadata,
-): void {
+export function notifySessionMetadataChanged(metadata: SessionExternalMetadata): void {
   metadataListener?.(metadata)
 }
 

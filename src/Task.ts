@@ -12,12 +12,7 @@ export type TaskType =
   | 'monitor_mcp'
   | 'dream'
 
-export type TaskStatus =
-  | 'pending'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'killed'
+export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'killed'
 
 /**
  * 当任务处于终止状态时为 true，表示不会再发生状态转换。

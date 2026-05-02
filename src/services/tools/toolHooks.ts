@@ -7,11 +7,7 @@ import type z from 'zod/v4'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js'
 import type { HookProgress } from '../../types/hooks.js'
-import type {
-  AssistantMessage,
-  AttachmentMessage,
-  ProgressMessage,
-} from '../../types/message.js'
+import type { AssistantMessage, AttachmentMessage, ProgressMessage } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -119,8 +115,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
           yield {
             message: createAttachmentMessage({
               type: 'hook_stopped_continuation',
-              message:
-                result.stopReason || 'Execution stopped by PostToolUse hook',
+              message: result.stopReason || 'Execution stopped by PostToolUse hook',
               hookName: `PostToolUse:${tool.name}`,
               toolUseID: toolUseID,
               hookEvent: 'PostToolUse',
@@ -152,8 +147,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
       } catch (error) {
         const postToolDurationMs = Date.now() - postToolStartTime
         logEvent('zy_post_tool_hook_error', {
-          messageID:
-            messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           toolName: sanitizeToolNameForAnalytics(tool.name),
           isMcp: tool.isMcp ?? false,
           duration: postToolDurationMs,
@@ -169,8 +163,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
             : {}),
           ...(requestId
             ? {
-                requestId:
-                  requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                requestId: requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               }
             : {}),
         })
@@ -201,9 +194,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
   requestId: string | undefined,
   mcpServerType: McpServerType,
   mcpServerBaseUrl: string | undefined,
-): AsyncGenerator<
-  MessageUpdateLazy<AttachmentMessage | ProgressMessage<HookProgress>>
-> {
+): AsyncGenerator<MessageUpdateLazy<AttachmentMessage | ProgressMessage<HookProgress>>> {
   const postToolStartTime = Date.now()
   try {
     const appState = toolUseContext.getAppState()
@@ -281,8 +272,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
       } catch (hookError) {
         const postToolDurationMs = Date.now() - postToolStartTime
         logEvent('zy_post_tool_failure_hook_error', {
-          messageID:
-            messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           toolName: sanitizeToolNameForAnalytics(tool.name),
           isMcp: tool.isMcp ?? false,
           duration: postToolDurationMs,
@@ -297,8 +287,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
             : {}),
           ...(requestId
             ? {
-                requestId:
-                  requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                requestId: requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               }
             : {}),
         })
@@ -354,27 +343,15 @@ export async function resolveHookPermissionDecision(
       requiresInteraction && hookPermissionResult.updatedInput !== undefined
 
     if ((requiresInteraction && !interactionSatisfied) || requireCanUseTool) {
-      logForDebugging(
-        `Hook approved tool use for ${tool.name}, but canUseTool is required`,
-      )
+      logForDebugging(`Hook approved tool use for ${tool.name}, but canUseTool is required`)
       return {
-        decision: await canUseTool(
-          tool,
-          hookInput,
-          toolUseContext,
-          assistantMessage,
-          toolUseID,
-        ),
+        decision: await canUseTool(tool, hookInput, toolUseContext, assistantMessage, toolUseID),
         input: hookInput,
       }
     }
 
     // Hook allow skips the interactive prompt, but deny/ask rules still apply.
-    const ruleCheck = await checkRuleBasedPermissions(
-      tool,
-      hookInput,
-      toolUseContext,
-    )
+    const ruleCheck = await checkRuleBasedPermissions(tool, hookInput, toolUseContext)
     if (ruleCheck === null) {
       logForDebugging(
         interactionSatisfied
@@ -390,17 +367,9 @@ export async function resolveHookPermissionDecision(
       return { decision: ruleCheck, input: hookInput }
     }
     // ask rule — dialog required despite hook approval
-    logForDebugging(
-      `Hook approved tool use for ${tool.name}, but ask rule requires prompt`,
-    )
+    logForDebugging(`Hook approved tool use for ${tool.name}, but ask rule requires prompt`)
     return {
-      decision: await canUseTool(
-        tool,
-        hookInput,
-        toolUseContext,
-        assistantMessage,
-        toolUseID,
-      ),
+      decision: await canUseTool(tool, hookInput, toolUseContext, assistantMessage, toolUseID),
       input: hookInput,
     }
   }
@@ -412,11 +381,9 @@ export async function resolveHookPermissionDecision(
 
   // No hook decision or 'ask' — normal permission flow, possibly with
   // forceDecision so the dialog shows the hook's ask message.
-  const forceDecision =
-    hookPermissionResult?.behavior === 'ask' ? hookPermissionResult : undefined
+  const forceDecision = hookPermissionResult?.behavior === 'ask' ? hookPermissionResult : undefined
   const askInput =
-    hookPermissionResult?.behavior === 'ask' &&
-    hookPermissionResult.updatedInput
+    hookPermissionResult?.behavior === 'ask' && hookPermissionResult.updatedInput
       ? hookPermissionResult.updatedInput
       : input
   return {
@@ -444,9 +411,7 @@ export async function* runPreToolUseHooks(
 ): AsyncGenerator<
   | {
       type: 'message'
-      message: MessageUpdateLazy<
-        AttachmentMessage | ProgressMessage<HookProgress>
-      >
+      message: MessageUpdateLazy<AttachmentMessage | ProgressMessage<HookProgress>>
     }
   | { type: 'hookPermissionResult'; hookPermissionResult: PermissionResult }
   | { type: 'hookUpdatedInput'; updatedInput: Record<string, unknown> }
@@ -508,9 +473,7 @@ export async function* runPreToolUseHooks(
         }
         // Check for hook-defined permission behavior
         if (result.permissionBehavior !== undefined) {
-          logForDebugging(
-            `Hook result has permissionBehavior=${result.permissionBehavior}`,
-          )
+          logForDebugging(`Hook result has permissionBehavior=${result.permissionBehavior}`)
           const decisionReason: PermissionDecisionReason = {
             type: 'hook',
             hookName: `PreToolUse:${tool.name}`,
@@ -605,8 +568,7 @@ export async function* runPreToolUseHooks(
         logError(error)
         const durationMs = Date.now() - hookStartTime
         logEvent('zy_pre_tool_hook_error', {
-          messageID:
-            messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           toolName: sanitizeToolNameForAnalytics(tool.name),
           isMcp: tool.isMcp ?? false,
           duration: durationMs,
@@ -622,8 +584,7 @@ export async function* runPreToolUseHooks(
             : {}),
           ...(requestId
             ? {
-                requestId:
-                  requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                requestId: requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               }
             : {}),
         })

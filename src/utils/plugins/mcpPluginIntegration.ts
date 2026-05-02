@@ -42,14 +42,9 @@ async function loadMcpServersFromMcpb(
     // Use plugin.repository directly - it's already in "plugin@marketplace" format
     const pluginId = plugin.repository
 
-    const result = await loadMcpbFile(
-      mcpbPath,
-      plugin.path,
-      pluginId,
-      status => {
-        logForDebugging(`MCPB [${plugin.name}]: ${status}`)
-      },
-    )
+    const result = await loadMcpbFile(mcpbPath, plugin.path, pluginId, (status) => {
+      logForDebugging(`MCPB [${plugin.name}]: ${status}`)
+    })
 
     // Check if MCPB needs user configuration
     if ('status' in result && result.status === 'needs-config') {
@@ -87,10 +82,7 @@ async function loadMcpServersFromMcpb(
 
     // Determine error type based on error message
     const isUrl = mcpbPath.startsWith('http')
-    if (
-      isUrl &&
-      (errorMsg.includes('download') || errorMsg.includes('network'))
-    ) {
+    if (isUrl && (errorMsg.includes('download') || errorMsg.includes('network'))) {
       errors.push({
         type: 'mcpb-download-failed',
         source,
@@ -98,10 +90,7 @@ async function loadMcpServersFromMcpb(
         url: mcpbPath,
         reason: errorMsg,
       })
-    } else if (
-      errorMsg.includes('manifest') ||
-      errorMsg.includes('user configuration')
-    ) {
+    } else if (errorMsg.includes('manifest') || errorMsg.includes('user configuration')) {
       errors.push({
         type: 'mcpb-invalid-manifest',
         source,
@@ -135,10 +124,7 @@ export async function loadPluginMcpServers(
   let servers: Record<string, McpServerConfig> = {}
 
   // Check for .mcp.json in plugin directory first (lowest priority)
-  const defaultMcpServers = await loadMcpServersFromFile(
-    plugin.path,
-    '.mcp.json',
-  )
+  const defaultMcpServers = await loadMcpServersFromFile(plugin.path, '.mcp.json')
   if (defaultMcpServers) {
     servers = { ...servers, ...defaultMcpServers }
   }
@@ -151,20 +137,13 @@ export async function loadPluginMcpServers(
     if (typeof mcpServersSpec === 'string') {
       // Check if it's an MCPB file
       if (isMcpbSource(mcpServersSpec)) {
-        const mcpbServers = await loadMcpServersFromMcpb(
-          plugin,
-          mcpServersSpec,
-          errors,
-        )
+        const mcpbServers = await loadMcpServersFromMcpb(plugin, mcpServersSpec, errors)
         if (mcpbServers) {
           servers = { ...servers, ...mcpbServers }
         }
       } else {
         // Path to JSON file
-        const mcpServers = await loadMcpServersFromFile(
-          plugin.path,
-          mcpServersSpec,
-        )
+        const mcpServers = await loadMcpServersFromFile(plugin.path, mcpServersSpec)
         if (mcpServers) {
           servers = { ...servers, ...mcpServers }
         }
@@ -174,7 +153,7 @@ export async function loadPluginMcpServers(
       // Load all specs in parallel, then merge in original order so
       // last-wins collision semantics are preserved.
       const results = await Promise.all(
-        mcpServersSpec.map(async spec => {
+        mcpServersSpec.map(async (spec) => {
           try {
             if (typeof spec === 'string') {
               // Check if it's an MCPB file
@@ -287,9 +266,7 @@ export type UnconfiguredChannel = {
  * `UserConfigSchema` because the Zod schema in schemas.ts matches
  * `McpbUserConfigurationOption` field-for-field.
  */
-export function getUnconfiguredChannels(
-  plugin: LoadedPlugin,
-): UnconfiguredChannel[] {
+export function getUnconfiguredChannels(plugin: LoadedPlugin): UnconfiguredChannel[] {
   const channels = plugin.manifest.channels
   if (!channels || channels.length === 0) {
     return []
@@ -327,7 +304,7 @@ function loadChannelUserConfig(
   plugin: LoadedPlugin,
   serverName: string,
 ): UserConfigValues | undefined {
-  const channel = plugin.manifest.channels?.find(c => c.server === serverName)
+  const channel = plugin.manifest.channels?.find((c) => c.server === serverName)
   if (!channel?.userConfig) {
     return undefined
   }
@@ -370,7 +347,7 @@ export async function extractMcpServersFromPlugins(
   const allServers: Record<string, ScopedMcpServerConfig> = {}
 
   const scopedResults = await Promise.all(
-    plugins.map(async plugin => {
+    plugins.map(async (plugin) => {
       if (!plugin.enabled) return null
 
       const servers = await loadPluginMcpServers(plugin, errors)
@@ -411,11 +388,7 @@ export async function extractMcpServersFromPlugins(
         `Loaded ${Object.keys(servers).length} MCP servers from plugin ${plugin.name}`,
       )
 
-      return addPluginScopeToServers(
-        resolvedServers,
-        plugin.name,
-        plugin.source,
-      )
+      return addPluginScopeToServers(resolvedServers, plugin.name, plugin.source)
     }),
   )
 
@@ -504,7 +477,7 @@ export function resolvePluginMcpEnvironment(
 
       // Resolve args
       if (stdioConfig.args) {
-        stdioConfig.args = stdioConfig.args.map(arg => resolveValue(arg))
+        stdioConfig.args = stdioConfig.args.map((arg) => resolveValue(arg))
       }
 
       // Resolve environment variables and add CLAUDE_PLUGIN_ROOT / CLAUDE_PLUGIN_DATA
@@ -561,10 +534,9 @@ export function resolvePluginMcpEnvironment(
     const uniqueMissingVars = [...new Set(allMissingVars)]
     const varList = uniqueMissingVars.join(', ')
 
-    logForDebugging(
-      `Missing environment variables in plugin MCP config: ${varList}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`Missing environment variables in plugin MCP config: ${varList}`, {
+      level: 'warn',
+    })
 
     // Add error to the errors array if plugin and server names are provided
     if (pluginName && serverName) {
@@ -595,8 +567,7 @@ export async function getPluginMcpServers(
   }
 
   // Use cached servers if available
-  const servers =
-    plugin.mcpServers || (await loadPluginMcpServers(plugin, errors))
+  const servers = plugin.mcpServers || (await loadPluginMcpServers(plugin, errors))
   if (!servers) {
     return undefined
   }

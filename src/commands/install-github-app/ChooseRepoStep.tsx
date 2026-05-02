@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import TextInput from '../../components/TextInput.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { Box, Text } from '../../ink.js';
-import { useKeybindings } from '../../keybindings/useKeybinding.js';
+import React, { useState } from 'react'
+import TextInput from '../../components/TextInput.js'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { Box, Text } from '../../ink.js'
+import { useKeybindings } from '../../keybindings/useKeybinding.js'
 interface ChooseRepoStepProps {
-  currentRepo: string | null;
-  useCurrentRepo: boolean;
-  repoUrl: string;
-  onRepoUrlChange: (value: string) => void;
-  onToggleUseCurrentRepo: (useCurrentRepo: boolean) => void;
-  onSubmit: () => void;
+  currentRepo: string | null
+  useCurrentRepo: boolean
+  repoUrl: string
+  onRepoUrlChange: (value: string) => void
+  onToggleUseCurrentRepo: (useCurrentRepo: boolean) => void
+  onSubmit: () => void
 }
 export function ChooseRepoStep({
   currentRepo,
@@ -17,46 +17,110 @@ export function ChooseRepoStep({
   repoUrl,
   onRepoUrlChange,
   onSubmit,
-  onToggleUseCurrentRepo
+  onToggleUseCurrentRepo,
 }: ChooseRepoStepProps) {
-  const [cursorOffset, setCursorOffset] = useState(0);
-  const [showEmptyError, setShowEmptyError] = useState(false);
-  const terminalSize = useTerminalSize();
-  const textInputColumns = terminalSize.columns;
+  const [cursorOffset, setCursorOffset] = useState(0)
+  const [showEmptyError, setShowEmptyError] = useState(false)
+  const terminalSize = useTerminalSize()
+  const textInputColumns = terminalSize.columns
   const handleSubmit = () => {
-    const repoName = useCurrentRepo ? currentRepo : repoUrl;
+    const repoName = useCurrentRepo ? currentRepo : repoUrl
     if (!repoName?.trim()) {
-      setShowEmptyError(true);
-      return;
+      setShowEmptyError(true)
+      return
     }
-    onSubmit();
-  };
-  const isTextInputVisible = !useCurrentRepo || !currentRepo;
+    onSubmit()
+  }
+  const isTextInputVisible = !useCurrentRepo || !currentRepo
   const handlePrevious = () => {
-    onToggleUseCurrentRepo(true);
-    setShowEmptyError(false);
-  };
+    onToggleUseCurrentRepo(true)
+    setShowEmptyError(false)
+  }
   const handleNext = () => {
-    onToggleUseCurrentRepo(false);
-    setShowEmptyError(false);
-  };
-  useKeybindings({
-    "confirm:previous": handlePrevious,
-    "confirm:next": handleNext,
-    "confirm:yes": handleSubmit
-  }, {
-    context: "Confirmation",
-    isActive: !isTextInputVisible
-  });
-  useKeybindings({
-    "confirm:previous": handlePrevious,
-    "confirm:next": handleNext
-  }, {
-    context: "Confirmation",
-    isActive: isTextInputVisible
-  });
-  return <>{<Box flexDirection="column" borderStyle="round" paddingX={1}>{<Box flexDirection="column" marginBottom={1}><Text bold={true}>Install GitHub App</Text><Text dimColor={true}>Select GitHub repository</Text></Box>}{currentRepo && <Box marginBottom={1}><Text bold={useCurrentRepo} color={useCurrentRepo ? "permission" : undefined}>{useCurrentRepo ? "> " : "  "}Use current repository: {currentRepo}</Text></Box>}{<Box marginBottom={1}><Text bold={!useCurrentRepo || !currentRepo} color={!useCurrentRepo || !currentRepo ? "permission" : undefined}>{!useCurrentRepo || !currentRepo ? "> " : "  "}{currentRepo ? "Enter a different repository" : "Enter repository"}</Text></Box>}{(!useCurrentRepo || !currentRepo) && <Box marginLeft={2} marginBottom={1}><TextInput value={repoUrl} onChange={value => {
-          onRepoUrlChange(value);
-          setShowEmptyError(false);
-        }} onSubmit={handleSubmit} focus={true} placeholder={"Enter a repo as owner/repo or https://github.com/owner/repo\u2026"} columns={textInputColumns} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} showCursor={true} /></Box>}</Box>}{showEmptyError && <Box marginLeft={3} marginBottom={1}><Text color="error">Please enter a repository name to continue</Text></Box>}{<Box marginLeft={3}><Text dimColor={true}>{currentRepo ? "\u2191/\u2193 to select \xB7 " : ""}Enter to continue</Text></Box>}</>;
+    onToggleUseCurrentRepo(false)
+    setShowEmptyError(false)
+  }
+  useKeybindings(
+    {
+      'confirm:previous': handlePrevious,
+      'confirm:next': handleNext,
+      'confirm:yes': handleSubmit,
+    },
+    {
+      context: 'Confirmation',
+      isActive: !isTextInputVisible,
+    },
+  )
+  useKeybindings(
+    {
+      'confirm:previous': handlePrevious,
+      'confirm:next': handleNext,
+    },
+    {
+      context: 'Confirmation',
+      isActive: isTextInputVisible,
+    },
+  )
+  return (
+    <>
+      {
+        <Box flexDirection="column" borderStyle="round" paddingX={1}>
+          {
+            <Box flexDirection="column" marginBottom={1}>
+              <Text bold={true}>Install GitHub App</Text>
+              <Text dimColor={true}>Select GitHub repository</Text>
+            </Box>
+          }
+          {currentRepo && (
+            <Box marginBottom={1}>
+              <Text bold={useCurrentRepo} color={useCurrentRepo ? 'permission' : undefined}>
+                {useCurrentRepo ? '> ' : '  '}Use current repository: {currentRepo}
+              </Text>
+            </Box>
+          )}
+          {
+            <Box marginBottom={1}>
+              <Text
+                bold={!useCurrentRepo || !currentRepo}
+                color={!useCurrentRepo || !currentRepo ? 'permission' : undefined}
+              >
+                {!useCurrentRepo || !currentRepo ? '> ' : '  '}
+                {currentRepo ? 'Enter a different repository' : 'Enter repository'}
+              </Text>
+            </Box>
+          }
+          {(!useCurrentRepo || !currentRepo) && (
+            <Box marginLeft={2} marginBottom={1}>
+              <TextInput
+                value={repoUrl}
+                onChange={(value) => {
+                  onRepoUrlChange(value)
+                  setShowEmptyError(false)
+                }}
+                onSubmit={handleSubmit}
+                focus={true}
+                placeholder={'Enter a repo as owner/repo or https://github.com/owner/repo\u2026'}
+                columns={textInputColumns}
+                cursorOffset={cursorOffset}
+                onChangeCursorOffset={setCursorOffset}
+                showCursor={true}
+              />
+            </Box>
+          )}
+        </Box>
+      }
+      {showEmptyError && (
+        <Box marginLeft={3} marginBottom={1}>
+          <Text color="error">Please enter a repository name to continue</Text>
+        </Box>
+      )}
+      {
+        <Box marginLeft={3}>
+          <Text dimColor={true}>
+            {currentRepo ? '\u2191/\u2193 to select \xB7 ' : ''}Enter to continue
+          </Text>
+        </Box>
+      }
+    </>
+  )
 }

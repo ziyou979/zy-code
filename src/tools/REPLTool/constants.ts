@@ -23,10 +23,7 @@ export const REPL_TOOL_NAME = 'REPL'
 export function isReplModeEnabled(): boolean {
   if (isEnvDefinedFalsy(process.env.ZY_CODE_REPL)) return false
   if (isEnvTruthy(process.env.CLAUDE_REPL_MODE)) return true
-  return (
-    isInternalBuild() &&
-    process.env.ZY_CODE_ENTRYPOINT === 'cli'
-  )
+  return isInternalBuild() && process.env.ZY_CODE_ENTRYPOINT === 'cli'
 }
 
 /**

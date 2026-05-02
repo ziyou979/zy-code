@@ -1,52 +1,84 @@
-import figures from 'figures';
-import * as React from 'react';
-import { useContext } from 'react';
-import { useQueuedMessage } from '../../context/QueuedMessageContext.js';
-import { Box, Text } from '../../ink.js';
-import { formatBriefTimestamp } from '../../utils/formatBriefTimestamp.js';
-import { findThinkingTriggerPositions, getRainbowColor, isUltrathinkEnabled } from '../../utils/thinking.js';
-import { MessageActionsSelectedContext } from '../messageActions.js';
+import figures from 'figures'
+import * as React from 'react'
+import { useContext } from 'react'
+import { useQueuedMessage } from '../../context/QueuedMessageContext.js'
+import { Box, Text } from '../../ink.js'
+import { formatBriefTimestamp } from '../../utils/formatBriefTimestamp.js'
+import {
+  findThinkingTriggerPositions,
+  getRainbowColor,
+  isUltrathinkEnabled,
+} from '../../utils/thinking.js'
+import { MessageActionsSelectedContext } from '../messageActions.js'
 type Props = {
-  text: string;
-  useBriefLayout?: boolean;
-  timestamp?: string;
-};
-export function HighlightedThinkingText({
-  text,
-  useBriefLayout,
-  timestamp
-}: Props) {
-  const isQueued = useQueuedMessage()?.isQueued ?? false;
-  const isSelected = useContext(MessageActionsSelectedContext);
-  const pointerColor = isSelected ? "suggestion" : "subtle";
+  text: string
+  useBriefLayout?: boolean
+  timestamp?: string
+}
+export function HighlightedThinkingText({ text, useBriefLayout, timestamp }: Props) {
+  const isQueued = useQueuedMessage()?.isQueued ?? false
+  const isSelected = useContext(MessageActionsSelectedContext)
+  const pointerColor = isSelected ? 'suggestion' : 'subtle'
   if (useBriefLayout) {
-    const ts = timestamp ? formatBriefTimestamp(timestamp) : "";
-    return <Box flexDirection="column" paddingLeft={2}>{<Box flexDirection="row">{<Text color={isQueued ? "subtle" : "briefLabelYou"}>You</Text>}{ts ? <Text dimColor={true}> {ts}</Text> : null}</Box>}{<Text color={isQueued ? "subtle" : "text"}>{text}</Text>}</Box>;
+    const ts = timestamp ? formatBriefTimestamp(timestamp) : ''
+    return (
+      <Box flexDirection="column" paddingLeft={2}>
+        {
+          <Box flexDirection="row">
+            {<Text color={isQueued ? 'subtle' : 'briefLabelYou'}>You</Text>}
+            {ts ? <Text dimColor={true}> {ts}</Text> : null}
+          </Box>
+        }
+        {<Text color={isQueued ? 'subtle' : 'text'}>{text}</Text>}
+      </Box>
+    )
   }
-  let parts;
-  let earlyReturn;
-  earlyReturn = Symbol.for("react.early_return_sentinel");
-  const triggers = isUltrathinkEnabled() ? findThinkingTriggerPositions(text) : [];
+  let parts
+  let earlyReturn
+  earlyReturn = Symbol.for('react.early_return_sentinel')
+  const triggers = isUltrathinkEnabled() ? findThinkingTriggerPositions(text) : []
   if (triggers.length === 0) {
-    earlyReturn = <Text>{<Text color={pointerColor}>{figures.pointer} </Text>}{<Text color="text">{text}</Text>}</Text>;
+    earlyReturn = (
+      <Text>
+        {<Text color={pointerColor}>{figures.pointer} </Text>}
+        {<Text color="text">{text}</Text>}
+      </Text>
+    )
   } else {
-    parts = [];
-    let cursor = 0;
+    parts = []
+    let cursor = 0
     for (const t of triggers) {
       if (t.start > cursor) {
-        parts.push(<Text key={`plain-${cursor}`} color="text">{text.slice(cursor, t.start)}</Text>);
+        parts.push(
+          <Text key={`plain-${cursor}`} color="text">
+            {text.slice(cursor, t.start)}
+          </Text>,
+        )
       }
       for (let i = t.start; i < t.end; i++) {
-        parts.push(<Text key={`rb-${i}`} color={getRainbowColor(i - t.start)}>{text[i]}</Text>);
+        parts.push(
+          <Text key={`rb-${i}`} color={getRainbowColor(i - t.start)}>
+            {text[i]}
+          </Text>,
+        )
       }
-      cursor = t.end;
+      cursor = t.end
     }
     if (cursor < text.length) {
-      parts.push(<Text key={`plain-${cursor}`} color="text">{text.slice(cursor)}</Text>);
+      parts.push(
+        <Text key={`plain-${cursor}`} color="text">
+          {text.slice(cursor)}
+        </Text>,
+      )
     }
   }
-  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn;
+  if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
+    return earlyReturn
   }
-  return <Text>{<Text color={pointerColor}>{figures.pointer} </Text>}{parts}</Text>;
+  return (
+    <Text>
+      {<Text color={pointerColor}>{figures.pointer} </Text>}
+      {parts}
+    </Text>
+  )
 }

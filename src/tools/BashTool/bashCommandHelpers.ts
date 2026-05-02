@@ -30,7 +30,7 @@ async function segmentedCommandPermissionResult(
   checkers: CommandIdentityCheckers,
 ): Promise<PermissionResult> {
   // Check for multiple cd commands across all segments
-  const cdCommands = segments.filter(segment => {
+  const cdCommands = segments.filter((segment) => {
     const trimmed = segment.trim()
     return checkers.isNormalizedCdCommand(trimmed)
   })
@@ -115,7 +115,7 @@ async function segmentedCommandPermissionResult(
   }
 
   const allAllowed = Array.from(segmentResults.values()).every(
-    result => result.behavior === 'allow',
+    (result) => result.behavior === 'allow',
   )
 
   if (allAllowed) {
@@ -132,11 +132,7 @@ async function segmentedCommandPermissionResult(
   // Collect suggestions from segments that need approval
   const suggestions: PermissionUpdate[] = []
   for (const [, result] of segmentResults) {
-    if (
-      result.behavior !== 'allow' &&
-      'suggestions' in result &&
-      result.suggestions
-    ) {
+    if (result.behavior !== 'allow' && 'suggestions' in result && result.suggestions) {
       suggestions.push(...result.suggestions)
     }
   }
@@ -159,9 +155,7 @@ async function segmentedCommandPermissionResult(
  * treating filenames as commands in permission checking.
  * Uses ParsedCommand to preserve original quoting.
  */
-async function buildSegmentWithoutRedirections(
-  segmentCommand: string,
-): Promise<string> {
+async function buildSegmentWithoutRedirections(segmentCommand: string): Promise<string> {
   // Fast path: skip parsing if no redirection operators present
   if (!segmentCommand.includes('>')) {
     return segmentCommand
@@ -192,12 +186,7 @@ export async function checkCommandOperatorPermissions(
   if (!parsed) {
     return { behavior: 'passthrough', message: tSync('bash.permission.parseFailed') }
   }
-  return bashToolCheckCommandOperatorPermissions(
-    input,
-    bashToolHasPermissionFn,
-    checkers,
-    parsed,
-  )
+  return bashToolCheckCommandOperatorPermissions(input, bashToolHasPermissionFn, checkers, parsed)
 }
 
 /**
@@ -215,8 +204,7 @@ async function bashToolCheckCommandOperatorPermissions(
   // 1. Check for unsafe compound commands (subshells, command groups).
   const tsAnalysis = parsed.getTreeSitterAnalysis()
   const isUnsafeCompound = tsAnalysis
-    ? tsAnalysis.compoundStructure.hasSubshell ||
-      tsAnalysis.compoundStructure.hasCommandGroup
+    ? tsAnalysis.compoundStructure.hasSubshell || tsAnalysis.compoundStructure.hasCommandGroup
     : isUnsafeCompoundCommand_DEPRECATED(input.command)
   if (isUnsafeCompound) {
     // This command contains an operator like `>` that we don't support as a subcommand separator
@@ -251,14 +239,9 @@ async function bashToolCheckCommandOperatorPermissions(
 
   // Strip output redirections from each segment while preserving quotes
   const segments = await Promise.all(
-    pipeSegments.map(segment => buildSegmentWithoutRedirections(segment)),
+    pipeSegments.map((segment) => buildSegmentWithoutRedirections(segment)),
   )
 
   // Handle as segmented command
-  return segmentedCommandPermissionResult(
-    input,
-    segments,
-    bashToolHasPermissionFn,
-    checkers,
-  )
+  return segmentedCommandPermissionResult(input, segments, bashToolHasPermissionFn, checkers)
 }

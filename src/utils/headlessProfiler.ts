@@ -31,8 +31,7 @@ const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)
 // Decision made once at module load - non-sampled users pay no profiling cost
 const STATSIG_SAMPLE_RATE = 0.05
 // eslint-disable-next-line custom-rules/no-process-env-top-level
-const STATSIG_LOGGING_SAMPLED =
-  isInternalBuild() || Math.random() < STATSIG_SAMPLE_RATE
+const STATSIG_LOGGING_SAMPLED = isInternalBuild() || Math.random() < STATSIG_SAMPLE_RATE
 
 // Enable profiling if either detailed mode OR sampled for Statsig
 const SHOULD_PROFILE = DETAILED_PROFILING || STATSIG_LOGGING_SAMPLED
@@ -91,9 +90,7 @@ export function headlessProfilerCheckpoint(name: string): void {
   perf.mark(`${MARK_PREFIX}${name}`)
 
   if (DETAILED_PROFILING) {
-    logForDebugging(
-      `[headlessProfiler] Checkpoint: ${name} at ${perf.now().toFixed(1)}ms`,
-    )
+    logForDebugging(`[headlessProfiler] Checkpoint: ${name} at ${perf.now().toFixed(1)}ms`)
   }
 }
 
@@ -111,7 +108,7 @@ export function logHeadlessProfilerTurn(): void {
   const allMarks = perf.getEntriesByType('mark')
 
   // Filter to only our headless marks
-  const marks = allMarks.filter(mark => mark.name.startsWith(MARK_PREFIX))
+  const marks = allMarks.filter((mark) => mark.name.startsWith(MARK_PREFIX))
   if (marks.length === 0) return
 
   // Build checkpoint lookup (strip prefix for easier access)

@@ -278,9 +278,7 @@ export function getPartialCompactPrompt(
 ): string {
   const template =
     // @ts-ignore
-    direction === 'up_to'
-      ? PARTIAL_COMPACT_UP_TO_PROMPT
-      : PARTIAL_COMPACT_PROMPT
+    direction === 'up_to' ? PARTIAL_COMPACT_UP_TO_PROMPT : PARTIAL_COMPACT_PROMPT
   let prompt = NO_TOOLS_PREAMBLE + template
 
   if (customInstructions && customInstructions.trim() !== '') {
@@ -315,10 +313,7 @@ export function formatCompactSummary(summary: string): string {
 
   // Strip analysis section — it's a drafting scratchpad that improves summary
   // quality but has no informational value once the summary is written.
-  formattedSummary = formattedSummary.replace(
-    /<analysis>[\s\S]*?<\/analysis>/,
-    '',
-  )
+  formattedSummary = formattedSummary.replace(/<analysis>[\s\S]*?<\/analysis>/, '')
 
   // Extract and format summary section
   const summaryMatch = formattedSummary.match(/<summary>([\s\S]*?)<\/summary>/)

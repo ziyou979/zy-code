@@ -14,10 +14,7 @@ import { cleanupOldVersions } from './nativeInstaller/index.js'
 import { cleanupOldPastes } from './pasteStore.js'
 import { getProjectsDir } from './sessionStorage.js'
 import { getSettingsWithAllErrors } from './settings/allErrors.js'
-import {
-  getSettings_DEPRECATED,
-  rawSettingsContainsKey,
-} from './settings/settings.js'
+import { getSettings_DEPRECATED, rawSettingsContainsKey } from './settings/settings.js'
 import { TOOL_RESULTS_SUBDIR } from './toolResultStorage.js'
 import { cleanupStaleAgentWorktrees } from './worktree.js'
 
@@ -25,8 +22,7 @@ const DEFAULT_CLEANUP_PERIOD_DAYS = 30
 
 function getCutoffDate(): Date {
   const settings = getSettings_DEPRECATED() || {}
-  const cleanupPeriodDays =
-    settings.cleanupPeriodDays ?? DEFAULT_CLEANUP_PERIOD_DAYS
+  const cleanupPeriodDays = settings.cleanupPeriodDays ?? DEFAULT_CLEANUP_PERIOD_DAYS
   const cleanupPeriodMs = cleanupPeriodDays * 24 * 60 * 60 * 1000
   return new Date(Date.now() - cleanupPeriodMs)
 }
@@ -36,10 +32,7 @@ export type CleanupResult = {
   errors: number
 }
 
-export function addCleanupResults(
-  a: CleanupResult,
-  b: CleanupResult,
-): CleanupResult {
+export function addCleanupResults(a: CleanupResult, b: CleanupResult): CleanupResult {
   return {
     messages: a.messages + b.messages,
     errors: a.errors + b.errors,
@@ -110,10 +103,8 @@ export async function cleanupOldMessageFiles(): Promise<CleanupResult> {
     }
 
     const mcpLogDirs = dirents
-      .filter(
-        dirent => dirent.isDirectory() && dirent.name.startsWith('mcp-logs-'),
-      )
-      .map(dirent => join(baseCachePath, dirent.name))
+      .filter((dirent) => dirent.isDirectory() && dirent.name.startsWith('mcp-logs-'))
+      .map((dirent) => join(baseCachePath, dirent.name))
 
     for (const mcpLogDir of mcpLogDirs) {
       // Clean up files in MCP log directory
@@ -185,9 +176,7 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
           continue
         }
         try {
-          if (
-            await unlinkIfOld(join(projectDir, entry.name), cutoffDate, fsImpl)
-          ) {
+          if (await unlinkIfOld(join(projectDir, entry.name), cutoffDate, fsImpl)) {
             result.messages++
           }
         } catch {
@@ -208,13 +197,7 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
         for (const toolEntry of toolDirs) {
           if (toolEntry.isFile()) {
             try {
-              if (
-                await unlinkIfOld(
-                  join(toolResultsDir, toolEntry.name),
-                  cutoffDate,
-                  fsImpl,
-                )
-              ) {
+              if (await unlinkIfOld(join(toolResultsDir, toolEntry.name), cutoffDate, fsImpl)) {
                 result.messages++
               }
             } catch {
@@ -231,13 +214,7 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
             for (const tf of toolFiles) {
               if (!tf.isFile()) continue
               try {
-                if (
-                  await unlinkIfOld(
-                    join(toolDirPath, tf.name),
-                    cutoffDate,
-                    fsImpl,
-                  )
-                ) {
+                if (await unlinkIfOld(join(toolDirPath, tf.name), cutoffDate, fsImpl)) {
                   result.messages++
                 }
               } catch {
@@ -320,11 +297,11 @@ export async function cleanupOldFileHistoryBackups(): Promise<CleanupResult> {
     }
 
     const fileHistorySessionsDirs = dirents
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => join(fileHistoryStorageDir, dirent.name))
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => join(fileHistoryStorageDir, dirent.name))
 
     await Promise.all(
-      fileHistorySessionsDirs.map(async fileHistorySessionDir => {
+      fileHistorySessionsDirs.map(async (fileHistorySessionDir) => {
         try {
           const stats = await fsImpl.stat(fileHistorySessionDir)
           if (stats.mtime < cutoffDate) {
@@ -365,8 +342,8 @@ export async function cleanupOldSessionEnvDirs(): Promise<CleanupResult> {
     }
 
     const sessionEnvDirs = dirents
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => join(sessionEnvBaseDir, dirent.name))
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => join(sessionEnvBaseDir, dirent.name))
 
     for (const sessionEnvDir of sessionEnvDirs) {
       try {
@@ -409,11 +386,7 @@ export async function cleanupOldDebugLogs(): Promise<CleanupResult> {
 
   for (const dirent of dirents) {
     // Preserve the 'latest' symlink
-    if (
-      !dirent.isFile() ||
-      !dirent.name.endsWith('.txt') ||
-      dirent.name === 'latest'
-    ) {
+    if (!dirent.isFile() || !dirent.name.endsWith('.txt') || dirent.name === 'latest') {
       continue
     }
     try {
@@ -487,8 +460,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
     const byPackage = new Map<string, { key: string; time: number }[]>()
     for (const entry of anthropicEntries) {
       const atVersionIdx = entry.key.lastIndexOf('@')
-      const pkgName =
-        atVersionIdx > 0 ? entry.key.slice(0, atVersionIdx) : entry.key
+      const pkgName = atVersionIdx > 0 ? entry.key.slice(0, atVersionIdx) : entry.key
       const existing = byPackage.get(pkgName) ?? []
       existing.push(entry)
       byPackage.set(pkgName, existing)
@@ -506,9 +478,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
       }
     }
 
-    await Promise.all(
-      keysToRemove.map(key => cacache.rm.entry(npmCachePath, key)),
-    )
+    await Promise.all(keysToRemove.map((key) => cacache.rm.entry(npmCachePath, key)))
 
     await fs.writeFile(markerPath, new Date().toISOString())
 

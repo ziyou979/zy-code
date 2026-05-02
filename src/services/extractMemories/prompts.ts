@@ -104,11 +104,7 @@ export function buildExtractCombinedPrompt(
   skipIndex = false,
 ): string {
   if (!feature('TEAMMEM')) {
-    return buildExtractAutoOnlyPrompt(
-      newMessageCount,
-      existingMemories,
-      skipIndex,
-    )
+    return buildExtractAutoOnlyPrompt(newMessageCount, existingMemories, skipIndex)
   }
 
   const howToSave = skipIndex

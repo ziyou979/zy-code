@@ -40,17 +40,13 @@ export async function fetchAndStoreZyCodeFirstTokenDate(): Promise<void> {
     if (firstTokenDate !== null) {
       const dateTime = new Date(firstTokenDate).getTime()
       if (isNaN(dateTime)) {
-        logError(
-          new Error(
-            `从 API 收到无效的 first_token_date：${firstTokenDate}`,
-          ),
-        )
+        logError(new Error(`从 API 收到无效的 first_token_date：${firstTokenDate}`))
         // 不保存无效日期
         return
       }
     }
 
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       ZyCodeFirstTokenDate: firstTokenDate,
     }))

@@ -76,11 +76,7 @@ export function createSelectionState(): SelectionState {
   }
 }
 
-export function startSelection(
-  s: SelectionState,
-  col: number,
-  row: number,
-): void {
+export function startSelection(s: SelectionState, col: number, row: number): void {
   s.anchor = { col, row }
   // Focus is not set until the first drag motion. A click-release with no
   // drag leaves focus null → hasSelection/selectionBounds return false/null
@@ -97,19 +93,14 @@ export function startSelection(
   s.lastPressHadAlt = false
 }
 
-export function updateSelection(
-  s: SelectionState,
-  col: number,
-  row: number,
-): void {
+export function updateSelection(s: SelectionState, col: number, row: number): void {
   if (!s.isDragging) return
   // First motion at the same cell as anchor is a no-op. Terminals in mode
   // 1002 can fire a drag event at the anchor cell (sub-pixel tremor, or a
   // motion-release pair). Setting focus here would turn a bare click into
   // a 1-cell selection and clobber the clipboard via useCopyOnSelect. Once
   // focus is set (real drag), we track normally including back to anchor.
-  if (!s.focus && s.anchor && s.anchor.col === col && s.anchor.row === row)
-    return
+  if (!s.focus && s.anchor && s.anchor.col === col && s.anchor.row === row) return
   s.focus = { col, row }
 }
 
@@ -159,11 +150,7 @@ function charClass(c: string): 0 | 1 | 2 {
  * null 如果点击超出边界或落在 noSelect 单元格上。由
  * selectWordAt（初始双击）和 extendWordSelection（拖拽）使用。
  */
-function wordBoundsAt(
-  screen: Screen,
-  col: number,
-  row: number,
-): { lo: number; hi: number } | null {
+function wordBoundsAt(screen: Screen, col: number, row: number): { lo: number; hi: number } | null {
   if (row < 0 || row >= screen.height) return null
   const width = screen.width
   const noSelect = screen.noSelect
@@ -237,12 +224,7 @@ function comparePoints(a: Point, b: Point): number {
  * 设置 isDragging=true 和 anchorSpan 以便后续拖拽逐字扩展
  * 选择（macOS 原生行为）。
  */
-export function selectWordAt(
-  s: SelectionState,
-  screen: Screen,
-  col: number,
-  row: number,
-): void {
+export function selectWordAt(s: SelectionState, screen: Screen, col: number, row: number): void {
   const b = wordBoundsAt(screen, col, row)
   if (!b) return
   const lo = { col: b.lo, row }
@@ -269,11 +251,7 @@ function isUrlChar(c: string): boolean {
  * 跟踪会拦截它。从 getHyperlinkAt 调用作为回退，
  * 当单元格没有 OSC 8 hyperlink 时。
  */
-export function findPlainTextUrlAt(
-  screen: Screen,
-  col: number,
-  row: number,
-): string | undefined {
+export function findPlainTextUrlAt(screen: Screen, col: number, row: number): string | undefined {
   if (row < 0 || row >= screen.height) return undefined
   const width = screen.width
   const noSelect = screen.noSelect
@@ -365,11 +343,7 @@ export function findPlainTextUrlAt(
  * 和尾部空白修剪，以便复制的文本只是可见的
  * 行内容。
  */
-export function selectLineAt(
-  s: SelectionState,
-  screen: Screen,
-  row: number,
-): void {
+export function selectLineAt(s: SelectionState, screen: Screen, row: number): void {
   if (row < 0 || row >= screen.height) return
   const lo = { col: 0, row }
   const hi = { col: screen.width - 1, row }
@@ -386,12 +360,7 @@ export function selectLineAt(
  * 当鼠标在 noSelect 单元格上或超出边界时，字模式回退到原始单元格，
  * 所以拖拽到装订线仍然扩展。
  */
-export function extendSelection(
-  s: SelectionState,
-  screen: Screen,
-  col: number,
-  row: number,
-): void {
+export function extendSelection(s: SelectionState, screen: Screen, col: number, row: number): void {
   if (!s.isDragging || !s.anchorSpan) return
   const span = s.anchorSpan
   let mLo: Point
@@ -422,13 +391,7 @@ export function extendSelection(
 
 /** 语义键盘焦点移动。见 ink.tsx 中的 moveSelectionFocus 了解
  *  如何应用屏幕边界 + 行换行。 */
-export type FocusMove =
-  | 'left'
-  | 'right'
-  | 'up'
-  | 'down'
-  | 'lineStart'
-  | 'lineEnd'
+export type FocusMove = 'left' | 'right' | 'up' | 'down' | 'lineStart' | 'lineEnd'
 
 /**
  * 设置焦点到（col, row）用于键盘选择扩展（shift+arrow）。
@@ -480,24 +443,15 @@ export function shiftSelection(
   // and scrolledOffAbove stays stale (highlight ≠ copy).
   const vAnchor = (s.virtualAnchorRow ?? s.anchor.row) + dRow
   const vFocus = (s.virtualFocusRow ?? s.focus.row) + dRow
-  if (
-    (vAnchor < minRow && vFocus < minRow) ||
-    (vAnchor > maxRow && vFocus > maxRow)
-  ) {
+  if ((vAnchor < minRow && vFocus < minRow) || (vAnchor > maxRow && vFocus > maxRow)) {
     clearSelection(s)
     return
   }
   // Debt = how far the nearer endpoint overshoots each edge. When debt
   // shrinks (reverse scroll), those rows are back on-screen — pop from
   // the accumulator so getSelectedText doesn't double-count them.
-  const oldMin = Math.min(
-    s.virtualAnchorRow ?? s.anchor.row,
-    s.virtualFocusRow ?? s.focus.row,
-  )
-  const oldMax = Math.max(
-    s.virtualAnchorRow ?? s.anchor.row,
-    s.virtualFocusRow ?? s.focus.row,
-  )
+  const oldMin = Math.min(s.virtualAnchorRow ?? s.anchor.row, s.virtualFocusRow ?? s.focus.row)
+  const oldMax = Math.max(s.virtualAnchorRow ?? s.anchor.row, s.virtualFocusRow ?? s.focus.row)
   const oldAboveDebt = Math.max(0, minRow - oldMin)
   const oldBelowDebt = Math.max(0, oldMax - maxRow)
   const newAboveDebt = Math.max(0, minRow - Math.min(vAnchor, vFocus))
@@ -524,10 +478,8 @@ export function shiftSelection(
   // that's the normal establish-debt path, not stale.
   if (s.scrolledOffAbove.length > newAboveDebt) {
     // Above pushes newest at END → keep END.
-    s.scrolledOffAbove =
-      newAboveDebt > 0 ? s.scrolledOffAbove.slice(-newAboveDebt) : []
-    s.scrolledOffAboveSW =
-      newAboveDebt > 0 ? s.scrolledOffAboveSW.slice(-newAboveDebt) : []
+    s.scrolledOffAbove = newAboveDebt > 0 ? s.scrolledOffAbove.slice(-newAboveDebt) : []
+    s.scrolledOffAboveSW = newAboveDebt > 0 ? s.scrolledOffAboveSW.slice(-newAboveDebt) : []
   }
   if (s.scrolledOffBelow.length > newBelowDebt) {
     // Below unshifts newest at FRONT → keep FRONT.
@@ -544,8 +496,7 @@ export function shiftSelection(
   }
   s.anchor = shift(s.anchor, vAnchor)
   s.focus = shift(s.focus, vFocus)
-  s.virtualAnchorRow =
-    vAnchor < minRow || vAnchor > maxRow ? vAnchor : undefined
+  s.virtualAnchorRow = vAnchor < minRow || vAnchor > maxRow ? vAnchor : undefined
   s.virtualFocusRow = vFocus < minRow || vFocus > maxRow ? vFocus : undefined
   // anchorSpan 不进行虚拟跟踪：它用于字/行拖拽扩展，
   // 与键盘滚动往返情况无关。
@@ -570,12 +521,7 @@ export function shiftSelection(
  * anchor 下的内容现在位于不同的视口行，所以 anchor
  * 必须跟随它。Focus 保持不变（保持在鼠标位置）。
  */
-export function shiftAnchor(
-  s: SelectionState,
-  dRow: number,
-  minRow: number,
-  maxRow: number,
-): void {
+export function shiftAnchor(s: SelectionState, dRow: number, minRow: number, maxRow: number): void {
   if (!s.anchor) return
   // 与 shiftSelection/shiftSelectionForFollow 相同的虚拟行跟踪：
   // 拖拽→跟随转换交给 shiftSelectionForFollow，它读取
@@ -637,9 +583,7 @@ export function shiftSelectionForFollow(
   // 而不是真正的预钳位行计算债务，并且永远不会弹出累加器
   // — getSelectedText 重复计算屏幕外的行。
   const rawAnchor = (s.virtualAnchorRow ?? s.anchor.row) + dRow
-  const rawFocus = s.focus
-    ? (s.virtualFocusRow ?? s.focus.row) + dRow
-    : undefined
+  const rawFocus = s.focus ? (s.virtualFocusRow ?? s.focus.row) + dRow : undefined
   if (rawAnchor < minRow && rawFocus !== undefined && rawFocus < minRow) {
     clearSelection(s)
     return true
@@ -650,12 +594,9 @@ export function shiftSelectionForFollow(
   if (s.focus && rawFocus !== undefined) {
     s.focus = { col: s.focus.col, row: clamp(rawFocus, minRow, maxRow) }
   }
-  s.virtualAnchorRow =
-    rawAnchor < minRow || rawAnchor > maxRow ? rawAnchor : undefined
+  s.virtualAnchorRow = rawAnchor < minRow || rawAnchor > maxRow ? rawAnchor : undefined
   s.virtualFocusRow =
-    rawFocus !== undefined && (rawFocus < minRow || rawFocus > maxRow)
-      ? rawFocus
-      : undefined
+    rawFocus !== undefined && (rawFocus < minRow || rawFocus > maxRow) ? rawFocus : undefined
   // anchorSpan 不进行虚拟跟踪（字/行扩展，与
   // 键盘滚动往返无关）— 从当前行直接钳位。
   if (s.anchorSpan) {
@@ -694,11 +635,7 @@ export function selectionBounds(s: SelectionState): {
  * 检查（col, row）处的单元格是否在当前选择范围内。
  * 由渲染器用于应用反向样式。
  */
-export function isCellSelected(
-  s: SelectionState,
-  col: number,
-  row: number,
-): boolean {
+export function isCellSelected(s: SelectionState, col: number, row: number): boolean {
   const b = selectionBounds(s)
   if (!b) return false
   const { start, end } = b
@@ -712,12 +649,7 @@ export function isCellSelected(
  *  延续（screen.softWrap[row+1]>0）时，钳位到该内容末尾
  *  列并跳过尾部修剪，以便词分隔符空格在连接时保留。
  *  见 Screen.softWrap 了解为什么钳位是必要的。 */
-function extractRowText(
-  screen: Screen,
-  row: number,
-  colStart: number,
-  colEnd: number,
-): string {
+function extractRowText(screen: Screen, row: number, colStart: number, colEnd: number): string {
   const noSelect = screen.noSelect
   const rowOff = row * screen.width
   const contentEnd = row + 1 < screen.height ? screen.softWrap[row + 1]! : 0
@@ -731,10 +663,7 @@ function extractRowText(
     if (!cell) continue
     // 跳过 spacer tail（宽字符的后半部分）— head 已包含
     // 完整的字素。SpacerHead 是行尾的空白。
-    if (
-      cell.width === CellWidth.SpacerTail ||
-      cell.width === CellWidth.SpacerHead
-    ) {
+    if (cell.width === CellWidth.SpacerTail || cell.width === CellWidth.SpacerHead) {
       continue
     }
     line += cell.char
@@ -746,11 +675,7 @@ function extractRowText(
  *  逻辑行。push(text, sw) 仅在 sw=false 时在文本前追加换行符
  *（即该行开始新的逻辑行）。sw=true 的行
  *  连接到前一行。 */
-function joinRows(
-  lines: string[],
-  text: string,
-  sw: boolean | undefined,
-): void {
+function joinRows(lines: string[], text: string, sw: boolean | undefined): void {
   if (sw && lines.length > 0) {
     lines[lines.length - 1] += text
   } else {

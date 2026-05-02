@@ -7,11 +7,7 @@
 import { useCallback, useRef } from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/metadata.js'
-import {
-  useAppState,
-  useAppStateStore,
-  useSetAppState,
-} from 'src/state/AppState.js'
+import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import { isVimModeEnabled } from '../components/PromptInput/utils.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../components/Spinner/types.js'
@@ -38,9 +34,7 @@ import { emitTaskTerminatedSdk } from '../utils/sdkEventQueue.js'
 const KILL_AGENTS_CONFIRM_WINDOW_MS = 3000
 
 type CancelRequestHandlerProps = {
-  setToolUseConfirmQueue: (
-    f: (toolUseConfirmQueue: ToolUseConfirm[]) => ToolUseConfirm[],
-  ) => void
+  setToolUseConfirmQueue: (f: (toolUseConfirmQueue: ToolUseConfirm[]) => ToolUseConfirm[]) => void
   onCancel: () => void
   onAgentsKilled: () => void
   isMessageSelectorVisible: boolean
@@ -82,14 +76,12 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
   const queuedCommandsLength = useCommandQueue().length
   const { addNotification, removeNotification } = useNotifications()
   const lastKillAgentsPressRef = useRef<number>(0)
-  const viewSelectionMode = useAppState(s => s.viewSelectionMode)
+  const viewSelectionMode = useAppState((s) => s.viewSelectionMode)
 
   const handleCancel = useCallback(() => {
     const cancelProps = {
-      source:
-        'escape' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      streamMode:
-        streamMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: 'escape' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      streamMode: streamMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }
 
     // 优先级 1：如果有正在运行的 task，首先取消它
@@ -113,13 +105,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     logEvent('zy_cancel', cancelProps)
     setToolUseConfirmQueue(() => [])
     onCancel()
-  }, [
-    abortSignal,
-    popCommandFromQueue,
-    setToolUseConfirmQueue,
-    onCancel,
-    streamMode,
-  ])
+  }, [abortSignal, popCommandFromQueue, setToolUseConfirmQueue, onCancel, streamMode])
 
   // 判断此 handler 是否应该处于激活状态
   // 其他上下文（Transcript、HistorySearch、Help）有各自的 escape 处理函数
@@ -158,8 +144,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
   // 当主线程在 prompt 处空闲时，绝不能抢占 ctrl+c——
   // 那会阻止 copy-selection handler 和双击退出接收到按键。
   const isCtrlCActive =
-    isContextActive &&
-    (canCancelRunningTask || hasQueuedCommands || isViewingTeammate)
+    isContextActive && (canCancelRunningTask || hasQueuedCommands || isViewingTeammate)
 
   useKeybinding('chat:cancel', handleCancel, {
     context: 'Chat',
@@ -188,7 +173,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     const summary =
       descriptions.length === 1
         ? `Background agent "${descriptions[0]}" was stopped by the user.`
-        : `${descriptions.length} background agents were stopped by the user: ${descriptions.map(d => `"${d}"`).join(', ')}.`
+        : `${descriptions.length} background agents were stopped by the user: ${descriptions.map((d) => `"${d}"`).join(', ')}.`
     enqueuePendingNotification({ value: summary, mode: 'task-notification' })
     onAgentsKilled()
     return true
@@ -225,7 +210,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
   const handleKillAgents = useCallback(() => {
     const tasks = store.getState().tasks
     const hasRunningAgents = Object.values(tasks).some(
-      t => t.type === 'local_agent' && t.status === 'running',
+      (t) => t.type === 'local_agent' && t.status === 'running',
     )
     if (!hasRunningAgents) {
       addNotification({
@@ -243,8 +228,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
       lastKillAgentsPressRef.current = 0
       removeNotification('kill-agents-confirm')
       logEvent('zy_cancel', {
-        source:
-          'kill_agents' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        source: 'kill_agents' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       clearCommandQueue()
       killAllAgentsAndNotify()
@@ -252,11 +236,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     }
     // 第一次按键——在状态栏显示确认提示
     lastKillAgentsPressRef.current = now
-    const shortcut = getShortcutDisplay(
-      'chat:killAgents',
-      'Chat',
-      'ctrl+x ctrl+k',
-    )
+    const shortcut = getShortcutDisplay('chat:killAgents', 'Chat', 'ctrl+x ctrl+k')
     addNotification({
       key: 'kill-agents-confirm',
       text: `Press ${shortcut} again to stop background agents`,

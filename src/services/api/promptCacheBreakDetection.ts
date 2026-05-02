@@ -143,10 +143,7 @@ function isExcludedModel(model: string): boolean {
  * nothing meaningful to compare against. Their cache metrics are still
  * logged via zy_api_success for analytics.
  */
-function getTrackingKey(
-  querySource: QuerySource,
-  agentId?: AgentId,
-): string | null {
+function getTrackingKey(querySource: QuerySource, agentId?: AgentId): string | null {
   if ((querySource as any) === 'compact') return 'repl_main_thread'
   for (const prefix of TRACKED_SOURCE_PREFIXES) {
     if (querySource.startsWith(prefix)) return agentId || querySource
@@ -154,10 +151,8 @@ function getTrackingKey(
   return null
 }
 
-function stripCacheControl(
-  items: ReadonlyArray<Record<string, unknown>>,
-): unknown[] {
-  return items.map(item => {
+function stripCacheControl(items: ReadonlyArray<Record<string, unknown>>): unknown[] {
+  return items.map((item) => {
     if (!('cache_control' in item)) return item
     const { cache_control: _, ...rest } = item
     return rest
@@ -200,14 +195,10 @@ function getSystemCharCount(system: TextBlock[]): number {
   return total
 }
 
-function buildDiffableContent(
-  system: TextBlock[],
-  tools: ToolDefinition[],
-  model: string,
-): string {
-  const systemText = system.map(b => b.text).join('\n\n')
+function buildDiffableContent(system: TextBlock[], tools: ToolDefinition[], model: string): string {
+  const systemText = system.map((b) => b.text).join('\n\n')
   const toolDetails = tools
-    .map(t => {
+    .map((t) => {
       if (!('name' in t)) return 'unknown'
       const desc = 'description' in t ? t.description : ''
       const schema = 'inputSchema' in t ? jsonStringify(t.inputSchema) : ''
@@ -272,20 +263,17 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
     // scope flips (global↔org/none) and TTL flips (1h↔5m) that the stripped
     // hash can't see because the text content is identical.
     const cacheControlHash = computeHash(
-      system.map(b => ('cache_control' in b ? b.cache_control : null)),
+      system.map((b) => ('cache_control' in b ? b.cache_control : null)),
     )
-    const toolNames = toolSchemas.map(t => ('name' in t ? t.name : 'unknown'))
+    const toolNames = toolSchemas.map((t) => ('name' in t ? t.name : 'unknown'))
     // Only compute per-tool hashes when the aggregate changed — common case
     // (tools unchanged) skips N extra jsonStringify calls.
-    const computeToolHashes = () =>
-      computePerToolHashes(strippedTools, toolNames)
+    const computeToolHashes = () => computePerToolHashes(strippedTools, toolNames)
     const systemCharCount = getSystemCharCount(system)
-    const lazyDiffableContent = () =>
-      buildDiffableContent(system, toolSchemas, model)
+    const lazyDiffableContent = () => buildDiffableContent(system, toolSchemas, model)
     const sortedBetas = [...betas].sort()
     const effortStr = effortValue === undefined ? '' : String(effortValue)
-    const extraBodyHash =
-      extraBodyParams === undefined ? 0 : computeHash(extraBodyParams)
+    const extraBodyHash = extraBodyParams === undefined ? 0 : computeHash(extraBodyParams)
 
     const prev = previousStateBySource.get(key)
 
@@ -326,11 +314,9 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
     const toolSchemasChanged = toolsHash !== prev.toolsHash
     const modelChanged = model !== prev.model
     const cacheControlChanged = cacheControlHash !== prev.cacheControlHash
-    const globalCacheStrategyChanged =
-      globalCacheStrategy !== prev.globalCacheStrategy
+    const globalCacheStrategyChanged = globalCacheStrategy !== prev.globalCacheStrategy
     const betasChanged =
-      sortedBetas.length !== prev.betas.length ||
-      sortedBetas.some((b, i) => b !== prev.betas[i])
+      sortedBetas.length !== prev.betas.length || sortedBetas.some((b, i) => b !== prev.betas[i])
     const autoModeChanged = autoModeActive !== prev.autoModeActive
     const overageChanged = isUsingOverage !== prev.isUsingOverage
     const cachedMCChanged = cachedMCEnabled !== prev.cachedMCEnabled
@@ -354,8 +340,8 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
       const newToolSet = new Set(toolNames)
       const prevBetaSet = new Set(prev.betas)
       const newBetaSet = new Set(sortedBetas)
-      const addedTools = toolNames.filter(n => !prevToolSet.has(n))
-      const removedTools = prev.toolNames.filter(n => !newToolSet.has(n))
+      const addedTools = toolNames.filter((n) => !prevToolSet.has(n))
+      const removedTools = prev.toolNames.filter((n) => !newToolSet.has(n))
       const changedToolSchemas: string[] = []
       if (toolSchemasChanged) {
         const newHashes = computeToolHashes()
@@ -389,8 +375,8 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
         newModel: model,
         prevGlobalCacheStrategy: prev.globalCacheStrategy,
         newGlobalCacheStrategy: globalCacheStrategy,
-        addedBetas: sortedBetas.filter(b => !prevBetaSet.has(b)),
-        removedBetas: prev.betas.filter(b => !newBetaSet.has(b)),
+        addedBetas: sortedBetas.filter((b) => !prevBetaSet.has(b)),
+        removedBetas: prev.betas.filter((b) => !newBetaSet.has(b)),
         prevEffortValue: prev.effortValue,
         newEffortValue: effortStr,
         buildPrevDiffableContent: prev.buildDiffableContent,
@@ -446,7 +432,7 @@ export async function checkResponseForCacheBreak(
 
     // Calculate time since last call for TTL detection by finding the most recent
     // assistant message timestamp in the messages array (before the current response)
-    const lastAssistantMessage = messages.findLast(m => m.type === 'assistant')
+    const lastAssistantMessage = messages.findLast((m) => m.type === 'assistant')
     const timeSinceLastAssistantMsg = lastAssistantMessage
       ? Date.now() - new Date(lastAssistantMessage.timestamp).getTime()
       : null
@@ -472,10 +458,7 @@ export async function checkResponseForCacheBreak(
     // Detect a cache break: cache read dropped >5% from previous AND
     // the absolute drop exceeds the minimum threshold.
     const tokenDrop = prevCacheRead - cacheReadTokens
-    if (
-      cacheReadTokens >= prevCacheRead * 0.95 ||
-      tokenDrop < MIN_CACHE_MISS_TOKENS
-    ) {
+    if (cacheReadTokens >= prevCacheRead * 0.95 || tokenDrop < MIN_CACHE_MISS_TOKENS) {
       state.pendingChanges = null
       return
     }
@@ -484,18 +467,12 @@ export async function checkResponseForCacheBreak(
     const parts: string[] = []
     if (changes) {
       if (changes.modelChanged) {
-        parts.push(
-          `model changed (${changes.previousModel} → ${changes.newModel})`,
-        )
+        parts.push(`model changed (${changes.previousModel} → ${changes.newModel})`)
       }
       if (changes.systemPromptChanged) {
         const charDelta = changes.systemCharDelta
         const charInfo =
-          charDelta === 0
-            ? ''
-            : charDelta > 0
-              ? ` (+${charDelta} chars)`
-              : ` (${charDelta} chars)`
+          charDelta === 0 ? '' : charDelta > 0 ? ` (+${charDelta} chars)` : ` (${charDelta} chars)`
         parts.push(`system prompt changed${charInfo}`)
       }
       if (changes.toolSchemasChanged) {
@@ -520,12 +497,8 @@ export async function checkResponseForCacheBreak(
         parts.push('cache_control changed (scope or TTL)')
       }
       if (changes.betasChanged) {
-        const added = changes.addedBetas.length
-          ? `+${changes.addedBetas.join(',')}`
-          : ''
-        const removed = changes.removedBetas.length
-          ? `-${changes.removedBetas.join(',')}`
-          : ''
+        const added = changes.addedBetas.length ? `+${changes.addedBetas.join(',')}` : ''
+        const removed = changes.removedBetas.length ? `-${changes.removedBetas.join(',')}` : ''
         const diff = [added, removed].filter(Boolean).join(' ')
         parts.push(`betas changed${diff ? ` (${diff})` : ''}`)
       }
@@ -550,11 +523,9 @@ export async function checkResponseForCacheBreak(
 
     // Check if time gap suggests TTL expiration
     const lastAssistantMsgOver5minAgo =
-      timeSinceLastAssistantMsg !== null &&
-      timeSinceLastAssistantMsg > CACHE_TTL_5MIN_MS
+      timeSinceLastAssistantMsg !== null && timeSinceLastAssistantMsg > CACHE_TTL_5MIN_MS
     const lastAssistantMsgOver1hAgo =
-      timeSinceLastAssistantMsg !== null &&
-      timeSinceLastAssistantMsg > CACHE_TTL_1HOUR_MS
+      timeSinceLastAssistantMsg !== null && timeSinceLastAssistantMsg > CACHE_TTL_1HOUR_MS
 
     // Post PR #19823 BQ analysis (bq-queries/prompt-caching/cache_break_pr19823_analysis.sql):
     // when all client-side flags are false and the gap is under TTL, ~90% of breaks
@@ -592,19 +563,13 @@ export async function checkResponseForCacheBreak(
       // MCP tools collapse to 'mcp' (user-configured, could leak paths).
       addedTools: (changes?.addedTools ?? [])
         .map(sanitizeToolName)
-        .join(
-          ',',
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       removedTools: (changes?.removedTools ?? [])
         .map(sanitizeToolName)
-        .join(
-          ',',
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       changedToolSchemas: (changes?.changedToolSchemas ?? [])
         .map(sanitizeToolName)
-        .join(
-          ',',
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       // Beta header names and cache strategy are fixed enum-like values,
       // not code or filepaths. requestId is an opaque server-generated ID.
       addedBetas: (changes?.addedBetas ?? []).join(
@@ -624,8 +589,7 @@ export async function checkResponseForCacheBreak(
       timeSinceLastAssistantMsg: timeSinceLastAssistantMsg ?? -1,
       lastAssistantMsgOver5minAgo,
       lastAssistantMsgOver1hAgo,
-      requestId: (requestId ??
-        '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      requestId: (requestId ?? '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     // Write diff file for ant debugging via --debug. The path is included in
@@ -655,10 +619,7 @@ export async function checkResponseForCacheBreak(
  * The next API response will have lower cache read tokens — that's
  * expected, not a cache break.
  */
-export function notifyCacheDeletion(
-  querySource: QuerySource,
-  agentId?: AgentId,
-): void {
+export function notifyCacheDeletion(querySource: QuerySource, agentId?: AgentId): void {
   const key = getTrackingKey(querySource, agentId)
   const state = key ? previousStateBySource.get(key) : undefined
   if (state) {
@@ -671,10 +632,7 @@ export function notifyCacheDeletion(
  * Compaction legitimately reduces message count, so cache read tokens
  * will naturally drop on the next call — that's not a break.
  */
-export function notifyCompaction(
-  querySource: QuerySource,
-  agentId?: AgentId,
-): void {
+export function notifyCompaction(querySource: QuerySource, agentId?: AgentId): void {
   const key = getTrackingKey(querySource, agentId)
   const state = key ? previousStateBySource.get(key) : undefined
   if (state) {
@@ -697,13 +655,7 @@ async function writeCacheBreakDiff(
   try {
     const diffPath = getCacheBreakDiffPath()
     await mkdir(getZyTempDir(), { recursive: true })
-    const patch = createPatch(
-      'prompt-state',
-      prevContent,
-      newContent,
-      'before',
-      'after',
-    )
+    const patch = createPatch('prompt-state', prevContent, newContent, 'before', 'after')
     await writeFile(diffPath, patch)
     return diffPath
   } catch {

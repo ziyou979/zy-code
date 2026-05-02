@@ -71,12 +71,9 @@ function getExtraCertsPathFromConfig(): string | undefined {
     )
 
     // Settings override global config (same precedence as applyConfigEnvironmentVariables)
-    const path =
-      settingsEnv?.NODE_EXTRA_CA_CERTS || globalEnv?.NODE_EXTRA_CA_CERTS
+    const path = settingsEnv?.NODE_EXTRA_CA_CERTS || globalEnv?.NODE_EXTRA_CA_CERTS
     if (path) {
-      logForDebugging(
-        `CA certs: Found NODE_EXTRA_CA_CERTS in config/settings: ${path}`,
-      )
+      logForDebugging(`CA certs: Found NODE_EXTRA_CA_CERTS in config/settings: ${path}`)
     }
     return path
   } catch (error) {

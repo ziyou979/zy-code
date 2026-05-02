@@ -97,8 +97,7 @@ export function isInITerm2(): boolean {
   const hasItermSessionId = !!process.env.ITERM_SESSION_ID
   const terminalIsITerm = env.terminal === 'iTerm.app'
 
-  isInITerm2Cached =
-    termProgram === 'iTerm.app' || hasItermSessionId || terminalIsITerm
+  isInITerm2Cached = termProgram === 'iTerm.app' || hasItermSessionId || terminalIsITerm
 
   return isInITerm2Cached
 }

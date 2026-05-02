@@ -11,12 +11,7 @@
  * trivial without reasoning through a helper's conditional rendering.
  */
 
-export const MEMORY_TYPES = [
-  'user',
-  'feedback',
-  'project',
-  'reference',
-] as const
+export const MEMORY_TYPES = ['user', 'feedback', 'project', 'reference'] as const
 
 export type MemoryType = (typeof MEMORY_TYPES)[number]
 
@@ -27,7 +22,7 @@ export type MemoryType = (typeof MEMORY_TYPES)[number]
  */
 export function parseMemoryType(raw: unknown): MemoryType | undefined {
   if (typeof raw !== 'string') return undefined
-  return MEMORY_TYPES.find(t => t === raw)
+  return MEMORY_TYPES.find((t) => t === raw)
 }
 
 /**

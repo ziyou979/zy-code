@@ -99,10 +99,7 @@ function formatToolInput(input: unknown): string {
  * Returns a summary of recent assistant messages to provide context
  * for "why" this command is being run.
  */
-function extractConversationContext(
-  messages: Message[],
-  maxChars = 1000,
-): string {
+function extractConversationContext(messages: Message[], maxChars = 1000): string {
   // Get recent assistant messages (they contain Zy's reasoning)
   const assistantMessages = messages
     .filter((m): m is AssistantMessage => m.type === 'assistant')
@@ -114,16 +111,14 @@ function extractConversationContext(
   for (const msg of assistantMessages.reverse()) {
     // Extract text content from assistant message
     const textBlocks = msg.message.content
-      .filter(c => c.type === 'text')
-      .map(c => ('text' in c ? c.text : ''))
+      .filter((c) => c.type === 'text')
+      .map((c) => ('text' in c ? c.text : ''))
       .join(' ')
 
     if (textBlocks && totalChars < maxChars) {
       const remaining = maxChars - totalChars
       const truncated =
-        textBlocks.length > remaining
-          ? textBlocks.slice(0, remaining) + '...'
-          : textBlocks
+        textBlocks.length > remaining ? textBlocks.slice(0, remaining) + '...' : textBlocks
       contextParts.unshift(truncated)
       totalChars += truncated.length
     }
@@ -160,9 +155,7 @@ export async function generatePermissionExplanation({
 
   try {
     const formattedInput = formatToolInput(toolInput)
-    const conversationContext = messages?.length
-      ? extractConversationContext(messages)
-      : ''
+    const conversationContext = messages?.length ? extractConversationContext(messages) : ''
 
     const userPrompt = `Tool: ${toolName}
 ${toolDescription ? `Description: ${toolDescription}\n` : ''}
@@ -191,7 +184,7 @@ Explain this command in context.`
     )
 
     // Extract structured data from tool use block
-    const toolUseBlock = response.content.find(c => c.type === 'tool_call')
+    const toolUseBlock = response.content.find((c) => c.type === 'tool_call')
     if (toolUseBlock && toolUseBlock.type === 'tool_call') {
       logForDebugging(
         `Permission explainer: tool input: ${jsonStringify(toolUseBlock.input).slice(0, 500)}`,

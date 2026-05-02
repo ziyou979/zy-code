@@ -1,5 +1,5 @@
-import { createContext, type RefObject, useContext } from 'react';
-import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
+import { createContext, type RefObject, useContext } from 'react'
+import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 
 /**
  * Set by FullscreenLayout when rendering content in its `modal` slot —
@@ -19,13 +19,13 @@ import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
  * null = not inside the modal slot.
  */
 type ModalCtx = {
-  rows: number;
-  columns: number;
-  scrollRef: RefObject<ScrollBoxHandle | null> | null;
-};
-export const ModalContext = createContext<ModalCtx | null>(null);
+  rows: number
+  columns: number
+  scrollRef: RefObject<ScrollBoxHandle | null> | null
+}
+export const ModalContext = createContext<ModalCtx | null>(null)
 export function useIsInsideModal() {
-  return useContext(ModalContext) !== null;
+  return useContext(ModalContext) !== null
 }
 
 /**
@@ -35,12 +35,14 @@ export function useIsInsideModal() {
  * smaller than the terminal.
  */
 export function useModalOrTerminalSize(fallback) {
-  const ctx = useContext(ModalContext);
-  return ctx ? {
-    rows: ctx.rows,
-    columns: ctx.columns
-  } : fallback;
+  const ctx = useContext(ModalContext)
+  return ctx
+    ? {
+        rows: ctx.rows,
+        columns: ctx.columns,
+      }
+    : fallback
 }
 export function useModalScrollRef() {
-  return useContext(ModalContext)?.scrollRef ?? null;
+  return useContext(ModalContext)?.scrollRef ?? null
 }

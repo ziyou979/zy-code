@@ -18,8 +18,5 @@ export function useSettingsChange(
     [onChange],
   )
 
-  useEffect(
-    () => settingsChangeDetector.subscribe(handleChange),
-    [handleChange],
-  )
+  useEffect(() => settingsChangeDetector.subscribe(handleChange), [handleChange])
 }

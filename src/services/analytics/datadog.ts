@@ -87,7 +87,7 @@ const TAG_FIELDS = [
 ]
 
 function camelToSnakeCase(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
 }
 
 type DatadogLog = {
@@ -111,7 +111,7 @@ function flushLogs(): void {
 
   try {
     mkdirSync(TELEMETRY_LOG_DIR, { recursive: true })
-    const line = logsToWrite.map(entry => JSON.stringify(entry)).join('\n')
+    const line = logsToWrite.map((entry) => JSON.stringify(entry)).join('\n')
     appendFileSync(TELEMETRY_LOG_FILE, line + '\n', 'utf8')
   } catch {
     // If we can't write to the local file, silently drop the events.
@@ -185,10 +185,7 @@ export async function trackDatadogEvent(
     }
 
     // Normalize MCP tool names to "mcp" for cardinality reduction
-    if (
-      typeof allData.toolName === 'string' &&
-      allData.toolName.startsWith('mcp__')
-    ) {
+    if (typeof allData.toolName === 'string' && allData.toolName.startsWith('mcp__')) {
       allData.toolName = 'mcp'
     }
 
@@ -231,9 +228,8 @@ export async function trackDatadogEvent(
     const tags = [
       `event:${eventName}`,
       ...TAG_FIELDS.filter(
-        field =>
-          allDataRecord[field] !== undefined && allDataRecord[field] !== null,
-      ).map(field => `${camelToSnakeCase(field)}:${allDataRecord[field]}`),
+        (field) => allDataRecord[field] !== undefined && allDataRecord[field] !== null,
+      ).map((field) => `${camelToSnakeCase(field)}:${allDataRecord[field]}`),
     ]
 
     const log: DatadogLog = {
@@ -283,7 +279,7 @@ const NUM_USER_BUCKETS = 30
  * This allows us to estimate the number of unique users by counting unique buckets,
  * while preserving user privacy and reducing cardinality.
  */
-let getUserBucket;
+let getUserBucket
 getUserBucket = memoize((): number => {
   const userId = getOrCreateUserID()
   const hash = createHash('sha256').update(userId).digest('hex')
@@ -293,7 +289,6 @@ getUserBucket = memoize((): number => {
 function getFlushIntervalMs(): number {
   // Allow tests to override to not block on the default flush interval.
   return (
-    parseInt(process.env.ZY_CODE_DATADOG_FLUSH_INTERVAL_MS || '', 10) ||
-    DEFAULT_FLUSH_INTERVAL_MS
+    parseInt(process.env.ZY_CODE_DATADOG_FLUSH_INTERVAL_MS || '', 10) || DEFAULT_FLUSH_INTERVAL_MS
   )
 }

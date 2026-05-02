@@ -53,11 +53,7 @@ import {
 import { suppressCompactWarning } from './compactWarningState.js'
 import { groupMessagesByApiRound } from './grouping.js'
 import { runPostCompactCleanup } from './postCompactCleanup.js'
-import {
-  formatCompactSummary,
-  getCompactPrompt,
-  getCompactUserSummaryMessage,
-} from './prompt.js'
+import { formatCompactSummary, getCompactPrompt, getCompactUserSummaryMessage } from './prompt.js'
 
 // ---------------------------------------------------------------------------
 // Feature gates
@@ -69,10 +65,7 @@ import {
  * to suppress proactive auto-compact when reactive owns recovery.
  */
 export function isReactiveCompactEnabled(): boolean {
-  return (
-    isAutoCompactEnabled() &&
-    getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_raccoon', false)
-  )
+  return isAutoCompactEnabled() && getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_raccoon', false)
 }
 
 /**
@@ -96,10 +89,7 @@ export function isReactiveOnlyMode(): boolean {
 export function isWithheldPromptTooLong(message: Message): boolean {
   if (message.type !== 'assistant') return false
   const assistantMsg = message as AssistantMessage
-  return (
-    assistantMsg.isApiErrorMessage === true &&
-    isPromptTooLongMessage(assistantMsg)
-  )
+  return assistantMsg.isApiErrorMessage === true && isPromptTooLongMessage(assistantMsg)
 }
 
 /**
@@ -110,10 +100,7 @@ export function isWithheldPromptTooLong(message: Message): boolean {
 export function isWithheldMediaSizeError(message: Message): boolean {
   if (message.type !== 'assistant') return false
   const assistantMsg = message as AssistantMessage
-  return (
-    assistantMsg.isApiErrorMessage === true &&
-    isMediaSizeErrorMessage(assistantMsg)
-  )
+  return assistantMsg.isApiErrorMessage === true && isMediaSizeErrorMessage(assistantMsg)
 }
 
 // ---------------------------------------------------------------------------
@@ -127,12 +114,7 @@ type ReactiveOutcome =
   | { ok: true; result: CompactionResult }
   | {
       ok: false
-      reason:
-        | 'too_few_groups'
-        | 'aborted'
-        | 'exhausted'
-        | 'error'
-        | 'media_unstrippable'
+      reason: 'too_few_groups' | 'aborted' | 'exhausted' | 'error' | 'media_unstrippable'
     }
 
 /**
@@ -170,14 +152,10 @@ export async function reactiveCompactOnPromptTooLong(
 
   // Strip images and re-injectable attachments to reduce token count
   // before sending to the summarization model.
-  let messagesToSummarize = stripReinjectedAttachments(
-    stripImagesFromMessages(messages),
-  )
+  let messagesToSummarize = stripReinjectedAttachments(stripImagesFromMessages(messages))
   let groupsRemaining = groups.length
 
-  const compactPrompt = getCompactPrompt(
-    options.customInstructions ?? undefined,
-  )
+  const compactPrompt = getCompactPrompt(options.customInstructions ?? undefined)
   const summaryRequest = createUserMessage({ content: compactPrompt })
 
   // Iteratively attempt summarization, dropping oldest groups on PTL failure
@@ -199,22 +177,16 @@ export async function reactiveCompactOnPromptTooLong(
         maxTurns: 1,
         skipCacheWrite: true,
         overrides: {
-          abortController:
-            cacheSafeParams.toolUseContext.abortController,
+          abortController: cacheSafeParams.toolUseContext.abortController,
         },
       })
 
       const assistantMsg = getLastAssistantMessage(result.messages)
-      const summaryText = assistantMsg
-        ? getAssistantMessageText(assistantMsg)
-        : null
+      const summaryText = assistantMsg ? getAssistantMessageText(assistantMsg) : null
 
       // Check for abort during the API call
       if (assistantMsg?.isApiErrorMessage) {
-        if (
-          summaryText?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE) &&
-          assistantMsg
-        ) {
+        if (summaryText?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE) && assistantMsg) {
           // Summarization itself hit PTL — drop oldest groups and retry
           const tokenGap = getPromptTooLongTokenGap(assistantMsg)
           const groupsToDrop = estimateGroupsToDrop(
@@ -225,9 +197,7 @@ export async function reactiveCompactOnPromptTooLong(
 
           if (groupsToDrop === 0) {
             // Can't drop any more groups
-            logForDebugging(
-              'reactiveCompact: cannot drop more groups, exhausted',
-            )
+            logForDebugging('reactiveCompact: cannot drop more groups, exhausted')
             return { ok: false, reason: 'exhausted' }
           }
 
@@ -249,10 +219,9 @@ export async function reactiveCompactOnPromptTooLong(
         }
 
         // Other API error — not recoverable
-        logForDebugging(
-          `reactiveCompact: API error during summarization: ${summaryText}`,
-          { level: 'error' },
-        )
+        logForDebugging(`reactiveCompact: API error during summarization: ${summaryText}`, {
+          level: 'error',
+        })
         return { ok: false, reason: 'error' }
       }
 
@@ -277,8 +246,7 @@ export async function reactiveCompactOnPromptTooLong(
       })
 
       logEvent('zy_reactive_compact_success', {
-        trigger:
-          options.trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        trigger: options.trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
         groupsTotal: groups.length,
         groupsDropped: groups.length - groupsRemaining,
@@ -335,16 +303,12 @@ export async function tryReactiveCompact(params: {
   }
 
   try {
-    const outcome = await reactiveCompactOnPromptTooLong(
-      params.messages,
-      params.cacheSafeParams,
-      { trigger: 'auto' },
-    )
+    const outcome = await reactiveCompactOnPromptTooLong(params.messages, params.cacheSafeParams, {
+      trigger: 'auto',
+    })
 
     if (!outcome.ok) {
-      logForDebugging(
-        `reactiveCompact: tryReactiveCompact failed: ${(outcome as any).reason}`,
-      )
+      logForDebugging(`reactiveCompact: tryReactiveCompact failed: ${(outcome as any).reason}`)
       return null
     }
 
@@ -353,9 +317,7 @@ export async function tryReactiveCompact(params: {
     suppressCompactWarning()
 
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction(
-        (params.querySource ?? 'compact') as any,
-      )
+      notifyCompaction((params.querySource ?? 'compact') as any)
     }
     markPostCompaction()
 
@@ -426,8 +388,7 @@ async function buildReactiveCompactionResult({
 
   // Preserved tail messages — the groups that were NOT summarized
   const preservedGroups = groups.slice(groups.length - groupsRemaining)
-  const messagesToKeep =
-    groupsRemaining < groups.length ? preservedGroups.flat() : undefined
+  const messagesToKeep = groupsRemaining < groups.length ? preservedGroups.flat() : undefined
 
   // Boundary marker
   const lastMessageUuid = (messages.at(-1)?.uuid as any) ?? undefined
@@ -440,10 +401,7 @@ async function buildReactiveCompactionResult({
   // Summary messages
   const summaryMessages: UserMessage[] = [
     createUserMessage({
-      content: getCompactUserSummaryMessage(
-        formattedSummary,
-        /* suppressFollowUpQuestions */ true,
-      ),
+      content: getCompactUserSummaryMessage(formattedSummary, /* suppressFollowUpQuestions */ true),
       isCompactSummary: true,
       isVisibleInTranscriptOnly: true,
     }),
@@ -461,10 +419,7 @@ async function buildReactiveCompactionResult({
   )) {
     attachments.push(createAttachmentMessage(att))
   }
-  for (const att of getAgentListingDeltaAttachment(
-    context,
-    preservedMessages,
-  )) {
+  for (const att of getAgentListingDeltaAttachment(context, preservedMessages)) {
     attachments.push(createAttachmentMessage(att))
   }
   for (const att of getMcpInstructionsDeltaAttachment(

@@ -4,16 +4,9 @@ import type { BridgePermissionCallbacks } from '../bridge/bridgePermissionCallba
 import type { Command } from '../commands.js'
 import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissions.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
-import type {
-  MCPServerConnection,
-  ServerResource,
-} from '../services/mcp/types.js'
+import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
 import { shouldEnablePromptSuggestion } from '../services/PromptSuggestion/promptSuggestion.js'
-import {
-  getEmptyToolPermissionContext,
-  type Tool,
-  type ToolPermissionContext,
-} from '../Tool.js'
+import { getEmptyToolPermissionContext, type Tool, type ToolPermissionContext } from '../Tool.js'
 import type { TaskState } from '../tasks/types.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
@@ -22,10 +15,7 @@ import type { AgentId } from '../types/ids.js'
 import type { Message, UserMessage } from '../types/message.js'
 import type { LoadedPlugin, PluginError } from '../types/plugin.js'
 import type { DeepImmutable } from '../types/utils.js'
-import {
-  type AttributionState,
-  createEmptyAttributionState,
-} from '../utils/commitAttribution.js'
+import { type AttributionState, createEmptyAttributionState } from '../utils/commitAttribution.js'
 import type { EffortValue } from '../utils/effort.js'
 import type { FileHistoryState } from '../utils/fileHistory.js'
 import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
@@ -78,13 +68,7 @@ export type SpeculationState =
 
 export const IDLE_SPECULATION_STATE: SpeculationState = { status: 'idle' }
 
-export type FooterItem =
-  | 'tasks'
-  | 'tmux'
-  | 'bagel'
-  | 'teams'
-  | 'bridge'
-  | 'companion'
+export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams' | 'bridge' | 'companion'
 
 export type AppState = DeepImmutable<{
   settings: SettingsJson
@@ -119,11 +103,7 @@ export type AppState = DeepImmutable<{
   // 远程会话 WS 状态（`zy assistant` 查看器）。'connected' 表示
   // 实时事件流已打开；'reconnecting' = 临时 WS 断开，正在进行退避重试；
   // 'disconnected' = 永久关闭或重试次数已耗尽。
-  remoteConnectionStatus:
-    | 'connecting'
-    | 'connected'
-    | 'reconnecting'
-    | 'disconnected'
+  remoteConnectionStatus: 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
   // `zy assistant`：运行在远程守护进程子进程中的后台任务
   //（Agent 调用、teammates、workflows）数量。通过 WS 上的
   // system/task_started 和 system/task_notification 事件驱动。
@@ -451,13 +431,10 @@ export function getDefaultAppState(): AppState {
   // 确定使用 plan_mode_required 生成的 teammate 的初始权限模式
   // 使用延迟 require 以避免与 teammate.ts 的循环依赖
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const teammateUtils =
-    require('../utils/teammate.js') as typeof import('../utils/teammate.js')
+  const teammateUtils = require('../utils/teammate.js') as typeof import('../utils/teammate.js')
   /* eslint-enable @typescript-eslint/no-require-imports */
   const initialMode: PermissionMode =
-    teammateUtils.isTeammate() && teammateUtils.isPlanModeRequired()
-      ? 'plan'
-      : 'default'
+    teammateUtils.isTeammate() && teammateUtils.isPlanModeRequired() ? 'plan' : 'default'
 
   return {
     settings: getInitialSettings(),

@@ -10,11 +10,7 @@ import type { Cursor } from '../utils/Cursor.js'
  * 将移动命令解析为目标光标位置。
  * 不修改任何内容 — 纯计算函数。
  */
-export function resolveMotion(
-  key: string,
-  cursor: Cursor,
-  count: number,
-): Cursor {
+export function resolveMotion(key: string, cursor: Cursor, count: number): Cursor {
   let result = cursor
   for (let i = 0; i < count; i++) {
     const next = applySingleMotion(key, result)

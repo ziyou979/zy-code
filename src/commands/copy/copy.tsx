@@ -1,43 +1,43 @@
-import { mkdir, writeFile } from 'fs/promises';
-import { marked, type Tokens } from 'marked';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import React, { useRef } from 'react';
-import type { CommandResultDisplay } from '../../commands.js';
-import { Select } from '../../components/CustomSelect/select.js';
-import { Byline } from '../../components/design-system/Byline.js';
-import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js';
-import { Pane } from '../../components/design-system/Pane.js';
-import { tSync } from '../../i18n/index.js';
-import { stringWidth } from '../../ink/stringWidth.js';
-import { setClipboard } from '../../ink/termio/osc.js';
-import { Box, Text } from '../../ink.js';
-import { logEvent } from '../../services/analytics/index.js';
-import type { LocalJSXCommandCall } from '../../types/command.js';
-import type { AssistantMessage, Message } from '../../types/message.js';
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
-import { extractTextContent, stripPromptXMLTags } from '../../utils/messages.js';
-import { countCharInString } from '../../utils/stringUtils.js';
-const COPY_DIR = join(tmpdir(), 'zy');
-const RESPONSE_FILENAME = 'response.md';
-const MAX_LOOKBACK = 20;
+import { mkdir, writeFile } from 'fs/promises'
+import { marked, type Tokens } from 'marked'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import React, { useRef } from 'react'
+import type { CommandResultDisplay } from '../../commands.js'
+import { Select } from '../../components/CustomSelect/select.js'
+import { Byline } from '../../components/design-system/Byline.js'
+import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
+import { Pane } from '../../components/design-system/Pane.js'
+import { tSync } from '../../i18n/index.js'
+import { stringWidth } from '../../ink/stringWidth.js'
+import { setClipboard } from '../../ink/termio/osc.js'
+import { Box, Text } from '../../ink.js'
+import { logEvent } from '../../services/analytics/index.js'
+import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { AssistantMessage, Message } from '../../types/message.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { extractTextContent, stripPromptXMLTags } from '../../utils/messages.js'
+import { countCharInString } from '../../utils/stringUtils.js'
+const COPY_DIR = join(tmpdir(), 'zy')
+const RESPONSE_FILENAME = 'response.md'
+const MAX_LOOKBACK = 20
 type CodeBlock = {
-  code: string;
-  lang: string | undefined;
-};
+  code: string
+  lang: string | undefined
+}
 function extractCodeBlocks(markdown: string): CodeBlock[] {
-  const tokens = marked.lexer(stripPromptXMLTags(markdown));
-  const blocks: CodeBlock[] = [];
+  const tokens = marked.lexer(stripPromptXMLTags(markdown))
+  const blocks: CodeBlock[] = []
   for (const token of tokens) {
     if (token.type === 'code') {
-      const codeToken = token as Tokens.Code;
+      const codeToken = token as Tokens.Code
       blocks.push({
         code: codeToken.text,
-        lang: codeToken.lang
-      });
+        lang: codeToken.lang,
+      })
     }
   }
-  return blocks;
+  return blocks
 }
 
 /**
@@ -46,203 +46,244 @@ function extractCodeBlocks(markdown: string): CodeBlock[] {
  * Index 0 = latest, 1 = second-to-latest, etc. Caps at MAX_LOOKBACK.
  */
 export function collectRecentAssistantTexts(messages: Message[]): string[] {
-  const texts: string[] = [];
+  const texts: string[] = []
   for (let i = messages.length - 1; i >= 0 && texts.length < MAX_LOOKBACK; i--) {
-    const msg = messages[i];
-    if (msg?.type !== 'assistant' || msg.isApiErrorMessage) continue;
-    const content = (msg as AssistantMessage).message.content;
-    if (!Array.isArray(content)) continue;
-    const text = extractTextContent(content, '\n\n');
-    if (text) texts.push(text);
+    const msg = messages[i]
+    if (msg?.type !== 'assistant' || msg.isApiErrorMessage) continue
+    const content = (msg as AssistantMessage).message.content
+    if (!Array.isArray(content)) continue
+    const text = extractTextContent(content, '\n\n')
+    if (text) texts.push(text)
   }
-  return texts;
+  return texts
 }
 export function fileExtension(lang: string | undefined): string {
   if (lang) {
     // Sanitize to prevent path traversal (e.g. ```../../etc/passwd)
     // Language identifiers are alphanumeric: python, tsx, jsonc, etc.
-    const sanitized = lang.replace(/[^a-zA-Z0-9]/g, '');
+    const sanitized = lang.replace(/[^a-zA-Z0-9]/g, '')
     if (sanitized && sanitized !== 'plaintext') {
-      return `.${sanitized}`;
+      return `.${sanitized}`
     }
   }
-  return '.txt';
+  return '.txt'
 }
 async function writeToFile(text: string, filename: string): Promise<string> {
-  const filePath = join(COPY_DIR, filename);
+  const filePath = join(COPY_DIR, filename)
   await mkdir(COPY_DIR, {
-    recursive: true
-  });
-  await writeFile(filePath, text, 'utf-8');
-  return filePath;
+    recursive: true,
+  })
+  await writeFile(filePath, text, 'utf-8')
+  return filePath
 }
 async function copyOrWriteToFile(text: string, filename: string): Promise<string> {
-  const raw = await setClipboard(text);
-  if (raw) process.stdout.write(raw);
-  const lineCount = countCharInString(text, '\n') + 1;
-  const charCount = text.length;
+  const raw = await setClipboard(text)
+  if (raw) process.stdout.write(raw)
+  const lineCount = countCharInString(text, '\n') + 1
+  const charCount = text.length
   // Also write to a temp file — clipboard paths are best-effort (OSC 52 needs
   // terminal support), so the file provides a reliable fallback.
   try {
-    const filePath = await writeToFile(text, filename);
-    return tSync('copy.copiedToClipboard', {charCount, lineCount}) + '\n' + tSync('copy.alsoWritten', {filePath});
+    const filePath = await writeToFile(text, filename)
+    return (
+      tSync('copy.copiedToClipboard', { charCount, lineCount }) +
+      '\n' +
+      tSync('copy.alsoWritten', { filePath })
+    )
   } catch {
-    return tSync('copy.copiedToClipboard', {charCount, lineCount});
+    return tSync('copy.copiedToClipboard', { charCount, lineCount })
   }
 }
 function truncateLine(text: string, maxLen: number): string {
-  const firstLine = text.split('\n')[0] ?? '';
+  const firstLine = text.split('\n')[0] ?? ''
   if (stringWidth(firstLine) <= maxLen) {
-    return firstLine;
+    return firstLine
   }
-  let result = '';
-  let width = 0;
-  const targetWidth = maxLen - 1;
+  let result = ''
+  let width = 0
+  const targetWidth = maxLen - 1
   for (const char of firstLine) {
-    const charWidth = stringWidth(char);
-    if (width + charWidth > targetWidth) break;
-    result += char;
-    width += charWidth;
+    const charWidth = stringWidth(char)
+    if (width + charWidth > targetWidth) break
+    result += char
+    width += charWidth
   }
-  return result + '\u2026';
+  return result + '\u2026'
 }
 type PickerProps = {
-  fullText: string;
-  codeBlocks: CodeBlock[];
-  messageAge: number;
-  onDone: (result?: string, options?: {
-    display?: CommandResultDisplay;
-  }) => void;
-};
-type PickerSelection = number | 'full' | 'always';
-function CopyPicker({
-  fullText,
-  codeBlocks,
-  messageAge,
-  onDone
-}: PickerProps) {
-  const focusedRef = useRef("full");
-  const options = [{
-    label: tSync('copy.fullResponse'),
-    value: "full" as const,
-    description: tSync('copy.charsLines', {charCount: fullText.length, lineCount: countCharInString(fullText, "\n") + 1})
-  }, ...codeBlocks.map((block, index) => {
-    const blockLines = countCharInString(block.code, "\n") + 1;
-    return {
-      label: truncateLine(block.code, 60),
-      value: index,
-      description: [block.lang, blockLines > 1 ? tSync('copy.lines', {count: blockLines}) : undefined].filter(Boolean).join(", ") || undefined
-    };
-  }), {
-    label: tSync('copy.alwaysCopy'),
-    value: "always" as const,
-    description: tSync('copy.alwaysCopyDesc')
-  }];
+  fullText: string
+  codeBlocks: CodeBlock[]
+  messageAge: number
+  onDone: (
+    result?: string,
+    options?: {
+      display?: CommandResultDisplay
+    },
+  ) => void
+}
+type PickerSelection = number | 'full' | 'always'
+function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
+  const focusedRef = useRef('full')
+  const options = [
+    {
+      label: tSync('copy.fullResponse'),
+      value: 'full' as const,
+      description: tSync('copy.charsLines', {
+        charCount: fullText.length,
+        lineCount: countCharInString(fullText, '\n') + 1,
+      }),
+    },
+    ...codeBlocks.map((block, index) => {
+      const blockLines = countCharInString(block.code, '\n') + 1
+      return {
+        label: truncateLine(block.code, 60),
+        value: index,
+        description:
+          [block.lang, blockLines > 1 ? tSync('copy.lines', { count: blockLines }) : undefined]
+            .filter(Boolean)
+            .join(', ') || undefined,
+      }
+    }),
+    {
+      label: tSync('copy.alwaysCopy'),
+      value: 'always' as const,
+      description: tSync('copy.alwaysCopyDesc'),
+    },
+  ]
   const getSelectionContent = function getSelectionContent(selected) {
-    if (selected === "full" || selected === "always") {
+    if (selected === 'full' || selected === 'always') {
       return {
         text: fullText,
-        filename: RESPONSE_FILENAME
-      };
+        filename: RESPONSE_FILENAME,
+      }
     }
-    const block_0 = codeBlocks[selected];
+    const block_0 = codeBlocks[selected]
     return {
       text: block_0.code,
       filename: `copy${fileExtension(block_0.lang)}`,
-      blockIndex: selected
-    };
-  };
+      blockIndex: selected,
+    }
+  }
   const handleSelect = async function handleSelect(selected_0) {
-    const content = getSelectionContent(selected_0);
-    if (selected_0 === "always") {
+    const content = getSelectionContent(selected_0)
+    if (selected_0 === 'always') {
       if (!getGlobalConfig().copyFullResponse) {
-        saveGlobalConfig(c => ({
+        saveGlobalConfig((c) => ({
           ...c,
-          copyFullResponse: true
-        }));
+          copyFullResponse: true,
+        }))
       }
-      logEvent("zy_copy", {
+      logEvent('zy_copy', {
         block_count: codeBlocks.length,
         always: true,
-        message_age: messageAge
-      });
-      const result = await copyOrWriteToFile(content.text, content.filename);
-      onDone(result + '\n' + tSync('copy.preferenceSaved'));
-      return;
+        message_age: messageAge,
+      })
+      const result = await copyOrWriteToFile(content.text, content.filename)
+      onDone(result + '\n' + tSync('copy.preferenceSaved'))
+      return
     }
-    logEvent("zy_copy", {
+    logEvent('zy_copy', {
       selected_block: content.blockIndex,
       block_count: codeBlocks.length,
-      message_age: messageAge
-    });
-    const result_0 = await copyOrWriteToFile(content.text, content.filename);
-    onDone(result_0);
-  };
+      message_age: messageAge,
+    })
+    const result_0 = await copyOrWriteToFile(content.text, content.filename)
+    onDone(result_0)
+  }
   const handleWrite = async function handleWrite(selected_1) {
-    const content_0 = getSelectionContent(selected_1);
-    logEvent("zy_copy", {
+    const content_0 = getSelectionContent(selected_1)
+    logEvent('zy_copy', {
       selected_block: content_0.blockIndex,
       block_count: codeBlocks.length,
       message_age: messageAge,
-      write_shortcut: true
-    });
+      write_shortcut: true,
+    })
     try {
-      const filePath = await writeToFile(content_0.text, content_0.filename);
-      onDone(tSync('copy.writtenTo', {filePath}));
+      const filePath = await writeToFile(content_0.text, content_0.filename)
+      onDone(tSync('copy.writtenTo', { filePath }))
     } catch (e) {
-      onDone(tSync('copy.writeFailed', {error: e instanceof Error ? e.message : e}));
+      onDone(tSync('copy.writeFailed', { error: e instanceof Error ? e.message : e }))
     }
-  };
+  }
   const handleKeyDown = function handleKeyDown(e_0) {
-    if (e_0.key === "w") {
-      e_0.preventDefault();
-      handleWrite(focusedRef.current);
+    if (e_0.key === 'w') {
+      e_0.preventDefault()
+      handleWrite(focusedRef.current)
     }
-  };
-  return <Pane><Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Text dimColor={true}>{tSync('copy.selectContent')}</Text>}{<Select options={options} hideIndexes={false} onFocus={value => {
-        focusedRef.current = value;
-      }} onChange={selected_2 => {
-        handleSelect(selected_2);
-      }} onCancel={() => {
-        onDone(tSync('copy.cancelled'), {
-          display: "system"
-        });
-      }} />}{<Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="enter" action="copy" /><KeyboardShortcutHint shortcut="w" action="write to file" /><KeyboardShortcutHint shortcut="esc" action="cancel" /></Byline></Text>}</Box></Pane>;
+  }
+  return (
+    <Pane>
+      <Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
+        {<Text dimColor={true}>{tSync('copy.selectContent')}</Text>}
+        {
+          <Select
+            options={options}
+            hideIndexes={false}
+            onFocus={(value) => {
+              focusedRef.current = value
+            }}
+            onChange={(selected_2) => {
+              handleSelect(selected_2)
+            }}
+            onCancel={() => {
+              onDone(tSync('copy.cancelled'), {
+                display: 'system',
+              })
+            }}
+          />
+        }
+        {
+          <Text dimColor={true}>
+            <Byline>
+              <KeyboardShortcutHint shortcut="enter" action="copy" />
+              <KeyboardShortcutHint shortcut="w" action="write to file" />
+              <KeyboardShortcutHint shortcut="esc" action="cancel" />
+            </Byline>
+          </Text>
+        }
+      </Box>
+    </Pane>
+  )
 }
 export const call: LocalJSXCommandCall = async (onDone, context, args) => {
-  const texts = collectRecentAssistantTexts(context.messages);
+  const texts = collectRecentAssistantTexts(context.messages)
   if (texts.length === 0) {
-    onDone(tSync('copy.noAssistantMessage'));
-    return null;
+    onDone(tSync('copy.noAssistantMessage'))
+    return null
   }
 
   // /copy N reaches back N-1 messages (1 = latest, 2 = second-to-latest, ...)
-  let age = 0;
-  const arg = args?.trim();
+  let age = 0
+  const arg = args?.trim()
   if (arg) {
-    const n = Number(arg);
+    const n = Number(arg)
     if (!Number.isInteger(n) || n < 1) {
-      onDone(tSync('copy.usage', {arg}));
-      return null;
+      onDone(tSync('copy.usage', { arg }))
+      return null
     }
     if (n > texts.length) {
-      onDone(tSync('copy.onlyMessages', {count: texts.length, messageLabel: tSync(texts.length === 1 ? 'copy.message_one' : 'copy.message_other')}));
-      return null;
+      onDone(
+        tSync('copy.onlyMessages', {
+          count: texts.length,
+          messageLabel: tSync(texts.length === 1 ? 'copy.message_one' : 'copy.message_other'),
+        }),
+      )
+      return null
     }
-    age = n - 1;
+    age = n - 1
   }
-  const text = texts[age]!;
-  const codeBlocks = extractCodeBlocks(text);
-  const config = getGlobalConfig();
+  const text = texts[age]!
+  const codeBlocks = extractCodeBlocks(text)
+  const config = getGlobalConfig()
   if (codeBlocks.length === 0 || config.copyFullResponse) {
     logEvent('zy_copy', {
       always: config.copyFullResponse,
       block_count: codeBlocks.length,
-      message_age: age
-    });
-    const result = await copyOrWriteToFile(text, RESPONSE_FILENAME);
-    onDone(result);
-    return null;
+      message_age: age,
+    })
+    const result = await copyOrWriteToFile(text, RESPONSE_FILENAME)
+    onDone(result)
+    return null
   }
-  return <CopyPicker fullText={text} codeBlocks={codeBlocks} messageAge={age} onDone={onDone} />;
-};
+  return <CopyPicker fullText={text} codeBlocks={codeBlocks} messageAge={age} onDone={onDone} />
+}

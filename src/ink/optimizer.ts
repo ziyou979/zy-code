@@ -66,11 +66,7 @@ export function optimize(diff: Diff): Diff {
       }
 
       // 去重 hyperlink
-      if (
-        type === 'hyperlink' &&
-        lastType === 'hyperlink' &&
-        patch.uri === last.uri
-      ) {
+      if (type === 'hyperlink' && lastType === 'hyperlink' && patch.uri === last.uri) {
         continue
       }
 

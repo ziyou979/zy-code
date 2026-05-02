@@ -123,9 +123,7 @@ const MCP_SERVER_PATTERNS: Array<{
  * detectCodeIndexingFromCommand('cody chat --message "help"') // returns 'cody'
  * detectCodeIndexingFromCommand('ls -la') // returns undefined
  */
-export function detectCodeIndexingFromCommand(
-  command: string,
-): CodeIndexingTool | undefined {
+export function detectCodeIndexingFromCommand(command: string): CodeIndexingTool | undefined {
   // Extract the first word (command name)
   const trimmed = command.trim()
   const firstWord = trimmed.split(/\s+/)[0]?.toLowerCase()
@@ -156,9 +154,7 @@ export function detectCodeIndexingFromCommand(
  * detectCodeIndexingFromMcpTool('mcp__cody__chat') // returns 'cody'
  * detectCodeIndexingFromMcpTool('mcp__filesystem__read') // returns undefined
  */
-export function detectCodeIndexingFromMcpTool(
-  toolName: string,
-): CodeIndexingTool | undefined {
+export function detectCodeIndexingFromMcpTool(toolName: string): CodeIndexingTool | undefined {
   // MCP tool names follow the format: mcp__serverName__toolName
   if (!toolName.startsWith('mcp__')) {
     return undefined

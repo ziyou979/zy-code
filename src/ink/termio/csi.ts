@@ -27,9 +27,7 @@ export function isCSIParam(byte: number): boolean {
 
 /** 判断一个字节是否为 CSI 中间字节 */
 export function isCSIIntermediate(byte: number): boolean {
-  return (
-    byte >= CSI_RANGE.INTERMEDIATE_START && byte <= CSI_RANGE.INTERMEDIATE_END
-  )
+  return byte >= CSI_RANGE.INTERMEDIATE_START && byte <= CSI_RANGE.INTERMEDIATE_END
 }
 
 /** 判断一个字节是否为 CSI 结束字节（@ 到 ~） */

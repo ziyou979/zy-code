@@ -6,10 +6,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getWebSocketTLSOptions } from '../../utils/mtls.js'
-import {
-  getWebSocketProxyAgent,
-  getWebSocketProxyUrl,
-} from '../../utils/proxy.js'
+import { getWebSocketProxyAgent, getWebSocketProxyUrl } from '../../utils/proxy.js'
 import {
   registerSessionActivityCallback,
   unregisterSessionActivityCallback,
@@ -57,12 +54,7 @@ export type WebSocketTransportOptions = {
   isBridge?: boolean
 }
 
-type WebSocketTransportState =
-  | 'idle'
-  | 'connected'
-  | 'reconnecting'
-  | 'closing'
-  | 'closed'
+type WebSocketTransportState = 'idle' | 'connected' | 'reconnecting' | 'closing' | 'closed'
 
 // Common interface between globalThis.WebSocket and ws.WebSocket
 type WebSocketLike = {
@@ -135,10 +127,9 @@ export class WebSocketTransport implements Transport {
 
   public async connect(): Promise<void> {
     if (this.state !== 'idle' && this.state !== 'reconnecting') {
-      logForDebugging(
-        `WebSocketTransport: Cannot connect, current state is ${this.state}`,
-        { level: 'error' },
-      )
+      logForDebugging(`WebSocketTransport: Cannot connect, current state is ${this.state}`, {
+        level: 'error',
+      })
       logForDiagnosticsNoPII('error', 'cli_websocket_connect_failed')
       return
     }
@@ -152,9 +143,7 @@ export class WebSocketTransport implements Transport {
     const headers = { ...this.headers }
     if (this.lastSentId) {
       headers['X-Last-Request-Id'] = this.lastSentId
-      logForDebugging(
-        `WebSocketTransport: Adding X-Last-Request-Id header: ${this.lastSentId}`,
-      )
+      logForDebugging(`WebSocketTransport: Adding X-Last-Request-Id header: ${this.lastSentId}`)
     }
 
     if (typeof Bun !== 'undefined') {
@@ -209,8 +198,7 @@ export class WebSocketTransport implements Transport {
   }
 
   private onBunMessage = (event: MessageEvent) => {
-    const message =
-      typeof event.data === 'string' ? event.data : String(event.data)
+    const message = typeof event.data === 'string' ? event.data : String(event.data)
     this.lastActivityTime = Date.now()
     logForDiagnosticsNoPII('info', 'cli_websocket_message_received', {
       length: message.length,
@@ -280,10 +268,7 @@ export class WebSocketTransport implements Transport {
 
   private onNodeClose = (code: number, _reason: Buffer) => {
     const isClean = code === 1000 || code === 1001
-    logForDebugging(
-      `WebSocketTransport: Closed: ${code}`,
-      isClean ? undefined : { level: 'error' },
-    )
+    logForDebugging(`WebSocketTransport: Closed: ${code}`, isClean ? undefined : { level: 'error' })
     logForDiagnosticsNoPII('error', 'cli_websocket_connect_closed')
     this.handleConnectionError(code)
   }
@@ -408,8 +393,7 @@ export class WebSocketTransport implements Transport {
       // peak sits at ~300s with closeCode 1006, that's the proxy RST.
       logEvent('zy_ws_transport_closed', {
         closeCode,
-        msSinceLastActivity:
-          this.lastActivityTime > 0 ? Date.now() - this.lastActivityTime : -1,
+        msSinceLastActivity: this.lastActivityTime > 0 ? Date.now() - this.lastActivityTime : -1,
         // 'connected' = healthy drop (the Cloudflare case); 'reconnecting' =
         // connect-rejection mid-storm. State isn't mutated until the branches
         // below, so this reads the pre-close value.
@@ -438,15 +422,10 @@ export class WebSocketTransport implements Transport {
       }
     }
 
-    if (
-      closeCode != null &&
-      PERMANENT_CLOSE_CODES.has(closeCode) &&
-      !headersRefreshed
-    ) {
-      logForDebugging(
-        `WebSocketTransport: Permanent close code ${closeCode}, not reconnecting`,
-        { level: 'error' },
-      )
+    if (closeCode != null && PERMANENT_CLOSE_CODES.has(closeCode) && !headersRefreshed) {
+      logForDebugging(`WebSocketTransport: Permanent close code ${closeCode}, not reconnecting`, {
+        level: 'error',
+      })
       logForDiagnosticsNoPII('error', 'cli_websocket_permanent_close', {
         closeCode,
       })
@@ -513,10 +492,7 @@ export class WebSocketTransport implements Transport {
         DEFAULT_MAX_RECONNECT_DELAY,
       )
       // Add ±25% jitter to avoid thundering herd
-      const delay = Math.max(
-        0,
-        baseDelay + baseDelay * 0.25 * (2 * Math.random() - 1),
-      )
+      const delay = Math.max(0, baseDelay + baseDelay * 0.25 * (2 * Math.random() - 1))
 
       logForDebugging(
         `WebSocketTransport: Reconnecting in ${Math.round(delay)}ms (attempt ${this.reconnectAttempts}, ${Math.round(elapsed / 1000)}s elapsed)`,
@@ -580,7 +556,7 @@ export class WebSocketTransport implements Transport {
     let startIndex = 0
     if (lastId) {
       const lastConfirmedIndex = messages.findIndex(
-        message => 'uuid' in message && message.uuid === lastId,
+        (message) => 'uuid' in message && message.uuid === lastId,
       )
       if (lastConfirmedIndex >= 0) {
         // Server confirmed messages up to lastConfirmedIndex — evict them
@@ -595,14 +571,10 @@ export class WebSocketTransport implements Transport {
         logForDebugging(
           `WebSocketTransport: Evicted ${startIndex} confirmed messages, ${remaining.length} remaining`,
         )
-        logForDiagnosticsNoPII(
-          'info',
-          'cli_websocket_evicted_confirmed_messages',
-          {
-            evicted: startIndex,
-            remaining: remaining.length,
-          },
-        )
+        logForDiagnosticsNoPII('info', 'cli_websocket_evicted_confirmed_messages', {
+          evicted: startIndex,
+          remaining: remaining.length,
+        })
       }
     }
 
@@ -613,9 +585,7 @@ export class WebSocketTransport implements Transport {
       return
     }
 
-    logForDebugging(
-      `WebSocketTransport: Replaying ${messagesToReplay.length} buffered messages`,
-    )
+    logForDebugging(`WebSocketTransport: Replaying ${messagesToReplay.length} buffered messages`)
     logForDiagnosticsNoPII('info', 'cli_websocket_messages_to_replay', {
       count: messagesToReplay.length,
     })
@@ -684,8 +654,7 @@ export class WebSocketTransport implements Transport {
   private getControlMessageDetailLabel(message: StdoutMessage): string {
     if (message.type === 'control_request') {
       const { request_id, request } = message
-      const toolName =
-        request.subtype === 'can_use_tool' ? request.tool_name : ''
+      const toolName = request.subtype === 'can_use_tool' ? request.tool_name : ''
       return ` subtype=${request.subtype} request_id=${request_id}${toolName ? ` tool=${toolName}` : ''}`
     }
     if (message.type === 'control_response') {
@@ -726,20 +695,15 @@ export class WebSocketTransport implements Transport {
           logForDebugging(
             `WebSocketTransport: ${Math.round(gap / 1000)}s tick gap detected — process was suspended, forcing reconnect`,
           )
-          logForDiagnosticsNoPII(
-            'info',
-            'cli_websocket_sleep_detected_on_ping',
-            { gapMs: gap },
-          )
+          logForDiagnosticsNoPII('info', 'cli_websocket_sleep_detected_on_ping', { gapMs: gap })
           this.handleConnectionError()
           return
         }
 
         if (!this.pongReceived) {
-          logForDebugging(
-            'WebSocketTransport: No pong received, connection appears dead',
-            { level: 'error' },
-          )
+          logForDebugging('WebSocketTransport: No pong received, connection appears dead', {
+            level: 'error',
+          })
           logForDiagnosticsNoPII('error', 'cli_websocket_pong_timeout')
           this.handleConnectionError()
           return
@@ -778,14 +742,11 @@ export class WebSocketTransport implements Transport {
         try {
           this.ws.send(KEEP_ALIVE_FRAME)
           this.lastActivityTime = Date.now()
-          logForDebugging(
-            'WebSocketTransport: Sent periodic keep_alive data frame',
-          )
+          logForDebugging('WebSocketTransport: Sent periodic keep_alive data frame')
         } catch (error) {
-          logForDebugging(
-            `WebSocketTransport: Periodic keep_alive failed: ${error}`,
-            { level: 'error' },
-          )
+          logForDebugging(`WebSocketTransport: Periodic keep_alive failed: ${error}`, {
+            level: 'error',
+          })
           logForDiagnosticsNoPII('error', 'cli_websocket_keepalive_failed')
         }
       }

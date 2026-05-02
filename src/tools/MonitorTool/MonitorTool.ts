@@ -1,10 +1,10 @@
 // Monitor Tool module stub implementation
 // This module provides monitoring tool functionality for MONITOR_TOOL feature
 
-import type { Tool } from '../../Tool.js';
-import { z } from 'zod/v4';
+import type { Tool } from '../../Tool.js'
+import { z } from 'zod/v4'
 
-const inputSchema = z.object({}).passthrough();
+const inputSchema = z.object({}).passthrough()
 
 /**
  * MonitorTool class implementing the Tool interface
@@ -12,55 +12,55 @@ const inputSchema = z.object({}).passthrough();
 export const MonitorTool: Tool = {
   name: 'monitor',
   inputSchema,
-  
+
   async call(input, context, canUseTool, parentMessage, onProgress) {
     // Stub implementation
-    return { data: { success: true, message: 'Monitor tool executed' } };
+    return { data: { success: true, message: 'Monitor tool executed' } }
   },
-  
+
   async description(input, options) {
-    return 'Monitor system or process status';
+    return 'Monitor system or process status'
   },
-  
+
   isConcurrencySafe(input) {
-    return true;
+    return true
   },
-  
+
   isEnabled() {
-    return true;
+    return true
   },
-  
+
   isReadOnly(input) {
-    return true;
+    return true
   },
-  
+
   async checkPermissions(input, context) {
-    return { behavior: 'allow' as const };
+    return { behavior: 'allow' as const }
   },
-  
+
   prompt(options) {
-    return Promise.resolve('Monitor tool');
+    return Promise.resolve('Monitor tool')
   },
-  
+
   userFacingName(input) {
-    return 'Monitor';
+    return 'Monitor'
   },
-  
+
   renderToolUseMessage(input, options) {
-    return null;
+    return null
   },
-  
+
   mapToolResultToToolResultBlock(content, toolUseID) {
     return {
       type: 'tool_result',
       toolCallId: toolUseID,
-      content: [{ type: 'text', text: JSON.stringify(content) }]
-    };
+      content: [{ type: 'text', text: JSON.stringify(content) }],
+    }
   },
-  
+
   toAutoClassifierInput(input) {
-    return input;
+    return input
   },
-  
-  maxResultSizeChars: 10000
-};
+
+  maxResultSizeChars: 10000,
+}

@@ -19,9 +19,7 @@ let initialized = false
 let hasEnvHooks = false
 let notifyCallback: ((text: string, isError: boolean) => void) | null = null
 
-export function setEnvHookNotifier(
-  cb: ((text: string, isError: boolean) => void) | null,
-): void {
+export function setEnvHookNotifier(cb: ((text: string, isError: boolean) => void) | null): void {
   notifyCallback = cb
 }
 
@@ -31,9 +29,7 @@ export function initializeFileChangedWatcher(cwd: string): void {
   currentCwd = cwd
 
   const config = getHooksConfigFromSnapshot()
-  hasEnvHooks =
-    (config?.CwdChanged?.length ?? 0) > 0 ||
-    (config?.FileChanged?.length ?? 0) > 0
+  hasEnvHooks = (config?.CwdChanged?.length ?? 0) > 0 || (config?.FileChanged?.length ?? 0) > 0
 
   if (hasEnvHooks) {
     registerCleanup(async () => dispose())
@@ -45,16 +41,14 @@ export function initializeFileChangedWatcher(cwd: string): void {
   startWatching(paths)
 }
 
-function resolveWatchPaths(
-  config?: ReturnType<typeof getHooksConfigFromSnapshot>,
-): string[] {
+function resolveWatchPaths(config?: ReturnType<typeof getHooksConfigFromSnapshot>): string[] {
   const matchers = (config ?? getHooksConfigFromSnapshot())?.FileChanged ?? []
 
   // Matcher field: filenames to watch in cwd, pipe-separated (e.g. ".envrc|.env")
   const staticPaths: string[] = []
   for (const m of matchers) {
     if (!m.matcher) continue
-    for (const name of m.matcher.split('|').map(s => s.trim())) {
+    for (const name of m.matcher.split('|').map((s) => s.trim())) {
       if (!name) continue
       staticPaths.push(isAbsolute(name) ? name : join(currentCwd, name))
     }
@@ -72,15 +66,12 @@ function startWatching(paths: string[]): void {
     awaitWriteFinish: { stabilityThreshold: 500, pollInterval: 200 },
     ignorePermissionErrors: true,
   })
-  watcher.on('change', p => handleFileEvent(p, 'change'))
-  watcher.on('add', p => handleFileEvent(p, 'add'))
-  watcher.on('unlink', p => handleFileEvent(p, 'unlink'))
+  watcher.on('change', (p) => handleFileEvent(p, 'change'))
+  watcher.on('add', (p) => handleFileEvent(p, 'add'))
+  watcher.on('unlink', (p) => handleFileEvent(p, 'unlink'))
 }
 
-function handleFileEvent(
-  path: string,
-  event: 'change' | 'add' | 'unlink',
-): void {
+function handleFileEvent(path: string, event: 'change' | 'add' | 'unlink'): void {
   logForDebugging(`FileChanged: ${event} ${path}`)
   void executeFileChangedHooks(path, event)
     .then(({ results, watchPaths, systemMessages }) => {
@@ -96,7 +87,7 @@ function handleFileEvent(
         }
       }
     })
-    .catch(e => {
+    .catch((e) => {
       const msg = errorMessage(e)
       logForDebugging(`FileChanged hook failed: ${msg}`, {
         level: 'error',
@@ -130,22 +121,18 @@ function restartWatching(): void {
   }
 }
 
-export async function onCwdChangedForHooks(
-  oldCwd: string,
-  newCwd: string,
-): Promise<void> {
+export async function onCwdChangedForHooks(oldCwd: string, newCwd: string): Promise<void> {
   if (oldCwd === newCwd) return
 
   // Re-evaluate from the current snapshot so mid-session hook changes are picked up
   const config = getHooksConfigFromSnapshot()
   const currentHasEnvHooks =
-    (config?.CwdChanged?.length ?? 0) > 0 ||
-    (config?.FileChanged?.length ?? 0) > 0
+    (config?.CwdChanged?.length ?? 0) > 0 || (config?.FileChanged?.length ?? 0) > 0
   if (!currentHasEnvHooks) return
   currentCwd = newCwd
 
   await clearCwdEnvFiles()
-  const hookResult = await executeCwdChangedHooks(oldCwd, newCwd).catch(e => {
+  const hookResult = await executeCwdChangedHooks(oldCwd, newCwd).catch((e) => {
     const msg = errorMessage(e)
     logForDebugging(`CwdChanged hook failed: ${msg}`, {
       level: 'error',

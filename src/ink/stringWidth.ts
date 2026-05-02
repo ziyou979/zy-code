@@ -209,12 +209,10 @@ function isZeroWidth(codePoint: number): boolean {
 // Bun.stringWidth 在模块作用域只解析一次，而非每次调用时检查——
 // typeof 守卫会导致属性访问降级，而这是热路径（每帧约 10 万次调用）。
 const bunStringWidth =
-  typeof Bun !== 'undefined' && typeof Bun.stringWidth === 'function'
-    ? Bun.stringWidth
-    : null
+  typeof Bun !== 'undefined' && typeof Bun.stringWidth === 'function' ? Bun.stringWidth : null
 
 const BUN_STRING_WIDTH_OPTS = { ambiguousIsNarrow: true } as const
 
 export const stringWidth: (str: string) => number = bunStringWidth
-  ? str => bunStringWidth(str, BUN_STRING_WIDTH_OPTS)
+  ? (str) => bunStringWidth(str, BUN_STRING_WIDTH_OPTS)
   : stringWidthJavaScript

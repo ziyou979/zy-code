@@ -68,10 +68,7 @@ export type PaneBackend = {
    * @param color - The color to use for the pane border/title
    * @returns The pane ID and whether this was the first teammate
    */
-  createTeammatePaneInSwarmView(
-    name: string,
-    color: AgentColorName,
-  ): Promise<CreatePaneResult>
+  createTeammatePaneInSwarmView(name: string, color: AgentColorName): Promise<CreatePaneResult>
 
   /**
    * Sends a command to execute in a specific pane.
@@ -80,11 +77,7 @@ export type PaneBackend = {
    * @param command - The command string to execute
    * @param useExternalSession - If true, uses external session socket (tmux-specific)
    */
-  sendCommandToPane(
-    paneId: PaneId,
-    command: string,
-    useExternalSession?: boolean,
-  ): Promise<void>
+  sendCommandToPane(paneId: PaneId, command: string, useExternalSession?: boolean): Promise<void>
 
   /**
    * Sets the border color for a pane.
@@ -120,10 +113,7 @@ export type PaneBackend = {
    * @param windowTarget - The window to enable status for (optional)
    * @param useExternalSession - If true, uses external session socket (tmux-specific)
    */
-  enablePaneBorderStatus(
-    windowTarget?: string,
-    useExternalSession?: boolean,
-  ): Promise<void>
+  enablePaneBorderStatus(windowTarget?: string, useExternalSession?: boolean): Promise<void>
 
   /**
    * Rebalances panes to achieve the desired layout.

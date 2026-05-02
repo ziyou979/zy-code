@@ -11,9 +11,7 @@ export type ClassifierResult = {
 
 export type ClassifierBehavior = 'deny' | 'ask' | 'allow'
 
-export function extractPromptDescription(
-  _ruleContent: string | undefined,
-): string | null {
+export function extractPromptDescription(_ruleContent: string | undefined): string | null {
   return null
 }
 

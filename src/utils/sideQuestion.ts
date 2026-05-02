@@ -124,9 +124,7 @@ ${question}`
  */
 function extractSideQuestionResponse(messages: Message[]): string | null {
   // Flatten all assistant content blocks across the per-block messages.
-  const assistantBlocks = messages.flatMap(m =>
-    m.type === 'assistant' ? m.message.content : [],
-  )
+  const assistantBlocks = messages.flatMap((m) => (m.type === 'assistant' ? m.message.content : []))
 
   if (assistantBlocks.length > 0) {
     // Concatenate all text blocks (there's normally at most one, but be safe).
@@ -134,7 +132,7 @@ function extractSideQuestionResponse(messages: Message[]): string | null {
     if (text) return text
 
     // No text — check if the model tried to call a tool despite instructions.
-    const toolUse = assistantBlocks.find(b => b.type === 'tool_call')
+    const toolUse = assistantBlocks.find((b) => b.type === 'tool_call')
     if (toolUse) {
       const toolName = 'name' in toolUse ? toolUse.name : 'a tool'
       return `(The model tried to call ${toolName} instead of answering directly. Try rephrasing or ask in the main conversation.)`

@@ -1,198 +1,300 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { extraUsage as extraUsageCommand } from 'src/commands/extra-usage/index.js';
-import { formatCost } from 'src/cost-tracker.js';
-import { getSubscriptionType } from 'src/utils/auth.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { Box, Text } from '../../ink.js';
-import { useKeybinding } from '../../keybindings/useKeybinding.js';
-import { type ExtraUsage, fetchUtilization, type RateLimit, type Utilization } from '../../services/api/usage.js';
-import { formatResetText } from '../../utils/format.js';
-import { logError } from '../../utils/log.js';
-import { jsonStringify } from '../../utils/slowOperations.js';
-import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
-import { Byline } from '../design-system/Byline.js';
-import { ProgressBar } from '../design-system/ProgressBar.js';
-import { isEligibleForOverageCreditGrant, OverageCreditUpsell } from '../LogoV2/OverageCreditUpsell.js';
-import { tSync } from '../../i18n/index.js';
+import * as React from 'react'
+import { useEffect, useState } from 'react'
+import { extraUsage as extraUsageCommand } from 'src/commands/extra-usage/index.js'
+import { formatCost } from 'src/cost-tracker.js'
+import { getSubscriptionType } from 'src/utils/auth.js'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { Box, Text } from '../../ink.js'
+import { useKeybinding } from '../../keybindings/useKeybinding.js'
+import {
+  type ExtraUsage,
+  fetchUtilization,
+  type RateLimit,
+  type Utilization,
+} from '../../services/api/usage.js'
+import { formatResetText } from '../../utils/format.js'
+import { logError } from '../../utils/log.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
+import { Byline } from '../design-system/Byline.js'
+import { ProgressBar } from '../design-system/ProgressBar.js'
+import {
+  isEligibleForOverageCreditGrant,
+  OverageCreditUpsell,
+} from '../LogoV2/OverageCreditUpsell.js'
+import { tSync } from '../../i18n/index.js'
 type LimitBarProps = {
-  title: string;
-  limit: RateLimit;
-  maxWidth: number;
-  showTimeInReset?: boolean;
-  extraSubtext?: string;
-};
-function LimitBar({
-  title,
-  limit,
-  maxWidth,
-  showTimeInReset = true,
-  extraSubtext
-}: LimitBarProps) {
-  const {
-    utilization,
-    resets_at
-  } = limit;
+  title: string
+  limit: RateLimit
+  maxWidth: number
+  showTimeInReset?: boolean
+  extraSubtext?: string
+}
+function LimitBar({ title, limit, maxWidth, showTimeInReset = true, extraSubtext }: LimitBarProps) {
+  const { utilization, resets_at } = limit
   if (utilization === null) {
-    return null;
+    return null
   }
   const usedText = tSync('usage.percentUsed', {
-    pct: Math.floor(utilization)
-  });
-  let subtext;
+    pct: Math.floor(utilization),
+  })
+  let subtext
   if (resets_at) {
-    const t2 = formatResetText(resets_at, true, showTimeInReset);
+    const t2 = formatResetText(resets_at, true, showTimeInReset)
     subtext = tSync('usage.resets', {
-      time: t2
-    });
+      time: t2,
+    })
   }
   if (extraSubtext) {
     if (subtext) {
-      subtext = `${extraSubtext} · ${subtext}`;
+      subtext = `${extraSubtext} · ${subtext}`
     } else {
-      subtext = extraSubtext;
+      subtext = extraSubtext
     }
   }
   if (maxWidth >= 62) {
-    return <Box flexDirection="column">{<Text bold={true}>{title}</Text>}{<Box flexDirection="row" gap={1}>{<ProgressBar ratio={utilization / 100} width={50} fillColor="rate_limit_fill" emptyColor="rate_limit_empty" />}{<Text>{usedText}</Text>}</Box>}{subtext && <Text dimColor={true}>{subtext}</Text>}</Box>;
+    return (
+      <Box flexDirection="column">
+        {<Text bold={true}>{title}</Text>}
+        {
+          <Box flexDirection="row" gap={1}>
+            {
+              <ProgressBar
+                ratio={utilization / 100}
+                width={50}
+                fillColor="rate_limit_fill"
+                emptyColor="rate_limit_empty"
+              />
+            }
+            {<Text>{usedText}</Text>}
+          </Box>
+        }
+        {subtext && <Text dimColor={true}>{subtext}</Text>}
+      </Box>
+    )
   } else {
-    return <Box flexDirection="column">{<Text>{<Text bold={true}>{title}</Text>}{subtext && <><Text> </Text><Text dimColor={true}>· {subtext}</Text></>}</Text>}{<ProgressBar ratio={utilization / 100} width={maxWidth} fillColor="rate_limit_fill" emptyColor="rate_limit_empty" />}{<Text>{usedText}</Text>}</Box>;
+    return (
+      <Box flexDirection="column">
+        {
+          <Text>
+            {<Text bold={true}>{title}</Text>}
+            {subtext && (
+              <>
+                <Text> </Text>
+                <Text dimColor={true}>· {subtext}</Text>
+              </>
+            )}
+          </Text>
+        }
+        {
+          <ProgressBar
+            ratio={utilization / 100}
+            width={maxWidth}
+            fillColor="rate_limit_fill"
+            emptyColor="rate_limit_empty"
+          />
+        }
+        {<Text>{usedText}</Text>}
+      </Box>
+    )
   }
 }
 export function Usage(): React.ReactNode {
-  const [utilization, setUtilization] = useState<Utilization | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const {
-    columns
-  } = useTerminalSize();
-  const availableWidth = columns - 2; // 2 for screen padding
-  const maxWidth = Math.min(availableWidth, 80);
+  const [utilization, setUtilization] = useState<Utilization | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const { columns } = useTerminalSize()
+  const availableWidth = columns - 2 // 2 for screen padding
+  const maxWidth = Math.min(availableWidth, 80)
   const loadUtilization = React.useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
     try {
-      const data = await fetchUtilization();
-      setUtilization(data);
+      const data = await fetchUtilization()
+      setUtilization(data)
     } catch (err) {
-      logError(err as Error);
+      logError(err as Error)
       const axiosError = err as {
         response?: {
-          data?: unknown;
-        };
-      };
-      const responseBody = axiosError.response?.data ? jsonStringify(axiosError.response.data) : undefined;
-      setError(responseBody ? tSync('usage.loadErrorDetail', {
-        detail: responseBody
-      }) : tSync('usage.loadError'));
+          data?: unknown
+        }
+      }
+      const responseBody = axiosError.response?.data
+        ? jsonStringify(axiosError.response.data)
+        : undefined
+      setError(
+        responseBody
+          ? tSync('usage.loadErrorDetail', {
+              detail: responseBody,
+            })
+          : tSync('usage.loadError'),
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
   useEffect(() => {
-    void loadUtilization();
-  }, [loadUtilization]);
-  useKeybinding('settings:retry', () => {
-    void loadUtilization();
-  }, {
-    context: 'Settings',
-    isActive: !!error && !isLoading
-  });
+    void loadUtilization()
+  }, [loadUtilization])
+  useKeybinding(
+    'settings:retry',
+    () => {
+      void loadUtilization()
+    },
+    {
+      context: 'Settings',
+      isActive: !!error && !isLoading,
+    },
+  )
   if (error) {
-    return <Box flexDirection="column" gap={1}>
-        <Text color="error">{tSync('usage.error', {
-          error: error
-        })}</Text>
+    return (
+      <Box flexDirection="column" gap={1}>
+        <Text color="error">
+          {tSync('usage.error', {
+            error: error,
+          })}
+        </Text>
         <Text dimColor>
           <Byline>
-            <ConfigurableShortcutHint action="settings:retry" context="Settings" fallback="r" description="retry" />
-            <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
+            <ConfigurableShortcutHint
+              action="settings:retry"
+              context="Settings"
+              fallback="r"
+              description="retry"
+            />
+            <ConfigurableShortcutHint
+              action="confirm:no"
+              context="Settings"
+              fallback="Esc"
+              description="cancel"
+            />
           </Byline>
         </Text>
-      </Box>;
+      </Box>
+    )
   }
   if (!utilization) {
-    return <Box flexDirection="column" gap={1}>
+    return (
+      <Box flexDirection="column" gap={1}>
         <Text dimColor>{tSync('usage.loading')}</Text>
         <Text dimColor>
-          <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
+          <ConfigurableShortcutHint
+            action="confirm:no"
+            context="Settings"
+            fallback="Esc"
+            description="cancel"
+          />
         </Text>
-      </Box>;
+      </Box>
+    )
   }
 
   // Only Max and Team plans have a Sonnet limit that differs from the weekly
   // limit (see rateLimitMessages.ts). For other plans the bar is redundant.
   // Show for null (unknown plan) to stay consistent with rateLimitMessages.ts,
   // which labels it "Sonnet limit" in that case.
-  const subscriptionType = getSubscriptionType();
-  const showSonnetBar = (subscriptionType as any) === 'max' || (subscriptionType as any) === 'team' || subscriptionType === null;
-  const limits = [{
-    title: tSync('usage.currentSession'),
-    limit: utilization.five_hour
-  }, {
-    title: tSync('usage.currentWeekAll'),
-    limit: utilization.seven_day
-  }, ...(showSonnetBar ? [{
-    title: tSync('usage.currentWeekSonnet'),
-    limit: utilization.seven_day_sonnet
-  }] : [])];
-  return <Box flexDirection="column" gap={1} width="100%">
-      {limits.some(({
-      limit
-    }) => limit) || <Text dimColor>{tSync('usage.subscriptionOnly')}</Text>}
+  const subscriptionType = getSubscriptionType()
+  const showSonnetBar =
+    (subscriptionType as any) === 'max' ||
+    (subscriptionType as any) === 'team' ||
+    subscriptionType === null
+  const limits = [
+    {
+      title: tSync('usage.currentSession'),
+      limit: utilization.five_hour,
+    },
+    {
+      title: tSync('usage.currentWeekAll'),
+      limit: utilization.seven_day,
+    },
+    ...(showSonnetBar
+      ? [
+          {
+            title: tSync('usage.currentWeekSonnet'),
+            limit: utilization.seven_day_sonnet,
+          },
+        ]
+      : []),
+  ]
+  return (
+    <Box flexDirection="column" gap={1} width="100%">
+      {limits.some(({ limit }) => limit) || <Text dimColor>{tSync('usage.subscriptionOnly')}</Text>}
 
-      {limits.map(({
-      title,
-      limit: limit_0
-    }) => limit_0 && <LimitBar key={title} title={title} limit={limit_0} maxWidth={maxWidth} />)}
+      {limits.map(
+        ({ title, limit: limit_0 }) =>
+          limit_0 && <LimitBar key={title} title={title} limit={limit_0} maxWidth={maxWidth} />,
+      )}
 
-      {utilization.extra_usage && <ExtraUsageSection extraUsage={utilization.extra_usage} maxWidth={maxWidth} />}
+      {utilization.extra_usage && (
+        <ExtraUsageSection extraUsage={utilization.extra_usage} maxWidth={maxWidth} />
+      )}
 
       {isEligibleForOverageCreditGrant() && <OverageCreditUpsell maxWidth={maxWidth} />}
 
       <Text dimColor>
-        <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
+        <ConfigurableShortcutHint
+          action="confirm:no"
+          context="Settings"
+          fallback="Esc"
+          description="cancel"
+        />
       </Text>
-    </Box>;
+    </Box>
+  )
 }
 type ExtraUsageSectionProps = {
-  extraUsage: ExtraUsage;
-  maxWidth: number;
-};
-const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage');
-function ExtraUsageSection({
-  extraUsage,
-  maxWidth
-}: ExtraUsageSectionProps) {
-  const subscriptionType = getSubscriptionType();
-  const isProOrMax = (subscriptionType as any) === "pro" || (subscriptionType as any) === "max";
+  extraUsage: ExtraUsage
+  maxWidth: number
+}
+const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage')
+function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
+  const subscriptionType = getSubscriptionType()
+  const isProOrMax = (subscriptionType as any) === 'pro' || (subscriptionType as any) === 'max'
   if (!isProOrMax) {
-    return false;
+    return false
   }
   if (!extraUsage.is_enabled) {
     if (extraUsageCommand.isEnabled()) {
-      return <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.extraUsageNotEnabled')}</Text></Box>;
+      return (
+        <Box flexDirection="column">
+          <Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text>
+          <Text dimColor={true}>{tSync('usage.extraUsageNotEnabled')}</Text>
+        </Box>
+      )
     }
-    return null;
+    return null
   }
   if (extraUsage.monthly_limit === null) {
-    return <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>{tSync('usage.unlimited')}</Text></Box>;
+    return (
+      <Box flexDirection="column">
+        <Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text>
+        <Text dimColor={true}>{tSync('usage.unlimited')}</Text>
+      </Box>
+    )
   }
-  if (typeof extraUsage.used_credits !== "number" || typeof extraUsage.utilization !== "number") {
-    return null;
+  if (typeof extraUsage.used_credits !== 'number' || typeof extraUsage.utilization !== 'number') {
+    return null
   }
-  const formattedUsedCredits = formatCost(extraUsage.used_credits / 100, 2);
-  const formattedMonthlyLimit = formatCost(extraUsage.monthly_limit / 100, 2);
-  const now = new Date();
-  const oneMonthReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const T0 = LimitBar;
-  const t6 = oneMonthReset.toISOString();
+  const formattedUsedCredits = formatCost(extraUsage.used_credits / 100, 2)
+  const formattedMonthlyLimit = formatCost(extraUsage.monthly_limit / 100, 2)
+  const now = new Date()
+  const oneMonthReset = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const T0 = LimitBar
+  const t6 = oneMonthReset.toISOString()
   const t9 = tSync('usage.spent', {
     used: formattedUsedCredits,
-    total: formattedMonthlyLimit
-  });
-  return <T0 title={EXTRA_USAGE_SECTION_TITLE} limit={{
-    utilization: extraUsage.utilization,
-    resets_at: t6
-  }} showTimeInReset={false} extraSubtext={t9} maxWidth={maxWidth} />;
+    total: formattedMonthlyLimit,
+  })
+  return (
+    <T0
+      title={EXTRA_USAGE_SECTION_TITLE}
+      limit={{
+        utilization: extraUsage.utilization,
+        resets_at: t6,
+      }}
+      showTimeInReset={false}
+      extraSubtext={t9}
+      maxWidth={maxWidth}
+    />
+  )
 }

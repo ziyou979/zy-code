@@ -8,7 +8,9 @@ type Props = {
 }
 
 export function NewInstallWizard({ onCancel }: Props): React.ReactElement {
-  React.useEffect(() => { onCancel() }, [])
+  React.useEffect(() => {
+    onCancel()
+  }, [])
   return React.createElement('div', null)
 }
 

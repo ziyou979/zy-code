@@ -109,7 +109,13 @@ export function getEncodingForModel(modelName: string): TiktokenEncoding {
   try {
     encodingForModel(lowerModel as TiktokenModel)
     // encodingForModel 成功意味着这是一个已知的 OpenAI 模型
-    if (lowerModel.includes('gpt-4o') || lowerModel.startsWith('o1') || lowerModel.startsWith('o3') || lowerModel.startsWith('o4') || lowerModel.includes('chatgpt-4o')) {
+    if (
+      lowerModel.includes('gpt-4o') ||
+      lowerModel.startsWith('o1') ||
+      lowerModel.startsWith('o3') ||
+      lowerModel.startsWith('o4') ||
+      lowerModel.includes('chatgpt-4o')
+    ) {
       return 'o200k_base'
     }
     return 'cl100k_base'
@@ -182,9 +188,11 @@ export function countTokensBatchLocally(texts: string[], model: string): number 
  */
 export function isExactTokenizer(model: string): boolean {
   const lowerModel = model.toLowerCase()
-  return lowerModel.startsWith('gpt-') ||
+  return (
+    lowerModel.startsWith('gpt-') ||
     lowerModel.startsWith('o1') ||
     lowerModel.startsWith('o3') ||
     lowerModel.startsWith('o4') ||
     lowerModel.startsWith('chatgpt-')
+  )
 }

@@ -9,9 +9,7 @@ import { isQueuedCommandEditable } from 'src/utils/messageQueueManager.js'
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */
 const proactiveModule =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? require('../../proactive/index.js')
-    : null
+  feature('PROACTIVE') || feature('KAIROS') ? require('../../proactive/index.js') : null
 
 type Props = {
   input: string
@@ -28,7 +26,7 @@ export function usePromptInputPlaceholder({
   viewingAgentName,
 }: Props): string | undefined {
   const queuedCommands = useCommandQueue()
-  const promptSuggestionEnabled = useAppState(s => s.promptSuggestionEnabled)
+  const promptSuggestionEnabled = useAppState((s) => s.promptSuggestionEnabled)
   const placeholder = useMemo(() => {
     if (input !== '') {
       return
@@ -48,8 +46,7 @@ export function usePromptInputPlaceholder({
     // are hidden from the prompt area (see PromptInputQueuedCommands).
     if (
       queuedCommands.some(isQueuedCommandEditable) &&
-      (getGlobalConfig().queuedCommandUpHintCount || 0) <
-        NUM_TIMES_QUEUE_HINT_SHOWN
+      (getGlobalConfig().queuedCommandUpHintCount || 0) < NUM_TIMES_QUEUE_HINT_SHOWN
     ) {
       return 'Press up to edit queued messages'
     }
@@ -57,20 +54,10 @@ export function usePromptInputPlaceholder({
     // Show example command if user has not submitted yet and suggestions are enabled.
     // Skip in proactive mode — the model drives the conversation so onboarding
     // examples are irrelevant and block prompt suggestions from showing.
-    if (
-      submitCount < 1 &&
-      promptSuggestionEnabled &&
-      !proactiveModule?.isProactiveActive()
-    ) {
+    if (submitCount < 1 && promptSuggestionEnabled && !proactiveModule?.isProactiveActive()) {
       return getExampleCommandFromCache()
     }
-  }, [
-    input,
-    queuedCommands,
-    submitCount,
-    promptSuggestionEnabled,
-    viewingAgentName,
-  ])
+  }, [input, queuedCommands, submitCount, promptSuggestionEnabled, viewingAgentName])
 
   return placeholder
 }

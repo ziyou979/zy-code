@@ -32,7 +32,7 @@ function makeCompletion(args: {
           content: args.content ?? null,
           refusal: null,
           ...(args.toolCalls && {
-            tool_calls: args.toolCalls.map(tc => ({
+            tool_calls: args.toolCalls.map((tc) => ({
               id: tc.id,
               type: 'function' as const,
               function: { name: tc.name, arguments: tc.arguments },
@@ -62,9 +62,7 @@ describe('openAIResponseToStandard: 入站 OpenAI 非流式', () => {
   test('工具调用：arguments 字符串被 parse 成 object input', () => {
     const r = openAIResponseToStandard(
       makeCompletion({
-        toolCalls: [
-          { id: 'c1', name: 'search', arguments: '{"q":"hello"}' },
-        ],
+        toolCalls: [{ id: 'c1', name: 'search', arguments: '{"q":"hello"}' }],
         finishReason: 'tool_calls',
       }),
       'gpt-4',

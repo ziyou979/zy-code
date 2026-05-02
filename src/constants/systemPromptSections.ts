@@ -17,10 +17,7 @@ type SystemPromptSection = {
  * Create a memoized system prompt section.
  * Computed once, cached until /clear or /compact.
  */
-export function systemPromptSection(
-  name: string,
-  compute: ComputeFn,
-): SystemPromptSection {
+export function systemPromptSection(name: string, compute: ComputeFn): SystemPromptSection {
   return { name, compute, cacheBreak: false }
 }
 
@@ -46,7 +43,7 @@ export async function resolveSystemPromptSections(
   const cache = getSystemPromptSectionCache()
 
   return Promise.all(
-    sections.map(async s => {
+    sections.map(async (s) => {
       if (!s.cacheBreak && cache.has(s.name)) {
         return cache.get(s.name) ?? null
       }

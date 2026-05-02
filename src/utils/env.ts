@@ -13,11 +13,7 @@ type Platform = 'win32' | 'darwin' | 'linux'
 // Config and data paths
 export const getGlobalZyFile = memoize((): string => {
   // Legacy fallback for backwards compatibility
-  if (
-    getFsImplementation().existsSync(
-      join(getZyConfigHomeDir(), '.config.json'),
-    )
-  ) {
+  if (getFsImplementation().existsSync(join(getZyConfigHomeDir(), '.config.json'))) {
     return join(getZyConfigHomeDir(), '.config.json')
   }
 
@@ -73,9 +69,7 @@ const detectRuntimes = memoize(async (): Promise<string[]> => {
 const isWslEnvironment = memoize((): boolean => {
   try {
     // Check for WSLInterop file which is a reliable indicator of WSL
-    return getFsImplementation().existsSync(
-      '/proc/sys/fs/binfmt_misc/WSLInterop',
-    )
+    return getFsImplementation().existsSync('/proc/sys/fs/binfmt_misc/WSLInterop')
   } catch (_error) {
     // If there's an error checking, assume not WSL
     return false
@@ -201,11 +195,7 @@ function detectTerminal(): string | null {
   if (process.env.WT_SESSION) return 'windows-terminal'
   if (process.env.SESSIONNAME && process.env.TERM === 'cygwin') return 'cygwin'
   if (process.env.MSYSTEM) return process.env.MSYSTEM.toLowerCase() // MINGW64, MSYS2, etc.
-  if (
-    process.env.ConEmuANSI ||
-    process.env.ConEmuPID ||
-    process.env.ConEmuTask
-  ) {
+  if (process.env.ConEmuANSI || process.env.ConEmuPID || process.env.ConEmuTask) {
     return 'conemu'
   }
 
@@ -246,10 +236,7 @@ export const detectDeploymentEnvironment = memoize((): string => {
 
   // Cloud platforms
   if (isEnvTruthy(process.env.VERCEL)) return 'vercel'
-  if (
-    process.env.RAILWAY_ENVIRONMENT_NAME ||
-    process.env.RAILWAY_SERVICE_NAME
-  ) {
+  if (process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_SERVICE_NAME) {
     return 'railway'
   }
   if (isEnvTruthy(process.env.RENDER)) return 'render'
@@ -273,8 +260,7 @@ export const detectDeploymentEnvironment = memoize((): string => {
   }
   if (process.env.K_SERVICE) return 'gcp-cloud-run'
   if (process.env.GOOGLE_CLOUD_PROJECT) return 'gcp'
-  if (process.env.WEBSITE_SITE_NAME || process.env.WEBSITE_SKU)
-    return 'azure-app-service'
+  if (process.env.WEBSITE_SITE_NAME || process.env.WEBSITE_SKU) return 'azure-app-service'
   if (process.env.AZURE_FUNCTIONS_ENVIRONMENT) return 'azure-functions'
   if (process.env.APP_URL?.includes('ondigitalocean.app')) {
     return 'digitalocean-app-platform'
@@ -306,14 +292,10 @@ export const detectDeploymentEnvironment = memoize((): string => {
 
 // all of these should be immutable
 function isSSHSession(): boolean {
-  return !!(
-    process.env.SSH_CONNECTION ||
-    process.env.SSH_CLIENT ||
-    process.env.SSH_TTY
-  )
+  return !!(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY)
 }
 
-export let env;
+export let env
 env = {
   hasInternetAccess,
   isCI: isEnvTruthy(process.env.CI),

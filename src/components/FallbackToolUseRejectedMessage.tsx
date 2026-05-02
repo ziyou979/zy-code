@@ -1,6 +1,10 @@
-import * as React from 'react';
-import { InterruptedByUser } from './InterruptedByUser.js';
-import { MessageResponse } from './MessageResponse.js';
+import * as React from 'react'
+import { InterruptedByUser } from './InterruptedByUser.js'
+import { MessageResponse } from './MessageResponse.js'
 export function FallbackToolUseRejectedMessage() {
-  return <MessageResponse height={1}><InterruptedByUser /></MessageResponse>;
+  return (
+    <MessageResponse height={1}>
+      <InterruptedByUser />
+    </MessageResponse>
+  )
 }

@@ -11,9 +11,7 @@ export const PolicyLimitsResponseSchema = lazySchema(() =>
   }),
 )
 
-export type PolicyLimitsResponse = z.infer<
-  ReturnType<typeof PolicyLimitsResponseSchema>
->
+export type PolicyLimitsResponse = z.infer<ReturnType<typeof PolicyLimitsResponseSchema>>
 
 /**
  * Result of fetching policy limits

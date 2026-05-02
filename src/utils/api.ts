@@ -15,10 +15,7 @@ import { prefetchAllMcpResources } from 'src/services/mcp/client.js'
 import type { ScopedMcpServerConfig } from 'src/services/mcp/types.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
-import {
-  normalizeFileEditInput,
-  stripTrailingWhitespace,
-} from 'src/tools/FileEditTool/utils.js'
+import { normalizeFileEditInput, stripTrailingWhitespace } from 'src/tools/FileEditTool/utils.js'
 import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import { getTools } from 'src/tools.js'
 import type { AgentId } from 'src/types/ids.js'
@@ -32,28 +29,14 @@ import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../tools/ExitPlanModeTool/constants
 import { TASK_OUTPUT_TOOL_NAME } from '../tools/TaskOutputTool/constants.js'
 import type { Message } from '../types/message.js'
 import { isAgentSwarmsEnabled } from './agentSwarmsEnabled.js'
-import {
-  modelSupportsStructuredOutputs,
-  shouldUseGlobalCacheScope,
-} from './betas.js'
+import { modelSupportsStructuredOutputs, shouldUseGlobalCacheScope } from './betas.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
 import { createUserMessage } from './messages.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-  providerHasCapability,
-} from './model/providers.js'
-import {
-  getFileReadIgnorePatterns,
-  normalizePatternsToPath,
-} from './permissions/filesystem.js'
-import {
-  getPlan,
-  getPlanFilePath,
-  persistFileSnapshotIfRemote,
-} from './plans.js'
+import { getAPIProvider, isAnthropicBaseUrl, providerHasCapability } from './model/providers.js'
+import { getFileReadIgnorePatterns, normalizePatternsToPath } from './permissions/filesystem.js'
+import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from './plans.js'
 import { getPlatform } from './platform.js'
 import { countFilesRoundedRg } from './ripgrep.js'
 import { jsonStringify } from './slowOperations.js'
@@ -149,8 +132,7 @@ export async function toolToAPISchema(
   const cache = getToolSchemaCache()
   let base: CachedSchema | undefined = cache.get(cacheKey)
   if (!base) {
-    const strictToolsEnabled =
-      checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_strict_tools')
+    const strictToolsEnabled = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_strict_tools')
     // 如果提供了工具的 JSON 模式则直接使用，否则转换 Zod 模式
     let inputSchema = (
       'inputJSONSchema' in tool && tool.inputJSONSchema
@@ -174,9 +156,7 @@ export async function toolToAPISchema(
     // 将语言偏好附加到工具提示中，以便模型尊重
     // 用户的配置语言，即使在工具相关输出期间也是如此。
     const languageSection = getLanguageSection(getInitialSettings().language)
-    const description = languageSection
-      ? `${toolPrompt}\n\n${languageSection}`
-      : toolPrompt
+    const description = languageSection ? `${toolPrompt}\n\n${languageSection}` : toolPrompt
 
     base = {
       name: tool.name,
@@ -248,13 +228,8 @@ export async function toolToAPISchema(
   // 它独立尊重此总开关。
   // github.com/anthropics/zy-code/issues/20031
   if (isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
-    const allowed = new Set([
-      'name',
-      'description',
-      'inputSchema',
-      'cache_control',
-    ])
-    const stripped = Object.keys(schema).filter(k => !allowed.has(k))
+    const allowed = new Set(['name', 'description', 'inputSchema', 'cache_control'])
+    const stripped = Object.keys(schema).filter((k) => !allowed.has(k))
     if (stripped.length > 0) {
       logStripOnce(stripped)
       return {
@@ -367,9 +342,7 @@ export function splitSysPromptPrefix(
   }
 
   if (useGlobalCacheFeature) {
-    const boundaryIndex = systemPrompt.findIndex(
-      s => s === SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
-    )
+    const boundaryIndex = systemPrompt.findIndex((s) => s === SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
     if (boundaryIndex !== -1) {
       let attributionHeader: string | undefined
       let systemPromptPrefix: string | undefined
@@ -392,13 +365,10 @@ export function splitSysPromptPrefix(
       }
 
       const result: SystemPromptBlock[] = []
-      if (attributionHeader)
-        result.push({ text: attributionHeader, cacheScope: null })
-      if (systemPromptPrefix)
-        result.push({ text: systemPromptPrefix, cacheScope: null })
+      if (attributionHeader) result.push({ text: attributionHeader, cacheScope: null })
+      if (systemPromptPrefix) result.push({ text: systemPromptPrefix, cacheScope: null })
       const staticJoined = staticBlocks.join('\n\n')
-      if (staticJoined)
-        result.push({ text: staticJoined, cacheScope: 'global' })
+      if (staticJoined) result.push({ text: staticJoined, cacheScope: 'global' })
       const dynamicJoined = dynamicBlocks.join('\n\n')
       if (dynamicJoined) result.push({ text: dynamicJoined, cacheScope: null })
 
@@ -432,10 +402,8 @@ export function splitSysPromptPrefix(
   }
 
   const result: SystemPromptBlock[] = []
-  if (attributionHeader)
-    result.push({ text: attributionHeader, cacheScope: null })
-  if (systemPromptPrefix)
-    result.push({ text: systemPromptPrefix, cacheScope: 'org' })
+  if (attributionHeader) result.push({ text: attributionHeader, cacheScope: null })
+  if (systemPromptPrefix) result.push({ text: systemPromptPrefix, cacheScope: 'org' })
   const restJoined = rest.join('\n\n')
   if (restJoined) result.push({ text: restJoined, cacheScope: 'org' })
   return result
@@ -491,13 +459,12 @@ export async function logContextMetrics(
   if (isAnalyticsDisabled()) {
     return
   }
-  const [{ tools: mcpTools }, tools, userContext, systemContext] =
-    await Promise.all([
-      prefetchAllMcpResources(mcpConfigs),
-      getTools(toolPermissionContext),
-      getUserContext(),
-      getSystemContext(),
-    ])
+  const [{ tools: mcpTools }, tools, userContext, systemContext] = await Promise.all([
+    prefetchAllMcpResources(mcpConfigs),
+    getTools(toolPermissionContext),
+    getUserContext(),
+    getSystemContext(),
+  ])
   // Extract individual context sizes and calculate total
   const gitStatusSize = systemContext.gitStatus?.length ?? 0
   const zyMdSize = userContext.zyMd?.length ?? 0
@@ -508,10 +475,7 @@ export async function logContextMetrics(
   // Get file count using ripgrep (rounded to nearest power of 10 for privacy)
   const currentDir = getCwd()
   const ignorePatternsByRoot = getFileReadIgnorePatterns(toolPermissionContext)
-  const normalizedIgnorePatterns = normalizePatternsToPath(
-    ignorePatternsByRoot,
-    currentDir,
-  )
+  const normalizedIgnorePatterns = normalizePatternsToPath(ignorePatternsByRoot, currentDir)
   const fileCount = await countFilesRoundedRg(
     currentDir,
     AbortSignal.timeout(1000),
@@ -525,7 +489,7 @@ export async function logContextMetrics(
   let nonMcpToolsCount = 0
   let nonMcpToolsTokens = 0
 
-  const nonMcpTools = tools.filter(tool => !tool.isMcp)
+  const nonMcpTools = tools.filter((tool) => !tool.isMcp)
   mcpToolsCount = mcpTools.length
   nonMcpToolsCount = nonMcpTools.length
 
@@ -592,10 +556,7 @@ export function normalizeToolInput<T extends Tool>(
       const cwd = getCwd()
       let normalizedCommand = command.replace(`cd ${cwd} && `, '')
       if (getPlatform() === 'windows') {
-        normalizedCommand = normalizedCommand.replace(
-          `cd ${windowsPathToPosixPath(cwd)} && `,
-          '',
-        )
+        normalizedCommand = normalizedCommand.replace(`cd ${windowsPathToPosixPath(cwd)} && `, '')
       }
 
       // 将 \\; 替换为 \;（find -exec 命令通常需要）
@@ -607,8 +568,7 @@ export function normalizeToolInput<T extends Tool>(
       }
 
       // 检查 run_in_background（如果设置了 ZY_CODE_DISABLE_BACKGROUND_TASKS，模式中可能不存在）
-      const run_in_background =
-        'run_in_background' in parsed ? parsed.run_in_background : undefined
+      const run_in_background = 'run_in_background' in parsed ? parsed.run_in_background : undefined
 
       // 安全：转换是安全的，因为输入已通过上面的 .parse() 验证。
       // TypeScript 无法基于 switch(tool.name) 缩小泛型 T 的范围，因此它
@@ -660,21 +620,16 @@ export function normalizeToolInput<T extends Tool>(
       // 安全：参见上面 BashTool 中的注释
       return {
         file_path: parsedInput.file_path,
-        content: isMarkdown
-          ? parsedInput.content
-          : stripTrailingWhitespace(parsedInput.content),
+        content: isMarkdown ? parsedInput.content : stripTrailingWhitespace(parsedInput.content),
       } as z.infer<T['inputSchema']>
     }
     case TASK_OUTPUT_TOOL_NAME: {
       // 规范化来自 AgentOutputTool/BashOutputTool 的遗留参数名
       const legacyInput = input as Record<string, unknown>
-      const taskId =
-        legacyInput.task_id ?? legacyInput.agentId ?? legacyInput.bash_id
+      const taskId = legacyInput.task_id ?? legacyInput.agentId ?? legacyInput.bash_id
       const timeout =
         legacyInput.timeout ??
-        (typeof legacyInput.wait_up_to === 'number'
-          ? legacyInput.wait_up_to * 1000
-          : undefined)
+        (typeof legacyInput.wait_up_to === 'number' ? legacyInput.wait_up_to * 1000 : undefined)
       // 安全：参见上面 BashTool 中的注释
       return {
         task_id: taskId ?? '',
@@ -696,11 +651,7 @@ export function normalizeToolInputForAPI<T extends Tool>(
   switch (tool.name) {
     case EXIT_PLAN_MODE_V2_TOOL_NAME: {
       // 发送到 API 前去除注入的字段（模式期望空对象）
-      if (
-        input &&
-        typeof input === 'object' &&
-        ('plan' in input || 'planFilePath' in input)
-      ) {
+      if (input && typeof input === 'object' && ('plan' in input || 'planFilePath' in input)) {
         const { plan, planFilePath, ...rest } = input as Record<string, unknown>
         return rest as z.infer<T['inputSchema']>
       }
@@ -713,8 +664,7 @@ export function normalizeToolInputForAPI<T extends Tool>(
       // 转录文件不会向 API 发送整个文件的副本。新会话
       // 不需要这个（合成已移至发射时）。
       if (input && typeof input === 'object' && 'edits' in input) {
-        const { old_string, new_string, replace_all, ...rest } =
-          input as Record<string, unknown>
+        const { old_string, new_string, replace_all, ...rest } = input as Record<string, unknown>
         return rest as z.infer<T['inputSchema']>
       }
       return input

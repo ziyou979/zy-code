@@ -3,12 +3,8 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { logEvent } from 'src/services/analytics/index.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
 import { getUiLanguage } from '../i18n/index.js'
-import {
-  getStaticPricingForModel,
-} from './model/modelCapabilities.js'
-import {
-  getDefaultMainLoopModelSetting,
-} from './model/model.js'
+import { getStaticPricingForModel } from './model/modelCapabilities.js'
+import { getDefaultMainLoopModelSetting } from './model/model.js'
 
 export type ModelCosts = {
   inputTokens: number
@@ -24,7 +20,8 @@ export type ModelCosts = {
  * 对于阶梯费用模型，usage.inputTokens 用于确定当前所在阶梯。
  */
 export function getModelCosts(model: string, usage: Usage): ModelCosts {
-  const currentInput = (usage.extras?.cacheReadInputTokens ?? 0) +
+  const currentInput =
+    (usage.extras?.cacheReadInputTokens ?? 0) +
     (usage.extras?.cacheCreationInputTokens ?? 0) +
     usage.inputTokens
   const pricing = getStaticPricingForModel(model, currentInput)
@@ -87,12 +84,10 @@ function calculateTokenCost(modelCosts: ModelCosts, usage: Usage): number {
   return (
     (usage.inputTokens / 1_000_000) * modelCosts.inputTokens +
     (usage.outputTokens / 1_000_000) * modelCosts.outputTokens +
-    ((usage.extras?.cacheReadInputTokens ?? 0) / 1_000_000) *
-      modelCosts.promptCacheReadTokens +
+    ((usage.extras?.cacheReadInputTokens ?? 0) / 1_000_000) * modelCosts.promptCacheReadTokens +
     ((usage.extras?.cacheCreationInputTokens ?? 0) / 1_000_000) *
       modelCosts.promptCacheWriteTokens +
-    ((usage.extras?.webSearchRequests ?? 0)) *
-      modelCosts.webSearchRequests
+    (usage.extras?.webSearchRequests ?? 0) * modelCosts.webSearchRequests
   )
 }
 
@@ -128,4 +123,3 @@ export function calculateCostFromTokens(
   }
   return calculateUSDCost(model, usage)
 }
-

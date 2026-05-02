@@ -1,10 +1,7 @@
 import { homedir } from 'os'
 import { getGlobalConfig, saveGlobalConfig } from '../../../utils/config.js'
 import { logForDebugging } from '../../../utils/debug.js'
-import {
-  execFileNoThrow,
-  execFileNoThrowWithCwd,
-} from '../../../utils/execFileNoThrow.js'
+import { execFileNoThrow, execFileNoThrowWithCwd } from '../../../utils/execFileNoThrow.js'
 import { logError } from '../../../utils/log.js'
 
 /**
@@ -87,9 +84,7 @@ export async function isIt2CliAvailable(): Promise<boolean> {
  * @param packageManager - The package manager to use for installation
  * @returns Result indicating success or failure
  */
-export async function installIt2(
-  packageManager: PythonPackageManager,
-): Promise<It2InstallResult> {
+export async function installIt2(packageManager: PythonPackageManager): Promise<It2InstallResult> {
   logForDebugging(`[it2Setup] Installing it2 using ${packageManager}`)
 
   // Run from home directory to avoid reading project-level pip.conf/uv.toml
@@ -110,18 +105,12 @@ export async function installIt2(
       break
     case 'pip':
       // Use --user to install without sudo
-      result = await execFileNoThrowWithCwd(
-        'pip',
-        ['install', '--user', 'it2'],
-        { cwd: homedir() },
-      )
+      result = await execFileNoThrowWithCwd('pip', ['install', '--user', 'it2'], { cwd: homedir() })
       if (result.code !== 0) {
         // Try pip3 if pip fails
-        result = await execFileNoThrowWithCwd(
-          'pip3',
-          ['install', '--user', 'it2'],
-          { cwd: homedir() },
-        )
+        result = await execFileNoThrowWithCwd('pip3', ['install', '--user', 'it2'], {
+          cwd: homedir(),
+        })
       }
       break
   }
@@ -214,7 +203,7 @@ export function getPythonApiInstructions(): string[] {
 export function markIt2SetupComplete(): void {
   const config = getGlobalConfig()
   if (config.iterm2It2SetupComplete !== true) {
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       iterm2It2SetupComplete: true,
     }))
@@ -229,7 +218,7 @@ export function markIt2SetupComplete(): void {
 export function setPreferTmuxOverIterm2(prefer: boolean): void {
   const config = getGlobalConfig()
   if (config.preferTmuxOverIterm2 !== prefer) {
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       preferTmuxOverIterm2: prefer,
     }))

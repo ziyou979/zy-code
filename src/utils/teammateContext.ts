@@ -56,10 +56,7 @@ export function getTeammateContext(): TeammateContext | undefined {
  * @param fn - The function to run with the context
  * @returns The return value of fn
  */
-export function runWithTeammateContext<T>(
-  context: TeammateContext,
-  fn: () => T,
-): T {
+export function runWithTeammateContext<T>(context: TeammateContext, fn: () => T): T {
   return teammateContextStorage.run(context, fn)
 }
 

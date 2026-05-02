@@ -20,17 +20,11 @@ import { countLinesChanged, getPatchForDisplay } from '../../utils/diff.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import { getFileModificationTime, writeTextContent } from '../../utils/file.js'
-import {
-  fileHistoryEnabled,
-  fileHistoryTrackEdit,
-} from '../../utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistory.js'
 import { logFileOperation } from '../../utils/fileOperationAnalytics.js'
 import { readFileSyncWithMetadata } from '../../utils/fileRead.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import {
-  fetchSingleFileGitDiff,
-  type ToolUseDiff,
-} from '../../utils/gitDiff.js'
+import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../utils/gitDiff.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import { expandPath } from '../../utils/path.js'
@@ -57,9 +51,7 @@ const inputSchema = lazySchema(() =>
   z.strictObject({
     file_path: z
       .string()
-      .describe(
-        'The absolute path to the file to write (must be absolute, not relative)',
-      ),
+      .describe('The absolute path to the file to write (must be absolute, not relative)'),
     content: z.string().describe('The content to write to the file'),
   }),
 )
@@ -69,20 +61,14 @@ const outputSchema = lazySchema(() =>
   z.object({
     type: z
       .enum(['create', 'update'])
-      .describe(
-        'Whether a new file was created or an existing file was updated',
-      ),
+      .describe('Whether a new file was created or an existing file was updated'),
     filePath: z.string().describe('The path to the file that was written'),
     content: z.string().describe('The content that was written to the file'),
-    structuredPatch: z
-      .array(hunkSchema())
-      .describe('Diff patch showing the changes'),
+    structuredPatch: z.array(hunkSchema()).describe('Diff patch showing the changes'),
     originalFile: z
       .string()
       .nullable()
-      .describe(
-        'The original file content before the write (null for new files)',
-      ),
+      .describe('The original file content before the write (null for new files)'),
     gitDiff: gitDiffSchema().optional(),
   }),
 )
@@ -130,15 +116,11 @@ export const FileWriteTool = buildTool({
     }
   },
   async preparePermissionMatcher({ file_path }) {
-    return pattern => matchWildcardPattern(pattern, file_path)
+    return (pattern) => matchWildcardPattern(pattern, file_path)
   },
   async checkPermissions(input, context): Promise<PermissionDecision> {
     const appState = context.getAppState()
-    return checkWritePermissionForTool(
-      FileWriteTool,
-      input,
-      appState.toolPermissionContext,
-    )
+    return checkWritePermissionForTool(FileWriteTool, input, appState.toolPermissionContext)
   },
   renderToolUseRejectedMessage,
   renderToolUseErrorMessage,
@@ -170,8 +152,7 @@ export const FileWriteTool = buildTool({
     if (denyRule !== null) {
       return {
         result: false,
-        message:
-          'File is in a directory that is denied by your permission settings.',
+        message: 'File is in a directory that is denied by your permission settings.',
         errorCode: 1,
       }
     }
@@ -199,8 +180,7 @@ export const FileWriteTool = buildTool({
     if (!readTimestamp || readTimestamp.isPartialView) {
       return {
         result: false,
-        message:
-          'File has not been read yet. Read it first before writing to it.',
+        message: 'File has not been read yet. Read it first before writing to it.',
         errorCode: 2,
       }
     }
@@ -256,11 +236,7 @@ export const FileWriteTool = buildTool({
       // Backup captures pre-edit content — safe to call before the staleness
       // check (idempotent v1 backup keyed on content hash; if staleness fails
       // later we just have an unused backup, not corrupt state).
-      await fileHistoryTrackEdit(
-        updateFileHistoryState,
-        fullFilePath,
-        parentMessage.uuid as any,
-      )
+      await fileHistoryTrackEdit(updateFileHistoryState, fullFilePath, parentMessage.uuid as any)
     }
 
     // Load current state and confirm no changes since last read.
@@ -283,10 +259,7 @@ export const FileWriteTool = buildTool({
         // Timestamp indicates modification, but on Windows timestamps can change
         // without content changes (cloud sync, antivirus, etc.). For full reads,
         // compare content as a fallback to avoid false positives.
-        const isFullRead =
-          lastRead &&
-          lastRead.offset === undefined &&
-          lastRead.limit === undefined
+        const isFullRead = lastRead && lastRead.offset === undefined && lastRead.limit === undefined
         // meta.content is CRLF-normalized — matches readFileState's normalized form.
         if (!isFullRead || meta.content !== lastRead.content) {
           throw new Error(FILE_UNEXPECTEDLY_MODIFIED_ERROR)

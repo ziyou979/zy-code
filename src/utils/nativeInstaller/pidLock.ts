@@ -17,11 +17,7 @@ import { isENOENT, toError } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { getProcessCommand } from '../genericProcessUtils.js'
 import { logError } from '../log.js'
-import {
-  jsonParse,
-  jsonStringify,
-  writeFileSync_DEPRECATED,
-} from '../slowOperations.js'
+import { jsonParse, jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
 
 /**
  * Check if PID-based version locking is enabled.
@@ -42,10 +38,7 @@ export function isPidBasedLockingEnabled(): boolean {
     return false
   }
   // GrowthBook controls gradual rollout (returns false for external users)
-  return getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_pid_based_version_locking',
-    false,
-  )
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_pid_based_version_locking', false)
 }
 
 /**
@@ -121,10 +114,7 @@ function isZyProcess(pid: number, expectedExecPath: string): boolean {
     const normalizedCommand = command.toLowerCase()
     const normalizedExecPath = expectedExecPath.toLowerCase()
 
-    return (
-      normalizedCommand.includes('zy') ||
-      normalizedCommand.includes(normalizedExecPath)
-    )
+    return normalizedCommand.includes('zy') || normalizedCommand.includes(normalizedExecPath)
   } catch {
     // If command check fails, trust the PID check
     return true
@@ -134,9 +124,7 @@ function isZyProcess(pid: number, expectedExecPath: string): boolean {
 /**
  * Read and parse a lock file's content
  */
-export function readLockContent(
-  lockFilePath: string,
-): VersionLockContent | null {
+export function readLockContent(lockFilePath: string): VersionLockContent | null {
   const fs = getFsImplementation()
 
   try {
@@ -178,9 +166,7 @@ export function isLockActive(lockFilePath: string): boolean {
   // Secondary validation: is it actually a Zy process?
   // This helps with PID reuse scenarios
   if (!isZyProcess(pid, execPath)) {
-    logForDebugging(
-      `Lock PID ${pid} is running but does not appear to be Zy - treating as stale`,
-    )
+    logForDebugging(`Lock PID ${pid} is running but does not appear to be Zy - treating as stale`)
     return false
   }
 
@@ -207,10 +193,7 @@ export function isLockActive(lockFilePath: string): boolean {
 /**
  * Write lock content to a file atomically
  */
-function writeLockFile(
-  lockFilePath: string,
-  content: VersionLockContent,
-): void {
+function writeLockFile(lockFilePath: string, content: VersionLockContent): void {
   const fs = getFsImplementation()
   const tempPath = `${lockFilePath}.tmp.${process.pid}.${Date.now()}`
 
@@ -247,9 +230,7 @@ export async function tryAcquireLock(
   // validates it's actually a Zy process (to handle PID reuse scenarios)
   if (isLockActive(lockFilePath)) {
     const existingContent = readLockContent(lockFilePath)
-    logForDebugging(
-      `Cannot acquire lock for ${versionName} - held by PID ${existingContent?.pid}`,
-    )
+    logForDebugging(`Cannot acquire lock for ${versionName} - held by PID ${existingContent?.pid}`)
     return null
   }
 
@@ -354,9 +335,7 @@ export function getAllLockInfo(locksDir: string): LockInfo[] {
   const lockInfos: LockInfo[] = []
 
   try {
-    const lockFiles = fs
-      .readdirStringSync(locksDir)
-      .filter((f: string) => f.endsWith('.lock'))
+    const lockFiles = fs.readdirStringSync(locksDir).filter((f: string) => f.endsWith('.lock'))
 
     for (const lockFile of lockFiles) {
       const lockFilePath = join(locksDir, lockFile)
@@ -396,9 +375,7 @@ export function cleanupStaleLocks(locksDir: string): number {
   let cleanedCount = 0
 
   try {
-    const lockEntries = fs
-      .readdirStringSync(locksDir)
-      .filter((f: string) => f.endsWith('.lock'))
+    const lockEntries = fs.readdirStringSync(locksDir).filter((f: string) => f.endsWith('.lock'))
 
     for (const lockEntry of lockEntries) {
       const lockFilePath = join(locksDir, lockEntry)

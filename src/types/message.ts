@@ -158,7 +158,8 @@ export type AttachmentContent =
   | { type: 'reasoning'; level: string }
   | { type: 'text'; content: string }
 
-export interface AttachmentMessage<T extends Record<string, unknown> = { type: string }> extends BaseMessage {
+export interface AttachmentMessage<T extends Record<string, unknown> = { type: string }>
+  extends BaseMessage {
   type: 'attachment'
   attachment: T & {
     type: string
@@ -313,7 +314,7 @@ export interface SystemStopHookSummaryMessage extends BaseMessage {
 }
 
 export interface SystemMemorySavedMessage extends BaseMessage {
-  teamCount: number;
+  teamCount: number
   type: 'system'
   subtype: 'memory_saved'
   content?: string
@@ -389,9 +390,9 @@ export interface GroupedToolUseMessage extends BaseMessage {
 }
 
 export interface CollapsedReadSearchGroup extends BaseMessage {
-  teamMemoryWriteCount: number;
-  teamMemoryReadCount: number;
-  teamMemorySearchCount: number;
+  teamMemoryWriteCount: number
+  teamMemoryReadCount: number
+  teamMemorySearchCount: number
   type: 'collapsed_read_search'
   content: string
   collapsedCount: number
@@ -403,9 +404,7 @@ export interface GroupedToolUseMessageWithMessages extends BaseMessage {
   messages: NormalizedAssistantMessage[]
 }
 
-export type CollapsibleMessage =
-  | NormalizedAssistantMessage
-  | GroupedToolUseMessageWithMessages
+export type CollapsibleMessage = NormalizedAssistantMessage | GroupedToolUseMessageWithMessages
 
 // ============================================================
 // Compact Metadata

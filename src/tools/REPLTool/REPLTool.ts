@@ -21,9 +21,7 @@ Separate commands with newlines.`
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
-    commands: z
-      .string()
-      .describe('Batch of commands to execute, one per line'),
+    commands: z.string().describe('Batch of commands to execute, one per line'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>

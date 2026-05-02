@@ -9,11 +9,7 @@ import {
 import type { ToolUseContext } from '../Tool.js'
 import { isBriefEntitled } from '../tools/BriefTool/BriefTool.js'
 import { BRIEF_TOOL_NAME } from '../tools/BriefTool/prompt.js'
-import type {
-  Command,
-  LocalJSXCommandContext,
-  LocalJSXCommandOnDone,
-} from '../types/command.js'
+import type { Command, LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types/command.js'
 import { lazySchema } from '../utils/lazySchema.js'
 
 // Zod guards against fat-fingered GB pushes (same pattern as pollConfig.ts /
@@ -70,8 +66,7 @@ const brief = {
           logEvent('zy_brief_mode_toggled', {
             enabled: false,
             gated: true,
-            source:
-              'slash_command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            source: 'slash_command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           })
           onDone('Brief tool is not enabled for your account', {
             display: 'system',
@@ -86,7 +81,7 @@ const brief = {
         // without the tool, emitting plain text the filter hides.
         setUserMsgOptIn(newState)
 
-        context.setAppState(prev => {
+        context.setAppState((prev) => {
           if (prev.isBriefOnly === newState) return prev
           return { ...prev, isBriefOnly: newState }
         })
@@ -94,8 +89,7 @@ const brief = {
         logEvent('zy_brief_mode_toggled', {
           enabled: newState,
           gated: false,
-          source:
-            'slash_command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          source: 'slash_command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
 
         // The tool list change alone isn't a strong enough signal mid-session
@@ -118,10 +112,10 @@ const brief = {
               }\n</system-reminder>`,
             ]
 
-        onDone(
-          newState ? 'Brief-only mode enabled' : 'Brief-only mode disabled',
-          { display: 'system', metaMessages },
-        )
+        onDone(newState ? 'Brief-only mode enabled' : 'Brief-only mode disabled', {
+          display: 'system',
+          metaMessages,
+        })
         return null
       },
     }),

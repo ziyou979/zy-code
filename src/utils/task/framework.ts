@@ -8,11 +8,7 @@ import {
   TOOL_USE_ID_TAG,
 } from '../../constants/xml.js'
 import type { AppState } from '../../state/AppState.js'
-import {
-  isTerminalTaskStatus,
-  type TaskStatus,
-  type TaskType,
-} from '../../Task.js'
+import { isTerminalTaskStatus, type TaskStatus, type TaskType } from '../../Task.js'
 import type { TaskState } from '../../tasks/types.js'
 import { enqueuePendingNotification } from '../messageQueueManager.js'
 import { enqueueSdkEvent } from '../sdkEventQueue.js'
@@ -50,7 +46,7 @@ export function updateTaskState<T extends TaskState>(
   setAppState: SetAppState,
   updater: (task: T) => T,
 ): void {
-  setAppState(prev => {
+  setAppState((prev) => {
     const task = prev.tasks?.[taskId] as T | undefined
     if (!task) {
       return prev
@@ -76,7 +72,7 @@ export function updateTaskState<T extends TaskState>(
  */
 export function registerTask(task: TaskState, setAppState: SetAppState): void {
   let isReplacement = false
-  setAppState(prev => {
+  setAppState((prev) => {
     const existing = prev.tasks[task.id]
     isReplacement = existing !== undefined
     // Carry forward UI-held state on re-register (resumeAgentBackground
@@ -108,10 +104,7 @@ export function registerTask(task: TaskState, setAppState: SetAppState): void {
     tool_use_id: task.toolUseId,
     description: task.description,
     task_type: task.type,
-    workflow_name:
-      'workflowName' in task
-        ? (task.workflowName as string | undefined)
-        : undefined,
+    workflow_name: 'workflowName' in task ? (task.workflowName as string | undefined) : undefined,
     prompt: 'prompt' in task ? (task.prompt as string) : undefined,
   })
 }
@@ -122,11 +115,8 @@ export function registerTask(task: TaskState, setAppState: SetAppState): void {
  * This allows memory to be freed without waiting for the next query loop iteration.
  * The lazy GC in generateTaskAttachments() remains as a safety net.
  */
-export function evictTerminalTask(
-  taskId: string,
-  setAppState: SetAppState,
-): void {
-  setAppState(prev => {
+export function evictTerminalTask(taskId: string, setAppState: SetAppState): void {
+  setAppState((prev) => {
     const task = prev.tasks?.[taskId]
     if (!task) return prev
     if (!isTerminalTaskStatus(task.status)) return prev
@@ -148,7 +138,7 @@ export function evictTerminalTask(
  */
 export function getRunningTasks(state: AppState): TaskState[] {
   const tasks = state.tasks ?? {}
-  return Object.values(tasks).filter(task => task.status === 'running')
+  return Object.values(tasks).filter((task) => task.status === 'running')
 }
 
 /**
@@ -187,10 +177,7 @@ export async function generateTaskAttachments(state: AppState): Promise<{
     }
 
     if (taskState.status === 'running') {
-      const delta = await getTaskOutputDelta(
-        taskState.id,
-        taskState.outputOffset,
-      )
+      const delta = await getTaskOutputDelta(taskState.id, taskState.outputOffset)
       if (delta.content) {
         updatedTaskOffsets[taskState.id] = delta.newOffset
       }
@@ -219,7 +206,7 @@ export function applyTaskOffsetsAndEvictions(
   if (offsetIds.length === 0 && evictedTaskIds.length === 0) {
     return
   }
-  setAppState(prev => {
+  setAppState((prev) => {
     let changed = false
     const newTasks = { ...prev.tasks }
     for (const id of offsetIds) {
@@ -257,8 +244,7 @@ export async function pollTasks(
   setAppState: SetAppState,
 ): Promise<void> {
   const state = getAppState()
-  const { attachments, updatedTaskOffsets, evictedTaskIds } =
-    await generateTaskAttachments(state)
+  const { attachments, updatedTaskOffsets, evictedTaskIds } = await generateTaskAttachments(state)
 
   applyTaskOffsetsAndEvictions(setAppState, updatedTaskOffsets, evictedTaskIds)
 

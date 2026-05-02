@@ -75,18 +75,16 @@ export type ReplBridgeTransport = {
  * no-op wrapper that exists only so replBridge's `transport` variable
  * has a single type.
  */
-export function createV1ReplTransport(
-  hybrid: HybridTransport,
-): ReplBridgeTransport {
+export function createV1ReplTransport(hybrid: HybridTransport): ReplBridgeTransport {
   return {
-    write: msg => hybrid.write(msg),
-    writeBatch: msgs => hybrid.writeBatch(msgs),
+    write: (msg) => hybrid.write(msg),
+    writeBatch: (msgs) => hybrid.writeBatch(msgs),
     close: () => hybrid.close(),
     isConnectedStatus: () => hybrid.isConnectedStatus(),
     getStateLabel: () => hybrid.getStateLabel(),
-    setOnData: cb => hybrid.setOnData(cb),
-    setOnClose: cb => hybrid.setOnClose(cb),
-    setOnConnect: cb => hybrid.setOnConnect(cb),
+    setOnData: (cb) => hybrid.setOnData(cb),
+    setOnClose: (cb) => hybrid.setOnClose(cb),
+    setOnConnect: (cb) => hybrid.setOnConnect(cb),
     connect: () => void hybrid.connect(),
     // v1 Session-Ingress WS doesn't use SSE sequence numbers; replay
     // semantics are different. Always return 0 so the seq-num carryover
@@ -154,13 +152,7 @@ export async function createV2ReplTransport(opts: {
    */
   getAuthToken?: () => string | undefined
 }): Promise<ReplBridgeTransport> {
-  const {
-    sessionUrl,
-    ingressToken,
-    sessionId,
-    initialSequenceNum,
-    getAuthToken,
-  } = opts
+  const { sessionUrl, ingressToken, sessionId, initialSequenceNum, getAuthToken } = opts
 
   // Auth header builder. If getAuthToken is provided, read from it
   // (per-instance, multi-session safe). Otherwise write ingressToken to
@@ -190,14 +182,7 @@ export async function createV2ReplTransport(opts: {
   const sseUrl = new URL(sessionUrl)
   sseUrl.pathname = sseUrl.pathname.replace(/\/$/, '') + '/worker/events/stream'
 
-  const sse = new SSETransport(
-    sseUrl,
-    {},
-    sessionId,
-    undefined,
-    initialSequenceNum,
-    getAuthHeaders,
-  )
+  const sse = new SSETransport(sseUrl, {}, sessionId, undefined, initialSequenceNum, getAuthHeaders)
   let onCloseCb: ((closeCode?: number) => void) | undefined
   const ccr = new CCRClient(sse, new URL(sessionUrl), {
     getAuthHeaders,
@@ -246,7 +231,7 @@ export async function createV2ReplTransport(opts: {
   // model); a crash there loses one prompt vs. the observed N-prompt flood on
   // every restart. Overwrite the constructor's wiring to do both — setOnEvent
   // replaces, not appends (SSETransport.ts:658).
-  sse.setOnEvent(event => {
+  sse.setOnEvent((event) => {
     ccr.reportDelivery(event.event_id, 'received')
     ccr.reportDelivery(event.event_id, 'processed')
   })
@@ -308,7 +293,7 @@ export async function createV2ReplTransport(opts: {
       // closes (SSETransport:280 passes response.status). Stop CCRClient's
       // heartbeat timer before notifying replBridge. (sse.close() doesn't
       // invoke this, so the epoch-mismatch path above isn't double-firing.)
-      sse.setOnClose(code => {
+      sse.setOnClose((code) => {
         ccr.close()
         cb(code ?? 4092)
       })
@@ -352,10 +337,9 @@ export async function createV2ReplTransport(opts: {
           onConnectCb?.()
         },
         (err: unknown) => {
-          logForDebugging(
-            `[bridge:repl] CCR v2 initialize failed: ${errorMessage(err)}`,
-            { level: 'error' },
-          )
+          logForDebugging(`[bridge:repl] CCR v2 initialize failed: ${errorMessage(err)}`, {
+            level: 'error',
+          })
           // Close transport resources and notify replBridge via onClose
           // so the poll loop can retry on the next work dispatch.
           // Without this callback, replBridge never learns the transport

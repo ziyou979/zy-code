@@ -1,8 +1,4 @@
-import {
-  expandPastedTextRefs,
-  formatPastedTextRef,
-  getPastedTextRefNumLines,
-} from '../history.js'
+import { expandPastedTextRefs, formatPastedTextRef, getPastedTextRefNumLines } from '../history.js'
 import instances from '../ink/instances.js'
 import type { PastedContent } from './config.js'
 import { classifyGuiEditor, getExternalEditor } from './editor.js'
@@ -124,9 +120,7 @@ function recollapsePastedContent(
         const numLines = getPastedTextRefNumLines(contentStr)
         const ref = formatPastedTextRef(pasteId, numLines)
         collapsed =
-          collapsed.slice(0, contentIndex) +
-          ref +
-          collapsed.slice(contentIndex + contentStr.length)
+          collapsed.slice(0, contentIndex) + ref + collapsed.slice(contentIndex + contentStr.length)
       }
     }
   }
@@ -169,11 +163,7 @@ export function editPromptInEditor(
 
     // Re-collapse pasted content if it wasn't edited
     if (pastedContents) {
-      finalContent = recollapsePastedContent(
-        finalContent,
-        currentPrompt,
-        pastedContents,
-      )
+      finalContent = recollapsePastedContent(finalContent, currentPrompt, pastedContents)
     }
 
     return { content: finalContent }

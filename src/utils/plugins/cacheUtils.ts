@@ -11,10 +11,7 @@ import { logError } from '../log.js'
 import { loadInstalledPluginsFromDisk } from './installedPluginsManager.js'
 import { clearPluginAgentCache } from './loadPluginAgents.js'
 import { clearPluginCommandCache } from './loadPluginCommands.js'
-import {
-  clearPluginHookCache,
-  pruneRemovedPluginHooks,
-} from './loadPluginHooks.js'
+import { clearPluginHookCache, pruneRemovedPluginHooks } from './loadPluginHooks.js'
 import { clearPluginOutputStyleCache } from './loadPluginOutputStyles.js'
 import { clearPluginCache, getPluginCachePath } from './pluginLoader.js'
 import { clearPluginOptionsCache } from './pluginOptionsStorage.js'
@@ -35,7 +32,7 @@ export function clearAllPluginCaches(): void {
   // stay valid until the prune completes (preserves gh-29767). No-op when
   // STATE.registeredHooks is empty (test/preload.ts beforeEach clears it via
   // resetStateForTests before reaching here).
-  pruneRemovedPluginHooks().catch(e => logError(e))
+  pruneRemovedPluginHooks().catch((e) => logError(e))
   clearPluginOptionsCache()
   clearPluginOutputStyleCache()
   clearAllOutputStylesCache()
@@ -53,9 +50,7 @@ export function clearAllCaches(): void {
  * Mark a plugin version as orphaned.
  * Called when a plugin is uninstalled or updated to a new version.
  */
-export async function markPluginVersionOrphaned(
-  versionPath: string,
-): Promise<void> {
+export async function markPluginVersionOrphaned(versionPath: string): Promise<void> {
   try {
     await writeFile(getOrphanedAtPath(versionPath), `${Date.now()}`, 'utf-8')
   } catch (error) {
@@ -88,9 +83,7 @@ export async function cleanupOrphanedPluginVersionsInBackground(): Promise<void>
 
     // Pass 1: Remove .orphaned_at from installed versions
     // This handles cases where a plugin was reinstalled after being orphaned
-    await Promise.all(
-      [...installedVersions].map(p => removeOrphanedAtMarker(p)),
-    )
+    await Promise.all([...installedVersions].map((p) => removeOrphanedAtMarker(p)))
 
     // Pass 2: Process orphaned versions
     for (const marketplace of await readSubdirs(cachePath)) {
@@ -146,10 +139,7 @@ function getInstalledVersionPaths(): Set<string> | null {
   }
 }
 
-async function processOrphanedPluginVersion(
-  versionPath: string,
-  now: number,
-): Promise<void> {
+async function processOrphanedPluginVersion(versionPath: string, now: number): Promise<void> {
   const orphanedAtPath = getOrphanedAtPath(versionPath)
 
   let orphanedAt: number
@@ -169,9 +159,7 @@ async function processOrphanedPluginVersion(
     try {
       await rm(versionPath, { recursive: true, force: true })
     } catch (error) {
-      logForDebugging(
-        `Failed to delete orphaned version: ${versionPath}: ${error}`,
-      )
+      logForDebugging(`Failed to delete orphaned version: ${versionPath}: ${error}`)
     }
   }
 }
@@ -189,7 +177,7 @@ async function removeIfEmpty(dirPath: string): Promise<void> {
 async function readSubdirs(dirPath: string): Promise<string[]> {
   try {
     const entries = await readdir(dirPath, { withFileTypes: true })
-    return entries.filter(d => d.isDirectory()).map(d => d.name)
+    return entries.filter((d) => d.isDirectory()).map((d) => d.name)
   } catch {
     return []
   }

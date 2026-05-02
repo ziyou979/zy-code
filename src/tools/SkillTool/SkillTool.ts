@@ -3,12 +3,7 @@ import type { ToolResultBlock } from '../../types/llm.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { dirname } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'
-import {
-  builtInCommandNames,
-  findCommand,
-  getCommands,
-  type PromptCommand,
-} from 'src/commands.js'
+import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands.js'
 import type {
   Tool,
   ToolCallProgress,
@@ -34,11 +29,7 @@ import {
 } from 'src/utils/plugins/pluginIdentifier.js'
 import { buildPluginCommandTelemetryFields } from 'src/utils/telemetry/pluginTelemetry.js'
 import { z } from 'zod/v4'
-import {
-  addInvokedSkill,
-  clearInvokedSkillsForAgent,
-  getSessionId,
-} from '../../bootstrap/state.js'
+import { addInvokedSkill, clearInvokedSkillsForAgent, getSessionId } from '../../bootstrap/state.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
@@ -49,10 +40,7 @@ import {
 import { getAgentContext } from '../../utils/agentContext.js'
 import { errorMessage } from '../../utils/errors.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import {
-  extractResultText,
-  prepareForkedCommandContext,
-} from '../../utils/forkedAgent.js'
+import { extractResultText, prepareForkedCommandContext } from '../../utils/forkedAgent.js'
 import { parseFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { createUserMessage, normalizeMessages } from '../../utils/messages.js'
@@ -61,10 +49,7 @@ import { resolveSkillModelOverride } from '../../utils/model/model.js'
 import { recordSkillUsage } from '../../utils/suggestions/skillUsageTracking.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { runAgent } from '../AgentTool/runAgent.js'
-import {
-  getToolUseIDFromParentMessage,
-  tagMessagesWithToolUseID,
-} from '../utils.js'
+import { getToolUseIDFromParentMessage, tagMessagesWithToolUseID } from '../utils.js'
 import { SKILL_TOOL_NAME } from './constants.js'
 import { getPrompt } from './prompt.js'
 import {
@@ -86,9 +71,7 @@ async function getAllCommands(context: ToolUseContext): Promise<Command[]> {
   // but were technically reachable.
   const mcpSkills = context
     .getAppState()
-    .mcp.commands.filter(
-      cmd => cmd.type === 'prompt' && cmd.loadedFrom === 'mcp',
-    )
+    .mcp.commands.filter((cmd) => cmd.type === 'prompt' && cmd.loadedFrom === 'mcp')
   if (mcpSkills.length === 0) return getCommands(getProjectRoot())
   const localCommands = await getCommands(getProjectRoot())
   return uniqBy([...localCommands, ...mcpSkills], 'name')
@@ -134,15 +117,12 @@ async function executeForkedSkill(
   const isBuiltIn = builtInCommandNames().has(commandName)
   const isOfficialSkill = isOfficialMarketplaceSkill(command)
   const isBundled = command.source === 'bundled'
-  const forkedSanitizedName =
-    isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
+  const forkedSanitizedName = isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
 
   const wasDiscoveredField =
-    feature('EXPERIMENTAL_SKILL_SEARCH') &&
-    (remoteSkillModules as any).isSkillSearchEnabled()
+    feature('EXPERIMENTAL_SKILL_SEARCH') && (remoteSkillModules as any).isSkillSearchEnabled()
       ? {
-          was_discovered:
-            context.discoveredSkillNames?.has(commandName) ?? false,
+          was_discovered: context.discoveredSkillNames?.has(commandName) ?? false,
         }
       : {}
   const pluginMarketplace = command.pluginInfo
@@ -151,36 +131,29 @@ async function executeForkedSkill(
   const queryDepth = context.queryTracking?.depth ?? 0
   const parentAgentId = getAgentContext()?.agentId
   logEvent('zy_skill_tool_invocation', {
-    command_name:
-      forkedSanitizedName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    command_name: forkedSanitizedName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     // _PROTO_skill_name routes to the privileged skill_name BQ column
     // (unredacted, all users); command_name stays in additional_metadata as
     // the redacted variant for general-access dashboards.
-    _PROTO_skill_name:
-      commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
-    execution_context:
-      'fork' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    _PROTO_skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+    execution_context: 'fork' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     invocation_trigger: (queryDepth > 0
       ? 'nested-skill'
       : 'zy-proactive') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     query_depth: queryDepth,
     ...(parentAgentId && {
-      parent_agent_id:
-        parentAgentId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      parent_agent_id: parentAgentId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     ...wasDiscoveredField,
     ...(isInternalBuild() && {
-      skill_name:
-        commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      skill_source:
-        command.source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      skill_source: command.source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       ...(command.loadedFrom && {
         skill_loaded_from:
           command.loadedFrom as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }),
       ...(command.kind && {
-        skill_kind:
-          command.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        skill_kind: command.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }),
     }),
     ...(command.pluginInfo && {
@@ -208,9 +181,7 @@ async function executeForkedSkill(
 
   // Merge skill's effort into the agent definition so runAgent applies it
   const agentDefinition =
-    command.effort !== undefined
-      ? { ...baseAgent, effort: command.effort }
-      : baseAgent
+    command.effort !== undefined ? { ...baseAgent, effort: command.effort } : baseAgent
 
   // Collect messages from the forked agent
   const agentMessages: Message[] = []
@@ -238,14 +209,11 @@ async function executeForkedSkill(
       agentMessages.push(message)
 
       // Report progress for tool uses (like AgentTool does)
-      if (
-        (message.type === 'assistant' || message.type === 'user') &&
-        onProgress
-      ) {
+      if ((message.type === 'assistant' || message.type === 'user') && onProgress) {
         const normalizedNew = normalizeMessages([message])
         for (const m of normalizedNew) {
           const hasToolContent = m.message.content.some(
-            c => c.type === 'tool_call' || c.type === 'tool_result',
+            (c) => c.type === 'tool_call' || c.type === 'tool_result',
           )
           if (hasToolContent) {
             onProgress({
@@ -262,17 +230,12 @@ async function executeForkedSkill(
       }
     }
 
-    const resultText = extractResultText(
-      agentMessages,
-      'Skill execution completed',
-    )
+    const resultText = extractResultText(agentMessages, 'Skill execution completed')
     // Release message memory after extracting result
     agentMessages.length = 0
 
     const durationMs = Date.now() - startTime
-    logForDebugging(
-      `SkillTool forked skill ${commandName} completed in ${durationMs}ms`,
-    )
+    logForDebugging(`SkillTool forked skill ${commandName} completed in ${durationMs}ms`)
 
     return {
       data: {
@@ -291,9 +254,7 @@ async function executeForkedSkill(
 
 export const inputSchema = lazySchema(() =>
   z.object({
-    skill: z
-      .string()
-      .describe('The skill name. E.g., "commit", "review-pr", or "pdf"'),
+    skill: z.string().describe('The skill name. E.g., "commit", "review-pr", or "pdf"'),
     args: z.string().optional().describe('Optional arguments for the skill'),
   }),
 )
@@ -304,10 +265,7 @@ export const outputSchema = lazySchema(() => {
   const inlineOutputSchema = z.object({
     success: z.boolean().describe('Whether the skill is valid'),
     commandName: z.string().describe('The name of the skill'),
-    allowedTools: z
-      .array(z.string())
-      .optional()
-      .describe('Tools allowed by this skill'),
+    allowedTools: z.array(z.string()).optional().describe('Tools allowed by this skill'),
     model: z.string().optional().describe('Model override if specified'),
     status: z.literal('inline').optional().describe('Execution status'),
   })
@@ -317,9 +275,7 @@ export const outputSchema = lazySchema(() => {
     success: z.boolean().describe('Whether the skill completed successfully'),
     commandName: z.string().describe('The name of the skill'),
     status: z.literal('forked').describe('Execution status'),
-    agentId: z
-      .string()
-      .describe('The ID of the sub-agent that executed the skill'),
+    agentId: z.string().describe('The ID of the sub-agent that executed the skill'),
     result: z.string().describe('The result from the forked skill execution'),
   })
 
@@ -368,20 +324,13 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     if (hasLeadingSlash) {
       logEvent('zy_skill_tool_slash_prefix', {})
     }
-    const normalizedCommandName = hasLeadingSlash
-      ? trimmed.substring(1)
-      : trimmed
+    const normalizedCommandName = hasLeadingSlash ? trimmed.substring(1) : trimmed
 
     // Remote canonical skill handling (ant-only experimental). Intercept
     // `_canonical_<slug>` names before local command lookup since remote
     // skills are not in the local command registry.
-    if (
-      feature('EXPERIMENTAL_SKILL_SEARCH') &&
-      isInternalBuild()
-    ) {
-      const slug = (remoteSkillModules as any).stripCanonicalPrefix(
-        normalizedCommandName,
-      )
+    if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
+      const slug = (remoteSkillModules as any).stripCanonicalPrefix(normalizedCommandName)
       if (slug !== null) {
         const meta = (remoteSkillModules as any).getDiscoveredRemoteSkill(slug)
         if (!meta) {
@@ -430,10 +379,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     return { result: true }
   },
 
-  async checkPermissions(
-    { skill, args },
-    context,
-  ): Promise<PermissionDecision> {
+  async checkPermissions({ skill, args }, context): Promise<PermissionDecision> {
     // Skills are just skill names, no arguments
     const trimmed = skill.trim()
 
@@ -451,9 +397,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // Normalizes both inputs by stripping leading slashes for consistent matching
     const ruleMatches = (ruleContent: string): boolean => {
       // Normalize rule content by stripping leading slash
-      const normalizedRule = ruleContent.startsWith('/')
-        ? ruleContent.substring(1)
-        : ruleContent
+      const normalizedRule = ruleContent.startsWith('/') ? ruleContent.substring(1) : ruleContent
 
       // Check exact match (using normalized commandName)
       if (normalizedRule === commandName) {
@@ -468,11 +412,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     }
 
     // Check for deny rules
-    const denyRules = getRuleByContentsForTool(
-      permissionContext,
-      SkillTool as Tool,
-      'deny',
-    )
+    const denyRules = getRuleByContentsForTool(permissionContext, SkillTool as Tool, 'deny')
     for (const [ruleContent, rule] of denyRules.entries()) {
       if (ruleMatches(ruleContent)) {
         return {
@@ -490,10 +430,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // Placed AFTER the deny loop so a user-configured Skill(_canonical_:*)
     // deny rule is honored (same pattern as safe-properties auto-allow below).
     // The skill content itself is canonical/curated, not user-authored.
-    if (
-      feature('EXPERIMENTAL_SKILL_SEARCH') &&
-      isInternalBuild()
-    ) {
+    if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
       const slug = (remoteSkillModules as any).stripCanonicalPrefix(commandName)
       if (slug !== null) {
         return {
@@ -505,11 +442,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     }
 
     // Check for allow rules
-    const allowRules = getRuleByContentsForTool(
-      permissionContext,
-      SkillTool as Tool,
-      'allow',
-    )
+    const allowRules = getRuleByContentsForTool(permissionContext, SkillTool as Tool, 'allow')
     for (const [ruleContent, rule] of allowRules.entries()) {
       if (ruleMatches(ruleContent)) {
         return {
@@ -527,10 +460,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // This is an allowlist: if a skill has any property NOT in this set with a
     // meaningful value, it requires permission. This ensures new properties added
     // in the future default to requiring permission.
-    if (
-      commandObj?.type === 'prompt' &&
-      skillHasOnlySafeProperties(commandObj)
-    ) {
+    if (commandObj?.type === 'prompt' && skillHasOnlySafeProperties(commandObj)) {
       return {
         behavior: 'allow',
         updatedInput: { skill, args },
@@ -603,10 +533,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // AKI/GCS (with local cache), injects content directly as a user message.
     // Remote skills are declarative markdown so no slash-command expansion
     // (no !command substitution, no $ARGUMENTS interpolation) is needed.
-    if (
-      feature('EXPERIMENTAL_SKILL_SEARCH') &&
-      isInternalBuild()
-    ) {
+    if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
       const slug = (remoteSkillModules as any).stripCanonicalPrefix(commandName)
       if (slug !== null) {
         return executeRemoteSkill(slug, commandName, parentMessage, context)
@@ -654,17 +581,13 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
 
     const isBuiltIn = builtInCommandNames().has(commandName)
     const isBundled = command?.type === 'prompt' && command.source === 'bundled'
-    const isOfficialSkill =
-      command?.type === 'prompt' && isOfficialMarketplaceSkill(command)
-    const sanitizedCommandName =
-      isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
+    const isOfficialSkill = command?.type === 'prompt' && isOfficialMarketplaceSkill(command)
+    const sanitizedCommandName = isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
 
     const wasDiscoveredField =
-      feature('EXPERIMENTAL_SKILL_SEARCH') &&
-      (remoteSkillModules as any).isSkillSearchEnabled()
+      feature('EXPERIMENTAL_SKILL_SEARCH') && (remoteSkillModules as any).isSkillSearchEnabled()
         ? {
-            was_discovered:
-              context.discoveredSkillNames?.has(commandName) ?? false,
+            was_discovered: context.discoveredSkillNames?.has(commandName) ?? false,
           }
         : {}
     const pluginMarketplace =
@@ -679,10 +602,8 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
       // _PROTO_skill_name routes to the privileged skill_name BQ column
       // (unredacted, all users); command_name stays in additional_metadata as
       // the redacted variant for general-access dashboards.
-      _PROTO_skill_name:
-        commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
-      execution_context:
-        'inline' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      _PROTO_skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      execution_context: 'inline' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       invocation_trigger: (queryDepth > 0
         ? 'nested-skill'
         : 'zy-proactive') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -693,8 +614,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
       }),
       ...wasDiscoveredField,
       ...(isInternalBuild() && {
-        skill_name:
-          commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...(command?.type === 'prompt' && {
           skill_source:
             command.source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -704,8 +624,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
             command.loadedFrom as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }),
         ...(command?.kind && {
-          skill_kind:
-            command.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          skill_kind: command.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }),
       }),
       ...(command?.type === 'prompt' &&
@@ -727,10 +646,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     })
 
     // Get the tool use ID from the parent message for linking newMessages
-    const toolUseID = getToolUseIDFromParentMessage(
-      parentMessage,
-      SKILL_TOOL_NAME,
-    )
+    const toolUseID = getToolUseIDFromParentMessage(parentMessage, SKILL_TOOL_NAME)
 
     // Tag user messages with sourceToolUseID so they stay transient until this tool resolves
     const newMessages = tagMessagesWithToolUseID(
@@ -742,10 +658,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
           // Filter out command-message since SkillTool handles display
           if (m.type === 'user' && 'message' in m) {
             const content = m.message.content
-            if (
-              typeof content === 'string' &&
-              content.includes(`<${COMMAND_MESSAGE_TAG}>`)
-            ) {
+            if (typeof content === 'string' && content.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
               return false
             }
           }
@@ -794,8 +707,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
                     ...appState.toolPermissionContext.alwaysAllowRules,
                     command: [
                       ...new Set([
-                        ...(appState.toolPermissionContext.alwaysAllowRules
-                          .command || []),
+                        ...(appState.toolPermissionContext.alwaysAllowRules.command || []),
                         ...allowedTools,
                       ]),
                     ],
@@ -813,10 +725,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
             ...modifiedContext,
             options: {
               ...modifiedContext.options,
-              mainLoopModel: resolveSkillModelOverride(
-                model,
-                ctx.options.mainLoopModel,
-              ),
+              mainLoopModel: resolveSkillModelOverride(model, ctx.options.mainLoopModel),
             },
           }
         }
@@ -841,10 +750,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     }
   },
 
-  mapToolResultToToolResultBlock(
-    result: Output,
-    toolUseID: string,
-  ): ToolResultBlock {
+  mapToolResultToToolResultBlock(result: Output, toolUseID: string): ToolResultBlock {
     // Handle forked skill result
     if ('status' in result && result.status === 'forked') {
       return {
@@ -921,11 +827,7 @@ function skillHasOnlySafeProperties(command: Command): boolean {
     if (Array.isArray(value) && value.length === 0) {
       continue
     }
-    if (
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      Object.keys(value).length === 0
-    ) {
+    if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) {
       continue
     }
     return false
@@ -937,9 +839,7 @@ function isOfficialMarketplaceSkill(command: PromptCommand): boolean {
   if (command.source !== 'plugin' || !command.pluginInfo?.repository) {
     return false
   }
-  return isOfficialMarketplaceName(
-    parsePluginIdentifier(command.pluginInfo.repository).marketplace,
-  )
+  return isOfficialMarketplaceName(parsePluginIdentifier(command.pluginInfo.repository).marketplace)
 }
 
 /**
@@ -1002,15 +902,7 @@ async function executeRemoteSkill(
     throw new Error(`Failed to load remote skill ${slug}: ${msg}`)
   }
 
-  const {
-    cacheHit,
-    latencyMs,
-    skillPath,
-    content,
-    fileCount,
-    totalBytes,
-    fetchMethod,
-  } = loadResult
+  const { cacheHit, latencyMs, skillPath, content, fileCount, totalBytes, fetchMethod } = loadResult
 
   logRemoteSkillLoaded({
     slug,
@@ -1028,32 +920,26 @@ async function executeRemoteSkill(
   const queryDepth = context.queryTracking?.depth ?? 0
   const parentAgentId = getAgentContext()?.agentId
   logEvent('zy_skill_tool_invocation', {
-    command_name:
-      'remote_skill' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    command_name: 'remote_skill' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     // _PROTO_skill_name routes to the privileged skill_name BQ column
     // (unredacted, all users); command_name stays in additional_metadata as
     // the redacted variant.
-    _PROTO_skill_name:
-      commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
-    execution_context:
-      'remote' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    _PROTO_skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+    execution_context: 'remote' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     invocation_trigger: (queryDepth > 0
       ? 'nested-skill'
       : 'zy-proactive') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     query_depth: queryDepth,
     ...(parentAgentId && {
-      parent_agent_id:
-        parentAgentId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      parent_agent_id: parentAgentId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     was_discovered: true,
     is_remote: true,
     remote_cache_hit: cacheHit,
     remote_load_latency_ms: latencyMs,
     ...(isInternalBuild() && {
-      skill_name:
-        commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      remote_slug:
-        slug as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      skill_name: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      remote_slug: slug as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
   })
 
@@ -1072,33 +958,21 @@ async function executeRemoteSkill(
   // substitution (matches loadSkillsDir.ts) so the model can resolve relative
   // refs like ./schemas/foo.json against the cache dir.
   const skillDir = dirname(skillPath)
-  const normalizedDir =
-    process.platform === 'win32' ? skillDir.replace(/\\/g, '/') : skillDir
+  const normalizedDir = process.platform === 'win32' ? skillDir.replace(/\\/g, '/') : skillDir
   let finalContent = `Base directory for this skill: ${normalizedDir}\n\n${bodyContent}`
   finalContent = finalContent.replace(/\$\{CLAUDE_SKILL_DIR\}/g, normalizedDir)
-  finalContent = finalContent.replace(
-    /\$\{CLAUDE_SESSION_ID\}/g,
-    getSessionId(),
-  )
+  finalContent = finalContent.replace(/\$\{CLAUDE_SESSION_ID\}/g, getSessionId())
 
   // Register with compaction-preservation state. Use the cached file path so
   // post-compact restoration knows where the content came from. Must use
   // finalContent (not raw content) so the base directory header and
   // ${CLAUDE_SKILL_DIR} substitutions survive compaction — matches how local
   // skills store their already-transformed content via processSlashCommand.
-  addInvokedSkill(
-    commandName,
-    skillPath,
-    finalContent,
-    getAgentContext()?.agentId ?? null,
-  )
+  addInvokedSkill(commandName, skillPath, finalContent, getAgentContext()?.agentId ?? null)
 
   // Direct injection — wrap SKILL.md content in a meta user message. Matches
   // the shape of what processPromptSlashCommand produces for simple skills.
-  const toolUseID = getToolUseIDFromParentMessage(
-    parentMessage,
-    SKILL_TOOL_NAME,
-  )
+  const toolUseID = getToolUseIDFromParentMessage(parentMessage, SKILL_TOOL_NAME)
   return {
     data: { success: true, commandName, status: 'inline' },
     newMessages: tagMessagesWithToolUseID(

@@ -1,7 +1,12 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { getModelCapability } from './model/modelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
-import { getLocalMaxOutputTokens, getLocalMaxInputTokens, getLocalContextWindow, getLocalMaxThinkingTokens } from './settings/localModelCapabilities.js'
+import {
+  getLocalMaxOutputTokens,
+  getLocalMaxInputTokens,
+  getLocalContextWindow,
+  getLocalMaxThinkingTokens,
+} from './settings/localModelCapabilities.js'
 
 // 默认上下文窗口大小（200k tokens）
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
@@ -54,9 +59,7 @@ export function calculateContextPercentages(
     currentUsage.cacheCreationInputTokens +
     currentUsage.cacheReadInputTokens
 
-  const usedPercentage = Math.round(
-    (totalInputTokens / contextWindowSize) * 100,
-  )
+  const usedPercentage = Math.round((totalInputTokens / contextWindowSize) * 100)
   const clampedUsed = Math.min(100, Math.max(0, usedPercentage))
 
   return {

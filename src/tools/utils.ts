@@ -16,7 +16,7 @@ export function tagMessagesWithToolUseID(
   if (!toolUseID) {
     return messages
   }
-  return messages.map(m => {
+  return messages.map((m) => {
     if (m.type === 'user') {
       return { ...m, sourceToolUseID: toolUseID }
     }
@@ -32,9 +32,7 @@ export function getToolUseIDFromParentMessage(
   toolName: string,
 ): string | undefined {
   const toolUseBlock = parentMessage.message.content.find(
-    block => block.type === 'tool_call' && block.name === toolName,
+    (block) => block.type === 'tool_call' && block.name === toolName,
   )
-  return toolUseBlock && toolUseBlock.type === 'tool_call'
-    ? toolUseBlock.id
-    : undefined
+  return toolUseBlock && toolUseBlock.type === 'tool_call' ? toolUseBlock.id : undefined
 }

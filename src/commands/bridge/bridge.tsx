@@ -1,26 +1,33 @@
-import { feature } from 'bun:bundle';
-import { toString as qrToString } from 'qrcode';
-import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { getBridgeAccessToken } from '../../bridge/bridgeConfig.js';
-import { checkBridgeMinVersion, getBridgeDisabledReason, isEnvLessBridgeEnabled } from '../../bridge/bridgeEnabled.js';
-import { checkEnvLessBridgeMinVersion } from '../../bridge/envLessBridgeConfig.js';
-import { BRIDGE_LOGIN_INSTRUCTION, REMOTE_CONTROL_DISCONNECTED_MSG } from '../../bridge/types.js';
-import { Dialog } from '../../components/design-system/Dialog.js';
-import { ListItem } from '../../components/design-system/ListItem.js';
-import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js';
-import { useRegisterOverlay } from '../../context/overlayContext.js';
-import { Box, Text } from '../../ink.js';
-import { useKeybindings } from '../../keybindings/useKeybinding.js';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
-import { useAppState, useSetAppState } from '../../state/AppState.js';
-import type { ToolUseContext } from '../../Tool.js';
-import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js';
-import { logForDebugging } from '../../utils/debug.js';
+import { feature } from 'bun:bundle'
+import { toString as qrToString } from 'qrcode'
+import * as React from 'react'
+import { useEffect, useState } from 'react'
+import { getBridgeAccessToken } from '../../bridge/bridgeConfig.js'
+import {
+  checkBridgeMinVersion,
+  getBridgeDisabledReason,
+  isEnvLessBridgeEnabled,
+} from '../../bridge/bridgeEnabled.js'
+import { checkEnvLessBridgeMinVersion } from '../../bridge/envLessBridgeConfig.js'
+import { BRIDGE_LOGIN_INSTRUCTION, REMOTE_CONTROL_DISCONNECTED_MSG } from '../../bridge/types.js'
+import { Dialog } from '../../components/design-system/Dialog.js'
+import { ListItem } from '../../components/design-system/ListItem.js'
+import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js'
+import { useRegisterOverlay } from '../../context/overlayContext.js'
+import { Box, Text } from '../../ink.js'
+import { useKeybindings } from '../../keybindings/useKeybinding.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../../services/analytics/index.js'
+import { useAppState, useSetAppState } from '../../state/AppState.js'
+import type { ToolUseContext } from '../../Tool.js'
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
+import { logForDebugging } from '../../utils/debug.js'
 type Props = {
-  onDone: LocalJSXCommandOnDone;
-  name?: string;
-};
+  onDone: LocalJSXCommandOnDone
+  name?: string
+}
 
 /**
  * /remote-control command — manages the bidirectional bridge connection.
@@ -34,78 +41,75 @@ type Props = {
  * Running /remote-control when already connected shows a dialog with the session
  * URL and options to disconnect or continue.
  */
-function BridgeToggle({
-  onDone,
-  name
-}: Props) {
-  const setAppState = useSetAppState();
-  const replBridgeConnected = useAppState(s => s.replBridgeConnected);
-  const replBridgeEnabled = useAppState(s_0 => s_0.replBridgeEnabled);
-  const replBridgeOutboundOnly = useAppState(s_1 => s_1.replBridgeOutboundOnly);
-  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
+function BridgeToggle({ onDone, name }: Props) {
+  const setAppState = useSetAppState()
+  const replBridgeConnected = useAppState((s) => s.replBridgeConnected)
+  const replBridgeEnabled = useAppState((s_0) => s_0.replBridgeEnabled)
+  const replBridgeOutboundOnly = useAppState((s_1) => s_1.replBridgeOutboundOnly)
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
   useEffect(() => {
     if ((replBridgeConnected || replBridgeEnabled) && !replBridgeOutboundOnly) {
-      setShowDisconnectDialog(true);
-      return;
+      setShowDisconnectDialog(true)
+      return
     }
-    let cancelled = false;
-    (async () => {
-      const error = await checkBridgePrerequisites();
+    let cancelled = false
+    ;(async () => {
+      const error = await checkBridgePrerequisites()
       if (cancelled) {
-        return;
+        return
       }
       if (error) {
-        logEvent("zy_bridge_command", {
-          action: "preflight_failed" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-        });
+        logEvent('zy_bridge_command', {
+          action: 'preflight_failed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
         onDone(error, {
-          display: "system"
-        });
-        return;
+          display: 'system',
+        })
+        return
       }
       if (shouldShowRemoteCallout()) {
-        setAppState(prev => {
+        setAppState((prev) => {
           if (prev.showRemoteCallout) {
-            return prev;
+            return prev
           }
           return {
             ...prev,
             showRemoteCallout: true,
-            replBridgeInitialName: name
-          };
-        });
-        onDone("", {
-          display: "system"
-        });
-        return;
+            replBridgeInitialName: name,
+          }
+        })
+        onDone('', {
+          display: 'system',
+        })
+        return
       }
-      logEvent("zy_bridge_command", {
-        action: "connect" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-      });
-      setAppState(prev_0 => {
+      logEvent('zy_bridge_command', {
+        action: 'connect' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      })
+      setAppState((prev_0) => {
         if (prev_0.replBridgeEnabled && !prev_0.replBridgeOutboundOnly) {
-          return prev_0;
+          return prev_0
         }
         return {
           ...prev_0,
           replBridgeEnabled: true,
           replBridgeExplicit: true,
           replBridgeOutboundOnly: false,
-          replBridgeInitialName: name
-        };
-      });
-      onDone("Remote Control connecting\u2026", {
-        display: "system"
-      });
-    })();
+          replBridgeInitialName: name,
+        }
+      })
+      onDone('Remote Control connecting\u2026', {
+        display: 'system',
+      })
+    })()
     return () => {
-      cancelled = true;
-    };
-  }, []);
+      cancelled = true
+    }
+  }, [])
   if (showDisconnectDialog) {
-    return <BridgeDisconnectDialog onDone={onDone} />;
+    return <BridgeDisconnectDialog onDone={onDone} />
   }
-  return null;
+  return null
 }
 
 /**
@@ -113,81 +117,115 @@ function BridgeToggle({
  * Shows the session URL and lets the user disconnect or continue.
  */
 
-function BridgeDisconnectDialog({
-  onDone
-}: Props) {
+function BridgeDisconnectDialog({ onDone }: Props) {
   // @ts-ignore
-  useRegisterOverlay("bridge-disconnect-dialog");
-  const setAppState = useSetAppState();
-  const sessionUrl = useAppState(s => s.replBridgeSessionUrl);
-  const connectUrl = useAppState(s_0 => s_0.replBridgeConnectUrl);
-  const sessionActive = useAppState(s_1 => s_1.replBridgeSessionActive);
-  const [focusIndex, setFocusIndex] = useState(2);
-  const [showQR, setShowQR] = useState(false);
-  const [qrText, setQrText] = useState("");
-  const displayUrl = sessionActive ? sessionUrl : connectUrl;
+  useRegisterOverlay('bridge-disconnect-dialog')
+  const setAppState = useSetAppState()
+  const sessionUrl = useAppState((s) => s.replBridgeSessionUrl)
+  const connectUrl = useAppState((s_0) => s_0.replBridgeConnectUrl)
+  const sessionActive = useAppState((s_1) => s_1.replBridgeSessionActive)
+  const [focusIndex, setFocusIndex] = useState(2)
+  const [showQR, setShowQR] = useState(false)
+  const [qrText, setQrText] = useState('')
+  const displayUrl = sessionActive ? sessionUrl : connectUrl
   useEffect(() => {
     if (!showQR || !displayUrl) {
-      setQrText("");
-      return;
+      setQrText('')
+      return
     }
     // @ts-ignore
     qrToString(displayUrl, {
-      type: "utf8",
-      errorCorrectionLevel: "L",
-      small: true
-    }).then(setQrText).catch(() => setQrText(""));
-  }, [showQR, displayUrl]);
+      type: 'utf8',
+      errorCorrectionLevel: 'L',
+      small: true,
+    })
+      .then(setQrText)
+      .catch(() => setQrText(''))
+  }, [showQR, displayUrl])
   const handleDisconnect = function handleDisconnect() {
-    setAppState(prev => {
+    setAppState((prev) => {
       if (!prev.replBridgeEnabled) {
-        return prev;
+        return prev
       }
       return {
         ...prev,
         replBridgeEnabled: false,
         replBridgeExplicit: false,
-        replBridgeOutboundOnly: false
-      };
-    });
-    logEvent("zy_bridge_command", {
-      action: "disconnect" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-    });
+        replBridgeOutboundOnly: false,
+      }
+    })
+    logEvent('zy_bridge_command', {
+      action: 'disconnect' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    })
     onDone(REMOTE_CONTROL_DISCONNECTED_MSG, {
-      display: "system"
-    });
-  };
+      display: 'system',
+    })
+  }
   const handleShowQR = function handleShowQR() {
-    setShowQR(prev_0 => !prev_0);
-  };
+    setShowQR((prev_0) => !prev_0)
+  }
   const handleContinue = function handleContinue() {
     onDone(undefined, {
-      display: "skip"
-    });
-  };
-  useKeybindings({
-    "select:next": () => setFocusIndex(i => (i + 1) % 3),
-    "select:previous": () => setFocusIndex(i_0 => (i_0 - 1 + 3) % 3),
-    "select:accept": () => {
-      if (focusIndex === 0) {
-        handleDisconnect();
-      } else {
-        if (focusIndex === 1) {
-          handleShowQR();
+      display: 'skip',
+    })
+  }
+  useKeybindings(
+    {
+      'select:next': () => setFocusIndex((i) => (i + 1) % 3),
+      'select:previous': () => setFocusIndex((i_0) => (i_0 - 1 + 3) % 3),
+      'select:accept': () => {
+        if (focusIndex === 0) {
+          handleDisconnect()
         } else {
-          handleContinue();
+          if (focusIndex === 1) {
+            handleShowQR()
+          } else {
+            handleContinue()
+          }
         }
+      },
+    },
+    {
+      context: 'Select',
+    },
+  )
+  const qrLines = qrText ? qrText.split('\n').filter((l) => l.length > 0) : []
+  const t17_text = displayUrl ? ` at ${displayUrl}` : ''
+  const T1 = Dialog
+  const T0 = Box
+  const t17_focus = focusIndex === 0
+  return (
+    <T1 title={'Remote Control'} onCancel={handleContinue} hideInputGuide={true}>
+      {
+        <T0 flexDirection={'column'} gap={1}>
+          {<Text>This session is available via Remote Control{t17_text as any}.</Text>}
+          {showQR && qrLines.length > 0 && (
+            <Box flexDirection="column">
+              {qrLines.map((line, i_1) => (
+                <Text key={i_1}>{line}</Text>
+              ))}
+            </Box>
+          )}
+          {
+            <Box flexDirection="column">
+              {
+                <ListItem isFocused={t17_focus as any}>
+                  {<Text>Disconnect this session</Text>}
+                </ListItem>
+              }
+              {
+                <ListItem isFocused={focusIndex === 1}>
+                  {<Text>{showQR ? 'Hide QR code' : 'Show QR code'}</Text>}
+                </ListItem>
+              }
+              {<ListItem isFocused={focusIndex === 2}>{<Text>Continue</Text>}</ListItem>}
+            </Box>
+          }
+          {<Text dimColor={true}>Enter to select · Esc to continue</Text>}
+        </T0>
       }
-    }
-  }, {
-    context: "Select"
-  });
-  const qrLines = qrText ? qrText.split("\n").filter(l => l.length > 0) : [];
-  const t17_text = displayUrl ? ` at ${displayUrl}` : "";
-  const T1 = Dialog;
-  const T0 = Box;
-  const t17_focus = focusIndex === 0;
-  return <T1 title={"Remote Control"} onCancel={handleContinue} hideInputGuide={true}>{<T0 flexDirection={"column"} gap={1}>{<Text>This session is available via Remote Control{t17_text as any}.</Text>}{showQR && qrLines.length > 0 && <Box flexDirection="column">{qrLines.map((line, i_1) => <Text key={i_1}>{line}</Text>)}</Box>}{<Box flexDirection="column">{<ListItem isFocused={t17_focus as any}>{<Text>Disconnect this session</Text>}</ListItem>}{<ListItem isFocused={focusIndex === 1}>{<Text>{showQR ? "Hide QR code" : "Show QR code"}</Text>}</ListItem>}{<ListItem isFocused={focusIndex === 2}>{<Text>Continue</Text>}</ListItem>}</Box>}{<Text dimColor={true}>Enter to select · Esc to continue</Text>}</T0>}</T1>;
+    </T1>
+  )
 }
 
 /**
@@ -199,41 +237,44 @@ function BridgeDisconnectDialog({
 
 async function checkBridgePrerequisites(): Promise<string | null> {
   // Check organization policy — remote control may be disabled
-  const {
-    waitForPolicyLimitsToLoad,
-    isPolicyAllowed
-  } = await import('../../services/policyLimits/index.js');
-  await waitForPolicyLimitsToLoad();
+  const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
+    '../../services/policyLimits/index.js'
+  )
+  await waitForPolicyLimitsToLoad()
   if (!isPolicyAllowed('allow_remote_control')) {
-    return "Remote Control is disabled by your organization's policy.";
+    return "Remote Control is disabled by your organization's policy."
   }
-  const disabledReason = await getBridgeDisabledReason();
+  const disabledReason = await getBridgeDisabledReason()
   if (disabledReason) {
-    return disabledReason;
+    return disabledReason
   }
 
   // Mirror the v1/v2 branching logic in initReplBridge: env-less (v2) is used
   // only when the flag is on AND the session is not perpetual.  In assistant
   // mode (KAIROS) useReplBridge sets perpetual=true, which forces
   // initReplBridge onto the v1 path — so the prerequisite check must match.
-  let useV2 = isEnvLessBridgeEnabled();
+  let useV2 = isEnvLessBridgeEnabled()
   if (feature('KAIROS') && useV2) {
-    const assistantModule = await import('../../assistant/index.js');
+    const assistantModule = await import('../../assistant/index.js')
     if ((assistantModule as any).isAssistantMode?.()) {
-      useV2 = false;
+      useV2 = false
     }
   }
-  const versionError = useV2 ? await checkEnvLessBridgeMinVersion() : checkBridgeMinVersion();
+  const versionError = useV2 ? await checkEnvLessBridgeMinVersion() : checkBridgeMinVersion()
   if (versionError) {
-    return versionError;
+    return versionError
   }
   if (!getBridgeAccessToken()) {
-    return BRIDGE_LOGIN_INSTRUCTION;
+    return BRIDGE_LOGIN_INSTRUCTION
   }
-  logForDebugging('[bridge] Prerequisites passed, enabling bridge');
-  return null;
+  logForDebugging('[bridge] Prerequisites passed, enabling bridge')
+  return null
 }
-export async function call(onDone: LocalJSXCommandOnDone, _context: ToolUseContext & LocalJSXCommandContext, args: string): Promise<React.ReactNode> {
-  const name = args.trim() || undefined;
-  return <BridgeToggle onDone={onDone} name={name} />;
+export async function call(
+  onDone: LocalJSXCommandOnDone,
+  _context: ToolUseContext & LocalJSXCommandContext,
+  args: string,
+): Promise<React.ReactNode> {
+  const name = args.trim() || undefined
+  return <BridgeToggle onDone={onDone} name={name} />
 }

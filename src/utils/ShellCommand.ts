@@ -4,10 +4,7 @@ import type { Readable } from 'stream'
 import treeKill from 'tree-kill'
 import { generateTaskId } from '../Task.js'
 import { formatDuration } from './format.js'
-import {
-  MAX_TASK_OUTPUT_BYTES,
-  MAX_TASK_OUTPUT_BYTES_DISPLAY,
-} from './task/diskOutput.js'
+import { MAX_TASK_OUTPUT_BYTES, MAX_TASK_OUTPUT_BYTES_DISPLAY } from './task/diskOutput.js'
 import { TaskOutput } from './task/TaskOutput.js'
 
 export type ExecResult = {
@@ -39,9 +36,7 @@ export type ShellCommand = {
    * Should be called after the command completes or is killed to prevent memory leaks.
    */
   cleanup: () => void
-  onTimeout?: (
-    callback: (backgroundFn: (taskId: string) => boolean) => void,
-  ) => void
+  onTimeout?: (callback: (backgroundFn: (taskId: string) => boolean) => void) => void
   /** The TaskOutput instance that owns all stdout/stderr data and progress. */
   taskOutput: TaskOutput
 }
@@ -122,9 +117,7 @@ class ShellCommandImpl implements ShellCommand {
   #killedForSize = false
   #maxOutputBytes: number
   #abortSignal: AbortSignal
-  #onTimeoutCallback:
-    | ((backgroundFn: (taskId: string) => boolean) => void)
-    | undefined
+  #onTimeoutCallback: ((backgroundFn: (taskId: string) => boolean) => void) | undefined
   #timeout: number
   #shouldAutoBackground: boolean
   #resultResolver: ((result: ExecResult) => void) | null = null
@@ -141,9 +134,7 @@ class ShellCommandImpl implements ShellCommand {
   }
 
   readonly result: Promise<ExecResult>
-  readonly onTimeout?: (
-    callback: (backgroundFn: (taskId: string) => boolean) => void,
-  ) => void
+  readonly onTimeout?: (callback: (backgroundFn: (taskId: string) => boolean) => void) => void
 
   constructor(
     childProcess: ChildProcess,
@@ -193,12 +184,7 @@ class ShellCommandImpl implements ShellCommand {
   }
 
   #exitHandler(code: number | null, signal: NodeJS.Signals | null): void {
-    const exitCode =
-      code !== null && code !== undefined
-        ? code
-        : signal === 'SIGTERM'
-          ? 144
-          : 1
+    const exitCode = code !== null && code !== undefined ? code : signal === 'SIGTERM' ? 144 : 1
     this.#resolveExitCode(exitCode)
   }
 
@@ -239,7 +225,7 @@ class ShellCommandImpl implements ShellCommand {
   #startSizeWatchdog(): void {
     this.#sizeWatchdog = setInterval(() => {
       void stat(this.taskOutput.path).then(
-        s => {
+        (s) => {
           // Bail if the watchdog was cleared while this stat was in flight
           // (process exited on its own) — otherwise we'd mislabel stderr.
           if (
@@ -278,11 +264,11 @@ class ShellCommandImpl implements ShellCommand {
       this,
     ) as NodeJS.Timeout
 
-    const exitPromise = new Promise<number>(resolve => {
+    const exitPromise = new Promise<number>((resolve) => {
       this.#exitCodeResolver = resolve
     })
 
-    return new Promise<ExecResult>(resolve => {
+    return new Promise<ExecResult>((resolve) => {
       this.#resultResolver = resolve
       void exitPromise.then(this.#handleExit.bind(this))
     })

@@ -1,9 +1,4 @@
-import {
-  EFFORT_HIGH,
-  EFFORT_LOW,
-  EFFORT_MAX,
-  EFFORT_MEDIUM,
-} from '../constants/figures.js'
+import { EFFORT_HIGH, EFFORT_LOW, EFFORT_MAX, EFFORT_MEDIUM } from '../constants/figures.js'
 import {
   type EffortLevel,
   type EffortValue,

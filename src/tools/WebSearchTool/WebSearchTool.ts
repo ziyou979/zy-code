@@ -1,5 +1,8 @@
 import type { ContentBlock } from '../../types/llm.js'
-import type { SearchOptions, SearchResult as ServiceSearchResult } from '../../services/search/index.js'
+import type {
+  SearchOptions,
+  SearchResult as ServiceSearchResult,
+} from '../../services/search/index.js'
 import { createFallbackSearchProvider } from '../../services/search/index.js'
 import { getAPIProvider, modelHasCapability } from '../../utils/model/providers.js'
 
@@ -155,22 +158,47 @@ export const WebSearchTool = buildTool({
       if (provider === 'anthropic') {
         logForDebugging('[WebSearch] Using Anthropic web_search_20260209')
         // Anthropic：通过 web_search_20260209 beta tool 让服务端执行搜索
-        searchResults = await searchViaAnthropic(query, allowed_domains, blocked_domains, context, onProgress)
+        searchResults = await searchViaAnthropic(
+          query,
+          allowed_domains,
+          blocked_domains,
+          context,
+          onProgress,
+        )
       } else if (provider === 'dashscope') {
         logForDebugging('[WebSearch] Using DashScope enable_search')
         // 百炼：通过 enable_search 参数让服务端执行搜索
-        searchResults = await searchViaDashScope(query, allowed_domains, blocked_domains, context, onProgress)
+        searchResults = await searchViaDashScope(
+          query,
+          allowed_domains,
+          blocked_domains,
+          context,
+          onProgress,
+        )
       } else if (provider === 'openai') {
         logForDebugging('[WebSearch] Using OpenAI web_search_preview')
         // OpenAI：通过 web_search_preview 内置工具让服务端执行搜索
-        searchResults = await searchViaOpenAI(query, allowed_domains, blocked_domains, context, onProgress)
+        searchResults = await searchViaOpenAI(
+          query,
+          allowed_domains,
+          blocked_domains,
+          context,
+          onProgress,
+        )
       } else {
         logForDebugging('[WebSearch] Using local DuckDuckGo fallback')
         // 其他 provider：本地 DuckDuckGo 兜底
-        searchResults = await searchViaLocalProvider(query, allowed_domains, blocked_domains, onProgress)
+        searchResults = await searchViaLocalProvider(
+          query,
+          allowed_domains,
+          blocked_domains,
+          onProgress,
+        )
       }
 
-      logForDebugging(`[WebSearch] Got ${searchResults.length} results in ${((performance.now() - startTime) / 1000).toFixed(2)}s`)
+      logForDebugging(
+        `[WebSearch] Got ${searchResults.length} results in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,
+      )
 
       const endTime = performance.now()
       const durationSeconds = (endTime - startTime) / 1000
@@ -181,7 +209,7 @@ export const WebSearchTool = buildTool({
       if (searchResults.length > 0) {
         results.push({
           toolCallId: `search-${Date.now()}`,
-          content: searchResults.map(r => ({ title: r.title, url: r.url })),
+          content: searchResults.map((r) => ({ title: r.title, url: r.url })),
         })
       } else {
         results.push('No results found for this query.')
@@ -196,7 +224,10 @@ export const WebSearchTool = buildTool({
       }
     } catch (error) {
       logError(error)
-      logForDebugging(`[WebSearch] Error: ${error instanceof Error ? error.message : String(error)}`, { level: 'error' })
+      logForDebugging(
+        `[WebSearch] Error: ${error instanceof Error ? error.message : String(error)}`,
+        { level: 'error' },
+      )
 
       const endTime = performance.now()
       const durationSeconds = (endTime - startTime) / 1000
@@ -217,7 +248,7 @@ export const WebSearchTool = buildTool({
 
     let formattedOutput = `Web search results for query: "${query}"\n\n`
 
-    ;(results ?? []).forEach(result => {
+    ;(results ?? []).forEach((result) => {
       if (result == null) {
         return
       }
@@ -271,7 +302,9 @@ async function searchViaAnthropic(
     toolSchema.blocked_domains = blocked_domains
   }
 
-  logForDebugging(`[WebSearch:Anthropic] Sending sub-query with beta=web_search_20260209, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`)
+  logForDebugging(
+    `[WebSearch:Anthropic] Sending sub-query with beta=web_search_20260209, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`,
+  )
 
   const queryStream = queryModelWithStreaming({
     messages: [userMessage],
@@ -369,7 +402,9 @@ async function searchViaDashScope(
     },
   })
 
-  logForDebugging(`[WebSearch:DashScope] Sending sub-query with enable_search=true, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`)
+  logForDebugging(
+    `[WebSearch:DashScope] Sending sub-query with enable_search=true, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`,
+  )
 
   // 收集搜索结果 — 百炼在 response 的 search_info.search_results 中返回
   const allContentBlocks: ContentBlock[] = []
@@ -382,13 +417,17 @@ async function searchViaDashScope(
       const raw = event.message as any
       if (raw?.extras?.searchInfo) {
         searchInfoResults = parseSearchInfoFromExtras(raw.extras.searchInfo)
-        logForDebugging(`[WebSearch:DashScope] Found search_info in extras: ${searchInfoResults.length} results`)
+        logForDebugging(
+          `[WebSearch:DashScope] Found search_info in extras: ${searchInfoResults.length} results`,
+        )
       }
       continue
     }
   }
 
-  logForDebugging(`[WebSearch:DashScope] Got ${searchInfoResults.length} results from extras, ${allContentBlocks.length} content blocks`)
+  logForDebugging(
+    `[WebSearch:DashScope] Got ${searchInfoResults.length} results from extras, ${allContentBlocks.length} content blocks`,
+  )
 
   // 如果从 extras 中拿到搜索结果，直接使用
   if (searchInfoResults.length > 0) {
@@ -449,7 +488,9 @@ async function searchViaOpenAI(
     webSearchTool.search_context_size = 'medium'
   }
 
-  logForDebugging(`[WebSearch:OpenAI] Sending sub-query with web_search_preview tool, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`)
+  logForDebugging(
+    `[WebSearch:OpenAI] Sending sub-query with web_search_preview tool, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`,
+  )
 
   const queryStream = queryModelWithStreaming({
     messages: [userMessage],
@@ -546,8 +587,8 @@ function parseResultsFromText(
 
   // 拼接所有文本块
   const text = contentBlocks
-    .filter(b => b.type === 'text')
-    .map(b => (b as any).text ?? '')
+    .filter((b) => b.type === 'text')
+    .map((b) => (b as any).text ?? '')
     .join('\n')
 
   if (!text) return results
@@ -566,7 +607,7 @@ function parseResultsFromText(
     if (blockedDomains && blockedDomains.length > 0) {
       try {
         const hostname = new URL(url).hostname
-        if (blockedDomains.some(d => hostname.includes(d))) continue
+        if (blockedDomains.some((d) => hostname.includes(d))) continue
       } catch {
         // URL 解析失败，保留结果
       }
@@ -586,7 +627,7 @@ function parseResultsFromText(
       if (blockedDomains && blockedDomains.length > 0) {
         try {
           const hostname = new URL(url).hostname
-          if (blockedDomains.some(d => hostname.includes(d))) continue
+          if (blockedDomains.some((d) => hostname.includes(d))) continue
         } catch {
           continue
         }

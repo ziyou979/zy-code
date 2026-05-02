@@ -27,8 +27,7 @@ export class ActivityManager {
 
   constructor(options?: ActivityManagerOptions) {
     this.getNow = options?.getNow ?? (() => Date.now())
-    this.getActiveTimeCounter =
-      options?.getActiveTimeCounter ?? getActiveTimeCounterImpl
+    this.getActiveTimeCounter = options?.getActiveTimeCounter ?? getActiveTimeCounterImpl
     this.lastCLIRecordedTime = this.getNow()
   }
 
@@ -127,10 +126,7 @@ export class ActivityManager {
   /**
    * Convenience method to track an async operation automatically (mainly for testing/debugging)
    */
-  async trackOperation<T>(
-    operationId: string,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  async trackOperation<T>(operationId: string, fn: () => Promise<T>): Promise<T> {
     this.startCLIActivity(operationId)
     try {
       return await fn()
@@ -149,8 +145,7 @@ export class ActivityManager {
   } {
     const now = this.getNow()
     const timeSinceUserActivity = (now - this.lastUserActivityTime) / 1000
-    const isUserActive =
-      timeSinceUserActivity < this.USER_ACTIVITY_TIMEOUT_MS / 1000
+    const isUserActive = timeSinceUserActivity < this.USER_ACTIVITY_TIMEOUT_MS / 1000
 
     return {
       isUserActive,

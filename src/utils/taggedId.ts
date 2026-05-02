@@ -7,8 +7,7 @@
  * This must stay in sync with api/api/common/utils/tagged_id.py.
  */
 
-const BASE_58_CHARS =
-  '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+const BASE_58_CHARS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 const VERSION = '01'
 // ceil(128 / log2(58)) = 22
 const ENCODED_LENGTH = 22

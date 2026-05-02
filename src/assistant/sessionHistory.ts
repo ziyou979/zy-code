@@ -28,9 +28,7 @@ export type HistoryAuthCtx = {
 }
 
 /** Prepare auth + headers + base URL once, reuse across pages. */
-export async function createHistoryAuthCtx(
-  sessionId: string,
-): Promise<HistoryAuthCtx> {
+export async function createHistoryAuthCtx(sessionId: string): Promise<HistoryAuthCtx> {
   const { accessToken, orgUUID } = await prepareApiRequest()
   return {
     baseUrl: `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`,

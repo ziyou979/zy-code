@@ -1,9 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import type { QueuedCommand } from '../types/textInputTypes.js'
-import {
-  getCommandQueueSnapshot,
-  subscribeToCommandQueue,
-} from '../utils/messageQueueManager.js'
+import { getCommandQueueSnapshot, subscribeToCommandQueue } from '../utils/messageQueueManager.js'
 import type { QueryGuard } from '../utils/QueryGuard.js'
 import { processQueueIfReady } from '../utils/queueProcessor.js'
 
@@ -32,18 +29,12 @@ export function useQueueProcessor({
 }: UseQueueProcessorParams): void {
   // Subscribe to the query guard. Re-renders when a query starts or ends
   // (or when reserve/cancelReservation transitions dispatching state).
-  const isQueryActive = useSyncExternalStore(
-    queryGuard.subscribe,
-    queryGuard.getSnapshot,
-  )
+  const isQueryActive = useSyncExternalStore(queryGuard.subscribe, queryGuard.getSnapshot)
 
   // Subscribe to the unified command queue via useSyncExternalStore.
   // This guarantees re-render when the store changes, bypassing
   // React context propagation delays that cause missed notifications in Ink.
-  const queueSnapshot = useSyncExternalStore(
-    subscribeToCommandQueue,
-    getCommandQueueSnapshot,
-  )
+  const queueSnapshot = useSyncExternalStore(subscribeToCommandQueue, getCommandQueueSnapshot)
 
   useEffect(() => {
     if (isQueryActive) return
@@ -58,11 +49,5 @@ export function useQueueProcessor({
     // guard above returns early. handlePromptSubmit's finally releases the
     // reservation via cancelReservation() (no-op if onQuery already ran end()).
     processQueueIfReady({ executeInput: executeQueuedInput })
-  }, [
-    queueSnapshot,
-    isQueryActive,
-    executeQueuedInput,
-    hasActiveLocalJsxUI,
-    queryGuard,
-  ])
+  }, [queueSnapshot, isQueryActive, executeQueuedInput, hasActiveLocalJsxUI, queryGuard])
 }

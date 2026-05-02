@@ -17,10 +17,7 @@ import { getCwd } from '../cwd.js'
 import { toError } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
-import {
-  getSettingsForSource,
-  updateSettingsForSource,
-} from '../settings/settings.js'
+import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { buildPluginTelemetryFields } from '../telemetry/pluginTelemetry.js'
 import { clearAllCaches } from './cacheUtils.js'
 import {
@@ -29,10 +26,7 @@ import {
   type ResolutionResult,
   resolveDependencyClosure,
 } from './dependencyResolver.js'
-import {
-  addInstalledPlugin,
-  getGitCommitSha,
-} from './installedPluginsManager.js'
+import { addInstalledPlugin, getGitCommitSha } from './installedPluginsManager.js'
 import { getManagedPluginNames } from './managedPlugins.js'
 import { getMarketplaceCacheOnly, getPluginById } from './marketplaceManager.js'
 import {
@@ -40,11 +34,7 @@ import {
   parsePluginIdentifier,
   scopeToSettingSource,
 } from './pluginIdentifier.js'
-import {
-  cachePlugin,
-  getVersionedCachePath,
-  getVersionedZipCachePath,
-} from './pluginLoader.js'
+import { cachePlugin, getVersionedCachePath, getVersionedZipCachePath } from './pluginLoader.js'
 import { isPluginBlockedByPolicy } from './pluginPolicy.js'
 import { calculatePluginVersion } from './pluginVersioning.js'
 import {
@@ -53,10 +43,7 @@ import {
   type PluginScope,
   type PluginSource,
 } from './schemas.js'
-import {
-  convertDirectoryToZipInPlace,
-  isPluginZipCacheEnabled,
-} from './zipCache.js'
+import { convertDirectoryToZipInPlace, isPluginZipCacheEnabled } from './zipCache.js'
 
 /**
  * Plugin installation metadata for installed_plugins.json
@@ -84,23 +71,15 @@ export function getCurrentTimestamp(): string {
  * @returns The validated absolute path
  * @throws Error if the path would escape the base directory
  */
-export function validatePathWithinBase(
-  basePath: string,
-  relativePath: string,
-): string {
+export function validatePathWithinBase(basePath: string, relativePath: string): string {
   const resolvedPath = resolve(basePath, relativePath)
   const normalizedBase = resolve(basePath) + sep
 
   // Check if the resolved path starts with the base path
   // Adding sep ensures we don't match partial directory names
   // e.g., /foo/bar should not match /foo/barbaz
-  if (
-    !resolvedPath.startsWith(normalizedBase) &&
-    resolvedPath !== resolve(basePath)
-  ) {
-    throw new Error(
-      `Path traversal detected: "${relativePath}" would escape the base directory`,
-    )
+  if (!resolvedPath.startsWith(normalizedBase) && resolvedPath !== resolve(basePath)) {
+    throw new Error(`Path traversal detected: "${relativePath}" would escape the base directory`)
   }
 
   return resolvedPath
@@ -149,8 +128,7 @@ export async function cacheAndRegisterPlugin(
   // cached path. For git-subdir sources, cachePlugin already captured the SHA
   // before discarding the ephemeral clone (the extracted subdir has no .git).
   const pathForGitSha = localSourcePath || cacheResult.path
-  const gitCommitSha =
-    cacheResult.gitCommitSha ?? (await getGitCommitSha(pathForGitSha))
+  const gitCommitSha = cacheResult.gitCommitSha ?? (await getGitCommitSha(pathForGitSha))
 
   const now = getCurrentTimestamp()
   const version = await calculatePluginVersion(
@@ -261,9 +239,7 @@ export function registerPluginInstallation(
  * @param pluginId - Plugin ID in "plugin@marketplace" format
  * @returns Parsed components or null if invalid
  */
-export function parsePluginId(
-  pluginId: string,
-): { name: string; marketplace: string } | null {
+export function parsePluginId(pluginId: string): { name: string; marketplace: string } | null {
   const parts = pluginId.split('@')
   if (parts.length !== 2 || !parts[0] || !parts[1]) {
     return null
@@ -301,17 +277,13 @@ export type InstallCoreResult =
  * the richer CLI messages (the "Is the X marketplace added?" hint is useful
  * for UI users too).
  */
-export function formatResolutionError(
-  r: ResolutionResult & { ok: false },
-): string {
+export function formatResolutionError(r: ResolutionResult & { ok: false }): string {
   switch (r.reason) {
     case 'cycle':
       return `Dependency cycle: ${r.chain.join(' → ')}`
     case 'cross-marketplace': {
       const depMkt = parsePluginIdentifier(r.dependency).marketplace
-      const where = depMkt
-        ? `marketplace "${depMkt}"`
-        : 'a different marketplace'
+      const where = depMkt ? `marketplace "${depMkt}"` : 'a different marketplace'
       const hint = depMkt
         ? ` Add "${depMkt}" to allowCrossMarketplaceDependenciesOn in the ROOT marketplace's marketplace.json (the marketplace of the plugin you're installing — only its allowlist applies; no transitive trust).`
         : ''
@@ -391,13 +363,12 @@ export async function installResolvedPlugin({
   const rootMarketplace = parsePluginIdentifier(pluginId).marketplace
   const allowedCrossMarketplaces = new Set(
     (rootMarketplace
-      ? (await getMarketplaceCacheOnly(rootMarketplace))
-          ?.allowCrossMarketplaceDependenciesOn
+      ? (await getMarketplaceCacheOnly(rootMarketplace))?.allowCrossMarketplaceDependenciesOn
       : undefined) ?? [],
   )
   const resolution = await resolveDependencyClosure(
     pluginId,
-    async id => {
+    async (id) => {
       if (depInfo.has(id)) return depInfo.get(id)!.entry
       if (id === pluginId) return entry
       const info = await getPluginById(id)
@@ -458,25 +429,14 @@ export async function installResolvedPlugin({
     let localSourcePath: string | undefined
     const { source } = info.entry
     if (isLocalPluginSource(source)) {
-      localSourcePath = validatePathWithinBase(
-        info.marketplaceInstallLocation,
-        source,
-      )
+      localSourcePath = validatePathWithinBase(info.marketplaceInstallLocation, source)
     }
-    await cacheAndRegisterPlugin(
-      id,
-      info.entry,
-      scope,
-      projectPath,
-      localSourcePath,
-    )
+    await cacheAndRegisterPlugin(id, info.entry, scope, projectPath, localSourcePath)
   }
 
   clearAllCaches()
 
-  const depNote = formatDependencyCountSuffix(
-    resolution.closure.filter(id => id !== pluginId),
-  )
+  const depNote = formatDependencyCountSuffix(resolution.closure.filter((id) => id !== pluginId))
   return { ok: true, closure: resolution.closure, depNote }
 }
 
@@ -560,26 +520,18 @@ export async function installPluginFromMarketplace({
     // extracts $.plugin_id for official-marketplace install tracking. Other
     // plugin lifecycle events drop the blob key — no downstream consumers.
     logEvent('zy_plugin_installed', {
-      _PROTO_plugin_name:
-        entry.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
-      _PROTO_marketplace_name:
-        marketplaceName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_plugin_name: entry.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+      _PROTO_marketplace_name: marketplaceName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
       plugin_id: (isOfficialMarketplaceName(marketplaceName)
         ? pluginId
         : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      trigger:
-        trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      trigger: trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       install_source: (trigger === 'hint'
         ? 'ui-suggestion'
         : 'ui-discover') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      ...buildPluginTelemetryFields(
-        entry.name,
-        marketplaceName,
-        getManagedPluginNames(),
-      ),
+      ...buildPluginTelemetryFields(entry.name, marketplaceName, getManagedPluginNames()),
       ...(entry.version && {
-        version:
-          entry.version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        version: entry.version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }),
     })
 

@@ -10,9 +10,7 @@ const DESCRIPTION =
   'Inspect a previously collapsed context span by its collapse ID. Returns the original summary or placeholder content for that span. Useful when the model needs to recall details from a collapsed portion of the conversation.'
 
 const inputSchema = z.object({
-  collapse_id: z
-    .string()
-    .describe('The 16-digit collapse ID to inspect.'),
+  collapse_id: z.string().describe('The 16-digit collapse ID to inspect.'),
 })
 type InputSchema = typeof inputSchema
 
@@ -32,9 +30,7 @@ export const CtxInspectTool = buildTool({
   inputSchema,
   async call({ collapse_id }, _context) {
     try {
-      const { getStats } = await import(
-        '../../services/contextCollapse/index.js'
-      )
+      const { getStats } = await import('../../services/contextCollapse/index.js')
       const stats = getStats()
       return {
         data: {
@@ -60,7 +56,7 @@ export const CtxInspectTool = buildTool({
     }
   },
   mapToolResultToToolResultBlock(output, toolUseID) {
-    const text = output.content.map(block => block.text).join('\n')
+    const text = output.content.map((block) => block.text).join('\n')
     return {
       toolCallId: toolUseID,
       type: 'tool_result',

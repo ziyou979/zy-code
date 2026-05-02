@@ -55,9 +55,7 @@ function logEventImpl(eventName: string, metadata: LogEventMetadata): void {
 
   // 若采样结果为正数，将其添加到元数据中
   const metadataWithSampleRate =
-    sampleResult !== null
-      ? { ...metadata, sample_rate: sampleResult }
-      : metadata
+    sampleResult !== null ? { ...metadata, sample_rate: sampleResult } : metadata
 
   if (shouldTrackDatadog()) {
     // Datadog 是通用访问后端 — 移除 _PROTO_* 键
@@ -76,10 +74,7 @@ function logEventImpl(eventName: string, metadata: LogEventMetadata): void {
  * 移除 Segment 后，剩余的两个事件汇都是即发即弃的，
  * 因此这里只是包装同步实现 — 保留以维持事件汇接口契约。
  */
-function logEventAsyncImpl(
-  eventName: string,
-  metadata: LogEventMetadata,
-): Promise<void> {
+function logEventAsyncImpl(eventName: string, metadata: LogEventMetadata): Promise<void> {
   logEventImpl(eventName, metadata)
   return Promise.resolve()
 }
@@ -93,8 +88,7 @@ function logEventAsyncImpl(
  * 在 main.tsx 的 setupBackend() 中调用。
  */
 export function initializeAnalyticsGates(): void {
-  isDatadogGateEnabled =
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE(DATADOG_GATE_NAME)
+  isDatadogGateEnabled = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(DATADOG_GATE_NAME)
 }
 
 /**

@@ -1,8 +1,5 @@
 import { feature } from 'bun:bundle'
-import type {
-  TokenUsage as Usage,
-  TokenUsage,
-} from '../types/llm.js'
+import type { TokenUsage as Usage, TokenUsage } from '../types/llm.js'
 import type {
   AssistantContentBlock,
   ContentBlock,
@@ -86,16 +83,10 @@ import { jsonStringify } from './slowOperations.js'
 import { isInternalBuild } from './envUtils.js'
 
 // 带有 hookName 字段的 Hook 附件（排除 HookPermissionDecisionAttachment）
-type HookAttachmentWithName = Exclude<
-  HookAttachment,
-  HookPermissionDecisionAttachment
->
+type HookAttachmentWithName = Exclude<HookAttachment, HookPermissionDecisionAttachment>
 
 import type { APIErrorLike } from '../types/llm.js'
-import type {
-  HookEvent,
-  SDKAssistantMessageError,
-} from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent, SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import { EXPLORE_AGENT } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 import { PLAN_AGENT } from 'src/tools/AgentTool/built-in/planAgent.js'
 import { areExplorePlanAgentsEnabled } from 'src/tools/AgentTool/builtInAgents.js'
@@ -104,10 +95,7 @@ import { ASK_USER_QUESTION_TOOL_NAME } from 'src/tools/AskUserQuestionTool/promp
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
-import {
-  FILE_READ_TOOL_NAME,
-  MAX_LINES_TO_READ,
-} from 'src/tools/FileReadTool/prompt.js'
+import { FILE_READ_TOOL_NAME, MAX_LINES_TO_READ } from 'src/tools/FileReadTool/prompt.js'
 import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
@@ -122,12 +110,7 @@ import {
   LOCAL_COMMAND_STDOUT_TAG,
 } from '../constants/xml.js'
 import { DiagnosticTrackingService } from '../services/diagnosticTracking.js'
-import {
-  findToolByName,
-  type Tool,
-  type Tools,
-  toolMatchesName,
-} from '../Tool.js'
+import { findToolByName, type Tool, type Tools, toolMatchesName } from '../Tool.js'
 import {
   FileReadTool,
   type Output as FileReadToolOutput,
@@ -161,10 +144,7 @@ function getTeammateMailbox(): typeof import('./teammateMailbox.js') {
   return require('./teammateMailbox.js')
 }
 
-import {
-  isToolReferenceBlock,
-  isToolSearchEnabledOptimistic,
-} from './toolSearch.js'
+import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from './toolSearch.js'
 
 const MEMORY_CORRECTION_HINT =
   "\n\nNote: The user's next message may contain a correction or preference. Pay close attention — if they explain what went wrong or how they'd prefer you to work, consider saving that to memory for future sessions."
@@ -176,10 +156,7 @@ const TOOL_REFERENCE_TURN_BOUNDARY = 'Tool loaded.'
  * 向拒绝/取消消息追加记忆纠正提示。
  */
 export function withMemoryCorrectionHint(message: string): string {
-  if (
-    isAutoMemoryEnabled() &&
-    getFeatureValue_CACHED_MAY_BE_STALE('zy_amber_prism', false)
-  ) {
+  if (isAutoMemoryEnabled() && getFeatureValue_CACHED_MAY_BE_STALE('zy_amber_prism', false)) {
     return message + MEMORY_CORRECTION_HINT
   }
   return message
@@ -198,8 +175,7 @@ export function deriveShortMessageId(uuid: string): string {
 }
 
 export const INTERRUPT_MESSAGE = '[Request interrupted by user]'
-export const INTERRUPT_MESSAGE_FOR_TOOL_USE =
-  '[Request interrupted by user for tool use]'
+export const INTERRUPT_MESSAGE_FOR_TOOL_USE = '[Request interrupted by user for tool use]'
 export const CANCEL_MESSAGE =
   "The user doesn't want to take this action right now. STOP what you are doing and wait for the user to tell you how to proceed."
 export const REJECT_MESSAGE =
@@ -236,12 +212,10 @@ export const NO_RESPONSE_REQUESTED = 'No response requested.'
 // 合成 tool_result 内容。导出后 HFI 提交可以
 // 拒绝任何包含它的负载 — 占位符在结构上满足配对
 // 但内容是伪造的，如果提交会污染训练数据。
-export const SYNTHETIC_TOOL_RESULT_PLACEHOLDER =
-  '[Tool result missing due to internal error]'
+export const SYNTHETIC_TOOL_RESULT_PLACEHOLDER = '[Tool result missing due to internal error]'
 
 // UI 用于识别分类器拒绝并简洁渲染的前缀
-const AUTO_MODE_REJECTION_PREFIX =
-  'Permission for this action has been denied. Reason: '
+const AUTO_MODE_REJECTION_PREFIX = 'Permission for this action has been denied. Reason: '
 
 /**
  * 检查工具结果消息是否为分类器拒绝。
@@ -329,14 +303,10 @@ function isSyntheticApiErrorMessage(
   )
 }
 
-export function getLastAssistantMessage(
-  messages: Message[],
-): AssistantMessage | undefined {
+export function getLastAssistantMessage(messages: Message[]): AssistantMessage | undefined {
   // findLast 从末尾提前退出 — 对大消息数组比 filter + last 快得多
   //（通过 useFeedbackSurvey 在每次 REPL 渲染时调用）。
-  return messages.findLast(
-    (msg): msg is AssistantMessage => msg.type === 'assistant',
-  )
+  return messages.findLast((msg): msg is AssistantMessage => msg.type === 'assistant')
 }
 
 export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean {
@@ -346,7 +316,7 @@ export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean {
       const assistantMessage = message as AssistantMessage
       const content = assistantMessage.message.content
       if (Array.isArray(content)) {
-        return content.some(block => block.type === 'tool_call')
+        return content.some((block) => block.type === 'tool_call')
       }
     }
   }
@@ -574,10 +544,7 @@ export function createSyntheticUserCaveatMessage(): UserMessage {
 /**
  * 格式化 slash 命令运行时模型看到的命令输入面包屑。
  */
-export function formatCommandInputTags(
-  commandName: string,
-  args: string,
-): string {
+export function formatCommandInputTags(commandName: string, args: string): string {
   return `<${COMMAND_NAME_TAG}>/${commandName}</${COMMAND_NAME_TAG}>
             <${COMMAND_MESSAGE_TAG}>${commandName}</${COMMAND_MESSAGE_TAG}>
             <${COMMAND_ARGS_TAG}>${args}</${COMMAND_ARGS_TAG}>`
@@ -622,9 +589,7 @@ export function createProgressMessage<P extends Progress>({
   }
 }
 
-export function createToolResultStopMessage(
-  toolUseID: string,
-): ToolResultBlock {
+export function createToolResultStopMessage(toolUseID: string): ToolResultBlock {
   return {
     type: 'tool_result',
     content: CANCEL_MESSAGE,
@@ -738,12 +703,8 @@ export function deriveUUID(parentUUID: string, index: number): UUID {
 }
 
 // 拆分消息，使每个内容块获得自己的消息
-export function normalizeMessages(
-  messages: AssistantMessage[],
-): NormalizedAssistantMessage[]
-export function normalizeMessages(
-  messages: UserMessage[],
-): NormalizedUserMessage[]
+export function normalizeMessages(messages: AssistantMessage[]): NormalizedAssistantMessage[]
+export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
 export function normalizeMessages(
   messages: (AssistantMessage | UserMessage)[],
 ): (NormalizedAssistantMessage | NormalizedUserMessage)[]
@@ -756,16 +717,14 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
   // 一旦遇到有多个内容块的消息，此标志设为 true，
   // 并在标准化过程中对所有后续消息保持为 true。
   let isNewChain = false
-  return messages.flatMap(message => {
+  return messages.flatMap((message) => {
     switch (message.type) {
       case 'assistant': {
         const content = message.message.content
         if (!Array.isArray(content)) return []
         isNewChain = isNewChain || content.length > 1
         return content.map((_, index) => {
-          const uuid = isNewChain
-            ? deriveUUID(message.uuid as UUID, index)
-            : message.uuid
+          const uuid = isNewChain ? deriveUUID(message.uuid as UUID, index) : message.uuid
           return {
             type: 'assistant' as const,
             timestamp: message.timestamp,
@@ -810,9 +769,7 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
           const isImage = _.type === 'image'
           // 对于图像内容块，仅提取此图像的 ID
           const imageId =
-            isImage && message.imagePasteIds
-              ? message.imagePasteIds[imageIndex]
-              : undefined
+            isImage && message.imagePasteIds ? message.imagePasteIds[imageIndex] : undefined
           if (isImage) imageIndex++
           return {
             ...createUserMessage({
@@ -844,7 +801,8 @@ export function isToolUseRequestMessage(
   return (
     message.type === 'assistant' &&
     // 注意：stop_reason === 'tool_call' 不可靠 — 并不总是正确设置
-    Array.isArray(message.message.content) && message.message.content.some(_ => _.type === 'tool_call')
+    Array.isArray(message.message.content) &&
+    message.message.content.some((_) => _.type === 'tool_call')
   )
 }
 
@@ -852,9 +810,7 @@ type ToolUseResultMessage = NormalizedUserMessage & {
   message: { content: [ToolResultBlock] }
 }
 
-export function isToolUseResultMessage(
-  message: Message,
-): message is ToolUseResultMessage {
+export function isToolUseResultMessage(message: Message): message is ToolUseResultMessage {
   return (
     message.type === 'user' &&
     ((Array.isArray(message.message.content) &&
@@ -872,12 +828,7 @@ export function reorderMessagesInUI(
     | SystemMessage
   )[],
   syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
-): (
-  | NormalizedUserMessage
-  | NormalizedAssistantMessage
-  | AttachmentMessage
-  | SystemMessage
-)[] {
+): (NormalizedUserMessage | NormalizedAssistantMessage | AttachmentMessage | SystemMessage)[] {
   // 将工具使用 ID 映射到其相关消息
   const toolUseGroups = new Map<
     string,
@@ -927,10 +878,7 @@ export function reorderMessagesInUI(
     }
 
     // 处理工具结果
-    if (
-      message.type === 'user' &&
-      message.message.content[0]?.type === 'tool_result'
-    ) {
+    if (message.type === 'user' && message.message.content[0]?.type === 'tool_result') {
       const toolUseID = message.message.content[0].toolCallId
       if (!toolUseGroups.has(toolUseID)) {
         toolUseGroups.set(toolUseID, {
@@ -995,17 +943,16 @@ export function reorderMessagesInUI(
     // 检查此消息是否为工具使用组的一部分
     if (isHookAttachmentMessage(message)) {
       const hookMsg = message as AttachmentMessage<Record<string, unknown>>
-      if (hookMsg.attachment.hookEvent === 'PreToolUse' ||
-        hookMsg.attachment.hookEvent === 'PostToolUse') {
+      if (
+        hookMsg.attachment.hookEvent === 'PreToolUse' ||
+        hookMsg.attachment.hookEvent === 'PostToolUse'
+      ) {
         // 跳过 — 已在工具使用组中处理
         continue
       }
     }
 
-    if (
-      message.type === 'user' &&
-      message.message.content[0]?.type === 'tool_result'
-    ) {
+    if (message.type === 'user' && message.message.content[0]?.type === 'tool_result') {
       // 跳过 — 已在工具使用组中处理
       continue
     }
@@ -1032,9 +979,7 @@ export function reorderMessagesInUI(
 
   // 过滤以仅保留最后一个 api 错误消息
   const last = result.at(-1)
-  return result.filter(
-    _ => _.type !== 'system' || _.subtype !== 'api_error' || _ === last,
-  )
+  return result.filter((_) => _.type !== 'system' || _.subtype !== 'api_error' || _ === last)
 }
 
 function isHookAttachmentMessage(
@@ -1060,7 +1005,7 @@ function getInProgressHookCount(
 ): number {
   return count(
     messages,
-    _ =>
+    (_) =>
       _.type === 'progress' &&
       _.data.type === 'hook_progress' &&
       _.data.hookEvent === hookEvent &&
@@ -1083,7 +1028,7 @@ function getResolvedHookCount(
           (_.attachment as Record<string, unknown>).toolUseID === toolUseID &&
           (_.attachment as Record<string, unknown>).hookEvent === hookEvent,
       )
-      .map(_ => _.attachment.hookName),
+      .map((_) => _.attachment.hookName),
   )
   return uniqueHookNames.size
 }
@@ -1093,11 +1038,7 @@ export function hasUnresolvedHooks(
   toolUseID: string,
   hookEvent: HookEvent,
 ) {
-  const inProgressHookCount = getInProgressHookCount(
-    messages,
-    toolUseID,
-    hookEvent,
-  )
+  const inProgressHookCount = getInProgressHookCount(messages, toolUseID, hookEvent)
   const resolvedHookCount = getResolvedHookCount(messages, toolUseID, hookEvent)
 
   if (inProgressHookCount > resolvedHookCount) {
@@ -1111,23 +1052,15 @@ export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
   [toolUseID: string]: boolean
 } {
   return Object.fromEntries(
-    normalizedMessages.flatMap(_ =>
+    normalizedMessages.flatMap((_) =>
       _.type === 'user' && _.message.content[0]?.type === 'tool_result'
-        ? [
-            [
-              _.message.content[0].toolCallId,
-              _.message.content[0].isError ?? false,
-            ],
-          ]
+        ? [[_.message.content[0].toolCallId, _.message.content[0].isError ?? false]]
         : ([] as [string, boolean][]),
     ),
   )
 }
 
-export function getSiblingToolUseIDs(
-  message: NormalizedMessage,
-  messages: Message[],
-): Set<string> {
+export function getSiblingToolUseIDs(message: NormalizedMessage, messages: Message[]): Set<string> {
   const toolUseID = getToolUseID(message)
   if (!toolUseID) {
     return new Set()
@@ -1136,7 +1069,8 @@ export function getSiblingToolUseIDs(
   const unnormalizedMessage = messages.find(
     (_): _ is AssistantMessage =>
       _.type === 'assistant' &&
-      Array.isArray(_.message.content) && _.message.content.some(_ => _.type === 'tool_call' && _.id === toolUseID),
+      Array.isArray(_.message.content) &&
+      _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUseID),
   )
   if (!unnormalizedMessage) {
     return new Set()
@@ -1144,13 +1078,14 @@ export function getSiblingToolUseIDs(
 
   const messageID = unnormalizedMessage.message.id
   const siblingMessages = messages.filter(
-    (_): _ is AssistantMessage =>
-      _.type === 'assistant' && _.message.id === messageID,
+    (_): _ is AssistantMessage => _.type === 'assistant' && _.message.id === messageID,
   )
 
   return new Set(
-    siblingMessages.flatMap(_ =>
-      (Array.isArray(_.message.content) ? _.message.content : []).filter(_ => _.type === 'tool_call').map(_ => _.id),
+    siblingMessages.flatMap((_) =>
+      (Array.isArray(_.message.content) ? _.message.content : [])
+        .filter((_) => _.type === 'tool_call')
+        .map((_) => _.id),
     ),
   )
 }
@@ -1268,12 +1203,10 @@ export function buildMessageLookups(
           'toolCallId' in content &&
           typeof (content as { toolCallId: string }).toolCallId === 'string'
         ) {
-          resolvedToolUseIDs.add(
-            (content as { toolCallId: string }).toolCallId,
-          )
+          resolvedToolUseIDs.add((content as { toolCallId: string }).toolCallId)
         }
         if ((content.type as string) === 'advisor_tool_result') {
-          const result = (content as unknown) as {
+          const result = content as unknown as {
             toolCallId: string
             content: { type: string }
           }
@@ -1320,8 +1253,7 @@ export function buildMessageLookups(
   // 结果）为错误，使 UI 显示为失败而不是
   // 永久旋转。
   const lastMsg = messages.at(-1)
-  const lastAssistantMsgId =
-    lastMsg?.type === 'assistant' ? lastMsg.message.id : undefined
+  const lastAssistantMsgId = lastMsg?.type === 'assistant' ? lastMsg.message.id : undefined
   for (const msg of normalizedMessages) {
     if (msg.type !== 'assistant') continue
     // 如果是 assistant 则跳过最后一条原始消息中的块，
@@ -1373,9 +1305,7 @@ export const EMPTY_LOOKUPS: MessageLookups = {
  *（冻结自身属性，不冻结 Set 内部状态）。
  * 所有消费者均为只读（迭代 / .has / .size）。
  */
-export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(
-  new Set<string>(),
-)
+export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<string>())
 
 /**
  * 从 subagent/skill 进度消息构建查找表，使子工具使用
@@ -1389,10 +1319,7 @@ export function buildSubagentLookups(
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } {
   const toolUseByToolUseID = new Map<string, ToolCallInlineBlock>()
   const resolvedToolUseIDs = new Set<string>()
-  const toolResultByToolUseID = new Map<
-    string,
-    NormalizedUserMessage & { type: 'user' }
-  >()
+  const toolResultByToolUseID = new Map<string, NormalizedUserMessage & { type: 'user' }>()
 
   for (const { message: msg } of messages) {
     if (msg.type === 'assistant') {
@@ -1466,16 +1393,12 @@ export function hasUnresolvedHooksFromLookup(
   hookEvent: HookEvent,
   lookups: MessageLookups,
 ): boolean {
-  const inProgressCount =
-    lookups.inProgressHookCounts.get(toolUseID)?.get(hookEvent) ?? 0
-  const resolvedCount =
-    lookups.resolvedHookCounts.get(toolUseID)?.get(hookEvent) ?? 0
+  const inProgressCount = lookups.inProgressHookCounts.get(toolUseID)?.get(hookEvent) ?? 0
+  const resolvedCount = lookups.resolvedHookCounts.get(toolUseID)?.get(hookEvent) ?? 0
   return inProgressCount > resolvedCount
 }
 
-export function getToolUseIDs(
-  normalizedMessages: NormalizedMessage[],
-): Set<string> {
+export function getToolUseIDs(normalizedMessages: NormalizedMessage[]): Set<string> {
   return new Set(
     normalizedMessages
       .filter(
@@ -1484,7 +1407,7 @@ export function getToolUseIDs(
           Array.isArray(_.message.content) &&
           _.message.content[0]?.type === 'tool_call',
       )
-      .map(_ => (_.message.content[0] as { id: string }).id),
+      .map((_) => (_.message.content[0] as { id: string }).id),
   )
 }
 
@@ -1564,15 +1487,13 @@ function stripUnavailableToolReferencesFromUserMessage(
 
   // 检查是否有任何 tool_reference 块指向不可用的工具
   const hasUnavailableReference = content.some(
-    block =>
+    (block) =>
       block.type === 'tool_result' &&
       Array.isArray(block.content) &&
-      block.content.some(c => {
+      block.content.some((c) => {
         if (!isToolReferenceBlock(c)) return false
         const toolName = (c as { tool_name?: string }).tool_name
-        return (
-          toolName && !availableToolNames.has(normalizeLegacyToolName(toolName))
-        )
+        return toolName && !availableToolNames.has(normalizeLegacyToolName(toolName))
       }),
   )
 
@@ -1584,23 +1505,22 @@ function stripUnavailableToolReferencesFromUserMessage(
     ...message,
     message: {
       ...message.message,
-      content: content.map(block => {
+      content: content.map((block) => {
         if (block.type !== 'tool_result' || !Array.isArray(block.content)) {
           return block
         }
 
         // 过滤掉不可用工具的 tool_reference 块
-        const filteredContent = block.content.filter(c => {
+        const filteredContent = block.content.filter((c) => {
           if (!isToolReferenceBlock(c)) return true
           const rawToolName = (c as { tool_name?: string }).tool_name
           if (!rawToolName) return true
           const toolName = normalizeLegacyToolName(rawToolName)
           const isAvailable = availableToolNames.has(toolName)
           if (!isAvailable) {
-            logForDebugging(
-              `Filtering out tool_reference for unavailable tool: ${toolName}`,
-              { level: 'warn' },
-            )
+            logForDebugging(`Filtering out tool_reference for unavailable tool: ${toolName}`, {
+              level: 'warn',
+            })
           }
           return isAvailable
         })
@@ -1689,16 +1609,14 @@ function appendMessageTagToUserMessage(message: UserMessage): UserMessage {
  * tool_reference 块仅在启用工具搜索 beta 时有效。
  * 工具搜索未启用时，需要移除这些块以避免 API 错误。
  */
-export function stripToolReferenceBlocksFromUserMessage(
-  message: UserMessage,
-): UserMessage {
+export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): UserMessage {
   const content = message.message.content
   if (!Array.isArray(content)) {
     return message
   }
 
   const hasToolReference = content.some(
-    block =>
+    (block) =>
       block.type === 'tool_result' &&
       Array.isArray(block.content) &&
       block.content.some(isToolReferenceBlock),
@@ -1712,15 +1630,13 @@ export function stripToolReferenceBlocksFromUserMessage(
     ...message,
     message: {
       ...message.message,
-      content: content.map(block => {
+      content: content.map((block) => {
         if (block.type !== 'tool_result' || !Array.isArray(block.content)) {
           return block
         }
 
         // 从 tool_result 内容中过滤掉 tool_reference 块
-        const filteredContent = block.content.filter(
-          c => !isToolReferenceBlock(c),
-        )
+        const filteredContent = block.content.filter((c) => !isToolReferenceBlock(c))
 
         // 如果全部内容都是 tool_reference 块，用占位符替换
         if (filteredContent.length === 0) {
@@ -1754,13 +1670,10 @@ export function stripToolReferenceBlocksFromUserMessage(
  * 这是有意为之：此 helper 用于模型特定的后处理，
  * 在 normalizeMessagesForAPI 已运行之后使用，因此输入已标准化。
  */
-export function stripCallerFieldFromAssistantMessage(
-  message: AssistantMessage,
-): AssistantMessage {
+export function stripCallerFieldFromAssistantMessage(message: AssistantMessage): AssistantMessage {
   if (!Array.isArray(message.message.content)) return message
   const hasCallerField = message.message.content.some(
-    block =>
-      block.type === 'tool_call' && 'caller' in block && block.caller !== null,
+    (block) => block.type === 'tool_call' && 'caller' in block && block.caller !== null,
   )
 
   if (!hasCallerField) {
@@ -1771,7 +1684,7 @@ export function stripCallerFieldFromAssistantMessage(
     ...message,
     message: {
       ...message.message,
-      content: message.message.content.map(block => {
+      content: message.message.content.map((block) => {
         if (block.type !== 'tool_call') {
           return block
         }
@@ -1791,11 +1704,9 @@ export function stripCallerFieldFromAssistantMessage(
  * content 数组是否包含 tool_result 块，其内部内容
  * 包含 tool_reference（ToolSearch 加载的工具）？
  */
-function contentHasToolReference(
-  content: ReadonlyArray<ContentBlock>,
-): boolean {
+function contentHasToolReference(content: ReadonlyArray<ContentBlock>): boolean {
   return content.some(
-    block =>
+    (block) =>
       block.type === 'tool_result' &&
       Array.isArray(block.content) &&
       block.content.some(isToolReferenceBlock),
@@ -1820,16 +1731,14 @@ function ensureSystemReminderWrap(msg: UserMessage): UserMessage {
     }
   }
   let changed = false
-  const newContent = content.map(b => {
+  const newContent = content.map((b) => {
     if (b.type === 'text' && !b.text.startsWith('<system-reminder>')) {
       changed = true
       return { ...b, text: wrapInSystemReminder(b.text) }
     }
     return b
   })
-  return changed
-    ? { ...msg, message: { ...msg.message, content: newContent } }
-    : msg
+  return changed ? { ...msg, message: { ...msg.message, content: newContent } } : msg
 }
 
 /**
@@ -1851,12 +1760,12 @@ function ensureSystemReminderWrap(msg: UserMessage): UserMessage {
 function smooshSystemReminderSiblings(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] {
-  return messages.map(msg => {
+  return messages.map((msg) => {
     if (msg.type !== 'user') return msg
     const content = msg.message.content
     if (!Array.isArray(content)) return msg
 
-    const hasToolResult = content.some(b => b.type === 'tool_result')
+    const hasToolResult = content.some((b) => b.type === 'tool_result')
     if (!hasToolResult) return msg
 
     const srText: TextBlock[] = []
@@ -1871,16 +1780,12 @@ function smooshSystemReminderSiblings(
     if (srText.length === 0) return msg
 
     // 合并到最后一个 tool_result（在渲染的 prompt 中位置相邻）
-    const lastTrIdx = kept.findLastIndex(b => b.type === 'tool_result')
+    const lastTrIdx = kept.findLastIndex((b) => b.type === 'tool_result')
     const lastTr = kept[lastTrIdx] as ToolResultBlock
     const smooshed = smooshIntoToolResult(lastTr, srText)
     if (smooshed === null) return msg // tool_ref 约束 — 保持不动
 
-    const newContent = [
-      ...kept.slice(0, lastTrIdx),
-      smooshed,
-      ...kept.slice(lastTrIdx + 1),
-    ]
+    const newContent = [...kept.slice(0, lastTrIdx), smooshed, ...kept.slice(lastTrIdx + 1)]
     return {
       ...msg,
       message: { ...msg.message, content: newContent },
@@ -1900,19 +1805,19 @@ function smooshSystemReminderSiblings(
 function sanitizeErrorToolResultContent(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] {
-  return messages.map(msg => {
+  return messages.map((msg) => {
     if (msg.type !== 'user') return msg
     const content = msg.message.content
     if (!Array.isArray(content)) return msg
 
     let changed = false
-    const newContent = content.map(b => {
+    const newContent = content.map((b) => {
       if (b.type !== 'tool_result' || !b.isError) return b
       const trContent = b.content
       if (!Array.isArray(trContent)) return b
-      if (trContent.every(c => c.type === 'text')) return b
+      if (trContent.every((c) => c.type === 'text')) return b
       changed = true
-      const texts = trContent.filter(c => c.type === 'text').map(c => c.text)
+      const texts = trContent.filter((c) => c.type === 'text').map((c) => c.text)
       const textOnly: TextBlock[] =
         texts.length > 0 ? [{ type: 'text', text: texts.join('\n\n') }] : []
       return { ...b, content: textOnly }
@@ -1958,7 +1863,7 @@ function relocateToolReferenceSiblings(
     if (!Array.isArray(content)) continue
     if (!contentHasToolReference(content)) continue
 
-    const textSiblings = content.filter(b => b.type === 'text')
+    const textSiblings = content.filter((b) => b.type === 'text')
     if (textSiblings.length === 0) continue
 
     // 查找下一个有 tool_result 但没有 tool_reference 的用户消息。
@@ -1970,7 +1875,7 @@ function relocateToolReferenceSiblings(
       if (cand.type !== 'user') continue
       const cc = cand.message.content
       if (!Array.isArray(cc)) continue
-      if (!cc.some(b => b.type === 'tool_result')) continue
+      if (!cc.some((b) => b.type === 'tool_result')) continue
       if (contentHasToolReference(cc)) continue
       targetIdx = j
       break
@@ -1983,7 +1888,7 @@ function relocateToolReferenceSiblings(
       ...msg,
       message: {
         ...msg.message,
-        content: content.filter(b => b.type !== 'text'),
+        content: content.filter((b) => b.type !== 'text'),
       },
     }
     const target = result[targetIdx] as UserMessage
@@ -1991,10 +1896,7 @@ function relocateToolReferenceSiblings(
       ...target,
       message: {
         ...target.message,
-        content: [
-          ...(target.message.content as ContentBlock[]),
-          ...textSiblings,
-        ],
+        content: [...(target.message.content as ContentBlock[]), ...textSiblings],
       },
     }
   }
@@ -2007,13 +1909,13 @@ export function normalizeMessagesForAPI(
   tools: Tools = [],
 ): (UserMessage | AssistantMessage)[] {
   // 构建可用工具名称集合，用于过滤不可用的工具引用
-  const availableToolNames = new Set(tools.map(t => t.name))
+  const availableToolNames = new Set(tools.map((t) => t.name))
 
   // 首先，重新排序附件使其向上冒泡，直到遇到工具结果或 assistant 消息
   // 然后剥离虚拟消息 — 它们仅用于显示（如 REPL 内部工具
   // 调用），绝不能发送到 API。
   const reorderedMessages = reorderAttachmentsForAPI(messages).filter(
-    m => !((m.type === 'user' || m.type === 'assistant') && m.isVirtual),
+    (m) => !((m.type === 'user' || m.type === 'assistant') && m.isVirtual),
   )
 
   // 构建从错误文本到要从前一个用户消息中剥离的块类型的映射。
@@ -2035,8 +1937,7 @@ export function normalizeMessagesForAPI(
     }
     // 确定这是哪种错误
     const errorText =
-      Array.isArray(msg.message.content) &&
-      msg.message.content[0]?.type === 'text'
+      Array.isArray(msg.message.content) && msg.message.content[0]?.type === 'text'
         ? msg.message.content[0].text
         : undefined
     if (!errorText) {
@@ -2072,13 +1973,7 @@ export function normalizeMessagesForAPI(
   const result: (UserMessage | AssistantMessage)[] = []
   reorderedMessages
     .filter(
-      (
-        _,
-      ): _ is
-        | UserMessage
-        | AssistantMessage
-        | AttachmentMessage
-        | SystemLocalCommandMessage => {
+      (_): _ is UserMessage | AssistantMessage | AttachmentMessage | SystemLocalCommandMessage => {
         if (
           _.type === 'progress' ||
           (_.type === 'system' && !isSystemLocalCommandMessage(_)) ||
@@ -2089,7 +1984,7 @@ export function normalizeMessagesForAPI(
         return true
       },
     )
-    .forEach(message => {
+    .forEach((message) => {
       switch (message.type) {
         case 'system': {
           // local_command 系统消息需要作为用户消息包含
@@ -2133,9 +2028,7 @@ export function normalizeMessagesForAPI(
           if (typesToStrip && normalizedMessage.isMeta) {
             const content = normalizedMessage.message.content
             if (Array.isArray(content)) {
-              const filtered = content.filter(
-                block => !typesToStrip.has(block.type),
-              )
+              const filtered = content.filter((block) => !typesToStrip.has(block.type))
               if (filtered.length === 0) {
                 // 所有内容块都被剥离了；完全跳过此消息
                 return
@@ -2172,18 +2065,12 @@ export function normalizeMessagesForAPI(
           // 在此添加一个。此注入本身会被 relocated，
           // 因此跳过它可以节省一次扫描。gate 关闭时，
           // 这是回退方案（与 pre-#21049 main 相同）。
-          if (
-            !checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-              'zy_toolref_defer_j8m',
-            )
-          ) {
+          if (!checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_toolref_defer_j8m')) {
             const contentAfterStrip = normalizedMessage.message.content
             if (
               Array.isArray(contentAfterStrip) &&
               !contentAfterStrip.some(
-                b =>
-                  b.type === 'text' &&
-                  b.text.startsWith(TOOL_REFERENCE_TURN_BOUNDARY),
+                (b) => b.type === 'text' && b.text.startsWith(TOOL_REFERENCE_TURN_BOUNDARY),
               ) &&
               contentHasToolReference(contentAfterStrip)
             ) {
@@ -2203,10 +2090,7 @@ export function normalizeMessagesForAPI(
           // 如果最后一条消息也是用户消息，合并它们
           const lastMessage = last(result)
           if (lastMessage?.type === 'user') {
-            result[result.length - 1] = mergeUserMessages(
-              lastMessage,
-              normalizedMessage,
-            )
+            result[result.length - 1] = mergeUserMessages(lastMessage, normalizedMessage)
             return
           }
 
@@ -2224,14 +2108,11 @@ export function normalizeMessagesForAPI(
             message: {
               ...message.message,
               content: Array.isArray(message.message.content)
-                ? message.message.content.map(block => {
+                ? message.message.content.map((block) => {
                     if (block.type === 'tool_call') {
-                      const tool = tools.find(t => toolMatchesName(t, block.name))
+                      const tool = tools.find((t) => toolMatchesName(t, block.name))
                       const normalizedInput = tool
-                        ? normalizeToolInputForAPI(
-                            tool,
-                            block.input as Record<string, unknown>,
-                          )
+                        ? normalizeToolInputForAPI(tool, block.input as Record<string, unknown>)
                         : block.input
                       const canonicalName = tool?.name ?? block.name
 
@@ -2283,12 +2164,8 @@ export function normalizeMessagesForAPI(
           return
         }
         case 'attachment': {
-          const rawAttachmentMessage = normalizeAttachmentForAPI(
-            message.attachment as any,
-          )
-          const attachmentMessage = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-            'zy_chair_sermon',
-          )
+          const rawAttachmentMessage = normalizeAttachmentForAPI(message.attachment as any)
+          const attachmentMessage = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_chair_sermon')
             ? rawAttachmentMessage.map(ensureSystemReminderWrap)
             : rawAttachmentMessage
 
@@ -2314,9 +2191,7 @@ export function normalizeMessagesForAPI(
   // 在合并之后（同级就位）和 ID 标记之前运行（因此
   // 标记反映最终位置）。gate 关闭时，这是空操作，
   // 上方的 TOOL_REFERENCE_TURN_BOUNDARY 注入作为回退。
-  const relocated = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-    'zy_toolref_defer_j8m',
-  )
+  const relocated = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_toolref_defer_j8m')
     ? relocateToolReferenceSiblings(result)
     : result
 
@@ -2332,10 +2207,8 @@ export function normalizeMessagesForAPI(
   //
   // 这些多轮归一化本质上很脆弱 — 每轮都可能创建前一轮要处理的条件。
   // 考虑统一为单轮清理内容，然后一次性验证。
-  const withFilteredThinking =
-    filterTrailingThinkingFromLastAssistant(withFilteredOrphans)
-  const withFilteredWhitespace =
-    filterWhitespaceOnlyAssistantMessages(withFilteredThinking)
+  const withFilteredThinking = filterTrailingThinkingFromLastAssistant(withFilteredOrphans)
+  const withFilteredWhitespace = filterWhitespaceOnlyAssistantMessages(withFilteredThinking)
   const withNonEmpty = ensureNonEmptyAssistantContent(withFilteredWhitespace)
 
   // filterOrphanedThinkingOnlyMessages 不会合并相邻的 user 消息（空白过滤器会，
@@ -2345,9 +2218,7 @@ export function normalizeMessagesForAPI(
   // 一起门控：合并存在的唯一目的是供给 smoosh；非门控运行会改变 @-mention 场景
   // （相邻 [prompt, attachment] user）的 VCR fixture 哈希，而当 smoosh 关闭时
   // 没有任何好处。
-  const smooshed = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-    'zy_chair_sermon',
-  )
+  const smooshed = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_chair_sermon')
     ? smooshSystemReminderSiblings(mergeAdjacentUserMessages(withNonEmpty))
     : withNonEmpty
 
@@ -2367,9 +2238,7 @@ export function normalizeMessagesForAPI(
     if (isSnipRuntimeEnabled()) {
       for (let i = 0; i < sanitized.length; i++) {
         if (sanitized[i]!.type === 'user') {
-          sanitized[i] = appendMessageTagToUserMessage(
-            sanitized[i] as UserMessage,
-          )
+          sanitized[i] = appendMessageTagToUserMessage(sanitized[i] as UserMessage)
         }
       }
     }
@@ -2381,27 +2250,19 @@ export function normalizeMessagesForAPI(
   return sanitized
 }
 
-export function mergeUserMessagesAndToolResults(
-  a: UserMessage,
-  b: UserMessage,
-): UserMessage {
+export function mergeUserMessagesAndToolResults(a: UserMessage, b: UserMessage): UserMessage {
   const lastContent = normalizeUserTextContent(a.message.content)
   const currentContent = normalizeUserTextContent(b.message.content)
   return {
     ...a,
     message: {
       ...a.message,
-      content: hoistToolResults(
-        mergeUserContentBlocks(lastContent, currentContent),
-      ),
+      content: hoistToolResults(mergeUserContentBlocks(lastContent, currentContent)),
     },
   }
 }
 
-export function mergeAssistantMessages(
-  a: AssistantMessage,
-  b: AssistantMessage,
-): AssistantMessage {
+export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage): AssistantMessage {
   return {
     ...a,
     message: {
@@ -2420,7 +2281,7 @@ function isToolResultMessage(msg: Message): boolean {
   }
   const content = msg.message.content
   if (typeof content === 'string') return false
-  return content.some(block => block.type === 'tool_result')
+  return content.some((block) => block.type === 'tool_result')
 }
 
 export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage {
@@ -2443,9 +2304,7 @@ export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage {
         uuid: a.isMeta ? b.uuid : a.uuid,
         message: {
           ...a.message,
-          content: hoistToolResults(
-            joinTextAtSeam(lastContent, currentContent),
-          ),
+          content: hoistToolResults(joinTextAtSeam(lastContent, currentContent)),
         },
       }
     }
@@ -2496,9 +2355,7 @@ function hoistToolResults(content: ContentBlock[]): ContentBlock[] {
   return [...toolResults, ...otherBlocks]
 }
 
-function normalizeUserTextContent(
-  a: string | ContentBlock[],
-): ContentBlock[] {
+function normalizeUserTextContent(a: string | ContentBlock[]): ContentBlock[] {
   if (typeof a === 'string') {
     return [{ type: 'text', text: a }]
   }
@@ -2516,10 +2373,7 @@ function normalizeUserTextContent(
  * `startsWith('<system-reminder>')`, and prepending to b would break that
  * when b is an SR-wrapped attachment.
  */
-function joinTextAtSeam(
-  a: ContentBlock[],
-  b: ContentBlock[],
-): ContentBlock[] {
+function joinTextAtSeam(a: ContentBlock[], b: ContentBlock[]): ContentBlock[] {
   const lastA = a.at(-1)
   const firstB = b[0]
   if (lastA?.type === 'text' && firstB?.type === 'text') {
@@ -2528,10 +2382,7 @@ function joinTextAtSeam(
   return [...a, ...b]
 }
 
-type ToolResultContentItem = Extract<
-  ToolResultBlock['content'],
-  readonly unknown[]
->[number]
+type ToolResultContentItem = Extract<ToolResultBlock['content'], readonly unknown[]>[number]
 
 /**
  * Fold content blocks into a tool_result's content. Returns the updated
@@ -2545,10 +2396,7 @@ type ToolResultContentItem = Extract<
  * - array content with tool_reference → null
  * - otherwise → array, with adjacent text merged (notebook.ts idiom)
  */
-function smooshIntoToolResult(
-  tr: ToolResultBlock,
-  blocks: ContentBlock[],
-): ToolResultBlock | null {
+function smooshIntoToolResult(tr: ToolResultBlock, blocks: ContentBlock[]): ToolResultBlock | null {
   if (blocks.length === 0) return tr
 
   const existing = tr.content
@@ -2561,18 +2409,18 @@ function smooshIntoToolResult(
   // 错误结果会产生一个每次后续调用都 400 且无法通过 /fork 恢复的记录。
   // 图片不会丢失：它会作为正常的 user 轮次到达。
   if (tr.isError) {
-    blocks = blocks.filter(b => b.type === 'text')
+    blocks = blocks.filter((b) => b.type === 'text')
     if (blocks.length === 0) return tr
   }
 
-  const allText = blocks.every(b => b.type === 'text')
+  const allText = blocks.every((b) => b.type === 'text')
 
   // 当 existing 是 string/undefined 且所有传入块都是 text 时保留字符串形态 —
   // 这是常见情况（向 Bash/Read 结果注入 hook 提醒），且与旧版 smoosh 输出形态一致。
   if (allText && (existing === undefined || typeof existing === 'string')) {
     const joined = [
       ((existing as string) ?? '').trim(),
-      ...blocks.map(b => (b as TextBlock).text.trim()),
+      ...blocks.map((b) => (b as TextBlock).text.trim()),
     ]
       .filter(Boolean)
       .join('\n\n')
@@ -2609,10 +2457,7 @@ function smooshIntoToolResult(
   return { ...tr, content: merged }
 }
 
-export function mergeUserContentBlocks(
-  a: ContentBlock[],
-  b: ContentBlock[],
-): ContentBlock[] {
+export function mergeUserContentBlocks(a: ContentBlock[], b: ContentBlock[]): ContentBlock[] {
   // 见 https://anthropic.slack.com/archives/C06FE2FP0Q2/p1747586370117479 和
   // https://anthropic.slack.com/archives/C0AHK9P0129/p1773159663856279：
   // tool_result 之后的任何兄弟节点在线上都会渲染为 </function_results>\n\nHuman:<...>。
@@ -2628,10 +2473,7 @@ export function mergeUserContentBlocks(
     // 与通用 smoosh 之前的 main 行为一致。
     // 前置条件保证 smooshIntoToolResult 命中其字符串路径
     //（无 tool_reference 退出，字符串输出形态得到保留）。
-    if (
-      typeof lastBlock.content === 'string' &&
-      b.every(x => x.type === 'text')
-    ) {
+    if (typeof lastBlock.content === 'string' && b.every((x) => x.type === 'text')) {
       const copy = a.slice()
       copy[copy.length - 1] = smooshIntoToolResult(lastBlock, b)!
       return copy
@@ -2641,8 +2483,8 @@ export function mergeUserContentBlocks(
 
   // 通用 smoosh（门控）：将所有非 tool_result 块类型（text、image、document、search_result）
   // 折叠到 tool_result.content 中。tool_result 块保持为兄弟节点（稍后由 hoistToolResults 提升）。
-  const toSmoosh = b.filter(x => x.type !== 'tool_result')
-  const toolResults = b.filter(x => x.type === 'tool_result')
+  const toSmoosh = b.filter((x) => x.type !== 'tool_result')
+  const toolResults = b.filter((x) => x.type === 'tool_result')
   if (toSmoosh.length === 0) {
     return [...a, ...b]
   }
@@ -2666,8 +2508,15 @@ export function normalizeContentFromAPI(
   if (!contentBlocks) {
     return []
   }
-  return contentBlocks.map(contentBlock => {
-    const block = contentBlock as { type: string; input?: unknown; id?: string; name?: string; text?: string; [key: string]: unknown }
+  return contentBlocks.map((contentBlock) => {
+    const block = contentBlock as {
+      type: string
+      input?: unknown
+      id?: string
+      name?: string
+      text?: string
+      [key: string]: unknown
+    }
     switch (block.type) {
       case 'tool_use':
       case 'tool_call': {
@@ -2676,10 +2525,7 @@ export function normalizeContentFromAPI(
         // chunk.type === 'tool_call'，input 以字符串形式累积，必须在此 parse 回 object，
         // 否则下一轮 messagesToOpenAI 会对字符串 JSON.stringify 产生双重转义，
         // 触发 DashScope 400: "function.arguments parameter must be in JSON format"。
-        if (
-          typeof block.input !== 'string' &&
-          !isObject(block.input)
-        ) {
+        if (typeof block.input !== 'string' && !isObject(block.input)) {
           // 我们以字符串形式流式传输 tool use 输入，但在回退时它们是对象
           throw new Error('Tool use input must be a string or object')
         }
@@ -2699,10 +2545,9 @@ export function normalizeContentFromAPI(
               inputLen: block.input.length,
             })
             if (isInternalBuild()) {
-              logForDebugging(
-                `tool input JSON parse fail: ${block.input.slice(0, 200)}`,
-                { level: 'warn' },
-              )
+              logForDebugging(`tool input JSON parse fail: ${block.input.slice(0, 200)}`, {
+                level: 'warn',
+              })
             }
           }
           normalizedInput = parsed ?? {}
@@ -2764,12 +2609,9 @@ export function normalizeContentFromAPI(
 }
 
 export function isEmptyMessageText(text: string): boolean {
-  return (
-    stripPromptXMLTags(text).trim() === '' || text.trim() === NO_CONTENT_MESSAGE
-  )
+  return stripPromptXMLTags(text).trim() === '' || text.trim() === NO_CONTENT_MESSAGE
 }
-const STRIPPED_TAGS_RE =
-  /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
+const STRIPPED_TAGS_RE = /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
 
 export function stripPromptXMLTags(content: string): string {
   return content.replace(STRIPPED_TAGS_RE, '').trim()
@@ -2799,9 +2641,7 @@ export function getToolUseID(message: NormalizedMessage): string | null {
     case 'progress':
       return message.toolUseID
     case 'system':
-      return message.subtype === 'informational'
-        ? (message.toolUseID ?? null)
-        : null
+      return message.subtype === 'informational' ? (message.toolUseID ?? null) : null
   }
 }
 
@@ -2827,16 +2667,14 @@ export function filterUnresolvedToolUses(messages: Message[]): Message[] {
     }
   }
 
-  const unresolvedIds = new Set(
-    [...toolUseIds].filter(id => !toolResultIds.has(id)),
-  )
+  const unresolvedIds = new Set([...toolUseIds].filter((id) => !toolResultIds.has(id)))
 
   if (unresolvedIds.size === 0) {
     return messages
   }
 
   // 过滤掉 tool_use 块全部未解决的 assistant 消息
-  return messages.filter(msg => {
+  return messages.filter((msg) => {
     if (msg.type !== 'assistant') return true
     const content = msg.message.content
     if (!Array.isArray(content)) return true
@@ -2848,7 +2686,7 @@ export function filterUnresolvedToolUses(messages: Message[]): Message[] {
     }
     if (toolUseBlockIds.length === 0) return true
     // 仅当消息的所有 tool_use 块都未解决时才移除
-    return !toolUseBlockIds.every(id => unresolvedIds.has(id))
+    return !toolUseBlockIds.every((id) => unresolvedIds.has(id))
   })
 }
 
@@ -2861,8 +2699,8 @@ export function getAssistantMessageText(message: Message): string | null {
   if (Array.isArray(message.message.content)) {
     return (
       message.message.content
-        .filter(block => block.type === 'text')
-        .map(block => (block.type === 'text' ? block.text : ''))
+        .filter((block) => block.type === 'text')
+        .map((block) => (block.type === 'text' ? block.text : ''))
         .join('\n')
         .trim() || null
     )
@@ -2870,9 +2708,7 @@ export function getAssistantMessageText(message: Message): string | null {
   return null
 }
 
-export function getUserMessageText(
-  message: Message | NormalizedMessage,
-): string | null {
+export function getUserMessageText(message: Message | NormalizedMessage): string | null {
   if (message.type !== 'user') {
     return null
   }
@@ -2908,7 +2744,7 @@ export function extractTextContent(
 ): string {
   return blocks
     .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-    .map(b => b.text)
+    .map((b) => b.text)
     .join(separator)
 }
 
@@ -2940,28 +2776,18 @@ export type StreamingThinking = {
  * Handles messages from a stream, updating response length for deltas and appending completed messages
  */
 export function handleMessageFromStream(
-  message:
-    | Message
-    | TombstoneMessage
-    | StreamEvent
-    | RequestStartEvent
-    | ToolUseSummaryMessage,
+  message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
   onMessage: (message: Message) => void,
   onUpdateLength: (newContent: string) => void,
   onSetStreamMode: (mode: SpinnerMode) => void,
-  onStreamingToolUses: (
-    f: (streamingToolUse: StreamingToolUse[]) => StreamingToolUse[],
-  ) => void,
+  onStreamingToolUses: (f: (streamingToolUse: StreamingToolUse[]) => StreamingToolUse[]) => void,
   onTombstone?: (message: Message) => void,
   onStreamingThinking?: (
     f: (current: StreamingThinking | null) => StreamingThinking | null,
   ) => void,
   onStreamingText?: (f: (current: string | null) => string | null) => void,
 ): void {
-  if (
-    message.type !== 'stream_event' &&
-    message.type !== 'stream_request_start'
-  ) {
+  if (message.type !== 'stream_event' && message.type !== 'stream_request_start') {
     const msg = message as Message | StreamEvent | RequestStartEvent | TombstoneMessage
     // 处理 tombstone 消息 — 移除目标消息而非添加
     if (message.type === 'system' && (message as any).subtype === 'tombstone') {
@@ -2976,7 +2802,7 @@ export function handleMessageFromStream(
     if (message.type === 'assistant') {
       const content = message.message.content
       const thinkingBlock = Array.isArray(content)
-        ? content.find(block => block.type === 'thinking')
+        ? content.find((block) => block.type === 'thinking')
         : undefined
       if (thinkingBlock && thinkingBlock.type === 'thinking') {
         onStreamingThinking?.(() => ({
@@ -3012,10 +2838,7 @@ export function handleMessageFromStream(
       const startEvent = message.event as unknown as import('../types/llm.js').ChunkStartEvent
       const chunk = startEvent.chunk
       if (!chunk) return
-      if (
-        feature('CONNECTOR_TEXT') &&
-        isConnectorTextBlock(chunk)
-      ) {
+      if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(chunk)) {
         onSetStreamMode('responding')
         return
       }
@@ -3032,7 +2855,7 @@ export function handleMessageFromStream(
         case 'tool_use':
         case 'tool_call': {
           onSetStreamMode('tool-input')
-          onStreamingToolUses(_ => [
+          onStreamingToolUses((_) => [
             ..._,
             {
               index: startEvent.index,
@@ -3066,19 +2889,19 @@ export function handleMessageFromStream(
         case 'text_delta': {
           const deltaText = delta.text
           onUpdateLength(deltaText)
-          onStreamingText?.(text => (text ?? '') + deltaText)
+          onStreamingText?.((text) => (text ?? '') + deltaText)
           return
         }
         case 'input_json_delta': {
           const partialJson = delta.partialJson ?? ''
           onUpdateLength(partialJson)
-          onStreamingToolUses(_ => {
-            const element = _.find(_ => _.index === deltaEvent.index)
+          onStreamingToolUses((_) => {
+            const element = _.find((_) => _.index === deltaEvent.index)
             if (!element) {
               return _
             }
             return [
-              ..._.filter(_ => _ !== element),
+              ..._.filter((_) => _ !== element),
               {
                 ...element,
                 unparsedToolInput: element.unparsedToolInput + partialJson,
@@ -3107,10 +2930,7 @@ export function handleMessageFromStream(
     // 旧格式（向后兼容）
     case 'content_block_start':
       onStreamingText?.(() => null)
-      if (
-        feature('CONNECTOR_TEXT') &&
-        isConnectorTextBlock(message.event.content_block)
-      ) {
+      if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(message.event.content_block)) {
         onSetStreamMode('responding')
         return
       }
@@ -3126,7 +2946,7 @@ export function handleMessageFromStream(
           onSetStreamMode('tool-input')
           const contentBlock = message.event.content_block
           const index = message.event.index
-          onStreamingToolUses(_ => [
+          onStreamingToolUses((_) => [
             ..._,
             {
               index,
@@ -3156,7 +2976,7 @@ export function handleMessageFromStream(
         case 'text_delta': {
           const deltaText = message.event.delta.text
           onUpdateLength(deltaText)
-          onStreamingText?.(text => (text ?? '') + deltaText)
+          onStreamingText?.((text) => (text ?? '') + deltaText)
           return
         }
         case 'input_json_delta': {
@@ -3164,13 +2984,13 @@ export function handleMessageFromStream(
           const delta = message.event.delta.partialJson ?? ''
           const index = message.event.index
           onUpdateLength(delta)
-          onStreamingToolUses(_ => {
-            const element = _.find(_ => _.index === index)
+          onStreamingToolUses((_) => {
+            const element = _.find((_) => _.index === index)
             if (!element) {
               return _
             }
             return [
-              ..._.filter(_ => _ !== element),
+              ..._.filter((_) => _ !== element),
               {
                 ...element,
                 unparsedToolInput: element.unparsedToolInput + delta,
@@ -3204,10 +3024,8 @@ export function wrapInSystemReminder(content: string): string {
   return `<system-reminder>\n${content}\n</system-reminder>`
 }
 
-export function wrapMessagesInSystemReminder(
-  messages: UserMessage[],
-): UserMessage[] {
-  return messages.map(msg => {
+export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] {
+  return messages.map((msg) => {
     if (typeof msg.message.content === 'string') {
       return {
         ...msg,
@@ -3218,7 +3036,7 @@ export function wrapMessagesInSystemReminder(
       }
     } else if (Array.isArray(msg.message.content)) {
       // 对于数组内容，将 text 块包装在 system-reminder 中
-      const wrappedContent = msg.message.content.map(block => {
+      const wrappedContent = msg.message.content.map((block) => {
         if (block.type === 'text') {
           return {
             ...block,
@@ -3396,9 +3214,7 @@ This is critical - your turn should only end with either using the ${ASK_USER_QU
 
 NOTE: At any point in time through this workflow you should feel free to ask the user questions or clarifications using the ${ASK_USER_QUESTION_TOOL_NAME} tool. Don't make large assumptions about user intent. The goal is to present a well researched plan to the user, and tie any loose ends before implementation begins.`
 
-  return wrapMessagesInSystemReminder([
-    createUserMessage({ content, isMeta: true }),
-  ])
+  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
 function getReadOnlyToolNames(): string {
@@ -3412,7 +3228,7 @@ function getReadOnlyToolNames(): string {
   // 因此该过滤仅对非内置分支有意义。
   const filtered =
     allowedTools && allowedTools.length > 0 && !hasEmbeddedSearchTools()
-      ? tools.filter(t => allowedTools.includes(t))
+      ? tools.filter((t) => allowedTools.includes(t))
       : tools
   return filtered.join(', ')
 }
@@ -3481,23 +3297,17 @@ Your turn should only end by either:
 
 **Important:** Use ${ExitPlanModeV2Tool.name} to request plan approval. Do NOT ask about plan approval via text or AskUserQuestion.`
 
-  return wrapMessagesInSystemReminder([
-    createUserMessage({ content, isMeta: true }),
-  ])
+  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-function getPlanModeV2SparseInstructions(attachment: {
-  planFilePath: string
-}): UserMessage[] {
+function getPlanModeV2SparseInstructions(attachment: { planFilePath: string }): UserMessage[] {
   const workflowDescription = isPlanModeInterviewPhaseEnabled()
     ? 'Follow iterative workflow: explore codebase, interview user, write to plan incrementally.'
     : 'Follow 5-phase workflow.'
 
   const content = `Plan mode still active (see full instructions earlier in conversation). Read-only except plan file (${attachment.planFilePath}). ${workflowDescription} End turns with ${ASK_USER_QUESTION_TOOL_NAME} (for clarifications) or ${ExitPlanModeV2Tool.name} (for plan approval). Never ask about plan approval via text or AskUserQuestion.`
 
-  return wrapMessagesInSystemReminder([
-    createUserMessage({ content, isMeta: true }),
-  ])
+  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
 function getPlanModeV2SubAgentInstructions(attachment: {
@@ -3515,14 +3325,10 @@ ${planFileInfo}
 You should build your plan incrementally by writing to or editing this file. NOTE that this is the only file you are allowed to edit - other than this you are only allowed to take READ-ONLY actions.
 Answer the user's query comprehensively, using the ${ASK_USER_QUESTION_TOOL_NAME} tool if you need to ask the user clarifying questions. If you do use the ${ASK_USER_QUESTION_TOOL_NAME}, make sure to ask all clarifying questions you need to fully understand the user's intent before proceeding.`
 
-  return wrapMessagesInSystemReminder([
-    createUserMessage({ content, isMeta: true }),
-  ])
+  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-function getAutoModeInstructions(attachment: {
-  reminderType: 'full' | 'sparse'
-}): UserMessage[] {
+function getAutoModeInstructions(attachment: { reminderType: 'full' | 'sparse' }): UserMessage[] {
   if (attachment.reminderType === 'sparse') {
     return getAutoModeSparseInstructions()
   }
@@ -3541,29 +3347,21 @@ Auto mode is active. The user chose continuous, autonomous execution. You should
 5. **Do not take overly destructive actions** — Auto mode is not a license to destroy. Anything that deletes data or modifies shared or production systems still needs explicit user confirmation. If you reach such a decision point, ask and wait, or course correct to a safer method instead.
 6. **Avoid data exfiltration** — Post even routine messages to chat platforms or work tickets only if the user has directed you to. You must not share secrets (e.g. credentials, internal documentation) unless the user has explicitly authorized both that specific secret and its destination.`
 
-  return wrapMessagesInSystemReminder([
-    createUserMessage({ content, isMeta: true }),
-  ])
+  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
 function getAutoModeSparseInstructions(): UserMessage[] {
   const content = `Auto mode still active (see full instructions earlier in conversation). Execute autonomously, minimize interruptions, prefer action over planning.`
 
-  return wrapMessagesInSystemReminder([
-    createUserMessage({ content, isMeta: true }),
-  ])
+  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-export function normalizeAttachmentForAPI(
-  attachment: Attachment,
-): UserMessage[] {
+export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[] {
   if (isAgentSwarmsEnabled()) {
     if (attachment.type === 'teammate_mailbox') {
       return [
         createUserMessage({
-          content: getTeammateMailbox().formatTeammateMessages(
-            attachment.messages,
-          ),
+          content: getTeammateMailbox().formatTeammateMessages(attachment.messages),
           isMeta: true,
         }),
       ]
@@ -3603,14 +3401,13 @@ Read the team config to discover your teammates' names. Check the task list peri
     }
   }
 
-
   // skill_discovery 在此处理（而非 switch 中），使 'skill_discovery' 字符串
   // 字面量位于 feature() 门控块内。case 标签无法门控，但此模式可以 — 与
   // 上方 teammate_mailbox 的方法相同。
   if (feature('EXPERIMENTAL_SKILL_SEARCH')) {
     if (attachment.type === 'skill_discovery') {
       if (attachment.skills.length === 0) return []
-      const lines = attachment.skills.map(s => `- ${s.name}: ${s.description}`)
+      const lines = attachment.skills.map((s) => `- ${s.name}: ${s.description}`)
       return wrapMessagesInSystemReminder([
         createUserMessage({
           content:
@@ -3718,8 +3515,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       const maxSelectionLength = 2000
       const content =
         attachment.content.length > maxSelectionLength
-          ? attachment.content.substring(0, maxSelectionLength) +
-            '\n... (truncated)'
+          ? attachment.content.substring(0, maxSelectionLength) + '\n... (truncated)'
           : attachment.content
 
       return wrapMessagesInSystemReminder([
@@ -3751,10 +3547,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       }
 
       const skillsContent = attachment.skills
-        .map(
-          skill =>
-            `### Skill: ${skill.name}\nPath: ${skill.path}\n\n${skill.content}`,
-        )
+        .map((skill) => `### Skill: ${skill.name}\nPath: ${skill.path}\n\n${skill.content}`)
         .join('\n\n---\n\n')
 
       return wrapMessagesInSystemReminder([
@@ -3786,7 +3579,7 @@ Read the team config to discover your teammates' names. Check the task list peri
         return []
       }
       const taskItems = attachment.content
-        .map(task => `#${task.id}. [${task.status}] ${task.subject}`)
+        .map((task) => `#${task.id}. [${task.status}] ${task.subject}`)
         .join('\n')
 
       let message = `The task tools haven't been used recently. If you're working on tasks that would benefit from tracking progress, consider using ${TASK_CREATE_TOOL_NAME} to add new tasks and ${TASK_UPDATE_TOOL_NAME} to update task status (set to in_progress when starting, completed when done). Also consider cleaning up the task list if it has become stale. Only use these if relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user\n`
@@ -3811,7 +3604,7 @@ Read the team config to discover your teammates' names. Check the task list peri
     }
     case 'relevant_memories': {
       return wrapMessagesInSystemReminder(
-        attachment.memories.map(m => {
+        attachment.memories.map((m) => {
           // 使用附件创建时存储的 header，使渲染的字节在轮次间稳定（prompt 缓存命中）。
           // 对于早于 stored-header 字段的恢复会话，回退到重新计算。
           const header = m.header ?? memoryHeader(m.path, m.mtimeMs)
@@ -3841,29 +3634,22 @@ Read the team config to discover your teammates' names. Check the task list peri
       // 优先使用队列携带的明确 origin；对于 task notification（早于 origin）回退到 commandMode。
       const origin: MessageOrigin | undefined =
         attachment.origin ??
-        (attachment.commandMode === 'task-notification'
-          ? { kind: 'task-notification' }
-          : undefined)
+        (attachment.commandMode === 'task-notification' ? { kind: 'task-notification' } : undefined)
 
       // 仅当队列命令本身是系统生成时才从 transcript 隐藏。人类在轮次中途输入的
       // 排水输入没有 origin 也没有 QueuedCommand.isMeta — 它应保持可见。
       // 此前此处硬编码 isMeta:true，这会在 brief 模式（filterForBriefTool）
       // 和普通模式（shouldShowUserMessage）中隐藏用户输入的消息。
-      const metaProp =
-        origin !== undefined || attachment.isMeta
-          ? ({ isMeta: true } as const)
-          : {}
+      const metaProp = origin !== undefined || attachment.isMeta ? ({ isMeta: true } as const) : {}
 
       if (Array.isArray(attachment.prompt)) {
         // 处理内容块（可能包含图片）
         const textContent = attachment.prompt
           .filter((block): block is TextBlock => block.type === 'text')
-          .map(block => block.text)
+          .map((block) => block.text)
           .join('\n')
 
-        const imageBlocks = attachment.prompt.filter(
-          block => block.type === 'image',
-        )
+        const imageBlocks = attachment.prompt.filter((block) => block.type === 'image')
 
         const content: ContentBlock[] = [
           {
@@ -3894,10 +3680,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       ])
     }
     case 'output_style': {
-      const outputStyle =
-        OUTPUT_STYLE_CONFIG[
-          attachment.style as keyof typeof OUTPUT_STYLE_CONFIG
-        ]
+      const outputStyle = OUTPUT_STYLE_CONFIG[attachment.style as keyof typeof OUTPUT_STYLE_CONFIG]
       if (!outputStyle) {
         return []
       }
@@ -3912,8 +3695,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       if (attachment.files.length === 0) return []
 
       // 使用集中的诊断格式化
-      const diagnosticSummary =
-        DiagnosticTrackingService.formatDiagnosticsSummary(attachment.files)
+      const diagnosticSummary = DiagnosticTrackingService.formatDiagnosticsSummary(attachment.files)
 
       return wrapMessagesInSystemReminder([
         createUserMessage({
@@ -3940,9 +3722,7 @@ You are returning to plan mode after having previously exited it. A plan file ex
 
 Treat this as a fresh planning session. Do not assume the existing plan is relevant without evaluating it first.`
 
-      return wrapMessagesInSystemReminder([
-        createUserMessage({ content, isMeta: true }),
-      ])
+      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
     }
     case 'plan_mode_exit': {
       const planReference = attachment.planExists
@@ -3952,9 +3732,7 @@ Treat this as a fresh planning session. Do not assume the existing plan is relev
 
 You have exited plan mode. You can now make edits, run tools, and take actions.${planReference}`
 
-      return wrapMessagesInSystemReminder([
-        createUserMessage({ content, isMeta: true }),
-      ])
+      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
     }
     case 'auto_mode': {
       return getAutoModeInstructions(attachment)
@@ -3964,9 +3742,7 @@ You have exited plan mode. You can now make edits, run tools, and take actions.$
 
 You have exited auto mode. The user may now want to interact more directly. You should ask clarifying questions when the approach is ambiguous rather than making assumptions.`
 
-      return wrapMessagesInSystemReminder([
-        createUserMessage({ content, isMeta: true }),
-      ])
+      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
     }
     case 'critical_system_reminder': {
       return wrapMessagesInSystemReminder([
@@ -4008,10 +3784,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
             )
           } else if ('blob' in item) {
             // 跳过二进制内容（包括图片）
-            const mimeType =
-              'mimeType' in item
-                ? String(item.mimeType)
-                : 'application/octet-stream'
+            const mimeType = 'mimeType' in item ? String(item.mimeType) : 'application/octet-stream'
             transformedBlocks.push({
               type: 'text',
               text: `[Binary content: ${mimeType}]`,
@@ -4051,8 +3824,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       ])
     }
     case 'task_status': {
-      const displayStatus =
-        attachment.status === 'killed' ? 'stopped' : attachment.status
+      const displayStatus = attachment.status === 'killed' ? 'stopped' : attachment.status
 
       // 对于已停止的任务，保持简短 — 工作中断，原始 transcript 增量不是有用上下文。
       if (attachment.status === 'killed') {
@@ -4108,9 +3880,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
           `Read the output file to retrieve the result: ${attachment.outputFilePath}`,
         )
       } else {
-        messageParts.push(
-          `You can check its output using the ${TASK_OUTPUT_TOOL_NAME} tool.`,
-        )
+        messageParts.push(`You can check its output using the ${TASK_OUTPUT_TOOL_NAME} tool.`)
       }
 
       return [
@@ -4194,10 +3964,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
         }),
       ]
     case 'hook_success':
-      if (
-        attachment.hookEvent !== 'SessionStart' &&
-        attachment.hookEvent !== 'UserPromptSubmit'
-      ) {
+      if (attachment.hookEvent !== 'SessionStart' && attachment.hookEvent !== 'UserPromptSubmit') {
         return []
       }
       if (attachment.content === '') {
@@ -4298,7 +4065,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       }
       if (attachment.removedTypes.length > 0) {
         parts.push(
-          `The following agent types are no longer available:\n${attachment.removedTypes.map(t => `- ${t}`).join('\n')}`,
+          `The following agent types are no longer available:\n${attachment.removedTypes.map((t) => `- ${t}`).join('\n')}`,
         )
       }
       if (attachment.isInitial && attachment.showConcurrencyNote) {
@@ -4337,14 +4104,9 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'verify_plan_reminder': {
       // 死代码消除：外部构建中 ZY_CODE_VERIFY_PLAN='false'，因此 === 'true' 检查使 Bun 能够消除该字符串
       /* eslint-disable-next-line custom-rules/no-process-env-top-level */
-      const toolName =
-        process.env.ZY_CODE_VERIFY_PLAN === 'true'
-          ? 'VerifyPlanExecution'
-          : ''
+      const toolName = process.env.ZY_CODE_VERIFY_PLAN === 'true' ? 'VerifyPlanExecution' : ''
       const content = `You have completed implementing the plan. Please call the "${toolName}" tool directly (NOT the ${AGENT_TOOL_NAME} tool or an agent) to verify that all plan items were completed correctly.`
-      return wrapMessagesInSystemReminder([
-        createUserMessage({ content, isMeta: true }),
-      ])
+      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
     }
     case 'already_read_file':
     case 'command_permissions':
@@ -4374,9 +4136,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
 
   logAntError(
     'normalizeAttachmentForAPI',
-    new Error(
-      `Unknown attachment type: ${(attachment as { type: string }).type}`,
-    ),
+    new Error(`Unknown attachment type: ${(attachment as { type: string }).type}`),
   )
   return []
 }
@@ -4389,10 +4149,7 @@ function createToolResultMessage<Output>(
     const result = tool.mapToolResultToToolResultBlock(toolUseResult, '1')
 
     // 如果结果包含图片内容块，原样保留
-    if (
-      Array.isArray(result.content) &&
-      result.content.some(block => block.type === 'image')
-    ) {
+    if (Array.isArray(result.content) && result.content.some((block) => block.type === 'image')) {
       return createUserMessage({
         content: result.content as ContentBlock[],
         isMeta: true,
@@ -4403,9 +4160,7 @@ function createToolResultMessage<Output>(
     // 每行浪费约 1 token（2000 行的 @-file = 浪费约 1000 token）。
     // 对于结构重要的数组/对象内容，保留 jsonStringify。
     const contentStr =
-      typeof result.content === 'string'
-        ? result.content
-        : jsonStringify(result.content)
+      typeof result.content === 'string' ? result.content : jsonStringify(result.content)
     return createUserMessage({
       content: `Result of calling the ${tool.name} tool:\n${contentStr}`,
       isMeta: true,
@@ -4447,9 +4202,7 @@ export function createSystemMessage(
   }
 }
 
-export function createPermissionRetryMessage(
-  commands: string[],
-): SystemPermissionRetryMessage {
+export function createPermissionRetryMessage(commands: string[]): SystemPermissionRetryMessage {
   return {
     type: 'system',
     subtype: 'permission_retry',
@@ -4478,9 +4231,7 @@ export function createBridgeStatusMessage(
   }
 }
 
-export function createScheduledTaskFireMessage(
-  content: string,
-): SystemScheduledTaskFireMessage {
+export function createScheduledTaskFireMessage(content: string): SystemScheduledTaskFireMessage {
   return {
     type: 'system',
     subtype: 'scheduled_task_fire',
@@ -4540,9 +4291,7 @@ export function createTurnDurationMessage(
   }
 }
 
-export function createAwaySummaryMessage(
-  content: string,
-): SystemAwaySummaryMessage {
+export function createAwaySummaryMessage(content: string): SystemAwaySummaryMessage {
   return {
     type: 'system',
     subtype: 'away_summary',
@@ -4553,9 +4302,7 @@ export function createAwaySummaryMessage(
   }
 }
 
-export function createMemorySavedMessage(
-  writtenPaths: string[],
-): SystemMemorySavedMessage {
+export function createMemorySavedMessage(writtenPaths: string[]): SystemMemorySavedMessage {
   return {
     type: 'system',
     subtype: 'memory_saved',
@@ -4577,9 +4324,7 @@ export function createAgentsKilledMessage(): SystemAgentsKilledMessage {
   }
 }
 
-export function createCommandInputMessage(
-  content: string,
-): SystemLocalCommandMessage {
+export function createCommandInputMessage(content: string): SystemLocalCommandMessage {
   return {
     type: 'system',
     subtype: 'local_command',
@@ -4679,9 +4424,9 @@ export function isCompactBoundaryMessage(
  * Finds the index of the last compact boundary marker in the messages array
  * @returns The index of the last compact boundary, or -1 if none found
  */
-export function findLastCompactBoundaryIndex<
-  T extends Message | NormalizedMessage,
->(messages: T[]): number {
+export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessage>(
+  messages: T[],
+): number {
   // 反向扫描以查找最近的 compact 边界
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]
@@ -4704,9 +4449,10 @@ export function findLastCompactBoundaryIndex<
  *
  * Note: The boundary itself is a system message and will be filtered by normalizeMessagesForAPI.
  */
-export function getMessagesAfterCompactBoundary<
-  T extends Message | NormalizedMessage,
->(messages: T[], options?: { includeSnipped?: boolean }): T[] {
+export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
+  messages: T[],
+  options?: { includeSnipped?: boolean },
+): T[] {
   const boundaryIndex = findLastCompactBoundaryIndex(messages)
   const sliced = boundaryIndex === -1 ? messages : messages.slice(boundaryIndex)
   if (!options?.includeSnipped && feature('HISTORY_SNIP')) {
@@ -4728,10 +4474,7 @@ export function shouldShowUserMessage(
     // Channel 消息保持 isMeta（用于 snip-tag/turn-boundary/brief-mode 语义），
     // 但在默认 transcript 中渲染 — 键盘用户应该看到到达的内容。
     // UserTextMessage 中的 <channel> 标签处理实际渲染。
-    if (
-      (feature('KAIROS') || feature('KAIROS_CHANNELS')) &&
-      message.origin?.kind === 'channel'
-    )
+    if ((feature('KAIROS') || feature('KAIROS_CHANNELS')) && message.origin?.kind === 'channel')
       return true
     return false
   }
@@ -4743,7 +4486,7 @@ export function isThinkingMessage(message: Message): boolean {
   if (message.type !== 'assistant') return false
   if (!Array.isArray(message.message.content)) return false
   return message.message.content.every(
-    block => block.type === 'thinking' || block.type === 'redacted_thinking',
+    (block) => block.type === 'thinking' || block.type === 'redacted_thinking',
   )
 }
 
@@ -4751,11 +4494,7 @@ export function isThinkingMessage(message: Message): boolean {
  * Count total calls to a specific tool in message history
  * Stops early at maxCount for efficiency
  */
-export function countToolCalls(
-  messages: Message[],
-  toolName: string,
-  maxCount?: number,
-): number {
+export function countToolCalls(messages: Message[], toolName: string, maxCount?: number): number {
   let count = 0
   for (const msg of messages) {
     if (!msg) continue
@@ -4779,10 +4518,7 @@ export function countToolCalls(
  * Check if the most recent tool call succeeded (has result without is_error)
  * Searches backwards for efficiency.
  */
-export function hasSuccessfulToolCall(
-  messages: Message[],
-  toolName: string,
-): boolean {
+export function hasSuccessfulToolCall(messages: Message[], toolName: string): boolean {
   // 反向搜索以找到此工具最近的 tool_use
   let mostRecentToolUseId: string | undefined
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -4809,8 +4545,7 @@ export function hasSuccessfulToolCall(
     if (msg.type === 'user' && Array.isArray(msg.message.content)) {
       const toolResult = msg.message.content.find(
         (block): block is ToolResultBlock =>
-          block.type === 'tool_result' &&
-          block.toolCallId === mostRecentToolUseId,
+          block.type === 'tool_result' && block.toolCallId === mostRecentToolUseId,
       )
       if (toolResult) {
         // is_error 为 false 或未定义时视为成功
@@ -4866,8 +4601,7 @@ function filterTrailingThinkingFromLastAssistant(
   }
 
   logEvent('zy_filtered_trailing_thinking_block', {
-    messageUUID:
-      lastMessage.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    messageUUID: lastMessage.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     blocksRemoved: content.length - lastValidIndex - 1,
     remainingBlocks: lastValidIndex + 1,
   })
@@ -4894,9 +4628,7 @@ function filterTrailingThinkingFromLastAssistant(
  * Returns true if all content blocks are text blocks with only whitespace.
  * Returns false if there are any non-text blocks (like tool_use) or text with actual content.
  */
-function hasOnlyWhitespaceTextContent(
-  content: Array<{ type: string; text?: string }>,
-): boolean {
+function hasOnlyWhitespaceTextContent(content: Array<{ type: string; text?: string }>): boolean {
   if (content.length === 0) {
     return false
   }
@@ -4931,15 +4663,11 @@ function hasOnlyWhitespaceTextContent(
 export function filterWhitespaceOnlyAssistantMessages(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[]
-export function filterWhitespaceOnlyAssistantMessages(
-  messages: Message[],
-): Message[]
-export function filterWhitespaceOnlyAssistantMessages(
-  messages: Message[],
-): Message[] {
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[]
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] {
   let hasChanges = false
 
-  const filtered = messages.filter(message => {
+  const filtered = messages.filter((message) => {
     if (message.type !== 'assistant') {
       return true
     }
@@ -4953,8 +4681,7 @@ export function filterWhitespaceOnlyAssistantMessages(
     if (hasOnlyWhitespaceTextContent(content)) {
       hasChanges = true
       logEvent('zy_filtered_whitespace_only_assistant', {
-        messageUUID:
-          message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        messageUUID: message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       return false
     }
@@ -5016,8 +4743,7 @@ function ensureNonEmptyAssistantContent(
     if (Array.isArray(content) && content.length === 0) {
       hasChanges = true
       logEvent('zy_fixed_empty_assistant_content', {
-        messageUUID:
-          message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        messageUUID: message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         messageIndex: index,
       })
 
@@ -5025,9 +4751,7 @@ function ensureNonEmptyAssistantContent(
         ...message,
         message: {
           ...message.message,
-          content: [
-            { type: 'text' as const, text: NO_CONTENT_MESSAGE, citations: [] },
-          ],
+          content: [{ type: 'text' as const, text: NO_CONTENT_MESSAGE, citations: [] }],
         },
       }
     }
@@ -5053,12 +4777,8 @@ function ensureNonEmptyAssistantContent(
 export function filterOrphanedThinkingOnlyMessages(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[]
-export function filterOrphanedThinkingOnlyMessages(
-  messages: Message[],
-): Message[]
-export function filterOrphanedThinkingOnlyMessages(
-  messages: Message[],
-): Message[] {
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[]
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[] {
   // 第一轮：收集具有非 thinking 内容的 message.id
   // 这些稍后会在 normalizeMessagesForAPI() 中合并
   const messageIdsWithNonThinkingContent = new Set<string>()
@@ -5069,7 +4789,7 @@ export function filterOrphanedThinkingOnlyMessages(
     if (!Array.isArray(content)) continue
 
     const hasNonThinking = content.some(
-      block => block.type !== 'thinking' && block.type !== 'redacted_thinking',
+      (block) => block.type !== 'thinking' && block.type !== 'redacted_thinking',
     )
     if (hasNonThinking && msg.message.id) {
       messageIdsWithNonThinkingContent.add(msg.message.id)
@@ -5077,7 +4797,7 @@ export function filterOrphanedThinkingOnlyMessages(
   }
 
   // 第二轮：过滤掉真正孤立的纯 thinking 消息
-  const filtered = messages.filter(msg => {
+  const filtered = messages.filter((msg) => {
     if (msg.type !== 'assistant') {
       return true
     }
@@ -5089,7 +4809,7 @@ export function filterOrphanedThinkingOnlyMessages(
 
     // 检查是否所有内容块都是 thinking 块
     const allThinking = content.every(
-      block => block.type === 'thinking' || block.type === 'redacted_thinking',
+      (block) => block.type === 'thinking' || block.type === 'redacted_thinking',
     )
 
     if (!allThinking) {
@@ -5098,19 +4818,14 @@ export function filterOrphanedThinkingOnlyMessages(
 
     // 仅 thinking。如果有相同 id 的其他消息包含非 thinking 内容，则保留
     //（它们稍后会被合并）
-    if (
-      msg.message.id &&
-      messageIdsWithNonThinkingContent.has(msg.message.id)
-    ) {
+    if (msg.message.id && messageIdsWithNonThinkingContent.has(msg.message.id)) {
       return true
     }
 
     // 真正孤立 — 没有相同 id 的其他消息有内容可合并
     logEvent('zy_filtered_orphaned_thinking_message', {
-      messageUUID:
-        msg.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      messageId: msg.message
-        .id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      messageUUID: msg.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      messageId: msg.message.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       blockCount: content.length,
     })
     return false
@@ -5127,13 +4842,13 @@ export function filterOrphanedThinkingOnlyMessages(
  */
 export function stripSignatureBlocks(messages: Message[]): Message[] {
   let changed = false
-  const result = messages.map(msg => {
+  const result = messages.map((msg) => {
     if (msg.type !== 'assistant') return msg
 
     const content = msg.message.content
     if (!Array.isArray(content)) return msg
 
-    const filtered = content.filter(block => {
+    const filtered = content.filter((block) => {
       if (isThinkingBlock(block)) return false
       if (feature('CONNECTOR_TEXT')) {
         if (isConnectorTextBlock(block)) return false
@@ -5221,12 +4936,8 @@ export function ensureToolResultPairing(
         result.at(-1)?.type !== 'assistant'
       ) {
         const stripped = msg.message.content.filter(
-          block =>
-            !(
-              typeof block === 'object' &&
-              'type' in block &&
-              block.type === 'tool_result'
-            ),
+          (block) =>
+            !(typeof block === 'object' && 'type' in block && block.type === 'tool_result'),
         )
         if (stripped.length !== msg.message.content.length) {
           repaired = true
@@ -5279,7 +4990,7 @@ export function ensureToolResultPairing(
     // corresponding advisor_tool_result" 拒绝。
     const seenToolUseIds = new Set<string>()
     const finalContent = Array.isArray(msg.message.content)
-      ? msg.message.content.filter(block => {
+      ? msg.message.content.filter((block) => {
           if (block.type === 'tool_call') {
             if (allSeenToolUseIds.has(block.id)) {
               repaired = true
@@ -5289,18 +5000,18 @@ export function ensureToolResultPairing(
             seenToolUseIds.add(block.id)
           }
           if (
-            ((block.type as string) === 'server_tool_use' || (block.type as string) === 'mcp_tool_use') &&
-        !serverResultIds.has((block as { id: string }).id)
-      ) {
-        repaired = true
-        return false
-      }
-      return true
-    })
+            ((block.type as string) === 'server_tool_use' ||
+              (block.type as string) === 'mcp_tool_use') &&
+            !serverResultIds.has((block as { id: string }).id)
+          ) {
+            repaired = true
+            return false
+          }
+          return true
+        })
       : msg.message.content
 
-    const assistantContentChanged =
-      finalContent.length !== msg.message.content.length
+    const assistantContentChanged = finalContent.length !== msg.message.content.length
 
     // 如果剥离孤立服务端 tool use 后内容数组为空，插入占位符使 API 不拒绝空 assistant 内容。
     if (Array.isArray(finalContent) && finalContent.length === 0) {
@@ -5336,11 +5047,7 @@ export function ensureToolResultPairing(
       const content = nextMsg.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
-          if (
-            typeof block === 'object' &&
-            'type' in block &&
-            block.type === 'tool_result'
-          ) {
+          if (typeof block === 'object' && 'type' in block && block.type === 'tool_result') {
             const trId = (block as ToolResultBlock).toolCallId
             if (existingToolResultIds.has(trId)) {
               hasDuplicateToolResults = true
@@ -5353,25 +5060,19 @@ export function ensureToolResultPairing(
 
     // 查找缺失的 tool_result ID（正向：有 tool_use 无 tool_result）
     const toolUseIdSet = new Set(toolUseIds)
-    const missingIds = toolUseIds.filter(id => !existingToolResultIds.has(id))
+    const missingIds = toolUseIds.filter((id) => !existingToolResultIds.has(id))
 
     // 查找孤立的 tool_result ID（反向：有 tool_result 无 tool_use）
-    const orphanedIds = [...existingToolResultIds].filter(
-      id => !toolUseIdSet.has(id),
-    )
+    const orphanedIds = [...existingToolResultIds].filter((id) => !toolUseIdSet.has(id))
 
-    if (
-      missingIds.length === 0 &&
-      orphanedIds.length === 0 &&
-      !hasDuplicateToolResults
-    ) {
+    if (missingIds.length === 0 && orphanedIds.length === 0 && !hasDuplicateToolResults) {
       continue
     }
 
     repaired = true
 
     // 为缺失 ID 构建合成错误 tool_result 块
-    const syntheticBlocks: ToolResultBlock[] = missingIds.map(id => ({
+    const syntheticBlocks: ToolResultBlock[] = missingIds.map((id) => ({
       type: 'tool_result' as const,
       toolCallId: id,
       content: SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
@@ -5380,9 +5081,7 @@ export function ensureToolResultPairing(
 
     if (nextMsg?.type === 'user') {
       // 下一条消息已经是 user 消息 — 修补它
-      let content: (ContentBlock | ContentBlock)[] = Array.isArray(
-        nextMsg.message.content,
-      )
+      let content: (ContentBlock | ContentBlock)[] = Array.isArray(nextMsg.message.content)
         ? nextMsg.message.content
         : [{ type: 'text' as const, text: nextMsg.message.content }]
 
@@ -5390,12 +5089,8 @@ export function ensureToolResultPairing(
       if (orphanedIds.length > 0 || hasDuplicateToolResults) {
         const orphanedSet = new Set(orphanedIds)
         const seenTrIds = new Set<string>()
-        content = content.filter(block => {
-          if (
-            typeof block === 'object' &&
-            'type' in block &&
-            block.type === 'tool_result'
-          ) {
+        content = content.filter((block) => {
+          if (typeof block === 'object' && 'type' in block && block.type === 'tool_result') {
             const trId = (block as ToolResultBlock).toolCallId
             if (orphanedSet.has(trId)) return false
             if (seenTrIds.has(trId)) return false
@@ -5457,20 +5152,18 @@ export function ensureToolResultPairing(
         const content = m.message.content
         const toolUses = Array.isArray(content)
           ? content
-              .filter(b => b.type === 'tool_call')
-              .map(b => (b as ToolCallInlineBlock | ToolCallInlineBlock).id)
+              .filter((b) => b.type === 'tool_call')
+              .map((b) => (b as ToolCallInlineBlock | ToolCallInlineBlock).id)
           : []
         const serverToolUses = Array.isArray(content)
           ? content
               .filter(
-                b => (b.type as string) === 'server_tool_use' || (b.type as string) === 'mcp_tool_use',
+                (b) =>
+                  (b.type as string) === 'server_tool_use' || (b.type as string) === 'mcp_tool_use',
               )
-              .map(b => (b as { id: string }).id)
+              .map((b) => (b as { id: string }).id)
           : []
-        const parts = [
-          `id=${m.message.id}`,
-          `tool_uses=[${toolUses.join(',')}]`,
-        ]
+        const parts = [`id=${m.message.id}`, `tool_uses=[${toolUses.join(',')}]`]
         if (serverToolUses.length > 0) {
           parts.push(`server_tool_uses=[${serverToolUses.join(',')}]`)
         }
@@ -5478,11 +5171,8 @@ export function ensureToolResultPairing(
       }
       if (m.type === 'user' && Array.isArray(m.message.content)) {
         const toolResults = m.message.content
-          .filter(
-            b =>
-              typeof b === 'object' && 'type' in b && b.type === 'tool_result',
-          )
-          .map(b => (b as ToolResultBlock).toolCallId)
+          .filter((b) => typeof b === 'object' && 'type' in b && b.type === 'tool_result')
+          .map((b) => (b as ToolResultBlock).toolCallId)
         if (toolResults.length > 0) {
           return `[${idx}] user(tool_results=[${toolResults.join(',')}])`
         }
@@ -5523,17 +5213,17 @@ export function stripAdvisorBlocks(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] {
   let changed = false
-  const result = messages.map(msg => {
+  const result = messages.map((msg) => {
     if (msg.type !== 'assistant') return msg
     const content = msg.message.content
     if (!Array.isArray(content)) return msg
-    const filtered = content.filter(b => !isAdvisorBlock(b))
+    const filtered = content.filter((b) => !isAdvisorBlock(b))
     if (filtered.length === content.length) return msg
     changed = true
     if (
       filtered.length === 0 ||
       filtered.every(
-        b =>
+        (b) =>
           b.type === 'thinking' ||
           b.type === 'redacted_thinking' ||
           (b.type === 'text' && (!b.text || !b.text.trim())),
@@ -5549,10 +5239,7 @@ export function stripAdvisorBlocks(
   return changed ? result : messages
 }
 
-export function wrapCommandText(
-  raw: string,
-  origin: MessageOrigin | undefined,
-): string {
+export function wrapCommandText(raw: string, origin: MessageOrigin | undefined): string {
   switch (origin?.kind) {
     case 'task-notification':
       return `A background agent completed a task:\n${raw}`

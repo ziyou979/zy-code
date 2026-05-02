@@ -46,10 +46,7 @@ import { getSubagentLogName } from './agentContext.js'
  * Extract the file path from a tool input for memdir detection.
  * Covers Read (file_path), Edit (file_path), and Write (file_path).
  */
-function getFilePathFromInput(
-  toolName: string,
-  toolInput: unknown,
-): string | null {
+function getFilePathFromInput(toolName: string, toolInput: unknown): string | null {
   switch (toolName) {
     case FILE_READ_TOOL_NAME: {
       const parsed = FileReadTool.inputSchema.safeParse(toolInput)
@@ -120,10 +117,7 @@ function getSessionFileTypeFromInput(
  * Detects session memory (via Read/Grep/Glob) and memdir access (via Read/Edit/Write).
  * Uses the same conditions as the PostToolUse session file access hooks.
  */
-export function isMemoryFileAccess(
-  toolName: string,
-  toolInput: unknown,
-): boolean {
+export function isMemoryFileAccess(toolName: string, toolInput: unknown): boolean {
   if (getSessionFileTypeFromInput(toolName, toolInput) === 'session_memory') {
     return true
   }
@@ -131,8 +125,7 @@ export function isMemoryFileAccess(
   const filePath = getFilePathFromInput(toolName, toolInput)
   if (
     filePath &&
-    (isAutoMemFile(filePath) ||
-      (feature('TEAMMEM') && teamMemPaths!.isTeamMemFile(filePath)))
+    (isAutoMemFile(filePath) || (feature('TEAMMEM') && teamMemPaths!.isTeamMemFile(filePath)))
   ) {
     return true
   }
@@ -150,10 +143,7 @@ async function handleSessionFileAccess(
 ): Promise<HookJSONOutput> {
   if (input.hook_event_name !== 'PostToolUse') return {}
 
-  const fileType = getSessionFileTypeFromInput(
-    input.tool_name,
-    input.tool_input,
-  )
+  const fileType = getSessionFileTypeFromInput(input.tool_name, input.tool_input)
 
   const subagentName = getSubagentLogName()
   const subagentProps = subagentName ? { subagent_name: subagentName } : {}
@@ -211,10 +201,9 @@ async function handleSessionFileAccess(
     const scope = memoryScopeForPath(filePath)
     if (
       scope !== null &&
-      (input.tool_name === FILE_EDIT_TOOL_NAME ||
-        input.tool_name === FILE_WRITE_TOOL_NAME)
+      (input.tool_name === FILE_EDIT_TOOL_NAME || input.tool_name === FILE_WRITE_TOOL_NAME)
     ) {
-      (memoryShapeTelemetry as any)!.logMemoryWriteShape(
+      ;(memoryShapeTelemetry as any)!.logMemoryWriteShape(
         input.tool_name,
         input.tool_input,
         filePath,

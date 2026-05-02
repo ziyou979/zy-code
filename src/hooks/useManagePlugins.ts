@@ -35,13 +35,9 @@ import { loadAllPlugins } from '../utils/plugins/pluginLoader.js'
  * goes through refreshActivePlugins() via /reload-plugins for one consistent
  * mental model. See Outline: declarative-settings-hXHBMDIf4b PR 5c.
  */
-export function useManagePlugins({
-  enabled = true,
-}: {
-  enabled?: boolean
-} = {}) {
+export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {}) {
   const setAppState = useSetAppState()
-  const needsRefresh = useAppState(s => s.plugins.needsRefresh)
+  const needsRefresh = useAppState((s) => s.plugins.needsRefresh)
   const { addNotification } = useNotifications()
 
   // Initial plugin load. Runs once on mount. NOT used for refresh — all
@@ -76,8 +72,7 @@ export function useManagePlugins({
       try {
         commands = await getPluginCommands()
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error)
+        const errorMessage = error instanceof Error ? error.message : String(error)
         errors.push({
           type: 'generic-error',
           source: 'plugin-commands',
@@ -88,8 +83,7 @@ export function useManagePlugins({
       try {
         agents = await loadPluginAgents()
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error)
+        const errorMessage = error instanceof Error ? error.message : String(error)
         errors.push({
           type: 'generic-error',
           source: 'plugin-agents',
@@ -100,8 +94,7 @@ export function useManagePlugins({
       try {
         await loadPluginHooks()
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error)
+        const errorMessage = error instanceof Error ? error.message : String(error)
         errors.push({
           type: 'generic-error',
           source: 'plugin-hooks',
@@ -119,7 +112,7 @@ export function useManagePlugins({
       // Runs BEFORE setAppState so any errors pushed by these loaders make it
       // into AppState.plugins.errors (Doctor UI), not just telemetry.
       const mcpServerCounts = await Promise.all(
-        enabled.map(async p => {
+        enabled.map(async (p) => {
           if (p.mcpServers) return Object.keys(p.mcpServers).length
           const servers = await loadPluginMcpServers(p, errors)
           if (servers) p.mcpServers = servers
@@ -135,7 +128,7 @@ export function useManagePlugins({
       // invalidation happened between main.tsx:3203 and REPL mount (e.g.
       // seed marketplace registration or policySettings hot-reload).
       const lspServerCounts = await Promise.all(
-        enabled.map(async p => {
+        enabled.map(async (p) => {
           if (p.lspServers) return Object.keys(p.lspServers).length
           const servers = await loadPluginLspServers(p, errors)
           if (servers) p.lspServers = servers
@@ -146,20 +139,20 @@ export function useManagePlugins({
       reinitializeLspServerManager()
 
       // Update AppState - merge errors to preserve LSP errors
-      setAppState(prevState => {
+      setAppState((prevState) => {
         // Keep existing LSP/non-plugin-loading errors (source 'lsp-manager' or 'plugin:*')
         const existingLspErrors = prevState.plugins.errors.filter(
-          e => e.source === 'lsp-manager' || e.source.startsWith('plugin:'),
+          (e) => e.source === 'lsp-manager' || e.source.startsWith('plugin:'),
         )
         // Deduplicate: remove existing LSP errors that are also in new errors
         const newErrorKeys = new Set(
-          errors.map(e =>
+          errors.map((e) =>
             e.type === 'generic-error'
               ? `generic-error:${e.source}:${e.error}`
               : `${e.type}:${e.source}`,
           ),
         )
-        const filteredExisting = existingLspErrors.filter(e => {
+        const filteredExisting = existingLspErrors.filter((e) => {
           const key =
             e.type === 'generic-error'
               ? `generic-error:${e.source}:${e.error}`
@@ -190,8 +183,7 @@ export function useManagePlugins({
         return (
           sum +
           Object.values(p.hooksConfig).reduce(
-            (s, matchers) =>
-              s + (matchers?.reduce((h, m) => h + m.hooks.length, 0) ?? 0),
+            (s, matchers) => s + (matchers?.reduce((h, m) => h + m.hooks.length, 0) ?? 0),
             0,
           )
         )
@@ -200,8 +192,8 @@ export function useManagePlugins({
       return {
         enabled_count: enabled.length,
         disabled_count: disabled.length,
-        inline_count: count(enabled, p => p.source.endsWith('@inline')),
-        marketplace_count: count(enabled, p => !p.source.endsWith('@inline')),
+        inline_count: count(enabled, (p) => p.source.endsWith('@inline')),
+        marketplace_count: count(enabled, (p) => !p.source.endsWith('@inline')),
         error_count: errors.length,
         skill_count: commands.length,
         agent_count: agents.length,
@@ -214,11 +206,9 @@ export function useManagePlugins({
         ant_enabled_names:
           isInternalBuild() && enabled.length > 0
             ? (enabled
-                .map(p => p.name)
+                .map((p) => p.name)
                 .sort()
-                .join(
-                  ',',
-                ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
+                .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
             : undefined,
       }
     } catch (error) {
@@ -227,10 +217,10 @@ export function useManagePlugins({
       logError(errorObj)
       logForDebugging(`Error loading plugins: ${error}`)
       // Set empty state on error, but preserve LSP errors and add the new error
-      setAppState(prevState => {
+      setAppState((prevState) => {
         // Keep existing LSP/non-plugin-loading errors
         const existingLspErrors = prevState.plugins.errors.filter(
-          e => e.source === 'lsp-manager' || e.source.startsWith('plugin:'),
+          (e) => e.source === 'lsp-manager' || e.source.startsWith('plugin:'),
         )
         const newError = {
           type: 'generic-error' as const,
@@ -269,7 +259,7 @@ export function useManagePlugins({
   // Load plugins on mount and emit telemetry
   useEffect(() => {
     if (!enabled) return
-    void initialPluginLoad().then(metrics => {
+    void initialPluginLoad().then((metrics) => {
       const { ant_enabled_names, ...baseMetrics } = metrics
       const allMetrics = {
         ...baseMetrics,

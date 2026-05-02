@@ -134,10 +134,7 @@ export function shouldUseSandbox(input: Partial<SandboxInput>): boolean {
   }
 
   // Don't sandbox if explicitly overridden AND unsandboxed commands are allowed by policy
-  if (
-    input.dangerouslyDisableSandbox &&
-    SandboxManager.areUnsandboxedCommandsAllowed()
-  ) {
+  if (input.dangerouslyDisableSandbox && SandboxManager.areUnsandboxedCommandsAllowed()) {
     return false
   }
 

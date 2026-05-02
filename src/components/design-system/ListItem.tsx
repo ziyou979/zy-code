@@ -1,43 +1,43 @@
-import figures from 'figures';
-import type { ReactNode } from 'react';
-import React from 'react';
-import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js';
-import { Box, Text } from '../../ink.js';
+import figures from 'figures'
+import type { ReactNode } from 'react'
+import React from 'react'
+import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
+import { Box, Text } from '../../ink.js'
 type ListItemProps = {
   /**
    * Whether this item is currently focused (keyboard selection).
    * Shows the pointer indicator (❯) when true.
    */
-  isFocused: boolean;
+  isFocused: boolean
 
   /**
    * Whether this item is selected (chosen/checked).
    * Shows the checkmark indicator (✓) when true.
    * @default false
    */
-  isSelected?: boolean;
+  isSelected?: boolean
 
   /**
    * The content to display for this item.
    */
-  children: ReactNode;
+  children: ReactNode
 
   /**
    * Optional description text displayed below the main content.
    */
-  description?: string;
+  description?: string
 
   /**
    * Show a down arrow indicator instead of pointer (for scroll hints).
    * Only applies when not focused.
    */
-  showScrollDown?: boolean;
+  showScrollDown?: boolean
 
   /**
    * Show an up arrow indicator instead of pointer (for scroll hints).
    * Only applies when not focused.
    */
-  showScrollUp?: boolean;
+  showScrollUp?: boolean
 
   /**
    * Whether to apply automatic styling to the children based on focus/selection state.
@@ -45,21 +45,21 @@ type ListItemProps = {
    * - When false: children are rendered as-is, allowing custom styling
    * @default true
    */
-  styled?: boolean;
+  styled?: boolean
 
   /**
    * Whether this item is disabled. Disabled items show dimmed text and no indicators.
    * @default false
    */
-  disabled?: boolean;
+  disabled?: boolean
 
   /**
    * Whether this ListItem should declare the terminal cursor position.
    * Set false when a child (e.g. BaseTextInput) declares its own cursor.
    * @default true
    */
-  declareCursor?: boolean;
-};
+  declareCursor?: boolean
+}
 
 /**
  * A list item component for selection UIs (dropdowns, multi-selects, menus).
@@ -109,43 +109,64 @@ export function ListItem({
   showScrollUp,
   styled = true,
   disabled = false,
-  declareCursor
+  declareCursor,
 }: ListItemProps) {
   const renderIndicator = function renderIndicator() {
     if (disabled) {
-      return <Text> </Text>;
+      return <Text> </Text>
     }
     if (isFocused) {
-      return <Text color="suggestion">{figures.pointer}</Text>;
+      return <Text color="suggestion">{figures.pointer}</Text>
     }
     if (showScrollDown) {
-      return <Text dimColor={true}>{figures.arrowDown}</Text>;
+      return <Text dimColor={true}>{figures.arrowDown}</Text>
     }
     if (showScrollUp) {
-      return <Text dimColor={true}>{figures.arrowUp}</Text>;
+      return <Text dimColor={true}>{figures.arrowUp}</Text>
     }
-    return <Text> </Text>;
-  };
+    return <Text> </Text>
+  }
   const getTextColor = function getTextColor() {
     if (disabled) {
-      return "inactive";
+      return 'inactive'
     }
     if (!styled) {
-      return;
+      return
     }
     if (isSelected) {
-      return "success";
+      return 'success'
     }
     if (isFocused) {
-      return "suggestion";
+      return 'suggestion'
     }
-  };
-  const textColor = getTextColor();
+  }
+  const textColor = getTextColor()
   const cursorRef = useDeclaredCursor({
     line: 0,
     column: 0,
-    active: isFocused && !disabled && declareCursor !== false
-  });
-  const t8 = renderIndicator();
-  return <Box ref={cursorRef} flexDirection="column">{<Box flexDirection="row" gap={1}>{t8}{styled ? <Text color={textColor} dimColor={disabled}>{children}</Text> : children}{isSelected && !disabled && <Text color="success">{figures.tick}</Text>}</Box>}{description && <Box paddingLeft={2}><Text color="inactive">{description}</Text></Box>}</Box>;
+    active: isFocused && !disabled && declareCursor !== false,
+  })
+  const t8 = renderIndicator()
+  return (
+    <Box ref={cursorRef} flexDirection="column">
+      {
+        <Box flexDirection="row" gap={1}>
+          {t8}
+          {styled ? (
+            <Text color={textColor} dimColor={disabled}>
+              {children}
+            </Text>
+          ) : (
+            children
+          )}
+          {isSelected && !disabled && <Text color="success">{figures.tick}</Text>}
+        </Box>
+      }
+      {description && (
+        <Box paddingLeft={2}>
+          <Text color="inactive">{description}</Text>
+        </Box>
+      )}
+    </Box>
+  )
 }

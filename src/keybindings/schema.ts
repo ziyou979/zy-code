@@ -34,29 +34,27 @@ export const KEYBINDING_CONTEXTS = [
 /**
  * Human-readable descriptions for each keybinding context.
  */
-export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<
-  (typeof KEYBINDING_CONTEXTS)[number],
-  string
-> = {
-  Global: 'Active everywhere, regardless of focus',
-  Chat: 'When the chat input is focused',
-  Autocomplete: 'When autocomplete menu is visible',
-  Confirmation: 'When a confirmation/permission dialog is shown',
-  Help: 'When the help overlay is open',
-  Transcript: 'When viewing the transcript',
-  HistorySearch: 'When searching command history (ctrl+r)',
-  Task: 'When a task/agent is running in the foreground',
-  ThemePicker: 'When the theme picker is open',
-  Settings: 'When the settings menu is open',
-  Tabs: 'When tab navigation is active',
-  Attachments: 'When navigating image attachments in a select dialog',
-  Footer: 'When footer indicators are focused',
-  MessageSelector: 'When the message selector (rewind) is open',
-  DiffDialog: 'When the diff dialog is open',
-  ModelPicker: 'When the model picker is open',
-  Select: 'When a select/list component is focused',
-  Plugin: 'When the plugin dialog is open',
-}
+export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<(typeof KEYBINDING_CONTEXTS)[number], string> =
+  {
+    Global: 'Active everywhere, regardless of focus',
+    Chat: 'When the chat input is focused',
+    Autocomplete: 'When autocomplete menu is visible',
+    Confirmation: 'When a confirmation/permission dialog is shown',
+    Help: 'When the help overlay is open',
+    Transcript: 'When viewing the transcript',
+    HistorySearch: 'When searching command history (ctrl+r)',
+    Task: 'When a task/agent is running in the foreground',
+    ThemePicker: 'When the theme picker is open',
+    Settings: 'When the settings menu is open',
+    Tabs: 'When tab navigation is active',
+    Attachments: 'When navigating image attachments in a select dialog',
+    Footer: 'When footer indicators are focused',
+    MessageSelector: 'When the message selector (rewind) is open',
+    DiffDialog: 'When the diff dialog is open',
+    ModelPicker: 'When the model picker is open',
+    Select: 'When a select/list component is focused',
+    Plugin: 'When the plugin dialog is open',
+  }
 
 /**
  * All valid keybinding action identifiers.
@@ -178,14 +176,10 @@ export const KeybindingBlockSchema = lazySchema(() =>
     .object({
       context: z
         .enum(KEYBINDING_CONTEXTS)
-        .describe(
-          'UI context where these bindings apply. Global bindings work everywhere.',
-        ),
+        .describe('UI context where these bindings apply. Global bindings work everywhere.'),
       bindings: z
         .record(
-          z
-            .string()
-            .describe('Keystroke pattern (e.g., "ctrl+k", "shift+tab")'),
+          z.string().describe('Keystroke pattern (e.g., "ctrl+k", "shift+tab")'),
           z
             .union([
               z.enum(KEYBINDING_ACTIONS),
@@ -197,9 +191,7 @@ export const KeybindingBlockSchema = lazySchema(() =>
                 ),
               z.null().describe('Set to null to unbind a default shortcut'),
             ])
-            .describe(
-              'Action to trigger, command to invoke, or null to unbind',
-            ),
+            .describe('Action to trigger, command to invoke, or null to unbind'),
         )
         .describe('Map of keystroke patterns to actions'),
     })
@@ -213,23 +205,14 @@ export const KeybindingBlockSchema = lazySchema(() =>
 export const KeybindingsSchema = lazySchema(() =>
   z
     .object({
-      $schema: z
-        .string()
-        .optional()
-        .describe('JSON Schema URL for editor validation'),
+      $schema: z.string().optional().describe('JSON Schema URL for editor validation'),
       $docs: z.string().optional().describe('Documentation URL'),
-      bindings: z
-        .array(KeybindingBlockSchema())
-        .describe('Array of keybinding blocks by context'),
+      bindings: z.array(KeybindingBlockSchema()).describe('Array of keybinding blocks by context'),
     })
-    .describe(
-      'ZY Code keybindings configuration. Customize keyboard shortcuts by context.',
-    ),
+    .describe('ZY Code keybindings configuration. Customize keyboard shortcuts by context.'),
 )
 
 /**
  * TypeScript types derived from the schema.
  */
-export type KeybindingsSchemaType = z.infer<
-  ReturnType<typeof KeybindingsSchema>
->
+export type KeybindingsSchemaType = z.infer<ReturnType<typeof KeybindingsSchema>>

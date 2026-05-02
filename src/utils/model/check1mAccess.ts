@@ -5,9 +5,9 @@
  */
 
 export function checkOpus1mAccess(): boolean {
-  return false;
+  return false
 }
 
 export function checkSonnet1mAccess(): boolean {
-  return false;
+  return false
 }

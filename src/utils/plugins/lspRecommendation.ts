@@ -15,14 +15,8 @@ import { isBinaryInstalled } from '../binaryCheck.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
-import {
-  getMarketplace,
-  loadKnownMarketplacesConfig,
-} from './marketplaceManager.js'
-import {
-  ALLOWED_OFFICIAL_MARKETPLACE_NAMES,
-  type PluginMarketplaceEntry,
-} from './schemas.js'
+import { getMarketplace, loadKnownMarketplacesConfig } from './marketplaceManager.js'
+import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES, type PluginMarketplaceEntry } from './schemas.js'
 
 /**
  * LSP plugin recommendation returned to the caller
@@ -109,9 +103,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-function extractFromServerConfigRecord(
-  serverConfigs: Record<string, unknown>,
-): LspInfo | null {
+function extractFromServerConfigRecord(serverConfigs: Record<string, unknown>): LspInfo | null {
   const extensions = new Set<string>()
   let command: string | null = null
 
@@ -157,9 +149,7 @@ type LspPluginInfo = {
  *
  * @returns Map of pluginId to plugin info with LSP metadata
  */
-async function getLspPluginsFromMarketplaces(): Promise<
-  Map<string, LspPluginInfo>
-> {
+async function getLspPluginsFromMarketplaces(): Promise<Map<string, LspPluginInfo>> {
   const result = new Map<string, LspPluginInfo>()
 
   try {
@@ -197,9 +187,7 @@ async function getLspPluginsFromMarketplaces(): Promise<
       }
     }
   } catch (error) {
-    logForDebugging(
-      `[lspRecommendation] Failed to load marketplaces config: ${error}`,
-    )
+    logForDebugging(`[lspRecommendation] Failed to load marketplaces config: ${error}`)
   }
 
   return result
@@ -219,9 +207,7 @@ async function getLspPluginsFromMarketplaces(): Promise<
  * @param filePath - Path to the file to find LSP plugins for
  * @returns Array of matching plugin recommendations (empty if none or disabled)
  */
-export async function getMatchingLspPlugins(
-  filePath: string,
-): Promise<LspPluginRecommendation[]> {
+export async function getMatchingLspPlugins(filePath: string): Promise<LspPluginRecommendation[]> {
   // Check if globally disabled
   if (isLspRecommendationsDisabled()) {
     logForDebugging('[lspRecommendation] Recommendations are disabled')
@@ -255,17 +241,13 @@ export async function getMatchingLspPlugins(
 
     // Filter: not in "never" list
     if (neverPlugins.includes(pluginId)) {
-      logForDebugging(
-        `[lspRecommendation] Skipping ${pluginId} (in never suggest list)`,
-      )
+      logForDebugging(`[lspRecommendation] Skipping ${pluginId} (in never suggest list)`)
       continue
     }
 
     // Filter: not already installed
     if (isPluginInstalled(pluginId)) {
-      logForDebugging(
-        `[lspRecommendation] Skipping ${pluginId} (already installed)`,
-      )
+      logForDebugging(`[lspRecommendation] Skipping ${pluginId} (already installed)`)
       continue
     }
 
@@ -279,9 +261,7 @@ export async function getMatchingLspPlugins(
     const binaryExists = await isBinaryInstalled(info.command)
     if (binaryExists) {
       pluginsWithBinary.push({ info, pluginId })
-      logForDebugging(
-        `[lspRecommendation] Binary '${info.command}' found for ${pluginId}`,
-      )
+      logForDebugging(`[lspRecommendation] Binary '${info.command}' found for ${pluginId}`)
     } else {
       logForDebugging(
         `[lspRecommendation] Skipping ${pluginId} (binary '${info.command}' not found)`,
@@ -314,7 +294,7 @@ export async function getMatchingLspPlugins(
  * @param pluginId - Plugin ID to never suggest again
  */
 export function addToNeverSuggest(pluginId: string): void {
-  saveGlobalConfig(currentConfig => {
+  saveGlobalConfig((currentConfig) => {
     const current = currentConfig.lspRecommendationNeverPlugins ?? []
     if (current.includes(pluginId)) {
       return currentConfig
@@ -332,7 +312,7 @@ export function addToNeverSuggest(pluginId: string): void {
  * After MAX_IGNORED_COUNT ignores, recommendations are disabled.
  */
 export function incrementIgnoredCount(): void {
-  saveGlobalConfig(currentConfig => {
+  saveGlobalConfig((currentConfig) => {
     const newCount = (currentConfig.lspRecommendationIgnoredCount ?? 0) + 1
     return {
       ...currentConfig,
@@ -360,7 +340,7 @@ export function isLspRecommendationsDisabled(): boolean {
  * Reset the ignored count (useful if user re-enables recommendations)
  */
 export function resetIgnoredCount(): void {
-  saveGlobalConfig(currentConfig => {
+  saveGlobalConfig((currentConfig) => {
     const currentCount = currentConfig.lspRecommendationIgnoredCount ?? 0
     if (currentCount === 0) {
       return currentConfig

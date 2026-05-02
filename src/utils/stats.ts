@@ -128,9 +128,7 @@ async function processSessionFiles(
   let totalMessages = 0
   let totalSpeculationTimeSavedMs = 0
   const modelUsageAgg: { [modelName: string]: ModelUsage } = {}
-  const shotDistributionMap = feature('SHOT_STATS')
-    ? new Map<number, number>()
-    : undefined
+  const shotDistributionMap = feature('SHOT_STATS') ? new Map<number, number>() : undefined
   // Track parent sessions that already recorded a shot count (dedup across subagents)
   const sessionsWithShotCount = new Set<string>()
 
@@ -139,7 +137,7 @@ async function processSessionFiles(
   for (let i = 0; i < sessionFiles.length; i += BATCH_SIZE) {
     const batch = sessionFiles.slice(i, i + BATCH_SIZE)
     const results = await Promise.all(
-      batch.map(async sessionFile => {
+      batch.map(async (sessionFile) => {
         try {
           // If we have a fromDate filter, skip files that haven't been modified since then
           if (fromDate) {
@@ -185,9 +183,7 @@ async function processSessionFiles(
     for (const { sessionFile, entries, error, skipped } of results) {
       if (skipped) continue
       if (error || !entries) {
-        logForDebugging(
-          `Failed to read session file ${sessionFile}: ${errorMessage(error)}`,
-        )
+        logForDebugging(`Failed to read session file ${sessionFile}: ${errorMessage(error)}`)
         continue
       }
 
@@ -212,27 +208,20 @@ async function processSessionFiles(
       // This must run before the sidechain filter since subagent transcripts
       // mark all messages as sidechain
       if (feature('SHOT_STATS') && shotDistributionMap) {
-        const parentSessionId = isSubagentFile
-          ? basename(dirname(dirname(sessionFile)))
-          : sessionId
+        const parentSessionId = isSubagentFile ? basename(dirname(dirname(sessionFile))) : sessionId
 
         if (!sessionsWithShotCount.has(parentSessionId)) {
           const shotCount = extractShotCountFromMessages(messages)
           if (shotCount !== null) {
             sessionsWithShotCount.add(parentSessionId)
-            shotDistributionMap.set(
-              shotCount,
-              (shotDistributionMap.get(shotCount) || 0) + 1,
-            )
+            shotDistributionMap.set(shotCount, (shotDistributionMap.get(shotCount) || 0) + 1)
           }
         }
       }
 
       // Filter out sidechain messages for session metadata (duration, counts).
       // For subagent files, use all messages since they're all sidechain.
-      const mainMessages = isSubagentFile
-        ? messages
-        : messages.filter(m => !m.isSidechain)
+      const mainMessages = isSubagentFile ? messages : messages.filter((m) => !m.isSidechain)
       if (mainMessages.length === 0) continue
 
       const firstMessage = mainMessages[0]!
@@ -246,9 +235,7 @@ async function processSessionFiles(
       // new Date(undefined) produces an Invalid Date, and toDateString() would
       // throw RangeError: Invalid Date on .toISOString().
       if (isNaN(firstTimestamp.getTime()) || isNaN(lastTimestamp.getTime())) {
-        logForDebugging(
-          `Skipping session with invalid timestamp: ${sessionFile}`,
-        )
+        logForDebugging(`Skipping session with invalid timestamp: ${sessionFile}`)
         continue
       }
 
@@ -330,14 +317,12 @@ async function processSessionFiles(
 
             modelUsageAgg[model]!.inputTokens += usage.inputTokens || 0
             modelUsageAgg[model]!.outputTokens += usage.outputTokens || 0
-            modelUsageAgg[model]!.cacheReadInputTokens +=
-              usage.extras?.cacheReadInputTokens || 0
+            modelUsageAgg[model]!.cacheReadInputTokens += usage.extras?.cacheReadInputTokens || 0
             modelUsageAgg[model]!.cacheCreationInputTokens +=
               usage.extras?.cacheCreationInputTokens || 0
 
             // Track daily tokens per model
-            const totalTokens =
-              (usage.inputTokens || 0) + (usage.outputTokens || 0)
+            const totalTokens = (usage.inputTokens || 0) + (usage.outputTokens || 0)
             if (totalTokens > 0) {
               const dayTokens = dailyModelTokensMap.get(dateKey) || {}
               dayTokens[model] = (dayTokens[model] || 0) + totalTokens
@@ -384,36 +369,36 @@ async function getAllSessionFiles(): Promise<string[]> {
     throw e
   }
   const projectDirs = allEntries
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => join(projectsDir, dirent.name))
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => join(projectsDir, dirent.name))
 
   // Collect all session files from all projects in parallel
   const projectResults = await Promise.all(
-    projectDirs.map(async projectDir => {
+    projectDirs.map(async (projectDir) => {
       try {
         const entries = await fs.readdir(projectDir)
 
         // Collect main session files (*.jsonl directly in project dir)
         const mainFiles = entries
-          .filter(dirent => dirent.isFile() && dirent.name.endsWith('.jsonl'))
-          .map(dirent => join(projectDir, dirent.name))
+          .filter((dirent) => dirent.isFile() && dirent.name.endsWith('.jsonl'))
+          .map((dirent) => join(projectDir, dirent.name))
 
         // Collect subagent files from session subdirectories in parallel
         // Structure: {projectDir}/{sessionId}/subagents/agent-{agentId}.jsonl
-        const sessionDirs = entries.filter(dirent => dirent.isDirectory())
+        const sessionDirs = entries.filter((dirent) => dirent.isDirectory())
         const subagentResults = await Promise.all(
-          sessionDirs.map(async sessionDir => {
+          sessionDirs.map(async (sessionDir) => {
             const subagentsDir = join(projectDir, sessionDir.name, 'subagents')
             try {
               const subagentEntries = await fs.readdir(subagentsDir)
               return subagentEntries
                 .filter(
-                  dirent =>
+                  (dirent) =>
                     dirent.isFile() &&
                     dirent.name.endsWith('.jsonl') &&
                     dirent.name.startsWith('agent-'),
                 )
-                .map(dirent => join(subagentsDir, dirent.name))
+                .map((dirent) => join(subagentsDir, dirent.name))
             } catch {
               // subagents directory doesn't exist for this session, skip
               return []
@@ -423,9 +408,7 @@ async function getAllSessionFiles(): Promise<string[]> {
 
         return [...mainFiles, ...subagentResults.flat()]
       } catch (error) {
-        logForDebugging(
-          `Failed to read project directory ${projectDir}: ${errorMessage(error)}`,
-        )
+        logForDebugging(`Failed to read project directory ${projectDir}: ${errorMessage(error)}`)
         return []
       }
     }),
@@ -437,10 +420,7 @@ async function getAllSessionFiles(): Promise<string[]> {
 /**
  * Convert a PersistedStatsCache to ZyCodeStats by computing derived fields.
  */
-function cacheToStats(
-  cache: PersistedStatsCache,
-  todayStats: ProcessedStats | null,
-): ZyCodeStats {
+function cacheToStats(cache: PersistedStatsCache, todayStats: ProcessedStats | null): ZyCodeStats {
   // Merge cache with today's stats
   const dailyActivityMap = new Map<string, DailyActivity>()
   for (const day of cache.dailyActivity) {
@@ -485,22 +465,13 @@ function cacheToStats(
           inputTokens: modelUsage[model]!.inputTokens + usage.inputTokens,
           outputTokens: modelUsage[model]!.outputTokens + usage.outputTokens,
           cacheReadInputTokens:
-            modelUsage[model]!.cacheReadInputTokens +
-            usage.cacheReadInputTokens,
+            modelUsage[model]!.cacheReadInputTokens + usage.cacheReadInputTokens,
           cacheCreationInputTokens:
-            modelUsage[model]!.cacheCreationInputTokens +
-            usage.cacheCreationInputTokens,
-          webSearchRequests:
-            modelUsage[model]!.webSearchRequests + usage.webSearchRequests,
+            modelUsage[model]!.cacheCreationInputTokens + usage.cacheCreationInputTokens,
+          webSearchRequests: modelUsage[model]!.webSearchRequests + usage.webSearchRequests,
           costUSD: modelUsage[model]!.costUSD + usage.costUSD,
-          contextWindow: Math.max(
-            modelUsage[model]!.contextWindow,
-            usage.contextWindow,
-          ),
-          maxOutputTokens: Math.max(
-            modelUsage[model]!.maxOutputTokens,
-            usage.maxOutputTokens,
-          ),
+          contextWindow: Math.max(modelUsage[model]!.contextWindow, usage.contextWindow),
+          maxOutputTokens: Math.max(modelUsage[model]!.maxOutputTokens, usage.maxOutputTokens),
         }
       } else {
         modelUsage[model] = { ...usage }
@@ -521,8 +492,8 @@ function cacheToStats(
   }
 
   // Calculate derived stats
-  const dailyActivityArray = Array.from(dailyActivityMap.values()).sort(
-    (a, b) => a.date.localeCompare(b.date),
+  const dailyActivityArray = Array.from(dailyActivityMap.values()).sort((a, b) =>
+    a.date.localeCompare(b.date),
   )
   const streaks = calculateStreaks(dailyActivityArray)
 
@@ -531,8 +502,7 @@ function cacheToStats(
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // Compute session aggregates: combine cache aggregates with today's stats
-  const totalSessions =
-    cache.totalSessions + (todayStats?.sessionStats.length || 0)
+  const totalSessions = cache.totalSessions + (todayStats?.sessionStats.length || 0)
   const totalMessages = cache.totalMessages + (todayStats?.totalMessages || 0)
 
   // Find longest session (compare cache's longest with today's sessions)
@@ -565,9 +535,7 @@ function cacheToStats(
 
   const peakActivityDay =
     dailyActivityArray.length > 0
-      ? dailyActivityArray.reduce((max, d) =>
-          d.messageCount > max.messageCount ? d : max,
-        ).date
+      ? dailyActivityArray.reduce((max, d) => (d.messageCount > max.messageCount ? d : max)).date
       : null
 
   const peakActivityHour =
@@ -580,15 +548,13 @@ function cacheToStats(
   const totalDays =
     firstSessionDate && lastSessionDate
       ? Math.ceil(
-          (new Date(lastSessionDate).getTime() -
-            new Date(firstSessionDate).getTime()) /
+          (new Date(lastSessionDate).getTime() - new Date(firstSessionDate).getTime()) /
             (1000 * 60 * 60 * 24),
         ) + 1
       : 0
 
   const totalSpeculationTimeSavedMs =
-    cache.totalSpeculationTimeSavedMs +
-    (todayStats?.totalSpeculationTimeSavedMs || 0)
+    cache.totalSpeculationTimeSavedMs + (todayStats?.totalSpeculationTimeSavedMs || 0)
 
   const result: ZyCodeStats = {
     totalSessions,
@@ -612,22 +578,15 @@ function cacheToStats(
       ...(cache.shotDistribution || {}),
     }
     if (todayStats?.shotDistribution) {
-      for (const [count, sessions] of Object.entries(
-        todayStats.shotDistribution,
-      )) {
+      for (const [count, sessions] of Object.entries(todayStats.shotDistribution)) {
         const key = parseInt(count, 10)
         shotDistribution[key] = (shotDistribution[key] || 0) + sessions
       }
     }
     result.shotDistribution = shotDistribution
-    const totalWithShots = Object.values(shotDistribution).reduce(
-      (sum, n) => sum + n,
-      0,
-    )
+    const totalWithShots = Object.values(shotDistribution).reduce((sum, n) => sum + n, 0)
     result.oneShotRate =
-      totalWithShots > 0
-        ? Math.round(((shotDistribution[1] || 0) / totalWithShots) * 100)
-        : 0
+      totalWithShots > 0 ? Math.round(((shotDistribution[1] || 0) / totalWithShots) * 100) : 0
   }
 
   return result
@@ -662,10 +621,7 @@ export async function aggregateZyCodeStats(): Promise<ZyCodeStats> {
         toDate: yesterday,
       })
 
-      if (
-        historicalStats.sessionStats.length > 0 ||
-        historicalStats.dailyActivity.length > 0
-      ) {
+      if (historicalStats.sessionStats.length > 0 || historicalStats.dailyActivity.length > 0) {
         result = mergeCacheWithNewStats(cache, historicalStats, yesterday)
         await saveStatsCache(result)
       }
@@ -681,10 +637,7 @@ export async function aggregateZyCodeStats(): Promise<ZyCodeStats> {
         toDate: yesterday,
       })
 
-      if (
-        newStats.sessionStats.length > 0 ||
-        newStats.dailyActivity.length > 0
-      ) {
+      if (newStats.sessionStats.length > 0 || newStats.dailyActivity.length > 0) {
         result = mergeCacheWithNewStats(cache, newStats, yesterday)
         await saveStatsCache(result)
       } else {
@@ -715,9 +668,7 @@ export type StatsDateRange = '7d' | '30d' | 'all'
  * Aggregates stats for a specific date range.
  * For 'all', uses the cached aggregation. For other ranges, processes files directly.
  */
-export async function aggregateZyCodeStatsForRange(
-  range: StatsDateRange,
-): Promise<ZyCodeStats> {
+export async function aggregateZyCodeStatsForRange(range: StatsDateRange): Promise<ZyCodeStats> {
   if (range === 'all') {
     return aggregateZyCodeStats()
   }
@@ -746,9 +697,7 @@ export async function aggregateZyCodeStatsForRange(
  * Convert ProcessedStats to ZyCodeStats.
  * Used for filtered date ranges that bypass the cache.
  */
-function processedStatsToZyCodeStats(
-  stats: ProcessedStats,
-): ZyCodeStats {
+function processedStatsToZyCodeStats(stats: ProcessedStats): ZyCodeStats {
   const dailyActivitySorted = stats.dailyActivity
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -782,9 +731,7 @@ function processedStatsToZyCodeStats(
   // Peak activity day
   const peakActivityDay =
     dailyActivitySorted.length > 0
-      ? dailyActivitySorted.reduce((max, d) =>
-          d.messageCount > max.messageCount ? d : max,
-        ).date
+      ? dailyActivitySorted.reduce((max, d) => (d.messageCount > max.messageCount ? d : max)).date
       : null
 
   // Peak activity hour
@@ -803,8 +750,7 @@ function processedStatsToZyCodeStats(
   const totalDays =
     firstSessionDate && lastSessionDate
       ? Math.ceil(
-          (new Date(lastSessionDate).getTime() -
-            new Date(firstSessionDate).getTime()) /
+          (new Date(lastSessionDate).getTime() - new Date(firstSessionDate).getTime()) /
             (1000 * 60 * 60 * 24),
         ) + 1
       : 0
@@ -828,14 +774,9 @@ function processedStatsToZyCodeStats(
 
   if (feature('SHOT_STATS') && stats.shotDistribution) {
     result.shotDistribution = stats.shotDistribution
-    const totalWithShots = Object.values(stats.shotDistribution).reduce(
-      (sum, n) => sum + n,
-      0,
-    )
+    const totalWithShots = Object.values(stats.shotDistribution).reduce((sum, n) => sum + n, 0)
     result.oneShotRate =
-      totalWithShots > 0
-        ? Math.round(((stats.shotDistribution[1] || 0) / totalWithShots) * 100)
-        : 0
+      totalWithShots > 0 ? Math.round(((stats.shotDistribution[1] || 0) / totalWithShots) * 100) : 0
   }
 
   return result
@@ -870,7 +811,7 @@ function calculateStreaks(dailyActivity: DailyActivity[]): StreakInfo {
   const checkDate = new Date(today)
 
   // Build a set of active dates for quick lookup
-  const activeDates = new Set(dailyActivity.map(d => d.date))
+  const activeDates = new Set(dailyActivity.map((d) => d.date))
 
   while (true) {
     const dateStr = toDateString(checkDate)
@@ -896,9 +837,7 @@ function calculateStreaks(dailyActivity: DailyActivity[]): StreakInfo {
       const prevDate = new Date(sortedDates[i - 1]!)
       const currDate = new Date(sortedDates[i]!)
 
-      const dayDiff = Math.round(
-        (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24),
-      )
+      const dayDiff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
 
       if (dayDiff === 1) {
         tempStreak++
@@ -937,9 +876,7 @@ const SHOT_COUNT_REGEX = /(\d+)-shotted by/
  * The attribution format is: "N-shotted by model-name"
  * Returns the shot count, or null if not found.
  */
-function extractShotCountFromMessages(
-  messages: TranscriptMessage[],
-): number | null {
+function extractShotCountFromMessages(messages: TranscriptMessage[]): number | null {
   for (const m of messages) {
     if (m.type !== 'assistant') continue
     const content = m.message?.content
@@ -968,13 +905,7 @@ function extractShotCountFromMessages(
 // The canonical dateKey (see processSessionFiles) reads mainMessages[0].timestamp,
 // where mainMessages = entries.filter(isTranscriptMessage).filter(!isSidechain).
 // This peek must extract the same value to be a safe skip optimization.
-const TRANSCRIPT_MESSAGE_TYPES = new Set([
-  'user',
-  'assistant',
-  'attachment',
-  'system',
-  'progress',
-])
+const TRANSCRIPT_MESSAGE_TYPES = new Set(['user', 'assistant', 'attachment', 'system', 'progress'])
 
 /**
  * Peeks at the head of a session file to get the session start date.
@@ -991,9 +922,7 @@ const TRANSCRIPT_MESSAGE_TYPES = new Set([
  * Returns a YYYY-MM-DD string, or null if no transcript message fits in the
  * head (caller falls through to the full read — safe default).
  */
-export async function readSessionStartDate(
-  filePath: string,
-): Promise<string | null> {
+export async function readSessionStartDate(filePath: string): Promise<string | null> {
   try {
     const fd = await open(filePath, 'r')
     try {

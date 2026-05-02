@@ -30,11 +30,7 @@ export const pendingClears = new WeakMap<DOMElement, Rectangle[]>()
  */
 let absoluteNodeRemoved = false
 
-export function addPendingClear(
-  parent: DOMElement,
-  rect: Rectangle,
-  isAbsolute: boolean,
-): void {
+export function addPendingClear(parent: DOMElement, rect: Rectangle, isAbsolute: boolean): void {
   const existing = pendingClears.get(parent)
   if (existing) {
     existing.push(rect)

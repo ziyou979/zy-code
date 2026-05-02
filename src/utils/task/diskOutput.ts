@@ -1,12 +1,5 @@
 import { constants as fsConstants } from 'fs'
-import {
-  type FileHandle,
-  mkdir,
-  open,
-  stat,
-  symlink,
-  unlink,
-} from 'fs/promises'
+import { type FileHandle, mkdir, open, stat, symlink, unlink } from 'fs/promises'
 import { join } from 'path'
 import { getSessionId } from '../../bootstrap/state.js'
 import { getErrnoCode } from '../errors.js'
@@ -116,14 +109,12 @@ export class DiskTaskOutput {
     this.#bytesWritten += content.length
     if (this.#bytesWritten > MAX_TASK_OUTPUT_BYTES) {
       this.#capped = true
-      this.#queue.push(
-        `\n[output truncated: exceeded ${MAX_TASK_OUTPUT_BYTES_DISPLAY} disk cap]\n`,
-      )
+      this.#queue.push(`\n[output truncated: exceeded ${MAX_TASK_OUTPUT_BYTES_DISPLAY} disk cap]\n`)
     } else {
       this.#queue.push(content)
     }
     if (!this.#flushPromise) {
-      this.#flushPromise = new Promise<void>(resolve => {
+      this.#flushPromise = new Promise<void>((resolve) => {
         this.#flushResolve = resolve
       })
       void track(this.#drain())
@@ -147,10 +138,7 @@ export class DiskTaskOutput {
             this.#path,
             process.platform === 'win32'
               ? 'a'
-              : fsConstants.O_WRONLY |
-                  fsConstants.O_APPEND |
-                  fsConstants.O_CREAT |
-                  O_NOFOLLOW,
+              : fsConstants.O_WRONLY | fsConstants.O_APPEND | fsConstants.O_CREAT | O_NOFOLLOW,
           )
         }
         while (true) {
@@ -307,11 +295,7 @@ export async function getTaskOutputDelta(
   maxBytes: number = DEFAULT_MAX_READ_BYTES,
 ): Promise<{ content: string; newOffset: number }> {
   try {
-    const result = await readFileRange(
-      getTaskOutputPath(taskId),
-      fromOffset,
-      maxBytes,
-    )
+    const result = await readFileRange(getTaskOutputPath(taskId), fromOffset, maxBytes)
     if (!result) {
       return { content: '', newOffset: fromOffset }
     }
@@ -338,10 +322,7 @@ export async function getTaskOutput(
   maxBytes: number = DEFAULT_MAX_READ_BYTES,
 ): Promise<string> {
   try {
-    const { content, bytesTotal, bytesRead } = await tailFile(
-      getTaskOutputPath(taskId),
-      maxBytes,
-    )
+    const { content, bytesTotal, bytesRead } = await tailFile(getTaskOutputPath(taskId), maxBytes)
     if (bytesTotal > bytesRead) {
       return `[${Math.round((bytesTotal - bytesRead) / 1024)}KB of earlier output omitted]\n${content}`
     }
@@ -409,10 +390,7 @@ export function initTaskOutput(taskId: string): Promise<string> {
         outputPath,
         process.platform === 'win32'
           ? 'wx'
-          : fsConstants.O_WRONLY |
-              fsConstants.O_CREAT |
-              fsConstants.O_EXCL |
-              O_NOFOLLOW,
+          : fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | O_NOFOLLOW,
       )
       await fh.close()
       return outputPath
@@ -424,10 +402,7 @@ export function initTaskOutput(taskId: string): Promise<string> {
  * Initialize output file as a symlink to another file (e.g., agent transcript).
  * Tries to create the symlink first; if a file already exists, removes it and retries.
  */
-export function initTaskOutputAsSymlink(
-  taskId: string,
-  targetPath: string,
-): Promise<string> {
+export function initTaskOutputAsSymlink(taskId: string, targetPath: string): Promise<string> {
   return track(
     (async () => {
       try {

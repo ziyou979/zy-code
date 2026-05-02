@@ -241,10 +241,7 @@ export function parseSedEditCommand(command: string): SedEditInfo | null {
  * Apply a sed substitution to file content
  * Returns the new content after applying the substitution
  */
-export function applySedSubstitution(
-  content: string,
-  sedInfo: SedEditInfo,
-): string {
+export function applySedSubstitution(content: string, sedInfo: SedEditInfo): string {
   // Convert sed pattern to JavaScript regex
   let regexFlags = ''
 

@@ -11,9 +11,7 @@ function validateUrl(url: string): void {
 
   // Validate URL protocol for security
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-    throw new Error(
-      `Invalid URL protocol: must use http:// or https://, got ${parsedUrl.protocol}`,
-    )
+    throw new Error(`Invalid URL protocol: must use http:// or https://, got ${parsedUrl.protocol}`)
   }
 }
 
@@ -50,15 +48,10 @@ export async function openBrowser(url: string): Promise<boolean> {
         const { code } = await execFileNoThrow(browserEnv, [`"${url}"`])
         return code === 0
       }
-      const { code } = await execFileNoThrow(
-        'rundll32',
-        ['url,OpenURL', url],
-        {},
-      )
+      const { code } = await execFileNoThrow('rundll32', ['url,OpenURL', url], {})
       return code === 0
     } else {
-      const command =
-        browserEnv || (platform === 'darwin' ? 'open' : 'xdg-open')
+      const command = browserEnv || (platform === 'darwin' ? 'open' : 'xdg-open')
       const { code } = await execFileNoThrow(command, [url])
       return code === 0
     }

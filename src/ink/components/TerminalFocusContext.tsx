@@ -1,17 +1,22 @@
-import React, { createContext, useSyncExternalStore } from 'react';
-import { getTerminalFocused, getTerminalFocusState, subscribeTerminalFocus, type TerminalFocusState } from '../terminal-focus-state.js';
-export type { TerminalFocusState };
+import React, { createContext, useSyncExternalStore } from 'react'
+import {
+  getTerminalFocused,
+  getTerminalFocusState,
+  subscribeTerminalFocus,
+  type TerminalFocusState,
+} from '../terminal-focus-state.js'
+export type { TerminalFocusState }
 export type TerminalFocusContextProps = {
-  readonly isTerminalFocused: boolean;
-  readonly terminalFocusState: TerminalFocusState;
-};
+  readonly isTerminalFocused: boolean
+  readonly terminalFocusState: TerminalFocusState
+}
 const TerminalFocusContext = createContext<TerminalFocusContextProps>({
   isTerminalFocused: true,
-  terminalFocusState: 'unknown'
-});
+  terminalFocusState: 'unknown',
+})
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
-TerminalFocusContext.displayName = 'TerminalFocusContext';
+TerminalFocusContext.displayName = 'TerminalFocusContext'
 
 // Separate component so App.tsx doesn't re-render on focus changes.
 // Children are a stable prop reference, so they don't re-render either —
@@ -20,12 +25,12 @@ export function TerminalFocusProvider({
   children,
   ...props
 }: TerminalFocusContextProps & { children?: React.ReactNode }) {
-  const isTerminalFocused = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocused);
-  const terminalFocusState = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocusState);
+  const isTerminalFocused = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocused)
+  const terminalFocusState = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocusState)
   const value = {
     isTerminalFocused,
-    terminalFocusState
-  };
-  return <TerminalFocusContext.Provider value={value}>{children}</TerminalFocusContext.Provider>;
+    terminalFocusState,
+  }
+  return <TerminalFocusContext.Provider value={value}>{children}</TerminalFocusContext.Provider>
 }
-export default TerminalFocusContext;
+export default TerminalFocusContext

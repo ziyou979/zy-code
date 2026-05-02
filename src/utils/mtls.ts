@@ -29,13 +29,10 @@ export const getMTLSConfig = memoize((): MTLSConfig | undefined => {
   // Client certificate
   if (process.env.ZY_CODE_CLIENT_CERT) {
     try {
-      config.cert = getFsImplementation().readFileSync(
-        process.env.ZY_CODE_CLIENT_CERT,
-        { encoding: 'utf8' },
-      )
-      logForDebugging(
-        'mTLS: Loaded client certificate from ZY_CODE_CLIENT_CERT',
-      )
+      config.cert = getFsImplementation().readFileSync(process.env.ZY_CODE_CLIENT_CERT, {
+        encoding: 'utf8',
+      })
+      logForDebugging('mTLS: Loaded client certificate from ZY_CODE_CLIENT_CERT')
     } catch (error) {
       logForDebugging(`mTLS: Failed to load client certificate: ${error}`, {
         level: 'error',
@@ -46,10 +43,9 @@ export const getMTLSConfig = memoize((): MTLSConfig | undefined => {
   // Client key
   if (process.env.ZY_CODE_CLIENT_KEY) {
     try {
-      config.key = getFsImplementation().readFileSync(
-        process.env.ZY_CODE_CLIENT_KEY,
-        { encoding: 'utf8' },
-      )
+      config.key = getFsImplementation().readFileSync(process.env.ZY_CODE_CLIENT_KEY, {
+        encoding: 'utf8',
+      })
       logForDebugging('mTLS: Loaded client key from ZY_CODE_CLIENT_KEY')
     } catch (error) {
       logForDebugging(`mTLS: Failed to load client key: ${error}`, {

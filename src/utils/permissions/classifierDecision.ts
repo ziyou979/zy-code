@@ -29,24 +29,23 @@ import { YOLO_CLASSIFIER_TOOL_NAME } from './yoloClassifier.js'
 const TERMINAL_CAPTURE_TOOL_NAME = feature('TERMINAL_PANEL')
   ? (
       require('../../tools/TerminalCaptureTool/prompt.js') as typeof import('../../tools/TerminalCaptureTool/prompt.js')
-    // @ts-ignore
     ).TERMINAL_CAPTURE_TOOL_NAME
-  : null
+  : // @ts-ignore
+    null
 // @ts-ignore
 const OVERFLOW_TEST_TOOL_NAME = feature('OVERFLOW_TEST_TOOL')
   ? (
       require('../../tools/OverflowTestTool/OverflowTestTool.js') as typeof import('../../tools/OverflowTestTool/OverflowTestTool.js')
-    // @ts-ignore
     ).OVERFLOW_TEST_TOOL_NAME
-  : null
+  : // @ts-ignore
+    null
 // @ts-ignore
-const VERIFY_PLAN_EXECUTION_TOOL_NAME =
-  isInternalBuild()
-    ? (
-        require('../../tools/VerifyPlanExecutionTool/constants.js') as typeof import('../../tools/VerifyPlanExecutionTool/constants.js')
-      // @ts-ignore
-      ).VERIFY_PLAN_EXECUTION_TOOL_NAME
-    : null
+const VERIFY_PLAN_EXECUTION_TOOL_NAME = isInternalBuild()
+  ? (
+      require('../../tools/VerifyPlanExecutionTool/constants.js') as typeof import('../../tools/VerifyPlanExecutionTool/constants.js')
+    ).VERIFY_PLAN_EXECUTION_TOOL_NAME
+  : // @ts-ignore
+    null
 const WORKFLOW_TOOL_NAME = feature('WORKFLOW_SCRIPTS')
   ? (
       require('../../tools/WorkflowTool/constants.js') as typeof import('../../tools/WorkflowTool/constants.js')

@@ -35,25 +35,16 @@ type ToolCounts = {
 /**
  * Tool categories for summarization.
  */
-const SEARCH_TOOLS = [
-  GREP_TOOL_NAME,
-  GLOB_TOOL_NAME,
-  WEB_SEARCH_TOOL_NAME,
-  LSP_TOOL_NAME,
-]
+const SEARCH_TOOLS = [GREP_TOOL_NAME, GLOB_TOOL_NAME, WEB_SEARCH_TOOL_NAME, LSP_TOOL_NAME]
 const READ_TOOLS = [FILE_READ_TOOL_NAME, LIST_MCP_RESOURCES_TOOL_NAME]
-const WRITE_TOOLS = [
-  FILE_WRITE_TOOL_NAME,
-  FILE_EDIT_TOOL_NAME,
-  NOTEBOOK_EDIT_TOOL_NAME,
-]
+const WRITE_TOOLS = [FILE_WRITE_TOOL_NAME, FILE_EDIT_TOOL_NAME, NOTEBOOK_EDIT_TOOL_NAME]
 const COMMAND_TOOLS = [...SHELL_TOOL_NAMES, 'Tmux', TASK_STOP_TOOL_NAME]
 
 function categorizeToolName(toolName: string): keyof ToolCounts {
-  if (SEARCH_TOOLS.some(t => toolName.startsWith(t))) return 'searches'
-  if (READ_TOOLS.some(t => toolName.startsWith(t))) return 'reads'
-  if (WRITE_TOOLS.some(t => toolName.startsWith(t))) return 'writes'
-  if (COMMAND_TOOLS.some(t => toolName.startsWith(t))) return 'commands'
+  if (SEARCH_TOOLS.some((t) => toolName.startsWith(t))) return 'searches'
+  if (READ_TOOLS.some((t) => toolName.startsWith(t))) return 'reads'
+  if (WRITE_TOOLS.some((t) => toolName.startsWith(t))) return 'writes'
+  if (COMMAND_TOOLS.some((t) => toolName.startsWith(t))) return 'commands'
   return 'other'
 }
 
@@ -75,22 +66,16 @@ function getToolSummaryText(counts: ToolCounts): string | undefined {
 
   // Use similar phrasing to collapseReadSearch.ts
   if (counts.searches > 0) {
-    parts.push(
-      `searched ${counts.searches} ${counts.searches === 1 ? 'pattern' : 'patterns'}`,
-    )
+    parts.push(`searched ${counts.searches} ${counts.searches === 1 ? 'pattern' : 'patterns'}`)
   }
   if (counts.reads > 0) {
     parts.push(`read ${counts.reads} ${counts.reads === 1 ? 'file' : 'files'}`)
   }
   if (counts.writes > 0) {
-    parts.push(
-      `wrote ${counts.writes} ${counts.writes === 1 ? 'file' : 'files'}`,
-    )
+    parts.push(`wrote ${counts.writes} ${counts.writes === 1 ? 'file' : 'files'}`)
   }
   if (counts.commands > 0) {
-    parts.push(
-      `ran ${counts.commands} ${counts.commands === 1 ? 'command' : 'commands'}`,
-    )
+    parts.push(`ran ${counts.commands} ${counts.commands === 1 ? 'command' : 'commands'}`)
   }
   if (counts.other > 0) {
     parts.push(`${counts.other} other ${counts.other === 1 ? 'tool' : 'tools'}`)
@@ -106,10 +91,7 @@ function getToolSummaryText(counts: ToolCounts): string | undefined {
 /**
  * Count tool uses in an assistant message and add to existing counts.
  */
-function accumulateToolUses(
-  message: SDKAssistantMessage,
-  counts: ToolCounts,
-): void {
+function accumulateToolUses(message: SDKAssistantMessage, counts: ToolCounts): void {
   const content = (message.message as any).content
   if (!Array.isArray(content)) {
     return
@@ -127,20 +109,14 @@ function accumulateToolUses(
  * Create a stateful transformer that accumulates tool counts between text messages.
  * Tool counts reset when a message with text content is encountered.
  */
-export function createStreamlinedTransformer(): (
-  message: StdoutMessage,
-) => StdoutMessage | null {
+export function createStreamlinedTransformer(): (message: StdoutMessage) => StdoutMessage | null {
   let cumulativeCounts = createEmptyToolCounts()
 
-  return function transformToStreamlined(
-    message: StdoutMessage,
-  ): StdoutMessage | null {
+  return function transformToStreamlined(message: StdoutMessage): StdoutMessage | null {
     switch (message.type) {
       case 'assistant': {
         const content = (message.message as any).content
-        const text = Array.isArray(content)
-          ? extractTextContent(content, '\n').trim()
-          : ''
+        const text = Array.isArray(content) ? extractTextContent(content, '\n').trim() : ''
 
         // Accumulate tool counts from this message
         accumulateToolUses(message, cumulativeCounts)

@@ -17,19 +17,15 @@ function createBasePublicApiAuth(): PublicApiAuth {
   return { account_id: 0, organization_uuid: '', account_uuid: '' }
 }
 
-export let PublicApiAuth;
+export let PublicApiAuth
 PublicApiAuth = {
   fromJSON(object: any): PublicApiAuth {
     return {
-      account_id: isSet(object.account_id)
-        ? globalThis.Number(object.account_id)
-        : 0,
+      account_id: isSet(object.account_id) ? globalThis.Number(object.account_id) : 0,
       organization_uuid: isSet(object.organization_uuid)
         ? globalThis.String(object.organization_uuid)
         : '',
-      account_uuid: isSet(object.account_uuid)
-        ? globalThis.String(object.account_uuid)
-        : '',
+      account_uuid: isSet(object.account_uuid) ? globalThis.String(object.account_uuid) : '',
     }
   },
 
@@ -47,14 +43,10 @@ PublicApiAuth = {
     return obj
   },
 
-  create<I extends Exact<DeepPartial<PublicApiAuth>, I>>(
-    base?: I,
-  ): PublicApiAuth {
+  create<I extends Exact<DeepPartial<PublicApiAuth>, I>>(base?: I): PublicApiAuth {
     return PublicApiAuth.fromPartial(base ?? ({} as any))
   },
-  fromPartial<I extends Exact<DeepPartial<PublicApiAuth>, I>>(
-    object: I,
-  ): PublicApiAuth {
+  fromPartial<I extends Exact<DeepPartial<PublicApiAuth>, I>>(object: I): PublicApiAuth {
     const message = createBasePublicApiAuth()
     message.account_id = object.account_id ?? 0
     message.organization_uuid = object.organization_uuid ?? ''
@@ -63,14 +55,7 @@ PublicApiAuth = {
   },
 }
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined
 
 type DeepPartial<T> = T extends Builtin
   ? T

@@ -1,36 +1,34 @@
-import React, { createContext, useContext, useState, useSyncExternalStore } from 'react';
-import { createStore, type Store } from '../state/store.js';
+import React, { createContext, useContext, useState, useSyncExternalStore } from 'react'
+import { createStore, type Store } from '../state/store.js'
 export type VoiceState = {
-  voiceState: 'idle' | 'recording' | 'processing';
-  voiceError: string | null;
-  voiceInterimTranscript: string;
-  voiceAudioLevels: number[];
-  voiceWarmingUp: boolean;
-};
+  voiceState: 'idle' | 'recording' | 'processing'
+  voiceError: string | null
+  voiceInterimTranscript: string
+  voiceAudioLevels: number[]
+  voiceWarmingUp: boolean
+}
 const DEFAULT_STATE: VoiceState = {
   voiceState: 'idle',
   voiceError: null,
   voiceInterimTranscript: '',
   voiceAudioLevels: [],
-  voiceWarmingUp: false
-};
-type VoiceStore = Store<VoiceState>;
-const VoiceContext = createContext<VoiceStore | null>(null);
+  voiceWarmingUp: false,
+}
+type VoiceStore = Store<VoiceState>
+const VoiceContext = createContext<VoiceStore | null>(null)
 type Props = {
-  children: React.ReactNode;
-};
-export function VoiceProvider({
-  children
-}: Props) {
-  const [store] = useState(() => createStore(DEFAULT_STATE));
-  return <VoiceContext.Provider value={store}>{children}</VoiceContext.Provider>;
+  children: React.ReactNode
+}
+export function VoiceProvider({ children }: Props) {
+  const [store] = useState(() => createStore(DEFAULT_STATE))
+  return <VoiceContext.Provider value={store}>{children}</VoiceContext.Provider>
 }
 function useVoiceStore() {
-  const store = useContext(VoiceContext);
+  const store = useContext(VoiceContext)
   if (!store) {
-    throw new Error("useVoiceState must be used within a VoiceProvider");
+    throw new Error('useVoiceState must be used within a VoiceProvider')
   }
-  return store;
+  return store
 }
 
 /**
@@ -38,9 +36,9 @@ function useVoiceStore() {
  * value changes (compared via Object.is).
  */
 export function useVoiceState(selector) {
-  const store = useVoiceStore();
-  const get = () => selector(store.getState());
-  return useSyncExternalStore(store.subscribe, get, get);
+  const store = useVoiceStore()
+  const get = () => selector(store.getState())
+  return useSyncExternalStore(store.subscribe, get, get)
 }
 
 /**
@@ -49,7 +47,7 @@ export function useVoiceState(selector) {
  * after to observe the new value (VoiceKeybindingHandler relies on this).
  */
 export function useSetVoiceState() {
-  return useVoiceStore().setState;
+  return useVoiceStore().setState
 }
 
 /**
@@ -58,5 +56,5 @@ export function useSetVoiceState() {
  * inside event handlers that need to read state set earlier in the same tick.
  */
 export function useGetVoiceState() {
-  return useVoiceStore().getState;
+  return useVoiceStore().getState
 }

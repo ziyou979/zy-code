@@ -43,10 +43,7 @@ const OPEN_TO_CLOSE: Record<string, string> = {
  * Shape matches findThinkingTriggerPositions (thinking.ts) so
  * PromptInput treats both trigger types uniformly.
  */
-function findKeywordTriggerPositions(
-  text: string,
-  keyword: string,
-): TriggerPosition[] {
+function findKeywordTriggerPositions(text: string, keyword: string): TriggerPosition[] {
   const re = new RegExp(keyword, 'i')
   if (!re.test(text)) return []
   if (text.startsWith('/')) return []
@@ -82,12 +79,11 @@ function findKeywordTriggerPositions(
     if (match.index === undefined) continue
     const start = match.index
     const end = start + match[0].length
-    if (quotedRanges.some(r => start >= r.start && start < r.end)) continue
+    if (quotedRanges.some((r) => start >= r.start && start < r.end)) continue
     const before = text[start - 1]
     const after = text[end]
     if (before === '/' || before === '\\' || before === '-') continue
-    if (after === '/' || after === '\\' || after === '-' || after === '?')
-      continue
+    if (after === '/' || after === '\\' || after === '-' || after === '?') continue
     if (after === '.' && isWord(text[end + 1])) continue
     positions.push({ word: match[0], start, end })
   }
@@ -98,9 +94,7 @@ export function findUltraplanTriggerPositions(text: string): TriggerPosition[] {
   return findKeywordTriggerPositions(text, 'ultraplan')
 }
 
-export function findUltrareviewTriggerPositions(
-  text: string,
-): TriggerPosition[] {
+export function findUltrareviewTriggerPositions(text: string): TriggerPosition[] {
   return findKeywordTriggerPositions(text, 'ultrareview')
 }
 

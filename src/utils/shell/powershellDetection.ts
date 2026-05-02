@@ -36,10 +36,7 @@ export async function findPowerShell(): Promise<string | null> {
           (await probePath('/usr/bin/pwsh'))
         if (direct) {
           const directResolved = await realpath(direct).catch(() => direct)
-          if (
-            !direct.startsWith('/snap/') &&
-            !directResolved.startsWith('/snap/')
-          ) {
+          if (!direct.startsWith('/snap/') && !directResolved.startsWith('/snap/')) {
             return direct
           }
         }

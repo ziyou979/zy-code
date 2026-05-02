@@ -21,9 +21,7 @@ export type {
 }
 
 // Helper function to get the appropriate prose description for rule behavior
-export function getRuleBehaviorDescription(
-  permissionResult: PermissionResult['behavior'],
-): string {
+export function getRuleBehaviorDescription(permissionResult: PermissionResult['behavior']): string {
   switch (permissionResult) {
     case 'allow':
       return 'allowed'

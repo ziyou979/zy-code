@@ -17,11 +17,7 @@ import { isInternalBuild } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 import { getSessionEnvironmentScript } from '../sessionEnvironment.js'
 import { getSessionEnvVars } from '../sessionEnvVars.js'
-import {
-  ensureSocketInitialized,
-  getZyTmuxEnv,
-  hasTmuxToolBeenUsed,
-} from '../tmuxSocket.js'
+import { ensureSocketInitialized, getZyTmuxEnv, hasTmuxToolBeenUsed } from '../tmuxSocket.js'
 import { windowsPathToPosixPath } from '../windowsPaths.js'
 import type { ShellProvider } from './shellProvider.js'
 
@@ -63,7 +59,7 @@ export async function createBashShellProvider(
   let currentSandboxTmpDir: string | undefined
   const snapshotPromise: Promise<string | undefined> = options?.skipSnapshot
     ? Promise.resolve(undefined)
-    : createAndSaveSnapshot(shellPath).catch(error => {
+    : createAndSaveSnapshot(shellPath).catch((error) => {
         logForDebugging(`Failed to create shell snapshot: ${error}`)
         return undefined
       })
@@ -95,9 +91,7 @@ export async function createBashShellProvider(
         try {
           await access(snapshotFilePath)
         } catch {
-          logForDebugging(
-            `Snapshot file missing, falling back to login shell: ${snapshotFilePath}`,
-          )
+          logForDebugging(`Snapshot file missing, falling back to login shell: ${snapshotFilePath}`)
           snapshotFilePath = undefined
         }
       }
@@ -131,16 +125,11 @@ export async function createBashShellProvider(
 
       // Debug logging for heredoc/multiline commands to trace trailer handling
       // Only log when commit attribution is enabled to avoid noise
-      if (
-        feature('COMMIT_ATTRIBUTION') &&
-        (command.includes('<<') || command.includes('\n'))
-      ) {
+      if (feature('COMMIT_ATTRIBUTION') && (command.includes('<<') || command.includes('\n'))) {
         logForDebugging(
           `Shell: Command before quoting (first 500 chars):\n${command.slice(0, 500)}`,
         )
-        logForDebugging(
-          `Shell: Quoted command (first 500 chars):\n${quotedCommand.slice(0, 500)}`,
-        )
+        logForDebugging(`Shell: Quoted command (first 500 chars):\n${quotedCommand.slice(0, 500)}`)
       }
 
       // Special handling for pipes: move stdin redirect after first command
@@ -161,9 +150,7 @@ export async function createBashShellProvider(
       // vanishes in that window, the `&&` chain still continues.
       if (snapshotFilePath) {
         const finalPath =
-          getPlatform() === 'windows'
-            ? windowsPathToPosixPath(snapshotFilePath)
-            : snapshotFilePath
+          getPlatform() === 'windows' ? windowsPathToPosixPath(snapshotFilePath) : snapshotFilePath
         commandParts.push(`source ${quote([finalPath])} 2>/dev/null || true`)
       }
 
@@ -189,10 +176,7 @@ export async function createBashShellProvider(
 
       // Apply ZY_CODE_SHELL_PREFIX if set
       if (process.env.ZY_CODE_SHELL_PREFIX) {
-        commandString = formatShellPrefixCommand(
-          process.env.ZY_CODE_SHELL_PREFIX,
-          commandString,
-        )
+        commandString = formatShellPrefixCommand(process.env.ZY_CODE_SHELL_PREFIX, commandString)
       }
 
       return { commandString, cwdFilePath }
@@ -206,9 +190,7 @@ export async function createBashShellProvider(
       return ['-c', ...(skipLoginShell ? [] : ['-l']), commandString]
     },
 
-    async getEnvironmentOverrides(
-      command: string,
-    ): Promise<Record<string, string>> {
+    async getEnvironmentOverrides(command: string): Promise<Record<string, string>> {
       // TMUX SOCKET ISOLATION (DEFERRED):
       // We initialize Zy's tmux socket ONLY AFTER the Tmux tool has been used
       // at least once, OR if the current command appears to use tmux.
@@ -219,10 +201,7 @@ export async function createBashShellProvider(
       //
       // See tmuxSocket.ts for the full isolation architecture documentation.
       const commandUsesTmux = command.includes('tmux')
-      if (
-        isInternalBuild() &&
-        (hasTmuxToolBeenUsed() || commandUsesTmux)
-      ) {
+      if (isInternalBuild() && (hasTmuxToolBeenUsed() || commandUsesTmux)) {
         await ensureSocketInitialized()
       }
       const ZyTmuxEnv = getZyTmuxEnv()

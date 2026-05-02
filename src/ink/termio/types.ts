@@ -40,13 +40,7 @@ export type Color =
 // =============================================================================
 
 /** 下划线样式变体 */
-export type UnderlineStyle =
-  | 'none'
-  | 'single'
-  | 'double'
-  | 'curly'
-  | 'dotted'
-  | 'dashed'
+export type UnderlineStyle = 'none' | 'single' | 'double' | 'curly' | 'dotted' | 'dashed'
 
 /** 文本样式属性 - 表示当前样式状态 */
 export type TextStyle = {
@@ -109,11 +103,7 @@ export function colorsEqual(a: Color, b: Color): boolean {
     case 'indexed':
       return a.index === (b as typeof a).index
     case 'rgb':
-      return (
-        a.r === (b as typeof a).r &&
-        a.g === (b as typeof a).g &&
-        a.b === (b as typeof a).b
-      )
+      return a.r === (b as typeof a).r && a.g === (b as typeof a).g && a.b === (b as typeof a).b
     case 'default':
       return true
   }

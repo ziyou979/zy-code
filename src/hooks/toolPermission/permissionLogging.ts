@@ -12,10 +12,7 @@ import type { Tool as ToolType, ToolUseContext } from '../../Tool.js'
 import { getLanguageName } from '../../utils/cliHighlight.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { logOTelEvent } from '../../utils/telemetry/events.js'
-import type {
-  PermissionApprovalSource,
-  PermissionRejectionSource,
-} from './PermissionContext.js'
+import type { PermissionApprovalSource, PermissionRejectionSource } from './PermissionContext.js'
 
 type PermissionLogContext = {
   tool: ToolType
@@ -65,9 +62,7 @@ async function buildCodeEditToolAttributes(
 }
 
 // Flattens structured source into a string label for analytics/OTel events
-function sourceToString(
-  source: PermissionApprovalSource | PermissionRejectionSource,
-): string {
+function sourceToString(source: PermissionApprovalSource | PermissionRejectionSource): string {
   if (
     (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
     source.type === 'classifier'
@@ -94,8 +89,7 @@ function baseMetadata(
   waitMs: number | undefined,
 ): { [key: string]: boolean | number | undefined } {
   return {
-    messageID:
-      messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     toolName: sanitizeToolNameForAnalytics(toolName),
     sandboxEnabled: SandboxManager.isSandboxingEnabled(),
     // Only include wait time when the user was actually prompted (not auto-approved)
@@ -112,20 +106,14 @@ function logApprovalEvent(
 ): void {
   if (source === 'config') {
     // Auto-approved by allowlist in settings -- no user wait time
-    logEvent(
-      'zy_tool_use_granted_in_config',
-      baseMetadata(messageId, tool.name, undefined),
-    )
+    logEvent('zy_tool_use_granted_in_config', baseMetadata(messageId, tool.name, undefined))
     return
   }
   if (
     (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
     source.type === 'classifier'
   ) {
-    logEvent(
-      'zy_tool_use_granted_by_classifier',
-      baseMetadata(messageId, tool.name, waitMs),
-    )
+    logEvent('zy_tool_use_granted_by_classifier', baseMetadata(messageId, tool.name, waitMs))
     return
   }
   switch (source.type) {
@@ -157,10 +145,7 @@ function logRejectionEvent(
 ): void {
   if (source === 'config') {
     // Denied by denylist in settings
-    logEvent(
-      'zy_tool_use_denied_in_config',
-      baseMetadata(messageId, tool.name, undefined),
-    )
+    logEvent('zy_tool_use_denied_in_config', baseMetadata(messageId, tool.name, undefined))
     return
   }
   logEvent('zy_tool_use_rejected_in_prompt', {
@@ -169,8 +154,7 @@ function logRejectionEvent(
     ...(source.type === 'hook'
       ? { isHook: true }
       : {
-          hasFeedback:
-            source.type === 'user_reject' ? source.hasFeedback : false,
+          hasFeedback: source.type === 'user_reject' ? source.hasFeedback : false,
         }),
   })
 }
@@ -187,33 +171,21 @@ function logPermissionDecision(
   const { decision, source } = args
 
   const waiting_for_user_permission_ms =
-    permissionPromptStartTimeMs !== undefined
-      ? Date.now() - permissionPromptStartTimeMs
-      : undefined
+    permissionPromptStartTimeMs !== undefined ? Date.now() - permissionPromptStartTimeMs : undefined
 
   // Log the analytics event
   if (args.decision === 'accept') {
-    logApprovalEvent(
-      tool,
-      messageId,
-      args.source,
-      waiting_for_user_permission_ms,
-    )
+    logApprovalEvent(tool, messageId, args.source, waiting_for_user_permission_ms)
   } else {
-    logRejectionEvent(
-      tool,
-      messageId,
-      args.source,
-      waiting_for_user_permission_ms,
-    )
+    logRejectionEvent(tool, messageId, args.source, waiting_for_user_permission_ms)
   }
 
   const sourceString = source === 'config' ? 'config' : sourceToString(source)
 
   // Track code editing tool metrics
   if (isCodeEditingTool(tool.name)) {
-    void buildCodeEditToolAttributes(tool, input, decision, sourceString).then(
-      attributes => getCodeEditToolDecisionCounter()?.add(1, attributes),
+    void buildCodeEditToolAttributes(tool, input, decision, sourceString).then((attributes) =>
+      getCodeEditToolDecisionCounter()?.add(1, attributes),
     )
   }
 

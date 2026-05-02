@@ -4,7 +4,7 @@ import { shouldAutoEnableClaudeInChrome } from '../../utils/claudeInChrome/setup
 import { registerBundledSkill } from '../bundledSkills.js'
 
 const CLAUDE_IN_CHROME_MCP_TOOLS = BROWSER_TOOLS.map(
-  tool => `mcp__claude-in-chrome__${(tool as any).name}`,
+  (tool) => `mcp__claude-in-chrome__${(tool as any).name}`,
 )
 
 const SKILL_ACTIVATION_MESSAGE = `

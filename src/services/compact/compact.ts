@@ -15,10 +15,7 @@ import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import { FileReadTool } from '../../tools/FileReadTool/FileReadTool.js'
-import {
-  FILE_READ_TOOL_NAME,
-  FILE_UNCHANGED_STUB,
-} from '../../tools/FileReadTool/prompt.js'
+import { FILE_READ_TOOL_NAME, FILE_UNCHANGED_STUB } from '../../tools/FileReadTool/prompt.js'
 import { ToolSearchTool } from '../../tools/ToolSearchTool/ToolSearchTool.js'
 import type { AgentId } from '../../types/ids.js'
 import type {
@@ -40,21 +37,12 @@ import {
 } from '../../utils/attachments.js'
 import { getMemoryPath } from '../../utils/config.js'
 import { COMPACT_MAX_OUTPUT_TOKENS } from '../../utils/context.js'
-import {
-  analyzeContext,
-  tokenStatsToStatsigMetrics,
-} from '../../utils/contextAnalysis.js'
+import { analyzeContext, tokenStatsToStatsigMetrics } from '../../utils/contextAnalysis.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { cacheToObject } from '../../utils/fileStateCache.js'
-import {
-  type CacheSafeParams,
-  runForkedAgent,
-} from '../../utils/forkedAgent.js'
-import {
-  executePostCompactHooks,
-  executePreCompactHooks,
-} from '../../utils/hooks.js'
+import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
+import { executePostCompactHooks, executePreCompactHooks } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
 import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
 import {
@@ -73,10 +61,7 @@ import {
   sendSessionActivitySignal,
 } from '../../utils/sessionActivity.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
-import {
-  getTranscriptPath,
-  reAppendSessionMetadata,
-} from '../../utils/sessionStorage.js'
+import { getTranscriptPath, reAppendSessionMetadata } from '../../utils/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -87,19 +72,13 @@ import {
   tokenCountFromLastAPIResponse,
   tokenCountWithEstimation,
 } from '../../utils/tokens.js'
-import {
-  extractDiscoveredToolNames,
-  isToolSearchEnabled,
-} from '../../utils/toolSearch.js'
+import { extractDiscoveredToolNames, isToolSearchEnabled } from '../../utils/toolSearch.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import {
-  getMaxOutputTokensForModel,
-  queryModelWithStreaming,
-} from '../api/zy.js'
+import { getMaxOutputTokensForModel, queryModelWithStreaming } from '../api/zy.js'
 import {
   getPromptTooLongTokenGap,
   PROMPT_TOO_LONG_ERROR_MESSAGE,
@@ -139,7 +118,7 @@ const MAX_COMPACT_STREAMING_RETRIES = 2
  * assistant 消息包含文本、tool_use 和 thinking 块，但不包含图片。
  */
 export function stripImagesFromMessages(messages: Message[]): Message[] {
-  return messages.map(message => {
+  return messages.map((message) => {
     if (message.type !== 'user') {
       return message
     }
@@ -150,7 +129,7 @@ export function stripImagesFromMessages(messages: Message[]): Message[] {
     }
 
     let hasMediaBlock = false
-    const newContent = content.flatMap(block => {
+    const newContent = content.flatMap((block) => {
       if (block.type === 'image') {
         hasMediaBlock = true
         return [{ type: 'text' as const, text: '[image]' }]
@@ -162,7 +141,7 @@ export function stripImagesFromMessages(messages: Message[]): Message[] {
       // Also strip images/documents nested inside tool_result content arrays
       if (block.type === 'tool_result' && Array.isArray(block.content)) {
         let toolHasMedia = false
-        const newToolContent = block.content.map(item => {
+        const newToolContent = block.content.map((item) => {
           if (item.type === 'image') {
             toolHasMedia = true
             return { type: 'text' as const, text: '[image]' }
@@ -206,19 +185,17 @@ export function stripImagesFromMessages(messages: Message[]): Message[] {
 export function stripReinjectedAttachments(messages: Message[]): Message[] {
   if (feature('EXPERIMENTAL_SKILL_SEARCH')) {
     return messages.filter(
-      m =>
+      (m) =>
         !(
           m.type === 'attachment' &&
-          (m.attachment.type === 'skill_discovery' ||
-            m.attachment.type === 'skill_listing')
+          (m.attachment.type === 'skill_discovery' || m.attachment.type === 'skill_listing')
         ),
     )
   }
   return messages
 }
 
-export const ERROR_MESSAGE_NOT_ENOUGH_MESSAGES =
-  'Not enough messages to compact.'
+export const ERROR_MESSAGE_NOT_ENOUGH_MESSAGES = 'Not enough messages to compact.'
 const MAX_PTL_RETRIES = 3
 const PTL_RETRY_MARKER = '[earlier conversation truncated for compaction retry]'
 
@@ -274,10 +251,7 @@ export function truncateHeadForPTLRetry(
   // API 会拒绝（第一条消息必须是 role=user）。添加一个合成的 user 标记 —
   // ensureToolResultPairing 已经处理由此产生的孤立 tool_result。
   if (sliced[0]?.type === 'assistant') {
-    return [
-      createUserMessage({ content: PTL_RETRY_MARKER, isMeta: true }),
-      ...sliced,
-    ]
+    return [createUserMessage({ content: PTL_RETRY_MARKER, isMeta: true }), ...sliced]
   }
   return sliced
 }
@@ -408,10 +382,7 @@ export async function compactConversation(
       },
       context.abortController.signal,
     )
-    customInstructions = mergeHookInstructions(
-      customInstructions,
-      hookResult.newCustomInstructions,
-    )
+    customInstructions = mergeHookInstructions(customInstructions, hookResult.newCustomInstructions)
     const userDisplayMessage = hookResult.userDisplayMessage
 
     // 显示请求模式，带上箭头和自定义消息
@@ -459,8 +430,7 @@ export async function compactConversation(
           : null
       if (!truncated) {
         logEvent('zy_compact_failed', {
-          reason:
-            'prompt_too_long' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          reason: 'prompt_too_long' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           preCompactTokenCount,
           promptCacheSharingEnabled,
           ptlAttempts,
@@ -487,8 +457,7 @@ export async function compactConversation(
         { level: 'error' },
       )
       logEvent('zy_compact_failed', {
-        reason:
-          'no_summary' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        reason: 'no_summary' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
         promptCacheSharingEnabled,
       })
@@ -497,8 +466,7 @@ export async function compactConversation(
       )
     } else if (startsWithApiErrorPrefix(summary)) {
       logEvent('zy_compact_failed', {
-        reason:
-          'api_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        reason: 'api_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         preCompactTokenCount,
         promptCacheSharingEnabled,
       })
@@ -586,14 +554,14 @@ export async function compactConversation(
     const boundaryMarker = createCompactBoundaryMessage(
       isAutoCompact ? 'auto' : 'manual',
       preCompactTokenCount ?? 0,
-      (messages.at(-1)?.uuid as any),
+      messages.at(-1)?.uuid as any,
     )
     // 携带已加载工具的状态 — 摘要不保留 tool_reference 块，
     // 所以压缩后的 schema 过滤器需要这个信息来继续向 API
     // 发送已加载的 deferred tool schema。
     const preCompactDiscovered = extractDiscoveredToolNames(messages)
     if (preCompactDiscovered.size > 0) {
-      (boundaryMarker.compactMetadata as any).preCompactDiscoveredTools = [
+      ;(boundaryMarker.compactMetadata as any).preCompactDiscoveredTools = [
         ...preCompactDiscovered,
       ].sort()
     }
@@ -601,11 +569,7 @@ export async function compactConversation(
     const transcriptPath = getTranscriptPath()
     const summaryMessages: UserMessage[] = [
       createUserMessage({
-        content: getCompactUserSummaryMessage(
-          summary,
-          suppressFollowUpQuestions,
-          transcriptPath,
-        ),
+        content: getCompactUserSummaryMessage(summary, suppressFollowUpQuestions, transcriptPath),
         isCompactSummary: true,
         isVisibleInTranscriptOnly: true,
       }),
@@ -614,9 +578,7 @@ export async function compactConversation(
     // 之前叫 "postCompactTokenCount" — 改名因为这个是压缩 API 调用的
     // 总用量（input_tokens ≈ preCompactTokenCount），而不是压缩后上下文的大小。
     // 保留是为了事件字段的连续性。
-    const compactionCallTotalTokens = tokenCountFromLastAPIResponse([
-      summaryResponse,
-    ])
+    const compactionCallTotalTokens = tokenCountFromLastAPIResponse([summaryResponse])
 
     // 对压缩后上下文的消息载荷估算。下一次迭代的 shouldAutoCompact
     // 会看到这个值再加上约 20-40K 的 system prompt + tools + userContext
@@ -651,15 +613,13 @@ export async function compactConversation(
         '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       queryDepth: context.queryTracking?.depth ?? -1,
       isRecompactionInChain: recompactionInfo?.isRecompactionInChain ?? false,
-      turnsSincePreviousCompact:
-        recompactionInfo?.turnsSincePreviousCompact ?? -1,
+      turnsSincePreviousCompact: recompactionInfo?.turnsSincePreviousCompact ?? -1,
       previousCompactTurnId: (recompactionInfo?.previousCompactTurnId ??
         '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       compactionInputTokens: compactionUsage?.inputTokens,
       compactionOutputTokens: compactionUsage?.outputTokens,
       compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
-      compactionCacheCreationTokens:
-        compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
+      compactionCacheCreationTokens: compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
       compactionTotalTokens: compactionUsage
         ? compactionUsage.inputTokens +
           (compactionUsage.extras?.cacheCreationInputTokens ?? 0) +
@@ -683,10 +643,7 @@ export async function compactConversation(
 
     // 重置 cache 读取基线，这样压缩后的 drop 不会被标记为 break
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction(
-        (context.options.querySource ?? 'compact') as any,
-        context.agentId,
-      )
+      notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
     }
     markPostCompaction()
 
@@ -778,12 +735,12 @@ export async function partialCompactConversation(
         ? allMessages
             .slice(pivotIndex)
             .filter(
-              m =>
+              (m) =>
                 m.type !== 'progress' &&
                 !isCompactBoundaryMessage(m) &&
                 !(m.type === 'user' && m.isCompactSummary),
             )
-        : allMessages.slice(0, pivotIndex).filter(m => m.type !== 'progress')
+        : allMessages.slice(0, pivotIndex).filter((m) => m.type !== 'progress')
 
     if (messagesToSummarize.length === 0) {
       throw new Error(
@@ -830,8 +787,7 @@ export async function partialCompactConversation(
 
     const failureMetadata = {
       preCompactTokenCount,
-      direction:
-        direction as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      direction: direction as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       messagesSummarized: messagesToSummarize.length,
     }
 
@@ -864,8 +820,7 @@ export async function partialCompactConversation(
           : null
       if (!truncated) {
         logEvent('zy_partial_compact_failed', {
-          reason:
-            'prompt_too_long' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          reason: 'prompt_too_long' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           ...failureMetadata,
           ptlAttempts,
         })
@@ -885,8 +840,7 @@ export async function partialCompactConversation(
     }
     if (!summary) {
       logEvent('zy_partial_compact_failed', {
-        reason:
-          'no_summary' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        reason: 'no_summary' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...failureMetadata,
       })
       throw new Error(
@@ -894,8 +848,7 @@ export async function partialCompactConversation(
       )
     } else if (startsWithApiErrorPrefix(summary)) {
       logEvent('zy_partial_compact_failed', {
-        reason:
-          'api_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        reason: 'api_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...failureMetadata,
       })
       throw new Error(summary)
@@ -967,9 +920,7 @@ export async function partialCompactConversation(
       model: context.options.mainLoopModel,
     })
 
-    const postCompactTokenCount = tokenCountFromLastAPIResponse([
-      summaryResponse,
-    ])
+    const postCompactTokenCount = tokenCountFromLastAPIResponse([summaryResponse])
     const compactionUsage = getTokenUsage(summaryResponse)
 
     logEvent('zy_partial_compact', {
@@ -977,29 +928,25 @@ export async function partialCompactConversation(
       postCompactTokenCount,
       messagesKept: messagesToKeep.length,
       messagesSummarized: messagesToSummarize.length,
-      direction:
-        direction as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      direction: direction as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       hasUserFeedback: !!userFeedback,
-      trigger:
-        'message_selector' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      trigger: 'message_selector' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       compactionInputTokens: compactionUsage?.inputTokens,
       compactionOutputTokens: compactionUsage?.outputTokens,
       compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
-      compactionCacheCreationTokens:
-        compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
+      compactionCacheCreationTokens: compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
     })
 
     // progress 消息无法记录日志，所以 forkSessionImpl 会将
     // 指向 progress 消息的 logicalParentUuid 置空。两个方向都跳过它们。
     const lastPreCompactUuid =
       (direction as any) === 'up_to'
-        ? allMessages.slice(0, pivotIndex).findLast(m => m.type !== 'progress')
-            ?.uuid
+        ? allMessages.slice(0, pivotIndex).findLast((m) => m.type !== 'progress')?.uuid
         : messagesToKeep.at(-1)?.uuid
     const boundaryMarker = createCompactBoundaryMessage(
       'manual',
       preCompactTokenCount ?? 0,
-      (lastPreCompactUuid as any),
+      lastPreCompactUuid as any,
       userFeedback,
       messagesToSummarize.length,
     )
@@ -1007,7 +954,7 @@ export async function partialCompactConversation(
     // 比追踪每个工具在哪个半区更简单。
     const preCompactDiscovered = extractDiscoveredToolNames(allMessages)
     if (preCompactDiscovered.size > 0) {
-      (boundaryMarker.compactMetadata as any).preCompactDiscoveredTools = [
+      ;(boundaryMarker.compactMetadata as any).preCompactDiscoveredTools = [
         ...preCompactDiscovered,
       ].sort()
     }
@@ -1030,10 +977,7 @@ export async function partialCompactConversation(
     ]
 
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction(
-        (context.options.querySource ?? 'compact') as any,
-        context.agentId,
-      )
+      notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
     }
     markPostCompaction()
 
@@ -1042,9 +986,7 @@ export async function partialCompactConversation(
     reAppendSessionMetadata()
 
     if (feature('KAIROS')) {
-      void (sessionTranscriptModule as any)?.writeSessionTranscriptSegment(
-        messagesToSummarize,
-      )
+      void (sessionTranscriptModule as any)?.writeSessionTranscriptSegment(messagesToSummarize)
     }
 
     context.onCompactProgress?.({
@@ -1068,7 +1010,7 @@ export async function partialCompactConversation(
       boundaryMarker: annotateBoundaryWithPreservedSegment(
         boundaryMarker,
         anchorUuid as any,
-        (messagesToKeep as any) as any,
+        messagesToKeep as any as any,
       ),
       summaryMessages,
       messagesToKeep,
@@ -1180,9 +1122,7 @@ async function streamCompactSummary({
           overrides: { abortController: context.abortController },
         })
         const assistantMsg = getLastAssistantMessage(result.messages)
-        const assistantText = assistantMsg
-          ? getAssistantMessageText(assistantMsg)
-          : null
+        const assistantText = assistantMsg ? getAssistantMessageText(assistantMsg) : null
         // 防护 isApiErrorMessage：query() 会捕获 API 错误（包括 ESC 时的
         // APIUserAbortError）并将它们作为合成的 assistant 消息返回。
         // 没有这个检查的话，被中止的压缩会"成功"地以 "Request was aborted."
@@ -1196,8 +1136,7 @@ async function streamCompactSummary({
               preCompactTokenCount,
               outputTokens: result.totalUsage.outputTokens,
               cacheReadInputTokens: result.totalUsage.cacheReadInputTokens,
-              cacheCreationInputTokens:
-                result.totalUsage.cacheCreationInputTokens,
+              cacheCreationInputTokens: result.totalUsage.cacheCreationInputTokens,
               cacheHitRate:
                 result.totalUsage.cacheReadInputTokens > 0
                   ? result.totalUsage.cacheReadInputTokens /
@@ -1214,25 +1153,20 @@ async function streamCompactSummary({
           { level: 'warn' },
         )
         logEvent('zy_compact_cache_sharing_fallback', {
-          reason:
-            'no_text_response' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          reason: 'no_text_response' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           preCompactTokenCount,
         })
       } catch (error) {
         logError(error)
         logEvent('zy_compact_cache_sharing_fallback', {
-          reason:
-            'error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          reason: 'error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           preCompactTokenCount,
         })
       }
     }
 
     // 常规流式路径（cache 共享失败或被禁用时的回退）
-    const retryEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-      'zy_compact_streaming_retry',
-      false,
-    )
+    const retryEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_compact_streaming_retry', false)
     const maxAttempts = retryEnabled ? MAX_COMPACT_STREAMING_RETRIES : 1
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -1261,11 +1195,7 @@ async function streamCompactSummary({
       // 按名称去重，避免 MCP 工具与内置工具同名时产生 API 错误。
       const tools: Tool[] = useToolSearch
         ? uniqBy(
-            [
-              FileReadTool,
-              ToolSearchTool,
-              ...context.options.tools.filter(t => t.isMcp),
-            ],
+            [FileReadTool, ToolSearchTool, ...context.options.tools.filter((t) => t.isMcp)],
             'name',
           )
         : [FileReadTool]
@@ -1327,7 +1257,7 @@ async function streamCompactSummary({
           (event as any).event.delta.type === 'text_delta'
         ) {
           const charactersStreamed = (event as any).event.delta.text.length
-          context.setResponseLength?.(length => length + charactersStreamed)
+          context.setResponseLength?.((length) => length + charactersStreamed)
         }
 
         if ((event as any).type === 'assistant') {
@@ -1402,17 +1332,15 @@ export async function createPostCompactFileAttachments(
   const recentFiles = Object.entries(readFileState)
     .map(([filename, state]) => ({ filename, ...state }))
     .filter(
-      file =>
-        !shouldExcludeFromPostCompactRestore(
-          file.filename,
-          toolUseContext.agentId,
-        ) && !preservedReadPaths.has(expandPath(file.filename)),
+      (file) =>
+        !shouldExcludeFromPostCompactRestore(file.filename, toolUseContext.agentId) &&
+        !preservedReadPaths.has(expandPath(file.filename)),
     )
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, maxFiles)
 
   const results = await Promise.all(
-    recentFiles.map(async file => {
+    recentFiles.map(async (file) => {
       const attachment = await generateFileAttachment(
         file.filename,
         {
@@ -1447,9 +1375,7 @@ export async function createPostCompactFileAttachments(
  * 如果当前会话存在 plan 文件，则创建 plan 文件附件。
  * 确保 plan 在压缩后得以保留。
  */
-export function createPlanAttachmentIfNeeded(
-  agentId?: AgentId,
-): AttachmentMessage | null {
+export function createPlanAttachmentIfNeeded(agentId?: AgentId): AttachmentMessage | null {
   const planContent = getPlan(agentId)
 
   if (!planContent) {
@@ -1471,9 +1397,7 @@ export function createPlanAttachmentIfNeeded(
  * 这样 skill 指南在对话被摘要后仍然可用，
  * 同时不会泄漏其他 agent 上下文的 skill。
  */
-export function createSkillAttachmentIfNeeded(
-  agentId?: string,
-): AttachmentMessage | null {
+export function createSkillAttachmentIfNeeded(agentId?: string): AttachmentMessage | null {
   const invokedSkills = getInvokedSkillsForAgent(agentId)
 
   if (invokedSkills.size === 0) {
@@ -1486,15 +1410,12 @@ export function createSkillAttachmentIfNeeded(
   let usedTokens = 0
   const skills = Array.from(invokedSkills.values())
     .sort((a, b) => b.invokedAt - a.invokedAt)
-    .map(skill => ({
+    .map((skill) => ({
       name: skill.skillName,
       path: skill.skillPath,
-      content: truncateToTokens(
-        skill.content,
-        POST_COMPACT_MAX_TOKENS_PER_SKILL,
-      ),
+      content: truncateToTokens(skill.content, POST_COMPACT_MAX_TOKENS_PER_SKILL),
     }))
-    .filter(skill => {
+    .filter((skill) => {
       const tokens = roughTokenCountEstimation(skill.content)
       if (usedTokens + tokens > POST_COMPACT_SKILLS_TOKEN_BUDGET) {
         return false
@@ -1552,12 +1473,8 @@ export async function createAsyncAgentAttachmentsIfNeeded(
     (task): task is LocalAgentTaskState => task.type === 'local_agent',
   )
 
-  return asyncAgents.flatMap(agent => {
-    if (
-      agent.retrieved ||
-      agent.status === 'pending' ||
-      agent.agentId === context.agentId
-    ) {
+  return asyncAgents.flatMap((agent) => {
+    if (agent.retrieved || agent.status === 'pending' || agent.agentId === context.agentId) {
       return []
     }
     return [
@@ -1568,9 +1485,7 @@ export async function createAsyncAgentAttachmentsIfNeeded(
         description: agent.description,
         status: agent.status,
         deltaSummary:
-          agent.status === 'running'
-            ? (agent.progress?.summary ?? null)
-            : (agent.error ?? null),
+          agent.status === 'running' ? (agent.progress?.summary ?? null) : (agent.error ?? null),
         outputFilePath: getTaskOutputPath(agent.agentId),
       }),
     ]
@@ -1605,10 +1520,7 @@ function collectReadToolFilePaths(messages: Message[]): Set<string> {
 
   const paths = new Set<string>()
   for (const message of messages) {
-    if (
-      message.type !== 'assistant' ||
-      !Array.isArray(message.message.content)
-    ) {
+    if (message.type !== 'assistant' || !Array.isArray(message.message.content)) {
       continue
     }
     for (const block of message.message.content) {
@@ -1649,10 +1561,7 @@ function truncateToTokens(content: string, maxTokens: number): string {
   return content.slice(0, charBudget) + SKILL_TRUNCATION_MARKER
 }
 
-function shouldExcludeFromPostCompactRestore(
-  filename: string,
-  agentId?: AgentId,
-): boolean {
+function shouldExcludeFromPostCompactRestore(filename: string, agentId?: AgentId): boolean {
   const normalizedFilename = expandPath(filename)
   // 排除 plan 文件
   try {
@@ -1669,7 +1578,7 @@ function shouldExcludeFromPostCompactRestore(
   // and to also match child directory memory files (.zy/rules/*.md, etc.)
   try {
     const normalizedMemoryPaths = new Set(
-      MEMORY_TYPE_VALUES.map(type => expandPath(getMemoryPath(type))),
+      MEMORY_TYPE_VALUES.map((type) => expandPath(getMemoryPath(type))),
     )
 
     if (normalizedMemoryPaths.has(normalizedFilename)) {

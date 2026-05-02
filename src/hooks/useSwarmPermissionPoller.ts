@@ -79,13 +79,9 @@ const pendingCallbacks: PendingCallbackRegistry = new Map()
  * Register a callback for a pending permission request
  * Called by useCanUseTool when a worker submits a permission request
  */
-export function registerPermissionCallback(
-  callback: PermissionResponseCallback,
-): void {
+export function registerPermissionCallback(callback: PermissionResponseCallback): void {
   pendingCallbacks.set(callback.requestId, callback)
-  logForDebugging(
-    `[SwarmPermissionPoller] Registered callback for request ${callback.requestId}`,
-  )
+  logForDebugging(`[SwarmPermissionPoller] Registered callback for request ${callback.requestId}`)
 }
 
 /**
@@ -93,9 +89,7 @@ export function registerPermissionCallback(
  */
 export function unregisterPermissionCallback(requestId: string): void {
   pendingCallbacks.delete(requestId)
-  logForDebugging(
-    `[SwarmPermissionPoller] Unregistered callback for request ${requestId}`,
-  )
+  logForDebugging(`[SwarmPermissionPoller] Unregistered callback for request ${requestId}`)
 }
 
 /**
@@ -169,9 +163,8 @@ export type SandboxPermissionResponseCallback = {
 }
 
 // Module-level registry for sandbox permission callbacks
-let pendingSandboxCallbacks;
-pendingSandboxCallbacks =
-  new Map()
+let pendingSandboxCallbacks
+pendingSandboxCallbacks = new Map()
 
 /**
  * Register a callback for a pending sandbox permission request
@@ -310,9 +303,7 @@ export function useSwarmPermissionPoller(): void {
         }
       }
     } catch (error) {
-      logForDebugging(
-        `[SwarmPermissionPoller] Error during poll: ${errorMessage(error)}`,
-      )
+      logForDebugging(`[SwarmPermissionPoller] Error during poll: ${errorMessage(error)}`)
     } finally {
       isProcessingRef.current = false
     }

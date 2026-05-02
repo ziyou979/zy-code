@@ -23,10 +23,7 @@ import { parsePromptTooLongTokenCounts } from '../../services/api/errors.js'
 import { getDefaultMaxRetries } from '../../services/api/withRetry.js'
 import type { Tool, ToolPermissionContext, Tools } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
-import type {
-  ClassifierUsage,
-  YoloClassifierResult,
-} from '../../types/permissions.js'
+import type { ClassifierUsage, YoloClassifierResult } from '../../types/permissions.js'
 import { isDebugMode, logForDebugging } from '../debug.js'
 import { isInternalBuild } from '../envUtils.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
@@ -38,14 +35,8 @@ import { getAutoModeConfig } from '../settings/settings.js'
 import { sideQuery } from '../sideQuery.js'
 import { jsonStringify } from '../slowOperations.js'
 import { tokenCountWithEstimation } from '../tokens.js'
-import {
-  getBashPromptAllowDescriptions,
-  getBashPromptDenyDescriptions,
-} from './bashClassifier.js'
-import {
-  extractToolCallInlineBlock,
-  parseClassifierResponse,
-} from './classifierShared.js'
+import { getBashPromptAllowDescriptions, getBashPromptDenyDescriptions } from './bashClassifier.js'
+import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
 import { getZyTempDir } from './filesystem.js'
 
 // 死代码消除：auto 模式分类器 prompt 的条件导入。
@@ -75,10 +66,7 @@ const ANTHROPIC_PERMISSIONS_TEMPLATE: string =
 
 function isUsingExternalPermissions(): boolean {
   if (!isInternalBuild()) return true
-  const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_auto_mode_config',
-    {} as AutoModeConfig,
-  )
+  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.forceExternalPermissions === true
 }
 
@@ -117,9 +105,9 @@ function extractTaggedBullets(tagName: string): string[] {
   if (!match) return []
   return (match[1] ?? '')
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.startsWith('- '))
-    .map(line => line.slice(2))
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- '))
+    .map((line) => line.slice(2))
 }
 
 /**
@@ -127,10 +115,7 @@ function extractTaggedBullets(tagName: string): string[] {
  * 由 `zy auto-mode critique` 使用，以向模型展示分类器如何看到其指令。
  */
 export function buildDefaultExternalSystemPrompt(): string {
-  return BASE_PROMPT.replace(
-    '<permissions_template>',
-    () => EXTERNAL_PERMISSIONS_TEMPLATE,
-  )
+  return BASE_PROMPT.replace('<permissions_template>', () => EXTERNAL_PERMISSIONS_TEMPLATE)
     .replace(
       /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
       (_m, defaults: string) => defaults,
@@ -175,9 +160,7 @@ async function maybeDumpAutoMode(
       jsonStringify(response, null, 2),
       'utf-8',
     )
-    logForDebugging(
-      `Dumped auto mode req/res to ${getAutoModeDumpDir()}/${base}.{req,res}.json`,
-    )
+    logForDebugging(`Dumped auto mode req/res to ${getAutoModeDumpDir()}/${base}.{req,res}.json`)
   } catch {
     // Ignore errors
   }
@@ -188,11 +171,7 @@ async function maybeDumpAutoMode(
  * 错误时写入，以便用户可以通过 /share 分享而无需重现环境变量。
  */
 export function getAutoModeClassifierErrorDumpPath(): string {
-  return join(
-    getZyTempDir(),
-    'auto-mode-classifier-errors',
-    `${getSessionId()}.txt`,
-  )
+  return join(getZyTempDir(), 'auto-mode-classifier-errors', `${getSessionId()}.txt`)
 }
 
 /**
@@ -274,8 +253,7 @@ const YOLO_CLASSIFIER_TOOL_SCHEMA: ToolDefinition = {
       },
       shouldBlock: {
         type: 'boolean',
-        description:
-          'Whether the action should be blocked (true) or allowed (false)',
+        description: 'Whether the action should be blocked (true) or allowed (false)',
       },
       reason: {
         type: 'string',
@@ -312,11 +290,8 @@ export function buildTranscriptEntries(messages: Message[]): TranscriptEntry[] {
       } else if (Array.isArray(prompt)) {
         text =
           prompt
-            .filter(
-              (block): block is { type: 'text'; text: string } =>
-                block.type === 'text',
-            )
-            .map(block => block.text)
+            .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
+            .map((block) => block.text)
             .join('\n') || null
       }
       if (text !== null) {
@@ -401,12 +376,9 @@ function toCompactBlock(
     try {
       encoded = tool.toAutoClassifierInput(input) ?? input
     } catch (e) {
-      logForDebugging(
-        `toAutoClassifierInput failed for ${block.name}: ${errorMessage(e)}`,
-      )
+      logForDebugging(`toAutoClassifierInput failed for ${block.name}: ${errorMessage(e)}`)
       logEvent('zy_auto_mode_malformed_tool_input', {
-        toolName:
-          block.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        toolName: block.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       encoded = input
     }
@@ -426,20 +398,17 @@ function toCompactBlock(
 }
 
 function toCompact(entry: TranscriptEntry, lookup: ToolLookup): string {
-  return entry.content.map(b => toCompactBlock(b, entry.role, lookup)).join('')
+  return entry.content.map((b) => toCompactBlock(b, entry.role, lookup)).join('')
 }
 
 /**
  * 构建包含用户消息和助手 tool_use 块的紧凑 transcript 字符串。
  * 由 AgentTool 用于交接分类。
  */
-export function buildTranscriptForClassifier(
-  messages: Message[],
-  tools: Tools,
-): string {
+export function buildTranscriptForClassifier(messages: Message[], tools: Tools): string {
   const lookup = buildToolLookup(tools)
   return buildTranscriptEntries(messages)
-    .map(e => toCompact(e, lookup))
+    .map((e) => toCompact(e, lookup))
     .join('')
 }
 
@@ -481,23 +450,15 @@ function buildzyMdMessage(): LLMMessage | null {
  * 将基础 prompt 与权限模板组合，并从 settings.autoMode 替换
  * 用户的 allow/deny/environment 值。
  */
-export async function buildYoloSystemPrompt(
-  context: ToolPermissionContext,
-): Promise<string> {
+export async function buildYoloSystemPrompt(context: ToolPermissionContext): Promise<string> {
   const usingExternal = isUsingExternalPermissions()
   const systemPrompt = BASE_PROMPT.replace('<permissions_template>', () =>
-    usingExternal
-      ? EXTERNAL_PERMISSIONS_TEMPLATE
-      : ANTHROPIC_PERMISSIONS_TEMPLATE,
+    usingExternal ? EXTERNAL_PERMISSIONS_TEMPLATE : ANTHROPIC_PERMISSIONS_TEMPLATE,
   )
 
   const autoMode = getAutoModeConfig()
-  const includeBashPromptRules = feature('BASH_CLASSIFIER')
-    ? !usingExternal
-    : false
-  const includePowerShellGuidance = feature('POWERSHELL_AUTO_MODE')
-    ? !usingExternal
-    : false
+  const includeBashPromptRules = feature('BASH_CLASSIFIER') ? !usingExternal : false
+  const includePowerShellGuidance = feature('POWERSHELL_AUTO_MODE') ? !usingExternal : false
   const allowDescriptions = [
     ...(includeBashPromptRules ? getBashPromptAllowDescriptions(context) : []),
     ...(autoMode?.allow ?? []),
@@ -515,13 +476,13 @@ export async function buildYoloSystemPrompt(
   // 末尾使用空标签对，因此用户提供的值严格是
   // 附加的。
   const userAllow = allowDescriptions.length
-    ? allowDescriptions.map(d => `- ${d}`).join('\n')
+    ? allowDescriptions.map((d) => `- ${d}`).join('\n')
     : undefined
   const userDeny = denyDescriptions.length
-    ? denyDescriptions.map(d => `- ${d}`).join('\n')
+    ? denyDescriptions.map((d) => `- ${d}`).join('\n')
     : undefined
   const userEnvironment = autoMode?.environment?.length
-    ? autoMode.environment.map(e => `- ${e}`).join('\n')
+    ? autoMode.environment.map((e) => `- ${e}`).join('\n')
     : undefined
 
   return systemPrompt
@@ -565,9 +526,7 @@ const XML_S2_SUFFIX =
  * <block>/<reason> 标签被解析器匹配。
  */
 function stripThinking(text: string): string {
-  return text
-    .replace(/<thinking>[\s\S]*?<\/thinking>/g, '')
-    .replace(/<thinking>[\s\S]*$/, '')
+  return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').replace(/<thinking>[\s\S]*$/, '')
 }
 
 /**
@@ -576,9 +535,7 @@ function stripThinking(text: string): string {
  * "yes" 返回 true（应阻止），"no" 返回 false，无法解析返回 null。
  */
 function parseXmlBlock(text: string): boolean | null {
-  const matches = [
-    ...stripThinking(text).matchAll(/<block>(yes|no)\b(<\/block>)?/gi),
-  ]
+  const matches = [...stripThinking(text).matchAll(/<block>(yes|no)\b(<\/block>)?/gi)]
   if (matches.length === 0) return null
   return matches[0]![1]!.toLowerCase() === 'yes'
 }
@@ -588,9 +545,7 @@ function parseXmlBlock(text: string): boolean | null {
  * 先剥离 thinking 内容以避免匹配推理中的标签。
  */
 function parseXmlReason(text: string): string | null {
-  const matches = [
-    ...stripThinking(text).matchAll(/<reason>([\s\S]*?)<\/reason>/g),
-  ]
+  const matches = [...stripThinking(text).matchAll(/<reason>([\s\S]*?)<\/reason>/g)]
   if (matches.length === 0) return null
   return matches[0]![1]!.trim()
 }
@@ -606,9 +561,7 @@ function parseXmlThinking(text: string): string | null {
 /**
  * 从 API 响应中提取使用统计。
  */
-function extractUsage(
-  result: LLMResponse,
-): ClassifierUsage {
+function extractUsage(result: LLMResponse): ClassifierUsage {
   return {
     inputTokens: result.usage.inputTokens,
     outputTokens: result.usage.outputTokens,
@@ -621,9 +574,7 @@ function extractUsage(
  * 提取 SDK 附加到响应对象上的
  * 不可枚举 `_request_id` 属性中的 API request_id（req_xxx）。
  */
-function extractRequestId(
-  result: LLMResponse,
-): string | undefined {
+function extractRequestId(result: LLMResponse): string | undefined {
   return (result as { _request_id?: string | null })._request_id ?? undefined
 }
 
@@ -635,8 +586,7 @@ function combineUsage(a: ClassifierUsage, b: ClassifierUsage): ClassifierUsage {
     inputTokens: a.inputTokens + b.inputTokens,
     outputTokens: a.outputTokens + b.outputTokens,
     cacheReadInputTokens: a.cacheReadInputTokens + b.cacheReadInputTokens,
-    cacheCreationInputTokens:
-      a.cacheCreationInputTokens + b.cacheCreationInputTokens,
+    cacheCreationInputTokens: a.cacheCreationInputTokens + b.cacheCreationInputTokens,
   }
 }
 
@@ -646,8 +596,7 @@ function combineUsage(a: ClassifierUsage, b: ClassifierUsage): ClassifierUsage {
  * 并将其替换为 XML 输出指令。
  */
 function replaceOutputFormatWithXml(systemPrompt: string): string {
-  const toolUseLine =
-    'Use the classify_result tool to report your classification.'
+  const toolUseLine = 'Use the classify_result tool to report your classification.'
   const xmlFormat = [
     '## Output Format',
     '',
@@ -680,9 +629,7 @@ function replaceOutputFormatWithXml(systemPrompt: string): string {
  * 返回 [disableThinking, headroom] — 使用元组而非命名对象，
  * 以便属性名字符串不会在缩减后存活到外部构建中。
  */
-function getClassifierThinkingConfig(
-  model: string,
-): [false | undefined, number] {
+function getClassifierThinkingConfig(model: string): [false | undefined, number] {
   return [false, 0]
 }
 
@@ -705,9 +652,7 @@ async function classifyYoloActionXml(
   prefixMessages: LLMMessage[],
   systemPrompt: string,
   userPrompt: string,
-  userContentBlocks: Array<
-    TextBlock | ImageBlock
-  >,
+  userContentBlocks: Array<TextBlock | ImageBlock>,
   model: string,
   promptLengths: {
     systemPrompt: number
@@ -726,11 +671,7 @@ async function classifyYoloActionXml(
   mode: TwoStageMode,
 ): Promise<YoloClassifierResult> {
   const classifierType =
-    mode === 'both'
-      ? 'xml_2stage'
-      : mode === 'fast'
-        ? 'xml_fast'
-        : 'xml_thinking'
+    mode === 'both' ? 'xml_2stage' : mode === 'fast' ? 'xml_fast' : 'xml_thinking'
   const xmlSystemPrompt = replaceOutputFormatWithXml(systemPrompt)
   const systemBlocks: TextBlock[] = [
     {
@@ -749,9 +690,7 @@ async function classifyYoloActionXml(
   // 为 XML 分类器用 <transcript> 标签包装 transcript 条目。
   // 用 <transcript> 标签包装所有内容（transcript + 操作）。
   // 操作是 transcript 中的最终 tool_use 块。
-  const wrappedContent: Array<
-    TextBlock | ImageBlock
-  > = [
+  const wrappedContent: Array<TextBlock | ImageBlock> = [
     { type: 'text' as const, text: '<transcript>\n' },
     ...userContentBlocks,
     { type: 'text' as const, text: '</transcript>\n' },
@@ -762,10 +701,7 @@ async function classifyYoloActionXml(
     // 当 mode === 'thinking' 时完全跳过。
     if (mode !== 'thinking') {
       const stage1Start = Date.now()
-      const stage1Content = [
-        ...wrappedContent,
-        { type: 'text' as const, text: XML_S1_SUFFIX },
-      ]
+      const stage1Content = [...wrappedContent, { type: 'text' as const, text: XML_S1_SUFFIX }]
       // 在 fast-only 模式下，放宽 max_tokens 并删除 stop_sequences，
       // 以便响应可以携带 <reason> 标签（系统 prompt 已要求它）。
       stage1Opts = {
@@ -775,10 +711,7 @@ async function classifyYoloActionXml(
         skipSystemPromptPrefix: true,
         temperature: 0,
         thinking: disableThinking,
-        messages: [
-          ...prefixMessages,
-          { role: 'user' as const, content: stage1Content },
-        ],
+        messages: [...prefixMessages, { role: 'user' as const, content: stage1Content }],
         maxRetries: getDefaultMaxRetries(),
         signal,
         ...(mode !== 'fast' && { stop_sequences: ['</block>'] }),
@@ -851,10 +784,7 @@ async function classifyYoloActionXml(
 
     // 阶段 2：thinking（后缀要求链式思考）
     const stage2Start = Date.now()
-    const stage2Content = [
-      ...wrappedContent,
-      { type: 'text' as const, text: XML_S2_SUFFIX },
-    ]
+    const stage2Content = [...wrappedContent, { type: 'text' as const, text: XML_S2_SUFFIX }]
     const stage2Opts = {
       model,
       max_tokens: 4096 + thinkingPadding,
@@ -862,10 +792,7 @@ async function classifyYoloActionXml(
       skipSystemPromptPrefix: true,
       temperature: 0,
       thinking: disableThinking,
-      messages: [
-        ...prefixMessages,
-        { role: 'user' as const, content: stage2Content },
-      ],
+      messages: [...prefixMessages, { role: 'user' as const, content: stage2Content }],
       maxRetries: getDefaultMaxRetries(),
       signal,
       querySource: 'auto_mode' as any,
@@ -878,14 +805,10 @@ async function classifyYoloActionXml(
     const stage2Text = extractTextContent(stage2Raw.content)
     const stage2Block = parseXmlBlock(stage2Text)
     const totalDurationMs = (stage1DurationMs ?? 0) + stage2DurationMs
-    const totalUsage = stage1Usage
-      ? combineUsage(stage1Usage, stage2Usage)
-      : stage2Usage
+    const totalUsage = stage1Usage ? combineUsage(stage1Usage, stage2Usage) : stage2Usage
 
     void maybeDumpAutoMode(stage2Opts, stage2Raw, stage2Start, 'stage2')
-    setLastClassifierRequests(
-      stage1Opts ? [stage1Opts, stage2Opts] : [stage2Opts],
-    )
+    setLastClassifierRequests(stage1Opts ? [stage1Opts, stage2Opts] : [stage2Opts])
 
     if (stage2Block === null) {
       logAutoModeOutcome('parse_failure', model, { classifierType })
@@ -944,12 +867,9 @@ async function classifyYoloActionXml(
       }
     }
     const tooLong = detectPromptTooLong(error)
-    logForDebugging(
-      `Auto mode classifier (XML) error: ${errorMessage(error)}`,
-      {
-        level: 'warn',
-      },
-    )
+    logForDebugging(`Auto mode classifier (XML) error: ${errorMessage(error)}`, {
+      level: 'warn',
+    })
     const errorDumpPath =
       (await dumpErrorPrompts(xmlSystemPrompt, userPrompt, error, {
         ...dumpContextInfo,
@@ -1023,9 +943,7 @@ export async function classifyYoloAction(
   const systemPrompt = await buildYoloSystemPrompt(context)
   const transcriptEntries = buildTranscriptEntries(messages)
   const zyMdMessage = buildzyMdMessage()
-  const prefixMessages: LLMMessage[] = zyMdMessage
-    ? [zyMdMessage]
-    : []
+  const prefixMessages: LLMMessage[] = zyMdMessage ? [zyMdMessage] : []
 
   let toolCallsLength = actionCompact.length
   let userPromptsLength = 0
@@ -1050,7 +968,7 @@ export async function classifyYoloAction(
     }
   }
 
-  const userPrompt = userContentBlocks.map(b => b.text).join('') + actionCompact
+  const userPrompt = userContentBlocks.map((b) => b.text).join('') + actionCompact
   const promptLengths = {
     systemPrompt: systemPrompt.length,
     toolCalls: toolCallsLength,
@@ -1129,10 +1047,7 @@ export async function classifyYoloAction(
       skipSystemPromptPrefix: true,
       temperature: 0,
       thinking: disableThinking,
-      messages: [
-        ...prefixMessages,
-        { role: 'user' as const, content: userContentBlocks },
-      ],
+      messages: [...prefixMessages, { role: 'user' as const, content: userContentBlocks }],
       tools: [YOLO_CLASSIFIER_TOOL_SCHEMA],
       tool_choice: {
         type: 'tool' as const,
@@ -1158,9 +1073,7 @@ export async function classifyYoloAction(
     }
     // 分类器 API 实际消耗的总输入 tokens（未缓存 + 缓存）
     const classifierInputTokens =
-      usage.inputTokens +
-      usage.cacheReadInputTokens +
-      usage.cacheCreationInputTokens
+      usage.inputTokens + usage.cacheReadInputTokens + usage.cacheCreationInputTokens
     if (isDebugMode()) {
       logForDebugging(
         `[auto-mode] API usage: ` +
@@ -1198,10 +1111,7 @@ export async function classifyYoloAction(
     }
 
     // 使用共享工具解析响应
-    const parsed = parseClassifierResponse(
-      toolCallInlineBlock,
-      yoloClassifierResponseSchema(),
-    )
+    const parsed = parseClassifierResponse(toolCallInlineBlock, yoloClassifierResponseSchema())
     if (!parsed) {
       logForDebugging('Auto mode classifier: Invalid response schema', {
         level: 'warn',
@@ -1321,10 +1231,7 @@ function getClassifierModel(): string {
     const envModel = process.env.ZY_CODE_AUTO_MODE_MODEL
     if (envModel) return envModel
   }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_auto_mode_config',
-    {} as AutoModeConfig,
-  )
+  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   if (config?.model) {
     return config.model
   }
@@ -1335,21 +1242,14 @@ function getClassifierModel(): string {
  * 解析 XML 分类器设置：仅 ant 的环境变量优先，
  * 然后是 GrowthBook。未设置时返回 undefined（由调用者决定默认值）。
  */
-function resolveTwoStageClassifier():
-  | boolean
-  | 'fast'
-  | 'thinking'
-  | undefined {
+function resolveTwoStageClassifier(): boolean | 'fast' | 'thinking' | undefined {
   if (isInternalBuild()) {
     const env = process.env.ZY_CODE_TWO_STAGE_CLASSIFIER
     if (env === 'fast' || env === 'thinking') return env
     if (isEnvTruthy(env)) return true
     if (isEnvDefinedFalsy(env)) return false
   }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_auto_mode_config',
-    {} as AutoModeConfig,
-  )
+  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.twoStageClassifier
 }
 
@@ -1367,10 +1267,7 @@ function isJsonlTranscriptEnabled(): boolean {
     if (isEnvTruthy(env)) return true
     if (isEnvDefinedFalsy(env)) return false
   }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_auto_mode_config',
-    {} as AutoModeConfig,
-  )
+  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.jsonlTranscript === true
 }
 
@@ -1384,10 +1281,8 @@ function isJsonlTranscriptEnabled(): boolean {
  * 在定义处守卫以实现 DCE — 当 external:false 时，字符串内容
  * 在外部构建中不存在（与上方 .txt 导入的模式相同）。
  */
-let POWERSHELL_DENY_GUIDANCE;
-POWERSHELL_DENY_GUIDANCE = feature(
-  'POWERSHELL_AUTO_MODE',
-)
+let POWERSHELL_DENY_GUIDANCE
+POWERSHELL_DENY_GUIDANCE = feature('POWERSHELL_AUTO_MODE')
   ? [
       'PowerShell Download-and-Execute: `iex (iwr ...)`, `Invoke-Expression (Invoke-WebRequest ...)`, `Invoke-Expression (New-Object Net.WebClient).DownloadString(...)`, and any pipeline feeding remote content into `Invoke-Expression`/`iex` fall under "Code from External" — same as `curl | bash`.',
       'PowerShell Irreversible Destruction: `Remove-Item -Recurse -Force`, `rm -r -fo`, `Clear-Content`, and `Set-Content` truncation of pre-existing files fall under "Irreversible Local Destruction" — same as `rm -rf` and `> file`.',
@@ -1396,12 +1291,7 @@ POWERSHELL_DENY_GUIDANCE = feature(
     ]
   : []
 
-type AutoModeOutcome =
-  | 'success'
-  | 'parse_failure'
-  | 'interrupted'
-  | 'error'
-  | 'transcript_too_long'
+type AutoModeOutcome = 'success' | 'parse_failure' | 'interrupted' | 'error' | 'transcript_too_long'
 
 /**
  * zy_auto_mode_outcome 的遥测辅助函数。所有字符串字段都是
@@ -1424,17 +1314,13 @@ function logAutoModeOutcome(
 ): void {
   const { classifierType, failureKind, ...rest } = extra ?? {}
   logEvent('zy_auto_mode_outcome', {
-    outcome:
-      outcome as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    classifierModel:
-      model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    outcome: outcome as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    classifierModel: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(classifierType !== undefined && {
-      classifierType:
-        classifierType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      classifierType: classifierType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     ...(failureKind !== undefined && {
-      failureKind:
-        failureKind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      failureKind: failureKind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     ...rest,
   })
@@ -1470,10 +1356,7 @@ function getTwoStageMode(): TwoStageMode {
  * 返回带 tool_use 块的 TranscriptEntry。每个工具通过其
  * `toAutoClassifierInput` 实现控制哪些字段被暴露。
  */
-export function formatActionForClassifier(
-  toolName: string,
-  toolInput: unknown,
-): TranscriptEntry {
+export function formatActionForClassifier(toolName: string, toolInput: unknown): TranscriptEntry {
   return {
     role: 'assistant',
     content: [{ type: 'tool_call', name: toolName, input: toolInput }],

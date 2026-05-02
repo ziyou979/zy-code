@@ -33,7 +33,7 @@ function execFilePromise(
   cmd: string,
   args: string[],
 ): Promise<{ stdout: string; code: number | null }> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     execFile(
       cmd,
       args,
@@ -68,20 +68,15 @@ export function fireRawRead(): Promise<RawReadResult> {
           if (!existsSync(path)) {
             return { stdout: '', label, ok: false }
           }
-          const { stdout, code } = await execFilePromise(PLUTIL_PATH, [
-            ...PLUTIL_ARGS_PREFIX,
-            path,
-          ])
+          const { stdout, code } = await execFilePromise(PLUTIL_PATH, [...PLUTIL_ARGS_PREFIX, path])
           return { stdout, label, ok: code === 0 && !!stdout }
         }),
       )
 
       // First source wins (array is in priority order)
-      const winner = allResults.find(r => r.ok)
+      const winner = allResults.find((r) => r.ok)
       return {
-        plistStdouts: winner
-          ? [{ stdout: winner.stdout, label: winner.label }]
-          : [],
+        plistStdouts: winner ? [{ stdout: winner.stdout, label: winner.label }] : [],
         hklmStdout: null,
         hkcuStdout: null,
       }

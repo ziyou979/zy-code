@@ -1,62 +1,78 @@
-import React, { Suspense, use, useState } from 'react';
-import { Box, Text } from '../../ink.js';
-import { useKeybinding } from '../../keybindings/useKeybinding.js';
-import { logEvent } from '../../services/analytics/index.js';
-import type { Message } from '../../types/message.js';
-import { generatePermissionExplanation, isPermissionExplainerEnabled, type PermissionExplanation as PermissionExplanationType, type RiskLevel } from '../../utils/permissions/permissionExplainer.js';
-import { ShimmerChar } from '../Spinner/ShimmerChar.js';
-import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js';
-import { tSync } from '../../i18n/index.js';
-const LOADING_MESSAGE = tSync('permission.loadingExplanation');
+import React, { Suspense, use, useState } from 'react'
+import { Box, Text } from '../../ink.js'
+import { useKeybinding } from '../../keybindings/useKeybinding.js'
+import { logEvent } from '../../services/analytics/index.js'
+import type { Message } from '../../types/message.js'
+import {
+  generatePermissionExplanation,
+  isPermissionExplainerEnabled,
+  type PermissionExplanation as PermissionExplanationType,
+  type RiskLevel,
+} from '../../utils/permissions/permissionExplainer.js'
+import { ShimmerChar } from '../Spinner/ShimmerChar.js'
+import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js'
+import { tSync } from '../../i18n/index.js'
+const LOADING_MESSAGE = tSync('permission.loadingExplanation')
 function ShimmerLoadingText() {
-  const [ref, glimmerIndex] = useShimmerAnimation("responding", LOADING_MESSAGE, false);
-  const t0 = LOADING_MESSAGE.split("").map((char, index) => <ShimmerChar key={index} char={char} index={index} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="text" />);
-  return <Box ref={ref}>{<Text>{t0}</Text>}</Box>;
+  const [ref, glimmerIndex] = useShimmerAnimation('responding', LOADING_MESSAGE, false)
+  const t0 = LOADING_MESSAGE.split('').map((char, index) => (
+    <ShimmerChar
+      key={index}
+      char={char}
+      index={index}
+      glimmerIndex={glimmerIndex}
+      messageColor="inactive"
+      shimmerColor="text"
+    />
+  ))
+  return <Box ref={ref}>{<Text>{t0}</Text>}</Box>
 }
 function getRiskColor(riskLevel: RiskLevel): 'success' | 'warning' | 'error' {
   switch (riskLevel) {
     case 'LOW':
-      return 'success';
+      return 'success'
     case 'MEDIUM':
-      return 'warning';
+      return 'warning'
     case 'HIGH':
-      return 'error';
+      return 'error'
   }
 }
 function getRiskLabel(riskLevel: RiskLevel): string {
   switch (riskLevel) {
     case 'LOW':
-      return tSync('permission.lowRisk');
+      return tSync('permission.lowRisk')
     case 'MEDIUM':
-      return tSync('permission.medRisk');
+      return tSync('permission.medRisk')
     case 'HIGH':
-      return tSync('permission.highRisk');
+      return tSync('permission.highRisk')
   }
 }
 type PermissionExplanationProps = {
-  toolName: string;
-  toolInput: unknown;
-  toolDescription?: string;
-  messages?: Message[];
-};
+  toolName: string
+  toolInput: unknown
+  toolDescription?: string
+  messages?: Message[]
+}
 type ExplainerState = {
-  visible: boolean;
-  enabled: boolean;
-  promise: Promise<PermissionExplanationType | null> | null;
-};
+  visible: boolean
+  enabled: boolean
+  promise: Promise<PermissionExplanationType | null> | null
+}
 
 /**
  * Creates an explanation promise that never rejects.
  * Errors are caught and returned as null.
  */
-function createExplanationPromise(props: PermissionExplanationProps): Promise<PermissionExplanationType | null> {
+function createExplanationPromise(
+  props: PermissionExplanationProps,
+): Promise<PermissionExplanationType | null> {
   return generatePermissionExplanation({
     toolName: props.toolName,
     toolInput: props.toolInput,
     toolDescription: props.toolDescription,
     messages: props.messages,
-    signal: new AbortController().signal // Won't abort - request is fast enough
-  }).catch(() => null);
+    signal: new AbortController().signal, // Won't abort - request is fast enough
+  }).catch(() => null)
 }
 
 /**
@@ -65,26 +81,30 @@ function createExplanationPromise(props: PermissionExplanationProps): Promise<Pe
  * to avoid consuming tokens for explanations users never view.
  */
 export function usePermissionExplainerUI(props) {
-  const enabled = isPermissionExplainerEnabled();
-  const [visible, setVisible] = useState(false);
-  const [promise, setPromise] = useState(null);
-  useKeybinding("confirm:toggleExplanation", () => {
-    if (!visible) {
-      logEvent("zy_permission_explainer_shortcut_used", {});
-      if (!promise) {
-        setPromise(createExplanationPromise(props));
+  const enabled = isPermissionExplainerEnabled()
+  const [visible, setVisible] = useState(false)
+  const [promise, setPromise] = useState(null)
+  useKeybinding(
+    'confirm:toggleExplanation',
+    () => {
+      if (!visible) {
+        logEvent('zy_permission_explainer_shortcut_used', {})
+        if (!promise) {
+          setPromise(createExplanationPromise(props))
+        }
       }
-    }
-    setVisible(v => !v);
-  }, {
-    context: "Confirmation",
-    isActive: enabled
-  });
+      setVisible((v) => !v)
+    },
+    {
+      context: 'Confirmation',
+      isActive: enabled,
+    },
+  )
   return {
     visible,
     enabled,
-    promise
-  };
+    promise,
+  }
 }
 
 /**
@@ -92,27 +112,53 @@ export function usePermissionExplainerUI(props) {
  * Suspends while loading, returns null on error.
  */
 
-function ExplanationResult({
-  promise
-}) {
-  const explanation = use(promise);
+function ExplanationResult({ promise }) {
+  const explanation = use(promise)
   if (!explanation) {
-    return <Box marginTop={1}><Text dimColor={true}>{tSync('permission.explanationUnavailable')}</Text></Box>;
+    return (
+      <Box marginTop={1}>
+        <Text dimColor={true}>{tSync('permission.explanationUnavailable')}</Text>
+      </Box>
+    )
   }
-  const t3 = getRiskColor((explanation as any).riskLevel);
-  const t4 = getRiskLabel((explanation as any).riskLevel);
-  return <Box flexDirection="column" marginTop={1}>{<Text>{(explanation as any).explanation}</Text>}{<Box marginTop={1}><Text>{(explanation as any).reasoning}</Text></Box>}{<Box marginTop={1}><Text>{<Text color={t3}>{t4}:</Text>}{<Text> {(explanation as any).risk}</Text>}</Text></Box>}</Box>;
+  const t3 = getRiskColor((explanation as any).riskLevel)
+  const t4 = getRiskLabel((explanation as any).riskLevel)
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      {<Text>{(explanation as any).explanation}</Text>}
+      {
+        <Box marginTop={1}>
+          <Text>{(explanation as any).reasoning}</Text>
+        </Box>
+      }
+      {
+        <Box marginTop={1}>
+          <Text>
+            {<Text color={t3}>{t4}:</Text>}
+            {<Text> {(explanation as any).risk}</Text>}
+          </Text>
+        </Box>
+      }
+    </Box>
+  )
 }
 
 /**
  * Content component - shows loading (via Suspense) or explanation when visible
  */
-export function PermissionExplainerContent({
-  visible,
-  promise
-}) {
+export function PermissionExplainerContent({ visible, promise }) {
   if (!visible || !promise) {
-    return null;
+    return null
   }
-  return <Suspense fallback={<Box marginTop={1}><ShimmerLoadingText /></Box>}><ExplanationResult promise={promise} /></Suspense>;
+  return (
+    <Suspense
+      fallback={
+        <Box marginTop={1}>
+          <ShimmerLoadingText />
+        </Box>
+      }
+    >
+      <ExplanationResult promise={promise} />
+    </Suspense>
+  )
 }

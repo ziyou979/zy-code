@@ -20,9 +20,7 @@ import { getTeamFilePath, readTeamFile } from './teamHelpers.js'
  *
  * @returns The teamContext object to include in initialState, or undefined if not a teammate
  */
-export function computeInitialTeamContext():
-  | AppState['teamContext']
-  | undefined {
+export function computeInitialTeamContext(): AppState['teamContext'] | undefined {
   // dynamicTeamContext is set in main.tsx from CLI args
   const context = getDynamicTeamContext()
 
@@ -38,11 +36,7 @@ export function computeInitialTeamContext():
   // Read team file to get lead agent ID
   const teamFile = readTeamFile(teamName)
   if (!teamFile) {
-    logError(
-      new Error(
-        `[computeInitialTeamContext] Could not read team file for ${teamName}`,
-      ),
-    )
+    logError(new Error(`[computeInitialTeamContext] Could not read team file for ${teamName}`))
     return undefined
   }
 
@@ -89,7 +83,7 @@ export function initializeTeammateContextFromSession(
   }
 
   // Find the member in the team file to get their agentId
-  const member = teamFile.members.find(m => m.name === agentName)
+  const member = teamFile.members.find((m) => m.name === agentName)
   if (!member) {
     logForDebugging(
       `[Reconnection] Member ${agentName} not found in team ${teamName} - may have been removed`,
@@ -100,7 +94,7 @@ export function initializeTeammateContextFromSession(
   const teamFilePath = getTeamFilePath(teamName)
 
   // Set teamContext in AppState
-  setAppState(prev => ({
+  setAppState((prev) => ({
     ...prev,
     teamContext: {
       teamName,

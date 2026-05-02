@@ -19,9 +19,7 @@ import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
-    message: z
-      .string()
-      .describe('The message for the user. Supports markdown formatting.'),
+    message: z.string().describe('The message for the user. Supports markdown formatting.'),
     attachments: z
       .array(z.string())
       .optional()
@@ -91,11 +89,7 @@ export function isBriefEntitled(): boolean {
   return feature('KAIROS') || feature('KAIROS_BRIEF')
     ? getKairosActive() ||
         isEnvTruthy(process.env.ZY_CODE_BRIEF) ||
-        getFeatureValue_CACHED_WITH_REFRESH(
-          'zy_kairos_brief',
-          false,
-          KAIROS_BRIEF_REFRESH_MS,
-        )
+        getFeatureValue_CACHED_WITH_REFRESH('zy_kairos_brief', false, KAIROS_BRIEF_REFRESH_MS)
     : false
 }
 
@@ -136,8 +130,7 @@ export function isBriefEnabled(): boolean {
 export const BriefTool = buildTool({
   name: BRIEF_TOOL_NAME,
   aliases: [LEGACY_BRIEF_TOOL_NAME],
-  searchHint:
-    'send a message to the user — your primary visible output channel',
+  searchHint: 'send a message to the user — your primary visible output channel',
   maxResultSizeChars: 100_000,
   userFacingName() {
     return ''

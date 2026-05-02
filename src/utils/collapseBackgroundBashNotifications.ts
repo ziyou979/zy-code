@@ -1,19 +1,10 @@
-import {
-  STATUS_TAG,
-  SUMMARY_TAG,
-  TASK_NOTIFICATION_TAG,
-} from '../constants/xml.js'
+import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../constants/xml.js'
 import { BACKGROUND_BASH_SUMMARY_PREFIX } from '../tasks/LocalShellTask/LocalShellTask.js'
-import type {
-  NormalizedUserMessage,
-  RenderableMessage,
-} from '../types/message.js'
+import type { NormalizedUserMessage, RenderableMessage } from '../types/message.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
 import { extractTag } from './messages.js'
 
-function isCompletedBackgroundBash(
-  msg: RenderableMessage,
-): msg is NormalizedUserMessage {
+function isCompletedBackgroundBash(msg: RenderableMessage): msg is NormalizedUserMessage {
   if (msg.type !== 'user') return false
   const content = msg.message.content[0]
   if ((content as any)?.type !== 'text') return false
@@ -24,9 +15,8 @@ function isCompletedBackgroundBash(
   // agent/workflow/monitor notifications. Monitor-kind completions have their
   // own summary wording and deliberately don't collapse here.
   return (
-    extractTag((content as any).text, SUMMARY_TAG)?.startsWith(
-      BACKGROUND_BASH_SUMMARY_PREFIX,
-    ) ?? false
+    extractTag((content as any).text, SUMMARY_TAG)?.startsWith(BACKGROUND_BASH_SUMMARY_PREFIX) ??
+    false
   )
 }
 

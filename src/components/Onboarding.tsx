@@ -1,47 +1,56 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js';
-import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js';
-import { Box, Link, Newline, Text, useTheme } from '../ink.js';
-import { useKeybindings } from '../keybindings/useKeybinding.js';
-import { normalizeApiKeyForConfig } from '../utils/authPortable.js';
-import { saveGlobalConfig } from '../utils/config.js';
-import { warmI18n, tSync } from '../i18n/index.js';
-import type { UiLanguage } from '../i18n/types.js';
-import { PROVIDER_REGISTRY } from '../utils/model/providerRegistry.js';
-import { updateSettingsForSource } from '../utils/settings/settings.js';
-import { Select } from './CustomSelect/select.js';
-import { WelcomeV2 } from './LogoV2/WelcomeV2.js';
-import { PressEnterToContinue } from './PressEnterToContinue.js';
-import { ThemePicker } from './ThemePicker.js';
-import { OrderedList } from './ui/OrderedList.js';
+import React, { useCallback, useEffect, useState } from 'react'
+import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js'
+import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { Box, Link, Newline, Text, useTheme } from '../ink.js'
+import { useKeybindings } from '../keybindings/useKeybinding.js'
+import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
+import { saveGlobalConfig } from '../utils/config.js'
+import { warmI18n, tSync } from '../i18n/index.js'
+import type { UiLanguage } from '../i18n/types.js'
+import { PROVIDER_REGISTRY } from '../utils/model/providerRegistry.js'
+import { updateSettingsForSource } from '../utils/settings/settings.js'
+import { Select } from './CustomSelect/select.js'
+import { WelcomeV2 } from './LogoV2/WelcomeV2.js'
+import { PressEnterToContinue } from './PressEnterToContinue.js'
+import { ThemePicker } from './ThemePicker.js'
+import { OrderedList } from './ui/OrderedList.js'
 
-type StepId = 'language' | 'theme' | 'platform' | 'model' | 'model-advanced' | 'model-compact' | 'model-tier' | 'security' | 'terminal-setup';
+type StepId =
+  | 'language'
+  | 'theme'
+  | 'platform'
+  | 'model'
+  | 'model-advanced'
+  | 'model-compact'
+  | 'model-tier'
+  | 'security'
+  | 'terminal-setup'
 
 interface OnboardingStep {
-  id: StepId;
-  component: React.ReactNode;
+  id: StepId
+  component: React.ReactNode
 }
 
 type Props = {
-  onDone(): void;
-};
+  onDone(): void
+}
 
 /** Provider id — derived from PROVIDER_REGISTRY */
-type PlatformProvider = (typeof PROVIDER_REGISTRY)[number]['id'];
+type PlatformProvider = (typeof PROVIDER_REGISTRY)[number]['id']
 
 interface PlatformConfig {
   /** Unique identifier for this platform entry (used as Select value) */
-  id: string;
-  provider: PlatformProvider;
-  label: string;
-  description: string;
-  apiKeyLabel: string;
-  baseUrlHint?: string;
-  suggestedModels?: Array<{ label: string; value: string; description: string }>;
+  id: string
+  provider: PlatformProvider
+  label: string
+  description: string
+  apiKeyLabel: string
+  baseUrlHint?: string
+  suggestedModels?: Array<{ label: string; value: string; description: string }>
   defaultBaseUrls?: {
-    openai?: string;
-    anthropic?: string;
-  };
+    openai?: string
+    anthropic?: string
+  }
 }
 
 /**
@@ -52,77 +61,80 @@ interface PlatformConfig {
  * the cached messages change but module-level constants would be stale.
  */
 function getPlatforms(): PlatformConfig[] {
-  return PROVIDER_REGISTRY
-    .filter(entry => entry.showInOnboarding !== false)
-    .map(entry => {
-      // Resolve i18n labels — convention: onboarding.platform.{id} / {id}Desc
-      const i18nLabel = tSync(`onboarding.platform.${entry.id}` as any);
-      const i18nDesc = tSync(`onboarding.platform.${entry.id}Desc` as any);
-      // For 'local' provider, apiKeyLabel is also i18n
-      const apiKeyLabel = entry.id === 'local'
+  return PROVIDER_REGISTRY.filter((entry) => entry.showInOnboarding !== false).map((entry) => {
+    // Resolve i18n labels — convention: onboarding.platform.{id} / {id}Desc
+    const i18nLabel = tSync(`onboarding.platform.${entry.id}` as any)
+    const i18nDesc = tSync(`onboarding.platform.${entry.id}Desc` as any)
+    // For 'local' provider, apiKeyLabel is also i18n
+    const apiKeyLabel =
+      entry.id === 'local'
         ? tSync('onboarding.platform.localApiKey')
-        : entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel');
+        : (entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel'))
 
-      // 根据 tags 自动渲染模型描述
-      const suggestedModels = entry.suggestedModels?.map(model => ({
-        label: model.label,
-        value: model.value,
-        description: model.tags?.length
-          ? model.tags.map(tag => tSync(`model.tag.${tag}` as any)).join(' · ')
-          : '',
-      }));
+    // 根据 tags 自动渲染模型描述
+    const suggestedModels = entry.suggestedModels?.map((model) => ({
+      label: model.label,
+      value: model.value,
+      description: model.tags?.length
+        ? model.tags.map((tag) => tSync(`model.tag.${tag}` as any)).join(' · ')
+        : '',
+    }))
 
-      return {
-        id: entry.id,
-        provider: entry.id,
-        label: i18nLabel,
-        description: i18nDesc,
-        apiKeyLabel,
-        baseUrlHint: entry.baseUrlHint,
-        suggestedModels,
-        defaultBaseUrls: entry.defaultBaseUrls,
-      };
-    });
+    return {
+      id: entry.id,
+      provider: entry.id,
+      label: i18nLabel,
+      description: i18nDesc,
+      apiKeyLabel,
+      baseUrlHint: entry.baseUrlHint,
+      suggestedModels,
+      defaultBaseUrls: entry.defaultBaseUrls,
+    }
+  })
 }
 
 function getGenericModelOptions(): Array<{ label: string; value: string; description: string }> {
   return [
-    { label: tSync('onboarding.model.custom'), value: '__custom__', description: tSync('onboarding.model.customDesc') },
-  ];
+    {
+      label: tSync('onboarding.model.custom'),
+      value: '__custom__',
+      description: tSync('onboarding.model.customDesc'),
+    },
+  ]
 }
 
 export function Onboarding({ onDone }: Props): React.ReactNode {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [theme, setTheme] = useTheme();
-  const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const [theme, setTheme] = useTheme()
+  const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null)
 
   useEffect(() => {
     // onboarding started
-  }, []);
+  }, [])
 
   function goToNextStep() {
     if (currentStepIndex < steps.length - 1) {
-      const nextIndex = currentStepIndex + 1;
-      setCurrentStepIndex(nextIndex);
+      const nextIndex = currentStepIndex + 1
+      setCurrentStepIndex(nextIndex)
     } else {
-      onDone();
+      onDone()
     }
   }
 
   async function handleLanguageSelection(lang: UiLanguage) {
     // Save language to user settings
-    updateSettingsForSource('userSettings', { language: lang === 'en' ? undefined : lang });
+    updateSettingsForSource('userSettings', { language: lang === 'en' ? undefined : lang })
     // Re-warm i18n cache with the new language so subsequent steps render in the selected language
-    await warmI18n();
-    goToNextStep();
+    await warmI18n()
+    goToNextStep()
   }
 
   function handleThemeSelection(newTheme: ReturnType<typeof useTheme>[0]) {
-    setTheme(newTheme);
-    goToNextStep();
+    setTheme(newTheme)
+    goToNextStep()
   }
 
-  const exitState = useExitOnCtrlCDWithKeybindings();
+  const exitState = useExitOnCtrlCDWithKeybindings()
 
   // Language selection step — must be first so all subsequent steps render in the chosen language
   const languageStep = (
@@ -135,18 +147,18 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
             { label: 'English', value: 'en', description: tSync('onboarding.language.english') },
             { label: '中文', value: 'zh-CN', description: tSync('onboarding.language.chinese') },
           ]}
-          onChange={value => {
-            void handleLanguageSelection(value as UiLanguage);
+          onChange={(value) => {
+            void handleLanguageSelection(value as UiLanguage)
           }}
           onCancel={() => {
             // Default to English if skipped
-            void handleLanguageSelection('en');
+            void handleLanguageSelection('en')
           }}
         />
         <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
       </Box>
     </Box>
-  );
+  )
 
   // Theme step
   const themeStep = (
@@ -159,25 +171,27 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         skipExitHandling={true}
       />
     </Box>
-  );
+  )
 
   // Platform setup step (replaces OAuth + API key approval)
   function handlePlatformDone(platformId: string, apiKey: string) {
-    const platform = getPlatforms().find(p => p.id === platformId);
-    const provider = platform?.provider ?? 'generic';
-    const normalizedKey = normalizeApiKeyForConfig(apiKey);
+    const platform = getPlatforms().find((p) => p.id === platformId)
+    const provider = platform?.provider ?? 'generic'
+    const normalizedKey = normalizeApiKeyForConfig(apiKey)
 
     // Resolve base URL from platform defaults based on supported formats
-    let baseUrl: string | undefined;
+    let baseUrl: string | undefined
     if (platform?.defaultBaseUrls) {
       // If provider supports openai, use openai base URL; otherwise use anthropic base URL
-      const supportsNativeOpenai = PROVIDER_REGISTRY.find(e => e.id === platform.provider)?.supportedFormats.includes('openai');
+      const supportsNativeOpenai = PROVIDER_REGISTRY.find(
+        (e) => e.id === platform.provider,
+      )?.supportedFormats.includes('openai')
       baseUrl = supportsNativeOpenai
         ? platform.defaultBaseUrls.openai
-        : platform.defaultBaseUrls.anthropic;
+        : platform.defaultBaseUrls.anthropic
     }
 
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       configuredProvider: provider,
       configuredApiKey: apiKey,
@@ -186,28 +200,28 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         ...current.apiKeyResponses,
         approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
       },
-    }));
-    setSelectedProvider(provider as PlatformProvider);
-    goToNextStep();
+    }))
+    setSelectedProvider(provider as PlatformProvider)
+    goToNextStep()
   }
 
   const platformStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
       <PlatformSetup onDone={handlePlatformDone} />
     </Box>
-  );
+  )
 
   // Tier-based model configuration steps
   const [tierModels, setTierModels] = useState<{
-    standard: string;
-    advanced?: string;
-    compact?: string;
-  }>({ standard: '' });
+    standard: string
+    advanced?: string
+    compact?: string
+  }>({ standard: '' })
 
   // standard tier — required
   function handleStandardDone(model: string) {
-    setTierModels(prev => ({ ...prev, standard: model }));
-    goToNextStep();
+    setTierModels((prev) => ({ ...prev, standard: model }))
+    goToNextStep()
   }
   const standardStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
@@ -220,14 +234,14 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         allowSkip={false}
       />
     </Box>
-  );
+  )
 
   // advanced tier — optional, skip → fallback to standard
   function handleAdvancedDone(model: string) {
     if (model) {
-      setTierModels(prev => ({ ...prev, advanced: model }));
+      setTierModels((prev) => ({ ...prev, advanced: model }))
     }
-    goToNextStep();
+    goToNextStep()
   }
   const advancedStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
@@ -240,14 +254,14 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         allowSkip={true}
       />
     </Box>
-  );
+  )
 
   // compact tier — optional, skip → fallback to standard
   function handleCompactDone(model: string) {
     if (model) {
-      setTierModels(prev => ({ ...prev, compact: model }));
+      setTierModels((prev) => ({ ...prev, compact: model }))
     }
-    goToNextStep();
+    goToNextStep()
   }
   const compactStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
@@ -260,23 +274,24 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         allowSkip={true}
       />
     </Box>
-  );
+  )
 
   // mainLoopModel tier selection — choose which tier is the default
   function handleTierDone(tier: string) {
     // Build models object
-    const models: Record<string, string> = { standard: tierModels.standard };
-    if (tierModels.advanced) models.advanced = tierModels.advanced;
-    if (tierModels.compact) models.compact = tierModels.compact;
+    const models: Record<string, string> = { standard: tierModels.standard }
+    if (tierModels.advanced) models.advanced = tierModels.advanced
+    if (tierModels.compact) models.compact = tierModels.compact
 
-    const mainLoopModel = (['advanced', 'standard', 'compact'] as const)
-      .includes(tier as 'advanced' | 'standard' | 'compact')
-      ? tier as 'advanced' | 'standard' | 'compact'
-      : 'standard';
+    const mainLoopModel = (['advanced', 'standard', 'compact'] as const).includes(
+      tier as 'advanced' | 'standard' | 'compact',
+    )
+      ? (tier as 'advanced' | 'standard' | 'compact')
+      : 'standard'
 
     // Write to settings.json
-    updateSettingsForSource('userSettings', { models, mainLoopModel });
-    goToNextStep();
+    updateSettingsForSource('userSettings', { models, mainLoopModel })
+    goToNextStep()
   }
   const tierStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
@@ -295,7 +310,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
       </Box>
     </Box>
-  );
+  )
 
   // Security step
   const securityStep = (
@@ -311,9 +326,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
             </Text>
           </OrderedList.Item>
           <OrderedList.Item>
-            <Text>
-              {tSync('onboarding.security.risk2')}
-            </Text>
+            <Text>{tSync('onboarding.security.risk2')}</Text>
             <Text dimColor wrap="wrap">
               {tSync('onboarding.security.risk2desc')}
               <Newline />
@@ -324,18 +337,18 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       </Box>
       <PressEnterToContinue />
     </Box>
-  );
+  )
 
   // Build steps array — language must be first
-  const steps = [];
-  steps.push({ id: 'language', component: languageStep });
-  steps.push({ id: 'theme', component: themeStep });
-  steps.push({ id: 'platform', component: platformStep });
-  steps.push({ id: 'model', component: standardStep });
-  steps.push({ id: 'model-advanced', component: advancedStep });
-  steps.push({ id: 'model-compact', component: compactStep });
-  steps.push({ id: 'model-tier', component: tierStep });
-  steps.push({ id: 'security', component: securityStep });
+  const steps = []
+  steps.push({ id: 'language', component: languageStep })
+  steps.push({ id: 'theme', component: themeStep })
+  steps.push({ id: 'platform', component: platformStep })
+  steps.push({ id: 'model', component: standardStep })
+  steps.push({ id: 'model-advanced', component: advancedStep })
+  steps.push({ id: 'model-compact', component: compactStep })
+  steps.push({ id: 'model-tier', component: tierStep })
+  steps.push({ id: 'security', component: securityStep })
 
   if (shouldOfferTerminalSetup()) {
     steps.push({
@@ -346,9 +359,10 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
           <Box flexDirection="column" width={70} gap={1}>
             <Text>
               {tSync('onboarding.terminalSetup.description', {
-                settings: process.env.TERM_PROGRAM === 'Apple_Terminal'
-                  ? tSync('onboarding.terminalSetup.appleSettings')
-                  : tSync('onboarding.terminalSetup.otherSettings')
+                settings:
+                  process.env.TERM_PROGRAM === 'Apple_Terminal'
+                    ? tSync('onboarding.terminalSetup.appleSettings')
+                    : tSync('onboarding.terminalSetup.otherSettings'),
               })}
             </Text>
             <Select
@@ -356,11 +370,13 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
                 { label: tSync('onboarding.terminalSetup.yes'), value: 'install' },
                 { label: tSync('onboarding.terminalSetup.no'), value: 'no' },
               ]}
-              onChange={value => {
+              onChange={(value) => {
                 if (value === 'install') {
-                  void setupTerminal(theme).catch(() => {}).finally(goToNextStep);
+                  void setupTerminal(theme)
+                    .catch(() => {})
+                    .finally(goToNextStep)
                 } else {
-                  goToNextStep();
+                  goToNextStep()
                 }
               }}
               onCancel={() => goToNextStep()}
@@ -368,37 +384,36 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
             <Text dimColor>
               {exitState.pending
                 ? tSync('onboarding.pressAgainToExit', { key: exitState.keyName })
-                : tSync('onboarding.enterToConfirmSkip')
-              }
+                : tSync('onboarding.enterToConfirmSkip')}
             </Text>
           </Box>
         </Box>
       ),
-    });
+    })
   }
 
-  const currentStep = steps[currentStepIndex];
+  const currentStep = steps[currentStepIndex]
 
   const handleSecurityContinue = useCallback(() => {
     if (currentStepIndex === steps.length - 1) {
-      onDone();
+      onDone()
     } else {
-      goToNextStep();
+      goToNextStep()
     }
-  }, [currentStepIndex, steps.length, onDone]);
+  }, [currentStepIndex, steps.length, onDone])
 
   const handleTerminalSetupSkip = useCallback(() => {
-    goToNextStep();
-  }, [currentStepIndex, steps.length, onDone]);
+    goToNextStep()
+  }, [currentStepIndex, steps.length, onDone])
 
   useKeybindings(
     { 'confirm:yes': handleSecurityContinue },
-    { context: 'Confirmation', isActive: currentStep?.id === 'security' }
-  );
+    { context: 'Confirmation', isActive: currentStep?.id === 'security' },
+  )
   useKeybindings(
     { 'confirm:no': handleTerminalSetupSkip },
-    { context: 'Confirmation', isActive: currentStep?.id === 'terminal-setup' }
-  );
+    { context: 'Confirmation', isActive: currentStep?.id === 'terminal-setup' },
+  )
 
   return (
     <Box flexDirection="column">
@@ -412,27 +427,27 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         )}
       </Box>
     </Box>
-  );
+  )
 }
 
 function PlatformSetup({
   onDone,
 }: {
-  onDone(platformId: string, apiKey: string): void;
+  onDone(platformId: string, apiKey: string): void
 }): React.ReactNode {
-  const [phase, setPhase] = useState<'provider' | 'apiKey'>('provider');
-  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null);
+  const [phase, setPhase] = useState<'provider' | 'apiKey'>('provider')
+  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
 
   const handleProviderSelect = (value: string) => {
-    setSelectedPlatformId(value);
-    setPhase('apiKey');
-  };
+    setSelectedPlatformId(value)
+    setPhase('apiKey')
+  }
 
   const handleApiKeyDone = (apiKey: string) => {
     if (selectedPlatformId) {
-      onDone(selectedPlatformId, apiKey);
+      onDone(selectedPlatformId, apiKey)
     }
-  };
+  }
 
   if (phase === 'provider') {
     return (
@@ -440,7 +455,7 @@ function PlatformSetup({
         <Text bold>{tSync('onboarding.selectPlatform')}</Text>
         <Box flexDirection="column" width={60} gap={1}>
           <Select
-            options={getPlatforms().map(p => ({
+            options={getPlatforms().map((p) => ({
               label: p.label,
               description: p.description,
               value: p.id,
@@ -451,21 +466,21 @@ function PlatformSetup({
           <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
         </Box>
       </>
-    );
+    )
   }
 
   // apiKey phase
-  const platform = getPlatforms().find(p => p.id === selectedPlatformId);
+  const platform = getPlatforms().find((p) => p.id === selectedPlatformId)
   return (
     <ApiKeyInput
       apiKeyLabel={platform?.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel')}
       baseUrlHint={platform?.baseUrlHint}
       onDone={handleApiKeyDone}
       onBack={() => {
-        setPhase('provider');
+        setPhase('provider')
       }}
     />
-  );
+  )
 }
 
 function ApiKeyInput({
@@ -474,10 +489,10 @@ function ApiKeyInput({
   onDone,
   onBack,
 }: {
-  apiKeyLabel: string;
-  baseUrlHint?: string;
-  onDone(apiKey: string): void;
-  onBack(): void;
+  apiKeyLabel: string
+  baseUrlHint?: string
+  onDone(apiKey: string): void
+  onBack(): void
 }): React.ReactNode {
   return (
     <Box flexDirection="column" gap={1}>
@@ -490,9 +505,9 @@ function ApiKeyInput({
               label: apiKeyLabel,
               value: 'input',
               placeholder: 'sk-...',
-              onChange: value => {
+              onChange: (value) => {
                 if (value.trim().length > 0) {
-                  onDone(value.trim());
+                  onDone(value.trim())
                 }
               },
               allowEmptySubmitToCancel: true,
@@ -502,12 +517,14 @@ function ApiKeyInput({
           onCancel={onBack}
         />
         {baseUrlHint && (
-          <Text dimColor>{tSync('onboarding.baseUrlLabel')}: {baseUrlHint}</Text>
+          <Text dimColor>
+            {tSync('onboarding.baseUrlLabel')}: {baseUrlHint}
+          </Text>
         )}
         <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
       </Box>
     </Box>
-  );
+  )
 }
 
 /**
@@ -522,50 +539,50 @@ function TierModelSetup({
   onDone,
   allowSkip,
 }: {
-  tier: 'standard' | 'advanced' | 'compact';
-  provider: PlatformProvider | null;
-  title: string;
-  description: string;
-  onDone(model: string): void;
-  allowSkip: boolean;
+  tier: 'standard' | 'advanced' | 'compact'
+  provider: PlatformProvider | null
+  title: string
+  description: string
+  onDone(model: string): void
+  allowSkip: boolean
 }): React.ReactNode {
-  const [phase, setPhase] = useState<'select' | 'custom'>('select');
+  const [phase, setPhase] = useState<'select' | 'custom'>('select')
 
-  const platform = getPlatforms().find(p => p.provider === provider);
-  const modelOptions = platform?.suggestedModels ?? getGenericModelOptions();
-  const hasCustomOption = !platform?.suggestedModels || platform.provider === 'generic';
+  const platform = getPlatforms().find((p) => p.provider === provider)
+  const modelOptions = platform?.suggestedModels ?? getGenericModelOptions()
+  const hasCustomOption = !platform?.suggestedModels || platform.provider === 'generic'
 
   // Build select options — add skip and custom options
-  const selectOptions = modelOptions.map(m => ({
+  const selectOptions = modelOptions.map((m) => ({
     label: m.label,
     description: m.description,
     value: m.value,
-  }));
+  }))
 
   if (allowSkip) {
     selectOptions.push({
       label: tSync('onboarding.tier.skip'),
       value: '__skip__',
       description: '',
-    });
+    })
   }
   if (hasCustomOption) {
     selectOptions.push({
       label: tSync('onboarding.tier.custom'),
       value: '__custom__',
       description: tSync('onboarding.tier.customDesc'),
-    });
+    })
   }
 
   const handleSelect = (value: string) => {
     if (value === '__skip__') {
-      onDone('');
+      onDone('')
     } else if (value === '__custom__') {
-      setPhase('custom');
+      setPhase('custom')
     } else {
-      onDone(value);
+      onDone(value)
     }
-  };
+  }
 
   if (phase === 'custom') {
     return (
@@ -579,9 +596,9 @@ function TierModelSetup({
                 label: tSync('onboarding.modelNameLabel'),
                 value: 'input',
                 placeholder: tSync('onboarding.modelNamePlaceholder'),
-                onChange: value => {
+                onChange: (value) => {
                   if (value.trim().length > 0) {
-                    onDone(value.trim());
+                    onDone(value.trim())
                   }
                 },
                 allowEmptySubmitToCancel: true,
@@ -593,7 +610,7 @@ function TierModelSetup({
           <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
         </Box>
       </>
-    );
+    )
   }
 
   return (
@@ -604,10 +621,10 @@ function TierModelSetup({
         <Select
           options={selectOptions}
           onChange={handleSelect}
-          onCancel={() => allowSkip ? onDone('') : undefined}
+          onCancel={() => (allowSkip ? onDone('') : undefined)}
         />
         <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
       </Box>
     </>
-  );
+  )
 }

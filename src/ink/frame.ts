@@ -103,10 +103,7 @@ export type Diff = Patch[]
  * 2. 当前帧屏幕高度超过终端可用行数 → 'offscreen'
  * 3. 上一帧屏幕高度超过终端可用行数 → 'offscreen'
  */
-export function shouldClearScreen(
-  prevFrame: Frame,
-  frame: Frame,
-): FlickerReason | undefined {
+export function shouldClearScreen(prevFrame: Frame, frame: Frame): FlickerReason | undefined {
   const didResize =
     frame.viewport.height !== prevFrame.viewport.height ||
     frame.viewport.width !== prevFrame.viewport.width
@@ -115,8 +112,7 @@ export function shouldClearScreen(
   }
 
   const currentFrameOverflows = frame.screen.height >= frame.viewport.height
-  const previousFrameOverflowed =
-    prevFrame.screen.height >= prevFrame.viewport.height
+  const previousFrameOverflowed = prevFrame.screen.height >= prevFrame.viewport.height
   if (currentFrameOverflows || previousFrameOverflowed) {
     return 'offscreen'
   }

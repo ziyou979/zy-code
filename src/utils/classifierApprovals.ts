@@ -16,10 +16,7 @@ const CLASSIFIER_APPROVALS = new Map<string, ClassifierApproval>()
 const CLASSIFIER_CHECKING = new Set<string>()
 const classifierChecking = createSignal()
 
-export function setClassifierApproval(
-  toolUseID: string,
-  matchedRule: string,
-): void {
+export function setClassifierApproval(toolUseID: string, matchedRule: string): void {
   if (!feature('BASH_CLASSIFIER')) {
     return
   }
@@ -38,19 +35,14 @@ export function getClassifierApproval(toolUseID: string): string | undefined {
   return approval.matchedRule
 }
 
-export function setYoloClassifierApproval(
-  toolUseID: string,
-  reason: string,
-): void {
+export function setYoloClassifierApproval(toolUseID: string, reason: string): void {
   if (!feature('TRANSCRIPT_CLASSIFIER')) {
     return
   }
   CLASSIFIER_APPROVALS.set(toolUseID, { classifier: 'auto-mode', reason })
 }
 
-export function getYoloClassifierApproval(
-  toolUseID: string,
-): string | undefined {
+export function getYoloClassifierApproval(toolUseID: string): string | undefined {
   if (!feature('TRANSCRIPT_CLASSIFIER')) {
     return undefined
   }

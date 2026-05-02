@@ -1,11 +1,6 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useRef } from 'react'
-import {
-  type AppState,
-  useAppState,
-  useAppStateStore,
-  useSetAppState,
-} from 'src/state/AppState.js'
+import { type AppState, useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import type { ToolPermissionContext } from 'src/Tool.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import {
@@ -36,12 +31,10 @@ export async function checkAndDisableBypassPermissionsIfNeeded(
     return
   }
 
-  setAppState(prev => {
+  setAppState((prev) => {
     return {
       ...prev,
-      toolPermissionContext: createDisabledBypassPermissionsContext(
-        prev.toolPermissionContext,
-      ),
+      toolPermissionContext: createDisabledBypassPermissionsContext(prev.toolPermissionContext),
     }
   })
 }
@@ -55,16 +48,13 @@ export function resetBypassPermissionsCheck(): void {
 }
 
 export function useKickOffCheckAndDisableBypassPermissionsIfNeeded(): void {
-  const toolPermissionContext = useAppState(s => s.toolPermissionContext)
+  const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const setAppState = useSetAppState()
 
   // Run once, when the component mounts
   useEffect(() => {
     if (getIsRemoteMode()) return
-    void checkAndDisableBypassPermissionsIfNeeded(
-      toolPermissionContext,
-      setAppState,
-    )
+    void checkAndDisableBypassPermissionsIfNeeded(toolPermissionContext, setAppState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }
@@ -81,19 +71,15 @@ export async function checkAndDisableAutoModeIfNeeded(
     }
     autoModeCheckRan = true
 
-    const { updateContext, notification } = await verifyAutoModeGateAccess(
-      toolPermissionContext,
-    )
-    setAppState(prev => {
+    const { updateContext, notification } = await verifyAutoModeGateAccess(toolPermissionContext)
+    setAppState((prev) => {
       // Apply the transform to CURRENT context, not the stale snapshot we
       // passed to verifyAutoModeGateAccess. The async GrowthBook await inside
       // can be outrun by a mid-turn shift-tab; spreading a stale context here
       // would revert the user's mode change.
       const nextCtx = updateContext(prev.toolPermissionContext)
       const newState =
-        nextCtx === prev.toolPermissionContext
-          ? prev
-          : { ...prev, toolPermissionContext: nextCtx }
+        nextCtx === prev.toolPermissionContext ? prev : { ...prev, toolPermissionContext: nextCtx }
       if (!notification) return newState
       return {
         ...newState,
@@ -123,8 +109,8 @@ export function resetAutoModeGateCheck(): void {
 }
 
 export function useKickOffCheckAndDisableAutoModeIfNeeded(): void {
-  const mainLoopModel = useAppState(s => s.mainLoopModel)
-  const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession)
+  const mainLoopModel = useAppState((s) => s.mainLoopModel)
+  const mainLoopModelForSession = useAppState((s) => s.mainLoopModelForSession)
   const setAppState = useSetAppState()
   const store = useAppStateStore()
   const isFirstRunRef = useRef(true)
@@ -141,10 +127,7 @@ export function useKickOffCheckAndDisableAutoModeIfNeeded(): void {
     } else {
       resetAutoModeGateCheck()
     }
-    void checkAndDisableAutoModeIfNeeded(
-      store.getState().toolPermissionContext,
-      setAppState,
-    )
+    void checkAndDisableAutoModeIfNeeded(store.getState().toolPermissionContext, setAppState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mainLoopModel, mainLoopModelForSession])
 }

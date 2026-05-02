@@ -185,19 +185,14 @@ function getQueryProfileReport(): string {
   if (firstChunkTime > 0) {
     const preRequestOverhead = apiRequestSentTime
     const networkLatency = firstChunkTime - apiRequestSentTime
-    const preRequestPercent = (
-      (preRequestOverhead / firstChunkTime) *
-      100
-    ).toFixed(1)
+    const preRequestPercent = ((preRequestOverhead / firstChunkTime) * 100).toFixed(1)
     const networkPercent = ((networkLatency / firstChunkTime) * 100).toFixed(1)
 
     lines.push(`Total TTFT: ${formatMs(firstChunkTime)}ms`)
     lines.push(
       `  - Pre-request overhead: ${formatMs(preRequestOverhead)}ms (${preRequestPercent}%)`,
     )
-    lines.push(
-      `  - Network latency: ${formatMs(networkLatency)}ms (${networkPercent}%)`,
-    )
+    lines.push(`  - Network latency: ${formatMs(networkLatency)}ms (${networkPercent}%)`)
   } else {
     lines.push(`Total time: ${formatMs(totalTime)}ms`)
   }
@@ -261,7 +256,7 @@ function getPhaseSummary(
     },
   ]
 
-  const markMap = new Map(marks.map(m => [m.name, m.startTime - baselineTime]))
+  const markMap = new Map(marks.map((m) => [m.name, m.startTime - baselineTime]))
 
   const lines: string[] = []
   lines.push('')
@@ -274,9 +269,7 @@ function getPhaseSummary(
     if (startTime !== undefined && endTime !== undefined) {
       const duration = endTime - startTime
       const bar = '█'.repeat(Math.min(Math.ceil(duration / 10), 50)) // 1 block per 10ms, max 50
-      lines.push(
-        `  ${phase.name.padEnd(22)} ${formatMs(duration).padStart(10)}ms ${bar}`,
-      )
+      lines.push(`  ${phase.name.padEnd(22)} ${formatMs(duration).padStart(10)}ms ${bar}`)
     }
   }
 

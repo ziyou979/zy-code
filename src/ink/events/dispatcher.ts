@@ -44,10 +44,7 @@ function getHandler(
  *
  * 结果：[root-cap, ..., parent-cap, target-cap, target-bub, parent-bub, ..., root-bub]
  */
-function collectListeners(
-  target: EventTarget,
-  event: TerminalEvent,
-): DispatchListener[] {
+function collectListeners(target: EventTarget, event: TerminalEvent): DispatchListener[] {
   const listeners: DispatchListener[] = []
 
   let node: EventTarget | undefined = target
@@ -85,10 +82,7 @@ function collectListeners(
  * 在每个监听器执行前，调用 event._prepareForTarget(node)，
  * 以便 event 子类可以执行每个节点的初始化操作。
  */
-function processDispatchQueue(
-  listeners: DispatchListener[],
-  event: TerminalEvent,
-): void {
+function processDispatchQueue(listeners: DispatchListener[], event: TerminalEvent): void {
   let previousNode: EventTarget | undefined
 
   for (const { node, handler, phase } of listeners) {
@@ -209,13 +203,7 @@ export class Dispatcher {
     if (!this.discreteUpdates) {
       return this.dispatch(target, event)
     }
-    return this.discreteUpdates(
-      (t, e) => this.dispatch(t, e),
-      target,
-      event,
-      undefined,
-      undefined,
-    )
+    return this.discreteUpdates((t, e) => this.dispatch(t, e), target, event, undefined, undefined)
   }
 
   /**

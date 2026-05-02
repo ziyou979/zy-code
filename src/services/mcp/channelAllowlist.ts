@@ -35,10 +35,7 @@ const ChannelAllowlistSchema = lazySchema(() =>
 )
 
 export function getChannelAllowlist(): ChannelAllowlistEntry[] {
-  const raw = getFeatureValue_CACHED_MAY_BE_STALE<unknown>(
-    'zy_harbor_ledger',
-    [],
-  )
+  const raw = getFeatureValue_CACHED_MAY_BE_STALE<unknown>('zy_harbor_ledger', [])
   const parsed = ChannelAllowlistSchema().safeParse(raw)
   return parsed.success ? parsed.data : []
 }
@@ -64,13 +61,9 @@ export function isChannelsEnabled(): boolean {
  * match the {marketplace, plugin}-keyed ledger) and for @-less sources
  * (builtin/inline — same reason).
  */
-export function isChannelAllowlisted(
-  pluginSource: string | undefined,
-): boolean {
+export function isChannelAllowlisted(pluginSource: string | undefined): boolean {
   if (!pluginSource) return false
   const { name, marketplace } = parsePluginIdentifier(pluginSource)
   if (!marketplace) return false
-  return getChannelAllowlist().some(
-    e => e.plugin === name && e.marketplace === marketplace,
-  )
+  return getChannelAllowlist().some((e) => e.plugin === name && e.marketplace === marketplace)
 }

@@ -11,13 +11,8 @@ import {
 } from 'src/services/analytics/index.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
-import {
-  getIsNonInteractiveSession,
-} from '../bootstrap/state.js'
-import {
-  getMockSubscriptionType,
-  shouldUseMockSubscription,
-} from '../services/mockRateLimits.js'
+import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getMockSubscriptionType, shouldUseMockSubscription } from '../services/mockRateLimits.js'
 import {
   isOAuthTokenExpired,
   refreshOAuthToken,
@@ -33,11 +28,7 @@ import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
 } from './authPortable.js'
-import {
-  checkStsCallerIdentity,
-  clearAwsIniCache,
-  isValidAwsStsOutput,
-} from './aws.js'
+import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from './aws.js'
 import { AwsAuthStatusManager } from './awsAuthStatusManager.js'
 import { clearBetasCaches } from './betas.js'
 import {
@@ -47,11 +38,7 @@ import {
   saveGlobalConfig,
 } from './config.js'
 import { logAntError, logForDebugging } from './debug.js'
-import {
-  getZyConfigHomeDir,
-  isBareMode,
-  isEnvTruthy,
-} from './envUtils.js'
+import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from './envUtils.js'
 import { errorMessage } from './errors.js'
 import { execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
 import * as lockfile from './lockfile.js'
@@ -66,10 +53,7 @@ import {
   getMacOsKeychainStorageServiceName,
   getUsername,
 } from './secureStorage/macOsKeychainHelpers.js'
-import {
-  getSettings_DEPRECATED,
-  getSettingsForSource,
-} from './settings/settings.js'
+import { getSettings_DEPRECATED, getSettingsForSource } from './settings/settings.js'
 import { sleep } from './sleep.js'
 import { jsonParse } from './slowOperations.js'
 import { clearToolSchemaCache } from './toolSchemaCache.js'
@@ -86,10 +70,7 @@ const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
  * also use that key — and fail if it's stale/wrong-org.
  */
 function isManagedOAuthContext(): boolean {
-  return (
-    isEnvTruthy(process.env.ZY_CODE_REMOTE) ||
-    process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop'
-  )
+  return isEnvTruthy(process.env.ZY_CODE_REMOTE) || process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop'
 }
 
 /** Whether we are supporting direct API auth. */
@@ -170,11 +151,7 @@ export function getAuthTokenSource() {
   return { source: 'none' as const, hasToken: false }
 }
 
-export type ApiKeySource =
-  | 'settingsApiKey'
-  | 'apiKeyHelper'
-  | '/login managed key'
-  | 'none'
+export type ApiKeySource = 'settingsApiKey' | 'apiKeyHelper' | '/login managed key' | 'none'
 
 export function getApiKey(): null | string {
   const { key } = getApiKeyWithSource()
@@ -188,9 +165,7 @@ export function hasApiKeyAuth(): boolean {
   return key !== null && source !== 'none'
 }
 
-export function getApiKeyWithSource(
-  opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {},
-): {
+export function getApiKeyWithSource(opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {}): {
   key: null | string
   source: ApiKeySource
 } {
@@ -211,9 +186,7 @@ export function getApiKeyWithSource(
   if (isBareMode()) {
     if (getConfiguredApiKeyHelper()) {
       return {
-        key: opts.skipRetrievingKeyFromApiKeyHelper
-          ? null
-          : getApiKeyFromApiKeyHelperCached(),
+        key: opts.skipRetrievingKeyFromApiKeyHelper ? null : getApiKeyFromApiKeyHelperCached(),
         source: 'apiKeyHelper',
       }
     }
@@ -284,8 +257,7 @@ function isApiKeyHelperFromProjectOrLocalSettings(): boolean {
   const projectSettings = getSettingsForSource('projectSettings')
   const localSettings = getSettingsForSource('localSettings')
   return (
-    projectSettings?.apiKeyHelper === apiKeyHelper ||
-    localSettings?.apiKeyHelper === apiKeyHelper
+    projectSettings?.apiKeyHelper === apiKeyHelper || localSettings?.apiKeyHelper === apiKeyHelper
   )
 }
 
@@ -391,11 +363,7 @@ export async function getApiKeyFromApiKeyHelper(
     // `??=` banned here by eslint no-nullish-assign-object-call (bun bug).
     if (!_apiKeyHelperInflight) {
       _apiKeyHelperInflight = {
-        promise: _runAndCache(
-          isNonInteractiveSession,
-          false,
-          _apiKeyHelperEpoch,
-        ),
+        promise: _runAndCache(isNonInteractiveSession, false, _apiKeyHelperEpoch),
         startedAt: null,
       }
     }
@@ -447,9 +415,7 @@ async function _runAndCache(
   }
 }
 
-async function _executeApiKeyHelper(
-  isNonInteractiveSession: boolean,
-): Promise<string | null> {
+async function _executeApiKeyHelper(isNonInteractiveSession: boolean): Promise<string | null> {
   const apiKeyHelper = getConfiguredApiKeyHelper()
   if (!apiKeyHelper) {
     return null
@@ -500,15 +466,10 @@ export function clearApiKeyHelperCache(): void {
   _apiKeyHelperInflight = null
 }
 
-export function prefetchApiKeyFromApiKeyHelperIfSafe(
-  isNonInteractiveSession: boolean,
-): void {
+export function prefetchApiKeyFromApiKeyHelperIfSafe(isNonInteractiveSession: boolean): void {
   // Skip if trust not yet accepted — the inner _executeApiKeyHelper check
   // would catch this too, but would fire a false-positive analytics event.
-  if (
-    isApiKeyHelperFromProjectOrLocalSettings() &&
-    !checkHasTrustDialogAccepted()
-  ) {
+  if (isApiKeyHelperFromProjectOrLocalSettings() && !checkHasTrustDialogAccepted()) {
     return
   }
   void getApiKeyFromApiKeyHelper(isNonInteractiveSession)
@@ -542,9 +503,7 @@ async function runAwsAuthRefresh(): Promise<boolean> {
   try {
     logForDebugging('Fetching AWS caller identity for AWS auth refresh command')
     await checkStsCallerIdentity()
-    logForDebugging(
-      'Fetched AWS caller identity, skipping AWS auth refresh command',
-    )
+    logForDebugging('Fetched AWS caller identity, skipping AWS auth refresh command')
     return false
   } catch {
     // only actually do the refresh if caller-identity calls
@@ -562,11 +521,11 @@ export function refreshAwsAuth(awsAuthRefresh: string): Promise<boolean> {
   const authStatusManager = AwsAuthStatusManager.getInstance()
   authStatusManager.startAuthentication()
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const refreshProc = exec(awsAuthRefresh, {
       timeout: AWS_AUTH_REFRESH_TIMEOUT_MS,
     })
-    refreshProc.stdout!.on('data', data => {
+    refreshProc.stdout!.on('data', (data) => {
       const output = data.toString().trim()
       if (output) {
         // Add output to status manager for UI display
@@ -576,7 +535,7 @@ export function refreshAwsAuth(awsAuthRefresh: string): Promise<boolean> {
       }
     })
 
-    refreshProc.stderr!.on('data', data => {
+    refreshProc.stderr!.on('data', (data) => {
       const error = data.toString().trim()
       if (error) {
         authStatusManager.setError(error)
@@ -595,9 +554,7 @@ export function refreshAwsAuth(awsAuthRefresh: string): Promise<boolean> {
           ? chalk.red(
               'AWS auth refresh timed out after 3 minutes. Run your auth command manually in a separate terminal.',
             )
-          : chalk.red(
-              'Error running awsAuthRefresh (in settings or ~/.zy.json):',
-            )
+          : chalk.red('Error running awsAuthRefresh (in settings or ~/.zy.json):')
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(message)
         authStatusManager.endAuthentication(false)
@@ -637,13 +594,9 @@ async function getAwsCredsFromCredentialExport(): Promise<{
   }
 
   try {
-    logForDebugging(
-      'Fetching AWS caller identity for credential export command',
-    )
+    logForDebugging('Fetching AWS caller identity for credential export command')
     await checkStsCallerIdentity()
-    logForDebugging(
-      'Fetched AWS caller identity, skipping AWS credential export command',
-    )
+    logForDebugging('Fetched AWS caller identity, skipping AWS credential export command')
     return null
   } catch {
     // only actually do the export if caller-identity calls
@@ -661,9 +614,7 @@ async function getAwsCredsFromCredentialExport(): Promise<{
       const awsOutput = jsonParse(result.stdout.trim())
 
       if (!isValidAwsStsOutput(awsOutput)) {
-        throw new Error(
-          'awsCredentialExport did not return valid AWS STS output structure',
-        )
+        throw new Error('awsCredentialExport did not return valid AWS STS output structure')
       }
 
       logForDebugging('AWS credentials retrieved from awsCredentialExport')
@@ -714,44 +665,42 @@ export function isGcpAuthRefreshFromProjectSettings(): boolean {
 }
 
 /** @private Use {@link getApiKey} or {@link getApiKeyWithSource} */
-export let getApiKeyFromConfigOrMacOSKeychain;
-getApiKeyFromConfigOrMacOSKeychain = memoize(
-  (): { key: string; source: ApiKeySource } | null => {
-    if (isBareMode()) return null
-    // TODO: migrate to SecureStorage
-    if (process.platform === 'darwin') {
-      // keychainPrefetch.ts fires this read at main.tsx top-level in parallel
-      // with module imports. If it completed, use that instead of spawning a
-      // sync `security` subprocess here (~33ms).
-      const prefetch = getLegacyApiKeyPrefetchResult()
-      if (prefetch) {
-        if (prefetch.stdout) {
-          return { key: prefetch.stdout, source: '/login managed key' }
+export let getApiKeyFromConfigOrMacOSKeychain
+getApiKeyFromConfigOrMacOSKeychain = memoize((): { key: string; source: ApiKeySource } | null => {
+  if (isBareMode()) return null
+  // TODO: migrate to SecureStorage
+  if (process.platform === 'darwin') {
+    // keychainPrefetch.ts fires this read at main.tsx top-level in parallel
+    // with module imports. If it completed, use that instead of spawning a
+    // sync `security` subprocess here (~33ms).
+    const prefetch = getLegacyApiKeyPrefetchResult()
+    if (prefetch) {
+      if (prefetch.stdout) {
+        return { key: prefetch.stdout, source: '/login managed key' }
+      }
+      // Prefetch completed with no key — fall through to config, not keychain.
+    } else {
+      const storageServiceName = getMacOsKeychainStorageServiceName()
+      try {
+        const result = execSyncWithDefaults_DEPRECATED(
+          `security find-generic-password -a $USER -w -s "${storageServiceName}"`,
+        )
+        if (result) {
+          return { key: result, source: '/login managed key' }
         }
-        // Prefetch completed with no key — fall through to config, not keychain.
-      } else {
-        const storageServiceName = getMacOsKeychainStorageServiceName()
-        try {
-          const result = execSyncWithDefaults_DEPRECATED(
-            `security find-generic-password -a $USER -w -s "${storageServiceName}"`,
-          )
-          if (result) {
-            return { key: result, source: '/login managed key' }
-          }
-        } catch (e) {
-          logError(e)
-        }
+      } catch (e) {
+        logError(e)
       }
     }
+  }
 
-    const config = getGlobalConfig()
-    if (!config.primaryApiKey) {
-      return null
-    }
+  const config = getGlobalConfig()
+  if (!config.primaryApiKey) {
+    return null
+  }
 
-    return { key: config.primaryApiKey, source: '/login managed key' }
-  },
-)
+  return { key: config.primaryApiKey, source: '/login managed key' }
+})
 
 function isValidApiKey(apiKey: string): boolean {
   // Only allow alphanumeric characters, dashes, and underscores
@@ -792,9 +741,7 @@ export async function saveApiKey(apiKey: string): Promise<void> {
     } catch (e) {
       logError(e)
       logEvent('zy_api_key_keychain_error', {
-        error: errorMessage(
-          e,
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        error: errorMessage(e) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       logEvent('zy_api_key_saved_to_config', {})
     }
@@ -805,7 +752,7 @@ export async function saveApiKey(apiKey: string): Promise<void> {
   const normalizedKey = normalizeApiKeyForConfig(apiKey)
 
   // Save config with all updates
-  saveGlobalConfig(current => {
+  saveGlobalConfig((current) => {
     const approved = current.apiKeyResponses?.approved ?? []
     return {
       ...current,
@@ -813,9 +760,7 @@ export async function saveApiKey(apiKey: string): Promise<void> {
       primaryApiKey: savedToKeychain ? current.primaryApiKey : apiKey,
       apiKeyResponses: {
         ...current.apiKeyResponses,
-        approved: approved.includes(normalizedKey)
-          ? approved
-          : [...approved, normalizedKey],
+        approved: approved.includes(normalizedKey) ? approved : [...approved, normalizedKey],
         rejected: current.apiKeyResponses?.rejected ?? [],
       },
     }
@@ -829,9 +774,7 @@ export async function saveApiKey(apiKey: string): Promise<void> {
 export function isApiKeyApproved(apiKey: string): boolean {
   const config = getGlobalConfig()
   const normalizedKey = normalizeApiKeyForConfig(apiKey)
-  return (
-    config.apiKeyResponses?.approved?.includes(normalizedKey) ?? false
-  )
+  return config.apiKeyResponses?.approved?.includes(normalizedKey) ?? false
 }
 
 export async function removeApiKey(): Promise<void> {
@@ -839,7 +782,7 @@ export async function removeApiKey(): Promise<void> {
 
   // Also remove from config instead of returning early, for older clients
   // that set keys before we supported keychain.
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     primaryApiKey: undefined,
   }))
@@ -874,8 +817,8 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
   }
 
   const secureStorage = getSecureStorage()
-  const storageBackend =
-    (secureStorage as any).name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
+  const storageBackend = (secureStorage as any)
+    .name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
   try {
     const storageData = (secureStorage as any).read() || {}
@@ -889,10 +832,8 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
       // Profile fetch in refreshOAuthToken swallows errors and returns null on
       // transient failures (network, 5xx, rate limit). Don't clobber a valid
       // stored subscription with null — fall back to the existing value.
-      subscriptionType:
-        (tokens as any).subscriptionType ?? existingOauth?.subscriptionType ?? null,
-      rateLimitTier:
-        (tokens as any).rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
+      subscriptionType: (tokens as any).subscriptionType ?? existingOauth?.subscriptionType ?? null,
+      rateLimitTier: (tokens as any).rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
     }
 
     const updateStatus = (secureStorage as any).update(storageData)
@@ -911,15 +852,13 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
     logError(error)
     logEvent('zy_oauth_tokens_save_exception', {
       storageBackend,
-      error: errorMessage(
-        error,
-      ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error: errorMessage(error) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return { success: false, warning: 'Failed to save OAuth tokens' }
   }
 }
 
-export let getZyAIOAuthTokens;
+export let getZyAIOAuthTokens
 getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
   // --bare: API-key-only. No OAuth tokens, no keychain, no credentials file.
   if (isBareMode()) return null
@@ -974,9 +913,7 @@ let lastCredentialsMtimeMs = 0
 // re-reads — infinite /login regress (CC-1096, GH#24317).
 async function invalidateOAuthCacheIfDiskChanged(): Promise<void> {
   try {
-    const { mtimeMs } = await stat(
-      join(getZyConfigHomeDir(), '.credentials.json'),
-    )
+    const { mtimeMs } = await stat(join(getZyConfigHomeDir(), '.credentials.json'))
     if (mtimeMs !== lastCredentialsMtimeMs) {
       lastCredentialsMtimeMs = mtimeMs
       clearOAuthTokenCache()
@@ -1012,9 +949,7 @@ const pending401Handlers = new Map<string, Promise<boolean>>()
  * @param failedAccessToken - The access token that was rejected with 401
  * @returns true if we now have a valid token, false otherwise
  */
-export function handleOAuth401Error(
-  failedAccessToken: string,
-): Promise<boolean> {
+export function handleOAuth401Error(failedAccessToken: string): Promise<boolean> {
   const pending = pending401Handlers.get(failedAccessToken)
   if (pending) return pending
 
@@ -1025,9 +960,7 @@ export function handleOAuth401Error(
   return promise
 }
 
-async function handleOAuth401ErrorImpl(
-  failedAccessToken: string,
-): Promise<boolean> {
+async function handleOAuth401ErrorImpl(failedAccessToken: string): Promise<boolean> {
   // Clear caches and re-read from keychain (async — sync read blocks ~100ms/call)
   clearOAuthTokenCache()
   const currentTokens = await getZyAIOAuthTokensAsync()
@@ -1076,10 +1009,7 @@ export async function getZyAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
 // In-flight promise for deduplicating concurrent calls
 let pendingRefreshCheck: Promise<boolean> | null = null
 
-export function checkAndRefreshOAuthTokenIfNeeded(
-  retryCount = 0,
-  force = false,
-): Promise<boolean> {
+export function checkAndRefreshOAuthTokenIfNeeded(retryCount = 0, force = false): Promise<boolean> {
   // 跳过 OAuth 检查，直接返回 false 以避免 "Invalid code" 错误
   return Promise.resolve(false)
 }
@@ -1114,10 +1044,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
   getZyAIOAuthTokens.cache?.clear?.()
   clearKeychainCache()
   const freshTokens = await getZyAIOAuthTokensAsync()
-  if (
-    !freshTokens?.refreshToken ||
-    !isOAuthTokenExpired((freshTokens as any).expiresAt)
-  ) {
+  if (!freshTokens?.refreshToken || !isOAuthTokenExpired((freshTokens as any).expiresAt)) {
     return false
   }
 
@@ -1148,9 +1075,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     }
     logError(err)
     logEvent('zy_oauth_token_refresh_lock_error', {
-      error: errorMessage(
-        err,
-      ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error: errorMessage(err) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return false
   }
@@ -1159,10 +1084,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     getZyAIOAuthTokens.cache?.clear?.()
     clearKeychainCache()
     const lockedTokens = await getZyAIOAuthTokensAsync()
-    if (
-      !lockedTokens?.refreshToken ||
-      !isOAuthTokenExpired((lockedTokens as any).expiresAt)
-    ) {
+    if (!lockedTokens?.refreshToken || !isOAuthTokenExpired((lockedTokens as any).expiresAt)) {
       logEvent('zy_oauth_token_refresh_race_resolved', {})
       return false
     }
@@ -1210,9 +1132,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
  * generate 403 storms against /api/oauth/profile, bootstrap, etc.
  */
 export function hasProfileScope(): boolean {
-  return (
-    getZyAIOAuthTokens()?.scopes?.includes(CLAUDE_AI_PROFILE_SCOPE) ?? false
-  )
+  return getZyAIOAuthTokens()?.scopes?.includes(CLAUDE_AI_PROFILE_SCOPE) ?? false
 }
 
 export function isDirectApiClient(): boolean {
@@ -1306,10 +1226,7 @@ export function isTeamSubscriber(): boolean {
 }
 
 export function isTeamPremiumSubscriber(): boolean {
-  return (
-    (getSubscriptionType() as any) === 'team' &&
-    getRateLimitTier() === 'default_Zy_max_5x'
-  )
+  return (getSubscriptionType() as any) === 'team' && getRateLimitTier() === 'default_Zy_max_5x'
 }
 
 export function isEnterpriseSubscriber(): boolean {
@@ -1391,10 +1308,7 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
     process.env.ZY_CODE_OTEL_HEADERS_HELPER_DEBOUNCE_MS ||
       DEFAULT_OTEL_HEADERS_DEBOUNCE_MS.toString(),
   )
-  if (
-    cachedOtelHeaders &&
-    Date.now() - cachedOtelHeadersTimestamp < debounceMs
-  ) {
+  if (cachedOtelHeaders && Date.now() - cachedOtelHeadersTimestamp < debounceMs) {
     return cachedOtelHeaders
   }
 
@@ -1417,14 +1331,8 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
     }
 
     const headers = jsonParse(result)
-    if (
-      typeof headers !== 'object' ||
-      headers === null ||
-      Array.isArray(headers)
-    ) {
-      throw new Error(
-        'otelHeadersHelper must return a JSON object with string key-value pairs',
-      )
+    if (typeof headers !== 'object' || headers === null || Array.isArray(headers)) {
+      throw new Error('otelHeadersHelper must return a JSON object with string key-value pairs')
     }
 
     // Validate all values are strings
@@ -1458,11 +1366,7 @@ function isConsumerPlan(plan: SubscriptionType): plan is 'max' | 'pro' {
 
 export function isConsumerSubscriber(): boolean {
   const subscriptionType = getSubscriptionType()
-  return (
-    isZyAISubscriber() &&
-    subscriptionType !== null &&
-    isConsumerPlan(subscriptionType)
-  )
+  return isZyAISubscriber() && subscriptionType !== null && isConsumerPlan(subscriptionType)
 }
 
 export type UserAccountInfo = {
@@ -1497,10 +1401,7 @@ export function getAccountInformation() {
   }
 
   // We don't know the organization if we're relying on an external API key or auth token
-  if (
-    authTokenSource === 'zy.ai' ||
-    apiKeySource === '/login managed key'
-  ) {
+  if (authTokenSource === 'zy.ai' || apiKeySource === '/login managed key') {
     // Get organization name from OAuth account info
     const orgName = getOauthAccountInfo()?.organizationName
     if (orgName) {
@@ -1508,11 +1409,7 @@ export function getAccountInformation() {
     }
   }
   const email = getOauthAccountInfo()?.emailAddress
-  if (
-    (authTokenSource === 'zy.ai' ||
-      apiKeySource === '/login managed key') &&
-    email
-  ) {
+  if ((authTokenSource === 'zy.ai' || apiKeySource === '/login managed key') && email) {
     accountInfo.email = email
   }
   return accountInfo
@@ -1521,9 +1418,7 @@ export function getAccountInformation() {
 /**
  * Result of org validation — either success or a descriptive error.
  */
-export type OrgValidationResult =
-  | { valid: true }
-  | { valid: false; message: string }
+export type OrgValidationResult = { valid: true } | { valid: false; message: string }
 
 /**
  * Validate that the active OAuth token belongs to the organization required
@@ -1545,8 +1440,7 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
     return { valid: true }
   }
 
-  const requiredOrgUuid =
-    getSettingsForSource('policySettings')?.forceLoginOrgUUID
+  const requiredOrgUuid = getSettingsForSource('policySettings')?.forceLoginOrgUUID
   if (!requiredOrgUuid) {
     return { valid: true }
   }

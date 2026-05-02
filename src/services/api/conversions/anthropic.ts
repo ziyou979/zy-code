@@ -130,9 +130,7 @@ function assistantContentToAnthropic(
   }
   if (typeof content === 'string') {
     if (!toolCalls?.length) return content
-    const blocks: Array<Record<string, unknown>> = content
-      ? [{ type: 'text', text: content }]
-      : []
+    const blocks: Array<Record<string, unknown>> = content ? [{ type: 'text', text: content }] : []
     for (const tc of toolCalls) {
       blocks.push({
         type: 'tool_use',
@@ -157,7 +155,7 @@ function blockToAnthropic(
       type: 'tool_use',
       id: b.id,
       name: b.name,
-      input: typeof b.input === 'string' ? safeParseToolArguments(b.input) : b.input ?? {},
+      input: typeof b.input === 'string' ? safeParseToolArguments(b.input) : (b.input ?? {}),
     }
   }
   if (b.type === 'thinking') {
@@ -206,9 +204,7 @@ export function toolsToAnthropic(
   }))
 }
 
-export function toolChoiceToAnthropic(
-  choice?: ToolChoice,
-): Record<string, unknown> | undefined {
+export function toolChoiceToAnthropic(choice?: ToolChoice): Record<string, unknown> | undefined {
   if (!choice) return undefined
   switch (choice.type) {
     case 'auto':
@@ -226,9 +222,7 @@ export function toolChoiceToAnthropic(
 // 入站：Anthropic → 标准
 // ============================================================================
 
-export function anthropicStopReasonToStandard(
-  reason: string | null | undefined,
-): StopReason {
+export function anthropicStopReasonToStandard(reason: string | null | undefined): StopReason {
   switch (reason) {
     case 'end_turn':
     case 'stop_sequence':
@@ -389,10 +383,7 @@ export async function* anthropicStreamToStandard(
   }
 }
 
-export function anthropicResponseToStandard(
-  result: any,
-  model: string,
-): LLMResponse {
+export function anthropicResponseToStandard(result: any, model: string): LLMResponse {
   const content: AssistantContentBlock[] = (result.content || []).map((block: any) => {
     switch (block.type) {
       case 'text':
@@ -434,9 +425,7 @@ export function anthropicResponseToStandard(
  * _extraToolSchemas（Anthropic 原生工具透传）/ extra_body 顶层透传 /
  * v1 snake_case 兼容（max_tokens / top_p / stop_sequences 等）。
  */
-export function buildAnthropicCreateParams(
-  params: CreateParams,
-): AnthropicCreateParams {
+export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreateParams {
   const p = params as any
 
   const maxTokens = p.maxTokens ?? p.max_tokens
@@ -495,5 +484,3 @@ export function buildAnthropicCreateParams(
 
   return out
 }
-
-

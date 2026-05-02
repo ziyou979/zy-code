@@ -84,20 +84,12 @@ export function renderTruncatedContent(
   // on huge outputs (e.g. 64MB binary dumps that cause 382K-row screens).
   const maxChars = MAX_LINES_TO_SHOW * wrapWidth * 4
   const preTruncated = trimmedContent.length > maxChars
-  const contentForWrapping = preTruncated
-    ? trimmedContent.slice(0, maxChars)
-    : trimmedContent
+  const contentForWrapping = preTruncated ? trimmedContent.slice(0, maxChars) : trimmedContent
 
-  const { aboveTheFold, remainingLines } = wrapText(
-    contentForWrapping,
-    wrapWidth,
-  )
+  const { aboveTheFold, remainingLines } = wrapText(contentForWrapping, wrapWidth)
 
   const estimatedRemaining = preTruncated
-    ? Math.max(
-        remainingLines,
-        Math.ceil(trimmedContent.length / wrapWidth) - MAX_LINES_TO_SHOW,
-      )
+    ? Math.max(remainingLines, Math.ceil(trimmedContent.length / wrapWidth) - MAX_LINES_TO_SHOW)
     : remainingLines
 
   return [

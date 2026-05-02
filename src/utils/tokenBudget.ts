@@ -28,16 +28,11 @@ export function parseTokenBudget(text: string): number | null {
   return null
 }
 
-export function findTokenBudgetPositions(
-  text: string,
-): Array<{ start: number; end: number }> {
+export function findTokenBudgetPositions(text: string): Array<{ start: number; end: number }> {
   const positions: Array<{ start: number; end: number }> = []
   const startMatch = text.match(SHORTHAND_START_RE)
   if (startMatch) {
-    const offset =
-      startMatch.index! +
-      startMatch[0].length -
-      startMatch[0].trimStart().length
+    const offset = startMatch.index! + startMatch[0].length - startMatch[0].trimStart().length
     positions.push({
       start: offset,
       end: startMatch.index! + startMatch[0].length,
@@ -47,9 +42,7 @@ export function findTokenBudgetPositions(
   if (endMatch) {
     // Avoid double-counting when input is just "+500k"
     const endStart = endMatch.index! + 1 // +1: regex includes leading \s
-    const alreadyCovered = positions.some(
-      p => endStart >= p.start && endStart < p.end,
-    )
+    const alreadyCovered = positions.some((p) => endStart >= p.start && endStart < p.end)
     if (!alreadyCovered) {
       positions.push({
         start: endStart,

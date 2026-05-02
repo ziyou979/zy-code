@@ -21,8 +21,7 @@ export type CommandSemantic = (
  */
 const DEFAULT_SEMANTIC: CommandSemantic = (exitCode, _stdout, _stderr) => ({
   isError: exitCode !== 0,
-  message:
-    exitCode !== 0 ? `Command failed with exit code ${exitCode}` : undefined,
+  message: exitCode !== 0 ? `Command failed with exit code ${exitCode}` : undefined,
 })
 
 /**
@@ -52,8 +51,7 @@ const COMMAND_SEMANTICS: Map<string, CommandSemantic> = new Map([
     'find',
     (exitCode, _stdout, _stderr) => ({
       isError: exitCode >= 2,
-      message:
-        exitCode === 1 ? 'Some directories were inaccessible' : undefined,
+      message: exitCode === 1 ? 'Some directories were inaccessible' : undefined,
     }),
   ],
 

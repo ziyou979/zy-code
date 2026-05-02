@@ -3,20 +3,20 @@
  * Callers attach an arbitrary `reason` string plus optional metadata.
  */
 export type Terminal = {
-  reason: string;
-  [key: string]: unknown;
-};
+  reason: string
+  [key: string]: unknown
+}
 
 /**
  * Continue state — the query loop should keep running.
  * Callers attach an arbitrary `reason` string plus optional metadata.
  */
 export type Continue = {
-  reason: string;
-  [key: string]: unknown;
-};
+  reason: string
+  [key: string]: unknown
+}
 
 /**
  * Union type for query transition states.
  */
-export type TransitionState = Terminal | Continue;
+export type TransitionState = Terminal | Continue

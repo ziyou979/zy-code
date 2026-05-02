@@ -1,9 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { isInternalBuild } from './utils/envUtils.js'
-import type {
-  ToolResultBlock,
-  ToolCallInlineBlock,
-} from './types/llm.js'
+import type { ToolResultBlock, ToolCallInlineBlock } from './types/llm.js'
 import type { CanUseToolFn } from './hooks/useCanUseTool.js'
 import { FallbackTriggeredError } from './services/api/withRetry.js'
 import {
@@ -39,10 +36,7 @@ import type {
   TombstoneMessage,
 } from './types/message.js'
 import { logError } from './utils/log.js'
-import {
-  PROMPT_TOO_LONG_ERROR_MESSAGE,
-  isPromptTooLongMessage,
-} from './services/api/errors.js'
+import { PROMPT_TOO_LONG_ERROR_MESSAGE, isPromptTooLongMessage } from './services/api/errors.js'
 import { logAntError, logForDebugging } from './utils/debug.js'
 import {
   createUserMessage,
@@ -70,9 +64,7 @@ const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
-const jobClassifier = feature('TEMPLATES')
-  ? (require('./jobs/classifier.js') as any)
-  : null
+const jobClassifier = feature('TEMPLATES') ? (require('./jobs/classifier.js') as any) : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   remove as removeFromQueue,
@@ -81,9 +73,7 @@ import {
 } from './utils/messageQueueManager.js'
 import { notifyCommandLifecycle } from './utils/commandLifecycle.js'
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
-import {
-  renderModelName,
-} from './utils/model/model.js'
+import { renderModelName } from './utils/model/model.js'
 import {
   doesMostRecentAssistantMessageExceed200k,
   finalContextTokensFromLastResponse,
@@ -132,7 +122,7 @@ function* yieldMissingToolResultBlocks(
   for (const assistantMessage of assistantMessages) {
     // 从此助手消息中提取所有工具使用块
     const toolUseBlocks = assistantMessage.message.content.filter(
-      content => content.type === 'tool_call',
+      (content) => content.type === 'tool_call',
     ) as ToolCallInlineBlock[]
 
     // 为每个工具使用发送中断消息
@@ -178,9 +168,7 @@ const MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3
  *
  * 与 reactiveCompact.isWithheldPromptTooLong 对应。
  */
-function isWithheldMaxOutputTokens(
-  msg: unknown,
-): msg is AssistantMessage {
+function isWithheldMaxOutputTokens(msg: unknown): msg is AssistantMessage {
   return (msg as any)?.type === 'assistant' && (msg as any).apiError === 'max_output_tokens'
 }
 
@@ -224,11 +212,7 @@ type State = {
 export async function* query(
   params: QueryParams,
 ): AsyncGenerator<
-  | StreamEvent
-  | RequestStartEvent
-  | Message
-  | TombstoneMessage
-  | ToolUseSummaryMessage,
+  StreamEvent | RequestStartEvent | Message | TombstoneMessage | ToolUseSummaryMessage,
   Terminal
 > {
   const consumedCommandUuids: string[] = []
@@ -247,11 +231,7 @@ async function* queryLoop(
   params: QueryParams,
   consumedCommandUuids: string[],
 ): AsyncGenerator<
-  | StreamEvent
-  | RequestStartEvent
-  | Message
-  | TombstoneMessage
-  | ToolUseSummaryMessage,
+  StreamEvent | RequestStartEvent | Message | TombstoneMessage | ToolUseSummaryMessage,
   Terminal
 > {
   // 不可变参数 — 查询循环期间永远不会重新赋值。
@@ -299,10 +279,7 @@ async function* queryLoop(
   // 所以每次迭代触发会让 sideQuery 重复问同一个问题 N 次。
   // 消费点轮询 settledAt（永不阻塞）。`using` 在所有生成器
   // 退出路径上释放 — 参见 MemoryPrefetch 的释放/遥测语义。
-  using pendingMemoryPrefetch = startRelevantMemoryPrefetch(
-    state.messages,
-    state.toolUseContext,
-  )
+  using pendingMemoryPrefetch = startRelevantMemoryPrefetch(state.messages, state.toolUseContext)
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -373,22 +350,18 @@ async function* queryLoop(
     // 路由到侧链文件（AgentTool 恢复）或会话文件（/resume）。
     // 临时的 runForkedAgent 调用者（agent_summary 等）不持久化。
     const persistReplacements =
-      querySource.startsWith('agent:') ||
-      querySource.startsWith('repl_main_thread')
+      querySource.startsWith('agent:') || querySource.startsWith('repl_main_thread')
     messagesForQuery = await applyToolResultBudget(
       messagesForQuery,
       toolUseContext.contentReplacementState,
       persistReplacements
-        ? records =>
-            void recordContentReplacement(
-              records,
-              toolUseContext.agentId,
-            ).catch(logError)
+        ? (records) =>
+            void recordContentReplacement(records, toolUseContext.agentId).catch(logError)
         : undefined,
       new Set(
         toolUseContext.options.tools
-          .filter(t => !Number.isFinite(t.maxResultSizeChars))
-          .map(t => t.name),
+          .filter((t) => !Number.isFinite(t.maxResultSizeChars))
+          .map((t) => t.name),
       ),
     )
 
@@ -444,9 +417,7 @@ async function* queryLoop(
       messagesForQuery = (collapseResult as any).messages
     }
 
-    const fullSystemPrompt = asSystemPrompt(
-      appendSystemContext(systemPrompt, systemContext),
-    )
+    const fullSystemPrompt = asSystemPrompt(appendSystemContext(systemPrompt, systemContext))
 
     queryCheckpoint('query_autocompact_start')
     const { compactionResult, consecutiveFailures } = await deps.autocompact(
@@ -484,10 +455,8 @@ async function* queryLoop(
         truePostCompactTokenCount,
         compactionInputTokens: compactionUsage?.inputTokens,
         compactionOutputTokens: compactionUsage?.outputTokens,
-        compactionCacheReadTokens:
-          compactionUsage?.extras?.cacheReadInputTokens ?? 0,
-        compactionCacheCreationTokens:
-          compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
+        compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
+        compactionCacheCreationTokens: compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
         compactionTotalTokens: compactionUsage
           ? compactionUsage.inputTokens +
             (compactionUsage.extras?.cacheCreationInputTokens ?? 0) +
@@ -503,8 +472,7 @@ async function* queryLoop(
       // 捕获压缩前最终上下文窗口。
       // iterations[-1] 是权威的最终窗口（服务器工具循环后）；见 #304930。
       if (params.taskBudget) {
-        const preCompactContext =
-          finalContextTokensFromLastResponse(messagesForQuery)
+        const preCompactContext = finalContextTokensFromLastResponse(messagesForQuery)
         taskBudgetRemaining = Math.max(
           0,
           (taskBudgetRemaining ?? params.taskBudget.total) - preCompactContext,
@@ -557,11 +525,7 @@ async function* queryLoop(
     queryCheckpoint('query_setup_start')
     const useStreamingToolExecution = config.gates.streamingToolExecution
     let streamingToolExecutor = useStreamingToolExecution
-      ? new StreamingToolExecutor(
-          toolUseContext.options.tools,
-          canUseTool,
-          toolUseContext,
-        )
+      ? new StreamingToolExecutor(toolUseContext.options.tools, canUseTool, toolUseContext)
       : null
 
     const appState = toolUseContext.getAppState()
@@ -605,22 +569,18 @@ async function* queryLoop(
     let collapseOwnsIt = false
     if (feature('CONTEXT_COLLAPSE')) {
       collapseOwnsIt =
-        (contextCollapse?.isContextCollapseEnabled() ?? false) &&
-        isAutoCompactEnabled()
+        (contextCollapse?.isContextCollapseEnabled() ?? false) && isAutoCompactEnabled()
     }
     // 每个轮次提升一次媒体恢复门控。扣留（在流循环内）
     // 和恢复（之后）必须一致；CACHED_MAY_BE_STALE 可以在
     // 5-30s 流期间翻转，扣留而不恢复会吞掉消息。PTL 不提升
     // 因为其扣留是无门控的 — 它早于实验且已是对照臂基线。
-    const mediaRecoveryEnabled =
-      (reactiveCompact as any)?.isReactiveCompactEnabled() ?? false
+    const mediaRecoveryEnabled = (reactiveCompact as any)?.isReactiveCompactEnabled() ?? false
     if (
       !compactionResult &&
       (querySource as any) !== 'compact' &&
       (querySource as any) !== 'session_memory' &&
-      !(
-        (reactiveCompact as any)?.isReactiveCompactEnabled() && isAutoCompactEnabled()
-      ) &&
+      !((reactiveCompact as any)?.isReactiveCompactEnabled() && isAutoCompactEnabled()) &&
       !collapseOwnsIt
     ) {
       const { isAtBlockingLimit } = calculateTokenWarningState(
@@ -658,24 +618,19 @@ async function* queryLoop(
               },
               model: currentModel,
               toolChoice: undefined,
-              isNonInteractiveSession:
-                toolUseContext.options.isNonInteractiveSession,
+              isNonInteractiveSession: toolUseContext.options.isNonInteractiveSession,
               fallbackModel,
               onStreamingFallback: () => {
                 streamingFallbackOccured = true
               },
               querySource,
               agents: toolUseContext.options.agentDefinitions.activeAgents,
-              allowedAgentTypes:
-                toolUseContext.options.agentDefinitions.allowedAgentTypes,
-              hasAppendSystemPrompt:
-                !!toolUseContext.options.appendSystemPrompt,
+              allowedAgentTypes: toolUseContext.options.agentDefinitions.allowedAgentTypes,
+              hasAppendSystemPrompt: !!toolUseContext.options.appendSystemPrompt,
               maxOutputTokensOverride,
               fetchOverride: dumpPromptsFetch,
               mcpTools: appState.mcp.tools,
-              hasPendingMcpServers: appState.mcp.clients.some(
-                c => c.type === 'pending',
-              ),
+              hasPendingMcpServers: appState.mcp.clients.some((c) => c.type === 'pending'),
               queryTracking,
               effortValue: appState.effortValue,
               advisorModel: appState.advisorModel,
@@ -739,10 +694,7 @@ async function* queryLoop(
                   typeof block.input === 'object' &&
                   block.input !== null
                 ) {
-                  const tool = findToolByName(
-                    toolUseContext.options.tools,
-                    block.name,
-                  )
+                  const tool = findToolByName(toolUseContext.options.tools, block.name)
                   if (tool?.backfillObservableInput) {
                     const originalInput = block.input as Record<string, unknown>
                     const inputCopy = { ...originalInput }
@@ -751,9 +703,7 @@ async function* queryLoop(
                     // 如果只覆盖了现有字段则跳过（例如文件工具扩展 file_path）。
                     // 覆盖会改变序列化的转录并在恢复时破坏 VCR 夹具哈希，
                     // 同时没有为 SDK 流添加任何东西 — 钩子通过 toolExecution.ts 单独获取扩展路径。
-                    const addedFields = Object.keys(inputCopy).some(
-                      k => !(k in originalInput),
-                    )
+                    const addedFields = Object.keys(inputCopy).some((k) => !(k in originalInput))
                     if (addedFields) {
                       clonedContent ??= [...message.message.content]
                       clonedContent[i] = { ...block, input: inputCopy }
@@ -808,27 +758,21 @@ async function* queryLoop(
               assistantMessages.push(message)
 
               const msgToolUseBlocks = message.message.content.filter(
-                content => content.type === 'tool_call',
+                (content) => content.type === 'tool_call',
               ) as ToolCallInlineBlock[]
               if (msgToolUseBlocks.length > 0) {
                 toolUseBlocks.push(...msgToolUseBlocks)
                 needsFollowUp = true
               }
 
-              if (
-                streamingToolExecutor &&
-                !toolUseContext.abortController.signal.aborted
-              ) {
+              if (streamingToolExecutor && !toolUseContext.abortController.signal.aborted) {
                 for (const toolBlock of msgToolUseBlocks) {
                   streamingToolExecutor.addTool(toolBlock, message)
                 }
               }
             }
 
-            if (
-              streamingToolExecutor &&
-              !toolUseContext.abortController.signal.aborted
-            ) {
+            if (streamingToolExecutor && !toolUseContext.abortController.signal.aborted) {
               for (const result of streamingToolExecutor.getCompletedResults()) {
                 if (result.message) {
                   yield result.message
@@ -836,7 +780,7 @@ async function* queryLoop(
                     ...normalizeMessagesForAPI(
                       [result.message],
                       toolUseContext.options.tools,
-                    ).filter(_ => _.type === 'user'),
+                    ).filter((_) => _.type === 'user'),
                   )
                 }
               }
@@ -853,8 +797,7 @@ async function* queryLoop(
             // 减去此请求之前捕获的基线来获取增量。
             const usage = lastAssistant?.message.usage
             const cumulativeDeleted = usage
-              ? ((usage as unknown as Record<string, number>)
-                  .cache_deleted_input_tokens ?? 0)
+              ? ((usage as unknown as Record<string, number>).cache_deleted_input_tokens ?? 0)
               : 0
             const deletedTokens = Math.max(
               0,
@@ -877,10 +820,7 @@ async function* queryLoop(
             attemptWithFallback = true
 
             // 清除助手消息，因为我们将重试整个请求
-            yield* yieldMissingToolResultBlocks(
-              assistantMessages,
-              'Model fallback triggered',
-            )
+            yield* yieldMissingToolResultBlocks(assistantMessages, 'Model fallback triggered')
             assistantMessages.length = 0
             toolResults.length = 0
             toolUseBlocks.length = 0
@@ -914,8 +854,7 @@ async function* queryLoop(
                 innerError.originalModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               fallback_model:
                 fallbackModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              entrypoint:
-                'cli' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              entrypoint: 'cli' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               queryChainId: queryChainIdForAnalytics,
               queryDepth: queryTracking.depth,
             })
@@ -934,12 +873,11 @@ async function* queryLoop(
       }
     } catch (error) {
       logError(error)
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       logEvent('zy_query_error', {
         assistantMessages: assistantMessages.length,
-        toolUses: assistantMessages.flatMap(_ =>
-          _.message.content.filter(content => content.type === 'tool_call'),
+        toolUses: assistantMessages.flatMap((_) =>
+          _.message.content.filter((content) => content.type === 'tool_call'),
         ).length,
 
         queryChainId: queryChainIdForAnalytics,
@@ -947,10 +885,7 @@ async function* queryLoop(
       })
 
       // 使用用户友好的消息处理图像大小/调整错误
-      if (
-        error instanceof ImageSizeError ||
-        error instanceof ImageResizeError
-      ) {
+      if (error instanceof ImageSizeError || error instanceof ImageResizeError) {
         yield createAssistantAPIErrorMessage({
           content: error.message,
         })
@@ -1002,19 +937,14 @@ async function* queryLoop(
           }
         }
       } else {
-        yield* yieldMissingToolResultBlocks(
-          assistantMessages,
-          'Interrupted by user',
-        )
+        yield* yieldMissingToolResultBlocks(assistantMessages, 'Interrupted by user')
       }
       // chicago MCP：中断时自动取消隐藏 + 释放锁。
       // 与 stopHooks.ts 中的自然轮次结束路径相同的清理。
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 释放主线程锁的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import(
-            './utils/computerUse/cleanup.js'
-          )
+          const { cleanupComputerUseAfterTurn } = await import('./utils/computerUse/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -1059,8 +989,7 @@ async function* queryLoop(
       // 压缩后轮次将再次媒体错误；hasAttemptedReactiveCompact
       // 防止螺旋并让错误浮现。
       const isWithheldMedia =
-        mediaRecoveryEnabled &&
-        (reactiveCompact as any)?.isWithheldMediaSizeError(lastMessage)
+        mediaRecoveryEnabled && (reactiveCompact as any)?.isWithheldMediaSizeError(lastMessage)
       if (isWithheld413) {
         // 首先：排出所有暂存的上下文折叠。门控在前一个
         // 转换不是 collapse_drain_retry — 如果我们已经排出
@@ -1115,12 +1044,10 @@ async function* queryLoop(
           // messagesForQuery 在这里仍然持有压缩前数组
           // （413 失败尝试的输入）。
           if (params.taskBudget) {
-            const preCompactContext =
-              finalContextTokensFromLastResponse(messagesForQuery)
+            const preCompactContext = finalContextTokensFromLastResponse(messagesForQuery)
             taskBudgetRemaining = Math.max(
               0,
-              (taskBudgetRemaining ?? params.taskBudget.total) -
-                preCompactContext,
+              (taskBudgetRemaining ?? params.taskBudget.total) - preCompactContext,
             )
           }
 
@@ -1169,10 +1096,7 @@ async function* queryLoop(
         // 多轮处理。这每轮触发一次（由 override 检查守卫），
         // 然后如果 64k 也触及上限则落入多轮恢复。
         // 第三方默认值：false（未在 Bedrock/Vertex 上验证）
-        const capEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-          'zy_otk_slot_v1',
-          false,
-        )
+        const capEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_otk_slot_v1', false)
         if (
           capEnabled &&
           maxOutputTokensOverride === undefined &&
@@ -1206,11 +1130,7 @@ async function* queryLoop(
           })
 
           const next: State = {
-            messages: [
-              ...messagesForQuery,
-              ...assistantMessages,
-              recoveryMessage,
-            ],
+            messages: [...messagesForQuery, ...assistantMessages, recoveryMessage],
             toolUseContext,
             autoCompactTracking: tracking,
             maxOutputTokensRecoveryCount: maxOutputTokensRecoveryCount + 1,
@@ -1258,11 +1178,7 @@ async function* queryLoop(
 
       if (stopHookResult.blockingErrors.length > 0) {
         const next: State = {
-          messages: [
-            ...messagesForQuery,
-            ...assistantMessages,
-            ...stopHookResult.blockingErrors,
-          ],
+          messages: [...messagesForQuery, ...assistantMessages, ...stopHookResult.blockingErrors],
           toolUseContext,
           autoCompactTracking: tracking,
           maxOutputTokensRecoveryCount: 0,
@@ -1339,7 +1255,6 @@ async function* queryLoop(
 
     queryCheckpoint('query_tool_execution_start')
 
-
     if (streamingToolExecutor) {
       logEvent('zy_streaming_tool_execution_used', {
         tool_count: toolUseBlocks.length,
@@ -1370,10 +1285,9 @@ async function* queryLoop(
         }
 
         toolResults.push(
-          ...normalizeMessagesForAPI(
-            [update.message],
-            toolUseContext.options.tools,
-          ).filter(_ => _.type === 'user'),
+          ...normalizeMessagesForAPI([update.message], toolUseContext.options.tools).filter(
+            (_) => _.type === 'user',
+          ),
         )
       }
       if (update.newContext) {
@@ -1386,9 +1300,7 @@ async function* queryLoop(
     queryCheckpoint('query_tool_execution_end')
 
     // 在工具调用完成后生成工具使用摘要 — 传递给下一次递归调用
-    let nextPendingToolUseSummary:
-      | Promise<ToolUseSummaryMessage | null>
-      | undefined
+    let nextPendingToolUseSummary: Promise<ToolUseSummaryMessage | null> | undefined
     if (
       config.gates.emitToolUseSummaries &&
       toolUseBlocks.length > 0 &&
@@ -1400,7 +1312,7 @@ async function* queryLoop(
       let lastAssistantText: string | undefined
       if (lastAssistantMessage) {
         const textBlocks = lastAssistantMessage.message.content.filter(
-          block => block.type === 'text',
+          (block) => block.type === 'text',
         )
         if (textBlocks.length > 0) {
           const lastTextBlock = textBlocks.at(-1)
@@ -1411,34 +1323,27 @@ async function* queryLoop(
       }
 
       // 收集工具信息用于摘要生成
-      const toolUseIds = toolUseBlocks.map(block => block.id)
-      const toolInfoForSummary = toolUseBlocks.map(block => {
+      const toolUseIds = toolUseBlocks.map((block) => block.id)
+      const toolInfoForSummary = toolUseBlocks.map((block) => {
         // 查找对应的工具结果
         const toolResult = toolResults.find(
-          result =>
+          (result) =>
             result.type === 'user' &&
             Array.isArray(result.message.content) &&
             result.message.content.some(
-              content =>
-                content.type === 'tool_result' &&
-                content.toolCallId === block.id,
+              (content) => content.type === 'tool_result' && content.toolCallId === block.id,
             ),
         )
         const resultContent =
-          toolResult?.type === 'user' &&
-          Array.isArray(toolResult.message.content)
+          toolResult?.type === 'user' && Array.isArray(toolResult.message.content)
             ? toolResult.message.content.find(
-                (c): c is ToolResultBlock =>
-                  c.type === 'tool_result' && c.toolCallId === block.id,
+                (c): c is ToolResultBlock => c.type === 'tool_result' && c.toolCallId === block.id,
               )
             : undefined
         return {
           name: block.name,
           input: block.input,
-          output:
-            resultContent && 'content' in resultContent
-              ? resultContent.content
-              : null,
+          output: resultContent && 'content' in resultContent ? resultContent.content : null,
         }
       })
 
@@ -1449,7 +1354,7 @@ async function* queryLoop(
         isNonInteractiveSession: toolUseContext.options.isNonInteractiveSession,
         lastAssistantText,
       })
-        .then(summary => {
+        .then((summary) => {
           if (summary) {
             return createToolUseSummaryMessage(summary, toolUseIds)
           }
@@ -1499,9 +1404,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import(
-            './utils/computerUse/cleanup.js'
-          )
+          const { cleanupComputerUseAfterTurn } = await import('./utils/computerUse/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -1534,8 +1437,7 @@ async function* queryLoop(
     if (tracking?.compacted) {
       tracking.turnCounter++
       logEvent('zy_post_autocompact_turn', {
-        turnId:
-          tracking.turnId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        turnId: tracking.turnId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         turnCounter: tracking.turnCounter,
 
         queryChainId: queryChainIdForAnalytics,
@@ -1575,19 +1477,18 @@ async function* queryLoop(
     // 子 agent 排出它们自己的 agentId。用户提示（mode:'prompt'）
     // 仍然只去主线程；子 agent 永远不会看到提示流。
     // eslint-disable-next-line custom-rules/require-tool-match-name -- ToolCallInlineBlock.name has no aliases
-    const sleepRan = toolUseBlocks.some(b => b.name === SLEEP_TOOL_NAME)
-    const isMainThread =
-      querySource.startsWith('repl_main_thread') || querySource === 'sdk'
+    const sleepRan = toolUseBlocks.some((b) => b.name === SLEEP_TOOL_NAME)
+    const isMainThread = querySource.startsWith('repl_main_thread') || querySource === 'sdk'
     const currentAgentId = toolUseContext.agentId
-    const queuedCommandsSnapshot = getCommandsByMaxPriority(
-      sleepRan ? 'later' : 'next',
-    ).filter(cmd => {
-      if (isSlashCommand(cmd)) return false
-      if (isMainThread) return cmd.agentId === undefined
-      // 子 agent 只排出发给它们的任务通知 — 永远不要
-      // 用户提示，即使有人在上面盖了 agentId。
-      return cmd.mode === 'task-notification' && cmd.agentId === currentAgentId
-    })
+    const queuedCommandsSnapshot = getCommandsByMaxPriority(sleepRan ? 'later' : 'next').filter(
+      (cmd) => {
+        if (isSlashCommand(cmd)) return false
+        if (isMainThread) return cmd.agentId === undefined
+        // 子 agent 只排出发给它们的任务通知 — 永远不要
+        // 用户提示，即使有人在上面盖了 agentId。
+        return cmd.mode === 'task-notification' && cmd.agentId === currentAgentId
+      },
+    )
 
     for await (const attachment of getAttachmentMessages(
       null,
@@ -1625,13 +1526,13 @@ async function* queryLoop(
       pendingMemoryPrefetch.consumedOnIteration = turnCount - 1
     }
 
-
     // 注入预取的技能发现。collectSkillDiscoveryPrefetch 发出
     // hidden_by_main_turn — true 当预取在此点之前解决时
     // （应该 >98%，AKI@250ms / Haiku@573ms 对比 2-30s 的轮次时长）。
     if (skillPrefetch && pendingSkillPrefetch) {
-      const skillAttachments =
-        await (skillPrefetch as any).collectSkillDiscoveryPrefetch(pendingSkillPrefetch)
+      const skillAttachments = await (skillPrefetch as any).collectSkillDiscoveryPrefetch(
+        pendingSkillPrefetch,
+      )
       for (const att of skillAttachments) {
         const msg = createAttachmentMessage(att)
         yield msg
@@ -1642,7 +1543,7 @@ async function* queryLoop(
     // 只移除实际作为附件消费的命令。
     // 提示和任务通知命令在上面被转换为附件。
     const consumedCommands = queuedCommandsSnapshot.filter(
-      cmd => cmd.mode === 'prompt' || cmd.mode === 'task-notification',
+      (cmd) => cmd.mode === 'prompt' || cmd.mode === 'task-notification',
     )
     if (consumedCommands.length > 0) {
       for (const cmd of consumedCommands) {
@@ -1657,8 +1558,7 @@ async function* queryLoop(
     // instrumentation：跟踪文件更改附件
     const fileChangeAttachmentCount = count(
       toolResults,
-      tr =>
-        tr.type === 'attachment' && tr.attachment.type === 'edited_text_file',
+      (tr) => tr.type === 'attachment' && tr.attachment.type === 'edited_text_file',
     )
 
     logEvent('zy_query_after_attachments', {
@@ -1695,20 +1595,13 @@ async function* queryLoop(
     // 于 !agentId，所以每个顶级对话（REPL、SDK、HFI、
     // remote）都生成摘要；子 agent/分叉不生成。
     if (feature('BG_SESSIONS')) {
-      if (
-        !toolUseContext.agentId &&
-        (taskSummaryModule as any)!.shouldGenerateTaskSummary()
-      ) {
-        (taskSummaryModule as any)!.maybeGenerateTaskSummary({
+      if (!toolUseContext.agentId && (taskSummaryModule as any)!.shouldGenerateTaskSummary()) {
+        ;(taskSummaryModule as any)!.maybeGenerateTaskSummary({
           systemPrompt,
           userContext,
           systemContext,
           toolUseContext,
-          forkContextMessages: [
-            ...messagesForQuery,
-            ...assistantMessages,
-            ...toolResults,
-          ],
+          forkContextMessages: [...messagesForQuery, ...assistantMessages, ...toolResults],
         })
       }
     }

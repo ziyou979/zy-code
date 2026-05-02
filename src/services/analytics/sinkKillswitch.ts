@@ -16,9 +16,10 @@ export type SinkName = 'datadog' | 'anthropic'
  * Call at per-event dispatch sites instead.
  */
 export function isSinkKilled(sink: SinkName): boolean {
-  const config = getDynamicConfig_CACHED_MAY_BE_STALE<
-    Partial<Record<SinkName, boolean>>
-  >(SINK_KILLSWITCH_CONFIG_NAME, {})
+  const config = getDynamicConfig_CACHED_MAY_BE_STALE<Partial<Record<SinkName, boolean>>>(
+    SINK_KILLSWITCH_CONFIG_NAME,
+    {},
+  )
   // getFeatureValue_CACHED_MAY_BE_STALE guards on `!== undefined`, so a
   // cached JSON null leaks through instead of falling back to {}.
   return config?.[sink] === true

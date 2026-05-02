@@ -184,7 +184,7 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     'system.object',
     // ModuleSpecification — full qualified name
     'microsoft.powershell.commands.modulespecification',
-  ].map(t => t.toLowerCase()),
+  ].map((t) => t.toLowerCase()),
 )
 
 /**

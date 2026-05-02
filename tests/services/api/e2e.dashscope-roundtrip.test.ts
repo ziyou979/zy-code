@@ -54,10 +54,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     expect(toolBlock.input).toBe('{"city":"Hangzhou"}')
 
     // ---- 步骤 4：normalize 应该把字符串 input parse 回对象 ----
-    const normalized = normalizeContentFromAPI(
-      accumulated.contentBlocks as any,
-      EMPTY_TOOLS as any,
-    )
+    const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)
     const normalizedTool = normalized[0] as any
     // 这是 DashScope 400 的根因关键点：normalize 后必须是 object
     expect(typeof normalizedTool.input).toBe('object')
@@ -79,7 +76,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     assertValidOpenAIChatMessages(openAIMessages)
 
     // 找到 assistant tool_call，验证 arguments 是合法 JSON 对象的字符串（不是双重转义、不是空、不是 string of string）
-    const assistantMsg = openAIMessages.find(m => m.role === 'assistant')!
+    const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')!
     const toolCalls = (assistantMsg as any).tool_calls
     expect(toolCalls).toHaveLength(1)
     expect(toolCalls[0].function.arguments).toBe('{"city":"Hangzhou"}')
@@ -174,7 +171,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     ]
     const openAIMessages = messagesToOpenAI(next as any)
     assertValidOpenAIChatMessages(openAIMessages)
-    const assistantMsg = openAIMessages.find(m => m.role === 'assistant')! as any
+    const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')! as any
     expect(assistantMsg.tool_calls).toHaveLength(2)
     expect(JSON.parse(assistantMsg.tool_calls[0].function.arguments)).toEqual({ x: 1 })
     expect(JSON.parse(assistantMsg.tool_calls[1].function.arguments)).toEqual({ y: 2 })
@@ -209,7 +206,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     const openAIMessages = messagesToOpenAI(next as any)
     // 关键断言：arguments 不能是空字符串、不能是 undefined、必须是合法 JSON 对象的字符串
     assertValidOpenAIChatMessages(openAIMessages)
-    const assistantMsg = openAIMessages.find(m => m.role === 'assistant')! as any
+    const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')! as any
     expect(assistantMsg.tool_calls[0].function.arguments).toBe('{}')
   })
 
@@ -243,7 +240,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
       { role: 'tool', toolCallId: 'call_skip_normalize', content: 'sunny' },
     ]
     const openAIMessages = messagesToOpenAI(next as any)
-    const assistantMsg = openAIMessages.find(m => m.role === 'assistant')! as any
+    const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')! as any
     const argStr = assistantMsg.tool_calls[0].function.arguments
     // 关键：A2 兜底防线起效，arguments 是合法 JSON 对象的字符串，不是双重转义
     expect(argStr).toBe('{"city":"Hangzhou"}')

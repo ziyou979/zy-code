@@ -23,11 +23,8 @@ type SupportsHyperlinksOptions = {
  * 在 supports-hyperlinks 库基础上扩展了额外的终端检测。
  * @param options 可选覆盖，用于测试（env、stdoutSupported）
  */
-export function supportsHyperlinks(
-  options?: SupportsHyperlinksOptions,
-): boolean {
-  const stdoutSupported =
-    options?.stdoutSupported ?? supportsHyperlinksLib.stdout
+export function supportsHyperlinks(options?: SupportsHyperlinksOptions): boolean {
+  const stdoutSupported = options?.stdoutSupported ?? supportsHyperlinksLib.stdout
   if (stdoutSupported) {
     return true
   }

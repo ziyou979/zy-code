@@ -5,10 +5,7 @@
 
 import { jsonStringify } from '../utils/slowOperations.js'
 import { DEFAULT_BINDINGS } from './defaultBindings.js'
-import {
-  NON_REBINDABLE,
-  normalizeKeyForComparison,
-} from './reservedShortcuts.js'
+import { NON_REBINDABLE, normalizeKeyForComparison } from './reservedShortcuts.js'
 import type { KeybindingBlock } from './types.js'
 
 /**
@@ -16,12 +13,10 @@ import type { KeybindingBlock } from './types.js'
  * These would cause /doctor to warn, so we exclude them from the template.
  */
 function filterReservedShortcuts(blocks: KeybindingBlock[]): KeybindingBlock[] {
-  const reservedKeys = new Set(
-    NON_REBINDABLE.map(r => normalizeKeyForComparison(r.key)),
-  )
+  const reservedKeys = new Set(NON_REBINDABLE.map((r) => normalizeKeyForComparison(r.key)))
 
   return blocks
-    .map(block => {
+    .map((block) => {
       const filteredBindings: Record<string, string | null> = {}
       for (const [key, action] of Object.entries(block.bindings)) {
         if (!reservedKeys.has(normalizeKeyForComparison(key))) {
@@ -30,7 +25,7 @@ function filterReservedShortcuts(blocks: KeybindingBlock[]): KeybindingBlock[] {
       }
       return { context: block.context, bindings: filteredBindings }
     })
-    .filter(block => Object.keys(block.bindings).length > 0)
+    .filter((block) => Object.keys(block.bindings).length > 0)
 }
 
 /**

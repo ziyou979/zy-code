@@ -55,12 +55,7 @@ import {
   writeFileLines,
 } from '../shellConfig.js'
 import { sleep } from '../sleep.js'
-import {
-  getUserBinDir,
-  getXDGCacheHome,
-  getXDGDataHome,
-  getXDGStateHome,
-} from '../xdg.js'
+import { getUserBinDir, getXDGCacheHome, getXDGDataHome, getXDGStateHome } from '../xdg.js'
 import { downloadVersion, getLatestVersion } from './download.js'
 import {
   acquireProcessLifetimeLock,
@@ -88,15 +83,13 @@ export function getPlatform(): string {
   // Use env.platform which already handles platform detection and defaults to 'linux'
   const os = env.platform
 
-  const arch =
-    process.arch === 'x64' ? 'x64' : process.arch === 'arm64' ? 'arm64' : null
+  const arch = process.arch === 'x64' ? 'x64' : process.arch === 'arm64' ? 'arm64' : null
 
   if (!arch) {
     const error = new Error(`Unsupported architecture: ${process.arch}`)
-    logForDebugging(
-      `Native installer does not support architecture: ${process.arch}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Native installer does not support architecture: ${process.arch}`, {
+      level: 'error',
+    })
     throw error
   }
 
@@ -155,7 +148,7 @@ async function getVersionPaths(version: string) {
 
   // Create directories, but not the executable path (which is a file)
   const dirsToCreate = [dirs.versions, dirs.staging, dirs.locks]
-  await Promise.all(dirsToCreate.map(dir => mkdir(dir, { recursive: true })))
+  await Promise.all(dirsToCreate.map((dir) => mkdir(dir, { recursive: true })))
 
   // Ensure parent directory of executable exists
   const executableParentDir = dirname(dirs.executable)
@@ -198,18 +191,14 @@ async function tryWithVersionLock(
     const maxTimeout = retries > 0 ? 5000 : 500
 
     while (attempts < maxAttempts) {
-      const success = await withLock(
-        versionFilePath,
-        lockfilePath,
-        async () => {
-          try {
-            await callback()
-          } catch (error) {
-            logError(error)
-            throw error
-          }
-        },
-      )
+      const success = await withLock(versionFilePath, lockfilePath, async () => {
+        try {
+          await callback()
+        } catch (error) {
+          logError(error)
+          throw error
+        }
+      })
 
       if (success) {
         logEvent('zy_version_lock_acquired', {
@@ -223,10 +212,7 @@ async function tryWithVersionLock(
       attempts++
       if (attempts < maxAttempts) {
         // Wait before retrying with exponential backoff
-        const timeout = Math.min(
-          minTimeout * Math.pow(2, attempts - 1),
-          maxTimeout,
-        )
+        const timeout = Math.min(minTimeout * Math.pow(2, attempts - 1), maxTimeout)
         await sleep(timeout)
       }
     }
@@ -236,10 +222,7 @@ async function tryWithVersionLock(
       is_lifetime_lock: false,
       attempts: maxAttempts,
     })
-    logLockAcquisitionError(
-      versionFilePath,
-      new Error('Lock held by another process'),
-    )
+    logLockAcquisitionError(versionFilePath, new Error('Lock held by another process'))
     return false
   }
 
@@ -297,10 +280,7 @@ async function tryWithVersionLock(
   }
 }
 
-async function atomicMoveToInstallPath(
-  stagedBinaryPath: string,
-  installPath: string,
-) {
+async function atomicMoveToInstallPath(stagedBinaryPath: string, installPath: string) {
   // Create installation directory if it doesn't exist
   await mkdir(dirname(installPath), { recursive: true })
 
@@ -325,17 +305,12 @@ async function atomicMoveToInstallPath(
   }
 }
 
-async function installVersionFromPackage(
-  stagingPath: string,
-  installPath: string,
-) {
+async function installVersionFromPackage(stagingPath: string, installPath: string) {
   try {
     // Extract binary from npm package structure in staging
     const nodeModulesDir = join(stagingPath, 'node_modules', '@anthropic-ai')
     const entries = await readdir(nodeModulesDir)
-    const nativePackage = entries.find((entry: string) =>
-      entry.startsWith('zy-cli-native-'),
-    )
+    const nativePackage = entries.find((entry: string) => entry.startsWith('zy-cli-native-'))
 
     if (!nativePackage) {
       logEvent('zy_native_install_package_failure', {
@@ -382,10 +357,7 @@ async function installVersionFromPackage(
   }
 }
 
-async function installVersionFromBinary(
-  stagingPath: string,
-  installPath: string,
-) {
+async function installVersionFromBinary(stagingPath: string, installPath: string) {
   try {
     // For direct binary downloads (GCS, generic bucket), the binary is directly in staging
     const platform = getPlatform()
@@ -438,12 +410,8 @@ async function installVersion(
  * Performs the core update operation: download (if needed), install, and update symlink.
  * Returns whether a new install was performed (vs just updating symlink).
  */
-async function performVersionUpdate(
-  version: string,
-  forceReinstall: boolean,
-): Promise<boolean> {
-  const { stagingPath: baseStagingPath, installPath } =
-    await getVersionPaths(version)
+async function performVersionUpdate(version: string, forceReinstall: boolean): Promise<boolean> {
+  const { stagingPath: baseStagingPath, installPath } = await getVersionPaths(version)
   const { executable: executablePath } = getBaseDirectories()
 
   // For lockless updates, use a unique staging path to avoid conflicts between concurrent downloads
@@ -521,10 +489,8 @@ async function updateLatest(
         )
         logEvent('zy_native_update_skipped_max_version', {
           latency_ms: Date.now() - startTime,
-          max_version:
-            maxVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          available_version:
-            version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          max_version: maxVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          available_version: version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
         return { success: true, latestVersion: version }
       }
@@ -555,8 +521,7 @@ async function updateLatest(
   if (!forceReinstall && shouldSkipVersion(version)) {
     logEvent('zy_native_update_skipped_minimum_version', {
       latency_ms: Date.now() - startTime,
-      target_version:
-        version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      target_version: version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return { success: true, latestVersion: version }
   }
@@ -636,10 +601,7 @@ export async function removeDirectoryIfEmpty(path: string): Promise<void> {
   }
 }
 
-async function updateSymlink(
-  symlinkPath: string,
-  targetPath: string,
-): Promise<boolean> {
+async function updateSymlink(symlinkPath: string, targetPath: string): Promise<boolean> {
   const platform = getPlatform()
   const isWindows = platform.startsWith('win32')
 
@@ -688,10 +650,9 @@ async function updateSymlink(
             await rename(oldFileName, symlinkPath)
           } catch (restoreError) {
             // Critical: User left without working executable - prioritize restore error
-            const errorWithCause = new Error(
-              `Failed to restore old executable: ${restoreError}`,
-              { cause: copyError },
-            )
+            const errorWithCause = new Error(`Failed to restore old executable: ${restoreError}`, {
+              cause: copyError,
+            })
             logError(errorWithCause)
             throw errorWithCause
           }
@@ -714,9 +675,7 @@ async function updateSymlink(
       return true
     } catch (error) {
       logError(
-        new Error(
-          `Failed to copy executable from ${targetPath} to ${symlinkPath}: ${error}`,
-        ),
+        new Error(`Failed to copy executable from ${targetPath} to ${symlinkPath}: ${error}`),
       )
       return false
     }
@@ -729,9 +688,7 @@ async function updateSymlink(
     await mkdir(parentDir, { recursive: true })
     logForDebugging(`Created directory ${parentDir} for symlink`)
   } catch (mkdirError) {
-    logError(
-      new Error(`Failed to create directory ${parentDir}: ${mkdirError}`),
-    )
+    logError(new Error(`Failed to create directory ${parentDir}: ${mkdirError}`))
     return false
   }
 
@@ -748,10 +705,7 @@ async function updateSymlink(
     if (symlinkExists) {
       try {
         const currentTarget = await readlink(symlinkPath)
-        const resolvedCurrentTarget = resolve(
-          dirname(symlinkPath),
-          currentTarget,
-        )
+        const resolvedCurrentTarget = resolve(dirname(symlinkPath), currentTarget)
         const resolvedTargetPath = resolve(targetPath)
 
         if (resolvedCurrentTarget === resolvedTargetPath) {
@@ -777,9 +731,7 @@ async function updateSymlink(
 
     // Atomically rename to final name (replaces existing)
     await rename(tempSymlink, symlinkPath)
-    logForDebugging(
-      `Atomically updated symlink ${symlinkPath} -> ${targetPath}`,
-    )
+    logForDebugging(`Atomically updated symlink ${symlinkPath} -> ${targetPath}`)
     return true
   } catch (error) {
     // Clean up temp symlink if it exists
@@ -788,18 +740,12 @@ async function updateSymlink(
     } catch {
       // Ignore cleanup errors
     }
-    logError(
-      new Error(
-        `Failed to create symlink from ${symlinkPath} to ${targetPath}: ${error}`,
-      ),
-    )
+    logError(new Error(`Failed to create symlink from ${symlinkPath} to ${targetPath}: ${error}`))
     return false
   }
 }
 
-export async function checkInstall(
-  force: boolean = false,
-): Promise<SetupMessage[]> {
+export async function checkInstall(force: boolean = false): Promise<SetupMessage[]> {
   // Skip all installation checks if disabled via environment variable
   if (isEnvTruthy(process.env.DISABLE_INSTALLATION_CHECKS)) {
     return []
@@ -893,22 +839,18 @@ export async function checkInstall(
   }
 
   // Check if bin directory is in PATH
-  const isInCurrentPath = (process.env.PATH || '')
-    .split(delimiter)
-    .some(entry => {
-      try {
-        const resolvedEntry = resolve(entry)
-        // On Windows, perform case-insensitive comparison for paths
-        if (isWindows) {
-          return (
-            resolvedEntry.toLowerCase() === resolvedLocalBinPath.toLowerCase()
-          )
-        }
-        return resolvedEntry === resolvedLocalBinPath
-      } catch {
-        return false
+  const isInCurrentPath = (process.env.PATH || '').split(delimiter).some((entry) => {
+    try {
+      const resolvedEntry = resolve(entry)
+      // On Windows, perform case-insensitive comparison for paths
+      if (isWindows) {
+        return resolvedEntry.toLowerCase() === resolvedLocalBinPath.toLowerCase()
       }
-    })
+      return resolvedEntry === resolvedLocalBinPath
+    } catch {
+      return false
+    }
+  })
 
   if (!isInCurrentPath) {
     if (isWindows) {
@@ -924,9 +866,7 @@ export async function checkInstall(
       const shellType = getShellType()
       const configPaths = getShellConfigPaths()
       const configFile = configPaths[shellType as keyof typeof configPaths]
-      const displayPath = configFile
-        ? configFile.replace(homedir(), '~')
-        : 'your shell config file'
+      const displayPath = configFile ? configFile.replace(homedir(), '~') : 'your shell config file'
 
       messages.push({
         message: `Native installation exists but ~/.local/bin is not in your PATH. Run:\n\necho 'export PATH="$HOME/.local/bin:$PATH"' >> ${displayPath} && source ${displayPath}`,
@@ -992,7 +932,7 @@ async function installLatestImpl(
   // and disable legacy auto-updater to protect symlinks.
   const config = getGlobalConfig()
   if (config.installMethod !== 'native') {
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       installMethod: 'native',
       // Disable legacy auto-updater to prevent npm sessions from deleting native symlinks.
@@ -1015,9 +955,7 @@ async function installLatestImpl(
   }
 }
 
-async function getVersionFromSymlink(
-  symlinkPath: string,
-): Promise<string | null> {
+async function getVersionFromSymlink(symlinkPath: string): Promise<string | null> {
   try {
     const target = await readlink(symlinkPath)
     const absoluteTarget = resolve(dirname(symlinkPath), target)
@@ -1064,20 +1002,14 @@ export async function lockCurrentVersion(): Promise<void> {
       // Acquire PID-based lock and hold it for the process lifetime
       // PID-based locking allows immediate detection of crashed processes
       // while still surviving laptop sleep (process is suspended but PID exists)
-      const acquired = await acquireProcessLifetimeLock(
-        versionPath,
-        lockfilePath,
-      )
+      const acquired = await acquireProcessLifetimeLock(versionPath, lockfilePath)
 
       if (!acquired) {
         logEvent('zy_version_lock_failed', {
           is_pid_based: true,
           is_lifetime_lock: true,
         })
-        logLockAcquisitionError(
-          versionPath,
-          new Error('Lock already held by another process'),
-        )
+        logLockAcquisitionError(versionPath, new Error('Lock already held by another process'))
         return
       }
 
@@ -1100,19 +1032,16 @@ export async function lockCurrentVersion(): Promise<void> {
           lockfilePath,
           // Handle lock compromise gracefully (e.g., if another process deletes the lock directory)
           onCompromised: (err: Error) => {
-            logForDebugging(
-              `NON-FATAL: Lock on running version was compromised: ${err.message}`,
-              { level: 'info' },
-            )
+            logForDebugging(`NON-FATAL: Lock on running version was compromised: ${err.message}`, {
+              level: 'info',
+            })
           },
         })
         logEvent('zy_version_lock_acquired', {
           is_pid_based: false,
           is_lifetime_lock: true,
         })
-        logForDebugging(
-          `Acquired mtime-based lock on running version: ${versionPath}`,
-        )
+        logForDebugging(`Acquired mtime-based lock on running version: ${versionPath}`)
 
         // Release lock explicitly; proper-lockfile's cleanup is unreliable with signal-exit v3+v4
         registerCleanup(async () => {
@@ -1124,10 +1053,9 @@ export async function lockCurrentVersion(): Promise<void> {
         })
       } catch (lockError) {
         if (isENOENT(lockError)) {
-          logForDebugging(
-            `Cannot lock current version - file does not exist: ${versionPath}`,
-            { level: 'info' },
-          )
+          logForDebugging(`Cannot lock current version - file does not exist: ${versionPath}`, {
+            level: 'info',
+          })
           return
         }
         logEvent('zy_version_lock_failed', {
@@ -1140,10 +1068,9 @@ export async function lockCurrentVersion(): Promise<void> {
     }
   } catch (error) {
     if (isENOENT(error)) {
-      logForDebugging(
-        `Cannot lock current version - file does not exist: ${versionPath}`,
-        { level: 'info' },
-      )
+      logForDebugging(`Cannot lock current version - file does not exist: ${versionPath}`, {
+        level: 'info',
+      })
       return
     }
     // We fallback to previous behavior where we don't acquire a lock on a running version
@@ -1204,9 +1131,7 @@ export async function cleanupOldVersions(): Promise<void> {
         }
       }
       if (cleanedCount > 0) {
-        logForDebugging(
-          `Cleaned up ${cleanedCount} old Windows executables on startup`,
-        )
+        logForDebugging(`Cleaned up ${cleanedCount} old Windows executables on startup`)
       }
     } catch (error) {
       if (!isENOENT(error)) {
@@ -1238,9 +1163,7 @@ export async function cleanupOldVersions(): Promise<void> {
       }
     }
     if (stagingCleanedCount > 0) {
-      logForDebugging(
-        `Cleaned up ${stagingCleanedCount} orphaned staging directories`,
-      )
+      logForDebugging(`Cleaned up ${stagingCleanedCount} orphaned staging directories`)
       logEvent('zy_native_staging_cleanup', {
         cleaned_count: stagingCleanedCount,
       })
@@ -1303,11 +1226,7 @@ export async function cleanupOldVersions(): Promise<void> {
     try {
       const stats = await stat(entryPath)
       if (!stats.isFile()) continue
-      if (
-        process.platform !== 'win32' &&
-        stats.size > 0 &&
-        (stats.mode & 0o111) === 0
-      ) {
+      if (process.platform !== 'win32' && stats.size > 0 && (stats.mode & 0o111) === 0) {
         // Check executability via mode bits from the existing stat result —
         // avoids a second syscall (access(X_OK)) and the TOCTOU window between
         // stat and access. Skip on Windows: libuv only sets execute bits for
@@ -1328,9 +1247,7 @@ export async function cleanupOldVersions(): Promise<void> {
   }
 
   if (tempFilesCleanedCount > 0) {
-    logForDebugging(
-      `Cleaned up ${tempFilesCleanedCount} orphaned temp install files`,
-    )
+    logForDebugging(`Cleaned up ${tempFilesCleanedCount} orphaned temp install files`)
     logEvent('zy_native_temp_files_cleanup', {
       cleaned_count: tempFilesCleanedCount,
     })
@@ -1379,7 +1296,7 @@ export async function cleanupOldVersions(): Promise<void> {
 
     // Eligible versions: not protected, sorted newest first (reuse cached mtime)
     const eligibleVersions = versionFiles
-      .filter(v => !protectedVersions.has(v.resolvedPath))
+      .filter((v) => !protectedVersions.has(v.resolvedPath))
       .sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
 
     const versionsToDelete = eligibleVersions.slice(VERSION_RETENTION_COUNT)
@@ -1401,7 +1318,7 @@ export async function cleanupOldVersions(): Promise<void> {
     let errorCount = 0
 
     await Promise.all(
-      versionsToDelete.map(async version => {
+      versionsToDelete.map(async (version) => {
         try {
           const deleted = await tryWithVersionLock(version.path, async () => {
             await unlink(version.path)
@@ -1410,15 +1327,11 @@ export async function cleanupOldVersions(): Promise<void> {
             deletedCount++
           } else {
             lockFailedCount++
-            logForDebugging(
-              `Skipping deletion of ${version.name} - locked by another process`,
-            )
+            logForDebugging(`Skipping deletion of ${version.name} - locked by another process`)
           }
         } catch (error) {
           errorCount++
-          logError(
-            new Error(`Failed to delete version ${version.name}: ${error}`),
-          )
+          logError(new Error(`Failed to delete version ${version.name}: ${error}`))
         }
       }),
     )
@@ -1468,9 +1381,7 @@ export async function removeInstalledSymlink(): Promise<void> {
   try {
     // Check if this is an npm-managed installation
     if (await isNpmSymlink(dirs.executable)) {
-      logForDebugging(
-        `Skipping removal of ${dirs.executable} - appears to be npm-managed`,
-      )
+      logForDebugging(`Skipping removal of ${dirs.executable} - appears to be npm-managed`)
       return
     }
 
@@ -1527,11 +1438,7 @@ async function manualRemoveNpmPackage(
 ): Promise<{ success: boolean; error?: string; warning?: string }> {
   try {
     // Get npm global prefix
-    const prefixResult = await execFileNoThrowWithCwd('npm', [
-      'config',
-      'get',
-      'prefix',
-    ])
+    const prefixResult = await execFileNoThrowWithCwd('npm', ['config', 'get', 'prefix'])
     if (prefixResult.code !== 0 || !prefixResult.stdout) {
       return {
         success: false,
@@ -1622,10 +1529,9 @@ async function attemptNpmUninstall(
   } else if (stderr && !stderr.includes('npm ERR! code E404')) {
     // Check for ENOTEMPTY error and try manual removal
     if (stderr.includes('npm error code ENOTEMPTY')) {
-      logForDebugging(
-        `Failed to uninstall global npm package ${packageName}: ${stderr}`,
-        { level: 'error' },
-      )
+      logForDebugging(`Failed to uninstall global npm package ${packageName}: ${stderr}`, {
+        level: 'error',
+      })
       logForDebugging(`Attempting manual removal due to ENOTEMPTY error`)
 
       const manualResult = await manualRemoveNpmPackage(packageName)
@@ -1640,10 +1546,9 @@ async function attemptNpmUninstall(
     }
 
     // Only report as error if it's not a "package not found" error
-    logForDebugging(
-      `Failed to uninstall global npm package ${packageName}: ${stderr}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Failed to uninstall global npm package ${packageName}: ${stderr}`, {
+      level: 'error',
+    })
     return {
       success: false,
       error: `Failed to remove global npm installation of ${packageName}: ${stderr}`,
@@ -1663,9 +1568,7 @@ export async function cleanupNpmInstallations(): Promise<{
   let removed = 0
 
   // Always attempt to remove @anthropic-ai/zy-code
-  const codePackageResult = await attemptNpmUninstall(
-    '@anthropic-ai/zy-code',
-  )
+  const codePackageResult = await attemptNpmUninstall('@anthropic-ai/zy-code')
   if (codePackageResult.success) {
     removed++
     if (codePackageResult.warning) {

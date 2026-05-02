@@ -35,10 +35,7 @@ export function findInProcessTeammateTaskId(
   appState: AppState,
 ): string | undefined {
   for (const task of Object.values(appState.tasks)) {
-    if (
-      isInProcessTeammateTask(task) &&
-      task.identity.agentName === agentName
-    ) {
+    if (isInProcessTeammateTask(task) && task.identity.agentName === agentName) {
       return task.id
     }
   }
@@ -57,7 +54,7 @@ export function setAwaitingPlanApproval(
   setAppState: SetAppState,
   awaiting: boolean,
 ): void {
-  updateTaskState<InProcessTeammateTaskState>(taskId, setAppState, task => ({
+  updateTaskState<InProcessTeammateTaskState>(taskId, setAppState, (task) => ({
     ...task,
     awaitingPlanApproval: awaiting,
   }))
@@ -95,8 +92,5 @@ export function handlePlanApprovalResponse(
  * @returns true if the message is a permission response
  */
 export function isPermissionRelatedResponse(messageText: string): boolean {
-  return (
-    !!isPermissionResponse(messageText) ||
-    !!isSandboxPermissionResponse(messageText)
-  )
+  return !!isPermissionResponse(messageText) || !!isSandboxPermissionResponse(messageText)
 }

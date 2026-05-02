@@ -10,10 +10,7 @@ import type { PermissionResult } from '../../utils/permissions/PermissionResult.
  * @param allowedFlags 允许的单字符和长标志数组
  * @returns 如果所有标志都有效则返回 true，否则返回 false
  */
-function validateFlagsAgainstAllowlist(
-  flags: string[],
-  allowedFlags: string[],
-): boolean {
+function validateFlagsAgainstAllowlist(flags: string[], allowedFlags: string[]): boolean {
   for (const flag of flags) {
     // Handle combined flags like -nE or -Er
     if (flag.startsWith('-') && !flag.startsWith('--') && flag.length > 2) {
@@ -38,10 +35,7 @@ function validateFlagsAgainstAllowlist(
  * 模式 1：检查是否为带 -n 标志的行打印命令。允许：sed -n 'N' | sed -n 'N,M'，可搭配 -E、-r、-z 标志。允许分号分隔的打印命令。此模式允许文件参数。
  * @internal 导出用于测试
  */
-export function isLinePrintingCommand(
-  command: string,
-  expressions: string[],
-): boolean {
+export function isLinePrintingCommand(command: string, expressions: string[]): boolean {
   const sedMatch = command.match(/^\s*sed\s+/)
   if (!sedMatch) return false
 
@@ -312,12 +306,7 @@ export function hasFileArgs(command: string): boolean {
       if (typeof arg !== 'string' && typeof arg !== 'object') continue
 
       // If it's a glob pattern, it counts as a file argument
-      if (
-        typeof arg === 'object' &&
-        arg !== null &&
-        'op' in arg &&
-        arg.op === 'glob'
-      ) {
+      if (typeof arg === 'object' && arg !== null && 'op' in arg && arg.op === 'glob') {
         return true
       }
 

@@ -68,9 +68,7 @@ let _getUpstreamProxyEnv: (() => Record<string, string>) | undefined
  * Called from init.ts to wire up the proxy env function after the upstreamproxy
  * module has been lazily loaded. Must be called before any subprocess is spawned.
  */
-export function registerUpstreamProxyEnvFn(
-  fn: () => Record<string, string>,
-): void {
+export function registerUpstreamProxyEnvFn(fn: () => Record<string, string>): void {
   _getUpstreamProxyEnv = fn
 }
 
@@ -82,9 +80,7 @@ export function subprocessEnv(): NodeJS.ProcessEnv {
   const proxyEnv = _getUpstreamProxyEnv?.() ?? {}
 
   if (!isEnvTruthy(process.env.ZY_CODE_SUBPROCESS_ENV_SCRUB)) {
-    return Object.keys(proxyEnv).length > 0
-      ? { ...process.env, ...proxyEnv }
-      : process.env
+    return Object.keys(proxyEnv).length > 0 ? { ...process.env, ...proxyEnv } : process.env
   }
   const env = { ...process.env, ...proxyEnv }
   for (const k of GHA_SUBPROCESS_SCRUB) {

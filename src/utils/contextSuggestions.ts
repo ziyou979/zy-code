@@ -28,9 +28,7 @@ const MEMORY_HIGH_TOKENS = 5_000
 
 // --
 
-export function generateContextSuggestions(
-  data: ContextData,
-): ContextSuggestion[] {
+export function generateContextSuggestions(data: ContextData): ContextSuggestion[] {
   const suggestions: ContextSuggestion[] = []
 
   checkNearCapacity(data, suggestions)
@@ -52,10 +50,7 @@ export function generateContextSuggestions(
 
 // --
 
-function checkNearCapacity(
-  data: ContextData,
-  suggestions: ContextSuggestion[],
-): void {
+function checkNearCapacity(data: ContextData, suggestions: ContextSuggestion[]): void {
   if (data.percentage >= NEAR_CAPACITY_PERCENT) {
     suggestions.push({
       severity: 'warning',
@@ -67,28 +62,18 @@ function checkNearCapacity(
   }
 }
 
-function checkLargeToolResults(
-  data: ContextData,
-  suggestions: ContextSuggestion[],
-): void {
+function checkLargeToolResults(data: ContextData, suggestions: ContextSuggestion[]): void {
   if (!data.messageBreakdown) return
 
   for (const tool of data.messageBreakdown.toolCallsByType) {
     const totalToolTokens = tool.callTokens + tool.resultTokens
     const percent = (totalToolTokens / data.rawMaxTokens) * 100
 
-    if (
-      percent < LARGE_TOOL_RESULT_PERCENT ||
-      totalToolTokens < LARGE_TOOL_RESULT_TOKENS
-    ) {
+    if (percent < LARGE_TOOL_RESULT_PERCENT || totalToolTokens < LARGE_TOOL_RESULT_TOKENS) {
       continue
     }
 
-    const suggestion = getLargeToolSuggestion(
-      tool.name,
-      totalToolTokens,
-      percent,
-    )
+    const suggestion = getLargeToolSuggestion(tool.name, totalToolTokens, percent)
     if (suggestion) {
       suggestions.push(suggestion)
     }
@@ -148,14 +133,11 @@ function getLargeToolSuggestion(
   }
 }
 
-function checkReadResultBloat(
-  data: ContextData,
-  suggestions: ContextSuggestion[],
-): void {
+function checkReadResultBloat(data: ContextData, suggestions: ContextSuggestion[]): void {
   if (!data.messageBreakdown) return
 
   const callsByType = data.messageBreakdown.toolCallsByType
-  const readTool = callsByType.find(t => t.name === FILE_READ_TOOL_NAME)
+  const readTool = callsByType.find((t) => t.name === FILE_READ_TOOL_NAME)
   if (!readTool) return
 
   const totalReadTokens = readTool.callTokens + readTool.resultTokens
@@ -170,10 +152,7 @@ function checkReadResultBloat(
     return
   }
 
-  if (
-    readPercent >= READ_BLOAT_PERCENT &&
-    readTool.resultTokens >= LARGE_TOOL_RESULT_TOKENS
-  ) {
+  if (readPercent >= READ_BLOAT_PERCENT && readTool.resultTokens >= LARGE_TOOL_RESULT_TOKENS) {
     suggestions.push({
       severity: 'info',
       title: `File reads using ${formatTokens(readTool.resultTokens)} tokens (${readPercent.toFixed(0)}%)`,
@@ -184,24 +163,15 @@ function checkReadResultBloat(
   }
 }
 
-function checkMemoryBloat(
-  data: ContextData,
-  suggestions: ContextSuggestion[],
-): void {
-  const totalMemoryTokens = data.memoryFiles.reduce(
-    (sum, f) => sum + f.tokens,
-    0,
-  )
+function checkMemoryBloat(data: ContextData, suggestions: ContextSuggestion[]): void {
+  const totalMemoryTokens = data.memoryFiles.reduce((sum, f) => sum + f.tokens, 0)
   const memoryPercent = (totalMemoryTokens / data.rawMaxTokens) * 100
 
-  if (
-    memoryPercent >= MEMORY_HIGH_PERCENT &&
-    totalMemoryTokens >= MEMORY_HIGH_TOKENS
-  ) {
+  if (memoryPercent >= MEMORY_HIGH_PERCENT && totalMemoryTokens >= MEMORY_HIGH_TOKENS) {
     const largestFiles = [...data.memoryFiles]
       .sort((a, b) => b.tokens - a.tokens)
       .slice(0, 3)
-      .map(f => {
+      .map((f) => {
         const name = getDisplayPath(f.path)
         return `${name} (${formatTokens(f.tokens)})`
       })
@@ -216,10 +186,7 @@ function checkMemoryBloat(
   }
 }
 
-function checkAutoCompactDisabled(
-  data: ContextData,
-  suggestions: ContextSuggestion[],
-): void {
+function checkAutoCompactDisabled(data: ContextData, suggestions: ContextSuggestion[]): void {
   if (
     !data.isAutoCompactEnabled &&
     data.percentage >= 50 &&

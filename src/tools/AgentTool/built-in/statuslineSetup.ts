@@ -133,8 +133,7 @@ Guidelines:
 
 export const STATUSLINE_SETUP_AGENT: BuiltInAgentDefinition = {
   agentType: 'statusline-setup',
-  whenToUse:
-    "Use this agent to configure the user's ZY Code status line setting.",
+  whenToUse: "Use this agent to configure the user's ZY Code status line setting.",
   tools: ['Read', 'Edit'],
   source: 'built-in',
   baseDir: 'built-in',

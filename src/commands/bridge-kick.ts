@@ -49,13 +49,12 @@ const USAGE = `/bridge-kick <subcommand>
   reconnect                 call reconnectEnvironmentWithSession directly
   status                    print bridge state`
 
-const call: LocalCommandCall = async args => {
+const call: LocalCommandCall = async (args) => {
   const h = getBridgeDebugHandle()
   if (!h) {
     return {
       type: 'text',
-      value:
-        'No bridge debug handle registered. Remote Control must be connected (USER_TYPE=ant).',
+      value: 'No bridge debug handle registered. Remote Control must be connected (USER_TYPE=ant).',
     }
   }
 
@@ -85,8 +84,7 @@ const call: LocalCommandCall = async args => {
         h.wakePollLoop()
         return {
           type: 'text',
-          value:
-            'Next poll will throw a transient (axios rejection). Poll loop woken.',
+          value: 'Next poll will throw a transient (axios rejection). Poll loop woken.',
         }
       }
       const status = Number(a)
@@ -98,8 +96,7 @@ const call: LocalCommandCall = async args => {
       }
       // Default to what the server ACTUALLY sends for 404 (BQ-verified),
       // so `/bridge-kick poll 404` reproduces the real 147K/week state.
-      const errorType =
-        b ?? (status === 404 ? 'not_found_error' : 'authentication_error')
+      const errorType = b ?? (status === 404 ? 'not_found_error' : 'authentication_error')
       h.injectFault({
         method: 'pollForWork',
         kind: 'fatal',
@@ -125,8 +122,7 @@ const call: LocalCommandCall = async args => {
         })
         return {
           type: 'text',
-          value:
-            'Next registerBridgeEnvironment will 403. Trigger with close/reconnect.',
+          value: 'Next registerBridgeEnvironment will 403. Trigger with close/reconnect.',
         }
       }
       const n = Number(b) || 1

@@ -1,21 +1,21 @@
-import * as React from 'react';
-import type { KeybindingAction, KeybindingContextName } from '../keybindings/types.js';
-import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
-import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+import * as React from 'react'
+import type { KeybindingAction, KeybindingContextName } from '../keybindings/types.js'
+import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
+import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 type Props = {
   /** The keybinding action (e.g., 'app:toggleTranscript') */
-  action: KeybindingAction;
+  action: KeybindingAction
   /** The keybinding context (e.g., 'Global') */
-  context: KeybindingContextName;
+  context: KeybindingContextName
   /** Default shortcut if keybinding not configured */
-  fallback: string;
+  fallback: string
   /** The action description text (e.g., 'expand') */
-  description: string;
+  description: string
   /** Whether to wrap in parentheses */
-  parens?: boolean;
+  parens?: boolean
   /** Whether to show in bold */
-  bold?: boolean;
-};
+  bold?: boolean
+}
 
 /**
  * KeyboardShortcutHint that displays the user-configured shortcut.
@@ -35,8 +35,10 @@ export function ConfigurableShortcutHint({
   fallback,
   description,
   parens,
-  bold
+  bold,
 }: Props) {
-  const shortcut = useShortcutDisplay(action, context, fallback);
-  return <KeyboardShortcutHint shortcut={shortcut} action={description} parens={parens} bold={bold} />;
+  const shortcut = useShortcutDisplay(action, context, fallback)
+  return (
+    <KeyboardShortcutHint shortcut={shortcut} action={description} parens={parens} bold={bold} />
+  )
 }

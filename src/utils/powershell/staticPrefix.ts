@@ -16,20 +16,14 @@ import { getCommandSpec } from '../bash/registry.js'
 import { buildPrefix, DEPTH_RULES } from '../shell/specPrefix.js'
 import { countCharInString } from '../stringUtils.js'
 import { NEVER_SUGGEST } from './dangerousCmdlets.js'
-import {
-  getAllCommands,
-  type ParsedCommandElement,
-  parsePowerShellCommand,
-} from './parser.js'
+import { getAllCommands, type ParsedCommandElement, parsePowerShellCommand } from './parser.js'
 
 /**
  * Extract a static prefix from a single parsed command element.
  * Returns null for commands we won't suggest (shells, eval cmdlets, path-like
  * invocations) or can't extract a meaningful prefix from.
  */
-async function extractPrefixFromElement(
-  cmd: ParsedCommandElement,
-): Promise<string | null> {
+async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<string | null> {
   // nameType === 'application' means the raw name had path chars (./x, x\y,
   // x.exe) — PowerShell will run a file, not a named cmdlet. Don't suggest.
   // Same reasoning as the permission engine's nameType gate (PR #20096).
@@ -121,10 +115,8 @@ async function extractPrefixFromElement(
           !cmd.args[argIdx]!.startsWith('-')
         ) {
           const flagLower = a.toLowerCase()
-          const opt = spec.options.find(o =>
-            Array.isArray(o.name)
-              ? o.name.includes(flagLower)
-              : o.name === flagLower,
+          const opt = spec.options.find((o) =>
+            Array.isArray(o.name) ? o.name.includes(flagLower) : o.name === flagLower,
           )
           if (opt?.args) {
             argIdx++
@@ -146,10 +138,7 @@ async function extractPrefixFromElement(
   // commands whose spec declares subcommands OR that have DEPTH_RULES entries
   // (gcloud, aws, kubectl, etc.) which implies subcommand structure even
   // without a loaded spec. (bug #17)
-  if (
-    !prefix.includes(' ') &&
-    (spec?.subcommands?.length || DEPTH_RULES[nameLower])
-  ) {
+  if (!prefix.includes(' ') && (spec?.subcommands?.length || DEPTH_RULES[nameLower])) {
     return null
   }
   return prefix
@@ -175,9 +164,7 @@ export async function getCommandPrefixStatic(
   // both statement.commands and statement.nestedCommands (for &&/||/if/for).
   // Skip synthetic CommandExpressionAst entries (expression pipeline sources,
   // non-PipelineAst statement placeholders).
-  const firstCommand = getAllCommands(parsed).find(
-    cmd => cmd.elementType === 'CommandAst',
-  )
+  const firstCommand = getAllCommands(parsed).find((cmd) => cmd.elementType === 'CommandAst')
   if (!firstCommand) {
     return { commandPrefix: null }
   }
@@ -210,15 +197,11 @@ export async function getCompoundCommandPrefixesStatic(
     return []
   }
 
-  const commands = getAllCommands(parsed).filter(
-    cmd => cmd.elementType === 'CommandAst',
-  )
+  const commands = getAllCommands(parsed).filter((cmd) => cmd.elementType === 'CommandAst')
 
   // Single command — no compound collapse needed.
   if (commands.length <= 1) {
-    const prefix = commands[0]
-      ? await extractPrefixFromElement(commands[0])
-      : null
+    const prefix = commands[0] ? await extractPrefixFromElement(commands[0]) : null
     return prefix ? [prefix] : []
   }
 

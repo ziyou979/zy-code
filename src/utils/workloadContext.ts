@@ -49,9 +49,6 @@ export function getWorkload(): string | undefined {
  * Always calling `.run()` guarantees `getWorkload()` inside `fn` returns
  * exactly what the caller passed — including `undefined`.
  */
-export function runWithWorkload<T>(
-  workload: string | undefined,
-  fn: () => T,
-): T {
+export function runWithWorkload<T>(workload: string | undefined, fn: () => T): T {
   return workloadStorage.run({ workload }, fn)
 }

@@ -210,8 +210,7 @@ function generateLoremIpsum(targetTokens: number): string {
     let wordsInSentence = 0
 
     for (let i = 0; i < sentenceLength && tokens < targetTokens; i++) {
-      const word =
-        ONE_TOKEN_WORDS[Math.floor(Math.random() * ONE_TOKEN_WORDS.length)]
+      const word = ONE_TOKEN_WORDS[Math.floor(Math.random() * ONE_TOKEN_WORDS.length)]
       result += word
       tokens++
       wordsInSentence++

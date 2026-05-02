@@ -8,17 +8,10 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import {
-  type McpServerConfig,
-  McpServerConfigSchema,
-} from '../../services/mcp/types.js'
+import { type McpServerConfig, McpServerConfigSchema } from '../../services/mcp/types.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { logForDebugging } from '../../utils/debug.js'
-import {
-  EFFORT_LEVELS,
-  type EffortValue,
-  parseEffortValue,
-} from '../../utils/effort.js'
+import { EFFORT_LEVELS, type EffortValue, parseEffortValue } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { parsePositiveIntFromFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -28,29 +21,16 @@ import {
   parseAgentToolsFromFrontmatter,
   parseSlashCommandToolsFromFrontmatter,
 } from '../../utils/markdownConfigLoader.js'
-import {
-  PERMISSION_MODES,
-  type PermissionMode,
-} from '../../utils/permissions/PermissionMode.js'
-import {
-  clearPluginAgentCache,
-  loadPluginAgents,
-} from '../../utils/plugins/loadPluginAgents.js'
+import { PERMISSION_MODES, type PermissionMode } from '../../utils/permissions/PermissionMode.js'
+import { clearPluginAgentCache, loadPluginAgents } from '../../utils/plugins/loadPluginAgents.js'
 import { HooksSchema, type HooksSettings } from '../../utils/settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
-import {
-  AGENT_COLORS,
-  type AgentColorName,
-  setAgentColor,
-} from './agentColorManager.js'
+import { AGENT_COLORS, type AgentColorName, setAgentColor } from './agentColorManager.js'
 import { type AgentMemoryScope, loadAgentMemoryPrompt } from './agentMemory.js'
-import {
-  checkAgentMemorySnapshot,
-  initializeFromSnapshot,
-} from './agentMemorySnapshot.js'
+import { checkAgentMemorySnapshot, initializeFromSnapshot } from './agentMemorySnapshot.js'
 import { getBuiltInAgents } from './builtInAgents.js'
 
 // Type for MCP server specification in agent definitions
@@ -80,7 +60,7 @@ const AgentJsonSchema = lazySchema(() =>
       .string()
       .trim()
       .min(1, 'Model cannot be empty')
-      .transform(m => (m.toLowerCase() === 'inherit' ? 'inherit' : m))
+      .transform((m) => (m.toLowerCase() === 'inherit' ? 'inherit' : m))
       .optional(),
     effort: z.union([z.enum(EFFORT_LEVELS), z.number().int()]).optional(),
     permissionMode: z.enum(PERMISSION_MODES).optional(),
@@ -98,9 +78,7 @@ const AgentJsonSchema = lazySchema(() =>
   }),
 )
 
-const AgentsJsonSchema = lazySchema(() =>
-  z.record(z.string(), AgentJsonSchema()),
-)
+const AgentsJsonSchema = lazySchema(() => z.record(z.string(), AgentJsonSchema()))
 
 // Base type with common fields for all agents
 export type BaseAgentDefinition = {
@@ -137,9 +115,7 @@ export type BuiltInAgentDefinition = BaseAgentDefinition & {
   source: 'built-in'
   baseDir: 'built-in'
   callback?: () => void
-  getSystemPrompt: (params: {
-    toolUseContext: Pick<ToolUseContext, 'options'>
-  }) => string
+  getSystemPrompt: (params: { toolUseContext: Pick<ToolUseContext, 'options'> }) => string
 }
 
 // Custom agents from user/project/policy settings - prompt stored via closure
@@ -159,27 +135,18 @@ export type PluginAgentDefinition = BaseAgentDefinition & {
 }
 
 // Union type for all agent types
-export type AgentDefinition =
-  | BuiltInAgentDefinition
-  | CustomAgentDefinition
-  | PluginAgentDefinition
+export type AgentDefinition = BuiltInAgentDefinition | CustomAgentDefinition | PluginAgentDefinition
 
 // Type guards for runtime type checking
-export function isBuiltInAgent(
-  agent: AgentDefinition,
-): agent is BuiltInAgentDefinition {
+export function isBuiltInAgent(agent: AgentDefinition): agent is BuiltInAgentDefinition {
   return agent.source === 'built-in'
 }
 
-export function isCustomAgent(
-  agent: AgentDefinition,
-): agent is CustomAgentDefinition {
+export function isCustomAgent(agent: AgentDefinition): agent is CustomAgentDefinition {
   return agent.source !== 'built-in' && agent.source !== 'plugin'
 }
 
-export function isPluginAgent(
-  agent: AgentDefinition,
-): agent is PluginAgentDefinition {
+export function isPluginAgent(agent: AgentDefinition): agent is PluginAgentDefinition {
   return agent.source === 'plugin'
 }
 
@@ -190,15 +157,13 @@ export type AgentDefinitionsResult = {
   allowedAgentTypes?: string[]
 }
 
-export function getActiveAgentsFromList(
-  allAgents: AgentDefinition[],
-): AgentDefinition[] {
-  const builtInAgents = allAgents.filter(a => a.source === 'built-in')
-  const pluginAgents = allAgents.filter(a => a.source === 'plugin')
-  const userAgents = allAgents.filter(a => a.source === 'userSettings')
-  const projectAgents = allAgents.filter(a => a.source === 'projectSettings')
-  const managedAgents = allAgents.filter(a => a.source === 'policySettings')
-  const flagAgents = allAgents.filter(a => a.source === 'flagSettings')
+export function getActiveAgentsFromList(allAgents: AgentDefinition[]): AgentDefinition[] {
+  const builtInAgents = allAgents.filter((a) => a.source === 'built-in')
+  const pluginAgents = allAgents.filter((a) => a.source === 'plugin')
+  const userAgents = allAgents.filter((a) => a.source === 'userSettings')
+  const projectAgents = allAgents.filter((a) => a.source === 'projectSettings')
+  const managedAgents = allAgents.filter((a) => a.source === 'policySettings')
+  const flagAgents = allAgents.filter((a) => a.source === 'flagSettings')
 
   const agentGroups = [
     builtInAgents,
@@ -226,18 +191,13 @@ export function getActiveAgentsFromList(
  * @param agent The agent to check
  * @param availableServers List of available MCP server names (e.g., from mcp.clients)
  */
-export function hasRequiredMcpServers(
-  agent: AgentDefinition,
-  availableServers: string[],
-): boolean {
+export function hasRequiredMcpServers(agent: AgentDefinition, availableServers: string[]): boolean {
   if (!agent.requiredMcpServers || agent.requiredMcpServers.length === 0) {
     return true
   }
   // Each required pattern must match at least one available server (case-insensitive)
-  return agent.requiredMcpServers.every(pattern =>
-    availableServers.some(server =>
-      server.toLowerCase().includes(pattern.toLowerCase()),
-    ),
+  return agent.requiredMcpServers.every((pattern) =>
+    availableServers.some((server) => server.toLowerCase().includes(pattern.toLowerCase())),
   )
 }
 
@@ -251,7 +211,7 @@ export function filterAgentsByMcpRequirements(
   agents: AgentDefinition[],
   availableServers: string[],
 ): AgentDefinition[] {
-  return agents.filter(agent => hasRequiredMcpServers(agent, availableServers))
+  return agents.filter((agent) => hasRequiredMcpServers(agent, availableServers))
 }
 
 /**
@@ -259,26 +219,15 @@ export function filterAgentsByMcpRequirements(
  * For agents with memory enabled, copies snapshot to local if no local memory exists.
  * For agents with newer snapshots, logs a debug message (user prompt TODO).
  */
-async function initializeAgentMemorySnapshots(
-  agents: CustomAgentDefinition[],
-): Promise<void> {
+async function initializeAgentMemorySnapshots(agents: CustomAgentDefinition[]): Promise<void> {
   await Promise.all(
-    agents.map(async agent => {
+    agents.map(async (agent) => {
       if (agent.memory !== 'user') return
-      const result = await checkAgentMemorySnapshot(
-        agent.agentType,
-        agent.memory,
-      )
+      const result = await checkAgentMemorySnapshot(agent.agentType, agent.memory)
       switch (result.action) {
         case 'initialize':
-          logForDebugging(
-            `Initializing ${agent.agentType} memory from project snapshot`,
-          )
-          await initializeFromSnapshot(
-            agent.agentType,
-            agent.memory,
-            result.snapshotTimestamp!,
-          )
+          logForDebugging(`Initializing ${agent.agentType} memory from project snapshot`)
+          await initializeFromSnapshot(agent.agentType, agent.memory, result.snapshotTimestamp!)
           break
         case 'prompt-update':
           agent.pendingSnapshotUpdate = {
@@ -310,13 +259,7 @@ export const getAgentDefinitionsWithOverrides = memoize(
       const failedFiles: Array<{ path: string; error: string }> = []
       const customAgents = markdownFiles
         .map(({ filePath, baseDir, frontmatter, content, source }) => {
-          const agent = parseAgentFromMarkdown(
-            filePath,
-            baseDir,
-            frontmatter,
-            content,
-            source,
-          )
+          const agent = parseAgentFromMarkdown(filePath, baseDir, frontmatter, content, source)
           if (!agent) {
             // Skip non-agent markdown files silently (e.g., reference docs
             // co-located with agent definitions). Only report errors for files
@@ -326,20 +269,16 @@ export const getAgentDefinitionsWithOverrides = memoize(
             }
             const errorMsg = getParseError(frontmatter)
             failedFiles.push({ path: filePath, error: errorMsg })
-            logForDebugging(
-              `Failed to parse agent from ${filePath}: ${errorMsg}`,
-            )
+            logForDebugging(`Failed to parse agent from ${filePath}: ${errorMsg}`)
             logEvent('zy_agent_parse_error', {
-              error:
-                errorMsg as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              location:
-                source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              error: errorMsg as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              location: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             })
             return null
           }
           return agent
         })
-        .filter(agent => agent !== null)
+        .filter((agent) => agent !== null)
 
       // Kick off plugin agent loading concurrently with memory snapshot init —
       // loadPluginAgents is memoized and takes no args, so it's independent.
@@ -356,11 +295,7 @@ export const getAgentDefinitionsWithOverrides = memoize(
 
       const builtInAgents = getBuiltInAgents()
 
-      const allAgentsList: AgentDefinition[] = [
-        ...builtInAgents,
-        ...pluginAgents,
-        ...customAgents,
-      ]
+      const allAgentsList: AgentDefinition[] = [...builtInAgents, ...pluginAgents, ...customAgents]
 
       const activeAgents = getActiveAgentsFromList(allAgentsList)
 
@@ -377,8 +312,7 @@ export const getAgentDefinitionsWithOverrides = memoize(
         failedFiles: failedFiles.length > 0 ? failedFiles : undefined,
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       logForDebugging(`Error loading agent definitions: ${errorMessage}`)
       logError(error)
       // Even on error, return the built-in agents
@@ -431,9 +365,7 @@ function parseHooksFromFrontmatter(
 
   const result = HooksSchema().safeParse(frontmatter.hooks)
   if (!result.success) {
-    logForDebugging(
-      `Invalid hooks in agent '${agentType}': ${result.error.message}`,
-    )
+    logForDebugging(`Invalid hooks in agent '${agentType}': ${result.error.message}`)
     return undefined
   }
   return result.data
@@ -455,11 +387,7 @@ export function parseAgentFromJson(
     // If memory is enabled, inject Write/Edit/Read tools for memory access
     if (isAutoMemoryEnabled() && parsed.memory && tools !== undefined) {
       const toolSet = new Set(tools)
-      for (const tool of [
-        FILE_WRITE_TOOL_NAME,
-        FILE_EDIT_TOOL_NAME,
-        FILE_READ_TOOL_NAME,
-      ]) {
+      for (const tool of [FILE_WRITE_TOOL_NAME, FILE_EDIT_TOOL_NAME, FILE_READ_TOOL_NAME]) {
         if (!toolSet.has(tool)) {
           tools = [...tools, tool]
         }
@@ -480,26 +408,20 @@ export function parseAgentFromJson(
       ...(disallowedTools !== undefined ? { disallowedTools } : {}),
       getSystemPrompt: () => {
         if (isAutoMemoryEnabled() && parsed.memory) {
-          return (
-            systemPrompt + '\n\n' + loadAgentMemoryPrompt(name, parsed.memory)
-          )
+          return systemPrompt + '\n\n' + loadAgentMemoryPrompt(name, parsed.memory)
         }
         return systemPrompt
       },
       source,
       ...(parsed.model ? { model: parsed.model } : {}),
       ...(parsed.effort !== undefined ? { effort: parsed.effort } : {}),
-      ...(parsed.permissionMode
-        ? { permissionMode: parsed.permissionMode }
-        : {}),
+      ...(parsed.permissionMode ? { permissionMode: parsed.permissionMode } : {}),
       ...(parsed.mcpServers && parsed.mcpServers.length > 0
         ? { mcpServers: parsed.mcpServers }
         : {}),
       ...(parsed.hooks ? { hooks: parsed.hooks } : {}),
       ...(parsed.maxTurns !== undefined ? { maxTurns: parsed.maxTurns } : {}),
-      ...(parsed.skills && parsed.skills.length > 0
-        ? { skills: parsed.skills }
-        : {}),
+      ...(parsed.skills && parsed.skills.length > 0 ? { skills: parsed.skills } : {}),
       ...(parsed.initialPrompt ? { initialPrompt: parsed.initialPrompt } : {}),
       ...(parsed.background ? { background: parsed.background } : {}),
       ...(parsed.memory ? { memory: parsed.memory } : {}),
@@ -555,9 +477,7 @@ export function parseAgentFromMarkdown(
       return null
     }
     if (!whenToUse || typeof whenToUse !== 'string') {
-      logForDebugging(
-        `Agent file ${filePath} is missing required 'description' in frontmatter`,
-      )
+      logForDebugging(`Agent file ${filePath} is missing required 'description' in frontmatter`)
       return null
     }
 
@@ -587,8 +507,7 @@ export function parseAgentFromMarkdown(
       )
     }
 
-    const background =
-      backgroundRaw === 'true' || backgroundRaw === true ? true : undefined
+    const background = backgroundRaw === 'true' || backgroundRaw === true ? true : undefined
 
     // Parse memory scope
     const VALID_MEMORY_SCOPES: AgentMemoryScope[] = ['user', 'project', 'local']
@@ -606,8 +525,9 @@ export function parseAgentFromMarkdown(
 
     // Parse isolation mode. 'remote' is ant-only; external builds reject it at parse time.
     type IsolationMode = 'worktree' | 'remote'
-    const VALID_ISOLATION_MODES: readonly IsolationMode[] =
-      isInternalBuild() ? ['worktree', 'remote'] : ['worktree']
+    const VALID_ISOLATION_MODES: readonly IsolationMode[] = isInternalBuild()
+      ? ['worktree', 'remote']
+      : ['worktree']
     const isolationRaw = frontmatter['isolation'] as string | undefined
     let isolation: IsolationMode | undefined
     if (isolationRaw !== undefined) {
@@ -622,8 +542,7 @@ export function parseAgentFromMarkdown(
 
     // Parse effort from frontmatter (supports string levels and integers)
     const effortRaw = frontmatter['effort']
-    const parsedEffort =
-      effortRaw !== undefined ? parseEffortValue(effortRaw) : undefined
+    const parsedEffort = effortRaw !== undefined ? parseEffortValue(effortRaw) : undefined
 
     if (effortRaw !== undefined && parsedEffort === undefined) {
       logForDebugging(
@@ -632,12 +551,9 @@ export function parseAgentFromMarkdown(
     }
 
     // Parse permissionMode from frontmatter
-    const permissionModeRaw = frontmatter['permissionMode'] as
-      | string
-      | undefined
+    const permissionModeRaw = frontmatter['permissionMode'] as string | undefined
     const isValidPermissionMode =
-      permissionModeRaw &&
-      (PERMISSION_MODES as readonly string[]).includes(permissionModeRaw)
+      permissionModeRaw && (PERMISSION_MODES as readonly string[]).includes(permissionModeRaw)
 
     if (permissionModeRaw && !isValidPermissionMode) {
       const errorMsg = `Agent file ${filePath} has invalid permissionMode '${permissionModeRaw}'. Valid options: ${PERMISSION_MODES.join(', ')}`
@@ -662,11 +578,7 @@ export function parseAgentFromMarkdown(
     // If memory is enabled, inject Write/Edit/Read tools for memory access
     if (isAutoMemoryEnabled() && memory && tools !== undefined) {
       const toolSet = new Set(tools)
-      for (const tool of [
-        FILE_WRITE_TOOL_NAME,
-        FILE_EDIT_TOOL_NAME,
-        FILE_READ_TOOL_NAME,
-      ]) {
+      for (const tool of [FILE_WRITE_TOOL_NAME, FILE_EDIT_TOOL_NAME, FILE_READ_TOOL_NAME]) {
         if (!toolSet.has(tool)) {
           tools = [...tools, tool]
         }
@@ -685,16 +597,14 @@ export function parseAgentFromMarkdown(
 
     const initialPromptRaw = frontmatter['initialPrompt']
     const initialPrompt =
-      typeof initialPromptRaw === 'string' && initialPromptRaw.trim()
-        ? initialPromptRaw
-        : undefined
+      typeof initialPromptRaw === 'string' && initialPromptRaw.trim() ? initialPromptRaw : undefined
 
     // Parse mcpServers from frontmatter using same Zod validation as JSON agents
     const mcpServersRaw = frontmatter['mcpServers']
     let mcpServers: AgentMcpServerSpec[] | undefined
     if (Array.isArray(mcpServersRaw)) {
       mcpServers = mcpServersRaw
-        .map(item => {
+        .map((item) => {
           const result = AgentMcpServerSpecSchema().safeParse(item)
           if (result.success) {
             return result.data
@@ -719,9 +629,7 @@ export function parseAgentFromMarkdown(
       ...(disallowedTools !== undefined ? { disallowedTools } : {}),
       ...(skills !== undefined ? { skills } : {}),
       ...(initialPrompt !== undefined ? { initialPrompt } : {}),
-      ...(mcpServers !== undefined && mcpServers.length > 0
-        ? { mcpServers }
-        : {}),
+      ...(mcpServers !== undefined && mcpServers.length > 0 ? { mcpServers } : {}),
       ...(hooks !== undefined ? { hooks } : {}),
       getSystemPrompt: () => {
         if (isAutoMemoryEnabled() && memory) {
@@ -732,14 +640,10 @@ export function parseAgentFromMarkdown(
       },
       source,
       filename,
-      ...(color && typeof color === 'string' && AGENT_COLORS.includes(color)
-        ? { color }
-        : {}),
+      ...(color && typeof color === 'string' && AGENT_COLORS.includes(color) ? { color } : {}),
       ...(model !== undefined ? { model } : {}),
       ...(parsedEffort !== undefined ? { effort: parsedEffort } : {}),
-      ...(isValidPermissionMode
-        ? { permissionMode: permissionModeRaw as PermissionMode }
-        : {}),
+      ...(isValidPermissionMode ? { permissionMode: permissionModeRaw as PermissionMode } : {}),
       ...(maxTurns !== undefined ? { maxTurns } : {}),
       ...(background ? { background } : {}),
       ...(memory ? { memory } : {}),

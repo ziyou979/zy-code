@@ -48,14 +48,8 @@ function buildHookSchemas() {
       .string()
       .optional()
       .describe('Custom status message to display in spinner while hook runs'),
-    once: z
-      .boolean()
-      .optional()
-      .describe('If true, hook runs once and is removed after execution'),
-    async: z
-      .boolean()
-      .optional()
-      .describe('If true, hook runs in background without blocking'),
+    once: z.boolean().optional().describe('If true, hook runs once and is removed after execution'),
+    async: z.boolean().optional().describe('If true, hook runs in background without blocking'),
     asyncRewake: z
       .boolean()
       .optional()
@@ -68,9 +62,7 @@ function buildHookSchemas() {
     type: z.literal('prompt').describe('LLM prompt hook type'),
     prompt: z
       .string()
-      .describe(
-        'Prompt to evaluate with LLM. Use $ARGUMENTS placeholder for hook input JSON.',
-      ),
+      .describe('Prompt to evaluate with LLM. Use $ARGUMENTS placeholder for hook input JSON.'),
     if: IfConditionSchema(),
     timeout: z
       .number()
@@ -88,10 +80,7 @@ function buildHookSchemas() {
       .string()
       .optional()
       .describe('Custom status message to display in spinner while hook runs'),
-    once: z
-      .boolean()
-      .optional()
-      .describe('If true, hook runs once and is removed after execution'),
+    once: z.boolean().optional().describe('If true, hook runs once and is removed after execution'),
   })
 
   const HttpHookSchema = z.object({
@@ -119,10 +108,7 @@ function buildHookSchemas() {
       .string()
       .optional()
       .describe('Custom status message to display in spinner while hook runs'),
-    once: z
-      .boolean()
-      .optional()
-      .describe('If true, hook runs once and is removed after execution'),
+    once: z.boolean().optional().describe('If true, hook runs once and is removed after execution'),
   })
 
   const AgentHookSchema = z.object({
@@ -156,10 +142,7 @@ function buildHookSchemas() {
       .string()
       .optional()
       .describe('Custom status message to display in spinner while hook runs'),
-    once: z
-      .boolean()
-      .optional()
-      .describe('If true, hook runs once and is removed after execution'),
+    once: z.boolean().optional().describe('If true, hook runs once and is removed after execution'),
   })
 
   return {
@@ -174,12 +157,8 @@ function buildHookSchemas() {
  * Schema for hook command (excludes function hooks - they can't be persisted)
  */
 export const HookCommandSchema = lazySchema(() => {
-  const {
-    BashCommandHookSchema,
-    PromptHookSchema,
-    AgentHookSchema,
-    HttpHookSchema,
-  } = buildHookSchemas()
+  const { BashCommandHookSchema, PromptHookSchema, AgentHookSchema, HttpHookSchema } =
+    buildHookSchemas()
   return z.discriminatedUnion('type', [
     BashCommandHookSchema,
     PromptHookSchema,

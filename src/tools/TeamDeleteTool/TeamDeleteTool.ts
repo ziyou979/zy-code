@@ -78,16 +78,14 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
       const teamFile = readTeamFile(teamName)
       if (teamFile) {
         // Filter out the team lead - only count non-lead members
-        const nonLeadMembers = teamFile.members.filter(
-          m => m.name !== TEAM_LEAD_NAME,
-        )
+        const nonLeadMembers = teamFile.members.filter((m) => m.name !== TEAM_LEAD_NAME)
 
         // Separate truly active members from idle/dead ones
         // Members with isActive === false are idle (finished their turn or crashed)
-        const activeMembers = nonLeadMembers.filter(m => m.isActive !== false)
+        const activeMembers = nonLeadMembers.filter((m) => m.isActive !== false)
 
         if (activeMembers.length > 0) {
-          const memberNames = activeMembers.map(m => m.name).join(', ')
+          const memberNames = activeMembers.map((m) => m.name).join(', ')
           return {
             data: {
               success: false,
@@ -109,13 +107,12 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
       clearLeaderTeamName()
 
       logEvent('zy_team_deleted', {
-        team_name:
-          teamName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        team_name: teamName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
     }
 
     // Clear team context and inbox from app state
-    setAppState(prev => ({
+    setAppState((prev) => ({
       ...prev,
       teamContext: undefined,
       inbox: {

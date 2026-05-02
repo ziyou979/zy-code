@@ -27,10 +27,7 @@ export function createAbortController(
  * strong reference that could prevent GC.
  * Module-scope function avoids per-call closure allocation.
  */
-function propagateAbort(
-  this: WeakRef<AbortController>,
-  weakChild: WeakRef<AbortController>,
-): void {
+function propagateAbort(this: WeakRef<AbortController>, weakChild: WeakRef<AbortController>): void {
   const parent = this.deref()
   weakChild.deref()?.abort(parent?.signal.reason)
 }

@@ -1,19 +1,19 @@
-import chalk from 'chalk';
-import React from 'react';
-import { useClipboardImageHint } from '../hooks/useClipboardImageHint.js';
-import { useVimInput } from '../hooks/useVimInput.js';
-import { Box, color, useTerminalFocus, useTheme } from '../ink.js';
-import type { VimTextInputProps } from '../types/textInputTypes.js';
-import type { TextHighlight } from '../utils/textHighlighting.js';
-import { BaseTextInput } from './BaseTextInput.js';
+import chalk from 'chalk'
+import React from 'react'
+import { useClipboardImageHint } from '../hooks/useClipboardImageHint.js'
+import { useVimInput } from '../hooks/useVimInput.js'
+import { Box, color, useTerminalFocus, useTheme } from '../ink.js'
+import type { VimTextInputProps } from '../types/textInputTypes.js'
+import type { TextHighlight } from '../utils/textHighlighting.js'
+import { BaseTextInput } from './BaseTextInput.js'
 export type Props = VimTextInputProps & {
-  highlights?: TextHighlight[];
-};
+  highlights?: TextHighlight[]
+}
 export default function VimTextInput(props) {
-  const [theme] = useTheme();
-  const isTerminalFocused = useTerminalFocus();
-  useClipboardImageHint(isTerminalFocused, !!props.onImagePaste);
-  const t15 = color("text", theme);
+  const [theme] = useTheme()
+  const isTerminalFocused = useTerminalFocus()
+  useClipboardImageHint(isTerminalFocused, !!props.onImagePaste)
+  const t15 = color('text', theme)
   const vimInputState = useVimInput({
     value: props.value,
     onChange: props.onChange,
@@ -27,9 +27,9 @@ export default function VimTextInput(props) {
     focus: props.focus,
     mask: props.mask,
     multiline: props.multiline,
-    cursorChar: props.showCursor ? " " : "",
+    cursorChar: props.showCursor ? ' ' : '',
     highlightPastedText: props.highlightPastedText,
-    invert: isTerminalFocused ? chalk.inverse : text => text,
+    invert: isTerminalFocused ? chalk.inverse : (text) => text,
     themeText: t15,
     columns: props.columns,
     maxVisibleLines: props.maxVisibleLines,
@@ -40,16 +40,22 @@ export default function VimTextInput(props) {
     onOffsetChange: props.onChangeCursorOffset,
     inputFilter: props.inputFilter,
     onModeChange: props.onModeChange,
-    onUndo: props.onUndo
-  });
-  const {
-    mode,
-    setMode
-  } = vimInputState;
+    onUndo: props.onUndo,
+  })
+  const { mode, setMode } = vimInputState
   React.useEffect(() => {
     if (props.initialMode && props.initialMode !== mode) {
-      setMode(props.initialMode);
+      setMode(props.initialMode)
     }
-  }, [props.initialMode, mode, setMode]);
-  return <Box flexDirection="column"><BaseTextInput inputState={vimInputState} terminalFocus={isTerminalFocused} highlights={props.highlights} {...props} /></Box>;
+  }, [props.initialMode, mode, setMode])
+  return (
+    <Box flexDirection="column">
+      <BaseTextInput
+        inputState={vimInputState}
+        terminalFocus={isTerminalFocused}
+        highlights={props.highlights}
+        {...props}
+      />
+    </Box>
+  )
 }

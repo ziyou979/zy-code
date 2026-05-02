@@ -22,10 +22,7 @@ export function generateTempFilePath(
   options?: { contentHash?: string },
 ): string {
   const id = options?.contentHash
-    ? createHash('sha256')
-        .update(options.contentHash)
-        .digest('hex')
-        .slice(0, 16)
+    ? createHash('sha256').update(options.contentHash).digest('hex').slice(0, 16)
     : randomUUID()
   return join(tmpdir(), `${prefix}-${id}${extension}`)
 }

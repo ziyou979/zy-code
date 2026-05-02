@@ -13,10 +13,7 @@ import { ensureToolResultsDir, getToolResultsDir } from './toolResultStorage.js'
 /**
  * Generates a format description string based on the MCP result type and schema.
  */
-export function getFormatDescription(
-  type: MCPResultType,
-  schema?: unknown,
-): string {
+export function getFormatDescription(type: MCPResultType, schema?: unknown): string {
   switch (type) {
     case 'toolResult':
       return 'Plain text'
@@ -164,8 +161,7 @@ export async function persistBinaryContent(
 
   // mime type and extension are safe fixed-vocabulary strings (not paths/code)
   logEvent('zy_binary_content_persisted', {
-    mimeType: (mimeType ??
-      'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    mimeType: (mimeType ?? 'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     sizeBytes: bytes.length,
     ext: ext as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })

@@ -1,9 +1,6 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useRef } from 'react'
-import {
-  getTerminalFocusState,
-  subscribeTerminalFocus,
-} from '../ink/terminal-focus-state.js'
+import { getTerminalFocusState, subscribeTerminalFocus } from '../ink/terminal-focus-state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { generateAwaySummary } from '../services/awaySummary.js'
 import type { Message } from '../types/message.js'
@@ -45,10 +42,7 @@ export function useAwaySummary(
   isLoadingRef.current = isLoading
 
   // 3P default: false
-  const gbEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_sedge_lantern',
-    false,
-  )
+  const gbEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_sedge_lantern', false)
 
   useEffect(() => {
     if (!feature('AWAY_SUMMARY')) return
@@ -72,12 +66,9 @@ export function useAwaySummary(
       abortInFlight()
       const controller = new AbortController()
       abortRef.current = controller
-      const text = await generateAwaySummary(
-        messagesRef.current,
-        controller.signal,
-      )
+      const text = await generateAwaySummary(messagesRef.current, controller.signal)
       if (controller.signal.aborted || text === null) return
-      setMessages(prev => [...prev, createAwaySummaryMessage(text)])
+      setMessages((prev) => [...prev, createAwaySummaryMessage(text)])
     }
 
     function onBlurTimerFire(): void {

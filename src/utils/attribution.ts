@@ -1,11 +1,7 @@
 import { feature } from 'bun:bundle'
 import { stat } from 'fs/promises'
 import { getClientType } from '../bootstrap/state.js'
-import {
-  getRemoteSessionUrl,
-  isRemoteSessionLocal,
-  PRODUCT_URL,
-} from '../constants/product.js'
+import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../constants/product.js'
 import { TERMINAL_OUTPUT_TAGS } from '../constants/xml.js'
 import type { AppState } from '../state/AppState.js'
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
@@ -25,11 +21,7 @@ import { logForDebugging } from './debug.js'
 import { isInternalBuild } from './envUtils.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
-import {
-  getMainLoopModel,
-  getPublicModelDisplayName,
-  getPublicModelName,
-} from './model/model.js'
+import { getMainLoopModel, getPublicModelDisplayName, getPublicModelName } from './model/model.js'
 import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
 import { getTranscriptPath } from './sessionStorage.js'
 import { readTranscriptForLoad } from './sessionStoragePortable.js'
@@ -139,7 +131,7 @@ export function countUserPromptsInMessages(
       }
       hasUserText = content.trim().length > 0
     } else if (Array.isArray(content)) {
-      hasUserText = content.some(block => {
+      hasUserText = content.some((block) => {
         if (!block || typeof block !== 'object' || !('type' in block)) {
           return false
         }
@@ -170,8 +162,7 @@ export function countUserPromptsInMessages(
  */
 function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
   const nonSidechain = entries.filter(
-    entry =>
-      entry.type === 'user' && !('isSidechain' in entry && entry.isSidechain),
+    (entry) => entry.type === 'user' && !('isSidechain' in entry && entry.isSidechain),
   )
   // @ts-ignore
   return countUserPromptsInMessages(nonSidechain as any)
@@ -183,9 +174,7 @@ function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
  * because for PR attribution, files may not be staged yet.
  * Returns null if no attribution data is available.
  */
-async function getPRAttributionData(
-  appState: AppState,
-): Promise<AttributionData | null> {
+async function getPRAttributionData(appState: AppState): Promise<AttributionData | null> {
   const attribution = appState.attribution
 
   if (!attribution) {
@@ -195,9 +184,7 @@ async function getPRAttributionData(
   // Handle both Map and plain object (in case of serialization)
   const fileStates = attribution.fileStates
   const isMap = fileStates instanceof Map
-  const trackedFiles = isMap
-    ? Array.from(fileStates.keys())
-    : Object.keys(fileStates)
+  const trackedFiles = isMap ? Array.from(fileStates.keys()) : Object.keys(fileStates)
 
   if (trackedFiles.length === 0) {
     return null
@@ -223,20 +210,14 @@ const MEMORY_ACCESS_TOOL_NAMES = new Set([
  * Count memory file accesses in transcript entries.
  * Uses the same detection conditions as the PostToolUse session file access hooks.
  */
-function countMemoryFileAccessFromEntries(
-  entries: ReadonlyArray<Entry>,
-): number {
+function countMemoryFileAccessFromEntries(entries: ReadonlyArray<Entry>): number {
   let count = 0
   for (const entry of entries) {
     if (entry.type !== 'assistant') continue
     const content = entry.message?.content
     if (!Array.isArray(content)) continue
     for (const block of content) {
-      if (
-        block.type !== 'tool_call' ||
-        !MEMORY_ACCESS_TOOL_NAMES.has(block.name)
-      )
-        continue
+      if (block.type !== 'tool_call' || !MEMORY_ACCESS_TOOL_NAMES.has(block.name)) continue
       if (isMemoryFileAccess(block.name, block.input)) count++
     }
   }
@@ -266,13 +247,9 @@ async function getTranscriptStats(): Promise<{
     const buf = scan.postBoundaryBuf
     const entries = parseJSONL<Entry>(buf)
     const lastBoundaryIdx = entries.findLastIndex(
-      e =>
-        e.type === 'system' &&
-        'subtype' in e &&
-        e.subtype === 'compact_boundary',
+      (e) => e.type === 'system' && 'subtype' in e && e.subtype === 'compact_boundary',
     )
-    const postBoundary =
-      lastBoundaryIdx >= 0 ? entries.slice(lastBoundaryIdx + 1) : entries
+    const postBoundary = lastBoundaryIdx >= 0 ? entries.slice(lastBoundaryIdx + 1) : entries
     return {
       promptCount: countUserPromptsFromEntries(postBoundary),
       memoryAccessCount: countMemoryFileAccessFromEntries(postBoundary),
@@ -295,9 +272,7 @@ async function getTranscriptStats(): Promise<{
  *
  * @param getAppState Function to get the current AppState (from command context)
  */
-export async function getEnhancedPRAttribution(
-  getAppState: () => AppState,
-): Promise<string> {
+export async function getEnhancedPRAttribution(getAppState: () => AppState): Promise<string> {
   if (isInternalBuild() && isUndercover()) {
     return ''
   }
@@ -331,9 +306,7 @@ export async function getEnhancedPRAttribution(
   // Get AppState first
   const appState = getAppState()
 
-  logForDebugging(
-    `PR Attribution: appState.attribution exists: ${!!appState.attribution}`,
-  )
+  logForDebugging(`PR Attribution: appState.attribution exists: ${!!appState.attribution}`)
   if (appState.attribution) {
     const fileStates = appState.attribution.fileStates
     const isMap = fileStates instanceof Map
@@ -342,12 +315,11 @@ export async function getEnhancedPRAttribution(
   }
 
   // Get attribution stats (transcript is read once for both prompt count and memory access)
-  const [attributionData, { promptCount, memoryAccessCount }, isInternal] =
-    await Promise.all([
-      getPRAttributionData(appState),
-      getTranscriptStats(),
-      isInternalModelRepo(),
-    ])
+  const [attributionData, { promptCount, memoryAccessCount }, isInternal] = await Promise.all([
+    getPRAttributionData(appState),
+    getTranscriptStats(),
+    isInternalModelRepo(),
+  ])
 
   const ZyPercent = attributionData?.summary.ZyPercent ?? 0
 
@@ -357,9 +329,7 @@ export async function getEnhancedPRAttribution(
 
   // Get short model name, sanitized for non-internal repos
   const rawModelName = getMainLoopModel()
-  const shortModelName = isInternal
-    ? rawModelName
-    : sanitizeModelName(rawModelName)
+  const shortModelName = isInternal ? rawModelName : sanitizeModelName(rawModelName)
 
   // If no attribution data, return default
   if (ZyPercent === 0 && promptCount === 0 && memoryAccessCount === 0) {

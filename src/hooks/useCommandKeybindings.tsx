@@ -9,61 +9,65 @@
  * away and preserve the user's existing input text (the prompt is not cleared).
  */
 
-import { useIsModalOverlayActive } from '../context/overlayContext.js';
-import { useOptionalKeybindingContext } from '../keybindings/KeybindingContext.js';
-import { useKeybindings } from '../keybindings/useKeybinding.js';
-import type { PromptInputHelpers } from '../utils/handlePromptSubmit.js';
+import { useIsModalOverlayActive } from '../context/overlayContext.js'
+import { useOptionalKeybindingContext } from '../keybindings/KeybindingContext.js'
+import { useKeybindings } from '../keybindings/useKeybinding.js'
+import type { PromptInputHelpers } from '../utils/handlePromptSubmit.js'
 type Props = {
   // onSubmit accepts additional parameters beyond what we pass here,
   // so we use a rest parameter to allow any additional args
-  onSubmit: (input: string, helpers: PromptInputHelpers, ...rest: [speculationAccept?: undefined, options?: {
-    fromKeybinding?: boolean;
-  }]) => void;
+  onSubmit: (
+    input: string,
+    helpers: PromptInputHelpers,
+    ...rest: [
+      speculationAccept?: undefined,
+      options?: {
+        fromKeybinding?: boolean
+      },
+    ]
+  ) => void
   /** Set to false to disable command keybindings (e.g., when a dialog is open) */
-  isActive?: boolean;
-};
+  isActive?: boolean
+}
 const NOOP_HELPERS: PromptInputHelpers = {
   setCursorOffset: () => {},
   clearBuffer: () => {},
-  resetHistory: () => {}
-};
+  resetHistory: () => {},
+}
 
 /**
  * Registers keybinding handlers for all "command:*" actions found in the
  * user's keybinding configuration. When triggered, each handler submits
  * the corresponding slash command (e.g., "command:commit" submits "/commit").
  */
-export function CommandKeybindingHandlers({
-  onSubmit,
-  isActive = true
-}: Props) {
-  const keybindingContext = useOptionalKeybindingContext();
-  const isModalOverlayActive = useIsModalOverlayActive();
-  let commandActions;
+export function CommandKeybindingHandlers({ onSubmit, isActive = true }: Props) {
+  const keybindingContext = useOptionalKeybindingContext()
+  const isModalOverlayActive = useIsModalOverlayActive()
+  let commandActions
   if (!keybindingContext) {
-    commandActions = new Set();
+    commandActions = new Set()
   } else {
-    const actions = new Set();
+    const actions = new Set()
     for (const binding of keybindingContext.bindings) {
-      if (binding.action?.startsWith("command:")) {
-        actions.add(binding.action);
+      if (binding.action?.startsWith('command:')) {
+        actions.add(binding.action)
       }
     }
-    commandActions = actions;
+    commandActions = actions
   }
-  const map = {};
+  const map = {}
   for (const action of commandActions) {
-    const commandName = action.slice(8);
+    const commandName = action.slice(8)
     map[action] = () => {
       onSubmit(`/${commandName}`, NOOP_HELPERS, undefined, {
-        fromKeybinding: true
-      });
-    };
+        fromKeybinding: true,
+      })
+    }
   }
-  const handlers = map;
+  const handlers = map
   useKeybindings(handlers, {
-    context: "Chat",
-    isActive: isActive && !isModalOverlayActive
-  });
-  return null;
+    context: 'Chat',
+    isActive: isActive && !isModalOverlayActive,
+  })
+  return null
 }

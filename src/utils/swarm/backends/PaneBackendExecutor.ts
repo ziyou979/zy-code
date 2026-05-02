@@ -6,11 +6,7 @@ import { registerCleanup } from '../../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../../utils/debug.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 import { writeToMailbox } from '../../../utils/teammateMailbox.js'
-import {
-  buildInheritedCliFlags,
-  buildInheritedEnvVars,
-  getTeammateCommand,
-} from '../spawnUtils.js'
+import { buildInheritedCliFlags, buildInheritedEnvVars, getTeammateCommand } from '../spawnUtils.js'
 import { assignTeammateColor } from '../teammateLayoutManager.js'
 import { isInsideTmux } from './detection.js'
 import type {
@@ -80,14 +76,11 @@ export class PaneBackendExecutor implements TeammateExecutor {
     const agentId = formatAgentId(config.name, config.teamName)
 
     if (!this.context) {
-      logForDebugging(
-        `[PaneBackendExecutor] spawn() called without context for ${config.name}`,
-      )
+      logForDebugging(`[PaneBackendExecutor] spawn() called without context for ${config.name}`)
       return {
         success: false,
         agentId,
-        error:
-          'PaneBackendExecutor not initialized. Call setContext() before spawn().',
+        error: 'PaneBackendExecutor not initialized. Call setContext() before spawn().',
       }
     }
 
@@ -96,11 +89,10 @@ export class PaneBackendExecutor implements TeammateExecutor {
       const teammateColor = config.color ?? assignTeammateColor(agentId)
 
       // Create a pane in the swarm view
-      const { paneId, isFirstTeammate } =
-        await this.backend.createTeammatePaneInSwarmView(
-          config.name,
-          teammateColor,
-        )
+      const { paneId, isFirstTeammate } = await this.backend.createTeammatePaneInSwarmView(
+        config.name,
+        teammateColor,
+      )
 
       // Check if we're inside tmux to determine how to send commands
       const insideTmux = await isInsideTmux()
@@ -136,9 +128,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
       if (config.model) {
         inheritedFlags = inheritedFlags
           .split(' ')
-          .filter(
-            (flag, i, arr) => flag !== '--model' && arr[i - 1] !== '--model',
-          )
+          .filter((flag, i, arr) => flag !== '--model' && arr[i - 1] !== '--model')
           .join(' ')
         inheritedFlags = inheritedFlags
           ? `${inheritedFlags} --model ${quote([config.model])}`
@@ -165,9 +155,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
         this.cleanupRegistered = true
         registerCleanup(async () => {
           for (const [id, info] of this.spawnedTeammates) {
-            logForDebugging(
-              `[PaneBackendExecutor] Cleanup: killing pane for ${id}`,
-            )
+            logForDebugging(`[PaneBackendExecutor] Cleanup: killing pane for ${id}`)
             await this.backend.killPane(info.paneId, !info.insideTmux)
           }
           this.spawnedTeammates.clear()
@@ -185,9 +173,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
         config.teamName,
       )
 
-      logForDebugging(
-        `[PaneBackendExecutor] Spawned teammate ${agentId} in pane ${paneId}`,
-      )
+      logForDebugging(`[PaneBackendExecutor] Spawned teammate ${agentId} in pane ${paneId}`)
 
       return {
         success: true,
@@ -195,11 +181,8 @@ export class PaneBackendExecutor implements TeammateExecutor {
         paneId,
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
-      logForDebugging(
-        `[PaneBackendExecutor] Failed to spawn ${agentId}: ${errorMessage}`,
-      )
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      logForDebugging(`[PaneBackendExecutor] Failed to spawn ${agentId}: ${errorMessage}`)
       return {
         success: false,
         agentId,
@@ -220,9 +203,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
 
     const parsed = parseAgentId(agentId)
     if (!parsed) {
-      throw new Error(
-        `Invalid agentId format: ${agentId}. Expected format: agentName@teamName`,
-      )
+      throw new Error(`Invalid agentId format: ${agentId}. Expected format: agentName@teamName`)
     }
 
     const { agentName, teamName } = parsed
@@ -238,9 +219,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
       teamName,
     )
 
-    logForDebugging(
-      `[PaneBackendExecutor] sendMessage() completed for ${agentId}`,
-    )
+    logForDebugging(`[PaneBackendExecutor] sendMessage() completed for ${agentId}`)
   }
 
   /**
@@ -250,15 +229,11 @@ export class PaneBackendExecutor implements TeammateExecutor {
    * let the teammate process handle exit gracefully.
    */
   async terminate(agentId: string, reason?: string): Promise<boolean> {
-    logForDebugging(
-      `[PaneBackendExecutor] terminate() called for ${agentId}: ${reason}`,
-    )
+    logForDebugging(`[PaneBackendExecutor] terminate() called for ${agentId}: ${reason}`)
 
     const parsed = parseAgentId(agentId)
     if (!parsed) {
-      logForDebugging(
-        `[PaneBackendExecutor] terminate() failed: invalid agentId format`,
-      )
+      logForDebugging(`[PaneBackendExecutor] terminate() failed: invalid agentId format`)
       return false
     }
 
@@ -282,9 +257,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
       teamName,
     )
 
-    logForDebugging(
-      `[PaneBackendExecutor] terminate() sent shutdown request to ${agentId}`,
-    )
+    logForDebugging(`[PaneBackendExecutor] terminate() sent shutdown request to ${agentId}`)
 
     return true
   }
@@ -331,9 +304,7 @@ export class PaneBackendExecutor implements TeammateExecutor {
 
     const teammateInfo = this.spawnedTeammates.get(agentId)
     if (!teammateInfo) {
-      logForDebugging(
-        `[PaneBackendExecutor] isActive(): teammate ${agentId} not found`,
-      )
+      logForDebugging(`[PaneBackendExecutor] isActive(): teammate ${agentId} not found`)
       return false
     }
 
@@ -347,8 +318,6 @@ export class PaneBackendExecutor implements TeammateExecutor {
 /**
  * Creates a PaneBackendExecutor wrapping the given PaneBackend.
  */
-export function createPaneBackendExecutor(
-  backend: PaneBackend,
-): PaneBackendExecutor {
+export function createPaneBackendExecutor(backend: PaneBackend): PaneBackendExecutor {
   return new PaneBackendExecutor(backend)
 }

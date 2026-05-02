@@ -8,10 +8,7 @@ import {
 } from '../memdir/paths.js'
 import { isAgentMemoryPath } from '../tools/AgentTool/agentMemory.js'
 import { getZyConfigHomeDir } from './envUtils.js'
-import {
-  posixPathToWindowsPath,
-  windowsPathToPosixPath,
-} from './windowsPaths.js'
+import { posixPathToWindowsPath, windowsPathToPosixPath } from './windowsPaths.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
@@ -160,8 +157,7 @@ export function isMemoryDirectory(dirPath: string): boolean {
   // Agent memory directories can be under cwd (project scope), configDir, or memoryBaseDir
   if (
     isAutoMemoryEnabled() &&
-    (normalizedCmp.includes('/agent-memory/') ||
-      normalizedCmp.includes('/agent-memory-local/'))
+    (normalizedCmp.includes('/agent-memory/') || normalizedCmp.includes('/agent-memory-local/'))
   ) {
     return true
   }
@@ -178,10 +174,7 @@ export function isMemoryDirectory(dirPath: string): boolean {
     const autoMemPath = getAutoMemPath()
     const autoMemDirCmp = toComparable(autoMemPath.replace(/[/\\]+$/, ''))
     const autoMemPathCmp = toComparable(autoMemPath)
-    if (
-      normalizedCmp === autoMemDirCmp ||
-      normalizedCmp.startsWith(autoMemPathCmp)
-    ) {
+    if (normalizedCmp === autoMemDirCmp || normalizedCmp.startsWith(autoMemPathCmp)) {
       return true
     }
   }
@@ -215,9 +208,7 @@ export function isMemoryDirectory(dirPath: string): boolean {
 export function isShellCommandTargetingMemory(command: string): boolean {
   const configDir = getZyConfigHomeDir()
   const memoryBase = getMemoryBaseDir()
-  const autoMemDir = isAutoMemoryEnabled()
-    ? getAutoMemPath().replace(/[/\\]+$/, '')
-    : ''
+  const autoMemDir = isAutoMemoryEnabled() ? getAutoMemPath().replace(/[/\\]+$/, '') : ''
 
   // Quick check: does the command mention the config, memory base, or
   // auto-mem directory? Compare in forward-slash form (PowerShell on Windows
@@ -228,7 +219,7 @@ export function isShellCommandTargetingMemory(command: string): boolean {
   // is NOT called, so Linux paths like /m/foo aren't misinterpreted as MinGW.
   const commandCmp = toComparable(command)
   const dirs = [configDir, memoryBase, autoMemDir].filter(Boolean)
-  const matchesAnyDir = dirs.some(d => {
+  const matchesAnyDir = dirs.some((d) => {
     if (commandCmp.includes(toComparable(d))) return true
     if (IS_WINDOWS) {
       // BashTool on Windows (Git Bash) emits /c/Users/... — check MinGW form too
@@ -259,9 +250,7 @@ export function isShellCommandTargetingMemory(command: string): boolean {
     // isAutoMemPath, isAgentMemoryPath) then receive native paths and only
     // need toComparable() for matching. On other platforms, paths are already
     // native — no conversion, so /m/foo etc. pass through unmodified.
-    const nativePath = IS_WINDOWS
-      ? posixPathToWindowsPath(cleanPath)
-      : cleanPath
+    const nativePath = IS_WINDOWS ? posixPathToWindowsPath(cleanPath) : cleanPath
     if (isAutoManagedMemoryFile(nativePath) || isMemoryDirectory(nativePath)) {
       return true
     }

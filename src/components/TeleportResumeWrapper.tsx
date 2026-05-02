@@ -1,17 +1,20 @@
-import React, { useEffect } from 'react';
-import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
-import type { TeleportRemoteResponse } from 'src/utils/conversationRecovery.js';
-import { type TeleportSource, useTeleportResume } from '../hooks/useTeleportResume.js';
-import { Box, Text } from '../ink.js';
-import { useKeybinding } from '../keybindings/useKeybinding.js';
-import { ResumeTask } from './ResumeTask.js';
-import { Spinner } from './Spinner.js';
+import React, { useEffect } from 'react'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from 'src/services/analytics/index.js'
+import type { TeleportRemoteResponse } from 'src/utils/conversationRecovery.js'
+import { type TeleportSource, useTeleportResume } from '../hooks/useTeleportResume.js'
+import { Box, Text } from '../ink.js'
+import { useKeybinding } from '../keybindings/useKeybinding.js'
+import { ResumeTask } from './ResumeTask.js'
+import { Spinner } from './Spinner.js'
 interface TeleportResumeWrapperProps {
-  onComplete: (result: TeleportRemoteResponse) => void;
-  onCancel: () => void;
-  onError?: (error: string, formattedMessage?: string) => void;
-  isEmbedded?: boolean;
-  source: TeleportSource;
+  onComplete: (result: TeleportRemoteResponse) => void
+  onCancel: () => void
+  onError?: (error: string, formattedMessage?: string) => void
+  isEmbedded?: boolean
+  source: TeleportSource
 }
 
 /**
@@ -23,44 +26,65 @@ export function TeleportResumeWrapper({
   onCancel,
   onError,
   isEmbedded = false,
-  source
+  source,
 }: TeleportResumeWrapperProps) {
-  const {
-    resumeSession,
-    isResuming,
-    error,
-    selectedSession
-  } = useTeleportResume(source);
+  const { resumeSession, isResuming, error, selectedSession } = useTeleportResume(source)
   useEffect(() => {
-    logEvent("zy_teleport_started", {
-      source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-    });
-  }, [source]);
-  const handleSelect = async session => {
-    const result = await resumeSession(session);
+    logEvent('zy_teleport_started', {
+      source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    })
+  }, [source])
+  const handleSelect = async (session) => {
+    const result = await resumeSession(session)
     if (result) {
-      onComplete(result);
+      onComplete(result)
     } else {
       if (error) {
         if (onError) {
-          onError(error.message, error.formattedMessage);
+          onError(error.message, error.formattedMessage)
         }
       }
     }
-  };
+  }
   const handleCancel = () => {
-    logEvent("zy_teleport_cancelled", {});
-    onCancel();
-  };
-  useKeybinding("app:interrupt", handleCancel, {
-    context: "Global",
-    isActive: !!error && !onError
-  });
+    logEvent('zy_teleport_cancelled', {})
+    onCancel()
+  }
+  useKeybinding('app:interrupt', handleCancel, {
+    context: 'Global',
+    isActive: !!error && !onError,
+  })
   if (isResuming && selectedSession) {
-    return <Box flexDirection="column" padding={1}>{<Box flexDirection="row"><Spinner /><Text bold={true}>Resuming session…</Text></Box>}<Text dimColor={true}>Loading "{selectedSession.title}"…</Text></Box>;
+    return (
+      <Box flexDirection="column" padding={1}>
+        {
+          <Box flexDirection="row">
+            <Spinner />
+            <Text bold={true}>Resuming session…</Text>
+          </Box>
+        }
+        <Text dimColor={true}>Loading "{selectedSession.title}"…</Text>
+      </Box>
+    )
   }
   if (error && !onError) {
-    return <Box flexDirection="column" padding={1}>{<Text bold={true} color="error">Failed to resume session</Text>}{<Text dimColor={true}>{error.message}</Text>}{<Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Esc</Text> to cancel</Text></Box>}</Box>;
+    return (
+      <Box flexDirection="column" padding={1}>
+        {
+          <Text bold={true} color="error">
+            Failed to resume session
+          </Text>
+        }
+        {<Text dimColor={true}>{error.message}</Text>}
+        {
+          <Box marginTop={1}>
+            <Text dimColor={true}>
+              Press <Text bold={true}>Esc</Text> to cancel
+            </Text>
+          </Box>
+        }
+      </Box>
+    )
   }
-  return <ResumeTask onSelect={handleSelect} onCancel={handleCancel} isEmbedded={isEmbedded} />;
+  return <ResumeTask onSelect={handleSelect} onCancel={handleCancel} isEmbedded={isEmbedded} />
 }

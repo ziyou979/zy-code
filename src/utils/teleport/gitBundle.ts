@@ -57,11 +57,10 @@ async function _bundleWithFallback(
   // --all picks up refs/seed/stash; HEAD needs it explicit.
   const extra = hasStash ? ['refs/seed/stash'] : []
   const mkBundle = (base: string) =>
-    execFileNoThrowWithCwd(
-      gitExe(),
-      ['bundle', 'create', bundlePath, base, ...extra],
-      { cwd: gitRoot, abortSignal: signal },
-    )
+    execFileNoThrowWithCwd(gitExe(), ['bundle', 'create', bundlePath, base, ...extra], {
+      cwd: gitRoot,
+      abortSignal: signal,
+    })
 
   const allResult = await mkBundle('--all')
   if (allResult.code !== 0) {
@@ -115,11 +114,9 @@ async function _bundleWithFallback(
     }
   }
   const squashedSha = commitTree.stdout.trim()
-  await execFileNoThrowWithCwd(
-    gitExe(),
-    ['update-ref', 'refs/seed/root', squashedSha],
-    { cwd: gitRoot },
-  )
+  await execFileNoThrowWithCwd(gitExe(), ['update-ref', 'refs/seed/root', squashedSha], {
+    cwd: gitRoot,
+  })
   const squashResult = await execFileNoThrowWithCwd(
     gitExe(),
     ['bundle', 'create', bundlePath, 'refs/seed/root'],
@@ -139,8 +136,7 @@ async function _bundleWithFallback(
 
   return {
     ok: false,
-    error:
-      'Repo is too large to bundle. Please setup GitHub on https://zy.ai/code',
+    error: 'Repo is too large to bundle. Please setup GitHub on https://zy.ai/code',
     failReason: 'too_large',
   }
 }
@@ -171,15 +167,12 @@ export async function createAndUploadGitBundle(
   // `stash create` fails with "You do not have the initial commit yet".
   // Check for any refs (not just HEAD) so orphan branches with commits
   // elsewhere still bundle — `--all` packs those refs regardless of HEAD.
-  const refCheck = await execFileNoThrowWithCwd(
-    gitExe(),
-    ['for-each-ref', '--count=1', 'refs/'],
-    { cwd: gitRoot },
-  )
+  const refCheck = await execFileNoThrowWithCwd(gitExe(), ['for-each-ref', '--count=1', 'refs/'], {
+    cwd: gitRoot,
+  })
   if (refCheck.code === 0 && refCheck.stdout.trim() === '') {
     logEvent('zy_ccr_bundle_upload', {
-      outcome:
-        'empty_repo' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      outcome: 'empty_repo' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return {
       success: false,
@@ -190,11 +183,10 @@ export async function createAndUploadGitBundle(
 
   // stash create writes a dangling commit — doesn't touch refs/stash or
   // the working tree. Untracked files intentionally excluded.
-  const stashResult = await execFileNoThrowWithCwd(
-    gitExe(),
-    ['stash', 'create'],
-    { cwd: gitRoot, abortSignal: opts?.signal },
-  )
+  const stashResult = await execFileNoThrowWithCwd(gitExe(), ['stash', 'create'], {
+    cwd: gitRoot,
+    abortSignal: opts?.signal,
+  })
   // exit 0 + empty stdout = nothing to stash. Nonzero is rare; non-fatal.
   const wipStashSha = stashResult.code === 0 ? stashResult.stdout.trim() : ''
   const hasWip = wipStashSha !== ''
@@ -205,11 +197,9 @@ export async function createAndUploadGitBundle(
   } else if (hasWip) {
     logForDebugging(`[gitBundle] Captured WIP as stash ${wipStashSha}`)
     // env-runner reads the SHA via bundle list-heads refs/seed/stash.
-    await execFileNoThrowWithCwd(
-      gitExe(),
-      ['update-ref', 'refs/seed/stash', wipStashSha],
-      { cwd: gitRoot },
-    )
+    await execFileNoThrowWithCwd(gitExe(), ['update-ref', 'refs/seed/stash', wipStashSha], {
+      cwd: gitRoot,
+    })
   }
 
   const bundlePath = generateTempFilePath('ccr-seed', '.bundle')
@@ -217,24 +207,16 @@ export async function createAndUploadGitBundle(
   // git leaves a partial file on nonzero exit (e.g. empty-repo 128).
   try {
     const maxBytes =
-      getFeatureValue_CACHED_MAY_BE_STALE<number | null>(
-        'zy_ccr_bundle_max_bytes',
-        null,
-      ) ?? DEFAULT_BUNDLE_MAX_BYTES
+      getFeatureValue_CACHED_MAY_BE_STALE<number | null>('zy_ccr_bundle_max_bytes', null) ??
+      DEFAULT_BUNDLE_MAX_BYTES
 
-    const bundle = await _bundleWithFallback(
-      gitRoot,
-      bundlePath,
-      maxBytes,
-      hasWip,
-      opts?.signal,
-    )
+    const bundle = await _bundleWithFallback(gitRoot, bundlePath, maxBytes, hasWip, opts?.signal)
 
     if (!bundle.ok) {
       logForDebugging(`[gitBundle] ${(bundle as any).error}`)
       logEvent('zy_ccr_bundle_upload', {
-        outcome:
-          (bundle as any).failReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        outcome: (bundle as any)
+          .failReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         max_bytes: maxBytes,
       })
       return {
@@ -251,21 +233,16 @@ export async function createAndUploadGitBundle(
 
     if (!upload.success) {
       logEvent('zy_ccr_bundle_upload', {
-        outcome:
-          'failed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        outcome: 'failed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       return { success: false, error: (upload as any).error }
     }
 
-    logForDebugging(
-      `[gitBundle] Uploaded ${upload.size} bytes as file_id ${upload.fileId}`,
-    )
+    logForDebugging(`[gitBundle] Uploaded ${upload.size} bytes as file_id ${upload.fileId}`)
     logEvent('zy_ccr_bundle_upload', {
-      outcome:
-        'success' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      outcome: 'success' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       size_bytes: upload.size,
-      scope:
-        bundle.scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      scope: bundle.scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       has_wip: hasWip,
     })
     return {

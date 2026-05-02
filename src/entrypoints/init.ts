@@ -28,19 +28,13 @@ import { initJetBrainsDetection } from '../utils/envDynamic.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog 在错误路径中动态导入，以避免在初始化时加载 React
-import {
-  gracefulShutdownSync,
-  setupGracefulShutdown,
-} from '../utils/gracefulShutdown.js'
+import { gracefulShutdownSync, setupGracefulShutdown } from '../utils/gracefulShutdown.js'
 import {
   applyConfigEnvironmentVariables,
   applySafeConfigEnvironmentVariables,
 } from '../utils/managedEnv.js'
 import { configureGlobalMTLS } from '../utils/mtls.js'
-import {
-  ensureScratchpadDir,
-  isScratchpadEnabled,
-} from '../utils/permissions/filesystem.js'
+import { ensureScratchpadDir, isScratchpadEnabled } from '../utils/permissions/filesystem.js'
 // initializeTelemetry 通过 setMeterState() 中的 import() 延迟加载，以推迟
 // ~400KB 的 OpenTelemetry + protobuf 模块，直到真正初始化遥测时才加载。
 // gRPC 导出器（通过 @grpc/grpc-js 约 ~700KB）在 instrumentation.ts 中进一步延迟加载。
@@ -173,9 +167,7 @@ export const init = memoize(async (): Promise<void> => {
         const { initUpstreamProxy, getUpstreamProxyEnv } = await import(
           '../upstreamproxy/upstreamproxy.js'
         )
-        const { registerUpstreamProxyEnvFn } = await import(
-          '../utils/subprocessEnv.js'
-        )
+        const { registerUpstreamProxyEnvFn } = await import('../utils/subprocessEnv.js')
         registerUpstreamProxyEnvFn(getUpstreamProxyEnv)
         await initUpstreamProxy()
       } catch (err) {
@@ -196,9 +188,7 @@ export const init = memoize(async (): Promise<void> => {
     // 团队会永久残留在磁盘上。为此会话创建的所有团队注册清理函数。
     // 延迟导入：swarm 代码受 feature gate 保护，大多数会话不会创建团队。
     registerCleanup(async () => {
-      const { cleanupSessionTeams } = await import(
-        '../utils/swarm/teamHelpers.js'
-      )
+      const { cleanupSessionTeams } = await import('../utils/swarm/teamHelpers.js')
       await cleanupSessionTeams()
     })
 
@@ -221,15 +211,13 @@ export const init = memoize(async (): Promise<void> => {
       // 该对话框会导致 JSON 消费者出错（如在 VM 沙箱中运行
       // `plugin marketplace list --json` 的桌面市场插件管理器）。
       if (getIsNonInteractiveSession()) {
-        process.stderr.write(
-          `Configuration error in ${error.filePath}: ${error.message}\n`,
-        )
+        process.stderr.write(`Configuration error in ${error.filePath}: ${error.message}\n`)
         gracefulShutdownSync(1)
         return
       }
 
       // 显示无效配置对话框并等待其完成
-      return import('../components/InvalidConfigDialog.js').then(m =>
+      return import('../components/InvalidConfigDialog.js').then((m) =>
         m.showInvalidConfigDialog({ error }),
       )
       // 对话框本身处理 process.exit，因此无需额外清理
@@ -253,37 +241,32 @@ export function initializeTelemetryAfterTrust(): void {
     // 以确保 tracer 在第一次查询运行前就绪。
     // 下面的异步路径仍会执行，但 doInitializeTelemetry() 会防止重复初始化。
     if (getIsNonInteractiveSession() && isBetaTracingEnabled()) {
-      void doInitializeTelemetry().catch(error => {
+      void doInitializeTelemetry().catch((error) => {
         logForDebugging(
           `[3P telemetry] Eager telemetry init failed (beta tracing): ${errorMessage(error)}`,
           { level: 'error' },
         )
       })
     }
-    logForDebugging(
-      '[3P telemetry] Waiting for remote managed settings before telemetry init',
-    )
+    logForDebugging('[3P telemetry] Waiting for remote managed settings before telemetry init')
     void waitForRemoteManagedSettingsToLoad()
       .then(async () => {
-        logForDebugging(
-          '[3P telemetry] Remote managed settings loaded, initializing telemetry',
-        )
+        logForDebugging('[3P telemetry] Remote managed settings loaded, initializing telemetry')
         // 在初始化遥测之前重新应用环境变量，以获取远程设置。
         applyConfigEnvironmentVariables()
         await doInitializeTelemetry()
       })
-      .catch(error => {
+      .catch((error) => {
         logForDebugging(
           `[3P telemetry] Telemetry init failed (remote settings path): ${errorMessage(error)}`,
           { level: 'error' },
         )
       })
   } else {
-    void doInitializeTelemetry().catch(error => {
-      logForDebugging(
-        `[3P telemetry] Telemetry init failed: ${errorMessage(error)}`,
-        { level: 'error' },
-      )
+    void doInitializeTelemetry().catch((error) => {
+      logForDebugging(`[3P telemetry] Telemetry init failed: ${errorMessage(error)}`, {
+        level: 'error',
+      })
     })
   }
 }
@@ -307,17 +290,12 @@ async function doInitializeTelemetry(): Promise<void> {
 
 async function setMeterState(): Promise<void> {
   // 延迟加载 instrumentation，以推迟 ~400KB 的 OpenTelemetry + protobuf
-  const { initializeTelemetry } = await import(
-    '../utils/telemetry/instrumentation.js'
-  )
+  const { initializeTelemetry } = await import('../utils/telemetry/instrumentation.js')
   // 初始化客户 OTLP 遥测（metrics, logs, traces）
   const meter = await initializeTelemetry()
   if (meter) {
     // 创建带属性计数器的工厂函数
-    const createAttributedCounter = (
-      name: string,
-      options: MetricOptions,
-    ): AttributedCounter => {
+    const createAttributedCounter = (name: string, options: MetricOptions): AttributedCounter => {
       const counter = meter?.createCounter(name, options)
 
       return {

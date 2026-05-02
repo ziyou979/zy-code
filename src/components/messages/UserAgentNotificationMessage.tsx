@@ -1,36 +1,39 @@
-import type { TextBlock } from '../../types/llm.js';
-import * as React from 'react';
-import { BLACK_CIRCLE } from '../../constants/figures.js';
-import { Box, Text, type TextProps } from '../../ink.js';
-import { extractTag } from '../../utils/messages.js';
+import type { TextBlock } from '../../types/llm.js'
+import * as React from 'react'
+import { BLACK_CIRCLE } from '../../constants/figures.js'
+import { Box, Text, type TextProps } from '../../ink.js'
+import { extractTag } from '../../utils/messages.js'
 type Props = {
-  addMargin: boolean;
-  param: TextBlock;
-};
+  addMargin: boolean
+  param: TextBlock
+}
 function getStatusColor(status: string | null): TextProps['color'] {
   switch (status) {
     case 'completed':
-      return 'success';
+      return 'success'
     case 'failed':
-      return 'error';
+      return 'error'
     case 'killed':
-      return 'warning';
+      return 'warning'
     default:
-      return 'text';
+      return 'text'
   }
 }
-export function UserAgentNotificationMessage({
-  addMargin,
-  param
-}: Props) {
-  const {
-    text
-  } = param;
-  const summary = extractTag(text, "summary");
+export function UserAgentNotificationMessage({ addMargin, param }: Props) {
+  const { text } = param
+  const summary = extractTag(text, 'summary')
   if (!summary) {
-    return null;
+    return null
   }
-  const status = extractTag(text, "status");
-  const color = getStatusColor(status);
-  return <Box marginTop={addMargin ? 1 : 0}>{<Text>{<Text color={color}>{BLACK_CIRCLE}</Text>} {summary}</Text>}</Box>;
+  const status = extractTag(text, 'status')
+  const color = getStatusColor(status)
+  return (
+    <Box marginTop={addMargin ? 1 : 0}>
+      {
+        <Text>
+          {<Text color={color}>{BLACK_CIRCLE}</Text>} {summary}
+        </Text>
+      }
+    </Box>
+  )
 }

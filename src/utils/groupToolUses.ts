@@ -24,7 +24,7 @@ const GROUPING_CACHE = new WeakMap<Tools, Set<string>>()
 function getToolsWithGrouping(tools: Tools): Set<string> {
   let cached = GROUPING_CACHE.get(tools)
   if (!cached) {
-    cached = new Set(tools.filter(t => t.renderGroupedToolUse).map(t => t.name))
+    cached = new Set(tools.filter((t) => t.renderGroupedToolUse).map((t) => t.name))
     GROUPING_CACHE.set(tools, cached)
   }
   return cached
@@ -64,10 +64,7 @@ export function applyGrouping(
   const toolsWithGrouping = getToolsWithGrouping(tools)
 
   // First pass: group tool uses by message.id + tool name
-  const groups = new Map<
-    string,
-    NormalizedAssistantMessage[]
-  >()
+  const groups = new Map<string, NormalizedAssistantMessage[]>()
 
   for (const msg of messages) {
     const info = getToolUseInfo(msg)
@@ -80,10 +77,7 @@ export function applyGrouping(
   }
 
   // Identify valid groups (2+ items) and collect their tool use IDs
-  const validGroups = new Map<
-    string,
-    NormalizedAssistantMessage[]
-  >()
+  const validGroups = new Map<string, NormalizedAssistantMessage[]>()
   const groupedToolUseIds = new Set<string>()
 
   for (const [key, group] of groups) {
@@ -105,10 +99,7 @@ export function applyGrouping(
   for (const msg of messages) {
     if (msg.type === 'user') {
       for (const content of msg.message.content) {
-        if (
-          content.type === 'tool_result' &&
-          groupedToolUseIds.has(content.toolCallId)
-        ) {
+        if (content.type === 'tool_result' && groupedToolUseIds.has(content.toolCallId)) {
           resultsByToolUseId.set(content.toolCallId, msg)
         }
       }
@@ -134,9 +125,7 @@ export function applyGrouping(
           // Collect results for this group
           const results: NormalizedUserMessage[] = []
           for (const assistantMsg of group) {
-            const toolUseId = (
-              assistantMsg.message.content[0] as { id: string }
-            ).id
+            const toolUseId = (assistantMsg.message.content[0] as { id: string }).id
             const resultMsg = resultsByToolUseId.get(toolUseId)
             if (resultMsg) {
               results.push(resultMsg)
@@ -165,9 +154,7 @@ export function applyGrouping(
         (c): c is ToolResultBlock => c.type === 'tool_result',
       )
       if (toolResults.length > 0) {
-        const allGrouped = toolResults.every(tr =>
-          groupedToolUseIds.has(tr.toolCallId),
-        )
+        const allGrouped = toolResults.every((tr) => groupedToolUseIds.has(tr.toolCallId))
         if (allGrouped) {
           continue
         }

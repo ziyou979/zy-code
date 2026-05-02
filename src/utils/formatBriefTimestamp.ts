@@ -13,10 +13,7 @@
  *
  * `now` is injectable for tests.
  */
-export function formatBriefTimestamp(
-  isoString: string,
-  now: Date = new Date(),
-): string {
+export function formatBriefTimestamp(isoString: string, now: Date = new Date()): string {
   const d = new Date(isoString)
   if (Number.isNaN(d.getTime())) {
     return ''
@@ -56,8 +53,7 @@ export function formatBriefTimestamp(
  * Converts POSIX format (en_GB.UTF-8) to BCP 47 (en-GB).
  */
 function getLocale(): string | undefined {
-  const raw =
-    process.env.LC_ALL || process.env.LC_TIME || process.env.LANG || ''
+  const raw = process.env.LC_ALL || process.env.LC_TIME || process.env.LANG || ''
   if (!raw || raw === 'C' || raw === 'POSIX') {
     return undefined
   }

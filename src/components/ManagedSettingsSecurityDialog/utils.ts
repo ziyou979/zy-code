@@ -1,7 +1,4 @@
-import {
-  DANGEROUS_SHELL_SETTINGS,
-  SAFE_ENV_VARS,
-} from '../../utils/managedEnvConstants.js'
+import { DANGEROUS_SHELL_SETTINGS, SAFE_ENV_VARS } from '../../utils/managedEnvConstants.js'
 import type { SettingsJson } from '../../utils/settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
@@ -120,9 +117,7 @@ export function hasDangerousSettingsChanged(
  * 将危险设置格式化为人类可读的列表用于 UI
  * 仅返回设置名称，不返回值
  */
-export function formatDangerousSettingsList(
-  dangerous: DangerousSettings,
-): string[] {
+export function formatDangerousSettingsList(dangerous: DangerousSettings): string[] {
   const items: string[] = []
 
   // Shell 设置（仅名称）

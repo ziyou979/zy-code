@@ -1,15 +1,15 @@
-import React from 'react';
-import { useIsInsideModal } from '../../context/modalContext.js';
-import { Box } from '../../ink.js';
-import type { Theme } from '../../utils/theme.js';
-import { Divider } from './Divider.js';
+import React from 'react'
+import { useIsInsideModal } from '../../context/modalContext.js'
+import { Box } from '../../ink.js'
+import type { Theme } from '../../utils/theme.js'
+import { Divider } from './Divider.js'
 type PaneProps = {
-  children: React.ReactNode;
+  children: React.ReactNode
   /**
    * Theme color for the top border line.
    */
-  color?: keyof Theme;
-};
+  color?: keyof Theme
+}
 
 /**
  * A pane — a region of the terminal that appears below the REPL prompt,
@@ -29,12 +29,22 @@ type PaneProps = {
  *   <Tabs title="Sandbox:">...</Tabs>
  * </Pane>
  */
-export function Pane({
-  children,
-  color
-}: PaneProps) {
+export function Pane({ children, color }: PaneProps) {
   if (useIsInsideModal()) {
-    return <Box flexDirection="column" paddingX={1} flexShrink={0}>{children}</Box>;
+    return (
+      <Box flexDirection="column" paddingX={1} flexShrink={0}>
+        {children}
+      </Box>
+    )
   }
-  return <Box flexDirection="column" paddingTop={1}>{<Divider color={color} />}{<Box flexDirection="column" paddingX={2}>{children}</Box>}</Box>;
+  return (
+    <Box flexDirection="column" paddingTop={1}>
+      {<Divider color={color} />}
+      {
+        <Box flexDirection="column" paddingX={2}>
+          {children}
+        </Box>
+      }
+    </Box>
+  )
 }

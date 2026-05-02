@@ -6,11 +6,7 @@ import { getSessionId } from 'src/bootstrap/state.js'
 
 import { type BufferedWriter, createBufferedWriter } from './bufferedWriter.js'
 import { registerCleanup } from './cleanupRegistry.js'
-import {
-  type DebugFilter,
-  parseDebugFilter,
-  shouldShowDebugMessage,
-} from './debugFilter.js'
+import { type DebugFilter, parseDebugFilter, shouldShowDebugMessage } from './debugFilter.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { isInternalBuild } from './envUtils.js'
@@ -52,7 +48,7 @@ export const isDebugMode = memoize((): boolean => {
     process.argv.includes('-d') ||
     isDebugToStdErr() ||
     // Also check for --debug=pattern syntax
-    process.argv.some(arg => arg.startsWith('--debug=')) ||
+    process.argv.some((arg) => arg.startsWith('--debug=')) ||
     // --debug-file implicitly enables debug mode
     getDebugFilePath() !== null
   )
@@ -74,7 +70,7 @@ export function enableDebugLogging(): boolean {
 // Exported for testing purposes
 export const getDebugFilter = memoize((): DebugFilter | null => {
   // Look for --debug=pattern in argv
-  const debugArg = process.argv.find(arg => arg.startsWith('--debug='))
+  const debugArg = process.argv.find((arg) => arg.startsWith('--debug='))
   if (!debugArg) {
     return null
   }
@@ -84,14 +80,12 @@ export const getDebugFilter = memoize((): DebugFilter | null => {
   return parseDebugFilter(filterPattern)
 })
 
-export let isDebugToStdErr;
+export let isDebugToStdErr
 isDebugToStdErr = memoize((): boolean => {
-  return (
-    process.argv.includes('--debug-to-stderr') || process.argv.includes('-d2e')
-  )
+  return process.argv.includes('--debug-to-stderr') || process.argv.includes('-d2e')
 })
 
-export let getDebugFilePath;
+export let getDebugFilePath
 getDebugFilePath = memoize((): string | null => {
   for (let i = 0; i < process.argv.length; i++) {
     const arg = process.argv[i]!
@@ -160,7 +154,7 @@ function getDebugWriter(): BufferedWriter {
   if (!debugWriter) {
     let ensuredDir: string | null = null
     debugWriter = createBufferedWriter({
-      writeFn: content => {
+      writeFn: (content) => {
         const path = getDebugLogPath()
         const dir = dirname(path)
         const needMkdir = ensuredDir !== dir
@@ -243,7 +237,7 @@ export function getDebugLogPath(): string {
  * Updates the latest debug log symlink to point to the current debug log file.
  * Creates or updates a symlink at ~/.zy/debug/latest
  */
-let updateLatestDebugLogSymlink;
+let updateLatestDebugLogSymlink
 updateLatestDebugLogSymlink = memoize(async (): Promise<void> => {
   try {
     const debugLogPath = getDebugLogPath()

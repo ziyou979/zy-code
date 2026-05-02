@@ -1,111 +1,114 @@
-import type { ReactNode } from 'react';
-import React from 'react';
-import type { Color, Styles } from '../styles.js';
+import type { ReactNode } from 'react'
+import React from 'react'
+import type { Color, Styles } from '../styles.js'
 type BaseProps = {
   /**
    * 更改文本颜色。接受原始颜色值（rgb、hex、ansi）。
    */
-  readonly color?: Color;
+  readonly color?: Color
 
   /**
    * 与 `color` 类似，但用于背景色。
    */
-  readonly backgroundColor?: Color;
+  readonly backgroundColor?: Color
 
   /**
    * 使文本倾斜。
    */
-  readonly italic?: boolean;
+  readonly italic?: boolean
 
   /**
    * 使文本带下划线。
    */
-  readonly underline?: boolean;
+  readonly underline?: boolean
 
   /**
    * 使文本带删除线。
    */
-  readonly strikethrough?: boolean;
+  readonly strikethrough?: boolean
 
   /**
    * 反转前景色和背景色。
    */
-  readonly inverse?: boolean;
+  readonly inverse?: boolean
 
   /**
    * 此属性告诉 Ink 在文本宽度超过容器时进行换行或截断。
    * 如果传入 `wrap`（默认），Ink 将换行并拆分为多行。
    * 如果传入 `truncate-*`，Ink 将截断文本，结果为单行文本，其余部分被裁剪。
    */
-  readonly wrap?: Styles['textWrap'];
-  readonly children?: ReactNode;
-};
+  readonly wrap?: Styles['textWrap']
+  readonly children?: ReactNode
+}
 
 /**
  * 在终端中 bold 和 dim 是互斥的。
  * 此类型确保你只能使用其中之一，但不能同时使用。
  */
-type WeightProps = {
-  bold?: never;
-  dim?: never;
-} | {
-  bold: boolean;
-  dim?: never;
-} | {
-  dim: boolean;
-  bold?: never;
-};
-export type Props = BaseProps & WeightProps;
+type WeightProps =
+  | {
+      bold?: never
+      dim?: never
+    }
+  | {
+      bold: boolean
+      dim?: never
+    }
+  | {
+      dim: boolean
+      bold?: never
+    }
+export type Props = BaseProps & WeightProps
 const memoizedStylesForWrap: Record<NonNullable<Styles['textWrap']>, Styles> = {
   wrap: {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'wrap'
+    textWrap: 'wrap',
   },
   'wrap-trim': {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'wrap-trim'
+    textWrap: 'wrap-trim',
   },
   end: {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'end'
+    textWrap: 'end',
   },
   middle: {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'middle'
+    textWrap: 'middle',
   },
   'truncate-end': {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'truncate-end'
+    textWrap: 'truncate-end',
   },
   truncate: {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'truncate'
+    textWrap: 'truncate',
   },
   'truncate-middle': {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'truncate-middle'
+    textWrap: 'truncate-middle',
   },
   'truncate-start': {
     flexGrow: 0,
     flexShrink: 1,
     flexDirection: 'row',
-    textWrap: 'truncate-start'
-  }
-} as const;
+    textWrap: 'truncate-start',
+  },
+} as const
 
 /**
  * 此组件用于显示文本，并可更改样式使其多彩色、加粗、下划线、斜体或删除线。
@@ -119,38 +122,42 @@ export default function Text({
   underline = false,
   strikethrough = false,
   inverse = false,
-  wrap = "wrap",
-  children
+  wrap = 'wrap',
+  children,
 }: Props) {
   if (children === undefined || children === null) {
-    return null;
+    return null
   }
   const textStyles = {
     ...(color && {
-      color
+      color,
     }),
     ...(backgroundColor && {
-      backgroundColor
+      backgroundColor,
     }),
     ...(dim && {
-      dim
+      dim,
     }),
     ...(bold && {
-      bold
+      bold,
     }),
     ...(italic && {
-      italic
+      italic,
     }),
     ...(underline && {
-      underline
+      underline,
     }),
     ...(strikethrough && {
-      strikethrough
+      strikethrough,
     }),
     ...(inverse && {
-      inverse
-    })
-  };
+      inverse,
+    }),
+  }
   // @ts-ignore
-  return <ink-text style={memoizedStylesForWrap[wrap]} textStyles={textStyles}>{children}</ink-text>;
+  return (
+    <ink-text style={memoizedStylesForWrap[wrap]} textStyles={textStyles}>
+      {children}
+    </ink-text>
+  )
 }

@@ -12,15 +12,9 @@ import {
 import { env } from '../../../utils/env.js'
 import { generateSuggestions } from '../../../utils/permissions/filesystem.js'
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
-import {
-  type CompletionType,
-  logUnaryEvent,
-} from '../../../utils/unaryLogging.js'
+import { type CompletionType, logUnaryEvent } from '../../../utils/unaryLogging.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
-import type {
-  FileOperationType,
-  PermissionOption,
-} from './permissionOptions.js'
+import type { FileOperationType, PermissionOption } from './permissionOptions.js'
 
 function logPermissionEvent(
   event: 'accept' | 'reject',
@@ -64,8 +58,7 @@ function handleAcceptOnce(
   params: PermissionHandlerParams,
   options?: PermissionHandlerOptions,
 ): void {
-  const { messageId, toolUseConfirm, onDone, completionType, languageName } =
-    params
+  const { messageId, toolUseConfirm, onDone, completionType, languageName } = params
 
   logPermissionEvent('accept', completionType, languageName, messageId)
 
@@ -102,10 +95,7 @@ function handleAcceptSession(
   logPermissionEvent('accept', completionType, languageName, messageId)
 
   // For zy-folder scope, grant session-level access to all .zy/ files
-  if (
-    options?.scope === 'zy-folder' ||
-    options?.scope === 'global-zy-folder'
-  ) {
+  if (options?.scope === 'zy-folder' || options?.scope === 'global-zy-folder') {
     const pattern =
       options.scope === 'global-zy-folder'
         ? GLOBAL_CLAUDE_FOLDER_PERMISSION_PATTERN
@@ -129,35 +119,17 @@ function handleAcceptSession(
   }
 
   // Generate permission updates if path is provided
-  const suggestions = path
-    ? generateSuggestions(path, operationType, toolPermissionContext)
-    : []
+  const suggestions = path ? generateSuggestions(path, operationType, toolPermissionContext) : []
 
   onDone()
   // Pass permission updates directly to onAllow
   toolUseConfirm.onAllow(toolUseConfirm.input, suggestions)
 }
 
-function handleReject(
-  params: PermissionHandlerParams,
-  options?: PermissionHandlerOptions,
-): void {
-  const {
-    messageId,
-    toolUseConfirm,
-    onDone,
-    onReject,
-    completionType,
-    languageName,
-  } = params
+function handleReject(params: PermissionHandlerParams, options?: PermissionHandlerOptions): void {
+  const { messageId, toolUseConfirm, onDone, onReject, completionType, languageName } = params
 
-  logPermissionEvent(
-    'reject',
-    completionType,
-    languageName,
-    messageId,
-    options?.hasFeedback,
-  )
+  logPermissionEvent('reject', completionType, languageName, messageId, options?.hasFeedback)
 
   // Log reject submission with feedback context
   logEvent('zy_reject_submitted', {

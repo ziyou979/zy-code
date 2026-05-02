@@ -35,9 +35,7 @@ export function assignTeammateColor(teammateId: string): AgentColorName {
 /**
  * Gets the assigned color for a teammate, if any.
  */
-export function getTeammateColor(
-  teammateId: string,
-): AgentColorName | undefined {
+export function getTeammateColor(teammateId: string): AgentColorName | undefined {
   return teammateColorAssignments.get(teammateId)
 }
 

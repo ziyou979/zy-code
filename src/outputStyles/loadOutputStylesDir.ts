@@ -26,10 +26,7 @@ import { clearPluginOutputStyleCache } from '../utils/plugins/loadPluginOutputSt
 export const getOutputStyleDirStyles = memoize(
   async (cwd: string): Promise<OutputStyleConfig[]> => {
     try {
-      const markdownFiles = await loadMarkdownFilesForSubdir(
-        'output-styles',
-        cwd,
-      )
+      const markdownFiles = await loadMarkdownFilesForSubdir('output-styles', cwd)
 
       const styles = markdownFiles
         .map(({ filePath, frontmatter, content, source }) => {
@@ -40,24 +37,15 @@ export const getOutputStyleDirStyles = memoize(
             // Get style configuration from frontmatter
             const name = (frontmatter['name'] || styleName) as string
             const description =
-              coerceDescriptionToString(
-                frontmatter['description'],
-                styleName,
-              ) ??
-              extractDescriptionFromMarkdown(
-                content,
-                `Custom ${styleName} output style`,
-              )
+              coerceDescriptionToString(frontmatter['description'], styleName) ??
+              extractDescriptionFromMarkdown(content, `Custom ${styleName} output style`)
 
             // Parse keep-coding-instructions flag (supports both boolean and string values)
-            const keepCodingInstructionsRaw =
-              frontmatter['keep-coding-instructions']
+            const keepCodingInstructionsRaw = frontmatter['keep-coding-instructions']
             const keepCodingInstructions =
-              keepCodingInstructionsRaw === true ||
-              keepCodingInstructionsRaw === 'true'
+              keepCodingInstructionsRaw === true || keepCodingInstructionsRaw === 'true'
                 ? true
-                : keepCodingInstructionsRaw === false ||
-                    keepCodingInstructionsRaw === 'false'
+                : keepCodingInstructionsRaw === false || keepCodingInstructionsRaw === 'false'
                   ? false
                   : undefined
 
@@ -81,7 +69,7 @@ export const getOutputStyleDirStyles = memoize(
             return null
           }
         })
-        .filter(style => style !== null)
+        .filter((style) => style !== null)
 
       return styles
     } catch (error) {

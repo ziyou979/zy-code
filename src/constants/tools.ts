@@ -46,9 +46,7 @@ export const ALL_AGENT_DISALLOWED_TOOLS = new Set([
   ...(feature('WORKFLOW_SCRIPTS') ? [WORKFLOW_TOOL_NAME] : []),
 ])
 
-export const CUSTOM_AGENT_DISALLOWED_TOOLS = new Set([
-  ...ALL_AGENT_DISALLOWED_TOOLS,
-])
+export const CUSTOM_AGENT_DISALLOWED_TOOLS = new Set([...ALL_AGENT_DISALLOWED_TOOLS])
 
 /*
  * Async Agent Tool Availability Status (Source of Truth)

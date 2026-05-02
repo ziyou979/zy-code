@@ -14,19 +14,11 @@ import {
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import {
-  getInitialSettings,
-  updateSettingsForSource,
-} from '../../utils/settings/settings.js'
+import { getInitialSettings, updateSettingsForSource } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { CONFIG_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, generatePrompt } from './prompt.js'
-import {
-  getConfig,
-  getOptionsForSetting,
-  getPath,
-  isSupported,
-} from './supportedSettings.js'
+import { getConfig, getOptionsForSetting, getPath, isSupported } from './supportedSettings.js'
 import {
   renderToolResultMessage,
   renderToolUseMessage,
@@ -37,9 +29,7 @@ const inputSchema = lazySchema(() =>
   z.strictObject({
     setting: z
       .string()
-      .describe(
-        'The setting key (e.g., "theme", "model", "permissions.defaultMode")',
-      ),
+      .describe('The setting key (e.g., "theme", "model", "permissions.defaultMode")'),
     value: z
       .union([z.string(), z.boolean(), z.number()])
       .optional()
@@ -91,9 +81,7 @@ export const ConfigTool = buildTool({
     return input.value === undefined
   },
   toAutoClassifierInput(input) {
-    return input.value === undefined
-      ? input.setting
-      : `${input.setting} = ${input.value}`
+    return input.value === undefined ? input.setting : `${input.setting} = ${input.value}`
   },
   async checkPermissions(input: Input) {
     // Auto-allow reading configs
@@ -114,9 +102,7 @@ export const ConfigTool = buildTool({
     // must also be gated at runtime. When the kill-switch is on, treat
     // voiceEnabled as an unknown setting so no voice-specific strings leak.
     if (feature('VOICE_MODE') && setting === 'voiceEnabled') {
-      const { isVoiceGrowthBookEnabled } = await import(
-        '../../voice/voiceModeEnabled.js'
-      )
+      const { isVoiceGrowthBookEnabled } = await import('../../voice/voiceModeEnabled.js')
       if (!isVoiceGrowthBookEnabled()) {
         return {
           data: { success: false, error: `Unknown setting: "${setting}"` },
@@ -135,9 +121,7 @@ export const ConfigTool = buildTool({
     // 2. GET operation
     if (value === undefined) {
       const currentValue = getValue(config.source, path)
-      const displayValue = config.formatOnRead
-        ? config.formatOnRead(currentValue)
-        : currentValue
+      const displayValue = config.formatOnRead ? config.formatOnRead(currentValue) : currentValue
       return {
         data: { success: true, operation: 'get', setting, value: displayValue },
       }
@@ -152,7 +136,7 @@ export const ConfigTool = buildTool({
       typeof value === 'string' &&
       value.toLowerCase().trim() === 'default'
     ) {
-      saveGlobalConfig(prev => {
+      saveGlobalConfig((prev) => {
         if (prev.remoteControlAtStartup === undefined) return prev
         const next = { ...prev }
         delete next.remoteControlAtStartup
@@ -160,9 +144,8 @@ export const ConfigTool = buildTool({
       })
       const resolved = getRemoteControlAtStartup()
       // Sync to AppState so useReplBridge reacts immediately
-      context.setAppState(prev => {
-        if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly)
-          return prev
+      context.setAppState((prev) => {
+        if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly) return prev
         return {
           ...prev,
           replBridgeEnabled: resolved,
@@ -229,14 +212,8 @@ export const ConfigTool = buildTool({
     }
 
     // Pre-flight checks for voice mode
-    if (
-      feature('VOICE_MODE') &&
-      setting === 'voiceEnabled' &&
-      finalValue === true
-    ) {
-      const { isVoiceModeEnabled } = await import(
-        '../../voice/voiceModeEnabled.js'
-      )
+    if (feature('VOICE_MODE') && setting === 'voiceEnabled' && finalValue === true) {
+      const { isVoiceModeEnabled } = await import('../../voice/voiceModeEnabled.js')
       if (!isVoiceModeEnabled()) {
         const { isAuthEnabled } = await import('../../utils/auth.js')
         return {
@@ -248,23 +225,16 @@ export const ConfigTool = buildTool({
           },
         }
       }
-      const { isVoiceStreamAvailable } = await import(
-        '../../services/voiceStreamSTT.js'
-      )
-      const {
-        checkRecordingAvailability,
-        checkVoiceDependencies,
-        requestMicrophonePermission,
-      } = await import('../../services/voice.js')
+      const { isVoiceStreamAvailable } = await import('../../services/voiceStreamSTT.js')
+      const { checkRecordingAvailability, checkVoiceDependencies, requestMicrophonePermission } =
+        await import('../../services/voice.js')
 
       const recording = await checkRecordingAvailability()
       if (!recording.available) {
         return {
           data: {
             success: false,
-            error:
-              recording.reason ??
-              'Voice mode is not available in this environment.',
+            error: recording.reason ?? 'Voice mode is not available in this environment.',
           },
         }
       }
@@ -272,8 +242,7 @@ export const ConfigTool = buildTool({
         return {
           data: {
             success: false,
-            error:
-              'Voice mode requires a Zy.ai account. Please run /login to sign in.',
+            error: 'Voice mode requires a Zy.ai account. Please run /login to sign in.',
           },
         }
       }
@@ -295,8 +264,7 @@ export const ConfigTool = buildTool({
         } else if (process.platform === 'linux') {
           guidance = "your system's audio settings"
         } else {
-          guidance =
-            'System Settings \u2192 Privacy & Security \u2192 Microphone'
+          guidance = 'System Settings \u2192 Privacy & Security \u2192 Microphone'
         }
         return {
           data: {
@@ -323,7 +291,7 @@ export const ConfigTool = buildTool({
             },
           }
         }
-        saveGlobalConfig(prev => {
+        saveGlobalConfig((prev) => {
           if (prev[key as keyof GlobalConfig] === finalValue) return prev
           return { ...prev, [key]: finalValue }
         })
@@ -346,16 +314,14 @@ export const ConfigTool = buildTool({
       // AppState.settings (useVoiceEnabled reads settings.voiceEnabled)
       // and the settings cache resets for the next /voice read.
       if (feature('VOICE_MODE') && setting === 'voiceEnabled') {
-        const { settingsChangeDetector } = await import(
-          '../../utils/settings/changeDetector.js'
-        )
+        const { settingsChangeDetector } = await import('../../utils/settings/changeDetector.js')
         settingsChangeDetector.notifyChange('userSettings')
       }
 
       // 5b. Sync to AppState if needed for immediate UI effect
       if (config.appStateKey) {
         const appKey = config.appStateKey
-        context.setAppState(prev => {
+        context.setAppState((prev) => {
           if (prev[appKey] === finalValue) return prev
           return { ...prev, [appKey]: finalValue }
         })
@@ -366,12 +332,8 @@ export const ConfigTool = buildTool({
       // so the generic appStateKey mechanism can't handle this).
       if (setting === 'remoteControlAtStartup') {
         const resolved = getRemoteControlAtStartup()
-        context.setAppState(prev => {
-          if (
-            prev.replBridgeEnabled === resolved &&
-            !prev.replBridgeOutboundOnly
-          )
-            return prev
+        context.setAppState((prev) => {
+          if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly) return prev
           return {
             ...prev,
             replBridgeEnabled: resolved,
@@ -381,11 +343,8 @@ export const ConfigTool = buildTool({
       }
 
       logEvent('zy_config_tool_changed', {
-        setting:
-          setting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        value: String(
-          finalValue,
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        setting: setting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        value: String(finalValue) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
       return {
@@ -452,10 +411,7 @@ function getValue(source: 'global' | 'settings', path: string[]): unknown {
   return current
 }
 
-function buildNestedObject(
-  path: string[],
-  value: unknown,
-): Record<string, unknown> {
+function buildNestedObject(path: string[], value: unknown): Record<string, unknown> {
   if (path.length === 0) {
     return {}
   }

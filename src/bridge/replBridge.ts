@@ -23,12 +23,7 @@ import {
   extractTitleText,
   BoundedUUIDSet,
 } from './bridgeMessaging.js'
-import {
-  decodeWorkSecret,
-  buildSdkUrl,
-  buildCCRv2SdkUrl,
-  sameSessionId,
-} from './workSecret.js'
+import { decodeWorkSecret, buildSdkUrl, buildCCRv2SdkUrl, sameSessionId } from './workSecret.js'
 import { toCompatSessionId, toInfraSessionId } from './sessionIdCompat.js'
 import { updateSessionBridgeId } from '../utils/concurrentSessions.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
@@ -41,24 +36,14 @@ import {
 import { updateSessionIngressAuthToken } from '../utils/sessionIngressAuth.js'
 import { isEnvTruthy, isInProtectedNamespace } from '../utils/envUtils.js'
 import { validateBridgeId } from './bridgeApi.js'
-import {
-  describeAxiosError,
-  extractHttpStatus,
-  logBridgeSkip,
-} from './debugUtils.js'
+import { describeAxiosError, extractHttpStatus, logBridgeSkip } from './debugUtils.js'
 import type { Message } from '../types/message.js'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import type {
-  SDKControlRequest,
-  SDKControlResponse,
-} from '../entrypoints/sdk/controlTypes.js'
+import type { SDKControlRequest, SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
 import { createCapacityWake, type CapacitySignal } from './capacityWake.js'
 import { FlushGate } from './flushGate.js'
-import {
-  DEFAULT_POLL_CONFIG,
-  type PollIntervalConfig,
-} from './pollConfigDefaults.js'
+import { DEFAULT_POLL_CONFIG, type PollIntervalConfig } from './pollConfigDefaults.js'
 import { errorMessage } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
 import {
@@ -190,9 +175,7 @@ export type BridgeCoreParams = {
    * throw, which corrupts the 3-way invariant documented in src/CLAUDE.md if
    * the callback lets the throw escape here.
    */
-  onSetPermissionMode?: (
-    mode: PermissionMode,
-  ) => { ok: true } | { ok: false; error: string }
+  onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
   onStateChange?: (state: BridgeState, detail?: string) => void
   /**
    * Fires on each real user message to flow through writeMessages() until
@@ -256,9 +239,7 @@ let initSequence = 0
  *
  * 注册或会话创建失败时返回 null。
  */
-export async function initBridgeCore(
-  params: BridgeCoreParams,
-): Promise<BridgeCoreHandle | null> {
+export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCoreHandle | null> {
   const {
     dir,
     machineName,
@@ -298,8 +279,9 @@ export async function initBridgeCore(
 
   // bridgePointer 导入提升：perpetual 模式在 register 之前读取它；
   // 非 perpetual 在 session create 之后写入它；两者都在 teardown 时使用 clear。
-  const { writeBridgePointer, clearBridgePointer, readBridgePointer } =
-    await import('./bridgePointer.js')
+  const { writeBridgePointer, clearBridgePointer, readBridgePointer } = await import(
+    './bridgePointer.js'
+  )
 
   // Perpetual 模式：读取崩溃恢复指针并将其视为先前
   // 状态。指针在 session create 后无条件写入
@@ -325,8 +307,7 @@ export async function initBridgeCore(
   })
   // 仅 Ant：拦截以便 /bridge-kick 可以注入 poll/register/heartbeat
   // 故障。在外部构建中零成本（rawApi 直接传递不变）。
-  const api =
-    isInternalBuild() ? wrapApiForFaultInjection(rawApi) : rawApi
+  const api = isInternalBuild() ? wrapApiForFaultInjection(rawApi) : rawApi
 
   const bridgeConfig: BridgeConfig = {
     dir,
@@ -375,10 +356,7 @@ export async function initBridgeCore(
    * 环境存活但在清理后空闲）以及 doReconnect() 策略 1（环境丢失后恢复）。
    * 成功返回 true；失败时调用者回退到创建新会话。
    */
-  async function tryReconnectInPlace(
-    requestedEnvId: string,
-    sessionId: string,
-  ): Promise<boolean> {
+  async function tryReconnectInPlace(requestedEnvId: string, sessionId: string): Promise<boolean> {
     if (environmentId !== requestedEnvId) {
       logForDebugging(
         `[bridge:repl] Env mismatch (requested ${requestedEnvId}, got ${environmentId}) — cannot reconnect in place`,
@@ -394,24 +372,17 @@ export async function initBridgeCore(
     // （doReconnect Strategy 1 路径 — currentSessionId 永远不会变异
     // 为 cse_*，但为未来检查做准备）。
     const infraId = toInfraSessionId(sessionId)
-    const candidates =
-      infraId === sessionId ? [sessionId] : [sessionId, infraId]
+    const candidates = infraId === sessionId ? [sessionId] : [sessionId, infraId]
     for (const id of candidates) {
       try {
         await api.reconnectSession(environmentId, id)
-        logForDebugging(
-          `[bridge:repl] Reconnected session ${id} in place on env ${environmentId}`,
-        )
+        logForDebugging(`[bridge:repl] Reconnected session ${id} in place on env ${environmentId}`)
         return true
       } catch (err) {
-        logForDebugging(
-          `[bridge:repl] reconnectSession(${id}) failed: ${errorMessage(err)}`,
-        )
+        logForDebugging(`[bridge:repl] reconnectSession(${id}) failed: ${errorMessage(err)}`)
       }
     }
-    logForDebugging(
-      '[bridge:repl] reconnectSession exhausted — falling through to fresh session',
-    )
+    logForDebugging('[bridge:repl] reconnectSession exhausted — falling through to fresh session')
     return false
   }
 
@@ -434,12 +405,9 @@ export async function initBridgeCore(
   // 可变会话 ID — 在连接丢失后重新创建环境+会话对时更新。
   let currentSessionId: string
 
-
   if (reusedPriorSession && prior) {
     currentSessionId = prior.sessionId
-    logForDebugging(
-      `[bridge:repl] Perpetual session reused: ${currentSessionId}`,
-    )
+    logForDebugging(`[bridge:repl] Perpetual session reused: ${currentSessionId}`)
     // 服务器已经有之前 CLI 运行的所有 initialMessages。标记
     // 它们为已刷新，以便初始刷新过滤器排除它们
     // （previouslyFlushedUUIDs 在每次 CLI 启动时是新的 Set）。
@@ -459,9 +427,7 @@ export async function initBridgeCore(
     })
 
     if (!createdSessionId) {
-      logForDebugging(
-        '[bridge:repl] Session creation failed, deregistering environment',
-      )
+      logForDebugging('[bridge:repl] Session creation failed, deregistering environment')
       logEvent('zy_bridge_repl_session_failed', {})
       await api.deregisterEnvironment(environmentId).catch(() => {})
       onStateChange?.('failed', 'Session creation failed')
@@ -646,18 +612,14 @@ export async function initBridgeCore(
     // 尽力而为：环境可能已经不在了，所以这很可能返回 404。
     if (currentWorkId) {
       const workIdBeingCleared = currentWorkId
-      await api
-        .stopWork(environmentId, workIdBeingCleared, false)
-        .catch(() => {})
+      await api.stopWork(environmentId, workIdBeingCleared, false).catch(() => {})
       // 当 doReconnect 与轮询循环并发运行时（ws_closed 处理程序场景——
       // void 调用，不同于等待的 onEnvironmentLost 路径），onWorkReceived
       // 可以在 stopWork 等待期间触发并设置新的 currentWorkId。如果发生了，
       // 轮询循环已经自行恢复—— defer 给它而不是继续执行 archiveSession，
       // 那会销毁它的新传输所连接的会话。
       if (currentWorkId !== workIdBeingCleared) {
-        logForDebugging(
-          '[bridge:repl] Poll loop recovered during stopWork await — deferring to it',
-        )
+        logForDebugging('[bridge:repl] Poll loop recovered during stopWork await — deferring to it')
         environmentRecreations = 0
         return true
       }
@@ -682,23 +644,17 @@ export async function initBridgeCore(
       environmentSecret = reg.environment_secret
     } catch (err) {
       bridgeConfig.reuseEnvironmentId = undefined
-      logForDebugging(
-        `[bridge:repl] Environment re-registration failed: ${errorMessage(err)}`,
-      )
+      logForDebugging(`[bridge:repl] Environment re-registration failed: ${errorMessage(err)}`)
       return false
     }
     // 在任何 await 之前清除——如果 doReconnect 再次运行，旧值会污染下一次新注册。
     bridgeConfig.reuseEnvironmentId = undefined
 
-    logForDebugging(
-      `[bridge:repl] Re-registered: requested=${requestedEnvId} got=${environmentId}`,
-    )
+    logForDebugging(`[bridge:repl] Re-registered: requested=${requestedEnvId} got=${environmentId}`)
 
     // 如果在我们注册时清理已经开始，则退出
     if (pollController.signal.aborted) {
-      logForDebugging(
-        '[bridge:repl] Reconnect aborted after env registration, cleaning up',
-      )
+      logForDebugging('[bridge:repl] Reconnect aborted after env registration, cleaning up')
       await api.deregisterEnvironment(environmentId).catch(() => {})
       return false
     }
@@ -734,9 +690,7 @@ export async function initBridgeCore(
 
     // 如果在我们归档时清理已经开始，则退出
     if (pollController.signal.aborted) {
-      logForDebugging(
-        '[bridge:repl] Reconnect aborted after archive, cleaning up',
-      )
+      logForDebugging('[bridge:repl] Reconnect aborted after archive, cleaning up')
       await api.deregisterEnvironment(environmentId).catch(() => {})
       return false
     }
@@ -755,17 +709,13 @@ export async function initBridgeCore(
     })
 
     if (!newSessionId) {
-      logForDebugging(
-        '[bridge:repl] Session creation failed during reconnection',
-      )
+      logForDebugging('[bridge:repl] Session creation failed during reconnection')
       return false
     }
 
     // 如果在会话创建期间（最长 15 秒）清理已经开始，则退出
     if (pollController.signal.aborted) {
-      logForDebugging(
-        '[bridge:repl] Reconnect aborted after session creation, cleaning up',
-      )
+      logForDebugging('[bridge:repl] Reconnect aborted after session creation, cleaning up')
       await archiveSession(newSessionId)
       return false
     }
@@ -805,7 +755,6 @@ export async function initBridgeCore(
     // UUID 在服务器上按会话作用域，因此重新刷新是安全的。
     previouslyFlushedUUIDs?.clear()
 
-
     // 重置计数器，使间隔数小时的独立重连不会耗尽限制——
     // 它防范的是快速连续失败，而不是生命周期总数。
     environmentRecreations = 0
@@ -826,22 +775,18 @@ export async function initBridgeCore(
     const msgs = flushGate.end()
     if (msgs.length === 0) return
     if (!transport) {
-      logForDebugging(
-        `[bridge:repl] Cannot drain ${msgs.length} pending message(s): no transport`,
-      )
+      logForDebugging(`[bridge:repl] Cannot drain ${msgs.length} pending message(s): no transport`)
       return
     }
     for (const msg of msgs) {
       recentPostedUUIDs.add(msg.uuid)
     }
     const sdkMessages = toSDKMessages(msgs)
-    const events = sdkMessages.map(sdkMsg => ({
+    const events = sdkMessages.map((sdkMsg) => ({
       ...sdkMsg,
       session_id: currentSessionId,
     }))
-    logForDebugging(
-      `[bridge:repl] Drained ${msgs.length} pending message(s) after flush`,
-    )
+    logForDebugging(`[bridge:repl] Drained ${msgs.length} pending message(s) after flush`)
     void transport.writeBatch(events)
   }
 
@@ -862,9 +807,7 @@ export async function initBridgeCore(
    * 瞬态断开由传输内部重试。
    */
   function handleTransportPermanentClose(closeCode: number | undefined): void {
-    logForDebugging(
-      `[bridge:repl] Transport permanently closed: code=${closeCode}`,
-    )
+    logForDebugging(`[bridge:repl] Transport permanently closed: code=${closeCode}`)
     logEvent('zy_bridge_repl_ws_closed', {
       code: closeCode,
     })
@@ -906,14 +849,11 @@ export async function initBridgeCore(
     // reconnectEnvironmentWithSession 可以通过 POST /bridge/reconnect 重新激活它，
     // 或者如果环境确实消失则回退到新会话。轮询循环（已在上方唤醒）
     // 会在 doReconnect 完成后接收重新入队的工作。
-    onStateChange?.(
-      'reconnecting',
-      `Remote Control connection lost (code ${closeCode})`,
-    )
+    onStateChange?.('reconnecting', `Remote Control connection lost (code ${closeCode})`)
     logForDebugging(
       `[bridge:repl] Transport reconnect budget exhausted (code=${closeCode}), attempting env reconnect`,
     )
-    void reconnectEnvironmentWithSession().then(success => {
+    void reconnectEnvironmentWithSession().then((success) => {
       if (success) return
       // doReconnect 有四个中止检查返回 false 的站点用于进行中的清理。
       // 当用户只是退出时，不要污染 BQ 失败信号或双重清理。
@@ -924,9 +864,7 @@ export async function initBridgeCore(
       // createSession failed — poll loop would poll a sessionless
       // env getting null work with no errors, never hitting any
       // give-up path. Tear down explicitly.
-      logForDebugging(
-        '[bridge:repl] reconnectEnvironmentWithSession resolved false — tearing down',
-      )
+      logForDebugging('[bridge:repl] reconnectEnvironmentWithSession resolved false — tearing down')
       logEvent('zy_bridge_repl_reconnect_failed', {
         close_code: closeCode,
       })
@@ -941,9 +879,7 @@ export async function initBridgeCore(
   let sigusr2Handler: (() => void) | undefined
   if (isInternalBuild() && process.platform !== 'win32') {
     sigusr2Handler = () => {
-      logForDebugging(
-        '[bridge:repl] SIGUSR2 received — forcing doReconnect() for testing',
-      )
+      logForDebugging('[bridge:repl] SIGUSR2 received — forcing doReconnect() for testing')
       void reconnectEnvironmentWithSession()
     }
     process.on('SIGUSR2', sigusr2Handler)
@@ -955,7 +891,7 @@ export async function initBridgeCore(
   let debugFireClose: ((code: number) => void) | null = null
   if (isInternalBuild()) {
     registerBridgeDebugHandle({
-      fireClose: code => {
+      fireClose: (code) => {
         if (!debugFireClose) {
           logForDebugging('[bridge:debug] fireClose: no transport wired yet')
           return
@@ -1018,21 +954,14 @@ export async function initBridgeCore(
       flushGate.drop()
       // force=false → 服务器重新入队。可能已经过期，但幂等且如果未过期则使重新分发立即生效。
       if (currentWorkId) {
-        void api
-          .stopWork(environmentId, currentWorkId, false)
-          .catch((e: unknown) => {
-            logForDebugging(
-              `[bridge:repl] stopWork after heartbeat fatal: ${errorMessage(e)}`,
-            )
-          })
+        void api.stopWork(environmentId, currentWorkId, false).catch((e: unknown) => {
+          logForDebugging(`[bridge:repl] stopWork after heartbeat fatal: ${errorMessage(e)}`)
+        })
       }
       currentWorkId = null
       currentIngressToken = null
       wakePollLoop()
-      onStateChange?.(
-        'reconnecting',
-        'Work item lease expired, fetching fresh token',
-      )
+      onStateChange?.('reconnecting', 'Work item lease expired, fetching fresh token')
     },
     async onEnvironmentLost() {
       const success = await reconnectEnvironmentWithSession()
@@ -1096,8 +1025,7 @@ export async function initBridgeCore(
       //
       // 与 ZY_CODE_（子级 SDK 传输选择器，由 sessionRunner/environment-manager
       // 设置）分开，以避免在 spawn 模式中父级的 orchestrator 变量泄漏到 v1 子级的继承风险。
-      const useCcrV2 =
-        serverUseCcrV2 || isEnvTruthy(process.env.CLAUDE_BRIDGE_USE_CCR_V2)
+      const useCcrV2 = serverUseCcrV2 || isEnvTruthy(process.env.CLAUDE_BRIDGE_USE_CCR_V2)
 
       // 认证是 v1 和 v2 唯一真正分歧的地方：
       //
@@ -1187,11 +1115,7 @@ export async function initBridgeCore(
           // 重要：onStateChange('connected') 被推迟到刷新完成。
           // 这防止 writeMessages() 发送可能在历史消息之间交错到达服务器的新消息，
           // 并延迟 web UI 在历史记录持久化之前显示会话为活动状态。
-          if (
-            !initialFlushDone &&
-            initialMessages &&
-            initialMessages.length > 0
-          ) {
+          if (!initialFlushDone && initialMessages && initialMessages.length > 0) {
             initialFlushDone = true
 
             // 将初始刷新限制为最近的 N 条消息。完整历史记录仅供 UI 使用
@@ -1200,9 +1124,7 @@ export async function initBridgeCore(
             // 0 或负数限制会禁用它。
             const historyCap = initialHistoryCap
             const eligibleMessages = initialMessages.filter(
-              m =>
-                isEligibleBridgeMessage(m) &&
-                !previouslyFlushedUUIDs?.has(m.uuid),
+              (m) => isEligibleBridgeMessage(m) && !previouslyFlushedUUIDs?.has(m.uuid),
             )
             const cappedMessages =
               historyCap > 0 && eligibleMessages.length > historyCap
@@ -1222,7 +1144,7 @@ export async function initBridgeCore(
               logForDebugging(
                 `[bridge:repl] Flushing ${sdkMessages.length} initial message(s) via transport`,
               )
-              const events = sdkMessages.map(sdkMsg => ({
+              const events = sdkMessages.map((sdkMsg) => ({
                 ...sdkMsg,
                 session_id: currentSessionId,
               }))
@@ -1247,9 +1169,7 @@ export async function initBridgeCore(
                     }
                   }
                 })
-                .catch(e =>
-                  logForDebugging(`[bridge:repl] Initial flush failed: ${e}`),
-                )
+                .catch((e) => logForDebugging(`[bridge:repl] Initial flush failed: ${e}`))
                 .finally(() => {
                   // 守卫：如果传输在刷新期间被替换，不要发送 connected 信号或排空——
                   // 新传输现在拥有生命周期。
@@ -1275,7 +1195,7 @@ export async function initBridgeCore(
           }
         })
 
-        newTransport.setOnData(data => {
+        newTransport.setOnData((data) => {
           handleIngressMessage(
             data,
             recentPostedUUIDs,
@@ -1291,7 +1211,7 @@ export async function initBridgeCore(
         // 已经在该作用域中。对 wireTransport 的唯一词法依赖是 `newTransport.getLastSequenceNum()`——
         // 但在下方守卫通过后我们知道 transport === newTransport。
         debugFireClose = handleTransportPermanentClose
-        newTransport.setOnClose(closeCode => {
+        newTransport.setOnClose((closeCode) => {
           // 守卫：如果传输被替换，忽略旧关闭。
           if (transport !== newTransport) return
           handleTransportPermanentClose(closeCode)
@@ -1301,11 +1221,7 @@ export async function initBridgeCore(
         // 在传输赋值和 setOnConnect 触发之间，writeMessages() 可能在
         // 初始刷新开始之前通过 HTTP POST 发送消息。在这里启动门确保
         // 这些调用被排队。如果没有初始消息，门保持不活跃。
-        if (
-          !initialFlushDone &&
-          initialMessages &&
-          initialMessages.length > 0
-        ) {
+        if (!initialFlushDone && initialMessages && initialMessages.length > 0) {
           flushGate.start()
         }
 
@@ -1332,7 +1248,7 @@ export async function initBridgeCore(
           sessionId: workSessionId,
           initialSequenceNum: lastTransportSequenceNum,
         }).then(
-          t => {
+          (t) => {
             // registerWorker 正在进行时触发了清理。清理看到 transport === null 并跳过了 close()；
             // 现在安装会泄漏 CCRClient 心跳定时器并通过 wireTransport 的副作用重置 teardownStarted。
             if (pollController.signal.aborted) {
@@ -1363,13 +1279,9 @@ export async function initBridgeCore(
             // 释放工作项使服务器立即重新分发，而不是等待自己的超时。
             // currentWorkId 已在上方设置；没有这个的话，会话对用户来说像是卡住了。
             if (currentWorkId) {
-              void api
-                .stopWork(environmentId, currentWorkId, false)
-                .catch((e: unknown) => {
-                  logForDebugging(
-                    `[bridge:repl] stopWork after v2 init failure: ${errorMessage(e)}`,
-                  )
-                })
+              void api.stopWork(environmentId, currentWorkId, false).catch((e: unknown) => {
+                logForDebugging(`[bridge:repl] stopWork after v2 init failure: ${errorMessage(e)}`)
+              })
               currentWorkId = null
               currentIngressToken = null
             }
@@ -1386,9 +1298,7 @@ export async function initBridgeCore(
         // refreshHeaders 在每次 WS 重连尝试时获取最新的 OAuth token。
         const wsUrl = buildSdkUrl(sessionIngressUrl, workSessionId)
         logForDebugging(`[bridge:repl] Ingress URL: ${wsUrl}`)
-        logForDebugging(
-          `[bridge:repl] Creating HybridTransport: session=${workSessionId}`,
-        )
+        logForDebugging(`[bridge:repl] Creating HybridTransport: session=${workSessionId}`)
         // v1OauthToken 已在上方验证为非 null（否则会提前返回）。
         const oauthToken = v1OauthToken ?? ''
         wireTransport(
@@ -1460,17 +1370,14 @@ export async function initBridgeCore(
   //（Query.ts 丢弃它；web/iOS/Android 在它们的消息循环中永远看不到它）。
   // 间隔来自 GrowthBook（zy_bridge_poll_interval_config
   // session_keepalive_interval_v2_ms，默认 120 秒）；0 = 禁用。
-  const keepAliveIntervalMs =
-    getPollIntervalConfig().session_keepalive_interval_v2_ms
+  const keepAliveIntervalMs = getPollIntervalConfig().session_keepalive_interval_v2_ms
   const keepAliveTimer =
     keepAliveIntervalMs > 0
       ? setInterval(() => {
           if (!transport) return
           logForDebugging('[bridge:repl] keep_alive sent')
           void transport.write({ type: 'keep_alive' }).catch((err: unknown) => {
-            logForDebugging(
-              `[bridge:repl] keep_alive write failed: ${errorMessage(err)}`,
-            )
+            logForDebugging(`[bridge:repl] keep_alive write failed: ${errorMessage(err)}`)
           })
         }, keepAliveIntervalMs)
       : null
@@ -1559,9 +1466,7 @@ export async function initBridgeCore(
             logForDebugging('[bridge:repl] Teardown: stopWork completed')
           })
           .catch((err: unknown) => {
-            logForDebugging(
-              `[bridge:repl] Teardown stopWork failed: ${errorMessage(err)}`,
-            )
+            logForDebugging(`[bridge:repl] Teardown stopWork failed: ${errorMessage(err)}`)
           })
       : Promise.resolve()
 
@@ -1575,9 +1480,7 @@ export async function initBridgeCore(
     logForDebugging('[bridge:repl] Teardown: transport closed')
 
     await api.deregisterEnvironment(environmentId).catch((err: unknown) => {
-      logForDebugging(
-        `[bridge:repl] Teardown deregister failed: ${errorMessage(err)}`,
-      )
+      logForDebugging(`[bridge:repl] Teardown deregister failed: ${errorMessage(err)}`)
     })
 
     // 清除崩溃恢复指针——显式断开连接或干净的 REPL 退出
@@ -1593,9 +1496,7 @@ export async function initBridgeCore(
   // 8. 注册清理用于正常关闭
   const unregister = registerCleanup(() => doTeardownImpl?.())
 
-  logForDebugging(
-    `[bridge:repl] Ready: env=${environmentId} session=${currentSessionId}`,
-  )
+  logForDebugging(`[bridge:repl] Ready: env=${environmentId} session=${currentSessionId}`)
   onStateChange?.('ready')
 
   return {
@@ -1619,7 +1520,7 @@ export async function initBridgeCore(
       //  - initialMessageUUIDs：作为会话创建事件发送的消息
       //  - recentPostedUUIDs：最近通过 POST 发送的消息
       const filtered = messages.filter(
-        m =>
+        (m) =>
           isEligibleBridgeMessage(m) &&
           !initialMessageUUIDs.has(m.uuid) &&
           !recentPostedUUIDs.has(m.uuid),
@@ -1641,14 +1542,12 @@ export async function initBridgeCore(
 
       // 在初始刷新进行时将消息排队，防止它们与历史消息交错到达服务器。
       if (flushGate.enqueue(...filtered)) {
-        logForDebugging(
-          `[bridge:repl] Queued ${filtered.length} message(s) during initial flush`,
-        )
+        logForDebugging(`[bridge:repl] Queued ${filtered.length} message(s) during initial flush`)
         return
       }
 
       if (!transport) {
-        const types = filtered.map(m => m.type).join(',')
+        const types = filtered.map((m) => m.type).join(',')
         logForDebugging(
           `[bridge:repl] Transport not configured, dropping ${filtered.length} message(s) [${types}] for session=${currentSessionId}`,
           { level: 'warn' },
@@ -1661,14 +1560,12 @@ export async function initBridgeCore(
         recentPostedUUIDs.add(msg.uuid)
       }
 
-      logForDebugging(
-        `[bridge:repl] Sending ${filtered.length} message(s) via transport`,
-      )
+      logForDebugging(`[bridge:repl] Sending ${filtered.length} message(s) via transport`)
 
       // 转换为 SDK 格式并通过 HTTP POST（HybridTransport）发送。
       // web UI 通过订阅 WebSocket 接收它们。
       const sdkMessages = toSDKMessages(filtered)
-      const events = sdkMessages.map(sdkMsg => ({
+      const events = sdkMessages.map((sdkMsg) => ({
         ...sdkMsg,
         session_id: currentSessionId,
       }))
@@ -1679,9 +1576,7 @@ export async function initBridgeCore(
       // 仍然运行回显去重（服务器在 WS 上弹回写入）。
       // 没有 initialMessageUUIDs 过滤——daemon 没有初始消息。
       // 没有 flushGate——daemon 永远不会启动它（没有初始刷新）。
-      const filtered = messages.filter(
-        m => !m.uuid || !recentPostedUUIDs.has(m.uuid),
-      )
+      const filtered = messages.filter((m) => !m.uuid || !recentPostedUUIDs.has(m.uuid))
       if (filtered.length === 0) return
       if (!transport) {
         logForDebugging(
@@ -1693,27 +1588,21 @@ export async function initBridgeCore(
       for (const msg of filtered) {
         if (msg.uuid) recentPostedUUIDs.add(msg.uuid)
       }
-      const events = filtered.map(m => ({ ...m, session_id: currentSessionId }))
+      const events = filtered.map((m) => ({ ...m, session_id: currentSessionId }))
       void transport.writeBatch(events)
     },
     sendControlRequest(request: SDKControlRequest) {
       if (!transport) {
-        logForDebugging(
-          '[bridge:repl] Transport not configured, skipping control_request',
-        )
+        logForDebugging('[bridge:repl] Transport not configured, skipping control_request')
         return
       }
       const event = { ...request, session_id: currentSessionId }
       void transport.write(event)
-      logForDebugging(
-        `[bridge:repl] Sent control_request request_id=${request.request_id}`,
-      )
+      logForDebugging(`[bridge:repl] Sent control_request request_id=${request.request_id}`)
     },
     sendControlResponse(response: SDKControlResponse) {
       if (!transport) {
-        logForDebugging(
-          '[bridge:repl] Transport not configured, skipping control_response',
-        )
+        logForDebugging('[bridge:repl] Transport not configured, skipping control_response')
         return
       }
       const event = { ...response, session_id: currentSessionId }
@@ -1722,9 +1611,7 @@ export async function initBridgeCore(
     },
     sendControlCancelRequest(requestId: string) {
       if (!transport) {
-        logForDebugging(
-          '[bridge:repl] Transport not configured, skipping control_cancel_request',
-        )
+        logForDebugging('[bridge:repl] Transport not configured, skipping control_cancel_request')
         return
       }
       const event = {
@@ -1733,9 +1620,7 @@ export async function initBridgeCore(
         session_id: currentSessionId,
       }
       void transport.write(event)
-      logForDebugging(
-        `[bridge:repl] Sent control_cancel_request request_id=${requestId}`,
-      )
+      logForDebugging(`[bridge:repl] Sent control_cancel_request request_id=${requestId}`)
     },
     sendResult() {
       if (!transport) {
@@ -1745,9 +1630,7 @@ export async function initBridgeCore(
         return
       }
       void transport.write(makeResultMessage(currentSessionId))
-      logForDebugging(
-        `[bridge:repl] Sent result for session=${currentSessionId}`,
-      )
+      logForDebugging(`[bridge:repl] Sent result for session=${currentSessionId}`)
     },
     async teardown() {
       unregister()
@@ -1835,9 +1718,7 @@ async function startWorkPollLoop({
 }): Promise<void> {
   const MAX_ENVIRONMENT_RECREATIONS = 3
 
-  logForDebugging(
-    `[bridge:repl] Starting work poll loop for env=${getCredentials().environmentId}`,
-  )
+  logForDebugging(`[bridge:repl] Starting work poll loop for env=${getCredentials().environmentId}`)
 
   let consecutiveErrors = 0
   let firstErrorTime: number | null = null
@@ -1851,16 +1732,10 @@ async function startWorkPollLoop({
 
   while (!signal.aborted) {
     // 在 try 外部捕获凭证，使 catch 块可以检测并发重连是否替换了环境。
-    const { environmentId: envId, environmentSecret: envSecret } =
-      getCredentials()
+    const { environmentId: envId, environmentSecret: envSecret } = getCredentials()
     const pollConfig = getPollIntervalConfig()
     try {
-      const work = await api.pollForWork(
-        envId,
-        envSecret,
-        signal,
-        pollConfig.reclaim_older_than_ms,
-      )
+      const work = await api.pollForWork(envId, envSecret, signal, pollConfig.reclaim_older_than_ms)
 
       // 成功的轮询证明环境确实健康——重置环境丢失计数器，
       // 使间隔数小时的事件各自从头开始。在下方状态变更守卫之外，
@@ -1897,13 +1772,9 @@ async function startWorkPollLoop({
           //   - Capacity wake fires (transport lost → poll for new work)
           //   - Heartbeat config disabled (GrowthBook update)
           //   - Loop aborted (shutdown)
-          if (
-            pollConfig.non_exclusive_heartbeat_interval_ms > 0 &&
-            getHeartbeatInfo
-          ) {
+          if (pollConfig.non_exclusive_heartbeat_interval_ms > 0 && getHeartbeatInfo) {
             logEvent('zy_bridge_heartbeat_mode_entered', {
-              heartbeat_interval_ms:
-                pollConfig.non_exclusive_heartbeat_interval_ms,
+              heartbeat_interval_ms: pollConfig.non_exclusive_heartbeat_interval_ms,
             })
             // Deadline computed once at entry — GB updates to atCapMs don't
             // shift an in-flight deadline (next entry picks up the new value).
@@ -1926,15 +1797,9 @@ async function startWorkPollLoop({
               const cap = capacitySignal()
 
               try {
-                await api.heartbeatWork(
-                  info.environmentId,
-                  info.workId,
-                  info.sessionToken,
-                )
+                await api.heartbeatWork(info.environmentId, info.workId, info.sessionToken)
               } catch (err) {
-                logForDebugging(
-                  `[bridge:repl:heartbeat] Failed: ${errorMessage(err)}`,
-                )
+                logForDebugging(`[bridge:repl:heartbeat] Failed: ${errorMessage(err)}`)
                 if (err instanceof BridgeFatalError) {
                   cap.cleanup()
                   logEvent('zy_bridge_heartbeat_error', {
@@ -1963,10 +1828,7 @@ async function startWorkPollLoop({
               }
 
               hbCycles++
-              await sleep(
-                hbConfig.non_exclusive_heartbeat_interval_ms,
-                cap.signal,
-              )
+              await sleep(hbConfig.non_exclusive_heartbeat_interval_ms, cap.signal)
               cap.cleanup()
             }
 
@@ -1980,8 +1842,7 @@ async function startWorkPollLoop({
                     ? 'poll_due'
                     : 'config_disabled'
             logEvent('zy_bridge_heartbeat_mode_exited', {
-              reason:
-                exitReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              reason: exitReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               heartbeat_cycles: hbCycles,
             })
 
@@ -2005,10 +1866,7 @@ async function startWorkPollLoop({
           // 在笔记本唤醒后可能直接回到 10 分钟睡眠。启用时使用 atCapMs，
           // 否则使用心跳间隔作为下限（在退避路径上保证 > 0），
           // 使仅心跳配置不会紧密循环。
-          const sleepMs =
-            atCapMs > 0
-              ? atCapMs
-              : pollConfig.non_exclusive_heartbeat_interval_ms
+          const sleepMs = atCapMs > 0 ? atCapMs : pollConfig.non_exclusive_heartbeat_interval_ms
           if (sleepMs > 0) {
             const cap = capacitySignal()
             const sleepStart = Date.now()
@@ -2042,9 +1900,7 @@ async function startWorkPollLoop({
       try {
         secret = decodeWorkSecret(work.secret)
       } catch (err) {
-        logForDebugging(
-          `[bridge:repl] Failed to decode work secret: ${errorMessage(err)}`,
-        )
+        logForDebugging(`[bridge:repl] Failed to decode work secret: ${errorMessage(err)}`)
         logEvent('zy_bridge_repl_work_secret_failed', {})
         // 无法确认（需要我们从解码失败的 JWT）。stopWork 使用 OAuth。
         // 防止 XAUTOCLAIM 每个周期重新分发这个中毒项。
@@ -2058,9 +1914,7 @@ async function startWorkPollLoop({
       try {
         await api.acknowledgeWork(envId, work.id, secret.session_ingress_token)
       } catch (err) {
-        logForDebugging(
-          `[bridge:repl] Acknowledge failed workId=${work.id}: ${errorMessage(err)}`,
-        )
+        logForDebugging(`[bridge:repl] Acknowledge failed workId=${work.id}: ${errorMessage(err)}`)
       }
 
       if (work.data.type === 'healthcheck') {
@@ -2073,9 +1927,7 @@ async function startWorkPollLoop({
         try {
           validateBridgeId(workSessionId, 'session_id')
         } catch {
-          logForDebugging(
-            `[bridge:repl] Invalid session_id in work: ${workSessionId}`,
-          )
+          logForDebugging(`[bridge:repl] Invalid session_id in work: ${workSessionId}`)
           continue
         }
 
@@ -2100,11 +1952,7 @@ async function startWorkPollLoop({
       // 服务器发送 error.type='not_found_error'（标准 Anthropic API 形状），
       // 而不是 bridge 特定的字符串——但 status===404 是真正的信号，
       // 能经受 body 形状变化。
-      if (
-        err instanceof BridgeFatalError &&
-        err.status === 404 &&
-        onEnvironmentLost
-      ) {
+      if (err instanceof BridgeFatalError && err.status === 404 && onEnvironmentLost) {
         // 如果凭证已经被并发重连（例如 WS 关闭处理程序）刷新，
         // 旧轮询的错误是预期的——跳过 onEnvironmentLost 并用新凭证重试。
         const currentEnvId = getCredentials().environmentId
@@ -2129,10 +1977,7 @@ async function startWorkPollLoop({
           logForDebugging(
             `[bridge:repl] Environment re-registration limit reached (${MAX_ENVIRONMENT_RECREATIONS}), giving up`,
           )
-          onStateChange?.(
-            'failed',
-            'Environment deleted and re-registration limit reached',
-          )
+          onStateChange?.('failed', 'Environment deleted and re-registration limit reached')
           onFatalError?.()
           break
         }
@@ -2154,16 +1999,11 @@ async function startWorkPollLoop({
           consecutiveErrors = 0
           firstErrorTime = null
           onStateChange?.('ready')
-          logForDebugging(
-            `[bridge:repl] Re-registered environment: ${newCreds.environmentId}`,
-          )
+          logForDebugging(`[bridge:repl] Re-registered environment: ${newCreds.environmentId}`)
           continue
         }
 
-        onStateChange?.(
-          'failed',
-          'Environment deleted and re-registration failed',
-        )
+        onStateChange?.('failed', 'Environment deleted and re-registration failed')
         onFatalError?.()
         break
       }
@@ -2177,22 +2017,18 @@ async function startWorkPollLoop({
         )
         logEvent('zy_bridge_repl_fatal_error', {
           status: err.status,
-          error_type:
-            err.errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          error_type: err.errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
-        logForDiagnosticsNoPII(
-          isExpiry ? 'info' : 'error',
-          'bridge_repl_fatal_error',
-          { status: err.status, error_type: err.errorType },
-        )
+        logForDiagnosticsNoPII(isExpiry ? 'info' : 'error', 'bridge_repl_fatal_error', {
+          status: err.status,
+          error_type: err.errorType,
+        })
         // 装饰性 403 错误（例如 external_poll_sessions scope、
         // environments:manage 权限）——抑制用户可见错误但始终触发清理。
         if (!isSuppressible) {
           onStateChange?.(
             'failed',
-            isExpiry
-              ? 'session expired · /remote-control to reconnect'
-              : err.message,
+            isExpiry ? 'session expired · /remote-control to reconnect' : err.message,
           )
         }
         // 始终触发清理——匹配 bridgeMain.ts，其中 fatalExit=true 是无条件的且循环后清理始终运行。
@@ -2205,10 +2041,7 @@ async function startWorkPollLoop({
       // 检测系统睡眠/唤醒：如果自上次轮询错误以来的间隔
       // 大大超过最大退避延迟，机器可能睡眠了。
       // 重置错误跟踪，以便我们用新预算重试而不是立即放弃。
-      if (
-        lastPollErrorTime !== null &&
-        now - lastPollErrorTime > POLL_ERROR_MAX_DELAY_MS * 2
-      ) {
+      if (lastPollErrorTime !== null && now - lastPollErrorTime > POLL_ERROR_MAX_DELAY_MS * 2) {
         logForDebugging(
           `[bridge:repl] Detected system sleep (${Math.round((now - lastPollErrorTime) / 1000)}s gap), resetting poll error budget`,
         )
@@ -2270,11 +2103,7 @@ async function startWorkPollLoop({
         const info = getHeartbeatInfo?.()
         if (info) {
           try {
-            await api.heartbeatWork(
-              info.environmentId,
-              info.workId,
-              info.sessionToken,
-            )
+            await api.heartbeatWork(info.environmentId, info.workId, info.sessionToken)
           } catch {
             // 尽力而为——如果心跳也失败了，租约死亡，与 poll_due 之前的行为相同
             //（那时唯一的心跳循环退出是租约已经在死亡的情况）。

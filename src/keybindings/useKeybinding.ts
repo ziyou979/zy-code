@@ -130,9 +130,7 @@ export function useKeybindings(
 
     const unregisterFns: Array<() => void> = []
     for (const [action, handler] of Object.entries(handlers)) {
-      unregisterFns.push(
-        keybindingContext.registerHandler({ action, context, handler }),
-      )
+      unregisterFns.push(keybindingContext.registerHandler({ action, context, handler }))
     }
 
     return () => {

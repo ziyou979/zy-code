@@ -7,9 +7,7 @@ import { getPlatform } from '../../utils/platform.js'
 
 // Windows dynamic port range 49152-65535 is reserved
 const REDIRECT_PORT_RANGE =
-  getPlatform() === 'windows'
-    ? { min: 39152, max: 49151 }
-    : { min: 49152, max: 65535 }
+  getPlatform() === 'windows' ? { min: 39152, max: 49151 } : { min: 49152, max: 65535 }
 const REDIRECT_PORT_FALLBACK = 3118
 
 /**
@@ -18,9 +16,7 @@ const REDIRECT_PORT_FALLBACK = 3118
  * RFC 8252 Section 7.3 (OAuth for Native Apps): loopback redirect URIs match any
  * port as long as the path matches.
  */
-export function buildRedirectUri(
-  port: number = REDIRECT_PORT_FALLBACK,
-): string {
+export function buildRedirectUri(port: number = REDIRECT_PORT_FALLBACK): string {
   return `http://localhost:${port}/callback`
 }
 

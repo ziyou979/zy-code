@@ -1,47 +1,65 @@
-import * as React from 'react';
-import { Box, Text, useTheme } from '../../ink.js';
-import { getTheme, type Theme } from '../../utils/theme.js';
-import { getDefaultCharacters, interpolateColor, parseRGB, toRGBColor } from './utils.js';
-const DEFAULT_CHARACTERS = getDefaultCharacters();
-const SPINNER_FRAMES = [...DEFAULT_CHARACTERS, ...[...DEFAULT_CHARACTERS].reverse()];
-const REDUCED_MOTION_DOT = '●';
-const REDUCED_MOTION_CYCLE_MS = 2000; // 2-second cycle: 1s visible, 1s dim
+import * as React from 'react'
+import { Box, Text, useTheme } from '../../ink.js'
+import { getTheme, type Theme } from '../../utils/theme.js'
+import { getDefaultCharacters, interpolateColor, parseRGB, toRGBColor } from './utils.js'
+const DEFAULT_CHARACTERS = getDefaultCharacters()
+const SPINNER_FRAMES = [...DEFAULT_CHARACTERS, ...[...DEFAULT_CHARACTERS].reverse()]
+const REDUCED_MOTION_DOT = '●'
+const REDUCED_MOTION_CYCLE_MS = 2000 // 2-second cycle: 1s visible, 1s dim
 // 停滞状态颜色：蓝紫色，与天蓝色主题协调但有明显区分
 const STALLED_COLOR = {
   r: 130,
   g: 80,
-  b: 210
-};
+  b: 210,
+}
 type Props = {
-  frame: number;
-  messageColor: keyof Theme;
-  stalledIntensity?: number;
-  reducedMotion?: boolean;
-  time?: number;
-};
+  frame: number
+  messageColor: keyof Theme
+  stalledIntensity?: number
+  reducedMotion?: boolean
+  time?: number
+}
 export function SpinnerGlyph({
   frame,
   messageColor,
   stalledIntensity = 0,
   reducedMotion = false,
-  time = 0
+  time = 0,
 }: Props) {
-  const [themeName] = useTheme();
-  const theme = getTheme(themeName);
+  const [themeName] = useTheme()
+  const theme = getTheme(themeName)
   if (reducedMotion) {
-    const isDim = Math.floor(time / (REDUCED_MOTION_CYCLE_MS / 2)) % 2 === 1;
-    return <Box flexWrap="wrap" height={1} width={2}><Text color={messageColor} dimColor={isDim}>{REDUCED_MOTION_DOT}</Text></Box>;
+    const isDim = Math.floor(time / (REDUCED_MOTION_CYCLE_MS / 2)) % 2 === 1
+    return (
+      <Box flexWrap="wrap" height={1} width={2}>
+        <Text color={messageColor} dimColor={isDim}>
+          {REDUCED_MOTION_DOT}
+        </Text>
+      </Box>
+    )
   }
-  const spinnerChar = SPINNER_FRAMES[frame % SPINNER_FRAMES.length];
+  const spinnerChar = SPINNER_FRAMES[frame % SPINNER_FRAMES.length]
   if (stalledIntensity > 0) {
-    const baseColorStr = theme[messageColor];
-    const baseRGB = baseColorStr ? parseRGB(baseColorStr) : null;
+    const baseColorStr = theme[messageColor]
+    const baseRGB = baseColorStr ? parseRGB(baseColorStr) : null
     if (baseRGB) {
-      const interpolated = interpolateColor(baseRGB, STALLED_COLOR, stalledIntensity);
-      return <Box flexWrap="wrap" height={1} width={2}><Text color={toRGBColor(interpolated)}>{spinnerChar}</Text></Box>;
+      const interpolated = interpolateColor(baseRGB, STALLED_COLOR, stalledIntensity)
+      return (
+        <Box flexWrap="wrap" height={1} width={2}>
+          <Text color={toRGBColor(interpolated)}>{spinnerChar}</Text>
+        </Box>
+      )
     }
-    const color = stalledIntensity > 0.5 ? "error" : messageColor;
-    return <Box flexWrap="wrap" height={1} width={2}><Text color={color}>{spinnerChar}</Text></Box>;
+    const color = stalledIntensity > 0.5 ? 'error' : messageColor
+    return (
+      <Box flexWrap="wrap" height={1} width={2}>
+        <Text color={color}>{spinnerChar}</Text>
+      </Box>
+    )
   }
-  return <Box flexWrap="wrap" height={1} width={2}><Text color={messageColor}>{spinnerChar}</Text></Box>;
+  return (
+    <Box flexWrap="wrap" height={1} width={2}>
+      <Text color={messageColor}>{spinnerChar}</Text>
+    </Box>
+  )
 }

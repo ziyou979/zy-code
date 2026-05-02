@@ -30,10 +30,7 @@ type InstalledAppLike = {
  * ~/Applications is checked at call time via the `homeDir` arg (HOME isn't
  * reliably known at module load in all environments).
  */
-const PATH_ALLOWLIST: readonly string[] = [
-  '/Applications/',
-  '/System/Applications/',
-]
+const PATH_ALLOWLIST: readonly string[] = ['/Applications/', '/System/Applications/']
 
 /**
  * Display-name patterns that mark background services even under /Applications.
@@ -110,18 +107,16 @@ const APP_NAME_MAX_LEN = 40
 const APP_NAME_MAX_COUNT = 50
 
 function isUserFacingPath(path: string, homeDir: string | undefined): boolean {
-  if (PATH_ALLOWLIST.some(root => path.startsWith(root))) return true
+  if (PATH_ALLOWLIST.some((root) => path.startsWith(root))) return true
   if (homeDir) {
-    const userApps = homeDir.endsWith('/')
-      ? `${homeDir}Applications/`
-      : `${homeDir}/Applications/`
+    const userApps = homeDir.endsWith('/') ? `${homeDir}Applications/` : `${homeDir}/Applications/`
     if (path.startsWith(userApps)) return true
   }
   return false
 }
 
 function isNoisyName(name: string): boolean {
-  return NAME_PATTERN_BLOCKLIST.some(re => re.test(name))
+  return NAME_PATTERN_BLOCKLIST.some((re) => re.test(name))
 }
 
 /**
@@ -129,14 +124,11 @@ function isNoisyName(name: string): boolean {
  * bundle IDs (Apple/Google/MS; a localized "Réglages Système" with unusual
  * punctuation shouldn't be dropped), apply for anything attacker-installable.
  */
-function sanitizeCore(
-  raw: readonly string[],
-  applyCharFilter: boolean,
-): string[] {
+function sanitizeCore(raw: readonly string[], applyCharFilter: boolean): string[] {
   const seen = new Set<string>()
   return raw
-    .map(name => name.trim())
-    .filter(trimmed => {
+    .map((name) => name.trim())
+    .filter((trimmed) => {
       if (!trimmed) return false
       if (trimmed.length > APP_NAME_MAX_LEN) return false
       if (applyCharFilter && !APP_NAME_ALLOWED.test(trimmed)) return false
@@ -176,10 +168,7 @@ export function filterAppsForDescription(
     (acc, app) => {
       if (ALWAYS_KEEP_BUNDLE_IDS.has(app.bundleId)) {
         acc.alwaysKept.push(app.displayName)
-      } else if (
-        isUserFacingPath(app.path, homeDir) &&
-        !isNoisyName(app.displayName)
-      ) {
+      } else if (isUserFacingPath(app.path, homeDir) && !isNoisyName(app.displayName)) {
         acc.rest.push(app.displayName)
       }
       return acc
@@ -189,8 +178,5 @@ export function filterAppsForDescription(
 
   const sanitizedAlways = sanitizeTrustedNames(alwaysKept)
   const alwaysSet = new Set(sanitizedAlways)
-  return [
-    ...sanitizedAlways,
-    ...sanitizeAppNames(rest).filter(n => !alwaysSet.has(n)),
-  ]
+  return [...sanitizedAlways, ...sanitizeAppNames(rest).filter((n) => !alwaysSet.has(n))]
 }

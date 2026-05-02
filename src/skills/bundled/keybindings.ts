@@ -20,10 +20,7 @@ import { registerBundledSkill } from '../bundledSkills.js'
 function generateContextsTable(): string {
   return markdownTable(
     ['Context', 'Description'],
-    KEYBINDING_CONTEXTS.map(ctx => [
-      `\`${ctx}\``,
-      KEYBINDING_CONTEXT_DESCRIPTIONS[ctx],
-    ]),
+    KEYBINDING_CONTEXTS.map((ctx) => [`\`${ctx}\``, KEYBINDING_CONTEXT_DESCRIPTIONS[ctx]]),
   )
 }
 
@@ -46,9 +43,9 @@ function generateActionsTable(): string {
 
   return markdownTable(
     ['Action', 'Default Key(s)', 'Context'],
-    KEYBINDING_ACTIONS.map(action => {
+    KEYBINDING_ACTIONS.map((action) => {
       const info = actionInfo[action]
-      const keys = info ? info.keys.map(k => `\`${k}\``).join(', ') : '(none)'
+      const keys = info ? info.keys.map((k) => `\`${k}\``).join(', ') : '(none)'
       const context = info ? info.context : inferContextFromAction(action)
       return [`\`${action}\``, keys, context]
     }),
@@ -334,6 +331,6 @@ function markdownTable(headers: string[], rows: string[][]): string {
   return [
     `| ${headers.join(' | ')} |`,
     `| ${separator.join(' | ')} |`,
-    ...rows.map(row => `| ${row.join(' | ')} |`),
+    ...rows.map((row) => `| ${row.join(' | ')} |`),
   ].join('\n')
 }

@@ -4,15 +4,7 @@ import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import type { BashTool } from './BashTool.js'
 
-const ACCEPT_EDITS_ALLOWED_COMMANDS = [
-  'mkdir',
-  'touch',
-  'rm',
-  'rmdir',
-  'mv',
-  'cp',
-  'sed',
-] as const
+const ACCEPT_EDITS_ALLOWED_COMMANDS = ['mkdir', 'touch', 'rm', 'rmdir', 'mv', 'cp', 'sed'] as const
 
 type FilesystemCommand = (typeof ACCEPT_EDITS_ALLOWED_COMMANDS)[number]
 
@@ -35,10 +27,7 @@ function validateCommandForMode(
   }
 
   // In Accept Edits mode, auto-allow filesystem operations
-  if (
-    toolPermissionContext.mode === 'acceptEdits' &&
-    isFilesystemCommand(baseCmd)
-  ) {
+  if (toolPermissionContext.mode === 'acceptEdits' && isFilesystemCommand(baseCmd)) {
     return {
       behavior: 'allow',
       updatedInput: { command: cmd },
@@ -108,8 +97,6 @@ export function checkPermissionMode(
   }
 }
 
-export function getAutoAllowedCommands(
-  mode: ToolPermissionContext['mode'],
-): readonly string[] {
+export function getAutoAllowedCommands(mode: ToolPermissionContext['mode']): readonly string[] {
   return mode === 'acceptEdits' ? ACCEPT_EDITS_ALLOWED_COMMANDS : []
 }

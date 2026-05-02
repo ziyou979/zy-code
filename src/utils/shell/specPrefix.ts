@@ -40,9 +40,9 @@ const toArray = <T>(val: T | T[]): T[] => (Array.isArray(val) ? val : [val])
 function isKnownSubcommand(arg: string, spec: CommandSpec | null): boolean {
   if (!spec?.subcommands?.length) return false
   const argLower = arg.toLowerCase()
-  return spec.subcommands.some(sub =>
+  return spec.subcommands.some((sub) =>
     Array.isArray(sub.name)
-      ? sub.name.some(n => n.toLowerCase() === argLower)
+      ? sub.name.some((n) => n.toLowerCase() === argLower)
       : sub.name.toLowerCase() === argLower,
   )
 }
@@ -55,7 +55,7 @@ function flagTakesArg(
 ): boolean {
   // Check if flag is in spec.options
   if (spec?.options) {
-    const option = spec.options.find(opt =>
+    const option = spec.options.find((opt) =>
       Array.isArray(opt.name) ? opt.name.includes(flag) : opt.name === flag,
     )
     if (option) return !!option.args
@@ -68,10 +68,7 @@ function flagTakesArg(
 }
 
 // Find the first subcommand by skipping flags and their values
-function findFirstSubcommand(
-  args: string[],
-  spec: CommandSpec | null,
-): string | undefined {
+function findFirstSubcommand(args: string[], spec: CommandSpec | null): string | undefined {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
     if (!arg) continue
@@ -101,18 +98,14 @@ export async function buildPrefix(
 
     if (arg.startsWith('-')) {
       // Special case: python -c should stop after -c
-      if (arg === '-c' && ['python', 'python3'].includes(command.toLowerCase()))
-        break
+      if (arg === '-c' && ['python', 'python3'].includes(command.toLowerCase())) break
 
       // Check for isCommand/isModule flags that should be included in prefix
       if (spec?.options) {
-        const option = spec.options.find(opt =>
+        const option = spec.options.find((opt) =>
           Array.isArray(opt.name) ? opt.name.includes(arg) : opt.name === arg,
         )
-        if (
-          option?.args &&
-          toArray(option.args).some(a => a?.isCommand || a?.isModule)
-        ) {
+        if (option?.args && toArray(option.args).some((a) => a?.isCommand || a?.isModule)) {
           parts.push(arg)
           continue
         }
@@ -144,23 +137,18 @@ async function calculateDepth(
   // Find first subcommand by skipping flags and their values
   const firstSubcommand = findFirstSubcommand(args, spec)
   const commandLower = command.toLowerCase()
-  const key = firstSubcommand
-    ? `${commandLower} ${firstSubcommand.toLowerCase()}`
-    : commandLower
+  const key = firstSubcommand ? `${commandLower} ${firstSubcommand.toLowerCase()}` : commandLower
   if (DEPTH_RULES[key]) return DEPTH_RULES[key]
   if (DEPTH_RULES[commandLower]) return DEPTH_RULES[commandLower]
   if (!spec) return 2
 
-  if (spec.options && args.some(arg => arg?.startsWith('-'))) {
+  if (spec.options && args.some((arg) => arg?.startsWith('-'))) {
     for (const arg of args) {
       if (!arg?.startsWith('-')) continue
-      const option = spec.options.find(opt =>
+      const option = spec.options.find((opt) =>
         Array.isArray(opt.name) ? opt.name.includes(arg) : opt.name === arg,
       )
-      if (
-        option?.args &&
-        toArray(option.args).some(arg => arg?.isCommand || arg?.isModule)
-      )
+      if (option?.args && toArray(option.args).some((arg) => arg?.isCommand || arg?.isModule))
         return 3
     }
   }
@@ -168,16 +156,16 @@ async function calculateDepth(
   // Find subcommand spec using the already-found firstSubcommand
   if (firstSubcommand && spec.subcommands?.length) {
     const firstSubLower = firstSubcommand.toLowerCase()
-    const subcommand = spec.subcommands.find(sub =>
+    const subcommand = spec.subcommands.find((sub) =>
       Array.isArray(sub.name)
-        ? sub.name.some(n => n.toLowerCase() === firstSubLower)
+        ? sub.name.some((n) => n.toLowerCase() === firstSubLower)
         : sub.name.toLowerCase() === firstSubLower,
     )
     if (subcommand) {
       if (subcommand.args) {
         const subArgs = toArray(subcommand.args)
-        if (subArgs.some(arg => arg?.isCommand)) return 3
-        if (subArgs.some(arg => arg?.isVariadic)) return 2
+        if (subArgs.some((arg) => arg?.isCommand)) return 3
+        if (subArgs.some((arg) => arg?.isVariadic)) return 2
       }
       if (subcommand.subcommands?.length) return 4
       // Leaf subcommand with NO args declared (git show, git log, git tag):
@@ -193,19 +181,19 @@ async function calculateDepth(
   if (spec.args) {
     const argsArray = toArray(spec.args)
 
-    if (argsArray.some(arg => arg?.isCommand)) {
+    if (argsArray.some((arg) => arg?.isCommand)) {
       return !Array.isArray(spec.args) && spec.args.isCommand
         ? 2
-        : Math.min(2 + argsArray.findIndex(arg => arg?.isCommand), 3)
+        : Math.min(2 + argsArray.findIndex((arg) => arg?.isCommand), 3)
     }
 
     if (!spec.subcommands?.length) {
-      if (argsArray.some(arg => arg?.isVariadic)) return 1
+      if (argsArray.some((arg) => arg?.isVariadic)) return 1
       if (argsArray[0] && !argsArray[0].isOptional) return 2
     }
   }
 
-  return spec.args && toArray(spec.args).some(arg => arg?.isDangerous) ? 3 : 2
+  return spec.args && toArray(spec.args).some((arg) => arg?.isDangerous) ? 3 : 2
 }
 
 async function shouldStopAtArg(
@@ -217,21 +205,19 @@ async function shouldStopAtArg(
 
   const dotIndex = arg.lastIndexOf('.')
   const hasExtension =
-    dotIndex > 0 &&
-    dotIndex < arg.length - 1 &&
-    !arg.substring(dotIndex + 1).includes(':')
+    dotIndex > 0 && dotIndex < arg.length - 1 && !arg.substring(dotIndex + 1).includes(':')
 
   const hasFile = arg.includes('/') || hasExtension
-  const hasUrl = URL_PROTOCOLS.some(proto => arg.startsWith(proto))
+  const hasUrl = URL_PROTOCOLS.some((proto) => arg.startsWith(proto))
 
   if (!hasFile && !hasUrl) return false
 
   // Check if we're after a -m flag for python modules
   if (spec?.options && args.length > 0 && args[args.length - 1] === '-m') {
-    const option = spec.options.find(opt =>
+    const option = spec.options.find((opt) =>
       Array.isArray(opt.name) ? opt.name.includes('-m') : opt.name === '-m',
     )
-    if (option?.args && toArray(option.args).some(arg => arg?.isModule)) {
+    if (option?.args && toArray(option.args).some((arg) => arg?.isModule)) {
       return false // Don't stop at module names
     }
   }

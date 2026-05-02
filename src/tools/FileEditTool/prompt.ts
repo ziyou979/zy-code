@@ -14,10 +14,9 @@ function getDefaultEditDescription(): string {
   const prefixFormat = isCompactLinePrefixEnabled()
     ? 'line number + tab'
     : 'spaces + line number + arrow'
-  const minimalUniquenessHint =
-    isInternalBuild()
-      ? `\n- Use the smallest old_string that's clearly unique — usually 2-4 adjacent lines is sufficient. Avoid including 10+ lines of context when less uniquely identifies the target.`
-      : ''
+  const minimalUniquenessHint = isInternalBuild()
+    ? `\n- Use the smallest old_string that's clearly unique — usually 2-4 adjacent lines is sufficient. Avoid including 10+ lines of context when less uniquely identifies the target.`
+    : ''
   return `Performs exact string replacements in files.
 
 Usage:${getPreReadInstruction()}

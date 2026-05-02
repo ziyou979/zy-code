@@ -44,14 +44,8 @@ export function startBackgroundHousekeeping(): void {
   let needsCleanup = true
   async function runVerySlowOps(): Promise<void> {
     // If the user did something in the last minute, don't make them wait for these slow operations to run.
-    if (
-      getIsInteractive() &&
-      getLastInteractionTime() > Date.now() - 1000 * 60
-    ) {
-      setTimeout(
-        runVerySlowOps,
-        DELAY_VERY_SLOW_OPERATIONS_THAT_HAPPEN_EVERY_SESSION,
-      ).unref()
+    if (getIsInteractive() && getLastInteractionTime() > Date.now() - 1000 * 60) {
+      setTimeout(runVerySlowOps, DELAY_VERY_SLOW_OPERATIONS_THAT_HAPPEN_EVERY_SESSION).unref()
       return
     }
 
@@ -61,24 +55,15 @@ export function startBackgroundHousekeeping(): void {
     }
 
     // If the user did something in the last minute, don't make them wait for these slow operations to run.
-    if (
-      getIsInteractive() &&
-      getLastInteractionTime() > Date.now() - 1000 * 60
-    ) {
-      setTimeout(
-        runVerySlowOps,
-        DELAY_VERY_SLOW_OPERATIONS_THAT_HAPPEN_EVERY_SESSION,
-      ).unref()
+    if (getIsInteractive() && getLastInteractionTime() > Date.now() - 1000 * 60) {
+      setTimeout(runVerySlowOps, DELAY_VERY_SLOW_OPERATIONS_THAT_HAPPEN_EVERY_SESSION).unref()
       return
     }
 
     await cleanupOldVersions()
   }
 
-  setTimeout(
-    runVerySlowOps,
-    DELAY_VERY_SLOW_OPERATIONS_THAT_HAPPEN_EVERY_SESSION,
-  ).unref()
+  setTimeout(runVerySlowOps, DELAY_VERY_SLOW_OPERATIONS_THAT_HAPPEN_EVERY_SESSION).unref()
 
   // For long-running sessions, schedule recurring cleanup every 24 hours.
   // Both cleanup functions use marker files and locks to throttle to once per day

@@ -12,10 +12,7 @@ import { quote } from './shellQuote.js'
  * @param command The command to be executed
  * @returns The properly formatted command string with quoted components
  */
-export function formatShellPrefixCommand(
-  prefix: string,
-  command: string,
-): string {
+export function formatShellPrefixCommand(prefix: string, command: string): string {
   // Split on the last space before a dash to separate executable from arguments
   const spaceBeforeDash = prefix.lastIndexOf(' -')
   if (spaceBeforeDash > 0) {

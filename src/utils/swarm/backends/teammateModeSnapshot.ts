@@ -43,9 +43,7 @@ export function getCliTeammateModeOverride(): TeammateMode | null {
 export function clearCliTeammateModeOverride(newMode: TeammateMode): void {
   cliTeammateModeOverride = null
   initialTeammateMode = newMode
-  logForDebugging(
-    `[TeammateModeSnapshot] CLI override cleared, new mode: ${newMode}`,
-  )
+  logForDebugging(`[TeammateModeSnapshot] CLI override cleared, new mode: ${newMode}`)
 }
 
 /**
@@ -56,15 +54,11 @@ export function clearCliTeammateModeOverride(newMode: TeammateMode): void {
 export function captureTeammateModeSnapshot(): void {
   if (cliTeammateModeOverride) {
     initialTeammateMode = cliTeammateModeOverride
-    logForDebugging(
-      `[TeammateModeSnapshot] Captured from CLI override: ${initialTeammateMode}`,
-    )
+    logForDebugging(`[TeammateModeSnapshot] Captured from CLI override: ${initialTeammateMode}`)
   } else {
     const config = getGlobalConfig()
     initialTeammateMode = config.teammateMode ?? 'auto'
-    logForDebugging(
-      `[TeammateModeSnapshot] Captured from config: ${initialTeammateMode}`,
-    )
+    logForDebugging(`[TeammateModeSnapshot] Captured from config: ${initialTeammateMode}`)
   }
 }
 

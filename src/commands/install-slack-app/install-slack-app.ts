@@ -9,7 +9,7 @@ export async function call(): Promise<LocalCommandResult> {
   logEvent('zy_install_slack_app_clicked', {})
 
   // Track that user has clicked to install
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     slackAppInstallCount: (current.slackAppInstallCount ?? 0) + 1,
   }))

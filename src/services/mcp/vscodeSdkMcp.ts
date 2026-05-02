@@ -53,9 +53,7 @@ export function notifyVscodeFileUpdated(
     })
     .catch((error: Error) => {
       // Do not throw if the notification failed
-      logForDebugging(
-        `[VSCode] Failed to send file_updated notification: ${error.message}`,
-      )
+      logForDebugging(`[VSCode] Failed to send file_updated notification: ${error.message}`)
     })
 }
 
@@ -63,41 +61,29 @@ export function notifyVscodeFileUpdated(
  * Sets up the speicial internal VSCode MCP for bidirectional communication using notifications.
  */
 export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
-  const client = sdkClients.find(client => client.name === 'zy-vscode')
+  const client = sdkClients.find((client) => client.name === 'zy-vscode')
 
   if (client && client.type === 'connected') {
     // Store the client reference for later use
     vscodeMcpClient = client
 
-    client.client.setNotificationHandler(
-      LogEventNotificationSchema(),
-      async notification => {
-        const { eventName, eventData } = notification.params
-        logEvent(
-          `zy_vscode_${eventName}`,
-          eventData as { [key: string]: boolean | number | undefined },
-        )
-      },
-    )
+    client.client.setNotificationHandler(LogEventNotificationSchema(), async (notification) => {
+      const { eventName, eventData } = notification.params
+      logEvent(
+        `zy_vscode_${eventName}`,
+        eventData as { [key: string]: boolean | number | undefined },
+      )
+    })
 
     // Send necessary experiment gates to VSCode immediately.
     const gates: Record<string, boolean | string> = {
-      zy_vscode_review_upsell: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-        'zy_vscode_review_upsell',
-      ),
-      zy_vscode_onboarding: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-        'zy_vscode_onboarding',
-      ),
+      zy_vscode_review_upsell:
+        checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_vscode_review_upsell'),
+      zy_vscode_onboarding: checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_vscode_onboarding'),
       // Browser support.
-      zy_quiet_fern: getFeatureValue_CACHED_MAY_BE_STALE(
-        'zy_quiet_fern',
-        false,
-      ),
+      zy_quiet_fern: getFeatureValue_CACHED_MAY_BE_STALE('zy_quiet_fern', false),
       // In-band OAuth via zy_authenticate (vs. extension-native PKCE).
-      zy_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE(
-        'zy_vscode_cc_auth',
-        false,
-      ),
+      zy_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE('zy_vscode_cc_auth', false),
     }
     // Tri-state: 'enabled' | 'disabled' | 'opt-in'. Omit if unknown so VSCode
     // fails closed (treats absent as 'disabled').

@@ -1,7 +1,7 @@
-import { AnimatedAsterisk } from './AnimatedAsterisk.js';
+import { AnimatedAsterisk } from './AnimatedAsterisk.js'
 export function shouldShowOpus1mMergeNotice(): boolean {
-  return false;
+  return false
 }
 export function Opus1mMergeNotice() {
-  return null;
+  return null
 }

@@ -1,13 +1,7 @@
 import type { AnyValueMap, Logger, logs } from '@opentelemetry/api-logs'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import {
-  BatchLogRecordProcessor,
-  LoggerProvider,
-} from '@opentelemetry/sdk-logs'
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-} from '@opentelemetry/semantic-conventions'
+import { BatchLogRecordProcessor, LoggerProvider } from '@opentelemetry/sdk-logs'
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 import { randomUUID } from 'crypto'
 import { isEqual } from 'lodash-es'
 import { getOrCreateUserID } from '../../utils/config.js'
@@ -42,10 +36,7 @@ const EVENT_SAMPLING_CONFIG_NAME = 'zy_event_sampling_config'
  * Uses cached value if available, updates cache in background.
  */
 export function getEventSamplingConfig(): EventSamplingConfig {
-  return getDynamicConfig_CACHED_MAY_BE_STALE<EventSamplingConfig>(
-    EVENT_SAMPLING_CONFIG_NAME,
-    {},
-  )
+  return getDynamicConfig_CACHED_MAY_BE_STALE<EventSamplingConfig>(EVENT_SAMPLING_CONFIG_NAME, {})
 }
 
 /**
@@ -96,10 +87,7 @@ type BatchConfig = {
   baseUrl?: string
 }
 function getBatchConfig(): BatchConfig {
-  return getDynamicConfig_CACHED_MAY_BE_STALE<BatchConfig>(
-    BATCH_CONFIG_NAME,
-    {},
-  )
+  return getDynamicConfig_CACHED_MAY_BE_STALE<BatchConfig>(BATCH_CONFIG_NAME, {})
 }
 
 // Module-local state for event logging (not exposed globally)
@@ -186,9 +174,7 @@ async function logEventToZyAsync(
 
     // Debug logging when debug mode is enabled
     if (isInternalBuild()) {
-      logForDebugging(
-        `[INNER-ONLY] ZY event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
-      )
+      logForDebugging(`[INNER-ONLY] ZY event: ${eventName} ${jsonStringify(metadata, null, 0)}`)
     }
 
     // Emit log record
@@ -254,15 +240,13 @@ function getEnvironmentForGrowthBook(): string {
  *
  * @param data - GrowthBook experiment assignment data
  */
-export function logGrowthBookExperimentToZy(
-  data: GrowthBookExperimentData,
-): void {
+export function logGrowthBookExperimentToZy(data: GrowthBookExperimentData): void {
   if (!isZyEventLoggingEnabled()) {
     return
   }
 
   if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
-    return;
+    return
   }
 
   const userId = getOrCreateUserID()
@@ -330,13 +314,9 @@ export function initializeZyEventLogging(): void {
 
   const scheduledDelayMillis =
     batchConfig.scheduledDelayMillis ||
-    parseInt(
-      process.env.OTEL_LOGS_EXPORT_INTERVAL ||
-        DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString(),
-    )
+    parseInt(process.env.OTEL_LOGS_EXPORT_INTERVAL || DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString())
 
-  const maxExportBatchSize =
-    batchConfig.maxExportBatchSize || DEFAULT_MAX_EXPORT_BATCH_SIZE
+  const maxExportBatchSize = batchConfig.maxExportBatchSize || DEFAULT_MAX_EXPORT_BATCH_SIZE
 
   const maxQueueSize = batchConfig.maxQueueSize || DEFAULT_MAX_QUEUE_SIZE
 
@@ -376,10 +356,7 @@ export function initializeZyEventLogging(): void {
   // IMPORTANT: We must get the logger from our local provider, not logs.getLogger()
   // because logs.getLogger() returns a logger from the global provider, which is
   // separate and used for customer telemetry.
-  zyEventLogger = zyEventLoggerProvider.getLogger(
-    'com.anthropic.zy_code.events',
-    MACRO.VERSION,
-  )
+  zyEventLogger = zyEventLoggerProvider.getLogger('com.anthropic.zy_code.events', MACRO.VERSION)
 }
 
 /**
@@ -410,9 +387,7 @@ export async function reinitializeZyEventLoggingIfConfigChanged(): Promise<void>
   }
 
   if (isInternalBuild()) {
-    logForDebugging(
-      `ZY event logging: ${BATCH_CONFIG_NAME} changed, reinitializing`,
-    )
+    logForDebugging(`ZY event logging: ${BATCH_CONFIG_NAME} changed, reinitializing`)
   }
 
   const oldProvider = zyEventLoggerProvider

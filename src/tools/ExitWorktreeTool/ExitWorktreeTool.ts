@@ -31,9 +31,7 @@ const inputSchema = lazySchema(() =>
   z.strictObject({
     action: z
       .enum(['keep', 'remove'])
-      .describe(
-        '"keep" leaves the worktree and branch on disk; "remove" deletes both.',
-      ),
+      .describe('"keep" leaves the worktree and branch on disk; "remove" deletes both.'),
     discard_changes: z
       .boolean()
       .optional()
@@ -80,16 +78,11 @@ async function countWorktreeChanges(
   worktreePath: string,
   originalHeadCommit: string | undefined,
 ): Promise<ChangeSummary | null> {
-  const status = await execFileNoThrow('git', [
-    '-C',
-    worktreePath,
-    'status',
-    '--porcelain',
-  ])
+  const status = await execFileNoThrow('git', ['-C', worktreePath, 'status', '--porcelain'])
   if (status.code !== 0) {
     return null
   }
-  const changedFiles = count(status.stdout.split('\n'), l => l.trim() !== '')
+  const changedFiles = count(status.stdout.split('\n'), (l) => l.trim() !== '')
 
   if (!originalHeadCommit) {
     // git status succeeded → this is a git repo, but without a baseline
@@ -119,10 +112,7 @@ async function countWorktreeChanges(
  * keepWorktree()/cleanupWorktree() handle process.chdir and currentWorktreeSession;
  * this handles everything above the worktree utility layer.
  */
-function restoreSessionToOriginalCwd(
-  originalCwd: string,
-  projectRootIsWorktree: boolean,
-): void {
+function restoreSessionToOriginalCwd(originalCwd: string, projectRootIsWorktree: boolean): void {
   setCwd(originalCwd)
   // EnterWorktree sets originalCwd to the *worktree* path (intentional — see
   // state.ts getProjectRoot comment). Reset to the real original.
@@ -188,10 +178,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
     }
 
     if (input.action === 'remove' && !input.discard_changes) {
-      const summary = await countWorktreeChanges(
-        session.worktreePath,
-        session.originalHeadCommit,
-      )
+      const summary = await countWorktreeChanges(session.worktreePath, session.originalHeadCommit)
       if (summary === null) {
         return {
           result: false,
@@ -203,9 +190,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
       if (changedFiles > 0 || commits > 0) {
         const parts: string[] = []
         if (changedFiles > 0) {
-          parts.push(
-            `${changedFiles} uncommitted ${changedFiles === 1 ? 'file' : 'files'}`,
-          )
+          parts.push(`${changedFiles} uncommitted ${changedFiles === 1 ? 'file' : 'files'}`)
         }
         if (commits > 0) {
           parts.push(
@@ -233,13 +218,8 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
     }
 
     // Capture before keepWorktree/cleanupWorktree null out currentWorktreeSession.
-    const {
-      originalCwd,
-      worktreePath,
-      worktreeBranch,
-      tmuxSessionName,
-      originalHeadCommit,
-    } = session
+    const { originalCwd, worktreePath, worktreeBranch, tmuxSessionName, originalHeadCommit } =
+      session
 
     // --worktree startup calls setOriginalCwd(getCwd()) and
     // setProjectRoot(getCwd()) back-to-back right after setCwd(worktreePath)
@@ -301,12 +281,9 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
       discardParts.push(`${commits} ${commits === 1 ? 'commit' : 'commits'}`)
     }
     if (changedFiles > 0) {
-      discardParts.push(
-        `${changedFiles} uncommitted ${changedFiles === 1 ? 'file' : 'files'}`,
-      )
+      discardParts.push(`${changedFiles} uncommitted ${changedFiles === 1 ? 'file' : 'files'}`)
     }
-    const discardNote =
-      discardParts.length > 0 ? ` Discarded ${discardParts.join(' and ')}.` : ''
+    const discardNote = discardParts.length > 0 ? ` Discarded ${discardParts.join(' and ')}.` : ''
     return {
       data: {
         action: 'remove' as const,

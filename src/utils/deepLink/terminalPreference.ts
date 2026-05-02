@@ -49,6 +49,6 @@ export function updateDeepLinkTerminalPreference(): void {
   const config = getGlobalConfig()
   if (config.deepLinkTerminal === app) return
 
-  saveGlobalConfig(current => ({ ...current, deepLinkTerminal: app }))
+  saveGlobalConfig((current) => ({ ...current, deepLinkTerminal: app }))
   logForDebugging(`Stored deep link terminal preference: ${app}`)
 }

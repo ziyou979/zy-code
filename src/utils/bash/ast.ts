@@ -51,12 +51,7 @@ export type ParseForSecurityResult =
  * wraps a command with its redirects. Semicolon-separated commands appear
  * as direct siblings under `program` (no wrapper node).
  */
-const STRUCTURAL_TYPES = new Set([
-  'program',
-  'list',
-  'pipeline',
-  'redirected_statement',
-])
+const STRUCTURAL_TYPES = new Set(['program', 'list', 'pipeline', 'redirected_statement'])
 
 /**
  * Operator tokens that separate commands. These are leaf nodes that appear
@@ -259,8 +254,7 @@ const CONTROL_CHAR_RE = /[\x00-\x08\x0B-\x1F\x7F]/
  * bash treats them as literal word characters. Blocks NBSP, zero-width
  * spaces, line/paragraph separators, BOM.
  */
-const UNICODE_WHITESPACE_RE =
-  /[\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]/
+const UNICODE_WHITESPACE_RE = /[\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]/
 
 /**
  * Backslash immediately before whitespace. bash treats `\ ` as a literal
@@ -378,17 +372,13 @@ const DOLLAR = String.fromCharCode(0x24)
  * statically analyze. Returns 'parse-unavailable' if tree-sitter WASM isn't
  * loaded — caller should fall back to conservative behavior.
  */
-export async function parseForSecurity(
-  cmd: string,
-): Promise<ParseForSecurityResult> {
+export async function parseForSecurity(cmd: string): Promise<ParseForSecurityResult> {
   // parseCommandRaw('') returns null (falsy check), so short-circuit here.
   // Don't use .trim() — it strips Unicode whitespace (\u00a0 etc.) which the
   // pre-checks in parseForSecurityFromAst need to see and reject.
   if (cmd === '') return { kind: 'simple', commands: [] }
   const root = await parseCommandRaw(cmd)
-  return root === null
-    ? { kind: 'parse-unavailable' }
-    : parseForSecurityFromAst(cmd, root)
+  return root === null ? { kind: 'parse-unavailable' } : parseForSecurityFromAst(cmd, root)
 }
 
 /**
@@ -450,8 +440,7 @@ export function parseForSecurityFromAst(
     // `enable`, `hash` leaked with Bash(*). Fail closed: too-complex → ask.
     return {
       kind: 'too-complex',
-      reason:
-        'Parser aborted (timeout or resource limit) — possible adversarial input',
+      reason: 'Parser aborted (timeout or resource limit) — possible adversarial input',
       nodeType: 'PARSE_ABORT',
     }
   }
@@ -621,9 +610,7 @@ function collectCommands(
           // accept -i; readonly -a/-A rejects subscripted args as invalid
           // identifiers so subscript-arith doesn't fire.
           if (
-            (argv[0] === 'declare' ||
-              argv[0] === 'typeset' ||
-              argv[0] === 'local') &&
+            (argv[0] === 'declare' || argv[0] === 'typeset' || argv[0] === 'local') &&
             /^-[a-zA-Z]*[niaA]/.test(arg)
           ) {
             return {
@@ -640,9 +627,7 @@ function collectCommands(
           // only the literal text. Scoped to declare/typeset/local:
           // export/readonly reject `[` in identifiers before eval.
           if (
-            (argv[0] === 'declare' ||
-              argv[0] === 'typeset' ||
-              argv[0] === 'local') &&
+            (argv[0] === 'declare' || argv[0] === 'typeset' || argv[0] === 'local') &&
             arg[0] !== '-' &&
             /^[^=]*\[/.test(arg)
           ) {
@@ -815,12 +800,7 @@ function collectCommands(
         const branchScope = new Map(varScope)
         for (const c of child.children) {
           if (!c) continue
-          if (
-            c.type === 'elif' ||
-            c.type === 'else' ||
-            c.type === 'then' ||
-            c.type === ';'
-          ) {
+          if (c.type === 'elif' || c.type === 'else' || c.type === 'then' || c.type === ';') {
             continue
           }
           const err = collectCommands(c, commands, branchScope)
@@ -859,10 +839,7 @@ function collectCommands(
                 // when a tracked literal would be overwritten. Safe case
                 // (no prior value or already a placeholder) → proceed.
                 const existing = varScope.get(a)
-                if (
-                  existing !== undefined &&
-                  !containsAnyPlaceholder(existing)
-                ) {
+                if (existing !== undefined && !containsAnyPlaceholder(existing)) {
                   return {
                     kind: 'too-complex',
                     reason: `'read ${a}' in condition may not execute (||/pipeline/subshell); cannot prove it overwrites tracked literal '${existing}'`,
@@ -1259,11 +1236,7 @@ function walkCommand(
         break
       }
       case 'command_name': {
-        const arg = walkArgument(
-          child.children[0] ?? child,
-          innerCommands,
-          varScope,
-        )
+        const arg = walkArgument(child.children[0] ?? child, innerCommands, varScope)
         if (typeof arg !== 'string') return arg
         argv.push(arg)
         break
@@ -1349,7 +1322,7 @@ function walkCommand(
   const text =
     /\$[A-Za-z_]/.test(node.text) || node.text.includes('\n')
       ? argv
-          .map(a =>
+          .map((a) =>
             a === '' || /["'\\ \t\n$`;|&<>(){}*?[\]~#]/.test(a)
               ? `'${a.replace(/'/g, "'\\''")}'`
               : a,
@@ -1739,7 +1712,7 @@ function extractSafeCatHeredoc(subNode: Node): string | 'DANGEROUS' | null {
     if (!child) continue
     if (child.type === 'command') {
       // Must be bare `cat` — no args, no env vars
-      const cmdChildren = child.children.filter(c => c)
+      const cmdChildren = child.children.filter((c) => c)
       if (cmdChildren.length !== 1) return null
       const nameNode = cmdChildren[0]
       if (nameNode?.type !== 'command_name' || nameNode.text !== 'cat') {
@@ -1879,8 +1852,7 @@ function walkVariableAssignment(
     if (isAppend) {
       return {
         kind: 'too-complex',
-        reason:
-          'PS4 += cannot be statically verified — combine into a single PS4= assignment',
+        reason: 'PS4 += cannot be statically verified — combine into a single PS4= assignment',
         nodeType: 'variable_assignment',
       }
     }
@@ -1891,11 +1863,7 @@ function walkVariableAssignment(
         nodeType: 'variable_assignment',
       }
     }
-    if (
-      !/^[A-Za-z0-9 _+:./=[\]-]*$/.test(
-        value.replace(/\$\{[A-Za-z_][A-Za-z0-9_]*\}/g, ''),
-      )
-    ) {
+    if (!/^[A-Za-z0-9 _+:./=[\]-]*$/.test(value.replace(/\$\{[A-Za-z_][A-Za-z0-9_]*\}/g, ''))) {
       return {
         kind: 'too-complex',
         reason:
@@ -1997,10 +1965,7 @@ function resolveSimpleExpansion(
   // bare argument to a path-sensitive command.
   if (insideString) {
     if (SAFE_ENV_VARS.has(varName)) return VAR_PLACEHOLDER
-    if (
-      isSpecial &&
-      (SPECIAL_VAR_NAMES.has(varName) || /^[0-9]+$/.test(varName))
-    ) {
+    if (isSpecial && (SPECIAL_VAR_NAMES.has(varName) || /^[0-9]+$/.test(varName))) {
       return VAR_PLACEHOLDER
     }
   }
@@ -2020,10 +1985,7 @@ function applyVarToScope(
 ): void {
   const existing = varScope.get(ev.name) ?? ''
   const combined = ev.isAppend ? existing + ev.value : ev.value
-  varScope.set(
-    ev.name,
-    containsAnyPlaceholder(combined) ? VAR_PLACEHOLDER : combined,
-  )
+  varScope.set(ev.name, containsAnyPlaceholder(combined) ? VAR_PLACEHOLDER : combined)
 }
 
 function stripRawString(text: string): string {
@@ -2194,7 +2156,7 @@ const READ_DATA_FLAGS = new Set(['-p', '-d', '-n', '-N', '-t', '-u', '-i'])
 
 // Use `.*` not `[^/]*` — Linux resolves `..` in procfs, so
 // `/proc/self/../self/environ` works and must be caught.
-let PROC_ENVIRON_RE;
+let PROC_ENVIRON_RE
 PROC_ENVIRON_RE = /\/proc\/.*\/environ/
 
 /**
@@ -2202,7 +2164,7 @@ PROC_ENVIRON_RE = /\/proc\/.*\/environ/
  * Downstream stripSafeWrappers re-tokenizes .text line-by-line and treats `#`
  * after a newline as a comment, hiding arguments that follow.
  */
-let NEWLINE_HASH_RE;
+let NEWLINE_HASH_RE
 NEWLINE_HASH_RE = /\n[ \t]*#/
 
 export type SemanticCheckResult = { ok: true } | { ok: false; reason: string }
@@ -2236,11 +2198,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         let i = 1
         while (i < a.length) {
           const arg = a[i]!
-          if (
-            arg === '--foreground' ||
-            arg === '--preserve-status' ||
-            arg === '--verbose'
-          ) {
+          if (arg === '--foreground' || arg === '--preserve-status' || arg === '--verbose') {
             i++ // known no-value long flags
           } else if (/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)) {
             i++ // --kill-after=5, --signal=TERM (value fused with =)
@@ -2441,12 +2399,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // Combined short flags: `-ra` is bash shorthand for `-r -a`.
         // Check if any danger flag character appears in a combined flag
         // string. The danger flag's NAME operand is the next argument.
-        if (
-          arg.length > 2 &&
-          arg[0] === '-' &&
-          arg[1] !== '-' &&
-          !arg.includes('[')
-        ) {
+        if (arg.length > 2 && arg[0] === '-' && arg[1] !== '-' && !arg.includes('[')) {
           for (const flag of dangerFlags) {
             if (flag.length === 2 && arg.includes(flag[1]!)) {
               if (a[i + 1]?.includes('[')) {
@@ -2461,12 +2414,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // Fused form: `-vNAME` in one arg. Only short-option flags fuse
         // (getopt), so check -v/-a/-R. `[[` uses test_operator nodes only.
         for (const flag of dangerFlags) {
-          if (
-            flag.length === 2 &&
-            arg.startsWith(flag) &&
-            arg.length > 2 &&
-            arg.includes('[')
-          ) {
+          if (flag.length === 2 && arg.startsWith(flag) && arg.length > 2 && arg.includes('[')) {
             return {
               ok: false,
               reason: `'${name} ${flag}' (fused) operand contains array subscript — bash evaluates $(cmd) in subscripts`,
@@ -2598,13 +2546,12 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         if (/\bsystem\s*\(/.test(arg)) {
           return {
             ok: false,
-            reason:
-              'jq command contains system() function which executes arbitrary commands',
+            reason: 'jq command contains system() function which executes arbitrary commands',
           }
         }
       }
       if (
-        a.some(arg =>
+        a.some((arg) =>
           /^(?:-[fL](?:$|[^A-Za-z])|--(?:from-file|rawfile|slurpfile|library-path)(?:$|=))/.test(
             arg,
           ),
@@ -2631,19 +2578,13 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
       // does bypass function/alias lookup (the concern), so keep blocking it.
       if (name === 'command' && (a[1] === '-v' || a[1] === '-V')) {
         // fall through to remaining checks
-      } else if (
-        name === 'fc' &&
-        !a.slice(1).some(arg => /^-[^-]*[es]/.test(arg))
-      ) {
+      } else if (name === 'fc' && !a.slice(1).some((arg) => /^-[^-]*[es]/.test(arg))) {
         // `fc -l`, `fc -ln` list history — safe. `fc -e ed` invokes an
         // editor then executes. `fc -s [pat=rep]` RE-EXECUTES the last
         // matching command (optionally with substitution) — as dangerous
         // as eval. Block any short-opt containing `e` or `s`.
         // to avoid introducing FPs for `fc -l` (list history).
-      } else if (
-        name === 'compgen' &&
-        !a.slice(1).some(arg => /^-[^-]*[CFW]/.test(arg))
-      ) {
+      } else if (name === 'compgen' && !a.slice(1).some((arg) => /^-[^-]*[CFW]/.test(arg))) {
         // `compgen -c/-f/-v` only list completions — safe. `compgen -C cmd`
         // immediately executes cmd; `-F func` calls a shell function; `-W list`
         // word-expands its argument (including $(cmd) even from single-quoted

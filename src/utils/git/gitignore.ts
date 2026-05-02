@@ -20,18 +20,11 @@ import { logError } from '../log.js'
  * @param filePath The path to check (absolute or relative to cwd)
  * @param cwd The working directory to run git from
  */
-export async function isPathGitignored(
-  filePath: string,
-  cwd: string,
-): Promise<boolean> {
-  const { code } = await execFileNoThrowWithCwd(
-    'git',
-    ['check-ignore', filePath],
-    {
-      preserveOutputOnError: false,
-      cwd,
-    },
-  )
+export async function isPathGitignored(filePath: string, cwd: string): Promise<boolean> {
+  const { code } = await execFileNoThrowWithCwd('git', ['check-ignore', filePath], {
+    preserveOutputOnError: false,
+    cwd,
+  })
 
   return code === 0
 }
@@ -62,9 +55,7 @@ export async function addFileGlobRuleToGitignore(
     // First check if the pattern is already ignored by any gitignore file (including global)
     const gitignoreEntry = `**/${filename}`
     // For directory patterns (ending with /), check with a sample file inside
-    const testPath = filename.endsWith('/')
-      ? `${filename}sample-file.txt`
-      : filename
+    const testPath = filename.endsWith('/') ? `${filename}sample-file.txt` : filename
     if (await isPathGitignored(testPath, cwd)) {
       // File is already ignored by existing patterns (local or global)
       return

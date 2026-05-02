@@ -1,13 +1,13 @@
-import React from 'react';
+import React from 'react'
 type Props = {
   /**
    * 预渲染的 ANSI 行。每个元素必须恰好是一个终端行
    * （已由生产者按 `width` 换行），ANSI 转义码内联。
    */
-  lines: string[];
+  lines: string[]
   /** 生产者换行的列宽。作为固定叶子宽度传给 Yoga。 */
-  width: number;
-};
+  width: number
+}
 
 /**
  * 绕过 <Ansi> → React 树 → Yoga → 压缩 → 重新序列化的循环，
@@ -23,14 +23,11 @@ type Props = {
  * （宽度 × lines.length），并将拼接的字符串直接交给 output.write()，
  * 后者已按 '\n' 分割并将 ANSI 解析到屏幕缓冲区。
  */
-export function RawAnsi({
-  lines,
-  width
-}: Props) {
+export function RawAnsi({ lines, width }: Props) {
   if (lines.length === 0) {
-    return null;
+    return null
   }
-  const joinedText = lines.join("\n");
+  const joinedText = lines.join('\n')
   // @ts-ignore
-  return <ink-raw-ansi rawText={joinedText} rawWidth={width} rawHeight={lines.length} />;
+  return <ink-raw-ansi rawText={joinedText} rawWidth={width} rawHeight={lines.length} />
 }

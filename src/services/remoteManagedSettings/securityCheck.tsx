@@ -1,15 +1,19 @@
-import React from 'react';
-import { getIsInteractive } from '../../bootstrap/state.js';
-import { ManagedSettingsSecurityDialog } from '../../components/ManagedSettingsSecurityDialog/ManagedSettingsSecurityDialog.js';
-import { extractDangerousSettings, hasDangerousSettings, hasDangerousSettingsChanged } from '../../components/ManagedSettingsSecurityDialog/utils.js';
-import { render } from '../../ink.js';
-import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js';
-import { AppStateProvider } from '../../state/AppState.js';
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js';
-import { getBaseRenderOptions } from '../../utils/renderOptions.js';
-import type { SettingsJson } from '../../utils/settings/types.js';
-import { logEvent } from '../analytics/index.js';
-export type SecurityCheckResult = 'approved' | 'rejected' | 'no_check_needed';
+import React from 'react'
+import { getIsInteractive } from '../../bootstrap/state.js'
+import { ManagedSettingsSecurityDialog } from '../../components/ManagedSettingsSecurityDialog/ManagedSettingsSecurityDialog.js'
+import {
+  extractDangerousSettings,
+  hasDangerousSettings,
+  hasDangerousSettingsChanged,
+} from '../../components/ManagedSettingsSecurityDialog/utils.js'
+import { render } from '../../ink.js'
+import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
+import { AppStateProvider } from '../../state/AppState.js'
+import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
+import { getBaseRenderOptions } from '../../utils/renderOptions.js'
+import type { SettingsJson } from '../../utils/settings/types.js'
+import { logEvent } from '../analytics/index.js'
+export type SecurityCheckResult = 'approved' | 'rejected' | 'no_check_needed'
 
 /**
  * 检查新的远程托管设置是否包含需要用户批准的危险设置。
@@ -19,45 +23,53 @@ export type SecurityCheckResult = 'approved' | 'rejected' | 'no_check_needed';
  * @param newSettings 从 API 获取的新设置
  * @returns 用户接受返回 'approved'，拒绝返回 'rejected'，无危险变更返回 'no_check_needed'
  */
-export async function checkManagedSettingsSecurity(cachedSettings: SettingsJson | null, newSettings: SettingsJson | null): Promise<SecurityCheckResult> {
+export async function checkManagedSettingsSecurity(
+  cachedSettings: SettingsJson | null,
+  newSettings: SettingsJson | null,
+): Promise<SecurityCheckResult> {
   // 如果新设置没有危险设置，无需检查
   if (!newSettings || !hasDangerousSettings(extractDangerousSettings(newSettings))) {
-    return 'no_check_needed';
+    return 'no_check_needed'
   }
 
   // 如果危险设置未发生变化，无需检查
   if (!hasDangerousSettingsChanged(cachedSettings, newSettings)) {
-    return 'no_check_needed';
+    return 'no_check_needed'
   }
 
   // 非交互模式下跳过对话框（与信任对话框行为一致）
   if (!getIsInteractive()) {
-    return 'no_check_needed';
+    return 'no_check_needed'
   }
 
   // 记录对话框已显示
-  logEvent('zy_managed_settings_security_dialog_shown', {});
+  logEvent('zy_managed_settings_security_dialog_shown', {})
 
   // 显示阻塞对话框
-  return new Promise<SecurityCheckResult>(resolve => {
+  return new Promise<SecurityCheckResult>((resolve) => {
     void (async () => {
-      const {
-        unmount
-      } = await render(<AppStateProvider>
+      const { unmount } = await render(
+        <AppStateProvider>
           <KeybindingSetup>
-            <ManagedSettingsSecurityDialog settings={newSettings} onAccept={() => {
-            logEvent('zy_managed_settings_security_dialog_accepted', {});
-            unmount();
-            void resolve('approved');
-          }} onReject={() => {
-            logEvent('zy_managed_settings_security_dialog_rejected', {});
-            unmount();
-            void resolve('rejected');
-          }} />
+            <ManagedSettingsSecurityDialog
+              settings={newSettings}
+              onAccept={() => {
+                logEvent('zy_managed_settings_security_dialog_accepted', {})
+                unmount()
+                void resolve('approved')
+              }}
+              onReject={() => {
+                logEvent('zy_managed_settings_security_dialog_rejected', {})
+                unmount()
+                void resolve('rejected')
+              }}
+            />
           </KeybindingSetup>
-        </AppStateProvider>, getBaseRenderOptions(false));
-    })();
-  });
+        </AppStateProvider>,
+        getBaseRenderOptions(false),
+      )
+    })()
+  })
 }
 
 /**
@@ -66,8 +78,8 @@ export async function checkManagedSettingsSecurity(cachedSettings: SettingsJson 
  */
 export function handleSecurityCheckResult(result: SecurityCheckResult): boolean {
   if (result === 'rejected') {
-    gracefulShutdownSync(1);
-    return false;
+    gracefulShutdownSync(1)
+    return false
   }
-  return true;
+  return true
 }

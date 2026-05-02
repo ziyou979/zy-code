@@ -44,8 +44,8 @@ const extractMemoriesModule = feature('MEMORY')
   : null
 // @ts-ignore
 const jobClassifierModule = feature('TEMPLATES')
-  // @ts-ignore
-  ? (require('../jobs/classifier.js' as any) as typeof import('../jobs/classifier.js'))
+  ? // @ts-ignore
+    (require('../jobs/classifier.js' as any) as typeof import('../jobs/classifier.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -54,10 +54,7 @@ import type { QuerySource } from '../constants/querySource.js'
 import { executeAutoDream } from '../services/autoDream/autoDream.js'
 import { executePromptSuggestion } from '../services/PromptSuggestion/promptSuggestion.js'
 import { isBareMode, isEnvDefinedFalsy } from '../utils/envUtils.js'
-import {
-  createCacheSafeParams,
-  saveCacheSafeParams,
-} from '../utils/forkedAgent.js'
+import { createCacheSafeParams, saveCacheSafeParams } from '../utils/forkedAgent.js'
 
 type StopHookResult = {
   blockingErrors: Message[]
@@ -74,11 +71,7 @@ export async function* handleStopHooks(
   querySource: QuerySource,
   stopHookActive?: boolean,
 ): AsyncGenerator<
-  | StreamEvent
-  | RequestStartEvent
-  | Message
-  | TombstoneMessage
-  | ToolUseSummaryMessage,
+  StreamEvent | RequestStartEvent | Message | TombstoneMessage | ToolUseSummaryMessage,
   StopHookResult
 > {
   const hookStartTime = Date.now()
@@ -121,7 +114,7 @@ export async function* handleStopHooks(
     )
     const p = jobClassifierModule!
       .classifyAndWriteState(process.env.CLAUDE_JOB_DIR, turnAssistantMessages)
-      .catch(err => {
+      .catch((err) => {
         logForDebugging(`[job] classifier error: ${errorMessage(err)}`, {
           level: 'error',
         })
@@ -129,7 +122,7 @@ export async function* handleStopHooks(
     await Promise.race([
       p,
       // eslint-disable-next-line no-restricted-syntax -- sleep() has no .unref(); timer must not block exit
-      new Promise<void>(r => setTimeout(r, 60_000).unref()),
+      new Promise<void>((r) => setTimeout(r, 60_000).unref()),
     ])
   }
   // --bare / SIMPLE: skip background bookkeeping (prompt suggestion,
@@ -140,11 +133,7 @@ export async function* handleStopHooks(
     if (!isEnvDefinedFalsy(process.env.ZY_CODE_ENABLE_PROMPT_SUGGESTION)) {
       void executePromptSuggestion(stopHookContext)
     }
-    if (
-      feature('EXTRACT_MEMORIES') &&
-      !toolUseContext.agentId &&
-      isExtractModeActive()
-    ) {
+    if (feature('EXTRACT_MEMORIES') && !toolUseContext.agentId && isExtractModeActive()) {
       // Fire-and-forget in both interactive and non-interactive. For -p/SDK,
       // print.ts drains the in-flight promise after flushing the response
       // but before gracefulShutdownSync (see drainPendingExtraction).
@@ -165,9 +154,7 @@ export async function* handleStopHooks(
   // mid-turn. Subagents don't start CU sessions so this is a pure skip.
   if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
     try {
-      const { cleanupComputerUseAfterTurn } = await import(
-        '../utils/computerUse/cleanup.js'
-      )
+      const { cleanupComputerUseAfterTurn } = await import('../utils/computerUse/cleanup.js')
       await cleanupComputerUseAfterTurn(toolUseContext)
     } catch {
       // Failures are silent — this is dogfooding cleanup, not critical path
@@ -220,13 +207,10 @@ export async function* handleStopHooks(
           const attachment = (result.message as any).attachment
           if (
             'hookEvent' in attachment &&
-            (attachment.hookEvent === 'Stop' ||
-              attachment.hookEvent === 'SubagentStop')
+            (attachment.hookEvent === 'Stop' || attachment.hookEvent === 'SubagentStop')
           ) {
             if (attachment.type === 'hook_non_blocking_error') {
-              hookErrors.push(
-                attachment.stderr || `Exit code ${attachment.exitCode}`,
-              )
+              hookErrors.push(attachment.stderr || `Exit code ${attachment.exitCode}`)
               // Non-blocking errors always have output
               hasOutput = true
             } else if (attachment.type === 'hook_error_during_execution') {
@@ -245,12 +229,12 @@ export async function* handleStopHooks(
             // Hooks run in parallel; match by command + first unassigned entry.
             if ('durationMs' in attachment && 'command' in attachment) {
               const info = hookInfos.find(
-                i =>
+                (i) =>
                   (i as any).command === (attachment as any).command &&
                   (i as any).durationMs === undefined,
               )
               if (info) {
-                (info as any).durationMs = (attachment as any).durationMs
+                ;(info as any).durationMs = (attachment as any).durationMs
               }
             }
           }
@@ -311,11 +295,7 @@ export async function* handleStopHooks(
 
       // Send notification about errors (shown in verbose/transcript mode via ctrl+o)
       if (hookErrors.length > 0) {
-        const expandShortcut = getShortcutDisplay(
-          'app:toggleTranscript',
-          'Global',
-          'ctrl+o',
-        )
+        const expandShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
         toolUseContext.addNotification?.({
           key: 'stop-hook-error',
           text: `Stop hook error occurred \u00b7 ${expandShortcut} to see`,
@@ -348,7 +328,7 @@ export async function* handleStopHooks(
       const taskListId = getTaskListId()
       const tasks = await listTasks(taskListId)
       const inProgressTasks = tasks.filter(
-        t => t.status === 'in_progress' && t.owner === teammateName,
+        (t) => t.status === 'in_progress' && t.owner === teammateName,
       )
 
       for (const task of inProgressTasks) {
@@ -366,10 +346,7 @@ export async function* handleStopHooks(
 
         for await (const result of taskCompletedGenerator) {
           if (result.message) {
-            if (
-              (result.message as any).type === 'progress' &&
-              (result.message as any).toolUseID
-            ) {
+            if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
               teammateHookToolUseID = (result.message as any).toolUseID
             }
             yield result.message
@@ -385,8 +362,7 @@ export async function* handleStopHooks(
           // Match Stop hook behavior: allow preventContinuation/stopReason
           if (result.preventContinuation) {
             teammatePreventedContinuation = true
-            teammateStopReason =
-              result.stopReason || 'TaskCompleted hook prevented continuation'
+            teammateStopReason = result.stopReason || 'TaskCompleted hook prevented continuation'
             yield createAttachmentMessage({
               type: 'hook_stopped_continuation',
               message: teammateStopReason,
@@ -427,8 +403,7 @@ export async function* handleStopHooks(
         // Match Stop hook behavior: allow preventContinuation/stopReason
         if (result.preventContinuation) {
           teammatePreventedContinuation = true
-          teammateStopReason =
-            result.stopReason || 'TeammateIdle hook prevented continuation'
+          teammateStopReason = result.stopReason || 'TeammateIdle hook prevented continuation'
           yield createAttachmentMessage({
             type: 'hook_stopped_continuation',
             message: teammateStopReason,
@@ -466,10 +441,7 @@ export async function* handleStopHooks(
     })
     // Yield a system message that is not visible to the model for the user
     // to debug their hook.
-    yield createSystemMessage(
-      `Stop hook failed: ${errorMessage(error)}`,
-      'warning' as any,
-    )
+    yield createSystemMessage(`Stop hook failed: ${errorMessage(error)}`, 'warning' as any)
     return { blockingErrors: [], preventContinuation: false }
   }
 }

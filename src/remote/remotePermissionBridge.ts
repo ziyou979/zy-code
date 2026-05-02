@@ -59,8 +59,7 @@ export function createToolStub(toolName: string): Tool {
       return entries
         .slice(0, 3)
         .map(([key, value]) => {
-          const valueStr =
-            typeof value === 'string' ? value : jsonStringify(value)
+          const valueStr = typeof value === 'string' ? value : jsonStringify(value)
           return `${key}: ${valueStr}`
         })
         .join(', ')

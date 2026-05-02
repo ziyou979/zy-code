@@ -23,10 +23,7 @@ function getLockfile(): Lockfile {
   return _lockfile
 }
 
-export function lock(
-  file: string,
-  options?: LockOptions,
-): Promise<() => Promise<void>> {
+export function lock(file: string, options?: LockOptions): Promise<() => Promise<void>> {
   return getLockfile().lock(file, options)
 }
 

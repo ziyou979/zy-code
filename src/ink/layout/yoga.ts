@@ -245,15 +245,11 @@ export class YogaLayoutNode implements LayoutNode {
   }
 
   getDisplay(): LayoutDisplay {
-    return this.yoga.getDisplay() === Display.None
-      ? LayoutDisplay.None
-      : LayoutDisplay.Flex
+    return this.yoga.getDisplay() === Display.None ? LayoutDisplay.None : LayoutDisplay.Flex
   }
 
   setPositionType(type: LayoutPositionType): void {
-    this.yoga.setPositionType(
-      type === 'absolute' ? PositionType.Absolute : PositionType.Relative,
-    )
+    this.yoga.setPositionType(type === 'absolute' ? PositionType.Absolute : PositionType.Relative)
   }
 
   setPosition(edge: LayoutEdge, value: number): void {

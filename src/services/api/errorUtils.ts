@@ -40,9 +40,7 @@ export type ConnectionErrorDetails = {
  * Anthropic SDK 将底层错误包装在 `cause` 属性中。
  * 此函数遍历 cause 链以找到根错误码/消息。
  */
-export function extractConnectionErrorDetails(
-  error: unknown,
-): ConnectionErrorDetails | null {
+export function extractConnectionErrorDetails(error: unknown): ConnectionErrorDetails | null {
   if (!error || typeof error !== 'object') {
     return null
   }
@@ -53,11 +51,7 @@ export function extractConnectionErrorDetails(
   let depth = 0
 
   while (current && depth < maxDepth) {
-    if (
-      current instanceof Error &&
-      'code' in current &&
-      typeof current.code === 'string'
-    ) {
+    if (current instanceof Error && 'code' in current && typeof current.code === 'string') {
       const code = current.code
       const isSSLError = SSL_ERROR_CODES.has(code)
       return {
@@ -68,11 +62,7 @@ export function extractConnectionErrorDetails(
     }
 
     // 移动到链中的下一个 cause
-    if (
-      current instanceof Error &&
-      'cause' in current &&
-      current.cause !== current
-    ) {
+    if (current instanceof Error && 'cause' in current && current.cause !== current) {
       current = current.cause
       depth++
     } else {

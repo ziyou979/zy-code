@@ -6,15 +6,9 @@ import {
 import { parseAgentId } from '../../../utils/agentId.js'
 import { logForDebugging } from '../../../utils/debug.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
-import {
-  createShutdownRequestMessage,
-  writeToMailbox,
-} from '../../../utils/teammateMailbox.js'
+import { createShutdownRequestMessage, writeToMailbox } from '../../../utils/teammateMailbox.js'
 import { startInProcessTeammate } from '../inProcessRunner.js'
-import {
-  killInProcessTeammate,
-  spawnInProcessTeammate,
-} from '../spawnInProcess.js'
+import { killInProcessTeammate, spawnInProcessTeammate } from '../spawnInProcess.js'
 import type {
   TeammateExecutor,
   TeammateMessage,
@@ -71,14 +65,11 @@ export class InProcessBackend implements TeammateExecutor {
    */
   async spawn(config: TeammateSpawnConfig): Promise<TeammateSpawnResult> {
     if (!this.context) {
-      logForDebugging(
-        `[InProcessBackend] spawn() called without context for ${config.name}`,
-      )
+      logForDebugging(`[InProcessBackend] spawn() called without context for ${config.name}`)
       return {
         success: false,
         agentId: `${config.name}@${config.teamName}`,
-        error:
-          'InProcessBackend not initialized. Call setContext() before spawn().',
+        error: 'InProcessBackend not initialized. Call setContext() before spawn().',
       }
     }
 
@@ -96,12 +87,7 @@ export class InProcessBackend implements TeammateExecutor {
     )
 
     // If spawn succeeded, start the agent execution loop
-    if (
-      result.success &&
-      result.taskId &&
-      result.teammateContext &&
-      result.abortController
-    ) {
+    if (result.success && result.taskId && result.teammateContext && result.abortController) {
       // Start the agent loop in the background (fire-and-forget)
       // The prompt is passed through the task state and config
       startInProcessTeammate({
@@ -128,9 +114,7 @@ export class InProcessBackend implements TeammateExecutor {
         allowPermissionPrompts: config.allowPermissionPrompts,
       })
 
-      logForDebugging(
-        `[InProcessBackend] Started agent execution for ${result.agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] Started agent execution for ${result.agentId}`)
     }
 
     return {
@@ -157,9 +141,7 @@ export class InProcessBackend implements TeammateExecutor {
     const parsed = parseAgentId(agentId)
     if (!parsed) {
       logForDebugging(`[InProcessBackend] Invalid agentId format: ${agentId}`)
-      throw new Error(
-        `Invalid agentId format: ${agentId}. Expected format: agentName@teamName`,
-      )
+      throw new Error(`Invalid agentId format: ${agentId}. Expected format: agentName@teamName`)
     }
 
     const { agentName, teamName } = parsed
@@ -190,14 +172,10 @@ export class InProcessBackend implements TeammateExecutor {
    * exit via the shutdown flow - no external killPane() is needed.
    */
   async terminate(agentId: string, reason?: string): Promise<boolean> {
-    logForDebugging(
-      `[InProcessBackend] terminate() called for ${agentId}: ${reason}`,
-    )
+    logForDebugging(`[InProcessBackend] terminate() called for ${agentId}: ${reason}`)
 
     if (!this.context) {
-      logForDebugging(
-        `[InProcessBackend] terminate() failed: no context set for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] terminate() failed: no context set for ${agentId}`)
       return false
     }
 
@@ -206,17 +184,13 @@ export class InProcessBackend implements TeammateExecutor {
     const task = findTeammateTaskByAgentId(agentId, state.tasks)
 
     if (!task) {
-      logForDebugging(
-        `[InProcessBackend] terminate() failed: task not found for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] terminate() failed: task not found for ${agentId}`)
       return false
     }
 
     // Don't send another shutdown request if one is already pending
     if (task.shutdownRequested) {
-      logForDebugging(
-        `[InProcessBackend] terminate(): shutdown already requested for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] terminate(): shutdown already requested for ${agentId}`)
       return true
     }
 
@@ -245,9 +219,7 @@ export class InProcessBackend implements TeammateExecutor {
     // Mark the task as shutdown requested
     requestTeammateShutdown(task.id, this.context.setAppState)
 
-    logForDebugging(
-      `[InProcessBackend] terminate() sent shutdown request to ${agentId}`,
-    )
+    logForDebugging(`[InProcessBackend] terminate() sent shutdown request to ${agentId}`)
 
     return true
   }
@@ -262,9 +234,7 @@ export class InProcessBackend implements TeammateExecutor {
     logForDebugging(`[InProcessBackend] kill() called for ${agentId}`)
 
     if (!this.context) {
-      logForDebugging(
-        `[InProcessBackend] kill() failed: no context set for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] kill() failed: no context set for ${agentId}`)
       return false
     }
 
@@ -273,18 +243,14 @@ export class InProcessBackend implements TeammateExecutor {
     const task = findTeammateTaskByAgentId(agentId, state.tasks)
 
     if (!task) {
-      logForDebugging(
-        `[InProcessBackend] kill() failed: task not found for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] kill() failed: task not found for ${agentId}`)
       return false
     }
 
     // Kill the teammate via the existing helper function
     const killed = killInProcessTeammate(task.id, this.context.setAppState)
 
-    logForDebugging(
-      `[InProcessBackend] kill() ${killed ? 'succeeded' : 'failed'} for ${agentId}`,
-    )
+    logForDebugging(`[InProcessBackend] kill() ${killed ? 'succeeded' : 'failed'} for ${agentId}`)
 
     return killed
   }
@@ -299,9 +265,7 @@ export class InProcessBackend implements TeammateExecutor {
     logForDebugging(`[InProcessBackend] isActive() called for ${agentId}`)
 
     if (!this.context) {
-      logForDebugging(
-        `[InProcessBackend] isActive() failed: no context set for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] isActive() failed: no context set for ${agentId}`)
       return false
     }
 
@@ -310,9 +274,7 @@ export class InProcessBackend implements TeammateExecutor {
     const task = findTeammateTaskByAgentId(agentId, state.tasks)
 
     if (!task) {
-      logForDebugging(
-        `[InProcessBackend] isActive(): task not found for ${agentId}`,
-      )
+      logForDebugging(`[InProcessBackend] isActive(): task not found for ${agentId}`)
       return false
     }
 

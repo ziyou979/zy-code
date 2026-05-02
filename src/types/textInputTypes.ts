@@ -262,16 +262,9 @@ export type VimInputState = BaseInputState & {
 /**
  * Input modes for the prompt
  */
-export type PromptInputMode =
-  | 'bash'
-  | 'prompt'
-  | 'orphaned-permission'
-  | 'task-notification'
+export type PromptInputMode = 'bash' | 'prompt' | 'orphaned-permission' | 'task-notification'
 
-export type EditablePromptInputMode = Exclude<
-  PromptInputMode,
-  `${string}-notification`
->
+export type EditablePromptInputMode = Exclude<PromptInputMode, `${string}-notification`>
 
 /**
  * Queue priority levels. Same semantics in both normal and proactive mode.
@@ -377,7 +370,7 @@ export function getImagePasteIds(
   }
   const ids = Object.values(pastedContents)
     .filter(isValidImagePaste)
-    .map(c => c.id)
+    .map((c) => c.id)
   return ids.length > 0 ? ids : undefined
 }
 

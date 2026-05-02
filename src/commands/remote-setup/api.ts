@@ -50,10 +50,7 @@ export type ImportTokenError =
  */
 export async function importGithubToken(
   token: RedactedGithubToken,
-): Promise<
-  | { ok: true; result: ImportTokenResult }
-  | { ok: false; error: ImportTokenError }
-> {
+): Promise<{ ok: true; result: ImportTokenResult } | { ok: false; error: ImportTokenError }> {
   let accessToken: string, orgUUID: string
   try {
     ;({ accessToken, orgUUID } = await prepareApiRequest())

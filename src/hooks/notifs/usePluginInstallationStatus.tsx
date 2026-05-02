@@ -1,57 +1,60 @@
-import * as React from 'react';
-import { useEffect } from 'react';
-import { getIsRemoteMode } from '../../bootstrap/state.js';
-import { useNotifications } from '../../context/notifications.js';
-import { Text } from '../../ink.js';
-import { useAppState } from '../../state/AppState.js';
-import { logForDebugging } from '../../utils/debug.js';
-import { plural } from '../../utils/stringUtils.js';
+import * as React from 'react'
+import { useEffect } from 'react'
+import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { useNotifications } from '../../context/notifications.js'
+import { Text } from '../../ink.js'
+import { useAppState } from '../../state/AppState.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { plural } from '../../utils/stringUtils.js'
 export function usePluginInstallationStatus() {
-  const {
-    addNotification
-  } = useNotifications();
-  const installationStatus = useAppState((s) => s.plugins.installationStatus);
-  let config;
+  const { addNotification } = useNotifications()
+  const installationStatus = useAppState((s) => s.plugins.installationStatus)
+  let config
   if (!installationStatus) {
     config = {
       totalFailed: 0,
       failedMarketplacesCount: 0,
-      failedPluginsCount: 0
-    };
+      failedPluginsCount: 0,
+    }
   } else {
-    const failedMarketplaces = installationStatus.marketplaces.filter((m) => m.status === "failed");
-    const failedPlugins = installationStatus.plugins.filter((p) => p.status === "failed");
+    const failedMarketplaces = installationStatus.marketplaces.filter((m) => m.status === 'failed')
+    const failedPlugins = installationStatus.plugins.filter((p) => p.status === 'failed')
     config = {
       totalFailed: failedMarketplaces.length + failedPlugins.length,
       failedMarketplacesCount: failedMarketplaces.length,
-      failedPluginsCount: failedPlugins.length
-    };
+      failedPluginsCount: failedPlugins.length,
+    }
   }
-  const {
-    totalFailed,
-    failedMarketplacesCount,
-    failedPluginsCount
-  } = config;
+  const { totalFailed, failedMarketplacesCount, failedPluginsCount } = config
   useEffect(() => {
     if (getIsRemoteMode()) {
-      return;
+      return
     }
     if (!installationStatus) {
-      logForDebugging("No installation status to monitor");
-      return;
+      logForDebugging('No installation status to monitor')
+      return
     }
     if (totalFailed === 0) {
-      return;
+      return
     }
-    logForDebugging(`Plugin installation status: ${failedMarketplacesCount} failed marketplaces, ${failedPluginsCount} failed plugins`);
+    logForDebugging(
+      `Plugin installation status: ${failedMarketplacesCount} failed marketplaces, ${failedPluginsCount} failed plugins`,
+    )
     if (totalFailed === 0) {
-      return;
+      return
     }
-    logForDebugging(`Adding notification for ${totalFailed} failed installations`);
+    logForDebugging(`Adding notification for ${totalFailed} failed installations`)
     addNotification({
-      key: "plugin-install-failed",
-      jsx: <><Text color="error">{totalFailed} {plural(totalFailed, "plugin")} failed to install</Text><Text dimColor={true}> · /plugin for details</Text></>,
-      priority: "medium"
-    });
-  }, [addNotification, totalFailed, failedMarketplacesCount, failedPluginsCount]);
+      key: 'plugin-install-failed',
+      jsx: (
+        <>
+          <Text color="error">
+            {totalFailed} {plural(totalFailed, 'plugin')} failed to install
+          </Text>
+          <Text dimColor={true}> · /plugin for details</Text>
+        </>
+      ),
+      priority: 'medium',
+    })
+  }, [addNotification, totalFailed, failedMarketplacesCount, failedPluginsCount])
 }

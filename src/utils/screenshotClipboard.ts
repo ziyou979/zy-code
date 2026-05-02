@@ -43,9 +43,7 @@ export async function copyAnsiToClipboard(
   }
 }
 
-async function copyPngToClipboard(
-  pngPath: string,
-): Promise<{ success: boolean; message: string }> {
+async function copyPngToClipboard(pngPath: string): Promise<{ success: boolean; message: string }> {
   const platform = getPlatform()
 
   if (platform === 'macos') {
@@ -91,8 +89,7 @@ async function copyPngToClipboard(
 
     return {
       success: false,
-      message:
-        'Failed to copy to clipboard. Please install xclip or xsel: sudo apt install xclip',
+      message: 'Failed to copy to clipboard. Please install xclip or xsel: sudo apt install xclip',
     }
   }
 

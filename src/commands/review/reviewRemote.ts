@@ -84,9 +84,7 @@ export async function checkOverageGate(): Promise<OverageGate> {
   const monthlyLimit = extraUsage.monthly_limit
   const usedCredits = extraUsage.used_credits ?? 0
   const available =
-    monthlyLimit === null || monthlyLimit === undefined
-      ? Infinity
-      : monthlyLimit - usedCredits
+    monthlyLimit === null || monthlyLimit === undefined ? Infinity : monthlyLimit - usedCredits
 
   if (available < 10) {
     logEvent('zy_review_overage_low_balance', { available })
@@ -128,16 +126,12 @@ export async function launchRemoteReview(
   // consume at session creation routes billing: first N zero-rate, then
   // anthropic:cccr org-service-key (overage-only).
   if (!eligibility.eligible) {
-    const blockers = (eligibility as any).errors.filter(
-      e => e.type !== 'no_remote_environment',
-    )
+    const blockers = (eligibility as any).errors.filter((e) => e.type !== 'no_remote_environment')
     if (blockers.length > 0) {
       logEvent('zy_review_remote_precondition_failed', {
         precondition_errors: blockers
-          .map(e => e.type)
-          .join(
-            ',',
-          ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          .map((e) => e.type)
+          .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       const reasons = blockers.map(formatPreconditionError).join('\n')
       return [
@@ -166,10 +160,10 @@ export async function launchRemoteReview(
   // total_wallclock must stay below RemoteAgentTask's 30min poll timeout
   // with headroom for finalization (~3min synthesis). Per-field guards
   // match autoDream.ts — GB cache can return stale wrong-type values.
-  const raw = getFeatureValue_CACHED_MAY_BE_STALE<Record<
-    string,
-    unknown
-  > | null>('zy_review_bughunter_config', null)
+  const raw = getFeatureValue_CACHED_MAY_BE_STALE<Record<string, unknown> | null>(
+    'zy_review_bughunter_config',
+    null,
+  )
   const posInt = (v: unknown, fallback: number, max?: number): number => {
     if (typeof v !== 'number' || !Number.isFinite(v)) return fallback
     const n = Math.floor(v)
@@ -183,12 +177,8 @@ export async function launchRemoteReview(
     BUGHUNTER_DRY_RUN: '1',
     BUGHUNTER_FLEET_SIZE: String(posInt(raw?.fleet_size, 5, 20)),
     BUGHUNTER_MAX_DURATION: String(posInt(raw?.max_duration_minutes, 10, 25)),
-    BUGHUNTER_AGENT_TIMEOUT: String(
-      posInt(raw?.agent_timeout_seconds, 600, 1800),
-    ),
-    BUGHUNTER_TOTAL_WALLCLOCK: String(
-      posInt(raw?.total_wallclock_minutes, 22, 27),
-    ),
+    BUGHUNTER_AGENT_TIMEOUT: String(posInt(raw?.agent_timeout_seconds, 600, 1800)),
+    BUGHUNTER_TOTAL_WALLCLOCK: String(posInt(raw?.total_wallclock_minutes, 22, 27)),
     ...(process.env.BUGHUNTER_DEV_BUNDLE_B64 && {
       BUGHUNTER_DEV_BUNDLE_B64: process.env.BUGHUNTER_DEV_BUNDLE_B64,
     }),

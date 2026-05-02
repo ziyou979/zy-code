@@ -28,19 +28,12 @@ import { createChildAbortController } from './abortController.js'
 import { logForDebugging } from './debug.js'
 import { cloneFileStateCache } from './fileStateCache.js'
 import type { REPLHookContext } from './hooks/postSamplingHooks.js'
-import {
-  createUserMessage,
-  extractTextContent,
-  getLastAssistantMessage,
-} from './messages.js'
+import { createUserMessage, extractTextContent, getLastAssistantMessage } from './messages.js'
 import { createDenialTrackingState } from './permissions/denialTracking.js'
 import { parseToolListFromCLI } from './permissions/permissionSetup.js'
 import { recordSidechainTranscript } from './sessionStorage.js'
 import type { SystemPrompt } from './systemPromptType.js'
-import {
-  type ContentReplacementState,
-  cloneContentReplacementState,
-} from './toolResultStorage.js'
+import { type ContentReplacementState, cloneContentReplacementState } from './toolResultStorage.js'
 import { createAgentId } from './uuid.js'
 
 /**
@@ -128,9 +121,7 @@ export type ForkedAgentResult = {
  *
  * @param context - 来自后采样钩子的 REPLHookContext
  */
-export function createCacheSafeParams(
-  context: REPLHookContext,
-): CacheSafeParams {
+export function createCacheSafeParams(context: REPLHookContext): CacheSafeParams {
   return {
     systemPrompt: context.systemPrompt,
     userContext: context.userContext,
@@ -159,8 +150,7 @@ export function createGetAppStateWithAllowedTools(
           ...appState.toolPermissionContext.alwaysAllowRules,
           command: [
             ...new Set([
-              ...(appState.toolPermissionContext.alwaysAllowRules.command ||
-                []),
+              ...(appState.toolPermissionContext.alwaysAllowRules.command || []),
               ...allowedTools,
             ]),
           ],
@@ -196,24 +186,21 @@ export async function prepareForkedCommandContext(
   // 获取已替换 $ARGUMENTS 的技能内容
   const skillPrompt = await command.getPromptForCommand(args, context)
   const skillContent = skillPrompt
-    .map(block => (block.type === 'text' ? block.text : ''))
+    .map((block) => (block.type === 'text' ? block.text : ''))
     .join('\n')
 
   // 解析并准备允许的工具
   const allowedTools = parseToolListFromCLI(command.allowedTools ?? [])
 
   // 创建带有允许工具的修改后的上下文
-  const modifiedGetAppState = createGetAppStateWithAllowedTools(
-    context.getAppState,
-    allowedTools,
-  )
+  const modifiedGetAppState = createGetAppStateWithAllowedTools(context.getAppState, allowedTools)
 
   // 如果指定了 command.agent 则使用，否则使用 'general-purpose'
   const agentTypeName = command.agent ?? 'general-purpose'
   const agents = context.options.agentDefinitions.activeAgents
   const baseAgent =
-    agents.find(a => a.agentType === agentTypeName) ??
-    agents.find(a => a.agentType === 'general-purpose') ??
+    agents.find((a) => a.agentType === agentTypeName) ??
+    agents.find((a) => a.agentType === 'general-purpose') ??
     agents[0]
 
   if (!baseAgent) {
@@ -241,10 +228,7 @@ export function extractResultText(
   const lastAssistantMessage = getLastAssistantMessage(agentMessages)
   if (!lastAssistantMessage) return defaultText
 
-  const textContent = extractTextContent(
-    lastAssistantMessage.message.content,
-    '\n',
-  )
+  const textContent = extractTextContent(lastAssistantMessage.message.content, '\n')
 
   return textContent || defaultText
 }
@@ -376,9 +360,7 @@ export function createSubagentContext(
   return {
     // 可变状态 - 默认克隆以保持隔离
     // 如果提供了 overrides.readFileState 则克隆它，否则从父级克隆
-    readFileState: cloneFileStateCache(
-      overrides?.readFileState ?? parentContext.readFileState,
-    ),
+    readFileState: cloneFileStateCache(overrides?.readFileState ?? parentContext.readFileState),
     nestedMemoryAttachmentTriggers: new Set<string>(),
     loadedNestedMemoryPaths: new Set<string>(),
     dynamicSkillDirTriggers: new Set<string>(),
@@ -407,14 +389,11 @@ export function createSubagentContext(
 
     // AppState 访问
     getAppState,
-    setAppState: overrides?.shareSetAppState
-      ? parentContext.setAppState
-      : () => {},
+    setAppState: overrides?.shareSetAppState ? parentContext.setAppState : () => {},
     // 任务注册/终止必须始终到达根存储，即使
     // setAppState 是无操作——否则异步代理的后台 bash 任务
     // 永远不会被注册和终止（PPID=1 僵尸进程）。
-    setAppStateForTasks:
-      parentContext.setAppStateForTasks ?? parentContext.setAppState,
+    setAppStateForTasks: parentContext.setAppStateForTasks ?? parentContext.setAppState,
     // 异步子代理的 setAppState 为无操作时，需要本地的拒绝跟踪状态，
     // 以便拒绝计数器在重试时能够正确累积。
     localDenialTracking: overrides?.shareSetAppState
@@ -452,8 +431,7 @@ export function createSubagentContext(
     },
     fileReadingLimits: parentContext.fileReadingLimits,
     userModified: parentContext.userModified,
-    criticalSystemReminder_EXPERIMENTAL:
-      overrides?.criticalSystemReminder_EXPERIMENTAL,
+    criticalSystemReminder_EXPERIMENTAL: overrides?.criticalSystemReminder_EXPERIMENTAL,
     requireCanUseTool: overrides?.requireCanUseTool,
   }
 }
@@ -500,19 +478,11 @@ export async function runForkedAgent({
   const outputMessages: Message[] = []
   let totalUsage: NonNullableUsage = { ...EMPTY_USAGE }
 
-  const {
-    systemPrompt,
-    userContext,
-    systemContext,
-    toolUseContext,
-    forkContextMessages,
-  } = cacheSafeParams
+  const { systemPrompt, userContext, systemContext, toolUseContext, forkContextMessages } =
+    cacheSafeParams
 
   // 创建隔离上下文以防止修改父级状态
-  const isolatedToolUseContext = createSubagentContext(
-    toolUseContext,
-    overrides,
-  )
+  const isolatedToolUseContext = createSubagentContext(toolUseContext, overrides)
 
   // 此处不要过滤 incompleteToolCalls——它会在部分工具批次时丢弃整个 assistant，
   // 导致配对的 tool_result 成为孤儿（API 400）。悬空的 tool_uses 会在下游
@@ -525,16 +495,12 @@ export async function runForkedAgent({
   const agentId = skipTranscript ? undefined : createAgentId(forkLabel)
   let lastRecordedUuid: UUID | null = null
   if (agentId) {
-    await recordSidechainTranscript(initialMessages, agentId).catch(err =>
-      logForDebugging(
-        `Forked agent [${forkLabel}] failed to record initial transcript: ${err}`,
-      ),
+    await recordSidechainTranscript(initialMessages, agentId).catch((err) =>
+      logForDebugging(`Forked agent [${forkLabel}] failed to record initial transcript: ${err}`),
     )
     // 跟踪最后记录的消息 UUID 用于父级链连续性
     lastRecordedUuid =
-      initialMessages.length > 0
-        ? (initialMessages[initialMessages.length - 1]!.uuid as any)
-        : null
+      initialMessages.length > 0 ? (initialMessages[initialMessages.length - 1]!.uuid as any) : null
   }
 
   // 使用隔离上下文运行查询循环（保留缓存安全参数）
@@ -553,11 +519,7 @@ export async function runForkedAgent({
     })) {
       // 从 message_delta 流事件中提取真实用量（每次 API 调用的最终用量）
       if (message.type === 'stream_event') {
-        if (
-          'event' in message &&
-          message.event?.type === 'message_delta' &&
-          message.event.usage
-        ) {
+        if ('event' in message && message.event?.type === 'message_delta' && message.event.usage) {
           const turnUsage = updateUsage({ ...EMPTY_USAGE }, message.event.usage as any)
           totalUsage = accumulateUsage(totalUsage, turnUsage)
         }
@@ -567,26 +529,16 @@ export async function runForkedAgent({
         continue
       }
 
-      logForDebugging(
-        `Forked agent [${forkLabel}] received message: type=${message.type}`,
-      )
+      logForDebugging(`Forked agent [${forkLabel}] received message: type=${message.type}`)
 
       outputMessages.push(message as Message)
       onMessage?.(message as Message)
 
       // 记录可记录消息类型的转录（与 runAgent.ts 相同的模式）
       const msg = message as Message
-      if (
-        agentId &&
-        (msg.type === 'assistant' ||
-          msg.type === 'user' ||
-          msg.type === 'progress')
-      ) {
-        await recordSidechainTranscript([msg], agentId, lastRecordedUuid).catch(
-          err =>
-            logForDebugging(
-              `Forked agent [${forkLabel}] failed to record transcript: ${err}`,
-            ),
+      if (agentId && (msg.type === 'assistant' || msg.type === 'user' || msg.type === 'progress')) {
+        await recordSidechainTranscript([msg], agentId, lastRecordedUuid).catch((err) =>
+          logForDebugging(`Forked agent [${forkLabel}] failed to record transcript: ${err}`),
         )
         if (msg.type !== 'progress') {
           lastRecordedUuid = msg.uuid as any
@@ -601,7 +553,7 @@ export async function runForkedAgent({
   }
 
   logForDebugging(
-    `Forked agent [${forkLabel}] finished: ${outputMessages.length} messages, types=[${outputMessages.map(m => m.type).join(', ')}], totalUsage: input=${totalUsage.inputTokens} output=${totalUsage.outputTokens} cacheRead=${totalUsage.cacheReadInputTokens} cacheCreate=${totalUsage.cacheCreationInputTokens}`,
+    `Forked agent [${forkLabel}] finished: ${outputMessages.length} messages, types=[${outputMessages.map((m) => m.type).join(', ')}], totalUsage: input=${totalUsage.inputTokens} output=${totalUsage.outputTokens} cacheRead=${totalUsage.cacheReadInputTokens} cacheCreate=${totalUsage.cacheCreationInputTokens}`,
   )
 
   const durationMs = Date.now() - startTime
@@ -642,20 +594,13 @@ function logForkAgentQueryEvent({
 }): void {
   // 计算缓存命中率
   const totalInputTokens =
-    totalUsage.inputTokens +
-    totalUsage.cacheCreationInputTokens +
-    totalUsage.cacheReadInputTokens
-  const cacheHitRate =
-    totalInputTokens > 0
-      ? totalUsage.cacheReadInputTokens / totalInputTokens
-      : 0
+    totalUsage.inputTokens + totalUsage.cacheCreationInputTokens + totalUsage.cacheReadInputTokens
+  const cacheHitRate = totalInputTokens > 0 ? totalUsage.cacheReadInputTokens / totalInputTokens : 0
 
   logEvent('zy_fork_agent_query', {
     // 元数据
-    forkLabel:
-      forkLabel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    querySource:
-      querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    forkLabel: forkLabel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    querySource: querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     durationMs,
     messageCount,
 
@@ -664,12 +609,10 @@ function logForkAgentQueryEvent({
     outputTokens: totalUsage.outputTokens,
     cacheReadInputTokens: totalUsage.cacheReadInputTokens,
     cacheCreationInputTokens: totalUsage.cacheCreationInputTokens,
-    serviceTier:
-      (totalUsage as any).service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    cacheCreationEphemeral1hTokens:
-      (totalUsage as any).cache_creation?.ephemeral_1h_input_tokens,
-    cacheCreationEphemeral5mTokens:
-      (totalUsage as any).cache_creation?.ephemeral_5m_input_tokens,
+    serviceTier: (totalUsage as any)
+      .service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    cacheCreationEphemeral1hTokens: (totalUsage as any).cache_creation?.ephemeral_1h_input_tokens,
+    cacheCreationEphemeral5mTokens: (totalUsage as any).cache_creation?.ephemeral_5m_input_tokens,
 
     // 派生指标
     cacheHitRate,

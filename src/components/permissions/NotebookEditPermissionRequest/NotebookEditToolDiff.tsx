@@ -1,106 +1,165 @@
-import { relative } from 'path';
-import * as React from 'react';
-import { Suspense, use } from 'react';
-import { Box, NoSelect, Text } from '../../../ink.js';
-import type { NotebookCellType, NotebookContent } from '../../../types/notebook.js';
-import { intersperse } from '../../../utils/array.js';
-import { getCwd } from '../../../utils/cwd.js';
-import { getPatchForDisplay } from '../../../utils/diff.js';
-import { getFsImplementation } from '../../../utils/fsOperations.js';
-import { safeParseJSON } from '../../../utils/json.js';
-import { parseCellId } from '../../../utils/notebook.js';
-import { HighlightedCode } from '../../HighlightedCode.js';
-import { StructuredDiff } from '../../StructuredDiff.js';
+import { relative } from 'path'
+import * as React from 'react'
+import { Suspense, use } from 'react'
+import { Box, NoSelect, Text } from '../../../ink.js'
+import type { NotebookCellType, NotebookContent } from '../../../types/notebook.js'
+import { intersperse } from '../../../utils/array.js'
+import { getCwd } from '../../../utils/cwd.js'
+import { getPatchForDisplay } from '../../../utils/diff.js'
+import { getFsImplementation } from '../../../utils/fsOperations.js'
+import { safeParseJSON } from '../../../utils/json.js'
+import { parseCellId } from '../../../utils/notebook.js'
+import { HighlightedCode } from '../../HighlightedCode.js'
+import { StructuredDiff } from '../../StructuredDiff.js'
 type Props = {
-  notebook_path: string;
-  cell_id: string | undefined;
-  new_source: string;
-  cell_type?: NotebookCellType;
-  edit_mode?: string;
-  verbose: boolean;
-  width: number;
-};
+  notebook_path: string
+  cell_id: string | undefined
+  new_source: string
+  cell_type?: NotebookCellType
+  edit_mode?: string
+  verbose: boolean
+  width: number
+}
 type InnerProps = {
-  notebook_path: string;
-  cell_id: string | undefined;
-  new_source: string;
-  cell_type?: NotebookCellType;
-  edit_mode?: string;
-  verbose: boolean;
-  width: number;
-  promise: Promise<NotebookContent | null>;
-};
+  notebook_path: string
+  cell_id: string | undefined
+  new_source: string
+  cell_type?: NotebookCellType
+  edit_mode?: string
+  verbose: boolean
+  width: number
+  promise: Promise<NotebookContent | null>
+}
 export function NotebookEditToolDiff(props) {
-  const notebookDataPromise = getFsImplementation().readFile(props.notebook_path, {
-    encoding: "utf-8"
-  }).then(content => safeParseJSON(content) as NotebookContent | null).catch(() => null);
-  return <Suspense fallback={null}><NotebookEditToolDiffInner {...props} promise={notebookDataPromise} /></Suspense>;
+  const notebookDataPromise = getFsImplementation()
+    .readFile(props.notebook_path, {
+      encoding: 'utf-8',
+    })
+    .then((content) => safeParseJSON(content) as NotebookContent | null)
+    .catch(() => null)
+  return (
+    <Suspense fallback={null}>
+      <NotebookEditToolDiffInner {...props} promise={notebookDataPromise} />
+    </Suspense>
+  )
 }
 function NotebookEditToolDiffInner({
   notebook_path,
   cell_id,
   new_source,
   cell_type,
-  edit_mode = "replace",
+  edit_mode = 'replace',
   verbose,
   width,
-  promise
+  promise,
 }: InnerProps) {
-  const notebookData = use(promise);
-  let oldSource;
+  const notebookData = use(promise)
+  let oldSource
   if (!notebookData || !cell_id) {
-    oldSource = "";
+    oldSource = ''
   } else {
-    const cellIndex = parseCellId(cell_id);
+    const cellIndex = parseCellId(cell_id)
     if (cellIndex !== undefined) {
       if (notebookData.cells[cellIndex]) {
-        const source = notebookData.cells[cellIndex].source;
-        oldSource = Array.isArray(source) ? source.join("") : source;
+        const source = notebookData.cells[cellIndex].source
+        oldSource = Array.isArray(source) ? source.join('') : source
       } else {
-        oldSource = "";
+        oldSource = ''
       }
     } else {
-      const cell_0 = notebookData.cells.find(cell => cell.id === cell_id);
+      const cell_0 = notebookData.cells.find((cell) => cell.id === cell_id)
       if (!cell_0) {
-        oldSource = "";
+        oldSource = ''
       } else {
-        oldSource = Array.isArray(cell_0.source) ? cell_0.source.join("") : cell_0.source;
+        oldSource = Array.isArray(cell_0.source) ? cell_0.source.join('') : cell_0.source
       }
     }
   }
-  let hunks;
-  if (!notebookData || edit_mode === "insert" || edit_mode === "delete") {
-    hunks = null;
+  let hunks
+  if (!notebookData || edit_mode === 'insert' || edit_mode === 'delete') {
+    hunks = null
   } else {
     hunks = getPatchForDisplay({
       filePath: notebook_path,
       fileContents: oldSource,
-      edits: [{
-        old_string: oldSource,
-        new_string: new_source,
-        replace_all: false
-      }],
-      ignoreWhitespace: false
-    });
+      edits: [
+        {
+          old_string: oldSource,
+          new_string: new_source,
+          replace_all: false,
+        },
+      ],
+      ignoreWhitespace: false,
+    })
   }
-  let editTypeDescription;
+  let editTypeDescription
   switch (edit_mode) {
-    case "insert":
-      {
-        editTypeDescription = "Insert new cell";
-        break;
-      }
-    case "delete":
-      {
-        editTypeDescription = "Delete cell";
-        break;
-      }
-    default:
-      {
-        editTypeDescription = "Replace cell contents";
-      }
+    case 'insert': {
+      editTypeDescription = 'Insert new cell'
+      break
+    }
+    case 'delete': {
+      editTypeDescription = 'Delete cell'
+      break
+    }
+    default: {
+      editTypeDescription = 'Replace cell contents'
+    }
   }
-  const t4 = verbose ? notebook_path : relative(getCwd(), notebook_path);
-  const t9 = edit_mode === "delete" ? <Box flexDirection="column" paddingLeft={2}><HighlightedCode code={oldSource} filePath={notebook_path} /></Box> : edit_mode === "insert" ? <Box flexDirection="column" paddingLeft={2}><HighlightedCode code={new_source} filePath={cell_type === "markdown" ? "file.md" : notebook_path} /></Box> : hunks ? intersperse(hunks.map(_ => <StructuredDiff key={_.newStart} patch={_} dim={false} width={width} filePath={notebook_path} firstLine={new_source.split("\n")[0] ?? null} fileContent={oldSource} />), i => <NoSelect fromLeftEdge={true} key={`ellipsis-${i}`}><Text dimColor={true}>...</Text></NoSelect>) : <HighlightedCode code={new_source} filePath={cell_type === "markdown" ? "file.md" : notebook_path} />;
-  return <Box flexDirection="column"><Box borderStyle="round" flexDirection="column" paddingX={1}>{<Box paddingBottom={1} flexDirection="column">{<Text bold={true}>{t4}</Text>}{<Text dimColor={true}>{editTypeDescription} for cell {cell_id}{cell_type ? ` (${cell_type})` : ""}</Text>}</Box>}{t9}</Box></Box>;
+  const t4 = verbose ? notebook_path : relative(getCwd(), notebook_path)
+  const t9 =
+    edit_mode === 'delete' ? (
+      <Box flexDirection="column" paddingLeft={2}>
+        <HighlightedCode code={oldSource} filePath={notebook_path} />
+      </Box>
+    ) : edit_mode === 'insert' ? (
+      <Box flexDirection="column" paddingLeft={2}>
+        <HighlightedCode
+          code={new_source}
+          filePath={cell_type === 'markdown' ? 'file.md' : notebook_path}
+        />
+      </Box>
+    ) : hunks ? (
+      intersperse(
+        hunks.map((_) => (
+          <StructuredDiff
+            key={_.newStart}
+            patch={_}
+            dim={false}
+            width={width}
+            filePath={notebook_path}
+            firstLine={new_source.split('\n')[0] ?? null}
+            fileContent={oldSource}
+          />
+        )),
+        (i) => (
+          <NoSelect fromLeftEdge={true} key={`ellipsis-${i}`}>
+            <Text dimColor={true}>...</Text>
+          </NoSelect>
+        ),
+      )
+    ) : (
+      <HighlightedCode
+        code={new_source}
+        filePath={cell_type === 'markdown' ? 'file.md' : notebook_path}
+      />
+    )
+  return (
+    <Box flexDirection="column">
+      <Box borderStyle="round" flexDirection="column" paddingX={1}>
+        {
+          <Box paddingBottom={1} flexDirection="column">
+            {<Text bold={true}>{t4}</Text>}
+            {
+              <Text dimColor={true}>
+                {editTypeDescription} for cell {cell_id}
+                {cell_type ? ` (${cell_type})` : ''}
+              </Text>
+            }
+          </Box>
+        }
+        {t9}
+      </Box>
+    </Box>
+  )
 }

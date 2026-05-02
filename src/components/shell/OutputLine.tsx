@@ -1,78 +1,74 @@
-import * as React from 'react';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { Ansi, Text } from '../../ink.js';
-import { createHyperlink } from '../../utils/hyperlink.js';
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js';
-import { renderTruncatedContent } from '../../utils/terminal.js';
-import { MessageResponse } from '../MessageResponse.js';
-import { InVirtualListContext } from '../messageActions.js';
-import { useExpandShellOutput } from './ExpandShellOutputContext.js';
+import * as React from 'react'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { Ansi, Text } from '../../ink.js'
+import { createHyperlink } from '../../utils/hyperlink.js'
+import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { renderTruncatedContent } from '../../utils/terminal.js'
+import { MessageResponse } from '../MessageResponse.js'
+import { InVirtualListContext } from '../messageActions.js'
+import { useExpandShellOutput } from './ExpandShellOutputContext.js'
 export function tryFormatJson(line: string): string {
   try {
-    const parsed = jsonParse(line);
-    const stringified = jsonStringify(parsed);
+    const parsed = jsonParse(line)
+    const stringified = jsonStringify(parsed)
 
     // 检查 JSON 往返过程中是否丢失精度
     // 当大整数超过 Number.MAX_SAFE_INTEGER 时会发生这种情况
     // 我们通过移除空白和不必要的转义（\/ 在 JSON 中有效但可选）来归一化两个字符串进行比较
-    const normalizedOriginal = line.replace(/\\\//g, '/').replace(/\s+/g, '');
-    const normalizedStringified = stringified.replace(/\s+/g, '');
+    const normalizedOriginal = line.replace(/\\\//g, '/').replace(/\s+/g, '')
+    const normalizedStringified = stringified.replace(/\s+/g, '')
     if (normalizedOriginal !== normalizedStringified) {
       // 检测到精度损失——返回未格式化的原始行
-      return line;
+      return line
     }
-    return jsonStringify(parsed, null, 2);
+    return jsonStringify(parsed, null, 2)
   } catch {
-    return line;
+    return line
   }
 }
-const MAX_JSON_FORMAT_LENGTH = 10_000;
+const MAX_JSON_FORMAT_LENGTH = 10_000
 export function tryJsonFormatContent(content: string): string {
   if (content.length > MAX_JSON_FORMAT_LENGTH) {
-    return content;
+    return content
   }
-  const allLines = content.split('\n');
-  return allLines.map(tryFormatJson).join('\n');
+  const allLines = content.split('\n')
+  return allLines.map(tryFormatJson).join('\n')
 }
 
 // 匹配 JSON 字符串值中的 http(s) URL。保守：无引号、
 // 无空白、无尾随逗号/大括号等 JSON 结构。
-const URL_IN_JSON = /https?:\/\/[^\s"'<>\\]+/g;
+const URL_IN_JSON = /https?:\/\/[^\s"'<>\\]+/g
 export function linkifyUrlsInText(content: string): string {
-  return content.replace(URL_IN_JSON, url => createHyperlink(url));
+  return content.replace(URL_IN_JSON, (url) => createHyperlink(url))
 }
 type OutputLineProps = {
-  content: string;
-  verbose: boolean;
-  isError?: boolean;
-  isWarning?: boolean;
-  linkifyUrls?: boolean;
-};
-export function OutputLine({
-  content,
-  verbose,
-  isError,
-  isWarning,
-  linkifyUrls
-}: OutputLineProps) {
-  const {
-    columns
-  } = useTerminalSize();
-  const expandShellOutput = useExpandShellOutput();
-  const inVirtualList = React.useContext(InVirtualListContext);
-  const shouldShowFull = verbose || expandShellOutput;
-  let formattedContent;
-  let formatted = tryJsonFormatContent(content);
+  content: string
+  verbose: boolean
+  isError?: boolean
+  isWarning?: boolean
+  linkifyUrls?: boolean
+}
+export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }: OutputLineProps) {
+  const { columns } = useTerminalSize()
+  const expandShellOutput = useExpandShellOutput()
+  const inVirtualList = React.useContext(InVirtualListContext)
+  const shouldShowFull = verbose || expandShellOutput
+  let formattedContent
+  let formatted = tryJsonFormatContent(content)
   if (linkifyUrls) {
-    formatted = linkifyUrlsInText(formatted);
+    formatted = linkifyUrlsInText(formatted)
   }
   if (shouldShowFull) {
-    formattedContent = stripUnderlineAnsi(formatted);
+    formattedContent = stripUnderlineAnsi(formatted)
   } else {
-    formattedContent = stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList));
+    formattedContent = stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   }
-  const color = isError ? "error" : isWarning ? "warning" : undefined;
-  return <MessageResponse><Text color={color}>{<Ansi>{formattedContent}</Ansi>}</Text></MessageResponse>;
+  const color = isError ? 'error' : isWarning ? 'warning' : undefined
+  return (
+    <MessageResponse>
+      <Text color={color}>{<Ansi>{formattedContent}</Ansi>}</Text>
+    </MessageResponse>
+  )
 }
 
 /**
@@ -84,6 +80,8 @@ export function OutputLine({
  */
 export function stripUnderlineAnsi(content: string): string {
   return content.replace(
-  // eslint-disable-next-line no-control-regex
-  /\u001b\[([0-9]+;)*4(;[0-9]+)*m|\u001b\[4(;[0-9]+)*m|\u001b\[([0-9]+;)*4m/g, '');
+    // eslint-disable-next-line no-control-regex
+    /\u001b\[([0-9]+;)*4(;[0-9]+)*m|\u001b\[4(;[0-9]+)*m|\u001b\[([0-9]+;)*4m/g,
+    '',
+  )
 }

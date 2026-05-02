@@ -5,8 +5,7 @@ const thinkback = {
   type: 'local-jsx',
   name: 'think-back',
   description: 'Your 2025 ZY Code Year in Review',
-  isEnabled: () =>
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_thinkback'),
+  isEnabled: () => checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_thinkback'),
   load: () => import('./thinkback.js'),
 } satisfies Command
 

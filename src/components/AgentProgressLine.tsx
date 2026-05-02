@@ -1,25 +1,25 @@
-import * as React from 'react';
-import { tSync } from '../i18n/index.js';
-import { Box, Text } from '../ink.js';
-import { formatNumber } from '../utils/format.js';
-import type { Theme } from '../utils/theme.js';
+import * as React from 'react'
+import { tSync } from '../i18n/index.js'
+import { Box, Text } from '../ink.js'
+import { formatNumber } from '../utils/format.js'
+import type { Theme } from '../utils/theme.js'
 type Props = {
-  agentType: string;
-  description?: string;
-  name?: string;
-  descriptionColor?: keyof Theme;
-  taskDescription?: string;
-  toolUseCount: number;
-  tokens: number | null;
-  color?: keyof Theme;
-  isLast: boolean;
-  isResolved: boolean;
-  isError: boolean;
-  isAsync?: boolean;
-  shouldAnimate: boolean;
-  lastToolInfo?: string | null;
-  hideType?: boolean;
-};
+  agentType: string
+  description?: string
+  name?: string
+  descriptionColor?: keyof Theme
+  taskDescription?: string
+  toolUseCount: number
+  tokens: number | null
+  color?: keyof Theme
+  isLast: boolean
+  isResolved: boolean
+  isError: boolean
+  isAsync?: boolean
+  shouldAnimate: boolean
+  lastToolInfo?: string | null
+  hideType?: boolean
+}
 export function AgentProgressLine({
   agentType,
   description,
@@ -33,18 +33,76 @@ export function AgentProgressLine({
   isResolved,
   isAsync = false,
   lastToolInfo,
-  hideType = false
+  hideType = false,
 }: Props) {
-  const treeChar = isLast ? "\u2514\u2500" : "\u251C\u2500";
-  const isBackgrounded = isAsync && isResolved;
+  const treeChar = isLast ? '\u2514\u2500' : '\u251C\u2500'
+  const isBackgrounded = isAsync && isResolved
   const getStatusText = () => {
     if (!isResolved) {
-      return lastToolInfo || tSync('agentProgress.initializing');
+      return lastToolInfo || tSync('agentProgress.initializing')
     }
     if (isBackgrounded) {
-      return taskDescription ?? tSync('agentProgress.runningBackground');
+      return taskDescription ?? tSync('agentProgress.runningBackground')
     }
-    return tSync('agentProgress.done');
-  };
-  return <Box flexDirection="column">{<Box paddingLeft={3}>{<Text dimColor={true}>{treeChar} </Text>}{<Text dimColor={!isResolved}>{hideType ? <><Text bold={true}>{name ?? description ?? agentType}</Text>{name && description && <Text dimColor={true}>: {description}</Text>}</> : <><Text bold={true} backgroundColor={color} color={color ? "inverseText" : undefined}>{agentType}</Text>{description && <>{" ("}<Text backgroundColor={descriptionColor} color={descriptionColor ? "inverseText" : undefined}>{description}</Text>{")"}</>}</>}{!isBackgrounded && <>{" \xB7 "}{toolUseCount} {tSync(toolUseCount === 1 ? 'agentProgress.toolUse_one' : 'agentProgress.toolUse_other')}{tokens !== null && <> · {formatNumber(tokens)} tokens</>}</>}</Text>}</Box>}{!isBackgrounded && <Box paddingLeft={3} flexDirection="row"><Text dimColor={true}>{isLast ? "   \u23BF  " : "\u2502  \u23BF  "}</Text><Text dimColor={true}>{getStatusText()}</Text></Box>}</Box>;
+    return tSync('agentProgress.done')
+  }
+  return (
+    <Box flexDirection="column">
+      {
+        <Box paddingLeft={3}>
+          {<Text dimColor={true}>{treeChar} </Text>}
+          {
+            <Text dimColor={!isResolved}>
+              {hideType ? (
+                <>
+                  <Text bold={true}>{name ?? description ?? agentType}</Text>
+                  {name && description && <Text dimColor={true}>: {description}</Text>}
+                </>
+              ) : (
+                <>
+                  <Text
+                    bold={true}
+                    backgroundColor={color}
+                    color={color ? 'inverseText' : undefined}
+                  >
+                    {agentType}
+                  </Text>
+                  {description && (
+                    <>
+                      {' ('}
+                      <Text
+                        backgroundColor={descriptionColor}
+                        color={descriptionColor ? 'inverseText' : undefined}
+                      >
+                        {description}
+                      </Text>
+                      {')'}
+                    </>
+                  )}
+                </>
+              )}
+              {!isBackgrounded && (
+                <>
+                  {' \xB7 '}
+                  {toolUseCount}{' '}
+                  {tSync(
+                    toolUseCount === 1
+                      ? 'agentProgress.toolUse_one'
+                      : 'agentProgress.toolUse_other',
+                  )}
+                  {tokens !== null && <> · {formatNumber(tokens)} tokens</>}
+                </>
+              )}
+            </Text>
+          }
+        </Box>
+      }
+      {!isBackgrounded && (
+        <Box paddingLeft={3} flexDirection="row">
+          <Text dimColor={true}>{isLast ? '   \u23BF  ' : '\u2502  \u23BF  '}</Text>
+          <Text dimColor={true}>{getStatusText()}</Text>
+        </Box>
+      )}
+    </Box>
+  )
 }

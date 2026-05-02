@@ -16,10 +16,7 @@ const SECRET_FIELD_NAMES = [
   'token',
 ]
 
-const SECRET_PATTERN = new RegExp(
-  `"(${SECRET_FIELD_NAMES.join('|')})"\\s*:\\s*"([^"]*)"`,
-  'g',
-)
+const SECRET_PATTERN = new RegExp(`"(${SECRET_FIELD_NAMES.join('|')})"\\s*:\\s*"([^"]*)"`, 'g')
 
 const REDACT_MIN_LENGTH = 16
 
@@ -69,8 +66,7 @@ export function describeAxiosError(err: unknown): string {
           : typeof data.error === 'object' &&
               data.error &&
               'message' in data.error &&
-              typeof (data.error as Record<string, unknown>).message ===
-                'string'
+              typeof (data.error as Record<string, unknown>).message === 'string'
             ? (data.error as Record<string, unknown>).message
             : undefined
       if (detail) {
@@ -91,8 +87,7 @@ export function extractHttpStatus(err: unknown): number | undefined {
     typeof err === 'object' &&
     'response' in err &&
     (err as { response?: { status?: unknown } }).response &&
-    typeof (err as { response: { status?: unknown } }).response.status ===
-      'number'
+    typeof (err as { response: { status?: unknown } }).response.status === 'number'
   ) {
     return (err as { response: { status: number } }).response.status
   }
@@ -125,17 +120,12 @@ export function extractErrorDetail(data: unknown): string | undefined {
  * analytics event. Centralizes the event name and the AnalyticsMetadata
  * cast so call sites don't each repeat the 5-line boilerplate.
  */
-export function logBridgeSkip(
-  reason: string,
-  debugMsg?: string,
-  v2?: boolean,
-): void {
+export function logBridgeSkip(reason: string, debugMsg?: string, v2?: boolean): void {
   if (debugMsg) {
     logForDebugging(debugMsg)
   }
   logEvent('zy_bridge_repl_skipped', {
-    reason:
-      reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    reason: reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(v2 !== undefined && { v2 }),
   })
 }

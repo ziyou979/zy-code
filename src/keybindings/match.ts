@@ -57,10 +57,7 @@ export function getKeyName(input: string, key: Key): string | null {
  * keyboard protocol on supporting terminals. A `cmd`/`super` binding will
  * simply never fire on terminals that don't send it.
  */
-function modifiersMatch(
-  inkMods: InkModifiers,
-  target: ParsedKeystroke,
-): boolean {
+function modifiersMatch(inkMods: InkModifiers, target: ParsedKeystroke): boolean {
   // Check ctrl modifier
   if (inkMods.ctrl !== target.ctrl) return false
 
@@ -83,11 +80,7 @@ function modifiersMatch(
  *
  * The display text will show platform-appropriate names (opt on macOS, alt elsewhere).
  */
-export function matchesKeystroke(
-  input: string,
-  key: Key,
-  target: ParsedKeystroke,
-): boolean {
+export function matchesKeystroke(input: string, key: Key, target: ParsedKeystroke): boolean {
   const keyName = getKeyName(input, key)
   if (keyName !== target.key) return false
 
@@ -108,11 +101,7 @@ export function matchesKeystroke(
  * Check if Ink's Key + input matches a parsed binding's first keystroke.
  * For single-keystroke bindings only (Phase 1).
  */
-export function matchesBinding(
-  input: string,
-  key: Key,
-  binding: ParsedBinding,
-): boolean {
+export function matchesBinding(input: string, key: Key, binding: ParsedBinding): boolean {
   if (binding.chord.length !== 1) return false
   const keystroke = binding.chord[0]
   if (!keystroke) return false

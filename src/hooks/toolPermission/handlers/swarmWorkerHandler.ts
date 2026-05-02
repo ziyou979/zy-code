@@ -59,12 +59,12 @@ async function handleSwarmWorkerPermission(
   // Forward permission request to the leader via mailbox
   try {
     const clearPendingRequest = (): void =>
-      ctx.toolUseContext.setAppState(prev => ({
+      ctx.toolUseContext.setAppState((prev) => ({
         ...prev,
         pendingWorkerRequest: null,
       }))
 
-    const decision = await new Promise<PermissionDecision>(resolve => {
+    const decision = await new Promise<PermissionDecision>((resolve) => {
       const { resolve: resolveOnce, claim } = createResolveOnce(resolve)
 
       // Create the permission request
@@ -92,9 +92,7 @@ async function handleSwarmWorkerPermission(
 
           // Merge the updated input with the original input
           const finalInput =
-            allowedInput && Object.keys(allowedInput).length > 0
-              ? allowedInput
-              : ctx.input
+            allowedInput && Object.keys(allowedInput).length > 0 ? allowedInput : ctx.input
 
           resolveOnce(
             await ctx.handleUserAllow(
@@ -123,7 +121,7 @@ async function handleSwarmWorkerPermission(
       void sendPermissionRequestViaMailbox(request)
 
       // Show visual indicator that we're waiting for leader approval
-      ctx.toolUseContext.setAppState(prev => ({
+      ctx.toolUseContext.setAppState((prev) => ({
         ...prev,
         pendingWorkerRequest: {
           toolName: ctx.tool.name,

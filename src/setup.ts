@@ -71,11 +71,7 @@ export async function setup(
   const nodeVersion = process.version.match(/^v(\d+)\./)?.[1]
   if (!nodeVersion || parseInt(nodeVersion) < 18) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.error(
-      chalk.bold.red(
-        tSync('setup.errorNodeVersion'),
-      ),
-    )
+    console.error(chalk.bold.red(tSync('setup.errorNodeVersion')))
     process.exit(1)
   }
 
@@ -119,11 +115,7 @@ export async function setup(
       const restoredIterm2Backup = await checkAndRestoreITerm2Backup()
       if (restoredIterm2Backup.status === 'restored') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(
-          chalk.yellow(
-            tSync('setup.iTerm2Restored'),
-          ),
-        )
+        console.log(chalk.yellow(tSync('setup.iTerm2Restored')))
       } else if (restoredIterm2Backup.status === 'failed') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
@@ -139,11 +131,7 @@ export async function setup(
       const restoredTerminalBackup = await checkAndRestoreTerminalBackup()
       if (restoredTerminalBackup.status === 'restored') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(
-          chalk.yellow(
-            tSync('setup.terminalRestored'),
-          ),
-        )
+        console.log(chalk.yellow(tSync('setup.terminalRestored')))
       } else if (restoredTerminalBackup.status === 'failed') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
@@ -181,16 +169,12 @@ export async function setup(
     const inGit = await getIsGit()
     if (!hasHook && !inGit) {
       process.stderr.write(
-        chalk.red(
-          tSync('setup.errorWorktreeNotGitRepo', { cwd: chalk.bold(cwd) }) + '\n',
-        ),
+        chalk.red(tSync('setup.errorWorktreeNotGitRepo', { cwd: chalk.bold(cwd) }) + '\n'),
       )
       process.exit(1)
     }
 
-    const slug = worktreePRNumber
-      ? `pr-${worktreePRNumber}`
-      : (worktreeName ?? getPlanSlug())
+    const slug = worktreePRNumber ? `pr-${worktreePRNumber}` : (worktreeName ?? getPlanSlug())
 
     // Git 前置处理在 git 仓库中始终运行 — 即使配置了 hook —
     // 这样 --tmux 对同时有 WorktreeCreate hook 的 git 用户仍然有效。
@@ -202,11 +186,7 @@ export async function setup(
       // findGitRoot 缓存已由上方 getIsGit() 预热，所以此处几乎无开销。
       const mainRepoRoot = findCanonicalGitRoot(getCwd())
       if (!mainRepoRoot) {
-        process.stderr.write(
-          chalk.red(
-            tSync('setup.errorCannotDetermineGitRoot') + '\n',
-          ),
-        )
+        process.stderr.write(chalk.red(tSync('setup.errorCannotDetermineGitRoot') + '\n'))
         process.exit(1)
       }
 
@@ -255,15 +235,16 @@ export async function setup(
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(
           chalk.green(
-            tSync('setup.tmuxSessionCreated', { sessionName: chalk.bold(tmuxSessionName), attachCmd: chalk.bold(`tmux attach -t ${tmuxSessionName}`) }),
+            tSync('setup.tmuxSessionCreated', {
+              sessionName: chalk.bold(tmuxSessionName),
+              attachCmd: chalk.bold(`tmux attach -t ${tmuxSessionName}`),
+            }),
           ),
         )
       } else {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
-          chalk.yellow(
-            tSync('setup.tmuxSessionCreateFailed', { error: tmuxResult.error }),
-          ),
+          chalk.yellow(tSync('setup.tmuxSessionCreateFailed', { error: tmuxResult.error })),
         )
       }
     }
@@ -312,15 +293,14 @@ export async function setup(
   // （并发 copyPluginToVersionedCache / cachePlugin 操作同一目录），
   // 且热重载处理器在 policySettings 到达时会触发 clearPluginCache()。
   const skipPluginPrefetch =
-    (getIsNonInteractiveSession() &&
-      isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) ||
+    (getIsNonInteractiveSession() && isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) ||
     // --bare：loadPluginHooks → loadAllPlugins 是文件系统操作，
     // 在 --bare 下 executeHooks 会提前返回，完全是浪费。
     isBareMode()
   if (!skipPluginPrefetch) {
     void getCommands(getProjectRoot())
   }
-  void import('./utils/plugins/loadPluginHooks.js').then(m => {
+  void import('./utils/plugins/loadPluginHooks.js').then((m) => {
     if (!skipPluginPrefetch) {
       void m.loadPluginHooks() // 预加载插件 hooks（由 processSessionStartHooks 在渲染前消费）
       m.setupPluginHookHotReload() // 设置插件 hooks 热重载，当设置变更时触发
@@ -336,11 +316,9 @@ export async function setup(
       // 预热仓库分类缓存，用于 auto-undercover 模式。默认
       // undercover 开启，直到确认为内部仓库；如果解析为内部仓库，
       // 清除 prompt 缓存使下一轮获取 OFF 状态。
-      void import('./utils/commitAttribution.js').then(async m => {
+      void import('./utils/commitAttribution.js').then(async (m) => {
         if (await m.isInternalModelRepo()) {
-          const { clearSystemPromptSections } = await import(
-            './constants/systemPromptSections.js'
-          )
+          const { clearSystemPromptSections } = await import('./constants/systemPromptSections.js')
           clearSystemPromptSections()
         }
       })
@@ -350,20 +328,14 @@ export async function setup(
       // 延迟到下一个 tick，使 git 子进程在首次渲染后运行，
       // 而不是在 setup() 微任务窗口期间运行。
       setImmediate(() => {
-        void import('./utils/attributionHooks.js').then(
-          (m: any) => {
-            m.registerAttributionHooks() // 注册归因追踪 hooks（仅 ant 功能）
-          },
-        )
+        void import('./utils/attributionHooks.js').then((m: any) => {
+          m.registerAttributionHooks() // 注册归因追踪 hooks（仅 ant 功能）
+        })
       })
     }
-    void import('./utils/sessionFileAccessHooks.js').then(m =>
-      m.registerSessionFileAccessHooks(),
-    ) // 注册会话文件访问分析 hooks
+    void import('./utils/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
     if (feature('TEAMMEM')) {
-      void import('./services/teamMemorySync/watcher.js').then(m =>
-        m.startTeamMemoryWatcher(),
-      ) // 启动团队内存同步监视器
+      void import('./services/teamMemorySync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
     }
   }
   initSinks() // 附加错误日志 + 分析 sink 并排空队列中的事件
@@ -382,19 +354,14 @@ export async function setup(
   // --bare / SIMPLE：跳过 — 发布说明是交互式 UI 显示数据，
   // 且 getRecentActivity() 会读取最多 10 个会话 JSONL 文件。
   if (!isBareMode()) {
-    const { hasReleaseNotes } = await checkForReleaseNotes(
-      getGlobalConfig().lastReleaseNotesSeen,
-    )
+    const { hasReleaseNotes } = await checkForReleaseNotes(getGlobalConfig().lastReleaseNotesSeen)
     if (hasReleaseNotes) {
       await getRecentActivity()
     }
   }
 
   // 如果权限模式设置为绕过，验证是否在安全环境中
-  if (
-    permissionMode === 'bypassPermissions' ||
-    allowDangerouslySkipPermissions
-  ) {
+  if (permissionMode === 'bypassPermissions' || allowDangerouslySkipPermissions) {
     // 检查是否在类 Unix 系统上以 root/sudo 运行
     // 如果在沙箱中则允许 root（例如需要 root 的 TPU devspaces）
     if (
@@ -405,9 +372,7 @@ export async function setup(
       !isEnvTruthy(process.env.ZY_CODE_BUBBLEWRAP)
     ) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.error(
-        tSync('setup.errorRootSudoNotAllowed'),
-      )
+      console.error(tSync('setup.errorRootSudoNotAllowed'))
       process.exit(1)
     }
 
@@ -432,7 +397,12 @@ export async function setup(
       if (!isSandboxed || hasInternet) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
-          tSync('setup.errorNotSandboxed', { isDocker: String(isDocker), isBubblewrap: String(isBubblewrap), isSandbox: String(isSandbox), hasInternet: String(hasInternet) }),
+          tSync('setup.errorNotSandboxed', {
+            isDocker: String(isDocker),
+            isBubblewrap: String(isBubblewrap),
+            isSandbox: String(isSandbox),
+            hasInternet: String(hasInternet),
+          }),
         )
         process.exit(1)
       }
@@ -445,10 +415,7 @@ export async function setup(
 
   // 记录上次会话的 zy_exit 事件？
   const projectConfig = getCurrentProjectConfig()
-  if (
-    projectConfig.lastCost !== undefined &&
-    projectConfig.lastDuration !== undefined
-  ) {
+  if (projectConfig.lastCost !== undefined && projectConfig.lastDuration !== undefined) {
     logEvent('zy_session_exit', {
       last_session_cost: projectConfig.lastCost,
       last_session_api_duration: projectConfig.lastAPIDuration,
@@ -460,8 +427,7 @@ export async function setup(
       last_session_total_output_tokens: projectConfig.lastTotalOutputTokens,
       last_session_total_cache_creation_input_tokens:
         projectConfig.lastTotalCacheCreationInputTokens,
-      last_session_total_cache_read_input_tokens:
-        projectConfig.lastTotalCacheReadInputTokens,
+      last_session_total_cache_read_input_tokens: projectConfig.lastTotalCacheReadInputTokens,
       last_session_fps_average: projectConfig.lastFpsAverage,
       last_session_fps_low_1_pct: projectConfig.lastFpsLow1Pct,
       last_session_id:

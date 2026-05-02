@@ -11,10 +11,7 @@ import {
   isSessionPersistenceDisabled,
 } from '../bootstrap/state.js'
 import instances from '../ink/instances.js'
-import {
-  DISABLE_KITTY_KEYBOARD,
-  DISABLE_MODIFY_OTHER_KEYS,
-} from '../ink/termio/csi.js'
+import { DISABLE_KITTY_KEYBOARD, DISABLE_MODIFY_OTHER_KEYS } from '../ink/termio/csi.js'
 import {
   DBP,
   DFE,
@@ -147,11 +144,7 @@ function printResumeHint(): void {
     return
   }
   // Only show with TTY, interactive sessions, and persistence
-  if (
-    process.stdout.isTTY &&
-    getIsInteractive() &&
-    !isSessionPersistenceDisabled()
-  ) {
+  if (process.stdout.isTTY && getIsInteractive() && !isSessionPersistenceDisabled()) {
     try {
       const sessionId = getSessionId()
       // Don't show resume hint if no session file exists (e.g., subcommands like `zy update`)
@@ -170,12 +163,7 @@ function printResumeHint(): void {
         resumeArg = sessionId
       }
 
-      writeSync(
-        1,
-        chalk.dim(
-          `\nResume this session with:\nzy --resume ${resumeArg}\n`,
-        ),
-      )
+      writeSync(1, chalk.dim(`\nResume this session with:\nzy --resume ${resumeArg}\n`))
       resumeHintPrinted = true
     } catch {
       // Ignore write errors
@@ -298,25 +286,20 @@ export const setupGracefulShutdown = memoize(() => {
 
   // Log uncaught exceptions for container observability and analytics
   // Error names (e.g., "TypeError") are not sensitive - safe to log
-  process.on('uncaughtException', error => {
+  process.on('uncaughtException', (error) => {
     logForDiagnosticsNoPII('error', 'uncaught_exception', {
       error_name: error.name,
       error_message: error.message.slice(0, 2000),
     })
     logEvent('zy_uncaught_exception', {
-      error_name:
-        error.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_name: error.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   })
 
   // Log unhandled promise rejections for container observability and analytics
-  process.on('unhandledRejection', reason => {
+  process.on('unhandledRejection', (reason) => {
     const errorName =
-      reason instanceof Error
-        ? reason.name
-        : typeof reason === 'string'
-          ? 'string'
-          : 'unknown'
+      reason instanceof Error ? reason.name : typeof reason === 'string' ? 'string' : 'unknown'
     const errorInfo =
       reason instanceof Error
         ? {
@@ -327,8 +310,7 @@ export const setupGracefulShutdown = memoize(() => {
         : { error_message: String(reason).slice(0, 2000) }
     logForDiagnosticsNoPII('error', 'unhandled_rejection', errorInfo)
     logEvent('zy_unhandled_rejection', {
-      error_name:
-        errorName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_name: errorName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   })
 })
@@ -347,7 +329,7 @@ export function gracefulShutdownSync(
   process.exitCode = exitCode
 
   pendingShutdown = gracefulShutdown(exitCode, reason, options)
-    .catch(error => {
+    .catch((error) => {
       logForDebugging(`Graceful shutdown failed: ${error}`, { level: 'error' })
       cleanupTerminalModes()
       printResumeHint()
@@ -406,16 +388,14 @@ export async function gracefulShutdown(
   // Resolve the SessionEnd hook budget before arming the failsafe so the
   // failsafe can scale with it. Without this, a user-configured 10s hook
   // budget is silently truncated by the 5s failsafe (gh-32712 follow-up).
-  const { executeSessionEndHooks, getSessionEndHookTimeoutMs } = await import(
-    './hooks.js'
-  )
+  const { executeSessionEndHooks, getSessionEndHookTimeoutMs } = await import('./hooks.js')
   const sessionEndTimeoutMs = getSessionEndHookTimeoutMs()
 
   // Failsafe: guarantee process exits even if cleanup hangs (e.g., MCP connections).
   // Runs cleanupTerminalModes first so a hung cleanup doesn't leave the terminal dirty.
   // Budget = max(5s, hook budget + 3.5s headroom for cleanup + analytics flush).
   failsafeTimer = setTimeout(
-    code => {
+    (code) => {
       cleanupTerminalModes()
       printResumeHint()
       forceExit(code)
@@ -453,11 +433,7 @@ export async function gracefulShutdown(
     await Promise.race([
       cleanupPromise,
       new Promise((_, reject) => {
-        cleanupTimeoutId = setTimeout(
-          rej => rej(new CleanupTimeoutError()),
-          2000,
-          reject,
-        )
+        cleanupTimeoutId = setTimeout((rej) => rej(new CleanupTimeoutError()), 2000, reject)
       }),
     ])
     clearTimeout(cleanupTimeoutId)
@@ -491,10 +467,8 @@ export async function gracefulShutdown(
   const lastRequestId = getLastMainRequestId()
   if (lastRequestId) {
     logEvent('zy_cache_eviction_hint', {
-      scope:
-        'session_end' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      last_request_id:
-        lastRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      scope: 'session_end' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      last_request_id: lastRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
 
@@ -502,10 +476,7 @@ export async function gracefulShutdown(
   // awaits all pending axios POSTs (10s each), eating the full failsafe budget.
   // Lost analytics on slow networks are acceptable; a hanging exit is not.
   try {
-    await Promise.race([
-      Promise.all([shutdownZyEventLogging(), shutdownDatadog()]),
-      sleep(500),
-    ])
+    await Promise.race([Promise.all([shutdownZyEventLogging(), shutdownDatadog()]), sleep(500)])
   } catch {
     // Ignore analytics shutdown errors
   }

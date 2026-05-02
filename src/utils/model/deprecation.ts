@@ -34,9 +34,7 @@ function getDeprecatedModelInfo(modelId: string): DeprecationInfo {
 /**
  * Get a deprecation warning message for a model, or null if not deprecated
  */
-export function getModelDeprecationWarning(
-  modelId: string | null,
-): string | null {
+export function getModelDeprecationWarning(modelId: string | null): string | null {
   if (!modelId) {
     return null
   }

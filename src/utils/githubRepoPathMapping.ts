@@ -2,10 +2,7 @@ import { realpath } from 'fs/promises'
 import { getOriginalCwd } from '../bootstrap/state.js'
 import { getGlobalConfig, saveGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
-import {
-  detectCurrentRepository,
-  parseGitHubRepository,
-} from './detectRepository.js'
+import { detectCurrentRepository, parseGitHubRepository } from './detectRepository.js'
 import { pathExists } from './file.js'
 import { getRemoteUrlForDir } from './git/gitFilesystem.js'
 import { findGitRoot } from './git.js'
@@ -24,9 +21,7 @@ export async function updateGithubRepoPathMapping(): Promise<void> {
   try {
     const repo = await detectCurrentRepository()
     if (!repo) {
-      logForDebugging(
-        'Not in a GitHub repository, skipping path mapping update',
-      )
+      logForDebugging('Not in a GitHub repository, skipping path mapping update')
       return
     }
 
@@ -57,10 +52,10 @@ export async function updateGithubRepoPathMapping(): Promise<void> {
     }
 
     // Remove if present elsewhere (to promote to front), then prepend
-    const withoutCurrent = existingPaths.filter(p => p !== currentPath)
+    const withoutCurrent = existingPaths.filter((p) => p !== currentPath)
     const updatedPaths = [currentPath, ...withoutCurrent]
 
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       githubRepoPaths: {
         ...current.githubRepoPaths,
@@ -102,10 +97,7 @@ export async function filterExistingPaths(paths: string[]): Promise<string[]> {
  * @param expectedRepo Expected repository in "owner/repo" format
  * @returns true if the path contains the expected repo, false otherwise
  */
-export async function validateRepoAtPath(
-  path: string,
-  expectedRepo: string,
-): Promise<boolean> {
+export async function validateRepoAtPath(path: string, expectedRepo: string): Promise<boolean> {
   try {
     const remoteUrl = await getRemoteUrlForDir(path)
     if (!remoteUrl) {
@@ -135,7 +127,7 @@ export function removePathFromRepo(repo: string, pathToRemove: string): void {
   const repoKey = repo.toLowerCase()
   const existingPaths = config.githubRepoPaths?.[repoKey] ?? []
 
-  const updatedPaths = existingPaths.filter(path => path !== pathToRemove)
+  const updatedPaths = existingPaths.filter((path) => path !== pathToRemove)
 
   if (updatedPaths.length === existingPaths.length) {
     // Path wasn't in the list, nothing to do
@@ -151,12 +143,10 @@ export function removePathFromRepo(repo: string, pathToRemove: string): void {
     updatedMapping[repoKey] = updatedPaths
   }
 
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     githubRepoPaths: updatedMapping,
   }))
 
-  logForDebugging(
-    `Removed ${pathToRemove} from tracked paths for repo ${repoKey}`,
-  )
+  logForDebugging(`Removed ${pathToRemove} from tracked paths for repo ${repoKey}`)
 }

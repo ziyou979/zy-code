@@ -17,7 +17,7 @@ import {
  * @param ignore When true, messages will not be recorded to the transcript
  */
 export function useLogMessages(messages: Message[], ignore: boolean = false) {
-  const teamContext = useAppState(s => s.teamContext)
+  const teamContext = useAppState((s) => s.teamContext)
 
   // messages is append-only between compactions, so track where we left off
   // and only pass the new tail to recordTranscript. Avoids O(n) filter+scan
@@ -76,7 +76,7 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
         : {},
       parentHint,
       messages,
-    ).then(lastRecordedUuid => {
+    ).then((lastRecordedUuid) => {
       // For compaction/full array case (!isIncremental): use the async return
       // value. After compaction, messagesToKeep in the array are skipped
       // (already in transcript), so the sync loop would find a wrong UUID.
@@ -107,9 +107,7 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       // pointing at a message that never reached disk. Pass full messages as
       // replId context — REPL tool_use and its tool_result land in separate
       // render cycles, so the slice alone can't pair them.
-      const last = cleanMessagesForLogging(slice, messages).findLast(
-        isChainParticipant,
-      )
+      const last = cleanMessagesForLogging(slice, messages).findLast(isChainParticipant)
       if (last) lastParentUuidRef.current = last.uuid as UUID
     }
 

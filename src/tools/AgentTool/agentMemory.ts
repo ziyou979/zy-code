@@ -1,9 +1,6 @@
 import { join, normalize, sep } from 'path'
 import { getProjectRoot } from '../../bootstrap/state.js'
-import {
-  buildMemoryPrompt,
-  ensureMemoryDirExists,
-} from '../../memdir/memdir.js'
+import { buildMemoryPrompt, ensureMemoryDirExists } from '../../memdir/memdir.js'
 import { getMemoryBaseDir } from '../../memdir/paths.js'
 import { getCwd } from '../../utils/cwd.js'
 import { findCanonicalGitRoot } from '../../utils/git.js'
@@ -32,9 +29,7 @@ function getLocalAgentMemoryDir(dirName: string): string {
       join(
         process.env.ZY_CODE_REMOTE_MEMORY_DIR,
         'projects',
-        sanitizePath(
-          findCanonicalGitRoot(getProjectRoot()) ?? getProjectRoot(),
-        ),
+        sanitizePath(findCanonicalGitRoot(getProjectRoot()) ?? getProjectRoot()),
         'agent-memory-local',
         dirName,
       ) + sep
@@ -49,10 +44,7 @@ function getLocalAgentMemoryDir(dirName: string): string {
  * - 'project' scope: <cwd>/.zy/agent-memory/<agentType>/
  * - 'local' scope: see getLocalAgentMemoryDir()
  */
-export function getAgentMemoryDir(
-  agentType: string,
-  scope: AgentMemoryScope,
-): string {
+export function getAgentMemoryDir(agentType: string, scope: AgentMemoryScope): string {
   const dirName = sanitizeAgentTypeForPath(agentType)
   switch (scope) {
     case 'project':
@@ -76,9 +68,7 @@ export function isAgentMemoryPath(absolutePath: string): boolean {
   }
 
   // Project scope: always cwd-based (not redirected)
-  if (
-    normalizedPath.startsWith(join(getCwd(), '.zy', 'agent-memory') + sep)
-  ) {
+  if (normalizedPath.startsWith(join(getCwd(), '.zy', 'agent-memory') + sep)) {
     return true
   }
 
@@ -86,17 +76,11 @@ export function isAgentMemoryPath(absolutePath: string): boolean {
   if (process.env.ZY_CODE_REMOTE_MEMORY_DIR) {
     if (
       normalizedPath.includes(sep + 'agent-memory-local' + sep) &&
-      normalizedPath.startsWith(
-        join(process.env.ZY_CODE_REMOTE_MEMORY_DIR, 'projects') + sep,
-      )
+      normalizedPath.startsWith(join(process.env.ZY_CODE_REMOTE_MEMORY_DIR, 'projects') + sep)
     ) {
       return true
     }
-  } else if (
-    normalizedPath.startsWith(
-      join(getCwd(), '.zy', 'agent-memory-local') + sep,
-    )
-  ) {
+  } else if (normalizedPath.startsWith(join(getCwd(), '.zy', 'agent-memory-local') + sep)) {
     return true
   }
 
@@ -106,16 +90,11 @@ export function isAgentMemoryPath(absolutePath: string): boolean {
 /**
  * Returns the agent memory file path for a given agent type and scope.
  */
-export function getAgentMemoryEntrypoint(
-  agentType: string,
-  scope: AgentMemoryScope,
-): string {
+export function getAgentMemoryEntrypoint(agentType: string, scope: AgentMemoryScope): string {
   return join(getAgentMemoryDir(agentType, scope), 'MEMORY.md')
 }
 
-export function getMemoryScopeDisplay(
-  memory: AgentMemoryScope | undefined,
-): string {
+export function getMemoryScopeDisplay(memory: AgentMemoryScope | undefined): string {
   switch (memory) {
     case 'user':
       return `User (${join(getMemoryBaseDir(), 'agent-memory')}/)`
@@ -135,10 +114,7 @@ export function getMemoryScopeDisplay(
  * @param agentType The agent's type name (used as directory name)
  * @param scope 'user' for ~/.zy/agent-memory/ or 'project' for .zy/agent-memory/
  */
-export function loadAgentMemoryPrompt(
-  agentType: string,
-  scope: AgentMemoryScope,
-): string {
+export function loadAgentMemoryPrompt(agentType: string, scope: AgentMemoryScope): string {
   let scopeNote: string
   switch (scope) {
     case 'user':
@@ -164,8 +140,7 @@ export function loadAgentMemoryPrompt(
   // it hasn't, FileWriteTool does its own mkdir of the parent directory.
   void ensureMemoryDirExists(memoryDir)
 
-  const coworkExtraGuidelines =
-    process.env.CLAUDE_COWORK_MEMORY_EXTRA_GUIDELINES
+  const coworkExtraGuidelines = process.env.CLAUDE_COWORK_MEMORY_EXTRA_GUIDELINES
   return buildMemoryPrompt({
     displayName: 'Persistent Agent Memory',
     memoryDir,

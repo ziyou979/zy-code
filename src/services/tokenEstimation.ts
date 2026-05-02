@@ -27,9 +27,7 @@ const TOKEN_COUNT_MAX_TOKENS = 2048
 /**
  * 检查消息是否包含思考块
  */
-function hasThinkingBlocks(
-  messages: LLMMessage[],
-): boolean {
+function hasThinkingBlocks(messages: LLMMessage[]): boolean {
   for (const message of messages) {
     if (message.role === 'assistant' && Array.isArray(message.content)) {
       for (const block of message.content) {
@@ -55,22 +53,19 @@ function hasThinkingBlocks(
  * 注意：我们使用 'as unknown as' 转换，因为 SDK 类型不包含 tool search beta 字段，
  * 但在启用 tool search 时，这些字段可能在运行时从 API 响应中存在。
  */
-function stripToolSearchFieldsFromMessages(
-  messages: LLMMessage[],
-): LLMMessage[] {
-  return messages.map(message => {
+function stripToolSearchFieldsFromMessages(messages: LLMMessage[]): LLMMessage[] {
+  return messages.map((message) => {
     if (!Array.isArray(message.content)) {
       return message
     }
 
-    const normalizedContent = message.content.map(block => {
+    const normalizedContent = message.content.map((block) => {
       // 从 tool_use 块中剥离 'caller'（助手消息）
       if (block.type === 'tool_call') {
         // 解构以排除 'caller' 等额外字段
-        const toolUse =
-          block as ToolCallInlineBlock & {
-            caller?: unknown
-          }
+        const toolUse = block as ToolCallInlineBlock & {
+          caller?: unknown
+        }
         return {
           type: 'tool_call' as const,
           id: toolUse.id,
@@ -81,11 +76,10 @@ function stripToolSearchFieldsFromMessages(
 
       // 从 tool_result 内容中剥离 tool_reference 块（用户消息）
       if (block.type === 'tool_result') {
-        const toolResult =
-          block as ToolResultBlock
+        const toolResult = block as ToolResultBlock
         if (Array.isArray(toolResult.content)) {
           const filteredContent = (toolResult.content as unknown[]).filter(
-            c => !isToolReferenceBlock(c),
+            (c) => !isToolReferenceBlock(c),
           ) as typeof toolResult.content
 
           if (filteredContent.length === 0) {
@@ -113,9 +107,7 @@ function stripToolSearchFieldsFromMessages(
   })
 }
 
-export async function countTokensWithAPI(
-  content: string,
-): Promise<number | null> {
+export async function countTokensWithAPI(content: string): Promise<number | null> {
   // 空内容的特殊情况 — API 不接受空消息
   if (!content) {
     return 0
@@ -148,10 +140,7 @@ export async function countMessagesTokensWithAPI(
   })
 }
 
-export function roughTokenCountEstimation(
-  content: string,
-  bytesPerToken: number = 4,
-): number {
+export function roughTokenCountEstimation(content: string, bytesPerToken: number = 4): number {
   return Math.round(content.length / bytesPerToken)
 }
 
@@ -178,18 +167,10 @@ export function getBytesPerTokenForLanguage(language?: string): number {
   ) {
     return 1.5
   }
-  if (
-    lang.includes('japanese') ||
-    lang.includes('日本語') ||
-    lang.startsWith('ja-')
-  ) {
+  if (lang.includes('japanese') || lang.includes('日本語') || lang.startsWith('ja-')) {
     return 2
   }
-  if (
-    lang.includes('korean') ||
-    lang.includes('한국어') ||
-    lang.startsWith('ko-')
-  ) {
+  if (lang.includes('korean') || lang.includes('한국어') || lang.startsWith('ko-')) {
     return 2.5
   }
   return 4
@@ -233,10 +214,7 @@ export function countMessagesTokensLocally(
 /**
  * 使用本地 tokenizer 计算单个内容块的 token 数。
  */
-function countBlockTokensLocally(
-  block: unknown,
-  model: string,
-): number {
+function countBlockTokensLocally(block: unknown, model: string): number {
   if (typeof block !== 'object' || block === null) return 0
 
   const typedBlock = block as Record<string, unknown>
@@ -307,10 +285,7 @@ export function roughTokenCountEstimationForFileType(
   content: string,
   fileExtension: string,
 ): number {
-  return roughTokenCountEstimation(
-    content,
-    bytesPerTokenForFileType(fileExtension),
-  )
+  return roughTokenCountEstimation(content, bytesPerTokenForFileType(fileExtension))
 }
 
 /**
@@ -352,10 +327,7 @@ export function roughTokenCountEstimationForMessage(message: {
   message?: { content?: unknown }
   attachment?: Attachment
 }): number {
-  if (
-    (message.type === 'assistant' || message.type === 'user') &&
-    message.message?.content
-  ) {
+  if ((message.type === 'assistant' || message.type === 'user') && message.message?.content) {
     return roughTokenCountEstimationForContent(
       message.message?.content as
         | string
@@ -426,9 +398,7 @@ function roughTokenCountEstimationForBlock(
     // input 是模型生成的 JSON — 任意大小（bash
     // 命令、Edit 差异、文件内容）。字符串化一次以获取
     // 字符计数；API 无论如何都会重新序列化，所以这就是它看到的。
-    return roughTokenCountEstimation(
-      block.name + jsonStringify(block.input ?? {}),
-    )
+    return roughTokenCountEstimation(block.name + jsonStringify(block.input ?? {}))
   }
   if (block.type === 'thinking') {
     return roughTokenCountEstimation(block.thinking)
@@ -442,5 +412,3 @@ function roughTokenCountEstimationForBlock(
   // 键/括号开销在实际块上是个位数百分比。
   return roughTokenCountEstimation(jsonStringify(block))
 }
-
-

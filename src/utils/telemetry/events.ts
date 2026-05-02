@@ -26,10 +26,9 @@ export async function logOTelEvent(
   if (!eventLogger) {
     if (!hasWarnedNoEventLogger) {
       hasWarnedNoEventLogger = true
-      logForDebugging(
-        `[3P telemetry] Event dropped (no event logger initialized): ${eventName}`,
-        { level: 'warn' },
-      )
+      logForDebugging(`[3P telemetry] Event dropped (no event logger initialized): ${eventName}`, {
+        level: 'warn',
+      })
     }
     return
   }

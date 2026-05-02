@@ -29,7 +29,7 @@ async function tryGetInstalledAppNames(): Promise<string[] | undefined> {
   const adapter = getComputerUseHostAdapter()
   const enumP = adapter.executor.listInstalledApps()
   let timer: ReturnType<typeof setTimeout> | undefined
-  const timeoutP = new Promise<undefined>(resolve => {
+  const timeoutP = new Promise<undefined>((resolve) => {
     timer = setTimeout(resolve, APP_ENUM_TIMEOUT_MS, undefined)
   })
   const installed = await Promise.race([enumP, timeoutP])

@@ -1,43 +1,83 @@
-import figures from 'figures';
-import React, { useState } from 'react';
-import { Box, Text } from '../../ink.js';
-import { AGENT_COLOR_TO_THEME_COLOR, AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js';
-import { capitalize } from '../../utils/stringUtils.js';
-type ColorOption = AgentColorName | 'automatic';
-const COLOR_OPTIONS: ColorOption[] = ['automatic', ...AGENT_COLORS];
+import figures from 'figures'
+import React, { useState } from 'react'
+import { Box, Text } from '../../ink.js'
+import {
+  AGENT_COLOR_TO_THEME_COLOR,
+  AGENT_COLORS,
+  type AgentColorName,
+} from '../../tools/AgentTool/agentColorManager.js'
+import { capitalize } from '../../utils/stringUtils.js'
+type ColorOption = AgentColorName | 'automatic'
+const COLOR_OPTIONS: ColorOption[] = ['automatic', ...AGENT_COLORS]
 type Props = {
-  agentName: string;
-  currentColor?: AgentColorName | 'automatic';
-  onConfirm: (color: AgentColorName | undefined) => void;
-};
-export function ColorPicker({
-  agentName,
-  currentColor = "automatic",
-  onConfirm
-}: Props) {
-  const t2 = COLOR_OPTIONS.findIndex(opt => opt === currentColor);
-  const [selectedIndex, setSelectedIndex] = useState(Math.max(0, t2));
-  const handleKeyDown = e => {
-    if (e.key === "up") {
-      e.preventDefault();
-      setSelectedIndex(prev => prev > 0 ? prev - 1 : COLOR_OPTIONS.length - 1);
+  agentName: string
+  currentColor?: AgentColorName | 'automatic'
+  onConfirm: (color: AgentColorName | undefined) => void
+}
+export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }: Props) {
+  const t2 = COLOR_OPTIONS.findIndex((opt) => opt === currentColor)
+  const [selectedIndex, setSelectedIndex] = useState(Math.max(0, t2))
+  const handleKeyDown = (e) => {
+    if (e.key === 'up') {
+      e.preventDefault()
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : COLOR_OPTIONS.length - 1))
     } else {
-      if (e.key === "down") {
-        e.preventDefault();
-        setSelectedIndex(prev_0 => prev_0 < COLOR_OPTIONS.length - 1 ? prev_0 + 1 : 0);
+      if (e.key === 'down') {
+        e.preventDefault()
+        setSelectedIndex((prev_0) => (prev_0 < COLOR_OPTIONS.length - 1 ? prev_0 + 1 : 0))
       } else {
-        if (e.key === "return") {
-          e.preventDefault();
-          const selected = COLOR_OPTIONS[selectedIndex];
-          onConfirm(selected === "automatic" ? undefined : selected);
+        if (e.key === 'return') {
+          e.preventDefault()
+          const selected = COLOR_OPTIONS[selectedIndex]
+          onConfirm(selected === 'automatic' ? undefined : selected)
         }
       }
     }
-  };
-  const selectedValue = COLOR_OPTIONS[selectedIndex];
+  }
+  const selectedValue = COLOR_OPTIONS[selectedIndex]
   const t4 = COLOR_OPTIONS.map((option, index) => {
-    const isSelected = index === selectedIndex;
-    return <Box key={option} flexDirection="row" gap={1}><Text color={isSelected ? "suggestion" : undefined}>{isSelected ? figures.pointer : " "}</Text>{option === "automatic" ? <Text bold={isSelected}>Automatic color</Text> : <Box gap={1}><Text backgroundColor={AGENT_COLOR_TO_THEME_COLOR[option]} color="inverseText">{" "}</Text><Text bold={isSelected}>{capitalize(option)}</Text></Box>}</Box>;
-  });
-  return <Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Box flexDirection="column">{t4}</Box>}{<Box marginTop={1}>{<Text>Preview: </Text>}{selectedValue === undefined || selectedValue === "automatic" ? <Text inverse={true} bold={true}>{" "}@{agentName}{" "}</Text> : <Text backgroundColor={AGENT_COLOR_TO_THEME_COLOR[selectedValue]} color="inverseText" bold={true}>{" "}@{agentName}{" "}</Text>}</Box>}</Box>;
+    const isSelected = index === selectedIndex
+    return (
+      <Box key={option} flexDirection="row" gap={1}>
+        <Text color={isSelected ? 'suggestion' : undefined}>
+          {isSelected ? figures.pointer : ' '}
+        </Text>
+        {option === 'automatic' ? (
+          <Text bold={isSelected}>Automatic color</Text>
+        ) : (
+          <Box gap={1}>
+            <Text backgroundColor={AGENT_COLOR_TO_THEME_COLOR[option]} color="inverseText">
+              {' '}
+            </Text>
+            <Text bold={isSelected}>{capitalize(option)}</Text>
+          </Box>
+        )}
+      </Box>
+    )
+  })
+  return (
+    <Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
+      {<Box flexDirection="column">{t4}</Box>}
+      {
+        <Box marginTop={1}>
+          {<Text>Preview: </Text>}
+          {selectedValue === undefined || selectedValue === 'automatic' ? (
+            <Text inverse={true} bold={true}>
+              {' '}
+              @{agentName}{' '}
+            </Text>
+          ) : (
+            <Text
+              backgroundColor={AGENT_COLOR_TO_THEME_COLOR[selectedValue]}
+              color="inverseText"
+              bold={true}
+            >
+              {' '}
+              @{agentName}{' '}
+            </Text>
+          )}
+        </Box>
+      }
+    </Box>
+  )
 }

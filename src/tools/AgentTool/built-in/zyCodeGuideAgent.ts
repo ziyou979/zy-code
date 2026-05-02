@@ -9,13 +9,9 @@ import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
 import { getSettings_DEPRECATED } from 'src/utils/settings/settings.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
-import type {
-  AgentDefinition,
-  BuiltInAgentDefinition,
-} from '../loadAgentsDir.js'
+import type { AgentDefinition, BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
-const ZY_CODE_DOCS_MAP_URL =
-  'https://code.zy.com/docs/en/zy_code_docs_map.md'
+const ZY_CODE_DOCS_MAP_URL = 'https://code.zy.com/docs/en/zy_code_docs_map.md'
 const CDP_DOCS_MAP_URL = 'https://platform.zy.com/llms.txt'
 
 export const ZY_CODE_GUIDE_AGENT_TYPE = 'zy-code-guide'
@@ -96,12 +92,7 @@ export const ZY_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
   // Ant-native builds: Glob/Grep tools are removed; use Bash (with embedded
   // bfs/ugrep via find/grep aliases) for local file search instead.
   tools: hasEmbeddedSearchTools()
-    ? [
-        BASH_TOOL_NAME,
-        FILE_READ_TOOL_NAME,
-        WEB_FETCH_TOOL_NAME,
-        WEB_SEARCH_TOOL_NAME,
-      ]
+    ? [BASH_TOOL_NAME, FILE_READ_TOOL_NAME, WEB_FETCH_TOOL_NAME, WEB_SEARCH_TOOL_NAME]
     : [
         GLOB_TOOL_NAME,
         GREP_TOOL_NAME,
@@ -120,46 +111,39 @@ export const ZY_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
     const contextSections: string[] = []
 
     // 1. Custom skills
-    const customCommands = commands.filter(cmd => cmd.type === 'prompt')
+    const customCommands = commands.filter((cmd) => cmd.type === 'prompt')
     if (customCommands.length > 0) {
       const commandList = customCommands
-        .map(cmd => `- /${cmd.name}: ${cmd.description}`)
+        .map((cmd) => `- /${cmd.name}: ${cmd.description}`)
         .join('\n')
-      contextSections.push(
-        `**Available custom skills in this project:**\n${commandList}`,
-      )
+      contextSections.push(`**Available custom skills in this project:**\n${commandList}`)
     }
 
     // 2. Custom agents from .zy/agents/
-    const customAgents =
-      toolUseContext.options.agentDefinitions.activeAgents.filter(
-        (a: AgentDefinition) => a.source !== 'built-in',
-      )
+    const customAgents = toolUseContext.options.agentDefinitions.activeAgents.filter(
+      (a: AgentDefinition) => a.source !== 'built-in',
+    )
     if (customAgents.length > 0) {
       const agentList = customAgents
         .map((a: AgentDefinition) => `- ${a.agentType}: ${a.whenToUse}`)
         .join('\n')
-      contextSections.push(
-        `**Available custom agents configured:**\n${agentList}`,
-      )
+      contextSections.push(`**Available custom agents configured:**\n${agentList}`)
     }
 
     // 3. MCP servers
     const mcpClients = toolUseContext.options.mcpClients
     if (mcpClients && mcpClients.length > 0) {
-      const mcpList = mcpClients
-        .map((client: { name: string }) => `- ${client.name}`)
-        .join('\n')
+      const mcpList = mcpClients.map((client: { name: string }) => `- ${client.name}`).join('\n')
       contextSections.push(`**Configured MCP servers:**\n${mcpList}`)
     }
 
     // 4. Plugin commands
     const pluginCommands = commands.filter(
-      cmd => cmd.type === 'prompt' && cmd.source === 'plugin',
+      (cmd) => cmd.type === 'prompt' && cmd.source === 'plugin',
     )
     if (pluginCommands.length > 0) {
       const pluginList = pluginCommands
-        .map(cmd => `- /${cmd.name}: ${cmd.description}`)
+        .map((cmd) => `- /${cmd.name}: ${cmd.description}`)
         .join('\n')
       contextSections.push(`**Available plugin skills:**\n${pluginList}`)
     }
@@ -169,9 +153,7 @@ export const ZY_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
     if (Object.keys(settings).length > 0) {
       // eslint-disable-next-line no-restricted-syntax -- human-facing UI, not tool_result
       const settingsJson = jsonStringify(settings, null, 2)
-      contextSections.push(
-        `**User's settings.json:**\n\`\`\`json\n${settingsJson}\n\`\`\``,
-      )
+      contextSections.push(`**User's settings.json:**\n\`\`\`json\n${settingsJson}\n\`\`\``)
     }
 
     // Add the feedback guideline (conditional based on whether user is using 3P services)

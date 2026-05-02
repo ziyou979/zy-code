@@ -170,9 +170,8 @@ export async function deletePluginDataDir(pluginId: string): Promise<void> {
   try {
     await rm(dir, { recursive: true, force: true })
   } catch (e) {
-    logForDebugging(
-      `Failed to delete plugin data dir ${dir}: ${errorMessage(e)}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`Failed to delete plugin data dir ${dir}: ${errorMessage(e)}`, {
+      level: 'warn',
+    })
   }
 }

@@ -31,9 +31,7 @@ export const SandboxNetworkConfigSchema = lazySchema(() =>
       allowAllUnixSockets: z
         .boolean()
         .optional()
-        .describe(
-          'If true, allow all Unix sockets (disables blocking on both platforms).',
-        ),
+        .describe('If true, allow all Unix sockets (disables blocking on both platforms).'),
       allowLocalBinding: z.boolean().optional(),
       httpProxyPort: z.number().optional(),
       socksProxyPort: z.number().optional(),
@@ -151,6 +149,4 @@ export type SandboxNetworkConfig = NonNullable<
 export type SandboxFilesystemConfig = NonNullable<
   z.infer<ReturnType<typeof SandboxFilesystemConfigSchema>>
 >
-export type SandboxIgnoreViolations = NonNullable<
-  SandboxSettings['ignoreViolations']
->
+export type SandboxIgnoreViolations = NonNullable<SandboxSettings['ignoreViolations']>

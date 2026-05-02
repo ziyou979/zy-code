@@ -17,9 +17,7 @@ import { getFsImplementation, safeResolvePath } from './fsOperations.js'
 
 export type LineEndingType = 'CRLF' | 'LF'
 
-export function detectEncodingForResolvedPath(
-  resolvedPath: string,
-): BufferEncoding {
+export function detectEncodingForResolvedPath(resolvedPath: string): BufferEncoding {
   const { buffer, bytesRead } = getFsImplementation().readSync(resolvedPath, {
     length: 4096,
   })
@@ -34,12 +32,7 @@ export function detectEncodingForResolvedPath(
     if (buffer[0] === 0xff && buffer[1] === 0xfe) return 'utf16le'
   }
 
-  if (
-    bytesRead >= 3 &&
-    buffer[0] === 0xef &&
-    buffer[1] === 0xbb &&
-    buffer[2] === 0xbf
-  ) {
+  if (bytesRead >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
     return 'utf8'
   }
 

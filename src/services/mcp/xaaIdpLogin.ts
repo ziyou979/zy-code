@@ -6,10 +6,7 @@
  * MCP server auths. The id_token is cached in the keychain and reused until expiry.
  */
 
-import {
-  exchangeAuthorization,
-  startAuthorization,
-} from '@modelcontextprotocol/sdk/client/auth.js'
+import { exchangeAuthorization, startAuthorization } from '@modelcontextprotocol/sdk/client/auth.js'
 import {
   type OAuthClientInformation,
   type OpenIdProviderDiscoveryMetadata,
@@ -106,11 +103,7 @@ export function getCachedIdpIdToken(idpIssuer: string): string | undefined {
   return entry.idToken
 }
 
-function saveIdpIdToken(
-  idpIssuer: string,
-  idToken: string,
-  expiresAt: number,
-): void {
+function saveIdpIdToken(idpIssuer: string, idToken: string, expiresAt: number): void {
   const storage = getSecureStorage()
   const existing = (storage as any).read() || {}
   ;(storage as any).update({
@@ -130,10 +123,7 @@ function saveIdpIdToken(
  * Parses the JWT's exp claim for cache TTL (same as acquireIdpIdToken).
  * Returns the expiresAt it computed so the caller can report it.
  */
-export function saveIdpIdTokenFromJwt(
-  idpIssuer: string,
-  idToken: string,
-): number {
+export function saveIdpIdTokenFromJwt(idpIssuer: string, idToken: string): number {
   const expFromJwt = jwtExp(idToken)
   const expiresAt = expFromJwt ? expFromJwt * 1000 : Date.now() + 3600 * 1000
   saveIdpIdToken(idpIssuer, idToken, expiresAt)
@@ -199,9 +189,7 @@ export function clearIdpClientSecret(idpIssuer: string): void {
 // breaking Azure AD (`login.microsoftonline.com/{tenant}/v2.0`), Okta custom
 // auth servers, and Keycloak realms. Trailing-slash base + relative path is
 // the fix. Exported because auth.ts needs the same discovery.
-export async function discoverOidc(
-  idpIssuer: string,
-): Promise<OpenIdProviderDiscoveryMetadata> {
+export async function discoverOidc(idpIssuer: string): Promise<OpenIdProviderDiscoveryMetadata> {
   const base = idpIssuer.endsWith('/') ? idpIssuer : idpIssuer + '/'
   const url = new URL('.well-known/openid-configuration', base)
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
@@ -210,9 +198,7 @@ export async function discoverOidc(
     signal: AbortSignal.timeout(IDP_REQUEST_TIMEOUT_MS),
   })
   if (!res.ok) {
-    throw new Error(
-      `XAA IdP: OIDC discovery failed: HTTP ${res.status} at ${url}`,
-    )
+    throw new Error(`XAA IdP: OIDC discovery failed: HTTP ${res.status} at ${url}`)
   }
   // Captive portals and proxy auth pages return 200 with HTML. res.json()
   // throws a raw SyntaxError before safeParse can give a useful message.
@@ -229,9 +215,7 @@ export async function discoverOidc(
     throw new Error(`XAA IdP: invalid OIDC metadata: ${parsed.error.message}`)
   }
   if (new URL(parsed.data.token_endpoint).protocol !== 'https:') {
-    throw new Error(
-      `XAA IdP: refusing non-HTTPS token endpoint: ${parsed.data.token_endpoint}`,
-    )
+    throw new Error(`XAA IdP: refusing non-HTTPS token endpoint: ${parsed.data.token_endpoint}`)
   }
   return parsed.data
 }
@@ -253,9 +237,9 @@ function jwtExp(jwt: string): number | undefined {
   const parts = jwt.split('.')
   if (parts.length !== 3) return undefined
   try {
-    const payload = jsonParse(
-      Buffer.from(parts[1]!, 'base64url').toString('utf-8'),
-    ) as { exp?: number }
+    const payload = jsonParse(Buffer.from(parts[1]!, 'base64url').toString('utf-8')) as {
+      exp?: number
+    }
     return typeof payload.exp === 'number' ? payload.exp : undefined
   } catch {
     return undefined
@@ -355,9 +339,7 @@ function waitForCallback(
       }
 
       res.writeHead(200, { 'Content-Type': 'text/html' })
-      res.end(
-        '<html><body><h3>IdP login complete — you can close this window.</h3></body></html>',
-      )
+      res.end('<html><body><h3>IdP login complete — you can close this window.</h3></body></html>')
       resolveOnce(code)
     })
 
@@ -386,7 +368,7 @@ function waitForCallback(
     })
     server.unref()
     timeoutId = setTimeout(
-      rej => rej(new Error('XAA IdP: login timed out')),
+      (rej) => rej(new Error('XAA IdP: login timed out')),
       IDP_LOGIN_TIMEOUT_MS,
       rejectOnce,
     )
@@ -398,9 +380,7 @@ function waitForCallback(
  * Acquire an id_token from the IdP: return cached if valid, otherwise run
  * the full OIDC authorization_code + PKCE flow (one browser pop).
  */
-export async function acquireIdpIdToken(
-  opts: IdpLoginOptions,
-): Promise<string> {
+export async function acquireIdpIdToken(opts: IdpLoginOptions): Promise<string> {
   const { idpIssuer, idpClientId } = opts
 
   const cached = getCachedIdpIdToken(idpIssuer)
@@ -420,35 +400,27 @@ export async function acquireIdpIdToken(
     ...(opts.idpClientSecret ? { client_secret: opts.idpClientSecret } : {}),
   }
 
-  const { authorizationUrl, codeVerifier } = await startAuthorization(
-    idpIssuer,
-    {
-      metadata,
-      clientInformation,
-      redirectUrl: redirectUri,
-      scope: 'openid',
-      state,
-    },
-  )
+  const { authorizationUrl, codeVerifier } = await startAuthorization(idpIssuer, {
+    metadata,
+    clientInformation,
+    redirectUrl: redirectUri,
+    scope: 'openid',
+    state,
+  })
 
   // Open the browser only after the socket is actually bound — listen() is
   // async, and on the fixed-callbackPort path EADDRINUSE otherwise surfaces
   // after a spurious tab has already popped. Mirrors the auth.ts pattern of
   // wrapping sdkAuth inside server.listen's callback.
-  const authorizationCode = await waitForCallback(
-    port,
-    state,
-    opts.abortSignal,
-    () => {
-      if (opts.onAuthorizationUrl) {
-        opts.onAuthorizationUrl(authorizationUrl.toString())
-      }
-      if (!opts.skipBrowserOpen) {
-        logMCPDebug('xaa', `Opening browser to IdP authorization endpoint`)
-        void openBrowser(authorizationUrl.toString())
-      }
-    },
-  )
+  const authorizationCode = await waitForCallback(port, state, opts.abortSignal, () => {
+    if (opts.onAuthorizationUrl) {
+      opts.onAuthorizationUrl(authorizationUrl.toString())
+    }
+    if (!opts.skipBrowserOpen) {
+      logMCPDebug('xaa', `Opening browser to IdP authorization endpoint`)
+      void openBrowser(authorizationUrl.toString())
+    }
+  })
 
   const tokens = await exchangeAuthorization(idpIssuer, {
     metadata,
@@ -464,18 +436,14 @@ export async function acquireIdpIdToken(
       }),
   })
   if (!tokens.id_token) {
-    throw new Error(
-      'XAA IdP: token response missing id_token (check scope=openid)',
-    )
+    throw new Error('XAA IdP: token response missing id_token (check scope=openid)')
   }
 
   // Prefer the id_token's own exp claim; fall back to expires_in.
   // expires_in is for the access_token and may differ from the id_token
   // lifetime. If neither is present, default to 1h.
   const expFromJwt = jwtExp(tokens.id_token)
-  const expiresAt = expFromJwt
-    ? expFromJwt * 1000
-    : Date.now() + (tokens.expires_in ?? 3600) * 1000
+  const expiresAt = expFromJwt ? expFromJwt * 1000 : Date.now() + (tokens.expires_in ?? 3600) * 1000
 
   saveIdpIdToken(idpIssuer, tokens.id_token, expiresAt)
   logMCPDebug(

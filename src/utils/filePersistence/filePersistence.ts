@@ -13,19 +13,12 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import {
-  type FilesApiConfig,
-  uploadSessionFiles,
-} from '../../services/api/filesApi.js'
+import { type FilesApiConfig, uploadSessionFiles } from '../../services/api/filesApi.js'
 import { getCwd } from '../cwd.js'
 import { errorMessage } from '../errors.js'
 import { logError } from '../log.js'
 import { getSessionIngressAuthToken } from '../sessionIngressAuth.js'
-import {
-  findModifiedFiles,
-  getEnvironmentKind,
-  logDebug,
-} from './outputsScanner.js'
+import { findModifiedFiles, getEnvironmentKind, logDebug } from './outputsScanner.js'
 import {
   DEFAULT_UPLOAD_CONCURRENCY,
   type FailedPersistence,
@@ -64,11 +57,7 @@ export async function runFilePersistence(
 
   const sessionId = process.env.ZY_CODE_REMOTE_SESSION_ID
   if (!sessionId) {
-    logError(
-      new Error(
-        'File persistence enabled but ZY_CODE_REMOTE_SESSION_ID is not set',
-      ),
-    )
+    logError(new Error('File persistence enabled but ZY_CODE_REMOTE_SESSION_ID is not set'))
     return null
   }
 
@@ -93,12 +82,7 @@ export async function runFilePersistence(
   try {
     let result: FilesPersistedEventData
     if (environmentKind === 'byoc') {
-      result = await executeBYOCPersistence(
-        turnStartTime,
-        config,
-        outputsDir,
-        signal,
-      )
+      result = await executeBYOCPersistence(turnStartTime, config, outputsDir, signal)
     } else {
       result = await executeCloudPersistence()
     }
@@ -127,8 +111,7 @@ export async function runFilePersistence(
       failure_count: 0,
       duration_ms: durationMs,
       mode: environmentKind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      error:
-        'exception' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error: 'exception' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     return {
@@ -170,9 +153,7 @@ async function executeBYOCPersistence(
 
   // Enforce file count limit
   if (modifiedFiles.length > FILE_COUNT_LIMIT) {
-    logDebug(
-      `File count limit exceeded: ${modifiedFiles.length} > ${FILE_COUNT_LIMIT}`,
-    )
+    logDebug(`File count limit exceeded: ${modifiedFiles.length} > ${FILE_COUNT_LIMIT}`)
     logEvent('zy_file_persistence_limit_exceeded', {
       file_count: modifiedFiles.length,
       limit: FILE_COUNT_LIMIT,
@@ -189,7 +170,7 @@ async function executeBYOCPersistence(
   }
 
   const filesToProcess = modifiedFiles
-    .map(filePath => ({
+    .map((filePath) => ({
       path: filePath,
       relativePath: relative(outputsDir, filePath),
     }))
@@ -205,11 +186,7 @@ async function executeBYOCPersistence(
   logDebug(`BYOC mode: uploading ${filesToProcess.length} files`)
 
   // Upload files in parallel
-  const results = await uploadSessionFiles(
-    filesToProcess,
-    config,
-    DEFAULT_UPLOAD_CONCURRENCY,
-  )
+  const results = await uploadSessionFiles(filesToProcess, config, DEFAULT_UPLOAD_CONCURRENCY)
 
   // Separate successful and failed uploads
   const persistedFiles: PersistedFile[] = []

@@ -16,7 +16,7 @@ export function extractToolCallInlineBlock(
   content: ContentBlock[],
   toolName: string,
 ): Extract<ContentBlock, { type: 'tool_call' }> | null {
-  const block = content.find(b => b.type === 'tool_call' && b.name === toolName)
+  const block = content.find((b) => b.type === 'tool_call' && b.name === toolName)
   if (!block || block.type !== 'tool_call') {
     return null
   }

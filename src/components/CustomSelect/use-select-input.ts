@@ -3,10 +3,7 @@ import { useRegisterOverlay } from '../../context/overlayContext.js'
 import type { InputEvent } from '../../ink/events/input-event.js'
 import { useInput } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
-import {
-  normalizeFullWidthDigits,
-  normalizeFullWidthSpace,
-} from '../../utils/stringUtils.js'
+import { normalizeFullWidthDigits, normalizeFullWidthSpace } from '../../utils/stringUtils.js'
 import type { OptionWithDescription } from './select.js'
 import type { SelectState } from './use-select-state.js'
 
@@ -102,7 +99,7 @@ export const useSelectInput = <T>({
 
   // Determine if the focused option is an input type
   const isInInput = useMemo(() => {
-    const focusedOption = options.find(opt => opt.value === state.focusedValue)
+    const focusedOption = options.find((opt) => opt.value === state.focusedValue)
     return focusedOption?.type === 'input'
   }, [options, state.focusedValue])
 
@@ -137,9 +134,7 @@ export const useSelectInput = <T>({
         if (disableSelection === true) return
         if (state.focusedValue === undefined) return
 
-        const focusedOption = options.find(
-          opt => opt.value === state.focusedValue,
-        )
+        const focusedOption = options.find((opt) => opt.value === state.focusedValue)
         if (focusedOption?.disabled === true) return
 
         state.selectFocusedOption?.()
@@ -154,14 +149,7 @@ export const useSelectInput = <T>({
     }
 
     return handlers
-  }, [
-    options,
-    state,
-    onDownFromLastItem,
-    onUpFromFirstItem,
-    isInInput,
-    disableSelection,
-  ])
+  }, [options, state, onDownFromLastItem, onUpFromFirstItem, isInInput, disableSelection])
 
   useKeybindings(keybindingHandlers, {
     context: 'Select',
@@ -173,9 +161,7 @@ export const useSelectInput = <T>({
   useInput(
     (input, key, event: InputEvent) => {
       const normalizedInput = normalizeFullWidthDigits(input)
-      const focusedOption = options.find(
-        opt => opt.value === state.focusedValue,
-      )
+      const focusedOption = options.find((opt) => opt.value === state.focusedValue)
       const currentIsInInput = focusedOption?.type === 'input'
 
       // Handle Tab key for input mode toggling
@@ -252,10 +238,7 @@ export const useSelectInput = <T>({
           }
         }
 
-        if (
-          disableSelection !== 'numeric' &&
-          /^[0-9]+$/.test(normalizedInput)
-        ) {
+        if (disableSelection !== 'numeric' && /^[0-9]+$/.test(normalizedInput)) {
           const index = parseInt(normalizedInput) - 1
           if (index >= 0 && index < state.options.length) {
             const selectedOption = state.options[index]!

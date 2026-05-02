@@ -14,10 +14,7 @@ import type { PermissionUpdate } from './PermissionUpdateSchema.js'
 const ESCAPED_STAR_PLACEHOLDER = '\x00ESCAPED_STAR\x00'
 const ESCAPED_BACKSLASH_PLACEHOLDER = '\x00ESCAPED_BACKSLASH\x00'
 const ESCAPED_STAR_PLACEHOLDER_RE = new RegExp(ESCAPED_STAR_PLACEHOLDER, 'g')
-const ESCAPED_BACKSLASH_PLACEHOLDER_RE = new RegExp(
-  ESCAPED_BACKSLASH_PLACEHOLDER,
-  'g',
-)
+const ESCAPED_BACKSLASH_PLACEHOLDER_RE = new RegExp(ESCAPED_BACKSLASH_PLACEHOLDER, 'g')
 
 /**
  * Parsed permission rule discriminated union.
@@ -40,9 +37,7 @@ export type ShellPermissionRule =
  * Extract prefix from legacy :* syntax (e.g., "npm:*" -> "npm")
  * This is maintained for backwards compatibility.
  */
-export function permissionRuleExtractPrefix(
-  permissionRule: string,
-): string | null {
+export function permissionRuleExtractPrefix(permissionRule: string): string | null {
   const match = permissionRule.match(/^(.+):\*$/)
   return match?.[1] ?? null
 }
@@ -156,9 +151,7 @@ export function matchWildcardPattern(
 /**
  * Parse a permission rule string into a structured rule object.
  */
-export function parsePermissionRule(
-  permissionRule: string,
-): ShellPermissionRule {
+export function parsePermissionRule(permissionRule: string): ShellPermissionRule {
   // Check for legacy :* prefix syntax first (backwards compatibility)
   const prefix = permissionRuleExtractPrefix(permissionRule)
   if (prefix !== null) {
@@ -186,10 +179,7 @@ export function parsePermissionRule(
 /**
  * Generate permission update suggestion for an exact command match.
  */
-export function suggestionForExactCommand(
-  toolName: string,
-  command: string,
-): PermissionUpdate[] {
+export function suggestionForExactCommand(toolName: string, command: string): PermissionUpdate[] {
   return [
     {
       type: 'addRules',
@@ -208,10 +198,7 @@ export function suggestionForExactCommand(
 /**
  * Generate permission update suggestion for a prefix match.
  */
-export function suggestionForPrefix(
-  toolName: string,
-  prefix: string,
-): PermissionUpdate[] {
+export function suggestionForPrefix(toolName: string, prefix: string): PermissionUpdate[] {
   return [
     {
       type: 'addRules',

@@ -3,10 +3,7 @@ import type { ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
-import {
-  FILE_NOT_FOUND_CWD_NOTE,
-  suggestPathUnderCwd,
-} from '../../utils/file.js'
+import { FILE_NOT_FOUND_CWD_NOTE, suggestPathUnderCwd } from '../../utils/file.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { glob } from '../../utils/glob.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -38,16 +35,10 @@ type InputSchema = ReturnType<typeof inputSchema>
 
 const outputSchema = lazySchema(() =>
   z.object({
-    durationMs: z
-      .number()
-      .describe('Time taken to execute the search in milliseconds'),
+    durationMs: z.number().describe('Time taken to execute the search in milliseconds'),
     numFiles: z.number().describe('Total number of files found'),
-    filenames: z
-      .array(z.string())
-      .describe('Array of file paths that match the pattern'),
-    truncated: z
-      .boolean()
-      .describe('Whether results were truncated (limited to 100 files)'),
+    filenames: z.array(z.string()).describe('Array of file paths that match the pattern'),
+    truncated: z.boolean().describe('Whether results were truncated (limited to 100 files)'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -89,7 +80,7 @@ export const GlobTool = buildTool({
     return path ? expandPath(path) : getCwd()
   },
   async preparePermissionMatcher({ pattern }) {
-    return rulePattern => matchWildcardPattern(rulePattern, pattern)
+    return (rulePattern) => matchWildcardPattern(rulePattern, pattern)
   },
   async validateInput({ path }): Promise<ValidationResult> {
     // If path is provided, validate that it exists and is a directory
@@ -134,11 +125,7 @@ export const GlobTool = buildTool({
   },
   async checkPermissions(input, context): Promise<PermissionDecision> {
     const appState = context.getAppState()
-    return checkReadPermissionForTool(
-      GlobTool,
-      input,
-      appState.toolPermissionContext,
-    )
+    return checkReadPermissionForTool(GlobTool, input, appState.toolPermissionContext)
   },
   async prompt() {
     return DESCRIPTION
@@ -188,9 +175,7 @@ export const GlobTool = buildTool({
       content: [
         ...output.filenames,
         ...(output.truncated
-          ? [
-              '(Results are truncated. Consider using a more specific path or pattern.)',
-            ]
+          ? ['(Results are truncated. Consider using a more specific path or pattern.)']
           : []),
       ].join('\n'),
     }

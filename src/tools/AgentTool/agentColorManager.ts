@@ -49,10 +49,7 @@ export function getAgentColor(agentType: string): keyof Theme | undefined {
   return undefined
 }
 
-export function setAgentColor(
-  agentType: string,
-  color: AgentColorName | undefined,
-): void {
+export function setAgentColor(agentType: string, color: AgentColorName | undefined): void {
   const agentColorMap = getAgentColorMap()
 
   if (!color) {

@@ -1,12 +1,15 @@
-import figures from 'figures';
-import React, { useState } from 'react';
-import { Dialog } from '../../components/design-system/Dialog.js';
-import { stringWidth } from '../../ink/stringWidth.js';
+import figures from 'figures'
+import React, { useState } from 'react'
+import { Dialog } from '../../components/design-system/Dialog.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw text input for config dialog
-import { Box, Text, useInput } from '../../ink.js';
-import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
-import { isEnvTruthy } from '../../utils/envUtils.js';
-import type { PluginOptionSchema, PluginOptionValues } from '../../utils/plugins/pluginOptionsStorage.js';
+import { Box, Text, useInput } from '../../ink.js'
+import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+import type {
+  PluginOptionSchema,
+  PluginOptionValues,
+} from '../../utils/plugins/pluginOptionsStorage.js'
 
 /**
  * Build the onSave payload from collected string inputs.
@@ -20,109 +23,153 @@ import type { PluginOptionSchema, PluginOptionValues } from '../../utils/plugins
  *
  * Exported for unit testing.
  */
-export function buildFinalValues(fields: string[], collected: Record<string, string>, configSchema: PluginOptionSchema, initialValues: PluginOptionValues | undefined): PluginOptionValues {
-  const finalValues: PluginOptionValues = {};
+export function buildFinalValues(
+  fields: string[],
+  collected: Record<string, string>,
+  configSchema: PluginOptionSchema,
+  initialValues: PluginOptionValues | undefined,
+): PluginOptionValues {
+  const finalValues: PluginOptionValues = {}
   for (const fieldKey of fields) {
-    const schema = configSchema[fieldKey];
-    const value = collected[fieldKey] ?? '';
+    const schema = configSchema[fieldKey]
+    const value = collected[fieldKey] ?? ''
     if (schema?.sensitive === true && value === '' && initialValues?.[fieldKey] !== undefined) {
-      continue;
+      continue
     }
     if (schema?.type === 'number') {
       // Number('') returns 0, not NaN — omit blank number inputs so
       // validateUserConfig's required check actually catches them.
-      if (value.trim() === '') continue;
-      const num = Number(value);
-      finalValues[fieldKey] = Number.isNaN(num) ? value : num;
+      if (value.trim() === '') continue
+      const num = Number(value)
+      finalValues[fieldKey] = Number.isNaN(num) ? value : num
     } else if (schema?.type === 'boolean') {
-      finalValues[fieldKey] = isEnvTruthy(value);
+      finalValues[fieldKey] = isEnvTruthy(value)
     } else {
-      finalValues[fieldKey] = value;
+      finalValues[fieldKey] = value
     }
   }
-  return finalValues;
+  return finalValues
 }
 type Props = {
-  title: string;
-  subtitle: string;
-  configSchema: PluginOptionSchema;
+  title: string
+  subtitle: string
+  configSchema: PluginOptionSchema
   /** Pre-fill fields when reconfiguring. Sensitive fields are not prepopulated. */
-  initialValues?: PluginOptionValues;
-  onSave: (config: PluginOptionValues) => void;
-  onCancel: () => void;
-};
+  initialValues?: PluginOptionValues
+  onSave: (config: PluginOptionValues) => void
+  onCancel: () => void
+}
 export function PluginOptionsDialog({
   title,
   subtitle,
   configSchema,
   initialValues,
   onSave,
-  onCancel
+  onCancel,
 }: Props) {
-  const fields = Object.keys(configSchema);
-  const initialFor = key => {
+  const fields = Object.keys(configSchema)
+  const initialFor = (key) => {
     if (configSchema[key]?.sensitive === true) {
-      return "";
+      return ''
     }
-    const v = initialValues?.[key];
-    return v === undefined ? "" : String(v);
-  };
-  const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
-  const [values, setValues] = useState({});
-  const [currentInput, setCurrentInput] = useState(() => fields[0] ? initialFor(fields[0]) : "");
-  const currentField = fields[currentFieldIndex];
-  const fieldSchema = currentField ? configSchema[currentField] : null;
-  useKeybinding("confirm:no", onCancel, {
-    context: "Settings"
-  });
+    const v = initialValues?.[key]
+    return v === undefined ? '' : String(v)
+  }
+  const [currentFieldIndex, setCurrentFieldIndex] = useState(0)
+  const [values, setValues] = useState({})
+  const [currentInput, setCurrentInput] = useState(() => (fields[0] ? initialFor(fields[0]) : ''))
+  const currentField = fields[currentFieldIndex]
+  const fieldSchema = currentField ? configSchema[currentField] : null
+  useKeybinding('confirm:no', onCancel, {
+    context: 'Settings',
+  })
   const handleNextField = () => {
     if (currentFieldIndex < fields.length - 1 && currentField) {
-      setValues(prev => ({
+      setValues((prev) => ({
         ...prev,
-        [currentField]: currentInput
-      }));
-      setCurrentFieldIndex(prev_0 => prev_0 + 1);
-      const nextKey = fields[currentFieldIndex + 1];
-      setCurrentInput(nextKey ? initialFor(nextKey) : "");
+        [currentField]: currentInput,
+      }))
+      setCurrentFieldIndex((prev_0) => prev_0 + 1)
+      const nextKey = fields[currentFieldIndex + 1]
+      setCurrentInput(nextKey ? initialFor(nextKey) : '')
     }
-  };
+  }
   const handleConfirm = () => {
     if (!currentField) {
-      return;
+      return
     }
     const newValues = {
       ...values,
-      [currentField]: currentInput
-    };
-    if (currentFieldIndex === fields.length - 1) {
-      onSave(buildFinalValues(fields, newValues, configSchema, initialValues));
-    } else {
-      setValues(newValues);
-      setCurrentFieldIndex(prev_1 => prev_1 + 1);
-      const nextKey_0 = fields[currentFieldIndex + 1];
-      setCurrentInput(nextKey_0 ? initialFor(nextKey_0) : "");
+      [currentField]: currentInput,
     }
-  };
-  useKeybindings({
-    "confirm:nextField": handleNextField,
-    "confirm:yes": handleConfirm
-  }, {
-    context: "Confirmation"
-  });
+    if (currentFieldIndex === fields.length - 1) {
+      onSave(buildFinalValues(fields, newValues, configSchema, initialValues))
+    } else {
+      setValues(newValues)
+      setCurrentFieldIndex((prev_1) => prev_1 + 1)
+      const nextKey_0 = fields[currentFieldIndex + 1]
+      setCurrentInput(nextKey_0 ? initialFor(nextKey_0) : '')
+    }
+  }
+  useKeybindings(
+    {
+      'confirm:nextField': handleNextField,
+      'confirm:yes': handleConfirm,
+    },
+    {
+      context: 'Confirmation',
+    },
+  )
   useInput((char, key_0) => {
     if (key_0.backspace || key_0.delete) {
-      setCurrentInput(prev_2 => prev_2.slice(0, -1));
-      return;
+      setCurrentInput((prev_2) => prev_2.slice(0, -1))
+      return
     }
     if (char && !key_0.ctrl && !key_0.meta && !key_0.tab && !key_0.return) {
-      setCurrentInput(prev_3 => prev_3 + char);
+      setCurrentInput((prev_3) => prev_3 + char)
     }
-  });
+  })
   if (!fieldSchema || !currentField) {
-    return null;
+    return null
   }
-  const isSensitive = fieldSchema.sensitive === true;
-  const isRequired = fieldSchema.required === true;
-  const displayValue = isSensitive ? "*".repeat(stringWidth(currentInput)) : currentInput;
-  return <Dialog title={title} subtitle={subtitle} onCancel={onCancel} isCancelActive={false}>{<Box flexDirection="column">{<Text bold={true}>{fieldSchema.title || currentField}{isRequired && <Text color="error"> *</Text>}</Text>}{fieldSchema.description && <Text dimColor={true}>{fieldSchema.description}</Text>}{<Box marginTop={1}>{<Text>{figures.pointerSmall} </Text>}{<Text>{displayValue}</Text>}{<Text>█</Text>}</Box>}</Box>}{<Box flexDirection="column">{<Text dimColor={true}>Field {currentFieldIndex + 1} of {fields.length}</Text>}{currentFieldIndex < fields.length - 1 && <Text dimColor={true}>Tab: Next field · Enter: Save and continue</Text>}{currentFieldIndex === fields.length - 1 && <Text dimColor={true}>Enter: Save configuration</Text>}</Box>}</Dialog>;
+  const isSensitive = fieldSchema.sensitive === true
+  const isRequired = fieldSchema.required === true
+  const displayValue = isSensitive ? '*'.repeat(stringWidth(currentInput)) : currentInput
+  return (
+    <Dialog title={title} subtitle={subtitle} onCancel={onCancel} isCancelActive={false}>
+      {
+        <Box flexDirection="column">
+          {
+            <Text bold={true}>
+              {fieldSchema.title || currentField}
+              {isRequired && <Text color="error"> *</Text>}
+            </Text>
+          }
+          {fieldSchema.description && <Text dimColor={true}>{fieldSchema.description}</Text>}
+          {
+            <Box marginTop={1}>
+              {<Text>{figures.pointerSmall} </Text>}
+              {<Text>{displayValue}</Text>}
+              {<Text>█</Text>}
+            </Box>
+          }
+        </Box>
+      }
+      {
+        <Box flexDirection="column">
+          {
+            <Text dimColor={true}>
+              Field {currentFieldIndex + 1} of {fields.length}
+            </Text>
+          }
+          {currentFieldIndex < fields.length - 1 && (
+            <Text dimColor={true}>Tab: Next field · Enter: Save and continue</Text>
+          )}
+          {currentFieldIndex === fields.length - 1 && (
+            <Text dimColor={true}>Enter: Save configuration</Text>
+          )}
+        </Box>
+      }
+    </Dialog>
+  )
 }

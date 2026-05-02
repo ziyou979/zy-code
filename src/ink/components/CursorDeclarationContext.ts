@@ -24,8 +24,6 @@ export type CursorDeclarationSetter = (
   clearIfNode?: DOMElement | null,
 ) => void
 
-const CursorDeclarationContext = createContext<CursorDeclarationSetter>(
-  () => {},
-)
+const CursorDeclarationContext = createContext<CursorDeclarationSetter>(() => {})
 
 export default CursorDeclarationContext

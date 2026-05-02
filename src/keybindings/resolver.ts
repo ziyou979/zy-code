@@ -1,11 +1,7 @@
 import type { Key } from '../ink.js'
 import { getKeyName, matchesBinding } from './match.js'
 import { chordToString } from './parser.js'
-import type {
-  KeybindingContextName,
-  ParsedBinding,
-  ParsedKeystroke,
-} from './types.js'
+import type { KeybindingContextName, ParsedBinding, ParsedKeystroke } from './types.js'
 
 export type ResolveResult =
   | { type: 'match'; action: string }
@@ -70,9 +66,7 @@ export function getBindingDisplayText(
   bindings: ParsedBinding[],
 ): string | undefined {
   // Find the last binding for this action in this context
-  const binding = bindings.findLast(
-    b => b.action === action && b.context === context,
-  )
+  const binding = bindings.findLast((b) => b.action === action && b.context === context)
   return binding ? chordToString(binding.chord) : undefined
 }
 
@@ -104,10 +98,7 @@ function buildKeystroke(input: string, key: Key): ParsedKeystroke | null {
  * match.ts modifiersMatch), so "alt+k" and "meta+k" are the same key.
  * Super (cmd/win) is distinct — only arrives via kitty keyboard protocol.
  */
-export function keystrokesEqual(
-  a: ParsedKeystroke,
-  b: ParsedKeystroke,
-): boolean {
+export function keystrokesEqual(a: ParsedKeystroke, b: ParsedKeystroke): boolean {
   return (
     a.key === b.key &&
     a.ctrl === b.ctrl &&
@@ -120,10 +111,7 @@ export function keystrokesEqual(
 /**
  * Check if a chord prefix matches the beginning of a binding's chord.
  */
-function chordPrefixMatches(
-  prefix: ParsedKeystroke[],
-  binding: ParsedBinding,
-): boolean {
+function chordPrefixMatches(prefix: ParsedKeystroke[], binding: ParsedBinding): boolean {
   if (prefix.length >= binding.chord.length) return false
   for (let i = 0; i < prefix.length; i++) {
     const prefixKey = prefix[i]
@@ -137,10 +125,7 @@ function chordPrefixMatches(
 /**
  * Check if a full chord matches a binding's chord.
  */
-function chordExactlyMatches(
-  chord: ParsedKeystroke[],
-  binding: ParsedBinding,
-): boolean {
+function chordExactlyMatches(chord: ParsedKeystroke[], binding: ParsedBinding): boolean {
   if (chord.length !== binding.chord.length) return false
   for (let i = 0; i < chord.length; i++) {
     const chordKey = chord[i]
@@ -185,13 +170,11 @@ export function resolveKeyWithChordState(
   }
 
   // Build the full chord sequence to test
-  const testChord = pending
-    ? [...pending, currentKeystroke]
-    : [currentKeystroke]
+  const testChord = pending ? [...pending, currentKeystroke] : [currentKeystroke]
 
   // Filter bindings by active contexts (Set lookup: O(n) instead of O(n·m))
   const ctxSet = new Set(activeContexts)
-  const contextBindings = bindings.filter(b => ctxSet.has(b.context))
+  const contextBindings = bindings.filter((b) => ctxSet.has(b.context))
 
   // Check if this could be a prefix for longer chords. Group by chord
   // string so a later null-override shadows the default it unbinds —
@@ -199,10 +182,7 @@ export function resolveKeyWithChordState(
   // chord-wait and the single-key binding on the prefix never fires.
   const chordWinners = new Map<string, string | null>()
   for (const binding of contextBindings) {
-    if (
-      binding.chord.length > testChord.length &&
-      chordPrefixMatches(testChord, binding)
-    ) {
+    if (binding.chord.length > testChord.length && chordPrefixMatches(testChord, binding)) {
       chordWinners.set(chordToString(binding.chord), binding.action)
     }
   }

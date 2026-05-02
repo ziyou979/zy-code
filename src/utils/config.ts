@@ -116,7 +116,7 @@ export type ProjectConfig = {
   projectOnboardingSeenCount: number
   haszyMdExternalIncludesApproved?: boolean
   haszyMdExternalIncludesWarningShown?: boolean
-// MCP 服务器审批字段 — 已迁移到 settings，保留以兼容旧版本
+  // MCP 服务器审批字段 — 已迁移到 settings，保留以兼容旧版本
   enabledMcpjsonServers?: string[]
   disabledMcpjsonServers?: string[]
   enableAllProjectMcpServers?: boolean
@@ -307,16 +307,10 @@ export type GlobalConfig = {
   >
 
   // 按组织缓存的 Guest pass 资格 — key 为组织 ID
-  passesEligibilityCache?: Record<
-    string,
-    ReferralEligibilityResponse & { timestamp: number }
-  >
+  passesEligibilityCache?: Record<string, ReferralEligibilityResponse & { timestamp: number }>
 
   // 按账户缓存的 Grove 配置 — key 为账户 UUID
-  groveConfigCache?: Record<
-    string,
-    { grove_enabled: boolean; timestamp: number }
-  >
+  groveConfigCache?: Record<string, { grove_enabled: boolean; timestamp: number }>
 
   // Guest pass 升级弹窗追踪
   passesUpsellSeenCount?: number // guest pass 升级弹窗已展示的次数
@@ -548,7 +542,6 @@ export type GlobalConfig = {
   // 推测配置（ant-only）
   speculationEnabled?: boolean // 是否启用推测（默认: true）
 
-
   // 服务端实验的客户端数据（在 bootstrap 期间获取）。
   clientDataCache?: Record<string, unknown> | null
 
@@ -772,17 +765,13 @@ function wouldLoseAuthState(fresh: {
 }): boolean {
   const cached = globalConfigCache.config
   if (!cached) return false
-  const lostOauth =
-    cached.oauthAccount !== undefined && fresh.oauthAccount === undefined
+  const lostOauth = cached.oauthAccount !== undefined && fresh.oauthAccount === undefined
   const lostOnboarding =
-    cached.hasCompletedOnboarding === true &&
-    fresh.hasCompletedOnboarding !== true
+    cached.hasCompletedOnboarding === true && fresh.hasCompletedOnboarding !== true
   return lostOauth || lostOnboarding
 }
 
-export function saveGlobalConfig(
-  updater: (currentConfig: GlobalConfig) => GlobalConfig,
-): void {
+export function saveGlobalConfig(updater: (currentConfig: GlobalConfig) => GlobalConfig): void {
   if (process.env.NODE_ENV === 'test') {
     const config = updater(TEST_GLOBAL_CONFIG_FOR_TESTING)
     // 无变更则跳过（返回了相同引用）
@@ -795,22 +784,18 @@ export function saveGlobalConfig(
 
   let written: GlobalConfig | null = null
   try {
-    const didWrite = saveConfigWithLock(
-      getGlobalZyFile(),
-      createDefaultGlobalConfig,
-      current => {
-        const config = updater(current)
-        // 无变更则跳过（返回了相同引用）
-        if (config === current) {
-          return current
-        }
-        written = {
-          ...config,
-          projects: removeProjectHistory(current.projects),
-        }
-        return written
-      },
-    )
+    const didWrite = saveConfigWithLock(getGlobalZyFile(), createDefaultGlobalConfig, (current) => {
+      const config = updater(current)
+      // 无变更则跳过（返回了相同引用）
+      if (config === current) {
+        return current
+      }
+      written = {
+        ...config,
+        projects: removeProjectHistory(current.projects),
+      }
+      return written
+    })
     // 仅在实际写入时才 write-through。如果认证丢失保护
     // 触发（或 updater 未做变更），文件未被触碰且缓存
     // 仍有效 — 触碰它会破坏保护。
@@ -825,10 +810,7 @@ export function saveGlobalConfig(
     // 如果另一个进程正在写入中（或文件被截断），
     // getConfig 返回默认值。拒绝将这些默认值写入好的缓存配置，
     // 以避免清除认证。见 GH #3117。
-    const currentConfig = getConfig(
-      getGlobalZyFile(),
-      createDefaultGlobalConfig,
-    )
+    const currentConfig = getConfig(getGlobalZyFile(), createDefaultGlobalConfig)
     if (wouldLoseAuthState(currentConfig)) {
       logForDebugging(
         'saveGlobalConfig fallback: re-read config is missing auth that cache has; refusing to write. See GH #3117.',
@@ -984,35 +966,31 @@ function startGlobalConfigFreshnessWatcher(): void {
   if (freshnessWatcherStarted || process.env.NODE_ENV === 'test') return
   freshnessWatcherStarted = true
   const file = getGlobalZyFile()
-  watchFile(
-    file,
-    { interval: CONFIG_FRESHNESS_POLL_MS, persistent: false },
-    curr => {
-      // 我们自己的写入也会触发此回调 — write-through 的 Date.now()
-      // 超调使 cache.mtime > 文件 mtime，因此我们跳过重读。
-      // Bun/Node 在文件不存在时（初始回调或删除）也会触发 curr.mtimeMs=0 —
-      // <= 也处理了这种情况。
-      if (curr.mtimeMs <= globalConfigCache.mtime) return
-      void getFsImplementation()
-        .readFile(file, { encoding: 'utf-8' })
-        .then(content => {
-          // write-through 可能在我们读取前推进了缓存；
-          // 不要回退到 watchFile stat 的过时快照。
-          if (curr.mtimeMs <= globalConfigCache.mtime) return
-          const parsed = safeParseJSON(stripBOM(content))
-          if (parsed === null || typeof parsed !== 'object') return
-          globalConfigCache = {
-            config: migrateConfigFields({
-              ...createDefaultGlobalConfig(),
-              ...(parsed as Partial<GlobalConfig>),
-            }),
-            mtime: curr.mtimeMs,
-          }
-          lastReadFileStats = { mtime: curr.mtimeMs, size: curr.size }
-        })
-        .catch(() => {})
-    },
-  )
+  watchFile(file, { interval: CONFIG_FRESHNESS_POLL_MS, persistent: false }, (curr) => {
+    // 我们自己的写入也会触发此回调 — write-through 的 Date.now()
+    // 超调使 cache.mtime > 文件 mtime，因此我们跳过重读。
+    // Bun/Node 在文件不存在时（初始回调或删除）也会触发 curr.mtimeMs=0 —
+    // <= 也处理了这种情况。
+    if (curr.mtimeMs <= globalConfigCache.mtime) return
+    void getFsImplementation()
+      .readFile(file, { encoding: 'utf-8' })
+      .then((content) => {
+        // write-through 可能在我们读取前推进了缓存；
+        // 不要回退到 watchFile stat 的过时快照。
+        if (curr.mtimeMs <= globalConfigCache.mtime) return
+        const parsed = safeParseJSON(stripBOM(content))
+        if (parsed === null || typeof parsed !== 'object') return
+        globalConfigCache = {
+          config: migrateConfigFields({
+            ...createDefaultGlobalConfig(),
+            ...(parsed as Partial<GlobalConfig>),
+          }),
+          mtime: curr.mtimeMs,
+        }
+        lastReadFileStats = { mtime: curr.mtimeMs, size: curr.size }
+      })
+      .catch(() => {})
+  })
   registerCleanup(async () => {
     unwatchFile(file)
     freshnessWatcherStarted = false
@@ -1050,23 +1028,17 @@ export function getGlobalConfig(): GlobalConfig {
     } catch {
       // 文件不存在
     }
-    const config = migrateConfigFields(
-      getConfig(getGlobalZyFile(), createDefaultGlobalConfig),
-    )
+    const config = migrateConfigFields(getConfig(getGlobalZyFile(), createDefaultGlobalConfig))
     globalConfigCache = {
       config,
       mtime: stats?.mtimeMs ?? Date.now(),
     }
-    lastReadFileStats = stats
-      ? { mtime: stats.mtimeMs, size: stats.size }
-      : null
+    lastReadFileStats = stats ? { mtime: stats.mtimeMs, size: stats.size } : null
     startGlobalConfigFreshnessWatcher()
     return config
   } catch {
     // 如果出了任何问题，回退到非缓存行为
-    return migrateConfigFields(
-      getConfig(getGlobalZyFile(), createDefaultGlobalConfig),
-    )
+    return migrateConfigFields(getConfig(getGlobalZyFile(), createDefaultGlobalConfig))
   }
 }
 
@@ -1085,9 +1057,7 @@ export function getRemoteControlAtStartup(): boolean {
   return false
 }
 
-export function getApiKeyStatus(
-  truncatedApiKey: string,
-): 'approved' | 'rejected' | 'new' {
+export function getApiKeyStatus(truncatedApiKey: string): 'approved' | 'rejected' | 'new' {
   const config = getGlobalConfig()
   if (config.apiKeyResponses?.approved?.includes(truncatedApiKey)) {
     return 'approved'
@@ -1098,11 +1068,7 @@ export function getApiKeyStatus(
   return 'new'
 }
 
-function saveConfig<A extends object>(
-  file: string,
-  config: A,
-  defaultConfig: A,
-): void {
+function saveConfig<A extends object>(file: string, config: A, defaultConfig: A): void {
   // 写入配置前确保目录存在
   const dir = dirname(file)
   const fs = getFsImplementation()
@@ -1112,18 +1078,13 @@ function saveConfig<A extends object>(
   // 过滤掉与默认值匹配的所有值
   const filteredConfig = pickBy(
     config,
-    (value, key) =>
-      jsonStringify(value) !== jsonStringify(defaultConfig[key as keyof A]),
+    (value, key) => jsonStringify(value) !== jsonStringify(defaultConfig[key as keyof A]),
   )
   // 以安全权限写入配置文件 — mode 仅适用于新文件
-  writeFileSyncAndFlush_DEPRECATED(
-    file,
-    jsonStringify(filteredConfig, null, 2),
-    {
-      encoding: 'utf-8',
-      mode: 0o600,
-    },
-  )
+  writeFileSyncAndFlush_DEPRECATED(file, jsonStringify(filteredConfig, null, 2), {
+    encoding: 'utf-8',
+    mode: 0o600,
+  })
   if (file === getGlobalZyFile()) {
     globalConfigWriteCount++
   }
@@ -1152,7 +1113,7 @@ function saveConfigWithLock<A extends object>(
     const startTime = Date.now()
     release = lockfile.lockSync(file, {
       lockfilePath: lockFilePath,
-      onCompromised: err => {
+      onCompromised: (err) => {
         // 默认 onCompromised 从 setTimeout 回调抛出，会变成
         // 未处理异常。改为记录日志 — 锁被偷走（例如事件循环
         // 停滞 10s 后）是可恢复的。
@@ -1218,8 +1179,7 @@ function saveConfigWithLock<A extends object>(
     // 过滤掉与默认值匹配的所有值
     const filteredConfig = pickBy(
       mergedConfig,
-      (value, key) =>
-        jsonStringify(value) !== jsonStringify(defaultConfig[key as keyof A]),
+      (value, key) => jsonStringify(value) !== jsonStringify(defaultConfig[key as keyof A]),
     )
 
     // 写入前为现有配置文件创建时间戳备份。
@@ -1245,7 +1205,7 @@ function saveConfigWithLock<A extends object>(
       const MIN_BACKUP_INTERVAL_MS = 60_000
       const existingBackups = fs
         .readdirStringSync(backupDir)
-        .filter(f => f.startsWith(`${fileBase}.backup.`))
+        .filter((f) => f.startsWith(`${fileBase}.backup.`))
         .sort()
         .reverse() // 最新的在前（时间戳按字典序排序）
 
@@ -1268,7 +1228,7 @@ function saveConfigWithLock<A extends object>(
       const backupsForCleanup = shouldCreateBackup
         ? fs
             .readdirStringSync(backupDir)
-            .filter(f => f.startsWith(`${fileBase}.backup.`))
+            .filter((f) => f.startsWith(`${fileBase}.backup.`))
             .sort()
             .reverse()
         : existingBackups
@@ -1291,14 +1251,10 @@ function saveConfigWithLock<A extends object>(
     }
 
     // 以安全权限写入配置文件 — mode 仅适用于新文件
-    writeFileSyncAndFlush_DEPRECATED(
-      file,
-      jsonStringify(filteredConfig, null, 2),
-      {
-        encoding: 'utf-8',
-        mode: 0o600,
-      },
-    )
+    writeFileSyncAndFlush_DEPRECATED(file, jsonStringify(filteredConfig, null, 2), {
+      encoding: 'utf-8',
+      mode: 0o600,
+    })
     if (file === getGlobalZyFile()) {
       globalConfigWriteCount++
     }
@@ -1326,11 +1282,7 @@ export function enableConfigs(): void {
   // 以防止我们在模块初始化期间添加配置读取
   configReadingAllowed = true
   // 目前只检查全局配置，因为所有配置共享一个文件
-  getConfig(
-    getGlobalZyFile(),
-    createDefaultGlobalConfig,
-    true /* throw on invalid */,
-  )
+  getConfig(getGlobalZyFile(), createDefaultGlobalConfig, true /* throw on invalid */)
 
   logForDiagnosticsNoPII('info', 'enable_configs_completed', {
     duration_ms: Date.now() - startTime,
@@ -1360,7 +1312,7 @@ function findMostRecentBackup(file: string): string | null {
   try {
     const backups = fs
       .readdirStringSync(backupDir)
-      .filter(f => f.startsWith(`${fileBase}.backup.`))
+      .filter((f) => f.startsWith(`${fileBase}.backup.`))
       .sort()
 
     const mostRecent = backups.at(-1) // 时间戳按字典序排序
@@ -1377,7 +1329,7 @@ function findMostRecentBackup(file: string): string | null {
   try {
     const backups = fs
       .readdirStringSync(fileDir)
-      .filter(f => f.startsWith(`${fileBase}.backup.`))
+      .filter((f) => f.startsWith(`${fileBase}.backup.`))
       .sort()
 
     const mostRecent = backups.at(-1) // 时间戳按字典序排序
@@ -1400,11 +1352,7 @@ function findMostRecentBackup(file: string): string | null {
   return null
 }
 
-function getConfig<A>(
-  file: string,
-  createDefault: () => A,
-  throwOnInvalid?: boolean,
-): A {
+function getConfig<A>(file: string, createDefault: () => A, throwOnInvalid?: boolean): A {
   // 配置在被允许之前访问时记录警告
   if (!configReadingAllowed && process.env.NODE_ENV !== 'test') {
     throw new Error('Config accessed before allowed.')
@@ -1425,8 +1373,7 @@ function getConfig<A>(
       }
     } catch (error) {
       // 抛出带有文件路径和默认配置的 ConfigParseError
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       throw new ConfigParseError(errorMessage, file, createDefault())
     }
   } catch (error) {
@@ -1451,10 +1398,9 @@ function getConfig<A>(
 
     // 记录配置解析错误，让用户知道发生了什么
     if (error instanceof ConfigParseError) {
-      logForDebugging(
-        `Config file corrupted, resetting to defaults: ${error.message}`,
-        { level: 'error' },
-      )
+      logForDebugging(`Config file corrupted, resetting to defaults: ${error.message}`, {
+        level: 'error',
+      })
 
       // 防护：logEvent → shouldSampleEvent → getGlobalConfig → getConfig
       // 配置文件损坏时会导致无限递归，因为
@@ -1482,9 +1428,7 @@ function getConfig<A>(
         }
       }
 
-      process.stderr.write(
-        `\nZy configuration file at ${file} is corrupted: ${error.message}\n`,
-      )
+      process.stderr.write(`\nZy configuration file at ${file} is corrupted: ${error.message}\n`)
 
       // 尝试备份损坏的配置文件（仅当尚未备份时）
       const fileBase = basename(file)
@@ -1502,7 +1446,7 @@ function getConfig<A>(
 
       const existingCorruptedBackups = fs
         .readdirStringSync(corruptedBackupDir)
-        .filter(f => f.startsWith(`${fileBase}.corrupted.`))
+        .filter((f) => f.startsWith(`${fileBase}.corrupted.`))
 
       let corruptedBackupPath: string | undefined
       let alreadyBackedUp = false
@@ -1511,10 +1455,9 @@ function getConfig<A>(
       const currentContent = fs.readFileSync(file, { encoding: 'utf-8' })
       for (const backup of existingCorruptedBackups) {
         try {
-          const backupContent = fs.readFileSync(
-            join(corruptedBackupDir, backup),
-            { encoding: 'utf-8' },
-          )
+          const backupContent = fs.readFileSync(join(corruptedBackupDir, backup), {
+            encoding: 'utf-8',
+          })
           if (currentContent === backupContent) {
             alreadyBackedUp = true
             break
@@ -1525,18 +1468,12 @@ function getConfig<A>(
       }
 
       if (!alreadyBackedUp) {
-        corruptedBackupPath = join(
-          corruptedBackupDir,
-          `${fileBase}.corrupted.${Date.now()}`,
-        )
+        corruptedBackupPath = join(corruptedBackupDir, `${fileBase}.corrupted.${Date.now()}`)
         try {
           fs.copyFileSync(file, corruptedBackupPath)
-          logForDebugging(
-            `Corrupted config backed up to: ${corruptedBackupPath}`,
-            {
-              level: 'error',
-            },
-          )
+          logForDebugging(`Corrupted config backed up to: ${corruptedBackupPath}`, {
+            level: 'error',
+          })
         } catch {
           // 忽略备份错误
         }
@@ -1545,9 +1482,7 @@ function getConfig<A>(
       // 通知用户配置文件损坏及可用备份
       const backupPath = findMostRecentBackup(file)
       if (corruptedBackupPath) {
-        process.stderr.write(
-          `The corrupted file has been backed up to: ${corruptedBackupPath}\n`,
-        )
+        process.stderr.write(`The corrupted file has been backed up to: ${corruptedBackupPath}\n`)
       } else if (alreadyBackedUp) {
         process.stderr.write(`The corrupted file has already been backed up.\n`)
       }
@@ -1567,7 +1502,7 @@ function getConfig<A>(
 }
 
 // 缓存的函数，用于获取配置查找的项目路径
-export let getProjectPathForConfig;
+export let getProjectPathForConfig
 getProjectPathForConfig = memoize((): string => {
   const originalCwd = getOriginalCwd()
   const gitRoot = findCanonicalGitRoot(originalCwd)
@@ -1598,8 +1533,7 @@ export function getCurrentProjectConfig(): ProjectConfig {
   // 不确定这个怎么变成 string 的
   // TODO: 在上游修复
   if (typeof projectConfig.allowedTools === 'string') {
-    projectConfig.allowedTools =
-      (safeParseJSON(projectConfig.allowedTools) as string[]) ?? []
+    projectConfig.allowedTools = (safeParseJSON(projectConfig.allowedTools) as string[]) ?? []
   }
 
   return projectConfig
@@ -1621,27 +1555,22 @@ export function saveCurrentProjectConfig(
 
   let written: GlobalConfig | null = null
   try {
-    const didWrite = saveConfigWithLock(
-      getGlobalZyFile(),
-      createDefaultGlobalConfig,
-      current => {
-        const currentProjectConfig =
-          current.projects?.[absolutePath] ?? DEFAULT_PROJECT_CONFIG
-        const newProjectConfig = updater(currentProjectConfig)
-        // 无变更则跳过（返回了相同引用）
-        if (newProjectConfig === currentProjectConfig) {
-          return current
-        }
-        written = {
-          ...current,
-          projects: {
-            ...current.projects,
-            [absolutePath]: newProjectConfig,
-          },
-        }
-        return written
-      },
-    )
+    const didWrite = saveConfigWithLock(getGlobalZyFile(), createDefaultGlobalConfig, (current) => {
+      const currentProjectConfig = current.projects?.[absolutePath] ?? DEFAULT_PROJECT_CONFIG
+      const newProjectConfig = updater(currentProjectConfig)
+      // 无变更则跳过（返回了相同引用）
+      if (newProjectConfig === currentProjectConfig) {
+        return current
+      }
+      written = {
+        ...current,
+        projects: {
+          ...current.projects,
+          [absolutePath]: newProjectConfig,
+        },
+      }
+      return written
+    })
     if (didWrite && written) {
       writeThroughGlobalConfigCache(written)
     }
@@ -1661,8 +1590,7 @@ export function saveCurrentProjectConfig(
       logEvent('zy_config_auth_loss_prevented', {})
       return
     }
-    const currentProjectConfig =
-      config.projects?.[absolutePath] ?? DEFAULT_PROJECT_CONFIG
+    const currentProjectConfig = config.projects?.[absolutePath] ?? DEFAULT_PROJECT_CONFIG
     const newProjectConfig = updater(currentProjectConfig)
     // 无变更则跳过（返回了相同引用）
     if (newProjectConfig === currentProjectConfig) {
@@ -1691,10 +1619,7 @@ export function isAutoUpdaterDisabled(): boolean {
  * 自动更新器被禁用时强制插件自动更新。
  */
 export function shouldSkipPluginAutoupdate(): boolean {
-  return (
-    isAutoUpdaterDisabled() &&
-    !isEnvTruthy(process.env.FORCE_AUTOUPDATE_PLUGINS)
-  )
+  return isAutoUpdaterDisabled() && !isEnvTruthy(process.env.FORCE_AUTOUPDATE_PLUGINS)
 }
 
 export type AutoUpdaterDisabledReason =
@@ -1702,9 +1627,7 @@ export type AutoUpdaterDisabledReason =
   | { type: 'env'; envVar: string }
   | { type: 'config' }
 
-export function formatAutoUpdaterDisabledReason(
-  reason: AutoUpdaterDisabledReason,
-): string {
+export function formatAutoUpdaterDisabledReason(reason: AutoUpdaterDisabledReason): string {
   switch (reason.type) {
     case 'development':
       return 'development build'
@@ -1729,8 +1652,7 @@ export function getAutoUpdaterDisabledReason(): AutoUpdaterDisabledReason | null
   const config = getGlobalConfig()
   if (
     config.autoUpdates === false &&
-    (config.installMethod !== 'native' ||
-      config.autoUpdatesProtectedForNative !== true)
+    (config.installMethod !== 'native' || config.autoUpdatesProtectedForNative !== true)
   ) {
     return { type: 'config' }
   }
@@ -1744,7 +1666,7 @@ export function getOrCreateUserID(): string {
   }
 
   const userID = randomBytes(32).toString('hex')
-  saveGlobalConfig(current => ({ ...current, userID }))
+  saveGlobalConfig((current) => ({ ...current, userID }))
   return userID
 }
 
@@ -1752,7 +1674,7 @@ export function recordFirstStartTime(): void {
   const config = getGlobalConfig()
   if (!config.firstStartTime) {
     const firstStartTime = new Date().toISOString()
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       firstStartTime: current.firstStartTime ?? firstStartTime,
     }))
@@ -1792,9 +1714,7 @@ export function getUserZyRulesDir(): string {
 // 仅用于测试导出
 export const _getConfigForTesting = getConfig
 export const _wouldLoseAuthStateForTesting = wouldLoseAuthState
-export function _setGlobalConfigCacheForTesting(
-  config: GlobalConfig | null,
-): void {
+export function _setGlobalConfigCacheForTesting(config: GlobalConfig | null): void {
   globalConfigCache.config = config
   globalConfigCache.mtime = config ? Date.now() : 0
 }

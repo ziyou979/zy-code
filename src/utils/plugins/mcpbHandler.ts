@@ -4,7 +4,7 @@ import type {
   McpbManifest,
   // @ts-ignore
   McpbUserConfigurationOption,
-// @ts-ignore
+  // @ts-ignore
 } from '@anthropic-ai/mcpb'
 import axios from 'axios'
 import { createHash } from 'crypto'
@@ -18,20 +18,14 @@ import { errorMessage, getErrnoCode, isENOENT, toError } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
 import { getSecureStorage } from '../secureStorage/index.js'
-import {
-  getSettings_DEPRECATED,
-  updateSettingsForSource,
-} from '../settings/settings.js'
+import { getSettings_DEPRECATED, updateSettingsForSource } from '../settings/settings.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
 import { getSystemDirectories } from '../systemDirectories.js'
 import { classifyFetchError, logPluginFetch } from './fetchTelemetry.js'
 /**
  * User configuration values for MCPB
  */
-export type UserConfigValues = Record<
-  string,
-  string | number | boolean | string[]
->
+export type UserConfigValues = Record<string, string | number | boolean | string[]>
 
 /**
  * User configuration schema from DXT manifest
@@ -109,10 +103,7 @@ function getMcpbCacheDir(pluginPath: string): string {
  * Get metadata file path for cached MCPB
  */
 function getMetadataPath(cacheDir: string, source: string): string {
-  const sourceHash = createHash('md5')
-    .update(source)
-    .digest('hex')
-    .substring(0, 8)
+  const sourceHash = createHash('md5').update(source).digest('hex').substring(0, 8)
   return join(cacheDir, `${sourceHash}.metadata.json`)
 }
 
@@ -148,29 +139,24 @@ export function loadMcpServerUserConfig(
 ): UserConfigValues | null {
   try {
     const settings = getSettings_DEPRECATED()
-    const nonSensitive =
-      settings.pluginConfigs?.[pluginId]?.mcpServers?.[serverName]
+    const nonSensitive = settings.pluginConfigs?.[pluginId]?.mcpServers?.[serverName]
 
-    const sensitive =
-      (getSecureStorage() as any).read()?.pluginSecrets?.[
-        serverSecretsKey(pluginId, serverName)
-      ]
+    const sensitive = (getSecureStorage() as any).read()?.pluginSecrets?.[
+      serverSecretsKey(pluginId, serverName)
+    ]
 
     if (!nonSensitive && !sensitive) {
       return null
     }
 
-    logForDebugging(
-      `Loaded user config for ${pluginId}/${serverName} (settings + secureStorage)`,
-    )
+    logForDebugging(`Loaded user config for ${pluginId}/${serverName} (settings + secureStorage)`)
     return { ...nonSensitive, ...sensitive }
   } catch (error) {
     const errorObj = toError(error)
     logError(errorObj)
-    logForDebugging(
-      `Failed to load user config for ${pluginId}/${serverName}: ${error}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Failed to load user config for ${pluginId}/${serverName}: ${error}`, {
+      level: 'error',
+    })
     return null
   }
 }
@@ -233,8 +219,7 @@ export function saveMcpServerUserConfig(
     // value win on next read.
     const storage = getSecureStorage() as any
     const k = serverSecretsKey(pluginId, serverName)
-    const existingInSecureStorage =
-      storage.read()?.pluginSecrets?.[k] ?? undefined
+    const existingInSecureStorage = storage.read()?.pluginSecrets?.[k] ?? undefined
     const secureScrubbed = existingInSecureStorage
       ? Object.fromEntries(
           Object.entries(existingInSecureStorage).filter(
@@ -245,8 +230,7 @@ export function saveMcpServerUserConfig(
     const needSecureScrub =
       secureScrubbed &&
       existingInSecureStorage &&
-      Object.keys(secureScrubbed).length !==
-        Object.keys(existingInSecureStorage).length
+      Object.keys(secureScrubbed).length !== Object.keys(existingInSecureStorage).length
     if (Object.keys(sensitive).length > 0 || needSecureScrub) {
       const existing = storage.read() ?? {}
       if (!existing.pluginSecrets) {
@@ -260,9 +244,7 @@ export function saveMcpServerUserConfig(
       }
       const result = storage.update(existing)
       if (!result.success) {
-        throw new Error(
-          `Failed to save sensitive config to secure storage for ${k}`,
-        )
+        throw new Error(`Failed to save sensitive config to secure storage for ${k}`)
       }
       if (result.warning) {
         logForDebugging(`Server secrets save warning: ${result.warning}`, {
@@ -272,8 +254,7 @@ export function saveMcpServerUserConfig(
       if (needSecureScrub) {
         logForDebugging(
           `saveMcpServerUserConfig: scrubbed ${
-            Object.keys(existingInSecureStorage!).length -
-            Object.keys(secureScrubbed!).length
+            Object.keys(existingInSecureStorage!).length - Object.keys(secureScrubbed!).length
           } stale non-sensitive key(s) from secureStorage for ${k}`,
         )
       }
@@ -291,15 +272,11 @@ export function saveMcpServerUserConfig(
     // set each sensitive key to explicit `undefined` — mergeWith (with the
     // customizer at settings.ts:349) treats explicit undefined as a delete.
     const settings = getSettings_DEPRECATED()
-    const existingInSettings =
-      settings.pluginConfigs?.[pluginId]?.mcpServers?.[serverName] ?? {}
-    const keysToScrubFromSettings = Object.keys(existingInSettings).filter(k =>
+    const existingInSettings = settings.pluginConfigs?.[pluginId]?.mcpServers?.[serverName] ?? {}
+    const keysToScrubFromSettings = Object.keys(existingInSettings).filter((k) =>
       sensitiveKeysInThisSave.has(k),
     )
-    if (
-      Object.keys(nonSensitive).length > 0 ||
-      keysToScrubFromSettings.length > 0
-    ) {
+    if (Object.keys(nonSensitive).length > 0 || keysToScrubFromSettings.length > 0) {
       if (!settings.pluginConfigs) {
         settings.pluginConfigs = {}
       }
@@ -315,7 +292,7 @@ export function saveMcpServerUserConfig(
       // plumbing (same rationale as deletePluginOptions in
       // pluginOptionsStorage.ts:184, see CLAUDE.md's 10% case).
       const scrubbed = Object.fromEntries(
-        keysToScrubFromSettings.map(k => [k, undefined]),
+        keysToScrubFromSettings.map((k) => [k, undefined]),
       ) as Record<string, undefined>
       settings.pluginConfigs[pluginId].mcpServers![serverName] = {
         ...nonSensitive,
@@ -373,10 +350,8 @@ export function validateUserConfig(
       if (Array.isArray(value)) {
         // String arrays are allowed if multiple: true
         if (!fieldSchema.multiple) {
-          errors.push(
-            `${fieldSchema.title || key} must be a string, not an array`,
-          )
-        } else if (!value.every(v => typeof v === 'string')) {
+          errors.push(`${fieldSchema.title || key} must be a string, not an array`)
+        } else if (!value.every((v) => typeof v === 'string')) {
           errors.push(`${fieldSchema.title || key} must be an array of strings`)
         }
       } else if (typeof value !== 'string') {
@@ -396,14 +371,10 @@ export function validateUserConfig(
     // Number range validation
     if (fieldSchema.type === 'number' && typeof value === 'number') {
       if (fieldSchema.min !== undefined && value < fieldSchema.min) {
-        errors.push(
-          `${fieldSchema.title || key} must be at least ${fieldSchema.min}`,
-        )
+        errors.push(`${fieldSchema.title || key} must be at least ${fieldSchema.min}`)
       }
       if (fieldSchema.max !== undefined && value > fieldSchema.max) {
-        errors.push(
-          `${fieldSchema.title || key} must be at most ${fieldSchema.max}`,
-        )
+        errors.push(`${fieldSchema.title || key} must be at most ${fieldSchema.max}`)
       }
     }
   }
@@ -501,11 +472,9 @@ async function downloadMcpb(
       timeout: 120000, // 2 minute timeout
       responseType: 'arraybuffer',
       maxRedirects: 5, // Follow redirects (like curl -L)
-      onDownloadProgress: progressEvent => {
+      onDownloadProgress: (progressEvent) => {
         if (progressEvent.total && onProgress) {
-          const percent = Math.round(
-            (progressEvent.loaded / progressEvent.total) * 100,
-          )
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100)
           onProgress(`Downloading... ${percent}%`)
         }
       },
@@ -529,18 +498,10 @@ async function downloadMcpb(
     return data
   } catch (error) {
     if (!fetchTelemetryFired) {
-      logPluginFetch(
-        'mcpb',
-        url,
-        'failure',
-        performance.now() - started,
-        classifyFetchError(error),
-      )
+      logPluginFetch('mcpb', url, 'failure', performance.now() - started, classifyFetchError(error))
     }
     const errorMsg = errorMessage(error)
-    const fullError = new Error(
-      `Failed to download MCPB file from ${url}: ${errorMsg}`,
-    )
+    const fullError = new Error(`Failed to download MCPB file from ${url}: ${errorMsg}`)
     logError(fullError)
     throw fullError
   }
@@ -624,10 +585,7 @@ async function extractMcpbContents(
 /**
  * Check if an MCPB source has changed and needs re-extraction
  */
-export async function checkMcpbChanged(
-  source: string,
-  pluginPath: string,
-): Promise<boolean> {
+export async function checkMcpbChanged(source: string, pluginPath: string): Promise<boolean> {
   const fs = getFsImplementation()
   const cacheDir = getMcpbCacheDir(pluginPath)
   const metadata = await loadCacheMetadata(cacheDir, source)
@@ -645,10 +603,9 @@ export async function checkMcpbChanged(
     if (code === 'ENOENT') {
       logForDebugging(`MCPB extraction path missing: ${metadata.extractedPath}`)
     } else {
-      logForDebugging(
-        `MCPB extraction path inaccessible: ${metadata.extractedPath}: ${error}`,
-        { level: 'error' },
-      )
+      logForDebugging(`MCPB extraction path inaccessible: ${metadata.extractedPath}: ${error}`, {
+        level: 'error',
+      })
     }
     return true
   }
@@ -664,10 +621,7 @@ export async function checkMcpbChanged(
       if (code === 'ENOENT') {
         logForDebugging(`MCPB source file missing: ${localPath}`)
       } else {
-        logForDebugging(
-          `MCPB source file inaccessible: ${localPath}: ${error}`,
-          { level: 'error' },
-        )
+        logForDebugging(`MCPB source file inaccessible: ${localPath}: ${error}`, { level: 'error' })
       }
       return true
     }
@@ -679,9 +633,7 @@ export async function checkMcpbChanged(
     const fileTime = Math.floor(stats.mtimeMs)
 
     if (fileTime > cachedTime) {
-      logForDebugging(
-        `MCPB file modified: ${new Date(fileTime)} > ${new Date(cachedTime)}`,
-      )
+      logForDebugging(`MCPB file modified: ${new Date(fileTime)} > ${new Date(cachedTime)}`)
       return true
     }
   }
@@ -774,11 +726,7 @@ export async function loadMcpbFile(
       }
 
       // Generate MCP config WITH user config
-      const mcpConfig = await generateMcpConfig(
-        manifest,
-        metadata.extractedPath,
-        userConfig,
-      )
+      const mcpConfig = await generateMcpConfig(manifest, metadata.extractedPath, userConfig)
 
       return {
         manifest,
@@ -805,10 +753,7 @@ export async function loadMcpbFile(
 
   if (isUrl(source)) {
     // Download from URL
-    const sourceHash = createHash('md5')
-      .update(source)
-      .digest('hex')
-      .substring(0, 8)
+    const sourceHash = createHash('md5').update(source).digest('hex').substring(0, 8)
     mcpbFilePath = join(cacheDir, `${sourceHash}.mcpb`)
     mcpbData = await downloadMcpb(source, mcpbFilePath, onProgress)
   } else {
@@ -856,9 +801,7 @@ export async function loadMcpbFile(
 
   // Parse and validate manifest
   const manifest = await parseAndValidateManifestFromBytes(manifestData)
-  logForDebugging(
-    `MCPB manifest: ${manifest.name} v${manifest.version} by ${manifest.author.name}`,
-  )
+  logForDebugging(`MCPB manifest: ${manifest.name} v${manifest.version} by ${manifest.author.name}`)
 
   // Check if manifest has server config
   if (!manifest.server) {
@@ -910,12 +853,7 @@ export async function loadMcpbFile(
 
     // Save config if it was provided (first time or reconfiguration)
     if (providedUserConfig) {
-      saveMcpServerUserConfig(
-        pluginId,
-        serverName,
-        providedUserConfig,
-        manifest.user_config ?? {},
-      )
+      saveMcpServerUserConfig(pluginId, serverName, providedUserConfig, manifest.user_config ?? {})
     }
 
     // Generate MCP config WITH user config
@@ -960,9 +898,7 @@ export async function loadMcpbFile(
   }
   await saveCacheMetadata(cacheDir, source, newMetadata)
 
-  logForDebugging(
-    `Successfully loaded MCPB: ${manifest.name} (extracted to ${extractPath})`,
-  )
+  logForDebugging(`Successfully loaded MCPB: ${manifest.name} (extracted to ${extractPath})`)
 
   return {
     manifest,

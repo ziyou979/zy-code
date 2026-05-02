@@ -16,10 +16,7 @@ export function watchSystemTheme(
   async function poll() {
     if (stopped) return
     try {
-      const [response] = await Promise.all([
-        querier.send(oscColor(11)),
-        querier.flush(),
-      ])
+      const [response] = await Promise.all([querier.send(oscColor(11)), querier.flush()])
       if (stopped) return
       if (response) {
         const theme = themeFromOscColor(response.data)

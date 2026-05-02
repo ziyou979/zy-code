@@ -19,9 +19,7 @@ function formatDuration(ms: number): string {
  * token is malformed or the payload is not valid JSON.
  */
 export function decodeJwtPayload(token: string): unknown | null {
-  const jwt = token.startsWith('sk-ant-si-')
-    ? token.slice('sk-ant-si-'.length)
-    : token
+  const jwt = token.startsWith('sk-ant-si-') ? token.slice('sk-ant-si-'.length) : token
   const parts = jwt.split('.')
   if (parts.length !== 3 || !parts[1]) return null
   try {
@@ -144,10 +142,7 @@ export function createTokenRefreshScheduler({
    * than decoding a JWT's exp claim. Used by callers whose JWT is opaque
    * (e.g. POST /v1/code/sessions/{id}/bridge returns expires_in directly).
    */
-  function scheduleFromExpiresIn(
-    sessionId: string,
-    expiresInSeconds: number,
-  ): void {
+  function scheduleFromExpiresIn(sessionId: string, expiresInSeconds: number): void {
     const existing = timers.get(sessionId)
     if (existing) clearTimeout(existing)
     const gen = nextGeneration(sessionId)
@@ -194,12 +189,7 @@ export function createTokenRefreshScheduler({
       // becomes available again (e.g. transient cache clear during refresh).
       // Cap retries to avoid spamming on genuine failures.
       if (failures < MAX_REFRESH_FAILURES) {
-        const retryTimer = setTimeout(
-          doRefresh,
-          REFRESH_RETRY_DELAY_MS,
-          sessionId,
-          gen,
-        )
+        const retryTimer = setTimeout(doRefresh, REFRESH_RETRY_DELAY_MS, sessionId, gen)
         timers.set(sessionId, retryTimer)
       }
       return
@@ -217,12 +207,7 @@ export function createTokenRefreshScheduler({
     // Schedule a follow-up refresh so long-running sessions stay authenticated.
     // Without this, the initial one-shot timer leaves the session vulnerable
     // to token expiry if it runs past the first refresh window.
-    const timer = setTimeout(
-      doRefresh,
-      FALLBACK_REFRESH_INTERVAL_MS,
-      sessionId,
-      gen,
-    )
+    const timer = setTimeout(doRefresh, FALLBACK_REFRESH_INTERVAL_MS, sessionId, gen)
     timers.set(sessionId, timer)
     logForDebugging(
       `[${label}:token] Scheduled follow-up refresh for sessionId=${sessionId} in ${formatDuration(FALLBACK_REFRESH_INTERVAL_MS)}`,

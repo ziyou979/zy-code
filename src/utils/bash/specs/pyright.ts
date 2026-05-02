@@ -83,8 +83,7 @@ export default {
   ],
   args: {
     name: 'files',
-    description:
-      'Specify files or directories to analyze (overrides config file)',
+    description: 'Specify files or directories to analyze (overrides config file)',
     isVariadic: true,
     isOptional: true,
   },

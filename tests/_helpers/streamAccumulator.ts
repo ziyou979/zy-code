@@ -84,21 +84,17 @@ export async function accumulateStream(
         const block = contentBlocks[part.index]
         if (!block) {
           throw new RangeError(
-            `Content block not found at index ${part.index}; existing indices: ${
-              contentBlocks
-                .map((b, i) => (b ? i : null))
-                .filter(i => i !== null)
-                .join(',')
-            }`,
+            `Content block not found at index ${part.index}; existing indices: ${contentBlocks
+              .map((b, i) => (b ? i : null))
+              .filter((i) => i !== null)
+              .join(',')}`,
           )
         }
         const delta = part.delta as any
         switch (delta.type) {
           case 'text_delta':
             if (block.type !== 'text') {
-              throw new Error(
-                `text_delta at index ${part.index} but block type is "${block.type}"`,
-              )
+              throw new Error(`text_delta at index ${part.index} but block type is "${block.type}"`)
             }
             block.text += delta.text
             break
@@ -106,7 +102,7 @@ export async function accumulateStream(
             if (block.type !== 'tool_call' && block.type !== 'tool_use') {
               throw new Error(
                 `input_json_delta at index ${part.index} but block type is "${block.type}". ` +
-                `(zy.ts would also throw 'Content block is not a input_json block'.)`,
+                  `(zy.ts would also throw 'Content block is not a input_json block'.)`,
               )
             }
             if (typeof block.input !== 'string') {
@@ -163,9 +159,7 @@ export async function accumulateStream(
 /**
  * 把一个事件数组转为 AsyncIterable。
  */
-export async function* eventsToStream(
-  events: StreamEvent[],
-): AsyncIterable<StreamEvent> {
+export async function* eventsToStream(events: StreamEvent[]): AsyncIterable<StreamEvent> {
   for (const e of events) {
     yield e
   }

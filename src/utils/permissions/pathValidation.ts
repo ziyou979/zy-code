@@ -39,12 +39,12 @@ export function formatDirectoryList(directories: string[]): string {
   const dirCount = directories.length
 
   if (dirCount <= MAX_DIRS_TO_LIST) {
-    return directories.map(dir => `'${dir}'`).join(', ')
+    return directories.map((dir) => `'${dir}'`).join(', ')
   }
 
   const firstDirs = directories
     .slice(0, MAX_DIRS_TO_LIST)
-    .map(dir => `'${dir}'`)
+    .map((dir) => `'${dir}'`)
     .join(', ')
 
   return `${firstDirs}, and ${dirCount - MAX_DIRS_TO_LIST} more`
@@ -114,18 +114,18 @@ export function isPathInSandboxWriteAllowlist(resolvedPath: string): boolean {
   const pathsToCheck = getPathsForPermissionCheck(resolvedPath)
   const resolvedAllow = allowOnly.flatMap(getResolvedSandboxConfigPath)
   const resolvedDeny = denyWithinAllow.flatMap(getResolvedSandboxConfigPath)
-  return pathsToCheck.every(p => {
+  return pathsToCheck.every((p) => {
     for (const denyPath of resolvedDeny) {
       if (pathInWorkingPath(p as any, denyPath as any)) return false
     }
-    return resolvedAllow.some(allowPath => pathInWorkingPath(p as any, allowPath as any))
+    return resolvedAllow.some((allowPath) => pathInWorkingPath(p as any, allowPath as any))
   })
 }
 
 // Sandbox config paths are session-stable; memoize their resolved forms to
 // avoid repeated lstat/realpath syscalls on every write-target check.
 // Matches the getResolvedWorkingDirPaths pattern in filesystem.ts.
-let getResolvedSandboxConfigPath;
+let getResolvedSandboxConfigPath
 getResolvedSandboxConfigPath = memoize(getPathsForPermissionCheck)
 
 /**
@@ -149,12 +149,7 @@ export function isPathAllowed(
   const permissionType = operationType === 'read' ? 'read' : 'edit'
 
   // 1. Check deny rules first (they take precedence)
-  const denyRule = matchingRuleForInput(
-    resolvedPath,
-    context,
-    permissionType,
-    'deny',
-  )
+  const denyRule = matchingRuleForInput(resolvedPath, context, permissionType, 'deny')
   if (denyRule !== null) {
     return {
       allowed: false,
@@ -180,10 +175,7 @@ export function isPathAllowed(
   // This MUST come before checking working directory to prevent bypass via acceptEdits mode
   // Checks: Windows patterns, Zy config files, dangerous files (on original + symlink paths)
   if (operationType !== 'read') {
-    const safetyCheck = checkPathSafetyForAutoEdit(
-      resolvedPath,
-      precomputedPathsToCheck,
-    )
+    const safetyCheck = checkPathSafetyForAutoEdit(resolvedPath, precomputedPathsToCheck)
     if (!safetyCheck.safe) {
       return {
         allowed: false,
@@ -199,11 +191,7 @@ export function isPathAllowed(
   // 3. Check if path is in allowed working directory
   // For write/create operations, require acceptEdits mode to auto-allow
   // This is consistent with checkWritePermissionForTool in filesystem.ts
-  const isInWorkingDir = pathInAllowedWorkingPath(
-    resolvedPath,
-    context,
-    precomputedPathsToCheck,
-  )
+  const isInWorkingDir = pathInAllowedWorkingPath(resolvedPath, context, precomputedPathsToCheck)
   if (isInWorkingDir) {
     if (operationType === 'read' || context.mode === 'acceptEdits') {
       return { allowed: true }
@@ -231,11 +219,7 @@ export function isPathAllowed(
   // Paths IN the working directory are intentionally excluded: the sandbox
   // allowlist always seeds '.' (cwd, see sandbox-adapter.ts), which would
   // bypass the acceptEdits gate at step 3. Step 3 handles those.
-  if (
-    operationType !== 'read' &&
-    !isInWorkingDir &&
-    isPathInSandboxWriteAllowlist(resolvedPath)
-  ) {
+  if (operationType !== 'read' && !isInWorkingDir && isPathInSandboxWriteAllowlist(resolvedPath)) {
     return {
       allowed: true,
       decisionReason: {
@@ -246,12 +230,7 @@ export function isPathAllowed(
   }
 
   // 4. Check allow rules for the operation type
-  const allowRule = matchingRuleForInput(
-    resolvedPath,
-    context,
-    permissionType,
-    'allow',
-  )
+  const allowRule = matchingRuleForInput(resolvedPath, context, permissionType, 'allow')
   if (allowRule !== null) {
     return {
       allowed: true,
@@ -275,13 +254,8 @@ export function validateGlobPattern(
 ): ResolvedPathCheckResult {
   if (containsPathTraversal(cleanPath)) {
     // For patterns with path traversal, resolve the full path
-    const absolutePath = isAbsolute(cleanPath)
-      ? cleanPath
-      : resolve(cwd, cleanPath)
-    const { resolvedPath, isCanonical } = safeResolvePath(
-      getFsImplementation(),
-      absolutePath,
-    )
+    const absolutePath = isAbsolute(cleanPath) ? cleanPath : resolve(cwd, cleanPath)
+    const { resolvedPath, isCanonical } = safeResolvePath(getFsImplementation(), absolutePath)
     const result = isPathAllowed(
       resolvedPath,
       toolPermissionContext,
@@ -296,13 +270,8 @@ export function validateGlobPattern(
   }
 
   const basePath = getGlobBaseDirectory(cleanPath)
-  const absoluteBasePath = isAbsolute(basePath)
-    ? basePath
-    : resolve(cwd, basePath)
-  const { resolvedPath, isCanonical } = safeResolvePath(
-    getFsImplementation(),
-    absoluteBasePath,
-  )
+  const absoluteBasePath = isAbsolute(basePath) ? basePath : resolve(cwd, basePath)
+  const { resolvedPath, isCanonical } = safeResolvePath(getFsImplementation(), absoluteBasePath)
   const result = isPathAllowed(
     resolvedPath,
     toolPermissionContext,
@@ -338,8 +307,7 @@ export function isDangerousRemovalPath(resolvedPath: string): boolean {
     return true
   }
 
-  const normalizedPath =
-    forwardSlashed === '/' ? forwardSlashed : forwardSlashed.replace(/\/$/, '')
+  const normalizedPath = forwardSlashed === '/' ? forwardSlashed : forwardSlashed.replace(/\/$/, '')
 
   if (normalizedPath === '/') {
     return true
@@ -405,8 +373,7 @@ export function validatePath(
       resolvedPath: cleanPath,
       decisionReason: {
         type: 'other',
-        reason:
-          'Tilde expansion variants (~user, ~+, ~-) in paths require manual approval',
+        reason: 'Tilde expansion variants (~user, ~+, ~-) in paths require manual approval',
       },
     }
   }
@@ -421,11 +388,7 @@ export function validatePath(
   // - =cmd (Zsh equals expansion, e.g. =rg expands to /usr/bin/rg)
   // All of these are preserved as literal strings during validation but expanded
   // by the shell during execution, creating a TOCTOU vulnerability
-  if (
-    cleanPath.includes('$') ||
-    cleanPath.includes('%') ||
-    cleanPath.startsWith('=')
-  ) {
+  if (cleanPath.includes('$') || cleanPath.includes('%') || cleanPath.startsWith('=')) {
     return {
       allowed: false,
       resolvedPath: cleanPath,
@@ -455,22 +418,12 @@ export function validatePath(
     }
 
     // For read operations, validate the base directory where the glob would expand
-    return validateGlobPattern(
-      cleanPath,
-      cwd,
-      toolPermissionContext,
-      operationType,
-    )
+    return validateGlobPattern(cleanPath, cwd, toolPermissionContext, operationType)
   }
 
   // Resolve path
-  const absolutePath = isAbsolute(cleanPath)
-    ? cleanPath
-    : resolve(cwd, cleanPath)
-  const { resolvedPath, isCanonical } = safeResolvePath(
-    getFsImplementation(),
-    absolutePath,
-  )
+  const absolutePath = isAbsolute(cleanPath) ? cleanPath : resolve(cwd, cleanPath)
+  const { resolvedPath, isCanonical } = safeResolvePath(getFsImplementation(), absolutePath)
 
   const result = isPathAllowed(
     resolvedPath,

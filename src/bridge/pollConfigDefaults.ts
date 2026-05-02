@@ -35,10 +35,8 @@ const POLL_INTERVAL_MS_AT_CAPACITY = 600_000
  * preserve current behavior. Ops can tune these independently via the
  * zy_bridge_poll_interval_config GB flag.
  */
-const MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY =
-  POLL_INTERVAL_MS_NOT_AT_CAPACITY
-const MULTISESSION_POLL_INTERVAL_MS_PARTIAL_CAPACITY =
-  POLL_INTERVAL_MS_NOT_AT_CAPACITY
+const MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY = POLL_INTERVAL_MS_NOT_AT_CAPACITY
+const MULTISESSION_POLL_INTERVAL_MS_PARTIAL_CAPACITY = POLL_INTERVAL_MS_NOT_AT_CAPACITY
 const MULTISESSION_POLL_INTERVAL_MS_AT_CAPACITY = POLL_INTERVAL_MS_AT_CAPACITY
 
 export type PollIntervalConfig = {
@@ -63,12 +61,9 @@ export const DEFAULT_POLL_CONFIG: PollIntervalConfig = {
   // clients — heartbeat suppressed poll). Old clients ignore this key; ops
   // can set both fields during rollout.
   non_exclusive_heartbeat_interval_ms: 0,
-  multisession_poll_interval_ms_not_at_capacity:
-    MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY,
-  multisession_poll_interval_ms_partial_capacity:
-    MULTISESSION_POLL_INTERVAL_MS_PARTIAL_CAPACITY,
-  multisession_poll_interval_ms_at_capacity:
-    MULTISESSION_POLL_INTERVAL_MS_AT_CAPACITY,
+  multisession_poll_interval_ms_not_at_capacity: MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY,
+  multisession_poll_interval_ms_partial_capacity: MULTISESSION_POLL_INTERVAL_MS_PARTIAL_CAPACITY,
+  multisession_poll_interval_ms_at_capacity: MULTISESSION_POLL_INTERVAL_MS_AT_CAPACITY,
   // Poll query param: reclaim unacknowledged work items older than this.
   // Matches the server's DEFAULT_RECLAIM_OLDER_THAN_MS (work_service.py:24).
   // Enables picking up stale-pending work after JWT expiry, when the prior

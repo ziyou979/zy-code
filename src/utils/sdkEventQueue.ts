@@ -86,14 +86,12 @@ export function enqueueSdkEvent(event: SdkEvent): void {
   queue.push(event)
 }
 
-export function drainSdkEvents(): Array<
-  SdkEvent & { uuid: UUID; session_id: string }
-> {
+export function drainSdkEvents(): Array<SdkEvent & { uuid: UUID; session_id: string }> {
   if (queue.length === 0) {
     return []
   }
   const events = queue.splice(0)
-  return events.map(e => ({
+  return events.map((e) => ({
     ...e,
     uuid: randomUUID(),
     session_id: getSessionId(),

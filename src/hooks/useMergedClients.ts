@@ -16,8 +16,5 @@ export function useMergedClients(
   initialClients: MCPServerConnection[] | undefined,
   mcpClients: MCPServerConnection[] | undefined,
 ): MCPServerConnection[] {
-  return useMemo(
-    () => mergeClients(initialClients, mcpClients),
-    [initialClients, mcpClients],
-  )
+  return useMemo(() => mergeClients(initialClients, mcpClients), [initialClients, mcpClients])
 }

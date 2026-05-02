@@ -1,8 +1,6 @@
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
 import { isInternalBuild } from '../utils/envUtils.js'
-import {
-  clearApiKeyHelperCache,
-} from '../utils/auth.js'
+import { clearApiKeyHelperCache } from '../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { toError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
@@ -23,7 +21,7 @@ import type { AppState } from './AppStateStore.js'
 export function externalMetadataToAppState(
   metadata: SessionExternalMetadata,
 ): (prev: AppState) => AppState {
-  return prev => ({
+  return (prev) => ({
     ...prev,
     ...(typeof metadata.permission_mode === 'string'
       ? {
@@ -77,9 +75,7 @@ export function onChangeAppState({
       // sets mode and isUltraplanMode atomically, so the flag's
       // transition gates it. null per RFC 7396 (removes the key).
       const isUltraplan =
-        newExternal === 'plan' &&
-        newState.isUltraplanMode &&
-        !oldState.isUltraplanMode
+        newExternal === 'plan' && newState.isUltraplanMode && !oldState.isUltraplanMode
           ? true
           : null
       notifySessionMetadataChanged({
@@ -93,9 +89,7 @@ export function onChangeAppState({
   // mainLoopModel: persist to settings
   // 如果值是 tier 名（advanced/standard/compact），写入 mainLoopModel 字段
   // 否则写入 model 字段并清除 mainLoopModel（覆盖模式）
-  if (
-    newState.mainLoopModel !== oldState.mainLoopModel
-  ) {
+  if (newState.mainLoopModel !== oldState.mainLoopModel) {
     const TIER_NAMES = ['advanced', 'standard', 'compact'] as const
     if (newState.mainLoopModel === null) {
       // 恢复默认：清除覆盖字段
@@ -104,7 +98,7 @@ export function onChangeAppState({
         mainLoopModel: undefined,
       })
       setMainLoopModelOverride(null)
-    } else if (TIER_NAMES.includes(newState.mainLoopModel as typeof TIER_NAMES[number])) {
+    } else if (TIER_NAMES.includes(newState.mainLoopModel as (typeof TIER_NAMES)[number])) {
       // tier 名 → 写入 mainLoopModel，清除 model 覆盖
       updateSettingsForSource('userSettings', {
         model: undefined,
@@ -129,7 +123,7 @@ export function onChangeAppState({
       getGlobalConfig().showExpandedTodos !== showExpandedTodos ||
       getGlobalConfig().showSpinnerTree !== showSpinnerTree
     ) {
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         showExpandedTodos,
         showSpinnerTree,
@@ -138,12 +132,9 @@ export function onChangeAppState({
   }
 
   // verbose
-  if (
-    newState.verbose !== oldState.verbose &&
-    getGlobalConfig().verbose !== newState.verbose
-  ) {
+  if (newState.verbose !== oldState.verbose && getGlobalConfig().verbose !== newState.verbose) {
     const verbose = newState.verbose
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       verbose,
     }))
@@ -157,7 +148,7 @@ export function onChangeAppState({
       getGlobalConfig().tungstenPanelVisible !== newState.tungstenPanelVisible
     ) {
       const tungstenPanelVisible = newState.tungstenPanelVisible
-      saveGlobalConfig(current => ({ ...current, tungstenPanelVisible }))
+      saveGlobalConfig((current) => ({ ...current, tungstenPanelVisible }))
     }
   }
 

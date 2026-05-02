@@ -27,11 +27,7 @@ type PasteHandlerProps = {
   ) => void
 }
 
-export function usePasteHandler({
-  onPaste,
-  onInput,
-  onImagePaste,
-}: PasteHandlerProps): {
+export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandlerProps): {
   wrappedOnInput: (input: string, key: Key, event: InputEvent) => void
   pasteState: {
     chunks: string[]
@@ -64,7 +60,7 @@ export function usePasteHandler({
     if (!onImagePaste || !isMountedRef.current) return
 
     void getImageFromClipboard()
-      .then(imageData => {
+      .then((imageData) => {
         if (imageData && isMountedRef.current) {
           onImagePaste(
             imageData.base64,
@@ -74,7 +70,7 @@ export function usePasteHandler({
           )
         }
       })
-      .catch(error => {
+      .catch((error) => {
         if (isMountedRef.current) {
           logError(error as Error)
         }
@@ -110,10 +106,7 @@ export function usePasteHandler({
           setPasteState(({ chunks }) => {
             // Join chunks and filter out orphaned focus sequences
             // These can appear when focus events split during paste
-            const pastedText = chunks
-              .join('')
-              .replace(/\[I$/, '')
-              .replace(/\[O$/, '')
+            const pastedText = chunks.join('').replace(/\[I$/, '').replace(/\[O$/, '')
 
             // Check if the pasted text contains image file paths
             // When dragging multiple images, they may come as:
@@ -125,54 +118,49 @@ export function usePasteHandler({
             // This works because spaces within paths are escaped (e.g., `file\ name.png`)
             const lines = pastedText
               .split(/ (?=\/|[A-Za-z]:\\)/)
-              .flatMap(part => part.split('\n'))
-              .filter(line => line.trim())
-            const imagePaths = lines.filter(line => isImageFilePath(line))
+              .flatMap((part) => part.split('\n'))
+              .filter((line) => line.trim())
+            const imagePaths = lines.filter((line) => isImageFilePath(line))
 
             if (onImagePaste && imagePaths.length > 0) {
-              const isTempScreenshot =
-                /\/TemporaryItems\/.*screencaptureui.*\/Screenshot/i.test(
-                  pastedText,
-                )
+              const isTempScreenshot = /\/TemporaryItems\/.*screencaptureui.*\/Screenshot/i.test(
+                pastedText,
+              )
 
               // Process all image paths
-              void Promise.all(
-                imagePaths.map(imagePath => tryReadImageFromPath(imagePath)),
-              ).then(results => {
-                const validImages = results.filter(
-                  (r): r is NonNullable<typeof r> => r !== null,
-                )
+              void Promise.all(imagePaths.map((imagePath) => tryReadImageFromPath(imagePath))).then(
+                (results) => {
+                  const validImages = results.filter((r): r is NonNullable<typeof r> => r !== null)
 
-                if (validImages.length > 0) {
-                  // Successfully read at least one image
-                  for (const imageData of validImages) {
-                    const filename = basename(imageData.path)
-                    onImagePaste(
-                      imageData.base64,
-                      imageData.mediaType,
-                      filename,
-                      imageData.dimensions,
-                      imageData.path,
-                    )
+                  if (validImages.length > 0) {
+                    // Successfully read at least one image
+                    for (const imageData of validImages) {
+                      const filename = basename(imageData.path)
+                      onImagePaste(
+                        imageData.base64,
+                        imageData.mediaType,
+                        filename,
+                        imageData.dimensions,
+                        imageData.path,
+                      )
+                    }
+                    // If some paths weren't images, paste them as text
+                    const nonImageLines = lines.filter((line) => !isImageFilePath(line))
+                    if (nonImageLines.length > 0 && onPaste) {
+                      onPaste(nonImageLines.join('\n'))
+                    }
+                    setIsPasting(false)
+                  } else if (isTempScreenshot && isMacOS) {
+                    // For temporary screenshot files that no longer exist, try clipboard
+                    checkClipboardForImage()
+                  } else {
+                    if (onPaste) {
+                      onPaste(pastedText)
+                    }
+                    setIsPasting(false)
                   }
-                  // If some paths weren't images, paste them as text
-                  const nonImageLines = lines.filter(
-                    line => !isImageFilePath(line),
-                  )
-                  if (nonImageLines.length > 0 && onPaste) {
-                    onPaste(nonImageLines.join('\n'))
-                  }
-                  setIsPasting(false)
-                } else if (isTempScreenshot && isMacOS) {
-                  // For temporary screenshot files that no longer exist, try clipboard
-                  checkClipboardForImage()
-                } else {
-                  if (onPaste) {
-                    onPaste(pastedText)
-                  }
-                  setIsPasting(false)
-                }
-              })
+                },
+              )
               return { chunks: [], timeoutId: null }
             }
 
@@ -235,8 +223,8 @@ export function usePasteHandler({
     // - Unix: ` /` - Windows: ` C:\` etc.
     const hasImageFilePath = input
       .split(/ (?=\/|[A-Za-z]:\\)/)
-      .flatMap(part => part.split('\n'))
-      .some(line => isImageFilePath(line.trim()))
+      .flatMap((part) => part.split('\n'))
+      .some((line) => isImageFilePath(line.trim()))
 
     // Handle empty paste (clipboard image on macOS)
     // When the user pastes an image with Cmd+V, the terminal sends an empty
@@ -252,10 +240,7 @@ export function usePasteHandler({
     // Check if we should handle as paste (from bracketed paste, large input, or continuation)
     const shouldHandleAsPaste =
       onPaste &&
-      (input.length > PASTE_THRESHOLD ||
-        pastePendingRef.current ||
-        hasImageFilePath ||
-        isFromPaste)
+      (input.length > PASTE_THRESHOLD || pastePendingRef.current || hasImageFilePath || isFromPaste)
 
     if (shouldHandleAsPaste) {
       pastePendingRef.current = true

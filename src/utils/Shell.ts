@@ -5,11 +5,7 @@ import memoize from 'lodash-es/memoize.js'
 import { isAbsolute, resolve } from 'path'
 import { join as posixJoin } from 'path/posix'
 import { logEvent } from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
-  getSessionId,
-  setCwdState,
-} from '../bootstrap/state.js'
+import { getOriginalCwd, getSessionId, setCwdState } from '../bootstrap/state.js'
 import { generateTaskId } from '../Task.js'
 import { pwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
@@ -76,8 +72,7 @@ export async function findSuitableShell(): Promise<string> {
   const shellOverride = process.env.ZY_CODE_SHELL
   if (shellOverride) {
     // Validate it's a supported shell type
-    const isSupported =
-      shellOverride.includes('bash') || shellOverride.includes('zsh')
+    const isSupported = shellOverride.includes('bash') || shellOverride.includes('zsh')
     if (isSupported && isExecutable(shellOverride)) {
       logForDebugging(`Using shell override: ${shellOverride}`)
       return shellOverride
@@ -92,8 +87,7 @@ export async function findSuitableShell(): Promise<string> {
   // Check user's preferred shell from environment
   const env_shell = process.env.SHELL
   // Only consider SHELL if it's bash or zsh
-  const isEnvShellSupported =
-    env_shell && (env_shell.includes('bash') || env_shell.includes('zsh'))
+  const isEnvShellSupported = env_shell && (env_shell.includes('bash') || env_shell.includes('zsh'))
   const preferBash = env_shell?.includes('bash')
 
   // Try to locate shells using which (uses Bun.which when available)
@@ -104,8 +98,8 @@ export async function findSuitableShell(): Promise<string> {
 
   // Order shells based on user preference
   const shellOrder = preferBash ? ['bash', 'zsh'] : ['zsh', 'bash']
-  const supportedShells = shellOrder.flatMap(shell =>
-    shellPaths.map(path => `${path}/${shell}`),
+  const supportedShells = shellOrder.flatMap((shell) =>
+    shellPaths.map((path) => `${path}/${shell}`),
   )
 
   // Add discovered paths to the beginning of our search list
@@ -123,7 +117,7 @@ export async function findSuitableShell(): Promise<string> {
     supportedShells.unshift(env_shell)
   }
 
-  const shellPath = supportedShells.find(shell => shell && isExecutable(shell))
+  const shellPath = supportedShells.find((shell) => shell && isExecutable(shell))
 
   // If no valid shell found, throw a helpful error
   if (!shellPath) {
@@ -202,17 +196,13 @@ export async function exec(
     .padStart(4, '0')
 
   // Sandbox temp directory - use per-user directory name to prevent multi-user permission conflicts
-  const sandboxTmpDir = posixJoin(
-    process.env.ZY_CODE_TMPDIR || '/tmp',
-    getZyTempDirName(),
-  )
+  const sandboxTmpDir = posixJoin(process.env.ZY_CODE_TMPDIR || '/tmp', getZyTempDirName())
 
-  const { commandString: builtCommand, cwdFilePath } =
-    await provider.buildExecCommand(command, {
-      id,
-      sandboxTmpDir: shouldUseSandbox ? sandboxTmpDir : undefined,
-      useSandbox: shouldUseSandbox ?? false,
-    })
+  const { commandString: builtCommand, cwdFilePath } = await provider.buildExecCommand(command, {
+    id,
+    sandboxTmpDir: shouldUseSandbox ? sandboxTmpDir : undefined,
+    useSandbox: shouldUseSandbox ?? false,
+  })
 
   let commandString = builtCommand
 
@@ -224,9 +214,7 @@ export async function exec(
     await realpath(cwd)
   } catch {
     const fallback = getOriginalCwd()
-    logForDebugging(
-      `Shell CWD "${cwd}" no longer exists, recovering to "${fallback}"`,
-    )
+    logForDebugging(`Shell CWD "${cwd}" no longer exists, recovering to "${fallback}"`)
     try {
       await realpath(fallback)
       setCwdState(fallback)
@@ -306,10 +294,7 @@ export async function exec(
       taskOutput.path,
       process.platform === 'win32'
         ? 'w'
-        : fsConstants.O_WRONLY |
-            fsConstants.O_CREAT |
-            fsConstants.O_APPEND |
-            O_NOFOLLOW,
+        : fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_APPEND | O_NOFOLLOW,
     )
   }
 
@@ -328,9 +313,7 @@ export async function exec(
           : {}),
       },
       cwd,
-      stdio: usePipeMode
-        ? ['pipe', 'pipe', 'pipe']
-        : ['pipe', outputHandle?.fd, outputHandle?.fd],
+      stdio: usePipeMode ? ['pipe', 'pipe', 'pipe'] : ['pipe', outputHandle?.fd, outputHandle?.fd],
       // Don't pass the signal - we'll handle termination ourselves with tree-kill
       detached: provider.detached,
       // Prevent visible console window on Windows (no-op on other platforms)
@@ -379,11 +362,9 @@ export async function exec(
     // but Node.js needs a native Windows path for readFileSync/unlinkSync.
     // Similarly, `pwd -P` outputs a POSIX path that must be converted before setCwd.
     const nativeCwdFilePath =
-      getPlatform() === 'windows'
-        ? posixPathToWindowsPath(cwdFilePath)
-        : cwdFilePath
+      getPlatform() === 'windows' ? posixPathToWindowsPath(cwdFilePath) : cwdFilePath
 
-    void shellCommand.result.then(async result => {
+    void shellCommand.result.then(async (result) => {
       // On Linux, bwrap creates 0-byte mount-point files on the host to deny
       // writes to non-existent paths (.bashrc, HEAD, etc.). These persist after
       // bwrap exits as ghost dotfiles in cwd. Cleanup is synchronous and a no-op

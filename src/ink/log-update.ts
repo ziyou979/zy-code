@@ -1,8 +1,4 @@
-import {
-  type AnsiCode,
-  ansiCodesToString,
-  diffAnsiCodes,
-} from '@alcalzone/ansi-tokenize'
+import { type AnsiCode, ansiCodesToString, diffAnsiCodes } from '@alcalzone/ansi-tokenize'
 import { logForDebugging } from '../utils/debug.js'
 import type { Diff, FlickerReason, Frame } from './frame.js'
 import type { Point } from './layout/geometry.js'
@@ -120,12 +116,7 @@ export class LogUpdate {
     return []
   }
 
-  render(
-    prev: Frame,
-    next: Frame,
-    altScreen = false,
-    decstbmSafe = true,
-  ): Diff {
+  render(prev: Frame, next: Frame, altScreen = false, decstbmSafe = true): Diff {
     if (!this.options.isTTY) {
       return this.renderFullFrame(next)
     }
@@ -160,11 +151,7 @@ export class LogUpdate {
     let scrollPatch: Diff = []
     if (altScreen && next.scrollHint && decstbmSafe) {
       const { top, bottom, delta } = next.scrollHint
-      if (
-        top >= 0 &&
-        bottom < prev.screen.height &&
-        bottom < next.screen.height
-      ) {
+      if (top >= 0 && bottom < prev.screen.height && bottom < next.screen.height) {
         shiftRows(prev.screen, top, bottom, delta)
         scrollPatch = [
           {
@@ -194,8 +181,7 @@ export class LogUpdate {
     const isGrowing = next.screen.height > prev.screen.height
     // 当内容恰好填满视口（height == viewport）且光标位于底部时，
     // 上一帧末尾的光标恢复 LF 已将 1 行滚动到回滚区。使用 >= 来覆盖此情况。
-    const prevHadScrollback =
-      cursorAtBottom && prev.screen.height >= prev.viewport.height
+    const prevHadScrollback = cursorAtBottom && prev.screen.height >= prev.viewport.height
     const isShrinking = next.screen.height < prev.screen.height
     const nextFitsViewport = next.screen.height <= prev.viewport.height
 
@@ -242,8 +228,7 @@ export class LogUpdate {
     const screen = new VirtualScreen(prev.cursor, next.viewport.width)
 
     // 将空屏幕视为高度 1，避免首次渲染时出现误调整
-    const heightDelta =
-      Math.max(next.screen.height, 1) - Math.max(prev.screen.height, 1)
+    const heightDelta = Math.max(next.screen.height, 1) - Math.max(prev.screen.height, 1)
     const shrinking = heightDelta < 0
     const growing = heightDelta > 0
 
@@ -254,11 +239,7 @@ export class LogUpdate {
       // eraseLines 仅在视口内有效 —— 无法清除回滚区。
       // 如果需要清除的行数超出视口容量，说明有些行在回滚区中，需要完整重置。
       if (linesToClear > prev.viewport.height) {
-        return fullResetSequence_CAUSES_FLICKER(
-          next,
-          'offscreen',
-          this.options.stylePool,
-        )
+        return fullResetSequence_CAUSES_FLICKER(next, 'offscreen', this.options.stylePool)
       }
 
       // eraseLines(n) 从当前光标位置向上擦除 n 行。diff 循环结束后光标可能
@@ -271,13 +252,10 @@ export class LogUpdate {
       const prevHeight = prev.screen.height
 
       // 将光标移到旧屏幕的底部行
-      screen.txn(prev => {
+      screen.txn((prev) => {
         const dy = prevHeight - 1 - prev.y
         if (dy !== 0 || prev.x !== 0) {
-          return [
-            [CARRIAGE_RETURN, { type: 'cursorMove', x: 0, y: dy }],
-            { dx: -prev.x, dy },
-          ]
+          return [[CARRIAGE_RETURN, { type: 'cursorMove', x: 0, y: dy }], { dx: -prev.x, dy }]
         }
         return [[], { dx: 0, dy: 0 }]
       })
@@ -302,10 +280,7 @@ export class LogUpdate {
     // 会在视口顶部被截断，导致写入偏移 1 行，输出错乱。
     const cursorRestoreScroll = prevHadScrollback ? 1 : 0
     const viewportY = growing
-      ? Math.max(
-          0,
-          prev.screen.height - prev.viewport.height + cursorRestoreScroll,
-        )
+      ? Math.max(0, prev.screen.height - prev.viewport.height + cursorRestoreScroll)
       : Math.max(prev.screen.height, next.screen.height) -
         next.viewport.height +
         cursorRestoreScroll
@@ -325,18 +300,13 @@ export class LogUpdate {
       // 渲染时跳过占位符，因为终端在写入宽字符时会自动前进 2 列。
       // SpacerTail: 宽字符的第二个单元格
       // SpacerHead: 标记宽字符换行到下一行时的行末位置
-      if (
-        added &&
-        (added.width === CellWidth.SpacerTail ||
-          added.width === CellWidth.SpacerHead)
-      ) {
+      if (added && (added.width === CellWidth.SpacerTail || added.width === CellWidth.SpacerHead)) {
         return
       }
 
       if (
         removed &&
-        (removed.width === CellWidth.SpacerTail ||
-          removed.width === CellWidth.SpacerHead) &&
+        (removed.width === CellWidth.SpacerTail || removed.width === CellWidth.SpacerHead) &&
         !added
       ) {
         return
@@ -361,11 +331,7 @@ export class LogUpdate {
 
       if (added) {
         const targetHyperlink = added.hyperlink
-        currentHyperlink = transitionHyperlink(
-          screen.diff,
-          currentHyperlink,
-          targetHyperlink,
-        )
+        currentHyperlink = transitionHyperlink(screen.diff, currentHyperlink, targetHyperlink)
         const styleStr = stylePool.transition(currentStyleId, added.styleId)
         if (writeCellWithStyleStr(screen, added, styleStr)) {
           currentStyleId = added.styleId
@@ -397,27 +363,12 @@ export class LogUpdate {
     }
 
     // 渲染新行前重置样式（新行会自行设置样式）
-    currentStyleId = transitionStyle(
-      screen.diff,
-      stylePool,
-      currentStyleId,
-      stylePool.none,
-    )
-    currentHyperlink = transitionHyperlink(
-      screen.diff,
-      currentHyperlink,
-      undefined,
-    )
+    currentStyleId = transitionStyle(screen.diff, stylePool, currentStyleId, stylePool.none)
+    currentHyperlink = transitionHyperlink(screen.diff, currentHyperlink, undefined)
 
     // 处理增长：直接渲染新行（它们会自然引起终端滚动）
     if (growing) {
-      renderFrameSlice(
-        screen,
-        next,
-        prev.screen.height,
-        next.screen.height,
-        stylePool,
-      )
+      renderFrameSlice(screen, next, prev.screen.height, next.screen.height, stylePool)
     }
 
     // 恢复光标。在 alt-screen 中跳过：光标是隐藏的，其位置
@@ -431,7 +382,7 @@ export class LogUpdate {
       // 无操作；下一帧的 CSI H 会锚定光标
     } else if (next.cursor.y >= next.screen.height) {
       // 移动到当前行的第 0 列，然后发出换行符到达目标行
-      screen.txn(prev => {
+      screen.txn((prev) => {
         const rowsToCreate = next.cursor.y - prev.y
         if (rowsToCreate > 0) {
           // 使用 CR 解决待处理的换行（如果有），而不会前进到下一行，
@@ -468,17 +419,11 @@ export class LogUpdate {
       )
     }
 
-    return scrollPatch.length > 0
-      ? [...scrollPatch, ...screen.diff]
-      : screen.diff
+    return scrollPatch.length > 0 ? [...scrollPatch, ...screen.diff] : screen.diff
   }
 }
 
-function transitionHyperlink(
-  diff: Diff,
-  current: Hyperlink,
-  target: Hyperlink,
-): Hyperlink {
+function transitionHyperlink(diff: Diff, current: Hyperlink, target: Hyperlink): Hyperlink {
   if (current !== target) {
     diff.push({ type: 'hyperlink', uri: target ?? '' })
     return target
@@ -519,11 +464,7 @@ function fullResetSequence_CAUSES_FLICKER(
   return [{ type: 'clearTerminal', reason, debug }, ...screen.diff]
 }
 
-function renderFrame(
-  screen: VirtualScreen,
-  frame: Frame,
-  stylePool: StylePool,
-): void {
+function renderFrame(screen: VirtualScreen, frame: Frame, stylePool: StylePool): void {
   renderFrameSlice(screen, frame, 0, frame.screen.height, stylePool)
 }
 
@@ -555,7 +496,7 @@ function renderFrameSlice(
     // 导致虚拟光标与真实终端光标之间产生永久的一行偏差。
     if (screen.cursor.y < y) {
       const rowsToAdvance = y - screen.cursor.y
-      screen.txn(prev => {
+      screen.txn((prev) => {
         const patches: Diff = new Array<Diff[number]>(1 + rowsToAdvance)
         patches[0] = CARRIAGE_RETURN
         for (let i = 0; i < rowsToAdvance; i++) {
@@ -572,13 +513,7 @@ function renderFrameSlice(
       // 与上一个已渲染单元格匹配的空格（因为光标前进会产生相同的
       // 视觉效果）。visibleCellAtIndex 内部处理此优化，避免为跳过的
       // 单元格分配 Cell 对象。
-      const cell = visibleCellAtIndex(
-        cells,
-        charPool,
-        hyperlinkPool,
-        index,
-        lastRenderedStyleId,
-      )
+      const cell = visibleCellAtIndex(cells, charPool, hyperlinkPool, index, lastRenderedStyleId)
       if (!cell) {
         continue
       }
@@ -587,11 +522,7 @@ function renderFrameSlice(
 
       // 处理超链接
       const targetHyperlink = cell.hyperlink
-      currentHyperlink = transitionHyperlink(
-        screen.diff,
-        currentHyperlink,
-        targetHyperlink,
-      )
+      currentHyperlink = transitionHyperlink(screen.diff, currentHyperlink, targetHyperlink)
 
       // 样式切换 —— 缓存的字符串，预热后零分配
       const styleStr = stylePool.transition(currentStyleId, cell.styleId)
@@ -603,21 +534,12 @@ function renderFrameSlice(
     // 换行前重置样式和超链接，防止背景色在终端滚动时泄漏到下一行。
     // 旧代码通过写入尾部无样式空格隐式重置；现在我们跳过空白单元格，
     // 必须显式重置。
-    currentStyleId = transitionStyle(
-      screen.diff,
-      stylePool,
-      currentStyleId,
-      stylePool.none,
-    )
-    currentHyperlink = transitionHyperlink(
-      screen.diff,
-      currentHyperlink,
-      undefined,
-    )
+    currentStyleId = transitionStyle(screen.diff, stylePool, currentStyleId, stylePool.none)
+    currentHyperlink = transitionHyperlink(screen.diff, currentHyperlink, undefined)
     // 行尾 CR+LF —— \r 回到第 0 列，\n 移动到下一行。
     // 不加 \r 时，终端光标会停留在内容结束处的列（由于我们跳过了
     // 尾部空格，可能停在行中位置）。
-    screen.txn(prev => [[CARRIAGE_RETURN, NEWLINE], { dx: -prev.x, dy: 1 }])
+    screen.txn((prev) => [[CARRIAGE_RETURN, NEWLINE], { dx: -prev.x, dy: 1 }])
   }
 
   // 在切片末尾重置所有打开的样式和超链接
@@ -638,11 +560,7 @@ type Delta = { dx: number; dy: number }
  * styleStr 不会被推送，终端的样式状态也不会改变。如果仍更新虚拟追踪器，
  * 会导致其与终端状态不同步，下一次切换会基于幽灵状态计算。
  */
-function writeCellWithStyleStr(
-  screen: VirtualScreen,
-  cell: Cell,
-  styleStr: string,
-): boolean {
+function writeCellWithStyleStr(screen: VirtualScreen, cell: Cell, styleStr: string): boolean {
   const cellWidth = cell.width === CellWidth.Wide ? 2 : 1
   const px = screen.cursor.x
   const vw = screen.viewportWidth
@@ -693,7 +611,7 @@ function writeCellWithStyleStr(
 }
 
 function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
-  screen.txn(prev => {
+  screen.txn((prev) => {
     const dx = targetX - prev.x
     const dy = targetY - prev.y
     const inPendingWrap = prev.x >= screen.viewportWidth
@@ -701,18 +619,12 @@ function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
     // 如果处于待换行状态（cursor.x >= width），使用 CR
     // 回到当前行的第 0 列而不前进到下一行，然后执行光标移动。
     if (inPendingWrap) {
-      return [
-        [CARRIAGE_RETURN, { type: 'cursorMove', x: targetX, y: dy }],
-        { dx, dy },
-      ]
+      return [[CARRIAGE_RETURN, { type: 'cursorMove', x: targetX, y: dy }], { dx, dy }]
     }
 
     // 移动到不同行时，先用回车符（\r）回到第 0 列，再移动光标。
     if (dy !== 0) {
-      return [
-        [CARRIAGE_RETURN, { type: 'cursorMove', x: targetX, y: dy }],
-        { dx, dy },
-      ]
+      return [[CARRIAGE_RETURN, { type: 'cursorMove', x: targetX, y: dy }], { dx, dy }]
     }
 
     // 同行标准光标移动

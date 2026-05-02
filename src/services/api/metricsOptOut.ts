@@ -64,28 +64,21 @@ async function _checkMetricsEnabledAPI(): Promise<MetricsStatus> {
       also403Revoked: true,
     })
 
-    logForDebugging(
-      `指标退出 API 响应：enabled=${data.metrics_logging_enabled}`,
-    )
+    logForDebugging(`指标退出 API 响应：enabled=${data.metrics_logging_enabled}`)
 
     return {
       enabled: data.metrics_logging_enabled,
       hasError: false,
     }
   } catch (error) {
-    logForDebugging(
-      `检查指标退出状态失败：${errorMessage(error)}`,
-    )
+    logForDebugging(`检查指标退出状态失败：${errorMessage(error)}`)
     logError(error)
     return { enabled: false, hasError: true }
   }
 }
 
 // 创建带自定义错误处理的记忆化版本
-const memoizedCheckMetrics = memoizeWithTTLAsync(
-  _checkMetricsEnabledAPI,
-  CACHE_TTL_MS,
-)
+const memoizedCheckMetrics = memoizeWithTTLAsync(_checkMetricsEnabledAPI, CACHE_TTL_MS)
 
 /**
  * 获取（内存记忆化）并在变更时持久化到磁盘。
@@ -105,7 +98,7 @@ async function refreshMetricsStatus(): Promise<MetricsStatus> {
     return result
   }
 
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     metricsStatusCache: {
       enabled: result.enabled,

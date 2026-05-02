@@ -54,8 +54,7 @@ function reducer(state: State, action: Action): State {
           action.updates.selectedValue ??
           existing?.selectedValue ??
           (action.isMultiSelect ? [] : undefined),
-        textInputValue:
-          action.updates.textInputValue ?? existing?.textInputValue ?? '',
+        textInputValue: action.updates.textInputValue ?? existing?.textInputValue ?? '',
       }
 
       return {
@@ -114,11 +113,7 @@ export type MultipleChoiceState = {
     updates: Partial<QuestionState>,
     isMultiSelect: boolean,
   ) => void
-  setAnswer: (
-    questionText: string,
-    answer: string,
-    shouldAdvance?: boolean,
-  ) => void
+  setAnswer: (questionText: string, answer: string, shouldAdvance?: boolean) => void
   setTextInputMode: (isInInput: boolean) => void
 }
 
@@ -134,11 +129,7 @@ export function useMultipleChoiceState(): MultipleChoiceState {
   }, [])
 
   const updateQuestionState = useCallback(
-    (
-      questionText: string,
-      updates: Partial<QuestionState>,
-      isMultiSelect: boolean,
-    ) => {
+    (questionText: string, updates: Partial<QuestionState>, isMultiSelect: boolean) => {
       dispatch({
         type: 'update-question-state',
         questionText,

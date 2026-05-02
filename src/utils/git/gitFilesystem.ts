@@ -37,9 +37,7 @@ export function clearResolveGitDirCache(): void {
  * Handles worktrees/submodules where .git is a file containing `gitdir: <path>`.
  * Memoized per startPath.
  */
-export async function resolveGitDir(
-  startPath?: string,
-): Promise<string | null> {
+export async function resolveGitDir(startPath?: string): Promise<string | null> {
   const cwd = resolve(startPath ?? getCwd())
   const cached = resolveGitDirCache.get(cwd)
   if (cached !== undefined) {
@@ -106,7 +104,7 @@ export function isSafeRefName(name: string): boolean {
   // `foo/`). Git-check-ref-format rejects these, and `.` normalizes away in
   // path joins so a tampered HEAD of `refs/heads/.` would make us watch the
   // refs/heads directory itself instead of a branch file.
-  if (name.split('/').some(c => c === '.' || c === '')) {
+  if (name.split('/').some((c) => c === '.' || c === '')) {
     return false
   }
   // Allowlist-only: alphanumerics, /, ., _, +, -, @. Rejects all shell
@@ -148,9 +146,7 @@ export function isValidGitSha(s: string): boolean {
  */
 export async function readGitHead(
   gitDir: string,
-): Promise<
-  { type: 'branch'; name: string } | { type: 'detached'; sha: string } | null
-> {
+): Promise<{ type: 'branch'; name: string } | { type: 'detached'; sha: string } | null> {
   try {
     const content = (await readFile(join(gitDir, 'HEAD'), 'utf-8')).trim()
     if (content.startsWith('ref:')) {
@@ -200,10 +196,7 @@ export async function readGitHead(
  *   - Entries: `<40-hex-sha> <refname>\n`
  *   - Peeled:  `^<40-hex-sha>\n` (after annotated tag entries)
  */
-export async function resolveRef(
-  gitDir: string,
-  ref: string,
-): Promise<string | null> {
+export async function resolveRef(gitDir: string, ref: string): Promise<string | null> {
   const result = await resolveRefInDir(gitDir, ref)
   if (result) {
     return result
@@ -218,10 +211,7 @@ export async function resolveRef(
   return null
 }
 
-async function resolveRefInDir(
-  dir: string,
-  ref: string,
-): Promise<string | null> {
+async function resolveRefInDir(dir: string, ref: string): Promise<string | null> {
   // Try loose ref file
   try {
     const content = (await readFile(join(dir, ref), 'utf-8')).trim()
@@ -396,8 +386,7 @@ class GitFileWatcher {
     const head = await readGitHead(this.gitDir)
     // Branch refs live in commonDir for worktrees (gitDir for regular repos)
     const refsDir = this.commonDir ?? this.gitDir
-    const refPath =
-      head?.type === 'branch' ? join(refsDir, 'refs', 'heads', head.name) : null
+    const refPath = head?.type === 'branch' ? join(refsDir, 'refs', 'heads', head.name) : null
 
     // Already watching this ref (or already not watching anything)
     if (refPath === this.branchRefPath) {
@@ -408,9 +397,7 @@ class GitFileWatcher {
     // branch→detached (checkout --detach, rebase, bisect).
     if (this.branchRefPath) {
       unwatchFile(this.branchRefPath)
-      this.watchedPaths = this.watchedPaths.filter(
-        p => p !== this.branchRefPath,
-      )
+      this.watchedPaths = this.watchedPaths.filter((p) => p !== this.branchRefPath)
     }
 
     this.branchRefPath = refPath
@@ -616,9 +603,7 @@ export async function getHeadForDir(cwd: string): Promise<string | null> {
  * Returns null if the worktree doesn't exist (`.git` pointer ENOENT) or is
  * malformed. Caller can treat null as "not a valid worktree".
  */
-export async function readWorktreeHeadSha(
-  worktreePath: string,
-): Promise<string | null> {
+export async function readWorktreeHeadSha(worktreePath: string): Promise<string | null> {
   let gitDir: string
   try {
     const ptr = (await readFile(join(worktreePath, '.git'), 'utf-8')).trim()

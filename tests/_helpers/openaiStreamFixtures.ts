@@ -25,9 +25,7 @@ export function reasoningChunk(reasoning: string, model = 'qwen-plus'): Chunk {
     object: 'chat.completion.chunk',
     created: 0,
     model,
-    choices: [
-      { index: 0, delta: { reasoning_content: reasoning } as any, finish_reason: null },
-    ],
+    choices: [{ index: 0, delta: { reasoning_content: reasoning } as any, finish_reason: null }],
   }
 }
 
@@ -107,20 +105,19 @@ export function finishChunk(args: {
     created: 0,
     model: args.model ?? 'gpt-4',
     choices: [{ index: 0, delta: {}, finish_reason: args.finishReason }],
-    usage: args.promptTokens !== undefined
-      ? {
-          prompt_tokens: args.promptTokens,
-          completion_tokens: args.completionTokens ?? 0,
-          total_tokens: (args.promptTokens) + (args.completionTokens ?? 0),
-        }
-      : undefined,
+    usage:
+      args.promptTokens !== undefined
+        ? {
+            prompt_tokens: args.promptTokens,
+            completion_tokens: args.completionTokens ?? 0,
+            total_tokens: args.promptTokens + (args.completionTokens ?? 0),
+          }
+        : undefined,
   }
 }
 
 /** 把一组 chunks 转成 AsyncIterable */
-export async function* chunksToStream(
-  chunks: Chunk[],
-): AsyncIterable<Chunk> {
+export async function* chunksToStream(chunks: Chunk[]): AsyncIterable<Chunk> {
   for (const c of chunks) {
     yield c
   }

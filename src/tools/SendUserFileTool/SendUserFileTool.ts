@@ -16,9 +16,7 @@ Parameters:
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
-    file_name: z
-      .string()
-      .describe('The name of the file to send (include extension)'),
+    file_name: z.string().describe('The name of the file to send (include extension)'),
     content: z.string().describe('The content of the file'),
   }),
 )

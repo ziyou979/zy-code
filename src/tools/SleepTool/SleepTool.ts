@@ -6,9 +6,7 @@ import { DESCRIPTION, SLEEP_TOOL_NAME } from './prompt.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
-    duration: z
-      .number()
-      .describe('Duration to sleep in seconds (max 3600)'),
+    duration: z.number().describe('Duration to sleep in seconds (max 3600)'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>

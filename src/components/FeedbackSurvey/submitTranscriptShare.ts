@@ -49,10 +49,9 @@ export async function submitTranscriptShare(
       if (size <= MAX_TRANSCRIPT_READ_BYTES) {
         rawTranscriptJsonl = await readFile(transcriptPath, 'utf-8')
       } else {
-        logForDebugging(
-          `Skipping raw transcript read: file too large (${size} bytes)`,
-          { level: 'warn' },
-        )
+        logForDebugging(`Skipping raw transcript read: file too large (${size} bytes)`, {
+          level: 'warn',
+        })
       }
     } catch {
       // File may not exist
@@ -64,9 +63,7 @@ export async function submitTranscriptShare(
       platform: process.platform,
       transcript,
       subagentTranscripts:
-        Object.keys(subagentTranscripts).length > 0
-          ? subagentTranscripts
-          : undefined,
+        Object.keys(subagentTranscripts).length > 0 ? subagentTranscripts : undefined,
       rawTranscriptJsonl,
     }
 

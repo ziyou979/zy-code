@@ -47,7 +47,7 @@ export class DuckDuckGoProvider implements SearchProvider {
 
     // 域过滤 — DuckDuckGo 不支持原生域过滤，但在查询中添加 site: 可以实现
     if (options?.allowedDomains && options.allowedDomains.length > 0) {
-      const siteQueries = options.allowedDomains.map(d => `site:${d}`)
+      const siteQueries = options.allowedDomains.map((d) => `site:${d}`)
       url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}+${siteQueries.join('+OR+')}`
       if (this.region) {
         url += `&kl=${REGION_MAP[this.region] ?? this.region}`
@@ -57,7 +57,7 @@ export class DuckDuckGoProvider implements SearchProvider {
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ZY-Code/1.0)',
-        'Accept': 'text/html',
+        Accept: 'text/html',
       },
       signal: AbortSignal.timeout(15000),
     })
@@ -93,7 +93,8 @@ function parseDuckDuckGoLiteHtml(
   // <a class="result-url" href="URL">URL</a>
 
   // 匹配结果条目 — 标题链接
-  const resultLinkRegex = /<a[^>]*rel="nofollow"[^>]*class="result-link"[^>]*href="([^"]+)"[^>]*>([^<]*)/g
+  const resultLinkRegex =
+    /<a[^>]*rel="nofollow"[^>]*class="result-link"[^>]*href="([^"]+)"[^>]*>([^<]*)/g
   // 匹配摘要
   const snippetRegex = /<td[^>]*class="result-snippet"[^>]*>([\s\S]*?)<\/td>/g
   // 匹配实际 URL（DDG Lite 的 href 是 DDG 重定向链接，需要从后面的 result-url 获取真实 URL）
@@ -133,7 +134,7 @@ function parseDuckDuckGoLiteHtml(
     if (blockedDomains && blockedDomains.length > 0) {
       try {
         const hostname = new URL(realUrl).hostname
-        if (blockedDomains.some(d => hostname.includes(d))) continue
+        if (blockedDomains.some((d) => hostname.includes(d))) continue
       } catch {
         // URL 解析失败，保留结果
       }
@@ -141,7 +142,9 @@ function parseDuckDuckGoLiteHtml(
 
     // 获取摘要
     const snippet = snippetMatches[i]
-      ? decodeHTMLEntities(snippetMatches[i][1] ?? '').replace(/<[^>]*>/g, '').trim()
+      ? decodeHTMLEntities(snippetMatches[i][1] ?? '')
+          .replace(/<[^>]*>/g, '')
+          .trim()
       : ''
 
     results.push({
@@ -166,7 +169,7 @@ function parseDuckDuckGoLiteHtml(
         // 检查域名阻止
         if (blockedDomains && blockedDomains.length > 0) {
           const hostname = new URL(url).hostname
-          if (blockedDomains.some(d => hostname.includes(d))) continue
+          if (blockedDomains.some((d) => hostname.includes(d))) continue
         }
 
         results.push({ title, url })

@@ -35,10 +35,7 @@ type AgentSuggestionSource = {
   color?: keyof Theme
 }
 
-type SuggestionSource =
-  | FileSuggestionSource
-  | McpResourceSuggestionSource
-  | AgentSuggestionSource
+type SuggestionSource = FileSuggestionSource | McpResourceSuggestionSource | AgentSuggestionSource
 
 /**
  * Creates a unified suggestion item from a source
@@ -84,7 +81,7 @@ function generateAgentSuggestions(
   }
 
   try {
-    const agentSources: AgentSuggestionSource[] = agents.map(agent => ({
+    const agentSources: AgentSuggestionSource[] = agents.map((agent) => ({
       type: 'agent' as const,
       displayText: `${agent.agentType} (agent)`,
       description: truncateDescription(agent.whenToUse),
@@ -98,7 +95,7 @@ function generateAgentSuggestions(
 
     const queryLower = query.toLowerCase()
     return agentSources.filter(
-      agent =>
+      (agent) =>
         agent.agentType.toLowerCase().includes(queryLower) ||
         agent.displayText.toLowerCase().includes(queryLower),
     )
@@ -123,25 +120,21 @@ export async function generateUnifiedSuggestions(
     Promise.resolve(generateAgentSuggestions(agents, query, showOnEmpty)),
   ])
 
-  const fileSources: FileSuggestionSource[] = fileSuggestions.map(
-    suggestion => ({
-      type: 'file' as const,
-      displayText: suggestion.displayText,
-      description: suggestion.description,
-      path: suggestion.displayText, // Use displayText as path for files
-      filename: basename(suggestion.displayText),
-      score: (suggestion.metadata as { score?: number } | undefined)?.score,
-    }),
-  )
+  const fileSources: FileSuggestionSource[] = fileSuggestions.map((suggestion) => ({
+    type: 'file' as const,
+    displayText: suggestion.displayText,
+    description: suggestion.description,
+    path: suggestion.displayText, // Use displayText as path for files
+    filename: basename(suggestion.displayText),
+    score: (suggestion.metadata as { score?: number } | undefined)?.score,
+  }))
 
   const mcpSources: McpResourceSuggestionSource[] = Object.values(mcpResources)
     .flat()
-    .map(resource => ({
+    .map((resource) => ({
       type: 'mcp_resource' as const,
       displayText: `${resource.server}:${resource.uri}`,
-      description: truncateDescription(
-        resource.description || resource.name || resource.uri,
-      ),
+      description: truncateDescription(resource.description || resource.name || resource.uri),
       server: resource.server,
       uri: resource.uri,
       name: resource.name || resource.uri,
@@ -149,9 +142,7 @@ export async function generateUnifiedSuggestions(
 
   if (!query) {
     const allSources = [...fileSources, ...mcpSources, ...agentSources]
-    return allSources
-      .slice(0, MAX_UNIFIED_SUGGESTIONS)
-      .map(createSuggestionFromSource)
+    return allSources.slice(0, MAX_UNIFIED_SUGGESTIONS).map(createSuggestionFromSource)
   }
 
   const nonFileSources: SuggestionSource[] = [...mcpSources, ...agentSources]
@@ -197,6 +188,6 @@ export async function generateUnifiedSuggestions(
 
   return scoredResults
     .slice(0, MAX_UNIFIED_SUGGESTIONS)
-    .map(r => r.source)
+    .map((r) => r.source)
     .map(createSuggestionFromSource)
 }

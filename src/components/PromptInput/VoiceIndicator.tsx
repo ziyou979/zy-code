@@ -1,52 +1,47 @@
-import { feature } from 'bun:bundle';
-import * as React from 'react';
-import { useSettings } from '../../hooks/useSettings.js';
-import { Box, Text, useAnimationFrame } from '../../ink.js';
-import { tSync } from '../../i18n/index.js';
-import { interpolateColor, toRGBColor } from '../Spinner/utils.js';
+import { feature } from 'bun:bundle'
+import * as React from 'react'
+import { useSettings } from '../../hooks/useSettings.js'
+import { Box, Text, useAnimationFrame } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
+import { interpolateColor, toRGBColor } from '../Spinner/utils.js'
 type Props = {
-  voiceState: 'idle' | 'recording' | 'processing';
-};
+  voiceState: 'idle' | 'recording' | 'processing'
+}
 
 // Processing shimmer colors: dim gray to lighter gray (matches ThinkingShimmerText)
 const PROCESSING_DIM = {
   r: 153,
   g: 153,
-  b: 153
-};
+  b: 153,
+}
 const PROCESSING_BRIGHT = {
   r: 185,
   g: 185,
-  b: 185
-};
-const PULSE_PERIOD_S = 2; // 2 second period for all pulsing animations
+  b: 185,
+}
+const PULSE_PERIOD_S = 2 // 2 second period for all pulsing animations
 
 export function VoiceIndicator(props) {
-  if (!feature("VOICE_MODE")) {
-    return null;
+  if (!feature('VOICE_MODE')) {
+    return null
   }
-  return <VoiceIndicatorImpl {...props} />;
+  return <VoiceIndicatorImpl {...props} />
 }
-function VoiceIndicatorImpl({
-  voiceState
-}) {
+function VoiceIndicatorImpl({ voiceState }) {
   switch (voiceState) {
-    case "recording":
-      {
-        let t1;
-        t1 = <Text dimColor={true}>listening…</Text>;
-        return t1;
-      }
-    case "processing":
-      {
-        let t1;
-        t1 = <ProcessingShimmer />;
-        return t1;
-      }
-    case "idle":
-      {
-        return null;
-      }
+    case 'recording': {
+      let t1
+      t1 = <Text dimColor={true}>listening…</Text>
+      return t1
+    }
+    case 'processing': {
+      let t1
+      t1 = <ProcessingShimmer />
+      return t1
+    }
+    case 'idle': {
+      return null
+    }
   }
 }
 
@@ -55,20 +50,20 @@ function VoiceIndicatorImpl({
 // timer here runs concurrently with auto-repeat spaces arriving every
 // 30-80ms, compounding re-renders during an already-busy window.
 export function VoiceWarmupHint() {
-  if (!feature("VOICE_MODE")) {
-    return null;
+  if (!feature('VOICE_MODE')) {
+    return null
   }
-  return <Text dimColor={true}>keep holding…</Text>;
+  return <Text dimColor={true}>keep holding…</Text>
 }
 function ProcessingShimmer() {
-  const settings = useSettings();
-  const reducedMotion = settings.prefersReducedMotion ?? false;
-  const [ref, time] = useAnimationFrame(reducedMotion ? null : 50);
+  const settings = useSettings()
+  const reducedMotion = settings.prefersReducedMotion ?? false
+  const [ref, time] = useAnimationFrame(reducedMotion ? null : 50)
   if (reducedMotion) {
-    return <Text color="warning">Voice: processing…</Text>;
+    return <Text color="warning">Voice: processing…</Text>
   }
-  const elapsedSec = time / 1000;
-  const opacity = (Math.sin(elapsedSec * Math.PI * 2 / PULSE_PERIOD_S) + 1) / 2;
-  const color = toRGBColor(interpolateColor(PROCESSING_DIM, PROCESSING_BRIGHT, opacity));
-  return <Box ref={ref}>{<Text color={color}>Voice: processing…</Text>}</Box>;
+  const elapsedSec = time / 1000
+  const opacity = (Math.sin((elapsedSec * Math.PI * 2) / PULSE_PERIOD_S) + 1) / 2
+  const color = toRGBColor(interpolateColor(PROCESSING_DIM, PROCESSING_BRIGHT, opacity))
+  return <Box ref={ref}>{<Text color={color}>Voice: processing…</Text>}</Box>
 }

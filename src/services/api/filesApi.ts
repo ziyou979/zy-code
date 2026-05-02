@@ -111,9 +111,7 @@ async function retryWithBackoff<T>(
     }
 
     lastError = (result as any).error || `${operation} 失败`
-    logDebug(
-      `${operation} 第 ${attempt}/${MAX_RETRIES} 次尝试失败：${lastError}`,
-    )
+    logDebug(`${operation} 第 ${attempt}/${MAX_RETRIES} 次尝试失败：${lastError}`)
 
     if (attempt < MAX_RETRIES) {
       const delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1)
@@ -132,10 +130,7 @@ async function retryWithBackoff<T>(
  * @param config - 文件 API 配置
  * @returns 文件内容，以 Buffer 形式返回
  */
-export async function downloadFile(
-  fileId: string,
-  config: FilesApiConfig,
-): Promise<Buffer> {
+export async function downloadFile(fileId: string, config: FilesApiConfig): Promise<Buffer> {
   const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
   const url = `${baseUrl}/v1/files/${fileId}/content`
 
@@ -153,7 +148,7 @@ export async function downloadFile(
         headers,
         responseType: 'arraybuffer',
         timeout: 60000, // 大文件 60 秒超时
-        validateStatus: status => status < 500,
+        validateStatus: (status) => status < 500,
       })
 
       if (response.status === 200) {
@@ -194,9 +189,7 @@ export function buildDownloadPath(
 ): string | null {
   const normalized = path.normalize(relativePath)
   if (normalized.startsWith('..')) {
-    logDebugError(
-      tSync('filesApi.path.invalid', { relativePath }),
-    )
+    logDebugError(tSync('filesApi.path.invalid', { relativePath }))
     return null
   }
 
@@ -205,10 +198,8 @@ export function buildDownloadPath(
     path.join(basePath, sessionId, 'uploads') + path.sep,
     path.sep + 'uploads' + path.sep,
   ]
-  const matchedPrefix = redundantPrefixes.find(p => normalized.startsWith(p))
-  const cleanPath = matchedPrefix
-    ? normalized.slice(matchedPrefix.length)
-    : normalized
+  const matchedPrefix = redundantPrefixes.find((p) => normalized.startsWith(p))
+  const cleanPath = matchedPrefix ? normalized.slice(matchedPrefix.length) : normalized
   return path.join(uploadsBase, cleanPath)
 }
 
@@ -326,23 +317,19 @@ export async function downloadSessionFiles(
     return []
   }
 
-  logDebug(
-    `正在为会话 ${config.sessionId} 下载 ${files.length} 个文件`,
-  )
+  logDebug(`正在为会话 ${config.sessionId} 下载 ${files.length} 个文件`)
   const startTime = Date.now()
 
   // 以受限并发数并行下载文件
   const results = await parallelWithLimit(
     files,
-    file => downloadAndSaveFile(file, config),
+    (file) => downloadAndSaveFile(file, config),
     concurrency,
   )
 
   const elapsedMs = Date.now() - startTime
-  const successCount = count(results, r => r.success)
-  logDebug(
-    `已下载 ${successCount}/${files.length} 个文件，耗时 ${elapsedMs}ms`,
-  )
+  const successCount = count(results, (r) => r.success)
+  logDebug(`已下载 ${successCount}/${files.length} 个文件，耗时 ${elapsedMs}ms`)
 
   return results
 }
@@ -401,8 +388,7 @@ export async function uploadFile(
     content = await fs.readFile(filePath)
   } catch (error) {
     logEvent('zy_file_upload_failed', {
-      error_type:
-        'file_read' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_type: 'file_read' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return {
       path: relativePath,
@@ -415,12 +401,14 @@ export async function uploadFile(
 
   if (fileSize > MAX_FILE_SIZE_BYTES) {
     logEvent('zy_file_upload_failed', {
-      error_type:
-        'file_too_large' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_type: 'file_too_large' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return {
       path: relativePath,
-      error: tSync('filesApi.upload.exceedsMaxSize', { maxBytes: String(MAX_FILE_SIZE_BYTES), actualBytes: String(fileSize) }),
+      error: tSync('filesApi.upload.exceedsMaxSize', {
+        maxBytes: String(MAX_FILE_SIZE_BYTES),
+        actualBytes: String(fileSize),
+      }),
       success: false,
     }
   }
@@ -468,7 +456,7 @@ export async function uploadFile(
           },
           timeout: 120000, // 上传 2 分钟超时
           signal: opts?.signal,
-          validateStatus: status => status < 500,
+          validateStatus: (status) => status < 500,
         })
 
         if (response.status === 200 || response.status === 201) {
@@ -494,26 +482,21 @@ export async function uploadFile(
         // 不可重试的错误 — 抛出以退出重试循环
         if (response.status === 401) {
           logEvent('zy_file_upload_failed', {
-            error_type:
-              'auth' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            error_type: 'auth' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           })
-          throw new UploadNonRetriableError(
-            tSync('filesApi.upload.authFailed'),
-          )
+          throw new UploadNonRetriableError(tSync('filesApi.upload.authFailed'))
         }
 
         if (response.status === 403) {
           logEvent('zy_file_upload_failed', {
-            error_type:
-              'forbidden' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            error_type: 'forbidden' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           })
           throw new UploadNonRetriableError(tSync('filesApi.upload.accessDenied'))
         }
 
         if (response.status === 413) {
           logEvent('zy_file_upload_failed', {
-            error_type:
-              'size' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            error_type: 'size' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           })
           throw new UploadNonRetriableError(tSync('filesApi.upload.fileTooLarge'))
         }
@@ -543,8 +526,7 @@ export async function uploadFile(
       }
     }
     logEvent('zy_file_upload_failed', {
-      error_type:
-        'network' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_type: 'network' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return {
       path: relativePath,
@@ -584,12 +566,12 @@ export async function uploadSessionFiles(
 
   const results = await parallelWithLimit(
     files,
-    file => uploadFile(file.path, file.relativePath, config),
+    (file) => uploadFile(file.path, file.relativePath, config),
     concurrency,
   )
 
   const elapsedMs = Date.now() - startTime
-  const successCount = count(results, r => r.success)
+  const successCount = count(results, (r) => r.success)
   logDebug(`已上传 ${successCount}/${files.length} 个文件，耗时 ${elapsedMs}ms`)
 
   return results
@@ -642,49 +624,43 @@ export async function listFilesCreatedAfter(
       params.after_id = afterId
     }
 
-    const page = await retryWithBackoff(
-      `列出 ${afterCreatedAt} 之后的文件`,
-      async () => {
-        try {
-          const response = await axios.get(`${baseUrl}/v1/files`, {
-            headers,
-            params,
-            timeout: 60000,
-            validateStatus: status => status < 500,
-          })
+    const page = await retryWithBackoff(`列出 ${afterCreatedAt} 之后的文件`, async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/v1/files`, {
+          headers,
+          params,
+          timeout: 60000,
+          validateStatus: (status) => status < 500,
+        })
 
-          if (response.status === 200) {
-            return { done: true, value: response.data }
-          }
-
-          if (response.status === 401) {
-            logEvent('zy_file_list_failed', {
-              error_type:
-                'auth' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-            })
-            throw new Error(tSync('filesApi.list.authFailed'))
-          }
-          if (response.status === 403) {
-            logEvent('zy_file_list_failed', {
-              error_type:
-                'forbidden' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-            })
-            throw new Error(tSync('filesApi.list.accessDenied'))
-          }
-
-          return { done: false, error: `状态码 ${response.status}` }
-        } catch (error) {
-          if (!axios.isAxiosError(error)) {
-            throw error
-          }
-          logEvent('zy_file_list_failed', {
-            error_type:
-              'network' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          })
-          return { done: false, error: error.message }
+        if (response.status === 200) {
+          return { done: true, value: response.data }
         }
-      },
-    )
+
+        if (response.status === 401) {
+          logEvent('zy_file_list_failed', {
+            error_type: 'auth' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          })
+          throw new Error(tSync('filesApi.list.authFailed'))
+        }
+        if (response.status === 403) {
+          logEvent('zy_file_list_failed', {
+            error_type: 'forbidden' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          })
+          throw new Error(tSync('filesApi.list.accessDenied'))
+        }
+
+        return { done: false, error: `状态码 ${response.status}` }
+      } catch (error) {
+        if (!axios.isAxiosError(error)) {
+          throw error
+        }
+        logEvent('zy_file_list_failed', {
+          error_type: 'network' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
+        return { done: false, error: error.message }
+      }
+    })
 
     const files = page.data || []
     for (const f of files) {
@@ -726,7 +702,7 @@ export function parseFileSpecs(fileSpecs: string[]): File[] {
   const files: File[] = []
 
   // Sandbox-gateway 可能将多个规格作为单个空格分隔的字符串传入
-  const expandedSpecs = fileSpecs.flatMap(s => s.split(' ').filter(Boolean))
+  const expandedSpecs = fileSpecs.flatMap((s) => s.split(' ').filter(Boolean))
 
   for (const spec of expandedSpecs) {
     const colonIndex = spec.indexOf(':')
@@ -738,9 +714,7 @@ export function parseFileSpecs(fileSpecs: string[]): File[] {
     const relativePath = spec.substring(colonIndex + 1)
 
     if (!fileId || !relativePath) {
-      logDebugError(
-        tSync('filesApi.spec.invalid', { spec }),
-      )
+      logDebugError(tSync('filesApi.spec.invalid', { spec }))
       continue
     }
 

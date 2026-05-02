@@ -5,7 +5,7 @@ import { getGlobalConfig, saveGlobalConfig } from './config.js'
 import { logError } from './log.js'
 
 export function markITerm2SetupComplete(): void {
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     iterm2SetupInProgress: false,
   }))
@@ -23,12 +23,7 @@ function getIterm2RecoveryInfo(): {
 }
 
 function getITerm2PlistPath(): string {
-  return join(
-    homedir(),
-    'Library',
-    'Preferences',
-    'com.googlecode.iterm2.plist',
-  )
+  return join(homedir(), 'Library', 'Preferences', 'com.googlecode.iterm2.plist')
 }
 
 type RestoreResult =
@@ -64,9 +59,7 @@ export async function checkAndRestoreITerm2Backup(): Promise<RestoreResult> {
     markITerm2SetupComplete()
     return { status: 'restored' }
   } catch (restoreError) {
-    logError(
-      new Error(`Failed to restore iTerm2 settings with: ${restoreError}`),
-    )
+    logError(new Error(`Failed to restore iTerm2 settings with: ${restoreError}`))
     markITerm2SetupComplete()
     return { status: 'failed', backupPath }
   }

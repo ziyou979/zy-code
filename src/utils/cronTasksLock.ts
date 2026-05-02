@@ -61,10 +61,7 @@ async function readLock(dir?: string): Promise<SchedulerLock | undefined> {
   return result.success ? result.data : undefined
 }
 
-async function tryCreateExclusive(
-  lock: SchedulerLock,
-  dir?: string,
-): Promise<boolean> {
+async function tryCreateExclusive(lock: SchedulerLock, dir?: string): Promise<boolean> {
   const path = getLockPath(dir)
   const body = jsonStringify(lock)
   try {
@@ -108,9 +105,7 @@ function registerLockCleanup(opts?: SchedulerLockOptions): void {
  *
  * If two sessions race to recover a stale lock, only one create succeeds.
  */
-export async function tryAcquireSchedulerLock(
-  opts?: SchedulerLockOptions,
-): Promise<boolean> {
+export async function tryAcquireSchedulerLock(opts?: SchedulerLockOptions): Promise<boolean> {
   const dir = opts?.dir
   // "sessionId" in the lock file is really just a stable owner key. REPL
   // uses getSessionId(); daemon callers supply their own UUID. PID remains
@@ -125,9 +120,7 @@ export async function tryAcquireSchedulerLock(
   if (await tryCreateExclusive(lock, dir)) {
     lastBlockedBy = undefined
     registerLockCleanup(opts)
-    logForDebugging(
-      `[ScheduledTasks] acquired scheduler lock (PID ${process.pid})`,
-    )
+    logForDebugging(`[ScheduledTasks] acquired scheduler lock (PID ${process.pid})`)
     return true
   }
 
@@ -158,9 +151,7 @@ export async function tryAcquireSchedulerLock(
 
   // Stale — unlink and retry the exclusive create once.
   if (existing) {
-    logForDebugging(
-      `[ScheduledTasks] recovering stale scheduler lock from PID ${existing.pid}`,
-    )
+    logForDebugging(`[ScheduledTasks] recovering stale scheduler lock from PID ${existing.pid}`)
   }
   await unlink(getLockPath(dir)).catch(() => {})
   if (await tryCreateExclusive(lock, dir)) {
@@ -175,9 +166,7 @@ export async function tryAcquireSchedulerLock(
 /**
  * Release the scheduler lock if the current session owns it.
  */
-export async function releaseSchedulerLock(
-  opts?: SchedulerLockOptions,
-): Promise<void> {
+export async function releaseSchedulerLock(opts?: SchedulerLockOptions): Promise<void> {
   unregisterCleanup?.()
   unregisterCleanup = undefined
   lastBlockedBy = undefined

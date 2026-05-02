@@ -12,10 +12,7 @@ import {
 } from '../../utils/forkedAgent.js'
 import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
-import {
-  createUserMessage,
-  getLastAssistantMessage,
-} from '../../utils/messages.js'
+import { createUserMessage, getLastAssistantMessage } from '../../utils/messages.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { isTeammate } from '../../utils/teammate.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
@@ -40,16 +37,14 @@ export function shouldEnablePromptSuggestion(): boolean {
   if (isEnvDefinedFalsy(envOverride)) {
     logEvent('zy_prompt_suggestion_init', {
       enabled: false,
-      source:
-        'env' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: 'env' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return false
   }
   if (isEnvTruthy(envOverride)) {
     logEvent('zy_prompt_suggestion_init', {
       enabled: true,
-      source:
-        'env' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: 'env' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return true
   }
@@ -58,8 +53,7 @@ export function shouldEnablePromptSuggestion(): boolean {
   if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_chomp_inflection', false)) {
     logEvent('zy_prompt_suggestion_init', {
       enabled: false,
-      source:
-        'growthbook' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: 'growthbook' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return false
   }
@@ -68,8 +62,7 @@ export function shouldEnablePromptSuggestion(): boolean {
   if (getIsNonInteractiveSession()) {
     logEvent('zy_prompt_suggestion_init', {
       enabled: false,
-      source:
-        'non_interactive' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: 'non_interactive' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return false
   }
@@ -78,8 +71,7 @@ export function shouldEnablePromptSuggestion(): boolean {
   if (isAgentSwarmsEnabled() && isTeammate()) {
     logEvent('zy_prompt_suggestion_init', {
       enabled: false,
-      source:
-        'swarm_teammate' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: 'swarm_teammate' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return false
   }
@@ -87,8 +79,7 @@ export function shouldEnablePromptSuggestion(): boolean {
   const enabled = getInitialSettings()?.promptSuggestionEnabled !== false
   logEvent('zy_prompt_suggestion_init', {
     enabled,
-    source:
-      'setting' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    source: 'setting' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
   return enabled
 }
@@ -106,14 +97,10 @@ export function abortPromptSuggestion(): void {
  */
 export function getSuggestionSuppressReason(appState: AppState): string | null {
   if (!appState.promptSuggestionEnabled) return 'disabled'
-  if (appState.pendingWorkerRequest || appState.pendingSandboxRequest)
-    return 'pending_permission'
+  if (appState.pendingWorkerRequest || appState.pendingSandboxRequest) return 'pending_permission'
   if (appState.elicitation.queue.length > 0) return 'elicitation_active'
   if (appState.toolPermissionContext.mode === 'plan') return 'plan_mode'
-  if (
-    process.env.USER_TYPE === 'external' &&
-    currentLimits.status !== 'allowed'
-  )
+  if (process.env.USER_TYPE === 'external' && currentLimits.status !== 'allowed')
     return 'rate_limit'
   return null
 }
@@ -138,7 +125,7 @@ export async function tryGenerateSuggestion(
     return null
   }
 
-  const assistantTurnCount = count(messages, m => m.type === 'assistant')
+  const assistantTurnCount = count(messages, (m) => m.type === 'assistant')
   if (assistantTurnCount < 2) {
     logSuggestionSuppressed('early_conversation', undefined, undefined, source)
     return null
@@ -181,9 +168,7 @@ export async function tryGenerateSuggestion(
   return { suggestion, promptId, generationRequestId }
 }
 
-export async function executePromptSuggestion(
-  context: REPLHookContext,
-): Promise<void> {
+export async function executePromptSuggestion(context: REPLHookContext): Promise<void> {
   if ((context.querySource as any) !== 'repl_main_thread') return
 
   currentAbortController = new AbortController()
@@ -200,7 +185,7 @@ export async function executePromptSuggestion(
     )
     if (!result) return
 
-    context.toolUseContext.setAppState(prev => ({
+    context.toolUseContext.setAppState((prev) => ({
       ...prev,
       promptSuggestion: {
         text: result.suggestion,
@@ -249,8 +234,7 @@ export function getParentCacheSuppressReason(
   // The fork re-processes the parent's output (never cached) plus its own prompt.
   const outputTokens = usage.outputTokens
 
-  return inputTokens + cacheWriteTokens + outputTokens >
-    MAX_PARENT_UNCACHED_TOKENS
+  return inputTokens + cacheWriteTokens + outputTokens > MAX_PARENT_UNCACHED_TOKENS
     ? 'cache_cold'
     : null
 }
@@ -331,15 +315,13 @@ export async function generateSuggestion(
 
   // Check ALL messages - model may loop (try tool → denied → text in next message)
   // Also extract the requestId from the first assistant message for RL dataset joins
-  const firstAssistantMsg = result.messages.find(m => m.type === 'assistant')
+  const firstAssistantMsg = result.messages.find((m) => m.type === 'assistant')
   const generationRequestId =
-    firstAssistantMsg?.type === 'assistant'
-      ? (firstAssistantMsg.requestId ?? null)
-      : null
+    firstAssistantMsg?.type === 'assistant' ? (firstAssistantMsg.requestId ?? null) : null
 
   for (const msg of result.messages) {
     if (msg.type !== 'assistant') continue
-    const textBlock = msg.message.content.find(b => b.type === 'text')
+    const textBlock = msg.message.content.find((b) => b.type === 'text')
     if (textBlock?.type === 'text') {
       const suggestion = textBlock.text.trim()
       if (suggestion) {
@@ -466,8 +448,7 @@ export function logSuggestionOutcome(
   promptId: PromptVariant,
   generationRequestId: string | null,
 ): void {
-  const similarity =
-    Math.round((userInput.length / (suggestion.length || 1)) * 100) / 100
+  const similarity = Math.round((userInput.length / (suggestion.length || 1)) * 100) / 100
   const wasAccepted = userInput === suggestion
   const timeMs = Math.max(0, Date.now() - emittedAt)
 
@@ -476,8 +457,7 @@ export function logSuggestionOutcome(
     outcome: (wasAccepted
       ? 'accepted'
       : 'ignored') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    prompt_id:
-      promptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    prompt_id: promptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(generationRequestId && {
       generationRequestId:
         generationRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -488,10 +468,8 @@ export function logSuggestionOutcome(
     ...(!wasAccepted && { timeToIgnoreMs: timeMs }),
     similarity,
     ...(isInternalBuild() && {
-      suggestion:
-        suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      userInput:
-        userInput as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      suggestion: suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      userInput: userInput as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
   })
 }
@@ -505,19 +483,14 @@ export function logSuggestionSuppressed(
   const resolvedPromptId = promptId ?? getPromptVariant()
   logEvent('zy_prompt_suggestion', {
     ...(source && {
-      source:
-        source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
-    outcome:
-      'suppressed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    reason:
-      reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    prompt_id:
-      resolvedPromptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    outcome: 'suppressed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    reason: reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    prompt_id: resolvedPromptId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...(isInternalBuild() &&
       suggestion && {
-        suggestion:
-          suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        suggestion: suggestion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }),
   })
 }

@@ -19,7 +19,11 @@ import type { ConnectorTextBlock } from './connectorText.js'
 export type UserContentBlock = TextBlock | ImageBlock
 
 /** 助手消息中可用的内容块 */
-export type AssistantContentBlock = TextBlock | ToolCallInlineBlock | ThinkingBlock | RedactedThinkingBlock
+export type AssistantContentBlock =
+  | TextBlock
+  | ToolCallInlineBlock
+  | ThinkingBlock
+  | RedactedThinkingBlock
 
 // ---- 通用内容块 ----
 
@@ -114,10 +118,7 @@ export interface ToolDefinition {
 }
 
 /** 工具选择策略 */
-export type ToolChoice =
-  | { type: 'auto' }
-  | { type: 'none' }
-  | { type: 'tool'; name: string }
+export type ToolChoice = { type: 'auto' } | { type: 'none' } | { type: 'tool'; name: string }
 
 // ============================================================================
 // 工具调用
@@ -185,7 +186,12 @@ export interface ResponseStopEvent {
 // ---- 增量类型 ----
 
 /** 内容增量联合类型 */
-export type ChunkDelta = TextDelta | ToolCallInputDelta | ThinkingDelta | SignatureDelta | ConnectorTextDelta
+export type ChunkDelta =
+  | TextDelta
+  | ToolCallInputDelta
+  | ThinkingDelta
+  | SignatureDelta
+  | ConnectorTextDelta
 
 /** 文本增量 */
 export interface TextDelta {
@@ -226,11 +232,11 @@ export interface ConnectorTextDelta {
  * 合并 Anthropic stop_reason 和 OpenAI finish_reason 为统一枚举。
  */
 export type StopReason =
-  | 'end_turn'       // 自然结束（Anthropic end_turn / stop_sequence / OpenAI stop）
-  | 'max_tokens'     // 达到 token 上限（Anthropic max_tokens / OpenAI length）
-  | 'tool_use'       // 模型发起工具调用（Anthropic tool_use / OpenAI tool_calls）
+  | 'end_turn' // 自然结束（Anthropic end_turn / stop_sequence / OpenAI stop）
+  | 'max_tokens' // 达到 token 上限（Anthropic max_tokens / OpenAI length）
+  | 'tool_use' // 模型发起工具调用（Anthropic tool_use / OpenAI tool_calls）
   | 'content_filter' // 内容安全过滤（OpenAI content_filter）
-  | 'refusal'        // 模型拒绝（OpenAI refusal）
+  | 'refusal' // 模型拒绝（OpenAI refusal）
   | null
 
 // ============================================================================
@@ -294,7 +300,10 @@ export interface CreateParams {
 export interface ProviderExtras {
   /** Anthropic 专属：thinking 配置、beta headers、context management、原生工具（web_search_20260209）等 */
   anthropic?: {
-    thinking?: { type: 'disabled' } | { type: 'enabled'; budget_tokens: number } | { type: 'adaptive' }
+    thinking?:
+      | { type: 'disabled' }
+      | { type: 'enabled'; budget_tokens: number }
+      | { type: 'adaptive' }
     betas?: string[]
     contextManagement?: Record<string, unknown>
     outputConfig?: Record<string, unknown>
@@ -334,21 +343,14 @@ export interface LLMAdapter {
   ): Promise<StreamResult>
 
   /** 创建非流式请求 */
-  createMessage(
-    params: CreateParams,
-    signal: AbortSignal,
-    timeout?: number,
-  ): Promise<LLMResponse>
+  createMessage(params: CreateParams, signal: AbortSignal, timeout?: number): Promise<LLMResponse>
 
   /**
    * 估算消息 + 工具定义的 token 数量。
    * 各 provider 使用自己的方式：Anthropic 调 countTokens API，OpenAI 用本地 tokenizer。
    * 返回 null 表示当前 provider 不支持或调用失败。
    */
-  countTokens?(
-    messages: LLMMessage[],
-    tools: ToolDefinition[],
-  ): Promise<number | null>
+  countTokens?(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null>
 
   /**
    * 列出当前 provider 可用的模型列表。
@@ -361,9 +363,7 @@ export interface LLMAdapter {
    * 用于需要访问响应头（如速率限制信息）的场景。
    * 返回 null 表示当前 provider 不支持此功能。
    */
-  createRawRequest?(
-    params: CreateParams,
-  ): Promise<Response | null>
+  createRawRequest?(params: CreateParams): Promise<Response | null>
 
   /** 验证 API key 是否有效 */
   verifyApiKey(apiKey: string): Promise<boolean>
@@ -381,11 +381,7 @@ export class LLMError extends Error {
   readonly status: number | undefined
   readonly headers: Record<string, string> | undefined
 
-  constructor(
-    message: string,
-    status?: number,
-    headers?: Record<string, string>,
-  ) {
+  constructor(message: string, status?: number, headers?: Record<string, string>) {
     super(message)
     this.name = 'LLMError'
     this.status = status
@@ -464,9 +460,7 @@ export function getHeader(error: APIErrorLike, name: string): string | null {
 export function isAPIError(error: unknown): error is APIErrorLike {
   return (
     error instanceof LLMError ||
-    (error instanceof Error &&
-      'status' in error &&
-      typeof (error as any).status === 'number')
+    (error instanceof Error && 'status' in error && typeof (error as any).status === 'number')
   )
 }
 
@@ -489,8 +483,7 @@ export function isConnectionTimeoutError(error: unknown): boolean {
   return (
     error instanceof Error &&
     (error.constructor.name === 'APIConnectionTimeoutError' ||
-      (isConnectionError(error) &&
-        error.message.toLowerCase().includes('timeout')))
+      (isConnectionError(error) && error.message.toLowerCase().includes('timeout')))
   )
 }
 
@@ -500,8 +493,7 @@ export function isConnectionTimeoutError(error: unknown): boolean {
 export function isAbortError(error: unknown): boolean {
   return (
     error instanceof LLMAbortError ||
-    (error instanceof Error &&
-      error.constructor.name === 'APIUserAbortError')
+    (error instanceof Error && error.constructor.name === 'APIUserAbortError')
   )
 }
 
@@ -549,7 +541,6 @@ export interface RedactedThinkingBlock {
   data: string
 }
 
-
 /** base64 图片源。ImageBlock.source 使用此类型。 */
 export interface ImageSource {
   type: 'base64'
@@ -558,7 +549,15 @@ export interface ImageSource {
 }
 
 /** 所有内容块的联合类型（用户内容 + 助手内容 + 工具结果等）。 */
-export type ContentBlock = TextBlock | ImageBlock | ToolCallInlineBlock | ToolResultBlock | DocumentBlock | ThinkingBlock | RedactedThinkingBlock | ConnectorTextBlock
+export type ContentBlock =
+  | TextBlock
+  | ImageBlock
+  | ToolCallInlineBlock
+  | ToolResultBlock
+  | DocumentBlock
+  | ThinkingBlock
+  | RedactedThinkingBlock
+  | ConnectorTextBlock
 
 /**
  * 安全地获取错误的 status 码。

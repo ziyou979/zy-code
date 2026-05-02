@@ -23,12 +23,7 @@ export type ServerConfig = {
   workspace?: string
 }
 
-export type SessionState =
-  | 'starting'
-  | 'running'
-  | 'detached'
-  | 'stopping'
-  | 'stopped'
+export type SessionState = 'starting' | 'running' | 'detached' | 'stopping' | 'stopped'
 
 export type SessionInfo = {
   id: string

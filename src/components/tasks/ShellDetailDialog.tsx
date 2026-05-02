@@ -1,133 +1,239 @@
-import React, { Suspense, use, useDeferredValue, useEffect, useState } from 'react';
-import type { DeepImmutable } from 'src/types/utils.js';
-import type { CommandResultDisplay } from '../../commands.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import { Box, Text } from '../../ink.js';
-import { useKeybindings } from '../../keybindings/useKeybinding.js';
-import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js';
-import { formatDuration, formatFileSize, truncateToWidth } from '../../utils/format.js';
-import { tailFile } from '../../utils/fsOperations.js';
-import { getTaskOutputPath } from '../../utils/task/diskOutput.js';
-import { Byline } from '../design-system/Byline.js';
-import { Dialog } from '../design-system/Dialog.js';
-import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
-import { tSync } from '../../i18n/index.js';
+import React, { Suspense, use, useDeferredValue, useEffect, useState } from 'react'
+import type { DeepImmutable } from 'src/types/utils.js'
+import type { CommandResultDisplay } from '../../commands.js'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { Box, Text } from '../../ink.js'
+import { useKeybindings } from '../../keybindings/useKeybinding.js'
+import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js'
+import { formatDuration, formatFileSize, truncateToWidth } from '../../utils/format.js'
+import { tailFile } from '../../utils/fsOperations.js'
+import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
+import { Byline } from '../design-system/Byline.js'
+import { Dialog } from '../design-system/Dialog.js'
+import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
+import { tSync } from '../../i18n/index.js'
 type Props = {
-  shell: DeepImmutable<LocalShellTaskState>;
-  onDone: (result?: string, options?: {
-    display?: CommandResultDisplay;
-  }) => void;
-  onKillShell?: () => void;
-  onBack?: () => void;
-};
-const SHELL_DETAIL_TAIL_BYTES = 8192;
+  shell: DeepImmutable<LocalShellTaskState>
+  onDone: (
+    result?: string,
+    options?: {
+      display?: CommandResultDisplay
+    },
+  ) => void
+  onKillShell?: () => void
+  onBack?: () => void
+}
+const SHELL_DETAIL_TAIL_BYTES = 8192
 type TaskOutputResult = {
-  content: string;
-  bytesTotal: number;
-};
+  content: string
+  bytesTotal: number
+}
 
 /**
  * Read the tail of the task output file. Only reads the last few KB,
  * not the entire file.
  */
 async function getTaskOutput(shell: DeepImmutable<LocalShellTaskState>): Promise<TaskOutputResult> {
-  const path = getTaskOutputPath(shell.id);
+  const path = getTaskOutputPath(shell.id)
   try {
-    const result = await tailFile(path, SHELL_DETAIL_TAIL_BYTES);
+    const result = await tailFile(path, SHELL_DETAIL_TAIL_BYTES)
     return {
       content: result.content,
-      bytesTotal: result.bytesTotal
-    };
+      bytesTotal: result.bytesTotal,
+    }
   } catch {
     return {
       content: '',
-      bytesTotal: 0
-    };
+      bytesTotal: 0,
+    }
   }
 }
-export function ShellDetailDialog({
-  shell,
-  onDone,
-  onKillShell,
-  onBack
-}) {
-  const {
-    columns
-  } = useTerminalSize();
-  const [outputPromise, setOutputPromise] = useState(() => getTaskOutput(shell));
-  const deferredOutputPromise = useDeferredValue(outputPromise);
+export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }) {
+  const { columns } = useTerminalSize()
+  const [outputPromise, setOutputPromise] = useState(() => getTaskOutput(shell))
+  const deferredOutputPromise = useDeferredValue(outputPromise)
   useEffect(() => {
-    if (shell.status !== "running") {
-      return;
+    if (shell.status !== 'running') {
+      return
     }
-    const timer = setInterval((setOutputPromise_0, shell_0) => setOutputPromise_0(getTaskOutput(shell_0)), 1000, setOutputPromise, shell);
-    return () => clearInterval(timer);
-  }, [shell.id, shell.status]);
-  const handleClose = () => onDone("Shell details dismissed", {
-    display: "system"
-  });
-  useKeybindings({
-    "confirm:yes": handleClose
-  }, {
-    context: "Confirmation"
-  });
-  const handleKeyDown = e => {
-    if (e.key === " ") {
-      e.preventDefault();
-      onDone("Shell details dismissed", {
-        display: "system"
-      });
+    const timer = setInterval(
+      (setOutputPromise_0, shell_0) => setOutputPromise_0(getTaskOutput(shell_0)),
+      1000,
+      setOutputPromise,
+      shell,
+    )
+    return () => clearInterval(timer)
+  }, [shell.id, shell.status])
+  const handleClose = () =>
+    onDone('Shell details dismissed', {
+      display: 'system',
+    })
+  useKeybindings(
+    {
+      'confirm:yes': handleClose,
+    },
+    {
+      context: 'Confirmation',
+    },
+  )
+  const handleKeyDown = (e) => {
+    if (e.key === ' ') {
+      e.preventDefault()
+      onDone('Shell details dismissed', {
+        display: 'system',
+      })
     } else {
-      if (e.key === "left" && onBack) {
-        e.preventDefault();
-        onBack();
+      if (e.key === 'left' && onBack) {
+        e.preventDefault()
+        onBack()
       } else {
-        if (e.key === "x" && shell.status === "running" && onKillShell) {
-          e.preventDefault();
-          onKillShell();
+        if (e.key === 'x' && shell.status === 'running' && onKillShell) {
+          e.preventDefault()
+          onKillShell()
         }
       }
     }
-  };
-  const isMonitor = shell.kind === "monitor";
-  const displayCommand = truncateToWidth(shell.command, 280);
-  const t14 = shell.endTime ?? Date.now();
-  const t16 = formatDuration(t14 - shell.startTime);
-  return <Box flexDirection="column" tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Dialog title={isMonitor ? tSync('backgroundTasks.monitorDetails') : tSync('backgroundTasks.shellDetails')} onCancel={handleClose} color="background" inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>{onBack && <KeyboardShortcutHint shortcut={"\u2190"} action="go back" />}<KeyboardShortcutHint shortcut="Esc/Enter/Space" action="close" />{shell.status === "running" && onKillShell && <KeyboardShortcutHint shortcut="x" action="stop" />}</Byline>}>{<Box flexDirection="column">{<Text>{<Text bold={true}>{tSync('backgroundTasks.status')}:</Text>}{" "}{shell.status === "running" ? <Text color="background">{shell.status}{shell.result?.code !== undefined && ` (exit code: ${shell.result.code})`}</Text> : shell.status === "completed" ? <Text color="success">{shell.status}{shell.result?.code !== undefined && ` (exit code: ${shell.result.code})`}</Text> : <Text color="error">{shell.status}{shell.result?.code !== undefined && ` (exit code: ${shell.result.code})`}</Text>}</Text>}{<Text>{<Text bold={true}>{tSync('backgroundTasks.runtime')}:</Text>}{" "}{t16}</Text>}{<Text wrap="wrap">{<Text bold={true}>{isMonitor ? tSync('backgroundTasks.script') : tSync('backgroundTasks.command')}:</Text>}{" "}{displayCommand}</Text>}</Box>}{<Box flexDirection="column">{<Text bold={true}>{tSync('backgroundTasks.output')}:</Text>}<Suspense fallback={<Text dimColor={true}>{tSync('backgroundTasks.loadingOutput')}</Text>}><ShellOutputContent outputPromise={deferredOutputPromise} columns={columns} /></Suspense></Box>}</Dialog>}</Box>;
+  }
+  const isMonitor = shell.kind === 'monitor'
+  const displayCommand = truncateToWidth(shell.command, 280)
+  const t14 = shell.endTime ?? Date.now()
+  const t16 = formatDuration(t14 - shell.startTime)
+  return (
+    <Box flexDirection="column" tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
+      {
+        <Dialog
+          title={
+            isMonitor
+              ? tSync('backgroundTasks.monitorDetails')
+              : tSync('backgroundTasks.shellDetails')
+          }
+          onCancel={handleClose}
+          color="background"
+          inputGuide={(exitState) =>
+            exitState.pending ? (
+              <Text>Press {exitState.keyName} again to exit</Text>
+            ) : (
+              <Byline>
+                {onBack && <KeyboardShortcutHint shortcut={'\u2190'} action="go back" />}
+                <KeyboardShortcutHint shortcut="Esc/Enter/Space" action="close" />
+                {shell.status === 'running' && onKillShell && (
+                  <KeyboardShortcutHint shortcut="x" action="stop" />
+                )}
+              </Byline>
+            )
+          }
+        >
+          {
+            <Box flexDirection="column">
+              {
+                <Text>
+                  {<Text bold={true}>{tSync('backgroundTasks.status')}:</Text>}{' '}
+                  {shell.status === 'running' ? (
+                    <Text color="background">
+                      {shell.status}
+                      {shell.result?.code !== undefined && ` (exit code: ${shell.result.code})`}
+                    </Text>
+                  ) : shell.status === 'completed' ? (
+                    <Text color="success">
+                      {shell.status}
+                      {shell.result?.code !== undefined && ` (exit code: ${shell.result.code})`}
+                    </Text>
+                  ) : (
+                    <Text color="error">
+                      {shell.status}
+                      {shell.result?.code !== undefined && ` (exit code: ${shell.result.code})`}
+                    </Text>
+                  )}
+                </Text>
+              }
+              {
+                <Text>
+                  {<Text bold={true}>{tSync('backgroundTasks.runtime')}:</Text>} {t16}
+                </Text>
+              }
+              {
+                <Text wrap="wrap">
+                  {
+                    <Text bold={true}>
+                      {isMonitor
+                        ? tSync('backgroundTasks.script')
+                        : tSync('backgroundTasks.command')}
+                      :
+                    </Text>
+                  }{' '}
+                  {displayCommand}
+                </Text>
+              }
+            </Box>
+          }
+          {
+            <Box flexDirection="column">
+              {<Text bold={true}>{tSync('backgroundTasks.output')}:</Text>}
+              <Suspense
+                fallback={<Text dimColor={true}>{tSync('backgroundTasks.loadingOutput')}</Text>}
+              >
+                <ShellOutputContent outputPromise={deferredOutputPromise} columns={columns} />
+              </Suspense>
+            </Box>
+          }
+        </Dialog>
+      }
+    </Box>
+  )
 }
 type ShellOutputContentProps = {
-  outputPromise: Promise<TaskOutputResult>;
-  columns: number;
-};
-function ShellOutputContent({
-  outputPromise,
-  columns
-}: ShellOutputContentProps) {
-  const {
-    content,
-    bytesTotal
-  } = use(outputPromise);
+  outputPromise: Promise<TaskOutputResult>
+  columns: number
+}
+function ShellOutputContent({ outputPromise, columns }: ShellOutputContentProps) {
+  const { content, bytesTotal } = use(outputPromise)
   if (!content) {
-    return <Text dimColor={true}>{tSync('backgroundTasks.noOutputAvailable')}</Text>;
+    return <Text dimColor={true}>{tSync('backgroundTasks.noOutputAvailable')}</Text>
   }
-  const starts = [];
-  let pos = content.length;
+  const starts = []
+  let pos = content.length
   for (let i = 0; i < 10 && pos > 0; i++) {
-    const prev = content.lastIndexOf("\n", pos - 1);
-    starts.push(prev + 1);
-    pos = prev;
+    const prev = content.lastIndexOf('\n', pos - 1)
+    starts.push(prev + 1)
+    pos = prev
   }
-  starts.reverse();
-  const isIncomplete = bytesTotal > content.length;
-  const rendered = [];
+  starts.reverse()
+  const isIncomplete = bytesTotal > content.length
+  const rendered = []
   for (let i_0 = 0; i_0 < starts.length; i_0++) {
-    const start = starts[i_0];
-    const end = i_0 < starts.length - 1 ? starts[i_0 + 1] - 1 : content.length;
-    const line = content.slice(start, end);
+    const start = starts[i_0]
+    const end = i_0 < starts.length - 1 ? starts[i_0 + 1] - 1 : content.length
+    const line = content.slice(start, end)
     if (line) {
-      rendered.push(line);
+      rendered.push(line)
     }
   }
-  const t2 = rendered.map((line_0, i_1) => <Text key={i_1} wrap="truncate-end">{line_0}</Text>);
-  return <>{<Box borderStyle="round" paddingX={1} flexDirection="column" height={12} maxWidth={columns - 6}>{t2}</Box>}{<Text dimColor={true} italic={true}>{tSync('backgroundTasks.showingLines', { count: rendered.length })}{isIncomplete ? tSync('backgroundTasks.ofFileSize', { size: formatFileSize(bytesTotal) }) : ""}</Text>}</>;
+  const t2 = rendered.map((line_0, i_1) => (
+    <Text key={i_1} wrap="truncate-end">
+      {line_0}
+    </Text>
+  ))
+  return (
+    <>
+      {
+        <Box
+          borderStyle="round"
+          paddingX={1}
+          flexDirection="column"
+          height={12}
+          maxWidth={columns - 6}
+        >
+          {t2}
+        </Box>
+      }
+      {
+        <Text dimColor={true} italic={true}>
+          {tSync('backgroundTasks.showingLines', { count: rendered.length })}
+          {isIncomplete
+            ? tSync('backgroundTasks.ofFileSize', { size: formatFileSize(bytesTotal) })
+            : ''}
+        </Text>
+      }
+    </>
+  )
 }

@@ -5,11 +5,7 @@ import { getIsRemoteMode } from '../../bootstrap/state.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
-import {
-  type ConfigChangeSource,
-  executeConfigChangeHooks,
-  hasBlockingResult,
-} from '../hooks.js'
+import { type ConfigChangeSource, executeConfigChangeHooks, hasBlockingResult } from '../hooks.js'
 import { createSignal } from '../signal.js'
 import { jsonStringify } from '../slowOperations.js'
 import { SETTING_SOURCES, type SettingSource } from './constants.js'
@@ -59,8 +55,7 @@ const MDM_POLL_INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
  * Must exceed chokidar's awaitWriteFinish delay (stabilityThreshold + pollInterval)
  * so the grace window outlasts the write stability check on the recreated file.
  */
-const DELETION_GRACE_MS =
-  FILE_STABILITY_THRESHOLD_MS + FILE_STABILITY_POLL_INTERVAL_MS + 200
+const DELETION_GRACE_MS = FILE_STABILITY_THRESHOLD_MS + FILE_STABILITY_POLL_INTERVAL_MS + 200
 
 let watcher: FSWatcher | null = null
 let mdmPollTimer: ReturnType<typeof setInterval> | null = null
@@ -105,17 +100,15 @@ export async function initialize(): Promise<void> {
     ignoreInitial: true,
     depth: 0, // Only watch immediate children, not subdirectories
     awaitWriteFinish: {
-      stabilityThreshold:
-        testOverrides?.stabilityThreshold ?? FILE_STABILITY_THRESHOLD_MS,
-      pollInterval:
-        testOverrides?.pollInterval ?? FILE_STABILITY_POLL_INTERVAL_MS,
+      stabilityThreshold: testOverrides?.stabilityThreshold ?? FILE_STABILITY_THRESHOLD_MS,
+      pollInterval: testOverrides?.pollInterval ?? FILE_STABILITY_POLL_INTERVAL_MS,
     },
     ignored: (path, stats) => {
       // Ignore special file types (sockets, FIFOs, devices) - they cannot be watched
       // and will error with EOPNOTSUPP on macOS.
       if (stats && !stats.isFile() && !stats.isDirectory()) return true
       // Ignore .git directories
-      if (path.split(platformPath.sep).some(dir => dir === '.git')) return true
+      if (path.split(platformPath.sep).some((dir) => dir === '.git')) return true
       // Allow directories (chokidar needs them for directory-level watching)
       // and paths without stats (chokidar's initial check before stat)
       if (!stats || stats.isDirectory()) return false
@@ -249,9 +242,7 @@ async function getWatchTargets(): Promise<{
   return { dirs: [...dirsWithExistingFiles], settingsFiles, dropInDir }
 }
 
-function settingSourceToConfigChangeSource(
-  source: SettingSource,
-): ConfigChangeSource {
+function settingSourceToConfigChangeSource(source: SettingSource): ConfigChangeSource {
   switch (source) {
     case 'userSettings':
       return 'user_settings'
@@ -275,9 +266,7 @@ function handleChange(path: string): void {
   if (pendingTimer) {
     clearTimeout(pendingTimer)
     pendingDeletions.delete(path)
-    logForDebugging(
-      `Cancelled pending deletion of ${path} — file was recreated`,
-    )
+    logForDebugging(`Cancelled pending deletion of ${path} — file was recreated`)
   }
 
   // Check if this was an internal write
@@ -289,10 +278,7 @@ function handleChange(path: string): void {
 
   // Fire ConfigChange hook first — if blocked (exit code 2 or decision: 'block'),
   // skip applying the change to the session
-  void executeConfigChangeHooks(
-    settingSourceToConfigChangeSource(source),
-    path,
-  ).then(results => {
+  void executeConfigChangeHooks(settingSourceToConfigChangeSource(source), path).then((results) => {
     if (hasBlockingResult(results)) {
       logForDebugging(`ConfigChange hook blocked change to ${path}`)
       return
@@ -341,10 +327,7 @@ function handleDelete(path: string): void {
       pendingDeletions.delete(p)
 
       // Fire ConfigChange hook first — if blocked, skip applying the deletion
-      void executeConfigChangeHooks(
-        settingSourceToConfigChangeSource(src),
-        p,
-      ).then(results => {
+      void executeConfigChangeHooks(settingSourceToConfigChangeSource(src), p).then((results) => {
         if (hasBlockingResult(results)) {
           logForDebugging(`ConfigChange hook blocked deletion of ${p}`)
           return
@@ -369,9 +352,7 @@ function getSourceForPath(path: string): SettingSource | undefined {
     return 'policySettings'
   }
 
-  return SETTING_SOURCES.find(
-    source => getSettingsFilePathForSource(source) === normalizedPath,
-  )
+  return SETTING_SOURCES.find((source) => getSettingsFilePathForSource(source) === normalizedPath)
 }
 
 /**

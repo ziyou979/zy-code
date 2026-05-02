@@ -5,17 +5,13 @@ import type { TranslationResource } from './resourceTypes.js'
  */
 export const zhCN: TranslationResource = {
   // 提示 Tips
-  'tip.newUserWarmup':
-    '从小功能或 Bug 修复开始，让 ZY Code 提出方案并验证它的修改建议',
-  'tip.planModeForComplexTasks':
-    '在复杂请求前使用计划模式做准备。按 {shortcut} 两次启用。',
+  'tip.newUserWarmup': '从小功能或 Bug 修复开始，让 ZY Code 提出方案并验证它的修改建议',
+  'tip.planModeForComplexTasks': '在复杂请求前使用计划模式做准备。按 {shortcut} 两次启用。',
   'tip.defaultPermissionModeConfig': '使用 /config 修改默认权限模式（包括计划模式）',
   'tip.gitWorktrees': '使用 git worktrees 并行运行多个 ZY Code 会话。',
   'tip.colorWhenMultiSessions': '同时运行多个 ZY Code 会话？使用 /color 和 /rename 来区分它们。',
-  'tip.terminalSetupApple':
-    '运行 /terminal-setup 启用便捷的终端集成，如 Option + Enter 换行等',
-  'tip.terminalSetupOther':
-    '运行 /terminal-setup 启用便捷的终端集成，如 Shift + Enter 换行等',
+  'tip.terminalSetupApple': '运行 /terminal-setup 启用便捷的终端集成，如 Option + Enter 换行等',
+  'tip.terminalSetupOther': '运行 /terminal-setup 启用便捷的终端集成，如 Shift + Enter 换行等',
   'tip.shiftEnterApple': '按 Option+Enter 发送多行消息',
   'tip.shiftEnterOther': '按 Shift+Enter 发送多行消息',
   'tip.shiftEnterSetupApple': '运行 /terminal-setup 启用 Option+Enter 换行',
@@ -56,17 +52,15 @@ export const zhCN: TranslationResource = {
   'tip.vercelPlugin': '在使用 Vercel？安装 Vercel 插件：\n{command}',
   'tip.effortHighB': '使用 {cmd} 获得更好的单次回答质量，ZY 会先深入思考。',
   'tip.effortHighA': '在做复杂的东西？{cmd} 能提供更好的首次回答',
-  'tip.subagentFanoutB':
-    '对于大型任务，告诉 ZY Code {cmd}。它们并行工作，保持主线程整洁。',
-  'tip.subagentFanoutA':
-    '说 {cmd}，ZY Code 会派出团队，每个代理深入挖掘，确保没有遗漏。',
+  'tip.subagentFanoutB': '对于大型任务，告诉 ZY Code {cmd}。它们并行工作，保持主线程整洁。',
+  'tip.subagentFanoutA': '说 {cmd}，ZY Code 会派出团队，每个代理深入挖掘，确保没有遗漏。',
   'tip.loopCommandB': '使用 {cmd} 定时运行任何提示。设置后就不用管了。',
-  'tip.loopCommandA':
-    '{cmd} 可以按设定的间隔运行任何提示。非常适合监控部署、看管 PR 或轮询状态。',
+  'tip.loopCommandA': '{cmd} 可以按设定的间隔运行任何提示。非常适合监控部署、看管 PR 或轮询状态。',
   'tip.guestPasses': '分享 ZY Code 并获得 {reward} 额外用量 · {passes}',
   'tip.guestPassesNoReward': '你有可以分享的访客通行证 · {passes}',
   'tip.overageCredit': '{amount} · {command}',
-  'tip.vscodeCommandInstall': '在命令面板（Cmd+Shift+P）中运行"Shell Command: Install \'{command}\' command in PATH"以启用 IDE 集成',
+  'tip.vscodeCommandInstall':
+    '在命令面板（Cmd+Shift+P）中运行"Shell Command: Install \'{command}\' command in PATH"以启用 IDE 集成',
   'tip.ideUpsellExternalTerminal': '将 ZY Code 连接到你的 IDE · /ide',
   'tip.feedbackCommand': '使用 /feedback 帮助我们改进！',
   'tip.clearContext': '切换话题时使用 /clear 可以释放上下文',
@@ -205,7 +199,8 @@ export const zhCN: TranslationResource = {
 
   // 信任对话框 Trust dialog
   'trustDialog.title': '正在访问工作区：',
-  'trustDialog.safetyCheck': '快速安全检查：这是你创建或信任的项目吗？（比如你自己的代码、知名的开源项目或团队的工作）。如果不是，请先花一点时间查看此文件夹中的内容。',
+  'trustDialog.safetyCheck':
+    '快速安全检查：这是你创建或信任的项目吗？（比如你自己的代码、知名的开源项目或团队的工作）。如果不是，请先花一点时间查看此文件夹中的内容。',
   'trustDialog.capabilities': 'ZY Code 将能够在此处读取、编辑和执行文件。',
   'trustDialog.securityGuide': '安全指南',
   'trustDialog.trust': '是的，我信任此文件夹',
@@ -252,7 +247,7 @@ export const zhCN: TranslationResource = {
   'effort.low': '低',
 
   // Press Enter
-  'pressEnterToContinue': '按 Enter 继续\u2026',
+  pressEnterToContinue: '按 Enter 继续\u2026',
 
   // Dialog
   'dialog.pressAgainToExit': '再按一次 {keyName} 退出',
@@ -583,7 +578,8 @@ export const zhCN: TranslationResource = {
 
   // Dev channels dialog
   'devChannels.warning': '警告：加载开发通道',
-  'devChannels.description': '--dangerously-load-development-channels 仅用于本地通道开发。请勿使用此选项运行从互联网下载的通道。',
+  'devChannels.description':
+    '--dangerously-load-development-channels 仅用于本地通道开发。请勿使用此选项运行从互联网下载的通道。',
   'devChannels.useChannels': '请使用 --channels 运行已批准的通道列表。',
   'devChannels.confirmDev': '我正在用于本地开发',
   'devChannels.exit': '退出',
@@ -591,7 +587,8 @@ export const zhCN: TranslationResource = {
   // MCP server dialog
   'mcpServer.select': '选择要启用的服务器',
   'mcpServer.rejectAll': '全部拒绝',
-  'mcpServer.warning': 'MCP 服务器可能执行代码或访问系统资源。所有工具调用都需要审批。了解更多请在 MCP 文档。',
+  'mcpServer.warning':
+    'MCP 服务器可能执行代码或访问系统资源。所有工具调用都需要审批。了解更多请在 MCP 文档。',
 
   // Background task status
   'backgroundTaskStatus.toView': '查看',
@@ -729,7 +726,7 @@ export const zhCN: TranslationResource = {
   'help.suspend': 'ctrl + z 挂起',
   'help.pasteImages': '{shortcut} 粘贴图片',
   'help.switchModel': '{shortcut} 切换模型',
-    'help.stashPrompt': '{shortcut} 暂存提示',
+  'help.stashPrompt': '{shortcut} 暂存提示',
   'help.externalEditor': '{shortcut} 使用 $EDITOR 编辑',
   'help.customizeKeybindings': '/keybindings 自定义快捷键',
   'help.terminal': '{shortcut} 切换终端',
@@ -759,9 +756,11 @@ export const zhCN: TranslationResource = {
   'onboarding.selectApiFormat': '选择 API 格式',
   'onboarding.apiFormatDescription': '为你的自定义 API 端点选择请求格式。',
   'onboarding.apiFormat.anthropic': 'Anthropic 格式',
-  'onboarding.apiFormat.anthropicDesc': '使用 Anthropic Messages API 格式（支持 thinking、cache_control 等）',
+  'onboarding.apiFormat.anthropicDesc':
+    '使用 Anthropic Messages API 格式（支持 thinking、cache_control 等）',
   'onboarding.apiFormat.openai': 'OpenAI 格式',
-  'onboarding.apiFormat.openaiDesc': '使用 OpenAI Chat Completions API 格式（适用于 vLLM、LiteLLM 等）',
+  'onboarding.apiFormat.openaiDesc':
+    '使用 OpenAI Chat Completions API 格式（适用于 vLLM、LiteLLM 等）',
   'onboarding.platform.dashscope': '百炼 DashScope',
   'onboarding.platform.dashscopeDesc': '阿里云百炼平台',
   'onboarding.platform.openai': 'OpenAI',
@@ -832,7 +831,8 @@ export const zhCN: TranslationResource = {
   'onboarding.tier.compact.title': '配置 Compact 层级模型（可选）',
   'onboarding.tier.compact.desc': '用于快速轻量任务（摘要、标题等）。跳过则使用 standard 模型。',
   'onboarding.tier.mainLoop.title': '选择主对话层级',
-  'onboarding.tier.mainLoop.desc': '主对话循环使用哪个层级。后续可通过 /config mainLoopModel 修改。',
+  'onboarding.tier.mainLoop.desc':
+    '主对话循环使用哪个层级。后续可通过 /config mainLoopModel 修改。',
   'onboarding.tier.option.advanced': 'Advanced — 复杂推理',
   'onboarding.tier.option.standard': 'Standard — 日常任务（默认）',
   'onboarding.tier.option.compact': 'Compact — 快速轻量',
@@ -848,7 +848,8 @@ export const zhCN: TranslationResource = {
   'onboarding.security.risk2': '由于提示注入风险，请仅在你信任的代码上使用',
   'onboarding.security.risk2desc': '更多详情请参阅：',
   'onboarding.terminalSetup.title': '使用 ZY Code 的终端设置？',
-  'onboarding.terminalSetup.description': '为了获得最佳编码体验，请为你的终端启用推荐设置：{settings}',
+  'onboarding.terminalSetup.description':
+    '为了获得最佳编码体验，请为你的终端启用推荐设置：{settings}',
   'onboarding.terminalSetup.appleSettings': 'Option+Enter 换行和视觉铃声',
   'onboarding.terminalSetup.otherSettings': 'Shift+Enter 换行',
   'onboarding.terminalSetup.yes': '是，使用推荐设置',
@@ -1067,18 +1068,18 @@ export const zhCN: TranslationResource = {
   'onboarding.themeHelpText': '后续可通过 /theme 更改',
 
   // Bash security
-  'bashSecurity.processSubstitutionBefore': '命令包含进程替换 (<)，可以从命令输出中读取',
-  'bashSecurity.processSubstitutionAfter': '命令包含进程替换 (>)，可以写入命令输入',
-  'bashSecurity.zshProcessSubstitution': '命令包含 Zsh 进程替换 (=)，可以执行命令',
-  'bashSecurity.zshEqualsExpansion': '命令包含 Zsh EQUALS 展开，会展开为命令路径',
-  'bashSecurity.dollarCommandSubstitution': '命令包含 $() 命令替换，可以执行任意命令',
-  'bashSecurity.parameterSubstitution': '命令包含 ${} 参数替换，可以展开变量或执行命令',
-  'bashSecurity.legacyArithmeticExpansion': '命令包含 $[] 传统算术展开',
-  'bashSecurity.zshStyleParameterExpansion': '命令包含 Zsh 风格参数展开 (~[])',
-  'bashSecurity.zshStyleGlobQualifiers': '命令包含 Zsh 风格通配符限定符 (e:)，可以执行命令',
-  'bashSecurity.zshGlobQualifierWithCommand': '命令包含 Zsh 通配符限定符 (+) 及命令执行',
-  'bashSecurity.zshAlwaysBlock': '命令包含 Zsh always 块，会无条件执行代码',
-  'bashSecurity.powerShellCommentSyntax': '命令包含 PowerShell 注释语法 (<#)，可能隐藏命令',
+  'bashSecurity.processSubstitutionBefore': '进程替换 (<)，可以从命令输出中读取',
+  'bashSecurity.processSubstitutionAfter': '进程替换 (>)，可以写入命令输入',
+  'bashSecurity.zshProcessSubstitution': 'Zsh 进程替换 (=)，可以执行命令',
+  'bashSecurity.zshEqualsExpansion': 'Zsh EQUALS 展开，会展开为命令路径',
+  'bashSecurity.dollarCommandSubstitution': '$() 命令替换，可执行任意命令',
+  'bashSecurity.parameterSubstitution': '${} 参数替换，可以展开变量或执行命令',
+  'bashSecurity.legacyArithmeticExpansion': '$[] 传统算术展开',
+  'bashSecurity.zshStyleParameterExpansion': 'Zsh 风格参数展开 (~[])',
+  'bashSecurity.zshStyleGlobQualifiers': 'Zsh 风格通配符限定符 (e:)，可以执行命令',
+  'bashSecurity.zshGlobQualifierWithCommand': 'Zsh 通配符限定符 (+) 及命令执行',
+  'bashSecurity.zshAlwaysBlock': 'Zsh always 块，会无条件执行代码',
+  'bashSecurity.powerShellCommentSyntax': 'PowerShell 注释语法 (<#)，可能隐藏命令',
   'bashSecurity.empty': '命令不为空',
   'bashSecurity.incompleteTab': '命令似乎是不完整的片段（以制表符开头）',
   'bashSecurity.incompleteFlags': '命令似乎是不完整的片段（以标志开头）',
@@ -1142,10 +1143,12 @@ export const zhCN: TranslationResource = {
   'bashSecurity.backslashWhitespace': '命令包含反斜杠转义的空格，可能改变命令解析',
   'bashSecurity.noBackslashWhitespace': '无反斜杠转义的空格',
   'bashSecurity.noOperatorNodes': 'AST 中无运算符节点',
-  'bashSecurity.backslashOperator': '命令在 shell 运算符（;、|、&、<、>）前有反斜杠，可能隐藏命令结构',
+  'bashSecurity.backslashOperator':
+    '命令在 shell 运算符（;、|、&、<、>）前有反斜杠，可能隐藏命令结构',
   'bashSecurity.noBackslashOperators': '无反斜杠转义的运算符',
   'bashSecurity.braceExcessClosing': '命令在引号剥离后有多余的右大括号，可能存在大括号展开混淆',
-  'bashSecurity.braceQuotedInside': '命令在大括号上下文中包含引用的大括号字符（可能存在大括号展开混淆）',
+  'bashSecurity.braceQuotedInside':
+    '命令在大括号上下文中包含引用的大括号字符（可能存在大括号展开混淆）',
   'bashSecurity.braceExpansion': '命令包含大括号展开，可能改变命令解析',
   'bashSecurity.noBraceExpansion': '未检测到大括号展开',
   'bashSecurity.unicodeWhitespace': '命令包含 Unicode 空白字符，可能导致解析不一致',
@@ -1156,7 +1159,8 @@ export const zhCN: TranslationResource = {
   'bashSecurity.commentQuoteDesync': '命令在 # 注释中包含引号字符，可能导致引号跟踪失步',
   'bashSecurity.noCommentQuoteDesync': '无注释引号失步',
   'bashSecurity.noNewlineOrHash': '无换行符或无 #',
-  'bashSecurity.quotedNewlineHash': '命令包含引用的换行符后跟 #-前缀的行，可能向基于行的权限检查隐藏参数',
+  'bashSecurity.quotedNewlineHash':
+    '命令包含引用的换行符后跟 #-前缀的行，可能向基于行的权限检查隐藏参数',
   'bashSecurity.noQuotedNewlineHash': '无引用换行符-# 模式',
   'bashSecurity.zshDangerousCommand': "命令使用 Zsh 特有的 '{baseCmd}'，可能绕过安全检查",
   'bashSecurity.fcEditor': "命令使用 'fc -e'，可通过编辑器执行任意命令",
@@ -1236,10 +1240,14 @@ export const zhCN: TranslationResource = {
   'commands.sandbox': '配置代码执行沙箱',
   'commands.logout': '退出你的 Anthropic 账户',
   'commands.login': '使用你的账户登录',
-  'commands.batch': '研究并规划大规模变更，然后在 5-30 个隔离 worktree 子代理中并行执行，每个子代理创建一个 PR。',
-  'commands.batch.whenToUse': '当用户需要对大量文件进行广泛的、机械性的变更时使用（迁移、重构、批量重命名等），这些变更可分解为独立的并行单元。',
-  'commands.batch.notAGitRepo': '这不是 git 仓库。`/batch` 命令需要 git 仓库，因为它在隔离的 git worktree 中生成子代理并从每个 worktree 创建 PR。请先初始化一个仓库，或在现有的仓库中运行此命令。',
-  'commands.batch.missingInstruction': '请提供一条指令，描述你想要进行的批量变更。\n\n示例：\n  /batch 将 react 迁移为 vue\n  /batch 用原生实现替换所有 lodash 的使用\n  /batch 为所有未标注类型的函数参数添加类型注解',
+  'commands.batch':
+    '研究并规划大规模变更，然后在 5-30 个隔离 worktree 子代理中并行执行，每个子代理创建一个 PR。',
+  'commands.batch.whenToUse':
+    '当用户需要对大量文件进行广泛的、机械性的变更时使用（迁移、重构、批量重命名等），这些变更可分解为独立的并行单元。',
+  'commands.batch.notAGitRepo':
+    '这不是 git 仓库。`/batch` 命令需要 git 仓库，因为它在隔离的 git worktree 中生成子代理并从每个 worktree 创建 PR。请先初始化一个仓库，或在现有的仓库中运行此命令。',
+  'commands.batch.missingInstruction':
+    '请提供一条指令，描述你想要进行的批量变更。\n\n示例：\n  /batch 将 react 迁移为 vue\n  /batch 用原生实现替换所有 lodash 的使用\n  /batch 为所有未标注类型的函数参数添加类型注解',
   'commands.passes': '与朋友分享一周免费 ZY Code 使用权',
   'commands.tasks': '列出和管理后台任务',
   'commands.commit': '创建 git 提交',
@@ -1249,18 +1257,27 @@ export const zhCN: TranslationResource = {
   'commands.bridgeKick': '注入桥接失败状态用于调试',
   'commands.heapdump': '将 JS 堆转储到 ~/Desktop',
   'commands.remoteSetup': '配置远程环境设置',
-  'commands.updateConfig': '通过 settings.json 配置 ZY Code。使用钩子设置自动化行为，管理权限、环境变量、插件和 MCP 服务器。',
-  'commands.keybindingsHelp': '自定义键盘快捷键、重新绑定按键、添加组合键绑定或修改 ~/.zy/keybindings.json。',
+  'commands.updateConfig':
+    '通过 settings.json 配置 ZY Code。使用钩子设置自动化行为，管理权限、环境变量、插件和 MCP 服务器。',
+  'commands.keybindingsHelp':
+    '自定义键盘快捷键、重新绑定按键、添加组合键绑定或修改 ~/.zy/keybindings.json。',
   'commands.claudeInChrome': '自动化 Chrome 浏览器与网页交互——点击元素、填写表单、截图等。',
-  'commands.claudeInChrome.whenToUse': '当用户想要与网页交互、自动化浏览器任务或执行基于浏览器的操作时使用。',
-  'commands.zyApi': '使用 Zy API 或 Anthropic SDK 构建应用。当代码导入 anthropic SDK 或用户询问 Zy API 时触发。',
+  'commands.claudeInChrome.whenToUse':
+    '当用户想要与网页交互、自动化浏览器任务或执行基于浏览器的操作时使用。',
+  'commands.zyApi':
+    '使用 Zy API 或 Anthropic SDK 构建应用。当代码导入 anthropic SDK 或用户询问 Zy API 时触发。',
   'commands.debug': '为本次会话启用调试日志并帮助诊断问题。',
   'commands.schedule': '创建、更新、列出或运行按计划执行的远程 agent（基于 cron 调度）。',
-  'commands.schedule.whenToUse': '当用户想要设置定期运行的远程 agent、创建自动化任务或管理计划 agent 时使用。',
-  'commands.schedule.authRequired': '你需要先使用 zy.ai 账户进行认证。不支持 API 账户。运行 /login 后再试 /schedule。',
-  'commands.schedule.connectionError': '连接到你的远程 zy.ai 账户时出现问题。请稍后再试 /schedule。',
-  'commands.schedule.noEnvironments': '未找到远程环境，且无法自动创建。访问 https://zy.ai/code 设置后再运行 /schedule。',
-  'commands.schedule.noConnectors': '未找到已连接的 MCP 连接器。如有需要，用户可以在 https://zy.ai/settings/connectors 连接服务器',
+  'commands.schedule.whenToUse':
+    '当用户想要设置定期运行的远程 agent、创建自动化任务或管理计划 agent 时使用。',
+  'commands.schedule.authRequired':
+    '你需要先使用 zy.ai 账户进行认证。不支持 API 账户。运行 /login 后再试 /schedule。',
+  'commands.schedule.connectionError':
+    '连接到你的远程 zy.ai 账户时出现问题。请稍后再试 /schedule。',
+  'commands.schedule.noEnvironments':
+    '未找到远程环境，且无法自动创建。访问 https://zy.ai/code 设置后再运行 /schedule。',
+  'commands.schedule.noConnectors':
+    '未找到已连接的 MCP 连接器。如有需要，用户可以在 https://zy.ai/settings/connectors 连接服务器',
   'commands.loop': '按固定间隔运行提示或斜杠命令（例如 /loop 5m /foo，默认 10 分钟）。',
   'commands.loop.whenToUse': '当用户想要设置定期任务、轮询状态或按间隔重复运行某项操作时使用。',
   'commands.source.bundled': '内置',
@@ -1307,7 +1324,8 @@ export const zhCN: TranslationResource = {
   'mcp.sentMessageTo': '已发送消息到',
   'mcp.image': '[图片]',
   'mcp.noContent': '（无内容）',
-  'mcp.largeResponseWarning': '{warning} MCP 响应过大（约 {tokens} 个 token），可能会很快占满上下文',
+  'mcp.largeResponseWarning':
+    '{warning} MCP 响应过大（约 {tokens} 个 token），可能会很快占满上下文',
 
   // 读取 MCP 资源消息
   'readMcpResource.readFromServer': '从服务器 "{server}" 读取资源 "{uri}"',
@@ -1352,7 +1370,6 @@ export const zhCN: TranslationResource = {
 
   // 笔记本编辑消息
   'notebook.errorEditing': '编辑笔记本出错',
-
 
   // LSP 工具消息
   'lsp.operationFailed': 'LSP 操作失败',
@@ -1408,8 +1425,10 @@ export const zhCN: TranslationResource = {
   'filesApi.spec.invalid': '无效的文件规格：{spec}。file_id 和 path 都是必需的',
 
   // 错误工具
-  'errorUtils.ssl.hint': 'SSL 证书错误（{code}）。如果你在企业代理或 TLS 拦截防火墙后面，请设置 NODE_EXTRA_CA_CERTS 为你的 CA 证书包路径，或联系 IT 将 *.anthropic.com 加入白名单。运行 /doctor 查看详情。',
-  'errorUtils.ssl.certVerificationFailed': '无法连接 API：SSL 证书验证失败。请检查代理或企业 SSL 证书',
+  'errorUtils.ssl.hint':
+    'SSL 证书错误（{code}）。如果你在企业代理或 TLS 拦截防火墙后面，请设置 NODE_EXTRA_CA_CERTS 为你的 CA 证书包路径，或联系 IT 将 *.anthropic.com 加入白名单。运行 /doctor 查看详情。',
+  'errorUtils.ssl.certVerificationFailed':
+    '无法连接 API：SSL 证书验证失败。请检查代理或企业 SSL 证书',
   'errorUtils.ssl.certExpired': '无法连接 API：SSL 证书已过期',
   'errorUtils.ssl.certRevoked': '无法连接 API：SSL 证书已被吊销',
   'errorUtils.ssl.selfSigned': '无法连接 API：检测到自签名证书。请检查代理或企业 SSL 证书',
@@ -1423,17 +1442,22 @@ export const zhCN: TranslationResource = {
 
   // 初始化设置
   'setup.errorNodeVersion': '错误：ZY Code 需要 Node.js 18 或更高版本。',
-  'setup.iTerm2Restored': '检测到 iTerm2 设置被中断。你的原始设置已恢复。你可以随时重新运行 /terminal-setup 来启用 Option+Enter。',
+  'setup.iTerm2Restored':
+    '检测到 iTerm2 设置被中断。你的原始设置已恢复。你可以随时重新运行 /terminal-setup 来启用 Option+Enter。',
   'setup.iTerm2RestoreFailed': '恢复 iTerm2 设置失败。请手动从备份恢复：{backupPath}',
-  'setup.terminalRestored': '检测到 Terminal.app 设置被中断。你的原始设置已恢复。你可以随时重新运行 /terminal-setup 来启用 Option+Enter。',
+  'setup.terminalRestored':
+    '检测到 Terminal.app 设置被中断。你的原始设置已恢复。你可以随时重新运行 /terminal-setup 来启用 Option+Enter。',
   'setup.terminalRestoreFailed': '恢复 Terminal.app 设置失败。请手动从备份恢复：{backupPath}',
-  'setup.errorWorktreeNotGitRepo': '错误：只能在 git 仓库中使用 --worktree。当前目录（{cwd}）不是 git 仓库。',
+  'setup.errorWorktreeNotGitRepo':
+    '错误：只能在 git 仓库中使用 --worktree。当前目录（{cwd}）不是 git 仓库。',
   'setup.errorCannotDetermineGitRoot': '错误：无法确定主 git 仓库根目录。',
   'setup.errorCreatingWorktree': '创建 worktree 时出错：{error}',
   'setup.tmuxSessionCreated': '已创建 tmux 会话：{sessionName}。使用以下命令连接：{attachCmd}',
   'setup.tmuxSessionCreateFailed': '警告：创建 tmux 会话失败：{error}',
-  'setup.errorRootSudoNotAllowed': '--dangerously-skip-permissions 不能在 root/sudo 下使用。请以普通用户身份运行。',
-  'setup.errorNotSandboxed': '--dangerously-skip-permissions 只能在 Docker/沙箱环境中使用（isDocker={isDocker}, isBubblewrap={isBubblewrap}, isSandbox={isSandbox}, hasInternet={hasInternet}）',
+  'setup.errorRootSudoNotAllowed':
+    '--dangerously-skip-permissions 不能在 root/sudo 下使用。请以普通用户身份运行。',
+  'setup.errorNotSandboxed':
+    '--dangerously-skip-permissions 只能在 Docker/沙箱环境中使用（isDocker={isDocker}, isBubblewrap={isBubblewrap}, isSandbox={isSandbox}, hasInternet={hasInternet}）',
 
   // 费用追踪
   'costTracker.usageEmpty': '用量：0 输入，0 输出（费用追踪尚不可用）',
@@ -1492,7 +1516,8 @@ export const zhCN: TranslationResource = {
   'backgroundTasks.reviewOnWeb': '在 ZY Code 网页版上审查',
   'backgroundTasks.stopUltraplanLabel': '停止 ultraplan',
   'backgroundTasks.stopUltrareview': '停止 ultrareview？',
-  'backgroundTasks.stopUltrareviewConfirm': '这将归档远程会话并停止本地跟踪。审查将不会完成，目前发现的所有内容都将被丢弃。',
+  'backgroundTasks.stopUltrareviewConfirm':
+    '这将归档远程会话并停止本地跟踪。审查将不会完成，目前发现的所有内容都将被丢弃。',
   'backgroundTasks.stopUltrareviewLabel': '停止 ultrareview',
   'backgroundTasks.openOnWeb': '在 ZY Code 网页版上打开',
   'backgroundTasks.dismiss': '忽略',
@@ -1530,8 +1555,10 @@ export const zhCN: TranslationResource = {
   'ide.vscodeSingleInstance': '注意：同一时间只能有一个 ZY Code 实例连接到 VS Code。',
   'ide.autoConnectTip': '提示：你可以通过 /config 或 --ide 标志启用 IDE 自动连接',
   'ide.noAvailable': '未检测到可用的 IDE。请确保你的 IDE 已安装 ZY Code 扩展或插件并正在运行。',
-  'ide.noAvailableJetBrains': '未检测到可用的 IDE。请安装插件并重启 IDE：\nhttps://docs.zy.com/s/zy-code-jetbrains',
-  'ide.unavailableCount': '发现 {count} 个其他正在运行的 IDE。但它们的工作区/项目目录与当前工作目录不匹配。',
+  'ide.noAvailableJetBrains':
+    '未检测到可用的 IDE。请安装插件并重启 IDE：\nhttps://docs.zy.com/s/zy-code-jetbrains',
+  'ide.unavailableCount':
+    '发现 {count} 个其他正在运行的 IDE。但它们的工作区/项目目录与当前工作目录不匹配。',
   'ide.selectToOpen': '选择 IDE 以打开项目',
   'ide.selectToInstall': '选择 IDE 以安装扩展',
   'ide.noIdeDetected': '未检测到带有 ZY Code 扩展的 IDE。',
@@ -1602,7 +1629,8 @@ export const zhCN: TranslationResource = {
   'feedback.reportEnvironment': '- 环境信息：',
   'feedback.reportGit': '- Git 仓库元数据：',
   'feedback.reportTranscript': '- 当前会话对话记录',
-  'feedback.reportUsage': '我们将使用你的反馈来调试相关问题或改进 ZY Code 的功能（例如降低未来出现 Bug 的风险）。',
+  'feedback.reportUsage':
+    '我们将使用你的反馈来调试相关问题或改进 ZY Code 的功能（例如降低未来出现 Bug 的风险）。',
   'feedback.pressEnterToSubmit': '按 Enter 确认并提交。',
   'feedback.submitting': '正在提交报告…',
   'feedback.thankYou': '感谢你的反馈！',
@@ -1622,14 +1650,16 @@ export const zhCN: TranslationResource = {
   'permissionRules.addDirectoryToWorkspace': '添加目录到工作区',
   'permissionRules.yesForThisSession': '是，仅限本次会话',
   'permissionRules.yesAndRememberDirectory': '是，并记住此目录',
-  'permissionRules.workspacePermissionDescription': 'ZY Code 将能够读取此目录中的文件，并在自动接受编辑开启时进行修改。',
+  'permissionRules.workspacePermissionDescription':
+    'ZY Code 将能够读取此目录中的文件，并在自动接受编辑开启时进行修改。',
   'permissionRules.enterDirectoryPath': '输入目录路径：',
   'permissionRules.directoryPathPlaceholder': '目录路径…',
   'permissionRules.removeDirectoryFromWorkspace': '从工作区移除目录？',
   'permissionRules.directoryRemovedWarning': 'ZY Code 将不再有权访问此目录中的文件。',
   'permissionRules.fromSource': '来自 {source}',
   'permissionRules.ruleDetails': '规则详情',
-  'permissionRules.managedByPolicy': '此规则由托管设置配置，无法修改。\n如需更多信息，请联系你的系统管理员。',
+  'permissionRules.managedByPolicy':
+    '此规则由托管设置配置，无法修改。\n如需更多信息，请联系你的系统管理员。',
   'permissionRules.allowedToolsSubtitle': 'ZY Code 在使用已允许的工具前不会询问。',
   'permissionRules.askToolsSubtitle': 'ZY Code 在使用这些工具前始终会请求确认。',
   'permissionRules.deniedToolsSubtitle': 'ZY Code 将始终拒绝使用被拒绝的工具请求。',
@@ -1639,7 +1669,8 @@ export const zhCN: TranslationResource = {
   'permissionRules.askTab': '询问',
   'permissionRules.denyTab': '拒绝',
   'permissionRules.workspaceTab': '工作区',
-  'permissionRules.workspaceDescription': 'ZY Code 可以读取工作区中的文件，并在自动接受编辑开启时进行修改。',
+  'permissionRules.workspaceDescription':
+    'ZY Code 可以读取工作区中的文件，并在自动接受编辑开启时进行修改。',
   'permissionRules.originalWorkingDirectory': '原始工作目录',
   'permissionRules.addDirectoryEllipsis': '添加目录…',
   'permissionRules.workspaceDialogDismissed': '工作区对话框已关闭',
@@ -1692,7 +1723,8 @@ export const zhCN: TranslationResource = {
   'computerUse.screenRecordingLabel': '屏幕录制：',
   'computerUse.granted': '已授权',
   'computerUse.notGranted': '未授权',
-  'computerUse.grantMissingPermissions': '在系统设置中授予缺失的权限，然后选择"重试"。macOS 可能需要在授予屏幕录制权限后重启 ZY Code。',
+  'computerUse.grantMissingPermissions':
+    '在系统设置中授予缺失的权限，然后选择"重试"。macOS 可能需要在授予屏幕录制权限后重启 ZY Code。',
   'computerUse.wantsToControlApps': 'Computer Use 想要控制这些应用',
   'computerUse.equivalentToShellAccess': '等同于 shell 访问权限',
   'computerUse.canReadWriteAnyFile': '可以读取/写入任何文件',
@@ -1791,7 +1823,8 @@ export const zhCN: TranslationResource = {
   'mcp.authSuccessfulReconnected': '认证成功。已重新连接到 {serverName}。',
   'mcp.authSuccessfulConnected': '认证成功。已连接到 {serverName}。',
   'mcp.authSuccessfulNeedsAuth': '认证成功，但服务器仍需要认证。你可能需要手动重启 ZY Code。',
-  'mcp.authSuccessfulReconnectFailed': '认证成功，但服务器重新连接失败。你可能需要手动重启 ZY Code 以使更改生效。',
+  'mcp.authSuccessfulReconnectFailed':
+    '认证成功，但服务器重新连接失败。你可能需要手动重启 ZY Code 以使更改生效。',
   'mcp.authCleared': '已清除 {serverName} 的认证。',
   'mcp.disconnectedFrom': '已从 {serverName} 断开连接。',
   'mcp.failedToToggle': "{action} MCP 服务器 '{serverName}' 失败：{error}",
@@ -1850,7 +1883,8 @@ export const zhCN: TranslationResource = {
   'mcp.errorReconnecting': '重新连接到 {serverName} 时出错：{error}',
 
   // MCP 设置
-  'mcp.noServersConfigured': '未配置 MCP 服务器。如果这是意外情况，请运行 /doctor。否则，运行 `zy mcp --help` 或访问 https://code.zy.com/docs/en/mcp 了解更多信息。',
+  'mcp.noServersConfigured':
+    '未配置 MCP 服务器。如果这是意外情况，请运行 /doctor。否则，运行 `zy mcp --help` 或访问 https://code.zy.com/docs/en/mcp 了解更多信息。',
 
   // Web 浏览器
   'webBrowser.title': '网页浏览器',
@@ -1904,7 +1938,8 @@ export const zhCN: TranslationResource = {
   'agents.noAgentsFound': '未找到 agents',
   'agents.noAgentsHelpLine1': '未找到 agents。创建 Zy 可以委托的专用子智能体。',
   'agents.noAgentsHelpLine2': '每个子智能体都有自己的上下文窗口、自定义系统提示和特定工具。',
-  'agents.noAgentsTryCreating': '尝试创建：Code Reviewer、Code Simplifier、Security Reviewer、Tech Lead 或 UX Reviewer。',
+  'agents.noAgentsTryCreating':
+    '尝试创建：Code Reviewer、Code Simplifier、Security Reviewer、Tech Lead 或 UX Reviewer。',
   'agents.agentsCount': '{count} 个 agents',
   'agents.shadowedBy': '被 {source} 覆盖',
   'agents.memoryLabel': '{memory} 记忆',
@@ -1923,7 +1958,8 @@ export const zhCN: TranslationResource = {
   'agents.dialogDismissed': 'Agents 对话框已关闭',
   'agents.deletedAgent': '已删除 agent: {name}',
   'agents.createdAgent': '已创建 agent: {name}',
-  'agents.createdAgentAndOpened': '已创建 agent: {name} 并在编辑器中打开。如果你进行了编辑，请重启以加载最新版本。',
+  'agents.createdAgentAndOpened':
+    '已创建 agent: {name} 并在编辑器中打开。如果你进行了编辑，请重启以加载最新版本。',
   'agents.updatedAgent': '已更新 agent: {name}',
   'agents.openedInEditor': '已在编辑器中打开 {name}。如果你进行了编辑，请重启以加载最新版本。',
   'agents.failedToSave': '保存 agent 失败',
@@ -1937,7 +1973,8 @@ export const zhCN: TranslationResource = {
 
   // Agent Validation
   'agents.validation.typeRequired': 'Agent 类型是必填项',
-  'agents.validation.typeFormat': 'Agent 类型必须以字母或数字开头和结尾，且只能包含字母、数字和连字符',
+  'agents.validation.typeFormat':
+    'Agent 类型必须以字母或数字开头和结尾，且只能包含字母、数字和连字符',
   'agents.validation.typeMinLength': 'Agent 类型必须至少 3 个字符',
   'agents.validation.typeMaxLength': 'Agent 类型必须少于 50 个字符',
   'agents.validation.typeDuplicate': 'Agent 类型 "{name}" 已存在于 {source}',
@@ -2022,8 +2059,10 @@ export const zhCN: TranslationResource = {
 
   // 输入框 Prompt input
   'promptInput.stashed': '已暂存（提交后自动恢复）',
-  'promptInput.sandboxBlocked_one': '沙箱拦截了 {count} 次操作 · 按 {shortcut} 查看详情 · 运行 /sandbox 禁用',
-  'promptInput.sandboxBlocked_other': '沙箱拦截了 {count} 次操作 · 按 {shortcut} 查看详情 · 运行 /sandbox 禁用',
+  'promptInput.sandboxBlocked_one':
+    '沙箱拦截了 {count} 次操作 · 按 {shortcut} 查看详情 · 运行 /sandbox 禁用',
+  'promptInput.sandboxBlocked_other':
+    '沙箱拦截了 {count} 次操作 · 按 {shortcut} 查看详情 · 运行 /sandbox 禁用',
   'promptInput.moreTasksCompleted': '+{count} 个任务已完成',
   'promptInput.remoteControlReconnecting': '远程控制重新连接中',
   'promptInput.enterToView': ' · Enter 查看',
@@ -2033,7 +2072,8 @@ export const zhCN: TranslationResource = {
   'promptInput.sentTo': '已发送给 @{recipientName}',
   'promptInput.noImageClipboardSSH': '剪贴板中未找到图片。你正在使用 SSH，试试 scp？',
   'promptInput.noImageClipboard': '剪贴板中未找到图片。使用 {shortcut} 粘贴图片。',
-  'promptInput.optionMetaHint': '要启用 {shortcut}，请在 {terminalName} 偏好设置（⌘,）中设置 Option as Meta',
+  'promptInput.optionMetaHint':
+    '要启用 {shortcut}，请在 {terminalName} 偏好设置（⌘,）中设置 Option as Meta',
   'promptInput.optionMetaHintSetup': '要启用 {shortcut}，请运行 /terminal-setup',
   'promptInput.stashTip': '提示：{shortcut} 暂存',
   'promptInput.editIn': '在 {editorName} 中编辑',
@@ -2075,7 +2115,8 @@ export const zhCN: TranslationResource = {
   'channels.messagesDropped': '入站消息将被静默丢弃',
   'channels.enablePolicy': '请让管理员在托管设置中设置 channelsEnabled: true 以启用',
   'channels.listening': '正在监听来自以下频道的消息：{list}',
-  'channels.experimental': '实验性功能 · 入站消息将被推送到此会话中，这存在提示注入风险。重启 ZY Code 时不带 {flag} 即可禁用。',
+  'channels.experimental':
+    '实验性功能 · 入站消息将被推送到此会话中，这存在提示注入风险。重启 ZY Code 时不带 {flag} 即可禁用。',
   'channels.noMcpServer': '没有配置该名称的 MCP 服务器',
   'channels.serverNeedsDev': '服务器：条目需要 --dangerously-load-development-channels',
   'channels.pluginNotInstalled': '插件未安装',
@@ -2097,8 +2138,10 @@ export const zhCN: TranslationResource = {
 
   // 模型选择器 Model picker
   'modelPicker.selectModel': '选择模型',
-  'modelPicker.description': '在 Zy 模型之间切换。适用于本次会话和未来的 ZY Code 会话。如需使用其他/旧版模型名称，请通过 --model 指定。',
-  'modelPicker.currentlyUsing': '本次会话当前使用 {model}（由计划模式设置）。选择模型将撤销此设置。',
+  'modelPicker.description':
+    '在 Zy 模型之间切换。适用于本次会话和未来的 ZY Code 会话。如需使用其他/旧版模型名称，请通过 --model 指定。',
+  'modelPicker.currentlyUsing':
+    '本次会话当前使用 {model}（由计划模式设置）。选择模型将撤销此设置。',
   'modelPicker.currentModel': '当前模型',
   'modelPicker.andMore': '还有 {count} 个…',
   'modelPicker.effortLabel': '{effort} 努力度',
@@ -2120,7 +2163,8 @@ export const zhCN: TranslationResource = {
   'thinkingToggle.enabledDesc': 'Zy 将在回复前进行思考',
   'thinkingToggle.disabled': '已禁用',
   'thinkingToggle.disabledDesc': 'Zy 将直接回复，不进行深度思考',
-  'thinkingToggle.midConversationWarning': '在对话中途更改思考模式会增加延迟并可能降低质量。为获得最佳效果，请在会话开始时设置。',
+  'thinkingToggle.midConversationWarning':
+    '在对话中途更改思考模式会增加延迟并可能降低质量。为获得最佳效果，请在会话开始时设置。',
   'thinkingToggle.proceedQuestion': '是否继续？',
   'thinkingToggle.pressAgainToExit': '再按一次 {key} 退出',
 
@@ -2166,9 +2210,12 @@ export const zhCN: TranslationResource = {
   'worktree.noActiveSession': '未找到活跃的 worktree 会话',
   'worktree.keepingWorktree': '正在保留 worktree…',
   'worktree.removingWorktree': '正在移除 worktree…',
-  'worktree.subtitleBoth': '你在 {branch} 上有 {fileCount} 个未提交的{fileLabel}和 {commitCount} 个{commitLabel}。如果移除，所有内容都将丢失。',
-  'worktree.subtitleFiles': '你有 {fileCount} 个未提交的{fileLabel}。如果移除 worktree，这些内容将丢失。',
-  'worktree.subtitleCommits': '你在 {branch} 上有 {commitCount} 个{commitLabel}。如果移除 worktree，该分支将被删除。',
+  'worktree.subtitleBoth':
+    '你在 {branch} 上有 {fileCount} 个未提交的{fileLabel}和 {commitCount} 个{commitLabel}。如果移除，所有内容都将丢失。',
+  'worktree.subtitleFiles':
+    '你有 {fileCount} 个未提交的{fileLabel}。如果移除 worktree，这些内容将丢失。',
+  'worktree.subtitleCommits':
+    '你在 {branch} 上有 {commitCount} 个{commitLabel}。如果移除 worktree，该分支将被删除。',
   'worktree.subtitleNone': '你正在 worktree 中工作。保留它以继续在那里工作，或移除它以清理。',
   'worktree.removeDescription': '所有更改和提交都将丢失。',
   'worktree.removeDescriptionClean': '清理 worktree 目录。',
@@ -2191,7 +2238,8 @@ export const zhCN: TranslationResource = {
   'remoteCallout.enableDesc': '打开到 zy.ai 的安全连接。',
   'remoteCallout.dismissLabel': '算了',
   'remoteCallout.dismissDesc': '你随时可以通过 /remote-control 启用它。',
-  'remoteCallout.description': '远程控制允许你从网页（zy.ai/code）或 Zy 应用访问此 CLI 会话，让你在任何设备上继续工作。',
+  'remoteCallout.description':
+    '远程控制允许你从网页（zy.ai/code）或 Zy 应用访问此 CLI 会话，让你在任何设备上继续工作。',
   'remoteCallout.disconnectInfo': '你随时可以通过运行 /remote-control 断开远程访问。',
 
   // MCP desktop import
@@ -2250,9 +2298,11 @@ export const zhCN: TranslationResource = {
 
   // ZY.md external includes
   'zyMd.allowExternalTitle': '允许外部 CLAUDE.md 文件导入？',
-  'zyMd.importsOutsideWarning': '此项目的 CLAUDE.md 引用了当前工作目录之外的文件。对于第三方仓库，切勿允许此操作。',
+  'zyMd.importsOutsideWarning':
+    '此项目的 CLAUDE.md 引用了当前工作目录之外的文件。对于第三方仓库，切勿允许此操作。',
   'zyMd.externalImports': '外部导入：',
-  'zyMd.securityWarning': '重要提示：仅对你信任的文件使用 ZY Code。访问不受信任的文件可能存在安全风险',
+  'zyMd.securityWarning':
+    '重要提示：仅对你信任的文件使用 ZY Code。访问不受信任的文件可能存在安全风险',
   'zyMd.yesAllow': '是，允许外部导入',
   'zyMd.noDisable': '否，禁用外部导入',
 
@@ -2293,7 +2343,8 @@ export const zhCN: TranslationResource = {
 
   // Transcript share prompt
   'transcriptShare.title': '是否允许 Anthropic 查看你的会话记录以帮助改进 ZY Code？',
-  'transcriptShare.learnMore': '了解更多：https://code.zy.com/docs/en/data-usage#session-quality-surveys',
+  'transcriptShare.learnMore':
+    '了解更多：https://code.zy.com/docs/en/data-usage#session-quality-surveys',
   'transcriptShare.yes': '是',
   'transcriptShare.no': '否',
   'transcriptShare.dontAskAgain': '不再询问',
@@ -2500,7 +2551,8 @@ export const zhCN: TranslationResource = {
   'passes.escToCancel': 'Esc 取消',
   'passes.notAvailable': '访客通行证当前不可用。',
   'passes.title': '访客通行证 · 剩余 {availableCount}',
-  'passes.shareWithReward': '与朋友分享一周免费的 ZY Code。如果他们喜欢并订阅，你将获得 {creditAmount} 的额外用量继续构建。',
+  'passes.shareWithReward':
+    '与朋友分享一周免费的 ZY Code。如果他们喜欢并订阅，你将获得 {creditAmount} 的额外用量继续构建。',
   'passes.shareWithFriends': '与朋友分享一周免费的 ZY Code。',
   'passes.termsApply': '适用条款。',
   'passes.enterCopyEscCancel': 'Enter 复制链接 · Esc 取消',
@@ -2515,7 +2567,8 @@ export const zhCN: TranslationResource = {
   'oauth.platformOptionLabel': '第三方平台 ·',
   'oauth.platformOptionDesc': 'Amazon Bedrock、Microsoft Foundry 或 Vertex AI',
   'oauth.usingThirdPartyPlatforms': '使用第三方平台',
-  'oauth.thirdPartyPlatformsDesc': '你可以通过 Amazon Bedrock、Microsoft Foundry 或 Google Vertex AI 使用 ZY Code。',
+  'oauth.thirdPartyPlatformsDesc':
+    '你可以通过 Amazon Bedrock、Microsoft Foundry 或 Google Vertex AI 使用 ZY Code。',
   'oauth.thirdPartyPlatformsEnterpriseHint': '这些选项通常用于企业部署。',
   'oauth.documentation': '文档',
   'oauth.pressEnterToGoBack': '按 Enter 返回',
@@ -2560,7 +2613,8 @@ export const zhCN: TranslationResource = {
   'tag.sessionTagged': '已为会话标记 #{tagName}',
   'tag.tagRemoved': '已移除标签 #{tagName}',
   'tag.tagKept': '已保留标签 #{tagName}',
-  'tag.usage': '用法：/tag <标签名>\n\n在当前会话上切换可搜索的标签。\n再次运行同一命令以移除标签。\n标签显示在 /resume 的分支名后面，可以用 / 搜索。\n\n示例：\n  /tag bugfix        # 添加标签\n  /tag bugfix        # 移除标签（切换）\n  /tag feature-auth\n  /tag wip',
+  'tag.usage':
+    '用法：/tag <标签名>\n\n在当前会话上切换可搜索的标签。\n再次运行同一命令以移除标签。\n标签显示在 /resume 的分支名后面，可以用 / 搜索。\n\n示例：\n  /tag bugfix        # 添加标签\n  /tag bugfix        # 移除标签（切换）\n  /tag feature-auth\n  /tag wip',
 
   // Login 命令
   'login.title': '登录',
@@ -2574,7 +2628,8 @@ export const zhCN: TranslationResource = {
   'memory.openedAt': '已打开记忆文件 {path}',
   'memory.editorHint': '要使用不同的编辑器，请设置 $EDITOR 或 $VISUAL 环境变量。',
   'memory.usingEditor': '正在使用 {editorSource}="{editorValue}"。',
-  'memory.usingEditorHint': '正在使用 {editorSource}="{editorValue}"。要更改编辑器，请设置 $EDITOR 或 $VISUAL 环境变量。',
+  'memory.usingEditorHint':
+    '正在使用 {editorSource}="{editorValue}"。要更改编辑器，请设置 $EDITOR 或 $VISUAL 环境变量。',
   'memory.openError': '打开记忆文件时出错：{error}',
   'memory.cancelled': '已取消记忆编辑',
 

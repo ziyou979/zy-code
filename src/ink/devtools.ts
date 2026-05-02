@@ -13,5 +13,5 @@ export function initDevtools(): void {
  * Check if devtools are connected
  */
 export function isDevtoolsConnected(): boolean {
-  return false;
+  return false
 }

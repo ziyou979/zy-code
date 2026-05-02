@@ -26,8 +26,7 @@ export function mcpInfoFromString(toolString: string): {
     return null
   }
   // Join all parts after server name to preserve double underscores in tool names
-  const toolName =
-    toolNameParts.length > 0 ? toolNameParts.join('__') : undefined
+  const toolName = toolNameParts.length > 0 ? toolNameParts.join('__') : undefined
   return { serverName, toolName }
 }
 
@@ -61,9 +60,7 @@ export function getToolNameForPermissionCheck(tool: {
   name: string
   mcpInfo?: { serverName: string; toolName: string }
 }): string {
-  return tool.mcpInfo
-    ? buildMcpToolName(tool.mcpInfo.serverName, tool.mcpInfo.toolName)
-    : tool.name
+  return tool.mcpInfo ? buildMcpToolName(tool.mcpInfo.serverName, tool.mcpInfo.toolName) : tool.name
 }
 
 /*
@@ -72,10 +69,7 @@ export function getToolNameForPermissionCheck(tool: {
  * @param serverName The server name to remove from the prefix
  * @returns The display name without the MCP prefix
  */
-export function getMcpDisplayName(
-  fullName: string,
-  serverName: string,
-): string {
+export function getMcpDisplayName(fullName: string, serverName: string): string {
   const prefix = `mcp__${normalizeNameForMCP(serverName)}__`
   return fullName.replace(prefix, '')
 }

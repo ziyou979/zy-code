@@ -17,9 +17,7 @@ import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import type { ProviderCapability } from '../model/providers.js'
 
-type ModelCapabilityKind =
-  | ProviderCapability
-  | 'auto_mode'
+type ModelCapabilityKind = ProviderCapability | 'auto_mode'
 
 /**
  * 解析 token 数量字符串，支持 "256k"、"1m"、"4096" 等格式。
@@ -53,9 +51,7 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
   z.object({
     pattern: z
       .string()
-      .describe(
-        '模型匹配模式（大小写不敏感的 substring match，如 "qwen3.6-max"、"gpt-4o"）',
-      ),
+      .describe('模型匹配模式（大小写不敏感的 substring match，如 "qwen3.6-max"、"gpt-4o"）'),
     capabilities: z
       .array(
         z.enum([
@@ -73,43 +69,36 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         ]),
       )
       .describe('模型支持的能力列表'),
-    maxOutputTokens: TokenCountSchema
-      .optional()
-      .describe('模型支持的最大输出 tokens（单次响应上限），支持数字或 "256k"、"1m" 格式'),
-    maxInputTokens: TokenCountSchema
-      .optional()
-      .describe('API 允许的最大输入 tokens，支持数字或 "256k"、"1m" 格式'),
-    contextWindow: TokenCountSchema
-      .optional()
-      .describe('模型上下文窗口总大小（input + output），用于自动压缩和用量计算，支持数字或 "200k"、"1m" 格式'),
-    maxThinkingTokens: TokenCountSchema
-      .optional()
-      .describe('思维链最大 token 数（budget_tokens），未配置时默认为 maxOutputTokens - 1，支持数字或 "16k" 格式'),
+    maxOutputTokens: TokenCountSchema.optional().describe(
+      '模型支持的最大输出 tokens（单次响应上限），支持数字或 "256k"、"1m" 格式',
+    ),
+    maxInputTokens: TokenCountSchema.optional().describe(
+      'API 允许的最大输入 tokens，支持数字或 "256k"、"1m" 格式',
+    ),
+    contextWindow: TokenCountSchema.optional().describe(
+      '模型上下文窗口总大小（input + output），用于自动压缩和用量计算，支持数字或 "200k"、"1m" 格式',
+    ),
+    maxThinkingTokens: TokenCountSchema.optional().describe(
+      '思维链最大 token 数（budget_tokens），未配置时默认为 maxOutputTokens - 1，支持数字或 "16k" 格式',
+    ),
     costs: z
       .union([
         // 固定单价（向后兼容）
         z.object({
           inputTokens: z.number().describe('每百万输入 token 费用（元）'),
           outputTokens: z.number().describe('每百万输出 token 费用（元）'),
-          promptCacheWriteTokens: z
-            .number()
-            .optional()
-            .describe('每百万缓存写入 token 费用（元）'),
-          promptCacheReadTokens: z
-            .number()
-            .optional()
-            .describe('每百万缓存读取 token 费用（元）'),
-          webSearchRequests: z
-            .number()
-            .optional()
-            .describe('每次网络搜索费用（元）'),
+          promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用（元）'),
+          promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用（元）'),
+          webSearchRequests: z.number().optional().describe('每次网络搜索费用（元）'),
         }),
         // 阶梯费用：根据输入 token 总量分段计价
         z.object({
           tiers: z
             .array(
               z.object({
-                upTo: TokenCountSchema.describe('此阶梯的输入 token 上限，支持 "128k"、"1m" 等格式'),
+                upTo: TokenCountSchema.describe(
+                  '此阶梯的输入 token 上限，支持 "128k"、"1m" 等格式',
+                ),
                 inputTokens: z.number().describe('此阶梯内每百万输入 token 费用（元）'),
                 outputTokens: z.number().describe('此阶梯内每百万输出 token 费用（元）'),
                 promptCacheWriteTokens: z
@@ -123,10 +112,7 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
               }),
             )
             .describe('按输入 token 总量分段计价的阶梯列表（从低到高排序）'),
-          webSearchRequests: z
-            .number()
-            .optional()
-            .describe('每次网络搜索费用（元）'),
+          webSearchRequests: z.number().optional().describe('每次网络搜索费用（元）'),
         }),
       ])
       .optional()
@@ -140,13 +126,9 @@ const ModelCapabilitiesFileSchema = lazySchema(() =>
   }),
 )
 
-export type ModelCapabilityEntry = z.infer<
-  ReturnType<typeof ModelCapabilityEntrySchema>
->
+export type ModelCapabilityEntry = z.infer<ReturnType<typeof ModelCapabilityEntrySchema>>
 
-export type ModelCapabilitiesFile = z.infer<
-  ReturnType<typeof ModelCapabilitiesFileSchema>
->
+export type ModelCapabilitiesFile = z.infer<ReturnType<typeof ModelCapabilitiesFileSchema>>
 
 function getConfigPath(): string {
   return join(getZyConfigHomeDir(), 'model-capabilities.json')
@@ -171,24 +153,17 @@ export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
  * 从本地配置中查找模型能力条目。
  * 返回第一个匹配 pattern 的条目，未匹配返回 undefined。
  */
-export function getLocalModelCapability(
-  model: string,
-): ModelCapabilityEntry | undefined {
+export function getLocalModelCapability(model: string): ModelCapabilityEntry | undefined {
   const config = loadLocalModelCapabilities()
   if (!config) return undefined
   const m = model.toLowerCase()
-  return config.models.find(entry =>
-    m.includes(entry.pattern.toLowerCase()),
-  )
+  return config.models.find((entry) => m.includes(entry.pattern.toLowerCase()))
 }
 
 /**
  * 从本地配置检查模型是否支持某项能力。
  */
-export function localModelHasCapability(
-  model: string,
-  capability: ModelCapabilityKind,
-): boolean {
+export function localModelHasCapability(model: string, capability: ModelCapabilityKind): boolean {
   const entry = getLocalModelCapability(model)
   return entry?.capabilities.includes(capability as never) ?? false
 }
@@ -248,13 +223,15 @@ export function getLocalMaxThinkingTokens(model: string): number {
 export function getLocalModelCosts(
   model: string,
   currentInputTokens?: number,
-): {
-  inputTokens: number
-  outputTokens: number
-  promptCacheWriteTokens: number
-  promptCacheReadTokens: number
-  webSearchRequests: number
-} | undefined {
+):
+  | {
+      inputTokens: number
+      outputTokens: number
+      promptCacheWriteTokens: number
+      promptCacheReadTokens: number
+      webSearchRequests: number
+    }
+  | undefined {
   const entry = getLocalModelCapability(model)
   if (!entry?.costs) return undefined
 

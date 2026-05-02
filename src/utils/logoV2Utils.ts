@@ -3,11 +3,7 @@ import { stringWidth } from '../ink/stringWidth.js'
 import type { LogOption } from '../types/logs.js'
 import { getCwd } from './cwd.js'
 import { getDisplayPath } from './file.js'
-import {
-  truncate,
-  truncateToWidth,
-  truncateToWidthNoEllipsis,
-} from './format.js'
+import { truncate, truncateToWidth, truncateToWidthNoEllipsis } from './format.js'
 import { tSync } from '../i18n/index.js'
 import { getStoredChangelogFromMemory, parseChangelog } from './releaseNotes.js'
 import { gt } from './semver.js'
@@ -48,8 +44,7 @@ export function calculateLayoutDimensions(
 ): LayoutDimensions {
   if (layoutMode === 'horizontal') {
     const leftWidth = optimalLeftWidth
-    const usedSpace =
-      BORDER_PADDING + CONTENT_PADDING + DIVIDER_WIDTH + leftWidth
+    const usedSpace = BORDER_PADDING + CONTENT_PADDING + DIVIDER_WIDTH + leftWidth
     const availableForRight = columns - usedSpace
 
     let rightWidth = Math.max(30, availableForRight)
@@ -132,24 +127,19 @@ export function truncatePath(path: string, maxLength: number): string {
   }
 
   // We have a first part so let's show the ellipsis and truncate last part
-  if (
-    first !== '' &&
-    ellipsisWidth * 2 + separatorWidth + lastWidth >= maxLength
-  ) {
+  if (first !== '' && ellipsisWidth * 2 + separatorWidth + lastWidth >= maxLength) {
     return `${ellipsis}${separator}${truncateToWidth(last, Math.max(1, maxLength - ellipsisWidth - separatorWidth))}`
   }
 
   // Truncate first and leave last
   if (parts.length === 2) {
-    const availableForFirst =
-      maxLength - ellipsisWidth - separatorWidth - lastWidth
+    const availableForFirst = maxLength - ellipsisWidth - separatorWidth - lastWidth
     return `${truncateToWidthNoEllipsis(first, availableForFirst)}${ellipsis}${separator}${last}`
   }
 
   // Now we start removing middle parts
 
-  let available =
-    maxLength - firstWidth - lastWidth - ellipsisWidth - 2 * separatorWidth
+  let available = maxLength - firstWidth - lastWidth - ellipsisWidth - 2 * separatorWidth
 
   // Just the first and last are too long, so truncate first
   if (available <= 0) {
@@ -195,17 +185,16 @@ export async function getRecentActivity(): Promise<LogOption[]> {
 
   const currentSessionId = getSessionId()
   cachePromise = loadMessageLogs(10)
-    .then(logs => {
+    .then((logs) => {
       cachedActivity = logs
-        .filter(log => {
+        .filter((log) => {
           if (log.isSidechain) return false
           if (log.sessionId === currentSessionId) return false
           if (log.summary?.includes('I apologize')) return false
 
           // Filter out sessions where both summary and firstPrompt are "No prompt" or missing
           const hasSummary = log.summary && log.summary !== 'No prompt'
-          const hasFirstPrompt =
-            log.firstPrompt && log.firstPrompt !== 'No prompt'
+          const hasFirstPrompt = log.firstPrompt && log.firstPrompt !== 'No prompt'
           return hasSummary || hasFirstPrompt
         })
         .slice(0, 3)
@@ -229,10 +218,7 @@ export function getRecentActivitySync(): LogOption[] {
 /**
  * Formats release notes for display, with smart truncation
  */
-export function formatReleaseNoteForDisplay(
-  note: string,
-  maxWidth: number,
-): string {
+export function formatReleaseNoteForDisplay(note: string, maxWidth: number): string {
   // Simply truncate at the max width, same as Recent Activity descriptions
   return truncate(note, maxWidth)
 }
@@ -248,12 +234,8 @@ export function getLogoDisplayData(): {
 } {
   const version = process.env.DEMO_VERSION ?? MACRO.VERSION
   const serverUrl = getDirectConnectServerUrl()
-  const displayPath = process.env.DEMO_VERSION
-    ? '/code/zy'
-    : getDisplayPath(getCwd())
-  const cwd = serverUrl
-    ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}`
-    : displayPath
+  const displayPath = process.env.DEMO_VERSION ? '/code/zy' : getDisplayPath(getCwd())
+  const cwd = serverUrl ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}` : displayPath
   const billingType = 'API Usage Billing'
   const agentName = getInitialSettings().agent
 
@@ -278,8 +260,7 @@ export function formatModelAndBilling(
   truncatedBilling: string
 } {
   const separator = ' · '
-  const combinedWidth =
-    stringWidth(modelName) + separator.length + stringWidth(billingType)
+  const combinedWidth = stringWidth(modelName) + separator.length + stringWidth(billingType)
   const shouldSplit = combinedWidth > availableWidth
 
   if (shouldSplit) {
@@ -294,10 +275,7 @@ export function formatModelAndBilling(
     shouldSplit: false,
     truncatedModel: truncate(
       modelName,
-      Math.max(
-        availableWidth - stringWidth(billingType) - separator.length,
-        10,
-      ),
+      Math.max(availableWidth - stringWidth(billingType) - separator.length, 10),
     ),
     truncatedBilling: billingType,
   }

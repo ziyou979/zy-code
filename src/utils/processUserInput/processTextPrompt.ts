@@ -1,20 +1,13 @@
 import type { ContentBlock } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { setPromptId } from 'src/bootstrap/state.js'
-import type {
-  AttachmentMessage,
-  SystemMessage,
-  UserMessage,
-} from 'src/types/message.js'
+import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { createUserMessage } from '../messages.js'
 import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js'
 import { startInteractionSpan } from '../telemetry/sessionTracing.js'
-import {
-  matchesKeepGoingKeyword,
-  matchesNegativeKeyword,
-} from '../userPromptKeywords.js'
+import { matchesKeepGoingKeyword, matchesNegativeKeyword } from '../userPromptKeywords.js'
 
 export function processTextPrompt(
   input: string | Array<ContentBlock>,
@@ -32,9 +25,7 @@ export function processTextPrompt(
   setPromptId(promptId)
 
   const userPromptText =
-    typeof input === 'string'
-      ? input
-      : input.find(block => block.type === 'text')?.text || ''
+    typeof input === 'string' ? input : input.find((block) => block.type === 'text')?.text || ''
   startInteractionSpan(userPromptText)
 
   // Emit user_prompt OTEL event for both string (CLI) and array (SDK/VS Code)
@@ -45,9 +36,7 @@ export function processTextPrompt(
   // so .findLast gets the actual prompt. userPromptText (first block) is kept
   // unchanged for startInteractionSpan to preserve existing span attributes.
   const otelPromptText =
-    typeof input === 'string'
-      ? input
-      : input.findLast(block => block.type === 'text')?.text || ''
+    typeof input === 'string' ? input : input.findLast((block) => block.type === 'text')?.text || ''
   if (otelPromptText) {
     void logOTelEvent('user_prompt', {
       prompt_length: String(otelPromptText.length),

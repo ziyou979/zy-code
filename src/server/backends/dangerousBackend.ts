@@ -3,6 +3,6 @@
  */
 export class DangerousBackend {
   constructor() {
-    throw new Error('DangerousBackend not implemented');
+    throw new Error('DangerousBackend not implemented')
   }
 }

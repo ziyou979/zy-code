@@ -20,7 +20,7 @@ function isKnownSubcommand(
   spec: { subcommands?: { name: string | string[] }[] } | null,
 ): boolean {
   if (!spec?.subcommands?.length) return false
-  return spec.subcommands.some(sub =>
+  return spec.subcommands.some((sub) =>
     Array.isArray(sub.name) ? sub.name.includes(arg) : sub.name === arg,
   )
 }
@@ -48,8 +48,7 @@ export async function getCommandPrefixStatic(
   const spec = await getCommandSpec(cmd)
   // Check if this is a wrapper command
   let isWrapper =
-    WRAPPER_COMMANDS.has(cmd) ||
-    (spec?.args && toArray(spec.args).some(arg => arg?.isCommand))
+    WRAPPER_COMMANDS.has(cmd) || (spec?.args && toArray(spec.args).some((arg) => arg?.isCommand))
 
   // Special case: if the command has subcommands and the first arg matches a subcommand,
   // treat it as a regular command, not a wrapper
@@ -78,7 +77,7 @@ async function handleWrapper(
   const spec = await getCommandSpec(command)
 
   if (spec?.args) {
-    const commandArgIndex = toArray(spec.args).findIndex(arg => arg?.isCommand)
+    const commandArgIndex = toArray(spec.args).findIndex((arg) => arg?.isCommand)
 
     if (commandArgIndex !== -1) {
       const parts = [command]
@@ -95,11 +94,7 @@ async function handleWrapper(
             return parts.join(' ')
           }
           break
-        } else if (
-          args[i] &&
-          !args[i]!.startsWith('-') &&
-          !ENV_VAR.test(args[i]!)
-        ) {
+        } else if (args[i] && !args[i]!.startsWith('-') && !ENV_VAR.test(args[i]!)) {
           parts.push(args[i]!)
         }
       }
@@ -107,7 +102,7 @@ async function handleWrapper(
   }
 
   const wrapped = args.find(
-    arg => !arg.startsWith('-') && !NUMERIC.test(arg) && !ENV_VAR.test(arg),
+    (arg) => !arg.startsWith('-') && !NUMERIC.test(arg) && !ENV_VAR.test(arg),
   )
   if (!wrapped) return command
 

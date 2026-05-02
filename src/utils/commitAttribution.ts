@@ -2,10 +2,7 @@ import { createHash, randomUUID, type UUID } from 'crypto'
 import { stat } from 'fs/promises'
 import { isAbsolute, join, relative, sep } from 'path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
-import type {
-  AttributionSnapshotMessage,
-  FileAttributionState,
-} from '../types/logs.js'
+import type { AttributionSnapshotMessage, FileAttributionState } from '../types/logs.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
@@ -123,7 +120,7 @@ export const isInternalModelRepo = sequential(async (): Promise<boolean> => {
     repoClassCache = 'none'
     return false
   }
-  const isInternal = INTERNAL_MODEL_REPOS.some(repo => remoteUrl.includes(repo))
+  const isInternal = INTERNAL_MODEL_REPOS.some((repo) => remoteUrl.includes(repo))
   repoClassCache = isInternal ? 'internal' : 'external'
   return isInternal
 })
@@ -263,10 +260,7 @@ export function normalizeFilePath(filePath: string): string {
     // Keep original cwd
   }
 
-  if (
-    resolvedPath.startsWith(resolvedCwd + sep) ||
-    resolvedPath === resolvedCwd
-  ) {
+  if (resolvedPath.startsWith(resolvedCwd + sep) || resolvedPath === resolvedCwd) {
     // Normalize to forward slashes so keys match git diff output on Windows
     return relative(resolvedCwd, resolvedPath).replaceAll(sep, '/')
   }
@@ -326,18 +320,14 @@ function computeFileModificationState(
 
     if (oldContent === '' || newContent === '') {
       // New file or full deletion - contribution is the content length
-      ZyContribution =
-        oldContent === '' ? newContent.length : oldContent.length
+      ZyContribution = oldContent === '' ? newContent.length : oldContent.length
     } else {
       // Find actual changed region via common prefix/suffix matching.
       // This correctly handles same-length replacements (e.g., "Esc" → "esc")
       // where Math.abs(newLen - oldLen) would be 0.
       const minLen = Math.min(oldContent.length, newContent.length)
       let prefixEnd = 0
-      while (
-        prefixEnd < minLen &&
-        oldContent[prefixEnd] === newContent[prefixEnd]
-      ) {
+      while (prefixEnd < minLen && oldContent[prefixEnd] === newContent[prefixEnd]) {
         prefixEnd++
       }
       let suffixLen = 0
@@ -411,9 +401,7 @@ export function trackFileModification(
   const newFileStates = new Map(state.fileStates)
   newFileStates.set(normalizedPath, newFileState)
 
-  logForDebugging(
-    `Attribution: Tracked ${newFileState.ZyContribution} chars for ${normalizedPath}`,
-  )
+  logForDebugging(`Attribution: Tracked ${newFileState.ZyContribution} chars for ${normalizedPath}`)
 
   return {
     ...state,
@@ -551,10 +539,7 @@ export async function calculateCommitAttribution(
 
   // Merge file states from all sessions
   const mergedFileStates = new Map<string, FileAttributionState>()
-  const mergedBaselines = new Map<
-    string,
-    { contentHash: string; mtime: number }
-  >()
+  const mergedBaselines = new Map<string, { contentHash: string; mtime: number }>()
 
   for (const state of states) {
     surfaces.add(state.surface)
@@ -583,18 +568,13 @@ export async function calculateCommitAttribution(
     const fileStates =
       state.fileStates instanceof Map
         ? state.fileStates
-        : new Map(
-            Object.entries(
-              (state.fileStates ?? {}) as Record<string, FileAttributionState>,
-            ),
-          )
+        : new Map(Object.entries((state.fileStates ?? {}) as Record<string, FileAttributionState>))
     for (const [path, fileState] of fileStates) {
       const existing = mergedFileStates.get(path)
       if (existing) {
         mergedFileStates.set(path, {
           ...fileState,
-          ZyContribution:
-            existing.ZyContribution + fileState.ZyContribution,
+          ZyContribution: existing.ZyContribution + fileState.ZyContribution,
         })
       } else {
         mergedFileStates.set(path, fileState)
@@ -604,7 +584,7 @@ export async function calculateCommitAttribution(
 
   // Process files in parallel
   const fileResults = await Promise.all(
-    stagedFiles.map(async file => {
+    stagedFiles.map(async (file) => {
       // Skip generated files
       if (isGeneratedFile(file)) {
         return { type: 'generated' as const, file }
@@ -697,19 +677,14 @@ export async function calculateCommitAttribution(
     totalZyChars += result.ZyChars
     totalHumanChars += result.humanChars
 
-    surfaceCounts[result.surface] =
-      (surfaceCounts[result.surface] ?? 0) + result.ZyChars
+    surfaceCounts[result.surface] = (surfaceCounts[result.surface] ?? 0) + result.ZyChars
   }
 
   const totalChars = totalZyChars + totalHumanChars
-  const ZyPercent =
-    totalChars > 0 ? Math.round((totalZyChars / totalChars) * 100) : 0
+  const ZyPercent = totalChars > 0 ? Math.round((totalZyChars / totalChars) * 100) : 0
 
   // Calculate surface breakdown (percentage of total content per surface)
-  const surfaceBreakdown: Record<
-    string,
-    { ZyChars: number; percent: number }
-  > = {}
+  const surfaceBreakdown: Record<string, { ZyChars: number; percent: number }> = {}
   for (const [surface, chars] of Object.entries(surfaceCounts)) {
     // Calculate what percentage of TOTAL content this surface contributed
     const percent = totalChars > 0 ? Math.round((chars / totalChars) * 100) : 0
@@ -807,11 +782,10 @@ export async function getStagedFiles(): Promise<string[]> {
   const cwd = getAttributionRepoRoot()
 
   try {
-    const result = await execFileNoThrowWithCwd(
-      gitExe(),
-      ['diff', '--cached', '--name-only'],
-      { cwd, timeout: 5000 },
-    )
+    const result = await execFileNoThrowWithCwd(gitExe(), ['diff', '--cached', '--name-only'], {
+      cwd,
+      timeout: 5000,
+    })
 
     if (result.code === 0 && result.stdout) {
       return result.stdout.split('\n').filter(Boolean)
@@ -842,7 +816,7 @@ export async function isGitTransientState(): Promise<boolean> {
   ]
 
   const results = await Promise.all(
-    indicators.map(async indicator => {
+    indicators.map(async (indicator) => {
       try {
         await stat(join(gitDir, indicator))
         return true
@@ -852,7 +826,7 @@ export async function isGitTransientState(): Promise<boolean> {
     }),
   )
 
-  return results.some(exists => exists)
+  return results.some((exists) => exists)
 }
 
 /**
@@ -909,8 +883,7 @@ export function restoreAttributionStateFromSnapshots(
   state.promptCount = lastSnapshot.promptCount ?? 0
   state.promptCountAtLastCommit = lastSnapshot.promptCountAtLastCommit ?? 0
   state.permissionPromptCount = lastSnapshot.permissionPromptCount ?? 0
-  state.permissionPromptCountAtLastCommit =
-    lastSnapshot.permissionPromptCountAtLastCommit ?? 0
+  state.permissionPromptCountAtLastCommit = lastSnapshot.permissionPromptCountAtLastCommit ?? 0
   state.escapeCount = lastSnapshot.escapeCount ?? 0
   state.escapeCountAtLastCommit = lastSnapshot.escapeCountAtLastCommit ?? 0
 

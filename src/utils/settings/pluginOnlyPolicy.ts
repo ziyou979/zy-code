@@ -16,11 +16,8 @@ export type CustomizationSurface = (typeof CUSTOMIZATION_SURFACES)[number]
  * `true` locks all four surfaces; array form locks only those listed.
  * Absent/undefined → nothing locked (the default).
  */
-export function isRestrictedToPluginOnly(
-  surface: CustomizationSurface,
-): boolean {
-  const policy =
-    getSettingsForSource('policySettings')?.strictPluginOnlyCustomization
+export function isRestrictedToPluginOnly(surface: CustomizationSurface): boolean {
+  const policy = getSettingsForSource('policySettings')?.strictPluginOnlyCustomization
   if (policy === true) return true
   if (Array.isArray(policy)) return policy.includes(surface)
   return false

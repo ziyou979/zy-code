@@ -7,8 +7,7 @@ export const BRIDGE_LOGIN_INSTRUCTION =
 
 /** Full error printed when `zy remote-control` is run without auth. */
 export const BRIDGE_LOGIN_ERROR =
-  'Error: You must be logged in to use Remote Control.\n\n' +
-  BRIDGE_LOGIN_INSTRUCTION
+  'Error: You must be logged in to use Remote Control.\n\n' + BRIDGE_LOGIN_INSTRUCTION
 
 /** Shown when the user disconnects Remote Control (via /remote-control or ultraplan launch). */
 export const REMOTE_CONTROL_DISCONNECTED_MSG = 'Remote Control disconnected.'
@@ -141,11 +140,7 @@ export type BridgeApiClient = {
     signal?: AbortSignal,
     reclaimOlderThanMs?: number,
   ): Promise<WorkResponse | null>
-  acknowledgeWork(
-    environmentId: string,
-    workId: string,
-    sessionToken: string,
-  ): Promise<void>
+  acknowledgeWork(environmentId: string, workId: string, sessionToken: string): Promise<void>
   /** Stop a work item via the environments API. */
   stopWork(environmentId: string, workId: string, force: boolean): Promise<void>
   /** Deregister/delete the bridge environment on graceful shutdown. */

@@ -6,9 +6,7 @@ import { all } from '../../utils/generators.js'
 import { type MessageUpdateLazy, runToolUse } from './toolExecution.js'
 
 function getMaxToolUseConcurrency(): number {
-  return (
-    parseInt(process.env.ZY_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) || 10
-  )
+  return parseInt(process.env.ZY_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) || 10
 }
 
 export type MessageUpdate = {
@@ -23,10 +21,7 @@ export async function* runTools(
   toolUseContext: ToolUseContext,
 ): AsyncGenerator<MessageUpdate, void> {
   let currentContext = toolUseContext
-  for (const { isConcurrencySafe, blocks } of partitionToolCalls(
-    toolUseMessages,
-    currentContext,
-  )) {
+  for (const { isConcurrencySafe, blocks } of partitionToolCalls(toolUseMessages, currentContext)) {
     if (isConcurrencySafe) {
       const queuedContextModifiers: Record<
         string,
@@ -124,15 +119,11 @@ async function* runToolsSerially(
   let currentContext = toolUseContext
 
   for (const toolUse of toolUseMessages) {
-    toolUseContext.setInProgressToolUseIDs(prev =>
-      new Set(prev).add(toolUse.id),
-    )
+    toolUseContext.setInProgressToolUseIDs((prev) => new Set(prev).add(toolUse.id))
     for await (const update of runToolUse(
       toolUse,
-      assistantMessages.find(_ =>
-        _.message.content.some(
-          _ => _.type === 'tool_call' && _.id === toolUse.id,
-        ),
+      assistantMessages.find((_) =>
+        _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUse.id),
       )!,
       canUseTool,
       currentContext,
@@ -157,15 +148,11 @@ async function* runToolsConcurrently(
 ): AsyncGenerator<MessageUpdateLazy, void> {
   yield* all(
     toolUseMessages.map(async function* (toolUse) {
-      toolUseContext.setInProgressToolUseIDs(prev =>
-        new Set(prev).add(toolUse.id),
-      )
+      toolUseContext.setInProgressToolUseIDs((prev) => new Set(prev).add(toolUse.id))
       yield* runToolUse(
         toolUse,
-        assistantMessages.find(_ =>
-          _.message.content.some(
-            _ => _.type === 'tool_call' && _.id === toolUse.id,
-          ),
+        assistantMessages.find((_) =>
+          _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUse.id),
         )!,
         canUseTool,
         toolUseContext,
@@ -176,11 +163,8 @@ async function* runToolsConcurrently(
   )
 }
 
-function markToolUseAsComplete(
-  toolUseContext: ToolUseContext,
-  toolUseID: string,
-) {
-  toolUseContext.setInProgressToolUseIDs(prev => {
+function markToolUseAsComplete(toolUseContext: ToolUseContext, toolUseID: string) {
+  toolUseContext.setInProgressToolUseIDs((prev) => {
     const next = new Set(prev)
     next.delete(toolUseID)
     return next

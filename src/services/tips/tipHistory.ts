@@ -2,7 +2,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 
 export function recordTipShown(tipId: string): void {
   const numStartups = getGlobalConfig().numStartups
-  saveGlobalConfig(c => {
+  saveGlobalConfig((c) => {
     const history = c.tipsHistory ?? {}
     if (history[tipId] === numStartups) return c
     return { ...c, tipsHistory: { ...history, [tipId]: numStartups } }

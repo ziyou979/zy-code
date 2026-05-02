@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  type ZyAILimits,
-  currentLimits,
-  statusListeners,
-} from './zyAiLimits.js'
+import { type ZyAILimits, currentLimits, statusListeners } from './zyAiLimits.js'
 
 export function useZyAiLimits(): ZyAILimits {
   const [limits, setLimits] = useState<ZyAILimits>({ ...currentLimits })

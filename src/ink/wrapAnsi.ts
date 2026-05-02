@@ -7,14 +7,9 @@ type WrapAnsiOptions = {
 }
 
 const wrapAnsiBun =
-  typeof Bun !== 'undefined' && typeof Bun.wrapAnsi === 'function'
-    ? Bun.wrapAnsi
-    : null
+  typeof Bun !== 'undefined' && typeof Bun.wrapAnsi === 'function' ? Bun.wrapAnsi : null
 
-const wrapAnsi: (
-  input: string,
-  columns: number,
-  options?: WrapAnsiOptions,
-) => string = wrapAnsiBun ?? wrapAnsiNpm
+const wrapAnsi: (input: string, columns: number, options?: WrapAnsiOptions) => string =
+  wrapAnsiBun ?? wrapAnsiNpm
 
 export { wrapAnsi }

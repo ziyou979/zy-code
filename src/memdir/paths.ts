@@ -1,22 +1,12 @@
 import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { isAbsolute, join, normalize, sep } from 'path'
-import {
-  getIsNonInteractiveSession,
-  getProjectRoot,
-} from '../bootstrap/state.js'
+import { getIsNonInteractiveSession, getProjectRoot } from '../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import {
-  getZyConfigHomeDir,
-  isEnvDefinedFalsy,
-  isEnvTruthy,
-} from '../utils/envUtils.js'
+import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy } from '../utils/envUtils.js'
 import { findCanonicalGitRoot } from '../utils/git.js'
 import { sanitizePath } from '../utils/path.js'
-import {
-  getInitialSettings,
-  getSettingsForSource,
-} from '../utils/settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from '../utils/settings/settings.js'
 
 /**
  * Whether auto-memory features are enabled (memdir, agent memory, past session search).
@@ -41,10 +31,7 @@ export function isAutoMemoryEnabled(): boolean {
   if (isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
     return false
   }
-  if (
-    isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
-    !process.env.ZY_CODE_REMOTE_MEMORY_DIR
-  ) {
+  if (isEnvTruthy(process.env.ZY_CODE_REMOTE) && !process.env.ZY_CODE_REMOTE_MEMORY_DIR) {
     return false
   }
   const settings = getInitialSettings()
@@ -71,8 +58,7 @@ export function isExtractModeActive(): boolean {
     return false
   }
   return (
-    !getIsNonInteractiveSession() ||
-    getFeatureValue_CACHED_MAY_BE_STALE('zy_slate_thimble', false)
+    !getIsNonInteractiveSession() || getFeatureValue_CACHED_MAY_BE_STALE('zy_slate_thimble', false)
   )
 }
 
@@ -106,10 +92,7 @@ const AUTO_MEM_ENTRYPOINT_NAME = 'MEMORY.md'
  * Returns the normalized path with exactly one trailing separator,
  * or undefined if the path is unset/empty/rejected.
  */
-function validateMemoryPath(
-  raw: string | undefined,
-  expandTilde: boolean,
-): string | undefined {
+function validateMemoryPath(raw: string | undefined, expandTilde: boolean): string | undefined {
   if (!raw) {
     return undefined
   }
@@ -119,10 +102,7 @@ function validateMemoryPath(
   // always pass absolute paths). Bare "~", "~/", "~/.", "~/..", etc. are NOT
   // expanded — they would make isAutoMemPath() match all of $HOME or its
   // parent (same class of danger as "/" or "C:\").
-  if (
-    expandTilde &&
-    (candidate.startsWith('~/') || candidate.startsWith('~\\'))
-  ) {
+  if (expandTilde && (candidate.startsWith('~/') || candidate.startsWith('~\\'))) {
     const rest = candidate.slice(2)
     // Reject trivial remainders that would expand to $HOME or an ancestor.
     // normalize('') = '.', normalize('.') = '.', normalize('foo/..') = '.',
@@ -159,10 +139,7 @@ function validateMemoryPath(
  * produce a different project-key for every session.
  */
 function getAutoMemPathOverride(): string | undefined {
-  return validateMemoryPath(
-    process.env.CLAUDE_COWORK_MEMORY_PATH_OVERRIDE,
-    false,
-  )
+  return validateMemoryPath(process.env.CLAUDE_COWORK_MEMORY_PATH_OVERRIDE, false)
 }
 
 /**
@@ -227,9 +204,9 @@ export const getAutoMemPath = memoize(
       return override
     }
     const projectsDir = join(getMemoryBaseDir(), 'projects')
-    return (
-      join(projectsDir, sanitizePath(getAutoMemBase()), AUTO_MEM_DIRNAME) + sep
-    ).normalize('NFC')
+    return (join(projectsDir, sanitizePath(getAutoMemBase()), AUTO_MEM_DIRNAME) + sep).normalize(
+      'NFC',
+    )
   },
   () => getProjectRoot(),
 )

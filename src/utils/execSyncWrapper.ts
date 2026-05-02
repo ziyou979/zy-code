@@ -25,14 +25,8 @@ export function execSync_DEPRECATED(
   command: string,
   options: ExecSyncOptionsWithBufferEncoding,
 ): Buffer
-export function execSync_DEPRECATED(
-  command: string,
-  options?: ExecSyncOptions,
-): Buffer | string
-export function execSync_DEPRECATED(
-  command: string,
-  options?: ExecSyncOptions,
-): Buffer | string {
+export function execSync_DEPRECATED(command: string, options?: ExecSyncOptions): Buffer | string
+export function execSync_DEPRECATED(command: string, options?: ExecSyncOptions): Buffer | string {
   using _ = slowLogging`execSync: ${command.slice(0, 100)}`
   return nodeExecSync(command, options)
 }

@@ -6,15 +6,7 @@
  * previously implemented as a Rust NAPI binding but now in pure TypeScript.
  */
 
-import {
-  appendFile,
-  chmod,
-  mkdir,
-  readdir,
-  rmdir,
-  stat,
-  unlink,
-} from 'fs/promises'
+import { appendFile, chmod, mkdir, readdir, rmdir, stat, unlink } from 'fs/promises'
 import { createServer, type Server, type Socket } from 'net'
 import { homedir, platform } from 'os'
 import { join } from 'path'
@@ -28,10 +20,9 @@ import { getSecureSocketPath, getSocketDir } from './common.js'
 const VERSION = '1.0.0'
 const MAX_MESSAGE_SIZE = 1024 * 1024 // 1MB - Max message size that can be sent to Chrome
 
-const LOG_FILE =
-  isInternalBuild()
-    ? join(homedir(), '.zy', 'debug', 'chrome-native-host.txt')
-    : undefined
+const LOG_FILE = isInternalBuild()
+  ? join(homedir(), '.zy', 'debug', 'chrome-native-host.txt')
+  : undefined
 
 function log(message: string, ...args: unknown[]): void {
   if (LOG_FILE) {
@@ -166,7 +157,7 @@ class ChromeNativeHost {
 
     log(`Creating socket listener: ${this.socketPath}`)
 
-    this.server = createServer(socket => this.handleMcpClient(socket))
+    this.server = createServer((socket) => this.handleMcpClient(socket))
 
     await new Promise<void>((resolve, reject) => {
       this.server!.listen(this.socketPath!, () => {
@@ -175,7 +166,7 @@ class ChromeNativeHost {
         resolve()
       })
 
-      this.server!.on('error', err => {
+      this.server!.on('error', (err) => {
         log('Socket server error:', err)
         reject(err)
       })
@@ -205,7 +196,7 @@ class ChromeNativeHost {
 
     // Close server
     if (this.server) {
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve) => {
         this.server!.close(() => resolve())
       })
       this.server = null
@@ -325,10 +316,7 @@ class ChromeNativeHost {
           const notificationData = Buffer.from(jsonStringify(data), 'utf-8')
           const lengthBuffer = Buffer.alloc(4)
           lengthBuffer.writeUInt32LE(notificationData.length, 0)
-          const notificationMsg = Buffer.concat([
-            lengthBuffer,
-            notificationData,
-          ])
+          const notificationMsg = Buffer.concat([lengthBuffer, notificationData])
 
           for (const [id, client] of this.mcpClients) {
             try {
@@ -362,9 +350,7 @@ class ChromeNativeHost {
     }
 
     this.mcpClients.set(clientId, client)
-    log(
-      `MCP client ${clientId} connected. Total clients: ${this.mcpClients.size}`,
-    )
+    log(`MCP client ${clientId} connected. Total clients: ${this.mcpClients.size}`)
 
     // Notify Chrome of connection
     sendChromeMessage(
@@ -394,12 +380,8 @@ class ChromeNativeHost {
         client.buffer = client.buffer.slice(4 + length)
 
         try {
-          const request = jsonParse(
-            messageBytes.toString('utf-8'),
-          ) as ToolRequest
-          log(
-            `Forwarding tool request from MCP client ${clientId}: ${request.method}`,
-          )
+          const request = jsonParse(messageBytes.toString('utf-8')) as ToolRequest
+          log(`Forwarding tool request from MCP client ${clientId}: ${request.method}`)
 
           // Forward to Chrome
           sendChromeMessage(
@@ -415,14 +397,12 @@ class ChromeNativeHost {
       }
     })
 
-    socket.on('error', err => {
+    socket.on('error', (err) => {
       log(`MCP client ${clientId} error: ${err}`)
     })
 
     socket.on('close', () => {
-      log(
-        `MCP client ${clientId} disconnected. Remaining clients: ${this.mcpClients.size - 1}`,
-      )
+      log(`MCP client ${clientId} disconnected. Remaining clients: ${this.mcpClients.size - 1}`)
       this.mcpClients.delete(clientId)
 
       // Notify Chrome of disconnection
@@ -508,11 +488,7 @@ class ChromeMessageReader {
     // Check if we already have a complete message buffered
     if (this.buffer.length >= 4) {
       const length = this.buffer.readUInt32LE(0)
-      if (
-        length > 0 &&
-        length <= MAX_MESSAGE_SIZE &&
-        this.buffer.length >= 4 + length
-      ) {
+      if (length > 0 && length <= MAX_MESSAGE_SIZE && this.buffer.length >= 4 + length) {
         const messageBytes = this.buffer.subarray(4, 4 + length)
         this.buffer = this.buffer.subarray(4 + length)
         return messageBytes.toString('utf-8')
@@ -520,7 +496,7 @@ class ChromeMessageReader {
     }
 
     // Wait for more data
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.pendingResolve = resolve
       // In case data arrived between check and setting pendingResolve
       this.tryProcessMessage()

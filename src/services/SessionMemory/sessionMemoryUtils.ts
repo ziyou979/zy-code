@@ -62,9 +62,7 @@ export function getLastSummarizedMessageId(): string | undefined {
 /**
  * Set the last summarized message ID (called from sessionMemory.ts)
  */
-export function setLastSummarizedMessageId(
-  messageId: string | undefined,
-): void {
+export function setLastSummarizedMessageId(messageId: string | undefined): void {
   lastSummarizedMessageId = messageId
 }
 
@@ -128,9 +126,7 @@ export async function getSessionMemoryContent(): Promise<string | null> {
 /**
  * Set the session memory configuration
  */
-export function setSessionMemoryConfig(
-  config: Partial<SessionMemoryConfig>,
-): void {
+export function setSessionMemoryConfig(config: Partial<SessionMemoryConfig>): void {
   sessionMemoryConfig = {
     ...sessionMemoryConfig,
     ...config,
@@ -170,9 +166,7 @@ export function markSessionMemoryInitialized(): void {
  * Check if we've met the threshold to initialize session memory.
  * Uses total context window tokens (same as autocompact) for consistent behavior.
  */
-export function hasMetInitializationThreshold(
-  currentTokenCount: number,
-): boolean {
+export function hasMetInitializationThreshold(currentTokenCount: number): boolean {
   return currentTokenCount >= sessionMemoryConfig.minimumMessageTokensToInit
 }
 
@@ -183,9 +177,7 @@ export function hasMetInitializationThreshold(
  */
 export function hasMetUpdateThreshold(currentTokenCount: number): boolean {
   const tokensSinceLastExtraction = currentTokenCount - tokensAtLastExtraction
-  return (
-    tokensSinceLastExtraction >= sessionMemoryConfig.minimumTokensBetweenUpdate
-  )
+  return tokensSinceLastExtraction >= sessionMemoryConfig.minimumTokensBetweenUpdate
 }
 
 /**

@@ -1,69 +1,89 @@
-import figures from 'figures';
-import * as React from 'react';
-import { useEffect } from 'react';
-import { tSync } from 'src/i18n/index.js';
-import { getOriginalCwd } from '../../../bootstrap/state.js';
-import type { CommandResultDisplay } from '../../../commands.js';
-import { Select } from '../../../components/CustomSelect/select.js';
-import { Box, Text } from '../../../ink.js';
-import type { ToolPermissionContext } from '../../../Tool.js';
-import { useTabHeaderFocus } from '../../design-system/Tabs.js';
+import figures from 'figures'
+import * as React from 'react'
+import { useEffect } from 'react'
+import { tSync } from 'src/i18n/index.js'
+import { getOriginalCwd } from '../../../bootstrap/state.js'
+import type { CommandResultDisplay } from '../../../commands.js'
+import { Select } from '../../../components/CustomSelect/select.js'
+import { Box, Text } from '../../../ink.js'
+import type { ToolPermissionContext } from '../../../Tool.js'
+import { useTabHeaderFocus } from '../../design-system/Tabs.js'
 type Props = {
-  onExit: (result?: string, options?: {
-    display?: CommandResultDisplay;
-  }) => void;
-  toolPermissionContext: ToolPermissionContext;
-  onRequestAddDirectory: () => void;
-  onRequestRemoveDirectory: (path: string) => void;
-  onHeaderFocusChange?: (focused: boolean) => void;
-};
+  onExit: (
+    result?: string,
+    options?: {
+      display?: CommandResultDisplay
+    },
+  ) => void
+  toolPermissionContext: ToolPermissionContext
+  onRequestAddDirectory: () => void
+  onRequestRemoveDirectory: (path: string) => void
+  onHeaderFocusChange?: (focused: boolean) => void
+}
 type DirectoryItem = {
-  path: string;
-  isCurrent: boolean;
-  isDeletable: boolean;
-};
+  path: string
+  isCurrent: boolean
+  isDeletable: boolean
+}
 export function WorkspaceTab({
   onExit,
   toolPermissionContext,
   onRequestAddDirectory,
   onRequestRemoveDirectory,
-  onHeaderFocusChange
+  onHeaderFocusChange,
 }: Props) {
-  const {
-    headerFocused,
-    focusHeader
-  } = useTabHeaderFocus();
+  const { headerFocused, focusHeader } = useTabHeaderFocus()
   useEffect(() => {
-    onHeaderFocusChange?.(headerFocused);
-  }, [headerFocused, onHeaderFocusChange]);
+    onHeaderFocusChange?.(headerFocused)
+  }, [headerFocused, onHeaderFocusChange])
   // @ts-ignore
-  const additionalDirectories = (Array.from(toolPermissionContext.additionalWorkingDirectories.keys()) as string[]).map(path => ({
+  const additionalDirectories = (
+    Array.from(toolPermissionContext.additionalWorkingDirectories.keys()) as string[]
+  ).map((path) => ({
     path,
     isCurrent: false,
-    isDeletable: true
-  }));
+    isDeletable: true,
+  }))
   const handleDirectorySelect = (selectedValue: string) => {
-    if (selectedValue === "add-directory") {
-      onRequestAddDirectory();
-      return;
+    if (selectedValue === 'add-directory') {
+      onRequestAddDirectory()
+      return
     }
-    const directory = additionalDirectories.find(d => d.path === selectedValue);
+    const directory = additionalDirectories.find((d) => d.path === selectedValue)
     if (directory && directory.isDeletable) {
-      onRequestRemoveDirectory(directory.path);
+      onRequestRemoveDirectory(directory.path)
     }
-  };
-  const handleCancel = () => onExit(tSync('permissionRules.workspaceDialogDismissed'), {
-    display: "system"
-  });
-  const opts = additionalDirectories.map(dir => ({
+  }
+  const handleCancel = () =>
+    onExit(tSync('permissionRules.workspaceDialogDismissed'), {
+      display: 'system',
+    })
+  const opts = additionalDirectories.map((dir) => ({
     label: dir.path,
-    value: dir.path
-  }));
+    value: dir.path,
+  }))
   opts.push({
     label: `${tSync('permissionRules.addDirectoryEllipsis')}`,
-    value: "add-directory"
-  });
-  const options = opts;
-  const t7 = Math.min(10, options.length);
-  return <Box flexDirection="column" marginBottom={1}>{<Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}><Text>{`-  ${getOriginalCwd()}`}</Text><Text dimColor={true}>({tSync('permissionRules.originalWorkingDirectory')})</Text></Box>}<Select options={options} onChange={handleDirectorySelect} onCancel={handleCancel} visibleOptionCount={t7} onUpFromFirstItem={focusHeader} isDisabled={headerFocused} /></Box>;
+    value: 'add-directory',
+  })
+  const options = opts
+  const t7 = Math.min(10, options.length)
+  return (
+    <Box flexDirection="column" marginBottom={1}>
+      {
+        <Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}>
+          <Text>{`-  ${getOriginalCwd()}`}</Text>
+          <Text dimColor={true}>({tSync('permissionRules.originalWorkingDirectory')})</Text>
+        </Box>
+      }
+      <Select
+        options={options}
+        onChange={handleDirectorySelect}
+        onCancel={handleCancel}
+        visibleOptionCount={t7}
+        onUpFromFirstItem={focusHeader}
+        isDisabled={headerFocused}
+      />
+    </Box>
+  )
 }

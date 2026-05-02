@@ -27,8 +27,7 @@ export function renderPlaceholder({
   if (placeholder) {
     if (hidePlaceholderText) {
       // Voice recording: show only the cursor, no placeholder text
-      renderedPlaceholder =
-        showCursor && focus && terminalFocus ? invert(' ') : ''
+      renderedPlaceholder = showCursor && focus && terminalFocus ? invert(' ') : ''
     } else {
       renderedPlaceholder = chalk.dim(placeholder)
 

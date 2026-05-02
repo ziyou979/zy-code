@@ -35,10 +35,7 @@ const INLINE_MARKETPLACE = 'inline'
  * real marketplace — fabricating "dep@inline" would never match anything.
  * verifyAndDemote handles bare deps via name-only matching.
  */
-export function qualifyDependency(
-  dep: string,
-  declaringPluginId: string,
-): string {
+export function qualifyDependency(dep: string, declaringPluginId: string): string {
   if (parsePluginIdentifier(dep).marketplace) return dep
   const mkt = parsePluginIdentifier(declaringPluginId).marketplace
   if (!mkt || mkt === INLINE_MARKETPLACE) return dep
@@ -103,10 +100,7 @@ export async function resolveDependencyClosure(
   const visited = new Set<PluginId>()
   const stack: PluginId[] = []
 
-  async function walk(
-    id: PluginId,
-    requiredBy: PluginId,
-  ): Promise<ResolutionResult | null> {
+  async function walk(id: PluginId, requiredBy: PluginId): Promise<ResolutionResult | null> {
     // Skip already-enabled DEPENDENCIES (avoids surprise settings writes),
     // but NEVER skip the root: installing an already-enabled plugin must
     // still cache/register it. Without this guard, re-installing a plugin
@@ -178,15 +172,13 @@ export function verifyAndDemote(plugins: readonly LoadedPlugin[]): {
   demoted: Set<string>
   errors: PluginError[]
 } {
-  const known = new Set(plugins.map(p => p.source))
-  const enabled = new Set(plugins.filter(p => p.enabled).map(p => p.source))
+  const known = new Set(plugins.map((p) => p.source))
+  const enabled = new Set(plugins.filter((p) => p.enabled).map((p) => p.source))
   // Name-only indexes for bare deps from --plugin-dir (@inline) plugins:
   // the real marketplace is unknown, so match "B" against any enabled "B@*".
   // enabledByName is a multiset: if B@epic AND B@other are both enabled,
   // demoting one mustn't make "B" disappear from the index.
-  const knownByName = new Set(
-    plugins.map(p => parsePluginIdentifier(p.source).name),
-  )
+  const knownByName = new Set(plugins.map((p) => parsePluginIdentifier(p.source).name))
   const enabledByName = new Map<string, number>()
   for (const id of enabled) {
     const n = parsePluginIdentifier(id).name
@@ -203,9 +195,7 @@ export function verifyAndDemote(plugins: readonly LoadedPlugin[]): {
         const dep = qualifyDependency(rawDep, p.source)
         // Bare dep ← @inline plugin: match by name only (see enabledByName)
         const isBare = !parsePluginIdentifier(dep).marketplace
-        const satisfied = isBare
-          ? (enabledByName.get(dep) ?? 0) > 0
-          : enabled.has(dep)
+        const satisfied = isBare ? (enabledByName.get(dep) ?? 0) > 0 : enabled.has(dep)
         if (!satisfied) {
           enabled.delete(p.source)
           const count = enabledByName.get(p.name) ?? 0
@@ -216,9 +206,7 @@ export function verifyAndDemote(plugins: readonly LoadedPlugin[]): {
             source: p.source,
             plugin: p.name,
             dependency: dep,
-            reason: (isBare ? knownByName.has(dep) : known.has(dep))
-              ? 'not-enabled'
-              : 'not-found',
+            reason: (isBare ? knownByName.has(dep) : known.has(dep)) ? 'not-enabled' : 'not-found',
           })
           changed = true
           break
@@ -228,7 +216,7 @@ export function verifyAndDemote(plugins: readonly LoadedPlugin[]): {
   }
 
   const demoted = new Set(
-    plugins.filter(p => p.enabled && !enabled.has(p.source)).map(p => p.source),
+    plugins.filter((p) => p.enabled && !enabled.has(p.source)).map((p) => p.source),
   )
   return { demoted, errors }
 }
@@ -248,10 +236,10 @@ export function findReverseDependents(
   const { name: targetName } = parsePluginIdentifier(pluginId)
   return plugins
     .filter(
-      p =>
+      (p) =>
         p.enabled &&
         p.source !== pluginId &&
-        (p.manifest.dependencies ?? []).some(d => {
+        (p.manifest.dependencies ?? []).some((d) => {
           const qualified = qualifyDependency(d, p.source)
           // Bare dep (from @inline plugin): match by name only
           return parsePluginIdentifier(qualified).marketplace
@@ -259,7 +247,7 @@ export function findReverseDependents(
             : qualified === targetName
         }),
     )
-    .map(p => p.name)
+    .map((p) => p.name)
 }
 
 /**
@@ -272,9 +260,7 @@ export function findReverseDependents(
  * Without the array check, a version-pinned dep would be re-added to the
  * closure and the settings write would clobber the constraint with `true`.
  */
-export function getEnabledPluginIdsForScope(
-  settingSource: EditableSettingSource,
-): Set<PluginId> {
+export function getEnabledPluginIdsForScope(settingSource: EditableSettingSource): Set<PluginId> {
   return new Set(
     Object.entries(getSettingsForSource(settingSource)?.enabledPlugins ?? {})
       .filter(([, v]) => v === true || Array.isArray(v))
@@ -297,9 +283,7 @@ export function formatDependencyCountSuffix(installedDeps: string[]): string {
  * results. Em-dash style for CLI result messages (not the middot style
  * used in the notification UI). Returns empty string when no dependents.
  */
-export function formatReverseDependentsSuffix(
-  rdeps: string[] | undefined,
-): string {
+export function formatReverseDependentsSuffix(rdeps: string[] | undefined): string {
   if (!rdeps || rdeps.length === 0) return ''
   return ` — warning: required by ${rdeps.join(', ')}`
 }

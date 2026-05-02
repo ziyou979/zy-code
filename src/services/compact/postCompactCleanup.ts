@@ -32,9 +32,7 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
   // （context-collapse、memory 文件缓存）。
   // 使用与 isMainThread 相同的 startsWith 模式（index.ts:188）。
   const isMainThreadCompact =
-    querySource === undefined ||
-    querySource.startsWith('repl_main_thread') ||
-    querySource === 'sdk'
+    querySource === undefined || querySource.startsWith('repl_main_thread') || querySource === 'sdk'
 
   resetMicrocompactState()
   if (feature('CONTEXT_COLLAPSE')) {
@@ -66,9 +64,7 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
   // cacheUtils resets. See compactConversation() for full rationale.
   clearBetaTracingState()
   if (feature('COMMIT_ATTRIBUTION')) {
-    void import('../../utils/attributionHooks.js').then(m =>
-      (m as any).sweepFileContentCache(),
-    )
+    void import('../../utils/attributionHooks.js').then((m) => (m as any).sweepFileContentCache())
   }
   clearSessionMessagesCache()
 }

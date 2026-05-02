@@ -146,7 +146,7 @@ describe('anthropicStreamToStandard: 整体流转换', () => {
 
   test('整流转换后事件序列符合预期', async () => {
     const events = await collect(anthropicStreamToStandard(fakeStream()))
-    const types = events.map(e => e.type)
+    const types = events.map((e) => e.type)
     expect(types).toEqual([
       'response_start',
       'chunk_start',

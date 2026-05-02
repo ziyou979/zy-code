@@ -164,9 +164,7 @@ export type PermissionCommandMetadata = {
 /**
  * Metadata attached to permission decisions
  */
-export type PermissionMetadata =
-  | { command: PermissionCommandMetadata }
-  | undefined
+export type PermissionMetadata = { command: PermissionCommandMetadata } | undefined
 
 /**
  * Result when permission is granted
@@ -240,10 +238,7 @@ export type PermissionDenyDecision = {
  */
 export type PermissionDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
-> =
-  | PermissionAllowDecision<Input>
-  | PermissionAskDecision<Input>
-  | PermissionDenyDecision
+> = PermissionAllowDecision<Input> | PermissionAskDecision<Input> | PermissionDenyDecision
 
 /**
  * Permission result with additional passthrough option
@@ -426,10 +421,7 @@ export type ToolPermissionRulesBySource = {
  */
 export type ToolPermissionContext = {
   readonly mode: PermissionMode
-  readonly additionalWorkingDirectories: ReadonlyMap<
-    string,
-    AdditionalWorkingDirectory
-  >
+  readonly additionalWorkingDirectories: ReadonlyMap<string, AdditionalWorkingDirectory>
   readonly alwaysAllowRules: ToolPermissionRulesBySource
   readonly alwaysDenyRules: ToolPermissionRulesBySource
   readonly alwaysAskRules: ToolPermissionRulesBySource

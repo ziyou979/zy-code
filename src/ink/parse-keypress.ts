@@ -176,7 +176,7 @@ function parseTerminalResponse(s: string): TerminalResponse | null {
 
 function splitNumericParams(params: string): number[] {
   if (!params) return []
-  return params.split(';').map(p => parseInt(p, 10))
+  return params.split(';').map((p) => parseInt(p, 10))
 }
 
 export type KeyParseState = {
@@ -407,7 +407,7 @@ const keyName: Record<string, string> = {
 export const nonAlphanumericKeys = [
   // 过滤掉单字符值（来自小键盘的数字、运算符），因为
   // 这些是可打印字符，应该产生输入
-  ...Object.values(keyName).filter(v => v.length > 1),
+  ...Object.values(keyName).filter((v) => v.length > 1),
   // escape 和 backspace 直接在 parseKeypress 中赋值（不通过
   // keyName 映射），所以上面的展开会漏掉它们。如果不加这两个，
   // 通过 Kitty/modifyOtherKeys 的 ctrl+escape 会把字面量单词
@@ -421,36 +421,13 @@ export const nonAlphanumericKeys = [
 ]
 
 const isShiftKey = (code: string): boolean => {
-  return [
-    '[a',
-    '[b',
-    '[c',
-    '[d',
-    '[e',
-    '[2$',
-    '[3$',
-    '[5$',
-    '[6$',
-    '[7$',
-    '[8$',
-    '[Z',
-  ].includes(code)
+  return ['[a', '[b', '[c', '[d', '[e', '[2$', '[3$', '[5$', '[6$', '[7$', '[8$', '[Z'].includes(
+    code,
+  )
 }
 
 const isCtrlKey = (code: string): boolean => {
-  return [
-    'Oa',
-    'Ob',
-    'Oc',
-    'Od',
-    'Oe',
-    '[2^',
-    '[3^',
-    '[5^',
-    '[6^',
-    '[7^',
-    '[8^',
-  ].includes(code)
+  return ['Oa', 'Ob', 'Oc', 'Od', 'Oe', '[2^', '[3^', '[5^', '[6^', '[7^', '[8^'].includes(code)
 }
 
 /**
@@ -739,9 +716,7 @@ function parseKeypress(s: string = ''): ParsedKey {
       key.option = true
     }
 
-    const code = [parts[1], parts[2], parts[4], parts[6]]
-      .filter(Boolean)
-      .join('')
+    const code = [parts[1], parts[2], parts[4], parts[6]].filter(Boolean).join('')
 
     const modifier = ((parts[3] || parts[5] || 1) as number) - 1
 

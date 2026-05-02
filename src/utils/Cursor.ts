@@ -1,10 +1,6 @@
 import { stringWidth } from '../ink/stringWidth.js'
 import { wrapAnsi } from '../ink/wrapAnsi.js'
-import {
-  firstGrapheme,
-  getGraphemeSegmenter,
-  getWordSegmenter,
-} from './intl.js'
+import { firstGrapheme, getGraphemeSegmenter, getWordSegmenter } from './intl.js'
 
 /**
  * Kill ring for storing killed (cut) text that can be yanked (pasted) with Ctrl+Y.
@@ -23,10 +19,7 @@ let lastYankStart = 0
 let lastYankLength = 0
 let lastActionWasYank = false
 
-export function pushToKillRing(
-  text: string,
-  direction: 'prepend' | 'append' = 'append',
-): void {
+export function pushToKillRing(text: string, direction: 'prepend' | 'append' = 'append'): void {
   if (text.length > 0) {
     if (lastActionWasKill && killRing.length > 0) {
       // Accumulate with the most recent kill
@@ -54,8 +47,7 @@ export function getLastKill(): string {
 
 export function getKillRingItem(index: number): string {
   if (killRing.length === 0) return ''
-  const normalizedIndex =
-    ((index % killRing.length) + killRing.length) % killRing.length
+  const normalizedIndex = ((index % killRing.length) + killRing.length) % killRing.length
   return killRing[normalizedIndex] ?? ''
 }
 
@@ -135,10 +127,8 @@ export const VIM_WORD_CHAR_REGEX = /^[\p{L}\p{N}\p{M}_]$/u
 export const WHITESPACE_REGEX = /\s/
 
 // Exported helper functions for Vim character classification
-export const isVimWordChar = (ch: string): boolean =>
-  VIM_WORD_CHAR_REGEX.test(ch)
-export const isVimWhitespace = (ch: string): boolean =>
-  WHITESPACE_REGEX.test(ch)
+export const isVimWordChar = (ch: string): boolean => VIM_WORD_CHAR_REGEX.test(ch)
+export const isVimWhitespace = (ch: string): boolean => WHITESPACE_REGEX.test(ch)
 export const isVimPunctuation = (ch: string): boolean =>
   ch.length > 0 && !isVimWhitespace(ch) && !isVimWordChar(ch)
 
@@ -193,8 +183,7 @@ export class Cursor {
   getViewportCharEnd(maxVisibleLines?: number): number {
     const startLine = this.getViewportStartLine(maxVisibleLines)
     const allLines = this.measuredText.getWrappedLines()
-    if (maxVisibleLines === undefined || maxVisibleLines <= 0)
-      return this.text.length
+    if (maxVisibleLines === undefined || maxVisibleLines <= 0) return this.text.length
     const endLine = Math.min(allLines.length, startLine + maxVisibleLines)
     if (endLine >= allLines.length) return this.text.length
     return allLines[endLine]?.startOffset ?? this.text.length
@@ -228,8 +217,7 @@ export class Cursor {
             // confirm they pasted the right thing without exposing the full token
             const visibleCount = Math.min(6, graphemes.length)
             const maskCount = graphemes.length - visibleCount
-            const splitOffset =
-              graphemes.length > visibleCount ? graphemes[maskCount]!.index : 0
+            const splitOffset = graphemes.length > visibleCount ? graphemes[maskCount]!.index : 0
             displayText = mask.repeat(maskCount) + text.slice(splitOffset)
           } else {
             // Earlier wrapped lines: fully mask. Previously only the last line
@@ -279,8 +267,7 @@ export class Cursor {
           ghostText.text.length > 0
         ) {
           // First ghost character goes in the inverted cursor (grapheme-safe)
-          const firstGhostChar =
-            firstGrapheme(ghostText.text) || ghostText.text[0]!
+          const firstGhostChar = firstGrapheme(ghostText.text) || ghostText.text[0]!
           renderedCursor = cursorChar ? invert(firstGhostChar) : firstGhostChar
           // Rest of ghost text is dimmed after cursor
           const ghostRest = ghostText.text.slice(firstGhostChar.length)
@@ -291,9 +278,7 @@ export class Cursor {
           renderedCursor = cursorChar ? invert(atCursor) : atCursor
         }
 
-        return (
-          beforeCursor + renderedCursor + ghostSuffix + afterCursor.trimEnd()
-        )
+        return beforeCursor + renderedCursor + ghostSuffix + afterCursor.trimEnd()
       })
       .join('\n')
   }
@@ -480,11 +465,7 @@ export class Cursor {
 
   // Helper to create cursor with preserved column, clamped to line length
   // Snaps to grapheme boundary to avoid landing mid-grapheme
-  private createCursorWithColumn(
-    lineStart: number,
-    lineEnd: number,
-    targetColumn: number,
-  ): Cursor {
+  private createCursorWithColumn(lineStart: number, lineEnd: number, targetColumn: number): Cursor {
     const lineLength = lineEnd - lineStart
     const clampedColumn = Math.min(targetColumn, lineLength)
     const rawOffset = lineStart + clampedColumn
@@ -523,11 +504,7 @@ export class Cursor {
     const prevLineEnd = currentStart - 1
     const prevLineStart = this.findLogicalLineStart(prevLineEnd)
 
-    return this.createCursorWithColumn(
-      prevLineStart,
-      prevLineEnd,
-      currentColumn,
-    )
+    return this.createCursorWithColumn(prevLineStart, prevLineEnd, currentColumn)
   }
 
   downLogicalLine(): Cursor {
@@ -545,11 +522,7 @@ export class Cursor {
     const nextLineStart = currentEnd + 1
     const nextLineEnd = this.findLogicalLineEnd(nextLineStart)
 
-    return this.createCursorWithColumn(
-      nextLineStart,
-      nextLineEnd,
-      currentColumn,
-    )
+    return this.createCursorWithColumn(nextLineStart, nextLineEnd, currentColumn)
   }
 
   // Vim word vs WORD movements:
@@ -678,10 +651,7 @@ export class Cursor {
       }
     }
 
-    while (
-      pos < this.text.length &&
-      WHITESPACE_REGEX.test(this.graphemeAt(pos))
-    ) {
+    while (pos < this.text.length && WHITESPACE_REGEX.test(this.graphemeAt(pos))) {
       pos = advance(pos)
     }
 
@@ -715,18 +685,13 @@ export class Cursor {
     if (isVimWordChar(charAtPos)) {
       while (pos < text.length) {
         const nextPos = advance(pos)
-        if (nextPos >= text.length || !isVimWordChar(this.graphemeAt(nextPos)))
-          break
+        if (nextPos >= text.length || !isVimWordChar(this.graphemeAt(nextPos))) break
         pos = nextPos
       }
     } else if (isVimPunctuation(charAtPos)) {
       while (pos < text.length) {
         const nextPos = advance(pos)
-        if (
-          nextPos >= text.length ||
-          !isVimPunctuation(this.graphemeAt(nextPos))
-        )
-          break
+        if (nextPos >= text.length || !isVimPunctuation(this.graphemeAt(nextPos))) break
         pos = nextPos
       }
     }
@@ -796,8 +761,7 @@ export class Cursor {
     // Check if we're already at the end of a WORD
     // (current character is non-whitespace, but next character is whitespace or we're at the end)
     const atEndOfWORD =
-      !cursor.isOverWhitespace() &&
-      (cursor.right().isOverWhitespace() || cursor.right().isAtEnd())
+      !cursor.isOverWhitespace() && (cursor.right().isOverWhitespace() || cursor.right().isAtEnd())
 
     if (atEndOfWORD) {
       // We're already at the end of a WORD, move to the next WORD
@@ -846,10 +810,7 @@ export class Cursor {
     const startOffset = this.offset
     const endOffset = end.offset
 
-    const newText =
-      this.text.slice(0, startOffset) +
-      insertString +
-      this.text.slice(endOffset)
+    const newText = this.text.slice(0, startOffset) + insertString + this.text.slice(endOffset)
 
     return Cursor.fromText(
       newText,
@@ -939,8 +900,7 @@ export class Cursor {
     // chip forward, not the char before it.
     const chipAfter = this.imageRefStartingAt(this.offset)
     if (chipAfter) {
-      const end =
-        this.text[chipAfter.end] === ' ' ? chipAfter.end + 1 : chipAfter.end
+      const end = this.text[chipAfter.end] === ' ' ? chipAfter.end + 1 : chipAfter.end
       return this.modifyText(new Cursor(this.measuredText, end))
     }
 
@@ -989,9 +949,7 @@ export class Cursor {
   }
 
   equals(other: Cursor): boolean {
-    return (
-      this.offset === other.offset && this.measuredText === other.measuredText
-    )
+    return this.offset === other.offset && this.measuredText === other.measuredText
   }
 
   isAtStart(): boolean {
@@ -1059,11 +1017,7 @@ export class Cursor {
    * @param count - Find the Nth occurrence
    * @returns The target offset, or null if not found
    */
-  findCharacter(
-    char: string,
-    type: 'f' | 'F' | 't' | 'T',
-    count: number = 1,
-  ): number | null {
+  findCharacter(char: string, type: 'f' | 'F' | 't' | 'T', count: number = 1): number | null {
     const text = this.text
     const forward = type === 'f' || type === 't'
     const till = type === 't' || type === 'T'
@@ -1076,9 +1030,7 @@ export class Cursor {
         if (grapheme === char) {
           found++
           if (found === count) {
-            return till
-              ? Math.max(this.offset, this.measuredText.prevOffset(pos))
-              : pos
+            return till ? Math.max(this.offset, this.measuredText.prevOffset(pos)) : pos
           }
         }
         pos = this.measuredText.nextOffset(pos)
@@ -1091,9 +1043,7 @@ export class Cursor {
         if (grapheme === char) {
           found++
           if (found === count) {
-            return till
-              ? Math.min(this.offset, this.measuredText.nextOffset(pos))
-              : pos
+            return till ? Math.min(this.offset, this.measuredText.nextOffset(pos)) : pos
           }
         }
         if (pos === 0) break
@@ -1195,11 +1145,7 @@ export class MeasuredText {
    * @param findNext: If true, finds first boundary > target. If false, finds last boundary < target.
    * @returns The found boundary index, or appropriate default
    */
-  private binarySearchBoundary(
-    boundaries: number[],
-    target: number,
-    findNext: boolean,
-  ): number {
+  private binarySearchBoundary(boundaries: number[], target: number, findNext: boolean): number {
     let left = 0
     let right = boundaries.length - 1
     let result = findNext ? this.text.length : 0
@@ -1315,23 +1261,13 @@ export class MeasuredText {
           const endsWithNewline = true
 
           wrappedLines.push(
-            new WrappedLine(
-              text,
-              startOffset,
-              isPrecededByNewline(startOffset),
-              endsWithNewline,
-            ),
+            new WrappedLine(text, startOffset, isPrecededByNewline(startOffset), endsWithNewline),
           )
         } else {
           // If we can't find another newline, this must be the end of text
           const startOffset = this.text.length
           wrappedLines.push(
-            new WrappedLine(
-              text,
-              startOffset,
-              isPrecededByNewline(startOffset),
-              false,
-            ),
+            new WrappedLine(text, startOffset, isPrecededByNewline(startOffset), false),
           )
         }
       } else {
@@ -1347,20 +1283,14 @@ export class MeasuredText {
         // Check if this line ends with a newline in this.text
         const potentialNewlinePos = startOffset + text.length
         const endsWithNewline =
-          potentialNewlinePos < this.text.length &&
-          this.text[potentialNewlinePos] === '\n'
+          potentialNewlinePos < this.text.length && this.text[potentialNewlinePos] === '\n'
 
         if (endsWithNewline) {
           lastNewLinePos = potentialNewlinePos
         }
 
         wrappedLines.push(
-          new WrappedLine(
-            text,
-            startOffset,
-            isPrecededByNewline(startOffset),
-            endsWithNewline,
-          ),
+          new WrappedLine(text, startOffset, isPrecededByNewline(startOffset), endsWithNewline),
         )
       }
     }
@@ -1369,7 +1299,7 @@ export class MeasuredText {
   }
 
   public getWrappedText(): WrappedText {
-    return this.wrappedLines.map(line =>
+    return this.wrappedLines.map((line) =>
       line.isPrecededByNewline ? line.text : line.text.trimStart(),
     )
   }
@@ -1398,10 +1328,7 @@ export class MeasuredText {
 
     // Convert display column to string index
     const displayColumnWithLeading = position.column + leadingWhitespace
-    const stringIndex = this.displayWidthToStringIndex(
-      wrappedLine.text,
-      displayColumnWithLeading,
-    )
+    const stringIndex = this.displayWidthToStringIndex(wrappedLine.text, displayColumnWithLeading)
 
     // Calculate the actual offset
     const offset = wrappedLine.startOffset + stringIndex
@@ -1431,10 +1358,7 @@ export class MeasuredText {
     for (let line = 0; line < lines.length; line++) {
       const currentLine = lines[line]!
       const nextLine = lines[line + 1]
-      if (
-        offset >= currentLine.startOffset &&
-        (!nextLine || offset < nextLine.startOffset)
-      ) {
+      if (offset >= currentLine.startOffset && (!nextLine || offset < nextLine.startOffset)) {
         // Calculate string position within the line
         const stringPosInLine = offset - currentLine.startOffset
 
@@ -1442,14 +1366,10 @@ export class MeasuredText {
         let displayColumn: number
         if (currentLine.isPrecededByNewline) {
           // For lines preceded by newline, calculate display width directly
-          displayColumn = this.stringIndexToDisplayWidth(
-            currentLine.text,
-            stringPosInLine,
-          )
+          displayColumn = this.stringIndexToDisplayWidth(currentLine.text, stringPosInLine)
         } else {
           // For wrapped lines, we need to account for trimmed whitespace
-          const leadingWhitespace =
-            currentLine.text.length - currentLine.text.trimStart().length
+          const leadingWhitespace = currentLine.text.length - currentLine.text.trimStart().length
           if (stringPosInLine < leadingWhitespace) {
             // Cursor is in the trimmed whitespace area, position at start
             displayColumn = 0
@@ -1457,10 +1377,7 @@ export class MeasuredText {
             // Calculate display width from the trimmed text
             const trimmedText = currentLine.text.trimStart()
             const posInTrimmed = stringPosInLine - leadingWhitespace
-            displayColumn = this.stringIndexToDisplayWidth(
-              trimmedText,
-              posInTrimmed,
-            )
+            displayColumn = this.stringIndexToDisplayWidth(trimmedText, posInTrimmed)
           }
         }
 

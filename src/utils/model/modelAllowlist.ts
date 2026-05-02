@@ -36,9 +36,7 @@ function prefixMatchesModel(modelName: string, prefix: string): boolean {
  */
 function modelMatchesVersionPrefix(model: string, entry: string): boolean {
   // Resolve the input model to a full name if it's an alias
-  const resolvedModel = isModelAlias(model)
-    ? parseUserSpecifiedModel(model).toLowerCase()
-    : model
+  const resolvedModel = isModelAlias(model) ? parseUserSpecifiedModel(model).toLowerCase() : model
 
   if (prefixMatchesModel(resolvedModel, entry)) {
     return true
@@ -52,10 +50,7 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
  * takes precedence — "advanced" alone would be a wildcard, but "advanced-1m" narrows
  * it to only that variant.
  */
-function familyHasSpecificEntries(
-  family: string,
-  allowlist: string[],
-): boolean {
+function familyHasSpecificEntries(family: string, allowlist: string[]): boolean {
   for (const entry of allowlist) {
     if (isModelFamilyAlias(entry)) {
       continue
@@ -98,7 +93,7 @@ export function isModelAllowed(model: string): boolean {
 
   const resolvedModel = resolveOverriddenModel(model)
   const normalizedModel = resolvedModel.trim().toLowerCase()
-  const normalizedAllowlist = availableModels.map(m => m.trim().toLowerCase())
+  const normalizedAllowlist = availableModels.map((m) => m.trim().toLowerCase())
 
   // Direct match (alias-to-alias or full-name-to-full-name)
   // Skip tier aliases that have been narrowed by specific entries —

@@ -107,19 +107,11 @@ export function logPluginFetch(
  */
 export function classifyFetchError(error: unknown): string {
   const msg = String((error as { message?: unknown })?.message ?? error)
-  if (
-    /ENOTFOUND|ECONNREFUSED|EAI_AGAIN|Could not resolve host|Connection refused/i.test(
-      msg,
-    )
-  ) {
+  if (/ENOTFOUND|ECONNREFUSED|EAI_AGAIN|Could not resolve host|Connection refused/i.test(msg)) {
     return 'dns_or_refused'
   }
   if (/ETIMEDOUT|timed out|timeout/i.test(msg)) return 'timeout'
-  if (
-    /ECONNRESET|socket hang up|Connection reset by peer|remote end hung up/i.test(
-      msg,
-    )
-  ) {
+  if (/ECONNRESET|socket hang up|Connection reset by peer|remote end hung up/i.test(msg)) {
     return 'conn_reset'
   }
   if (/403|401|authentication|permission denied/i.test(msg)) return 'auth'

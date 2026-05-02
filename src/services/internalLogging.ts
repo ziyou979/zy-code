@@ -19,8 +19,7 @@ const getKubernetesNamespace = memoize(async (): Promise<string | null> => {
   if (!isInternalBuild()) {
     return null
   }
-  const namespacePath =
-    '/var/run/secrets/kubernetes.io/serviceaccount/namespace'
+  const namespacePath = '/var/run/secrets/kubernetes.io/serviceaccount/namespace'
   const namespaceNotFound = 'namespace not found'
   try {
     const content = await readFile(namespacePath, { encoding: 'utf8' })
@@ -41,15 +40,12 @@ export const getContainerId = memoize(async (): Promise<string | null> => {
   const containerIdNotFound = 'container ID not found'
   const containerIdNotFoundInMountinfo = 'container ID not found in mountinfo'
   try {
-    const mountinfo = (
-      await readFile(containerIdPath, { encoding: 'utf8' })
-    ).trim()
+    const mountinfo = (await readFile(containerIdPath, { encoding: 'utf8' })).trim()
 
     // Pattern to match both Docker and containerd/CRI-O container IDs
     // Docker: /docker/containers/[64-char-hex]
     // Containerd: /sandboxes/[64-char-hex]
-    const containerIdPattern =
-      /(?:\/docker\/containers\/|\/sandboxes\/)([0-9a-f]{64})/
+    const containerIdPattern = /(?:\/docker\/containers\/|\/sandboxes\/)([0-9a-f]{64})/
 
     const lines = mountinfo.split('\n')
 
@@ -78,8 +74,7 @@ export async function logPermissionContextForAnts(
   }
 
   void logEvent('zy_internal_record_permission_context', {
-    moment:
-      moment as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    moment: moment as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     namespace:
       (await getKubernetesNamespace()) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     toolPermissionContext: jsonStringify(

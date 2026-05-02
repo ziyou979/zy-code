@@ -30,12 +30,7 @@ import {
 import { COMMON_PARAMETERS } from './commonParameters.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 
-const DOTNET_READ_ONLY_FLAGS = new Set([
-  '--version',
-  '--info',
-  '--list-runtimes',
-  '--list-sdks',
-])
+const DOTNET_READ_ONLY_FLAGS = new Set(['--version', '--info', '--list-runtimes', '--list-sdks'])
 
 type CommandConfig = {
   /** Safe subcommands or flags for this command */
@@ -74,10 +69,7 @@ type CommandConfig = {
  *    anything other than StringConstant (Variable, ParenExpression wrapping
  *    arbitrary pipelines, Hashtable, etc.) is a leak vector.
  */
-export function argLeaksValue(
-  _cmd: string,
-  element?: ParsedCommandElement,
-): boolean {
+export function argLeaksValue(_cmd: string, element?: ParsedCommandElement): boolean {
   const argTypes = (element?.elementTypes ?? []).slice(1)
   const args = element?.args ?? []
   const children = element?.children
@@ -97,7 +89,7 @@ export function argLeaksValue(
     if (argTypes[i] === 'Parameter') {
       const paramChildren = children?.[i]
       if (paramChildren) {
-        if (paramChildren.some(c => c.type !== 'StringConstant')) {
+        if (paramChildren.some((c) => c.type !== 'StringConstant')) {
           return true
         }
       } else {
@@ -191,14 +183,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
       safeFlags: ['-Path', '-LiteralPath', '-Algorithm', '-InputStream'],
     },
     'get-acl': {
-      safeFlags: [
-        '-Path',
-        '-LiteralPath',
-        '-Audit',
-        '-Filter',
-        '-Include',
-        '-Exclude',
-      ],
+      safeFlags: ['-Path', '-LiteralPath', '-Audit', '-Filter', '-Include', '-Exclude'],
     },
 
     // =========================================================================
@@ -240,25 +225,13 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // PowerShell Cmdlets - Data conversion (pure transforms, no side effects)
     // =========================================================================
     'convertto-json': {
-      safeFlags: [
-        '-InputObject',
-        '-Depth',
-        '-Compress',
-        '-EnumsAsStrings',
-        '-AsArray',
-      ],
+      safeFlags: ['-InputObject', '-Depth', '-Compress', '-EnumsAsStrings', '-AsArray'],
     },
     'convertfrom-json': {
       safeFlags: ['-InputObject', '-Depth', '-AsHashtable', '-NoEnumerate'],
     },
     'convertto-csv': {
-      safeFlags: [
-        '-InputObject',
-        '-Delimiter',
-        '-NoTypeInformation',
-        '-NoHeader',
-        '-UseQuotes',
-      ],
+      safeFlags: ['-InputObject', '-Delimiter', '-NoTypeInformation', '-NoHeader', '-UseQuotes'],
     },
     'convertfrom-csv': {
       safeFlags: ['-InputObject', '-Delimiter', '-Header', '-UseCulture'],
@@ -280,28 +253,14 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
       ],
     },
     'format-hex': {
-      safeFlags: [
-        '-Path',
-        '-LiteralPath',
-        '-InputObject',
-        '-Encoding',
-        '-Count',
-        '-Offset',
-      ],
+      safeFlags: ['-Path', '-LiteralPath', '-InputObject', '-Encoding', '-Count', '-Offset'],
     },
 
     // =========================================================================
     // PowerShell Cmdlets - Object inspection and manipulation (read-only)
     // =========================================================================
     'get-member': {
-      safeFlags: [
-        '-InputObject',
-        '-MemberType',
-        '-Name',
-        '-Static',
-        '-View',
-        '-Force',
-      ],
+      safeFlags: ['-InputObject', '-MemberType', '-Name', '-Static', '-View', '-Force'],
     },
     'get-unique': {
       safeFlags: ['-InputObject', '-AsString', '-CaseInsensitive', '-OnType'],
@@ -343,14 +302,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // `Test-Json '{}' '{"$ref":"http://evil.com"}'` → position 1 binds to
     // -Schema → safeFlags check sees two non-flag args, skips both → auto-allow.
     'get-random': {
-      safeFlags: [
-        '-InputObject',
-        '-Minimum',
-        '-Maximum',
-        '-Count',
-        '-SetSeed',
-        '-Shuffle',
-      ],
+      safeFlags: ['-InputObject', '-Minimum', '-Maximum', '-Count', '-SetSeed', '-Shuffle'],
     },
 
     // =========================================================================
@@ -404,13 +356,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // PowerShell Cmdlets - Process/System info
     // =========================================================================
     'get-process': {
-      safeFlags: [
-        '-Name',
-        '-Id',
-        '-Module',
-        '-FileVersionInfo',
-        '-IncludeUserName',
-      ],
+      safeFlags: ['-Name', '-Id', '-Module', '-FileVersionInfo', '-IncludeUserName'],
     },
     'get-service': {
       safeFlags: [
@@ -445,13 +391,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // bypasses the callback entirely since args are empty. Removal forces
     // prompt. Users who need it can add explicit allow rule.
     'get-module': {
-      safeFlags: [
-        '-Name',
-        '-ListAvailable',
-        '-All',
-        '-FullyQualifiedName',
-        '-PSEdition',
-      ],
+      safeFlags: ['-Name', '-ListAvailable', '-All', '-FullyQualifiedName', '-PSEdition'],
     },
     // SECURITY: Get-Help REMOVED from allowlist. Same module autoload hazard
     // as Get-Command (-Name has ValueFromPipeline=true, pipeline input bypasses
@@ -489,13 +429,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // strictly less capable than Write-Output — but the same
     // `Write-Host $env:SECRET` leak-via-display applies.
     'write-host': {
-      safeFlags: [
-        '-Object',
-        '-NoNewline',
-        '-Separator',
-        '-ForegroundColor',
-        '-BackgroundColor',
-      ],
+      safeFlags: ['-Object', '-NoNewline', '-Separator', '-ForegroundColor', '-BackgroundColor'],
       additionalCommandIsDangerousCallback: argLeaksValue,
     },
     // Bash parity: `sleep` is in READONLY_COMMANDS (BashTool
@@ -582,31 +516,16 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // PowerShell Cmdlets - Network info (read-only)
     // =========================================================================
     'get-netadapter': {
-      safeFlags: [
-        '-Name',
-        '-InterfaceDescription',
-        '-InterfaceIndex',
-        '-Physical',
-      ],
+      safeFlags: ['-Name', '-InterfaceDescription', '-InterfaceIndex', '-Physical'],
     },
     'get-netipaddress': {
-      safeFlags: [
-        '-InterfaceIndex',
-        '-InterfaceAlias',
-        '-AddressFamily',
-        '-Type',
-      ],
+      safeFlags: ['-InterfaceIndex', '-InterfaceAlias', '-AddressFamily', '-Type'],
     },
     'get-netipconfiguration': {
       safeFlags: ['-InterfaceIndex', '-InterfaceAlias', '-Detailed', '-All'],
     },
     'get-netroute': {
-      safeFlags: [
-        '-InterfaceIndex',
-        '-InterfaceAlias',
-        '-AddressFamily',
-        '-DestinationPrefix',
-      ],
+      safeFlags: ['-InterfaceIndex', '-InterfaceAlias', '-AddressFamily', '-DestinationPrefix'],
     },
     'get-dnsclientcache': {
       // SECURITY: -CimSession/-ThrottleLimit excluded. -CimSession connects to
@@ -669,13 +588,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     // WMI can also auto-load provider DLLs (init code). Removal forces prompt.
     // get-cimclass stays — only lists class metadata, no instance enumeration.
     'get-cimclass': {
-      safeFlags: [
-        '-ClassName',
-        '-Namespace',
-        '-MethodName',
-        '-PropertyName',
-        '-QualifierName',
-      ],
+      safeFlags: ['-ClassName', '-Namespace', '-MethodName', '-PropertyName', '-QualifierName'],
     },
 
     // =========================================================================
@@ -703,31 +616,12 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
       // `ipconfig /all` (read-only display) allowed. Windows ipconfig only uses
       // /flags (display), macOS ipconfig uses subcommands (get/set/waitall).
       safeFlags: ['/all', '/displaydns', '/allcompartments'],
-      additionalCommandIsDangerousCallback: (
-        _cmd: string,
-        element?: ParsedCommandElement,
-      ) => {
-        return (element?.args ?? []).some(
-          a => !a.startsWith('/') && !a.startsWith('-'),
-        )
+      additionalCommandIsDangerousCallback: (_cmd: string, element?: ParsedCommandElement) => {
+        return (element?.args ?? []).some((a) => !a.startsWith('/') && !a.startsWith('-'))
       },
     },
     netstat: {
-      safeFlags: [
-        '-a',
-        '-b',
-        '-e',
-        '-f',
-        '-n',
-        '-o',
-        '-p',
-        '-q',
-        '-r',
-        '-s',
-        '-t',
-        '-x',
-        '-y',
-      ],
+      safeFlags: ['-a', '-b', '-e', '-f', '-n', '-o', '-p', '-q', '-r', '-s', '-t', '-x', '-y'],
     },
     systeminfo: {
       safeFlags: ['/FO', '/NH'],
@@ -747,25 +641,13 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
       // system config). `hostname -F FILE` / `--file=FILE` also sets from file.
       // Only allow bare `hostname` and known read-only flags.
       safeFlags: ['-a', '-d', '-f', '-i', '-I', '-s', '-y', '-A'],
-      additionalCommandIsDangerousCallback: (
-        _cmd: string,
-        element?: ParsedCommandElement,
-      ) => {
+      additionalCommandIsDangerousCallback: (_cmd: string, element?: ParsedCommandElement) => {
         // Reject any positional (non-flag) argument — sets hostname.
-        return (element?.args ?? []).some(a => !a.startsWith('-'))
+        return (element?.args ?? []).some((a) => !a.startsWith('-'))
       },
     },
     whoami: {
-      safeFlags: [
-        '/user',
-        '/groups',
-        '/claims',
-        '/priv',
-        '/logonid',
-        '/all',
-        '/fo',
-        '/nh',
-      ],
+      safeFlags: ['/user', '/groups', '/claims', '/priv', '/logonid', '/all', '/fo', '/nh'],
     },
     ver: {
       allowAllFlags: true,
@@ -775,10 +657,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     },
     route: {
       safeFlags: ['print', 'PRINT', '-4', '-6'],
-      additionalCommandIsDangerousCallback: (
-        _cmd: string,
-        element?: ParsedCommandElement,
-      ) => {
+      additionalCommandIsDangerousCallback: (_cmd: string, element?: ParsedCommandElement) => {
         // SECURITY: route.exe syntax is `route [-f] [-p] [-4|-6] VERB [args...]`.
         // The first non-flag positional is the verb. `route add 10.0.0.0 mask
         // 255.0.0.0 192.168.1.1 print` adds a route (print is a trailing display
@@ -787,7 +666,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
         if (!element) {
           return true
         }
-        const verb = element.args.find(a => !a.startsWith('-'))
+        const verb = element.args.find((a) => !a.startsWith('-'))
         return verb?.toLowerCase() !== 'print'
       },
     },
@@ -1028,8 +907,7 @@ export function isCwdChangingCmdlet(name: string): boolean {
     // ndr/mount are PS aliases for New-PSDrive on Windows only. On POSIX,
     // 'mount' is the native mount(8) command; treating it as PSDrive-creating
     // would false-positive. (bug #15 / review nit)
-    (getPlatform() === 'windows' &&
-      (canonical === 'ndr' || canonical === 'mount'))
+    (getPlatform() === 'windows' && (canonical === 'ndr' || canonical === 'mount'))
   )
 }
 
@@ -1166,10 +1044,7 @@ export function hasSyncSecurityConcerns(command: string): boolean {
  * @param parsed - The AST-parsed representation of the command
  * @returns true if the command is read-only, false otherwise
  */
-export function isReadOnlyCommand(
-  command: string,
-  parsed?: ParsedPowerShellCommand,
-): boolean {
+export function isReadOnlyCommand(command: string, parsed?: ParsedPowerShellCommand): boolean {
   const trimmedCommand = command.trim()
   if (!trimmedCommand) {
     return false
@@ -1221,14 +1096,9 @@ export function isReadOnlyCommand(
   // read-only when other statements may use relative paths — those paths
   // resolve differently at runtime than at validation time. BashTool has the
   // equivalent guard via compoundCommandHasCd threading into path validation.
-  const totalCommands = segments.reduce(
-    (sum, seg) => sum + seg.commands.length,
-    0,
-  )
+  const totalCommands = segments.reduce((sum, seg) => sum + seg.commands.length, 0)
   if (totalCommands > 1) {
-    const hasCd = segments.some(seg =>
-      seg.commands.some(cmd => isCwdChangingCmdlet(cmd.name)),
-    )
+    const hasCd = segments.some((seg) => seg.commands.some((cmd) => isCwdChangingCmdlet(cmd.name)))
     if (hasCd) {
       return false
     }
@@ -1244,7 +1114,7 @@ export function isReadOnlyCommand(
     // and is not a filesystem write, so it doesn't disqualify read-only status.
     if (pipeline.redirections.length > 0) {
       const hasFileRedirection = pipeline.redirections.some(
-        r => !r.isMerging && !isNullRedirectionTarget(r.target),
+        (r) => !r.isMerging && !isNullRedirectionTarget(r.target),
       )
       if (hasFileRedirection) {
         return false
@@ -1308,10 +1178,7 @@ export function isReadOnlyCommand(
 /**
  * Checks if a single command element is in the allowlist and passes flag validation.
  */
-export function isAllowlistedCommand(
-  cmd: ParsedCommandElement,
-  originalCommand: string,
-): boolean {
+export function isAllowlistedCommand(cmd: ParsedCommandElement, originalCommand: string): boolean {
   // SECURITY: nameType is computed from the raw (pre-stripModulePrefix) name.
   // 'application' means the raw name contains path chars (. \\ /) — e.g.
   // 'scripts\\Get-Process', './git', 'node.exe'. PowerShell resolves these as
@@ -1410,7 +1277,7 @@ export function isAllowlistedCommand(
       if (t === 'Parameter') {
         const paramChildren = cmd.children?.[i - 1]
         if (paramChildren) {
-          if (paramChildren.some(c => c.type !== 'StringConstant')) {
+          if (paramChildren.some((c) => c.type !== 'StringConstant')) {
             return false
           }
         } else {
@@ -1459,10 +1326,7 @@ export function isAllowlistedCommand(
       if (isCmdlet) {
         return isPowerShellParameter(arg, cmd.elementTypes?.[i + 1])
       }
-      return (
-        arg.startsWith('-') ||
-        (process.platform === 'win32' && arg.startsWith('/'))
-      )
+      return arg.startsWith('-') || (process.platform === 'win32' && arg.startsWith('/'))
     })
     return !hasFlags
   }
@@ -1481,8 +1345,7 @@ export function isAllowlistedCommand(
     // tokenizer — the parser sees `/S` as a positional, not CommandParameterAst).
     const isFlag = isCmdlet
       ? isPowerShellParameter(arg, cmd.elementTypes?.[i + 1])
-      : arg.startsWith('-') ||
-        (process.platform === 'win32' && arg.startsWith('/'))
+      : arg.startsWith('-') || (process.platform === 'win32' && arg.startsWith('/'))
     if (isFlag) {
       // For cmdlets, normalize Unicode dash to ASCII hyphen for safeFlags
       // comparison (safeFlags entries are always written with ASCII `-`).
@@ -1504,9 +1367,7 @@ export function isAllowlistedCommand(
       if (isCmdlet && COMMON_PARAMETERS.has(paramLower)) {
         continue
       }
-      const isSafe = config.safeFlags.some(
-        flag => flag.toLowerCase() === paramLower,
-      )
+      const isSafe = config.safeFlags.some((flag) => flag.toLowerCase() === paramLower)
       if (!isSafe) {
         return false
       }
@@ -1654,8 +1515,7 @@ function isGitSafe(args: string[]): boolean {
   const twoWordKey = `git ${first} ${second}`
   const oneWordKey = `git ${first}`
 
-  let config: ExternalCommandConfig | undefined =
-    GIT_READ_ONLY_COMMANDS[twoWordKey]
+  let config: ExternalCommandConfig | undefined = GIT_READ_ONLY_COMMANDS[twoWordKey]
   let subcommandTokens = 2
 
   if (!config) {
@@ -1680,12 +1540,7 @@ function isGitSafe(args: string[]): boolean {
   if (first === 'ls-remote') {
     for (const arg of flagArgs) {
       if (!arg.startsWith('-')) {
-        if (
-          arg.includes('://') ||
-          arg.includes('@') ||
-          arg.includes(':') ||
-          arg.includes('$')
-        ) {
+        if (arg.includes('://') || arg.includes('@') || arg.includes(':') || arg.includes('$')) {
           return false
         }
       }
@@ -1790,8 +1645,7 @@ function isDockerSafe(args: string[]): boolean {
 
   // DOCKER_READ_ONLY_COMMANDS entries ('docker logs', 'docker inspect') have
   // per-flag configs. Mirrors isGhSafe: look up config, then validateFlags.
-  const config: ExternalCommandConfig | undefined =
-    DOCKER_READ_ONLY_COMMANDS[oneWordKey]
+  const config: ExternalCommandConfig | undefined = DOCKER_READ_ONLY_COMMANDS[oneWordKey]
   if (!config) {
     return false
   }

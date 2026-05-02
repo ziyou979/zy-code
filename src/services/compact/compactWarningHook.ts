@@ -9,8 +9,5 @@ import { compactWarningStore } from './compactWarningState.js'
  * 会将其拖入打印模式启动路径。
  */
 export function useCompactWarningSuppression(): boolean {
-  return useSyncExternalStore(
-    compactWarningStore.subscribe,
-    compactWarningStore.getState,
-  )
+  return useSyncExternalStore(compactWarningStore.subscribe, compactWarningStore.getState)
 }

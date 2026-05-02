@@ -27,7 +27,6 @@ function getModelByTier(tier: ModelTier): ModelName {
   return 'qwen3.6-plus'
 }
 
-
 /**
  * Helper to get the model from /model (including via /config), the --model flag,
  * or the saved settings.
@@ -87,7 +86,6 @@ export function getDefaultCompactModel(): ModelName {
   return getModelByTier('compact')
 }
 
-
 /**
  * Get the default main loop model setting.
  * 从 settings.mainLoopModel 读取 tier 名（advanced/standard/compact），
@@ -107,9 +105,7 @@ export function getDefaultMainLoopModel(): ModelName {
   return parseUserSpecifiedModel(getDefaultMainLoopModelSetting())
 }
 
-export function renderDefaultModelSetting(
-  setting: ModelName | ModelAlias,
-): string {
+export function renderDefaultModelSetting(setting: ModelName | ModelAlias): string {
   return renderModelName(parseUserSpecifiedModel(setting))
 }
 
@@ -117,7 +113,7 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
-      m => m.alias === setting || m.model === setting,
+      (m) => m.alias === setting || m.model === setting,
     )
     if (customModel) {
       return customModel.label ?? customModel.alias
@@ -136,7 +132,7 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
-      m => m.model === model || m.model + '[1m]' === model,
+      (m) => m.model === model || m.model + '[1m]' === model,
     )
     if (customModel) {
       const has1m = model.toLowerCase().includes('[1m]')
@@ -173,9 +169,7 @@ export function getPublicModelName(model: ModelName): string {
  *
  * @param modelInput The model alias or name provided by the user.
  */
-export function parseUserSpecifiedModel(
-  modelInput: ModelName | ModelAlias,
-): ModelName {
+export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): ModelName {
   const modelInputTrimmed = modelInput.trim()
   const normalizedModel = modelInputTrimmed.toLowerCase()
 
@@ -187,9 +181,7 @@ export function parseUserSpecifiedModel(
   // Resolve custom model aliases from settings
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
-    const customModel = settings.customModels.find(
-      m => m.alias.toLowerCase() === normalizedModel,
-    )
+    const customModel = settings.customModels.find((m) => m.alias.toLowerCase() === normalizedModel)
     if (customModel) {
       return customModel.model
     }
@@ -203,10 +195,7 @@ export function parseUserSpecifiedModel(
  * Skill authors can specify a tier alias (e.g., `model: advanced`) which gets
  * resolved to the actual model name.
  */
-export function resolveSkillModelOverride(
-  skillModel: string,
-  currentModel: string,
-): string {
+export function resolveSkillModelOverride(skillModel: string, currentModel: string): string {
   // 上下文窗口统一通过 model-capabilities.json 中的 contextWindow 配置管理，
   // skill 指定的模型会使用其自身配置的 contextWindow，无需后缀传递
   return skillModel
@@ -224,7 +213,7 @@ export function getMarketingNameForModel(modelId: string): string | undefined {
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
-      m => m.model === modelId.replace(/\[1m\]$/i, ''),
+      (m) => m.model === modelId.replace(/\[1m\]$/i, ''),
     )
     if (customModel) {
       const has1m = modelId.toLowerCase().includes('[1m]')

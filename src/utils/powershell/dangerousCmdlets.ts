@@ -79,10 +79,7 @@ function aliasesOf(targets: ReadonlySet<string>): string[] {
  * Network cmdlets — wildcard rules for these enable exfil/download without
  * prompt. No legitimate narrow prefix exists.
  */
-export const NETWORK_CMDLETS = new Set([
-  'invoke-webrequest',
-  'invoke-restmethod',
-])
+export const NETWORK_CMDLETS = new Set(['invoke-webrequest', 'invoke-restmethod'])
 
 /**
  * Alias/variable mutation cmdlets — Set-Alias rebinds command resolution,
@@ -179,7 +176,7 @@ export const NEVER_SUGGEST: ReadonlySet<string> = (() => {
     // auto-mode classifier strips these rules (isDangerousPowerShellPermission)
     // but the suggestion gate didn't. Multi-word entries ('npm run') are
     // filtered out — NEVER_SUGGEST is a single-name lookup on cmd.name.
-    ...CROSS_PLATFORM_CODE_EXEC.filter(p => !p.includes(' ')),
+    ...CROSS_PLATFORM_CODE_EXEC.filter((p) => !p.includes(' ')),
   ])
   return new Set([...core, ...aliasesOf(core)])
 })()

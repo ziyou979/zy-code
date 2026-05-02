@@ -26,10 +26,7 @@ import { executePreCompactHooks } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { getUpgradeMessage } from '../../utils/model/contextWindowUpgradeCheck.js'
-import {
-  buildEffectiveSystemPrompt,
-  type SystemPrompt,
-} from '../../utils/systemPrompt.js'
+import { buildEffectiveSystemPrompt, type SystemPrompt } from '../../utils/systemPrompt.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const reactiveCompact = feature('REACTIVE_COMPACT')
@@ -55,20 +52,14 @@ export const call: LocalCommandCall = async (args, context) => {
     // Try session memory compaction first if no custom instructions
     // (session memory compaction doesn't support custom instructions)
     if (!customInstructions) {
-      const sessionMemoryResult = await trySessionMemoryCompaction(
-        messages,
-        context.agentId,
-      )
+      const sessionMemoryResult = await trySessionMemoryCompaction(messages, context.agentId)
       if (sessionMemoryResult) {
         getUserContext.cache.clear?.()
         runPostCompactCleanup()
         // Reset cache read baseline so the post-compact drop isn't flagged
         // as a break. compactConversation does this internally; SM-compact doesn't.
         if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-          notifyCompaction(
-            (context.options.querySource ?? 'compact') as any,
-            context.agentId,
-          )
+          notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
         }
         markPostCompaction()
         // Suppress warning immediately after successful compaction
@@ -85,12 +76,7 @@ export const call: LocalCommandCall = async (args, context) => {
     // Reactive-only mode: route /compact through the reactive path.
     // Checked after session-memory (that path is cheap and orthogonal).
     if ((reactiveCompact as any)?.isReactiveOnlyMode()) {
-      return await compactViaReactive(
-        messages,
-        context,
-        customInstructions,
-        reactiveCompact,
-      )
+      return await compactViaReactive(messages, context, customInstructions, reactiveCompact)
     }
 
     // Fall back to traditional compaction
@@ -227,20 +213,11 @@ async function compactViaReactive(
   }
 }
 
-function buildDisplayText(
-  context: ToolUseContext,
-  userDisplayMessage?: string,
-): string {
+function buildDisplayText(context: ToolUseContext, userDisplayMessage?: string): string {
   const upgradeMessage = getUpgradeMessage('tip')
-  const expandShortcut = getShortcutDisplay(
-    'app:toggleTranscript',
-    'Global',
-    'ctrl+o',
-  )
+  const expandShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   const dimmed = [
-    ...(context.options.verbose
-      ? []
-      : [`(${expandShortcut} to see full summary)`]),
+    ...(context.options.verbose ? [] : [`(${expandShortcut} to see full summary)`]),
     ...(userDisplayMessage ? [userDisplayMessage] : []),
     ...(upgradeMessage ? [upgradeMessage] : []),
   ]
@@ -261,9 +238,7 @@ async function getCacheSharingParams(
   const defaultSysPrompt = await getSystemPrompt(
     context.options.tools,
     context.options.mainLoopModel,
-    Array.from(
-      (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
-    ),
+    Array.from((appState.toolPermissionContext.additionalWorkingDirectories as any).keys()),
     context.options.mcpClients,
   )
   const systemPrompt = buildEffectiveSystemPrompt({
@@ -273,10 +248,7 @@ async function getCacheSharingParams(
     defaultSystemPrompt: defaultSysPrompt,
     appendSystemPrompt: context.options.appendSystemPrompt,
   })
-  const [userContext, systemContext] = await Promise.all([
-    getUserContext(),
-    getSystemContext(),
-  ])
+  const [userContext, systemContext] = await Promise.all([getUserContext(), getSystemContext()])
   return {
     systemPrompt,
     userContext,

@@ -1,11 +1,7 @@
 import { useContext, useMemo, useSyncExternalStore } from 'react'
 import StdinContext from '../components/StdinContext.js'
 import instances from '../instances.js'
-import {
-  type FocusMove,
-  type SelectionState,
-  shiftAnchor,
-} from '../selection.js'
+import { type FocusMove, type SelectionState, shiftAnchor } from '../selection.js'
 
 /**
  * 访问 Ink 实例上的文本选择操作（仅全屏模式）。
@@ -33,11 +29,7 @@ export function useSelection(): {
   moveFocus: (move: FocusMove) => void
   /** 捕获即将滚出视口的行的文本（在 scrollBy 之前调用，
    *  这样屏幕缓冲区仍有即将离开的行）。 */
-  captureScrolledRows: (
-    firstRow: number,
-    lastRow: number,
-    side: 'above' | 'below',
-  ) => void
+  captureScrolledRows: (firstRow: number, lastRow: number, side: 'above' | 'below') => void
   /** 设置选择高亮背景色（主题接入；实色背景
    *  替代旧的 SGR-7 反色，使语法高亮在选择下仍可读）。
    *  挂载时调用一次 + 主题变化时调用。 */
@@ -75,8 +67,7 @@ export function useSelection(): {
       subscribe: (cb: () => void) => ink.subscribeToSelectionChange(cb),
       shiftAnchor: (dRow: number, minRow: number, maxRow: number) =>
         shiftAnchor(ink.selection, dRow, minRow, maxRow),
-      shiftSelection: (dRow, minRow, maxRow) =>
-        ink.shiftSelectionForScroll(dRow, minRow, maxRow),
+      shiftSelection: (dRow, minRow, maxRow) => ink.shiftSelectionForScroll(dRow, minRow, maxRow),
       moveFocus: (move: FocusMove) => ink.moveSelectionFocus(move),
       captureScrolledRows: (firstRow, lastRow, side) =>
         ink.captureScrolledRows(firstRow, lastRow, side),

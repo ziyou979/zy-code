@@ -13,10 +13,7 @@
 
 import { homedir } from 'os'
 import { logForDebugging } from '../debug.js'
-import {
-  filterExistingPaths,
-  getKnownPathsForRepo,
-} from '../githubRepoPathMapping.js'
+import { filterExistingPaths, getKnownPathsForRepo } from '../githubRepoPathMapping.js'
 import { jsonStringify } from '../slowOperations.js'
 import { readLastFetchTime } from './banner.js'
 import { parseDeepLink } from './parseDeepLink.js'
@@ -93,7 +90,7 @@ export async function handleUrlSchemeLaunch(): Promise<number | null> {
 
   try {
     // @ts-ignore
-    const { waitForUrlEvent } = await import('url-handler-napi') as any
+    const { waitForUrlEvent } = (await import('url-handler-napi')) as any
     const url = waitForUrlEvent(5000)
     if (!url) {
       return null
@@ -129,9 +126,7 @@ async function resolveCwd(action: {
       logForDebugging(`Resolved repo ${action.repo} → ${existing[0]}`)
       return { cwd: existing[0], resolvedRepo: action.repo }
     }
-    logForDebugging(
-      `No local clone found for repo ${action.repo}, falling back to home`,
-    )
+    logForDebugging(`No local clone found for repo ${action.repo}, falling back to home`)
   }
   return { cwd: homedir() }
 }

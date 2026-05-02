@@ -13,18 +13,13 @@ import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
  */
 export function extractInboundMessageFields(
   msg: SDKMessage,
-):
-  | { content: string | Array<ContentBlock>; uuid: UUID | undefined }
-  | undefined {
+): { content: string | Array<ContentBlock>; uuid: UUID | undefined } | undefined {
   if (msg.type !== 'user') return undefined
   const content = (msg.message as any)?.content
   if (!content) return undefined
   if (Array.isArray(content) && content.length === 0) return undefined
 
-  const uuid =
-    'uuid' in msg && typeof msg.uuid === 'string'
-      ? (msg.uuid as UUID)
-      : undefined
+  const uuid = 'uuid' in msg && typeof msg.uuid === 'string' ? (msg.uuid as UUID) : undefined
 
   return { content, uuid }
 }

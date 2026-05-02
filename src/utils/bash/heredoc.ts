@@ -310,10 +310,7 @@ export function extractHeredocs(
     // operator. Extracting it would hide content that bash actually expands.
     let insideSkipped = false
     for (const skipped of skippedHeredocRanges) {
-      if (
-        startIndex > skipped.contentStartIndex &&
-        startIndex < skipped.contentEndIndex
-      ) {
+      if (startIndex > skipped.contentStartIndex && startIndex < skipped.contentEndIndex) {
         insideSkipped = true
         break
       }
@@ -451,10 +448,7 @@ export function extractHeredocs(
     // joining (commands.ts:82), so it would put `rm -rf /` in the heredoc body,
     // hiding it from all validators. Bail if same-line content ends with an
     // odd number of backslashes.
-    const sameLineContent = command.slice(
-      operatorEndIndex,
-      operatorEndIndex + firstNewlineOffset,
-    )
+    const sameLineContent = command.slice(operatorEndIndex, operatorEndIndex + firstNewlineOffset)
     let trailingBackslashes = 0
     for (let j = sameLineContent.length - 1; j >= 0; j--) {
       if (sameLineContent[j] === '\\') {
@@ -510,10 +504,7 @@ export function extractHeredocs(
       //
       // For <<- heredocs, bash strips leading tabs before this check.
       const eofCheckLine = isDash ? line.replace(/^\t*/, '') : line
-      if (
-        eofCheckLine.length > delimiter.length &&
-        eofCheckLine.startsWith(delimiter)
-      ) {
+      if (eofCheckLine.length > delimiter.length && eofCheckLine.startsWith(delimiter)) {
         const charAfterDelimiter = eofCheckLine[delimiter.length]!
         if (/^[)}`|&;(<>]$/.test(charAfterDelimiter)) {
           // Shell metacharacter or substitution closer after delimiter —
@@ -647,9 +638,7 @@ export function extractHeredocs(
   // because indices are calculated on the original string but applied to
   // a progressively modified string. Return without extraction - the fallback
   // is safe (requires manual approval or fails parsing).
-  const contentStartPositions = new Set(
-    topLevelHeredocs.map(h => h.contentStartIndex),
-  )
+  const contentStartPositions = new Set(topLevelHeredocs.map((h) => h.contentStartIndex))
   if (contentStartPositions.size < topLevelHeredocs.length) {
     return { processedCommand: command, heredocs }
   }
@@ -690,10 +679,7 @@ export function extractHeredocs(
  * Restores heredoc placeholders back to their original content in a single string.
  * Internal helper used by restoreHeredocs.
  */
-function restoreHeredocsInString(
-  text: string,
-  heredocs: Map<string, HeredocInfo>,
-): string {
+function restoreHeredocsInString(text: string, heredocs: Map<string, HeredocInfo>): string {
   let result = text
   for (const [placeholder, info] of heredocs) {
     result = result.replaceAll(placeholder, info.fullText)
@@ -708,15 +694,12 @@ function restoreHeredocsInString(
  * @param heredocs - The map of placeholders from `extractHeredocs`
  * @returns New array with placeholders replaced by original heredoc content
  */
-export function restoreHeredocs(
-  parts: string[],
-  heredocs: Map<string, HeredocInfo>,
-): string[] {
+export function restoreHeredocs(parts: string[], heredocs: Map<string, HeredocInfo>): string[] {
   if (heredocs.size === 0) {
     return parts
   }
 
-  return parts.map(part => restoreHeredocsInString(part, heredocs))
+  return parts.map((part) => restoreHeredocsInString(part, heredocs))
 }
 
 /**

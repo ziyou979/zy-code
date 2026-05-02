@@ -1,8 +1,6 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import {
-  getOauthAccountInfo,
-} from '../../utils/auth.js'
+import { getOauthAccountInfo } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
@@ -187,7 +185,7 @@ export async function fetchAndStorePassesEligibility(): Promise<ReferralEligibil
         timestamp: Date.now(),
       }
 
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         passesEligibilityCache: {
           ...current.passesEligibilityCache,
@@ -195,9 +193,7 @@ export async function fetchAndStorePassesEligibility(): Promise<ReferralEligibil
         },
       }))
 
-      logForDebugging(
-        `通行证资格已缓存，组织 ${orgId}：${response.eligible}`,
-      )
+      logForDebugging(`通行证资格已缓存，组织 ${orgId}：${response.eligible}`)
 
       return response
     } catch (error) {
@@ -238,18 +234,14 @@ export async function getCachedOrFetchPassesEligibility(): Promise<ReferralEligi
   // 无缓存 — 触发后台获取并返回 null（非阻塞）
   // 本次会话通行证命令不可用，但下次会话将可用
   if (!cachedEntry) {
-    logForDebugging(
-      '通行证：无缓存，后台获取资格（本次会话命令不可用）',
-    )
+    logForDebugging('通行证：无缓存，后台获取资格（本次会话命令不可用）')
     void fetchAndStorePassesEligibility()
     return null
   }
 
   // 缓存存在但已过期 — 返回过期缓存并触发后台刷新
   if (now - cachedEntry.timestamp > CACHE_EXPIRATION_MS) {
-    logForDebugging(
-      '通行证：缓存已过期，返回缓存数据并后台刷新',
-    )
+    logForDebugging('通行证：缓存已过期，返回缓存数据并后台刷新')
     void fetchAndStorePassesEligibility() // 后台刷新
     const { timestamp, ...response } = cachedEntry
     return response as ReferralEligibilityResponse

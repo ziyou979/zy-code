@@ -55,7 +55,7 @@ export function getSpinnerVerbs(): string[] {
 }
 
 // Spinner verbs for loading messages
-export let SPINNER_VERBS;
+export let SPINNER_VERBS
 SPINNER_VERBS = [
   'Accomplishing',
   'Actioning',

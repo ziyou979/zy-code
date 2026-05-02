@@ -56,7 +56,7 @@ export function reorderBidi(characters: ClusteredChar[]): ClusteredChar[] {
   }
 
   // 从 ClusteredChar 构建纯字符串，交给 bidi 处理
-  const plainText = characters.map(c => c.value).join('')
+  const plainText = characters.map((c) => c.value).join('')
 
   // 检查是否包含 RTL 字符 — 纯 LTR 文本跳过 bidi
   if (!hasRTLCharacters(plainText)) {

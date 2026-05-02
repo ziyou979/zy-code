@@ -11,17 +11,13 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 const inputSchema = lazySchema(() => z.object({}).passthrough())
 type InputSchema = ReturnType<typeof inputSchema>
 
-const outputSchema = lazySchema(() =>
-  z.string().describe('Structured output tool result'),
-)
+const outputSchema = lazySchema(() => z.string().describe('Structured output tool result'))
 type OutputSchema = ReturnType<typeof outputSchema>
 export type Output = z.infer<OutputSchema>
 
 export const SYNTHETIC_OUTPUT_TOOL_NAME = 'StructuredOutput'
 
-export function isSyntheticOutputToolEnabled(opts: {
-  isNonInteractiveSession: boolean
-}): boolean {
+export function isSyntheticOutputToolEnabled(opts: { isNonInteractiveSession: boolean }): boolean {
   return opts.isNonInteractiveSession
 }
 
@@ -75,7 +71,7 @@ export const SyntheticOutputTool = buildTool({
     const keys = Object.keys(input)
     if (keys.length === 0) return null
     if (keys.length <= 3) {
-      return keys.map(k => `${k}: ${jsonStringify(input[k])}`).join(', ')
+      return keys.map((k) => `${k}: ${jsonStringify(input[k])}`).join(', ')
     }
     return `${keys.length} fields: ${keys.slice(0, 3).join(', ')}…`
   },
@@ -113,9 +109,7 @@ const toolCache = new WeakMap<object, CreateResult>()
  * Returns {tool} on success or {error} with Ajv's diagnostic message
  * (e.g. "data/properties/bugs should be object") on invalid schema.
  */
-export function createSyntheticOutputTool(
-  jsonSchema: Record<string, unknown>,
-): CreateResult {
+export function createSyntheticOutputTool(jsonSchema: Record<string, unknown>): CreateResult {
   const cached = toolCache.get(jsonSchema)
   if (cached) return cached
 
@@ -124,9 +118,7 @@ export function createSyntheticOutputTool(
   return result
 }
 
-function buildSyntheticOutputTool(
-  jsonSchema: Record<string, unknown>,
-): CreateResult {
+function buildSyntheticOutputTool(jsonSchema: Record<string, unknown>): CreateResult {
   try {
     const ajv = new Ajv({ allErrors: true })
     const isValidSchema = ajv.validateSchema(jsonSchema)
@@ -143,7 +135,7 @@ function buildSyntheticOutputTool(
           const isValid = validateSchema(input)
           if (!isValid) {
             const errors = validateSchema.errors
-              ?.map(e => `${e.instancePath || 'root'}: ${e.message}`)
+              ?.map((e) => `${e.instancePath || 'root'}: ${e.message}`)
               .join(', ')
             throw new TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS(
               `Output does not match required schema: ${errors}`,

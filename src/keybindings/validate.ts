@@ -1,14 +1,7 @@
 import { plural } from '../utils/stringUtils.js'
 import { chordToString, parseChord, parseKeystroke } from './parser.js'
-import {
-  getReservedShortcuts,
-  normalizeKeyForComparison,
-} from './reservedShortcuts.js'
-import type {
-  KeybindingBlock,
-  KeybindingContextName,
-  ParsedBinding,
-} from './types.js'
+import { getReservedShortcuts, normalizeKeyForComparison } from './reservedShortcuts.js'
+import type { KeybindingBlock, KeybindingContextName, ParsedBinding } from './types.js'
 
 /**
  * Types of validation issues that can occur with keybindings.
@@ -39,11 +32,7 @@ export type KeybindingWarning = {
 function isKeybindingBlock(obj: unknown): obj is KeybindingBlock {
   if (typeof obj !== 'object' || obj === null) return false
   const b = obj as Record<string, unknown>
-  return (
-    typeof b.context === 'string' &&
-    typeof b.bindings === 'object' &&
-    b.bindings !== null
-  )
+  return typeof b.context === 'string' && typeof b.bindings === 'object' && b.bindings !== null
 }
 
 /**
@@ -106,13 +95,7 @@ function validateKeystroke(keystroke: string): KeybindingWarning | null {
 
   // Try to parse and see if it fails
   const parsed = parseKeystroke(keystroke)
-  if (
-    !parsed.key &&
-    !parsed.ctrl &&
-    !parsed.alt &&
-    !parsed.shift &&
-    !parsed.meta
-  ) {
+  if (!parsed.key && !parsed.ctrl && !parsed.alt && !parsed.shift && !parsed.meta) {
     return {
       type: 'parse_error',
       severity: 'error',
@@ -127,10 +110,7 @@ function validateKeystroke(keystroke: string): KeybindingWarning | null {
 /**
  * Validate a keybinding block from user config.
  */
-function validateBlock(
-  block: unknown,
-  blockIndex: number,
-): KeybindingWarning[] {
+function validateBlock(block: unknown, blockIndex: number): KeybindingWarning[] {
   const warnings: KeybindingWarning[] = []
 
   if (typeof block !== 'object' || block === null) {
@@ -255,15 +235,12 @@ function validateBlock(
  * Duplicates across different contexts are allowed (e.g., "enter" in Chat
  * and "enter" in Confirmation).
  */
-export function checkDuplicateKeysInJson(
-  jsonString: string,
-): KeybindingWarning[] {
+export function checkDuplicateKeysInJson(jsonString: string): KeybindingWarning[] {
   const warnings: KeybindingWarning[] = []
 
   // Find each "bindings" block and check for duplicates within it
   // Pattern: "bindings" : { ... }
-  const bindingsBlockPattern =
-    /"bindings"\s*:\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g
+  const bindingsBlockPattern = /"bindings"\s*:\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g
 
   let blockMatch
   while ((blockMatch = bindingsBlockPattern.exec(jsonString)) !== null) {
@@ -272,9 +249,7 @@ export function checkDuplicateKeysInJson(
 
     // Find the context for this block by looking backwards
     const textBeforeBlock = jsonString.slice(0, blockMatch.index)
-    const contextMatch = textBeforeBlock.match(
-      /"context"\s*:\s*"([^"]+)"[^{]*$/,
-    )
+    const contextMatch = textBeforeBlock.match(/"context"\s*:\s*"([^"]+)"[^{]*$/)
     const context = contextMatch?.[1] ?? 'unknown'
 
     // Find all keys within this bindings block
@@ -333,15 +308,12 @@ export function validateUserConfig(userBlocks: unknown): KeybindingWarning[] {
  * Check for duplicate bindings within the same context.
  * Only checks user bindings (not default + user merged).
  */
-export function checkDuplicates(
-  blocks: KeybindingBlock[],
-): KeybindingWarning[] {
+export function checkDuplicates(blocks: KeybindingBlock[]): KeybindingWarning[] {
   const warnings: KeybindingWarning[] = []
   const seenByContext = new Map<string, Map<string, string>>()
 
   for (const block of blocks) {
-    const contextMap =
-      seenByContext.get(block.context) ?? new Map<string, string>()
+    const contextMap = seenByContext.get(block.context) ?? new Map<string, string>()
     seenByContext.set(block.context, contextMap)
 
     for (const [key, action] of Object.entries(block.bindings)) {
@@ -370,9 +342,7 @@ export function checkDuplicates(
 /**
  * Check for reserved shortcuts that may not work.
  */
-export function checkReservedShortcuts(
-  bindings: ParsedBinding[],
-): KeybindingWarning[] {
+export function checkReservedShortcuts(bindings: ParsedBinding[]): KeybindingWarning[] {
   const warnings: KeybindingWarning[] = []
   const reserved = getReservedShortcuts()
 
@@ -402,13 +372,11 @@ export function checkReservedShortcuts(
  * Parse user blocks into bindings for validation.
  * This is separate from the main parser to avoid importing it.
  */
-function getUserBindingsForValidation(
-  userBlocks: KeybindingBlock[],
-): ParsedBinding[] {
+function getUserBindingsForValidation(userBlocks: KeybindingBlock[]): ParsedBinding[] {
   const bindings: ParsedBinding[] = []
   for (const block of userBlocks) {
     for (const [key, action] of Object.entries(block.bindings)) {
-      const chord = key.split(' ').map(k => parseKeystroke(k))
+      const chord = key.split(' ').map((k) => parseKeystroke(k))
       bindings.push({
         chord,
         action,
@@ -442,7 +410,7 @@ export function validateBindings(
 
   // Deduplicate warnings (same key+context+type)
   const seen = new Set<string>()
-  return warnings.filter(w => {
+  return warnings.filter((w) => {
     const key = `${w.type}:${w.key}:${w.context}`
     if (seen.has(key)) return false
     seen.add(key)
@@ -470,15 +438,13 @@ export function formatWarning(warning: KeybindingWarning): string {
 export function formatWarnings(warnings: KeybindingWarning[]): string {
   if (warnings.length === 0) return ''
 
-  const errors = warnings.filter(w => w.severity === 'error')
-  const warns = warnings.filter(w => w.severity === 'warning')
+  const errors = warnings.filter((w) => w.severity === 'error')
+  const warns = warnings.filter((w) => w.severity === 'warning')
 
   const lines: string[] = []
 
   if (errors.length > 0) {
-    lines.push(
-      `Found ${errors.length} keybinding ${plural(errors.length, 'error')}:`,
-    )
+    lines.push(`Found ${errors.length} keybinding ${plural(errors.length, 'error')}:`)
     for (const e of errors) {
       lines.push(formatWarning(e))
     }
@@ -486,9 +452,7 @@ export function formatWarnings(warnings: KeybindingWarning[]): string {
 
   if (warns.length > 0) {
     if (lines.length > 0) lines.push('')
-    lines.push(
-      `Found ${warns.length} keybinding ${plural(warns.length, 'warning')}:`,
-    )
+    lines.push(`Found ${warns.length} keybinding ${plural(warns.length, 'warning')}:`)
     for (const w of warns) {
       lines.push(formatWarning(w))
     }

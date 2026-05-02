@@ -24,10 +24,7 @@ import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
 import { isSettingSourceEnabled } from '../../utils/settings/constants.js'
 import { getManagedFilePath } from '../../utils/settings/managedPath.js'
 import { isRestrictedToPluginOnly } from '../../utils/settings/pluginOnlyPolicy.js'
-import {
-  getInitialSettings,
-  getSettingsForSource,
-} from '../../utils/settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from '../../utils/settings/settings.js'
 import {
   isMcpServerCommandEntry,
   isMcpServerNameEntry,
@@ -168,10 +165,7 @@ function getServerUrl(config: McpServerConfig): string | null {
  * so the proxy knows where to forward. See api-go/ccr/internal/ccrshared/
  * mcp_url_rewriter.go and api-go/ccr/internal/mcpproxy/proxy.go.
  */
-const CCR_PROXY_PATH_MARKERS = [
-  '/v2/session_ingress/shttp/mcp/',
-  '/v2/ccr-sessions/',
-]
+const CCR_PROXY_PATH_MARKERS = ['/v2/session_ingress/shttp/mcp/', '/v2/ccr-sessions/']
 
 /**
  * If the URL is a CCR proxy URL, extract the original vendor URL from the
@@ -180,7 +174,7 @@ const CCR_PROXY_PATH_MARKERS = [
  * rewritten proxy URL when both point at the same MCP server.
  */
 export function unwrapCcrProxyUrl(url: string): string {
-  if (!CCR_PROXY_PATH_MARKERS.some(m => url.includes(m))) {
+  if (!CCR_PROXY_PATH_MARKERS.some((m) => url.includes(m))) {
     return url
   }
   try {
@@ -361,10 +355,7 @@ function getMcpDenylistSettings(): SettingsJson {
  * @param config Optional server config for command/URL-based matching
  * @returns true if denied, false if not on denylist
  */
-function isMcpServerDenied(
-  serverName: string,
-  config?: McpServerConfig,
-): boolean {
+function isMcpServerDenied(serverName: string, config?: McpServerConfig): boolean {
   const settings = getMcpDenylistSettings()
   if (!settings.deniedMcpServers) {
     return false // 没有限制
@@ -394,10 +385,7 @@ function isMcpServerDenied(
     const serverUrl = getServerUrl(config)
     if (serverUrl) {
       for (const entry of settings.deniedMcpServers) {
-        if (
-          isMcpServerUrlEntry(entry) &&
-          urlMatchesPattern(serverUrl, entry.serverUrl)
-        ) {
+        if (isMcpServerUrlEntry(entry) && urlMatchesPattern(serverUrl, entry.serverUrl)) {
           return true
         }
       }
@@ -414,10 +402,7 @@ function isMcpServerDenied(
  * @param config Optional server config for command/URL-based matching
  * @returns true if allowed, false if blocked by policy
  */
-function isMcpServerAllowedByPolicy(
-  serverName: string,
-  config?: McpServerConfig,
-): boolean {
+function isMcpServerAllowedByPolicy(serverName: string, config?: McpServerConfig): boolean {
   // 拒绝列表具有绝对优先级
   if (isMcpServerDenied(serverName, config)) {
     return false
@@ -434,9 +419,7 @@ function isMcpServerAllowedByPolicy(
   }
 
   // 检查允许列表是否包含任何基于命令或基于 URL 的条目
-  const hasCommandEntries = settings.allowedMcpServers.some(
-    isMcpServerCommandEntry,
-  )
+  const hasCommandEntries = settings.allowedMcpServers.some(isMcpServerCommandEntry)
   const hasUrlEntries = settings.allowedMcpServers.some(isMcpServerUrlEntry)
 
   if (config) {
@@ -470,10 +453,7 @@ function isMcpServerAllowedByPolicy(
       if (hasUrlEntries) {
         // 如果存在任何 serverUrl 条目，远程服务器必须匹配其中之一
         for (const entry of settings.allowedMcpServers) {
-          if (
-            isMcpServerUrlEntry(entry) &&
-            urlMatchesPattern(serverUrl, entry.serverUrl)
-          ) {
+          if (isMcpServerUrlEntry(entry) && urlMatchesPattern(serverUrl, entry.serverUrl)) {
             return true
           }
         }
@@ -575,9 +555,7 @@ function expandEnvVars(config: McpServerConfig): {
         ...stdioConfig,
         command: expandString(stdioConfig.command),
         args: stdioConfig.args.map(expandString),
-        env: stdioConfig.env
-          ? mapValues(stdioConfig.env, expandString)
-          : undefined,
+        env: stdioConfig.env ? mapValues(stdioConfig.env, expandString) : undefined,
       }
       break
     }
@@ -591,9 +569,7 @@ function expandEnvVars(config: McpServerConfig): {
       expanded = {
         ...remoteConfig,
         url: expandString(remoteConfig.url),
-        headers: remoteConfig.headers
-          ? mapValues(remoteConfig.headers, expandString)
-          : undefined,
+        headers: remoteConfig.headers ? mapValues(remoteConfig.headers, expandString) : undefined,
       }
       break
     }
@@ -639,9 +615,7 @@ export async function addMcpConfig(
   }
 
   if (feature('CHICAGO_MCP')) {
-    const { isComputerUseMCPServer } = await import(
-      '../../utils/computerUse/common.js'
-    )
+    const { isComputerUseMCPServer } = await import('../../utils/computerUse/common.js')
     if (isComputerUseMCPServer(name)) {
       throw new Error(`Cannot add MCP server "${name}": this name is reserved.`)
     }
@@ -658,7 +632,7 @@ export async function addMcpConfig(
   const result = McpServerConfigSchema().safeParse(config)
   if (!result.success) {
     const formattedErrors = result.error.issues
-      .map(err => `${err.path.join('.')}: ${err.message}`)
+      .map((err) => `${err.path.join('.')}: ${err.message}`)
       .join(', ')
     throw new Error(`Invalid configuration: ${formattedErrors}`)
   }
@@ -673,9 +647,7 @@ export async function addMcpConfig(
 
   // 检查允许列表（含配置用于基于命令的检查）
   if (!isMcpServerAllowedByPolicy(name, validatedConfig)) {
-    throw new Error(
-      `Cannot add MCP server "${name}": not allowed by enterprise policy`,
-    )
+    throw new Error(`Cannot add MCP server "${name}": not allowed by enterprise policy`)
   }
 
   // 检查服务器是否已存在于目标作用域中
@@ -715,9 +687,7 @@ export async function addMcpConfig(
       const { servers: existingServers } = getProjectMcpConfigsFromCwd()
 
       const mcpServers: Record<string, McpServerConfig> = {}
-      for (const [serverName, serverConfig] of Object.entries(
-        existingServers,
-      )) {
+      for (const [serverName, serverConfig] of Object.entries(existingServers)) {
         const { scope: _, ...configWithoutScope } = serverConfig
         mcpServers[serverName] = configWithoutScope
       }
@@ -734,7 +704,7 @@ export async function addMcpConfig(
     }
 
     case 'user': {
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         mcpServers: {
           ...current.mcpServers,
@@ -745,7 +715,7 @@ export async function addMcpConfig(
     }
 
     case 'local': {
-      saveCurrentProjectConfig(current => ({
+      saveCurrentProjectConfig((current) => ({
         ...current,
         mcpServers: {
           ...current.mcpServers,
@@ -766,10 +736,7 @@ export async function addMcpConfig(
  * @param scope The configuration scope
  * @throws Error if server not found in specified scope
  */
-export async function removeMcpConfig(
-  name: string,
-  scope: ConfigScope,
-): Promise<void> {
+export async function removeMcpConfig(name: string, scope: ConfigScope): Promise<void> {
   switch (scope) {
     case 'project': {
       const { servers: existingServers } = getProjectMcpConfigsFromCwd()
@@ -780,9 +747,7 @@ export async function removeMcpConfig(
 
       // 写回 .mcp.json 时剥离作用域信息
       const mcpServers: Record<string, McpServerConfig> = {}
-      for (const [serverName, serverConfig] of Object.entries(
-        existingServers,
-      )) {
+      for (const [serverName, serverConfig] of Object.entries(existingServers)) {
         if (serverName !== name) {
           const { scope: _, ...configWithoutScope } = serverConfig
           mcpServers[serverName] = configWithoutScope
@@ -802,7 +767,7 @@ export async function removeMcpConfig(
       if (!config.mcpServers?.[name]) {
         throw new Error(`No user-scoped MCP server found with name: ${name}`)
       }
-      saveGlobalConfig(current => {
+      saveGlobalConfig((current) => {
         const { [name]: _, ...restMcpServers } = current.mcpServers ?? {}
         return {
           ...current,
@@ -818,7 +783,7 @@ export async function removeMcpConfig(
       if (!config.mcpServers?.[name]) {
         throw new Error(`No project-local MCP server found with name: ${name}`)
       }
-      saveCurrentProjectConfig(current => {
+      saveCurrentProjectConfig((current) => {
         const { [name]: _, ...restMcpServers } = current.mcpServers ?? {}
         return {
           ...current,
@@ -860,11 +825,11 @@ export function getProjectMcpConfigsFromCwd(): {
   // 缺少 .mcp.json 是预期的，但格式错误的文件应报告错误
   if (!config) {
     const nonMissingErrors = errors.filter(
-      e => !e.message.startsWith('MCP config file not found'),
+      (e) => !e.message.startsWith('MCP config file not found'),
     )
     if (nonMissingErrors.length > 0) {
       logForDebugging(
-        `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map(e => e.message))}`,
+        `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
         { level: 'error' },
       )
       return { servers: {}, errors: nonMissingErrors }
@@ -873,9 +838,7 @@ export function getProjectMcpConfigsFromCwd(): {
   }
 
   return {
-    servers: config.mcpServers
-      ? addScopeToServers(config.mcpServers, 'project')
-      : {},
+    servers: config.mcpServers ? addScopeToServers(config.mcpServers, 'project') : {},
     errors: errors || [],
   }
 }
@@ -885,17 +848,12 @@ export function getProjectMcpConfigsFromCwd(): {
  * @param scope The configuration scope
  * @returns Servers with scope information and any validation errors
  */
-export function getMcpConfigsByScope(
-  scope: 'project' | 'user' | 'local' | 'enterprise',
-): {
+export function getMcpConfigsByScope(scope: 'project' | 'user' | 'local' | 'enterprise'): {
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
   // 检查此源是否已启用
-  const sourceMap: Record<
-    string,
-    'projectSettings' | 'userSettings' | 'localSettings'
-  > = {
+  const sourceMap: Record<string, 'projectSettings' | 'userSettings' | 'localSettings'> = {
     project: 'projectSettings',
     user: 'userSettings',
     local: 'localSettings',
@@ -932,11 +890,11 @@ export function getMcpConfigsByScope(
         // 父目录中缺少 .mcp.json 是预期的，但格式错误的文件应报告错误
         if (!config) {
           const nonMissingErrors = errors.filter(
-            e => !e.message.startsWith('MCP config file not found'),
+            (e) => !e.message.startsWith('MCP config file not found'),
           )
           if (nonMissingErrors.length > 0) {
             logForDebugging(
-              `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map(e => e.message))}`,
+              `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
               { level: 'error' },
             )
             allErrors.push(...nonMissingErrors)
@@ -1005,11 +963,11 @@ export function getMcpConfigsByScope(
       // 缺少企业配置文件是预期的，但格式错误的文件应报告错误
       if (!config) {
         const nonMissingErrors = errors.filter(
-          e => !e.message.startsWith('MCP config file not found'),
+          (e) => !e.message.startsWith('MCP config file not found'),
         )
         if (nonMissingErrors.length > 0) {
           logForDebugging(
-            `Enterprise MCP config errors for ${enterpriseMcpPath}: ${jsonStringify(nonMissingErrors.map(e => e.message))}`,
+            `Enterprise MCP config errors for ${enterpriseMcpPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
             { level: 'error' },
           )
           return { servers: {}, errors: nonMissingErrors }
@@ -1070,9 +1028,7 @@ export function getMcpConfigByName(name: string): ScopedMcpServerConfig | null {
  */
 export async function getZyCodeMcpConfigs(
   dynamicServers: Record<string, ScopedMcpServerConfig> = {},
-  extraDedupTargets: Promise<
-    Record<string, ScopedMcpServerConfig>
-  > = Promise.resolve({}),
+  extraDedupTargets: Promise<Record<string, ScopedMcpServerConfig>> = Promise.resolve({}),
 ): Promise<{
   servers: Record<string, ScopedMcpServerConfig>
   errors: PluginError[]
@@ -1101,15 +1057,9 @@ export async function getZyCodeMcpConfigs(
   const noServers: { servers: Record<string, ScopedMcpServerConfig> } = {
     servers: {},
   }
-  const { servers: userServers } = mcpLocked
-    ? noServers
-    : getMcpConfigsByScope('user')
-  const { servers: projectServers } = mcpLocked
-    ? noServers
-    : getMcpConfigsByScope('project')
-  const { servers: localServers } = mcpLocked
-    ? noServers
-    : getMcpConfigsByScope('local')
+  const { servers: userServers } = mcpLocked ? noServers : getMcpConfigsByScope('user')
+  const { servers: projectServers } = mcpLocked ? noServers : getMcpConfigsByScope('project')
+  const { servers: localServers } = mcpLocked ? noServers : getMcpConfigsByScope('local')
 
   // 加载插件 MCP 服务器
   const pluginMcpServers: Record<string, ScopedMcpServerConfig> = {}
@@ -1136,16 +1086,14 @@ export async function getZyCodeMcpConfigs(
         // 插件不存在或不可用 — 这很常见，不一定是错误
         // 插件系统会在可能时处理安装
         const errorType = error.type
-        logForDebugging(
-          `Plugin not available for MCP: ${error.source} - error type: ${errorType}`,
-        )
+        logForDebugging(`Plugin not available for MCP: ${error.source} - error type: ${errorType}`)
       }
     }
   }
 
   // 并行处理已启用插件的 MCP 服务器
   const pluginServerResults = await Promise.all(
-    pluginResult.enabled.map(plugin => getPluginMcpServers(plugin, mcpErrors)),
+    pluginResult.enabled.map((plugin) => getPluginMcpServers(plugin, mcpErrors)),
   )
   for (const servers of pluginServerResults) {
     if (servers) {
@@ -1185,10 +1133,7 @@ export async function getZyCodeMcpConfigs(
     ...dynamicServers,
     ...extraTargets,
   })) {
-    if (
-      !isMcpServerDisabled(name) &&
-      isMcpServerAllowedByPolicy(name, config)
-    ) {
+    if (!isMcpServerDisabled(name) && isMcpServerAllowedByPolicy(name, config)) {
       enabledManualServers[name] = config
     }
   }
@@ -1199,10 +1144,7 @@ export async function getZyCodeMcpConfigs(
   const enabledPluginServers: Record<string, ScopedMcpServerConfig> = {}
   const disabledPluginServers: Record<string, ScopedMcpServerConfig> = {}
   for (const [name, config] of Object.entries(pluginMcpServers)) {
-    if (
-      isMcpServerDisabled(name) ||
-      !isMcpServerAllowedByPolicy(name, config)
-    ) {
+    if (isMcpServerDisabled(name) || !isMcpServerAllowedByPolicy(name, config)) {
       disabledPluginServers[name] = config
     } else {
       enabledPluginServers[name] = config
@@ -1267,21 +1209,13 @@ export async function getAllMcpConfigs(): Promise<{
   // 在 getZyCodeMcpConfigs 之前启动 zy.ai 获取，使其重叠
   // 与内部的 loadAllPluginsCacheOnly()。已备忘录化 — 下面等待的调用是缓存命中。
   const zyaiPromise = fetchZyAIMcpConfigsIfEligible()
-  const { servers: ZyCodeServers, errors } = await getZyCodeMcpConfigs(
-    {},
-    zyaiPromise,
-  )
-  const { allowed: zyaiMcpServers } = filterMcpServersByPolicy(
-    await zyaiPromise,
-  )
+  const { servers: ZyCodeServers, errors } = await getZyCodeMcpConfigs({}, zyaiPromise)
+  const { allowed: zyaiMcpServers } = filterMcpServersByPolicy(await zyaiPromise)
 
   // 抑制与已启用的手动服务器重复的 zy.ai 连接器。
   // 键永远不会冲突（`slack` 与 `zy.ai Slack`），所以下面的合并
   // 无法捕获 — 需要通过 URL 签名进行基于内容的去重。
-  const { servers: dedupedZyAI } = dedupZyAIMcpServers(
-    zyaiMcpServers,
-    ZyCodeServers,
-  )
+  const { servers: dedupedZyAI } = dedupZyAIMcpServers(zyaiMcpServers, ZyCodeServers)
 
   // 合并时 zy.ai 具有最低优先级
   const servers = Object.assign({}, dedupedZyAI, ZyCodeServers)
@@ -1308,7 +1242,7 @@ export function parseMcpConfig(params: {
   if (!schemaResult.success) {
     return {
       config: null,
-      errors: schemaResult.error.issues.map(issue => ({
+      errors: schemaResult.error.issues.map((issue) => ({
         ...(filePath && { file: filePath }),
         path: issue.path.join('.'),
         message: 'Does not adhere to MCP server configuration schema',
@@ -1414,10 +1348,9 @@ export function parseMcpConfigFromFilePath(params: {
         ],
       }
     }
-    logForDebugging(
-      `MCP config read error for ${filePath} (scope=${scope}): ${error}`,
-      { level: 'error' },
-    )
+    logForDebugging(`MCP config read error for ${filePath} (scope=${scope}): ${error}`, {
+      level: 'error',
+    })
     return {
       config: null,
       errors: [
@@ -1467,7 +1400,7 @@ export function parseMcpConfigFromFilePath(params: {
   })
 }
 
-export let doesEnterpriseMcpConfigExist;
+export let doesEnterpriseMcpConfigExist
 doesEnterpriseMcpConfigExist = memoize((): boolean => {
   const { config } = parseMcpConfigFromFilePath({
     filePath: getEnterpriseMcpFilePath(),
@@ -1484,9 +1417,7 @@ doesEnterpriseMcpConfigExist = memoize((): boolean => {
  * Users can still add their own MCP servers and deny servers via deniedMcpServers.
  */
 export function shouldAllowManagedMcpServersOnly(): boolean {
-  return (
-    getSettingsForSource('policySettings')?.allowManagedMcpServersOnly === true
-  )
+  return getSettingsForSource('policySettings')?.allowManagedMcpServersOnly === true
 }
 
 /**
@@ -1499,9 +1430,7 @@ export function areMcpConfigsAllowedWithEnterpriseMcpConfig(
   // 最佳方式。同时，我们暂时将其限制为 zy-vscode，以便
   // 为启用了企业 MCP 配置的某些企业客户修复 VSCode 扩展。
   // https://anthropic.slack.com/archives/C093UA0KLD7/p1764975463670109
-  return Object.values(configs).every(
-    c => c.type === 'sdk' && c.name === 'zy-vscode',
-  )
+  return Object.values(configs).every((c) => c.type === 'sdk' && c.name === 'zy-vscode')
 }
 
 /**
@@ -1536,14 +1465,10 @@ export function isMcpServerDisabled(name: string): boolean {
   return disabledServers.includes(name)
 }
 
-function toggleMembership(
-  list: string[],
-  name: string,
-  shouldContain: boolean,
-): string[] {
+function toggleMembership(list: string[], name: string, shouldContain: boolean): string[] {
   const contains = list.includes(name)
   if (contains === shouldContain) return list
-  return shouldContain ? [...list, name] : list.filter(s => s !== name)
+  return shouldContain ? [...list, name] : list.filter((s) => s !== name)
 }
 
 /**
@@ -1555,7 +1480,7 @@ export function setMcpServerEnabled(name: string, enabled: boolean): void {
   const isBuiltinStateChange =
     isDefaultDisabledBuiltin(name) && isMcpServerDisabled(name) === enabled
 
-  saveCurrentProjectConfig(current => {
+  saveCurrentProjectConfig((current) => {
     if (isDefaultDisabledBuiltin(name)) {
       const prev = current.enabledMcpServers || []
       const next = toggleMembership(prev, name, enabled)
@@ -1571,8 +1496,7 @@ export function setMcpServerEnabled(name: string, enabled: boolean): void {
 
   if (isBuiltinStateChange) {
     logEvent('zy_builtin_mcp_toggle', {
-      serverName:
-        name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      serverName: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       enabled,
     })
   }

@@ -10,8 +10,7 @@ export function formatError(error: unknown): string {
     return String(error)
   }
   const parts = getErrorParts(error)
-  const fullMessage =
-    parts.filter(Boolean).join('\n').trim() || 'Command failed with no output'
+  const fullMessage = parts.filter(Boolean).join('\n').trim() || 'Command failed with no output'
   if (fullMessage.length <= 10000) {
     return fullMessage
   }
@@ -63,29 +62,18 @@ function formatValidationPath(path: PropertyKey[]): string {
  * @param error The Zod error object
  * @returns A formatted error message string
  */
-export function formatZodValidationError(
-  toolName: string,
-  error: ZodError,
-): string {
+export function formatZodValidationError(toolName: string, error: ZodError): string {
   const missingParams = error.issues
-    .filter(
-      err =>
-        err.code === 'invalid_type' &&
-        err.message.includes('received undefined'),
-    )
-    .map(err => formatValidationPath(err.path))
+    .filter((err) => err.code === 'invalid_type' && err.message.includes('received undefined'))
+    .map((err) => formatValidationPath(err.path))
 
   const unexpectedParams = error.issues
-    .filter(err => err.code === 'unrecognized_keys')
-    .flatMap(err => err.keys)
+    .filter((err) => err.code === 'unrecognized_keys')
+    .flatMap((err) => err.keys)
 
   const typeMismatchParams = error.issues
-    .filter(
-      err =>
-        err.code === 'invalid_type' &&
-        !err.message.includes('received undefined'),
-    )
-    .map(err => {
+    .filter((err) => err.code === 'invalid_type' && !err.message.includes('received undefined'))
+    .map((err) => {
       const typeErr = err as { expected: string }
       const receivedMatch = err.message.match(/received (\w+)/)
       const received = receivedMatch ? receivedMatch[1] : 'unknown'
@@ -104,14 +92,14 @@ export function formatZodValidationError(
 
   if (missingParams.length > 0) {
     const missingParamErrors = missingParams.map(
-      param => `The required parameter \`${param}\` is missing`,
+      (param) => `The required parameter \`${param}\` is missing`,
     )
     errorParts.push(...missingParamErrors)
   }
 
   if (unexpectedParams.length > 0) {
     const unexpectedParamErrors = unexpectedParams.map(
-      param => `An unexpected parameter \`${param}\` was provided`,
+      (param) => `An unexpected parameter \`${param}\` was provided`,
     )
     errorParts.push(...unexpectedParamErrors)
   }

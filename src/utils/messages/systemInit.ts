@@ -2,15 +2,8 @@ import { feature } from 'bun:bundle'
 import { randomUUID } from 'crypto'
 import { getSdkBetas, getSessionId } from 'src/bootstrap/state.js'
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js'
-import type {
-  ApiKeySource,
-  PermissionMode,
-  SDKMessage,
-} from 'src/entrypoints/agentSdkTypes.js'
-import {
-  AGENT_TOOL_NAME,
-  LEGACY_AGENT_TOOL_NAME,
-} from 'src/tools/AgentTool/constants.js'
+import type { ApiKeySource, PermissionMode, SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
+import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { getApiKeyWithSource } from '../auth.js'
 import { getCwd } from '../cwd.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
@@ -57,25 +50,21 @@ export function buildSystemInitMessage(inputs: SystemInitInputs): SDKMessage {
     subtype: 'init',
     cwd: getCwd(),
     session_id: getSessionId(),
-    tools: inputs.tools.map(tool => sdkCompatToolName(tool.name)),
-    mcp_servers: inputs.mcpClients.map(client => ({
+    tools: inputs.tools.map((tool) => sdkCompatToolName(tool.name)),
+    mcp_servers: inputs.mcpClients.map((client) => ({
       name: client.name,
       status: client.type,
     })),
     model: inputs.model,
     permissionMode: inputs.permissionMode,
-    slash_commands: inputs.commands
-      .filter(c => c.userInvocable !== false)
-      .map(c => c.name),
+    slash_commands: inputs.commands.filter((c) => c.userInvocable !== false).map((c) => c.name),
     apiKeySource: getApiKeyWithSource().source as ApiKeySource,
     betas: getSdkBetas(),
     zy_code_version: MACRO.VERSION,
     output_style: outputStyle,
-    agents: inputs.agents.map(agent => agent.agentType),
-    skills: inputs.skills
-      .filter(s => s.userInvocable !== false)
-      .map(skill => skill.name),
-    plugins: inputs.plugins.map(plugin => ({
+    agents: inputs.agents.map((agent) => agent.agentType),
+    skills: inputs.skills.filter((s) => s.userInvocable !== false).map((skill) => skill.name),
+    plugins: inputs.plugins.map((plugin) => ({
       name: plugin.name,
       path: plugin.path,
       source: plugin.source,

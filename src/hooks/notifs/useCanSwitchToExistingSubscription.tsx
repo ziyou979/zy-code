@@ -1,17 +1,17 @@
-import * as React from 'react';
-import { getOauthProfileFromApiKey } from 'src/services/oauth/getOauthProfile.js';
-import { Text } from '../../ink.js';
-import { logEvent } from '../../services/analytics/index.js';
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
-import { useStartupNotification } from './useStartupNotification.js';
-const MAX_SHOW_COUNT = 3;
+import * as React from 'react'
+import { getOauthProfileFromApiKey } from 'src/services/oauth/getOauthProfile.js'
+import { Text } from '../../ink.js'
+import { logEvent } from '../../services/analytics/index.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { useStartupNotification } from './useStartupNotification.js'
+const MAX_SHOW_COUNT = 3
 
 /**
  * Hook to check if the user has a subscription on Console but isn't logged into it.
  */
 export function useCanSwitchToExistingSubscription() {
   // @ts-ignore
-  useStartupNotification(_temp2);
+  useStartupNotification(_temp2)
 }
 
 /**
@@ -20,36 +20,44 @@ export function useCanSwitchToExistingSubscription() {
  */
 async function _temp2() {
   if ((getGlobalConfig().subscriptionNoticeCount ?? 0) >= MAX_SHOW_COUNT) {
-    return null;
+    return null
   }
-  const subscriptionType = await getExistingZySubscription();
+  const subscriptionType = await getExistingZySubscription()
   if (subscriptionType === null) {
-    return null;
+    return null
   }
-  saveGlobalConfig(_temp);
-  logEvent("zy_switch_to_subscription_notice_shown", {});
+  saveGlobalConfig(_temp)
+  logEvent('zy_switch_to_subscription_notice_shown', {})
   return {
-    key: "switch-to-subscription",
-    jsx: <Text color="suggestion">Use your existing Zy {subscriptionType} plan with ZY Code<Text color="text" dimColor={true}>{" "}· /login to activate</Text></Text>,
-    priority: "low"
-  };
+    key: 'switch-to-subscription',
+    jsx: (
+      <Text color="suggestion">
+        Use your existing Zy {subscriptionType} plan with ZY Code
+        <Text color="text" dimColor={true}>
+          {' '}
+          · /login to activate
+        </Text>
+      </Text>
+    ),
+    priority: 'low',
+  }
 }
 function _temp(current) {
   return {
     ...current,
-    subscriptionNoticeCount: (current.subscriptionNoticeCount ?? 0) + 1
-  };
+    subscriptionNoticeCount: (current.subscriptionNoticeCount ?? 0) + 1,
+  }
 }
 async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {
-  const profile = await getOauthProfileFromApiKey();
+  const profile = await getOauthProfileFromApiKey()
   if (!profile) {
-    return null;
+    return null
   }
   if ((profile as any).account.has_Zy_max) {
-    return 'Max';
+    return 'Max'
   }
   if ((profile as any).account.has_Zy_pro) {
-    return 'Pro';
+    return 'Pro'
   }
-  return null;
+  return null
 }

@@ -27,10 +27,7 @@ export type ExternalCommandConfig = {
   safeFlags: Record<string, FlagArgType>
   // Returns true if the command is dangerous, false if safe.
   // args is the list of tokens AFTER the command name (e.g., after "git branch").
-  additionalCommandIsDangerousCallback?: (
-    rawCommand: string,
-    args: string[],
-  ) => boolean
+  additionalCommandIsDangerousCallback?: (rawCommand: string, args: string[]) => boolean
   // When false, the tool does NOT respect POSIX `--` end-of-options.
   // validateFlags will continue checking flags after `--` instead of breaking.
   // Default: true (most tools respect `--`).
@@ -280,10 +277,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     // writes. Only `git reflog` (bare = show) and `git reflog show` are safe.
     // The positional-arg fallthrough at ~:1730 would otherwise accept `expire`
     // as a non-flag arg, and `--all` is in GIT_REF_SELECTION_FLAGS → passes.
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // Block known write-capable subcommands: expire, delete, exists.
       // Allow: `show`, ref names (HEAD, refs/*, branch names).
       // The subcommand (if any) is the first positional arg. Subsequent
@@ -475,12 +469,9 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '-n': 'none',
     },
     // Only allow optional -n, then one alphanumeric remote name
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // Filter out the known safe flag
-      const positional = args.filter(a => a !== '-n')
+      const positional = args.filter((a) => a !== '-n')
       // Must have exactly one positional arg that looks like a remote name
       if (positional.length !== 1) return true
       return !/^[a-zA-Z0-9_-]+$/.test(positional[0]!)
@@ -492,12 +483,9 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--verbose': 'none',
     },
     // Only allow bare 'git remote' or 'git remote -v/--verbose'
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // All args must be known safe flags; no positional args allowed
-      return args.some(a => a !== '-v' && a !== '--verbose')
+      return args.some((a) => a !== '-v' && a !== '--verbose')
     },
   },
   // git merge-base is a read-only command for finding common ancestors
@@ -736,10 +724,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     // to .git/refs/tags/, content is fixed HEAD SHA), it violates the
     // read-only invariant and can pollute CI/CD tag-pattern matching or make
     // abandoned commits reachable via `git tag foo <commit>`.
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // Safe uses: `git tag` (list), `git tag -l pattern` (list filtered),
       // `git tag --contains <ref>` (list containing). A bare positional arg
       // without -l/--list is a tag name to CREATE — dangerous.
@@ -848,10 +833,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     // Block branch creation via positional arguments (e.g., "git branch newbranch")
     // Flag validation is handled by safeFlags above
     // args is tokens after "git branch"
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // Block branch creation: "git branch <name>" or "git branch <name> <start-point>"
       // Only safe uses are: "git branch" (list), "git branch -flags" (list with options),
       // or "git branch --contains/--merged/etc <ref>" (filtering)
@@ -956,11 +938,7 @@ function ghIsDangerousCallback(_rawCommand: string, args: string[]): boolean {
       if (!value) continue
     }
     // Skip values that are clearly not repo specs (no `/` at all, or pure numbers)
-    if (
-      !value.includes('/') &&
-      !value.includes('://') &&
-      !value.includes('@')
-    ) {
+    if (!value.includes('/') && !value.includes('://') && !value.includes('@')) {
       continue
     }
     // URL schemes: https://, http://, git://, ssh://
@@ -1383,152 +1361,146 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
 // DOCKER_READ_ONLY_COMMANDS — docker inspect/logs read-only commands
 // ---------------------------------------------------------------------------
 
-export const DOCKER_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
-  {
-    'docker logs': {
-      safeFlags: {
-        '--follow': 'none',
-        '-f': 'none',
-        '--tail': 'string',
-        '-n': 'string',
-        '--timestamps': 'none',
-        '-t': 'none',
-        '--since': 'string',
-        '--until': 'string',
-        '--details': 'none',
-      },
+export const DOCKER_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
+  'docker logs': {
+    safeFlags: {
+      '--follow': 'none',
+      '-f': 'none',
+      '--tail': 'string',
+      '-n': 'string',
+      '--timestamps': 'none',
+      '-t': 'none',
+      '--since': 'string',
+      '--until': 'string',
+      '--details': 'none',
     },
-    'docker inspect': {
-      safeFlags: {
-        '--format': 'string',
-        '-f': 'string',
-        '--type': 'string',
-        '--size': 'none',
-        '-s': 'none',
-      },
+  },
+  'docker inspect': {
+    safeFlags: {
+      '--format': 'string',
+      '-f': 'string',
+      '--type': 'string',
+      '--size': 'none',
+      '-s': 'none',
     },
-  }
+  },
+}
 
 // ---------------------------------------------------------------------------
 // RIPGREP_READ_ONLY_COMMANDS — rg (ripgrep) read-only search
 // ---------------------------------------------------------------------------
 
-export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
-  {
-    rg: {
-      safeFlags: {
-        // Pattern flags
-        '-e': 'string', // Pattern to search for
-        '--regexp': 'string',
-        '-f': 'string', // Read patterns from file
+export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
+  rg: {
+    safeFlags: {
+      // Pattern flags
+      '-e': 'string', // Pattern to search for
+      '--regexp': 'string',
+      '-f': 'string', // Read patterns from file
 
-        // Common search options
-        '-i': 'none', // Case insensitive
-        '--ignore-case': 'none',
-        '-S': 'none', // Smart case
-        '--smart-case': 'none',
-        '-F': 'none', // Fixed strings
-        '--fixed-strings': 'none',
-        '-w': 'none', // Word regexp
-        '--word-regexp': 'none',
-        '-v': 'none', // Invert match
-        '--invert-match': 'none',
+      // Common search options
+      '-i': 'none', // Case insensitive
+      '--ignore-case': 'none',
+      '-S': 'none', // Smart case
+      '--smart-case': 'none',
+      '-F': 'none', // Fixed strings
+      '--fixed-strings': 'none',
+      '-w': 'none', // Word regexp
+      '--word-regexp': 'none',
+      '-v': 'none', // Invert match
+      '--invert-match': 'none',
 
-        // Output options
-        '-c': 'none', // Count matches
-        '--count': 'none',
-        '-l': 'none', // Files with matches
-        '--files-with-matches': 'none',
-        '--files-without-match': 'none',
-        '-n': 'none', // Line number
-        '--line-number': 'none',
-        '-o': 'none', // Only matching
-        '--only-matching': 'none',
-        '-A': 'number', // After context
-        '--after-context': 'number',
-        '-B': 'number', // Before context
-        '--before-context': 'number',
-        '-C': 'number', // Context
-        '--context': 'number',
-        '-H': 'none', // With filename
-        '-h': 'none', // No filename
-        '--heading': 'none',
-        '--no-heading': 'none',
-        '-q': 'none', // Quiet
-        '--quiet': 'none',
-        '--column': 'none',
+      // Output options
+      '-c': 'none', // Count matches
+      '--count': 'none',
+      '-l': 'none', // Files with matches
+      '--files-with-matches': 'none',
+      '--files-without-match': 'none',
+      '-n': 'none', // Line number
+      '--line-number': 'none',
+      '-o': 'none', // Only matching
+      '--only-matching': 'none',
+      '-A': 'number', // After context
+      '--after-context': 'number',
+      '-B': 'number', // Before context
+      '--before-context': 'number',
+      '-C': 'number', // Context
+      '--context': 'number',
+      '-H': 'none', // With filename
+      '-h': 'none', // No filename
+      '--heading': 'none',
+      '--no-heading': 'none',
+      '-q': 'none', // Quiet
+      '--quiet': 'none',
+      '--column': 'none',
 
-        // File filtering
-        '-g': 'string', // Glob
-        '--glob': 'string',
-        '-t': 'string', // Type
-        '--type': 'string',
-        '-T': 'string', // Type not
-        '--type-not': 'string',
-        '--type-list': 'none',
-        '--hidden': 'none',
-        '--no-ignore': 'none',
-        '-u': 'none', // Unrestricted
+      // File filtering
+      '-g': 'string', // Glob
+      '--glob': 'string',
+      '-t': 'string', // Type
+      '--type': 'string',
+      '-T': 'string', // Type not
+      '--type-not': 'string',
+      '--type-list': 'none',
+      '--hidden': 'none',
+      '--no-ignore': 'none',
+      '-u': 'none', // Unrestricted
 
-        // Common options
-        '-m': 'number', // Max count per file
-        '--max-count': 'number',
-        '-d': 'number', // Max depth
-        '--max-depth': 'number',
-        '-a': 'none', // Text (search binary files)
-        '--text': 'none',
-        '-z': 'none', // Search zip
-        '-L': 'none', // Follow symlinks
-        '--follow': 'none',
+      // Common options
+      '-m': 'number', // Max count per file
+      '--max-count': 'number',
+      '-d': 'number', // Max depth
+      '--max-depth': 'number',
+      '-a': 'none', // Text (search binary files)
+      '--text': 'none',
+      '-z': 'none', // Search zip
+      '-L': 'none', // Follow symlinks
+      '--follow': 'none',
 
-        // Display options
-        '--color': 'string',
-        '--json': 'none',
-        '--stats': 'none',
+      // Display options
+      '--color': 'string',
+      '--json': 'none',
+      '--stats': 'none',
 
-        // Help and version
-        '--help': 'none',
-        '--version': 'none',
-        '--debug': 'none',
+      // Help and version
+      '--help': 'none',
+      '--version': 'none',
+      '--debug': 'none',
 
-        // Special argument separator
-        '--': 'none',
-      },
+      // Special argument separator
+      '--': 'none',
     },
-  }
+  },
+}
 
 // ---------------------------------------------------------------------------
 // PYRIGHT_READ_ONLY_COMMANDS — pyright static type checker
 // ---------------------------------------------------------------------------
 
-export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
-  {
-    pyright: {
-      respectsDoubleDash: false, // pyright treats -- as a file path, not end-of-options
-      safeFlags: {
-        '--outputjson': 'none',
-        '--project': 'string',
-        '-p': 'string',
-        '--pythonversion': 'string',
-        '--pythonplatform': 'string',
-        '--typeshedpath': 'string',
-        '--venvpath': 'string',
-        '--level': 'string',
-        '--stats': 'none',
-        '--verbose': 'none',
-        '--version': 'none',
-        '--dependencies': 'none',
-        '--warnings': 'none',
-      },
-      additionalCommandIsDangerousCallback: (
-        _rawCommand: string,
-        args: string[],
-      ) => {
-        // Check if --watch or -w appears as a standalone token (flag)
-        return args.some(t => t === '--watch' || t === '-w')
-      },
+export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
+  pyright: {
+    respectsDoubleDash: false, // pyright treats -- as a file path, not end-of-options
+    safeFlags: {
+      '--outputjson': 'none',
+      '--project': 'string',
+      '-p': 'string',
+      '--pythonversion': 'string',
+      '--pythonplatform': 'string',
+      '--typeshedpath': 'string',
+      '--venvpath': 'string',
+      '--level': 'string',
+      '--stats': 'none',
+      '--verbose': 'none',
+      '--version': 'none',
+      '--dependencies': 'none',
+      '--warnings': 'none',
     },
-  }
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
+      // Check if --watch or -w appears as a standalone token (flag)
+      return args.some((t) => t === '--watch' || t === '-w')
+    },
+  },
+}
 
 // ---------------------------------------------------------------------------
 // EXTERNAL_READONLY_COMMANDS — cross-shell read-only commands
@@ -1647,10 +1619,7 @@ export const FLAG_PATTERN = /^-[a-zA-Z0-9_-]/
 /**
  * Validates flag arguments based on their expected type
  */
-export function validateFlagArgument(
-  value: string,
-  argType: FlagArgType,
-): boolean {
+export function validateFlagArgument(value: string, argType: FlagArgType): boolean {
   switch (argType) {
     case 'none':
       return false // Should not have been called for 'none' type
@@ -1866,11 +1835,7 @@ export function validateFlags(
         // Exception: git's --sort flag can have values starting with '-' for reverse sorting
         if (flagArgType === 'string' && argValue.startsWith('-')) {
           // Special case: git's --sort flag allows - prefix for reverse sorting
-          if (
-            flag === '--sort' &&
-            options?.commandName === 'git' &&
-            argValue.match(/^-[a-zA-Z]/)
-          ) {
+          if (flag === '--sort' && options?.commandName === 'git' && argValue.match(/^-[a-zA-Z]/)) {
             // This looks like a reverse sort (e.g., -refname, -version:refname)
             // Allow it if the rest looks like a valid sort key
           } else {

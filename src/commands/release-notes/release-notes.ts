@@ -10,7 +10,7 @@ function formatReleaseNotes(notes: Array<[string, string[]]>): string {
   return notes
     .map(([version, notes]) => {
       const header = `Version ${version}:`
-      const bulletPoints = notes.map(note => `· ${note}`).join('\n')
+      const bulletPoints = notes.map((note) => `· ${note}`).join('\n')
       return `${header}\n${bulletPoints}`
     })
     .join('\n\n')
@@ -22,7 +22,7 @@ export async function call(): Promise<LocalCommandResult> {
 
   try {
     const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(rej => rej(new Error('Timeout')), 500, reject)
+      setTimeout((rej) => rej(new Error('Timeout')), 500, reject)
     })
 
     await Promise.race([fetchAndStoreChangelog(), timeoutPromise])

@@ -87,17 +87,11 @@ export async function readFileInRange(
   const stats = await fsStat(filePath)
 
   if (stats.isDirectory()) {
-    throw new Error(
-      `EISDIR: illegal operation on a directory, read '${filePath}'`,
-    )
+    throw new Error(`EISDIR: illegal operation on a directory, read '${filePath}'`)
   }
 
   if (stats.isFile() && stats.size < FAST_PATH_MAX_SIZE) {
-    if (
-      !truncateOnByteLimit &&
-      maxBytes !== undefined &&
-      stats.size > maxBytes
-    ) {
+    if (!truncateOnByteLimit && maxBytes !== undefined && stats.size > maxBytes) {
       throw new FileTooLargeError(stats.size, maxBytes)
     }
 
@@ -111,14 +105,7 @@ export async function readFileInRange(
     )
   }
 
-  return readFileInRangeStreaming(
-    filePath,
-    offset,
-    maxLines,
-    maxBytes,
-    truncateOnByteLimit,
-    signal,
-  )
+  return readFileInRangeStreaming(filePath, offset, maxLines, maxBytes, truncateOnByteLimit, signal)
 }
 
 // ---------------------------------------------------------------------------
@@ -235,9 +222,7 @@ function streamOnData(this: StreamState, chunk: string): void {
     this.maxBytes !== undefined &&
     this.totalBytesRead > this.maxBytes
   ) {
-    this.stream.destroy(
-      new FileTooLargeError(this.totalBytesRead, this.maxBytes),
-    )
+    this.stream.destroy(new FileTooLargeError(this.totalBytesRead, this.maxBytes))
     return
   }
 
@@ -247,10 +232,7 @@ function streamOnData(this: StreamState, chunk: string): void {
   let startPos = 0
   let newlinePos: number
   while ((newlinePos = data.indexOf('\n', startPos)) !== -1) {
-    if (
-      this.currentLineIndex >= this.offset &&
-      this.currentLineIndex < this.endLine
-    ) {
+    if (this.currentLineIndex >= this.offset && this.currentLineIndex < this.endLine) {
       let line = data.slice(startPos, newlinePos)
       if (line.endsWith('\r')) {
         line = line.slice(0, -1)
@@ -279,10 +261,7 @@ function streamOnData(this: StreamState, chunk: string): void {
   // Outside the range we just count newlines — discarding prevents
   // unbounded memory growth on huge single-line files.
   if (startPos < data.length) {
-    if (
-      this.currentLineIndex >= this.offset &&
-      this.currentLineIndex < this.endLine
-    ) {
+    if (this.currentLineIndex >= this.offset && this.currentLineIndex < this.endLine) {
       const fragment = data.slice(startPos)
       // In truncate mode, `partial` can grow unboundedly if the selected
       // range contains a huge single line (no newline across many chunks).
@@ -308,10 +287,7 @@ function streamOnEnd(this: StreamState): void {
   if (line.endsWith('\r')) {
     line = line.slice(0, -1)
   }
-  if (
-    this.currentLineIndex >= this.offset &&
-    this.currentLineIndex < this.endLine
-  ) {
+  if (this.currentLineIndex >= this.offset && this.currentLineIndex < this.endLine) {
     if (this.truncateOnByteLimit && this.maxBytes !== undefined) {
       const sep = this.selectedLines.length > 0 ? 1 : 0
       const nextBytes = this.selectedBytes + sep + Buffer.byteLength(line)
@@ -328,7 +304,7 @@ function streamOnEnd(this: StreamState): void {
 
   const content = this.selectedLines.join('\n')
   const truncated = this.truncatedByBytes
-  this.mtimeReady.then(mtimeMs => {
+  this.mtimeReady.then((mtimeMs) => {
     this.resolve({
       content,
       lineCount: this.selectedLines.length,
@@ -371,7 +347,7 @@ function readFileInRangeStreaming(
       resolveMtime: () => {},
       mtimeReady: null as unknown as Promise<number>,
     }
-    state.mtimeReady = new Promise<number>(r => {
+    state.mtimeReady = new Promise<number>((r) => {
       state.resolveMtime = r
     })
 

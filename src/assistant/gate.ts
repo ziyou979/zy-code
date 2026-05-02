@@ -5,7 +5,7 @@
  * Check if KAIROS gate is enabled
  */
 export function isKairosGateEnabled(): boolean {
-  return false;
+  return false
 }
 
 /**
@@ -13,7 +13,7 @@ export function isKairosGateEnabled(): boolean {
  * @param featureName - The feature to check
  */
 export function checkGate(featureName: string): boolean {
-  return false;
+  return false
 }
 
 /**

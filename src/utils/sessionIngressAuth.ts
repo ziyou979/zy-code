@@ -1,7 +1,4 @@
-import {
-  getSessionIngressToken,
-  setSessionIngressToken,
-} from '../bootstrap/state.js'
+import { getSessionIngressToken, setSessionIngressToken } from '../bootstrap/state.js'
 import {
   CCR_SESSION_INGRESS_TOKEN_PATH,
   maybePersistTokenForSubprocesses,
@@ -26,9 +23,7 @@ function getTokenFromFileDescriptor(): string | null {
   if (!fdEnv) {
     // No FD env var — either we're not in CCR, or we're a subprocess whose
     // parent stripped the (useless) FD env var. Try the well-known file.
-    const path =
-      process.env.CLAUDE_SESSION_INGRESS_TOKEN_FILE ??
-      CCR_SESSION_INGRESS_TOKEN_PATH
+    const path = process.env.CLAUDE_SESSION_INGRESS_TOKEN_FILE ?? CCR_SESSION_INGRESS_TOKEN_PATH
     const fromFile = readTokenFromWellKnownFile(path, 'session ingress token')
     setSessionIngressToken(fromFile)
     return fromFile
@@ -63,22 +58,15 @@ function getTokenFromFileDescriptor(): string | null {
     }
     logForDebugging(`Successfully read token from file descriptor ${fd}`)
     setSessionIngressToken(token)
-    maybePersistTokenForSubprocesses(
-      CCR_SESSION_INGRESS_TOKEN_PATH,
-      token,
-      'session ingress token',
-    )
+    maybePersistTokenForSubprocesses(CCR_SESSION_INGRESS_TOKEN_PATH, token, 'session ingress token')
     return token
   } catch (error) {
-    logForDebugging(
-      `Failed to read token from file descriptor ${fd}: ${errorMessage(error)}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Failed to read token from file descriptor ${fd}: ${errorMessage(error)}`, {
+      level: 'error',
+    })
     // FD env var was set but read failed — typically a subprocess that
     // inherited the env var but not the FD (ENXIO). Try the well-known file.
-    const path =
-      process.env.CLAUDE_SESSION_INGRESS_TOKEN_FILE ??
-      CCR_SESSION_INGRESS_TOKEN_PATH
+    const path = process.env.CLAUDE_SESSION_INGRESS_TOKEN_FILE ?? CCR_SESSION_INGRESS_TOKEN_PATH
     const fromFile = readTokenFromWellKnownFile(path, 'session ingress token')
     setSessionIngressToken(fromFile)
     return fromFile

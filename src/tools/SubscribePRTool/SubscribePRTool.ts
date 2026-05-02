@@ -15,10 +15,7 @@ Parameters:
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
-    pr_url: z
-      .string()
-      .url()
-      .describe('The URL of the GitHub Pull Request to subscribe to'),
+    pr_url: z.string().url().describe('The URL of the GitHub Pull Request to subscribe to'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
@@ -76,9 +73,7 @@ export const SubscribePRTool = buildTool({
       // Store subscription in app state
       const appState = context.getAppState()
       const existingSubscriptions =
-        (appState as Record<string, unknown>).prSubscriptions as
-          | string[]
-          | undefined ?? []
+        ((appState as Record<string, unknown>).prSubscriptions as string[] | undefined) ?? []
       if (!existingSubscriptions.includes(pr_url)) {
         context.setAppState((prev: any) => ({
           ...prev,

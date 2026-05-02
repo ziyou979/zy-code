@@ -16,15 +16,14 @@ export const call: LocalCommandCall = async () => {
 
   const newMode = currentMode === 'normal' ? 'vim' : 'normal'
 
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
     editorMode: newMode,
   }))
 
   logEvent('zy_editor_mode_changed', {
     mode: newMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    source:
-      'command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    source: 'command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
   return {

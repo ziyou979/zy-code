@@ -24,7 +24,7 @@ function isDevMode(): boolean {
     '/build-external-native/',
   ]
 
-  return pathsToCheck.some(p => buildDirs.some(dir => p.includes(dir)))
+  return pathsToCheck.some((p) => buildDirs.some((dir) => p.includes(dir)))
 }
 
 /**
@@ -69,11 +69,7 @@ async function isDesktopInstalled(): Promise<boolean> {
     return code === 0 && stdout.trim().length > 0
   } else if (platform === 'win32') {
     // On Windows, try to query the registry for the protocol handler
-    const { code } = await execFileNoThrow('reg', [
-      'query',
-      'HKEY_CLASSES_ROOT\\zy',
-      '/ve',
-    ])
+    const { code } = await execFileNoThrow('reg', ['query', 'HKEY_CLASSES_ROOT\\zy', '/ve'])
     return code === 0
   }
 
@@ -109,9 +105,9 @@ async function getDesktopVersion(): Promise<string | null> {
     try {
       const entries = await readdir(installDir)
       const versions = entries
-        .filter(e => e.startsWith('app-'))
-        .map(e => e.slice(4))
-        .filter(v => semverCoerce(v) !== null)
+        .filter((e) => e.startsWith('app-'))
+        .map((e) => e.slice(4))
+        .filter((v) => semverCoerce(v) !== null)
         .sort((a, b) => {
           const ca = semverCoerce(a)!
           const cb = semverCoerce(b)!
@@ -187,12 +183,7 @@ async function openDeepLink(deepLinkUrl: string): Promise<boolean> {
     return code === 0
   } else if (platform === 'win32') {
     // On Windows, use cmd /c start to open URLs
-    const { code } = await execFileNoThrow('cmd', [
-      '/c',
-      'start',
-      '',
-      deepLinkUrl,
-    ])
+    const { code } = await execFileNoThrow('cmd', ['/c', 'start', '', deepLinkUrl])
     return code === 0
   }
 
@@ -215,8 +206,7 @@ export async function openCurrentSessionInDesktop(): Promise<{
   if (!installed) {
     return {
       success: false,
-      error:
-        'Zy Desktop is not installed. Install it from https://zy.ai/download',
+      error: 'Zy Desktop is not installed. Install it from https://zy.ai/download',
     }
   }
 

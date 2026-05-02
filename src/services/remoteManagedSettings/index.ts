@@ -24,18 +24,12 @@ import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError, getErrnoCode } from '../../utils/errors.js'
 import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
-import {
-  type SettingsJson,
-  SettingsSchema,
-} from '../../utils/settings/types.js'
+import { type SettingsJson, SettingsSchema } from '../../utils/settings/types.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
-import {
-  checkManagedSettingsSecurity,
-  handleSecurityCheckResult,
-} from './securityCheck.jsx'
+import { checkManagedSettingsSecurity, handleSecurityCheckResult } from './securityCheck.jsx'
 import { isRemoteManagedSettingsEligible, resetSyncCache } from './syncCache.js'
 import {
   getRemoteManagedSettingsSyncFromCache,
@@ -78,16 +72,14 @@ export function initializeRemoteManagedSettingsLoadingPromise(): void {
   }
 
   if (isRemoteManagedSettingsEligible()) {
-    loadingCompletePromise = new Promise(resolve => {
+    loadingCompletePromise = new Promise((resolve) => {
       loadingCompleteResolve = resolve
 
       // 设置超时，即使从未调用 loadRemoteManagedSettings() 也解析 Promise
       // 这防止了 Agent SDK 测试和其他非 CLI 上下文中的死锁
       setTimeout(() => {
         if (loadingCompleteResolve) {
-          logForDebugging(
-            'Remote settings: Loading promise timed out, resolving anyway',
-          )
+          logForDebugging('Remote settings: Loading promise timed out, resolving anyway')
           loadingCompleteResolve()
           loadingCompleteResolve = null
         }
@@ -204,9 +196,7 @@ function getRemoteSettingsAuthHeaders(): {
  * 使用重试逻辑和指数退避获取远程设置
  * 使用现有的代码库重试工具以保持一致性
  */
-async function fetchWithRetry(
-  cachedChecksum?: string,
-): Promise<RemoteManagedSettingsFetchResult> {
+async function fetchWithRetry(cachedChecksum?: string): Promise<RemoteManagedSettingsFetchResult> {
   let lastResult: RemoteManagedSettingsFetchResult | null = null
 
   for (let attempt = 1; attempt <= DEFAULT_MAX_RETRIES + 1; attempt++) {
@@ -229,9 +219,7 @@ async function fetchWithRetry(
 
     // 计算延迟并在下次重试前等待
     const delayMs = getRetryDelay(attempt)
-    logForDebugging(
-      `Remote settings: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`,
-    )
+    logForDebugging(`Remote settings: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`)
     await sleep(delayMs)
   }
 
@@ -278,7 +266,7 @@ async function fetchRemoteManagedSettings(
       timeout: SETTINGS_TIMEOUT_MS,
       // 允许 204、304 和 404 响应，不将其视为错误。
       // 当用户没有设置或功能标志关闭时返回 204/404。
-      validateStatus: status =>
+      validateStatus: (status) =>
         status === 200 || status === 204 || status === 304 || status === 404,
     })
 
@@ -303,13 +291,9 @@ async function fetchRemoteManagedSettings(
       }
     }
 
-    const parsed = RemoteManagedSettingsResponseSchema().safeParse(
-      response.data,
-    )
+    const parsed = RemoteManagedSettingsResponseSchema().safeParse(response.data)
     if (!parsed.success) {
-      logForDebugging(
-        `Remote settings: Invalid response format - ${parsed.error.message}`,
-      )
+      logForDebugging(`Remote settings: Invalid response format - ${parsed.error.message}`)
       return {
         success: false,
         error: 'Invalid remote settings format',
@@ -419,9 +403,7 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
   const cachedSettings = getRemoteManagedSettingsSyncFromCache()
 
   // 从缓存的设置本地计算校验和，用于 HTTP 缓存验证
-  const cachedChecksum = cachedSettings
-    ? computeChecksumFromSettings(cachedSettings)
-    : undefined
+  const cachedChecksum = cachedSettings ? computeChecksumFromSettings(cachedSettings) : undefined
 
   try {
     // 使用重试逻辑从 API 获取设置
@@ -430,9 +412,7 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
     if (!result.success) {
       // 获取失败时，如果有文件则使用过期的文件（优雅降级）
       if (cachedSettings) {
-        logForDebugging(
-          'Remote settings: Using stale cache after fetch failure',
-        )
+        logForDebugging('Remote settings: Using stale cache after fetch failure')
         setSessionCache(cachedSettings)
         return cachedSettings
       }
@@ -453,15 +433,10 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
 
     if (hasContent) {
       // 应用前检查危险设置变更
-      const securityResult = await checkManagedSettingsSecurity(
-        cachedSettings,
-        newSettings,
-      )
+      const securityResult = await checkManagedSettingsSecurity(cachedSettings, newSettings)
       if (!handleSecurityCheckResult(securityResult)) {
         // 用户拒绝 — 不应用设置，返回缓存或 null
-        logForDebugging(
-          'Remote settings: User rejected new settings, using cached settings',
-        )
+        logForDebugging('Remote settings: User rejected new settings, using cached settings')
         return cachedSettings
       }
 
@@ -514,7 +489,7 @@ export async function loadRemoteManagedSettings(): Promise<void> {
   // 仅在用户符合远程设置资格且 Promise 尚未设置时
   // （initializeRemoteManagedSettingsLoadingPromise 可能已经被提前调用）
   if (isRemoteManagedSettingsEligible() && !loadingCompletePromise) {
-    loadingCompletePromise = new Promise(resolve => {
+    loadingCompletePromise = new Promise((resolve) => {
       loadingCompleteResolve = resolve
     })
   }

@@ -103,7 +103,6 @@ export function safeStringifyToolArguments(input: unknown): string {
 
 type AnyMessage = LLMMessage | Record<string, unknown>
 
-
 /**
  * 判断是否走 DeepSeek reasoning 协议。
  * DeepSeek 要求：两轮之间有 tool_call 时必须回传 reasoning_content。
@@ -159,9 +158,7 @@ export function messagesToOpenAI(
               typeof block.content === 'string'
                 ? block.content
                 : Array.isArray(block.content)
-                  ? block.content
-                      .map((c: any) => (c.type === 'text' ? c.text : ''))
-                      .join('\n')
+                  ? block.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('\n')
                   : ''
             toolResults.push({
               role: 'tool',
@@ -184,10 +181,7 @@ export function messagesToOpenAI(
         if (parts.length > 0) {
           result.push({
             role: 'user',
-            content:
-              parts.length === 1 && parts[0]?.type === 'text'
-                ? parts[0].text
-                : parts,
+            content: parts.length === 1 && parts[0]?.type === 'text' ? parts[0].text : parts,
           })
         } else if (toolResults.length === 0) {
           result.push({ role: 'user', content: '' })
@@ -297,10 +291,11 @@ export function toolsToOpenAI(
     function: {
       name: tool.name ?? '',
       description: tool.description ?? '',
-      parameters: (tool.inputSchema ?? (tool as any).input_schema ?? {
-        type: 'object',
-        properties: {},
-      }) as Record<string, unknown>,
+      parameters: (tool.inputSchema ??
+        (tool as any).input_schema ?? {
+          type: 'object',
+          properties: {},
+        }) as Record<string, unknown>,
     },
   }))
 }
@@ -400,8 +395,7 @@ export function convertOutputFormatToResponseFormat(
 
   if (format.type === 'json_schema') {
     const jsonSchema =
-      (format.json_schema as Record<string, unknown>) ??
-      (format.schema as Record<string, unknown>)
+      (format.json_schema as Record<string, unknown>) ?? (format.schema as Record<string, unknown>)
     if (jsonSchema) {
       return {
         type: 'json_schema',
@@ -429,9 +423,7 @@ const OPENAI_STOP_REASON_MAP: Record<string, StopReason> = {
   refusal: 'refusal',
 }
 
-export function openAIFinishReasonToStandard(
-  reason: string | null | undefined,
-): StopReason {
+export function openAIFinishReasonToStandard(reason: string | null | undefined): StopReason {
   if (!reason) return null
   return OPENAI_STOP_REASON_MAP[reason] ?? 'end_turn'
 }
@@ -631,17 +623,13 @@ export async function* mapOpenAIStreamToStandard(
  * thinking 多 provider 适配、response_format、OpenAI 原生工具透传、
  * providerExtras.openai / extra_body 顶层透传、model 字符串规范化。
  */
-export function buildOpenAIRequestParams(
-  params: CreateParams,
-): OpenAICreateParams {
+export function buildOpenAIRequestParams(params: CreateParams): OpenAICreateParams {
   const p = params as any
   const openAIMessages = messagesToOpenAI(p.messages ?? [], p.model)
   const openaiExtras = p.providerExtras?.openai
 
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
-  const openaiNativeTools = openaiExtras?._web_search_tool
-    ? [openaiExtras._web_search_tool]
-    : []
+  const openaiNativeTools = openaiExtras?._web_search_tool ? [openaiExtras._web_search_tool] : []
   const cleanedExtras = openaiExtras ? { ...openaiExtras } : {}
   delete (cleanedExtras as any)._web_search_tool
 
@@ -649,18 +637,11 @@ export function buildOpenAIRequestParams(
   const explicitResponseFormat = openaiExtras?.response_format
   const responseFormatFromConfig = convertOutputFormatToResponseFormat(p.output_config)
 
-  const thinkingParams = convertThinkingForOpenAI(
-    p.thinking,
-    p.model,
-    p.output_config,
-  )
+  const thinkingParams = convertThinkingForOpenAI(p.thinking, p.model, p.output_config)
 
   const toolDefs =
     (p.tools && p.tools.length > 0) || openaiNativeTools.length > 0
-      ? [
-          ...openaiNativeTools,
-          ...((p.tools ? toolsToOpenAI(p.tools) : []) ?? []),
-        ]
+      ? [...openaiNativeTools, ...((p.tools ? toolsToOpenAI(p.tools) : []) ?? [])]
       : undefined
 
   const out: OpenAICreateParams = {
@@ -689,5 +670,3 @@ export function buildOpenAIRequestParams(
 
   return out
 }
-
-

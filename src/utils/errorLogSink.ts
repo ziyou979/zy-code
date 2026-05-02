@@ -182,8 +182,7 @@ function logMCPErrorImpl(serverName: string, error: unknown): void {
   logForDebugging(`MCP server "${serverName}" ${error}`, { level: 'error' })
 
   const logFile = getMCPLogsPath(serverName)
-  const errorStr =
-    error instanceof Error ? error.stack || error.message : String(error)
+  const errorStr = error instanceof Error ? error.stack || error.message : String(error)
 
   const errorInfo = {
     error: errorStr,

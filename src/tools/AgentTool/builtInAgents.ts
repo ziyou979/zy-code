@@ -36,17 +36,13 @@ export function getBuiltInAgents(): AgentDefinition[] {
     if (isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE)) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       // @ts-ignore
-      const { getCoordinatorAgents } =
-        require('../../coordinator/workerAgent.js')
+      const { getCoordinatorAgents } = require('../../coordinator/workerAgent.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
       return getCoordinatorAgents()
     }
   }
 
-  const agents: AgentDefinition[] = [
-    GENERAL_PURPOSE_AGENT,
-    STATUSLINE_SETUP_AGENT,
-  ]
+  const agents: AgentDefinition[] = [GENERAL_PURPOSE_AGENT, STATUSLINE_SETUP_AGENT]
 
   if (areExplorePlanAgentsEnabled()) {
     agents.push(EXPLORE_AGENT, PLAN_AGENT)

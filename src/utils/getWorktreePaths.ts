@@ -49,8 +49,8 @@ export async function getWorktreePaths(cwd: string): Promise<string[]> {
   // branch refs/heads/feature
   const worktreePaths = stdout
     .split('\n')
-    .filter(line => line.startsWith('worktree '))
-    .map(line => line.slice('worktree '.length).normalize('NFC'))
+    .filter((line) => line.startsWith('worktree '))
+    .map((line) => line.slice('worktree '.length).normalize('NFC'))
 
   logEvent('zy_worktree_detection', {
     duration_ms: durationMs,
@@ -59,11 +59,9 @@ export async function getWorktreePaths(cwd: string): Promise<string[]> {
   })
 
   // Sort worktrees: current worktree first, then alphabetically
-  const currentWorktree = worktreePaths.find(
-    path => cwd === path || cwd.startsWith(path + sep),
-  )
+  const currentWorktree = worktreePaths.find((path) => cwd === path || cwd.startsWith(path + sep))
   const otherWorktrees = worktreePaths
-    .filter(path => path !== currentWorktree)
+    .filter((path) => path !== currentWorktree)
     .sort((a, b) => a.localeCompare(b))
 
   return currentWorktree ? [currentWorktree, ...otherWorktrees] : otherWorktrees

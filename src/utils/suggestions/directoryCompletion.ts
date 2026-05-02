@@ -52,10 +52,7 @@ const pathCache = new LRUCache<string, PathEntry[]>({
 /**
  * Parses a partial path into directory and prefix components
  */
-export function parsePartialPath(
-  partialPath: string,
-  basePath?: string,
-): ParsedPath {
+export function parsePartialPath(partialPath: string, basePath?: string): ParsedPath {
   // Handle empty input
   if (!partialPath) {
     const directory = basePath || getCwd()
@@ -81,9 +78,7 @@ export function parsePartialPath(
  * Scans a directory and returns subdirectories
  * Uses LRU cache to avoid repeated filesystem calls
  */
-export async function scanDirectory(
-  dirPath: string,
-): Promise<DirectoryEntry[]> {
+export async function scanDirectory(dirPath: string): Promise<DirectoryEntry[]> {
   // Check cache first
   const cached = directoryCache.get(dirPath)
   if (cached) {
@@ -97,8 +92,8 @@ export async function scanDirectory(
 
     // Filter for directories only, exclude hidden directories
     const directories = entries
-      .filter(entry => entry.isDirectory() && !entry.name.startsWith('.'))
-      .map(entry => ({
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+      .map((entry) => ({
         name: entry.name,
         path: join(dirPath, entry.name),
         type: 'directory' as const,
@@ -128,10 +123,10 @@ export async function getDirectoryCompletions(
   const entries = await scanDirectory(directory)
   const prefixLower = prefix.toLowerCase()
   const matches = entries
-    .filter(entry => entry.name.toLowerCase().startsWith(prefixLower))
+    .filter((entry) => entry.name.toLowerCase().startsWith(prefixLower))
     .slice(0, maxResults)
 
-  return matches.map(entry => ({
+  return matches.map((entry) => ({
     id: entry.path,
     displayText: entry.name + '/',
     description: 'directory',
@@ -180,8 +175,8 @@ export async function scanDirectoryForPaths(
     const entries = await fs.readdir(dirPath)
 
     const paths = entries
-      .filter(entry => includeHidden || !entry.name.startsWith('.'))
-      .map(entry => ({
+      .filter((entry) => includeHidden || !entry.name.startsWith('.'))
+      .map((entry) => ({
         name: entry.name,
         path: join(dirPath, entry.name),
         type: entry.isDirectory() ? ('directory' as const) : ('file' as const),
@@ -221,7 +216,7 @@ export async function getPathCompletions(
   const prefixLower = prefix.toLowerCase()
 
   const matches = entries
-    .filter(entry => {
+    .filter((entry) => {
       if (!includeFiles && entry.type === 'file') return false
       return entry.name.toLowerCase().startsWith(prefixLower)
     })
@@ -244,7 +239,7 @@ export async function getPathCompletions(
     dirPortion = dirPortion.slice(2)
   }
 
-  return matches.map(entry => {
+  return matches.map((entry) => {
     const fullPath = dirPortion + entry.name
     return {
       id: fullPath,

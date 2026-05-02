@@ -50,10 +50,7 @@ export type PromptCommand = {
   // Glob patterns for file paths this skill applies to
   // When set, the skill is only visible after the model touches matching files
   paths?: string[]
-  getPromptForCommand(
-    args: string,
-    context: ToolUseContext,
-  ): Promise<ContentBlock[]>
+  getPromptForCommand(args: string, context: ToolUseContext): Promise<ContentBlock[]>
 }
 
 /**
@@ -86,15 +83,9 @@ export type LocalJSXCommandContext = ToolUseContext & {
     theme: ThemeName
   }
   onChangeAPIKey: () => void
-  onChangeDynamicMcpConfig?: (
-    config: Record<string, ScopedMcpServerConfig>,
-  ) => void
+  onChangeDynamicMcpConfig?: (config: Record<string, ScopedMcpServerConfig>) => void
   onInstallIDEExtension?: (ide: IdeType) => void
-  resume?: (
-    sessionId: UUID,
-    log: LogOption,
-    entrypoint: ResumeEntrypoint,
-  ) => Promise<void>
+  resume?: (sessionId: UUID, log: LogOption, entrypoint: ResumeEntrypoint) => Promise<void>
 }
 
 export type ResumeEntrypoint =
@@ -188,13 +179,7 @@ export type CommandBase = {
   version?: string // Version of the command/skill
   disableModelInvocation?: boolean // Whether to disable this command from being invoked by models
   userInvocable?: boolean // Whether users can invoke this skill by typing /skill-name
-  loadedFrom?:
-    | 'commands_DEPRECATED'
-    | 'skills'
-    | 'plugin'
-    | 'managed'
-    | 'bundled'
-    | 'mcp' // Where the command was loaded from
+  loadedFrom?: 'commands_DEPRECATED' | 'skills' | 'plugin' | 'managed' | 'bundled' | 'mcp' // Where the command was loaded from
   kind?: 'workflow' // Distinguishes workflow-backed commands (badged in autocomplete)
   immediate?: boolean // If true, command executes immediately without waiting for a stop point (bypasses queue)
   isSensitive?: boolean // If true, args are redacted from the conversation history
@@ -202,8 +187,7 @@ export type CommandBase = {
   userFacingName?: () => string
 }
 
-export type Command = CommandBase &
-  (PromptCommand | LocalCommand | LocalJSXCommand)
+export type Command = CommandBase & (PromptCommand | LocalCommand | LocalJSXCommand)
 
 /** Resolves the user-visible name, falling back to `cmd.name` when not overridden. */
 export function getCommandName(cmd: CommandBase): string {

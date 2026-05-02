@@ -1,5 +1,8 @@
 import type { TokenUsage as Usage } from '../types/llm.js'
-import { roughTokenCountEstimationForMessages, getBytesPerTokenForLanguage } from '../services/tokenEstimation.js'
+import {
+  roughTokenCountEstimationForMessages,
+  getBytesPerTokenForLanguage,
+} from '../services/tokenEstimation.js'
 import type { AssistantMessage, Message } from '../types/message.js'
 import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages.js'
 import { jsonStringify } from './slowOperations.js'
@@ -78,9 +81,7 @@ export function tokenCountFromLastAPIResponse(messages: Message[]): number {
  *（无服务端工具循环，顶层用量即最终窗口）。
  * 两条路径均排除缓存 token 以匹配 #304930 的公式。
  */
-export function finalContextTokensFromLastResponse(
-  messages: Message[],
-): number {
+export function finalContextTokensFromLastResponse(messages: Message[]): number {
   let i = messages.length - 1
   while (i >= 0) {
     const message = messages[i]
@@ -123,9 +124,7 @@ export function finalContextTokensFromLastResponse(
  * 此函数仅用于测量 Zy 在单次响应中生成了多少 token，
  * 而非上下文窗口的填满程度。
  */
-export function messageTokenCountFromLastAPIResponse(
-  messages: Message[],
-): number {
+export function messageTokenCountFromLastAPIResponse(messages: Message[]): number {
   let i = messages.length - 1
   while (i >= 0) {
     const message = messages[i]
@@ -159,12 +158,10 @@ export function getCurrentUsage(messages: Message[]): {
   return null
 }
 
-export function doesMostRecentAssistantMessageExceed200k(
-  messages: Message[],
-): boolean {
+export function doesMostRecentAssistantMessageExceed200k(messages: Message[]): boolean {
   const THRESHOLD = 200_000
 
-  const lastAsst = messages.findLast(m => m.type === 'assistant')
+  const lastAsst = messages.findLast((m) => m.type === 'assistant')
   if (!lastAsst) return false
   const usage = getTokenUsage(lastAsst)
   return usage ? getTokenCountFromUsage(usage) > THRESHOLD : false
@@ -183,9 +180,7 @@ export function doesMostRecentAssistantMessageExceed200k(
  * - tool_use input（input_json_delta）
  * 注意：signature_delta 不计入流式统计（非模型输出）。
  */
-export function getAssistantMessageContentLength(
-  message: AssistantMessage,
-): number {
+export function getAssistantMessageContentLength(message: AssistantMessage): number {
   let contentLength = 0
   const content = message.message.content
   if (typeof content === 'string') {
@@ -263,14 +258,11 @@ export function tokenCountWithEstimation(messages: readonly Message[]): number {
       return (
         getTokenCountFromUsage(usage as any) +
         Math.round(
-          roughTokenCountEstimationForMessages(messages.slice(i + 1) as any) *
-            correctionFactor,
+          roughTokenCountEstimationForMessages(messages.slice(i + 1) as any) * correctionFactor,
         )
       )
     }
     i--
   }
-  return Math.round(
-    roughTokenCountEstimationForMessages(messages as any) * correctionFactor,
-  )
+  return Math.round(roughTokenCountEstimationForMessages(messages as any) * correctionFactor)
 }

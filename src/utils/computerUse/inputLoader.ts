@@ -1,7 +1,4 @@
-import type {
-  ComputerUseInput,
-  ComputerUseInputAPI,
-} from '@ant/computer-use-input'
+import type { ComputerUseInput, ComputerUseInputAPI } from '@ant/computer-use-input'
 
 let cached: ComputerUseInputAPI | undefined
 

@@ -11,11 +11,7 @@ import { isEssentialTrafficOnly } from 'src/utils/privacyLevel.js'
 import { writeToStderr } from 'src/utils/process.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
-import {
-  getAuthHeaders,
-  getUserAgent,
-  withOAuth401Retry,
-} from '../../utils/http.js'
+import { getAuthHeaders, getUserAgent, withOAuth401Retry } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { tSync } from '../../i18n/index.js'
@@ -50,39 +46,37 @@ export type ApiResult<T> = { success: true; data: T } | { success: false }
  * 会话级别缓存，避免每次渲染重复请求。
  * 缓存在 updateGroveSettings() 中会失效，确保切换后的读取值是最新的。
  */
-export const getGroveSettings = memoize(
-  async (): Promise<ApiResult<AccountSettings>> => {
-    // Grove 是通知功能；在服务中断期间跳过是正确的。
-    if (isEssentialTrafficOnly()) {
-      return { success: false }
-    }
-    try {
-      const response = await withOAuth401Retry(() => {
-        const authHeaders = getAuthHeaders()
-        if (authHeaders.error) {
-          throw new Error(`Failed to get auth headers: ${authHeaders.error}`)
-        }
-        return axios.get<AccountSettings>(
-          `${getOauthConfig().BASE_API_URL}/api/oauth/account/settings`,
-          {
-            headers: {
-              ...authHeaders.headers,
-              'User-Agent': getZyCodeUserAgent(),
-            },
+export const getGroveSettings = memoize(async (): Promise<ApiResult<AccountSettings>> => {
+  // Grove 是通知功能；在服务中断期间跳过是正确的。
+  if (isEssentialTrafficOnly()) {
+    return { success: false }
+  }
+  try {
+    const response = await withOAuth401Retry(() => {
+      const authHeaders = getAuthHeaders()
+      if (authHeaders.error) {
+        throw new Error(`Failed to get auth headers: ${authHeaders.error}`)
+      }
+      return axios.get<AccountSettings>(
+        `${getOauthConfig().BASE_API_URL}/api/oauth/account/settings`,
+        {
+          headers: {
+            ...authHeaders.headers,
+            'User-Agent': getZyCodeUserAgent(),
           },
-        )
-      })
-      return { success: true, data: response.data }
-    } catch (err) {
-      logError(err)
-      // 不要缓存失败结果——瞬态网络问题会导致用户在整个会话中
-      // 无法访问隐私设置（死锁：对话框需要 success 才能渲染开关，
-      // 开关调用 updateGroveSettings，那是唯一另一个清除缓存的地方）。
-      getGroveSettings.cache.clear?.()
-      return { success: false }
-    }
-  },
-)
+        },
+      )
+    })
+    return { success: true, data: response.data }
+  } catch (err) {
+    logError(err)
+    // 不要缓存失败结果——瞬态网络问题会导致用户在整个会话中
+    // 无法访问隐私设置（死锁：对话框需要 success 才能渲染开关，
+    // 开关调用 updateGroveSettings，那是唯一另一个清除缓存的地方）。
+    getGroveSettings.cache.clear?.()
+    return { success: false }
+  }
+})
 
 /**
  * 标记用户已查看 Grove 通知
@@ -117,9 +111,7 @@ export async function markGroveNoticeViewed(): Promise<void> {
 /**
  * 更新用户账户的 Grove 设置
  */
-export async function updateGroveSettings(
-  groveEnabled: boolean,
-): Promise<void> {
+export async function updateGroveSettings(groveEnabled: boolean): Promise<void> {
   try {
     await withOAuth401Retry(() => {
       const authHeaders = getAuthHeaders()
@@ -171,18 +163,14 @@ export async function isQualifiedForGrove(): Promise<boolean> {
   // 无缓存——触发后台获取并返回 false（非阻塞）
   // 本次会话不会显示 Grove 对话框，但下次符合条件时会显示
   if (!cachedEntry) {
-    logForDebugging(
-      'Grove: 无缓存，正在后台获取配置（本次会话跳过对话框）',
-    )
+    logForDebugging('Grove: 无缓存，正在后台获取配置（本次会话跳过对话框）')
     void fetchAndStoreGroveConfig(accountId)
     return false
   }
 
   // 缓存存在但已过期——返回缓存值并在后台刷新
   if (now - cachedEntry.timestamp > GROVE_CACHE_EXPIRATION_MS) {
-    logForDebugging(
-      'Grove: 缓存已过期，返回缓存数据并在后台刷新',
-    )
+    logForDebugging('Grove: 缓存已过期，返回缓存数据并在后台刷新')
     void fetchAndStoreGroveConfig(accountId)
     return cachedEntry.grove_enabled
   }
@@ -209,7 +197,7 @@ async function fetchAndStoreGroveConfig(accountId: string): Promise<void> {
     ) {
       return
     }
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       groveConfigCache: {
         ...current.groveConfigCache,
@@ -229,54 +217,45 @@ async function fetchAndStoreGroveConfig(accountId: string): Promise<void> {
  * 返回 ApiResult 以区分 API 调用失败与成功。
  * 使用已有的 OAuth 401 重试机制，若仍失败则返回 failure。
  */
-export let getGroveNoticeConfig;
-getGroveNoticeConfig = memoize(
-  async (): Promise<ApiResult<GroveConfig>> => {
-    // Grove 是通知功能；在服务中断期间跳过是正确的。
-    if (isEssentialTrafficOnly()) {
-      return { success: false }
-    }
-    try {
-      const response = await withOAuth401Retry(() => {
-        const authHeaders = getAuthHeaders()
-        if (authHeaders.error) {
-          throw new Error(`Failed to get auth headers: ${authHeaders.error}`)
-        }
-        return axios.get<GroveConfig>(
-          `${getOauthConfig().BASE_API_URL}/api/claude_code_grove`,
-          {
-            headers: {
-              ...authHeaders.headers,
-              'User-Agent': getUserAgent(),
-            },
-            timeout: 3000, // 短超时——响应慢时跳过 Grove 对话框
-          },
-        )
-      })
-
-      // 将 API 响应映射为 GroveConfig 类型
-      const {
-        grove_enabled,
-        domain_excluded,
-        notice_is_grace_period,
-        notice_reminder_frequency,
-      } = response.data
-
-      return {
-        success: true,
-        data: {
-          grove_enabled,
-          domain_excluded: domain_excluded ?? false,
-          notice_is_grace_period: notice_is_grace_period ?? true,
-          notice_reminder_frequency,
-        },
+export let getGroveNoticeConfig
+getGroveNoticeConfig = memoize(async (): Promise<ApiResult<GroveConfig>> => {
+  // Grove 是通知功能；在服务中断期间跳过是正确的。
+  if (isEssentialTrafficOnly()) {
+    return { success: false }
+  }
+  try {
+    const response = await withOAuth401Retry(() => {
+      const authHeaders = getAuthHeaders()
+      if (authHeaders.error) {
+        throw new Error(`Failed to get auth headers: ${authHeaders.error}`)
       }
-    } catch (err) {
-      logForDebugging(`获取 Grove 通知配置失败: ${err}`)
-      return { success: false }
+      return axios.get<GroveConfig>(`${getOauthConfig().BASE_API_URL}/api/claude_code_grove`, {
+        headers: {
+          ...authHeaders.headers,
+          'User-Agent': getUserAgent(),
+        },
+        timeout: 3000, // 短超时——响应慢时跳过 Grove 对话框
+      })
+    })
+
+    // 将 API 响应映射为 GroveConfig 类型
+    const { grove_enabled, domain_excluded, notice_is_grace_period, notice_reminder_frequency } =
+      response.data
+
+    return {
+      success: true,
+      data: {
+        grove_enabled,
+        domain_excluded: domain_excluded ?? false,
+        notice_is_grace_period: notice_is_grace_period ?? true,
+        notice_reminder_frequency,
+      },
     }
-  },
-)
+  } catch (err) {
+    logForDebugging(`获取 Grove 通知配置失败: ${err}`)
+    return { success: false }
+  }
+})
 
 /**
  * 判断是否应显示 Grove 对话框。
@@ -310,8 +289,7 @@ export function calculateShouldShowGrove(
   const reminderFrequency = config.notice_reminder_frequency
   if (reminderFrequency !== null && settings.grove_notice_viewed_at) {
     const daysSinceViewed = Math.floor(
-      (Date.now() - new Date(settings.grove_notice_viewed_at).getTime()) /
-        (1000 * 60 * 60 * 24),
+      (Date.now() - new Date(settings.grove_notice_viewed_at).getTime()) / (1000 * 60 * 60 * 24),
     )
     return daysSinceViewed >= reminderFrequency
   } else {
@@ -328,11 +306,7 @@ export async function checkGroveForNonInteractive(): Promise<void> {
   ])
 
   // 检查用户是否尚未做出选择（API 失败时返回 false）
-  const shouldShowGrove = calculateShouldShowGrove(
-    settingsResult,
-    configResult,
-    false,
-  )
+  const shouldShowGrove = calculateShouldShowGrove(settingsResult, configResult, false)
 
   if (shouldShowGrove) {
     // shouldShowGrove 为 true 仅当两个 API 调用都成功

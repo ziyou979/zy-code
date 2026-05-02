@@ -1,19 +1,17 @@
-import React, { createContext, useContext } from 'react';
-import { Mailbox } from '../utils/mailbox.js';
-const MailboxContext = createContext<Mailbox | undefined>(undefined);
+import React, { createContext, useContext } from 'react'
+import { Mailbox } from '../utils/mailbox.js'
+const MailboxContext = createContext<Mailbox | undefined>(undefined)
 type Props = {
-  children: React.ReactNode;
-};
-export function MailboxProvider({
-  children
-}: Props) {
-  const mailbox = new Mailbox();
-  return <MailboxContext.Provider value={mailbox}>{children}</MailboxContext.Provider>;
+  children: React.ReactNode
+}
+export function MailboxProvider({ children }: Props) {
+  const mailbox = new Mailbox()
+  return <MailboxContext.Provider value={mailbox}>{children}</MailboxContext.Provider>
 }
 export function useMailbox() {
-  const mailbox = useContext(MailboxContext);
+  const mailbox = useContext(MailboxContext)
   if (!mailbox) {
-    throw new Error("useMailbox must be used within a MailboxProvider");
+    throw new Error('useMailbox must be used within a MailboxProvider')
   }
-  return mailbox;
+  return mailbox
 }

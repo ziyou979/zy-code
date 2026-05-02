@@ -2,17 +2,11 @@ import { isRemoteManagedSettingsEligible } from '../services/remoteManagedSettin
 import { clearCACertsCache } from './caCerts.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
-import {
-  isProviderManagedEnvVar,
-  SAFE_ENV_VARS,
-} from './managedEnvConstants.js'
+import { isProviderManagedEnvVar, SAFE_ENV_VARS } from './managedEnvConstants.js'
 import { clearMTLSCache } from './mtls.js'
 import { clearProxyCache, configureGlobalAgents } from './proxy.js'
 import { isSettingSourceEnabled } from './settings/constants.js'
-import {
-  getSettings_DEPRECATED,
-  getSettingsForSource,
-} from './settings/settings.js'
+import { getSettings_DEPRECATED, getSettingsForSource } from './settings/settings.js'
 
 /**
  * `zy ssh` remote: ANTHROPIC_UNIX_SOCKET routes auth through a -R forwarded
@@ -20,9 +14,7 @@ import {
  * env vars that the remote's ~/.zy settings.env MUST NOT clobber (see
  * isAuthEnabled). Strip them from any settings-sourced env object.
  */
-function withoutSSHTunnelVars(
-  env: Record<string, string> | undefined,
-): Record<string, string> {
+function withoutSSHTunnelVars(env: Record<string, string> | undefined): Record<string, string> {
   if (!env || !process.env.ANTHROPIC_UNIX_SOCKET) return env || {}
   const {
     ANTHROPIC_UNIX_SOCKET: _1,
@@ -68,9 +60,7 @@ function withoutHostManagedProviderVars(
  */
 let ccdSpawnEnvKeys: Set<string> | null | undefined
 
-function withoutCcdSpawnEnvKeys(
-  env: Record<string, string> | undefined,
-): Record<string, string> {
+function withoutCcdSpawnEnvKeys(env: Record<string, string> | undefined): Record<string, string> {
   if (!env || !ccdSpawnEnvKeys) return env || {}
   const out: Record<string, string> = {}
   for (const [key, value] of Object.entries(env)) {
@@ -82,12 +72,8 @@ function withoutCcdSpawnEnvKeys(
 /**
  * Compose the strip filters applied to every settings-sourced env object.
  */
-function filterSettingsEnv(
-  env: Record<string, string> | undefined,
-): Record<string, string> {
-  return withoutCcdSpawnEnvKeys(
-    withoutHostManagedProviderVars(withoutSSHTunnelVars(env)),
-  )
+function filterSettingsEnv(env: Record<string, string> | undefined): Record<string, string> {
+  return withoutCcdSpawnEnvKeys(withoutHostManagedProviderVars(withoutSSHTunnelVars(env)))
 }
 
 /**
@@ -102,11 +88,7 @@ function filterSettingsEnv(
  * inside the project directory and could be committed by a malicious actor to redirect
  * traffic (e.g., ANTHROPIC_BASE_URL) to an attacker-controlled server.
  */
-const TRUSTED_SETTING_SOURCES = [
-  'userSettings',
-  'flagSettings',
-  'policySettings',
-] as const
+const TRUSTED_SETTING_SOURCES = ['userSettings', 'flagSettings', 'policySettings'] as const
 
 /**
  * Apply environment variables from trusted sources to process.env.
@@ -125,9 +107,7 @@ export function applySafeConfigEnvironmentVariables(): void {
   // Capture CCD spawn-env keys before any settings.env is applied (once).
   if (ccdSpawnEnvKeys === undefined) {
     ccdSpawnEnvKeys =
-      process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop'
-        ? new Set(Object.keys(process.env))
-        : null
+      process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop' ? new Set(Object.keys(process.env)) : null
   }
 
   // Global config (~/.zy.json) is user-controlled. In CCD mode,
@@ -142,10 +122,7 @@ export function applySafeConfigEnvironmentVariables(): void {
   for (const source of TRUSTED_SETTING_SOURCES) {
     if (source === 'policySettings') continue
     if (!isSettingSourceEnabled(source)) continue
-    Object.assign(
-      process.env,
-      filterSettingsEnv(getSettingsForSource(source)?.env),
-    )
+    Object.assign(process.env, filterSettingsEnv(getSettingsForSource(source)?.env))
   }
 
   // Compute remote-managed-settings eligibility now, with userSettings and
@@ -156,10 +133,7 @@ export function applySafeConfigEnvironmentVariables(): void {
   // dependency visible: non-policy env → eligibility → policy env.
   isRemoteManagedSettingsEligible()
 
-  Object.assign(
-    process.env,
-    filterSettingsEnv(getSettingsForSource('policySettings')?.env),
-  )
+  Object.assign(process.env, filterSettingsEnv(getSettingsForSource('policySettings')?.env))
 
   // Apply only safe env vars from the fully-merged settings (which includes
   // project-scoped sources). For safe vars that also exist in trusted sources,

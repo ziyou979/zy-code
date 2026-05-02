@@ -8,10 +8,7 @@ import { formatAgentId } from '../../utils/agentId.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { getCwd } from '../../utils/cwd.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import {
-  getDefaultMainLoopModel,
-  parseUserSpecifiedModel,
-} from '../../utils/model/model.js'
+import { getDefaultMainLoopModel, parseUserSpecifiedModel } from '../../utils/model/model.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getResolvedTeammateMode } from '../../utils/swarm/backends/registry.js'
 import { TEAM_LEAD_NAME } from '../../utils/swarm/constants.js'
@@ -24,11 +21,7 @@ import {
   writeTeamFileAsync,
 } from '../../utils/swarm/teamHelpers.js'
 import { assignTeammateColor } from '../../utils/swarm/teammateLayoutManager.js'
-import {
-  ensureTasksDir,
-  resetTaskList,
-  setLeaderTeamName,
-} from '../../utils/tasks.js'
+import { ensureTasksDir, resetTaskList, setLeaderTeamName } from '../../utils/tasks.js'
 import { generateWordSlug } from '../../utils/words.js'
 import { TEAM_CREATE_TOOL_NAME } from './constants.js'
 import { getPrompt } from './prompt.js'
@@ -147,9 +140,7 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
     const leadAgentType = agent_type || TEAM_LEAD_NAME
     // Get the team lead's current model from AppState (handles session model, settings, CLI override)
     const leadModel = parseUserSpecifiedModel(
-      appState.mainLoopModelForSession ??
-        appState.mainLoopModel ??
-        getDefaultMainLoopModel(),
+      appState.mainLoopModelForSession ?? appState.mainLoopModel ?? getDefaultMainLoopModel(),
     )
 
     const teamFilePath = getTeamFilePath(finalTeamName)
@@ -191,7 +182,7 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
     setLeaderTeamName(sanitizeName(finalTeamName))
 
     // Update AppState with team context
-    setAppState(prev => ({
+    setAppState((prev) => ({
       ...prev,
       teamContext: {
         teamName: finalTeamName,
@@ -212,11 +203,9 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
     }))
 
     logEvent('zy_team_created', {
-      team_name:
-        finalTeamName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      team_name: finalTeamName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       teammate_count: 1,
-      lead_agent_type:
-        leadAgentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      lead_agent_type: leadAgentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       teammate_mode:
         getResolvedTeammateMode() as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })

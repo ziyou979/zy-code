@@ -42,10 +42,9 @@ export function maybePersistTokenForSubprocesses(
     writeFileSync(path, token, { encoding: 'utf8', mode: 0o600 })
     logForDebugging(`Persisted ${tokenName} to ${path} for subprocess access`)
   } catch (error) {
-    logForDebugging(
-      `Failed to persist ${tokenName} to disk (non-fatal): ${errorMessage(error)}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Failed to persist ${tokenName} to disk (non-fatal): ${errorMessage(error)}`, {
+      level: 'error',
+    })
   }
 }
 
@@ -54,10 +53,7 @@ export function maybePersistTokenForSubprocesses(
  * creates the directory), so file-not-found is the expected outcome everywhere
  * else — treated as "no fallback", not an error.
  */
-export function readTokenFromWellKnownFile(
-  path: string,
-  tokenName: string,
-): string | null {
+export function readTokenFromWellKnownFile(path: string, tokenName: string): string | null {
   try {
     const fsOps = getFsImplementation()
     // eslint-disable-next-line custom-rules/no-sync-fs -- fallback read for CCR subprocess path, one-shot at startup, caller is sync
@@ -72,10 +68,9 @@ export function readTokenFromWellKnownFile(
     // else (EACCES from perm misconfig, etc.) is worth surfacing in the
     // debug log so subprocess auth failures aren't mysterious.
     if (!isENOENT(error)) {
-      logForDebugging(
-        `Failed to read ${tokenName} from ${path}: ${errorMessage(error)}`,
-        { level: 'debug' },
-      )
+      logForDebugging(`Failed to read ${tokenName} from ${path}: ${errorMessage(error)}`, {
+        level: 'debug',
+      })
     }
     return null
   }
@@ -123,10 +118,9 @@ function getCredentialFromFd({
 
   const fd = parseInt(fdEnv, 10)
   if (Number.isNaN(fd)) {
-    logForDebugging(
-      `${envVar} must be a valid file descriptor number, got: ${fdEnv}`,
-      { level: 'error' },
-    )
+    logForDebugging(`${envVar} must be a valid file descriptor number, got: ${fdEnv}`, {
+      level: 'error',
+    })
     setCached(null)
     return null
   }
@@ -153,10 +147,9 @@ function getCredentialFromFd({
     maybePersistTokenForSubprocesses(wellKnownPath, token, label)
     return token
   } catch (error) {
-    logForDebugging(
-      `Failed to read ${label} from file descriptor ${fd}: ${errorMessage(error)}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Failed to read ${label} from file descriptor ${fd}: ${errorMessage(error)}`, {
+      level: 'error',
+    })
     // FD env var was set but read failed — typically a subprocess that
     // inherited the env var but not the FD (ENXIO). Try the well-known file.
     const fromFile = readTokenFromWellKnownFile(wellKnownPath, label)

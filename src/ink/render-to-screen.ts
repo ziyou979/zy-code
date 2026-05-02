@@ -6,9 +6,7 @@ import { createNode, type DOMElement } from './dom.js'
 import { FocusManager } from './focus.js'
 import Output from './output.js'
 import reconciler from './reconciler.js'
-import renderNodeToOutput, {
-  resetLayoutShifted,
-} from './render-node-to-output.js'
+import renderNodeToOutput, { resetLayoutShifted } from './render-node-to-output.js'
 import {
   CellWidth,
   CharPool,

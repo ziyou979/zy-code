@@ -74,7 +74,7 @@ const MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3
 // 1. 配置偏差：用户配置的 maxInputTokens 可能与 API 实际限制有差距
 // 2. Token 估算误差：客户端估算与 API 实际计数不完全一致
 // 默认 90%：若 maxInputTokens=240K，触发点约 216K，距 224K 的 API 限制有 8K 余量。
-const MAX_INPUT_AUTOCOMPACT_RATIO = 0.90
+const MAX_INPUT_AUTOCOMPACT_RATIO = 0.9
 
 export function getAutoCompactThreshold(model: string): number {
   // 第一重保障：基于 contextWindow，留出 buffer 避免压缩过程本身超限
@@ -83,28 +83,19 @@ export function getAutoCompactThreshold(model: string): number {
 
   // 第二重保障：基于 maxInputTokens（API 硬性输入上限），留出安全余量
   const maxInputTokens = getLocalMaxInputTokens(model)
-  const inputBasedThreshold = maxInputTokens >= 100_000
-    ? Math.floor(maxInputTokens * MAX_INPUT_AUTOCOMPACT_RATIO)
-    : Infinity
+  const inputBasedThreshold =
+    maxInputTokens >= 100_000 ? Math.floor(maxInputTokens * MAX_INPUT_AUTOCOMPACT_RATIO) : Infinity
 
   // 两重保障取更严格的（更早触发的）
-  let autocompactThreshold = Math.min(
-    contextBasedThreshold,
-    inputBasedThreshold,
-  )
+  let autocompactThreshold = Math.min(contextBasedThreshold, inputBasedThreshold)
 
   // 便于测试自动压缩的覆盖
   const envPercent = process.env.AUTOCOMPACT_PCT_OVERRIDE
   if (envPercent) {
     const parsed = parseFloat(envPercent)
     if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
-      const percentageThreshold = Math.floor(
-        effectiveContextWindow * (parsed / 100),
-      )
-      autocompactThreshold = Math.min(
-        autocompactThreshold,
-        percentageThreshold,
-      )
+      const percentageThreshold = Math.floor(effectiveContextWindow * (parsed / 100))
+      autocompactThreshold = Math.min(autocompactThreshold, percentageThreshold)
     }
   }
 
@@ -126,10 +117,7 @@ export function calculateTokenWarningState(
     ? autoCompactThreshold
     : getEffectiveContextWindowSize(model)
 
-  const percentLeft = Math.max(
-    0,
-    Math.round(((threshold - tokenUsage) / threshold) * 100),
-  )
+  const percentLeft = Math.max(0, Math.round(((threshold - tokenUsage) / threshold) * 100))
 
   const warningThreshold = threshold - WARNING_THRESHOLD_BUFFER_TOKENS
   const errorThreshold = threshold - ERROR_THRESHOLD_BUFFER_TOKENS
@@ -137,29 +125,21 @@ export function calculateTokenWarningState(
   const isAboveWarningThreshold = tokenUsage >= warningThreshold
   const isAboveErrorThreshold = tokenUsage >= errorThreshold
 
-  const isAboveAutoCompactThreshold =
-    isAutoCompactEnabled() && tokenUsage >= autoCompactThreshold
+  const isAboveAutoCompactThreshold = isAutoCompactEnabled() && tokenUsage >= autoCompactThreshold
 
   // blockingLimit：两重保障取更严格的。
   // 1. contextWindow - 3K（保留手动压缩空间）
   // 2. maxInputTokens（API 硬性输入上限）
-  const contextBasedLimit =
-    getEffectiveContextWindowSize(model) - MANUAL_COMPACT_BUFFER_TOKENS
+  const contextBasedLimit = getEffectiveContextWindowSize(model) - MANUAL_COMPACT_BUFFER_TOKENS
   const maxInputTokens = getLocalMaxInputTokens(model)
-  const inputBasedLimit = maxInputTokens >= 100_000
-    ? maxInputTokens
-      : Infinity
+  const inputBasedLimit = maxInputTokens >= 100_000 ? maxInputTokens : Infinity
   const defaultBlockingLimit = Math.min(contextBasedLimit, inputBasedLimit)
 
   // Allow override for testing
   const blockingLimitOverride = process.env.ZY_CODE_BLOCKING_LIMIT_OVERRIDE
-  const parsedOverride = blockingLimitOverride
-    ? parseInt(blockingLimitOverride, 10)
-    : NaN
+  const parsedOverride = blockingLimitOverride ? parseInt(blockingLimitOverride, 10) : NaN
   const blockingLimit =
-    !isNaN(parsedOverride) && parsedOverride > 0
-      ? parsedOverride
-      : defaultBlockingLimit
+    !isNaN(parsedOverride) && parsedOverride > 0 ? parsedOverride : defaultBlockingLimit
 
   const isAtBlockingLimit = tokenUsage >= blockingLimit
 
@@ -257,10 +237,7 @@ export async function shouldAutoCompact(
     `autocompact: tokens=${tokenCount} threshold=${threshold} effectiveWindow=${effectiveWindow}${snipTokensFreed > 0 ? ` snipFreed=${snipTokensFreed}` : ''}`,
   )
 
-  const { isAboveAutoCompactThreshold } = calculateTokenWarningState(
-    tokenCount,
-    model,
-  )
+  const { isAboveAutoCompactThreshold } = calculateTokenWarningState(tokenCount, model)
 
   return isAboveAutoCompactThreshold
 }
@@ -292,12 +269,7 @@ export async function autoCompactIfNeeded(
   }
 
   const model = toolUseContext.options.mainLoopModel
-  const shouldCompact = await shouldAutoCompact(
-    messages,
-    model,
-    querySource,
-    snipTokensFreed,
-  )
+  const shouldCompact = await shouldAutoCompact(messages, model, querySource, snipTokensFreed)
 
   if (!shouldCompact) {
     return { wasCompacted: false }

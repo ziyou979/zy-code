@@ -106,9 +106,7 @@ export type DOMNodeAttribute = boolean | string | number
 
 export const createNode = (nodeName: ElementNames): DOMElement => {
   const needsYogaNode =
-    nodeName !== 'ink-virtual-text' &&
-    nodeName !== 'ink-link' &&
-    nodeName !== 'ink-progress'
+    nodeName !== 'ink-virtual-text' && nodeName !== 'ink-link' && nodeName !== 'ink-progress'
   const node: DOMElement = {
     nodeName,
     style: {},
@@ -128,10 +126,7 @@ export const createNode = (nodeName: ElementNames): DOMElement => {
   return node
 }
 
-export const appendChildNode = (
-  node: DOMElement,
-  childNode: DOMElement,
-): void => {
+export const appendChildNode = (node: DOMElement, childNode: DOMElement): void => {
   if (childNode.parentNode) {
     removeChildNode(childNode.parentNode, childNode)
   }
@@ -140,10 +135,7 @@ export const appendChildNode = (
   node.childNodes.push(childNode)
 
   if (childNode.yogaNode) {
-    node.yogaNode?.insertChild(
-      childNode.yogaNode,
-      node.yogaNode.getChildCount(),
-    )
+    node.yogaNode?.insertChild(childNode.yogaNode, node.yogaNode.getChildCount())
   }
 
   markDirty(node)
@@ -189,20 +181,14 @@ export const insertBeforeNode = (
   node.childNodes.push(newChildNode)
 
   if (newChildNode.yogaNode) {
-    node.yogaNode?.insertChild(
-      newChildNode.yogaNode,
-      node.yogaNode.getChildCount(),
-    )
+    node.yogaNode?.insertChild(newChildNode.yogaNode, node.yogaNode.getChildCount())
   }
 
   markDirty(node)
 }
 
-export let removeChildNode;
-removeChildNode = (
-  node: DOMElement,
-  removeNode: DOMNode,
-): void => {
+export let removeChildNode
+removeChildNode = (node: DOMElement, removeNode: DOMNode): void => {
   if (removeNode.yogaNode) {
     removeNode.parentNode?.yogaNode?.removeChild(removeNode.yogaNode)
   }
@@ -220,11 +206,7 @@ removeChildNode = (
   markDirty(node)
 }
 
-function collectRemovedRects(
-  parent: DOMElement,
-  removed: DOMNode,
-  underAbsolute = false,
-): void {
+function collectRemovedRects(parent: DOMElement, removed: DOMNode, underAbsolute = false): void {
   if (removed.nodeName === '#text') return
   const elem = removed as DOMElement
   // 如果此节点或被移除子树中的任何祖先节点是 absolute，
@@ -242,11 +224,7 @@ function collectRemovedRects(
   }
 }
 
-export const setAttribute = (
-  node: DOMElement,
-  key: string,
-  value: DOMNodeAttribute,
-): void => {
+export const setAttribute = (node: DOMElement, key: string, value: DOMNodeAttribute): void => {
   // 跳过 'children' — React 通过 appendChild/removeChild 处理子节点，
   // 而不是通过 attributes。React 总是传递新的 children 引用，所以
   // 将其作为属性跟踪会导致每次渲染都将所有内容标记为 dirty。
@@ -271,10 +249,7 @@ export const setStyle = (node: DOMNode, style: Styles): void => {
   markDirty(node)
 }
 
-export const setTextStyles = (
-  node: DOMElement,
-  textStyles: TextStyles,
-): void => {
+export const setTextStyles = (node: DOMElement, textStyles: TextStyles): void => {
   // 与 setStyle 相同的 dirty 检查守卫：React（以及 Text.tsx 中的 buildTextStyles）
   // 在每次渲染时都会分配新的 textStyles 对象，即使值未变化，
   // 所以按值比较以避免在每次 Text 重新渲染时 markDirty -> yoga 重新测量。
@@ -289,10 +264,7 @@ function stylesEqual(a: Styles, b: Styles): boolean {
   return shallowEqual(a, b)
 }
 
-function shallowEqual<T extends object>(
-  a: T | undefined,
-  b: T | undefined,
-): boolean {
+function shallowEqual<T extends object>(a: T | undefined, b: T | undefined): boolean {
   // 快速路径：相同对象引用（或两者都是 undefined）
   if (a === b) return true
   if (a === undefined || b === undefined) return false
@@ -326,14 +298,13 @@ export const createTextNode = (text: string): TextNode => {
   return node
 }
 
-let measureTextNode;
+let measureTextNode
 measureTextNode = function (
   node: DOMNode,
   width: number,
   widthMode: LayoutMeasureMode,
 ): { width: number; height: number } {
-  const rawText =
-    node.nodeName === '#text' ? node.nodeValue : squashTextNodes(node)
+  const rawText = node.nodeName === '#text' ? node.nodeValue : squashTextNodes(node)
 
   // 展开制表符用于测量（最坏情况：每个 8 个空格）。
   // 实际的制表符展开在 output.ts 中根据屏幕位置进行。
@@ -374,7 +345,7 @@ measureTextNode = function (
 // ink-raw-ansi 节点保存预渲染的 ANSI 字符串及其已知尺寸。
 // 无需 stringWidth、无需换行、无需制表符展开 — 生产者（例如 ColorDiff）
 // 已经以目标宽度包裹，每行正好是一个终端行。
-let measureRawAnsiNode;
+let measureRawAnsiNode
 measureRawAnsiNode = function (node: DOMElement): {
   width: number
   height: number
@@ -389,7 +360,7 @@ measureRawAnsiNode = function (node: DOMElement): {
  * 将节点及其所有祖先节点标记为 dirty 以进行重新渲染。
  * 如果是文本节点，还会标记 yoga dirty 以进行文本重新测量。
  */
-export let markDirty;
+export let markDirty
 markDirty = (node?: DOMNode): void => {
   let current: DOMNode | undefined = node
   let markedYoga = false
@@ -400,8 +371,7 @@ markDirty = (node?: DOMNode): void => {
       // 仅在具有测量函数的叶节点上标记 yoga dirty
       if (
         !markedYoga &&
-        (current.nodeName === 'ink-text' ||
-          current.nodeName === 'ink-raw-ansi') &&
+        (current.nodeName === 'ink-text' || current.nodeName === 'ink-raw-ansi') &&
         current.yogaNode
       ) {
         current.yogaNode.markDirty()
@@ -422,7 +392,7 @@ export const scheduleRenderFrom = (node?: DOMNode): void => {
   if (cur && cur.nodeName !== '#text') (cur as DOMElement).onRender?.()
 }
 
-export let setTextNodeValue;
+export let setTextNodeValue
 setTextNodeValue = (node: TextNode, text: string): void => {
   if (typeof text !== 'string') {
     text = String(text)

@@ -1,8 +1,5 @@
 import { feature } from 'bun:bundle'
-import type {
-  ElicitResult,
-  JSONRPCMessage,
-} from '@modelcontextprotocol/sdk/types.js'
+import type { ElicitResult, JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import { randomUUID } from 'crypto'
 import type { AssistantMessage } from 'src//types/message.js'
 import type {
@@ -61,9 +58,7 @@ import { ndjsonSafeStringify } from './ndjsonSafeStringify.js'
  */
 export const SANDBOX_NETWORK_ACCESS_TOOL_NAME = 'SandboxNetworkAccess'
 
-function serializeDecisionReason(
-  reason: PermissionDecisionReason | undefined,
-): string | undefined {
+function serializeDecisionReason(reason: PermissionDecisionReason | undefined): string | undefined {
   if (!reason) {
     return undefined
   }
@@ -138,13 +133,10 @@ export class StructuredIO {
 
   // CCR external_metadata read back on worker start; null when the
   // transport doesn't restore. Assigned by RemoteIO.
-  restoredWorkerState: Promise<SessionExternalMetadata | null> =
-    Promise.resolve(null)
+  restoredWorkerState: Promise<SessionExternalMetadata | null> = Promise.resolve(null)
 
   private inputClosed = false
-  private unexpectedResponseCallback?: (
-    response: SDKControlResponse,
-  ) => Promise<void>
+  private unexpectedResponseCallback?: (response: SDKControlResponse) => Promise<void>
 
   // Tracks tool_use IDs that have been resolved through the normal permission
   // flow (or aborted by a hook). When a duplicate control_response arrives
@@ -254,21 +246,17 @@ export class StructuredIO {
     this.inputClosed = true
     for (const request of this.pendingRequests.values()) {
       // Reject all pending requests if the input stream
-      request.reject(
-        new Error('Tool permission stream closed before response received'),
-      )
+      request.reject(new Error('Tool permission stream closed before response received'))
     }
   }
 
   getPendingPermissionRequests() {
     return Array.from(this.pendingRequests.values())
-      .map(entry => entry.request)
-      .filter(pr => pr.request.subtype === 'can_use_tool')
+      .map((entry) => entry.request)
+      .filter((pr) => pr.request.subtype === 'can_use_tool')
   }
 
-  setUnexpectedResponseCallback(
-    callback: (response: SDKControlResponse) => Promise<void>,
-  ): void {
+  setUnexpectedResponseCallback(callback: (response: SDKControlResponse) => Promise<void>): void {
     this.unexpectedResponseCallback = callback
   }
 
@@ -313,9 +301,7 @@ export class StructuredIO {
    * is written to stdout. Used by the bridge to forward permission
    * requests to zy.ai.
    */
-  setOnControlRequestSent(
-    callback: ((request: SDKControlRequest) => void) | undefined,
-  ): void {
+  setOnControlRequestSent(callback: ((request: SDKControlRequest) => void) | undefined): void {
     this.onControlRequestSent = callback
   }
 
@@ -324,23 +310,17 @@ export class StructuredIO {
    * from the SDK consumer (via stdin). Used by the bridge to cancel the
    * stale permission prompt on zy.ai when the SDK consumer wins the race.
    */
-  setOnControlRequestResolved(
-    callback: ((requestId: string) => void) | undefined,
-  ): void {
+  setOnControlRequestResolved(callback: ((requestId: string) => void) | undefined): void {
     this.onControlRequestResolved = callback
   }
 
-  private async processLine(
-    line: string,
-  ): Promise<StdinMessage | SDKMessage | undefined> {
+  private async processLine(line: string): Promise<StdinMessage | SDKMessage | undefined> {
     // Skip empty lines (e.g. from double newlines in piped stdin)
     if (!line) {
       return undefined
     }
     try {
-      const message = normalizeControlMessageKeys(jsonParse(line)) as
-        | StdinMessage
-        | SDKMessage
+      const message = normalizeControlMessageKeys(jsonParse(line)) as StdinMessage | SDKMessage
       if (message.type === 'keep_alive') {
         // Silently ignore keep-alive messages
         return undefined
@@ -354,9 +334,7 @@ export class StructuredIO {
         for (const [key, value] of Object.entries(message.variables)) {
           process.env[key] = value
         }
-        logForDebugging(
-          `[structuredIO] applied update_environment_variables: ${keys.join(', ')}`,
-        )
+        logForDebugging(`[structuredIO] applied update_environment_variables: ${keys.join(', ')}`)
         return undefined
       }
       if (message.type === 'control_response') {
@@ -365,9 +343,7 @@ export class StructuredIO {
         // is the only path that sees them. uuid is server-injected into the
         // payload.
         const uuid =
-          'uuid' in message && typeof message.uuid === 'string'
-            ? message.uuid
-            : undefined
+          'uuid' in message && typeof message.uuid === 'string' ? message.uuid : undefined
         if (uuid) {
           notifyCommandLifecycle(uuid, 'completed')
         }
@@ -379,14 +355,9 @@ export class StructuredIO {
           // re-processing them would push duplicate assistant messages into
           // the conversation, causing API 400 errors.
           const responsePayload =
-            message.response.subtype === 'success'
-              ? message.response.response
-              : undefined
+            message.response.subtype === 'success' ? message.response.response : undefined
           const toolUseID = responsePayload?.toolUseID
-          if (
-            typeof toolUseID === 'string' &&
-            this.resolvedToolUseIds.has(toolUseID)
-          ) {
+          if (typeof toolUseID === 'string' && this.resolvedToolUseIds.has(toolUseID)) {
             logForDebugging(
               `Ignoring duplicate control_response for already-resolved toolUseID=${toolUseID} request_id=${message.response.request_id}`,
             )
@@ -401,10 +372,7 @@ export class StructuredIO {
         this.pendingRequests.delete(message.response.request_id)
         // Notify the bridge when the SDK consumer resolves a can_use_tool
         // request, so it can cancel the stale permission prompt on zy.ai.
-        if (
-          request.request.request.subtype === 'can_use_tool' &&
-          this.onControlRequestResolved
-        ) {
+        if (request.request.request.subtype === 'can_use_tool' && this.onControlRequestResolved) {
           this.onControlRequestResolved(message.response.request_id)
         }
 
@@ -515,7 +483,7 @@ export class StructuredIO {
             request_id: requestId,
             request,
           },
-          resolve: result => {
+          resolve: (result) => {
             resolve(result as Response)
           },
           reject,
@@ -530,9 +498,7 @@ export class StructuredIO {
     }
   }
 
-  createCanUseTool(
-    onPermissionPrompt?: (details: RequiresActionDetails) => void,
-  ): CanUseToolFn {
+  createCanUseTool(onPermissionPrompt?: (details: RequiresActionDetails) => void): CanUseToolFn {
     return async (
       tool: Tool,
       input: { [key: string]: unknown },
@@ -543,18 +509,9 @@ export class StructuredIO {
     ): Promise<PermissionDecision> => {
       const mainPermissionResult =
         forceDecision ??
-        (await hasPermissionsToUseTool(
-          tool,
-          input,
-          toolUseContext,
-          assistantMessage,
-          toolUseID,
-        ))
+        (await hasPermissionsToUseTool(tool, input, toolUseContext, assistantMessage, toolUseID))
       // If the tool is allowed or denied, return the result
-      if (
-        mainPermissionResult.behavior === 'allow' ||
-        mainPermissionResult.behavior === 'deny'
-      ) {
+      if (mainPermissionResult.behavior === 'allow' || mainPermissionResult.behavior === 'deny') {
         return mainPermissionResult
       }
 
@@ -580,13 +537,11 @@ export class StructuredIO {
           input,
           toolUseContext,
           mainPermissionResult.suggestions,
-        ).then(decision => ({ source: 'hook' as const, decision }))
+        ).then((decision) => ({ source: 'hook' as const, decision }))
 
         // Start the SDK permission prompt immediately (don't wait for hooks)
         const requestId = randomUUID()
-        onPermissionPrompt?.(
-          buildRequiresActionDetails(tool, input, toolUseID, requestId),
-        )
+        onPermissionPrompt?.(buildRequiresActionDetails(tool, input, toolUseID, requestId))
         const sdkPromise = this.sendRequest<PermissionToolOutput>(
           {
             subtype: 'can_use_tool',
@@ -594,16 +549,14 @@ export class StructuredIO {
             input,
             permission_suggestions: mainPermissionResult.suggestions,
             blocked_path: mainPermissionResult.blockedPath,
-            decision_reason: serializeDecisionReason(
-              mainPermissionResult.decisionReason,
-            ),
+            decision_reason: serializeDecisionReason(mainPermissionResult.decisionReason),
             tool_use_id: toolUseID,
             agent_id: toolUseContext.agentId,
           },
           permissionToolOutputSchema(),
           hookAbortController.signal,
           requestId,
-        ).then(result => ({ source: 'sdk' as const, result }))
+        ).then((result) => ({ source: 'sdk' as const, result }))
 
         // Race: hook completion vs SDK prompt response.
         // The hook promise always resolves (never rejects), returning
@@ -728,10 +681,7 @@ export class StructuredIO {
    * tool name so that SDK hosts (VS Code, CCR, etc.) can prompt the user
    * for network access without requiring a new protocol subtype.
    */
-  createSandboxAskCallback(): (hostPattern: {
-    host: string
-    port?: number
-  }) => Promise<boolean> {
+  createSandboxAskCallback(): (hostPattern: { host: string; port?: number }) => Promise<boolean> {
     return async (hostPattern): Promise<boolean> => {
       try {
         const result = await this.sendRequest<PermissionToolOutput>(
@@ -755,10 +705,7 @@ export class StructuredIO {
   /**
    * Sends an MCP message to an SDK server and waits for the response
    */
-  async sendMcpMessage(
-    serverName: string,
-    message: JSONRPCMessage,
-  ): Promise<JSONRPCMessage> {
+  async sendMcpMessage(serverName: string, message: JSONRPCMessage): Promise<JSONRPCMessage> {
     const response = await this.sendRequest<{ mcp_response: JSONRPCMessage }>(
       {
         subtype: 'mcp_message',
@@ -825,7 +772,7 @@ async function executePermissionRequestHooksForSDK(
             permissionUpdates,
           )
           // Update permission context via setAppState
-          toolUseContext.setAppState(prev => {
+          toolUseContext.setAppState((prev) => {
             if (prev.toolPermissionContext === updatedContext) return prev
             return { ...prev, toolPermissionContext: updatedContext }
           })
@@ -844,8 +791,7 @@ async function executePermissionRequestHooksForSDK(
         // Hook denied the permission
         return {
           behavior: 'deny',
-          message:
-            decision.message || 'Permission denied by PermissionRequest hook',
+          message: decision.message || 'Permission denied by PermissionRequest hook',
           decisionReason: {
             type: 'hook',
             hookName: 'PermissionRequest',

@@ -1,30 +1,46 @@
-import React from 'react';
-import type { Tools } from '../../../../Tool.js';
-import { tSync } from '../../../../i18n/index.js';
-import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
-import { Byline } from '../../../design-system/Byline.js';
-import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js';
-import { useWizard } from '../../../wizard/index.js';
-import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
-import { ToolSelector } from '../../ToolSelector.js';
+import React from 'react'
+import type { Tools } from '../../../../Tool.js'
+import { tSync } from '../../../../i18n/index.js'
+import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
+import { Byline } from '../../../design-system/Byline.js'
+import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
+import { useWizard } from '../../../wizard/index.js'
+import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
+import { ToolSelector } from '../../ToolSelector.js'
 type Props = {
-  tools: Tools;
-};
-export function ToolsStep({
-  tools
-}: Props) {
-  const {
-    goNext,
-    goBack,
-    updateWizardData,
-    wizardData
-  } = useWizard();
-  const handleComplete = selectedTools => {
+  tools: Tools
+}
+export function ToolsStep({ tools }: Props) {
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard()
+  const handleComplete = (selectedTools) => {
     updateWizardData({
-      selectedTools
-    });
-    goNext();
-  };
-  const initialTools = wizardData.selectedTools;
-  return <WizardDialogLayout subtitle={tSync('wizard.selectTools')} footerText={<Byline><KeyboardShortcutHint shortcut="Enter" action="toggle selection" /><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" /></Byline>}><ToolSelector tools={tools} initialTools={initialTools} onComplete={handleComplete} onCancel={goBack} /></WizardDialogLayout>;
+      selectedTools,
+    })
+    goNext()
+  }
+  const initialTools = wizardData.selectedTools
+  return (
+    <WizardDialogLayout
+      subtitle={tSync('wizard.selectTools')}
+      footerText={
+        <Byline>
+          <KeyboardShortcutHint shortcut="Enter" action="toggle selection" />
+          <KeyboardShortcutHint shortcut={'\u2191\u2193'} action="navigate" />
+          <ConfigurableShortcutHint
+            action="confirm:no"
+            context="Confirmation"
+            fallback="Esc"
+            description="go back"
+          />
+        </Byline>
+      }
+    >
+      <ToolSelector
+        tools={tools}
+        initialTools={initialTools}
+        onComplete={handleComplete}
+        onCancel={goBack}
+      />
+    </WizardDialogLayout>
+  )
 }

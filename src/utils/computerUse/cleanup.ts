@@ -28,27 +28,20 @@ const UNHIDE_TIMEOUT_MS = 5000
  * No-ops cheaply on non-CU turns: both gate checks are zero-syscall.
  */
 export async function cleanupComputerUseAfterTurn(
-  ctx: Pick<
-    ToolUseContext,
-    'getAppState' | 'setAppState' | 'sendOSNotification'
-  >,
+  ctx: Pick<ToolUseContext, 'getAppState' | 'setAppState' | 'sendOSNotification'>,
 ): Promise<void> {
   const appState = ctx.getAppState()
 
   const hidden = appState.computerUseMcpState?.hiddenDuringTurn
   if (hidden && hidden.size > 0) {
     const { unhideComputerUseApps } = await import('./executor.js')
-    const unhide = unhideComputerUseApps([...hidden]).catch(err =>
-      logForDebugging(
-        `[Computer Use MCP] auto-unhide failed: ${errorMessage(err)}`,
-      ),
+    const unhide = unhideComputerUseApps([...hidden]).catch((err) =>
+      logForDebugging(`[Computer Use MCP] auto-unhide failed: ${errorMessage(err)}`),
     )
     const timeout = withResolvers<void>()
     const timer = setTimeout(timeout.resolve, UNHIDE_TIMEOUT_MS)
-    await Promise.race([unhide, timeout.promise]).finally(() =>
-      clearTimeout(timer),
-    )
-    ctx.setAppState(prev =>
+    await Promise.race([unhide, timeout.promise]).finally(() => clearTimeout(timer))
+    ctx.setAppState((prev) =>
       prev.computerUseMcpState?.hiddenDuringTurn === undefined
         ? prev
         : {
@@ -72,9 +65,7 @@ export async function cleanupComputerUseAfterTurn(
   try {
     unregisterEscHotkey()
   } catch (err) {
-    logForDebugging(
-      `[Computer Use MCP] unregisterEscHotkey failed: ${errorMessage(err)}`,
-    )
+    logForDebugging(`[Computer Use MCP] unregisterEscHotkey failed: ${errorMessage(err)}`)
   }
 
   if (await releaseComputerUseLock()) {

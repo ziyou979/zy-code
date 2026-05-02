@@ -53,17 +53,10 @@ import { logError } from '../../utils/log.js'
 import { isAutoMemFile } from '../../utils/memoryFileDetection.js'
 import { createUserMessage } from '../../utils/messages.js'
 import { getMainLoopModel } from '../../utils/model/model.js'
-import {
-  mapNotebookCellsToToolResult,
-  readNotebook,
-} from '../../utils/notebook.js'
+import { mapNotebookCellsToToolResult, readNotebook } from '../../utils/notebook.js'
 import { expandPath } from '../../utils/path.js'
 import { extractPDFPages, getPDFPageCount, readPDF } from '../../utils/pdf.js'
-import {
-  isPDFExtension,
-  isPDFSupported,
-  parsePDFPageRange,
-} from '../../utils/pdfUtils.js'
+import { isPDFExtension, isPDFSupported, parsePDFPageRange } from '../../utils/pdfUtils.js'
 import {
   checkReadPermissionForTool,
   matchingRuleForInput,
@@ -119,9 +112,7 @@ function isBlockedDevicePath(filePath: string): boolean {
   // /proc/self/fd/0-2 and /proc/<pid>/fd/0-2 are Linux aliases for stdio
   if (
     filePath.startsWith('/proc/') &&
-    (filePath.endsWith('/fd/0') ||
-      filePath.endsWith('/fd/1') ||
-      filePath.endsWith('/fd/2'))
+    (filePath.endsWith('/fd/0') || filePath.endsWith('/fd/1') || filePath.endsWith('/fd/2'))
   )
     return true
   return false
@@ -162,9 +153,7 @@ function getAlternateScreenshotPath(filePath: string): string | undefined {
 type FileReadListener = (filePath: string, content: string) => void
 const fileReadListeners: FileReadListener[] = []
 
-export function registerFileReadListener(
-  listener: FileReadListener,
-): () => void {
+export function registerFileReadListener(listener: FileReadListener): () => void {
   fileReadListeners.push(listener)
   return () => {
     const i = fileReadListeners.indexOf(listener)
@@ -192,9 +181,7 @@ const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp'])
  * Only matches files within the Zy config directory (e.g., ~/.zy).
  * Returns the type of session file or null if not a session file.
  */
-function detectSessionFileType(
-  filePath: string,
-): 'session_memory' | 'session_transcript' | null {
+function detectSessionFileType(filePath: string): 'session_memory' | 'session_transcript' | null {
   const configDir = getZyConfigHomeDir()
 
   // Only match files within the Zy config directory
@@ -206,18 +193,12 @@ function detectSessionFileType(
   const normalizedPath = filePath.split(win32.sep).join(posix.sep)
 
   // Session memory files: ~/.zy/session-memory/*.md (including summary.md)
-  if (
-    normalizedPath.includes('/session-memory/') &&
-    normalizedPath.endsWith('.md')
-  ) {
+  if (normalizedPath.includes('/session-memory/') && normalizedPath.endsWith('.md')) {
     return 'session_memory'
   }
 
   // Session JSONL transcript files: ~/.zy/projects/*/*.jsonl
-  if (
-    normalizedPath.includes('/projects/') &&
-    normalizedPath.endsWith('.jsonl')
-  ) {
+  if (normalizedPath.includes('/projects/') && normalizedPath.endsWith('.jsonl')) {
     return 'session_transcript'
   }
 
@@ -247,12 +228,7 @@ export type Input = z.infer<InputSchema>
 
 const outputSchema = lazySchema(() => {
   // Define the media types supported for images
-  const imageMediaTypes = z.enum([
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-  ])
+  const imageMediaTypes = z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
   return z.discriminatedUnion('type', [
     z.object({
@@ -260,9 +236,7 @@ const outputSchema = lazySchema(() => {
       file: z.object({
         filePath: z.string().describe('The path to the file that was read'),
         content: z.string().describe('The content of the file'),
-        numLines: z
-          .number()
-          .describe('Number of lines in the returned content'),
+        numLines: z.number().describe('Number of lines in the returned content'),
         startLine: z.number().describe('The starting line number'),
         totalLines: z.number().describe('Total number of lines in the file'),
       }),
@@ -275,14 +249,8 @@ const outputSchema = lazySchema(() => {
         originalSize: z.number().describe('Original file size in bytes'),
         dimensions: z
           .object({
-            originalWidth: z
-              .number()
-              .optional()
-              .describe('Original image width in pixels'),
-            originalHeight: z
-              .number()
-              .optional()
-              .describe('Original image height in pixels'),
+            originalWidth: z.number().optional().describe('Original image width in pixels'),
+            originalHeight: z.number().optional().describe('Original image height in pixels'),
             displayWidth: z
               .number()
               .optional()
@@ -317,9 +285,7 @@ const outputSchema = lazySchema(() => {
         filePath: z.string().describe('The path to the PDF file'),
         originalSize: z.number().describe('Original file size in bytes'),
         count: z.number().describe('Number of pages extracted'),
-        outputDir: z
-          .string()
-          .describe('Directory containing extracted page images'),
+        outputDir: z.string().describe('Directory containing extracted page images'),
       }),
     }),
     z.object({
@@ -352,11 +318,7 @@ export const FileReadTool = buildTool({
     const offsetInstruction = limits.targetedRangeNudge
       ? OFFSET_INSTRUCTION_TARGETED
       : OFFSET_INSTRUCTION_DEFAULT
-    return renderPromptTemplate(
-      pickLineFormatInstruction(),
-      maxSizeInstruction,
-      offsetInstruction,
-    )
+    return renderPromptTemplate(pickLineFormatInstruction(), maxSizeInstruction, offsetInstruction)
   },
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -393,15 +355,11 @@ export const FileReadTool = buildTool({
     }
   },
   async preparePermissionMatcher({ file_path }) {
-    return pattern => matchWildcardPattern(pattern, file_path)
+    return (pattern) => matchWildcardPattern(pattern, file_path)
   },
   async checkPermissions(input, context): Promise<PermissionDecision> {
     const appState = context.getAppState()
-    return checkReadPermissionForTool(
-      FileReadTool,
-      input,
-      appState.toolPermissionContext,
-    )
+    return checkReadPermissionForTool(FileReadTool, input, appState.toolPermissionContext)
   },
   renderToolUseMessage,
   renderToolUseTag,
@@ -452,16 +410,14 @@ export const FileReadTool = buildTool({
     if (denyRule !== null) {
       return {
         result: false,
-        message:
-          'File is in a directory that is denied by your permission settings.',
+        message: 'File is in a directory that is denied by your permission settings.',
         errorCode: 1,
       }
     }
 
     // SECURITY: UNC path check (no I/O) — defer filesystem operations
     // until after user grants permission to prevent NTLM credential leaks
-    const isUncPath =
-      fullFilePath.startsWith('\\\\') || fullFilePath.startsWith('//')
+    const isUncPath = fullFilePath.startsWith('\\\\') || fullFilePath.startsWith('//')
     if (isUncPath) {
       return { result: true }
     }
@@ -502,8 +458,7 @@ export const FileReadTool = buildTool({
     const { readFileState, fileReadingLimits } = context
 
     const defaults = getDefaultFileReadingLimits()
-    const maxSizeBytes =
-      fileReadingLimits?.maxSizeBytes ?? defaults.maxSizeBytes
+    const maxSizeBytes = fileReadingLimits?.maxSizeBytes ?? defaults.maxSizeBytes
     const maxTokens = fileReadingLimits?.maxTokens ?? defaults.maxTokens
 
     // Telemetry: track when callers override default read limits.
@@ -533,24 +488,14 @@ export const FileReadTool = buildTool({
     // the model externally.
     // 3P default: killswitch off = dedup enabled. Client-side only — no
     // server support needed, safe for Bedrock/Vertex/Foundry.
-    const dedupKillswitch = getFeatureValue_CACHED_MAY_BE_STALE(
-      'zy_read_dedup_killswitch',
-      false,
-    )
-    const existingState = dedupKillswitch
-      ? undefined
-      : readFileState.get(fullFilePath)
+    const dedupKillswitch = getFeatureValue_CACHED_MAY_BE_STALE('zy_read_dedup_killswitch', false)
+    const existingState = dedupKillswitch ? undefined : readFileState.get(fullFilePath)
     // Only dedup entries that came from a prior Read (offset is always set
     // by Read). Edit/Write store offset=undefined — their readFileState
     // entry reflects post-edit mtime, so deduping against it would wrongly
     // point the model at the pre-edit Read content.
-    if (
-      existingState &&
-      !existingState.isPartialView &&
-      existingState.offset !== undefined
-    ) {
-      const rangeMatch =
-        existingState.offset === offset && existingState.limit === limit
+    if (existingState && !existingState.isPartialView && existingState.offset !== undefined) {
+      const rangeMatch = existingState.offset === offset && existingState.limit === limit
       if (rangeMatch) {
         try {
           const mtimeMs = await getFileModificationTimeAsync(fullFilePath)
@@ -693,9 +638,7 @@ export const FileReadTool = buildTool({
           content =
             memoryFileFreshnessPrefix(data) +
             formatFileLines(data.file) +
-            (shouldIncludeFileReadMitigation()
-              ? CYBER_RISK_MITIGATION_REMINDER
-              : '')
+            (shouldIncludeFileReadMitigation() ? CYBER_RISK_MITIGATION_REMINDER : '')
         } else {
           // Determine the appropriate warning message
           content =
@@ -723,7 +666,7 @@ function formatFileLines(file: { content: string; startLine: number }): string {
   return addLineNumbers(file)
 }
 
-export let CYBER_RISK_MITIGATION_REMINDER;
+export let CYBER_RISK_MITIGATION_REMINDER
 CYBER_RISK_MITIGATION_REMINDER =
   '\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n'
 
@@ -755,8 +698,7 @@ async function validateContentTokens(
   ext: string,
   maxTokens?: number,
 ): Promise<void> {
-  const effectiveMaxTokens =
-    maxTokens ?? getDefaultFileReadingLimits().maxTokens
+  const effectiveMaxTokens = maxTokens ?? getDefaultFileReadingLimits().maxTokens
 
   const tokenEstimate = roughTokenCountEstimationForFileType(content, ext)
   if (!tokenEstimate || tokenEstimate <= effectiveMaxTokens / 4) return
@@ -874,16 +816,12 @@ async function callInner(
       content: data.file.base64,
     })
 
-    const metadataText = data.file.dimensions
-      ? createImageMetadataText(data.file.dimensions)
-      : null
+    const metadataText = data.file.dimensions ? createImageMetadataText(data.file.dimensions) : null
 
     return {
       data,
       ...(metadataText && {
-        newMessages: [
-          createUserMessage({ content: metadataText, isMeta: true }),
-        ],
+        newMessages: [createUserMessage({ content: metadataText, isMeta: true })],
       }),
     }
   }
@@ -892,10 +830,7 @@ async function callInner(
   if (isPDFExtension(ext)) {
     if (pages) {
       const parsedRange = parsePDFPageRange(pages)
-      const extractResult = await extractPDFPages(
-        resolvedFilePath,
-        parsedRange ?? undefined,
-      )
+      const extractResult = await extractPDFPages(resolvedFilePath, parsedRange ?? undefined)
       if (!(extractResult as any).success) {
         throw new Error((extractResult as any).error.message)
       }
@@ -912,9 +847,9 @@ async function callInner(
         content: `PDF pages ${pages}`,
       })
       const entries = await readdir((extractResult as any).data.file.outputDir)
-      const imageFiles = entries.filter(f => f.endsWith('.jpg')).sort()
+      const imageFiles = entries.filter((f) => f.endsWith('.jpg')).sort()
       const imageBlocks = await Promise.all(
-        imageFiles.map(async f => {
+        imageFiles.map(async (f) => {
           const imgPath = path.join((extractResult as any).data.file.outputDir, f)
           const imgBuffer = await readFileAsync(imgPath)
           const resized = await maybeResizeAndDownsampleImageBuffer(
@@ -924,8 +859,7 @@ async function callInner(
           )
           return {
             type: 'image' as const,
-            mimeType:
-              `image/${resized.mediaType}` as ImageSource['mediaType'],
+            mimeType: `image/${resized.mediaType}` as ImageSource['mediaType'],
             data: resized.buffer.toString('base64'),
           }
         }),
@@ -933,9 +867,7 @@ async function callInner(
       return {
         data: (extractResult as any).data,
         ...(imageBlocks.length > 0 && {
-          newMessages: [
-            createUserMessage({ content: imageBlocks, isMeta: true }),
-          ],
+          newMessages: [createUserMessage({ content: imageBlocks, isMeta: true })],
         }),
       }
     }
@@ -951,8 +883,7 @@ async function callInner(
 
     const fs = getFsImplementation()
     const stats = await fs.stat(resolvedFilePath)
-    const shouldExtractPages =
-      !isPDFSupported() || stats.size > PDF_EXTRACT_SIZE_THRESHOLD
+    const shouldExtractPages = !isPDFSupported() || stats.size > PDF_EXTRACT_SIZE_THRESHOLD
 
     if (shouldExtractPages) {
       const extractResult = await extractPDFPages(resolvedFilePath)
@@ -1013,14 +944,13 @@ async function callInner(
 
   // --- Text file (single async read via readFileInRange) ---
   const lineOffset = offset === 0 ? 0 : offset - 1
-  const { content, lineCount, totalLines, totalBytes, readBytes, mtimeMs } =
-    await readFileInRange(
-      resolvedFilePath,
-      lineOffset,
-      limit,
-      limit === undefined ? maxSizeBytes : undefined,
-      context.abortController.signal,
-    )
+  const { content, lineCount, totalLines, totalBytes, readBytes, mtimeMs } = await readFileInRange(
+    resolvedFilePath,
+    lineOffset,
+    limit,
+    limit === undefined ? maxSizeBytes : undefined,
+    context.abortController.signal,
+  )
 
   await validateContentTokens(content, ext, maxTokens)
 
@@ -1070,8 +1000,7 @@ async function callInner(
     ...(limit !== undefined && { limit }),
     ...(analyticsExt !== undefined && { ext: analyticsExt }),
     ...(messageId !== undefined && {
-      messageID:
-        messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     is_session_memory: sessionFileType === 'session_memory',
     is_session_transcript: sessionFileType === 'session_transcript',
@@ -1095,10 +1024,7 @@ export async function readImageWithTokenBudget(
   maxBytes?: number,
 ): Promise<ImageResult> {
   // Read file ONCE — capped to maxBytes to avoid OOM on huge files
-  const imageBuffer = await getFsImplementation().readFileBytes(
-    filePath,
-    maxBytes,
-  )
+  const imageBuffer = await getFsImplementation().readFileBytes(filePath, maxBytes)
   const originalSize = imageBuffer.length
 
   if (originalSize === 0) {

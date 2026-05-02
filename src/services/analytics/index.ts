@@ -44,9 +44,7 @@ export type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED = never
  */
 import { isInternalBuild } from '../../utils/envUtils.js'
 
-export function stripProtoFields<V>(
-  metadata: Record<string, V>,
-): Record<string, V> {
+export function stripProtoFields<V>(metadata: Record<string, V>): Record<string, V> {
   let result: Record<string, V> | undefined
   for (const key in metadata) {
     if (key.startsWith('_PROTO_')) {
@@ -73,10 +71,7 @@ type QueuedEvent = {
  */
 export type AnalyticsSink = {
   logEvent: (eventName: string, metadata: LogEventMetadata) => void
-  logEventAsync: (
-    eventName: string,
-    metadata: LogEventMetadata,
-  ) => Promise<void>
+  logEventAsync: (eventName: string, metadata: LogEventMetadata) => Promise<void>
 }
 
 // Event queue for events logged before sink is attached

@@ -5,10 +5,7 @@
 
 import { resolve } from 'path'
 import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
-import type {
-  PermissionDecisionReason,
-  PermissionResult,
-} from '../../types/permissions.js'
+import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
 import type { PermissionRule } from '../../utils/permissions/PermissionRule.js'
@@ -36,10 +33,7 @@ import {
 } from '../../utils/powershell/parser.js'
 import { containsVulnerableUncPath } from '../../utils/shell/readOnlyCommandValidation.js'
 import { isDotGitPathPS, isGitInternalPathPS } from './gitSafety.js'
-import {
-  checkPermissionMode,
-  isSymlinkCreatingCommand,
-} from './modeValidation.js'
+import { checkPermissionMode, isSymlinkCreatingCommand } from './modeValidation.js'
 import {
   checkPathConstraints,
   dangerousRemovalDeny,
@@ -129,9 +123,7 @@ async function extractCommandName(command: string): Promise<string> {
  * Parse a permission rule string into a structured rule object.
  * Delegates to shared parsePermissionRule.
  */
-export function powershellPermissionRule(
-  permissionRule: string,
-): ShellPermissionRule {
+export function powershellPermissionRule(permissionRule: string): ShellPermissionRule {
   return parsePermissionRule(permissionRule)
 }
 
@@ -264,18 +256,14 @@ function filterRulesByContentsMatchingInput(
       // module-qualified form against COMMON_ALIASES.
       if (rule.type === 'exact') {
         const rawRuleCmdName = rule.command.split(/\s+/)[0] ?? ''
-        const ruleCanonical = resolveToCanonical(
-          stripModulePrefixForRule(rawRuleCmdName),
-        )
+        const ruleCanonical = resolveToCanonical(stripModulePrefixForRule(rawRuleCmdName))
         if (ruleCanonical === inputCanonical) {
           // Rule and input resolve to same canonical cmdlet
           // SECURITY: use normalized `rest` not a raw re-slice
           // from `command`. The raw slice preserves tab separators so
           // `Remove-Item\t./secret.txt` vs deny rule `rm ./secret.txt` misses.
           // Normalize both sides identically.
-          const ruleRest = rule.command
-            .slice(rawRuleCmdName.length)
-            .replace(/^\s+/, ' ')
+          const ruleRest = rule.command.slice(rawRuleCmdName.length).replace(/^\s+/, ' ')
           const inputRest = rest
           if (strEquals(ruleRest, inputRest)) {
             return true
@@ -283,13 +271,9 @@ function filterRulesByContentsMatchingInput(
         }
       } else if (rule.type === 'prefix') {
         const rawRuleCmdName = rule.prefix.split(/\s+/)[0] ?? ''
-        const ruleCanonical = resolveToCanonical(
-          stripModulePrefixForRule(rawRuleCmdName),
-        )
+        const ruleCanonical = resolveToCanonical(stripModulePrefixForRule(rawRuleCmdName))
         if (ruleCanonical === inputCanonical) {
-          const ruleRest = rule.prefix
-            .slice(rawRuleCmdName.length)
-            .replace(/^\s+/, ' ')
+          const ruleRest = rule.prefix.slice(rawRuleCmdName.length).replace(/^\s+/, ' ')
           const canonicalPrefix = inputCanonical + ruleRest
           if (matchMode === 'exact') {
             if (strEquals(canonicalPrefix, canonicalCommand)) {
@@ -308,18 +292,14 @@ function filterRulesByContentsMatchingInput(
         // Resolve the wildcard pattern's command name to canonical and re-match
         // This ensures 'deny rm *' also blocks 'Remove-Item secret.txt'
         const rawRuleCmdName = rule.pattern.split(/\s+/)[0] ?? ''
-        const ruleCanonical = resolveToCanonical(
-          stripModulePrefixForRule(rawRuleCmdName),
-        )
+        const ruleCanonical = resolveToCanonical(stripModulePrefixForRule(rawRuleCmdName))
         if (ruleCanonical === inputCanonical && matchMode !== 'exact') {
           // Rebuild the pattern with the canonical cmdlet name
           // Normalize separator same as exact and prefix branches.
           // Without this, a wildcard rule `rm\t*` produces canonicalPattern
           // with a literal tab that never matches the space-normalized
           // canonicalCommand.
-          const ruleRest = rule.pattern
-            .slice(rawRuleCmdName.length)
-            .replace(/^\s+/, ' ')
+          const ruleRest = rule.pattern.slice(rawRuleCmdName.length).replace(/^\s+/, ' ')
           const canonicalPattern = inputCanonical + ruleRest
           if (matchWildcardPattern(canonicalPattern, canonicalCommand, true)) {
             return true
@@ -387,8 +367,11 @@ export function powershellToolCheckExactMatchPermission(
   toolPermissionContext: ToolPermissionContext,
 ): PermissionResult {
   const trimmedCommand = input.command.trim()
-  const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
-    matchingRulesForInput(input, toolPermissionContext, 'exact')
+  const { matchingDenyRules, matchingAskRules, matchingAllowRules } = matchingRulesForInput(
+    input,
+    toolPermissionContext,
+    'exact',
+  )
 
   if (matchingDenyRules[0] !== undefined) {
     return {
@@ -420,10 +403,7 @@ export function powershellToolCheckExactMatchPermission(
   }
   return {
     behavior: 'passthrough',
-    message: createPermissionRequestMessage(
-      POWERSHELL_TOOL_NAME,
-      decisionReason,
-    ),
+    message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
     decisionReason,
     suggestions: suggestionForExactCommand(trimmedCommand),
   }
@@ -439,22 +419,19 @@ export function powershellToolCheckPermission(
   const command = input.command.trim()
 
   // 1. Check exact match first
-  const exactMatchResult = powershellToolCheckExactMatchPermission(
-    input,
-    toolPermissionContext,
-  )
+  const exactMatchResult = powershellToolCheckExactMatchPermission(input, toolPermissionContext)
 
   // 1a. Deny/ask if exact command has a rule
-  if (
-    exactMatchResult.behavior === 'deny' ||
-    exactMatchResult.behavior === 'ask'
-  ) {
+  if (exactMatchResult.behavior === 'deny' || exactMatchResult.behavior === 'ask') {
     return exactMatchResult
   }
 
   // 2. Find all matching rules (prefix or exact)
-  const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
-    matchingRulesForInput(input, toolPermissionContext, 'prefix')
+  const { matchingDenyRules, matchingAskRules, matchingAllowRules } = matchingRulesForInput(
+    input,
+    toolPermissionContext,
+    'prefix',
+  )
 
   // 2a. Deny if command has a deny rule
   if (matchingDenyRules[0] !== undefined) {
@@ -504,10 +481,7 @@ export function powershellToolCheckPermission(
   }
   return {
     behavior: 'passthrough',
-    message: createPermissionRequestMessage(
-      POWERSHELL_TOOL_NAME,
-      decisionReason,
-    ),
+    message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
     decisionReason,
     suggestions: suggestionForExactCommand(command),
   }
@@ -580,9 +554,7 @@ async function getSubCommandsForPermissionCheck(
         // auto-allow → redirection inside paren writes file. Only zero-arg
         // Out-String/Out-Null/Out-Host invocations are provably safe.
         isSafeOutput:
-          cmd.nameType !== 'application' &&
-          isSafeOutputCommand(cmd.name) &&
-          cmd.args.length === 0,
+          cmd.nameType !== 'application' && isSafeOutputCommand(cmd.name) && cmd.args.length === 0,
       })
     }
 
@@ -662,10 +634,7 @@ export async function powershellToolHasPermission(
   // Deny rules operate on the raw command string and don't need the parsed AST.
   // This ensures explicit deny rules still block commands even when parsing fails.
   // 1. Check exact match first
-  const exactMatchResult = powershellToolCheckExactMatchPermission(
-    input,
-    toolPermissionContext,
-  )
+  const exactMatchResult = powershellToolCheckExactMatchPermission(input, toolPermissionContext)
 
   // Exact command was denied
   if (exactMatchResult.behavior === 'deny') {
@@ -717,8 +686,7 @@ export async function powershellToolHasPermission(
   if (preParseAskDecision === null && containsVulnerableUncPath(command)) {
     preParseAskDecision = {
       behavior: 'ask',
-      message:
-        'Command contains a UNC path that could trigger network requests',
+      message: 'Command contains a UNC path that could trigger network requests',
     }
   }
 
@@ -781,9 +749,7 @@ export async function powershellToolHasPermission(
     // pieces. Instead: collapse backtick-newline (line continuation) so
     // `Invoke-Ex`<nl>pression` rejoins, strip remaining backticks (escape
     // chars — ``x → x), then split on actual statement/grouping separators.
-    const backtickStripped = command
-      .replace(/`[\r\n]+\s*/g, '')
-      .replace(/`/g, '')
+    const backtickStripped = command.replace(/`[\r\n]+\s*/g, '').replace(/`/g, '')
     for (const fragment of backtickStripped.split(/[;|\n\r{}()&]+/)) {
       const trimmedFrag = fragment.trim()
       if (!trimmedFrag) continue // skip empty fragments
@@ -865,10 +831,7 @@ export async function powershellToolHasPermission(
     return {
       behavior: 'ask',
       decisionReason,
-      message: createPermissionRequestMessage(
-        POWERSHELL_TOOL_NAME,
-        decisionReason,
-      ),
+      message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
       // No suggestions - don't recommend persisting invalid syntax
     }
   }
@@ -920,10 +883,7 @@ export async function powershellToolHasPermission(
     }
     decisions.push({
       behavior: 'ask',
-      message: createPermissionRequestMessage(
-        POWERSHELL_TOOL_NAME,
-        decisionReason,
-      ),
+      message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
       decisionReason,
       suggestions: suggestionForExactCommand(command),
     })
@@ -945,10 +905,7 @@ export async function powershellToolHasPermission(
     }
     decisions.push({
       behavior: 'ask',
-      message: createPermissionRequestMessage(
-        POWERSHELL_TOOL_NAME,
-        decisionReason,
-      ),
+      message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
       decisionReason,
       suggestions: suggestionForExactCommand(command),
     })
@@ -956,15 +913,11 @@ export async function powershellToolHasPermission(
   if (parsed.hasScriptRequirements) {
     const decisionReason: PermissionDecisionReason = {
       type: 'other' as const,
-      reason:
-        'Command contains a `#Requires` directive that may trigger module loading',
+      reason: 'Command contains a `#Requires` directive that may trigger module loading',
     }
     decisions.push({
       behavior: 'ask',
-      message: createPermissionRequestMessage(
-        POWERSHELL_TOOL_NAME,
-        decisionReason,
-      ),
+      message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
       decisionReason,
       suggestions: suggestionForExactCommand(command),
     })
@@ -1061,8 +1014,7 @@ export async function powershellToolHasPermission(
     // `& 'Invoke-Expression' 'x'` yields name='Invoke-Expression', not
     // "'Invoke-Expression'". canonicalSubCmd is built from the same stripped
     // name, so deny-rule prefix matching on `Invoke-Expression:*` hits.
-    const canonicalSubCmd =
-      element.name !== '' ? [element.name, ...element.args].join(' ') : null
+    const canonicalSubCmd = element.name !== '' ? [element.name, ...element.args].join(' ') : null
 
     const subInput = { command: subCmd }
     const { matchingDenyRules: subDenyRules, matchingAskRules: subAskRules } =
@@ -1071,14 +1023,8 @@ export async function powershellToolHasPermission(
     let matchedAskRule = subAskRules[0]
 
     if (matchedDenyRule === undefined && canonicalSubCmd !== null) {
-      const {
-        matchingDenyRules: canonicalDenyRules,
-        matchingAskRules: canonicalAskRules,
-      } = matchingRulesForInput(
-        { command: canonicalSubCmd },
-        toolPermissionContext,
-        'prefix',
-      )
+      const { matchingDenyRules: canonicalDenyRules, matchingAskRules: canonicalAskRules } =
+        matchingRulesForInput({ command: canonicalSubCmd }, toolPermissionContext, 'prefix')
       matchedDenyRule = canonicalDenyRules[0]
       if (matchedAskRule === undefined) {
         matchedAskRule = canonicalAskRules[0]
@@ -1171,42 +1117,36 @@ export async function powershellToolHasPermission(
   // extracted write paths + redirection targets against git-internal patterns.
   // Port of BashTool commandWritesToGitInternalPaths, adapted for AST.
   if (hasGitSubCommand) {
-    const writesToGitInternal = allSubCommands.some(
-      ({ element, statement }) => {
-        // Redirection targets on this sub-command (raw Extent.Text — quotes
-        // and ./ intact; normalizer handles both)
-        for (const r of element.redirections ?? []) {
-          if (isGitInternalPathPS(r.target)) return true
+    const writesToGitInternal = allSubCommands.some(({ element, statement }) => {
+      // Redirection targets on this sub-command (raw Extent.Text — quotes
+      // and ./ intact; normalizer handles both)
+      for (const r of element.redirections ?? []) {
+        if (isGitInternalPathPS(r.target)) return true
+      }
+      // Write cmdlet args (new-item HEAD; mkdir hooks; set-content hooks/pre-commit)
+      const canonical = resolveToCanonical(element.name)
+      if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) return false
+      // Raw arg text — normalizer strips colon-bound params, quotes, ./, case.
+      // PS ArrayLiteralAst (`New-Item a,hooks/pre-commit`) surfaces as a single
+      // comma-joined arg — split before checking.
+      if (element.args.flatMap((a) => a.split(',')).some((a) => isGitInternalPathPS(a))) {
+        return true
+      }
+      // Pipeline input: `"hooks/pre-commit" | New-Item -ItemType File` binds the
+      // string to -Path at runtime. The path is in a non-CommandAst pipeline
+      // element, not in element.args. The hasExpressionSource guard at step 5
+      // already forces approval here; this check just adds the git-internal
+      // warning text.
+      if (statement !== null) {
+        for (const c of statement.commands) {
+          if (c.elementType === 'CommandAst') continue
+          if (isGitInternalPathPS(c.text)) return true
         }
-        // Write cmdlet args (new-item HEAD; mkdir hooks; set-content hooks/pre-commit)
-        const canonical = resolveToCanonical(element.name)
-        if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) return false
-        // Raw arg text — normalizer strips colon-bound params, quotes, ./, case.
-        // PS ArrayLiteralAst (`New-Item a,hooks/pre-commit`) surfaces as a single
-        // comma-joined arg — split before checking.
-        if (
-          element.args
-            .flatMap(a => a.split(','))
-            .some(a => isGitInternalPathPS(a))
-        ) {
-          return true
-        }
-        // Pipeline input: `"hooks/pre-commit" | New-Item -ItemType File` binds the
-        // string to -Path at runtime. The path is in a non-CommandAst pipeline
-        // element, not in element.args. The hasExpressionSource guard at step 5
-        // already forces approval here; this check just adds the git-internal
-        // warning text.
-        if (statement !== null) {
-          for (const c of statement.commands) {
-            if (c.elementType === 'CommandAst') continue
-            if (isGitInternalPathPS(c.text)) return true
-          }
-        }
-        return false
-      },
-    )
+      }
+      return false
+    })
     // Also check top-level file redirections (> hooks/pre-commit)
-    const redirWritesToGitInternal = getFileRedirections(parsed).some(r =>
+    const redirWritesToGitInternal = getFileRedirections(parsed).some((r) =>
       isGitInternalPathPS(r.target),
     )
     if (writesToGitInternal || redirWritesToGitInternal) {
@@ -1245,8 +1185,8 @@ export async function powershellToolHasPermission(
         }
         const canonical = resolveToCanonical(element.name)
         if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) return false
-        return element.args.flatMap(a => a.split(',')).some(isDotGitPathPS)
-      }) || getFileRedirections(parsed).some(r => isDotGitPathPS(r.target))
+        return element.args.flatMap((a) => a.split(',')).some(isDotGitPathPS)
+      }) || getFileRedirections(parsed).some((r) => isDotGitPathPS(r.target))
     if (found) {
       decisions.push({
         behavior: 'ask',
@@ -1268,12 +1208,7 @@ export async function powershellToolHasPermission(
   // stale validator cwd, not PowerShell's runtime cwd. This is the architectural
   // fix for the CWD-desync cluster (findings #3/#21/#27/#28), replacing the
   // per-auto-allow-site guards with a single gate at the path-resolution layer.
-  const pathResult = checkPathConstraints(
-    input,
-    parsed,
-    toolPermissionContext,
-    hasCdSubCommand,
-  )
+  const pathResult = checkPathConstraints(input, parsed, toolPermissionContext, hasCdSubCommand)
   if (pathResult.behavior !== 'passthrough') {
     decisions.push(pathResult)
   }
@@ -1307,9 +1242,7 @@ export async function powershellToolHasPermission(
     exactMatchResult.behavior === 'allow' &&
     allSubCommands[0] !== undefined &&
     allSubCommands.every(
-      sc =>
-        sc.element.nameType !== 'application' &&
-        !argLeaksValue(sc.text, sc.element),
+      (sc) => sc.element.nameType !== 'application' && !argLeaksValue(sc.text, sc.element),
     )
   ) {
     decisions.push(exactMatchResult)
@@ -1338,8 +1271,7 @@ export async function powershellToolHasPermission(
   if (fileRedirections.length > 0) {
     decisions.push({
       behavior: 'ask',
-      message:
-        'Command contains file redirections that could write to arbitrary paths',
+      message: 'Command contains file redirections that could write to arbitrary paths',
       suggestions: suggestionForExactCommand(command),
     })
   }
@@ -1354,15 +1286,15 @@ export async function powershellToolHasPermission(
   // REDUCE: deny > ask > allow > passthrough. First of each behavior type
   // wins (preserves step-order messaging for single-check cases). If nothing
   // decided, fall through to step 5 per-sub-command approval collection.
-  const deniedDecision = decisions.find(d => d.behavior === 'deny')
+  const deniedDecision = decisions.find((d) => d.behavior === 'deny')
   if (deniedDecision !== undefined) {
     return deniedDecision
   }
-  const askDecision = decisions.find(d => d.behavior === 'ask')
+  const askDecision = decisions.find((d) => d.behavior === 'ask')
   if (askDecision !== undefined) {
     return askDecision
   }
-  const allowDecision = decisions.find(d => d.behavior === 'allow')
+  const allowDecision = decisions.find((d) => d.behavior === 'allow')
   if (allowDecision !== undefined) {
     return allowDecision
   }
@@ -1397,9 +1329,7 @@ export async function powershellToolHasPermission(
       // en-dash would find `–LiteralPath` as "target", mismatch cwd, stay in
       // list — also correct. The risk is the inverse: a Unicode-dash parameter
       // being treated as the positional target. Use the tokenizer dash set.
-      const target = element.args.find(
-        a => a.length === 0 || !PS_TOKENIZER_DASH_CHARS.has(a[0]!),
-      )
+      const target = element.args.find((a) => a.length === 0 || !PS_TOKENIZER_DASH_CHARS.has(a[0]!))
       if (target && resolve(getCwd(), target) === getCwd()) {
         return false
       }
@@ -1427,17 +1357,12 @@ export async function powershellToolHasPermission(
   // (not a sub-command), statement marked seen → gate skips → auto-allow →
   // secret leaks. Tracking on push only: statement stays unseen → gate fires
   // → ask.
-  const statementsSeenInLoop = new Set<
-    ParsedPowerShellCommand['statements'][number]
-  >()
+  const statementsSeenInLoop = new Set<ParsedPowerShellCommand['statements'][number]>()
 
   for (const { text: subCmd, element, statement } of subCommands) {
     // Check deny rules FIRST - user explicit rules take precedence over allowlist
     const subInput = { command: subCmd }
-    const subResult = powershellToolCheckPermission(
-      subInput,
-      toolPermissionContext,
-    )
+    const subResult = powershellToolCheckPermission(subInput, toolPermissionContext)
 
     if (subResult.behavior === 'deny') {
       return {
@@ -1463,11 +1388,7 @@ export async function powershellToolHasPermission(
     // the RAW name pre-strip — `scripts\Get-Content` → 'application' (has `\`).
     // Module-qualified cmdlets also classify 'application' — fail-safe over-fire.
     // An application should NEVER be auto-allowed by a cmdlet allow rule.
-    if (
-      subResult.behavior === 'allow' &&
-      element.nameType !== 'application' &&
-      !hasSymlinkCreate
-    ) {
+    if (subResult.behavior === 'allow' && element.nameType !== 'application' && !hasSymlinkCreate) {
       // SECURITY: User allow rule asserts the cmdlet is safe, NOT that
       // arbitrary variable expansion through it is safe. A user who allows
       // PowerShell(Write-Output:*) did not intend to auto-allow
@@ -1638,10 +1559,7 @@ export async function powershellToolHasPermission(
 
   return {
     behavior: 'passthrough',
-    message: createPermissionRequestMessage(
-      POWERSHELL_TOOL_NAME,
-      decisionReason,
-    ),
+    message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME, decisionReason),
     decisionReason,
     suggestions: pendingSuggestions,
   }

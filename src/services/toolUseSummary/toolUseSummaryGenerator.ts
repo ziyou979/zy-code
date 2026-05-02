@@ -55,7 +55,7 @@ export async function generateToolUseSummary({
   try {
     // Build a concise representation of what tools did
     const toolSummaries = tools
-      .map(tool => {
+      .map((tool) => {
         const inputStr = truncateJson(tool.input, 300)
         const outputStr = truncateJson(tool.output, 300)
         return `Tool: ${tool.name}\nInput: ${inputStr}\nOutput: ${outputStr}`
@@ -81,8 +81,8 @@ export async function generateToolUseSummary({
     })
 
     const summary = response.message.content
-      .filter(block => block.type === 'text')
-      .map(block => (block.type === 'text' ? block.text : ''))
+      .filter((block) => block.type === 'text')
+      .map((block) => (block.type === 'text' ? block.text : ''))
       .join('')
       .trim()
 

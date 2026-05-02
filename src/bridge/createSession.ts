@@ -61,8 +61,7 @@ export async function createBridgeSession({
   const { getMainLoopModel } = await import('../utils/model/model.js')
   const { default: axios } = await import('axios')
 
-  const accessToken =
-    getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
+  const accessToken = getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
   if (!accessToken) {
     logForDebugging('[bridge] No access token for session creation')
     return null
@@ -147,12 +146,10 @@ export async function createBridgeSession({
     response = await axios.post(url, requestBody, {
       headers,
       signal,
-      validateStatus: s => s < 500,
+      validateStatus: (s) => s < 500,
     })
   } catch (err: unknown) {
-    logForDebugging(
-      `[bridge] Session creation request failed: ${errorMessage(err)}`,
-    )
+    logForDebugging(`[bridge] Session creation request failed: ${errorMessage(err)}`)
     return null
   }
   const isSuccess = response.status === 200 || response.status === 201
@@ -197,8 +194,7 @@ export async function getBridgeSession(
   const { getOAuthHeaders } = await import('../utils/teleport/api.js')
   const { default: axios } = await import('axios')
 
-  const accessToken =
-    opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
+  const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
   if (!accessToken) {
     logForDebugging('[bridge] No access token for session fetch')
     return null
@@ -221,14 +217,13 @@ export async function getBridgeSession(
 
   let response
   try {
-    response = await axios.get<{ environment_id?: string; title?: string }>(
-      url,
-      { headers, timeout: 10_000, validateStatus: s => s < 500 },
-    )
+    response = await axios.get<{ environment_id?: string; title?: string }>(url, {
+      headers,
+      timeout: 10_000,
+      validateStatus: (s) => s < 500,
+    })
   } catch (err: unknown) {
-    logForDebugging(
-      `[bridge] Session fetch request failed: ${errorMessage(err)}`,
-    )
+    logForDebugging(`[bridge] Session fetch request failed: ${errorMessage(err)}`)
     return null
   }
 
@@ -274,8 +269,7 @@ export async function archiveBridgeSession(
   const { getOAuthHeaders } = await import('../utils/teleport/api.js')
   const { default: axios } = await import('axios')
 
-  const accessToken =
-    opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
+  const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
   if (!accessToken) {
     logForDebugging('[bridge] No access token for session archive')
     return
@@ -302,7 +296,7 @@ export async function archiveBridgeSession(
     {
       headers,
       timeout: opts?.timeoutMs ?? 10_000,
-      validateStatus: s => s < 500,
+      validateStatus: (s) => s < 500,
     },
   )
 
@@ -335,8 +329,7 @@ export async function updateBridgeSessionTitle(
   const { getOAuthHeaders } = await import('../utils/teleport/api.js')
   const { default: axios } = await import('axios')
 
-  const accessToken =
-    opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
+  const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
   if (!accessToken) {
     logForDebugging('[bridge] No access token for session title update')
     return
@@ -365,7 +358,7 @@ export async function updateBridgeSessionTitle(
     const response = await axios.patch(
       url,
       { title },
-      { headers, timeout: 10_000, validateStatus: s => s < 500 },
+      { headers, timeout: 10_000, validateStatus: (s) => s < 500 },
     )
 
     if (response.status === 200) {
@@ -377,8 +370,6 @@ export async function updateBridgeSessionTitle(
       )
     }
   } catch (err: unknown) {
-    logForDebugging(
-      `[bridge] Session title update request failed: ${errorMessage(err)}`,
-    )
+    logForDebugging(`[bridge] Session title update request failed: ${errorMessage(err)}`)
   }
 }

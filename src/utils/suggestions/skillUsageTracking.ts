@@ -19,7 +19,7 @@ export function recordSkillUsage(skillName: string): void {
     return
   }
   lastWriteBySkill.set(skillName, now)
-  saveGlobalConfig(current => {
+  saveGlobalConfig((current) => {
     const existing = current.skillUsage?.[skillName]
     return {
       ...current,

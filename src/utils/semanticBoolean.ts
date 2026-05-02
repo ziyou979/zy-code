@@ -19,11 +19,6 @@ import { z } from 'zod/v4'
  *   semanticBoolean(z.boolean().optional())        → boolean | undefined
  *   semanticBoolean(z.boolean().default(false))    → boolean
  */
-export function semanticBoolean<T extends z.ZodType>(
-  inner: T = z.boolean() as unknown as T,
-) {
-  return z.preprocess(
-    (v: unknown) => (v === 'true' ? true : v === 'false' ? false : v),
-    inner,
-  )
+export function semanticBoolean<T extends z.ZodType>(inner: T = z.boolean() as unknown as T) {
+  return z.preprocess((v: unknown) => (v === 'true' ? true : v === 'false' ? false : v), inner)
 }

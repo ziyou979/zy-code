@@ -1,42 +1,42 @@
-import React, { type ReactNode } from 'react';
-import { ListItem } from '../design-system/ListItem.js';
+import React, { type ReactNode } from 'react'
+import { ListItem } from '../design-system/ListItem.js'
 export type SelectOptionProps = {
   /**
    * Determines if option is focused.
    */
-  readonly isFocused: boolean;
+  readonly isFocused: boolean
 
   /**
    * Determines if option is selected.
    */
-  readonly isSelected: boolean;
+  readonly isSelected: boolean
 
   /**
    * Option label.
    */
-  readonly children: ReactNode;
+  readonly children: ReactNode
 
   /**
    * Optional description to display below the label.
    */
-  readonly description?: string;
+  readonly description?: string
 
   /**
    * Determines if the down arrow should be shown.
    */
-  readonly shouldShowDownArrow?: boolean;
+  readonly shouldShowDownArrow?: boolean
 
   /**
    * Determines if the up arrow should be shown.
    */
-  readonly shouldShowUpArrow?: boolean;
+  readonly shouldShowUpArrow?: boolean
 
   /**
    * Whether ListItem should declare the terminal cursor position.
    * Set false when a child declares its own cursor (e.g. BaseTextInput).
    */
-  readonly declareCursor?: boolean;
-};
+  readonly declareCursor?: boolean
+}
 export function SelectOption({
   isFocused,
   isSelected,
@@ -44,7 +44,19 @@ export function SelectOption({
   description,
   shouldShowDownArrow,
   shouldShowUpArrow,
-  declareCursor
+  declareCursor,
 }: SelectOptionProps) {
-  return <ListItem isFocused={isFocused} isSelected={isSelected} description={description} showScrollDown={shouldShowDownArrow} showScrollUp={shouldShowUpArrow} styled={false} declareCursor={declareCursor}>{children}</ListItem>;
+  return (
+    <ListItem
+      isFocused={isFocused}
+      isSelected={isSelected}
+      description={description}
+      showScrollDown={shouldShowDownArrow}
+      showScrollUp={shouldShowUpArrow}
+      styled={false}
+      declareCursor={declareCursor}
+    >
+      {children}
+    </ListItem>
+  )
 }

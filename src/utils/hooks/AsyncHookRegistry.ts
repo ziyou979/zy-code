@@ -83,9 +83,7 @@ export function registerPendingAsyncHook({
 }
 
 export function getPendingAsyncHooks(): PendingAsyncHook[] {
-  return Array.from(pendingHooks.values()).filter(
-    hook => !hook.responseAttachmentSent,
-  )
+  return Array.from(pendingHooks.values()).filter((hook) => !hook.responseAttachmentSent)
 }
 
 async function finalizeHook(
@@ -142,7 +140,7 @@ export async function checkForAsyncHookResponses(): Promise<
   const hooks = Array.from(pendingHooks.values())
 
   const settled = await Promise.allSettled(
-    hooks.map(async hook => {
+    hooks.map(async (hook) => {
       const stdout = (await hook.shellCommand?.taskOutput.getStdout()) ?? ''
       const stderr = hook.shellCommand?.taskOutput.getStderr() ?? ''
       logForDebugging(
@@ -181,9 +179,7 @@ export async function checkForAsyncHookResponses(): Promise<
       }
 
       const lines = stdout.split('\n')
-      logForDebugging(
-        `Hooks: Processing ${lines.length} lines of stdout for ${hook.processId}`,
-      )
+      logForDebugging(`Hooks: Processing ${lines.length} lines of stdout for ${hook.processId}`)
 
       const execResult = await hook.shellCommand.result
       const exitCode = execResult.code
@@ -191,9 +187,7 @@ export async function checkForAsyncHookResponses(): Promise<
       let response: SyncHookJSONOutput = {}
       for (const line of lines) {
         if (line.trim().startsWith('{')) {
-          logForDebugging(
-            `Hooks: Found JSON line: ${line.trim().substring(0, 100)}...`,
-          )
+          logForDebugging(`Hooks: Found JSON line: ${line.trim().substring(0, 100)}...`)
           try {
             const parsed = jsonParse(line.trim())
             if (!('async' in parsed)) {
@@ -204,9 +198,7 @@ export async function checkForAsyncHookResponses(): Promise<
               break
             }
           } catch {
-            logForDebugging(
-              `Hooks: Failed to parse JSON from ${hook.processId}: ${line.trim()}`,
-            )
+            logForDebugging(`Hooks: Failed to parse JSON from ${hook.processId}: ${line.trim()}`)
           }
         }
       }
@@ -238,10 +230,9 @@ export async function checkForAsyncHookResponses(): Promise<
   let sessionStartCompleted = false
   for (const s of settled) {
     if (s.status !== 'fulfilled') {
-      logForDebugging(
-        `Hooks: checkForAsyncHookResponses callback rejected: ${s.reason}`,
-        { level: 'error' },
-      )
+      logForDebugging(`Hooks: checkForAsyncHookResponses callback rejected: ${s.reason}`, {
+        level: 'error',
+      })
       continue
     }
     const r = s.value
@@ -255,15 +246,11 @@ export async function checkForAsyncHookResponses(): Promise<
   }
 
   if (sessionStartCompleted) {
-    logForDebugging(
-      `Invalidating session env cache after SessionStart hook completed`,
-    )
+    logForDebugging(`Invalidating session env cache after SessionStart hook completed`)
     invalidateSessionEnvCache()
   }
 
-  logForDebugging(
-    `Hooks: checkForNewResponses returning ${responses.length} responses`,
-  )
+  logForDebugging(`Hooks: checkForNewResponses returning ${responses.length} responses`)
   return responses
 }
 
@@ -281,14 +268,10 @@ export function removeDeliveredAsyncHooks(processIds: string[]): void {
 export async function finalizePendingAsyncHooks(): Promise<void> {
   const hooks = Array.from(pendingHooks.values())
   await Promise.all(
-    hooks.map(async hook => {
+    hooks.map(async (hook) => {
       if (hook.shellCommand?.status === 'completed') {
         const result = await hook.shellCommand.result
-        await finalizeHook(
-          hook,
-          result.code,
-          result.code === 0 ? 'success' : 'error',
-        )
+        await finalizeHook(hook, result.code, result.code === 0 ? 'success' : 'error')
       } else {
         if (hook.shellCommand && hook.shellCommand.status !== 'killed') {
           hook.shellCommand.kill()

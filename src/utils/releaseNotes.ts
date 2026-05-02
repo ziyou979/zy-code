@@ -26,8 +26,7 @@ const MAX_RELEASE_NOTES_SHOWN = 5
  * 2. We fetch the changelog in the background and store it in config
  * 3. Next time the user starts ZY Code, the cached changelog is available immediately
  */
-export const CHANGELOG_URL =
-  'https://github.com/anthropics/zy-code/blob/main/CHANGELOG.md'
+export const CHANGELOG_URL = 'https://github.com/anthropics/zy-code/blob/main/CHANGELOG.md'
 const RAW_CHANGELOG_URL =
   'https://raw.githubusercontent.com/anthropics/zy-code/refs/heads/main/CHANGELOG.md'
 
@@ -112,7 +111,7 @@ export async function fetchAndStoreChangelog(): Promise<void> {
 
     // Update timestamp in config
     const changelogLastFetched = Date.now()
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       changelogLastFetched,
     }))
@@ -180,8 +179,8 @@ export function parseChangelog(content: string): Record<string, string[]> {
       // Extract bullet points
       const notes = lines
         .slice(1)
-        .filter(line => line.trim().startsWith('- '))
-        .map(line => line.trim().substring(2).trim())
+        .filter((line) => line.trim().startsWith('- '))
+        .map((line) => line.trim().substring(2).trim())
         .filter(Boolean)
 
       if (notes.length > 0) {
@@ -219,15 +218,11 @@ export function getRecentReleaseNotes(
 
     if (
       !basePreviousVersion ||
-      (baseCurrentVersion &&
-        gt(baseCurrentVersion.version, basePreviousVersion.version))
+      (baseCurrentVersion && gt(baseCurrentVersion.version, basePreviousVersion.version))
     ) {
       // Get all versions that are newer than the last seen version
       return Object.entries(releaseNotes)
-        .filter(
-          ([version]) =>
-            !basePreviousVersion || gt(version, basePreviousVersion.version),
-        )
+        .filter(([version]) => !basePreviousVersion || gt(version, basePreviousVersion.version))
         .sort(([versionA], [versionB]) => (gt(versionA, versionB) ? -1 : 1)) // Sort newest first
         .flatMap(([_, notes]) => notes)
         .filter(Boolean)
@@ -254,13 +249,11 @@ export function getAllReleaseNotes(
     const releaseNotes = parseChangelog(changelogContent)
 
     // Sort versions with oldest first
-    const sortedVersions = Object.keys(releaseNotes).sort((a, b) =>
-      gt(a, b) ? 1 : -1,
-    )
+    const sortedVersions = Object.keys(releaseNotes).sort((a, b) => (gt(a, b) ? 1 : -1))
 
     // Return array of [version, notes] arrays
     return sortedVersions
-      .map(version => {
+      .map((version) => {
         const versionNotes = releaseNotes[version]
         if (!versionNotes || versionNotes.length === 0) return null
 
@@ -311,14 +304,10 @@ export async function checkForReleaseNotes(
   // If the version has changed or we don't have a cached changelog, fetch a new one
   // This happens in the background and doesn't block the UI
   if (lastSeenVersion !== currentVersion || !cachedChangelog) {
-    fetchAndStoreChangelog().catch(error => logError(toError(error)))
+    fetchAndStoreChangelog().catch((error) => logError(toError(error)))
   }
 
-  const releaseNotes = getRecentReleaseNotes(
-    currentVersion,
-    lastSeenVersion,
-    cachedChangelog,
-  )
+  const releaseNotes = getRecentReleaseNotes(currentVersion, lastSeenVersion, cachedChangelog)
   const hasReleaseNotes = releaseNotes.length > 0
 
   return {

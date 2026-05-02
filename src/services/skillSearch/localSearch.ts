@@ -10,10 +10,7 @@ export function clearSkillIndexCache(): void {
  * Searches for skills locally based on a query.
  * This is a stub implementation for external builds.
  */
-export function searchLocalSkills(
-  query: string,
-  limit?: number,
-): unknown[] {
+export function searchLocalSkills(query: string, limit?: number): unknown[] {
   // Stub: returns empty array in external builds
   return []
 }

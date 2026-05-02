@@ -25,10 +25,7 @@ import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { createEmptyAttributionState } from '../../utils/commitAttribution.js'
 import type { FileStateCache } from '../../utils/fileStateCache.js'
-import {
-  executeSessionEndHooks,
-  getSessionEndHookTimeoutMs,
-} from '../../utils/hooks.js'
+import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
 import { clearAllPlanSlugs } from '../../utils/plans.js'
 import { setCwd } from '../../utils/Shell.js'
@@ -39,10 +36,7 @@ import {
   resetSessionFilePointer,
   saveWorktreeState,
 } from '../../utils/sessionStorage.js'
-import {
-  evictTaskOutput,
-  initTaskOutputAsSymlink,
-} from '../../utils/task/diskOutput.js'
+import { evictTaskOutput, initTaskOutputAsSymlink } from '../../utils/task/diskOutput.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { clearSessionCaches } from './caches.js'
@@ -78,10 +72,8 @@ export async function clearConversation({
   const lastRequestId = getLastMainRequestId()
   if (lastRequestId) {
     logEvent('zy_cache_eviction_hint', {
-      scope:
-        'conversation_clear' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      last_request_id:
-        lastRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      scope: 'conversation_clear' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      last_request_id: lastRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
 
@@ -134,7 +126,7 @@ export async function clearConversation({
 
   // Clean out necessary items from App State
   if (setAppState) {
-    setAppState(prev => {
+    setAppState((prev) => {
       // Partition tasks using the same predicate computed above:
       // kill+remove foreground tasks, preserve everything else.
       const nextTasks: AppState['tasks'] = {}
@@ -218,10 +210,7 @@ export async function clearConversation({
   // recordSidechainTranscript to getAgentTranscriptPath), so no special case.
   for (const task of preservedLocalAgents) {
     if (task.status !== 'running') continue
-    void initTaskOutputAsSymlink(
-      task.id,
-      getAgentTranscriptPath(asAgentId(task.agentId)),
-    )
+    void initTaskOutputAsSymlink(task.id, getAgentTranscriptPath(asAgentId(task.agentId)))
   }
 
   // Re-persist mode and worktree state after the clear so future --resume
@@ -231,9 +220,7 @@ export async function clearConversation({
   if (feature('COORDINATOR_MODE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { saveMode } = require('../../utils/sessionStorage.js')
-    const {
-      isCoordinatorMode,
-    } = require('../../coordinator/coordinatorMode.js')
+    const { isCoordinatorMode } = require('../../coordinator/coordinatorMode.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     saveMode(isCoordinatorMode() ? 'coordinator' : 'normal')
   }

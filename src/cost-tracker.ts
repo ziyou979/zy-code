@@ -33,14 +33,8 @@ import {
   logEvent,
 } from './services/analytics/index.js'
 import { getAdvisorUsage } from './utils/advisor.js'
-import {
-  getCurrentProjectConfig,
-  saveCurrentProjectConfig,
-} from './utils/config.js'
-import {
-  getContextWindowForModel,
-  getModelMaxOutputTokens,
-} from './utils/context.js'
+import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
+import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
 import { calculateUSDCost, getCurrencySymbol } from './utils/modelCost.js'
@@ -82,9 +76,7 @@ type StoredCostState = {
  * 仅在会话 ID 匹配时返回费用数据，否则返回 undefined。
  * 用于在 saveCurrentSessionCosts() 覆盖配置之前读取费用数据。
  */
-export function getStoredSessionCosts(
-  sessionId: string,
-): StoredCostState | undefined {
+export function getStoredSessionCosts(sessionId: string): StoredCostState | undefined {
   const projectConfig = getCurrentProjectConfig()
 
   // 仅在上次保存的是同一会话时返回费用数据
@@ -110,8 +102,7 @@ export function getStoredSessionCosts(
   return {
     totalCostUSD: projectConfig.lastCost ?? 0,
     totalAPIDuration: projectConfig.lastAPIDuration ?? 0,
-    totalAPIDurationWithoutRetries:
-      projectConfig.lastAPIDurationWithoutRetries ?? 0,
+    totalAPIDurationWithoutRetries: projectConfig.lastAPIDurationWithoutRetries ?? 0,
     totalToolDuration: projectConfig.lastToolDuration ?? 0,
     totalLinesAdded: projectConfig.lastLinesAdded ?? 0,
     totalLinesRemoved: projectConfig.lastLinesRemoved ?? 0,
@@ -139,7 +130,7 @@ export function restoreCostStateForSession(sessionId: string): boolean {
  * 在切换会话之前调用此方法，以避免丢失已累积的费用数据。
  */
 export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
-  saveCurrentProjectConfig(current => ({
+  saveCurrentProjectConfig((current) => ({
     ...current,
     lastCost: getTotalCostUSD(),
     lastAPIDuration: getTotalAPIDuration(),
@@ -227,9 +218,7 @@ function formatModelUsage(): string {
 export function formatTotalCost(): string {
   const costDisplay =
     formatCost(getTotalCostUSD()) +
-    (hasUnknownModelCost()
-      ? ' ' + tSync('costTracker.costsMayBeInaccurate')
-      : '')
+    (hasUnknownModelCost() ? ' ' + tSync('costTracker.costsMayBeInaccurate') : '')
 
   const modelUsageDisplay = formatModelUsage()
 
@@ -249,11 +238,7 @@ function round(number: number, precision: number): number {
   return Math.round(number * precision) / precision
 }
 
-function addToTotalModelUsage(
-  cost: number,
-  usage: Usage,
-  model: string,
-): ModelUsage {
+function addToTotalModelUsage(cost: number, usage: Usage, model: string): ModelUsage {
   const modelUsage = getUsageForModel(model) ?? {
     inputTokens: 0,
     outputTokens: 0,
@@ -269,19 +254,14 @@ function addToTotalModelUsage(
   modelUsage.outputTokens += usage.outputTokens
   modelUsage.cacheReadInputTokens += usage.extras?.cacheReadInputTokens ?? 0
   modelUsage.cacheCreationInputTokens += usage.extras?.cacheCreationInputTokens ?? 0
-  modelUsage.webSearchRequests +=
-    (usage as any).server_tool_use?.web_search_requests ?? 0
+  modelUsage.webSearchRequests += (usage as any).server_tool_use?.web_search_requests ?? 0
   modelUsage.costUSD += cost
   modelUsage.contextWindow = getContextWindowForModel(model)
   modelUsage.maxOutputTokens = getModelMaxOutputTokens(model).default
   return modelUsage
 }
 
-export function addToTotalSessionCost(
-  cost: number,
-  usage: Usage,
-  model: string,
-): number {
+export function addToTotalSessionCost(cost: number, usage: Usage, model: string): number {
   const modelUsage = addToTotalModelUsage(cost, usage, model)
   addToTotalCostState(cost, modelUsage, model)
 
@@ -308,15 +288,10 @@ export function addToTotalSessionCost(
       input_tokens: advisorUsage.inputTokens,
       output_tokens: advisorUsage.outputTokens,
       cache_read_input_tokens: advisorUsage.extras?.cacheReadInputTokens ?? 0,
-      cache_creation_input_tokens:
-        advisorUsage.extras?.cacheCreationInputTokens ?? 0,
+      cache_creation_input_tokens: advisorUsage.extras?.cacheCreationInputTokens ?? 0,
       cost_usd_micros: Math.round(advisorCost * 1_000_000),
     })
-    totalCost += addToTotalSessionCost(
-      advisorCost,
-      advisorUsage,
-      advisorUsage.model,
-    )
+    totalCost += addToTotalSessionCost(advisorCost, advisorUsage, advisorUsage.model)
   }
   return totalCost
 }

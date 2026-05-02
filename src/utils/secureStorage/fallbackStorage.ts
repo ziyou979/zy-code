@@ -35,7 +35,7 @@ export function createFallbackStorage(
         // This preserves credentials when sharing .zy between host and containers
         // See: https://github.com/anthropics/zy-code/issues/1414
         if (primaryDataBefore === null) {
-          (secondary as any).delete()
+          ;(secondary as any).delete()
         }
         return result
       }
@@ -50,7 +50,7 @@ export function createFallbackStorage(
         // /login loop (#30337). Best-effort delete; if this also fails the
         // user's keychain is in a bad state we can't fix from here.
         if (primaryDataBefore !== null) {
-          (primary as any).delete()
+          ;(primary as any).delete()
         }
         return {
           success: true,

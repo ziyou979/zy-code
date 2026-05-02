@@ -30,8 +30,6 @@ function getBuiltinModelStrings(provider: APIProvider): ModelStrings {
   return out
 }
 
-
-
 /**
  * Layer user-configured modelOverrides (from settings.json) on top of the
  * provider-derived model strings. Overrides map canonical model IDs to
@@ -75,8 +73,6 @@ export function resolveOverriddenModel(modelId: string): string {
   }
   return modelId
 }
-
-
 
 function initModelStrings(): void {
   const ms = getModelStringsState()

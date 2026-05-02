@@ -56,9 +56,7 @@ export type ActiveAgentForInput =
  *
  * 由输入路由逻辑使用，将用户消息定向到正确的 agent。
  */
-export function getActiveAgentForInput(
-  appState: AppState,
-): ActiveAgentForInput {
+export function getActiveAgentForInput(appState: AppState): ActiveAgentForInput {
   const viewedTask = getViewedTeammateTask(appState)
   if (viewedTask) {
     return { type: 'viewed', task: viewedTask }

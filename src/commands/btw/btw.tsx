@@ -1,95 +1,142 @@
-import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
-import { useInterval } from 'usehooks-ts';
-import type { CommandResultDisplay } from '../../commands.js';
-import { Markdown } from '../../components/Markdown.js';
-import { SpinnerGlyph } from '../../components/Spinner/SpinnerGlyph.js';
-import { DOWN_ARROW, UP_ARROW } from '../../constants/figures.js';
-import { getSystemPrompt } from '../../constants/prompts.js';
-import { useModalOrTerminalSize } from '../../context/modalContext.js';
-import { getSystemContext, getUserContext } from '../../context.js';
-import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import ScrollBox from '../../ink/components/ScrollBox.js';
-import { Box, Text } from '../../ink.js';
-import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import type { Message } from '../../types/message.js';
-import { createAbortController } from '../../utils/abortController.js';
-import { saveGlobalConfig } from '../../utils/config.js';
-import { errorMessage } from '../../utils/errors.js';
-import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forkedAgent.js';
-import { getMessagesAfterCompactBoundary } from '../../utils/messages.js';
-import type { ProcessUserInputContext } from '../../utils/processUserInput/processUserInput.js';
-import { runSideQuestion } from '../../utils/sideQuestion.js';
-import { asSystemPrompt } from '../../utils/systemPromptType.js';
+import * as React from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useInterval } from 'usehooks-ts'
+import type { CommandResultDisplay } from '../../commands.js'
+import { Markdown } from '../../components/Markdown.js'
+import { SpinnerGlyph } from '../../components/Spinner/SpinnerGlyph.js'
+import { DOWN_ARROW, UP_ARROW } from '../../constants/figures.js'
+import { getSystemPrompt } from '../../constants/prompts.js'
+import { useModalOrTerminalSize } from '../../context/modalContext.js'
+import { getSystemContext, getUserContext } from '../../context.js'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import ScrollBox from '../../ink/components/ScrollBox.js'
+import { Box, Text } from '../../ink.js'
+import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { Message } from '../../types/message.js'
+import { createAbortController } from '../../utils/abortController.js'
+import { saveGlobalConfig } from '../../utils/config.js'
+import { errorMessage } from '../../utils/errors.js'
+import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forkedAgent.js'
+import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
+import type { ProcessUserInputContext } from '../../utils/processUserInput/processUserInput.js'
+import { runSideQuestion } from '../../utils/sideQuestion.js'
+import { asSystemPrompt } from '../../utils/systemPromptType.js'
 type BtwComponentProps = {
-  question: string;
-  context: ProcessUserInputContext;
-  onDone: (result?: string, options?: {
-    display?: CommandResultDisplay;
-  }) => void;
-};
-const CHROME_ROWS = 5;
-const OUTER_CHROME_ROWS = 6;
-const SCROLL_LINES = 3;
-function BtwSideQuestion({
-  question,
-  context,
-  onDone
-}) {
-  const [response, setResponse] = useState(null);
-  const [error, setError] = useState(null);
-  const [frame, setFrame] = useState(0);
-  const scrollRef = useRef(null);
-  const {
-    rows
-  } = useModalOrTerminalSize(useTerminalSize());
-  useInterval(() => setFrame(f => f + 1), response || error ? null : 80);
+  question: string
+  context: ProcessUserInputContext
+  onDone: (
+    result?: string,
+    options?: {
+      display?: CommandResultDisplay
+    },
+  ) => void
+}
+const CHROME_ROWS = 5
+const OUTER_CHROME_ROWS = 6
+const SCROLL_LINES = 3
+function BtwSideQuestion({ question, context, onDone }) {
+  const [response, setResponse] = useState(null)
+  const [error, setError] = useState(null)
+  const [frame, setFrame] = useState(0)
+  const scrollRef = useRef(null)
+  const { rows } = useModalOrTerminalSize(useTerminalSize())
+  useInterval(() => setFrame((f) => f + 1), response || error ? null : 80)
   const handleKeyDown = function handleKeyDown(e) {
-    if (e.key === "escape" || e.key === "return" || e.key === " " || e.ctrl && (e.key === "c" || e.key === "d")) {
-      e.preventDefault();
+    if (
+      e.key === 'escape' ||
+      e.key === 'return' ||
+      e.key === ' ' ||
+      (e.ctrl && (e.key === 'c' || e.key === 'd'))
+    ) {
+      e.preventDefault()
       onDone(undefined, {
-        display: "skip"
-      });
-      return;
+        display: 'skip',
+      })
+      return
     }
-    if (e.key === "up" || e.ctrl && e.key === "p") {
-      e.preventDefault();
-      scrollRef.current?.scrollBy(-SCROLL_LINES);
+    if (e.key === 'up' || (e.ctrl && e.key === 'p')) {
+      e.preventDefault()
+      scrollRef.current?.scrollBy(-SCROLL_LINES)
     }
-    if (e.key === "down" || e.ctrl && e.key === "n") {
-      e.preventDefault();
-      scrollRef.current?.scrollBy(SCROLL_LINES);
+    if (e.key === 'down' || (e.ctrl && e.key === 'n')) {
+      e.preventDefault()
+      scrollRef.current?.scrollBy(SCROLL_LINES)
     }
-  };
+  }
   useEffect(() => {
-    const abortController = createAbortController();
+    const abortController = createAbortController()
     const fetchResponse = async function fetchResponse() {
       try {
-        const cacheSafeParams = await buildCacheSafeParams(context);
+        const cacheSafeParams = await buildCacheSafeParams(context)
         const result = await runSideQuestion({
           question,
-          cacheSafeParams
-        });
+          cacheSafeParams,
+        })
         if (!abortController.signal.aborted) {
           if (result.response) {
-            setResponse(result.response);
+            setResponse(result.response)
           } else {
-            setError("No response received");
+            setError('No response received')
           }
         }
       } catch (err) {
         if (!abortController.signal.aborted) {
-          setError(errorMessage(err) || "Failed to get response");
+          setError(errorMessage(err) || 'Failed to get response')
         }
       }
-    };
-    fetchResponse();
+    }
+    fetchResponse()
     return () => {
-      abortController.abort();
-    };
-  }, [question, context]);
-  const maxContentHeight = Math.max(5, rows - CHROME_ROWS - OUTER_CHROME_ROWS);
-  return <Box flexDirection="column" paddingLeft={2} marginTop={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{<Box>{<Text color="warning" bold={true}>/btw{" "}</Text>}<Text dimColor={true}>{question}</Text></Box>}{<Box marginTop={1} marginLeft={2} maxHeight={maxContentHeight}>{<ScrollBox ref={scrollRef} flexDirection="column" flexGrow={1}>{error ? <Text color="error">{error}</Text> : response ? <Markdown>{response}</Markdown> : <Box><SpinnerGlyph frame={frame} messageColor="warning" /><Text color="warning">Answering...</Text></Box>}</ScrollBox>}</Box>}{(response || error) && <Box marginTop={1}><Text dimColor={true}>{UP_ARROW}/{DOWN_ARROW} to scroll · Space, Enter, or Escape to dismiss</Text></Box>}</Box>;
+      abortController.abort()
+    }
+  }, [question, context])
+  const maxContentHeight = Math.max(5, rows - CHROME_ROWS - OUTER_CHROME_ROWS)
+  return (
+    <Box
+      flexDirection="column"
+      paddingLeft={2}
+      marginTop={1}
+      tabIndex={0}
+      autoFocus={true}
+      onKeyDown={handleKeyDown}
+    >
+      {
+        <Box>
+          {
+            <Text color="warning" bold={true}>
+              /btw{' '}
+            </Text>
+          }
+          <Text dimColor={true}>{question}</Text>
+        </Box>
+      }
+      {
+        <Box marginTop={1} marginLeft={2} maxHeight={maxContentHeight}>
+          {
+            <ScrollBox ref={scrollRef} flexDirection="column" flexGrow={1}>
+              {error ? (
+                <Text color="error">{error}</Text>
+              ) : response ? (
+                <Markdown>{response}</Markdown>
+              ) : (
+                <Box>
+                  <SpinnerGlyph frame={frame} messageColor="warning" />
+                  <Text color="warning">Answering...</Text>
+                </Box>
+              )}
+            </ScrollBox>
+          }
+        </Box>
+      }
+      {(response || error) && (
+        <Box marginTop={1}>
+          <Text dimColor={true}>
+            {UP_ARROW}/{DOWN_ARROW} to scroll · Space, Enter, or Escape to dismiss
+          </Text>
+        </Box>
+      )}
+    </Box>
+  )
 }
 
 /**
@@ -109,44 +156,59 @@ function BtwSideQuestion({
  */
 
 function stripInProgressAssistantMessage(messages: Message[]): Message[] {
-  const last = messages.at(-1);
+  const last = messages.at(-1)
   if (last?.type === 'assistant' && last.message.stop_reason === null) {
-    return messages.slice(0, -1);
+    return messages.slice(0, -1)
   }
-  return messages;
+  return messages
 }
 async function buildCacheSafeParams(context: ProcessUserInputContext): Promise<CacheSafeParams> {
-  const forkContextMessages = getMessagesAfterCompactBoundary(stripInProgressAssistantMessage(context.messages));
-  const saved = getLastCacheSafeParams();
+  const forkContextMessages = getMessagesAfterCompactBoundary(
+    stripInProgressAssistantMessage(context.messages),
+  )
+  const saved = getLastCacheSafeParams()
   if (saved) {
     return {
       systemPrompt: saved.systemPrompt,
       userContext: saved.userContext,
       systemContext: saved.systemContext,
       toolUseContext: context,
-      forkContextMessages
-    };
+      forkContextMessages,
+    }
   }
-  const [rawSystemPrompt, userContext, systemContext] = await Promise.all([getSystemPrompt(context.options.tools, context.options.mainLoopModel, [], context.options.mcpClients), getUserContext(), getSystemContext()]);
+  const [rawSystemPrompt, userContext, systemContext] = await Promise.all([
+    getSystemPrompt(
+      context.options.tools,
+      context.options.mainLoopModel,
+      [],
+      context.options.mcpClients,
+    ),
+    getUserContext(),
+    getSystemContext(),
+  ])
   return {
     systemPrompt: asSystemPrompt(rawSystemPrompt),
     userContext,
     systemContext,
     toolUseContext: context,
-    forkContextMessages
-  };
+    forkContextMessages,
+  }
 }
-export async function call(onDone: LocalJSXCommandOnDone, context: ProcessUserInputContext, args: string): Promise<React.ReactNode> {
-  const question = args?.trim();
+export async function call(
+  onDone: LocalJSXCommandOnDone,
+  context: ProcessUserInputContext,
+  args: string,
+): Promise<React.ReactNode> {
+  const question = args?.trim()
   if (!question) {
     onDone('Usage: /btw <your question>', {
-      display: 'system'
-    });
-    return null;
+      display: 'system',
+    })
+    return null
   }
-  saveGlobalConfig(current => ({
+  saveGlobalConfig((current) => ({
     ...current,
-    btwUseCount: current.btwUseCount + 1
-  }));
-  return <BtwSideQuestion question={question} context={context} onDone={onDone} />;
+    btwUseCount: current.btwUseCount + 1,
+  }))
+  return <BtwSideQuestion question={question} context={context} onDone={onDone} />
 }

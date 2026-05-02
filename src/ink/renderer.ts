@@ -28,16 +28,12 @@ export type RenderOptions = {
 
 export type Renderer = (options: RenderOptions) => Frame
 
-export default function createRenderer(
-  node: DOMElement,
-  stylePool: StylePool,
-): Renderer {
+export default function createRenderer(node: DOMElement, stylePool: StylePool): Renderer {
   // 在帧之间复用 Output，使 charCache（tokenize + grapheme clustering）
   // 得以保留——大多数行在渲染之间不会发生变化。
   let output: Output | undefined
-  return options => {
-    const { frontFrame, backFrame, isTTY, terminalWidth, terminalRows } =
-      options
+  return (options) => {
+    const { frontFrame, backFrame, isTTY, terminalWidth, terminalRows } = options
     const prevScreen = frontFrame.screen
     const backScreen = backFrame.screen
     // 从 back buffer 的 screen 读取 pool——pool 可能在帧之间被替换
@@ -51,13 +47,9 @@ export default function createRenderer(
     const computedHeight = node.yogaNode?.getComputedHeight()
     const computedWidth = node.yogaNode?.getComputedWidth()
     const hasInvalidHeight =
-      computedHeight === undefined ||
-      !Number.isFinite(computedHeight) ||
-      computedHeight < 0
+      computedHeight === undefined || !Number.isFinite(computedHeight) || computedHeight < 0
     const hasInvalidWidth =
-      computedWidth === undefined ||
-      !Number.isFinite(computedWidth) ||
-      computedWidth < 0
+      computedWidth === undefined || !Number.isFinite(computedWidth) || computedWidth < 0
 
     if (!node.yogaNode || hasInvalidHeight || hasInvalidWidth) {
       // 输出日志以帮助诊断根本原因（使用 --debug 标志时可见）
@@ -68,13 +60,7 @@ export default function createRenderer(
         )
       }
       return {
-        screen: createScreen(
-          terminalWidth,
-          0,
-          stylePool,
-          charPool,
-          hyperlinkPool,
-        ),
+        screen: createScreen(terminalWidth, 0, stylePool, charPool, hyperlinkPool),
         viewport: { width: terminalWidth, height: terminalRows },
         cursor: { x: 0, y: 0, visible: true },
       }
@@ -99,9 +85,7 @@ export default function createRenderer(
         { level: 'warn' },
       )
     }
-    const screen =
-      backScreen ??
-      createScreen(width, height, stylePool, charPool, hyperlinkPool)
+    const screen = backScreen ?? createScreen(width, height, stylePool, charPool, hyperlinkPool)
     if (output) {
       output.reset(width, height, screen)
     } else {
@@ -123,10 +107,7 @@ export default function createRenderer(
     // 直接兄弟节点。Normal-flow 的移除不会跨子树绘制，没有问题。
     const absoluteRemoved = consumeAbsoluteRemovedFlag()
     renderNodeToOutput(node, output, {
-      prevScreen:
-        absoluteRemoved || options.prevFrameContaminated
-          ? undefined
-          : prevScreen,
+      prevScreen: absoluteRemoved || options.prevFrameContaminated ? undefined : prevScreen,
     })
 
     const renderedScreen = output.get()

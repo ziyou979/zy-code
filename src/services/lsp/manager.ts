@@ -2,10 +2,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isBareMode } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import {
-  createLSPServerManager,
-  type LSPServerManager,
-} from './LSPServerManager.js'
+import { createLSPServerManager, type LSPServerManager } from './LSPServerManager.js'
 import { registerLSPNotificationHandlers } from './passiveFeedback.js'
 
 /**
@@ -152,9 +149,7 @@ export function initializeLspServerManager(): void {
 
   // Skip if already initialized or currently initializing
   if (lspManagerInstance !== undefined && initializationState !== 'failed') {
-    logForDebugging(
-      '[LSP MANAGER] Already initialized or initializing, skipping',
-    )
+    logForDebugging('[LSP MANAGER] Already initialized or initializing, skipping')
     return
   }
 
@@ -171,9 +166,7 @@ export function initializeLspServerManager(): void {
 
   // Increment generation to invalidate any pending initializations
   const currentGeneration = ++initializationGeneration
-  logForDebugging(
-    `[LSP MANAGER] Starting async initialization (generation ${currentGeneration})`,
-  )
+  logForDebugging(`[LSP MANAGER] Starting async initialization (generation ${currentGeneration})`)
 
   // Start initialization asynchronously without blocking
   // Store the promise so callers can await it via waitForInitialization()
@@ -200,9 +193,7 @@ export function initializeLspServerManager(): void {
         lspManagerInstance = undefined
 
         logError(error as Error)
-        logForDebugging(
-          `Failed to initialize LSP server manager: ${errorMessage(error)}`,
-        )
+        logForDebugging(`Failed to initialize LSP server manager: ${errorMessage(error)}`)
       }
     })
 }
@@ -236,7 +227,7 @@ export function reinitializeLspServerManager(): void {
   // /reload-plugins doesn't leak child processes. Fire-and-forget: the
   // primary use case (issue #15521) has 0 servers so this is usually a no-op.
   if (lspManagerInstance) {
-    void lspManagerInstance.shutdown().catch(err => {
+    void lspManagerInstance.shutdown().catch((err) => {
       logForDebugging(
         `[LSP MANAGER] old instance shutdown during reinit failed: ${errorMessage(err)}`,
       )
@@ -274,9 +265,7 @@ export async function shutdownLspServerManager(): Promise<void> {
     logForDebugging('LSP server manager shut down successfully')
   } catch (error: unknown) {
     logError(error as Error)
-    logForDebugging(
-      `Failed to shutdown LSP server manager: ${errorMessage(error)}`,
-    )
+    logForDebugging(`Failed to shutdown LSP server manager: ${errorMessage(error)}`)
   } finally {
     // Always clear state even if shutdown failed
     lspManagerInstance = undefined

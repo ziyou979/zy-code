@@ -21,10 +21,7 @@ import {
   type REPLHookContext,
   registerPostSamplingHook,
 } from '../../utils/hooks/postSamplingHooks.js'
-import {
-  createUserMessage,
-  hasToolCallsInLastAssistantTurn,
-} from '../../utils/messages.js'
+import { createUserMessage, hasToolCallsInLastAssistantTurn } from '../../utils/messages.js'
 import { sequential } from '../../utils/sequential.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { buildMagicDocsUpdatePrompt } from './prompts.js'
@@ -112,12 +109,8 @@ function getMagicDocsAgent(): BuiltInAgentDefinition {
 /**
  * Update a single Magic Doc
  */
-async function updateMagicDoc(
-  docInfo: MagicDocInfo,
-  context: REPLHookContext,
-): Promise<void> {
-  const { messages, systemPrompt, userContext, systemContext, toolUseContext } =
-    context
+async function updateMagicDoc(docInfo: MagicDocInfo, context: REPLHookContext): Promise<void> {
+  const { messages, systemPrompt, userContext, systemContext, toolUseContext } = context
 
   // Clone the FileStateCache to isolate Magic Docs operations. Delete this
   // doc's entry so FileReadTool's dedup doesn't return a file_unchanged
@@ -132,10 +125,7 @@ async function updateMagicDoc(
   // Read the document; if deleted or unreadable, remove from tracking
   let currentDoc = ''
   try {
-    const result = await FileReadTool.call(
-      { file_path: docInfo.path },
-      clonedToolUseContext,
-    )
+    const result = await FileReadTool.call({ file_path: docInfo.path }, clonedToolUseContext)
     const output = result.data as FileReadToolOutput
     if (output.type === 'text') {
       currentDoc = output.file.content
@@ -215,9 +205,7 @@ async function updateMagicDoc(
 /**
  * Magic Docs post-sampling hook that updates all tracked Magic Docs
  */
-const updateMagicDocs = sequential(async function (
-  context: REPLHookContext,
-): Promise<void> {
+const updateMagicDocs = sequential(async function (context: REPLHookContext): Promise<void> {
   const { messages, querySource } = context
 
   if ((querySource as any) !== 'repl_main_thread') {

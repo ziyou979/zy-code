@@ -33,11 +33,7 @@ const GCS_BUCKET_URL =
 
 class AutoUpdaterError extends ZyError {}
 
-export type InstallStatus =
-  | 'success'
-  | 'no_permissions'
-  | 'install_failed'
-  | 'in_progress'
+export type InstallStatus = 'success' | 'no_permissions' | 'install_failed' | 'in_progress'
 
 export type AutoUpdaterResult = {
   version: string | null
@@ -78,10 +74,7 @@ export async function assertMinVersion(): Promise<void> {
       minVersion: string
     }>('zy_version_config', { minVersion: '0.0.0' })
 
-    if (
-      versionConfig.minVersion &&
-      lt(MACRO.VERSION, versionConfig.minVersion)
-    ) {
+    if (versionConfig.minVersion && lt(MACRO.VERSION, versionConfig.minVersion)) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.error(`
 It looks like your version of ZY Code (${MACRO.VERSION}) needs an update.
@@ -128,10 +121,7 @@ export async function getMaxVersionMessage(): Promise<string | undefined> {
 
 async function getMaxVersionConfig(): Promise<MaxVersionConfig> {
   try {
-    return await getDynamicConfig_BLOCKS_ON_INIT<MaxVersionConfig>(
-      'zy_max_version_config',
-      {},
-    )
+    return await getDynamicConfig_BLOCKS_ON_INIT<MaxVersionConfig>('zy_max_version_config', {})
   } catch (error) {
     logError(error as Error)
     return {}
@@ -152,9 +142,7 @@ export function shouldSkipVersion(targetVersion: string): boolean {
   // Skip if target version is less than minimum
   const shouldSkip = !gte(targetVersion, minimumVersion)
   if (shouldSkip) {
-    logForDebugging(
-      `Skipping update to ${targetVersion} - below minimumVersion ${minimumVersion}`,
-    )
+    logForDebugging(`Skipping update to ${targetVersion} - below minimumVersion ${minimumVersion}`)
   }
   return shouldSkip
 }
@@ -277,11 +265,9 @@ async function getInstallationPrefix(): Promise<string | null> {
       cwd: homedir(),
     })
   } else {
-    prefixResult = await execFileNoThrowWithCwd(
-      'npm',
-      ['-g', 'config', 'get', 'prefix'],
-      { cwd: homedir() },
-    )
+    prefixResult = await execFileNoThrowWithCwd('npm', ['-g', 'config', 'get', 'prefix'], {
+      cwd: homedir(),
+    })
   }
   if (prefixResult.code !== 0) {
     logError(new Error(`Failed to check ${isBun ? 'bun' : 'npm'} permissions`))
@@ -304,11 +290,7 @@ export async function checkGlobalInstallPermissions(): Promise<{
       await access(prefix, fsConstants.W_OK)
       return { hasPermissions: true, npmPrefix: prefix }
     } catch {
-      logError(
-        new AutoUpdaterError(
-          'Insufficient permissions for global npm install.',
-        ),
-      )
+      logError(new AutoUpdaterError('Insufficient permissions for global npm install.'))
       return { hasPermissions: false, npmPrefix: prefix }
     }
   } catch (error) {
@@ -317,9 +299,7 @@ export async function checkGlobalInstallPermissions(): Promise<{
   }
 }
 
-export async function getLatestVersion(
-  channel: ReleaseChannel,
-): Promise<string | null> {
+export async function getLatestVersion(channel: ReleaseChannel): Promise<string | null> {
   const npmTag = channel === 'stable' ? 'stable' : 'latest'
 
   // Run from home directory to avoid reading project-level .npmrc
@@ -382,9 +362,7 @@ export async function getNpmDistTags(): Promise<NpmDistTags> {
  * Get the latest version from GCS bucket for a given release channel.
  * This is used by installations that don't have npm (e.g. package manager installs).
  */
-export async function getLatestVersionFromGcs(
-  channel: ReleaseChannel,
-): Promise<string | null> {
+export async function getLatestVersionFromGcs(channel: ReleaseChannel): Promise<string | null> {
   try {
     const response = await axios.get(`${GCS_BUCKET_URL}/${channel}`, {
       timeout: 5000,
@@ -458,14 +436,11 @@ export async function installGlobalPackage(
   specificVersion?: string | null,
 ): Promise<InstallStatus> {
   if (!(await acquireLock())) {
-    logError(
-      new AutoUpdaterError('Another process is currently installing an update'),
-    )
+    logError(new AutoUpdaterError('Another process is currently installing an update'))
     // Log the lock contention
     logEvent('zy_auto_updater_lock_contention', {
       pid: process.pid,
-      currentVersion:
-        MACRO.VERSION as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      currentVersion: MACRO.VERSION as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return 'in_progress'
   }
@@ -476,8 +451,7 @@ export async function installGlobalPackage(
     if (!env.isRunningWithBun() && env.isNpmFromWindowsPath()) {
       logError(new Error('Windows NPM detected in WSL environment'))
       logEvent('zy_auto_updater_windows_npm_in_wsl', {
-        currentVersion:
-          MACRO.VERSION as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        currentVersion: MACRO.VERSION as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.error(`
@@ -521,7 +495,7 @@ To fix this issue:
     }
 
     // Set installMethod to 'global' to track npm global installations
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       installMethod: 'global',
     }))

@@ -8,10 +8,7 @@ import { nodeCache, pendingClears } from './node-cache.js'
 import type Output from './output.js'
 import renderBorder from './render-border.js'
 import type { Screen } from './screen.js'
-import {
-  type StyledSegment,
-  squashTextNodesToSegments,
-} from './squash-text-nodes.js'
+import { type StyledSegment, squashTextNodesToSegments } from './squash-text-nodes.js'
 import type { Color } from './styles.js'
 import { isXtermJs } from './terminal.js'
 import { widestLine } from './widest-line.js'
@@ -120,11 +117,7 @@ const SCROLL_STEP_HIGH = 3 // pending ≥ HIGH: fast flick
 const SCROLL_MAX_PENDING = 30 // snap excess beyond this
 
 // xterm.js 自适应 drain。返回已应用的行数；会修改 pendingScrollDelta。
-function drainAdaptive(
-  node: DOMElement,
-  pending: number,
-  innerHeight: number,
-): number {
+function drainAdaptive(node: DOMElement, pending: number, innerHeight: number): number {
   const sign = pending > 0 ? 1 : -1
   let abs = Math.abs(pending)
   let applied = 0
@@ -157,11 +150,7 @@ function drainAdaptive(
 
 // 原生比例 drain。step = max(MIN, floor(abs*3/4))，限制在
 // innerHeight-1 以内以触发 DECSTBM + blit+shift 快速路径。
-function drainProportional(
-  node: DOMElement,
-  pending: number,
-  innerHeight: number,
-): number {
+function drainProportional(node: DOMElement, pending: number, innerHeight: number): number {
   const abs = Math.abs(pending)
   const cap = Math.max(1, innerHeight - 1)
   const step = Math.min(cap, Math.max(SCROLL_MIN_PER_FRAME, (abs * 3) >> 2))
@@ -232,10 +221,7 @@ function applyStylesToWrappedText(
 
       // 仅当原始文本有空白但行没有时才跳过
       if (originalHasWhitespace && !lineStartsWithWhitespace) {
-        while (
-          charIndex < originalPlain.length &&
-          /\s/.test(originalPlain[charIndex]!)
-        ) {
+        while (charIndex < originalPlain.length && /\s/.test(originalPlain[charIndex]!)) {
           charIndex++
         }
       }
@@ -302,15 +288,9 @@ function applyStylesToWrappedText(
       const nextLineFirstChar = nextLine.length > 0 ? nextLine[0] : null
 
       // 跳过空白，直到遇到匹配下一行首字符的字符
-      while (
-        charIndex < originalPlain.length &&
-        /\s/.test(originalPlain[charIndex]!)
-      ) {
+      while (charIndex < originalPlain.length && /\s/.test(originalPlain[charIndex]!)) {
         // 如果找到了下一行开头的字符则停止
-        if (
-          nextLineFirstChar !== null &&
-          originalPlain[charIndex] === nextLineFirstChar
-        ) {
+        if (nextLineFirstChar !== null && originalPlain[charIndex] === nextLineFirstChar) {
           break
         }
         charIndex++
@@ -361,11 +341,7 @@ function wrapWithSoftWrap(
 // 并将其作为其余节点的偏移量
 // 仅考虑第一个节点，因为其他文本节点不能有 margin 或 padding，
 // 所以它们的坐标将相对于第一个节点
-function applyPaddingToText(
-  node: DOMElement,
-  text: string,
-  softWrap?: boolean[],
-): string {
+function applyPaddingToText(node: DOMElement, text: string, softWrap?: boolean[]): string {
   const yogaNode = node.childNodes[0]?.yogaNode
 
   if (yogaNode) {
@@ -485,10 +461,7 @@ function renderNodeToOutput(
     // 改变了高度），旧单元格仍在终端上。
     const positionChanged =
       cached !== undefined &&
-      (cached.x !== x ||
-        cached.y !== y ||
-        cached.width !== width ||
-        cached.height !== height)
+      (cached.x !== x || cached.y !== y || cached.width !== width || cached.height !== height)
     if (positionChanged) {
       layoutShifted = true
     }
@@ -548,13 +521,11 @@ function renderNodeToOutput(
     } else if (node.nodeName === 'ink-text') {
       const segments = squashTextNodesToSegments(
         node,
-        inheritedBackgroundColor
-          ? { backgroundColor: inheritedBackgroundColor }
-          : undefined,
+        inheritedBackgroundColor ? { backgroundColor: inheritedBackgroundColor } : undefined,
       )
 
       // 首先获取纯文本以检查是否需要换行
-      const plainText = segments.map(s => s.text).join('')
+      const plainText = segments.map((s) => s.text).join('')
 
       if (plainText.length > 0) {
         // 上游 Ink 在此处使用未钳位的 getMaxWidth(yogaNode)。该
@@ -579,7 +550,7 @@ function renderNodeToOutput(
           softWrap = w.softWrap
           text = w.wrapped
             .split('\n')
-            .map(line => {
+            .map((line) => {
               let styled = applyTextStyles(line, segment.styles)
               // 对每行应用 OSC 8 超链接，使每行可独立
               // 点击。output.ts 按换行拆分并对每行
@@ -610,7 +581,7 @@ function renderNodeToOutput(
         } else {
           // 无需换行：直接应用样式
           text = segments
-            .map(segment => {
+            .map((segment) => {
               let styledText = applyTextStyles(segment.text, segment.styles)
               if (segment.hyperlink) {
                 styledText = wrapWithOsc8Link(styledText, segment.hyperlink)
@@ -625,8 +596,7 @@ function renderNodeToOutput(
         output.write(x, y, text, softWrap)
       }
     } else if (node.nodeName === 'ink-box') {
-      const boxBackgroundColor =
-        node.style.backgroundColor ?? inheritedBackgroundColor
+      const boxBackgroundColor = node.style.backgroundColor ?? inheritedBackgroundColor
 
       // 将此 box 的区域标记为不可选（全屏文本
       // 选择）。noSelect 操作在 output.get() 的 blits/writes 之后
@@ -665,19 +635,13 @@ function renderNodeToOutput(
           : undefined
 
         const clipXEnd = clipHorizontally
-          ? x +
-            yogaNode.getComputedWidth() -
-            yogaNode.getComputedBorder(LayoutEdge.Right)
+          ? x + yogaNode.getComputedWidth() - yogaNode.getComputedBorder(LayoutEdge.Right)
           : undefined
 
-        y1 = clipVertically
-          ? y + yogaNode.getComputedBorder(LayoutEdge.Top)
-          : undefined
+        y1 = clipVertically ? y + yogaNode.getComputedBorder(LayoutEdge.Top) : undefined
 
         y2 = clipVertically
-          ? y +
-            yogaNode.getComputedHeight() -
-            yogaNode.getComputedBorder(LayoutEdge.Bottom)
+          ? y + yogaNode.getComputedHeight() - yogaNode.getComputedBorder(LayoutEdge.Bottom)
           : undefined
 
         output.clip({ x1: clipXStart, x2: clipXEnd, y1, y2 })
@@ -693,13 +657,10 @@ function renderNodeToOutput(
         const padTop = yogaNode.getComputedPadding(LayoutEdge.Top)
         const innerHeight = Math.max(
           0,
-          (y2 ?? y + height) -
-            (y1 ?? y) -
-            padTop -
-            yogaNode.getComputedPadding(LayoutEdge.Bottom),
+          (y2 ?? y + height) - (y1 ?? y) - padTop - yogaNode.getComputedPadding(LayoutEdge.Bottom),
         )
 
-        const content = node.childNodes.find(c => (c as DOMElement).yogaNode) as
+        const content = node.childNodes.find((c) => (c as DOMElement).yogaNode) as
           | DOMElement
           | undefined
         const contentYoga = content?.yogaNode
@@ -752,16 +713,14 @@ function renderNodeToOutput(
         // 活跃文本选择（原生终端行为：
         // 视图继续滚动，高亮随文本上移）。
         const scrollTopBeforeFollow = node.scrollTop ?? 0
-        const sticky =
-          node.stickyScroll ?? Boolean(node.attributes['stickyScroll'])
+        const sticky = node.stickyScroll ?? Boolean(node.attributes['stickyScroll'])
         const prevMaxScroll = Math.max(0, prevScrollHeight - prevInnerHeight)
         // 位置检查仅在内容增长时有效 — 虚拟化可能
         // 短暂缩小 scrollHeight（尾部卸载 + 陈旧的 heightCache
         // 占位符）使 scrollTop >= prevMaxScroll 为真是伪影，而非
         // 因为用户在底部。
         const grew = scrollHeight >= prevScrollHeight
-        const atBottom =
-          sticky || (grew && scrollTopBeforeFollow >= prevMaxScroll)
+        const atBottom = sticky || (grew && scrollTopBeforeFollow >= prevMaxScroll)
         if (atBottom && (node.pendingScrollDelta ?? 0) >= 0) {
           node.scrollTop = maxScroll
           node.pendingScrollDelta = undefined
@@ -775,10 +734,7 @@ function renderNodeToOutput(
           // undefined（从未被用户操作设置）时保持不动 — 设置它会
           // 使 sticky 标志默认为粘性并锁定
           // 直接 scrollTop 写入（如 alt-screen-perf 测试）。
-          if (
-            node.stickyScroll === false &&
-            scrollTopBeforeFollow >= prevMaxScroll
-          ) {
+          if (node.stickyScroll === false && scrollTopBeforeFollow >= prevMaxScroll) {
             node.stickyScroll = true
           }
         }
@@ -816,8 +772,7 @@ function renderNodeToOutput(
           // 帧，大致匹配 React 的滑动速率，使差距保持
           // 有界且输入停止后能快速赶上。
           const pastClamp =
-            haveClamp &&
-            ((pending < 0 && cur < cMin) || (pending > 0 && cur > cMax))
+            haveClamp && ((pending < 0 && cur < cMin) || (pending > 0 && cur > cMax))
           const eff = pastClamp ? Math.min(4, innerHeight >> 3) : innerHeight
           cur += isXtermJsHost()
             ? drainAdaptive(node, pending, eff)
@@ -836,9 +791,7 @@ function renderNodeToOutput(
         // 正确的范围。此处不调度 scrollDrainNode 使
         // clamp 保持被动 — React 提交 → resetAfterCommit → onRender 将
         // 用新的边界重新绘制。
-        const clamped = haveClamp
-          ? Math.max(cMin, Math.min(scrollTop, cMax))
-          : scrollTop
+        const clamped = haveClamp ? Math.max(cMin, Math.min(scrollTop, cMax)) : scrollTop
         node.scrollTop = scrollTop
         // Clamp 触及顶部/底部消耗任何余量。仅在
         // clamp 之后设置 drainPending，避免调度浪费的无操作帧。
@@ -903,9 +856,7 @@ function renderNodeToOutput(
           const prevHeight = contentCached?.height ?? scrollHeight
           const heightDelta = scrollHeight - prevHeight
           const safeForFastPath =
-            !hint ||
-            heightDelta === 0 ||
-            (hint.delta > 0 && heightDelta === hint.delta)
+            !hint || heightDelta === 0 || (hint.delta > 0 && heightDelta === hint.delta)
           // scrollHint 在捕获提示时在上方设置。如果 safeForFastPath
           // 为 false，完整路径渲染的 next.screen 与
           // DECSTBM 偏移不匹配 — 发出 DECSTBM 会留下陈旧行（表现为
@@ -935,7 +886,7 @@ function renderNodeToOutput(
             // 会清除 dirty 标志，跨越边缘的子节点在
             // 第二遍中会被遗漏，没有此快照的话。
             const dirtyChildren = content.dirty
-              ? new Set(content.childNodes.filter(c => (c as DOMElement).dirty))
+              ? new Set(content.childNodes.filter((c) => (c as DOMElement).dirty))
               : null
             renderScrolledChildren(
               content,
@@ -1004,14 +955,9 @@ function renderNodeToOutput(
                   cumHeightShift += childH - (prev ? prev.height : 0)
                 }
                 // 跳过被裁剪的子节点（在视口外）
-                if (
-                  childBottom <= scrollTop ||
-                  childTop >= scrollTop + innerHeight
-                )
-                  continue
+                if (childBottom <= scrollTop || childTop >= scrollTop + innerHeight) continue
                 // 跳过完全在边缘行内的子节点（已渲染）
-                if (childTop >= edgeTopLocal && childBottom <= edgeBottomLocal)
-                  continue
+                if (childTop >= edgeTopLocal && childBottom <= edgeBottomLocal) continue
                 const screenY = Math.floor(contentY + childTop)
                 // 到达此处的干净子节点有 cumHeightShift ≠ 0 或
                 // 无缓存。精确重新检查：cached.y − delta 是
@@ -1021,10 +967,7 @@ function renderNodeToOutput(
                 // 绘制它 → 渲染。
                 if (!isDirty) {
                   const childCached = nodeCache.get(childElem)
-                  if (
-                    childCached &&
-                    Math.floor(childCached.y) - delta === screenY
-                  ) {
+                  if (childCached && Math.floor(childCached.y) - delta === screenY) {
                     continue
                   }
                 }
@@ -1068,13 +1011,9 @@ function renderNodeToOutput(
             for (const r of absoluteRectsPrev) {
               if (r.y >= bottom + 1 || r.y + r.height <= top) continue
               const shiftedTop = Math.max(top, Math.floor(r.y) - delta)
-              const shiftedBottom = Math.min(
-                bottom + 1,
-                Math.floor(r.y + r.height) - delta,
-              )
+              const shiftedBottom = Math.min(bottom + 1, Math.floor(r.y + r.height) - delta)
               // 如果完全在边缘行内则跳过（已渲染）。
-              if (shiftedTop >= edgeTop && shiftedBottom <= edgeBottom + 1)
-                continue
+              if (shiftedTop >= edgeTop && shiftedBottom <= edgeBottom + 1) continue
               if (shiftedTop >= shiftedBottom) continue
               const fill = Array(shiftedBottom - shiftedTop)
                 .fill(spaces)
@@ -1201,15 +1140,7 @@ function renderNodeToOutput(
       // 可能与父节点边框现在所在的位置重叠。
       renderBorder(x, y, node, output)
     } else if (node.nodeName === 'ink-root') {
-      renderChildren(
-        node,
-        output,
-        x,
-        y,
-        hasRemovedChild,
-        prevScreen,
-        inheritedBackgroundColor,
-      )
+      renderChildren(node, output, x, y, hasRemovedChild, prevScreen, inheritedBackgroundColor)
     }
 
     // 缓存布局边界用于脏检测
@@ -1292,9 +1223,7 @@ function renderChildren(
 function clipsBothAxes(node: DOMElement): boolean {
   const ox = node.style.overflowX ?? node.style.overflow
   const oy = node.style.overflowY ?? node.style.overflow
-  return (
-    (ox === 'hidden' || ox === 'scroll') && (oy === 'hidden' || oy === 'scroll')
-  )
+  return (ox === 'hidden' || ox === 'scroll') && (oy === 'hidden' || oy === 'scroll')
 }
 
 // 当 Yoga 将盒子压缩到 h=0 时，重影仅在兄弟节点
@@ -1400,11 +1329,7 @@ function renderScrolledChildren(
       const cached = nodeCache.get(childElem)
       let top: number
       let height: number
-      if (
-        cached?.top !== undefined &&
-        !childElem.dirty &&
-        cumHeightShift === 0
-      ) {
+      if (cached?.top !== undefined && !childElem.dirty && cumHeightShift === 0) {
         top = cached.top
         height = cached.height
       } else {

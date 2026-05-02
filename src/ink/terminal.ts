@@ -35,11 +35,7 @@ export function isProgressReportingAvailable(): boolean {
   }
 
   // ConEmu 支持 OSC 9;4 进度报告（所有版本）
-  if (
-    process.env.ConEmuANSI ||
-    process.env.ConEmuPID ||
-    process.env.ConEmuTask
-  ) {
+  if (process.env.ConEmuANSI || process.env.ConEmuPID || process.env.ConEmuTask) {
     return true
   }
 
@@ -185,11 +181,7 @@ export type Terminal = {
   stderr: Writable
 }
 
-export function writeDiffToTerminal(
-  terminal: Terminal,
-  diff: Diff,
-  skipSyncMarkers = false,
-): void {
+export function writeDiffToTerminal(terminal: Terminal, diff: Diff, skipSyncMarkers = false): void {
   // 没有补丁时无输出
   if (diff.length === 0) {
     return

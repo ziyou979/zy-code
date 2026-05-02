@@ -53,7 +53,7 @@ export function checkCrossProjectResume(
 
   // Check if log.projectPath is under a worktree of the same repo
   const isSameRepo = worktreePaths.some(
-    wt => log.projectPath === wt || log.projectPath!.startsWith(wt + sep),
+    (wt) => log.projectPath === wt || log.projectPath!.startsWith(wt + sep),
   )
 
   if (isSameRepo) {

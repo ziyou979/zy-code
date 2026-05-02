@@ -46,9 +46,7 @@ export type AdminRequest = {
  * 如果同一类型的待处理请求已存在，
  * 返回现有请求而非创建新请求。
  */
-export async function createAdminRequest(
-  params: AdminRequestCreateParams,
-): Promise<AdminRequest> {
+export async function createAdminRequest(params: AdminRequestCreateParams): Promise<AdminRequest> {
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {

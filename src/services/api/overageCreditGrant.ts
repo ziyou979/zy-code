@@ -63,7 +63,7 @@ export function invalidateOverageCreditGrantCache(): void {
   if (!orgId) return
   const cache = getGlobalConfig().overageCreditGrantCache
   if (!cache || !(orgId in cache)) return
-  saveGlobalConfig(prev => {
+  saveGlobalConfig((prev) => {
     const next = { ...prev.overageCreditGrantCache }
     delete next[orgId]
     return { ...prev, overageCreditGrantCache: next }
@@ -84,7 +84,7 @@ export async function refreshOverageCreditGrantCache(): Promise<void> {
   //（inc-4552 模式）。仍刷新时间戳，以免
   // getCachedOverageCreditGrant 中基于 TTL 的过期检查
   // 在每次组件挂载时重复触发 API 调用。
-  saveGlobalConfig(prev => {
+  saveGlobalConfig((prev) => {
     // 从 prev（锁内新鲜）派生，而非锁前的 getGlobalConfig()
     // 读取 — saveConfigWithLock 在文件锁下从磁盘重新读取配置，
     // 所以另一个 CLI 实例可能在外部读取和锁获取之间写入了数据。
@@ -98,11 +98,7 @@ export async function refreshOverageCreditGrantCache(): Promise<void> {
       existing.amount_minor_units === info.amount_minor_units &&
       existing.currency === info.currency
     // 数据未变更且时间戳仍新鲜时，完全跳过写入
-    if (
-      dataUnchanged &&
-      prevCached &&
-      Date.now() - prevCached.timestamp <= CACHE_TTL_MS
-    ) {
+    if (dataUnchanged && prevCached && Date.now() - prevCached.timestamp <= CACHE_TTL_MS) {
       return prev
     }
     const entry: CachedGrantEntry = {

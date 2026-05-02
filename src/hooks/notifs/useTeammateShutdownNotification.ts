@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
-import {
-  type Notification,
-  useNotifications,
-} from '../../context/notifications.js'
+import { type Notification, useNotifications } from '../../context/notifications.js'
 import { useAppState } from '../../state/AppState.js'
 import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
 
@@ -29,10 +26,7 @@ function makeSpawnNotif(count: number): Notification {
   }
 }
 
-function foldShutdown(
-  acc: Notification,
-  _incoming: Notification,
-): Notification {
+function foldShutdown(acc: Notification, _incoming: Notification): Notification {
   return makeShutdownNotif(parseCount(acc) + 1)
 }
 
@@ -52,7 +46,7 @@ function makeShutdownNotif(count: number): Notification {
  * like "3 agents spawned" or "2 agents shut down".
  */
 export function useTeammateLifecycleNotification(): void {
-  const tasks = useAppState(s => s.tasks)
+  const tasks = useAppState((s) => s.tasks)
   const { addNotification } = useNotifications()
   const seenRunningRef = useRef<Set<string>>(new Set())
   const seenCompletedRef = useRef<Set<string>>(new Set())

@@ -6,10 +6,7 @@ import { getOrganizationUUID } from '../../services/oauth/client.js'
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getZyAIOAuthTokens,
-} from '../../utils/auth.js'
+import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { DESCRIPTION, PROMPT, REMOTE_TRIGGER_TOOL_NAME } from './prompt.js'
@@ -23,10 +20,7 @@ const inputSchema = lazySchema(() =>
       .regex(/^[\w-]+$/)
       .optional()
       .describe('Required for get, update, and run'),
-    body: z
-      .record(z.string(), z.unknown())
-      .optional()
-      .describe('JSON body for create and update'),
+    body: z.record(z.string(), z.unknown()).optional().describe('JSON body for create and update'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
@@ -79,9 +73,7 @@ export const RemoteTriggerTool = buildTool({
     await checkAndRefreshOAuthTokenIfNeeded()
     const accessToken = getZyAIOAuthTokens()?.accessToken
     if (!accessToken) {
-      throw new Error(
-        'Not authenticated with a zy.ai account. Run /login and try again.',
-      )
+      throw new Error('Not authenticated with a zy.ai account. Run /login and try again.')
     }
     const orgUUID = await getOrganizationUUID()
     if (!orgUUID) {

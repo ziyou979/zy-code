@@ -48,10 +48,7 @@ export type LSPClient = {
  *   exit code during operation, not during intentional stop). Allows the owner
  *   to propagate crash state so the server can be restarted on next use.
  */
-export function createLSPClient(
-  serverName: string,
-  onCrash?: (error: Error) => void,
-): LSPClient {
+export function createLSPClient(serverName: string, onCrash?: (error: Error) => void): LSPClient {
   // State variables in closure
   let process: ChildProcess | undefined
   let connection: MessageConnection | undefined
@@ -122,7 +119,7 @@ export function createLSPClient(
             cleanup()
             reject(error)
           }
-          let cleanup;
+          let cleanup
           cleanup = (): void => {
             spawnedProcess.removeListener('spawn', onSpawn)
             spawnedProcess.removeListener('error', onError)
@@ -142,15 +139,11 @@ export function createLSPClient(
         }
 
         // Handle process errors (after successful spawn, e.g., crash during operation)
-        process.on('error', error => {
+        process.on('error', (error) => {
           if (!isStopping) {
             startFailed = true
             startError = error
-            logError(
-              new Error(
-                `LSP server ${serverName} failed to start: ${error.message}`,
-              ),
-            )
+            logError(new Error(`LSP server ${serverName} failed to start: ${error.message}`))
           }
         })
 
@@ -159,9 +152,7 @@ export function createLSPClient(
             isInitialized = false
             startFailed = false
             startError = undefined
-            const crashError = new Error(
-              `LSP server ${serverName} crashed with exit code ${code}`,
-            )
+            const crashError = new Error(`LSP server ${serverName} crashed with exit code ${code}`)
             logError(crashError)
             onCrash?.(crashError)
           }
@@ -171,9 +162,7 @@ export function createLSPClient(
         // when the LSP server process exits before we finish writing
         process.stdin.on('error', (error: Error) => {
           if (!isStopping) {
-            logForDebugging(
-              `LSP server ${serverName} stdin error: ${error.message}`,
-            )
+            logForDebugging(`LSP server ${serverName} stdin error: ${error.message}`)
           }
           // Error is logged but not thrown - the connection error handler will catch this
         })
@@ -190,11 +179,7 @@ export function createLSPClient(
           if (!isStopping) {
             startFailed = true
             startError = error
-            logError(
-              new Error(
-                `LSP server ${serverName} connection error: ${error.message}`,
-              ),
-            )
+            logError(new Error(`LSP server ${serverName} connection error: ${error.message}`))
           }
         })
 
@@ -221,35 +206,27 @@ export function createLSPClient(
             },
           })
           .catch((error: Error) => {
-            logForDebugging(
-              `Failed to enable tracing for ${serverName}: ${error.message}`,
-            )
+            logForDebugging(`Failed to enable tracing for ${serverName}: ${error.message}`)
           })
 
         // 4. Apply any queued notification handlers
         for (const { method, handler } of pendingHandlers) {
           connection.onNotification(method, handler)
-          logForDebugging(
-            `Applied queued notification handler for ${serverName}.${method}`,
-          )
+          logForDebugging(`Applied queued notification handler for ${serverName}.${method}`)
         }
         pendingHandlers.length = 0 // Clear the queue
 
         // 5. Apply any queued request handlers
         for (const { method, handler } of pendingRequestHandlers) {
           connection.onRequest(method, handler)
-          logForDebugging(
-            `Applied queued request handler for ${serverName}.${method}`,
-          )
+          logForDebugging(`Applied queued request handler for ${serverName}.${method}`)
         }
         pendingRequestHandlers.length = 0 // Clear the queue
 
         logForDebugging(`LSP client started for ${serverName}`)
       } catch (error) {
         const err = error as Error
-        logError(
-          new Error(`LSP server ${serverName} failed to start: ${err.message}`),
-        )
+        logError(new Error(`LSP server ${serverName} failed to start: ${err.message}`))
         throw error
       }
     },
@@ -262,10 +239,7 @@ export function createLSPClient(
       checkStartFailed()
 
       try {
-        const result: InitializeResult = await connection.sendRequest(
-          'initialize',
-          params,
-        )
+        const result: InitializeResult = await connection.sendRequest('initialize', params)
 
         capabilities = result.capabilities
 
@@ -278,19 +252,12 @@ export function createLSPClient(
         return result
       } catch (error) {
         const err = error as Error
-        logError(
-          new Error(
-            `LSP server ${serverName} initialize failed: ${err.message}`,
-          ),
-        )
+        logError(new Error(`LSP server ${serverName} initialize failed: ${err.message}`))
         throw error
       }
     },
 
-    async sendRequest<TResult>(
-      method: string,
-      params: unknown,
-    ): Promise<TResult> {
+    async sendRequest<TResult>(method: string, params: unknown): Promise<TResult> {
       if (!connection) {
         throw new Error('LSP client not started')
       }
@@ -305,11 +272,7 @@ export function createLSPClient(
         return await connection.sendRequest(method, params)
       } catch (error) {
         const err = error as Error
-        logError(
-          new Error(
-            `LSP server ${serverName} request ${method} failed: ${err.message}`,
-          ),
-        )
+        logError(new Error(`LSP server ${serverName} request ${method} failed: ${err.message}`))
         throw error
       }
     },
@@ -326,9 +289,7 @@ export function createLSPClient(
       } catch (error) {
         const err = error as Error
         logError(
-          new Error(
-            `LSP server ${serverName} notification ${method} failed: ${err.message}`,
-          ),
+          new Error(`LSP server ${serverName} notification ${method} failed: ${err.message}`),
         )
         // Don't re-throw for notifications - they're fire-and-forget
         logForDebugging(`Notification ${method} failed but continuing`)
@@ -360,9 +321,7 @@ export function createLSPClient(
           method,
           handler: handler as (params: unknown) => unknown | Promise<unknown>,
         })
-        logForDebugging(
-          `Queued request handler for ${serverName}.${method} (connection not ready)`,
-        )
+        logForDebugging(`Queued request handler for ${serverName}.${method} (connection not ready)`)
         return
       }
 
@@ -385,9 +344,7 @@ export function createLSPClient(
         }
       } catch (error) {
         const err = error as Error
-        logError(
-          new Error(`LSP server ${serverName} stop failed: ${err.message}`),
-        )
+        logError(new Error(`LSP server ${serverName} stop failed: ${err.message}`))
         shutdownError = err
         // Continue to cleanup despite shutdown failure
       } finally {
@@ -397,9 +354,7 @@ export function createLSPClient(
             connection.dispose()
           } catch (error) {
             // Log but don't throw - disposal errors are less critical
-            logForDebugging(
-              `Connection disposal failed for ${serverName}: ${errorMessage(error)}`,
-            )
+            logForDebugging(`Connection disposal failed for ${serverName}: ${errorMessage(error)}`)
           }
           connection = undefined
         }

@@ -5,7 +5,7 @@
  * Get the session transcript path
  */
 export function getSessionTranscriptPath(): string | null {
-  return null;
+  return null
 }
 
 /**
@@ -20,7 +20,7 @@ export function saveTranscriptEntry(entry: unknown): void {
  * Load transcript entries
  */
 export function loadTranscriptEntries(): unknown[] {
-  return [];
+  return []
 }
 
 /**

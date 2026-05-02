@@ -1,9 +1,5 @@
 import { feature } from 'bun:bundle'
-import type {
-  ImageSource,
-  ContentBlock,
-  ImageBlock,
-} from '../../types/llm.js'
+import type { ImageSource, ContentBlock, ImageBlock } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -26,10 +22,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
-import {
-  isValidImagePaste,
-  type PromptInputMode,
-} from '../../types/textInputTypes.js'
+import { isValidImagePaste, type PromptInputMode } from '../../types/textInputTypes.js'
 import {
   type AgentMentionAttachment,
   createAttachmentMessage,
@@ -38,37 +31,18 @@ import {
 import type { PastedContent } from '../config.js'
 import type { EffortValue } from '../effort.js'
 import { toArray } from '../generators.js'
-import {
-  executeUserPromptSubmitHooks,
-  getUserPromptSubmitHookBlockingMessage,
-} from '../hooks.js'
-import {
-  createImageMetadataText,
-  maybeResizeAndDownsampleImageBlock,
-} from '../imageResizer.js'
+import { executeUserPromptSubmitHooks, getUserPromptSubmitHookBlockingMessage } from '../hooks.js'
+import { createImageMetadataText, maybeResizeAndDownsampleImageBlock } from '../imageResizer.js'
 import { storeImages } from '../imageStore.js'
-import {
-  createCommandInputMessage,
-  createSystemMessage,
-  createUserMessage,
-} from '../messages.js'
+import { createCommandInputMessage, createSystemMessage, createUserMessage } from '../messages.js'
 import { queryCheckpoint } from '../queryProfiler.js'
 import { parseSlashCommand } from '../slashCommandParsing.js'
-import {
-  hasUltraplanKeyword,
-  replaceUltraplanKeyword,
-} from '../ultraplan/keyword.js'
+import { hasUltraplanKeyword, replaceUltraplanKeyword } from '../ultraplan/keyword.js'
 import { processTextPrompt } from './processTextPrompt.js'
 export type ProcessUserInputContext = ToolUseContext & LocalJSXCommandContext
 
 export type ProcessUserInputBaseResult = {
-  messages: (
-    | UserMessage
-    | AssistantMessage
-    | AttachmentMessage
-    | SystemMessage
-    | ProgressMessage
-  )[]
+  messages: (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage | ProgressMessage)[]
   shouldQuery: boolean
   allowedTools?: string[]
   model?: string
@@ -192,16 +166,11 @@ export async function processUserInput({
 
     // Return only a system-level error message, erasing the original user input
     if (hookResult.blockingError) {
-      const blockingMessage = getUserPromptSubmitHookBlockingMessage(
-        hookResult.blockingError,
-      )
+      const blockingMessage = getUserPromptSubmitHookBlockingMessage(hookResult.blockingError)
       return {
         messages: [
           // TODO: Make this an attachment message
-          createSystemMessage(
-            `${blockingMessage}\n\nOriginal prompt: ${input}`,
-            'warning' as any,
-          ),
+          createSystemMessage(`${blockingMessage}\n\nOriginal prompt: ${input}`, 'warning' as any),
         ],
         shouldQuery: false,
         allowedTools: result.allowedTools,
@@ -224,10 +193,7 @@ export async function processUserInput({
     }
 
     // Collect additional contexts
-    if (
-      hookResult.additionalContexts &&
-      hookResult.additionalContexts.length > 0
-    ) {
+    if (hookResult.additionalContexts && hookResult.additionalContexts.length > 0) {
       result.messages.push(
         createAttachmentMessage({
           type: 'hook_additional_context',
@@ -353,7 +319,7 @@ async function processUserInputBase(
   const imageContents = pastedContents
     ? Object.values(pastedContents).filter(isValidImagePaste)
     : []
-  const imagePasteIds = imageContents.map(img => img.id)
+  const imagePasteIds = imageContents.map((img) => img.id)
 
   // Store images to disk so Zy can reference the path in context
   // (for manipulation with CLI tools, uploading to PRs, etc.)
@@ -364,11 +330,10 @@ async function processUserInputBase(
   // Resize pasted images to ensure they fit within API limits (parallel processing)
   queryCheckpoint('query_pasted_image_processing_start')
   const imageProcessingResults = await Promise.all(
-    imageContents.map(async pastedImage => {
+    imageContents.map(async (pastedImage) => {
       const imageBlock: ImageBlock = {
         type: 'image',
-        mimeType: (pastedImage.mediaType ||
-          'image/png') as ImageSource['mediaType'],
+        mimeType: (pastedImage.mediaType || 'image/png') as ImageSource['mediaType'],
         data: pastedImage.content,
       }
       logEvent('zy_pasted_image_resize_attempt', {
@@ -378,33 +343,22 @@ async function processUserInputBase(
       return {
         resized,
         originalDimensions: pastedImage.dimensions,
-        sourcePath:
-          pastedImage.sourcePath ?? storedImagePaths.get(pastedImage.id),
+        sourcePath: pastedImage.sourcePath ?? storedImagePaths.get(pastedImage.id),
       }
     }),
   )
   // Collect results preserving order
   const imageContentBlocks: ContentBlock[] = []
-  for (const {
-    resized,
-    originalDimensions,
-    sourcePath,
-  } of imageProcessingResults) {
+  for (const { resized, originalDimensions, sourcePath } of imageProcessingResults) {
     // Collect image metadata for isMeta message (prefer resized dimensions)
     if (resized.dimensions) {
-      const metadataText = createImageMetadataText(
-        resized.dimensions,
-        sourcePath,
-      )
+      const metadataText = createImageMetadataText(resized.dimensions, sourcePath)
       if (metadataText) {
         imageMetadataTexts.push(metadataText)
       }
     } else if (originalDimensions) {
       // Fall back to original dimensions if resize didn't provide them
-      const metadataText = createImageMetadataText(
-        originalDimensions,
-        sourcePath,
-      )
+      const metadataText = createImageMetadataText(originalDimensions, sourcePath)
       if (metadataText) {
         imageMetadataTexts.push(metadataText)
       }
@@ -425,9 +379,7 @@ async function processUserInputBase(
   let effectiveSkipSlash = skipSlashCommands
   if (bridgeOrigin && inputString !== null && inputString.startsWith('/')) {
     const parsed = parseSlashCommand(inputString)
-    const cmd = parsed
-      ? findCommand(parsed.commandName, context.options.commands)
-      : undefined
+    const cmd = parsed ? findCommand(parsed.commandName, context.options.commands) : undefined
     if (cmd) {
       if (isBridgeSafeCommand(cmd)) {
         effectiveSkipSlash = false
@@ -436,9 +388,7 @@ async function processUserInputBase(
         return {
           messages: [
             createUserMessage({ content: inputString, uuid }),
-            createCommandInputMessage(
-              `<local-command-stdout>${msg}</local-command-stdout>`,
-            ),
+            createCommandInputMessage(`<local-command-stdout>${msg}</local-command-stdout>`),
           ],
           shouldQuery: false,
           resultText: msg,
@@ -527,11 +477,7 @@ async function processUserInputBase(
 
   // Slash commands
   // Skip for remote bridge messages — input from CCR clients is plain text
-  if (
-    inputString !== null &&
-    !effectiveSkipSlash &&
-    inputString.startsWith('/')
-  ) {
+  if (inputString !== null && !effectiveSkipSlash && inputString.startsWith('/')) {
     const { processSlashCommand } = await import('./processSlashCommand.js')
     const slashResult = await processSlashCommand(
       inputString,
@@ -552,15 +498,13 @@ async function processUserInputBase(
     const trimmedInput = inputString.trim()
 
     const agentMention = attachmentMessages.find(
-      (m): m is AttachmentMessage<AgentMentionAttachment> =>
-        m.attachment.type === 'agent_mention',
+      (m): m is AttachmentMessage<AgentMentionAttachment> => m.attachment.type === 'agent_mention',
     )
 
     if (agentMention) {
       const agentMentionString = `@agent-${agentMention.attachment.agentType}`
       const isSubagentOnly = trimmedInput === agentMentionString
-      const isPrefix =
-        trimmedInput.startsWith(agentMentionString) && !isSubagentOnly
+      const isPrefix = trimmedInput.startsWith(agentMentionString) && !isSubagentOnly
 
       // Log whenever users use @agent-<name> syntax
       logEvent('zy_subagent_at_mention', {
@@ -593,7 +537,7 @@ function addImageMetadataMessage(
   if (imageMetadataTexts.length > 0) {
     result.messages.push(
       createUserMessage({
-        content: imageMetadataTexts.map(text => ({ type: 'text', text })),
+        content: imageMetadataTexts.map((text) => ({ type: 'text', text })),
         isMeta: true,
       }),
     )

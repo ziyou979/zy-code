@@ -43,8 +43,7 @@ export const OUTPUT_STYLE_CONFIG: OutputStyles = {
   Explanatory: {
     name: 'Explanatory',
     source: 'built-in',
-    description:
-      'Zy explains its implementation choices and codebase patterns',
+    description: 'Zy explains its implementation choices and codebase patterns',
     keepCodingInstructions: true,
     prompt: `You are an interactive CLI tool that helps users with software engineering tasks. In addition to software engineering tasks, you should provide educational insights about the codebase along the way.
 
@@ -56,8 +55,7 @@ ${EXPLANATORY_FEATURE_PROMPT}`,
   Learning: {
     name: 'Learning',
     source: 'built-in',
-    description:
-      'Zy pauses and asks you to write small pieces of code for hands-on practice',
+    description: 'Zy pauses and asks you to write small pieces of code for hands-on practice',
     keepCodingInstructions: true,
     prompt: `You are an interactive CLI tool that helps users with software engineering tasks. In addition to software engineering tasks, you should help users learn more about the codebase through hands-on practice and educational insights.
 
@@ -145,15 +143,9 @@ export const getAllOutputStyles = memoize(async function getAllOutputStyles(
     ...OUTPUT_STYLE_CONFIG,
   }
 
-  const managedStyles = customStyles.filter(
-    style => style.source === 'policySettings',
-  )
-  const userStyles = customStyles.filter(
-    style => style.source === 'userSettings',
-  )
-  const projectStyles = customStyles.filter(
-    style => style.source === 'projectSettings',
-  )
+  const managedStyles = customStyles.filter((style) => style.source === 'policySettings')
+  const userStyles = customStyles.filter((style) => style.source === 'userSettings')
+  const projectStyles = customStyles.filter((style) => style.source === 'projectSettings')
 
   // Add styles in priority order (lowest to highest): built-in, plugin, managed, user, project
   const styleGroups = [pluginStyles, userStyles, projectStyles, managedStyles]
@@ -184,28 +176,23 @@ export async function getOutputStyleConfig(): Promise<OutputStyleConfig | null> 
   // Check for forced plugin output styles
   const forcedStyles = Object.values(allStyles).filter(
     (style): style is OutputStyleConfig =>
-      style !== null &&
-      style.source === 'plugin' &&
-      style.forceForPlugin === true,
+      style !== null && style.source === 'plugin' && style.forceForPlugin === true,
   )
 
   const firstForcedStyle = forcedStyles[0]
   if (firstForcedStyle) {
     if (forcedStyles.length > 1) {
       logForDebugging(
-        `Multiple plugins have forced output styles: ${forcedStyles.map(s => s.name).join(', ')}. Using: ${firstForcedStyle.name}`,
+        `Multiple plugins have forced output styles: ${forcedStyles.map((s) => s.name).join(', ')}. Using: ${firstForcedStyle.name}`,
         { level: 'warn' },
       )
     }
-    logForDebugging(
-      `Using forced plugin output style: ${firstForcedStyle.name}`,
-    )
+    logForDebugging(`Using forced plugin output style: ${firstForcedStyle.name}`)
     return firstForcedStyle
   }
 
   const settings = getSettings_DEPRECATED()
-  const outputStyle = (settings?.outputStyle ||
-    DEFAULT_OUTPUT_STYLE_NAME) as string
+  const outputStyle = (settings?.outputStyle || DEFAULT_OUTPUT_STYLE_NAME) as string
 
   return allStyles[outputStyle] ?? null
 }

@@ -8,11 +8,7 @@ import { getZyConfigHomeDir, isEnvTruthy } from './utils/envUtils.js'
 import { getErrnoCode } from './utils/errors.js'
 import { readLinesReverse } from './utils/fsOperations.js'
 import { lock } from './utils/lockfile.js'
-import {
-  hashPastedText,
-  retrievePastedText,
-  storePastedText,
-} from './utils/pasteStore.js'
+import { hashPastedText, retrievePastedText, storePastedText } from './utils/pasteStore.js'
 import { sleep } from './utils/sleep.js'
 import { jsonParse, jsonStringify } from './utils/slowOperations.js'
 
@@ -65,12 +61,12 @@ export function parseReferences(
     /\[(Pasted text|Image|\.\.\.Truncated text) #(\d+)(?: \+\d+ lines)?(\.)*\]/g
   const matches = [...input.matchAll(referencePattern)]
   return matches
-    .map(match => ({
+    .map((match) => ({
       id: parseInt(match[2] || '0'),
       match: match[0],
       index: match.index,
     }))
-    .filter(match => match.id > 0)
+    .filter((match) => match.id > 0)
 }
 
 /**
@@ -91,9 +87,7 @@ export function expandPastedTextRefs(
     const content = pastedContents[ref.id]
     if (content?.type !== 'text') continue
     expanded =
-      expanded.slice(0, ref.index) +
-      content.content +
-      expanded.slice(ref.index + ref.match.length)
+      expanded.slice(0, ref.index) + content.content + expanded.slice(ref.index + ref.match.length)
   }
   return expanded
 }
@@ -120,10 +114,7 @@ async function* makeLogEntryReader(): AsyncGenerator<LogEntry> {
         // removeLastFromHistory slow path: entry was flushed before removal,
         // so filter here so both getHistory (Up-arrow) and makeHistoryReader
         // (ctrl+r search) skip it consistently.
-        if (
-          entry.sessionId === currentSession &&
-          skippedTimestamps.has(entry.timestamp)
-        ) {
+        if (entry.sessionId === currentSession && skippedTimestamps.has(entry.timestamp)) {
           continue
         }
         yield entry
@@ -285,7 +276,7 @@ let lastAddedEntry: LogEntry | null = null
 // Timestamps of entries already flushed to disk that should be skipped when
 // reading. Used by removeLastFromHistory when the entry has raced past the
 // pending buffer. Session-scoped (module state resets on process restart).
-let skippedTimestamps;
+let skippedTimestamps
 skippedTimestamps = new Set<number>()
 
 // Core flush logic - writes pending entries to disk
@@ -313,7 +304,7 @@ async function immediateFlushHistory(): Promise<void> {
       },
     })
 
-    const jsonLines = pendingEntries.map(entry => jsonStringify(entry) + '\n')
+    const jsonLines = pendingEntries.map((entry) => jsonStringify(entry) + '\n')
     pendingEntries = []
 
     await appendFile(historyPath, jsonLines.join(''), { mode: 0o600 })
@@ -352,13 +343,8 @@ async function flushPromptHistory(retries: number): Promise<void> {
   }
 }
 
-async function addToPromptHistory(
-  command: HistoryEntry | string,
-): Promise<void> {
-  const entry =
-    typeof command === 'string'
-      ? { display: command, pastedContents: {} }
-      : command
+async function addToPromptHistory(command: HistoryEntry | string): Promise<void> {
+  const entry = typeof command === 'string' ? { display: command, pastedContents: {} } : command
 
   const storedPastedContents: Record<number, StoredPastedContent> = {}
   if (entry.pastedContents) {

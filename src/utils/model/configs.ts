@@ -58,18 +58,18 @@ export const ALL_MODEL_CONFIGS = {
 export type ModelKey = keyof typeof ALL_MODEL_CONFIGS_WITH_COSTS
 
 /** Union of all canonical model IDs, e.g. 'qwen3.6-plus' */
-export type CanonicalModelId =
-  (typeof ALL_MODEL_CONFIGS)[ModelKey]['anthropic']
+export type CanonicalModelId = (typeof ALL_MODEL_CONFIGS)[ModelKey]['anthropic']
 
 /** Runtime list of canonical model IDs — used by comprehensiveness tests. */
-export const CANONICAL_MODEL_IDS = Object.values(ALL_MODEL_CONFIGS).map(
-  c => c.anthropic,
-) as [CanonicalModelId, ...CanonicalModelId[]]
+export const CANONICAL_MODEL_IDS = Object.values(ALL_MODEL_CONFIGS).map((c) => c.anthropic) as [
+  CanonicalModelId,
+  ...CanonicalModelId[],
+]
 
 /** Map canonical ID → internal short key. Used to apply settings-based modelOverrides. */
-export const CANONICAL_ID_TO_KEY: Record<CanonicalModelId, ModelKey> =
-  Object.fromEntries(
-    (Object.entries(ALL_MODEL_CONFIGS) as [ModelKey, ModelConfig][]).map(
-      ([key, cfg]) => [cfg.anthropic, key],
-    ),
-  ) as Record<CanonicalModelId, ModelKey>
+export const CANONICAL_ID_TO_KEY: Record<CanonicalModelId, ModelKey> = Object.fromEntries(
+  (Object.entries(ALL_MODEL_CONFIGS) as [ModelKey, ModelConfig][]).map(([key, cfg]) => [
+    cfg.anthropic,
+    key,
+  ]),
+) as Record<CanonicalModelId, ModelKey>

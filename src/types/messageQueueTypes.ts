@@ -1,9 +1,4 @@
-export type QueueOperation =
-  | 'enqueue'
-  | 'dequeue'
-  | 'clear'
-  | 'cancel'
-  | 'reorder'
+export type QueueOperation = 'enqueue' | 'dequeue' | 'clear' | 'cancel' | 'reorder'
 
 export interface QueueOperationMessage {
   type: 'queue-operation'

@@ -2,15 +2,8 @@ import { useEffect, useRef } from 'react'
 import { KeyboardEvent } from '../ink/events/keyboard-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until REPL wires handleKeyDown to <Box onKeyDown>
 import { useInput } from '../ink.js'
-import {
-  type AppState,
-  useAppState,
-  useSetAppState,
-} from '../state/AppState.js'
-import {
-  enterTeammateView,
-  exitTeammateView,
-} from '../state/teammateViewHelpers.js'
+import { type AppState, useAppState, useSetAppState } from '../state/AppState.js'
+import { enterTeammateView, exitTeammateView } from '../state/teammateViewHelpers.js'
 import {
   getRunningTeammatesSorted,
   InProcessTeammateTask,
@@ -27,7 +20,7 @@ function stepTeammateSelection(
   delta: 1 | -1,
   setAppState: (updater: (prev: AppState) => AppState) => void,
 ): void {
-  setAppState(prev => {
+  setAppState((prev) => {
     const currentCount = getRunningTeammatesSorted(prev.tasks).length
     if (currentCount === 0) return prev
 
@@ -42,14 +35,7 @@ function stepTeammateSelection(
 
     const maxIdx = currentCount // hide row
     const cur = prev.selectedIPAgentIndex
-    const next =
-      delta === 1
-        ? cur >= maxIdx
-          ? -1
-          : cur + 1
-        : cur <= -1
-          ? maxIdx
-          : cur - 1
+    const next = delta === 1 ? (cur >= maxIdx ? -1 : cur + 1) : cur <= -1 ? maxIdx : cur - 1
     return {
       ...prev,
       selectedIPAgentIndex: next,
@@ -64,13 +50,13 @@ function stepTeammateSelection(
  * 当仅有非 teammate 的后台 task 时，打开后台 task 对话框。
  * 同时处理 Enter 确认选择、'f' 查看转录、'k' 终止。
  */
-export function useBackgroundTaskNavigation(options?: {
-  onOpenBackgroundTasks?: () => void
-}): { handleKeyDown: (e: KeyboardEvent) => void } {
-  const tasks = useAppState(s => s.tasks)
-  const viewSelectionMode = useAppState(s => s.viewSelectionMode)
-  const viewingAgentTaskId = useAppState(s => s.viewingAgentTaskId)
-  const selectedIPAgentIndex = useAppState(s => s.selectedIPAgentIndex)
+export function useBackgroundTaskNavigation(options?: { onOpenBackgroundTasks?: () => void }): {
+  handleKeyDown: (e: KeyboardEvent) => void
+} {
+  const tasks = useAppState((s) => s.tasks)
+  const viewSelectionMode = useAppState((s) => s.viewSelectionMode)
+  const viewingAgentTaskId = useAppState((s) => s.viewingAgentTaskId)
+  const selectedIPAgentIndex = useAppState((s) => s.selectedIPAgentIndex)
   const setAppState = useSetAppState()
 
   // 过滤出运行中的 teammates 并按字母顺序排序，以匹配 TeammateSpinnerTree 的显示
@@ -79,7 +65,7 @@ export function useBackgroundTaskNavigation(options?: {
 
   // 检查是否存在非 teammate 的后台 task（local_agent、local_bash 等）
   const hasNonTeammateBackgroundTasks = Object.values(tasks).some(
-    t => isBackgroundTask(t) && t.type !== 'in_process_teammate',
+    (t) => isBackgroundTask(t) && t.type !== 'in_process_teammate',
   )
 
   // 记录上一次的 teammate 数量，用于检测 teammate 被移除的情况
@@ -90,7 +76,7 @@ export function useBackgroundTaskNavigation(options?: {
     const prevCount = prevTeammateCountRef.current
     prevTeammateCountRef.current = teammateCount
 
-    setAppState(prev => {
+    setAppState((prev) => {
       const currentTeammates = getRunningTeammatesSorted(prev.tasks)
       const currentCount = currentTeammates.length
 
@@ -98,11 +84,7 @@ export function useBackgroundTaskNavigation(options?: {
       // 仅在之前有 teammate 时重置（而不是初始挂载时为 0 的情况）
       // 如果正在查看 teammate 转录，不要覆盖 viewSelectionMode——
       // 用户可能正在回顾已完成的 teammate，需要通过 escape 退出
-      if (
-        currentCount === 0 &&
-        prevCount > 0 &&
-        prev.selectedIPAgentIndex !== -1
-      ) {
+      if (currentCount === 0 && prevCount > 0 && prev.selectedIPAgentIndex !== -1) {
         if (prev.viewSelectionMode === 'viewing-agent') {
           return {
             ...prev,
@@ -118,8 +100,7 @@ export function useBackgroundTaskNavigation(options?: {
 
       // 如果索引超出范围则进行钳位
       // 当 spinner tree 显示时，最大有效索引为 currentCount（"hide" 行）
-      const maxIndex =
-        prev.expandedView === 'teammates' ? currentCount : currentCount - 1
+      const maxIndex = prev.expandedView === 'teammates' ? currentCount : currentCount - 1
       if (currentCount > 0 && prev.selectedIPAgentIndex > maxIndex) {
         return {
           ...prev,
@@ -167,7 +148,7 @@ export function useBackgroundTaskNavigation(options?: {
     // Escape 在选择模式下：退出选择而不终止 leader
     if (e.key === 'escape' && viewSelectionMode === 'selecting-agent') {
       e.preventDefault()
-      setAppState(prev => ({
+      setAppState((prev) => ({
         ...prev,
         viewSelectionMode: 'none',
         selectedIPAgentIndex: -1,
@@ -189,11 +170,7 @@ export function useBackgroundTaskNavigation(options?: {
     }
 
     // 'f' 查看已选中 teammate 的转录（仅在选择模式下）
-    if (
-      e.key === 'f' &&
-      viewSelectionMode === 'selecting-agent' &&
-      teammateCount > 0
-    ) {
+    if (e.key === 'f' && viewSelectionMode === 'selecting-agent' && teammateCount > 0) {
       e.preventDefault()
       const selected = getSelectedTeammate()
       if (selected) {
@@ -209,7 +186,7 @@ export function useBackgroundTaskNavigation(options?: {
         exitTeammateView(setAppState)
       } else if (selectedIPAgentIndex >= teammateCount) {
         // "Hide" 行被选中——折叠 spinner tree
-        setAppState(prev => ({
+        setAppState((prev) => ({
           ...prev,
           expandedView: 'none' as const,
           viewSelectionMode: 'none',
@@ -225,11 +202,7 @@ export function useBackgroundTaskNavigation(options?: {
     }
 
     // k 终止已选中的 teammate（仅在选择模式下）
-    if (
-      e.key === 'k' &&
-      viewSelectionMode === 'selecting-agent' &&
-      selectedIPAgentIndex >= 0
-    ) {
+    if (e.key === 'k' && viewSelectionMode === 'selecting-agent' && selectedIPAgentIndex >= 0) {
       e.preventDefault()
       const selected = getSelectedTeammate()
       if (selected && selected.task.status === 'running') {

@@ -1,10 +1,7 @@
 import chokidar, { type FSWatcher } from 'chokidar'
 import * as platformPath from 'path'
 import { getAdditionalDirectoriesForzyMd } from '../../bootstrap/state.js'
-import {
-  clearCommandMemoizationCaches,
-  clearCommandsCache,
-} from '../../commands.js'
+import { clearCommandMemoizationCaches, clearCommandsCache } from '../../commands.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -103,26 +100,22 @@ export async function initialize(): Promise<void> {
   const paths = await getWatchablePaths()
   if (paths.length === 0) return
 
-  logForDebugging(
-    `Watching for changes in skill/command directories: ${paths.join(', ')}...`,
-  )
+  logForDebugging(`Watching for changes in skill/command directories: ${paths.join(', ')}...`)
 
   watcher = chokidar.watch(paths, {
     persistent: true,
     ignoreInitial: true,
     depth: 2, // Skills use skill-name/SKILL.md format
     awaitWriteFinish: {
-      stabilityThreshold:
-        testOverrides?.stabilityThreshold ?? FILE_STABILITY_THRESHOLD_MS,
-      pollInterval:
-        testOverrides?.pollInterval ?? FILE_STABILITY_POLL_INTERVAL_MS,
+      stabilityThreshold: testOverrides?.stabilityThreshold ?? FILE_STABILITY_THRESHOLD_MS,
+      pollInterval: testOverrides?.pollInterval ?? FILE_STABILITY_POLL_INTERVAL_MS,
     },
     // Ignore special file types (sockets, FIFOs, devices) - they cannot be watched
     // and will error with EOPNOTSUPP on macOS. Only allow regular files and directories.
     ignored: (path, stats) => {
       if (stats && !stats.isFile() && !stats.isDirectory()) return true
       // Ignore .git directories
-      return path.split(platformPath.sep).some(dir => dir === '.git')
+      return path.split(platformPath.sep).some((dir) => dir === '.git')
     },
     ignorePermissionErrors: true,
     usePolling: USE_POLLING,
@@ -237,8 +230,7 @@ async function getWatchablePaths(): Promise<string[]> {
 function handleChange(path: string): void {
   logForDebugging(`Detected skill change: ${path}`)
   logEvent('zy_skill_file_changed', {
-    source:
-      'chokidar' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    source: 'chokidar' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
   scheduleReload(path)
@@ -266,9 +258,7 @@ function scheduleReload(changedPath: string): void {
     // skills directory if they need the full set.
     const results = await executeConfigChangeHooks('skills', paths[0]!)
     if (hasBlockingResult(results)) {
-      logForDebugging(
-        `ConfigChange hook blocked skill reload (${paths.length} paths)`,
-      )
+      logForDebugging(`ConfigChange hook blocked skill reload (${paths.length} paths)`)
       return
     }
     clearSkillCaches()

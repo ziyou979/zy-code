@@ -37,8 +37,7 @@ export function formatAgentAsMarkdown(
     .replace(/\n/g, '\\\\n') // Escape newlines as \\n so yaml preserves them as \n
 
   // Omit tools field entirely when tools is undefined or ['*'] (all tools allowed)
-  const isAllTools =
-    tools === undefined || (tools.length === 1 && tools[0] === '*')
+  const isAllTools = tools === undefined || (tools.length === 1 && tools[0] === '*')
   const toolsLine = isAllTools ? '' : `\ntools: ${tools.join(', ')}`
   const modelLine = model ? `\nmodel: ${model}` : ''
   const effortLine = effort !== undefined ? `\neffort: ${effort}` : ''
@@ -66,11 +65,7 @@ function getAgentDirectoryPath(location: SettingSource): string {
     case 'projectSettings':
       return join(getCwd(), AGENT_PATHS.FOLDER_NAME, AGENT_PATHS.AGENTS_DIR)
     case 'policySettings':
-      return join(
-        getManagedFilePath(),
-        AGENT_PATHS.FOLDER_NAME,
-        AGENT_PATHS.AGENTS_DIR,
-      )
+      return join(getManagedFilePath(), AGENT_PATHS.FOLDER_NAME, AGENT_PATHS.AGENTS_DIR)
     case 'localSettings':
       return join(getCwd(), AGENT_PATHS.FOLDER_NAME, AGENT_PATHS.AGENTS_DIR)
   }
@@ -89,10 +84,7 @@ function getRelativeAgentDirectoryPath(location: SettingSource): string {
  * Gets the file path for a new agent based on its name
  * Used when creating new agent files
  */
-export function getNewAgentFilePath(agent: {
-  source: SettingSource
-  agentType: string
-}): string {
+export function getNewAgentFilePath(agent: { source: SettingSource; agentType: string }): string {
   const dirPath = getAgentDirectoryPath(agent.source)
   return join(dirPath, `${agent.agentType}.md`)
 }
@@ -151,9 +143,7 @@ export function getActualRelativeAgentFilePath(agent: AgentDefinition): string {
 /**
  * Ensures the directory for an agent location exists
  */
-async function ensureAgentDirectoryExists(
-  source: SettingSource,
-): Promise<string> {
+async function ensureAgentDirectoryExists(source: SettingSource): Promise<string> {
   const dirPath = getAgentDirectoryPath(source)
   await mkdir(dirPath, { recursive: true })
   return dirPath
@@ -238,9 +228,7 @@ export async function updateAgentFile(
 /**
  * Deletes an agent file
  */
-export async function deleteAgentFromFile(
-  agent: AgentDefinition,
-): Promise<void> {
+export async function deleteAgentFromFile(agent: AgentDefinition): Promise<void> {
   if (agent.source === 'built-in') {
     throw new Error('Cannot delete built-in agents')
   }

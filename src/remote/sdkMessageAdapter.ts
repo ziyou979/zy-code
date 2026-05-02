@@ -9,12 +9,7 @@ import type {
   SDKToolProgressMessage,
 } from '../entrypoints/agentSdkTypes.js'
 import { tSync } from '../i18n/index.js'
-import type {
-  AssistantMessage,
-  Message,
-  StreamEvent,
-  SystemMessage,
-} from '../types/message.js'
+import type { AssistantMessage, Message, StreamEvent, SystemMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 import { fromSDKCompactMetadata } from '../utils/messages/mappers.js'
 import { createUserMessage } from '../utils/messages.js'
@@ -96,10 +91,7 @@ function convertStatusMessage(msg: SDKStatusMessage): SystemMessage | null {
   return {
     type: 'system',
     subtype: 'informational',
-    content:
-      msg.status === 'compacting'
-        ? tSync('spinner.compacting')
-        : `Status: ${msg.status}`,
+    content: msg.status === 'compacting' ? tSync('spinner.compacting') : `Status: ${msg.status}`,
     level: 'info',
     uuid: msg.uuid,
     timestamp: new Date().toISOString(),
@@ -111,9 +103,7 @@ function convertStatusMessage(msg: SDKStatusMessage): SystemMessage | null {
  * We use a system message instead of ProgressMessage since the Progress type
  * is a complex union that requires tool-specific data we don't have from CCR.
  */
-function convertToolProgressMessage(
-  msg: SDKToolProgressMessage,
-): SystemMessage {
+function convertToolProgressMessage(msg: SDKToolProgressMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'informational',
@@ -128,9 +118,7 @@ function convertToolProgressMessage(
 /**
  * Convert an SDKCompactBoundaryMessage to a SystemMessage
  */
-function convertCompactBoundaryMessage(
-  msg: SDKCompactBoundaryMessage,
-): SystemMessage {
+function convertCompactBoundaryMessage(msg: SDKCompactBoundaryMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'compact_boundary',
@@ -168,10 +156,7 @@ type ConvertOptions = {
 /**
  * Convert an SDKMessage to REPL message format
  */
-export function convertSDKMessage(
-  msg: SDKMessage,
-  opts?: ConvertOptions,
-): ConvertedMessage {
+export function convertSDKMessage(msg: SDKMessage, opts?: ConvertOptions): ConvertedMessage {
   switch (msg.type) {
     case 'assistant':
       return { type: 'message', message: convertAssistantMessage(msg) }
@@ -183,8 +168,7 @@ export function convertSDKMessage(
       // shape (tool_result blocks) — parent_tool_use_id is NOT reliable: the
       // agent-side normalizeMessage() hardcodes it to null for top-level
       // tool results, so it can't distinguish tool results from prompt echoes.
-      const isToolResult =
-        Array.isArray(content) && content.some(b => b.type === 'tool_result')
+      const isToolResult = Array.isArray(content) && content.some((b) => b.type === 'tool_result')
       if (opts?.convertToolResults && isToolResult) {
         return {
           type: 'message',
@@ -234,9 +218,7 @@ export function convertSDKMessage(
       }
       if (msg.subtype === 'status') {
         const statusMsg = convertStatusMessage(msg)
-        return statusMsg
-          ? { type: 'message', message: statusMsg }
-          : { type: 'ignored' }
+        return statusMsg ? { type: 'message', message: statusMsg } : { type: 'ignored' }
       }
       if (msg.subtype === 'compact_boundary') {
         return {
@@ -245,9 +227,7 @@ export function convertSDKMessage(
         }
       }
       // hook_response and other subtypes
-      logForDebugging(
-        `[sdkMessageAdapter] Ignoring system message subtype: ${msg.subtype}`,
-      )
+      logForDebugging(`[sdkMessageAdapter] Ignoring system message subtype: ${msg.subtype}`)
       return { type: 'ignored' }
 
     case 'tool_progress':
@@ -272,9 +252,7 @@ export function convertSDKMessage(
       // Gracefully ignore unknown message types. The backend may send new
       // types before the client is updated; logging helps with debugging
       // without crashing or losing the session.
-      logForDebugging(
-        `[sdkMessageAdapter] Unknown message type: ${(msg as { type: string }).type}`,
-      )
+      logForDebugging(`[sdkMessageAdapter] Unknown message type: ${(msg as { type: string }).type}`)
       return { type: 'ignored' }
     }
   }

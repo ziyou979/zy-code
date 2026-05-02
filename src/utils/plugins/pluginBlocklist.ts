@@ -12,15 +12,8 @@ import { uninstallPluginOp } from '../../services/plugins/pluginOperations.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { loadInstalledPluginsV2 } from './installedPluginsManager.js'
-import {
-  getMarketplace,
-  loadKnownMarketplacesConfigSafe,
-} from './marketplaceManager.js'
-import {
-  addFlaggedPlugin,
-  getFlaggedPlugins,
-  loadFlaggedPlugins,
-} from './pluginFlagging.js'
+import { getMarketplace, loadKnownMarketplacesConfigSafe } from './marketplaceManager.js'
+import { addFlaggedPlugin, getFlaggedPlugins, loadFlaggedPlugins } from './pluginFlagging.js'
 import type { InstalledPluginsFileV2, PluginMarketplace } from './schemas.js'
 
 /**
@@ -36,7 +29,7 @@ export function detectDelistedPlugins(
   marketplace: PluginMarketplace,
   marketplaceName: string,
 ): string[] {
-  const marketplacePluginNames = new Set(marketplace.plugins.map(p => p.name))
+  const marketplacePluginNames = new Set(marketplace.plugins.map((p) => p.name))
   const suffix = `@${marketplaceName}`
 
   const delisted: string[] = []
@@ -78,11 +71,7 @@ export async function detectAndUninstallDelistedPlugins(): Promise<string[]> {
 
       if (!marketplace.forceRemoveDeletedPlugins) continue
 
-      const delisted = detectDelistedPlugins(
-        installedPlugins,
-        marketplace,
-        marketplaceName,
-      )
+      const delisted = detectDelistedPlugins(installedPlugins, marketplace, marketplaceName)
 
       for (const pluginId of delisted) {
         if (pluginId in alreadyFlagged) continue
@@ -90,8 +79,7 @@ export async function detectAndUninstallDelistedPlugins(): Promise<string[]> {
         // Skip managed-only plugins — enterprise admin should handle those
         const installations = installedPlugins.plugins[pluginId] ?? []
         const hasUserInstall = installations.some(
-          i =>
-            i.scope === 'user' || i.scope === 'project' || i.scope === 'local',
+          (i) => i.scope === 'user' || i.scope === 'project' || i.scope === 'local',
         )
         if (!hasUserInstall) continue
 

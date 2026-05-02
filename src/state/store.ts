@@ -7,10 +7,7 @@ export type Store<T> = {
   subscribe: (listener: Listener) => () => void
 }
 
-export function createStore<T>(
-  initialState: T,
-  onChange?: OnChange<T>,
-): Store<T> {
+export function createStore<T>(initialState: T, onChange?: OnChange<T>): Store<T> {
   let state = initialState
   const listeners = new Set<Listener>()
 

@@ -20,10 +20,7 @@ import {
   SETTING_SOURCE_TO_SCOPE,
   scopeToSettingSource,
 } from './pluginIdentifier.js'
-import {
-  cacheAndRegisterPlugin,
-  registerPluginInstallation,
-} from './pluginInstallationHelpers.js'
+import { cacheAndRegisterPlugin, registerPluginInstallation } from './pluginInstallationHelpers.js'
 import { isLocalPluginSource, type PluginScope } from './schemas.js'
 
 /**
@@ -152,9 +149,7 @@ export function getPluginEditableScopes(): Map<string, ExtendedPluginScope> {
   }
 
   logForDebugging(
-    `Found ${result.size} enabled plugins with scopes: ${Array.from(
-      result.entries(),
-    )
+    `Found ${result.size} enabled plugins with scopes: ${Array.from(result.entries())
       .map(([id, scope]) => `${id}(${scope})`)
       .join(', ')}`,
   )
@@ -167,9 +162,7 @@ export function getPluginEditableScopes(): Map<string, ExtendedPluginScope> {
  * @param scope The scope to check
  * @returns true if the scope should be persisted to installed_plugins.json
  */
-export function isPersistableScope(
-  scope: ExtendedPluginScope,
-): scope is PersistablePluginScope {
+export function isPersistableScope(scope: ExtendedPluginScope): scope is PersistablePluginScope {
   return scope !== 'flag'
 }
 
@@ -178,9 +171,7 @@ export function isPersistableScope(
  * @param source The settings source
  * @returns The corresponding plugin scope
  */
-export function settingSourceToScope(
-  source: SettingSource,
-): ExtendedPluginScope {
+export function settingSourceToScope(source: SettingSource): ExtendedPluginScope {
   return SETTING_SOURCE_TO_SCOPE[source]
 }
 
@@ -197,7 +188,7 @@ export function settingSourceToScope(
 export async function getInstalledPlugins(): Promise<string[]> {
   // Trigger sync in background (don't await - don't block startup)
   // This syncs enabledPlugins from settings.json to installed_plugins.json
-  void migrateFromEnabledPlugins().catch(error => {
+  void migrateFromEnabledPlugins().catch((error) => {
     logError(error)
   })
 
@@ -213,34 +204,26 @@ export async function getInstalledPlugins(): Promise<string[]> {
  * @param enabledPlugins Array of enabled plugin IDs
  * @returns Array of missing plugin IDs
  */
-export async function findMissingPlugins(
-  enabledPlugins: string[],
-): Promise<string[]> {
+export async function findMissingPlugins(enabledPlugins: string[]): Promise<string[]> {
   try {
     const installedPlugins = await getInstalledPlugins()
 
     // Filter to not-installed synchronously, then look up all in parallel.
     // Results are collected in original enabledPlugins order.
-    const notInstalled = enabledPlugins.filter(
-      id => !installedPlugins.includes(id),
-    )
+    const notInstalled = enabledPlugins.filter((id) => !installedPlugins.includes(id))
     const lookups = await Promise.all(
-      notInstalled.map(async pluginId => {
+      notInstalled.map(async (pluginId) => {
         try {
           const plugin = await getPluginById(pluginId)
           return { pluginId, found: plugin !== null && plugin !== undefined }
         } catch (error) {
-          logForDebugging(
-            `Failed to check plugin ${pluginId} in marketplace: ${error}`,
-          )
+          logForDebugging(`Failed to check plugin ${pluginId} in marketplace: ${error}`)
           // Plugin doesn't exist in any marketplace, will be handled as an error
           return { pluginId, found: false }
         }
       }),
     )
-    const missing = lookups
-      .filter(({ found }) => found)
-      .map(({ pluginId }) => pluginId)
+    const missing = lookups.filter(({ found }) => found).map(({ pluginId }) => pluginId)
 
     return missing
   } catch (error) {
@@ -324,8 +307,7 @@ export async function installSelectedPlugins(
       updatedEnabledPlugins[pluginId] = true
       installed.push(pluginId)
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       failed.push({ name: pluginId, error: errorMessage })
       logError(error)
     }

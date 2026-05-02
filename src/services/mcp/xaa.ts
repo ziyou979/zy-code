@@ -144,14 +144,10 @@ export async function discoverProtectedResource(
       opts?.fetchFn ?? defaultFetch,
     )
   } catch (e) {
-    throw new Error(
-      `XAA: PRM discovery failed: ${e instanceof Error ? e.message : String(e)}`,
-    )
+    throw new Error(`XAA: PRM discovery failed: ${e instanceof Error ? e.message : String(e)}`)
   }
   if (!prm.resource || !prm.authorization_servers?.[0]) {
-    throw new Error(
-      'XAA: PRM discovery failed: PRM missing resource or authorization_servers',
-    )
+    throw new Error('XAA: PRM discovery failed: PRM missing resource or authorization_servers')
   }
   if (normalizeUrl(prm.resource) !== normalizeUrl(serverUrl)) {
     throw new Error(
@@ -183,9 +179,7 @@ export async function discoverAuthorizationServer(
     fetchFn: opts?.fetchFn ?? defaultFetch,
   })
   if (!meta?.issuer || !meta.token_endpoint) {
-    throw new Error(
-      `XAA: AS metadata discovery failed: no valid metadata at ${asUrl}`,
-    )
+    throw new Error(`XAA: AS metadata discovery failed: no valid metadata at ${asUrl}`)
   }
   if (normalizeUrl(meta.issuer) !== normalizeUrl(asUrl)) {
     throw new Error(
@@ -196,16 +190,13 @@ export async function discoverAuthorizationServer(
   // that self-consistently reports an http:// issuer would pass the mismatch
   // check above, then we'd POST id_token + client_secret over plaintext.
   if (new URL(meta.token_endpoint).protocol !== 'https:') {
-    throw new Error(
-      `XAA: refusing non-HTTPS token endpoint: ${meta.token_endpoint}`,
-    )
+    throw new Error(`XAA: refusing non-HTTPS token endpoint: ${meta.token_endpoint}`)
   }
   return {
     issuer: meta.issuer,
     token_endpoint: meta.token_endpoint,
     grant_types_supported: meta.grant_types_supported,
-    token_endpoint_auth_methods_supported:
-      meta.token_endpoint_auth_methods_supported,
+    token_endpoint_auth_methods_supported: meta.token_endpoint_auth_methods_supported,
   }
 }
 

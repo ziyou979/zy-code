@@ -26,9 +26,7 @@ export class AbortError extends Error {
  */
 export function isAbortError(e: unknown): boolean {
   return (
-    e instanceof AbortError ||
-    isLlmAbortError(e) ||
-    (e instanceof Error && e.name === 'AbortError')
+    e instanceof AbortError || isLlmAbortError(e) || (e instanceof Error && e.name === 'AbortError')
   )
 }
 
@@ -165,7 +163,7 @@ export function shortErrorStack(e: unknown, maxFrames = 5): string {
   // First line is the message; subsequent "    at " lines are frames.
   const lines = e.stack.split('\n')
   const header = lines[0] ?? e.message
-  const frames = lines.slice(1).filter(l => l.trim().startsWith('at '))
+  const frames = lines.slice(1).filter((l) => l.trim().startsWith('at '))
   if (frames.length <= maxFrames) return e.stack
   return [header, ...frames.slice(0, maxFrames)].join('\n')
 }
@@ -216,12 +214,7 @@ export function classifyAxiosError(e: unknown): {
   message: string
 } {
   const message = errorMessage(e)
-  if (
-    !e ||
-    typeof e !== 'object' ||
-    !('isAxiosError' in e) ||
-    !e.isAxiosError
-  ) {
+  if (!e || typeof e !== 'object' || !('isAxiosError' in e) || !e.isAxiosError) {
     return { kind: 'other', message }
   }
   const err = e as {

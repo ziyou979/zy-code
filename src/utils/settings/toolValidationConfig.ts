@@ -25,14 +25,7 @@ export type ToolValidationConfig = {
 
 export const TOOL_VALIDATION_CONFIG: ToolValidationConfig = {
   // File pattern tools (accept *.ts, src/**, etc.)
-  filePatternTools: [
-    'Read',
-    'Write',
-    'Edit',
-    'Glob',
-    'NotebookRead',
-    'NotebookEdit',
-  ],
+  filePatternTools: ['Read', 'Write', 'Edit', 'Glob', 'NotebookRead', 'NotebookEdit'],
 
   // Bash wildcard tools (accept * anywhere, and legacy command:* syntax)
   bashPrefixTools: ['Bash'],
@@ -40,7 +33,7 @@ export const TOOL_VALIDATION_CONFIG: ToolValidationConfig = {
   // Custom validation (only if needed)
   customValidation: {
     // WebSearch doesn't support wildcards or complex patterns
-    WebSearch: content => {
+    WebSearch: (content) => {
       if (content.includes('*') || content.includes('?')) {
         return {
           valid: false,
@@ -53,17 +46,14 @@ export const TOOL_VALIDATION_CONFIG: ToolValidationConfig = {
     },
 
     // WebFetch uses domain: prefix for hostname-based permissions
-    WebFetch: content => {
+    WebFetch: (content) => {
       // Check if it's trying to use a URL format
       if (content.includes('://') || content.startsWith('http')) {
         return {
           valid: false,
           error: 'WebFetch permissions use domain format, not URLs',
           suggestion: 'Use "domain:hostname" format',
-          examples: [
-            'WebFetch(domain:example.com)',
-            'WebFetch(domain:github.com)',
-          ],
+          examples: ['WebFetch(domain:example.com)', 'WebFetch(domain:github.com)'],
         }
       }
 
@@ -73,10 +63,7 @@ export const TOOL_VALIDATION_CONFIG: ToolValidationConfig = {
           valid: false,
           error: 'WebFetch permissions must use "domain:" prefix',
           suggestion: 'Use "domain:hostname" format',
-          examples: [
-            'WebFetch(domain:example.com)',
-            'WebFetch(domain:*.google.com)',
-          ],
+          examples: ['WebFetch(domain:example.com)', 'WebFetch(domain:*.google.com)'],
         }
       }
 

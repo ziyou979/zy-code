@@ -18,8 +18,7 @@ export function useMaybeTruncateInput({
   setPastedContents,
 }: Props) {
   // Track if we've initialized this specific input value
-  const [hasAppliedTruncationToInput, setHasAppliedTruncationToInput] =
-    useState(false)
+  const [hasAppliedTruncationToInput, setHasAppliedTruncationToInput] = useState(false)
 
   // Process input for truncation and pasted images from MessageSelector.
   useEffect(() => {
@@ -31,10 +30,7 @@ export function useMaybeTruncateInput({
       return
     }
 
-    const { newInput, newPastedContents } = maybeTruncateInput(
-      input,
-      pastedContents,
-    )
+    const { newInput, newPastedContents } = maybeTruncateInput(input, pastedContents)
 
     onInputChange(newInput)
     setCursorOffset(newInput.length)

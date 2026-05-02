@@ -10,10 +10,7 @@ import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from './analytics/index.js'
 import { logEvent } from './analytics/index.js'
 import { getLLMAdapter } from './api/client.js'
-import {
-  processRateLimitHeaders,
-  shouldProcessRateLimits,
-} from './rateLimitMocking.js'
+import { processRateLimitHeaders, shouldProcessRateLimits } from './rateLimitMocking.js'
 
 /**
  * 安全地获取 header 值，兼容 Headers 实例和普通对象
@@ -38,12 +35,7 @@ export {
 
 type QuotaStatus = 'allowed' | 'allowed_warning' | 'rejected'
 
-type RateLimitType =
-  | 'five_hour'
-  | 'seven_day'
-  | 'seven_day_opus'
-  | 'seven_day_sonnet'
-  | 'overage'
+type RateLimitType = 'five_hour' | 'seven_day' | 'seven_day_opus' | 'seven_day_sonnet' | 'overage'
 
 export type { RateLimitType }
 
@@ -175,16 +167,15 @@ export function getRawUtilization(): RawUtilization {
   return rawUtilization
 }
 
-function extractRawUtilization(headers: globalThis.Headers | Record<string, string>): RawUtilization {
+function extractRawUtilization(
+  headers: globalThis.Headers | Record<string, string>,
+): RawUtilization {
   const result: RawUtilization = {}
   for (const [key, abbrev] of [
     ['five_hour', '5h'],
     ['seven_day', '7d'],
   ] as const) {
-    const util = getHeaderValue(
-      headers,
-      `anthropic-ratelimit-unified-${abbrev}-utilization`,
-    )
+    const util = getHeaderValue(headers, `anthropic-ratelimit-unified-${abbrev}-utilization`)
     const reset = getHeaderValue(headers, `anthropic-ratelimit-unified-${abbrev}-reset`)
     if (util !== null && reset !== null) {
       result[key] = { utilization: Number(util), resets_at: Number(reset) }
@@ -198,14 +189,13 @@ export const statusListeners: Set<StatusChangeListener> = new Set()
 
 export function emitStatusChange(limits: ZyAILimits) {
   currentLimits = limits
-  statusListeners.forEach(listener => listener(limits))
+  statusListeners.forEach((listener) => listener(limits))
   const hoursTillReset = Math.round(
     (limits.resetsAt ? limits.resetsAt - Date.now() / 1000 : 0) / (60 * 60),
   )
 
   logEvent('zy_Zyai_limits_status_changed', {
-    status:
-      limits.status as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    status: limits.status as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     unifiedRateLimitFallbackAvailable: limits.unifiedRateLimitFallbackAvailable,
     hoursTillReset,
   })
@@ -286,9 +276,7 @@ function getHeaderBasedEarlyWarning(
   unifiedRateLimitFallbackAvailable: boolean,
 ): ZyAILimits | null {
   // Check each claim type for surpassed threshold header
-  for (const [claimAbbrev, rateLimitType] of Object.entries(
-    EARLY_WARNING_CLAIM_MAP,
-  )) {
+  for (const [claimAbbrev, rateLimitType] of Object.entries(EARLY_WARNING_CLAIM_MAP)) {
     const surpassedThreshold = headers.get(
       `anthropic-ratelimit-unified-${claimAbbrev}-surpassed-threshold`,
     )
@@ -298,13 +286,9 @@ function getHeaderBasedEarlyWarning(
       const utilizationHeader = headers.get(
         `anthropic-ratelimit-unified-${claimAbbrev}-utilization`,
       )
-      const resetHeader = headers.get(
-        `anthropic-ratelimit-unified-${claimAbbrev}-reset`,
-      )
+      const resetHeader = headers.get(`anthropic-ratelimit-unified-${claimAbbrev}-reset`)
 
-      const utilization = utilizationHeader
-        ? Number(utilizationHeader)
-        : undefined
+      const utilization = utilizationHeader ? Number(utilizationHeader) : undefined
       const resetsAt = resetHeader ? Number(resetHeader) : undefined
 
       return {
@@ -334,12 +318,8 @@ function getTimeRelativeEarlyWarning(
 ): ZyAILimits | null {
   const { rateLimitType, claimAbbrev, windowSeconds, thresholds } = config
 
-  const utilizationHeader = headers.get(
-    `anthropic-ratelimit-unified-${claimAbbrev}-utilization`,
-  )
-  const resetHeader = headers.get(
-    `anthropic-ratelimit-unified-${claimAbbrev}-reset`,
-  )
+  const utilizationHeader = headers.get(`anthropic-ratelimit-unified-${claimAbbrev}-utilization`)
+  const resetHeader = headers.get(`anthropic-ratelimit-unified-${claimAbbrev}-reset`)
 
   if (utilizationHeader === null || resetHeader === null) {
     return null
@@ -351,7 +331,7 @@ function getTimeRelativeEarlyWarning(
 
   // Check if any threshold is exceeded: high usage early in the window
   const shouldWarn = thresholds.some(
-    t => utilization >= t.utilization && timeProgress <= t.timePct,
+    (t) => utilization >= t.utilization && timeProgress <= t.timePct,
   )
 
   if (!shouldWarn) {
@@ -378,10 +358,7 @@ function getEarlyWarningFromHeaders(
   unifiedRateLimitFallbackAvailable: boolean,
 ): ZyAILimits | null {
   // Try header-based detection first (preferred when API sends the header)
-  const headerBasedWarning = getHeaderBasedEarlyWarning(
-    headers,
-    unifiedRateLimitFallbackAvailable,
-  )
+  const headerBasedWarning = getHeaderBasedEarlyWarning(headers, unifiedRateLimitFallbackAvailable)
   if (headerBasedWarning) {
     return headerBasedWarning
   }
@@ -406,8 +383,7 @@ function computeNewLimitsFromHeaders(
   headers: globalThis.Headers | Record<string, string>,
 ): ZyAILimits {
   const status =
-    (getHeaderValue(headers, 'anthropic-ratelimit-unified-status') as QuotaStatus) ||
-    'allowed'
+    (getHeaderValue(headers, 'anthropic-ratelimit-unified-status') as QuotaStatus) || 'allowed'
   const resetsAtHeader = getHeaderValue(headers, 'anthropic-ratelimit-unified-reset')
   const resetsAt = resetsAtHeader ? Number(resetsAtHeader) : undefined
   const unifiedRateLimitFallbackAvailable =
@@ -422,13 +398,8 @@ function computeNewLimitsFromHeaders(
     headers,
     'anthropic-ratelimit-unified-overage-status',
   ) as QuotaStatus | null
-  const overageResetsAtHeader = getHeaderValue(
-    headers,
-    'anthropic-ratelimit-unified-overage-reset',
-  )
-  const overageResetsAt = overageResetsAtHeader
-    ? Number(overageResetsAtHeader)
-    : undefined
+  const overageResetsAtHeader = getHeaderValue(headers, 'anthropic-ratelimit-unified-overage-reset')
+  const overageResetsAt = overageResetsAtHeader ? Number(overageResetsAtHeader) : undefined
 
   // Reason why overage is disabled (spending cap or wallet empty)
   const overageDisabledReason = getHeaderValue(
@@ -438,8 +409,7 @@ function computeNewLimitsFromHeaders(
 
   // Determine if we're using overage (standard limits rejected but overage allowed)
   const isUsingOverage =
-    status === 'rejected' &&
-    (overageStatus === 'allowed' || overageStatus === 'allowed_warning')
+    status === 'rejected' && (overageStatus === 'allowed' || overageStatus === 'allowed_warning')
 
   // Check for early warning based on surpassed-threshold header
   // If status is allowed/allowed_warning and we find a surpassed threshold, show warning
@@ -477,16 +447,14 @@ function cacheExtraUsageDisabledReason(headers: globalThis.Headers | Record<stri
     getHeaderValue(headers, 'anthropic-ratelimit-unified-overage-disabled-reason') ?? null
   const cached = getGlobalConfig().cachedExtraUsageDisabledReason
   if (cached !== reason) {
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       cachedExtraUsageDisabledReason: reason,
     }))
   }
 }
 
-export function extractQuotaStatusFromHeaders(
-  headers: globalThis.Headers,
-): void {
+export function extractQuotaStatusFromHeaders(headers: globalThis.Headers): void {
   // Check if we need to process rate limits
   if (!shouldProcessRateLimits(false)) {
     // If we have any rate limit state, clear it
@@ -516,10 +484,7 @@ export function extractQuotaStatusFromHeaders(
 }
 
 export function extractQuotaStatusFromError(error: APIErrorLike): void {
-  if (
-    !shouldProcessRateLimits(false) ||
-    error.status !== 429
-  ) {
+  if (!shouldProcessRateLimits(false) || error.status !== 429) {
     return
   }
 
@@ -527,7 +492,9 @@ export function extractQuotaStatusFromError(error: APIErrorLike): void {
     let newLimits = { ...currentLimits }
     if (error.headers) {
       // Process headers (applies mocks from /mock-limits command if active)
-      const headersToUse = processRateLimitHeaders(error.headers as globalThis.Headers | Record<string, string>)
+      const headersToUse = processRateLimitHeaders(
+        error.headers as globalThis.Headers | Record<string, string>,
+      )
       rawUtilization = extractRawUtilization(headersToUse)
       newLimits = computeNewLimitsFromHeaders(headersToUse)
 

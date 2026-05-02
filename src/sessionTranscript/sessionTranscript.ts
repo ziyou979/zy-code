@@ -5,7 +5,7 @@
  * Get the session transcript
  */
 export function getSessionTranscript(): unknown | null {
-  return null;
+  return null
 }
 
 /**

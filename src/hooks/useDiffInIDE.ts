@@ -12,10 +12,7 @@ import type {
 } from '../services/mcp/types.js'
 import type { ToolUseContext } from '../Tool.js'
 import type { FileEdit } from '../tools/FileEditTool/types.js'
-import {
-  getEditsForPatch,
-  getPatchForEdits,
-} from '../tools/FileEditTool/utils.js'
+import { getEditsForPatch, getPatchForEdits } from '../tools/FileEditTool/utils.js'
 import { getGlobalConfig } from '../utils/config.js'
 import { getPatchFromContents } from '../utils/diff.js'
 import { isENOENT } from '../utils/errors.js'
@@ -43,13 +40,7 @@ type Props = {
   editMode: 'single' | 'multiple'
 }
 
-export function useDiffInIDE({
-  onChange,
-  toolUseContext,
-  filePath,
-  edits,
-  editMode,
-}: Props): {
+export function useDiffInIDE({ onChange, toolUseContext, filePath, edits, editMode }: Props): {
   closeTabInIDE: () => void
   showingDiffInIDE: boolean
   ideName: string
@@ -59,10 +50,7 @@ export function useDiffInIDE({
   const [hasError, setHasError] = useState(false)
 
   const sha = useMemo(() => randomUUID().slice(0, 6), [])
-  const tabName = useMemo(
-    () => `✻ [ZY Code] ${basename(filePath)} (${sha}) ⧉`,
-    [filePath, sha],
-  )
+  const tabName = useMemo(() => `✻ [ZY Code] ${basename(filePath)} (${sha}) ⧉`, [filePath, sha])
 
   const shouldShowDiffInIDE =
     hasAccessToIDEExtensionDiffFeature(toolUseContext.options.mcpClients) &&
@@ -71,8 +59,7 @@ export function useDiffInIDE({
     // File writes may come through here but are not supported for diffs.
     !filePath.endsWith('.ipynb')
 
-  const ideName =
-    getConnectedIdeName(toolUseContext.options.mcpClients) ?? 'IDE'
+  const ideName = getConnectedIdeName(toolUseContext.options.mcpClients) ?? 'IDE'
 
   async function showDiff(): Promise<void> {
     if (!shouldShowDiffInIDE) {
@@ -95,20 +82,13 @@ export function useDiffInIDE({
 
       logEvent('zy_ext_diff_accepted', {})
 
-      const newEdits = computeEditsFromContents(
-        filePath,
-        oldContent,
-        newContent,
-        editMode,
-      )
+      const newEdits = computeEditsFromContents(filePath, oldContent, newContent, editMode)
 
       if (newEdits.length === 0) {
         // No changes -- edit was rejected (eg. reverted)
         logEvent('zy_ext_diff_rejected', {})
         // We close the tab here because 'no' no longer auto-closes
-        const ideClient = getConnectedIdeClient(
-          toolUseContext.options.mcpClients,
-        )
+        const ideClient = getConnectedIdeClient(toolUseContext.options.mcpClients)
         if (ideClient) {
           // Close the tab in the IDE
           await closeTabInIDE(tabName, ideClient)
@@ -188,11 +168,7 @@ export function computeEditsFromContents(
 
   // For single edit mode, verify we only got one hunk
   if (singleHunk && patch.length > 1) {
-    logError(
-      new Error(
-        `Unexpected number of hunks: ${patch.length}. Expected 1 hunk.`,
-      ),
-    )
+    logError(new Error(`Unexpected number of hunks: ${patch.length}. Expected 1 hunk.`))
   }
 
   // Re-compute the edits to match the patch
@@ -255,7 +231,7 @@ async function showDiffInIDE(
   process.on('beforeExit', cleanup)
 
   // Open the diff in the IDE
-  let ideClient;
+  let ideClient
   ideClient = getConnectedIdeClient(toolUseContext.options.mcpClients)
   try {
     const { updatedFile } = getPatchForEdits({
@@ -273,11 +249,7 @@ async function showDiffInIDE(
     const ideRunningInWindows =
       (ideClient.config as McpSSEIDEServerConfig | McpWebSocketIDEServerConfig)
         .ideRunningInWindows === true
-    if (
-      getPlatform() === 'wsl' &&
-      ideRunningInWindows &&
-      process.env.WSL_DISTRO_NAME
-    ) {
+    if (getPlatform() === 'wsl' && ideRunningInWindows && process.env.WSL_DISTRO_NAME) {
       const converter = new WindowsToWSLConverter(process.env.WSL_DISTRO_NAME)
       ideOldPath = converter.toIDEPath(oldFilePath)
     }
@@ -368,9 +340,7 @@ function isRejectedMessage(data: unknown): data is { text: 'DIFF_REJECTED' } {
   )
 }
 
-function isSaveMessage(
-  data: unknown,
-): data is [{ text: 'FILE_SAVED' }, { text: string }] {
+function isSaveMessage(data: unknown): data is [{ text: 'FILE_SAVED' }, { text: string }] {
   return (
     Array.isArray(data) &&
     data[0]?.type === 'text' &&

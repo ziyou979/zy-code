@@ -21,10 +21,8 @@ export const MACOS_PREFERENCE_DOMAIN = 'com.anthropic.zycode'
  * redirected and 32-bit processes would silently read from WOW6432Node.
  * See: https://learn.microsoft.com/en-us/windows/win32/winprog64/shared-registry-keys
  */
-export const WINDOWS_REGISTRY_KEY_PATH_HKLM =
-  'HKLM\\SOFTWARE\\Policies\\ZyCode'
-export const WINDOWS_REGISTRY_KEY_PATH_HKCU =
-  'HKCU\\SOFTWARE\\Policies\\ZyCode'
+export const WINDOWS_REGISTRY_KEY_PATH_HKLM = 'HKLM\\SOFTWARE\\Policies\\ZyCode'
+export const WINDOWS_REGISTRY_KEY_PATH_HKCU = 'HKCU\\SOFTWARE\\Policies\\ZyCode'
 
 /** Windows registry value name containing the JSON settings blob. */
 export const WINDOWS_REGISTRY_VALUE_NAME = 'Settings'
@@ -68,12 +66,7 @@ export function getMacOSPlistPaths(): Array<{ path: string; label: string }> {
   // Allow user-writable preferences for local MDM testing in ant builds only.
   if (isInternalBuild()) {
     paths.push({
-      path: join(
-        homedir(),
-        'Library',
-        'Preferences',
-        `${MACOS_PREFERENCE_DOMAIN}.plist`,
-      ),
+      path: join(homedir(), 'Library', 'Preferences', `${MACOS_PREFERENCE_DOMAIN}.plist`),
       label: 'user preferences (ant-only)',
     })
   }

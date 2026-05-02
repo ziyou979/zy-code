@@ -7,12 +7,4 @@ import srun from './srun.js'
 import time from './time.js'
 import timeout from './timeout.js'
 
-export default [
-  pyright,
-  timeout,
-  sleep,
-  alias,
-  nohup,
-  time,
-  srun,
-] satisfies CommandSpec[]
+export default [pyright, timeout, sleep, alias, nohup, time, srun] satisfies CommandSpec[]

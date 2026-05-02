@@ -52,7 +52,7 @@ export const HOOK_EVENTS = [
   'FileChanged',
 ] as const
 
-export type HookEvent = typeof HOOK_EVENTS[number]
+export type HookEvent = (typeof HOOK_EVENTS)[number]
 
 export type SDKAssistantMessageError =
   | 'authentication_failed'

@@ -4,11 +4,7 @@
 
 import axios from 'axios'
 import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
-import {
-  getApiKey,
-  getZyAIOAuthTokens,
-  handleOAuth401Error,
-} from './auth.js'
+import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
@@ -73,12 +69,12 @@ export function getAuthHeaders(): AuthHeaders {
     if (apiKey) {
       return {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       }
     }
   }
-  
+
   // Use API key authentication
   const apiKey = getApiKey()
   if (!apiKey) {

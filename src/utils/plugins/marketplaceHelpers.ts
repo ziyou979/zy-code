@@ -20,7 +20,7 @@ export function formatFailureDetails(
   const maxShow = 2
   const details = failures
     .slice(0, maxShow)
-    .map(f => {
+    .map((f) => {
       const reason = f.reason || f.error || 'unknown error'
       return includeReasons ? `${f.name} (${reason})` : f.name
     })
@@ -57,10 +57,7 @@ export function getMarketplaceSourceDisplay(source: MarketplaceSource): string {
 /**
  * Create a plugin ID from plugin name and marketplace name
  */
-export function createPluginId(
-  pluginName: string,
-  marketplaceName: string,
-): string {
+export function createPluginId(pluginName: string, marketplaceName: string): string {
   return `${pluginName}@${marketplaceName}`
 }
 
@@ -140,16 +137,12 @@ export function formatMarketplaceLoadingErrors(
   }
 }
 
-function formatFailureNames(
-  failures: Array<{ name: string; error: string }>,
-): string {
-  return failures.map(f => f.name).join(', ')
+function formatFailureNames(failures: Array<{ name: string; error: string }>): string {
+  return failures.map((f) => f.name).join(', ')
 }
 
-function formatFailureErrors(
-  failures: Array<{ name: string; error: string }>,
-): string {
-  return failures.map(f => `${f.name}: ${f.error}`).join('; ')
+function formatFailureErrors(failures: Array<{ name: string; error: string }>): string {
+  return failures.map((f) => `${f.name}: ${f.error}`).join('; ')
 }
 
 /**
@@ -213,10 +206,7 @@ function areSourcesEqual(a: MarketplaceSource, b: MarketplaceSource): boolean {
     case 'directory':
       return a.path === (b as typeof a).path
     case 'settings':
-      return (
-        a.name === (b as typeof a).name &&
-        isEqual(a.plugins, (b as typeof a).plugins)
-      )
+      return a.name === (b as typeof a).name && isEqual(a.plugins, (b as typeof a).plugins)
     default:
       return false
   }
@@ -232,9 +222,7 @@ function areSourcesEqual(a: MarketplaceSource, b: MarketplaceSource): boolean {
  * @param source - The marketplace source to extract host from
  * @returns The hostname string, or null if extraction fails or source type not supported
  */
-export function extractHostFromSource(
-  source: MarketplaceSource,
-): string | null {
+export function extractHostFromSource(source: MarketplaceSource): string | null {
   switch (source.source) {
     case 'github':
       // GitHub shorthand always means github.com
@@ -333,7 +321,7 @@ export function getHostPatternsFromAllowlist(): string[] {
       (entry): entry is MarketplaceSource & { source: 'hostPattern' } =>
         entry.source === 'hostPattern',
     )
-    .map(entry => entry.hostPattern)
+    .map((entry) => entry.hostPattern)
 }
 
 /**
@@ -353,9 +341,7 @@ function extractGitHubRepoFromGitUrl(url: string): string | null {
   }
 
   // HTTPS format: https://github.com/owner/repo.git or https://github.com/owner/repo
-  const httpsMatch = url.match(
-    /^https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/,
-  )
+  const httpsMatch = url.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/)
   if (httpsMatch && httpsMatch[1]) {
     return httpsMatch[1]
   }
@@ -463,9 +449,7 @@ export function isSourceInBlocklist(source: MarketplaceSource): boolean {
   if (blocklist === null) {
     return false
   }
-  return blocklist.some(blocked =>
-    areSourcesEquivalentForBlocklist(source, blocked),
-  )
+  return blocklist.some((blocked) => areSourcesEquivalentForBlocklist(source, blocked))
 }
 
 /**
@@ -490,7 +474,7 @@ export function isSourceAllowedByPolicy(source: MarketplaceSource): boolean {
   }
 
   // Check each entry in the allowlist
-  return allowlist.some(allowed => {
+  return allowlist.some((allowed) => {
     // Handle hostPattern entries - match by extracted host
     if (allowed.source === 'hostPattern') {
       return doesSourceMatchHostPattern(source, allowed)
@@ -579,10 +563,7 @@ export async function detectEmptyMarketplaceReason({
   }
 
   // Check if all configured marketplaces failed to load
-  if (
-    failedMarketplaceCount > 0 &&
-    failedMarketplaceCount === configuredMarketplaceCount
-  ) {
+  if (failedMarketplaceCount > 0 && failedMarketplaceCount === configuredMarketplaceCount) {
     return 'all-marketplaces-failed'
   }
 

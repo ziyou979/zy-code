@@ -27,16 +27,14 @@ export function parseArguments(args: string): string[] {
   }
 
   // Return $KEY to preserve variable syntax literally (don't expand variables)
-  const result = tryParseShellCommand(args, key => `$${key}`)
+  const result = tryParseShellCommand(args, (key) => `$${key}`)
   if (!result.success) {
     // Fall back to simple whitespace split if parsing fails
     return args.split(/\s+/).filter(Boolean)
   }
 
   // Filter to only string tokens (ignore shell operators, etc.)
-  return result.tokens.filter(
-    (token): token is string => typeof token === 'string',
-  )
+  return result.tokens.filter((token): token is string => typeof token === 'string')
 }
 
 /**
@@ -47,9 +45,7 @@ export function parseArguments(args: string): string[] {
  * - "foo bar baz" => ["foo", "bar", "baz"]
  * - ["foo", "bar", "baz"] => ["foo", "bar", "baz"]
  */
-export function parseArgumentNames(
-  argumentNames: string | string[] | undefined,
-): string[] {
+export function parseArgumentNames(argumentNames: string | string[] | undefined): string[] {
   if (!argumentNames) {
     return []
   }
@@ -79,7 +75,7 @@ export function generateProgressiveArgumentHint(
 ): string | undefined {
   const remaining = argNames.slice(typedArgs.length)
   if (remaining.length === 0) return undefined
-  return remaining.map(name => `[${name}]`).join(' ')
+  return remaining.map((name) => `[${name}]`).join(' ')
 }
 
 /**
@@ -114,10 +110,7 @@ export function substituteArguments(
 
     // Match $name but not $name[...] or $nameXxx (word chars)
     // Also ensure we match word boundaries to avoid partial matches
-    content = content.replace(
-      new RegExp(`\\$${name}(?![\\[\\w])`, 'g'),
-      parsedArgs[i] ?? '',
-    )
+    content = content.replace(new RegExp(`\\$${name}(?![\\[\\w])`, 'g'), parsedArgs[i] ?? '')
   }
 
   // Replace indexed arguments ($ARGUMENTS[0], $ARGUMENTS[1], etc.)

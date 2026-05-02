@@ -44,9 +44,7 @@ export function useElapsedTime(
     // 避免独立 setInterval 导致的 Ink 帧竞争和渲染重叠。
     const onChange = (): void => {
       const now = clock.absoluteNow()
-      setElapsed(
-        formatDuration(Math.max(0, (endTime ?? now) - startTime - pausedMs)),
-      )
+      setElapsed(formatDuration(Math.max(0, (endTime ?? now) - startTime - pausedMs)))
     }
 
     return clock.subscribe(onChange, true)

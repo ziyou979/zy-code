@@ -11,108 +11,75 @@ export const en: TranslationResource = {
     'Use Plan Mode to prepare for a complex request before making changes. Press {shortcut} twice to enable.',
   'tip.defaultPermissionModeConfig':
     'Use /config to change your default permission mode (including Plan Mode)',
-  'tip.gitWorktrees':
-    'Use git worktrees to run multiple ZY code sessions in parallel.',
+  'tip.gitWorktrees': 'Use git worktrees to run multiple ZY code sessions in parallel.',
   'tip.colorWhenMultiSessions':
     'Running multiple ZY Code sessions? Use /color and /rename to tell them apart at a glance.',
   'tip.terminalSetupApple':
     'Run /terminal-setup to enable convenient terminal integration like Option + Enter for new line and more',
   'tip.terminalSetupOther':
     'Run /terminal-setup to enable convenient terminal integration like Shift + Enter for new line and more',
-  'tip.shiftEnterApple':
-    'Press Option+Enter to send a multi-line message',
-  'tip.shiftEnterOther':
-    'Press Shift+Enter to send a multi-line message',
-  'tip.shiftEnterSetupApple':
-    'Run /terminal-setup to enable Option+Enter for new lines',
-  'tip.shiftEnterSetupOther':
-    'Run /terminal-setup to enable Shift+Enter for new lines',
-  'tip.memoryCommand':
-    'Use /memory to view and manage ZY Code memory',
-  'tip.themeCommand':
-    'Use /theme to change the color theme',
+  'tip.shiftEnterApple': 'Press Option+Enter to send a multi-line message',
+  'tip.shiftEnterOther': 'Press Shift+Enter to send a multi-line message',
+  'tip.shiftEnterSetupApple': 'Run /terminal-setup to enable Option+Enter for new lines',
+  'tip.shiftEnterSetupOther': 'Run /terminal-setup to enable Shift+Enter for new lines',
+  'tip.memoryCommand': 'Use /memory to view and manage ZY Code memory',
+  'tip.themeCommand': 'Use /theme to change the color theme',
   'tip.colortermTruecolor':
     'Try setting environment variable COLORTERM=truecolor for richer colors',
   'tip.powershellToolEnv':
     'Set ZY_CODE_USE_POWERSHELL_TOOL=1 to enable the PowerShell tool (preview)',
   'tip.statusLine':
     'Use /statusline to set up a custom status line that will display beneath the input box',
-  'tip.promptQueue':
-    'Hit Enter to queue up additional messages while ZY Code is working.',
-  'tip.enterToSteer':
-    'Send messages to ZY code while it works to steer ZY Code in real-time',
+  'tip.promptQueue': 'Hit Enter to queue up additional messages while ZY Code is working.',
+  'tip.enterToSteer': 'Send messages to ZY code while it works to steer ZY Code in real-time',
   'tip.todoList':
     'Ask ZY Code to create a todo list when working on complex tasks to track progress and remain on track',
   'tip.installGithubApp':
     'Run /install-github-app to tag @zy right from your Github issues and PRs',
-  'tip.installSlackApp':
-    'Run /install-slack-app to use ZY Code in Slack',
-  'tip.permissions':
-    'Use /permissions to pre-approve and pre-deny bash, edit, and MCP tools',
-  'tip.dragAndDropImages':
-    'Did you know you can drag and drop image files into your terminal?',
-  'tip.pasteImagesMac':
-    'Paste images into ZY Code using control+v (not cmd+v!)',
-  'tip.doubleEsc':
-    'Double-tap esc to rewind the conversation to a previous point in time',
+  'tip.installSlackApp': 'Run /install-slack-app to use ZY Code in Slack',
+  'tip.permissions': 'Use /permissions to pre-approve and pre-deny bash, edit, and MCP tools',
+  'tip.dragAndDropImages': 'Did you know you can drag and drop image files into your terminal?',
+  'tip.pasteImagesMac': 'Paste images into ZY Code using control+v (not cmd+v!)',
+  'tip.doubleEsc': 'Double-tap esc to rewind the conversation to a previous point in time',
   'tip.doubleEscCodeRestore':
     'Double-tap esc to rewind the code and/or conversation to a previous point in time',
-  'tip.continue':
-    'Run zy --continue or zy --resume to resume a conversation',
+  'tip.continue': 'Run zy --continue or zy --resume to resume a conversation',
   'tip.renameConversation':
     'Name your conversations with /rename to find them easily in /resume later',
   'tip.customCommands':
     'Create skills by adding .md files to .zy/skills/ in your project or ~/.zy/skills/ for skills that work in any project',
   'tip.shiftTab':
     'Hit {shortcut} to cycle between modes (default, auto-accept edit, and plan mode)',
-  'tip.imagePaste':
-    'Use {shortcut} to paste images from your clipboard',
+  'tip.imagePaste': 'Use {shortcut} to paste images from your clipboard',
   'tip.customAgents':
     'Use /agents to optimize specific tasks. Eg. Software Architect, Code Writer, Code Reviewer',
-  'tip.agentFlag':
-    'Use --agent <agent_name> to directly start a conversation with a subagent',
-  'tip.desktopApp':
-    'Run ZY Code locally or remotely using the Zy desktop app',
-  'tip.desktopShortcut':
-    'Continue your session in ZY Code Desktop with {shortcut}',
-  'tip.webApp':
-    'Run tasks in the cloud while you keep coding locally',
-  'tip.mobileApp':
-    '/mobile to use ZY Code from the Zy app on your phone',
+  'tip.agentFlag': 'Use --agent <agent_name> to directly start a conversation with a subagent',
+  'tip.desktopApp': 'Run ZY Code locally or remotely using the Zy desktop app',
+  'tip.desktopShortcut': 'Continue your session in ZY Code Desktop with {shortcut}',
+  'tip.webApp': 'Run tasks in the cloud while you keep coding locally',
+  'tip.mobileApp': '/mobile to use ZY Code from the Zy app on your phone',
   'tip.opusPlanModeReminder':
     'Your default model setting is Opus Plan Mode. Press {shortcut} twice to activate Plan Mode and plan with Zy Opus.',
   'tip.frontendDesignPlugin':
     'Working with HTML/CSS? Install the frontend-design plugin:\n{command}',
-  'tip.vercelPlugin':
-    'Working with Vercel? Install the vercel plugin:\n{command}',
-  'tip.effortHighB':
-    'Use {cmd} for better one-shot answers. Zy thinks it through first.',
-  'tip.effortHighA':
-    'Working on something tricky? {cmd} gives better first answers',
+  'tip.vercelPlugin': 'Working with Vercel? Install the vercel plugin:\n{command}',
+  'tip.effortHighB': 'Use {cmd} for better one-shot answers. Zy thinks it through first.',
+  'tip.effortHighA': 'Working on something tricky? {cmd} gives better first answers',
   'tip.subagentFanoutB':
     'For big tasks, tell ZY Code to {cmd}. They work in parallel and keep your main thread clean.',
   'tip.subagentFanoutA':
     'Say {cmd} and ZY Code sends a team. Each one digs deep so nothing gets missed.',
-  'tip.loopCommandB':
-    'Use {cmd} to run any prompt on a schedule. Set it and forget it.',
+  'tip.loopCommandB': 'Use {cmd} to run any prompt on a schedule. Set it and forget it.',
   'tip.loopCommandA':
     '{cmd} runs any prompt on a recurring schedule. Great for monitoring deploys, babysitting PRs, or polling status.',
-  'tip.guestPasses':
-    'Share ZY Code and earn {reward} of extra usage · {passes}',
-  'tip.guestPassesNoReward':
-    'You have free guest passes to share · {passes}',
-  'tip.overageCredit':
-    '{amount} · {command}',
-  'tip.feedbackCommand':
-    'Use /feedback to help us improve!',
-  'tip.clearContext':
-    'Use /clear to start fresh when switching topics and free up context',
-  'tip.btwSideQuestion':
-    'Use /btw to ask a quick side question without interrupting current work',
-  'tip.vscodeCommandInstall':
-    `Open the Command Palette (Cmd+Shift+P) and run "Shell Command: Install '{command}' command in PATH" to enable IDE integration`,
-  'tip.ideUpsellExternalTerminal':
-    'Connect ZY Code to your IDE · /ide',
+  'tip.guestPasses': 'Share ZY Code and earn {reward} of extra usage · {passes}',
+  'tip.guestPassesNoReward': 'You have free guest passes to share · {passes}',
+  'tip.overageCredit': '{amount} · {command}',
+  'tip.feedbackCommand': 'Use /feedback to help us improve!',
+  'tip.clearContext': 'Use /clear to start fresh when switching topics and free up context',
+  'tip.btwSideQuestion': 'Use /btw to ask a quick side question without interrupting current work',
+  'tip.vscodeCommandInstall': `Open the Command Palette (Cmd+Shift+P) and run "Shell Command: Install '{command}' command in PATH" to enable IDE integration`,
+  'tip.ideUpsellExternalTerminal': 'Connect ZY Code to your IDE · /ide',
 
   // Rate limit
   'rateLimit.hit': "You've hit your {limit}",
@@ -127,22 +94,21 @@ export const en: TranslationResource = {
   'rateLimit.weeklyLimit': 'weekly limit',
   'rateLimit.sessionLimit': 'session limit',
   'rateLimit.usageLimit': 'usage limit',
-  'rateLimit.extraUsageSpendingLimit':
-    "You're close to your extra usage spending limit",
+  'rateLimit.extraUsageSpendingLimit': "You're close to your extra usage spending limit",
   'rateLimit.feedbackReset':
-    "If you have feedback about this limit, post in {channel}. You can reset your limits with /reset-limits",
+    'If you have feedback about this limit, post in {channel}. You can reset your limits with /reset-limits',
   'rateLimit.hitWithReset': "You've hit your {limit} · {resetTime}",
   'rateLimit.usedPercentWithReset': "You've used {pct}% of your {limit} · {resetTime}",
   'rateLimit.approachingWithReset': 'Approaching {limit} · {resetTime}',
-  'rateLimit.nowUsingExtraUsageWithReset': "You're now using extra usage · Your {limit} {resetTime}",
+  'rateLimit.nowUsingExtraUsageWithReset':
+    "You're now using extra usage · Your {limit} {resetTime}",
 
   // Rate limit upsell
   'rateLimit.upsell.extraUsage': '/extra-usage to finish what you\u2019re working on.',
   'rateLimit.upsell.login': '/login to switch to an API usage-billed account.',
   'rateLimit.upsell.openingOptions': 'Opening your options\u2026',
   'rateLimit.upsell.upgrade': '/upgrade to increase your usage limit.',
-  'rateLimit.upsell.requestAdmin':
-    '/extra-usage to request more usage from your admin.',
+  'rateLimit.upsell.requestAdmin': '/extra-usage to request more usage from your admin.',
   'rateLimit.upsell.upgradeOrExtra':
     '/upgrade or /extra-usage to finish what you\u2019re working on.',
 
@@ -245,12 +211,14 @@ export const en: TranslationResource = {
   'permission.sedPatternDidNotMatch': 'Pattern did not match any content',
   'permission.saveFileToContinue': 'Save file to continue…',
   'permission.openedChangesInIDE': 'Opened changes in {ideName}',
-  'permission.symlinkModifyOutside': 'This will modify {symlinkTarget} (outside working directory) via a symlink',
+  'permission.symlinkModifyOutside':
+    'This will modify {symlinkTarget} (outside working directory) via a symlink',
   'permission.symlinkTarget': 'Symlink target: {symlinkTarget}',
 
   // Trust dialog
   'trustDialog.title': 'Accessing workspace:',
-  'trustDialog.safetyCheck': "Quick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work from your team). If not, take a moment to review what's in this folder first.",
+  'trustDialog.safetyCheck':
+    "Quick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source project, or work from your team). If not, take a moment to review what's in this folder first.",
   'trustDialog.capabilities': "ZY Code'll be able to read, edit, and execute files here.",
   'trustDialog.securityGuide': 'Security guide',
   'trustDialog.trust': 'Yes, I trust this folder',
@@ -271,8 +239,7 @@ export const en: TranslationResource = {
   'usage.currentWeekAll': 'Current week (all models)',
   'usage.currentWeekSonnet': 'Current week (Sonnet only)',
   'usage.extraUsage': 'Extra usage',
-  'usage.extraUsageNotEnabled':
-    'Extra usage not enabled · /extra-usage to enable',
+  'usage.extraUsageNotEnabled': 'Extra usage not enabled · /extra-usage to enable',
   'usage.unlimited': 'Unlimited',
   'usage.loading': 'Loading usage data\u2026',
   'usage.loadError': 'Failed to load usage data',
@@ -280,8 +247,7 @@ export const en: TranslationResource = {
   'usage.percentUsed': '{pct}% used',
   'usage.resets': 'Resets {time}',
   'usage.spent': '{used} / {total} spent',
-  'usage.subscriptionOnly':
-    '/usage is only available for subscription plans.',
+  'usage.subscriptionOnly': '/usage is only available for subscription plans.',
   'usage.error': 'Error: {error}',
 
   // Token warning
@@ -299,7 +265,7 @@ export const en: TranslationResource = {
   'effort.low': 'Low',
 
   // Press Enter
-  'pressEnterToContinue': 'Press Enter to continue\u2026',
+  pressEnterToContinue: 'Press Enter to continue\u2026',
 
   // Dialog
   'dialog.pressAgainToExit': 'Press {keyName} again to exit',
@@ -433,7 +399,8 @@ export const en: TranslationResource = {
   'logo.whatsNewFooter': '/release-notes for more',
   'logo.whatsNewEmpty': 'Check the ZY Code changelog for updates',
   'logo.noPrompt': 'No prompt',
-  'logo.homeDirWarning': 'Note: You have launched zy in your home directory. For the best experience, launch it in a project directory instead.',
+  'logo.homeDirWarning':
+    'Note: You have launched zy in your home directory. For the best experience, launch it in a project directory instead.',
   'logo.tipsGettingStarted': 'Tips for getting started',
   'logo.guestPassesTitle': '3 guest passes',
   'logo.guestPassesSubtitle': 'Share ZY Code and earn {reward} of extra usage',
@@ -450,30 +417,43 @@ export const en: TranslationResource = {
   'bash.imageDetected': '[Image data detected and sent to ZY]',
   'bash.runningCommand': 'Running command',
   'bash.runningActivity': 'Running {desc}',
-  'bash.sedRequiresApproval': 'sed command requires approval (contains potentially dangerous operations)',
-  'bash.sedDangerousOperations': 'sed command contains operations that require explicit approval (e.g., write commands, execute commands)',
+  'bash.sedRequiresApproval':
+    'sed command requires approval (contains potentially dangerous operations)',
+  'bash.sedDangerousOperations':
+    'sed command contains operations that require explicit approval (e.g., write commands, execute commands)',
   'bash.sedNoDangerousOperations': 'No dangerous sed operations detected',
   'bash.permission.requiresApproval': 'This command requires approval',
   'bash.permission.readOnlyAllowed': 'Read-only command is allowed',
-  'bash.permission.sandboxAutoAllow': 'Auto-allowed with sandbox (autoAllowBashIfSandboxed enabled)',
+  'bash.permission.sandboxAutoAllow':
+    'Auto-allowed with sandbox (autoAllowBashIfSandboxed enabled)',
   'bash.permission.allowedByPromptRule': 'Allowed by prompt rule: "{rule}"',
   'bash.permission.deniedByPromptRule': 'Denied by Bash prompt rule: "{rule}"',
   'bash.permission.requiredByPromptRule': 'Required by Bash prompt rule: "{rule}"',
-  'bash.permission.malformedSyntax': 'Command contains malformed syntax that cannot be parsed: {error}',
-  'bash.permission.tooManySubcommands': 'Command splits into {count} subcommands, too many to safety-check individually',
-  'bash.permission.multipleCd': 'Multiple directory changes in one command require approval for clarity',
-  'bash.permission.cdAndGit': 'Compound commands with cd and git require approval to prevent bare repository attacks',
-  'bash.permission.shellOperators': 'This command uses shell operators that require approval for safety',
+  'bash.permission.malformedSyntax':
+    'Command contains malformed syntax that cannot be parsed: {error}',
+  'bash.permission.tooManySubcommands':
+    'Command splits into {count} subcommands, too many to safety-check individually',
+  'bash.permission.multipleCd':
+    'Multiple directory changes in one command require approval for clarity',
+  'bash.permission.cdAndGit':
+    'Compound commands with cd and git require approval to prevent bare repository attacks',
+  'bash.permission.shellOperators':
+    'This command uses shell operators that require approval for safety',
   'bash.permission.parseFailed': 'Failed to parse command',
   'bash.permission.noPipes': 'No pipes found in command',
   'bash.permission.patternsRequireApproval': 'Command contains patterns that require approval',
-  'bash.permission.securityPatterns': 'This command contains patterns that could pose security risks and requires approval',
+  'bash.permission.securityPatterns':
+    'This command contains patterns that could pose security risks and requires approval',
   'bash.permission.requiresSandboxBypass': 'Requires permission to bypass sandbox',
   'bash.permission.processSubstitution': 'Process substitution requires manual approval',
-  'bash.permission.processSubstitutionFull': 'Process substitution ({pattern}) can execute arbitrary commands and requires manual approval',
-  'bash.permission.shellExpansionInPaths': 'Shell expansion syntax in paths requires manual approval',
-  'bash.permission.shellExpansionInPathsFull': 'Shell expansion syntax in paths requires manual approval',
-  'bash.permission.dangerousOperationOnPath': 'Dangerous {command} operation on critical path: {path}',
+  'bash.permission.processSubstitutionFull':
+    'Process substitution ({pattern}) can execute arbitrary commands and requires manual approval',
+  'bash.permission.shellExpansionInPaths':
+    'Shell expansion syntax in paths requires manual approval',
+  'bash.permission.shellExpansionInPathsFull':
+    'Shell expansion syntax in paths requires manual approval',
+  'bash.permission.dangerousOperationOnPath':
+    'Dangerous {command} operation on critical path: {path}',
 
   // File read tool
   'fileRead.readImage': 'Read image ({size})',
@@ -529,12 +509,13 @@ export const en: TranslationResource = {
   'help.suspend': 'ctrl + z to suspend',
   'help.pasteImages': '{shortcut} to paste images',
   'help.switchModel': '{shortcut} to switch model',
-    'help.stashPrompt': '{shortcut} to stash prompt',
+  'help.stashPrompt': '{shortcut} to stash prompt',
   'help.externalEditor': '{shortcut} to edit in $EDITOR',
   'help.customizeKeybindings': '/keybindings to customize',
   'help.terminal': '{shortcut} for terminal',
   'help.shortcutsTitle': 'Shortcuts',
-  'help.description': 'Zy understands your codebase, makes edits with your permission, and executes commands — right from your terminal.',
+  'help.description':
+    'Zy understands your codebase, makes edits with your permission, and executes commands — right from your terminal.',
   'help.newlineShift': 'shift + \u23CE for newline',
   'help.newlineBackslash': '\\\u23CE for newline',
   'help.newlineBackslashFull': 'backslash (\\) + return (\u23CE) for newline',
@@ -591,9 +572,11 @@ export const en: TranslationResource = {
   'onboarding.selectApiFormat': 'Select API format',
   'onboarding.apiFormatDescription': 'Choose the request format for your custom API endpoint.',
   'onboarding.apiFormat.anthropic': 'Anthropic format',
-  'onboarding.apiFormat.anthropicDesc': 'Uses Anthropic Messages API format (supports thinking, cache_control, etc.)',
+  'onboarding.apiFormat.anthropicDesc':
+    'Uses Anthropic Messages API format (supports thinking, cache_control, etc.)',
   'onboarding.apiFormat.openai': 'OpenAI format',
-  'onboarding.apiFormat.openaiDesc': 'Uses OpenAI Chat Completions API format (for vLLM, LiteLLM, etc.)',
+  'onboarding.apiFormat.openaiDesc':
+    'Uses OpenAI Chat Completions API format (for vLLM, LiteLLM, etc.)',
   'onboarding.platform.dashscope': 'Bailian DashScope',
   'onboarding.platform.dashscopeDesc': 'Alibaba Cloud Bailian Platform',
   'onboarding.platform.openai': 'OpenAI',
@@ -662,9 +645,11 @@ export const en: TranslationResource = {
   'onboarding.tier.advanced.title': 'Configure Advanced Tier Model (optional)',
   'onboarding.tier.advanced.desc': 'Used for complex reasoning. Skip to use the standard model.',
   'onboarding.tier.compact.title': 'Configure Compact Tier Model (optional)',
-  'onboarding.tier.compact.desc': 'Used for fast/lightweight tasks (summaries, titles). Skip to use the standard model.',
+  'onboarding.tier.compact.desc':
+    'Used for fast/lightweight tasks (summaries, titles). Skip to use the standard model.',
   'onboarding.tier.mainLoop.title': 'Select Main Conversation Tier',
-  'onboarding.tier.mainLoop.desc': 'Which tier to use for the main conversation loop. Can be changed later via /config mainLoopModel.',
+  'onboarding.tier.mainLoop.desc':
+    'Which tier to use for the main conversation loop. Can be changed later via /config mainLoopModel.',
   'onboarding.tier.option.advanced': 'Advanced — complex reasoning',
   'onboarding.tier.option.standard': 'Standard — everyday tasks (default)',
   'onboarding.tier.option.compact': 'Compact — fast/lightweight',
@@ -676,11 +661,13 @@ export const en: TranslationResource = {
   'onboarding.pressAgainToExit': 'Press {key} again to exit',
   'onboarding.security.title': 'Security notes:',
   'onboarding.security.risk1': 'ZY Code can make mistakes',
-  'onboarding.security.risk1desc': 'You should always review ZY Code&apos;s responses, especially when running code.',
+  'onboarding.security.risk1desc':
+    'You should always review ZY Code&apos;s responses, especially when running code.',
   'onboarding.security.risk2': 'Due to prompt injection risks, only use it with code you trust',
   'onboarding.security.risk2desc': 'For more details see:',
   'onboarding.terminalSetup.title': 'Use ZY Code&apos;s terminal setup?',
-  'onboarding.terminalSetup.description': 'For the optimal coding experience, enable the recommended settings for your terminal: {settings}',
+  'onboarding.terminalSetup.description':
+    'For the optimal coding experience, enable the recommended settings for your terminal: {settings}',
   'onboarding.terminalSetup.appleSettings': 'Option+Enter for newlines and visual bell',
   'onboarding.terminalSetup.otherSettings': 'Shift+Enter for newlines',
   'onboarding.terminalSetup.yes': 'Yes, use recommended settings',
@@ -707,13 +694,15 @@ export const en: TranslationResource = {
   'permission.yesAllowReadMultiplePathsStart': 'Yes, allow reading from',
   'permission.yesAllowReadMultiplePathsEnd': 'in this project',
   'permission.fromThisProject': 'from this project',
-  'permission.yesAllowEditsInDir': 'Yes, allow all edits in {dir}/ during this session ({shortcut})',
+  'permission.yesAllowEditsInDir':
+    'Yes, allow all edits in {dir}/ during this session ({shortcut})',
   'permission.yesAllowZyFolderEdits': 'Yes, and allow Zy to edit its own settings for this session',
   'permission.yesInstallPlugin': 'Yes, install {pluginName}',
   'permission.yesAllowAccessDir': 'Yes, and always allow access to {dir}/ from this project',
   'permission.yesAllowAccessDirs': 'Yes, and always allow access to {dirs} from this project',
   'permission.yesAllowReadAndAccess': 'Yes, and allow {paths} access and {commands} commands',
-  'permission.yesAllowAccessAndCommands': 'Yes, and allow access to {paths} and {commands} commands',
+  'permission.yesAllowAccessAndCommands':
+    'Yes, and allow access to {paths} and {commands} commands',
   'permission.noDontShowPluginAgain': "No, and don't show plugin installation hints again",
   'permission.noRecommended': 'No (recommended)',
   'permission.tellZyNext': 'and tell Zy what to do next',
@@ -750,7 +739,8 @@ export const en: TranslationResource = {
   // Plan mode exit dialog
   'planMode.readyToCode': 'Ready to code?',
   'planMode.hereIsPlan': 'Here is Zy&apos;s plan:',
-  'planMode.planWrittenReady': 'Zy has written up a plan and is ready to execute. Would you like to proceed?',
+  'planMode.planWrittenReady':
+    'Zy has written up a plan and is ready to execute. Would you like to proceed?',
   'planMode.wouldYouProceed': 'Would you like to proceed?',
   'planMode.exitPlanMode': 'Exit plan mode?',
   'planMode.wantsExit': 'Zy wants to exit plan mode',
@@ -769,7 +759,8 @@ export const en: TranslationResource = {
   'planMode.tellZyWhatToChange': 'Tell Zy what to change',
   'planMode.shiftTabApprove': 'shift+tab to approve with this feedback',
   'planMode.enterTitle': 'Enter plan mode?',
-  'planMode.wantsEnter': 'Zy wants to enter plan mode to explore and design an implementation approach.',
+  'planMode.wantsEnter':
+    'Zy wants to enter plan mode to explore and design an implementation approach.',
   'planMode.inPlanModeWill': 'In plan mode, Zy will:',
   'planMode.exploreCodebase': ' · Explore the codebase thoroughly',
   'planMode.identifyPatterns': ' · Identify existing patterns',
@@ -897,22 +888,34 @@ export const en: TranslationResource = {
   'onboarding.themeHelpText': '后续可通过 /theme 更改',
 
   // Bash security
-  'bashSecurity.processSubstitutionBefore': 'Command contains process substitution (<) which can read from command output',
-  'bashSecurity.processSubstitutionAfter': 'Command contains process substitution (>) which can write to command input',
-  'bashSecurity.zshProcessSubstitution': 'Command contains Zsh process substitution (=) which can execute commands',
-  'bashSecurity.zshEqualsExpansion': 'Command contains Zsh EQUALS expansion which expands to command path',
-  'bashSecurity.dollarCommandSubstitution': 'Command contains $() command substitution which can execute arbitrary commands',
-  'bashSecurity.parameterSubstitution': 'Command contains ${} parameter substitution which can expand variables or execute commands',
-  'bashSecurity.legacyArithmeticExpansion': 'Command contains $[] legacy arithmetic expansion',
-  'bashSecurity.zshStyleParameterExpansion': 'Command contains Zsh style parameter expansion (~[])',
-  'bashSecurity.zshStyleGlobQualifiers': 'Command contains Zsh style glob qualifiers (e:) which can execute commands',
-  'bashSecurity.zshGlobQualifierWithCommand': 'Command contains Zsh glob qualifier (+) with command execution',
-  'bashSecurity.zshAlwaysBlock': 'Command contains Zsh always block which executes code unconditionally',
-  'bashSecurity.powerShellCommentSyntax': 'Command contains PowerShell comment syntax (<#) which can hide commands',
+  'bashSecurity.processSubstitutionBefore':
+    'process substitution (<) which can read from command output',
+  'bashSecurity.processSubstitutionAfter':
+    'process substitution (>) which can write to command input',
+  'bashSecurity.zshProcessSubstitution':
+    'Zsh process substitution (=) which can execute commands',
+  'bashSecurity.zshEqualsExpansion':
+    'Zsh EQUALS expansion which expands to command path',
+  'bashSecurity.dollarCommandSubstitution':
+    '$() command substitution which can execute arbitrary commands',
+  'bashSecurity.parameterSubstitution':
+    '${} parameter substitution which can expand variables or execute commands',
+  'bashSecurity.legacyArithmeticExpansion': '$[] legacy arithmetic expansion',
+  'bashSecurity.zshStyleParameterExpansion': 'Zsh style parameter expansion (~[])',
+  'bashSecurity.zshStyleGlobQualifiers':
+    'Zsh style glob qualifiers (e:) which can execute commands',
+  'bashSecurity.zshGlobQualifierWithCommand':
+    'Zsh glob qualifier (+) with command execution',
+  'bashSecurity.zshAlwaysBlock':
+    'Zsh always block which executes code unconditionally',
+  'bashSecurity.powerShellCommentSyntax':
+    'PowerShell comment syntax (<#) which can hide commands',
   'bashSecurity.empty': 'Command is not empty',
   'bashSecurity.incompleteTab': 'Command appears to be an incomplete fragment (starts with tab)',
-  'bashSecurity.incompleteFlags': 'Command appears to be an incomplete fragment (starts with flags)',
-  'bashSecurity.incompleteOperator': 'Command appears to be a continuation line (starts with operator)',
+  'bashSecurity.incompleteFlags':
+    'Command appears to be an incomplete fragment (starts with flags)',
+  'bashSecurity.incompleteOperator':
+    'Command appears to be a continuation line (starts with operator)',
   'bashSecurity.complete': 'Command appears complete',
   'bashSecurity.safeHeredocNoSubstitution': 'No heredoc in substitution',
   'bashSecurity.noHeredocInSubstitution': 'No heredoc in substitution',
@@ -928,71 +931,101 @@ export const en: TranslationResource = {
   'bashSecurity.gitCommitNeedsValidation': 'Git commit needs validation',
   'bashSecurity.jqNotJq': 'Not jq',
   'bashSecurity.notJq': 'Not jq',
-  'bashSecurity.jqSystemFunction': 'jq command contains system() function which executes arbitrary commands',
-  'bashSecurity.jqDangerousFlags': 'jq command contains dangerous flags that could execute code or read arbitrary files',
+  'bashSecurity.jqSystemFunction':
+    'jq command contains system() function which executes arbitrary commands',
+  'bashSecurity.jqDangerousFlags':
+    'jq command contains dangerous flags that could execute code or read arbitrary files',
   'bashSecurity.jqSafe': 'jq command is safe',
-  'bashSecurity.shellMetacharacters': 'Command contains shell metacharacters (;, |, or &) in arguments',
+  'bashSecurity.shellMetacharacters':
+    'Command contains shell metacharacters (;, |, or &) in arguments',
   'bashSecurity.noMetacharacters': 'No metacharacters',
-  'bashSecurity.dangerousVariables': 'Command contains variables in dangerous contexts (redirections or pipes)',
+  'bashSecurity.dangerousVariables':
+    'Command contains variables in dangerous contexts (redirections or pipes)',
   'bashSecurity.noDangerousVariables': 'No dangerous variables',
   'bashSecurity.backticks': 'Command contains backticks (`) for command substitution',
   'bashSecurity.commandSubstitution': 'Command contains {pattern}',
   'bashSecurity.noDangerousPatterns': 'No dangerous patterns',
-  'bashSecurity.inputRedirection': 'Command contains input redirection (<) which could read sensitive files',
-  'bashSecurity.outputRedirection': 'Command contains output redirection (>) which could write to arbitrary files',
+  'bashSecurity.inputRedirection':
+    'Command contains input redirection (<) which could read sensitive files',
+  'bashSecurity.outputRedirection':
+    'Command contains output redirection (>) which could write to arbitrary files',
   'bashSecurity.noRedirections': 'No redirections',
   'bashSecurity.noNewlines': 'No newlines',
-  'bashSecurity.newlinesMultipleCommands': 'Command contains newlines that could separate multiple commands',
+  'bashSecurity.newlinesMultipleCommands':
+    'Command contains newlines that could separate multiple commands',
   'bashSecurity.newlinesInData': 'Newlines appear to be within data',
   'bashSecurity.noCarriageReturn': 'No carriage return',
-  'bashSecurity.carriageReturn': 'Command contains carriage return (\\r) which shell-quote and bash tokenize differently',
+  'bashSecurity.carriageReturn':
+    'Command contains carriage return (\\r) which shell-quote and bash tokenize differently',
   'bashSecurity.crInsideDoubleQuotes': 'CR only inside double quotes',
   'bashSecurity.crOnlyInsideDoubleQuotes': 'CR only inside double quotes',
-  'bashSecurity.ifsInjection': 'Command contains IFS variable usage which could bypass security validation',
-  'bashSecurity.ifsVariable': 'Command contains IFS variable usage which could bypass security validation',
+  'bashSecurity.ifsInjection':
+    'Command contains IFS variable usage which could bypass security validation',
+  'bashSecurity.ifsVariable':
+    'Command contains IFS variable usage which could bypass security validation',
   'bashSecurity.noIfsInjection': 'No IFS injection detected',
-  'bashSecurity.procEnviron': 'Command accesses /proc/*/environ which could expose sensitive environment variables',
+  'bashSecurity.procEnviron':
+    'Command accesses /proc/*/environ which could expose sensitive environment variables',
   'bashSecurity.noProcEnviron': 'No /proc/environ access detected',
   'bashSecurity.parseFailed': 'Parse failed, handled elsewhere',
   'bashSecurity.noCommandSeparators': 'No command separators',
-  'bashSecurity.malformedTokens': 'Command contains ambiguous syntax with command separators that could be misinterpreted',
-  'bashSecurity.ambiguousSeparators': 'Command contains ambiguous syntax with command separators that could be misinterpreted',
+  'bashSecurity.malformedTokens':
+    'Command contains ambiguous syntax with command separators that could be misinterpreted',
+  'bashSecurity.ambiguousSeparators':
+    'Command contains ambiguous syntax with command separators that could be misinterpreted',
   'bashSecurity.noMalformedTokens': 'No malformed token injection detected',
   'bashSecurity.noMalformedToken': 'No malformed token injection detected',
   'bashSecurity.echoSafe': 'echo command is safe and has no dangerous flags',
   'bashSecurity.ansiCQuoting': 'Command contains ANSI-C quoting which can hide characters',
   'bashSecurity.localeQuoting': 'Command contains locale quoting which can hide characters',
-  'bashSecurity.emptyQuotesBeforeDash': 'Command contains empty special quotes before dash (potential bypass)',
-  'bashSecurity.emptySpecialQuotesBeforeDash': 'Command contains empty special quotes before dash (potential bypass)',
-  'bashSecurity.emptyQuotesBeforeDashAlt': 'Command contains empty quotes before dash (potential bypass)',
-  'bashSecurity.emptyQuotePairDash': 'Command contains empty quote pair adjacent to quoted dash (potential flag obfuscation)',
-  'bashSecurity.consecutiveQuotes': 'Command contains consecutive quote characters at word start (potential obfuscation)',
+  'bashSecurity.emptyQuotesBeforeDash':
+    'Command contains empty special quotes before dash (potential bypass)',
+  'bashSecurity.emptySpecialQuotesBeforeDash':
+    'Command contains empty special quotes before dash (potential bypass)',
+  'bashSecurity.emptyQuotesBeforeDashAlt':
+    'Command contains empty quotes before dash (potential bypass)',
+  'bashSecurity.emptyQuotePairDash':
+    'Command contains empty quote pair adjacent to quoted dash (potential flag obfuscation)',
+  'bashSecurity.consecutiveQuotes':
+    'Command contains consecutive quote characters at word start (potential obfuscation)',
   'bashSecurity.quotedInFlag': 'Command contains quoted characters in flag names',
   'bashSecurity.noObfuscatedFlags': 'No obfuscated flags detected',
-  'bashSecurity.backslashWhitespace': 'Command contains backslash-escaped whitespace that could alter command parsing',
+  'bashSecurity.backslashWhitespace':
+    'Command contains backslash-escaped whitespace that could alter command parsing',
   'bashSecurity.noBackslashWhitespace': 'No backslash-escaped whitespace',
   'bashSecurity.noOperatorNodes': 'No operator nodes in AST',
-  'bashSecurity.backslashOperator': 'Command contains a backslash before a shell operator (;, |, &, <, >) which can hide command structure',
+  'bashSecurity.backslashOperator':
+    'Command contains a backslash before a shell operator (;, |, &, <, >) which can hide command structure',
   'bashSecurity.noBackslashOperators': 'No backslash-escaped operators',
-  'bashSecurity.braceExcessClosing': 'Command has excess closing braces after quote stripping, indicating possible brace expansion obfuscation',
-  'bashSecurity.braceQuotedInside': 'Command contains quoted brace character inside brace context (potential brace expansion obfuscation)',
-  'bashSecurity.braceExpansion': 'Command contains brace expansion that could alter command parsing',
+  'bashSecurity.braceExcessClosing':
+    'Command has excess closing braces after quote stripping, indicating possible brace expansion obfuscation',
+  'bashSecurity.braceQuotedInside':
+    'Command contains quoted brace character inside brace context (potential brace expansion obfuscation)',
+  'bashSecurity.braceExpansion':
+    'Command contains brace expansion that could alter command parsing',
   'bashSecurity.noBraceExpansion': 'No brace expansion detected',
-  'bashSecurity.unicodeWhitespace': 'Command contains Unicode whitespace characters that could cause parsing inconsistencies',
+  'bashSecurity.unicodeWhitespace':
+    'Command contains Unicode whitespace characters that could cause parsing inconsistencies',
   'bashSecurity.noUnicodeWhitespace': 'No Unicode whitespace',
-  'bashSecurity.midWordHash': 'Command contains mid-word # which is parsed differently by shell-quote vs bash',
+  'bashSecurity.midWordHash':
+    'Command contains mid-word # which is parsed differently by shell-quote vs bash',
   'bashSecurity.noMidWordHash': 'No mid-word hash',
   'bashSecurity.treeSitterAuthoritative': 'Tree-sitter quote context is authoritative',
-  'bashSecurity.commentQuoteDesync': 'Command contains quote characters inside a # comment which can desync quote tracking',
+  'bashSecurity.commentQuoteDesync':
+    'Command contains quote characters inside a # comment which can desync quote tracking',
   'bashSecurity.noCommentQuoteDesync': 'No comment quote desync',
   'bashSecurity.noNewlineOrHash': 'No newline or no hash',
-  'bashSecurity.quotedNewlineHash': 'Command contains a quoted newline followed by a #-prefixed line, which can hide arguments from line-based permission checks',
+  'bashSecurity.quotedNewlineHash':
+    'Command contains a quoted newline followed by a #-prefixed line, which can hide arguments from line-based permission checks',
   'bashSecurity.noQuotedNewlineHash': 'No quoted newline-hash pattern',
-  'bashSecurity.zshDangerousCommand': "Command uses Zsh-specific '{baseCmd}' which can bypass security checks",
+  'bashSecurity.zshDangerousCommand':
+    "Command uses Zsh-specific '{baseCmd}' which can bypass security checks",
   'bashSecurity.fcEditor': "Command uses 'fc -e' which can execute arbitrary commands via editor",
   'bashSecurity.noZshDangerousCommands': 'No Zsh dangerous commands',
-  'bashSecurity.controlCharacters': 'Command contains non-printable control characters that could be used to bypass security checks',
-  'bashSecurity.singleQuotedBackslash': 'Command contains single-quoted backslash pattern that could bypass security checks',
+  'bashSecurity.controlCharacters':
+    'Command contains non-printable control characters that could be used to bypass security checks',
+  'bashSecurity.singleQuotedBackslash':
+    'Command contains single-quoted backslash pattern that could bypass security checks',
   'bashSecurity.allChecksPassed': 'Command passed all security checks',
 
   // Command descriptions (slash command popup list)
@@ -1133,9 +1166,11 @@ export const en: TranslationResource = {
 
   'commands.session': 'Show remote session URL and QR code',
   'commands.skills': 'List available skills',
-  'commands.simplify': 'Review changed code for reuse, quality, and efficiency, then fix any issues found.',
+  'commands.simplify':
+    'Review changed code for reuse, quality, and efficiency, then fix any issues found.',
   'commands.stats': 'Show your ZY Code usage statistics and activity',
-  'commands.status': 'Show ZY Code status including version, model, account, API connectivity, and tool statuses',
+  'commands.status':
+    'Show ZY Code status including version, model, account, API connectivity, and tool statuses',
   'commands.statusline': "Set up ZY Code's status line UI",
   'commands.stickers': 'Order ZY Code stickers',
   'commands.tag': 'Toggle a searchable tag on the current session',
@@ -1144,7 +1179,8 @@ export const en: TranslationResource = {
   'commands.review': 'Review a pull request',
   'commands.ultrareview': 'Finds and verifies bugs in your branch. Runs in ZY Code on the web.',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',
-  'commands.securityReview': 'Complete a security review of the pending changes on the current branch',
+  'commands.securityReview':
+    'Complete a security review of the pending changes on the current branch',
   'commands.terminalSetup': 'Set up key bindings for newlines in your terminal',
   'commands.upgrade': 'Upgrade to Max for higher rate limits and more Opus',
   'commands.extraUsage': 'Configure extra usage to keep working when limits are hit',
@@ -1163,10 +1199,14 @@ export const en: TranslationResource = {
   'commands.sandbox': 'Configure code execution sandbox',
   'commands.logout': 'Sign out from your Anthropic account',
   'commands.login': 'Sign in with your account',
-  'commands.batch': 'Research and plan a large-scale change, then execute it in parallel across 5–30 isolated worktree agents that each open a PR.',
-  'commands.batch.whenToUse': 'Use when the user wants to make a sweeping, mechanical change across many files (migrations, refactors, bulk renames) that can be decomposed into independent parallel units.',
-  'commands.batch.notAGitRepo': 'This is not a git repository. The `/batch` command requires a git repo because it spawns agents in isolated git worktrees and creates PRs from each. Initialize a repo first, or run this from inside an existing one.',
-  'commands.batch.missingInstruction': 'Provide an instruction describing the batch change you want to make.\n\nExamples:\n  /batch migrate from react to vue\n  /batch replace all uses of lodash with native equivalents\n  /batch add type annotations to all untyped function parameters',
+  'commands.batch':
+    'Research and plan a large-scale change, then execute it in parallel across 5–30 isolated worktree agents that each open a PR.',
+  'commands.batch.whenToUse':
+    'Use when the user wants to make a sweeping, mechanical change across many files (migrations, refactors, bulk renames) that can be decomposed into independent parallel units.',
+  'commands.batch.notAGitRepo':
+    'This is not a git repository. The `/batch` command requires a git repo because it spawns agents in isolated git worktrees and creates PRs from each. Initialize a repo first, or run this from inside an existing one.',
+  'commands.batch.missingInstruction':
+    'Provide an instruction describing the batch change you want to make.\n\nExamples:\n  /batch migrate from react to vue\n  /batch replace all uses of lodash with native equivalents\n  /batch add type annotations to all untyped function parameters',
   'commands.passes': 'Share a free week of ZY Code with friends',
   'commands.tasks': 'List and manage background tasks',
   'commands.commit': 'Create a git commit',
@@ -1176,20 +1216,33 @@ export const en: TranslationResource = {
   'commands.bridgeKick': 'Inject bridge failure states for debugging',
   'commands.heapdump': 'Dump the JS heap to ~/Desktop',
   'commands.remoteSetup': 'Configure remote environment setup',
-  'commands.updateConfig': 'Configure the ZY Code harness via settings.json. Set up automated behaviors with hooks, manage permissions, env vars, plugins, and MCP servers.',
-  'commands.keybindingsHelp': 'Customize keyboard shortcuts, rebind keys, add chord bindings, or modify ~/.zy/keybindings.json.',
-  'commands.claudeInChrome': 'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
-  'commands.claudeInChrome.whenToUse': 'When the user wants to interact with web pages, automate browser tasks, or perform browser-based actions.',
-  'commands.zyApi': 'Build apps with the Zy API or Anthropic SDK. Trigger when code imports anthropic SDK or user asks about Zy API.',
+  'commands.updateConfig':
+    'Configure the ZY Code harness via settings.json. Set up automated behaviors with hooks, manage permissions, env vars, plugins, and MCP servers.',
+  'commands.keybindingsHelp':
+    'Customize keyboard shortcuts, rebind keys, add chord bindings, or modify ~/.zy/keybindings.json.',
+  'commands.claudeInChrome':
+    'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
+  'commands.claudeInChrome.whenToUse':
+    'When the user wants to interact with web pages, automate browser tasks, or perform browser-based actions.',
+  'commands.zyApi':
+    'Build apps with the Zy API or Anthropic SDK. Trigger when code imports anthropic SDK or user asks about Zy API.',
   'commands.debug': 'Enable debug logging for this session and help diagnose issues.',
-  'commands.schedule': 'Create, update, list, or run scheduled remote agents that execute on a cron schedule.',
-  'commands.schedule.whenToUse': 'When the user wants to schedule a recurring remote agent, set up automated tasks, or manage scheduled agents.',
-  'commands.schedule.authRequired': 'You need to authenticate with a zy.ai account first. API accounts are not supported. Run /login, then try /schedule again.',
-  'commands.schedule.connectionError': "We're having trouble connecting with your remote zy.ai account to set up a scheduled task. Please try /schedule again in a few minutes.",
-  'commands.schedule.noEnvironments': 'No remote environments found, and we could not create one automatically. Visit https://zy.ai/code to set one up, then run /schedule again.',
-  'commands.schedule.noConnectors': 'No connected MCP connectors found. The user may need to connect servers at https://zy.ai/settings/connectors',
-  'commands.loop': 'Run a prompt or slash command on a recurring interval (e.g. /loop 5m /foo, defaults to 10m).',
-  'commands.loop.whenToUse': 'When the user wants to set up a recurring task, poll for status, or run something repeatedly on an interval.',
+  'commands.schedule':
+    'Create, update, list, or run scheduled remote agents that execute on a cron schedule.',
+  'commands.schedule.whenToUse':
+    'When the user wants to schedule a recurring remote agent, set up automated tasks, or manage scheduled agents.',
+  'commands.schedule.authRequired':
+    'You need to authenticate with a zy.ai account first. API accounts are not supported. Run /login, then try /schedule again.',
+  'commands.schedule.connectionError':
+    "We're having trouble connecting with your remote zy.ai account to set up a scheduled task. Please try /schedule again in a few minutes.",
+  'commands.schedule.noEnvironments':
+    'No remote environments found, and we could not create one automatically. Visit https://zy.ai/code to set one up, then run /schedule again.',
+  'commands.schedule.noConnectors':
+    'No connected MCP connectors found. The user may need to connect servers at https://zy.ai/settings/connectors',
+  'commands.loop':
+    'Run a prompt or slash command on a recurring interval (e.g. /loop 5m /foo, defaults to 10m).',
+  'commands.loop.whenToUse':
+    'When the user wants to set up a recurring task, poll for status, or run something repeatedly on an interval.',
   'commands.source.bundled': 'bundled',
   'commands.source.workflow': 'workflow',
   'commands.source.plugin': 'plugin',
@@ -1235,7 +1288,8 @@ export const en: TranslationResource = {
   'mcp.sentMessageTo': 'Sent a message to',
   'mcp.image': '[Image]',
   'mcp.noContent': '(No content)',
-  'mcp.largeResponseWarning': '{warning} Large MCP response (~{tokens} tokens), this can fill up context quickly',
+  'mcp.largeResponseWarning':
+    '{warning} Large MCP response (~{tokens} tokens), this can fill up context quickly',
 
   // Read MCP resource messages
   'readMcpResource.readFromServer': 'Read resource "{uri}" from server "{server}"',
@@ -1336,38 +1390,51 @@ export const en: TranslationResource = {
   'filesApi.upload.fileTooLarge': 'File too large for upload',
   'filesApi.upload.canceled': 'Upload canceled',
   'filesApi.upload.noFileId': 'Upload succeeded but no file ID returned',
-  'filesApi.upload.exceedsMaxSize': 'File exceeds maximum size of {maxBytes} bytes (actual: {actualBytes})',
+  'filesApi.upload.exceedsMaxSize':
+    'File exceeds maximum size of {maxBytes} bytes (actual: {actualBytes})',
   'filesApi.retry.exhausted': '{lastError} after {maxRetries} attempts',
-  'filesApi.path.invalid': 'Invalid file path: {relativePath}. Path must not traverse above workspace',
+  'filesApi.path.invalid':
+    'Invalid file path: {relativePath}. Path must not traverse above workspace',
   'filesApi.spec.invalid': 'Invalid file spec: {spec}. Both file_id and path are required',
 
   // Error utils
-  'errorUtils.ssl.hint': 'SSL certificate error ({code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist *.anthropic.com. Run /doctor for details.',
-  'errorUtils.ssl.certVerificationFailed': 'Unable to connect to API: SSL certificate verification failed. Check your proxy or corporate SSL certificates',
+  'errorUtils.ssl.hint':
+    'SSL certificate error ({code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist *.anthropic.com. Run /doctor for details.',
+  'errorUtils.ssl.certVerificationFailed':
+    'Unable to connect to API: SSL certificate verification failed. Check your proxy or corporate SSL certificates',
   'errorUtils.ssl.certExpired': 'Unable to connect to API: SSL certificate has expired',
   'errorUtils.ssl.certRevoked': 'Unable to connect to API: SSL certificate has been revoked',
-  'errorUtils.ssl.selfSigned': 'Unable to connect to API: Self-signed certificate detected. Check your proxy or corporate SSL certificates',
+  'errorUtils.ssl.selfSigned':
+    'Unable to connect to API: Self-signed certificate detected. Check your proxy or corporate SSL certificates',
   'errorUtils.ssl.hostnameMismatch': 'Unable to connect to API: SSL certificate hostname mismatch',
   'errorUtils.ssl.certNotYetValid': 'Unable to connect to API: SSL certificate is not yet valid',
   'errorUtils.ssl.genericError': 'Unable to connect to API: SSL error ({code})',
-  'errorUtils.connection.timeout': 'Request timed out. Check your internet connection and proxy settings',
+  'errorUtils.connection.timeout':
+    'Request timed out. Check your internet connection and proxy settings',
   'errorUtils.connection.failed': 'Unable to connect to API. Check your internet connection',
   'errorUtils.connection.withCode': 'Unable to connect to API ({code})',
   'errorUtils.api.errorWithStatus': 'API error (status {status})',
 
   // Setup
   'setup.errorNodeVersion': 'Error: ZY Code requires Node.js version 18 or higher.',
-  'setup.iTerm2Restored': 'Detected an interrupted iTerm2 setup. Your original settings have been restored. You can re-run /terminal-setup at any time to enable Option+Enter.',
-  'setup.iTerm2RestoreFailed': 'Failed to restore iTerm2 settings. Please manually restore from backup at: {backupPath}',
-  'setup.terminalRestored': 'Detected an interrupted Terminal.app setup. Your original settings have been restored. You can re-run /terminal-setup at any time to enable Option+Enter.',
-  'setup.terminalRestoreFailed': 'Failed to restore Terminal.app settings. Please manually restore from backup at: {backupPath}',
-  'setup.errorWorktreeNotGitRepo': 'Error: Can only use --worktree in a git repository. Current directory ({cwd}) is not a git repo.',
+  'setup.iTerm2Restored':
+    'Detected an interrupted iTerm2 setup. Your original settings have been restored. You can re-run /terminal-setup at any time to enable Option+Enter.',
+  'setup.iTerm2RestoreFailed':
+    'Failed to restore iTerm2 settings. Please manually restore from backup at: {backupPath}',
+  'setup.terminalRestored':
+    'Detected an interrupted Terminal.app setup. Your original settings have been restored. You can re-run /terminal-setup at any time to enable Option+Enter.',
+  'setup.terminalRestoreFailed':
+    'Failed to restore Terminal.app settings. Please manually restore from backup at: {backupPath}',
+  'setup.errorWorktreeNotGitRepo':
+    'Error: Can only use --worktree in a git repository. Current directory ({cwd}) is not a git repo.',
   'setup.errorCannotDetermineGitRoot': 'Error: Could not determine the main git repository root.',
   'setup.errorCreatingWorktree': 'Error creating worktree: {error}',
   'setup.tmuxSessionCreated': 'Created tmux session: {sessionName}. Attach with: {attachCmd}',
   'setup.tmuxSessionCreateFailed': 'Warning: Failed to create tmux session: {error}',
-  'setup.errorRootSudoNotAllowed': '--dangerously-skip-permissions cannot be used with root/sudo. Run as a regular user instead.',
-  'setup.errorNotSandboxed': '--dangerously-skip-permissions can only be used in Docker/sandbox environments (isDocker={isDocker}, isBubblewrap={isBubblewrap}, isSandbox={isSandbox}, hasInternet={hasInternet})',
+  'setup.errorRootSudoNotAllowed':
+    '--dangerously-skip-permissions cannot be used with root/sudo. Run as a regular user instead.',
+  'setup.errorNotSandboxed':
+    '--dangerously-skip-permissions can only be used in Docker/sandbox environments (isDocker={isDocker}, isBubblewrap={isBubblewrap}, isSandbox={isSandbox}, hasInternet={hasInternet})',
 
   // Cost tracker
   'costTracker.usageEmpty': 'Usage: 0 input, 0 output (cost tracking not yet available)',
@@ -1380,7 +1447,8 @@ export const en: TranslationResource = {
   'plugins.common.invalidVersion': 'Version must be one of: {valid}',
   'plugins.common.invalidScope': 'Invalid scope "{scope}". Valid scopes: {valid}',
   'plugins.disable.allWithPlugin': 'Cannot use --all with a specific plugin',
-  'plugins.disable.specifyPlugin': 'Please specify a plugin name or use --all to disable all plugins',
+  'plugins.disable.specifyPlugin':
+    'Please specify a plugin name or use --all to disable all plugins',
   'plugins.disable.scopeWithAll': 'Cannot use --scope with --all',
 
   // Background tasks detail dialogs
@@ -1431,7 +1499,8 @@ export const en: TranslationResource = {
   'backgroundTasks.reviewOnWeb': 'Review in ZY Code on the web',
   'backgroundTasks.stopUltraplanLabel': 'Stop ultraplan',
   'backgroundTasks.stopUltrareview': 'Stop ultrareview?',
-  'backgroundTasks.stopUltrareviewConfirm': 'This archives the remote session and stops local tracking. The review will not complete and any findings so far are discarded.',
+  'backgroundTasks.stopUltrareviewConfirm':
+    'This archives the remote session and stops local tracking. The review will not complete and any findings so far are discarded.',
   'backgroundTasks.stopUltrareviewLabel': 'Stop ultrareview',
   'backgroundTasks.openOnWeb': 'Open in ZY Code on the web',
   'backgroundTasks.dismiss': 'Dismiss',
@@ -1466,11 +1535,15 @@ export const en: TranslationResource = {
   'ide.selectTitle': 'Select IDE',
   'ide.selectSubtitle': 'Connect to an IDE for integrated development features.',
   'ide.none': 'None',
-  'ide.vscodeSingleInstance': 'Note: Only one ZY Code instance can be connected to VS Code at a time.',
+  'ide.vscodeSingleInstance':
+    'Note: Only one ZY Code instance can be connected to VS Code at a time.',
   'ide.autoConnectTip': 'Tip: You can enable auto-connect to IDE in /config or with the --ide flag',
-  'ide.noAvailable': 'No available IDEs detected. Make sure your IDE has the ZY Code extension or plugin installed and is running.',
-  'ide.noAvailableJetBrains': 'No available IDEs detected. Please install the plugin and restart your IDE:\nhttps://docs.zy.com/s/zy-code-jetbrains',
-  'ide.unavailableCount': 'Found {count} other running IDE(s). However, their workspace/project directories do not match the current cwd.',
+  'ide.noAvailable':
+    'No available IDEs detected. Make sure your IDE has the ZY Code extension or plugin installed and is running.',
+  'ide.noAvailableJetBrains':
+    'No available IDEs detected. Please install the plugin and restart your IDE:\nhttps://docs.zy.com/s/zy-code-jetbrains',
+  'ide.unavailableCount':
+    'Found {count} other running IDE(s). However, their workspace/project directories do not match the current cwd.',
   'ide.selectToOpen': 'Select an IDE to open the project',
   'ide.selectToInstall': 'Select IDE to install extension',
   'ide.noIdeDetected': 'No IDEs with ZY Code extension detected.',
@@ -1488,12 +1561,14 @@ export const en: TranslationResource = {
   'ide.connecting': 'Connecting to {name}…',
   'ide.worktree': 'worktree',
   'ide.project': 'project',
-  'ide.installedPlugin': 'Installed plugin to {name}\nPlease **restart your IDE** completely for it to take effect',
+  'ide.installedPlugin':
+    'Installed plugin to {name}\nPlease **restart your IDE** completely for it to take effect',
   'ide.installedExtension': 'Installed extension to {name}',
 
   // Channel downgrade dialog
   'channel.downgradeTitle': 'Switch to Stable Channel',
-  'channel.downgradeDescription': 'The stable channel may have an older version than what you\'re currently running ({currentVersion}).',
+  'channel.downgradeDescription':
+    "The stable channel may have an older version than what you're currently running ({currentVersion}).",
   'channel.howToHandle': 'How would you like to handle this?',
   'channel.allowDowngrade': 'Allow possible downgrade to stable version',
   'channel.stayOnCurrent': 'Stay on current version ({currentVersion}) until stable catches up',
@@ -1542,13 +1617,16 @@ export const en: TranslationResource = {
   'feedback.reportEnvironment': '- Environment info: ',
   'feedback.reportGit': '- Git repo metadata: ',
   'feedback.reportTranscript': '- Current session transcript',
-  'feedback.reportUsage': 'We will use your feedback to debug related issues or to improve ZY Code\'s functionality (eg. to reduce the risk of bugs occurring in the future).',
+  'feedback.reportUsage':
+    "We will use your feedback to debug related issues or to improve ZY Code's functionality (eg. to reduce the risk of bugs occurring in the future).",
   'feedback.pressEnterToSubmit': 'Press Enter to confirm and submit.',
   'feedback.submitting': 'Submitting report…',
   'feedback.thankYou': 'Thank you for your report!',
   'feedback.feedbackId': 'Feedback ID: {feedbackId}',
-  'feedback.openGitHubOrClose': 'Press Enter to open your browser and draft a GitHub issue, or any other key to close.',
-  'feedback.errorZdrOrg': 'Feedback collection is not available for organizations with custom data retention policies.',
+  'feedback.openGitHubOrClose':
+    'Press Enter to open your browser and draft a GitHub issue, or any other key to close.',
+  'feedback.errorZdrOrg':
+    'Feedback collection is not available for organizations with custom data retention policies.',
   'feedback.errorGeneric': 'Could not submit feedback. Please try again later.',
   'feedback.submitted': 'Feedback / bug report submitted',
   'feedback.errorSubmitting': 'Error submitting feedback / bug report',
@@ -1562,16 +1640,20 @@ export const en: TranslationResource = {
   'permissionRules.addDirectoryToWorkspace': 'Add directory to workspace',
   'permissionRules.yesForThisSession': 'Yes, for this session',
   'permissionRules.yesAndRememberDirectory': 'Yes, and remember this directory',
-  'permissionRules.workspacePermissionDescription': 'ZY Code will be able to read files in this directory and make edits when auto-accept edits is on.',
+  'permissionRules.workspacePermissionDescription':
+    'ZY Code will be able to read files in this directory and make edits when auto-accept edits is on.',
   'permissionRules.enterDirectoryPath': 'Enter the path to the directory:',
   'permissionRules.directoryPathPlaceholder': 'Directory path…',
   'permissionRules.removeDirectoryFromWorkspace': 'Remove directory from workspace?',
-  'permissionRules.directoryRemovedWarning': 'ZY Code will no longer have access to files in this directory.',
+  'permissionRules.directoryRemovedWarning':
+    'ZY Code will no longer have access to files in this directory.',
   'permissionRules.fromSource': 'From {source}',
   'permissionRules.ruleDetails': 'Rule details',
-  'permissionRules.managedByPolicy': 'This rule is configured by managed settings and cannot be modified.\nContact your system administrator for more information.',
+  'permissionRules.managedByPolicy':
+    'This rule is configured by managed settings and cannot be modified.\nContact your system administrator for more information.',
   'permissionRules.allowedToolsSubtitle': "ZY Code won't ask before using allowed tools.",
-  'permissionRules.askToolsSubtitle': 'ZY Code will always ask for confirmation before using these tools.',
+  'permissionRules.askToolsSubtitle':
+    'ZY Code will always ask for confirmation before using these tools.',
   'permissionRules.deniedToolsSubtitle': 'ZY Code will always reject requests to use denied tools.',
   'permissionRules.addNewRule': 'Add a new rule…',
   'permissionRules.recentlyDenied': 'Recently denied',
@@ -1579,7 +1661,8 @@ export const en: TranslationResource = {
   'permissionRules.askTab': 'Ask',
   'permissionRules.denyTab': 'Deny',
   'permissionRules.workspaceTab': 'Workspace',
-  'permissionRules.workspaceDescription': 'ZY Code can read files in the workspace, and make edits when auto-accept edits is on.',
+  'permissionRules.workspaceDescription':
+    'ZY Code can read files in the workspace, and make edits when auto-accept edits is on.',
   'permissionRules.originalWorkingDirectory': 'Original working directory',
   'permissionRules.addDirectoryEllipsis': 'Add directory…',
   'permissionRules.workspaceDialogDismissed': 'Workspace dialog dismissed',
@@ -1596,7 +1679,8 @@ export const en: TranslationResource = {
   'permissionRules.whereSaveSingleRule': 'Where should this rule be saved?',
   'permissionRules.whereSaveMultipleRules': 'Where should these rules be saved?',
   'permissionRules.addPermissionRuleHeader': 'Add {behavior} permission rule',
-  'permissionRules.permissionRulesDescription': 'Permission rules are a tool name, optionally followed by a specifier in parentheses.',
+  'permissionRules.permissionRulesDescription':
+    'Permission rules are a tool name, optionally followed by a specifier in parentheses.',
   'permissionRules.enterPermissionRulePlaceholder': 'Enter permission rule…',
   'permissionRules.toolUse': 'Tool use',
   'permissionRules.networkRequestOutsideSandbox': 'Network request outside of sandbox',
@@ -1619,9 +1703,11 @@ export const en: TranslationResource = {
   'permissionRules.tabToSwitchQuestions': 'Tab to switch questions',
   'permissionRules.ctrlGToEditIn': 'ctrl+g to edit in {editorName}',
   'permissionRules.escToCancelHint': 'Esc to cancel',
-  'permissionRules.noRecentDenials': 'No recent denials. Commands denied by the auto mode classifier will appear here.',
+  'permissionRules.noRecentDenials':
+    'No recent denials. Commands denied by the auto mode classifier will appear here.',
   'permissionRules.retrySuffix': ' (retry)',
-  'permissionRules.recentlyDeniedDescription': 'Commands recently denied by the auto mode classifier.',
+  'permissionRules.recentlyDeniedDescription':
+    'Commands recently denied by the auto mode classifier.',
 
   // Computer Use Approval
   'computerUse.needsMacOSPermissions': 'Computer Use needs macOS permissions',
@@ -1632,7 +1718,8 @@ export const en: TranslationResource = {
   'computerUse.screenRecordingLabel': 'Screen Recording:',
   'computerUse.granted': 'granted',
   'computerUse.notGranted': 'not granted',
-  'computerUse.grantMissingPermissions': 'Grant the missing permissions in System Settings, then select "Try again". macOS may require you to restart ZY Code after granting Screen Recording.',
+  'computerUse.grantMissingPermissions':
+    'Grant the missing permissions in System Settings, then select "Try again". macOS may require you to restart ZY Code after granting Screen Recording.',
   'computerUse.wantsToControlApps': 'Computer Use wants to control these apps',
   'computerUse.equivalentToShellAccess': 'equivalent to shell access',
   'computerUse.canReadWriteAnyFile': 'can read/write any file',
@@ -1665,7 +1752,8 @@ export const en: TranslationResource = {
   'mcp.failedToReconnect': 'Failed to reconnect to {serverName}',
   'mcp.serverNotFound': 'MCP server "{serverName}" not found',
   'mcp.requiresAuthentication': '{serverName} requires authentication',
-  'mcp.requiresAuthenticationHelp': '{serverName} requires authentication. Use /mcp to authenticate.',
+  'mcp.requiresAuthenticationHelp':
+    '{serverName} requires authentication. Use /mcp to authenticate.',
   'mcp.reconnectError': 'Error: {error}',
 
   // MCP parsing warnings
@@ -1718,20 +1806,24 @@ export const en: TranslationResource = {
   'mcp.browserWillOpen': 'A browser window will open for authentication',
   'mcp.copyUrlManually': "If your browser doesn't open automatically, copy this URL manually",
   'mcp.copied': 'Copied!',
-  'mcp.pasteUrlFromBrowser': "If the redirect page shows a connection error, paste the URL from your browser's address bar:",
+  'mcp.pasteUrlFromBrowser':
+    "If the redirect page shows a connection error, paste the URL from your browser's address bar:",
   'mcp.returnAfterAuth': 'Return here after authenticating in your browser. Press Esc to go back.',
   'mcp.pressEnterAfterAuth': 'Press Enter after authenticating in your browser.',
   'mcp.pressEnterWhenDone': 'Press Enter when done.',
   'mcp.pressEnterToOpenBrowser': 'Press Enter to open the browser.',
   'mcp.clearAuthTitle': 'Clear authentication for {serverName}',
   'mcp.findServerAndDisconnect': 'Find the MCP server in the browser and click "Disconnect".',
-  'mcp.willOpenZyAi': 'This will open zy.ai in the browser. Find the MCP server in the list and click "Disconnect".',
+  'mcp.willOpenZyAi':
+    'This will open zy.ai in the browser. Find the MCP server in the list and click "Disconnect".',
   'mcp.connectingTo': 'Connecting to {serverName}…',
   'mcp.mayTakeAMoment': 'This may take a few moments.',
   'mcp.authSuccessfulReconnected': 'Authentication successful. Reconnected to {serverName}.',
   'mcp.authSuccessfulConnected': 'Authentication successful. Connected to {serverName}.',
-  'mcp.authSuccessfulNeedsAuth': 'Authentication successful, but server still requires authentication. You may need to manually restart ZY Code.',
-  'mcp.authSuccessfulReconnectFailed': 'Authentication successful, but server reconnection failed. You may need to manually restart ZY Code for the changes to take effect.',
+  'mcp.authSuccessfulNeedsAuth':
+    'Authentication successful, but server still requires authentication. You may need to manually restart ZY Code.',
+  'mcp.authSuccessfulReconnectFailed':
+    'Authentication successful, but server reconnection failed. You may need to manually restart ZY Code for the changes to take effect.',
   'mcp.authCleared': 'Authentication cleared for {serverName}.',
   'mcp.disconnectedFrom': 'Disconnected from {serverName}.',
   'mcp.failedToToggle': "Failed to {action} MCP server '{serverName}': {error}",
@@ -1784,13 +1876,14 @@ export const en: TranslationResource = {
 
   // MCP reconnect helpers
   'mcp.reconnectedTo': 'Reconnected to {serverName}.',
-  'mcp.requiresAuthOption': '{serverName} requires authentication. Use the \'Authenticate\' option.',
+  'mcp.requiresAuthOption': "{serverName} requires authentication. Use the 'Authenticate' option.",
   'mcp.failedToReconnectTo': 'Failed to reconnect to {serverName}.',
   'mcp.unknownReconnectResult': 'Unknown result when reconnecting to {serverName}.',
   'mcp.errorReconnecting': 'Error reconnecting to {serverName}: {error}',
 
   // MCP Settings
-  'mcp.noServersConfigured': 'No MCP servers configured. Please run /doctor if this is unexpected. Otherwise, run `zy mcp --help` or visit https://code.zy.com/docs/en/mcp to learn more.',
+  'mcp.noServersConfigured':
+    'No MCP servers configured. Please run /doctor if this is unexpected. Otherwise, run `zy mcp --help` or visit https://code.zy.com/docs/en/mcp to learn more.',
 
   // Web Browser
   'webBrowser.title': 'Web Browser',
@@ -1842,9 +1935,12 @@ export const en: TranslationResource = {
   'agents.builtInAgentsDesc': 'Built-in agents are provided by default and cannot be modified.',
   'agents.builtInAlwaysAvailable': '(always available)',
   'agents.noAgentsFound': 'No agents found',
-  'agents.noAgentsHelpLine1': 'No agents found. Create specialized subagents that Zy can delegate to.',
-  'agents.noAgentsHelpLine2': 'Each subagent has its own context window, custom system prompt, and specific tools.',
-  'agents.noAgentsTryCreating': 'Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.',
+  'agents.noAgentsHelpLine1':
+    'No agents found. Create specialized subagents that Zy can delegate to.',
+  'agents.noAgentsHelpLine2':
+    'Each subagent has its own context window, custom system prompt, and specific tools.',
+  'agents.noAgentsTryCreating':
+    'Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.',
   'agents.agentsCount': '{count} agents',
   'agents.shadowedBy': 'shadowed by {source}',
   'agents.memoryLabel': '{memory} memory',
@@ -1863,9 +1959,11 @@ export const en: TranslationResource = {
   'agents.dialogDismissed': 'Agents dialog dismissed',
   'agents.deletedAgent': 'Deleted agent: {name}',
   'agents.createdAgent': 'Created agent: {name}',
-  'agents.createdAgentAndOpened': 'Created agent: {name} and opened in editor. If you made edits, restart to load the latest version.',
+  'agents.createdAgentAndOpened':
+    'Created agent: {name} and opened in editor. If you made edits, restart to load the latest version.',
   'agents.updatedAgent': 'Updated agent: {name}',
-  'agents.openedInEditor': 'Opened {name} in editor. If you made edits, restart to load the latest version.',
+  'agents.openedInEditor':
+    'Opened {name} in editor. If you made edits, restart to load the latest version.',
   'agents.failedToSave': 'Failed to save agent',
 
   // Agent Editor
@@ -1877,16 +1975,19 @@ export const en: TranslationResource = {
 
   // Agent Validation
   'agents.validation.typeRequired': 'Agent type is required',
-  'agents.validation.typeFormat': 'Agent type must start and end with alphanumeric characters and contain only letters, numbers, and hyphens',
+  'agents.validation.typeFormat':
+    'Agent type must start and end with alphanumeric characters and contain only letters, numbers, and hyphens',
   'agents.validation.typeMinLength': 'Agent type must be at least 3 characters long',
   'agents.validation.typeMaxLength': 'Agent type must be less than 50 characters',
   'agents.validation.typeDuplicate': 'Agent type "{name}" already exists in {source}',
   'agents.validation.descriptionRequired': 'Description (description) is required',
-  'agents.validation.descriptionTooShort': 'Description should be more descriptive (at least 10 characters)',
+  'agents.validation.descriptionTooShort':
+    'Description should be more descriptive (at least 10 characters)',
   'agents.validation.descriptionTooLong': 'Description is very long (over 5000 characters)',
   'agents.validation.toolsInvalid': 'Tools must be an array',
   'agents.validation.toolsAllWarning': 'Agent has access to all tools',
-  'agents.validation.toolsNoneWarning': 'No tools selected - agent will have very limited capabilities',
+  'agents.validation.toolsNoneWarning':
+    'No tools selected - agent will have very limited capabilities',
   'agents.validation.toolsInvalidList': 'Invalid tools: {tools}',
   'agents.validation.promptRequired': 'System prompt is required',
   'agents.validation.promptTooShort': 'System prompt is too short (minimum 20 characters)',
@@ -1954,7 +2055,8 @@ export const en: TranslationResource = {
   'wizard.errors': 'Errors:',
   'wizard.allTools': 'All tools',
   'wizard.none': 'None',
-  'wizard.generateSubtitle': 'Describe what this agent should do and when it should be used (be comprehensive for best results)',
+  'wizard.generateSubtitle':
+    'Describe what this agent should do and when it should be used (be comprehensive for best results)',
   'wizard.generatingAgent': ' Generating agent from description...',
   'wizard.generationCancelled': 'Generation cancelled',
   'wizard.pleaseDescribe': 'Please describe what the agent should do',
@@ -1962,18 +2064,23 @@ export const en: TranslationResource = {
 
   // Prompt input
   'promptInput.stashed': 'Stashed (auto-restores after submit)',
-  'promptInput.sandboxBlocked_one': 'Sandbox blocked {count} operation · {shortcut} for details · /sandbox to disable',
-  'promptInput.sandboxBlocked_other': 'Sandbox blocked {count} operations · {shortcut} for details · /sandbox to disable',
+  'promptInput.sandboxBlocked_one':
+    'Sandbox blocked {count} operation · {shortcut} for details · /sandbox to disable',
+  'promptInput.sandboxBlocked_other':
+    'Sandbox blocked {count} operations · {shortcut} for details · /sandbox to disable',
   'promptInput.moreTasksCompleted': '+{count} more tasks completed',
   'promptInput.remoteControlReconnecting': 'Remote Control reconnecting',
   'promptInput.enterToView': ' · Enter to view',
   'promptInput.effortSetHigh': 'Effort set to high for this turn',
-  'promptInput.ultraplanLaunch': 'This prompt will launch an ultraplan session in ZY Code on the web',
-  'promptInput.ultrareviewRun': 'Run /ultrareview after Zy finishes to review these changes in the cloud',
+  'promptInput.ultraplanLaunch':
+    'This prompt will launch an ultraplan session in ZY Code on the web',
+  'promptInput.ultrareviewRun':
+    'Run /ultrareview after Zy finishes to review these changes in the cloud',
   'promptInput.sentTo': 'Sent to @{recipientName}',
   'promptInput.noImageClipboardSSH': "No image found in clipboard. You're SSH'd; try scp?",
   'promptInput.noImageClipboard': 'No image found in clipboard. Use {shortcut} to paste images.',
-  'promptInput.optionMetaHint': 'To enable {shortcut}, set Option as Meta in {terminalName} preferences (⌘,)',
+  'promptInput.optionMetaHint':
+    'To enable {shortcut}, set Option as Meta in {terminalName} preferences (⌘,)',
   'promptInput.optionMetaHintSetup': 'To enable {shortcut}, run /terminal-setup',
   'promptInput.stashTip': 'Tip: {shortcut} to stash',
   'promptInput.editIn': 'edit in {editorName}',
@@ -2013,9 +2120,11 @@ export const en: TranslationResource = {
   'channels.requireAuth': 'Channels require zy.ai authentication · run /login, then restart',
   'channels.blockedByPolicy': '{flag} blocked by org policy ({list})',
   'channels.messagesDropped': 'Inbound messages will be silently dropped',
-  'channels.enablePolicy': 'Have an administrator set channelsEnabled: true in managed settings to enable',
+  'channels.enablePolicy':
+    'Have an administrator set channelsEnabled: true in managed settings to enable',
   'channels.listening': 'Listening for channel messages from: {list}',
-  'channels.experimental': 'Experimental · inbound messages will be pushed into this session, this carries prompt injection risks. Restart ZY Code without {flag} to disable.',
+  'channels.experimental':
+    'Experimental · inbound messages will be pushed into this session, this carries prompt injection risks. Restart ZY Code without {flag} to disable.',
   'channels.noMcpServer': 'no MCP server configured with that name',
   'channels.serverNeedsDev': 'server: entries need --dangerously-load-development-channels',
   'channels.pluginNotInstalled': 'plugin not installed',
@@ -2037,8 +2146,10 @@ export const en: TranslationResource = {
 
   // Model picker
   'modelPicker.selectModel': 'Select model',
-  'modelPicker.description': 'Switch between Zy models. Applies to this session and future ZY Code sessions. For other/previous model names, specify with --model.',
-  'modelPicker.currentlyUsing': 'Currently using {model} for this session (set by plan mode). Selecting a model will undo this.',
+  'modelPicker.description':
+    'Switch between Zy models. Applies to this session and future ZY Code sessions. For other/previous model names, specify with --model.',
+  'modelPicker.currentlyUsing':
+    'Currently using {model} for this session (set by plan mode). Selecting a model will undo this.',
   'modelPicker.currentModel': 'Current model',
   'modelPicker.andMore': 'and {count} more…',
   'modelPicker.effortLabel': '{effort} effort',
@@ -2060,7 +2171,8 @@ export const en: TranslationResource = {
   'thinkingToggle.enabledDesc': 'Zy will think before responding',
   'thinkingToggle.disabled': 'Disabled',
   'thinkingToggle.disabledDesc': 'Zy will respond without extended thinking',
-  'thinkingToggle.midConversationWarning': 'Changing thinking mode mid-conversation will increase latency and may reduce quality. For best results, set this at the start of a session.',
+  'thinkingToggle.midConversationWarning':
+    'Changing thinking mode mid-conversation will increase latency and may reduce quality. For best results, set this at the start of a session.',
   'thinkingToggle.proceedQuestion': 'Do you want to proceed?',
   'thinkingToggle.pressAgainToExit': 'Press {key} again to exit',
 
@@ -2087,7 +2199,8 @@ export const en: TranslationResource = {
   'teleport.errorPrefix': 'Error: {error}',
   'teleport.pressEscapeToCancel': 'Press Escape to cancel',
   'teleport.workingDirHasChanges': 'Working Directory Has Changes',
-  'teleport.willSwitchBranches': 'Teleport will switch git branches. The following changes were found:',
+  'teleport.willSwitchBranches':
+    'Teleport will switch git branches. The following changes were found:',
   'teleport.filesChanged': '{count} files changed',
   'teleport.noChangesDetected': 'No changes detected',
   'teleport.stashAndContinue': 'Would you like to stash these changes and continue with teleport?',
@@ -2097,7 +2210,8 @@ export const en: TranslationResource = {
   'teleport.openInRepo': 'Open ZY Code in {repo}:',
   'teleport.validatingRepo': 'Validating repository…',
   'teleport.runFromCheckout': 'Run zy --teleport from a checkout of {repo}',
-  'teleport.pathNoLongerValid': '{path} no longer contains the correct repository. Select another path.',
+  'teleport.pathNoLongerValid':
+    '{path} no longer contains the correct repository. Select another path.',
   'teleport.usePath': 'Use {path}',
   'teleport.cancel': 'Cancel',
 
@@ -2106,10 +2220,14 @@ export const en: TranslationResource = {
   'worktree.noActiveSession': 'No active worktree session found',
   'worktree.keepingWorktree': 'Keeping worktree…',
   'worktree.removingWorktree': 'Removing worktree…',
-  'worktree.subtitleBoth': 'You have {fileCount} uncommitted {fileLabel} and {commitCount} {commitLabel} on {branch}. All will be lost if you remove.',
-  'worktree.subtitleFiles': 'You have {fileCount} uncommitted {fileLabel}. These will be lost if you remove the worktree.',
-  'worktree.subtitleCommits': 'You have {commitCount} {commitLabel} on {branch}. The branch will be deleted if you remove the worktree.',
-  'worktree.subtitleNone': 'You are working in a worktree. Keep it to continue working there, or remove it to clean up.',
+  'worktree.subtitleBoth':
+    'You have {fileCount} uncommitted {fileLabel} and {commitCount} {commitLabel} on {branch}. All will be lost if you remove.',
+  'worktree.subtitleFiles':
+    'You have {fileCount} uncommitted {fileLabel}. These will be lost if you remove the worktree.',
+  'worktree.subtitleCommits':
+    'You have {commitCount} {commitLabel} on {branch}. The branch will be deleted if you remove the worktree.',
+  'worktree.subtitleNone':
+    'You are working in a worktree. Keep it to continue working there, or remove it to clean up.',
   'worktree.removeDescription': 'All changes and commits will be lost.',
   'worktree.removeDescriptionClean': 'Clean up the worktree directory.',
   'worktree.keepWorktreeAndTmux': 'Keep worktree and tmux session',
@@ -2123,10 +2241,14 @@ export const en: TranslationResource = {
   'worktree.removedNoChanges': 'Worktree removed (no changes)',
   'worktree.cleanupFailed': 'Worktree cleanup failed, exiting anyway',
   'worktree.keptWithPath': 'Worktree kept. Your work is saved at {path} on branch {branch}.',
-  'worktree.keptWithPathAndTmux': 'Worktree kept. Your work is saved at {path} on branch {branch}. Reattach to tmux session with: tmux attach -t {tmux}',
-  'worktree.keptWithPathTmuxKilled': 'Worktree kept at {path} on branch {branch}. Tmux session terminated.',
-  'worktree.removedWithCommitsAndChanges': 'Worktree removed. {commitCount} {commitLabel} and uncommitted changes were discarded.{tmuxNote}',
-  'worktree.removedWithCommits': 'Worktree removed. {commitCount} {commitLabel} on {branch} {wasWere} discarded.{tmuxNote}',
+  'worktree.keptWithPathAndTmux':
+    'Worktree kept. Your work is saved at {path} on branch {branch}. Reattach to tmux session with: tmux attach -t {tmux}',
+  'worktree.keptWithPathTmuxKilled':
+    'Worktree kept at {path} on branch {branch}. Tmux session terminated.',
+  'worktree.removedWithCommitsAndChanges':
+    'Worktree removed. {commitCount} {commitLabel} and uncommitted changes were discarded.{tmuxNote}',
+  'worktree.removedWithCommits':
+    'Worktree removed. {commitCount} {commitLabel} on {branch} {wasWere} discarded.{tmuxNote}',
   'worktree.removedWithChanges': 'Worktree removed. Uncommitted changes were discarded.{tmuxNote}',
   'worktree.removed': 'Worktree removed.{tmuxNote}',
   'worktree.tmuxTerminated': ' Tmux session terminated.',
@@ -2143,8 +2265,10 @@ export const en: TranslationResource = {
   'remoteCallout.enableDesc': 'Opens a secure connection to zy.ai.',
   'remoteCallout.dismissLabel': 'Never mind',
   'remoteCallout.dismissDesc': 'You can always enable it later with /remote-control.',
-  'remoteCallout.description': 'Remote Control lets you access this CLI session from the web (zy.ai/code) or the Zy app, so you can pick up where you left off on any device.',
-  'remoteCallout.disconnectInfo': 'You can disconnect remote access anytime by running /remote-control again.',
+  'remoteCallout.description':
+    'Remote Control lets you access this CLI session from the web (zy.ai/code) or the Zy app, so you can pick up where you left off on any device.',
+  'remoteCallout.disconnectInfo':
+    'You can disconnect remote access anytime by running /remote-control again.',
 
   // MCP desktop import
   'mcp.importDesktopTitle': 'Import MCP Servers from Zy Desktop',
@@ -2152,14 +2276,16 @@ export const en: TranslationResource = {
   'mcp.importServer_one': 'server',
   'mcp.importServer_other': 'servers',
   'mcp.importAlreadyExists': ' (already exists)',
-  'mcp.importCollisionNote': 'Note: Some servers already exist with the same name. If selected, they will be imported with a numbered suffix.',
+  'mcp.importCollisionNote':
+    'Note: Some servers already exist with the same name. If selected, they will be imported with a numbered suffix.',
   'mcp.importSelectServers': 'Please select the servers you want to import:',
   'mcp.importSuccess': 'Successfully imported {count} MCP {unit} to {scope} config.',
   'mcp.importNoneImported': 'No servers were imported.',
 
   // Settings
   'settings.errorTitle': 'Settings Error',
-  'settings.filesSkippedWarning': 'Files with errors are skipped entirely, not just the invalid settings.',
+  'settings.filesSkippedWarning':
+    'Files with errors are skipped entirely, not just the invalid settings.',
   'settings.exitAndFix': 'Exit and fix manually',
   'settings.continueWithout': 'Continue without these settings',
 
@@ -2192,7 +2318,8 @@ export const en: TranslationResource = {
   'desktop.openDesktop': 'Open in ZY Code Desktop',
   'desktop.notNow': 'Not now',
   'desktop.dontAskAgain': "Don't ask again",
-  'desktop.description': 'Same ZY Code with visual diffs, live app preview, parallel sessions, and more.',
+  'desktop.description':
+    'Same ZY Code with visual diffs, live app preview, parallel sessions, and more.',
 
   // Workflow
   'workflow.selectTitle': 'Select GitHub workflows to install',
@@ -2202,9 +2329,11 @@ export const en: TranslationResource = {
 
   // ZY.md external includes
   'zyMd.allowExternalTitle': 'Allow external CLAUDE.md file imports?',
-  'zyMd.importsOutsideWarning': "This project's CLAUDE.md imports files outside the current working directory. Never allow this for third-party repositories.",
+  'zyMd.importsOutsideWarning':
+    "This project's CLAUDE.md imports files outside the current working directory. Never allow this for third-party repositories.",
   'zyMd.externalImports': 'External imports:',
-  'zyMd.securityWarning': 'Important: Only use ZY Code with files you trust. Accessing untrusted files may pose security risks',
+  'zyMd.securityWarning':
+    'Important: Only use ZY Code with files you trust. Accessing untrusted files may pose security risks',
   'zyMd.yesAllow': 'Yes, allow external imports',
   'zyMd.noDisable': 'No, disable external imports',
 
@@ -2217,10 +2346,12 @@ export const en: TranslationResource = {
 
   // Desktop handoff
   'desktopHandoff.unknownError': 'Unknown error',
-  'desktopHandoff.startingDownload': 'Starting download. Re-run /desktop once you\'ve installed the app.\nLearn more at {url}',
+  'desktopHandoff.startingDownload':
+    "Starting download. Re-run /desktop once you've installed the app.\nLearn more at {url}",
   'desktopHandoff.desktopRequired': 'The desktop app is required for /desktop. Learn more at {url}',
   'desktopHandoff.notInstalled': 'Zy Desktop is not installed.',
-  'desktopHandoff.needsUpdate': 'Zy Desktop needs to be updated (found v{version}, need v1.1.2396+).',
+  'desktopHandoff.needsUpdate':
+    'Zy Desktop needs to be updated (found v{version}, need v1.1.2396+).',
   'desktopHandoff.openFailed': 'Failed to open Zy Desktop',
   'desktopHandoff.sessionTransferred': 'Session transferred to Zy Desktop',
   'desktopHandoff.errorLabel': 'Error: {error}',
@@ -2244,11 +2375,13 @@ export const en: TranslationResource = {
   'remoteEnv.updating': 'Updating…',
 
   // Transcript share prompt
-  'transcriptShare.title': 'Can Anthropic look at your session transcript to help us improve ZY Code?',
-  'transcriptShare.learnMore': 'Learn more: https://code.zy.com/docs/en/data-usage#session-quality-surveys',
+  'transcriptShare.title':
+    'Can Anthropic look at your session transcript to help us improve ZY Code?',
+  'transcriptShare.learnMore':
+    'Learn more: https://code.zy.com/docs/en/data-usage#session-quality-surveys',
   'transcriptShare.yes': 'Yes',
   'transcriptShare.no': 'No',
-  'transcriptShare.dontAskAgain': 'Don\'t ask again',
+  'transcriptShare.dontAskAgain': "Don't ask again",
 
   // Feedback survey
   'feedbackSurvey.defaultMessage': 'How is Zy doing this session? (optional)',
@@ -2394,11 +2527,14 @@ export const en: TranslationResource = {
   'messageSelector.rewindTitle': 'Rewind',
   'messageSelector.errorPrefix': 'Error:',
   'messageSelector.nothingToRewind': 'Nothing to rewind to yet.',
-  'messageSelector.confirmRestore': 'Confirm you want to restore {what} to the point before you sent this message:',
+  'messageSelector.confirmRestore':
+    'Confirm you want to restore {what} to the point before you sent this message:',
   'messageSelector.conversation': 'the conversation ',
   'messageSelector.summarizing': 'Summarizing…',
-  'messageSelector.rewindNoBashFiles': 'Rewinding does not affect files edited manually or via bash.',
-  'messageSelector.restoreCodeOrConversation': 'Restore the code and/or conversation to the point before…',
+  'messageSelector.rewindNoBashFiles':
+    'Rewinding does not affect files edited manually or via bash.',
+  'messageSelector.restoreCodeOrConversation':
+    'Restore the code and/or conversation to the point before…',
   'messageSelector.restoreAndFork': 'Restore and fork the conversation to the point before…',
   'messageSelector.noCodeChanges': 'No code changes',
   'messageSelector.noCodeRestore': 'No code restore',
@@ -2414,7 +2550,8 @@ export const en: TranslationResource = {
   'messageSelector.currentLabel': '(current)',
   'messageSelector.emptyMessage': '((empty message))',
   'messageSelector.messagesAfterSummarized': 'Messages after this point will be summarized.',
-  'messageSelector.precedingMessagesSummarized': 'Preceding messages will be summarized. This and subsequent messages will remain unchanged — you will stay at the end of the conversation.',
+  'messageSelector.precedingMessagesSummarized':
+    'Preceding messages will be summarized. This and subsequent messages will remain unchanged — you will stay at the end of the conversation.',
   'messageSelector.conversationWillBeForked': 'The conversation will be forked.',
   'messageSelector.conversationUnchanged': 'The conversation will be unchanged.',
 
@@ -2446,10 +2583,12 @@ export const en: TranslationResource = {
   'planApproval.requestFrom': 'Plan Approval Request from {from}',
   'planApproval.planFile': 'Plan file: {filePath}',
   'planApproval.approvedBy': '✓ Plan Approved by {senderName}',
-  'planApproval.proceedWithImplementation': 'You can now proceed with implementation. Your plan mode restrictions have been lifted.',
+  'planApproval.proceedWithImplementation':
+    'You can now proceed with implementation. Your plan mode restrictions have been lifted.',
   'planApproval.rejectedBy': '✗ Plan Rejected by {senderName}',
   'planApproval.feedbackLabel': 'Feedback:',
-  'planApproval.reviseAndCallAgain': 'Please revise your plan based on the feedback and call ExitPlanMode again.',
+  'planApproval.reviseAndCallAgain':
+    'Please revise your plan based on the feedback and call ExitPlanMode again.',
   'planApproval.summaryRequestFrom': '[Plan Approval Request from {from}]',
   'planApproval.summaryApproved': '[Plan Approved] You can now proceed with implementation',
   'planApproval.summaryRejected': '[Plan Rejected] {feedback}',
@@ -2463,14 +2602,16 @@ export const en: TranslationResource = {
   'passes.escToCancel': 'Esc to cancel',
   'passes.notAvailable': 'Guest passes are not currently available.',
   'passes.title': 'Guest passes · {availableCount} left',
-  'passes.shareWithReward': "Share a free week of ZY Code with friends. If they love it and subscribe, you'll get {creditAmount} of extra usage to keep building. ",
+  'passes.shareWithReward':
+    "Share a free week of ZY Code with friends. If they love it and subscribe, you'll get {creditAmount} of extra usage to keep building. ",
   'passes.shareWithFriends': 'Share a free week of ZY Code with friends. ',
   'passes.termsApply': 'Terms apply.',
   'passes.enterCopyEscCancel': 'Enter to copy link · Esc to cancel',
 
   // OAuth
   'oauth.selectLoginMethod': 'Select login method:',
-  'oauth.introMessage': 'ZY Code can be used with your Zy subscription or billed based on API usage through your Console account.',
+  'oauth.introMessage':
+    'ZY Code can be used with your Zy subscription or billed based on API usage through your Console account.',
   'oauth.zyaiOptionLabel': 'Zy account with subscription ·',
   'oauth.zyaiOptionDesc': 'Pro, Max, Team, or Enterprise',
   'oauth.consoleOptionLabel': 'Anthropic Console account ·',
@@ -2478,8 +2619,10 @@ export const en: TranslationResource = {
   'oauth.platformOptionLabel': '3rd-party platform ·',
   'oauth.platformOptionDesc': 'Amazon Bedrock, Microsoft Foundry, or Vertex AI',
   'oauth.usingThirdPartyPlatforms': 'Using Third-Party Platforms',
-  'oauth.thirdPartyPlatformsDesc': 'You can use ZY Code with Amazon Bedrock, Microsoft Foundry, or Google Vertex AI.',
-  'oauth.thirdPartyPlatformsEnterpriseHint': 'These options are typically used for enterprise deployments.',
+  'oauth.thirdPartyPlatformsDesc':
+    'You can use ZY Code with Amazon Bedrock, Microsoft Foundry, or Google Vertex AI.',
+  'oauth.thirdPartyPlatformsEnterpriseHint':
+    'These options are typically used for enterprise deployments.',
   'oauth.documentation': 'Documentation',
   'oauth.pressEnterToGoBack': 'Press Enter to go back',
   'oauth.openingBrowserToSignIn': 'Opening browser to sign in…',
@@ -2523,7 +2666,8 @@ export const en: TranslationResource = {
   'tag.sessionTagged': 'Tagged session with #{tagName}',
   'tag.tagRemoved': 'Removed tag #{tagName}',
   'tag.tagKept': 'Kept tag #{tagName}',
-  'tag.usage': 'Usage: /tag <tag-name>\n\nToggle a searchable tag on the current session.\nRun the same command again to remove the tag.\nTags are displayed after the branch name in /resume and can be searched with /.\n\nExamples:\n  /tag bugfix        # Add tag\n  /tag bugfix        # Remove tag (toggle)\n  /tag feature-auth\n  /tag wip',
+  'tag.usage':
+    'Usage: /tag <tag-name>\n\nToggle a searchable tag on the current session.\nRun the same command again to remove the tag.\nTags are displayed after the branch name in /resume and can be searched with /.\n\nExamples:\n  /tag bugfix        # Add tag\n  /tag bugfix        # Remove tag (toggle)\n  /tag feature-auth\n  /tag wip',
 
   // Login command
   'login.title': 'Login',
@@ -2535,9 +2679,11 @@ export const en: TranslationResource = {
   'memory.title': 'Memory',
   'memory.learnMore': 'Learn more: {link}',
   'memory.openedAt': 'Opened memory file at {path}',
-  'memory.editorHint': 'To use a different editor, set the $EDITOR or $VISUAL environment variable.',
+  'memory.editorHint':
+    'To use a different editor, set the $EDITOR or $VISUAL environment variable.',
   'memory.usingEditor': 'Using {editorSource}="{editorValue}".',
-  'memory.usingEditorHint': 'Using {editorSource}="{editorValue}". To change editor, set $EDITOR or $VISUAL environment variable.',
+  'memory.usingEditorHint':
+    'Using {editorSource}="{editorValue}". To change editor, set $EDITOR or $VISUAL environment variable.',
   'memory.openError': 'Error opening memory file: {error}',
   'memory.cancelled': 'Cancelled memory editing',
 
@@ -2560,4 +2706,3 @@ export const en: TranslationResource = {
   'copy.charsLines': '{charCount} chars, {lineCount} lines',
   'copy.lines': '{count} lines',
 }
-

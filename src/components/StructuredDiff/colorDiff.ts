@@ -31,7 +31,5 @@ export function expectColorFile(): typeof ColorFile | null {
 }
 
 export function getSyntaxTheme(themeName: string): SyntaxTheme | null {
-  return getColorModuleUnavailableReason() === null
-    ? nativeGetSyntaxTheme(themeName)
-    : null
+  return getColorModuleUnavailableReason() === null ? nativeGetSyntaxTheme(themeName) : null
 }

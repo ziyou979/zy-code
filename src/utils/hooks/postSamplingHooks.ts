@@ -17,9 +17,7 @@ export type REPLHookContext = {
   querySource?: QuerySource
 }
 
-export type PostSamplingHook = (
-  context: REPLHookContext,
-) => Promise<void> | void
+export type PostSamplingHook = (context: REPLHookContext) => Promise<void> | void
 
 // Internal registry for post-sampling hooks
 const postSamplingHooks: PostSamplingHook[] = []

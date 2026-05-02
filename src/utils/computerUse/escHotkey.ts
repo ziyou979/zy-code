@@ -42,7 +42,7 @@ export function unregisterEscHotkey(): void {
   if (!registered) return
   try {
     // @ts-ignore
-    (requireComputerUseSwift() as any).hotkey.unregister()
+    ;(requireComputerUseSwift() as any).hotkey.unregister()
   } finally {
     releasePump()
     registered = false
@@ -51,7 +51,6 @@ export function unregisterEscHotkey(): void {
 }
 
 export function notifyExpectedEscape(): void {
-  if (!registered) return
-  // @ts-ignore
-  (requireComputerUseSwift() as any).hotkey.notifyExpectedEscape()
+  if (!registered) return // @ts-ignore
+  ;(requireComputerUseSwift() as any).hotkey.notifyExpectedEscape()
 }

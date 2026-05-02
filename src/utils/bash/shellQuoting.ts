@@ -32,9 +32,7 @@ function containsMultilineString(command: string): boolean {
   const singleQuoteMultiline = /'(?:[^'\\]|\\.)*\n(?:[^'\\]|\\.)*'/
   const doubleQuoteMultiline = /"(?:[^"\\]|\\.)*\n(?:[^"\\]|\\.)*"/
 
-  return (
-    singleQuoteMultiline.test(command) || doubleQuoteMultiline.test(command)
-  )
+  return singleQuoteMultiline.test(command) || doubleQuoteMultiline.test(command)
 }
 
 /**
@@ -43,10 +41,7 @@ function containsMultilineString(command: string): boolean {
  * @param addStdinRedirect Whether to add < /dev/null
  * @returns The properly quoted command
  */
-export function quoteShellCommand(
-  command: string,
-  addStdinRedirect: boolean = true,
-): string {
+export function quoteShellCommand(command: string, addStdinRedirect: boolean = true): string {
   // If command contains heredoc or multiline strings, handle specially
   // The shell-quote library incorrectly escapes ! to \! in these cases
   if (containsHeredoc(command) || containsMultilineString(command)) {

@@ -10,29 +10,19 @@ import type {
   ToolDefinition,
   ToolChoice,
   TextBlock,
-  LLMMessage,
   DocumentBlock,
   ProviderExtras,
 } from '../../types/llm.js'
-import {
-  isAPIError,
-  isAbortError
-} from '../../types/llm.js'
+import { isAPIError, isAbortError } from '../../types/llm.js'
 
 // 以下类型仅用于 Anthropic SDK 请求构建，保留为局部类型
 type BetaOutputConfig = Record<string, unknown>
 type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
 
 import { randomUUID } from 'crypto'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-  isOpenAIProvider,
-} from 'src/utils/model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { getLLMAdapter } from './client.js'
-import {
-  getCLISyspromptPrefix,
-} from '../../constants/system.js'
+import { getCLISyspromptPrefix } from '../../constants/system.js'
 import {
   getEmptyToolPermissionContext,
   type QueryChainTracking,
@@ -62,10 +52,7 @@ import {
   toolToAPISchema,
 } from '../../utils/api.js'
 import { getOauthAccountInfo } from '../../utils/auth.js'
-import {
-  getMergedBetas,
-  getModelBetas,
-} from '../../utils/betas.js'
+import { getMergedBetas, getModelBetas } from '../../utils/betas.js'
 import { getOrCreateUserID } from '../../utils/config.js'
 import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { resolveAppliedEffort } from '../../utils/effort.js'
@@ -87,10 +74,7 @@ import {
   getDefaultStandardModel,
   getDefaultCompactModel,
 } from '../../utils/model/model.js'
-import {
-  asSystemPrompt,
-  type SystemPrompt,
-} from '../../utils/systemPromptType.js'
+import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { getDynamicConfig_BLOCKS_ON_INIT } from '../analytics/growthbook.js'
 import {
@@ -188,14 +172,8 @@ import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
 import { safeParseJSON } from '../../utils/json.js'
 
-import {
-  normalizeModelStringForAPI,
-  parseUserSpecifiedModel,
-} from '../../utils/model/model.js'
-import {
-  startSessionActivity,
-  stopSessionActivity,
-} from '../../utils/sessionActivity.js'
+import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../utils/model/model.js'
+import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   isBetaTracingEnabled,
@@ -276,10 +254,9 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
         )
       }
     } catch (error) {
-      logForDebugging(
-        `Error parsing ZY_CODE_EXTRA_BODY: ${errorMessage(error)}`,
-        { level: 'error' },
-      )
+      logForDebugging(`Error parsing ZY_CODE_EXTRA_BODY: ${errorMessage(error)}`, {
+        level: 'error',
+      })
     }
   }
 
@@ -288,23 +265,18 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
     feature('ANTI_DISTILLATION_CC')
       ? process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
         shouldIncludeExperimentalBetas() &&
-        getFeatureValue_CACHED_MAY_BE_STALE(
-          'zy_anti_distill_fake_tool_injection',
-          false,
-        )
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_anti_distill_fake_tool_injection', false)
       : false
   ) {
     result.anti_distillation = ['fake_tools']
   }
 
   // 处理 beta headers（如果提供）
-    if (betaHeaders && betaHeaders.length > 0) {
-      if (result.anthropic_beta && Array.isArray(result.anthropic_beta)) {
-        // 添加到现有数组，避免重复
+  if (betaHeaders && betaHeaders.length > 0) {
+    if (result.anthropic_beta && Array.isArray(result.anthropic_beta)) {
+      // 添加到现有数组，避免重复
       const existingHeaders = result.anthropic_beta as string[]
-      const newHeaders = betaHeaders.filter(
-        header => !existingHeaders.includes(header),
-      )
+      const newHeaders = betaHeaders.filter((header) => !existingHeaders.includes(header))
       result.anthropic_beta = [...existingHeaders, ...newHeaders]
     } else {
       // 用 beta headers 创建新数组
@@ -378,10 +350,7 @@ export function getCacheControl({
 function should1hCacheTTL(querySource?: QuerySource): boolean {
   // 第三方 Bedrock 用户通过环境变量选择 1h TTL — 他们自行管理计费
   // 无需 GrowthBook 控制，因为第三方用户没有配置 GrowthBook
-  if (
-    getAPIProvider() === 'bedrock' &&
-    isEnvTruthy(process.env.ENABLE_PROMPT_CACHING_1H_BEDROCK)
-  ) {
+  if (getAPIProvider() === 'bedrock' && isEnvTruthy(process.env.ENABLE_PROMPT_CACHING_1H_BEDROCK)) {
     return true
   }
 
@@ -390,8 +359,7 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
   // 破坏服务端提示词缓存（每次变更约 ~20K 令牌）。
   let userEligible = getPromptCache1hEligible()
   if (userEligible === null) {
-    userEligible =
-      isInternalBuild()
+    userEligible = isInternalBuild()
     setPromptCache1hEligible(userEligible)
   }
   if (!userEligible) return false
@@ -409,7 +377,7 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
 
   return (
     querySource !== undefined &&
-    allowlist.some(pattern =>
+    allowlist.some((pattern) =>
       pattern.endsWith('*')
         ? querySource.startsWith(pattern.slice(0, -1))
         : querySource === pattern,
@@ -440,8 +408,7 @@ function configureEffortParams(
     betas.push(EFFORT_BETA_HEADER)
   } else if (isInternalBuild()) {
     // 数值 effort 覆盖 - 仅限 ant 用户（使用 anthropic_internal）
-    const existingInternal =
-      (extraBodyParams.anthropic_internal as Record<string, unknown>) || {}
+    const existingInternal = (extraBodyParams.anthropic_internal as Record<string, unknown>) || {}
     extraBodyParams.anthropic_internal = {
       ...existingInternal,
       effort_override: effortValue,
@@ -465,11 +432,7 @@ export function configureTaskBudgetParams(
   outputConfig: BetaOutputConfig & { task_budget?: TaskBudgetParam },
   betas: string[],
 ): void {
-  if (
-    !taskBudget ||
-    'task_budget' in outputConfig ||
-    !shouldIncludeExperimentalBetas()
-  ) {
+  if (!taskBudget || 'task_budget' in outputConfig || !shouldIncludeExperimentalBetas()) {
     return
   }
   outputConfig.task_budget = {
@@ -669,14 +632,7 @@ export async function queryModelWithoutStreaming({
   // logAPISuccessAndDuration 被调用（在所有 yield 之后发生）
   let assistantMessage: AssistantMessage | undefined
   for await (const message of withStreamingVCR(messages, async function* () {
-    yield* queryModel(
-      messages,
-      systemPrompt,
-      thinkingConfig,
-      tools,
-      signal,
-      options,
-    )
+    yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
   })) {
     if (message.type === 'assistant') {
       assistantMessage = message
@@ -709,19 +665,9 @@ export async function* queryModelWithStreaming({
   tools: Tools
   signal: AbortSignal
   options: Options
-}): AsyncGenerator<
-  StreamEvent | AssistantMessage | SystemAPIErrorMessage,
-  void
-> {
+}): AsyncGenerator<StreamEvent | AssistantMessage | SystemAPIErrorMessage, void> {
   return yield* withStreamingVCR(messages, async function* () {
-    yield* queryModel(
-      messages,
-      systemPrompt,
-      thinkingConfig,
-      tools,
-      signal,
-      options,
-    )
+    yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
   })
 }
 
@@ -799,20 +745,13 @@ export async function* executeNonStreamingRequest(
       captureRequest(retryParams)
       onAttempt(attempt, start, retryParams.max_tokens)
 
-      const adjustedParams = adjustParamsForNonStreaming(
-        retryParams,
-        MAX_NON_STREAMING_TOKENS,
-      )
+      const adjustedParams = adjustParamsForNonStreaming(retryParams, MAX_NON_STREAMING_TOKENS)
 
       try {
         // biome-ignore lint/plugin: non-streaming API call
         // 统一的非流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
         const adapter = getLLMAdapter({ anthropicClient: anthropic })
-        return await adapter.createMessage(
-          adjustedParams,
-          retryOptions.signal,
-          fallbackTimeoutMs,
-        )
+        return await adapter.createMessage(adjustedParams, retryOptions.signal, fallbackTimeoutMs)
       } catch (err) {
         // 用户中止不是错误 — 立即重新抛出，不记录日志
         if (isAbortError(err)) throw err
@@ -822,8 +761,7 @@ export async function* executeNonStreamingRequest(
         // 和"回退触发了有界超时"（此事件）。
         logForDiagnosticsNoPII('error', 'cli_nonstreaming_fallback_error')
         logEvent('zy_nonstreaming_fallback_error', {
-          model:
-            clientOptions.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: clientOptions.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           error:
             err instanceof Error
               ? (err.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
@@ -866,9 +804,7 @@ export async function* executeNonStreamingRequest(
  *（主线程、子代理、队友）独立跟踪自己的请求链，
  * 回滚/撤销自然会更新该值。
  */
-function getPreviousRequestIdFromMessages(
-  messages: Message[],
-): string | undefined {
+function getPreviousRequestIdFromMessages(messages: Message[]): string | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i]!
     if (msg.type === 'assistant' && msg.requestId) {
@@ -878,15 +814,11 @@ function getPreviousRequestIdFromMessages(
   return undefined
 }
 
-function isMedia(
-  block: ContentBlock,
-): block is ImageBlock | DocumentBlock {
+function isMedia(block: ContentBlock): block is ImageBlock | DocumentBlock {
   return block.type === 'image' || block.type === 'document'
 }
 
-function isToolResult(
-  block: ContentBlock,
-): block is ToolResultBlock {
+function isToolResult(block: ContentBlock): block is ToolResultBlock {
   return block.type === 'tool_result'
 }
 
@@ -913,32 +845,25 @@ export function stripExcessMediaItems(
   toRemove -= limit
   if (toRemove <= 0) return messages
 
-  return messages.map(msg => {
+  return messages.map((msg) => {
     if (toRemove <= 0) return msg
     const content = msg.message.content
     if (!Array.isArray(content)) return msg
 
     const before = toRemove
     const stripped = content
-      .map(block => {
-        if (
-          toRemove <= 0 ||
-          !isToolResult(block) ||
-          !Array.isArray(block.content)
-        )
-          return block
-        const filtered = block.content.filter(n => {
+      .map((block) => {
+        if (toRemove <= 0 || !isToolResult(block) || !Array.isArray(block.content)) return block
+        const filtered = block.content.filter((n) => {
           if (toRemove > 0 && isMedia(n)) {
             toRemove--
             return false
           }
           return true
         })
-        return filtered.length === block.content.length
-          ? block
-          : { ...block, content: filtered }
+        return filtered.length === block.content.length ? block : { ...block, content: filtered }
       })
-      .filter(block => {
+      .filter((block) => {
         if (toRemove > 0 && isMedia(block)) {
           toRemove--
           return false
@@ -962,10 +887,7 @@ async function* queryModel(
   tools: Tools,
   signal: AbortSignal,
   options: Options,
-): AsyncGenerator<
-  StreamEvent | AssistantMessage | SystemAPIErrorMessage,
-  void
-> {
+): AsyncGenerator<StreamEvent | AssistantMessage | SystemAPIErrorMessage, void> {
   // 从此查询链中最后的助手消息派生之前的请求 ID。
   // 每个消息数组作用域独立（主线程、子代理、队友各有自己的），
   // 因此并发代理不会互相覆盖请求链跟踪。
@@ -1000,8 +922,8 @@ async function* queryModel(
         normalizeModelStringForAPI(advisorExperiment.baseModel) ===
         normalizeModelStringForAPI(options.model)
       ) {
-      // 如果基础模型匹配，覆盖 advisor 模型。只有在用户无法
-      // 自行配置时，我们才应该有实验模型。
+        // 如果基础模型匹配，覆盖 advisor 模型。只有在用户无法
+        // 自行配置时，我们才应该有实验模型。
         advisorOption = advisorExperiment.advisorModel
       }
     }
@@ -1048,14 +970,8 @@ async function* queryModel(
   // 即使启用了工具搜索模式，如果没有延迟工具
   // 并且没有 MCP 服务器仍在连接中，也跳过。当服务器挂起时，保留
   // ToolSearch 以便模型在它们连接后发现工具。
-  if (
-    useToolSearch &&
-    deferredToolNames.size === 0 &&
-    !options.hasPendingMcpServers
-  ) {
-    logForDebugging(
-      'Tool search disabled: no deferred tools available to search',
-    )
+  if (useToolSearch && deferredToolNames.size === 0 && !options.hasPendingMcpServers) {
+    logForDebugging('Tool search disabled: no deferred tools available to search')
     useToolSearch = false
   }
 
@@ -1069,7 +985,7 @@ async function* queryModel(
     // 预先声明所有延迟工具的需要，并移除了工具数量限制。
     const discoveredToolNames = extractDiscoveredToolNames(messages)
 
-    filteredTools = tools.filter(tool => {
+    filteredTools = tools.filter((tool) => {
       // 始终包含非延迟工具
       if (!deferredToolNames.has(tool.name)) return true
       // 始终包含 ToolSearchTool（以便它能发现更多工具）
@@ -1078,9 +994,7 @@ async function* queryModel(
       return discoveredToolNames.has(tool.name)
     })
   } else {
-    filteredTools = tools.filter(
-      t => !toolMatchesName(t, TOOL_SEARCH_TOOL_NAME),
-    )
+    filteredTools = tools.filter((t) => !toolMatchesName(t, TOOL_SEARCH_TOOL_NAME))
   }
 
   // 如果启用，添加工具搜索 beta header — defer_loading 被接受所必需
@@ -1100,8 +1014,8 @@ async function* queryModel(
   let cachedMCEnabled = false
   let cacheEditingBetaHeader = ''
   if (feature('CACHED_MICROCOMPACT')) {
-    const cachedMicrocompact = await import('../compact/cachedMicrocompact.js') as any
-    const betas = await import('src/constants/betas.js') as any
+    const cachedMicrocompact = (await import('../compact/cachedMicrocompact.js')) as any
+    const betas = (await import('src/constants/betas.js')) as any
     const isCachedMicrocompactEnabled = cachedMicrocompact.isCachedMicrocompactEnabled
     const isModelSupportedForCacheEditing = cachedMicrocompact.isModelSupportedForCacheEditing
     const getCachedMCConfig = cachedMicrocompact.getCachedMCConfig
@@ -1121,14 +1035,10 @@ async function* queryModel(
   // MCP 工具是每用户的 → 动态工具部分 → 无法全局缓存。
   // 仅在 MCP 工具实际渲染（非 defer_loading）时才进行门控。
   const needsToolBasedCacheMarker =
-    useGlobalCacheFeature &&
-    filteredTools.some(t => t.isMcp === true && !willDefer(t))
+    useGlobalCacheFeature && filteredTools.some((t) => t.isMcp === true && !willDefer(t))
 
   // 启用全局缓存时，确保存在 prompt_caching_scope beta header。
-  if (
-    useGlobalCacheFeature &&
-    !betas.includes(PROMPT_CACHING_SCOPE_BETA_HEADER)
-  ) {
+  if (useGlobalCacheFeature && !betas.includes(PROMPT_CACHING_SCOPE_BETA_HEADER)) {
     betas.push(PROMPT_CACHING_SCOPE_BETA_HEADER)
   }
 
@@ -1144,7 +1054,7 @@ async function* queryModel(
   // ToolSearchTool 的 prompt 能列出所有可用的 MCP 工具。过滤仅影响
   // 实际发送给 API 的工具，不影响模型在工具描述中看到的内容。
   const toolSchemas = await Promise.all(
-    filteredTools.map(tool =>
+    filteredTools.map((tool) =>
       toolToAPISchema(tool, {
         getToolPermissionContext: options.getToolPermissionContext,
         tools,
@@ -1157,9 +1067,7 @@ async function* queryModel(
   )
 
   if (useToolSearch) {
-    const includedDeferredTools = count(filteredTools, t =>
-      deferredToolNames.has(t.name),
-    )
+    const includedDeferredTools = count(filteredTools, (t) => deferredToolNames.has(t.name))
     logForDebugging(
       `Dynamic tool loading: ${includedDeferredTools}/${deferredToolNames.size} deferred tools included`,
     )
@@ -1192,7 +1100,7 @@ async function* queryModel(
   // 工具输入，所以 stripCallerFieldFromAssistantMessage 只需移除
   // 'caller' 字段（无需重新规范化输入）。
   if (!useToolSearch) {
-    messagesForAPI = messagesForAPI.map(msg => {
+    messagesForAPI = messagesForAPI.map((msg) => {
       switch (msg.type) {
         case 'user':
           // 从 tool_result 内容中剥离 tool_reference 块
@@ -1220,10 +1128,7 @@ async function* queryModel(
   // API 会拒绝包含 >100 个媒体项的请求，但返回的错误令人困惑。
   // 与其报错（在 Cowork/CCD 中难以恢复），我们
   // 静默移除最旧的媒体项以保持在限制内。
-  messagesForAPI = stripExcessMediaItems(
-    messagesForAPI,
-    API_MAX_MEDIA_PER_REQUEST,
-  )
+  messagesForAPI = stripExcessMediaItems(messagesForAPI, API_MAX_MEDIA_PER_REQUEST)
 
   //  instrumentation：跟踪规范化后的消息数量
   logEvent('zy_api_after_normalize', {
@@ -1235,7 +1140,7 @@ async function* queryModel(
   //（每当工具池变化时会破坏缓存）。
   if (useToolSearch && !isDeferredToolsDeltaEnabled()) {
     const deferredToolList = tools
-      .filter(t => deferredToolNames.has(t.name))
+      .filter((t) => deferredToolNames.has(t.name))
       .map(formatDeferredToolLine)
       .sort()
       .join('\n')
@@ -1254,11 +1159,10 @@ async function* queryModel(
   // 这些作为客户端块携带在 mcp_instructions_delta 中
   //（attachments.ts），而非此处。此每次请求的系统提示追加
   // 会在 chrome 延迟连接时破坏提示词缓存。
-  const hasChromeTools = filteredTools.some(t =>
+  const hasChromeTools = filteredTools.some((t) =>
     isToolFromMcpServer(t.name, CLAUDE_IN_CHROME_MCP_SERVER_NAME),
   )
-  const injectChromeHere =
-    useToolSearch && hasChromeTools && !isMcpInstructionsDeltaEnabled()
+  const injectChromeHere = useToolSearch && hasChromeTools && !isMcpInstructionsDeltaEnabled()
 
   // filter(Boolean) 通过将每个元素转换为布尔值来工作 - 空字符串变为 false 并被过滤掉。
   systemPrompt = asSystemPrompt(
@@ -1276,8 +1180,7 @@ async function* queryModel(
   // 前置系统提示块，便于 API 识别
   logAPIPrefix(systemPrompt)
 
-  const enablePromptCaching =
-    options.enablePromptCaching ?? getPromptCachingEnabled(options.model)
+  const enablePromptCaching = options.enablePromptCaching ?? getPromptCachingEnabled(options.model)
   const system = buildSystemPromptBlocks(systemPrompt, enablePromptCaching, {
     skipGlobalCacheForSystemPrompt: needsToolBasedCacheMarker,
     querySource: options.querySource,
@@ -1338,10 +1241,7 @@ async function* queryModel(
   let thinkingClearLatched = getThinkingClearLatched() === true
   if (!thinkingClearLatched && isAgenticQuery) {
     const lastCompletion = getLastApiCompletionTimestamp()
-    if (
-      lastCompletion !== null &&
-      Date.now() - lastCompletion > CACHE_TTL_1HOUR_MS
-    ) {
+    if (lastCompletion !== null && Date.now() - lastCompletion > CACHE_TTL_1HOUR_MS) {
       thinkingClearLatched = true
       setThinkingClearLatched(true)
     }
@@ -1354,7 +1254,7 @@ async function* queryModel(
     // 所以它们永远不会影响实际的缓存键。包含它们会在工具被发现或
     // MCP 服务器重新连接时创建误报的"工具 schema 变更"破坏。
     const toolsForCacheDetection = allTools.filter(
-      t => !('defer_loading' in t && t.defer_loading),
+      (t) => !('defer_loading' in t && t.defer_loading),
     )
     // 捕获所有可能影响服务端缓存键的内容。
     // 传递锁存的 header 值（而非实时状态），以便破坏检测
@@ -1385,11 +1285,7 @@ async function* queryModel(
 
   // 捕获 span 以便稍后传递给 endLLMRequestSpan
   // 这确保在多个请求并行运行时，响应能匹配到正确的请求
-  const llmSpan = startLLMRequestSpan(
-    options.model,
-    newContext,
-    messagesForAPI,
-  )
+  const llmSpan = startLLMRequestSpan(options.model, newContext, messagesForAPI)
 
   const startIncludingRetries = Date.now()
   let start = Date.now()
@@ -1433,13 +1329,7 @@ async function* queryModel(
       ...((extraBodyParams.output_config as BetaOutputConfig) ?? {}),
     }
 
-    configureEffortParams(
-      effort,
-      outputConfig,
-      extraBodyParams,
-      betasParams,
-      options.model,
-    )
+    configureEffortParams(effort, outputConfig, extraBodyParams, betasParams, options.model)
 
     configureTaskBudgetParams(
       options.taskBudget,
@@ -1467,8 +1357,7 @@ async function* queryModel(
       getMaxOutputTokensForModel(options.model)
 
     const hasThinking =
-      thinkingConfig.type !== 'disabled' &&
-      !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
+      thinkingConfig.type !== 'disabled' && !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
     let thinking: any | undefined = undefined
 
     // 重要：不要更改下面的自适应与预算 thinking 选择，
@@ -1488,10 +1377,7 @@ async function* queryModel(
         // 对于不支持自适应 thinking 的模型，使用默认
         // thinking 预算，除非明确指定。
         let thinkingBudget = getMaxThinkingTokensForModel(options.model)
-        if (
-          thinkingConfig.type === 'enabled' &&
-          thinkingConfig.budgetTokens !== undefined
-        ) {
+        if (thinkingConfig.type === 'enabled' && thinkingConfig.budgetTokens !== undefined) {
           thinkingBudget = thinkingConfig.budgetTokens
         }
         thinkingBudget = Math.min(maxOutputTokens - 1, thinkingBudget)
@@ -1539,16 +1425,12 @@ async function* queryModel(
       !betasParams.includes(cacheEditingBetaHeader)
     ) {
       betasParams.push(cacheEditingBetaHeader)
-      logForDebugging(
-        'Cache editing beta header enabled for cached microcompact',
-      )
+      logForDebugging('Cache editing beta header enabled for cached microcompact')
     }
 
     // 仅在 thinking 禁用时发送 temperature — API 要求
     // thinking 启用时 temperature: 1，这已经是默认值。
-    const temperature = !hasThinking
-      ? (options.temperatureOverride ?? 1)
-      : undefined
+    const temperature = !hasThinking ? (options.temperatureOverride ?? 1) : undefined
 
     lastRequestBetas = betasParams
 
@@ -1598,7 +1480,7 @@ async function* queryModel(
     const logBetas = useBetas ? (queryParams.betas ?? []) : []
     const logThinkingType = queryParams.thinking?.type ?? 'disabled'
     const logEffortValue = queryParams.output_config?.effort
-    void options.getToolPermissionContext().then(permissionContext => {
+    void options.getToolPermissionContext().then((permissionContext) => {
       logAPIQuery({
         model: options.model,
         messagesLength: logMessagesLength,
@@ -1665,15 +1547,13 @@ async function* queryModel(
         // 仍可与服务端日志关联。仅限第一方 — 第三方提供商不记录它
         //（inc-4029 类）。
         clientRequestId =
-          getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
-            ? randomUUID()
-            : undefined
+          getAPIProvider() === 'anthropic' && isAnthropicBaseUrl() ? randomUUID() : undefined
 
         // 使用原始流而非 BetaMessageStream，避免 O(n²) 的部分 JSON 解析
         // BetaMessageStream 在每个 input_json_delta 上调用 partialParse()，我们不需要它
         // 因为我们自己处理工具输入累积
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
-        
+
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
         const adapter = getLLMAdapter({ anthropicClient: anthropic })
         const streamResult = await adapter.createStream(params, signal, clientRequestId)
@@ -1716,9 +1596,7 @@ async function* queryModel(
     // 此机制使用 setTimeout 主动杀死挂起的流。没有这个，静默断开的
     // 连接会无限期挂起会话，因为 SDK 的请求超时仅覆盖初始 fetch()，
     // 不覆盖流式响应体。
-    const streamWatchdogEnabled = isEnvTruthy(
-      process.env.CLAUDE_ENABLE_STREAM_WATCHDOG,
-    )
+    const streamWatchdogEnabled = isEnvTruthy(process.env.CLAUDE_ENABLE_STREAM_WATCHDOG)
     const STREAM_IDLE_TIMEOUT_MS =
       parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000
     const STREAM_IDLE_WARNING_MS = STREAM_IDLE_TIMEOUT_MS / 2
@@ -1743,11 +1621,10 @@ async function* queryModel(
         return
       }
       streamIdleWarningTimer = setTimeout(
-        warnMs => {
-          logForDebugging(
-            `Streaming idle warning: no chunks received for ${warnMs / 1000}s`,
-            { level: 'warn' },
-          )
+        (warnMs) => {
+          logForDebugging(`Streaming idle warning: no chunks received for ${warnMs / 1000}s`, {
+            level: 'warn',
+          })
           logForDiagnosticsNoPII('warn', 'cli_streaming_idle_warning')
         },
         STREAM_IDLE_WARNING_MS,
@@ -1762,8 +1639,7 @@ async function* queryModel(
         )
         logForDiagnosticsNoPII('error', 'cli_streaming_idle_timeout')
         logEvent('zy_streaming_idle_timeout', {
-          model:
-            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           timeout_ms: STREAM_IDLE_TIMEOUT_MS,
@@ -1800,10 +1676,8 @@ async function* queryModel(
               stall_duration_ms: timeSinceLastEvent,
               stall_count: stallCount,
               total_stall_time_ms: totalStallTime,
-              event_type:
-                part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              model:
-                options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              event_type: part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               request_id: (streamRequestId ??
                 'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             })
@@ -1886,9 +1760,7 @@ async function* queryModel(
                 break
               default:
                 contentBlocks[chunkIndex] = { ...startChunk } as ContentBlock
-                if (
-                  startChunk.type === 'advisor_tool_result'
-                ) {
+                if (startChunk.type === 'advisor_tool_result') {
                   isAdvisorInProgress = false
                   logForDebugging(`[AdvisorTool] Advisor tool result received`)
                 }
@@ -1903,16 +1775,12 @@ async function* queryModel(
               logEvent('zy_streaming_error', {
                 error_type:
                   'content_block_not_found_delta' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                part_type:
-                  part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                part_type: part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_index: part.index,
               })
               throw new RangeError('Content block not found')
             }
-            if (
-              feature('CONNECTOR_TEXT') &&
-              delta.type === 'connector_text_delta'
-            ) {
+            if (feature('CONNECTOR_TEXT') && delta.type === 'connector_text_delta') {
               if (contentBlock.type !== 'connector_text') {
                 logEvent('zy_streaming_error', {
                   error_type:
@@ -1972,10 +1840,7 @@ async function* queryModel(
                   contentBlock.text += delta.text
                   break
                 case 'signature_delta':
-                  if (
-                    feature('CONNECTOR_TEXT') &&
-                    contentBlock.type === 'connector_text'
-                  ) {
+                  if (feature('CONNECTOR_TEXT') && contentBlock.type === 'connector_text') {
                     contentBlock.signature = delta.signature
                     break
                   }
@@ -2034,8 +1899,7 @@ async function* queryModel(
               logEvent('zy_streaming_error', {
                 error_type:
                   'content_block_not_found_stop' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                part_type:
-                  part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                part_type: part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_index: part.index,
               })
               throw new RangeError('Content block not found')
@@ -2044,8 +1908,7 @@ async function* queryModel(
               logEvent('zy_streaming_error', {
                 error_type:
                   'partial_message_not_found' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                part_type:
-                  part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                part_type: part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               })
               throw new Error('Message not found')
             }
@@ -2062,8 +1925,7 @@ async function* queryModel(
               type: 'assistant',
               uuid: randomUUID(),
               timestamp: new Date().toISOString(),
-              ...(isInternalBuild() &&
-                research !== undefined && { research }),
+              ...(isInternalBuild() && research !== undefined && { research }),
               ...(advisorModel && { advisorModel }),
             }
             newMessages.push(m)
@@ -2090,10 +1952,7 @@ async function* queryModel(
             // Always overwrite with the latest value. Also write back to
             // already-yielded messages since message_delta arrives after
             // content_block_stop.
-            if (
-              isInternalBuild() &&
-              'research' in (part as unknown as Record<string, unknown>)
-            ) {
+            if (isInternalBuild() && 'research' in (part as unknown as Record<string, unknown>)) {
               research = (part as unknown as Record<string, unknown>).research
               for (const msg of newMessages) {
                 msg.research = research
@@ -2123,16 +1982,9 @@ async function* queryModel(
 
             // Update cost
             const costUSDForPart = calculateUSDCost(resolvedModel, usage)
-            costUSD += addToTotalSessionCost(
-              costUSDForPart,
-              usage,
-              options.model,
-            )
+            costUSD += addToTotalSessionCost(costUSDForPart, usage, options.model)
 
-            const refusalMessage = getErrorMessageIfRefusal(
-              stopReasonV2,
-              options.model,
-            )
+            const refusalMessage = getErrorMessageIfRefusal(stopReasonV2, options.model)
             if (refusalMessage) {
               yield refusalMessage
             }
@@ -2176,8 +2028,7 @@ async function* queryModel(
             logEvent('zy_streaming_unknown_event', {
               event_type: (part as { type: string })
                 .type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              model:
-                options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               request_id: (streamRequestId ??
                 'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             })
@@ -2203,18 +2054,13 @@ async function* queryModel(
           streamWatchdogFiredAt !== null
             ? Math.round(performance.now() - streamWatchdogFiredAt)
             : -1
-        logForDiagnosticsNoPII(
-          'info',
-          'cli_stream_loop_exited_after_watchdog_clean',
-        )
+        logForDiagnosticsNoPII('info', 'cli_stream_loop_exited_after_watchdog_clean')
         logEvent('zy_stream_loop_exited_after_watchdog', {
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           exit_delay_ms: exitDelayMs,
-          exit_path:
-            'clean' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          model:
-            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          exit_path: 'clean' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
         // Prevent double-emit: this throw lands in the catch block below,
         // whose exit_path='error' probe guards on streamWatchdogFiredAt.
@@ -2243,8 +2089,7 @@ async function* queryModel(
           { level: 'error' },
         )
         logEvent('zy_stream_no_events', {
-          model:
-            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -2260,8 +2105,7 @@ async function* queryModel(
         logEvent('zy_streaming_stall_summary', {
           stall_count: stallCount,
           total_stall_time_ms: totalStallTime,
-          model:
-            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -2297,25 +2141,18 @@ async function* queryModel(
       // threw (rather than exiting cleanly), record that the loop DID exit and
       // how long after the watchdog. Distinguishes true hangs from error exits.
       if (streamIdleAborted && streamWatchdogFiredAt !== null) {
-        const exitDelayMs = Math.round(
-          performance.now() - streamWatchdogFiredAt,
-        )
-        logForDiagnosticsNoPII(
-          'info',
-          'cli_stream_loop_exited_after_watchdog_error',
-        )
+        const exitDelayMs = Math.round(performance.now() - streamWatchdogFiredAt)
+        logForDiagnosticsNoPII('info', 'cli_stream_loop_exited_after_watchdog_error')
         logEvent('zy_stream_loop_exited_after_watchdog', {
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           exit_delay_ms: exitDelayMs,
-          exit_path:
-            'error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          exit_path: 'error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           error_name:
             streamingError instanceof Error
               ? (streamingError.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
               : ('unknown' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS),
-          model:
-            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
       }
 
@@ -2325,13 +2162,10 @@ async function* queryModel(
         // If not, it's likely a timeout from the SDK
         if (signal.aborted) {
           // This is a real user abort (ESC key was pressed)
-          logForDebugging(
-            `Streaming aborted by user: ${errorMessage(streamingError)}`,
-          )
+          logForDebugging(`Streaming aborted by user: ${errorMessage(streamingError)}`)
           if (isAdvisorInProgress) {
             logEvent('zy_advisor_tool_interrupted', {
-              model:
-                options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               advisor_model: (advisorModel ??
                 'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             })
@@ -2340,10 +2174,9 @@ async function* queryModel(
         } else {
           // The SDK threw APIUserAbortError but our signal wasn't aborted
           // This means it's a timeout from the SDK's internal timeout
-          logForDebugging(
-            `Streaming timeout (SDK abort): ${streamingError.message}`,
-            { level: 'error' },
-          )
+          logForDebugging(`Streaming timeout (SDK abort): ${streamingError.message}`, {
+            level: 'error',
+          })
           // Throw a more specific error for timeout
           throw new LLMConnectionError('Request timed out')
         }
@@ -2356,10 +2189,7 @@ async function* queryModel(
       // and runs it again. See inc-4258.
       const disableFallback =
         isEnvTruthy(process.env.ZY_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
-        getFeatureValue_CACHED_MAY_BE_STALE(
-          'zy_disable_streaming_to_non_streaming_fallback',
-          false,
-        )
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_streaming_to_non_streaming_fallback', false)
 
       if (disableFallback) {
         logForDebugging(
@@ -2367,8 +2197,7 @@ async function* queryModel(
           { level: 'error' },
         )
         logEvent('zy_streaming_fallback_to_non_streaming', {
-          model:
-            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           error:
             streamingError instanceof Error
               ? (streamingError.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
@@ -2399,8 +2228,7 @@ async function* queryModel(
       }
 
       logEvent('zy_streaming_fallback_to_non_streaming', {
-        model:
-          options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         error:
           streamingError instanceof Error
             ? (streamingError.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
@@ -2430,8 +2258,7 @@ async function* queryModel(
       logEvent('zy_nonstreaming_fallback_started', {
         request_id: (streamRequestId ??
           'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        model:
-          options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         fallback_cause: (streamIdleAborted
           ? 'watchdog'
           : 'other') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2451,18 +2278,14 @@ async function* queryModel(
           attemptNumber = attempt
           maxOutputTokens = tokens
         },
-        params => captureAPIRequest(params, options.querySource),
+        (params) => captureAPIRequest(params, options.querySource),
         streamRequestId,
       )
 
       const m: AssistantMessage = {
         message: {
           ...result,
-          content: normalizeContentFromAPI(
-            result.content,
-            tools,
-            options.agentId,
-          ),
+          content: normalizeContentFromAPI(result.content, tools, options.agentId),
         },
         requestId: streamRequestId ?? undefined,
         type: 'assistant',
@@ -2506,28 +2329,23 @@ async function* queryModel(
       // 404 is thrown at .withResponse() before streamRequestId is assigned,
       // and CannotRetryError means every retry failed — so grab the failed
       // request's ID from the error header instead.
-      const failedRequestId =
-        (errorFromRetry.originalError as any).requestID ?? 'unknown'
-      logForDebugging(
-        'Streaming endpoint returned 404, falling back to non-streaming mode',
-        { level: 'warn' },
-      )
+      const failedRequestId = (errorFromRetry.originalError as any).requestID ?? 'unknown'
+      logForDebugging('Streaming endpoint returned 404, falling back to non-streaming mode', {
+        level: 'warn',
+      })
       didFallBackToNonStreaming = true
       if (options.onStreamingFallback) {
         options.onStreamingFallback()
       }
 
       logEvent('zy_streaming_fallback_to_non_streaming', {
-        model:
-          options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        error:
-          '404_stream_creation' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        error: '404_stream_creation' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         attemptNumber,
         maxOutputTokens,
         thinkingType:
           thinkingConfig.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        request_id:
-          failedRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        request_id: failedRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         fallback_cause:
           '404_stream_creation' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
@@ -2547,25 +2365,20 @@ async function* queryModel(
             attemptNumber = attempt
             maxOutputTokens = tokens
           },
-          params => captureAPIRequest(params, options.querySource),
+          (params) => captureAPIRequest(params, options.querySource),
           failedRequestId,
         )
 
         const m: AssistantMessage = {
           message: {
             ...result,
-            content: normalizeContentFromAPI(
-              result.content,
-              tools,
-              options.agentId,
-            ),
+            content: normalizeContentFromAPI(result.content, tools, options.agentId),
           },
           requestId: streamRequestId ?? undefined,
           type: 'assistant',
           uuid: randomUUID(),
           timestamp: new Date().toISOString(),
-          ...(isInternalBuild() &&
-            research !== undefined && { research }),
+          ...(isInternalBuild() && research !== undefined && { research }),
           ...(advisorModel && { advisorModel }),
         }
         newMessages.push(m)
@@ -2580,10 +2393,9 @@ async function* queryModel(
         }
 
         // Fallback also failed, handle as normal error
-        logForDebugging(
-          `Non-streaming fallback also failed: ${errorMessage(fallbackError)}`,
-          { level: 'error' },
-        )
+        logForDebugging(`Non-streaming fallback also failed: ${errorMessage(fallbackError)}`, {
+          level: 'error',
+        })
 
         let error = fallbackError
         let errorModel = options.model
@@ -2706,11 +2518,7 @@ async function* queryModel(
       usage = updateUsage(EMPTY_USAGE, fallbackUsage)
       stopReason = fallbackMessage.message.stopReason
       const fallbackCost = calculateUSDCost(resolvedModel, fallbackUsage)
-      costUSD += addToTotalSessionCost(
-        fallbackCost,
-        fallbackUsage,
-        options.model,
-      )
+      costUSD += addToTotalSessionCost(fallbackCost, fallbackUsage, options.model)
     }
   }
 
@@ -2727,8 +2535,7 @@ async function* queryModel(
   if (
     streamRequestId &&
     !getAgentContext() &&
-    (options.querySource.startsWith('repl_main_thread') ||
-      options.querySource === 'sdk')
+    (options.querySource.startsWith('repl_main_thread') || options.querySource === 'sdk')
   ) {
     setLastMainRequestId(streamRequestId)
   }
@@ -2738,10 +2545,9 @@ async function* queryModel(
   //（上下文窗口限制内的整个会话）。
   const logMessageCount = messagesForAPI.length
   const logMessageTokens = tokenCountFromLastAPIResponse(messagesForAPI)
-  void options.getToolPermissionContext().then(permissionContext => {
+  void options.getToolPermissionContext().then((permissionContext) => {
     logAPISuccessAndDuration({
-      model:
-        newMessages[0]?.message.model ?? partialMessage?.model ?? options.model,
+      model: newMessages[0]?.message.model ?? partialMessage?.model ?? options.model,
       preNormalizedModel: options.model,
       usage,
       start,
@@ -2778,9 +2584,7 @@ async function* queryModel(
  * 清理流资源以防止内存泄漏。
  * @internal 导出用于测试
  */
-export function cleanupStream(
-  stream: AsyncIterable<StreamEvent> | undefined,
-): void {
+export function cleanupStream(stream: AsyncIterable<StreamEvent> | undefined): void {
   if (!stream) {
     return
   }
@@ -2817,23 +2621,19 @@ export function updateUsage(
         ? partUsage.input_tokens
         : usage.inputTokens,
     cacheCreationInputTokens:
-      partUsage.cache_creation_input_tokens !== null &&
-      partUsage.cache_creation_input_tokens > 0
+      partUsage.cache_creation_input_tokens !== null && partUsage.cache_creation_input_tokens > 0
         ? partUsage.cache_creation_input_tokens
         : usage.cacheCreationInputTokens,
     cacheReadInputTokens:
-      partUsage.cache_read_input_tokens !== null &&
-      partUsage.cache_read_input_tokens > 0
+      partUsage.cache_read_input_tokens !== null && partUsage.cache_read_input_tokens > 0
         ? partUsage.cache_read_input_tokens
         : usage.cacheReadInputTokens,
     outputTokens: partUsage.output_tokens ?? usage.outputTokens,
     server_tool_use: {
       web_search_requests:
-        partUsage.server_tool_use?.web_search_requests ??
-        usage.server_tool_use.web_search_requests,
+        partUsage.server_tool_use?.web_search_requests ?? usage.server_tool_use.web_search_requests,
       web_fetch_requests:
-        partUsage.server_tool_use?.web_fetch_requests ??
-        usage.server_tool_use.web_fetch_requests,
+        partUsage.server_tool_use?.web_fetch_requests ?? usage.server_tool_use.web_fetch_requests,
     },
     service_tier: usage.service_tier,
     cache_creation: {
@@ -2879,10 +2679,8 @@ export function accumulateUsage(
   return {
     inputTokens: totalUsage.inputTokens + messageUsage.inputTokens,
     cacheCreationInputTokens:
-      totalUsage.cacheCreationInputTokens +
-      messageUsage.cacheCreationInputTokens,
-    cacheReadInputTokens:
-      totalUsage.cacheReadInputTokens + messageUsage.cacheReadInputTokens,
+      totalUsage.cacheCreationInputTokens + messageUsage.cacheCreationInputTokens,
+    cacheReadInputTokens: totalUsage.cacheReadInputTokens + messageUsage.cacheReadInputTokens,
     outputTokens: totalUsage.outputTokens + messageUsage.outputTokens,
     server_tool_use: {
       web_search_requests:
@@ -2908,9 +2706,8 @@ export function accumulateUsage(
           cache_deleted_input_tokens:
             ((totalUsage as unknown as { cache_deleted_input_tokens?: number })
               .cache_deleted_input_tokens ?? 0) +
-            ((
-              messageUsage as unknown as { cache_deleted_input_tokens?: number }
-            ).cache_deleted_input_tokens ?? 0),
+            ((messageUsage as unknown as { cache_deleted_input_tokens?: number })
+              .cache_deleted_input_tokens ?? 0),
         }
       : {}),
     inference_geo: messageUsage.inference_geo, // 使用最新的
@@ -2918,9 +2715,7 @@ export function accumulateUsage(
   }
 }
 
-function isToolResultBlock(
-  block: unknown,
-): block is { type: 'tool_result'; toolCallId: string } {
+function isToolResultBlock(block: unknown): block is { type: 'tool_result'; toolCallId: string } {
   return (
     block !== null &&
     typeof block === 'object' &&
@@ -2970,19 +2765,9 @@ export function addCacheBreakpoints(
   const result = messages.map((msg, index) => {
     const addCache = index === markerIndex
     if (msg.type === 'user') {
-      return userMessageToMessageParam(
-        msg,
-        addCache,
-        enablePromptCaching,
-        querySource,
-      )
+      return userMessageToMessageParam(msg, addCache, enablePromptCaching, querySource)
     }
-    return assistantMessageToMessageParam(
-      msg,
-      addCache,
-      enablePromptCaching,
-      querySource,
-    )
+    return assistantMessageToMessageParam(msg, addCache, enablePromptCaching, querySource)
   })
 
   if (!useCachedMC) {
@@ -2994,7 +2779,7 @@ export function addCacheBreakpoints(
 
   // 辅助函数：对 cache_edits 块去重，排除已见过的删除项
   const deduplicateEdits = (block: CachedMCEditsBlock): CachedMCEditsBlock => {
-    const uniqueEdits = block.edits.filter(edit => {
+    const uniqueEdits = block.edits.filter((edit) => {
       if (seenDeleteRefs.has(edit.cache_reference)) {
         return false
       }
@@ -3033,7 +2818,7 @@ export function addCacheBreakpoints(
           pinCacheEdits(i, newCacheEdits)
 
           logForDebugging(
-            `Added cache_edits block with ${dedupedNewEdits.edits.length} deletion(s) to message[${i}]: ${dedupedNewEdits.edits.map(e => e.cache_reference).join(', ')}`,
+            `Added cache_edits block with ${dedupedNewEdits.edits.length} deletion(s) to message[${i}]: ${dedupedNewEdits.edits.map((e) => e.cache_reference).join(', ')}`,
           )
           break
         }
@@ -3101,7 +2886,7 @@ export function buildSystemPromptBlocks(
   // 重要：不要再添加任何用于缓存的块，否则会收到 400 错误
   return splitSysPromptPrefix(systemPrompt, {
     skipGlobalCacheForSystemPrompt: options?.skipGlobalCacheForSystemPrompt,
-  }).map(block => {
+  }).map((block) => {
     return {
       type: 'text' as const,
       text: block.text,
@@ -3138,7 +2923,7 @@ export async function queryCompactModel({
   const result = await withVCR(
     [
       createUserMessage({
-        content: systemPrompt.map(text => ({ type: 'text', text })),
+        content: systemPrompt.map((text) => ({ type: 'text', text })),
       }),
       createUserMessage({
         content: userPrompt,
@@ -3174,7 +2959,6 @@ export async function queryCompactModel({
   return result[0]! as AssistantMessage
 }
 
-
 type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
 
 /**
@@ -3198,7 +2982,7 @@ export async function queryWithModel({
   const result = await withVCR(
     [
       createUserMessage({
-        content: systemPrompt.map(text => ({ type: 'text', text })),
+        content: systemPrompt.map((text) => ({ type: 'text', text })),
       }),
       createUserMessage({
         content: userPrompt,
@@ -3236,7 +3020,7 @@ export async function queryWithModel({
 // https://platform.zy.com/docs/en/api/errors#long-requests
 // SDK 的 21333 令牌上限由 10 分钟 × 128k 令牌/小时推导，但我们
 // 通过设置客户端级超时绕过它，因此可以设置更高的上限。
-export let MAX_NON_STREAMING_TOKENS;
+export let MAX_NON_STREAMING_TOKENS
 MAX_NON_STREAMING_TOKENS = 64_000
 
 /**
@@ -3258,10 +3042,7 @@ export function adjustParamsForNonStreaming<
   // 如果思考预算超过限制的 max_tokens 则调整
   // 以维护约束：max_tokens > thinking.budget_tokens
   const adjustedParams = { ...params }
-  if (
-    adjustedParams.thinking?.type === 'enabled' &&
-    adjustedParams.thinking.budget_tokens
-  ) {
+  if (adjustedParams.thinking?.type === 'enabled' && adjustedParams.thinking.budget_tokens) {
     adjustedParams.thinking = {
       ...adjustedParams.thinking,
       budget_tokens: Math.min(

@@ -36,10 +36,7 @@ export function getRecordFilePath(): string | null {
   const projectsDir = join(getZyConfigHomeDir(), 'projects')
   const projectDir = join(projectsDir, sanitizePath(getOriginalCwd()))
   recordingState.timestamp = Date.now()
-  recordingState.filePath = join(
-    projectDir,
-    `${getSessionId()}-${recordingState.timestamp}.cast`,
-  )
+  recordingState.filePath = join(projectDir, `${getSessionId()}-${recordingState.timestamp}.cast`)
   return recordingState.filePath
 }
 
@@ -60,14 +57,10 @@ export function getSessionRecordingPaths(): string[] {
     // eslint-disable-next-line custom-rules/no-sync-fs -- called during /share before upload, not in hot path
     const entries = getFsImplementation().readdirSync(projectDir)
     const names = (
-      typeof entries[0] === 'string'
-        ? entries
-        : (entries as { name: string }[]).map(e => e.name)
+      typeof entries[0] === 'string' ? entries : (entries as { name: string }[]).map((e) => e.name)
     ) as string[]
-    const files = names
-      .filter(f => f.startsWith(sessionId) && f.endsWith('.cast'))
-      .sort()
-    return files.map(f => join(projectDir, f))
+    const files = names.filter((f) => f.startsWith(sessionId) && f.endsWith('.cast')).sort()
+    return files.map((f) => join(projectDir, f))
   } catch {
     return []
   }
@@ -86,10 +79,7 @@ export async function renameRecordingForSession(): Promise<void> {
   }
   const projectsDir = join(getZyConfigHomeDir(), 'projects')
   const projectDir = join(projectsDir, sanitizePath(getOriginalCwd()))
-  const newPath = join(
-    projectDir,
-    `${getSessionId()}-${recordingState.timestamp}.cast`,
-  )
+  const newPath = join(projectDir, `${getSessionId()}-${recordingState.timestamp}.cast`)
   if (oldPath === newPath) {
     return
   }
@@ -102,9 +92,7 @@ export async function renameRecordingForSession(): Promise<void> {
     recordingState.filePath = newPath
     logForDebugging(`[asciicast] Renamed recording: ${oldName} → ${newName}`)
   } catch {
-    logForDebugging(
-      `[asciicast] Failed to rename recording from ${oldName} to ${newName}`,
-    )
+    logForDebugging(`[asciicast] Failed to rename recording from ${oldName} to ${newName}`)
   }
 }
 
@@ -188,9 +176,7 @@ export function installAsciicastRecorder(): void {
   })
 
   // Wrap process.stdout.write to capture output
-  const originalWrite = process.stdout.write.bind(
-    process.stdout,
-  ) as typeof process.stdout.write
+  const originalWrite = process.stdout.write.bind(process.stdout) as typeof process.stdout.write
   process.stdout.write = function (
     chunk: string | Uint8Array,
     encodingOrCb?: BufferEncoding | ((err?: Error) => void),
@@ -198,8 +184,7 @@ export function installAsciicastRecorder(): void {
   ): boolean {
     // Record the output event
     const elapsed = (performance.now() - startTime) / 1000
-    const text =
-      typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8')
+    const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8')
     writer.write(jsonStringify([elapsed, 'o', text]) + '\n')
 
     // Pass through to the real stdout

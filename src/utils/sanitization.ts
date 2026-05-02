@@ -80,8 +80,7 @@ export function recursivelySanitizeUnicode(value: unknown): unknown {
   if (value !== null && typeof value === 'object') {
     const sanitized: Record<string, unknown> = {}
     for (const [key, val] of Object.entries(value)) {
-      sanitized[recursivelySanitizeUnicode(key)] =
-        recursivelySanitizeUnicode(val)
+      sanitized[recursivelySanitizeUnicode(key)] = recursivelySanitizeUnicode(val)
     }
     return sanitized
   }

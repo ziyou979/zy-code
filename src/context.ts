@@ -1,15 +1,8 @@
 import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
-import {
-  getAdditionalDirectoriesForzyMd,
-  setCachedZyMdContent,
-} from './bootstrap/state.js'
+import { getAdditionalDirectoriesForzyMd, setCachedZyMdContent } from './bootstrap/state.js'
 import { getLocalISODate } from './constants/common.js'
-import {
-  filterInjectedMemoryFiles,
-  getzyMds,
-  getMemoryFiles,
-} from './utils/zymd.js'
+import { filterInjectedMemoryFiles, getzyMds, getMemoryFiles } from './utils/zymd.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
 import { execFileNoThrow } from './utils/execFileNoThrow.js'
@@ -64,13 +57,9 @@ export const getGitStatus = memoize(async (): Promise<string | null> => {
       execFileNoThrow(gitExe(), ['--no-optional-locks', 'status', '--short'], {
         preserveOutputOnError: false,
       }).then(({ stdout }) => stdout.trim()),
-      execFileNoThrow(
-        gitExe(),
-        ['--no-optional-locks', 'log', '--oneline', '-n', '5'],
-        {
-          preserveOutputOnError: false,
-        },
-      ).then(({ stdout }) => stdout.trim()),
+      execFileNoThrow(gitExe(), ['--no-optional-locks', 'log', '--oneline', '-n', '5'], {
+        preserveOutputOnError: false,
+      }).then(({ stdout }) => stdout.trim()),
       execFileNoThrow(gitExe(), ['config', 'user.name'], {
         preserveOutputOnError: false,
       }).then(({ stdout }) => stdout.trim()),
@@ -113,7 +102,7 @@ export const getGitStatus = memoize(async (): Promise<string | null> => {
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getSystemContext;
+export let getSystemContext
 getSystemContext = memoize(
   async (): Promise<{
     [k: string]: string
@@ -123,15 +112,12 @@ getSystemContext = memoize(
 
     // Skip git status in CCR (unnecessary overhead on resume) or when git instructions are disabled
     const gitStatus =
-      isEnvTruthy(process.env.ZY_CODE_REMOTE) ||
-      !shouldIncludeGitInstructions()
+      isEnvTruthy(process.env.ZY_CODE_REMOTE) || !shouldIncludeGitInstructions()
         ? null
         : await getGitStatus()
 
     // Include system prompt injection if set (for cache breaking, ant-only)
-    const injection = feature('BREAK_CACHE_COMMAND')
-      ? getSystemPromptInjection()
-      : null
+    const injection = feature('BREAK_CACHE_COMMAND') ? getSystemPromptInjection() : null
 
     logForDiagnosticsNoPII('info', 'system_context_completed', {
       duration_ms: Date.now() - startTime,
@@ -153,7 +139,7 @@ getSystemContext = memoize(
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getUserContext;
+export let getUserContext
 getUserContext = memoize(
   async (): Promise<{
     [k: string]: string

@@ -59,11 +59,7 @@ type ShadowResult =
  * - flagSettings: From --settings flag (runtime)
  */
 export function isSharedSettingSource(source: PermissionRuleSource): boolean {
-  return (
-    source === 'projectSettings' ||
-    source === 'policySettings' ||
-    source === 'command'
-  )
+  return source === 'projectSettings' || source === 'policySettings' || source === 'command'
 }
 
 /**
@@ -123,9 +119,8 @@ function isAllowRuleShadowedByAskRule(
 
   // Find any tool-wide ask rule for the same tool
   const shadowingAskRule = askRules.find(
-    askRule =>
-      askRule.ruleValue.toolName === toolName &&
-      askRule.ruleValue.ruleContent === undefined,
+    (askRule) =>
+      askRule.ruleValue.toolName === toolName && askRule.ruleValue.ruleContent === undefined,
   )
 
   if (!shadowingAskRule) {
@@ -171,9 +166,8 @@ function isAllowRuleShadowedByDenyRule(
 
   // Find any tool-wide deny rule for the same tool
   const shadowingDenyRule = denyRules.find(
-    denyRule =>
-      denyRule.ruleValue.toolName === toolName &&
-      denyRule.ruleValue.ruleContent === undefined,
+    (denyRule) =>
+      denyRule.ruleValue.toolName === toolName && denyRule.ruleValue.ruleContent === undefined,
   )
 
   if (!shadowingDenyRule) {

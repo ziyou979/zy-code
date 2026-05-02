@@ -38,11 +38,7 @@ export function groupMessagesByApiRound(messages: Message[]): Message[][] {
   // 到一个组中。我们让这些边界触发；摘要分叉自己的
   // ensureToolResultPairing（zy.ts:1136）在 API 时修复悬空的 tu。
   for (const msg of messages) {
-    if (
-      msg.type === 'assistant' &&
-      msg.message.id !== lastAssistantId &&
-      current.length > 0
-    ) {
+    if (msg.type === 'assistant' && msg.message.id !== lastAssistantId && current.length > 0) {
       groups.push(current)
       current = [msg]
     } else {

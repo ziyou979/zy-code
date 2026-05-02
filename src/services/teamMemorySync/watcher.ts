@@ -11,10 +11,7 @@ import { feature } from 'bun:bundle'
 import { type FSWatcher, watch } from 'fs'
 import { mkdir, stat } from 'fs/promises'
 import { join } from 'path'
-import {
-  getTeamMemPath,
-  isTeamMemoryEnabled,
-} from '../../memdir/teamMemPaths.js'
+import { getTeamMemPath, isTeamMemoryEnabled } from '../../memdir/teamMemPaths.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -92,10 +89,9 @@ async function executePush(): Promise<void> {
       hasPendingChanges = false
     }
     if (result.success && result.filesUploaded > 0) {
-      logForDebugging(
-        `team-memory-watcher: pushed ${result.filesUploaded} files`,
-        { level: 'info' },
-      )
+      logForDebugging(`team-memory-watcher: pushed ${result.filesUploaded} files`, {
+        level: 'info',
+      })
     } else if (!result.success) {
       logForDebugging(`team-memory-watcher: push failed: ${result.error}`, {
         level: 'warn',
@@ -176,41 +172,34 @@ async function startFileWatcher(teamDir: string): Promise<void> {
     // recursive:true is idempotent — no existence check needed.
     await mkdir(teamDir, { recursive: true })
 
-    watcher = watch(
-      teamDir,
-      { persistent: true, recursive: true },
-      (_eventType, filename) => {
-        if (filename === null) {
-          schedulePush()
-          return
-        }
-        if (pushSuppressedReason !== null) {
-          // Suppression is only cleared by unlink (recovery action for
-          // too-many-entries). fs.watch doesn't distinguish unlink from
-          // add/write — stat to disambiguate. ENOENT → file gone → clear.
-          void stat(join(teamDir, filename)).catch(
-            (err: NodeJS.ErrnoException) => {
-              if (err.code !== 'ENOENT') return
-              if (pushSuppressedReason !== null) {
-                logForDebugging(
-                  `team-memory-watcher: unlink cleared suppression (was: ${pushSuppressedReason})`,
-                  { level: 'info' },
-                )
-                pushSuppressedReason = null
-              }
-              schedulePush()
-            },
-          )
-          return
-        }
+    watcher = watch(teamDir, { persistent: true, recursive: true }, (_eventType, filename) => {
+      if (filename === null) {
         schedulePush()
-      },
-    )
-    watcher.on('error', err => {
-      logForDebugging(
-        `team-memory-watcher: fs.watch error: ${errorMessage(err)}`,
-        { level: 'warn' },
-      )
+        return
+      }
+      if (pushSuppressedReason !== null) {
+        // Suppression is only cleared by unlink (recovery action for
+        // too-many-entries). fs.watch doesn't distinguish unlink from
+        // add/write — stat to disambiguate. ENOENT → file gone → clear.
+        void stat(join(teamDir, filename)).catch((err: NodeJS.ErrnoException) => {
+          if (err.code !== 'ENOENT') return
+          if (pushSuppressedReason !== null) {
+            logForDebugging(
+              `team-memory-watcher: unlink cleared suppression (was: ${pushSuppressedReason})`,
+              { level: 'info' },
+            )
+            pushSuppressedReason = null
+          }
+          schedulePush()
+        })
+        return
+      }
+      schedulePush()
+    })
+    watcher.on('error', (err) => {
+      logForDebugging(`team-memory-watcher: fs.watch error: ${errorMessage(err)}`, {
+        level: 'warn',
+      })
     })
     logForDebugging(`team-memory-watcher: watching ${teamDir}`, {
       level: 'debug',
@@ -219,10 +208,9 @@ async function startFileWatcher(teamDir: string): Promise<void> {
     // fs.watch throws synchronously on ENOENT (race: dir deleted between
     // mkdir and watch) or EACCES. watcherStarted is already true above,
     // so notifyTeamMemoryWrite's explicit schedulePush path still works.
-    logForDebugging(
-      `team-memory-watcher: failed to watch ${teamDir}: ${errorMessage(err)}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`team-memory-watcher: failed to watch ${teamDir}: ${errorMessage(err)}`, {
+      level: 'warn',
+    })
   }
 
   registerCleanup(async () => stopTeamMemoryWatcher())
@@ -258,10 +246,7 @@ export async function startTeamMemoryWatcher(): Promise<void> {
   }
   const repoSlug = await getGithubRepo()
   if (!repoSlug) {
-    logForDebugging(
-      'team-memory-watcher: no github.com remote, skipping sync',
-      { level: 'debug' },
-    )
+    logForDebugging('team-memory-watcher: no github.com remote, skipping sync', { level: 'debug' })
     return
   }
 
@@ -278,16 +263,14 @@ export async function startTeamMemoryWatcher(): Promise<void> {
     serverHasContent = pullResult.entryCount > 0
     if (pullResult.success && pullResult.filesWritten > 0) {
       initialFilesPulled = pullResult.filesWritten
-      logForDebugging(
-        `team-memory-watcher: initial pull got ${pullResult.filesWritten} files`,
-        { level: 'info' },
-      )
+      logForDebugging(`team-memory-watcher: initial pull got ${pullResult.filesWritten} files`, {
+        level: 'info',
+      })
     }
   } catch (e) {
-    logForDebugging(
-      `team-memory-watcher: initial pull failed: ${errorMessage(e)}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`team-memory-watcher: initial pull failed: ${errorMessage(e)}`, {
+      level: 'warn',
+    })
   }
 
   // Always start the watcher. Watching an empty dir is cheap,

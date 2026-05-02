@@ -1,10 +1,7 @@
 import type { AssistantContentBlock } from '../../types/llm.js'
 import { randomUUID, type UUID } from 'crypto'
 import { getSessionId } from 'src/bootstrap/state.js'
-import {
-  LOCAL_COMMAND_STDERR_TAG,
-  LOCAL_COMMAND_STDOUT_TAG,
-} from 'src/constants/xml.js'
+import { LOCAL_COMMAND_STDERR_TAG, LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'
 import type {
   SDKAssistantMessage,
   SDKCompactBoundaryMessage,
@@ -13,20 +10,14 @@ import type {
 } from 'src/entrypoints/agentSdkTypes.js'
 import type { ZyAILimits } from 'src/services/zyAiLimits.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
-import type {
-  AssistantMessage,
-  CompactMetadata,
-  Message,
-} from 'src/types/message.js'
+import type { AssistantMessage, CompactMetadata, Message } from 'src/types/message.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import stripAnsi from 'strip-ansi'
 import { createAssistantMessage } from '../messages.js'
 import { getPlan } from '../plans.js'
 
-export function toInternalMessages(
-  messages: readonly DeepImmutable<SDKMessage>[],
-): Message[] {
-  return messages.flatMap(message => {
+export function toInternalMessages(messages: readonly DeepImmutable<SDKMessage>[]): Message[] {
+  return messages.flatMap((message) => {
     switch (message.type) {
       case 'assistant':
         return [
@@ -58,9 +49,7 @@ export function toInternalMessages(
               content: 'Conversation compacted',
               level: 'info',
               subtype: 'compact_boundary',
-              compactMetadata: fromSDKCompactMetadata(
-                compactMsg.compact_metadata,
-              ),
+              compactMetadata: fromSDKCompactMetadata(compactMsg.compact_metadata),
               uuid: message.uuid,
               timestamp: new Date().toISOString(),
             },
@@ -75,9 +64,7 @@ export function toInternalMessages(
 
 type SDKCompactMetadata = SDKCompactBoundaryMessage['compact_metadata']
 
-export function toSDKCompactMetadata(
-  meta: CompactMetadata,
-): SDKCompactMetadata {
+export function toSDKCompactMetadata(meta: CompactMetadata): SDKCompactMetadata {
   const seg = meta.preservedSegment
   return {
     trigger: meta.trigger as any,
@@ -95,9 +82,7 @@ export function toSDKCompactMetadata(
 /**
  * Shared SDK→internal compact_metadata converter.
  */
-export function fromSDKCompactMetadata(
-  meta: SDKCompactMetadata,
-): CompactMetadata {
+export function fromSDKCompactMetadata(meta: SDKCompactMetadata): CompactMetadata {
   const seg = meta.preserved_segment
   return {
     trigger: meta.trigger as any,
@@ -167,12 +152,7 @@ export function toSDKMessages(messages: Message[]): SDKMessage[] {
           (message.content.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
             message.content.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`))
         ) {
-          return [
-            localCommandOutputToSDKAssistantMessage(
-              message.content,
-              message.uuid as any,
-            ),
-          ]
+          return [localCommandOutputToSDKAssistantMessage(message.content, message.uuid as any)]
         }
         return []
       default:
@@ -219,9 +199,7 @@ export function localCommandOutputToSDKAssistantMessage(
  * Maps internal ZyAILimits to the SDK-facing SDKRateLimitInfo type,
  * stripping internal-only fields like unifiedRateLimitFallbackAvailable.
  */
-export function toSDKRateLimitInfo(
-  limits: ZyAILimits | undefined,
-): SDKRateLimitInfo | undefined {
+export function toSDKRateLimitInfo(limits: ZyAILimits | undefined): SDKRateLimitInfo | undefined {
   if (!limits) {
     return undefined
   }
@@ -258,9 +236,7 @@ export function toSDKRateLimitInfo(
  * the V2 tool reads plan from file instead of input, but SDK users expect
  * tool_input.plan to exist.
  */
-function normalizeAssistantMessageForSDK(
-  message: AssistantMessage,
-): AssistantMessage['message'] {
+function normalizeAssistantMessageForSDK(message: AssistantMessage): AssistantMessage['message'] {
   const content = message.message.content
   if (!Array.isArray(content)) {
     return message.message

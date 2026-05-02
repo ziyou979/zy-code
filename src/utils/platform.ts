@@ -21,10 +21,9 @@ export const getPlatform = memoize((): Platform => {
     if (process.platform === 'linux') {
       // Check if running in WSL (Windows Subsystem for Linux)
       try {
-        const procVersion = getFsImplementation().readFileSync(
-          '/proc/version',
-          { encoding: 'utf8' },
-        )
+        const procVersion = getFsImplementation().readFileSync('/proc/version', {
+          encoding: 'utf8',
+        })
         if (
           procVersion.toLowerCase().includes('microsoft') ||
           procVersion.toLowerCase().includes('wsl')
@@ -84,36 +83,34 @@ export type LinuxDistroInfo = {
   linuxKernel?: string
 }
 
-export const getLinuxDistroInfo = memoize(
-  async (): Promise<LinuxDistroInfo | undefined> => {
-    if (process.platform !== 'linux') {
-      return undefined
-    }
+export const getLinuxDistroInfo = memoize(async (): Promise<LinuxDistroInfo | undefined> => {
+  if (process.platform !== 'linux') {
+    return undefined
+  }
 
-    const result: LinuxDistroInfo = {
-      linuxKernel: osRelease(),
-    }
+  const result: LinuxDistroInfo = {
+    linuxKernel: osRelease(),
+  }
 
-    try {
-      const content = await readFile('/etc/os-release', 'utf8')
-      for (const line of content.split('\n')) {
-        const match = line.match(/^(ID|VERSION_ID)=(.*)$/)
-        if (match && match[1] && match[2]) {
-          const value = match[2].replace(/^"|"$/g, '')
-          if (match[1] === 'ID') {
-            result.linuxDistroId = value
-          } else {
-            result.linuxDistroVersion = value
-          }
+  try {
+    const content = await readFile('/etc/os-release', 'utf8')
+    for (const line of content.split('\n')) {
+      const match = line.match(/^(ID|VERSION_ID)=(.*)$/)
+      if (match && match[1] && match[2]) {
+        const value = match[2].replace(/^"|"$/g, '')
+        if (match[1] === 'ID') {
+          result.linuxDistroId = value
+        } else {
+          result.linuxDistroVersion = value
         }
       }
-    } catch {
-      // /etc/os-release may not exist on all Linux systems
     }
+  } catch {
+    // /etc/os-release may not exist on all Linux systems
+  }
 
-    return result
-  },
-)
+  return result
+})
 
 const VCS_MARKERS: Array<[string, string]> = [
   ['.git', 'git'],

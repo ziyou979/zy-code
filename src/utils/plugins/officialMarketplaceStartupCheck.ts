@@ -24,10 +24,7 @@ import {
   loadKnownMarketplacesConfig,
   saveKnownMarketplacesConfig,
 } from './marketplaceManager.js'
-import {
-  OFFICIAL_MARKETPLACE_NAME,
-  OFFICIAL_MARKETPLACE_SOURCE,
-} from './officialMarketplace.js'
+import { OFFICIAL_MARKETPLACE_NAME, OFFICIAL_MARKETPLACE_SOURCE } from './officialMarketplace.js'
 import { fetchOfficialMarketplaceFromGcs } from './officialMarketplaceGcs.js'
 
 /**
@@ -45,9 +42,7 @@ export type OfficialMarketplaceSkipReason =
  * Check if official marketplace auto-install is disabled via environment variable.
  */
 export function isOfficialMarketplaceAutoInstallDisabled(): boolean {
-  return isEnvTruthy(
-    process.env.ZY_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL,
-  )
+  return isEnvTruthy(process.env.ZY_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL)
 }
 
 /**
@@ -65,17 +60,14 @@ export const RETRY_CONFIG = {
  */
 function calculateNextRetryDelay(retryCount: number): number {
   const delay =
-    RETRY_CONFIG.INITIAL_DELAY_MS *
-    Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, retryCount)
+    RETRY_CONFIG.INITIAL_DELAY_MS * Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, retryCount)
   return Math.min(delay, RETRY_CONFIG.MAX_DELAY_MS)
 }
 
 /**
  * Determine if installation should be retried based on failure reason and retry state
  */
-function shouldRetryInstallation(
-  config: ReturnType<typeof getGlobalConfig>,
-): boolean {
+function shouldRetryInstallation(config: ReturnType<typeof getGlobalConfig>): boolean {
   // If never attempted, should try
   if (!config.officialMarketplaceAutoInstallAttempted) {
     return true
@@ -162,10 +154,8 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
   try {
     // Check if auto-install is disabled via env var
     if (isOfficialMarketplaceAutoInstallDisabled()) {
-      logForDebugging(
-        'Official marketplace auto-install disabled via env var, skipping',
-      )
-      saveGlobalConfig(current => ({
+      logForDebugging('Official marketplace auto-install disabled via env var, skipping')
+      saveGlobalConfig((current) => ({
         ...current,
         officialMarketplaceAutoInstallAttempted: true,
         officialMarketplaceAutoInstalled: false,
@@ -186,7 +176,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
         `Official marketplace '${OFFICIAL_MARKETPLACE_NAME}' already installed, skipping`,
       )
       // Mark as attempted so we don't check again
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         officialMarketplaceAutoInstallAttempted: true,
         officialMarketplaceAutoInstalled: true,
@@ -196,10 +186,8 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
 
     // Check enterprise policy restrictions
     if (!isSourceAllowedByPolicy(OFFICIAL_MARKETPLACE_SOURCE)) {
-      logForDebugging(
-        'Official marketplace blocked by enterprise policy, skipping',
-      )
-      saveGlobalConfig(current => ({
+      logForDebugging('Official marketplace blocked by enterprise policy, skipping')
+      saveGlobalConfig((current) => ({
         ...current,
         officialMarketplaceAutoInstallAttempted: true,
         officialMarketplaceAutoInstalled: false,
@@ -220,10 +208,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     // entirely.
     const cacheDir = getMarketplacesCacheDir()
     const installLocation = join(cacheDir, OFFICIAL_MARKETPLACE_NAME)
-    const gcsSha = await fetchOfficialMarketplaceFromGcs(
-      installLocation,
-      cacheDir,
-    )
+    const gcsSha = await fetchOfficialMarketplaceFromGcs(installLocation, cacheDir)
     if (gcsSha !== null) {
       const known = await loadKnownMarketplacesConfig()
       known[OFFICIAL_MARKETPLACE_NAME] = {
@@ -233,7 +218,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
       }
       await saveKnownMarketplacesConfig(known)
 
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         officialMarketplaceAutoInstallAttempted: true,
         officialMarketplaceAutoInstalled: true,
@@ -251,22 +236,16 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     }
     // GCS failed (404 until backend writes, or network). Fall through to git
     // ONLY if the kill-switch allows — same gate as refreshMarketplace().
-    if (
-      !getFeatureValue_CACHED_MAY_BE_STALE(
-        'zy_plugin_official_mkt_git_fallback',
-        true,
-      )
-    ) {
+    if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_plugin_official_mkt_git_fallback', true)) {
       logForDebugging(
         'Official marketplace GCS failed; git fallback disabled by flag — skipping install',
       )
       // Same retry-with-backoff metadata as git_unavailable below — transient
       // GCS failures should retry with exponential backoff, not give up.
-      const retryCount =
-        (config.officialMarketplaceAutoInstallRetryCount || 0) + 1
+      const retryCount = (config.officialMarketplaceAutoInstallRetryCount || 0) + 1
       const now = Date.now()
       const nextRetryTime = now + calculateNextRetryDelay(retryCount)
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         officialMarketplaceAutoInstallAttempted: true,
         officialMarketplaceAutoInstalled: false,
@@ -287,18 +266,15 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     // Check git availability
     const gitAvailable = await checkGitAvailable()
     if (!gitAvailable) {
-      logForDebugging(
-        'Git not available, skipping official marketplace auto-install',
-      )
-      const retryCount =
-        (config.officialMarketplaceAutoInstallRetryCount || 0) + 1
+      logForDebugging('Git not available, skipping official marketplace auto-install')
+      const retryCount = (config.officialMarketplaceAutoInstallRetryCount || 0) + 1
       const now = Date.now()
       const nextRetryDelay = calculateNextRetryDelay(retryCount)
       const nextRetryTime = now + nextRetryDelay
 
       let configSaveFailed = false
       try {
-        saveGlobalConfig(current => ({
+        saveGlobalConfig((current) => ({
           ...current,
           officialMarketplaceAutoInstallAttempted: true,
           officialMarketplaceAutoInstalled: false,
@@ -338,9 +314,8 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
 
     // Success
     logForDebugging('Successfully auto-installed official marketplace')
-    const previousRetryCount =
-      config.officialMarketplaceAutoInstallRetryCount || 0
-    saveGlobalConfig(current => ({
+    const previousRetryCount = config.officialMarketplaceAutoInstallRetryCount || 0
+    saveGlobalConfig((current) => ({
       ...current,
       officialMarketplaceAutoInstallAttempted: true,
       officialMarketplaceAutoInstalled: true,
@@ -385,21 +360,19 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
       }
     }
 
-    logForDebugging(
-      `Failed to auto-install official marketplace: ${errorMessage}`,
-      { level: 'error' },
-    )
+    logForDebugging(`Failed to auto-install official marketplace: ${errorMessage}`, {
+      level: 'error',
+    })
     logError(toError(error))
 
-    const retryCount =
-      (config.officialMarketplaceAutoInstallRetryCount || 0) + 1
+    const retryCount = (config.officialMarketplaceAutoInstallRetryCount || 0) + 1
     const now = Date.now()
     const nextRetryDelay = calculateNextRetryDelay(retryCount)
     const nextRetryTime = now + nextRetryDelay
 
     let configSaveFailed = false
     try {
-      saveGlobalConfig(current => ({
+      saveGlobalConfig((current) => ({
         ...current,
         officialMarketplaceAutoInstallAttempted: true,
         officialMarketplaceAutoInstalled: false,
@@ -414,10 +387,9 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
       const configError = toError(saveError)
       logError(configError)
 
-      logForDebugging(
-        `Failed to save marketplace auto-install failure state: ${saveError}`,
-        { level: 'error' },
-      )
+      logForDebugging(`Failed to save marketplace auto-install failure state: ${saveError}`, {
+        level: 'error',
+      })
 
       // Still return the failure result even if config save failed
       // This ensures we report the installation failure correctly

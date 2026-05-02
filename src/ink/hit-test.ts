@@ -14,19 +14,10 @@ import { nodeCache } from './node-cache.js'
  * 即使命中节点没有 onClick 也会返回——dispatchClick 会通过
  * parentNode 向上查找处理器。
  */
-export function hitTest(
-  node: DOMElement,
-  col: number,
-  row: number,
-): DOMElement | null {
+export function hitTest(node: DOMElement, col: number, row: number): DOMElement | null {
   const rect = nodeCache.get(node)
   if (!rect) return null
-  if (
-    col < rect.x ||
-    col >= rect.x + rect.width ||
-    row < rect.y ||
-    row >= rect.y + rect.height
-  ) {
+  if (col < rect.x || col >= rect.x + rect.width || row < rect.y || row >= rect.y + rect.height) {
     return null
   }
   // 后渲染的兄弟节点绘制在上层；逆序遍历返回最上层的命中结果。
@@ -69,9 +60,7 @@ export function dispatchClick(
   const event = new ClickEvent(col, row, cellIsBlank)
   let handled = false
   while (target) {
-    const handler = target._eventHandlers?.onClick as
-      | ((event: ClickEvent) => void)
-      | undefined
+    const handler = target._eventHandlers?.onClick as ((event: ClickEvent) => void) | undefined
     if (handler) {
       handled = true
       const rect = nodeCache.get(target)

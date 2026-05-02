@@ -1,9 +1,6 @@
 import type { HrTime } from '@opentelemetry/api'
 import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
-import type {
-  LogRecordExporter,
-  ReadableLogRecord,
-} from '@opentelemetry/sdk-logs'
+import type { LogRecordExporter, ReadableLogRecord } from '@opentelemetry/sdk-logs'
 import { appendFile, mkdir } from 'fs/promises'
 import * as path from 'path'
 import type { CoreUserData } from 'src/utils/user.js'
@@ -54,7 +51,7 @@ export class ZyEventExporter implements LogRecordExporter {
     try {
       // Filter for event logs by scope name or event_type attribute
       const eventLogs = logs.filter(
-        log =>
+        (log) =>
           log.instrumentationScope?.name === 'zy-code-events' ||
           log.attributes?.event_type !== undefined,
       )
@@ -92,9 +89,7 @@ export class ZyEventExporter implements LogRecordExporter {
     return path.join(dir, `events.${sessionId}.jsonl`)
   }
 
-  private async appendEventsToLocalFile(
-    events: ZyEventLoggingEvent[],
-  ): Promise<void> {
+  private async appendEventsToLocalFile(events: ZyEventLoggingEvent[]): Promise<void> {
     if (events.length === 0) return
 
     try {
@@ -102,7 +97,7 @@ export class ZyEventExporter implements LogRecordExporter {
       const dir = path.dirname(filePath)
       await mkdir(dir, { recursive: true })
 
-      const content = events.map(e => jsonStringify(e)).join('\n') + '\n'
+      const content = events.map((e) => jsonStringify(e)).join('\n') + '\n'
       await appendFile(filePath, content, 'utf8')
     } catch (error) {
       logError(error)
@@ -115,9 +110,7 @@ export class ZyEventExporter implements LogRecordExporter {
     return new Date(seconds * 1000 + nanoseconds / 1000000)
   }
 
-  private transformLogsToEvents(
-    logs: ReadableLogRecord[],
-  ): ZyEventLoggingPayload {
+  private transformLogsToEvents(logs: ReadableLogRecord[]): ZyEventLoggingPayload {
     const events: ZyEventLoggingEvent[] = []
 
     for (const log of logs) {
@@ -127,9 +120,7 @@ export class ZyEventExporter implements LogRecordExporter {
       if (attributes.event_type === 'GrowthbookExperimentEvent') {
         const timestamp = this.hrTimeToDate(log.hrTime)
         const account_uuid = attributes.account_uuid as string | undefined
-        const organization_uuid = attributes.organization_uuid as
-          | string
-          | undefined
+        const organization_uuid = attributes.organization_uuid as string | undefined
         events.push({
           event_type: 'GrowthbookExperimentEvent',
           event_data: GrowthbookExperimentEvent.toJSON({
@@ -143,32 +134,24 @@ export class ZyEventExporter implements LogRecordExporter {
             device_id: attributes.device_id as string,
             session_id: attributes.session_id as string,
             auth:
-              account_uuid || organization_uuid
-                ? { account_uuid, organization_uuid }
-                : undefined,
+              account_uuid || organization_uuid ? { account_uuid, organization_uuid } : undefined,
           }),
         })
         continue
       }
 
       // Extract event name
-      const eventName =
-        (attributes.event_name as string) || (log.body as string) || 'unknown'
+      const eventName = (attributes.event_name as string) || (log.body as string) || 'unknown'
 
       // Extract metadata objects directly (no JSON parsing needed)
       const coreMetadata = attributes.core_metadata as unknown as EventMetadata | undefined
       const userMetadata = attributes.user_metadata as CoreUserData
-      const eventMetadata = (attributes.event_metadata || {}) as Record<
-        string,
-        unknown
-      >
+      const eventMetadata = (attributes.event_metadata || {}) as Record<string, unknown>
 
       if (!coreMetadata) {
         // Emit partial event if core metadata is missing
         if (isInternalBuild()) {
-          console.debug(
-            `ZY event logging: core_metadata missing for event ${eventName}`,
-          )
+          console.debug(`ZY event logging: core_metadata missing for event ${eventName}`)
         }
         events.push({
           event_type: 'ZyCodeInternalEvent',
@@ -188,23 +171,15 @@ export class ZyEventExporter implements LogRecordExporter {
       }
 
       // Transform to ZY format
-      const formatted = toZyEventFormat(
-        coreMetadata,
-        userMetadata,
-        eventMetadata,
-      )
+      const formatted = toZyEventFormat(coreMetadata, userMetadata, eventMetadata)
 
       // _PROTO_* keys are PII-tagged values meant only for privileged BQ
       // columns. Hoist known keys to proto fields, then defensively strip any
       // remaining _PROTO_* so an unrecognized future key can't silently land
       // in the general-access additional_metadata blob. sink.ts applies the
       // same strip before Datadog; this closes the ZY side.
-      const {
-        _PROTO_skill_name,
-        _PROTO_plugin_name,
-        _PROTO_marketplace_name,
-        ...rest
-      } = formatted.additional
+      const { _PROTO_skill_name, _PROTO_plugin_name, _PROTO_marketplace_name, ...rest } =
+        formatted.additional
       const additionalMetadata = stripProtoFields(rest)
 
       events.push({
@@ -219,23 +194,13 @@ export class ZyEventExporter implements LogRecordExporter {
           ...formatted.core,
           env: formatted.env,
           process: formatted.process,
-          skill_name:
-            typeof _PROTO_skill_name === 'string'
-              ? _PROTO_skill_name
-              : undefined,
-          plugin_name:
-            typeof _PROTO_plugin_name === 'string'
-              ? _PROTO_plugin_name
-              : undefined,
+          skill_name: typeof _PROTO_skill_name === 'string' ? _PROTO_skill_name : undefined,
+          plugin_name: typeof _PROTO_plugin_name === 'string' ? _PROTO_plugin_name : undefined,
           marketplace_name:
-            typeof _PROTO_marketplace_name === 'string'
-              ? _PROTO_marketplace_name
-              : undefined,
+            typeof _PROTO_marketplace_name === 'string' ? _PROTO_marketplace_name : undefined,
           additional_metadata:
             Object.keys(additionalMetadata).length > 0
-              ? Buffer.from(jsonStringify(additionalMetadata)).toString(
-                  'base64',
-                )
+              ? Buffer.from(jsonStringify(additionalMetadata)).toString('base64')
               : undefined,
         }),
       })

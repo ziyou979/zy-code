@@ -29,9 +29,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
 
   test('user 消息为字符串和数组形式，处理一致', () => {
     const r1 = messagesToOpenAI([{ role: 'user', content: 'hi' }] as any)
-    const r2 = messagesToOpenAI([
-      { role: 'user', content: [{ type: 'text', text: 'hi' }] },
-    ] as any)
+    const r2 = messagesToOpenAI([{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] as any)
     expect(r1[0]).toEqual({ role: 'user', content: 'hi' })
     expect(r2[0]).toEqual({ role: 'user', content: 'hi' })
   })
@@ -54,7 +52,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     ]
     const result = messagesToOpenAI(messages as any)
     assertValidOpenAIChatMessages(result)
-    const a = result.find(m => m.role === 'assistant') as any
+    const a = result.find((m) => m.role === 'assistant') as any
     expect(a.content).toBe('Let me check.')
     expect(a.tool_calls).toHaveLength(1)
     expect(a.tool_calls[0].function.arguments).toBe('{"query":"hello"}')
@@ -79,7 +77,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
     ]
     const result = messagesToOpenAI(messages as any)
-    const a = result.find(m => m.role === 'assistant') as any
+    const a = result.find((m) => m.role === 'assistant') as any
     expect(a.tool_calls).toHaveLength(1)
     expect(a.tool_calls[0].id).toBe('call_v1')
     expect(a.tool_calls[0].function.name).toBe('search')
@@ -101,7 +99,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     ]
     const result = messagesToOpenAI(messages as any)
     assertValidOpenAIChatMessages(result)
-    const a = result.find(m => m.role === 'assistant') as any
+    const a = result.find((m) => m.role === 'assistant') as any
     expect(a.tool_calls).toHaveLength(2)
     expect(JSON.parse(a.tool_calls[0].function.arguments)).toEqual({ x: 1 })
     expect(JSON.parse(a.tool_calls[1].function.arguments)).toEqual({ y: 'two' })
@@ -115,7 +113,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
     ]
     const result = messagesToOpenAI(messages as any)
-    const a = result.find(m => m.role === 'assistant') as any
+    const a = result.find((m) => m.role === 'assistant') as any
     expect(a.tool_calls[0].function.arguments).toBe('{}')
   })
 
@@ -138,7 +136,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
     ]
     const result = messagesToOpenAI(messages as any)
-    const a = result.find(m => m.role === 'assistant') as any
+    const a = result.find((m) => m.role === 'assistant') as any
     const argStr = a.tool_calls[0].function.arguments
     // 关键：A2 重构后 arguments 是合法 JSON 对象的字符串，不再双重转义
     expect(argStr).toBe('{"q":"hi"}')
@@ -164,7 +162,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
     ]
     const result = messagesToOpenAI(messages as any)
-    const a = result.find(m => m.role === 'assistant') as any
+    const a = result.find((m) => m.role === 'assistant') as any
     const parsed = JSON.parse(a.tool_calls[0].function.arguments)
     expect(parsed).toEqual({ raw: 'not a json at all' })
     assertValidOpenAIChatMessages(result)
@@ -208,9 +206,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
       {
         role: 'user',
-        content: [
-          { type: 'image', mimeType: 'image/jpeg', data: 'BBB' },
-        ],
+        content: [{ type: 'image', mimeType: 'image/jpeg', data: 'BBB' }],
       },
     ]
     const result = messagesToOpenAI(messages as any)
@@ -229,16 +225,11 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     // DeepSeek 协议：两轮之间有 tool_call 时必须回传 reasoning_content
     // 参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
     const { mock } = await import('bun:test')
-    mock.module(
-      '../../../src/utils/settings/localModelCapabilities.js',
-      () => ({
-        localModelHasCapability: (model: string, cap: string) =>
-          model.toLowerCase().includes('deepseek') && cap === 'thinking',
-      }),
-    )
-    const { messagesToOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
+    mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+      localModelHasCapability: (model: string, cap: string) =>
+        model.toLowerCase().includes('deepseek') && cap === 'thinking',
+    }))
+    const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
         role: 'assistant',
@@ -258,16 +249,11 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
 
   test('DeepSeek + 纯文本轮次：thinking 被丢弃', async () => {
     const { mock } = await import('bun:test')
-    mock.module(
-      '../../../src/utils/settings/localModelCapabilities.js',
-      () => ({
-        localModelHasCapability: (model: string, cap: string) =>
-          model.toLowerCase().includes('deepseek') && cap === 'thinking',
-      }),
-    )
-    const { messagesToOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
+    mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+      localModelHasCapability: (model: string, cap: string) =>
+        model.toLowerCase().includes('deepseek') && cap === 'thinking',
+    }))
+    const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
         role: 'assistant',
@@ -286,15 +272,10 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
 
   test('DeepSeek 但不具备 thinking 能力（model-capabilities 未声明）：走普通 <thinking> 兜底', async () => {
     const { mock } = await import('bun:test')
-    mock.module(
-      '../../../src/utils/settings/localModelCapabilities.js',
-      () => ({
-        localModelHasCapability: () => false, // 未声明 thinking 能力
-      }),
-    )
-    const { messagesToOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
+    mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+      localModelHasCapability: () => false, // 未声明 thinking 能力
+    }))
+    const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
         role: 'assistant',
@@ -355,7 +336,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     ]
     const result = messagesToOpenAI(messages as any)
     assertValidOpenAIChatMessages(result)
-    expect(result.map(m => m.role)).toEqual(['user', 'assistant', 'tool', 'assistant'])
+    expect(result.map((m) => m.role)).toEqual(['user', 'assistant', 'tool', 'assistant'])
   })
 
   test('tool 消息 content 为空：兜底为 (empty)', () => {
@@ -364,7 +345,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       { role: 'tool', toolCallId: 'c', content: '' },
     ]
     const result = messagesToOpenAI(messages as any)
-    const t = result.find(m => m.role === 'tool') as any
+    const t = result.find((m) => m.role === 'tool') as any
     expect(t.content).toBe('(empty)')
   })
 })

@@ -36,10 +36,7 @@ export type AdvisorToolResultBlock = {
 
 export type AdvisorBlock = AdvisorServerToolUseBlock | AdvisorToolResultBlock
 
-export function isAdvisorBlock(param: {
-  type: string
-  name?: string
-}): param is AdvisorBlock {
+export function isAdvisorBlock(param: { type: string; name?: string }): param is AdvisorBlock {
   return (
     param.type === 'advisor_tool_result' ||
     (param.type === 'server_tool_use' && param.name === 'advisor')
@@ -54,10 +51,7 @@ type AdvisorConfig = {
 }
 
 function getAdvisorConfig(): AdvisorConfig {
-  return getFeatureValue_CACHED_MAY_BE_STALE<AdvisorConfig>(
-    'zy_sage_compass',
-    {},
-  )
+  return getFeatureValue_CACHED_MAY_BE_STALE<AdvisorConfig>('zy_sage_compass', {})
 }
 
 export function isAdvisorEnabled(): boolean {
@@ -79,10 +73,7 @@ export function getExperimentAdvisorModels():
   | { baseModel: string; advisorModel: string }
   | undefined {
   const config = getAdvisorConfig()
-  return isAdvisorEnabled() &&
-    !canUserConfigureAdvisor() &&
-    config.baseModel &&
-    config.advisorModel
+  return isAdvisorEnabled() && !canUserConfigureAdvisor() && config.baseModel && config.advisorModel
     ? { baseModel: config.baseModel, advisorModel: config.advisorModel }
     : undefined
 }
@@ -122,20 +113,15 @@ export function getInitialAdvisorSetting(): string | undefined {
   return getInitialSettings().advisorModel
 }
 
-export function getAdvisorUsage(
-  usage: TokenUsage,
-): Array<TokenUsage & { model: string }> {
+export function getAdvisorUsage(usage: TokenUsage): Array<TokenUsage & { model: string }> {
   // @ts-ignore
-  const iterations = usage.iterations as
-    | Array<{ type: string }>
-    | null
-    | undefined
+  const iterations = usage.iterations as Array<{ type: string }> | null | undefined
   if (!iterations) {
     return []
   }
-  return iterations.filter(
-    it => it.type === 'advisor_message',
-  ) as unknown as Array<TokenUsage & { model: string }>
+  return iterations.filter((it) => it.type === 'advisor_message') as unknown as Array<
+    TokenUsage & { model: string }
+  >
 }
 
 export const ADVISOR_TOOL_INSTRUCTIONS = `# Advisor Tool

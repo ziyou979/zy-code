@@ -29,11 +29,7 @@ export function capitalize(str: string): string {
  * @example plural(3, 'file') → 'files'
  * @example plural(2, 'entry', 'entries') → 'entries'
  */
-export function plural(
-  n: number,
-  word: string,
-  pluralWord = word + 's',
-): string {
+export function plural(n: number, word: string, pluralWord = word + 's'): string {
   return n === 1 ? word : pluralWord
 }
 
@@ -70,9 +66,7 @@ export function countCharInString(
  * Useful for accepting input from Japanese/CJK IMEs.
  */
 export function normalizeFullWidthDigits(input: string): string {
-  return input.replace(/[０-９]/g, ch =>
-    String.fromCharCode(ch.charCodeAt(0) - 0xfee0),
-  )
+  return input.replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
 }
 
 /**
@@ -113,15 +107,11 @@ export function safeJoinLines(
     } else {
       // Need to truncate
       const remainingSpace =
-        maxSize -
-        result.length -
-        delimiterToAdd.length -
-        truncationMarker.length
+        maxSize - result.length - delimiterToAdd.length - truncationMarker.length
 
       if (remainingSpace > 0) {
         // Add delimiter and as much of the line as will fit
-        result +=
-          delimiterToAdd + line.slice(0, remainingSpace) + truncationMarker
+        result += delimiterToAdd + line.slice(0, remainingSpace) + truncationMarker
       } else {
         // No room for any of this line, just add truncation marker
         result += truncationMarker

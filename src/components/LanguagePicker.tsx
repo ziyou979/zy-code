@@ -1,27 +1,44 @@
-import figures from 'figures';
-import React, { useState } from 'react';
-import { Box, Text } from '../ink.js';
-import { tSync } from 'src/i18n/index.js';
-import { useKeybinding } from '../keybindings/useKeybinding.js';
-import TextInput from './TextInput.js';
+import figures from 'figures'
+import React, { useState } from 'react'
+import { Box, Text } from '../ink.js'
+import { tSync } from 'src/i18n/index.js'
+import { useKeybinding } from '../keybindings/useKeybinding.js'
+import TextInput from './TextInput.js'
 type Props = {
-  initialLanguage: string | undefined;
-  onComplete: (language: string | undefined) => void;
-  onCancel: () => void;
-};
-export function LanguagePicker({
-  initialLanguage,
-  onComplete,
-  onCancel
-}: Props) {
-  const [language, setLanguage] = useState(initialLanguage);
-  const [cursorOffset, setCursorOffset] = useState((initialLanguage ?? "").length);
-  useKeybinding("confirm:no", onCancel, {
-    context: "Settings"
-  });
+  initialLanguage: string | undefined
+  onComplete: (language: string | undefined) => void
+  onCancel: () => void
+}
+export function LanguagePicker({ initialLanguage, onComplete, onCancel }: Props) {
+  const [language, setLanguage] = useState(initialLanguage)
+  const [cursorOffset, setCursorOffset] = useState((initialLanguage ?? '').length)
+  useKeybinding('confirm:no', onCancel, {
+    context: 'Settings',
+  })
   const handleSubmit = function handleSubmit() {
-    const trimmed = language?.trim();
-    onComplete(trimmed || undefined);
-  };
-  return <Box flexDirection="column" gap={1}>{<Text>{tSync('languagePicker.enterLanguage')}</Text>}{<Box flexDirection="row" gap={1}>{<Text>{figures.pointer}</Text>}<TextInput value={language ?? ""} onChange={setLanguage} onSubmit={handleSubmit} focus={true} showCursor={true} placeholder={tSync('languagePicker.placeholder', { ellipsis: figures.ellipsis })} columns={60} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} /></Box>}{<Text dimColor={true}>{tSync('languagePicker.defaultHint')}</Text>}</Box>;
+    const trimmed = language?.trim()
+    onComplete(trimmed || undefined)
+  }
+  return (
+    <Box flexDirection="column" gap={1}>
+      {<Text>{tSync('languagePicker.enterLanguage')}</Text>}
+      {
+        <Box flexDirection="row" gap={1}>
+          {<Text>{figures.pointer}</Text>}
+          <TextInput
+            value={language ?? ''}
+            onChange={setLanguage}
+            onSubmit={handleSubmit}
+            focus={true}
+            showCursor={true}
+            placeholder={tSync('languagePicker.placeholder', { ellipsis: figures.ellipsis })}
+            columns={60}
+            cursorOffset={cursorOffset}
+            onChangeCursorOffset={setCursorOffset}
+          />
+        </Box>
+      }
+      {<Text dimColor={true}>{tSync('languagePicker.defaultHint')}</Text>}
+    </Box>
+  )
 }

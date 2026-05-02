@@ -3,9 +3,7 @@ import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 export const DESCRIPTION = 'Create a new task in the task list'
 
 export function getPrompt(): string {
-  const teammateContext = isAgentSwarmsEnabled()
-    ? ' and potentially assigned to teammates'
-    : ''
+  const teammateContext = isAgentSwarmsEnabled() ? ' and potentially assigned to teammates' : ''
 
   const teammateTips = isAgentSwarmsEnabled()
     ? `- Include enough detail in the description for another agent to understand and complete the task

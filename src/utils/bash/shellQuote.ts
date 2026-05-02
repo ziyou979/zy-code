@@ -3,11 +3,7 @@
  * These are drop-in replacements for the original functions
  */
 
-import {
-  type ParseEntry,
-  parse as shellQuoteParse,
-  quote as shellQuoteQuote,
-} from 'shell-quote'
+import { type ParseEntry, parse as shellQuoteParse, quote as shellQuoteQuote } from 'shell-quote'
 import { logError } from '../log.js'
 import { jsonStringify } from '../slowOperations.js'
 
@@ -17,21 +13,14 @@ export type ShellParseResult =
   | { success: true; tokens: ParseEntry[] }
   | { success: false; error: string }
 
-export type ShellQuoteResult =
-  | { success: true; quoted: string }
-  | { success: false; error: string }
+export type ShellQuoteResult = { success: true; quoted: string } | { success: false; error: string }
 
 export function tryParseShellCommand(
   cmd: string,
-  env?:
-    | Record<string, string | undefined>
-    | ((key: string) => string | undefined),
+  env?: Record<string, string | undefined> | ((key: string) => string | undefined),
 ): ShellParseResult {
   try {
-    const tokens =
-      typeof env === 'function'
-        ? shellQuoteParse(cmd, env)
-        : shellQuoteParse(cmd, env)
+    const tokens = typeof env === 'function' ? shellQuoteParse(cmd, env) : shellQuoteParse(cmd, env)
     return { success: true, tokens }
   } catch (error) {
     if (error instanceof Error) {
@@ -61,14 +50,10 @@ export function tryQuoteShellArgs(args: unknown[]): ShellQuoteResult {
       }
 
       if (type === 'object') {
-        throw new Error(
-          `Cannot quote argument at index ${index}: object values are not supported`,
-        )
+        throw new Error(`Cannot quote argument at index ${index}: object values are not supported`)
       }
       if (type === 'symbol') {
-        throw new Error(
-          `Cannot quote argument at index ${index}: symbol values are not supported`,
-        )
+        throw new Error(`Cannot quote argument at index ${index}: symbol values are not supported`)
       }
       if (type === 'function') {
         throw new Error(
@@ -76,9 +61,7 @@ export function tryQuoteShellArgs(args: unknown[]): ShellQuoteResult {
         )
       }
 
-      throw new Error(
-        `Cannot quote argument at index ${index}: unsupported type ${type}`,
-      )
+      throw new Error(`Cannot quote argument at index ${index}: unsupported type ${type}`)
     })
 
     const quoted = shellQuoteQuote(validated)
@@ -114,10 +97,7 @@ export function tryQuoteShellArgs(args: unknown[]): ShellQuoteResult {
  * Security: This prevents command injection via HackerOne #3482049 where
  * shell-quote's correct parsing of ambiguous input can be exploited.
  */
-export function hasMalformedTokens(
-  command: string,
-  parsed: ParseEntry[],
-): boolean {
+export function hasMalformedTokens(command: string, parsed: ParseEntry[]): boolean {
   // Check for unterminated quotes in the original command. shell-quote drops
   // an unmatched quote without leaving any trace in the tokens, so this must
   // inspect the raw string. Walk with bash semantics: backslash escapes the
@@ -249,11 +229,7 @@ export function hasShellQuoteSingleQuoteBug(command: string): boolean {
         // the chunker regex can use as a false closing quote. We check for
         // ANY later ' because the regex doesn't respect bash quote state
         // (e.g., a ' inside double quotes is also consumable).
-        if (
-          backslashCount > 0 &&
-          backslashCount % 2 === 0 &&
-          command.indexOf("'", i + 1) !== -1
-        ) {
+        if (backslashCount > 0 && backslashCount % 2 === 0 && command.indexOf("'", i + 1) !== -1) {
           return true
         }
       }
@@ -275,7 +251,7 @@ export function quote(args: ReadonlyArray<unknown>): string {
   // If strict validation failed, use lenient fallback
   // This handles objects, symbols, functions, etc. by converting them to strings
   try {
-    const stringArgs = args.map(arg => {
+    const stringArgs = args.map((arg) => {
       if (arg === null || arg === undefined) {
         return String(arg)
       }

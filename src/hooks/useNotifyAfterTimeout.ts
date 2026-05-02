@@ -1,8 +1,5 @@
 import { useEffect } from 'react'
-import {
-  getLastInteractionTime,
-  updateLastInteractionTime,
-} from '../bootstrap/state.js'
+import { getLastInteractionTime, updateLastInteractionTime } from '../bootstrap/state.js'
 import { useTerminalNotification } from '../ink/useTerminalNotification.js'
 import { sendNotification } from '../services/notifier.js'
 // The time threshold in milliseconds for considering an interaction "recent" (6 seconds)
@@ -35,10 +32,7 @@ function shouldNotify(threshold: number): boolean {
  * @param message - The notification message to display
  * @param timeout - The timeout in milliseconds (defaults to 6000ms)
  */
-export function useNotifyAfterTimeout(
-  message: string,
-  notificationType: string,
-): void {
+export function useNotifyAfterTimeout(message: string, notificationType: string): void {
   const terminal = useTerminalNotification()
 
   // Reset interaction time when hook is called to make sure that requests

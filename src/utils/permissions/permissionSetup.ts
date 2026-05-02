@@ -7,10 +7,7 @@ import {
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
 } from '../../bootstrap/state.js'
-import type {
-  ToolPermissionContext,
-  ToolPermissionRulesBySource,
-} from '../../Tool.js'
+import type { ToolPermissionContext, ToolPermissionRulesBySource } from '../../Tool.js'
 import { getCwd } from '../cwd.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
@@ -22,10 +19,7 @@ import {
   getUseAutoModeDuringPlan,
   hasAutoModeOptIn,
 } from '../settings/settings.js'
-import {
-  type PermissionMode,
-  permissionModeFromString,
-} from './PermissionMode.js'
+import { type PermissionMode, permissionModeFromString } from './PermissionMode.js'
 import { applyPermissionRulesToPermissionContext } from './permissions.js'
 import { loadAllPermissionRulesFromDisk } from './permissionsLoader.js'
 
@@ -54,27 +48,14 @@ import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { getToolsForDefaultPreset, parseToolPreset } from '../../tools.js'
-import {
-  getFsImplementation,
-  safeResolvePath,
-} from '../../utils/fsOperations.js'
+import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
 import { modelSupportsAutoMode } from '../betas.js'
 import { logForDebugging } from '../debug.js'
 import { gracefulShutdown } from '../gracefulShutdown.js'
 import { getMainLoopModel } from '../model/model.js'
-import {
-  CROSS_PLATFORM_CODE_EXEC,
-  DANGEROUS_BASH_PATTERNS,
-} from './dangerousPatterns.js'
-import type {
-  PermissionRule,
-  PermissionRuleSource,
-  PermissionRuleValue,
-} from './PermissionRule.js'
-import {
-  type AdditionalWorkingDirectory,
-  applyPermissionUpdate,
-} from './PermissionUpdate.js'
+import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
+import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './PermissionRule.js'
+import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './PermissionUpdate.js'
 import type { PermissionUpdateDestination } from './PermissionUpdateSchema.js'
 import {
   normalizeLegacyToolName,
@@ -217,10 +198,7 @@ export function isDangerousPowerShellPermission(
     // `npm run` → `npm.exe run`（npm.exe 才是 Windows 上的真实二进制名）。
     // 像 `PowerShell(npm.exe run:*)` 这样的规则需要匹配 `npm run`。
     const sp = pattern.indexOf(' ')
-    const exe =
-      sp === -1
-        ? `${pattern}.exe`
-        : `${pattern.slice(0, sp)}.exe${pattern.slice(sp)}`
+    const exe = sp === -1 ? `${pattern}.exe` : `${pattern.slice(0, sp)}.exe${pattern.slice(sp)}`
     if (content === exe) return true
     if (content === `${exe}:*`) return true
     if (content === `${exe}*`) return true
@@ -298,10 +276,7 @@ export function findDangerousClassifierPermissions(
   for (const rule of rules) {
     if (
       rule.ruleBehavior === 'allow' &&
-      isDangerousClassifierPermission(
-        rule.ruleValue.toolName,
-        rule.ruleValue.ruleContent,
-      )
+      isDangerousClassifierPermission(rule.ruleValue.toolName, rule.ruleValue.ruleContent)
     ) {
       const ruleString = rule.ruleValue.ruleContent
         ? `${rule.ruleValue.toolName}(${rule.ruleValue.ruleContent})`
@@ -344,12 +319,8 @@ export function findDangerousClassifierPermissions(
  *
  * 匹配：Bash、Bash(*)、Bash() — 都解析为 { toolName: 'Bash' } 且没有 ruleContent。
  */
-export function isOverlyBroadBashAllowRule(
-  ruleValue: PermissionRuleValue,
-): boolean {
-  return (
-    ruleValue.toolName === BASH_TOOL_NAME && ruleValue.ruleContent === undefined
-  )
+export function isOverlyBroadBashAllowRule(ruleValue: PermissionRuleValue): boolean {
+  return ruleValue.toolName === BASH_TOOL_NAME && ruleValue.ruleContent === undefined
 }
 
 /**
@@ -358,13 +329,8 @@ export function isOverlyBroadBashAllowRule(
  * 匹配：PowerShell、PowerShell(*)、PowerShell() — 都解析为
  * { toolName: 'PowerShell' } 且没有 ruleContent。
  */
-export function isOverlyBroadPowerShellAllowRule(
-  ruleValue: PermissionRuleValue,
-): boolean {
-  return (
-    ruleValue.toolName === POWERSHELL_TOOL_NAME &&
-    ruleValue.ruleContent === undefined
-  )
+export function isOverlyBroadPowerShellAllowRule(ruleValue: PermissionRuleValue): boolean {
+  return ruleValue.toolName === POWERSHELL_TOOL_NAME && ruleValue.ruleContent === undefined
 }
 
 /**
@@ -379,10 +345,7 @@ export function findOverlyBroadBashPermissions(
   const overlyBroad: DangerousPermissionInfo[] = []
 
   for (const rule of rules) {
-    if (
-      rule.ruleBehavior === 'allow' &&
-      isOverlyBroadBashAllowRule(rule.ruleValue)
-    ) {
+    if (rule.ruleBehavior === 'allow' && isOverlyBroadBashAllowRule(rule.ruleValue)) {
       overlyBroad.push({
         ruleValue: rule.ruleValue,
         source: rule.source,
@@ -417,10 +380,7 @@ export function findOverlyBroadPowerShellPermissions(
   const overlyBroad: DangerousPermissionInfo[] = []
 
   for (const rule of rules) {
-    if (
-      rule.ruleBehavior === 'allow' &&
-      isOverlyBroadPowerShellAllowRule(rule.ruleValue)
-    ) {
+    if (rule.ruleBehavior === 'allow' && isOverlyBroadPowerShellAllowRule(rule.ruleValue)) {
       overlyBroad.push({
         ruleValue: rule.ruleValue,
         source: rule.source,
@@ -452,13 +412,7 @@ export function findOverlyBroadPowerShellPermissions(
 function isPermissionUpdateDestination(
   source: PermissionRuleSource,
 ): source is PermissionUpdateDestination {
-  return [
-    'userSettings',
-    'projectSettings',
-    'localSettings',
-    'session',
-    'cliArg',
-  ].includes(source)
+  return ['userSettings', 'projectSettings', 'localSettings', 'session', 'cliArg'].includes(source)
 }
 
 /**
@@ -469,10 +423,7 @@ export function removeDangerousPermissions(
   dangerousPermissions: DangerousPermissionInfo[],
 ): ToolPermissionContext {
   // 按来源（更新的目标）对危险规则分组
-  const rulesBySource = new Map<
-    PermissionUpdateDestination,
-    PermissionRuleValue[]
-  >()
+  const rulesBySource = new Map<PermissionUpdateDestination, PermissionRuleValue[]>()
   for (const perm of dangerousPermissions) {
     // 跳过无法持久化的来源（flagSettings、policySettings、command）
     if (!isPermissionUpdateDestination(perm.source)) {
@@ -505,9 +456,7 @@ export function stripDangerousPermissionsForAutoMode(
   context: ToolPermissionContext,
 ): ToolPermissionContext {
   const rules: PermissionRule[] = []
-  for (const [source, ruleStrings] of Object.entries(
-    context.alwaysAllowRules,
-  )) {
+  for (const [source, ruleStrings] of Object.entries(context.alwaysAllowRules)) {
     if (!ruleStrings) {
       continue
     }
@@ -536,9 +485,7 @@ export function stripDangerousPermissionsForAutoMode(
   const stripped: ToolPermissionRulesBySource = {}
   for (const perm of dangerousPermissions) {
     if (!isPermissionUpdateDestination(perm.source)) continue
-    ;(stripped[perm.source] ??= []).push(
-      permissionRuleValueToString(perm.ruleValue),
-    )
+    ;(stripped[perm.source] ??= []).push(permissionRuleValueToString(perm.ruleValue))
   }
   return {
     ...removeDangerousPermissions(context, dangerousPermissions),
@@ -551,9 +498,7 @@ export function stripDangerousPermissionsForAutoMode(
  * 在离开 auto 模式时调用，以便用户的 Bash(python:*)、Agent(*) 等规则在 default 模式下再次生效。
  * 调用后清空暂存，使第二次退出成为无操作。
  */
-export function restoreDangerousPermissions(
-  context: ToolPermissionContext,
-): ToolPermissionContext {
+export function restoreDangerousPermissions(context: ToolPermissionContext): ToolPermissionContext {
   const stash = context.strippedDangerousRules
   if (!stash) {
     return context
@@ -611,8 +556,7 @@ export function transitionPermissionMode(
     // 进入、transitionPlanAutoMode），而这些字段仍然保持设置/未设置。
     const fromUsesClassifier =
       fromMode === 'auto' ||
-      (fromMode === 'plan' &&
-        (autoModeStateModule?.isAutoModeActive() ?? false))
+      (fromMode === 'plan' && (autoModeStateModule?.isAutoModeActive() ?? false))
     const toUsesClassifier = toMode === 'auto' // plan 进入已在上方处理
 
     if (toUsesClassifier && !fromUsesClassifier) {
@@ -666,12 +610,12 @@ function isSymlinkTo({
   originalCwd: string
 }): boolean {
   // 使用 safeResolvePath 检查 processPwd 是否为符号链接并获取其解析后的路径
-  const { resolvedPath: resolvedProcessPwd, isSymlink: isProcessPwdSymlink } =
-    safeResolvePath(getFsImplementation(), processPwd)
+  const { resolvedPath: resolvedProcessPwd, isSymlink: isProcessPwdSymlink } = safeResolvePath(
+    getFsImplementation(),
+    processPwd,
+  )
 
-  return isProcessPwdSymlink
-    ? resolvedProcessPwd === resolve(originalCwd)
-    : false
+  return isProcessPwdSymlink ? resolvedProcessPwd === resolve(originalCwd) : false
 }
 
 /**
@@ -687,10 +631,9 @@ export function initialPermissionModeFromCLI({
   const settings = getSettings_DEPRECATED() || {}
 
   // 首先检查 GrowthBook 门控 — 最高优先级
-  const growthBookDisableBypassPermissionsMode =
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-      'zy_disable_bypass_permissions_mode',
-    )
+  const growthBookDisableBypassPermissionsMode = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
+    'zy_disable_bypass_permissions_mode',
+  )
 
   // 然后检查设置 — 较低优先级
   const settingsDisableBypassPermissionsMode =
@@ -698,8 +641,7 @@ export function initialPermissionModeFromCLI({
 
   // Statsig 门控优先于设置
   const disableBypassPermissionsMode =
-    growthBookDisableBypassPermissionsMode ||
-    settingsDisableBypassPermissionsMode
+    growthBookDisableBypassPermissionsMode || settingsDisableBypassPermissionsMode
 
   // 同步熔断器检查（缓存的 GB 读取）。当 auto 模式实际无法进入时，
   // 阻止 AutoModeOptInDialog 在 showSetupScreens() 中显示。
@@ -720,10 +662,9 @@ export function initialPermissionModeFromCLI({
     const parsedMode = permissionModeFromString(permissionModeCli)
     if (feature('TRANSCRIPT_CLASSIFIER') && parsedMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
-        logForDebugging(
-          'auto mode circuit breaker active (cached) — falling back to default',
-          { level: 'warn' },
-        )
+        logForDebugging('auto mode circuit breaker active (cached) — falling back to default', {
+          level: 'warn',
+        })
       } else {
         orderedModes.push('auto')
       }
@@ -750,10 +691,9 @@ export function initialPermissionModeFromCLI({
     // 来自设置的 auto 模式需要与来自 CLI 的相同门控检查
     else if (feature('TRANSCRIPT_CLASSIFIER') && settingsMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
-        logForDebugging(
-          'auto mode circuit breaker active (cached) — falling back to default',
-          { level: 'warn' },
-        )
+        logForDebugging('auto mode circuit breaker active (cached) — falling back to default', {
+          level: 'warn',
+        })
       } else {
         orderedModes.push('auto')
       }
@@ -770,8 +710,7 @@ export function initialPermissionModeFromCLI({
         logForDebugging('bypassPermissions mode is disabled by Statsig gate', {
           level: 'warn',
         })
-        notification =
-          'Bypass permissions mode was disabled by your organization policy'
+        notification = 'Bypass permissions mode was disabled by your organization policy'
       } else {
         logForDebugging('bypassPermissions mode is disabled by settings', {
           level: 'warn',
@@ -840,7 +779,7 @@ export function parseToolListFromCLI(tools: string[]): string[] {
           if (isInParens) {
             current += char
           } else if (current.trim()) {
-          // 空格分隔符 — 推送当前工具并开始新的工具
+            // 空格分隔符 — 推送当前工具并开始新的工具
             result.push(current.trim())
             current = ''
           }
@@ -882,8 +821,8 @@ export async function initializeToolPermissionContext({
   // Parse comma-separated allowed and disallowed tools if provided
   // Normalize legacy tool names (e.g., 'Task' → 'Agent') so that in-memory
   // rule removal in stripDangerousPermissionsForAutoMode matches correctly.
-  const parsedAllowedToolsCli = parseToolListFromCLI(allowedToolsCli).map(
-    rule => permissionRuleValueToString(permissionRuleValueFromString(rule)),
+  const parsedAllowedToolsCli = parseToolListFromCLI(allowedToolsCli).map((rule) =>
+    permissionRuleValueToString(permissionRuleValueFromString(rule)),
   )
   let parsedDisallowedToolsCli = parseToolListFromCLI(disallowedToolsCli)
 
@@ -895,15 +834,12 @@ export async function initializeToolPermissionContext({
     // base tool lists using old names still match canonical names.
     const baseToolsSet = new Set(baseToolsResult.map(normalizeLegacyToolName))
     const allToolNames = getToolsForDefaultPreset()
-    const toolsToDisallow = allToolNames.filter(tool => !baseToolsSet.has(tool))
+    const toolsToDisallow = allToolNames.filter((tool) => !baseToolsSet.has(tool))
     parsedDisallowedToolsCli = [...parsedDisallowedToolsCli, ...toolsToDisallow]
   }
 
   const warnings: string[] = []
-  const additionalWorkingDirectories = new Map<
-    string,
-    AdditionalWorkingDirectory
-  >()
+  const additionalWorkingDirectories = new Map<string, AdditionalWorkingDirectory>()
   // process.env.PWD 可能是符号链接，而 getOriginalCwd() 使用真实路径
   const processPwd = process.env.PWD
   if (
@@ -919,16 +855,14 @@ export async function initializeToolPermissionContext({
 
   // 检查 bypassPermissions 模式是否可用（未被 Statsig 门控或设置禁用）
   // 使用缓存值以避免阻塞启动
-  const growthBookDisableBypassPermissionsMode =
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-      'zy_disable_bypass_permissions_mode',
-    )
+  const growthBookDisableBypassPermissionsMode = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
+    'zy_disable_bypass_permissions_mode',
+  )
   const settings = getSettings_DEPRECATED() || {}
   const settingsDisableBypassPermissionsMode =
     settings.permissions?.disableBypassPermissionsMode === 'disable'
   const isBypassPermissionsModeAvailable =
-    (permissionMode === 'bypassPermissions' ||
-      allowDangerouslySkipPermissions) &&
+    (permissionMode === 'bypassPermissions' || allowDangerouslySkipPermissions) &&
     !growthBookDisableBypassPermissionsMode &&
     !settingsDisableBypassPermissionsMode
 
@@ -947,10 +881,7 @@ export async function initializeToolPermissionContext({
   ) {
     overlyBroadBashPermissions = [
       ...findOverlyBroadBashPermissions(rulesFromDisk, parsedAllowedToolsCli),
-      ...findOverlyBroadPowerShellPermissions(
-        rulesFromDisk,
-        parsedAllowedToolsCli,
-      ),
+      ...findOverlyBroadPowerShellPermissions(rulesFromDisk, parsedAllowedToolsCli),
     ]
   }
 
@@ -959,10 +890,7 @@ export async function initializeToolPermissionContext({
   // 从而使更安全的 YOLO 模式失去意义
   let dangerousPermissions: DangerousPermissionInfo[] = []
   if (feature('TRANSCRIPT_CLASSIFIER') && permissionMode === 'auto') {
-    dangerousPermissions = findDangerousClassifierPermissions(
-      rulesFromDisk,
-      parsedAllowedToolsCli,
-    )
+    dangerousPermissions = findDangerousClassifierPermissions(rulesFromDisk, parsedAllowedToolsCli)
   }
 
   let toolPermissionContext = applyPermissionRulesToPermissionContext(
@@ -973,9 +901,7 @@ export async function initializeToolPermissionContext({
       alwaysDenyRules: { cliArg: parsedDisallowedToolsCli },
       alwaysAskRules: {},
       isBypassPermissionsModeAvailable,
-      ...(feature('TRANSCRIPT_CLASSIFIER')
-        ? { isAutoModeAvailable: isAutoModeGateEnabled() }
-        : {}),
+      ...(feature('TRANSCRIPT_CLASSIFIER') ? { isAutoModeAvailable: isAutoModeGateEnabled() } : {}),
     },
     rulesFromDisk,
   )
@@ -990,7 +916,7 @@ export async function initializeToolPermissionContext({
   // 与并行化的行为差异是无害的（两个重叠的 --add-dir 都成功，
   // 而不是其中一个被标记为 alreadyInWorkingDirectory，这本来也被静默跳过了）。
   const validationResults = await Promise.all(
-    allAdditionalDirectories.map(dir =>
+    allAdditionalDirectories.map((dir) =>
       validateDirectoryForWorkspace(dir, toolPermissionContext),
     ),
   )
@@ -1031,9 +957,7 @@ export type AutoModeGateCheckResult = {
 
 export type AutoModeUnavailableReason = 'settings' | 'circuit-breaker' | 'model'
 
-export function getAutoModeUnavailableNotification(
-  reason: AutoModeUnavailableReason,
-): string {
+export function getAutoModeUnavailableNotification(reason: AutoModeUnavailableReason): string {
   let base: string
   switch (reason) {
     case 'settings':
@@ -1046,9 +970,7 @@ export function getAutoModeUnavailableNotification(
       base = 'auto mode unavailable for this model'
       break
   }
-  return isInternalBuild()
-    ? `${base} · #zy-code-feedback`
-    : base
+  return isInternalBuild() ? `${base} · #zy-code-feedback` : base
 }
 
 /**
@@ -1075,22 +997,18 @@ export async function verifyAutoModeGateAccess(
   const disabledBySettings = isAutoModeDisabledBySettings()
   // 将设置禁用在熔断器语义上与 GrowthBook 'disabled' 同等对待 —
   // 阻止 SDK/显式重新进入（通过 isAutoModeGateEnabled()）。
-  autoModeStateModule?.setAutoModeCircuitBroken(
-    enabledState === 'disabled' || disabledBySettings,
-  )
+  autoModeStateModule?.setAutoModeCircuitBroken(enabledState === 'disabled' || disabledBySettings)
 
   // 轮播可用性：未被熔断、未被设置禁用、模型支持，且（已启用或已 opt-in）
   const mainModel = getMainLoopModel()
   const modelSupported = modelSupportsAutoMode(mainModel)
   let carouselAvailable = false
   if (enabledState !== 'disabled' && !disabledBySettings && modelSupported) {
-    carouselAvailable =
-      enabledState === 'enabled' || hasAutoModeOptInAnySource()
+    carouselAvailable = enabledState === 'enabled' || hasAutoModeOptInAnySource()
   }
   // canEnterAuto 门控显式进入（--permission-mode auto、defaultMode: auto）
   // — 显式进入本身就是一种 opt-in，因此我们仅基于熔断器 + 设置 + 模型进行阻止
-  const canEnterAuto =
-    enabledState !== 'disabled' && !disabledBySettings && modelSupported
+  const canEnterAuto = enabledState !== 'disabled' && !disabledBySettings && modelSupported
   logForDebugging(
     `[auto-mode] verifyAutoModeGateAccess: enabledState=${enabledState} disabledBySettings=${disabledBySettings} model=${mainModel} modelSupported=${modelSupported} carouselAvailable=${carouselAvailable} canEnterAuto=${canEnterAuto}`,
   )
@@ -1105,22 +1023,17 @@ export async function verifyAutoModeGateAccess(
   // shift-tab 会被回退（或者更糟：如果用户在 await 期间进入了 auto 模式，
   // 尽管熔断器已设置，用户仍会留在 auto 中 — 因为 setAutoModeCircuitBroken
   // 在 await 之后才运行）。
-  const setAvailable = (
-    ctx: ToolPermissionContext,
-    available: boolean,
-  ): ToolPermissionContext => {
+  const setAvailable = (ctx: ToolPermissionContext, available: boolean): ToolPermissionContext => {
     if (ctx.isAutoModeAvailable !== available) {
       logForDebugging(
         `[auto-mode] verifyAutoModeGateAccess setAvailable: ${ctx.isAutoModeAvailable} -> ${available}`,
       )
     }
-    return ctx.isAutoModeAvailable === available
-      ? ctx
-      : { ...ctx, isAutoModeAvailable: available }
+    return ctx.isAutoModeAvailable === available ? ctx : { ...ctx, isAutoModeAvailable: available }
   }
 
   if (canEnterAuto) {
-    return { updateContext: ctx => setAvailable(ctx, carouselAvailable) }
+    return { updateContext: (ctx) => setAvailable(ctx, carouselAvailable) }
   }
 
   // 门控关闭或熔断 — 确定原因（与上下文无关）。
@@ -1138,10 +1051,9 @@ export async function verifyAutoModeGateAccess(
     )
   } else {
     reason = 'model'
-    logForDebugging(
-      `auto mode disabled: model ${getMainLoopModel()} does not support auto mode`,
-      { level: 'warn' },
-    )
+    logForDebugging(`auto mode disabled: model ${getMainLoopModel()} does not support auto mode`, {
+      level: 'warn',
+    })
   }
   const notification = getAutoModeUnavailableNotification(reason)
 
@@ -1152,17 +1064,14 @@ export async function verifyAutoModeGateAccess(
   // handleCycleMode 已停用分类器，我们不再触发；
   // 如果他们在 await 期间进入了 auto（在 setAutoModeCircuitBroken 生效前可能），
   // 我们在这里踢出他们。
-  const kickOutOfAutoIfNeeded = (
-    ctx: ToolPermissionContext,
-  ): ToolPermissionContext => {
+  const kickOutOfAutoIfNeeded = (ctx: ToolPermissionContext): ToolPermissionContext => {
     const inAuto = ctx.mode === 'auto'
     logForDebugging(
       `[auto-mode] kickOutOfAutoIfNeeded applying: ctx.mode=${ctx.mode} ctx.prePlanMode=${ctx.prePlanMode} reason=${reason}`,
     )
     // 带 auto 激活的 plan 模式：来自 prePlanMode='auto'（从 auto 进入）或 opt-in（存在 strippedDangerousRules）。
     const inPlanWithAutoActive =
-      ctx.mode === 'plan' &&
-      (ctx.prePlanMode === 'auto' || !!ctx.strippedDangerousRules)
+      ctx.mode === 'plan' && (ctx.prePlanMode === 'auto' || !!ctx.strippedDangerousRules)
     if (!inAuto && !inPlanWithAutoActive) {
       return setAvailable(ctx, false)
     }
@@ -1195,8 +1104,7 @@ export async function verifyAutoModeGateAccess(
   // auto 在 plan 期间被使用：从 auto 进入或 opt-in auto 已激活
   const autoActiveDuringPlan =
     currentContext.mode === 'plan' &&
-    (currentContext.prePlanMode === 'auto' ||
-      !!currentContext.strippedDangerousRules)
+    (currentContext.prePlanMode === 'auto' || !!currentContext.strippedDangerousRules)
   const wantedAuto = wasInAuto || autoActiveDuringPlan || autoModeFlagCli
 
   if (!wantedAuto) {
@@ -1229,10 +1137,9 @@ export function shouldDisableBypassPermissions(): Promise<boolean> {
 function isAutoModeDisabledBySettings(): boolean {
   const settings = getSettings_DEPRECATED() || {}
   return (
-    (settings as { disableAutoMode?: 'disable' }).disableAutoMode ===
-      'disable' ||
-    (settings.permissions as { disableAutoMode?: 'disable' } | undefined)
-      ?.disableAutoMode === 'disable'
+    (settings as { disableAutoMode?: 'disable' }).disableAutoMode === 'disable' ||
+    (settings.permissions as { disableAutoMode?: 'disable' } | undefined)?.disableAutoMode ===
+      'disable'
   )
 }
 
@@ -1242,8 +1149,7 @@ function isAutoModeDisabledBySettings(): boolean {
 export function isAutoModeGateEnabled(): boolean {
   if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) return false
   if (isAutoModeDisabledBySettings()) return false
-  return modelSupportsAutoMode(getMainLoopModel());
-
+  return modelSupportsAutoMode(getMainLoopModel())
 }
 
 /**
@@ -1298,9 +1204,7 @@ const NO_CACHED_AUTO_MODE_CONFIG = Symbol('no-cached-auto-mode-config')
  * 同步熔断器检查使用，不能将"尚未获取"与"已获取并禁用"混为一谈 —
  * 前者委托给 verifyAutoModeGateAccess，后者立即阻止。
  */
-export function getAutoModeEnabledStateIfCached():
-  | AutoModeEnabledState
-  | undefined {
+export function getAutoModeEnabledStateIfCached(): AutoModeEnabledState | undefined {
   const config = getFeatureValue_CACHED_MAY_BE_STALE<
     { enabled?: AutoModeEnabledState } | typeof NO_CACHED_AUTO_MODE_CONFIG
   >('zy_auto_mode_config', NO_CACHED_AUTO_MODE_CONFIG)
@@ -1325,18 +1229,14 @@ export function hasAutoModeOptInAnySource(): boolean {
  * 这是使用缓存 Statsig 值的同步版本。
  */
 export function isBypassPermissionsModeDisabled(): boolean {
-  const growthBookDisableBypassPermissionsMode =
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-      'zy_disable_bypass_permissions_mode',
-    )
+  const growthBookDisableBypassPermissionsMode = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
+    'zy_disable_bypass_permissions_mode',
+  )
   const settings = getSettings_DEPRECATED() || {}
   const settingsDisableBypassPermissionsMode =
     settings.permissions?.disableBypassPermissionsMode === 'disable'
 
-  return (
-    growthBookDisableBypassPermissionsMode ||
-    settingsDisableBypassPermissionsMode
-  )
+  return growthBookDisableBypassPermissionsMode || settingsDisableBypassPermissionsMode
 }
 
 /**
@@ -1378,10 +1278,9 @@ export async function checkAndDisableBypassPermissions(
   }
 
   // 门控已启用，需要禁用 bypassPermissions 模式
-  logForDebugging(
-    'bypassPermissions mode is being disabled by Statsig gate (async check)',
-    { level: 'warn' },
-  )
+  logForDebugging('bypassPermissions mode is being disabled by Statsig gate (async check)', {
+    level: 'warn',
+  })
 
   void gracefulShutdown(1, 'bypass_permissions_disabled')
 }
@@ -1401,11 +1300,7 @@ export function isDefaultPermissionModeAuto(): boolean {
  */
 export function shouldPlanUseAutoMode(): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
-    return (
-      hasAutoModeOptIn() &&
-      isAutoModeGateEnabled() &&
-      getUseAutoModeDuringPlan()
-    )
+    return hasAutoModeOptIn() && isAutoModeGateEnabled() && getUseAutoModeDuringPlan()
   }
   return false
 }
@@ -1415,9 +1310,7 @@ export function shouldPlanUseAutoMode(): boolean {
  * 以便 ExitPlanMode 可以恢复它。当用户已 opt-in auto 模式时，
  * auto 语义在 plan 模式期间保持激活。
  */
-export function prepareContextForPlanMode(
-  context: ToolPermissionContext,
-): ToolPermissionContext {
+export function prepareContextForPlanMode(context: ToolPermissionContext): ToolPermissionContext {
   const currentMode = context.mode
   if (currentMode === 'plan') return context
   if (feature('TRANSCRIPT_CLASSIFIER')) {
@@ -1441,10 +1334,9 @@ export function prepareContextForPlanMode(
       }
     }
   }
-  logForDebugging(
-    `[prepareContextForPlanMode] plain plan entry, prePlanMode=${currentMode}`,
-    { level: 'info' },
-  )
+  logForDebugging(`[prepareContextForPlanMode] plain plan entry, prePlanMode=${currentMode}`, {
+    level: 'info',
+  })
   return { ...context, prePlanMode: currentMode }
 }
 
@@ -1454,9 +1346,7 @@ export function prepareContextForPlanMode(
  * 并相应地激活/停用 auto。不在 plan 模式时为无操作。
  * 从 applySettingsChange 调用，以便在 plan 中间切换 useAutoModeDuringPlan 立即生效。
  */
-export function transitionPlanAutoMode(
-  context: ToolPermissionContext,
-): ToolPermissionContext {
+export function transitionPlanAutoMode(context: ToolPermissionContext): ToolPermissionContext {
   if (!feature('TRANSCRIPT_CLASSIFIER')) return context
   if (context.mode !== 'plan') return context
   // 与 prepareContextForPlanMode 的入口时排除条件保持一致 —

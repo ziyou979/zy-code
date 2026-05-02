@@ -76,7 +76,7 @@ export function clearAllPlanSlugs(): void {
 // and permission checks. Inputs (initial settings + cwd) are fixed at startup, so the
 // mkdirSync result is stable for the session. Without memoization, each rendered tool
 // message triggers a mkdirSync syscall (regressed in #20005).
-export let getPlansDirectory;
+export let getPlansDirectory
 getPlansDirectory = memoize(function getPlansDirectory(): string {
   const settings = getInitialSettings()
   const settingsDir = settings.plansDirectory
@@ -89,9 +89,7 @@ getPlansDirectory = memoize(function getPlansDirectory(): string {
 
     // Validate path stays within project root to prevent path traversal
     if (!resolved.startsWith(cwd + sep) && resolved !== cwd) {
-      logError(
-        new Error(`plansDirectory must be within project root: ${settingsDir}`),
-      )
+      logError(new Error(`plansDirectory must be within project root: ${settingsDir}`))
       plansPath = join(getZyConfigHomeDir(), 'plans')
     } else {
       plansPath = resolved
@@ -148,7 +146,7 @@ export function getPlan(agentId?: AgentId): string | null {
  * Extract the plan slug from a log's message history.
  */
 function getSlugFromLog(log: LogOption): string | undefined {
-  return log.messages.find(m => m.slug)?.slug
+  return log.messages.find((m) => m.slug)?.slug
 }
 
 /**
@@ -191,27 +189,23 @@ export async function copyPlanForResume(
       return false
     }
 
-    logForDebugging(
-      `Plan file missing during resume: ${planPath}. Attempting recovery.`,
-    )
+    logForDebugging(`Plan file missing during resume: ${planPath}. Attempting recovery.`)
 
     // Try file snapshot first (written incrementally during session)
     const snapshotPlan = findFileSnapshotEntry(log.messages, 'plan')
     let recovered: string | null = null
     if (snapshotPlan && snapshotPlan.content.length > 0) {
       recovered = snapshotPlan.content
-      logForDebugging(
-        `Plan recovered from file snapshot, ${recovered.length} chars`,
-        { level: 'info' },
-      )
+      logForDebugging(`Plan recovered from file snapshot, ${recovered.length} chars`, {
+        level: 'info',
+      })
     } else {
       // Fall back to searching message history
       recovered = recoverPlanFromMessages(log)
       if (recovered) {
-        logForDebugging(
-          `Plan recovered from message history, ${recovered.length} chars`,
-          { level: 'info' },
-        )
+        logForDebugging(`Plan recovered from message history, ${recovered.length} chars`, {
+          level: 'info',
+        })
       }
     }
 
@@ -288,10 +282,7 @@ function recoverPlanFromMessages(log: LogOption): string | null {
       const { content } = (msg as AssistantMessage).message
       if (Array.isArray(content)) {
         for (const block of content) {
-          if (
-            block.type === 'tool_call' &&
-            block.name === EXIT_PLAN_MODE_V2_TOOL_NAME
-          ) {
+          if (block.type === 'tool_call' && block.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
             const input = block.input as Record<string, unknown> | undefined
             const plan = input?.plan
             if (typeof plan === 'string' && plan.length > 0) {
@@ -315,8 +306,7 @@ function recoverPlanFromMessages(log: LogOption): string | null {
     if (msg.type === 'attachment') {
       const attachmentMsg = msg as AttachmentMessage
       if (attachmentMsg.attachment?.type === 'plan_file_reference') {
-        const plan = (attachmentMsg.attachment as { planContent?: string })
-          .planContent
+        const plan = (attachmentMsg.attachment as { planContent?: string }).planContent
         if (typeof plan === 'string' && plan.length > 0) {
           return plan
         }
@@ -347,7 +337,7 @@ function findFileSnapshotEntry(
         path: string
         content: string
       }>
-      return files.find(f => f.key === key)
+      return files.find((f) => f.key === key)
     }
   }
   return undefined

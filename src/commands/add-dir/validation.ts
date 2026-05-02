@@ -4,10 +4,7 @@ import { dirname, resolve } from 'path'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { expandPath } from '../../utils/path.js'
-import {
-  allWorkingDirectories,
-  pathInWorkingPath,
-} from '../../utils/permissions/filesystem.js'
+import { allWorkingDirectories, pathInWorkingPath } from '../../utils/permissions/filesystem.js'
 
 export type AddDirectoryResult =
   | {
@@ -57,12 +54,7 @@ export async function validateDirectoryForWorkspace(
     // Match prior existsSync() semantics: treat any of these as "not found"
     // rather than re-throwing. EACCES/EPERM in particular must not crash
     // startup when a settings-configured additional directory is inaccessible.
-    if (
-      code === 'ENOENT' ||
-      code === 'ENOTDIR' ||
-      code === 'EACCES' ||
-      code === 'EPERM'
-    ) {
+    if (code === 'ENOENT' || code === 'ENOTDIR' || code === 'EACCES' || code === 'EPERM') {
       return {
         resultType: 'pathNotFound',
         directoryPath,

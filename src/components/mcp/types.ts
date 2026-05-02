@@ -1,6 +1,13 @@
 // MCP Component Types
 
-export type ConfigScope = 'user' | 'project' | 'local' | 'dynamic' | 'enterprise' | 'zyai' | 'managed'
+export type ConfigScope =
+  | 'user'
+  | 'project'
+  | 'local'
+  | 'dynamic'
+  | 'enterprise'
+  | 'zyai'
+  | 'managed'
 
 export interface ServerInfo {
   name: string

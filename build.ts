@@ -13,10 +13,7 @@ const outDir = join(root, 'dist')
 const buildTime = new Date().toISOString()
 
 // Resolve react-compiler-runtime package path
-const reactCompilerRuntime = resolve(
-  root,
-  'node_modules/react-compiler-runtime/dist/index.js',
-)
+const reactCompilerRuntime = resolve(root, 'node_modules/react-compiler-runtime/dist/index.js')
 
 const result = await Bun.build({
   entrypoints: [join(srcDir, 'entrypoints/cli.tsx')],

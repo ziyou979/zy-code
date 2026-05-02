@@ -1,65 +1,65 @@
-import React from 'react';
-import Text from '../../ink/components/Text.js';
-import { tSync } from '../../i18n/index.js';
+import React from 'react'
+import Text from '../../ink/components/Text.js'
+import { tSync } from '../../i18n/index.js'
 type Props = {
   /** The key or chord to display (e.g., "ctrl+o", "Enter", "↑/↓") */
-  shortcut: string;
+  shortcut: string
   /** The action the key performs (e.g., "expand", "select", "navigate") */
-  action: string;
+  action: string
   /** Whether to wrap the hint in parentheses. Default: false */
-  parens?: boolean;
+  parens?: boolean
   /** Whether to render the shortcut in bold. Default: false */
-  bold?: boolean;
-};
+  bold?: boolean
+}
 
 /** Map common action identifiers to i18n keys */
 const actionKeyMap: Record<string, string> = {
-  'expand': 'common.expand',
-  'collapse': 'common.collapse',
-  'select': 'common.select',
-  'confirm': 'common.confirm',
+  expand: 'common.expand',
+  collapse: 'common.collapse',
+  select: 'common.select',
+  confirm: 'common.confirm',
   'confirm:no': 'common.confirmNo',
   'confirm:yes': 'common.confirmYes',
-  'cancel': 'common.cancel',
-  'navigate': 'common.navigate',
-  'nav': 'common.nav',
-  'toggle': 'common.toggle',
-  'manage': 'common.manage',
-  'interrupt': 'shortcut.interrupt',
+  cancel: 'common.cancel',
+  navigate: 'common.navigate',
+  nav: 'common.nav',
+  toggle: 'common.toggle',
+  manage: 'common.manage',
+  interrupt: 'shortcut.interrupt',
   'run in background': 'bash.runInBackground',
-  'background': 'shortcut.background',
-  'amend': 'permission.amend',
-  'explain': 'permission.explain',
-  'hide': 'permission.hide',
-  'add': 'common.add',
-  'complete': 'common.complete',
+  background: 'shortcut.background',
+  amend: 'permission.amend',
+  explain: 'permission.explain',
+  hide: 'permission.hide',
+  add: 'common.add',
+  complete: 'common.complete',
   'stop agents': 'shortcut.stopAgents',
-  'close': 'common.close',
-  'cycle': 'shortcut.cycleMode',
+  close: 'common.close',
+  cycle: 'shortcut.cycleMode',
   'go back': 'common.goBack',
   'enter text': 'common.enterText',
-  'continue': 'common.continue',
+  continue: 'common.continue',
   'open in editor': 'common.openInEditor',
   'toggle selection': 'common.toggleSelection',
-  'submit': 'common.submit',
-  'save': 'common.save',
+  submit: 'common.submit',
+  save: 'common.save',
   'edit in your editor': 'common.editInEditor',
-  'stop': 'backgroundTasks.action.stop',
-  'foreground': 'backgroundTasks.action.foreground',
-  'teleport': 'backgroundTasks.action.teleport',
-  'view': 'backgroundTasks.action.view',
+  stop: 'backgroundTasks.action.stop',
+  foreground: 'backgroundTasks.action.foreground',
+  teleport: 'backgroundTasks.action.teleport',
+  view: 'backgroundTasks.action.view',
   'insert path': 'globalSearch.insertPath',
-  'mention': 'globalSearch.mention',
+  mention: 'globalSearch.mention',
   'select:accept': 'common.selectAccept',
   'select:previous': 'common.selectPrevious',
   'select:cancel': 'common.selectCancel',
-  'copy': 'common.copy',
-  'return': 'common.return',
-  'update': 'common.update',
-  'remove': 'common.remove',
-  'resume': 'common.resume',
-  'switch': 'common.switch',
-  'tabs': 'shortcut.tabs',
+  copy: 'common.copy',
+  return: 'common.return',
+  update: 'common.update',
+  remove: 'common.remove',
+  resume: 'common.resume',
+  switch: 'common.switch',
+  tabs: 'shortcut.tabs',
   'native select': 'shortcut.nativeSelect',
   'view tasks': 'shortcut.viewTasks',
   'write to file': 'common.writeToFile',
@@ -76,29 +76,26 @@ const actionKeyMap: Record<string, string> = {
   'attachments:previous': 'attachments.previous',
   'attachments:remove': 'attachments.remove',
   'attachments:exit': 'attachments.exit',
-};
+}
 
 /**
  * Renders a keyboard shortcut hint like "ctrl+o to expand" or "(tab to toggle)"
  *
  * Wrap in <Text dimColor> for the common dim styling.
  */
-export function KeyboardShortcutHint({
-  shortcut,
-  action,
-  parens = false,
-  bold = false
-}: Props) {
+export function KeyboardShortcutHint({ shortcut, action, parens = false, bold = false }: Props) {
   // Look up the action in the key map; fall back to raw action string
-  const actionKey = actionKeyMap[action];
-  const actionText = actionKey ? tSync(actionKey) : action;
-  const shortcutValue = bold ? <Text bold={true}>{shortcut as any}</Text> : shortcut as any;
-  const template = parens ? tSync('shortcut.hintParens', {
-    shortcut: shortcutValue,
-    action: actionText
-  }) : tSync('shortcut.hint', {
-    shortcut: shortcutValue,
-    action: actionText
-  }) as any;
-  return <Text>{template}</Text>;
+  const actionKey = actionKeyMap[action]
+  const actionText = actionKey ? tSync(actionKey) : action
+  const shortcutValue = bold ? <Text bold={true}>{shortcut as any}</Text> : (shortcut as any)
+  const template = parens
+    ? tSync('shortcut.hintParens', {
+        shortcut: shortcutValue,
+        action: actionText,
+      })
+    : (tSync('shortcut.hint', {
+        shortcut: shortcutValue,
+        action: actionText,
+      }) as any)
+  return <Text>{template}</Text>
 }

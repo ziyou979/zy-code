@@ -33,9 +33,7 @@ export async function execPromptHook(
   try {
     // Replace $ARGUMENTS with the JSON input
     const processedPrompt = addArgumentsToPrompt(hook.prompt, jsonInput)
-    logForDebugging(
-      `Hooks: Processing prompt hook with prompt: ${processedPrompt}`,
-    )
+    logForDebugging(`Hooks: Processing prompt hook with prompt: ${processedPrompt}`)
 
     // Create user message directly - no need for processUserInput which would
     // trigger UserPromptSubmit hooks and cause infinite recursion
@@ -43,20 +41,17 @@ export async function execPromptHook(
 
     // Prepend conversation history if provided
     const messagesToQuery =
-      messages && messages.length > 0
-        ? [...messages, userMessage]
-        : [userMessage]
+      messages && messages.length > 0 ? [...messages, userMessage] : [userMessage]
 
-    logForDebugging(
-      `Hooks: Querying model with ${messagesToQuery.length} messages`,
-    )
+    logForDebugging(`Hooks: Querying model with ${messagesToQuery.length} messages`)
 
     // Query the model with Haiku
     const hookTimeoutMs = hook.timeout ? hook.timeout * 1000 : 30000
 
     // Combined signal: aborts if either the hook signal or timeout triggers
-    const { signal: combinedSignal, cleanup: cleanupSignal } =
-      createCombinedAbortSignal(signal, { timeoutMs: hookTimeoutMs })
+    const { signal: combinedSignal, cleanup: cleanupSignal } = createCombinedAbortSignal(signal, {
+      timeoutMs: hookTimeoutMs,
+    })
 
     try {
       const response = await queryModelWithoutStreaming({
@@ -105,16 +100,14 @@ Your response must be a JSON object matching one of the following schemas:
       const content = extractTextContent(response.message.content)
 
       // Update response length for spinner display
-      toolUseContext.setResponseLength(length => length + content.length)
+      toolUseContext.setResponseLength((length) => length + content.length)
 
       const fullResponse = content.trim()
       logForDebugging(`Hooks: Model response: ${fullResponse}`)
 
       const json = safeParseJSON(fullResponse)
       if (!json) {
-        logForDebugging(
-          `Hooks: error parsing response as JSON: ${fullResponse}`,
-        )
+        logForDebugging(`Hooks: error parsing response as JSON: ${fullResponse}`)
         return {
           hook,
           outcome: 'non_blocking_error',
@@ -152,9 +145,7 @@ Your response must be a JSON object matching one of the following schemas:
 
       // Failed to meet condition
       if (!parsed.data.ok) {
-        logForDebugging(
-          `Hooks: Prompt hook condition was not met: ${parsed.data.reason}`,
-        )
+        logForDebugging(`Hooks: Prompt hook condition was not met: ${parsed.data.reason}`)
         return {
           hook,
           outcome: 'blocking',

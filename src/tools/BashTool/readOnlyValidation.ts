@@ -1,10 +1,7 @@
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import {
-  extractOutputRedirections,
-  splitCommand_DEPRECATED,
-} from '../../utils/bash/commands.js'
+import { extractOutputRedirections, splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
@@ -25,11 +22,7 @@ import {
 import type { BashTool } from './BashTool.js'
 import { isNormalizedGitCommand } from './bashPermissions.js'
 import { bashCommandIsSafe_DEPRECATED } from './bashSecurity.js'
-import {
-  COMMAND_OPERATION_TYPE,
-  PATH_EXTRACTORS,
-  type PathCommand,
-} from './pathValidation.js'
+import { COMMAND_OPERATION_TYPE, PATH_EXTRACTORS, type PathCommand } from './pathValidation.js'
 import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'
 
 // Unified command validation configuration system
@@ -40,10 +33,7 @@ type CommandConfig = {
   regex?: RegExp
   // An optional callback for additional custom validation logic. Returns true if the command is dangerous,
   // false if it appears to be safe. Meant to be used in conjunction with the safeFlags-based validation.
-  additionalCommandIsDangerousCallback?: (
-    rawCommand: string,
-    args: string[],
-  ) => boolean
+  additionalCommandIsDangerousCallback?: (rawCommand: string, args: string[]) => boolean
   // When false, the tool does NOT respect POSIX `--` end-of-options.
   // validateFlags will continue checking flags after `--` instead of breaking.
   // Default: true (most tools respect `--`).
@@ -240,10 +230,8 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--help': 'none',
       '--version': 'none',
     },
-    additionalCommandIsDangerousCallback: (
-      rawCommand: string,
-      _args: string[],
-    ) => !sedCommandIsAllowedByAllowlist(rawCommand),
+    additionalCommandIsDangerousCallback: (rawCommand: string, _args: string[]) =>
+      !sedCommandIsAllowedByAllowlist(rawCommand),
   },
   sort: {
     safeFlags: {
@@ -418,15 +406,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     },
     // Block BSD-style 'e' modifier which shows environment variables
     // BSD options are letter-only tokens without a leading dash
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // Check for BSD-style 'e' in letter-only tokens (not -e which is UNIX-style)
       // A BSD-style option is a token of only letters (no leading dash) containing 'e'
-      return args.some(
-        a => !a.startsWith('-') && /^[a-zA-Z]*e[a-zA-Z]*$/.test(a),
-      )
+      return args.some((a) => !a.startsWith('-') && /^[a-zA-Z]*e[a-zA-Z]*$/.test(a))
     },
   },
   base64: {
@@ -754,10 +737,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     // -f / --file - reads dates from file (can be used to set time in batch)
     // CRITICAL: date positional args in format MMDDhhmm[[CC]YY][.ss] set system time
     // Use callback to verify positional args start with + (format strings like +"%Y-%m-%d")
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // args are already parsed tokens after "date"
       // Flags that require an argument
       const flagsWithArgs = new Set([
@@ -907,7 +887,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     // so we must catch them here. lsof accepts +m<path> (attached path, no space)
     // with both absolute (+m/tmp/evil) and relative (+mfoo, +m.evil) paths.
     additionalCommandIsDangerousCallback: (_rawCommand, args) =>
-      args.some(a => a === '+m' || a.startsWith('+m')),
+      args.some((a) => a === '+m' || a.startsWith('+m')),
   },
 
   pgrep: {
@@ -976,10 +956,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       // from safeFlags ensures validateFlags rejects it (bundled or not) before
       // the callback runs. The callback's -S check is defense-in-depth.
     },
-    additionalCommandIsDangerousCallback: (
-      _rawCommand: string,
-      args: string[],
-    ) => {
+    additionalCommandIsDangerousCallback: (_rawCommand: string, args: string[]) => {
       // Capabilities that modify terminal state or could be harmful.
       // init/reset run iprog (arbitrary code from terminfo) and modify tty settings.
       // rs1/rs2/rs3/is1/is2/is3 are the individual reset/init sequences that
@@ -1026,12 +1003,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
           // Defense-in-depth: block -S even if it somehow passes validateFlags
           if (token === '-S') return true
           // Also check for -S bundled with other flags (e.g., -xS)
-          if (
-            !token.startsWith('--') &&
-            token.length > 2 &&
-            token.includes('S')
-          )
-            return true
+          if (!token.startsWith('--') && token.length > 2 && token.includes('S')) return true
           if (flagsWithArgs.has(token)) {
             i += 2
           } else {
@@ -1248,10 +1220,10 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   // Parse the command to get individual tokens using shell-quote for accuracy
   // Handle glob operators by converting them to strings, they don't matter from the perspective
   // of this function
-  const parseResult = tryParseShellCommand(command, env => `$${env}`)
+  const parseResult = tryParseShellCommand(command, (env) => `$${env}`)
   if (!parseResult.success) return false
 
-  const parsed = parseResult.tokens.map(token => {
+  const parsed = parseResult.tokens.map((token) => {
     if (typeof token !== 'string') {
       token = token as { op: 'glob'; pattern: string }
       if (token.op === 'glob') {
@@ -1264,7 +1236,7 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   // If there are operators (pipes, redirects, etc.), it's not a simple command.
   // Breaking commands down into their constituent parts is handled upstream of
   // this function, so we reject anything with operators here.
-  const hasOperators = parsed.some(token => typeof token !== 'string')
+  const hasOperators = parsed.some((token) => typeof token !== 'string')
   if (hasOperators) {
     return false
   }
@@ -1374,8 +1346,7 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
     !validateFlags(tokens, commandTokens, commandConfig, {
       commandName: tokens[0],
       rawCommand: command,
-      xargsTargetCommands:
-        tokens[0] === 'xargs' ? SAFE_TARGET_COMMANDS_FOR_XARGS : undefined,
+      xargsTargetCommands: tokens[0] === 'xargs' ? SAFE_TARGET_COMMANDS_FOR_XARGS : undefined,
     })
   ) {
     return false
@@ -1397,10 +1368,7 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   }
   if (
     commandConfig.additionalCommandIsDangerousCallback &&
-    commandConfig.additionalCommandIsDangerousCallback(
-      command,
-      tokens.slice(commandTokens),
-    )
+    commandConfig.additionalCommandIsDangerousCallback(command, tokens.slice(commandTokens))
   ) {
     return false
   }
@@ -1730,20 +1698,14 @@ function isCommandReadOnly(command: string): boolean {
 
       // Prevent git commands with --exec-path flag to avoid path manipulation that can lead to code execution
       // The --exec-path flag allows overriding the directory where git looks for executables
-      if (
-        testCommand.includes('git') &&
-        /\s--exec-path[\s=]/.test(testCommand)
-      ) {
+      if (testCommand.includes('git') && /\s--exec-path[\s=]/.test(testCommand)) {
         return false
       }
 
       // Prevent git commands with --config-env flag to avoid config injection via environment variables
       // The --config-env flag allows setting git config values from environment variables, which can be
       // just as dangerous as -c flag (e.g., core.fsmonitor, diff.external, core.gitProxy)
-      if (
-        testCommand.includes('git') &&
-        /\s--config-env[\s=]/.test(testCommand)
-      ) {
+      if (testCommand.includes('git') && /\s--config-env[\s=]/.test(testCommand)) {
         return false
       }
       return true
@@ -1759,9 +1721,7 @@ function isCommandReadOnly(command: string): boolean {
  * @returns true if any subcommand is a git command
  */
 function commandHasAnyGit(command: string): boolean {
-  return splitCommand_DEPRECATED(command).some(subcmd =>
-    isNormalizedGitCommand(subcmd.trim()),
-  )
+  return splitCommand_DEPRECATED(command).some((subcmd) => isNormalizedGitCommand(subcmd.trim()))
 }
 
 /**
@@ -1769,12 +1729,7 @@ function commandHasAnyGit(command: string): boolean {
  * If a command creates these files and then runs git, the git command
  * could execute malicious hooks from the created files.
  */
-const GIT_INTERNAL_PATTERNS = [
-  /^HEAD$/,
-  /^objects(?:\/|$)/,
-  /^refs(?:\/|$)/,
-  /^hooks(?:\/|$)/,
-]
+const GIT_INTERNAL_PATTERNS = [/^HEAD$/, /^objects(?:\/|$)/, /^refs(?:\/|$)/, /^hooks(?:\/|$)/]
 
 /**
  * Checks if a path is a git-internal path (HEAD, objects/, refs/, hooks/).
@@ -1782,7 +1737,7 @@ const GIT_INTERNAL_PATTERNS = [
 function isGitInternalPath(path: string): boolean {
   // Normalize path by removing leading ./ or /
   const normalized = path.replace(/^\.?\//, '')
-  return GIT_INTERNAL_PATTERNS.some(pattern => pattern.test(normalized))
+  return GIT_INTERNAL_PATTERNS.some((pattern) => pattern.test(normalized))
 }
 
 // Commands that only delete or modify in-place (don't create new files at new paths)
@@ -1794,12 +1749,10 @@ const NON_CREATING_WRITE_COMMANDS = new Set(['rm', 'rmdir', 'sed'])
  * (write/create operations excluding deletion and in-place modification).
  */
 function extractWritePathsFromSubcommand(subcommand: string): string[] {
-  const parseResult = tryParseShellCommand(subcommand, env => `$${env}`)
+  const parseResult = tryParseShellCommand(subcommand, (env) => `$${env}`)
   if (!parseResult.success) return []
 
-  const tokens = parseResult.tokens.filter(
-    (t): t is string => typeof t === 'string',
-  )
+  const tokens = parseResult.tokens.filter((t): t is string => typeof t === 'string')
   if (tokens.length === 0) return []
 
   const baseCmd = tokens[0]
@@ -1810,10 +1763,7 @@ function extractWritePathsFromSubcommand(subcommand: string): string[] {
     return []
   }
   const opType = COMMAND_OPERATION_TYPE[baseCmd as PathCommand]
-  if (
-    (opType !== 'write' && opType !== 'create') ||
-    NON_CREATING_WRITE_COMMANDS.has(baseCmd)
-  ) {
+  if ((opType !== 'write' && opType !== 'create') || NON_CREATING_WRITE_COMMANDS.has(baseCmd)) {
     return []
   }
 
@@ -1881,7 +1831,7 @@ export function checkReadOnlyConstraints(
   const { command } = input
 
   // Detect if the command is not parseable and return early
-  const result = tryParseShellCommand(command, env => `$${env}`)
+  const result = tryParseShellCommand(command, (env) => `$${env}`)
   if (!result.success) {
     return {
       behavior: 'passthrough',
@@ -1904,8 +1854,7 @@ export function checkReadOnlyConstraints(
   if (containsVulnerableUncPath(command)) {
     return {
       behavior: 'ask',
-      message:
-        'Command contains Windows UNC path that could be vulnerable to WebDAV attacks',
+      message: 'Command contains Windows UNC path that could be vulnerable to WebDAV attacks',
     }
   }
 
@@ -1918,8 +1867,7 @@ export function checkReadOnlyConstraints(
   if (compoundCommandHasCd && hasGitCommand) {
     return {
       behavior: 'passthrough',
-      message:
-        'Compound commands with cd and git require permission checks for enhanced security',
+      message: 'Compound commands with cd and git require permission checks for enhanced security',
     }
   }
 
@@ -1954,11 +1902,7 @@ export function checkReadOnlyConstraints(
   // Race condition: a sandboxed command can create bare repo files in a subdirectory,
   // and a backgrounded git command (e.g. sleep 10 && git status) would pass the
   // isCurrentDirectoryBareGitRepo() check at evaluation time before the files exist.
-  if (
-    hasGitCommand &&
-    SandboxManager.isSandboxingEnabled() &&
-    getCwd() !== getOriginalCwd()
-  ) {
+  if (hasGitCommand && SandboxManager.isSandboxingEnabled() && getCwd() !== getOriginalCwd()) {
     return {
       behavior: 'passthrough',
       message:
@@ -1967,14 +1911,12 @@ export function checkReadOnlyConstraints(
   }
 
   // Check if all subcommands are read-only
-  const allSubcommandsReadOnly = splitCommand_DEPRECATED(command).every(
-    subcmd => {
-      if (bashCommandIsSafe_DEPRECATED(subcmd).behavior !== 'passthrough') {
-        return false
-      }
-      return isCommandReadOnly(subcmd)
-    },
-  )
+  const allSubcommandsReadOnly = splitCommand_DEPRECATED(command).every((subcmd) => {
+    if (bashCommandIsSafe_DEPRECATED(subcmd).behavior !== 'passthrough') {
+      return false
+    }
+    return isCommandReadOnly(subcmd)
+  })
 
   if (allSubcommandsReadOnly) {
     return {

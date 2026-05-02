@@ -2,15 +2,9 @@ import { feature } from 'bun:bundle'
 import type { ToolCallInlineBlock } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import {
-  FORK_BOILERPLATE_TAG,
-  FORK_DIRECTIVE_PREFIX,
-} from '../../constants/xml.js'
+import { FORK_BOILERPLATE_TAG, FORK_DIRECTIVE_PREFIX } from '../../constants/xml.js'
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
-import type {
-  AssistantMessage,
-  Message as MessageType,
-} from '../../types/message.js'
+import type { AssistantMessage, Message as MessageType } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { createUserMessage } from '../../utils/messages.js'
 import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
@@ -76,14 +70,12 @@ export const FORK_AGENT = {
  * at call time by detecting the fork boilerplate tag in conversation history.
  */
 export function isInForkChild(messages: MessageType[]): boolean {
-  return messages.some(m => {
+  return messages.some((m) => {
     if (m.type !== 'user') return false
     const content = m.message.content
     if (!Array.isArray(content)) return false
     return content.some(
-      block =>
-        block.type === 'text' &&
-        block.text.includes(`<${FORK_BOILERPLATE_TAG}>`),
+      (block) => block.type === 'text' && block.text.includes(`<${FORK_BOILERPLATE_TAG}>`),
     )
   })
 }
@@ -131,15 +123,13 @@ export function buildForkedMessages(
     )
     return [
       createUserMessage({
-        content: [
-          { type: 'text' as const, text: buildChildMessage(directive) },
-        ],
+        content: [{ type: 'text' as const, text: buildChildMessage(directive) }],
       }),
     ]
   }
 
   // Build tool_result blocks for every tool_use, all with identical placeholder text
-  const toolResultBlocks = toolUseBlocks.map(block => ({
+  const toolResultBlocks = toolUseBlocks.map((block) => ({
     type: 'tool_result' as const,
     toolCallId: block.id,
     content: [
@@ -202,9 +192,6 @@ ${FORK_DIRECTIVE_PREFIX}${directive}`
  * Tells the child to translate paths from the inherited context, re-read
  * potentially stale files, and that its changes are isolated.
  */
-export function buildWorktreeNotice(
-  parentCwd: string,
-  worktreeCwd: string,
-): string {
+export function buildWorktreeNotice(parentCwd: string, worktreeCwd: string): string {
   return `You've inherited the conversation context above from a parent agent working in ${parentCwd}. You are operating in an isolated git worktree at ${worktreeCwd} — same repository, same relative file structure, separate working copy. Paths in the inherited context refer to the parent's working directory; translate them to your worktree root. Re-read files before editing if the parent may have modified them since they appear in the context. Your changes stay in this worktree and will not affect the parent's files.`
 }

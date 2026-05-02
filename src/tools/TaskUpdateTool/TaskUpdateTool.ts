@@ -3,10 +3,7 @@ import { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
-import {
-  executeTaskCompletedHooks,
-  getTaskCompletedHookMessage,
-} from '../../utils/hooks.js'
+import { executeTaskCompletedHooks, getTaskCompletedHookMessage } from '../../utils/hooks.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   blockTask,
@@ -19,12 +16,7 @@ import {
   TaskStatusSchema,
   updateTask,
 } from '../../utils/tasks.js'
-import {
-  getAgentId,
-  getAgentName,
-  getTeammateColor,
-  getTeamName,
-} from '../../utils/teammate.js'
+import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import { VERIFICATION_AGENT_TYPE } from '../AgentTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from './constants.js'
@@ -44,24 +36,14 @@ const inputSchema = lazySchema(() => {
       .describe(
         'Present continuous form shown in spinner when in_progress (e.g., "Running tests")',
       ),
-    status: TaskUpdateStatusSchema.optional().describe(
-      'New status for the task',
-    ),
-    addBlocks: z
-      .array(z.string())
-      .optional()
-      .describe('Task IDs that this task blocks'),
-    addBlockedBy: z
-      .array(z.string())
-      .optional()
-      .describe('Task IDs that block this task'),
+    status: TaskUpdateStatusSchema.optional().describe('New status for the task'),
+    addBlocks: z.array(z.string()).optional().describe('Task IDs that this task blocks'),
+    addBlockedBy: z.array(z.string()).optional().describe('Task IDs that block this task'),
     owner: z.string().optional().describe('New owner for the task'),
     metadata: z
       .record(z.string(), z.unknown())
       .optional()
-      .describe(
-        'Metadata keys to merge into the task. Set a key to null to delete it.',
-      ),
+      .describe('Metadata keys to merge into the task. Set a key to null to delete it.'),
   })
 })
 type InputSchema = ReturnType<typeof inputSchema>
@@ -121,23 +103,13 @@ export const TaskUpdateTool = buildTool({
     return null
   },
   async call(
-    {
-      taskId,
-      subject,
-      description,
-      activeForm,
-      status,
-      owner,
-      addBlocks,
-      addBlockedBy,
-      metadata,
-    },
+    { taskId, subject, description, activeForm, status, owner, addBlocks, addBlockedBy, metadata },
     context,
   ) {
     const taskListId = getTaskListId()
 
     // Auto-expand task list when updating tasks
-    context.setAppState(prev => {
+    context.setAppState((prev) => {
       if (prev.expandedView === 'tasks') return prev
       return { ...prev, expandedView: 'tasks' as const }
     })
@@ -219,9 +191,7 @@ export const TaskUpdateTool = buildTool({
             taskId,
             updatedFields: deleted ? ['deleted'] : [],
             error: deleted ? undefined : 'Failed to delete task',
-            statusChange: deleted
-              ? { from: existingTask.status, to: 'deleted' }
-              : undefined,
+            statusChange: deleted ? { from: existingTask.status, to: 'deleted' } : undefined,
           },
         }
       }
@@ -246,9 +216,7 @@ export const TaskUpdateTool = buildTool({
 
           for await (const result of generator) {
             if (result.blockingError) {
-              blockingErrors.push(
-                getTaskCompletedHookMessage(result.blockingError),
-              )
+              blockingErrors.push(getTaskCompletedHookMessage(result.blockingError))
             }
           }
 
@@ -299,9 +267,7 @@ export const TaskUpdateTool = buildTool({
 
     // Add blocks if provided and not already present
     if (addBlocks && addBlocks.length > 0) {
-      const newBlocks = addBlocks.filter(
-        id => !existingTask.blocks.includes(id),
-      )
+      const newBlocks = addBlocks.filter((id) => !existingTask.blocks.includes(id))
       for (const blockId of newBlocks) {
         await blockTask(taskListId, taskId, blockId)
       }
@@ -312,9 +278,7 @@ export const TaskUpdateTool = buildTool({
 
     // Add blockedBy if provided and not already present (reverse: the blocker blocks this task)
     if (addBlockedBy && addBlockedBy.length > 0) {
-      const newBlockedBy = addBlockedBy.filter(
-        id => !existingTask.blockedBy.includes(id),
-      )
+      const newBlockedBy = addBlockedBy.filter((id) => !existingTask.blockedBy.includes(id))
       for (const blockerId of newBlockedBy) {
         await blockTask(taskListId, blockerId, taskId)
       }
@@ -338,12 +302,8 @@ export const TaskUpdateTool = buildTool({
       updates.status === 'completed'
     ) {
       const allTasks = await listTasks(taskListId)
-      const allDone = allTasks.every(t => t.status === 'completed')
-      if (
-        allDone &&
-        allTasks.length >= 3 &&
-        !allTasks.some(t => /verif/i.test(t.subject))
-      ) {
+      const allDone = allTasks.every((t) => t.status === 'completed')
+      if (allDone && allTasks.length >= 3 && !allTasks.some((t) => /verif/i.test(t.subject))) {
         verificationNudgeNeeded = true
       }
     }
@@ -362,14 +322,8 @@ export const TaskUpdateTool = buildTool({
     }
   },
   mapToolResultToToolResultBlock(content, toolUseID) {
-    const {
-      success,
-      taskId,
-      updatedFields,
-      error,
-      statusChange,
-      verificationNudgeNeeded,
-    } = content as Output
+    const { success, taskId, updatedFields, error, statusChange, verificationNudgeNeeded } =
+      content as Output
     if (!success) {
       // Return as non-error so it doesn't trigger sibling tool cancellation
       // in StreamingToolExecutor. "Task not found" is a benign condition
@@ -384,11 +338,7 @@ export const TaskUpdateTool = buildTool({
     let resultContent = `Updated task #${taskId} ${updatedFields.join(', ')}`
 
     // Add reminder for teammates when they complete a task (supports in-process teammates)
-    if (
-      statusChange?.to === 'completed' &&
-      getAgentId() &&
-      isAgentSwarmsEnabled()
-    ) {
+    if (statusChange?.to === 'completed' && getAgentId() && isAgentSwarmsEnabled()) {
       resultContent +=
         '\n\nTask completed. Call TaskList now to find your next available task or see if your work unblocked others.'
     }

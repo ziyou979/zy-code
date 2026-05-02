@@ -28,11 +28,7 @@ const BASE_DELAY_MS = 500
 // 每会话的顺序包装器，防止并发日志写入
 const sequentialAppendBySession: Map<
   string,
-  (
-    entry: TranscriptMessage,
-    url: string,
-    headers: Record<string, string>,
-  ) => Promise<boolean>
+  (entry: TranscriptMessage, url: string, headers: Record<string, string>) => Promise<boolean>
 > = new Map()
 
 /**
@@ -42,11 +38,8 @@ function getOrCreateSequentialAppend(sessionId: string) {
   let sequentialAppend = sequentialAppendBySession.get(sessionId)
   if (!sequentialAppend) {
     sequentialAppend = sequential(
-      async (
-        entry: TranscriptMessage,
-        url: string,
-        headers: Record<string, string>,
-      ) => await appendSessionLogImpl(sessionId, entry, url, headers),
+      async (entry: TranscriptMessage, url: string, headers: Record<string, string>) =>
+        await appendSessionLogImpl(sessionId, entry, url, headers),
     )
     sequentialAppendBySession.set(sessionId, sequentialAppend)
   }
@@ -76,14 +69,12 @@ async function appendSessionLogImpl(
       // @ts-ignore
       const response = await axios.put(url, entry, {
         headers: requestHeaders,
-        validateStatus: status => status < 500,
+        validateStatus: (status) => status < 500,
       })
 
       if (response.status === 200 || response.status === 201) {
         lastUuidMap.set(sessionId, entry.uuid as any)
-        logForDebugging(
-          `已成功持久化会话 ${sessionId} 的日志条目`,
-        )
+        logForDebugging(`已成功持久化会话 ${sessionId} 的日志条目`)
         return true
       }
 
@@ -93,13 +84,11 @@ async function appendSessionLogImpl(
         // 导致 lastUuidMap 过期
         const serverLastUuid = response.headers['x-last-uuid']
         // @ts-ignore
-        if (serverLastUuid === entry.uuid as any) {
+        if (serverLastUuid === (entry.uuid as any)) {
           // 我们的条目就是服务器上的最后一条——之前已成功存储
           // @ts-ignore
           lastUuidMap.set(sessionId, entry.uuid as any)
-          logForDebugging(
-            `会话条目 ${entry.uuid} 已存在于服务器，从过期状态恢复`,
-          )
+          logForDebugging(`会话条目 ${entry.uuid} 已存在于服务器，从过期状态恢复`)
           logForDiagnosticsNoPII('info', 'session_persist_recovered_from_409')
           return true
         }
@@ -125,17 +114,13 @@ async function appendSessionLogImpl(
           } else {
             // 无法确定服务器状态 — 放弃
             const errorData = response.data as SessionIngressError
-            const errorMessage =
-              errorData.error?.message || '检测到并发修改'
+            const errorMessage = errorData.error?.message || '检测到并发修改'
             logError(
               new Error(
                 `会话持久化冲突：会话 ${sessionId} 的 UUID 不匹配，条目 ${entry.uuid}。${errorMessage}`,
               ),
             )
-            logForDiagnosticsNoPII(
-              'error',
-              'session_persist_fail_concurrent_modification',
-            )
+            logForDiagnosticsNoPII('error', 'session_persist_fail_concurrent_modification')
             return false
           }
         }
@@ -150,9 +135,7 @@ async function appendSessionLogImpl(
       }
 
       // 其他 4xx（429 等）— 可重试
-      logForDebugging(
-        `持久化会话日志失败：${response.status} ${response.statusText}`,
-      )
+      logForDebugging(`持久化会话日志失败：${response.status} ${response.statusText}`)
       logForDiagnosticsNoPII('error', 'session_persist_fail_status', {
         status: response.status,
         attempt,
@@ -169,18 +152,12 @@ async function appendSessionLogImpl(
 
     if (attempt === MAX_RETRIES) {
       logForDebugging(`远程持久化在 ${MAX_RETRIES} 次尝试后失败`)
-      logForDiagnosticsNoPII(
-        'error',
-        'session_persist_error_retries_exhausted',
-        { attempt },
-      )
+      logForDiagnosticsNoPII('error', 'session_persist_error_retries_exhausted', { attempt })
       return false
     }
 
     const delayMs = Math.min(BASE_DELAY_MS * Math.pow(2, attempt - 1), 8000)
-    logForDebugging(
-      `远程持久化第 ${attempt}/${MAX_RETRIES} 次尝试失败，${delayMs}ms 后重试…`,
-    )
+    logForDebugging(`远程持久化第 ${attempt}/${MAX_RETRIES} 次尝试失败，${delayMs}ms 后重试…`)
     await sleep(delayMs)
   }
 
@@ -216,10 +193,7 @@ export async function appendSessionLog(
 /**
  * 获取所有会话日志用于水合
  */
-export async function getSessionLogs(
-  sessionId: string,
-  url: string,
-): Promise<Entry[] | null> {
+export async function getSessionLogs(sessionId: string, url: string): Promise<Entry[] | null> {
   const sessionToken = getSessionIngressAuthToken()
   if (!sessionToken) {
     logForDebugging('无可用会话令牌用于获取会话日志')
@@ -325,7 +299,7 @@ export async function getTeleportEvents(
         headers,
         params,
         timeout: 20000,
-        validateStatus: status => status < 500,
+        validateStatus: (status) => status < 500,
       })
     } catch (e) {
       const err = e as AxiosError
@@ -348,37 +322,25 @@ export async function getTeleportEvents(
       //
       // 分页中间的 404（pages > 0）意味着会话在页面之间
       // 被删除 — 返回已有数据。
-      logForDebugging(
-        `[teleport] 会话 ${sessionId} 未找到（第 ${pages} 页）`,
-      )
+      logForDebugging(`[teleport] 会话 ${sessionId} 未找到（第 ${pages} 页）`)
       logForDiagnosticsNoPII('warn', 'teleport_events_not_found')
       return pages === 0 ? null : all
     }
 
     if (response.status === 401) {
       logForDiagnosticsNoPII('error', 'teleport_events_bad_token')
-      throw new Error(
-        'Your session has expired. Please run /login to sign in again.',
-      )
+      throw new Error('Your session has expired. Please run /login to sign in again.')
     }
 
     if (response.status !== 200) {
-      logError(
-        new Error(
-          `传送事件返回 ${response.status}：${jsonStringify(response.data)}`,
-        ),
-      )
+      logError(new Error(`传送事件返回 ${response.status}：${jsonStringify(response.data)}`))
       logForDiagnosticsNoPII('error', 'teleport_events_bad_status')
       return null
     }
 
     const { data, next_cursor } = response.data
     if (!Array.isArray(data)) {
-      logError(
-        new Error(
-          `传送事件响应格式无效：${jsonStringify(response.data)}`,
-        ),
-      )
+      logError(new Error(`传送事件响应格式无效：${jsonStringify(response.data)}`))
       logForDiagnosticsNoPII('error', 'teleport_events_invalid_shape')
       return null
     }
@@ -405,15 +367,11 @@ export async function getTeleportEvents(
   if (pages >= maxPages) {
     // 不算失败 — 返回已有数据。传送截断的转录总比
     // 完全无法传送好。
-    logError(
-      new Error(`传送事件达到分页上限（${maxPages}），会话 ${sessionId}`),
-    )
+    logError(new Error(`传送事件达到分页上限（${maxPages}），会话 ${sessionId}`))
     logForDiagnosticsNoPII('warn', 'teleport_events_page_cap')
   }
 
-  logForDebugging(
-    `[teleport] 已获取 ${all.length} 条事件，共 ${pages} 页，会话 ${sessionId}`,
-  )
+  logForDebugging(`[teleport] 已获取 ${all.length} 条事件，共 ${pages} 页，会话 ${sessionId}`)
   return all
 }
 
@@ -429,7 +387,7 @@ async function fetchSessionLogsFromUrl(
     const response = await axios.get(url, {
       headers,
       timeout: 20000,
-      validateStatus: status => status < 500,
+      validateStatus: (status) => status < 500,
       params: isEnvTruthy(process.env.CLAUDE_AFTER_LAST_COMPACT)
         ? { after_last_compact: true }
         : undefined,
@@ -440,19 +398,13 @@ async function fetchSessionLogsFromUrl(
 
       // 验证响应结构
       if (!data || typeof data !== 'object' || !Array.isArray(data.loglines)) {
-        logError(
-          new Error(
-            `会话日志响应格式无效：${jsonStringify(data)}`,
-          ),
-        )
+        logError(new Error(`会话日志响应格式无效：${jsonStringify(data)}`))
         logForDiagnosticsNoPII('error', 'session_get_fail_invalid_response')
         return null
       }
 
       const logs = data.loglines as Entry[]
-      logForDebugging(
-        `已获取 ${logs.length} 条会话日志，会话 ${sessionId}`,
-      )
+      logForDebugging(`已获取 ${logs.length} 条会话日志，会话 ${sessionId}`)
       return logs
     }
 
@@ -465,14 +417,10 @@ async function fetchSessionLogsFromUrl(
     if (response.status === 401) {
       logForDebugging('认证令牌已过期或无效')
       logForDiagnosticsNoPII('error', 'session_get_fail_bad_token')
-      throw new Error(
-        'Your session has expired. Please run /login to sign in again.',
-      )
+      throw new Error('Your session has expired. Please run /login to sign in again.')
     }
 
-    logForDebugging(
-      `获取会话日志失败：${response.status} ${response.statusText}`,
-    )
+    logForDebugging(`获取会话日志失败：${response.status} ${response.statusText}`)
     logForDiagnosticsNoPII('error', 'session_get_fail_status', {
       status: response.status,
     })
@@ -495,7 +443,7 @@ function findLastUuid(logs: Entry[] | null): UUID | undefined {
   if (!logs) {
     return undefined
   }
-  const entry = logs.findLast(e => 'uuid' in e && e.uuid)
+  const entry = logs.findLast((e) => 'uuid' in e && e.uuid)
   return entry && 'uuid' in entry ? (entry.uuid as UUID) : undefined
 }
 

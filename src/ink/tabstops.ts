@@ -6,10 +6,7 @@ import { createTokenizer } from './termio/tokenize.js'
 
 const DEFAULT_TAB_INTERVAL = 8
 
-export function expandTabs(
-  text: string,
-  interval = DEFAULT_TAB_INTERVAL,
-): string {
+export function expandTabs(text: string, interval = DEFAULT_TAB_INTERVAL): string {
   if (!text.includes('\t')) {
     return text
   }

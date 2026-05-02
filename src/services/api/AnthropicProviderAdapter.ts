@@ -14,10 +14,7 @@ import type {
   ToolDefinition,
 } from '../../types/llm.js'
 import { getAnthropicClient } from './client.js'
-import {
-  getMainLoopModel,
-  normalizeModelStringForAPI,
-} from '../../utils/model/model.js'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../../utils/model/model.js'
 import { getModelBetas } from '../../utils/betas.js'
 import { logError } from '../../utils/log.js'
 import {
@@ -116,10 +113,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
     return false
   }
 
-  async countTokens(
-    messages: LLMMessage[],
-    tools: ToolDefinition[],
-  ): Promise<number | null> {
+  async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
     try {
       const model = getMainLoopModel()
       const betas = getModelBetas(model)
@@ -134,12 +128,11 @@ export class AnthropicProviderAdapter implements LLMAdapter {
       const response = await client.beta.messages.countTokens({
         model: normalizeModelStringForAPI(model),
         messages:
-          anthropicMessages.length > 0
-            ? anthropicMessages
-            : [{ role: 'user', content: 'foo' }],
-        ...(anthropicTools && anthropicTools.length > 0 && {
-          tools: anthropicTools as any,
-        }),
+          anthropicMessages.length > 0 ? anthropicMessages : [{ role: 'user', content: 'foo' }],
+        ...(anthropicTools &&
+          anthropicTools.length > 0 && {
+            tools: anthropicTools as any,
+          }),
         ...(betas.length > 0 && { betas }),
         ...(containsThinking && {
           thinking: {
@@ -210,10 +203,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
       })
       return true
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes('authentication_error')
-      ) {
+      if (error instanceof Error && error.message.includes('authentication_error')) {
         return false
       }
       throw error

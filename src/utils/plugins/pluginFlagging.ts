@@ -60,10 +60,7 @@ function parsePluginsData(content: string): Record<string, FlaggedPlugin> {
       const parsed: FlaggedPlugin = {
         flaggedAt: (entry as { flaggedAt: string }).flaggedAt,
       }
-      if (
-        'seenAt' in entry &&
-        typeof (entry as { seenAt: unknown }).seenAt === 'string'
-      ) {
+      if ('seenAt' in entry && typeof (entry as { seenAt: unknown }).seenAt === 'string') {
         parsed.seenAt = (entry as { seenAt: string }).seenAt
       }
       result[id] = parsed
@@ -83,9 +80,7 @@ async function readFromDisk(): Promise<Record<string, FlaggedPlugin>> {
   }
 }
 
-async function writeToDisk(
-  plugins: Record<string, FlaggedPlugin>,
-): Promise<void> {
+async function writeToDisk(plugins: Record<string, FlaggedPlugin>): Promise<void> {
   const filePath = getFlaggedPluginsPath()
   const tempPath = `${filePath}.${randomBytes(8).toString('hex')}.tmp`
 
@@ -120,10 +115,7 @@ export async function loadFlaggedPlugins(): Promise<void> {
   let changed = false
 
   for (const [id, entry] of Object.entries(all)) {
-    if (
-      entry.seenAt &&
-      now - new Date(entry.seenAt).getTime() >= SEEN_EXPIRY_MS
-    ) {
+    if (entry.seenAt && now - new Date(entry.seenAt).getTime() >= SEEN_EXPIRY_MS) {
       delete all[id]
       changed = true
     }
@@ -169,9 +161,7 @@ export async function addFlaggedPlugin(pluginId: string): Promise<void> {
  * flagged plugins. Sets seenAt on entries that don't already have it.
  * After 48 hours from seenAt, entries are auto-cleared on next load.
  */
-export async function markFlaggedPluginsSeen(
-  pluginIds: string[],
-): Promise<void> {
+export async function markFlaggedPluginsSeen(pluginIds: string[]): Promise<void> {
   if (cache === null) {
     cache = await readFromDisk()
   }

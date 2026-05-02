@@ -120,12 +120,7 @@ function parseKey(keypress: ParsedKey): [Key, string] {
       // processedAsSpecialSequence 会跳过下方的 nonAlphanumericKeys
       // 清除逻辑，因此必须在此显式处理）；
       // 其他情况使用键名。
-      input =
-        keypress.name === 'space'
-          ? ' '
-          : keypress.name === 'escape'
-            ? ''
-            : keypress.name
+      input = keypress.name === 'space' ? ' ' : keypress.name === 'escape' ? '' : keypress.name
     }
     processedAsSpecialSequence = true
   }
@@ -143,12 +138,7 @@ function parseKey(keypress: ParsedKey): [Key, string] {
       // 终端行为的变化。
       input = ''
     } else {
-      input =
-        keypress.name === 'space'
-          ? ' '
-          : keypress.name === 'escape'
-            ? ''
-            : keypress.name
+      input = keypress.name === 'space' ? ' ' : keypress.name === 'escape' ? '' : keypress.name
     }
     processedAsSpecialSequence = true
   }
@@ -156,12 +146,7 @@ function parseKey(keypress: ParsedKey): [Key, string] {
   // 处理应用小键盘模式序列：剥离 ESC 后，剩下
   // "O<字母>"（例如小键盘 0 的 "Op"，小键盘 9 的 "Oy"）。
   // 使用解析后的键名（数字字符）进行 input 处理。
-  if (
-    input.startsWith('O') &&
-    input.length === 2 &&
-    keypress.name &&
-    keypress.name.length === 1
-  ) {
+  if (input.startsWith('O') && input.length === 2 && keypress.name && keypress.name.length === 1) {
     input = keypress.name
     processedAsSpecialSequence = true
   }
@@ -169,22 +154,13 @@ function parseKey(keypress: ParsedKey): [Key, string] {
   // 清除非字母数字键（方向键、功能键等）的 input
   // 跳过 CSI u 和应用小键盘模式序列，因为它们
   // 已被转换为正确的输入字符。
-  if (
-    !processedAsSpecialSequence &&
-    keypress.name &&
-    nonAlphanumericKeys.includes(keypress.name)
-  ) {
+  if (!processedAsSpecialSequence && keypress.name && nonAlphanumericKeys.includes(keypress.name)) {
     input = ''
   }
 
   // 为大写字母（A-Z）设置 shift=true
   // 必须确认它确实是字母，而非任何不受 toUpperCase 影响的字符
-  if (
-    input.length === 1 &&
-    typeof input[0] === 'string' &&
-    input[0] >= 'A' &&
-    input[0] <= 'Z'
-  ) {
+  if (input.length === 1 && typeof input[0] === 'string' && input[0] >= 'A' && input[0] <= 'Z') {
     key.shift = true
   }
 

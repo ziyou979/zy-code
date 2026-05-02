@@ -1,7 +1,4 @@
-import type {
-  createSkillCommand,
-  parseSkillFrontmatterFields,
-} from './loadSkillsDir.js'
+import type { createSkillCommand, parseSkillFrontmatterFields } from './loadSkillsDir.js'
 
 /**
  * Write-once registry for the two loadSkillsDir functions that MCP skill

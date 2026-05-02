@@ -56,9 +56,7 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
     })
 
     if (response.status !== 200) {
-      throw new Error(
-        `Failed to fetch environments: ${response.status} ${response.statusText}`,
-      )
+      throw new Error(`Failed to fetch environments: ${response.status} ${response.statusText}`)
     }
 
     return response.data.environments
@@ -73,9 +71,7 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
  * Creates a default anthropic_cloud environment for users who have none.
  * Uses the public environment_providers route (same auth as fetchEnvironments).
  */
-export async function createDefaultCloudEnvironment(
-  name: string,
-): Promise<EnvironmentResource> {
+export async function createDefaultCloudEnvironment(name: string): Promise<EnvironmentResource> {
   const accessToken = getZyAIOAuthTokens()?.accessToken
   if (!accessToken) {
     throw new Error('No access token available')

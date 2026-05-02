@@ -104,11 +104,8 @@ export class SerialBatchEventUploader<T> {
     if (items.length === 0) return
 
     // Backpressure: wait until there's space
-    while (
-      this.pending.length + items.length > this.config.maxQueueSize &&
-      !this.closed
-    ) {
-      await new Promise<void>(resolve => {
+    while (this.pending.length + items.length > this.config.maxQueueSize && !this.closed) {
+      await new Promise<void>((resolve) => {
         this.backpressureResolvers.push(resolve)
       })
     }
@@ -127,7 +124,7 @@ export class SerialBatchEventUploader<T> {
       return Promise.resolve()
     }
     void this.drain()
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       this.flushResolvers.push(resolve)
     })
   }
@@ -182,8 +179,7 @@ export class SerialBatchEventUploader<T> {
           // allocation) instead of unshift(...batch) which shifts every
           // pending item batch.length times. Only hit on failure path.
           this.pending = batch.concat(this.pending)
-          const retryAfterMs =
-            err instanceof RetryableError ? err.retryAfterMs : undefined
+          const retryAfterMs = err instanceof RetryableError ? err.retryAfterMs : undefined
           await this.sleep(this.retryDelay(failures, retryAfterMs))
           continue
         }
@@ -259,7 +255,7 @@ export class SerialBatchEventUploader<T> {
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.sleepResolve = resolve
       setTimeout(
         (self, resolve) => {

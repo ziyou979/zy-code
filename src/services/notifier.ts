@@ -27,10 +27,8 @@ export async function sendNotification(
   const methodUsed = await sendToChannel(channel, notif, terminal)
 
   logEvent('zy_notification_method_used', {
-    configured_channel:
-      channel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    method_used:
-      methodUsed as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    configured_channel: channel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    method_used: methodUsed as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     term: env.terminal as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 }
@@ -123,11 +121,7 @@ async function isAppleTerminalBellDisabled(): Promise<boolean> {
       return false
     }
 
-    const defaultsOutput = await execFileNoThrow('defaults', [
-      'export',
-      'com.apple.Terminal',
-      '-',
-    ])
+    const defaultsOutput = await execFileNoThrow('defaults', ['export', 'com.apple.Terminal', '-'])
 
     if (defaultsOutput.code !== 0) {
       return false
@@ -138,12 +132,8 @@ async function isAppleTerminalBellDisabled(): Promise<boolean> {
     // @ts-ignore
     const plist = await import('plist')
     const parsed: Record<string, unknown> = plist.parse(defaultsOutput.stdout)
-    const windowSettings = parsed?.['Window Settings'] as
-      | Record<string, unknown>
-      | undefined
-    const profileSettings = windowSettings?.[currentProfile] as
-      | Record<string, unknown>
-      | undefined
+    const windowSettings = parsed?.['Window Settings'] as Record<string, unknown> | undefined
+    const profileSettings = windowSettings?.[currentProfile] as Record<string, unknown> | undefined
 
     if (!profileSettings) {
       return false

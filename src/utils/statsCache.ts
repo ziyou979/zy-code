@@ -32,7 +32,7 @@ export async function withStatsCacheLock<T>(fn: () => Promise<T>): Promise<T> {
 
   // Create our lock
   let releaseLock: (() => void) | undefined
-  statsCacheLockPromise = new Promise<void>(resolve => {
+  statsCacheLockPromise = new Promise<void>((resolve) => {
     releaseLock = resolve
   })
 
@@ -161,18 +161,14 @@ export async function loadStatsCache(): Promise<PersistedStatsCache> {
         )
         return getEmptyCache()
       }
-      logForDebugging(
-        `Migrated stats cache from v${parsed.version} to v${STATS_CACHE_VERSION}`,
-      )
+      logForDebugging(`Migrated stats cache from v${parsed.version} to v${STATS_CACHE_VERSION}`)
       // Persist migration so we don't re-migrate on every load.
       // aggregateZyCodeStats() skips its save when lastComputedDate is
       // already current, so without this the on-disk file stays at the old
       // version indefinitely.
       await saveStatsCache(migrated)
       if (feature('SHOT_STATS') && !migrated.shotDistribution) {
-        logForDebugging(
-          'Migrated stats cache missing shotDistribution, forcing recomputation',
-        )
+        logForDebugging('Migrated stats cache missing shotDistribution, forcing recomputation')
         return getEmptyCache()
       }
       return migrated
@@ -185,18 +181,14 @@ export async function loadStatsCache(): Promise<PersistedStatsCache> {
       typeof parsed.totalSessions !== 'number' ||
       typeof parsed.totalMessages !== 'number'
     ) {
-      logForDebugging(
-        'Stats cache has invalid structure, returning empty cache',
-      )
+      logForDebugging('Stats cache has invalid structure, returning empty cache')
       return getEmptyCache()
     }
 
     // If SHOT_STATS is enabled but cache doesn't have shotDistribution,
     // force full recomputation to get historical shot data
     if (feature('SHOT_STATS') && !parsed.shotDistribution) {
-      logForDebugging(
-        'Stats cache missing shotDistribution, forcing recomputation',
-      )
+      logForDebugging('Stats cache missing shotDistribution, forcing recomputation')
       return getEmptyCache()
     }
 
@@ -211,9 +203,7 @@ export async function loadStatsCache(): Promise<PersistedStatsCache> {
  * Save the stats cache to disk atomically.
  * Uses a temp file + rename pattern to prevent corruption.
  */
-export async function saveStatsCache(
-  cache: PersistedStatsCache,
-): Promise<void> {
+export async function saveStatsCache(cache: PersistedStatsCache): Promise<void> {
   const fs = getFsImplementation()
   const cachePath = getStatsCachePath()
   const tempPath = `${cachePath}.${randomBytes(8).toString('hex')}.tmp`
@@ -239,9 +229,7 @@ export async function saveStatsCache(
 
     // Atomic rename
     await fs.rename(tempPath, cachePath)
-    logForDebugging(
-      `Stats cache saved successfully (lastComputedDate: ${cache.lastComputedDate})`,
-    )
+    logForDebugging(`Stats cache saved successfully (lastComputedDate: ${cache.lastComputedDate})`)
   } catch (error) {
     logError(error)
     // Clean up temp file
@@ -309,22 +297,13 @@ export function mergeCacheWithNewStats(
       modelUsage[model] = {
         inputTokens: modelUsage[model]!.inputTokens + usage.inputTokens,
         outputTokens: modelUsage[model]!.outputTokens + usage.outputTokens,
-        cacheReadInputTokens:
-          modelUsage[model]!.cacheReadInputTokens + usage.cacheReadInputTokens,
+        cacheReadInputTokens: modelUsage[model]!.cacheReadInputTokens + usage.cacheReadInputTokens,
         cacheCreationInputTokens:
-          modelUsage[model]!.cacheCreationInputTokens +
-          usage.cacheCreationInputTokens,
-        webSearchRequests:
-          modelUsage[model]!.webSearchRequests + usage.webSearchRequests,
+          modelUsage[model]!.cacheCreationInputTokens + usage.cacheCreationInputTokens,
+        webSearchRequests: modelUsage[model]!.webSearchRequests + usage.webSearchRequests,
         costUSD: modelUsage[model]!.costUSD + usage.costUSD,
-        contextWindow: Math.max(
-          modelUsage[model]!.contextWindow,
-          usage.contextWindow,
-        ),
-        maxOutputTokens: Math.max(
-          modelUsage[model]!.maxOutputTokens,
-          usage.maxOutputTokens,
-        ),
+        contextWindow: Math.max(modelUsage[model]!.contextWindow, usage.contextWindow),
+        maxOutputTokens: Math.max(modelUsage[model]!.maxOutputTokens, usage.maxOutputTokens),
       }
     } else {
       modelUsage[model] = { ...usage }
@@ -339,11 +318,9 @@ export function mergeCacheWithNewStats(
   }
 
   // Update session aggregates
-  const totalSessions =
-    existingCache.totalSessions + newStats.sessionStats.length
+  const totalSessions = existingCache.totalSessions + newStats.sessionStats.length
   const totalMessages =
-    existingCache.totalMessages +
-    newStats.sessionStats.reduce((sum, s) => sum + s.messageCount, 0)
+    existingCache.totalMessages + newStats.sessionStats.reduce((sum, s) => sum + s.messageCount, 0)
 
   // Find longest session (compare existing with new)
   let longestSession = existingCache.longestSession
@@ -377,17 +354,14 @@ export function mergeCacheWithNewStats(
     firstSessionDate,
     hourCounts,
     totalSpeculationTimeSavedMs:
-      existingCache.totalSpeculationTimeSavedMs +
-      newStats.totalSpeculationTimeSavedMs,
+      existingCache.totalSpeculationTimeSavedMs + newStats.totalSpeculationTimeSavedMs,
   }
 
   if (feature('SHOT_STATS')) {
     const shotDistribution: { [shotCount: number]: number } = {
       ...(existingCache.shotDistribution || {}),
     }
-    for (const [count, sessions] of Object.entries(
-      newStats.shotDistribution || {},
-    )) {
+    for (const [count, sessions] of Object.entries(newStats.shotDistribution || {})) {
       const key = parseInt(count, 10)
       shotDistribution[key] = (shotDistribution[key] || 0) + sessions
     }

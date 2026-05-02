@@ -7,10 +7,7 @@ import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.j
 import { getZyAIOAuthTokens } from '../../utils/auth.js'
 import { checkRepoForRemoteAccess } from '../../utils/background/remote/preconditions.js'
 import { logForDebugging } from '../../utils/debug.js'
-import {
-  detectCurrentRepositoryWithHost,
-  parseGitRemote,
-} from '../../utils/detectRepository.js'
+import { detectCurrentRepositoryWithHost, parseGitRemote } from '../../utils/detectRepository.js'
 import { getRemoteUrl } from '../../utils/git.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
@@ -62,9 +59,7 @@ type ConnectorInfo = {
   url: string
 }
 
-function getConnectedZyAIConnectors(
-  mcpClients: MCPServerConnection[],
-): ConnectorInfo[] {
+function getConnectedZyAIConnectors(mcpClients: MCPServerConnection[]): ConnectorInfo[] {
   const connectors: ConnectorInfo[] = []
   for (const client of mcpClients) {
     if (client.type !== 'connected') {
@@ -101,9 +96,7 @@ function formatConnectorsInfo(connectors: ConnectorInfo[]): string {
   const lines = ['Connected connectors (available for triggers):']
   for (const c of connectors) {
     const safeName = sanitizeConnectorName(c.name)
-    lines.push(
-      `- ${c.name} (connector_uuid: ${c.uuid}, name: ${safeName}, url: ${c.url})`,
-    )
+    lines.push(`- ${c.name} (connector_uuid: ${c.uuid}, name: ${safeName}, url: ${c.url})`)
   }
   return lines.join('\n')
 }
@@ -116,7 +109,7 @@ const BASE_QUESTION = 'What would you like to do with scheduled remote agents?'
  * section (args path) so notes are never silently dropped.
  */
 function formatSetupNotes(notes: string[]): string {
-  const items = notes.map(n => `- ${n}`).join('\n')
+  const items = notes.map((n) => `- ${n}`).join('\n')
   return `⚠ Heads-up:\n${items}`
 }
 
@@ -156,13 +149,9 @@ function buildPrompt(opts: {
   // Setup notes must surface in the prompt body instead, otherwise they're
   // computed and silently discarded (regression vs. the old hard-block).
   const setupNotesSection =
-    userArgs && setupNotes.length > 0
-      ? `\n## Setup Notes\n\n${formatSetupNotes(setupNotes)}\n`
-      : ''
+    userArgs && setupNotes.length > 0 ? `\n## Setup Notes\n\n${formatSetupNotes(setupNotes)}\n` : ''
   const initialQuestion =
-    setupNotes.length > 0
-      ? `${formatSetupNotes(setupNotes)}\n\n${BASE_QUESTION}`
-      : BASE_QUESTION
+    setupNotes.length > 0 ? `${formatSetupNotes(setupNotes)}\n\n${BASE_QUESTION}` : BASE_QUESTION
   const firstStep = userArgs
     ? `The user has already told you what they want (see User Request at the bottom). Skip the initial question and go directly to the matching workflow.`
     : `Your FIRST action must be a single ${ASK_USER_QUESTION_TOOL_NAME} tool call (no preamble). Use this EXACT string for the \`question\` field — do not paraphrase or shorten it:
@@ -361,9 +350,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
       let createdEnvironment: EnvironmentResource | null = null
       if (environments.length === 0) {
         try {
-          createdEnvironment = await createDefaultCloudEnvironment(
-            'zy-code-default',
-          )
+          createdEnvironment = await createDefaultCloudEnvironment('zy-code-default')
           environments = [createdEnvironment]
         } catch (err) {
           logForDebugging(`[schedule] Failed to create environment: ${err}`, {
@@ -391,16 +378,10 @@ export function registerScheduleRemoteAgentsSkill(): void {
           `Not in a git repo — you'll need to specify a repo URL manually (or skip repos entirely).`,
         )
       } else if (repo.host === 'github.com') {
-        const { hasAccess } = await checkRepoForRemoteAccess(
-          repo.owner,
-          repo.name,
-        )
+        const { hasAccess } = await checkRepoForRemoteAccess(repo.owner, repo.name)
         if (!hasAccess) {
           needsGitHubAccessReminder = true
-          const webSetupEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
-            'zy_cobalt_lantern',
-            false,
-          )
+          const webSetupEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_lantern', false)
           const msg = webSetupEnabled
             ? `GitHub not connected for ${repo.owner}/${repo.name} \u2014 run /web-setup to sync your GitHub credentials, or install the Zy GitHub App at https://zy.ai/code/onboarding?magic=github-app-setup.`
             : `Zy GitHub App not installed on ${repo.owner}/${repo.name} \u2014 install at https://zy.ai/code/onboarding?magic=github-app-setup if your trigger needs this repo.`
@@ -412,9 +393,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
       // would be factually wrong — getCurrentRepoHttpsUrl() below will
       // still populate gitRepoUrl with the GHE URL.
 
-      const connectors = getConnectedZyAIConnectors(
-        context.options.mcpClients,
-      )
+      const connectors = getConnectedZyAIConnectors(context.options.mcpClients)
       if (connectors.length === 0) {
         setupNotes.push(
           `No MCP connectors — connect at https://zy.ai/settings/connectors if needed.`,
@@ -426,9 +405,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
       const gitRepoUrl = await getCurrentRepoHttpsUrl()
       const lines = ['Available environments:']
       for (const env of environments) {
-        lines.push(
-          `- ${env.name} (id: ${env.environment_id}, kind: ${env.kind})`,
-        )
+        lines.push(`- ${env.name} (id: ${env.environment_id}, kind: ${env.kind})`)
       }
       const environmentsInfo = lines.join('\n')
       const prompt = buildPrompt({

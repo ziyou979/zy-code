@@ -170,16 +170,13 @@ function handleNormalInput(
   }
   if (input === 'I') {
     return {
-      execute: () =>
-        ctx.enterInsert(ctx.cursor.firstNonBlankInLogicalLine().offset),
+      execute: () => ctx.enterInsert(ctx.cursor.firstNonBlankInLogicalLine().offset),
     }
   }
   if (input === 'a') {
     return {
       execute: () => {
-        const newOffset = ctx.cursor.isAtEnd()
-          ? ctx.cursor.offset
-          : ctx.cursor.right().offset
+        const newOffset = ctx.cursor.isAtEnd() ? ctx.cursor.offset : ctx.cursor.right().offset
         ctx.enterInsert(newOffset)
       },
     }
@@ -342,8 +339,7 @@ function fromOperatorFind(
   ctx: TransitionContext,
 ): TransitionResult {
   return {
-    execute: () =>
-      executeOperatorFind(state.op, state.find, input, state.count, ctx),
+    execute: () => executeOperatorFind(state.op, state.find, input, state.count, ctx),
   }
 }
 
@@ -359,8 +355,7 @@ function fromOperatorTextObj(
 ): TransitionResult {
   if (TEXT_OBJ_TYPES.has(input)) {
     return {
-      execute: () =>
-        executeOperatorTextObj(state.op, state.scope, input, state.count, ctx),
+      execute: () => executeOperatorTextObj(state.op, state.scope, input, state.count, ctx),
     }
   }
   return { next: { type: 'idle' } }
@@ -424,8 +419,7 @@ function fromOperatorG(
 ): TransitionResult {
   if (input === 'j' || input === 'k') {
     return {
-      execute: () =>
-        executeOperatorMotion(state.op, `g${input}`, state.count, ctx),
+      execute: () => executeOperatorMotion(state.op, `g${input}`, state.count, ctx),
     }
   }
   if (input === 'g') {
@@ -462,11 +456,7 @@ function fromIndent(
 // Helper functions for special commands
 // ============================================================================
 
-function executeRepeatFind(
-  reverse: boolean,
-  count: number,
-  ctx: TransitionContext,
-): void {
+function executeRepeatFind(reverse: boolean, count: number, ctx: TransitionContext): void {
   const lastFind = ctx.getLastFind()
   if (!lastFind) return
 

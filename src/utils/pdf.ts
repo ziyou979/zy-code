@@ -1,10 +1,7 @@
 import { randomUUID } from 'crypto'
 import { mkdir, readdir, readFile } from 'fs/promises'
 import { join } from 'path'
-import {
-  PDF_MAX_EXTRACT_SIZE,
-  PDF_TARGET_RAW_SIZE,
-} from '../constants/apiLimits.js'
+import { PDF_MAX_EXTRACT_SIZE, PDF_TARGET_RAW_SIZE } from '../constants/apiLimits.js'
 import { errorMessage } from './errors.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
 import { formatFileSize } from './format.js'
@@ -12,19 +9,11 @@ import { getFsImplementation } from './fsOperations.js'
 import { getToolResultsDir } from './toolResultStorage.js'
 
 export type PDFError = {
-  reason:
-    | 'empty'
-    | 'too_large'
-    | 'password_protected'
-    | 'corrupted'
-    | 'unknown'
-    | 'unavailable'
+  reason: 'empty' | 'too_large' | 'password_protected' | 'corrupted' | 'unknown' | 'unavailable'
   message: string
 }
 
-export type PDFResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: PDFError }
+export type PDFResult<T> = { success: true; data: T } | { success: false; error: PDFError }
 
 /**
  * Read a PDF file and return it as base64-encoded data.
@@ -116,9 +105,7 @@ export async function readPDF(filePath: string): Promise<
  * Get the number of pages in a PDF file using `pdfinfo` (from poppler-utils).
  * Returns `null` if pdfinfo is not available or if the page count cannot be determined.
  */
-export async function getPDFPageCount(
-  filePath: string,
-): Promise<number | null> {
+export async function getPDFPageCount(filePath: string): Promise<number | null> {
   const { code, stdout } = await execFileNoThrow('pdfinfo', [filePath], {
     timeout: 10_000,
     useCwd: false,
@@ -239,8 +226,7 @@ export async function extractPDFPages(
           success: false,
           error: {
             reason: 'password_protected',
-            message:
-              'PDF is password-protected. Please provide an unprotected version.',
+            message: 'PDF is password-protected. Please provide an unprotected version.',
           },
         }
       }
@@ -261,7 +247,7 @@ export async function extractPDFPages(
 
     // Read generated image files and sort naturally
     const entries = await readdir(outputDir)
-    const imageFiles = entries.filter(f => f.endsWith('.jpg')).sort()
+    const imageFiles = entries.filter((f) => f.endsWith('.jpg')).sort()
     const pageCount = imageFiles.length
 
     if (pageCount === 0) {

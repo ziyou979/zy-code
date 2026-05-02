@@ -75,9 +75,7 @@ export type InProcessTeammateTaskState = TaskStateBase & {
   lastReportedTokenCount: number
 }
 
-export function isInProcessTeammateTask(
-  task: unknown,
-): task is InProcessTeammateTaskState {
+export function isInProcessTeammateTask(task: unknown): task is InProcessTeammateTaskState {
   return (
     typeof task === 'object' &&
     task !== null &&
@@ -105,10 +103,7 @@ export const TEAMMATE_MESSAGES_UI_CAP = 50
  * TEAMMATE_MESSAGES_UI_CAP entries by dropping the oldest. Always returns
  * a new array (AppState immutability).
  */
-export function appendCappedMessage<T>(
-  prev: readonly T[] | undefined,
-  item: T,
-): T[] {
+export function appendCappedMessage<T>(prev: readonly T[] | undefined, item: T): T[] {
   if (prev === undefined || prev.length === 0) {
     return [item]
   }

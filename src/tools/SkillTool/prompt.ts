@@ -1,10 +1,6 @@
 import { memoize } from 'lodash-es'
 import type { Command } from 'src/commands.js'
-import {
-  getCommandName,
-  getSkillToolCommands,
-  getSlashCommandToolSkills,
-} from 'src/commands.js'
+import { getCommandName, getSkillToolCommands, getSlashCommandToolSkills } from 'src/commands.js'
 import { COMMAND_NAME_TAG } from '../../constants/xml.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import {
@@ -34,17 +30,13 @@ export function getCharBudget(contextWindowTokens?: number): number {
     return Number(process.env.SLASH_COMMAND_TOOL_CHAR_BUDGET)
   }
   if (contextWindowTokens) {
-    return Math.floor(
-      contextWindowTokens * CHARS_PER_TOKEN * SKILL_BUDGET_CONTEXT_PERCENT,
-    )
+    return Math.floor(contextWindowTokens * CHARS_PER_TOKEN * SKILL_BUDGET_CONTEXT_PERCENT)
   }
   return DEFAULT_CHAR_BUDGET
 }
 
 function getCommandDescription(cmd: Command): string {
-  const desc = cmd.whenToUse
-    ? `${cmd.description} - ${cmd.whenToUse}`
-    : cmd.description
+  const desc = cmd.whenToUse ? `${cmd.description} - ${cmd.whenToUse}` : cmd.description
   return desc.length > MAX_LISTING_DESC_CHARS
     ? desc.slice(0, MAX_LISTING_DESC_CHARS - 1) + '\u2026'
     : desc
@@ -53,14 +45,8 @@ function getCommandDescription(cmd: Command): string {
 function formatCommandDescription(cmd: Command): string {
   // Debug: log if userFacingName differs from cmd.name for plugin skills
   const displayName = getCommandName(cmd)
-  if (
-    cmd.name !== displayName &&
-    cmd.type === 'prompt' &&
-    cmd.source === 'plugin'
-  ) {
-    logForDebugging(
-      `Skill prompt: showing "${cmd.name}" (userFacingName="${displayName}")`,
-    )
+  if (cmd.name !== displayName && cmd.type === 'prompt' && cmd.source === 'plugin') {
+    logForDebugging(`Skill prompt: showing "${cmd.name}" (userFacingName="${displayName}")`)
   }
 
   return `- ${cmd.name}: ${getCommandDescription(cmd)}`
@@ -77,17 +63,16 @@ export function formatCommandsWithinBudget(
   const budget = getCharBudget(contextWindowTokens)
 
   // Try full descriptions first
-  const fullEntries = commands.map(cmd => ({
+  const fullEntries = commands.map((cmd) => ({
     cmd,
     full: formatCommandDescription(cmd),
   }))
   // join('\n') produces N-1 newlines for N entries
   const fullTotal =
-    fullEntries.reduce((sum, e) => sum + stringWidth(e.full), 0) +
-    (fullEntries.length - 1)
+    fullEntries.reduce((sum, e) => sum + stringWidth(e.full), 0) + (fullEntries.length - 1)
 
   if (fullTotal <= budget) {
-    return fullEntries.map(e => e.full).join('\n')
+    return fullEntries.map((e) => e.full).join('\n')
   }
 
   // Partition into bundled (never truncated) and rest
@@ -104,15 +89,14 @@ export function formatCommandsWithinBudget(
 
   // Compute space used by bundled skills (full descriptions, always preserved)
   const bundledChars = fullEntries.reduce(
-    (sum, e, i) =>
-      bundledIndices.has(i) ? sum + stringWidth(e.full) + 1 : sum,
+    (sum, e, i) => (bundledIndices.has(i) ? sum + stringWidth(e.full) + 1 : sum),
     0,
   )
   const remainingBudget = budget - bundledChars
 
   // Calculate max description length for non-bundled commands
   if (restCommands.length === 0) {
-    return fullEntries.map(e => e.full).join('\n')
+    return fullEntries.map((e) => e.full).join('\n')
   }
 
   const restNameOverhead =
@@ -128,24 +112,21 @@ export function formatCommandsWithinBudget(
         skill_count: commands.length,
         budget,
         full_total: fullTotal,
-        truncation_mode:
-          'names_only' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        truncation_mode: 'names_only' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         max_desc_length: maxDescLen,
         bundled_count: bundledIndices.size,
         bundled_chars: bundledChars,
       })
     }
     return commands
-      .map((cmd, i) =>
-        bundledIndices.has(i) ? fullEntries[i]!.full : `- ${cmd.name}`,
-      )
+      .map((cmd, i) => (bundledIndices.has(i) ? fullEntries[i]!.full : `- ${cmd.name}`))
       .join('\n')
   }
 
   // Truncate non-bundled descriptions to fit within budget
   const truncatedCount = count(
     restCommands,
-    cmd => stringWidth(getCommandDescription(cmd)) > maxDescLen,
+    (cmd) => stringWidth(getCommandDescription(cmd)) > maxDescLen,
   )
   if (isInternalBuild()) {
     logEvent('zy_skill_descriptions_truncated', {

@@ -81,7 +81,7 @@ const findGitRootImpl = memoizeWithLRU(
     })
     return GIT_ROOT_NOT_FOUND
   },
-  path => path,
+  (path) => path,
   50,
 )
 
@@ -129,10 +129,7 @@ const resolveCanonicalRoot = memoizeWithLRU(
       if (!gitContent.startsWith('gitdir:')) {
         return gitRoot
       }
-      const worktreeGitDir = resolve(
-        gitRoot,
-        gitContent.slice('gitdir:'.length).trim(),
-      )
+      const worktreeGitDir = resolve(gitRoot, gitContent.slice('gitdir:'.length).trim())
       // commondir points to the shared .git directory (relative to worktree gitdir).
       // Submodules have no commondir (readFileSync throws ENOENT) → fall through.
       const commonDir = resolve(
@@ -162,9 +159,7 @@ const resolveCanonicalRoot = memoizeWithLRU(
       // /tmp → /private/tmp) aren't rejected. Realpath the directory then join
       // '.git' — realpathing the .git file itself would follow a symlinked .git
       // and let an attacker borrow a victim's back-link.
-      const backlink = realpathSync(
-        readFileSync(join(worktreeGitDir, 'gitdir'), 'utf-8').trim(),
-      )
+      const backlink = realpathSync(readFileSync(join(worktreeGitDir, 'gitdir'), 'utf-8').trim())
       if (backlink !== join(realpathSync(gitRoot), '.git')) {
         return gitRoot
       }
@@ -178,7 +173,7 @@ const resolveCanonicalRoot = memoizeWithLRU(
       return gitRoot
     }
   },
-  root => root,
+  (root) => root,
   50,
 )
 
@@ -240,10 +235,7 @@ export async function isAtGitRoot(): Promise<boolean> {
   }
   // Resolve symlinks for accurate comparison
   try {
-    const [resolvedCwd, resolvedGitRoot] = await Promise.all([
-      realpath(cwd),
-      realpath(gitRoot),
-    ])
+    const [resolvedCwd, resolvedGitRoot] = await Promise.all([realpath(cwd), realpath(gitRoot)])
     return resolvedCwd === resolvedGitRoot
   } catch {
     return cwd === gitRoot
@@ -291,9 +283,7 @@ export function normalizeGitRemoteUrl(url: string): string | null {
   }
 
   // Handle HTTPS/SSH URL format: https://host/owner/repo.git or ssh://git@host/owner/repo
-  const urlMatch = trimmed.match(
-    /^(?:https?|ssh):\/\/(?:[^@]+@)?([^/]+)\/(.+?)(?:\.git)?$/,
-  )
+  const urlMatch = trimmed.match(/^(?:https?|ssh):\/\/(?:[^@]+@)?([^/]+)\/(.+?)(?:\.git)?$/)
   if (urlMatch && urlMatch[1] && urlMatch[2]) {
     const host = urlMatch[1]
     const path = urlMatch[2]
@@ -345,17 +335,13 @@ export const getIsHeadOnRemote = async (): Promise<boolean> => {
 }
 
 export const hasUnpushedCommits = async (): Promise<boolean> => {
-  const { stdout, code } = await execFileNoThrow(
-    gitExe(),
-    ['rev-list', '--count', '@{u}..HEAD'],
-    { preserveOutputOnError: false },
-  )
+  const { stdout, code } = await execFileNoThrow(gitExe(), ['rev-list', '--count', '@{u}..HEAD'], {
+    preserveOutputOnError: false,
+  })
   return code === 0 && parseInt(stdout.trim(), 10) > 0
 }
 
-export const getIsClean = async (options?: {
-  ignoreUntracked?: boolean
-}): Promise<boolean> => {
+export const getIsClean = async (options?: { ignoreUntracked?: boolean }): Promise<boolean> => {
   const args = ['--no-optional-locks', 'status', '--porcelain']
   if (options?.ignoreUntracked) {
     args.push('-uno')
@@ -377,8 +363,8 @@ export const getChangedFiles = async (): Promise<string[]> => {
   return stdout
     .trim()
     .split('\n')
-    .map(line => line.trim().split(' ', 2)[1]?.trim()) // Remove status prefix (e.g., "M ", "A ", "??")
-    .filter(line => typeof line === 'string') // Remove empty entries
+    .map((line) => line.trim().split(' ', 2)[1]?.trim()) // Remove status prefix (e.g., "M ", "A ", "??")
+    .filter((line) => typeof line === 'string') // Remove empty entries
 }
 
 export type GitFileStatus = {
@@ -401,8 +387,8 @@ export const getFileStatus = async (): Promise<GitFileStatus> => {
   stdout
     .trim()
     .split('\n')
-    .filter(line => line.length > 0)
-    .forEach(line => {
+    .filter((line) => line.length > 0)
+    .forEach((line) => {
       const status = line.substring(0, 2)
       const filename = line.substring(2).trim()
 
@@ -428,8 +414,7 @@ export const getWorktreeCount = async (): Promise<number> => {
  */
 export const stashToCleanState = async (message?: string): Promise<boolean> => {
   try {
-    const stashMessage =
-      message || `ZY Code auto-stash - ${new Date().toISOString()}`
+    const stashMessage = message || `ZY Code auto-stash - ${new Date().toISOString()}`
 
     // First, check if we have untracked files
     const { untracked } = await getFileStatus()
@@ -437,11 +422,9 @@ export const stashToCleanState = async (message?: string): Promise<boolean> => {
     // If we have untracked files, add them to the index first
     // This prevents them from being deleted
     if (untracked.length > 0) {
-      const { code: addCode } = await execFileNoThrow(
-        gitExe(),
-        ['add', ...untracked],
-        { preserveOutputOnError: false },
-      )
+      const { code: addCode } = await execFileNoThrow(gitExe(), ['add', ...untracked], {
+        preserveOutputOnError: false,
+      })
 
       if (addCode !== 0) {
         return false
@@ -449,11 +432,9 @@ export const stashToCleanState = async (message?: string): Promise<boolean> => {
     }
 
     // Now stash everything (staged and unstaged changes)
-    const { code } = await execFileNoThrow(
-      gitExe(),
-      ['stash', 'push', '--message', stashMessage],
-      { preserveOutputOnError: false },
-    )
+    const { code } = await execFileNoThrow(gitExe(), ['stash', 'push', '--message', stashMessage], {
+      preserveOutputOnError: false,
+    })
     return code === 0
   } catch (_) {
     return false
@@ -471,21 +452,15 @@ export type GitRepoState = {
 
 export async function getGitState(): Promise<GitRepoState | null> {
   try {
-    const [
-      commitHash,
-      branchName,
-      remoteUrl,
-      isHeadOnRemote,
-      isClean,
-      worktreeCount,
-    ] = await Promise.all([
-      getHead(),
-      getBranch(),
-      getRemoteUrl(),
-      getIsHeadOnRemote(),
-      getIsClean(),
-      getWorktreeCount(),
-    ])
+    const [commitHash, branchName, remoteUrl, isHeadOnRemote, isClean, worktreeCount] =
+      await Promise.all([
+        getHead(),
+        getBranch(),
+        getRemoteUrl(),
+        getIsHeadOnRemote(),
+        getIsClean(),
+        getWorktreeCount(),
+      ])
 
     return {
       commitHash,
@@ -589,11 +564,9 @@ export async function findRemoteBase(): Promise<string | null> {
   // Third try: check which common branches exist
   const candidates = ['origin/main', 'origin/staging', 'origin/master']
   for (const candidate of candidates) {
-    const { code } = await execFileNoThrow(
-      gitExe(),
-      ['rev-parse', '--verify', candidate],
-      { preserveOutputOnError: false },
-    )
+    const { code } = await execFileNoThrow(gitExe(), ['rev-parse', '--verify', candidate], {
+      preserveOutputOnError: false,
+    })
     if (code === 0) {
       return candidate
     }
@@ -613,9 +586,7 @@ function isShallowClone(): Promise<boolean> {
  * Capture untracked files (git diff doesn't include them).
  * Respects size limits and skips binary files.
  */
-async function captureUntrackedFiles(): Promise<
-  Array<{ path: string; content: string }>
-> {
+async function captureUntrackedFiles(): Promise<Array<{ path: string; content: string }>> {
   const { stdout, code } = await execFileNoThrow(
     gitExe(),
     ['ls-files', '--others', '--exclude-standard'],
@@ -634,9 +605,7 @@ async function captureUntrackedFiles(): Promise<
   for (const filePath of files) {
     // Check file count limit
     if (result.length >= MAX_FILE_COUNT) {
-      logForDebugging(
-        `Untracked file capture: reached max file count (${MAX_FILE_COUNT})`,
-      )
+      logForDebugging(`Untracked file capture: reached max file count (${MAX_FILE_COUNT})`)
       break
     }
 
@@ -811,11 +780,7 @@ export async function preserveGitStateForIssue(): Promise<PreservedGitState | nu
       // Preserves the actual commit chain (author, date, message) so replay
       // containers can reconstruct the branch with real commits instead of a
       // squashed diff. Uses --stdout to emit all patches as a single text stream.
-      execFileNoThrow(gitExe(), [
-        'format-patch',
-        `${remoteBaseSha}..HEAD`,
-        '--stdout',
-      ]),
+      execFileNoThrow(gitExe(), ['format-patch', `${remoteBaseSha}..HEAD`, '--stdout']),
       // HEAD SHA for replay
       execFileNoThrow(gitExe(), ['rev-parse', 'HEAD']),
       // Branch name for replay
@@ -835,8 +800,7 @@ export async function preserveGitStateForIssue(): Promise<PreservedGitState | nu
       untracked_files: untrackedFiles,
       format_patch: formatPatch,
       head_sha: headSha?.trim() || null,
-      branch_name:
-        trimmedBranch && trimmedBranch !== 'HEAD' ? trimmedBranch : null,
+      branch_name: trimmedBranch && trimmedBranch !== 'HEAD' ? trimmedBranch : null,
     }
   } catch (err) {
     logError(err)
@@ -846,10 +810,7 @@ export async function preserveGitStateForIssue(): Promise<PreservedGitState | nu
 
 function isLocalHost(host: string): boolean {
   const hostWithoutPort = host.split(':')[0] ?? ''
-  return (
-    hostWithoutPort === 'localhost' ||
-    /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostWithoutPort)
-  )
+  return hostWithoutPort === 'localhost' || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostWithoutPort)
 }
 
 /**

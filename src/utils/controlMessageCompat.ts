@@ -17,11 +17,7 @@ export function normalizeControlMessageKeys(obj: unknown): unknown {
     record.request_id = record.requestId
     delete record.requestId
   }
-  if (
-    'response' in record &&
-    record.response !== null &&
-    typeof record.response === 'object'
-  ) {
+  if ('response' in record && record.response !== null && typeof record.response === 'object') {
     const response = record.response as Record<string, unknown>
     if ('requestId' in response && !('request_id' in response)) {
       response.request_id = response.requestId

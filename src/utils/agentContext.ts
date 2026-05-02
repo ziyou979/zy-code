@@ -112,9 +112,7 @@ export function runWithAgentContext<T>(context: AgentContext, fn: () => T): T {
 /**
  * Type guard to check if context is a SubagentContext.
  */
-export function isSubagentContext(
-  context: AgentContext | undefined,
-): context is SubagentContext {
+export function isSubagentContext(context: AgentContext | undefined): context is SubagentContext {
   return context?.agentType === 'subagent'
 }
 

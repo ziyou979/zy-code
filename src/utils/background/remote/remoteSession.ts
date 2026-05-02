@@ -85,10 +85,7 @@ export async function checkBackgroundRemoteSessionEligibility({
   } else if (repository === null) {
     errors.push({ type: 'no_git_remote' })
   } else if (repository.host === 'github.com') {
-    const hasGithubApp = await checkGithubAppInstalled(
-      repository.owner,
-      repository.name,
-    )
+    const hasGithubApp = await checkGithubAppInstalled(repository.owner, repository.name)
     if (!hasGithubApp) {
       errors.push({ type: 'github_app_not_installed' })
     }

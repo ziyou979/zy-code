@@ -1,14 +1,7 @@
-import type {
-  ImageBlock,
-  TextBlock,
-  ToolResultBlock,
-} from '../types/llm.js'
+import type { ImageBlock, TextBlock, ToolResultBlock } from '../types/llm.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { formatOutput } from '../tools/BashTool/utils.js'
-import type {
-  NotebookCell,
-  NotebookContent,
-} from '../types/notebook.js'
+import type { NotebookCell, NotebookContent } from '../types/notebook.js'
 
 // Local type declarations for missing exports
 type NotebookCellOutput = any
@@ -21,9 +14,7 @@ import { jsonParse } from './slowOperations.js'
 
 const LARGE_OUTPUT_THRESHOLD = 10000
 
-function isLargeOutputs(
-  outputs: (NotebookCellSourceOutput | undefined)[],
-): boolean {
+function isLargeOutputs(outputs: (NotebookCellSourceOutput | undefined)[]): boolean {
   let size = 0
   for (const o of outputs) {
     if (!o) continue
@@ -40,9 +31,7 @@ function processOutputText(text: string | string[] | undefined): string {
   return truncatedContent
 }
 
-function extractImage(
-  data: Record<string, unknown>,
-): NotebookOutputImage | undefined {
+function extractImage(data: Record<string, unknown>): NotebookOutputImage | undefined {
   if (typeof data['image/png'] === 'string') {
     return {
       image_data: data['image/png'].replace(/\s/g, ''),
@@ -170,15 +159,13 @@ export async function readNotebook(
   const notebook = jsonParse(content) as NotebookContent
   const language = (notebook.metadata as any)?.language_info?.name ?? 'python'
   if (cellId) {
-    const cell = notebook.cells.find(c => c.id === cellId)
+    const cell = notebook.cells.find((c) => c.id === cellId)
     if (!cell) {
       throw new Error(`Cell with ID "${cellId}" not found in notebook`)
     }
     return [processCell(cell, notebook.cells.indexOf(cell), language, true)]
   }
-  return notebook.cells.map((cell, index) =>
-    processCell(cell, index, language, false),
-  )
+  return notebook.cells.map((cell, index) => processCell(cell, index, language, false))
 }
 
 /**
@@ -194,22 +181,19 @@ export function mapNotebookCellsToToolResult(
   return {
     toolCallId: toolUseID,
     type: 'tool_result' as const,
-    content: allResults.reduce<(TextBlock | ImageBlock)[]>(
-      (acc, curr) => {
-        if (acc.length === 0) return [curr]
+    content: allResults.reduce<(TextBlock | ImageBlock)[]>((acc, curr) => {
+      if (acc.length === 0) return [curr]
 
-        const prev = acc[acc.length - 1]
-        if (prev && prev.type === 'text' && curr.type === 'text') {
-          // Merge the text blocks
-          prev.text += '\n' + curr.text
-          return acc
-        }
-
-        acc.push(curr)
+      const prev = acc[acc.length - 1]
+      if (prev && prev.type === 'text' && curr.type === 'text') {
+        // Merge the text blocks
+        prev.text += '\n' + curr.text
         return acc
-      },
-      [],
-    ),
+      }
+
+      acc.push(curr)
+      return acc
+    }, []),
   }
 }
 

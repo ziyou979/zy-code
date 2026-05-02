@@ -4,11 +4,7 @@ import { errorMessage } from '../utils/errors.js'
 import { getDefaultStandardModel } from '../utils/model/model.js'
 import { sideQuery } from '../utils/sideQuery.js'
 import { jsonParse } from '../utils/slowOperations.js'
-import {
-  formatMemoryManifest,
-  type MemoryHeader,
-  scanMemoryFiles,
-} from './memoryScan.js'
+import { formatMemoryManifest, type MemoryHeader, scanMemoryFiles } from './memoryScan.js'
 
 export type RelevantMemory = {
   path: string
@@ -44,21 +40,16 @@ export async function findRelevantMemories(
   alreadySurfaced: ReadonlySet<string> = new Set(),
 ): Promise<RelevantMemory[]> {
   const memories = (await scanMemoryFiles(memoryDir, signal)).filter(
-    m => !alreadySurfaced.has(m.filePath),
+    (m) => !alreadySurfaced.has(m.filePath),
   )
   if (memories.length === 0) {
     return []
   }
 
-  const selectedFilenames = await selectRelevantMemories(
-    query,
-    memories,
-    signal,
-    recentTools,
-  )
-  const byFilename = new Map(memories.map(m => [m.filename, m]))
+  const selectedFilenames = await selectRelevantMemories(query, memories, signal, recentTools)
+  const byFilename = new Map(memories.map((m) => [m.filename, m]))
   const selected = selectedFilenames
-    .map(filename => byFilename.get(filename))
+    .map((filename) => byFilename.get(filename))
     .filter((m): m is MemoryHeader => m !== undefined)
 
   // Fires even on empty selection: selection-rate needs the denominator,
@@ -66,14 +57,13 @@ export async function findRelevantMemories(
   if (feature('MEMORY_SHAPE_TELEMETRY')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     // @ts-ignore
-    const { logMemoryRecallShape } =
-      require('./memoryShapeTelemetry.js') as any
+    const { logMemoryRecallShape } = require('./memoryShapeTelemetry.js') as any
     /* eslint-enable @typescript-eslint/no-require-imports */
     // @ts-ignore
-    (logMemoryRecallShape as any)(memories, selected)
+    ;(logMemoryRecallShape as any)(memories, selected)
   }
 
-  return selected.map(m => ({ path: m.filePath, mtimeMs: m.mtimeMs }))
+  return selected.map((m) => ({ path: m.filePath, mtimeMs: m.mtimeMs }))
 }
 
 async function selectRelevantMemories(
@@ -82,7 +72,7 @@ async function selectRelevantMemories(
   signal: AbortSignal,
   recentTools: readonly string[],
 ): Promise<string[]> {
-  const validFilenames = new Set(memories.map(m => m.filename))
+  const validFilenames = new Set(memories.map((m) => m.filename))
 
   const manifest = formatMemoryManifest(memories)
 
@@ -92,9 +82,7 @@ async function selectRelevantMemories(
   // on keyword overlap ("spawn" in query + "spawn" in a memory
   // description → false positive).
   const toolsSection =
-    recentTools.length > 0
-      ? `\n\nRecently used tools: ${recentTools.join(', ')}`
-      : ''
+    recentTools.length > 0 ? `\n\nRecently used tools: ${recentTools.join(', ')}` : ''
 
   try {
     const result = await sideQuery({
@@ -123,21 +111,18 @@ async function selectRelevantMemories(
       querySource: 'memdir_relevance' as any,
     })
 
-    const textBlock = result.content.find(block => block.type === 'text')
+    const textBlock = result.content.find((block) => block.type === 'text')
     if (!textBlock || textBlock.type !== 'text') {
       return []
     }
 
     const parsed: { selected_memories: string[] } = jsonParse(textBlock.text)
-    return parsed.selected_memories.filter(f => validFilenames.has(f))
+    return parsed.selected_memories.filter((f) => validFilenames.has(f))
   } catch (e) {
     if (signal.aborted) {
       return []
     }
-    logForDebugging(
-      `[memdir] selectRelevantMemories failed: ${errorMessage(e)}`,
-      { level: 'warn' },
-    )
+    logForDebugging(`[memdir] selectRelevantMemories failed: ${errorMessage(e)}`, { level: 'warn' })
     return []
   }
 }

@@ -31,8 +31,8 @@ export function useSessionBackgrounding({
   setAbortController,
   onBackgroundQuery,
 }: UseSessionBackgroundingProps): UseSessionBackgroundingResult {
-  const foregroundedTaskId = useAppState(s => s.foregroundedTaskId)
-  const foregroundedTask = useAppState(s =>
+  const foregroundedTaskId = useAppState((s) => s.foregroundedTaskId)
+  const foregroundedTask = useAppState((s) =>
     s.foregroundedTaskId ? s.tasks[s.foregroundedTaskId] : undefined,
   )
   const setAppState = useSetAppState()
@@ -41,7 +41,7 @@ export function useSessionBackgrounding({
   const handleBackgroundSession = useCallback(() => {
     if (foregroundedTaskId) {
       // Re-background the foregrounded task
-      setAppState(prev => {
+      setAppState((prev) => {
         const taskId = prev.foregroundedTaskId
         if (!taskId) return prev
         const task = prev.tasks[taskId]
@@ -82,7 +82,7 @@ export function useSessionBackgrounding({
     }
 
     if (!foregroundedTask || foregroundedTask.type !== 'local_agent') {
-      setAppState(prev => ({ ...prev, foregroundedTaskId: undefined }))
+      setAppState((prev) => ({ ...prev, foregroundedTaskId: undefined }))
       resetLoadingState()
       lastSyncedMessagesLengthRef.current = 0
       return
@@ -101,7 +101,7 @@ export function useSessionBackgrounding({
       const taskAbortController = foregroundedTask.abortController
       if (taskAbortController?.signal.aborted) {
         // Task was aborted - clear foregrounded state immediately
-        setAppState(prev => {
+        setAppState((prev) => {
           if (!prev.foregroundedTaskId) return prev
           const task = prev.tasks[prev.foregroundedTaskId]
           if (!task) return { ...prev, foregroundedTaskId: undefined }
@@ -127,7 +127,7 @@ export function useSessionBackgrounding({
       }
     } else {
       // Task completed - restore to background and clear foregrounded view
-      setAppState(prev => {
+      setAppState((prev) => {
         const taskId = prev.foregroundedTaskId
         if (!taskId) return prev
         const task = prev.tasks[taskId]

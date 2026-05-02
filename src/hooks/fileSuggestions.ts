@@ -6,11 +6,7 @@ import {
   loadMarkdownFilesForSubdir,
 } from 'src/utils/markdownConfigLoader.js'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
-import {
-  CHUNK_MS,
-  FileIndex,
-  yieldToEventLoop,
-} from '../native-ts/file-index/index.js'
+import { CHUNK_MS, FileIndex, yieldToEventLoop } from '../native-ts/file-index/index.js'
 import { logEvent } from '../services/analytics/index.js'
 // @ts-ignore
 import type { FileSuggestionCommandInput } from '../types/fileSuggestion.js'
@@ -21,10 +17,7 @@ import { errorMessage } from '../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../utils/execFileNoThrow.js'
 import { getFsImplementation } from '../utils/fsOperations.js'
 import { findGitRoot, gitExe } from '../utils/git.js'
-import {
-  createBaseHookInput,
-  executeFileSuggestionCommand,
-} from '../utils/hooks.js'
+import { createBaseHookInput, executeFileSuggestionCommand } from '../utils/hooks.js'
 import { logError } from '../utils/log.js'
 import { expandPath } from '../utils/path.js'
 import { ripGrep } from '../utils/ripgrep.js'
@@ -149,15 +142,11 @@ function getGitIndexMtime(): number | null {
 /**
  * 将 git 路径相对于 originalCwd 进行归一化
  */
-function normalizeGitPaths(
-  files: string[],
-  repoRoot: string,
-  originalCwd: string,
-): string[] {
+function normalizeGitPaths(files: string[], repoRoot: string, originalCwd: string): string[] {
   if (originalCwd === repoRoot) {
     return files
   }
-  return files.map(f => {
+  return files.map((f) => {
     const absolutePath = path.join(repoRoot, f)
     return path.relative(originalCwd, absolutePath)
   })
@@ -166,9 +155,7 @@ function normalizeGitPaths(
 /**
  * 将已归一化的未跟踪文件合并到缓存中
  */
-async function mergeUntrackedIntoNormalizedCache(
-  normalizedUntracked: string[],
-): Promise<void> {
+async function mergeUntrackedIntoNormalizedCache(normalizedUntracked: string[]): Promise<void> {
   if (normalizedUntracked.length === 0) return
   if (!fileIndex || cachedTrackedFiles.length === 0) return
 
@@ -182,9 +169,7 @@ async function mergeUntrackedIntoNormalizedCache(
   ]
   const sig = pathListSignature(allPaths)
   if (sig === loadedMergedSignature) {
-    logForDebugging(
-      `[FileIndex] 跳过索引重建 — 合并路径未变更`,
-    )
+    logForDebugging(`[FileIndex] 跳过索引重建 — 合并路径未变更`)
     return
   }
   await fileIndex.loadFromFileListAsync(allPaths).done
@@ -217,11 +202,9 @@ async function loadRipgrepIgnorePatterns(
   const ig = ignore()
   let hasPatterns = false
 
-  const paths = directories.flatMap(dir =>
-    ignoreFiles.map(f => path.join(dir, f)),
-  )
+  const paths = directories.flatMap((dir) => ignoreFiles.map((f) => path.join(dir, f)))
   const contents = await Promise.all(
-    paths.map(p => fs.readFile(p, { encoding: 'utf8' }).catch(() => null)),
+    paths.map((p) => fs.readFile(p, { encoding: 'utf8' }).catch(() => null)),
   )
   for (const [i, content] of contents.entries()) {
     if (content === null) continue
@@ -270,9 +253,7 @@ async function getFilesUsingGit(
       ['-c', 'core.quotepath=false', 'ls-files', '--recurse-submodules'],
       { timeout: 5000, abortSignal, cwd: repoRoot },
     )
-    logForDebugging(
-      `[FileIndex] git ls-files（已跟踪）耗时 ${Date.now() - lsFilesStart}ms`,
-    )
+    logForDebugging(`[FileIndex] git ls-files（已跟踪）耗时 ${Date.now() - lsFilesStart}ms`)
 
     if (trackedResult.code !== 0) {
       logForDebugging(
@@ -314,13 +295,7 @@ async function getFilesUsingGit(
     // 启动后台获取未跟踪文件（不等待）
     if (!untrackedFetchPromise) {
       const untrackedArgs = respectGitignore
-        ? [
-            '-c',
-            'core.quotepath=false',
-            'ls-files',
-            '--others',
-            '--exclude-standard',
-          ]
+        ? ['-c', 'core.quotepath=false', 'ls-files', '--others', '--exclude-standard']
         : ['-c', 'core.quotepath=false', 'ls-files', '--others']
 
       const generation = cacheGeneration
@@ -328,28 +303,18 @@ async function getFilesUsingGit(
         timeout: 10000,
         cwd: repoRoot,
       })
-        .then(async untrackedResult => {
+        .then(async (untrackedResult) => {
           if (generation !== cacheGeneration) {
             return // 缓存已清除；不要合并过期的未跟踪文件
           }
           if (untrackedResult.code === 0) {
-            const rawUntrackedFiles = untrackedResult.stdout
-              .trim()
-              .split('\n')
-              .filter(Boolean)
+            const rawUntrackedFiles = untrackedResult.stdout.trim().split('\n').filter(Boolean)
 
             // 在应用忽略模式之前归一化路径（与已跟踪文件一致）
-            let normalizedUntracked = normalizeGitPaths(
-              rawUntrackedFiles,
-              repoRoot,
-              cwd,
-            )
+            let normalizedUntracked = normalizeGitPaths(rawUntrackedFiles, repoRoot, cwd)
 
             // 对已归一化的未跟踪文件应用 .ignore/.rgignore 模式
-            const ignorePatterns = await loadRipgrepIgnorePatterns(
-              repoRoot,
-              cwd,
-            )
+            const ignorePatterns = await loadRipgrepIgnorePatterns(repoRoot, cwd)
             if (ignorePatterns && normalizedUntracked.length > 0) {
               const beforeCount = normalizedUntracked.length
               normalizedUntracked = ignorePatterns.filter(normalizedUntracked)
@@ -358,17 +323,13 @@ async function getFilesUsingGit(
               )
             }
 
-            logForDebugging(
-              `[FileIndex] 后台未跟踪文件获取：${normalizedUntracked.length} 个文件`,
-            )
+            logForDebugging(`[FileIndex] 后台未跟踪文件获取：${normalizedUntracked.length} 个文件`)
             // 将已归一化的文件直接传递给合并函数
             void mergeUntrackedIntoNormalizedCache(normalizedUntracked)
           }
         })
-        .catch(error => {
-          logForDebugging(
-            `[FileIndex] 后台未跟踪文件获取失败：${error}`,
-          )
+        .catch((error) => {
+          logForDebugging(`[FileIndex] 后台未跟踪文件获取失败：${error}`)
         })
         .finally(() => {
           untrackedFetchPromise = null
@@ -393,16 +354,14 @@ async function getFilesUsingGit(
 export function getDirectoryNames(files: string[]): string[] {
   const directoryNames = new Set<string>()
   collectDirectoryNames(files, 0, files.length, directoryNames)
-  return [...directoryNames].map(d => d + path.sep)
+  return [...directoryNames].map((d) => d + path.sep)
 }
 
 /**
  * 异步变体：每约 1 万个文件让出一次，避免 27 万+ 文件列表
  * 连续占用主线程超过 10ms。
  */
-export async function getDirectoryNamesAsync(
-  files: string[],
-): Promise<string[]> {
+export async function getDirectoryNamesAsync(files: string[]): Promise<string[]> {
   const directoryNames = new Set<string>()
   // 基于时间的分块：在 CHUNK_MS 的工作量后让出，使慢速机器获得
   // 更小的分块并保持响应。
@@ -414,7 +373,7 @@ export async function getDirectoryNamesAsync(
       chunkStart = performance.now()
     }
   }
-  return [...directoryNames].map(d => d + path.sep)
+  return [...directoryNames].map((d) => d + path.sep)
 }
 
 function collectDirectoryNames(
@@ -444,13 +403,9 @@ function collectDirectoryNames(
  */
 async function getZyConfigFiles(cwd: string): Promise<string[]> {
   const markdownFileArrays = await Promise.all(
-    ZY_CONFIG_DIRECTORIES.map(subdir =>
-      loadMarkdownFilesForSubdir(subdir, cwd),
-    ),
+    ZY_CONFIG_DIRECTORIES.map((subdir) => loadMarkdownFilesForSubdir(subdir, cwd)),
   )
-  return markdownFileArrays.flatMap(markdownFiles =>
-    markdownFiles.map(f => f.filePath),
-  )
+  return markdownFileArrays.flatMap((markdownFiles) => markdownFiles.map((f) => f.filePath))
 }
 
 /**
@@ -460,23 +415,17 @@ async function getProjectFiles(
   abortSignal: AbortSignal,
   respectGitignore: boolean,
 ): Promise<string[]> {
-  logForDebugging(
-    `[FileIndex] getProjectFiles 已调用，respectGitignore=${respectGitignore}`,
-  )
+  logForDebugging(`[FileIndex] getProjectFiles 已调用，respectGitignore=${respectGitignore}`)
 
   // 优先尝试 git ls-files（对于 git 仓库快得多）
   const gitFiles = await getFilesUsingGit(abortSignal, respectGitignore)
   if (gitFiles !== null) {
-    logForDebugging(
-      `[FileIndex] 使用 git ls-files 结果（${gitFiles.length} 个文件）`,
-    )
+    logForDebugging(`[FileIndex] 使用 git ls-files 结果（${gitFiles.length} 个文件）`)
     return gitFiles
   }
 
   // 回退到 ripgrep
-  logForDebugging(
-    `[FileIndex] git ls-files 返回 null，回退到 ripgrep`,
-  )
+  logForDebugging(`[FileIndex] git ls-files 返回 null，回退到 ripgrep`)
   const startTime = Date.now()
   const rgArgs = [
     '--files',
@@ -500,12 +449,10 @@ async function getProjectFiles(
   }
 
   const files = await ripGrep(rgArgs, '.', abortSignal)
-  const relativePaths = files.map(f => path.relative(getCwd(), f))
+  const relativePaths = files.map((f) => path.relative(getCwd(), f))
 
   const duration = Date.now() - startTime
-  logForDebugging(
-    `[FileIndex] ripgrep：${relativePaths.length} 个文件，耗时 ${duration}ms`,
-  )
+  logForDebugging(`[FileIndex] ripgrep：${relativePaths.length} 个文件，耗时 ${duration}ms`)
 
   logEvent('zy_file_suggestions_ripgrep', {
     file_count: relativePaths.length,
@@ -558,9 +505,7 @@ export async function getPathsForSuggestions(): Promise<FileIndex> {
       // 强制下次未跟踪合并重建，即使其自身签名匹配。
       loadedMergedSignature = null
     } else {
-      logForDebugging(
-        `[FileIndex] 跳过索引重建 — 已跟踪路径未变更`,
-      )
+      logForDebugging(`[FileIndex] 跳过索引重建 — 已跟踪路径未变更`)
     }
   } catch (error) {
     logError(error)
@@ -587,7 +532,7 @@ function findCommonPrefix(a: string, b: string): string {
 export function findLongestCommonPrefix(suggestions: SuggestionItem[]): string {
   if (suggestions.length === 0) return ''
 
-  const strings = suggestions.map(item => item.displayText)
+  const strings = suggestions.map((item) => item.displayText)
   let prefix = strings[0]!
   for (let i = 1; i < strings.length; i++) {
     const currentString = strings[i]!
@@ -600,10 +545,7 @@ export function findLongestCommonPrefix(suggestions: SuggestionItem[]): string {
 /**
  * 创建文件建议项
  */
-function createFileSuggestionItem(
-  filePath: string,
-  score?: number,
-): SuggestionItem {
+function createFileSuggestionItem(filePath: string, score?: number): SuggestionItem {
   return {
     id: `file-${filePath}`,
     displayText: filePath,
@@ -615,14 +557,9 @@ function createFileSuggestionItem(
  * 使用 TS 文件索引查找给定查询匹配的文件和文件夹
  */
 const MAX_SUGGESTIONS = 15
-function findMatchingFiles(
-  fileIndex: FileIndex,
-  partialPath: string,
-): SuggestionItem[] {
+function findMatchingFiles(fileIndex: FileIndex, partialPath: string): SuggestionItem[] {
   const results = fileIndex.search(partialPath, MAX_SUGGESTIONS)
-  return results.map(result =>
-    createFileSuggestionItem(result.path, result.score),
-  )
+  return results.map((result) => createFileSuggestionItem(result.path, result.score))
 }
 
 /**
@@ -643,8 +580,7 @@ export function startBackgroundCacheRefresh(): void {
   // 5 秒刷新未发现实际变更时跳过重建。
   const indexMtime = getGitIndexMtime()
   if (fileIndex) {
-    const gitStateChanged =
-      indexMtime !== null && indexMtime !== lastGitIndexMtime
+    const gitStateChanged = indexMtime !== null && indexMtime !== lastGitIndexMtime
     if (!gitStateChanged && Date.now() - lastRefreshMs < REFRESH_THROTTLE_MS) {
       return
     }
@@ -657,7 +593,7 @@ export function startBackgroundCacheRefresh(): void {
   // indexBuildComplete 在 .done 之后触发，以便它们重新搜索。
   getFileIndex()
   fileListRefreshPromise = getPathsForSuggestions()
-    .then(result => {
+    .then((result) => {
       if (generation !== cacheGeneration) {
         return result // 缓存已清除；不要用过期数据覆盖
       }
@@ -668,15 +604,11 @@ export function startBackgroundCacheRefresh(): void {
       // 并正确地再次刷新。
       lastGitIndexMtime = indexMtime
       lastRefreshMs = Date.now()
-      logForDebugging(
-        `[FileIndex] 缓存刷新完成，耗时 ${Date.now() - refreshStart}ms`,
-      )
+      logForDebugging(`[FileIndex] 缓存刷新完成，耗时 ${Date.now() - refreshStart}ms`)
       return result
     })
-    .catch(error => {
-      logForDebugging(
-        `[FileIndex] 缓存刷新失败：${errorMessage(error)}`,
-      )
+    .catch((error) => {
+      logForDebugging(`[FileIndex] 缓存刷新失败：${errorMessage(error)}`)
       logError(error)
       if (generation === cacheGeneration) {
         fileListRefreshPromise = null // 允许下次调用时重试
@@ -695,7 +627,7 @@ async function getTopLevelPaths(): Promise<string[]> {
 
   try {
     const entries = await fs.readdir(cwd)
-    return entries.map(entry => {
+    return entries.map((entry) => {
       const fullPath = path.join(cwd, entry.name)
       const relativePath = path.relative(cwd, fullPath)
       // 为目录添加尾部分隔符
@@ -761,9 +693,7 @@ export async function generateFileSuggestions(
       normalizedPath = expandPath(normalizedPath)
     }
 
-    const matches = fileIndex
-      ? findMatchingFiles(fileIndex, normalizedPath)
-      : []
+    const matches = fileIndex ? findMatchingFiles(fileIndex, normalizedPath) : []
 
     const duration = Date.now() - startTime
     logForDebugging(
@@ -795,14 +725,11 @@ export function applyFileSuggestion(
   setCursorOffset: (offset: number) => void,
 ): void {
   // 从字符串或 SuggestionItem 中提取建议文本
-  const suggestionText =
-    typeof suggestion === 'string' ? suggestion : suggestion.displayText
+  const suggestionText = typeof suggestion === 'string' ? suggestion : suggestion.displayText
 
   // 用选中的文件路径替换部分路径
   const newInput =
-    input.substring(0, startPos) +
-    suggestionText +
-    input.substring(startPos + partialPath.length)
+    input.substring(0, startPos) + suggestionText + input.substring(startPos + partialPath.length)
   onInputChange(newInput)
 
   // 将光标移动到文件路径末尾

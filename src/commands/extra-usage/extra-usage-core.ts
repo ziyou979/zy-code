@@ -16,7 +16,7 @@ type ExtraUsageResult =
 
 export async function runExtraUsage(): Promise<ExtraUsageResult> {
   if (!getGlobalConfig().hasVisitedExtraUsage) {
-    saveGlobalConfig(prev => ({ ...prev, hasVisitedExtraUsage: true }))
+    saveGlobalConfig((prev) => ({ ...prev, hasVisitedExtraUsage: true }))
   }
   // Invalidate only the current org's entry so a follow-up read refetches
   // the granted state. Separate from the visited flag since users may run
@@ -41,8 +41,7 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
     if (extraUsage?.is_enabled && extraUsage.monthly_limit === null) {
       return {
         type: 'message',
-        value:
-          'Your organization already has unlimited extra usage. No request needed.',
+        value: 'Your organization already has unlimited extra usage. No request needed.',
       }
     }
 
@@ -60,15 +59,14 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
     }
 
     try {
-      const pendingOrDismissedRequests = await getMyAdminRequests(
-        'limit_increase',
-        ['pending', 'dismissed'],
-      )
+      const pendingOrDismissedRequests = await getMyAdminRequests('limit_increase', [
+        'pending',
+        'dismissed',
+      ])
       if (pendingOrDismissedRequests && pendingOrDismissedRequests.length > 0) {
         return {
           type: 'message',
-          value:
-            'You have already submitted a request for extra usage to your admin.',
+          value: 'You have already submitted a request for extra usage to your admin.',
         }
       }
     } catch (error) {

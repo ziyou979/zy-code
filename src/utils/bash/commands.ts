@@ -103,21 +103,18 @@ export function splitCommandWithOperators(command: string): string[] {
   // and the newline is a command separator, not a continuation. Joining would cause us to
   // miss checking subsequent commands (e.g., `echo \\<newline>rm -rf /` would be parsed as
   // one command but shell executes two).
-  const commandWithContinuationsJoined = processedCommand.replace(
-    /\\+\n/g,
-    match => {
-      const backslashCount = match.length - 1 // -1 for the newline
-      if (backslashCount % 2 === 1) {
-        // Odd number of backslashes: last one escapes the newline (line continuation)
-        // Remove the escaping backslash and newline, keep remaining backslashes
-        return '\\'.repeat(backslashCount - 1)
-      } else {
-        // Even number of backslashes: all pair up as escape sequences
-        // The newline is a command separator, not continuation - keep it
-        return match
-      }
-    },
-  )
+  const commandWithContinuationsJoined = processedCommand.replace(/\\+\n/g, (match) => {
+    const backslashCount = match.length - 1 // -1 for the newline
+    if (backslashCount % 2 === 1) {
+      // Odd number of backslashes: last one escapes the newline (line continuation)
+      // Remove the escaping backslash and newline, keep remaining backslashes
+      return '\\'.repeat(backslashCount - 1)
+    } else {
+      // Even number of backslashes: all pair up as escape sequences
+      // The newline is a command separator, not continuation - keep it
+      return match
+    }
+  })
 
   // SECURITY: Also join continuations on the ORIGINAL command (pre-heredoc-
   // extraction) for use in the parse-failure fallback paths. The fallback
@@ -130,7 +127,7 @@ export function splitCommandWithOperators(command: string): string[] {
   // zsh/bash executes `echo "${}" ; curl evil.com` → curl runs.
   // We join on the ORIGINAL (not processedCommand) so the fallback doesn't
   // need to deal with heredoc placeholders.
-  const commandOriginalJoined = command.replace(/\\+\n/g, match => {
+  const commandOriginalJoined = command.replace(/\\+\n/g, (match) => {
     const backslashCount = match.length - 1
     if (backslashCount % 2 === 1) {
       return '\\'.repeat(backslashCount - 1)
@@ -146,7 +143,7 @@ export function splitCommandWithOperators(command: string): string[] {
       .replaceAll('\n', `\n${placeholders.NEW_LINE}\n`) // parse() strips out new lines :P
       .replaceAll('\\(', placeholders.ESCAPED_OPEN_PAREN) // parse() converts \( to ( :P
       .replaceAll('\\)', placeholders.ESCAPED_CLOSE_PAREN), // parse() converts \) to ) :P
-    varName => `$${varName}`, // Preserve shell variables
+    (varName) => `$${varName}`, // Preserve shell variables
   )
 
   // If parse failed due to malformed syntax (e.g., shell-quote throws
@@ -192,7 +189,7 @@ export function splitCommandWithOperators(command: string): string[] {
 
     // 2. Map tokens to strings
     const stringParts = parts
-      .map(part => {
+      .map((part) => {
         if (part === null) {
           return null
         }
@@ -208,14 +205,8 @@ export function splitCommandWithOperators(command: string): string[] {
           // shell-quote's chunker regex catastrophically backtracks (ReDoS).
           // Strip the injected-quote prefix so un-placeholder yields one quote.
           const cleaned = part.comment
-            .replaceAll(
-              `"${placeholders.DOUBLE_QUOTE}`,
-              placeholders.DOUBLE_QUOTE,
-            )
-            .replaceAll(
-              `'${placeholders.SINGLE_QUOTE}`,
-              placeholders.SINGLE_QUOTE,
-            )
+            .replaceAll(`"${placeholders.DOUBLE_QUOTE}`, placeholders.DOUBLE_QUOTE)
+            .replaceAll(`'${placeholders.SINGLE_QUOTE}`, placeholders.SINGLE_QUOTE)
           return '#' + cleaned
         }
         if ('op' in part && part.op === 'glob') {
@@ -226,10 +217,10 @@ export function splitCommandWithOperators(command: string): string[] {
         }
         return null
       })
-      .filter(_ => _ !== null)
+      .filter((_) => _ !== null)
 
     // 3. Map quotes and escaped parentheses back to their original form
-    const quotedParts = stringParts.map(part => {
+    const quotedParts = stringParts.map((part) => {
       return part
         .replaceAll(`${placeholders.SINGLE_QUOTE}`, "'")
         .replaceAll(`${placeholders.DOUBLE_QUOTE}`, '"')
@@ -248,11 +239,9 @@ export function splitCommandWithOperators(command: string): string[] {
   }
 }
 
-export function filterControlOperators(
-  commandsAndOperators: string[],
-): string[] {
+export function filterControlOperators(commandsAndOperators: string[]): string[] {
   return commandsAndOperators.filter(
-    part => !(ALL_SUPPORTED_CONTROL_OPERATORS as Set<string>).has(part),
+    (part) => !(ALL_SUPPORTED_CONTROL_OPERATORS as Set<string>).has(part),
   )
 }
 
@@ -298,9 +287,7 @@ export function splitCommand_DEPRECATED(command: string): string[] {
         nextPart.length >= 3 &&
         nextPart.charAt(nextPart.length - 2) === ' ' &&
         ALLOWED_FILE_DESCRIPTORS.has(nextPart.charAt(nextPart.length - 1)) &&
-        (afterNextPart === '>' ||
-          afterNextPart === '>>' ||
-          afterNextPart === '>&')
+        (afterNextPart === '>' || afterNextPart === '>>' || afterNextPart === '>&')
       ) {
         effectiveNextPart = nextPart.slice(0, -2)
       }
@@ -325,10 +312,7 @@ export function splitCommand_DEPRECATED(command: string): string[] {
       ) {
         // 2 > &1 style (space before &1 but not after)
         shouldStrip = true
-      } else if (
-        (part === '>' || part === '>>') &&
-        isStaticRedirectTarget(effectiveNextPart)
-      ) {
+      } else if ((part === '>' || part === '>>') && isStaticRedirectTarget(effectiveNextPart)) {
         // General file redirection: > file.txt, >> file.txt, > /tmp/output.txt
         // Only strip static targets; keep dynamic ones (with $, `, *, etc.) visible
         shouldStrip = true
@@ -362,9 +346,7 @@ export function splitCommand_DEPRECATED(command: string): string[] {
     }
   }
   // Remove undefined parts and empty strings (from stripped file descriptors)
-  const stringParts = parts.filter(
-    (part): part is string => part !== undefined && part !== '',
-  )
+  const stringParts = parts.filter((part): part is string => part !== undefined && part !== '')
   return filterControlOperators(stringParts)
 }
 
@@ -503,8 +485,7 @@ const getCommandPrefix = createCommandPrefixExtractor({
   policySpec: BASH_POLICY_SPEC,
   eventName: 'zy_bash_prefix',
   querySource: 'bash_extract_prefix' as any,
-  preCheck: command =>
-    isHelpCommand(command) ? { commandPrefix: command } : null,
+  preCheck: (command) => (isHelpCommand(command) ? { commandPrefix: command } : null),
 })
 
 export const getCommandSubcommandPrefix = createSubcommandPrefixExtractor(
@@ -520,15 +501,9 @@ export function clearCommandPrefixCaches(): void {
   getCommandSubcommandPrefix.cache.clear()
 }
 
-const COMMAND_LIST_SEPARATORS = new Set<ControlOperator>([
-  '&&',
-  '||',
-  ';',
-  ';;',
-  '|',
-])
+const COMMAND_LIST_SEPARATORS = new Set<ControlOperator>(['&&', '||', ';', ';;', '|'])
 
-let ALL_SUPPORTED_CONTROL_OPERATORS;
+let ALL_SUPPORTED_CONTROL_OPERATORS
 ALL_SUPPORTED_CONTROL_OPERATORS = new Set<ControlOperator>([
   ...COMMAND_LIST_SEPARATORS,
   '>&',
@@ -548,7 +523,7 @@ function isCommandList(command: string): boolean {
     processedCommand
       .replaceAll('"', `"${placeholders.DOUBLE_QUOTE}`) // parse() strips out quotes :P
       .replaceAll("'", `'${placeholders.SINGLE_QUOTE}`), // parse() strips out quotes :P
-    varName => `$${varName}`, // Preserve shell variables
+    (varName) => `$${varName}`, // Preserve shell variables
   )
 
   // If parse failed, it's not a safe command list
@@ -613,10 +588,7 @@ export function isUnsafeCompoundCommand_DEPRECATED(command: string): boolean {
   // would likely also reject malformed syntax, we don't want to rely
   // on that assumption for security.
   const { processedCommand } = extractHeredocs(command)
-  const parseResult = tryParseShellCommand(
-    processedCommand,
-    varName => `$${varName}`,
-  )
+  const parseResult = tryParseShellCommand(processedCommand, (varName) => `$${varName}`)
   if (!parseResult.success) {
     return true
   }
@@ -675,7 +647,7 @@ export function extractOutputRedirections(cmd: string): {
   // true (now also fixed as defense-in-depth); path.resolve(cwd,'') returns cwd
   // (always allowed). Meanwhile bash joins the continuation and writes to
   // /etc/passwd. Even backslash count = newline is a separator (not continuation).
-  const processedCommand = heredocExtracted.replace(/\\+\n/g, match => {
+  const processedCommand = heredocExtracted.replace(/\\+\n/g, (match) => {
     const backslashCount = match.length - 1
     if (backslashCount % 2 === 1) {
       return '\\'.repeat(backslashCount - 1)
@@ -684,7 +656,7 @@ export function extractOutputRedirections(cmd: string): {
   })
 
   // Try to parse the heredoc-extracted command
-  const parseResult = tryParseShellCommand(processedCommand, env => `$${env}`)
+  const parseResult = tryParseShellCommand(processedCommand, (env) => `$${env}`)
 
   // SECURITY: FAIL-CLOSED on parse failure. Previously returned
   // {redirections:[], hasDangerousRedirection:false} — a silent bypass.
@@ -718,10 +690,7 @@ export function extractOutputRedirections(cmd: string): {
     } else if (isOperator(part, ')') && parenStack.length > 0) {
       const opening = parenStack.pop()!
       const next = parsed[i + 1]
-      if (
-        opening.isStart &&
-        (isOperator(next, '>') || isOperator(next, '>>'))
-      ) {
+      if (opening.isStart && (isOperator(next, '>') || isOperator(next, '>>'))) {
         redirectedSubshells.add(opening.index).add(i)
       }
     }
@@ -738,20 +707,12 @@ export function extractOutputRedirections(cmd: string): {
     const [prev, next] = [parsed[i - 1], parsed[i + 1]]
 
     // Skip redirected subshell parens
-    if (
-      (isOperator(part, '(') || isOperator(part, ')')) &&
-      redirectedSubshells.has(i)
-    ) {
+    if ((isOperator(part, '(') || isOperator(part, ')')) && redirectedSubshells.has(i)) {
       continue
     }
 
     // Track command substitution depth
-    if (
-      isOperator(part, '(') &&
-      prev &&
-      typeof prev === 'string' &&
-      prev.endsWith('$')
-    ) {
+    if (isOperator(part, '(') && prev && typeof prev === 'string' && prev.endsWith('$')) {
       cmdSubDepth++
     } else if (isOperator(part, ')') && cmdSubDepth > 0) {
       cmdSubDepth--
@@ -791,9 +752,7 @@ export function extractOutputRedirections(cmd: string): {
 }
 
 function isOperator(part: ParseEntry | undefined, op: string): boolean {
-  return (
-    typeof part === 'object' && part !== null && 'op' in part && part.op === op
-  )
+  return typeof part === 'object' && part !== null && 'op' in part && part.op === op
 }
 
 function isSimpleTarget(target: ParseEntry | undefined): target is string {
@@ -1101,10 +1060,7 @@ function handleFileDescriptorRedirection(
 ): { skip: number; dangerous: boolean } {
   const isStdout = fd === '1'
   const isFileTarget =
-    target &&
-    isSimpleTarget(target) &&
-    typeof target === 'string' &&
-    !/^\d+$/.test(target)
+    target && isSimpleTarget(target) && typeof target === 'string' && !/^\d+$/.test(target)
   const isFdTarget = typeof target === 'string' && /^\d+$/.test(target.trim())
 
   // Always remove the fd number from kept
@@ -1210,16 +1166,11 @@ function reconstructCommand(kept: ParseEntry[], originalCmd: string): string {
       // For strings containing command separators (|&;), use double quotes to make them unambiguous
       // For other strings (spaces, etc), use shell-quote's quote() which handles escaping correctly
       const hasCommandSeparator = /[|&;]/.test(part)
-      const str = hasCommandSeparator
-        ? `"${part}"`
-        : needsQuoting(part)
-          ? quote([part])
-          : part
+      const str = hasCommandSeparator ? `"${part}"` : needsQuoting(part) ? quote([part]) : part
 
       // Check if this string ends with $ and next is (
       const endsWithDollar = str.endsWith('$')
-      const nextIsParen =
-        next && typeof next === 'object' && 'op' in next && next.op === '('
+      const nextIsParen = next && typeof next === 'object' && 'op' in next && next.op === '('
 
       // Special spacing rules
       const noSpace =

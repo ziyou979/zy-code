@@ -23,9 +23,7 @@ type ShellConfigOptions = {
  * Respects ZDOTDIR for zsh users
  * @param options Optional overrides for testing (env, homedir)
  */
-export function getShellConfigPaths(
-  options?: ShellConfigOptions,
-): Record<string, string> {
+export function getShellConfigPaths(options?: ShellConfigOptions): Record<string, string> {
   const home = options?.homedir ?? osHomedir()
   const env = options?.env ?? process.env
   const zshConfigDir = env.ZDOTDIR || home
@@ -47,7 +45,7 @@ export function filterZyAliases(lines: string[]): {
   hadAlias: boolean
 } {
   let hadAlias = false
-  const filtered = lines.filter(line => {
+  const filtered = lines.filter((line) => {
     // Check if this is a zy alias
     if (CLAUDE_ALIAS_REGEX.test(line)) {
       // Extract the alias target - handle spaces, quotes, and various formats
@@ -78,9 +76,7 @@ export function filterZyAliases(lines: string[]): {
  * Read a file and split it into lines
  * Returns null if file doesn't exist or can't be read
  */
-export async function readFileLines(
-  filePath: string,
-): Promise<string[] | null> {
+export async function readFileLines(filePath: string): Promise<string[] | null> {
   try {
     const content = await readFile(filePath, { encoding: 'utf8' })
     return content.split('\n')
@@ -93,10 +89,7 @@ export async function readFileLines(
 /**
  * Write lines back to a file
  */
-export async function writeFileLines(
-  filePath: string,
-  lines: string[],
-): Promise<void> {
+export async function writeFileLines(filePath: string, lines: string[]): Promise<void> {
   const fh = await open(filePath, 'w')
   try {
     await fh.writeFile(lines.join('\n'), { encoding: 'utf8' })
@@ -111,9 +104,7 @@ export async function writeFileLines(
  * Returns the alias target if found, null otherwise
  * @param options Optional overrides for testing (env, homedir)
  */
-export async function findZyAlias(
-  options?: ShellConfigOptions,
-): Promise<string | null> {
+export async function findZyAlias(options?: ShellConfigOptions): Promise<string | null> {
   const configs = getShellConfigPaths(options)
 
   for (const configPath of Object.values(configs)) {
@@ -139,18 +130,14 @@ export async function findZyAlias(
  * Returns the alias target if valid, null otherwise
  * @param options Optional overrides for testing (env, homedir)
  */
-export async function findValidZyAlias(
-  options?: ShellConfigOptions,
-): Promise<string | null> {
+export async function findValidZyAlias(options?: ShellConfigOptions): Promise<string | null> {
   const aliasTarget = await findZyAlias(options)
   if (!aliasTarget) return null
 
   const home = options?.homedir ?? osHomedir()
 
   // Expand ~ to home directory
-  const expandedPath = aliasTarget.startsWith('~')
-    ? aliasTarget.replace('~', home)
-    : aliasTarget
+  const expandedPath = aliasTarget.startsWith('~') ? aliasTarget.replace('~', home) : aliasTarget
 
   // Check if the target exists and is executable
   try {

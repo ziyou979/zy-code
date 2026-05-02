@@ -1,41 +1,41 @@
-import React from 'react';
-import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js';
-import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js';
-import { MessageResponse } from '../../components/MessageResponse.js';
-import { OutputLine } from '../../components/shell/OutputLine.js';
-import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js';
-import { tSync } from '../../i18n/index.js';
-import { Box, Text } from '../../ink.js';
-import type { Out as BashOut } from './BashTool.js';
+import React from 'react'
+import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js'
+import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
+import { MessageResponse } from '../../components/MessageResponse.js'
+import { OutputLine } from '../../components/shell/OutputLine.js'
+import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js'
+import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
+import type { Out as BashOut } from './BashTool.js'
 type Props = {
-  content: Omit<BashOut, 'interrupted'>;
-  verbose: boolean;
-  timeoutMs?: number;
-};
+  content: Omit<BashOut, 'interrupted'>
+  verbose: boolean
+  timeoutMs?: number
+}
 
 // 匹配 "Shell cwd was reset to <path>" 消息的模式
 // 使用 (?:^|\n) 匹配字符串开头或换行后的位置
-const SHELL_CWD_RESET_PATTERN = /(?:^|\n)(Shell cwd was reset to .+)$/;
+const SHELL_CWD_RESET_PATTERN = /(?:^|\n)(Shell cwd was reset to .+)$/
 
 /**
  * 从 stderr 中提取沙箱违规信息（如果存在）
  * 返回清理后的 stderr 和违规内容
  */
 function extractSandboxViolations(stderr: string): {
-  cleanedStderr: string;
+  cleanedStderr: string
 } {
-  const violationsMatch = stderr.match(/<sandbox_violations>([\s\S]*?)<\/sandbox_violations>/);
+  const violationsMatch = stderr.match(/<sandbox_violations>([\s\S]*?)<\/sandbox_violations>/)
   if (!violationsMatch) {
     return {
-      cleanedStderr: stderr
-    };
+      cleanedStderr: stderr,
+    }
   }
 
   // 从 stderr 中移除沙箱违规部分
-  const cleanedStderr = removeSandboxViolationTags(stderr).trim();
+  const cleanedStderr = removeSandboxViolationTags(stderr).trim()
   return {
-    cleanedStderr
-  };
+    cleanedStderr,
+  }
 }
 
 /**
@@ -43,67 +43,96 @@ function extractSandboxViolations(stderr: string): {
  * 返回清理后的 stderr 和警告消息
  */
 function extractCwdResetWarning(stderr: string): {
-  cleanedStderr: string;
-  cwdResetWarning: string | null;
+  cleanedStderr: string
+  cwdResetWarning: string | null
 } {
-  const match = stderr.match(SHELL_CWD_RESET_PATTERN);
+  const match = stderr.match(SHELL_CWD_RESET_PATTERN)
   if (!match) {
     return {
       cleanedStderr: stderr,
-      cwdResetWarning: null
-    };
+      cwdResetWarning: null,
+    }
   }
 
   // 从捕获组 1 中提取警告消息
-  const cwdResetWarning = match[1] ?? null;
+  const cwdResetWarning = match[1] ?? null
   // 从 stderr 中移除此警告（替换完整匹配）
-  const cleanedStderr = stderr.replace(SHELL_CWD_RESET_PATTERN, '').trim();
+  const cleanedStderr = stderr.replace(SHELL_CWD_RESET_PATTERN, '').trim()
   return {
     cleanedStderr,
-    cwdResetWarning
-  };
+    cwdResetWarning,
+  }
 }
-export default function BashToolResultMessage({
-  content,
-  verbose,
-  timeoutMs
-}: Props) {
+export default function BashToolResultMessage({ content, verbose, timeoutMs }: Props) {
   const {
     stdout: t2,
     stderr: t3,
     isImage,
     returnCodeInterpretation,
     noOutputExpected,
-    backgroundTaskId
-  } = content;
-  const stdout = t2 === undefined ? "" : t2;
-  const stdErrWithViolations = t3 === undefined ? "" : t3;
-  let BoxComponent;
+    backgroundTaskId,
+  } = content
+  const stdout = t2 === undefined ? '' : t2
+  const stdErrWithViolations = t3 === undefined ? '' : t3
+  let BoxComponent
 
-  let outputLineElement;
-  let earlyReturn = Symbol.for("react.early_return_sentinel");
-  const {
-    cleanedStderr: stderrWithoutViolations
-  } = extractSandboxViolations(stdErrWithViolations);
-  let stderr: string;
-  let cwdResetWarning: string | undefined;
-  ({
-    cleanedStderr: stderr,
-    cwdResetWarning
-  } = extractCwdResetWarning(stderrWithoutViolations));
-  let outputLineElement2;
+  let outputLineElement
+  let earlyReturn = Symbol.for('react.early_return_sentinel')
+  const { cleanedStderr: stderrWithoutViolations } = extractSandboxViolations(stdErrWithViolations)
+  let stderr: string
+  let cwdResetWarning: string | undefined
+  ;({ cleanedStderr: stderr, cwdResetWarning } = extractCwdResetWarning(stderrWithoutViolations))
+  let outputLineElement2
   if (isImage) {
     // @ts-ignore
-    earlyReturn = <MessageResponse height={1}><Text dimColor={true}>{tSync('bash.imageDetected')}</Text></MessageResponse>;
+    earlyReturn = (
+      <MessageResponse height={1}>
+        <Text dimColor={true}>{tSync('bash.imageDetected')}</Text>
+      </MessageResponse>
+    )
   } else {
-    BoxComponent = Box;
+    BoxComponent = Box
 
-    outputLineElement2 = (stdout !== "" ? <OutputLine content={stdout as any} verbose={verbose} /> : null) as any;
-    outputLineElement = stderr.trim() !== "" ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null;
+    outputLineElement2 = (
+      stdout !== '' ? <OutputLine content={stdout as any} verbose={verbose} /> : null
+    ) as any
+    outputLineElement =
+      stderr.trim() !== '' ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null
   }
-  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn;
+  if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
+    return earlyReturn
   }
-  const messageResponseElement = stdout === "" && stderr.trim() === "" && !cwdResetWarning ? <MessageResponse height={1}><Text dimColor={true}>{backgroundTaskId ? <>{tSync('bash.runningInBackground')}{" "}<KeyboardShortcutHint shortcut={"\u2193"} action="manage" parens={true} /></> : returnCodeInterpretation || (noOutputExpected ? tSync('bash.done') : tSync('bash.noOutput'))}</Text></MessageResponse> : null;
-  return <BoxComponent flexDirection={"column"}>{outputLineElement2}{outputLineElement}{cwdResetWarning ? <MessageResponse><Text dimColor={true}>{cwdResetWarning}</Text></MessageResponse> : null}{messageResponseElement}{timeoutMs && <MessageResponse><ShellTimeDisplay timeoutMs={timeoutMs} /></MessageResponse>}</BoxComponent>;
+  const messageResponseElement =
+    stdout === '' && stderr.trim() === '' && !cwdResetWarning ? (
+      <MessageResponse height={1}>
+        <Text dimColor={true}>
+          {backgroundTaskId ? (
+            <>
+              {tSync('bash.runningInBackground')}{' '}
+              <KeyboardShortcutHint shortcut={'\u2193'} action="manage" parens={true} />
+            </>
+          ) : (
+            returnCodeInterpretation ||
+            (noOutputExpected ? tSync('bash.done') : tSync('bash.noOutput'))
+          )}
+        </Text>
+      </MessageResponse>
+    ) : null
+  return (
+    <BoxComponent flexDirection={'column'}>
+      {outputLineElement2}
+      {outputLineElement}
+      {cwdResetWarning ? (
+        <MessageResponse>
+          <Text dimColor={true}>{cwdResetWarning}</Text>
+        </MessageResponse>
+      ) : null}
+      {messageResponseElement}
+      {timeoutMs && (
+        <MessageResponse>
+          <ShellTimeDisplay timeoutMs={timeoutMs} />
+        </MessageResponse>
+      )}
+    </BoxComponent>
+  )
 }

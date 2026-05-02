@@ -88,13 +88,27 @@ export interface SDKControlGetContextUsageResponse {
   maxTokens: number
   rawMaxTokens: number
   percentage: number
-  gridRows: Array<Array<{ color: string; isFilled: boolean; categoryName: string; tokens: number; percentage: number; squareFullness: number }>>
+  gridRows: Array<
+    Array<{
+      color: string
+      isFilled: boolean
+      categoryName: string
+      tokens: number
+      percentage: number
+      squareFullness: number
+    }>
+  >
   model: string
   memoryFiles: Array<{ path: string; type: string; tokens: number }>
   mcpTools: Array<{ name: string; serverName: string; tokens: number; isLoaded?: boolean }>
   agents: Array<{ agentType: string; source: string; tokens: number }>
   isAutoCompactEnabled: boolean
-  apiUsage: { input_tokens: number; output_tokens: number; cache_creation_input_tokens: number; cache_read_input_tokens: number } | null
+  apiUsage: {
+    input_tokens: number
+    output_tokens: number
+    cache_creation_input_tokens: number
+    cache_read_input_tokens: number
+  } | null
 }
 
 export interface SDKControlRewindFilesRequest {
@@ -243,8 +257,14 @@ export interface SDKControlRequest {
 
 export interface SDKControlResponse {
   type: 'control_response'
-  response: { subtype: 'success'; request_id: string; response?: Record<string, unknown> }
-    | { subtype: 'error'; request_id: string; error: string; pending_permission_requests?: SDKControlRequest[] }
+  response:
+    | { subtype: 'success'; request_id: string; response?: Record<string, unknown> }
+    | {
+        subtype: 'error'
+        request_id: string
+        error: string
+        pending_permission_requests?: SDKControlRequest[]
+      }
 }
 
 export interface SDKControlCancelRequest {

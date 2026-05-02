@@ -36,7 +36,7 @@ export function projectView(
   if (collapseEntries.length === 0) return messages as Message[]
 
   // 收集所有需要归档的 UUID 范围
-  const ranges = collapseEntries.map(e => ({
+  const ranges = collapseEntries.map((e) => ({
     first: e.firstArchivedUuid,
     last: e.lastArchivedUuid,
     summaryContent: e.summaryContent,
@@ -133,5 +133,5 @@ export function collapseContext(messages: readonly Message[]): Message[] {
     uuid: randomUUID() as any,
   } as unknown as UserMessage
 
-  return [collapsedMessage as unknown as Message, ...keep as Message[]]
+  return [collapsedMessage as unknown as Message, ...(keep as Message[])]
 }

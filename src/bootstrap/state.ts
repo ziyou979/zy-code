@@ -428,9 +428,7 @@ export function getSessionId(): SessionId {
   return STATE.sessionId
 }
 
-export function regenerateSessionId(
-  options: { setCurrentAsParent?: boolean } = {},
-): SessionId {
+export function regenerateSessionId(options: { setCurrentAsParent?: boolean } = {}): SessionId {
   if (options.setCurrentAsParent) {
     STATE.parentSessionId = STATE.sessionId
   }
@@ -460,10 +458,7 @@ export function getParentSessionId(): SessionId | undefined {
  *   传 `dirname(transcriptPath)`（git worktree、跨项目恢复）。
  *   每次调用都会重置项目目录，不会从前一个会话继承。
  */
-export function switchSession(
-  sessionId: SessionId,
-  projectDir: string | null = null,
-): void {
+export function switchSession(sessionId: SessionId, projectDir: string | null = null): void {
   // 移除传出会话的计划 slug 条目，使 Map 在
   // 重复 /resume 时保持有界。只有当前会话的 slug 会被读取
   //（plans.ts getPlanSlug 默认为 getSessionId()）。
@@ -473,7 +468,7 @@ export function switchSession(
   sessionSwitched.emit(sessionId)
 }
 
-let sessionSwitched;
+let sessionSwitched
 sessionSwitched = createSignal<[id: SessionId]>()
 
 /**
@@ -536,10 +531,7 @@ export function setDirectConnectServerUrl(url: string): void {
   STATE.directConnectServerUrl = url
 }
 
-export function addToTotalDurationState(
-  duration: number,
-  durationWithoutRetries: number,
-): void {
+export function addToTotalDurationState(duration: number, durationWithoutRetries: number): void {
   STATE.totalAPIDuration += duration
   STATE.totalAPIDurationWithoutRetries += durationWithoutRetries
 }
@@ -550,11 +542,7 @@ export function resetTotalDurationStateAndCost_FOR_TESTS_ONLY(): void {
   STATE.totalCostUSD = 0
 }
 
-export function addToTotalCostState(
-  cost: number,
-  modelUsage: ModelUsage,
-  model: string,
-): void {
+export function addToTotalCostState(cost: number, modelUsage: ModelUsage, model: string): void {
   STATE.modelUsage[model] = modelUsage
   STATE.totalCostUSD += cost
 }
@@ -640,9 +628,7 @@ export function getStatsStore(): {
   return STATE.statsStore
 }
 
-export function setStatsStore(
-  store: { observe(name: string, value: number): void } | null,
-): void {
+export function setStatsStore(store: { observe(name: string, value: number): void } | null): void {
   STATE.statsStore = store
 }
 
@@ -815,7 +801,7 @@ export async function waitForScrollIdle(): Promise<void> {
   while (scrollDraining) {
     // bootstrap-isolation 禁止从 src/utils/ 导入 sleep()
     // eslint-disable-next-line no-restricted-syntax
-    await new Promise(r => setTimeout(r, SCROLL_DRAIN_IDLE_MS).unref?.())
+    await new Promise((r) => setTimeout(r, SCROLL_DRAIN_IDLE_MS).unref?.())
   }
 }
 
@@ -839,9 +825,7 @@ export function getInitialMainLoopModel(): ModelSetting {
   return STATE.initialMainLoopModel
 }
 
-export function setMainLoopModelOverride(
-  model: ModelSetting | undefined,
-): void {
+export function setMainLoopModelOverride(model: ModelSetting | undefined): void {
   STATE.mainLoopModelOverride = model
 }
 
@@ -969,13 +953,10 @@ export function setMeter(
     description: 'Number of tokens used',
     unit: 'tokens',
   })
-  STATE.codeEditToolDecisionCounter = createCounter(
-    'zy_code.code_edit_tool.decision',
-    {
-      description:
-        'Count of code editing tool permission decisions (accept/reject) for Edit, Write, and NotebookEdit tools',
-    },
-  )
+  STATE.codeEditToolDecisionCounter = createCounter('zy_code.code_edit_tool.decision', {
+    description:
+      'Count of code editing tool permission decisions (accept/reject) for Edit, Write, and NotebookEdit tools',
+  })
   STATE.activeTimeCounter = createCounter('zy_code.active_time.total', {
     description: 'Total active time in seconds',
     unit: 's',
@@ -1030,9 +1011,7 @@ export function getEventLogger(): ReturnType<typeof logs.getLogger> | null {
   return STATE.eventLogger
 }
 
-export function setEventLogger(
-  logger: ReturnType<typeof logs.getLogger> | null,
-): void {
+export function setEventLogger(logger: ReturnType<typeof logs.getLogger> | null): void {
   STATE.eventLogger = logger
 }
 
@@ -1137,9 +1116,7 @@ export function getFlagSettingsInline(): Record<string, unknown> | null {
   return STATE.flagSettingsInline
 }
 
-export function setFlagSettingsInline(
-  settings: Record<string, unknown> | null,
-): void {
+export function setFlagSettingsInline(settings: Record<string, unknown> | null): void {
   STATE.flagSettingsInline = settings
 }
 
@@ -1167,28 +1144,19 @@ export function setApiKeyFromFd(key: string | null): void {
   STATE.apiKeyFromFd = key
 }
 
-export function setLastAPIRequest(
-  params: Omit<CreateParams, 'messages'> | null,
-): void {
+export function setLastAPIRequest(params: Omit<CreateParams, 'messages'> | null): void {
   STATE.lastAPIRequest = params
 }
 
-export function getLastAPIRequest(): Omit<
-  CreateParams,
-  'messages'
-> | null {
+export function getLastAPIRequest(): Omit<CreateParams, 'messages'> | null {
   return STATE.lastAPIRequest
 }
 
-export function setLastAPIRequestMessages(
-  messages: CreateParams['messages'] | null,
-): void {
+export function setLastAPIRequestMessages(messages: CreateParams['messages'] | null): void {
   STATE.lastAPIRequestMessages = messages
 }
 
-export function getLastAPIRequestMessages():
-  | CreateParams['messages']
-  | null {
+export function getLastAPIRequestMessages(): CreateParams['messages'] | null {
   return STATE.lastAPIRequestMessages
 }
 
@@ -1208,10 +1176,7 @@ export function getCachedZyMdContent(): string | null {
   return STATE.cachedZyMdContent
 }
 
-export function addToInMemoryErrorLog(errorInfo: {
-  error: string
-  timestamp: string
-}): void {
+export function addToInMemoryErrorLog(errorInfo: { error: string; timestamp: string }): void {
   const MAX_IN_MEMORY_ERRORS = 100
   if (STATE.inMemoryErrorLog.length >= MAX_IN_MEMORY_ERRORS) {
     STATE.inMemoryErrorLog.shift() // 移除最旧的错误
@@ -1303,7 +1268,7 @@ export function addSessionCronTask(task: SessionCronTask): void {
 export function removeSessionCronTasks(ids: readonly string[]): number {
   if (ids.length === 0) return 0
   const idSet = new Set(ids)
-  const remaining = STATE.sessionCronTasks.filter(t => !idSet.has(t.id))
+  const remaining = STATE.sessionCronTasks.filter((t) => !idSet.has(t.id))
   const removed = STATE.sessionCronTasks.length - remaining.length
   if (removed === 0) return 0
   STATE.sessionCronTasks = remaining
@@ -1342,10 +1307,7 @@ export function setNeedsPlanModeExitAttachment(value: boolean): void {
   STATE.needsPlanModeExitAttachment = value
 }
 
-export function handlePlanModeTransition(
-  fromMode: string,
-  toMode: string,
-): void {
+export function handlePlanModeTransition(fromMode: string, toMode: string): void {
   // 切换到计划模式时，清除任何待处理的退出附件
   // 这防止用户快速切换时同时发送 plan_mode 和 plan_mode_exit
   if (toMode === 'plan' && fromMode !== 'plan') {
@@ -1366,18 +1328,12 @@ export function setNeedsAutoModeExitAttachment(value: boolean): void {
   STATE.needsAutoModeExitAttachment = value
 }
 
-export function handleAutoModeTransition(
-  fromMode: string,
-  toMode: string,
-): void {
+export function handleAutoModeTransition(fromMode: string, toMode: string): void {
   // 自动↔计划模式的切换由 prepareContextForPlanMode 处理
   //（如果选择加入，自动模式可能在计划模式中保持活跃）
   // 和 ExitPlanMode（恢复模式）。跳过两个方向，因此
   // 此函数仅处理直接的自动模式切换。
-  if (
-    (fromMode === 'auto' && toMode === 'plan') ||
-    (fromMode === 'plan' && toMode === 'auto')
-  ) {
+  if ((fromMode === 'auto' && toMode === 'plan') || (fromMode === 'plan' && toMode === 'auto')) {
     return
   }
   const fromIsAuto = fromMode === 'auto'
@@ -1430,9 +1386,7 @@ export function registerHookCallbacks(
   }
 }
 
-export function getRegisteredHooks(): Partial<
-  Record<HookEvent, RegisteredHookMatcher[]>
-> | null {
+export function getRegisteredHooks(): Partial<Record<HookEvent, RegisteredHookMatcher[]>> | null {
   return STATE.registeredHooks
 }
 
@@ -1448,7 +1402,7 @@ export function clearRegisteredPluginHooks(): void {
   const filtered: Partial<Record<HookEvent, RegisteredHookMatcher[]>> = {}
   for (const [event, matchers] of Object.entries(STATE.registeredHooks)) {
     // 仅保留回调钩子（那些没有 pluginRoot 的）
-    const callbackHooks = matchers.filter(m => !('pluginRoot' in m))
+    const callbackHooks = matchers.filter((m) => !('pluginRoot' in m))
     if (callbackHooks.length > 0) {
       filtered[event as HookEvent] = callbackHooks
     }
@@ -1471,9 +1425,7 @@ export function getSessionCreatedTeams(): Set<string> {
 }
 
 // Teleported session tracking for reliability logging
-export function setTeleportedSessionInfo(info: {
-  sessionId: string | null
-}): void {
+export function setTeleportedSessionInfo(info: { sessionId: string | null }): void {
   STATE.teleportedSessionInfo = {
     isTeleported: true,
     hasLoggedFirstMessage: false,
@@ -1537,9 +1489,7 @@ export function getInvokedSkillsForAgent(
   return filtered
 }
 
-export function clearInvokedSkills(
-  preservedAgentIds?: ReadonlySet<string>,
-): void {
+export function clearInvokedSkills(preservedAgentIds?: ReadonlySet<string>): void {
   if (!preservedAgentIds || preservedAgentIds.size === 0) {
     STATE.invokedSkills.clear()
     return
@@ -1573,7 +1523,7 @@ export function addSlowOperation(operation: string, durationMs: number): void {
   const now = Date.now()
   // 移除过期的操作
   STATE.slowOperations = STATE.slowOperations.filter(
-    op => now - op.timestamp < SLOW_OPERATION_TTL_MS,
+    (op) => now - op.timestamp < SLOW_OPERATION_TTL_MS,
   )
   // 添加新操作
   STATE.slowOperations.push({ operation, durationMs, timestamp: now })
@@ -1602,11 +1552,9 @@ export function getSlowOperations(): ReadonlyArray<{
   const now = Date.now()
   // 仅在有操作真正过期时才分配新数组；否则在
   // 操作仍然新鲜时保持引用稳定。
-  if (
-    STATE.slowOperations.some(op => now - op.timestamp >= SLOW_OPERATION_TTL_MS)
-  ) {
+  if (STATE.slowOperations.some((op) => now - op.timestamp >= SLOW_OPERATION_TTL_MS)) {
     STATE.slowOperations = STATE.slowOperations.filter(
-      op => now - op.timestamp < SLOW_OPERATION_TTL_MS,
+      (op) => now - op.timestamp < SLOW_OPERATION_TTL_MS,
     )
     if (STATE.slowOperations.length === 0) {
       return EMPTY_SLOW_OPERATIONS
@@ -1639,10 +1587,7 @@ export function getSystemPromptSectionCache(): Map<string, string | null> {
   return STATE.systemPromptSectionCache
 }
 
-export function setSystemPromptSectionCacheEntry(
-  name: string,
-  value: string | null,
-): void {
+export function setSystemPromptSectionCacheEntry(name: string, value: string | null): void {
   STATE.systemPromptSectionCache.set(name, value)
 }
 
@@ -1664,9 +1609,7 @@ export function getAdditionalDirectoriesForzyMd(): string[] {
   return STATE.additionalDirectoriesForzyMd
 }
 
-export function setAdditionalDirectoriesForzyMd(
-  directories: string[],
-): void {
+export function setAdditionalDirectoriesForzyMd(directories: string[]): void {
   STATE.additionalDirectoriesForzyMd = directories
 }
 
@@ -1743,4 +1686,3 @@ export function getPromptId(): string | null {
 export function setPromptId(id: string | null): void {
   STATE.promptId = id
 }
-

@@ -1,9 +1,5 @@
 import { feature } from 'bun:bundle'
-import type {
-  ImageSource,
-  ContentBlock,
-  LLMMessage,
-} from '../../types/llm.js'
+import type { ImageSource, ContentBlock, LLMMessage } from '../../types/llm.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {
   SSEClientTransport,
@@ -45,11 +41,7 @@ import type { Command } from '../../commands.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { PRODUCT_URL } from '../../constants/product.js'
 import type { AppState } from '../../state/AppState.js'
-import {
-  type Tool,
-  type ToolCallProgress,
-  toolMatchesName,
-} from '../../Tool.js'
+import { type Tool, type ToolCallProgress, toolMatchesName } from '../../Tool.js'
 import { ListMcpResourcesTool } from '../../tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 import { type MCPProgress, MCPTool } from '../../tools/MCPTool/MCPTool.js'
 import { createMcpAuthTool } from '../../tools/McpAuthTool/McpAuthTool.js'
@@ -96,10 +88,7 @@ import {
 import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
 import { subprocessEnv } from '../../utils/subprocessEnv.js'
-import {
-  isPersistError,
-  persistToolResult,
-} from '../../utils/toolResultStorage.js'
+import { isPersistError, persistToolResult } from '../../utils/toolResultStorage.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -124,11 +113,7 @@ import type { AssistantMessage } from 'src/types/message.js'
 import { classifyMcpToolForCollapse } from '../../tools/MCPTool/classifyForCollapse.js'
 import { clearKeychainCache } from '../../utils/secureStorage/macOsKeychainHelpers.js'
 import { sleep } from '../../utils/sleep.js'
-import {
-  ZyAuthProvider,
-  hasMcpDiscoveryButNoToken,
-  wrapFetchWithStepUpDetection,
-} from './auth.js'
+import { ZyAuthProvider, hasMcpDiscoveryButNoToken, wrapFetchWithStepUpDetection } from './auth.js'
 import { markZyAiMcpConnected } from './zyai.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
 import { getMcpServerHeaders } from './headersHelper.js'
@@ -188,18 +173,14 @@ export class McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS extends T
  * 我们同时检查两个信号以避免将通用 404（URL 错误、服务器下线等）误判。
  */
 export function isMcpSessionExpiredError(error: Error): boolean {
-  const httpStatus =
-    'code' in error ? (error as Error & { code?: number }).code : undefined
+  const httpStatus = 'code' in error ? (error as Error & { code?: number }).code : undefined
   if (httpStatus !== 404) {
     return false
   }
   // SDK 将响应体文本嵌入到错误消息中。
   // MCP 服务器返回：{"error":{"code":-32001,"message":"Session not found"},...}
   // 检查 JSON-RPC 错误代码以区分于通用 Web 服务器 404。
-  return (
-    error.message.includes('"code":-32001') ||
-    error.message.includes('"code": -32001')
-  )
+  return error.message.includes('"code":-32001') || error.message.includes('"code": -32001')
 }
 
 /**
@@ -219,10 +200,7 @@ const MAX_MCP_DESCRIPTION_LENGTH = 2048
  * Uses MCP_TOOL_TIMEOUT environment variable if set, otherwise defaults to ~27.8 hours.
  */
 function getMcpToolTimeoutMs(): number {
-  return (
-    parseInt(process.env.MCP_TOOL_TIMEOUT || '', 10) ||
-    DEFAULT_MCP_TOOL_TIMEOUT_MS
-  )
+  return parseInt(process.env.MCP_TOOL_TIMEOUT || '', 10) || DEFAULT_MCP_TOOL_TIMEOUT_MS
 }
 
 // @ts-ignore
@@ -269,7 +247,7 @@ let authCachePromise: Promise<McpAuthCacheData> | null = null
 function getMcpAuthCache(): Promise<McpAuthCacheData> {
   if (!authCachePromise) {
     authCachePromise = readFile(getMcpAuthCachePath(), 'utf-8')
-      .then(data => jsonParse(data) as McpAuthCacheData)
+      .then((data) => jsonParse(data) as McpAuthCacheData)
       .catch(() => ({}))
   }
   return authCachePromise
@@ -324,8 +302,7 @@ function mcpBaseUrlAnalytics(serverRef: ScopedMcpServerConfig): {
   const url = getLoggingSafeMcpBaseUrl(serverRef)
   return url
     ? {
-        mcpServerBaseUrl:
-          url as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        mcpServerBaseUrl: url as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       }
     : {}
 }
@@ -341,8 +318,7 @@ function handleRemoteAuthFailure(
   transportType: 'sse' | 'http' | 'zyai-proxy',
 ): MCPServerConnection {
   logEvent('zy_mcp_server_needs_auth', {
-    transportType:
-      transportType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    transportType: transportType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     ...mcpBaseUrlAnalytics(serverRef),
   })
   const label: Record<typeof transportType, string> = {
@@ -350,10 +326,7 @@ function handleRemoteAuthFailure(
     http: 'HTTP',
     'zyai-proxy': 'zy.ai proxy',
   }
-  logMCPDebug(
-    name,
-    `Authentication required for ${label[transportType]} server`,
-  )
+  logMCPDebug(name, `Authentication required for ${label[transportType]} server`)
   setMcpAuthCacheEntry(name)
   return { name, type: 'needs-auth', config: serverRef }
 }
@@ -398,8 +371,7 @@ export function createZyAiProxyFetch(innerFetch: FetchLike): FetchLike {
     //（常见情况：30+ 服务器显示"MCP 服务器需要认证但未配置 OAuth token"）。
     const tokenChanged = await handleOAuth401Error(sentToken).catch(() => false)
     logEvent('zy_mcp_Zyai_proxy_401', {
-      tokenChanged:
-        tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      tokenChanged: tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     if (!tokenChanged) {
       // ELOCKED 竞争：另一个连接器可能已赢得锁文件并完成刷新 — 检查 token 是否在我们底下已改变
@@ -443,12 +415,7 @@ async function createNodeWsClient(
   return new WS(url, ['mcp'], options)
 }
 
-const IMAGE_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-])
+const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
 function getConnectionTimeoutMs(): number {
   return parseInt(process.env.MCP_TIMEOUT || '', 10) || 30000
@@ -511,8 +478,7 @@ export function wrapFetchWithTimeout(baseFetch: FetchLike): FetchLike {
     // 每个请求约 2.4KB 原生内存仍会滞留满 60 秒。
     const controller = new AbortController()
     const timer = setTimeout(
-      c =>
-        c.abort(new DOMException('The operation timed out.', 'TimeoutError')),
+      (c) => c.abort(new DOMException('The operation timed out.', 'TimeoutError')),
       MCP_REQUEST_TIMEOUT_MS,
       controller,
     )
@@ -550,10 +516,7 @@ export function getMcpServerConnectionBatchSize(): number {
 }
 
 function getRemoteMcpServerConnectionBatchSize(): number {
-  return (
-    parseInt(process.env.MCP_REMOTE_SERVER_CONNECTION_BATCH_SIZE || '', 10) ||
-    20
-  )
+  return parseInt(process.env.MCP_REMOTE_SERVER_CONNECTION_BATCH_SIZE || '', 10) || 20
 }
 
 function isLocalMcpServer(config: ScopedMcpServerConfig): boolean {
@@ -563,9 +526,7 @@ function isLocalMcpServer(config: ScopedMcpServerConfig): boolean {
 // 对于 IDE MCP 服务器，我们只包含特定的工具
 const ALLOWED_IDE_TOOLS = ['mcp__ide__executeCode', 'mcp__ide__getDiagnostics']
 function isIncludedMcpTool(tool: Tool): boolean {
-  return (
-    !tool.name.startsWith('mcp__ide__') || ALLOWED_IDE_TOOLS.includes(tool.name)
-  )
+  return !tool.name.startsWith('mcp__ide__') || ALLOWED_IDE_TOOLS.includes(tool.name)
 }
 
 /**
@@ -574,10 +535,7 @@ function isIncludedMcpTool(tool: Tool): boolean {
  * @param serverRef Server configuration
  * @returns Cache key string
  */
-export function getServerCacheKey(
-  name: string,
-  serverRef: ScopedMcpServerConfig,
-): string {
+export function getServerCacheKey(name: string, serverRef: ScopedMcpServerConfig): string {
   return `${name}-${jsonStringify(serverRef)}`
 }
 
@@ -664,40 +622,34 @@ export const connectToServer = memoize(
           },
         }
 
-        transport = new SSEClientTransport(
-          new URL(serverRef.url),
-          transportOptions,
-        )
+        transport = new SSEClientTransport(new URL(serverRef.url), transportOptions)
         logMCPDebug(name, `SSE transport initialized, awaiting connection`)
       } else if (serverRef.type === 'sse-ide') {
         logMCPDebug(name, `Setting up SSE-IDE transport to ${serverRef.url}`)
         // IDE 服务器不需要认证
         // TODO: 使用 lockfile 中提供的认证 token
         const proxyOptions = getProxyFetchOptions()
-        const transportOptions: SSEClientTransportOptions =
-          proxyOptions.dispatcher
-            ? {
-                eventSourceInit: {
-                  fetch: async (url: string | URL, init?: RequestInit) => {
-                    // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-                    return fetch(url, {
-                      ...init,
-                      ...proxyOptions,
-                      headers: {
-                        'User-Agent': getMCPUserAgent(),
-                        ...init?.headers,
-                      },
-                    })
-                  },
+        const transportOptions: SSEClientTransportOptions = proxyOptions.dispatcher
+          ? {
+              eventSourceInit: {
+                fetch: async (url: string | URL, init?: RequestInit) => {
+                  // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
+                  return fetch(url, {
+                    ...init,
+                    ...proxyOptions,
+                    headers: {
+                      'User-Agent': getMCPUserAgent(),
+                      ...init?.headers,
+                    },
+                  })
                 },
-              }
-            : {}
+              },
+            }
+          : {}
 
         transport = new SSEClientTransport(
           new URL(serverRef.url),
-          Object.keys(transportOptions).length > 0
-            ? transportOptions
-            : undefined,
+          Object.keys(transportOptions).length > 0 ? transportOptions : undefined,
         )
       } else if (serverRef.type === 'ws-ide') {
         const tlsOptions = getWebSocketTLSOptions()
@@ -727,10 +679,7 @@ export const connectToServer = memoize(
         }
         transport = new WebSocketTransport(wsClient)
       } else if (serverRef.type === 'ws') {
-        logMCPDebug(
-          name,
-          `Initializing WebSocket transport to ${serverRef.url}`,
-        )
+        logMCPDebug(name, `Initializing WebSocket transport to ${serverRef.url}`)
 
         const combinedHeaders = await getMcpServerHeaders(name, serverRef)
 
@@ -777,10 +726,7 @@ export const connectToServer = memoize(
         transport = new WebSocketTransport(wsClient)
       } else if (serverRef.type === 'http') {
         logMCPDebug(name, `Initializing HTTP transport to ${serverRef.url}`)
-        logMCPDebug(
-          name,
-          `Node version: ${process.version}, Platform: ${process.platform}`,
-        )
+        logMCPDebug(name, `Node version: ${process.version}, Platform: ${process.platform}`)
         logMCPDebug(
           name,
           `Environment: ${jsonStringify({
@@ -837,8 +783,7 @@ export const connectToServer = memoize(
         const headersForLogging = transportOptions.requestInit?.headers
           ? mapValues(
               transportOptions.requestInit.headers as Record<string, string>,
-              (value, key) =>
-                key.toLowerCase() === 'authorization' ? '[REDACTED]' : value,
+              (value, key) => (key.toLowerCase() === 'authorization' ? '[REDACTED]' : value),
             )
           : undefined
 
@@ -852,18 +797,12 @@ export const connectToServer = memoize(
           })}`,
         )
 
-        transport = new StreamableHTTPClientTransport(
-          new URL(serverRef.url),
-          transportOptions,
-        )
+        transport = new StreamableHTTPClientTransport(new URL(serverRef.url), transportOptions)
         logMCPDebug(name, `HTTP transport created successfully`)
       } else if (serverRef.type === 'sdk') {
         throw new Error('SDK servers should be handled in print.ts')
       } else if (serverRef.type === 'zyai-proxy') {
-        logMCPDebug(
-          name,
-          `Initializing zy.ai proxy transport for server ${serverRef.id}`,
-        )
+        logMCPDebug(name, `Initializing zy.ai proxy transport for server ${serverRef.id}`)
 
         const tokens = getZyAIOAuthTokens()
         if (!tokens) {
@@ -891,25 +830,16 @@ export const connectToServer = memoize(
           },
         }
 
-        transport = new StreamableHTTPClientTransport(
-          new URL(proxyUrl),
-          transportOptions,
-        )
+        transport = new StreamableHTTPClientTransport(new URL(proxyUrl), transportOptions)
         logMCPDebug(name, `zy.ai proxy transport created successfully`)
       } else if (
         ((serverRef as any).type === 'stdio' || !(serverRef as any).type) &&
         isClaudeInChromeMCPServer(name)
       ) {
         // 在进程中运行 Chrome MCP 服务器以避免生成约 325 MB 的子进程
-        const { createChromeContext } = await import(
-          '../../utils/claudeInChrome/mcpServer.js'
-        )
-        const { createZyForChromeMcpServer } = await import(
-          '@ant/claude-for-chrome-mcp'
-        )
-        const { createLinkedTransportPair } = await import(
-          './InProcessTransport.js'
-        )
+        const { createChromeContext } = await import('../../utils/claudeInChrome/mcpServer.js')
+        const { createZyForChromeMcpServer } = await import('@ant/claude-for-chrome-mcp')
+        const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         const context = createChromeContext(serverRef.env)
         inProcessServer = createZyForChromeMcpServer(context) as any
         const [clientTransport, serverTransport] = createLinkedTransportPair()
@@ -927,17 +857,14 @@ export const connectToServer = memoize(
         const { createComputerUseMcpServerForCli } = await import(
           '../../utils/computerUse/mcpServer.js'
         )
-        const { createLinkedTransportPair } = await import(
-          './InProcessTransport.js'
-        )
+        const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         inProcessServer = await createComputerUseMcpServerForCli()
         const [clientTransport, serverTransport] = createLinkedTransportPair()
         await inProcessServer.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Computer Use MCP server started`)
       } else if ((serverRef as any).type === 'stdio' || !(serverRef as any).type) {
-        const finalCommand =
-          process.env.ZY_CODE_SHELL_PREFIX || serverRef.command
+        const finalCommand = process.env.ZY_CODE_SHELL_PREFIX || serverRef.command
         const finalArgs = process.env.ZY_CODE_SHELL_PREFIX
           ? [[serverRef.command, ...serverRef.args].join(' ')]
           : serverRef.args
@@ -1012,10 +939,7 @@ export const connectToServer = memoize(
       })
 
       // 为连接尝试添加超时，防止测试无限挂起
-      logMCPDebug(
-        name,
-        `Starting connection with timeout of ${getConnectionTimeoutMs()}ms`,
-      )
+      logMCPDebug(name, `Starting connection with timeout of ${getConnectionTimeoutMs()}ms`)
 
       // 对于 HTTP 传输，先尝试基本连接测试
       if (serverRef.type === 'http') {
@@ -1028,10 +952,7 @@ export const connectToServer = memoize(
           )
 
           // 记录 DNS 解析尝试
-          if (
-            testUrl.hostname === '127.0.0.1' ||
-            testUrl.hostname === 'localhost'
-          ) {
+          if (testUrl.hostname === '127.0.0.1' || testUrl.hostname === 'localhost') {
             logMCPDebug(name, `Using loopback address: ${testUrl.hostname}`)
           }
         } catch (urlError) {
@@ -1064,7 +985,7 @@ export const connectToServer = memoize(
           () => {
             clearTimeout(timeoutId)
           },
-          _error => {
+          (_error) => {
             clearTimeout(timeoutId)
           },
         )
@@ -1115,14 +1036,8 @@ export const connectToServer = memoize(
           if (error instanceof UnauthorizedError) {
             return handleRemoteAuthFailure(name, serverRef, 'http')
           }
-        } else if (
-          serverRef.type === 'zyai-proxy' &&
-          error instanceof Error
-        ) {
-          logMCPDebug(
-            name,
-            `zy.ai proxy connection failed after ${elapsed}ms: ${error.message}`,
-          )
+        } else if (serverRef.type === 'zyai-proxy' && error instanceof Error) {
+          logMCPDebug(name, `zy.ai proxy connection failed after ${elapsed}ms: ${error.message}`)
           logMCPError(name, error)
 
           // StreamableHTTPError has a `code` property with the HTTP status
@@ -1130,10 +1045,7 @@ export const connectToServer = memoize(
           if (errorCode === 401) {
             return handleRemoteAuthFailure(name, serverRef, 'zyai-proxy')
           }
-        } else if (
-          serverRef.type === 'sse-ide' ||
-          serverRef.type === 'ws-ide'
-        ) {
+        } else if (serverRef.type === 'sse-ide' || serverRef.type === 'ws-ide') {
           logEvent('zy_mcp_ide_server_connection_failed', {
             connectionDurationMs: elapsed,
           })
@@ -1152,12 +1064,8 @@ export const connectToServer = memoize(
       const serverVersion = client.getServerVersion()
       const rawInstructions = client.getInstructions()
       let instructions = rawInstructions
-      if (
-        rawInstructions &&
-        rawInstructions.length > MAX_MCP_DESCRIPTION_LENGTH
-      ) {
-        instructions =
-          rawInstructions.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '… [truncated]'
+      if (rawInstructions && rawInstructions.length > MAX_MCP_DESCRIPTION_LENGTH) {
+        instructions = rawInstructions.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '… [truncated]'
         logMCPDebug(
           name,
           `Server instructions truncated from ${rawInstructions.length} to ${MAX_MCP_DESCRIPTION_LENGTH} chars`,
@@ -1182,7 +1090,7 @@ export const connectToServer = memoize(
       // Register default elicitation handler that returns cancel during the
       // window before registerElicitationHandler overwrites it in
       // onConnectionAttempt (useManageMCPConnections).
-      client.setRequestHandler(ElicitRequestSchema, async request => {
+      client.setRequestHandler(ElicitRequestSchema, async (request) => {
         logMCPDebug(
           name,
           `Elicitation request received during initialization: ${jsonStringify(request)}`,
@@ -1200,10 +1108,7 @@ export const connectToServer = memoize(
         try {
           void maybeNotifyIDEConnected(client)
         } catch (error) {
-          logMCPError(
-            name,
-            `Failed to send ide_connected notification: ${error}`,
-          )
+          logMCPError(name, `Failed to send ide_connected notification: ${error}`)
         }
       }
 
@@ -1235,7 +1140,7 @@ export const connectToServer = memoize(
         if (hasTriggeredClose) return
         hasTriggeredClose = true
         logMCPDebug(name, `Closing transport (${reason})`)
-        void client.close().catch(e => {
+        void client.close().catch((e) => {
           logMCPDebug(name, `Error during close: ${errorMessage(e)}`)
         })
       }
@@ -1271,34 +1176,19 @@ export const connectToServer = memoize(
         // Log specific error details for debugging
         if (error.message) {
           if (error.message.includes('ECONNRESET')) {
-            logMCPDebug(
-              name,
-              `Connection reset - server may have crashed or restarted`,
-            )
+            logMCPDebug(name, `Connection reset - server may have crashed or restarted`)
           } else if (error.message.includes('ETIMEDOUT')) {
-            logMCPDebug(
-              name,
-              `Connection timeout - network issue or server unresponsive`,
-            )
+            logMCPDebug(name, `Connection timeout - network issue or server unresponsive`)
           } else if (error.message.includes('ECONNREFUSED')) {
             logMCPDebug(name, `Connection refused - server may be down`)
           } else if (error.message.includes('EPIPE')) {
-            logMCPDebug(
-              name,
-              `Broken pipe - server closed connection unexpectedly`,
-            )
+            logMCPDebug(name, `Broken pipe - server closed connection unexpectedly`)
           } else if (error.message.includes('EHOSTUNREACH')) {
             logMCPDebug(name, `Host unreachable - network connectivity issue`)
           } else if (error.message.includes('ESRCH')) {
-            logMCPDebug(
-              name,
-              `Process not found - stdio server process terminated`,
-            )
+            logMCPDebug(name, `Process not found - stdio server process terminated`)
           } else if (error.message.includes('spawn')) {
-            logMCPDebug(
-              name,
-              `Failed to spawn process - check command and permissions`,
-            )
+            logMCPDebug(name, `Failed to spawn process - check command and permissions`)
           } else {
             logMCPDebug(name, `Connection error: ${error.message}`)
           }
@@ -1324,11 +1214,7 @@ export const connectToServer = memoize(
 
         // For remote transports (SSE/HTTP), track terminal connection errors
         // and trigger reconnection via close if we see repeated failures.
-        if (
-          transportType === 'sse' ||
-          transportType === 'http' ||
-          transportType === 'zyai-proxy'
-        ) {
+        if (transportType === 'sse' || transportType === 'http' || transportType === 'zyai-proxy') {
           // The SDK's StreamableHTTP transport fires this after exhausting its
           // own SSE reconnect attempts (default maxRetries: 2) — but it never
           // calls onclose, so pending callTool() promises hang indefinitely.
@@ -1437,7 +1323,7 @@ export const connectToServer = memoize(
               }
 
               // Wait for graceful shutdown with rapid escalation (total 500ms to keep CLI responsive)
-              await new Promise<void>(async resolve => {
+              await new Promise<void>(async (resolve) => {
                 let resolved = false
 
                 // Set up a timer to check if process still exists
@@ -1458,15 +1344,12 @@ export const connectToServer = memoize(
                 }, 50)
 
                 // Absolute failsafe: clear interval after 600ms no matter what
-                let failsafeTimeout;
+                let failsafeTimeout
                 failsafeTimeout = setTimeout(() => {
                   if (!resolved) {
                     resolved = true
                     clearInterval(checkInterval)
-                    logMCPDebug(
-                      name,
-                      'Cleanup timeout reached, stopping process monitoring',
-                    )
+                    logMCPDebug(name, 'Cleanup timeout reached, stopping process monitoring')
                     resolve()
                   }
                 }, 600)
@@ -1480,10 +1363,7 @@ export const connectToServer = memoize(
                     try {
                       process.kill(childPid, 0)
                       // Process still exists, SIGINT failed, try SIGTERM
-                      logMCPDebug(
-                        name,
-                        'SIGINT failed, sending SIGTERM to MCP server process',
-                      )
+                      logMCPDebug(name, 'SIGINT failed, sending SIGTERM to MCP server process')
                       try {
                         process.kill(childPid, 'SIGTERM')
                       } catch (termError) {
@@ -1511,17 +1391,11 @@ export const connectToServer = memoize(
                       try {
                         process.kill(childPid, 0)
                         // Process still exists, SIGTERM failed, force kill with SIGKILL
-                        logMCPDebug(
-                          name,
-                          'SIGTERM failed, sending SIGKILL to MCP server process',
-                        )
+                        logMCPDebug(name, 'SIGTERM failed, sending SIGKILL to MCP server process')
                         try {
                           process.kill(childPid, 'SIGKILL')
                         } catch (killError) {
-                          logMCPDebug(
-                            name,
-                            `Error sending SIGKILL: ${killError}`,
-                          )
+                          logMCPDebug(name, `Error sending SIGKILL: ${killError}`)
                         }
                       } catch {
                         // Process already exited
@@ -1602,23 +1476,16 @@ export const connectToServer = memoize(
       logEvent('zy_mcp_server_connection_failed', {
         connectionDurationMs,
         totalServers: serverStats?.totalServers || 1,
-        stdioCount:
-          serverStats?.stdioCount || (serverRef.type === 'stdio' ? 1 : 0),
+        stdioCount: serverStats?.stdioCount || (serverRef.type === 'stdio' ? 1 : 0),
         sseCount: serverStats?.sseCount || (serverRef.type === 'sse' ? 1 : 0),
-        httpCount:
-          serverStats?.httpCount || (serverRef.type === 'http' ? 1 : 0),
-        sseIdeCount:
-          serverStats?.sseIdeCount || (serverRef.type === 'sse-ide' ? 1 : 0),
-        wsIdeCount:
-          serverStats?.wsIdeCount || (serverRef.type === 'ws-ide' ? 1 : 0),
+        httpCount: serverStats?.httpCount || (serverRef.type === 'http' ? 1 : 0),
+        sseIdeCount: serverStats?.sseIdeCount || (serverRef.type === 'sse-ide' ? 1 : 0),
+        wsIdeCount: serverStats?.wsIdeCount || (serverRef.type === 'ws-ide' ? 1 : 0),
         transportType: (serverRef.type ??
           'stdio') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...mcpBaseUrlAnalytics(serverRef),
       })
-      logMCPDebug(
-        name,
-        `Connection failed after ${connectionDurationMs}ms: ${errorMessage(error)}`,
-      )
+      logMCPDebug(name, `Connection failed after ${connectionDurationMs}ms: ${errorMessage(error)}`)
       logMCPError(name, `Connection failed: ${errorMessage(error)}`)
 
       if (inProcessServer) {
@@ -1702,10 +1569,7 @@ export async function ensureConnectedClient(
  * Compares two MCP server configurations to determine if they are equivalent.
  * Used to detect when a server needs to be reconnected due to config changes.
  */
-export function areMcpConfigsEqual(
-  a: ScopedMcpServerConfig,
-  b: ScopedMcpServerConfig,
-): boolean {
+export function areMcpConfigsEqual(a: ScopedMcpServerConfig, b: ScopedMcpServerConfig): boolean {
   // Quick type check first
   if (a.type !== b.type) return false
 
@@ -1730,12 +1594,10 @@ export function mcpToolInputToAutoClassifierInput(
   toolName: string,
 ): string {
   const keys = Object.keys(input)
-  return keys.length > 0
-    ? keys.map(k => `${k}=${String(input[k])}`).join(' ')
-    : toolName
+  return keys.length > 0 ? keys.map((k) => `${k}=${String(input[k])}`).join(' ') : toolName
 }
 
-export let fetchToolsForClient;
+export let fetchToolsForClient
 fetchToolsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Tool[]> => {
     if (client.type !== 'connected') return []
@@ -1755,8 +1617,7 @@ fetchToolsForClient = memoizeWithLRU(
 
       // Check if we should skip the mcp__ prefix for SDK MCP servers
       const skipPrefix =
-        client.config.type === 'sdk' &&
-        isEnvTruthy(process.env.CLAUDE_AGENT_SDK_MCP_NO_PREFIX)
+        client.config.type === 'sdk' && isEnvTruthy(process.env.CLAUDE_AGENT_SDK_MCP_NO_PREFIX)
 
       // Convert MCP tools to our Tool format
       return toolsToProcess
@@ -1774,9 +1635,7 @@ fetchToolsForClient = memoizeWithLRU(
             // list (formatDeferredToolLine joins on '\n').
             searchHint:
               typeof tool._meta?.['anthropic/searchHint'] === 'string'
-                ? tool._meta['anthropic/searchHint']
-                    .replace(/\s+/g, ' ')
-                    .trim() || undefined
+                ? tool._meta['anthropic/searchHint'].replace(/\s+/g, ' ').trim() || undefined
                 : undefined,
             alwaysLoad: tool._meta?.['anthropic/alwaysLoad'] === true,
             async description() {
@@ -1834,9 +1693,7 @@ fetchToolsForClient = memoizeWithLRU(
               onProgress?: ToolCallProgress<MCPProgress>,
             ) {
               const toolUseId = extractToolUseId(parentMessage)
-              const meta = toolUseId
-                ? { 'zycode/toolUseId': toolUseId }
-                : {}
+              const meta = toolUseId ? { 'zycode/toolUseId': toolUseId } : {}
 
               // Emit progress when tool starts
               if (onProgress && toolUseId) {
@@ -1866,7 +1723,7 @@ fetchToolsForClient = memoizeWithLRU(
                     setAppState: context.setAppState,
                     onProgress:
                       onProgress && toolUseId
-                        ? progressData => {
+                        ? (progressData) => {
                             onProgress({
                               toolUseID: toolUseId,
                               data: progressData,
@@ -1906,14 +1763,8 @@ fetchToolsForClient = memoizeWithLRU(
                 } catch (error) {
                   // Session expired — the connection cache has been
                   // cleared, so retry with a fresh client.
-                  if (
-                    error instanceof McpSessionExpiredError &&
-                    attempt < MAX_SESSION_RETRIES
-                  ) {
-                    logMCPDebug(
-                      client.name,
-                      `Retrying tool '${tool.name}' after session recovery`,
-                    )
+                  if (error instanceof McpSessionExpiredError && attempt < MAX_SESSION_RETRIES) {
+                    logMCPDebug(client.name, `Retrying tool '${tool.name}' after session recovery`)
                     continue
                   }
 
@@ -1936,10 +1787,7 @@ fetchToolsForClient = memoizeWithLRU(
                   // don't contain user file paths or code.
                   if (
                     error instanceof Error &&
-                    !(
-                      error instanceof
-                      TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-                    )
+                    !(error instanceof TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
                   ) {
                     const name = error.constructor.name
                     if (name === 'Error') {
@@ -1950,11 +1798,7 @@ fetchToolsForClient = memoizeWithLRU(
                     }
                     // McpError has a numeric `code` with the JSON-RPC error
                     // code (e.g. -32000 ConnectionClosed, -32001 RequestTimeout)
-                    if (
-                      name === 'McpError' &&
-                      'code' in error &&
-                      typeof error.code === 'number'
-                    ) {
+                    if (name === 'McpError' && 'code' in error && typeof error.code === 'number') {
                       throw new TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS(
                         error.message,
                         `McpError ${error.code}`,
@@ -1972,9 +1816,7 @@ fetchToolsForClient = memoizeWithLRU(
             },
             ...(isClaudeInChromeMCPServer(client.name) &&
             (client.config.type === 'stdio' || !client.config.type)
-              ? ClaudeInChromeToolRendering().getClaudeInChromeMCPToolOverrides(
-                  tool.name,
-                )
+              ? ClaudeInChromeToolRendering().getClaudeInChromeMCPToolOverrides(tool.name)
               : {}),
             ...(feature('CHICAGO_MCP') &&
             (client.config.type === 'stdio' || !client.config.type) &&
@@ -1993,7 +1835,7 @@ fetchToolsForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export let fetchResourcesForClient;
+export let fetchResourcesForClient
 fetchResourcesForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<ServerResource[]> => {
     if (client.type !== 'connected') return []
@@ -2011,15 +1853,12 @@ fetchResourcesForClient = memoizeWithLRU(
       if (!result.resources) return []
 
       // Add server name to each resource
-      return result.resources.map(resource => ({
+      return result.resources.map((resource) => ({
         ...resource,
         server: client.name,
       }))
     } catch (error) {
-      logMCPError(
-        client.name,
-        `Failed to fetch resources: ${errorMessage(error)}`,
-      )
+      logMCPError(client.name, `Failed to fetch resources: ${errorMessage(error)}`)
       return []
     }
   },
@@ -2027,7 +1866,7 @@ fetchResourcesForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export let fetchCommandsForClient;
+export let fetchCommandsForClient
 fetchCommandsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Command[]> => {
     if (client.type !== 'connected') return []
@@ -2049,8 +1888,8 @@ fetchCommandsForClient = memoizeWithLRU(
       const promptsToProcess = recursivelySanitizeUnicode(result.prompts)
 
       // Convert MCP prompts to our Command format
-      return promptsToProcess.map(prompt => {
-        const argNames = Object.values(prompt.arguments ?? {}).map(k => k.name)
+      return promptsToProcess.map((prompt) => {
+        const argNames = Object.values(prompt.arguments ?? {}).map((k) => k.name)
         return {
           type: 'prompt' as const,
           name: 'mcp__' + normalizeNameForMCP(client.name) + '__' + prompt.name,
@@ -2077,7 +1916,7 @@ fetchCommandsForClient = memoizeWithLRU(
                 arguments: zipObject(argNames, argsArray),
               })
               const transformed = await Promise.all(
-                result.messages.map(message =>
+                result.messages.map((message) =>
                   transformResultContent(message.content, connectedClient.name),
                 ),
               )
@@ -2093,10 +1932,7 @@ fetchCommandsForClient = memoizeWithLRU(
         }
       })
     } catch (error) {
-      logMCPError(
-        client.name,
-        `Failed to fetch commands: ${errorMessage(error)}`,
-      )
+      logMCPError(client.name, `Failed to fetch commands: ${errorMessage(error)}`)
       return []
     }
   },
@@ -2180,8 +2016,8 @@ export async function reconnectMcpServerImpl(
     const resourceTools: Tool[] = []
     if (supportsResources) {
       // 仅当没有其他服务器有资源工具时才添加
-      const hasResourceTools = [ListMcpResourcesTool, ReadMcpResourceTool].some(
-        tool => tools.some(t => toolMatchesName(t, tool.name)),
+      const hasResourceTools = [ListMcpResourcesTool, ReadMcpResourceTool].some((tool) =>
+        tools.some((t) => toolMatchesName(t, tool.name)),
       )
       if (!hasResourceTools) {
         resourceTools.push(ListMcpResourcesTool, ReadMcpResourceTool)
@@ -2231,9 +2067,7 @@ export async function getMcpToolsCommandsAndResources(
 ): Promise<void> {
   let resourceToolsAdded = false
 
-  const allConfigEntries = Object.entries(
-    mcpConfigs ?? (await getAllMcpConfigs()).servers,
-  )
+  const allConfigEntries = Object.entries(mcpConfigs ?? (await getAllMcpConfigs()).servers)
 
   // 分区为禁用和活跃条目 — 禁用的服务器不应
   // 生成 HTTP 连接或流经批次处理
@@ -2260,12 +2094,8 @@ export async function getMcpToolsCommandsAndResources(
 
   // 按类型拆分服务器：本地（stdio/sdk）需要较低并发，因为
   // 涉及进程生成，远程服务器可以较高并发连接
-  const localServers = configEntries.filter(([_, config]) =>
-    isLocalMcpServer(config),
-  )
-  const remoteServers = configEntries.filter(
-    ([_, config]) => !isLocalMcpServer(config),
-  )
+  const localServers = configEntries.filter(([_, config]) => isLocalMcpServer(config))
+  const remoteServers = configEntries.filter(([_, config]) => !isLocalMcpServer(config))
 
   const serverStats = {
     totalServers,
@@ -2276,10 +2106,7 @@ export async function getMcpToolsCommandsAndResources(
     wsIdeCount,
   }
 
-  const processServer = async ([name, config]: [
-    string,
-    ScopedMcpServerConfig,
-  ]): Promise<void> => {
+  const processServer = async ([name, config]: [string, ScopedMcpServerConfig]): Promise<void> => {
     try {
       // 检查服务器是否已禁用 — 如果是，仅添加到状态而不连接
       if (isMcpServerDisabled(name)) {
@@ -2302,9 +2129,7 @@ export async function getMcpToolsCommandsAndResources(
       // 每次探测都是一次 connect-401 加 OAuth 发现的网络往返，
       // 而 print 模式会等待整个批次（main.tsx:3503）。
       if (
-        (config.type === 'zyai-proxy' ||
-          config.type === 'http' ||
-          config.type === 'sse') &&
+        (config.type === 'zyai-proxy' || config.type === 'http' || config.type === 'sse') &&
         ((await isMcpAuthCached(name)) ||
           ((config.type === 'http' || config.type === 'sse') &&
             hasMcpDiscoveryButNoToken(name, config)))
@@ -2323,10 +2148,7 @@ export async function getMcpToolsCommandsAndResources(
       if (client.type !== 'connected') {
         onConnectionAttempt({
           client,
-          tools:
-            client.type === 'needs-auth'
-              ? [createMcpAuthTool(name, config)]
-              : [],
+          tools: client.type === 'needs-auth' ? [createMcpAuthTool(name, config)] : [],
           commands: [],
         })
         return
@@ -2346,9 +2168,7 @@ export async function getMcpToolsCommandsAndResources(
           ? fetchMcpSkillsForClient!(client)
           : Promise.resolve([]),
         // 如果支持则获取资源
-        supportsResources
-          ? fetchResourcesForClient(client)
-          : Promise.resolve([]),
+        supportsResources ? fetchResourcesForClient(client) : Promise.resolve([]),
       ])
       const commands = [...mcpCommands, ...mcpSkills]
 
@@ -2368,10 +2188,7 @@ export async function getMcpToolsCommandsAndResources(
       })
     } catch (error) {
       // 优雅处理错误 — 连接可能在获取期间已关闭
-      logMCPError(
-        name,
-        `Error fetching tools/commands/resources: ${errorMessage(error)}`,
-      )
+      logMCPError(name, `Error fetching tools/commands/resources: ${errorMessage(error)}`)
 
       // 仍然用客户端更新，但不含工具/命令
       onConnectionAttempt({
@@ -2386,16 +2203,8 @@ export async function getMcpToolsCommandsAndResources(
   // - 本地服务器（stdio/sdk）：较低并发以避免进程生成的资源竞争
   // - 远程服务器：较高并发，因为它们只是网络连接
   await Promise.all([
-    processBatched(
-      localServers,
-      getMcpServerConnectionBatchSize(),
-      processServer,
-    ),
-    processBatched(
-      remoteServers,
-      getRemoteMcpServerConnectionBatchSize(),
-      processServer,
-    ),
+    processBatched(localServers, getMcpServerConnectionBatchSize(), processServer),
+    processBatched(remoteServers, getRemoteMcpServerConnectionBatchSize(), processServer),
   ])
 }
 
@@ -2409,7 +2218,7 @@ export function prefetchAllMcpResources(
   tools: Tool[]
   commands: Command[]
 }> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     let pendingCount = 0
     let completedCount = 0
 
@@ -2428,7 +2237,7 @@ export function prefetchAllMcpResources(
     const tools: Tool[] = []
     const commands: Command[] = []
 
-    getMcpToolsCommandsAndResources(result => {
+    getMcpToolsCommandsAndResources((result) => {
       clients.push(result.client)
       tools.push(...result.tools)
       commands.push(...result.commands)
@@ -2454,11 +2263,8 @@ export function prefetchAllMcpResources(
           commands,
         })
       }
-    }, mcpConfigs).catch(error => {
-      logMCPError(
-        'prefetchAllMcpResources',
-        `Failed to get MCP resources: ${errorMessage(error)}`,
-      )
+    }, mcpConfigs).catch((error) => {
+      logMCPError('prefetchAllMcpResources', `Failed to get MCP resources: ${errorMessage(error)}`)
       // 仍然返回空结果
       void resolve({
         clients: [],
@@ -2509,8 +2315,7 @@ export async function transformResultContent(
       return [
         {
           type: 'image',
-          mimeType:
-            `image/${resized.mediaType}` as ImageSource['mediaType'],
+          mimeType: `image/${resized.mediaType}` as ImageSource['mediaType'],
           data: resized.buffer.toString('base64'),
         },
       ]
@@ -2547,8 +2352,7 @@ export async function transformResultContent(
           }
           content.push({
             type: 'image',
-            mimeType:
-              `image/${resized.mediaType}` as ImageSource['mediaType'],
+            mimeType: `image/${resized.mediaType}` as ImageSource['mediaType'],
             data: resized.buffer.toString('base64'),
           })
           return content
@@ -2607,12 +2411,7 @@ async function persistBlobToTextBlock(
   return [
     {
       type: 'text',
-      text: getBinaryBlobSavedMessage(
-        result.filepath,
-        mimeType,
-        result.size,
-        sourceDescription,
-      ),
+      text: getBinaryBlobSavedMessage(result.filepath, mimeType, result.size, sourceDescription),
     },
   ]
 }
@@ -2641,9 +2440,7 @@ export function inferCompactSchema(value: unknown, depth = 2): string {
   if (typeof value === 'object') {
     if (depth <= 0) return '{...}'
     const entries = Object.entries(value).slice(0, 10)
-    const props = entries.map(
-      ([k, v]) => `${k}: ${inferCompactSchema(v, depth - 1)}`,
-    )
+    const props = entries.map(([k, v]) => `${k}: ${inferCompactSchema(v, depth - 1)}`)
     const suffix = Object.keys(value).length > 10 ? ', ...' : ''
     return `{${props.join(', ')}${suffix}}`
   }
@@ -2663,10 +2460,7 @@ export async function transformMCPResult(
       }
     }
 
-    if (
-      'structuredContent' in result &&
-      result.structuredContent !== undefined
-    ) {
+    if ('structuredContent' in result && result.structuredContent !== undefined) {
       return {
         content: jsonStringify(result.structuredContent),
         type: 'structuredContent',
@@ -2676,9 +2470,7 @@ export async function transformMCPResult(
 
     if ('content' in result && Array.isArray(result.content)) {
       const transformedContent = (
-        await Promise.all(
-          result.content.map(item => transformResultContent(item, name)),
-        )
+        await Promise.all(result.content.map((item) => transformResultContent(item, name)))
       ).flat()
       return {
         content: transformedContent,
@@ -2705,7 +2497,7 @@ function contentContainsImages(content: MCPToolResult): boolean {
   if (!content || typeof content === 'string') {
     return false
   }
-  return content.some(block => block.type === 'image')
+  return content.some((block) => block.type === 'image')
 }
 
 export async function processMCPResult(
@@ -2759,8 +2551,7 @@ export async function processMCPResult(
   const timestamp = Date.now()
   const persistId = `mcp-${normalizeNameForMCP(name)}-${normalizeNameForMCP(tool)}-${timestamp}`
   // 转换为字符串用于持久化（persistToolResult 期望字符串或特定块类型）
-  const contentStr =
-    typeof content === 'string' ? content : jsonStringify(content, null, 2)
+  const contentStr = typeof content === 'string' ? content : jsonStringify(content, null, 2)
   const persistResult = await persistToolResult(contentStr, persistId)
 
   if (isPersistError(persistResult)) {
@@ -2852,10 +2643,7 @@ export async function callMCPToolWithUrlElicitationRetry({
       // MCP SDK 的 Protocol 为错误响应创建普通的 McpError
       //（而非 UrlElicitationRequiredError），因此我们检查错误代码
       // 而非 instanceof。
-      if (
-        !(error instanceof McpError) ||
-        error.code !== ErrorCode.UrlElicitationRequired
-      ) {
+      if (!(error instanceof McpError) || error.code !== ErrorCode.UrlElicitationRequired) {
         throw error
       }
 
@@ -2874,23 +2662,18 @@ export async function callMCPToolWithUrlElicitationRetry({
           : []
 
       // 验证每个元素具有 ElicitRequestURLParams 所需的字段
-      const elicitations = rawElicitations.filter(
-        (e): e is ElicitRequestURLParams => {
-          if (e == null || typeof e !== 'object') return false
-          const obj = e as Record<string, unknown>
-          return (
-            obj.mode === 'url' &&
-            typeof obj.url === 'string' &&
-            typeof obj.elicitationId === 'string' &&
-            typeof obj.message === 'string'
-          )
-        },
-      )
+      const elicitations = rawElicitations.filter((e): e is ElicitRequestURLParams => {
+        if (e == null || typeof e !== 'object') return false
+        const obj = e as Record<string, unknown>
+        return (
+          obj.mode === 'url' &&
+          typeof obj.url === 'string' &&
+          typeof obj.elicitationId === 'string' &&
+          typeof obj.message === 'string'
+        )
+      })
 
-      const serverName =
-        clientConnection.type === 'connected'
-          ? clientConnection.name
-          : 'unknown'
+      const serverName = clientConnection.type === 'connected' ? clientConnection.name : 'unknown'
 
       if (elicitations.length === 0) {
         logMCPDebug(
@@ -2912,11 +2695,7 @@ export async function callMCPToolWithUrlElicitationRetry({
         const { elicitationId } = elicitation
 
         // 运行征询处理器 — 它们可以编程方式解决 URL 征询
-        const hookResponse = await runElicitationHooks(
-          serverName,
-          elicitation,
-          signal,
-        )
+        const hookResponse = await runElicitationHooks(serverName, elicitation, signal)
         if (hookResponse) {
           logMCPDebug(
             serverName,
@@ -2942,7 +2721,7 @@ export async function callMCPToolWithUrlElicitationRetry({
             actionLabel: 'Retry now',
             showCancel: true,
           }
-          userResult = await new Promise<ElicitResult>(resolve => {
+          userResult = await new Promise<ElicitResult>((resolve) => {
             const onAbort = () => {
               void resolve({ action: 'cancel' })
             }
@@ -2952,7 +2731,7 @@ export async function callMCPToolWithUrlElicitationRetry({
             }
             signal.addEventListener('abort', onAbort, { once: true })
 
-            setAppState(prev => ({
+            setAppState((prev) => ({
               ...prev,
               elicitation: {
                 queue: [
@@ -2963,7 +2742,7 @@ export async function callMCPToolWithUrlElicitationRetry({
                     params: elicitation,
                     signal,
                     waitingState,
-                    respond: result => {
+                    respond: (result) => {
                       // 第一阶段同意：接受是无操作（不解析重试 Promise）
                       if (result.action === 'accept') {
                         return
@@ -2972,7 +2751,7 @@ export async function callMCPToolWithUrlElicitationRetry({
                       signal.removeEventListener('abort', onAbort)
                       void resolve(result)
                     },
-                    onWaitingDismiss: action => {
+                    onWaitingDismiss: (action) => {
                       signal.removeEventListener('abort', onAbort)
                       if (action === 'retry') {
                         void resolve({ action: 'accept' })
@@ -3006,10 +2785,7 @@ export async function callMCPToolWithUrlElicitationRetry({
           }
         }
 
-        logMCPDebug(
-          serverName,
-          `Elicitation ${elicitationId} completed, retrying tool call`,
-        )
+        logMCPDebug(serverName, `Elicitation ${elicitationId} completed, retrying tool call`)
       }
 
       // 循环回去重试工具调用
@@ -3091,7 +2867,7 @@ async function callMCPTool({
           signal,
           timeout: timeoutMs,
           onprogress: onProgress
-            ? sdkProgress => {
+            ? (sdkProgress) => {
                 onProgress({
                   type: 'mcp_progress',
                   status: 'progress',
@@ -3114,17 +2890,9 @@ async function callMCPTool({
 
     if ('isError' in result && result.isError) {
       let errorDetails = 'Unknown error'
-      if (
-        'content' in result &&
-        Array.isArray(result.content) &&
-        result.content.length > 0
-      ) {
+      if ('content' in result && Array.isArray(result.content) && result.content.length > 0) {
         const firstContent = result.content[0]
-        if (
-          firstContent &&
-          typeof firstContent === 'object' &&
-          'text' in firstContent
-        ) {
+        if (firstContent && typeof firstContent === 'object' && 'text' in firstContent) {
           errorDetails = firstContent.text
         }
       } else if ('error' in result) {
@@ -3153,8 +2921,7 @@ async function callMCPTool({
     if (codeIndexingTool) {
       logEvent('zy_code_indexing_tool_used', {
         tool: codeIndexingTool as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        source:
-          'mcp' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        source: 'mcp' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         success: true,
       })
     }
@@ -3163,9 +2930,7 @@ async function callMCPTool({
     return {
       content,
       _meta: result._meta as Record<string, unknown> | undefined,
-      structuredContent: result.structuredContent as
-        | Record<string, unknown>
-        | undefined,
+      structuredContent: result.structuredContent as Record<string, unknown> | undefined,
     }
   } catch (e) {
     // 出错时清除间隔
@@ -3176,10 +2941,7 @@ async function callMCPTool({
     const elapsed = Date.now() - toolStartTime
 
     if (e instanceof Error && e.name !== 'AbortError') {
-      logMCPDebug(
-        name,
-        `Tool '${tool}' failed after ${Math.floor(elapsed / 1000)}s: ${e.message}`,
-      )
+      logMCPDebug(name, `Tool '${tool}' failed after ${Math.floor(elapsed / 1000)}s: ${e.message}`)
     }
 
     // 检查 401 错误，表示 OAuth token 过期/无效
@@ -3187,10 +2949,7 @@ async function callMCPTool({
     if (e instanceof Error) {
       const errorCode = 'code' in e ? (e.code as number | undefined) : undefined
       if (errorCode === 401 || e instanceof UnauthorizedError) {
-        logMCPDebug(
-          name,
-          `Tool call returned 401 Unauthorized - token may have expired`,
-        )
+        logMCPDebug(name, `Tool call returned 401 Unauthorized - token may have expired`)
         logEvent('zy_mcp_tool_call_auth_error', {})
         throw new McpAuthError(
           name,
@@ -3252,10 +3011,7 @@ function extractToolUseId(message: AssistantMessage): string | undefined {
  */
 export async function setupSdkMcpClients(
   sdkMcpConfigs: Record<string, McpSdkServerConfig>,
-  sendMcpMessage: (
-    serverName: string,
-    message: JSONRPCMessage,
-  ) => Promise<JSONRPCMessage>,
+  sendMcpMessage: (serverName: string, message: JSONRPCMessage) => Promise<JSONRPCMessage>,
 ): Promise<{
   clients: MCPServerConnection[]
   tools: Tool[]

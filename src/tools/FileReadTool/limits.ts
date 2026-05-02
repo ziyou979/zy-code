@@ -51,11 +51,10 @@ export type FileReadingLimits = {
  * through to the hardcoded defaults (no route to cap=0).
  */
 export const getDefaultFileReadingLimits = memoize((): FileReadingLimits => {
-  const override =
-    getFeatureValue_CACHED_MAY_BE_STALE<Partial<FileReadingLimits> | null>(
-      'zy_amber_wren',
-      {},
-    )
+  const override = getFeatureValue_CACHED_MAY_BE_STALE<Partial<FileReadingLimits> | null>(
+    'zy_amber_wren',
+    {},
+  )
 
   const maxSizeBytes =
     typeof override?.maxSizeBytes === 'number' &&
@@ -79,9 +78,7 @@ export const getDefaultFileReadingLimits = memoize((): FileReadingLimits => {
       : undefined
 
   const targetedRangeNudge =
-    typeof override?.targetedRangeNudge === 'boolean'
-      ? override.targetedRangeNudge
-      : undefined
+    typeof override?.targetedRangeNudge === 'boolean' ? override.targetedRangeNudge : undefined
 
   return {
     maxSizeBytes,

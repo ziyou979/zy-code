@@ -45,19 +45,12 @@ export type ChannelPermissionResponse = {
 
 export type ChannelPermissionCallbacks = {
   /** Register a resolver for a request ID. Returns unsubscribe. */
-  onResponse(
-    requestId: string,
-    handler: (response: ChannelPermissionResponse) => void,
-  ): () => void
+  onResponse(requestId: string, handler: (response: ChannelPermissionResponse) => void): () => void
   /** Resolve a pending request from a structured channel event
    *  (notifications/zy/channel/permission). Returns true if the ID
    *  was pending — the server parsed the user's reply and emitted
    *  {request_id, behavior}; we just match against the map. */
-  resolve(
-    requestId: string,
-    behavior: 'allow' | 'deny',
-    fromServer: string,
-  ): boolean
+  resolve(requestId: string, behavior: 'allow' | 'deny', fromServer: string): boolean
 }
 
 /**
@@ -143,7 +136,7 @@ export function shortRequestId(toolUseID: string): string {
   // Cap at 10 retries; (1/700)^10 is negligible.
   let candidate = hashToId(toolUseID)
   for (let salt = 0; salt < 10; salt++) {
-    if (!ID_AVOID_SUBSTRINGS.some(bad => candidate.includes(bad))) {
+    if (!ID_AVOID_SUBSTRINGS.some((bad) => candidate.includes(bad))) {
       return candidate
     }
     candidate = hashToId(`${toolUseID}:${salt}`)
@@ -180,10 +173,7 @@ export function filterPermissionRelayClients<
     name: string
     capabilities?: { experimental?: Record<string, unknown> }
   },
->(
-  clients: readonly T[],
-  isInAllowlist: (name: string) => boolean,
-): (T & { type: 'connected' })[] {
+>(clients: readonly T[], isInAllowlist: (name: string) => boolean): (T & { type: 'connected' })[] {
   return clients.filter(
     (c): c is T & { type: 'connected' } =>
       c.type === 'connected' &&
@@ -207,10 +197,7 @@ export function filterPermissionRelayClients<
  * general channel can't accidentally approve anything.
  */
 export function createChannelPermissionCallbacks(): ChannelPermissionCallbacks {
-  const pending = new Map<
-    string,
-    (response: ChannelPermissionResponse) => void
-  >()
+  const pending = new Map<string, (response: ChannelPermissionResponse) => void>()
 
   return {
     onResponse(requestId, handler) {

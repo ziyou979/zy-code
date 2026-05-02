@@ -36,10 +36,7 @@ const CONSOLE_SCOPE = 'org:create_api_key' as const
 export const OAUTH_BETA_HEADER = 'oauth-2025-04-20' as const
 
 // Console OAuth scopes - for API key creation via Console
-export const CONSOLE_OAUTH_SCOPES = [
-  CONSOLE_SCOPE,
-  CLAUDE_AI_PROFILE_SCOPE,
-] as const
+export const CONSOLE_OAUTH_SCOPES = [CONSOLE_SCOPE, CLAUDE_AI_PROFILE_SCOPE] as const
 
 // Zy.ai OAuth scopes - for Zy.ai subscribers (Pro/Max/Team/Enterprise)
 export const CLAUDE_AI_OAUTH_SCOPES = [
@@ -93,8 +90,7 @@ const PROD_OAUTH_CONFIG = {
   ROLES_URL: 'https://api.anthropic.com/api/oauth/claude_cli/roles',
   CONSOLE_SUCCESS_URL:
     'https://platform.zy.com/buy_credits?returnUrl=/oauth/code/success%3Fapp%3Dzy-code',
-  CLAUDEAI_SUCCESS_URL:
-    'https://platform.zy.com/oauth/code/success?app=zy-code',
+  CLAUDEAI_SUCCESS_URL: 'https://platform.zy.com/oauth/code/success?app=zy-code',
   MANUAL_REDIRECT_URL: 'https://platform.zy.com/oauth/code/callback',
   CLIENT_ID: '9d1c250a-e61b-44d9-88ed-5944d1962f5e',
   // No suffix for production config
@@ -110,8 +106,7 @@ const PROD_OAUTH_CONFIG = {
  * The URL must point to a JSON document hosted by the OAuth provider.
  * See: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00
  */
-export const MCP_CLIENT_METADATA_URL =
-  'https://zy.ai/oauth/zy-code-client-metadata'
+export const MCP_CLIENT_METADATA_URL = 'https://zy.ai/oauth/zy-code-client-metadata'
 
 // TODO: 自建 staging OAuth 配置（原 Anthropic 内部 ant.dev 配置已移除）
 const STAGING_OAUTH_CONFIG: OauthConfig | undefined = undefined
@@ -120,15 +115,11 @@ const STAGING_OAUTH_CONFIG: OauthConfig | undefined = undefined
 // :4000 zy-ai frontend, :3000 Console frontend. Env vars let
 // scripts/zy-localhost override if your layout differs.
 function getLocalOauthConfig(): OauthConfig {
-  const api =
-    process.env.CLAUDE_LOCAL_OAUTH_API_BASE?.replace(/\/$/, '') ??
-    'http://localhost:8000'
+  const api = process.env.CLAUDE_LOCAL_OAUTH_API_BASE?.replace(/\/$/, '') ?? 'http://localhost:8000'
   const apps =
-    process.env.CLAUDE_LOCAL_OAUTH_APPS_BASE?.replace(/\/$/, '') ??
-    'http://localhost:4000'
+    process.env.CLAUDE_LOCAL_OAUTH_APPS_BASE?.replace(/\/$/, '') ?? 'http://localhost:4000'
   const consoleBase =
-    process.env.CLAUDE_LOCAL_OAUTH_CONSOLE_BASE?.replace(/\/$/, '') ??
-    'http://localhost:3000'
+    process.env.CLAUDE_LOCAL_OAUTH_CONSOLE_BASE?.replace(/\/$/, '') ?? 'http://localhost:3000'
   return {
     BASE_API_URL: api,
     CONSOLE_AUTHORIZE_URL: `${consoleBase}/oauth/authorize`,
@@ -151,10 +142,7 @@ function getLocalOauthConfig(): OauthConfig {
 // Only FedStart/PubSec deployments are permitted to prevent OAuth tokens
 // from being sent to arbitrary endpoints.
 // TODO: 自建 staging 后添加自建域名到此白名单
-const ALLOWED_OAUTH_BASE_URLS = [
-  'https://zy.fedstart.com',
-  'https://zy-staging.fedstart.com',
-]
+const ALLOWED_OAUTH_BASE_URLS = ['https://zy.fedstart.com', 'https://zy-staging.fedstart.com']
 
 // Default to prod config, override with test/staging if enabled
 export function getOauthConfig(): OauthConfig {
@@ -175,9 +163,7 @@ export function getOauthConfig(): OauthConfig {
   if (oauthBaseUrl) {
     const base = oauthBaseUrl.replace(/\/$/, '')
     if (!ALLOWED_OAUTH_BASE_URLS.includes(base)) {
-      throw new Error(
-        'ZY_CODE_CUSTOM_OAUTH_URL is not an approved endpoint.',
-      )
+      throw new Error('ZY_CODE_CUSTOM_OAUTH_URL is not an approved endpoint.')
     }
     config = {
       ...config,

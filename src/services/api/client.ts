@@ -1,18 +1,25 @@
-import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
-import { randomUUID } from 'crypto';
-import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js';
-import { getUserAgent } from 'src/utils/http.js';
-import { getAPIProvider, isAnthropicBaseUrl, isCustomEndpointProvider, isEnvOrDefaultProvider, isOpenAIProvider, isPreconfiguredEndpointProvider } from 'src/utils/model/providers.js';
-import { getProviderEntry } from 'src/utils/model/providerRegistry.js';
-import { getProxyFetchOptions } from 'src/utils/proxy.js';
-import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js';
-import { getOauthConfig } from '../../constants/oauth.js';
-import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js';
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js';
-import type { LLMAdapter } from '../../types/llm.js';
-import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js';
-import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
+import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
+import { randomUUID } from 'crypto'
+import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js'
+import { getUserAgent } from 'src/utils/http.js'
+import {
+  getAPIProvider,
+  isAnthropicBaseUrl,
+  isCustomEndpointProvider,
+  isEnvOrDefaultProvider,
+  isOpenAIProvider,
+  isPreconfiguredEndpointProvider,
+} from 'src/utils/model/providers.js'
+import { getProviderEntry } from 'src/utils/model/providerRegistry.js'
+import { getProxyFetchOptions } from 'src/utils/proxy.js'
+import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import type { LLMAdapter } from '../../types/llm.js'
+import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js'
+import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
 
 /**
  * 不同客户端类型的环境变量：
@@ -24,116 +31,129 @@ import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js';
 function createStderrLogger(): any {
   return {
     error: (msg, ...args) =>
-    // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-    console.error('[SDK ERROR]', msg, ...args),
+      // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
+      console.error('[SDK ERROR]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
     warn: (msg, ...args) => console.error('[SDK WARN]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
     info: (msg, ...args) => console.error('[SDK INFO]', msg, ...args),
     debug: (msg, ...args) =>
-    // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-    console.error('[SDK DEBUG]', msg, ...args)
-  };
+      // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
+      console.error('[SDK DEBUG]', msg, ...args),
+  }
 }
 export async function getAnthropicClient({
   apiKey,
   maxRetries,
   model,
   fetchOverride,
-  source
+  source,
 }: {
-  apiKey?: string;
-  maxRetries: number;
-  model?: string;
-  fetchOverride?: ClientOptions['fetch'];
-  source?: string;
+  apiKey?: string
+  maxRetries: number
+  model?: string
+  fetchOverride?: ClientOptions['fetch']
+  source?: string
 }): Promise<Anthropic> {
-  const containerId = process.env.ZY_CODE_CONTAINER_ID;
-  const remoteSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID;
-  const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP;
-  const customHeaders = getCustomHeaders();
+  const containerId = process.env.ZY_CODE_CONTAINER_ID
+  const remoteSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID
+  const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP
+  const customHeaders = getCustomHeaders()
   const defaultHeaders: {
-    [key: string]: string;
+    [key: string]: string
   } = {
     'x-app': 'cli',
     'User-Agent': getUserAgent(),
     'X-Claude-Code-Session-Id': getSessionId(),
     ...customHeaders,
-    ...(containerId ? {
-      'x-claude-remote-container-id': containerId
-    } : {}),
-    ...(remoteSessionId ? {
-      'x-claude-remote-session-id': remoteSessionId
-    } : {}),
+    ...(containerId
+      ? {
+          'x-claude-remote-container-id': containerId,
+        }
+      : {}),
+    ...(remoteSessionId
+      ? {
+          'x-claude-remote-session-id': remoteSessionId,
+        }
+      : {}),
     // SDK 消费者可以通过此标识在 SDK 请求上设置他们的 app/library，用于后端分析
-    ...(clientApp ? {
-      'x-client-app': clientApp
-    } : {})
-  };
+    ...(clientApp
+      ? {
+          'x-client-app': clientApp,
+        }
+      : {}),
+  }
 
   // 记录 API 客户端配置，用于 HFI 调试
-  logForDebugging(`[API:request] Creating client, ZY_CODE_CUSTOM_HEADERS present: ${!!process.env.ZY_CODE_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders['Authorization']}`);
+  logForDebugging(
+    `[API:request] Creating client, ZY_CODE_CUSTOM_HEADERS present: ${!!process.env.ZY_CODE_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders['Authorization']}`,
+  )
 
   // 如果通过环境变量启用了额外保护 header
-  const additionalProtectionEnabled = isEnvTruthy(process.env.ZY_CODE_ADDITIONAL_PROTECTION);
+  const additionalProtectionEnabled = isEnvTruthy(process.env.ZY_CODE_ADDITIONAL_PROTECTION)
   if (additionalProtectionEnabled) {
-    defaultHeaders['x-anthropic-additional-protection'] = 'true';
+    defaultHeaders['x-anthropic-additional-protection'] = 'true'
   }
 
   // 始终配置 API 密钥 header（无订阅上下文）
-  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession());
-  const resolvedFetch = buildFetch(fetchOverride, source);
+  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession())
+  const resolvedFetch = buildFetch(fetchOverride, source)
   const ARGS = {
     defaultHeaders,
     maxRetries,
     timeout: parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10),
     dangerouslyAllowBrowser: true,
     fetchOptions: getProxyFetchOptions({
-      forAnthropicAPI: true
+      forAnthropicAPI: true,
     }) as any,
     ...(resolvedFetch && {
-      fetch: resolvedFetch
-    })
-  } as any;
+      fetch: resolvedFetch,
+    }),
+  } as any
   // ── Registry-driven providers ──────────────────────────────────────────
   // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
   // siliconflow, etc.), and generic — all share the same client creation logic.
-  const apiProvider = getAPIProvider();
-  const registryEntry = getProviderEntry(apiProvider);
+  const apiProvider = getAPIProvider()
+  const registryEntry = getProviderEntry(apiProvider)
 
-  if (registryEntry && (isEnvOrDefaultProvider(apiProvider) || isPreconfiguredEndpointProvider(apiProvider) || apiProvider === 'generic')) {
-    const resolvedApiKey = getApiKey();
-    let resolvedBaseURL: string | undefined;
+  if (
+    registryEntry &&
+    (isEnvOrDefaultProvider(apiProvider) ||
+      isPreconfiguredEndpointProvider(apiProvider) ||
+      apiProvider === 'generic')
+  ) {
+    const resolvedApiKey = getApiKey()
+    let resolvedBaseURL: string | undefined
 
     // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
     if (registryEntry.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
-      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar];
+      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
     }
     // 2. Generic env vars
     if (!resolvedBaseURL && process.env.ANTHROPIC_BASE_URL) {
-      resolvedBaseURL = process.env.ANTHROPIC_BASE_URL;
+      resolvedBaseURL = process.env.ANTHROPIC_BASE_URL
     }
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
-      resolvedBaseURL = process.env.LLM_BASE_URL;
+      resolvedBaseURL = process.env.LLM_BASE_URL
     }
     // 3. Onboarding config (configuredBaseUrl)
     if (!resolvedBaseURL) {
       try {
-        const { getGlobalConfig } = await import('../../utils/config.js');
-        resolvedBaseURL = getGlobalConfig().configuredBaseUrl;
+        const { getGlobalConfig } = await import('../../utils/config.js')
+        resolvedBaseURL = getGlobalConfig().configuredBaseUrl
       } catch {
         // config not ready
       }
     }
     // 4. Registry defaults (use openai format as default)
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
-      resolvedBaseURL = registryEntry.defaultBaseUrls.openai;
+      resolvedBaseURL = registryEntry.defaultBaseUrls.openai
     }
 
     if (resolvedBaseURL) {
-      const providerHeaders: Record<string, string> = {};
+      const providerHeaders: Record<string, string> = {}
       if (defaultHeaders['User-Agent']) {
-        providerHeaders['User-Agent'] = defaultHeaders['User-Agent'];
+        providerHeaders['User-Agent'] = defaultHeaders['User-Agent']
       }
       const providerConfig: ConstructorParameters<typeof Anthropic>[0] = {
         apiKey: resolvedApiKey,
@@ -144,33 +164,33 @@ export async function getAnthropicClient({
         dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
         ...(ARGS.fetch && { fetch: ARGS.fetch }),
         ...(isDebugToStdErr() && { logger: createStderrLogger() }),
-      };
-      return new Anthropic(providerConfig);
+      }
+      return new Anthropic(providerConfig)
     }
   }
 
   // 本地推理引擎（ollama、lmstudio、llamacpp、nvidia-nim 等）
   if (isCustomEndpointProvider(apiProvider) && registryEntry) {
     // 优先级：环境变量 > onboarding 配置 > registry 默认值
-    let customBaseURL: string | undefined;
+    let customBaseURL: string | undefined
     if (process.env.LLM_BASE_URL) {
-      customBaseURL = process.env.LLM_BASE_URL;
+      customBaseURL = process.env.LLM_BASE_URL
     } else {
       try {
-        const { getGlobalConfig } = await import('../../utils/config.js');
-        customBaseURL = getGlobalConfig().configuredBaseUrl;
+        const { getGlobalConfig } = await import('../../utils/config.js')
+        customBaseURL = getGlobalConfig().configuredBaseUrl
       } catch {
         // config not ready
       }
     }
     if (!customBaseURL) {
-      customBaseURL = registryEntry.defaultBaseUrls?.openai;
+      customBaseURL = registryEntry.defaultBaseUrls?.openai
     }
 
-    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey();
-    const customEndpointHeaders: Record<string, string> = {};
+    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey()
+    const customEndpointHeaders: Record<string, string> = {}
     if (defaultHeaders['User-Agent']) {
-      customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent'];
+      customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent']
     }
     const providerAnthropicConfig: ConstructorParameters<typeof Anthropic>[0] = {
       apiKey: customApiKey,
@@ -181,8 +201,8 @@ export async function getAnthropicClient({
       dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
       ...(ARGS.fetch && { fetch: ARGS.fetch }),
       ...(isDebugToStdErr() && { logger: createStderrLogger() }),
-    };
-    return new Anthropic(providerAnthropicConfig);
+    }
+    return new Anthropic(providerAnthropicConfig)
   }
 
   // 根据可用的 token 确定认证方式
@@ -190,15 +210,17 @@ export async function getAnthropicClient({
     apiKey: apiKey || getApiKey(),
     authToken: undefined,
     // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
-    ...(isInternalBuild() && isEnvTruthy(process.env.USE_STAGING_OAUTH) ? {
-      baseURL: getOauthConfig().BASE_API_URL
-    } : {}),
+    ...(isInternalBuild() && isEnvTruthy(process.env.USE_STAGING_OAUTH)
+      ? {
+          baseURL: getOauthConfig().BASE_API_URL,
+        }
+      : {}),
     ...ARGS,
     ...(isDebugToStdErr() && {
-      logger: createStderrLogger()
-    })
-  };
-  return new Anthropic(clientConfig);
+      logger: createStderrLogger(),
+    }),
+  }
+  return new Anthropic(clientConfig)
 }
 
 // ============================================================================
@@ -284,12 +306,11 @@ export async function getOpenAIClient(options?: {
     }
   }
 
-  const timeout = options?.timeout
-    ?? parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10)
+  const timeout = options?.timeout ?? parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10)
 
   logForDebugging(
     `[API:request] Creating OpenAI client, baseURL=${resolvedBaseURL}, ` +
-    `provider=${apiProvider}, customHeaders=${!!process.env.ZY_CODE_CUSTOM_HEADERS}`,
+      `provider=${apiProvider}, customHeaders=${!!process.env.ZY_CODE_CUSTOM_HEADERS}`,
   )
 
   return new OpenAI({
@@ -302,65 +323,73 @@ export async function getOpenAIClient(options?: {
   })
 }
 
-async function configureApiKeyHeaders(headers: Record<string, string>, isNonInteractiveSession: boolean): Promise<void> {
-  const token = process.env.ANTHROPIC_AUTH_TOKEN || (await getApiKeyFromApiKeyHelper(isNonInteractiveSession));
+async function configureApiKeyHeaders(
+  headers: Record<string, string>,
+  isNonInteractiveSession: boolean,
+): Promise<void> {
+  const token =
+    process.env.ANTHROPIC_AUTH_TOKEN || (await getApiKeyFromApiKeyHelper(isNonInteractiveSession))
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`
   }
 }
 function getCustomHeaders(): Record<string, string> {
-  const customHeaders: Record<string, string> = {};
-  const customHeadersEnv = process.env.ZY_CODE_CUSTOM_HEADERS;
-  if (!customHeadersEnv) return customHeaders;
+  const customHeaders: Record<string, string> = {}
+  const customHeadersEnv = process.env.ZY_CODE_CUSTOM_HEADERS
+  if (!customHeadersEnv) return customHeaders
 
   // 按换行符分割以支持多个 header
-  const headerStrings = customHeadersEnv.split(/\n|\r\n/);
+  const headerStrings = customHeadersEnv.split(/\n|\r\n/)
   for (const headerString of headerStrings) {
-    if (!headerString.trim()) continue;
+    if (!headerString.trim()) continue
 
     // 解析 "Name: Value" 格式的 header（curl 风格）。在第一个 `:` 处分割
     // 然后修剪空白——避免在畸形长 header 行上出现正则回溯
-    const colonIdx = headerString.indexOf(':');
-    if (colonIdx === -1) continue;
-    const name = headerString.slice(0, colonIdx).trim();
-    const value = headerString.slice(colonIdx + 1).trim();
+    const colonIdx = headerString.indexOf(':')
+    if (colonIdx === -1) continue
+    const name = headerString.slice(0, colonIdx).trim()
+    const value = headerString.slice(colonIdx + 1).trim()
     if (name) {
-      customHeaders[name] = value;
+      customHeaders[name] = value
     }
   }
-  return customHeaders;
+  return customHeaders
 }
-export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id';
+export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id'
 
-
-function buildFetch(fetchOverride: ClientOptions['fetch'], source: string | undefined): ClientOptions['fetch'] {
+function buildFetch(
+  fetchOverride: ClientOptions['fetch'],
+  source: string | undefined,
+): ClientOptions['fetch'] {
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-  const inner = fetchOverride ?? globalThis.fetch;
+  const inner = fetchOverride ?? globalThis.fetch
   // 仅发送到直接 API——Bedrock/Vertex/Foundry 不记录此
   // 未知 header 有被严格代理拒绝的风险（inc-4029 类）
-  const injectClientRequestId = getAPIProvider() === 'anthropic' && isAnthropicBaseUrl();
+  const injectClientRequestId = getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-    const headers = new Headers((init as any)?.headers);
+    const headers = new Headers((init as any)?.headers)
     // 生成客户端侧请求 ID，以便超时（不返回服务器请求 ID）
     // 仍能被 API 团队与服务器日志关联。
     // 想要自行追踪 ID 的调用方可以预设此 header
     if (injectClientRequestId && !headers.has(CLIENT_REQUEST_ID_HEADER)) {
-      headers.set(CLIENT_REQUEST_ID_HEADER, randomUUID());
+      headers.set(CLIENT_REQUEST_ID_HEADER, randomUUID())
     }
     try {
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      const url = input instanceof Request ? input.url : String(input);
-      const id = headers.get(CLIENT_REQUEST_ID_HEADER);
-      logForDebugging(`[API REQUEST] ${new URL(url).pathname}${id ? ` ${CLIENT_REQUEST_ID_HEADER}=${id}` : ''} source=${source ?? 'unknown'}`);
+      const url = input instanceof Request ? input.url : String(input)
+      const id = headers.get(CLIENT_REQUEST_ID_HEADER)
+      logForDebugging(
+        `[API REQUEST] ${new URL(url).pathname}${id ? ` ${CLIENT_REQUEST_ID_HEADER}=${id}` : ''} source=${source ?? 'unknown'}`,
+      )
     } catch {
       // 绝不让日志导致 fetch 崩溃
     }
     return (inner as any)(input, {
       ...(init as any),
-      headers
-    });
-  };
+      headers,
+    })
+  }
 }
 
 /**

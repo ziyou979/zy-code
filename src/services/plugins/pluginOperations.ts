@@ -18,10 +18,7 @@ import type { LoadedPlugin, PluginManifest } from '../../types/plugin.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { logError } from '../../utils/log.js'
-import {
-  clearAllCaches,
-  markPluginVersionOrphaned,
-} from '../../utils/plugins/cacheUtils.js'
+import { clearAllCaches, markPluginVersionOrphaned } from '../../utils/plugins/cacheUtils.js'
 import {
   findReverseDependents,
   formatReverseDependentsSuffix,
@@ -58,14 +55,8 @@ import { deletePluginOptions } from '../../utils/plugins/pluginOptionsStorage.js
 import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js'
 import { getPluginEditableScopes } from '../../utils/plugins/pluginStartupCheck.js'
 import { calculatePluginVersion } from '../../utils/plugins/pluginVersioning.js'
-import type {
-  PluginMarketplaceEntry,
-  PluginScope,
-} from '../../utils/plugins/schemas.js'
-import {
-  getSettingsForSource,
-  updateSettingsForSource,
-} from '../../utils/settings/settings.js'
+import type { PluginMarketplaceEntry, PluginScope } from '../../utils/plugins/schemas.js'
+import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 
 /** Valid installable scopes (excludes 'managed' which can only be installed from managed-settings.json) */
@@ -87,9 +78,7 @@ export const VALID_UPDATE_SCOPES: readonly PluginScope[] = [
  * @param scope The scope to validate
  * @throws Error if scope is not a valid installable scope
  */
-export function assertInstallableScope(
-  scope: string,
-): asserts scope is InstallableScope {
+export function assertInstallableScope(scope: string): asserts scope is InstallableScope {
   if (!VALID_INSTALLABLE_SCOPES.includes(scope as InstallableScope)) {
     throw new Error(
       `Invalid scope "${scope}". Must be one of: ${VALID_INSTALLABLE_SCOPES.join(', ')}`,
@@ -101,9 +90,7 @@ export function assertInstallableScope(
  * Type guard to check if a scope is an installable scope (not 'managed').
  * Use this for type narrowing in conditional blocks.
  */
-export function isInstallableScope(
-  scope: PluginScope,
-): scope is InstallableScope {
+export function isInstallableScope(scope: PluginScope): scope is InstallableScope {
   return VALID_INSTALLABLE_SCOPES.includes(scope as InstallableScope)
 }
 
@@ -126,9 +113,7 @@ export function getProjectPathForScope(scope: PluginScope): string | undefined {
  * enablement active — the plugin keeps running.
  */
 export function isPluginEnabledAtProjectScope(pluginId: string): boolean {
-  return (
-    getSettingsForSource('projectSettings')?.enabledPlugins?.[pluginId] === true
-  )
+  return getSettingsForSource('projectSettings')?.enabledPlugins?.[pluginId] === true
 }
 
 // ============================================================================
@@ -186,9 +171,7 @@ function findPluginInSettings(plugin: string): {
   const searchOrder: InstallableScope[] = ['local', 'project', 'user']
 
   for (const scope of searchOrder) {
-    const enabledPlugins = getSettingsForSource(
-      scopeToSettingSource(scope),
-    )?.enabledPlugins
+    const enabledPlugins = getSettingsForSource(scopeToSettingSource(scope))?.enabledPlugins
     if (!enabledPlugins) continue
 
     for (const key of Object.keys(enabledPlugins)) {
@@ -203,13 +186,10 @@ function findPluginInSettings(plugin: string): {
 /**
  * Helper function to find a plugin from loaded plugins
  */
-function findPluginByIdentifier(
-  plugin: string,
-  plugins: LoadedPlugin[],
-): LoadedPlugin | undefined {
+function findPluginByIdentifier(plugin: string, plugins: LoadedPlugin[]): LoadedPlugin | undefined {
   const { name, marketplace } = parsePluginIdentifier(plugin)
 
-  return plugins.find(p => {
+  return plugins.find((p) => {
     // Check exact name match
     if (p.name === plugin || p.name === name) return true
 
@@ -227,9 +207,7 @@ function findPluginByIdentifier(
  * have been delisted from its marketplace. Returns null if the plugin is not
  * found in V2 data.
  */
-function resolveDelistedPluginId(
-  plugin: string,
-): { pluginId: string; pluginName: string } | null {
+function resolveDelistedPluginId(plugin: string): { pluginId: string; pluginName: string } | null {
   const { name } = parsePluginIdentifier(plugin)
   const installedData = loadInstalledPluginsV2()
 
@@ -238,7 +216,7 @@ function resolveDelistedPluginId(
     return { pluginId: plugin, pluginName: name }
   }
 
-  const matchingKey = Object.keys(installedData.plugins).find(key => {
+  const matchingKey = Object.keys(installedData.plugins).find((key) => {
     const { name: keyName } = parsePluginIdentifier(key)
     return keyName === name && (installedData.plugins[key]?.length ?? 0) > 0
   })
@@ -270,14 +248,14 @@ export function getPluginInstallationFromV2(pluginId: string): {
 
   // Find installations by priority: local > project > user > managed
   const localInstall = installations.find(
-    inst => inst.scope === 'local' && inst.projectPath === currentProjectPath,
+    (inst) => inst.scope === 'local' && inst.projectPath === currentProjectPath,
   )
   if (localInstall) {
     return { scope: localInstall.scope, projectPath: localInstall.projectPath }
   }
 
   const projectInstall = installations.find(
-    inst => inst.scope === 'project' && inst.projectPath === currentProjectPath,
+    (inst) => inst.scope === 'project' && inst.projectPath === currentProjectPath,
   )
   if (projectInstall) {
     return {
@@ -286,7 +264,7 @@ export function getPluginInstallationFromV2(pluginId: string): {
     }
   }
 
-  const userInstall = installations.find(inst => inst.scope === 'user')
+  const userInstall = installations.find((inst) => inst.scope === 'user')
   if (userInstall) {
     return { scope: userInstall.scope }
   }
@@ -324,8 +302,7 @@ export async function installPluginOp(
 ): Promise<PluginOperationResult> {
   assertInstallableScope(scope)
 
-  const { name: pluginName, marketplace: marketplaceName } =
-    parsePluginIdentifier(plugin)
+  const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(plugin)
 
   // ── Search materialized marketplaces for the plugin ──
   let foundPlugin: PluginMarketplaceEntry | undefined
@@ -344,7 +321,7 @@ export async function installPluginOp(
     for (const [mktName, mktConfig] of Object.entries(marketplaces)) {
       try {
         const marketplace = await getMarketplace(mktName)
-        const pluginEntry = marketplace.plugins.find(p => p.name === pluginName)
+        const pluginEntry = marketplace.plugins.find((p) => p.name === pluginName)
         if (pluginEntry) {
           foundPlugin = pluginEntry
           foundMarketplace = mktName
@@ -449,10 +426,7 @@ export async function uninstallPluginOp(
     // if user gave short name but settings has plugin@marketplace)
     pluginId =
       Object.keys(settings?.enabledPlugins ?? {}).find(
-        k =>
-          k === plugin ||
-          k === foundPlugin.name ||
-          k.startsWith(`${foundPlugin.name}@`),
+        (k) => k === plugin || k === foundPlugin.name || k.startsWith(`${foundPlugin.name}@`),
       ) ?? (plugin.includes('@') ? plugin : foundPlugin.name)
     pluginName = foundPlugin.name
   } else {
@@ -475,7 +449,7 @@ export async function uninstallPluginOp(
   const installedData = loadInstalledPluginsV2()
   const installations = installedData.plugins[pluginId]
   const scopeInstallation = installations?.find(
-    i => i.scope === scope && i.projectPath === projectPath,
+    (i) => i.scope === scope && i.projectPath === projectPath,
   )
 
   if (!scopeInstallation) {
@@ -520,8 +494,7 @@ export async function uninstallPluginOp(
 
   const updatedData = loadInstalledPluginsV2()
   const remainingInstallations = updatedData.plugins[pluginId]
-  const isLastScope =
-    !remainingInstallations || remainingInstallations.length === 0
+  const isLastScope = !remainingInstallations || remainingInstallations.length === 0
   if (isLastScope && installPath) {
     await markPluginVersionOrphaned(installPath)
   }
@@ -552,8 +525,7 @@ export async function uninstallPluginOp(
     pluginId,
     pluginName,
     scope,
-    reverseDependents:
-      reverseDependents.length > 0 ? reverseDependents : undefined,
+    reverseDependents: reverseDependents.length > 0 ? reverseDependents : undefined,
   }
 }
 
@@ -658,8 +630,7 @@ export async function setPluginEnabledOp(
   }
 
   const settingSource = scopeToSettingSource(resolvedScope)
-  const scopeSettingsValue =
-    getSettingsForSource(settingSource)?.enabledPlugins?.[pluginId]
+  const scopeSettingsValue = getSettingsForSource(settingSource)?.enabledPlugins?.[pluginId]
 
   // ── Cross-scope hint: explicit scope given but plugin is elsewhere ──
   // If the plugin is absent from the requested scope but present at a
@@ -672,15 +643,8 @@ export async function setPluginEnabledOp(
     project: 1,
     local: 2,
   }
-  const isOverride =
-    scope && found && SCOPE_PRECEDENCE[scope] > SCOPE_PRECEDENCE[found.scope]
-  if (
-    scope &&
-    scopeSettingsValue === undefined &&
-    found &&
-    found.scope !== scope &&
-    !isOverride
-  ) {
+  const isOverride = scope && found && SCOPE_PRECEDENCE[scope] > SCOPE_PRECEDENCE[found.scope]
+  if (scope && scopeSettingsValue === undefined && found && found.scope !== scope && !isOverride) {
     return {
       success: false,
       message: `Plugin "${plugin}" is installed at ${found.scope} scope, not ${scope}. Use --scope ${found.scope} or omit --scope to auto-detect.`,
@@ -696,9 +660,7 @@ export async function setPluginEnabledOp(
   // disabled", but the whole point of the override is to write an explicit
   // `false` that masks the lower scope's `true`.
   const isCurrentlyEnabled =
-    scope && !isOverride
-      ? scopeSettingsValue === true
-      : getPluginEditableScopes().has(pluginId)
+    scope && !isOverride ? scopeSettingsValue === true : getPluginEditableScopes().has(pluginId)
   if (enabled === isCurrentlyEnabled) {
     return {
       success: false,
@@ -711,10 +673,7 @@ export async function setPluginEnabledOp(
   let reverseDependents: string[] | undefined
   if (!enabled) {
     const { enabled: loadedEnabled, disabled } = await loadAllPlugins()
-    const rdeps = findReverseDependents(pluginId, [
-      ...loadedEnabled,
-      ...disabled,
-    ])
+    const rdeps = findReverseDependents(pluginId, [...loadedEnabled, ...disabled])
     if (rdeps.length > 0) reverseDependents = rdeps
   }
 
@@ -831,8 +790,7 @@ export async function updatePluginOp(
   scope: PluginScope,
 ): Promise<PluginUpdateResult> {
   // Parse the plugin identifier to get the full plugin ID
-  const { name: pluginName, marketplace: marketplaceName } =
-    parsePluginIdentifier(plugin)
+  const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(plugin)
   const pluginId = marketplaceName ? `${pluginName}@${marketplaceName}` : plugin
 
   // Get plugin info from marketplace
@@ -866,7 +824,7 @@ export async function updatePluginOp(
 
   // Find the installation for this scope
   const installation = installations.find(
-    inst => inst.scope === scope && inst.projectPath === projectPath,
+    (inst) => inst.scope === scope && inst.projectPath === projectPath,
   )
   if (!installation) {
     const scopeDesc = projectPath ? `${scope} (${projectPath})` : scope
@@ -988,11 +946,7 @@ async function performPluginUpdate({
     let pluginManifest: PluginManifest | undefined
     const manifestPath = join(sourcePath, '.zy-plugin', 'plugin.json')
     try {
-      pluginManifest = await loadPluginManifest(
-        manifestPath,
-        entry.name,
-        entry.source,
-      )
+      pluginManifest = await loadPluginManifest(manifestPath, entry.name, entry.source)
     } catch {
       // Failed to load - will use other version sources
     }
@@ -1031,12 +985,7 @@ async function performPluginUpdate({
     }
 
     // Copy to versioned cache (returns actual path, which may be .zip)
-    versionedPath = await copyPluginToVersionedCache(
-      sourcePath,
-      pluginId,
-      newVersion,
-      entry,
-    )
+    versionedPath = await copyPluginToVersionedCache(sourcePath, pluginId, newVersion, entry)
 
     // Store old version path for potential cleanup
     const oldVersionPath = installation.installPath
@@ -1054,10 +1003,9 @@ async function performPluginUpdate({
 
     if (oldVersionPath && oldVersionPath !== versionedPath) {
       const updatedDiskData = loadInstalledPluginsFromDisk()
-      const isOldVersionStillReferenced = Object.values(
-        updatedDiskData.plugins,
-      ).some(pluginInstallations =>
-        pluginInstallations.some(inst => inst.installPath === oldVersionPath),
+      const isOldVersionStillReferenced = Object.values(updatedDiskData.plugins).some(
+        (pluginInstallations) =>
+          pluginInstallations.some((inst) => inst.installPath === oldVersionPath),
       )
 
       if (!isOldVersionStillReferenced) {
@@ -1078,10 +1026,7 @@ async function performPluginUpdate({
     }
   } finally {
     // Clean up temp source if it was a remote download
-    if (
-      shouldCleanupSource &&
-      sourcePath !== getVersionedCachePath(pluginId, newVersion)
-    ) {
+    if (shouldCleanupSource && sourcePath !== getVersionedCachePath(pluginId, newVersion)) {
       await fs.rm(sourcePath, { recursive: true, force: true })
     }
   }

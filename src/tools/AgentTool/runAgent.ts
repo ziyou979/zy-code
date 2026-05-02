@@ -6,10 +6,7 @@ import { logForDebugging } from 'src/utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getProjectRoot, getSessionId } from '../../bootstrap/state.js'
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands.js'
-import {
-  DEFAULT_AGENT_PROMPT,
-  enhanceSystemPromptWithEnvDetails,
-} from '../../constants/prompts.js'
+import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
@@ -17,15 +14,9 @@ import { query } from '../../query.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
 import { cleanupAgentTracking } from '../../services/api/promptCacheBreakDetection.js'
-import {
-  connectToServer,
-  fetchToolsForClient,
-} from '../../services/mcp/client.js'
+import { connectToServer, fetchToolsForClient } from '../../services/mcp/client.js'
 import { getMcpConfigByName } from '../../services/mcp/config.js'
-import type {
-  MCPServerConnection,
-  ScopedMcpServerConfig,
-} from '../../services/mcp/types.js'
+import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import type { Tool, Tools, ToolUseContext } from '../../Tool.js'
 import { killShellTasksForAgent } from '../../tasks/LocalShellTask/killShellTasks.js'
 import type { Command } from '../../types/command.js'
@@ -49,10 +40,7 @@ import {
   createFileStateCacheWithSizeLimit,
   READ_FILE_STATE_CACHE_SIZE,
 } from '../../utils/fileStateCache.js'
-import {
-  type CacheSafeParams,
-  createSubagentContext,
-} from '../../utils/forkedAgent.js'
+import { type CacheSafeParams, createSubagentContext } from '../../utils/forkedAgent.js'
 import { registerFrontmatterHooks } from '../../utils/hooks/registerFrontmatterHooks.js'
 import { clearSessionHooks } from '../../utils/hooks/sessionHooks.js'
 import { executeSubagentStartHooks } from '../../utils/hooks.js'
@@ -69,10 +57,7 @@ import {
   isRestrictedToPluginOnly,
   isSourceAdminTrusted,
 } from '../../utils/settings/pluginOnlyPolicy.js'
-import {
-  asSystemPrompt,
-  type SystemPrompt,
-} from '../../utils/systemPromptType.js'
+import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
 import {
   isPerfettoTracingEnabled,
   registerAgent as registerPerfettoAgent,
@@ -144,10 +129,9 @@ async function initializeAgentMcpServers(
       name = spec
       config = getMcpConfigByName(spec)
       if (!config) {
-        logForDebugging(
-          `[Agent: ${agentDefinition.agentType}] MCP server not found: ${spec}`,
-          { level: 'warn' },
-        )
+        logForDebugging(`[Agent: ${agentDefinition.agentType}] MCP server not found: ${spec}`, {
+          level: 'warn',
+        })
         continue
       }
     } else {
@@ -231,18 +215,12 @@ type QueryMessage =
  */
 function isRecordableMessage(
   msg: QueryMessage,
-): msg is
-  | AssistantMessage
-  | UserMessage
-  | ProgressMessage
-  | SystemCompactBoundaryMessage {
+): msg is AssistantMessage | UserMessage | ProgressMessage | SystemCompactBoundaryMessage {
   return (
     msg.type === 'assistant' ||
     msg.type === 'user' ||
     msg.type === 'progress' ||
-    (msg.type === 'system' &&
-      'subtype' in msg &&
-      msg.subtype === 'compact_boundary')
+    (msg.type === 'system' && 'subtype' in msg && msg.subtype === 'compact_boundary')
   )
 }
 
@@ -335,8 +313,7 @@ export async function* runAgent({
   // Always-shared channel to the root AppState store. toolUseContext.setAppState
   // is a no-op when the *parent* is itself an async agent (nested async→async),
   // so session-scoped writes (hooks, bash tasks) must go through this instead.
-  const rootSetAppState =
-    toolUseContext.setAppStateForTasks ?? toolUseContext.setAppState
+  const rootSetAppState = toolUseContext.setAppStateForTasks ?? toolUseContext.setAppState
 
   const resolvedAgentModel = getAgentModel(
     agentDefinition.model,
@@ -392,21 +369,16 @@ export async function* runAgent({
     agentDefinition.omitzyMd &&
     !override?.userContext &&
     getFeatureValue_CACHED_MAY_BE_STALE('zy_slim_subagent_md', true)
-  const { zyMd: _omittedzyMd, ...userContextNozyMd } =
-    baseUserContext
-  const resolvedUserContext = shouldOmitzyMd
-    ? userContextNozyMd
-    : baseUserContext
+  const { zyMd: _omittedzyMd, ...userContextNozyMd } = baseUserContext
+  const resolvedUserContext = shouldOmitzyMd ? userContextNozyMd : baseUserContext
 
   // Explore/Plan are read-only search agents — the parent-session-start
   // gitStatus (up to 40KB, explicitly labeled stale) is dead weight. If they
   // need git info they run `git status` themselves and get fresh data.
   // Saves ~1-3 Gtok/week fleet-wide.
-  const { gitStatus: _omittedGitStatus, ...systemContextNoGit } =
-    baseSystemContext
+  const { gitStatus: _omittedGitStatus, ...systemContextNoGit } = baseSystemContext
   const resolvedSystemContext =
-    agentDefinition.agentType === 'Explore' ||
-    agentDefinition.agentType === 'Plan'
+    agentDefinition.agentType === 'Explore' || agentDefinition.agentType === 'Plan'
       ? systemContextNoGit
       : baseSystemContext
 
@@ -423,10 +395,7 @@ export async function* runAgent({
       agentPermissionMode &&
       state.toolPermissionContext.mode !== 'bypassPermissions' &&
       state.toolPermissionContext.mode !== 'acceptEdits' &&
-      !(
-        feature('TRANSCRIPT_CLASSIFIER') &&
-        state.toolPermissionContext.mode === 'auto'
-      )
+      !(feature('TRANSCRIPT_CLASSIFIER') && state.toolPermissionContext.mode === 'auto')
     ) {
       toolPermissionContext = {
         ...toolPermissionContext,
@@ -481,9 +450,7 @@ export async function* runAgent({
 
     // Override effort level if agent defines one
     const effortValue =
-      agentDefinition.effort !== undefined
-        ? agentDefinition.effort
-        : state.effortValue
+      agentDefinition.effort !== undefined ? agentDefinition.effort : state.effortValue
 
     if (
       toolPermissionContext === state.toolPermissionContext &&
@@ -535,10 +502,7 @@ export async function* runAgent({
     agentDefinition.agentType,
     agentAbortController.signal,
   )) {
-    if (
-      hookResult.additionalContexts &&
-      hookResult.additionalContexts.length > 0
-    ) {
+    if (hookResult.additionalContexts && hookResult.additionalContexts.length > 0) {
       additionalContexts.push(...hookResult.additionalContexts)
     }
   }
@@ -563,8 +527,7 @@ export async function* runAgent({
   // blanket-blocking all session hooks at execution time (which would
   // also kill plugin agents' hooks).
   const hooksAllowedForThisAgent =
-    !isRestrictedToPluginOnly('hooks') ||
-    isSourceAdminTrusted(agentDefinition.source)
+    !isRestrictedToPluginOnly('hooks') || isSourceAdminTrusted(agentDefinition.source)
   if (agentDefinition.hooks && hooksAllowedForThisAgent) {
     registerFrontmatterHooks(
       rootSetAppState,
@@ -591,11 +554,7 @@ export async function* runAgent({
       // 1. Exact match (hasCommand checks name, userFacingName, aliases)
       // 2. Fully-qualified with agent's plugin prefix (e.g., "my-skill" → "plugin:my-skill")
       // 3. Suffix match on ":skillName" for plugin-namespaced skills
-      const resolvedName = resolveSkillName(
-        skillName,
-        allSkills,
-        agentDefinition,
-      )
+      const resolvedName = resolveSkillName(skillName, allSkills, agentDefinition)
       if (!resolvedName) {
         logForDebugging(
           `[Agent: ${agentDefinition.agentType}] Warning: Skill '${skillName}' specified in frontmatter was not found`,
@@ -627,15 +586,10 @@ export async function* runAgent({
       })),
     )
     for (const { skillName, skill, content } of loaded) {
-      logForDebugging(
-        `[Agent: ${agentDefinition.agentType}] Preloaded skill '${skillName}'`,
-      )
+      logForDebugging(`[Agent: ${agentDefinition.agentType}] Preloaded skill '${skillName}'`)
 
       // Add command-message metadata so the UI shows which skill is loading
-      const metadata = formatSkillLoadingMetadata(
-        skillName,
-        skill.progressMessage,
-      )
+      const metadata = formatSkillLoadingMetadata(skillName, skill.progressMessage)
 
       initialMessages.push(
         createUserMessage({
@@ -651,18 +605,13 @@ export async function* runAgent({
     clients: mergedMcpClients,
     tools: agentMcpTools,
     cleanup: mcpCleanup,
-  } = await initializeAgentMcpServers(
-    agentDefinition,
-    toolUseContext.options.mcpClients,
-  )
+  } = await initializeAgentMcpServers(agentDefinition, toolUseContext.options.mcpClients)
 
   // Merge agent MCP tools with resolved agent tools, deduplicating by name.
   // resolvedTools is already deduplicated (see resolveAgentTools), so skip
   // the spread + uniqBy overhead when there are no agent-specific MCP tools.
   const allTools =
-    agentMcpTools.length > 0
-      ? uniqBy([...resolvedTools, ...agentMcpTools], 'name')
-      : resolvedTools
+    agentMcpTools.length > 0 ? uniqBy([...resolvedTools, ...agentMcpTools], 'name') : resolvedTools
 
   // Build agent-specific options
   const agentOptions: ToolUseContext['options'] = {
@@ -709,8 +658,7 @@ export async function* runAgent({
     // Sync agents share these callbacks with parent
     shareSetAppState: !isAsync,
     shareSetResponseLength: true, // Both sync and async contribute to response metrics
-    criticalSystemReminder_EXPERIMENTAL:
-      agentDefinition.criticalSystemReminder_EXPERIMENTAL,
+    criticalSystemReminder_EXPERIMENTAL: agentDefinition.criticalSystemReminder_EXPERIMENTAL,
     contentReplacementState,
   })
 
@@ -733,14 +681,14 @@ export async function* runAgent({
   // Record initial messages before the query loop starts, plus the agentType
   // so resume can route correctly when subagent_type is omitted. Both writes
   // are fire-and-forget — persistence failure shouldn't block the agent.
-  void recordSidechainTranscript(initialMessages, agentId).catch(_err =>
+  void recordSidechainTranscript(initialMessages, agentId).catch((_err) =>
     logForDebugging(`Failed to record sidechain transcript: ${_err}`),
   )
   void writeAgentMetadata(agentId, {
     agentType: agentDefinition.agentType,
     ...(worktreePath && { worktreePath }),
     ...(description && { description }),
-  }).catch(_err => logForDebugging(`Failed to write agent metadata: ${_err}`))
+  }).catch((_err) => logForDebugging(`Failed to write agent metadata: ${_err}`))
 
   // Track the last recorded message UUID for parent chain continuity
   let lastRecordedUuid: UUID | null = (initialMessages.at(-1)?.uuid as any) ?? null
@@ -783,11 +731,7 @@ export async function* runAgent({
 
       if (isRecordableMessage(message)) {
         // Record only the new message with correct parent (O(1) per message)
-        await recordSidechainTranscript(
-          [message],
-          agentId,
-          lastRecordedUuid,
-        ).catch(err =>
+        await recordSidechainTranscript([message], agentId, lastRecordedUuid).catch((err) =>
           logForDebugging(`Failed to record sidechain transcript: ${err}`),
         )
         if (message.type !== 'progress') {
@@ -828,7 +772,7 @@ export async function* runAgent({
     // called TodoWrite leaves a key in AppState.todos forever (even after all
     // items complete, the value is [] but the key stays). Whale sessions
     // spawn hundreds of agents; each orphaned key is a small leak that adds up.
-    rootSetAppState(prev => {
+    rootSetAppState((prev) => {
       if (!(agentId in prev.todos)) return prev
       const { [agentId]: _removed, ...todos } = prev.todos
       return { ...prev, todos }
@@ -841,7 +785,7 @@ export async function* runAgent({
     if (feature('MONITOR_TOOL')) {
       const mcpMod =
         require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js')
-      (mcpMod as any).killMonitorMcpTasksForAgent(
+      ;(mcpMod as any).killMonitorMcpTasksForAgent(
         agentId,
         toolUseContext.getAppState,
         rootSetAppState,
@@ -874,17 +818,14 @@ export function filterIncompleteToolCalls(messages: Message[]): Message[] {
   }
 
   // Filter out assistant messages that contain tool calls without results
-  return messages.filter(message => {
+  return messages.filter((message) => {
     if (message?.type === 'assistant') {
       const assistantMessage = message as AssistantMessage
       const content = assistantMessage.message.content
       if (Array.isArray(content)) {
         // Check if this assistant message has any tool uses without results
         const hasIncompleteToolCall = content.some(
-          block =>
-            block.type === 'tool_call' &&
-            block.id &&
-            !toolUseIdsWithResults.has(block.id),
+          (block) => block.type === 'tool_call' && block.id && !toolUseIdsWithResults.has(block.id),
         )
         // Exclude messages with incomplete tool calls
         return !hasIncompleteToolCall
@@ -902,7 +843,7 @@ async function getAgentSystemPrompt(
   additionalWorkingDirectories: string[],
   resolvedTools: readonly Tool[],
 ): Promise<string[]> {
-  const enabledToolNames = new Set(resolvedTools.map(t => t.name))
+  const enabledToolNames = new Set(resolvedTools.map((t) => t.name))
   try {
     const agentPrompt = agentDefinition.getSystemPrompt({ toolUseContext })
     const prompts = [agentPrompt]
@@ -956,7 +897,7 @@ function resolveSkillName(
 
   // 3. Suffix match — find a skill whose name ends with ":skillName"
   const suffix = `:${skillName}`
-  const match = allSkills.find(cmd => cmd.name.endsWith(suffix))
+  const match = allSkills.find((cmd) => cmd.name.endsWith(suffix))
   if (match) {
     return match.name
   }

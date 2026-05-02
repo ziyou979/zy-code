@@ -21,7 +21,8 @@ export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
  */
 function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
   try {
-    const { getSettings_DEPRECATED } = require('../settings/settings.js') as typeof import('../settings/settings.js')
+    const { getSettings_DEPRECATED } =
+      require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getSettings_DEPRECATED()
     return settings?.provider ?? null
   } catch {
@@ -78,20 +79,20 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
  * When adding a new provider, update providerRegistry.ts instead of this file.
  */
 export type ProviderCapability =
-  | 'thinking'            // extended thinking (thinking blocks)
-  | 'adaptive_thinking'   // adaptive thinking mode
-  | 'effort'              // effort parameter (low/medium/high/max)
-  | 'max_effort'          // max effort level support
-  | 'advisor'             // advisor tool support
-  | 'structured_outputs'  // strict tool schema / structured outputs beta
-  | 'context_management'  // context management beta (thinking preservation)
-  | 'prompt_caching'      // cache_control / prompt caching beta
-  | 'web_search'          // web search tool
+  | 'thinking' // extended thinking (thinking blocks)
+  | 'adaptive_thinking' // adaptive thinking mode
+  | 'effort' // effort parameter (low/medium/high/max)
+  | 'max_effort' // max effort level support
+  | 'advisor' // advisor tool support
+  | 'structured_outputs' // strict tool schema / structured outputs beta
+  | 'context_management' // context management beta (thinking preservation)
+  | 'prompt_caching' // cache_control / prompt caching beta
+  | 'web_search' // web search tool
   | 'interleaved_thinking' // interleaved thinking (ISP) beta
 
 /** Per-provider capability declarations — auto-generated from PROVIDER_REGISTRY. */
 const PROVIDER_CAPABILITIES: Record<string, Set<ProviderCapability>> = Object.fromEntries(
-  PROVIDER_REGISTRY.map(entry => [entry.id, new Set<ProviderCapability>(entry.capabilities)]),
+  PROVIDER_REGISTRY.map((entry) => [entry.id, new Set<ProviderCapability>(entry.capabilities)]),
 )
 
 export function providerHasCapability(
@@ -195,13 +196,14 @@ export function getModelMaxInputTokens(model: string): number | undefined {
 export function getModelCostsFromSettings(
   model: string,
   currentInputTokens?: number,
-): {
-  inputTokens: number
-  outputTokens: number
-  promptCacheWriteTokens: number
-  promptCacheReadTokens: number
-  webSearchRequests: number
-} | undefined {
+):
+  | {
+      inputTokens: number
+      outputTokens: number
+      promptCacheWriteTokens: number
+      promptCacheReadTokens: number
+      webSearchRequests: number
+    }
+  | undefined {
   return getLocalModelCosts(model, currentInputTokens)
 }
-

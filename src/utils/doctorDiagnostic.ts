@@ -35,11 +35,7 @@ import { getRipgrepStatus } from './ripgrep.js'
 import { SandboxManager } from './sandbox/sandbox-adapter.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from './settings/types.js'
-import {
-  findZyAlias,
-  findValidZyAlias,
-  getShellConfigPaths,
-} from './shellConfig.js'
+import { findZyAlias, findValidZyAlias, getShellConfigPaths } from './shellConfig.js'
 import { jsonParse } from './slowOperations.js'
 import { which } from './which.js'
 
@@ -123,7 +119,7 @@ export async function getCurrentInstallationType(): Promise<InstallationType> {
     '/.nvm/versions/node/', // nvm installations
   ]
 
-  if (npmGlobalPaths.some(path => invokedPath.includes(path))) {
+  if (npmGlobalPaths.some((path) => invokedPath.includes(path))) {
     return 'npm-global'
   }
 
@@ -136,8 +132,7 @@ export async function getCurrentInstallationType(): Promise<InstallationType> {
     shell: true,
     reject: false,
   })
-  const globalPrefix =
-    npmConfigResult.exitCode === 0 ? npmConfigResult.stdout.trim() : null
+  const globalPrefix = npmConfigResult.exitCode === 0 ? npmConfigResult.stdout.trim() : null
 
   if (globalPrefix && invokedPath.startsWith(globalPrefix)) {
     return 'npm-global'
@@ -202,9 +197,7 @@ export function getInvokedBinary(): string {
   }
 }
 
-async function detectMultipleInstallations(): Promise<
-  Array<{ type: string; path: string }>
-> {
+async function detectMultipleInstallations(): Promise<Array<{ type: string; path: string }>> {
   const fs = getFsImplementation()
   const installations: Array<{ type: string; path: string }> = []
 
@@ -219,12 +212,7 @@ async function detectMultipleInstallations(): Promise<
   if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== '@anthropic-ai/zy-code') {
     packagesToCheck.push(MACRO.PACKAGE_URL)
   }
-  const npmResult = await execFileNoThrow('npm', [
-    '-g',
-    'config',
-    'get',
-    'prefix',
-  ])
+  const npmResult = await execFileNoThrow('npm', ['-g', 'config', 'get', 'prefix'])
   if (npmResult.code === 0 && npmResult.stdout) {
     const npmPrefix = npmResult.stdout.trim()
     const isWindows = getPlatform() === 'windows'
@@ -232,9 +220,7 @@ async function detectMultipleInstallations(): Promise<
     // First check for active installations via bin/zy
     // Linux / macOS have prefix/bin/zy and prefix/lib/node_modules
     // Windows has prefix/zy and prefix/node_modules
-    const globalBinPath = isWindows
-      ? join(npmPrefix, 'zy')
-      : join(npmPrefix, 'bin', 'zy')
+    const globalBinPath = isWindows ? join(npmPrefix, 'zy') : join(npmPrefix, 'bin', 'zy')
 
     let globalBinExists = false
     try {
@@ -303,7 +289,7 @@ async function detectMultipleInstallations(): Promise<
     const nativeDataPath = join(homedir(), '.local', 'share', 'zy')
     try {
       await fs.stat(nativeDataPath)
-      if (!installations.some(i => i.type === 'native')) {
+      if (!installations.some((i) => i.type === 'native')) {
         installations.push({ type: 'native', path: nativeDataPath })
       }
     } catch {
@@ -326,10 +312,7 @@ async function detectConfigurationIssues(
   // development-mode early return: this is config correctness, not an
   // install-path check, and it's useful to see during dev testing.
   try {
-    const raw = await readFile(
-      join(getManagedFilePath(), 'managed-settings.json'),
-      'utf-8',
-    )
+    const raw = await readFile(join(getManagedFilePath(), 'managed-settings.json'), 'utf-8')
     const parsed: unknown = jsonParse(raw)
     const field =
       parsed && typeof parsed === 'object'
@@ -346,9 +329,8 @@ async function detectConfigurationIssues(
         })
       } else {
         const unknown = field.filter(
-          x =>
-            typeof x === 'string' &&
-            !(CUSTOMIZATION_SURFACES as readonly string[]).includes(x),
+          (x) =>
+            typeof x === 'string' && !(CUSTOMIZATION_SURFACES as readonly string[]).includes(x),
         )
         if (unknown.length > 0) {
           warnings.push({
@@ -385,7 +367,7 @@ async function detectConfigurationIssues(
 
     // Check if ~/.local/bin is in PATH (handle both expanded and unexpanded forms)
     // Also handle trailing slashes that users may have in their PATH
-    const localBinInPath = pathDirectories.some(dir => {
+    const localBinInPath = pathDirectories.some((dir) => {
       let normalizedDir = dir
       if (getPlatform() === 'windows') {
         normalizedDir = dir.split(win32.sep).join(posix.sep)
@@ -404,9 +386,7 @@ async function detectConfigurationIssues(
       const isWindows = getPlatform() === 'windows'
       if (isWindows) {
         // Windows-specific PATH instructions
-        const windowsLocalBinPath = localBinPath
-          .split(posix.sep)
-          .join(win32.sep)
+        const windowsLocalBinPath = localBinPath.split(posix.sep).join(win32.sep)
         warnings.push({
           issue: `Native installation exists but ${windowsLocalBinPath} is not in your PATH`,
           fix: `Add it by opening: System Properties → Environment Variables → Edit User PATH → New → Add the path above. Then restart your terminal.`,
@@ -421,8 +401,7 @@ async function detectConfigurationIssues(
           : 'your shell config file'
 
         warnings.push({
-          issue:
-            'Native installation exists but ~/.local/bin is not in your PATH',
+          issue: 'Native installation exists but ~/.local/bin is not in your PATH',
           fix: `Run: echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${displayPath} then open a new terminal or run: source ${displayPath}`,
         })
       }
@@ -499,8 +478,7 @@ export function detectLinuxGlobPatternWarnings(): Array<{
     // Show first 3 patterns, then indicate if there are more
     const displayPatterns = globPatterns.slice(0, 3).join(', ')
     const remaining = globPatterns.length - 3
-    const patternList =
-      remaining > 0 ? `${displayPatterns} (${remaining} more)` : displayPatterns
+    const patternList = remaining > 0 ? `${displayPatterns} (${remaining} more)` : displayPatterns
 
     warnings.push({
       issue: `Glob patterns in sandbox permission rules are not fully supported on Linux`,
@@ -513,8 +491,7 @@ export function detectLinuxGlobPatternWarnings(): Array<{
 
 export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
   const installationType = await getCurrentInstallationType()
-  const version =
-    typeof MACRO !== 'undefined' && MACRO.VERSION ? MACRO.VERSION : 'unknown'
+  const version = typeof MACRO !== 'undefined' && MACRO.VERSION ? MACRO.VERSION : 'unknown'
   const installationPath = await getInstallationPath()
   const invokedBinary = getInvokedBinary()
   const multipleInstallations = await detectMultipleInstallations()
@@ -526,10 +503,7 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
   // Add warnings for leftover npm installations when running native
   if (installationType === 'native') {
     const npmInstalls = multipleInstallations.filter(
-      i =>
-        i.type === 'npm-global' ||
-        i.type === 'npm-global-orphan' ||
-        i.type === 'npm-local',
+      (i) => i.type === 'npm-global' || i.type === 'npm-global-orphan' || i.type === 'npm-local',
     )
 
     const isWindows = getPlatform() === 'windows'
@@ -537,10 +511,7 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
     for (const install of npmInstalls) {
       if (install.type === 'npm-global') {
         let uninstallCmd = 'npm -g uninstall @anthropic-ai/zy-code'
-        if (
-          MACRO.PACKAGE_URL &&
-          MACRO.PACKAGE_URL !== '@anthropic-ai/zy-code'
-        ) {
+        if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== '@anthropic-ai/zy-code') {
           uninstallCmd += ` && npm -g uninstall ${MACRO.PACKAGE_URL}`
         }
         warnings.push({
@@ -550,16 +521,12 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
       } else if (install.type === 'npm-global-orphan') {
         warnings.push({
           issue: `Orphaned npm global package at ${install.path}`,
-          fix: isWindows
-            ? `Run: rmdir /s /q "${install.path}"`
-            : `Run: rm -rf ${install.path}`,
+          fix: isWindows ? `Run: rmdir /s /q "${install.path}"` : `Run: rm -rf ${install.path}`,
         })
       } else if (install.type === 'npm-local') {
         warnings.push({
           issue: `Leftover npm local installation at ${install.path}`,
-          fix: isWindows
-            ? `Run: rmdir /s /q "${install.path}"`
-            : `Run: rm -rf ${install.path}`,
+          fix: isWindows ? `Run: rmdir /s /q "${install.path}"` : `Run: rm -rf ${install.path}`,
         })
       }
     }
@@ -592,15 +559,12 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
   const ripgrepStatus = {
     working: ripgrepStatusRaw.working ?? true, // Assume working if not yet tested
     mode: ripgrepStatusRaw.mode,
-    systemPath:
-      ripgrepStatusRaw.mode === 'system' ? ripgrepStatusRaw.path : null,
+    systemPath: ripgrepStatusRaw.mode === 'system' ? ripgrepStatusRaw.path : null,
   }
 
   // Get package manager info if running from package manager
   const packageManager =
-    installationType === 'package-manager'
-      ? await getPackageManager()
-      : undefined
+    installationType === 'package-manager' ? await getPackageManager() : undefined
 
   const diagnostic: DiagnosticInfo = {
     installationType,
@@ -610,9 +574,7 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
     configInstallMethod,
     autoUpdates: (() => {
       const reason = getAutoUpdaterDisabledReason()
-      return reason
-        ? `disabled (${formatAutoUpdaterDisabledReason(reason)})`
-        : 'enabled'
+      return reason ? `disabled (${formatAutoUpdaterDisabledReason(reason)})` : 'enabled'
     })(),
     hasUpdatePermissions,
     multipleInstallations,

@@ -2,10 +2,7 @@ import { feature } from 'bun:bundle'
 import type { ContentBlock } from './types/llm.js'
 import { randomUUID } from 'crypto'
 import last from 'lodash-es/last.js'
-import {
-  getSessionId,
-  isSessionPersistenceDisabled,
-} from 'src/bootstrap/state.js'
+import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type {
   PermissionMode,
   SDKCompactBoundaryMessage,
@@ -20,15 +17,8 @@ import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import stripAnsi from 'strip-ansi'
 import type { Command } from './commands.js'
 import { getSlashCommandToolSkills } from './commands.js'
-import {
-  LOCAL_COMMAND_STDERR_TAG,
-  LOCAL_COMMAND_STDOUT_TAG,
-} from './constants/xml.js'
-import {
-  getModelUsage,
-  getTotalAPIDuration,
-  getTotalCost,
-} from './cost-tracker.js'
+import { LOCAL_COMMAND_STDERR_TAG, LOCAL_COMMAND_STDOUT_TAG } from './constants/xml.js'
+import { getModelUsage, getTotalAPIDuration, getTotalCost } from './cost-tracker.js'
 import type { CanUseToolFn } from './hooks/useCanUseTool.js'
 import { loadMemoryPrompt } from './memdir/memdir.js'
 import { hasAutoMemPathOverride } from './memdir/paths.js'
@@ -51,18 +41,12 @@ import {
   fileHistoryEnabled,
   fileHistoryMakeSnapshot,
 } from './utils/fileHistory.js'
-import {
-  cloneFileStateCache,
-  type FileStateCache,
-} from './utils/fileStateCache.js'
+import { cloneFileStateCache, type FileStateCache } from './utils/fileStateCache.js'
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
 import { registerStructuredOutputEnforcement } from './utils/hooks/hookHelpers.js'
 import { getInMemoryErrors } from './utils/log.js'
 import { countToolCalls, SYNTHETIC_MESSAGES } from './utils/messages.js'
-import {
-  getMainLoopModel,
-  parseUserSpecifiedModel,
-} from './utils/model/model.js'
+import { getMainLoopModel, parseUserSpecifiedModel } from './utils/model/model.js'
 import { loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js'
 import {
   type ProcessUserInputContext,
@@ -70,35 +54,22 @@ import {
 } from './utils/processUserInput/processUserInput.js'
 import { fetchSystemPromptParts } from './utils/queryContext.js'
 import { setCwd } from './utils/Shell.js'
-import {
-  flushSessionStorage,
-  recordTranscript,
-} from './utils/sessionStorage.js'
+import { flushSessionStorage, recordTranscript } from './utils/sessionStorage.js'
 import { asSystemPrompt } from './utils/systemPromptType.js'
 import { resolveThemeSetting } from './utils/systemTheme.js'
-import {
-  shouldEnableThinkingByDefault,
-  type ThinkingConfig,
-} from './utils/thinking.js'
+import { shouldEnableThinkingByDefault, type ThinkingConfig } from './utils/thinking.js'
 
 // 延迟加载：MessageSelector.tsx 会引入 React/ink；仅在查询时进行消息过滤才需要
 /* eslint-disable @typescript-eslint/no-require-imports */
-const messageSelector =
-  (): typeof import('src/components/MessageSelector.js') =>
-    require('src/components/MessageSelector.js')
+const messageSelector = (): typeof import('src/components/MessageSelector.js') =>
+  require('src/components/MessageSelector.js')
 
 import {
   localCommandOutputToSDKAssistantMessage,
   toSDKCompactMetadata,
 } from './utils/messages/mappers.js'
-import {
-  buildSystemInitMessage,
-  sdkCompatToolName,
-} from './utils/messages/systemInit.js'
-import {
-  getScratchpadDir,
-  isScratchpadEnabled,
-} from './utils/permissions/filesystem.js'
+import { buildSystemInitMessage, sdkCompatToolName } from './utils/messages/systemInit.js'
+import { getScratchpadDir, isScratchpadEnabled } from './utils/permissions/filesystem.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   handleOrphanedPermission,
@@ -276,22 +247,22 @@ export class QueryEngine {
 
     headlessProfilerCheckpoint('before_getSystemPrompt')
     // 提前窄化类型，使 TS 在以下条件判断中正确追踪类型
-    const customPrompt =
-      typeof customSystemPrompt === 'string' ? customSystemPrompt : undefined
+    const customPrompt = typeof customSystemPrompt === 'string' ? customSystemPrompt : undefined
     const {
       defaultSystemPrompt,
       userContext: baseUserContext,
       systemContext,
-    } = (await fetchSystemPromptParts({
-      tools,
-      mainLoopModel: initialMainLoopModel,
-      additionalWorkingDirectories: (Array.from(
-        (initialAppState.toolPermissionContext.additionalWorkingDirectories.keys as any)(),
-      ) as any),
-      mcpClients,
-      customSystemPrompt: customPrompt,
-    }) as any)
-    (headlessProfilerCheckpoint as any)('after_getSystemPrompt')
+    } = (
+      (await fetchSystemPromptParts({
+        tools,
+        mainLoopModel: initialMainLoopModel,
+        additionalWorkingDirectories: Array.from(
+          (initialAppState.toolPermissionContext.additionalWorkingDirectories.keys as any)(),
+        ) as any,
+        mcpClients,
+        customSystemPrompt: customPrompt,
+      })) as any
+    )(headlessProfilerCheckpoint as any)('after_getSystemPrompt')
     const userContext = {
       ...baseUserContext,
       ...getCoordinatorUserContext(
@@ -307,9 +278,7 @@ export class QueryEngine {
     // Write/Edit 工具、MEMORY.md 文件名、加载语义等）。
     // 调用者可以通过 appendSystemPrompt 添加自己的策略文本。
     const memoryMechanicsPrompt =
-      customPrompt !== undefined && hasAutoMemPathOverride()
-        ? await loadMemoryPrompt()
-        : null
+      customPrompt !== undefined && hasAutoMemPathOverride() ? await loadMemoryPrompt() : null
 
     const systemPrompt = asSystemPrompt([
       ...(customPrompt !== undefined ? [customPrompt] : defaultSystemPrompt),
@@ -318,7 +287,7 @@ export class QueryEngine {
     ])
 
     // 注册结构化输出强制执行的函数钩子
-    const hasStructuredOutputTool = tools.some(t =>
+    const hasStructuredOutputTool = tools.some((t) =>
       toolMatchesName(t, SYNTHETIC_OUTPUT_TOOL_NAME),
     )
     if (jsonSchema && hasStructuredOutputTool) {
@@ -332,7 +301,7 @@ export class QueryEngine {
       // 使查询循环的后续部分（:389 的 push、:392 的 snapshot）能看到结果。
       // 下方第二个 processUserInputContext（斜杠命令处理之后）保留了该 no-op——
       // 此后没有其他代码会调用 setMessages。
-      setMessages: fn => {
+      setMessages: (fn) => {
         this.mutableMessages = fn(this.mutableMessages)
       },
       onChangeAPIKey: () => {},
@@ -364,19 +333,15 @@ export class QueryEngine {
       discoveredSkillNames: this.discoveredSkillNames,
       setInProgressToolUseIDs: () => {},
       setResponseLength: () => {},
-      updateFileHistoryState: (
-        updater: (prev: FileHistoryState) => FileHistoryState,
-      ) => {
-        setAppState(prev => {
+      updateFileHistoryState: (updater: (prev: FileHistoryState) => FileHistoryState) => {
+        setAppState((prev) => {
           const updated = updater(prev.fileHistory)
           if (updated === prev.fileHistory) return prev
           return { ...prev, fileHistory: updated }
         })
       },
-      updateAttributionState: (
-        updater: (prev: AttributionState) => AttributionState,
-      ) => {
-        setAppState(prev => {
+      updateAttributionState: (updater: (prev: AttributionState) => AttributionState) => {
+        setAppState((prev) => {
           const updated = updater(prev.attribution)
           if (updated === prev.attribution) return prev
           return { ...prev, attribution: updated }
@@ -453,7 +418,7 @@ export class QueryEngine {
 
     // 过滤掉在 transcript 之后需要确认的消息
     const replayableMessages = messagesFromUserInput.filter(
-      msg =>
+      (msg) =>
         (msg.type === 'user' &&
           !msg.isMeta && // Skip synthetic caveat messages
           !msg.toolUseResult && // Skip tool results (they'll be acked from query)
@@ -463,7 +428,7 @@ export class QueryEngine {
     const messagesToAck = replayUserMessages ? replayableMessages : []
 
     // 根据用户输入处理结果更新 ToolPermissionContext（如需要）
-    setAppState(prev => ({
+    setAppState((prev) => ({
       ...prev,
       toolPermissionContext: {
         ...prev.toolPermissionContext,
@@ -529,8 +494,7 @@ export class QueryEngine {
       tools,
       mcpClients,
       model: mainLoopModel,
-      permissionMode: initialAppState.toolPermissionContext
-        .mode as PermissionMode, // TODO: avoid the cast
+      permissionMode: initialAppState.toolPermissionContext.mode as PermissionMode, // TODO: avoid the cast
       commands,
       agents,
       skills,
@@ -624,16 +588,13 @@ export class QueryEngine {
     if (fileHistoryEnabled() && persistSession) {
       messagesFromUserInput
         .filter(messageSelector().selectableUserMessagesFilter)
-        .forEach(message => {
-          void fileHistoryMakeSnapshot(
-            (updater: (prev: FileHistoryState) => FileHistoryState) => {
-              setAppState(prev => ({
-                ...prev,
-                fileHistory: updater(prev.fileHistory),
-              }))
-            },
-            message.uuid as any,
-          )
+        .forEach((message) => {
+          void fileHistoryMakeSnapshot((updater: (prev: FileHistoryState) => FileHistoryState) => {
+            setAppState((prev) => ({
+              ...prev,
+              fileHistory: updater(prev.fileHistory),
+            }))
+          }, message.uuid as any)
         })
     }
 
@@ -679,16 +640,10 @@ export class QueryEngine {
         // 在 turn 之间 kill），tailUuid 会指向一个从未写入的消息——
         // applyPreservedSegmentRelinks 的 tail→head 遍历失败——直接返回
         // 而不进行裁剪——恢复时会加载完整的压缩前历史。
-        if (
-          persistSession &&
-          message.type === 'system' &&
-          message.subtype === 'compact_boundary'
-        ) {
+        if (persistSession && message.type === 'system' && message.subtype === 'compact_boundary') {
           const tailUuid = message.compactMetadata?.preservedSegment?.tailUuid
           if (tailUuid) {
-            const tailIdx = this.mutableMessages.findLastIndex(
-              m => m.uuid === tailUuid,
-            )
+            const tailIdx = this.mutableMessages.findLastIndex((m) => m.uuid === tailUuid)
             if (tailIdx !== -1) {
               await recordTranscript(this.mutableMessages.slice(0, tailIdx + 1))
             }
@@ -765,32 +720,35 @@ export class QueryEngine {
           yield* normalizeMessage(message)
           break
         case 'stream_event':
-          if ((message as any).event.type === 'message_start' || (message as any).event.type === 'response_start') {
+          if (
+            (message as any).event.type === 'message_start' ||
+            (message as any).event.type === 'response_start'
+          ) {
             // 重置新消息的当前 usage
             currentMessageUsage = EMPTY_USAGE
             const startMsg = (message as any).event.message
             if (startMsg?.usage) {
-              currentMessageUsage = updateUsage(
-                currentMessageUsage,
-                startMsg.usage,
-              )
+              currentMessageUsage = updateUsage(currentMessageUsage, startMsg.usage)
             }
           }
-          if ((message as any).event.type === 'message_delta' || (message as any).event.type === 'response_delta') {
+          if (
+            (message as any).event.type === 'message_delta' ||
+            (message as any).event.type === 'response_delta'
+          ) {
             const evt = (message as any).event
             // response_delta 的 usage 是标准格式（camelCase），转为 snake_case 供 updateUsage
             const deltaUsage = evt.usage
               ? {
                   output_tokens: evt.usage.outputTokens ?? evt.usage.output_tokens ?? 0,
                   input_tokens: evt.usage.inputTokens ?? evt.usage.input_tokens,
-                  cache_creation_input_tokens: evt.usage.extras?.cacheCreationInputTokens ?? evt.usage.cache_creation_input_tokens,
-                  cache_read_input_tokens: evt.usage.extras?.cacheReadInputTokens ?? evt.usage.cache_read_input_tokens,
+                  cache_creation_input_tokens:
+                    evt.usage.extras?.cacheCreationInputTokens ??
+                    evt.usage.cache_creation_input_tokens,
+                  cache_read_input_tokens:
+                    evt.usage.extras?.cacheReadInputTokens ?? evt.usage.cache_read_input_tokens,
                 }
               : evt.usage
-            currentMessageUsage = updateUsage(
-              currentMessageUsage,
-              deltaUsage as any,
-            )
+            currentMessageUsage = updateUsage(currentMessageUsage, deltaUsage as any)
             // 从 message_delta/response_delta 捕获 stopReason。assistant 消息在
             // content_block_stop/chunk_stop 时产生，stopReason=null；真实值仅在此处到达
             //（见 zy.ts 的处理器）。没有这一步，
@@ -801,12 +759,12 @@ export class QueryEngine {
               lastStopReason = evtStopReason
             }
           }
-          if ((message as any).event.type === 'message_stop' || (message as any).event.type === 'response_stop') {
+          if (
+            (message as any).event.type === 'message_stop' ||
+            (message as any).event.type === 'response_stop'
+          ) {
             // 将当前消息的 usage 累积到总计中
-            this.totalUsage = accumulateUsage(
-              this.totalUsage,
-              currentMessageUsage,
-            )
+            this.totalUsage = accumulateUsage(this.totalUsage, currentMessageUsage)
           }
 
           if (includePartialMessages) {
@@ -863,10 +821,7 @@ export class QueryEngine {
             return
           }
           // 将 queued_command 附件作为 SDK 用户消息回放产生
-          else if (
-            replayUserMessages &&
-            (message as any).attachment.type === 'queued_command'
-          ) {
+          else if (replayUserMessages && (message as any).attachment.type === 'queued_command') {
             yield {
               type: 'user',
               message: {
@@ -890,10 +845,7 @@ export class QueryEngine {
           // 没有这一步，标记会在每个 turn 持续存在并重新触发，mutableMessages
           // 永远不会缩小（长 SDK 会话中的内存泄漏）。子类型检查在注入的回调内部，
           // 因此 feature 门控的字符串不会进入此文件（excluded-strings 检查）。
-          const snipResult = this.config.snipReplay?.(
-            message,
-            this.mutableMessages,
-          )
+          const snipResult = this.config.snipReplay?.(message, this.mutableMessages)
           if (snipResult !== undefined) {
             if (snipResult.executed) {
               this.mutableMessages.length = 0
@@ -903,10 +855,7 @@ export class QueryEngine {
           }
           this.mutableMessages.push(message)
           // 向 SDK 产生 compact boundary 消息
-          if (
-            (message as any).subtype === 'compact_boundary' &&
-            (message as any).compactMetadata
-          ) {
+          if ((message as any).subtype === 'compact_boundary' && (message as any).compactMetadata) {
             // 释放压缩前的消息以供 GC。边界刚刚被推送，所以它是最后一个元素。
             // query.ts 内部已使用 getMessagesAfterCompactBoundary()，因此
             // 后续只需要边界之后的消息。
@@ -986,15 +935,9 @@ export class QueryEngine {
 
       // 检查结构化输出重试次数是否超限（仅在 user 消息时）
       if (message.type === 'user' && jsonSchema) {
-        const currentCalls = countToolCalls(
-          this.mutableMessages,
-          SYNTHETIC_OUTPUT_TOOL_NAME,
-        )
+        const currentCalls = countToolCalls(this.mutableMessages, SYNTHETIC_OUTPUT_TOOL_NAME)
         const callsThisQuery = currentCalls - initialStructuredOutputCalls
-        const maxRetries = parseInt(
-          process.env.MAX_STRUCTURED_OUTPUT_RETRIES || '5',
-          10,
-        )
+        const maxRetries = parseInt(process.env.MAX_STRUCTURED_OUTPUT_RETRIES || '5', 10)
         if (callsThisQuery >= maxRetries) {
           if (persistSession) {
             if (
@@ -1018,9 +961,7 @@ export class QueryEngine {
             modelUsage: getModelUsage(),
             permission_denials: this.permissionDenials,
             uuid: randomUUID(),
-            errors: [
-              `Failed to provide valid structured output after ${maxRetries} attempts`,
-            ],
+            errors: [`Failed to provide valid structured output after ${maxRetries} attempts`],
           }
           return
         }
@@ -1033,9 +974,7 @@ export class QueryEngine {
     // 而非 assistant——这会使下方的 textResult 提取返回 ''，-p 模式
     // 输出空行。白名单限定 assistant|user：isResultSuccessful 处理两者
     //（带有完整 tool_result 块的 user 是有效的成功终态）。
-    const result = messages.findLast(
-      m => m.type === 'assistant' || m.type === 'user',
-    )
+    const result = messages.findLast((m) => m.type === 'assistant' || m.type === 'user')
     // 为 error_during_execution 诊断捕获值——isResultSuccessful 是类型谓词
     //（message is Message），因此在 false 分支内 `result` 被窄化为 never，
     // 这些访问无法通过类型检查。
@@ -1079,12 +1018,10 @@ export class QueryEngine {
         // 整个进程的 logError 缓冲区（ripgrep 超时、ENOENT 等）。
         errors: (() => {
           const all = getInMemoryErrors()
-          const start = errorLogWatermark
-            ? all.lastIndexOf(errorLogWatermark) + 1
-            : 0
+          const start = errorLogWatermark ? all.lastIndexOf(errorLogWatermark) + 1 : 0
           return [
             `[ede_diagnostic] result_type=${edeResultType} last_content_type=${edeLastContentType} stop_reason=${lastStopReason}`,
-            ...all.slice(start).map(_ => _.error),
+            ...all.slice(start).map((_) => _.error),
           ]
         })(),
       }
@@ -1097,10 +1034,7 @@ export class QueryEngine {
 
     if (result.type === 'assistant' && Array.isArray(result.message.content)) {
       const lastContent = result.message.content.at(-1)
-      if (
-        lastContent?.type === 'text' &&
-        !SYNTHETIC_MESSAGES.has(lastContent.text)
-      ) {
+      if (lastContent?.type === 'text' && !SYNTHETIC_MESSAGES.has(lastContent.text)) {
         textResult = lastContent.text
       }
       isApiError = Boolean(result.isApiErrorMessage)
@@ -1245,8 +1179,7 @@ export async function* ask({
     ...(feature('HISTORY_SNIP')
       ? {
           snipReplay: (yielded: Message, store: Message[]) => {
-            if (!snipProjection!.isSnipBoundaryMessage(yielded))
-              return undefined
+            if (!snipProjection!.isSnipBoundaryMessage(yielded)) return undefined
             return (snipModule as any)!.snipCompactIfNeeded(store, { force: true })
           },
         }

@@ -30,10 +30,7 @@ import {
   type SettingSource,
 } from './constants.js'
 import { markInternalWrite } from './internalWrites.js'
-import {
-  getManagedFilePath,
-  getManagedSettingsDropInDir,
-} from './managedPath.js'
+import { getManagedFilePath, getManagedSettingsDropInDir } from './managedPath.js'
 import { getHkcuSettings, getMdmSettings } from './mdm/settings.js'
 import {
   getCachedParsedFile,
@@ -80,9 +77,7 @@ export function loadManagedFileSettings(): {
   let merged: SettingsJson = {}
   let found = false
 
-  const { settings, errors: baseErrors } = parseSettingsFile(
-    getManagedSettingsFilePath(),
-  )
+  const { settings, errors: baseErrors } = parseSettingsFile(getManagedSettingsFilePath())
   errors.push(...baseErrors)
   if (settings && Object.keys(settings).length > 0) {
     merged = mergeWith(merged, settings, settingsMergeCustomizer)
@@ -94,17 +89,13 @@ export function loadManagedFileSettings(): {
     const entries = getFsImplementation()
       .readdirSync(dropInDir)
       .filter(
-        d =>
-          (d.isFile() || d.isSymbolicLink()) &&
-          d.name.endsWith('.json') &&
-          !d.name.startsWith('.'),
+        (d) =>
+          (d.isFile() || d.isSymbolicLink()) && d.name.endsWith('.json') && !d.name.startsWith('.'),
       )
-      .map(d => d.name)
+      .map((d) => d.name)
       .sort()
     for (const name of entries) {
-      const { settings, errors: fileErrors } = parseSettingsFile(
-        join(dropInDir, name),
-      )
+      const { settings, errors: fileErrors } = parseSettingsFile(join(dropInDir, name))
       errors.push(...fileErrors)
       if (settings && Object.keys(settings).length > 0) {
         merged = mergeWith(merged, settings, settingsMergeCustomizer)
@@ -138,10 +129,8 @@ export function getManagedFileSettingsPresence(): {
     hasDropIns = getFsImplementation()
       .readdirSync(dropInDir)
       .some(
-        d =>
-          (d.isFile() || d.isSymbolicLink()) &&
-          d.name.endsWith('.json') &&
-          !d.name.startsWith('.'),
+        (d) =>
+          (d.isFile() || d.isSymbolicLink()) && d.name.endsWith('.json') && !d.name.startsWith('.'),
       )
   } catch {
     // dir doesn't exist
@@ -156,15 +145,8 @@ export function getManagedFileSettingsPresence(): {
  * @param path The file path that caused the error
  */
 function handleFileSystemError(error: unknown, path: string): void {
-  if (
-    typeof error === 'object' &&
-    error &&
-    'code' in error &&
-    error.code === 'ENOENT'
-  ) {
-    logForDebugging(
-      `Broken symlink or missing file encountered for settings.json at path: ${path}`,
-    )
+  if (typeof error === 'object' && error && 'code' in error && error.code === 'ENOENT') {
+    logForDebugging(`Broken symlink or missing file encountered for settings.json at path: ${path}`)
   } else {
     logError(error)
   }
@@ -264,24 +246,16 @@ export function getSettingsRootPathForSource(source: SettingSource): string {
  * 3. Default: 'settings.json'
  */
 function getUserSettingsFilePath(): string {
-  if (
-    getUseCoworkPlugins() ||
-    isEnvTruthy(process.env.ZY_CODE_USE_COWORK_PLUGINS)
-  ) {
+  if (getUseCoworkPlugins() || isEnvTruthy(process.env.ZY_CODE_USE_COWORK_PLUGINS)) {
     return 'cowork_settings.json'
   }
   return 'settings.json'
 }
 
-export function getSettingsFilePathForSource(
-  source: SettingSource,
-): string | undefined {
+export function getSettingsFilePathForSource(source: SettingSource): string | undefined {
   switch (source) {
     case 'userSettings':
-      return join(
-        getSettingsRootPathForSource(source),
-        getUserSettingsFilePath(),
-      )
+      return join(getSettingsRootPathForSource(source), getUserSettingsFilePath())
     case 'projectSettings':
     case 'localSettings': {
       return join(
@@ -308,9 +282,7 @@ export function getRelativeSettingsFilePathForSource(
   }
 }
 
-export function getSettingsForSource(
-  source: SettingSource,
-): SettingsJson | null {
+export function getSettingsForSource(source: SettingSource): SettingsJson | null {
   const cached = getCachedSettingsForSource(source)
   if (cached !== undefined) return cached
   const result = getSettingsForSourceUncached(source)
@@ -318,9 +290,7 @@ export function getSettingsForSource(
   return result
 }
 
-function getSettingsForSourceUncached(
-  source: SettingSource,
-): SettingsJson | null {
+function getSettingsForSourceUncached(source: SettingSource): SettingsJson | null {
   // For policySettings: first source wins (remote > HKLM/plist > file > HKCU)
   if (source === 'policySettings') {
     const remoteSettings = getRemoteManagedSettingsSyncFromCache()
@@ -357,11 +327,7 @@ function getSettingsForSourceUncached(
     if (inlineSettings) {
       const parsed = SettingsSchema().safeParse(inlineSettings)
       if (parsed.success) {
-        return mergeWith(
-          fileSettings || {},
-          parsed.data,
-          settingsMergeCustomizer,
-        ) as SettingsJson
+        return mergeWith(fileSettings || {}, parsed.data, settingsMergeCustomizer) as SettingsJson
       }
     }
   }
@@ -374,13 +340,7 @@ function getSettingsForSourceUncached(
  * Uses "first source wins" — returns the first source that has content.
  * Priority: remote > plist/hklm > file (managed-settings.json) > hkcu
  */
-export function getPolicySettingsOrigin():
-  | 'remote'
-  | 'plist'
-  | 'hklm'
-  | 'file'
-  | 'hkcu'
-  | null {
+export function getPolicySettingsOrigin(): 'remote' | 'plist' | 'hklm' | 'file' | 'hkcu' | null {
   // 1. Remote (highest)
   const remoteSettings = getRemoteManagedSettingsSyncFromCache()
   if (remoteSettings && Object.keys(remoteSettings).length > 0) {
@@ -419,10 +379,7 @@ export function updateSettingsForSource(
   source: EditableSettingSource,
   settings: SettingsJson,
 ): { error: Error | null } {
-  if (
-    (source as unknown) === 'policySettings' ||
-    (source as unknown) === 'flagSettings'
-  ) {
+  if ((source as unknown) === 'policySettings' || (source as unknown) === 'flagSettings') {
     return { error: null }
   }
 
@@ -458,16 +415,12 @@ export function updateSettingsForSource(
           // JSON syntax error - return validation error instead of overwriting
           // safeParseJSON will already log the error, so we'll just return the error here
           return {
-            error: new Error(
-              `Invalid JSON syntax in settings file at ${filePath}`,
-            ),
+            error: new Error(`Invalid JSON syntax in settings file at ${filePath}`),
           }
         }
         if (rawData && typeof rawData === 'object') {
           existingSettings = rawData as SettingsJson
-          logForDebugging(
-            `Using raw settings from ${filePath} due to validation failure`,
-          )
+          logForDebugging(`Using raw settings from ${filePath} due to validation failure`)
         }
       }
     }
@@ -499,10 +452,7 @@ export function updateSettingsForSource(
     // Mark this as an internal write before writing the file
     markInternalWrite(filePath)
 
-    writeFileSyncAndFlush_DEPRECATED(
-      filePath,
-      jsonStringify(updatedSettings, null, 2) + '\n',
-    )
+    writeFileSyncAndFlush_DEPRECATED(filePath, jsonStringify(updatedSettings, null, 2) + '\n')
 
     // Invalidate the session cache since settings have been updated
     resetSettingsCache()
@@ -515,9 +465,7 @@ export function updateSettingsForSource(
       )
     }
   } catch (e) {
-    const error = new Error(
-      `Failed to read raw settings from ${filePath}: ${e}`,
-    )
+    const error = new Error(`Failed to read raw settings from ${filePath}: ${e}`)
     logError(error)
     return { error }
   }
@@ -537,10 +485,7 @@ function mergeArrays<T>(targetArray: T[], sourceArray: T[]): T[] {
  * Arrays are concatenated and deduplicated; other values use default lodash merge behavior.
  * Exported for testing.
  */
-export function settingsMergeCustomizer(
-  objValue: unknown,
-  srcValue: unknown,
-): unknown {
+export function settingsMergeCustomizer(objValue: unknown, srcValue: unknown): unknown {
   if (Array.isArray(objValue) && Array.isArray(srcValue)) {
     return mergeArrays(objValue, srcValue)
   }
@@ -557,14 +502,9 @@ export function settingsMergeCustomizer(
  * @param settings The settings object to extract keys from
  * @returns Sorted array of key paths
  */
-export function getManagedSettingsKeysForLogging(
-  settings: SettingsJson,
-): string[] {
+export function getManagedSettingsKeysForLogging(settings: SettingsJson): string[] {
   // Use .strip() to get only valid schema keys
-  const validSettings = SettingsSchema().strip().parse(settings) as Record<
-    string,
-    unknown
-  >
+  const validSettings = SettingsSchema().strip().parse(settings) as Record<string, unknown>
   const keysToExpand = ['permissions', 'sandbox', 'hooks']
   const allKeys: string[] = []
 
@@ -662,11 +602,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
     const pluginSettings = getPluginSettingsBase()
     let mergedSettings: SettingsJson = {}
     if (pluginSettings) {
-      mergedSettings = mergeWith(
-        mergedSettings,
-        pluginSettings,
-        settingsMergeCustomizer,
-      )
+      mergedSettings = mergeWith(mergedSettings, pluginSettings, settingsMergeCustomizer)
     }
     const allErrors: ValidationError[] = []
     const seenErrors = new Set<string>()
@@ -688,9 +624,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
             policySettings = result.data
           } else {
             // Remote exists but is invalid — surface errors even as we fall through
-            policyErrors.push(
-              ...formatZodError(result.error, 'remote managed settings'),
-            )
+            policyErrors.push(...formatZodError(result.error, 'remote managed settings'))
           }
         }
 
@@ -723,11 +657,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
 
         // Merge the winning policy source into the settings chain
         if (policySettings) {
-          mergedSettings = mergeWith(
-            mergedSettings,
-            policySettings,
-            settingsMergeCustomizer,
-          )
+          mergedSettings = mergeWith(mergedSettings, policySettings, settingsMergeCustomizer)
         }
         for (const error of policyErrors) {
           const errorKey = `${error.file}:${error.path}:${error.message}`
@@ -760,11 +690,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           }
 
           if (settings) {
-            mergedSettings = mergeWith(
-              mergedSettings,
-              settings,
-              settingsMergeCustomizer,
-            )
+            mergedSettings = mergeWith(mergedSettings, settings, settingsMergeCustomizer)
           }
         }
       }
@@ -775,11 +701,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
         if (inlineSettings) {
           const parsed = SettingsSchema().safeParse(inlineSettings)
           if (parsed.success) {
-            mergedSettings = mergeWith(
-              mergedSettings,
-              parsed.data,
-              settingsMergeCustomizer,
-            )
+            mergedSettings = mergeWith(mergedSettings, parsed.data, settingsMergeCustomizer)
           }
         }
       }
@@ -898,11 +820,9 @@ export function hasSkipDangerousModePermissionPrompt(): boolean {
 export function hasAutoModeOptIn(): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     const user = getSettingsForSource('userSettings')?.skipAutoPermissionPrompt
-    const local =
-      getSettingsForSource('localSettings')?.skipAutoPermissionPrompt
+    const local = getSettingsForSource('localSettings')?.skipAutoPermissionPrompt
     const flag = getSettingsForSource('flagSettings')?.skipAutoPermissionPrompt
-    const policy =
-      getSettingsForSource('policySettings')?.skipAutoPermissionPrompt
+    const policy = getSettingsForSource('policySettings')?.skipAutoPermissionPrompt
     const result = !!(user || local || flag || policy)
     logForDebugging(
       `[auto-mode] hasAutoModeOptIn=${result} skipAutoPermissionPrompt: user=${user} local=${local} flag=${flag} policy=${policy}`,
@@ -958,17 +878,14 @@ export function getAutoModeConfig():
     ] as const) {
       const settings = getSettingsForSource(source)
       if (!settings) continue
-      const result = schema.safeParse(
-        (settings as Record<string, unknown>).autoMode,
-      )
+      const result = schema.safeParse((settings as Record<string, unknown>).autoMode)
       if (result.success) {
         if (result.data.allow) allow.push(...result.data.allow)
         if (result.data.soft_deny) soft_deny.push(...result.data.soft_deny)
         if (isInternalBuild()) {
           if (result.data.deny) soft_deny.push(...result.data.deny)
         }
-        if (result.data.environment)
-          environment.push(...result.data.environment)
+        if (result.data.environment) environment.push(...result.data.environment)
       }
     }
 

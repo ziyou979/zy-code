@@ -1,37 +1,48 @@
-import React from 'react';
-import { tSync } from '../../i18n/index.js';
-import { MessageResponse } from '../../components/MessageResponse.js';
-import { Text } from '../../ink.js';
-import { jsonStringify } from '../../utils/slowOperations.js';
-import type { Input, Output } from './ConfigTool.js';
+import React from 'react'
+import { tSync } from '../../i18n/index.js'
+import { MessageResponse } from '../../components/MessageResponse.js'
+import { Text } from '../../ink.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import type { Input, Output } from './ConfigTool.js'
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
-  if (!input.setting) return null;
+  if (!input.setting) return null
   if (input.value === undefined) {
-    return <Text dimColor>{tSync('toolConfig.getting', { setting: input.setting })}</Text>;
+    return <Text dimColor>{tSync('toolConfig.getting', { setting: input.setting })}</Text>
   }
-  return <Text dimColor>
+  return (
+    <Text dimColor>
       {tSync('toolConfig.settingTo', { setting: input.setting, value: jsonStringify(input.value) })}
-    </Text>;
+    </Text>
+  )
 }
 export function renderToolResultMessage(content: Output): React.ReactNode {
   if (!content.success) {
-    return <MessageResponse>
+    return (
+      <MessageResponse>
         <Text color="error">{tSync('toolConfig.failed', { error: content.error })}</Text>
-      </MessageResponse>;
+      </MessageResponse>
+    )
   }
   if (content.operation === 'get') {
-    return <MessageResponse>
+    return (
+      <MessageResponse>
         <Text>
           <Text bold>{content.setting}</Text> = {jsonStringify(content.value)}
         </Text>
-      </MessageResponse>;
+      </MessageResponse>
+    )
   }
-  return <MessageResponse>
+  return (
+    <MessageResponse>
       <Text>
-        {tSync('toolConfig.setValue', { setting: content.setting, value: jsonStringify(content.newValue) })}
+        {tSync('toolConfig.setValue', {
+          setting: content.setting,
+          value: jsonStringify(content.newValue),
+        })}
       </Text>
-    </MessageResponse>;
+    </MessageResponse>
+  )
 }
 export function renderToolUseRejectedMessage(): React.ReactNode {
-  return <Text color="warning">{tSync('toolConfig.changeRejected')}</Text>;
+  return <Text color="warning">{tSync('toolConfig.changeRejected')}</Text>
 }

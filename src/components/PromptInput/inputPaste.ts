@@ -17,10 +17,7 @@ type TruncatedMessage = {
  * @param nextPasteId The reference id to use
  * @returns The new text to display and separate placeholder content if applicable.
  */
-export function maybeTruncateMessageForInput(
-  text: string,
-  nextPasteId: number,
-): TruncatedMessage {
+export function maybeTruncateMessageForInput(text: string, nextPasteId: number): TruncatedMessage {
   // If the text is short enough, return it as-is
   if (text.length <= TRUNCATION_THRESHOLD) {
     return {
@@ -67,10 +64,7 @@ export function maybeTruncateInput(
   const nextPasteId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1
 
   // Apply truncation
-  const { truncatedText, placeholderContent } = maybeTruncateMessageForInput(
-    input,
-    nextPasteId,
-  )
+  const { truncatedText, placeholderContent } = maybeTruncateMessageForInput(input, nextPasteId)
 
   if (!placeholderContent) {
     return { newInput: input, newPastedContents: pastedContents }

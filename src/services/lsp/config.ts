@@ -25,7 +25,7 @@ export async function getAllLspServers(): Promise<{
     // Each plugin is independent — results are merged in original order so
     // Object.assign collision precedence (later plugins win) is preserved.
     const results = await Promise.all(
-      plugins.map(async plugin => {
+      plugins.map(async (plugin) => {
         const errors: PluginError[] = []
         try {
           const scopedServers = await getPluginLspServers(plugin, errors)
@@ -33,10 +33,9 @@ export async function getAllLspServers(): Promise<{
         } catch (e) {
           // Defensive: if one plugin throws, don't lose results from the
           // others. The previous serial loop implicitly tolerated this.
-          logForDebugging(
-            `Failed to load LSP servers for plugin ${plugin.name}: ${e}`,
-            { level: 'error' },
-          )
+          logForDebugging(`Failed to load LSP servers for plugin ${plugin.name}: ${e}`, {
+            level: 'error',
+          })
           return { plugin, scopedServers: undefined, errors }
         }
       }),
@@ -48,22 +47,16 @@ export async function getAllLspServers(): Promise<{
         // Merge into all servers (already scoped by getPluginLspServers)
         Object.assign(allServers, scopedServers)
 
-        logForDebugging(
-          `Loaded ${serverCount} LSP server(s) from plugin: ${plugin.name}`,
-        )
+        logForDebugging(`Loaded ${serverCount} LSP server(s) from plugin: ${plugin.name}`)
       }
 
       // Log any errors encountered
       if (errors.length > 0) {
-        logForDebugging(
-          `${errors.length} error(s) loading LSP servers from plugin: ${plugin.name}`,
-        )
+        logForDebugging(`${errors.length} error(s) loading LSP servers from plugin: ${plugin.name}`)
       }
     }
 
-    logForDebugging(
-      `Total LSP servers loaded: ${Object.keys(allServers).length}`,
-    )
+    logForDebugging(`Total LSP servers loaded: ${Object.keys(allServers).length}`)
   } catch (error) {
     // Log error for monitoring production issues.
     // LSP is optional, so we don't throw - but we need visibility

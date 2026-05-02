@@ -88,9 +88,7 @@ export function prependToShellHistoryCache(command: string): void {
  * @param input The current user input (without '!' prefix)
  * @returns The best match, or null if no match found
  */
-export async function getShellHistoryCompletion(
-  input: string,
-): Promise<ShellHistoryMatch | null> {
+export async function getShellHistoryCompletion(input: string): Promise<ShellHistoryMatch | null> {
   // Don't suggest for empty or very short input
   if (!input || input.length < 2) {
     return null

@@ -39,9 +39,7 @@ export function expandPath(path: string, baseDir?: string): string {
   }
 
   if (typeof actualBaseDir !== 'string') {
-    throw new TypeError(
-      `Base directory must be a string, received ${typeof actualBaseDir}`,
-    )
+    throw new TypeError(`Base directory must be a string, received ${typeof actualBaseDir}`)
   }
 
   // Security: Check for null bytes

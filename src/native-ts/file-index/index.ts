@@ -85,17 +85,14 @@ export class FileIndex {
     done: Promise<void>
   } {
     let markQueryable: () => void = () => {}
-    const queryable = new Promise<void>(resolve => {
+    const queryable = new Promise<void>((resolve) => {
       markQueryable = resolve
     })
     const done = this.buildAsync(fileList, markQueryable)
     return { queryable, done }
   }
 
-  private async buildAsync(
-    fileList: string[],
-    markQueryable: () => void,
-  ): Promise<void> {
+  private async buildAsync(fileList: string[], markQueryable: () => void): Promise<void> {
     const seen = new Set<string>()
     const paths: string[] = []
     let chunkStart = performance.now()
@@ -195,8 +192,7 @@ export class FileIndex {
     // Upper bound on score assuming every match gets the max boundary bonus.
     // Used to reject paths whose gap penalties alone make them unable to beat
     // the current top-k threshold, before the charCodeAt-heavy boundary pass.
-    const scoreCeiling =
-      nLen * (SCORE_MATCH + BONUS_BOUNDARY) + BONUS_FIRST_CHAR + 32
+    const scoreCeiling = nLen * (SCORE_MATCH + BONUS_BOUNDARY) + BONUS_FIRST_CHAR + 32
 
     // Top-k: maintain a sorted-ascending array of the best `limit` matches.
     // Avoids O(n log n) sort of all matches when we only need `limit` of them.
@@ -233,10 +229,7 @@ export class FileIndex {
 
       // Gap-bound reject: if the best-case score (all boundary bonuses) minus
       // known gap penalties can't beat threshold, skip the boundary pass.
-      if (
-        topK.length === limit &&
-        scoreCeiling + consecBonus - gapPenalty <= threshold
-      ) {
+      if (topK.length === limit && scoreCeiling + consecBonus - gapPenalty <= threshold) {
         continue
       }
 
@@ -280,9 +273,7 @@ export class FileIndex {
     for (let i = 0; i < matchCount; i++) {
       const path = topK[i]!.path
       const positionScore = i / denom
-      const finalScore = path.includes('test')
-        ? Math.min(positionScore * 1.05, 1.0)
-        : positionScore
+      const finalScore = path.includes('test') ? Math.min(positionScore * 1.05, 1.0) : positionScore
       results[i] = { path, score: finalScore }
     }
 
@@ -323,7 +314,7 @@ function isUpper(code: number): boolean {
 }
 
 export function yieldToEventLoop(): Promise<void> {
-  return new Promise(resolve => setImmediate(resolve))
+  return new Promise((resolve) => setImmediate(resolve))
 }
 
 export { CHUNK_MS }
@@ -333,10 +324,7 @@ export { CHUNK_MS }
  * Handles both Unix (/) and Windows (\) path separators.
  * Mirrors FileIndex::compute_top_level_entries in lib.rs.
  */
-function computeTopLevelEntries(
-  paths: string[],
-  limit: number,
-): SearchResult[] {
+function computeTopLevelEntries(paths: string[], limit: number): SearchResult[] {
   const topLevel = new Set<string>()
 
   for (const p of paths) {
@@ -363,7 +351,7 @@ function computeTopLevelEntries(
     return a < b ? -1 : a > b ? 1 : 0
   })
 
-  return sorted.slice(0, limit).map(path => ({ path, score: 0.0 }))
+  return sorted.slice(0, limit).map((path) => ({ path, score: 0.0 }))
 }
 
 export default FileIndex

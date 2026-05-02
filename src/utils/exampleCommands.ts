@@ -29,7 +29,7 @@ const NON_CORE_PATTERNS = [
 ]
 
 function isCoreFile(path: string): boolean {
-  return !NON_CORE_PATTERNS.some(p => p.test(path))
+  return !NON_CORE_PATTERNS.some((p) => p.test(path))
 }
 
 /**
@@ -53,10 +53,7 @@ export function countAndSortItems(items: string[], topN: number = 20): string {
  * skipping non-core files and spreading across different directories.
  * Returns empty array if fewer than `want` core files are available.
  */
-export function pickDiverseCoreFiles(
-  sortedPaths: string[],
-  want: number,
-): string[] {
+export function pickDiverseCoreFiles(sortedPaths: string[], want: number): string[] {
   const picked: string[] = []
   const seenBasenames = new Set<string>()
   const dirTally = new Map<string, number>()
@@ -92,14 +89,7 @@ async function getFrequentlyModifiedFiles(): Promise<string[]> {
     // Collect frequently-modified files, preferring the user's own commits.
     const userEmail = await getGitEmail()
 
-    const logArgs = [
-      'log',
-      '-n',
-      '1000',
-      '--pretty=format:',
-      '--name-only',
-      '--diff-filter=M',
-    ]
+    const logArgs = ['log', '-n', '1000', '--pretty=format:', '--name-only', '--diff-filter=M']
 
     const counts = new Map<string, number>()
     const tallyInto = (stdout: string) => {
@@ -171,9 +161,9 @@ export const refreshExampleCommands = memoize(async (): Promise<void> => {
 
   // If no example files cached, kickstart fetch in background
   if (!projectConfig.exampleFiles?.length) {
-    void getFrequentlyModifiedFiles().then(files => {
+    void getFrequentlyModifiedFiles().then((files) => {
       if (files.length) {
-        saveCurrentProjectConfig(current => ({
+        saveCurrentProjectConfig((current) => ({
           ...current,
           exampleFiles: files,
           exampleFilesGeneratedAt: Date.now(),

@@ -1,24 +1,24 @@
-import React from 'react';
-import Link from './components/Link.js';
-import Text from './components/Text.js';
-import type { Color } from './styles.js';
-import { type NamedColor, Parser, type Color as TermioColor, type TextStyle } from './termio.js';
+import React from 'react'
+import Link from './components/Link.js'
+import Text from './components/Text.js'
+import type { Color } from './styles.js'
+import { type NamedColor, Parser, type Color as TermioColor, type TextStyle } from './termio.js'
 type Props = {
-  children: string;
+  children: string
   /** 为 true 时，强制所有文本以暗淡样式渲染 */
-  dimColor?: boolean;
-};
+  dimColor?: boolean
+}
 type SpanProps = {
-  color?: Color;
-  backgroundColor?: Color;
-  dim?: boolean;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  strikethrough?: boolean;
-  inverse?: boolean;
-  hyperlink?: string;
-};
+  color?: Color
+  backgroundColor?: Color
+  dim?: boolean
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  strikethrough?: boolean
+  inverse?: boolean
+  hyperlink?: string
+}
 
 /**
  * 解析 ANSI 转义码并使用 Text 组件渲染的组件。
@@ -28,102 +28,134 @@ type SpanProps = {
  *
  * 已做记忆化，当 children 字符串相同但父组件变化时避免重渲染。
  */
-export const Ansi = React.memo(function Ansi({
-  children,
-  dimColor
-}: Props) {
-  if (typeof children !== "string") {
-    return dimColor ? <Text dim={true}>{String(children)}</Text> : <Text>{String(children)}</Text>;
+export const Ansi = React.memo(function Ansi({ children, dimColor }: Props) {
+  if (typeof children !== 'string') {
+    return dimColor ? <Text dim={true}>{String(children)}</Text> : <Text>{String(children)}</Text>
   }
-  if (children === "") {
-    return null;
+  if (children === '') {
+    return null
   }
-  let content;
-  let earlyReturn: any = Symbol.for("react.early_return_sentinel");
-  const spans = parseToSpans(children);
+  let content
+  let earlyReturn: any = Symbol.for('react.early_return_sentinel')
+  const spans = parseToSpans(children)
   if (spans.length === 0) {
-    earlyReturn = null;
+    earlyReturn = null
   } else if (spans.length === 1 && !hasAnyProps(spans[0].props)) {
-    earlyReturn = dimColor ? <Text dim={true}>{spans[0].text}</Text> : <Text>{spans[0].text}</Text>;
+    earlyReturn = dimColor ? <Text dim={true}>{spans[0].text}</Text> : <Text>{spans[0].text}</Text>
   } else {
     content = spans.map((span, i) => {
-      const hyperlink = span.props.hyperlink;
+      const hyperlink = span.props.hyperlink
       if (dimColor) {
-        span.props.dim = true;
+        span.props.dim = true
       }
-      const hasTextProps = hasAnyTextProps(span.props);
+      const hasTextProps = hasAnyTextProps(span.props)
       if (hyperlink) {
-        return hasTextProps ? <Link key={i} url={hyperlink}><StyledText color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText></Link> : <Link key={i} url={hyperlink}>{span.text}</Link>;
+        return hasTextProps ? (
+          <Link key={i} url={hyperlink}>
+            <StyledText
+              color={span.props.color}
+              backgroundColor={span.props.backgroundColor}
+              dim={span.props.dim}
+              bold={span.props.bold}
+              italic={span.props.italic}
+              underline={span.props.underline}
+              strikethrough={span.props.strikethrough}
+              inverse={span.props.inverse}
+            >
+              {span.text}
+            </StyledText>
+          </Link>
+        ) : (
+          <Link key={i} url={hyperlink}>
+            {span.text}
+          </Link>
+        )
       }
-      return hasTextProps ? <StyledText key={i} color={span.props.color} backgroundColor={span.props.backgroundColor} dim={span.props.dim} bold={span.props.bold} italic={span.props.italic} underline={span.props.underline} strikethrough={span.props.strikethrough} inverse={span.props.inverse}>{span.text}</StyledText> : span.text;
-    });
+      return hasTextProps ? (
+        <StyledText
+          key={i}
+          color={span.props.color}
+          backgroundColor={span.props.backgroundColor}
+          dim={span.props.dim}
+          bold={span.props.bold}
+          italic={span.props.italic}
+          underline={span.props.underline}
+          strikethrough={span.props.strikethrough}
+          inverse={span.props.inverse}
+        >
+          {span.text}
+        </StyledText>
+      ) : (
+        span.text
+      )
+    })
   }
-  if (earlyReturn !== Symbol.for("react.early_return_sentinel")) {
-    return earlyReturn;
+  if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
+    return earlyReturn
   }
-  return dimColor ? <Text dim={true}>{content}</Text> : <Text>{content}</Text>;
-});
+  return dimColor ? <Text dim={true}>{content}</Text> : <Text>{content}</Text>
+})
 type Span = {
-  text: string;
-  props: SpanProps;
-};
+  text: string
+  props: SpanProps
+}
 
 /**
  * 使用 termio 解析器将 ANSI 字符串解析为 span。
  */
 function parseToSpans(input: string): Span[] {
-  const parser = new Parser();
-  const actions = parser.feed(input);
-  const spans: Span[] = [];
-  let currentHyperlink: string | undefined;
+  const parser = new Parser()
+  const actions = parser.feed(input)
+  const spans: Span[] = []
+  let currentHyperlink: string | undefined
   for (const action of actions) {
     if (action.type === 'link') {
       if (action.action.type === 'start') {
-        currentHyperlink = action.action.url;
+        currentHyperlink = action.action.url
       } else {
-        currentHyperlink = undefined;
+        currentHyperlink = undefined
       }
-      continue;
+      continue
     }
     if (action.type === 'text') {
-      const text = action.graphemes.map((g) => g.value).join('');
-      if (!text) continue;
-      const props = textStyleToSpanProps(action.style);
+      const text = action.graphemes.map((g) => g.value).join('')
+      if (!text) continue
+      const props = textStyleToSpanProps(action.style)
       if (currentHyperlink) {
-        props.hyperlink = currentHyperlink;
+        props.hyperlink = currentHyperlink
       }
 
       // 尝试与前一个 span 合并（如果 props 相同）
-      const lastSpan = spans[spans.length - 1];
+      const lastSpan = spans[spans.length - 1]
       if (lastSpan && propsEqual(lastSpan.props, props)) {
-        lastSpan.text += text;
+        lastSpan.text += text
       } else {
         spans.push({
           text,
-          props
-        });
+          props,
+        })
       }
     }
   }
-  return spans;
+  return spans
 }
 
 /**
  * 将 termio 的 TextStyle 转换为 SpanProps。
  */
 function textStyleToSpanProps(style: TextStyle): SpanProps {
-  const props: SpanProps = {};
-  if (style.bold) props.bold = true;
-  if (style.dim) props.dim = true;
-  if (style.italic) props.italic = true;
-  if (style.underline !== 'none') props.underline = true;
-  if (style.strikethrough) props.strikethrough = true;
-  if (style.inverse) props.inverse = true;
-  const fgColor = colorToString(style.fg);
-  if (fgColor) props.color = fgColor;
-  const bgColor = colorToString(style.bg);
-  if (bgColor) props.backgroundColor = bgColor;
-  return props;
+  const props: SpanProps = {}
+  if (style.bold) props.bold = true
+  if (style.dim) props.dim = true
+  if (style.italic) props.italic = true
+  if (style.underline !== 'none') props.underline = true
+  if (style.strikethrough) props.strikethrough = true
+  if (style.inverse) props.inverse = true
+  const fgColor = colorToString(style.fg)
+  if (fgColor) props.color = fgColor
+  const bgColor = colorToString(style.bg)
+  if (bgColor) props.backgroundColor = bgColor
+  return props
 }
 
 // 将 termio 命名颜色映射到 ansi: 格式
@@ -143,8 +175,8 @@ const NAMED_COLOR_MAP: Record<NamedColor, string> = {
   brightBlue: 'ansi:blueBright',
   brightMagenta: 'ansi:magentaBright',
   brightCyan: 'ansi:cyanBright',
-  brightWhite: 'ansi:whiteBright'
-};
+  brightWhite: 'ansi:whiteBright',
+}
 
 /**
  * 将 termio 的 Color 转换为 Ink 使用的字符串格式。
@@ -152,13 +184,13 @@ const NAMED_COLOR_MAP: Record<NamedColor, string> = {
 function colorToString(color: TermioColor): Color | undefined {
   switch (color.type) {
     case 'named':
-      return NAMED_COLOR_MAP[color.name] as Color;
+      return NAMED_COLOR_MAP[color.name] as Color
     case 'indexed':
-      return `ansi256(${color.index})` as Color;
+      return `ansi256(${color.index})` as Color
     case 'rgb':
-      return `rgb(${color.r},${color.g},${color.b})` as Color;
+      return `rgb(${color.r},${color.g},${color.b})` as Color
     case 'default':
-      return undefined;
+      return undefined
   }
 }
 
@@ -166,40 +198,72 @@ function colorToString(color: TermioColor): Color | undefined {
  * 比较两个 SpanProps 是否相等，用于合并判断。
  */
 function propsEqual(a: SpanProps, b: SpanProps): boolean {
-  return a.color === b.color && a.backgroundColor === b.backgroundColor && a.bold === b.bold && a.dim === b.dim && a.italic === b.italic && a.underline === b.underline && a.strikethrough === b.strikethrough && a.inverse === b.inverse && a.hyperlink === b.hyperlink;
+  return (
+    a.color === b.color &&
+    a.backgroundColor === b.backgroundColor &&
+    a.bold === b.bold &&
+    a.dim === b.dim &&
+    a.italic === b.italic &&
+    a.underline === b.underline &&
+    a.strikethrough === b.strikethrough &&
+    a.inverse === b.inverse &&
+    a.hyperlink === b.hyperlink
+  )
 }
 function hasAnyProps(props: SpanProps): boolean {
-  return props.color !== undefined || props.backgroundColor !== undefined || props.dim === true || props.bold === true || props.italic === true || props.underline === true || props.strikethrough === true || props.inverse === true || props.hyperlink !== undefined;
+  return (
+    props.color !== undefined ||
+    props.backgroundColor !== undefined ||
+    props.dim === true ||
+    props.bold === true ||
+    props.italic === true ||
+    props.underline === true ||
+    props.strikethrough === true ||
+    props.inverse === true ||
+    props.hyperlink !== undefined
+  )
 }
 function hasAnyTextProps(props: SpanProps): boolean {
-  return props.color !== undefined || props.backgroundColor !== undefined || props.dim === true || props.bold === true || props.italic === true || props.underline === true || props.strikethrough === true || props.inverse === true;
+  return (
+    props.color !== undefined ||
+    props.backgroundColor !== undefined ||
+    props.dim === true ||
+    props.bold === true ||
+    props.italic === true ||
+    props.underline === true ||
+    props.strikethrough === true ||
+    props.inverse === true
+  )
 }
 
 // 文本样式 props，包含字重和 children
 type StyledTextProps = {
-  children?: React.ReactNode;
-  bold?: boolean;
-  dim?: boolean;
-  color?: Color;
-  backgroundColor?: Color;
-  italic?: boolean;
-  underline?: boolean;
-  strikethrough?: boolean;
-  inverse?: boolean;
-};
+  children?: React.ReactNode
+  bold?: boolean
+  dim?: boolean
+  color?: Color
+  backgroundColor?: Color
+  italic?: boolean
+  underline?: boolean
+  strikethrough?: boolean
+  inverse?: boolean
+}
 
 // 处理 bold/dim 互斥逻辑的包装组件，适配 Text 组件
-function StyledText({
-  bold,
-  dim,
-  children,
-  ...rest
-}: StyledTextProps) {
+function StyledText({ bold, dim, children, ...rest }: StyledTextProps) {
   if (dim) {
-    return <Text {...rest} dim={true}>{children}</Text>;
+    return (
+      <Text {...rest} dim={true}>
+        {children}
+      </Text>
+    )
   }
   if (bold) {
-    return <Text {...rest} bold={true}>{children}</Text>;
+    return (
+      <Text {...rest} bold={true}>
+        {children}
+      </Text>
+    )
   }
-  return <Text {...rest}>{children}</Text>;
+  return <Text {...rest}>{children}</Text>
 }

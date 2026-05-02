@@ -24,9 +24,7 @@ export async function isBinaryInstalled(command: string): Promise<boolean> {
   // Check cache first
   const cached = binaryCache.get(trimmedCommand)
   if (cached !== undefined) {
-    logForDebugging(
-      `[binaryCheck] Cache hit for '${trimmedCommand}': ${cached}`,
-    )
+    logForDebugging(`[binaryCheck] Cache hit for '${trimmedCommand}': ${cached}`)
     return cached
   }
 
@@ -38,9 +36,7 @@ export async function isBinaryInstalled(command: string): Promise<boolean> {
   // Cache the result
   binaryCache.set(trimmedCommand, exists)
 
-  logForDebugging(
-    `[binaryCheck] Binary '${trimmedCommand}' ${exists ? 'found' : 'not found'}`,
-  )
+  logForDebugging(`[binaryCheck] Binary '${trimmedCommand}' ${exists ? 'found' : 'not found'}`)
 
   return exists
 }

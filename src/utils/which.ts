@@ -55,10 +55,7 @@ function whichNodeSync(command: string): string | null {
   }
 }
 
-const bunWhich =
-  typeof Bun !== 'undefined' && typeof Bun.which === 'function'
-    ? Bun.which
-    : null
+const bunWhich = typeof Bun !== 'undefined' && typeof Bun.which === 'function' ? Bun.which : null
 
 /**
  * Finds the full path to a command executable.
@@ -69,7 +66,7 @@ const bunWhich =
  * @returns The full path to the command, or null if not found
  */
 export const which: (command: string) => Promise<string | null> = bunWhich
-  ? async command => bunWhich(command)
+  ? async (command) => bunWhich(command)
   : whichNodeAsync
 
 /**
@@ -78,5 +75,4 @@ export const which: (command: string) => Promise<string | null> = bunWhich
  * @param command - The command name to look up
  * @returns The full path to the command, or null if not found
  */
-export const whichSync: (command: string) => string | null =
-  bunWhich ?? whichNodeSync
+export const whichSync: (command: string) => string | null = bunWhich ?? whichNodeSync

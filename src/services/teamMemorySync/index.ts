@@ -38,17 +38,11 @@ import {
   validateTeamMemKey,
 } from '../../memdir/teamMemPaths.js'
 import { count } from '../../utils/array.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getZyAIOAuthTokens,
-} from '../../utils/auth.js'
+import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { getGithubRepo } from '../../utils/git.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-} from '../../utils/model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl } from '../../utils/model/providers.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
@@ -158,8 +152,7 @@ function isUsingOAuth(): boolean {
 }
 
 function getTeamMemorySyncEndpoint(repoSlug: string): string {
-  const baseUrl =
-    process.env.TEAM_MEMORY_SYNC_URL || getOauthConfig().BASE_API_URL
+  const baseUrl = process.env.TEAM_MEMORY_SYNC_URL || getOauthConfig().BASE_API_URL
   return `${baseUrl}/api/claude_code/team_memory?repo=${encodeURIComponent(repoSlug)}`
 }
 
@@ -209,8 +202,7 @@ async function fetchTeamMemoryOnce(
     const response = await axios.get(endpoint, {
       headers,
       timeout: TEAM_MEMORY_SYNC_TIMEOUT_MS,
-      validateStatus: status =>
-        status === 200 || status === 304 || status === 404,
+      validateStatus: (status) => status === 200 || status === 304 || status === 404,
     })
 
     if (response.status === 304) {
@@ -243,9 +235,7 @@ async function fetchTeamMemoryOnce(
 
     // 从响应数据或 ETag 头中提取校验和
     const responseChecksum =
-      parsed.data.checksum ||
-      response.headers['etag']?.replace(/^"|"$/g, '') ||
-      undefined
+      parsed.data.checksum || response.headers['etag']?.replace(/^"|"$/g, '') || undefined
     if (responseChecksum) {
       state.lastKnownChecksum = responseChecksum
     }
@@ -262,9 +252,7 @@ async function fetchTeamMemoryOnce(
     }
   } catch (error) {
     const { kind, status, message } = classifyAxiosError(error)
-    const body = axios.isAxiosError(error)
-      ? JSON.stringify(error.response?.data ?? '')
-      : ''
+    const body = axios.isAxiosError(error) ? JSON.stringify(error.response?.data ?? '') : ''
     if (kind !== 'other') {
       logForDebugging(`team-memory-sync: fetch error ${status}: ${body}`, {
         level: 'warn',
@@ -324,7 +312,7 @@ async function fetchTeamMemoryHashes(
     const response = await axios.get(endpoint, {
       headers: auth.headers,
       timeout: TEAM_MEMORY_SYNC_TIMEOUT_MS,
-      validateStatus: status => status === 200 || status === 404,
+      validateStatus: (status) => status === 200 || status === 404,
     })
 
     if (response.status === 404) {
@@ -332,8 +320,7 @@ async function fetchTeamMemoryHashes(
       return { success: true, entryChecksums: {} }
     }
 
-    const checksum =
-      response.data?.checksum || response.headers['etag']?.replace(/^"|"$/g, '')
+    const checksum = response.data?.checksum || response.headers['etag']?.replace(/^"|"$/g, '')
     const entryChecksums = response.data?.entryChecksums
 
     // 需要 anthropic/anthropic#283027。如果缺少 entryChecksums，
@@ -341,8 +328,7 @@ async function fetchTeamMemoryHashes(
     if (!entryChecksums || typeof entryChecksums !== 'object') {
       return {
         success: false,
-        error:
-          'Server did not return entryChecksums (?view=hashes unsupported)',
+        error: 'Server did not return entryChecksums (?view=hashes unsupported)',
         errorType: 'parse',
       }
     }
@@ -420,9 +406,7 @@ async function fetchTeamMemory(
  * （MAX_FILE_SIZE_BYTES=250K 已经限制了单个文件大小；
  * ~250K 的独立 body 高于我们的软限制，但低于网关观察到的实际阈值）。
  */
-export function batchDeltaByBytes(
-  delta: Record<string, string>,
-): Array<Record<string, string>> {
+export function batchDeltaByBytes(delta: Record<string, string>): Array<Record<string, string>> {
   const keys = Object.keys(delta).sort()
   if (keys.length === 0) return []
 
@@ -431,9 +415,7 @@ export function batchDeltaByBytes(
   // 字符串的转义，因此计数与 axios 序列化的结果匹配。
   const EMPTY_BODY_BYTES = Buffer.byteLength('{"entries":{}}', 'utf8')
   const entryBytes = (k: string, v: string): number =>
-    Buffer.byteLength(jsonStringify(k), 'utf8') +
-    Buffer.byteLength(jsonStringify(v), 'utf8') +
-    1 // 冒号 + 逗号（最后一个条目多算了 1 个逗号；无影响，只是余量）
+    Buffer.byteLength(jsonStringify(k), 'utf8') + Buffer.byteLength(jsonStringify(v), 'utf8') + 1 // 冒号 + 逗号（最后一个条目多算了 1 个逗号；无影响，只是余量）
 
   const batches: Array<Record<string, string>> = []
   let current: Record<string, string> = {}
@@ -441,10 +423,7 @@ export function batchDeltaByBytes(
 
   for (const key of keys) {
     const added = entryBytes(key, delta[key]!)
-    if (
-      currentBytes + added > MAX_PUT_BODY_BYTES &&
-      Object.keys(current).length > 0
-    ) {
+    if (currentBytes + added > MAX_PUT_BODY_BYTES && Object.keys(current).length > 0) {
       batches.push(current)
       current = {}
       currentBytes = EMPTY_BODY_BYTES
@@ -485,7 +464,7 @@ async function uploadTeamMemory(
       {
         headers,
         timeout: TEAM_MEMORY_SYNC_TIMEOUT_MS,
-        validateStatus: status => status === 200 || status === 412,
+        validateStatus: (status) => status === 200 || status === 412,
       },
     )
 
@@ -511,9 +490,7 @@ async function uploadTeamMemory(
       lastModified: response.data?.lastModified,
     }
   } catch (error) {
-    const body = axios.isAxiosError(error)
-      ? JSON.stringify(error.response?.data ?? '')
-      : ''
+    const body = axios.isAxiosError(error) ? JSON.stringify(error.response?.data ?? '') : ''
     logForDebugging(
       `team-memory-sync: upload failed: ${error instanceof Error ? error.message : ''} ${body}`,
       { level: 'warn' },
@@ -528,9 +505,7 @@ async function uploadTeamMemory(
     // 有有效的 max_entries（可按组织进行 GB 级别调整）。缓存它以便
     // 下次 push 时截断到正确的值。
     if (httpStatus === 413 && axios.isAxiosError(error)) {
-      const parsed = TeamMemoryTooManyEntriesSchema().safeParse(
-        error.response?.data,
-      )
+      const parsed = TeamMemoryTooManyEntriesSchema().safeParse(error.response?.data)
       if (parsed.success) {
         serverErrorCode = parsed.data.error.details.error_code
         serverMaxEntries = parsed.data.error.details.max_entries
@@ -572,7 +547,7 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
     try {
       const dirEntries = await readdir(dir, { withFileTypes: true })
       await Promise.all(
-        dirEntries.map(async entry => {
+        dirEntries.map(async (entry) => {
           const fullPath = join(dir, entry.name)
           if (entry.isDirectory()) {
             await walkDir(fullPath)
@@ -682,9 +657,7 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
  *
  * 返回实际写入的文件数量。
  */
-async function writeRemoteEntriesToLocal(
-  entries: Record<string, string>,
-): Promise<number> {
+async function writeRemoteEntriesToLocal(entries: Record<string, string>): Promise<number> {
   const results = await Promise.all(
     Object.entries(entries).map(async ([relPath, content]) => {
       let validatedPath: string
@@ -700,10 +673,9 @@ async function writeRemoteEntriesToLocal(
 
       const sizeBytes = Buffer.byteLength(content, 'utf8')
       if (sizeBytes > MAX_FILE_SIZE_BYTES) {
-        logForDebugging(
-          `team-memory-sync: skipping oversized remote entry "${relPath}"`,
-          { level: 'info' },
-        )
+        logForDebugging(`team-memory-sync: skipping oversized remote entry "${relPath}"`, {
+          level: 'info',
+        })
         return false
       }
 
@@ -716,32 +688,21 @@ async function writeRemoteEntriesToLocal(
           return false
         }
       } catch (e) {
-        if (
-          isErrnoException(e) &&
-          e.code !== 'ENOENT' &&
-          e.code !== 'ENOTDIR'
-        ) {
-          logForDebugging(
-            `team-memory-sync: unexpected read error for "${relPath}": ${e.code}`,
-            { level: 'debug' },
-          )
+        if (isErrnoException(e) && e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
+          logForDebugging(`team-memory-sync: unexpected read error for "${relPath}": ${e.code}`, {
+            level: 'debug',
+          })
         }
         // 对 ENOENT/ENOTDIR（文件尚不存在）继续执行写入
       }
 
       try {
-        const parentDir = validatedPath.substring(
-          0,
-          validatedPath.lastIndexOf(sep),
-        )
+        const parentDir = validatedPath.substring(0, validatedPath.lastIndexOf(sep))
         await mkdir(parentDir, { recursive: true })
         await writeFile(validatedPath, content, 'utf8')
         return true
       } catch (e) {
-        logForDebugging(
-          `team-memory-sync: failed to write "${relPath}": ${e}`,
-          { level: 'warn' },
-        )
+        logForDebugging(`team-memory-sync: failed to write "${relPath}": ${e}`, { level: 'warn' })
         return false
       }
     }),
@@ -882,9 +843,7 @@ export async function pullTeamMemory(
  * 更改，而静默丢弃本地编辑会使用户刚刚完成的工作
  * 无法挽回地丢失。
  */
-export async function pushTeamMemory(
-  state: SyncState,
-): Promise<TeamMemorySyncPushResult> {
+export async function pushTeamMemory(state: SyncState): Promise<TeamMemorySyncPushResult> {
   const startTime = Date.now()
   let conflictRetries = 0
 
@@ -921,9 +880,7 @@ export async function pushTeamMemory(
     // 记录用户可见的警告，列出哪些文件被跳过及原因。
     // 不阻塞 push —— 仅排除这些文件。密钥的 VALUE
     // 永远不会被记录，只记录类型标签。
-    const summary = skippedSecrets
-      .map(s => `"${s.path}" (${s.label})`)
-      .join(', ')
+    const summary = skippedSecrets.map((s) => `"${s.path}" (${s.label})`).join(', ')
     logForDebugging(
       `team-memory-sync: ${skippedSecrets.length} file(s) skipped due to detected secrets: ${summary}. Remove the secret(s) to enable sync for these files.`,
       { level: 'warn' },
@@ -933,10 +890,8 @@ export async function pushTeamMemory(
       // 只记录 gitleaks 规则 ID（不记录值，不记录路径 —— 路径可能
       // 泄漏仓库结构）。逗号连接以压缩为单个 analytics 字段。
       rule_ids: skippedSecrets
-        .map(s => s.ruleId)
-        .join(
-          ',',
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        .map((s) => s.ruleId)
+        .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
 
@@ -949,11 +904,7 @@ export async function pushTeamMemory(
 
   let sawConflict = false
 
-  for (
-    let conflictAttempt = 0;
-    conflictAttempt <= MAX_CONFLICT_RETRIES;
-    conflictAttempt++
-  ) {
+  for (let conflictAttempt = 0; conflictAttempt <= MAX_CONFLICT_RETRIES; conflictAttempt++) {
     // 增量：仅上传内容哈希与我们认为服务器持有的
     // 内容不同的 key。首次 pull 后的 push，这正好是
     // 用户的本地编辑。412 探测后，匹配的哈希被排除 ——
@@ -996,12 +947,7 @@ export async function pushTeamMemory(
     let result: TeamMemorySyncUploadResult | undefined
 
     for (const batch of batches) {
-      result = await uploadTeamMemory(
-        state,
-        repoSlug,
-        batch,
-        state.lastKnownChecksum,
-      )
+      result = await uploadTeamMemory(state, repoSlug, batch, state.lastKnownChecksum)
       if (!result.success) break
 
       for (const key of Object.keys(batch)) {
@@ -1203,8 +1149,7 @@ function logPull(
     not_modified: outcome.notModified ?? false,
     duration_ms: Date.now() - startTime,
     ...(outcome.errorType && {
-      errorType:
-        outcome.errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      errorType: outcome.errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     ...(outcome.status && { status: outcome.status }),
   })
@@ -1232,14 +1177,12 @@ function logPush(
     conflict_retries: outcome.conflictRetries ?? 0,
     duration_ms: Date.now() - startTime,
     ...(outcome.errorType && {
-      errorType:
-        outcome.errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      errorType: outcome.errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     ...(outcome.status && { status: outcome.status }),
     ...(outcome.putBatches && { put_batches: outcome.putBatches }),
     ...(outcome.errorCode && {
-      error_code:
-        outcome.errorCode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      error_code: outcome.errorCode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     }),
     ...(outcome.serverMaxEntries !== undefined && {
       server_max_entries: outcome.serverMaxEntries,

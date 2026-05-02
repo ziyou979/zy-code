@@ -7,12 +7,7 @@ import { createWriteStream, writeFileSync } from 'fs'
 import { readdir, readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { pipeline } from 'stream/promises'
-import {
-  getHeapSnapshot,
-  getHeapSpaceStatistics,
-  getHeapStatistics,
-  type HeapSpaceInfo,
-} from 'v8'
+import { getHeapSnapshot, getHeapSpaceStatistics, getHeapStatistics, type HeapSpaceInfo } from 'v8'
 import { getSessionId } from '../bootstrap/state.js'
 import { logEvent } from '../services/analytics/index.js'
 import { logForDebugging } from './debug.js'
@@ -139,9 +134,7 @@ export async function captureMemoryDiagnostics(
     )
   }
   if (activeHandles > 100) {
-    potentialLeaks.push(
-      `${activeHandles} active handles - possible timer/socket leak`,
-    )
+    potentialLeaks.push(`${activeHandles} active handles - possible timer/socket leak`)
   }
   if (nativeMemory > usage.heapUsed) {
     potentialLeaks.push(
@@ -149,14 +142,10 @@ export async function captureMemoryDiagnostics(
     )
   }
   if (mbPerHour > 100) {
-    potentialLeaks.push(
-      `High memory growth rate: ${mbPerHour.toFixed(1)} MB/hour`,
-    )
+    potentialLeaks.push(`High memory growth rate: ${mbPerHour.toFixed(1)} MB/hour`)
   }
   if (openFileDescriptors && openFileDescriptors > 500) {
-    potentialLeaks.push(
-      `${openFileDescriptors} open file descriptors - possible file/socket leak`,
-    )
+    potentialLeaks.push(`${openFileDescriptors} open file descriptors - possible file/socket leak`)
   }
 
   return {
@@ -183,7 +172,7 @@ export async function captureMemoryDiagnostics(
       detachedContexts: heapStats.number_of_detached_contexts,
       nativeContexts: heapStats.number_of_native_contexts,
     },
-    v8HeapSpaces: heapSpaceStats?.map(space => ({
+    v8HeapSpaces: heapSpaceStats?.map((space) => ({
       name: space.space_name,
       size: space.space_size,
       used: space.space_used_size,
@@ -229,8 +218,7 @@ export async function performHeapDump(
     // the heap dump itself allocates memory and would skew the numbers.
     const diagnostics = await captureMemoryDiagnostics(trigger, dumpNumber)
 
-    const toGB = (bytes: number): string =>
-      (bytes / 1024 / 1024 / 1024).toFixed(3)
+    const toGB = (bytes: number): string => (bytes / 1024 / 1024 / 1024).toFixed(3)
     logForDebugging(`[HeapDump] Memory state:
   heapUsed: ${toGB(diagnostics.memoryUsage.heapUsed)} GB (in snapshot)
   external: ${toGB(diagnostics.memoryUsage.external)} GB (NOT in snapshot)

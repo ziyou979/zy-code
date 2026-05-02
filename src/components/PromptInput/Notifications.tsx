@@ -1,57 +1,63 @@
-import { feature } from 'bun:bundle';
-import * as React from 'react';
-import { type ReactNode, useEffect, useState } from 'react';
-import { type Notification, useNotifications } from 'src/context/notifications.js';
-import { logEvent } from 'src/services/analytics/index.js';
-import { useAppState } from 'src/state/AppState.js';
-import { useVoiceState } from '../../context/voice.js';
-import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js';
-import { useIdeConnectionStatus } from '../../hooks/useIdeConnectionStatus.js';
-import type { IDESelection } from '../../hooks/useIdeSelection.js';
-import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
-import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js';
-import { Box, Text } from '../../ink.js';
-import { useZyAiLimits } from '../../services/zyAiLimitsHook.js';
-import { calculateTokenWarningState } from '../../services/compact/autoCompact.js';
-import type { MCPServerConnection } from '../../services/mcp/types.js';
-import type { Message } from '../../types/message.js';
-import { getApiKeyHelperElapsedMs, getConfiguredApiKeyHelper, getSubscriptionType } from '../../utils/auth.js';
-import type { AutoUpdaterResult } from '../../utils/autoUpdater.js';
-import { getExternalEditor } from '../../utils/editor.js';
-import { isEnvTruthy } from '../../utils/envUtils.js';
-import { formatDuration } from '../../utils/format.js';
-import { setEnvHookNotifier } from '../../utils/hooks/fileChangedWatcher.js';
-import { toIDEDisplayName } from '../../utils/ide.js';
-import { getMessagesAfterCompactBoundary } from '../../utils/messages.js';
-import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js';
-import { AutoUpdaterWrapper } from '../AutoUpdaterWrapper.js';
-import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
-import { IdeStatusIndicator } from '../IdeStatusIndicator.js';
-import { MemoryUsageIndicator } from '../MemoryUsageIndicator.js';
-import { SentryErrorBoundary } from '../SentryErrorBoundary.js';
-import { TokenWarning } from '../TokenWarning.js';
-import { SandboxPromptFooterHint } from './SandboxPromptFooterHint.js';
-import { tSync } from '../../i18n/index.js';
+import { feature } from 'bun:bundle'
+import * as React from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
+import { type Notification, useNotifications } from 'src/context/notifications.js'
+import { logEvent } from 'src/services/analytics/index.js'
+import { useAppState } from 'src/state/AppState.js'
+import { useVoiceState } from '../../context/voice.js'
+import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
+import { useIdeConnectionStatus } from '../../hooks/useIdeConnectionStatus.js'
+import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js'
+import { Box, Text } from '../../ink.js'
+import { useZyAiLimits } from '../../services/zyAiLimitsHook.js'
+import { calculateTokenWarningState } from '../../services/compact/autoCompact.js'
+import type { MCPServerConnection } from '../../services/mcp/types.js'
+import type { Message } from '../../types/message.js'
+import {
+  getApiKeyHelperElapsedMs,
+  getConfiguredApiKeyHelper,
+  getSubscriptionType,
+} from '../../utils/auth.js'
+import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
+import { getExternalEditor } from '../../utils/editor.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+import { formatDuration } from '../../utils/format.js'
+import { setEnvHookNotifier } from '../../utils/hooks/fileChangedWatcher.js'
+import { toIDEDisplayName } from '../../utils/ide.js'
+import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
+import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
+import { AutoUpdaterWrapper } from '../AutoUpdaterWrapper.js'
+import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
+import { IdeStatusIndicator } from '../IdeStatusIndicator.js'
+import { MemoryUsageIndicator } from '../MemoryUsageIndicator.js'
+import { SentryErrorBoundary } from '../SentryErrorBoundary.js'
+import { TokenWarning } from '../TokenWarning.js'
+import { SandboxPromptFooterHint } from './SandboxPromptFooterHint.js'
+import { tSync } from '../../i18n/index.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const VoiceIndicator: typeof import('./VoiceIndicator.js').VoiceIndicator = feature('VOICE_MODE') ? require('./VoiceIndicator.js').VoiceIndicator : () => null;
+const VoiceIndicator: typeof import('./VoiceIndicator.js').VoiceIndicator = feature('VOICE_MODE')
+  ? require('./VoiceIndicator.js').VoiceIndicator
+  : () => null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-export const FOOTER_TEMPORARY_STATUS_TIMEOUT = 5000;
+export const FOOTER_TEMPORARY_STATUS_TIMEOUT = 5000
 type Props = {
-  apiKeyStatus: VerificationStatus;
-  autoUpdaterResult: AutoUpdaterResult | null;
-  isAutoUpdating: boolean;
-  debug: boolean;
-  verbose: boolean;
-  messages: Message[];
-  onAutoUpdaterResult: (result: AutoUpdaterResult) => void;
-  onChangeIsUpdating: (isUpdating: boolean) => void;
-  ideSelection: IDESelection | undefined;
-  mcpClients?: MCPServerConnection[];
-  isInputWrapped?: boolean;
-  isNarrow?: boolean;
-};
+  apiKeyStatus: VerificationStatus
+  autoUpdaterResult: AutoUpdaterResult | null
+  isAutoUpdating: boolean
+  debug: boolean
+  verbose: boolean
+  messages: Message[]
+  onAutoUpdaterResult: (result: AutoUpdaterResult) => void
+  onChangeIsUpdating: (isUpdating: boolean) => void
+  ideSelection: IDESelection | undefined
+  mcpClients?: MCPServerConnection[]
+  isInputWrapped?: boolean
+  isNarrow?: boolean
+}
 export function Notifications({
   apiKeyStatus,
   autoUpdaterResult,
@@ -64,55 +70,98 @@ export function Notifications({
   ideSelection,
   mcpClients,
   isInputWrapped = false,
-  isNarrow = false
+  isNarrow = false,
 }: Props) {
-  const messagesForTokenCount = getMessagesAfterCompactBoundary(messages);
-  const tokenUsage = tokenCountFromLastAPIResponse(messagesForTokenCount);
-  const mainLoopModel = useMainLoopModel();
-  const t4 = calculateTokenWarningState(tokenUsage, mainLoopModel);
-  const isShowingCompactMessage = t4.isAboveWarningThreshold;
-  const {
-    status: ideStatus
-  } = useIdeConnectionStatus(mcpClients);
-  const notifications = useAppState(s => s.notifications);
-  const {
-    addNotification,
-    removeNotification
-  } = useNotifications();
-  const zyAiLimits = useZyAiLimits();
+  const messagesForTokenCount = getMessagesAfterCompactBoundary(messages)
+  const tokenUsage = tokenCountFromLastAPIResponse(messagesForTokenCount)
+  const mainLoopModel = useMainLoopModel()
+  const t4 = calculateTokenWarningState(tokenUsage, mainLoopModel)
+  const isShowingCompactMessage = t4.isAboveWarningThreshold
+  const { status: ideStatus } = useIdeConnectionStatus(mcpClients)
+  const notifications = useAppState((s) => s.notifications)
+  const { addNotification, removeNotification } = useNotifications()
+  const zyAiLimits = useZyAiLimits()
   useEffect(() => {
     setEnvHookNotifier((text, isError) => {
       addNotification({
-        key: "env-hook",
+        key: 'env-hook',
         text,
-        color: isError ? "error" : undefined,
-        priority: isError ? "medium" : "low",
-        timeoutMs: isError ? 8000 : 5000
-      });
-    });
-    return () => setEnvHookNotifier(null);
-  }, [addNotification]);
-  const shouldShowIdeSelection = ideStatus === "connected" && (ideSelection?.filePath || ideSelection?.text && ideSelection.lineCount > 0);
-  const shouldShowAutoUpdater = !shouldShowIdeSelection || isAutoUpdating || autoUpdaterResult?.status !== "success";
-  const isInOverageMode = zyAiLimits.isUsingOverage;
-  const subscriptionType = getSubscriptionType();
-  const isTeamOrEnterprise = (subscriptionType as any) === "team" || (subscriptionType as any) === "enterprise";
-  const editor = getExternalEditor();
-  const shouldShowExternalEditorHint = isInputWrapped && !isShowingCompactMessage && apiKeyStatus !== "invalid" && apiKeyStatus !== "missing" && editor !== undefined;
+        color: isError ? 'error' : undefined,
+        priority: isError ? 'medium' : 'low',
+        timeoutMs: isError ? 8000 : 5000,
+      })
+    })
+    return () => setEnvHookNotifier(null)
+  }, [addNotification])
+  const shouldShowIdeSelection =
+    ideStatus === 'connected' &&
+    (ideSelection?.filePath || (ideSelection?.text && ideSelection.lineCount > 0))
+  const shouldShowAutoUpdater =
+    !shouldShowIdeSelection || isAutoUpdating || autoUpdaterResult?.status !== 'success'
+  const isInOverageMode = zyAiLimits.isUsingOverage
+  const subscriptionType = getSubscriptionType()
+  const isTeamOrEnterprise =
+    (subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise'
+  const editor = getExternalEditor()
+  const shouldShowExternalEditorHint =
+    isInputWrapped &&
+    !isShowingCompactMessage &&
+    apiKeyStatus !== 'invalid' &&
+    apiKeyStatus !== 'missing' &&
+    editor !== undefined
   useEffect(() => {
     if (shouldShowExternalEditorHint && editor) {
-      logEvent("zy_external_editor_hint_shown", {});
+      logEvent('zy_external_editor_hint_shown', {})
       addNotification({
-        key: "external-editor-hint",
-        jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={`edit in ${toIDEDisplayName(editor)}`} /></Text>,
-        priority: "immediate",
-        timeoutMs: 5000
-      });
+        key: 'external-editor-hint',
+        jsx: (
+          <Text dimColor={true}>
+            <ConfigurableShortcutHint
+              action="chat:externalEditor"
+              context="Chat"
+              fallback="ctrl+g"
+              description={`edit in ${toIDEDisplayName(editor)}`}
+            />
+          </Text>
+        ),
+        priority: 'immediate',
+        timeoutMs: 5000,
+      })
     } else {
-      removeNotification("external-editor-hint");
+      removeNotification('external-editor-hint')
     }
-  }, [shouldShowExternalEditorHint, editor, addNotification, removeNotification]);
-  return <SentryErrorBoundary><Box flexDirection="column" alignItems={isNarrow ? "flex-start" : "flex-end"} flexShrink={0} overflowX="hidden">{<NotificationContent ideSelection={ideSelection} mcpClients={mcpClients} notifications={notifications} isInOverageMode={isInOverageMode ?? false} isTeamOrEnterprise={isTeamOrEnterprise} apiKeyStatus={apiKeyStatus} debug={debug} verbose={verbose} tokenUsage={tokenUsage} mainLoopModel={mainLoopModel} shouldShowAutoUpdater={shouldShowAutoUpdater} autoUpdaterResult={autoUpdaterResult} isAutoUpdating={isAutoUpdating} isShowingCompactMessage={isShowingCompactMessage} onAutoUpdaterResult={onAutoUpdaterResult} onChangeIsUpdating={onChangeIsUpdating} />}</Box></SentryErrorBoundary>;
+  }, [shouldShowExternalEditorHint, editor, addNotification, removeNotification])
+  return (
+    <SentryErrorBoundary>
+      <Box
+        flexDirection="column"
+        alignItems={isNarrow ? 'flex-start' : 'flex-end'}
+        flexShrink={0}
+        overflowX="hidden"
+      >
+        {
+          <NotificationContent
+            ideSelection={ideSelection}
+            mcpClients={mcpClients}
+            notifications={notifications}
+            isInOverageMode={isInOverageMode ?? false}
+            isTeamOrEnterprise={isTeamOrEnterprise}
+            apiKeyStatus={apiKeyStatus}
+            debug={debug}
+            verbose={verbose}
+            tokenUsage={tokenUsage}
+            mainLoopModel={mainLoopModel}
+            shouldShowAutoUpdater={shouldShowAutoUpdater}
+            autoUpdaterResult={autoUpdaterResult}
+            isAutoUpdating={isAutoUpdating}
+            isShowingCompactMessage={isShowingCompactMessage}
+            onAutoUpdaterResult={onAutoUpdaterResult}
+            onChangeIsUpdating={onChangeIsUpdating}
+          />
+        }
+      </Box>
+    </SentryErrorBoundary>
+  )
 }
 function NotificationContent({
   ideSelection,
@@ -130,105 +179,154 @@ function NotificationContent({
   isAutoUpdating,
   isShowingCompactMessage,
   onAutoUpdaterResult,
-  onChangeIsUpdating
+  onChangeIsUpdating,
 }: {
-  ideSelection: IDESelection | undefined;
-  mcpClients?: MCPServerConnection[];
+  ideSelection: IDESelection | undefined
+  mcpClients?: MCPServerConnection[]
   notifications: {
-    current: Notification | null;
-    queue: Notification[];
-  };
-  isInOverageMode: boolean;
-  isTeamOrEnterprise: boolean;
-  apiKeyStatus: VerificationStatus;
-  debug: boolean;
-  verbose: boolean;
-  tokenUsage: number;
-  mainLoopModel: string;
-  shouldShowAutoUpdater: boolean;
-  autoUpdaterResult: AutoUpdaterResult | null;
-  isAutoUpdating: boolean;
-  isShowingCompactMessage: boolean;
-  onAutoUpdaterResult: (result: AutoUpdaterResult) => void;
-  onChangeIsUpdating: (isUpdating: boolean) => void;
+    current: Notification | null
+    queue: Notification[]
+  }
+  isInOverageMode: boolean
+  isTeamOrEnterprise: boolean
+  apiKeyStatus: VerificationStatus
+  debug: boolean
+  verbose: boolean
+  tokenUsage: number
+  mainLoopModel: string
+  shouldShowAutoUpdater: boolean
+  autoUpdaterResult: AutoUpdaterResult | null
+  isAutoUpdating: boolean
+  isShowingCompactMessage: boolean
+  onAutoUpdaterResult: (result: AutoUpdaterResult) => void
+  onChangeIsUpdating: (isUpdating: boolean) => void
 }): ReactNode {
   // Poll apiKeyHelper inflight state to show slow-helper notice.
   // Gated on configuration — most users never set apiKeyHelper, so the
   // effect is a no-op for them (no interval allocated).
-  const [apiKeyHelperSlow, setApiKeyHelperSlow] = useState<string | null>(null);
+  const [apiKeyHelperSlow, setApiKeyHelperSlow] = useState<string | null>(null)
   useEffect(() => {
-    if (!getConfiguredApiKeyHelper()) return;
-    const interval = setInterval((setSlow: React.Dispatch<React.SetStateAction<string | null>>) => {
-      const ms = getApiKeyHelperElapsedMs();
-      const next = ms >= 10_000 ? formatDuration(ms) : null;
-      setSlow(prev => next === prev ? prev : next);
-    }, 1000, setApiKeyHelperSlow);
-    return () => clearInterval(interval);
-  }, []);
+    if (!getConfiguredApiKeyHelper()) return
+    const interval = setInterval(
+      (setSlow: React.Dispatch<React.SetStateAction<string | null>>) => {
+        const ms = getApiKeyHelperElapsedMs()
+        const next = ms >= 10_000 ? formatDuration(ms) : null
+        setSlow((prev) => (next === prev ? prev : next))
+      },
+      1000,
+      setApiKeyHelperSlow,
+    )
+    return () => clearInterval(interval)
+  }, [])
 
   // Voice state (VOICE_MODE builds only, runtime-gated by GrowthBook)
-  const voiceState = feature('VOICE_MODE') ?
+  const voiceState = feature('VOICE_MODE')
+    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+      useVoiceState((s) => s.voiceState)
+    : ('idle' as const)
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  useVoiceState(s => s.voiceState) : 'idle' as const;
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const voiceEnabled = feature('VOICE_MODE') ? useVoiceEnabled() : false;
-  const voiceError = feature('VOICE_MODE') ?
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  useVoiceState(s_0 => s_0.voiceError) : null;
-  const isBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ?
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  useAppState(s_1 => s_1.isBriefOnly) : false;
+  const voiceEnabled = feature('VOICE_MODE') ? useVoiceEnabled() : false
+  const voiceError = feature('VOICE_MODE')
+    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+      useVoiceState((s_0) => s_0.voiceError)
+    : null
+  const isBriefOnly =
+    feature('KAIROS') || feature('KAIROS_BRIEF')
+      ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+        useAppState((s_1) => s_1.isBriefOnly)
+      : false
 
   // When voice is actively recording or processing, replace all
   // notifications with just the voice indicator.
-  if (feature('VOICE_MODE') && voiceEnabled && (voiceState === 'recording' || voiceState === 'processing')) {
-    return <VoiceIndicator voiceState={voiceState} />;
+  if (
+    feature('VOICE_MODE') &&
+    voiceEnabled &&
+    (voiceState === 'recording' || voiceState === 'processing')
+  ) {
+    return <VoiceIndicator voiceState={voiceState} />
   }
-  return <>
+  return (
+    <>
       <IdeStatusIndicator ideSelection={ideSelection} mcpClients={mcpClients} />
-      {notifications.current && ('jsx' in notifications.current ? <Text wrap="truncate" key={notifications.current.key}>
+      {notifications.current &&
+        ('jsx' in notifications.current ? (
+          <Text wrap="truncate" key={notifications.current.key}>
             {notifications.current.jsx}
-          </Text> : <Text color={notifications.current.color} dimColor={!notifications.current.color} wrap="truncate">
+          </Text>
+        ) : (
+          <Text
+            color={notifications.current.color}
+            dimColor={!notifications.current.color}
+            wrap="truncate"
+          >
             {notifications.current.text}
-          </Text>)}
-      {isInOverageMode && !isTeamOrEnterprise && <Box>
+          </Text>
+        ))}
+      {isInOverageMode && !isTeamOrEnterprise && (
+        <Box>
           <Text dimColor wrap="truncate">
             {tSync('notif.nowUsingExtraUsage')}
           </Text>
-        </Box>}
-      {apiKeyHelperSlow && <Box>
+        </Box>
+      )}
+      {apiKeyHelperSlow && (
+        <Box>
           <Text color="warning" wrap="truncate">
             {tSync('notif.apiKeyHelperSlow')}{' '}
           </Text>
           <Text dimColor wrap="truncate">
             ({apiKeyHelperSlow})
           </Text>
-        </Box>}
-      {(apiKeyStatus === 'invalid' || apiKeyStatus === 'missing') && <Box>
+        </Box>
+      )}
+      {(apiKeyStatus === 'invalid' || apiKeyStatus === 'missing') && (
+        <Box>
           <Text color="error" wrap="truncate">
-            {isEnvTruthy(process.env.ZY_CODE_REMOTE) ? tSync('notif.authError') : tSync('notif.notLoggedIn')}
+            {isEnvTruthy(process.env.ZY_CODE_REMOTE)
+              ? tSync('notif.authError')
+              : tSync('notif.notLoggedIn')}
           </Text>
-        </Box>}
-      {debug && <Box>
+        </Box>
+      )}
+      {debug && (
+        <Box>
           <Text color="warning" wrap="truncate">
             {tSync('notif.debugMode')}
           </Text>
-        </Box>}
-      {apiKeyStatus !== 'invalid' && apiKeyStatus !== 'missing' && verbose && <Box>
+        </Box>
+      )}
+      {apiKeyStatus !== 'invalid' && apiKeyStatus !== 'missing' && verbose && (
+        <Box>
           <Text dimColor wrap="truncate">
             {tSync('notif.tokenCount', {
-          count: tokenUsage
-        })}
+              count: tokenUsage,
+            })}
           </Text>
-        </Box>}
+        </Box>
+      )}
       {!isBriefOnly && <TokenWarning tokenUsage={tokenUsage} model={mainLoopModel} />}
-      {shouldShowAutoUpdater && <AutoUpdaterWrapper verbose={verbose} onAutoUpdaterResult={onAutoUpdaterResult} autoUpdaterResult={autoUpdaterResult} isUpdating={isAutoUpdating} onChangeIsUpdating={onChangeIsUpdating} showSuccessMessage={!isShowingCompactMessage} />}
-      {feature('VOICE_MODE') ? voiceEnabled && voiceError && <Box>
+      {shouldShowAutoUpdater && (
+        <AutoUpdaterWrapper
+          verbose={verbose}
+          onAutoUpdaterResult={onAutoUpdaterResult}
+          autoUpdaterResult={autoUpdaterResult}
+          isUpdating={isAutoUpdating}
+          onChangeIsUpdating={onChangeIsUpdating}
+          showSuccessMessage={!isShowingCompactMessage}
+        />
+      )}
+      {feature('VOICE_MODE')
+        ? voiceEnabled &&
+          voiceError && (
+            <Box>
               <Text color="error" wrap="truncate">
                 {voiceError}
               </Text>
-            </Box> : null}
+            </Box>
+          )
+        : null}
       <MemoryUsageIndicator />
       <SandboxPromptFooterHint />
-    </>;
+    </>
+  )
 }

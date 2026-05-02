@@ -18,10 +18,7 @@ import { parseFrontmatter } from './frontmatterParser.js'
 import { findCanonicalGitRoot, findGitRoot } from './git.js'
 import { parseToolListFromCLI } from './permissions/permissionSetup.js'
 import { ripGrep } from './ripgrep.js'
-import {
-  isSettingSourceEnabled,
-  type SettingSource,
-} from './settings/constants.js'
+import { isSettingSourceEnabled, type SettingSource } from './settings/constants.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { isRestrictedToPluginOnly } from './settings/pluginOnlyPolicy.js'
 
@@ -89,9 +86,7 @@ function parseToolListString(toolsValue: unknown): string[] | null {
   if (typeof toolsValue === 'string') {
     toolsArray = [toolsValue]
   } else if (Array.isArray(toolsValue)) {
-    toolsArray = toolsValue.filter(
-      (item): item is string => typeof item === 'string',
-    )
+    toolsArray = toolsValue.filter((item): item is string => typeof item === 'string')
   }
 
   if (toolsArray.length === 0) {
@@ -110,9 +105,7 @@ function parseToolListString(toolsValue: unknown): string[] | null {
  * Missing field = undefined (all tools)
  * Empty field = [] (no tools)
  */
-export function parseAgentToolsFromFrontmatter(
-  toolsValue: unknown,
-): string[] | undefined {
+export function parseAgentToolsFromFrontmatter(toolsValue: unknown): string[] | undefined {
   const parsed = parseToolListString(toolsValue)
   if (parsed === null) {
     // For agents: undefined = all tools (undefined), null = no tools ([])
@@ -129,9 +122,7 @@ export function parseAgentToolsFromFrontmatter(
  * Parse allowed-tools from slash command frontmatter
  * Missing or empty field = no tools ([])
  */
-export function parseSlashCommandToolsFromFrontmatter(
-  toolsValue: unknown,
-): string[] {
+export function parseSlashCommandToolsFromFrontmatter(toolsValue: unknown): string[] {
   const parsed = parseToolListString(toolsValue)
   if (parsed === null) {
     return []
@@ -199,8 +190,7 @@ function resolveStopBoundary(cwd: string): string | null {
   const cwdCanonical = findCanonicalGitRoot(cwd)
   if (
     cwdCanonical &&
-    normalizePathForComparison(cwdCanonical) ===
-      normalizePathForComparison(sessionGitRoot)
+    normalizePathForComparison(cwdCanonical) === normalizePathForComparison(sessionGitRoot)
   ) {
     // Same canonical repo (main, or a worktree of main). Stop at nearest .git.
     return cwdGitRoot
@@ -208,10 +198,7 @@ function resolveStopBoundary(cwd: string): string | null {
   // Different canonical repo. Is it nested *inside* the session's project?
   const nCwdGitRoot = normalizePathForComparison(cwdGitRoot)
   const nSessionRoot = normalizePathForComparison(sessionGitRoot)
-  if (
-    nCwdGitRoot !== nSessionRoot &&
-    nCwdGitRoot.startsWith(nSessionRoot + sep)
-  ) {
+  if (nCwdGitRoot !== nSessionRoot && nCwdGitRoot.startsWith(nSessionRoot + sep)) {
     // Nested repo inside the project — skip past it, stop at the project's root.
     return sessionGitRoot
   }
@@ -231,10 +218,7 @@ function resolveStopBoundary(cwd: string): string | null {
  * @param cwd Current working directory to start from
  * @returns Array of directory paths containing .zy/subdir, from most specific (cwd) to least specific
  */
-export function getProjectDirsUpToHome(
-  subdir: ZyConfigDirectory,
-  cwd: string,
-): string[] {
+export function getProjectDirsUpToHome(subdir: ZyConfigDirectory, cwd: string): string[] {
   const home = resolve(homedir()).normalize('NFC')
   const gitRoot = resolveStopBoundary(cwd)
   let current = resolve(cwd)
@@ -244,9 +228,7 @@ export function getProjectDirsUpToHome(
   while (true) {
     // Stop if we've reached the home directory (don't check it, as it's loaded separately as userDir)
     // Use normalized comparison to handle Windows drive letter casing (C:\ vs c:\)
-    if (
-      normalizePathForComparison(current) === normalizePathForComparison(home)
-    ) {
+    if (normalizePathForComparison(current) === normalizePathForComparison(home)) {
       break
     }
 
@@ -266,11 +248,7 @@ export function getProjectDirsUpToHome(
 
     // Stop after processing the git root directory - this prevents commands from parent
     // directories outside the repository from appearing in the project
-    if (
-      gitRoot &&
-      normalizePathForComparison(current) ===
-        normalizePathForComparison(gitRoot)
-    ) {
+    if (gitRoot && normalizePathForComparison(current) === normalizePathForComparison(gitRoot)) {
       break
     }
 
@@ -295,10 +273,7 @@ export function getProjectDirsUpToHome(
  * @returns Array of parsed markdown files with metadata
  */
 export const loadMarkdownFilesForSubdir = memoize(
-  async function (
-    subdir: ZyConfigDirectory,
-    cwd: string,
-  ): Promise<MarkdownFile[]> {
+  async function (subdir: ZyConfigDirectory, cwd: string): Promise<MarkdownFile[]> {
     const searchStartTime = Date.now()
     const userDir = join(getZyConfigHomeDir(), subdir)
     const managedDir = join(getManagedFilePath(), '.zy', subdir)
@@ -320,11 +295,9 @@ export const loadMarkdownFilesForSubdir = memoize(
     const gitRoot = findGitRoot(cwd)
     const canonicalRoot = findCanonicalGitRoot(cwd)
     if (gitRoot && canonicalRoot && canonicalRoot !== gitRoot) {
-      const worktreeSubdir = normalizePathForComparison(
-        join(gitRoot, '.zy', subdir),
-      )
+      const worktreeSubdir = normalizePathForComparison(join(gitRoot, '.zy', subdir))
       const worktreeHasSubdir = projectDirs.some(
-        dir => normalizePathForComparison(dir) === worktreeSubdir,
+        (dir) => normalizePathForComparison(dir) === worktreeSubdir,
       )
       if (!worktreeHasSubdir) {
         const mainZySubdir = join(canonicalRoot, '.zy', subdir)
@@ -336,8 +309,8 @@ export const loadMarkdownFilesForSubdir = memoize(
 
     const [managedFiles, userFiles, projectFilesNested] = await Promise.all([
       // Always load managed (policy settings)
-      loadMarkdownFiles(managedDir).then(_ =>
-        _.map(file => ({
+      loadMarkdownFiles(managedDir).then((_) =>
+        _.map((file) => ({
           ...file,
           baseDir: managedDir,
           source: 'policySettings' as const,
@@ -346,8 +319,8 @@ export const loadMarkdownFilesForSubdir = memoize(
       // Conditionally load user files
       isSettingSourceEnabled('userSettings') &&
       !(subdir === 'agents' && isRestrictedToPluginOnly('agents'))
-        ? loadMarkdownFiles(userDir).then(_ =>
-            _.map(file => ({
+        ? loadMarkdownFiles(userDir).then((_) =>
+            _.map((file) => ({
               ...file,
               baseDir: userDir,
               source: 'userSettings' as const,
@@ -358,9 +331,9 @@ export const loadMarkdownFilesForSubdir = memoize(
       isSettingSourceEnabled('projectSettings') &&
       !(subdir === 'agents' && isRestrictedToPluginOnly('agents'))
         ? Promise.all(
-            projectDirs.map(projectDir =>
-              loadMarkdownFiles(projectDir).then(_ =>
-                _.map(file => ({
+            projectDirs.map((projectDir) =>
+              loadMarkdownFiles(projectDir).then((_) =>
+                _.map((file) => ({
                   ...file,
                   baseDir: projectDir,
                   source: 'projectSettings' as const,
@@ -381,9 +354,7 @@ export const loadMarkdownFilesForSubdir = memoize(
     // This prevents the same file from appearing multiple times when ~/.zy is
     // symlinked to a directory within the project hierarchy, causing the same
     // physical file to be discovered through different paths.
-    const fileIdentities = await Promise.all(
-      allFiles.map(file => getFileIdentity(file.filePath)),
-    )
+    const fileIdentities = await Promise.all(allFiles.map((file) => getFileIdentity(file.filePath)))
 
     const seenFileIds = new Map<string, SettingSource>()
     const deduplicatedFiles: MarkdownFile[] = []
@@ -419,8 +390,7 @@ export const loadMarkdownFilesForSubdir = memoize(
       userFilesFound: userFiles.length,
       projectFilesFound: projectFiles.length,
       projectDirsSearched: projectDirs.length,
-      subdir:
-        subdir as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      subdir: subdir as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     return deduplicatedFiles
@@ -448,10 +418,7 @@ export const loadMarkdownFilesForSubdir = memoize(
  * @param signal AbortSignal for timeout
  * @returns Array of file paths
  */
-async function findMarkdownFilesNative(
-  dir: string,
-  signal: AbortSignal,
-): Promise<string[]> {
+async function findMarkdownFilesNative(dir: string, signal: AbortSignal): Promise<string[]> {
   const files: string[] = []
   const visitedDirs = new Set<string>()
 
@@ -473,16 +440,13 @@ async function findMarkdownFilesNative(
             : await realpath(currentDir) // Windows: canonical path
 
         if (visitedDirs.has(dirKey)) {
-          logForDebugging(
-            `Skipping already visited directory (circular symlink): ${currentDir}`,
-          )
+          logForDebugging(`Skipping already visited directory (circular symlink): ${currentDir}`)
           return
         }
         visitedDirs.add(dirKey)
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       logForDebugging(`Failed to stat directory ${currentDir}: ${errorMessage}`)
       return
     }
@@ -508,11 +472,8 @@ async function findMarkdownFilesNative(
                 files.push(fullPath)
               }
             } catch (error) {
-              const errorMessage =
-                error instanceof Error ? error.message : String(error)
-              logForDebugging(
-                `Failed to follow symlink ${fullPath}: ${errorMessage}`,
-              )
+              const errorMessage = error instanceof Error ? error.message : String(error)
+              logForDebugging(`Failed to follow symlink ${fullPath}: ${errorMessage}`)
             }
           } else if (entry.isDirectory()) {
             await walk(fullPath)
@@ -521,15 +482,13 @@ async function findMarkdownFilesNative(
           }
         } catch (error) {
           // Skip files/directories we can't access
-          const errorMessage =
-            error instanceof Error ? error.message : String(error)
+          const errorMessage = error instanceof Error ? error.message : String(error)
           logForDebugging(`Failed to access ${fullPath}: ${errorMessage}`)
         }
       }
     } catch (error) {
       // If readdir fails (e.g., permission denied), log and continue
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       logForDebugging(`Failed to read directory ${currentDir}: ${errorMessage}`)
     }
   }
@@ -575,7 +534,7 @@ async function loadMarkdownFiles(dir: string): Promise<
   }
 
   const results = await Promise.all(
-    files.map(async filePath => {
+    files.map(async (filePath) => {
       try {
         const rawContent = await readFile(filePath, { encoding: 'utf-8' })
         const { frontmatter, content } = parseFrontmatter(rawContent, filePath)
@@ -586,15 +545,12 @@ async function loadMarkdownFiles(dir: string): Promise<
           content,
         }
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error)
-        logForDebugging(
-          `Failed to read/parse markdown file:  ${filePath}: ${errorMessage}`,
-        )
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        logForDebugging(`Failed to read/parse markdown file:  ${filePath}: ${errorMessage}`)
         return null
       }
     }),
   )
 
-  return results.filter(_ => _ !== null)
+  return results.filter((_) => _ !== null)
 }

@@ -39,9 +39,7 @@ export function isDevEnv(): boolean {
 // tests that change the env var get a fresh value without explicit cache.clear.
 export const getZyConfigHomeDir = memoize(
   (): string => {
-    return (
-      process.env.ZY_CONFIG_DIR ?? join(homedir(), '.zy')
-    ).normalize('NFC')
+    return (process.env.ZY_CONFIG_DIR ?? join(homedir(), '.zy')).normalize('NFC')
   },
   () => process.env.ZY_CONFIG_DIR,
 )
@@ -69,9 +67,7 @@ export function isEnvTruthy(envVar: string | boolean | undefined): boolean {
   return ['1', 'true', 'yes', 'on'].includes(normalizedValue)
 }
 
-export function isEnvDefinedFalsy(
-  envVar: string | boolean | undefined,
-): boolean {
+export function isEnvDefinedFalsy(envVar: string | boolean | undefined): boolean {
   if (envVar === undefined) return false
   if (typeof envVar === 'boolean') return !envVar
   if (!envVar) return false
@@ -91,10 +87,7 @@ export function isEnvDefinedFalsy(
  * — notably startKeychainPrefetch() at main.tsx top-level.
  */
 export function isBareMode(): boolean {
-  return (
-    isEnvTruthy(process.env.ZY_CODE_SIMPLE) ||
-    process.argv.includes('--bare')
-  )
+  return isEnvTruthy(process.env.ZY_CODE_SIMPLE) || process.argv.includes('--bare')
 }
 
 /**
@@ -102,9 +95,7 @@ export function isBareMode(): boolean {
  * @param envVars Array of strings in KEY=VALUE format
  * @returns Object with key-value pairs
  */
-export function parseEnvVars(
-  rawEnvArgs: string[] | undefined,
-): Record<string, string> {
+export function parseEnvVars(rawEnvArgs: string[] | undefined): Record<string, string> {
   const parsedEnv: Record<string, string> = {}
 
   // Parse individual env vars
@@ -122,8 +113,6 @@ export function parseEnvVars(
   return parsedEnv
 }
 
-
-
 /**
  * Check if bash commands should maintain project working directory (reset to original after each command)
  * @returns true if CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR is set to a truthy value
@@ -136,10 +125,7 @@ export function shouldMaintainProjectWorkingDir(): boolean {
  * Check if running on Homespace (ant-internal cloud environment)
  */
 export function isRunningOnHomespace(): boolean {
-  return (
-    isInternalBuild() &&
-    isEnvTruthy(process.env.COO_RUNNING_ON_HOMESPACE)
-  )
+  return isInternalBuild() && isEnvTruthy(process.env.COO_RUNNING_ON_HOMESPACE)
 }
 
 /**
@@ -165,5 +151,3 @@ export function isInProtectedNamespace(): boolean {
   }
   return false
 }
-
-

@@ -10,12 +10,7 @@ import {
 } from '../../bootstrap/state.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/metadata.js'
-import {
-  buildTool,
-  type Tool,
-  type ToolDef,
-  toolMatchesName,
-} from '../../Tool.js'
+import { buildTool, type Tool, type ToolDef, toolMatchesName } from '../../Tool.js'
 import { formatAgentId, generateRequestId } from '../../utils/agentId.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -25,18 +20,9 @@ import {
 } from '../../utils/inProcessTeammateHelpers.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import {
-  getPlan,
-  getPlanFilePath,
-  persistFileSnapshotIfRemote,
-} from '../../utils/plans.js'
+import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from '../../utils/plans.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import {
-  getAgentName,
-  getTeamName,
-  isPlanModeRequired,
-  isTeammate,
-} from '../../utils/teammate.js'
+import { getAgentName, getTeamName, isPlanModeRequired, isTeammate } from '../../utils/teammate.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 import { TEAM_CREATE_TOOL_NAME } from '../TeamCreateTool/constants.js'
@@ -66,9 +52,7 @@ const allowedPromptSchema = lazySchema(() =>
     tool: z.enum(['Bash']).describe('The tool this prompt applies to'),
     prompt: z
       .string()
-      .describe(
-        'Semantic description of the action, e.g. "run tests", "install dependencies"',
-      ),
+      .describe('Semantic description of the action, e.g. "run tests", "install dependencies"'),
   }),
 )
 
@@ -109,15 +93,9 @@ export const _sdkInputSchema = lazySchema(() =>
 
 export const outputSchema = lazySchema(() =>
   z.object({
-    plan: z
-      .string()
-      .nullable()
-      .describe('The plan that was presented to the user'),
+    plan: z.string().nullable().describe('The plan that was presented to the user'),
     isAgent: z.boolean(),
-    filePath: z
-      .string()
-      .optional()
-      .describe('The file path where the plan was saved'),
+    filePath: z.string().optional().describe('The file path where the plan was saved'),
     hasTaskTool: z
       .boolean()
       .optional()
@@ -131,13 +109,8 @@ export const outputSchema = lazySchema(() =>
     awaitingLeaderApproval: z
       .boolean()
       .optional()
-      .describe(
-        'When true, the teammate has sent a plan approval request to the team leader',
-      ),
-    requestId: z
-      .string()
-      .optional()
-      .describe('Unique identifier for the plan approval request'),
+      .describe('When true, the teammate has sent a plan approval request to the team leader'),
+    requestId: z.string().optional().describe('Unique identifier for the plan approval request'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -168,10 +141,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     // When --channels is active the user is likely on Telegram/Discord, not
     // watching the TUI. The plan-approval dialog would hang. Paired with the
     // same gate on EnterPlanMode so plan mode isn't a trap.
-    if (
-      (feature('KAIROS') || feature('KAIROS_CHANNELS')) &&
-      getAllowedChannels().length > 0
-    ) {
+    if ((feature('KAIROS') || feature('KAIROS_CHANNELS')) && getAllowedChannels().length > 0) {
       return false
     }
     return true
@@ -204,8 +174,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     const mode = getAppState().toolPermissionContext.mode
     if (mode !== 'plan') {
       logEvent('zy_exit_plan_mode_called_outside_plan', {
-        model:
-          options.mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        model: options.mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         mode: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         hasExitedPlanModeInSession: hasExitedPlanModeInSession(),
       })
@@ -248,15 +217,14 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     // queryHelpers.ts full-replaces finalInput, so when CCR sends {} (no edit)
     // input.plan is undefined -> disk fallback. The internal inputSchema omits
     // `plan` (normally injected by normalizeToolInput), hence the narrowing.
-    const inputPlan =
-      'plan' in input && typeof input.plan === 'string' ? input.plan : undefined
+    const inputPlan = 'plan' in input && typeof input.plan === 'string' ? input.plan : undefined
     const plan = inputPlan ?? getPlan(context.agentId)
 
     // Sync disk so VerifyPlanExecution / Read see the edit. Re-snapshot
     // after: the only other persistFileSnapshotIfRemote call (api.ts) runs
     // in normalizeToolInput, pre-permission — it captured the old plan.
     if (inputPlan !== undefined && filePath) {
-      await writeFile(filePath, inputPlan, 'utf-8').catch(e => logError(e))
+      await writeFile(filePath, inputPlan, 'utf-8').catch((e) => logError(e))
       void persistFileSnapshotIfRemote()
     }
 
@@ -327,13 +295,8 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     let gateFallbackNotification: string | null = null
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       const prePlanRaw = appState.toolPermissionContext.prePlanMode ?? 'default'
-      if (
-        prePlanRaw === 'auto' &&
-        !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)
-      ) {
-        const reason =
-          permissionSetupModule?.getAutoModeUnavailableReason() ??
-          'circuit-breaker'
+      if (prePlanRaw === 'auto' && !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)) {
+        const reason = permissionSetupModule?.getAutoModeUnavailableReason() ?? 'circuit-breaker'
         gateFallbackNotification =
           permissionSetupModule?.getAutoModeUnavailableNotification(reason) ??
           'auto mode unavailable'
@@ -354,24 +317,20 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
       })
     }
 
-    context.setAppState(prev => {
+    context.setAppState((prev) => {
       if (prev.toolPermissionContext.mode !== 'plan') return prev
       setHasExitedPlanMode(true)
       setNeedsPlanModeExitAttachment(true)
       let restoreMode = prev.toolPermissionContext.prePlanMode ?? 'default'
       if (feature('TRANSCRIPT_CLASSIFIER')) {
-        if (
-          restoreMode === 'auto' &&
-          !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)
-        ) {
+        if (restoreMode === 'auto' && !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)) {
           restoreMode = 'default'
         }
         const finalRestoringAuto = restoreMode === 'auto'
         // Capture pre-restore state — isAutoModeActive() is the authoritative
         // signal (prePlanMode/strippedDangerousRules are stale after
         // transitionPlanAutoMode deactivates mid-plan).
-        const autoWasUsedDuringPlan =
-          autoModeStateModule?.isAutoModeActive() ?? false
+        const autoWasUsedDuringPlan = autoModeStateModule?.isAutoModeActive() ?? false
         autoModeStateModule?.setAutoModeActive(finalRestoringAuto)
         if (autoWasUsedDuringPlan && !finalRestoringAuto) {
           setNeedsAutoModeExitAttachment(true)
@@ -384,13 +343,9 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
       let baseContext = prev.toolPermissionContext
       if (restoringToAuto) {
         baseContext =
-          permissionSetupModule?.stripDangerousPermissionsForAutoMode(
-            baseContext,
-          ) ?? baseContext
+          permissionSetupModule?.stripDangerousPermissionsForAutoMode(baseContext) ?? baseContext
       } else if (prev.toolPermissionContext.strippedDangerousRules) {
-        baseContext =
-          permissionSetupModule?.restoreDangerousPermissions(baseContext) ??
-          baseContext
+        baseContext = permissionSetupModule?.restoreDangerousPermissions(baseContext) ?? baseContext
       }
       return {
         ...prev,
@@ -404,7 +359,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
 
     const hasTaskTool =
       isAgentSwarmsEnabled() &&
-      context.options.tools.some(t => toolMatchesName(t, AGENT_TOOL_NAME))
+      context.options.tools.some((t) => toolMatchesName(t, AGENT_TOOL_NAME))
 
     return {
       data: {
@@ -417,15 +372,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     }
   },
   mapToolResultToToolResultBlock(
-    {
-      isAgent,
-      plan,
-      filePath,
-      hasTaskTool,
-      planWasEdited,
-      awaitingLeaderApproval,
-      requestId,
-    },
+    { isAgent, plan, filePath, hasTaskTool, planWasEdited, awaitingLeaderApproval, requestId },
     toolUseID,
   ) {
     // Handle teammate awaiting leader approval
@@ -474,9 +421,7 @@ Request ID: ${requestId}`,
     // Always include the plan — extractApprovedPlan() in the Ultraplan CCR
     // flow parses the tool_result to retrieve the plan text for the local CLI.
     // Label edited plans so the model knows the user changed something.
-    const planLabel = planWasEdited
-      ? 'Approved Plan (edited by user)'
-      : 'Approved Plan'
+    const planLabel = planWasEdited ? 'Approved Plan (edited by user)' : 'Approved Plan'
 
     return {
       type: 'tool_result',

@@ -1,10 +1,4 @@
-export const RARITIES = [
-  'common',
-  'uncommon',
-  'rare',
-  'epic',
-  'legendary',
-] as const
+export const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const
 export type Rarity = (typeof RARITIES)[number]
 
 // One species name collides with a model-codename canary in excluded-strings.txt.
@@ -26,29 +20,11 @@ export const turtle = c(0x74, 0x75, 0x72, 0x74, 0x6c, 0x65) as 'turtle'
 export const snail = c(0x73, 0x6e, 0x61, 0x69, 0x6c) as 'snail'
 export const ghost = c(0x67, 0x68, 0x6f, 0x73, 0x74) as 'ghost'
 export const axolotl = c(0x61, 0x78, 0x6f, 0x6c, 0x6f, 0x74, 0x6c) as 'axolotl'
-export const capybara = c(
-  0x63,
-  0x61,
-  0x70,
-  0x79,
-  0x62,
-  0x61,
-  0x72,
-  0x61,
-) as 'capybara'
+export const capybara = c(0x63, 0x61, 0x70, 0x79, 0x62, 0x61, 0x72, 0x61) as 'capybara'
 export const cactus = c(0x63, 0x61, 0x63, 0x74, 0x75, 0x73) as 'cactus'
 export const robot = c(0x72, 0x6f, 0x62, 0x6f, 0x74) as 'robot'
 export const rabbit = c(0x72, 0x61, 0x62, 0x62, 0x69, 0x74) as 'rabbit'
-export const mushroom = c(
-  0x6d,
-  0x75,
-  0x73,
-  0x68,
-  0x72,
-  0x6f,
-  0x6f,
-  0x6d,
-) as 'mushroom'
+export const mushroom = c(0x6d, 0x75, 0x73, 0x68, 0x72, 0x6f, 0x6f, 0x6d) as 'mushroom'
 export const chonk = c(0x63, 0x68, 0x6f, 0x6e, 0x6b) as 'chonk'
 
 export const SPECIES = [
@@ -88,13 +64,7 @@ export const HATS = [
 ] as const
 export type Hat = (typeof HATS)[number]
 
-export const STAT_NAMES = [
-  'DEBUGGING',
-  'PATIENCE',
-  'CHAOS',
-  'WISDOM',
-  'SNARK',
-] as const
+export const STAT_NAMES = ['DEBUGGING', 'PATIENCE', 'CHAOS', 'WISDOM', 'SNARK'] as const
 export type StatName = (typeof STAT_NAMES)[number]
 
 // Deterministic parts — derived from hash(userId)

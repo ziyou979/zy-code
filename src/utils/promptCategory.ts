@@ -1,8 +1,5 @@
 import type { QuerySource } from 'src/constants/querySource.js'
-import {
-  DEFAULT_OUTPUT_STYLE_NAME,
-  OUTPUT_STYLE_CONFIG,
-} from '../constants/outputStyles.js'
+import { DEFAULT_OUTPUT_STYLE_NAME, OUTPUT_STYLE_CONFIG } from '../constants/outputStyles.js'
 import { getSettings_DEPRECATED } from './settings/settings.js'
 
 /**
@@ -19,11 +16,9 @@ export function getQuerySourceForAgent(
 ): QuerySource {
   if (isBuiltInAgent) {
     // TODO: avoid this cast
-    return agentType
-      ? (`agent:builtin:${agentType}` as QuerySource)
-      : ('agent:default' as any)
+    return agentType ? (`agent:builtin:${agentType}` as QuerySource) : ('agent:default' as any)
   } else {
-    return ('agent:custom' as any)
+    return 'agent:custom' as any
   }
 }
 
@@ -38,7 +33,7 @@ export function getQuerySourceForREPL(): QuerySource {
   const style = settings?.outputStyle ?? DEFAULT_OUTPUT_STYLE_NAME
 
   if (style === DEFAULT_OUTPUT_STYLE_NAME) {
-    return ('repl_main_thread' as any)
+    return 'repl_main_thread' as any
   }
 
   // All styles in OUTPUT_STYLE_CONFIG are built-in

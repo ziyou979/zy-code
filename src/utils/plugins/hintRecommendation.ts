@@ -20,16 +20,13 @@ import {
   type ZyCodeHint,
   hasShownHintThisSession,
   setPendingHint,
-// @ts-ignore
+  // @ts-ignore
 } from '../ZyCodeHints.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
 import { getPluginById } from './marketplaceManager.js'
-import {
-  isOfficialMarketplaceName,
-  parsePluginIdentifier,
-} from './pluginIdentifier.js'
+import { isOfficialMarketplaceName, parsePluginIdentifier } from './pluginIdentifier.js'
 import { isPluginBlockedByPolicy } from './pluginPolicy.js'
 
 /**
@@ -89,7 +86,7 @@ export function maybeRecordPluginHint(hint: ZyCodeHint): void {
   setPendingHint(hint)
 }
 
-let triedThisSession;
+let triedThisSession
 triedThisSession = new Set<string>()
 
 /** Test-only reset. */
@@ -111,19 +108,15 @@ export async function resolvePluginHint(
   const pluginData = await getPluginById(pluginId)
 
   logEvent('zy_plugin_hint_detected', {
-    _PROTO_plugin_name: (name ??
-      '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
-    _PROTO_marketplace_name: (marketplace ??
-      '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+    _PROTO_plugin_name: (name ?? '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+    _PROTO_marketplace_name: (marketplace ?? '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
     result: (pluginData
       ? 'passed'
       : 'not_in_cache') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
   if (!pluginData) {
-    logForDebugging(
-      `[hintRecommendation] ${pluginId} not found in marketplace cache`,
-    )
+    logForDebugging(`[hintRecommendation] ${pluginId} not found in marketplace cache`)
     return null
   }
 
@@ -141,7 +134,7 @@ export async function resolvePluginHint(
  * the user's yes/no response — show-once semantics.
  */
 export function markHintPluginShown(pluginId: string): void {
-  saveGlobalConfig(current => {
+  saveGlobalConfig((current) => {
     const existing = current.ZyCodeHints?.plugin ?? []
     if (existing.includes(pluginId)) return current
     return {
@@ -156,7 +149,7 @@ export function markHintPluginShown(pluginId: string): void {
 
 /** Called when the user picks "don't show plugin installation hints again". */
 export function disableHintRecommendations(): void {
-  saveGlobalConfig(current => {
+  saveGlobalConfig((current) => {
     if (current.ZyCodeHints?.disabled) return current
     return {
       ...current,

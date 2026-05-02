@@ -1,5 +1,5 @@
-import React from 'react';
-import Box, { type Props as BoxProps } from './Box.js';
+import React from 'react'
+import Box, { type Props as BoxProps } from './Box.js'
 type Props = Omit<BoxProps, 'noSelect'> & {
   /**
    * 将排除区域从第 0 列扩展到此 box 的右边缘，
@@ -10,8 +10,8 @@ type Props = Omit<BoxProps, 'noSelect'> & {
    *
    * @default false
    */
-  fromLeftEdge?: boolean;
-};
+  fromLeftEdge?: boolean
+}
 
 /**
  * 在全屏文本选择中将其内容标记为不可选择。
@@ -29,10 +29,10 @@ type Props = Omit<BoxProps, 'noSelect'> & {
  * 仅影响备用屏幕文本选择（带鼠标追踪的 <AlternateScreen>）。
  * 在主屏幕滚动回退渲染中无作用，此时使用终端的原生选择。
  */
-export function NoSelect({
-  children,
-  fromLeftEdge,
-  ...boxProps
-}: Props) {
-  return <Box {...boxProps} noSelect={fromLeftEdge ? "from-left-edge" : true}>{children}</Box>;
+export function NoSelect({ children, fromLeftEdge, ...boxProps }: Props) {
+  return (
+    <Box {...boxProps} noSelect={fromLeftEdge ? 'from-left-edge' : true}>
+      {children}
+    </Box>
+  )
 }

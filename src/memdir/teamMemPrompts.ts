@@ -19,10 +19,7 @@ import { getTeamMemPath } from './teamMemPaths.js'
  * Closed four-type taxonomy (user / feedback / project / reference) with
  * per-type <scope> guidance embedded in XML-style <type> blocks.
  */
-export function buildCombinedMemoryPrompt(
-  extraGuidelines?: string[],
-  skipIndex = false,
-): string {
+export function buildCombinedMemoryPrompt(extraGuidelines?: string[], skipIndex = false): string {
   const autoDir = getAutoMemPath()
   const teamDir = getTeamMemPath()
 

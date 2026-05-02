@@ -11,7 +11,7 @@ export function color(
   theme: ThemeName,
   type: ColorType = 'foreground',
 ): (text: string) => string {
-  return text => {
+  return (text) => {
     if (!c) {
       return text
     }

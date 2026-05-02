@@ -16,10 +16,7 @@ import { isKairosCronEnabled } from '../../tools/ScheduleCronTool/prompt.js'
 import { isDirectApiClient } from '../../utils/auth.js'
 import { countConcurrentSessions } from '../../utils/concurrentSessions.js'
 import { getGlobalConfig } from '../../utils/config.js'
-import {
-  getEffortEnvOverride,
-  modelSupportsEffort,
-} from '../../utils/effort.js'
+import { getEffortEnvOverride, modelSupportsEffort } from '../../utils/effort.js'
 import { env } from '../../utils/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { cacheKeys } from '../../utils/fileStateCache.js'
@@ -33,23 +30,14 @@ import {
   isVSCodeInstalled,
   isWindsurfInstalled,
 } from '../../utils/ide.js'
-import {
-  getMainLoopModel,
-  getUserSpecifiedModelSetting,
-} from '../../utils/model/model.js'
+import { getMainLoopModel, getUserSpecifiedModelSetting } from '../../utils/model/model.js'
 import { getPlatform } from '../../utils/platform.js'
 import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js'
 import { loadKnownMarketplacesConfigSafe } from '../../utils/plugins/marketplaceManager.js'
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
-import {
-  getCurrentSessionAgentColor,
-  isCustomTitleEnabled,
-} from '../../utils/sessionStorage.js'
+import { getCurrentSessionAgentColor, isCustomTitleEnabled } from '../../utils/sessionStorage.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import {
-  formatGrantAmount,
-  getCachedOverageCreditGrant,
-} from '../api/overageCreditGrant.js'
+import { formatGrantAmount, getCachedOverageCreditGrant } from '../api/overageCreditGrant.js'
 import {
   checkCachedPassesEligibility,
   formatCreditAmount,
@@ -82,13 +70,13 @@ async function isMarketplacePluginRelevant(
   }
   const { bashTools } = context ?? {}
   if (signals.cli && bashTools?.size) {
-    if (signals.cli.some(cmd => bashTools.has(cmd))) {
+    if (signals.cli.some((cmd) => bashTools.has(cmd))) {
       return true
     }
   }
   if (signals.filePath && context?.readFileState) {
     const readFiles = cacheKeys(context.readFileState)
-    if (readFiles.some(fp => signals.filePath!.test(fp))) {
+    if (readFiles.some((fp) => signals.filePath!.test(fp))) {
       return true
     }
   }
@@ -108,7 +96,9 @@ const externalTips: Tip[] = [
   {
     id: 'plan-mode-for-complex-tasks',
     content: async () =>
-      tSync('tip.planModeForComplexTasks', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
+      tSync('tip.planModeForComplexTasks', {
+        shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab'),
+      }),
     cooldownSessions: 5,
     isRelevant: async () => {
       if (isInternalBuild()) return false
@@ -122,8 +112,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'default-permission-mode-config',
-    content: async () =>
-      tSync('tip.defaultPermissionModeConfig'),
+    content: async () => tSync('tip.defaultPermissionModeConfig'),
     cooldownSessions: 10,
     isRelevant: async () => {
       try {
@@ -134,18 +123,16 @@ const externalTips: Tip[] = [
         const hasDefaultMode = Boolean(settings?.permissions?.defaultMode)
         return hasUsedPlanMode && !hasDefaultMode
       } catch (error) {
-        logForDebugging(
-          `Failed to check default-permission-mode-config tip relevance: ${error}`,
-          { level: 'warn' },
-        )
+        logForDebugging(`Failed to check default-permission-mode-config tip relevance: ${error}`, {
+          level: 'warn',
+        })
         return false
       }
     },
   },
   {
     id: 'git-worktrees',
-    content: async () =>
-      tSync('tip.gitWorktrees'),
+    content: async () => tSync('tip.gitWorktrees'),
     cooldownSessions: 10,
     isRelevant: async () => {
       try {
@@ -159,8 +146,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'color-when-multi-sessions',
-    content: async () =>
-      tSync('tip.colorWhenMultiSessions'),
+    content: async () => tSync('tip.colorWhenMultiSessions'),
     cooldownSessions: 10,
     isRelevant: async () => {
       if (getCurrentSessionAgentColor()) return false
@@ -233,31 +219,26 @@ const externalTips: Tip[] = [
   },
   {
     id: 'colorterm-truecolor',
-    content: async () =>
-      tSync('tip.colortermTruecolor'),
+    content: async () => tSync('tip.colortermTruecolor'),
     cooldownSessions: 30,
     isRelevant: async () => !process.env.COLORTERM && chalk.level < 3,
   },
   {
     id: 'powershell-tool-env',
-    content: async () =>
-      tSync('tip.powershellToolEnv'),
+    content: async () => tSync('tip.powershellToolEnv'),
     cooldownSessions: 10,
     isRelevant: async () =>
-      getPlatform() === 'windows' &&
-      process.env.ZY_CODE_USE_POWERSHELL_TOOL === undefined,
+      getPlatform() === 'windows' && process.env.ZY_CODE_USE_POWERSHELL_TOOL === undefined,
   },
   {
     id: 'status-line',
-    content: async () =>
-      tSync('tip.statusLine'),
+    content: async () => tSync('tip.statusLine'),
     cooldownSessions: 25,
     isRelevant: async () => getSettings_DEPRECATED().statusLine === undefined,
   },
   {
     id: 'prompt-queue',
-    content: async () =>
-      tSync('tip.promptQueue'),
+    content: async () => tSync('tip.promptQueue'),
     cooldownSessions: 5,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -266,15 +247,13 @@ const externalTips: Tip[] = [
   },
   {
     id: 'enter-to-steer-in-relatime',
-    content: async () =>
-      tSync('tip.enterToSteer'),
+    content: async () => tSync('tip.enterToSteer'),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'todo-list',
-    content: async () =>
-      tSync('tip.todoList'),
+    content: async () => tSync('tip.todoList'),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
@@ -328,8 +307,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'install-github-app',
-    content: async () =>
-      tSync('tip.installGithubApp'),
+    content: async () => tSync('tip.installGithubApp'),
     cooldownSessions: 10,
     isRelevant: async () => !getGlobalConfig().githubActionSetupCount,
   },
@@ -342,8 +320,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'permissions',
-    content: async () =>
-      tSync('tip.permissions'),
+    content: async () => tSync('tip.permissions'),
     cooldownSessions: 10,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -352,51 +329,43 @@ const externalTips: Tip[] = [
   },
   {
     id: 'drag-and-drop-images',
-    content: async () =>
-      tSync('tip.dragAndDropImages'),
+    content: async () => tSync('tip.dragAndDropImages'),
     cooldownSessions: 10,
     isRelevant: async () => !env.isSSH(),
   },
   {
     id: 'paste-images-mac',
-    content: async () =>
-      tSync('tip.pasteImagesMac'),
+    content: async () => tSync('tip.pasteImagesMac'),
     cooldownSessions: 10,
     isRelevant: async () => getPlatform() === 'macos',
   },
   {
     id: 'double-esc',
-    content: async () =>
-      tSync('tip.doubleEsc'),
+    content: async () => tSync('tip.doubleEsc'),
     cooldownSessions: 10,
     isRelevant: async () => !fileHistoryEnabled(),
   },
   {
     id: 'double-esc-code-restore',
-    content: async () =>
-      tSync('tip.doubleEscCodeRestore'),
+    content: async () => tSync('tip.doubleEscCodeRestore'),
     cooldownSessions: 10,
     isRelevant: async () => fileHistoryEnabled(),
   },
   {
     id: 'continue',
-    content: async () =>
-      tSync('tip.continue'),
+    content: async () => tSync('tip.continue'),
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
   {
     id: 'rename-conversation',
-    content: async () =>
-      tSync('tip.renameConversation'),
+    content: async () => tSync('tip.renameConversation'),
     cooldownSessions: 15,
-    isRelevant: async () =>
-      isCustomTitleEnabled() && getGlobalConfig().numStartups > 10,
+    isRelevant: async () => isCustomTitleEnabled() && getGlobalConfig().numStartups > 10,
   },
   {
     id: 'custom-commands',
-    content: async () =>
-      tSync('tip.customCommands'),
+    content: async () => tSync('tip.customCommands'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -406,21 +375,24 @@ const externalTips: Tip[] = [
   {
     id: 'shift-tab',
     content: async () =>
-      tSync('tip.shiftTab', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
+      tSync('tip.shiftTab', {
+        shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab'),
+      }),
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
   {
     id: 'image-paste',
     content: async () =>
-      tSync('tip.imagePaste', { shortcut: getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v') }),
+      tSync('tip.imagePaste', {
+        shortcut: getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v'),
+      }),
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'custom-agents',
-    content: async () =>
-      tSync('tip.customAgents'),
+    content: async () => tSync('tip.customAgents'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -429,8 +401,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'agent-flag',
-    content: async () =>
-      tSync('tip.agentFlag'),
+    content: async () => tSync('tip.agentFlag'),
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -446,7 +417,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'desktop-shortcut',
-    content: async ctx => {
+    content: async (ctx) => {
       const blue = color('suggestion', ctx.theme)
       const text = tSync('tip.desktopShortcut', { shortcut: '/desktop' })
       return text.replace('/desktop', blue('/desktop'))
@@ -469,7 +440,9 @@ const externalTips: Tip[] = [
   {
     id: 'opusplan-mode-reminder',
     content: async () =>
-      tSync('tip.opusPlanModeReminder', { shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab') }),
+      tSync('tip.opusPlanModeReminder', {
+        shortcut: getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab'),
+      }),
     cooldownSessions: 2,
     async isRelevant() {
       if (isInternalBuild()) return false
@@ -485,26 +458,26 @@ const externalTips: Tip[] = [
   },
   {
     id: 'frontend-design-plugin',
-    content: async ctx => {
+    content: async (ctx) => {
       const blue = color('suggestion', ctx.theme)
       const command = blue(`/plugin install frontend-design@${OFFICIAL_MARKETPLACE_NAME}`)
       return tSync('tip.frontendDesignPlugin', { command })
     },
     cooldownSessions: 3,
-    isRelevant: async context =>
+    isRelevant: async (context) =>
       isMarketplacePluginRelevant('frontend-design', context, {
         filePath: /\.(html|css|htm)$/i,
       }),
   },
   {
     id: 'vercel-plugin',
-    content: async ctx => {
+    content: async (ctx) => {
       const blue = color('suggestion', ctx.theme)
       const command = blue(`/plugin install vercel@${OFFICIAL_MARKETPLACE_NAME}`)
       return tSync('tip.vercelPlugin', { command })
     },
     cooldownSessions: 3,
-    isRelevant: async context =>
+    isRelevant: async (context) =>
       isMarketplacePluginRelevant('vercel', context, {
         filePath: /(?:^|[/\\])vercel\.json$/i,
         cli: ['vercel'],
@@ -512,12 +485,13 @@ const externalTips: Tip[] = [
   },
   {
     id: 'effort-high-nudge',
-    content: async ctx => {
+    content: async (ctx) => {
       const blue = color('suggestion', ctx.theme)
       const cmd = blue('/effort high')
-      const variant = getFeatureValue_CACHED_MAY_BE_STALE<
-        'off' | 'copy_a' | 'copy_b'
-      >('zy_tide_elm', 'off')
+      const variant = getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
+        'zy_tide_elm',
+        'off',
+      )
       return variant === 'copy_b'
         ? tSync('tip.effortHighB', { cmd })
         : tSync('tip.effortHighA', { cmd })
@@ -533,20 +507,19 @@ const externalTips: Tip[] = [
       const persisted = getInitialSettings().effortLevel
       if (persisted === 'high' || persisted === 'max') return false
       return (
-        getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
-          'zy_tide_elm',
-          'off',
-        ) !== 'off'
+        getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>('zy_tide_elm', 'off') !==
+        'off'
       )
     },
   },
   {
     id: 'subagent-fanout-nudge',
-    content: async ctx => {
+    content: async (ctx) => {
       const blue = color('suggestion', ctx.theme)
-      const variant = getFeatureValue_CACHED_MAY_BE_STALE<
-        'off' | 'copy_a' | 'copy_b'
-      >('zy_tern_alloy', 'off')
+      const variant = getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
+        'zy_tern_alloy',
+        'off',
+      )
       return variant === 'copy_b'
         ? tSync('tip.subagentFanoutB', { cmd: blue('use subagents') })
         : tSync('tip.subagentFanoutA', { cmd: blue('"fan out subagents"') })
@@ -555,20 +528,19 @@ const externalTips: Tip[] = [
     isRelevant: async () => {
       if (!isDirectApiClient()) return false
       return (
-        getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
-          'zy_tern_alloy',
-          'off',
-        ) !== 'off'
+        getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>('zy_tern_alloy', 'off') !==
+        'off'
       )
     },
   },
   {
     id: 'loop-command-nudge',
-    content: async ctx => {
+    content: async (ctx) => {
       const blue = color('suggestion', ctx.theme)
-      const variant = getFeatureValue_CACHED_MAY_BE_STALE<
-        'off' | 'copy_a' | 'copy_b'
-      >('zy_timber_lark', 'off')
+      const variant = getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
+        'zy_timber_lark',
+        'off',
+      )
       return variant === 'copy_b'
         ? tSync('tip.loopCommandB', { cmd: blue('/loop 5m check the deploy') })
         : tSync('tip.loopCommandA', { cmd: blue('/loop') })
@@ -587,7 +559,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'guest-passes',
-    content: async ctx => {
+    content: async (ctx) => {
       const zy = color('zy', ctx.theme)
       const reward = getCachedReferrerReward()
       const passes = zy('/passes')
@@ -607,12 +579,15 @@ const externalTips: Tip[] = [
   },
   {
     id: 'overage-credit',
-    content: async ctx => {
+    content: async (ctx) => {
       const zy = color('zy', ctx.theme)
       const info = getCachedOverageCreditGrant()
       const amount = info ? formatGrantAmount(info) : null
       if (!amount) return ''
-      return tSync('tip.overageCredit', { amount: zy(`${amount} in extra usage, on us`), command: zy('/extra-usage') })
+      return tSync('tip.overageCredit', {
+        amount: zy(`${amount} in extra usage, on us`),
+        command: zy('/extra-usage'),
+      })
     },
     cooldownSessions: 3,
     isRelevant: async () => shouldShowOverageCreditUpsell(),
@@ -630,25 +605,23 @@ const externalTips: Tip[] = [
     },
   },
 ]
-const internalOnlyTips: Tip[] =
-  isInternalBuild()
-    ? [
-        {
-          id: 'important-zymd',
-          content: async () =>
-            '[INNER-ONLY] Use "IMPORTANT:" prefix for must-follow CLAUDE.md rules',
-          cooldownSessions: 30,
-          isRelevant: async () => true,
-        },
-        {
-          id: 'skillify',
-          content: async () =>
-            '[INNER-ONLY] Use /skillify at the end of a workflow to turn it into a reusable skill',
-          cooldownSessions: 15,
-          isRelevant: async () => true,
-        },
-      ]
-    : []
+const internalOnlyTips: Tip[] = isInternalBuild()
+  ? [
+      {
+        id: 'important-zymd',
+        content: async () => '[INNER-ONLY] Use "IMPORTANT:" prefix for must-follow CLAUDE.md rules',
+        cooldownSessions: 30,
+        isRelevant: async () => true,
+      },
+      {
+        id: 'skillify',
+        content: async () =>
+          '[INNER-ONLY] Use /skillify at the end of a workflow to turn it into a reusable skill',
+        cooldownSessions: 15,
+        isRelevant: async () => true,
+      },
+    ]
+  : []
 
 function getCustomTips(): Tip[] {
   const settings = getInitialSettings()
@@ -675,10 +648,10 @@ export async function getRelevantTips(context?: TipContext): Promise<Tip[]> {
 
   // Otherwise, filter built-in tips as before and combine with custom
   const tips = [...externalTips, ...internalOnlyTips]
-  const isRelevant = await Promise.all(tips.map(_ => _.isRelevant(context)))
+  const isRelevant = await Promise.all(tips.map((_) => _.isRelevant(context)))
   const filtered = tips
     .filter((_, index) => isRelevant[index])
-    .filter(_ => getSessionsSinceLastShown(_.id) >= _.cooldownSessions)
+    .filter((_) => getSessionsSinceLastShown(_.id) >= _.cooldownSessions)
 
   return [...filtered, ...customTips]
 }

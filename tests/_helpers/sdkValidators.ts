@@ -74,19 +74,21 @@ export function assertValidOpenAIChatMessages(
             throw new Error(`${tctx}.function: missing`)
           }
           if (typeof fn.name !== 'string' || fn.name.length === 0) {
-            throw new Error(`${tctx}.function.name: must be non-empty string, got ${JSON.stringify(fn.name)}`)
+            throw new Error(
+              `${tctx}.function.name: must be non-empty string, got ${JSON.stringify(fn.name)}`,
+            )
           }
           // 严格 JSON 校验 —— DashScope 400 错误的根因
           if (typeof fn.arguments !== 'string') {
             throw new Error(
               `${tctx}.function.arguments: must be a string (JSON), got ${typeof fn.arguments}. ` +
-              `OpenAI / DashScope require arguments to be a JSON-encoded string.`,
+                `OpenAI / DashScope require arguments to be a JSON-encoded string.`,
             )
           }
           if (fn.arguments.length === 0) {
             throw new Error(
               `${tctx}.function.arguments: must be non-empty JSON string. ` +
-              `Empty string violates DashScope: 'function.arguments parameter must be in JSON format'.`,
+                `Empty string violates DashScope: 'function.arguments parameter must be in JSON format'.`,
             )
           }
           let parsed: unknown
@@ -95,16 +97,16 @@ export function assertValidOpenAIChatMessages(
           } catch (e) {
             throw new Error(
               `${tctx}.function.arguments: not valid JSON. ` +
-              `Got: ${JSON.stringify(fn.arguments).slice(0, 200)}. ` +
-              `Parse error: ${(e as Error).message}`,
+                `Got: ${JSON.stringify(fn.arguments).slice(0, 200)}. ` +
+                `Parse error: ${(e as Error).message}`,
             )
           }
           if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
             throw new Error(
               `${tctx}.function.arguments: parsed result must be a JSON object, ` +
-              `got ${Array.isArray(parsed) ? 'array' : typeof parsed}. ` +
-              `Value: ${JSON.stringify(parsed).slice(0, 200)}. ` +
-              `(DashScope strictly rejects non-object arguments, e.g. doubly-stringified strings.)`,
+                `got ${Array.isArray(parsed) ? 'array' : typeof parsed}. ` +
+                `Value: ${JSON.stringify(parsed).slice(0, 200)}. ` +
+                `(DashScope strictly rejects non-object arguments, e.g. doubly-stringified strings.)`,
             )
           }
           seenToolCallIds.add(tc.id)
@@ -175,7 +177,9 @@ export function assertValidAnthropicCreateParams(params: Record<string, any>): v
     const msg = params.messages[i]
     const ctx = `messages[${i}]`
     if (msg.role !== 'user' && msg.role !== 'assistant') {
-      throw new Error(`${ctx}.role: Anthropic messages only support user/assistant, got ${msg.role}`)
+      throw new Error(
+        `${ctx}.role: Anthropic messages only support user/assistant, got ${msg.role}`,
+      )
     }
     if (typeof msg.content === 'string') continue
     if (!Array.isArray(msg.content)) {
@@ -189,10 +193,19 @@ export function assertValidAnthropicCreateParams(params: Record<string, any>): v
       }
       // Anthropic 合法 block 类型
       const validBlockTypes = [
-        'text', 'image', 'tool_use', 'tool_result', 'thinking',
-        'redacted_thinking', 'document', 'server_tool_use',
-        'web_search_tool_result', 'code_execution_tool_result',
-        'mcp_tool_use', 'mcp_tool_result', 'container_upload',
+        'text',
+        'image',
+        'tool_use',
+        'tool_result',
+        'thinking',
+        'redacted_thinking',
+        'document',
+        'server_tool_use',
+        'web_search_tool_result',
+        'code_execution_tool_result',
+        'mcp_tool_use',
+        'mcp_tool_result',
+        'container_upload',
       ]
       if (!validBlockTypes.includes(block.type)) {
         throw new Error(`${bctx}.type: unknown block type "${block.type}"`)

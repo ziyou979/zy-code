@@ -67,11 +67,7 @@ function rejectWithTimeout(reject: (e: Error) => void, message: string): void {
  * backed by a runaway async operation, that keeps running. This just
  * returns control to the caller.
  */
-export function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  message: string,
-): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeoutPromise = new Promise<never>((_, reject) => {
     // eslint-disable-next-line no-restricted-syntax -- not a sleep: REJECTS after ms (timeout guard)

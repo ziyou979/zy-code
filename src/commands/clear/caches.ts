@@ -3,10 +3,7 @@
  * This module is imported at startup by main.tsx, so keep imports minimal.
  */
 import { feature } from 'bun:bundle'
-import {
-  clearInvokedSkills,
-  setLastEmittedDate,
-} from '../../bootstrap/state.js'
+import { clearInvokedSkills, setLastEmittedDate } from '../../bootstrap/state.js'
 import { clearCommandsCache } from '../../commands.js'
 import { getSessionStartDate } from '../../constants/common.js'
 import {
@@ -45,9 +42,7 @@ import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
  *   state (pending permission callbacks, dump state, cache-break tracking) is left
  *   intact since it cannot be safely scoped to the main session.
  */
-export function clearSessionCaches(
-  preservedAgentIds: ReadonlySet<string> = new Set(),
-): void {
+export function clearSessionCaches(preservedAgentIds: ReadonlySet<string> = new Set()): void {
   const hasPreserved = preservedAgentIds.size > 0
   // Clear context caches
   getUserContext.cache.clear?.()
@@ -104,9 +99,7 @@ export function clearSessionCaches(
   // Clear attribution caches (file content cache, pending bash states)
   // Dynamic import to preserve dead code elimination for COMMIT_ATTRIBUTION feature flag
   if (feature('COMMIT_ATTRIBUTION')) {
-    void import('../../utils/attributionHooks.js').then(
-      (mod: any) => mod.clearAttributionCaches(),
-    )
+    void import('../../utils/attributionHooks.js').then((mod: any) => mod.clearAttributionCaches())
   }
   // Clear repository detection caches
   clearRepositoryCaches()
@@ -127,19 +120,17 @@ export function clearSessionCaches(
   // Clear session environment variables
   clearSessionEnvVars()
   // Clear WebFetch URL cache (up to 50MB of cached page content)
-  void import('../../tools/WebFetchTool/utils.js').then(
-    ({ clearWebFetchCache }) => clearWebFetchCache(),
+  void import('../../tools/WebFetchTool/utils.js').then(({ clearWebFetchCache }) =>
+    clearWebFetchCache(),
   )
   // Clear ToolSearch description cache (full tool prompts, ~500KB for 50 MCP tools)
   void import('../../tools/ToolSearchTool/ToolSearchTool.js').then(
     ({ clearToolSearchDescriptionCache }) => clearToolSearchDescriptionCache(),
   )
   // Clear agent definitions cache (accumulates per-cwd via EnterWorktreeTool)
-  void import('../../tools/AgentTool/loadAgentsDir.js').then(
-    ({ clearAgentDefinitionsCache }) => clearAgentDefinitionsCache(),
+  void import('../../tools/AgentTool/loadAgentsDir.js').then(({ clearAgentDefinitionsCache }) =>
+    clearAgentDefinitionsCache(),
   )
   // Clear SkillTool prompt cache (accumulates per project root)
-  void import('../../tools/SkillTool/prompt.js').then(({ clearPromptCache }) =>
-    clearPromptCache(),
-  )
+  void import('../../tools/SkillTool/prompt.js').then(({ clearPromptCache }) => clearPromptCache())
 }

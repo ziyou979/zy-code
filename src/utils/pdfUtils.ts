@@ -13,9 +13,7 @@ export const DOCUMENT_EXTENSIONS = new Set(['pdf'])
  * Returns null on invalid input (non-numeric, zero, inverted range).
  * Pages are 1-indexed.
  */
-export function parsePDFPageRange(
-  pages: string,
-): { firstPage: number; lastPage: number } | null {
+export function parsePDFPageRange(pages: string): { firstPage: number; lastPage: number } | null {
   const trimmed = pages.trim()
   if (!trimmed) {
     return null

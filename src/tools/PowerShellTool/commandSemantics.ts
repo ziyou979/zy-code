@@ -31,8 +31,7 @@ export type CommandSemantic = (
  */
 const DEFAULT_SEMANTIC: CommandSemantic = (exitCode, _stdout, _stderr) => ({
   isError: exitCode !== 0,
-  message:
-    exitCode !== 0 ? `Command failed with exit code ${exitCode}` : undefined,
+  message: exitCode !== 0 ? `Command failed with exit code ${exitCode}` : undefined,
 })
 
 /**
@@ -119,7 +118,7 @@ function extractBaseCommand(segment: string): string {
  * for exit-code interpretation (false negatives just fall back to default).
  */
 function heuristicallyExtractBaseCommand(command: string): string {
-  const segments = command.split(/[;|]/).filter(s => s.trim())
+  const segments = command.split(/[;|]/).filter((s) => s.trim())
   const last = segments[segments.length - 1] || command
   return extractBaseCommand(last)
 }

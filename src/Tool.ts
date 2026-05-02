@@ -1,11 +1,5 @@
-import type {
-  ToolResultBlock,
-  ToolCallInlineBlock,
-} from './types/llm.js'
-import type {
-  ElicitRequestURLParams,
-  ElicitResult,
-} from '@modelcontextprotocol/sdk/types.js'
+import type { ToolResultBlock, ToolCallInlineBlock } from './types/llm.js'
+import type { ElicitRequestURLParams, ElicitResult } from '@modelcontextprotocol/sdk/types.js'
 import type { UUID } from 'crypto'
 import type { z } from 'zod/v4'
 import type { Command } from './commands.js'
@@ -21,14 +15,8 @@ export type ToolInputJSONSchema = {
 }
 
 import type { Notification } from './context/notifications.js'
-import type {
-  MCPServerConnection,
-  ServerResource,
-} from './services/mcp/types.js'
-import type {
-  AgentDefinition,
-  AgentDefinitionsResult,
-} from './tools/AgentTool/loadAgentsDir.js'
+import type { MCPServerConnection, ServerResource } from './services/mcp/types.js'
+import type { AgentDefinition, AgentDefinitionsResult } from './tools/AgentTool/loadAgentsDir.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -76,11 +64,7 @@ import type { SpinnerMode } from './components/Spinner.js'
 import type { QuerySource } from './constants/querySource.js'
 import type { SDKStatus } from './entrypoints/agentSdkTypes.js'
 import type { AppState } from './state/AppState.js'
-import type {
-  HookProgress,
-  PromptRequest,
-  PromptResponse,
-} from './types/hooks.js'
+import type { HookProgress, PromptRequest, PromptResponse } from './types/hooks.js'
 import type { AgentId } from './types/ids.js'
 import type { DeepImmutable } from './types/utils.js'
 import type { AttributionState } from './utils/commitAttribution.js'
@@ -137,15 +121,14 @@ export type ToolPermissionContext = DeepImmutable<{
   prePlanMode?: PermissionMode
 }>
 
-export const getEmptyToolPermissionContext: () => ToolPermissionContext =
-  () => ({
-    mode: 'default',
-    additionalWorkingDirectories: new Map(),
-    alwaysAllowRules: {},
-    alwaysDenyRules: {},
-    alwaysAskRules: {},
-    isBypassPermissionsModeAvailable: false,
-  })
+export const getEmptyToolPermissionContext: () => ToolPermissionContext = () => ({
+  mode: 'default',
+  additionalWorkingDirectories: new Map(),
+  alwaysAllowRules: {},
+  alwaysDenyRules: {},
+  alwaysAskRules: {},
+  isBypassPermissionsModeAvailable: false,
+})
 
 export type CompactProgressEvent =
   | {
@@ -202,14 +185,9 @@ export type ToolUseContext = {
   setToolJSX?: SetToolJSXFn
   addNotification?: (notif: Notification) => void
   /** 向 REPL 消息列表追加一个仅 UI 的系统消息。在 normalizeMessagesForAPI 边界处会被剥离 — Exclude<> 使其成为类型强制的。 */
-  appendSystemMessage?: (
-    msg: Exclude<SystemMessage, SystemLocalCommandMessage>,
-  ) => void
+  appendSystemMessage?: (msg: Exclude<SystemMessage, SystemLocalCommandMessage>) => void
   /** 发送操作系统级别的通知（iTerm2、Kitty、Ghostty、bell 等） */
-  sendOSNotification?: (opts: {
-    message: string
-    notificationType: string
-  }) => void
+  sendOSNotification?: (opts: { message: string; notificationType: string }) => void
   nestedMemoryAttachmentTriggers?: Set<string>
   /**
    * 本会话中已作为 nested_memory 附件注入的 CLAUDE.md 路径。
@@ -230,12 +208,8 @@ export type ToolUseContext = {
   onCompactProgress?: (event: CompactProgressEvent) => void
   setSDKStatus?: (status: SDKStatus) => void
   openMessageSelector?: () => void
-  updateFileHistoryState: (
-    updater: (prev: FileHistoryState) => FileHistoryState,
-  ) => void
-  updateAttributionState: (
-    updater: (prev: AttributionState) => AttributionState,
-  ) => void
+  updateFileHistoryState: (updater: (prev: FileHistoryState) => FileHistoryState) => void
+  updateAttributionState: (updater: (prev: AttributionState) => AttributionState) => void
   setConversationId?: (id: UUID) => void
   agentId?: AgentId // 仅对子 agent 设置；使用 getSessionId() 获取会话 ID。hooks 用此来区分子 agent 调用
   agentType?: string // 子 agent 类型名称。主线程的 --agent 类型，hooks 会回退到 getMainThreadAgentType()
@@ -308,19 +282,13 @@ export function filterToolProgressMessages(
   progressMessagesForMessage: ProgressMessage[],
 ): ProgressMessage<ToolProgressData>[] {
   return progressMessagesForMessage.filter(
-    (msg): msg is ProgressMessage<ToolProgressData> =>
-      msg.data?.type !== 'hook_progress',
+    (msg): msg is ProgressMessage<ToolProgressData> => msg.data?.type !== 'hook_progress',
   )
 }
 
 export type ToolResult<T> = {
   data: T
-  newMessages?: (
-    | UserMessage
-    | AssistantMessage
-    | AttachmentMessage
-    | SystemMessage
-  )[]
+  newMessages?: (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage)[]
   // contextModifier 仅对非并发安全的工具有效
   contextModifier?: (context: ToolUseContext) => ToolUseContext
   /** MCP 协议元数据（structuredContent、_meta），用于透传给 SDK 消费者 */
@@ -340,10 +308,7 @@ export type AnyObject = z.ZodType<{ [key: string]: unknown }>
 /**
  * 检查工具是否匹配给定名称（主名称或别名）。
  */
-export function toolMatchesName(
-  tool: { name: string; aliases?: string[] },
-  name: string,
-): boolean {
+export function toolMatchesName(tool: { name: string; aliases?: string[] }, name: string): boolean {
   return tool.name === name || (tool.aliases?.includes(name) ?? false)
 }
 
@@ -351,7 +316,7 @@ export function toolMatchesName(
  * 从工具列表中按名称或别名查找工具。
  */
 export function findToolByName(tools: Tools, name: string): Tool | undefined {
-  return tools.find(t => toolMatchesName(t, name))
+  return tools.find((t) => toolMatchesName(t, name))
 }
 
 export type Tool<
@@ -479,10 +444,7 @@ export type Tool<
    * @param input 工具输入
    * @param context 工具使用上下文
    */
-  validateInput?(
-    input: z.infer<Input>,
-    context: ToolUseContext,
-  ): Promise<ValidationResult>
+  validateInput?(input: z.infer<Input>, context: ToolUseContext): Promise<ValidationResult>
 
   /**
    * 确定是否需要请求用户权限。仅在 validateInput() 通过后调用。
@@ -490,10 +452,7 @@ export type Tool<
    * @param input 工具输入
    * @param context 工具使用上下文
    */
-  checkPermissions(
-    input: z.infer<Input>,
-    context: ToolUseContext,
-  ): Promise<PermissionResult>
+  checkPermissions(input: z.infer<Input>, context: ToolUseContext): Promise<PermissionResult>
 
   // 对文件路径进行操作的工具的可选方法
   getPath?(input: z.infer<Input>): string
@@ -504,9 +463,7 @@ export type Tool<
    * 任何耗时的解析都在这里完成。返回一个闭包，
    * 对每个 hook 模式调用。如果未实现，仅工具名称级匹配有效。
    */
-  preparePermissionMatcher?(
-    input: z.infer<Input>,
-  ): Promise<(pattern: string) => boolean>
+  preparePermissionMatcher?(input: z.infer<Input>): Promise<(pattern: string) => boolean>
 
   prompt(options: {
     getToolPermissionContext: () => Promise<ToolPermissionContext>
@@ -536,9 +493,7 @@ export type Tool<
    * @param input 工具输入
    * @returns 活动描述字符串，或 null 以回退到工具名称
    */
-  getActivityDescription?(
-    input: Partial<z.infer<Input>> | undefined,
-  ): string | null
+  getActivityDescription?(input: Partial<z.infer<Input>> | undefined): string | null
   /**
    * 返回此工具使用的精简表示，用于自动模式安全分类器。
    * 例如：Bash 的 `ls -la`，Edit 的 `/tmp/x: new content`。
@@ -547,10 +502,7 @@ export type Tool<
    * 调用者 JSON 包装时重复编码。
    */
   toAutoClassifierInput(input: z.infer<Input>): unknown
-  mapToolResultToToolResultBlock(
-    content: Output,
-    toolUseID: string,
-  ): ToolResultBlock
+  mapToolResultToToolResultBlock(content: Output, toolUseID: string): ToolResultBlock
   /**
    * 可选。省略时，工具结果不渲染任何内容（与返回 null 相同）。
    * 对结果在其他地方展示的工具省略此项（例如 TodoWrite
@@ -752,8 +704,7 @@ const TOOL_DEFAULTS = {
   checkPermissions: (
     input: { [key: string]: unknown },
     _ctx?: ToolUseContext,
-  ): Promise<PermissionResult> =>
-    Promise.resolve({ behavior: 'allow', updatedInput: input }),
+  ): Promise<PermissionResult> => Promise.resolve({ behavior: 'allow', updatedInput: input }),
   toAutoClassifierInput: (_input?: unknown) => '',
   userFacingName: (_input?: unknown) => '',
 }

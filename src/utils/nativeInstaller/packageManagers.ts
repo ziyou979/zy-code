@@ -26,30 +26,22 @@ export type PackageManager =
  * Returns null if the file is unreadable (pre-systemd or non-standard systems);
  * callers fall through to the exec in that case as a conservative fallback.
  */
-export const getOsRelease = memoize(
-  async (): Promise<{ id: string; idLike: string[] } | null> => {
-    try {
-      const content = await readFile('/etc/os-release', 'utf8')
-      const idMatch = content.match(/^ID=["']?(\S+?)["']?\s*$/m)
-      const idLikeMatch = content.match(/^ID_LIKE=["']?(.+?)["']?\s*$/m)
-      return {
-        id: idMatch?.[1] ?? '',
-        idLike: idLikeMatch?.[1]?.split(' ') ?? [],
-      }
-    } catch {
-      return null
+export const getOsRelease = memoize(async (): Promise<{ id: string; idLike: string[] } | null> => {
+  try {
+    const content = await readFile('/etc/os-release', 'utf8')
+    const idMatch = content.match(/^ID=["']?(\S+?)["']?\s*$/m)
+    const idLikeMatch = content.match(/^ID_LIKE=["']?(.+?)["']?\s*$/m)
+    return {
+      id: idMatch?.[1] ?? '',
+      idLike: idLikeMatch?.[1]?.split(' ') ?? [],
     }
-  },
-)
+  } catch {
+    return null
+  }
+})
 
-function isDistroFamily(
-  osRelease: { id: string; idLike: string[] },
-  families: string[],
-): boolean {
-  return (
-    families.includes(osRelease.id) ||
-    osRelease.idLike.some(like => families.includes(like))
-  )
+function isDistroFamily(osRelease: { id: string; idLike: string[] }, families: string[]): boolean {
+  return families.includes(osRelease.id) || osRelease.idLike.some((like) => families.includes(like))
 }
 
 /**
@@ -141,10 +133,7 @@ export function detectWinget(): boolean {
   const execPath = process.execPath || process.argv[0] || ''
 
   // Check for WinGet paths (handles both forward and backslashes)
-  const wingetPatterns = [
-    /Microsoft[/\\]WinGet[/\\]Packages/i,
-    /Microsoft[/\\]WinGet[/\\]Links/i,
-  ]
+  const wingetPatterns = [/Microsoft[/\\]WinGet[/\\]Packages/i, /Microsoft[/\\]WinGet[/\\]Links/i]
 
   for (const pattern of wingetPatterns) {
     if (pattern.test(execPath)) {
@@ -278,14 +267,10 @@ export const detectApk = memoize(async (): Promise<boolean> => {
 
   const execPath = process.execPath || process.argv[0] || ''
 
-  const result = await execFileNoThrow(
-    'apk',
-    ['info', '--who-owns', execPath],
-    {
-      timeout: 5000,
-      useCwd: false,
-    },
-  )
+  const result = await execFileNoThrow('apk', ['info', '--who-owns', execPath], {
+    timeout: 5000,
+    useCwd: false,
+  })
 
   if (result.code === 0 && result.stdout) {
     logForDebugging(`Detected apk installation: ${result.stdout.trim()}`)

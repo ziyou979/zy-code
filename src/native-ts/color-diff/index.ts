@@ -103,8 +103,7 @@ function detectColorMode(theme: string): ColorMode {
 // comparing cube vs grey-ramp candidates, like the Rust crate.
 const CUBE_LEVELS = [0, 95, 135, 175, 215, 255]
 function ansi256FromRgb(r: number, g: number, b: number): number {
-  const q = (c: number) =>
-    c < 48 ? 0 : c < 115 ? 1 : c < 155 ? 2 : c < 195 ? 3 : c < 235 ? 4 : 5
+  const q = (c: number) => (c < 48 ? 0 : c < 115 ? 1 : c < 155 ? 2 : c < 195 ? 3 : c < 235 ? 4 : 5)
   const qr = q(r)
   const qg = q(g)
   const qb = q(b)
@@ -419,10 +418,7 @@ const FILENAME_LANGS: Record<string, string> = {
   CMakeLists: 'cmake',
 }
 
-function detectLanguage(
-  filePath: string,
-  firstLine: string | null,
-): string | null {
+function detectLanguage(filePath: string, firstLine: string | null): string | null {
   const base = basename(filePath)
   const ext = extname(filePath).slice(1)
 
@@ -452,20 +448,12 @@ function detectLanguage(
   return null
 }
 
-function scopeColor(
-  scope: string | undefined,
-  text: string,
-  theme: Theme,
-): Color {
+function scopeColor(scope: string | undefined, text: string, theme: Theme): Color {
   if (!scope) return theme.foreground
   if (scope === 'keyword' && STORAGE_KEYWORDS.has(text.trim())) {
     return theme.scopes['_storage'] ?? theme.foreground
   }
-  return (
-    theme.scopes[scope] ??
-    theme.scopes[scope.split('.')[0]!] ??
-    theme.foreground
-  )
+  return theme.scopes[scope] ?? theme.scopes[scope.split('.')[0]!] ?? theme.foreground
 }
 
 function flattenHljs(
@@ -649,11 +637,11 @@ type Highlight = {
 }
 
 function removeNewlines(h: Highlight): void {
-  h.lines = h.lines.map(line =>
+  h.lines = h.lines.map((line) =>
     line.flatMap(([style, text]) =>
       text
         .split('\n')
-        .filter(p => p.length > 0)
+        .filter((p) => p.length > 0)
         .map((p): Block => [style, p]),
     ),
   )
@@ -726,12 +714,7 @@ function wrapText(h: Highlight, width: number, theme: Theme): void {
   }
 }
 
-function addLineNumber(
-  h: Highlight,
-  theme: Theme,
-  maxDigits: number,
-  fullDim: boolean,
-): void {
+function addLineNumber(h: Highlight, theme: Theme, maxDigits: number, fullDim: boolean): void {
   const style: Style = {
     foreground: h.marker ? decorationColor(h.marker, theme) : theme.foreground,
     background: h.marker ? lineBackground(h.marker, theme) : theme.background,
@@ -739,9 +722,7 @@ function addLineNumber(
   const shouldDim = h.marker === null || h.marker === ' '
   for (let i = 0; i < h.lines.length; i++) {
     const prefix =
-      i === 0
-        ? ` ${String(h.lineNumber).padStart(maxDigits)} `
-        : ' '.repeat(maxDigits + 2)
+      i === 0 ? ` ${String(h.lineNumber).padStart(maxDigits)} ` : ' '.repeat(maxDigits + 2)
     const wrapped = shouldDim && !fullDim ? `${DIM}${prefix}${UNDIM}` : prefix
     h.lines[i]!.unshift([style, wrapped])
   }
@@ -819,13 +800,8 @@ function applyBackground(h: Highlight, theme: Theme, ranges: Range[]): void {
   }
 }
 
-function intoLines(
-  h: Highlight,
-  dim: boolean,
-  skipBg: boolean,
-  mode: ColorMode,
-): string[] {
-  return h.lines.map(line => asTerminalEscaped(line, mode, skipBg, dim))
+function intoLines(h: Highlight, dim: boolean, skipBg: boolean, mode: ColorMode): string[] {
+  return h.lines.map((line) => asTerminalEscaped(line, mode, skipBg, dim))
 }
 
 // ---------------------------------------------------------------------------
@@ -877,7 +853,7 @@ export class ColorDiff {
 
     // First pass: assign markers + line numbers
     type Entry = { lineNumber: number; marker: Marker; code: string }
-    const entries: Entry[] = this.hunk.lines.map(rawLine => {
+    const entries: Entry[] = this.hunk.lines.map((rawLine) => {
       const marker = parseMarker(rawLine.slice(0, 1))
       const code = rawLine.slice(1)
       let lineNumber: number
@@ -900,12 +876,9 @@ export class ColorDiff {
     // Word-diff ranges (skip when dim — too loud)
     const ranges: Range[][] = entries.map(() => [])
     if (!dim) {
-      const markers = entries.map(e => e.marker)
+      const markers = entries.map((e) => e.marker)
       for (const [delIdx, addIdx] of findAdjacentPairs(markers)) {
-        const [delR, addR] = wordDiffStrings(
-          entries[delIdx]!.code,
-          entries[addIdx]!.code,
-        )
+        const [delR, addR] = wordDiffStrings(entries[delIdx]!.code, entries[addIdx]!.code)
         ranges[delIdx] = delR
         ranges[addIdx] = addR
       }
@@ -916,9 +889,7 @@ export class ColorDiff {
     for (let i = 0; i < entries.length; i++) {
       const { lineNumber, marker, code } = entries[i]!
       const tokens: Block[] =
-        marker === '-'
-          ? [[defaultStyle(theme), code]]
-          : highlightLine(hlState, code, theme)
+        marker === '-' ? [[defaultStyle(theme), code]] : highlightLine(hlState, code, theme)
 
       const h: Highlight = { marker, lineNumber, lines: [tokens] }
       removeNewlines(h)
@@ -973,8 +944,7 @@ export class ColorFile {
 export function getSyntaxTheme(themeName: string): SyntaxTheme {
   // highlight.js has no bat theme set, so env vars can't select alternate
   // syntect themes. We still report the env var if set, for diagnostics.
-  const envTheme =
-    process.env.ZY_CODE_SYNTAX_HIGHLIGHT ?? process.env.BAT_THEME
+  const envTheme = process.env.ZY_CODE_SYNTAX_HIGHLIGHT ?? process.env.BAT_THEME
   void envTheme
   return { theme: defaultSyntaxThemeName(themeName), source: null }
 }

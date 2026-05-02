@@ -17,9 +17,7 @@ export type ParsedSessionUrl = {
  * @param resumeIdentifier - The URL or session ID to parse
  * @returns Parsed session information or null if invalid
  */
-export function parseSessionIdentifier(
-  resumeIdentifier: string,
-): ParsedSessionUrl | null {
+export function parseSessionIdentifier(resumeIdentifier: string): ParsedSessionUrl | null {
   // Check for JSONL file path before URL parsing, since Windows absolute
   // paths (e.g., C:\path\file.jsonl) are parsed as valid URLs with C: as protocol
   if (resumeIdentifier.toLowerCase().endsWith('.jsonl')) {

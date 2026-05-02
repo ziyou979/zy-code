@@ -95,7 +95,7 @@ export function truncateStartToWidth(text: string, maxWidth: number): string {
     '…' +
     segments
       .slice(startIdx)
-      .map(s => s.segment)
+      .map((s) => s.segment)
       .join('')
   )
 }
@@ -105,10 +105,7 @@ export function truncateStartToWidth(text: string, maxWidth: number): string {
  * Useful when the caller adds its own separator (e.g. middle-truncation with '…' between parts).
  * Width-aware and grapheme-safe.
  */
-export function truncateToWidthNoEllipsis(
-  text: string,
-  maxWidth: number,
-): string {
+export function truncateToWidthNoEllipsis(text: string, maxWidth: number): string {
   if (stringWidth(text) <= maxWidth) return text
   if (maxWidth <= 0) return ''
   let width = 0
@@ -131,11 +128,7 @@ export function truncateToWidthNoEllipsis(
  * @param singleLine If true, also truncates at the first newline
  * @returns The truncated string with ellipsis if needed
  */
-export function truncate(
-  str: string,
-  maxWidth: number,
-  singleLine: boolean = false,
-): string {
+export function truncate(str: string, maxWidth: number, singleLine: boolean = false): string {
   let result = str
 
   // If singleLine is true, truncate at first newline

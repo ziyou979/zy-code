@@ -1,14 +1,5 @@
-import {
-  type AnsiCode,
-  ansiCodesToString,
-  diffAnsiCodes,
-} from '@alcalzone/ansi-tokenize'
-import {
-  type Point,
-  type Rectangle,
-  type Size,
-  unionRect,
-} from './layout/geometry.js'
+import { type AnsiCode, ansiCodesToString, diffAnsiCodes } from '@alcalzone/ansi-tokenize'
+import { type Point, type Rectangle, type Size, unionRect } from './layout/geometry.js'
 import { BEL, ESC, SEP } from './termio/ansi.js'
 import * as warn from './warn.js'
 
@@ -127,14 +118,12 @@ export class StylePool {
    * 对打包值的单次位掩码检查跳过不可见的空格。
    */
   intern(styles: AnsiCode[]): number {
-    const key = styles.length === 0 ? '' : styles.map(s => s.code).join('\0')
+    const key = styles.length === 0 ? '' : styles.map((s) => s.code).join('\0')
     let id = this.ids.get(key)
     if (id === undefined) {
       const rawId = this.styles.length
       this.styles.push(styles.length === 0 ? [] : styles)
-      id =
-        (rawId << 1) |
-        (styles.length > 0 && hasVisibleSpaceEffect(styles) ? 1 : 0)
+      id = (rawId << 1) | (styles.length > 0 && hasVisibleSpaceEffect(styles) ? 1 : 0)
       this.ids.set(key, id)
     }
     return id
@@ -172,7 +161,7 @@ export class StylePool {
     if (id === undefined) {
       const baseCodes = this.get(baseId)
       // 如果已经包含反色，则原样使用（避免 SGR 7 叠加）
-      const hasInverse = baseCodes.some(c => c.endCode === '\x1b[27m')
+      const hasInverse = baseCodes.some((c) => c.endCode === '\x1b[27m')
       id = hasInverse ? baseId : this.intern([...baseCodes, INVERSE_CODE])
       this.inverseCache.set(baseId, id)
     }
@@ -198,21 +187,17 @@ export class StylePool {
       // 反色语义会有差异）。过滤两者可在各处得到干净的
       // 黄底 + 终端默认前景。粗体/dim/斜体
       // 可共存——保留这些。
-      const codes = baseCodes.filter(
-        c => c.endCode !== '\x1b[39m' && c.endCode !== '\x1b[49m',
-      )
+      const codes = baseCodes.filter((c) => c.endCode !== '\x1b[39m' && c.endCode !== '\x1b[49m')
       // 先设置黄色前景，这样反色会将其交换为背景。反色之后设置粗体也
       // 没问题——SGR 1 只影响前景属性，与 7 的顺序无关。
       codes.push(YELLOW_FG_CODE)
-      if (!baseCodes.some(c => c.endCode === '\x1b[27m'))
-        codes.push(INVERSE_CODE)
-      if (!baseCodes.some(c => c.endCode === '\x1b[22m')) codes.push(BOLD_CODE)
+      if (!baseCodes.some((c) => c.endCode === '\x1b[27m')) codes.push(INVERSE_CODE)
+      if (!baseCodes.some((c) => c.endCode === '\x1b[22m')) codes.push(BOLD_CODE)
       // 使用下划线作为无歧义标记——黄底可能与
       // 现有背景样式冲突（用户提示背景、语法背景）。如果你在匹配处
       // 看到下划线但没有黄色，说明叠加层确实找到了它；
       // 只是黄色在样式竞争中丢失了。
-      if (!baseCodes.some(c => c.endCode === '\x1b[24m'))
-        codes.push(UNDERLINE_CODE)
+      if (!baseCodes.some((c) => c.endCode === '\x1b[24m')) codes.push(UNDERLINE_CODE)
       id = this.intern(codes)
       this.currentMatchCache.set(baseId, id)
     }
@@ -249,7 +234,7 @@ export class StylePool {
       // 保留除了背景（49m）和反色（27m）之外的所有内容。前景、粗体、dim、
       // 斜体、下划线、删除线均保留。
       const kept = this.get(baseId).filter(
-        c => c.endCode !== '\x1b[49m' && c.endCode !== '\x1b[27m',
+        (c) => c.endCode !== '\x1b[49m' && c.endCode !== '\x1b[27m',
       )
       kept.push(bg)
       id = this.intern(kept)
@@ -338,11 +323,7 @@ const HYPERLINK_MASK = 0x7fff // 15 位
 const WIDTH_MASK = 3 // 2 位
 
 // 将 styleId、hyperlinkId 和 width 打包到一个 Int32 中
-function packWord1(
-  styleId: number,
-  hyperlinkId: number,
-  width: number,
-): number {
+function packWord1(styleId: number, hyperlinkId: number, width: number): number {
   return (styleId << STYLE_SHIFT) | (hyperlinkId << HYPERLINK_SHIFT) | width
 }
 
@@ -495,11 +476,7 @@ export function createScreen(
  * 对于双缓冲，这允许在前后台缓冲区之间交换，
  * 而无需每帧分配新的 Screen 对象。
  */
-export function resetScreen(
-  screen: Screen,
-  width: number,
-  height: number,
-): void {
+export function resetScreen(screen: Screen, width: number, height: number): void {
   // 警告：如果维度不是有效整数
   warn.ifNotInteger(width, 'resetScreen width')
   warn.ifNotInteger(height, 'resetScreen height')
@@ -588,8 +565,7 @@ export function migrateScreenPools(
  * 这是有意为之，因为单元格以打包方式存储，而非对象。
  */
 export function cellAt(screen: Screen, x: number, y: number): Cell | undefined {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height)
-    return undefined
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return undefined
   return cellAtIndex(screen, y * screen.width + x)
 }
 /**
@@ -660,13 +636,8 @@ function cellAtCI(screen: Screen, ci: number, out: Cell): void {
   out.hyperlink = hid === 0 ? undefined : screen.hyperlinkPool.get(hid)
 }
 
-export function charInCellAt(
-  screen: Screen,
-  x: number,
-  y: number,
-): string | undefined {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height)
-    return undefined
+export function charInCellAt(screen: Screen, x: number, y: number): string | undefined {
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return undefined
   const ci = (y * screen.width + x) << 1
   return screen.charPool.get(screen.cells[ci]!)
 }
@@ -685,12 +656,7 @@ export function charInCellAt(
  * 宽字符换行到下一行的行末位置显式放置。
  * 此函数无需自动处理 SpacerHead——它将由换行代码直接设置。
  */
-export function setCellAt(
-  screen: Screen,
-  x: number,
-  y: number,
-  cell: Cell,
-): void {
+export function setCellAt(screen: Screen, x: number, y: number, cell: Cell): void {
   if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return
   const ci = (y * screen.width + x) << 1
   const cells = screen.cells
@@ -705,20 +671,13 @@ export function setCellAt(
       const spacerCI = ci + 2
       if ((cells[spacerCI + 1]! & WIDTH_MASK) === CellWidth.SpacerTail) {
         cells[spacerCI] = EMPTY_CHAR_INDEX
-        cells[spacerCI + 1] = packWord1(
-          screen.emptyStyleId,
-          0,
-          CellWidth.Narrow,
-        )
+        cells[spacerCI + 1] = packWord1(screen.emptyStyleId, 0, CellWidth.Narrow)
       }
     }
   }
   // 追踪下方 damage 扩展中清除的宽字符位置
   let clearedWideX = -1
-  if (
-    prevWidth === CellWidth.SpacerTail &&
-    cell.width !== CellWidth.SpacerTail
-  ) {
+  if (prevWidth === CellWidth.SpacerTail && cell.width !== CellWidth.SpacerTail) {
     // 覆盖 SpacerTail：清除 (x-1) 处孤立的宽字符。
     // 将宽字符保留为窄宽度会导致终端
     // 仍然以宽度 2 渲染它，使光标模型不同步。
@@ -734,11 +693,7 @@ export function setCellAt(
 
   // 将单元格数据打包到 cells 数组
   cells[ci] = internCharString(screen, cell.char)
-  cells[ci + 1] = packWord1(
-    cell.styleId,
-    internHyperlink(screen, cell.hyperlink),
-    cell.width,
-  )
+  cells[ci + 1] = packWord1(cell.styleId, internHyperlink(screen, cell.hyperlink), cell.width)
 
   // 追踪 damage——原地扩展边界而非分配新对象
   // 包含主单元格位置和任何清除的孤立单元格
@@ -781,19 +736,11 @@ export function setCellAt(
           (cells[orphanCI + 1]! & WIDTH_MASK) === CellWidth.SpacerTail
         ) {
           cells[orphanCI] = EMPTY_CHAR_INDEX
-          cells[orphanCI + 1] = packWord1(
-            screen.emptyStyleId,
-            0,
-            CellWidth.Narrow,
-          )
+          cells[orphanCI + 1] = packWord1(screen.emptyStyleId, 0, CellWidth.Narrow)
         }
       }
       cells[spacerCI] = SPACER_CHAR_INDEX
-      cells[spacerCI + 1] = packWord1(
-        screen.emptyStyleId,
-        0,
-        CellWidth.SpacerTail,
-      )
+      cells[spacerCI + 1] = packWord1(screen.emptyStyleId, 0, CellWidth.SpacerTail)
 
       // 扩展 damage 以包含 SpacerTail，让 diff() 扫描它
       const d = screen.damage
@@ -809,12 +756,7 @@ export function setCellAt(
  * 或 hyperlink。保留空单元格不变（char 保持 ' '）。追踪单元格的
  * damage 以便 diffEach 检测到变化。
  */
-export function setCellStyleId(
-  screen: Screen,
-  x: number,
-  y: number,
-  styleId: number,
-): void {
+export function setCellStyleId(screen: Screen, x: number, y: number, styleId: number): void {
   if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return
   const ci = (y * screen.width + x) << 1
   const cells = screen.cells
@@ -926,11 +868,7 @@ export function blitRegion(
     for (let y = regionY; y < maxY; y++) {
       if ((srcCells[srcLastCI + 1]! & WIDTH_MASK) === CellWidth.Wide) {
         dstCells[dstSpacerCI] = SPACER_CHAR_INDEX
-        dstCells[dstSpacerCI + 1] = packWord1(
-          dst.emptyStyleId,
-          0,
-          CellWidth.SpacerTail,
-        )
+        dstCells[dstSpacerCI + 1] = packWord1(dst.emptyStyleId, 0, CellWidth.SpacerTail)
         wroteSpacerOutsideRegion = true
       }
       srcLastCI += srcStride
@@ -975,11 +913,7 @@ export function clearRegion(
   // word0=EMPTY_CHAR_INDEX(0), word1=packWord1(0,0,0)=0
   if (startX === 0 && maxX === screenWidth) {
     // 全宽：单次 fill，无需边界检查
-    cells64.fill(
-      EMPTY_CELL_VALUE,
-      rowBase,
-      rowBase + (maxY - startY) * screenWidth,
-    )
+    cells64.fill(EMPTY_CELL_VALUE, rowBase, rowBase + (maxY - startY) * screenWidth)
   } else {
     // 部分宽度：单个循环处理每行的边界清理和填充。
     const stride = screenWidth << 1 // 2 Int32s per cell
@@ -1049,12 +983,7 @@ export function clearRegion(
  * noSelect 位图都被移动，因此当此操作应用于滚动
  * 快速路径期间的 next.screen 时，文本选区标记保持对齐。
  */
-export function shiftRows(
-  screen: Screen,
-  top: number,
-  bottom: number,
-  n: number,
-): void {
+export function shiftRows(screen: Screen, top: number, bottom: number, n: number): void {
   if (n === 0 || top < 0 || bottom >= screen.height || top > bottom) return
   const w = screen.width
   const cells64 = screen.cells64
@@ -1091,9 +1020,7 @@ const OSC8_REGEX = new RegExp(`^${ESC}\\]8${SEP}${SEP}([^${BEL}]*)${BEL}$`)
 // OSC8 前缀：ESC ] 8 ; ——对绝大多数样式（SGR = ESC [）跳过正则的廉价检查
 export const OSC8_PREFIX = `${ESC}]8${SEP}`
 
-export function extractHyperlinkFromStyles(
-  styles: AnsiCode[],
-): Hyperlink | null {
+export function extractHyperlinkFromStyles(styles: AnsiCode[]): Hyperlink | null {
   for (const style of styles) {
     const code = style.code
     if (code.length < 5 || !code.startsWith(OSC8_PREFIX)) continue
@@ -1107,8 +1034,7 @@ export function extractHyperlinkFromStyles(
 
 export function filterOutHyperlinkStyles(styles: AnsiCode[]): AnsiCode[] {
   return styles.filter(
-    style =>
-      !style.code.startsWith(OSC8_PREFIX) || !OSC8_REGEX.test(style.code),
+    (style) => !style.code.startsWith(OSC8_PREFIX) || !OSC8_REGEX.test(style.code),
   )
 }
 
@@ -1125,11 +1051,7 @@ export function diff(
   const output: [Point, Cell | undefined, Cell | undefined][] = []
   diffEach(prev, next, (x, y, removed, added) => {
     // 复制单元格，因为 diffEach 重用对象
-    output.push([
-      { x, y },
-      removed ? { ...removed } : undefined,
-      added ? { ...added } : undefined,
-    ])
+    output.push([{ x, y }, removed ? { ...removed } : undefined, added ? { ...added } : undefined])
   })
   return output
 }
@@ -1148,11 +1070,7 @@ type DiffCallback = (
  *
  * 如果回调曾经返回 true，则返回 true（提前退出信号）。
  */
-export function diffEach(
-  prev: Screen,
-  next: Screen,
-  cb: DiffCallback,
-): boolean {
+export function diffEach(prev: Screen, next: Screen, cb: DiffCallback): boolean {
   const prevWidth = prev.width
   const nextWidth = next.width
   const prevHeight = prev.height
@@ -1205,12 +1123,7 @@ export function diffEach(
  * 返回第一个差异之前匹配的单元格数，
  * 如果所有单元格都匹配则返回 `count`。小巧纯净，适合 JIT 内联。
  */
-function findNextDiff(
-  a: Int32Array,
-  b: Int32Array,
-  w0: number,
-  count: number,
-): number {
+function findNextDiff(a: Int32Array, b: Int32Array, w0: number, count: number): number {
   for (let i = 0; i < count; i++, w0 += 2) {
     const w1 = w0 | 1
     if (a[w0] !== b[w0] || a[w1] !== b[w1]) return i
@@ -1351,13 +1264,9 @@ function diffSameWidth(
       )
         return true
     } else if (prevIn) {
-      if (diffRowRemoved(prev, rowCI, y, startX, rowEndX, prevCell, cb))
-        return true
+      if (diffRowRemoved(prev, rowCI, y, startX, rowEndX, prevCell, cb)) return true
     } else if (nextIn) {
-      if (
-        diffRowAdded(nextCells, next, rowCI, y, startX, rowEndX, nextCell, cb)
-      )
-        return true
+      if (diffRowAdded(nextCells, next, rowCI, y, startX, rowEndX, nextCell, cb)) return true
     }
 
     rowCI += stride

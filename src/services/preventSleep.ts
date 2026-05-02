@@ -122,19 +122,15 @@ function spawnCaffeinate(): void {
     //     This is the least aggressive option - display can still sleep
     // -t: Timeout in seconds - caffeinate exits automatically after this
     //     This provides self-healing if Node is killed with SIGKILL
-    caffeinateProcess = spawn(
-      'caffeinate',
-      ['-i', '-t', String(CAFFEINATE_TIMEOUT_SECONDS)],
-      {
-        stdio: 'ignore',
-      },
-    )
+    caffeinateProcess = spawn('caffeinate', ['-i', '-t', String(CAFFEINATE_TIMEOUT_SECONDS)], {
+      stdio: 'ignore',
+    })
 
     // Don't let caffeinate keep the Node process alive
     caffeinateProcess.unref()
 
     const thisProc = caffeinateProcess
-    caffeinateProcess.on('error', err => {
+    caffeinateProcess.on('error', (err) => {
       logForDebugging(`caffeinate spawn error: ${err.message}`)
       if (caffeinateProcess === thisProc) caffeinateProcess = null
     })

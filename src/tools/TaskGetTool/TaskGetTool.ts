@@ -1,12 +1,7 @@
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import {
-  getTask,
-  getTaskListId,
-  isTodoV2Enabled,
-  TaskStatusSchema,
-} from '../../utils/tasks.js'
+import { getTask, getTaskListId, isTodoV2Enabled, TaskStatusSchema } from '../../utils/tasks.js'
 import { TASK_GET_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 
@@ -113,10 +108,10 @@ export const TaskGetTool = buildTool({
     ]
 
     if (task.blockedBy.length > 0) {
-      lines.push(`Blocked by: ${task.blockedBy.map(id => `#${id}`).join(', ')}`)
+      lines.push(`Blocked by: ${task.blockedBy.map((id) => `#${id}`).join(', ')}`)
     }
     if (task.blocks.length > 0) {
-      lines.push(`Blocks: ${task.blocks.map(id => `#${id}`).join(', ')}`)
+      lines.push(`Blocks: ${task.blocks.map((id) => `#${id}`).join(', ')}`)
     }
 
     return {

@@ -1,8 +1,4 @@
-export const MODEL_ALIASES = [
-  'advanced',
-  'standard',
-  'compact',
-] as const
+export const MODEL_ALIASES = ['advanced', 'standard', 'compact'] as const
 export type ModelAlias = (typeof MODEL_ALIASES)[number]
 
 export function isModelAlias(modelInput: string): modelInput is ModelAlias {

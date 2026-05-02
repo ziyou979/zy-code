@@ -17,10 +17,7 @@ import {
   setSessionMetadataChangedListener,
   setSessionStateChangedListener,
 } from '../utils/sessionState.js'
-import {
-  setInternalEventReader,
-  setInternalEventWriter,
-} from '../utils/sessionStorage.js'
+import { setInternalEventReader, setInternalEventWriter } from '../utils/sessionStorage.js'
 import { ndjsonSafeStringify } from './ndjsonSafeStringify.js'
 import { StructuredIO } from './structuredIO.js'
 import { CCRClient, CCRInitError } from './transports/ccrClient.js'
@@ -85,25 +82,21 @@ export class RemoteIO extends StructuredIO {
     }
 
     // Get appropriate transport based on URL protocol
-    this.transport = getTransportForUrl(
-      this.url,
-      headers,
-      getSessionId(),
-      refreshHeaders,
-    )
+    this.transport = getTransportForUrl(this.url, headers, getSessionId(), refreshHeaders)
 
     // Set up data callback
     this.isBridge = process.env.ZY_CODE_ENVIRONMENT_KIND === 'bridge'
-    this.isDebug = (isDebugMode as any)()
-    ((this.transport as any).setOnData as any)?.((data: string) => {
-      this.inputStream.write(data)
-      if (this.isBridge && this.isDebug) {
-        writeToStdout(data.endsWith('\n') ? data : data + '\n')
-      }
-    })
-
-    // Set up close callback to handle connection failures
-    (this.transport as any).setOnClose(() => {
+    this.isDebug = (isDebugMode as any)()((this.transport as any).setOnData as any)?.(
+      (data: string) => {
+        this.inputStream.write(data)
+        if (this.isBridge && this.isDebug) {
+          writeToStdout(data.endsWith('\n') ? data : data + '\n')
+        }
+      },
+    )(
+      // Set up close callback to handle connection failures
+      this.transport as any,
+    ).setOnClose(() => {
       // End the input stream to trigger graceful shutdown
       this.inputStream.end()
     })
@@ -119,9 +112,7 @@ export class RemoteIO extends StructuredIO {
       // different files — assert the invariant so a future decoupling
       // fails loudly here instead of confusingly inside CCRClient.
       if (!(this.transport instanceof SSETransport)) {
-        throw new Error(
-          'CCR v2 requires SSETransport; check getTransportForUrl',
-        )
+        throw new Error('CCR v2 requires SSETransport; check getTransportForUrl')
       }
       this.ccrClient = new CCRClient(this.transport, this.url)
       const init = this.ccrClient.initialize()
@@ -130,9 +121,7 @@ export class RemoteIO extends StructuredIO {
         logForDiagnosticsNoPII('error', 'cli_worker_lifecycle_init_failed', {
           reason: error instanceof CCRInitError ? error.reason : 'unknown',
         })
-        logError(
-          new Error(`CCRClient initialization failed: ${errorMessage(error)}`),
-        )
+        logError(new Error(`CCRClient initialization failed: ${errorMessage(error)}`))
         void gracefulShutdown(1, 'other')
       })
       registerCleanup(async () => this.ccrClient?.close())
@@ -162,7 +151,7 @@ export class RemoteIO extends StructuredIO {
       setSessionStateChangedListener((state, details) => {
         this.ccrClient?.reportState(state, details)
       })
-      setSessionMetadataChangedListener(metadata => {
+      setSessionMetadataChangedListener((metadata) => {
         this.ccrClient?.reportMetadata(metadata)
       })
     }
@@ -181,15 +170,12 @@ export class RemoteIO extends StructuredIO {
     // Bridge-only: fixes Envoy idle timeout on bridge-topology sessions
     // (#21931). byoc workers ran without this before #21931 and do not
     // need it — different network path.
-    const keepAliveIntervalMs =
-      getPollIntervalConfig().session_keepalive_interval_v2_ms
+    const keepAliveIntervalMs = getPollIntervalConfig().session_keepalive_interval_v2_ms
     if (this.isBridge && keepAliveIntervalMs > 0) {
       this.keepAliveTimer = setInterval(() => {
         logForDebugging('[remote-io] keep_alive sent')
-        void this.write({ type: 'keep_alive' }).catch(err => {
-          logForDebugging(
-            `[remote-io] keep_alive write failed: ${errorMessage(err)}`,
-          )
+        void this.write({ type: 'keep_alive' }).catch((err) => {
+          logForDebugging(`[remote-io] keep_alive write failed: ${errorMessage(err)}`)
         })
       }, keepAliveIntervalMs)
       this.keepAliveTimer.unref?.()
@@ -249,7 +235,7 @@ export class RemoteIO extends StructuredIO {
       clearInterval(this.keepAliveTimer)
       this.keepAliveTimer = null
     }
-    (this.transport as any).close()
+    ;(this.transport as any).close()
     this.inputStream.end()
   }
 }

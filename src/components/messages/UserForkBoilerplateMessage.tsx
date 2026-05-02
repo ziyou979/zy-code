@@ -22,9 +22,5 @@ interface Props {
 export function UserForkBoilerplateMessage({ param }: Props): React.ReactElement {
   // fork-boilerplate 消息通常包含 <fork-boilerplate> 标签，
   // 直接展示其文本内容即可
-  return React.createElement(
-    React.Fragment,
-    null,
-    param.text,
-  )
+  return React.createElement(React.Fragment, null, param.text)
 }

@@ -56,7 +56,7 @@ export async function fetchBootstrapData(): Promise<void> {
     }
 
     logForDebugging('[Bootstrap] 缓存已更新，持久化到磁盘')
-    saveGlobalConfig(current => ({
+    saveGlobalConfig((current) => ({
       ...current,
       clientDataCache: clientData,
       additionalModelOptionsCache: additionalModelOptions,

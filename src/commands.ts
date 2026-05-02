@@ -55,33 +55,19 @@ import { feature } from 'bun:bundle'
 // 死代码消除：条件导入
 /* eslint-disable @typescript-eslint/no-require-imports */
 const proactive =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? require('./commands/proactive.js').default
-    : null
+  feature('PROACTIVE') || feature('KAIROS') ? require('./commands/proactive.js').default : null
 const briefCommand =
-  feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? require('./commands/brief.js').default
-    : null
-const assistantCommand = feature('KAIROS')
-  ? require('./commands/assistant/index.js').default
-  : null
-const bridge = feature('BRIDGE_MODE')
-  ? require('./commands/bridge/index.js').default
-  : null
+  feature('KAIROS') || feature('KAIROS_BRIEF') ? require('./commands/brief.js').default : null
+const assistantCommand = feature('KAIROS') ? require('./commands/assistant/index.js').default : null
+const bridge = feature('BRIDGE_MODE') ? require('./commands/bridge/index.js').default : null
 const remoteControlServerCommand =
   feature('DAEMON') && feature('BRIDGE_MODE')
     ? require('./commands/remoteControlServer/index.js').default
     : null
-const voiceCommand = feature('VOICE_MODE')
-  ? require('./commands/voice/index.js').default
-  : null
-const forceSnip = feature('HISTORY_SNIP')
-  ? require('./commands/force-snip.js').default
-  : null
+const voiceCommand = feature('VOICE_MODE') ? require('./commands/voice/index.js').default : null
+const forceSnip = feature('HISTORY_SNIP') ? require('./commands/force-snip.js').default : null
 const workflowsCmd = feature('WORKFLOW_SCRIPTS')
-  ? (
-      require('./commands/workflows/index.js') as any
-    ).default
+  ? (require('./commands/workflows/index.js') as any).default
   : null
 const webCmd = feature('CCR_REMOTE_SETUP')
   ? (
@@ -89,32 +75,18 @@ const webCmd = feature('CCR_REMOTE_SETUP')
     ).default
   : null
 const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (
-      require('./services/skillSearch/localSearch.js') as any
-    ).clearSkillIndexCache
+  ? (require('./services/skillSearch/localSearch.js') as any).clearSkillIndexCache
   : null
 const subscribePr = feature('KAIROS_GITHUB_WEBHOOKS')
   ? require('./commands/subscribe-pr.js').default
   : null
-const ultraplan = feature('ULTRAPLAN')
-  ? require('./commands/ultraplan.js').default
-  : null
+const ultraplan = feature('ULTRAPLAN') ? require('./commands/ultraplan.js').default : null
 const torch = feature('TORCH') ? require('./commands/torch.js').default : null
-const peersCmd = feature('UDS_INBOX')
-  ? (
-      require('./commands/peers/index.js') as any
-    ).default
-  : null
+const peersCmd = feature('UDS_INBOX') ? (require('./commands/peers/index.js') as any).default : null
 const forkCmd = feature('FORK_SUBAGENT')
-  ? (
-      require('./commands/fork/index.js') as any
-    ).default
+  ? (require('./commands/fork/index.js') as any).default
   : null
-const buddy = feature('BUDDY')
-  ? (
-      require('./commands/buddy/index.js') as any
-    ).default
-  : null
+const buddy = feature('BUDDY') ? (require('./commands/buddy/index.js') as any).default : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import thinkback from './commands/thinkback/index.js'
 import thinkbackPlay from './commands/thinkback-play/index.js'
@@ -134,10 +106,7 @@ import mockLimits from './commands/mock-limits/index.js'
 import bridgeKick from './commands/bridge-kick.js'
 import version from './commands/version.js'
 import summary from './commands/summary/index.js'
-import {
-  resetLimits,
-  resetLimitsNonInteractive,
-} from './commands/reset-limits/index.js'
+import { resetLimits, resetLimitsNonInteractive } from './commands/reset-limits/index.js'
 import antTrace from './commands/ant-trace/index.js'
 import perfIssue from './commands/perf-issue/index.js'
 import sandboxToggle from './commands/sandbox-toggle/index.js'
@@ -147,11 +116,7 @@ import advisor from './commands/advisor.js'
 import { logError } from './utils/log.js'
 import { toError } from './utils/errors.js'
 import { logForDebugging } from './utils/debug.js'
-import {
-  getSkillDirCommands,
-  clearSkillCaches,
-  getDynamicSkills,
-} from './skills/loadSkillsDir.js'
+import { getSkillDirCommands, clearSkillCaches, getDynamicSkills } from './skills/loadSkillsDir.js'
 import { getBundledSkills } from './skills/bundledSkills.js'
 import { getBuiltinPluginSkillCommands } from './plugins/builtinPlugins.js'
 import {
@@ -171,10 +136,7 @@ import tag from './commands/tag/index.js'
 import outputStyle from './commands/output-style/index.js'
 import remoteEnv from './commands/remote-env/index.js'
 import upgrade from './commands/upgrade/index.js'
-import {
-  extraUsage,
-  extraUsageNonInteractive,
-} from './commands/extra-usage/index.js'
+import { extraUsage, extraUsageNonInteractive } from './commands/extra-usage/index.js'
 import rateLimitOptions from './commands/rate-limit-options/index.js'
 import statusline from './commands/statusline.js'
 import effort from './commands/effort/index.js'
@@ -196,11 +158,7 @@ const usageReport: Command = {
 import oauthRefresh from './commands/oauth-refresh/index.js'
 import debugToolCall from './commands/debug-tool-call/index.js'
 import { getSettingSourceName } from './utils/settings/constants.js'
-import {
-  type Command,
-  getCommandName,
-  isCommandEnabled,
-} from './types/command.js'
+import { type Command, getCommandName, isCommandEnabled } from './types/command.js'
 
 // 从集中位置重新导出类型
 export type {
@@ -330,14 +288,11 @@ const COMMANDS = memoize((): Command[] => [
   tasks,
   ...(workflowsCmd ? [workflowsCmd] : []),
   ...(torch ? [torch] : []),
-  ...(isInternalBuild() && !process.env.IS_DEMO
-    ? INTERNAL_ONLY_COMMANDS
-    : []),
+  ...(isInternalBuild() && !process.env.IS_DEMO ? INTERNAL_ONLY_COMMANDS : []),
 ])
 
 export const builtInCommandNames = memoize(
-  (): Set<string> =>
-    new Set(COMMANDS().flatMap(_ => [_.name, ...(_.aliases ?? [])])),
+  (): Set<string> => new Set(COMMANDS().flatMap((_) => [_.name, ...(_.aliases ?? [])])),
 )
 
 async function getSkills(cwd: string): Promise<{
@@ -348,14 +303,12 @@ async function getSkills(cwd: string): Promise<{
 }> {
   try {
     const [skillDirCommands, pluginSkills] = await Promise.all([
-      getSkillDirCommands(cwd).catch(err => {
+      getSkillDirCommands(cwd).catch((err) => {
         logError(toError(err))
-        logForDebugging(
-          'Skill directory commands failed to load, continuing without them',
-        )
+        logForDebugging('Skill directory commands failed to load, continuing without them')
         return []
       }),
-      getPluginSkills().catch(err => {
+      getPluginSkills().catch((err) => {
         logError(toError(err))
         logForDebugging('Plugin skills failed to load, continuing without them')
         return []
@@ -389,9 +342,7 @@ async function getSkills(cwd: string): Promise<{
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getWorkflowCommands = feature('WORKFLOW_SCRIPTS')
-  ? (
-      require('./tools/WorkflowTool/createWorkflowCommand.js') as any
-    ).getWorkflowCommands
+  ? (require('./tools/WorkflowTool/createWorkflowCommand.js') as any).getWorkflowCommands
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -465,7 +416,7 @@ export async function getCommands(cwd: string): Promise<Command[]> {
 
   // 构建不包含动态技能的基础命令列表
   const baseCommands = allCommands.filter(
-    _ => meetsAvailabilityRequirement(_) && isCommandEnabled(_),
+    (_) => meetsAvailabilityRequirement(_) && isCommandEnabled(_),
   )
 
   if (dynamicSkills.length === 0) {
@@ -473,12 +424,9 @@ export async function getCommands(cwd: string): Promise<Command[]> {
   }
 
   // 对动态技能去重 — 仅当尚未存在时才添加
-  const baseCommandNames = new Set(baseCommands.map(c => c.name))
+  const baseCommandNames = new Set(baseCommands.map((c) => c.name))
   const uniqueDynamicSkills = dynamicSkills.filter(
-    s =>
-      !baseCommandNames.has(s.name) &&
-      meetsAvailabilityRequirement(s) &&
-      isCommandEnabled(s),
+    (s) => !baseCommandNames.has(s.name) && meetsAvailabilityRequirement(s) && isCommandEnabled(s),
   )
 
   if (uniqueDynamicSkills.length === 0) {
@@ -486,8 +434,8 @@ export async function getCommands(cwd: string): Promise<Command[]> {
   }
 
   // 将动态技能插入到插件技能之后、内置命令之前
-  const builtInNames = new Set(COMMANDS().map(c => c.name))
-  const insertIndex = baseCommands.findIndex(c => builtInNames.has(c.name))
+  const builtInNames = new Set(COMMANDS().map((c) => c.name))
+  const insertIndex = baseCommands.findIndex((c) => builtInNames.has(c.name))
 
   if (insertIndex === -1) {
     return [...baseCommands, ...uniqueDynamicSkills]
@@ -526,15 +474,10 @@ export function clearCommandsCache(): void {
  * 可调用模型、从 MCP 加载）。这些放在 getCommands() 之外，
  * 以便需要在技能索引中包含 MCP 技能的调用方可以单独传递它们。
  */
-export function getMcpSkillCommands(
-  mcpCommands: readonly Command[],
-): readonly Command[] {
+export function getMcpSkillCommands(mcpCommands: readonly Command[]): readonly Command[] {
   if (feature('MCP_SKILLS')) {
     return mcpCommands.filter(
-      cmd =>
-        cmd.type === 'prompt' &&
-        cmd.loadedFrom === 'mcp' &&
-        !cmd.disableModelInvocation,
+      (cmd) => cmd.type === 'prompt' && cmd.loadedFrom === 'mcp' && !cmd.disableModelInvocation,
     )
   }
   return []
@@ -542,54 +485,50 @@ export function getMcpSkillCommands(
 
 // SkillTool 显示模型可以调用的所有基于 prompt 的命令
 // 包括技能（来自 /skills/）和命令（来自 /commands/）
-export let getSkillToolCommands;
-getSkillToolCommands = memoize(
-  async (cwd: string): Promise<Command[]> => {
-    const allCommands = await getCommands(cwd)
-    return allCommands.filter(
-      cmd =>
-        cmd.type === 'prompt' &&
-        !cmd.disableModelInvocation &&
-        cmd.source !== 'builtin' &&
-        // 始终包含来自 /skills/ 目录的技能、预置技能和遗留的 /commands/ 条目
-        // （如果缺少 frontmatter，它们都会从第一行自动生成描述）。
-        // 插件/MCP 命令仍需要显式描述才能出现在列表中。
-        (cmd.loadedFrom === 'bundled' ||
-          cmd.loadedFrom === 'skills' ||
-          cmd.loadedFrom === 'commands_DEPRECATED' ||
-          cmd.hasUserSpecifiedDescription ||
-          cmd.whenToUse),
-    )
-  },
-)
+export let getSkillToolCommands
+getSkillToolCommands = memoize(async (cwd: string): Promise<Command[]> => {
+  const allCommands = await getCommands(cwd)
+  return allCommands.filter(
+    (cmd) =>
+      cmd.type === 'prompt' &&
+      !cmd.disableModelInvocation &&
+      cmd.source !== 'builtin' &&
+      // 始终包含来自 /skills/ 目录的技能、预置技能和遗留的 /commands/ 条目
+      // （如果缺少 frontmatter，它们都会从第一行自动生成描述）。
+      // 插件/MCP 命令仍需要显式描述才能出现在列表中。
+      (cmd.loadedFrom === 'bundled' ||
+        cmd.loadedFrom === 'skills' ||
+        cmd.loadedFrom === 'commands_DEPRECATED' ||
+        cmd.hasUserSpecifiedDescription ||
+        cmd.whenToUse),
+  )
+})
 
 // 筛选命令，仅包含技能。技能是为模型提供专用能力的命令。
 // 通过 loadedFrom 为 'skills'、'plugin' 或 'bundled'，
 // 或设置了 disableModelInvocation 来识别。
-export let getSlashCommandToolSkills;
-getSlashCommandToolSkills = memoize(
-  async (cwd: string): Promise<Command[]> => {
-    try {
-      const allCommands = await getCommands(cwd)
-      return allCommands.filter(
-        cmd =>
-          cmd.type === 'prompt' &&
-          cmd.source !== 'builtin' &&
-          (cmd.hasUserSpecifiedDescription || cmd.whenToUse) &&
-          (cmd.loadedFrom === 'skills' ||
-            cmd.loadedFrom === 'plugin' ||
-            cmd.loadedFrom === 'bundled' ||
-            cmd.disableModelInvocation),
-      )
-    } catch (error) {
-      logError(toError(error))
-      // 返回空数组而不是抛出异常 — 技能是非关键的
-      // 这可以防止技能加载失败破坏整个系统
-      logForDebugging('Returning empty skills array due to load failure')
-      return []
-    }
-  },
-)
+export let getSlashCommandToolSkills
+getSlashCommandToolSkills = memoize(async (cwd: string): Promise<Command[]> => {
+  try {
+    const allCommands = await getCommands(cwd)
+    return allCommands.filter(
+      (cmd) =>
+        cmd.type === 'prompt' &&
+        cmd.source !== 'builtin' &&
+        (cmd.hasUserSpecifiedDescription || cmd.whenToUse) &&
+        (cmd.loadedFrom === 'skills' ||
+          cmd.loadedFrom === 'plugin' ||
+          cmd.loadedFrom === 'bundled' ||
+          cmd.disableModelInvocation),
+    )
+  } catch (error) {
+    logError(toError(error))
+    // 返回空数组而不是抛出异常 — 技能是非关键的
+    // 这可以防止技能加载失败破坏整个系统
+    logForDebugging('Returning empty skills array due to load failure')
+    return []
+  }
+})
 
 /**
  * 在远程模式 (--remote) 下可安全使用的命令。
@@ -665,15 +604,12 @@ export function isBridgeSafeCommand(cmd: Command): boolean {
  * 防止本地专属命令在 CCR 初始化消息到达前短暂可用。
  */
 export function filterCommandsForRemoteMode(commands: Command[]): Command[] {
-  return commands.filter(cmd => REMOTE_SAFE_COMMANDS.has(cmd))
+  return commands.filter((cmd) => REMOTE_SAFE_COMMANDS.has(cmd))
 }
 
-export function findCommand(
-  commandName: string,
-  commands: Command[],
-): Command | undefined {
+export function findCommand(commandName: string, commands: Command[]): Command | undefined {
   return commands.find(
-    _ =>
+    (_) =>
       _.name === commandName ||
       getCommandName(_) === commandName ||
       _.aliases?.includes(commandName),
@@ -689,7 +625,7 @@ export function getCommand(commandName: string, commands: Command[]): Command {
   if (!command) {
     throw ReferenceError(
       `Command ${commandName} not found. Available commands: ${commands
-        .map(_ => {
+        .map((_) => {
           const name = getCommandName(_)
           return _.aliases ? `${name} (aliases: ${_.aliases.join(', ')})` : name
         })
@@ -707,90 +643,90 @@ export function getCommand(commandName: string, commands: Command[]): Command {
  */
 const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'add-dir': 'commands.addDir',
-  'advisor': 'commands.advisor',
-  'agents': 'commands.agents',
-  'batch': 'commands.batch',
-  'branch': 'commands.branch',
-  'btw': 'commands.btw',
-  'chrome': 'commands.chrome',
-  'clear': 'commands.clear',
-  'color': 'commands.color',
-  'compact': 'commands.compact',
-  'config': 'commands.config',
-  'copy': 'commands.copy',
-  'desktop': 'commands.desktop',
-  'context': 'commands.context',
+  advisor: 'commands.advisor',
+  agents: 'commands.agents',
+  batch: 'commands.batch',
+  branch: 'commands.branch',
+  btw: 'commands.btw',
+  chrome: 'commands.chrome',
+  clear: 'commands.clear',
+  color: 'commands.color',
+  compact: 'commands.compact',
+  config: 'commands.config',
+  copy: 'commands.copy',
+  desktop: 'commands.desktop',
+  context: 'commands.context',
   'context-noninteractive': 'commands.contextNonInteractive',
-  'cost': 'commands.cost',
-  'diff': 'commands.diff',
-  'doctor': 'commands.doctor',
-  'effort': 'commands.effort',
-  'exit': 'commands.exit',
-  'files': 'commands.files',
-  'help': 'commands.help',
-  'ide': 'commands.ide',
-  'init': 'commands.init',
-  'keybindings': 'commands.keybindings',
+  cost: 'commands.cost',
+  diff: 'commands.diff',
+  doctor: 'commands.doctor',
+  effort: 'commands.effort',
+  exit: 'commands.exit',
+  files: 'commands.files',
+  help: 'commands.help',
+  ide: 'commands.ide',
+  init: 'commands.init',
+  keybindings: 'commands.keybindings',
   'install-github-app': 'commands.installGitHubApp',
   'install-slack-app': 'commands.installSlackApp',
-  'mcp': 'commands.mcp',
-  'memory': 'commands.memory',
-  'mobile': 'commands.mobile',
-  'model': 'commands.model',
+  mcp: 'commands.mcp',
+  memory: 'commands.memory',
+  mobile: 'commands.mobile',
+  model: 'commands.model',
   'output-style': 'commands.outputStyle',
   'remote-env': 'commands.remoteEnv',
-  'plugin': 'commands.plugin',
+  plugin: 'commands.plugin',
   'pr-comments': 'commands.prComments',
   'release-notes': 'commands.releaseNotes',
   'reload-plugins': 'commands.reloadPlugins',
-  'rename': 'commands.rename',
-  'resume': 'commands.resume',
-  'session': 'commands.session',
-  'skills': 'commands.skills',
-  'simplify': 'commands.simplify',
-  'stats': 'commands.stats',
-  'status': 'commands.status',
-  'statusline': 'commands.statusline',
-  'stickers': 'commands.stickers',
-  'tag': 'commands.tag',
-  'theme': 'commands.theme',
-  'feedback': 'commands.feedback',
-  'review': 'commands.review',
-  'ultrareview': 'commands.ultrareview',
-  'rewind': 'commands.rewind',
+  rename: 'commands.rename',
+  resume: 'commands.resume',
+  session: 'commands.session',
+  skills: 'commands.skills',
+  simplify: 'commands.simplify',
+  stats: 'commands.stats',
+  status: 'commands.status',
+  statusline: 'commands.statusline',
+  stickers: 'commands.stickers',
+  tag: 'commands.tag',
+  theme: 'commands.theme',
+  feedback: 'commands.feedback',
+  review: 'commands.review',
+  ultrareview: 'commands.ultrareview',
+  rewind: 'commands.rewind',
   'security-review': 'commands.securityReview',
   'terminal-setup': 'commands.terminalSetup',
-  'upgrade': 'commands.upgrade',
+  upgrade: 'commands.upgrade',
   'extra-usage': 'commands.extraUsage',
   'rate-limit-options': 'commands.rateLimitOptions',
-  'usage': 'commands.usage',
-  'insights': 'commands.insights',
-  'vim': 'commands.vim',
+  usage: 'commands.usage',
+  insights: 'commands.insights',
+  vim: 'commands.vim',
   'think-back': 'commands.thinkback',
   'thinkback-play': 'commands.thinkbackPlay',
-  'permissions': 'commands.permissions',
-  'plan': 'commands.plan',
+  permissions: 'commands.permissions',
+  plan: 'commands.plan',
   'privacy-settings': 'commands.privacySettings',
-  'hooks': 'commands.hooks',
-  'export': 'commands.export',
-  'sandbox': 'commands.sandbox',
-  'logout': 'commands.logout',
-  'login': 'commands.login',
-  'passes': 'commands.passes',
-  'tasks': 'commands.tasks',
-  'commit': 'commands.commit',
+  hooks: 'commands.hooks',
+  export: 'commands.export',
+  sandbox: 'commands.sandbox',
+  logout: 'commands.logout',
+  login: 'commands.login',
+  passes: 'commands.passes',
+  tasks: 'commands.tasks',
+  commit: 'commands.commit',
   'commit-push-pr': 'commands.commitPushPr',
   'init-verifiers': 'commands.initVerifiers',
-  'version': 'commands.version',
-  'heapdump': 'commands.heapdump',
+  version: 'commands.version',
+  heapdump: 'commands.heapdump',
   'remote-setup': 'commands.remoteSetup',
   'update-config': 'commands.updateConfig',
   'keybindings-help': 'commands.keybindingsHelp',
   'claude-in-chrome': 'commands.claudeInChrome',
   'zy-api': 'commands.zyApi',
-  'debug': 'commands.debug',
-  'schedule': 'commands.schedule',
-  'loop': 'commands.loop',
+  debug: 'commands.debug',
+  schedule: 'commands.schedule',
+  loop: 'commands.loop',
 }
 
 /**

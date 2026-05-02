@@ -51,9 +51,7 @@ export function cacheImagePath(content: PastedContent): string | null {
 /**
  * Store an image from pastedContents to disk.
  */
-export async function storeImage(
-  content: PastedContent,
-): Promise<string | null> {
+export async function storeImage(content: PastedContent): Promise<string | null> {
   if (content.type !== 'image') {
     return null
   }

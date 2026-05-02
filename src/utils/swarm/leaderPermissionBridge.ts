@@ -25,9 +25,7 @@ export type SetToolPermissionContextFn = (
 let registeredSetter: SetToolUseConfirmQueueFn | null = null
 let registeredPermissionContextSetter: SetToolPermissionContextFn | null = null
 
-export function registerLeaderToolUseConfirmQueue(
-  setter: SetToolUseConfirmQueueFn,
-): void {
+export function registerLeaderToolUseConfirmQueue(setter: SetToolUseConfirmQueueFn): void {
   registeredSetter = setter
 }
 
@@ -39,9 +37,7 @@ export function unregisterLeaderToolUseConfirmQueue(): void {
   registeredSetter = null
 }
 
-export function registerLeaderSetToolPermissionContext(
-  setter: SetToolPermissionContextFn,
-): void {
+export function registerLeaderSetToolPermissionContext(setter: SetToolPermissionContextFn): void {
   registeredPermissionContextSetter = setter
 }
 

@@ -37,10 +37,5 @@ export function hashPair(a: string, b: string): string {
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require('crypto') as typeof import('crypto')
-  return crypto
-    .createHash('sha256')
-    .update(a)
-    .update('\0')
-    .update(b)
-    .digest('hex')
+  return crypto.createHash('sha256').update(a).update('\0').update(b).digest('hex')
 }

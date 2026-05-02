@@ -102,9 +102,7 @@ export interface McpZyAIProxyServerConfig {
   id: string
 }
 
-export type McpServerStatusConfig =
-  | McpServerConfigForProcessTransport
-  | McpZyAIProxyServerConfig
+export type McpServerStatusConfig = McpServerConfigForProcessTransport | McpZyAIProxyServerConfig
 
 export interface McpServerStatus {
   name: string
@@ -189,10 +187,7 @@ export type PermissionUpdate =
       destination: PermissionUpdateDestination
     }
 
-export type PermissionDecisionClassification =
-  | 'user_temporary'
-  | 'user_permanent'
-  | 'user_reject'
+export type PermissionDecisionClassification = 'user_temporary' | 'user_permanent' | 'user_reject'
 
 export type PermissionResult =
   | {
@@ -210,12 +205,7 @@ export type PermissionResult =
       decisionClassification?: PermissionDecisionClassification
     }
 
-export type PermissionMode =
-  | 'default'
-  | 'acceptEdits'
-  | 'bypassPermissions'
-  | 'plan'
-  | 'dontAsk'
+export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'dontAsk'
 
 // ============================================================================
 // Hook Input Types
@@ -655,7 +645,14 @@ export interface AccountInfo {
   subscriptionType?: string
   tokenSource?: string
   apiKeySource?: string
-  apiProvider?: 'anthropic' | 'bedrock' | 'vertex' | 'foundry' | 'dashscope' | 'openrouter' | 'generic'
+  apiProvider?:
+    | 'anthropic'
+    | 'bedrock'
+    | 'vertex'
+    | 'foundry'
+    | 'dashscope'
+    | 'openrouter'
+    | 'generic'
 }
 
 // ============================================================================
@@ -826,7 +823,11 @@ export interface SDKResultSuccess {
 
 export interface SDKResultError {
   type: 'result'
-  subtype: 'error_during_execution' | 'error_max_turns' | 'error_max_budget_usd' | 'error_max_structured_output_retries'
+  subtype:
+    | 'error_during_execution'
+    | 'error_max_turns'
+    | 'error_max_budget_usd'
+    | 'error_max_structured_output_retries'
   duration_ms: number
   duration_api_ms: number
   isError: boolean

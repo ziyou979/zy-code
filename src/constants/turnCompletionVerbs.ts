@@ -27,7 +27,5 @@ const TURN_COMPLETION_VERBS_ZH = [
 ]
 
 export function getTurnCompletionVerbs(): string[] {
-  return getUiLanguage() === 'zh-CN'
-    ? TURN_COMPLETION_VERBS_ZH
-    : TURN_COMPLETION_VERBS_EN
+  return getUiLanguage() === 'zh-CN' ? TURN_COMPLETION_VERBS_ZH : TURN_COMPLETION_VERBS_EN
 }

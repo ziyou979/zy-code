@@ -34,10 +34,7 @@ export type BundledSkillDefinition = {
    * same contract as disk-based skills.
    */
   files?: Record<string, string>
-  getPromptForCommand: (
-    args: string,
-    context: ToolUseContext,
-  ) => Promise<ContentBlock[]>
+  getPromptForCommand: (args: string, context: ToolUseContext) => Promise<ContentBlock[]>
 }
 
 // Internal registry for bundled skills
@@ -144,10 +141,7 @@ async function extractBundledSkillFiles(
   }
 }
 
-async function writeSkillFiles(
-  dir: string,
-  files: Record<string, string>,
-): Promise<void> {
+async function writeSkillFiles(dir: string, files: Record<string, string>): Promise<void> {
   // Group by parent dir so we mkdir each subtree once, then write.
   const byParent = new Map<string, [string, string][]>()
   for (const [relPath, content] of Object.entries(files)) {
@@ -178,10 +172,7 @@ const O_NOFOLLOW = fsConstants.O_NOFOLLOW ?? 0
 const SAFE_WRITE_FLAGS =
   process.platform === 'win32'
     ? 'wx'
-    : fsConstants.O_WRONLY |
-      fsConstants.O_CREAT |
-      fsConstants.O_EXCL |
-      O_NOFOLLOW
+    : fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | O_NOFOLLOW
 
 async function safeWriteFile(p: string, content: string): Promise<void> {
   const fh = await open(p, SAFE_WRITE_FLAGS, 0o600)
@@ -205,16 +196,10 @@ function resolveSkillFilePath(baseDir: string, relPath: string): string {
   return join(baseDir, normalized)
 }
 
-function prependBaseDir(
-  blocks: ContentBlock[],
-  baseDir: string,
-): ContentBlock[] {
+function prependBaseDir(blocks: ContentBlock[], baseDir: string): ContentBlock[] {
   const prefix = `Base directory for this skill: ${baseDir}\n\n`
   if (blocks.length > 0 && blocks[0]!.type === 'text') {
-    return [
-      { type: 'text', text: prefix + blocks[0]!.text },
-      ...blocks.slice(1),
-    ]
+    return [{ type: 'text', text: prefix + blocks[0]!.text }, ...blocks.slice(1)]
   }
   return [{ type: 'text', text: prefix }, ...blocks]
 }

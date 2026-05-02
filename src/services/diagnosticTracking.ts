@@ -77,11 +77,7 @@ export class DiagnosticTrackingService {
 
   private normalizeFileUri(fileUri: string): string {
     // Remove our protocol prefixes
-    const protocolPrefixes = [
-      'file://',
-      '_Zy_fs_right:',
-      '_Zy_fs_left:',
-    ]
+    const protocolPrefixes = ['file://', '_Zy_fs_right:', '_Zy_fs_left:']
 
     let normalized = fileUri
     for (const prefix of protocolPrefixes) {
@@ -101,11 +97,7 @@ export class DiagnosticTrackingService {
    * This is important for language services like diagnostics to work properly.
    */
   async ensureFileOpened(fileUri: string): Promise<void> {
-    if (
-      !this.initialized ||
-      !this.mcpClient ||
-      this.mcpClient.type !== 'connected'
-    ) {
+    if (!this.initialized || !this.mcpClient || this.mcpClient.type !== 'connected') {
       return
     }
 
@@ -133,11 +125,7 @@ export class DiagnosticTrackingService {
    * This is called before editing a file to ensure we have a baseline to compare against.
    */
   async beforeFileEdited(filePath: string): Promise<void> {
-    if (
-      !this.initialized ||
-      !this.mcpClient ||
-      this.mcpClient.type !== 'connected'
-    ) {
+    if (!this.initialized || !this.mcpClient || this.mcpClient.type !== 'connected') {
       return
     }
 
@@ -153,10 +141,7 @@ export class DiagnosticTrackingService {
       if (diagnosticFile) {
         // Compare normalized paths (handles protocol prefixes and Windows case-insensitivity)
         if (
-          !pathsEqual(
-            this.normalizeFileUri(filePath),
-            this.normalizeFileUri(diagnosticFile.uri),
-          )
+          !pathsEqual(this.normalizeFileUri(filePath), this.normalizeFileUri(diagnosticFile.uri))
         ) {
           logError(
             new DiagnosticsTrackingError(
@@ -186,11 +171,7 @@ export class DiagnosticTrackingService {
    * Only processes diagnostics for files that have been edited.
    */
   async getNewDiagnostics(): Promise<DiagnosticFile[]> {
-    if (
-      !this.initialized ||
-      !this.mcpClient ||
-      this.mcpClient.type !== 'connected'
-    ) {
+    if (!this.initialized || !this.mcpClient || this.mcpClient.type !== 'connected') {
       return []
     }
 
@@ -208,21 +189,15 @@ export class DiagnosticTrackingService {
       return []
     }
     const diagnosticsForFileUrisWithBaselines = allDiagnosticFiles
-      .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
-      .filter(file => file.uri.startsWith('file://'))
+      .filter((file) => this.baseline.has(this.normalizeFileUri(file.uri)))
+      .filter((file) => file.uri.startsWith('file://'))
 
-    const diagnosticsForZyFsRightUrisWithBaselinesMap = new Map<
-      string,
-      DiagnosticFile
-    >()
+    const diagnosticsForZyFsRightUrisWithBaselinesMap = new Map<string, DiagnosticFile>()
     allDiagnosticFiles
-      .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
-      .filter(file => file.uri.startsWith('_Zy_fs_right:'))
-      .forEach(file => {
-        diagnosticsForZyFsRightUrisWithBaselinesMap.set(
-          this.normalizeFileUri(file.uri),
-          file,
-        )
+      .filter((file) => this.baseline.has(this.normalizeFileUri(file.uri)))
+      .filter((file) => file.uri.startsWith('_Zy_fs_right:'))
+      .forEach((file) => {
+        diagnosticsForZyFsRightUrisWithBaselinesMap.set(this.normalizeFileUri(file.uri), file)
       })
 
     const newDiagnosticFiles: DiagnosticFile[] = []
@@ -233,39 +208,31 @@ export class DiagnosticTrackingService {
       const baselineDiagnostics = this.baseline.get(normalizedPath) || []
 
       // Get the _Zy_fs_right file if it exists
-      const ZyFsRightFile =
-        diagnosticsForZyFsRightUrisWithBaselinesMap.get(normalizedPath)
+      const ZyFsRightFile = diagnosticsForZyFsRightUrisWithBaselinesMap.get(normalizedPath)
 
       // Determine which file to use based on the state of right file diagnostics
       let fileToUse = file
 
       if (ZyFsRightFile) {
-        const previousRightDiagnostics =
-          this.rightFileDiagnosticsState.get(normalizedPath)
+        const previousRightDiagnostics = this.rightFileDiagnosticsState.get(normalizedPath)
 
         // Use _Zy_fs_right if:
         // 1. We've never gotten right file diagnostics for this file (previousRightDiagnostics === undefined)
         // 2. OR the right file diagnostics have just changed
         if (
           !previousRightDiagnostics ||
-          !this.areDiagnosticArraysEqual(
-            previousRightDiagnostics,
-            ZyFsRightFile.diagnostics,
-          )
+          !this.areDiagnosticArraysEqual(previousRightDiagnostics, ZyFsRightFile.diagnostics)
         ) {
           fileToUse = ZyFsRightFile
         }
 
         // Update our tracking of right file diagnostics
-        this.rightFileDiagnosticsState.set(
-          normalizedPath,
-          ZyFsRightFile.diagnostics,
-        )
+        this.rightFileDiagnosticsState.set(normalizedPath, ZyFsRightFile.diagnostics)
       }
 
       // Find new diagnostics that aren't in the baseline
       const newDiagnostics = fileToUse.diagnostics.filter(
-        d => !baselineDiagnostics.some(b => this.areDiagnosticsEqual(d, b)),
+        (d) => !baselineDiagnostics.some((b) => this.areDiagnosticsEqual(d, b)),
       )
 
       if (newDiagnostics.length > 0) {
@@ -284,7 +251,7 @@ export class DiagnosticTrackingService {
 
   private parseDiagnosticResult(result: unknown): DiagnosticFile[] {
     if (Array.isArray(result)) {
-      const textBlock = result.find(block => block.type === 'text')
+      const textBlock = result.find((block) => block.type === 'text')
       if (textBlock && 'text' in textBlock) {
         const parsed = jsonParse(textBlock.text)
         return parsed
@@ -311,10 +278,8 @@ export class DiagnosticTrackingService {
 
     // Check if every diagnostic in 'a' exists in 'b'
     return (
-      a.every(diagA =>
-        b.some(diagB => this.areDiagnosticsEqual(diagA, diagB)),
-      ) &&
-      b.every(diagB => a.some(diagA => this.areDiagnosticsEqual(diagA, diagB)))
+      a.every((diagA) => b.some((diagB) => this.areDiagnosticsEqual(diagA, diagB))) &&
+      b.every((diagB) => a.some((diagA) => this.areDiagnosticsEqual(diagA, diagB)))
     )
   }
 
@@ -352,13 +317,11 @@ export class DiagnosticTrackingService {
   static formatDiagnosticsSummary(files: DiagnosticFile[]): string {
     const truncationMarker = '…[truncated]'
     const result = files
-      .map(file => {
+      .map((file) => {
         const filename = file.uri.split('/').pop() || file.uri
         const diagnostics = file.diagnostics
-          .map(d => {
-            const severitySymbol = DiagnosticTrackingService.getSeveritySymbol(
-              d.severity,
-            )
+          .map((d) => {
+            const severitySymbol = DiagnosticTrackingService.getSeveritySymbol(d.severity)
 
             return `  ${severitySymbol} [Line ${d.range.start.line + 1}:${d.range.start.character + 1}] ${d.message}${d.code ? ` [${d.code}]` : ''}${d.source ? ` (${d.source})` : ''}`
           })
@@ -370,10 +333,7 @@ export class DiagnosticTrackingService {
 
     if (result.length > MAX_DIAGNOSTICS_SUMMARY_CHARS) {
       return (
-        result.slice(
-          0,
-          MAX_DIAGNOSTICS_SUMMARY_CHARS - truncationMarker.length,
-        ) + truncationMarker
+        result.slice(0, MAX_DIAGNOSTICS_SUMMARY_CHARS - truncationMarker.length) + truncationMarker
       )
     }
     return result

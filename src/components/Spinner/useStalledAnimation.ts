@@ -67,9 +67,7 @@ export function useStalledAnimation(
   }
 
   // When reducedMotion is enabled, use instant intensity change
-  const effectiveIntensity = reducedMotion
-    ? intensity
-    : stalledIntensityRef.current
+  const effectiveIntensity = reducedMotion ? intensity : stalledIntensityRef.current
 
   return { isStalled, stalledIntensity: effectiveIntensity }
 }

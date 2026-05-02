@@ -26,7 +26,7 @@ export function useMemoryUsage(): MemoryUsageInfo | null {
         : heapUsed >= HIGH_MEMORY_THRESHOLD
           ? 'high'
           : 'normal'
-    setMemoryUsage(prev => {
+    setMemoryUsage((prev) => {
       // Bail when status is 'normal' — nothing is shown, so heapUsed is
       // irrelevant and we avoid re-rendering the whole Notifications subtree
       // every 10 seconds for the 99%+ of users who never reach 1.5GB.

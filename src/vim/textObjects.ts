@@ -4,11 +4,7 @@
  * 用于查找文本对象边界的函数（iw、aw、i"、a( 等）
  */
 
-import {
-  isVimPunctuation,
-  isVimWhitespace,
-  isVimWordChar,
-} from '../utils/Cursor.js'
+import { isVimPunctuation, isVimWhitespace, isVimWordChar } from '../utils/Cursor.js'
 import { getGraphemeSegmenter } from '../utils/intl.js'
 
 export type TextObjectRange = { start: number; end: number } | null
@@ -41,10 +37,8 @@ export function findTextObject(
   objectType: string,
   isInner: boolean,
 ): TextObjectRange {
-  if (objectType === 'w')
-    return findWordObject(text, offset, isInner, isVimWordChar)
-  if (objectType === 'W')
-    return findWordObject(text, offset, isInner, ch => !isVimWhitespace(ch))
+  if (objectType === 'w') return findWordObject(text, offset, isInner, isVimWordChar)
+  if (objectType === 'W') return findWordObject(text, offset, isInner, (ch) => !isVimWhitespace(ch))
 
   const pair = PAIRS[objectType]
   if (pair) {
@@ -73,8 +67,7 @@ function findWordObject(
   let graphemeIdx = graphemes.length - 1
   for (let i = 0; i < graphemes.length; i++) {
     const g = graphemes[i]!
-    const nextStart =
-      i + 1 < graphemes.length ? graphemes[i + 1]!.index : text.length
+    const nextStart = i + 1 < graphemes.length ? graphemes[i + 1]!.index : text.length
     if (offset >= g.index && offset < nextStart) {
       graphemeIdx = i
       break

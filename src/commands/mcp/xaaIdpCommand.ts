@@ -22,26 +22,19 @@ import { errorMessage } from '../../utils/errors.js'
 import { updateSettingsForSource } from '../../utils/settings/settings.js'
 
 export function registerMcpXaaIdpCommand(mcp: Command): void {
-  const xaaIdp = mcp
-    .command('xaa')
-    .description('Manage the XAA (SEP-990) IdP connection')
+  const xaaIdp = mcp.command('xaa').description('Manage the XAA (SEP-990) IdP connection')
 
   xaaIdp
     .command('setup')
-    .description(
-      'Configure the IdP connection (one-time setup for all XAA-enabled servers)',
-    )
+    .description('Configure the IdP connection (one-time setup for all XAA-enabled servers)')
     .requiredOption('--issuer <url>', 'IdP issuer URL (OIDC discovery)')
     .requiredOption('--client-id <id>', "ZY Code's client_id at the IdP")
-    .option(
-      '--client-secret',
-      'Read IdP client secret from MCP_XAA_IDP_CLIENT_SECRET env var',
-    )
+    .option('--client-secret', 'Read IdP client secret from MCP_XAA_IDP_CLIENT_SECRET env var')
     .option(
       '--callback-port <port>',
       'Fixed loopback callback port (only if IdP does not honor RFC 8252 port-any matching)',
     )
-    .action(options => {
+    .action((options) => {
       // Validate everything BEFORE any writes. An exit(1) mid-write leaves
       // settings configured but keychain missing — confusing state.
       // updateSettingsForSource doesn't schema-check on write; a non-URL
@@ -52,9 +45,7 @@ export function registerMcpXaaIdpCommand(mcp: Command): void {
       try {
         issuerUrl = new URL(options.issuer)
       } catch {
-        return cliError(
-          `Error: --issuer must be a valid URL (got "${options.issuer}")`,
-        )
+        return cliError(`Error: --issuer must be a valid URL (got "${options.issuer}")`)
       }
       // OIDC discovery + token exchange run against this host. Allow http://
       // only for loopback (conformance harness mock IdP); anything else leaks
@@ -72,24 +63,15 @@ export function registerMcpXaaIdpCommand(mcp: Command): void {
           `Error: --issuer must use https:// (got "${issuerUrl.protocol}//${issuerUrl.host}")`,
         )
       }
-      const callbackPort = options.callbackPort
-        ? parseInt(options.callbackPort, 10)
-        : undefined
+      const callbackPort = options.callbackPort ? parseInt(options.callbackPort, 10) : undefined
       // callbackPort <= 0 fails Zod's .positive() on next launch — same
       // settings-poisoning failure mode as the issuer check above.
-      if (
-        callbackPort !== undefined &&
-        (!Number.isInteger(callbackPort) || callbackPort <= 0)
-      ) {
+      if (callbackPort !== undefined && (!Number.isInteger(callbackPort) || callbackPort <= 0)) {
         return cliError('Error: --callback-port must be a positive integer')
       }
-      const secret = options.clientSecret
-        ? process.env.MCP_XAA_IDP_CLIENT_SECRET
-        : undefined
+      const secret = options.clientSecret ? process.env.MCP_XAA_IDP_CLIENT_SECRET : undefined
       if (options.clientSecret && !secret) {
-        return cliError(
-          'Error: --client-secret requires MCP_XAA_IDP_CLIENT_SECRET env var',
-        )
+        return cliError('Error: --client-secret requires MCP_XAA_IDP_CLIENT_SECRET env var')
       }
 
       // Read old config now (before settings overwrite) so we can clear stale
@@ -155,10 +137,7 @@ export function registerMcpXaaIdpCommand(mcp: Command): void {
         'write a pre-obtained JWT directly (used by conformance/e2e tests ' +
         'where the mock IdP does not serve /authorize).',
     )
-    .option(
-      '--force',
-      'Ignore any cached id_token and re-login (useful after IdP-side revocation)',
-    )
+    .option('--force', 'Ignore any cached id_token and re-login (useful after IdP-side revocation)')
     // TODO(paulc): read the JWT from stdin instead of argv to keep it out of
     // shell history. Fine for conformance (docker exec uses argv directly,
     // no shell parser), but a real user would want `echo $TOKEN | ... --stdin`.
@@ -166,12 +145,10 @@ export function registerMcpXaaIdpCommand(mcp: Command): void {
       '--id-token <jwt>',
       'Write this pre-obtained id_token directly to cache, skipping the OIDC browser login',
     )
-    .action(async options => {
+    .action(async (options) => {
       const idp = getXaaIdpSettings()
       if (!idp) {
-        return cliError(
-          "Error: no XAA IdP connection. Run 'zy mcp xaa setup' first.",
-        )
+        return cliError("Error: no XAA IdP connection. Run 'zy mcp xaa setup' first.")
       }
 
       // Direct-inject path: skip cache check, skip OIDC. Writing IS the
@@ -202,15 +179,11 @@ export function registerMcpXaaIdpCommand(mcp: Command): void {
           idpClientId: idp.clientId,
           idpClientSecret: getIdpClientSecret(idp.issuer),
           callbackPort: idp.callbackPort,
-          onAuthorizationUrl: url => {
-            process.stdout.write(
-              `If the browser did not open, visit:\n  ${url}\n`,
-            )
+          onAuthorizationUrl: (url) => {
+            process.stdout.write(`If the browser did not open, visit:\n  ${url}\n`)
           },
         })
-        cliOk(
-          `Logged in. MCP servers with --xaa will now authenticate silently.`,
-        )
+        cliOk(`Logged in. MCP servers with --xaa will now authenticate silently.`)
       } catch (e) {
         cliError(`IdP login failed: ${errorMessage(e)}`)
       }

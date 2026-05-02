@@ -39,9 +39,7 @@ import {
   setMeterProvider,
   setTracerProvider,
 } from 'src/bootstrap/state.js'
-import {
-  getOtelHeadersFromHelper,
-} from 'src/utils/auth.js'
+import { getOtelHeadersFromHelper } from 'src/utils/auth.js'
 import { getPlatform, getWslVersion } from 'src/utils/platform.js'
 
 import { getCACertificates } from '../caCerts.js'
@@ -58,10 +56,7 @@ import { isBetaTracingEnabled } from './betaSessionTracing.js'
 import { BigQueryMetricsExporter } from './bigqueryExporter.js'
 import { ZyCodeDiagLogger } from './logger.js'
 import { initializePerfettoTracing } from './perfettoTracing.js'
-import {
-  endInteractionSpan,
-  isEnhancedTelemetryEnabled,
-} from './sessionTracing.js'
+import { endInteractionSpan, isEnhancedTelemetryEnabled } from './sessionTracing.js'
 import { isInternalBuild } from '../envUtils.js'
 
 const DEFAULT_METRICS_EXPORT_INTERVAL_MS = 60000
@@ -73,8 +68,7 @@ class TelemetryTimeoutError extends Error {}
 function telemetryTimeout(ms: number, message: string): Promise<never> {
   return new Promise((_, reject) => {
     setTimeout(
-      (rej: (e: Error) => void, msg: string) =>
-        rej(new TelemetryTimeoutError(msg)),
+      (rej: (e: Error) => void, msg: string) => rej(new TelemetryTimeoutError(msg)),
       ms,
       reject,
       message,
@@ -95,16 +89,13 @@ export function bootstrapTelemetry() {
       process.env.OTEL_TRACES_EXPORTER = process.env.ANT_OTEL_TRACES_EXPORTER
     }
     if (process.env.ANT_OTEL_EXPORTER_OTLP_PROTOCOL) {
-      process.env.OTEL_EXPORTER_OTLP_PROTOCOL =
-        process.env.ANT_OTEL_EXPORTER_OTLP_PROTOCOL
+      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = process.env.ANT_OTEL_EXPORTER_OTLP_PROTOCOL
     }
     if (process.env.ANT_OTEL_EXPORTER_OTLP_ENDPOINT) {
-      process.env.OTEL_EXPORTER_OTLP_ENDPOINT =
-        process.env.ANT_OTEL_EXPORTER_OTLP_ENDPOINT
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = process.env.ANT_OTEL_EXPORTER_OTLP_ENDPOINT
     }
     if (process.env.ANT_OTEL_EXPORTER_OTLP_HEADERS) {
-      process.env.OTEL_EXPORTER_OTLP_HEADERS =
-        process.env.ANT_OTEL_EXPORTER_OTLP_HEADERS
+      process.env.OTEL_EXPORTER_OTLP_HEADERS = process.env.ANT_OTEL_EXPORTER_OTLP_HEADERS
     }
   }
 
@@ -121,15 +112,14 @@ export function parseExporterTypes(value: string | undefined): string[] {
     .trim()
     .split(',')
     .filter(Boolean)
-    .map(t => t.trim())
-    .filter(t => t !== 'none')
+    .map((t) => t.trim())
+    .filter((t) => t !== 'none')
 }
 
 async function getOtlpReaders() {
   const exporterTypes = parseExporterTypes(process.env.OTEL_METRICS_EXPORTER)
   const exportInterval = parseInt(
-    process.env.OTEL_METRIC_EXPORT_INTERVAL ||
-      DEFAULT_METRICS_EXPORT_INTERVAL_MS.toString(),
+    process.env.OTEL_METRIC_EXPORT_INTERVAL || DEFAULT_METRICS_EXPORT_INTERVAL_MS.toString(),
   )
 
   const exporters = []
@@ -190,9 +180,7 @@ async function getOtlpReaders() {
           )
       }
     } else if (exporterType === 'prometheus') {
-      const { PrometheusExporter } = await import(
-        '@opentelemetry/exporter-prometheus' as any
-      )
+      const { PrometheusExporter } = await import('@opentelemetry/exporter-prometheus' as any)
       exporters.push(new PrometheusExporter())
     } else {
       throw new Error(
@@ -201,7 +189,7 @@ async function getOtlpReaders() {
     }
   }
 
-  return exporters.map(exporter => {
+  return exporters.map((exporter) => {
     if ('export' in exporter) {
       return new PeriodicExportingMetricReader({
         exporter,
@@ -233,23 +221,17 @@ async function getOtlpLogExporters() {
 
       switch (protocol) {
         case 'grpc': {
-          const { OTLPLogExporter } = await import(
-            '@opentelemetry/exporter-logs-otlp-grpc' as any
-          )
+          const { OTLPLogExporter } = await import('@opentelemetry/exporter-logs-otlp-grpc' as any)
           exporters.push(new OTLPLogExporter())
           break
         }
         case 'http/json': {
-          const { OTLPLogExporter } = await import(
-            '@opentelemetry/exporter-logs-otlp-http' as any
-          )
+          const { OTLPLogExporter } = await import('@opentelemetry/exporter-logs-otlp-http' as any)
           exporters.push(new OTLPLogExporter(httpConfig))
           break
         }
         case 'http/protobuf': {
-          const { OTLPLogExporter } = await import(
-            '@opentelemetry/exporter-logs-otlp-proto' as any
-          )
+          const { OTLPLogExporter } = await import('@opentelemetry/exporter-logs-otlp-proto' as any)
           exporters.push(new OTLPLogExporter(httpConfig))
           break
         }
@@ -259,9 +241,7 @@ async function getOtlpLogExporters() {
           )
       }
     } else {
-      throw new Error(
-        `Unknown exporter type set in OTEL_LOGS_EXPORTER env var: ${exporterType}`,
-      )
+      throw new Error(`Unknown exporter type set in OTEL_LOGS_EXPORTER env var: ${exporterType}`)
     }
   }
 
@@ -310,9 +290,7 @@ async function getOtlpTraceExporters() {
           )
       }
     } else {
-      throw new Error(
-        `Unknown exporter type set in OTEL_TRACES_EXPORTER env var: ${exporterType}`,
-      )
+      throw new Error(`Unknown exporter type set in OTEL_TRACES_EXPORTER env var: ${exporterType}`)
     }
   }
 
@@ -394,10 +372,7 @@ async function initializeBetaTracing(
   setLoggerProvider(loggerProvider)
 
   // Initialize event logger
-  const eventLogger = logs.getLogger(
-    'com.anthropic.zy_code.events',
-    MACRO.VERSION,
-  )
+  const eventLogger = logs.getLogger('com.anthropic.zy_code.events', MACRO.VERSION)
   setEventLogger(eventLogger)
 
   // Setup flush handlers - flush both logs AND traces
@@ -433,8 +408,8 @@ export async function initializeTelemetry() {
       if (v?.includes('console')) {
         process.env[key] = v
           .split(',')
-          .map(s => s.trim())
-          .filter(s => s !== 'console')
+          .map((s) => s.trim())
+          .filter((s) => s !== 'console')
           .join(',')
       }
     }
@@ -480,9 +455,7 @@ export async function initializeTelemetry() {
   const baseResource = resourceFromAttributes(baseAttributes)
 
   // Use OpenTelemetry detectors
-  const osResource = resourceFromAttributes(
-    osDetector.detect().attributes || {},
-  )
+  const osResource = resourceFromAttributes(osDetector.detect().attributes || {})
 
   // Extract only host.arch from hostDetector
   const hostDetected = hostDetector.detect()
@@ -493,20 +466,15 @@ export async function initializeTelemetry() {
     : {}
   const hostArchResource = resourceFromAttributes(hostArchAttributes)
 
-  const envResource = resourceFromAttributes(
-    envDetector.detect().attributes || {},
-  )
+  const envResource = resourceFromAttributes(envDetector.detect().attributes || {})
 
   // Merge resources - later resources take precedence
-  const resource = baseResource
-    .merge(osResource)
-    .merge(hostArchResource)
-    .merge(envResource)
+  const resource = baseResource.merge(osResource).merge(hostArchResource).merge(envResource)
 
   // Check if beta tracing is enabled - this is a separate code path
   // Available to all users who set ENABLE_BETA_TRACING_DETAILED=1 and BETA_TRACING_ENDPOINT
   if (isBetaTracingEnabled()) {
-    void initializeBetaTracing(resource).catch(e =>
+    void initializeBetaTracing(resource).catch((e) =>
       logForDebugging(`Beta tracing init failed: ${e}`, { level: 'error' }),
     )
     // Still set up meter provider for metrics (but skip regular logs/traces setup)
@@ -519,9 +487,7 @@ export async function initializeTelemetry() {
 
     // Register shutdown for beta tracing
     const shutdownTelemetry = async () => {
-      const timeoutMs = parseInt(
-        process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000',
-      )
+      const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000')
       try {
         endInteractionSpan()
 
@@ -534,14 +500,10 @@ export async function initializeTelemetry() {
 
         const chains: Promise<void>[] = [meterProvider.shutdown()]
         if (loggerProvider) {
-          chains.push(
-            loggerProvider.forceFlush().then(() => loggerProvider.shutdown()),
-          )
+          chains.push(loggerProvider.forceFlush().then(() => loggerProvider.shutdown()))
         }
         if (tracerProvider) {
-          chains.push(
-            tracerProvider.forceFlush().then(() => tracerProvider.shutdown()),
-          )
+          chains.push(tracerProvider.forceFlush().then(() => tracerProvider.shutdown()))
         }
 
         await Promise.race([
@@ -569,9 +531,7 @@ export async function initializeTelemetry() {
   // Initialize logs if telemetry is enabled
   if (telemetryEnabled) {
     const logExporters = await getOtlpLogExporters()
-    logForDebugging(
-      `[3P telemetry] Created ${logExporters.length} log exporter(s)`,
-    )
+    logForDebugging(`[3P telemetry] Created ${logExporters.length} log exporter(s)`)
 
     if (logExporters.length > 0) {
       const loggerProvider = new LoggerProvider({
@@ -579,11 +539,10 @@ export async function initializeTelemetry() {
         // Add batch processors for each exporter
         // @ts-ignore
         processors: logExporters.map(
-          exporter =>
+          (exporter) =>
             new BatchLogRecordProcessor(exporter, {
               scheduledDelayMillis: parseInt(
-                process.env.OTEL_LOGS_EXPORT_INTERVAL ||
-                  DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString(),
+                process.env.OTEL_LOGS_EXPORT_INTERVAL || DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString(),
               ),
             }),
         ),
@@ -594,10 +553,7 @@ export async function initializeTelemetry() {
       setLoggerProvider(loggerProvider)
 
       // Initialize event logger
-      const eventLogger = logs.getLogger(
-        'com.anthropic.zy_code.events',
-        MACRO.VERSION,
-      )
+      const eventLogger = logs.getLogger('com.anthropic.zy_code.events', MACRO.VERSION)
       setEventLogger(eventLogger)
       logForDebugging('[3P telemetry] Event logger set successfully')
 
@@ -625,7 +581,7 @@ export async function initializeTelemetry() {
     if (traceExporters.length > 0) {
       // Create span processors for each exporter
       const spanProcessors = traceExporters.map(
-        exporter =>
+        (exporter) =>
           new BatchSpanProcessor(exporter, {
             scheduledDelayMillis: parseInt(
               process.env.OTEL_TRACES_EXPORT_INTERVAL ||
@@ -647,9 +603,7 @@ export async function initializeTelemetry() {
 
   // Shutdown metrics and logs on exit (flushes and closes exporters)
   const shutdownTelemetry = async () => {
-    const timeoutMs = parseInt(
-      process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000',
-    )
+    const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000')
 
     try {
       // End any active interaction span before shutdown
@@ -705,9 +659,7 @@ export async function flushTelemetry(): Promise<void> {
     return
   }
 
-  const timeoutMs = parseInt(
-    process.env.ZY_CODE_OTEL_FLUSH_TIMEOUT_MS || '5000',
-  )
+  const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_FLUSH_TIMEOUT_MS || '5000')
 
   try {
     const flushPromises = [meterProvider.forceFlush()]
