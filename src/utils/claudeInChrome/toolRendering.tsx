@@ -10,8 +10,8 @@ import { trackClaudeInChromeTabId } from './common.js';
 export type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 /**
- * All tool names from BROWSER_TOOLS in @ant/claude-for-chrome-mcp.
- * Keep in sync with the package's BROWSER_TOOLS array.
+ * @ant/claude-for-chrome-mcp 中 BROWSER_TOOLS 的所有工具名。
+ * 请与该包的 BROWSER_TOOLS 数组保持同步。
  */
 export type ChromeToolName = 'javascript_tool' | 'read_page' | 'find' | 'form_input' | 'computer' | 'navigate' | 'resize_window' | 'gif_creator' | 'upload_image' | 'get_page_text' | 'tabs_context_mcp' | 'tabs_create_mcp' | 'update_plan' | 'read_console_messages' | 'read_network_requests' | 'shortcuts_list' | 'shortcuts_execute';
 const CHROME_EXTENSION_FOCUS_TAB_URL_BASE = 'https://clau.de/chrome/tab/';
@@ -21,7 +21,7 @@ function renderChromeToolUseMessage(input: Record<string, unknown>, toolName: Ch
     trackClaudeInChromeTabId(tabId);
   }
 
-  // Build secondary info based on tool type and input
+  // 根据工具类型和输入构建次要信息
   const secondaryInfo: string[] = [];
   switch (toolName) {
     case 'navigate':
@@ -94,11 +94,11 @@ function renderChromeToolUseMessage(input: Record<string, unknown>, toolName: Ch
       }
       break;
     case 'javascript_tool':
-      // In verbose mode, show the full code
+      // verbose 模式下展示完整代码
       if (verbose && typeof input.text === 'string') {
         return input.text;
       }
-      // In non-verbose mode, return empty string to preserve View Tab layout
+      // 非 verbose 模式下返回空字符串以保持 View Tab 布局
       return '';
     case 'tabs_create_mcp':
     case 'tabs_context_mcp':
@@ -108,19 +108,19 @@ function renderChromeToolUseMessage(input: Record<string, unknown>, toolName: Ch
     case 'upload_image':
     case 'get_page_text':
     case 'update_plan':
-      // These tools don't have meaningful secondary info to show inline.
-      // Return empty string (not null) to ensure tool header still renders.
+      // 这些工具没有有意义的次要信息可内联展示。
+      // 返回空字符串（而非 null）以确保工具表头仍然渲染。
       return '';
   }
   return secondaryInfo.join(', ') || null;
 }
 
 /**
- * Renders a clickable "View Tab" link for Claude in Chrome MCP tools.
- * Returns null if:
- * - The tool is not a Claude in Chrome MCP tool
- * - The input doesn't have a valid tabId
- * - Hyperlinks are not supported
+ * 为 Chrome 中的 Claude MCP 工具渲染可点击的“查看标签页”链接。
+ * 以下情况返回 null：
+ * - 工具不是 Chrome 中的 Claude MCP 工具
+ * - 输入中没有有效的 tabId
+ * - 不支持超链接
  */
 function renderChromeViewTabLink(input: unknown): React.ReactNode {
   if (!supportsHyperlinks()) {
@@ -143,9 +143,9 @@ function renderChromeViewTabLink(input: unknown): React.ReactNode {
 }
 
 /**
- * Custom tool result message rendering for claude-in-chrome tools.
- * Shows a brief summary for successful results. Errors are handled by
- * the default renderToolUseErrorMessage when is_error is set.
+ * Chrome 中的 Claude 工具结果消息的自定义渲染。
+ * 对成功结果展示简要摘要。错误将在 is_error 设置时
+ * 由默认的 renderToolUseErrorMessage 处理。
  */
 export function renderChromeToolResultMessage(output: MCPToolResult, toolName: ChromeToolName, verbose: boolean): React.ReactNode {
   if (verbose) {
@@ -216,8 +216,7 @@ export function renderChromeToolResultMessage(output: MCPToolResult, toolName: C
 }
 
 /**
- * Returns tool method overrides for Claude in Chrome MCP tools. Use this to customize
- * rendering for chrome tools in a single spread operation.
+ * 返回单个 `mcp__computer-use__{toolName}` 工具的方法覆盖对象。可通过一次 spread 操作自定义 Chrome 工具的渲染。
  */
 export function getClaudeInChromeMCPToolOverrides(toolName: string): {
   userFacingName: (input?: Record<string, unknown>) => string;
@@ -231,7 +230,7 @@ export function getClaudeInChromeMCPToolOverrides(toolName: string): {
 } {
   return {
     userFacingName(_input?: Record<string, unknown>) {
-      // Trim the _mcp postfix that show up in some of the tool names
+      // 删除部分工具名末尾的 _mcp 后缀
       const displayName = toolName.replace(/_mcp$/, '');
       return `Claude in Chrome[${displayName}]`;
     },

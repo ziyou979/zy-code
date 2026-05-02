@@ -1,19 +1,17 @@
 /**
- * The `.call()` override — thin adapter between `ToolUseContext` and
- * `bindSessionContext`. Spread into the MCP tool object in `client.ts`
- * (same pattern as Chrome's rendering overrides, plus `.call()`).
+ * `.call()` 覆盖——`ToolUseContext` 与 `bindSessionContext` 之间的薄适配层。
+ * 通过 spread 展入 `client.ts` 中的 MCP 工具对象
+ * （与 Chrome 渲染覆盖相同的模式，另加 `.call()`）。
  *
- * The wrapper-closure logic (build overrides fresh, lock gate, permission
- * merge, screenshot stash) lives in `@ant/computer-use-mcp`'s
- * `bindSessionContext`. This file binds it once per process,
- * caches the dispatcher, and updates a per-call ref for the pieces of
- * `ToolUseContext` that vary per-call (`abortController`, `setToolJSX`,
- * `sendOSNotification`). AppState accessors are read through the ref too —
- * they're likely stable but we don't depend on that.
+ * 封装闭包逻辑（构建新覆盖、锁门、权限合并、截图暂存）位于
+ * `@ant/computer-use-mcp` 的 `bindSessionContext` 中。本文件在进程层面绑定一次，
+ * 缓存分发器，并在每次调用时更新 `ToolUseContext` 中
+ * 每调用可变的部分（`abortController`、`setToolJSX`、
+ * `sendOSNotification`）。AppState 访问器也通过此 ref 读取——
+ * 它们可能是稳定的，但我们不依赖这一点。
  *
- * External callers reach this via the lazy require thunk in `client.ts`, gated
- * on `feature('CHICAGO_MCP')`. Runtime enablement is controlled by the
- * GrowthBook gate `zy_malort_pedway` (see gates.ts).
+ * 外部调用方通过 `client.ts` 中的懒加载 require 阔值访问此外层，
+ * 由 GrowthBook 门标 `zy_malort_pedway`（见 gates.ts）控制运行时启用。
  */
 
 import { bindSessionContext, type ComputerUseSessionContext, type CuCallToolResult, type CuPermissionRequest, type CuPermissionResponse, DEFAULT_GRANT_FLAGS, type ScreenshotDims } from '@ant/computer-use-mcp';
@@ -34,23 +32,23 @@ type Binding = {
 };
 
 /**
- * Cached binding — built on first `.call()`, reused for process lifetime.
- * The dispatcher's closure-held screenshot blob persists across calls.
+ * 缓存绑定——首次 `.call()` 时构建，在进程生命周期内复用。
+ * 分发器闭包持有的截图 blob 在调用之间持续存在。
  *
- * `currentToolUseContext` is updated on every call. Every getter/callback in
- * `ctx` reads through it, so the per-call pieces (`abortController`,
- * `setToolJSX`, `sendOSNotification`) are always current.
+ * `currentToolUseContext` 在每次调用时更新。`ctx` 中的每个 getter/回调
+ * 均通过它读取，因此每调用的部分（`abortController`、
+ * `setToolJSX`、`sendOSNotification`）始终是最新的。
  *
- * Module-level `let` is a deliberate exception to the no-module-scope-state
- * rule (src/CLAUDE.md): the dispatcher closure must persist across calls so
- * its internal screenshot blob survives, but `ToolUseContext` is per-call.
- * Tests will need to either inject the cache or run serially.
+ * 模块级 `let` 是对「禁止模块作用域状态」规则（src/CLAUDE.md）的有意例外：
+ * 分发器闭包必须跨调用持续，以保留内部截图 blob，
+ * 而 `ToolUseContext` 是每调用独有的。
+ * 测试时需要注入缓存或串行运行。
  */
 let binding: Binding | undefined;
 let currentToolUseContext: ToolUseContext | undefined;
 function tuc(): ToolUseContext {
-  // Safe: `binding` is only populated when `currentToolUseContext` is set.
-  // Called only from within `ctx` callbacks, which only fire during dispatch.
+  // 安全：`binding` 仅在 `currentToolUseContext` 设置后才填充。
+  // 仅在 `ctx` 回调内部调用，而回调只在 dispatch 期间触发。
   return currentToolUseContext!;
 }
 function formatLockHeld(holder: string): string {
@@ -58,10 +56,10 @@ function formatLockHeld(holder: string): string {
 }
 export function buildSessionContext(): ComputerUseSessionContext {
   return {
-    // ── Read state fresh via the per-call ref ─────────────────────────────
+    // ── 通过每调用 ref 即时读取状态 ─────────────────────────────
     getAllowedApps: () => tuc().getAppState().computerUseMcpState?.allowedApps ?? [],
     getGrantFlags: () => tuc().getAppState().computerUseMcpState?.grantFlags ?? DEFAULT_GRANT_FLAGS,
-    // cc-2 has no Settings page for user-denied apps yet.
+    // cc-2 尚无用户拒绝应用的 Settings 页面。
     getUserDeniedBundleIds: () => [],
     getSelectedDisplayId: () => tuc().getAppState().computerUseMcpState?.selectedDisplayId,
     getDisplayPinnedByModel: () => tuc().getAppState().computerUseMcpState?.displayPinnedByModel ?? false,
@@ -75,14 +73,13 @@ export function buildSessionContext(): ComputerUseSessionContext {
         originY: (d as any).originY ?? 0
       } as any : undefined;
     },
-    // ── Write-backs ────────────────────────────────────────────────────────
-    // `setToolJSX` is guaranteed present — the gate in `main.tsx` excludes
-    // non-interactive sessions. The package's `_dialogSignal` (tool-finished
-    // dismissal) is irrelevant here: `setToolJSX` blocks the tool call, so
-    // the dialog can't outlive it. Ctrl+C is what matters, and
-    // `runPermissionDialog` wires that from the per-call ref's abortController.
+    // ── 写回 ────────────────────────────────────────────────────────
+    // `setToolJSX` 将必存在——main.tsx 中的门标排除了非交互式会话。包的
+    // `_dialogSignal`（工具完成后关闭对话框）在这里不相关：`setToolJSX` 会阻塞工具调用，
+    // 因此对话框不会超出其存活时间。Ctrl+C 才是关键，
+    // `runPermissionDialog` 从每调用 ref 的 abortController 中连接。
     onPermissionRequest: (req, _dialogSignal) => runPermissionDialog(req),
-    // Package does the merge (dedupe + truthy-only flags). We just persist.
+    // 包负责合并（去重复 + 指定为真的标志）。我们只需持久化。
     onAllowedAppsChanged: (apps, flags) => tuc().setAppState(prev => {
       const cu = prev.computerUseMcpState;
       const prevApps = cu?.allowedApps;
@@ -113,10 +110,10 @@ export function buildSessionContext(): ComputerUseSessionContext {
         };
       });
     },
-    // Resolver writeback only fires under a pin when Swift fell back to main
-    // (pinned display unplugged) — the pin is semantically dead, so clear it
-    // and the app-set key so the chase chain runs next time. When autoResolve
-    // was true, onDisplayResolvedForApps re-sets the key in the same tick.
+    // 仅在 pin 激活且 Swift 回退到主显示器时触发解析器回写
+    // （已 pin 的显示器拔出）——pin 语义上已失效，清除它
+    // 和 app-set 键，下次进行追踪链。当 autoResolve 为 true 时，
+    // onDisplayResolvedForApps 会在同一节拍重新设置该键。
     onResolvedDisplayUpdated: id => tuc().setAppState(prev => {
       const cu = prev.computerUseMcpState;
       if (cu?.selectedDisplayId === id && !cu.displayPinnedByModel && cu.displayResolvedForApps === undefined) {
@@ -132,8 +129,8 @@ export function buildSessionContext(): ComputerUseSessionContext {
         }
       };
     }),
-    // switch_display(name) pins; switch_display("auto") unpins and clears the
-    // app-set key so the next screenshot auto-resolves fresh.
+    // switch_display(name) 会 pin ；switch_display("auto") 会 unpin 并清除
+    // app-set 键，下一次截图自动重新解析。
     onDisplayPinned: id => tuc().setAppState(prev => {
       const cu = prev.computerUseMcpState;
       const pinned = id !== undefined;
@@ -173,11 +170,11 @@ export function buildSessionContext(): ComputerUseSessionContext {
         }
       };
     }),
-    // ── Lock — async, direct file-lock calls ───────────────────────────────
-    // No `lockHolderForGate` dance: the package's gate is async now. It
-    // awaits `checkCuLock`, and on `holder: undefined` + non-deferring tool
-    // awaits `acquireCuLock`. `defersLockAcquire` is the PACKAGE's set —
-    // the local copy is gone.
+    // ── 锁——异步，直接调用文件锁 ───────────────────────────────
+    // 无需 `lockHolderForGate` 逻辑：包的门标现在是异步的。它
+    // 等待 `checkCuLock`，尚且 `holder: undefined` + 非延迟锁工具时
+    // 等待 `acquireCuLock`。`defersLockAcquire` 是包的集合——
+    // 本地副本已删除。
     checkCuLock: async () => {
       const c = await checkComputerUseLock();
       switch (c.kind) {
@@ -198,22 +195,20 @@ export function buildSessionContext(): ComputerUseSessionContext {
           };
       }
     },
-    // Called only when checkCuLock returned `holder: undefined`. The O_EXCL
-    // acquire is atomic — if another process grabbed it in the gap (rare),
-    // throw so the tool fails instead of proceeding without the lock.
-    // `fresh: false` (re-entrant) shouldn't happen given check said free,
-    // but is possible under parallel tool-use interleaving — don't spam the
-    // notification in that case.
+    // 仅当 checkCuLock 返回 `holder: undefined` 时调用。O_EXCL
+    // 获取是原子的——若其他进程在间隙中抢占（极少发生），
+    // 抛出异常使工具失败，而非在无锁的情况下继续。
+    // `fresh: false`（重入）理论上不应发生（检查说是 free），
+    // 但并行工具用下交错可能出现——此时请勿刷屏通知。
     acquireCuLock: async () => {
       const r = await tryAcquireComputerUseLock();
       if (r.kind === 'blocked') {
         throw new Error(formatLockHeld(r.by));
       }
       if (r.fresh) {
-        // Global Escape → abort. Consumes the event (PI defense — prompt
-        // injection can't dismiss dialogs with Escape). The CGEventTap's
-        // CFRunLoopSource is processed by the drainRunLoop pump, so this
-        // holds a pump retain until unregisterEscHotkey() in cleanup.ts.
+        // 全局 Escape → 中止。消耗事件（PI 防御——提示词注入无法用 Escape 关闭对话框）。
+        // CGEventTap 的 CFRunLoopSource 由 drainRunLoop pump 处理，
+        // 因此在 unregisterEscHotkey() 清理之前保持 pump retain。
         const escRegistered = registerEscHotkey(() => {
           logForDebugging('[cu-esc] user escape, aborting turn');
           tuc().abortController.abort();
@@ -238,9 +233,8 @@ function getOrBind(): Binding {
 }
 
 /**
- * Returns the full override object for a single `mcp__computer-use__{toolName}`
- * tool: rendering overrides from `toolRendering.tsx` plus a `.call()` that
- * dispatches through the cached binder.
+ * 返回单个 `mcp__computer-use__{toolName}` 工具的完整覆盖对象：
+ * 来自 `toolRendering.tsx` 的渲染覆盖加上通过缓存绑定分发的 `.call()`。
  */
 type ComputerUseMCPToolOverrides = ReturnType<typeof getComputerUseMCPRenderingOverrides> & {
   call: CallOverride;
@@ -260,12 +254,12 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
       logForDebugging(`[Computer Use MCP] ${toolName} error_kind=${telemetry.error_kind}`);
     }
 
-    // MCP content blocks → Anthropic API blocks. CU only produces text and
-    // pre-sized JPEG (executor.ts computeTargetDims → targetImageSize), so
-    // unlike the generic MCP path there's no resize needed — the MCP image
-    // shape just maps to the API's base64-source shape. The package's result
-    // type admits audio/resource too, but CU's handleToolCall never emits
-    // those; the fallthrough coerces them to empty text.
+    // MCP 内容块 → Anthropic API 块。CU 仅产生文本和
+    // 预先设定大小的 JPEG（executor.ts computeTargetDims → targetImageSize），
+    // 与通用 MCP 路径不同，无需调整大小——MCP image
+    // 形状直接映射到 API 的 base64-source 形状。包的结果
+    // 类型也允许 audio/resource，但 CU 的 handleToolCall 永远不会发出
+    // 这些；默写将它们强制转换为空文本。
     const data = Array.isArray(result.content) ? result.content.map(item => item.type === 'image' ? {
       type: 'image' as const,
       source: {
@@ -288,17 +282,17 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
 }
 
 /**
- * Render the approval dialog mid-call via `setToolJSX` + `Promise`, wait for
- * the user. Mirrors `spawnMultiAgent.ts:419-436` (the `It2SetupPrompt` pattern).
+ * 通过 `setToolJSX` + `Promise` 在调用中渲染权限对话框，等待用户操作。
+ * 模式参考 `spawnMultiAgent.ts:419-436`（`It2SetupPrompt` 模式）。
  *
- * The merge-into-AppState that used to live here (dedupe + truthy-only flags)
- * is now in the package's `bindSessionContext` → `onAllowedAppsChanged`.
+ * 原先位于此处的 AppState 合并逻辑（去重复 + 指定为真的标志）
+ * 已移至包的 `bindSessionContext` → `onAllowedAppsChanged`。
  */
 async function runPermissionDialog(req: CuPermissionRequest): Promise<CuPermissionResponse> {
   const context = tuc();
   const setToolJSX = context.setToolJSX;
   if (!setToolJSX) {
-    // Shouldn't happen — main.tsx gate excludes non-interactive. Fail safe.
+    // 不应发生——main.tsx 门标排除了非交互式会话。安全失败。
     return {
       granted: [],
       denied: [],
@@ -308,8 +302,8 @@ async function runPermissionDialog(req: CuPermissionRequest): Promise<CuPermissi
   try {
     return await new Promise<CuPermissionResponse>((resolve, reject) => {
       const signal = context.abortController.signal;
-      // If already aborted, addEventListener won't fire — reject now so the
-      // promise doesn't hang waiting for a user who Ctrl+C'd.
+      // 若已中止，addeventListener 不会触发——立即 reject，
+      // 避免 promise 在用户已 Ctrl+C 后悬挂等待。
       if (signal.aborted) {
         reject(new Error('Computer Use permission dialog aborted'));
         return;

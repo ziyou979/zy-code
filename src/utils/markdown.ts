@@ -12,9 +12,9 @@ import { createHyperlink } from './hyperlink.js'
 import { stripPromptXMLTags } from './messages.js'
 import type { ThemeName } from './theme.js'
 
-// Use \n unconditionally — os.EOL is \r\n on Windows, and the extra \r
-// breaks the character-to-segment mapping in applyStylesToWrappedText,
-// causing styled text to shift right.
+// 无条件使用 \n — os.EOL 在 Windows 上是 \r\n，多出的 \r
+// 会破坏 applyStylesToWrappedText 中字符到段的映射，
+// 导致样式文本向右偏移。
 const EOL = '\n'
 
 let markedConfigured = false
@@ -23,8 +23,8 @@ export function configureMarked(): void {
   if (markedConfigured) return
   markedConfigured = true
 
-  // Disable strikethrough parsing - the model often uses ~ for "approximate"
-  // (e.g., ~100) and rarely intends actual strikethrough formatting
+  // 禁用删除线解析——模型常用 ~ 表示「约等于」
+  // （如 ~100），鲜少真正表示删除线格式
   marked.use({
     tokenizer: {
       del() {
@@ -60,8 +60,7 @@ export function formatToken(
       const inner = (token.tokens ?? [])
         .map(_ => formatToken(_, theme, 0, null, null, highlight))
         .join('')
-      // Prefix each line with a dim vertical bar. Keep text italic but at
-      // normal brightness — chalk.dim is nearly invisible on dark themes.
+      // 每行前缀一个暗色竖线。保持文字斜体但维持正常亮度——chalk.dim 在深色主题下几乎不可见。
       const bar = chalk.dim(BLOCKQUOTE_BAR)
       return inner
         .split(EOL)
@@ -87,7 +86,7 @@ export function formatToken(
       return highlight.highlight(token.text, { language }) + EOL
     }
     case 'codespan': {
-      // inline code
+      // 行内代码
       return color('permission', theme)(token.text)
     }
     case 'em':
@@ -140,24 +139,24 @@ export function formatToken(
     case 'image':
       return token.href
     case 'link': {
-      // Prevent mailto links from being displayed as clickable links
+      // 阻止 mailto 链接被显示为可点击链接
       if (token.href.startsWith('mailto:')) {
-        // Extract email from mailto: link and display as plain text
+        // 从 mailto: 链接中提取邮箱地址并以纯文本展示
         const email = token.href.replace(/^mailto:/, '')
         return email
       }
-      // Extract display text from the link's child tokens
+      // 从链接的子 token 中提取显示文本
       const linkText = (token.tokens ?? [])
         .map(_ => formatToken(_, theme, 0, null, token, highlight))
         .join('')
       const plainLinkText = stripAnsi(linkText)
-      // If the link has meaningful display text (different from the URL),
-      // show it as a clickable hyperlink. In terminals that support OSC 8,
-      // users see the text and can hover/click to see the URL.
+      // 若链接有有意义的显示文本（与 URL 不同），
+      // 则渲染为可点击超链接。在支持 OSC 8 的终端中，
+      // 用户看到文本并可悬停/点击查看 URL。
       if (plainLinkText && plainLinkText !== token.href) {
         return createHyperlink(token.href, linkText)
       }
-      // When the display text matches the URL (or is empty), just show the URL
+      // 当显示文本与 URL 相同（或为空）时，直接展示 URL
       return createHyperlink(token.href)
     }
     case 'list': {
@@ -206,7 +205,7 @@ export function formatToken(
     case 'table': {
       const tableToken = token as Tokens.Table
 
-      // Helper function to get the text content that will be displayed (after stripAnsi)
+      // 辅助函数：获取最终显示的文本内容（经 stripAnsi 处理后）
       function getDisplayText(tokens: Token[] | undefined): string {
         return stripAnsi(
           tokens
@@ -215,17 +214,17 @@ export function formatToken(
         )
       }
 
-      // Determine column widths based on displayed content (without formatting)
+      // 根据显示内容（不含格式化字符）计算各列宽度
       const columnWidths = tableToken.header.map((header, index) => {
         let maxWidth = stringWidth(getDisplayText(header.tokens))
         for (const row of tableToken.rows) {
           const cellLength = stringWidth(getDisplayText(row[index]?.tokens))
           maxWidth = Math.max(maxWidth, cellLength)
         }
-        return Math.max(maxWidth, 3) // Minimum width of 3
+        return Math.max(maxWidth, 3) // 最小宽度为 3
       })
 
-      // Format header row
+      // 格式化表头行
       let tableOutput = '| '
       tableToken.header.forEach((header, index) => {
         const content =
@@ -240,16 +239,16 @@ export function formatToken(
       })
       tableOutput = tableOutput.trimEnd() + EOL
 
-      // Add separator row
+      // 添加分隔行
       tableOutput += '|'
       columnWidths.forEach(width => {
-        // Always use dashes, don't show alignment colons in the output
-        const separator = '-'.repeat(width + 2) // +2 for spaces on each side
+        // 始终使用短横线，输出中不显示对齐冒号
+        const separator = '-'.repeat(width + 2) // +2 为两侧空格
         tableOutput += separator + '|'
       })
       tableOutput += EOL
 
-      // Format data rows
+      // 格式化数据行
       tableToken.rows.forEach(row => {
         tableOutput += '| '
         row.forEach((cell, index) => {
@@ -269,24 +268,22 @@ export function formatToken(
       return tableOutput + EOL
     }
     case 'escape':
-      // Markdown escape: \) → ), \\ → \, etc.
+      // Markdown 转义：\) → )，\\ → \ 等
       return token.text
     case 'def':
     case 'del':
     case 'html':
-      // These token types are not rendered
+      // 这些 token 类型不进行渲染
       return ''
   }
   return ''
 }
 
-// Matches owner/repo#NNN style GitHub issue/PR references. The qualified form
-// is unambiguous — bare #NNN was removed because it guessed the current repo
-// and was wrong whenever the assistant discussed a different one.
-// Owner segment disallows dots (GitHub usernames are alphanumerics + hyphens
-// only) so hostnames like docs.github.io/guide#42 don't false-positive. Repo
-// segment allows dots (e.g. cc.kurs.web). Lookbehind is avoided — it defeats
-// YARR JIT in JSC.
+// 匹配 owner/repo#NNN 格式的 GitHub issue/PR 引用。完整格式无歧义——
+// 裸 #NNN 已移除，因为它猜测当前仓库，助手讨论其他仓库时会出错。
+// owner 段不允许点号（GitHub 用户名仅含字母数字和连字符），
+// 以防 docs.github.io/guide#42 等域名误匹配。repo 段允许点号（如 cc.kurs.web）。
+// 避免使用 lookbehind——会导致 JSC 中 YARR JIT 失效。
 const ISSUE_REF_PATTERN =
   /(^|[^\w./-])([A-Za-z0-9][\w-]*\/[A-Za-z0-9][\w.-]*)#(\d+)\b/g
 
@@ -296,7 +293,7 @@ const FILE_PATH_PATTERN =
   /(^|[^\w.\/-])((?:(?:\.\.\/|\.\/|\/)?(?:[\w.-]+\/)*)[\w.-]+\.\w{1,10}):(\d+)(?:-(\d+))?/g
 
 /**
- * Replaces owner/repo#123 references with clickable hyperlinks to GitHub.
+ * 将 owner/repo#123 格式的引用替换为指向 GitHub 的可点击超链接。
  */
 function linkifyIssueReferences(text: string): string {
   if (!supportsHyperlinks()) {
@@ -383,9 +380,9 @@ function getListNumber(listDepth: number, orderedListNumber: number): string {
 }
 
 /**
- * Pad `content` to `targetWidth` according to alignment. `displayWidth` is the
- * visible width of `content` (caller computes this, e.g. via stringWidth on
- * stripAnsi'd text, so ANSI codes in `content` don't affect padding).
+ * 根据对齐方式将 `content` 填充至 `targetWidth`。`displayWidth` 为 `content`
+ * 的可见宽度（由调用方计算，例如对 stripAnsi 后的文本调用 stringWidth，
+ * 使得 `content` 中的 ANSI 转义码不影响填充计算）。
  */
 export function padAligned(
   content: string,
