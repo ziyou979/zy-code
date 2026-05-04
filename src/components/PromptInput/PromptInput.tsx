@@ -93,7 +93,6 @@ import type { EffortLevel } from '../../utils/effort.js'
 import { env } from '../../utils/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { isBilledAsExtraUsage } from '../../utils/extraUsage.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import { getImageFromClipboard, PASTE_THRESHOLD } from '../../utils/imagePaste.js'
@@ -2368,9 +2367,6 @@ function PromptInput({
       }))
       setShowModelPicker(false)
       let message = `Model set to ${modelDisplayString(model)}`
-      if (isBilledAsExtraUsage(model)) {
-        message += ' · Billed as extra usage'
-      }
       addNotification({
         key: 'model-switched',
         jsx: <Text>{message}</Text>,

@@ -223,7 +223,9 @@ export function countUnseenAssistantTurns(
 }
 function assistantHasVisibleText(m: Message): boolean {
   if (m.type !== 'assistant') return false
-  for (const b of m.message.content) {
+  const content = m.message.content
+  if (!Array.isArray(content)) return false
+  for (const b of content) {
     if (b.type === 'text' && b.text.trim() !== '') return true
   }
   return false
@@ -293,7 +295,7 @@ export function FullscreenLayout({
   hideSticky = false,
   newMessageCount = 0,
   onPillClick,
-}) {
+}: Props) {
   const { rows: terminalRows, columns } = useTerminalSize()
   const [stickyPrompt, setStickyPrompt] = useState(null)
   const chromeCtx = {

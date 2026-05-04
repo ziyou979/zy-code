@@ -11,8 +11,6 @@ import type { McpServerConfig } from '../services/mcp/types.js'
 import type {
   // @ts-ignore
   BillingType,
-  // @ts-ignore
-  ReferralEligibilityResponse,
 } from '../services/oauth/types.js'
 import { getCwd } from '../utils/cwd.js'
 import { registerCleanup } from './cleanupRegistry.js'
@@ -291,65 +289,14 @@ export type GlobalConfig = {
   // 记忆使用追踪
   memoryUsageCount: number // 用户向记忆添加内容的次数
 
-  // Sonnet-1M 配置
-  hasShownS1MWelcomeV2?: Record<string, boolean> // Sonnet-1M v2 欢迎消息是否已按组织展示
-  // 按组织缓存的 Sonnet-1M 订阅者访问权限 — key 为组织 ID
-  // hasAccess 表示 "hasAccessAsDefault"，但旧名称保留以兼容旧版本。
-  s1mAccessCache?: Record<
-    string,
-    { hasAccess: boolean; hasAccessNotAsDefault?: boolean; timestamp: number }
-  >
-  // 按组织缓存的 Sonnet-1M PayG 访问权限 — key 为组织 ID
-  // hasAccess 表示 "hasAccessAsDefault"，但旧名称保留以兼容旧版本。
-  s1mNonSubscriberAccessCache?: Record<
-    string,
-    { hasAccess: boolean; hasAccessNotAsDefault?: boolean; timestamp: number }
-  >
-
-  // 按组织缓存的 Guest pass 资格 — key 为组织 ID
-  passesEligibilityCache?: Record<string, ReferralEligibilityResponse & { timestamp: number }>
-
-  // 按账户缓存的 Grove 配置 — key 为账户 UUID
-  groveConfigCache?: Record<string, { grove_enabled: boolean; timestamp: number }>
-
-  // Guest pass 升级弹窗追踪
-  passesUpsellSeenCount?: number // guest pass 升级弹窗已展示的次数
-  hasVisitedPasses?: boolean // 用户是否访问过 /passes 命令
-  passesLastSeenRemaining?: number // 上次看到的剩余 passes 数量 — 增加时重置升级提示
-
-  // 超额额度授予升级追踪（按组织 UUID 索引 — 支持多组织用户）。
-  // 直接定义结构（不使用 import()），因为 config.ts 在 SDK 构建范围内，
-  // 而 SDK 打包器无法解析 CLI 服务模块。
-  overageCreditGrantCache?: Record<
-    string,
-    {
-      info: {
-        available: boolean
-        eligible: boolean
-        granted: boolean
-        amount_minor_units: number | null
-        currency: string | null
-      }
-      timestamp: number
-    }
-  >
-  overageCreditUpsellSeenCount?: number // 超额额度升级弹窗已展示的次数
-  hasVisitedExtraUsage?: boolean // 用户是否访问过 /extra-usage — 访问后隐藏额度升级弹窗
-
   // 语音模式通知追踪
   voiceNoticeSeenCount?: number // 语音模式可用通知已展示的次数
   voiceLangHintShownCount?: number // /voice 听写语言提示已展示的次数
   voiceLangHintLastLanguage?: string // 上次展示提示时解析的 STT 语言代码 — 变更时重置计数
   voiceFooterHintSeenCount?: number // "按住 X 说话" 底部提示已展示的会话数
 
-  // Opus 1M 合并通知追踪
-  opus1mMergeNoticeSeenCount?: number // opus-1m-merge 通知已展示的次数
-
   // 实验注册通知追踪（按实验 ID 索引）
   experimentNoticesSeenCount?: Record<string, number>
-
-  // OpusPlan 实验配置
-  hasShownOpusPlanWelcome?: Record<string, boolean> // OpusPlan 欢迎消息是否已按组织展示
 
   // 队列使用追踪
   promptQueueUseCount: number // 用户使用提示队列的次数
@@ -401,10 +348,6 @@ export type GlobalConfig = {
   modelSwitchCalloutDismissed?: boolean // 用户是否选择了"不再显示"
   modelSwitchCalloutLastShown?: number // 上次展示的时间戳（24小时内不再展示）
   modelSwitchCalloutVersion?: string
-
-  // 努力程度提示追踪 — 对 Opus 4.6 用户展示一次
-  effortCalloutDismissed?: boolean // v1 - 旧版，读取以抑制 v2（已看到过的 Pro 用户）
-  effortCalloutV2Dismissed?: boolean
 
   // Remote 弹窗追踪 — 首次启用 bridge 前展示一次
   remoteDialogSeen?: boolean

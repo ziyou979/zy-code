@@ -94,7 +94,7 @@ function WelcomeContent({ separator }: { separator: string }) {
   )
 }
 
-export function WelcomeV2() {
+export function Welcome() {
   const [theme] = useTheme()
   const isLight = ['light', 'light-daltonized', 'light-ansi'].includes(theme)
   const separator = isLight
@@ -102,18 +102,18 @@ export function WelcomeV2() {
     : '……………………………………………………………………………………………………'
 
   if (env.terminal === 'Apple_Terminal') {
-    return <AppleTerminalWelcomeV2 theme={theme} welcomeMessage="Hello, ready to build?" />
+    return <AppleTerminalWelcome theme={theme} welcomeMessage="Hello, ready to build?" />
   }
 
   return <WelcomeContent separator={separator} />
 }
 
-type AppleTerminalWelcomeV2Props = {
+type AppleTerminalWelcomeProps = {
   theme: string
   welcomeMessage: string
 }
 
-function AppleTerminalWelcomeV2({ theme, welcomeMessage }: AppleTerminalWelcomeV2Props) {
+function AppleTerminalWelcome({ theme, welcomeMessage }: AppleTerminalWelcomeProps) {
   const isLightTheme = ['light', 'light-daltonized', 'light-ansi'].includes(theme)
   const separator = isLightTheme
     ? '──────────────────────────────────────────────────────────'

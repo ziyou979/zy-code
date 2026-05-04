@@ -51,7 +51,7 @@ import { plural } from '../utils/stringUtils.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
 import { Divider } from './design-system/Divider.js'
 import type { UnseenDivider } from './FullscreenLayout.js'
-import { LogoV2 } from './LogoV2/LogoV2.js'
+import { Logo } from './Logo/Logo.js'
 import { StreamingMarkdown } from './Markdown.js'
 import { hasContentAfterIndex, MessageRow } from './MessageRow.js'
 import {
@@ -73,7 +73,7 @@ import type { JumpHandle } from './VirtualMessageList.js'
 // prevScreen（blit）——每条 MessageRow 都从头重新写入而不是 blit。
 // 在长会话中（约 2800 条消息），这会导致每帧 150K+ 次写入并将
 // CPU 占用推到 100%。memo 依赖 agentDefinitions，这样新的 messages
-// 数组不会使 logo 子树失效。LogoV2/StatusNotices 内部会订阅
+// 数组不会使 logo 子树失效。Logo/StatusNotices 内部会订阅
 // useAppState/useSettings 来获取自己的更新。
 const LogoHeader = React.memo(function LogoHeader({
   agentDefinitions,
@@ -83,7 +83,7 @@ const LogoHeader = React.memo(function LogoHeader({
   return (
     <OffscreenFreeze>
       <Box flexDirection="column" gap={1}>
-        {<LogoV2 />}
+        {<Logo />}
         <React.Suspense fallback={null}>
           <StatusNotices agentDefinitions={agentDefinitions} />
         </React.Suspense>

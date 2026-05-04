@@ -176,6 +176,7 @@ describe('llm 类型守卫', () => {
     })
 
     test('headers 为 undefined → null', () => {
+      // @ts-ignore
       expect(getHeader({}, 'foo')).toBe(null)
     })
 

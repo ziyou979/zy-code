@@ -68,9 +68,9 @@ export function ConsoleOAuthFlow({
   const orgUUID = settings.forceLoginOrgUUID
   const forcedMethodMessage =
     forceLoginMethod === 'zyai'
-      ? 'Login method pre-selected: Subscription Plan (Zy Pro/Max)'
+      ? tSync('oauth.forceLoginMethod.zyai')
       : forceLoginMethod === 'console'
-        ? 'Login method pre-selected: API Usage Billing (Anthropic Console)'
+        ? tSync('oauth.forceLoginMethod.console')
         : null
   const terminal = useTerminalNotification()
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>(() => {

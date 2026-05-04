@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { extraUsage } from 'src/commands/extra-usage/index.js'
 import { Box, Text } from 'src/ink.js'
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
 import { shouldProcessMockLimits } from 'src/services/rateLimitMocking.js' // Used for /mock-limits command
@@ -78,7 +77,7 @@ export function RateLimitMessage({ text, onOpenRateLimitOptions }: RateLimitMess
   const message = getUpsellMessage({
     shouldShowUpsell,
     isMax20x,
-    isExtraUsageCommandEnabled: extraUsage.isEnabled(),
+    isExtraUsageCommandEnabled: false,
     shouldAutoOpenRateLimitOptionsMenu: !!shouldAutoOpenRateLimitOptionsMenu,
     isTeamOrEnterprise,
     hasBillingAccess: hasZyAiBillingAccess(),

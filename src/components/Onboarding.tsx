@@ -10,7 +10,7 @@ import type { UiLanguage } from '../i18n/types.js'
 import { PROVIDER_REGISTRY } from '../utils/model/providerRegistry.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
-import { WelcomeV2 } from './LogoV2/WelcomeV2.js'
+import { Welcome } from './Logo/Welcome.js'
 import { PressEnterToContinue } from './PressEnterToContinue.js'
 import { ThemePicker } from './ThemePicker.js'
 import { OrderedList } from './ui/OrderedList.js'
@@ -417,7 +417,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
 
   return (
     <Box flexDirection="column">
-      <WelcomeV2 />
+      <Welcome />
       <Box flexDirection="column" marginTop={1}>
         {currentStep?.component}
         {exitState.pending && (

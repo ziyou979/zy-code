@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { extraUsage as extraUsageCommand } from 'src/commands/extra-usage/index.js'
 import { formatCost } from 'src/cost-tracker.js'
 import { getSubscriptionType } from 'src/utils/auth.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
@@ -18,10 +17,6 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { ProgressBar } from '../design-system/ProgressBar.js'
-import {
-  isEligibleForOverageCreditGrant,
-  OverageCreditUpsell,
-} from '../LogoV2/OverageCreditUpsell.js'
 import { tSync } from '../../i18n/index.js'
 type LimitBarProps = {
   title: string
@@ -229,8 +224,6 @@ export function Usage(): React.ReactNode {
         <ExtraUsageSection extraUsage={utilization.extra_usage} maxWidth={maxWidth} />
       )}
 
-      {isEligibleForOverageCreditGrant() && <OverageCreditUpsell maxWidth={maxWidth} />}
-
       <Text dimColor>
         <ConfigurableShortcutHint
           action="confirm:no"
@@ -254,14 +247,6 @@ function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
     return false
   }
   if (!extraUsage.is_enabled) {
-    if (extraUsageCommand.isEnabled()) {
-      return (
-        <Box flexDirection="column">
-          <Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text>
-          <Text dimColor={true}>{tSync('usage.extraUsageNotEnabled')}</Text>
-        </Box>
-      )
-    }
     return null
   }
   if (extraUsage.monthly_limit === null) {

@@ -10,11 +10,9 @@ import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { getOauthAccountInfo, getRateLimitTier } from '../../utils/auth.js'
 import { hasZyAiBillingAccess } from '../../utils/billing.js'
 import { tSync } from '../../i18n/index.js'
-import { call as extraUsageCall } from '../extra-usage/extra-usage.js'
-import { extraUsage } from '../extra-usage/index.js'
 import upgrade from '../upgrade/index.js'
 import { call as upgradeCall } from '../upgrade/upgrade.js'
-type RateLimitOptionsMenuOptionType = 'upgrade' | 'extra-usage' | 'cancel'
+type RateLimitOptionsMenuOptionType = 'upgrade' | 'cancel'
 type RateLimitOptionsMenuProps = {
   onDone: (
     result?: string,
@@ -36,33 +34,6 @@ function RateLimitOptionsMenu({ onDone, context }: RateLimitOptionsMenuProps) {
   const buyFirst = getFeatureValue_CACHED_MAY_BE_STALE('zy_jade_anvil_4', false)
   let options
   const actionOptions = []
-  if (extraUsage.isEnabled()) {
-    const hasBillingAccess = hasZyAiBillingAccess()
-    const needsToRequestFromAdmin = isTeamOrEnterprise && !hasBillingAccess
-    const isOrgSpendCapDepleted =
-      zyAiLimits.overageDisabledReason === 'out_of_credits' ||
-      zyAiLimits.overageDisabledReason === 'org_level_disabled_until' ||
-      zyAiLimits.overageDisabledReason === 'org_service_zero_credit_limit'
-    if (needsToRequestFromAdmin && isOrgSpendCapDepleted) {
-    } else {
-      const isOverageState =
-        zyAiLimits.overageStatus === 'rejected' || zyAiLimits.overageStatus === 'allowed_warning'
-      let label
-      if (needsToRequestFromAdmin) {
-        label = isOverageState
-          ? tSync('rateLimit.requestMore')
-          : tSync('rateLimit.requestExtraUsage')
-      } else {
-        label = hasExtraUsageEnabled
-          ? tSync('rateLimit.addFunds')
-          : tSync('rateLimit.switchToExtraUsage')
-      }
-      actionOptions.push({
-        label,
-        value: 'extra-usage',
-      })
-    }
-  }
   if (!isMax20x && !isTeamOrEnterprise && upgrade.isEnabled()) {
     actionOptions.push({
       label: tSync('rateLimit.upgradePlan'),
@@ -92,19 +63,8 @@ function RateLimitOptionsMenu({ onDone, context }: RateLimitOptionsMenuProps) {
           setSubCommandJSX(jsx)
         }
       })
-    } else {
-      if (value === 'extra-usage') {
-        logEvent('zy_rate_limit_options_menu_select_extra_usage', {})
-        extraUsageCall(onDone, context).then((jsx_0) => {
-          if (jsx_0) {
-            setSubCommandJSX(jsx_0)
-          }
-        })
-      } else {
-        if (value === 'cancel') {
-          handleCancel()
-        }
-      }
+    } else if (value === 'cancel') {
+      handleCancel()
     }
   }
   if (subCommandJSX) {

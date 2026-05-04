@@ -10,7 +10,6 @@ import {
 import { shouldOfferTerminalSetup } from '../../commands/terminalSetup/terminalSetup.js'
 import { getDesktopUpsellConfig } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
 import { color } from '../../components/design-system/color.js'
-import { shouldShowOverageCreditUpsell } from '../../components/LogoV2/OverageCreditUpsell.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { isKairosCronEnabled } from '../../tools/ScheduleCronTool/prompt.js'
 import { isDirectApiClient } from '../../utils/auth.js'
@@ -37,12 +36,6 @@ import { loadKnownMarketplacesConfigSafe } from '../../utils/plugins/marketplace
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
 import { getCurrentSessionAgentColor, isCustomTitleEnabled } from '../../utils/sessionStorage.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import { formatGrantAmount, getCachedOverageCreditGrant } from '../api/overageCreditGrant.js'
-import {
-  checkCachedPassesEligibility,
-  formatCreditAmount,
-  getCachedReferrerReward,
-} from '../api/referral.js'
 import { getSessionsSinceLastShown } from './tipHistory.js'
 // @ts-ignore
 import type { Tip, TipContext } from './types.js'
@@ -556,41 +549,6 @@ const externalTips: Tip[] = [
         ) !== 'off'
       )
     },
-  },
-  {
-    id: 'guest-passes',
-    content: async (ctx) => {
-      const zy = color('zy', ctx.theme)
-      const reward = getCachedReferrerReward()
-      const passes = zy('/passes')
-      return reward
-        ? tSync('tip.guestPasses', { reward: zy(formatCreditAmount(reward)), passes })
-        : tSync('tip.guestPassesNoReward', { passes })
-    },
-    cooldownSessions: 3,
-    isRelevant: async () => {
-      const config = getGlobalConfig()
-      if (config.hasVisitedPasses) {
-        return false
-      }
-      const { eligible } = checkCachedPassesEligibility()
-      return eligible
-    },
-  },
-  {
-    id: 'overage-credit',
-    content: async (ctx) => {
-      const zy = color('zy', ctx.theme)
-      const info = getCachedOverageCreditGrant()
-      const amount = info ? formatGrantAmount(info) : null
-      if (!amount) return ''
-      return tSync('tip.overageCredit', {
-        amount: zy(`${amount} in extra usage, on us`),
-        command: zy('/extra-usage'),
-      })
-    },
-    cooldownSessions: 3,
-    isRelevant: async () => shouldShowOverageCreditUpsell(),
   },
   {
     id: 'feedback-command',

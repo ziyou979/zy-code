@@ -473,11 +473,11 @@ function flattenHljs(
   }
 }
 
-// result.emitter is in the public HighlightResult type, but rootNode is
-// internal to TokenTreeEmitter. Type guard validates the shape once so we
-// fail loudly (via logError) instead of a silent try/catch swallow — the
-// prior `as unknown as` cast hid a version mismatch (_emitter vs emitter,
-// scope vs kind) behind a silent gray fallback.
+// hljs v11 stores emitter in `_emitter` (underscore prefix), not `emitter`.
+// rootNode is internal to TokenTreeEmitter. Type guard validates the shape
+// once so we fail loudly (via logError) instead of a silent try/catch
+// swallow — the prior `as unknown as` cast hid a version mismatch
+// (_emitter vs emitter, scope vs kind) behind a silent gray fallback.
 function hasRootNode(emitter: unknown): emitter is { rootNode: HljsNode } {
   return (
     typeof emitter === 'object' &&
@@ -512,19 +512,19 @@ function highlightLine(
     // hljs throws on unknown language despite ignoreIllegals
     return [[defaultStyle(theme), code]]
   }
-  if (!hasRootNode(result.emitter)) {
+  if (!hasRootNode(result._emitter)) {
     if (!loggedEmitterShapeError) {
       loggedEmitterShapeError = true
       logError(
         new Error(
-          `color-diff: hljs emitter shape mismatch (keys: ${Object.keys(result.emitter).join(',')}). Syntax highlighting disabled.`,
+          `color-diff: hljs emitter shape mismatch (keys: ${Object.keys(result._emitter).join(',')}). Syntax highlighting disabled.`,
         ),
       )
     }
     return [[defaultStyle(theme), code]]
   }
   const blocks: Block[] = []
-  flattenHljs(result.emitter.rootNode, theme, undefined, blocks)
+  flattenHljs(result._emitter.rootNode, theme, undefined, blocks)
   return blocks
 }
 

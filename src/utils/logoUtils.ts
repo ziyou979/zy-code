@@ -10,6 +10,7 @@ import { gt } from './semver.js'
 import { isInternalBuild } from './envUtils.js'
 import { loadMessageLogs } from './sessionStorage.js'
 import { getInitialSettings } from './settings/settings.js'
+import { getAPIProvider } from './model/providers.js'
 
 // Layout constants
 const MAX_LEFT_WIDTH = 50
@@ -35,7 +36,7 @@ export function getLayoutMode(columns: number): LayoutMode {
 }
 
 /**
- * Calculates layout dimensions for the LogoV2 component
+ * Calculates layout dimensions for the Logo component
  */
 export function calculateLayoutDimensions(
   columns: number,
@@ -224,50 +225,85 @@ export function formatReleaseNoteForDisplay(note: string, maxWidth: number): str
 }
 
 /**
- * Gets the common logo display data used by both LogoV2 and CondensedLogo
+ * 获取当前 provider 的展示名称
+ */
+function getProviderDisplayName(): string {
+  const provider = getAPIProvider()
+  const names: Record<string, string> = {
+    dashscope: 'DashScope',
+    deepseek: 'DeepSeek',
+    openai: 'OpenAI',
+    zhipu: 'ZHIPU AI',
+    kimi: 'Kimi',
+    siliconflow: 'SiliconFlow',
+    volcark: '火山引擎 ARK',
+    tencentlke: '腾讯云',
+    minimax: 'MiniMax',
+    baiduqianfan: '百度千帆',
+    huaweicloud: '华为云',
+    openrouter: 'OpenRouter',
+    together: 'Together AI',
+    groq: 'Groq',
+    fireworks: 'Fireworks',
+    perplexity: 'Perplexity',
+    ollama: 'Ollama',
+    lmstudio: 'LM Studio',
+    llamacpp: 'llama.cpp',
+    'nvidia-nim': 'NVIDIA NIM',
+    anthropic: 'Anthropic',
+    generic: '自定义',
+    bedrock: 'AWS Bedrock',
+    vertex: 'Google Vertex AI',
+    foundry: 'Microsoft Foundry',
+  }
+  return names[provider] ?? provider
+}
+
+/**
+ * Gets the common logo display data used by both Logo and CondensedLogo
  */
 export function getLogoDisplayData(): {
   version: string
   cwd: string
-  billingType: string
+  providerName: string
   agentName: string | undefined
 } {
   const version = process.env.DEMO_VERSION ?? MACRO.VERSION
   const serverUrl = getDirectConnectServerUrl()
   const displayPath = process.env.DEMO_VERSION ? '/code/zy' : getDisplayPath(getCwd())
   const cwd = serverUrl ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}` : displayPath
-  const billingType = 'API Usage Billing'
+  const providerName = getProviderDisplayName()
   const agentName = getInitialSettings().agent
 
   return {
     version,
     cwd,
-    billingType,
+    providerName,
     agentName,
   }
 }
 
 /**
- * Determines how to display model and billing information based on available width
+ * Determines how to display model and provider information based on available width
  */
-export function formatModelAndBilling(
+export function formatModelAndProvider(
   modelName: string,
-  billingType: string,
+  providerName: string,
   availableWidth: number,
 ): {
   shouldSplit: boolean
   truncatedModel: string
-  truncatedBilling: string
+  truncatedProvider: string
 } {
   const separator = ' · '
-  const combinedWidth = stringWidth(modelName) + separator.length + stringWidth(billingType)
+  const combinedWidth = stringWidth(modelName) + separator.length + stringWidth(providerName)
   const shouldSplit = combinedWidth > availableWidth
 
   if (shouldSplit) {
     return {
       shouldSplit: true,
       truncatedModel: truncate(modelName, availableWidth),
-      truncatedBilling: truncate(billingType, availableWidth),
+      truncatedProvider: truncate(providerName, availableWidth),
     }
   }
 
@@ -275,9 +311,9 @@ export function formatModelAndBilling(
     shouldSplit: false,
     truncatedModel: truncate(
       modelName,
-      Math.max(availableWidth - stringWidth(billingType) - separator.length, 10),
+      Math.max(availableWidth - stringWidth(providerName) - separator.length, 10),
     ),
-    truncatedBilling: billingType,
+    truncatedProvider: providerName,
   }
 }
 

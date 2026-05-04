@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from 'react'
 import { Box, Text } from '../ink.js'
-import { isMaxSubscriber, isProSubscriber, isTeamSubscriber } from '../utils/auth.js'
-import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import type { EffortLevel } from '../utils/effort.js'
 import {
   convertEffortValueToLevel,
@@ -9,7 +7,6 @@ import {
   getOpusDefaultEffortConfig,
   toPersistableEffort,
 } from '../utils/effort.js'
-import { parseUserSpecifiedModel } from '../utils/model/model.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
@@ -30,9 +27,6 @@ export function EffortCallout({ model, onDone }: Props) {
   const handleCancel = () => {
     onDoneRef.current('dismiss')
   }
-  useEffect(() => {
-    markV2Dismissed()
-  }, [])
   useEffect(() => {
     const timeoutId = setTimeout(handleCancel, AUTO_DISMISS_MS)
     return () => clearTimeout(timeoutId)
@@ -94,57 +88,3 @@ function EffortOptionLabel({ level, text }: { level: EffortLevel; text: string }
   )
 }
 
-/**
- * Check whether to show the effort callout.
- *
- * Audience:
- * - Pro: already had medium default; show unless they saw v1 (effortCalloutDismissed)
- * - Max/Team: getting medium via zy_grey_step2 config; show when enabled
- * - Everyone else: mark as dismissed so it never shows
- */
-export function shouldShowEffortCallout(model: string): boolean {
-  // Only show for Opus 4.6 for now
-  const parsed = parseUserSpecifiedModel(model)
-  if (!parsed.toLowerCase().includes('opus-4-6')) {
-    return false
-  }
-  const config = getGlobalConfig()
-  if (config.effortCalloutV2Dismissed) return false
-
-  // Don't show to brand-new users — they never knew the old default, so this
-  // isn't a change for them. Mark as dismissed so it stays suppressed.
-  if (config.numStartups <= 1) {
-    markV2Dismissed()
-    return false
-  }
-
-  // Pro users already had medium default before this PR. Show the new copy,
-  // but skip if they already saw the v1 dialog — no point nagging twice.
-  if (isProSubscriber()) {
-    if (config.effortCalloutDismissed) {
-      markV2Dismissed()
-      return false
-    }
-    return getOpusDefaultEffortConfig().enabled
-  }
-
-  // Max/Team are the target of the zy_grey_step2 config.
-  // Don't mark dismissed when config is disabled — they should see the dialog
-  // once it's enabled for them.
-  if (isMaxSubscriber() || isTeamSubscriber()) {
-    return getOpusDefaultEffortConfig().enabled
-  }
-
-  // Everyone else (free tier, API key, non-subscribers): not in scope.
-  markV2Dismissed()
-  return false
-}
-function markV2Dismissed(): void {
-  saveGlobalConfig((current) => {
-    if (current.effortCalloutV2Dismissed) return current
-    return {
-      ...current,
-      effortCalloutV2Dismissed: true,
-    }
-  })
-}

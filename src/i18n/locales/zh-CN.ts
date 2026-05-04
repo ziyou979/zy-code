@@ -56,9 +56,6 @@ export const zhCN: TranslationResource = {
   'tip.subagentFanoutA': '说 {cmd}，ZY Code 会派出团队，每个代理深入挖掘，确保没有遗漏。',
   'tip.loopCommandB': '使用 {cmd} 定时运行任何提示。设置后就不用管了。',
   'tip.loopCommandA': '{cmd} 可以按设定的间隔运行任何提示。非常适合监控部署、看管 PR 或轮询状态。',
-  'tip.guestPasses': '分享 ZY Code 并获得 {reward} 额外用量 · {passes}',
-  'tip.guestPassesNoReward': '你有可以分享的访客通行证 · {passes}',
-  'tip.overageCredit': '{amount} · {command}',
   'tip.vscodeCommandInstall':
     '在命令面板（Cmd+Shift+P）中运行"Shell Command: Install \'{command}\' command in PATH"以启用 IDE 集成',
   'tip.ideUpsellExternalTerminal': '将 ZY Code 连接到你的 IDE · /ide',
@@ -371,7 +368,7 @@ export const zhCN: TranslationResource = {
   'logo.welcomeBackUser': '欢迎回来，{username}！',
   'logo.recentActivity': '最近对话',
   'logo.noRecentActivity': '暂无最近对话',
-  'logo.recentActivityFooter': '/resume 查看更多',
+  'logo.recentActivityFooter': '运行 /resume 查看更多',
 
   // Resume conversation
   'resume.loading': '正在加载对话…',
@@ -636,10 +633,10 @@ export const zhCN: TranslationResource = {
   'logo.noPrompt': '无提示',
   'logo.homeDirWarning': '提示：你在主目录下启动了 ZY。为了获得最佳体验，请在项目目录中启动它。',
   'logo.tipsGettingStarted': '入门提示',
-  'logo.guestPassesTitle': '3 个访客通行证',
-  'logo.guestPassesSubtitle': '分享 ZY Code 并获得 {reward} 额外用量',
-  'logo.guestPassesSubtitleNoReward': '与朋友分享 ZY Code',
-  'logo.guestPassesFooter': '/passes',
+
+  // OAuth / Login
+  'oauth.forceLoginMethod.zyai': '已预选登录方式：订阅方案（Zy Pro/Max）',
+  'oauth.forceLoginMethod.console': '已预选登录方式：API 用量计费（Anthropic Console）',
 
   // Bash tool
   'bash.runInBackground': '后台运行',
@@ -1224,8 +1221,6 @@ export const zhCN: TranslationResource = {
   'commands.securityReview': '完成当前分支待更改的安全审查',
   'commands.terminalSetup': '为终端设置换行快捷键',
   'commands.upgrade': '升级到 Max 以获得更高的用量限额和更多 Opus',
-  'commands.extraUsage': '配置额外用量以在达到限额时继续工作',
-  'commands.extraUsageNonInteractive': '配置额外用量以在达到限额时继续工作',
   'commands.rateLimitOptions': '显示达到频率限制时的选项',
   'commands.usage': '显示计划用量限额',
   'commands.insights': '生成分析你的 ZY Code 会话的报告',
@@ -1234,7 +1229,6 @@ export const zhCN: TranslationResource = {
   'commands.thinkbackPlay': '播放 thinkback 动画',
   'commands.permissions': '管理允许和拒绝的工具权限规则',
   'commands.plan': '启用计划模式或查看当前会话计划',
-  'commands.privacySettings': '查看和更新你的隐私设置',
   'commands.hooks': '查看工具事件的钩子配置',
   'commands.export': '将当前对话导出到文件或剪贴板',
   'commands.sandbox': '配置代码执行沙箱',
@@ -1248,7 +1242,6 @@ export const zhCN: TranslationResource = {
     '这不是 git 仓库。`/batch` 命令需要 git 仓库，因为它在隔离的 git worktree 中生成子代理并从每个 worktree 创建 PR。请先初始化一个仓库，或在现有的仓库中运行此命令。',
   'commands.batch.missingInstruction':
     '请提供一条指令，描述你想要进行的批量变更。\n\n示例：\n  /batch 将 react 迁移为 vue\n  /batch 用原生实现替换所有 lodash 的使用\n  /batch 为所有未标注类型的函数参数添加类型注解',
-  'commands.passes': '与朋友分享一周免费 ZY Code 使用权',
   'commands.tasks': '列出和管理后台任务',
   'commands.commit': '创建 git 提交',
   'commands.commitPushPr': '提交、推送并创建拉取请求',
@@ -1391,11 +1384,6 @@ export const zhCN: TranslationResource = {
   'fileEdit.update': '更新',
   'fileEdit.create': '创建',
 
-  // Grove 条款通知
-  'grove.termsNotice':
-    '我们的消费者条款和隐私政策将于 {date} 更新生效。运行 `{command}` 查看更新后的条款。',
-  'grove.termsNoticeActionRequired':
-    '[需要操作] 我们的消费者条款和隐私政策已于 {date} 更新生效。你必须运行 `{command}` 查看更新后的条款。',
 
   // 费用追踪汇总
   'costTracker.totalCost': '总费用',
@@ -2123,15 +2111,6 @@ export const zhCN: TranslationResource = {
   'channels.notOnOrgList': '不在你组织批准的频道列表中',
   'channels.notOnAllowlist': '不在批准的频道白名单中',
 
-  // 访客通行证 Guest passes upsell
-  'guestPasses.shareEarn': '分享 ZY Code 并获得 {reward} 额外用量 · /passes',
-  'guestPasses.threePasses': '3 个访客通行证，前往 /passes',
-
-  // 超额积分 Overage credit
-  'overageCredit.extraUsageText': '{amount} 额外用量，用于第三方应用 · /extra-usage',
-  'overageCredit.extraUsageTitle': '{amount} 额外用量',
-  'overageCredit.subtitle': '免费赠送。适用于第三方应用 · /extra-usage',
-  'overageCredit.defaultTitle': '额外用量积分',
 
   // 语音模式通知 Voice mode notice
   'voiceMode.available': ' 语音模式现已可用 · 运行 /voice 启用',
@@ -2543,19 +2522,6 @@ export const zhCN: TranslationResource = {
   'planApproval.summaryRejected': '[计划被拒绝] {feedback}',
   'planApproval.revisePlanFallback': '请修改你的计划',
 
-  // Guest passes
-  'passes.dialogDismissed': '访客通行证对话框已关闭',
-  'passes.linkCopied': '推荐链接已复制到剪贴板！',
-  'passes.loadingInfo': '正在加载访客通行证信息…',
-  'passes.pressAgainToExit': '再按 {keyName} 退出',
-  'passes.escToCancel': 'Esc 取消',
-  'passes.notAvailable': '访客通行证当前不可用。',
-  'passes.title': '访客通行证 · 剩余 {availableCount}',
-  'passes.shareWithReward':
-    '与朋友分享一周免费的 ZY Code。如果他们喜欢并订阅，你将获得 {creditAmount} 的额外用量继续构建。',
-  'passes.shareWithFriends': '与朋友分享一周免费的 ZY Code。',
-  'passes.termsApply': '适用条款。',
-  'passes.enterCopyEscCancel': 'Enter 复制链接 · Esc 取消',
 
   // OAuth
   'oauth.selectLoginMethod': '选择登录方式：',

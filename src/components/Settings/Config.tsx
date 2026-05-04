@@ -45,7 +45,6 @@ import { ThemePicker } from '../ThemePicker.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
 import { ModelPicker } from '../ModelPicker.js'
 import { modelDisplayString } from '../../utils/model/model.js'
-import { isBilledAsExtraUsage } from '../../utils/extraUsage.js'
 import { zyMdExternalIncludesDialog } from '../ZyMdExternalIncludesDialog.js'
 import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js'
 import { Dialog } from '../design-system/Dialog.js'
@@ -264,7 +263,7 @@ export function Config({
     }))
     setChanges((prev_0) => {
       const valStr =
-        modelDisplayString(value) + (isBilledAsExtraUsage(value) ? ' · Billed as extra usage' : '')
+        modelDisplayString(value)
       if ('model' in prev_0) {
         const { model, ...rest } = prev_0
         return {

@@ -24,7 +24,6 @@ import {
   initializeGrowthBook,
   resetGrowthBook,
 } from './services/analytics/growthbook.js'
-import { isQualifiedForGrove } from './services/api/grove.js'
 import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js'
 import { AppStateProvider } from './state/AppState.js'
 import { onChangeAppState } from './state/onChangeAppState.js'
@@ -247,21 +246,6 @@ export async function showSetupScreens(
   // Defer to next tick so the OTel dynamic import resolves after first render
   // instead of during the pre-render microtask queue.
   setImmediate(() => initializeTelemetryAfterTrust())
-  if (await isQualifiedForGrove()) {
-    const { GroveDialog } = await import('src/components/grove/Grove.js')
-    const decision = await showSetupDialog<string>(root, (done) => (
-      <GroveDialog
-        showIfAlreadyViewed={false}
-        location={onboardingShown ? 'onboarding' : 'policy_update_modal'}
-        onDone={done}
-      />
-    ))
-    if (decision === 'escape') {
-      logEvent('zy_grove_policy_exited', {})
-      gracefulShutdownSync(0)
-      return false
-    }
-  }
 
   // Check for API key from environment variable
   // On homespace, ZY_API_KEY is preserved in process.env for child

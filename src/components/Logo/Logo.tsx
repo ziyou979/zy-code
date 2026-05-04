@@ -12,7 +12,7 @@ import {
   getRecentActivitySync,
   getRecentReleaseNotesSync,
   getLogoDisplayData,
-} from '../../utils/logoV2Utils.js'
+} from '../../utils/logoUtils.js'
 import { truncate } from '../../utils/format.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { Zy } from './Zy.js'
@@ -21,7 +21,6 @@ import {
   createRecentActivityFeed,
   createWhatsNewFeed,
   createProjectOnboardingFeed,
-  createGuestPassesFeed,
 } from './feedConfigs.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config.js'
 import { resolveThemeSetting } from 'src/utils/systemTheme.js'
@@ -41,7 +40,6 @@ import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/utils/startupProfiler.js'
 import { EmergencyTip } from './EmergencyTip.js'
 import { VoiceModeNotice } from './VoiceModeNotice.js'
-import { Opus1mMergeNotice } from './Opus1mMergeNotice.js'
 import { feature } from 'bun:bundle'
 
 // Type declarations for missing components
@@ -60,25 +58,17 @@ const ChannelsNoticeModule =
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
-import { useShowGuestPassesUpsell, incrementGuestPassesSeenCount } from './GuestPassesUpsell.js'
-import {
-  useShowOverageCreditUpsell,
-  incrementOverageCreditUpsellSeenCount,
-  createOverageCreditFeed,
-} from './OverageCreditUpsell.js'
 import { useAppState } from '../../state/AppState.js'
 import { getEffortSuffix } from '../../utils/effort.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { renderModelSetting } from '../../utils/model/model.js'
 const LEFT_PANEL_MAX_WIDTH = 50
-export function LogoV2() {
+export function Logo() {
   const activities = getRecentActivitySync()
   const username = getGlobalConfig().oauthAccount?.displayName ?? ''
   const { columns } = useTerminalSize()
   const showOnboarding = shouldShowProjectOnboarding()
   const showSandboxStatus = SandboxManager.isSandboxingEnabled()
-  const showGuestPassesUpsell = useShowGuestPassesUpsell()
-  const showOverageCreditUpsell = useShowOverageCreditUpsell()
   const agent = useAppState((s) => s.agent)
   const effortValue = useAppState((s_0) => s_0.effortValue)
   const config = getGlobalConfig()
@@ -118,19 +108,9 @@ export function LogoV2() {
   }, [config, showOnboarding])
   const isCondensedMode =
     !hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)
-  useEffect(() => {
-    if (showGuestPassesUpsell && !showOnboarding && !isCondensedMode) {
-      incrementGuestPassesSeenCount()
-    }
-  }, [showGuestPassesUpsell, showOnboarding, isCondensedMode])
-  useEffect(() => {
-    if (showOverageCreditUpsell && !showOnboarding && !showGuestPassesUpsell && !isCondensedMode) {
-      incrementOverageCreditUpsellSeenCount()
-    }
-  }, [showOverageCreditUpsell, showOnboarding, showGuestPassesUpsell, isCondensedMode])
   const model = useMainLoopModel()
   const fullModelDisplayName = renderModelSetting(model)
-  const { version, cwd, billingType, agentName: agentNameFromSettings } = getLogoDisplayData()
+  const { version, cwd, providerName, agentName: agentNameFromSettings } = getLogoDisplayData()
   const agentName = agent ?? agentNameFromSettings
   const effortSuffix = getEffortSuffix(model, effortValue)
   const modelDisplayName = truncate(fullModelDisplayName + effortSuffix, LEFT_PANEL_MAX_WIDTH - 20)
@@ -145,7 +125,6 @@ export function LogoV2() {
       <>
         {<CondensedLogo />}
         {<VoiceModeNotice />}
-        {<Opus1mMergeNotice />}
         {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
         {t15}
         {<EmergencyTip />}
@@ -223,14 +202,13 @@ export function LogoV2() {
               </Box>
             }
             {<Text dimColor={true}>{modelDisplayName}</Text>}
-            <Text dimColor={true}>{billingType}</Text>
+            <Text dimColor={true}>{providerName}</Text>
             <Text dimColor={true}>
               {agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd}
             </Text>
           </Box>
         </OffscreenFreeze>
         {<VoiceModeNotice />}
-        {<Opus1mMergeNotice />}
         {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
         {showSandboxStatus && (
           <Box marginTop={1} flexDirection="column">
@@ -247,8 +225,8 @@ export function LogoV2() {
   const welcomeMessage_0 = formatWelcomeMessage(username)
   const modelLine =
     !process.env.IS_DEMO && config.oauthAccount?.organizationName
-      ? `${modelDisplayName} · ${billingType} · ${config.oauthAccount.organizationName}`
-      : `${modelDisplayName} · ${billingType}`
+      ? `${modelDisplayName} · ${providerName} · ${config.oauthAccount.organizationName}`
+      : `${modelDisplayName} · ${providerName}`
   const cwdAvailableWidth_0 = agentName
     ? LEFT_PANEL_MAX_WIDTH - 1 - stringWidth(agentName) - 3
     : LEFT_PANEL_MAX_WIDTH
@@ -328,14 +306,10 @@ export function LogoV2() {
                               createProjectOnboardingFeed(getSteps()),
                               createRecentActivityFeed(activities),
                             ]
-                          : showGuestPassesUpsell
-                            ? [createRecentActivityFeed(activities), createGuestPassesFeed()]
-                            : showOverageCreditUpsell
-                              ? [createRecentActivityFeed(activities), createOverageCreditFeed()]
-                              : [
-                                  createRecentActivityFeed(activities),
-                                  createWhatsNewFeed(changelog),
-                                ]
+                          : [
+                              createRecentActivityFeed(activities),
+                              createWhatsNewFeed(changelog),
+                            ]
                       }
                       maxWidth={rightWidth}
                     />
@@ -347,7 +321,6 @@ export function LogoV2() {
         </T0>
       }
       {<VoiceModeNotice />}
-      {<Opus1mMergeNotice />}
       {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
       {t32}
       {<EmergencyTip />}

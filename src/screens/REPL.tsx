@@ -403,7 +403,7 @@ import {
   type ActiveSpeculationState,
 } from '../services/PromptSuggestion/speculation.js'
 import { IdeOnboardingDialog } from '../components/IdeOnboardingDialog.js'
-import { EffortCallout, shouldShowEffortCallout } from '../components/EffortCallout.js'
+import { EffortCallout } from '../components/EffortCallout.js'
 import type { EffortValue } from '../utils/effort.js'
 import { RemoteCallout } from '../components/RemoteCallout.js'
 import { activityManager } from '../utils/activityManager.js'
@@ -973,9 +973,7 @@ export function REPL({
   const [ideInstallationStatus, setIDEInstallationStatus] =
     useState<IDEExtensionInstallationStatus | null>(null)
   const [showIdeOnboarding, setShowIdeOnboarding] = useState(false)
-  const [showEffortCallout, setShowEffortCallout] = useState(() =>
-    shouldShowEffortCallout(mainLoopModel),
-  )
+  const [showEffortCallout, setShowEffortCallout] = useState(() => true)
   const showRemoteCallout = useAppState((s) => s.showRemoteCallout)
   const [showDesktopUpsellStartup, setShowDesktopUpsellStartup] = useState(() =>
     shouldShowDesktopUpsellStartup(),
@@ -1923,7 +1921,9 @@ export function REPL({
   const onlySleepToolActive = useMemo(() => {
     const lastAssistant = messages.findLast((m) => m.type === 'assistant')
     if (lastAssistant?.type !== 'assistant') return false
-    const inProgressToolUses = lastAssistant.message.content.filter(
+    const content = lastAssistant.message.content
+    if (!Array.isArray(content)) return false
+    const inProgressToolUses = content.filter(
       (b) => b.type === 'tool_call' && inProgressToolUseIDs.has(b.id),
     )
     return (
@@ -3240,7 +3240,7 @@ export function REPL({
 
       // 将 skill 的 effort 覆盖范围限定为此回合的上下文 —
       // 包装 getAppState 使覆盖不进入全局 store，所以
-      // 后台 agent 和 UI 订阅者（Spinner, LogoV2）永远不会看到它。
+      // 后台 agent 和 UI 订阅者（Spinner, Logo）永远不会看到它。
       if (effort !== undefined) {
         const previousGetAppState = toolUseContext.getAppState
         toolUseContext.getAppState = () => ({
@@ -4062,11 +4062,13 @@ export function REPL({
               }
               contentBlocks.push({
                 type: 'image',
-                source,
+                mimeType: source.mediaType,
+                data: source.data,
               })
               remoteBlocks.push({
                 type: 'image',
-                source,
+                mimeType: source.mediaType,
+                data: source.data,
               })
             } else {
               contentBlocks.push({
@@ -4398,14 +4400,12 @@ export function REPL({
         if (imageBlocks.length > 0) {
           const newPastedContents: Record<number, PastedContent> = {}
           imageBlocks.forEach((block, index) => {
-            if (block.source.type === 'base64') {
-              const id = message.imagePasteIds?.[index] ?? index + 1
-              newPastedContents[id] = {
-                id,
-                type: 'image',
-                content: block.source.data,
-                mediaType: block.source.mediaType,
-              }
+            const id = message.imagePasteIds?.[index] ?? index + 1
+            newPastedContents[id] = {
+              id,
+              type: 'image',
+              content: block.data,
+              mediaType: block.mimeType,
             }
           })
           setPastedContents(newPastedContents)
@@ -5224,7 +5224,6 @@ export function REPL({
           />
         ) : null}
         <CancelRequestHandler {...cancelRequestProps} />
-        {/* @ts-ignore -- FullscreenLayout props may have been extended; transcript mode only uses a subset */}
         {transcriptScrollRef ? (
           <FullscreenLayout
             scrollRef={scrollRef}
@@ -5402,6 +5401,11 @@ export function REPL({
   // 和 scrollable（非 immediate: /config, /theme, /diff, ...）现在都走这里
   const toolJsxCentered = isFullscreenEnvEnabled() && toolJSX?.isLocalJSXCommand === true
   const centeredModal: React.ReactNode = toolJsxCentered ? toolJSX!.jsx : null
+
+  // inner-only：Ultraplan 组件由 feature('ULTRAPLAN') 门控，当前未导入
+  // 使用 stub 组件避免 JSX 中引用未定义变量
+  const UltraplanChoiceDialog: React.FC<Record<string, unknown>> = () => null
+  const UltraplanLaunchDialog: React.FC<Record<string, unknown>> = () => null
 
   // 根部的 <AlternateScreen>：下面的所有内容都在其
   // <Box height={rows}> 内。Handlers/contexts 是零高度所以 ScrollBox 的
@@ -5917,10 +5921,10 @@ export function REPL({
                   <DesktopUpsellStartup onDone={() => setShowDesktopUpsellStartup(false)} />
                 )}
 
-                {/* @ts-ignore -- ant-only: UltraplanChoiceDialog is conditionally imported */}
                 {feature('ULTRAPLAN')
                   ? focusedInputDialog === 'ultraplan-choice' &&
                     ultraplanPendingChoice && (
+                      // @ts-ignore -- ant-only: UltraplanChoiceDialog is conditionally imported
                       <UltraplanChoiceDialog
                         plan={ultraplanPendingChoice.plan}
                         sessionId={ultraplanPendingChoice.sessionId}
@@ -5933,10 +5937,10 @@ export function REPL({
                     )
                   : null}
 
-                {/* @ts-ignore -- ant-only: UltraplanLaunchDialog is conditionally imported */}
                 {feature('ULTRAPLAN')
                   ? focusedInputDialog === 'ultraplan-launch' &&
                     ultraplanLaunchPending && (
+                      // @ts-ignore -- ant-only: UltraplanLaunchDialog is conditionally imported
                       <UltraplanLaunchDialog
                         onChoice={(choice, opts) => {
                           const blurb = ultraplanLaunchPending.blurb

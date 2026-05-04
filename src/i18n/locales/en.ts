@@ -72,9 +72,6 @@ export const en: TranslationResource = {
   'tip.loopCommandB': 'Use {cmd} to run any prompt on a schedule. Set it and forget it.',
   'tip.loopCommandA':
     '{cmd} runs any prompt on a recurring schedule. Great for monitoring deploys, babysitting PRs, or polling status.',
-  'tip.guestPasses': 'Share ZY Code and earn {reward} of extra usage · {passes}',
-  'tip.guestPassesNoReward': 'You have free guest passes to share · {passes}',
-  'tip.overageCredit': '{amount} · {command}',
   'tip.feedbackCommand': 'Use /feedback to help us improve!',
   'tip.clearContext': 'Use /clear to start fresh when switching topics and free up context',
   'tip.btwSideQuestion': 'Use /btw to ask a quick side question without interrupting current work',
@@ -402,10 +399,10 @@ export const en: TranslationResource = {
   'logo.homeDirWarning':
     'Note: You have launched zy in your home directory. For the best experience, launch it in a project directory instead.',
   'logo.tipsGettingStarted': 'Tips for getting started',
-  'logo.guestPassesTitle': '3 guest passes',
-  'logo.guestPassesSubtitle': 'Share ZY Code and earn {reward} of extra usage',
-  'logo.guestPassesSubtitleNoReward': 'Share ZY Code with friends',
-  'logo.guestPassesFooter': '/passes',
+
+  // OAuth / Login
+  'oauth.forceLoginMethod.zyai': 'Login method pre-selected: Subscription Plan (Zy Pro/Max)',
+  'oauth.forceLoginMethod.console': 'Login method pre-selected: API Usage Billing (Anthropic Console)',
 
   // Bash tool
   'bash.runInBackground': 'run in background',
@@ -1183,8 +1180,6 @@ export const en: TranslationResource = {
     'Complete a security review of the pending changes on the current branch',
   'commands.terminalSetup': 'Set up key bindings for newlines in your terminal',
   'commands.upgrade': 'Upgrade to Max for higher rate limits and more Opus',
-  'commands.extraUsage': 'Configure extra usage to keep working when limits are hit',
-  'commands.extraUsageNonInteractive': 'Configure extra usage to keep working when limits are hit',
   'commands.rateLimitOptions': 'Show options when rate limit is reached',
   'commands.usage': 'Show plan usage limits',
   'commands.insights': 'Generate a report analyzing your ZY Code sessions',
@@ -1193,7 +1188,6 @@ export const en: TranslationResource = {
   'commands.thinkbackPlay': 'Play the thinkback animation',
   'commands.permissions': 'Manage allow & deny tool permission rules',
   'commands.plan': 'Enable plan mode or view the current session plan',
-  'commands.privacySettings': 'View and update your privacy settings',
   'commands.hooks': 'View hook configurations for tool events',
   'commands.export': 'Export the current conversation to a file or clipboard',
   'commands.sandbox': 'Configure code execution sandbox',
@@ -1207,7 +1201,6 @@ export const en: TranslationResource = {
     'This is not a git repository. The `/batch` command requires a git repo because it spawns agents in isolated git worktrees and creates PRs from each. Initialize a repo first, or run this from inside an existing one.',
   'commands.batch.missingInstruction':
     'Provide an instruction describing the batch change you want to make.\n\nExamples:\n  /batch migrate from react to vue\n  /batch replace all uses of lodash with native equivalents\n  /batch add type annotations to all untyped function parameters',
-  'commands.passes': 'Share a free week of ZY Code with friends',
   'commands.tasks': 'List and manage background tasks',
   'commands.commit': 'Create a git commit',
   'commands.commitPushPr': 'Commit, push, and open a PR',
@@ -1362,11 +1355,6 @@ export const en: TranslationResource = {
   'fileEdit.update': 'Update',
   'fileEdit.create': 'Create',
 
-  // Grove terms notice
-  'grove.termsNotice':
-    'An update to our Consumer Terms and Privacy Policy will take effect on {date}. Run `{command}` to review the updated terms.',
-  'grove.termsNoticeActionRequired':
-    '[ACTION REQUIRED] An update to our Consumer Terms and Privacy Policy has taken effect on {date}. You must run `{command}` to review the updated terms.',
 
   // Cost tracker summary
   'costTracker.totalCost': 'Total cost',
@@ -2131,15 +2119,6 @@ export const en: TranslationResource = {
   'channels.notOnOrgList': "not on your org's approved channels list",
   'channels.notOnAllowlist': 'not on the approved channels allowlist',
 
-  // Guest passes upsell
-  'guestPasses.shareEarn': 'Share ZY Code and earn {reward} of extra usage · /passes',
-  'guestPasses.threePasses': '3 guest passes at /passes',
-
-  // Overage credit
-  'overageCredit.extraUsageText': '{amount} in extra usage for third-party apps · /extra-usage',
-  'overageCredit.extraUsageTitle': '{amount} in extra usage',
-  'overageCredit.subtitle': 'On us. Works on third-party apps · /extra-usage',
-  'overageCredit.defaultTitle': 'extra usage credit',
 
   // Voice mode notice
   'voiceMode.available': ' Voice mode is now available · /voice to enable',
@@ -2594,19 +2573,6 @@ export const en: TranslationResource = {
   'planApproval.summaryRejected': '[Plan Rejected] {feedback}',
   'planApproval.revisePlanFallback': 'Please revise your plan',
 
-  // Guest passes
-  'passes.dialogDismissed': 'Guest passes dialog dismissed',
-  'passes.linkCopied': 'Referral link copied to clipboard!',
-  'passes.loadingInfo': 'Loading guest pass information…',
-  'passes.pressAgainToExit': 'Press {keyName} again to exit',
-  'passes.escToCancel': 'Esc to cancel',
-  'passes.notAvailable': 'Guest passes are not currently available.',
-  'passes.title': 'Guest passes · {availableCount} left',
-  'passes.shareWithReward':
-    "Share a free week of ZY Code with friends. If they love it and subscribe, you'll get {creditAmount} of extra usage to keep building. ",
-  'passes.shareWithFriends': 'Share a free week of ZY Code with friends. ',
-  'passes.termsApply': 'Terms apply.',
-  'passes.enterCopyEscCancel': 'Enter to copy link · Esc to cancel',
 
   // OAuth
   'oauth.selectLoginMethod': 'Select login method:',

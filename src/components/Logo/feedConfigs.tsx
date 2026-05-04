@@ -1,9 +1,6 @@
 import figures from 'figures'
 import { homedir } from 'os'
-import * as React from 'react'
-import { Box, Text } from '../../ink.js'
 import type { Step } from '../../projectOnboardingState.js'
-import { formatCreditAmount, getCachedReferrerReward } from '../../services/api/referral.js'
 import type { LogOption } from '../../types/logs.js'
 import { getCwd } from '../../utils/cwd.js'
 import { formatRelativeTimeAgo } from '../../utils/format.js'
@@ -70,27 +67,5 @@ export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
   return {
     title: tSync('logo.tipsGettingStarted'),
     lines,
-  }
-}
-export function createGuestPassesFeed(): FeedConfig {
-  const reward = getCachedReferrerReward()
-  const subtitle = reward
-    ? tSync('logo.guestPassesSubtitle', { reward: formatCreditAmount(reward) })
-    : tSync('logo.guestPassesSubtitleNoReward')
-  return {
-    title: tSync('logo.guestPassesTitle'),
-    lines: [],
-    customContent: {
-      content: (
-        <>
-          <Box marginY={1}>
-            <Text color="zy">[✻] [✻] [✻]</Text>
-          </Box>
-          <Text dimColor>{subtitle}</Text>
-        </>
-      ),
-      width: 48,
-    },
-    footer: tSync('logo.guestPassesFooter'),
   }
 }

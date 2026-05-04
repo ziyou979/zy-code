@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useEffect } from 'react'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -8,47 +7,25 @@ import { useAppState } from '../../state/AppState.js'
 import { getEffortSuffix } from '../../utils/effort.js'
 import { truncate } from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
-import { formatModelAndBilling, getLogoDisplayData, truncatePath } from '../../utils/logoV2Utils.js'
+import { formatModelAndProvider, getLogoDisplayData, truncatePath } from '../../utils/logoUtils.js'
 import { renderModelSetting } from '../../utils/model/model.js'
 import { OffscreenFreeze } from '../OffscreenFreeze.js'
 import { AnimatedZy } from './AnimatedZy.js'
 import { Zy } from './Zy.js'
-import {
-  GuestPassesUpsell,
-  incrementGuestPassesSeenCount,
-  useShowGuestPassesUpsell,
-} from './GuestPassesUpsell.js'
-import {
-  incrementOverageCreditUpsellSeenCount,
-  OverageCreditUpsell,
-  useShowOverageCreditUpsell,
-} from './OverageCreditUpsell.js'
 export function CondensedLogo() {
   const { columns } = useTerminalSize()
   const agent = useAppState((s) => s.agent)
   const effortValue = useAppState((s_0) => s_0.effortValue)
   const model = useMainLoopModel()
   const modelDisplayName = renderModelSetting(model)
-  const { version, cwd, billingType, agentName: agentNameFromSettings } = getLogoDisplayData()
+  const { version, cwd, providerName, agentName: agentNameFromSettings } = getLogoDisplayData()
   const agentName = agent ?? agentNameFromSettings
-  const showGuestPassesUpsell = useShowGuestPassesUpsell()
-  const showOverageCreditUpsell = useShowOverageCreditUpsell()
-  useEffect(() => {
-    if (showGuestPassesUpsell) {
-      incrementGuestPassesSeenCount()
-    }
-  }, [showGuestPassesUpsell])
-  useEffect(() => {
-    if (showOverageCreditUpsell && !showGuestPassesUpsell) {
-      incrementOverageCreditUpsellSeenCount()
-    }
-  }, [showOverageCreditUpsell, showGuestPassesUpsell])
   const textWidth = Math.max(columns - 15, 20)
   const truncatedVersion = truncate(version, Math.max(textWidth - 13, 6))
   const effortSuffix = getEffortSuffix(model, effortValue)
-  const { shouldSplit, truncatedModel, truncatedBilling } = formatModelAndBilling(
+  const { shouldSplit, truncatedModel, truncatedProvider } = formatModelAndProvider(
     modelDisplayName + effortSuffix,
-    billingType,
+    providerName,
     textWidth,
   )
   const cwdAvailableWidth = agentName ? textWidth - 1 - stringWidth(agentName) - 3 : textWidth
@@ -67,11 +44,11 @@ export function CondensedLogo() {
           {shouldSplit ? (
             <>
               <Text dimColor={true}>{truncatedModel}</Text>
-              <Text dimColor={true}>{truncatedBilling}</Text>
+              <Text dimColor={true}>{truncatedProvider}</Text>
             </>
           ) : (
             <Text dimColor={true}>
-              {truncatedModel} · {truncatedBilling}
+              {truncatedModel} · {truncatedProvider}
             </Text>
           )}
           {
@@ -79,10 +56,6 @@ export function CondensedLogo() {
               {agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd}
             </Text>
           }
-          {showGuestPassesUpsell && <GuestPassesUpsell />}
-          {!showGuestPassesUpsell && showOverageCreditUpsell && (
-            <OverageCreditUpsell maxWidth={textWidth} twoLine={true} />
-          )}
         </Box>
       </Box>
     </OffscreenFreeze>

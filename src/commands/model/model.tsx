@@ -9,7 +9,6 @@ import {
 } from '../../services/analytics/index.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall } from '../../types/command.js'
-import { isBilledAsExtraUsage } from '../../utils/extraUsage.js'
 
 import { MODEL_ALIASES } from '../../utils/model/aliases.js'
 import {
@@ -45,9 +44,6 @@ function ModelPickerWrapper({ onDone }) {
     let message = `Set model to ${chalk.bold(renderModelLabel(model))}`
     if (effort !== undefined) {
       message = message + ` with ${chalk.bold(effort)} effort`
-    }
-    if (isBilledAsExtraUsage(model)) {
-      message = message + ' \xB7 Billed as extra usage'
     }
     onDone(message)
   }
@@ -121,9 +117,6 @@ function SetModelAndClose({
         mainLoopModelForSession: null,
       }))
       let message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`
-      if (isBilledAsExtraUsage(modelValue)) {
-        message += ` · Billed as extra usage`
-      }
       onDone(message)
     }
     void handleModelChange()

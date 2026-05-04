@@ -92,8 +92,6 @@ import thinkback from './commands/thinkback/index.js'
 import thinkbackPlay from './commands/thinkback-play/index.js'
 import permissions from './commands/permissions/index.js'
 import plan from './commands/plan/index.js'
-import passes from './commands/passes/index.js'
-import privacySettings from './commands/privacy-settings/index.js'
 import hooks from './commands/hooks/index.js'
 import files from './commands/files/index.js'
 import branch from './commands/branch/index.js'
@@ -136,7 +134,6 @@ import tag from './commands/tag/index.js'
 import outputStyle from './commands/output-style/index.js'
 import remoteEnv from './commands/remote-env/index.js'
 import upgrade from './commands/upgrade/index.js'
-import { extraUsage, extraUsageNonInteractive } from './commands/extra-usage/index.js'
 import rateLimitOptions from './commands/rate-limit-options/index.js'
 import statusline from './commands/statusline.js'
 import effort from './commands/effort/index.js'
@@ -259,8 +256,6 @@ const COMMANDS = memoize((): Command[] => [
   securityReview,
   terminalSetup,
   upgrade,
-  extraUsage,
-  extraUsageNonInteractive,
   rateLimitOptions,
   usage,
   usageReport,
@@ -278,12 +273,10 @@ const COMMANDS = memoize((): Command[] => [
   thinkbackPlay,
   permissions,
   plan,
-  privacySettings,
   hooks,
   exportCommand,
   sandboxToggle,
   ...[logout, login()],
-  passes,
   ...(peersCmd ? [peersCmd] : []),
   tasks,
   ...(workflowsCmd ? [workflowsCmd] : []),
@@ -697,7 +690,6 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'security-review': 'commands.securityReview',
   'terminal-setup': 'commands.terminalSetup',
   upgrade: 'commands.upgrade',
-  'extra-usage': 'commands.extraUsage',
   'rate-limit-options': 'commands.rateLimitOptions',
   usage: 'commands.usage',
   insights: 'commands.insights',
@@ -706,13 +698,11 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'thinkback-play': 'commands.thinkbackPlay',
   permissions: 'commands.permissions',
   plan: 'commands.plan',
-  'privacy-settings': 'commands.privacySettings',
   hooks: 'commands.hooks',
   export: 'commands.export',
   sandbox: 'commands.sandbox',
   logout: 'commands.logout',
   login: 'commands.login',
-  passes: 'commands.passes',
   tasks: 'commands.tasks',
   commit: 'commands.commit',
   'commit-push-pr': 'commands.commitPushPr',

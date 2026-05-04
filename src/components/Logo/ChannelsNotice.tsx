@@ -1,4 +1,4 @@
-// Conditionally require()'d in LogoV2.tsx behind feature('KAIROS') ||
+// Conditionally require()'d in Logo.tsx behind feature('KAIROS') ||
 // feature('KAIROS_CHANNELS'). No feature() guard here — the whole file
 // tree-shakes via the require pattern when both flags are false (see
 // docs/feature-gating.md). Do NOT import this module statically from

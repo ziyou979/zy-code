@@ -51,7 +51,6 @@ import {
   type FilesApiConfig,
   parseFileSpecs,
 } from './services/api/filesApi.js'
-import { prefetchPassesEligibility } from './services/api/referral.js'
 import { warmI18n } from './i18n/index.js'
 import { prefetchOfficialMcpUrls } from './services/mcp/officialRegistry.js'
 import type {
@@ -3146,7 +3145,6 @@ async function run(): Promise<CommanderCommand> {
         void fetchBootstrapData()
 
         // TODO: Consolidate other prefetches into a single bootstrap request.
-        void prefetchPassesEligibility()
         if (bgRefreshThrottleMs > 0) {
           saveGlobalConfig((current) => ({
             ...current,
@@ -3878,9 +3876,7 @@ async function run(): Promise<CommanderCommand> {
       }
       const initialTools = mcpTools
 
-      // 同步递增 numStartups —— 首次渲染读取器如
-      // shouldShowEffortCallout（通过 useState 初始化器）需要在 setImmediate 触发之前获得更新的
-      // 值。仅延迟遥测。
+      // 同步递增 numStartups，仅延迟遥测。
       saveGlobalConfig((current) => ({
         ...current,
         numStartups: (current.numStartups ?? 0) + 1,

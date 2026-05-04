@@ -1217,26 +1217,6 @@ export function getSubscriptionType(): SubscriptionType | null {
   return oauthTokens.subscriptionType ?? null
 }
 
-export function isMaxSubscriber(): boolean {
-  return (getSubscriptionType() as any) === 'max'
-}
-
-export function isTeamSubscriber(): boolean {
-  return (getSubscriptionType() as any) === 'team'
-}
-
-export function isTeamPremiumSubscriber(): boolean {
-  return (getSubscriptionType() as any) === 'team' && getRateLimitTier() === 'default_Zy_max_5x'
-}
-
-export function isEnterpriseSubscriber(): boolean {
-  return (getSubscriptionType() as any) === 'enterprise'
-}
-
-export function isProSubscriber(): boolean {
-  return (getSubscriptionType() as any) === 'pro'
-}
-
 export function getRateLimitTier(): string | null {
   if (!isAuthEnabled()) {
     return null
