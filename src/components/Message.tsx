@@ -123,7 +123,7 @@ function MessageImpl({
           onOpenRateLimitOptions={onOpenRateLimitOptions}
           thinkingBlockId={`${message.uuid}:${index_0}` as any}
           lastThinkingBlockId={lastThinkingBlockId as any}
-          advisorModel={(message as any).advisorModel}
+          advisorModel={message.advisorModel}
         />
       )
       t3 = message.message.content.map(t4)
@@ -300,7 +300,7 @@ function UserMessage({
           addMargin={addMargin}
           param={param as any}
           verbose={verbose}
-          planContent={(message as any).planContent}
+          planContent={message.planContent}
           isTranscriptMode={isTranscriptMode}
           timestamp={message.timestamp}
         />

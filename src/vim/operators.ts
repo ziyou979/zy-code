@@ -452,6 +452,102 @@ function applyOperator(
   }
 }
 
+/**
+ * 在 visual mode 中对选区执行操作符。
+ * 选区由 anchor（按 v 时的偏移量）和当前光标位置定义。
+ */
+export function executeVisualOperator(
+  op: Operator,
+  anchor: number,
+  cursorOffset: number,
+  ctx: OperatorContext,
+): void {
+  if (anchor === cursorOffset) return
+
+  const from = Math.min(anchor, cursorOffset)
+  const to = Math.max(anchor, cursorOffset)
+  // 选区包含结束字符（vim visual mode inclusive）
+  const inclusiveTo = ctx.cursor.measuredText.nextOffset(to)
+
+  applyOperator(op, from, inclusiveTo, ctx)
+}
+
+/**
+ * 在 visual mode 中对选区中的每一行执行缩进。
+ */
+export function executeVisualIndent(
+  dir: '>' | '<',
+  anchor: number,
+  cursorOffset: number,
+  ctx: OperatorContext,
+): void {
+  const from = Math.min(anchor, cursorOffset)
+  const to = Math.max(anchor, cursorOffset)
+
+  let lineStart = from
+  while (lineStart > 0 && ctx.text[lineStart - 1] !== '\n') lineStart--
+
+  let lineEnd = to
+  while (lineEnd < ctx.text.length && ctx.text[lineEnd] !== '\n') lineEnd++
+
+  const affectedText = ctx.text.slice(lineStart, lineEnd)
+  const lines = affectedText.split('\n')
+  const indent = '  '
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? ''
+    if (dir === '>') {
+      lines[i] = indent + line
+    } else if (line.startsWith(indent)) {
+      lines[i] = line.slice(indent.length)
+    } else if (line.startsWith('\t')) {
+      lines[i] = line.slice(1)
+    } else {
+      let removed = 0
+      let idx = 0
+      while (idx < line.length && removed < indent.length && /\s/.test(line[idx]!)) {
+        removed++
+        idx++
+      }
+      lines[i] = line.slice(idx)
+    }
+  }
+
+  const newText = ctx.text.slice(0, lineStart) + lines.join('\n') + ctx.text.slice(lineEnd)
+  ctx.setText(newText)
+  ctx.setOffset(lineStart)
+  ctx.recordChange({ type: 'indent', dir, count: 1 })
+}
+
+/**
+ * 在 visual mode 中对选区中的每个字符切换大小写。
+ */
+export function executeVisualToggleCase(
+  anchor: number,
+  cursorOffset: number,
+  ctx: OperatorContext,
+): void {
+  const from = Math.min(anchor, cursorOffset)
+  const to = Math.max(anchor, cursorOffset)
+  const inclusiveTo = ctx.cursor.measuredText.nextOffset(to)
+
+  let newText = ctx.text
+  let offset = from
+
+  while (offset < inclusiveTo && offset < newText.length) {
+    const grapheme = firstGrapheme(newText.slice(offset))
+    const graphemeLen = grapheme.length
+    const toggled =
+      grapheme === grapheme.toUpperCase() ? grapheme.toLowerCase() : grapheme.toUpperCase()
+    newText = newText.slice(0, offset) + toggled + newText.slice(offset + graphemeLen)
+    offset += toggled.length
+  }
+
+  ctx.setText(newText)
+  ctx.setOffset(from)
+  ctx.recordChange({ type: 'toggleCase', count: 1 })
+}
+
 export function executeOperatorG(op: Operator, count: number, ctx: OperatorContext): void {
   // count=1 means no count given, target = end of file
   // otherwise target = line N

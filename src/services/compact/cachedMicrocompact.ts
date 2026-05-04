@@ -1,5 +1,3 @@
-// Stub for src/services/compact/cachedMicrocompact.ts
-
 export type CachedMCState = {
   enabled: boolean
 }
@@ -15,5 +13,17 @@ export type PinnedCacheEdits = {
 }
 
 export function getCachedMCState(): CachedMCState {
-  return { enabled: false }
+  return { enabled: true }
+}
+
+export function createCachedMCState(): CachedMCState {
+  return { enabled: true }
+}
+
+export function markToolsSentToAPI(_state: CachedMCState): void {
+  // no-op: ZY Code 暂不需要跟踪发送到 API 的工具
+}
+
+export function resetCachedMCState(_state: CachedMCState): void {
+  _state.enabled = true
 }

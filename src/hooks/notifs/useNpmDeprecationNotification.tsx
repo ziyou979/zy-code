@@ -3,7 +3,7 @@ import { getCurrentInstallationType } from 'src/utils/doctorDiagnostic.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { useStartupNotification } from './useStartupNotification.js'
 const NPM_DEPRECATION_MESSAGE =
-  'ZY Code has switched from npm to native installer. Run `zy install` or see https://docs.anthropic.com/en/docs/zy-code/getting-started for more options.'
+  'ZY Code has switched from npm to native installer. Run `zy install` for more options.'
 export function useNpmDeprecationNotification() {
   useStartupNotification(_temp as any)
 }

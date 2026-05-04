@@ -131,15 +131,15 @@ const WorkflowDetailDialog = feature('WORKFLOW_SCRIPTS')
 const workflowTaskModule = feature('WORKFLOW_SCRIPTS')
   ? (require('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js') as typeof import('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js'))
   : null
-const killWorkflowTask = (workflowTaskModule as any)?.killWorkflowTask ?? null
-const skipWorkflowAgent = (workflowTaskModule as any)?.skipWorkflowAgent ?? null
-const retryWorkflowAgent = (workflowTaskModule as any)?.retryWorkflowAgent ?? null
+const killWorkflowTask = workflowTaskModule?.killWorkflowTask ?? null
+const skipWorkflowAgent = workflowTaskModule?.skipWorkflowAgent ?? null
+const retryWorkflowAgent = workflowTaskModule?.retryWorkflowAgent ?? null
 // 相对路径，而非 `src/...` 路径映射——Bun 的 DCE 可以静态解析并消除 `./` require，
 // 但路径映射的字符串保持不透明，会作为死文字保留在包中。与 tasks.ts 模式一致。
 const monitorMcpModule = feature('MONITOR_TOOL')
   ? (require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js'))
   : null
-const killMonitorMcp = (monitorMcpModule as any)?.killMonitorMcp ?? null
+const killMonitorMcp = monitorMcpModule?.killMonitorMcp ?? null
 // @ts-ignore
 const MonitorMcpDetailDialog = feature('MONITOR_TOOL')
   ? (require('./MonitorMcpDetailDialog.js') as typeof import('./MonitorMcpDetailDialog.js'))

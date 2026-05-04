@@ -594,7 +594,7 @@ export const zhCN: TranslationResource = {
   'backgroundTaskStatus.toView': '查看',
 
   // Shell progress
-  'shellProgress.timeout': '超时',
+  'shellProgress.timeout': '执行超时',
   'shellProgress.lines': '行',
   'shellProgress.done': '完成',
   'shellProgress.error': '错误',
@@ -1426,7 +1426,7 @@ export const zhCN: TranslationResource = {
 
   // 错误工具
   'errorUtils.ssl.hint':
-    'SSL 证书错误（{code}）。如果你在企业代理或 TLS 拦截防火墙后面，请设置 NODE_EXTRA_CA_CERTS 为你的 CA 证书包路径，或联系 IT 将 *.anthropic.com 加入白名单。运行 /doctor 查看详情。',
+    'SSL 证书错误（{code}）。如果你在企业代理或 TLS 拦截防火墙后面，请设置 NODE_EXTRA_CA_CERTS 为你的 CA 证书包路径，或联系 IT 将 *.zy.ai 加入白名单。运行 /doctor 查看详情。',
   'errorUtils.ssl.certVerificationFailed':
     '无法连接 API：SSL 证书验证失败。请检查代理或企业 SSL 证书',
   'errorUtils.ssl.certExpired': '无法连接 API：SSL 证书已过期',
@@ -2651,4 +2651,7 @@ export const zhCN: TranslationResource = {
   'copy.message_other': '消息',
   'copy.charsLines': '{charCount} 个字符，{lineCount} 行',
   'copy.lines': '{count} 行',
+
+  'settings.missingStandardModel':
+    '未配置 standard 模型。请使用 /config 命令或编辑 settings.json 设置 models.standard。',
 }

@@ -104,7 +104,7 @@ import { getLoggingSafeMcpBaseUrl } from './utils.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fetchMcpSkillsForClient = feature('MCP_SKILLS')
-  ? (require('../../skills/mcpSkills.js') as any).fetchMcpSkillsForClient
+  ? (require('../../skills/mcpSkills.js') as typeof import('../../skills/mcpSkills.js')).fetchMcpSkillsForClient
   : null
 
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'

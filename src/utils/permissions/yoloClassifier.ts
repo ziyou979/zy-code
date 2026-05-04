@@ -51,16 +51,16 @@ const BASE_PROMPT: string = feature('TRANSCRIPT_CLASSIFIER')
   ? txtRequire(require('./yolo-classifier-prompts/auto_mode_system_prompt.txt'))
   : ''
 
-// 外部模板单独加载，因此即使在 ant 构建中也可用于
-// `zy auto-mode defaults`。ant 构建在运行时使用
-// permissions_anthropic.txt，但应转储外部默认值。
+// 外部模板单独加载，因此即使在内部构建中也可用于
+// `zy auto-mode defaults`。内部构建在运行时使用
+// permissions_internal.txt，但应转储外部默认值。
 const EXTERNAL_PERMISSIONS_TEMPLATE: string = feature('TRANSCRIPT_CLASSIFIER')
   ? txtRequire(require('./yolo-classifier-prompts/permissions_external.txt'))
   : ''
 
-const ANTHROPIC_PERMISSIONS_TEMPLATE: string =
+const INTERNAL_PERMISSIONS_TEMPLATE: string =
   feature('TRANSCRIPT_CLASSIFIER') && isInternalBuild()
-    ? txtRequire(require('./yolo-classifier-prompts/permissions_anthropic.txt'))
+    ? txtRequire(require('./yolo-classifier-prompts/permissions_internal.txt'))
     : ''
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 
@@ -88,7 +88,7 @@ export type AutoModeRules = {
  * 捕获的标签内容就是默认值。列表项在模板中为单行；
  * 每行以 `- ` 开头的内容成为一个数组条目。
  * 由 `zy auto-mode defaults` 使用。始终返回外部默认值，
- * 从不返回 Anthropic 内部模板。
+ * 从不返回内部模板。
  */
 export function getDefaultExternalAutoModeRules(): AutoModeRules {
   return {
@@ -453,7 +453,7 @@ function buildzyMdMessage(): LLMMessage | null {
 export async function buildYoloSystemPrompt(context: ToolPermissionContext): Promise<string> {
   const usingExternal = isUsingExternalPermissions()
   const systemPrompt = BASE_PROMPT.replace('<permissions_template>', () =>
-    usingExternal ? EXTERNAL_PERMISSIONS_TEMPLATE : ANTHROPIC_PERMISSIONS_TEMPLATE,
+    usingExternal ? EXTERNAL_PERMISSIONS_TEMPLATE : INTERNAL_PERMISSIONS_TEMPLATE,
   )
 
   const autoMode = getAutoModeConfig()
@@ -472,7 +472,7 @@ export async function buildYoloSystemPrompt(context: ToolPermissionContext): Pro
   // 三个部分都使用相同的 <foo_to_replace>...</foo_to_replace>
   // 分隔符模式。外部模板将其默认值包装在
   // 标签内，因此用户提供的值完全替换默认值。
-  // Anthropic 模板将默认值保留在标签外，并在每部分
+  // 内部模板将默认值保留在标签外，并在每部分
   // 末尾使用空标签对，因此用户提供的值严格是
   // 附加的。
   const userAllow = allowDescriptions.length
@@ -618,7 +618,7 @@ function replaceOutputFormatWithXml(systemPrompt: string): string {
  *
  * 对于大多数模型：通过 sideQuery 的 `thinking: false` 发送 { type: 'disabled' }。
  *
- * 具有 alwaysOnThinking 的模型（在 zy_ant_model_override 中声明）默认
+ * 具有 alwaysOnThinking 的模型（在模型覆盖配置中声明）默认
  * 在服务器端使用自适应 thinking，并以 400 拒绝 `disabled`。对于这些模型：
  * 不传递 `thinking: false`，而是填充 max_tokens 以便自适应 thinking
  * （观察到的 0-1114 tokens，重放 go/ccshare/shawnm-20260310-202833）不会
@@ -1210,8 +1210,8 @@ type AutoModeConfig = {
    */
   twoStageClassifier?: boolean | 'fast' | 'thinking'
   /**
-   * Ant builds normally use permissions_anthropic.txt; when true, use
-   * permissions_external.txt instead (dogfood the external template).
+   * 内部构建默认使用 permissions_internal.txt; 当此值为 true 时，改用
+   * permissions_external.txt instead (内部测试用外部模板).
    */
   forceExternalPermissions?: boolean
   /**
@@ -1223,7 +1223,7 @@ type AutoModeConfig = {
 
 /**
  * 获取分类器的模型。
- * 仅 ant 的环境变量优先，然后是 GrowthBook JSON 配置覆盖，
+ * 内部构建的环境变量优先，然后是 GrowthBook JSON 配置覆盖，
  * 最后是主循环模型。
  */
 function getClassifierModel(): string {
@@ -1239,7 +1239,7 @@ function getClassifierModel(): string {
 }
 
 /**
- * 解析 XML 分类器设置：仅 ant 的环境变量优先，
+ * 解析 XML 分类器设置：内部构建的环境变量优先，
  * 然后是 GrowthBook。未设置时返回 undefined（由调用者决定默认值）。
  */
 function resolveTwoStageClassifier(): boolean | 'fast' | 'thinking' | undefined {

@@ -17,10 +17,10 @@ import type { MCPServerConnection, ScopedMcpServerConfig, ServerResource } from 
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fetchMcpSkillsForClient = feature('MCP_SKILLS')
-  ? (require('../../skills/mcpSkills.js') as any).fetchMcpSkillsForClient
+  ? (require('../../skills/mcpSkills.js') as typeof import('../../skills/mcpSkills.js')).fetchMcpSkillsForClient
   : null
 const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('../skillSearch/localSearch.js') as any).clearSkillIndexCache
+  ? (require('../skillSearch/localSearch.js') as typeof import('../skillSearch/localSearch.js')).clearSkillIndexCache
   : null
 
 import {

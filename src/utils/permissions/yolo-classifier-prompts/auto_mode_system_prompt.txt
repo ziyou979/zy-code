@@ -1,0 +1,9 @@
+Auto mode classifier system prompt placeholder.
+<permissions_template>
+<user_allow_rules_to_replace>
+</user_allow_rules_to_replace>
+<user_deny_rules_to_replace>
+</user_deny_rules_to_replace>
+<user_environment_to_replace>
+</user_environment_to_replace>
+</permissions_template>

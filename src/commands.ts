@@ -67,7 +67,7 @@ const remoteControlServerCommand =
 const voiceCommand = feature('VOICE_MODE') ? require('./commands/voice/index.js').default : null
 const forceSnip = feature('HISTORY_SNIP') ? require('./commands/force-snip.js').default : null
 const workflowsCmd = feature('WORKFLOW_SCRIPTS')
-  ? (require('./commands/workflows/index.js') as any).default
+  ? (require('./commands/workflows/index.js') as typeof import('./commands/workflows/index.js')).default
   : null
 const webCmd = feature('CCR_REMOTE_SETUP')
   ? (
@@ -75,18 +75,18 @@ const webCmd = feature('CCR_REMOTE_SETUP')
     ).default
   : null
 const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('./services/skillSearch/localSearch.js') as any).clearSkillIndexCache
+  ? (require('./services/skillSearch/localSearch.js') as typeof import('./services/skillSearch/localSearch.js')).clearSkillIndexCache
   : null
 const subscribePr = feature('KAIROS_GITHUB_WEBHOOKS')
   ? require('./commands/subscribe-pr.js').default
   : null
 const ultraplan = feature('ULTRAPLAN') ? require('./commands/ultraplan.js').default : null
 const torch = feature('TORCH') ? require('./commands/torch.js').default : null
-const peersCmd = feature('UDS_INBOX') ? (require('./commands/peers/index.js') as any).default : null
+const peersCmd = feature('UDS_INBOX') ? (require('./commands/peers/index.js') as typeof import('./commands/peers/index.js')).default : null
 const forkCmd = feature('FORK_SUBAGENT')
-  ? (require('./commands/fork/index.js') as any).default
+  ? (require('./commands/fork/index.js') as typeof import('./commands/fork/index.js')).default
   : null
-const buddy = feature('BUDDY') ? (require('./commands/buddy/index.js') as any).default : null
+const buddy = feature('BUDDY') ? (require('./commands/buddy/index.js') as typeof import('./commands/buddy/index.js')).default : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import thinkback from './commands/thinkback/index.js'
 import thinkbackPlay from './commands/thinkback-play/index.js'
@@ -342,7 +342,7 @@ async function getSkills(cwd: string): Promise<{
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getWorkflowCommands = feature('WORKFLOW_SCRIPTS')
-  ? (require('./tools/WorkflowTool/createWorkflowCommand.js') as any).getWorkflowCommands
+  ? (require('./tools/WorkflowTool/createWorkflowCommand.js') as typeof import('./tools/WorkflowTool/createWorkflowCommand.js')).getWorkflowCommands
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

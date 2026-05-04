@@ -1,7 +1,7 @@
 export const PR_TITLE = 'Add ZY Code GitHub Workflow'
 
 export const GITHUB_ACTION_SETUP_DOCS_URL =
-  'https://github.com/anthropics/zy-code-action/blob/main/docs/setup.md'
+  'https://github.com/zy-ai/zy-code-action/blob/main/docs/setup.md'
 
 export const WORKFLOW_CONTENT = `name: ZY Code
 
@@ -37,9 +37,9 @@ jobs:
 
       - name: Run ZY Code
         id: zy
-        uses: anthropics/zy-code-action@v1
+        uses: zy-ai/zy-code-action@v1
         with:
-          anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}
+          zy_code_api_key: \${{ secrets.ZY_CODE_API_KEY }}
 
           # This is an optional setting that allows Zy to read CI results on PRs
           additional_permissions: |
@@ -49,7 +49,7 @@ jobs:
           # prompt: 'Update the pull request description to include a summary of changes.'
 
           # Optional: Add zy_args to customize behavior and configuration
-          # See https://github.com/anthropics/zy-code-action/blob/main/docs/usage.md
+          # See https://github.com/zy-ai/zy-code-action/blob/main/docs/usage.md
           # or https://code.zy.com/docs/en/cli-reference for available options
           # zy_args: '--allowed-tools Bash(gh pr:*)'
 
@@ -93,7 +93,7 @@ Once the workflow is triggered, Zy will analyze the comment and surrounding cont
 allowed_tools: Bash(npm install),Bash(npm run build),Bash(npm run lint),Bash(npm run test)
 \`\`\`
 
-There's more information in the [Zy Code action repo](https://github.com/anthropics/zy-code-action).
+There's more information in the [Zy Code action repo](https://github.com/zy-ai/zy-code-action).
 
 After merging this PR, let's try mentioning @zy in a comment on any PR to get started!`
 
@@ -132,13 +132,13 @@ jobs:
 
       - name: Run ZY Code Review
         id: zy-review
-        uses: anthropics/zy-code-action@v1
+        uses: zy-ai/zy-code-action@v1
         with:
-          anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}
-          plugin_marketplaces: 'https://github.com/anthropics/zy-code.git'
+          zy_code_api_key: \${{ secrets.ZY_CODE_API_KEY }}
+          plugin_marketplaces: 'https://github.com/zy-ai/zy-code.git'
           plugins: 'code-review@zy-code-plugins'
           prompt: '/code-review:code-review \${{ github.repository }}/pull/\${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/zy-code-action/blob/main/docs/usage.md
+          # See https://github.com/zy-ai/zy-code-action/blob/main/docs/usage.md
           # or https://code.zy.com/docs/en/cli-reference for available options
 
 `

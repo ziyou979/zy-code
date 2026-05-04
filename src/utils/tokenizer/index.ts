@@ -42,7 +42,7 @@ const MODEL_PREFIX_TO_ENCODING: Array<[string, TiktokenEncoding]> = [
   ['o4', 'o200k_base'],
   ['chatgpt-4o', 'o200k_base'],
 
-  // Claude 系列 — 近似（Claude 的 tokenizer 未公开，cl100k_base 误差约 5-10%）
+  // Claude 系列 — 近似（tokenizer 未公开，cl100k_base 误差约 5-10%）
   ['claude', 'cl100k_base'],
 
   // DeepSeek — 近似（BBPE 128K 词表，cl100k_base 是最接近的公开编码）

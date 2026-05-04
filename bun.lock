@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "claude-code",
+      "name": "zy-code",
       "dependencies": {
         "@alcalzone/ansi-tokenize": "^0.1.3",
         "@ant/claude-for-chrome-mcp": "workspace:*",

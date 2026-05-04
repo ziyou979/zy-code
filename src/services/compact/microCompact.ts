@@ -60,7 +60,7 @@ async function getCachedMCModule(): Promise<typeof import('./cachedMicrocompact.
 
 function ensureCachedMCState(): import('./cachedMicrocompact.js').CachedMCState {
   if (!cachedMCState && cachedMCModule) {
-    cachedMCState = (cachedMCModule as any).createCachedMCState()
+    cachedMCState = cachedMCModule.createCachedMCState()
   }
   if (!cachedMCState) {
     throw new Error('cachedMCState not initialized — getCachedMCModule() must be called first')
@@ -111,13 +111,13 @@ export function pinCacheEdits(
  */
 export function markToolsSentToAPIState(): void {
   if (cachedMCState && cachedMCModule) {
-    ;(cachedMCModule as any).markToolsSentToAPI(cachedMCState)
+    ;cachedMCModule.markToolsSentToAPI(cachedMCState)
   }
 }
 
 export function resetMicrocompactState(): void {
   if (cachedMCState && cachedMCModule) {
-    ;(cachedMCModule as any).resetCachedMCState(cachedMCState)
+    ;cachedMCModule.resetCachedMCState(cachedMCState)
   }
   pendingCacheEdits = null
 }

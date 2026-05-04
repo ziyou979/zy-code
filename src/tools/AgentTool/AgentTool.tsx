@@ -786,7 +786,7 @@ export const AgentTool = buildTool({
         isCoordinator ||
         forceAsync ||
         assistantForceAsync ||
-        ((proactiveModule as any)?.isProactiveActive() ?? false)) &&
+        (proactiveModule?.isProactiveActive() ?? false)) &&
       !isBackgroundTasksDisabled
     // Assemble the worker's tool pool independently of the parent's.
     // Workers always get their tools from assembleToolPool with their own
@@ -1358,17 +1358,17 @@ export const AgentTool = buildTool({
               const { result } = raceResult
               if (result.done) break
               const message = result.value
-              agentMessages.push(message as any)
+              agentMessages.push(message)
 
               // Emit task_progress for the VS Code subagent panel
               updateProgressFromMessage(
                 syncTracker,
-                message as any,
+                message,
                 syncResolveActivity,
                 toolUseContext.options.tools,
               )
               if (foregroundTaskId) {
-                const lastToolName = getLastToolUseName(message as any)
+                const lastToolName = getLastToolUseName(message)
                 if (lastToolName) {
                   emitTaskProgress(
                     syncTracker,
@@ -1394,30 +1394,30 @@ export const AgentTool = buildTool({
               // Forward bash_progress events from sub-agent to parent so the SDK
               // receives tool_progress events just as it does for the main agent.
               if (
-                (message as any).type === 'progress' &&
-                ((message as any).data.type === 'bash_progress' ||
-                  (message as any).data.type === 'powershell_progress') &&
+                message.type === 'progress' &&
+                (message.data.type === 'bash_progress' ||
+                  message.data.type === 'powershell_progress') &&
                 onProgress
               ) {
                 onProgress({
-                  toolUseID: (message as any).toolUseID,
-                  data: (message as any).data,
+                  toolUseID: message.toolUseID,
+                  data: message.data,
                 })
               }
-              if ((message as any).type !== 'assistant' && (message as any).type !== 'user') {
+              if (message.type !== 'assistant' && message.type !== 'user') {
                 continue
               }
 
               // Increment token count in spinner for assistant messages
               // Subagent streaming events are filtered out in runAgent.ts, so we
               // need to count tokens from completed messages here
-              if ((message as any).type === 'assistant') {
-                const contentLength = getAssistantMessageContentLength(message as any)
+              if (message.type === 'assistant') {
+                const contentLength = getAssistantMessageContentLength(message)
                 if (contentLength > 0) {
                   toolUseContext.setResponseLength((len) => len + contentLength)
                 }
               }
-              const normalizedNew: any[] = normalizeMessages([message as any]) as any
+              const normalizedNew: any[] = normalizeMessages([message]) as any
               for (const m of normalizedNew) {
                 for (const content of m.message.content) {
                   if (content.type !== 'tool_call' && content.type !== 'tool_result') {

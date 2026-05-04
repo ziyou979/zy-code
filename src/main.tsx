@@ -128,6 +128,11 @@ const coordinatorModeModule = feature('COORDINATOR_MODE')
 const assistantModule = feature('KAIROS')
   ? (require('./assistant/index.js') as typeof import('./assistant/index.js'))
   : null
+
+// 辅助函数：在 KAIROS 已守卫的代码块中安全获取 assistant 模块
+function getAssistant() {
+  return assistantModule!
+}
 const kairosGate = feature('KAIROS')
   ? (require('./assistant/gate.js') as typeof import('./assistant/gate.js'))
   : null
@@ -287,7 +292,7 @@ import { logContextMetrics } from 'src/utils/api.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   isClaudeInChromeMCPServer,
-} from 'src/utils/ClaudeInChrome/common.js'
+} from 'src/utils/claudeInChrome/common.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import { eagerParseCliFlag } from 'src/utils/cliArgs.js'
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js'
@@ -1548,7 +1553,7 @@ async function run(): Promise<CommanderCommand> {
       }
 
       // 助手模式：当 .zy/settings.json 有 assistant: true 且
-      // zy_kairos GrowthBook 门开启时，强制 brief 开启。权限
+      // zy_kairos GrowthBook 门控开启时，强制 brief 开启。权限
       // 模式留给用户 —— 设置 defaultMode 或 --permission-mode
       // 正常应用。REPL 输入的消息默认为 'next'
       // 优先级（messageQueueManager.enqueue），以便它们在工具调用之间
@@ -1562,9 +1567,8 @@ async function run(): Promise<CommanderCommand> {
       // 到那时我们已经将 .zy/agents/assistant.md 附加到了系统提示。
       // 在目录被明确信任之前拒绝激活。
       let kairosEnabled = false
-      // @ts-ignore
       let assistantTeamContext:
-        | Awaited<ReturnType<NonNullable<typeof assistantModule>['initializeAssistantTeam']>>
+        | Awaited<ReturnType<typeof getAssistant>['initializeAssistantTeam']>
         | undefined
       if (
         feature('KAIROS') &&
@@ -1578,11 +1582,11 @@ async function run(): Promise<CommanderCommand> {
         // --assistant（Agent SDK 守护进程模式）：在
         // isAssistantMode() 在下面运行之前强制锁定。守护进程已经检查过
         // 权限 —— 不要让子进程重新检查 zy_kairos。
-        ;(assistantModule as any).markAssistantForced()
+        ;assistantModule.markAssistantForced()
       }
       if (
         feature('KAIROS') &&
-        (assistantModule as any)?.isAssistantMode() &&
+        assistantModule?.isAssistantMode() &&
         // 生成的队友共享领导者的 cwd + settings.json，所以
         // isAssistantMode() 对它们也为 true。--agent-id 被设置
         // 意味着我们是一个生成的队友（extractTeammateOptions 在
@@ -1608,7 +1612,7 @@ async function run(): Promise<CommanderCommand> {
           //（最多约 5 秒）。--assistant 完全跳过此门（守护进程是
           // 预先授权的）。
           kairosEnabled =
-            (assistantModule as any).isAssistantForced() ||
+            getAssistant().isAssistantForced() ||
             (await (kairosGate as any).isKairosEnabled())
           if (kairosEnabled) {
             const opts = options as {
@@ -1620,7 +1624,7 @@ async function run(): Promise<CommanderCommand> {
             // 队友时不需要 TeamCreate。必须在 setup() 捕获
             // teammateMode 快照之前运行（initializeAssistantTeam 内部调用
             // setCliTeammateModeOverride）。
-            assistantTeamContext = await (assistantModule as any).initializeAssistantTeam()
+            assistantTeamContext = await getAssistant().initializeAssistantTeam()
           }
         }
       }
@@ -2972,7 +2976,7 @@ async function run(): Promise<CommanderCommand> {
           : proactivePrompt
       }
       if (feature('KAIROS') && kairosEnabled && assistantModule) {
-        const assistantAddendum = (assistantModule as any).getAssistantSystemPromptAddendum()
+        const assistantAddendum = assistantModule.getAssistantSystemPromptAddendum()
         appendSystemPrompt = appendSystemPrompt
           ? `${appendSystemPrompt}\n\n${assistantAddendum}`
           : assistantAddendum
@@ -3324,7 +3328,7 @@ async function run(): Promise<CommanderCommand> {
         thinkingConfig,
         assistantActivationPath:
           feature('KAIROS') && kairosEnabled
-            ? (assistantModule as any)?.getAssistantActivationPath()
+            ? assistantModule?.getAssistantActivationPath()
             : undefined,
       })
 
@@ -3863,9 +3867,9 @@ async function run(): Promise<CommanderCommand> {
         // KAIROS 块中更早设置，以便 Agent(name: "foo") 可以生成进程内队友
         // 而不需要 TeamCreate。computeInitialTeamContext() 用于 tmux 生成的
         // 队友读取自己的身份，而不是助手模式领导者。
-        teamContext: feature('KAIROS')
+        teamContext: (feature('KAIROS')
           ? (assistantTeamContext ?? computeInitialTeamContext?.())
-          : computeInitialTeamContext?.(),
+          : computeInitialTeamContext?.()) as AppState['teamContext'],
       }
 
       // 将 CLI 初始提示添加到历史记录
@@ -5270,7 +5274,7 @@ async function run(): Promise<CommanderCommand> {
           ccUrl: string,
           opts: {
             print?: string | boolean
-            outputFormat: string
+            outputFormat?: string
           },
         ) => {
           const {

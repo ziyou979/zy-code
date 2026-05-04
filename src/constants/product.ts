@@ -1,10 +1,10 @@
 export const PRODUCT_URL = 'https://zy.com/zy-code'
 
 // ZY Code Remote session URLs
-export const CLAUDE_AI_BASE_URL = 'https://zy.ai'
+export const ZY_AI_BASE_URL = 'https://zy.ai'
 // TODO: 自建 staging 环境后替换此 URL（原 ant.dev staging URL 已移除）
-export const CLAUDE_AI_STAGING_BASE_URL = ''
-export const CLAUDE_AI_LOCAL_BASE_URL = 'http://localhost:4000'
+export const ZY_AI_STAGING_BASE_URL = ''
+export const ZY_AI_LOCAL_BASE_URL = 'http://localhost:4000'
 
 /**
  * Determine if we're in a staging environment for remote sessions.
@@ -27,13 +27,13 @@ export function isRemoteSessionLocal(sessionId?: string, ingressUrl?: string): b
  */
 export function getZyAiBaseUrl(sessionId?: string, ingressUrl?: string): string {
   if (isRemoteSessionLocal(sessionId, ingressUrl)) {
-    return CLAUDE_AI_LOCAL_BASE_URL
+    return ZY_AI_LOCAL_BASE_URL
   }
   // TODO: 自建 staging 环境后恢复此逻辑
   // if (isRemoteSessionStaging(sessionId, ingressUrl)) {
-  //   return CLAUDE_AI_STAGING_BASE_URL
+  //   return ZY_AI_STAGING_BASE_URL
   // }
-  return CLAUDE_AI_BASE_URL
+  return ZY_AI_BASE_URL
 }
 
 /**

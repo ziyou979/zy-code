@@ -4,6 +4,7 @@ import Link from '../../ink/components/Link.js'
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { Box, Text } from '../../ink.js'
 import { getStoredImagePath } from '../../utils/imageStore.js'
+import { renderInlineImageFromFile } from '../../utils/terminalImage.js'
 import { MessageResponse } from '../MessageResponse.js'
 type Props = {
   imageId?: number
@@ -12,13 +13,26 @@ type Props = {
 
 /**
  * Renders an image attachment in user messages.
- * Shows as a clickable link if the image is stored and terminal supports hyperlinks.
+ * Shows inline image (iTerm2 OSC 1337) if supported,
+ * falls back to a clickable hyperlink or plain text label.
  * Uses MessageResponse styling to appear connected to the message above,
  * unless addMargin is true (image starts a new user turn without text).
  */
 export function UserImageMessage({ imageId, addMargin }: Props) {
   const label = imageId ? `[Image #${imageId}]` : '[Image]'
   const imagePath = imageId ? getStoredImagePath(imageId) : null
+
+  if (imagePath) {
+    const inline = renderInlineImageFromFile(imagePath)
+    if (inline) {
+      const content = <Text>{inline}</Text>
+      if (addMargin) {
+        return <Box marginTop={1}>{content}</Box>
+      }
+      return <MessageResponse>{content}</MessageResponse>
+    }
+  }
+
   const content =
     imagePath && supportsHyperlinks() ? (
       <Link url={pathToFileURL(imagePath).href}>

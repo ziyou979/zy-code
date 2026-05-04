@@ -140,7 +140,8 @@ export function PromptInputFooterLeftSide({
       </Text>
     )
   }
-  const showVim = isVimModeEnabled() && vimMode === 'INSERT' && !isSearching
+  const showVimInsert = isVimModeEnabled() && vimMode === 'INSERT' && !isSearching
+  const showVimVisual = isVimModeEnabled() && vimMode === 'VISUAL' && !isSearching
   return (
     <Box justifyContent="flex-start" gap={1}>
       {isSearching && (
@@ -150,16 +151,20 @@ export function PromptInputFooterLeftSide({
           historyFailedMatch={historyFailedMatch}
         />
       )}
-      {showVim ? (
+      {showVimInsert ? (
         <Text dimColor={true} key="vim-insert">
           -- INSERT --
+        </Text>
+      ) : showVimVisual ? (
+        <Text dimColor={true} key="vim-visual">
+          -- VISUAL --
         </Text>
       ) : null}
       {
         <ModeIndicator
           mode={mode}
           toolPermissionContext={toolPermissionContext}
-          showHint={!suppressHint && !showVim}
+          showHint={!suppressHint && !showVimInsert && !showVimVisual}
           isLoading={isLoading}
           tasksSelected={tasksSelected}
           teamsSelected={teamsSelected}

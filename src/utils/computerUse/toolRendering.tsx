@@ -3,6 +3,7 @@ import { MessageResponse } from '../../components/MessageResponse.js'
 import { Text } from '../../ink.js'
 import { truncateToWidth } from '../format.js'
 import type { MCPToolResult } from '../mcpValidation.js'
+import { renderInlineImage } from '../terminalImage.js'
 type CuToolInput = Record<string, unknown> & {
   coordinate?: [number, number]
   start_coordinate?: [number, number]
@@ -124,6 +125,32 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
     },
     renderToolResultMessage(output, _progress, { verbose }) {
       if (verbose || typeof output !== 'object' || output === null) return null
+
+      // 尝试从结果中提取图像数据用于内联渲染
+      if (Array.isArray(output)) {
+        for (const block of output) {
+          if (
+            typeof block === 'object' &&
+            block !== null &&
+            'type' in block &&
+            block.type === 'image' &&
+            'data' in block
+          ) {
+            const imgBlock = block as { data: string; mimeType?: string }
+            // 估算 base64 解码大小
+            const byteLength = Math.ceil((imgBlock.data.length * 3) / 4)
+            const inline = renderInlineImage(imgBlock.data, byteLength, 50)
+            if (inline) {
+              return (
+                <MessageResponse>
+                  <Text>{inline}</Text>
+                </MessageResponse>
+              )
+            }
+            break
+          }
+        }
+      }
 
       // Non-verbose: one-line dim summary, like Chrome's pattern.
       const summary = RESULT_SUMMARY[toolName]

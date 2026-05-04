@@ -256,7 +256,7 @@ async function checkBridgePrerequisites(): Promise<string | null> {
   let useV2 = isEnvLessBridgeEnabled()
   if (feature('KAIROS') && useV2) {
     const assistantModule = await import('../../assistant/index.js')
-    if ((assistantModule as any).isAssistantMode?.()) {
+    if (assistantModule.isAssistantMode?.()) {
       useV2 = false
     }
   }

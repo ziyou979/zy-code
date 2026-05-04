@@ -49,6 +49,7 @@ export type TextObjScope = 'inner' | 'around'
 export type VimState =
   | { mode: 'INSERT'; insertedText: string }
   | { mode: 'NORMAL'; command: CommandState }
+  | { mode: 'VISUAL'; anchor: number }
 
 /**
  * Command state machine for NORMAL mode.

@@ -1,30 +1,30 @@
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
+import { tSync } from '../../i18n/index.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import type { ModelAlias } from './aliases.js'
 
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
-/** Tier-based model resolution: all tiers use qwen3.6-plus */
+/** 基于层级划分不同能力的模型 */
 type ModelTier = 'advanced' | 'standard' | 'compact'
 
 /**
  * 从 settings.models 中读取指定 tier 的模型。
  * 未配置时回退到 standard tier。
- * standard 也未配置则使用内置默认值。
+ * standard 也未配置则抛错引导用户配置。
  */
 function getModelByTier(tier: ModelTier): ModelName {
   const settings = getSettings_DEPRECATED() || {}
   const tierModel = settings.models?.[tier]
   if (tierModel) return tierModel
-  // non-standard tiers fall back to standard
+  // 其他层级未配置时使用 standard
   if (tier !== 'standard') {
     const standard = settings.models?.standard
     if (standard) return standard
   }
-  // 内置默认值
-  return 'qwen3.6-plus'
+  throw new Error(tSync('settings.missingStandardModel'))
 }
 
 /**

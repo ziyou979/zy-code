@@ -129,7 +129,7 @@ export function CollapsedReadSearchContent({
     memoryReadCount,
     memoryWriteCount,
     messages: groupMessages,
-  } = message as any
+  } = message
   const [theme] = useTheme()
   const toolUseIds = getToolUseIdsFromCollapsedGroup(message)
   const anyError = toolUseIds.some((id) => lookups.erroredToolUseIDs.has(id))
@@ -149,8 +149,8 @@ export function CollapsedReadSearchContent({
   maxReadCountRef.current = Math.max(maxReadCountRef.current, rawReadCount)
   maxSearchCountRef.current = Math.max(maxSearchCountRef.current, rawSearchCount)
   maxListCountRef.current = Math.max(maxListCountRef.current, rawListCount)
-  maxMcpCountRef.current = Math.max(maxMcpCountRef.current, (message as any).mcpCallCount ?? 0)
-  maxBashCountRef.current = Math.max(maxBashCountRef.current, (message as any).bashCount ?? 0)
+  maxMcpCountRef.current = Math.max(maxMcpCountRef.current, message.mcpCallCount ?? 0)
+  maxBashCountRef.current = Math.max(maxBashCountRef.current, message.bashCount ?? 0)
   const readCount = maxReadCountRef.current
   const searchCount = maxSearchCountRef.current
   const listCount = maxListCountRef.current
@@ -158,7 +158,7 @@ export function CollapsedReadSearchContent({
   // 减去作为 "Committed …" / "Created PR …" 显示的命令，这样
   // 同一命令不会被计数两次。gitOpBashCount 是实时读取的（不需要 max-ref，
   // 在结果到达之前为 0，之后只增不减）。
-  const gitOpBashCount = (message as any).gitOpBashCount ?? 0
+  const gitOpBashCount = message.gitOpBashCount ?? 0
   const bashCount = isFullscreenEnvEnabled()
     ? Math.max(0, maxBashCountRef.current - gitOpBashCount)
     : 0
@@ -170,9 +170,9 @@ export function CollapsedReadSearchContent({
     mcpCallCount > 0 ||
     bashCount > 0 ||
     gitOpBashCount > 0
-  const readPaths = (message as any).readFilePaths
-  const searchArgs = (message as any).searchArgs
-  let incomingHint = (message as any).latestDisplayHint
+  const readPaths = message.readFilePaths
+  const searchArgs = message.searchArgs
+  let incomingHint = message.latestDisplayHint
   if (incomingHint === undefined) {
     const lastSearchRaw = searchArgs?.at(-1)
     const lastSearch = lastSearchRaw !== undefined ? `"${lastSearchRaw}"` : undefined
@@ -232,14 +232,14 @@ export function CollapsedReadSearchContent({
             />
           )
         })}
-        {(message as any).hookInfos && (message as any).hookInfos.length > 0 && (
+        {message.hookInfos && message.hookInfos.length > 0 && (
           <>
             <Text dimColor>
-              {'  ⎿  '}Ran {(message as any).hookCount} PreToolUse{' '}
-              {(message as any).hookCount === 1 ? 'hook' : 'hooks'} (
-              {formatSecondsShort((message as any).hookTotalMs ?? 0)})
+              {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
+              {message.hookCount === 1 ? 'hook' : 'hooks'} (
+              {formatSecondsShort(message.hookTotalMs ?? 0)})
             </Text>
-            {(message as any).hookInfos.map((info: any, idx: any) => (
+            {message.hookInfos.map((info: any, idx: any) => (
               <Text key={`hook-${idx}`} dimColor>
                 {'     ⎿ '}
                 {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
@@ -247,7 +247,7 @@ export function CollapsedReadSearchContent({
             ))}
           </>
         )}
-        {(message as any).relevantMemories?.map((m: any) => (
+        {message.relevantMemories?.map((m: any) => (
           <Box key={m.path} flexDirection="column" marginTop={1}>
             <Text dimColor>
               {'  ⎿  '}Recalled {basename(m.path)}
@@ -315,9 +315,9 @@ export function CollapsedReadSearchContent({
       </Text>,
     )
   }
-  if (isFullscreenEnvEnabled() && (message as any).commits?.length) {
+  if (isFullscreenEnvEnabled() && message.commits?.length) {
     for (const kind of ['committed', 'amended', 'cherryPicked'] as const) {
-      const shas = (message as any).commits
+      const shas = message.commits
         .filter((c: any) => c.kind === kind.replace('Picked', '-picked'))
         .map((c_0: any) => c_0.sha)
       if (shas.length) {
@@ -325,12 +325,12 @@ export function CollapsedReadSearchContent({
       }
     }
   }
-  if (isFullscreenEnvEnabled() && (message as any).pushes?.length) {
-    const branches = uniq((message as any).pushes.map((p: any) => p.branch))
+  if (isFullscreenEnvEnabled() && message.pushes?.length) {
+    const branches = uniq(message.pushes.map((p: any) => p.branch))
     pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>)
   }
-  if (isFullscreenEnvEnabled() && (message as any).branches?.length) {
-    for (const b of (message as any).branches) {
+  if (isFullscreenEnvEnabled() && message.branches?.length) {
+    for (const b of message.branches) {
       pushPart(
         `br-${b.action}-${b.ref}`,
         b.action === 'merged' ? 'merged' : 'rebasedOnto',
@@ -338,8 +338,8 @@ export function CollapsedReadSearchContent({
       )
     }
   }
-  if (isFullscreenEnvEnabled() && (message as any).prs?.length) {
-    for (const pr of (message as any).prs) {
+  if (isFullscreenEnvEnabled() && message.prs?.length) {
+    for (const pr of message.prs) {
       const verbKey =
         pr.action === 'ready'
           ? 'prMarkedReady'
@@ -440,7 +440,7 @@ export function CollapsedReadSearchContent({
   }
   if (mcpCallCount > 0) {
     const serverLabel =
-      (message as any).mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') ||
+      message.mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') ||
       'MCP'
     const isFirst_3 = nonMemParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
@@ -582,11 +582,11 @@ export function CollapsedReadSearchContent({
           </Box>
         </Box>
       )}
-      {(message as any).hookTotalMs !== undefined && (message as any).hookTotalMs > 0 && (
+      {message.hookTotalMs !== undefined && message.hookTotalMs > 0 && (
         <Text dimColor>
-          {'  ⎿  '}Ran {(message as any).hookCount} PreToolUse{' '}
-          {(message as any).hookCount === 1 ? 'hook' : 'hooks'} (
-          {formatSecondsShort((message as any).hookTotalMs)})
+          {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
+          {message.hookCount === 1 ? 'hook' : 'hooks'} (
+          {formatSecondsShort(message.hookTotalMs)})
         </Text>
       )}
     </Box>

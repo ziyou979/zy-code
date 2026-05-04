@@ -8,7 +8,7 @@ import { isEnvTruthy } from '../utils/envUtils.js'
 /**
  * Runtime check for bridge mode entitlement.
  *
- * Remote Control requires a claude.ai subscription. Since there is no
+ * Remote Control requires a zy.ai subscription. Since there is no
  * subscription context, bridge is never enabled.
  */
 export function isBridgeEnabled(): boolean {
@@ -38,7 +38,7 @@ export async function isBridgeEnabledBlocking(): Promise<boolean> {
  * that re-login would fix it. See CC-1165 / gh-33105.
  */
 export async function getBridgeDisabledReason(): Promise<string | null> {
-  return 'Remote Control requires a claude.ai subscription. Run `zy auth login` to sign in with your zy.ai account.'
+  return 'Remote Control requires a zy.ai subscription. Run `zy auth login` to sign in with your zy.ai account.'
 }
 
 // try/catch: main.tsx:5698 calls isBridgeEnabled() while defining the Commander

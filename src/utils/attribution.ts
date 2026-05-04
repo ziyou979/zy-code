@@ -67,9 +67,9 @@ export function getAttributionTexts(): AttributionTexts {
   const modelName =
     isInternalModelRepoCached() || isKnownPublicModel
       ? getPublicModelName(model)
-      : 'ZY (qwen3.6-plus)'
+      : 'ZY (unknown)'
   const defaultAttribution = `🤖 Generated with [ZY Code](${PRODUCT_URL})`
-  const defaultCommit = `Co-Authored-By: ${modelName} <noreply@anthropic.com>`
+  const defaultCommit = `Co-Authored-By: ${modelName}`
 
   const settings = getInitialSettings()
 

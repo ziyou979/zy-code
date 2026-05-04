@@ -44,8 +44,7 @@ const extractMemoriesModule = feature('MEMORY')
   : null
 // @ts-ignore
 const jobClassifierModule = feature('TEMPLATES')
-  ? // @ts-ignore
-    (require('../jobs/classifier.js' as any) as typeof import('../jobs/classifier.js'))
+  ? (require('../jobs/classifier.js') as typeof import('../jobs/classifier.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */

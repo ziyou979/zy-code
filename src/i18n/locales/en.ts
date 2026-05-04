@@ -1399,7 +1399,7 @@ export const en: TranslationResource = {
 
   // Error utils
   'errorUtils.ssl.hint':
-    'SSL certificate error ({code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist *.anthropic.com. Run /doctor for details.',
+    'SSL certificate error ({code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist *.zy.ai. Run /doctor for details.',
   'errorUtils.ssl.certVerificationFailed':
     'Unable to connect to API: SSL certificate verification failed. Check your proxy or corporate SSL certificates',
   'errorUtils.ssl.certExpired': 'Unable to connect to API: SSL certificate has expired',
@@ -2654,6 +2654,8 @@ export const en: TranslationResource = {
   'settings.defaultEnglish': 'Default (English)',
   'settings.modelLabel': 'Model',
   'settings.defaultRecommended': 'Default (recommended)',
+  'settings.missingStandardModel':
+    'Standard model is not configured. Use /config or edit settings.json to set models.standard.',
 
   // Tag command
   'tag.removeTitle': 'Remove tag?',

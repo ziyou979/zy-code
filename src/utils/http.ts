@@ -49,7 +49,7 @@ export function getMCPUserAgent(): string {
 // operators match in robots.txt); the zy-code suffix lets them distinguish
 // local CLI traffic from zy.ai server-side fetches.
 export function getWebFetchUserAgent(): string {
-  return `Zy-User (${getZyCodeUserAgent()}; +https://support.anthropic.com/)`
+  return `Zy-User (${getZyCodeUserAgent()}; +https://zy.ai/)`
 }
 
 export type AuthHeaders = {

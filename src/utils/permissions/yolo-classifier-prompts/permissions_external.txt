@@ -1,0 +1,15 @@
+<user_allow_rules_to_replace>
+</user_allow_rules_to_replace>
+<user_deny_rules_to_replace>
+- 禁止删除或修改 .git 目录中的文件
+- 禁止执行 rm -rf、git push --force 等不可逆操作（用户明确要求除外）
+- 禁止修改系统配置文件（/etc、~/.ssh、~/.zshrc 等）
+- 禁止执行可能影响整个系统的命令（如 sudo、chown、chmod 777 等）
+</user_deny_rules_to_replace>
+<user_environment_to_replace>
+- 操作系统：macOS Darwin
+- Shell：zsh
+- 项目类型：前后端混合项目（TypeScript、Java）
+- 用户角色：全栈软件工程师
+- 工作目录是 Git 仓库
+</user_environment_to_replace>

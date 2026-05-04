@@ -1,4 +1,4 @@
-import type { ContentBlock } from '../../types/llm.js'
+import type { AssistantContentBlock, TextBlock } from '../../types/llm.js'
 import { getUserContext } from 'src/context.js'
 import { queryModelWithoutStreaming } from 'src/services/api/zy.js'
 import { getEmptyToolPermissionContext } from 'src/Tool.js'
@@ -170,8 +170,8 @@ export async function generateAgent(
     },
   })
 
-  const textBlocks = response.message.content.filter(
-    (block): block is ContentBlock & { type: 'text' } => block.type === 'text',
+  const textBlocks = (response.message.content as AssistantContentBlock[]).filter(
+    (block): block is TextBlock => block.type === 'text',
   )
   const responseText = textBlocks.map((block) => block.text).join('\n')
 

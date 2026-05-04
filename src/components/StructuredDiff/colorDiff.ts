@@ -1,9 +1,9 @@
 import {
   ColorDiff,
   ColorFile,
-  getSyntaxTheme as nativeGetSyntaxTheme,
+  getSyntaxTheme as tsGetSyntaxTheme,
   type SyntaxTheme,
-} from 'color-diff-napi'
+} from '../../native-ts/color-diff/index.js'
 import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
 
 export type ColorModuleUnavailableReason = 'env'
@@ -31,5 +31,5 @@ export function expectColorFile(): typeof ColorFile | null {
 }
 
 export function getSyntaxTheme(themeName: string): SyntaxTheme | null {
-  return getColorModuleUnavailableReason() === null ? nativeGetSyntaxTheme(themeName) : null
+  return getColorModuleUnavailableReason() === null ? tsGetSyntaxTheme(themeName) : null
 }

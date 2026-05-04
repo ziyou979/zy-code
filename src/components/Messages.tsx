@@ -1039,7 +1039,7 @@ export function shouldRenderStatically(
       return message.subtype !== 'api_error'
     }
     case 'grouped_tool_use': {
-      const allResolved = (message as any).messages.every((msg: any) => {
+      const allResolved = message.messages.every((msg) => {
         const content = msg.message.content[0]
         return content?.type === 'tool_call' && lookups.resolvedToolUseIDs.has(content.id)
       })

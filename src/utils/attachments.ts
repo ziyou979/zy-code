@@ -1282,7 +1282,7 @@ export function getDateChangeAttachments(messages: Message[] | undefined): Attac
   // 按消息时间戳分桶，因此多天空隔也能正确刷新每一天。
   if (feature('KAIROS')) {
     if (getKairosActive() && messages !== undefined) {
-      ;(sessionTranscriptModule as any)?.flushOnDateChange(messages, currentDate)
+      ;sessionTranscriptModule?.flushOnDateChange(messages, currentDate)
     }
   }
   return [
@@ -2428,7 +2428,7 @@ async function getSkillListingAttachments(toolUseContext: ToolUseContext): Promi
   // feature() 优先用于 DCE — 否则属性访问字符串会泄露，即使对 null 使用 ?.。
   if (
     feature('EXPERIMENTAL_SKILL_SEARCH') &&
-    (skillSearchModules?.featureCheck as any)?.isSkillSearchEnabled()
+    skillSearchModules?.featureCheck?.isSkillSearchEnabled()
   ) {
     allCommands = filterToBundledAndMcp(allCommands)
   }

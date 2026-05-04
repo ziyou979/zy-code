@@ -70,9 +70,9 @@ function GracePeriodContentBody() {
       }
       <Text>
         {tSync('grove.learnMore')} (
-        {<Link url="https://www.anthropic.com/news/updates-to-our-consumer-terms" />}){' '}
-        {tSync('grove.orReadTerms')} ({<Link url="https://anthropic.com/legal/terms" />}){' '}
-        {tSync('grove.andPrivacyPolicy')} (<Link url="https://anthropic.com/legal/privacy" />)
+        {<Link url="https://zy.ai/news" />}){' '}
+        {tSync('grove.orReadTerms')} ({<Link url="https://zy.ai/legal/terms" />}){' '}
+        {tSync('grove.andPrivacyPolicy')} (<Link url="https://zy.ai/legal/privacy" />)
       </Text>
     </>
   )
@@ -99,9 +99,9 @@ function PostGracePeriodContentBody() {
       }
       <Text>
         {tSync('grove.learnMore')} (
-        {<Link url="https://www.anthropic.com/news/updates-to-our-consumer-terms" />}){' '}
-        {tSync('grove.orReadTerms')} ({<Link url="https://anthropic.com/legal/terms" />}){' '}
-        {tSync('grove.andPrivacyPolicy')} (<Link url="https://anthropic.com/legal/privacy" />)
+        {<Link url="https://zy.ai/news" />}){' '}
+        {tSync('grove.orReadTerms')} ({<Link url="https://zy.ai/legal/terms" />}){' '}
+        {tSync('grove.andPrivacyPolicy')} (<Link url="https://zy.ai/legal/privacy" />)
       </Text>
     </>
   )

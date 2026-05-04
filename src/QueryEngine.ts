@@ -689,7 +689,7 @@ export class QueryEngine {
         turnCount++
       }
 
-      switch (message.type as any) {
+      switch (message.type) {
         case 'tombstone':
           // Tombstone 消息 是用于删除消息的控制信号，跳过它们
           break
@@ -721,21 +721,21 @@ export class QueryEngine {
           break
         case 'stream_event':
           if (
-            (message as any).event.type === 'message_start' ||
-            (message as any).event.type === 'response_start'
+            message.event.type === 'message_start' ||
+            message.event.type === 'response_start'
           ) {
             // 重置新消息的当前 usage
             currentMessageUsage = EMPTY_USAGE
-            const startMsg = (message as any).event.message
+            const startMsg = message.event.message
             if (startMsg?.usage) {
               currentMessageUsage = updateUsage(currentMessageUsage, startMsg.usage)
             }
           }
           if (
-            (message as any).event.type === 'message_delta' ||
-            (message as any).event.type === 'response_delta'
+            message.event.type === 'message_delta' ||
+            message.event.type === 'response_delta'
           ) {
-            const evt = (message as any).event
+            const evt = message.event
             // response_delta 的 usage 是标准格式（camelCase），转为 snake_case 供 updateUsage
             const deltaUsage = evt.usage
               ? {
@@ -760,8 +760,8 @@ export class QueryEngine {
             }
           }
           if (
-            (message as any).event.type === 'message_stop' ||
-            (message as any).event.type === 'response_stop'
+            message.event.type === 'message_stop' ||
+            message.event.type === 'response_stop'
           ) {
             // 将当前消息的 usage 累积到总计中
             this.totalUsage = accumulateUsage(this.totalUsage, currentMessageUsage)
@@ -770,7 +770,7 @@ export class QueryEngine {
           if (includePartialMessages) {
             yield {
               type: 'stream_event' as const,
-              event: (message as any).event,
+              event: message.event,
               session_id: getSessionId(),
               parent_tool_use_id: null,
               uuid: randomUUID(),
@@ -855,7 +855,7 @@ export class QueryEngine {
           }
           this.mutableMessages.push(message)
           // 向 SDK 产生 compact boundary 消息
-          if ((message as any).subtype === 'compact_boundary' && (message as any).compactMetadata) {
+          if (message.subtype === 'compact_boundary' && message.compactMetadata) {
             // 释放压缩前的消息以供 GC。边界刚刚被推送，所以它是最后一个元素。
             // query.ts 内部已使用 getMessagesAfterCompactBoundary()，因此
             // 后续只需要边界之后的消息。
@@ -873,18 +873,18 @@ export class QueryEngine {
               subtype: 'compact_boundary' as const,
               session_id: getSessionId(),
               uuid: message.uuid,
-              compact_metadata: toSDKCompactMetadata((message as any).compactMetadata),
+              compact_metadata: toSDKCompactMetadata(message.compactMetadata),
             }
           }
-          if ((message as any).subtype === 'api_error') {
+          if (message.subtype === 'api_error') {
             yield {
               type: 'system',
               subtype: 'api_retry' as const,
-              attempt: (message as any).retryAttempt,
-              max_retries: (message as any).maxRetries,
-              retry_delay_ms: (message as any).retryInMs,
-              error_status: (message as any).error.status ?? null,
-              error: categorizeRetryableAPIError((message as any).error),
+              attempt: message.retryAttempt,
+              max_retries: message.maxRetries,
+              retry_delay_ms: message.retryInMs,
+              error_status: message.error.status ?? null,
+              error: categorizeRetryableAPIError(message.error),
               session_id: getSessionId(),
               uuid: message.uuid,
             }
@@ -896,8 +896,8 @@ export class QueryEngine {
           // 向 SDK 产生 tool use summary 消息
           yield {
             type: 'tool_use_summary' as const,
-            summary: (message as any).summary,
-            preceding_tool_use_ids: (message as any).precedingToolUseIds,
+            summary: message.summary,
+            preceding_tool_use_ids: message.precedingToolUseIds,
             session_id: getSessionId(),
             uuid: message.uuid,
           }
@@ -1180,7 +1180,7 @@ export async function* ask({
       ? {
           snipReplay: (yielded: Message, store: Message[]) => {
             if (!snipProjection!.isSnipBoundaryMessage(yielded)) return undefined
-            return (snipModule as any)!.snipCompactIfNeeded(store, { force: true })
+            return snipModule!.snipCompactIfNeeded(store, { force: true })
           },
         }
       : {}),

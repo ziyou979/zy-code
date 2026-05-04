@@ -321,6 +321,12 @@ export interface SystemMemorySavedMessage extends BaseMessage {
   writtenPaths?: string[]
 }
 
+export interface SystemSnipBoundaryMessage extends BaseMessage {
+  type: 'system'
+  subtype: 'snip_boundary'
+  content: string
+}
+
 export type SystemMessage =
   | SystemInformationalMessage
   | SystemAPIErrorMessage
@@ -337,6 +343,7 @@ export type SystemMessage =
   | TombstoneMessage
   | SystemStopHookSummaryMessage
   | SystemMemorySavedMessage
+  | SystemSnipBoundaryMessage
 
 // ============================================================
 // Hook Result / Stream Events
@@ -387,6 +394,11 @@ export interface StopHookInfo {
 export interface GroupedToolUseMessage extends BaseMessage {
   type: 'grouped_tool_use'
   toolUses: ToolCallInlineBlock[]
+  toolName: string
+  messages: NormalizedAssistantMessage[]
+  results: NormalizedUserMessage[]
+  displayMessage: NormalizedAssistantMessage
+  messageId?: string
 }
 
 export interface CollapsedReadSearchGroup extends BaseMessage {
@@ -396,6 +408,30 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
   type: 'collapsed_read_search'
   content: string
   collapsedCount: number
+  searchCount?: number
+  readCount?: number
+  listCount?: number
+  replCount?: number
+  memorySearchCount?: number
+  memoryReadCount?: number
+  memoryWriteCount?: number
+  messages?: NormalizedAssistantMessage[]
+  displayMessage?: NormalizedAssistantMessage
+  mcpCallCount?: number
+  bashCount?: number
+  gitOpBashCount?: number
+  readFilePaths?: string[]
+  searchArgs?: unknown
+  latestDisplayHint?: string
+  hookInfos?: StopHookInfo[]
+  hookCount?: number
+  hookTotalMs?: number
+  relevantMemories?: unknown[]
+  commits?: { sha: string }[]
+  pushes?: { branch: string }[]
+  branches?: unknown[]
+  prs?: unknown[]
+  mcpServerNames?: string[]
 }
 
 export interface GroupedToolUseMessageWithMessages extends BaseMessage {

@@ -17,7 +17,7 @@ const teamMemSaved = feature('TEAMMEM')
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import type { SystemMessage } from '../../types/message.js'
+import type { SystemMessage, SystemStopHookSummaryMessage, SystemMemorySavedMessage } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
 import { formatDuration, formatNumber, formatSecondsShort } from '../../utils/format.js'
 import { getGlobalConfig } from '../../utils/config.js'
@@ -37,13 +37,13 @@ type Props = {
 }
 export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMode }: Props) {
   const bg = useSelectedMessageBg()
-  if ((message as any).subtype === 'turn_duration') {
+  if (message.subtype === 'turn_duration') {
     return <TurnDurationMessage message={message} addMargin={addMargin} />
   }
-  if ((message as any).subtype === 'memory_saved') {
+  if (message.subtype === 'memory_saved') {
     return <MemorySavedMessage message={message} addMargin={addMargin} />
   }
-  if ((message as any).subtype === 'away_summary') {
+  if (message.subtype === 'away_summary') {
     return (
       <Box
         flexDirection="row"
@@ -56,11 +56,11 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
             <Text dimColor={true}>{REFERENCE_MARK}</Text>
           </Box>
         }
-        {<Text dimColor={true}>{(message as any).content}</Text>}
+        {<Text dimColor={true}>{message.content}</Text>}
       </Box>
     )
   }
-  if ((message as any).subtype === 'agents_killed') {
+  if (message.subtype === 'agents_killed') {
     return (
       <Box
         flexDirection="row"
@@ -77,25 +77,25 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       </Box>
     )
   }
-  if ((message as any).subtype === 'thinking') {
+  if (message.subtype === 'thinking') {
     return null
   }
-  if ((message as any).subtype === 'bridge_status') {
+  if (message.subtype === 'bridge_status') {
     return <BridgeStatusMessage message={message} addMargin={addMargin} />
   }
-  if ((message as any).subtype === 'scheduled_task_fire') {
+  if (message.subtype === 'scheduled_task_fire') {
     return (
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
         {
           <Text dimColor={true}>
-            {TEARDROP_ASTERISK} {(message as any).content}
+            {TEARDROP_ASTERISK} {message.content}
           </Text>
         }
       </Box>
     )
   }
-  if ((message as any).subtype === 'permission_retry') {
-    const t4 = ((message as any).commands as any).join(', ')
+  if (message.subtype === 'permission_retry') {
+    const t4 = message.commands.join(', ')
     return (
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
         {<Text dimColor={true}>{TEARDROP_ASTERISK} </Text>}
@@ -104,14 +104,14 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       </Box>
     )
   }
-  const isStopHookSummary = (message as any).subtype === 'stop_hook_summary'
-  if (!isStopHookSummary && !verbose && (message as any).level === 'info') {
+  const isStopHookSummary = message.subtype === 'stop_hook_summary'
+  if (!isStopHookSummary && !verbose && message.level === 'info') {
     return null
   }
-  if ((message as any).subtype === 'api_error') {
-    return <SystemAPIErrorMessage message={message as any} verbose={verbose} />
+  if (message.subtype === 'api_error') {
+    return <SystemAPIErrorMessage message={message} verbose={verbose} />
   }
-  if ((message as any).subtype === 'stop_hook_summary') {
+  if (message.subtype === 'stop_hook_summary') {
     return (
       <StopHookSummaryMessage
         message={message}
@@ -121,7 +121,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       />
     )
   }
-  const content = (message as any).content
+  const content = message.content
   if (typeof content !== 'string') {
     return null
   }
@@ -130,24 +130,29 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       <SystemTextMessageInner
         content={content}
         addMargin={addMargin}
-        dot={(message as any).level !== 'info'}
-        color={(message as any).level === 'warning' ? ('warning' as any) : undefined}
-        dimColor={(message as any).level === 'info'}
+        dot={message.level !== 'info'}
+        color={message.level === 'warning' ? ('warning' as any) : undefined}
+        dimColor={message.level === 'info'}
       />
     </Box>
   )
 }
-function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode }: Props) {
+function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode }: {
+  message: SystemStopHookSummaryMessage
+  addMargin: boolean
+  verbose: boolean
+  isTranscriptMode?: boolean
+}) {
   const bg = useSelectedMessageBg()
-  const { hookCount, hookInfos, hookErrors, preventedContinuation, stopReason } = message as any
+  const { hookCount, hookInfos, hookErrors, preventedContinuation, stopReason } = message
   const { columns } = useTerminalSize()
   const totalDurationMs =
-    (message as any).totalDurationMs ?? hookInfos.reduce((sum, h) => sum + (h.durationMs ?? 0), 0)
-  if (hookErrors.length === 0 && !preventedContinuation && !(message as any).hookLabel) {
+    message.totalDurationMs ?? hookInfos.reduce((sum, h) => sum + (h.durationMs ?? 0), 0)
+  if (hookErrors.length === 0 && !preventedContinuation && !message.hookLabel) {
     return null
   }
   const totalStr = ''
-  if ((message as any).hookLabel) {
+  if (message.hookLabel) {
     const t5 =
       isTranscriptMode &&
       hookInfos.map((info, idx) => {
@@ -165,7 +170,7 @@ function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode 
       <Box flexDirection="column" width="100%">
         {
           <Text dimColor={true}>
-            {'  \u23BF  '}Ran {hookCount} {(message as any).hookLabel}{' '}
+            {'  \u23BF  '}Ran {hookCount} {message.hookLabel}{' '}
             {hookCount === 1 ? 'hook' : 'hooks'}
             {totalStr}
           </Text>
@@ -194,7 +199,7 @@ function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode 
     hookErrors.map((err, idx_1) => (
       <Text key={idx_1}>
         <Text dimColor={true}>⎿ </Text>
-        {(message as any).hookLabel ?? 'Stop'} hook error: {err}
+        {message.hookLabel ?? 'Stop'} hook error: {err}
       </Text>
     ))
   return (
@@ -208,7 +213,7 @@ function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode 
         <Box flexDirection="column" width={columns - 10}>
           {
             <Text>
-              Ran {<Text bold={true}>{hookCount}</Text>} {(message as any).hookLabel ?? 'stop'}{' '}
+              Ran {<Text bold={true}>{hookCount}</Text>} {message.hookLabel ?? 'stop'}{' '}
               {hookCount === 1 ? 'hook' : 'hooks'}
               {totalStr}
               {!verbose && hookInfos.length > 0 && (
@@ -269,8 +274,8 @@ function TurnDurationMessage({ message, addMargin }) {
     return running.length > 0 ? getPillLabel(running) : null
   })
   const showTurnDuration = getGlobalConfig().showTurnDuration ?? true
-  const duration = formatDuration((message as any).durationMs)
-  const hasBudget = (message as any).budgetLimit !== undefined
+  const duration = formatDuration(message.durationMs)
+  const hasBudget = message.budgetLimit !== undefined
   let budgetSuffix
   if (!hasBudget) {
     // ... existing code ...
@@ -303,10 +308,13 @@ function TurnDurationMessage({ message, addMargin }) {
     </Box>
   )
 }
-function MemorySavedMessage({ message, addMargin }) {
+function MemorySavedMessage({ message, addMargin }: {
+  message: SystemMemorySavedMessage
+  addMargin: boolean
+}) {
   const bg = useSelectedMessageBg()
-  const { writtenPaths } = message as any
-  const team = feature('TEAMMEM') ? teamMemSaved.teamMemSavedPart(message as any) : null
+  const { writtenPaths } = message
+  const team = feature('TEAMMEM') ? teamMemSaved.teamMemSavedPartmessage : null
   const privateCount = writtenPaths.length - (team?.count ?? 0)
   const t3 = team?.segment
   const parts = [
@@ -325,7 +333,7 @@ function MemorySavedMessage({ message, addMargin }) {
             </Box>
           }
           <Text>
-            {(message as any).verb ?? 'Saved'} {t8}
+            {message.verb ?? 'Saved'} {t8}
           </Text>
         </Box>
       }
@@ -361,7 +369,7 @@ function ThinkingMessage({ message, addMargin }) {
           <Text dimColor={true}>{TEARDROP_ASTERISK}</Text>
         </Box>
       }
-      {<Text dimColor={true}>{(message as any).content}</Text>}
+      {<Text dimColor={true}>{message.content}</Text>}
     </Box>
   )
 }
@@ -378,9 +386,9 @@ function BridgeStatusMessage({ message, addMargin }) {
               in CLI or at
             </Text>
           }
-          {<Link url={(message as any).url}>{(message as any).url}</Link>}
-          {(message as any).upgradeNudge && (
-            <Text dimColor={true}>⎿ {(message as any).upgradeNudge}</Text>
+          {<Link url={message.url}>{message.url}</Link>}
+          {message.upgradeNudge && (
+            <Text dimColor={true}>⎿ {message.upgradeNudge}</Text>
           )}
         </Box>
       }

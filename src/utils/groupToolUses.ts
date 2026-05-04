@@ -134,14 +134,14 @@ export function applyGrouping(
 
           const groupedMessage: GroupedToolUseMessage = {
             type: 'grouped_tool_use',
-            toolName: info.toolName as any,
-            messages: group as any,
-            results: results as any,
-            displayMessage: firstMsg as any,
+            toolName: info.toolName,
+            messages: group,
+            results: results,
+            displayMessage: firstMsg,
             uuid: `grouped-${firstMsg.uuid}`,
             timestamp: firstMsg.timestamp,
             messageId: info.messageId,
-          } as any
+          }
           result.push(groupedMessage)
         }
         continue

@@ -656,7 +656,7 @@ export async function compactConversation(
     // 为压缩前的消息写入精简的 transcript 片段（仅 assistant 模式）。
     // Fire-and-forget — 错误会在内部记录。
     if (feature('KAIROS')) {
-      void (sessionTranscriptModule as any)?.writeSessionTranscriptSegment(messages)
+      void sessionTranscriptModule?.writeSessionTranscriptSegment(messages)
     }
 
     context.onCompactProgress?.({
@@ -986,7 +986,7 @@ export async function partialCompactConversation(
     reAppendSessionMetadata()
 
     if (feature('KAIROS')) {
-      void (sessionTranscriptModule as any)?.writeSessionTranscriptSegment(messagesToSummarize)
+      void sessionTranscriptModule?.writeSessionTranscriptSegment(messagesToSummarize)
     }
 
     context.onCompactProgress?.({

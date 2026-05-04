@@ -37,7 +37,7 @@ const teamMemOps = feature('TEAMMEM')
   ? (require('./teamMemoryOps.js') as typeof import('./teamMemoryOps.js'))
   : null
 const SNIP_TOOL_NAME = feature('HISTORY_SNIP')
-  ? (require('../tools/SnipTool/prompt.js') as any).SNIP_TOOL_NAME
+  ? (require('../tools/SnipTool/prompt.js') as typeof import('../tools/SnipTool/prompt.js')).SNIP_TOOL_NAME
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -441,7 +441,7 @@ function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
  */
 export function getToolUseIdsFromCollapsedGroup(message: CollapsedReadSearchGroup): string[] {
   const ids: string[] = []
-  for (const msg of (message as any).messages) {
+  for (const msg of message.messages ?? []) {
     ids.push(...getToolUseIdsFromMessage(msg))
   }
   return ids
@@ -465,7 +465,7 @@ export function hasAnyToolInProgress(
 export function getDisplayMessageFromCollapsed(
   message: CollapsedReadSearchGroup,
 ): Exclude<CollapsibleMessage, { type: 'grouped_tool_use' }> {
-  const firstMsg = (message as any).displayMessage
+  const firstMsg = message.displayMessage
   if (firstMsg.type === 'grouped_tool_use') {
     return firstMsg.displayMessage
   }

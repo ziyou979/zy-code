@@ -12,6 +12,9 @@ import {
   executeOperatorTextObj,
   executeReplace,
   executeToggleCase,
+  executeVisualIndent,
+  executeVisualOperator,
+  executeVisualToggleCase,
   executeX,
   type OperatorContext,
 } from '../vim/operators.js'
@@ -211,6 +214,118 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       return
     }
 
+    // VISUAL mode handling
+    if (state.mode === 'VISUAL') {
+      const ctx = createOperatorContext(cursor, false)
+
+      // Escape or v returns to NORMAL idle
+      if (key.escape || input === 'v') {
+        vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
+        setMode('NORMAL')
+        onModeChange?.('NORMAL')
+        return
+      }
+
+      // Map arrow keys to motions
+      let visInput = input
+      if (key.leftArrow) visInput = 'h'
+      else if (key.rightArrow) visInput = 'l'
+      else if (key.upArrow) visInput = 'k'
+      else if (key.downArrow) visInput = 'j'
+
+      // Motion keys extend selection
+      if (['h', 'j', 'k', 'l'].includes(visInput)) {
+        const motionMap: Record<string, () => void> = {
+          h: () => textInput.setOffset(Math.max(0, cursor.offset - 1)),
+          l: () => textInput.setOffset(Math.min(props.value.length, cursor.measuredText.nextOffset(cursor.offset))),
+          j: () => {
+            const next = cursor.text.indexOf('\n', cursor.offset)
+            if (next !== -1) {
+              const col = cursor.offset - cursor.startOfLogicalLine().offset
+              const nextLine = new Cursor(cursor.measuredText, next + 1)
+              textInput.setOffset(Math.min(nextLine.text.length, nextLine.offset + col))
+            }
+          },
+          k: () => {
+            if (cursor.offset === 0) return
+            const prev = cursor.text.lastIndexOf('\n', cursor.offset - 1)
+            if (prev !== -1) {
+              const col = cursor.offset - cursor.startOfLogicalLine().offset
+              const prevLine = new Cursor(cursor.measuredText, prev)
+              textInput.setOffset(Math.min(prev, prevLine.offset + col))
+            } else {
+              textInput.setOffset(0)
+            }
+          },
+        }
+        motionMap[visInput]?.()
+        return
+      }
+
+      // w/b/e word motions
+      if (['w', 'b', 'e'].includes(visInput)) {
+        const wordMap: Record<string, () => Cursor> = {
+          w: () => cursor.nextVimWord(),
+          b: () => cursor.prevVimWord(),
+          e: () => cursor.endOfVimWord(),
+        }
+        const target = wordMap[visInput]?.()
+        if (target) textInput.setOffset(target.offset)
+        return
+      }
+
+      // Line boundaries
+      if (visInput === '0') { textInput.setOffset(cursor.startOfLogicalLine().offset); return }
+      if (visInput === '$') { textInput.setOffset(cursor.endOfLogicalLine().offset); return }
+      if (visInput === '^') { textInput.setOffset(cursor.firstNonBlankInLogicalLine().offset); return }
+
+      // Operators on selection
+      if (visInput === 'd') {
+        executeVisualOperator('delete', state.anchor, cursor.offset, ctx)
+        vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
+        setMode('NORMAL')
+        onModeChange?.('NORMAL')
+        return
+      }
+      if (visInput === 'c') {
+        executeVisualOperator('change', state.anchor, cursor.offset, ctx)
+        switchToInsertMode(
+          Math.min(state.anchor, cursor.offset),
+        )
+        return
+      }
+      if (visInput === 'y') {
+        executeVisualOperator('yank', state.anchor, cursor.offset, ctx)
+        vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
+        setMode('NORMAL')
+        onModeChange?.('NORMAL')
+        return
+      }
+      if (visInput === '~') {
+        executeVisualToggleCase(state.anchor, cursor.offset, ctx)
+        vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
+        setMode('NORMAL')
+        onModeChange?.('NORMAL')
+        return
+      }
+      if (visInput === '>' || visInput === '<') {
+        executeVisualIndent(visInput, state.anchor, cursor.offset, ctx)
+        vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
+        setMode('NORMAL')
+        onModeChange?.('NORMAL')
+        return
+      }
+      if (visInput === 'x' || (key.delete && !key.ctrl)) {
+        executeVisualOperator('delete', state.anchor, cursor.offset, ctx)
+        vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
+        setMode('NORMAL')
+        onModeChange?.('NORMAL')
+        return
+      }
+
+      return
+    }
+
     if (state.mode !== 'NORMAL') {
       return
     }
@@ -222,6 +337,14 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow)
     ) {
       textInput.onInput(input, key)
+      return
+    }
+
+    // v in idle enters VISUAL mode
+    if (state.command.type === 'idle' && input === 'v' && !key.ctrl) {
+      vimStateRef.current = { mode: 'VISUAL', anchor: cursor.offset }
+      setMode('VISUAL')
+      onModeChange?.('VISUAL')
       return
     }
 

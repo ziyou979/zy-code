@@ -5528,7 +5528,7 @@ export function REPL({
                 )}
               {feature('WEB_BROWSER_TOOL')
                 ? WebBrowserPanelModule &&
-                  React.createElement((WebBrowserPanelModule as any).WebBrowserPanel)
+                  React.createElement(WebBrowserPanelModule.WebBrowserPanel)
                 : null}
               <Box flexGrow={1} />
               {showSpinner && (

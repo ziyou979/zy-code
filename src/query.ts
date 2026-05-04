@@ -64,7 +64,7 @@ const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
-const jobClassifier = feature('TEMPLATES') ? (require('./jobs/classifier.js') as any) : null
+const jobClassifier = feature('TEMPLATES') ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js')) : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   remove as removeFromQueue,
@@ -372,7 +372,7 @@ async function* queryLoop(
     let snipTokensFreed = 0
     if (feature('HISTORY_SNIP')) {
       queryCheckpoint('query_snip_start')
-      const snipResult = (snipModule as any)!.snipCompactIfNeeded(messagesForQuery)
+      const snipResult = snipModule!.snipCompactIfNeeded(messagesForQuery)
       messagesForQuery = snipResult.messages
       snipTokensFreed = snipResult.tokensFreed
       if (snipResult.boundaryMessage) {
@@ -1595,8 +1595,8 @@ async function* queryLoop(
     // 于 !agentId，所以每个顶级对话（REPL、SDK、HFI、
     // remote）都生成摘要；子 agent/分叉不生成。
     if (feature('BG_SESSIONS')) {
-      if (!toolUseContext.agentId && (taskSummaryModule as any)!.shouldGenerateTaskSummary()) {
-        ;(taskSummaryModule as any)!.maybeGenerateTaskSummary({
+      if (!toolUseContext.agentId && taskSummaryModule!.shouldGenerateTaskSummary()) {
+        ;taskSummaryModule!.maybeGenerateTaskSummary({
           systemPrompt,
           userContext,
           systemContext,

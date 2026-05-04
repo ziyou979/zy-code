@@ -468,10 +468,10 @@ export async function runHeadless(
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule &&
-    !(proactiveModule as any).isProactiveActive() &&
+    !proactiveModule.isProactiveActive() &&
     isEnvTruthy(process.env.ZY_CODE_PROACTIVE)
   ) {
-    ;(proactiveModule as any).activateProactive('command')
+    ;proactiveModule.activateProactive('command')
   }
 
   // Periodically force a full GC to keep memory usage in check
@@ -1684,8 +1684,8 @@ function runHeadlessStreaming(
           setTimeout(() => {
             if (
               !proactiveModule ||
-              !(proactiveModule as any).isProactiveActive() ||
-              (proactiveModule as any).isProactivePaused() ||
+              !proactiveModule.isProactiveActive() ||
+              proactiveModule.isProactivePaused() ||
               inputClosed
             ) {
               return
@@ -2266,8 +2266,8 @@ function runHeadlessStreaming(
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
       proactiveModule &&
-      (proactiveModule as any).isProactiveActive() &&
-      !(proactiveModule as any).isProactivePaused()
+      proactiveModule.isProactiveActive() &&
+      !proactiveModule.isProactivePaused()
     ) {
       if (peek(isMainThread) === undefined && !inputClosed) {
         scheduleProactiveTick!()
@@ -2601,9 +2601,9 @@ function runHeadlessStreaming(
           suggestionState.lastEmitted = null
           suggestionState.pendingSuggestion = null
           sendControlResponseSuccess(message)
-        } else if ((message.request as any).subtype === 'end_session') {
+        } else if (message.request.subtype === 'end_session') {
           logForDebugging(
-            `[print.ts] end_session received, reason=${(message.request as any).reason ?? 'unspecified'}`,
+            `[print.ts] end_session received, reason=${message.request.reason ?? 'unspecified'}`,
           )
           if (abortController) {
             // 会话被外部要求结束（SDK end_session 控制消息），
@@ -2668,7 +2668,7 @@ function runHeadlessStreaming(
           if (hasCommandsInQueue()) {
             void run()
           }
-        } else if ((message.request as any).subtype === 'set_permission_mode') {
+        } else if (message.request.subtype === 'set_permission_mode') {
           const m = message.request as any
           setAppState((prev) => ({
             ...prev,
@@ -3024,16 +3024,16 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage)
             }
           }
-        } else if ((message.request as any).subtype === 'channel_enable') {
+        } else if (message.request.subtype === 'channel_enable') {
           const currentAppState = getAppState()
           handleChannelEnable(
             message.request_id,
-            (message.request as any).serverName,
+            message.request.serverName,
             // Pool spread matches mcp_status — all three client sources.
             [...currentAppState.mcp.clients, ...sdkClients, ...dynamicMcpState.clients],
             output,
           )
-        } else if ((message.request as any).subtype === 'mcp_authenticate') {
+        } else if (message.request.subtype === 'mcp_authenticate') {
           const { serverName } = message.request as any
           const currentAppState = getAppState()
           const config =
@@ -3173,7 +3173,7 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage(error))
             }
           }
-        } else if ((message.request as any).subtype === 'mcp_oauth_callback_url') {
+        } else if (message.request.subtype === 'mcp_oauth_callback_url') {
           const { serverName, callbackUrl } = message.request as any
           const submit = oauthCallbackSubmitters.get(serverName)
           if (submit) {
@@ -3217,13 +3217,13 @@ function runHeadlessStreaming(
           } else {
             sendControlResponseError(message, `No active OAuth flow for server: ${serverName}`)
           }
-        } else if ((message.request as any).subtype === 'zy_authenticate') {
+        } else if (message.request.subtype === 'zy_authenticate') {
           // Anthropic OAuth over the control channel. The SDK client owns
           // the user's browser (we're headless in -p mode); we hand back
           // both URLs and wait. Automatic URL → localhost listener catches
           // the redirect if the browser is on this host; manual URL → the
           // success page shows "code#state" for zy_oauth_callback.
-          const loginWithZyAi = (message.request as any).loginWithZyAi
+          const loginWithZyAi = message.request.loginWithZyAi
 
           // Clean up any prior flow. cleanup() closes the localhost listener
           // and nulls the manual resolver. The prior `flow` promise is left
@@ -3307,8 +3307,8 @@ function runHeadlessStreaming(
             sendControlResponseError(message, errorMessage(error))
           }
         } else if (
-          (message.request as any).subtype === 'zy_oauth_callback' ||
-          (message.request as any).subtype === 'zy_oauth_wait_for_completion'
+          message.request.subtype === 'zy_oauth_callback' ||
+          message.request.subtype === 'zy_oauth_wait_for_completion'
         ) {
           if (!zyOAuth) {
             sendControlResponseError(message, 'No active zy_authenticate flow')
@@ -3316,10 +3316,10 @@ function runHeadlessStreaming(
             // Inject the manual code synchronously — must happen in stdin
             // message order so a subsequent zy_authenticate doesn't
             // replace the service before this code lands.
-            if ((message.request as any).subtype === 'zy_oauth_callback') {
+            if (message.request.subtype === 'zy_oauth_callback') {
               zyOAuth.service.handleManualAuthCodeInput({
-                authorizationCode: (message.request as any).authorizationCode,
-                state: (message.request as any).state,
+                authorizationCode: message.request.authorizationCode,
+                state: message.request.state,
               })
             }
             // Detach the await — the stdin reader is serial and blocking
@@ -3345,7 +3345,7 @@ function runHeadlessStreaming(
               (error: unknown) => sendControlResponseError(message, errorMessage(error)),
             )
           }
-        } else if ((message.request as any).subtype === 'mcp_clear_auth') {
+        } else if (message.request.subtype === 'mcp_clear_auth') {
           const { serverName } = message.request as any
           const currentAppState = getAppState()
           const config =
@@ -3469,7 +3469,7 @@ function runHeadlessStreaming(
           } catch (error) {
             sendControlResponseError(message, errorMessage(error))
           }
-        } else if ((message.request as any).subtype === 'generate_session_title') {
+        } else if (message.request.subtype === 'generate_session_title') {
           // Fire-and-forget so the compact model call does not block the stdin loop
           // (which would delay processing of subsequent user messages /
           // interrupts for the duration of the API roundtrip).
@@ -3501,7 +3501,7 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage(e))
             }
           })()
-        } else if ((message.request as any).subtype === 'side_question') {
+        } else if (message.request.subtype === 'side_question') {
           // Same fire-and-forget pattern as generate_session_title above —
           // the forked agent's API roundtrip must not block the stdin loop.
           //
@@ -3570,16 +3570,16 @@ function runHeadlessStreaming(
             enabled: boolean
           }
           if (req.enabled) {
-            if (!proactiveModule || !(proactiveModule as any).isProactiveActive()) {
-              ;(proactiveModule as any).activateProactive('command')
+            if (!proactiveModule || !proactiveModule.isProactiveActive()) {
+              ;proactiveModule.activateProactive('command')
               scheduleProactiveTick!()
             }
           } else {
-            ;(proactiveModule as any).deactivateProactive()
+            ;proactiveModule.deactivateProactive()
           }
           sendControlResponseSuccess(message)
-        } else if ((message.request as any).subtype === 'remote_control') {
-          if ((message.request as any).enabled) {
+        } else if (message.request.subtype === 'remote_control') {
+          if (message.request.enabled) {
             if (bridgeHandle) {
               // Already connected
               sendControlResponseSuccess(message, {

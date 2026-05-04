@@ -348,4 +348,75 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     const t = result.find((m) => m.role === 'tool') as any
     expect(t.content).toBe('(empty)')
   })
+
+  test('user content 非 string 非 array（如数字）：兜底为空', () => {
+    const result = messagesToOpenAI([{ role: 'user', content: 123 }] as any)
+    expect(result[0].content).toBe('')
+  })
+
+  test('user content 数组全为未知 block 类型：无 text/image/tool_result，推送空 user', () => {
+    const result = messagesToOpenAI([
+      {
+        role: 'user',
+        content: [{ type: 'unknown_block', foo: 'bar' }],
+      },
+    ] as any)
+    expect(result[0].content).toBe('')
+  })
+
+  test('tool_result content 是数组（多 text block）：拼接为字符串', () => {
+    const result = messagesToOpenAI([
+      {
+        role: 'assistant',
+        content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }],
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            toolCallId: 'c',
+            content: [
+              { type: 'text', text: 'line1' },
+              { type: 'text', text: 'line2' },
+            ],
+          },
+        ],
+      },
+    ] as any)
+    const toolMsg = result.find((m) => m.role === 'tool') as any
+    expect(toolMsg.content).toBe('line1\nline2')
+  })
+
+  test('assistant string content + toolCalls 独立字段：text + tool_calls 共存', () => {
+    const result = messagesToOpenAI([
+      {
+        role: 'assistant',
+        content: 'Let me search',
+        toolCalls: [{ id: 'c1', name: 'search', arguments: '{"q":"hi"}' }],
+      },
+    ] as any)
+    const a = result.find((m) => m.role === 'assistant') as any
+    expect(a.content).toBe('Let me search')
+    expect(a.tool_calls).toHaveLength(1)
+    expect(a.tool_calls[0].function.arguments).toBe('{"q":"hi"}')
+  })
+
+  test('assistant content 为 array 无 tool_call，但 msg.toolCalls 独立字段存在 → 走 fallback', () => {
+    const result = messagesToOpenAI([
+      {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'answer' }],
+        toolCalls: [{ id: 'c1', name: 'search', arguments: '{}' }],
+      },
+    ] as any)
+    const a = result.find((m) => m.role === 'assistant') as any
+    expect(a.content).toBe('answer')
+    expect(a.tool_calls).toHaveLength(1)
+  })
+
+  test('user content 为非 object（如 null）：兜底为空', () => {
+    const result = messagesToOpenAI([{ role: 'user', content: null }] as any)
+    expect(result[0].content).toBe('')
+  })
 })

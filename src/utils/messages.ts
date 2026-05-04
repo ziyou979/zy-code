@@ -2790,8 +2790,8 @@ export function handleMessageFromStream(
   if (message.type !== 'stream_event' && message.type !== 'stream_request_start') {
     const msg = message as Message | StreamEvent | RequestStartEvent | TombstoneMessage
     // 处理 tombstone 消息 — 移除目标消息而非添加
-    if (message.type === 'system' && (message as any).subtype === 'tombstone') {
-      onTombstone?.((message as any).message)
+    if (message.type === 'system' && message.subtype === 'tombstone') {
+      onTombstone?.(message.message)
       return
     }
     // Tool use summary 消息仅限 SDK，流处理中忽略它们

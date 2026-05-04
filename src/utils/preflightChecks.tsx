@@ -118,7 +118,7 @@ export function PreflightStep({ onSuccess }: PreflightStepProps) {
               <Text>Please check your internet connection and network settings.</Text>
               <Text>
                 Note: ZY Code might not be available in your country. Check supported countries at{' '}
-                <Text color="suggestion">https://anthropic.com/supported-countries</Text>
+                <Text color="suggestion">https://zy.ai/supported-countries</Text>
               </Text>
             </Box>
           )}

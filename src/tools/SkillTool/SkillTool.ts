@@ -120,7 +120,7 @@ async function executeForkedSkill(
   const forkedSanitizedName = isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
 
   const wasDiscoveredField =
-    feature('EXPERIMENTAL_SKILL_SEARCH') && (remoteSkillModules as any).isSkillSearchEnabled()
+    feature('EXPERIMENTAL_SKILL_SEARCH') && remoteSkillModules.isSkillSearchEnabled()
       ? {
           was_discovered: context.discoveredSkillNames?.has(commandName) ?? false,
         }
@@ -330,9 +330,9 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // `_canonical_<slug>` names before local command lookup since remote
     // skills are not in the local command registry.
     if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
-      const slug = (remoteSkillModules as any).stripCanonicalPrefix(normalizedCommandName)
+      const slug = remoteSkillModules.stripCanonicalPrefix(normalizedCommandName)
       if (slug !== null) {
-        const meta = (remoteSkillModules as any).getDiscoveredRemoteSkill(slug)
+        const meta = remoteSkillModules.getDiscoveredRemoteSkill(slug)
         if (!meta) {
           return {
             result: false,
@@ -431,7 +431,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // deny rule is honored (same pattern as safe-properties auto-allow below).
     // The skill content itself is canonical/curated, not user-authored.
     if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
-      const slug = (remoteSkillModules as any).stripCanonicalPrefix(commandName)
+      const slug = remoteSkillModules.stripCanonicalPrefix(commandName)
       if (slug !== null) {
         return {
           behavior: 'allow',
@@ -534,7 +534,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // Remote skills are declarative markdown so no slash-command expansion
     // (no !command substitution, no $ARGUMENTS interpolation) is needed.
     if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
-      const slug = (remoteSkillModules as any).stripCanonicalPrefix(commandName)
+      const slug = remoteSkillModules.stripCanonicalPrefix(commandName)
       if (slug !== null) {
         return executeRemoteSkill(slug, commandName, parentMessage, context)
       }
@@ -585,7 +585,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     const sanitizedCommandName = isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
 
     const wasDiscoveredField =
-      feature('EXPERIMENTAL_SKILL_SEARCH') && (remoteSkillModules as any).isSkillSearchEnabled()
+      feature('EXPERIMENTAL_SKILL_SEARCH') && remoteSkillModules.isSkillSearchEnabled()
         ? {
             was_discovered: context.discoveredSkillNames?.has(commandName) ?? false,
           }
@@ -874,7 +874,7 @@ async function executeRemoteSkill(
   context: ToolUseContext,
 ): Promise<ToolResult<Output>> {
   const { getDiscoveredRemoteSkill, loadRemoteSkill, logRemoteSkillLoaded } =
-    remoteSkillModules as any
+    remoteSkillModules
 
   // validateInput already confirmed this slug is in session state, but we
   // re-fetch here to get the URL. If it's somehow gone (e.g., state cleared
