@@ -245,7 +245,7 @@ export const zhCN: TranslationResource = {
   'effort.medium': '均衡',
   'effort.defaultDialogTitle': '推荐使用均衡努力度',
   'effort.defaultDialogDescription':
-    '努力度决定模型在完成任务时思考的时长。对于大多数任务，建议使用中等努力度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发高努力度。',
+    '努力度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡努力度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发高努力度。',
 
   // Press Enter
   pressEnterToContinue: '按 Enter 继续\u2026',
