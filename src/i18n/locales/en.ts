@@ -135,6 +135,7 @@ export const en: TranslationResource = {
   // Thinking
   'thinking.label': 'thinking',
   'thinking.thoughtFor': 'thought for {duration}',
+  'statusBar.thinkingOn': '💭 Deep Think',
   'shortcut.interrupt': 'interrupt',
   'shortcut.shortcutsHint': '? for shortcuts',
   'shortcut.background': 'run in background',
@@ -674,6 +675,9 @@ export const en: TranslationResource = {
   'onboarding.enterToConfirm': 'Enter to confirm · Esc to exit',
   'onboarding.enterToConfirmSkip': 'Enter to confirm · Esc to skip',
   'onboarding.pressAgainToExit': 'Press {key} again to exit',
+  'onboarding.effort.title': 'Choose effort level',
+  'onboarding.effort.desc':
+    "How thorough should ZY Code's responses be? Medium balances quality and speed. You can change this later with /effort.",
   'onboarding.security.title': 'Security notes:',
   'onboarding.security.risk1': 'ZY Code can make mistakes',
   'onboarding.security.risk1desc':
@@ -2545,9 +2549,6 @@ export const en: TranslationResource = {
   'messageSelector.conversationUnchanged': 'The conversation will be unchanged.',
 
   // Cost threshold dialog
-  'costThreshold.title': "You've spent $5 on the Anthropic API this session.",
-  'costThreshold.learnMore': 'Learn more about how to monitor your spending:',
-  'costThreshold.gotIt': 'Got it, thanks!',
 
   // Invalid config dialog (body)
   'invalidConfig.title': 'Configuration Error',

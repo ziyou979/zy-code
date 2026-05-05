@@ -21,11 +21,7 @@ export function TungstenPill({ selected }: Props): React.ReactNode {
   const label = `${figures.squareSmallFilled} tmux`
 
   return (
-    <Text
-      key={selected ? 'selected' : 'normal'}
-      color="background"
-      inverse={selected}
-    >
+    <Text key={selected ? 'selected' : 'normal'} color="background" inverse={selected}>
       {label}
     </Text>
   )

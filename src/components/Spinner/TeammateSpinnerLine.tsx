@@ -10,8 +10,8 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink.js'
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
 import { summarizeRecentActivities } from '../../utils/collapseReadSearch.js'
-import { formatDuration, formatDurationZh, truncateToWidth } from '../../utils/format.js'
-import { getUiLanguage, tSync } from '../../i18n/index.js'
+import { getLocalizedDurationFormatter, truncateToWidth } from '../../utils/format.js'
+import { tSync } from '../../i18n/index.js'
 import { toInkColor } from '../../utils/ink.js'
 import { TEAMMATE_SELECT_HINT } from './teammateSelectHint.js'
 function formatToolUseCount(count: number): string {
@@ -133,7 +133,7 @@ export function TeammateSpinnerLine({
   // Freeze the duration when we first detect all idle
   // Use the teammate's actual work time (since task started) for the past-tense display
   if (allIdle && frozenDurationRef.current === null) {
-    frozenDurationRef.current = formatDuration(
+    frozenDurationRef.current = getLocalizedDurationFormatter()(
       Math.max(0, Date.now() - teammate.startTime - (teammate.totalPausedMs ?? 0)),
     )
   }
@@ -221,9 +221,8 @@ export function TeammateSpinnerLine({
     }
     if (teammate.isIdle) {
       if (allIdle) {
-        const isZh = getUiLanguage() === 'zh-CN'
-        const durationText = isZh
-          ? formatDurationZh(
+        const durationText = allIdle
+          ? getLocalizedDurationFormatter()(
               Math.max(0, Date.now() - teammate.startTime - (teammate.totalPausedMs ?? 0)),
             )
           : displayTime

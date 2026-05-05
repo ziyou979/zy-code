@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { ClockContext } from '../ink/components/ClockContext.js'
-import { formatDuration, formatDurationZh } from '../utils/format.js'
-import { getUiLanguage } from '../i18n/index.js'
+import { getLocalizedDurationFormatter } from '../utils/format.js'
 
 /**
  * Hook that returns formatted elapsed time since startTime.
@@ -28,7 +27,7 @@ export function useElapsedTime(
   endTime?: number,
 ): string {
   const clock = useContext(ClockContext)
-  const fmt = getUiLanguage() === 'zh-CN' ? formatDurationZh : formatDuration
+  const fmt = getLocalizedDurationFormatter()
   const [elapsed, setElapsed] = useState(() =>
     fmt(Math.max(0, (endTime ?? Date.now()) - startTime - pausedMs)),
   )

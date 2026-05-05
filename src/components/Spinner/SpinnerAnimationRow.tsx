@@ -4,8 +4,8 @@ import { useMemo, useRef } from 'react'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useAnimationFrame } from '../../ink.js'
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
-import { formatDuration, formatDurationZh, formatNumber } from '../../utils/format.js'
-import { getUiLanguage, tSync } from '../../i18n/index.js'
+import { formatNumber, getLocalizedDurationFormatter } from '../../utils/format.js'
+import { tSync } from '../../i18n/index.js'
 import { toInkColor } from '../../utils/ink.js'
 import type { Theme } from '../../utils/theme.js'
 import { Byline } from '../design-system/Byline.js'
@@ -175,7 +175,7 @@ export function SpinnerAnimationRow({
   const effectiveElapsedMs = hasRunningTeammates
     ? Math.max(elapsedTimeMs, now - turnStartRef.current)
     : elapsedTimeMs
-  const timerText = formatDuration(effectiveElapsedMs)
+  const timerText = getLocalizedDurationFormatter()(effectiveElapsedMs)
   const timerWidth = stringWidth(timerText)
 
   // === Token count (leader + teammates, or foregrounded teammate) ===
@@ -190,7 +190,6 @@ export function SpinnerAnimationRow({
   const tokensWidth = stringWidth(tokensText)
 
   // === Thinking text (may shrink to fit) ===
-  const isZh = getUiLanguage() === 'zh-CN'
   const thinkingLabel = tSync('thinking.label')
   const thinkingBareWidth = stringWidth(thinkingLabel)
   let thinkingText =
@@ -198,7 +197,7 @@ export function SpinnerAnimationRow({
       ? `${thinkingLabel}${effortSuffix}`
       : typeof thinkingStatus === 'number'
         ? tSync('thinking.thoughtFor', {
-            duration: isZh ? formatDurationZh(thinkingStatus) : formatDuration(thinkingStatus),
+            duration: getLocalizedDurationFormatter()(thinkingStatus),
           })
         : null
   let thinkingWidthValue = thinkingText ? stringWidth(thinkingText) : 0

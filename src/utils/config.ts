@@ -230,7 +230,6 @@ export type GlobalConfig = {
   configuredApiKey?: string
   /** 对话默认模型，onboarding 期间配置 */
   configuredModel?: string
-  hasAcknowledgedCostThreshold?: boolean
   hasSeenUndercoverAutoNotice?: boolean // ant-only: 一次性自动 undercover 说明是否已展示
   hasSeenUltraplanTerms?: boolean // ant-only: 是否在 ultraplan 启动弹窗中展示过一次 CCR 条款
   hasResetAutoModeOptInForDefaultOffer?: boolean // ant-only: 一次性迁移保护，重新提示已流失的 auto-mode 用户

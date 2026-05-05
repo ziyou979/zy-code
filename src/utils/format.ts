@@ -1,6 +1,7 @@
 // Pure display formatters — leaf-safe (no Ink). Width-aware truncation lives in ./truncate.ts.
 
 import { getRelativeTimeFormat, getTimeZone } from './intl.js'
+import { getUiLanguage } from '../i18n/index.js'
 
 /**
  * Formats a byte count to a human-readable string (KB, MB, GB).
@@ -160,6 +161,19 @@ export function formatDurationZh(
     return `${minutes}分${seconds}秒`
   }
   return `${seconds}秒`
+}
+
+/**
+ * 根据当前 UI 语言返回对应的时长格式化函数。
+ * 集中管理语言到格式化器的映射，后续新增语言只需在此扩展。
+ */
+export function getLocalizedDurationFormatter(): typeof formatDuration {
+  switch (getUiLanguage()) {
+    case 'zh-CN':
+      return formatDurationZh
+    default:
+      return formatDuration
+  }
 }
 
 // `new Intl.NumberFormat` is expensive, so cache formatters for reuse

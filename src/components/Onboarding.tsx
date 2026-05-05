@@ -14,6 +14,8 @@ import { Welcome } from './Logo/Welcome.js'
 import { PressEnterToContinue } from './PressEnterToContinue.js'
 import { ThemePicker } from './ThemePicker.js'
 import { OrderedList } from './ui/OrderedList.js'
+import { toPersistableEffort } from '../utils/effort.js'
+import { effortLevelToSymbol } from './EffortIndicator.js'
 
 type StepId =
   | 'language'
@@ -23,6 +25,7 @@ type StepId =
   | 'model-advanced'
   | 'model-compact'
   | 'model-tier'
+  | 'effort'
   | 'security'
   | 'terminal-setup'
 
@@ -312,6 +315,42 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     </Box>
   )
 
+  // Effort step — choose how thorough model responses should be
+  function handleEffortDone(effortLevel: string) {
+    updateSettingsForSource('userSettings', {
+      effortLevel: toPersistableEffort(effortLevel as any),
+    })
+    goToNextStep()
+  }
+
+  const effortStep = (
+    <Box flexDirection="column" gap={1} paddingLeft={1}>
+      <Text bold>{tSync('onboarding.effort.title')}</Text>
+      <Text dimColor>{tSync('onboarding.effort.desc')}</Text>
+      <Box flexDirection="column" width={60} gap={1}>
+        <Select
+          options={[
+            {
+              label: `${effortLevelToSymbol('medium')} ${tSync('effort.mediumRecommended')}`,
+              value: 'medium',
+            },
+            {
+              label: `${effortLevelToSymbol('high')} ${tSync('effort.high')}`,
+              value: 'high',
+            },
+            {
+              label: `${effortLevelToSymbol('low')} ${tSync('effort.low')}`,
+              value: 'low',
+            },
+          ]}
+          onChange={(value) => handleEffortDone(value)}
+          onCancel={() => handleEffortDone('medium')}
+        />
+        <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
+      </Box>
+    </Box>
+  )
+
   // Security step
   const securityStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
@@ -348,6 +387,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   steps.push({ id: 'model-advanced', component: advancedStep })
   steps.push({ id: 'model-compact', component: compactStep })
   steps.push({ id: 'model-tier', component: tierStep })
+  steps.push({ id: 'effort', component: effortStep })
   steps.push({ id: 'security', component: securityStep })
 
   if (shouldOfferTerminalSetup()) {

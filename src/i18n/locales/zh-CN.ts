@@ -119,6 +119,7 @@ export const zhCN: TranslationResource = {
   // Thinking
   'thinking.label': '思考中',
   'thinking.thoughtFor': '思考结束，耗时 {duration}',
+  'statusBar.thinkingOn': '💭 思考',
   'shortcut.interrupt': '中断',
   'shortcut.background': '后台运行',
   'shortcut.shortcutsHint': '? 查看快捷键',
@@ -857,6 +858,9 @@ export const zhCN: TranslationResource = {
   'onboarding.enterToConfirm': 'Enter 确认 · Esc 退出',
   'onboarding.enterToConfirmSkip': 'Enter 确认 · Esc 跳过',
   'onboarding.pressAgainToExit': '再按一次 {key} 退出',
+  'onboarding.effort.title': '选择回答努力度',
+  'onboarding.effort.desc':
+    '你希望 ZY Code 的回答有多深入？均衡模式兼顾质量与速度，推荐使用。后续可通过 /effort 更改。',
   'onboarding.security.title': '安全提示：',
   'onboarding.security.risk1': 'ZY Code 可能会出错',
   'onboarding.security.risk1desc': '你应该始终审查 ZY Code 的响应，尤其是在运行代码时。',
@@ -2508,9 +2512,6 @@ export const zhCN: TranslationResource = {
   'messageSelector.emptyMessage': '（（空消息））',
 
   // Cost threshold dialog
-  'costThreshold.title': '本次会话你已在 Anthropic API 上花费了 $5。',
-  'costThreshold.learnMore': '了解更多关于如何监控你的支出的信息：',
-  'costThreshold.gotIt': '知道了，谢谢！',
 
   // LSP recommendation
   'lsp.title': 'LSP 插件推荐',

@@ -164,7 +164,11 @@ function PromptInputFooter({
             !exitMessage.show &&
             !isPasting &&
             settings?.builtInStatusBar?.enabled !== false && (
-              <BuiltInStatusBar messagesRef={messagesRef} mainLoopModel={mainLoopModel} />
+              <BuiltInStatusBar
+                messages={messages}
+                isLoading={isLoading}
+                mainLoopModel={mainLoopModel}
+              />
             )}
           <PromptInputFooterLeftSide
             exitMessage={exitMessage}

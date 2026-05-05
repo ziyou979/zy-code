@@ -511,10 +511,19 @@ export async function* mapOpenAIStreamToStandard(
   // 百炼深度思考：reasoning_content 需要独立的 thinking block
   let thinkingBlockStarted = false
   const thinkingBlockIndex = 0
+  // 最终 stop_reason 和 usage（usage 可能在独立的 usage-only chunk 中到达）
+  let finalStopReason: StopReason | null = null
+  let finalUsage: DeltaUsage | undefined = undefined
 
   yield { type: 'response_start', responseId: messageId, model }
 
   for await (const chunk of stream) {
+    // 累积 usage（OpenAI stream_options.include_usage 下，usage 在独立 chunk 中，
+    // choices 为空，因此必须在 choices 循环外捕获）
+    if (chunk.usage) {
+      finalUsage = openAIDeltaUsageToStandard(chunk.usage)
+    }
+
     for (const choice of chunk.choices ?? []) {
       const delta = choice.delta as any
 
@@ -588,8 +597,9 @@ export async function* mapOpenAIStreamToStandard(
         }
       }
 
-      // 结束
+      // 结束（捕获 stop_reason，发送 chunk_stop 事件）
       if (choice.finish_reason) {
+        finalStopReason = openAIFinishReasonToStandard(choice.finish_reason)
         if (thinkingBlockStarted) {
           yield { type: 'chunk_stop', index: thinkingBlockIndex }
         }
@@ -599,13 +609,16 @@ export async function* mapOpenAIStreamToStandard(
         for (const blockIndex of toolBlockIndices.values()) {
           yield { type: 'chunk_stop', index: blockIndex }
         }
-
-        yield {
-          type: 'response_delta',
-          stopReason: openAIFinishReasonToStandard(choice.finish_reason),
-          usage: openAIDeltaUsageToStandard(chunk.usage),
-        }
       }
+    }
+  }
+
+  // 在流结束后 yield response_delta，此时 usage 已从 usage-only chunk 中收集完毕
+  if (finalStopReason) {
+    yield {
+      type: 'response_delta',
+      stopReason: finalStopReason,
+      usage: finalUsage,
     }
   }
 

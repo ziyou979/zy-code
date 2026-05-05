@@ -33,7 +33,6 @@ import {
   useTabStatus,
 } from '../ink.js'
 import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
-import { CostThresholdDialog } from '../components/CostThresholdDialog.js'
 import { IdleReturnDialog } from '../components/IdleReturnDialog.js'
 import * as React from 'react'
 import {
@@ -137,6 +136,7 @@ import { SpinnerWithVerb, BriefIdleStatus, type SpinnerMode } from '../component
 import { getSystemPrompt } from '../constants/prompts.js'
 import { buildEffectiveSystemPrompt } from '../utils/systemPrompt.js'
 import { getSystemContext, getUserContext } from '../context.js'
+import { getSettingsForSource } from '../utils/settings/settings.js'
 import { getMemoryFiles } from '../utils/zymd.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
 import {
@@ -973,7 +973,11 @@ export function REPL({
   const [ideInstallationStatus, setIDEInstallationStatus] =
     useState<IDEExtensionInstallationStatus | null>(null)
   const [showIdeOnboarding, setShowIdeOnboarding] = useState(false)
-  const [showEffortCallout, setShowEffortCallout] = useState(() => true)
+  const [showEffortCallout, setShowEffortCallout] = useState(() => {
+    // 如果 onboarding 已经持久化了 effortLevel 则不弹出
+    const settings = getSettingsForSource('userSettings')
+    return !settings?.effortLevel
+  })
   const showRemoteCallout = useAppState((s) => s.showRemoteCallout)
   const [showDesktopUpsellStartup, setShowDesktopUpsellStartup] = useState(() =>
     shouldShowDesktopUpsellStartup(),
@@ -1722,7 +1726,6 @@ export function REPL({
   const [messageSelectorPreselect, setMessageSelectorPreselect] = useState<UserMessage | undefined>(
     undefined,
   )
-  const [showCostDialog, setShowCostDialog] = useState(false)
   const [conversationId, setConversationId] = useState(randomUUID())
 
   // 空闲返回对话框：用户在长空闲后提交时显示
@@ -1748,9 +1751,6 @@ export function REPL({
   const [contentReplacementStateRef] = useState(() => ({
     current: provisionContentReplacementState(initialMessages, initialContentReplacements),
   }))
-  const [haveShownCostDialog, setHaveShownCostDialog] = useState(
-    getGlobalConfig().hasAcknowledgedCostThreshold,
-  )
   const [vimMode, setVimMode] = useState<VimMode>('INSERT')
   const [showBashesDialog, setShowBashesDialog] = useState<string | boolean>(false)
   const [isSearchingHistory, setIsSearchingHistory] = useState(false)
@@ -2312,8 +2312,6 @@ export function REPL({
   const [isExiting, setIsExiting] = useState(false)
 
   // 计算是否应显示成本对话框
-  const showingCostDialog = !isLoading && showCostDialog
-
   // 确定哪个对话框应该获得焦点（如果有）
   // 权限和交互式对话框即使在设置了 toolJSX 时也可以显示，
   // 只要 shouldContinueAnimation 为 true。这防止当
@@ -2355,7 +2353,6 @@ export function REPL({
     if (allowDialogsWithAnimation && workerSandboxPermissions.queue[0])
       return 'worker-sandbox-permission'
     if (allowDialogsWithAnimation && elicitation.queue[0]) return 'elicitation'
-    if (allowDialogsWithAnimation && showingCostDialog) return 'cost'
     if (allowDialogsWithAnimation && idleReturnPending) return 'idle-return'
     if (feature('ULTRAPLAN') && allowDialogsWithAnimation && !isLoading && ultraplanPendingChoice)
       return 'ultraplan-choice'
@@ -2390,8 +2387,7 @@ export function REPL({
       toolUseConfirmQueue[0] ||
       promptQueue[0] ||
       workerSandboxPermissions.queue[0] ||
-      elicitation.queue[0] ||
-      showingCostDialog)
+      elicitation.queue[0])
 
   // 保持 ref 同步以便 timer 回调可以读取当前值
   focusedInputDialogRef.current = focusedInputDialog
@@ -2529,19 +2525,6 @@ export function REPL({
     inputValue,
     streamMode,
   }
-  useEffect(() => {
-    const totalCost = getTotalCost()
-    if (totalCost >= 5 /* $5 */ && !showCostDialog && !haveShownCostDialog) {
-      logEvent('zy_cost_threshold_reached', {})
-      // 即使对话框不会渲染（无控制台计费
-      // 访问）也标记为已显示。否则此 effect 会在会话剩余时间
-      // 的每次消息更改时重新触发 — 观察到 200k+ 次虚假事件。
-      setHaveShownCostDialog(true)
-      if (hasConsoleBillingAccess()) {
-        setShowCostDialog(true)
-      }
-    }
-  }, [messages, showCostDialog, haveShownCostDialog])
   const sandboxAskCallback: SandboxAskCallback = useCallback(
     async (hostPattern: NetworkHostPattern) => {
       // 作为 swarm worker 运行时，通过 mailbox 将请求转发给 leader
@@ -5787,19 +5770,6 @@ export function REPL({
                         },
                       }))
                       currentRequest?.onWaitingDismiss?.(action)
-                    }}
-                  />
-                )}
-                {focusedInputDialog === 'cost' && (
-                  <CostThresholdDialog
-                    onDone={() => {
-                      setShowCostDialog(false)
-                      setHaveShownCostDialog(true)
-                      saveGlobalConfig((current) => ({
-                        ...current,
-                        hasAcknowledgedCostThreshold: true,
-                      }))
-                      logEvent('zy_cost_threshold_acknowledged', {})
                     }}
                   />
                 )}

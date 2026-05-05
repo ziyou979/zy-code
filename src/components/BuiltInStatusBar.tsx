@@ -1,6 +1,12 @@
 import * as React from 'react'
 import { memo, useEffect, useRef, useState } from 'react'
-import { EFFORT_HIGH, EFFORT_LOW, EFFORT_MAX, EFFORT_MEDIUM } from '../constants/figures.js'
+import {
+  EFFORT_HIGH,
+  EFFORT_LOW,
+  EFFORT_MAX,
+  EFFORT_MEDIUM,
+  FORK_GLYPH,
+} from '../constants/figures.js'
 import { getTotalCost, getTotalInputTokens, getTotalOutputTokens } from '../cost-tracker.js'
 import { tSync } from '../i18n/index.js'
 import { useSettings } from '../hooks/useSettings.js'
@@ -59,16 +65,21 @@ function formatMemory(bytes: number): string {
 }
 
 type Props = {
-  messagesRef: React.RefObject<Message[]>
+  messages: Message[]
+  isLoading: boolean
   mainLoopModel: ModelName
 }
 
-function BuiltInStatusBarInner({ messagesRef, mainLoopModel }: Props): React.ReactNode {
+/** 加载期间刷新间隔（ms），确保 token/费用实时更新 */
+const LOADING_REFRESH_MS = 500
+
+function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): React.ReactNode {
   const settings = useSettings()
   const effortValue = useAppState((s) => s.effortValue)
   const tasks = useAppState((s) => s.tasks)
   const [branch, setBranch] = useState<string | null>(null)
   const [memoryRss, setMemoryRss] = useState<number>(0)
+  const [tick, setTick] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
 
   // 是否启用（默认启用）
@@ -103,21 +114,27 @@ function BuiltInStatusBarInner({ messagesRef, mainLoopModel }: Props): React.Rea
     }
   }, [])
 
+  // 加载期间定时刷新，确保 token/费用读数实时更新
+  useEffect(() => {
+    if (!isLoading) return
+    const id = setInterval(() => setTick((n) => n + 1), LOADING_REFRESH_MS)
+    return () => clearInterval(id)
+  }, [isLoading])
+
   const parts: string[] = []
 
-  // 1. Effort 级别
-  {
-    const level = getDisplayedEffortLevel(mainLoopModel, effortValue)
-    const icon = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
-    const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
-    const levelName = tSync(i18nKey)
-    parts.push(`${icon} ${levelName}`)
-  }
+  // 强制引用 tick 以避免 unused variable 警告
+  void tick
+
+  // 读取思考模式状态
+  const thinkingEnabled = useAppState((s) => s.thinkingEnabled)
+
+  // 1. 模型名
+  parts.push(mainLoopModel)
 
   // 2. 上下文使用量（进度条）
   {
-    const msgs = messagesRef.current
-    const currentUsage = getCurrentUsage(msgs)
+    const currentUsage = getCurrentUsage(messages)
     const contextWindowSize = getContextWindowForModel(mainLoopModel)
     if (currentUsage) {
       const percentages = calculateContextPercentages(currentUsage, contextWindowSize)
@@ -126,25 +143,35 @@ function BuiltInStatusBarInner({ messagesRef, mainLoopModel }: Props): React.Rea
         currentUsage.cacheCreationInputTokens +
         currentUsage.cacheReadInputTokens
       const bar = renderContextBar(percentages.used)
-      parts.push(`📊 ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`)
+      parts.push(`🪟 ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`)
     } else {
-      parts.push(`📊 ${formatTokens(contextWindowSize)}`)
+      parts.push(`🪟 ${formatTokens(contextWindowSize)}`)
     }
   }
 
-  // 3. 模型名
-  parts.push(mainLoopModel)
+  // 3. Effort 级别 + 思考模式（整合）
+  {
+    const level = getDisplayedEffortLevel(mainLoopModel, effortValue)
+    const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
+    const levelName = tSync(i18nKey)
+    if (thinkingEnabled) {
+      parts.push(`${tSync('statusBar.thinkingOn')} - ${levelName}`)
+    } else {
+      const icon = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
+      parts.push(`${icon} ${levelName}`)
+    }
+  }
 
-  // 4. Token 使用量
+  // 5. Token 使用量
   {
     const totalIn = getTotalInputTokens()
     const totalOut = getTotalOutputTokens()
     if (totalIn > 0 || totalOut > 0) {
-      parts.push(`🔤 ↑${formatTokens(totalIn)} ↓${formatTokens(totalOut)}`)
+      parts.push(`📊 ↑${formatTokens(totalIn)} ↓${formatTokens(totalOut)}`)
     }
   }
 
-  // 5. 预估费用
+  // 6. 预估费用
   {
     const cost = getTotalCost()
     if (cost > 0) {
@@ -152,7 +179,7 @@ function BuiltInStatusBarInner({ messagesRef, mainLoopModel }: Props): React.Rea
     }
   }
 
-  // 6. 活跃子智能体
+  // 7. 活跃子智能体
   {
     const visibleTasks = getVisibleAgentTasks(tasks)
     const runningTasks = visibleTasks.filter((t) => t.status === 'running')
@@ -160,21 +187,21 @@ function BuiltInStatusBarInner({ messagesRef, mainLoopModel }: Props): React.Rea
     const failedTasks = visibleTasks.filter((t) => t.status === 'failed')
 
     if (runningTasks.length > 0 || completedTasks.length > 0) {
-      let taskInfo = `🤖${runningTasks.length}`
-      if (completedTasks.length > 0) taskInfo += ` ✓${completedTasks.length}`
-      if (failedTasks.length > 0) taskInfo += ` ✗${failedTasks.length}`
+      let taskInfo = `🤖 ${runningTasks.length}`
+      if (completedTasks.length > 0) taskInfo += ` ✓ ${completedTasks.length}`
+      if (failedTasks.length > 0) taskInfo += ` ✗ ${failedTasks.length}`
       parts.push(taskInfo)
     }
   }
 
-  // 7. 内存占用
+  // 8. 内存占用
   if (memoryRss > 0) {
     parts.push(`💾 ${formatMemory(memoryRss)}`)
   }
 
-  // 8. Git 分支
+  // 9. Git 分支
   if (branch) {
-    parts.push(branch)
+    parts.push(`${FORK_GLYPH} ${branch}`)
   }
 
   return (

@@ -398,6 +398,15 @@ function ModeIndicator({
     (task) => task.type === 'local_agent' && task.status === 'running',
   )
 
+  // ESC 中断提示始终显示（不受 showHint / builtInStatusBar 影响）
+  if (isLoading) {
+    parts.push(
+      <Text dimColor key="esc">
+        <KeyboardShortcutHint shortcut={escShortcut} action="interrupt" />
+      </Text>,
+    )
+  }
+
   // Get hint parts separately for potential second-line rendering
   const hintParts = showHint
     ? getSpinnerHintParts(
@@ -614,13 +623,7 @@ function getSpinnerHintParts(
   // teammates to cycle to
   const showToggleHint = hasTaskItems || hasTeammates
   return [
-    ...(isLoading
-      ? [
-          <Text dimColor key="esc">
-            <KeyboardShortcutHint shortcut={escShortcut} action="interrupt" />
-          </Text>,
-        ]
-      : []),
+    // ESC 中断提示已移至 ModeIndicator 中独立渲染（不受 showHint 影响）
     ...(!isLoading && hasRunningAgentTasks && !isKillAgentsConfirmShowing
       ? [
           <Text dimColor key="kill-agents">
