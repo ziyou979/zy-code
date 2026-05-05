@@ -655,7 +655,7 @@ export const zhCN: TranslationResource = {
 
   // OAuth / Login
   'oauth.forceLoginMethod.zyai': '已预选登录方式：订阅方案（Zy Pro/Max）',
-  'oauth.forceLoginMethod.console': '已预选登录方式：API 用量计费（Anthropic Console）',
+  'oauth.forceLoginMethod.console': '已预选登录方式：API 用量计费',
 
   // Bash tool
   'bash.runInBackground': '后台运行',
@@ -1254,7 +1254,7 @@ export const zhCN: TranslationResource = {
   'commands.hooks': '查看工具事件的钩子配置',
   'commands.export': '将当前对话导出到文件或剪贴板',
   'commands.sandbox': '配置代码执行沙箱',
-  'commands.logout': '退出你的 Anthropic 账户',
+  'commands.logout': '退出登录',
   'commands.login': '使用你的账户登录',
   'commands.batch':
     '研究并规划大规模变更，然后在 5-30 个隔离 worktree 子代理中并行执行，每个子代理创建一个 PR。',
@@ -2511,8 +2511,6 @@ export const zhCN: TranslationResource = {
   'messageSelector.currentLabel': '（当前）',
   'messageSelector.emptyMessage': '（（空消息））',
 
-  // Cost threshold dialog
-
   // LSP recommendation
   'lsp.title': 'LSP 插件推荐',
   'lsp.yesInstallPlugin': '是，安装 {pluginName}',
@@ -2543,7 +2541,7 @@ export const zhCN: TranslationResource = {
   'oauth.introMessage': 'ZY Code 可通过你的 Zy 订阅使用，也可通过 Console 账户按 API 用量计费。',
   'oauth.zyaiOptionLabel': 'Zy 订阅账户 ·',
   'oauth.zyaiOptionDesc': 'Pro、Max、Team 或 Enterprise',
-  'oauth.consoleOptionLabel': 'Anthropic Console 账户 ·',
+  'oauth.consoleOptionLabel': 'API 账户 ·',
   'oauth.consoleOptionDesc': 'API 用量计费',
   'oauth.platformOptionLabel': '第三方平台 ·',
   'oauth.platformOptionDesc': 'Amazon Bedrock、Microsoft Foundry 或 Vertex AI',

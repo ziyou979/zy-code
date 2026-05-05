@@ -654,7 +654,7 @@ export function extractTag(html: string, tagName: string): string | null {
   return null
 }
 
-export function isNotEmptyMessage(message: Message): boolean {
+export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean {
   if (!message) {
     return false
   }

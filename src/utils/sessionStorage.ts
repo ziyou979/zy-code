@@ -3446,6 +3446,9 @@ export async function loadTranscriptFile(
     // rewrite any subsequent message whose parentUuid lands in the bridge.
     const progressBridge = new Map<UUID, UUID | null>()
 
+    // 容错：记录文件中上一条 transcript 消息的 uuid，用于修复 parentUuid=null 的断链
+    let lastTranscriptUuid: UUID | null = null
+
     for (const entry of entries) {
       // Legacy progress check runs before the Entry-typed else-if chain —
       // progress is not in the Entry union, so checking it after TypeScript
@@ -3465,6 +3468,11 @@ export async function loadTranscriptFile(
         if (entry.parentUuid && progressBridge.has(entry.parentUuid)) {
           entry.parentUuid = progressBridge.get(entry.parentUuid) ?? null
         }
+        // 容错：修复 dev 模式下 parentUuid 写入断链的问题。
+        // compact_boundary 的 parentUuid=null 是有意为之，不修复。
+        if (!entry.parentUuid && lastTranscriptUuid && !isCompactBoundaryMessage(entry)) {
+          entry.parentUuid = lastTranscriptUuid
+        }
         messages.set(entry.uuid, entry)
         // Compact boundary: prior marble-origami-commit entries reference
         // messages that won't be in the post-boundary chain. The >5MB
@@ -3477,6 +3485,7 @@ export async function loadTranscriptFile(
           contextCollapseCommits.length = 0
           contextCollapseSnapshot = undefined
         }
+        lastTranscriptUuid = entry.uuid
       } else if (entry.type === 'summary' && entry.leafUuid) {
         summaries.set(entry.leafUuid, entry.summary)
       } else if (entry.type === 'custom-title' && entry.sessionId) {

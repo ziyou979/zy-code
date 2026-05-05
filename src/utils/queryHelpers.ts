@@ -51,7 +51,9 @@ export function isResultSuccessful(
   if (!message) return false
 
   if (message.type === 'assistant') {
-    const lastContent = last(message.message.content)
+    const content = message.message.content
+    if (!Array.isArray(content)) return content.trim().length > 0
+    const lastContent = last(content)
     return (
       lastContent?.type === 'text' ||
       lastContent?.type === 'thinking' ||
@@ -110,7 +112,7 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
       return
     case 'progress':
       if (message.data.type === 'agent_progress' || message.data.type === 'skill_progress') {
-        for (const _ of normalizeMessages([message.data.message])) {
+        for (const _ of normalizeMessages([message.data.message] as Message[])) {
           switch (_.type) {
             case 'assistant':
               // Skip empty messages (e.g., "(no content)") that shouldn't be output to SDK

@@ -628,7 +628,8 @@ const MessagesImpl = ({
     // 生命周期内是常量（scrollRef 要么始终传递，要么从不）。
     // renderRange 优先：分块导出路径对分组后的数组进行切片，
     // 这样每个 chunk 都能获得正确的 tool-call 分组。
-    const capApplies = !virtualScrollRuntimeGate && !disableRenderCap
+    // Ctrl+E 展开全部时也跳过 200 条上限——用户显式要求查看完整历史。
+    const capApplies = !virtualScrollRuntimeGate && !disableRenderCap && !showAllInTranscript
     const sliceStart = capApplies ? computeSliceStart(collapsed_0, sliceAnchorRef) : 0
     return renderRange
       ? collapsed_0.slice(renderRange[0], renderRange[1])

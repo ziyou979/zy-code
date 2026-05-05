@@ -2,7 +2,22 @@
 // Loaded via `bun --preload` before cli.tsx — never shipped in production builds.
 
 process.env.USER_TYPE = 'external'
-process.env.ZY_CODE_NO_FLICKER = 'false'
+
+// 注入 build features，使 feature('TRANSCRIPT_CLASSIFIER') 等在 dev 下为 true
+if (typeof Bun !== 'undefined') {
+  ;(Bun as any).features = [
+    ...((Bun as any).features || []),
+    'TRANSCRIPT_CLASSIFIER',
+    'FORK_SUBAGENT',
+    'REACTIVE_COMPACT',
+    'TOKEN_BUDGET',
+    'CONTEXT_COLLAPSE',
+    'KAIROS',
+  ]
+}
+
+// dev 下启用 auto mode（绕过 GrowthBook 远程配置默认 disabled）
+process.env.ZY_CODE_DEV_AUTO_MODE = '1'
 
 Object.assign(globalThis, {
   MACRO: {

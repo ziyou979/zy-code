@@ -1190,6 +1190,8 @@ function parseAutoModeEnabledState(value: unknown): AutoModeEnabledState {
  * 其他表面（IDE、Desktop）应调用此函数来决定是否在其模式选择器中展示 auto 模式。
  */
 export function getAutoModeEnabledState(): AutoModeEnabledState {
+  // dev 模式下直接启用（绕过 GrowthBook 远程配置默认 disabled）
+  if (isEnvTruthy(process.env.ZY_CODE_DEV_AUTO_MODE)) return 'enabled'
   const config = getFeatureValue_CACHED_MAY_BE_STALE<{
     enabled?: AutoModeEnabledState
   }>('zy_auto_mode_config', {})
@@ -1205,6 +1207,8 @@ const NO_CACHED_AUTO_MODE_CONFIG = Symbol('no-cached-auto-mode-config')
  * 前者委托给 verifyAutoModeGateAccess，后者立即阻止。
  */
 export function getAutoModeEnabledStateIfCached(): AutoModeEnabledState | undefined {
+  // dev 模式下直接启用（绕过 GrowthBook 远程配置默认 disabled）
+  if (isEnvTruthy(process.env.ZY_CODE_DEV_AUTO_MODE)) return 'enabled'
   const config = getFeatureValue_CACHED_MAY_BE_STALE<
     { enabled?: AutoModeEnabledState } | typeof NO_CACHED_AUTO_MODE_CONFIG
   >('zy_auto_mode_config', NO_CACHED_AUTO_MODE_CONFIG)

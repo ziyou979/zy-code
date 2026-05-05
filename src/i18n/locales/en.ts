@@ -420,8 +420,7 @@ export const en: TranslationResource = {
 
   // OAuth / Login
   'oauth.forceLoginMethod.zyai': 'Login method pre-selected: Subscription Plan (Zy Pro/Max)',
-  'oauth.forceLoginMethod.console':
-    'Login method pre-selected: API Usage Billing (Anthropic Console)',
+  'oauth.forceLoginMethod.console': 'Login method pre-selected: API Usage Billing',
 
   // Bash tool
   'bash.runInBackground': 'run in background',
@@ -1208,7 +1207,7 @@ export const en: TranslationResource = {
   'commands.hooks': 'View hook configurations for tool events',
   'commands.export': 'Export the current conversation to a file or clipboard',
   'commands.sandbox': 'Configure code execution sandbox',
-  'commands.logout': 'Sign out from your Anthropic account',
+  'commands.logout': 'Sign out from your account',
   'commands.login': 'Sign in with your account',
   'commands.batch':
     'Research and plan a large-scale change, then execute it in parallel across 5–30 isolated worktree agents that each open a PR.',
@@ -2368,8 +2367,7 @@ export const en: TranslationResource = {
   'remoteEnv.updating': 'Updating…',
 
   // Transcript share prompt
-  'transcriptShare.title':
-    'Can Anthropic look at your session transcript to help us improve ZY Code?',
+  'transcriptShare.title': 'Can ZY look at your session transcript to help us improve ZY Code?',
   'transcriptShare.learnMore':
     'Learn more: https://code.zy.com/docs/en/data-usage#session-quality-surveys',
   'transcriptShare.yes': 'Yes',
@@ -2590,7 +2588,7 @@ export const en: TranslationResource = {
     'ZY Code can be used with your Zy subscription or billed based on API usage through your Console account.',
   'oauth.zyaiOptionLabel': 'Zy account with subscription ·',
   'oauth.zyaiOptionDesc': 'Pro, Max, Team, or Enterprise',
-  'oauth.consoleOptionLabel': 'Anthropic Console account ·',
+  'oauth.consoleOptionLabel': 'API account ·',
   'oauth.consoleOptionDesc': 'API usage billing',
   'oauth.platformOptionLabel': '3rd-party platform ·',
   'oauth.platformOptionDesc': 'Amazon Bedrock, Microsoft Foundry, or Vertex AI',
