@@ -260,6 +260,10 @@ export const en: TranslationResource = {
   'effort.mediumRecommended': 'Medium (recommended)',
   'effort.high': 'High',
   'effort.low': 'Low',
+  'effort.medium': 'Medium',
+  'effort.defaultDialogTitle': 'We recommend medium effort',
+  'effort.defaultDialogDescription':
+    'Effort determines how long model thinks for when completing your task. We recommend medium effort for most tasks to balance speed and intelligence and maximize rate limits. Use ultrathink to trigger high effort when needed.',
 
   // Press Enter
   pressEnterToContinue: 'Press Enter to continue\u2026',

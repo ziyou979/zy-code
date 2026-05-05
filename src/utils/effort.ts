@@ -226,26 +226,25 @@ export function getEffortValueDescription(value: EffortValue): string {
   return 'Balanced approach with standard implementation and testing'
 }
 
-export type OpusDefaultEffortConfig = {
+export type EffortCalloutConfig = {
   enabled: boolean
   dialogTitle: string
   dialogDescription: string
 }
 
-const OPUS_DEFAULT_EFFORT_CONFIG_DEFAULT: OpusDefaultEffortConfig = {
+const EFFORT_CALLOUT_CONFIG_DEFAULT: EffortCalloutConfig = {
   enabled: true,
-  dialogTitle: 'We recommend medium effort for Opus',
-  dialogDescription:
-    'Effort determines how long Zy thinks for when completing your task. We recommend medium effort for most tasks to balance speed and intelligence and maximize rate limits. Use ultrathink to trigger high effort when needed.',
+  dialogTitle: 'effort.defaultDialogTitle',
+  dialogDescription: 'effort.defaultDialogDescription',
 }
 
-export function getOpusDefaultEffortConfig(): OpusDefaultEffortConfig {
+export function getEffortCalloutConfig(): EffortCalloutConfig {
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
     'zy_grey_step2',
-    OPUS_DEFAULT_EFFORT_CONFIG_DEFAULT,
+    EFFORT_CALLOUT_CONFIG_DEFAULT,
   )
   return {
-    ...OPUS_DEFAULT_EFFORT_CONFIG_DEFAULT,
+    ...EFFORT_CALLOUT_CONFIG_DEFAULT,
     ...config,
   }
 }

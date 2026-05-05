@@ -4,7 +4,7 @@ import type { EffortLevel } from '../utils/effort.js'
 import {
   convertEffortValueToLevel,
   getDefaultEffortForModel,
-  getOpusDefaultEffortConfig,
+  getEffortCalloutConfig,
   toPersistableEffort,
 } from '../utils/effort.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
@@ -19,7 +19,7 @@ type Props = {
 }
 const AUTO_DISMISS_MS = 30_000
 export function EffortCallout({ model, onDone }: Props) {
-  const defaultEffortConfig = getOpusDefaultEffortConfig()
+  const defaultEffortConfig = getEffortCalloutConfig()
   const onDoneRef = useRef(onDone)
   useEffect(() => {
     onDoneRef.current = onDone
@@ -55,19 +55,20 @@ export function EffortCallout({ model, onDone }: Props) {
     },
   ]
   return (
-    <PermissionDialog title={defaultEffortConfig.dialogTitle}>
+    <PermissionDialog title={tSync(defaultEffortConfig.dialogTitle)}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         {
           <Box marginBottom={1} flexDirection="column">
-            <Text>{defaultEffortConfig.dialogDescription}</Text>
+            <Text>{tSync(defaultEffortConfig.dialogDescription)}</Text>
           </Box>
         }
         {
           <Box marginBottom={1}>
             <Text dimColor={true}>
-              {<EffortIndicatorSymbol level="low" />} low {'\xB7'}{' '}
-              {<EffortIndicatorSymbol level="medium" />} medium {'\xB7'}{' '}
-              <EffortIndicatorSymbol level="high" /> high
+              {<EffortIndicatorSymbol level="low" />} {tSync('effort.low')}{' '}
+              {'\xB7'} {<EffortIndicatorSymbol level="medium" />}{' '}
+              {tSync('effort.medium')}{' \xB7'} {<EffortIndicatorSymbol level="high" />}{' '}
+              {tSync('effort.high')}
             </Text>
           </Box>
         }
