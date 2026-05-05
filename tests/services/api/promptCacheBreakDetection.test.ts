@@ -94,7 +94,7 @@ describe('promptCacheBreakDetection', () => {
       await checkResponseForCacheBreak(
         'repl_main_thread' as any,
         1000, // cacheReadTokens
-        200,  // cacheCreationTokens
+        200, // cacheCreationTokens
         [{ type: 'user', content: 'hi' }],
       )
 
@@ -129,10 +129,7 @@ describe('promptCacheBreakDetection', () => {
       recordPromptState(baseSnapshot)
 
       // 首次 checkResponse 只记录基线（prevCacheRead），第二次才检测
-      await checkResponseForCacheBreak(
-        'repl_main_thread' as any,
-        2000, 0, [],
-      )
+      await checkResponseForCacheBreak('repl_main_thread' as any, 2000, 0, [])
 
       // 变更 system prompt
       recordPromptState({
@@ -143,7 +140,7 @@ describe('promptCacheBreakDetection', () => {
       // 第二次 checkResponse: 缓存读取下降 → 触发检测
       await checkResponseForCacheBreak(
         'repl_main_thread' as any,
-        500,  // 从 2000 降到 500 (>5%)，触发检测
+        500, // 从 2000 降到 500 (>5%)，触发检测
         100,
         [{ type: 'user', content: 'hi' }],
       )

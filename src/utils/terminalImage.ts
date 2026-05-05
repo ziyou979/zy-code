@@ -29,10 +29,7 @@ export function supportsInlineImages(): boolean {
  * @param maxWidth 最大宽度（终端列数），默认 40
  * @returns OSC 1337 转义序列字符串，若不支持内联图像则返回 null
  */
-export function renderInlineImageFromFile(
-  imagePath: string,
-  maxWidth: number = 40,
-): string | null {
+export function renderInlineImageFromFile(imagePath: string, maxWidth: number = 40): string | null {
   if (!supportsInlineImages()) return null
 
   try {

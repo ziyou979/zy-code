@@ -28,8 +28,6 @@ export const en: TranslationResource = {
     'Try setting environment variable COLORTERM=truecolor for richer colors',
   'tip.powershellToolEnv':
     'Set ZY_CODE_USE_POWERSHELL_TOOL=1 to enable the PowerShell tool (preview)',
-  'tip.statusLine':
-    'Use /statusline to set up a custom status line that will display beneath the input box',
   'tip.promptQueue': 'Hit Enter to queue up additional messages while ZY Code is working.',
   'tip.enterToSteer': 'Send messages to ZY code while it works to steer ZY Code in real-time',
   'tip.todoList':
@@ -163,6 +161,20 @@ export const en: TranslationResource = {
   'permission.powershellCommand': 'PowerShell command',
   'permission.fetch': 'Fetch',
 
+  // Permission mode titles (bottom bar)
+  'permissionMode.default': 'Default',
+  'permissionMode.defaultShort': 'Default',
+  'permissionMode.plan': 'Plan Mode',
+  'permissionMode.planShort': 'Plan',
+  'permissionMode.acceptEdits': 'Accept edits',
+  'permissionMode.acceptEditsShort': 'Accept',
+  'permissionMode.bypassPermissions': 'Bypass Permissions',
+  'permissionMode.bypassPermissionsShort': 'Bypass',
+  'permissionMode.dontAsk': "Don't Ask",
+  'permissionMode.dontAskShort': 'DontAsk',
+  'permissionMode.auto': 'Auto mode',
+  'permissionMode.autoShort': 'Auto',
+
   // Worker / swarm permission strings
   'permission.waitingTeamLeadApproval': 'Waiting for team lead approval',
   'permission.toolLabel': 'Tool: ',
@@ -261,6 +273,7 @@ export const en: TranslationResource = {
   'effort.high': 'High',
   'effort.low': 'Low',
   'effort.medium': 'Medium',
+  'effort.max': 'Max',
   'effort.defaultDialogTitle': 'We recommend medium effort',
   'effort.defaultDialogDescription':
     'Effort determines how long model thinks for when completing your task. We recommend medium effort for most tasks to balance speed and intelligence and maximize rate limits. Use ultrathink to trigger high effort when needed.',
@@ -406,7 +419,8 @@ export const en: TranslationResource = {
 
   // OAuth / Login
   'oauth.forceLoginMethod.zyai': 'Login method pre-selected: Subscription Plan (Zy Pro/Max)',
-  'oauth.forceLoginMethod.console': 'Login method pre-selected: API Usage Billing (Anthropic Console)',
+  'oauth.forceLoginMethod.console':
+    'Login method pre-selected: API Usage Billing (Anthropic Console)',
 
   // Bash tool
   'bash.runInBackground': 'run in background',
@@ -697,7 +711,7 @@ export const en: TranslationResource = {
   'permission.fromThisProject': 'from this project',
   'permission.yesAllowEditsInDir':
     'Yes, allow all edits in {dir}/ during this session ({shortcut})',
-  'permission.yesAllowZyFolderEdits': 'Yes, and allow Zy to edit its own settings for this session',
+  'permission.yesAllowZyFolderEdits': 'Yes, and allow ZY to edit its own settings for this session',
   'permission.yesInstallPlugin': 'Yes, install {pluginName}',
   'permission.yesAllowAccessDir': 'Yes, and always allow access to {dir}/ from this project',
   'permission.yesAllowAccessDirs': 'Yes, and always allow access to {dirs} from this project',
@@ -893,10 +907,8 @@ export const en: TranslationResource = {
     'process substitution (<) which can read from command output',
   'bashSecurity.processSubstitutionAfter':
     'process substitution (>) which can write to command input',
-  'bashSecurity.zshProcessSubstitution':
-    'Zsh process substitution (=) which can execute commands',
-  'bashSecurity.zshEqualsExpansion':
-    'Zsh EQUALS expansion which expands to command path',
+  'bashSecurity.zshProcessSubstitution': 'Zsh process substitution (=) which can execute commands',
+  'bashSecurity.zshEqualsExpansion': 'Zsh EQUALS expansion which expands to command path',
   'bashSecurity.dollarCommandSubstitution':
     '$() command substitution which can execute arbitrary commands',
   'bashSecurity.parameterSubstitution':
@@ -905,12 +917,9 @@ export const en: TranslationResource = {
   'bashSecurity.zshStyleParameterExpansion': 'Zsh style parameter expansion (~[])',
   'bashSecurity.zshStyleGlobQualifiers':
     'Zsh style glob qualifiers (e:) which can execute commands',
-  'bashSecurity.zshGlobQualifierWithCommand':
-    'Zsh glob qualifier (+) with command execution',
-  'bashSecurity.zshAlwaysBlock':
-    'Zsh always block which executes code unconditionally',
-  'bashSecurity.powerShellCommentSyntax':
-    'PowerShell comment syntax (<#) which can hide commands',
+  'bashSecurity.zshGlobQualifierWithCommand': 'Zsh glob qualifier (+) with command execution',
+  'bashSecurity.zshAlwaysBlock': 'Zsh always block which executes code unconditionally',
+  'bashSecurity.powerShellCommentSyntax': 'PowerShell comment syntax (<#) which can hide commands',
   'bashSecurity.empty': 'Command is not empty',
   'bashSecurity.incompleteTab': 'Command appears to be an incomplete fragment (starts with tab)',
   'bashSecurity.incompleteFlags':
@@ -1052,13 +1061,13 @@ export const en: TranslationResource = {
   'commands.files': 'List all files currently in context',
   'commands.help': 'Show help and available commands',
   'commands.ide': 'Manage IDE integrations and show status',
-  'commands.init': 'Initialize a new CLAUDE.md file with codebase documentation',
+  'commands.init': 'Initialize a new ZY.md file with codebase documentation',
   'commands.keybindings': 'Open or create your keybindings configuration file',
-  'commands.installGitHubApp': 'Set up Zy GitHub Actions for a repository',
-  'commands.installSlackApp': 'Install the Zy Slack app',
+  'commands.installGitHubApp': 'Set up ZY GitHub Actions for a repository',
+  'commands.installSlackApp': 'Install the ZY Slack app',
   'commands.mcp': 'Manage MCP servers',
-  'commands.memory': 'Edit Zy memory files',
-  'commands.mobile': 'Show QR code to download the Zy mobile app',
+  'commands.memory': 'Edit ZY memory files',
+  'commands.mobile': 'Show QR code to download the ZY mobile app',
   'commands.model': 'Set the AI model for ZY Code',
   'commands.outputStyle': 'Deprecated: use /config to change output style',
   'commands.remoteEnv': 'Configure the default remote environment for teleport sessions',
@@ -1172,7 +1181,7 @@ export const en: TranslationResource = {
   'commands.stats': 'Show your ZY Code usage statistics and activity',
   'commands.status':
     'Show ZY Code status including version, model, account, API connectivity, and tool statuses',
-  'commands.statusline': "Set up ZY Code's status line UI",
+  'commands.statusline': 'Toggle the built-in status bar at the bottom of the screen',
   'commands.stickers': 'Order ZY Code stickers',
   'commands.tag': 'Toggle a searchable tag on the current session',
   'commands.theme': 'Change the theme',
@@ -1358,7 +1367,6 @@ export const en: TranslationResource = {
   'fileEdit.removedLinesOnly': 'Removed {count} lines',
   'fileEdit.update': 'Update',
   'fileEdit.create': 'Create',
-
 
   // Cost tracker summary
   'costTracker.totalCost': 'Total cost',
@@ -1590,9 +1598,8 @@ export const en: TranslationResource = {
 
   // Status line
   'status.cwd': 'Working directory',
-  'statusLine.skippedTrust': 'statusline skipped · restart to fix',
-  'statusLine.blockedWarning': 'Status line is configured but disableAllHooks is true',
-  'statusLine.trustBlocked': 'Status line command skipped: workspace trust not accepted',
+  'statusLine.enabled': 'Status bar enabled',
+  'statusLine.disabled': 'Status bar disabled',
 
   // Exit flow goodbye messages
   'exitFlow.goodbye': 'Goodbye!',
@@ -2123,7 +2130,6 @@ export const en: TranslationResource = {
   'channels.notOnOrgList': "not on your org's approved channels list",
   'channels.notOnAllowlist': 'not on the approved channels allowlist',
 
-
   // Voice mode notice
   'voiceMode.available': ' Voice mode is now available · /voice to enable',
 
@@ -2311,9 +2317,9 @@ export const en: TranslationResource = {
   'workflow.selectAtLeastOne': 'You must select at least one workflow to continue',
 
   // ZY.md external includes
-  'zyMd.allowExternalTitle': 'Allow external CLAUDE.md file imports?',
+  'zyMd.allowExternalTitle': 'Allow external ZY.md file imports?',
   'zyMd.importsOutsideWarning':
-    "This project's CLAUDE.md imports files outside the current working directory. Never allow this for third-party repositories.",
+    "This project's ZY.md imports files outside the current working directory. Never allow this for third-party repositories.",
   'zyMd.externalImports': 'External imports:',
   'zyMd.securityWarning':
     'Important: Only use ZY Code with files you trust. Accessing untrusted files may pose security risks',
@@ -2577,7 +2583,6 @@ export const en: TranslationResource = {
   'planApproval.summaryRejected': '[Plan Rejected] {feedback}',
   'planApproval.revisePlanFallback': 'Please revise your plan',
 
-
   // OAuth
   'oauth.selectLoginMethod': 'Select login method:',
   'oauth.introMessage':
@@ -2624,6 +2629,40 @@ export const en: TranslationResource = {
   'settings.defaultEnglish': 'Default (English)',
   'settings.modelLabel': 'Model',
   'settings.defaultRecommended': 'Default (recommended)',
+  'settings.autoCompact': 'Auto-compact',
+  'settings.showTips': 'Show tips',
+  'settings.reduceMotion': 'Reduce motion',
+  'settings.thinkingMode': 'Thinking mode',
+  'settings.promptSuggestions': 'Prompt suggestions',
+  'settings.speculativeExecution': 'Speculative execution',
+  'settings.rewindCode': 'Rewind code (checkpoints)',
+  'settings.verboseOutput': 'Verbose output',
+  'settings.terminalProgressBar': 'Terminal progress bar',
+  'settings.showStatusInTerminalTab': 'Show status in terminal tab',
+  'settings.showTurnDuration': 'Show turn duration',
+  'settings.defaultPermissionMode': 'Default permission mode',
+  'settings.useAutoModeDuringPlan': 'Use auto mode during plan',
+  'settings.respectGitignore': 'Respect .gitignore in file picker',
+  'settings.alwaysCopyFullResponse': 'Always copy full response (skip /copy picker)',
+  'settings.copyOnSelect': 'Copy on select',
+  'settings.autoUpdateChannel': 'Auto-update channel',
+  'settings.theme': 'Theme',
+  'settings.pushWhenIdle': 'Push when idle',
+  'settings.pushWhenInputNeeded': 'Push when input needed',
+  'settings.pushWhenZyDecides': 'Push when Zy decides',
+  'settings.outputStyle': 'Output style',
+  'settings.whatYouSeeByDefault': 'What you see by default',
+  'settings.editorMode': 'Editor mode',
+  'settings.showPrStatusFooter': 'Show PR status footer',
+  'settings.diffTool': 'Diff tool',
+  'settings.autoConnectIde': 'Auto-connect to IDE (external terminal)',
+  'settings.autoInstallIdeExtension': 'Auto-install IDE extension',
+  'settings.claudeInChromeEnabled': 'Claude in Chrome enabled by default',
+  'settings.defaultTeammateModel': 'Default teammate model',
+  'settings.enableRemoteControl': 'Enable Remote Control for all sessions',
+  'settings.externalClaudeMdIncludes': 'External ZY.md includes',
+  'settings.enableWithLatestChannel': 'Enable with latest channel',
+  'settings.enableWithStableChannel': 'Enable with stable channel',
   'settings.missingStandardModel':
     'Standard model is not configured. Use /config or edit settings.json to set models.standard.',
 

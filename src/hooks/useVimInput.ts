@@ -237,7 +237,10 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       if (['h', 'j', 'k', 'l'].includes(visInput)) {
         const motionMap: Record<string, () => void> = {
           h: () => textInput.setOffset(Math.max(0, cursor.offset - 1)),
-          l: () => textInput.setOffset(Math.min(props.value.length, cursor.measuredText.nextOffset(cursor.offset))),
+          l: () =>
+            textInput.setOffset(
+              Math.min(props.value.length, cursor.measuredText.nextOffset(cursor.offset)),
+            ),
           j: () => {
             const next = cursor.text.indexOf('\n', cursor.offset)
             if (next !== -1) {
@@ -275,9 +278,18 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       }
 
       // Line boundaries
-      if (visInput === '0') { textInput.setOffset(cursor.startOfLogicalLine().offset); return }
-      if (visInput === '$') { textInput.setOffset(cursor.endOfLogicalLine().offset); return }
-      if (visInput === '^') { textInput.setOffset(cursor.firstNonBlankInLogicalLine().offset); return }
+      if (visInput === '0') {
+        textInput.setOffset(cursor.startOfLogicalLine().offset)
+        return
+      }
+      if (visInput === '$') {
+        textInput.setOffset(cursor.endOfLogicalLine().offset)
+        return
+      }
+      if (visInput === '^') {
+        textInput.setOffset(cursor.firstNonBlankInLogicalLine().offset)
+        return
+      }
 
       // Operators on selection
       if (visInput === 'd') {
@@ -289,9 +301,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       }
       if (visInput === 'c') {
         executeVisualOperator('change', state.anchor, cursor.offset, ctx)
-        switchToInsertMode(
-          Math.min(state.anchor, cursor.offset),
-        )
+        switchToInsertMode(Math.min(state.anchor, cursor.offset))
         return
       }
       if (visInput === 'y') {

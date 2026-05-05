@@ -562,15 +562,15 @@ export const SettingsSchema = lazySchema(() =>
             'Composes with strictKnownMarketplaces for end-to-end admin control — plugins gated by ' +
             'marketplace allowlist, everything else blocked here.',
         ),
-      // Status line for custom status line display
-      statusLine: z
+      // Built-in status bar at the bottom showing effort, context, model, tokens, git
+      builtInStatusBar: z
         .object({
-          type: z.literal('command'),
-          command: z.string(),
-          padding: z.number().optional(),
+          enabled: z.boolean().optional(),
         })
         .optional()
-        .describe('Custom status line display configuration'),
+        .describe(
+          'Built-in status bar at the bottom of the screen. Shows effort level, context usage, model name, token usage, and git branch.',
+        ),
       // Enabled plugins using marketplace-first format
       enabledPlugins: z
         .record(z.string(), z.union([z.array(z.string()), z.boolean(), z.undefined()]))

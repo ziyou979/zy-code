@@ -32,38 +32,40 @@ type PermissionModeConfig = {
   external: ExternalPermissionMode
 }
 
+import { tSync } from '../../i18n/index.js'
+
 const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfig>> = {
   default: {
-    title: 'Default',
-    shortTitle: 'Default',
+    title: 'permissionMode.default',
+    shortTitle: 'permissionMode.defaultShort',
     symbol: '',
     color: 'text',
     external: 'default',
   },
   plan: {
-    title: 'Plan Mode',
-    shortTitle: 'Plan',
+    title: 'permissionMode.plan',
+    shortTitle: 'permissionMode.planShort',
     symbol: PAUSE_ICON,
     color: 'planMode',
     external: 'plan',
   },
   acceptEdits: {
-    title: 'Accept edits',
-    shortTitle: 'Accept',
+    title: 'permissionMode.acceptEdits',
+    shortTitle: 'permissionMode.acceptEditsShort',
     symbol: '⏵⏵',
     color: 'autoAccept',
     external: 'acceptEdits',
   },
   bypassPermissions: {
-    title: 'Bypass Permissions',
-    shortTitle: 'Bypass',
+    title: 'permissionMode.bypassPermissions',
+    shortTitle: 'permissionMode.bypassPermissionsShort',
     symbol: '⏵⏵',
     color: 'error',
     external: 'bypassPermissions',
   },
   dontAsk: {
-    title: "Don't Ask",
-    shortTitle: 'DontAsk',
+    title: 'permissionMode.dontAsk',
+    shortTitle: 'permissionMode.dontAskShort',
     symbol: '⏵⏵',
     color: 'error',
     external: 'dontAsk',
@@ -71,8 +73,8 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   ...(feature('TRANSCRIPT_CLASSIFIER')
     ? {
         auto: {
-          title: 'Auto mode',
-          shortTitle: 'Auto',
+          title: 'permissionMode.auto',
+          shortTitle: 'permissionMode.autoShort',
           symbol: '⏵⏵',
           color: 'warning' as ModeColorKey,
           external: 'default' as ExternalPermissionMode,
@@ -106,7 +108,7 @@ export function permissionModeFromString(str: string): PermissionMode {
 }
 
 export function permissionModeTitle(mode: PermissionMode): string {
-  return getModeConfig(mode).title
+  return tSync(getModeConfig(mode).title)
 }
 
 export function isDefaultMode(mode: PermissionMode | undefined): boolean {
@@ -114,7 +116,7 @@ export function isDefaultMode(mode: PermissionMode | undefined): boolean {
 }
 
 export function permissionModeShortTitle(mode: PermissionMode): string {
-  return getModeConfig(mode).shortTitle
+  return tSync(getModeConfig(mode).shortTitle)
 }
 
 export function permissionModeSymbol(mode: PermissionMode): string {

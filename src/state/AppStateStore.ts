@@ -75,7 +75,6 @@ export type AppState = DeepImmutable<{
   verbose: boolean
   mainLoopModel: ModelSetting
   mainLoopModelForSession: ModelSetting
-  statusLineText: string | undefined
   expandedView: 'none' | 'tasks' | 'teammates'
   isBriefOnly: boolean
   // 可选字段 - 仅在 ENABLE_AGENT_SWARMS 为 true 时存在（用于死代码消除）
@@ -443,7 +442,6 @@ export function getDefaultAppState(): AppState {
     verbose: false,
     mainLoopModel: null, // 别名、全名（如 --model 或环境变量），或 null（默认）
     mainLoopModelForSession: null,
-    statusLineText: undefined,
     expandedView: 'none',
     isBriefOnly: false,
     showTeammateMessagePreview: false,

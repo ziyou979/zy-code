@@ -440,8 +440,7 @@ export function CollapsedReadSearchContent({
   }
   if (mcpCallCount > 0) {
     const serverLabel =
-      message.mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') ||
-      'MCP'
+      message.mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP'
     const isFirst_3 = nonMemParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
     const position = isFirst_3 ? 'first' : 'sub'
@@ -584,8 +583,7 @@ export function CollapsedReadSearchContent({
       )}
       {message.hookTotalMs !== undefined && message.hookTotalMs > 0 && (
         <Text dimColor>
-          {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
-          {message.hookCount === 1 ? 'hook' : 'hooks'} (
+          {'  ⎿  '}Ran {message.hookCount} PreToolUse {message.hookCount === 1 ? 'hook' : 'hooks'} (
           {formatSecondsShort(message.hookTotalMs)})
         </Text>
       )}

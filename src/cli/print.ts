@@ -470,7 +470,7 @@ export async function runHeadless(
     !proactiveModule.isProactiveActive() &&
     isEnvTruthy(process.env.ZY_CODE_PROACTIVE)
   ) {
-    ;proactiveModule.activateProactive('command')
+    proactiveModule.activateProactive('command')
   }
 
   // Periodically force a full GC to keep memory usage in check
@@ -482,7 +482,6 @@ export async function runHeadless(
   // Start headless profiler for first turn
   headlessProfilerStartTurn()
   headlessProfilerCheckpoint('runHeadless_entry')
-
 
   // Initialize GrowthBook so feature flags take effect in headless mode.
   // Without this, the disk cache is empty and all flags fall back to defaults.
@@ -3565,11 +3564,11 @@ function runHeadlessStreaming(
           }
           if (req.enabled) {
             if (!proactiveModule || !proactiveModule.isProactiveActive()) {
-              ;proactiveModule.activateProactive('command')
+              proactiveModule.activateProactive('command')
               scheduleProactiveTick!()
             }
           } else {
-            ;proactiveModule.deactivateProactive()
+            proactiveModule.deactivateProactive()
           }
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'remote_control') {

@@ -720,10 +720,7 @@ export class QueryEngine {
           yield* normalizeMessage(message)
           break
         case 'stream_event':
-          if (
-            message.event.type === 'message_start' ||
-            message.event.type === 'response_start'
-          ) {
+          if (message.event.type === 'message_start' || message.event.type === 'response_start') {
             // 重置新消息的当前 usage
             currentMessageUsage = EMPTY_USAGE
             const startMsg = message.event.message
@@ -731,10 +728,7 @@ export class QueryEngine {
               currentMessageUsage = updateUsage(currentMessageUsage, startMsg.usage)
             }
           }
-          if (
-            message.event.type === 'message_delta' ||
-            message.event.type === 'response_delta'
-          ) {
+          if (message.event.type === 'message_delta' || message.event.type === 'response_delta') {
             const evt = message.event
             // response_delta 的 usage 是标准格式（camelCase），转为 snake_case 供 updateUsage
             const deltaUsage = evt.usage
@@ -759,10 +753,7 @@ export class QueryEngine {
               lastStopReason = evtStopReason
             }
           }
-          if (
-            message.event.type === 'message_stop' ||
-            message.event.type === 'response_stop'
-          ) {
+          if (message.event.type === 'message_stop' || message.event.type === 'response_stop') {
             // 将当前消息的 usage 累积到总计中
             this.totalUsage = accumulateUsage(this.totalUsage, currentMessageUsage)
           }

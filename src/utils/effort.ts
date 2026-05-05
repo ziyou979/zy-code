@@ -239,10 +239,7 @@ const EFFORT_CALLOUT_CONFIG_DEFAULT: EffortCalloutConfig = {
 }
 
 export function getEffortCalloutConfig(): EffortCalloutConfig {
-  const config = getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_grey_step2',
-    EFFORT_CALLOUT_CONFIG_DEFAULT,
-  )
+  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_grey_step2', EFFORT_CALLOUT_CONFIG_DEFAULT)
   return {
     ...EFFORT_CALLOUT_CONFIG_DEFAULT,
     ...config,

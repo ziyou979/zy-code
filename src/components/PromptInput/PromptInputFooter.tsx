@@ -6,6 +6,7 @@ import { getBridgeStatus } from '../../bridge/bridgeStatusUtil.js'
 import { useSetPromptOverlay } from '../../context/promptOverlayContext.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text } from '../../ink.js'
@@ -18,8 +19,8 @@ import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isUndercover } from '../../utils/undercover.js'
+import { BuiltInStatusBar } from '../BuiltInStatusBar.js'
 import { CoordinatorTaskPanel, useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js'
-import { getLastAssistantMessageId, StatusLine, statusLineShouldDisplay } from '../StatusLine.js'
 import { Notifications } from './Notifications.js'
 import { PromptInputFooterLeftSide } from './PromptInputFooterLeftSide.js'
 import {
@@ -100,9 +101,9 @@ function PromptInputFooter({
 }: Props): ReactNode {
   const settings = useSettings()
   const { columns, rows } = useTerminalSize()
+  const mainLoopModel = useMainLoopModel()
   const messagesRef = useRef(messages)
   messagesRef.current = messages
-  const lastAssistantMessageId = useMemo(() => getLastAssistantMessageId(messages), [messages])
   const isNarrow = columns < 80
   // In fullscreen the bottom slot is flexShrink:0, so every row here is a row
   // stolen from the ScrollBox. Drop the optional StatusLine first. Non-fullscreen
@@ -119,8 +120,9 @@ function PromptInputFooter({
   const coordinatorTaskIndex = useAppState((s) => s.coordinatorTaskIndex)
   const pillSelected = tasksSelected && (coordinatorTaskCount === 0 || coordinatorTaskIndex < 0)
 
-  // Hide `? for shortcuts` if the user has a custom status line, or during ctrl-r
-  const suppressHint = suppressHintFromProps || statusLineShouldDisplay(settings) || isSearching
+  // Hide `? for shortcuts` if the built-in status bar is active, or during ctrl-r
+  const suppressHint =
+    suppressHintFromProps || settings?.builtInStatusBar?.enabled !== false || isSearching
   // Fullscreen: portal data to FullscreenLayout — see promptOverlayContext.tsx
   const overlayData = useMemo(
     () =>
@@ -161,12 +163,8 @@ function PromptInputFooter({
             !isShort &&
             !exitMessage.show &&
             !isPasting &&
-            statusLineShouldDisplay(settings) && (
-              <StatusLine
-                messagesRef={messagesRef}
-                lastAssistantMessageId={lastAssistantMessageId}
-                vimMode={vimMode}
-              />
+            settings?.builtInStatusBar?.enabled !== false && (
+              <BuiltInStatusBar messagesRef={messagesRef} mainLoopModel={mainLoopModel} />
             )}
           <PromptInputFooterLeftSide
             exitMessage={exitMessage}

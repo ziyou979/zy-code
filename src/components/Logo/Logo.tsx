@@ -59,7 +59,6 @@ const ChannelsNoticeModule =
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
 import { useAppState } from '../../state/AppState.js'
-import { getEffortSuffix } from '../../utils/effort.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { renderModelSetting } from '../../utils/model/model.js'
 const LEFT_PANEL_MAX_WIDTH = 50
@@ -70,7 +69,7 @@ export function Logo() {
   const showOnboarding = shouldShowProjectOnboarding()
   const showSandboxStatus = SandboxManager.isSandboxingEnabled()
   const agent = useAppState((s) => s.agent)
-  const effortValue = useAppState((s_0) => s_0.effortValue)
+  const model = useMainLoopModel()
   const config = getGlobalConfig()
   let changelog
   try {
@@ -106,14 +105,10 @@ export function Logo() {
       incrementProjectOnboardingSeenCount()
     }
   }, [config, showOnboarding])
-  const isCondensedMode =
-    !hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)
-  const model = useMainLoopModel()
   const fullModelDisplayName = renderModelSetting(model)
   const { version, cwd, providerName, agentName: agentNameFromSettings } = getLogoDisplayData()
   const agentName = agent ?? agentNameFromSettings
-  const effortSuffix = getEffortSuffix(model, effortValue)
-  const modelDisplayName = truncate(fullModelDisplayName + effortSuffix, LEFT_PANEL_MAX_WIDTH - 20)
+  const modelDisplayName = truncate(fullModelDisplayName, LEFT_PANEL_MAX_WIDTH - 20)
   if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)) {
     const t15 = isDebugMode() && (
       <Box paddingLeft={2} flexDirection="column">
@@ -306,10 +301,7 @@ export function Logo() {
                               createProjectOnboardingFeed(getSteps()),
                               createRecentActivityFeed(activities),
                             ]
-                          : [
-                              createRecentActivityFeed(activities),
-                              createWhatsNewFeed(changelog),
-                            ]
+                          : [createRecentActivityFeed(activities), createWhatsNewFeed(changelog)]
                       }
                       maxWidth={rightWidth}
                     />

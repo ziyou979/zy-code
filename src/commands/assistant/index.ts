@@ -7,8 +7,9 @@ const command = {
   description: 'Manage KAIROS assistant mode',
   supportsNonInteractive: false,
   async load(): Promise<LocalCommandModule> {
-    const { isAssistantMode, enableAssistantMode, disableAssistantMode } =
-      await import('../../assistant/index.js')
+    const { isAssistantMode, enableAssistantMode, disableAssistantMode } = await import(
+      '../../assistant/index.js'
+    )
     return {
       async call(args) {
         const isActive = isAssistantMode()

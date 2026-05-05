@@ -1581,7 +1581,7 @@ async function run(): Promise<CommanderCommand> {
         // --assistant（Agent SDK 守护进程模式）：在
         // isAssistantMode() 在下面运行之前强制锁定。守护进程已经检查过
         // 权限 —— 不要让子进程重新检查 zy_kairos。
-        ;assistantModule.markAssistantForced()
+        assistantModule.markAssistantForced()
       }
       if (
         feature('KAIROS') &&
@@ -1611,8 +1611,7 @@ async function run(): Promise<CommanderCommand> {
           //（最多约 5 秒）。--assistant 完全跳过此门（守护进程是
           // 预先授权的）。
           kairosEnabled =
-            getAssistant().isAssistantForced() ||
-            (await (kairosGate as any).isKairosEnabled())
+            getAssistant().isAssistantForced() || (await (kairosGate as any).isKairosEnabled())
           if (kairosEnabled) {
             const opts = options as {
               brief?: boolean
@@ -3789,7 +3788,6 @@ async function run(): Promise<CommanderCommand> {
           },
           needsRefresh: false,
         },
-        statusLineText: undefined,
         kairosEnabled,
         remoteSessionUrl: undefined,
         remoteConnectionStatus: 'connecting',

@@ -40,10 +40,7 @@ function hasMarkdownSyntax(s: string): boolean {
 const FILE_PATH_RE = /((?:(?:\.\.\/|\.\/|\/)?(?:[\w.-]+\/)*)[\w.-]+\.\w{1,10}):(\d+)(?:-(\d+))?/g
 
 /** 将含文件路径引用的 ANSI 文本拆分为 Ansi/FilePathLink 混合节点 */
-function renderContentWithFileLinks(
-  content: string,
-  dimColor: boolean,
-): React.ReactNode[] {
+function renderContentWithFileLinks(content: string, dimColor: boolean): React.ReactNode[] {
   const parts: React.ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null

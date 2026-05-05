@@ -9,9 +9,6 @@ function hasHooks(settings: SettingsJson | null): boolean {
   if (settings === null || settings.disableAllHooks) {
     return false
   }
-  if (settings.statusLine) {
-    return true
-  }
   if (settings.fileSuggestion) {
     return true
   }

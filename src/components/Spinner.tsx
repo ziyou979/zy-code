@@ -30,8 +30,7 @@ import { useSettings } from '../hooks/useSettings.js'
 import { isInProcessTeammateTask } from '../tasks/InProcessTeammateTask/types.js'
 import { isBackgroundTask } from '../tasks/types.js'
 import { getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
-import { getEffortSuffix } from '../utils/effort.js'
-import { getMainLoopModel } from '../utils/model/model.js'
+
 import { getViewedTeammateTask } from '../state/selectors.js'
 import { TEARDROP_ASTERISK } from '../constants/figures.js'
 import { getCurrentTurnTokenBudget, getTurnOutputTokens } from '../bootstrap/state.js'
@@ -196,8 +195,8 @@ function SpinnerWithVerbInner({
       activityManager.endCLIActivity(operationId)
     }
   }, [mode])
-  const effortValue = useAppState((s_4) => s_4.effortValue)
-  const effortSuffix = getEffortSuffix(getMainLoopModel(), effortValue)
+  // effort 后缀在 Spinner 中不展示（getEffortSuffix 保留供其他场景使用）
+  const effortSuffix = ''
 
   // 检查是否有运行中的 in-process teammates（两种模式都需要）
   const runningTeammates = getAllInProcessTeammateTasks(tasks).filter((t) => t.status === 'running')

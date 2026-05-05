@@ -77,7 +77,11 @@ export function clearTranscript(): void {
 export function flushOnDateChange(_messages: unknown[], currentDate: string): void {
   try {
     clearTranscript()
-    saveTranscriptEntry({ type: 'date_change', date: currentDate, timestamp: new Date().toISOString() })
+    saveTranscriptEntry({
+      type: 'date_change',
+      date: currentDate,
+      timestamp: new Date().toISOString(),
+    })
   } catch {
     // 非关键操作
   }

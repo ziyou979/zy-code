@@ -33,12 +33,12 @@ export async function restoreFromEntries(
   const indexModule = await import('./index.js')
 
   // 重置状态
-  ;indexModule.initContextCollapse()
+  indexModule.initContextCollapse()
 
   if (entries.length > 0) {
     // 回放 commits：entry 的字段与 index.ts 的 CommittedCollapse 一致
     for (const entry of entries) {
-      ;indexModule._addCommit({
+      indexModule._addCommit({
         collapseId: entry.collapseId,
         summaryUuid: entry.summaryUuid,
         summaryContent: entry.summaryContent,
@@ -50,13 +50,13 @@ export async function restoreFromEntries(
 
     // 从最大 collapseId 恢复计数器
     const maxId = entries.reduce((max, e) => Math.max(max, parseInt(e.collapseId, 10) || 0), 0)
-    ;indexModule._reseedIdCounter(maxId + 1)
+    indexModule._reseedIdCounter(maxId + 1)
   }
 
   // 恢复 staged 队列和 spawn 状态
   if (snapshot?.staged && snapshot.staged.length > 0) {
     for (const s of snapshot.staged) {
-      ;indexModule._addStaged({
+      indexModule._addStaged({
         startUuid: s.startUuid,
         endUuid: s.endUuid,
         summary: s.summary,

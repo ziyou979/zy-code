@@ -20,7 +20,6 @@ export const zhCN: TranslationResource = {
   'tip.themeCommand': '使用 /theme 更换颜色主题',
   'tip.colortermTruecolor': '尝试设置环境变量 COLORTERM=truecolor 以获得更丰富的颜色',
   'tip.powershellToolEnv': '设置 ZY_CODE_USE_POWERSHELL_TOOL=1 启用 PowerShell 工具（预览）',
-  'tip.statusLine': '使用 /statusline 设置在输入框下方显示的自定义状态行',
   'tip.promptQueue': 'ZY Code 工作时按 Enter 可以排队更多消息。',
   'tip.enterToSteer': 'ZY Code 工作时发送消息来实时引导它',
   'tip.todoList': '处理复杂任务时，让 ZY Code 创建待办列表来跟踪进度、保持专注',
@@ -146,6 +145,20 @@ export const zhCN: TranslationResource = {
   'permission.powershellCommand': 'PowerShell 命令',
   'permission.fetch': '获取网络内容',
 
+  // 权限模式标题（底部栏）
+  'permissionMode.default': '默认',
+  'permissionMode.defaultShort': '默认',
+  'permissionMode.plan': '计划模式',
+  'permissionMode.planShort': '计划',
+  'permissionMode.acceptEdits': '接受编辑',
+  'permissionMode.acceptEditsShort': '接受',
+  'permissionMode.bypassPermissions': '跳过权限',
+  'permissionMode.bypassPermissionsShort': '跳过',
+  'permissionMode.dontAsk': '不再询问',
+  'permissionMode.dontAskShort': '免问',
+  'permissionMode.auto': '自动模式',
+  'permissionMode.autoShort': '自动',
+
   // Worker / swarm 权限字符串
   'permission.waitingTeamLeadApproval': '等待团队负责人批准',
   'permission.toolLabel': '工具：',
@@ -243,6 +256,7 @@ export const zhCN: TranslationResource = {
   'effort.high': '深度',
   'effort.low': '轻量',
   'effort.medium': '均衡',
+  'effort.max': '最大化',
   'effort.defaultDialogTitle': '推荐使用均衡努力度',
   'effort.defaultDialogDescription':
     '努力度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡努力度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发高努力度。',
@@ -1193,7 +1207,7 @@ export const zhCN: TranslationResource = {
   'commands.files': '列出当前上下文中的所有文件',
   'commands.help': '显示帮助和可用命令',
   'commands.ide': '管理 IDE 集成并显示状态',
-  'commands.init': '初始化 CLAUDE.md 文件和可选的技能/钩子',
+  'commands.init': '初始化 ZY.md 文件和可选的技能/钩子',
   'commands.keybindings': '打开或创建快捷键配置文件',
   'commands.installGitHubApp': '为仓库设置 Zy GitHub Actions',
   'commands.installSlackApp': '安装 Zy Slack 应用',
@@ -1214,7 +1228,7 @@ export const zhCN: TranslationResource = {
   'commands.simplify': '审查变更代码的复用性、质量和效率，并修复发现的问题。',
   'commands.stats': '显示你的 ZY Code 使用统计和活动',
   'commands.status': '显示 ZY Code 状态，包括版本、模型、账户、API 连接性和工具状态',
-  'commands.statusline': '设置 ZY Code 的状态栏 UI',
+  'commands.statusline': '切换屏幕底部的内置状态栏',
   'commands.stickers': '订购 ZY Code 贴纸',
   'commands.tag': '为当前会话切换可搜索标签',
   'commands.theme': '更换主题',
@@ -1387,7 +1401,6 @@ export const zhCN: TranslationResource = {
   'fileEdit.removedLinesOnly': '删除 {count} 行',
   'fileEdit.update': '更新',
   'fileEdit.create': '创建',
-
 
   // 费用追踪汇总
   'costTracker.totalCost': '总费用',
@@ -1602,9 +1615,8 @@ export const zhCN: TranslationResource = {
   'fullscreen.jumpToBottom': '跳转到底部',
 
   // 状态行
-  'statusLine.skippedTrust': 'statusline 已跳过 · 重启以修复',
-  'statusLine.blockedWarning': '状态行已配置但 disableAllHooks 为 true',
-  'statusLine.trustBlocked': '状态行命令已跳过：工作区信任未接受',
+  'statusLine.enabled': '状态栏已启用',
+  'statusLine.disabled': '状态栏已禁用',
 
   // 退出流程告别消息
   'exitFlow.goodbye': '再见！',
@@ -2115,7 +2127,6 @@ export const zhCN: TranslationResource = {
   'channels.notOnOrgList': '不在你组织批准的频道列表中',
   'channels.notOnAllowlist': '不在批准的频道白名单中',
 
-
   // 语音模式通知 Voice mode notice
   'voiceMode.available': ' 语音模式现已可用 · 运行 /voice 启用',
 
@@ -2280,9 +2291,9 @@ export const zhCN: TranslationResource = {
   'workflow.selectAtLeastOne': '你必须至少选择一个工作流才能继续',
 
   // ZY.md external includes
-  'zyMd.allowExternalTitle': '允许外部 CLAUDE.md 文件导入？',
+  'zyMd.allowExternalTitle': '允许外部 ZY.md 文件导入？',
   'zyMd.importsOutsideWarning':
-    '此项目的 CLAUDE.md 引用了当前工作目录之外的文件。对于第三方仓库，切勿允许此操作。',
+    '此项目的 ZY.md 引用了当前工作目录之外的文件。对于第三方仓库，切勿允许此操作。',
   'zyMd.externalImports': '外部导入：',
   'zyMd.securityWarning':
     '重要提示：仅对你信任的文件使用 ZY Code。访问不受信任的文件可能存在安全风险',
@@ -2526,7 +2537,6 @@ export const zhCN: TranslationResource = {
   'planApproval.summaryRejected': '[计划被拒绝] {feedback}',
   'planApproval.revisePlanFallback': '请修改你的计划',
 
-
   // OAuth
   'oauth.selectLoginMethod': '选择登录方式：',
   'oauth.introMessage': 'ZY Code 可通过你的 Zy 订阅使用，也可通过 Console 账户按 API 用量计费。',
@@ -2571,6 +2581,40 @@ export const zhCN: TranslationResource = {
   'settings.defaultEnglish': '默认（英语）',
   'settings.modelLabel': '模型',
   'settings.defaultRecommended': '默认（推荐）',
+  'settings.autoCompact': '自动压缩',
+  'settings.showTips': '显示提示',
+  'settings.reduceMotion': '减少动画',
+  'settings.thinkingMode': '思考模式',
+  'settings.promptSuggestions': '提示建议',
+  'settings.speculativeExecution': '推测执行',
+  'settings.rewindCode': '代码回退（检查点）',
+  'settings.verboseOutput': '详细输出',
+  'settings.terminalProgressBar': '终端进度条',
+  'settings.showStatusInTerminalTab': '在终端标签页显示状态',
+  'settings.showTurnDuration': '显示回合耗时',
+  'settings.defaultPermissionMode': '默认权限模式',
+  'settings.useAutoModeDuringPlan': '规划时使用自动模式',
+  'settings.respectGitignore': '文件选择器遵循 .gitignore',
+  'settings.alwaysCopyFullResponse': '始终复制完整响应（跳过 /copy 选择器）',
+  'settings.copyOnSelect': '选中时复制',
+  'settings.autoUpdateChannel': '自动更新频道',
+  'settings.theme': '主题',
+  'settings.pushWhenIdle': '空闲时推送',
+  'settings.pushWhenInputNeeded': '需要输入时推送',
+  'settings.pushWhenZyDecides': 'Zy 决定时推送',
+  'settings.outputStyle': '输出风格',
+  'settings.whatYouSeeByDefault': '默认显示内容',
+  'settings.editorMode': '编辑器模式',
+  'settings.showPrStatusFooter': '显示 PR 状态栏',
+  'settings.diffTool': '差异对比工具',
+  'settings.autoConnectIde': '自动连接到 IDE（外部终端）',
+  'settings.autoInstallIdeExtension': '自动安装 IDE 扩展',
+  'settings.claudeInChromeEnabled': '默认启用 Claude Chrome 插件',
+  'settings.defaultTeammateModel': '默认协作模型',
+  'settings.enableRemoteControl': '为所有会话启用远程控制',
+  'settings.externalClaudeMdIncludes': '外部 ZY.md 引用',
+  'settings.enableWithLatestChannel': '使用最新频道启用',
+  'settings.enableWithStableChannel': '使用稳定频道启用',
 
   // Tag 命令
   'tag.removeTitle': '移除标签？',

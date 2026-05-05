@@ -111,13 +111,13 @@ export function pinCacheEdits(
  */
 export function markToolsSentToAPIState(): void {
   if (cachedMCState && cachedMCModule) {
-    ;cachedMCModule.markToolsSentToAPI(cachedMCState)
+    cachedMCModule.markToolsSentToAPI(cachedMCState)
   }
 }
 
 export function resetMicrocompactState(): void {
   if (cachedMCState && cachedMCModule) {
-    ;cachedMCModule.resetCachedMCState(cachedMCState)
+    cachedMCModule.resetCachedMCState(cachedMCState)
   }
   pendingCacheEdits = null
 }

@@ -23,7 +23,11 @@ describe('toolsToOpenAI', () => {
 
   test('工具定义带 inputSchema → OpenAI 格式', () => {
     const result = toolsToOpenAI([
-      { name: 'search', description: 'Search web', inputSchema: { type: 'object', properties: { q: { type: 'string' } } } },
+      {
+        name: 'search',
+        description: 'Search web',
+        inputSchema: { type: 'object', properties: { q: { type: 'string' } } },
+      },
     ])
     expect(result).toEqual([
       {
@@ -45,9 +49,7 @@ describe('toolsToOpenAI', () => {
   })
 
   test('工具定义无 schema → 默认空 object', () => {
-    const result = toolsToOpenAI([
-      { name: 'f', description: 'd' } as any,
-    ])
+    const result = toolsToOpenAI([{ name: 'f', description: 'd' } as any])
     expect(result![0].function.parameters).toEqual({ type: 'object', properties: {} })
   })
 })
@@ -87,16 +89,20 @@ describe('convertOutputFormatToResponseFormat', () => {
   })
 
   test('json_object → { type: "json_object" }', () => {
-    expect(convertOutputFormatToResponseFormat({
-      format: { type: 'json_object' },
-    })).toEqual({ type: 'json_object' })
+    expect(
+      convertOutputFormatToResponseFormat({
+        format: { type: 'json_object' },
+      }),
+    ).toEqual({ type: 'json_object' })
   })
 
   test('json_schema → { type: "json_schema", json_schema }', () => {
     const schema = { name: 'test', schema: { type: 'object' } }
-    expect(convertOutputFormatToResponseFormat({
-      format: { type: 'json_schema', json_schema: schema },
-    })).toEqual({
+    expect(
+      convertOutputFormatToResponseFormat({
+        format: { type: 'json_schema', json_schema: schema },
+      }),
+    ).toEqual({
       type: 'json_schema',
       json_schema: schema,
     })
@@ -104,24 +110,30 @@ describe('convertOutputFormatToResponseFormat', () => {
 
   test('json_schema 用 schema 字段（替代 json_schema）', () => {
     const schema = { name: 'test', schema: { type: 'object' } }
-    expect(convertOutputFormatToResponseFormat({
-      format: { type: 'json_schema', schema },
-    })).toEqual({
+    expect(
+      convertOutputFormatToResponseFormat({
+        format: { type: 'json_schema', schema },
+      }),
+    ).toEqual({
       type: 'json_schema',
       json_schema: schema,
     })
   })
 
   test('已知 type 但不是 json_object/json_schema → 原样返回', () => {
-    expect(convertOutputFormatToResponseFormat({
-      format: { type: 'text' } as any,
-    })).toEqual({ type: 'text' })
+    expect(
+      convertOutputFormatToResponseFormat({
+        format: { type: 'text' } as any,
+      }),
+    ).toEqual({ type: 'text' })
   })
 
   test('json_schema 但无 schema 数据 → 原样透传 type', () => {
-    expect(convertOutputFormatToResponseFormat({
-      format: { type: 'json_schema' },
-    })).toEqual({ type: 'json_schema' })
+    expect(
+      convertOutputFormatToResponseFormat({
+        format: { type: 'json_schema' },
+      }),
+    ).toEqual({ type: 'json_schema' })
   })
 })
 

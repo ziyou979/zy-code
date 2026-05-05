@@ -42,9 +42,6 @@ export function createBridgeLogger(options: {
   const write = options.write ?? ((s: string) => process.stdout.write(s))
   const verbose = options.verbose
 
-  // Track how many status lines are currently displayed at the bottom
-  let statusLineCount = 0
-
   // Status state machine
   let currentState: StatusState = 'idle'
   let currentStateText = 'Ready'
@@ -110,20 +107,14 @@ export function createBridgeLogger(options: {
     return count
   }
 
-  /** Write a status line and track its visual line count. */
+  /** Write a status line. */
   function writeStatus(text: string): void {
     write(text)
-    statusLineCount += countVisualLines(text)
   }
 
   /** Clear any currently displayed status lines. */
   function clearStatusLines(): void {
-    if (statusLineCount <= 0) return
-    logForDebugging(`[bridge:ui] clearStatusLines count=${statusLineCount}`)
-    // Move cursor up to the start of the status block, then erase everything below
-    write(`\x1b[${statusLineCount}A`) // cursor up N lines
     write('\x1b[J') // erase from cursor to end of screen
-    statusLineCount = 0
   }
 
   /** Print a permanent log line, clearing status first and restoring after. */

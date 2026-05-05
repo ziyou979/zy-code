@@ -17,7 +17,11 @@ const teamMemSaved = feature('TEAMMEM')
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import type { SystemMessage, SystemStopHookSummaryMessage, SystemMemorySavedMessage } from '../../types/message.js'
+import type {
+  SystemMessage,
+  SystemStopHookSummaryMessage,
+  SystemMemorySavedMessage,
+} from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
 import { formatDuration, formatNumber, formatSecondsShort } from '../../utils/format.js'
 import { getGlobalConfig } from '../../utils/config.js'
@@ -137,7 +141,12 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
     </Box>
   )
 }
-function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode }: {
+function StopHookSummaryMessage({
+  message,
+  addMargin,
+  verbose,
+  isTranscriptMode,
+}: {
   message: SystemStopHookSummaryMessage
   addMargin: boolean
   verbose: boolean
@@ -170,8 +179,7 @@ function StopHookSummaryMessage({ message, addMargin, verbose, isTranscriptMode 
       <Box flexDirection="column" width="100%">
         {
           <Text dimColor={true}>
-            {'  \u23BF  '}Ran {hookCount} {message.hookLabel}{' '}
-            {hookCount === 1 ? 'hook' : 'hooks'}
+            {'  \u23BF  '}Ran {hookCount} {message.hookLabel} {hookCount === 1 ? 'hook' : 'hooks'}
             {totalStr}
           </Text>
         }
@@ -308,7 +316,10 @@ function TurnDurationMessage({ message, addMargin }) {
     </Box>
   )
 }
-function MemorySavedMessage({ message, addMargin }: {
+function MemorySavedMessage({
+  message,
+  addMargin,
+}: {
   message: SystemMemorySavedMessage
   addMargin: boolean
 }) {
@@ -387,9 +398,7 @@ function BridgeStatusMessage({ message, addMargin }) {
             </Text>
           }
           {<Link url={message.url}>{message.url}</Link>}
-          {message.upgradeNudge && (
-            <Text dimColor={true}>⎿ {message.upgradeNudge}</Text>
-          )}
+          {message.upgradeNudge && <Text dimColor={true}>⎿ {message.upgradeNudge}</Text>}
         </Box>
       }
     </Box>

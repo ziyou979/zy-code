@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { ClockContext } from '../ink/components/ClockContext.js'
-import { formatDuration } from '../utils/format.js'
+import { formatDuration, formatDurationZh } from '../utils/format.js'
+import { getUiLanguage } from '../i18n/index.js'
 
 /**
  * Hook that returns formatted elapsed time since startTime.
@@ -27,14 +28,15 @@ export function useElapsedTime(
   endTime?: number,
 ): string {
   const clock = useContext(ClockContext)
+  const fmt = getUiLanguage() === 'zh-CN' ? formatDurationZh : formatDuration
   const [elapsed, setElapsed] = useState(() =>
-    formatDuration(Math.max(0, (endTime ?? Date.now()) - startTime - pausedMs)),
+    fmt(Math.max(0, (endTime ?? Date.now()) - startTime - pausedMs)),
   )
 
   useEffect(() => {
     if (!isRunning || !clock) {
       // 不运行时，直接计算一次静态值
-      setElapsed(formatDuration(Math.max(0, (endTime ?? Date.now()) - startTime - pausedMs)))
+      setElapsed(fmt(Math.max(0, (endTime ?? Date.now()) - startTime - pausedMs)))
       return
     }
 
@@ -44,7 +46,7 @@ export function useElapsedTime(
     // 避免独立 setInterval 导致的 Ink 帧竞争和渲染重叠。
     const onChange = (): void => {
       const now = clock.absoluteNow()
-      setElapsed(formatDuration(Math.max(0, (endTime ?? now) - startTime - pausedMs)))
+      setElapsed(fmt(Math.max(0, (endTime ?? now) - startTime - pausedMs)))
     }
 
     return clock.subscribe(onChange, true)

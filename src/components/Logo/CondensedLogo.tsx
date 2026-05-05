@@ -4,7 +4,6 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
-import { getEffortSuffix } from '../../utils/effort.js'
 import { truncate } from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { formatModelAndProvider, getLogoDisplayData, truncatePath } from '../../utils/logoUtils.js'
@@ -15,16 +14,14 @@ import { Zy } from './Zy.js'
 export function CondensedLogo() {
   const { columns } = useTerminalSize()
   const agent = useAppState((s) => s.agent)
-  const effortValue = useAppState((s_0) => s_0.effortValue)
   const model = useMainLoopModel()
   const modelDisplayName = renderModelSetting(model)
   const { version, cwd, providerName, agentName: agentNameFromSettings } = getLogoDisplayData()
   const agentName = agent ?? agentNameFromSettings
   const textWidth = Math.max(columns - 15, 20)
   const truncatedVersion = truncate(version, Math.max(textWidth - 13, 6))
-  const effortSuffix = getEffortSuffix(model, effortValue)
   const { shouldSplit, truncatedModel, truncatedProvider } = formatModelAndProvider(
-    modelDisplayName + effortSuffix,
+    modelDisplayName,
     providerName,
     textWidth,
   )

@@ -262,8 +262,7 @@ export function Config({
       mainLoopModelForSession: null,
     }))
     setChanges((prev_0) => {
-      const valStr =
-        modelDisplayString(value)
+      const valStr = modelDisplayString(value)
       if ('model' in prev_0) {
         const { model, ...rest } = prev_0
         return {
@@ -310,7 +309,7 @@ export function Config({
     // Global settings
     {
       id: 'autoCompactEnabled',
-      label: 'Auto-compact',
+      label: tSync('settings.autoCompact'),
       value: globalConfig.autoCompactEnabled,
       type: 'boolean' as const,
       onChange(autoCompactEnabled: boolean) {
@@ -329,7 +328,7 @@ export function Config({
     },
     {
       id: 'spinnerTipsEnabled',
-      label: 'Show tips',
+      label: tSync('settings.showTips'),
       value: settingsData?.spinnerTipsEnabled ?? true,
       type: 'boolean' as const,
       onChange(spinnerTipsEnabled: boolean) {
@@ -348,7 +347,7 @@ export function Config({
     },
     {
       id: 'prefersReducedMotion',
-      label: 'Reduce motion',
+      label: tSync('settings.reduceMotion'),
       value: settingsData?.prefersReducedMotion ?? false,
       type: 'boolean' as const,
       onChange(prefersReducedMotion: boolean) {
@@ -374,7 +373,7 @@ export function Config({
     },
     {
       id: 'thinkingEnabled',
-      label: 'Thinking mode',
+      label: tSync('settings.thinkingMode'),
       value: thinkingEnabled ?? true,
       type: 'boolean' as const,
       onChange(enabled: boolean) {
@@ -394,7 +393,7 @@ export function Config({
       ? [
           {
             id: 'promptSuggestionEnabled',
-            label: 'Prompt suggestions',
+            label: tSync('settings.promptSuggestions'),
             value: promptSuggestionEnabled,
             type: 'boolean' as const,
             onChange(enabled_1: boolean) {
@@ -414,7 +413,7 @@ export function Config({
       ? [
           {
             id: 'speculationEnabled',
-            label: 'Speculative execution',
+            label: tSync('settings.speculativeExecution'),
             value: globalConfig.speculationEnabled ?? true,
             type: 'boolean' as const,
             onChange(enabled_2: boolean) {
@@ -440,7 +439,7 @@ export function Config({
       ? [
           {
             id: 'fileCheckpointingEnabled',
-            label: 'Rewind code (checkpoints)',
+            label: tSync('settings.rewindCode'),
             value: globalConfig.fileCheckpointingEnabled,
             type: 'boolean' as const,
             onChange(enabled_3: boolean) {
@@ -461,14 +460,14 @@ export function Config({
       : []),
     {
       id: 'verbose',
-      label: 'Verbose output',
+      label: tSync('settings.verboseOutput'),
       value: verbose,
       type: 'boolean',
       onChange: onChangeVerbose,
     },
     {
       id: 'terminalProgressBarEnabled',
-      label: 'Terminal progress bar',
+      label: tSync('settings.terminalProgressBar'),
       value: globalConfig.terminalProgressBarEnabled,
       type: 'boolean' as const,
       onChange(terminalProgressBarEnabled: boolean) {
@@ -489,7 +488,7 @@ export function Config({
       ? [
           {
             id: 'showStatusInTerminalTab',
-            label: 'Show status in terminal tab',
+            label: tSync('settings.showStatusInTerminalTab'),
             value: globalConfig.showStatusInTerminalTab ?? false,
             type: 'boolean' as const,
             onChange(showStatusInTerminalTab: boolean) {
@@ -510,7 +509,7 @@ export function Config({
       : []),
     {
       id: 'showTurnDuration',
-      label: 'Show turn duration',
+      label: tSync('settings.showTurnDuration'),
       value: globalConfig.showTurnDuration,
       type: 'boolean' as const,
       onChange(showTurnDuration: boolean) {
@@ -529,7 +528,7 @@ export function Config({
     },
     {
       id: 'defaultPermissionMode',
-      label: 'Default permission mode',
+      label: tSync('settings.defaultPermissionMode'),
       value: settingsData?.permissions?.defaultMode || 'default',
       options: (() => {
         const priorityOrder: PermissionMode[] = ['default', 'plan']
@@ -590,7 +589,7 @@ export function Config({
       ? [
           {
             id: 'useAutoModeDuringPlan',
-            label: 'Use auto mode during plan',
+            label: tSync('settings.useAutoModeDuringPlan'),
             value:
               (
                 settingsData as
@@ -621,7 +620,7 @@ export function Config({
               })
               setChanges((prev_16) => ({
                 ...prev_16,
-                'Use auto mode during plan': useAutoModeDuringPlan,
+                useAutoModeDuringPlan: useAutoModeDuringPlan,
               }))
             },
           },
@@ -629,7 +628,7 @@ export function Config({
       : []),
     {
       id: 'respectGitignore',
-      label: 'Respect .gitignore in file picker',
+      label: tSync('settings.respectGitignore'),
       value: globalConfig.respectGitignore,
       type: 'boolean' as const,
       onChange(respectGitignore: boolean) {
@@ -648,7 +647,7 @@ export function Config({
     },
     {
       id: 'copyFullResponse',
-      label: 'Always copy full response (skip /copy picker)',
+      label: tSync('settings.alwaysCopyFullResponse'),
       value: globalConfig.copyFullResponse,
       type: 'boolean' as const,
       onChange(copyFullResponse: boolean) {
@@ -674,7 +673,7 @@ export function Config({
       ? [
           {
             id: 'copyOnSelect',
-            label: 'Copy on select',
+            label: tSync('settings.copyOnSelect'),
             value: globalConfig.copyOnSelect ?? true,
             type: 'boolean' as const,
             onChange(copyOnSelect: boolean) {
@@ -701,14 +700,14 @@ export function Config({
     autoUpdaterDisabledReason
       ? {
           id: 'autoUpdatesChannel',
-          label: 'Auto-update channel',
+          label: tSync('settings.autoUpdateChannel'),
           value: 'disabled',
           type: 'managedEnum' as const,
           onChange() {},
         }
       : {
           id: 'autoUpdatesChannel',
-          label: 'Auto-update channel',
+          label: tSync('settings.autoUpdateChannel'),
           value: settingsData?.autoUpdatesChannel ?? 'latest',
           type: 'managedEnum' as const,
           onChange() {
@@ -717,7 +716,7 @@ export function Config({
         },
     {
       id: 'theme',
-      label: 'Theme',
+      label: tSync('settings.theme'),
       value: themeSetting,
       type: 'managedEnum',
       onChange: setTheme,
@@ -754,7 +753,7 @@ export function Config({
       ? [
           {
             id: 'taskCompleteNotifEnabled',
-            label: 'Push when idle',
+            label: tSync('settings.pushWhenIdle'),
             value: globalConfig.taskCompleteNotifEnabled ?? false,
             type: 'boolean' as const,
             onChange(taskCompleteNotifEnabled: boolean) {
@@ -770,7 +769,7 @@ export function Config({
           },
           {
             id: 'inputNeededNotifEnabled',
-            label: 'Push when input needed',
+            label: tSync('settings.pushWhenInputNeeded'),
             value: globalConfig.inputNeededNotifEnabled ?? false,
             type: 'boolean' as const,
             onChange(inputNeededNotifEnabled: boolean) {
@@ -786,7 +785,7 @@ export function Config({
           },
           {
             id: 'agentPushNotifEnabled',
-            label: 'Push when Zy decides',
+            label: tSync('settings.pushWhenZyDecides'),
             value: globalConfig.agentPushNotifEnabled ?? false,
             type: 'boolean' as const,
             onChange(agentPushNotifEnabled: boolean) {
@@ -804,7 +803,7 @@ export function Config({
       : []),
     {
       id: 'outputStyle',
-      label: 'Output style',
+      label: tSync('settings.outputStyle'),
       value: currentOutputStyle,
       type: 'managedEnum' as const,
       onChange: () => {}, // handled by OutputStylePicker submenu
@@ -813,7 +812,7 @@ export function Config({
       ? [
           {
             id: 'defaultView',
-            label: 'What you see by default',
+            label: tSync('settings.whatYouSeeByDefault'),
             // 'default' means the setting is unset — currently resolves to
             // transcript (main.tsx falls through when defaultView !== 'chat').
             // String() narrows the conditional-schema-spread union to string.
@@ -867,7 +866,7 @@ export function Config({
     },
     {
       id: 'editorMode',
-      label: 'Editor mode',
+      label: tSync('settings.editorMode'),
       // Convert 'emacs' to 'normal' for backward compatibility
       value: globalConfig.editorMode === 'emacs' ? 'normal' : globalConfig.editorMode || 'normal',
       options: ['normal', 'vim'],
@@ -889,7 +888,7 @@ export function Config({
     },
     {
       id: 'prStatusFooterEnabled',
-      label: 'Show PR status footer',
+      label: tSync('settings.showPrStatusFooter'),
       value: globalConfig.prStatusFooterEnabled ?? true,
       type: 'boolean' as const,
       onChange(enabled_4: boolean) {
@@ -920,7 +919,7 @@ export function Config({
       ? [
           {
             id: 'diffTool',
-            label: 'Diff tool',
+            label: tSync('settings.diffTool'),
             value: globalConfig.diffTool ?? 'auto',
             options: ['terminal', 'auto'],
             type: 'enum' as const,
@@ -946,7 +945,7 @@ export function Config({
       ? [
           {
             id: 'autoConnectIde',
-            label: 'Auto-connect to IDE (external terminal)',
+            label: tSync('settings.autoConnectIde'),
             value: globalConfig.autoConnectIde ?? false,
             type: 'boolean' as const,
             onChange(autoConnectIde: boolean) {
@@ -971,7 +970,7 @@ export function Config({
       ? [
           {
             id: 'autoInstallIdeExtension',
-            label: 'Auto-install IDE extension',
+            label: tSync('settings.autoInstallIdeExtension'),
             value: globalConfig.autoInstallIdeExtension ?? true,
             type: 'boolean' as const,
             onChange(autoInstallIdeExtension: boolean) {
@@ -994,7 +993,7 @@ export function Config({
       : []),
     {
       id: 'ClaudeInChromeDefaultEnabled',
-      label: 'Claude in Chrome enabled by default',
+      label: tSync('settings.claudeInChromeEnabled'),
       value: globalConfig.ClaudeInChromeDefaultEnabled ?? true,
       type: 'boolean' as const,
       onChange(enabled_5: boolean) {
@@ -1044,7 +1043,7 @@ export function Config({
             },
             {
               id: 'teammateDefaultModel',
-              label: 'Default teammate model',
+              label: tSync('settings.defaultTeammateModel'),
               value: teammateModelDisplayString(globalConfig.teammateDefaultModel),
               type: 'managedEnum' as const,
               onChange() {},
@@ -1057,7 +1056,7 @@ export function Config({
       ? [
           {
             id: 'remoteControlAtStartup',
-            label: 'Enable Remote Control for all sessions',
+            label: tSync('settings.enableRemoteControl'),
             value:
               globalConfig.remoteControlAtStartup === undefined
                 ? 'default'
@@ -1112,7 +1111,7 @@ export function Config({
       ? [
           {
             id: 'showExternalIncludesDialog',
-            label: 'External CLAUDE.md includes',
+            label: tSync('settings.externalClaudeMdIncludes'),
             value: (() => {
               const projectConfig = getCurrentProjectConfig()
               if (projectConfig.haszyMdExternalIncludesApproved) {
@@ -1934,11 +1933,11 @@ export function Config({
             <Select
               options={[
                 {
-                  label: 'Enable with latest channel',
+                  label: tSync('settings.enableWithLatestChannel'),
                   value: 'latest',
                 },
                 {
-                  label: 'Enable with stable channel',
+                  label: tSync('settings.enableWithStableChannel'),
                   value: 'stable',
                 },
               ]}
@@ -2163,8 +2162,7 @@ function teammateModelDisplayString(value: string | null | undefined): string {
   if (value === null) return "Default (leader's model)"
   return modelDisplayString(value)
 }
-let THEME_LABELS
-THEME_LABELS = {
+let THEME_LABELS = {
   auto: 'Auto (match terminal)',
   dark: 'Dark mode',
   light: 'Light mode',

@@ -288,9 +288,7 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
   })
 
   test('user 消息内容为空数组：返回空数组', () => {
-    const result = messagesToAnthropic([
-      { role: 'user', content: [] },
-    ] as any)
+    const result = messagesToAnthropic([{ role: 'user', content: [] }] as any)
     expect(result[0].content).toEqual([])
   })
 
@@ -597,9 +595,7 @@ describe('messagesToAnthropic: tool → assistant（无 user 介入）', () => {
 
 describe('assistantContentToAnthropic: null content 无 toolCalls', () => {
   test('content 为 null 且无 toolCalls → 空字符串', () => {
-    const result = messagesToAnthropic([
-      { role: 'assistant', content: null },
-    ] as any)
+    const result = messagesToAnthropic([{ role: 'assistant', content: null }] as any)
     expect(result[0].content).toBe('')
   })
 })
@@ -612,9 +608,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
       messages: [
         {
           role: 'assistant',
-          content: [
-            { type: 'tool_call', id: 'c', name: 'f', input: { x: 1 } },
-          ],
+          content: [{ type: 'tool_call', id: 'c', name: 'f', input: { x: 1 } }],
         },
       ],
     } as any)
@@ -630,9 +624,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
       messages: [
         {
           role: 'assistant',
-          content: [
-            { type: 'tool_call', id: 'c', name: 'f', input: '42' },
-          ],
+          content: [{ type: 'tool_call', id: 'c', name: 'f', input: '42' }],
         },
       ],
     } as any)
@@ -649,9 +641,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
       messages: [
         {
           role: 'assistant',
-          content: [
-            { type: 'tool_call', id: 'c', name: 'f', input: '"just a string"' },
-          ],
+          content: [{ type: 'tool_call', id: 'c', name: 'f', input: '"just a string"' }],
         },
       ],
     } as any)
@@ -667,9 +657,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
       messages: [
         {
           role: 'assistant',
-          content: [
-            { type: 'tool_call', id: 'c', name: 'f', input: '{broken' },
-          ],
+          content: [{ type: 'tool_call', id: 'c', name: 'f', input: '{broken' }],
         },
       ],
     } as any)

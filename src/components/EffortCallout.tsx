@@ -65,10 +65,9 @@ export function EffortCallout({ model, onDone }: Props) {
         {
           <Box marginBottom={1}>
             <Text dimColor={true}>
-              {<EffortIndicatorSymbol level="low" />} {tSync('effort.low')}{' '}
-              {'\xB7'} {<EffortIndicatorSymbol level="medium" />}{' '}
-              {tSync('effort.medium')}{' \xB7'} {<EffortIndicatorSymbol level="high" />}{' '}
-              {tSync('effort.high')}
+              {<EffortIndicatorSymbol level="low" />} {tSync('effort.low')} {'\xB7'}{' '}
+              {<EffortIndicatorSymbol level="medium" />} {tSync('effort.medium')}
+              {' \xB7'} {<EffortIndicatorSymbol level="high" />} {tSync('effort.high')}
             </Text>
           </Box>
         }
@@ -88,4 +87,3 @@ function EffortOptionLabel({ level, text }: { level: EffortLevel; text: string }
     </>
   )
 }
-

@@ -202,11 +202,10 @@ export function useReplBridge(
               let sanitized = fields.content
               if (feature('KAIROS_GITHUB_WEBHOOKS')) {
                 /* eslint-disable @typescript-eslint/no-require-imports */
-                const webhookModule = require('../bridge/webhookSanitizer.js') as typeof import('../bridge/webhookSanitizer.js')
+                const webhookModule =
+                  require('../bridge/webhookSanitizer.js') as typeof import('../bridge/webhookSanitizer.js')
                 /* eslint-enable @typescript-eslint/no-require-imports */
-                sanitized = webhookModule.sanitizeInboundWebhookContent(
-                  fields.content,
-                )
+                sanitized = webhookModule.sanitizeInboundWebhookContent(fields.content)
               }
               const content = await resolveAndPrepend(msg, sanitized)
               const preview =

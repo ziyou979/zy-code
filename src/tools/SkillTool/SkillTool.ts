@@ -873,8 +873,7 @@ async function executeRemoteSkill(
   parentMessage: AssistantMessage,
   context: ToolUseContext,
 ): Promise<ToolResult<Output>> {
-  const { getDiscoveredRemoteSkill, loadRemoteSkill, logRemoteSkillLoaded } =
-    remoteSkillModules
+  const { getDiscoveredRemoteSkill, loadRemoteSkill, logRemoteSkillLoaded } = remoteSkillModules
 
   // validateInput already confirmed this slug is in session state, but we
   // re-fetch here to get the URL. If it's somehow gone (e.g., state cleared

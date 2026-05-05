@@ -225,9 +225,10 @@ const externalTips: Tip[] = [
   },
   {
     id: 'status-line',
-    content: async () => tSync('tip.statusLine'),
+    content: async () =>
+      'Use /statusline to toggle the built-in status bar showing effort, context usage, model, tokens, and git branch',
     cooldownSessions: 25,
-    isRelevant: async () => getSettings_DEPRECATED().statusLine === undefined,
+    isRelevant: async () => getSettings_DEPRECATED().builtInStatusBar === undefined,
   },
   {
     id: 'prompt-queue',

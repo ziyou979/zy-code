@@ -65,9 +65,7 @@ export function getAttributionTexts(): AttributionTexts {
   const model = getMainLoopModel()
   const isKnownPublicModel = getPublicModelDisplayName(model) !== null
   const modelName =
-    isInternalModelRepoCached() || isKnownPublicModel
-      ? getPublicModelName(model)
-      : 'ZY (unknown)'
+    isInternalModelRepoCached() || isKnownPublicModel ? getPublicModelName(model) : 'ZY (unknown)'
   const defaultAttribution = `🤖 Generated with [ZY Code](${PRODUCT_URL})`
   const defaultCommit = `Co-Authored-By: ${modelName}`
 

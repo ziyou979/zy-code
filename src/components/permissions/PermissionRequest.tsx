@@ -35,7 +35,9 @@ import { tSync } from '../../i18n/index.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 // @ts-ignore
 const ReviewArtifactTool = feature('REVIEW_ARTIFACT')
-  ? (require('../../tools/ReviewArtifactTool/ReviewArtifactTool.js') as typeof import('../../tools/ReviewArtifactTool/ReviewArtifactTool.js')).ReviewArtifactTool
+  ? (
+      require('../../tools/ReviewArtifactTool/ReviewArtifactTool.js') as typeof import('../../tools/ReviewArtifactTool/ReviewArtifactTool.js')
+    ).ReviewArtifactTool
   : null
 // @ts-ignore
 const ReviewArtifactPermissionRequest = feature('REVIEW_ARTIFACT')
@@ -43,16 +45,21 @@ const ReviewArtifactPermissionRequest = feature('REVIEW_ARTIFACT')
   : null
 // @ts-ignore
 const WorkflowTool = feature('WORKFLOW_SCRIPTS')
-  ? (require('../../tools/WorkflowTool/WorkflowTool.js') as typeof import('../../tools/WorkflowTool/WorkflowTool.js')).WorkflowTool
+  ? (
+      require('../../tools/WorkflowTool/WorkflowTool.js') as typeof import('../../tools/WorkflowTool/WorkflowTool.js')
+    ).WorkflowTool
   : null
 // @ts-ignore
 const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS')
-  ? (require('../../tools/WorkflowTool/WorkflowPermissionRequest.js') as typeof import('../../tools/WorkflowTool/WorkflowPermissionRequest.js'))
-      .WorkflowPermissionRequest
+  ? (
+      require('../../tools/WorkflowTool/WorkflowPermissionRequest.js') as typeof import('../../tools/WorkflowTool/WorkflowPermissionRequest.js')
+    ).WorkflowPermissionRequest
   : null
 // @ts-ignore
 const MonitorTool = feature('MONITOR_TOOL')
-  ? (require('../../tools/MonitorTool/MonitorTool.js') as typeof import('../../tools/MonitorTool/MonitorTool.js')).MonitorTool
+  ? (
+      require('../../tools/MonitorTool/MonitorTool.js') as typeof import('../../tools/MonitorTool/MonitorTool.js')
+    ).MonitorTool
   : null
 // @ts-ignore
 const MonitorPermissionRequest = feature('MONITOR_TOOL')

@@ -49,6 +49,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { getPlatform } from '../../utils/platform.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { PrBadge } from '../PrBadge.js'
+import { TungstenPill } from '../TungstenPill.js'
 
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -365,9 +366,8 @@ function ModeIndicator({
     // its click-target Box isn't nested inside the <Text wrap="truncate">
     // wrapper (reconciler throws on Box-in-Text).
     // Tmux pill (ant-only) — appears right after tasks in nav order
-    // @ts-ignore -- ant-only: TungstenPill is only available in internal builds
     ...(isInternalBuild() && hasTmuxSession
-      ? [(TungstenPill as any)({ key: 'tmux', selected: tmuxSelected })]
+      ? [<TungstenPill key="tmux" selected={tmuxSelected} />]
       : []),
     ...(isAgentSwarmsEnabled() && hasTeams
       ? [

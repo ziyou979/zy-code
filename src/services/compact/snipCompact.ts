@@ -95,10 +95,7 @@ export function snipMessages(messages: Message[]): Message[] {
       ...groups.slice(Math.max(1, keepFromIndex)).flat(),
     ]
   } else {
-    result = [
-      createSnipBoundaryMessage(SNIP_NUDGE_TEXT),
-      ...groups.slice(keepFromIndex).flat(),
-    ]
+    result = [createSnipBoundaryMessage(SNIP_NUDGE_TEXT), ...groups.slice(keepFromIndex).flat()]
   }
 
   return result

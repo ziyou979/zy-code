@@ -64,7 +64,9 @@ const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
-const jobClassifier = feature('TEMPLATES') ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js')) : null
+const jobClassifier = feature('TEMPLATES')
+  ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js'))
+  : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   remove as removeFromQueue,
@@ -1596,7 +1598,7 @@ async function* queryLoop(
     // remote）都生成摘要；子 agent/分叉不生成。
     if (feature('BG_SESSIONS')) {
       if (!toolUseContext.agentId && taskSummaryModule!.shouldGenerateTaskSummary()) {
-        ;taskSummaryModule!.maybeGenerateTaskSummary({
+        taskSummaryModule!.maybeGenerateTaskSummary({
           systemPrompt,
           userContext,
           systemContext,
