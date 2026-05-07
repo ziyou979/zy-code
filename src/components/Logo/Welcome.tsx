@@ -44,49 +44,49 @@ function WelcomeContent({ separator }: { separator: string }) {
         {' '.repeat(22)}
       </Text>
       <Text>
-        {' '.repeat(22)}
+        {' '.repeat(21)}
         <Text color="clawd_body">{zy3}</Text>
-        {' '.repeat(22)}
+        {' '.repeat(23)}
       </Text>
       <Text>
-        {' '.repeat(22)}
+        {' '.repeat(21)}
         <Text color="clawd_body">{zy4}</Text>
-        {' '.repeat(23)}
+        {' '.repeat(24)}
       </Text>
       <Text>
-        {' '.repeat(22)}
+        {' '.repeat(21)}
         <Text color="clawd_body">{zy5}</Text>
-        {' '.repeat(23)}
+        {' '.repeat(24)}
       </Text>
       <Text>{'                                                          '}</Text>
       <Text>
-        {'              '}
-        <Text color="clawd_body">▄▀▀▀▀▀▀▀▄</Text>
-        {'         '}
+        {' '.repeat(10)}
+        <Text color="clawd_body">{'  ▄▀▀▀▀▀▀▀▄  '}</Text>
+        {' '.repeat(24)}
         <Text dimColor={true}>*</Text>
-        {' '.repeat(25)}
+        {' '.repeat(9)}
       </Text>
       <Text>
-        {'             '}
-        <Text color="clawd_body">█ ● ● █</Text>
+        {' '.repeat(10)}
+        <Text color="clawd_body">{' █  ●   ●  █ '}</Text>
         {' '.repeat(34)}
       </Text>
       <Text>
-        {'              '}
-        <Text color="clawd_body">█ ▀▀▀ █</Text>
-        {' '.repeat(35)}
+        {' '.repeat(10)}
+        <Text color="clawd_body">{'  █  ▀▀▀  █  '}</Text>
+        {' '.repeat(34)}
       </Text>
       <Text>
-        {'              '}
-        <Text color="clawd_body">▀▄ ▄▀</Text>
-        {'      '}
+        {' '.repeat(10)}
+        <Text color="clawd_body">{'  ▀▄     ▄▀  '}</Text>
+        {' '.repeat(18)}
         <Text bold={true}>*</Text>
-        {' '.repeat(28)}
+        {' '.repeat(15)}
       </Text>
       <Text>
-        {'               '}
-        <Text color="clawd_body">▀▄▀▀▀▄▀</Text>
-        {' '.repeat(36)}
+        {' '.repeat(10)}
+        <Text color="clawd_body">{'   ▀▄▀▀▀▄▀   '}</Text>
+        {' '.repeat(34)}
       </Text>
       <Text>{'                                                          '}</Text>
       <Text>{separator}</Text>
