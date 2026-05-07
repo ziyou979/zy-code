@@ -1,6 +1,5 @@
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
-import { tSync } from '../../i18n/index.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import type { ModelAlias } from './aliases.js'
 
@@ -13,9 +12,9 @@ type ModelTier = 'advanced' | 'standard' | 'compact'
 /**
  * 从 settings.models 中读取指定 tier 的模型。
  * 未配置时回退到 standard tier。
- * standard 也未配置则抛错引导用户配置。
+ * standard 也未配置则返回 undefined，由调用方处理（如引导用户进入 onboarding 配置）。
  */
-function getModelByTier(tier: ModelTier): ModelName {
+function getModelByTier(tier: ModelTier): ModelName | undefined {
   const settings = getSettings_DEPRECATED() || {}
   const tierModel = settings.models?.[tier]
   if (tierModel) return tierModel
@@ -24,7 +23,7 @@ function getModelByTier(tier: ModelTier): ModelName {
     const standard = settings.models?.standard
     if (standard) return standard
   }
-  throw new Error(tSync('settings.missingStandardModel'))
+  return undefined
 }
 
 /**
@@ -62,7 +61,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
  * 2. 启动时通过 --model 参数覆盖的模型
  * 3. settings 中的 models.standard 配置
  */
-export function getMainLoopModel(): ModelName {
+export function getMainLoopModel(): ModelName | undefined {
   const model = getUserSpecifiedModelSetting()
   if (model !== undefined && model !== null) {
     return parseUserSpecifiedModel(model)
@@ -71,17 +70,17 @@ export function getMainLoopModel(): ModelName {
 }
 
 /** 获取 advanced 能力层级的默认模型 */
-export function getDefaultAdvancedModel(): ModelName {
+export function getDefaultAdvancedModel(): ModelName | undefined {
   return getModelByTier('advanced')
 }
 
 /** 获取 standard 能力层级的默认模型 */
-export function getDefaultStandardModel(): ModelName {
+export function getDefaultStandardModel(): ModelName | undefined {
   return getModelByTier('standard')
 }
 
 /** 获取 compact 能力层级的默认模型 */
-export function getDefaultCompactModel(): ModelName {
+export function getDefaultCompactModel(): ModelName | undefined {
   return getModelByTier('compact')
 }
 
@@ -90,7 +89,7 @@ export function getDefaultCompactModel(): ModelName {
  * 从 settings.mainLoopModel 读取 tier 名（advanced/standard/compact），
  * 再解析到实际模型。默认为 standard。
  */
-export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
+export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias | undefined {
   const settings = getSettings_DEPRECATED()
   const tier = settings?.mainLoopModel ?? 'standard'
   return getModelByTier(tier)
@@ -98,9 +97,12 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
 
 /**
  * 同步获取默认的主循环模型（跳过用户指定的值）。
+ * 未配置时返回 undefined。
  */
-export function getDefaultMainLoopModel(): ModelName {
-  return parseUserSpecifiedModel(getDefaultMainLoopModelSetting())
+export function getDefaultMainLoopModel(): ModelName | undefined {
+  const setting = getDefaultMainLoopModelSetting()
+  if (!setting) return undefined
+  return parseUserSpecifiedModel(setting)
 }
 
 export function renderDefaultModelSetting(setting: ModelName | ModelAlias): string {

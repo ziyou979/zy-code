@@ -460,7 +460,9 @@ if (!isInternalBuild() && isBeingDebugged()) {
  * 调用点，而不是一个在这里 + 一个在 QueryEngine 中。
  */
 function logSessionTelemetry(): void {
-  const model = parseUserSpecifiedModel(getInitialMainLoopModel() ?? getDefaultMainLoopModel())
+  const fallbackModel = getInitialMainLoopModel() ?? getDefaultMainLoopModel()
+  if (!fallbackModel) return // 模型未配置时跳过遥测
+  const model = parseUserSpecifiedModel(fallbackModel)
   void logSkillsLoaded(getCwd(), getContextWindowForModel(model))
   void loadAllPluginsCacheOnly()
     .then(({ enabled, errors }) => {
@@ -2831,9 +2833,10 @@ async function run(): Promise<CommanderCommand> {
       // 为钩子计算解析的模型（使用启动时用户指定的模型）
       setInitialMainLoopModel(getUserSpecifiedModelSetting() || null)
       const initialMainLoopModel = getInitialMainLoopModel()
-      const resolvedInitialModel = parseUserSpecifiedModel(
-        initialMainLoopModel ?? getDefaultMainLoopModel(),
-      )
+      const resolvedInitialModelInput = initialMainLoopModel ?? getDefaultMainLoopModel()
+      const resolvedInitialModel = resolvedInitialModelInput
+        ? parseUserSpecifiedModel(resolvedInitialModelInput)
+        : ''
       let advisorModel: string | undefined
       if (isAdvisorEnabled()) {
         const advisorOption = canUserConfigureAdvisor()

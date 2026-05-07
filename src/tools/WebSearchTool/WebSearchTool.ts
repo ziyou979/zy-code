@@ -77,6 +77,7 @@ export const WebSearchTool = buildTool({
   },
   isEnabled() {
     const model = getMainLoopModel()
+    if (!model) return false
     return modelHasCapability(model, 'web_search')
   },
   get inputSchema(): InputSchema {
@@ -341,7 +342,6 @@ async function searchViaAnthropic(
       const contentArr = event.message.content
       allContentBlocks.push(...contentArr)
       blockCount += contentArr.length
-      continue
     }
   }
 

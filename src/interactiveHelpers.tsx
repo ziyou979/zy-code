@@ -40,6 +40,7 @@ import {
   saveGlobalConfig,
 } from './utils/config.js'
 import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js'
+import { getDefaultStandardModel } from './utils/model/model.js'
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js'
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'
@@ -157,7 +158,8 @@ export async function showSetupScreens(
   let onboardingShown = false
   if (
     !config.theme ||
-    !config.hasCompletedOnboarding // always show onboarding at least once
+    !config.hasCompletedOnboarding || // always show onboarding at least once
+    !getDefaultStandardModel() // standard 模型未配置时强制进入配置
   ) {
     onboardingShown = true
     const { Onboarding } = await import('./components/Onboarding.js')
