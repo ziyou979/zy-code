@@ -106,7 +106,7 @@ export function getLanguageSection(languagePreference: string | undefined): stri
   if (!languagePreference) return null
 
   return `# Language
-Think and respond in ${languagePreference} natively, not by translating. This applies to all reasoning, explanations, and tool-call narration. Keep code, identifiers, file paths, and quoted text unchanged.`
+Think, reason, and respond in ${languagePreference} natively, not by translating. This includes all internal thinking, chain-of-thought reasoning, explanations, and tool-call narration. Keep code, identifiers, file paths, and quoted text unchanged.`
 }
 
 function getOutputStyleSection(outputStyleConfig: OutputStyleConfig | null): string | null {
