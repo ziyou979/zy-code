@@ -17,70 +17,69 @@ import { getLLMAdapter } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { normalizeModelStringForAPI } from './model/model.js'
 
-// BetaJSONOutputFormat can be inlined as a local type for structured output format
+// BetaJSONOutputFormat 可内联为结构化输出格式的本地类型
 type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
 
 export type SideQueryOptions = {
-  /** Model to use for the query */
+  /** 用于查询的模型 */
   model: string
   /**
-   * System prompt - string or array of text blocks (will be prefixed with CLI attribution).
+   * 系统提示词 - 字符串或 text block 数组（将以 CLI 归属前缀开头）。
    *
-   * The attribution header is always placed in its own TextBlock block to ensure
-   * server-side parsing correctly extracts the cc_entrypoint value without including
-   * system prompt content.
+   * 归属头始终放在独立的 TextBlock 块中，以确保服务端解析能正确提取
+   * cc_entrypoint 值而不包含系统提示词内容。
    */
   system?: string | TextBlock[]
-  /** Messages to send (supports cache_control on content blocks) */
+  /** 要发送的消息（content block 上支持 cache_control） */
   messages: LLMMessage[]
-  /** Optional tools (supports both standard ToolDefinition[] for custom tool types) */
+  /** 可选的工具定义（支持标准 ToolDefinition[] 用于自定义工具类型） */
   tools?: ToolDefinition[]
-  /** Optional tool choice (use { type: 'tool', name: 'x' } for forced output) */
+  /** 可选的工具选择（使用 { type: 'tool', name: 'x' } 强制输出） */
   tool_choice?: ToolChoice
-  /** Optional JSON output format for structured responses */
+  /** 可选的 JSON 输出格式，用于结构化响应 */
   output_format?: BetaJSONOutputFormat
-  /** Max tokens (default: 1024) */
+  /** 最大 token 数（默认：1024） */
   max_tokens?: number
-  /** Max retries (default: 2) */
+  /** 最大重试次数（默认：2） */
   maxRetries?: number
-  /** Abort signal */
+  /** 中止信号 */
   signal?: AbortSignal
-  /** Skip CLI system prompt prefix (keeps attribution header for OAuth). For internal classifiers that provide their own prompt. */
+  /** 跳过 CLI 系统提示词前缀（保留 OAuth 归属头）。供提供自有提示词的内部分类器使用。 */
   skipSystemPromptPrefix?: boolean
-  /** Temperature override */
+  /** 温度覆盖 */
   temperature?: number
-  /** Thinking budget (enables thinking), or `false` to send `{ type: 'disabled' }`. */
+  /** 思考预算（启用思考），或 `false` 发送 `{ type: 'disabled' }`。 */
   thinking?: number | false
-  /** Stop sequences — generation stops when any of these strings is emitted */
+  /** 停止序列 — 当输出任何这些字符串时停止生成 */
   stop_sequences?: string[]
-  /** Attributes this call in zy_api_success for COGS joining against reporting.sampling_calls. */
+  /** 在 zy_api_success 中标记此调用，用于 COGS 与 reporting.sampling_calls 的关联。 */
   querySource: QuerySource
 }
 
 /**
- * Lightweight API wrapper for "side queries" outside the main conversation loop.
+ * 用于主对话循环之外的"旁路查询"的轻量级 API 封装。
  *
- * Use this instead of direct client.beta.messages.create() calls to ensure
- * proper OAuth token validation with fingerprint attribution headers.
+ * 使用此函数替代直接的 client.beta.messages.create() 调用，以确保
+ * 通过指纹归属头进行正确的 OAuth token 验证。
  *
- * This handles:
- * - Fingerprint computation for OAuth validation
- * - Attribution header injection
- * - CLI system prompt prefix
- * - Proper betas for the model
- * - API metadata
- * - Model string normalization (strips [1m] suffix for API)
+ * 此函数处理：
+ * - OAuth 验证的指纹计算
+ * - 归属头注入
+ * - CLI 系统提示词前缀
+ * - 模型对应的 betas 参数
+ * - API 元数据
+ * - 模型字符串标准化（去除 API 的 [1m] 后缀）
  *
  * @example
- * // Permission explainer
+ * // 权限解释器
  * await sideQuery({ querySource: 'permission_explainer', model, system: SYSTEM_PROMPT, messages, tools, tool_choice })
  *
  * @example
- * // Session search
+ * // 会话搜索
  * await sideQuery({ querySource: 'session_search', model, system: SEARCH_PROMPT, messages })
  *
  * @example
- * // Model validation
+ * // 模型验证
  * await sideQuery({ querySource: 'model_validation', model, max_tokens: 1, messages: [{ role: 'user', content: 'Hi' }] })
  */
 export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
@@ -101,7 +100,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   } = opts
 
   const betas = [...getModelBetas(model)]
-  // Add structured-outputs beta if using output_format and provider supports it
+  // 如果使用了 output_format 且 provider 支持，则添加结构化输出 beta
   if (
     output_format &&
     modelSupportsStructuredOutputs(model) &&
@@ -111,7 +110,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   }
 
   const systemBlocks: TextBlock[] = [
-    // Skip CLI system prompt prefix for internal classifiers that provide their own prompt
+    // 对提供自有提示词的内部分类器跳过 CLI 系统提示词前缀
     ...(skipSystemPromptPrefix
       ? []
       : [

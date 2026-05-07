@@ -1,12 +1,12 @@
 /**
- * Git bundle creation + upload for CCR seed-bundle seeding.
+ * Git bundle 创建与上传，用于 CCR seed-bundle 播种。
  *
- * Flow:
- *   1. git stash create → update-ref refs/seed/stash (makes it reachable)
- *   2. git bundle create --all (packs refs/seed/stash + its objects)
- *   3. Upload to /v1/files
- *   4. Cleanup refs/seed/stash (don't pollute user's repo)
- *   5. Caller sets seed_bundle_file_id on SessionContext
+ * 流程：
+ *   1. git stash create → update-ref refs/seed/stash（使其可达）
+ *   2. git bundle create --all（打包 refs/seed/stash 及其对象）
+ *   3. 上传到 /v1/files
+ *   4. 清理 refs/seed/stash（不污染用户的仓库）
+ *   5. 调用方在 SessionContext 上设置 seed_bundle_file_id
  */
 
 import { stat, unlink } from 'fs/promises'
@@ -22,7 +22,7 @@ import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { findGitRoot, gitExe } from '../git.js'
 import { generateTempFilePath } from '../tempfile.js'
 
-// Tunable via zy_ccr_bundle_max_bytes.
+// 可通过 zy_ccr_bundle_max_bytes 调节。
 const DEFAULT_BUNDLE_MAX_BYTES = 100 * 1024 * 1024
 
 type BundleScope = 'all' | 'head' | 'squashed'
@@ -43,10 +43,10 @@ type BundleCreateResult =
   | { ok: true; size: number; scope: BundleScope }
   | { ok: false; error: string; failReason: BundleFailReason }
 
-// Bundle --all → HEAD → squashed-root. HEAD drops side branches/tags but
-// keeps full current-branch history. Squashed-root is a single parentless
-// commit of HEAD's tree (or the stash tree if WIP exists) — no history,
-// just the snapshot. Receiver needs refs/seed/root handling for that tier.
+// Bundle --all → HEAD → squashed-root 降级链。HEAD 会丢弃侧分支/标签，
+// 但保留当前分支的完整历史。Squashed-root 是 HEAD 树（或存在 WIP 时的
+// stash 树）的单个无父提交——没有历史，只有快照。
+// 接收端需要处理该层级的 refs/seed/root。
 async function _bundleWithFallback(
   gitRoot: string,
   bundlePath: string,
@@ -54,7 +54,7 @@ async function _bundleWithFallback(
   hasStash: boolean,
   signal: AbortSignal | undefined,
 ): Promise<BundleCreateResult> {
-  // --all picks up refs/seed/stash; HEAD needs it explicit.
+  // --all 会包含 refs/seed/stash；HEAD 模式需要显式指定。
   const extra = hasStash ? ['refs/seed/stash'] : []
   const mkBundle = (base: string) =>
     execFileNoThrowWithCwd(gitExe(), ['bundle', 'create', bundlePath, base, ...extra], {
@@ -76,7 +76,7 @@ async function _bundleWithFallback(
     return { ok: true, size: allSize, scope: 'all' }
   }
 
-  // bundle create overwrites in place.
+  // bundle create 会原地覆盖文件。
   logForDebugging(
     `[gitBundle] --all bundle is ${(allSize / 1024 / 1024).toFixed(1)}MB (> ${(maxBytes / 1024 / 1024).toFixed(0)}MB), retrying HEAD-only`,
   )
@@ -94,9 +94,9 @@ async function _bundleWithFallback(
     return { ok: true, size: headSize, scope: 'head' }
   }
 
-  // Last resort: squash to a single parentless commit. Uses the stash tree
-  // when WIP exists (bakes uncommitted changes in — can't bundle the stash
-  // ref separately since its parents would drag history back).
+  // 最后手段：压缩为单个无父提交。当存在 WIP 时使用 stash 树
+  // （将未提交的变更烘焙进去——不能单独 bundle stash ref，
+  // 因为其父提交会将历史拖回来）。
   logForDebugging(
     `[gitBundle] HEAD bundle is ${(headSize / 1024 / 1024).toFixed(1)}MB, retrying squashed-root`,
   )
@@ -141,10 +141,10 @@ async function _bundleWithFallback(
   }
 }
 
-// Bundle the repo and upload to Files API; return file_id for
-// seed_bundle_file_id. --all → HEAD → squashed-root fallback chain.
-// Tracked WIP via stash create → refs/seed/stash (or baked into the
-// squashed tree); untracked not captured.
+// 打包仓库并上传到 Files API；返回 file_id 用于
+// seed_bundle_file_id。降级链：--all → HEAD → squashed-root。
+// 通过 stash create → refs/seed/stash 跟踪 WIP（或烘焙到
+// 压缩树中）；不捕获未跟踪文件。
 export async function createAndUploadGitBundle(
   config: FilesApiConfig,
   opts?: { cwd?: string; signal?: AbortSignal },
@@ -155,18 +155,18 @@ export async function createAndUploadGitBundle(
     return { success: false, error: 'Not in a git repository' }
   }
 
-  // Sweep stale refs from a crashed prior run before --all bundles them.
-  // Runs before the empty-repo check so it's never skipped by an early return.
+  // 清除上次崩溃运行遗留的过时 ref，避免 --all 将其打包进 bundle。
+  // 在空仓库检查之前运行，确保不会被提前返回跳过。
   for (const ref of ['refs/seed/stash', 'refs/seed/root']) {
     await execFileNoThrowWithCwd(gitExe(), ['update-ref', '-d', ref], {
       cwd: gitRoot,
     })
   }
 
-  // `git bundle create` refuses to create an empty bundle (exit 128), and
-  // `stash create` fails with "You do not have the initial commit yet".
-  // Check for any refs (not just HEAD) so orphan branches with commits
-  // elsewhere still bundle — `--all` packs those refs regardless of HEAD.
+  // `git bundle create` 拒绝创建空 bundle（退出码 128），
+  // `stash create` 会报错 "You do not have the initial commit yet"。
+  // 检查所有 ref（不仅是 HEAD），这样在其他位置有提交的孤立分支
+  // 仍然可以打包——`--all` 会打包这些 ref，无论 HEAD 状态如何。
   const refCheck = await execFileNoThrowWithCwd(gitExe(), ['for-each-ref', '--count=1', 'refs/'], {
     cwd: gitRoot,
   })
@@ -181,13 +181,13 @@ export async function createAndUploadGitBundle(
     }
   }
 
-  // stash create writes a dangling commit — doesn't touch refs/stash or
-  // the working tree. Untracked files intentionally excluded.
+  // stash create 会写入一个悬空提交——不会修改 refs/stash 或工作树。
+  // 有意排除未跟踪文件。
   const stashResult = await execFileNoThrowWithCwd(gitExe(), ['stash', 'create'], {
     cwd: gitRoot,
     abortSignal: opts?.signal,
   })
-  // exit 0 + empty stdout = nothing to stash. Nonzero is rare; non-fatal.
+  // 退出码 0 + 空 stdout = 无需 stash。非零退出码罕见且非致命。
   const wipStashSha = stashResult.code === 0 ? stashResult.stdout.trim() : ''
   const hasWip = wipStashSha !== ''
   if (stashResult.code !== 0) {
@@ -196,7 +196,7 @@ export async function createAndUploadGitBundle(
     )
   } else if (hasWip) {
     logForDebugging(`[gitBundle] Captured WIP as stash ${wipStashSha}`)
-    // env-runner reads the SHA via bundle list-heads refs/seed/stash.
+    // env-runner 通过 bundle list-heads refs/seed/stash 读取该 SHA。
     await execFileNoThrowWithCwd(gitExe(), ['update-ref', 'refs/seed/stash', wipStashSha], {
       cwd: gitRoot,
     })
@@ -204,7 +204,7 @@ export async function createAndUploadGitBundle(
 
   const bundlePath = generateTempFilePath('ccr-seed', '.bundle')
 
-  // git leaves a partial file on nonzero exit (e.g. empty-repo 128).
+  // git 在非零退出时会留下部分文件（例如空仓库时退出码 128）。
   try {
     const maxBytes =
       getFeatureValue_CACHED_MAY_BE_STALE<number | null>('zy_ccr_bundle_max_bytes', null) ??
@@ -226,7 +226,7 @@ export async function createAndUploadGitBundle(
       }
     }
 
-    // Fixed relativePath so CCR can locate it.
+    // 固定的 relativePath，以便 CCR 能定位到它。
     const upload = await uploadFile(bundlePath, '_source_seed.bundle', config, {
       signal: opts?.signal,
     })
@@ -258,8 +258,8 @@ export async function createAndUploadGitBundle(
     } catch {
       logForDebugging(`[gitBundle] Could not delete ${bundlePath} (non-fatal)`)
     }
-    // Always delete — also sweeps a stale ref from a crashed prior run.
-    // update-ref -d on a missing ref exits 0.
+    // 始终删除——同时清除上次崩溃运行遗留的过时 ref。
+    // 对不存在的 ref 执行 update-ref -d 会以退出码 0 正常退出。
     for (const ref of ['refs/seed/stash', 'refs/seed/root']) {
       await execFileNoThrowWithCwd(gitExe(), ['update-ref', '-d', ref], {
         cwd: gitRoot,

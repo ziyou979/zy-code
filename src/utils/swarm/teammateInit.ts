@@ -1,8 +1,8 @@
 /**
- * Teammate Initialization Module
+ * 队友初始化模块
  *
- * Handles initialization for ZY Code instances running as teammates in a swarm.
- * Registers a Stop hook to notify the team leader when the teammate becomes idle.
+ * 处理作为 swarm 中队友运行的 ZY Code 实例的初始化。
+ * 注册 Stop 钩子，在队友空闲时通知团队 leader。
  */
 
 import type { AppState } from '../../state/AppState.js'
@@ -15,11 +15,10 @@ import { createIdleNotification, getLastPeerDmSummary, writeToMailbox } from '..
 import { readTeamFile, setMemberActive } from './teamHelpers.js'
 
 /**
- * Initializes hooks for a teammate running in a swarm.
- * Should be called early in session startup after AppState is available.
+ * 为 swarm 中运行的队友初始化钩子。
+ * 应在会话启动早期、AppState 可用后调用。
  *
- * Registers a Stop hook that sends an idle notification to the team leader
- * when this teammate's session stops.
+ * 注册 Stop 钩子，在此队友的会话停止时向团队 leader 发送空闲通知。
  */
 export function initializeTeammateHooks(
   setAppState: (updater: (prev: AppState) => AppState) => void,
@@ -28,7 +27,7 @@ export function initializeTeammateHooks(
 ): void {
   const { teamName, agentId, agentName } = teamInfo
 
-  // Read team file to get leader ID
+  // 读取团队文件以获取 leader ID
   const teamFile = readTeamFile(teamName)
   if (!teamFile) {
     logForDebugging(`[TeammateInit] Team file not found for team: ${teamName}`)
@@ -37,15 +36,15 @@ export function initializeTeammateHooks(
 
   const leadAgentId = teamFile.leadAgentId
 
-  // Apply team-wide allowed paths if any exist
+  // 如果存在团队级别的允许路径则应用
   if (teamFile.teamAllowedPaths && teamFile.teamAllowedPaths.length > 0) {
     logForDebugging(
       `[TeammateInit] Found ${teamFile.teamAllowedPaths.length} team-wide allowed path(s)`,
     )
 
     for (const allowedPath of teamFile.teamAllowedPaths) {
-      // For absolute paths (starting with /), prepend one / to create //path/** pattern
-      // For relative paths, just use path/**
+      // 对于绝对路径（以 / 开头），前面加一个 / 以创建 //path/** 模式
+      // 对于相对路径，直接使用 path/**
       const ruleContent = allowedPath.path.startsWith('/')
         ? `/${allowedPath.path}/**`
         : `${allowedPath.path}/**`
@@ -71,11 +70,11 @@ export function initializeTeammateHooks(
     }
   }
 
-  // Find the leader's name from the members array
+  // 从成员数组中查找 leader 的名称
   const leadMember = teamFile.members.find((m) => m.agentId === leadAgentId)
   const leadAgentName = leadMember?.name || 'team-lead'
 
-  // Don't register hook if this agent is the leader
+  // 如果当前 agent 是 leader 则不注册钩子
   if (agentId === leadAgentId) {
     logForDebugging(
       '[TeammateInit] This agent is the team leader - skipping idle notification hook',
@@ -87,18 +86,18 @@ export function initializeTeammateHooks(
     `[TeammateInit] Registering Stop hook for teammate ${agentName} to notify leader ${leadAgentName}`,
   )
 
-  // Register Stop hook to notify leader when this teammate stops
+  // 注册 Stop 钩子，在此队友停止时通知 leader
   addFunctionHook(
     setAppState,
     sessionId,
     'Stop',
-    '', // No matcher - applies to all Stop events
+    '', // 无匹配器 - 适用于所有 Stop 事件
     async (messages, _signal) => {
-      // Mark this teammate as idle in the team config (fire and forget)
+      // 在团队配置中将此队友标记为空闲（即发即忘）
       void setMemberActive(teamName, agentName, false)
 
-      // Send idle notification to the team leader using agent name (not UUID)
-      // Must await to ensure the write completes before process shutdown
+      // 使用 agent 名称（而非 UUID）向团队 leader 发送空闲通知
+      // 必须 await 以确保写入在进程关闭前完成
       const notification = createIdleNotification(agentName, {
         idleReason: 'available',
         summary: getLastPeerDmSummary(messages),
@@ -110,7 +109,7 @@ export function initializeTeammateHooks(
         color: getTeammateColor(),
       })
       logForDebugging(`[TeammateInit] Sent idle notification to leader ${leadAgentName}`)
-      return true // Don't block the Stop
+      return true // 不阻塞 Stop
     },
     'Failed to send idle notification to team leader',
     {

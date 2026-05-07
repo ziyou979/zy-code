@@ -83,7 +83,7 @@ function filterSwarmFieldsFromSchema(
     return schema
   }
 
-  // Clone the schema to avoid mutating the original
+  // 克隆 schema 以避免修改原始对象
   const filtered = { ...schema }
   const props = filtered.properties
   if (props && typeof props === 'object') {
@@ -310,7 +310,7 @@ export function splitSysPromptPrefix(
       promptBlockCount: systemPrompt.length,
     })
 
-    // Filter out boundary marker, return blocks without global scope
+    // 过滤边界标记，返回不带全局作用域的块
     let attributionHeader: string | undefined
     let systemPromptPrefix: string | undefined
     const rest: string[] = []
@@ -465,14 +465,14 @@ export async function logContextMetrics(
     getUserContext(),
     getSystemContext(),
   ])
-  // Extract individual context sizes and calculate total
+  // 提取各个上下文的大小并计算总量
   const gitStatusSize = systemContext.gitStatus?.length ?? 0
   const zyMdSize = userContext.zyMd?.length ?? 0
 
-  // Calculate total context size
+  // 计算上下文总大小
   const totalContextSize = gitStatusSize + zyMdSize
 
-  // Get file count using ripgrep (rounded to nearest power of 10 for privacy)
+  // 使用 ripgrep 获取文件数量（为隐私考虑取最近的 10 的幂次）
   const currentDir = getCwd()
   const ignorePatternsByRoot = getFileReadIgnorePatterns(toolPermissionContext)
   const normalizedIgnorePatterns = normalizePatternsToPath(ignorePatternsByRoot, currentDir)
@@ -482,7 +482,7 @@ export async function logContextMetrics(
     normalizedIgnorePatterns,
   )
 
-  // Calculate tool metrics
+  // 计算工具相关指标
   let mcpToolsCount = 0
   let mcpServersCount = 0
   let mcpToolsTokens = 0
@@ -493,7 +493,7 @@ export async function logContextMetrics(
   mcpToolsCount = mcpTools.length
   nonMcpToolsCount = nonMcpTools.length
 
-  // Extract unique server names from MCP tool names (format: mcp__servername__toolname)
+  // 从 MCP 工具名称中提取唯一的服务器名（格式：mcp__servername__toolname）
   const serverNames = new Set<string>()
   for (const tool of mcpTools) {
     const parts = tool.name.split('__')
@@ -503,8 +503,8 @@ export async function logContextMetrics(
   }
   mcpServersCount = serverNames.size
 
-  // Estimate tool tokens locally for analytics (avoids N API calls per session)
-  // Use inputJSONSchema (plain JSON Schema) when available, otherwise convert Zod schema
+  // 在本地估算工具 token 数量用于分析（避免每个会话进行 N 次 API 调用）
+  // 优先使用 inputJSONSchema（纯 JSON Schema），否则转换 Zod schema
   for (const tool of mcpTools) {
     const schema =
       'inputJSONSchema' in tool && tool.inputJSONSchema
@@ -545,12 +545,12 @@ export function normalizeToolInput<T extends Tool>(
       // V2 工具从文件而非输入中读取计划，但 hooks/SDK
       const plan = getPlan(agentId)
       const planFilePath = getPlanFilePath(agentId)
-      // Persist file snapshot for CCR sessions so the plan survives pod recycling
+      // 为 CCR 会话持久化文件快照，以确保计划在 Pod 回收后仍然存在
       void persistFileSnapshotIfRemote()
       return plan !== null ? { ...input, plan, planFilePath } : input
     }
     case BashTool.name: {
-      // Validated upstream, won't throw
+      // 已在上游验证，不会抛出异常
       const parsed = BashTool.inputSchema.parse(input)
       const { command, timeout, description } = parsed
       const cwd = getCwd()
@@ -587,7 +587,7 @@ export function normalizeToolInput<T extends Tool>(
       } as z.infer<T['inputSchema']>
     }
     case FileEditTool.name: {
-      // Validated upstream, won't throw
+      // 已在上游验证，不会抛出异常
       const parsedInput = FileEditTool.inputSchema.parse(input)
 
       // 这是 zy 无法看到的 token 的变通方法
@@ -611,7 +611,7 @@ export function normalizeToolInput<T extends Tool>(
       } as z.infer<T['inputSchema']>
     }
     case FileWriteTool.name: {
-      // Validated upstream, won't throw
+      // 已在上游验证，不会抛出异常
       const parsedInput = FileWriteTool.inputSchema.parse(input)
 
       // Markdown 使用两个尾随空格作为硬换行符 — 不要去除。

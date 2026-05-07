@@ -1018,8 +1018,8 @@ function getPlanModeAttachmentTurnCount(messages: Message[]): {
 }
 
 /**
- * Count plan_mode attachments since the last plan_mode_exit (or from start if no exit).
- * This ensures the full/sparse cycle resets when re-entering plan mode.
+ * 统计自上次 plan_mode_exit 以来（或从头开始如果无 exit）的 plan_mode 附件数量。
+ * 这确保了重新进入 plan mode 时 full/sparse 周期会重置。
  */
 function countPlanModeAttachmentsSinceLastExit(messages: Message[]): number {
   let count = 0
@@ -1092,8 +1092,8 @@ async function getPlanModeAttachments(
 }
 
 /**
- * Returns a plan_mode_exit attachment if we just exited plan mode.
- * This is a one-time notification to tell the model it's no longer in plan mode.
+ * 如果刚退出 plan mode，返回 plan_mode_exit 附件。
+ * 这是一次性通知，告知模型它不再处于 plan mode。
  */
 async function getPlanModeExitAttachment(toolUseContext: ToolUseContext): Promise<Attachment[]> {
   // 仅在标志已设置时触发（我们刚退出 plan mode）
@@ -1243,17 +1243,15 @@ async function getAutoModeExitAttachment(toolUseContext: ToolUseContext): Promis
 }
 
 /**
- * Detects when the local date has changed since the last turn (user coding
- * past midnight) and emits an attachment to notify the model.
+ * 检测本地日期自上一轮以来是否发生变化（用户编码跨过午夜），
+ * 并发出附件通知模型。
  *
- * The date_change attachment is appended at the tail of the conversation,
- * so the model learns the new date without mutating the cached prefix.
- * messages[0] (from getUserContext → prependUserContext) intentionally
- * keeps the stale date — clearing that cache would regenerate the prefix
- * and turn the entire conversation into cache_creation on the next turn
- * (~920K effective tokens per midnight crossing per overnight session).
+ * date_change 附件追加在对话末尾，使模型了解新日期而无需修改缓存前缀。
+ * messages[0]（来自 getUserContext → prependUserContext）有意保留过时日期——
+ * 清除该缓存会重新生成前缀，并在下一轮将整个对话转为 cache_creation
+ *（每次午夜跨越约 920K 有效 token）。
  *
- * Exported for testing — regression guard for the cache-clear removal.
+ * 导出用于测试——缓存清除移除的回归保护。
  */
 export function getDateChangeAttachments(messages: Message[] | undefined): Attachment[] {
   const currentDate = getLocalISODate()
@@ -1324,17 +1322,15 @@ export function getDeferredToolsDeltaAttachment(
 }
 
 /**
- * Diff the current filtered agent pool against what's already been announced
- * in this conversation (reconstructed from prior agent_listing_delta
- * attachments). Returns [] if nothing changed or the gate is off.
+ * 对比当前过滤后的 agent 池与此对话中已公告的内容
+ *（从之前的 agent_listing_delta 附件重建）。如果无变化或 gate 关闭则返回 []。
  *
- * The agent list was embedded in AgentTool's description, causing ~10.2% of
- * fleet cache_creation: MCP async connect, /reload-plugins, or
- * permission-mode change → description changes → full tool-schema cache bust.
- * Moving the list here keeps the tool description static.
+ * agent 列表之前嵌入在 AgentTool 的 description 中，导致约 10.2% 的
+ * 全量 cache_creation：MCP 异步连接、/reload-plugins 或权限模式变更
+ * → description 变化 → 完整 tool-schema 缓存失效。
+ * 将列表移到此处使工具 description 保持静态。
  *
- * Exported for compact.ts — re-announces the full set after compaction eats
- * prior deltas.
+ * 导出供 compact.ts 使用——在压缩吞噬先前 delta 后重新公告完整集合。
  */
 export function getAgentListingDeltaAttachment(
   toolUseContext: ToolUseContext,
@@ -1536,17 +1532,17 @@ export function getDirectoriesToProcess(
 }
 
 /**
- * Converts memory files to attachments, filtering out already-loaded files.
+ * 将内存文件转换为附件，过滤掉已加载的文件。
  *
- * @param memoryFiles The memory files to convert
- * @param toolUseContext The tool use context (for tracking loaded files)
- * @returns Array of nested memory attachments
+ * @param memoryFiles 要转换的内存文件
+ * @param toolUseContext 工具使用上下文（用于追踪已加载的文件）
+ * @returns 嵌套内存附件数组
  */
 function isInstructionsMemoryType(type: MemoryFileInfo['type']): type is InstructionsMemoryType {
   return type === 'User' || type === 'Project' || type === 'Local' || type === 'Managed'
 }
 
-/** Exported for testing — regression guard for LRU-eviction re-injection. */
+/** 导出用于测试——LRU 淘汰重新注入的回归保护。 */
 export function memoryFilesToAttachments(
   memoryFiles: MemoryFileInfo[],
   toolUseContext: ToolUseContext,
@@ -1607,19 +1603,18 @@ export function memoryFilesToAttachments(
 }
 
 /**
- * Loads nested memory files for a given file path and returns them as attachments.
- * This function performs directory traversal to find CLAUDE.md files and conditional rules
- * that apply to the target file path.
+ * 为给定文件路径加载嵌套内存文件并将其作为附件返回。
+ * 此函数执行目录遍历以查找适用于目标文件路径的 CLAUDE.md 文件和条件规则。
  *
- * Processing order (must be preserved):
- * 1. Managed/User conditional rules matching targetPath
- * 2. Nested directories (CWD → target): CLAUDE.md + unconditional + conditional rules
- * 3. CWD-level directories (root → CWD): conditional rules only
+ * 处理顺序（必须保持）：
+ * 1. 匹配 targetPath 的 Managed/User 条件规则
+ * 2. 嵌套目录（CWD → target）：CLAUDE.md + 无条件规则 + 条件规则
+ * 3. CWD 级目录（root → CWD）：仅条件规则
  *
- * @param filePath The file path to get nested memory files for
- * @param toolUseContext The tool use context
- * @param appState The app state containing tool permission context
- * @returns Array of nested memory attachments
+ * @param filePath 要获取嵌套内存文件的文件路径
+ * @param toolUseContext 工具使用上下文
+ * @param appState 包含工具权限上下文的应用状态
+ * @returns 嵌套内存附件数组
  */
 async function getNestedMemoryAttachmentsForFile(
   filePath: string,
@@ -1924,8 +1919,8 @@ export async function getChangedFiles(toolUseContext: ToolUseContext): Promise<A
 }
 
 /**
- * Processes paths that need nested memory attachments and checks for nested CLAUDE.md files
- * Uses nestedMemoryAttachmentTriggers field from ToolUseContext
+ * 处理需要嵌套内存附件的路径并检查嵌套 CLAUDE.md 文件
+ * 使用 ToolUseContext 中的 nestedMemoryAttachmentTriggers 字段
  */
 async function getNestedMemoryAttachments(toolUseContext: ToolUseContext): Promise<Attachment[]> {
   // 先检查触发器 — getAppState() 等待 React 渲染周期，
@@ -1991,11 +1986,10 @@ async function getRelevantMemoryAttachments(
 }
 
 /**
- * Scan messages for past relevant_memories attachments.  Returns both the
- * set of surfaced paths (for selector de-dup) and cumulative byte count
- * (for session-total throttle).  Scanning messages rather than tracking
- * in toolUseContext means compact naturally resets both — old attachments
- * are gone from the compacted transcript, so re-surfacing is valid again.
+ * 扫描消息中过去的 relevant_memories 附件。返回已展示路径集合
+ *（用于选择器去重）和累计字节数（用于会话总量限流）。
+ * 扫描消息而非在 toolUseContext 中追踪意味着 compact 自然地重置两者——
+ * 旧附件从压缩后的 transcript 中消失，因此重新展示是有效的。
  */
 export function collectSurfacedMemories(messages: ReadonlyArray<Message>): {
   paths: Set<string>
@@ -2077,8 +2071,8 @@ export async function readMemoriesForSurfacing(
 }
 
 /**
- * Header string for a relevant-memory block.  Exported so messages.ts
- * can fall back for resumed sessions where the stored header is missing.
+ * 相关内存块的头部字符串。导出供 messages.ts 使用，
+ * 以便在存储的 header 缺失时作为恢复会话的回退。
  */
 export function memoryHeader(path: string, mtimeMs: number): string {
   const staleness = memoryFreshnessText(mtimeMs)
@@ -2088,16 +2082,15 @@ export function memoryHeader(path: string, mtimeMs: number): string {
 }
 
 /**
- * A memory relevance-selector prefetch handle. The promise is started once
- * per user turn and runs while the main model streams and tools execute.
- * At the collect point (post-tools), the caller reads settledAt to
- * consume-if-ready or skip-and-retry-next-iteration — the prefetch never
- * blocks the turn.
+ * 内存相关性选择器预取句柄。Promise 在每个用户轮次启动一次，
+ * 在主模型流式传输和工具执行期间运行。
+ * 在收集点（工具执行后），调用者读取 settledAt 以按需消费或
+ * 跳过-下次迭代重试——预取永不阻塞轮次。
  *
- * Disposable: query.ts binds with `using`, so [Symbol.dispose] fires on all
- * generator exit paths (return, throw, .return() closure) — aborting the
- * in-flight request and emitting terminal telemetry without instrumenting
- * each of the ~13 return sites inside the while loop.
+ * 可释放：query.ts 通过 `using` 绑定，因此 [Symbol.dispose] 在所有
+ * generator 退出路径（return、throw、.return() 闭合）上触发——中止
+ * 进行中的请求并发出终端遥测，无需对 while 循环内约 13 个 return
+ * 位置逐一添加检测。
  */
 export type MemoryPrefetch = {
   promise: Promise<Attachment[]>
@@ -2109,10 +2102,10 @@ export type MemoryPrefetch = {
 }
 
 /**
- * Starts the relevant memory search as an async prefetch.
- * Extracts the last real user prompt from messages (skipping isMeta system
- * injections) and kicks off a non-blocking search. Returns a Disposable
- * handle with settlement tracking. Bound with `using` in query.ts.
+ * 将相关内存搜索作为异步预取启动。
+ * 从消息中提取最后一条真实用户 prompt（跳过 isMeta 系统注入），
+ * 并发起非阻塞搜索。返回带有结算追踪的 Disposable 句柄。
+ * 在 query.ts 中通过 `using` 绑定。
  */
 export function startRelevantMemoryPrefetch(
   messages: ReadonlyArray<Message>,
@@ -2185,28 +2178,27 @@ function isToolResultBlock(b: unknown): b is ToolResultBlock {
 }
 
 /**
- * Check whether a user message's content contains tool_result blocks.
- * This is more reliable than checking `toolUseResult === undefined` because
- * sub-agent tool result messages explicitly set `toolUseResult` to `undefined`
- * when `preserveToolUseResults` is false (the default for Explore agents).
+ * 检查用户消息的 content 是否包含 tool_result 块。
+ * 这比检查 `toolUseResult === undefined` 更可靠，因为
+ * 子 agent 工具结果消息在 `preserveToolUseResults` 为 false 时
+ *（Explore agent 的默认值）会显式将 `toolUseResult` 设为 `undefined`。
  */
 function hasToolResultContent(content: unknown): boolean {
   return Array.isArray(content) && content.some(isToolResultBlock)
 }
 
 /**
- * Tools that succeeded (and never errored) since the previous real turn
- * boundary.  The memory selector uses this to suppress docs about tools
- * that are working — surfacing reference material for a tool the model
- * is already calling successfully is noise.
+ * 自上一个真实轮次边界以来成功执行（且从未报错）的工具。
+ * 内存选择器用此来抑制关于正常工作的工具的文档——
+ * 为模型已成功调用的工具展示参考资料是噪音。
  *
- * Any error → tool excluded (model is struggling, docs stay available).
- * No result yet → also excluded (outcome unknown).
+ * 任何错误 → 工具被排除（模型遇到困难，文档保持可用）。
+ * 尚无结果 → 同样排除（结果未知）。
  *
- * tool_use lives in assistant content; tool_result in user content
- * (toolUseResult set, isMeta undefined).  Both are within the scan window.
- * Backward scan sees results before uses so we collect both by id and
- * resolve after.
+ * tool_use 位于 assistant content 中；tool_result 位于 user content 中
+ *（toolUseResult 已设置，isMeta 未定义）。两者都在扫描窗口内。
+ * 反向扫描先看到 result 再看到 use，因此我们按 id 收集两者
+ * 然后再解析。
  */
 export function collectRecentSuccessfulTools(
   messages: ReadonlyArray<Message>,
@@ -2245,18 +2237,15 @@ export function collectRecentSuccessfulTools(
 }
 
 /**
- * Filters prefetched memory attachments to exclude memories the model already
- * has in context via FileRead/Write/Edit tool calls (any iteration this turn)
- * or a previous turn's memory surfacing — both tracked in the cumulative
- * readFileState. Survivors are then marked in readFileState so subsequent
- * turns won't re-surface them.
+ * 过滤预取的内存附件，排除模型已通过 FileRead/Write/Edit 工具调用
+ *（本轮任何迭代）或上一轮的内存展示而存在于上下文中的内存——
+ * 两者都通过累积的 readFileState 追踪。存活者随后在 readFileState 中标记，
+ * 使后续轮次不会重新展示。
  *
- * The mark-after-filter ordering is load-bearing: readMemoriesForSurfacing
- * used to write to readFileState during the prefetch, which meant the filter
- * saw every prefetch-selected path as "already in context" and dropped them
- * all (self-referential filter). Deferring the write to here, after the
- * filter runs, breaks that cycle while still deduping against tool calls
- * from any iteration.
+ * 先过滤后标记的顺序是关键的：readMemoriesForSurfacing 之前在预取期间
+ * 写入 readFileState，这意味着过滤器将每个预取选中的路径视为"已在上下文中"
+ * 并全部丢弃（自引用过滤器）。将写入延迟到此处（过滤器运行之后），
+ * 打破了该循环，同时仍能对任何迭代的工具调用进行去重。
  */
 export function filterDuplicateMemoryAttachments(
   attachments: Attachment[],
@@ -2285,8 +2274,8 @@ export function filterDuplicateMemoryAttachments(
 }
 
 /**
- * Processes skill directories that were discovered during file operations.
- * Uses dynamicSkillDirTriggers field from ToolUseContext
+ * 处理在文件操作期间发现的技能目录。
+ * 使用 ToolUseContext 中的 dynamicSkillDirTriggers 字段
  */
 async function getDynamicSkillAttachments(toolUseContext: ToolUseContext): Promise<Attachment[]> {
   const attachments: Attachment[] = []

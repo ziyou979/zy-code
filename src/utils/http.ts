@@ -1,5 +1,5 @@
 /**
- * HTTP utility constants and helpers
+ * HTTP 工具常量和辅助函数
  */
 
 import axios from 'axios'
@@ -8,22 +8,22 @@ import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
-// WARNING: We rely on `zy-cli` in the user agent for log filtering.
-// Please do NOT change this without making sure that logging also gets updated!
+// 警告：我们依赖 user agent 中的 `zy-cli` 进行日志过滤。
+// 请勿在未确认日志也更新的情况下修改此处！
 export function getUserAgent(): string {
   const agentSdkVersion = process.env.CLAUDE_AGENT_SDK_VERSION
     ? `, agent-sdk/${process.env.CLAUDE_AGENT_SDK_VERSION}`
     : ''
-  // SDK consumers can identify their app/library via CLAUDE_AGENT_SDK_CLIENT_APP
-  // e.g., "my-app/1.0.0" or "my-library/2.1"
+  // SDK 使用者可以通过 CLAUDE_AGENT_SDK_CLIENT_APP 标识其应用/库
+  // 例如 "my-app/1.0.0" 或 "my-library/2.1"
   const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP
     ? `, client-app/${process.env.CLAUDE_AGENT_SDK_CLIENT_APP}`
     : ''
-  // Turn-/process-scoped workload tag for cron-initiated requests. Direct API-only
-  // observability — proxies strip HTTP headers; QoS routing uses cc_workload
-  // in the billing-header attribution block instead (see constants/system.ts).
-  // getAnthropicClient (client.ts:98) calls this per-request inside withRetry,
-  // so the read picks up the same setWorkload() value as getAttributionHeader.
+  // 轮次/进程范围的工作负载标签，用于 cron 发起的请求。仅直连 API 可观测性——
+  // 代理会剥离 HTTP headers；QoS 路由使用计费 header 归因块中的 cc_workload
+  // （见 constants/system.ts）。
+  // getAnthropicClient (client.ts:98) 在 withRetry 内每次请求调用此方法，
+  // 因此读取会获取与 getAttributionHeader 相同的 setWorkload() 值。
   const workload = getWorkload()
   const workloadSuffix = workload ? `, workload/${workload}` : ''
   return `zy-cli/${MACRO.VERSION} (${process.env.USER_TYPE}, ${process.env.ZY_CODE_ENTRYPOINT ?? 'cli'}${agentSdkVersion}${clientApp}${workloadSuffix})`
@@ -44,10 +44,9 @@ export function getMCPUserAgent(): string {
   return `zy-code/${MACRO.VERSION}${suffix}`
 }
 
-// User-Agent for WebFetch requests to arbitrary sites. `Zy-User` is
-// our publicly documented agent for user-initiated fetches
-// operators match in robots.txt); the zy-code suffix lets them distinguish
-// local CLI traffic from zy.ai server-side fetches.
+// WebFetch 请求到任意站点的 User-Agent。`Zy-User` 是我们公开文档中
+// 用于用户发起请求的 agent（运营者在 robots.txt 中匹配）；
+// zy-code 后缀用于区分本地 CLI 流量和 zy.ai 服务端请求。
 export function getWebFetchUserAgent(): string {
   return `Zy-User (${getZyCodeUserAgent()}; +https://zy.ai/)`
 }
@@ -58,8 +57,8 @@ export type AuthHeaders = {
 }
 
 /**
- * Get authentication headers for API requests
- * Returns either OAuth headers for Max/Pro users or API key headers for regular users
+ * 获取 API 请求的认证 headers
+ * 为 Max/Pro 用户返回 OAuth headers，为普通用户返回 API key headers
  * 支持百炼 DashScope API Key
  */
 export function getAuthHeaders(): AuthHeaders {
@@ -75,7 +74,7 @@ export function getAuthHeaders(): AuthHeaders {
     }
   }
 
-  // Use API key authentication
+  // 使用 API key 认证
   const apiKey = getApiKey()
   if (!apiKey) {
     return {
@@ -91,18 +90,17 @@ export function getAuthHeaders(): AuthHeaders {
 }
 
 /**
- * Wrapper that handles OAuth 401 errors by force-refreshing the token and
- * retrying once. Addresses clock drift scenarios where the local expiration
- * check disagrees with the server.
+ * 处理 OAuth 401 错误的包装器，通过强制刷新 token 并重试一次。
+ * 解决本地过期检查与服务器不一致的时钟漂移场景。
  *
- * The request closure is called again on retry, so it should re-read auth
- * (e.g., via getAuthHeaders()) to pick up the refreshed token.
+ * 重试时会再次调用请求闭包，因此它应重新读取认证信息
+ * （例如通过 getAuthHeaders()）以获取刷新后的 token。
  *
- * Note: bridgeApi.ts has its own DI-injected version — handleOAuth401Error
- * transitively pulls in config.ts (~1300 modules), which breaks the SDK bundle.
+ * 注意：bridgeApi.ts 有自己的 DI 注入版本——handleOAuth401Error
+ * 传递性地引入 config.ts（约 1300 个模块），会破坏 SDK bundle。
  *
- * @param opts.also403Revoked - Also retry on 403 with "OAuth token has been
- *   revoked" body (some endpoints signal revocation this way instead of 401).
+ * @param opts.also403Revoked - 也在 403 且响应体包含 "OAuth token has been
+ *   revoked" 时重试（某些端点以此方式而非 401 表示撤销）。
  */
 export async function withOAuth401Retry<T>(
   request: () => Promise<T>,

@@ -35,8 +35,8 @@ function logLoadOnce(success: boolean): void {
 }
 
 /**
- * Awaits WASM init (Parser.init + Language.load). Must be called before
- * parseCommand/parseCommandRaw for the parser to be available. Idempotent.
+ * 等待 WASM 初始化（Parser.init + Language.load）。必须在调用
+ * parseCommand/parseCommandRaw 之前执行以确保 parser 可用。幂等操作。
  */
 export async function ensureInitialized(): Promise<void> {
   if (feature('TREE_SITTER_BASH') || feature('TREE_SITTER_BASH_SHADOW')) {
@@ -47,10 +47,10 @@ export async function ensureInitialized(): Promise<void> {
 export async function parseCommand(command: string): Promise<ParsedCommandData | null> {
   if (!command || command.length > MAX_COMMAND_LENGTH) return null
 
-  // Gate: ant-only until pentest. External builds fall back to legacy
-  // regex/shell-quote path. Guarding the whole body inside the positive
-  // branch lets Bun DCE the NAPI import AND keeps telemetry honest — we
-  // only fire zy_tree_sitter_load when a load was genuinely attempted.
+  // 门控：仅限内部使用，直到安全测试完成。外部构建回退到旧的
+  // regex/shell-quote 路径。将整个函数体包裹在正向分支内，使 Bun 可以
+  // 对 NAPI 导入进行 DCE（死代码消除），同时保持遥测数据准确——仅在
+  // 真正尝试加载时才触发 zy_tree_sitter_load 事件。
   if (feature('TREE_SITTER_BASH')) {
     await ensureParserInitialized()
     const mod = getParserModule()
@@ -73,22 +73,22 @@ export async function parseCommand(command: string): Promise<ParsedCommandData |
 }
 
 /**
- * SECURITY: Sentinel for "parser was loaded and attempted, but aborted"
- * (timeout / node budget / Rust panic). Distinct from `null` (module not
- * loaded). Adversarial input can trigger abort under MAX_COMMAND_LENGTH:
- * `(( a[0][0]... ))` with ~2800 subscripts hits PARSE_TIMEOUT_MICROS.
- * Callers MUST treat this as fail-closed (too-complex), NOT route to legacy.
+ * 安全机制：表示"parser 已加载并尝试解析，但被中止"的哨兵值
+ * （超时 / 节点预算耗尽 / Rust panic）。与 `null`（模块未加载）不同。
+ * 对抗性输入可在 MAX_COMMAND_LENGTH 限制内触发中止：
+ * `(( a[0][0]... ))` 约 2800 个下标即可命中 PARSE_TIMEOUT_MICROS。
+ * 调用方必须将此视为失败关闭（过于复杂），不得回退到旧路径。
  */
 export const PARSE_ABORTED = Symbol('parse-aborted')
 
 /**
- * Raw parse — skips findCommandNode/extractEnvVars which the security
- * walker in ast.ts doesn't use. Saves one tree walk per bash command.
+ * 原始解析——跳过 findCommandNode/extractEnvVars，因为 ast.ts 中的安全
+ * 遍历器不使用它们。每个 bash command 节省一次树遍历。
  *
- * Returns:
- *   - Node: parse succeeded
- *   - null: module not loaded / feature off / empty / over-length
- *   - PARSE_ABORTED: module loaded but parse failed (timeout/panic)
+ * 返回值：
+ *   - Node：解析成功
+ *   - null：模块未加载 / 特性关闭 / 空命令 / 超长
+ *   - PARSE_ABORTED：模块已加载但解析失败（超时/panic）
  */
 export async function parseCommandRaw(
   command: string,
@@ -101,10 +101,10 @@ export async function parseCommandRaw(
     if (!mod) return null
     try {
       const result = mod.parse(command)
-      // SECURITY: Module loaded; null here = timeout/node-budget abort in
-      // bashParser.ts (PARSE_TIMEOUT_MS=50, MAX_NODES=50_000).
-      // Previously collapsed into `return null` → parse-unavailable → legacy
-      // path, which lacks EVAL_LIKE_BUILTINS — `trap`, `enable`, `hash` leaked.
+      // 安全机制：模块已加载；此处返回 null 意味着在 bashParser.ts 中发生了
+      // 超时/节点预算中止（PARSE_TIMEOUT_MS=50, MAX_NODES=50_000）。
+      // 之前被合并为 `return null` → 解析不可用 → 旧路径，
+      // 而旧路径缺少 EVAL_LIKE_BUILTINS——`trap`、`enable`、`hash` 会泄漏。
       if (result === null) {
         logEvent('zy_tree_sitter_parse_abort', {
           cmdLength: command.length,
@@ -129,7 +129,7 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
 
   if (COMMAND_TYPES.has(type)) return node
 
-  // Variable assignment followed by command
+  // 变量赋值后跟命令
   if (type === 'variable_assignment' && parent) {
     return (
       parent.children.find((c) => COMMAND_TYPES.has(c.type) && c.startIndex > node.startIndex) ??
@@ -137,7 +137,7 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
     )
   }
 
-  // Pipeline: recurse into first child (which may be a redirected_statement)
+  // 管道：递归进入第一个子节点（可能是 redirected_statement）
   if (type === 'pipeline') {
     for (const child of children) {
       const result = findCommandNode(child, node)
@@ -146,12 +146,12 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
     return null
   }
 
-  // Redirected statement: find the command inside
+  // 重定向语句：查找内部的命令
   if (type === 'redirected_statement') {
     return children.find((c) => COMMAND_TYPES.has(c.type)) ?? null
   }
 
-  // Recursive search
+  // 递归搜索
   for (const child of children) {
     const result = findCommandNode(child, node)
     if (result) return result
@@ -175,7 +175,7 @@ function extractEnvVars(commandNode: Node | null): string[] {
 }
 
 export function extractCommandArguments(commandNode: Node): string[] {
-  // Declaration commands
+  // 声明命令
   if (commandNode.type === 'declaration_command') {
     const firstChild = commandNode.children[0]
     return firstChild && DECLARATION_COMMANDS.has(firstChild.text) ? [firstChild.text] : []
@@ -187,14 +187,14 @@ export function extractCommandArguments(commandNode: Node): string[] {
   for (const child of commandNode.children) {
     if (child.type === 'variable_assignment') continue
 
-    // Command name
+    // 命令名称
     if (child.type === 'command_name' || (!foundCommandName && child.type === 'word')) {
       foundCommandName = true
       args.push(child.text)
       continue
     }
 
-    // Arguments
+    // 参数
     if (ARGUMENT_TYPES.has(child.type)) {
       args.push(stripQuotes(child.text))
     } else if (SUBSTITUTION_TYPES.has(child.type)) {

@@ -17,20 +17,20 @@ export type ApiQueryHookConfig<TResult> = {
   name: QuerySource
   shouldRun: (context: ApiQueryHookContext) => Promise<boolean>
 
-  // Build the complete message list to send to the API
+  // 构建发送给 API 的完整消息列表
   buildMessages: (context: ApiQueryHookContext) => Message[]
 
-  // Optional: override system prompt (defaults to context.systemPrompt)
+  // 可选：覆盖系统提示词（默认使用 context.systemPrompt）
   systemPrompt?: string
 
-  // Optional: whether to use tools from context (defaults to true)
-  // Set to false to pass empty tools array
+  // 可选：是否使用 context 中的工具（默认为 true）
+  // 设为 false 则传递空的工具数组
   useTools?: boolean
 
   parseResponse: (content: string, context: ApiQueryHookContext) => TResult
   logResult: (result: ApiQueryResult<TResult>, context: ApiQueryHookContext) => void
-  // Must be a function to ensure lazy loading (config is accessed before allowed)
-  // Receives context so callers can inherit the main loop model if desired.
+  // 必须是函数以确保延迟加载（config 在允许之前就会被访问）
+  // 接收 context 参数，以便调用方可以继承主循环的模型配置
   getModel: (context: ApiQueryHookContext) => string
 }
 
@@ -60,23 +60,23 @@ export function createApiQueryHook<TResult>(config: ApiQueryHookConfig<TResult>)
 
       const uuid = randomUUID()
 
-      // Build messages using the config's buildMessages function
+      // 使用 config 的 buildMessages 函数构建消息
       const messages = config.buildMessages(context)
       context.queryMessageCount = messages.length
 
-      // Use config's system prompt if provided, otherwise use context's
+      // 如果 config 提供了系统提示词则使用，否则使用 context 中的
       const systemPrompt = config.systemPrompt
         ? asSystemPrompt([config.systemPrompt])
         : context.systemPrompt
 
-      // Use config's tools preference (defaults to true = use context tools)
+      // 使用 config 的工具偏好设置（默认为 true = 使用 context 中的工具）
       const useTools = config.useTools ?? true
       const tools = useTools ? context.toolUseContext.options.tools : []
 
-      // Get model (lazy loaded)
+      // 获取模型（延迟加载）
       const model = config.getModel(context)
 
-      // Make API call
+      // 发起 API 调用
       const response = await queryModelWithoutStreaming({
         messages,
         systemPrompt,
@@ -100,7 +100,7 @@ export function createApiQueryHook<TResult>(config: ApiQueryHookConfig<TResult>)
         },
       })
 
-      // Parse response
+      // 解析响应
       const msgContent = Array.isArray(response.message.content) ? response.message.content : []
       const content = extractTextContent(msgContent).trim()
 

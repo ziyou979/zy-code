@@ -179,8 +179,8 @@ function createInProcessCanUseTool(
         let decisionMade = false
         const permissionStartMs = Date.now()
 
-        // Report permission wait time to the caller so it can be
-        // subtracted from the displayed elapsed time.
+        // 向调用方报告权限等待时间，以便从显示的
+        // 已用时间中减去。
         const reportPermissionWait = () => {
           onPermissionWaitMs?.(Date.now() - permissionStartMs)
         }
@@ -1016,7 +1016,7 @@ export async function runInProcessTeammate(
         if (teammateReplacementState) {
           teammateReplacementState = createContentReplacementState()
         }
-        // Update allMessages in place with compacted version
+        // 用压缩后的版本就地更新 allMessages
         allMessages.length = 0
         allMessages.push(...contextMessages)
 
@@ -1349,7 +1349,7 @@ export async function runInProcessTeammate(
 
     logForDebugging(`[inProcessRunner] Agent ${identity.agentId} failed: ${errorMessage}`)
 
-    // Mark task as failed and notify any waiters
+    // 将任务标记为失败并通知所有等待者
     let alreadyTerminal = false
     let toolUseId: string | undefined
     updateTaskState(

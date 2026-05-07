@@ -28,13 +28,12 @@ function getModelByTier(tier: ModelTier): ModelName {
 }
 
 /**
- * Helper to get the model from /model (including via /config), the --model flag,
- * or the saved settings.
+ * 获取用户指定的模型设置，来源包括 /model 命令（含 /config）、--model 启动参数或已保存的配置。
  *
- * Priority:
- * 1. Model override during session (from /model command)
- * 2. Model override at startup (from --model flag)
- * 3. Settings (from user's saved settings)
+ * 优先级：
+ * 1. 会话中通过 /model 命令覆盖的模型
+ * 2. 启动时通过 --model 参数覆盖的模型
+ * 3. 用户已保存的 settings 配置
  */
 export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
   let specifiedModel: ModelSetting | undefined
@@ -47,7 +46,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
     specifiedModel = settings.model || undefined
   }
 
-  // Ignore the user-specified model if it's not in the availableModels allowlist.
+  // 如果用户指定的模型不在 availableModels 白名单中，则忽略
   if (specifiedModel && !isModelAllowed(specifiedModel)) {
     return undefined
   }
@@ -56,12 +55,12 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
 }
 
 /**
- * Get the main loop model to use for the current session.
+ * 获取当前会话使用的主循环模型。
  *
- * Priority:
- * 1. Model override during session (from /model command)
- * 2. Model override at startup (from --model flag)
- * 3. models.standard from settings
+ * 优先级：
+ * 1. 会话中通过 /model 命令覆盖的模型
+ * 2. 启动时通过 --model 参数覆盖的模型
+ * 3. settings 中的 models.standard 配置
  */
 export function getMainLoopModel(): ModelName {
   const model = getUserSpecifiedModelSetting()
@@ -87,7 +86,7 @@ export function getDefaultCompactModel(): ModelName {
 }
 
 /**
- * Get the default main loop model setting.
+ * 获取默认的主循环模型设置。
  * 从 settings.mainLoopModel 读取 tier 名（advanced/standard/compact），
  * 再解析到实际模型。默认为 standard。
  */
@@ -98,8 +97,7 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
 }
 
 /**
- * Synchronous operation to get the default main loop model to use
- * (bypassing any user-specified values).
+ * 同步获取默认的主循环模型（跳过用户指定的值）。
  */
 export function getDefaultMainLoopModel(): ModelName {
   return parseUserSpecifiedModel(getDefaultMainLoopModelSetting())
@@ -122,13 +120,12 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
   return renderModelName(setting)
 }
 
-// @[MODEL LAUNCH]: Add display name cases for the new model (base + [1m] variant if applicable).
+// @[MODEL LAUNCH]: 为新模型添加显示名称映射（包括基础模型和 [1m] 变体，如适用）。
 /**
- * Returns a human-readable display name for known public models, or null
- * if the model is not recognized as a public model.
+ * 返回已知公开模型的可读显示名称，如果模型不是已知的公开模型则返回 null。
  */
 export function getPublicModelDisplayName(model: ModelName): string | null {
-  // Check custom models first
+  // 优先检查自定义模型
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
@@ -148,12 +145,12 @@ export function renderModelName(model: ModelName): string {
 }
 
 /**
- * Returns a safe author name for public display (e.g., in git commit trailers).
- * Returns "Zy {ModelName}" for publicly known models, or "Zy ({model})"
- * for unknown/internal models so the exact model name is preserved.
+ * 返回适合公开展示的作者名称（例如用于 git commit 尾部标记）。
+ * 对已知公开模型返回 "Zy {ModelName}"，对未知/内部模型返回 "Zy ({model})"
+ * 以保留完整的模型名称。
  *
- * @param model The full model name
- * @returns "Zy {ModelName}" for public models, or "Zy ({model})" for non-public models
+ * @param model 完整的模型名称
+ * @returns 公开模型返回 "Zy {ModelName}"，非公开模型返回 "Zy ({model})"
  */
 export function getPublicModelName(model: ModelName): string {
   const publicName = getPublicModelDisplayName(model)
@@ -164,10 +161,9 @@ export function getPublicModelName(model: ModelName): string {
 }
 
 /**
- * Returns a full model name for use in this session, possibly after resolving
- * a model alias.
+ * 返回当前会话使用的完整模型名称，可能经过别名解析。
  *
- * @param modelInput The model alias or name provided by the user.
+ * @param modelInput 用户提供的模型别名或名称。
  */
 export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): ModelName {
   const modelInputTrimmed = modelInput.trim()
@@ -178,7 +174,7 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
   if (normalizedModel === 'standard') return getModelByTier('standard')
   if (normalizedModel === 'compact') return getModelByTier('compact')
 
-  // Resolve custom model aliases from settings
+  // 从 settings 中解析自定义模型别名
   const settings = getSettings_DEPRECATED() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find((m) => m.alias.toLowerCase() === normalizedModel)
@@ -191,9 +187,9 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
 }
 
 /**
- * Resolves a skill's `model:` frontmatter against the current model.
- * Skill authors can specify a tier alias (e.g., `model: advanced`) which gets
- * resolved to the actual model name.
+ * 将 skill 的 `model:` frontmatter 解析为实际模型。
+ * Skill 作者可以指定 tier 别名（例如 `model: advanced`），
+ * 会被解析为对应的实际模型名称。
  */
 export function resolveSkillModelOverride(skillModel: string, currentModel: string): string {
   // 上下文窗口统一通过 model-capabilities.json 中的 contextWindow 配置管理，

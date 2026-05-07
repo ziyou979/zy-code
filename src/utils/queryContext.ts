@@ -1,12 +1,11 @@
 /**
- * Shared helpers for building the API cache-key prefix (systemPrompt,
- * userContext, systemContext) for query() calls.
+ * 构建 API 缓存键前缀（systemPrompt、userContext、systemContext）
+ * 供 query() 调用使用的共享辅助函数。
  *
- * Lives in its own file because it imports from context.ts and
- * constants/prompts.ts, which are high in the dependency graph. Putting
- * these imports in systemPrompt.ts or sideQuestion.ts (both reachable
- * from commands.ts) would create cycles. Only entrypoint-layer files
- * import from here (QueryEngine.ts, cli/print.ts).
+ * 独立为单独文件，因为它从 context.ts 和 constants/prompts.ts 导入，
+ * 这些模块在依赖图中层级较高。将这些导入放在 systemPrompt.ts 或
+ * sideQuestion.ts（两者均可从 commands.ts 访问）中会产生循环依赖。
+ * 仅入口层文件从此处导入（QueryEngine.ts、cli/print.ts）。
  */
 
 import type { Command } from '../commands.js'
@@ -25,18 +24,17 @@ import { asSystemPrompt } from './systemPromptType.js'
 import { shouldEnableThinkingByDefault, type ThinkingConfig } from './thinking.js'
 
 /**
- * Fetch the three context pieces that form the API cache-key prefix:
- * systemPrompt parts, userContext, systemContext.
+ * 获取构成 API 缓存键前缀的三个上下文部分：
+ * systemPrompt 片段、userContext、systemContext。
  *
- * When customSystemPrompt is set, the default getSystemPrompt build and
- * getSystemContext are skipped — the custom prompt replaces the default
- * entirely, and systemContext would be appended to a default that isn't
- * being used.
+ * 当设置了 customSystemPrompt 时，将跳过默认的 getSystemPrompt 构建和
+ * getSystemContext — 自定义提示词完全替代默认提示词，而 systemContext
+ * 会被追加到一个未使用的默认值上。
  *
- * Callers assemble the final systemPrompt from defaultSystemPrompt (or
- * customSystemPrompt) + optional extras + appendSystemPrompt. QueryEngine
- * injects coordinator userContext and memory-mechanics prompt on top;
- * sideQuestion's fallback uses the base result directly.
+ * 调用者从 defaultSystemPrompt（或 customSystemPrompt）+ 可选附加内容 +
+ * appendSystemPrompt 组装最终的 systemPrompt。QueryEngine 在此基础上
+ * 注入协调器 userContext 和记忆机制提示词；sideQuestion 的回退方案直接
+ * 使用基础结果。
  */
 export async function fetchSystemPromptParts({
   tools,
@@ -66,16 +64,16 @@ export async function fetchSystemPromptParts({
 }
 
 /**
- * Build CacheSafeParams from raw inputs when getLastCacheSafeParams() is null.
+ * 当 getLastCacheSafeParams() 为 null 时，从原始输入构建 CacheSafeParams。
  *
- * Used by the SDK side_question handler (print.ts) on resume before a turn
- * completes — there's no stopHooks snapshot yet. Mirrors the system prompt
- * assembly in QueryEngine.ts:ask() so the rebuilt prefix matches what the
- * main loop will send, preserving the cache hit in the common case.
+ * 供 SDK side_question 处理器（print.ts）在恢复时、轮次完成之前使用 —
+ * 此时尚无 stopHooks 快照。镜像 QueryEngine.ts:ask() 中的系统提示词
+ * 组装逻辑，使重建的前缀与主循环将发送的内容匹配，在常见情况下保留
+ * 缓存命中。
  *
- * May still miss the cache if the main loop applies extras this path doesn't
- * know about (coordinator mode, memory-mechanics prompt). That's acceptable —
- * the alternative is returning null and failing the side question entirely.
+ * 如果主循环应用了此路径不知晓的附加内容（协调器模式、记忆机制提示词），
+ * 可能仍会缓存未命中。这是可接受的 — 替代方案是返回 null 并使
+ * side question 完全失败。
  */
 export async function buildSideQuestionFallbackParams({
   tools,
@@ -120,8 +118,8 @@ export async function buildSideQuestionFallbackParams({
     ...(appendSystemPrompt ? [appendSystemPrompt] : []),
   ])
 
-  // Strip in-progress assistant message (stopReason === null) — same guard
-  // as btw.tsx. The SDK can fire side_question mid-turn.
+  // 剥离进行中的 assistant 消息（stopReason === null）— 与 btw.tsx 中相同的
+  // 保护逻辑。SDK 可能在轮次中途触发 side_question。
   const last = messages.at(-1)
   const forkContextMessages =
     last?.type === 'assistant' && last.message.stopReason === null

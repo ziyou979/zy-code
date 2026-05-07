@@ -1,10 +1,10 @@
-// Pure display formatters — leaf-safe (no Ink). Width-aware truncation lives in ./truncate.ts.
+// 纯展示格式化函数 — 叶节点安全（不依赖 Ink）。宽度感知的截断逻辑位于 ./truncate.ts。
 
 import { getRelativeTimeFormat, getTimeZone } from './intl.js'
 import { getUiLanguage } from '../i18n/index.js'
 
 /**
- * Formats a byte count to a human-readable string (KB, MB, GB).
+ * 将字节数格式化为人类可读的字符串（KB、MB、GB）。
  * @example formatFileSize(1536) → "1.5KB"
  */
 export function formatFileSize(sizeInBytes: number): string {
@@ -24,28 +24,28 @@ export function formatFileSize(sizeInBytes: number): string {
 }
 
 /**
- * Formats milliseconds as seconds with 1 decimal place (e.g. `1234` → `"1.2s"`).
- * Unlike formatDuration, always keeps the decimal — use for sub-minute timings
- * where the fractional second is meaningful (TTFT, hook durations, etc.).
+ * 将毫秒数格式化为带 1 位小数的秒数（例如 `1234` → `"1.2s"`）。
+ * 与 formatDuration 不同，始终保留小数 — 适用于亚分钟级计时场景，
+ * 其中小数秒有实际意义（TTFT、hook 耗时等）。
  */
 export function formatSecondsShort(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
 /**
- * Formats milliseconds as a human-readable duration string.
- * English style: "1m 8s", "48s"
+ * 将毫秒数格式化为人类可读的时长字符串。
+ * 英文风格："1m 8s"、"48s"
  */
 export function formatDuration(
   ms: number,
   options?: { hideTrailingZeros?: boolean; mostSignificantOnly?: boolean },
 ): string {
   if (ms < 60000) {
-    // Special case for 0
+    // 特殊情况：值为 0
     if (ms === 0) {
       return '0s'
     }
-    // For durations < 1s, show 1 decimal place (e.g., 0.5s)
+    // 时长 < 1s 时，显示 1 位小数（例如 0.5s）
     if (ms < 1) {
       const s = (ms / 1000).toFixed(1)
       return `${s}s`
@@ -59,7 +59,7 @@ export function formatDuration(
   let minutes = Math.floor((ms % 3600000) / 60000)
   let seconds = Math.round((ms % 60000) / 1000)
 
-  // Handle rounding carry-over (e.g., 59.5s rounds to 60s)
+  // 处理四舍五入进位（例如 59.5s 进位为 60s）
   if (seconds === 60) {
     seconds = 0
     minutes++
@@ -100,8 +100,8 @@ export function formatDuration(
 }
 
 /**
- * Formats milliseconds as a human-readable duration string in Chinese style.
- * Chinese style: "1分8秒", "48秒"
+ * 将毫秒数格式化为人类可读的中文风格时长字符串。
+ * 中文风格："1分8秒"、"48秒"
  */
 export function formatDurationZh(
   ms: number,
@@ -176,7 +176,7 @@ export function getLocalizedDurationFormatter(): typeof formatDuration {
   }
 }
 
-// `new Intl.NumberFormat` is expensive, so cache formatters for reuse
+// `new Intl.NumberFormat` 开销较大，因此缓存格式化器以复用
 let numberFormatterForConsistentDecimals: Intl.NumberFormat | null = null
 let numberFormatterForInconsistentDecimals: Intl.NumberFormat | null = null
 const getNumberFormatter = (useConsistentDecimals: boolean): Intl.NumberFormat => {
@@ -202,12 +202,12 @@ const getNumberFormatter = (useConsistentDecimals: boolean): Intl.NumberFormat =
 }
 
 export function formatNumber(number: number): string {
-  // Only use minimumFractionDigits for numbers that will be shown in compact notation
+  // 仅对将以紧凑记数法显示的数字使用 minimumFractionDigits
   const shouldUseConsistentDecimals = number >= 1000
 
   return getNumberFormatter(shouldUseConsistentDecimals)
-    .format(number) // eg. "1321" => "1.3K", "900" => "900"
-    .toLowerCase() // eg. "1.3K" => "1.3k", "1.0K" => "1.0k"
+    .format(number) // 例如 "1321" => "1.3K", "900" => "900"
+    .toLowerCase() // 例如 "1.3K" => "1.3k", "1.0K" => "1.0k"
 }
 
 export function formatTokens(count: number): string {
@@ -227,10 +227,10 @@ export function formatRelativeTime(
 ): string {
   const { style = 'narrow', numeric = 'always', now = new Date() } = options
   const diffInMs = date.getTime() - now.getTime()
-  // Use Math.trunc to truncate towards zero for both positive and negative values
+  // 使用 Math.trunc 对正值和负值均向零截断
   const diffInSeconds = Math.trunc(diffInMs / 1000)
 
-  // Define time intervals with custom short units
+  // 定义带自定义短单位的时间区间
   const intervals = [
     { unit: 'year', seconds: 31536000, shortUnit: 'y' },
     { unit: 'month', seconds: 2592000, shortUnit: 'mo' },
@@ -241,20 +241,20 @@ export function formatRelativeTime(
     { unit: 'second', seconds: 1, shortUnit: 's' },
   ] as const
 
-  // Find the appropriate unit
+  // 查找合适的时间单位
   for (const { unit, seconds: intervalSeconds, shortUnit } of intervals) {
     if (Math.abs(diffInSeconds) >= intervalSeconds) {
       const value = Math.trunc(diffInSeconds / intervalSeconds)
-      // For short style, use custom format
+      // 对 narrow 风格使用自定义格式
       if (style === 'narrow') {
         return diffInSeconds < 0 ? `${Math.abs(value)}${shortUnit} ago` : `in ${value}${shortUnit}`
       }
-      // For days and longer, use long style regardless of the style parameter
+      // 对天及更长的单位，无论 style 参数如何都使用 long 风格
       return getRelativeTimeFormat('long', numeric).format(value, unit)
     }
   }
 
-  // For values less than 1 second
+  // 不足 1 秒的情况
   if (style === 'narrow') {
     return diffInSeconds <= 0 ? '0s ago' : 'in 0s'
   }
@@ -267,16 +267,16 @@ export function formatRelativeTimeAgo(
 ): string {
   const { now = new Date(), ...restOptions } = options
   if (date > now) {
-    // For future dates, just return the relative time without "ago"
+    // 对未来日期，直接返回相对时间（不带 "ago"）
     return formatRelativeTime(date, { ...restOptions, now })
   }
 
-  // For past dates, force numeric: 'always' to ensure we get "X units ago"
+  // 对过去日期，强制 numeric: 'always' 以确保输出 "X units ago" 格式
   return formatRelativeTime(date, { ...restOptions, numeric: 'always', now })
 }
 
 /**
- * Formats log metadata for display (time, size or message count, branch, tag, PR)
+ * 格式化日志元数据用于展示（时间、大小或消息数、分支、标签、PR）
  */
 export function formatLogMetadata(log: {
   modified: Date
@@ -318,12 +318,12 @@ export function formatResetTime(
   const now = new Date()
   const minutes = date.getMinutes()
 
-  // Calculate hours until reset
+  // 计算距离重置还有多少小时
   const hoursUntilReset = (date.getTime() - now.getTime()) / (1000 * 60 * 60)
 
-  // If reset is more than 24 hours away, show the date as well
+  // 如果重置时间超过 24 小时，同时显示日期
   if (hoursUntilReset > 24) {
-    // Show date and time for resets more than a day away
+    // 对超过一天的重置时间，显示日期和时间
     const dateOptions: Intl.DateTimeFormatOptions = {
       month: 'short',
       day: 'numeric',
@@ -332,28 +332,28 @@ export function formatResetTime(
       hour12: showTime ? true : undefined,
     }
 
-    // Add year if it's not the current year
+    // 如果不是当前年份，添加年份显示
     if (date.getFullYear() !== now.getFullYear()) {
       dateOptions.year = 'numeric'
     }
 
     const dateString = date.toLocaleString('en-US', dateOptions)
 
-    // Remove the space before AM/PM and make it lowercase
+    // 移除 AM/PM 前的空格并转为小写
     return (
       dateString.replace(/ ([AP]M)/i, (_match, ampm) => ampm.toLowerCase()) +
       (showTimezone ? ` (${getTimeZone()})` : '')
     )
   }
 
-  // For resets within 24 hours, show just the time (existing behavior)
+  // 24 小时内的重置，仅显示时间（保持已有行为）
   const timeString = date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: minutes === 0 ? undefined : '2-digit',
     hour12: true,
   })
 
-  // Remove the space before AM/PM and make it lowercase, then add timezone
+  // 移除 AM/PM 前的空格并转为小写，然后添加时区
   return (
     timeString.replace(/ ([AP]M)/i, (_match, ampm) => ampm.toLowerCase()) +
     (showTimezone ? ` (${getTimeZone()})` : '')
@@ -369,7 +369,7 @@ export function formatResetText(
   return `${formatResetTime(Math.floor(dt.getTime() / 1000), showTimezone, showTime)}`
 }
 
-// Back-compat: truncate helpers moved to ./truncate.ts (needs ink/stringWidth)
+// 向后兼容：截断辅助函数已移至 ./truncate.ts（依赖 ink/stringWidth）
 export {
   truncate,
   truncatePathMiddle,

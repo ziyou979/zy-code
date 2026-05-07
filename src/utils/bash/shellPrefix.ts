@@ -1,19 +1,19 @@
 import { quote } from './shellQuote.js'
 
 /**
- * Parses a shell prefix that may contain an executable path and arguments.
+ * 解析可能包含可执行文件路径和参数的 shell 前缀。
  *
- * Examples:
- * - "bash" -> quotes as 'bash'
- * - "/usr/bin/bash -c" -> quotes as '/usr/bin/bash' -c
- * - "C:\Program Files\Git\bin\bash.exe -c" -> quotes as 'C:\Program Files\Git\bin\bash.exe' -c
+ * 示例：
+ * - "bash" -> 引用为 'bash'
+ * - "/usr/bin/bash -c" -> 引用为 '/usr/bin/bash' -c
+ * - "C:\Program Files\Git\bin\bash.exe -c" -> 引用为 'C:\Program Files\Git\bin\bash.exe' -c
  *
- * @param prefix The shell prefix string containing executable and optional arguments
- * @param command The command to be executed
- * @returns The properly formatted command string with quoted components
+ * @param prefix 包含可执行文件和可选参数的 shell 前缀字符串
+ * @param command 要执行的命令
+ * @returns 格式正确且组件已引用的命令字符串
  */
 export function formatShellPrefixCommand(prefix: string, command: string): string {
-  // Split on the last space before a dash to separate executable from arguments
+  // 在最后一个短横线前的空格处分割，以分离可执行文件和参数
   const spaceBeforeDash = prefix.lastIndexOf(' -')
   if (spaceBeforeDash > 0) {
     const execPath = prefix.substring(0, spaceBeforeDash)

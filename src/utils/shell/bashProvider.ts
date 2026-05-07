@@ -22,33 +22,33 @@ import { windowsPathToPosixPath } from '../windowsPaths.js'
 import type { ShellProvider } from './shellProvider.js'
 
 /**
- * Returns a shell command to disable extended glob patterns for security.
- * Extended globs (bash extglob, zsh EXTENDED_GLOB) can be exploited via
- * malicious filenames that expand after our security validation.
+ * 返回一个禁用扩展 glob 模式的 shell 命令，用于安全防护。
+ * 扩展 glob（bash extglob、zsh EXTENDED_GLOB）可以通过
+ * 恶意文件名在安全验证后展开来被利用。
  *
- * When ZY_CODE_SHELL_PREFIX is set, the actual executing shell may differ
- * from shellPath (e.g., shellPath is zsh but the wrapper runs bash). In this
- * case, we include commands for BOTH shells. We redirect both stdout and stderr
- * to /dev/null because zsh's command_not_found_handler writes to STDOUT.
+ * 当设置了 ZY_CODE_SHELL_PREFIX 时，实际执行的 shell 可能与
+ * shellPath 不同（例如 shellPath 是 zsh 但包装器运行 bash）。在这种
+ * 情况下，我们包含两种 shell 的命令。我们将 stdout 和 stderr 都
+ * 重定向到 /dev/null，因为 zsh 的 command_not_found_handler 写入 STDOUT。
  *
- * When no shell prefix is set, we use the appropriate command for the detected shell.
+ * 当没有设置 shell 前缀时，我们使用检测到的 shell 对应的命令。
  */
 function getDisableExtglobCommand(shellPath: string): string | null {
-  // When ZY_CODE_SHELL_PREFIX is set, the wrapper may use a different shell
-  // than shellPath, so we include both bash and zsh commands
+  // 当设置了 ZY_CODE_SHELL_PREFIX 时，包装器可能使用与 shellPath 不同的
+  // shell，所以我们包含 bash 和 zsh 两种命令
   if (process.env.ZY_CODE_SHELL_PREFIX) {
-    // Redirect both stdout and stderr because zsh's command_not_found_handler
-    // writes to stdout instead of stderr
+    // 重定向 stdout 和 stderr，因为 zsh 的 command_not_found_handler
+    // 写入 stdout 而非 stderr
     return '{ shopt -u extglob || setopt NO_EXTENDED_GLOB; } >/dev/null 2>&1 || true'
   }
 
-  // No shell prefix - use shell-specific command
+  // 无 shell 前缀 - 使用 shell 特定命令
   if (shellPath.includes('bash')) {
     return 'shopt -u extglob 2>/dev/null || true'
   } else if (shellPath.includes('zsh')) {
     return 'setopt NO_EXTENDED_GLOB 2>/dev/null || true'
   }
-  // Unknown shell - do nothing, we don't know the right command
+  // 未知 shell - 不做任何操作，我们不知道正确的命令
   return null
 }
 
@@ -63,7 +63,7 @@ export async function createBashShellProvider(
         logForDebugging(`Failed to create shell snapshot: ${error}`)
         return undefined
       })
-  // Track the last resolved snapshot path for use in getSpawnArgs
+  // 跟踪最后解析的快照路径，供 getSpawnArgs 使用
   let lastSnapshotFilePath: string | undefined
 
   return {
@@ -80,13 +80,13 @@ export async function createBashShellProvider(
       },
     ): Promise<{ commandString: string; cwdFilePath: string }> {
       let snapshotFilePath = await snapshotPromise
-      // This access() check is NOT pure TOCTOU — it's the fallback decision
-      // point for getSpawnArgs. When the snapshot disappears mid-session
-      // (tmpdir cleanup), we must clear lastSnapshotFilePath so getSpawnArgs
-      // adds -l and the command gets login-shell init. Without this check,
-      // `source ... || true` silently fails and commands run with NO shell
-      // init (neither snapshot env nor login profile). The `|| true` on source
-      // still guards the race between this check and the spawned shell.
+      // 此 access() 检查不是纯 TOCTOU — 它是 getSpawnArgs 的回退决策点。
+      // 当快照在会话中途消失时（tmpdir 清理），我们必须清除
+      // lastSnapshotFilePath 以便 getSpawnArgs 添加 -l，使命令获得
+      // login-shell 初始化。没有此检查，`source ... || true` 会静默失败，
+      // 命令在没有任何 shell 初始化的情况下运行（既无快照环境也无
+      // login profile）。source 上的 `|| true` 仍然防护此检查与
+      // 生成的 shell 之间的竞态。
       if (snapshotFilePath) {
         try {
           await access(snapshotFilePath)
@@ -97,7 +97,7 @@ export async function createBashShellProvider(
       }
       lastSnapshotFilePath = snapshotFilePath
 
-      // Stash sandboxTmpDir for use in getEnvironmentOverrides
+      // 将 sandboxTmpDir 暂存供 getEnvironmentOverrides 使用
       currentSandboxTmpDir = opts.sandboxTmpDir
 
       const tmpdir = osTmpdir()
@@ -123,8 +123,8 @@ export async function createBashShellProvider(
       const addStdinRedirect = shouldAddStdinRedirect(normalizedCommand)
       let quotedCommand = quoteShellCommand(normalizedCommand, addStdinRedirect)
 
-      // Debug logging for heredoc/multiline commands to trace trailer handling
-      // Only log when commit attribution is enabled to avoid noise
+      // heredoc/多行命令的调试日志，用于追踪尾部处理
+      // 仅在启用提交归属时记录以避免噪声
       if (feature('COMMIT_ATTRIBUTION') && (command.includes('<<') || command.includes('\n'))) {
         logForDebugging(
           `Shell: Command before quoting (first 500 chars):\n${command.slice(0, 500)}`,
@@ -154,13 +154,13 @@ export async function createBashShellProvider(
         commandParts.push(`source ${quote([finalPath])} 2>/dev/null || true`)
       }
 
-      // Source session environment variables captured from session start hooks
+      // 加载从会话启动钩子捕获的会话环境变量
       const sessionEnvScript = await getSessionEnvironmentScript()
       if (sessionEnvScript) {
         commandParts.push(sessionEnvScript)
       }
 
-      // Disable extended glob patterns for security (after sourcing user config to override)
+      // 为安全禁用扩展 glob 模式（在加载用户配置以覆盖之后）
       const disableExtglobCmd = getDisableExtglobCommand(shellPath)
       if (disableExtglobCmd) {
         commandParts.push(disableExtglobCmd)
@@ -174,7 +174,7 @@ export async function createBashShellProvider(
       commandParts.push(`pwd -P >| ${quote([shellCwdFilePath])}`)
       let commandString = commandParts.join(' && ')
 
-      // Apply ZY_CODE_SHELL_PREFIX if set
+      // 如果设置了 ZY_CODE_SHELL_PREFIX 则应用
       if (process.env.ZY_CODE_SHELL_PREFIX) {
         commandString = formatShellPrefixCommand(process.env.ZY_CODE_SHELL_PREFIX, commandString)
       }
@@ -225,7 +225,7 @@ export async function createBashShellProvider(
         // Safe to set unconditionally — non-zsh shells ignore TMPPREFIX.
         env.TMPPREFIX = posixJoin(posixTmpDir, 'zsh')
       }
-      // Apply session env vars set via /env (child processes only, not the REPL)
+      // 应用通过 /env 设置的会话环境变量（仅子进程，不含 REPL）
       for (const [key, value] of getSessionEnvVars()) {
         env[key] = value
       }

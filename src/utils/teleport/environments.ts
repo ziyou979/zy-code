@@ -25,9 +25,9 @@ export type EnvironmentListResponse = {
 }
 
 /**
- * Fetches the list of available environments from the Environment API
- * @returns Promise<EnvironmentResource[]> Array of available environments
- * @throws Error if the API request fails or no access token is available
+ * 从 Environment API 获取可用环境列表
+ * @returns Promise<EnvironmentResource[]> 可用环境的数组
+ * @throws 当 API 请求失败或无可用访问令牌时抛出错误
  */
 export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
   const accessToken = getZyAIOAuthTokens()?.accessToken
@@ -68,8 +68,8 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
 }
 
 /**
- * Creates a default anthropic_cloud environment for users who have none.
- * Uses the public environment_providers route (same auth as fetchEnvironments).
+ * 为没有环境的用户创建默认的 anthropic_cloud 环境。
+ * 使用公开的 environment_providers 路由（与 fetchEnvironments 相同的认证方式）。
  */
 export async function createDefaultCloudEnvironment(name: string): Promise<EnvironmentResource> {
   const accessToken = getZyAIOAuthTokens()?.accessToken

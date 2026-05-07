@@ -1,14 +1,14 @@
 /**
- * Protocol Handler
+ * Protocol Handler（协议处理器）
  *
- * Entry point for `zy --handle-uri <url>`. When the OS invokes zy
- * with a `zy-cli://` URL, this module:
- *   1. Parses the URI into a structured action
- *   2. Detects the user's terminal emulator
- *   3. Opens a new terminal window running zy with the appropriate args
+ * `zy --handle-uri <url>` 的入口点。当操作系统通过 `zy-cli://` URL 调用 zy 时，
+ * 本模块执行以下操作：
+ *   1. 将 URI 解析为结构化的 action
+ *   2. 检测用户的终端模拟器
+ *   3. 在新的终端窗口中以相应参数启动 zy
  *
- * This runs in a headless context (no TTY) because the OS launches the binary
- * directly — there is no terminal attached.
+ * 由于操作系统直接启动二进制文件（没有关联的终端），
+ * 因此本模块运行在无头环境中（无 TTY）。
  */
 
 import { homedir } from 'os'
@@ -21,14 +21,13 @@ import { MACOS_BUNDLE_ID } from './registerProtocol.js'
 import { launchInTerminal } from './terminalLauncher.js'
 
 /**
- * Handle an incoming deep link URI.
+ * 处理传入的 deep link URI。
  *
- * Called from the CLI entry point when `--handle-uri` is passed.
- * This function parses the URI, resolves the zy binary, and
- * launches it in the user's terminal.
+ * 当 CLI 入口接收到 `--handle-uri` 参数时调用。
+ * 本函数解析 URI，定位 zy 可执行文件，并在用户的终端中启动它。
  *
- * @param uri - The raw URI string (e.g., "zy-cli://prompt?q=hello+world")
- * @returns exit code (0 = success)
+ * @param uri - 原始 URI 字符串（例如 "zy-cli://prompt?q=hello+world"）
+ * @returns 退出码（0 = 成功）
  */
 export async function handleDeepLinkUri(uri: string): Promise<number> {
   logForDebugging(`Handling deep link URI: ${uri}`)
@@ -38,21 +37,19 @@ export async function handleDeepLinkUri(uri: string): Promise<number> {
     action = parseDeepLink(uri)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    // biome-ignore lint/suspicious/noConsole: intentional error output
+    // biome-ignore lint/suspicious/noConsole: 有意的错误输出
     console.error(`Deep link error: ${message}`)
     return 1
   }
 
   logForDebugging(`Parsed deep link action: ${jsonStringify(action)}`)
 
-  // Always the running executable — no PATH lookup. The OS launched us via
-  // an absolute path (bundle symlink / .desktop Exec= / registry command)
-  // baked at registration time, and we want the terminal-launched Zy to
-  // be the same binary. process.execPath is that binary.
+  // 始终使用当前运行的可执行文件——不通过 PATH 查找。操作系统通过注册时
+  // 固定的绝对路径（bundle 符号链接 / .desktop Exec= / 注册表命令）启动我们，
+  // 我们希望在终端中启动的 Zy 使用同一个二进制文件。process.execPath 即该二进制。
   const { cwd, resolvedRepo } = await resolveCwd(action)
-  // Resolve FETCH_HEAD age here, in the trampoline process, so main.tsx
-  // stays await-free — the launched instance receives it as a precomputed
-  // flag instead of statting the filesystem on its own startup path.
+  // 在此跳板进程中解析 FETCH_HEAD 的时间戳，以便 main.tsx 保持无 await——
+  // 启动的实例将收到一个预计算的标志，而非在自己的启动路径中执行文件系统 stat。
   const lastFetch = resolvedRepo ? await readLastFetchTime(cwd) : undefined
   const launched = await launchInTerminal(process.execPath, {
     query: action.query,
@@ -61,7 +58,7 @@ export async function handleDeepLinkUri(uri: string): Promise<number> {
     lastFetchMs: lastFetch?.getTime(),
   })
   if (!launched) {
-    // biome-ignore lint/suspicious/noConsole: intentional error output
+    // biome-ignore lint/suspicious/noConsole: 有意的错误输出
     console.error(
       'Failed to open a terminal. Make sure a supported terminal emulator is installed.',
     )
@@ -72,18 +69,17 @@ export async function handleDeepLinkUri(uri: string): Promise<number> {
 }
 
 /**
- * Handle the case where zy was launched as the app bundle's executable
- * by macOS (via URL scheme). Uses the NAPI module to receive the URL from
- * the Apple Event, then handles it normally.
+ * 处理 zy 作为 macOS app bundle 可执行文件通过 URL scheme 启动的情况。
+ * 使用 NAPI 模块从 Apple Event 中接收 URL，然后按常规流程处理。
  *
- * @returns exit code (0 = success, 1 = error, null = not a URL launch)
+ * @returns 退出码（0 = 成功，1 = 错误，null = 非 URL 启动）
  */
 export async function handleUrlSchemeLaunch(): Promise<number | null> {
-  // LaunchServices overwrites __CFBundleIdentifier with the launching bundle's
-  // ID. This is a precise positive signal — it's set to our exact bundle ID
-  // if and only if macOS launched us via the URL handler .app bundle.
-  // (`open` from a terminal passes the caller's env through, so negative
-  // heuristics like !TERM don't work — the terminal's TERM leaks in.)
+  // LaunchServices 会用启动 bundle 的 ID 覆盖 __CFBundleIdentifier。
+  // 这是一个精确的正向信号——当且仅当 macOS 通过 URL handler .app bundle
+  // 启动我们时，该变量才会被设为我们的 bundle ID。
+  // （从终端使用 `open` 命令会透传调用者的环境变量，因此 !TERM 等
+  // 反向启发式方法不可靠——终端的 TERM 变量会泄露进来。）
   if (process.env.__CFBundleIdentifier !== MACOS_BUNDLE_ID) {
     return null
   }
@@ -97,20 +93,19 @@ export async function handleUrlSchemeLaunch(): Promise<number | null> {
     }
     return await handleDeepLinkUri(url)
   } catch {
-    // NAPI module not available, or handleDeepLinkUri rejected — not a URL launch
+    // NAPI 模块不可用，或 handleDeepLinkUri 抛出异常——非 URL 启动
     return null
   }
 }
 
 /**
- * Resolve the working directory for the launched Zy instance.
- * Precedence: explicit cwd > repo lookup (MRU clone) > home.
- * A repo that isn't cloned locally is not an error — fall through to home
- * so a web link referencing a repo the user doesn't have still opens Zy.
+ * 解析启动的 Zy 实例的工作目录。
+ * 优先级：显式指定的 cwd > 仓库查找（最近使用的 clone）> 用户主目录。
+ * 本地未克隆的仓库不视为错误——回退到主目录，
+ * 以确保引用了用户未持有仓库的 web 链接仍能打开 Zy。
  *
- * Returns the resolved cwd, and the repo slug if (and only if) the MRU
- * lookup hit — so the launched instance can show which clone was selected
- * and its git freshness.
+ * 返回解析后的 cwd，以及仓库 slug（仅当 MRU 查找命中时返回）——
+ * 这样启动的实例可以显示选中了哪个 clone 及其 git 新鲜度。
  */
 async function resolveCwd(action: {
   cwd?: string

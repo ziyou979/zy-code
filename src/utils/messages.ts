@@ -1793,13 +1793,12 @@ function smooshSystemReminderSiblings(
 }
 
 /**
- * Strip non-text blocks from is_error tool_results — the API rejects the
- * combination with "all content must be type text if is_error is true".
+ * 从 is_error 的 tool_result 中剥离非文本块 — API 会拒绝该组合，
+ * 报错 "all content must be type text if is_error is true"。
  *
- * Read-side guard for transcripts persisted before smooshIntoToolResult
- * learned to filter on is_error. Without this a resumed session with one
- * of these 400s on every call and can't be recovered by /fork. Adjacent
- * text left behind by a stripped image is re-merged.
+ * 这是读取端防护，针对在 smooshIntoToolResult 学会按 is_error 过滤之前
+ * 持久化的转录文件。没有此防护，恢复的会话每次调用都会收到 400 错误，
+ * 且无法通过 /fork 恢复。被剥离图像留下的相邻文本会被重新合并。
  */
 function sanitizeErrorToolResultContent(
   messages: (UserMessage | AssistantMessage)[],
@@ -1827,28 +1826,23 @@ function sanitizeErrorToolResultContent(
 }
 
 /**
- * Move text-block siblings off user messages that contain tool_reference.
+ * 将文本块同级从包含 tool_reference 的用户消息中移走。
  *
- * When a tool_result contains tool_reference, the server expands it to a
- * functions block. Any text siblings appended to that same user message
- * (auto-memory, skill reminders, etc.) create a second human-turn segment
- * right after the functions-close tag — an anomalous pattern the model
- * imprints on. At a later tool-results tail, the model completes the
- * pattern and emits the stop sequence. See #21049 for mechanism and
- * five-arm dose-response.
+ * 当 tool_result 包含 tool_reference 时，服务器会将其展开为 functions 块。
+ * 追加到同一用户消息中的任何文本同级（auto-memory、skill 提醒等）会在
+ * functions-close 标签之后创建第二个 human-turn 段 — 一种异常模式，
+ * 模型会印记该模式。在后续的 tool-results 尾部，模型会补全该模式并
+ * 发出停止序列。机制和五组剂量响应详见 #21049。
  *
- * The fix: find the next user message with tool_result content but NO
- * tool_reference, and move the text siblings there. Pure transformation —
- * no state, no side effects. The target message's existing siblings (if any)
- * are preserved; moved blocks append.
+ * 修复方案：找到下一个包含 tool_result 内容但不包含 tool_reference 的
+ * 用户消息，将文本同级移动到那里。纯变换 — 无状态、无副作用。
+ * 目标消息的现有同级（如有）保留；移动的块追加在后面。
  *
- * If no valid target exists (tool_reference message is at/near the tail),
- * siblings stay in place. That's safe: a tail ending in a human turn (with
- * siblings) gets an Assistant: cue before generation; only a tail ending
- * in bare tool output (no siblings) lacks the cue.
+ * 如果不存在有效目标（tool_reference 消息在尾部附近），同级保持原位。
+ * 这是安全的：以 human turn（带同级）结尾的尾部会在生成前获得 Assistant:
+ * 提示；只有以裸工具输出（无同级）结尾的尾部才缺少该提示。
  *
- * Idempotent: after moving, the source has no text siblings; second pass
- * finds nothing to move.
+ * 幂等：移动后，源消息没有文本同级；第二次遍历不会移动任何内容。
  */
 function relocateToolReferenceSiblings(
   messages: (UserMessage | AssistantMessage)[],
@@ -2336,8 +2330,8 @@ function mergeAdjacentUserMessages(
 }
 
 /**
- * In thecontent[] list on a UserMessage, tool_result blocks much come first
- * to avoid "tool result must follow tool use" API errors.
+ * 在 UserMessage 的 content[] 列表中，tool_result 块必须排在前面，
+ * 以避免 "tool result must follow tool use" API 错误。
  */
 function hoistToolResults(content: ContentBlock[]): ContentBlock[] {
   const toolResults: ContentBlock[] = []
@@ -2362,15 +2356,13 @@ function normalizeUserTextContent(a: string | ContentBlock[]): ContentBlock[] {
 }
 
 /**
- * Concatenate two content block arrays, appending `\n` to a's last text block
- * when the seam is text-text. The API concatenates adjacent text blocks in a
- * user message without a separator, so two queued prompts `"2 + 2"` +
- * `"3 + 3"` would otherwise reach the model as `"2 + 23 + 3"`.
+ * 拼接两个内容块数组，当拼接处为 text-text 时在 a 的最后一个文本块后追加 `\n`。
+ * API 会将用户消息中相邻的文本块无分隔符地拼接，因此两个排队的 prompt
+ * `"2 + 2"` + `"3 + 3"` 如不处理会以 `"2 + 23 + 3"` 的形式到达模型。
  *
- * Blocks stay separate; the `\n` goes on a's side so no block's startsWith
- * changes — smooshSystemReminderSiblings classifies via
- * `startsWith('<system-reminder>')`, and prepending to b would break that
- * when b is an SR-wrapped attachment.
+ * 块保持独立；`\n` 加在 a 侧，这样不会改变任何块的 startsWith —
+ * smooshSystemReminderSiblings 通过 `startsWith('<system-reminder>')` 分类，
+ * 前缀到 b 侧会在 b 是 SR 包装的附件时破坏该判断。
  */
 function joinTextAtSeam(a: ContentBlock[], b: ContentBlock[]): ContentBlock[] {
   const lastA = a.at(-1)
@@ -2384,16 +2376,16 @@ function joinTextAtSeam(a: ContentBlock[], b: ContentBlock[]): ContentBlock[] {
 type ToolResultContentItem = Extract<ToolResultBlock['content'], readonly unknown[]>[number]
 
 /**
- * Fold content blocks into a tool_result's content. Returns the updated
- * tool_result, or `null` if smoosh is impossible (tool_reference constraint).
+ * 将内容块折叠到 tool_result 的 content 中。返回更新后的 tool_result，
+ * 如果折叠不可行（tool_reference 约束）则返回 `null`。
  *
- * Valid block types inside tool_result.content per SDK: text, image,
- * search_result, document. All of these smoosh. tool_reference (beta) cannot
- * mix with other types — server ValueError — so we bail with null.
+ * 按 SDK 规范，tool_result.content 内有效的块类型：text、image、
+ * search_result、document。这些都可以折叠。tool_reference（beta）
+ * 不能与其他类型混合 — 服务器会报 ValueError — 因此返回 null。
  *
- * - string/undefined content + all-text blocks → string (preserve legacy shape)
- * - array content with tool_reference → null
- * - otherwise → array, with adjacent text merged (notebook.ts idiom)
+ * - string/undefined 内容 + 全 text 块 → string（保留旧版形态）
+ * - 数组内容含 tool_reference → null
+ * - 其他情况 → 数组，相邻 text 合并（notebook.ts 惯用法）
  */
 function smooshIntoToolResult(tr: ToolResultBlock, blocks: ContentBlock[]): ToolResultBlock | null {
   if (blocks.length === 0) return tr
@@ -2733,9 +2725,8 @@ export function textForResubmit(
 }
 
 /**
- * Extract text from an array of content blocks, joining text blocks with the
- * given separator. Works with ContentBlock, ContentBlock, ContentBlock,
- * and their readonly/DeepImmutable variants via structural typing.
+ * 从内容块数组中提取文本，用给定分隔符连接文本块。
+ * 通过结构化类型兼容 ContentBlock 及其 readonly/DeepImmutable 变体。
  */
 export function extractTextContent(
   blocks: readonly { readonly type: string }[],
@@ -2772,7 +2763,7 @@ export type StreamingThinking = {
 }
 
 /**
- * Handles messages from a stream, updating response length for deltas and appending completed messages
+ * 处理来自流的消息，更新增量的响应长度并追加已完成的消息
  */
 export function handleMessageFromStream(
   message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
@@ -3233,11 +3224,11 @@ function getReadOnlyToolNames(): string {
 }
 
 /**
- * Iterative interview-based plan mode workflow.
- * Instead of forcing Explore/Plan agents, this workflow has the model:
- * 1. Read files and ask questions iteratively
- * 2. Build up the spec/plan file incrementally as understanding grows
- * 3. Use AskUserQuestion throughout to clarify and gather input
+ * 基于迭代访谈的计划模式工作流。
+ * 此工作流不强制使用 Explore/Plan agent，而是让模型：
+ * 1. 迭代地读取文件并提问
+ * 2. 随着理解深入逐步构建规格/计划文件
+ * 3. 全程使用 AskUserQuestion 来澄清和收集输入
  */
 function getPlanModeInterviewInstructions(attachment: {
   planFilePath?: string
@@ -4403,7 +4394,7 @@ export function createSystemAPIErrorMessage(
 }
 
 /**
- * Checks if a message is a compact boundary marker
+ * 检查消息是否为 compact 边界标记
  */
 export function isCompactBoundaryMessage(
   message: Message | NormalizedMessage,
@@ -4412,8 +4403,8 @@ export function isCompactBoundaryMessage(
 }
 
 /**
- * Finds the index of the last compact boundary marker in the messages array
- * @returns The index of the last compact boundary, or -1 if none found
+ * 在消息数组中查找最后一个 compact 边界标记的索引
+ * @returns 最后一个 compact 边界的索引，未找到则返回 -1
  */
 export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessage>(
   messages: T[],
@@ -4429,16 +4420,16 @@ export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessa
 }
 
 /**
- * Returns messages from the last compact boundary onward (including the boundary).
- * If no boundary exists, returns all messages.
+ * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
+ * 如果不存在边界，则返回所有消息。
  *
- * Also filters snipped messages by default (when HISTORY_SNIP is enabled) —
- * the REPL keeps full history for UI scrollback, so model-facing paths need
- * both compact-slice AND snip-filter applied. Pass `{ includeSnipped: true }`
- * to opt out (e.g., REPL.tsx fullscreen compact handler which preserves
- * snipped messages in scrollback).
+ * 默认情况下也会过滤已截断的消息（当 HISTORY_SNIP 启用时）——
+ * REPL 保留完整历史用于 UI 回滚，因此面向模型的路径需要
+ * 同时应用 compact 切片和 snip 过滤。传入 `{ includeSnipped: true }`
+ * 可跳过此行为（例如 REPL.tsx 全屏 compact 处理器保留
+ * 已截断消息用于回滚显示）。
  *
- * Note: The boundary itself is a system message and will be filtered by normalizeMessagesForAPI.
+ * 注意：边界本身是系统消息，会被 normalizeMessagesForAPI 过滤。
  */
 export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
   messages: T[],
@@ -4482,8 +4473,8 @@ export function isThinkingMessage(message: Message): boolean {
 }
 
 /**
- * Count total calls to a specific tool in message history
- * Stops early at maxCount for efficiency
+ * 统计消息历史中对指定工具的总调用次数
+ * 达到 maxCount 时提前终止以提高效率
  */
 export function countToolCalls(messages: Message[], toolName: string, maxCount?: number): number {
   let count = 0
@@ -4506,8 +4497,8 @@ export function countToolCalls(messages: Message[], toolName: string, maxCount?:
 }
 
 /**
- * Check if the most recent tool call succeeded (has result without is_error)
- * Searches backwards for efficiency.
+ * 检查最近一次工具调用是否成功（有 result 且无 is_error）
+ * 反向搜索以提高效率。
  */
 export function hasSuccessfulToolCall(messages: Message[], toolName: string): boolean {
   // 反向搜索以找到此工具最近的 tool_use
@@ -4562,8 +4553,8 @@ function isThinkingBlock(
 }
 
 /**
- * Filter trailing thinking blocks from the last message if it's an assistant message.
- * The API doesn't allow assistant messages to end with thinking/redacted_thinking blocks.
+ * 过滤最后一条 assistant 消息末尾的 thinking 块。
+ * API 不允许 assistant 消息以 thinking/redacted_thinking 块结尾。
  */
 function filterTrailingThinkingFromLastAssistant(
   messages: (UserMessage | AssistantMessage)[],
@@ -4615,9 +4606,9 @@ function filterTrailingThinkingFromLastAssistant(
 }
 
 /**
- * Check if an assistant message has only whitespace-only text content blocks.
- * Returns true if all content blocks are text blocks with only whitespace.
- * Returns false if there are any non-text blocks (like tool_use) or text with actual content.
+ * 检查 assistant 消息是否仅包含纯空白的 text 内容块。
+ * 当所有内容块都是仅含空白的 text 块时返回 true。
+ * 当存在任何非 text 块（如 tool_use）或包含实际内容的 text 时返回 false。
  */
 function hasOnlyWhitespaceTextContent(content: Array<{ type: string; text?: string }>): boolean {
   if (content.length === 0) {
@@ -4640,16 +4631,16 @@ function hasOnlyWhitespaceTextContent(content: Array<{ type: string; text?: stri
 }
 
 /**
- * Filter out assistant messages with only whitespace-only text content.
+ * 过滤仅含纯空白 text 内容的 assistant 消息。
  *
- * The API requires "text content blocks must contain non-whitespace text".
- * This can happen when the model outputs whitespace (like "\n\n") before a thinking block,
- * but the user cancels mid-stream, leaving only the whitespace text.
+ * API 要求"text 内容块必须包含非空白文本"。
+ * 当模型在 thinking 块之前输出空白（如 "\n\n"），但用户在流式传输中途取消时，
+ * 可能只留下空白文本。
  *
- * This function removes such messages entirely rather than keeping a placeholder,
- * since whitespace-only content has no semantic value.
+ * 此函数直接移除此类消息而非保留占位符，
+ * 因为纯空白内容没有语义价值。
  *
- * Also used by conversationRecovery to filter these from the main state during session resume.
+ * 也被 conversationRecovery 在会话恢复时用于从主状态中过滤这些消息。
  */
 export function filterWhitespaceOnlyAssistantMessages(
   messages: (UserMessage | AssistantMessage)[],
@@ -4699,16 +4690,15 @@ export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Mess
 }
 
 /**
- * Ensure all non-final assistant messages have non-empty content.
+ * 确保所有非最后一条的 assistant 消息具有非空内容。
  *
- * The API requires "all messages must have non-empty content except for the
- * optional final assistant message". This can happen when the model returns
- * an empty content array.
+ * API 要求"所有消息必须具有非空内容，可选的最后一条 assistant 消息除外"。
+ * 当模型返回空内容数组时可能出现此情况。
  *
- * For non-final assistant messages with empty content, we insert a placeholder.
- * The final assistant message is left as-is since it's allowed to be empty (for prefill).
+ * 对于内容为空的非最后一条 assistant 消息，插入占位符。
+ * 最后一条 assistant 消息保持原样，因为它允许为空（用于预填充）。
  *
- * Note: Whitespace-only text content is handled separately by filterWhitespaceOnlyAssistantMessages.
+ * 注意：纯空白 text 内容由 filterWhitespaceOnlyAssistantMessages 单独处理。
  */
 function ensureNonEmptyAssistantContent(
   messages: (UserMessage | AssistantMessage)[],
@@ -4754,16 +4744,16 @@ function ensureNonEmptyAssistantContent(
 }
 
 /**
- * Filter orphaned thinking-only assistant messages.
+ * 过滤孤立的纯 thinking assistant 消息。
  *
- * During streaming, each content block is yielded as a separate message with the same
- * message.id. When messages are loaded for resume, interleaved user messages or attachments
- * can prevent proper merging by message.id, leaving orphaned assistant messages that contain
- * only thinking blocks. These cause "thinking blocks cannot be modified" API errors.
+ * 在流式传输期间，每个内容块作为具有相同 message.id 的独立消息产出。
+ * 当加载消息用于恢复时，中间穿插的 user 消息或附件可能阻止按 message.id
+ * 正确合并，留下仅包含 thinking 块的孤立 assistant 消息。
+ * 这些会导致 "thinking blocks cannot be modified" API 错误。
  *
- * A thinking-only message is "orphaned" if there is NO other assistant message with the
- * same message.id that contains non-thinking content (text, tool_use, etc). If such a
- * message exists, the thinking block will be merged with it in normalizeMessagesForAPI().
+ * 一个纯 thinking 消息被认为是"孤立的"，当且仅当没有其他具有相同
+ * message.id 的 assistant 消息包含非 thinking 内容（text、tool_use 等）。
+ * 如果存在这样的消息，thinking 块将在 normalizeMessagesForAPI() 中与之合并。
  */
 export function filterOrphanedThinkingOnlyMessages(
   messages: (UserMessage | AssistantMessage)[],
@@ -4826,10 +4816,9 @@ export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message
 }
 
 /**
- * Strip signature-bearing blocks (thinking, redacted_thinking, connector_text)
- * from all assistant messages. Their signatures are bound to the API key that
- * generated them; after a credential change (e.g. /login) they're invalid and
- * the API rejects them with a 400.
+ * 从所有 assistant 消息中剥离带签名的块（thinking、redacted_thinking、connector_text）。
+ * 这些块的签名绑定到生成它们的 API key；在凭证变更后（例如 /login），
+ * 签名失效，API 会以 400 拒绝。
  */
 export function stripSignatureBlocks(messages: Message[]): Message[] {
   let changed = false
@@ -4866,8 +4855,8 @@ export function stripSignatureBlocks(messages: Message[]): Message[] {
 }
 
 /**
- * Creates a tool use summary message for SDK emission.
- * Tool use summaries provide human-readable progress updates after tool batches complete.
+ * 创建用于 SDK 发射的工具使用摘要消息。
+ * 工具使用摘要在工具批次完成后提供人类可读的进度更新。
  */
 export function createToolUseSummaryMessage(
   summary: string,
@@ -4883,19 +4872,18 @@ export function createToolUseSummaryMessage(
 }
 
 /**
- * Defensive validation: ensure tool_use/tool_result pairing is correct.
+ * 防御性验证：确保 tool_use/tool_result 配对正确。
  *
- * Handles both directions:
- * - Forward: inserts synthetic error tool_result blocks for tool_use blocks missing results
- * - Reverse: strips orphaned tool_result blocks referencing non-existent tool_use blocks
+ * 处理两个方向：
+ * - 正向：为缺少 result 的 tool_use 块插入合成错误 tool_result 块
+ * - 反向：剥离引用不存在的 tool_use 块的孤立 tool_result 块
  *
- * Logs when this activates to help identify the root cause.
+ * 激活时记录日志以帮助识别根本原因。
  *
- * Strict mode: when getStrictToolResultPairing() is true (HFI opts in at
- * startup), any mismatch throws instead of repairing. For training-data
- * collection, a model response conditioned on synthetic placeholders is
- * tainted — fail the trajectory rather than waste labeler time on a turn
- * that will be rejected at submission anyway.
+ * 严格模式：当 getStrictToolResultPairing() 为 true 时（HFI 在启动时启用），
+ * 任何不匹配都会抛出异常而非修复。对于训练数据收集，基于合成占位符
+ * 条件化的模型响应是受污染的——让轨迹失败而不是浪费标注者时间在
+ * 提交时无论如何都会被拒绝的轮次上。
  */
 export function ensureToolResultPairing(
   messages: (UserMessage | AssistantMessage)[],
@@ -5197,8 +5185,8 @@ export function ensureToolResultPairing(
 }
 
 /**
- * Strip advisor blocks from messages. The API rejects server_tool_use blocks
- * with name "advisor" unless the advisor beta header is present.
+ * 从消息中剥离 advisor 块。当 advisor beta header 不存在时，
+ * API 会拒绝 name 为 "advisor" 的 server_tool_use 块。
  */
 export function stripAdvisorBlocks(
   messages: (UserMessage | AssistantMessage)[],

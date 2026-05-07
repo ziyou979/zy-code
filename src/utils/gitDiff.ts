@@ -29,31 +29,29 @@ export type GitDiffResult = {
 
 const GIT_TIMEOUT_MS = 5000
 const MAX_FILES = 50
-const MAX_DIFF_SIZE_BYTES = 1_000_000 // 1 MB - skip files larger than this
-const MAX_LINES_PER_FILE = 400 // GitHub's auto-load limit
-const MAX_FILES_FOR_DETAILS = 500 // Skip per-file details if more files than this
+const MAX_DIFF_SIZE_BYTES = 1_000_000 // 1 MB - 跳过大于此值的文件
+const MAX_LINES_PER_FILE = 400 // GitHub 自动加载的行数限制
+const MAX_FILES_FOR_DETAILS = 500 // 文件数超过此值时跳过逐文件详情
 
 /**
- * Fetch git diff stats and hunks comparing working tree to HEAD.
- * Returns null if not in a git repo or if git commands fail.
+ * 获取 git diff 统计信息和 hunk，比较工作树与 HEAD。
+ * 不在 git 仓库中或 git 命令失败时返回 null。
  *
- * Returns null during merge/rebase/cherry-pick/revert operations since the
- * working tree contains incoming changes that weren't intentionally
- * made by the user.
+ * 在 merge/rebase/cherry-pick/revert 操作期间返回 null，因为工作树
+ * 包含的是非用户主动操作的传入变更。
  */
 export async function fetchGitDiff(): Promise<GitDiffResult | null> {
   const isGit = await getIsGit()
   if (!isGit) return null
 
-  // Skip diff calculation during transient git states since the
-  // working tree contains incoming changes, not user-intentional edits
+  // 在临时 git 状态期间跳过 diff 计算，因为工作树包含的是
+  // 传入的变更，而非用户有意的编辑
   if (await isInTransientGitState()) {
     return null
   }
 
-  // Quick probe: use --shortstat to get totals without loading all content.
-  // This is O(1) memory and lets us detect massive diffs (e.g., jj workspaces)
-  // before committing to expensive operations.
+  // 快速探测：使用 --shortstat 获取总计而不加载所有内容。
+  // 这是 O(1) 内存，让我们在执行昂贵操作前检测到大量 diff（如 jj 工作区）。
   const { stdout: shortstatOut, code: shortstatCode } = await execFileNoThrow(
     gitExe(),
     ['--no-optional-locks', 'diff', 'HEAD', '--shortstat'],
@@ -63,8 +61,8 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
   if (shortstatCode === 0) {
     const quickStats = parseShortstat(shortstatOut)
     if (quickStats && quickStats.filesCount > MAX_FILES_FOR_DETAILS) {
-      // Too many files - return accurate totals but skip per-file details
-      // to avoid loading hundreds of MB into memory
+      // 文件过多——返回准确的总计但跳过逐文件详情，
+      // 以避免将数百 MB 加载到内存中
       return {
         stats: quickStats,
         perFileStats: new Map(),
@@ -73,7 +71,7 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
     }
   }
 
-  // Get stats via --numstat (all uncommitted changes vs HEAD)
+  // 通过 --numstat 获取统计信息（所有未提交的变更 vs HEAD）
   const { stdout: numstatOut, code: numstatCode } = await execFileNoThrow(
     gitExe(),
     ['--no-optional-locks', 'diff', 'HEAD', '--numstat'],
@@ -84,8 +82,8 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
 
   const { stats, perFileStats } = parseGitNumstat(numstatOut)
 
-  // Include untracked files (new files not yet staged)
-  // Just filenames - no content reading for performance
+  // 包含未跟踪文件（尚未暂存的新文件）
+  // 仅获取文件名——为了性能不读取内容
   const remainingSlots = MAX_FILES - perFileStats.size
   if (remainingSlots > 0) {
     const untrackedStats = await fetchUntrackedFiles(remainingSlots)
@@ -97,14 +95,14 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
     }
   }
 
-  // Return stats only - hunks are fetched on-demand via fetchGitDiffHunks()
-  // to avoid expensive git diff HEAD call on every poll
+  // 仅返回统计信息——hunk 通过 fetchGitDiffHunks() 按需获取，
+  // 以避免每次轮询时执行昂贵的 git diff HEAD 调用
   return { stats, perFileStats, hunks: new Map() }
 }
 
 /**
- * Fetch git diff hunks on-demand (for DiffDialog).
- * Separated from fetchGitDiff() to avoid expensive calls during polling.
+ * 按需获取 git diff hunk（用于 DiffDialog）。
+ * 与 fetchGitDiff() 分离以避免轮询期间的昂贵调用。
  */
 export async function fetchGitDiffHunks(): Promise<Map<string, StructuredPatchHunk[]>> {
   const isGit = await getIsGit()
@@ -133,10 +131,10 @@ export type NumstatResult = {
 }
 
 /**
- * Parse git diff --numstat output into stats.
- * Format: <added>\t<removed>\t<filename>
- * Binary files show '-' for counts.
- * Only stores first MAX_FILES entries in perFileStats.
+ * 解析 git diff --numstat 输出为统计信息。
+ * 格式：<added>\t<removed>\t<filename>
+ * 二进制文件的计数显示为 '-'。
+ * 仅在 perFileStats 中存储前 MAX_FILES 条。
  */
 export function parseGitNumstat(stdout: string): NumstatResult {
   const lines = stdout.trim().split('\n').filter(Boolean)
@@ -147,13 +145,13 @@ export function parseGitNumstat(stdout: string): NumstatResult {
 
   for (const line of lines) {
     const parts = line.split('\t')
-    // Valid numstat lines have exactly 3 tab-separated parts: added, removed, filename
+    // 有效的 numstat 行恰好有 3 个 tab 分隔的部分：added、removed、filename
     if (parts.length < 3) continue
 
     validFileCount++
     const addStr = parts[0]
     const remStr = parts[1]
-    const filePath = parts.slice(2).join('\t') // filename may contain tabs
+    const filePath = parts.slice(2).join('\t') // 文件名可能包含 tab
     const isBinary = addStr === '-' || remStr === '-'
     const fileAdded = isBinary ? 0 : parseInt(addStr ?? '0', 10) || 0
     const fileRemoved = isBinary ? 0 : parseInt(remStr ?? '0', 10) || 0
@@ -161,7 +159,7 @@ export function parseGitNumstat(stdout: string): NumstatResult {
     added += fileAdded
     removed += fileRemoved
 
-    // Only store first MAX_FILES entries
+    // 仅存储前 MAX_FILES 条
     if (perFileStats.size < MAX_FILES) {
       perFileStats.set(filePath, {
         added: fileAdded,
@@ -182,38 +180,38 @@ export function parseGitNumstat(stdout: string): NumstatResult {
 }
 
 /**
- * Parse unified diff output into per-file hunks.
- * Splits by "diff --git" and parses each file's hunks.
+ * 解析统一 diff 输出为逐文件的 hunk。
+ * 按 "diff --git" 分割并解析每个文件的 hunk。
  *
- * Applies limits:
- * - MAX_FILES: stop after this many files
- * - Files >1MB: skipped entirely (not in result map)
- * - Files ≤1MB: parsed but limited to MAX_LINES_PER_FILE lines
+ * 应用限制：
+ * - MAX_FILES：达到此文件数后停止
+ * - 大于 1MB 的文件：完全跳过（不在结果 map 中）
+ * - 小于等于 1MB 的文件：解析但限制为 MAX_LINES_PER_FILE 行
  */
 export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]> {
   const result = new Map<string, StructuredPatchHunk[]>()
   if (!stdout.trim()) return result
 
-  // Split by file diffs
+  // 按文件 diff 分割
   const fileDiffs = stdout.split(/^diff --git /m).filter(Boolean)
 
   for (const fileDiff of fileDiffs) {
-    // Stop after MAX_FILES
+    // 达到 MAX_FILES 后停止
     if (result.size >= MAX_FILES) break
 
-    // Skip files larger than 1MB
+    // 跳过大于 1MB 的文件
     if (fileDiff.length > MAX_DIFF_SIZE_BYTES) {
       continue
     }
 
     const lines = fileDiff.split('\n')
 
-    // Extract filename from first line: "a/path/to/file b/path/to/file"
+    // 从第一行提取文件名："a/path/to/file b/path/to/file"
     const headerMatch = lines[0]?.match(/^a\/(.+?) b\/(.+)$/)
     if (!headerMatch) continue
     const filePath = headerMatch[2] ?? headerMatch[1] ?? ''
 
-    // Find and parse hunks
+    // 查找并解析 hunk
     const fileHunks: StructuredPatchHunk[] = []
     let currentHunk: StructuredPatchHunk | null = null
     let lineCount = 0
@@ -221,7 +219,7 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i] ?? ''
 
-      // StructuredPatchHunk header: @@ -oldStart,oldLines +newStart,newLines @@
+      // StructuredPatchHunk 头部：@@ -oldStart,oldLines +newStart,newLines @@
       const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/)
       if (hunkMatch) {
         if (currentHunk) {
@@ -237,7 +235,7 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
         continue
       }
 
-      // Skip binary file markers and other metadata
+      // 跳过二进制文件标记和其他元数据
       if (
         line.startsWith('index ') ||
         line.startsWith('---') ||
@@ -251,26 +249,26 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
         continue
       }
 
-      // Add diff lines to current hunk (with line limit)
+      // 将 diff 行添加到当前 hunk（有行数限制）
       if (
         currentHunk &&
         (line.startsWith('+') || line.startsWith('-') || line.startsWith(' ') || line === '')
       ) {
-        // Stop adding lines once we hit the limit
+        // 达到限制后停止添加行
         if (lineCount >= MAX_LINES_PER_FILE) {
           continue
         }
-        // Force a flat string copy to break V8 sliced string references.
-        // When split() creates lines, V8 creates "sliced strings" that reference
-        // the parent. This keeps the entire parent string (~MBs) alive as long as
-        // any line is retained. Using '' + line forces a new flat string allocation,
-        // unlike slice(0) which V8 may optimize to return the same reference.
+        // 强制进行平坦字符串拷贝以断开 V8 切片字符串引用。
+        // 当 split() 创建行时，V8 会创建引用父字符串的"切片字符串"。
+        // 这会使整个父字符串（约数 MB）在任何行被保留时一直存活。
+        // 使用 '' + line 强制新的平坦字符串分配，
+        // 不像 slice(0) 那样 V8 可能优化为返回相同引用。
         currentHunk.lines.push('' + line)
         lineCount++
       }
     }
 
-    // Don't forget the last hunk
+    // 不要忘记最后一个 hunk
     if (currentHunk) {
       fileHunks.push(currentHunk)
     }
@@ -284,11 +282,11 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
 }
 
 /**
- * Check if we're in a transient git state (merge, rebase, cherry-pick, or revert).
- * During these operations, we skip diff calculation since the working
- * tree contains incoming changes that weren't intentionally made.
+ * 检查是否处于临时 git 状态（merge、rebase、cherry-pick 或 revert）。
+ * 在这些操作期间跳过 diff 计算，因为工作树包含的是
+ * 非用户主动操作的传入变更。
  *
- * Uses fs.access to check for transient ref files, avoiding process spawns.
+ * 使用 fs.access 检查临时引用文件，避免进程生成。
  */
 async function isInTransientGitState(): Promise<boolean> {
   const gitDir = await getGitDir(getCwd())
@@ -307,13 +305,13 @@ async function isInTransientGitState(): Promise<boolean> {
 }
 
 /**
- * Fetch untracked file names (no content reading).
- * Returns file paths only - they'll be displayed with a note to stage them.
+ * 获取未跟踪文件名（不读取内容）。
+ * 仅返回文件路径——它们将在展示时带有暂存提示。
  *
- * @param maxFiles Maximum number of untracked files to include
+ * @param maxFiles 包含的最大未跟踪文件数
  */
 async function fetchUntrackedFiles(maxFiles: number): Promise<Map<string, PerFileStats> | null> {
-  // Get list of untracked files (excludes gitignored)
+  // 获取未跟踪文件列表（排除 gitignore 中的文件）
   const { stdout, code } = await execFileNoThrow(
     gitExe(),
     ['--no-optional-locks', 'ls-files', '--others', '--exclude-standard'],
@@ -327,7 +325,7 @@ async function fetchUntrackedFiles(maxFiles: number): Promise<Map<string, PerFil
 
   const perFileStats = new Map<string, PerFileStats>()
 
-  // Just record filenames, no content reading
+  // 仅记录文件名，不读取内容
   for (const filePath of untrackedPaths.slice(0, maxFiles)) {
     perFileStats.set(filePath, {
       added: 0,
@@ -341,14 +339,14 @@ async function fetchUntrackedFiles(maxFiles: number): Promise<Map<string, PerFil
 }
 
 /**
- * Parse git diff --shortstat output into stats.
- * Format: " 1648 files changed, 52341 insertions(+), 8123 deletions(-)"
+ * 解析 git diff --shortstat 输出为统计信息。
+ * 格式：" 1648 files changed, 52341 insertions(+), 8123 deletions(-)"
  *
- * This is O(1) memory regardless of diff size - git computes totals without
- * loading all content. Used as a quick probe before expensive operations.
+ * 无论 diff 大小如何，内存消耗都是 O(1)——git 在不加载全部内容的情况下
+ * 计算总计。用作昂贵操作前的快速探测。
  */
 export function parseShortstat(stdout: string): GitDiffStats | null {
-  // Match: "N files changed" with optional ", N insertions(+)" and ", N deletions(-)"
+  // 匹配："N files changed" 加可选的 ", N insertions(+)" 和 ", N deletions(-)"
   const match = stdout.match(
     /(\d+)\s+files?\s+changed(?:,\s+(\d+)\s+insertions?\(\+\))?(?:,\s+(\d+)\s+deletions?\(-\))?/,
   )
@@ -369,17 +367,16 @@ export type ToolUseDiff = {
   deletions: number
   changes: number
   patch: string
-  /** GitHub "owner/repo" when available (null for non-github.com or unknown repos) */
+  /** 可用时的 GitHub "owner/repo"（非 github.com 或未知仓库时为 null） */
   repository: string | null
 }
 
 /**
- * Fetch a structured diff for a single file against the merge base with the
- * default branch. This produces a PR-like diff showing all changes since
- * the branch diverged. Falls back to diffing against HEAD if the merge base
- * cannot be determined (e.g., on the default branch itself).
- * For untracked files, generates a synthetic diff showing all additions.
- * Returns null if not in a git repo or if git commands fail.
+ * 获取单个文件与默认分支 merge base 的结构化 diff。
+ * 这产生类似 PR 的 diff，显示分支分叉以来的所有变更。
+ * 如果无法确定 merge base（如在默认分支上），则回退到与 HEAD 做 diff。
+ * 对于未跟踪文件，生成显示所有新增的合成 diff。
+ * 不在 git 仓库中或 git 命令失败时返回 null。
  */
 export async function fetchSingleFileGitDiff(
   absoluteFilePath: string,
@@ -390,7 +387,7 @@ export async function fetchSingleFileGitDiff(
   const gitPath = relative(gitRoot, absoluteFilePath).split(sep).join('/')
   const repository = getCachedRepository()
 
-  // Check if the file is tracked by git
+  // 检查文件是否被 git 跟踪
   const { code: lsFilesCode } = await execFileNoThrowWithCwd(
     gitExe(),
     ['--no-optional-locks', 'ls-files', '--error-unmatch', gitPath],
@@ -398,7 +395,7 @@ export async function fetchSingleFileGitDiff(
   )
 
   if (lsFilesCode === 0) {
-    // File is tracked - diff against merge base for PR-like view
+    // 文件已跟踪——与 merge base 做 diff 以获得类似 PR 的视图
     const diffRef = await getDiffRef(gitRoot)
     const { stdout, code } = await execFileNoThrowWithCwd(
       gitExe(),
@@ -413,16 +410,15 @@ export async function fetchSingleFileGitDiff(
     }
   }
 
-  // File is untracked - generate synthetic diff
+  // 文件未跟踪——生成合成 diff
   const syntheticDiff = await generateSyntheticDiff(gitPath, absoluteFilePath)
   if (!syntheticDiff) return null
   return { ...syntheticDiff, repository }
 }
 
 /**
- * Parse raw unified diff output into the structured ToolUseDiff format.
- * Extracts only the hunk content (starting from @@) as the patch,
- * and counts additions/deletions.
+ * 将原始统一 diff 输出解析为结构化 ToolUseDiff 格式。
+ * 仅提取 hunk 内容（从 @@ 开始）作为 patch，并统计新增/删除行数。
  */
 function parseRawDiffToToolUseDiff(
   filename: string,
@@ -460,11 +456,11 @@ function parseRawDiffToToolUseDiff(
 }
 
 /**
- * Determine the best ref to diff against for a PR-like diff.
- * Priority:
- * 1. ZY_CODE_BASE_REF env var (set externally, e.g. by CCR managed containers)
- * 2. Merge base with the default branch (best guess)
- * 3. HEAD (fallback if merge-base fails)
+ * 确定用于类似 PR diff 的最佳比较引用。
+ * 优先级：
+ * 1. ZY_CODE_BASE_REF 环境变量（外部设置，如由 CCR 管理容器设置）
+ * 2. 与默认分支的 merge base（最佳猜测）
+ * 3. HEAD（merge-base 失败时的回退）
  */
 async function getDiffRef(gitRoot: string): Promise<string> {
   const baseBranch = process.env.ZY_CODE_BASE_REF || (await getDefaultBranch())
@@ -489,7 +485,7 @@ async function generateSyntheticDiff(
     }
     const content = await readFile(absoluteFilePath, 'utf-8')
     const lines = content.split('\n')
-    // Remove trailing empty line from split if file ends with newline
+    // 如果文件以换行符结尾，移除 split 产生的末尾空行
     if (lines.length > 0 && lines.at(-1) === '') {
       lines.pop()
     }

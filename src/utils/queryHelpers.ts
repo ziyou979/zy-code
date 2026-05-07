@@ -32,17 +32,16 @@ export type PermissionPromptTool = Tool<
   ReturnType<typeof permissionToolOutputSchema>
 >
 
-// Small cache size for ask operations which typically access few files
-// during permission prompts or limited tool operations
+// ask 操作的小型缓存，通常在权限提示或有限工具操作期间只访问少量文件
 const ASK_READ_FILE_STATE_CACHE_SIZE = 10
 
 /**
- * Checks if the result should be considered successful based on the last message.
- * Returns true if:
- * - Last message is assistant with text/thinking content
- * - Last message is user with only tool_result blocks
- * - Last message is the user prompt but the API completed with end_turn
- *   (model chose to emit no content blocks)
+ * 根据最后一条消息判断结果是否应视为成功。
+ * 以下情况返回 true：
+ * - 最后一条消息是包含 text/thinking 内容的 assistant 消息
+ * - 最后一条消息是仅包含 tool_result 块的 user 消息
+ * - 最后一条消息是用户 prompt，但 API 以 end_turn 结束
+ *   （模型选择不输出任何 content block）
  */
 export function isResultSuccessful(
   message: Message | undefined,
@@ -61,7 +60,7 @@ export function isResultSuccessful(
   }
 
   if (message.type === 'user') {
-    // Check if all content blocks are tool_result type
+    // 检查是否所有 content block 都是 tool_result 类型
     const content = message.message.content
     if (
       Array.isArray(content) &&
@@ -72,21 +71,20 @@ export function isResultSuccessful(
     }
   }
 
-  // Carve-out: API completed (message_delta set stop_reason) but yielded
-  // no assistant content — last(messages) is still this turn's prompt.
-  // zy.ts:2026 recognizes end_turn-with-zero-content-blocks as
-  // legitimate and passes through without throwing. Observed on
-  // task_notification drain turns: model returns stop_reason=end_turn,
-  // outputTokens=4, textContentLength=0 — it saw the subagent result
-  // and decided nothing needed saying. Without this, QueryEngine emits
-  // error_during_execution with errors[] = the entire process's
-  // accumulated logError() buffer. Covers both string-content and
-  // text-block-content user prompts, and any other non-passing shape.
+  // 特殊情况：API 已完成（message_delta 设置了 stop_reason）但未产生
+  // assistant 内容 — last(messages) 仍然是本轮的 prompt。
+  // zy.ts:2026 将 end_turn 且零 content block 视为合法情况并正常通过
+  // 而非抛出异常。在 task_notification 消耗轮次中观察到：模型返回
+  // stop_reason=end_turn、outputTokens=4、textContentLength=0 —
+  // 它看到了子代理结果并决定无需回复。如果没有此处理，QueryEngine 会
+  // 发出 error_during_execution，其 errors[] 包含整个进程累积的
+  // logError() 缓冲区。覆盖 string-content 和 text-block-content
+  // 类型的用户 prompt 以及任何其他不匹配的消息形态。
   return stopReason === 'end_turn'
 }
 
-// Track last sent time for tool progress messages per tool use ID
-// Keep only the last 100 entries to prevent unbounded growth
+// 记录每个 tool use ID 的工具进度消息最后发送时间
+// 仅保留最近 100 条记录以防止无限增长
 const MAX_TOOL_PROGRESS_TRACKING_ENTRIES = 100
 const TOOL_PROGRESS_THROTTLE_MS = 30000
 const toolProgressLastSentTime = new Map<string, number>()
@@ -95,7 +93,7 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
   switch (message.type) {
     case 'assistant':
       for (const _ of normalizeMessages([message])) {
-        // Skip empty messages (e.g., "(no content)") that shouldn't be output to SDK
+        // 跳过不应输出到 SDK 的空消息（例如 "(no content)"）
         if (!isNotEmptyMessage(_)) {
           continue
         }
@@ -114,7 +112,7 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
         for (const _ of normalizeMessages([message.data.message] as Message[])) {
           switch (_.type) {
             case 'assistant':
-              // Skip empty messages (e.g., "(no content)") that shouldn't be output to SDK
+              // 跳过不应输出到 SDK 的空消息（例如 "(no content)"）
               if (!isNotEmptyMessage(_)) {
                 break
               }
@@ -147,21 +145,21 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
         message.data.type === 'bash_progress' ||
         message.data.type === 'powershell_progress'
       ) {
-        // Filter bash progress to send only one per minute
-        // Only emit for ZY Code Remote for now
+        // 过滤 bash 进度消息，每分钟最多发送一次
+        // 目前仅对 ZY Code Remote 生效
         if (!isEnvTruthy(process.env.ZY_CODE_REMOTE) && !process.env.ZY_CODE_CONTAINER_ID) {
           break
         }
 
-        // Use parentToolUseID as the key since toolUseID changes for each progress message
+        // 使用 parentToolUseID 作为键，因为 toolUseID 每条进度消息都会变化
         const trackingKey = message.parentToolUseID
         const now = Date.now()
         const lastSent = toolProgressLastSentTime.get(trackingKey) || 0
         const timeSinceLastSent = now - lastSent
 
-        // Send if at least 30 seconds have passed since last update
+        // 距上次更新至少过了 30 秒才发送
         if (timeSinceLastSent >= TOOL_PROGRESS_THROTTLE_MS) {
-          // Remove oldest entry if we're at capacity (LRU eviction)
+          // 达到容量上限时移除最旧的条目（LRU 淘汰）
           if (toolProgressLastSentTime.size >= MAX_TOOL_PROGRESS_TRACKING_ENTRIES) {
             const firstKey = toolProgressLastSentTime.keys().next().value
             if (firstKey !== undefined) {
@@ -198,7 +196,7 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
       }
       return
     default:
-    // yield nothing
+    // 不产出任何内容
   }
 }
 
@@ -239,7 +237,7 @@ export async function* handleOrphanedPermission(
     return
   }
 
-  // Create ToolCallInlineBlock with the updated input if permission was allowed
+  // 如果权限被允许，使用更新后的输入创建 ToolCallInlineBlock
   let finalInput = toolInput
   if (permissionResult.behavior === 'allow') {
     if (permissionResult.updatedInput !== undefined) {
@@ -264,19 +262,19 @@ export async function* handleOrphanedPermission(
     },
   })
 
-  // Add the assistant message with tool_use to messages BEFORE executing
-  // so the conversation history is complete (tool_use -> tool_result).
+  // 在执行之前将包含 tool_use 的 assistant 消息添加到 messages 中，
+  // 以确保对话历史完整（tool_use -> tool_result）。
   //
-  // On CCR resume, mutableMessages is seeded from the transcript and may already
-  // contain this tool_use. Pushing again would make normalizeMessagesForAPI merge
-  // same-ID assistants (concatenating content) and produce a duplicate tool_use
-  // ID, which the API rejects with "tool_use ids must be unique".
+  // 在 CCR 恢复时，mutableMessages 从转录记录中初始化，可能已经包含
+  // 此 tool_use。再次 push 会导致 normalizeMessagesForAPI 合并相同 ID
+  // 的 assistant（拼接 content），从而产生重复的 tool_use ID，
+  // API 会以 "tool_use ids must be unique" 拒绝请求。
   //
-  // Check for the specific tool_use_id rather than message.id: streaming yields
-  // each content block as a separate AssistantMessage sharing one message.id, so
-  // a [text, tool_use] response lands as two entries. filterUnresolvedToolUses may
-  // strip the tool_use entry but keep the text one; an id-based check would then
-  // wrongly skip the push while runTools below still executes, orphaning the result.
+  // 检查特定的 tool_use_id 而非 message.id：流式传输时每个 content block
+  // 作为独立的 AssistantMessage 共享同一个 message.id，因此一个
+  // [text, tool_use] 响应会产生两条记录。filterUnresolvedToolUses 可能
+  // 剥离 tool_use 条目但保留 text 条目；基于 id 的检查会错误地跳过 push，
+  // 而 runTools 仍会执行，导致结果成为孤儿。
   const alreadyPresent = mutableMessages.some(
     (m) =>
       m.type === 'assistant' &&
@@ -296,7 +294,7 @@ export async function* handleOrphanedPermission(
   } as SDKMessage
   yield sdkAssistantMessage
 
-  // Execute the tool - errors are handled internally by runToolUse
+  // 执行工具 - 错误由 runToolUse 内部处理
   for await (const update of runTools(
     [finalToolCallInlineBlock],
     [assistantMessage],
@@ -320,7 +318,7 @@ export async function* handleOrphanedPermission(
   }
 }
 
-// Create a function to extract read files from messages
+// 从消息中提取已读取的文件
 export function extractReadFilesFromMessages(
   messages: Message[],
   cwd: string,
@@ -328,7 +326,7 @@ export function extractReadFilesFromMessages(
 ): FileStateCache {
   const cache = createFileStateCacheWithSizeLimit(maxSize)
 
-  // First pass: find all FileReadTool/FileWriteTool/FileEditTool uses in assistant messages
+  // 第一遍遍历：查找 assistant 消息中所有 FileReadTool/FileWriteTool/FileEditTool 的使用
   const fileReadToolUseIds = new Map<string, string>() // toolUseId -> filePath
   const fileWriteToolUseIds = new Map<string, { filePath: string; content: string }>() // toolUseId -> { filePath, content }
   const fileEditToolUseIds = new Map<string, string>() // toolUseId -> filePath
@@ -337,19 +335,19 @@ export function extractReadFilesFromMessages(
     if (message.type === 'assistant') {
       for (const content of message.message.content) {
         if (content.type === 'tool_call' && content.name === FILE_READ_TOOL_NAME) {
-          // Extract file_path from the tool use input
+          // 从工具调用输入中提取 file_path
           const input = content.input as FileReadInput | undefined
-          // Ranged reads are not added to the cache.
+          // 范围读取不加入缓存
           if (input?.file_path && input?.offset === undefined && input?.limit === undefined) {
-            // Normalize to absolute path for consistent cache lookups
+            // 标准化为绝对路径以确保缓存查找一致性
             const absolutePath = expandPath(input.file_path, cwd)
             fileReadToolUseIds.set(content.id, absolutePath)
           }
         } else if (content.type === 'tool_call' && content.name === FILE_WRITE_TOOL_NAME) {
-          // Extract file_path and content from the Write tool use input
+          // 从 Write 工具调用输入中提取 file_path 和 content
           const input = content.input as { file_path?: string; content?: string } | undefined
           if (input?.file_path && input?.content) {
-            // Normalize to absolute path for consistent cache lookups
+            // 标准化为绝对路径以确保缓存查找一致性
             const absolutePath = expandPath(input.file_path, cwd)
             fileWriteToolUseIds.set(content.id, {
               filePath: absolutePath,
@@ -357,8 +355,8 @@ export function extractReadFilesFromMessages(
             })
           }
         } else if (content.type === 'tool_call' && content.name === FILE_EDIT_TOOL_NAME) {
-          // Edit's input has old_string/new_string, not the resulting content.
-          // Track the path so the second pass can read current disk state.
+          // Edit 的输入包含 old_string/new_string，而非最终内容。
+          // 记录路径以便第二遍遍历时读取当前磁盘状态。
           const input = content.input as { file_path?: string } | undefined
           if (input?.file_path) {
             const absolutePath = expandPath(input.file_path, cwd)
@@ -369,36 +367,35 @@ export function extractReadFilesFromMessages(
     }
   }
 
-  // Second pass: find corresponding tool results and extract content
+  // 第二遍遍历：查找对应的工具结果并提取内容
   for (const message of messages) {
     if (message.type === 'user' && Array.isArray(message.message.content)) {
       for (const content of message.message.content) {
         if (content.type === 'tool_result' && content.toolCallId) {
-          // Handle Read tool results
+          // 处理 Read 工具结果
           const readFilePath = fileReadToolUseIds.get(content.toolCallId)
           if (
             readFilePath &&
             typeof content.content === 'string' &&
-            // Dedup stubs contain no file content — the earlier real Read
-            // already cached it. Chronological last-wins would otherwise
-            // overwrite the real entry with stub text.
+            // 去重桩不包含文件内容 — 之前的真实 Read 已将其缓存。
+            // 按时间顺序的后者覆盖策略会用桩文本覆盖真实条目。
             !content.content.startsWith(FILE_UNCHANGED_STUB)
           ) {
-            // Remove system-reminder blocks from the content
+            // 从内容中移除 system-reminder 块
             const processedContent = content.content.replace(
               /<system-reminder>[\s\S]*?<\/system-reminder>/g,
               '',
             )
 
-            // Extract the actual file content from the tool result
-            // Tool results for text files contain line numbers, we need to strip those
+            // 从工具结果中提取实际文件内容
+            // 文本文件的工具结果包含行号，需要去除
             const fileContent = processedContent
               .split('\n')
               .map(stripLineNumberPrefix)
               .join('\n')
               .trim()
 
-            // Cache the file content with the message timestamp
+            // 使用消息时间戳缓存文件内容
             if (message.timestamp) {
               const timestamp = new Date(message.timestamp).getTime()
               cache.set(readFilePath, {
@@ -410,7 +407,7 @@ export function extractReadFilesFromMessages(
             }
           }
 
-          // Handle Write tool results - use content from the tool input
+          // 处理 Write 工具结果 - 使用工具输入中的内容
           const writeToolData = fileWriteToolUseIds.get(content.toolCallId)
           if (writeToolData && message.timestamp) {
             const timestamp = new Date(message.timestamp).getTime()
@@ -422,15 +419,15 @@ export function extractReadFilesFromMessages(
             })
           }
 
-          // Handle Edit tool results — post-edit content isn't in the
-          // tool_use input (only old_string/new_string) nor fully in the
-          // result (only a snippet). Read from disk now, using actual mtime
-          // so getChangedFiles's mtime check passes on the next turn.
+          // 处理 Edit 工具结果 — 编辑后的内容不在 tool_use 输入中
+          // （只有 old_string/new_string），也不完整地存在于结果中
+          // （只有片段）。现在从磁盘读取，使用实际 mtime 以便
+          // getChangedFiles 的 mtime 检查在下一轮通过。
           //
-          // Callers seed the cache once at process start (print.ts --resume,
-          // Cowork cold-restart per turn), so disk content at extraction time
-          // IS the post-edit state. No dedup: processing every Edit preserves
-          // last-wins semantics when Read/Write interleave (Edit→Read→Edit).
+          // 调用者在进程启动时初始化缓存一次（print.ts --resume、
+          // Cowork 每轮冷重启），因此提取时的磁盘内容就是编辑后的状态。
+          // 不去重：处理每个 Edit 保留了 Read/Write 交错时的
+          // 后者覆盖语义（Edit->Read->Edit）。
           const editFilePath = fileEditToolUseIds.get(content.toolCallId)
           if (editFilePath && content.isError !== true) {
             try {
@@ -445,7 +442,7 @@ export function extractReadFilesFromMessages(
               if (!isFsInaccessible(e)) {
                 throw e
               }
-              // File deleted or inaccessible since the Edit — skip
+              // 文件在 Edit 之后被删除或无法访问 — 跳过
             }
           }
         }
@@ -457,8 +454,8 @@ export function extractReadFilesFromMessages(
 }
 
 /**
- * Extract the top-level CLI tools used in BashTool calls from message history.
- * Returns a deduplicated set of command names (e.g. 'vercel', 'aws', 'git').
+ * 从消息历史中提取 BashTool 调用中使用的顶层 CLI 工具。
+ * 返回去重后的命令名集合（例如 'vercel'、'aws'、'git'）。
  */
 export function extractBashToolsFromMessages(messages: Message[]): Set<string> {
   const tools = new Set<string>()
@@ -482,9 +479,8 @@ export function extractBashToolsFromMessages(messages: Message[]): Set<string> {
 const STRIPPED_COMMANDS = new Set(['sudo'])
 
 /**
- * Extract the actual CLI name from a bash command string, skipping
- * env var assignments (e.g. `FOO=bar vercel` → `vercel`) and prefixes
- * in STRIPPED_COMMANDS.
+ * 从 bash 命令字符串中提取实际的 CLI 名称，跳过环境变量赋值
+ * （例如 `FOO=bar vercel` -> `vercel`）以及 STRIPPED_COMMANDS 中的前缀。
  */
 function extractCliName(command: string | undefined): string | undefined {
   if (!command) return undefined

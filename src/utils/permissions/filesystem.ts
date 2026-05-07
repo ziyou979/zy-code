@@ -73,11 +73,11 @@ export function normalizeCaseForComparison(path: string): string {
 }
 
 /**
- * If filePath is inside a .zy/skills/{name}/ directory (project or global),
- * return the skill name and a session-allow pattern scoped to just that skill.
- * Used to offer a narrower "allow edits to this skill only" option in the
- * permission dialog and SDK suggestions, so iterating on one skill doesn't
- * require granting session access to all of .zy/ (settings.json, hooks/, etc.).
+ * 如果 filePath 位于 .zy/skills/{name}/ 目录内（项目级或全局级），
+ * 返回技能名称和仅限于该技能的会话放行模式。
+ * 用于在权限对话框和 SDK 建议中提供更精确的"仅允许编辑此技能"选项，
+ * 这样迭代开发一个技能时无需授予对整个 .zy/ 的会话访问权限
+ * （settings.json、hooks/ 等）。
  */
 export function getZySkillScope(filePath: string): { skillName: string; pattern: string } | null {
   const absolutePath = expandPath(filePath)
@@ -573,7 +573,7 @@ export function checkPathSafetyForAutoEdit(
   path: string,
   precomputedPathsToCheck?: readonly string[],
 ): { safe: true } | { safe: false; message: string; classifierApprovable: boolean } {
-  // Get all paths to check (original + symlink resolved paths)
+  // 获取所有需要检查的路径（原始路径 + 解析的符号链接路径）
   const pathsToCheck = precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
 
   // 在所有路径上检查可疑 Windows 路径模式
@@ -799,7 +799,7 @@ function patternWithRoot(
       // 将 POSIX 路径转换为 Windows 格式
       // 模式类似于 /c/Users/...，因此将其转换为 C:\Users\...
       const driveLetter = patternWithoutDoubleSlash[1]?.toUpperCase() ?? 'C'
-      // Keep the pattern in POSIX format since relativePath returns POSIX paths
+      // 保持模式为 POSIX 格式，因为 relativePath 返回 POSIX 路径
       const pathAfterDrive = patternWithoutDoubleSlash.slice(2)
 
       // 提取盘符根目录（C:\）和模式的其余部分
@@ -891,7 +891,7 @@ export function matchingRuleForInput(
 
   const patternsByRoot = getPatternsByRoot(toolPermissionContext, toolType, behavior)
 
-  // Check each root for a matching pattern
+  // 检查每个根中是否有匹配的模式
   for (const [root, patternMap] of patternsByRoot.entries()) {
     // 为 ignore 库转换模式
     const patterns = Array.from(patternMap.keys()).map((pattern) => {
@@ -908,7 +908,7 @@ export function matchingRuleForInput(
 
     const ig = ignore().add(patterns)
 
-    // 使用跨平台相对路径辅助函数 for POSIX-style patterns
+    // 使用跨平台相对路径辅助函数处理 POSIX 风格的模式
     const relativePathStr = relativePath(root ?? getCwd(), fileAbsolutePath ?? getCwd())
 
     if (relativePathStr.startsWith(`..${DIR_SEP}`)) {
@@ -1561,7 +1561,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  // Memdir directory (persistent memory for cross-session learning)
+  // Memdir 目录（用于跨会话学习的持久内存）
   if (isAutoMemPath(normalizedPath)) {
     return {
       behavior: 'allow',

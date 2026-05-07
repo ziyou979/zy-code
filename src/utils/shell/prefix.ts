@@ -1,10 +1,9 @@
 /**
- * Shared command prefix extraction using a compact model
+ * 使用轻量模型的共享命令前缀提取模块
  *
- * This module provides a factory for creating command prefix extractors
- * that can be used by different shell tools. The core logic
- * (compact model query, response validation) is shared, while tool-specific
- * aspects (examples, pre-checks) are configurable.
+ * 本模块提供了创建命令前缀提取器的工厂方法，
+ * 可供不同的 shell 工具使用。核心逻辑（轻量模型查询、响应验证）是共享的，
+ * 而工具特定的方面（示例、预检查）是可配置的。
  */
 
 import chalk from 'chalk'
@@ -21,9 +20,9 @@ import { jsonStringify } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 
 /**
- * Shell executables that must never be accepted as bare prefixes.
- * Allowing e.g. "bash:*" would let any command through, defeating
- * the permission system. Includes Unix shells and Windows equivalents.
+ * 绝不能作为裸前缀接受的 shell 可执行文件。
+ * 允许如 "bash:*" 会让任何命令通过，从而绕过权限系统。
+ * 包含 Unix shell 和 Windows 等效项。
  */
 const DANGEROUS_SHELL_PREFIXES = new Set([
   'sh',
@@ -44,50 +43,49 @@ const DANGEROUS_SHELL_PREFIXES = new Set([
 ])
 
 /**
- * Result of command prefix extraction
+ * 命令前缀提取的结果
  */
 export type CommandPrefixResult = {
-  /** The detected command prefix, or null if no prefix could be determined */
+  /** 检测到的命令前缀，如果无法确定前缀则为 null */
   commandPrefix: string | null
 }
 
 /**
- * Result including subcommand prefixes for compound commands
+ * 包含复合命令子命令前缀的结果
  */
 export type CommandSubcommandPrefixResult = CommandPrefixResult & {
   subcommandPrefixes: Map<string, CommandPrefixResult>
 }
 
 /**
- * Configuration for creating a command prefix extractor
+ * 创建命令前缀提取器的配置
  */
 export type PrefixExtractorConfig = {
-  /** Tool name for logging and warning messages */
+  /** 用于日志和警告消息的工具名称 */
   toolName: string
 
   /** The policy spec containing examples for Haiku */
   policySpec: string
-  /** Analytics event name for logging */
+  /** 用于日志记录的分析事件名称 */
   eventName: string
 
-  /** Query source identifier for the API call */
+  /** API 调用的查询来源标识符 */
   querySource: QuerySource
 
-  /** Optional pre-check function that can short-circuit the Haiku call */
+  /** 可选的预检查函数，可短路 Haiku 调用 */
   preCheck?: (command: string) => CommandPrefixResult | null
 }
 
 /**
- * Creates a memoized command prefix extractor function.
+ * 创建一个被记忆化的命令前缀提取器函数。
  *
- * Uses two-layer memoization: the outer memoized function creates the promise
- * and attaches a .catch handler that evicts the cache entry on rejection.
- * This prevents aborted or failed Haiku calls from poisoning future lookups.
+ * 使用两层记忆化：外层记忆化函数创建 promise 并附加 .catch 处理器，
+ * 在拒绝时清除缓存条目。这可以防止中止或失败的 Haiku 调用污染后续查找。
  *
- * Bounded to 200 entries via LRU to prevent unbounded growth in heavy sessions.
+ * 通过 LRU 限制为 200 个条目，防止在高负载会话中无限增长。
  *
- * @param config - Configuration for the extractor
- * @returns A memoized async function that extracts command prefixes
+ * @param config - 提取器的配置
+ * @returns 一个提取命令前缀的记忆化异步函数
  */
 export function createCommandPrefixExtractor(config: PrefixExtractorConfig) {
   const { toolName, policySpec, eventName, querySource, preCheck } = config
@@ -108,9 +106,9 @@ export function createCommandPrefixExtractor(config: PrefixExtractorConfig) {
         querySource,
         preCheck,
       )
-      // Evict on rejection so aborted calls don't poison future turns.
-      // Identity guard: after LRU eviction, a newer promise may occupy
-      // this key; a stale rejection must not delete it.
+      // 拒绝时清除缓存，防止中止的调用污染后续轮次。
+      // 身份守卫：LRU 淘汰后，一个更新的 promise 可能占据此 key；
+      // 过期的拒绝不能删除它。
       promise.catch(() => {
         if (memoized.cache.get(command) === promise) {
           memoized.cache.delete(command)
@@ -118,7 +116,7 @@ export function createCommandPrefixExtractor(config: PrefixExtractorConfig) {
       })
       return promise
     },
-    (command) => command, // memoize by command only
+    (command) => command, // 仅按命令进行记忆化
     200,
   )
 
@@ -126,14 +124,14 @@ export function createCommandPrefixExtractor(config: PrefixExtractorConfig) {
 }
 
 /**
- * Creates a memoized function to get prefixes for compound commands with subcommands.
+ * 创建一个被记忆化的函数，用于获取包含子命令的复合命令的前缀。
  *
- * Uses the same two-layer memoization pattern as createCommandPrefixExtractor:
- * a .catch handler evicts the cache entry on rejection to prevent poisoning.
+ * 使用与 createCommandPrefixExtractor 相同的两层记忆化模式：
+ * .catch 处理器在拒绝时清除缓存条目以防止污染。
  *
- * @param getPrefix - The single-command prefix extractor (from createCommandPrefixExtractor)
- * @param splitCommand - Function to split a compound command into subcommands
- * @returns A memoized async function that extracts prefixes for the main command and all subcommands
+ * @param getPrefix - 单命令前缀提取器（来自 createCommandPrefixExtractor）
+ * @param splitCommand - 将复合命令拆分为子命令的函数
+ * @returns 一个提取主命令和所有子命令前缀的记忆化异步函数
  */
 export function createSubcommandPrefixExtractor(
   getPrefix: ReturnType<typeof createCommandPrefixExtractor>,
@@ -152,9 +150,9 @@ export function createSubcommandPrefixExtractor(
         getPrefix,
         splitCommand,
       )
-      // Evict on rejection so aborted calls don't poison future turns.
-      // Identity guard: after LRU eviction, a newer promise may occupy
-      // this key; a stale rejection must not delete it.
+      // 拒绝时清除缓存，防止中止的调用污染后续轮次。
+      // 身份守卫：LRU 淘汰后，一个更新的 promise 可能占据此 key；
+      // 过期的拒绝不能删除它。
       promise.catch(() => {
         if (memoized.cache.get(command) === promise) {
           memoized.cache.delete(command)
@@ -162,7 +160,7 @@ export function createSubcommandPrefixExtractor(
       })
       return promise
     },
-    (command) => command, // memoize by command only
+    (command) => command, // 仅按命令进行记忆化
     200,
   )
 
@@ -183,7 +181,7 @@ async function getCommandPrefixImpl(
     return null
   }
 
-  // Run pre-check if provided (e.g., isHelpCommand for Bash)
+  // 如果提供了预检查则执行（例如 Bash 的 isHelpCommand）
   if (preCheck) {
     const preCheckResult = preCheck(command)
     if (preCheckResult !== null) {
@@ -196,7 +194,7 @@ async function getCommandPrefixImpl(
   let result: CommandPrefixResult | null = null
 
   try {
-    // Log a warning if the pre-flight check takes too long
+    // 如果预检查耗时过长则记录警告
     preflightCheckTimeoutId = setTimeout(
       (tn, nonInteractive) => {
         const message = `[${tn}Tool] Pre-flight check is taking longer than expected. Run with ANTHROPIC_LOG=debug to check for failed or slow API requests.`
@@ -238,7 +236,7 @@ async function getCommandPrefixImpl(
       },
     })
 
-    // Clear the timeout since the query completed
+    // 查询已完成，清除超时定时器
     clearTimeout(preflightCheckTimeoutId)
     const durationMs = Date.now() - startTime
 
@@ -257,7 +255,7 @@ async function getCommandPrefixImpl(
       })
       result = null
     } else if (prefix === 'command_injection_detected') {
-      // Haiku detected something suspicious - treat as no prefix available
+      // Haiku 检测到可疑内容 - 视为无可用前缀
       logEvent(eventName, {
         success: false,
         error:
@@ -268,7 +266,7 @@ async function getCommandPrefixImpl(
         commandPrefix: null,
       }
     } else if (prefix === 'git' || DANGEROUS_SHELL_PREFIXES.has(prefix.toLowerCase())) {
-      // Never accept bare `git` or shell executables as a prefix
+      // 永远不接受裸 `git` 或 shell 可执行文件作为前缀
       logEvent(eventName, {
         success: false,
         error:
@@ -279,7 +277,7 @@ async function getCommandPrefixImpl(
         commandPrefix: null,
       }
     } else if (prefix === 'none') {
-      // No prefix detected
+      // 未检测到前缀
       logEvent(eventName, {
         success: false,
         error: 'prefix "none"' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -289,10 +287,10 @@ async function getCommandPrefixImpl(
         commandPrefix: null,
       }
     } else {
-      // Validate that the prefix is actually a prefix of the command
+      // 验证前缀确实是命令的前缀
 
       if (!command.startsWith(prefix)) {
-        // Prefix isn't actually a prefix of the command
+        // 前缀实际上不是命令的前缀
         logEvent(eventName, {
           success: false,
           error:

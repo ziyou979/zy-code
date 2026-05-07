@@ -34,12 +34,12 @@ export type AttributionTexts = {
 }
 
 /**
- * Returns attribution text for commits and PRs based on user settings.
- * Handles:
- * - Dynamic model name via getPublicModelName()
- * - Custom attribution settings (settings.attribution.commit/pr)
- * - Backward compatibility with deprecated includeCoAuthoredBy setting
- * - Remote mode: returns session URL for attribution
+ * 根据用户设置返回 commit 和 PR 的署名文本。
+ * 处理以下场景：
+ * - 通过 getPublicModelName() 动态获取模型名称
+ * - 自定义署名设置（settings.attribution.commit/pr）
+ * - 向后兼容已废弃的 includeCoAuthoredBy 设置
+ * - 远程模式：返回会话 URL 作为署名
  */
 export function getAttributionTexts(): AttributionTexts {
   if (isInternalBuild() && isUndercover()) {
@@ -50,7 +50,7 @@ export function getAttributionTexts(): AttributionTexts {
     const remoteSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID
     if (remoteSessionId) {
       const ingressUrl = process.env.SESSION_INGRESS_URL
-      // Skip for local dev - URLs won't persist
+      // 本地开发环境跳过 — URL 不会持久化
       if (!isRemoteSessionLocal(remoteSessionId, ingressUrl)) {
         const sessionUrl = getRemoteSessionUrl(remoteSessionId, ingressUrl)
         return { commit: sessionUrl, pr: sessionUrl }
@@ -59,9 +59,9 @@ export function getAttributionTexts(): AttributionTexts {
     return { commit: '', pr: '' }
   }
 
-  // @[MODEL LAUNCH]: Update the hardcoded fallback model name below (guards against codename leaks).
-  // For internal repos, use the real model name. For external repos,
-  // fall back to "ZY (qwen3.6-plus)" for unrecognized models to avoid leaking codenames.
+  // @[MODEL LAUNCH]: 更新下方硬编码的回退模型名称（防止代号泄漏）。
+  // 对内部仓库，使用真实模型名称。对外部仓库，
+  // 无法识别的模型回退到 "ZY (qwen3.6-plus)" 以避免泄漏代号。
   const model = getMainLoopModel()
   const isKnownPublicModel = getPublicModelDisplayName(model) !== null
   const modelName =
@@ -71,7 +71,7 @@ export function getAttributionTexts(): AttributionTexts {
 
   const settings = getInitialSettings()
 
-  // New attribution setting takes precedence over deprecated includeCoAuthoredBy
+  // 新的 attribution 设置优先于已废弃的 includeCoAuthoredBy
   if (settings.attribution) {
     return {
       commit: settings.attribution.commit ?? defaultCommit,
@@ -79,7 +79,7 @@ export function getAttributionTexts(): AttributionTexts {
     }
   }
 
-  // Backward compatibility: deprecated includeCoAuthoredBy setting
+  // 向后兼容：已废弃的 includeCoAuthoredBy 设置
   if (settings.includeCoAuthoredBy === false) {
     return { commit: '', pr: '' }
   }
@@ -88,8 +88,8 @@ export function getAttributionTexts(): AttributionTexts {
 }
 
 /**
- * Check if a message content string is terminal output rather than a user prompt.
- * Terminal output includes bash input/output tags and caveat messages about local commands.
+ * 检查消息内容字符串是否为终端输出而非用户提示。
+ * 终端输出包括 bash 输入/输出标签和关于本地命令的附带说明消息。
  */
 function isTerminalOutput(content: string): boolean {
   for (const tag of TERMINAL_OUTPUT_TAGS) {
@@ -101,10 +101,10 @@ function isTerminalOutput(content: string): boolean {
 }
 
 /**
- * Count user messages with visible text content in a list of non-sidechain messages.
- * Excludes tool_result blocks, terminal output, and empty messages.
+ * 统计非 sidechain 消息列表中包含可见文本内容的用户消息数。
+ * 排除 tool_result 块、终端输出和空消息。
  *
- * Callers should pass messages already filtered to exclude sidechain messages.
+ * 调用方应传入已过滤掉 sidechain 消息的列表。
  */
 export function countUserPromptsInMessages(
   messages: ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
@@ -152,11 +152,11 @@ export function countUserPromptsInMessages(
 }
 
 /**
- * Count non-sidechain user messages in transcript entries.
- * Used to calculate the number of "steers" (user prompts - 1).
+ * 统计转录条目中非 sidechain 的用户消息数。
+ * 用于计算 "steers" 数量（用户提示数 - 1）。
  *
- * Counts user messages that contain actual user-typed text,
- * excluding tool_result blocks, sidechain messages, and terminal output.
+ * 统计包含用户实际输入文本的消息，
+ * 排除 tool_result 块、sidechain 消息和终端输出。
  */
 function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
   const nonSidechain = entries.filter(
@@ -167,10 +167,10 @@ function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
 }
 
 /**
- * Get full attribution data from the provided AppState's attribution state.
- * Uses ALL tracked files from the attribution state (not just staged files)
- * because for PR attribution, files may not be staged yet.
- * Returns null if no attribution data is available.
+ * 从提供的 AppState 的 attribution 状态获取完整的署名数据。
+ * 使用 attribution 状态中的所有跟踪文件（不仅仅是暂存文件），
+ * 因为对于 PR 署名，文件可能尚未暂存。
+ * 如果没有可用的署名数据则返回 null。
  */
 async function getPRAttributionData(appState: AppState): Promise<AttributionData | null> {
   const attribution = appState.attribution
@@ -179,7 +179,7 @@ async function getPRAttributionData(appState: AppState): Promise<AttributionData
     return null
   }
 
-  // Handle both Map and plain object (in case of serialization)
+  // 同时处理 Map 和普通对象（序列化场景）
   const fileStates = attribution.fileStates
   const isMap = fileStates instanceof Map
   const trackedFiles = isMap ? Array.from(fileStates.keys()) : Object.keys(fileStates)
@@ -205,8 +205,8 @@ const MEMORY_ACCESS_TOOL_NAMES = new Set([
 ])
 
 /**
- * Count memory file accesses in transcript entries.
- * Uses the same detection conditions as the PostToolUse session file access hooks.
+ * 统计转录条目中的记忆文件访问次数。
+ * 使用与 PostToolUse 会话文件访问 hook 相同的检测条件。
  */
 function countMemoryFileAccessFromEntries(entries: ReadonlyArray<Entry>): number {
   let count = 0
@@ -223,10 +223,9 @@ function countMemoryFileAccessFromEntries(entries: ReadonlyArray<Entry>): number
 }
 
 /**
- * Read session transcript entries and compute prompt count and memory access
- * count. Pre-compact entries are skipped — the N-shot count and memory-access
- * count should reflect only the current conversation arc, not accumulated
- * prompts from before a compaction boundary.
+ * 读取会话转录条目并计算提示数和记忆访问数。
+ * 压缩前的条目会被跳过 — N-shot 计数和记忆访问计数应仅反映
+ * 当前对话弧，而非压缩边界之前累积的提示。
  */
 async function getTranscriptStats(): Promise<{
   promptCount: number
@@ -235,12 +234,11 @@ async function getTranscriptStats(): Promise<{
   try {
     const filePath = getTranscriptPath()
     const fileSize = (await stat(filePath)).size
-    // Fused reader: attr-snap lines (84% of a long session by bytes) are
-    // skipped at the fd level so peak scales with output, not file size. The
-    // one surviving attr-snap at EOF is a no-op for the count functions
-    // (neither checks type === 'attribution-snapshot'). When the last
-    // boundary has preservedSegment the reader returns full (no truncate);
-    // the findLastIndex below still slices to post-boundary.
+    // 融合读取器：attr-snap 行（长会话中按字节计占 84%）在 fd 层级被跳过，
+    // 因此峰值内存随输出而非文件大小扩展。EOF 处保留的那一条 attr-snap
+    // 对计数函数无影响（两者都不检查 type === 'attribution-snapshot'）。
+    // 当最后一个边界包含 preservedSegment 时读取器返回完整内容（不截断）；
+    // 下方的 findLastIndex 仍会切片到边界之后。
     const scan = await readTranscriptForLoad(filePath, fileSize)
     const buf = scan.postBoundaryBuf
     const entries = parseJSONL<Entry>(buf)
@@ -258,17 +256,17 @@ async function getTranscriptStats(): Promise<{
 }
 
 /**
- * Get enhanced PR attribution text with Zy contribution stats.
+ * 获取包含 Zy 贡献统计的增强 PR 署名文本。
  *
- * Format: "🤖 Generated with ZY Code (93% 3-shotted by qwen3.6-plus)"
+ * 格式："🤖 Generated with ZY Code (93% 3-shotted by qwen3.6-plus)"
  *
- * Rules:
- * - Shows Zy contribution percentage from commit attribution
- * - Shows N-shotted where N is the prompt count (1-shotted, 2-shotted, etc.)
- * - Shows short model name (e.g., qwen3.6-plus)
- * - Returns default attribution if stats can't be computed
+ * 规则：
+ * - 显示来自 commit 署名的 Zy 贡献百分比
+ * - 显示 N-shotted，其中 N 为提示次数（1-shotted、2-shotted 等）
+ * - 显示模型短名称（例如 qwen3.6-plus）
+ * - 无法计算统计时返回默认署名
  *
- * @param getAppState Function to get the current AppState (from command context)
+ * @param getAppState 获取当前 AppState 的函数（来自命令上下文）
  */
 export async function getEnhancedPRAttribution(getAppState: () => AppState): Promise<string> {
   if (isInternalBuild() && isUndercover()) {
@@ -279,7 +277,7 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
     const remoteSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID
     if (remoteSessionId) {
       const ingressUrl = process.env.SESSION_INGRESS_URL
-      // Skip for local dev - URLs won't persist
+      // 本地开发环境跳过 — URL 不会持久化
       if (!isRemoteSessionLocal(remoteSessionId, ingressUrl)) {
         return getRemoteSessionUrl(remoteSessionId, ingressUrl)
       }
@@ -289,19 +287,19 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
 
   const settings = getInitialSettings()
 
-  // If user has custom PR attribution, use that
+  // 如果用户有自定义 PR 署名，使用自定义值
   if (settings.attribution?.pr) {
     return settings.attribution.pr
   }
 
-  // Backward compatibility: deprecated includeCoAuthoredBy setting
+  // 向后兼容：已废弃的 includeCoAuthoredBy 设置
   if (settings.includeCoAuthoredBy === false) {
     return ''
   }
 
   const defaultAttribution = `🤖 Generated with [ZY Code](${PRODUCT_URL})`
 
-  // Get AppState first
+  // 先获取 AppState
   const appState = getAppState()
 
   logForDebugging(`PR Attribution: appState.attribution exists: ${!!appState.attribution}`)
@@ -312,7 +310,7 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
     logForDebugging(`PR Attribution: fileStates count: ${fileCount}`)
   }
 
-  // Get attribution stats (transcript is read once for both prompt count and memory access)
+  // 获取署名统计（转录文件只读取一次，同时用于提示计数和记忆访问计数）
   const [attributionData, { promptCount, memoryAccessCount }, isInternal] = await Promise.all([
     getPRAttributionData(appState),
     getTranscriptStats(),
@@ -325,30 +323,29 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
     `PR Attribution: ZyPercent: ${ZyPercent}, promptCount: ${promptCount}, memoryAccessCount: ${memoryAccessCount}`,
   )
 
-  // Get short model name, sanitized for non-internal repos
+  // 获取短模型名称，对非内部仓库进行脱敏处理
   const rawModelName = getMainLoopModel()
   const shortModelName = isInternal ? rawModelName : sanitizeModelName(rawModelName)
 
-  // If no attribution data, return default
+  // 如果没有署名数据，返回默认值
   if (ZyPercent === 0 && promptCount === 0 && memoryAccessCount === 0) {
     logForDebugging('PR Attribution: returning default (no data)')
     return defaultAttribution
   }
 
-  // Build the enhanced attribution: "🤖 Generated with ZY Code (93% 3-shotted by qwen3.6-plus, 2 memories recalled)"
+  // 构建增强署名："🤖 Generated with ZY Code (93% 3-shotted by qwen3.6-plus, 2 memories recalled)"
   const memSuffix =
     memoryAccessCount > 0
       ? `, ${memoryAccessCount} ${memoryAccessCount === 1 ? 'memory' : 'memories'} recalled`
       : ''
   const summary = `🤖 Generated with [ZY Code](${PRODUCT_URL}) (${ZyPercent}% ${promptCount}-shotted by ${shortModelName}${memSuffix})`
 
-  // Append trailer lines for squash-merge survival. Only for allowlisted repos
-  // (INTERNAL_MODEL_REPOS) and only in builds with COMMIT_ATTRIBUTION enabled —
-  // attributionTrailer.ts contains excluded strings, so reach it via dynamic
-  // import behind feature(). When the repo is configured with
-  // squash_merge_commit_message=PR_BODY (cli, apps), the PR body becomes the
-  // squash commit body verbatim — trailer lines at the end become proper git
-  // trailers on the squash commit.
+  // 追加 trailer 行以在 squash-merge 中保留。仅适用于白名单仓库
+  // （INTERNAL_MODEL_REPOS）且仅在启用 COMMIT_ATTRIBUTION 的构建中 —
+  // attributionTrailer.ts 包含被排除的字符串，因此通过 feature() 后的
+  // 动态 import 访问。当仓库配置为 squash_merge_commit_message=PR_BODY
+  // （cli、apps）时，PR body 会原样成为 squash commit body —
+  // 末尾的 trailer 行会成为 squash commit 上的正式 git trailers。
   if (feature('COMMIT_ATTRIBUTION') && isInternal && attributionData) {
     // @ts-ignore
     const { buildPRTrailers } = await import('./attributionTrailer.js')

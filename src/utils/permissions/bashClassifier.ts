@@ -1,4 +1,4 @@
-// Stub for external builds - classifier permissions feature is ANT-ONLY
+// 外部构建的桩实现 - classifier permissions 功能仅限内部版本
 
 export const PROMPT_PREFIX = 'prompt:'
 

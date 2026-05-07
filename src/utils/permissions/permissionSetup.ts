@@ -97,27 +97,27 @@ export function isDangerousBashPermission(
   for (const pattern of DANGEROUS_BASH_PATTERNS) {
     const lowerPattern = pattern.toLowerCase()
 
-    // Exact match to the pattern itself (e.g., "python" as a rule)
+    // 精确匹配模式本身（例如，将 "python" 作为规则）
     if (content === lowerPattern) {
       return true
     }
 
-    // Prefix syntax: "python:*" allows any python command
+    // 前缀语法："python:*" 放行任何 python 命令
     if (content === `${lowerPattern}:*`) {
       return true
     }
 
-    // Wildcard at end: "python*" matches python, python3, etc.
+    // 末尾通配符："python*" 匹配 python、python3 等
     if (content === `${lowerPattern}*`) {
       return true
     }
 
-    // Wildcard with space: "python *" would match "python script.py"
+    // 带空格的通配符："python *" 匹配 "python script.py"
     if (content === `${lowerPattern} *`) {
       return true
     }
 
-    // Check for patterns like "python -*" which would match "python -c 'code'"
+    // 检查类似 "python -*" 的模式，它会匹配 "python -c 'code'"
     if (content.startsWith(`${lowerPattern} -`) && content.endsWith('*')) {
       return true
     }
@@ -818,9 +818,9 @@ export async function initializeToolPermissionContext({
   dangerousPermissions: DangerousPermissionInfo[]
   overlyBroadBashPermissions: DangerousPermissionInfo[]
 }> {
-  // Parse comma-separated allowed and disallowed tools if provided
-  // Normalize legacy tool names (e.g., 'Task' → 'Agent') so that in-memory
-  // rule removal in stripDangerousPermissionsForAutoMode matches correctly.
+  // 解析逗号分隔的允许和禁止工具（如果提供）
+  // 规范化旧版工具名称（例如 'Task' → 'Agent'），以便
+  // stripDangerousPermissionsForAutoMode 中的内存规则移除能正确匹配。
   const parsedAllowedToolsCli = parseToolListFromCLI(allowedToolsCli).map((rule) =>
     permissionRuleValueToString(permissionRuleValueFromString(rule)),
   )
@@ -830,8 +830,8 @@ export async function initializeToolPermissionContext({
   // 我们需要检查基础工具是否被显式提供（而不仅仅是空默认值）
   if (baseToolsCli && baseToolsCli.length > 0) {
     const baseToolsResult = parseBaseToolsFromCLI(baseToolsCli)
-    // Normalize legacy tool names (e.g., 'Task' → 'Agent') so user-provided
-    // base tool lists using old names still match canonical names.
+    // 规范化旧版工具名称（例如 'Task' → 'Agent'），以便用户提供的
+    // 使用旧名称的基础工具列表仍能匹配规范名称。
     const baseToolsSet = new Set(baseToolsResult.map(normalizeLegacyToolName))
     const allToolNames = getToolsForDefaultPreset()
     const toolsToDisallow = allToolNames.filter((tool) => !baseToolsSet.has(tool))

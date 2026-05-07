@@ -1,10 +1,9 @@
 /**
- * Marketplace reconciler — makes known_marketplaces.json consistent with
- * declared intent in settings.
+ * Marketplace 协调器 — 使 known_marketplaces.json 与 settings 中声明的意图保持一致。
  *
- * Two layers:
- * - diffMarketplaces(): comparison (reads .git for worktree canonicalization, memoized)
- * - reconcileMarketplaces(): bundled diff + install (I/O, idempotent, additive)
+ * 两个层次：
+ * - diffMarketplaces()：比较（读取 .git 进行工作树规范化，已记忆化）
+ * - reconcileMarketplaces()：捆绑的 diff + 安装（I/O，幂等，仅追加）
  */
 
 import isEqual from 'lodash-es/isEqual.js'
@@ -28,24 +27,24 @@ import {
 } from './schemas.js'
 
 export type MarketplaceDiff = {
-  /** Declared in settings, absent from known_marketplaces.json */
+  /** 在 settings 中声明，但在 known_marketplaces.json 中缺失 */
   missing: string[]
-  /** Present in both, but settings source ≠ JSON source (settings wins) */
+  /** 两者都存在，但 settings 源 ≠ JSON 源（settings 胜出） */
   sourceChanged: Array<{
     name: string
     declaredSource: MarketplaceSource
     materializedSource: MarketplaceSource
   }>
-  /** Present in both, sources match */
+  /** 两者都存在，源匹配 */
   upToDate: string[]
 }
 
 /**
- * Compare declared intent (settings) against materialized state (JSON).
+ * 将声明的意图（settings）与已物化的状态（JSON）进行比较。
  *
- * Resolves relative directory/file paths in `declared` before comparing,
- * so project settings with `./path` match JSON's absolute path. Path
- * resolution reads `.git` to canonicalize worktree paths (memoized).
+ * 在比较前解析 `declared` 中的相对目录/文件路径，
+ * 这样包含 `./path` 的项目 settings 可以与 JSON 的绝对路径匹配。
+ * 路径解析读取 `.git` 来规范化工作树路径（已记忆化）。
  */
 export function diffMarketplaces(
   declared: Record<string, DeclaredMarketplace>,
@@ -63,10 +62,10 @@ export function diffMarketplaces(
     if (!state) {
       missing.push(name)
     } else if (intent.sourceIsFallback) {
-      // Fallback: presence suffices. Don't compare sources — the declared source
-      // is only a default for the `missing` branch. If seed/prior-install/mirror
-      // materialized this marketplace under ANY source, leave it alone. Comparing
-      // would report sourceChanged → re-clone → stomp the materialized content.
+      // 回退：存在即可。不比较源 — 声明的源仅是 `missing` 分支的
+      // 默认值。如果种子/先前安装/镜像在任何源下物化了
+      // 此 marketplace，则保持不变。比较会报告 sourceChanged
+      // → 重新克隆 → 覆盖已物化的内容。
       upToDate.push(name)
     } else if (!isEqual(normalizedIntent, state.source)) {
       sourceChanged.push({
@@ -83,7 +82,7 @@ export function diffMarketplaces(
 }
 
 export type ReconcileOptions = {
-  /** Skip a declared marketplace. Used by zip-cache mode for unsupported source types. */
+  /** 跳过声明的 marketplace。用于 zip-cache 模式中不支持的源类型。 */
   skip?: (name: string, source: MarketplaceSource) => boolean
   onProgress?: (event: ReconcileProgressEvent) => void
 }
@@ -108,8 +107,8 @@ export type ReconcileResult = {
 }
 
 /**
- * Make known_marketplaces.json consistent with declared intent.
- * Idempotent. Additive only (never deletes). Does not touch AppState.
+ * 使 known_marketplaces.json 与声明的意图保持一致。
+ * 幂等。仅追加（从不删除）。不触及 AppState。
  */
 export async function reconcileMarketplaces(opts?: ReconcileOptions): Promise<ReconcileResult> {
   const declared = getDeclaredMarketplaces()
@@ -158,12 +157,12 @@ export async function reconcileMarketplaces(opts?: ReconcileOptions): Promise<Re
       skipped.push(item.name)
       continue
     }
-    // For sourceChanged local-path entries, skip if the declared path doesn't
-    // exist. Guards multi-checkout scenarios where normalizeSource can't
-    // canonicalize and produces a dead path — the materialized entry may still
-    // be valid; addMarketplaceSource would fail anyway, so skipping avoids a
-    // noisy "failed" event and preserves the working entry. Missing entries
-    // are NOT skipped (nothing to preserve; the user should see the error).
+    // 对于 sourceChanged 的本地路径条目，如果声明的路径不存在则跳过。
+    // 防护多检出场景，其中 normalizeSource 无法规范化并产生
+    // 死路径 — 已物化的条目可能仍然有效；addMarketplaceSource
+    // 无论如何都会失败，所以跳过可以避免嘈杂的 "failed" 事件
+    // 并保留工作条目。缺失的条目不会被跳过
+    // （没有什么要保留；用户应该看到错误）。
     if (
       item.action === 'update' &&
       isLocalMarketplaceSource(item.source) &&
@@ -207,10 +206,10 @@ export async function reconcileMarketplaces(opts?: ReconcileOptions): Promise<Re
     })
 
     try {
-      // addMarketplaceSource is source-idempotent — same source returns
-      // alreadyMaterialized:true without cloning. For 'update' (source
-      // changed), the new source won't match existing → proceeds with clone
-      // and overwrites the old JSON entry.
+      // addMarketplaceSource 是源幂等的 — 相同的源返回
+      // alreadyMaterialized:true 而不克隆。对于 'update'（源
+      // 已更改），新源不会匹配现有的 → 继续克隆
+      // 并覆写旧的 JSON 条目。
       const result = await addMarketplaceSource(source)
 
       if (action === 'install') installed.push(name)
@@ -232,17 +231,17 @@ export async function reconcileMarketplaces(opts?: ReconcileOptions): Promise<Re
 }
 
 /**
- * Resolve relative directory/file paths for stable comparison.
- * Settings declared at project scope may use project-relative paths;
- * JSON stores absolute paths.
+ * 解析相对目录/文件路径以进行稳定的比较。
+ * 在项目范围声明的 settings 可能使用项目相对路径；
+ * JSON 存储绝对路径。
  *
- * For git worktrees, resolve against the main checkout (canonical root)
- * instead of the worktree cwd. Project settings are checked into git,
- * so `./foo` means "relative to this repo" — but known_marketplaces.json is
- * user-global with one entry per marketplace name. Resolving against the
- * worktree cwd means each worktree session overwrites the shared entry with
- * its own absolute path, and deleting the worktree leaves a dead
- * installLocation. The canonical root is stable across all worktrees.
+ * 对于 git 工作树，相对于主检出（规范根）解析而非
+ * 工作树 cwd。项目 settings 被检入 git，所以 `./foo`
+ * 意味着“相对于此仓库”— 但 known_marketplaces.json 是
+ * 用户全局的，每个 marketplace 名称一个条目。相对于
+ * 工作树 cwd 解析意味着每个工作树会话会用其自己的
+ * 绝对路径覆写共享条目，删除工作树会留下死的
+ * installLocation。规范根在所有工作树中是稳定的。
  */
 function normalizeSource(source: MarketplaceSource, projectRoot?: string): MarketplaceSource {
   if ((source.source === 'directory' || source.source === 'file') && !isAbsolute(source.path)) {

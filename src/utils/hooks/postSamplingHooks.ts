@@ -5,11 +5,11 @@ import { toError } from '../errors.js'
 import { logError } from '../log.js'
 import type { SystemPrompt } from '../systemPromptType.js'
 
-// Post-sampling hook - not exposed in settings.json config (yet), only used programmatically
+// Post-sampling hook - 尚未在 settings.json 配置中暴露，仅供程序内部使用
 
-// Generic context for REPL hooks (both post-sampling and stop hooks)
+// REPL hooks 的通用上下文（适用于 post-sampling 和 stop hooks）
 export type REPLHookContext = {
-  messages: Message[] // Full message history including assistant responses
+  messages: Message[] // 完整的消息历史，包含助手的回复
   systemPrompt: SystemPrompt
   userContext: { [k: string]: string }
   systemContext: { [k: string]: string }
@@ -19,26 +19,26 @@ export type REPLHookContext = {
 
 export type PostSamplingHook = (context: REPLHookContext) => Promise<void> | void
 
-// Internal registry for post-sampling hooks
+// post-sampling hooks 的内部注册表
 const postSamplingHooks: PostSamplingHook[] = []
 
 /**
- * Register a post-sampling hook that will be called after model sampling completes
- * This is an internal API not exposed through settings
+ * 注册一个 post-sampling hook，在模型 sampling 完成后被调用
+ * 这是一个内部 API，不通过 settings 暴露
  */
 export function registerPostSamplingHook(hook: PostSamplingHook): void {
   postSamplingHooks.push(hook)
 }
 
 /**
- * Clear all registered post-sampling hooks (for testing)
+ * 清除所有已注册的 post-sampling hooks（用于测试）
  */
 export function clearPostSamplingHooks(): void {
   postSamplingHooks.length = 0
 }
 
 /**
- * Execute all registered post-sampling hooks
+ * 执行所有已注册的 post-sampling hooks
  */
 export async function executePostSamplingHooks(
   messages: Message[],
@@ -61,7 +61,7 @@ export async function executePostSamplingHooks(
     try {
       await hook(context)
     } catch (error) {
-      // Log but don't fail on hook errors
+      // 记录日志但不因 hook 错误而中断执行
       logError(toError(error))
     }
   }

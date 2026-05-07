@@ -1,15 +1,14 @@
 /**
- * Session title generation via compact model.
+ * 通过 compact model 生成会话标题。
  *
- * Standalone module with minimal dependencies so it can be imported from
- * print.ts (SDK control request handler) without pulling in the React/chalk/
- * git dependency chain that teleport.tsx carries.
+ * 独立模块，依赖最少，可从 print.ts（SDK 控制请求处理器）导入，
+ * 而不会引入 teleport.tsx 携带的 React/chalk/git 依赖链。
  *
- * This is the single source of truth for AI-generated session titles across
- * all surfaces. Previously there were separate compact model title generators:
- * - teleport.tsx generateTitleAndBranch (6-word title + branch for CCR)
- * - rename/generateSessionName.ts (kebab-case name for /rename)
- * Each remains for backwards compat; new callers should use this module.
+ * 这是所有界面中 AI 生成会话标题的唯一真实来源。之前有独立的
+ * compact model 标题生成器：
+ * - teleport.tsx generateTitleAndBranch（6 词标题 + CCR 分支名）
+ * - rename/generateSessionName.ts（kebab-case 名称，用于 /rename）
+ * 为保持向后兼容，这些保留不变；新的调用方应使用本模块。
  */
 
 import { z } from 'zod/v4'
@@ -26,9 +25,9 @@ import { asSystemPrompt } from './systemPromptType.js'
 const MAX_CONVERSATION_TEXT = 1000
 
 /**
- * Flatten a message array into a single text string for compact model title input.
- * Skips meta/non-human messages. Tail-slices to the last 1000 chars so
- * recent context wins when the conversation is long.
+ * 将消息数组展平为单个文本字符串，作为 compact model 标题生成的输入。
+ * 跳过 meta/非人类消息。从末尾截取最后 1000 个字符，
+ * 以便在会话较长时近期上下文优先。
  */
 export function extractConversationText(messages: Message[]): string {
   const parts: string[] = []
@@ -68,11 +67,11 @@ Bad (wrong case): {"title": "Fix Login Button On Mobile"}`
 const titleSchema = lazySchema(() => z.object({ title: z.string() }))
 
 /**
- * Generate a sentence-case session title from a description or first message.
- * Returns null on error or if the compact model returns an unparseable response.
+ * 从描述或首条消息生成句首大写格式的会话标题。
+ * 出错或 compact model 返回无法解析的响应时返回 null。
  *
- * @param description - The user's first message or a description of the session
- * @param signal - Abort signal for cancellation
+ * @param description - 用户的首条消息或会话描述
+ * @param signal - 用于取消的 AbortSignal
  */
 export async function generateSessionTitle(
   description: string,
@@ -100,9 +99,8 @@ export async function generateSessionTitle(
       options: {
         querySource: 'generate_session_title' as any,
         agents: [],
-        // Reflect the actual session mode — this module is called from
-        // both the SDK print path (non-interactive) and the CCR remote
-        // session path via useRemoteSession (interactive).
+        // 反映实际会话模式——本模块既从 SDK print 路径（非交互式）调用，
+        // 也从 CCR 远程会话路径通过 useRemoteSession（交互式）调用。
         isNonInteractiveSession: getIsNonInteractiveSession(),
         hasAppendSystemPrompt: false,
         mcpTools: [],

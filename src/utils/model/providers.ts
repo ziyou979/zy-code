@@ -10,14 +10,14 @@ import {
 import { PROVIDER_REGISTRY, getProviderEntry } from './providerRegistry.js'
 
 /**
- * Union of all registered provider IDs.
- * Derived from PROVIDER_REGISTRY — add new providers there, not here.
+ * 所有已注册的 provider ID 的联合类型。
+ * 派生自 PROVIDER_REGISTRY —— 添加新 provider 请修改该文件，而非此处。
  */
 export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
 
 /**
- * Get the configured API provider from settings (zy.json).
- * Returns null if not configured in settings.
+ * 从 settings（zy.json）中获取已配置的 API provider。
+ * 未配置时返回 null。
  */
 function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
   try {
@@ -31,15 +31,15 @@ function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'fou
 }
 
 /**
- * Get the configured API provider from onboarding config.
- * Returns null if config isn't ready yet (early startup) or not configured.
+ * 从 onboarding 配置中获取已配置的 API provider。
+ * 如果配置尚未就绪（启动早期）或未配置，则返回 null。
  */
 function getConfiguredProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
   try {
     const { getGlobalConfig } = require('../config.js') as typeof import('../config.js')
     return getGlobalConfig().configuredProvider ?? null
   } catch {
-    // Config not ready yet — return null to fall through to env var detection
+    // 配置尚未就绪 —— 返回 null 以继续检测环境变量
     return null
   }
 }
@@ -57,14 +57,14 @@ export function getAPIProvider(): APIProvider {
     return configured
   }
 
-  // 3. Check activation env vars from registry
+  // 3. 检查注册表中的激活环境变量
   for (const entry of PROVIDER_REGISTRY) {
     if (entry.activationEnvVar && isEnvTruthy(process.env[entry.activationEnvVar])) {
       return entry.id as APIProvider
     }
   }
 
-  // 4. Default to anthropic
+  // 4. 默认使用 anthropic
   return 'anthropic'
 }
 
@@ -73,24 +73,24 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
 }
 
 /**
- * Provider-level capabilities — declared per-provider in providerRegistry.ts,
- * optionally refined per-model.
+ * Provider 级别的能力声明 —— 在 providerRegistry.ts 中按 provider 定义，
+ * 可按模型进行细化。
  *
- * When adding a new provider, update providerRegistry.ts instead of this file.
+ * 添加新 provider 时，请修改 providerRegistry.ts 而非此文件。
  */
 export type ProviderCapability =
-  | 'thinking' // extended thinking (thinking blocks)
-  | 'adaptive_thinking' // adaptive thinking mode
-  | 'effort' // effort parameter (low/medium/high/max)
-  | 'max_effort' // max effort level support
-  | 'advisor' // advisor tool support
-  | 'structured_outputs' // strict tool schema / structured outputs beta
-  | 'context_management' // context management beta (thinking preservation)
-  | 'prompt_caching' // cache_control / prompt caching beta
-  | 'web_search' // web search tool
-  | 'interleaved_thinking' // interleaved thinking (ISP) beta
+  | 'thinking' // 扩展思考（thinking blocks）
+  | 'adaptive_thinking' // 自适应思考模式
+  | 'effort' // effort 参数（low/medium/high/max）
+  | 'max_effort' // 支持最大 effort 级别
+  | 'advisor' // advisor 工具支持
+  | 'structured_outputs' // 严格工具 schema / 结构化输出 beta
+  | 'context_management' // 上下文管理 beta（思考保留）
+  | 'prompt_caching' // cache_control / prompt 缓存 beta
+  | 'web_search' // 网络搜索工具
+  | 'interleaved_thinking' // 交错思考（ISP）beta
 
-/** Per-provider capability declarations — auto-generated from PROVIDER_REGISTRY. */
+/** 按 provider 的能力声明 —— 从 PROVIDER_REGISTRY 自动生成。 */
 const PROVIDER_CAPABILITIES: Record<string, Set<ProviderCapability>> = Object.fromEntries(
   PROVIDER_REGISTRY.map((entry) => [entry.id, new Set<ProviderCapability>(entry.capabilities)]),
 )
@@ -103,9 +103,9 @@ export function providerHasCapability(
 }
 
 /**
- * Check if ANTHROPIC_BASE_URL is an Anthropic API URL.
- * Returns true if not set (default API) or points to api.anthropic.com
- * (or api-staging.anthropic.com for ant users).
+ * 检查 ANTHROPIC_BASE_URL 是否为 Anthropic API 地址。
+ * 未设置（使用默认 API）或指向 api.anthropic.com 时返回 true
+ * （内部构建还允许 api-staging.anthropic.com）。
  */
 export function isAnthropicBaseUrl(): boolean {
   const baseUrl = process.env.ANTHROPIC_BASE_URL
@@ -125,10 +125,9 @@ export function isAnthropicBaseUrl(): boolean {
 }
 
 /**
- * Returns true for providers that use the Anthropic SDK directly with an
- * Anthropic-compatible message format (not just the SDK library, but the
- * actual request/response shape). Used for beta header injection and
- * request-ID logging.
+ * 对于直接使用 Anthropic SDK 并采用 Anthropic 兼容消息格式的 provider 返回 true
+ * （不仅是使用了 SDK 库，而是请求/响应的实际结构也兼容）。
+ * 用于 beta header 注入和 request-ID 日志记录。
  */
 export function isCompatibleProvider(provider: APIProvider): boolean {
   const entry = getProviderEntry(provider)
@@ -176,8 +175,7 @@ export function isEnvOrDefaultProvider(provider: APIProvider): boolean {
  * 从 ~/.zy/model-capabilities.json 读取模型能力配置。
  * 模型能力配置已从 settings.json 独立出来。
  *
- * Usage: replace hardcoded model checks with
- * `modelHasCapability(model, 'thinking')`.
+ * 用法：用 `modelHasCapability(model, 'thinking')` 替代硬编码的模型判断。
  */
 export function modelHasCapability(
   model: string,

@@ -42,8 +42,8 @@ import {
 } from './sessionStorage.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
 
-// Dead code elimination: ant-only tool names are conditionally required so
-// their strings don't leak into external builds. Static imports always bundle.
+// 死代码消除：ant 专属的工具名通过条件 require 引入，
+// 避免其字符串泄漏到外部构建产物中。静态 import 会始终被打包。
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
@@ -63,7 +63,7 @@ const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
- * Transforms legacy attachment types to current types for backward compatibility
+ * 将旧版附件类型转换为当前类型，以实现向后兼容
  */
 function migrateLegacyAttachmentTypes(message: Message): Message {
   if (message.type !== 'attachment') {
@@ -73,9 +73,9 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
   const attachment = message.attachment as {
     type: string
     [key: string]: unknown
-  } // Handle legacy types not in current type system
+  } // 处理不在当前类型系统中的旧版类型
 
-  // Transform legacy attachment types
+  // 转换旧版附件类型
   if (attachment.type === 'new_file') {
     return {
       ...message,
@@ -84,7 +84,7 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
         type: 'file',
         displayPath: relative(getCwd(), attachment.filename as string),
       },
-    } as unknown as SerializedMessage // Cast entire message since we know the structure is correct
+    } as unknown as SerializedMessage // 因为已知结构正确，所以强制转换整条消息
   }
 
   if (attachment.type === 'new_directory') {
@@ -95,10 +95,10 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
         type: 'directory',
         displayPath: relative(getCwd(), attachment.path as string),
       },
-    } as unknown as SerializedMessage // Cast entire message since we know the structure is correct
+    } as unknown as SerializedMessage // 因为已知结构正确，所以强制转换整条消息
   }
 
-  // Backfill displayPath for attachments from old sessions
+  // 为旧会话中缺少 displayPath 的附件回填该字段
   if (!('displayPath' in attachment)) {
     const path =
       'filename' in attachment
@@ -137,30 +137,29 @@ export type DeserializeResult = {
 }
 
 /**
- * Deserializes messages from a log file into the format expected by the REPL.
- * Filters unresolved tool uses, orphaned thinking messages, and appends a
- * synthetic assistant sentinel when the last message is from the user.
- * @internal Exported for testing - use loadConversationForResume instead
+ * 将日志文件中的消息反序列化为 REPL 期望的格式。
+ * 过滤未解析的 tool use、孤立的 thinking 消息，并在最后一条消息来自用户时
+ * 追加一条合成的 assistant 哨兵消息。
+ * @internal 仅为测试导出 - 请使用 loadConversationForResume 代替
  */
 export function deserializeMessages(serializedMessages: Message[]): Message[] {
   return deserializeMessagesWithInterruptDetection(serializedMessages).messages
 }
 
 /**
- * Like deserializeMessages, but also detects whether the session was
- * interrupted mid-turn. Used by the SDK resume path to auto-continue
- * interrupted turns after a gateway-triggered restart.
- * @internal Exported for testing
+ * 类似 deserializeMessages，但同时检测会话是否在轮次中途被中断。
+ * 用于 SDK resume 路径，在网关触发重启后自动继续被中断的轮次。
+ * @internal 仅为测试导出
  */
 export function deserializeMessagesWithInterruptDetection(
   serializedMessages: Message[],
 ): DeserializeResult {
   try {
-    // Transform legacy attachment types before processing
+    // 在处理前先转换旧版附件类型
     const migratedMessages = serializedMessages.map(migrateLegacyAttachmentTypes)
 
-    // Strip invalid permissionMode values from deserialized user messages.
-    // The field is unvalidated JSON from disk and may contain modes from a different build.
+    // 从反序列化的用户消息中剥离无效的 permissionMode 值。
+    // 该字段是从磁盘读取的未经验证的 JSON，可能包含来自不同构建版本的模式。
     const validModes = new Set<string>(PERMISSION_MODES)
     for (const msg of migratedMessages) {
       if (
@@ -172,27 +171,26 @@ export function deserializeMessagesWithInterruptDetection(
       }
     }
 
-    // Filter out unresolved tool uses and any synthetic messages that follow them
+    // 过滤未解析的 tool use 及其后续的合成消息
     const filteredToolUses = filterUnresolvedToolUses(migratedMessages) as NormalizedMessage[]
 
-    // Filter out orphaned thinking-only assistant messages that can cause API errors
-    // during resume. These occur when streaming yields separate messages per content
-    // block and interleaved user messages prevent proper merging by message.id.
+    // 过滤孤立的仅含 thinking 的 assistant 消息，这些消息在 resume 时会导致 API 错误。
+    // 当流式传输为每个 content block 生成独立消息，且穿插的用户消息阻止了
+    // 按 message.id 正确合并时，就会出现此情况。
     const filteredThinking = filterOrphanedThinkingOnlyMessages(
       filteredToolUses,
     ) as NormalizedMessage[]
 
-    // Filter out assistant messages with only whitespace text content.
-    // This can happen when model outputs "\n\n" before thinking, user cancels mid-stream.
+    // 过滤仅包含空白文本内容的 assistant 消息。
+    // 当模型在 thinking 前输出 "\n\n"，而用户在流式传输中途取消时会发生此情况。
     const filteredMessages = filterWhitespaceOnlyAssistantMessages(
       filteredThinking,
     ) as NormalizedMessage[]
 
     const internalState = detectTurnInterruption(filteredMessages)
 
-    // Transform mid-turn interruptions into interrupted_prompt by appending
-    // a synthetic continuation message. This unifies both interruption kinds
-    // so the consumer only needs to handle interrupted_prompt.
+    // 通过追加一条合成的继续消息，将轮次中途中断转换为 interrupted_prompt。
+    // 这统一了两种中断类型，使消费者只需处理 interrupted_prompt。
     let turnInterruptionState: TurnInterruptionState
     if (internalState.kind === 'interrupted_turn') {
       const [continuationMessage] = normalizeMessages([
@@ -210,11 +208,10 @@ export function deserializeMessagesWithInterruptDetection(
       turnInterruptionState = internalState
     }
 
-    // Append a synthetic assistant sentinel after the last user message so
-    // the conversation is API-valid if no resume action is taken. Skip past
-    // trailing system/progress messages and insert right after the user
-    // message so removeInterruptedMessage's splice(idx, 2) removes the
-    // correct pair.
+    // 在最后一条用户消息之后追加合成的 assistant 哨兵消息，
+    // 以确保在不执行 resume 操作时 conversation 仍然是 API 合法的。
+    // 跳过尾部的 system/progress 消息，紧接在用户消息之后插入，
+    // 这样 removeInterruptedMessage 的 splice(idx, 2) 能正确移除对应的消息对。
     const lastRelevantIdx = filteredMessages.findLastIndex(
       (m) => m.type !== 'system' && m.type !== 'progress',
     )
@@ -236,31 +233,28 @@ export function deserializeMessagesWithInterruptDetection(
 }
 
 /**
- * Internal 3-way result from detection, before transforming interrupted_turn
- * into interrupted_prompt with a synthetic continuation message.
+ * 检测结果的内部三态类型，在将 interrupted_turn
+ * 转换为带有合成继续消息的 interrupted_prompt 之前使用。
  */
 type InternalInterruptionState = TurnInterruptionState | { kind: 'interrupted_turn' }
 
 /**
- * Determines whether the conversation was interrupted mid-turn based on the
- * last message after filtering. An assistant as last message (after filtering
- * unresolved tool_uses) is treated as a completed turn because stop_reason is
- * always null on persisted messages in the streaming path.
+ * 根据过滤后的最后一条消息，判断 conversation 是否在轮次中途被中断。
+ * 如果最后一条消息是 assistant（在过滤未解析的 tool_uses 之后），则视为已完成的轮次，
+ * 因为在流式路径中持久化消息的 stop_reason 始终为 null。
  *
- * System and progress messages are skipped when finding the last turn-relevant
- * message — they are bookkeeping artifacts that should not mask a genuine
- * interruption. Attachments are kept as part of the turn.
+ * 在查找最后一条与轮次相关的消息时会跳过 system 和 progress 消息——
+ * 它们是记账类辅助产物，不应掩盖真正的中断。附件被视为轮次的一部分予以保留。
  */
 function detectTurnInterruption(messages: NormalizedMessage[]): InternalInterruptionState {
   if (messages.length === 0) {
     return { kind: 'none' }
   }
 
-  // Find the last turn-relevant message, skipping system/progress and
-  // synthetic API error assistants. Error assistants are already filtered
-  // before API send (normalizeMessagesForAPI) — skipping them here lets
-  // auto-resume fire after retry exhaustion instead of reading the error as
-  // a completed turn.
+  // 查找最后一条与轮次相关的消息，跳过 system/progress 及合成的 API 错误 assistant 消息。
+  // 错误类 assistant 消息已在发送 API 前被过滤（normalizeMessagesForAPI）——
+  // 在此处跳过它们可以让 auto-resume 在重试耗尽后触发，
+  // 而不是将错误消息误判为已完成的轮次。
   const lastMessageIdx = messages.findLastIndex(
     (m) =>
       m.type !== 'system' &&
@@ -274,11 +268,10 @@ function detectTurnInterruption(messages: NormalizedMessage[]): InternalInterrup
   }
 
   if (lastMessage.type === 'assistant') {
-    // In the streaming path, stop_reason is always null on persisted messages
-    // because messages are recorded at content_block_stop time, before
-    // message_delta delivers the stop_reason. After filterUnresolvedToolUses
-    // has removed assistant messages with unmatched tool_uses, an assistant as
-    // the last message means the turn most likely completed normally.
+    // 在流式路径中，持久化消息的 stop_reason 始终为 null，
+    // 因为消息是在 content_block_stop 时记录的，此时 message_delta 尚未传递 stop_reason。
+    // 在 filterUnresolvedToolUses 已移除带有未匹配 tool_uses 的 assistant 消息后，
+    // 如果最后一条消息仍是 assistant，则表明该轮次很可能已正常完成。
     return { kind: 'none' }
   }
 
@@ -287,24 +280,22 @@ function detectTurnInterruption(messages: NormalizedMessage[]): InternalInterrup
       return { kind: 'none' }
     }
     if (isToolUseResultMessage(lastMessage)) {
-      // Brief mode (#20467) drops the trailing assistant text block, so a
-      // completed brief-mode turn legitimately ends on SendUserMessage's
-      // tool_result. Without this check, resume misclassifies every
-      // brief-mode session as interrupted mid-turn and injects a phantom
-      // "Continue from where you left off." before the user's real next
-      // prompt. Look back one step for the originating tool_use.
+      // Brief 模式 (#20467) 会省略末尾的 assistant 文本块，因此一个完成的
+      // brief 模式轮次合理地以 SendUserMessage 的 tool_result 结尾。
+      // 如果没有此检查，resume 会将每个 brief 模式会话误判为轮次中途中断，
+      // 并在用户真正的下一条 prompt 之前注入一条幻影的
+      // "Continue from where you left off."。向前回溯一步找到发起的 tool_use。
       if (isTerminalToolResult(lastMessage, messages, lastMessageIdx)) {
         return { kind: 'none' }
       }
       return { kind: 'interrupted_turn' }
     }
-    // Plain text user prompt — CC hadn't started responding
+    // 纯文本用户 prompt —— 助手尚未开始响应
     return { kind: 'interrupted_prompt', message: lastMessage }
   }
 
   if (lastMessage.type === 'attachment') {
-    // Attachments are part of the user turn — the user provided context but
-    // the assistant never responded.
+    // 附件是用户轮次的一部分——用户提供了上下文但助手从未响应。
     return { kind: 'interrupted_turn' }
   }
 
@@ -312,17 +303,14 @@ function detectTurnInterruption(messages: NormalizedMessage[]): InternalInterrup
 }
 
 /**
- * Is this tool_result the output of a tool that legitimately terminates a
- * turn? SendUserMessage is the canonical case: in brief mode, calling it is
- * the turn's final act — there is no follow-up assistant text (#20467
- * removed it). A transcript ending here means the turn COMPLETED, not that
- * it was killed mid-tool.
+ * 判断此 tool_result 是否是合理终止轮次的工具的输出。
+ * SendUserMessage 是典型案例：在 brief 模式下，调用它是轮次的最终动作——
+ * 不再有后续的 assistant 文本（#20467 移除了它）。
+ * 如果转录在此处结束，说明轮次已完成，而非在工具执行中途被终止。
  *
- * Walks back to find the assistant tool_use that this result belongs to and
- * checks its name. The matching tool_use is typically the immediately
- * preceding relevant message (filterUnresolvedToolUses has already dropped
- * unpaired ones), but we walk just in case system/progress noise is
- * interleaved.
+ * 向前回溯查找此 result 所属的 assistant tool_use 并检查其名称。
+ * 匹配的 tool_use 通常是紧接在前面的相关消息（filterUnresolvedToolUses
+ * 已移除了未配对的），但我们仍然向前遍历以防 system/progress 噪声穿插其中。
  */
 function isTerminalToolResult(
   result: NormalizedUserMessage,
@@ -352,11 +340,11 @@ function isTerminalToolResult(
 }
 
 /**
- * Restores skill state from invoked_skills attachments in messages.
- * This ensures that skills are preserved across resume after compaction.
- * Without this, if another compaction happens after resume, the skills would be lost
- * because STATE.invokedSkills would be empty.
- * @internal Exported for testing - use loadConversationForResume instead
+ * 从消息中的 invoked_skills 附件恢复 skill 状态。
+ * 确保 skill 在 resume 后的压缩过程中得以保留。
+ * 如果没有此操作，当 resume 后再次发生压缩时，skill 将会丢失，
+ * 因为 STATE.invokedSkills 会是空的。
+ * @internal 仅为测试导出 - 请使用 loadConversationForResume 代替
  */
 export function restoreSkillStateFromMessages(messages: Message[]): void {
   for (const message of messages) {
@@ -366,15 +354,14 @@ export function restoreSkillStateFromMessages(messages: Message[]): void {
     if (message.attachment.type === 'invoked_skills') {
       for (const skill of (message.attachment as any).skills) {
         if (skill.name && skill.path && skill.content) {
-          // Resume only happens for the main session, so agentId is null
+          // resume 仅发生在主会话中，因此 agentId 为 null
           addInvokedSkill(skill.name, skill.path, skill.content, null)
         }
       }
     }
-    // A prior process already injected the skills-available reminder — it's
-    // in the transcript the model is about to see. sentSkillNames is
-    // process-local, so without this every resume re-announces the same
-    // ~600 tokens. Fire-once latch; consumed on the first attachment pass.
+    // 前一个进程已注入了 skills-available 提醒——它在模型即将看到的转录中。
+    // sentSkillNames 是进程局部的，如果不做处理，每次 resume 都会重复声明
+    // 相同的约 600 个 token。一次性闩锁；在第一次附件遍历时消费。
     if (message.attachment.type === 'skill_listing') {
       suppressNextSkillListing()
     }
@@ -382,15 +369,13 @@ export function restoreSkillStateFromMessages(messages: Message[]): void {
 }
 
 /**
- * Chain-walk a transcript jsonl by path.  Same sequence loadFullLog
- * runs internally — loadTranscriptFile → find newest non-sidechain
- * leaf → buildConversationChain → removeExtraFields — just starting
- * from an arbitrary path instead of the sid-derived one.
+ * 通过路径对 transcript jsonl 进行链式遍历。与 loadFullLog 内部运行的序列相同——
+ * loadTranscriptFile -> 查找最新的非侧链叶节点 -> buildConversationChain
+ * -> removeExtraFields——只是从任意路径而非从 sid 派生路径开始。
  *
- * leafUuids is populated by loadTranscriptFile as "uuids that no
- * other message's parentUuid points at" — the chain tips.  There can
- * be several (sidechains, orphans); newest non-sidechain is the main
- * conversation's end.
+ * leafUuids 由 loadTranscriptFile 填充，表示"没有其他消息的 parentUuid
+ * 指向的 uuid"——即链的末端。可能有多个（侧链、孤立节点）；
+ * 最新的非侧链节点就是主 conversation 的终点。
  */
 export async function loadMessagesFromJsonlPath(path: string): Promise<{
   messages: SerializedMessage[]
@@ -411,26 +396,24 @@ export async function loadMessagesFromJsonlPath(path: string): Promise<{
   const chain = buildConversationChain(byUuid, tip)
   return {
     messages: removeExtraFields(chain),
-    // Leaf's sessionId — forked sessions copy chain[0] from the source
-    // transcript, so the root retains the source session's ID. Matches
-    // loadFullLog's mostRecentLeaf.sessionId.
+    // 叶节点的 sessionId —— fork 的会话会从源 transcript 复制 chain[0]，
+    // 因此根节点保留源会话的 ID。与 loadFullLog 的 mostRecentLeaf.sessionId 一致。
     sessionId: tip.sessionId as UUID | undefined,
   }
 }
 
 /**
- * Loads a conversation for resume from various sources.
- * This is the centralized function for loading and deserializing conversations.
+ * 从多种来源加载 conversation 以进行 resume。
+ * 这是加载和反序列化 conversation 的集中化函数。
  *
- * @param source - The source to load from:
- *   - undefined: load most recent conversation
- *   - string: session ID to load
- *   - LogOption: already loaded conversation
- * @param sourceJsonlFile - Alternate: path to a transcript jsonl.
- *   Used when --resume receives a .jsonl path (cli/print.ts routes
- *   on suffix), typically for cross-directory resume where the
- *   transcript lives outside the current project dir.
- * @returns Object containing the deserialized messages and the original log, or null if not found
+ * @param source - 加载来源：
+ *   - undefined: 加载最近的 conversation
+ *   - string: 要加载的 session ID
+ *   - LogOption: 已加载的 conversation
+ * @param sourceJsonlFile - 备选：transcript jsonl 的路径。
+ *   当 --resume 接收到 .jsonl 路径时使用（cli/print.ts 根据后缀路由），
+ *   通常用于 transcript 位于当前项目目录之外的跨目录 resume 场景。
+ * @returns 包含反序列化消息和原始日志的对象，未找到时返回 null
  */
 export async function loadConversationForResume(
   source: string | LogOption | undefined,
@@ -444,7 +427,7 @@ export async function loadConversationForResume(
   contextCollapseCommits?: ContextCollapseCommitEntry[]
   contextCollapseSnapshot?: ContextCollapseSnapshotEntry
   sessionId: UUID | undefined
-  // Session metadata for restoring agent context
+  // 用于恢复 agent 上下文的会话元数据
   agentName?: string
   agentColor?: string
   agentSetting?: string
@@ -455,7 +438,7 @@ export async function loadConversationForResume(
   prNumber?: number
   prUrl?: string
   prRepository?: string
-  // Full path to the session file (for cross-directory resume)
+  // 会话文件的完整路径（用于跨目录 resume）
   fullPath?: string
 } | null> {
   try {
@@ -464,8 +447,8 @@ export async function loadConversationForResume(
     let sessionId: UUID | undefined
 
     if (source === undefined) {
-      // --continue: most recent session, skipping live --bg/daemon sessions
-      // that are actively writing their own transcript.
+      // --continue: 最近的会话，跳过正在主动写入自身 transcript 的
+      // 活跃 --bg/daemon 会话。
       const logsPromise = loadMessageLogs()
       let skip = new Set<string>()
       if (feature('BG_SESSIONS')) {
@@ -478,7 +461,7 @@ export async function loadConversationForResume(
             ),
           )
         } catch {
-          // UDS unavailable — treat all sessions as continuable
+          // UDS 不可用——将所有会话视为可继续的
         }
       }
       const logs = await logsPromise
@@ -488,18 +471,17 @@ export async function loadConversationForResume(
           return !id || !skip.has(id)
         }) ?? null
     } else if (sourceJsonlFile) {
-      // --resume with a .jsonl path (cli/print.ts routes on suffix).
-      // Same chain walk as the sid branch below — only the starting
-      // path differs.
+      // --resume 带有 .jsonl 路径（cli/print.ts 根据后缀路由）。
+      // 与下方 sid 分支相同的链式遍历——只是起始路径不同。
       const loaded = await loadMessagesFromJsonlPath(sourceJsonlFile)
       messages = loaded.messages
       sessionId = loaded.sessionId
     } else if (typeof source === 'string') {
-      // Load specific session by ID
+      // 按 ID 加载指定会话
       log = await getLastSessionLog(source as UUID)
       sessionId = source as UUID
     } else {
-      // Already have a LogOption
+      // 已持有 LogOption
       log = source
     }
 
@@ -508,40 +490,40 @@ export async function loadConversationForResume(
     }
 
     if (log) {
-      // Load full messages for lite logs
+      // 为精简日志加载完整消息
       if (isLiteLog(log)) {
         log = await loadFullLog(log)
       }
 
-      // Determine sessionId first so we can pass it to copy functions
+      // 先确定 sessionId，以便传递给后续的复制函数
       if (!sessionId) {
         sessionId = getSessionIdFromLog(log) as UUID
       }
-      // Pass the original session ID to ensure the plan slug is associated with
-      // the session we're resuming, not the temporary session ID before resume
+      // 传递原始 session ID，确保 plan slug 关联到正在 resume 的会话，
+      // 而非 resume 之前的临时 session ID
       if (sessionId) {
         await copyPlanForResume(log, asSessionId(sessionId))
       }
 
-      // Copy file history for resume
+      // 为 resume 复制文件历史
       void copyFileHistoryForResume(log)
 
       messages = log.messages
       checkResumeConsistency(messages)
     }
 
-    // Restore skill state from invoked_skills attachments before deserialization.
-    // This ensures skills survive multiple compaction cycles after resume.
+    // 在反序列化之前从 invoked_skills 附件恢复 skill 状态。
+    // 确保 skill 在 resume 后的多次压缩循环中得以存续。
     restoreSkillStateFromMessages(messages!)
 
-    // Deserialize messages to handle unresolved tool uses and ensure proper format
+    // 反序列化消息，处理未解析的 tool use 并确保格式正确
     const deserialized = deserializeMessagesWithInterruptDetection(messages!)
     messages = deserialized.messages
 
-    // Process session start hooks for resume
+    // 为 resume 处理会话启动钩子
     const hookMessages = await processSessionStartHooks('resume', { sessionId })
 
-    // Append hook messages to the conversation
+    // 将钩子消息追加到 conversation
     messages.push(...hookMessages)
 
     return {
@@ -553,7 +535,7 @@ export async function loadConversationForResume(
       contextCollapseCommits: log?.contextCollapseCommits,
       contextCollapseSnapshot: log?.contextCollapseSnapshot,
       sessionId,
-      // Include session metadata for restoring agent context on resume
+      // 包含会话元数据以在 resume 时恢复 agent 上下文
       agentName: log?.agentName,
       agentColor: log?.agentColor,
       agentSetting: log?.agentSetting,
@@ -564,7 +546,7 @@ export async function loadConversationForResume(
       prNumber: log?.prNumber,
       prUrl: log?.prUrl,
       prRepository: log?.prRepository,
-      // Include full path for cross-directory resume
+      // 包含完整路径以支持跨目录 resume
       fullPath: log?.fullPath,
     }
   } catch (error) {

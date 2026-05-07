@@ -6,7 +6,7 @@ function handleEPIPE(stream: NodeJS.WriteStream): (err: NodeJS.ErrnoException) =
   }
 }
 
-// Prevents memory leak when pipe is broken (e.g., `zy -p | head -1`)
+// 防止管道断开时的内存泄漏（例如 `zy -p | head -1`）
 export function registerProcessOutputErrorHandlers(): void {
   process.stdout.on('error', handleEPIPE(process.stdout))
   process.stderr.on('error', handleEPIPE(process.stderr))
@@ -17,10 +17,10 @@ function writeOut(stream: NodeJS.WriteStream, data: string): void {
     return
   }
 
-  // Note: we don't handle backpressure (write() returning false).
+  // 注意：这里没有处理背压（write() 返回 false 的情况）。
   //
-  // We should consider handling the callback to ensure we wait for data to flush.
-  stream.write(data /* callback to handle here */)
+  // 应该考虑处理回调以确保等待数据刷新完成。
+  stream.write(data /* 此处应处理回调 */)
 }
 
 export function writeToStdout(data: string): void {
@@ -31,20 +31,20 @@ export function writeToStderr(data: string): void {
   writeOut(process.stderr, data)
 }
 
-// Write error to stderr and exit with code 1. Consolidates the
-// console.error + process.exit(1) pattern used in entrypoint fast-paths.
+// 将错误写入 stderr 并以退出码 1 退出。整合了入口快速路径中
+// console.error + process.exit(1) 的使用模式。
 export function exitWithError(message: string): never {
-  // biome-ignore lint/suspicious/noConsole:: intentional console output
+  // biome-ignore lint/suspicious/noConsole:: 有意的控制台输出
   console.error(message)
   // eslint-disable-next-line custom-rules/no-process-exit
   process.exit(1)
 }
 
-// Wait for a stdin-like stream to close, but give up after ms if no data ever
-// arrives. First data chunk cancels the timeout — after that, wait for end
-// unconditionally (caller's accumulator needs all chunks, not just the first).
-// Returns true on timeout, false on end. Used by -p mode to distinguish a
-// real pipe producer from an inherited-but-idle parent stdin.
+// 等待类似 stdin 的流关闭，但如果在 ms 毫秒内没有收到任何数据则放弃。
+// 第一个数据块会取消超时——之后将无条件等待流结束
+//（调用方的累加器需要所有数据块，而非仅第一个）。
+// 超时返回 true，流结束返回 false。用于 -p 模式区分
+// 真正的管道生产者和继承但空闲的父级 stdin。
 export function peekForStdinData(stream: NodeJS.EventEmitter, ms: number): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     const done = (timedOut: boolean) => {
@@ -57,7 +57,7 @@ export function peekForStdinData(stream: NodeJS.EventEmitter, ms: number): Promi
     onEnd = () => done(false)
     let onFirstData
     onFirstData = () => clearTimeout(peek)
-    // eslint-disable-next-line no-restricted-syntax -- not a sleep: races timeout against stream end/data events
+    // eslint-disable-next-line no-restricted-syntax -- 不是 sleep：将超时与流的 end/data 事件进行竞争
     let peek
     peek = setTimeout(done, ms, true)
     stream.once('end', onEnd)

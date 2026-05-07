@@ -51,23 +51,22 @@ import {
 } from './validation.js'
 
 /**
- * Get the path to the managed settings file based on the current platform
+ * 根据当前平台获取托管配置文件的路径
  */
 function getManagedSettingsFilePath(): string {
   return join(getManagedFilePath(), 'managed-settings.json')
 }
 
 /**
- * Load file-based managed settings: managed-settings.json + managed-settings.d/*.json.
+ * 加载基于文件的托管配置：managed-settings.json + managed-settings.d/*.json。
  *
- * managed-settings.json is merged first (lowest precedence / base), then drop-in
- * files are sorted alphabetically and merged on top (higher precedence, later
- * files win). This matches the systemd/sudoers drop-in convention: the base
- * file provides defaults, drop-ins customize. Separate teams can ship
- * independent policy fragments (e.g. 10-otel.json, 20-security.json) without
- * coordinating edits to a single admin-owned file.
+ * managed-settings.json 最先合并（最低优先级/基础），然后 drop-in
+ * 文件按字母顺序排序并叠加合并（更高优先级，后加载的文件覆盖前面的）。
+ * 这与 systemd/sudoers drop-in 约定一致：基础文件提供默认值，
+ * drop-in 进行自定义。不同团队可以各自发布独立的策略片段
+ *（如 10-otel.json、20-security.json），无需协调编辑同一个管理员拥有的文件。
  *
- * Exported for testing.
+ * 导出用于测试。
  */
 export function loadManagedFileSettings(): {
   settings: SettingsJson | null
@@ -113,8 +112,8 @@ export function loadManagedFileSettings(): {
 }
 
 /**
- * Check which file-based managed settings sources are present.
- * Used by /status to show "(file)", "(drop-ins)", or "(file + drop-ins)".
+ * 检查哪些基于文件的托管配置源存在。
+ * 用于 /status 显示 "(file)"、"(drop-ins)" 或 "(file + drop-ins)"。
  */
 export function getManagedFileSettingsPresence(): {
   hasBase: boolean
@@ -133,16 +132,16 @@ export function getManagedFileSettingsPresence(): {
           (d.isFile() || d.isSymbolicLink()) && d.name.endsWith('.json') && !d.name.startsWith('.'),
       )
   } catch {
-    // dir doesn't exist
+    // 目录不存在
   }
 
   return { hasBase, hasDropIns }
 }
 
 /**
- * Handles file system errors appropriately
- * @param error The error to handle
- * @param path The file path that caused the error
+ * 适当处理文件系统错误
+ * @param error 要处理的错误
+ * @param path 导致错误的文件路径
  */
 function handleFileSystemError(error: unknown, path: string): void {
   if (typeof error === 'object' && error && 'code' in error && error.code === 'ENOENT') {
@@ -153,10 +152,10 @@ function handleFileSystemError(error: unknown, path: string): void {
 }
 
 /**
- * Parses a settings file into a structured format
- * @param path The path to the permissions file
- * @param source The source of the settings (optional, for error reporting)
- * @returns Parsed settings data and validation errors
+ * 将配置文件解析为结构化格式
+ * @param path 配置文件的路径
+ * @param source 配置的来源（可选，用于错误报告）
+ * @returns 解析后的配置数据和验证错误
  */
 export function parseSettingsFile(path: string): {
   settings: SettingsJson | null
@@ -164,8 +163,8 @@ export function parseSettingsFile(path: string): {
 } {
   const cached = getCachedParsedFile(path)
   if (cached) {
-    // Clone so callers (e.g. mergeWith in getSettingsForSourceUncached,
-    // updateSettingsForSource) can't mutate the cached entry.
+    // 克隆以防止调用方（如 getSettingsForSourceUncached 和
+    // updateSettingsForSource 中的 mergeWith）修改缓存条目。
     return {
       settings: cached.settings ? clone(cached.settings) : null,
       errors: cached.errors,
@@ -173,8 +172,7 @@ export function parseSettingsFile(path: string): {
   }
   const result = parseSettingsFileUncached(path)
   setCachedParsedFile(path, result)
-  // Clone the first return too — the caller may mutate before
-  // another caller reads the same cache entry.
+  // 首次返回也需要克隆 - 调用方可能在另一个调用方读取同一缓存条目之前进行修改。
   return {
     settings: result.settings ? clone(result.settings) : null,
     errors: result.errors,
@@ -195,8 +193,8 @@ function parseSettingsFileUncached(path: string): {
 
     const data = safeParseJSON(content, false)
 
-    // Filter invalid permission rules before schema validation so one bad
-    // rule doesn't cause the entire settings file to be rejected.
+    // 在 schema 验证之前过滤无效的权限规则，以防止一条错误规则
+    // 导致整个配置文件被拒绝。
     const ruleWarnings = filterInvalidPermissionRules(data, path)
 
     const schema = SettingsSchema()
@@ -215,10 +213,10 @@ function parseSettingsFileUncached(path: string): {
 }
 
 /**
- * Get the absolute path to the associated file root for a given settings source
- * (e.g. for $PROJ_DIR/.zy/settings.json, returns $PROJ_DIR)
- * @param source The source of the settings
- * @returns The root path of the settings file
+ * 获取给定配置源对应的文件根目录的绝对路径
+ *（例如对于 $PROJ_DIR/.zy/settings.json，返回 $PROJ_DIR）
+ * @param source 配置的来源
+ * @returns 配置文件的根路径
  */
 export function getSettingsRootPathForSource(source: SettingSource): string {
   switch (source) {
@@ -237,13 +235,13 @@ export function getSettingsRootPathForSource(source: SettingSource): string {
 }
 
 /**
- * Get the user settings filename based on cowork mode.
- * Returns 'cowork_settings.json' when in cowork mode, 'settings.json' otherwise.
+ * 根据协作模式获取用户配置文件名。
+ * 协作模式下返回 'cowork_settings.json'，否则返回 'settings.json'。
  *
- * Priority:
- * 1. Session state (set by CLI flag --cowork)
- * 2. Environment variable ZY_CODE_USE_COWORK_PLUGINS
- * 3. Default: 'settings.json'
+ * 优先级：
+ * 1. 会话状态（通过 CLI 参数 --cowork 设置）
+ * 2. 环境变量 ZY_CODE_USE_COWORK_PLUGINS
+ * 3. 默认值：'settings.json'
  */
 function getUserSettingsFilePath(): string {
   if (getUseCoworkPlugins() || isEnvTruthy(process.env.ZY_CODE_USE_COWORK_PLUGINS)) {
@@ -291,7 +289,7 @@ export function getSettingsForSource(source: SettingSource): SettingsJson | null
 }
 
 function getSettingsForSourceUncached(source: SettingSource): SettingsJson | null {
-  // For policySettings: first source wins (remote > HKLM/plist > file > HKCU)
+  // 对于 policySettings：第一个有内容的源生效（remote > HKLM/plist > file > HKCU）
   if (source === 'policySettings') {
     const remoteSettings = getRemoteManagedSettingsSyncFromCache()
     if (remoteSettings && Object.keys(remoteSettings).length > 0) {
@@ -321,7 +319,7 @@ function getSettingsForSourceUncached(source: SettingSource): SettingsJson | nul
     ? parseSettingsFile(settingsFilePath)
     : { settings: null }
 
-  // For flagSettings, merge in any inline settings set via the SDK
+  // 对于 flagSettings，合并通过 SDK 设置的内联配置
   if (source === 'flagSettings') {
     const inlineSettings = getFlagSettingsInline()
     if (inlineSettings) {
@@ -336,30 +334,30 @@ function getSettingsForSourceUncached(source: SettingSource): SettingsJson | nul
 }
 
 /**
- * Get the origin of the highest-priority active policy settings source.
- * Uses "first source wins" — returns the first source that has content.
- * Priority: remote > plist/hklm > file (managed-settings.json) > hkcu
+ * 获取最高优先级的活跃策略配置源的来源。
+ * 使用"第一个有内容的源生效"策略 - 返回第一个有内容的源。
+ * 优先级：remote > plist/hklm > file (managed-settings.json) > hkcu
  */
 export function getPolicySettingsOrigin(): 'remote' | 'plist' | 'hklm' | 'file' | 'hkcu' | null {
-  // 1. Remote (highest)
+  // 1. 远程（最高优先级）
   const remoteSettings = getRemoteManagedSettingsSyncFromCache()
   if (remoteSettings && Object.keys(remoteSettings).length > 0) {
     return 'remote'
   }
 
-  // 2. Admin-only MDM (HKLM / macOS plist)
+  // 2. 仅管理员的 MDM（HKLM / macOS plist）
   const mdmResult = getMdmSettings()
   if (Object.keys(mdmResult.settings).length > 0) {
     return getPlatform() === 'macos' ? 'plist' : 'hklm'
   }
 
-  // 3. managed-settings.json + managed-settings.d/ (file-based, requires admin)
+  // 3. managed-settings.json + managed-settings.d/（基于文件，需要管理员权限）
   const { settings: fileSettings } = loadManagedFileSettings()
   if (fileSettings) {
     return 'file'
   }
 
-  // 4. HKCU (lowest — user-writable)
+  // 4. HKCU（最低优先级 - 用户可写）
   const hkcu = getHkcuSettings()
   if (Object.keys(hkcu.settings).length > 0) {
     return 'hkcu'
@@ -369,11 +367,11 @@ export function getPolicySettingsOrigin(): 'remote' | 'plist' | 'hklm' | 'file' 
 }
 
 /**
- * Merges `settings` into the existing settings for `source` using lodash mergeWith.
+ * 使用 lodash mergeWith 将 `settings` 合并到 `source` 的现有配置中。
  *
- * To delete a key from a record field (e.g. enabledPlugins, extraKnownMarketplaces),
- * set it to `undefined` — do NOT use `delete`. mergeWith only detects deletion when
- * the key is present with an explicit `undefined` value.
+ * 要从 record 字段（如 enabledPlugins、extraKnownMarketplaces）中删除一个键，
+ * 请将其设置为 `undefined` - 不要使用 `delete`。mergeWith 只有在键存在且
+ * 值为显式 `undefined` 时才能检测到删除操作。
  */
 export function updateSettingsForSource(
   source: EditableSettingSource,
@@ -383,7 +381,7 @@ export function updateSettingsForSource(
     return { error: null }
   }
 
-  // Create the folder if needed
+  // 如果需要则创建文件夹
   const filePath = getSettingsFilePathForSource(source)
   if (!filePath) {
     return { error: null }
@@ -392,13 +390,12 @@ export function updateSettingsForSource(
   try {
     getFsImplementation().mkdirSync(dirname(filePath))
 
-    // Try to get existing settings with validation. Bypass the per-source
-    // cache — mergeWith below mutates its target (including nested refs),
-    // and mutating the cached object would leak unpersisted state if the
-    // write fails before resetSettingsCache().
+    // 尝试获取带验证的现有配置。绕过按源缓存 -
+    // 下面的 mergeWith 会修改其目标对象（包括嵌套引用），
+    // 如果写入在 resetSettingsCache() 之前失败，修改缓存对象会泄露未持久化的状态。
     let existingSettings = getSettingsForSourceUncached(source)
 
-    // If validation failed, check if file exists with a JSON syntax error
+    // 如果验证失败，检查文件是否存在 JSON 语法错误
     if (!existingSettings) {
       let content: string | null = null
       try {
@@ -407,13 +404,13 @@ export function updateSettingsForSource(
         if (!isENOENT(e)) {
           throw e
         }
-        // File doesn't exist — fall through to merge with empty settings
+        // 文件不存在 - 继续与空配置合并
       }
       if (content !== null) {
         const rawData = safeParseJSON(content)
         if (rawData === null) {
-          // JSON syntax error - return validation error instead of overwriting
-          // safeParseJSON will already log the error, so we'll just return the error here
+          // JSON 语法错误 - 返回验证错误而不是覆盖
+          // safeParseJSON 已经记录了错误，所以这里直接返回错误
           return {
             error: new Error(`Invalid JSON syntax in settings file at ${filePath}`),
           }
@@ -434,31 +431,31 @@ export function updateSettingsForSource(
         key: string | number | symbol,
         object: Record<string | number | symbol, unknown>,
       ) => {
-        // Handle undefined as deletion
+        // 将 undefined 视为删除操作
         if (srcValue === undefined && object && typeof key === 'string') {
           delete object[key]
           return undefined
         }
-        // For arrays, always replace with the provided array
-        // This puts the responsibility on the caller to compute the desired final state
+        // 对于数组，始终使用提供的数组替换
+        // 由调用方负责计算所需的最终状态
         if (Array.isArray(srcValue)) {
           return srcValue
         }
-        // For non-arrays, let lodash handle the default merge behavior
+        // 对于非数组值，让 lodash 处理默认的合并行为
         return undefined
       },
     )
 
-    // Mark this as an internal write before writing the file
+    // 在写入文件之前标记为内部写入
     markInternalWrite(filePath)
 
     writeFileSyncAndFlush_DEPRECATED(filePath, jsonStringify(updatedSettings, null, 2) + '\n')
 
-    // Invalidate the session cache since settings have been updated
+    // 配置已更新，使会话缓存失效
     resetSettingsCache()
 
     if (source === 'localSettings') {
-      // Okay to add to gitignore async without awaiting
+      // 可以异步添加到 gitignore，无需等待
       void addFileGlobRuleToGitignore(
         getRelativeSettingsFilePathForSource('localSettings'),
         getOriginalCwd(),
@@ -474,41 +471,40 @@ export function updateSettingsForSource(
 }
 
 /**
- * Custom merge function for arrays - concatenate and deduplicate
+ * 数组的自定义合并函数 - 拼接并去重
  */
 function mergeArrays<T>(targetArray: T[], sourceArray: T[]): T[] {
   return uniq([...targetArray, ...sourceArray])
 }
 
 /**
- * Custom merge function for lodash mergeWith when merging settings.
- * Arrays are concatenated and deduplicated; other values use default lodash merge behavior.
- * Exported for testing.
+ * 合并配置时用于 lodash mergeWith 的自定义合并函数。
+ * 数组会被拼接并去重；其他值使用 lodash 默认的合并行为。
+ * 导出用于测试。
  */
 export function settingsMergeCustomizer(objValue: unknown, srcValue: unknown): unknown {
   if (Array.isArray(objValue) && Array.isArray(srcValue)) {
     return mergeArrays(objValue, srcValue)
   }
-  // Return undefined to let lodash handle default merge behavior
+  // 返回 undefined 让 lodash 处理默认的合并行为
   return undefined
 }
 
 /**
- * Get a list of setting keys from managed settings for logging purposes.
- * For certain nested settings (permissions, sandbox, hooks), expands to show
- * one level of nesting (e.g., "permissions.allow"). For other settings,
- * returns only the top-level key.
+ * 获取托管配置的键列表，用于日志记录。
+ * 对于某些嵌套配置（permissions、sandbox、hooks），会展开一层嵌套
+ *（如 "permissions.allow"）。对于其他配置，只返回顶级键。
  *
- * @param settings The settings object to extract keys from
- * @returns Sorted array of key paths
+ * @param settings 要提取键的配置对象
+ * @returns 排序后的键路径数组
  */
 export function getManagedSettingsKeysForLogging(settings: SettingsJson): string[] {
-  // Use .strip() to get only valid schema keys
+  // 使用 .strip() 只获取有效的 schema 键
   const validSettings = SettingsSchema().strip().parse(settings) as Record<string, unknown>
   const keysToExpand = ['permissions', 'sandbox', 'hooks']
   const allKeys: string[] = []
 
-  // Define valid nested keys for each nested setting we expand
+  // 定义每个需要展开的嵌套配置的有效嵌套键
   const validNestedKeys: Record<string, Set<string>> = {
     permissions: new Set([
       'allow',
@@ -532,7 +528,7 @@ export function getManagedSettingsKeysForLogging(settings: SettingsJson): string
       'enableWeakerNetworkIsolation',
       'ripgrep',
     ]),
-    // For hooks, we use z.record with enum keys, so we validate separately
+    // 对于 hooks，使用 z.record 配合枚举键，所以单独验证
     hooks: new Set([
       'PreToolUse',
       'PostToolUse',
@@ -556,20 +552,20 @@ export function getManagedSettingsKeysForLogging(settings: SettingsJson): string
       validSettings[key] &&
       typeof validSettings[key] === 'object'
     ) {
-      // Expand nested keys for these special settings (one level deep only)
+      // 展开这些特殊配置的嵌套键（仅一层深度）
       const nestedObj = validSettings[key] as Record<string, unknown>
       const validKeys = validNestedKeys[key]
 
       if (validKeys) {
         for (const nestedKey of Object.keys(nestedObj)) {
-          // Only include known valid nested keys
+          // 只包含已知的有效嵌套键
           if (validKeys.has(nestedKey)) {
             allKeys.push(`${key}.${nestedKey}`)
           }
         }
       }
     } else {
-      // For other settings, just use the top-level key
+      // 对于其他配置，只使用顶级键
       allKeys.push(key)
     }
   }
@@ -577,15 +573,15 @@ export function getManagedSettingsKeysForLogging(settings: SettingsJson): string
   return allKeys.sort()
 }
 
-// Flag to prevent infinite recursion when loading settings
+// 防止加载配置时无限递归的标志
 let isLoadingSettings = false
 
 /**
- * Load settings from disk without using cache
- * This is the original implementation that actually reads from files
+ * 从磁盘加载配置，不使用缓存。
+ * 这是实际从文件读取的原始实现。
  */
 function loadSettingsFromDisk(): SettingsWithErrors {
-  // Prevent recursive calls to loadSettingsFromDisk
+  // 防止递归调用 loadSettingsFromDisk
   if (isLoadingSettings) {
     return { settings: {}, errors: [] }
   }
@@ -596,9 +592,9 @@ function loadSettingsFromDisk(): SettingsWithErrors {
 
   isLoadingSettings = true
   try {
-    // Start with plugin settings as the lowest priority base.
-    // All file-based sources (user, project, local, flag, policy) override these.
-    // Plugin settings only contain allowlisted keys (e.g., agent) that are valid SettingsJson fields.
+    // 以插件配置作为最低优先级的基础。
+    // 所有基于文件的源（user、project、local、flag、policy）都会覆盖这些。
+    // 插件配置只包含白名单中的键（如 agent），它们是有效的 SettingsJson 字段。
     const pluginSettings = getPluginSettingsBase()
     let mergedSettings: SettingsJson = {}
     if (pluginSettings) {
@@ -608,27 +604,27 @@ function loadSettingsFromDisk(): SettingsWithErrors {
     const seenErrors = new Set<string>()
     const seenFiles = new Set<string>()
 
-    // Merge settings from each source in priority order with deep merging
+    // 按优先级顺序深度合并各源的配置
     for (const source of getEnabledSettingSources()) {
-      // policySettings: "first source wins" — use the highest-priority source
-      // that has content. Priority: remote > HKLM/plist > managed-settings.json > HKCU
+      // policySettings："第一个有内容的源生效" - 使用最高优先级的源。
+      // 优先级：remote > HKLM/plist > managed-settings.json > HKCU
       if (source === 'policySettings') {
         let policySettings: SettingsJson | null = null
         const policyErrors: ValidationError[] = []
 
-        // 1. Remote (highest priority)
+        // 1. 远程（最高优先级）
         const remoteSettings = getRemoteManagedSettingsSyncFromCache()
         if (remoteSettings && Object.keys(remoteSettings).length > 0) {
           const result = SettingsSchema().safeParse(remoteSettings)
           if (result.success) {
             policySettings = result.data
           } else {
-            // Remote exists but is invalid — surface errors even as we fall through
+            // 远程配置存在但无效 - 即使继续回退也要暴露错误
             policyErrors.push(...formatZodError(result.error, 'remote managed settings'))
           }
         }
 
-        // 2. Admin-only MDM (HKLM / macOS plist)
+        // 2. 仅管理员的 MDM（HKLM / macOS plist）
         if (!policySettings) {
           const mdmResult = getMdmSettings()
           if (Object.keys(mdmResult.settings).length > 0) {
@@ -637,7 +633,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           policyErrors.push(...mdmResult.errors)
         }
 
-        // 3. managed-settings.json + managed-settings.d/ (file-based, requires admin)
+        // 3. managed-settings.json + managed-settings.d/（基于文件，需要管理员权限）
         if (!policySettings) {
           const { settings, errors } = loadManagedFileSettings()
           if (settings) {
@@ -646,7 +642,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           policyErrors.push(...errors)
         }
 
-        // 4. HKCU (lowest — user-writable, only if nothing above exists)
+        // 4. HKCU（最低优先级 - 用户可写，仅在以上源都不存在时使用）
         if (!policySettings) {
           const hkcu = getHkcuSettings()
           if (Object.keys(hkcu.settings).length > 0) {
@@ -655,7 +651,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           policyErrors.push(...hkcu.errors)
         }
 
-        // Merge the winning policy source into the settings chain
+        // 将胜出的策略源合并到配置链中
         if (policySettings) {
           mergedSettings = mergeWith(mergedSettings, policySettings, settingsMergeCustomizer)
         }
@@ -674,13 +670,13 @@ function loadSettingsFromDisk(): SettingsWithErrors {
       if (filePath) {
         const resolvedPath = resolve(filePath)
 
-        // Skip if we've already loaded this file from another source
+        // 如果已经从其他源加载过此文件则跳过
         if (!seenFiles.has(resolvedPath)) {
           seenFiles.add(resolvedPath)
 
           const { settings, errors } = parseSettingsFile(filePath)
 
-          // Add unique errors (deduplication)
+          // 添加唯一的错误（去重）
           for (const error of errors) {
             const errorKey = `${error.file}:${error.path}:${error.message}`
             if (!seenErrors.has(errorKey)) {
@@ -695,7 +691,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
         }
       }
 
-      // For flagSettings, also merge any inline settings set via the SDK
+      // 对于 flagSettings，还需要合并通过 SDK 设置的内联配置
       if (source === 'flagSettings') {
         const inlineSettings = getFlagSettingsInline()
         if (inlineSettings) {
@@ -720,18 +716,18 @@ function loadSettingsFromDisk(): SettingsWithErrors {
 }
 
 /**
- * Get merged settings from all sources in priority order
- * Settings are merged from lowest to highest priority:
+ * 按优先级顺序从所有源获取合并后的配置。
+ * 配置按从低到高的优先级合并：
  * userSettings -> projectSettings -> localSettings -> policySettings
  *
- * This function returns a snapshot of settings at the time of call.
- * For React components, prefer using useSettings() hook for reactive updates
- * when settings change on disk.
+ * 此函数返回调用时配置的快照。
+ * 对于 React 组件，建议使用 useSettings() hook 以在磁盘上的配置
+ * 变更时获得响应式更新。
  *
- * Uses session-level caching to avoid repeated file I/O.
- * Cache is invalidated when settings files change via resetSettingsCache().
+ * 使用会话级缓存以避免重复的文件 I/O。
+ * 当配置文件通过 resetSettingsCache() 变更时缓存会失效。
  *
- * @returns Merged settings from all available sources (always returns at least empty object)
+ * @returns 所有可用源合并后的配置（始终返回至少空对象）
  */
 export function getInitialSettings(): SettingsJson {
   const { settings } = getSettingsWithErrors()
@@ -739,27 +735,26 @@ export function getInitialSettings(): SettingsJson {
 }
 
 /**
- * @deprecated Use getInitialSettings() instead. This alias exists for backwards compatibility.
+ * @deprecated 请使用 getInitialSettings() 代替。此别名仅为向后兼容而存在。
  */
 export const getSettings_DEPRECATED = getInitialSettings
 
 export type SettingsWithSources = {
   effective: SettingsJson
-  /** Ordered low-to-high priority — later entries override earlier ones. */
+  /** 按从低到高的优先级排序 - 后面的条目覆盖前面的。 */
   sources: Array<{ source: SettingSource; settings: SettingsJson }>
 }
 
 /**
- * Get the effective merged settings alongside the raw per-source settings,
- * in merge-priority order. Only includes sources that are enabled and have
- * non-empty content.
+ * 获取生效的合并配置以及每个源的原始配置，
+ * 按合并优先级排序。仅包含已启用且有非空内容的源。
  *
- * Always reads fresh from disk — resets the session cache so that `effective`
- * and `sources` are consistent even if the change detector hasn't fired yet.
+ * 始终从磁盘重新读取 - 重置会话缓存以确保 `effective`
+ * 和 `sources` 一致，即使变更检测器尚未触发。
  */
 export function getSettingsWithSources(): SettingsWithSources {
-  // Reset both caches so getSettingsForSource (per-source cache) and
-  // getInitialSettings (session cache) agree on the current disk state.
+  // 重置两个缓存，以确保 getSettingsForSource（按源缓存）和
+  // getInitialSettings（会话缓存）对当前磁盘状态达成一致。
   resetSettingsCache()
   const sources: SettingsWithSources['sources'] = []
   for (const source of getEnabledSettingSources()) {
@@ -772,19 +767,19 @@ export function getSettingsWithSources(): SettingsWithSources {
 }
 
 /**
- * Get merged settings and validation errors from all sources
- * This function now uses session-level caching to avoid repeated file I/O.
- * Settings changes require ZY Code restart, so cache is valid for entire session.
- * @returns Merged settings and all validation errors encountered
+ * 从所有源获取合并后的配置和验证错误。
+ * 此函数现在使用会话级缓存以避免重复的文件 I/O。
+ * 配置变更需要重启 ZY Code，因此缓存在整个会话期间有效。
+ * @returns 合并后的配置和所有遇到的验证错误
  */
 export function getSettingsWithErrors(): SettingsWithErrors {
-  // Use cached result if available
+  // 如果有可用的缓存结果则使用缓存
   const cached = getSessionSettingsCache()
   if (cached !== null) {
     return cached
   }
 
-  // Load from disk and cache the result
+  // 从磁盘加载并缓存结果
   const result = loadSettingsFromDisk()
   profileCheckpoint('loadSettingsFromDisk_end')
   setSessionSettingsCache(result)
@@ -792,16 +787,14 @@ export function getSettingsWithErrors(): SettingsWithErrors {
 }
 
 /**
- * Check if any raw settings file contains a specific key, regardless of validation.
- * This is useful for detecting user intent even when settings validation fails.
- * For example, if a user set cleanupPeriodDays but has validation errors elsewhere,
- * we can detect they explicitly configured cleanup and skip cleanup rather than
- * falling back to defaults.
+ * 检查任何原始配置文件是否包含特定键，不考虑验证结果。
+ * 这对于检测用户意图很有用，即使配置验证失败。
+ * 例如，如果用户设置了 cleanupPeriodDays 但其他地方有验证错误，
+ * 我们可以检测到他们明确配置了清理策略并跳过清理，而不是回退到默认值。
  */
 /**
- * Returns true if any trusted settings source has accepted the bypass
- * permissions mode dialog. projectSettings is intentionally excluded —
- * a malicious project could otherwise auto-bypass the dialog (RCE risk).
+ * 如果任何受信任的配置源已接受绕过权限模式对话框则返回 true。
+ * projectSettings 被有意排除 - 恶意项目可能会自动绕过对话框（RCE 风险）。
  */
 export function hasSkipDangerousModePermissionPrompt(): boolean {
   return !!(
@@ -813,9 +806,8 @@ export function hasSkipDangerousModePermissionPrompt(): boolean {
 }
 
 /**
- * Returns true if any trusted settings source has accepted the auto
- * mode opt-in dialog. projectSettings is intentionally excluded —
- * a malicious project could otherwise auto-bypass the dialog (RCE risk).
+ * 如果任何受信任的配置源已接受自动模式选择加入对话框则返回 true。
+ * projectSettings 被有意排除 - 恶意项目可能会自动绕过对话框（RCE 风险）。
  */
 export function hasAutoModeOptIn(): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
@@ -833,9 +825,9 @@ export function hasAutoModeOptIn(): boolean {
 }
 
 /**
- * Returns whether plan mode should use auto mode semantics. Default true
- * (opt-out). Returns false if any trusted source explicitly sets false.
- * projectSettings is excluded so a malicious project can't control this.
+ * 返回计划模式是否应使用自动模式语义。默认为 true（选择退出）。
+ * 如果任何受信任源明确设置为 false 则返回 false。
+ * projectSettings 被排除以防止恶意项目控制此行为。
  */
 export function getUseAutoModeDuringPlan(): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
@@ -850,10 +842,10 @@ export function getUseAutoModeDuringPlan(): boolean {
 }
 
 /**
- * Returns the merged autoMode config from trusted settings sources.
- * Only available when TRANSCRIPT_CLASSIFIER is active; returns undefined otherwise.
- * projectSettings is intentionally excluded — a malicious project could
- * otherwise inject classifier allow/deny rules (RCE risk).
+ * 返回从受信任配置源合并后的 autoMode 配置。
+ * 仅在 TRANSCRIPT_CLASSIFIER 激活时可用；否则返回 undefined。
+ * projectSettings 被有意排除 - 恶意项目可能会注入分类器
+ * allow/deny 规则（RCE 风险）。
  */
 export function getAutoModeConfig():
   | { allow?: string[]; soft_deny?: string[]; environment?: string[] }
@@ -902,7 +894,7 @@ export function getAutoModeConfig():
 
 export function rawSettingsContainsKey(key: string): boolean {
   for (const source of getEnabledSettingSources()) {
-    // Skip policySettings - we only care about user-configured settings
+    // 跳过 policySettings - 我们只关心用户配置的设置
     if (source === 'policySettings') {
       continue
     }
@@ -924,8 +916,8 @@ export function rawSettingsContainsKey(key: string): boolean {
         return true
       }
     } catch (error) {
-      // File not found is expected - not all settings files exist
-      // Other errors (permissions, I/O) should be tracked
+      // 文件未找到是预期行为 - 并非所有配置文件都存在
+      // 其他错误（权限、I/O）应被追踪
       handleFileSystemError(error, filePath)
     }
   }

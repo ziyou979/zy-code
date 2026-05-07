@@ -1,35 +1,33 @@
 /**
- * Plugin Loader Module
+ * 插件加载器模块
  *
- * This module is responsible for discovering, loading, and validating ZY Code plugins
- * from various sources including marketplaces and git repositories.
+ * 本模块负责从各种来源（包括 marketplace 和 git 仓库）发现、加载和验证 ZY Code 插件。
  *
- * NPM packages are also supported but must be referenced through marketplaces - the marketplace
- * entry contains the NPM package information.
+ * 也支持 NPM 包，但必须通过 marketplace 引用 — marketplace 条目包含 NPM 包信息。
  *
- * Plugin Discovery Sources (in order of precedence):
- * 1. Marketplace-based plugins (plugin@marketplace format in settings)
- * 2. Session-only plugins (from --plugin-dir CLI flag or SDK plugins option)
+ * 插件发现来源（按优先级排列）：
+ * 1. 基于 Marketplace 的插件（settings 中的 plugin@marketplace 格式）
+ * 2. 仅会话插件（来自 --plugin-dir CLI 标志或 SDK plugins 选项）
  *
- * Plugin Directory Structure:
+ * 插件目录结构：
  * ```
  * my-plugin/
- * ├── plugin.json          # Optional manifest with metadata
- * ├── commands/            # Custom slash commands
+ * ├── plugin.json          # 可选的包含元数据的清单文件
+ * ├── commands/            # 自定义斜杠命令
  * │   ├── build.md
  * │   └── deploy.md
- * ├── agents/              # Custom AI agents
+ * ├── agents/              # 自定义 AI 代理
  * │   └── test-runner.md
- * └── hooks/               # Hook configurations
- *     └── hooks.json       # Hook definitions
+ * └── hooks/               # Hook 配置
+ *     └── hooks.json       # Hook 定义
  * ```
  *
- * The loader handles:
- * - Plugin manifest validation
- * - Hooks configuration loading and variable resolution
- * - Duplicate name detection
- * - Enable/disable state management
- * - Error collection and reporting
+ * 加载器处理：
+ * - 插件清单验证
+ * - Hook 配置加载和变量解析
+ * - 重复名称检测
+ * - 启用/禁用状态管理
+ * - 错误收集和报告
  */
 
 import {
@@ -119,13 +117,13 @@ export function getPluginCachePath(): string {
 }
 
 /**
- * Compute the versioned cache path under a specific base plugins directory.
- * Used to probe both primary and seed caches.
+ * 在指定的基础插件目录下计算版本化缓存路径。
+ * 用于探测主缓存和种子缓存。
  *
- * @param baseDir - Base plugins directory (e.g. getPluginsDirectory() or seed dir)
- * @param pluginId - Plugin identifier in format "name@marketplace"
- * @param version - Version string (semver, git SHA, etc.)
- * @returns Absolute path to versioned plugin directory under baseDir
+ * @param baseDir - 基础插件目录（例如 getPluginsDirectory() 或种子目录）
+ * @param pluginId - 插件标识符，格式为 "name@marketplace"
+ * @param version - 版本字符串（semver、git SHA 等）
+ * @returns baseDir 下版本化插件目录的绝对路径
  */
 export function getVersionedCachePathIn(
   baseDir: string,
@@ -141,29 +139,29 @@ export function getVersionedCachePathIn(
 }
 
 /**
- * Get versioned cache path for a plugin under the primary plugins directory.
- * Format: ~/.zy/plugins/cache/{marketplace}/{plugin}/{version}/
+ * 获取插件在主插件目录下的版本化缓存路径。
+ * 格式：~/.zy/plugins/cache/{marketplace}/{plugin}/{version}/
  *
- * @param pluginId - Plugin identifier in format "name@marketplace"
- * @param version - Version string (semver, git SHA, etc.)
- * @returns Absolute path to versioned plugin directory
+ * @param pluginId - 插件标识符，格式为 "name@marketplace"
+ * @param version - 版本字符串（semver、git SHA 等）
+ * @returns 版本化插件目录的绝对路径
  */
 export function getVersionedCachePath(pluginId: string, version: string): string {
   return getVersionedCachePathIn(getPluginsDirectory(), pluginId, version)
 }
 
 /**
- * Get versioned ZIP cache path for a plugin.
- * This is the zip cache variant of getVersionedCachePath.
+ * 获取插件的版本化 ZIP 缓存路径。
+ * 这是 getVersionedCachePath 的 zip 缓存变体。
  */
 export function getVersionedZipCachePath(pluginId: string, version: string): string {
   return `${getVersionedCachePath(pluginId, version)}.zip`
 }
 
 /**
- * Probe seed directories for a populated cache at this plugin version.
- * Seeds are checked in precedence order; first hit wins. Returns null if no
- * seed is configured or none contains a populated directory at this version.
+ * 探测种子目录中是否存在该插件版本的已填充缓存。
+ * 按优先级顺序检查种子；首个命中者胜出。如果未配置种子
+ * 或没有种子包含该版本的已填充目录，则返回 null。
  */
 async function probeSeedCache(pluginId: string, version: string): Promise<string | null> {
   for (const seedDir of getPluginSeedDirs()) {
@@ -179,13 +177,13 @@ async function probeSeedCache(pluginId: string, version: string): Promise<string
 }
 
 /**
- * When the computed version is 'unknown', probe seed/cache/<m>/<p>/ for an
- * actual version dir. Handles the first-boot chicken-and-egg where the
- * version can only be known after cloning, but seed already has the clone.
+ * 当计算版本为 'unknown' 时，探测 seed/cache/<m>/<p>/ 中的实际版本目录。
+ * 处理首次启动的先有鸡还是先有蛋问题：版本只能在克隆后才能确定，
+ * 但种子中已有克隆。
  *
- * Per seed, only matches when exactly one version exists (typical BYOC case).
- * Multiple versions within a single seed → ambiguous → try next seed.
- * Seeds are checked in precedence order; first match wins.
+ * 每个种子仅在恰好存在一个版本时匹配（典型的 BYOC 场景）。
+ * 单个种子中有多个版本 → 歧义 → 尝试下一个种子。
+ * 按优先级顺序检查种子；首个匹配胜出。
  */
 export async function probeSeedCacheAnyVersion(pluginId: string): Promise<string | null> {
   for (const seedDir of getPluginSeedDirs()) {
@@ -206,13 +204,13 @@ export async function probeSeedCacheAnyVersion(pluginId: string): Promise<string
 }
 
 /**
- * Get legacy (non-versioned) cache path for a plugin.
- * Format: ~/.zy/plugins/cache/{plugin-name}/
+ * 获取插件的旧版（非版本化）缓存路径。
+ * 格式：~/.zy/plugins/cache/{plugin-name}/
  *
- * Used for backward compatibility with existing installations.
+ * 用于向后兼容现有安装。
  *
- * @param pluginName - Plugin name (without marketplace suffix)
- * @returns Absolute path to legacy plugin directory
+ * @param pluginName - 插件名称（不含 marketplace 后缀）
+ * @returns 旧版插件目录的绝对路径
  */
 export function getLegacyCachePath(pluginName: string): string {
   const cachePath = getPluginCachePath()
@@ -220,16 +218,16 @@ export function getLegacyCachePath(pluginName: string): string {
 }
 
 /**
- * Resolve plugin path with fallback to legacy location.
+ * 解析插件路径，回退到旧版位置。
  *
- * Always:
- * 1. Try versioned path first if version is provided
- * 2. Fall back to legacy path for existing installations
- * 3. Return versioned path for new installations
+ * 始终：
+ * 1. 如果提供了版本，先尝试版本化路径
+ * 2. 回退到旧路径以兼容现有安装
+ * 3. 为新安装返回版本化路径
  *
- * @param pluginId - Plugin identifier in format "name@marketplace"
- * @param version - Optional version string
- * @returns Absolute path to plugin directory
+ * @param pluginId - 插件标识符，格式为 "name@marketplace"
+ * @param version - 可选的版本字符串
+ * @returns 插件目录的绝对路径
  */
 export async function resolvePluginPath(pluginId: string, version?: string): Promise<string> {
   // 先尝试版本化路径
@@ -252,8 +250,8 @@ export async function resolvePluginPath(pluginId: string, version?: string): Pro
 }
 
 /**
- * Recursively copy a directory.
- * Exported for testing purposes.
+ * 递归复制目录。
+ * 导出用于测试目的。
  */
 export async function copyDir(src: string, dest: string): Promise<void> {
   await getFsImplementation().mkdir(dest)
@@ -307,19 +305,19 @@ export async function copyDir(src: string, dest: string): Promise<void> {
 }
 
 /**
- * Copy plugin files to versioned cache directory.
+ * 将插件文件复制到版本化缓存目录。
  *
- * For local plugins: Uses entry.source from marketplace.json as the single source of truth.
- * For remote plugins: Falls back to copying sourcePath (the downloaded content).
+ * 对于本地插件：使用 marketplace.json 中的 entry.source 作为唯一真实来源。
+ * 对于远程插件：回退到复制 sourcePath（已下载的内容）。
  *
- * @param sourcePath - Path to the plugin source (used as fallback for remote plugins)
- * @param pluginId - Plugin identifier in format "name@marketplace"
- * @param version - Version string for versioned path
- * @param entry - Optional marketplace entry containing the source field
- * @param marketplaceDir - Marketplace directory for resolving entry.source (undefined for remote plugins)
- * @returns Path to the cached plugin directory
- * @throws Error if the source directory is not found
- * @throws Error if the destination directory is empty after copy
+ * @param sourcePath - 插件源路径（用作远程插件的回退）
+ * @param pluginId - 插件标识符，格式为 "name@marketplace"
+ * @param version - 用于版本化路径的版本字符串
+ * @param entry - 可选的包含 source 字段的 marketplace 条目
+ * @param marketplaceDir - 用于解析 entry.source 的 marketplace 目录（远程插件为 undefined）
+ * @returns 缓存插件目录的路径
+ * @throws 如果源目录未找到则抛出错误
+ * @throws 如果复制后目标目录为空则抛出错误
  */
 export async function copyPluginToVersionedCache(
   sourcePath: string,
@@ -594,10 +592,9 @@ async function installFromGitHub(
 }
 
 /**
- * Resolve a git-subdir `url` field to a clonable git URL.
- * Accepts GitHub owner/repo shorthand (converted to ssh or https depending on
- * ZY_CODE_REMOTE) or any URL that passes validateGitUrl (https, http,
- * file, git@ ssh).
+ * 将 git-subdir 的 `url` 字段解析为可克隆的 git URL。
+ * 接受 GitHub owner/repo 简写（根据 ZY_CODE_REMOTE 转换为 ssh 或 https）
+ * 或任何通过 validateGitUrl 验证的 URL（https、http、file、git@ ssh）。
  */
 function resolveGitSubdirUrl(url: string): string {
   if (/^[a-zA-Z0-9-_.]+\/[a-zA-Z0-9-_.]+$/.test(url)) {
@@ -609,27 +606,23 @@ function resolveGitSubdirUrl(url: string): string {
 }
 
 /**
- * Install a plugin from a subdirectory of a git repository (exported for
- * testing).
+ * 从 git 仓库的子目录安装插件（导出用于测试）。
  *
- * Uses partial clone (--filter=tree:0) + sparse-checkout so only the tree
- * objects along the path and the blobs under it are downloaded. For large
- * monorepos this is dramatically cheaper than a full clone — the tree objects
- * for a million-file repo can be hundreds of MB, all avoided here.
+ * 使用部分克隆（--filter=tree:0）+ sparse-checkout，这样只下载路径上的
+ * tree 对象和其下的 blob。对于大型 monorepo，这比完整克隆便宜得多 ——
+ * 百万文件仓库的 tree 对象可达数百 MB，这里全部避免了。
  *
- * Sequence:
+ * 执行顺序：
  * 1. clone --depth 1 --filter=tree:0 --no-checkout [--branch ref]
  * 2. sparse-checkout set --cone -- <path>
- * 3. If sha: fetch --depth 1 origin <sha> (fallback: --unshallow), then
- *    checkout <sha>. The partial-clone filter is stored in remote config so
- *    subsequent fetches respect it; --unshallow gets all commits but trees
- *    and blobs remain lazy.
- *    If no sha: checkout HEAD (points to ref if --branch was used).
- * 4. Move <cloneDir>/<path> to targetPath and discard the clone.
+ * 3. 如果有 sha：fetch --depth 1 origin <sha>（回退：--unshallow），然后
+ *    checkout <sha>。部分克隆过滤器存储在远程配置中，后续 fetch 会遵守它；
+ *    --unshallow 获取所有提交但 tree 和 blob 保持延迟加载。
+ *    如果没有 sha：checkout HEAD（如果使用了 --branch 则指向 ref）。
+ * 4. 将 <cloneDir>/<path> 移动到 targetPath 并丢弃克隆。
  *
- * The clone is ephemeral — it goes into a sibling temp directory and is
- * removed after the subdir is extracted. targetPath ends up containing only
- * the plugin files with no .git directory.
+ * 克隆是临时的 — 它放入同级临时目录中，在子目录提取后被删除。
+ * targetPath 最终只包含插件文件，没有 .git 目录。
  */
 export async function installFromGitSubdir(
   url: string,
@@ -980,13 +973,12 @@ export async function cachePlugin(
 }
 
 /**
- * Loads and validates a plugin manifest from a JSON file.
+ * 从 JSON 文件加载并验证插件清单。
  *
- * The manifest provides metadata about the plugin including name, version,
- * description, author, and other optional fields. If no manifest exists,
- * a minimal one is created to allow the plugin to function.
+ * 清单提供插件的元数据，包括名称、版本、描述、作者和其他可选字段。
+ * 如果清单不存在，将创建一个最小清单以使插件能够运行。
  *
- * Example plugin.json:
+ * plugin.json 示例：
  * ```json
  * {
  *   "name": "code-assistant",
@@ -1005,26 +997,24 @@ export async function cachePlugin(
  */
 
 /**
- * Loads and validates a plugin manifest from a JSON file.
+ * 从 JSON 文件加载并验证插件清单。
  *
- * The manifest provides metadata about the plugin including name, version,
- * description, author, and other optional fields. If no manifest exists,
- * a minimal one is created to allow the plugin to function.
+ * 清单提供插件的元数据，包括名称、版本、描述、作者和其他可选字段。
+ * 如果清单不存在，将创建一个最小清单以使插件能够运行。
  *
- * Unknown keys in the manifest are silently stripped (PluginManifestSchema
- * uses zod's default strip behavior, not .strict()). Type mismatches and
- * other validation errors still fail.
+ * 清单中的未知键会被静默去除（PluginManifestSchema 使用 zod 的默认 strip
+ * 行为，而非 .strict()）。类型不匹配和其他验证错误仍会失败。
  *
- * Behavior:
- * - Missing file: Creates default with provided name and source
- * - Invalid JSON: Throws error with parse details
- * - Schema validation failure: Throws error with validation details
+ * 行为：
+ * - 文件缺失：使用提供的名称和源创建默认清单
+ * - 无效 JSON：抛出包含解析详情的错误
+ * - Schema 验证失败：抛出包含验证详情的错误
  *
- * @param manifestPath - Full path to the plugin.json file
- * @param pluginName - Name to use in default manifest (e.g., "my-plugin")
- * @param source - Source description for default manifest (e.g., "git:repo" or ".zy-plugin/name")
- * @returns A valid PluginManifest object (either loaded or default)
- * @throws Error if manifest exists but is invalid (corrupt JSON or schema validation failure)
+ * @param manifestPath - plugin.json 文件的完整路径
+ * @param pluginName - 默认清单中使用的名称（例如 "my-plugin"）
+ * @param source - 默认清单的源描述（例如 "git:repo" 或 ".zy-plugin/name"）
+ * @returns 有效的 PluginManifest 对象（加载的或默认的）
+ * @throws 如果清单存在但无效（损坏的 JSON 或 schema 验证失败）则抛出错误
  */
 export async function loadPluginManifest(
   manifestPath: string,
@@ -1068,7 +1058,7 @@ export async function loadPluginManifest(
       `Plugin ${pluginName} has an invalid manifest file at ${manifestPath}.\n\nValidation errors: ${errors}`,
     )
   } catch (error) {
-    // Check if this is the error we just threw (validation error)
+    // 检查这是否是我们刚刚抛出的验证错误
     if (error instanceof Error && error.message.includes('invalid manifest file')) {
       throw error
     }
@@ -1088,13 +1078,13 @@ export async function loadPluginManifest(
 }
 
 /**
- * Loads and validates plugin hooks configuration from a JSON file.
- * IMPORTANT: Only call this when the hooks file is expected to exist.
+ * 从 JSON 文件加载并验证插件 hooks 配置。
+ * 重要：仅在预期 hooks 文件存在时调用此函数。
  *
- * @param hooksConfigPath - Full path to the hooks.json file
- * @param pluginName - Plugin name for error messages
- * @returns Validated HooksSettings
- * @throws Error if file doesn't exist or is invalid
+ * @param hooksConfigPath - hooks.json 文件的完整路径
+ * @param pluginName - 用于错误消息的插件名称
+ * @returns 验证后的 HooksSettings
+ * @throws 如果文件不存在或无效则抛出错误
  */
 async function loadPluginHooks(
   hooksConfigPath: string,
@@ -1117,25 +1107,25 @@ async function loadPluginHooks(
 }
 
 /**
- * Validate a list of plugin component relative paths by checking existence in parallel.
+ * 通过并行检查文件存在性来验证插件组件相对路径列表。
  *
- * This helper parallelizes the pathExists checks (the expensive async part) while
- * preserving deterministic error/log ordering by iterating results sequentially.
+ * 此辅助函数并行执行 pathExists 检查（开销较大的异步部分），
+ * 同时通过顺序迭代结果来保持确定性的错误/日志顺序。
  *
- * Introduced to fix a perf regression from the sync→async fs migration: sequential
- * `for { await pathExists }` loops add ~1-5ms of event-loop overhead per iteration.
- * With many plugins × several component types, this compounds to hundreds of ms.
+ * 引入此函数是为了修复从同步→异步 fs 迁移带来的性能回退：顺序的
+ * `for { await pathExists }` 循环每次迭代增加约 1-5ms 的事件循环开销。
+ * 当有多个插件 × 多种组件类型时，这会累积到数百毫秒。
  *
- * @param relPaths - Relative paths from the manifest/marketplace entry to validate
- * @param pluginPath - Plugin root directory to resolve relative paths against
- * @param pluginName - Plugin name for error messages
- * @param source - Source identifier for PluginError records
- * @param component - Which component these paths belong to (for error records)
- * @param componentLabel - Human-readable label for log messages (e.g. "Agent", "Skill")
- * @param contextLabel - Where the path came from, for log messages
- *   (e.g. "specified in manifest but", "from marketplace entry")
- * @param errors - Error array to push path-not-found errors into (mutated)
- * @returns Array of full paths that exist on disk, in original order
+ * @param relPaths - 要验证的来自清单/marketplace 条目的相对路径
+ * @param pluginPath - 用于解析相对路径的插件根目录
+ * @param pluginName - 用于错误消息的插件名称
+ * @param source - PluginError 记录的源标识符
+ * @param component - 这些路径所属的组件（用于错误记录）
+ * @param componentLabel - 日志消息中人类可读的标签（例如 "Agent"、"Skill"）
+ * @param contextLabel - 路径的来源，用于日志消息
+ *   （例如 "specified in manifest but"、"from marketplace entry"）
+ * @param errors - 用于推入路径未找到错误的数组（会被修改）
+ * @returns 磁盘上存在的完整路径数组，保持原始顺序
  */
 async function validatePluginPaths(
   relPaths: string[],
@@ -1178,43 +1168,40 @@ async function validatePluginPaths(
 }
 
 /**
- * Creates a LoadedPlugin object from a plugin directory path.
+ * 从插件目录路径创建 LoadedPlugin 对象。
  *
- * This is the central function that assembles a complete plugin representation
- * by scanning the plugin directory structure and loading all components.
- * It handles both fully-featured plugins with manifests and minimal plugins
- * with just commands or agents directories.
+ * 这是核心函数，通过扫描插件目录结构并加载所有组件来组装完整的插件表示。
+ * 它同时处理具有完整清单的插件和仅有 commands 或 agents 目录的最小插件。
  *
- * Directory structure it looks for:
+ * 它查找的目录结构：
  * ```
  * plugin-directory/
- * ├── plugin.json          # Optional: Plugin manifest
- * ├── commands/            # Optional: Custom slash commands
- * │   ├── build.md         # /build command
- * │   └── test.md          # /test command
- * ├── agents/              # Optional: Custom AI agents
- * │   ├── reviewer.md      # Code review agent
- * │   └── optimizer.md     # Performance optimization agent
- * └── hooks/               # Optional: Hook configurations
- *     └── hooks.json       # Hook definitions
+ * ├── plugin.json          # 可选：插件清单
+ * ├── commands/            # 可选：自定义斜杠命令
+ * │   ├── build.md         # /build 命令
+ * │   └── test.md          # /test 命令
+ * ├── agents/              # 可选：自定义 AI 代理
+ * │   ├── reviewer.md      # 代码审查代理
+ * │   └── optimizer.md     # 性能优化代理
+ * └── hooks/               # 可选：Hook 配置
+ *     └── hooks.json       # Hook 定义
  * ```
  *
- * Component detection:
- * - Manifest: Loaded from plugin.json if present, otherwise creates default
- * - Commands: Sets commandsPath if commands/ directory exists
- * - Agents: Sets agentsPath if agents/ directory exists
- * - Hooks: Loads from hooks/hooks.json if present
+ * 组件检测：
+ * - 清单：如果存在 plugin.json 则从中加载，否则创建默认清单
+ * - 命令：如果 commands/ 目录存在则设置 commandsPath
+ * - 代理：如果 agents/ 目录存在则设置 agentsPath
+ * - Hooks：如果存在则从 hooks/hooks.json 加载
  *
- * The function is tolerant of missing components - a plugin can have
- * any combination of the above directories/files. Missing component files
- * are reported as errors but don't prevent plugin loading.
+ * 该函数对缺失组件具有容错性 - 插件可以拥有上述目录/文件的任意组合。
+ * 缺失的组件文件会被报告为错误，但不会阻止插件加载。
  *
- * @param pluginPath - Absolute path to the plugin directory
- * @param source - Source identifier (e.g., "git:repo", ".zy-plugin/my-plugin")
- * @param enabled - Initial enabled state (may be overridden by settings)
- * @param fallbackName - Name to use if manifest doesn't specify one
- * @param strict - When true, adds errors for duplicate hook files (default: true)
- * @returns Object containing the LoadedPlugin and any errors encountered
+ * @param pluginPath - 插件目录的绝对路径
+ * @param source - 源标识符（例如 "git:repo"、".zy-plugin/my-plugin"）
+ * @param enabled - 初始启用状态（可能被 settings 覆盖）
+ * @param fallbackName - 如果清单未指定名称时使用的名称
+ * @param strict - 为 true 时，对重复的 hook 文件添加错误（默认：true）
+ * @returns 包含 LoadedPlugin 和遇到的任何错误的对象
  */
 export async function createPluginFromPath(
   pluginPath: string,
@@ -1225,23 +1212,23 @@ export async function createPluginFromPath(
 ): Promise<{ plugin: LoadedPlugin; errors: PluginError[] }> {
   const errors: PluginError[] = []
 
-  // Step 1: Load or create the plugin manifest
-  // This provides metadata about the plugin (name, version, etc.)
+  // 步骤 1：加载或创建插件清单
+  // 这提供了插件的元数据（名称、版本等）
   const manifestPath = join(pluginPath, '.zy-plugin', 'plugin.json')
   const manifest = await loadPluginManifest(manifestPath, fallbackName, source)
 
-  // Step 2: Create the base plugin object
-  // Start with required fields from manifest and parameters
+  // 步骤 2：创建基础插件对象
+  // 从清单和参数中的必填字段开始
   const plugin: LoadedPlugin = {
-    name: manifest.name, // Use name from manifest (or fallback)
-    manifest, // Store full manifest for later use
-    path: pluginPath, // Absolute path to plugin directory
-    source, // Source identifier (e.g., "git:repo" or ".zy-plugin/name")
-    repository: source, // For backward compatibility with Plugin Repository
-    enabled, // Current enabled state
+    name: manifest.name, // 使用清单中的名称（或回退值）
+    manifest, // 存储完整清单以供后续使用
+    path: pluginPath, // 插件目录的绝对路径
+    source, // 源标识符（例如 "git:repo" 或 ".zy-plugin/name"）
+    repository: source, // 为了向后兼容插件仓库
+    enabled, // 当前启用状态
   }
 
-  // Step 3: Auto-detect optional directories in parallel
+  // 步骤 3：并行自动检测可选目录
   const [commandsDirExists, agentsDirExists, skillsDirExists, outputStylesDirExists] =
     await Promise.all([
       !manifest.commands ? pathExists(join(pluginPath, 'commands')) : false,
@@ -1255,9 +1242,9 @@ export async function createPluginFromPath(
     plugin.commandsPath = commandsPath
   }
 
-  // Step 3a: Process additional command paths from manifest
+  // 步骤 3a：处理清单中的额外命令路径
   if (manifest.commands) {
-    // Check if it's an object mapping (record of command name → metadata)
+    // 检查是否为对象映射（命令名称 → 元数据的记录）
     const firstValue = Object.values(manifest.commands)[0]
     if (
       typeof manifest.commands === 'object' &&
@@ -1266,12 +1253,12 @@ export async function createPluginFromPath(
       typeof firstValue === 'object' &&
       ('source' in firstValue || 'content' in firstValue)
     ) {
-      // Object mapping format: { "about": { "source": "./README.md", ... } }
+      // 对象映射格式：{ "about": { "source": "./README.md", ... } }
       const commandsMetadata: Record<string, CommandMetadata> = {}
       const validPaths: string[] = []
 
-      // Parallelize pathExists checks; process results in order to keep
-      // error/log ordering deterministic.
+      // 并行执行 pathExists 检查；按顺序处理结果以保持
+      // 错误/日志顺序确定性。
       const entries = Object.entries(manifest.commands)
       const checks = await Promise.all(
         entries.map(async ([commandName, metadata]) => {
@@ -1297,11 +1284,11 @@ export async function createPluginFromPath(
       for (const check of checks) {
         if (check.kind === 'skip') continue
         if (check.kind === 'content') {
-          // For inline content commands, add metadata without path
+          // 对于内联内容命令，添加元数据但不添加路径
           commandsMetadata[check.commandName] = check.metadata
           continue
         }
-        // kind === 'source'
+        // kind === 'source'（源类型）
         if (check.exists) {
           validPaths.push(check.fullPath)
           commandsMetadata[check.commandName] = check.metadata
@@ -1323,21 +1310,21 @@ export async function createPluginFromPath(
         }
       }
 
-      // Set commandsPaths if there are file-based commands
+      // 如果有基于文件的命令则设置 commandsPaths
       if (validPaths.length > 0) {
         plugin.commandsPaths = validPaths
       }
-      // Set commandsMetadata if there are any commands (file-based or inline)
+      // 如果有任何命令（基于文件或内联的）则设置 commandsMetadata
       if (Object.keys(commandsMetadata).length > 0) {
         plugin.commandsMetadata = commandsMetadata
       }
     } else {
-      // Path or array of paths format
+      // 路径或路径数组格式
       const commandPaths = Array.isArray(manifest.commands)
         ? manifest.commands
         : [manifest.commands]
 
-      // Parallelize pathExists checks; process results in order.
+      // 并行执行 pathExists 检查；按顺序处理结果。
       const checks = await Promise.all(
         commandPaths.map(async (cmdPath) => {
           if (typeof cmdPath !== 'string') {
@@ -1386,13 +1373,13 @@ export async function createPluginFromPath(
     }
   }
 
-  // Step 4: Register agents directory if detected
+  // 步骤 4：如果检测到则注册代理目录
   const agentsPath = join(pluginPath, 'agents')
   if (agentsDirExists) {
     plugin.agentsPath = agentsPath
   }
 
-  // Step 4a: Process additional agent paths from manifest
+  // 步骤 4a：处理清单中的额外代理路径
   if (manifest.agents) {
     const agentPaths = Array.isArray(manifest.agents) ? manifest.agents : [manifest.agents]
 
@@ -1412,13 +1399,13 @@ export async function createPluginFromPath(
     }
   }
 
-  // Step 4b: Register skills directory if detected
+  // 步骤 4b：如果检测到则注册技能目录
   const skillsPath = join(pluginPath, 'skills')
   if (skillsDirExists) {
     plugin.skillsPath = skillsPath
   }
 
-  // Step 4c: Process additional skill paths from manifest
+  // 步骤 4c：处理清单中的额外技能路径
   if (manifest.skills) {
     const skillPaths = Array.isArray(manifest.skills) ? manifest.skills : [manifest.skills]
 
@@ -1438,13 +1425,13 @@ export async function createPluginFromPath(
     }
   }
 
-  // Step 4d: Register output-styles directory if detected
+  // 步骤 4d：如果检测到则注册输出样式目录
   const outputStylesPath = join(pluginPath, 'output-styles')
   if (outputStylesDirExists) {
     plugin.outputStylesPath = outputStylesPath
   }
 
-  // Step 4e: Process additional output style paths from manifest
+  // 步骤 4e：处理清单中的额外输出样式路径
   if (manifest.outputStyles) {
     const outputStylePaths = Array.isArray(manifest.outputStyles)
       ? manifest.outputStyles
@@ -1466,20 +1453,20 @@ export async function createPluginFromPath(
     }
   }
 
-  // Step 5: Load hooks configuration
+  // 步骤 5：加载 hooks 配置
   let mergedHooks: HooksSettings | undefined
-  const loadedHookPaths = new Set<string>() // Track loaded hook files
+  const loadedHookPaths = new Set<string>() // 跟踪已加载的 hook 文件
 
-  // Load from standard hooks/hooks.json if it exists
+  // 如果存在标准的 hooks/hooks.json 则从中加载
   const standardHooksPath = join(pluginPath, 'hooks', 'hooks.json')
   if (await pathExists(standardHooksPath)) {
     try {
       mergedHooks = await loadPluginHooks(standardHooksPath, manifest.name)
-      // Track the normalized path to prevent duplicate loading
+      // 跟踪规范化路径以防止重复加载
       try {
         loadedHookPaths.add(await realpath(standardHooksPath))
       } catch {
-        // If realpathSync fails, use original path
+        // 如果 realpathSync 失败，使用原始路径
         loadedHookPaths.add(standardHooksPath)
       }
       logForDebugging(
@@ -1501,13 +1488,13 @@ export async function createPluginFromPath(
     }
   }
 
-  // Load and merge hooks from manifest.hooks if specified
+  // 如果指定了 manifest.hooks 则加载并合并
   if (manifest.hooks) {
     const manifestHooksArray = Array.isArray(manifest.hooks) ? manifest.hooks : [manifest.hooks]
 
     for (const hookSpec of manifestHooksArray) {
       if (typeof hookSpec === 'string') {
-        // Path to additional hooks file
+        // 额外 hooks 文件的路径
         const hookFilePath = join(pluginPath, hookSpec)
         if (!(await pathExists(hookFilePath))) {
           logForDebugging(
@@ -1527,12 +1514,12 @@ export async function createPluginFromPath(
           continue
         }
 
-        // Check if this path resolves to an already-loaded hooks file
+        // 检查此路径是否解析到已加载的 hooks 文件
         let normalizedPath: string
         try {
           normalizedPath = await realpath(hookFilePath)
         } catch {
-          // If realpathSync fails, use original path
+          // 如果 realpathSync 失败，使用原始路径
           normalizedPath = hookFilePath
         }
 
@@ -1594,7 +1581,7 @@ export async function createPluginFromPath(
           })
         }
       } else if (typeof hookSpec === 'object') {
-        // Inline hooks
+        // 内联 hooks
         mergedHooks = mergeHooksSettings(mergedHooks, hookSpec as HooksSettings)
       }
     }
@@ -1604,9 +1591,9 @@ export async function createPluginFromPath(
     plugin.hooksConfig = mergedHooks
   }
 
-  // Step 6: Load plugin settings
-  // Settings can come from settings.json in the plugin directory or from manifest.settings
-  // Only allowlisted keys are kept (currently: agent)
+  // 步骤 6：加载插件设置
+  // 设置可以来自插件目录中的 settings.json 或 manifest.settings
+  // 仅保留白名单中的键（当前：agent）
   const pluginSettings = await loadPluginSettings(pluginPath, manifest)
   if (pluginSettings) {
     plugin.settings = pluginSettings
@@ -1616,8 +1603,8 @@ export async function createPluginFromPath(
 }
 
 /**
- * Schema derived from SettingsSchema that only keeps keys plugins are allowed to set.
- * Uses .strip() so unknown keys are silently removed during parsing.
+ * 从 SettingsSchema 派生的 Schema，仅保留允许插件设置的键。
+ * 使用 .strip() 以便在解析期间静默移除未知键。
  */
 const PluginSettingsSchema = lazySchema(() =>
   SettingsSchema()
@@ -1628,8 +1615,8 @@ const PluginSettingsSchema = lazySchema(() =>
 )
 
 /**
- * Parse raw settings through PluginSettingsSchema, returning only allowlisted keys.
- * Returns undefined if parsing fails or all keys are filtered out.
+ * 通过 PluginSettingsSchema 解析原始设置，仅返回白名单中的键。
+ * 如果解析失败或所有键都被过滤掉则返回 undefined。
  */
 function parsePluginSettings(raw: Record<string, unknown>): Record<string, unknown> | undefined {
   const result = PluginSettingsSchema().safeParse(raw)
@@ -1644,15 +1631,15 @@ function parsePluginSettings(raw: Record<string, unknown>): Record<string, unkno
 }
 
 /**
- * Load plugin settings from settings.json file or manifest.settings.
- * settings.json takes priority over manifest.settings when both exist.
- * Only allowlisted keys are included in the result.
+ * 从 settings.json 文件或 manifest.settings 加载插件设置。
+ * 当两者都存在时，settings.json 优先于 manifest.settings。
+ * 结果中仅包含白名单中的键。
  */
 async function loadPluginSettings(
   pluginPath: string,
   manifest: PluginManifest,
 ): Promise<Record<string, unknown> | undefined> {
-  // Try loading settings.json from the plugin directory
+  // 尝试从插件目录加载 settings.json
   const settingsJsonPath = join(pluginPath, 'settings.json')
   try {
     const content = await readFile(settingsJsonPath, { encoding: 'utf-8' })
@@ -1665,7 +1652,7 @@ async function loadPluginSettings(
       }
     }
   } catch (e: unknown) {
-    // Missing/inaccessible is expected - settings.json is optional
+    // 缺失/无法访问是预期的 - settings.json 是可选的
     if (!isFsInaccessible(e)) {
       logForDebugging(`Failed to parse settings.json for plugin ${manifest.name}: ${e}`, {
         level: 'warn',
@@ -1673,7 +1660,7 @@ async function loadPluginSettings(
     }
   }
 
-  // Fall back to manifest.settings
+  // 回退到 manifest.settings
   if (manifest.settings) {
     const filtered = parsePluginSettings(manifest.settings as Record<string, unknown>)
     if (filtered) {
@@ -1686,7 +1673,7 @@ async function loadPluginSettings(
 }
 
 /**
- * Merge two HooksSettings objects
+ * 合并两个 HooksSettings 对象
  */
 function mergeHooksSettings(
   base: HooksSettings | undefined,
@@ -1702,7 +1689,7 @@ function mergeHooksSettings(
     if (!merged[event as keyof HooksSettings]) {
       merged[event as keyof HooksSettings] = matchers
     } else {
-      // Merge matchers for this event
+      // 合并此事件的匹配器
       merged[event as keyof HooksSettings] = [
         ...(merged[event as keyof HooksSettings] || []),
         ...matchers,
@@ -1714,20 +1701,19 @@ function mergeHooksSettings(
 }
 
 /**
- * Shared discovery/policy/merge pipeline for both load modes.
+ * 两种加载模式共享的发现/策略/合并管道。
  *
- * Resolves enabledPlugins → marketplace entries, runs enterprise policy
- * checks, pre-loads catalogs, then dispatches each entry to the full or
- * cache-only per-entry loader. The ONLY difference between loadAllPlugins
- * and loadAllPluginsCacheOnly is which loader runs — discovery and policy
- * are identical.
+ * 解析 enabledPlugins → marketplace 条目，运行企业策略检查，
+ * 预加载目录，然后将每个条目分派给完整或仅缓存的逐条目加载器。
+ * loadAllPlugins 和 loadAllPluginsCacheOnly 之间唯一的区别是
+ * 运行哪个加载器 — 发现和策略是相同的。
  */
 async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }): Promise<{
   plugins: LoadedPlugin[]
   errors: PluginError[]
 }> {
   const settings = getSettings_DEPRECATED()
-  // Merge --add-dir plugins at lowest priority; standard settings win on conflict
+  // 以最低优先级合并 --add-dir 插件；标准设置在冲突时胜出
   const enabledPlugins = {
     ...getAddDirEnabledPlugins(),
     ...(settings.enabledPlugins || {}),
@@ -1735,41 +1721,40 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
   const plugins: LoadedPlugin[] = []
   const errors: PluginError[] = []
 
-  // Filter to plugin@marketplace format and validate
+  // 过滤为 plugin@marketplace 格式并验证
   const marketplacePluginEntries = Object.entries(enabledPlugins).filter(([key, value]) => {
-    // Check if it's in plugin@marketplace format (includes both enabled and disabled)
+    // 检查是否为 plugin@marketplace 格式（包括已启用和已禁用的）
     const isValidFormat = PluginIdSchema().safeParse(key).success
     if (!isValidFormat || value === undefined) return false
-    // Skip built-in plugins — handled separately by getBuiltinPlugins()
+    // 跳过内置插件 — 由 getBuiltinPlugins() 单独处理
     const { marketplace } = parsePluginIdentifier(key)
     return marketplace !== BUILTIN_MARKETPLACE_NAME
   })
 
-  // Load known marketplaces config to look up sources for policy checking.
-  // Use the Safe variant so a corrupted config file doesn't crash all plugin
-  // loading — this is a read-only path, so returning {} degrades gracefully.
+  // 加载已知 marketplace 配置以查找用于策略检查的源。
+  // 使用 Safe 变体，这样损坏的配置文件不会导致所有插件
+  // 加载崩溃 — 这是只读路径，返回 {} 可以优雅降级。
   const knownMarketplaces = await loadKnownMarketplacesConfigSafe()
 
-  // Fail-closed guard for enterprise policy: if a policy IS configured and we
-  // cannot resolve a marketplace's source (config returned {} due to corruption,
-  // or entry missing), we must NOT silently skip the policy check and load the
-  // plugin anyway. Before Safe, a corrupted config crashed everything (loud,
-  // fail-closed). With Safe + no guard, the policy check short-circuits on
-  // undefined marketplaceConfig and the fallback path (getPluginByIdCacheOnly)
-  // loads the plugin unchecked — a silent fail-open. This guard restores
-  // fail-closed: unknown source + active policy → block.
+  // 企业策略的失败关闭守卫：如果策略已配置且我们无法解析
+  // marketplace 的源（配置因损坏返回 {}，或条目缺失），我们绝不能
+  // 静默跳过策略检查而加载插件。在 Safe 之前，损坏的配置会导致
+  // 所有东西崩溃（响亮的失败关闭）。有了 Safe + 无守卫，策略检查
+  // 在 undefined marketplaceConfig 时短路，回退路径（getPluginByIdCacheOnly）
+  // 会不经检查地加载插件 — 静默的失败开放。此守卫恢复
+  // 失败关闭：未知源 + 活跃策略 → 阻止。
   //
-  // Allowlist: any value (including []) is active — empty allowlist = deny all.
-  // Blocklist: empty [] is a semantic no-op — only non-empty counts as active.
+  // 允许列表：任何值（包括 []）都是活跃的 — 空允许列表 = 拒绝所有。
+  // 阻止列表：空 [] 是语义上的空操作 — 只有非空才算活跃。
   const strictAllowlist = getStrictKnownMarketplaces()
   const blocklist = getBlockedMarketplaces()
   const hasEnterprisePolicy =
     strictAllowlist !== null || (blocklist !== null && blocklist.length > 0)
 
-  // Pre-load marketplace catalogs once per marketplace rather than re-reading
-  // known_marketplaces.json + marketplace.json for every plugin. This is the
-  // hot path — with N plugins across M marketplaces, the old per-plugin
-  // getPluginByIdCacheOnly() did 2N config reads + N catalog reads; this does M.
+  // 每个 marketplace 预加载一次目录，而不是为每个插件重新读取
+  // known_marketplaces.json + marketplace.json。这是热路径 —
+  // 对于 M 个 marketplace 中的 N 个插件，旧的逐插件
+  // getPluginByIdCacheOnly() 执行 2N 次配置读取 + N 次目录读取；这里只做 M 次。
   const uniqueMarketplaces = new Set(
     marketplacePluginEntries
       .map(([pluginId]) => parsePluginIdentifier(pluginId).marketplace)
@@ -1782,37 +1767,36 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
     }),
   )
 
-  // Look up installed versions once so the first-pass ZIP cache check
-  // can hit even when the marketplace entry omits `version`.
+  // 一次性查找已安装版本，这样即使 marketplace 条目省略了 `version`
+  // 首次 ZIP 缓存检查也能命中。
   const installedPluginsData = getInMemoryInstalledPlugins()
 
-  // Load all marketplace plugins in parallel for faster startup
+  // 并行加载所有 marketplace 插件以加快启动速度
   const results = await Promise.allSettled(
     marketplacePluginEntries.map(async ([pluginId, enabledValue]) => {
       const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(pluginId)
 
-      // Check if marketplace source is allowed by enterprise policy
+      // 检查 marketplace 源是否被企业策略允许
       const marketplaceConfig = knownMarketplaces[marketplaceName!]
 
-      // Fail-closed: if enterprise policy is active and we can't look up the
-      // marketplace source (config corrupted/empty, or entry missing), block
-      // rather than silently skip the policy check. See hasEnterprisePolicy
-      // comment above for the fail-open hazard this guards against.
+      // 失败关闭：如果企业策略活跃且我们无法查找 marketplace 源
+      // （配置损坏/为空，或条目缺失），阻止而非静默跳过策略检查。
+      // 参见上面的 hasEnterprisePolicy 注释了解此守卫防范的
+      // 失败开放风险。
       //
-      // This also fires for the "stale enabledPlugins entry with no registered
-      // marketplace" case, which is a UX trade-off: the user gets a policy
-      // error instead of plugin-not-found. Accepted because the fallback path
-      // (getPluginByIdCacheOnly) does a raw cast of known_marketplaces.json
-      // with NO schema validation — if one entry is malformed enough to fail
-      // our validation but readable enough for the raw cast, it would load
-      // unchecked. Unverifiable source + active policy → block, always.
+      // 这也适用于“过期的 enabledPlugins 条目且无已注册
+      // marketplace”的情况，这是一个用户体验权衡：用户会看到策略
+      // 错误而非插件未找到。这是可接受的，因为回退路径
+      // （getPluginByIdCacheOnly）对 known_marketplaces.json 进行原始
+      // 类型转换且无 schema 验证 — 如果某条目损坏到无法通过我们的
+      // 验证但原始转换可读，它会未经检查就加载。
+      // 不可验证的源 + 活跃策略 → 始终阻止。
       if (!marketplaceConfig && hasEnterprisePolicy) {
-        // We can't know whether the unverifiable source would actually be in
-        // the blocklist or not in the allowlist — so pick the error variant
-        // that matches whichever policy IS configured. If an allowlist exists,
-        // "not in allowed list" is the right framing; if only a blocklist
-        // exists, "blocked by blocklist" is less misleading than showing an
-        // empty allowed-sources list.
+        // 我们无法知道不可验证的源是否实际在阻止列表中或不在
+        // 允许列表中 — 因此选择与已配置策略匹配的错误变体。
+        // 如果允许列表存在，“不在允许列表中”是正确的表述；如果只有
+        // 阻止列表存在，“被阻止列表阻止”比显示空的允许源列表
+        // 更不易造成误解。
         errors.push({
           type: 'marketplace-blocked-by-policy',
           source: pluginId,
@@ -1825,7 +1809,7 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
       }
 
       if (marketplaceConfig && !isSourceAllowedByPolicy(marketplaceConfig.source)) {
-        // Check if explicitly blocked vs not in allowlist for better error context
+        // 检查是被显式阻止还是不在允许列表中，以提供更好的错误上下文
         const isBlocked = isSourceInBlocklist(marketplaceConfig.source)
         const allowlist = getStrictKnownMarketplaces() || []
         errors.push({
@@ -1839,8 +1823,8 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
         return null
       }
 
-      // Look up plugin entry from pre-loaded marketplace catalog (no per-plugin I/O).
-      // Fall back to getPluginByIdCacheOnly if the catalog couldn't be pre-loaded.
+      // 从预加载的 marketplace 目录查找插件条目（无逐插件 I/O）。
+      // 如果目录无法预加载则回退到 getPluginByIdCacheOnly。
       let result: Awaited<ReturnType<typeof getPluginByIdCacheOnly>> = null
       const marketplace = marketplaceCatalogs.get(marketplaceName!)
       if (marketplace && marketplaceConfig) {
@@ -1865,9 +1849,9 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
         return null
       }
 
-      // installed_plugins.json records what's actually cached on disk
-      // (version for the full loader's first-pass probe, installPath for
-      // the cache-only loader's direct read).
+      // installed_plugins.json 记录了磁盘上实际缓存的内容
+      // （version 用于完整加载器的首次探测，installPath 用于
+      // 仅缓存加载器的直接读取）。
       const installEntry = installedPluginsData.plugins[pluginId]?.[0]
       return cacheOnly
         ? loadPluginFromMarketplaceEntryCacheOnly(
@@ -1909,11 +1893,11 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
 }
 
 /**
- * Cache-only variant of loadPluginFromMarketplaceEntry.
+ * loadPluginFromMarketplaceEntry 的仅缓存变体。
  *
- * Skips network (cachePlugin) and disk-copy (copyPluginToVersionedCache).
- * Reads directly from the recorded installPath; if missing, emits
- * 'plugin-cache-miss'. Still extracts ZIP-cached plugins (local, fast).
+ * 跳过网络（cachePlugin）和磁盘复制（copyPluginToVersionedCache）。
+ * 直接从记录的 installPath 读取；如果缺失，发出
+ * 'plugin-cache-miss'。仍然提取 ZIP 缓存的插件（本地，快速）。
  */
 async function loadPluginFromMarketplaceEntryCacheOnly(
   entry: PluginMarketplaceEntry,
@@ -1926,8 +1910,8 @@ async function loadPluginFromMarketplaceEntryCacheOnly(
   let pluginPath: string
 
   if (typeof entry.source === 'string') {
-    // Local relative path — read from the marketplace source dir directly.
-    // Skip copyPluginToVersionedCache; startup doesn't need a fresh copy.
+    // 本地相对路径 — 直接从 marketplace 源目录读取。
+    // 跳过 copyPluginToVersionedCache；启动时不需要新副本。
     let marketplaceDir: string
     try {
       marketplaceDir = (await stat(marketplaceInstallLocation)).isDirectory()
@@ -1943,10 +1927,10 @@ async function loadPluginFromMarketplaceEntryCacheOnly(
       return null
     }
     pluginPath = join(marketplaceDir, entry.source)
-    // finishLoadingPluginFromPath reads pluginPath — its error handling
-    // surfaces ENOENT as a load failure, no need to pre-check here.
+    // finishLoadingPluginFromPath 读取 pluginPath — 其错误处理
+    // 会将 ENOENT 作为加载失败暴露，无需在此预检查。
   } else {
-    // External source (npm/github/url/git-subdir) — use recorded installPath.
+    // 外部源（npm/github/url/git-subdir）— 使用记录的 installPath。
     if (!installPath || !(await pathExists(installPath))) {
       errorsOut.push({
         type: 'plugin-cache-miss',
@@ -1959,7 +1943,7 @@ async function loadPluginFromMarketplaceEntryCacheOnly(
     pluginPath = installPath
   }
 
-  // Zip cache extraction — must still happen in cacheOnly mode (invariant 4)
+  // Zip 缓存提取 — 在 cacheOnly 模式下仍必须执行（不变量 4）
   if (isPluginZipCacheEnabled() && pluginPath.endsWith('.zip')) {
     const sessionDir = await getSessionPluginCachePath()
     const extractDir = join(sessionDir, pluginId.replace(/[^a-zA-Z0-9@\-_]/g, '-'))
@@ -1980,24 +1964,23 @@ async function loadPluginFromMarketplaceEntryCacheOnly(
     }
   }
 
-  // Delegate to the shared tail — identical to the full loader from here
+  // 委派给共享尾部 — 从这里开始与完整加载器相同
   return finishLoadingPluginFromPath(entry, pluginId, enabled, errorsOut, pluginPath)
 }
 
 /**
- * Load a plugin from a marketplace entry based on its source configuration.
+ * 根据源配置从 marketplace 条目加载插件。
  *
- * Handles different source types:
- * - Relative path: Loads from marketplace repo directory
- * - npm/github/url: Caches then loads from cache
+ * 处理不同的源类型：
+ * - 相对路径：从 marketplace 仓库目录加载
+ * - npm/github/url：缓存后从缓存加载
  *
- * @param installedVersion - Version from installed_plugins.json, used as a
- *   first-pass hint for the versioned cache lookup when the marketplace entry
- *   omits `version`. Avoids re-cloning external plugins just to discover the
- *   version we already recorded at install time.
+ * @param installedVersion - 来自 installed_plugins.json 的版本，当 marketplace 条目
+ *   省略 `version` 时用作版本化缓存查找的首次探测提示。避免仅为发现
+ *   安装时已记录的版本而重新克隆外部插件。
  *
- * Returns both the loaded plugin and any errors encountered during loading.
- * Errors include missing component files and hook load failures.
+ * 返回加载的插件和加载过程中遇到的任何错误。
+ * 错误包括缺失的组件文件和 hook 加载失败。
  */
 async function loadPluginFromMarketplaceEntry(
   entry: PluginMarketplaceEntry,
@@ -2011,7 +1994,7 @@ async function loadPluginFromMarketplaceEntry(
   let pluginPath: string
 
   if (typeof entry.source === 'string') {
-    // Relative path - resolve relative to marketplace install location
+    // 相对路径 - 相对于 marketplace 安装位置解析
     const marketplaceDir = (await stat(marketplaceInstallLocation)).isDirectory()
       ? marketplaceInstallLocation
       : join(marketplaceInstallLocation, '..')
@@ -2031,28 +2014,28 @@ async function loadPluginFromMarketplaceEntry(
       return null
     }
 
-    // Always copy local plugins to versioned cache
+    // 始终将本地插件复制到版本化缓存
     try {
-      // Try to load manifest from plugin directory to check for version field first
+      // 先尝试从插件目录加载清单以检查版本字段
       const manifestPath = join(sourcePluginPath, '.zy-plugin', 'plugin.json')
       let pluginManifest: PluginManifest | undefined
       try {
         pluginManifest = await loadPluginManifest(manifestPath, entry.name, entry.source)
       } catch {
-        // Manifest loading failed - will fall back to provided version or git SHA
+        // 清单加载失败 - 将回退到提供的版本或 git SHA
       }
 
-      // Calculate version with fallback order:
-      // 1. Plugin manifest version, 2. Marketplace entry version, 3. Git SHA, 4. 'unknown'
+      // 按回退顺序计算版本：
+      // 1. 插件清单版本，2. Marketplace 条目版本，3. Git SHA，4. 'unknown'
       const version = await calculatePluginVersion(
         pluginId,
         entry.source,
         pluginManifest,
         marketplaceDir,
-        entry.version, // Marketplace entry version as fallback
+        entry.version, // Marketplace 条目版本作为回退
       )
 
-      // Copy to versioned cache
+      // 复制到版本化缓存
       pluginPath = await copyPluginToVersionedCache(
         sourcePluginPath,
         pluginId,
@@ -2063,7 +2046,7 @@ async function loadPluginFromMarketplaceEntry(
 
       logForDebugging(`Resolved local plugin ${entry.name} to versioned cache: ${pluginPath}`)
     } catch (error) {
-      // If copy fails, fall back to loading from marketplace directly
+      // 如果复制失败，回退到直接从 marketplace 加载
       const errorMsg = errorMessage(error)
       logForDebugging(
         `Failed to copy plugin ${entry.name} to versioned cache: ${errorMsg}. Using marketplace path.`,
@@ -2072,13 +2055,13 @@ async function loadPluginFromMarketplaceEntry(
       pluginPath = sourcePluginPath
     }
   } else {
-    // External source (npm, github, url, pip) - always use versioned cache
+    // 外部源（npm、github、url、pip）- 始终使用版本化缓存
     try {
-      // Calculate version with fallback order:
-      // 1. No manifest yet, 2. installed_plugins.json version,
-      //    3. Marketplace entry version, 4. source.sha (pinned commits — the
-      //    exact value the post-clone call at cached.gitCommitSha would see),
-      //    5. 'unknown' → ref-tracked, falls through to clone by design.
+      // 按回退顺序计算版本：
+      // 1. 尚无清单，2. installed_plugins.json 版本，
+      //    3. Marketplace 条目版本，4. source.sha（固定提交 — 与
+      //    克隆后调用 cached.gitCommitSha 看到的完全相同的值），
+      //    5. 'unknown' → 按设计跟踪 ref，落入克隆路径。
       const version = await calculatePluginVersion(
         pluginId,
         entry.source,
@@ -2090,7 +2073,7 @@ async function loadPluginFromMarketplaceEntry(
 
       const versionedPath = getVersionedCachePath(pluginId, version)
 
-      // Check for cached version — ZIP file (zip cache mode) or directory
+      // 检查缓存版本 — ZIP 文件（zip 缓存模式）或目录
       const zipPath = getVersionedZipCachePath(pluginId, version)
       if (isPluginZipCacheEnabled() && (await pathExists(zipPath))) {
         logForDebugging(`Using versioned cached plugin ZIP ${entry.name} from ${zipPath}`)
@@ -2099,12 +2082,11 @@ async function loadPluginFromMarketplaceEntry(
         logForDebugging(`Using versioned cached plugin ${entry.name} from ${versionedPath}`)
         pluginPath = versionedPath
       } else {
-        // Seed cache probe (CCR pre-baked images, read-only). Seed content is
-        // frozen at image build time — no freshness concern, 'whatever's there'
-        // is what the image builder put there. Primary cache is NOT probed
-        // here; ref-tracked sources fall through to clone (the re-clone IS
-        // the freshness mechanism). If the clone fails, the plugin is simply
-        // disabled for this session — errorsOut.push below surfaces it.
+        // 种子缓存探测（CCR 预烘焙镜像，只读）。种子内容在镜像
+        // 构建时冻结 — 无新鲜度问题，“那里有什么”就是镜像构建者
+        // 放的。主缓存不在此探测；跟踪 ref 的源落入克隆路径
+        // （重新克隆本身就是新鲜度机制）。如果克隆失败，插件
+        // 只是在本次会话中禁用 — 下面的 errorsOut.push 会暴露它。
         const seedPath =
           (await probeSeedCache(pluginId, version)) ??
           (version === 'unknown' ? await probeSeedCacheAnyVersion(pluginId) : null)
@@ -2112,19 +2094,19 @@ async function loadPluginFromMarketplaceEntry(
           pluginPath = seedPath
           logForDebugging(`Using seed cache for external plugin ${entry.name} at ${seedPath}`)
         } else {
-          // Download to temp location, then copy to versioned cache
+          // 下载到临时位置，然后复制到版本化缓存
           const cached = await cachePlugin(entry.source, {
             manifest: { name: entry.name },
           })
 
-          // If the pre-clone version was deterministic (source.sha /
-          // entry.version / installedVersion), REUSE it. The post-clone
-          // recomputation with cached.manifest can return a DIFFERENT value
-          // — manifest.version (step 1) outranks gitCommitSha (step 3) —
-          // which would cache at e.g. "2.0.0/" while every warm start
-          // probes "{sha12}-{hash}/". Mismatched keys = re-clone forever.
-          // Recomputation is only needed when pre-clone was 'unknown'
-          // (ref-tracked, no hints) — the clone is the ONLY way to learn.
+          // 如果克隆前版本是确定性的（source.sha /
+          // entry.version / installedVersion），则重用它。克隆后
+          // 使用 cached.manifest 重新计算可能返回不同的值
+          // — manifest.version（步骤 1）优先于 gitCommitSha（步骤 3）—
+          // 这会缓存到例如 "2.0.0/" 而每次热启动
+          // 探测 "{sha12}-{hash}/"。不匹配的键 = 永远重新克隆。
+          // 仅当克隆前为 'unknown'时才需要重新计算
+          // （跟踪 ref，无提示）— 克隆是获知的唯一方式。
           const actualVersion =
             version !== 'unknown'
               ? version
@@ -2137,8 +2119,8 @@ async function loadPluginFromMarketplaceEntry(
                   cached.gitCommitSha,
                 )
 
-          // Copy to versioned cache
-          // For external sources, marketplaceDir is not applicable (already downloaded)
+          // 复制到版本化缓存
+          // 对于外部源，marketplaceDir 不适用（已下载）
           pluginPath = await copyPluginToVersionedCache(
             cached.path,
             pluginId,
@@ -2147,7 +2129,7 @@ async function loadPluginFromMarketplaceEntry(
             undefined,
           )
 
-          // Clean up temp path
+          // 清理临时路径
           if (cached.path !== pluginPath) {
             await rm(cached.path, { recursive: true, force: true })
           }
@@ -2168,7 +2150,7 @@ async function loadPluginFromMarketplaceEntry(
     }
   }
 
-  // Zip cache mode: extract ZIP to session temp dir before loading
+  // Zip 缓存模式：加载前将 ZIP 提取到会话临时目录
   if (isPluginZipCacheEnabled() && pluginPath.endsWith('.zip')) {
     const sessionDir = await getSessionPluginCachePath()
     const extractDir = join(sessionDir, pluginId.replace(/[^a-zA-Z0-9@\-_]/g, '-'))
@@ -2177,7 +2159,7 @@ async function loadPluginFromMarketplaceEntry(
       logForDebugging(`Extracted plugin ZIP to session dir: ${extractDir}`)
       pluginPath = extractDir
     } catch (error) {
-      // Corrupt ZIP: delete it so next install attempt re-creates it
+      // 损坏的 ZIP：删除它以便下次安装尝试重新创建
       logForDebugging(`Failed to extract plugin ZIP ${pluginPath}, deleting corrupt file: ${error}`)
       await rm(pluginPath, { force: true }).catch(() => {})
       throw error
@@ -2188,12 +2170,12 @@ async function loadPluginFromMarketplaceEntry(
 }
 
 /**
- * Shared tail of both loadPluginFromMarketplaceEntry variants.
+ * 两个 loadPluginFromMarketplaceEntry 变体的共享尾部。
  *
- * Once pluginPath is resolved (via clone, cache, or installPath lookup),
- * the rest of the load — manifest probe, createPluginFromPath, marketplace
- * entry supplementation — is identical. Extracted so the cache-only path
- * doesn't duplicate ~500 lines.
+ * 一旦 pluginPath 解析完成（通过克隆、缓存或 installPath 查找），
+ * 加载的其余部分 — 清单探测、createPluginFromPath、marketplace
+ * 条目补充 — 是相同的。提取出来以便仅缓存路径
+ * 不需要重复约 500 行代码。
  */
 async function finishLoadingPluginFromPath(
   entry: PluginMarketplaceEntry,
@@ -2204,7 +2186,7 @@ async function finishLoadingPluginFromPath(
 ): Promise<LoadedPlugin | null> {
   const errors: PluginError[] = []
 
-  // Check if plugin.json exists to determine if we should use marketplace manifest
+  // 检查 plugin.json 是否存在以确定是否应使用 marketplace 清单
   const manifestPath = join(pluginPath, '.zy-plugin', 'plugin.json')
   const hasManifest = await pathExists(manifestPath)
 
@@ -2213,16 +2195,16 @@ async function finishLoadingPluginFromPath(
     pluginId,
     enabled,
     entry.name,
-    entry.strict ?? true, // Respect marketplace entry's strict setting
+    entry.strict ?? true, // 尊重 marketplace 条目的 strict 设置
   )
   errors.push(...pluginErrors)
 
-  // Set sha from source if available (for github and url source types)
+  // 如果可用则从源设置 sha（用于 github 和 url 源类型）
   if (typeof entry.source === 'object' && 'sha' in entry.source && entry.source.sha) {
     plugin.sha = entry.source.sha
   }
 
-  // If there's no plugin.json, use marketplace entry as manifest (regardless of strict mode)
+  // 如果没有 plugin.json，使用 marketplace 条目作为清单（无论 strict 模式）
   if (!hasManifest) {
     plugin.manifest = {
       ...entry,
@@ -2232,9 +2214,9 @@ async function finishLoadingPluginFromPath(
     } as PluginManifest
     plugin.name = plugin.manifest.name
 
-    // Process commands from marketplace entry
+    // 处理来自 marketplace 条目的命令
     if (entry.commands) {
-      // Check if it's an object mapping
+      // 检查是否为对象映射
       const firstValue = Object.values(entry.commands)[0]
       if (
         typeof entry.commands === 'object' &&
@@ -2243,11 +2225,11 @@ async function finishLoadingPluginFromPath(
         typeof firstValue === 'object' &&
         ('source' in firstValue || 'content' in firstValue)
       ) {
-        // Object mapping format
+        // 对象映射格式
         const commandsMetadata: Record<string, CommandMetadata> = {}
         const validPaths: string[] = []
 
-        // Parallelize pathExists checks; process results in order.
+        // 并行执行 pathExists 检查；按顺序处理结果。
         const entries = Object.entries(entry.commands)
         const checks = await Promise.all(
           entries.map(async ([commandName, metadata]) => {
@@ -2292,10 +2274,10 @@ async function finishLoadingPluginFromPath(
           plugin.commandsMetadata = commandsMetadata
         }
       } else {
-        // Path or array of paths format
+        // 路径或路径数组格式
         const commandPaths = Array.isArray(entry.commands) ? entry.commands : [entry.commands]
 
-        // Parallelize pathExists checks; process results in order.
+        // 并行执行 pathExists 检查；按顺序处理结果。
         const checks = await Promise.all(
           commandPaths.map(async (cmdPath) => {
             if (typeof cmdPath !== 'string') {
@@ -2344,7 +2326,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Process agents from marketplace entry
+    // 处理来自 marketplace 条目的代理
     if (entry.agents) {
       const agentPaths = Array.isArray(entry.agents) ? entry.agents : [entry.agents]
 
@@ -2364,7 +2346,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Process skills from marketplace entry
+    // 处理来自 marketplace 条目的技能
     if (entry.skills) {
       logForDebugging(
         `Processing ${Array.isArray(entry.skills) ? entry.skills.length : 1} skill paths for plugin ${entry.name}`,
@@ -2411,7 +2393,7 @@ async function finishLoadingPluginFromPath(
       logForDebugging(`Plugin ${entry.name} has no entry.skills defined`)
     }
 
-    // Process output styles from marketplace entry
+    // 处理来自 marketplace 条目的输出样式
     if (entry.outputStyles) {
       const outputStylePaths = Array.isArray(entry.outputStyles)
         ? entry.outputStyles
@@ -2433,7 +2415,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Process inline hooks from marketplace entry
+    // 处理来自 marketplace 条目的内联 hooks
     if (entry.hooks) {
       plugin.hooksConfig = entry.hooks as HooksSettings
     }
@@ -2442,7 +2424,7 @@ async function finishLoadingPluginFromPath(
     hasManifest &&
     (entry.commands || entry.agents || entry.skills || entry.hooks || entry.outputStyles)
   ) {
-    // In non-strict mode with plugin.json, marketplace entries for commands/agents/skills/hooks/outputStyles are conflicts
+    // 在非 strict 模式下有 plugin.json 时，marketplace 条目中的 commands/agents/skills/hooks/outputStyles 是冲突的
     const error = new Error(
       `Plugin ${entry.name} has both plugin.json and marketplace manifest entries for commands/agents/skills/hooks/outputStyles. This is a conflict.`,
     )
@@ -2458,11 +2440,11 @@ async function finishLoadingPluginFromPath(
     })
     return null
   } else if (hasManifest) {
-    // Has plugin.json - marketplace can supplement commands/agents/skills/hooks/outputStyles
+    // 有 plugin.json - marketplace 可以补充 commands/agents/skills/hooks/outputStyles
 
-    // Supplement commands from marketplace entry
+    // 从 marketplace 条目补充命令
     if (entry.commands) {
-      // Check if it's an object mapping
+      // 检查是否为对象映射
       const firstValue = Object.values(entry.commands)[0]
       if (
         typeof entry.commands === 'object' &&
@@ -2471,7 +2453,7 @@ async function finishLoadingPluginFromPath(
         typeof firstValue === 'object' &&
         ('source' in firstValue || 'content' in firstValue)
       ) {
-        // Object mapping format - merge metadata
+        // 对象映射格式 - 合并元数据
         const commandsMetadata: Record<string, CommandMetadata> = {
           ...(plugin.commandsMetadata || {}),
         }
@@ -2522,7 +2504,7 @@ async function finishLoadingPluginFromPath(
           plugin.commandsMetadata = commandsMetadata
         }
       } else {
-        // Path or array of paths format
+        // 路径或路径数组格式
         const commandPaths = Array.isArray(entry.commands) ? entry.commands : [entry.commands]
 
         // Parallelize pathExists checks; process results in order.
@@ -2574,7 +2556,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Supplement agents from marketplace entry
+    // 从 marketplace 条目补充代理
     if (entry.agents) {
       const agentPaths = Array.isArray(entry.agents) ? entry.agents : [entry.agents]
 
@@ -2594,7 +2576,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Supplement skills from marketplace entry
+    // 从 marketplace 条目补充技能
     if (entry.skills) {
       const skillPaths = Array.isArray(entry.skills) ? entry.skills : [entry.skills]
 
@@ -2614,7 +2596,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Supplement output styles from marketplace entry
+    // 从 marketplace 条目补充输出样式
     if (entry.outputStyles) {
       const outputStylePaths = Array.isArray(entry.outputStyles)
         ? entry.outputStyles
@@ -2636,7 +2618,7 @@ async function finishLoadingPluginFromPath(
       }
     }
 
-    // Supplement hooks from marketplace entry
+    // 从 marketplace 条目补充 hooks
     if (entry.hooks) {
       plugin.hooksConfig = {
         ...(plugin.hooksConfig || {}),
@@ -2650,13 +2632,13 @@ async function finishLoadingPluginFromPath(
 }
 
 /**
- * Load session-only plugins from --plugin-dir CLI flag.
+ * 从 --plugin-dir CLI 标志加载仅会话插件。
  *
- * These plugins are loaded directly without going through the marketplace system.
- * They appear with source='plugin-name@inline' and are always enabled for the current session.
+ * 这些插件直接加载，不通过 marketplace 系统。
+ * 它们以 source='plugin-name@inline' 出现，并且在当前会话中始终启用。
  *
- * @param sessionPluginPaths - Array of plugin directory paths from CLI
- * @returns LoadedPlugin objects and any errors encountered
+ * @param sessionPluginPaths - 来自 CLI 的插件目录路径数组
+ * @returns LoadedPlugin 对象和遇到的任何错误
  */
 async function loadSessionOnlyPlugins(
   sessionPluginPaths: Array<string>,
@@ -2686,12 +2668,12 @@ async function loadSessionOnlyPlugins(
       const dirName = basename(resolvedPath)
       const { plugin, errors: pluginErrors } = await createPluginFromPath(
         resolvedPath,
-        `${dirName}@inline`, // temporary, will be updated after we know the real name
+        `${dirName}@inline`, // 临时的，在知道真实名称后会更新
         true, // always enabled
         dirName,
       )
 
-      // Update source to use the actual plugin name from manifest
+      // 更新源以使用清单中的实际插件名称
       plugin.source = `${plugin.name}@inline`
       plugin.repository = `${plugin.name}@inline`
 
@@ -2720,18 +2702,17 @@ async function loadSessionOnlyPlugins(
 }
 
 /**
- * Merge plugins from session (--plugin-dir), marketplace (installed), and
- * builtin sources. Session plugins override marketplace plugins with the
- * same name — the user explicitly pointed at a directory for this session.
+ * 合并来自会话（--plugin-dir）、marketplace（已安装）和内置源的插件。
+ * 会话插件覆盖同名的 marketplace 插件 — 用户在本次会话中
+ * 显式指向了一个目录。
  *
- * Exception: marketplace plugins locked by managed settings (policySettings)
- * cannot be overridden. Enterprise admin intent beats local dev convenience.
- * When a session plugin collides with a managed one, the session copy is
- * dropped and an error is returned for surfacing.
+ * 例外：被管理设置（policySettings）锁定的 marketplace 插件
+ * 不能被覆盖。企业管理员意图优先于本地开发便利。
+ * 当会话插件与管理插件冲突时，会话副本被丢弃
+ * 并返回错误以供显示。
  *
- * Without this dedup, both versions sat in the array and marketplace won
- * on first-match, making --plugin-dir useless for iterating on an
- * installed plugin.
+ * 没有这个去重，两个版本都在数组中，marketplace 在首次匹配时
+ * 胜出，使 --plugin-dir 对于迭代已安装插件无用。
  */
 export function mergePluginSources(sources: {
   session: LoadedPlugin[]
@@ -2742,18 +2723,17 @@ export function mergePluginSources(sources: {
   const errors: PluginError[] = []
   const managed = sources.managedNames
 
-  // Managed settings win over --plugin-dir. Drop session plugins whose
-  // name appears in policySettings.enabledPlugins (whether force-enabled
-  // OR force-disabled — both are admin intent that --plugin-dir must not
-  // bypass). Surface an error so the user knows why their dev copy was
-  // ignored.
+  // 管理设置优先于 --plugin-dir。丢弃名称出现在
+  // policySettings.enabledPlugins 中的会话插件（无论是强制启用
+  // 还是强制禁用 — 两者都是 --plugin-dir 不应绕过的管理员意图）。
+  // 暴露错误以便用户知道为什么他们的开发副本被忽略。
   //
-  // NOTE: managedNames contains the pluginId prefix (entry.name), which is
-  // expected to equal manifest.name by convention (schema description at
-  // schemas.ts PluginMarketplaceEntry.name). If a marketplace publishes a
-  // plugin where entry.name ≠ manifest.name, this guard will silently miss —
-  // but that's a marketplace misconfiguration that breaks other things too
-  // (e.g., ManagePlugins constructs pluginIds from manifest.name).
+  // 注意：managedNames 包含 pluginId 前缀（entry.name），按约定
+  // 应等于 manifest.name（参见 schemas.ts PluginMarketplaceEntry.name
+  // 的 schema 描述）。如果 marketplace 发布的插件中
+  // entry.name ≠ manifest.name，此守卫会静默失效 —
+  // 但这是 marketplace 配置错误，会破坏其他东西
+  // （例如 ManagePlugins 从 manifest.name 构造 pluginIds）。
   const sessionPlugins = sources.session.filter((p) => {
     if (managed?.has(p.name)) {
       logForDebugging(`Plugin "${p.name}" from --plugin-dir is blocked by managed settings`, {
@@ -2778,9 +2758,9 @@ export function mergePluginSources(sources: {
     }
     return true
   })
-  // Session first, then non-overridden marketplace, then builtin.
-  // Downstream first-match consumers see session plugins before
-  // installed ones for any that slipped past the name filter.
+  // 会话优先，然后是未被覆盖的 marketplace，最后是内置。
+  // 下游首次匹配的消费者对于任何通过名称过滤器的
+  // 插件都会先看到会话插件而非已安装的。
   return {
     plugins: [...sessionPlugins, ...marketplacePlugins, ...sources.builtin],
     errors,
@@ -2788,75 +2768,73 @@ export function mergePluginSources(sources: {
 }
 
 /**
- * Main plugin loading function that discovers and loads all plugins.
+ * 主插件加载函数，发现并加载所有插件。
  *
- * This function is memoized to avoid repeated filesystem scanning and is
- * the primary entry point for the plugin system. It discovers plugins from
- * multiple sources and returns categorized results.
+ * 此函数被记忆化以避免重复的文件系统扫描，是插件系统的
+ * 主要入口点。它从多个源发现插件并返回分类结果。
  *
- * Loading order and precedence (see mergePluginSources):
- * 1. Session-only plugins (from --plugin-dir CLI flag) — override
- *    installed plugins with the same name, UNLESS that plugin is
- *    locked by managed settings (policySettings, either force-enabled
- *    or force-disabled)
- * 2. Marketplace-based plugins (plugin@marketplace format from settings)
- * 3. Built-in plugins shipped with the CLI
+ * 加载顺序和优先级（参见 mergePluginSources）：
+ * 1. 仅会话插件（来自 --plugin-dir CLI 标志）— 覆盖
+ *    同名的已安装插件，除非该插件被管理设置锁定
+ *    （policySettings，无论是强制启用还是强制禁用）
+ * 2. 基于 Marketplace 的插件（来自 settings 的 plugin@marketplace 格式）
+ * 3. 随 CLI 分发的内置插件
  *
- * Name collision: session plugin wins over installed. The user explicitly
- * pointed at a directory for this session — that intent beats whatever
- * is installed. Exception: managed settings (enterprise policy) win over
- * --plugin-dir. Admin intent beats local dev convenience.
+ * 名称冲突：会话插件胜过已安装的。用户在本次会话中显式
+ * 指向了一个目录 — 该意图胜过已安装的内容。例外：
+ * 管理设置（企业策略）优先于 --plugin-dir。
+ * 管理员意图优先于本地开发便利。
  *
- * Error collection:
- * - Non-fatal errors are collected and returned
- * - System continues loading other plugins on errors
- * - Errors include source information for debugging
+ * 错误收集：
+ * - 非致命错误被收集并返回
+ * - 系统在出错时继续加载其他插件
+ * - 错误包含用于调试的源信息
  *
- * @returns Promise resolving to categorized plugin results:
- *   - enabled: Array of enabled LoadedPlugin objects
- *   - disabled: Array of disabled LoadedPlugin objects
- *   - errors: Array of loading errors with source information
+ * @returns 解析为分类插件结果的 Promise：
+ *   - enabled：已启用的 LoadedPlugin 对象数组
+ *   - disabled：已禁用的 LoadedPlugin 对象数组
+ *   - errors：带有源信息的加载错误数组
  */
 export const loadAllPlugins = memoize(async (): Promise<PluginLoadResult> => {
   const result = await assemblePluginLoadResult(() =>
     loadPluginsFromMarketplaces({ cacheOnly: false }),
   )
-  // A fresh full-load result is strictly valid for cache-only callers
-  // (both variants share assemblePluginLoadResult). Warm the separate
-  // memoize so refreshActivePlugins()'s downstream getPluginCommands() /
-  // getAgentDefinitionsWithOverrides() — which now call
-  // loadAllPluginsCacheOnly — see just-cloned plugins instead of reading
-  // an installed_plugins.json that nothing writes mid-session.
+  // 新鲜的完整加载结果对仅缓存调用者也是严格有效的
+  // （两个变体共享 assemblePluginLoadResult）。预热单独的
+  // memoize，这样 refreshActivePlugins() 下游的 getPluginCommands() /
+  // getAgentDefinitionsWithOverrides() — 现在调用
+  // loadAllPluginsCacheOnly — 可以看到刚克隆的插件而不是读取
+  // 会话中无人写入的 installed_plugins.json。
   loadAllPluginsCacheOnly.cache?.set(undefined, Promise.resolve(result))
   return result
 })
 
 /**
- * Cache-only variant of loadAllPlugins.
+ * loadAllPlugins 的仅缓存变体。
  *
- * Same merge/dependency/settings logic, but the marketplace loader never
- * hits the network (no cachePlugin, no copyPluginToVersionedCache). Reads
- * from installed_plugins.json's installPath. Plugins not on disk emit
- * 'plugin-cache-miss' and are skipped.
+ * 相同的合并/依赖/设置逻辑，但 marketplace 加载器从不
+ * 访问网络（无 cachePlugin，无 copyPluginToVersionedCache）。
+ * 从 installed_plugins.json 的 installPath 读取。磁盘上不存在的插件
+ * 发出 'plugin-cache-miss' 并被跳过。
  *
- * Use this in startup consumers (getCommands, loadPluginAgents, MCP/LSP
- * config) so interactive startup never blocks on git clones for ref-tracked
- * plugins. Use loadAllPlugins() in explicit refresh paths (/plugins,
- * refresh.ts, headlessPluginInstall) where fresh source is the intent.
+ * 在启动消费者（getCommands、loadPluginAgents、MCP/LSP
+ * 配置）中使用此函数，这样交互式启动永远不会因跟踪 ref 的
+ * 插件的 git 克隆而阻塞。在显式刷新路径（/plugins、
+ * refresh.ts、headlessPluginInstall）中使用 loadAllPlugins()，
+ * 其中新鲜源是意图。
  *
- * ZY_CODE_SYNC_PLUGIN_INSTALL=1 delegates to the full loader — that
- * mode explicitly opts into blocking install before first query, and
- * main.tsx's getZyCodeMcpConfigs()/getInitialSettings().agent run
- * BEFORE runHeadless() can warm this cache. First-run CCR/headless has
- * no installed_plugins.json, so cache-only would miss plugin MCP servers
- * and plugin settings (the agent key). The interactive startup win is
- * preserved since interactive mode doesn't set SYNC_PLUGIN_INSTALL.
+ * ZY_CODE_SYNC_PLUGIN_INSTALL=1 委派给完整加载器 — 该模式
+ * 显式选择在首次查询前阻塞安装，且
+ * main.tsx 的 getZyCodeMcpConfigs()/getInitialSettings().agent 在
+ * runHeadless() 可以预热此缓存之前运行。首次运行的 CCR/headless
+ * 没有 installed_plugins.json，因此仅缓存会遗漏插件 MCP 服务器
+ * 和插件设置（agent 键）。交互式启动的优势得以保留，
+ * 因为交互模式不设置 SYNC_PLUGIN_INSTALL。
  *
- * Separate memoize cache from loadAllPlugins — a cache-only result must
- * never satisfy a caller that wants fresh source. The reverse IS valid:
- * loadAllPlugins warms this cache on completion so refresh paths that run
- * the full loader don't get plugin-cache-miss from their downstream
- * cache-only consumers.
+ * 与 loadAllPlugins 分开的 memoize 缓存 — 仅缓存结果绝不能
+ * 满足想要新鲜源的调用者。反过来是有效的：
+ * loadAllPlugins 在完成时预热此缓存，这样运行完整加载器的
+ * 刷新路径不会从其下游仅缓存消费者得到 plugin-cache-miss。
  */
 export let loadAllPluginsCacheOnly
 loadAllPluginsCacheOnly = memoize(async (): Promise<PluginLoadResult> => {
@@ -2867,11 +2845,11 @@ loadAllPluginsCacheOnly = memoize(async (): Promise<PluginLoadResult> => {
 })
 
 /**
- * Shared body of loadAllPlugins and loadAllPluginsCacheOnly.
+ * loadAllPlugins 和 loadAllPluginsCacheOnly 的共享主体。
  *
- * The only difference between the two is which marketplace loader runs —
- * session plugins, builtins, merge, verifyAndDemote, and cachePluginSettings
- * are identical (invariants 1-3).
+ * 两者之间唯一的区别是运行哪个 marketplace 加载器 —
+ * 会话插件、内置插件、合并、verifyAndDemote 和 cachePluginSettings
+ * 是相同的（不变量 1-3）。
  */
 async function assemblePluginLoadResult(
   marketplaceLoader: () => Promise<{
@@ -2879,9 +2857,9 @@ async function assemblePluginLoadResult(
     errors: PluginError[]
   }>,
 ): Promise<PluginLoadResult> {
-  // Load marketplace plugins and session-only plugins in parallel.
-  // getInlinePlugins() is a synchronous state read with no dependency on
-  // marketplace loading, so these two sources can be fetched concurrently.
+  // 并行加载 marketplace 插件和仅会话插件。
+  // getInlinePlugins() 是同步状态读取，不依赖于
+  // marketplace 加载，因此这两个源可以并发获取。
   const inlinePlugins = getInlinePlugins()
   const [marketplaceResult, sessionResult] = await Promise.all([
     marketplaceLoader(),
@@ -2889,12 +2867,12 @@ async function assemblePluginLoadResult(
       ? loadSessionOnlyPlugins(inlinePlugins)
       : Promise.resolve({ plugins: [], errors: [] }),
   ])
-  // 3. Load built-in plugins that ship with the CLI
+  // 3. 加载随 CLI 分发的内置插件
   const builtinResult = getBuiltinPlugins()
 
-  // Session plugins (--plugin-dir) override installed ones by name,
-  // UNLESS the installed plugin is locked by managed settings
-  // (policySettings). See mergePluginSources() for details.
+  // 会话插件（--plugin-dir）按名称覆盖已安装的，
+  // 除非已安装插件被管理设置锁定
+  // （policySettings）。详见 mergePluginSources()。
   const { plugins: allPlugins, errors: mergeErrors } = mergePluginSources({
     session: sessionResult.plugins,
     marketplace: marketplaceResult.plugins,
@@ -2903,9 +2881,9 @@ async function assemblePluginLoadResult(
   })
   const allErrors = [...marketplaceResult.errors, ...sessionResult.errors, ...mergeErrors]
 
-  // Verify dependencies. Runs AFTER the parallel load — deps are presence
-  // checks, not load-order, so no topological sort needed. Demotion is
-  // session-local: does NOT write settings (user fixes intent via /doctor).
+  // 验证依赖。在并行加载之后运行 — 依赖是存在性
+  // 检查，不是加载顺序，因此不需要拓扑排序。降级是
+  // 会话本地的：不写入设置（用户通过 /doctor 修复意图）。
   const { demoted, errors: depErrors } = verifyAndDemote(allPlugins)
   for (const p of allPlugins) {
     if (demoted.has(p.source)) p.enabled = false
@@ -2917,7 +2895,7 @@ async function assemblePluginLoadResult(
     `Found ${allPlugins.length} plugins (${enabledPlugins.length} enabled, ${allPlugins.length - enabledPlugins.length} disabled)`,
   )
 
-  // 3. Cache plugin settings for synchronous access by the settings cascade
+  // 3. 缓存插件设置以供设置级联同步访问
   cachePluginSettings(enabledPlugins)
 
   return {
@@ -2928,16 +2906,16 @@ async function assemblePluginLoadResult(
 }
 
 /**
- * Clears the memoized plugin cache.
+ * 清除记忆化的插件缓存。
  *
- * Call this when plugins are installed, removed, or settings change
- * to force a fresh scan on the next loadAllPlugins call.
+ * 在插件安装、卸载或设置更改时调用此函数，
+ * 以强制在下次 loadAllPlugins 调用时进行新的扫描。
  *
- * Use cases:
- * - After installing/uninstalling plugins
- * - After modifying .zy-plugin/ directory (for export)
- * - After changing enabledPlugins settings
- * - When debugging plugin loading issues
+ * 使用场景：
+ * - 安装/卸载插件后
+ * - 修改 .zy-plugin/ 目录后（用于导出）
+ * - 更改 enabledPlugins 设置后
+ * - 调试插件加载问题时
  */
 export function clearPluginCache(reason?: string): void {
   if (reason) {
@@ -2945,22 +2923,22 @@ export function clearPluginCache(reason?: string): void {
   }
   loadAllPlugins.cache?.clear?.()
   loadAllPluginsCacheOnly.cache?.clear?.()
-  // If a plugin previously contributed settings, the session settings cache
-  // holds a merged result that includes them. cachePluginSettings() on reload
-  // won't bust the cache when the new base is empty (the startup perf win),
-  // so bust it here to drop stale plugin overrides. When the base is already
-  // undefined (startup, or no prior plugin settings) this is a no-op.
+  // 如果插件之前贡献了设置，会话设置缓存保存了包含它们的
+  // 合并结果。重新加载时的 cachePluginSettings() 在新基础为空时
+  // 不会清除缓存（启动性能优化），所以在这里清除以丢弃
+  // 过时的插件覆盖。当基础已是 undefined（启动时，或之前
+  // 无插件设置）时这是空操作。
   if (getPluginSettingsBase() !== undefined) {
     resetSettingsCache()
   }
   clearPluginSettingsBase()
-  // TODO: Clear installed plugins cache when installedPluginsManager is implemented
+  // TODO: 当 installedPluginsManager 实现时清除已安装插件缓存
 }
 
 /**
- * Merge settings from all enabled plugins into a single record.
- * Later plugins override earlier ones for the same key.
- * Only allowlisted keys are included (filtering happens at load time).
+ * 将所有已启用插件的设置合并为单个记录。
+ * 后面的插件对相同的键覆盖前面的。
+ * 仅包含白名单中的键（过滤在加载时发生）。
  */
 function mergePluginSettings(plugins: LoadedPlugin[]): Record<string, unknown> | undefined {
   let merged: Record<string, unknown> | undefined
@@ -2988,17 +2966,17 @@ function mergePluginSettings(plugins: LoadedPlugin[]): Record<string, unknown> |
 }
 
 /**
- * Store merged plugin settings in the synchronous cache.
- * Called after loadAllPlugins resolves.
+ * 将合并的插件设置存储在同步缓存中。
+ * 在 loadAllPlugins 解析后调用。
  */
 export function cachePluginSettings(plugins: LoadedPlugin[]): void {
   const settings = mergePluginSettings(plugins)
   setPluginSettingsBase(settings)
-  // Only bust the session settings cache if there are actually plugin settings
-  // to merge. In the common case (no plugins, or plugins without settings) the
-  // base layer is empty and loadSettingsFromDisk would produce the same result
-  // anyway — resetting here would waste ~17ms on startup re-reading and
-  // re-validating every settings file on the next getSettingsWithErrors() call.
+  // 仅在实际有插件设置需要合并时才清除会话设置缓存。
+  // 在常见情况下（无插件，或插件无设置）基础层为空，
+  // loadSettingsFromDisk 无论如何都会产生相同的结果 —
+  // 在这里重置会在下次 getSettingsWithErrors() 调用时浪费
+  // 约 17ms 用于启动时重新读取和重新验证每个设置文件。
   if (settings && Object.keys(settings).length > 0) {
     resetSettingsCache()
     logForDebugging(`Cached plugin settings with keys: ${Object.keys(settings).join(', ')}`)
@@ -3006,7 +2984,7 @@ export function cachePluginSettings(plugins: LoadedPlugin[]): void {
 }
 
 /**
- * Type predicate: check if a value is a non-null, non-array object (i.e., a record).
+ * 类型谓词：检查值是否为非 null、非数组的对象（即记录）。
  */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

@@ -1,4 +1,4 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: ANT-ONLY import 标记不可重排序
 import { getModelCapability } from './model/modelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 import {
@@ -11,7 +11,7 @@ import {
 // 默认上下文窗口大小（200k tokens）
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
 
-// Maximum output tokens for compact operations
+// compact 操作的最大输出 token 数
 export const COMPACT_MAX_OUTPUT_TOKENS = 20_000
 
 // 通用默认值（当模型未配置 maxOutputTokens 时）
@@ -39,8 +39,8 @@ export function getContextWindowForModel(model: string): number {
 }
 
 /**
- * Calculate context window usage percentage from token usage data.
- * Returns used and remaining percentages, or null values if no usage data.
+ * 根据 token 使用数据计算上下文窗口使用百分比。
+ * 返回已用和剩余百分比，如果没有使用数据则返回 null。
  */
 export function calculateContextPercentages(
   currentUsage: {
@@ -69,7 +69,7 @@ export function calculateContextPercentages(
 }
 
 /**
- * Returns the model's default and upper limit for max output tokens.
+ * 返回模型的默认值和上限 max output tokens。
  *
  * 优先级：
  * 1. ~/.zy/model-capabilities.json 本地模型能力配置（单个 maxOutputTokens 数值）
@@ -117,15 +117,14 @@ export function getModelMaxOutputTokens(model: string): {
 }
 
 /**
- * Returns the max thinking budget tokens for a given model. The max
- * thinking tokens should be strictly less than the max output tokens.
+ * 返回给定模型的最大思考 token 预算。最大思考 token 数
+ * 应严格小于最大输出 token 数。
  *
  * 优先级：
  * 1. ~/.zy/model-capabilities.json 中手动配置的 maxThinkingTokens
  * 2. 默认：maxOutputTokens.upperLimit - 1
  *
- * Deprecated since newer models use adaptive thinking rather than a
- * strict thinking token budget.
+ * 已废弃：较新的模型使用自适应思考模式，而非固定的思考 token 预算。
  */
 export function getMaxThinkingTokensForModel(model: string): number {
   const localThinkingTokens = getLocalMaxThinkingTokens(model)

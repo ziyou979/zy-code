@@ -9,8 +9,8 @@ import { SettingsSchema } from './types.js'
 import { getValidationTip } from './validationTips.js'
 
 /**
- * Helper type guards for specific Zod v4 issue types
- * In v4, issue types have different structures than v3
+ * 针对特定 Zod v4 issue 类型的辅助类型守卫
+ * 在 v4 中，issue 类型的结构与 v3 不同
  */
 function isInvalidTypeIssue(issue: ZodIssue): issue is ZodIssue & {
   code: 'invalid_type'
@@ -42,31 +42,31 @@ function isTooSmallIssue(issue: ZodIssue): issue is ZodIssue & {
   return issue.code === 'too_small'
 }
 
-/** Field path in dot notation (e.g., "permissions.defaultMode", "env.DEBUG") */
+/** 点号分隔的字段路径（如 "permissions.defaultMode"、"env.DEBUG"） */
 export type FieldPath = string
 
 export type ValidationError = {
-  /** Relative file path */
+  /** 相对文件路径 */
   file?: string
-  /** Field path in dot notation */
+  /** 点号分隔的字段路径 */
   path: FieldPath
-  /** Human-readable error message */
+  /** 人类可读的错误消息 */
   message: string
-  /** Expected value or type */
+  /** 期望的值或类型 */
   expected?: string
-  /** The actual invalid value that was provided */
+  /** 实际提供的无效值 */
   invalidValue?: unknown
-  /** Suggestion for fixing the error */
+  /** 修复错误的建议 */
   suggestion?: string
-  /** Link to relevant documentation */
+  /** 相关文档的链接 */
   docLink?: string
-  /** MCP-specific metadata - only present for MCP configuration errors */
+  /** MCP 特定的元数据 - 仅在 MCP 配置错误时存在 */
   mcpErrorMetadata?: {
-    /** Which configuration scope this error came from */
+    /** 此错误来自哪个配置范围 */
     scope: ConfigScope
-    /** The server name if error is specific to a server */
+    /** 如果错误针对特定服务器，则为服务器名称 */
     serverName?: string
-    /** Severity of the error */
+    /** 错误的严重程度 */
     severity?: 'fatal' | 'warning'
   }
 }
@@ -77,10 +77,10 @@ export type SettingsWithErrors = {
 }
 
 /**
- * Format a Zod validation error into human-readable validation errors
+ * 将 Zod 验证错误格式化为人类可读的验证错误
  */
 /**
- * Get the type string for an unknown value (for error messages)
+ * 获取未知值的类型字符串（用于错误消息）
  */
 function getReceivedType(value: unknown): string {
   if (value === null) return 'null'
@@ -164,8 +164,8 @@ export function formatZodError(error: ZodError, filePath: string): ValidationErr
 }
 
 /**
- * Validates that settings file content conforms to the SettingsSchema.
- * This is used during file edits to ensure the resulting file is valid.
+ * 验证配置文件内容是否符合 SettingsSchema。
+ * 在文件编辑期间使用，以确保生成的文件有效。
  */
 export function validateSettingsFileContent(content: string):
   | {
@@ -177,17 +177,17 @@ export function validateSettingsFileContent(content: string):
       fullSchema: string
     } {
   try {
-    // Parse the JSON first
+    // 首先解析 JSON
     const jsonData = jsonParse(content)
 
-    // Validate against SettingsSchema in strict mode
+    // 在严格模式下针对 SettingsSchema 进行验证
     const result = SettingsSchema().strict().safeParse(jsonData)
 
     if (result.success) {
       return { isValid: true }
     }
 
-    // Format the validation error in a helpful way
+    // 以有用的方式格式化验证错误
     const errors = formatZodError(result.error, 'settings')
     const errorMessage =
       'Settings validation failed:\n' +
@@ -208,9 +208,9 @@ export function validateSettingsFileContent(content: string):
 }
 
 /**
- * Filters invalid permission rules from raw parsed JSON data before schema validation.
- * This prevents one bad rule from poisoning the entire settings file.
- * Returns warnings for each filtered rule.
+ * 在 schema 验证之前从原始解析的 JSON 数据中过滤无效的权限规则。
+ * 这可以防止一条错误规则导致整个配置文件被拒绝。
+ * 为每条被过滤的规则返回警告。
  */
 export function filterInvalidPermissionRules(data: unknown, filePath: string): ValidationError[] {
   if (!data || typeof data !== 'object') return []

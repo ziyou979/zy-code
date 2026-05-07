@@ -1,10 +1,10 @@
 /**
- * Teammate Mailbox - File-based messaging system for agent swarms
+ * Teammate Mailbox - 基于文件的 agent 集群消息系统
  *
- * Each teammate has an inbox file at .zy/teams/{team_name}/inboxes/{agent_name}.json
- * Other teammates can write messages to it, and the recipient sees them as attachments.
+ * 每个 teammate 拥有一个收件箱文件，路径为 .zy/teams/{team_name}/inboxes/{agent_name}.json
+ * 其他 teammate 可以向其中写入消息，接收方会以附件的形式看到这些消息。
  *
- * Note: Inboxes are keyed by agent name within a team.
+ * 注意：收件箱在团队内以 agent 名称作为键。
  */
 
 import { mkdir, readFile, writeFile } from 'fs/promises'
@@ -28,10 +28,9 @@ import { TEAM_LEAD_NAME } from './swarm/constants.js'
 import { sanitizePathComponent } from './tasks.js'
 import { getAgentName, getTeammateColor, getTeamName } from './teammate.js'
 
-// Lock options: retry with backoff so concurrent callers (multiple Zys
-// in a swarm) wait for the lock instead of failing immediately. The sync
-// lockSync API blocked the event loop; the async API needs explicit retries
-// to achieve the same serialization semantics.
+// 锁选项：使用退避重试策略，使并发调用者（集群中的多个 Zy 实例）
+// 等待锁释放而非立即失败。同步的 lockSync API 会阻塞事件循环；
+// 异步 API 需要显式重试来实现相同的序列化语义。
 const LOCK_OPTIONS = {
   retries: {
     retries: 10,
@@ -45,13 +44,13 @@ export type TeammateMessage = {
   text: string
   timestamp: string
   read: boolean
-  color?: string // Sender's assigned color (e.g., 'red', 'blue', 'green')
-  summary?: string // 5-10 word summary shown as preview in the UI
+  color?: string // 发送方分配的颜色（例如 'red'、'blue'、'green'）
+  summary?: string // 5-10 个词的摘要，在 UI 中作为预览显示
 }
 
 /**
- * Get the path to a teammate's inbox file
- * Structure: ~/.zy/teams/{team_name}/inboxes/{agent_name}.json
+ * 获取 teammate 收件箱文件的路径
+ * 结构：~/.zy/teams/{team_name}/inboxes/{agent_name}.json
  */
 export function getInboxPath(agentName: string, teamName?: string): string {
   const team = teamName || getTeamName() || 'default'
@@ -66,7 +65,7 @@ export function getInboxPath(agentName: string, teamName?: string): string {
 }
 
 /**
- * Ensure the inbox directory exists for a team
+ * 确保团队的收件箱目录存在
  */
 async function ensureInboxDir(teamName?: string): Promise<void> {
   const team = teamName || getTeamName() || 'default'
@@ -77,9 +76,9 @@ async function ensureInboxDir(teamName?: string): Promise<void> {
 }
 
 /**
- * Read all messages from a teammate's inbox
- * @param agentName - The agent name (not UUID) to read inbox for
- * @param teamName - Optional team name (defaults to ZY_CODE_TEAM_NAME env var or 'default')
+ * 读取 teammate 收件箱中的所有消息
+ * @param agentName - 要读取收件箱的 agent 名称（非 UUID）
+ * @param teamName - 可选的团队名称（默认使用 ZY_CODE_TEAM_NAME 环境变量或 'default'）
  */
 export async function readMailbox(
   agentName: string,
@@ -106,9 +105,9 @@ export async function readMailbox(
 }
 
 /**
- * Read only unread messages from a teammate's inbox
- * @param agentName - The agent name (not UUID) to read inbox for
- * @param teamName - Optional team name
+ * 仅读取 teammate 收件箱中的未读消息
+ * @param agentName - 要读取收件箱的 agent 名称（非 UUID）
+ * @param teamName - 可选的团队名称
  */
 export async function readUnreadMessages(
   agentName: string,
@@ -123,11 +122,11 @@ export async function readUnreadMessages(
 }
 
 /**
- * Write a message to a teammate's inbox
- * Uses file locking to prevent race conditions when multiple agents write concurrently
- * @param recipientName - The recipient's agent name (not UUID)
- * @param message - The message to write
- * @param teamName - Optional team name
+ * 向 teammate 的收件箱写入一条消息
+ * 使用文件锁防止多个 agent 并发写入时产生竞态条件
+ * @param recipientName - 接收方的 agent 名称（非 UUID）
+ * @param message - 要写入的消息
+ * @param teamName - 可选的团队名称
  */
 export async function writeToMailbox(
   recipientName: string,
@@ -143,7 +142,7 @@ export async function writeToMailbox(
     `[TeammateMailbox] writeToMailbox: recipient=${recipientName}, from=${message.from}, path=${inboxPath}`,
   )
 
-  // Ensure the inbox file exists before locking (proper-lockfile requires the file to exist)
+  // 在加锁之前确保收件箱文件存在（proper-lockfile 要求文件必须存在）
   try {
     await writeFile(inboxPath, '[]', { encoding: 'utf-8', flag: 'wx' })
     logForDebugging(`[TeammateMailbox] writeToMailbox: created new inbox file`)
@@ -163,7 +162,7 @@ export async function writeToMailbox(
       ...LOCK_OPTIONS,
     })
 
-    // Re-read messages after acquiring lock to get the latest state
+    // 获取锁之后重新读取消息以获得最新状态
     const messages = await readMailbox(recipientName, teamName)
 
     const newMessage: TeammateMessage = {
@@ -188,11 +187,11 @@ export async function writeToMailbox(
 }
 
 /**
- * Mark a specific message in a teammate's inbox as read by index
- * Uses file locking to prevent race conditions
- * @param agentName - The agent name to mark message as read for
- * @param teamName - Optional team name
- * @param messageIndex - Index of the message to mark as read
+ * 按索引将 teammate 收件箱中的指定消息标记为已读
+ * 使用文件锁防止竞态条件
+ * @param agentName - 要标记消息已读的 agent 名称
+ * @param teamName - 可选的团队名称
+ * @param messageIndex - 要标记为已读的消息索引
  */
 export async function markMessageAsReadByIndex(
   agentName: string,
@@ -215,7 +214,7 @@ export async function markMessageAsReadByIndex(
     })
     logForDebugging(`[TeammateMailbox] markMessageAsReadByIndex: lock acquired`)
 
-    // Re-read messages after acquiring lock to get the latest state
+    // 获取锁之后重新读取消息以获得最新状态
     const messages = await readMailbox(agentName, teamName)
     logForDebugging(
       `[TeammateMailbox] markMessageAsReadByIndex: read ${messages.length} messages after lock`,
@@ -259,10 +258,10 @@ export async function markMessageAsReadByIndex(
 }
 
 /**
- * Mark all messages in a teammate's inbox as read
- * Uses file locking to prevent race conditions
- * @param agentName - The agent name to mark messages as read for
- * @param teamName - Optional team name
+ * 将 teammate 收件箱中的所有消息标记为已读
+ * 使用文件锁防止竞态条件
+ * @param agentName - 要标记消息已读的 agent 名称
+ * @param teamName - 可选的团队名称
  */
 export async function markMessagesAsRead(agentName: string, teamName?: string): Promise<void> {
   const inboxPath = getInboxPath(agentName, teamName)
@@ -281,7 +280,7 @@ export async function markMessagesAsRead(agentName: string, teamName?: string): 
     })
     logForDebugging(`[TeammateMailbox] markMessagesAsRead: lock acquired`)
 
-    // Re-read messages after acquiring lock to get the latest state
+    // 获取锁之后重新读取消息以获得最新状态
     const messages = await readMailbox(agentName, teamName)
     logForDebugging(
       `[TeammateMailbox] markMessagesAsRead: read ${messages.length} messages after lock`,
@@ -297,7 +296,7 @@ export async function markMessagesAsRead(agentName: string, teamName?: string): 
       `[TeammateMailbox] markMessagesAsRead: ${unreadCount} unread of ${messages.length} total`,
     )
 
-    // messages comes from jsonParse — fresh, unshared objects safe to mutate
+    // messages 来自 jsonParse —— 全新的、未共享的对象，可以安全地直接修改
     for (const m of messages) m.read = true
 
     await writeFile(inboxPath, jsonStringify(messages, null, 2), 'utf-8')
@@ -321,16 +320,16 @@ export async function markMessagesAsRead(agentName: string, teamName?: string): 
 }
 
 /**
- * Clear a teammate's inbox (delete all messages)
- * @param agentName - The agent name to clear inbox for
- * @param teamName - Optional team name
+ * 清空 teammate 的收件箱（删除所有消息）
+ * @param agentName - 要清空收件箱的 agent 名称
+ * @param teamName - 可选的团队名称
  */
 export async function clearMailbox(agentName: string, teamName?: string): Promise<void> {
   const inboxPath = getInboxPath(agentName, teamName)
 
   try {
-    // flag 'r+' throws ENOENT if the file doesn't exist, so we don't
-    // accidentally create an inbox file that wasn't there.
+    // 标志 'r+' 在文件不存在时会抛出 ENOENT，因此不会
+    // 意外创建一个原本不存在的收件箱文件。
     await writeFile(inboxPath, '[]', { encoding: 'utf-8', flag: 'r+' })
     logForDebugging(`[TeammateMailbox] Cleared inbox for ${agentName}`)
   } catch (error) {
@@ -344,7 +343,7 @@ export async function clearMailbox(agentName: string, teamName?: string): Promis
 }
 
 /**
- * Format teammate messages as XML for attachment display
+ * 将 teammate 消息格式化为 XML 以供附件展示
  */
 export function formatTeammateMessages(
   messages: Array<{
@@ -365,15 +364,15 @@ export function formatTeammateMessages(
 }
 
 /**
- * Structured message sent when a teammate becomes idle (via Stop hook)
+ * teammate 进入空闲状态时发送的结构化消息（通过 Stop hook 触发）
  */
 export type IdleNotificationMessage = {
   type: 'idle_notification'
   from: string
   timestamp: string
-  /** Why the agent went idle */
+  /** agent 进入空闲状态的原因 */
   idleReason?: 'available' | 'interrupted' | 'failed'
-  /** Brief summary of the last DM sent this turn (if any) */
+  /** 本轮最后一条私信的简要摘要（如果有的话） */
   summary?: string
   completedTaskId?: string
   completedStatus?: 'resolved' | 'blocked' | 'failed'
@@ -381,7 +380,7 @@ export type IdleNotificationMessage = {
 }
 
 /**
- * Creates an idle notification message to send to the team leader
+ * 创建一条空闲通知消息，发送给团队领导
  */
 export function createIdleNotification(
   agentId: string,
@@ -406,7 +405,7 @@ export function createIdleNotification(
 }
 
 /**
- * Checks if a message text contains an idle notification
+ * 检查消息文本中是否包含空闲通知
  */
 export function isIdleNotification(messageText: string): IdleNotificationMessage | null {
   try {
@@ -415,14 +414,14 @@ export function isIdleNotification(messageText: string): IdleNotificationMessage
       return parsed as IdleNotificationMessage
     }
   } catch {
-    // Not JSON or not a valid idle notification
+    // 非 JSON 或非有效的空闲通知
   }
   return null
 }
 
 /**
- * Permission request message sent from worker to leader via mailbox.
- * Field names align with SDK `can_use_tool` (snake_case).
+ * 从 worker 通过 mailbox 发送给 leader 的权限请求消息。
+ * 字段名与 SDK `can_use_tool` 保持一致（snake_case）。
  */
 export type PermissionRequestMessage = {
   type: 'permission_request'
@@ -436,8 +435,8 @@ export type PermissionRequestMessage = {
 }
 
 /**
- * Permission response message sent from leader to worker via mailbox.
- * Shape mirrors SDK ControlResponseSchema / ControlErrorResponseSchema.
+ * 从 leader 通过 mailbox 发送给 worker 的权限响应消息。
+ * 结构与 SDK ControlResponseSchema / ControlErrorResponseSchema 对齐。
  */
 export type PermissionResponseMessage =
   | {
@@ -457,7 +456,7 @@ export type PermissionResponseMessage =
     }
 
 /**
- * Creates a permission request message to send to the team leader
+ * 创建一条权限请求消息，发送给团队领导
  */
 export function createPermissionRequestMessage(params: {
   request_id: string
@@ -481,7 +480,7 @@ export function createPermissionRequestMessage(params: {
 }
 
 /**
- * Creates a permission response message to send back to a worker
+ * 创建一条权限响应消息，发送回 worker
  */
 export function createPermissionResponseMessage(params: {
   request_id: string
@@ -510,7 +509,7 @@ export function createPermissionResponseMessage(params: {
 }
 
 /**
- * Checks if a message text contains a permission request
+ * 检查消息文本中是否包含权限请求
  */
 export function isPermissionRequest(messageText: string): PermissionRequestMessage | null {
   try {
@@ -519,13 +518,13 @@ export function isPermissionRequest(messageText: string): PermissionRequestMessa
       return parsed as PermissionRequestMessage
     }
   } catch {
-    // Not JSON or not a valid permission request
+    // 非 JSON 或非有效的权限请求
   }
   return null
 }
 
 /**
- * Checks if a message text contains a permission response
+ * 检查消息文本中是否包含权限响应
  */
 export function isPermissionResponse(messageText: string): PermissionResponseMessage | null {
   try {
@@ -534,50 +533,50 @@ export function isPermissionResponse(messageText: string): PermissionResponseMes
       return parsed as PermissionResponseMessage
     }
   } catch {
-    // Not JSON or not a valid permission response
+    // 非 JSON 或非有效的权限响应
   }
   return null
 }
 
 /**
- * Sandbox permission request message sent from worker to leader via mailbox
- * This is triggered when sandbox runtime detects a network access to a non-allowed host
+ * 从 worker 通过 mailbox 发送给 leader 的沙箱权限请求消息。
+ * 当沙箱运行时检测到对未允许主机的网络访问时触发。
  */
 export type SandboxPermissionRequestMessage = {
   type: 'sandbox_permission_request'
-  /** Unique identifier for this request */
+  /** 此请求的唯一标识符 */
   requestId: string
-  /** Worker's ZY_CODE_AGENT_ID */
+  /** Worker 的 ZY_CODE_AGENT_ID */
   workerId: string
-  /** Worker's ZY_CODE_AGENT_NAME */
+  /** Worker 的 ZY_CODE_AGENT_NAME */
   workerName: string
-  /** Worker's ZY_CODE_AGENT_COLOR */
+  /** Worker 的 ZY_CODE_AGENT_COLOR */
   workerColor?: string
-  /** The host pattern requesting network access */
+  /** 请求网络访问的主机模式 */
   hostPattern: {
     host: string
   }
-  /** Timestamp when request was created */
+  /** 请求创建时的时间戳 */
   createdAt: number
 }
 
 /**
- * Sandbox permission response message sent from leader to worker via mailbox
+ * 从 leader 通过 mailbox 发送给 worker 的沙箱权限响应消息
  */
 export type SandboxPermissionResponseMessage = {
   type: 'sandbox_permission_response'
-  /** ID of the request this responds to */
+  /** 此响应对应的请求 ID */
   requestId: string
-  /** The host that was approved/denied */
+  /** 被批准/拒绝的主机 */
   host: string
-  /** Whether the connection is allowed */
+  /** 是否允许该连接 */
   allow: boolean
-  /** Timestamp when response was created */
+  /** 响应创建时的时间戳 */
   timestamp: string
 }
 
 /**
- * Creates a sandbox permission request message to send to the team leader
+ * 创建一条沙箱权限请求消息，发送给团队领导
  */
 export function createSandboxPermissionRequestMessage(params: {
   requestId: string
@@ -598,7 +597,7 @@ export function createSandboxPermissionRequestMessage(params: {
 }
 
 /**
- * Creates a sandbox permission response message to send back to a worker
+ * 创建一条沙箱权限响应消息，发送回 worker
  */
 export function createSandboxPermissionResponseMessage(params: {
   requestId: string
@@ -615,7 +614,7 @@ export function createSandboxPermissionResponseMessage(params: {
 }
 
 /**
- * Checks if a message text contains a sandbox permission request
+ * 检查消息文本中是否包含沙箱权限请求
  */
 export function isSandboxPermissionRequest(
   messageText: string,
@@ -626,13 +625,13 @@ export function isSandboxPermissionRequest(
       return parsed as SandboxPermissionRequestMessage
     }
   } catch {
-    // Not JSON or not a valid sandbox permission request
+    // 非 JSON 或非有效的沙箱权限请求
   }
   return null
 }
 
 /**
- * Checks if a message text contains a sandbox permission response
+ * 检查消息文本中是否包含沙箱权限响应
  */
 export function isSandboxPermissionResponse(
   messageText: string,
@@ -643,13 +642,13 @@ export function isSandboxPermissionResponse(
       return parsed as SandboxPermissionResponseMessage
     }
   } catch {
-    // Not JSON or not a valid sandbox permission response
+    // 非 JSON 或非有效的沙箱权限响应
   }
   return null
 }
 
 /**
- * Message sent when a teammate requests plan approval from the team leader
+ * teammate 向团队领导请求计划审批时发送的消息
  */
 export const PlanApprovalRequestMessageSchema = lazySchema(() =>
   z.object({
@@ -667,7 +666,7 @@ export type PlanApprovalRequestMessage = z.infer<
 >
 
 /**
- * Message sent by the team leader in response to a plan approval request
+ * 团队领导对计划审批请求的响应消息
  */
 export const PlanApprovalResponseMessageSchema = lazySchema(() =>
   z.object({
@@ -685,7 +684,7 @@ export type PlanApprovalResponseMessage = z.infer<
 >
 
 /**
- * Shutdown request message sent from leader to teammate via mailbox
+ * 从 leader 通过 mailbox 发送给 teammate 的关闭请求消息
  */
 export const ShutdownRequestMessageSchema = lazySchema(() =>
   z.object({
@@ -700,7 +699,7 @@ export const ShutdownRequestMessageSchema = lazySchema(() =>
 export type ShutdownRequestMessage = z.infer<ReturnType<typeof ShutdownRequestMessageSchema>>
 
 /**
- * Shutdown approved message sent from teammate to leader via mailbox
+ * 从 teammate 通过 mailbox 发送给 leader 的关闭批准消息
  */
 export const ShutdownApprovedMessageSchema = lazySchema(() =>
   z.object({
@@ -716,7 +715,7 @@ export const ShutdownApprovedMessageSchema = lazySchema(() =>
 export type ShutdownApprovedMessage = z.infer<ReturnType<typeof ShutdownApprovedMessageSchema>>
 
 /**
- * Shutdown rejected message sent from teammate to leader via mailbox
+ * 从 teammate 通过 mailbox 发送给 leader 的关闭拒绝消息
  */
 export const ShutdownRejectedMessageSchema = lazySchema(() =>
   z.object({
@@ -731,7 +730,7 @@ export const ShutdownRejectedMessageSchema = lazySchema(() =>
 export type ShutdownRejectedMessage = z.infer<ReturnType<typeof ShutdownRejectedMessageSchema>>
 
 /**
- * Creates a shutdown request message to send to a teammate
+ * 创建一条关闭请求消息，发送给 teammate
  */
 export function createShutdownRequestMessage(params: {
   requestId: string
@@ -748,7 +747,7 @@ export function createShutdownRequestMessage(params: {
 }
 
 /**
- * Creates a shutdown approved message to send to the team leader
+ * 创建一条关闭批准消息，发送给团队领导
  */
 export function createShutdownApprovedMessage(params: {
   requestId: string
@@ -767,7 +766,7 @@ export function createShutdownApprovedMessage(params: {
 }
 
 /**
- * Creates a shutdown rejected message to send to the team leader
+ * 创建一条关闭拒绝消息，发送给团队领导
  */
 export function createShutdownRejectedMessage(params: {
   requestId: string
@@ -784,13 +783,13 @@ export function createShutdownRejectedMessage(params: {
 }
 
 /**
- * Sends a shutdown request to a teammate's mailbox.
- * This is the core logic extracted for reuse by both the tool and UI components.
+ * 向 teammate 的 mailbox 发送关闭请求。
+ * 这是提取出的核心逻辑，供工具和 UI 组件复用。
  *
- * @param targetName - Name of the teammate to send shutdown request to
- * @param teamName - Optional team name (defaults to ZY_CODE_TEAM_NAME env var)
- * @param reason - Optional reason for the shutdown request
- * @returns The request ID and target name
+ * @param targetName - 要发送关闭请求的 teammate 名称
+ * @param teamName - 可选的团队名称（默认使用 ZY_CODE_TEAM_NAME 环境变量）
+ * @param reason - 可选的关闭请求原因
+ * @returns 请求 ID 和目标名称
  */
 export async function sendShutdownRequestToMailbox(
   targetName: string,
@@ -799,13 +798,13 @@ export async function sendShutdownRequestToMailbox(
 ): Promise<{ requestId: string; target: string }> {
   const resolvedTeamName = teamName || getTeamName()
 
-  // Get sender name (supports in-process teammates via AsyncLocalStorage)
+  // 获取发送方名称（支持通过 AsyncLocalStorage 的进程内 teammate）
   const senderName = getAgentName() || TEAM_LEAD_NAME
 
-  // Generate a deterministic request ID for this shutdown request
+  // 为此关闭请求生成确定性的请求 ID
   const requestId = generateRequestId('shutdown', targetName)
 
-  // Create and send the shutdown request message
+  // 创建并发送关闭请求消息
   const shutdownMessage = createShutdownRequestMessage({
     requestId,
     from: senderName,
@@ -827,72 +826,72 @@ export async function sendShutdownRequestToMailbox(
 }
 
 /**
- * Checks if a message text contains a shutdown request
+ * 检查消息文本中是否包含关闭请求
  */
 export function isShutdownRequest(messageText: string): ShutdownRequestMessage | null {
   try {
     const result = ShutdownRequestMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
-    // Not JSON
+    // 非 JSON
   }
   return null
 }
 
 /**
- * Checks if a message text contains a plan approval request
+ * 检查消息文本中是否包含计划审批请求
  */
 export function isPlanApprovalRequest(messageText: string): PlanApprovalRequestMessage | null {
   try {
     const result = PlanApprovalRequestMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
-    // Not JSON
+    // 非 JSON
   }
   return null
 }
 
 /**
- * Checks if a message text contains a shutdown approved message
+ * 检查消息文本中是否包含关闭批准消息
  */
 export function isShutdownApproved(messageText: string): ShutdownApprovedMessage | null {
   try {
     const result = ShutdownApprovedMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
-    // Not JSON
+    // 非 JSON
   }
   return null
 }
 
 /**
- * Checks if a message text contains a shutdown rejected message
+ * 检查消息文本中是否包含关闭拒绝消息
  */
 export function isShutdownRejected(messageText: string): ShutdownRejectedMessage | null {
   try {
     const result = ShutdownRejectedMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
-    // Not JSON
+    // 非 JSON
   }
   return null
 }
 
 /**
- * Checks if a message text contains a plan approval response
+ * 检查消息文本中是否包含计划审批响应
  */
 export function isPlanApprovalResponse(messageText: string): PlanApprovalResponseMessage | null {
   try {
     const result = PlanApprovalResponseMessageSchema().safeParse(jsonParse(messageText))
     if (result.success) return result.data
   } catch {
-    // Not JSON
+    // 非 JSON
   }
   return null
 }
 
 /**
- * Task assignment message sent when a task is assigned to a teammate
+ * 任务分配给 teammate 时发送的任务分配消息
  */
 export type TaskAssignmentMessage = {
   type: 'task_assignment'
@@ -904,7 +903,7 @@ export type TaskAssignmentMessage = {
 }
 
 /**
- * Checks if a message text contains a task assignment
+ * 检查消息文本中是否包含任务分配
  */
 export function isTaskAssignment(messageText: string): TaskAssignmentMessage | null {
   try {
@@ -913,32 +912,32 @@ export function isTaskAssignment(messageText: string): TaskAssignmentMessage | n
       return parsed as TaskAssignmentMessage
     }
   } catch {
-    // Not JSON or not a valid task assignment
+    // 非 JSON 或非有效的任务分配
   }
   return null
 }
 
 /**
- * Team permission update message sent from leader to teammates via mailbox
- * Broadcasts a permission update that applies to all teammates
+ * 从 leader 通过 mailbox 发送给 teammate 的团队权限更新消息。
+ * 广播适用于所有 teammate 的权限更新。
  */
 export type TeamPermissionUpdateMessage = {
   type: 'team_permission_update'
-  /** The permission update to apply */
+  /** 要应用的权限更新 */
   permissionUpdate: {
     type: 'addRules'
     rules: Array<{ toolName: string; ruleContent?: string }>
     behavior: 'allow' | 'deny' | 'ask'
     destination: 'session'
   }
-  /** The directory path that was allowed */
+  /** 被允许的目录路径 */
   directoryPath: string
-  /** The tool name this applies to */
+  /** 此规则适用的工具名称 */
   toolName: string
 }
 
 /**
- * Checks if a message text contains a team permission update
+ * 检查消息文本中是否包含团队权限更新
  */
 export function isTeamPermissionUpdate(messageText: string): TeamPermissionUpdateMessage | null {
   try {
@@ -947,14 +946,14 @@ export function isTeamPermissionUpdate(messageText: string): TeamPermissionUpdat
       return parsed as TeamPermissionUpdateMessage
     }
   } catch {
-    // Not JSON or not a valid team permission update
+    // 非 JSON 或非有效的团队权限更新
   }
   return null
 }
 
 /**
- * Mode set request message sent from leader to teammate via mailbox
- * Uses SDK PermissionModeSchema for validated mode values
+ * 从 leader 通过 mailbox 发送给 teammate 的模式设置请求消息。
+ * 使用 SDK PermissionModeSchema 进行模式值校验。
  */
 export const ModeSetRequestMessageSchema = lazySchema(() =>
   z.object({
@@ -967,7 +966,7 @@ export const ModeSetRequestMessageSchema = lazySchema(() =>
 export type ModeSetRequestMessage = z.infer<ReturnType<typeof ModeSetRequestMessageSchema>>
 
 /**
- * Creates a mode set request message to send to a teammate
+ * 创建一条模式设置请求消息，发送给 teammate
  */
 export function createModeSetRequestMessage(params: {
   mode: string
@@ -981,7 +980,7 @@ export function createModeSetRequestMessage(params: {
 }
 
 /**
- * Checks if a message text contains a mode set request
+ * 检查消息文本中是否包含模式设置请求
  */
 export function isModeSetRequest(messageText: string): ModeSetRequestMessage | null {
   try {
@@ -990,19 +989,19 @@ export function isModeSetRequest(messageText: string): ModeSetRequestMessage | n
       return parsed.data
     }
   } catch {
-    // Not JSON or not a valid mode set request
+    // 非 JSON 或非有效的模式设置请求
   }
   return null
 }
 
 /**
- * Checks if a message text is a structured protocol message that should be
- * routed by useInboxPoller rather than consumed as raw LLM context.
+ * 检查消息文本是否为结构化协议消息，这类消息应由 useInboxPoller
+ * 路由处理，而非作为原始 LLM 上下文消费。
  *
- * These message types have specific handlers in useInboxPoller that route them
- * to the correct queues (workerPermissions, workerSandboxPermissions, etc.).
- * If getTeammateMailboxAttachments consumes them first, they get bundled as
- * raw text in attachments and never reach their intended handlers.
+ * 这些消息类型在 useInboxPoller 中有专门的处理器，会将它们路由到
+ * 正确的队列（workerPermissions、workerSandboxPermissions 等）。
+ * 如果 getTeammateMailboxAttachments 先消费了它们，就会被打包为
+ * 附件中的原始文本，永远无法到达其预期的处理器。
  */
 export function isStructuredProtocolMessage(messageText: string): boolean {
   try {
@@ -1029,8 +1028,8 @@ export function isStructuredProtocolMessage(messageText: string): boolean {
 }
 
 /**
- * Marks only messages matching a predicate as read, leaving others unread.
- * Uses the same file-locking mechanism as markMessagesAsRead.
+ * 仅将匹配谓词条件的消息标记为已读，其余消息保持未读。
+ * 使用与 markMessagesAsRead 相同的文件锁机制。
  */
 export async function markMessagesAsReadByPredicate(
   agentName: string,
@@ -1069,23 +1068,23 @@ export async function markMessagesAsReadByPredicate(
       try {
         await release()
       } catch {
-        // Lock may have already been released
+        // 锁可能已经被释放
       }
     }
   }
 }
 
 /**
- * Extracts a "[to {name}] {summary}" string from the last assistant message
- * if it ended with a SendMessage tool_use targeting a peer (not the team lead).
- * Returns undefined when the turn didn't end with a peer DM.
+ * 从最后一条 assistant 消息中提取 "[to {name}] {summary}" 字符串，
+ * 前提是该消息以一个发送给同级（非团队领导）的 SendMessage tool_use 结尾。
+ * 当本轮未以同级私信结尾时返回 undefined。
  */
 export function getLastPeerDmSummary(messages: Message[]): string | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i]
     if (!msg) continue
 
-    // Stop at wake-up boundary: a user prompt (string content), not tool results (array content)
+    // 在唤醒边界处停止：用户提示（string 类型内容），而非工具结果（array 类型内容）
     if (msg.type === 'user' && typeof msg.message.content === 'string') {
       break
     }

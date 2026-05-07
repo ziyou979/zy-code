@@ -21,9 +21,9 @@ import { getComputerUseHostAdapter } from './hostAdapter.js'
 const APP_ENUM_TIMEOUT_MS = 1000
 
 /**
- * Enumerate installed apps, timed. Fails soft — if Spotlight is slow or
- * zy-swift throws, the tool description just omits the list. Resolution
- * happens at call time regardless; the model just doesn't get hints.
+ * 枚举已安装应用，带超时。失败时软处理 —— 如果 Spotlight 响应慢或
+ * zy-swift 抛异常，工具描述中将省略应用列表。无论如何在调用时进行解析；
+ * 模型只是得不到提示。
  */
 async function tryGetInstalledAppNames(): Promise<string[] | undefined> {
   const adapter = getComputerUseHostAdapter()
@@ -36,7 +36,7 @@ async function tryGetInstalledAppNames(): Promise<string[] | undefined> {
     .catch(() => undefined)
     .finally(() => clearTimeout(timer))
   if (!installed) {
-    // The enumeration continues in the background — swallow late rejections.
+    // 枚举仍在后台继续运行 —— 吞掉延迟的 rejection。
     void enumP.catch(() => {})
     logForDebugging(
       `[Computer Use MCP] app enumeration exceeded ${APP_ENUM_TIMEOUT_MS}ms or failed; tool description omits list`,
@@ -47,18 +47,15 @@ async function tryGetInstalledAppNames(): Promise<string[] | undefined> {
 }
 
 /**
- * Construct the in-process server. Delegates to the package's
- * `createComputerUseMcpServer` for the Server object + stub CallTool handler,
- * then REPLACES the ListTools handler with one that includes installed-app
- * names in the `request_access` description (the package's factory doesn't
- * take `installedAppNames`, and Cowork builds its own tool array in
- * serverDef.ts for the same reason).
+ * 构建进程内 MCP 服务器。委托给包内的 `createComputerUseMcpServer` 获取 Server
+ * 对象和桩 CallTool 处理器，然后替换 ListTools 处理器为包含已安装应用名称的版本
+ * （写入 `request_access` 描述中）。包的工厂不接受 `installedAppNames`，Cowork
+ * 在 serverDef.ts 中出于同样原因自行构建工具数组。
  *
- * Async so the 1s app-enumeration timeout doesn't block startup — called from
- * an `await import()` in `client.ts` on first CU connection, not `main.tsx`.
+ * 异步执行以避免 1s 应用枚举超时阻塞启动 —— 在 `client.ts` 首次 CU 连接时
+ * 通过 `await import()` 调用，而非 `main.tsx`。
  *
- * Real dispatch still goes through `wrapper.tsx`'s `.call()` override; this
- * server exists only to answer ListTools.
+ * 实际调度仍通过 `wrapper.tsx` 的 `.call()` 覆盖；此服务器仅用于响应 ListTools。
  */
 export async function createComputerUseMcpServerForCli(): Promise<
   ReturnType<typeof createComputerUseMcpServer>
@@ -81,9 +78,8 @@ export async function createComputerUseMcpServerForCli(): Promise<
 }
 
 /**
- * Subprocess entrypoint for `--computer-use-mcp`. Mirror of
- * `runClaudeInChromeMcpServer` — stdio transport, exit on stdin close,
- * flush analytics before exit.
+ * `--computer-use-mcp` 的子进程入口。对应 `runClaudeInChromeMcpServer` ——
+ * stdio 传输，stdin 关闭时退出，退出前刷新分析数据。
  */
 export async function runComputerUseMcpServer(): Promise<void> {
   enableConfigs()
