@@ -35,13 +35,12 @@ function getToolUseInfo(
 ): { messageId: string; toolUseId: string; toolName: string } | null {
   if (!('message' in msg) || !msg.message) return null
   const assistantMsg = msg as import('../types/message.js').NormalizedAssistantMessage
-  const contentBlocks = Array.isArray(assistantMsg.message.content) ? assistantMsg.message.content : []
-  const firstBlock = contentBlocks[0]
-  if (firstBlock && typeof firstBlock !== 'string' && firstBlock.type === 'tool_call') {
+  const firstBlock = assistantMsg.message.content[0]
+  if (firstBlock && firstBlock.type === 'tool_call') {
     return {
       messageId: assistantMsg.message.id as string,
-      toolUseId: (firstBlock as { id: string }).id,
-      toolName: (firstBlock as { name: string }).name,
+      toolUseId: firstBlock.id,
+      toolName: firstBlock.name,
     }
   }
   return null

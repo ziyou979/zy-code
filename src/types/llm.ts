@@ -79,7 +79,7 @@ export interface AssistantMessage {
   model?: string
   /** 停止原因 */
   stopReason?: StopReason | null
-  content: string | AssistantContentBlock[]
+  content: AssistantContentBlock[]
   /** 工具调用列表（OpenAI 风格独立字段，流式场景也可能使用 ToolCallInlineBlock） */
   toolCalls?: ToolCall[]
   /** 模型使用的 token 用量 */

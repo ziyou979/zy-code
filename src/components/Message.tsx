@@ -126,7 +126,7 @@ function MessageImpl({
           advisorModel={message.advisorModel}
         />
       )
-      t3 = (Array.isArray(message.message.content) ? message.message.content : []).map(t4)
+      t3 = message.message.content.map(t4)
       let t5
       t5 = (
         <Box flexDirection="column" width={t2}>

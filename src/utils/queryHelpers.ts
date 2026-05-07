@@ -52,7 +52,6 @@ export function isResultSuccessful(
 
   if (message.type === 'assistant') {
     const content = message.message.content
-    if (!Array.isArray(content)) return content.trim().length > 0
     const lastContent = last(content)
     return (
       lastContent?.type === 'text' ||

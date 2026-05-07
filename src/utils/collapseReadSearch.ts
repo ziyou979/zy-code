@@ -292,10 +292,9 @@ function getCollapsibleToolInfo(
   isBash?: boolean
 } | null {
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
+    const content = msg.message.content[0]
     const info = getSearchOrReadFromContent(content, tools)
-    if (info && content && typeof content !== 'string' && content.type === 'tool_call') {
+    if (info && content && content.type === 'tool_call') {
       return { name: content.name, input: content.input, ...info }
     }
   }
@@ -320,9 +319,8 @@ function getCollapsibleToolInfo(
  */
 function isTextBreaker(msg: RenderableMessage): boolean {
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
-    if (content && typeof content !== 'string' && content.type === 'text' && content.text.trim().length > 0) {
+    const content = msg.message.content[0]
+    if (content && content.type === 'text' && content.text.trim().length > 0) {
       return true
     }
   }
@@ -335,9 +333,8 @@ function isTextBreaker(msg: RenderableMessage): boolean {
  */
 function isNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): boolean {
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
-    if (content && typeof content !== 'string' && content.type === 'tool_call' && !isToolSearchOrRead(content.name, content.input, tools)) {
+    const content = msg.message.content[0]
+    if (content && content.type === 'tool_call' && !isToolSearchOrRead(content.name, content.input, tools)) {
       return true
     }
   }
@@ -365,10 +362,9 @@ function isPreToolHookSummary(msg: RenderableMessage): msg is SystemStopHookSumm
  */
 function shouldSkipMessage(msg: RenderableMessage): boolean {
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
+    const content = msg.message.content[0]
     // 跳过 thinking 块和其他非文本、非工具内容
-    if (content && typeof content !== 'string' && (content.type === 'thinking' || content.type === 'redacted_thinking')) {
+    if (content && (content.type === 'thinking' || content.type === 'redacted_thinking')) {
       return true
     }
   }
@@ -388,9 +384,8 @@ function shouldSkipMessage(msg: RenderableMessage): boolean {
  */
 function isCollapsibleToolUse(msg: RenderableMessage, tools: Tools): msg is CollapsibleMessage {
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
-    return !!content && typeof content !== 'string' && content.type === 'tool_call' && isToolSearchOrRead(content.name, content.input, tools)
+    const content = msg.message.content[0]
+    return !!content && content.type === 'tool_call' && isToolSearchOrRead(content.name, content.input, tools)
   }
   if (msg.type === 'grouped_tool_use') {
     const firstContent = (msg as any).messages[0]?.message.content[0]
@@ -427,9 +422,8 @@ function isCollapsibleToolResult(
  */
 function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
-    if (content && typeof content !== 'string' && content.type === 'tool_call') {
+    const content = msg.message.content[0]
+    if (content && content.type === 'tool_call') {
       return [content.id]
     }
   }
@@ -499,9 +493,8 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
   const paths: string[] = []
 
   if (msg.type === 'assistant') {
-    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentArr[0]
-    if (content && typeof content !== 'string' && content.type === 'tool_call') {
+    const content = msg.message.content[0]
+    if (content && content.type === 'tool_call') {
       const input = content.input as { file_path?: string } | undefined
       if (input?.file_path) {
         paths.push(input.file_path)

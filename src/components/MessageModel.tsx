@@ -10,11 +10,10 @@ export function MessageModel({ message, isTranscriptMode }: Props) {
   if (message.type !== 'assistant') {
     return null
   }
-  const content = Array.isArray(message.message.content) ? message.message.content : []
   const shouldShowModel =
     isTranscriptMode &&
     message.message.model &&
-    content.some((c) => typeof c !== 'string' && c.type === 'text')
+    message.message.content.some((c) => c.type === 'text')
   if (!shouldShowModel) {
     return null
   }

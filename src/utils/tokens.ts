@@ -183,9 +183,6 @@ export function doesMostRecentAssistantMessageExceed200k(messages: Message[]): b
 export function getAssistantMessageContentLength(message: AssistantMessage): number {
   let contentLength = 0
   const content = message.message.content
-  if (typeof content === 'string') {
-    return content.length
-  }
   for (const block of content) {
     if (block.type === 'text') {
       contentLength += block.text.length

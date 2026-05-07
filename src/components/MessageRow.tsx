@@ -66,12 +66,11 @@ export function hasContentAfterIndex(
   for (let i = index + 1; i < messages.length; i++) {
     const msg = messages[i]
     if (msg?.type === 'assistant') {
-      const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
-      const content = contentArr[0]
-      if (content && typeof content !== 'string' && (content.type === 'thinking' || content.type === 'redacted_thinking')) {
+      const content = msg.message.content[0]
+      if (content && (content.type === 'thinking' || content.type === 'redacted_thinking')) {
         continue
       }
-      if (content && typeof content !== 'string' && content.type === 'tool_call') {
+      if (content && content.type === 'tool_call') {
         if (getToolSearchOrReadInfo(content.name, content.input, tools).isCollapsible) {
           continue
         }
