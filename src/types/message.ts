@@ -31,7 +31,7 @@ export type MessageOrigin =
 export type PartialCompactDirection = 'forward' | 'backward'
 
 export interface BaseMessage {
-  uuid: UUID | string
+  uuid: string
   timestamp: string
   isMeta?: boolean
 }

@@ -99,7 +99,7 @@ export function updateProgressFromMessage(
     (usage.extras?.cacheReadInputTokens ?? 0)
   tracker.cumulativeOutputTokens += usage.outputTokens
   for (const content of message.message.content) {
-    if (typeof content !== 'string' && content.type === 'tool_call') {
+    if (content.type === 'tool_call') {
       tracker.toolUseCount++
       // Omit StructuredOutput from preview - it's an internal tool
       if (content.name !== SYNTHETIC_OUTPUT_TOOL_NAME) {

@@ -127,9 +127,9 @@ export function applyGrouping(
           // Collect results for this group
           const results: NormalizedUserMessage[] = []
           for (const assistantMsg of group) {
-            const contentBlocks = Array.isArray(assistantMsg.message.content) ? assistantMsg.message.content : []
+            const contentBlocks = assistantMsg.message.content
             const firstBlock = contentBlocks[0]
-            if (firstBlock && typeof firstBlock !== 'string' && firstBlock.type === 'tool_call') {
+            if (firstBlock && firstBlock.type === 'tool_call') {
               const toolUseId = firstBlock.id
               const resultMsg = resultsByToolUseId.get(toolUseId)
               if (resultMsg) {
@@ -148,9 +148,9 @@ export function applyGrouping(
             timestamp: firstMsg.timestamp,
             messageId: info.messageId,
             toolUses: group.map((m) => {
-              const blocks = Array.isArray(m.message.content) ? m.message.content : []
+              const blocks = m.message.content
               const block = blocks[0]
-              return block && typeof block !== 'string' && block.type === 'tool_call' ? block : null
+              return block && block.type === 'tool_call' ? block : null
             }).filter((b): b is NonNullable<typeof b> => b !== null),
           }
           result.push(groupedMessage)

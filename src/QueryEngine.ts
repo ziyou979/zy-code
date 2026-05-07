@@ -974,7 +974,7 @@ export class QueryEngine {
     // 这些访问无法通过类型检查。
     const edeResultType = result?.type ?? 'undefined'
     const edeLastContentType =
-      result?.type === 'assistant' && Array.isArray(result.message.content)
+      result?.type === 'assistant'
         ? (result.message.content.at(-1)?.type ?? 'none')
         : 'n/a'
 
@@ -1026,7 +1026,7 @@ export class QueryEngine {
     let textResult = ''
     let isApiError = false
 
-    if (result.type === 'assistant' && Array.isArray(result.message.content)) {
+    if (result.type === 'assistant') {
       const lastContent = result.message.content.at(-1)
       if (lastContent?.type === 'text' && !SYNTHETIC_MESSAGES.has(lastContent.text)) {
         textResult = lastContent.text

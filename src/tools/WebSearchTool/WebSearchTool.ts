@@ -338,7 +338,7 @@ async function searchViaAnthropic(
 
   for await (const event of queryStream) {
     if (event.type === 'assistant') {
-      const contentArr = Array.isArray(event.message.content) ? event.message.content : []
+      const contentArr = event.message.content
       allContentBlocks.push(...contentArr)
       blockCount += contentArr.length
       continue
@@ -413,7 +413,7 @@ async function searchViaDashScope(
 
   for await (const event of queryStream) {
     if (event.type === 'assistant') {
-      const contentArr = Array.isArray(event.message.content) ? event.message.content : []
+      const contentArr = event.message.content
       allContentBlocks.push(...contentArr)
       // 尝试从 assistant message 的 extras 中提取 search_info
       const raw = event.message as any
@@ -526,7 +526,7 @@ async function searchViaOpenAI(
 
   for await (const event of queryStream) {
     if (event.type === 'assistant') {
-      const contentArr = Array.isArray(event.message.content) ? event.message.content : []
+      const contentArr = event.message.content
       allContentBlocks.push(...contentArr)
       blockCount += contentArr.length
       continue

@@ -31,7 +31,7 @@ export function getToolUseIDFromParentMessage(
   parentMessage: AssistantMessage,
   toolName: string,
 ): string | undefined {
-  const content = Array.isArray(parentMessage.message.content) ? parentMessage.message.content : []
+  const content = parentMessage.message.content
   const toolUseBlock = content.find(
     (block) => block.type === 'tool_call' && block.name === toolName,
   )

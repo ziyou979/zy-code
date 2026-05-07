@@ -342,8 +342,7 @@ export function finalizeAgentTool(
 export function getLastToolUseName(message: MessageType): string | undefined {
   if (message.type !== 'assistant') return undefined
   const content = message.message.content
-  if (!Array.isArray(content)) return undefined
-  const block = content.findLast((b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'tool_call')
+  const block = content.findLast((b): b is AssistantContentBlock => b.type === 'tool_call')
   return block?.type === 'tool_call' ? block.name : undefined
 }
 

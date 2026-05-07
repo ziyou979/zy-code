@@ -586,7 +586,7 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
     })
     const firstBlock = response.message.content[0]
     const title =
-      firstBlock && typeof firstBlock !== 'string' && firstBlock.type === 'text' ? firstBlock.text : 'Bug Report'
+      firstBlock && firstBlock.type === 'text' ? firstBlock.text : 'Bug Report'
 
     // Check if the title contains an API error message
     if (startsWithApiErrorPrefix(title)) {

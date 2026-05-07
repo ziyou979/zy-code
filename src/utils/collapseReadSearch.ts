@@ -502,9 +502,8 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
     }
   } else if (msg.type === 'grouped_tool_use') {
     for (const m of (msg as GroupedToolUseMessage).messages) {
-      const mContentArr = Array.isArray(m.message.content) ? m.message.content : []
-      const content = mContentArr[0]
-      if (content && typeof content !== 'string' && content.type === 'tool_call') {
+      const content = m.message.content[0]
+      if (content && content.type === 'tool_call') {
         const input = content.input as { file_path?: string } | undefined
         if (input?.file_path) {
           paths.push(input.file_path)

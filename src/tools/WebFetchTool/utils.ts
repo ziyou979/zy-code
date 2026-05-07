@@ -503,12 +503,10 @@ export async function applyPromptToMarkdown(
     throw new AbortError()
   }
 
-  const content = Array.isArray(assistantMessage.message.content)
-    ? assistantMessage.message.content
-    : []
+  const content = assistantMessage.message.content
   if (content.length > 0) {
     const contentBlock = content[0]
-    if (typeof contentBlock !== 'string' && 'text' in contentBlock) {
+    if ('text' in contentBlock) {
       return contentBlock.text
     }
   }

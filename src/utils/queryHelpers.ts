@@ -280,7 +280,6 @@ export async function* handleOrphanedPermission(
   const alreadyPresent = mutableMessages.some(
     (m) =>
       m.type === 'assistant' &&
-      Array.isArray(m.message.content) &&
       m.message.content.some((b) => b.type === 'tool_call' && 'id' in b && b.id === toolUseID),
   )
   if (!alreadyPresent) {
@@ -335,7 +334,7 @@ export function extractReadFilesFromMessages(
   const fileEditToolUseIds = new Map<string, string>() // toolUseId -> filePath
 
   for (const message of messages) {
-    if (message.type === 'assistant' && Array.isArray(message.message.content)) {
+    if (message.type === 'assistant') {
       for (const content of message.message.content) {
         if (content.type === 'tool_call' && content.name === FILE_READ_TOOL_NAME) {
           // Extract file_path from the tool use input

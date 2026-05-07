@@ -426,11 +426,8 @@ async function countBuiltInToolTokens(
       const deferredToolNameSet = new Set(deferredBuiltinTools.map((t) => t.name))
       for (const msg of messages) {
         if (msg.type === 'assistant') {
-          const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
-          for (const block of contentBlocks) {
+          for (const block of msg.message.content) {
             if (
-              typeof block !== 'string' &&
-              'type' in block &&
               block.type === 'tool_call' &&
               'name' in block &&
               typeof block.name === 'string' &&
@@ -650,11 +647,8 @@ export async function countMcpToolTokens(
     const mcpToolNameSet = new Set(mcpTools.map((t) => t.name))
     for (const msg of messages) {
       if (msg.type === 'assistant') {
-        const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
-        for (const block of contentBlocks) {
+        for (const block of msg.message.content) {
           if (
-            typeof block !== 'string' &&
-            'type' in block &&
             block.type === 'tool_call' &&
             'name' in block &&
             typeof block.name === 'string' &&
@@ -751,9 +745,7 @@ function processAssistantMessage(
   breakdown: MessageBreakdown,
 ): void {
   // Process each content block individually
-  const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
-  for (const block of contentBlocks) {
-    if (typeof block === 'string') continue
+  for (const block of msg.message.content) {
     const blockStr = jsonStringify(block)
     const blockTokens = roughTokenCountEstimation(blockStr)
 
@@ -835,9 +827,8 @@ async function approximateMessageTokens(messages: Message[]): Promise<MessageBre
   const toolUseIdToName = new Map<string, string>()
   for (const msg of microcompactResult.messages) {
     if (msg.type === 'assistant') {
-      const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
-      for (const block of contentBlocks) {
-        if (typeof block !== 'string' && 'type' in block && block.type === 'tool_call') {
+      for (const block of msg.message.content) {
+        if (block.type === 'tool_call') {
           const toolUseId = 'id' in block ? block.id : undefined
           const toolName = ('name' in block ? block.name : undefined) || 'unknown'
           if (toolUseId) {

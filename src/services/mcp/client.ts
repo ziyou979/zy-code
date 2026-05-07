@@ -2997,11 +2997,11 @@ async function callMCPTool({
 
 function extractToolUseId(message: AssistantMessage): string | undefined {
   const content = message.message.content
-  if (!Array.isArray(content) || content.length === 0) {
+  if (content.length === 0) {
     return undefined
   }
   const firstBlock = content[0]
-  if (typeof firstBlock === 'string' || firstBlock.type !== 'tool_call') {
+  if (firstBlock.type !== 'tool_call') {
     return undefined
   }
   return firstBlock.id

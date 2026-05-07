@@ -102,7 +102,7 @@ export function buildForkedMessages(
 ): MessageType[] {
   // Clone the assistant message to avoid mutating the original, keeping all
   // content blocks (thinking, text, and every tool_use)
-  const contentBlocks = Array.isArray(assistantMessage.message.content) ? assistantMessage.message.content : []
+  const contentBlocks = assistantMessage.message.content
   const fullAssistantMessage: AssistantMessage = {
     ...assistantMessage,
     uuid: randomUUID(),

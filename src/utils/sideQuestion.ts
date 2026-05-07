@@ -126,8 +126,8 @@ ${question}`
 function extractSideQuestionResponse(messages: Message[]): string | null {
   // Flatten all assistant content blocks across the per-block messages.
   const assistantBlocks = messages.flatMap((m) =>
-    m.type === 'assistant' && Array.isArray(m.message.content) ? m.message.content : [],
-  ).filter((b): b is AssistantContentBlock => typeof b !== 'string')
+    m.type === 'assistant' ? m.message.content : [],
+  )
 
   if (assistantBlocks.length > 0) {
     // Concatenate all text blocks (there's normally at most one, but be safe).

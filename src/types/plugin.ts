@@ -208,13 +208,6 @@ export type PluginError =
       validationError: string
     }
   | {
-      type: 'lsp-config-invalid'
-      source: string
-      plugin: string
-      serverName: string
-      validationError: string
-    }
-  | {
       type: 'lsp-server-start-failed'
       source: string
       plugin: string

@@ -624,17 +624,16 @@ export function logAPISuccessAndDuration({
 
     for (const msg of newMessages) {
       for (const block of msg.message.content) {
-        if (typeof block !== 'string' && block.type === 'text') {
+        if (block.type === 'text') {
           textLen += block.text.length
-        } else if (typeof block !== 'string' && feature('CONNECTOR_TEXT') && isConnectorTextBlock(block)) {
+        } else if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(block)) {
           connectorCount++
-        } else if (typeof block !== 'string' && block.type === 'thinking') {
+        } else if (block.type === 'thinking') {
           thinkingLen += block.thinking.length
         } else if (
-          typeof block !== 'string' &&
-          (block.type === 'tool_call' ||
+          block.type === 'tool_call' ||
           (block as any).type === 'server_tool_use' ||
-          (block as any).type === 'mcp_tool_use')
+          (block as any).type === 'mcp_tool_use'
         ) {
           const inputLen = jsonStringify((block as any).input).length
           const sanitizedName = sanitizeToolNameForAnalytics((block as any).name)
@@ -701,10 +700,8 @@ export function logAPISuccessAndDuration({
     modelOutput =
       newMessages
         .flatMap((m) => {
-          const content = m.message.content
-          if (!Array.isArray(content)) return []
-          return content
-            .filter((c): c is { type: 'text'; text: string } => typeof c !== 'string' && c.type === 'text')
+          return m.message.content
+            .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
             .map((c) => c.text)
         })
         .join('\n') || undefined
@@ -714,10 +711,8 @@ export function logAPISuccessAndDuration({
       thinkingOutput =
         newMessages
           .flatMap((m) => {
-            const content = m.message.content
-            if (!Array.isArray(content)) return []
-            return content
-              .filter((c): c is import('../../types/llm.js').ThinkingBlock => typeof c !== 'string' && c.type === 'thinking')
+            return m.message.content
+              .filter((c): c is import('../../types/llm.js').ThinkingBlock => c.type === 'thinking')
               .map((c) => c.thinking)
           })
           .join('\n') || undefined
@@ -725,8 +720,7 @@ export function logAPISuccessAndDuration({
 
     // 检查输出中是否包含 tool_use 块
     hasToolCall = newMessages.some((m) => {
-      const content = m.message.content
-      return Array.isArray(content) && content.some((c) => typeof c !== 'string' && c.type === 'tool_call')
+      return m.message.content.some((c) => c.type === 'tool_call')
     })
   }
 
