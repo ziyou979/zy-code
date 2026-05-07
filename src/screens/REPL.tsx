@@ -469,11 +469,6 @@ const WebBrowserPanelModule = feature('WEB_BROWSER_TOOL')
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { IssueFlagBanner } from '../components/PromptInput/IssueFlagBanner.js'
 import { useIssueFlagBanner } from '../hooks/useIssueFlagBanner.js'
-import {
-  CompanionSprite,
-  CompanionFloatingBubble,
-  MIN_COLS_FOR_FULL_SPRITE,
-} from '../buddy/CompanionSprite.js'
 import { DevBar } from '../components/DevBar.js'
 // Session manager 已移除 - 现在使用 AppState
 import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
@@ -1538,19 +1533,6 @@ export function REPL({
       } else {
         onScrollAway(handle)
         if (feature('KAIROS')) maybeLoadOlder(handle)
-        // 滚动时关闭伙伴气泡 — 它绝对定位
-        // 在右下角，覆盖转录内容。滚动 = 用户正在
-        // 尝试阅读它下面的内容。
-        if (feature('BUDDY')) {
-          setAppState((prev) =>
-            prev.companionReaction === undefined
-              ? prev
-              : {
-                  ...prev,
-                  companionReaction: undefined,
-                },
-          )
-        }
       }
     },
     [onRepin, onScrollAway, maybeLoadOlder, setAppState],
@@ -3282,19 +3264,6 @@ export function REPL({
         querySource: getQuerySourceForREPL(),
       })) {
         onQueryEvent(event)
-      }
-      if (feature('BUDDY')) {
-        // @ts-ignore -- ant-only: fireCompanionObserver is conditionally imported
-        void fireCompanionObserver(messagesRef.current, (reaction) =>
-          setAppState((prev) =>
-            prev.companionReaction === reaction
-              ? prev
-              : {
-                  ...prev,
-                  companionReaction: reaction,
-                },
-          ),
-        )
       }
       queryCheckpoint('query_end')
 
@@ -5363,19 +5332,6 @@ export function REPL({
       />
     ) : null
 
-  // 窄终端：companion 折叠为一行，REPL 将其堆叠
-  // 在自己的行上（全屏时在输入上方，回滚时在下方）而非
-  // 行旁边。宽终端保持行布局，精灵在右侧
-  const companionNarrow = transcriptCols < MIN_COLS_FOR_FULL_SPRITE
-  // PromptInput 提前返回 BackgroundTasksDialog 时隐藏精灵。
-  // 精灵作为 PromptInput 的行兄弟放置，所以对话框的 Pane
-  // 分隔线在 useTerminalSize() 宽度处绘制但只获得 terminalWidth -
-  // spriteWidth —— 分隔线提前停止且对话框文字提前换行。
-  // 不检查 footerSelection：pill 焦点（向下箭头到任务 pill）必须保持
-  // 精灵可见以便右箭头可以导航到它
-  const companionVisible =
-    !toolJSX?.shouldHidePromptInput && !focusedInputDialog && !showBashesDialog
-
   // 全屏时，所有 local-jsx 斜杠命令浮动在模态插槽中 ——
   // FullscreenLayout 将它们包装在绝对定位底部锚定的
   // 面板中（▔ 分隔线，ModalContext）。Pane/Dialog 在内部检测上下文
@@ -5443,11 +5399,6 @@ export function REPL({
         <FullscreenLayout
           scrollRef={scrollRef}
           overlay={toolPermissionOverlay}
-          bottomFloat={
-            feature('BUDDY') && companionVisible && !companionNarrow ? (
-              <CompanionFloatingBubble />
-            ) : undefined
-          }
           modal={centeredModal}
           modalScrollRef={modalScrollRef}
           dividerYRef={dividerYRef}
@@ -5545,17 +5496,7 @@ export function REPL({
             </>
           }
           bottom={
-            <Box
-              flexDirection={feature('BUDDY') && companionNarrow ? 'column' : 'row'}
-              width="100%"
-              alignItems={feature('BUDDY') && companionNarrow ? undefined : 'flex-end'}
-            >
-              {feature('BUDDY') &&
-              companionNarrow &&
-              isFullscreenEnvEnabled() &&
-              companionVisible ? (
-                <CompanionSprite />
-              ) : null}
+            <Box flexDirection="row" width="100%" alignItems="flex-end">
               <Box flexDirection="column" flexGrow={1}>
                 {permissionStickyFooter}
                 {/* 即时 local-jsx 命令（/btw、/sandbox、/assistant、
@@ -6243,11 +6184,6 @@ export function REPL({
                 )}
                 {isInternalBuild() && <DevBar />}
               </Box>
-              {feature('BUDDY') &&
-              !(companionNarrow && isFullscreenEnvEnabled()) &&
-              companionVisible ? (
-                <CompanionSprite />
-              ) : null}
             </Box>
           }
         />

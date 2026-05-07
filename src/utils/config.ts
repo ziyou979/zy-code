@@ -273,9 +273,6 @@ export type GlobalConfig = {
     [tipId: string]: number // key 为 tipId，value 为上次展示该提示时的 numStartups
   }
 
-  // /buddy 伴侣灵魂 — 从 userId 读取时重建 bones。详见 src/buddy/。
-  companion?: import('../buddy/types.js').StoredCompanion
-  companionMuted?: boolean
 
   // 反馈调查追踪
   feedbackSurveyState?: {

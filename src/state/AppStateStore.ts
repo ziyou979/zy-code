@@ -68,7 +68,7 @@ export type SpeculationState =
 
 export const IDLE_SPECULATION_STATE: SpeculationState = { status: 'idle' }
 
-export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams' | 'bridge' | 'companion'
+export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams' | 'bridge'
 
 export type AppState = DeepImmutable<{
   settings: SettingsJson
@@ -86,8 +86,6 @@ export type AppState = DeepImmutable<{
   coordinatorTaskIndex: number
   viewSelectionMode: 'none' | 'selecting-agent' | 'viewing-agent'
   // 哪个 footer 药丸处于聚焦状态（提示符下方的箭头键导航）。
-  // 放在 AppState 中，这样渲染在 PromptInput 外部的药丸组件
-  //（REPL.tsx 中的 CompanionSprite）可以读取自身的聚焦状态。
   footerSelection: FooterItem | null
   toolPermissionContext: ToolPermissionContext
   spinnerTip?: string
@@ -143,10 +141,7 @@ export type AppState = DeepImmutable<{
   foregroundedTaskId?: string
   // 正在查看其转录的进行中 teammate task 的 task ID（undefined = 领导者视图）
   viewingAgentTaskId?: string
-  // 来自好友观察者（src/buddy/observer.ts）的最新 companion 反应
-  companionReaction?: string
-  // 上次 /buddy pet 的时间戳 —— CompanionSprite 在最近时间内渲染爱心
-  companionPetAt?: number
+
   // TODO (ashwin): see if we can use utility-types DeepReadonly for this
   mcp: {
     clients: MCPServerConnection[]
