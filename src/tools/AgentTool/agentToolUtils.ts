@@ -31,6 +31,7 @@ import {
   updateProgressFromMessage,
 } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import { asAgentId } from '../../types/ids.js'
+import type { AssistantContentBlock } from '../../types/llm.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -242,9 +243,12 @@ export function countToolUses(messages: MessageType[]): number {
   let count = 0
   for (const m of messages) {
     if (m.type === 'assistant') {
-      for (const block of m.message.content) {
-        if (block.type === 'tool_call') {
-          count++
+      const content = m.message.content
+      if (Array.isArray(content)) {
+        for (const block of content) {
+          if (typeof block !== 'string' && block.type === 'tool_call') {
+            count++
+          }
         }
       }
     }
@@ -273,12 +277,18 @@ export function finalizeAgentTool(
   // Extract text content from the agent's response. If the final assistant
   // message is a pure tool_use block (loop exited mid-turn), fall back to
   // the most recent assistant message that has text content.
-  let content = lastAssistantMessage.message.content.filter((_) => _.type === 'text')
+  const lastContent = lastAssistantMessage.message.content
+  let content: AssistantContentBlock[] = Array.isArray(lastContent)
+    ? lastContent.filter((b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'text')
+    : []
   if (content.length === 0) {
     for (let i = agentMessages.length - 1; i >= 0; i--) {
       const m = agentMessages[i]!
       if (m.type !== 'assistant') continue
-      const textBlocks = m.message.content.filter((_) => _.type === 'text')
+      const msgContent = m.message.content
+      const textBlocks = Array.isArray(msgContent)
+        ? msgContent.filter((b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'text')
+        : []
       if (textBlocks.length > 0) {
         content = textBlocks
         break
@@ -314,11 +324,14 @@ export function finalizeAgentTool(
   return {
     agentId,
     agentType,
-    content,
+    content: content.map((b) => ({ type: 'text' as const, text: b.type === 'text' ? b.text : '' })),
     totalDurationMs: Date.now() - startTime,
     totalTokens,
     totalToolUseCount,
-    usage: lastAssistantMessage.message.usage,
+    usage: {
+      input_tokens: lastAssistantMessage.message.usage?.inputTokens ?? 0,
+      output_tokens: lastAssistantMessage.message.usage?.outputTokens ?? 0,
+    },
   }
 }
 
@@ -328,7 +341,9 @@ export function finalizeAgentTool(
  */
 export function getLastToolUseName(message: MessageType): string | undefined {
   if (message.type !== 'assistant') return undefined
-  const block = message.message.content.findLast((b) => b.type === 'tool_call')
+  const content = message.message.content
+  if (!Array.isArray(content)) return undefined
+  const block = content.findLast((b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'tool_call')
   return block?.type === 'tool_call' ? block.name : undefined
 }
 
@@ -451,7 +466,9 @@ export function extractPartialResult(messages: MessageType[]): string | undefine
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i]!
     if (m.type !== 'assistant') continue
-    const text = extractTextContent(m.message.content, '\n')
+    const content = m.message.content
+    if (!Array.isArray(content)) continue
+    const text = extractTextContent(content, '\n')
     if (text) {
       return text
     }

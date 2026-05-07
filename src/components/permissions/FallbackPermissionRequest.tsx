@@ -161,7 +161,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
           }
           {
             <PermissionPrompt
-              options={options}
+              options={options as import('./PermissionPrompt.js').PermissionPromptOption<string>[]}
               onSelect={handleSelect}
               onCancel={handleCancel}
               toolAnalyticsContext={toolAnalyticsContext}

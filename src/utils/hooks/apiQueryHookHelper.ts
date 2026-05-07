@@ -101,7 +101,8 @@ export function createApiQueryHook<TResult>(config: ApiQueryHookConfig<TResult>)
       })
 
       // Parse response
-      const content = extractTextContent(response.message.content).trim()
+      const msgContent = Array.isArray(response.message.content) ? response.message.content : []
+      const content = extractTextContent(msgContent).trim()
 
       try {
         const result = config.parseResponse(content, context)

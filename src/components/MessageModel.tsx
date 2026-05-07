@@ -7,14 +7,17 @@ type Props = {
   isTranscriptMode: boolean
 }
 export function MessageModel({ message, isTranscriptMode }: Props) {
+  if (message.type !== 'assistant') {
+    return null
+  }
+  const content = Array.isArray(message.message.content) ? message.message.content : []
   const shouldShowModel =
     isTranscriptMode &&
-    message.type === 'assistant' &&
     message.message.model &&
-    message.message.content.some((c) => c.type === 'text')
+    content.some((c) => typeof c !== 'string' && c.type === 'text')
   if (!shouldShowModel) {
     return null
   }
-  const t1 = stringWidth(message.message.model) + 8
-  return <Box minWidth={t1}>{<Text dimColor={true}>{message.message.model}</Text>}</Box>
+  const t1 = stringWidth(message.message.model as string) + 8
+  return <Box minWidth={t1}>{<Text dimColor={true}>{message.message.model as string}</Text>}</Box>
 }

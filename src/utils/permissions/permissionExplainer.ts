@@ -110,7 +110,8 @@ function extractConversationContext(messages: Message[], maxChars = 1000): strin
 
   for (const msg of assistantMessages.reverse()) {
     // Extract text content from assistant message
-    const textBlocks = msg.message.content
+    const content = Array.isArray(msg.message.content) ? msg.message.content : []
+    const textBlocks = content
       .filter((c) => c.type === 'text')
       .map((c) => ('text' in c ? c.text : ''))
       .join(' ')

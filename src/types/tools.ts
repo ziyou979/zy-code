@@ -1,6 +1,10 @@
 // Tool Types - shared type definitions for tools.
 
-import type { NormalizedMessage, NormalizedUserMessage } from './message.js'
+import type {
+  NormalizedAssistantMessage,
+  NormalizedMessage,
+  NormalizedUserMessage,
+} from './message.js'
 
 export interface ToolDefinition {
   name: string
@@ -48,7 +52,7 @@ export type MCPProgress = {
 
 export type AgentToolProgress = {
   type: 'agent_progress'
-  message: NormalizedUserMessage
+  message: NormalizedUserMessage | NormalizedAssistantMessage
   prompt: string
   agentId: string
 }

@@ -17,6 +17,7 @@ import { TOOL_SEARCH_TOOL_NAME } from '../tools/ToolSearchTool/prompt.js'
 import type {
   CollapsedReadSearchGroup,
   CollapsibleMessage,
+  GroupedToolUseMessage,
   RenderableMessage,
   StopHookInfo,
   SystemStopHookSummaryMessage,
@@ -291,9 +292,10 @@ function getCollapsibleToolInfo(
   isBash?: boolean
 } | null {
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
     const info = getSearchOrReadFromContent(content, tools)
-    if (info && content?.type === 'tool_call') {
+    if (info && content && typeof content !== 'string' && content.type === 'tool_call') {
       return { name: content.name, input: content.input, ...info }
     }
   }
@@ -318,8 +320,9 @@ function getCollapsibleToolInfo(
  */
 function isTextBreaker(msg: RenderableMessage): boolean {
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
-    if (content?.type === 'text' && content.text.trim().length > 0) {
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
+    if (content && typeof content !== 'string' && content.type === 'text' && content.text.trim().length > 0) {
       return true
     }
   }
@@ -332,8 +335,9 @@ function isTextBreaker(msg: RenderableMessage): boolean {
  */
 function isNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): boolean {
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
-    if (content?.type === 'tool_call' && !isToolSearchOrRead(content.name, content.input, tools)) {
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
+    if (content && typeof content !== 'string' && content.type === 'tool_call' && !isToolSearchOrRead(content.name, content.input, tools)) {
       return true
     }
   }
@@ -361,9 +365,10 @@ function isPreToolHookSummary(msg: RenderableMessage): msg is SystemStopHookSumm
  */
 function shouldSkipMessage(msg: RenderableMessage): boolean {
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
-    // Skip thinking blocks and other non-text, non-tool content
-    if (content?.type === 'thinking' || content?.type === 'redacted_thinking') {
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
+    // 跳过 thinking 块和其他非文本、非工具内容
+    if (content && typeof content !== 'string' && (content.type === 'thinking' || content.type === 'redacted_thinking')) {
       return true
     }
   }
@@ -383,8 +388,9 @@ function shouldSkipMessage(msg: RenderableMessage): boolean {
  */
 function isCollapsibleToolUse(msg: RenderableMessage, tools: Tools): msg is CollapsibleMessage {
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
-    return content?.type === 'tool_call' && isToolSearchOrRead(content.name, content.input, tools)
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
+    return !!content && typeof content !== 'string' && content.type === 'tool_call' && isToolSearchOrRead(content.name, content.input, tools)
   }
   if (msg.type === 'grouped_tool_use') {
     const firstContent = (msg as any).messages[0]?.message.content[0]
@@ -421,8 +427,9 @@ function isCollapsibleToolResult(
  */
 function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
-    if (content?.type === 'tool_call') {
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
+    if (content && typeof content !== 'string' && content.type === 'tool_call') {
       return [content.id]
     }
   }
@@ -467,8 +474,9 @@ export function getDisplayMessageFromCollapsed(
   message: CollapsedReadSearchGroup,
 ): Exclude<CollapsibleMessage, { type: 'grouped_tool_use' }> {
   const firstMsg = message.displayMessage
-  if (firstMsg.type === 'grouped_tool_use') {
-    return firstMsg.displayMessage
+  const msgType: string = firstMsg.type
+  if (msgType === 'grouped_tool_use') {
+    return (firstMsg as unknown as GroupedToolUseMessage).displayMessage
   }
   return firstMsg
 }
@@ -491,17 +499,19 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
   const paths: string[] = []
 
   if (msg.type === 'assistant') {
-    const content = msg.message.content[0]
-    if (content?.type === 'tool_call') {
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentArr[0]
+    if (content && typeof content !== 'string' && content.type === 'tool_call') {
       const input = content.input as { file_path?: string } | undefined
       if (input?.file_path) {
         paths.push(input.file_path)
       }
     }
   } else if (msg.type === 'grouped_tool_use') {
-    for (const m of (msg as any).messages) {
-      const content = m.message.content[0]
-      if (content?.type === 'tool_call') {
+    for (const m of (msg as GroupedToolUseMessage).messages) {
+      const mContentArr = Array.isArray(m.message.content) ? m.message.content : []
+      const content = mContentArr[0]
+      if (content && typeof content !== 'string' && content.type === 'tool_call') {
         const input = content.input as { file_path?: string } | undefined
         if (input?.file_path) {
           paths.push(input.file_path)

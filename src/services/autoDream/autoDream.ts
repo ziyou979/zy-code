@@ -266,9 +266,9 @@ function makeDreamProgressWatcher(
     let toolUseCount = 0
     const touchedPaths: string[] = []
     for (const block of msg.message.content) {
-      if (block.type === 'text') {
+      if (typeof block !== 'string' && block.type === 'text') {
         text += block.text
-      } else if (block.type === 'tool_call') {
+      } else if (typeof block !== 'string' && block.type === 'tool_call') {
         toolUseCount++
         if (block.name === FILE_EDIT_TOOL_NAME || block.name === FILE_WRITE_TOOL_NAME) {
           const input = block.input as { file_path?: unknown }

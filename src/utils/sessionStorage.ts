@@ -3298,6 +3298,48 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
 }
 
 /**
+ * 修复 transcript messages 中损坏的 parentUuid 链。
+ * 正常文件零开销：先快速扫描，没有断链则直接返回。
+ * 有断链时按 session 分组 + timestamp 排序修复：
+ * - parentUuid=null → 修复为前一条消息的 uuid
+ * - parentUuid 指向不存在的 UUID → 修复为前一条消息的 uuid
+ * - sidechain 消息排除（不参与主链修复）
+ * - compact_boundary 的 parentUuid=null 是有意为之，不修复
+ */
+function repairBrokenParentUuidChains(messages: Map<UUID, TranscriptMessage>): void {
+  // 快速扫描：检查是否有需要修复的消息
+  let hasBroken = false
+  for (const msg of messages.values()) {
+    if (msg.isSidechain || isCompactBoundaryMessage(msg)) continue
+    if (!msg.parentUuid || !messages.has(msg.parentUuid)) {
+      hasBroken = true
+      break
+    }
+  }
+  if (!hasBroken) return
+
+  // 按 sessionId 分组（排除 sidechain 和 compact_boundary）
+  const bySession = new Map<string, TranscriptMessage[]>()
+  for (const msg of messages.values()) {
+    if (msg.isSidechain || isCompactBoundaryMessage(msg)) continue
+    const sid = (msg.sessionId as string) ?? '__root__'
+    if (!bySession.has(sid)) bySession.set(sid, [])
+    bySession.get(sid)!.push(msg)
+  }
+
+  // 时间顺序即真实顺序，修复损坏的 parentUuid
+  for (const group of bySession.values()) {
+    group.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    for (let i = 1; i < group.length; i++) {
+      const msg = group[i]!
+      if (!msg.parentUuid || !messages.has(msg.parentUuid)) {
+        msg.parentUuid = group[i - 1]!.uuid
+      }
+    }
+  }
+}
+
+/**
  * Loads all messages, summaries, and file history snapshots from a transcript file.
  * Returns the messages, summaries, custom titles, tags, file history snapshots, and attribution snapshots.
  */
@@ -3446,9 +3488,6 @@ export async function loadTranscriptFile(
     // rewrite any subsequent message whose parentUuid lands in the bridge.
     const progressBridge = new Map<UUID, UUID | null>()
 
-    // 容错：记录文件中上一条 transcript 消息的 uuid，用于修复 parentUuid=null 的断链
-    let lastTranscriptUuid: UUID | null = null
-
     for (const entry of entries) {
       // Legacy progress check runs before the Entry-typed else-if chain —
       // progress is not in the Entry union, so checking it after TypeScript
@@ -3468,11 +3507,6 @@ export async function loadTranscriptFile(
         if (entry.parentUuid && progressBridge.has(entry.parentUuid)) {
           entry.parentUuid = progressBridge.get(entry.parentUuid) ?? null
         }
-        // 容错：修复 dev 模式下 parentUuid 写入断链的问题。
-        // compact_boundary 的 parentUuid=null 是有意为之，不修复。
-        if (!entry.parentUuid && lastTranscriptUuid && !isCompactBoundaryMessage(entry)) {
-          entry.parentUuid = lastTranscriptUuid
-        }
         messages.set(entry.uuid, entry)
         // Compact boundary: prior marble-origami-commit entries reference
         // messages that won't be in the post-boundary chain. The >5MB
@@ -3485,7 +3519,6 @@ export async function loadTranscriptFile(
           contextCollapseCommits.length = 0
           contextCollapseSnapshot = undefined
         }
-        lastTranscriptUuid = entry.uuid
       } else if (entry.type === 'summary' && entry.leafUuid) {
         summaries.set(entry.leafUuid, entry.summary)
       } else if (entry.type === 'custom-title' && entry.sessionId) {
@@ -3532,6 +3565,7 @@ export async function loadTranscriptFile(
     // File doesn't exist or can't be read
   }
 
+  repairBrokenParentUuidChains(messages)
   applyPreservedSegmentRelinks(messages)
   applySnipRemovals(messages)
 

@@ -106,7 +106,7 @@ export function TokenWarning({ tokenUsage, model }: Props) {
     // @ts-ignore
     return (
       <Box flexDirection="row">
-        <CollapseLabel upgradeMessage={upgradeMessage} />
+        <CollapseLabel tokenUsage={tokenUsage} model={model} />
       </Box>
     )
   }

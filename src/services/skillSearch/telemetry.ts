@@ -15,6 +15,15 @@ export function logSkillUsageEvent(skillId: string, metadata: Record<string, unk
 }
 
 /** 记录远程技能加载事件 */
-export function logRemoteSkillLoaded(skillId: string): void {
+export function logRemoteSkillLoaded(params: {
+  slug: string
+  cacheHit?: boolean
+  latencyMs?: number
+  urlScheme?: string
+  error?: string
+  fileCount?: number
+  totalBytes?: number
+  fetchMethod?: string
+}): void {
   // Stub: no-op in external builds
 }

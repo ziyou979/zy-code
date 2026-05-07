@@ -13,6 +13,7 @@ export default function Link({ children, url, fallback }: Props) {
     // @ts-ignore
     return (
       <Text>
+        {/* @ts-ignore */}
         <ink-link href={url}>{content}</ink-link>
       </Text>
     )

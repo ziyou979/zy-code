@@ -33,12 +33,15 @@ function getToolsWithGrouping(tools: Tools): Set<string> {
 function getToolUseInfo(
   msg: MessageWithoutProgress,
 ): { messageId: string; toolUseId: string; toolName: string } | null {
-  if (msg.type === 'assistant' && msg.message.content[0]?.type === 'tool_call') {
-    const content = msg.message.content[0]
+  if (!('message' in msg) || !msg.message) return null
+  const assistantMsg = msg as import('../types/message.js').NormalizedAssistantMessage
+  const contentBlocks = Array.isArray(assistantMsg.message.content) ? assistantMsg.message.content : []
+  const firstBlock = contentBlocks[0]
+  if (firstBlock && typeof firstBlock !== 'string' && firstBlock.type === 'tool_call') {
     return {
-      messageId: msg.message.id,
-      toolUseId: content.id,
-      toolName: content.name,
+      messageId: assistantMsg.message.id as string,
+      toolUseId: (firstBlock as { id: string }).id,
+      toolName: (firstBlock as { name: string }).name,
     }
   }
   return null
@@ -125,10 +128,14 @@ export function applyGrouping(
           // Collect results for this group
           const results: NormalizedUserMessage[] = []
           for (const assistantMsg of group) {
-            const toolUseId = (assistantMsg.message.content[0] as { id: string }).id
-            const resultMsg = resultsByToolUseId.get(toolUseId)
-            if (resultMsg) {
-              results.push(resultMsg)
+            const contentBlocks = Array.isArray(assistantMsg.message.content) ? assistantMsg.message.content : []
+            const firstBlock = contentBlocks[0]
+            if (firstBlock && typeof firstBlock !== 'string' && firstBlock.type === 'tool_call') {
+              const toolUseId = firstBlock.id
+              const resultMsg = resultsByToolUseId.get(toolUseId)
+              if (resultMsg) {
+                results.push(resultMsg)
+              }
             }
           }
 
@@ -141,6 +148,11 @@ export function applyGrouping(
             uuid: `grouped-${firstMsg.uuid}`,
             timestamp: firstMsg.timestamp,
             messageId: info.messageId,
+            toolUses: group.map((m) => {
+              const blocks = Array.isArray(m.message.content) ? m.message.content : []
+              const block = blocks[0]
+              return block && typeof block !== 'string' && block.type === 'tool_call' ? block : null
+            }).filter((b): b is NonNullable<typeof b> => b !== null),
           }
           result.push(groupedMessage)
         }

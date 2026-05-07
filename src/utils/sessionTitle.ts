@@ -109,7 +109,9 @@ export async function generateSessionTitle(
       },
     })
 
-    const text = extractTextContent(result.message.content)
+    const text = extractTextContent(
+      Array.isArray(result.message.content) ? result.message.content : [],
+    )
 
     const parsed = titleSchema().safeParse(safeParseJSON(text))
     const title = parsed.success ? parsed.data.title.trim() || null : null

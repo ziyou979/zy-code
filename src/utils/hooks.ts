@@ -3407,8 +3407,9 @@ export async function executeStopFailureHooks(
   const sessionId = getSessionId()
   if (!hasHookForEvent('StopFailure', appState, sessionId)) return
 
+  const contentBlocks = Array.isArray(lastMessage.message.content) ? lastMessage.message.content : []
   const lastAssistantText =
-    extractTextContent(lastMessage.message.content, '\n').trim() || undefined
+    extractTextContent(contentBlocks, '\n').trim() || undefined
 
   // Some createAssistantAPIErrorMessage call sites omit `error` (e.g.
   // image-size at errors.ts:431). Default to 'unknown' so matcher filtering
@@ -3465,7 +3466,10 @@ export async function* executeStopHooks(
   // inspect the final response without reading the transcript file.
   const lastAssistantMessage = messages ? getLastAssistantMessage(messages) : undefined
   const lastAssistantText = lastAssistantMessage
-    ? extractTextContent(lastAssistantMessage.message.content, '\n').trim() || undefined
+    ? (() => {
+        const contentBlocks = Array.isArray(lastAssistantMessage.message.content) ? lastAssistantMessage.message.content : []
+        return extractTextContent(contentBlocks, '\n').trim() || undefined
+      })()
     : undefined
 
   const hookInput: StopHookInput | SubagentStopHookInput = subagentId

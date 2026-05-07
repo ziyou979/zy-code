@@ -624,17 +624,17 @@ export function logAPISuccessAndDuration({
 
     for (const msg of newMessages) {
       for (const block of msg.message.content) {
-        if (block.type === 'text') {
+        if (typeof block !== 'string' && block.type === 'text') {
           textLen += block.text.length
-        } else if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(block)) {
+        } else if (typeof block !== 'string' && feature('CONNECTOR_TEXT') && isConnectorTextBlock(block)) {
           connectorCount++
-        } else if (block.type === 'thinking') {
+        } else if (typeof block !== 'string' && block.type === 'thinking') {
           thinkingLen += block.thinking.length
-          // @ts-ignore
         } else if (
-          (block.type as any) === 'tool_call' ||
-          (block.type as any) === 'server_tool_use' ||
-          (block.type as any) === 'mcp_tool_use'
+          typeof block !== 'string' &&
+          (block.type === 'tool_call' ||
+          (block as any).type === 'server_tool_use' ||
+          (block as any).type === 'mcp_tool_use')
         ) {
           const inputLen = jsonStringify((block as any).input).length
           const sanitizedName = sanitizeToolNameForAnalytics((block as any).name)
@@ -700,27 +700,34 @@ export function logAPISuccessAndDuration({
     // 模型输出 — 所有用户可见
     modelOutput =
       newMessages
-        .flatMap((m) =>
-          m.message.content
-            .filter((c) => c.type === 'text')
-            .map((c) => (c as { type: 'text'; text: string }).text),
-        )
+        .flatMap((m) => {
+          const content = m.message.content
+          if (!Array.isArray(content)) return []
+          return content
+            .filter((c): c is { type: 'text'; text: string } => typeof c !== 'string' && c.type === 'text')
+            .map((c) => c.text)
+        })
         .join('\n') || undefined
 
     // 思考输出 — 仅 Ant（构建时门控）
     if (isInternalBuild()) {
       thinkingOutput =
         newMessages
-          .flatMap((m) =>
-            m.message.content
-              .filter((c) => c.type === 'thinking')
-              .map((c) => (c as { type: 'thinking'; thinking: string }).thinking),
-          )
+          .flatMap((m) => {
+            const content = m.message.content
+            if (!Array.isArray(content)) return []
+            return content
+              .filter((c): c is import('../../types/llm.js').ThinkingBlock => typeof c !== 'string' && c.type === 'thinking')
+              .map((c) => c.thinking)
+          })
           .join('\n') || undefined
     }
 
     // 检查输出中是否包含 tool_use 块
-    hasToolCall = newMessages.some((m) => m.message.content.some((c) => c.type === 'tool_call'))
+    hasToolCall = newMessages.some((m) => {
+      const content = m.message.content
+      return Array.isArray(content) && content.some((c) => typeof c !== 'string' && c.type === 'tool_call')
+    })
   }
 
   // 传递 span 以在启用 beta tracing 时正确匹配请求和响应

@@ -1135,8 +1135,9 @@ export async function runInProcessTeammate(
                 // 为 transcript 视图跟踪进行中的工具使用 ID
                 let inProgressToolUseIDs = task.inProgressToolUseIDs
                 if (message.type === 'assistant') {
-                  for (const block of message.message.content) {
-                    if (block.type === 'tool_call') {
+                  const contentBlocks = Array.isArray(message.message.content) ? message.message.content : []
+                  for (const block of contentBlocks) {
+                    if (typeof block !== 'string' && block.type === 'tool_call') {
                       inProgressToolUseIDs = new Set([...(inProgressToolUseIDs ?? []), block.id])
                     }
                   }

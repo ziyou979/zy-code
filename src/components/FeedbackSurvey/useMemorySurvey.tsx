@@ -202,7 +202,8 @@ export function useMemorySurvey(
     if (!lastAssistant || seenAssistantUuids.current.has(lastAssistant.uuid)) {
       return
     }
-    const text = extractTextContent(lastAssistant.message.content, ' ')
+    const contentArr = Array.isArray(lastAssistant.message.content) ? lastAssistant.message.content : []
+    const text = extractTextContent(contentArr, ' ')
     if (!MEMORY_WORD_RE.test(text)) {
       return
     }

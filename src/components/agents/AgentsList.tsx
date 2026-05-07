@@ -186,17 +186,6 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
     )
   }
   const sourceTitle = getAgentSourceDisplayName(source)
-  let BoxComponent
-  let DialogComponent
-
-  let t14
-  let fragmentContent
-  let t17
-  let t18
-  let t19
-
-  let earlyReturn
-  earlyReturn = Symbol.for('react.early_return_sentinel')
   const builtInAgents_0 = sortedAgents.filter((a_3) => a_3.source === 'built-in')
   const hasNoAgents =
     !sortedAgents.length ||
@@ -207,11 +196,11 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       sortedAgents.some((a_5) => a_5.source === 'built-in') && (
         <>
           <Divider />
-          {renderBuiltInAgentsSection()}
+          {renderBuiltInAgentsSection(undefined)}
         </>
       )
     // @ts-ignore
-    earlyReturn = (
+    return (
       <Dialog
         title={sourceTitle}
         subtitle={tSync('agents.noAgentsFound')}
@@ -234,24 +223,25 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
           </Box>
         }
       </Dialog>
-    ) as any
-  } else {
-    DialogComponent = Dialog
-    t17 = sourceTitle
-    const countResult = count(sortedAgents, (a_6) => !a_6.overriddenBy)
-    t18 = tSync('agents.agentsCount', { count: countResult })
-    t19 = onBack
-
-    const boxElement = changes && changes.length > 0 && (
-      <Box marginTop={1}>
-        <Text dimColor={true}>{changes[changes.length - 1]}</Text>
-      </Box>
     )
-    BoxComponent = Box
+  }
 
-    t14 = handleKeyDown
-    const boxElement2 = onCreateNew && <Box marginBottom={1}>{renderCreateNewOption()}</Box>
-    fragmentContent =
+  const DialogComponent = Dialog
+  const t17 = sourceTitle
+  const countResult = count(sortedAgents, (a_6) => !a_6.overriddenBy)
+  const t18 = tSync('agents.agentsCount', { count: countResult })
+  const t19 = onBack
+
+  const boxElement = changes && changes.length > 0 && (
+    <Box marginTop={1}>
+      <Text dimColor={true}>{changes[changes.length - 1]}</Text>
+    </Box>
+  )
+  const BoxComponent = Box
+
+  const t14 = handleKeyDown
+  const boxElement2 = onCreateNew && <Box marginBottom={1}>{renderCreateNewOption()}</Box>
+  const fragmentContent =
       source === 'all' ? (
         <>
           {AGENT_SOURCE_GROUPS.filter((g_0) => g_0.source !== 'built-in').map((t24) => {
@@ -293,15 +283,12 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
           {sortedAgents.some((a_9) => a_9.source === 'built-in') && (
             <>
               <Divider />
-              {renderBuiltInAgentsSection()}
+              {renderBuiltInAgentsSection(undefined)}
             </>
           )}
         </>
       )
-  }
-  if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
-  }
+
   // @ts-ignore
   return (
     <DialogComponent title={t17} subtitle={t18} onCancel={t19} hideInputGuide={true}>

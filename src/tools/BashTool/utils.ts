@@ -71,11 +71,8 @@ export function buildImageToolResult(stdout: string, toolUseID: string): ToolRes
     content: [
       {
         type: 'image',
-        source: {
-          type: 'base64',
-          mediaType: parsed.mediaType as ImageSource['mediaType'],
-          data: parsed.data,
-        },
+        mimeType: parsed.mediaType,
+        data: parsed.data,
       },
     ],
   }

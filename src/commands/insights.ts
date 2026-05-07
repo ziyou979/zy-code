@@ -860,7 +860,8 @@ async function summarizeTranscriptChunk(chunk: string): Promise<string> {
       },
     })
 
-    const text = extractTextContent(result.message.content)
+    const contentBlocks = Array.isArray(result.message.content) ? result.message.content : []
+    const text = extractTextContent(contentBlocks)
     return text || chunk.slice(0, 2000)
   } catch {
     // On error, just return truncated chunk
@@ -997,7 +998,8 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
       },
     })
 
-    const text = extractTextContent(result.message.content)
+    const contentBlocks = Array.isArray(result.message.content) ? result.message.content : []
+    const text = extractTextContent(contentBlocks)
 
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/)
@@ -1534,7 +1536,8 @@ async function generateSectionInsight(
       },
     })
 
-    const text = extractTextContent(result.message.content)
+    const contentBlocks = Array.isArray(result.message.content) ? result.message.content : []
+    const text = extractTextContent(contentBlocks)
 
     if (text) {
       // Parse JSON from response

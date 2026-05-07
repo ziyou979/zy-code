@@ -218,33 +218,28 @@ function ScrollBox({
   // stickyScroll 作为 DOM 属性传递（通过 ink-box 直接传递），
   // 使其在首次渲染时可用 —— ref 回调在首次 commit 后才触发，
   // 对第一帧来说太晚了。
-  // @ts-ignore
-  return (
-    <ink-box
-      ref={(el) => {
-        domRef.current = el
-        if (el) el.scrollTop ??= 0
-      }}
-      style={{
-        flexWrap: 'nowrap',
-        flexDirection: style.flexDirection ?? 'row',
-        flexGrow: style.flexGrow ?? 0,
-        flexShrink: style.flexShrink ?? 1,
-        ...style,
-        overflowX: 'scroll',
-        overflowY: 'scroll',
-      }}
-      {...(stickyScroll
-        ? {
-            stickyScroll: true,
-          }
-        : {})}
-    >
-      <Box flexDirection="column" flexGrow={1} flexShrink={0} width="100%">
-        {children}
-      </Box>
-      {/* @ts-ignore */}
-    </ink-box>
+  const inkBoxProps: Record<string, unknown> = {
+    ref: (el: unknown) => {
+      domRef.current = el as typeof domRef.current
+      if (el) (el as { scrollTop?: number }).scrollTop ??= 0
+    },
+    style: {
+      flexWrap: 'nowrap',
+      flexDirection: style.flexDirection ?? 'row',
+      flexGrow: style.flexGrow ?? 0,
+      flexShrink: style.flexShrink ?? 1,
+      ...style,
+      overflowX: 'scroll',
+      overflowY: 'scroll',
+    },
+    ...(stickyScroll ? { stickyScroll: true } : {}),
+  }
+  return React.createElement(
+    'ink-box' as React.ElementType,
+    inkBoxProps,
+    <Box flexDirection="column" flexGrow={1} flexShrink={0} width="100%">
+      {children}
+    </Box>,
   )
 }
 export default ScrollBox

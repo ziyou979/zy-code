@@ -102,18 +102,19 @@ export function buildForkedMessages(
 ): MessageType[] {
   // Clone the assistant message to avoid mutating the original, keeping all
   // content blocks (thinking, text, and every tool_use)
+  const contentBlocks = Array.isArray(assistantMessage.message.content) ? assistantMessage.message.content : []
   const fullAssistantMessage: AssistantMessage = {
     ...assistantMessage,
     uuid: randomUUID(),
     message: {
       ...assistantMessage.message,
-      content: [...assistantMessage.message.content],
+      content: [...contentBlocks],
     },
   }
 
   // Collect all tool_use blocks from the assistant message
-  const toolUseBlocks = assistantMessage.message.content.filter(
-    (block): block is ToolCallInlineBlock => block.type === 'tool_call',
+  const toolUseBlocks = contentBlocks.filter(
+    (block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call',
   )
 
   if (toolUseBlocks.length === 0) {

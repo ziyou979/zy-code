@@ -66,20 +66,15 @@ export function Settings({ onClose, context, defaultTab }: Props) {
     <Tab key="usage" title={tSync('settings.usageTab')}>
       <Usage />
     </Tab>,
-    ...(false
-      ? [
-          <Tab key="gates" title={tSync('settings.gatesTab')}>
-            <Gates onOwnsEscChange={setGatesOwnsEsc} contentHeight={contentHeight} />
-          </Tab>,
-        ]
-      : []),
-  ] as any
+    // Gates tab is disabled (behind false flag)
+  ] as React.ReactElement[]
   return (
     <Pane color="permission">
+      {/* @ts-ignore - Tabs children type mismatch */}
       <Tabs
         color="permission"
         selectedTab={selectedTab}
-        onTabChange={setSelectedTab as any}
+        onTabChange={setSelectedTab as React.Dispatch<React.SetStateAction<string>>}
         hidden={tabsHidden}
         initialHeaderFocused={defaultTab !== 'Config' && defaultTab !== 'Gates'}
         contentHeight={tabsHidden || insideModal ? undefined : contentHeight}

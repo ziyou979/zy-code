@@ -242,7 +242,7 @@ function mapAssistantMessage(
     timestamp: message.timestamp,
     message: {
       ...message.message,
-      content: message.message.content
+      content: (Array.isArray(message.message.content) ? message.message.content : [])
         .map((_) => {
           switch (_.type) {
             case 'text':

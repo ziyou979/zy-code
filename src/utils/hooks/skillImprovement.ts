@@ -240,7 +240,8 @@ Rules:
     },
   })
 
-  const responseText = extractTextContent(response.message.content).trim()
+  const content = Array.isArray(response.message.content) ? response.message.content : []
+  const responseText = extractTextContent(content).trim()
 
   const updatedContent = extractTag(responseText, 'updated_file')
   if (!updatedContent) {

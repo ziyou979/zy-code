@@ -382,6 +382,7 @@ export function ResumeConversation({
     <LogSelector
       logs={filteredLogs}
       maxHeight={rows}
+      forceWidth={undefined}
       onCancel={onCancel}
       onSelect={onSelect}
       onLogsChanged={isResumeWithRenameEnabled ? () => loadLogs(showAllProjects) : undefined}

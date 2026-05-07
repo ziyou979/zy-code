@@ -118,7 +118,8 @@ export function startAgentSummarization(
           logForDebugging(`[AgentSummary] Skipping API error message for ${taskId}`)
           continue
         }
-        const textBlock = msg.message.content.find((b) => b.type === 'text')
+        const content = Array.isArray(msg.message.content) ? msg.message.content : []
+        const textBlock = content.find((b) => b.type === 'text')
         if (textBlock?.type === 'text' && textBlock.text.trim()) {
           const summaryText = textBlock.text.trim()
           logForDebugging(`[AgentSummary] Summary result for ${taskId}: ${summaryText}`)

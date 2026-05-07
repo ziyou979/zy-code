@@ -217,9 +217,9 @@ export async function showSetupScreens(
       const { zyMdExternalIncludesDialog } = await import(
         './components/ZyMdExternalIncludesDialog.js'
       )
-      // @ts-ignore -- zyMdExternalIncludesDialog is a valid component but TS sees lowercase as intrinsic
+      const DialogComponent = zyMdExternalIncludesDialog as React.ComponentType<{ onDone: () => void; isStandaloneDialog: boolean; externalIncludes: unknown }>
       await showSetupDialog(root, (done) => (
-        <zyMdExternalIncludesDialog
+        <DialogComponent
           onDone={done}
           isStandaloneDialog
           externalIncludes={externalIncludes}

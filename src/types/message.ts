@@ -58,6 +58,7 @@ export interface AssistantMessage extends BaseMessage {
 export interface NormalizedAssistantMessage extends BaseMessage {
   type: 'assistant'
   message: Omit<LLMAssistantMessage, 'content'> & {
+    role: 'assistant'
     content: AssistantContentBlock[]
     context_management: null | Record<string, unknown>
   }
@@ -385,6 +386,8 @@ export interface StopHookInfo {
   hookName: string
   status: string
   duration?: number
+  durationMs?: number
+  command?: string
 }
 
 // ============================================================

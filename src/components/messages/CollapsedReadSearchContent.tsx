@@ -171,7 +171,7 @@ export function CollapsedReadSearchContent({
     bashCount > 0 ||
     gitOpBashCount > 0
   const readPaths = message.readFilePaths
-  const searchArgs = message.searchArgs
+  const searchArgs = message.searchArgs as string[] | undefined
   let incomingHint = message.latestDisplayHint
   if (incomingHint === undefined) {
     const lastSearchRaw = searchArgs?.at(-1)
@@ -210,7 +210,7 @@ export function CollapsedReadSearchContent({
       if (msg.type === 'assistant') {
         toolUses.push(msg)
       } else if (msg.type === 'grouped_tool_use') {
-        toolUses.push(...msg.messages)
+        toolUses.push(...(msg.message as unknown as NormalizedAssistantMessage[]))
       }
     }
     return (
@@ -330,7 +330,7 @@ export function CollapsedReadSearchContent({
     pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>)
   }
   if (isFullscreenEnvEnabled() && message.branches?.length) {
-    for (const b of message.branches) {
+    for (const b of message.branches as Array<{ action: string; ref: string }>) {
       pushPart(
         `br-${b.action}-${b.ref}`,
         b.action === 'merged' ? 'merged' : 'rebasedOnto',
@@ -339,7 +339,7 @@ export function CollapsedReadSearchContent({
     }
   }
   if (isFullscreenEnvEnabled() && message.prs?.length) {
-    for (const pr of message.prs) {
+    for (const pr of message.prs as Array<{ action: string; number: number; url?: string }>) {
       const verbKey =
         pr.action === 'ready'
           ? 'prMarkedReady'

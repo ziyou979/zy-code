@@ -27,12 +27,13 @@ export type NavigableMessage = RenderableMessage
 export function isNavigableMessage(msg: NavigableMessage): boolean {
   switch (msg.type) {
     case 'assistant': {
-      const b = msg.message.content[0]
+      const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+      const b = contentArr[0]
       // 文本回复（减去 AssistantTextMessage 的 return-null 情况——第一级
       // 错过未测量的虚拟项目），或具有可提取输入的工具调用。
       return (
-        (b?.type === 'text' && !isEmptyMessageText(b.text) && !SYNTHETIC_MESSAGES.has(b.text)) ||
-        (b?.type === 'tool_call' && b.name in PRIMARY_INPUT)
+        (b && typeof b !== 'string' && b.type === 'text' && !isEmptyMessageText(b.text) && !SYNTHETIC_MESSAGES.has(b.text)) ||
+        (b && typeof b !== 'string' && b.type === 'tool_call' && b.name in PRIMARY_INPUT)
       )
     }
     case 'user': {
@@ -136,8 +137,9 @@ export function toolCallOf(msg: NavigableMessage):
     }
   | undefined {
   if (msg.type === 'assistant') {
-    const b = msg.message.content[0]
-    if (b?.type === 'tool_call')
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    const b = contentArr[0]
+    if (b && typeof b !== 'string' && b.type === 'tool_call')
       return {
         name: b.name,
         input: b.input as Record<string, unknown>,

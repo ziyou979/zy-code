@@ -763,9 +763,13 @@ function ModelsTab({ stats, dateRange, isLoading }) {
         <Box flexDirection="column" width={36}>
           {leftModels.map((entry) => {
             const [model_0, usage_0] = entry
-            // @ts-ignore -- Type error in ModelEntry usage prop
+            const normalizedUsage = {
+              inputTokens: (usage_0 as { inputTokens?: number }).inputTokens ?? 0,
+              outputTokens: (usage_0 as { outputTokens?: number }).outputTokens ?? 0,
+              cacheReadInputTokens: (usage_0 as { cacheReadInputTokens?: number }).cacheReadInputTokens ?? 0,
+            }
             return (
-              <ModelEntry key={model_0} model={model_0} usage={usage_0} totalTokens={totalTokens} />
+              <ModelEntry key={model_0} model={model_0} usage={normalizedUsage} totalTokens={totalTokens} />
             )
           })}
         </Box>

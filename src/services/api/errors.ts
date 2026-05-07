@@ -1,4 +1,4 @@
-import type { APIErrorLike, Response as LLMMessage, StopReason } from '../../types/llm.js'
+import type { APIErrorLike, StopReason } from '../../types/llm.js'
 import { isAPIError, isConnectionError, getErrorHeader } from '../../types/llm.js'
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
@@ -343,16 +343,16 @@ function logToolUseToolResultMismatch(
 /**
  * 类型守卫，检查值是否为来自 API 的有效 Message 响应
  */
-export function isValidAPIMessage(value: unknown): value is LLMMessage {
+export function isValidAPIMessage(value: unknown): value is { content: unknown[]; model: string; usage: object } {
   return (
     typeof value === 'object' &&
     value !== null &&
     'content' in value &&
     'model' in value &&
     'usage' in value &&
-    Array.isArray((value as LLMMessage).content) &&
-    typeof (value as LLMMessage).model === 'string' &&
-    typeof (value as LLMMessage).usage === 'object'
+    Array.isArray((value as { content: unknown[] }).content) &&
+    typeof (value as { model: string }).model === 'string' &&
+    typeof (value as { usage: object }).usage === 'object'
   )
 }
 

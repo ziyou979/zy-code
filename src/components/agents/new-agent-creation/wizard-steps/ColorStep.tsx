@@ -56,11 +56,11 @@ export function ColorStep() {
     >
       <Box>
         <ColorPicker
-          agentName={wizardData.agentType || 'agent'}
+          agentName={String(wizardData.agentType || 'agent')}
           currentColor={'automatic' as any}
           onConfirm={handleConfirm}
         />
       </Box>
     </WizardDialogLayout>
-  ) as any
+  ) as React.ReactElement
 }

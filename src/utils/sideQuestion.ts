@@ -8,6 +8,7 @@
 
 import { formatAPIError } from '../services/api/errorUtils.js'
 import type { NonNullableUsage } from '../services/api/logging.js'
+import type { AssistantContentBlock } from '../types/llm.js'
 import type { Message, SystemAPIErrorMessage } from '../types/message.js'
 import { type CacheSafeParams, runForkedAgent } from './forkedAgent.js'
 import { createUserMessage, extractTextContent } from './messages.js'
@@ -124,7 +125,9 @@ ${question}`
  */
 function extractSideQuestionResponse(messages: Message[]): string | null {
   // Flatten all assistant content blocks across the per-block messages.
-  const assistantBlocks = messages.flatMap((m) => (m.type === 'assistant' ? m.message.content : []))
+  const assistantBlocks = messages.flatMap((m) =>
+    m.type === 'assistant' && Array.isArray(m.message.content) ? m.message.content : [],
+  ).filter((b): b is AssistantContentBlock => typeof b !== 'string')
 
   if (assistantBlocks.length > 0) {
     // Concatenate all text blocks (there's normally at most one, but be safe).

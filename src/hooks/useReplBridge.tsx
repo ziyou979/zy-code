@@ -199,19 +199,23 @@ export function useReplBridge(
 
               // 动态 import，使 bridge 代码不会出现在非 BRIDGE_MODE 构建中。
               const { resolveAndPrepend } = await import('../bridge/inboundAttachments.js')
-              let sanitized = fields.content
+              let sanitized: string = typeof fields.content === 'string' ? fields.content : JSON.stringify(fields.content)
               if (feature('KAIROS_GITHUB_WEBHOOKS')) {
                 /* eslint-disable @typescript-eslint/no-require-imports */
                 const webhookModule =
                   require('../bridge/webhookSanitizer.js') as typeof import('../bridge/webhookSanitizer.js')
                 /* eslint-enable @typescript-eslint/no-require-imports */
-                sanitized = webhookModule.sanitizeInboundWebhookContent(fields.content)
+                const sanitizedResult = webhookModule.sanitizeInboundWebhookContent(typeof fields.content === 'string' ? fields.content : JSON.stringify(fields.content))
+                sanitized = typeof sanitizedResult === 'string' ? sanitizedResult : JSON.stringify(sanitizedResult)
               }
-              const content = await resolveAndPrepend(msg, sanitized)
+              const resolvedContent = await resolveAndPrepend(msg, sanitized)
+              const content = typeof resolvedContent === 'string' ? resolvedContent : JSON.stringify(resolvedContent)
               const preview =
-                typeof content === 'string'
-                  ? content.slice(0, 80)
-                  : `[${content.length} content blocks]`
+                typeof resolvedContent === 'string'
+                  ? resolvedContent.slice(0, 80)
+                  : Array.isArray(resolvedContent)
+                    ? `[${resolvedContent.length} content blocks]`
+                    : '[content]'
               logForDebugging(
                 `[bridge:repl] Injecting inbound user message: ${preview}${uuid ? ` uuid=${uuid}` : ''}`,
               )
@@ -717,10 +721,9 @@ export function useReplBridge(
             })
           }, BRIDGE_FAILURE_DISMISS_MS)
           if (!outboundOnly) {
-            // @ts-ignore
             setMessages((prev_2) => [
               ...prev_2,
-              createSystemMessage(`Remote Control failed to connect: ${errMsg}`, 'warning'),
+              createSystemMessage(`Remote Control failed to connect: ${errMsg}`, 'error'),
             ])
           }
         }

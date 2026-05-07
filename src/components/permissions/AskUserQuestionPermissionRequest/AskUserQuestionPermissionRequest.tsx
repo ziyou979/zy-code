@@ -387,11 +387,8 @@ async function convertImagesToBlocks(images: PastedContent[]): Promise<ImageBloc
     images.map(async (img) => {
       const block: ImageBlock = {
         type: 'image',
-        source: {
-          type: 'base64',
-          mediaType: (img.mediaType || 'image/png') as ImageSource['mediaType'],
-          data: img.content,
-        },
+        mimeType: img.mediaType || 'image/png',
+        data: img.content,
       }
       const resized = await maybeResizeAndDownsampleImageBlock(block)
       return resized.block

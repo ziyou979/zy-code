@@ -123,28 +123,14 @@ type ListItem =
 // WORKFLOW_SCRIPTS 仅限 ant（build_flags.yaml）。静态导入会泄漏约 1.3K 行到外部构建中。
 // 使用 feature() + require 门控，这样打包器可以对分支进行死代码消除。
 /* eslint-disable @typescript-eslint/no-require-imports */
-// @ts-ignore
-const WorkflowDetailDialog = feature('WORKFLOW_SCRIPTS')
-  ? (require('./WorkflowDetailDialog.js') as typeof import('./WorkflowDetailDialog.js'))
-      .WorkflowDetailDialog
-  : null
-const workflowTaskModule = feature('WORKFLOW_SCRIPTS')
-  ? (require('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js') as typeof import('src/tasks/LocalWorkflowTask/LocalWorkflowTask.js'))
-  : null
-const killWorkflowTask = workflowTaskModule?.killWorkflowTask ?? null
-const skipWorkflowAgent = workflowTaskModule?.skipWorkflowAgent ?? null
-const retryWorkflowAgent = workflowTaskModule?.retryWorkflowAgent ?? null
-// 相对路径，而非 `src/...` 路径映射——Bun 的 DCE 可以静态解析并消除 `./` require，
-// 但路径映射的字符串保持不透明，会作为死文字保留在包中。与 tasks.ts 模式一致。
-const monitorMcpModule = feature('MONITOR_TOOL')
-  ? (require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js'))
-  : null
-const killMonitorMcp = monitorMcpModule?.killMonitorMcp ?? null
-// @ts-ignore
-const MonitorMcpDetailDialog = feature('MONITOR_TOOL')
-  ? (require('./MonitorMcpDetailDialog.js') as typeof import('./MonitorMcpDetailDialog.js'))
-      .MonitorMcpDetailDialog
-  : null
+const WorkflowDetailDialog = null
+const workflowTaskModule = null
+const killWorkflowTask = null
+const skipWorkflowAgent = null
+const retryWorkflowAgent = null
+const monitorMcpModule = null
+const killMonitorMcp = null
+const MonitorMcpDetailDialog = null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 // 辅助函数：获取过滤后的后台任务（排除已前置的 local_agent）
@@ -517,12 +503,12 @@ export function BackgroundTasksDialog({
             }
             onSkipAgent={
               task_0.status === 'running' && skipWorkflowAgent
-                ? (agentId) => skipWorkflowAgent(task_0.id, agentId, setAppState)
+                ? () => skipWorkflowAgent(task_0.id, setAppState)
                 : undefined
             }
             onRetryAgent={
               task_0.status === 'running' && retryWorkflowAgent
-                ? (agentId_0) => retryWorkflowAgent(task_0.id, agentId_0, setAppState)
+                ? () => retryWorkflowAgent(task_0.id, setAppState)
                 : undefined
             }
             onBack={goBackToList}

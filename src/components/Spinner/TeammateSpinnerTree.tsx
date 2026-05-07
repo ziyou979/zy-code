@@ -94,7 +94,7 @@ export function TeammateSpinnerTree({
   // @ts-ignore
   return (
     <BoxComponent flexDirection={'column'} marginTop={1}>
-      {boxElement as any}
+      {null}
       {mappedItems}
       {isInSelectionMode && <HideRow isSelected={isHideSelected} />}
     </BoxComponent>

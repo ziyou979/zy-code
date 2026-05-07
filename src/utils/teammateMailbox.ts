@@ -1091,7 +1091,9 @@ export function getLastPeerDmSummary(messages: Message[]): string | undefined {
     }
 
     if (msg.type !== 'assistant') continue
-    for (const block of msg.message.content) {
+    const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+    for (const block of contentArr) {
+      if (typeof block === 'string') continue
       if (
         block.type === 'tool_call' &&
         block.name === SEND_MESSAGE_TOOL_NAME &&

@@ -41,10 +41,14 @@ export function GroupedToolUseContent({
     }
   }
   const toolUsesData = message.messages.map((msg) => {
-    const content = msg.message.content[0]
+    const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
+    const content = contentBlocks[0]
+    if (!content || typeof content === 'string' || content.type !== 'tool_call') {
+      return null
+    }
     const result = resultsByToolUseId.get(content.id)
     return {
-      param: content as ToolCallInlineBlock,
+      param: content,
       isResolved: lookups.resolvedToolUseIDs.has(content.id),
       isError: lookups.erroredToolUseIDs.has(content.id),
       isInProgress: inProgressToolUseIDs.has(content.id),
@@ -53,7 +57,7 @@ export function GroupedToolUseContent({
       ),
       result,
     }
-  })
+  }).filter((d): d is NonNullable<typeof d> => d !== null)
   const anyInProgress = toolUsesData.some((d) => d.isInProgress)
   return tool.renderGroupedToolUse(toolUsesData, {
     shouldAnimate: shouldAnimate && anyInProgress,

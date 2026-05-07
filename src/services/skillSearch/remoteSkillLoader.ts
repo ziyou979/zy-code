@@ -2,7 +2,7 @@
  * Loads a remote skill from the skill registry.
  * This is a stub implementation for external builds.
  */
-export async function loadRemoteSkill(skillId: string): Promise<unknown | null> {
+export async function loadRemoteSkill(skillId: string, url?: string): Promise<unknown | null> {
   // Stub: returns null in external builds
   return null
 }

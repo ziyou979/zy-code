@@ -29,7 +29,7 @@ import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import type { Message } from './types/message.js'
+import type { AssistantMessage, Message, StreamEvent, SystemMessage, ToolUseSummaryMessage } from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
 import { createAbortController } from './utils/abortController.js'
 import type { AttributionState } from './utils/commitAttribution.js'
@@ -689,20 +689,23 @@ export class QueryEngine {
         turnCount++
       }
 
-      switch (message.type) {
+      const messageType: string = message.type
+      switch (messageType) {
         case 'tombstone':
           // Tombstone 消息 是用于删除消息的控制信号，跳过它们
           break
-        case 'assistant':
+        case 'assistant': {
           // 如果已设置则捕获 stopReason（合成消息）。对于流式响应，
           // 在 content_block_stop 时该值为 null；真实值会在下方通过
           // message_delta 到达（见 zy.ts 的 message_delta 处理器）。
-          if ((message as any).message.stopReason != null) {
-            lastStopReason = (message as any).message.stopReason
+          const assistantMsg = message as AssistantMessage
+          if (assistantMsg.message.stopReason != null) {
+            lastStopReason = assistantMsg.message.stopReason
           }
           this.mutableMessages.push(message)
           yield* normalizeMessage(message)
           break
+        }
         case 'progress':
           this.mutableMessages.push(message)
           // 内联记录，使下次 ask() 调用中的去重循环能看到它已被记录。
@@ -719,41 +722,37 @@ export class QueryEngine {
           this.mutableMessages.push(message)
           yield* normalizeMessage(message)
           break
-        case 'stream_event':
-          if (message.event.type === 'message_start' || message.event.type === 'response_start') {
+        case 'stream_event': {
+          const streamMsg = message as StreamEvent
+          if (streamMsg.event.type === 'message_start' || streamMsg.event.type === 'response_start') {
             // 重置新消息的当前 usage
             currentMessageUsage = EMPTY_USAGE
-            const startMsg = message.event.message
+            const startMsg = streamMsg.event.message as { usage?: import('./types/llm.js').DeltaUsage } | undefined
             if (startMsg?.usage) {
               currentMessageUsage = updateUsage(currentMessageUsage, startMsg.usage)
             }
           }
-          if (message.event.type === 'message_delta' || message.event.type === 'response_delta') {
-            const evt = message.event
-            // response_delta 的 usage 是标准格式（camelCase），转为 snake_case 供 updateUsage
-            const deltaUsage = evt.usage
+          if (streamMsg.event.type === 'message_delta' || streamMsg.event.type === 'response_delta') {
+            const evt = streamMsg.event as unknown as import('./types/llm.js').ResponseDeltaEvent
+            // response_delta 的 usage 是标准格式（camelCase）
+            const deltaUsage: import('./types/llm.js').DeltaUsage | undefined = evt.usage
               ? {
-                  output_tokens: evt.usage.outputTokens ?? evt.usage.output_tokens ?? 0,
-                  input_tokens: evt.usage.inputTokens ?? evt.usage.input_tokens,
-                  cache_creation_input_tokens:
-                    evt.usage.extras?.cacheCreationInputTokens ??
-                    evt.usage.cache_creation_input_tokens,
-                  cache_read_input_tokens:
-                    evt.usage.extras?.cacheReadInputTokens ?? evt.usage.cache_read_input_tokens,
+                  inputTokens: evt.usage.inputTokens,
+                  outputTokens: evt.usage.outputTokens ?? 0,
+                  extras: evt.usage.extras,
                 }
-              : evt.usage
-            currentMessageUsage = updateUsage(currentMessageUsage, deltaUsage as any)
+              : undefined
+            currentMessageUsage = updateUsage(currentMessageUsage, deltaUsage)
             // 从 message_delta/response_delta 捕获 stopReason。assistant 消息在
             // content_block_stop/chunk_stop 时产生，stopReason=null；真实值仅在此处到达
             //（见 zy.ts 的处理器）。没有这一步，
             // result.stopReason 将始终为 null。
-            // 兼容入站事件可能仍带 snake_case stop_reason（部分上游 SDK 透传）。
-            const evtStopReason = evt.stopReason ?? evt.delta?.stopReason ?? evt.delta?.stop_reason
+            const evtStopReason = evt.stopReason
             if (evtStopReason != null) {
               lastStopReason = evtStopReason
             }
           }
-          if (message.event.type === 'message_stop' || message.event.type === 'response_stop') {
+          if (streamMsg.event.type === 'message_stop' || streamMsg.event.type === 'response_stop') {
             // 将当前消息的 usage 累积到总计中
             this.totalUsage = accumulateUsage(this.totalUsage, currentMessageUsage)
           }
@@ -761,7 +760,7 @@ export class QueryEngine {
           if (includePartialMessages) {
             yield {
               type: 'stream_event' as const,
-              event: message.event,
+              event: streamMsg.event,
               session_id: getSessionId(),
               parent_tool_use_id: null,
               uuid: randomUUID(),
@@ -769,6 +768,7 @@ export class QueryEngine {
           }
 
           break
+        }
         case 'attachment':
           this.mutableMessages.push(message)
           // 记录内联（与上方 progress 相同的原因）
@@ -846,7 +846,8 @@ export class QueryEngine {
           }
           this.mutableMessages.push(message)
           // 向 SDK 产生 compact boundary 消息
-          if (message.subtype === 'compact_boundary' && message.compactMetadata) {
+          const sysMsg = message as unknown as { subtype?: string; compactMetadata?: unknown; retryAttempt?: number; maxRetries?: number; retryInMs?: number; error?: import('./types/llm.js').LLMError; uuid: string }
+          if (sysMsg.subtype === 'compact_boundary' && sysMsg.compactMetadata) {
             // 释放压缩前的消息以供 GC。边界刚刚被推送，所以它是最后一个元素。
             // query.ts 内部已使用 getMessagesAfterCompactBoundary()，因此
             // 后续只需要边界之后的消息。
@@ -864,18 +865,18 @@ export class QueryEngine {
               subtype: 'compact_boundary' as const,
               session_id: getSessionId(),
               uuid: message.uuid,
-              compact_metadata: toSDKCompactMetadata(message.compactMetadata),
+              compact_metadata: toSDKCompactMetadata(sysMsg.compactMetadata as import('./types/message.js').CompactMetadata),
             }
           }
-          if (message.subtype === 'api_error') {
+          if (sysMsg.subtype === 'api_error') {
             yield {
               type: 'system',
               subtype: 'api_retry' as const,
-              attempt: message.retryAttempt,
-              max_retries: message.maxRetries,
-              retry_delay_ms: message.retryInMs,
-              error_status: message.error.status ?? null,
-              error: categorizeRetryableAPIError(message.error),
+              attempt: sysMsg.retryAttempt,
+              max_retries: sysMsg.maxRetries,
+              retry_delay_ms: sysMsg.retryInMs,
+              error_status: sysMsg.error?.status ?? null,
+              error: categorizeRetryableAPIError(sysMsg.error),
               session_id: getSessionId(),
               uuid: message.uuid,
             }
@@ -883,16 +884,18 @@ export class QueryEngine {
           // 在 headless 模式下不产生其他 system 消息
           break
         }
-        case 'tool_use_summary':
+        case 'tool_use_summary': {
           // 向 SDK 产生 tool use summary 消息
+          const summaryMsg = message as ToolUseSummaryMessage
           yield {
             type: 'tool_use_summary' as const,
-            summary: message.summary,
-            preceding_tool_use_ids: message.precedingToolUseIds,
+            summary: summaryMsg.summary,
+            preceding_tool_use_ids: summaryMsg.precedingToolUseIds,
             session_id: getSessionId(),
             uuid: message.uuid,
           }
           break
+        }
       }
 
       // 检查是否超出 USD 预算
@@ -1171,7 +1174,8 @@ export async function* ask({
       ? {
           snipReplay: (yielded: Message, store: Message[]) => {
             if (!snipProjection!.isSnipBoundaryMessage(yielded)) return undefined
-            return snipModule!.snipCompactIfNeeded(store, { force: true })
+            const result = snipModule!.snipCompactIfNeeded(store, { force: true })
+            return { messages: result.messages, executed: true }
           },
         }
       : {}),

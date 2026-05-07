@@ -84,6 +84,9 @@ export function WizardProvider({
     cancel,
     title,
     showStepCounter,
+    completeWizard: () => setIsCompleted(true),
+    cancelWizard: cancel,
+    steps,
   }
   const CurrentStepComponent = steps[currentStepIndex]
   if (!CurrentStepComponent || isCompleted) {

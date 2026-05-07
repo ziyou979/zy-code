@@ -122,9 +122,10 @@ async function* runToolsSerially(
     toolUseContext.setInProgressToolUseIDs((prev) => new Set(prev).add(toolUse.id))
     for await (const update of runToolUse(
       toolUse,
-      assistantMessages.find((_) =>
-        _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUse.id),
-      )!,
+      assistantMessages.find((_) => {
+        const contentBlocks = Array.isArray(_.message.content) ? _.message.content : []
+        return contentBlocks.some((block) => typeof block !== 'string' && block.type === 'tool_call' && block.id === toolUse.id)
+      })!,
       canUseTool,
       currentContext,
     )) {
@@ -151,9 +152,10 @@ async function* runToolsConcurrently(
       toolUseContext.setInProgressToolUseIDs((prev) => new Set(prev).add(toolUse.id))
       yield* runToolUse(
         toolUse,
-        assistantMessages.find((_) =>
-          _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUse.id),
-        )!,
+        assistantMessages.find((_) => {
+          const contentBlocks = Array.isArray(_.message.content) ? _.message.content : []
+          return contentBlocks.some((block) => typeof block !== 'string' && block.type === 'tool_call' && block.id === toolUse.id)
+        })!,
         canUseTool,
         toolUseContext,
       )

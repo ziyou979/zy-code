@@ -265,8 +265,9 @@ export function useRemoteSession({
           // toolOrchestration.ts handles this, but remote sessions receive
           // pre-built assistant messages without running local tool execution.
           if (setInProgressToolUseIDs && converted.message.type === 'assistant') {
-            const toolUseIds = converted.message.message.content
-              .filter((block) => block.type === 'tool_call')
+            const contentArr = Array.isArray(converted.message.message.content) ? converted.message.message.content : []
+            const toolUseIds = contentArr
+              .filter((block): block is import('../types/llm.js').AssistantContentBlock & { type: 'tool_call'; id: string } => typeof block !== 'string' && block.type === 'tool_call')
               .map((block) => block.id)
             if (toolUseIds.length > 0) {
               setInProgressToolUseIDs((prev) => {

@@ -261,12 +261,10 @@ type VerboseAgentTranscriptProps = {
   verbose: boolean
 }
 function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAgentTranscriptProps) {
-  const {
-    lookups: agentLookups,
-    inProgressToolUseIDs,
-    // @ts-ignore -- Progress union type narrowed by hasProgressMessage filter
-  } = buildSubagentLookups(
-    progressMessages.filter((pm) => hasProgressMessage(pm.data)).map((pm_0) => pm_0.data),
+  const { lookups: agentLookups, inProgressToolUseIDs } = buildSubagentLookups(
+    progressMessages
+      .filter((pm): pm is ProgressMessage<AgentToolProgress> => hasProgressMessage(pm.data))
+      .map((pm_0) => pm_0.data),
   )
   const filteredMessages = progressMessages.filter((pm_1) => {
     if (!hasProgressMessage(pm_1.data)) {
@@ -278,11 +276,10 @@ function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAge
     }
     return true
   })
-  // @ts-ignore -- Progress type narrowed by filter above
   const transcriptElements = filteredMessages.map((progressMessage) => (
     <MessageResponse key={progressMessage.uuid} height={1}>
       <MessageComponent
-        message={progressMessage.data.message}
+        message={(progressMessage.data as AgentToolProgress).message}
         lookups={agentLookups}
         addMargin={false}
         tools={tools}
@@ -517,16 +514,14 @@ export function renderToolUseProgressMessage(
       if (!hasProgressMessage(msg.data)) {
         return false
       }
-      const message = msg.data.message
-      return message.message.content.some((content) => content.type === 'tool_call')
+      const message = msg.data.message as any
+      return message.message.content.some((content: any) => content.type === 'tool_call')
     })
-    // @ts-ignore -- message type is narrowed at runtime
     const latestAssistant = progressMessages.findLast(
       (msg): msg is ProgressMessage<AgentToolProgress> =>
         hasProgressMessage(msg.data) && msg.data.message.type === 'assistant',
     )
     let tokens = null
-    // @ts-ignore -- message type is narrowed at runtime
     if (latestAssistant?.data.message.type === 'assistant') {
       const usage = (latestAssistant.data.message as any).message.usage
       tokens =
@@ -589,7 +584,9 @@ export function renderToolUseProgressMessage(
     if (!hasProgressMessage(data)) {
       return false
     }
-    return data.message.message.content.some((content) => content.type === 'tool_call')
+    return (data.message as any).message.content.some(
+      (content: any) => content.type === 'tool_call',
+    )
   })
   const firstData = progressMessages[0]?.data
   const prompt = firstData && hasProgressMessage(firstData) ? firstData.prompt : undefined
@@ -609,7 +606,7 @@ export function renderToolUseProgressMessage(
     buildSubagentLookups(
       progressMessages
         .filter((pm): pm is ProgressMessage<AgentToolProgress> => hasProgressMessage(pm.data))
-        .map((pm) => pm.data),
+        .map((pm) => pm.data) as any,
     )
   return (
     <MessageResponse>
@@ -642,7 +639,7 @@ export function renderToolUseProgressMessage(
             return (
               <MessageComponent
                 key={processed.message.uuid}
-                message={processed.message.data.message}
+                message={processed.message.data.message as any}
                 lookups={subagentLookups}
                 addMargin={false}
                 tools={tools}
@@ -754,13 +751,11 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
       message.message.content.some((content) => content.type === 'tool_result')
     )
   })
-  // @ts-ignore -- message type is narrowed at runtime
   const latestAssistant = progressMessages.findLast(
     (msg): msg is ProgressMessage<AgentToolProgress> =>
       hasProgressMessage(msg.data) && msg.data.message.type === 'assistant',
   )
   let tokens = null
-  // @ts-ignore -- message type is narrowed at runtime
   if (latestAssistant?.data.message.type === 'assistant') {
     const usage = (latestAssistant.data.message as any).message.usage
     tokens =

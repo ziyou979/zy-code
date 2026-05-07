@@ -389,9 +389,9 @@ export function startBackgroundSession({
 
         if (event.type === 'assistant') {
           for (const block of event.message.content) {
-            if (block.type === 'text') {
+            if (typeof block !== 'string' && block.type === 'text') {
               tokenCount += roughTokenCountEstimation(block.text)
-            } else if (block.type === 'tool_call') {
+            } else if (typeof block !== 'string' && block.type === 'tool_call') {
               toolCount++
               const activity: ToolActivity = {
                 toolName: block.name,

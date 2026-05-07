@@ -317,10 +317,11 @@ export function buildTranscriptEntries(messages: Message[]): TranscriptEntry[] {
       }
     } else if (msg.type === 'assistant') {
       const blocks: TranscriptBlock[] = []
-      for (const block of msg.message.content) {
+      const contentArr = Array.isArray(msg.message.content) ? msg.message.content : []
+      for (const block of contentArr) {
         // 仅包括 tool_use 块 — 助手文本是模型撰写的
         // 可能被精心制作以影响分类器的决定。
-        if (block.type === 'tool_call') {
+        if (typeof block !== 'string' && block.type === 'tool_call') {
           blocks.push({
             type: 'tool_call',
             name: block.name,

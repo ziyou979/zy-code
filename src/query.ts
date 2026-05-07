@@ -1,6 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { isInternalBuild } from './utils/envUtils.js'
-import type { ToolResultBlock, ToolCallInlineBlock } from './types/llm.js'
+import type { ToolResultBlock, ToolCallInlineBlock, AssistantContentBlock, TextBlock } from './types/llm.js'
 import type { CanUseToolFn } from './hooks/useCanUseTool.js'
 import { FallbackTriggeredError } from './services/api/withRetry.js'
 import {
@@ -123,9 +123,11 @@ function* yieldMissingToolResultBlocks(
 ) {
   for (const assistantMessage of assistantMessages) {
     // 从此助手消息中提取所有工具使用块
-    const toolUseBlocks = assistantMessage.message.content.filter(
-      (content) => content.type === 'tool_call',
-    ) as ToolCallInlineBlock[]
+    const content = assistantMessage.message.content
+    if (!Array.isArray(content)) continue
+    const toolUseBlocks = content.filter(
+      (block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call',
+    )
 
     // 为每个工具使用发送中断消息
     for (const toolUse of toolUseBlocks) {
@@ -688,27 +690,29 @@ async function* queryLoop(
             // 它流回 API，修改它会破坏提示缓存（字节不匹配）。
             let yieldMessage: typeof message = message
             if (message.type === 'assistant') {
-              let clonedContent: typeof message.message.content | undefined
+              let clonedContent: AssistantContentBlock[] | undefined
               for (let i = 0; i < message.message.content.length; i++) {
                 const block = message.message.content[i]!
-                if (
-                  block.type === 'tool_call' &&
-                  typeof block.input === 'object' &&
-                  block.input !== null
-                ) {
-                  const tool = findToolByName(toolUseContext.options.tools, block.name)
-                  if (tool?.backfillObservableInput) {
-                    const originalInput = block.input as Record<string, unknown>
-                    const inputCopy = { ...originalInput }
-                    tool.backfillObservableInput(inputCopy)
-                    // 仅在回填添加了字段时才产生克隆；
-                    // 如果只覆盖了现有字段则跳过（例如文件工具扩展 file_path）。
-                    // 覆盖会改变序列化的转录并在恢复时破坏 VCR 夹具哈希，
-                    // 同时没有为 SDK 流添加任何东西 — 钩子通过 toolExecution.ts 单独获取扩展路径。
-                    const addedFields = Object.keys(inputCopy).some((k) => !(k in originalInput))
-                    if (addedFields) {
-                      clonedContent ??= [...message.message.content]
-                      clonedContent[i] = { ...block, input: inputCopy }
+                // 类型守卫：确保 block 不是 string 类型
+                if (typeof block !== 'string' && block.type === 'tool_call') {
+                  if (typeof block.input === 'object' && block.input !== null) {
+                    const tool = findToolByName(toolUseContext.options.tools, block.name)
+                    if (tool?.backfillObservableInput) {
+                      const originalInput = block.input as Record<string, unknown>
+                      const inputCopy = { ...originalInput }
+                      tool.backfillObservableInput(inputCopy)
+                      // 仅在回填添加了字段时才产生克隆；
+                      // 如果只覆盖了现有字段则跳过（例如文件工具扩展 file_path）。
+                      // 覆盖会改变序列化的转录并在恢复时破坏 VCR 夹具哈希，
+                      // 同时没有为 SDK 流添加任何东西 — 钩子通过 toolExecution.ts 单独获取扩展路径。
+                      const addedFields = Object.keys(inputCopy).some((k) => !(k in originalInput))
+                      if (addedFields) {
+                        const content = message.message.content
+                        clonedContent ??= Array.isArray(content)
+                          ? content.filter((b): b is AssistantContentBlock => typeof b !== 'string')
+                          : []
+                        clonedContent[i] = { ...block, input: inputCopy }
+                      }
                     }
                   }
                 }
@@ -759,9 +763,11 @@ async function* queryLoop(
             if (message.type === 'assistant') {
               assistantMessages.push(message)
 
-              const msgToolUseBlocks = message.message.content.filter(
-                (content) => content.type === 'tool_call',
-              ) as ToolCallInlineBlock[]
+              // 类型守卫：确保 content 是数组
+              const content = message.message.content
+              const msgToolUseBlocks = Array.isArray(content)
+                ? content.filter((block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call')
+                : []
               if (msgToolUseBlocks.length > 0) {
                 toolUseBlocks.push(...msgToolUseBlocks)
                 needsFollowUp = true
@@ -878,9 +884,12 @@ async function* queryLoop(
       const errorMessage = error instanceof Error ? error.message : String(error)
       logEvent('zy_query_error', {
         assistantMessages: assistantMessages.length,
-        toolUses: assistantMessages.flatMap((_) =>
-          _.message.content.filter((content) => content.type === 'tool_call'),
-        ).length,
+        toolUses: assistantMessages.flatMap((_) => {
+          const content = _.message.content
+          return Array.isArray(content)
+            ? content.filter((block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call')
+            : []
+        }).length,
 
         queryChainId: queryChainIdForAnalytics,
         queryDepth: queryTracking.depth,
@@ -1313,9 +1322,10 @@ async function* queryLoop(
       const lastAssistantMessage = assistantMessages.at(-1)
       let lastAssistantText: string | undefined
       if (lastAssistantMessage) {
-        const textBlocks = lastAssistantMessage.message.content.filter(
-          (block) => block.type === 'text',
-        )
+        const content = lastAssistantMessage.message.content
+        const textBlocks = Array.isArray(content)
+          ? content.filter((block): block is TextBlock => typeof block !== 'string' && block.type === 'text')
+          : []
         if (textBlocks.length > 0) {
           const lastTextBlock = textBlocks.at(-1)
           if (lastTextBlock && 'text' in lastTextBlock) {

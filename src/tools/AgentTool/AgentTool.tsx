@@ -1358,6 +1358,7 @@ export const AgentTool = buildTool({
               const { result } = raceResult
               if (result.done) break
               const message = result.value
+              if (!message) continue
               agentMessages.push(message)
 
               // Emit task_progress for the VS Code subagent panel

@@ -41,13 +41,13 @@ type Props = {
 }
 export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMode }: Props) {
   const bg = useSelectedMessageBg()
-  if (message.subtype === 'turn_duration') {
+  if ('subtype' in message && message.subtype === 'turn_duration') {
     return <TurnDurationMessage message={message} addMargin={addMargin} />
   }
-  if (message.subtype === 'memory_saved') {
+  if ('subtype' in message && message.subtype === 'memory_saved') {
     return <MemorySavedMessage message={message} addMargin={addMargin} />
   }
-  if (message.subtype === 'away_summary') {
+  if ('subtype' in message && message.subtype === 'away_summary') {
     return (
       <Box
         flexDirection="row"
@@ -64,7 +64,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       </Box>
     )
   }
-  if (message.subtype === 'agents_killed') {
+  if ('subtype' in message && message.subtype === 'agents_killed') {
     return (
       <Box
         flexDirection="row"
@@ -81,13 +81,14 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       </Box>
     )
   }
-  if (message.subtype === 'thinking') {
+  const subtypeValue: string = 'subtype' in message ? (message as { subtype: string }).subtype : ''
+  if (subtypeValue === 'thinking') {
     return null
   }
-  if (message.subtype === 'bridge_status') {
+  if ('subtype' in message && message.subtype === 'bridge_status') {
     return <BridgeStatusMessage message={message} addMargin={addMargin} />
   }
-  if (message.subtype === 'scheduled_task_fire') {
+  if ('subtype' in message && message.subtype === 'scheduled_task_fire') {
     return (
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
         {
@@ -98,7 +99,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       </Box>
     )
   }
-  if (message.subtype === 'permission_retry') {
+  if ('subtype' in message && message.subtype === 'permission_retry') {
     const t4 = message.commands.join(', ')
     return (
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
@@ -108,14 +109,14 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       </Box>
     )
   }
-  const isStopHookSummary = message.subtype === 'stop_hook_summary'
-  if (!isStopHookSummary && !verbose && message.level === 'info') {
+  const isStopHookSummary = 'subtype' in message && message.subtype === 'stop_hook_summary'
+  if (!isStopHookSummary && !verbose && 'level' in message && message.level === 'info') {
     return null
   }
-  if (message.subtype === 'api_error') {
+  if ('subtype' in message && message.subtype === 'api_error') {
     return <SystemAPIErrorMessage message={message} verbose={verbose} />
   }
-  if (message.subtype === 'stop_hook_summary') {
+  if ('subtype' in message && message.subtype === 'stop_hook_summary') {
     return (
       <StopHookSummaryMessage
         message={message}
@@ -134,9 +135,9 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       <SystemTextMessageInner
         content={content}
         addMargin={addMargin}
-        dot={message.level !== 'info'}
-        color={message.level === 'warning' ? ('warning' as any) : undefined}
-        dimColor={message.level === 'info'}
+        dot={'level' in message && message.level !== 'info'}
+        color={'level' in message && message.level === 'warning' ? ('warning' as any) : undefined}
+        dimColor={'level' in message && message.level === 'info'}
       />
     </Box>
   )
@@ -170,7 +171,7 @@ function StopHookSummaryMessage({
         return (
           <Text key={`cmd-${idx}`} dimColor={true}>
             {'     \u23BF '}
-            {info.command === 'prompt' ? `prompt: ${info.promptText || ''}` : info.command}
+            {info.command === 'prompt' ? `prompt: ${info.command || ''}` : info.command}
             {durationStr}
           </Text>
         )
@@ -197,7 +198,7 @@ function StopHookSummaryMessage({
           : ''
       return (
         <Text key={`cmd-${idx_0}`} dimColor={true}>
-          ⎿ {info_0.command === 'prompt' ? `prompt: ${info_0.promptText || ''}` : info_0.command}
+          ⎿ {info_0.command === 'prompt' ? `prompt: ${info_0.command || ''}` : info_0.command}
           {durationStr_0}
         </Text>
       )
@@ -325,7 +326,7 @@ function MemorySavedMessage({
 }) {
   const bg = useSelectedMessageBg()
   const { writtenPaths } = message
-  const team = feature('TEAMMEM') ? teamMemSaved.teamMemSavedPartmessage : null
+  const team = feature('TEAMMEM') ? teamMemSaved.teamMemSavedPart(message) : null
   const privateCount = writtenPaths.length - (team?.count ?? 0)
   const t3 = team?.segment
   const parts = [
@@ -344,7 +345,7 @@ function MemorySavedMessage({
             </Box>
           }
           <Text>
-            {message.verb ?? 'Saved'} {t8}
+            {'Saved'} {t8}
           </Text>
         </Box>
       }

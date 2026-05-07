@@ -426,8 +426,10 @@ async function countBuiltInToolTokens(
       const deferredToolNameSet = new Set(deferredBuiltinTools.map((t) => t.name))
       for (const msg of messages) {
         if (msg.type === 'assistant') {
-          for (const block of msg.message.content) {
+          const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
+          for (const block of contentBlocks) {
             if (
+              typeof block !== 'string' &&
               'type' in block &&
               block.type === 'tool_call' &&
               'name' in block &&
@@ -648,8 +650,10 @@ export async function countMcpToolTokens(
     const mcpToolNameSet = new Set(mcpTools.map((t) => t.name))
     for (const msg of messages) {
       if (msg.type === 'assistant') {
-        for (const block of msg.message.content) {
+        const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
+        for (const block of contentBlocks) {
           if (
+            typeof block !== 'string' &&
             'type' in block &&
             block.type === 'tool_call' &&
             'name' in block &&
@@ -747,7 +751,9 @@ function processAssistantMessage(
   breakdown: MessageBreakdown,
 ): void {
   // Process each content block individually
-  for (const block of msg.message.content) {
+  const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
+  for (const block of contentBlocks) {
+    if (typeof block === 'string') continue
     const blockStr = jsonStringify(block)
     const blockTokens = roughTokenCountEstimation(blockStr)
 
@@ -810,7 +816,7 @@ function processAttachment(msg: AttachmentMessage, breakdown: MessageBreakdown):
 }
 
 async function approximateMessageTokens(messages: Message[]): Promise<MessageBreakdown> {
-  const microcompactResult = await microcompactMessages(messages)
+  const microcompactResult = await microcompactMessages(messages, undefined)
 
   // Initialize tracking
   const breakdown: MessageBreakdown = {
@@ -829,8 +835,9 @@ async function approximateMessageTokens(messages: Message[]): Promise<MessageBre
   const toolUseIdToName = new Map<string, string>()
   for (const msg of microcompactResult.messages) {
     if (msg.type === 'assistant') {
-      for (const block of msg.message.content) {
-        if ('type' in block && block.type === 'tool_call') {
+      const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
+      for (const block of contentBlocks) {
+        if (typeof block !== 'string' && 'type' in block && block.type === 'tool_call') {
           const toolUseId = 'id' in block ? block.id : undefined
           const toolName = ('name' in block ? block.name : undefined) || 'unknown'
           if (toolUseId) {

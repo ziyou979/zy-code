@@ -228,7 +228,10 @@ export function extractResultText(
   const lastAssistantMessage = getLastAssistantMessage(agentMessages)
   if (!lastAssistantMessage) return defaultText
 
-  const textContent = extractTextContent(lastAssistantMessage.message.content, '\n')
+  const content = Array.isArray(lastAssistantMessage.message.content)
+    ? lastAssistantMessage.message.content
+    : []
+  const textContent = extractTextContent(content, '\n')
 
   return textContent || defaultText
 }

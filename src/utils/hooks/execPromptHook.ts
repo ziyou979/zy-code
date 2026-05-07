@@ -97,7 +97,8 @@ Your response must be a JSON object matching one of the following schemas:
       cleanupSignal()
 
       // Extract text content from response
-      const content = extractTextContent(response.message.content)
+      const msgContent = Array.isArray(response.message.content) ? response.message.content : []
+      const content = extractTextContent(msgContent)
 
       // Update response length for spinner display
       toolUseContext.setResponseLength((length) => length + content.length)

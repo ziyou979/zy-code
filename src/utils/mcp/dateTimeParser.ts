@@ -80,7 +80,8 @@ Parse the user's input into ISO 8601 format. Return ONLY the formatted string, o
     })
 
     // Extract text from result
-    const parsedText = extractTextContent(result.message.content).trim()
+    const content = Array.isArray(result.message.content) ? result.message.content : []
+    const parsedText = extractTextContent(content).trim()
 
     // Validate that we got something usable
     if (!parsedText || parsedText === 'INVALID') {
