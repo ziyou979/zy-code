@@ -1,6 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import * as React from 'react'
 import { Box, Text, color } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import {
@@ -112,8 +113,8 @@ export function Logo() {
   if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)) {
     const t15 = isDebugMode() && (
       <Box paddingLeft={2} flexDirection="column">
-        <Text color="warning">Debug mode enabled</Text>
-        <Text dimColor={true}>Logging to: {isDebugToStdErr() ? 'stderr' : getDebugLogPath()}</Text>
+        <Text color="warning">{tSync('logo.debugModeEnabled')}</Text>
+        <Text dimColor={true}>{tSync('logo.loggingTo', { path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath() })}</Text>
       </Box>
     )
     return (
@@ -234,8 +235,8 @@ export function Logo() {
   const T2 = Box
   const t32 = isDebugMode() && (
     <Box paddingLeft={2} flexDirection="column">
-      <Text color="warning">Debug mode enabled</Text>
-      <Text dimColor={true}>Logging to: {isDebugToStdErr() ? 'stderr' : getDebugLogPath()}</Text>
+      <Text color="warning">{tSync('logo.debugModeEnabled')}</Text>
+      <Text dimColor={true}>{tSync('logo.loggingTo', { path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath() })}</Text>
     </Box>
   )
   return (

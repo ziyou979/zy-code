@@ -645,6 +645,7 @@ export const en: TranslationResource = {
   'model.tag.coding': 'Coding',
   'model.tag.flagship': 'Flagship',
   'model.tag.budget': 'Budget-friendly',
+  'onboarding.platform.generic': 'Generic (Custom)',
   'onboarding.platform.genericDesc': 'Custom API endpoint (Anthropic or OpenAI format)',
   'onboarding.model.custom': 'Custom model',
   'onboarding.model.customDesc': 'Enter a full model name',

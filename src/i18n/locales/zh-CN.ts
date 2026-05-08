@@ -830,6 +830,7 @@ export const zhCN: TranslationResource = {
   'model.tag.coding': '编程',
   'model.tag.flagship': '旗舰',
   'model.tag.budget': '高性价比',
+  'onboarding.platform.generic': '通用（自定义）',
   'onboarding.platform.genericDesc': '自定义 API 端点（Anthropic 或 OpenAI 格式）',
   'onboarding.model.custom': '自定义模型',
   'onboarding.model.customDesc': '输入完整的模型名称',
