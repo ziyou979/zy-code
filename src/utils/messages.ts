@@ -597,6 +597,168 @@ export function createToolResultStopMessage(toolUseID: string): ToolResultBlock 
   }
 }
 
+// ============================================================
+// 内存优化：清理已完成 turn 的 UI-only 临时消息
+// ============================================================
+
+/**
+ * 这些 message 类型仅用于 CLI UI 渲染或流式增量信号，
+ * **不会**被发送给模型（既不在请求 messages 中，也不在 compact 时被保留）。
+ *
+ * 在历史 turn（非最后一个 user 消息所在 turn）中，
+ * 这些消息已经完成 UI 渲染、已写入 transcript 磁盘记录，
+ * 在 mutableMessages 中继续持有它们仅是内存负担。
+ *
+ * 验证依据：
+ * - LLM 请求构建链路只读取 user/assistant/system/attachment
+ * - buildPostCompactMessages 不保留 progress
+ * - recordTranscript 已在消息产生时即时写入磁盘
+ */
+const UI_ONLY_MESSAGE_TYPES = new Set<string>([
+  'progress',
+  'stream_event',
+  'stream_request_start',
+  'request_start',
+  'tombstone',
+])
+
+/**
+ * 这些 attachment 子类型是纯 UI 状态信号，
+ * 不会被 reinject 给模型（参见 stripReinjectedAttachments 的反向集合）。
+ */
+const UI_ONLY_ATTACHMENT_SUBTYPES = new Set<string>([
+  'hook_success',
+  'hook_cancelled',
+  'hook_stopped_continuation',
+])
+
+/**
+ * 估算单条消息在内存中的大致字节数（仅用于 profiler 统计，不要求精确）。
+ */
+function estimateMessageBytes(msg: Message): number {
+  try {
+    // JSON.stringify 的成本与对象大小成正比，足够用于相对比较
+    return JSON.stringify(msg).length
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * 判断一条 progress 消息的体积是否值得"瘦身"（截断 fullOutput / 内嵌 message）。
+ * 仅作用于已完成 turn 中的 progress（最新 turn 的不动）。
+ */
+function shrinkProgressData(msg: ProgressMessage): ProgressMessage {
+  const data = msg.data as { type?: string; [k: string]: unknown }
+  const dataType = data?.type
+  // ShellProgress：fullOutput 是给 transcript 复制用的全文，已落盘，可清空
+  if (dataType === 'bash_progress' || dataType === 'powershell_progress') {
+    if ((data as { fullOutput?: string }).fullOutput) {
+      return {
+        ...msg,
+        data: { ...data, fullOutput: '' } as ProgressMessage['data'],
+      }
+    }
+    return msg
+  }
+  // AgentToolProgress / SkillToolProgress：内嵌完整子消息，已通过其他路径记录
+  if (dataType === 'agent_progress' || dataType === 'skill_progress') {
+    if ('message' in data && data.message) {
+      return {
+        ...msg,
+        data: { ...data, message: undefined } as unknown as ProgressMessage['data'],
+      }
+    }
+    return msg
+  }
+  return msg
+}
+
+export type PruneResult = {
+  messages: Message[]
+  /** 释放的字节数估算（用于 profiler / 调试）。 */
+  freedBytes: number
+  /** 被丢弃的消息数。 */
+  droppedCount: number
+  /** 被瘦身（保留但裁字段）的消息数。 */
+  shrunkCount: number
+}
+
+/**
+ * 清理已完成 turn 中的 UI-only 临时消息，释放内存。
+ *
+ * 安全保证：
+ *   1. **绝不动** user / assistant / 任何 tool_result 内容（这些是模型上下文）
+ *   2. **绝不动** 会被 reinject 的 attachment（file/image/memory/text/diagnostics 等）
+ *   3. **保留**最近一个 user 消息及其之后的全部消息（最新 turn UI 仍在用）
+ *   4. 仅丢弃 / 瘦身：progress、stream_event、stream_request_start、request_start、tombstone、UI-only attachment
+ *
+ * @param messages 当前的消息数组（不会被原地修改）
+ * @returns 新的消息数组 + 统计信息
+ */
+export function pruneCompletedTurnArtifacts(messages: readonly Message[]): PruneResult {
+  // 找到"最后一个 user 消息"的索引——它划分了"最新 turn"和"历史 turn"。
+  // 最新 turn 的 progress 仍可能在 UI 上动画收尾，必须原样保留。
+  let lastUserIdx = -1
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]?.type === 'user') {
+      lastUserIdx = i
+      break
+    }
+  }
+
+  let freedBytes = 0
+  let droppedCount = 0
+  let shrunkCount = 0
+
+  const result: Message[] = []
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i]!
+    // 最新 turn 范围内：原样保留
+    if (i >= lastUserIdx) {
+      result.push(msg)
+      continue
+    }
+
+    // 历史 turn 范围内
+    const msgType: string = msg.type
+
+    // 1. UI-only 消息：直接丢弃
+    if (UI_ONLY_MESSAGE_TYPES.has(msgType)) {
+      // progress 优先尝试瘦身——但既然在历史 turn 里，保留意义不大，直接丢弃更省。
+      freedBytes += estimateMessageBytes(msg)
+      droppedCount++
+      continue
+    }
+
+    // 2. UI-only attachment：丢弃
+    if (msgType === 'attachment') {
+      const attachmentType =
+        (msg as AttachmentMessage).attachment &&
+        (msg as AttachmentMessage).attachment.type
+      if (attachmentType && UI_ONLY_ATTACHMENT_SUBTYPES.has(attachmentType)) {
+        freedBytes += estimateMessageBytes(msg)
+        droppedCount++
+        continue
+      }
+    }
+
+    // 其余消息原样保留
+    result.push(msg)
+  }
+
+  return { messages: result, freedBytes, droppedCount, shrunkCount }
+}
+
+/**
+ * 单独导出 progress 瘦身工具，供需要"保留 progress 但只裁大字段"的场景使用。
+ * 当前 pruneCompletedTurnArtifacts 选择直接丢弃历史 progress（更彻底），
+ * 但保留这个 helper 以便未来如需"transcript view 仍能看到 progress 摘要"时切换策略。
+ */
+export function shrinkHistoricalProgress(msg: ProgressMessage): ProgressMessage {
+  return shrinkProgressData(msg)
+}
+
 export function extractTag(html: string, tagName: string): string | null {
   if (!html.trim() || !tagName.trim()) {
     return null

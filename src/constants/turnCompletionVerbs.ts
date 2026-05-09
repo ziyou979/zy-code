@@ -19,13 +19,20 @@ const TURN_COMPLETION_VERBS_ZH = [
   '搞定了',
   '弄好了',
   '完成了',
-  '处理了',
+  '处理完成',
   '做好了',
-  '算完了',
-  '琢磨完了',
-  '干完了',
+  '收工了',
+  '齐活了',
+  '大功告成',
 ]
 
 export function getTurnCompletionVerbs(): string[] {
-  return getUiLanguage() === 'zh-CN' ? TURN_COMPLETION_VERBS_ZH : TURN_COMPLETION_VERBS_EN
+  const language = getUiLanguage()
+
+  switch (language) {
+    case 'zh-CN':
+      return TURN_COMPLETION_VERBS_ZH
+    default:
+      return TURN_COMPLETION_VERBS_EN
+  }
 }

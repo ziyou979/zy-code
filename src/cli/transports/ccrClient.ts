@@ -934,11 +934,13 @@ export class CCRClient {
     return this.internalEventUploader.pendingCount
   }
 
-  /** Clean up uploaders and timers. */
-  close(): void {
-    this.closed = true
-    this.stopHeartbeat()
-    unregisterSessionActivityCallback()
+  /**
+   * 内存优化：仅清理 stream 相关的临时状态（buffer + accumulator + timer），
+   * 不关闭底层连接和 uploader。供 abort/中断路径调用，避免长时未完成的
+   * stream（异常断流、模型 503、abortController 触发）在 accumulator 中
+   * 留下永远等不到 finalize 的孤儿条目。
+   */
+  clearStreamState(): void {
     if (this.streamEventTimer) {
       clearTimeout(this.streamEventTimer)
       this.streamEventTimer = null
@@ -946,6 +948,16 @@ export class CCRClient {
     this.streamEventBuffer = []
     this.streamTextAccumulator.byMessage.clear()
     this.streamTextAccumulator.scopeToMessage.clear()
+  }
+
+  /** Clean up uploaders and timers. */
+  close(): void {
+    this.closed = true
+    this.stopHeartbeat()
+    unregisterSessionActivityCallback()
+    // 复用 clearStreamState：close 前必须释放 buffer/accumulator 引用，
+    // 否则 uploader.close() 异步收尾期间这些对象仍被强引用。
+    this.clearStreamState()
     this.workerState.close()
     this.eventUploader.close()
     this.internalEventUploader.close()

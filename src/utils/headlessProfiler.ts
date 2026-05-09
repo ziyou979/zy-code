@@ -95,6 +95,32 @@ export function headlessProfilerCheckpoint(name: string): void {
 }
 
 /**
+ * 采样当前进程的内存使用情况并附加到当前 turn 的 profiler metadata。
+ * 在每个 turn 结束时调用，帮助发现长会话内存退化（rss 单调上涨等）。
+ *
+ * 与现有的 perf mark 一样，仅在 SHOULD_PROFILE 为 true 时实际工作；
+ * 非采样用户零成本。
+ */
+let lastMemorySample: NodeJS.MemoryUsage | null = null
+
+export function headlessProfilerMemorySample(): void {
+  if (!getIsNonInteractiveSession()) return
+  if (!SHOULD_PROFILE) return
+  try {
+    lastMemorySample = process.memoryUsage()
+    if (DETAILED_PROFILING) {
+      const mb = (n: number): number => Math.round(n / 1024 / 1024)
+      logForDebugging(
+        `[headlessProfiler] Memory: rss=${mb(lastMemorySample.rss)}MB heapUsed=${mb(lastMemorySample.heapUsed)}MB heapTotal=${mb(lastMemorySample.heapTotal)}MB external=${mb(lastMemorySample.external)}MB`,
+      )
+    }
+  } catch {
+    // process.memoryUsage 在极少数环境下会抛错，吞掉避免影响主流程
+    lastMemorySample = null
+  }
+}
+
+/**
  * Log headless latency metrics for the current turn to Statsig.
  * Call this at the end of each turn (before processing next user message).
  */

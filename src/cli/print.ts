@@ -267,6 +267,7 @@ import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
 import {
   headlessProfilerStartTurn,
   headlessProfilerCheckpoint,
+  headlessProfilerMemorySample,
   logHeadlessProfilerTurn,
 } from 'src/utils/headlessProfiler.js'
 import { startQueryProfile, logQueryProfileReport } from 'src/utils/queryProfiler.js'
@@ -869,6 +870,8 @@ export async function runHeadless(
   }
 
   // Log headless latency metrics for the final turn
+  // 内存优化：采样最终 turn 的内存使用，便于发现长会话退化
+  headlessProfilerMemorySample()
   logHeadlessProfilerTurn()
 
   // Drain any in-flight memory extraction before shutdown. The response is
@@ -2145,6 +2148,8 @@ function runHeadlessStreaming(
           }
 
           // Log headless profiler metrics for this turn and start next turn
+          // 内存优化：每个 turn 结束都采样一次，多 turn 对比可发现单调上涨的泄漏
+          headlessProfilerMemorySample()
           logHeadlessProfilerTurn()
           logQueryProfileReport()
           headlessProfilerStartTurn()

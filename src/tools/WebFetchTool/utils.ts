@@ -142,7 +142,7 @@ export function validateURL(url: string): boolean {
     return false
   }
 
-  let parsed
+  let parsed: URL
   try {
     parsed = new URL(url)
   } catch {

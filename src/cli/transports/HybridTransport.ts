@@ -159,11 +159,14 @@ export class HybridTransport extends WebSocketTransport {
   }
 
   override close(): void {
-    if (this.streamEventTimer) {
-      clearTimeout(this.streamEventTimer)
-      this.streamEventTimer = null
+    // 内存优化：close 时把缓冲的 stream_events 也加入最后一次 flush，
+    // 避免直接丢弃。takeStreamEvents() 内部已 clearTimeout + 清空 buffer，
+    // 既保证最后这批 events 有机会进入 grace 窗口被 POST 出去，
+    // 又确保对 buffer 数组的引用被释放、可被 GC。
+    const tail = this.takeStreamEvents()
+    if (tail.length > 0) {
+      void this.uploader.enqueue(tail)
     }
-    this.streamEventBuffer = []
     // Grace period for queued writes — fallback. replBridge teardown now
     // awaits archive between write and close (see CLOSE_GRACE_MS), so
     // archive latency is the primary drain window and this is a last

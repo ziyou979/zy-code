@@ -45,7 +45,11 @@ import { cloneFileStateCache, type FileStateCache } from './utils/fileStateCache
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
 import { registerStructuredOutputEnforcement } from './utils/hooks/hookHelpers.js'
 import { getInMemoryErrors } from './utils/log.js'
-import { countToolCalls, SYNTHETIC_MESSAGES } from './utils/messages.js'
+import {
+  countToolCalls,
+  pruneCompletedTurnArtifacts,
+  SYNTHETIC_MESSAGES,
+} from './utils/messages.js'
 import { getMainLoopModel, parseUserSpecifiedModel } from './utils/model/model.js'
 import { loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js'
 import {
@@ -199,7 +203,11 @@ export class QueryEngine {
       orphanedPermission,
     } = this.config
 
+    // 与 discoveredSkillNames 对齐：每个 turn 入口清空，避免长会话单调增长。
+    // 这两个 Set 仅用于 turn 内的去重计数（was_discovered 字段、嵌套 memory 加载），
+    // 跨 turn 持有没有语义价值，但会持续累积路径字符串。
     this.discoveredSkillNames.clear()
+    this.loadedNestedMemoryPaths.clear()
     setCwd(cwd)
     const persistSession = !isSessionPersistenceDisabled()
     const startTime = Date.now()
@@ -566,6 +574,9 @@ export class QueryEngine {
         }
       }
 
+      // 内存优化：transcript 已落盘，丢弃历史 turn 的 UI-only 消息
+      this.pruneArtifactsBeforeResult()
+
       yield {
         type: 'result',
         subtype: 'success',
@@ -791,6 +802,8 @@ export class QueryEngine {
                 await flushSessionStorage()
               }
             }
+            // 内存优化：丢弃历史 turn 的 UI-only 消息
+            this.pruneArtifactsBeforeResult()
             yield {
               type: 'result',
               subtype: 'error_max_turns',
@@ -908,6 +921,8 @@ export class QueryEngine {
             await flushSessionStorage()
           }
         }
+        // 内存优化：丢弃历史 turn 的 UI-only 消息
+        this.pruneArtifactsBeforeResult()
         yield {
           type: 'result',
           subtype: 'error_max_budget_usd',
@@ -941,6 +956,8 @@ export class QueryEngine {
               await flushSessionStorage()
             }
           }
+          // 内存优化：丢弃历史 turn 的 UI-only 消息
+          this.pruneArtifactsBeforeResult()
           yield {
             type: 'result',
             subtype: 'error_max_structured_output_retries',
@@ -991,6 +1008,8 @@ export class QueryEngine {
     }
 
     if (!isResultSuccessful(result, lastStopReason)) {
+      // 内存优化：丢弃历史 turn 的 UI-only 消息
+      this.pruneArtifactsBeforeResult()
       yield {
         type: 'result',
         subtype: 'error_during_execution',
@@ -1034,6 +1053,9 @@ export class QueryEngine {
       isApiError = Boolean(result.isApiErrorMessage)
     }
 
+    // 内存优化：丢弃历史 turn 的 UI-only 消息
+    this.pruneArtifactsBeforeResult()
+
     yield {
       type: 'result',
       subtype: 'success',
@@ -1055,6 +1077,39 @@ export class QueryEngine {
 
   interrupt(): void {
     this.abortController.abort()
+  }
+
+  /**
+   * 内存优化：在 turn 结束前清理 mutableMessages 中已完成 turn 的 UI-only 消息。
+   *
+   * 安全说明：
+   * - 仅丢弃 progress / stream_event / 控制信号 / UI-only attachment
+   * - 这些消息不进入 LLM 请求（验证：构建链路只读 user/assistant/system/attachment，
+   *   且 buildPostCompactMessages 不保留 progress）
+   * - 已通过 recordTranscript 写入磁盘，transcript view 仍可看到完整历史
+   * - 保留最近一个 turn 的全部消息，避免影响 UI 动画收尾
+   *
+   * 在每个 result yield 之前调用，保证：
+   * 1. transcript 已经在 messages 流中独立持久化（QueryEngine 的 progress/attachment 分支
+   *    都已 recordTranscript）
+   * 2. 此时 turn 已完成，UI 不再依赖 mutableMessages 里的 progress 渲染
+   */
+  private pruneArtifactsBeforeResult(): void {
+    const before = this.mutableMessages.length
+    const result = pruneCompletedTurnArtifacts(this.mutableMessages)
+    if (result.droppedCount === 0 && result.shrunkCount === 0) {
+      return
+    }
+    this.mutableMessages = result.messages
+    // 仅在调试模式打印，避免污染普通输出
+    if (isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[QueryEngine] Pruned ${result.droppedCount} UI-only messages (` +
+          `${before} → ${this.mutableMessages.length}, ` +
+          `freed ~${Math.round(result.freedBytes / 1024)}KB)`,
+      )
+    }
   }
 
   getMessages(): readonly Message[] {

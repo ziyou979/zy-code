@@ -20,10 +20,9 @@ export type ModelCosts = {
  * 对于阶梯费用模型，usage.inputTokens 用于确定当前所在阶梯。
  */
 export function getModelCosts(model: string, usage: Usage): ModelCosts {
-  const currentInput =
-    (usage.extras?.cacheReadInputTokens ?? 0) +
-    (usage.extras?.cacheCreationInputTokens ?? 0) +
-    usage.inputTokens
+  // inputTokens 已包含 cacheRead 和 cacheCreation 的 token 数，
+  // 直接用它作为阶梯定价的判断基准即可
+  const currentInput = usage.inputTokens
   const pricing = getStaticPricingForModel(model, currentInput)
   if (pricing) {
     return {
@@ -79,14 +78,21 @@ export function getCurrencySymbol(): string {
 /**
  * 根据 token 用量和模型定价配置计算费用。
  * 返回值单位与配置中的单价单位一致（RMB 元）。
+ *
+ * Anthropic SDK 返回的 inputTokens 已包含 cacheRead 和 cacheCreation，
+ * 因此计费时需从 inputTokens 中扣除缓存 token，分别按各自价格计算。
+ * 参考 opencode 同类修正：adjustedInputTokens = inputTokens - cacheRead - cacheWrite。
  */
 function calculateTokenCost(modelCosts: ModelCosts, usage: Usage): number {
+  const cacheRead = usage.extras?.cacheReadInputTokens ?? 0
+  const cacheWrite = usage.extras?.cacheCreationInputTokens ?? 0
+  // 非缓存的普通输入 token = 总输入 - 缓存命中 - 缓存写入
+  const plainInput = Math.max(0, usage.inputTokens - cacheRead - cacheWrite)
   return (
-    (usage.inputTokens / 1_000_000) * modelCosts.inputTokens +
+    (plainInput / 1_000_000) * modelCosts.inputTokens +
     (usage.outputTokens / 1_000_000) * modelCosts.outputTokens +
-    ((usage.extras?.cacheReadInputTokens ?? 0) / 1_000_000) * modelCosts.promptCacheReadTokens +
-    ((usage.extras?.cacheCreationInputTokens ?? 0) / 1_000_000) *
-      modelCosts.promptCacheWriteTokens +
+    (cacheRead / 1_000_000) * modelCosts.promptCacheReadTokens +
+    (cacheWrite / 1_000_000) * modelCosts.promptCacheWriteTokens +
     (usage.extras?.webSearchRequests ?? 0) * modelCosts.webSearchRequests
   )
 }

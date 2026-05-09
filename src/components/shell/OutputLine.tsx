@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { Ansi, Text } from '../../ink.js'
+import { Text } from '../../ink.js'
 import { createHyperlink } from '../../utils/hyperlink.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { renderTruncatedContent } from '../../utils/terminal.js'
 import { MessageResponse } from '../MessageResponse.js'
 import { InVirtualListContext } from '../messageActions.js'
+import { renderContentWithFileLinks } from '../FilePathLink.js'
 import { useExpandShellOutput } from './ExpandShellOutputContext.js'
 export function tryFormatJson(line: string): string {
   try {
@@ -64,9 +65,10 @@ export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }
     formattedContent = stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   }
   const color = isError ? 'error' : isWarning ? 'warning' : undefined
+  const finalContent = renderContentWithFileLinks(formattedContent, false)
   return (
     <MessageResponse>
-      <Text color={color}>{<Ansi>{formattedContent}</Ansi>}</Text>
+      <Text color={color}>{finalContent}</Text>
     </MessageResponse>
   )
 }

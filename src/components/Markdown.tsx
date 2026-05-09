@@ -1,13 +1,14 @@
-import { marked, type Token, type Tokens } from 'marked'
-import React, { Suspense, use, useRef } from 'react'
-import { useSettings } from '../hooks/useSettings.js'
-import { Ansi, Box, Text, useTheme } from '../ink.js'
-import { getCliHighlightPromise } from '../utils/cliHighlight.js'
-import { hashContent } from '../utils/hash.js'
-import { configureMarked, formatToken } from '../utils/markdown.js'
-import { stripPromptXMLTags } from '../utils/messages.js'
-import { FilePathLink } from './FilePathLink.js'
-import { MarkdownTable } from './MarkdownTable.js'
+import {marked, type Token, type Tokens} from 'marked'
+import React, {Suspense, use, useRef} from 'react'
+import {useSettings} from '../hooks/useSettings.js'
+import {Box, useTheme} from '../ink.js'
+import {getCliHighlightPromise} from '../utils/cliHighlight.js'
+import {hashContent} from '../utils/hash.js'
+import {configureMarked, formatToken} from '../utils/markdown.js'
+import {stripPromptXMLTags} from '../utils/messages.js'
+import {renderContentWithFileLinks} from './FilePathLink.js'
+import {MarkdownTable} from './MarkdownTable.js'
+
 type Props = {
   children: string
   /** When true, render all text content as dim */
@@ -35,49 +36,6 @@ function hasMarkdownSyntax(s: string): boolean {
   return MD_SYNTAX_RE.test(s.length > 500 ? s.slice(0, 500) : s)
 }
 
-// 匹配文件路径 + 行号模式，如 src/foo.ts:123 或 /abs/path.go:10-20
-// 与 markdown.ts 中的 FILE_PATH_PATTERN 保持一致，但不包含边界前缀捕获组
-const FILE_PATH_RE = /((?:(?:\.\.\/|\.\/|\/)?(?:[\w.-]+\/)*)[\w.-]+\.\w{1,10}):(\d+)(?:-(\d+))?/g
-
-/** 将含文件路径引用的 ANSI 文本拆分为 Ansi/FilePathLink 混合节点 */
-function renderContentWithFileLinks(content: string, dimColor: boolean): React.ReactNode[] {
-  const parts: React.ReactNode[] = []
-  let lastIndex = 0
-  let match: RegExpExecArray | null
-
-  FILE_PATH_RE.lastIndex = 0
-  while ((match = FILE_PATH_RE.exec(content)) !== null) {
-    // 渲染匹配前的纯文本
-    if (match.index > lastIndex) {
-      const before = content.slice(lastIndex, match.index)
-      parts.push(
-        <Ansi key={parts.length} dimColor={dimColor}>
-          {before}
-        </Ansi>,
-      )
-    }
-    // 渲染文件路径 + 行号为可点击超链接
-    const filePath = match[1]!
-    const display = match[0]
-    parts.push(
-      <FilePathLink key={parts.length} filePath={filePath}>
-        {display}
-      </FilePathLink>,
-    )
-    lastIndex = match.index + display.length
-  }
-
-  // 渲染剩余部分
-  if (lastIndex < content.length) {
-    parts.push(
-      <Ansi key={parts.length} dimColor={dimColor}>
-        {content.slice(lastIndex)}
-      </Ansi>,
-    )
-  }
-
-  return parts
-}
 function cachedLexer(content: string): Token[] {
   // 快速路径：没有 markdown 语法的纯文本 → 单个段落 token。
   // 跳过 marked.lexer 的完整 GFM 解析（长内容约 3ms）。不缓存——
@@ -165,10 +123,9 @@ function MarkdownBody({ children, dimColor, highlight }) {
     }
   }
   flushNonTableContent()
-  const elements_0 = elements
   return (
     <Box flexDirection="column" gap={1}>
-      {elements_0}
+      {elements}
     </Box>
   )
 }

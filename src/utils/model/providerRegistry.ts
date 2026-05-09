@@ -119,6 +119,7 @@ const STANDARD_CAPABILITIES: ProviderCapability[] = [
   'adaptive_thinking',
   'structured_outputs',
   'context_management',
+  'prompt_caching',
   'web_search',
   'interleaved_thinking',
 ]

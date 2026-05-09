@@ -33,6 +33,7 @@ const result = await Bun.build({
     'CONTEXT_COLLAPSE',
     'HISTORY_SNIP',
     'KAIROS',
+    'BUILTIN_EXPLORE_PLAN_AGENTS',
   ],
   define: {
     // Treat as external build (notinternal)

@@ -166,7 +166,8 @@ export function messagesToOpenAI(
               content: text || '(empty)',
             })
           } else if (block.type === 'text') {
-            parts.push({ type: 'text', text: block.text })
+            // 保留 cache_control 等额外字段（百炼/火山引擎的 OpenAI 端点支持）
+            parts.push({ ...block } as OpenAI.Chat.ChatCompletionContentPart)
           } else if (block.type === 'image') {
             const mimeType = block.mimeType ?? 'image/png'
             const data = block.data ?? ''
@@ -433,18 +434,47 @@ export function openAIUsageToStandard(
 ): TokenUsage {
   const inputTokens = usage?.prompt_tokens ?? 0
   const outputTokens = usage?.completion_tokens ?? 0
+  const extras: Record<string, number> = {}
+
+  // 缓存命中 token（百炼/火山引擎等 OpenAI 兼容端点可能返回 cache_read_input_tokens，
+  // 或在 prompt_tokens_details.cached_tokens 下）
+  if (usage && typeof usage === 'object' && 'cache_read_input_tokens' in usage) {
+    extras.cacheReadInputTokens = (usage as any).cache_read_input_tokens
+  } else if (usage?.prompt_tokens_details?.cached_tokens !== undefined) {
+    extras.cacheReadInputTokens = usage.prompt_tokens_details.cached_tokens
+  }
+  // 缓存写入 token
+  if (usage && typeof usage === 'object' && 'cache_creation_input_tokens' in usage) {
+    extras.cacheCreationInputTokens = (usage as any).cache_creation_input_tokens
+  } else if ((usage?.prompt_tokens_details as any)?.cache_creation_input_tokens !== undefined) {
+    extras.cacheCreationInputTokens = (usage.prompt_tokens_details as any).cache_creation_input_tokens
+  }
+
   return {
     inputTokens,
     outputTokens,
+    ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
 
 export function openAIDeltaUsageToStandard(
   usage: OpenAI.CompletionUsage | undefined | null,
 ): DeltaUsage {
+  const extras: Record<string, number> = {}
+  if (usage && typeof usage === 'object' && 'cache_read_input_tokens' in usage) {
+    extras.cacheReadInputTokens = (usage as any).cache_read_input_tokens
+  } else if (usage?.prompt_tokens_details?.cached_tokens !== undefined) {
+    extras.cacheReadInputTokens = usage.prompt_tokens_details.cached_tokens
+  }
+  if (usage && typeof usage === 'object' && 'cache_creation_input_tokens' in usage) {
+    extras.cacheCreationInputTokens = (usage as any).cache_creation_input_tokens
+  } else if ((usage?.prompt_tokens_details as any)?.cache_creation_input_tokens !== undefined) {
+    extras.cacheCreationInputTokens = (usage.prompt_tokens_details as any).cache_creation_input_tokens
+  }
   return {
     inputTokens: usage?.prompt_tokens,
     outputTokens: usage?.completion_tokens ?? 0,
+    ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
 
@@ -640,6 +670,12 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
   const p = params as any
   const openAIMessages = messagesToOpenAI(p.messages ?? [], p.model)
   const openaiExtras = p.providerExtras?.openai
+
+  // 系统提示：buildSystemPromptBlocks 生成的 TextBlock[] 带有 cache_control，
+  // 注入为 messages 数组中的 system 角色消息
+  if (p.system && Array.isArray(p.system) && p.system.length > 0) {
+    openAIMessages.unshift({ role: 'system', content: p.system } as any)
+  }
 
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
   const openaiNativeTools = openaiExtras?._web_search_tool ? [openaiExtras._web_search_tool] : []
