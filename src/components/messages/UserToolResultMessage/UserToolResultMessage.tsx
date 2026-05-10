@@ -46,12 +46,12 @@ export function UserToolResultMessage({
     (typeof param.content === 'string' && param.content.startsWith(REJECT_MESSAGE)) ||
     param.content === INTERRUPT_MESSAGE_FOR_TOOL_USE
   ) {
-    const t1 = toolUse.toolUse.input as {
+    const toolInput = toolUse.toolUse.input as {
       [key: string]: unknown
     }
     return (
       <UserToolRejectMessage
-        input={t1}
+        input={toolInput}
         progressMessagesForMessage={progressMessagesForMessage}
         tool={toolUse.tool}
         tools={tools}

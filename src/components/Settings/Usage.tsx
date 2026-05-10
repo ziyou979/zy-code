@@ -35,9 +35,9 @@ function LimitBar({ title, limit, maxWidth, showTimeInReset = true, extraSubtext
   })
   let subtext
   if (resets_at) {
-    const t2 = formatResetText(resets_at, true, showTimeInReset)
+    const resetText = formatResetText(resets_at, true, showTimeInReset)
     subtext = tSync('usage.resets', {
-      time: t2,
+      time: resetText,
     })
   }
   if (extraSubtext) {

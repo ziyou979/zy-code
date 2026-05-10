@@ -13,7 +13,6 @@ import { getActualRelativeAgentFilePath } from './agentFileUtils.js'
 type Props = {
   agent: AgentDefinition
   tools: Tools
-  allAgents?: AgentDefinition[]
   onBack: () => void
 }
 export function AgentDetail({ agent, tools, onBack }: Props) {
@@ -47,11 +46,9 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
       </>
     )
   }
-  const T0 = Box
-  const T1 = Box
-  const t13 = renderToolsList()
-  const t16 = getAgentModelDisplay(agent.model)
-  const t23 = !isBuiltInAgent(agent) && (
+  const toolsList = renderToolsList()
+  const modelDisplay = getAgentModelDisplay(agent.model)
+  const systemPromptSection = !isBuiltInAgent(agent) && (
     <>
       <Box>
         <Text>
@@ -64,7 +61,7 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
     </>
   )
   return (
-    <T0 flexDirection={'column'} gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
+    <Box flexDirection={'column'} gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
       {<Text dimColor={true}>{filePath}</Text>}
       {
         <Box flexDirection="column">
@@ -79,18 +76,18 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
         </Box>
       }
       {
-        <T1>
+        <Box>
           {
             <Text>
               <Text bold={true}>Tools</Text>:{' '}
             </Text>
           }
-          {t13}
-        </T1>
+          {toolsList}
+        </Box>
       }
       {
         <Text>
-          {<Text bold={true}>Model</Text>}: {t16}
+          {<Text bold={true}>Model</Text>}: {modelDisplay}
         </Text>
       }
       {agent.permissionMode && (
@@ -125,7 +122,7 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
           </Text>
         </Box>
       )}
-      {t23}
-    </T0>
+      {systemPromptSection}
+    </Box>
   )
 }

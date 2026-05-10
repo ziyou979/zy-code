@@ -65,15 +65,15 @@ function extractCwdResetWarning(stderr: string): {
 }
 export default function BashToolResultMessage({ content, verbose, timeoutMs }: Props) {
   const {
-    stdout: t2,
-    stderr: t3,
+    stdout: rawStdout,
+    stderr: rawStderr,
     isImage,
     returnCodeInterpretation,
     noOutputExpected,
     backgroundTaskId,
   } = content
-  const stdout = t2 === undefined ? '' : t2
-  const stdErrWithViolations = t3 === undefined ? '' : t3
+  const stdout = rawStdout === undefined ? '' : rawStdout
+  const stdErrWithViolations = rawStderr === undefined ? '' : rawStderr
   let BoxComponent
 
   let outputLineElement

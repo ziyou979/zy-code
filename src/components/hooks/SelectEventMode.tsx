@@ -32,11 +32,11 @@ export function SelectEventMode({
   onSelectEvent,
   onCancel,
 }: Props) {
-  const t1 = plural(totalHooksCount, 'hook')
-  const subtitle = tSync('hooks.configuredCount', { count: totalHooksCount, hook: t1 })
-  const t5 = Object.entries(hookEventMetadata)
-  const t6 = t5.map((t7) => {
-    const [name, metadata] = t7
+  const hookCountLabel = plural(totalHooksCount, 'hook')
+  const subtitle = tSync('hooks.configuredCount', { count: totalHooksCount, hook: hookCountLabel })
+  const eventEntries = Object.entries(hookEventMetadata)
+  const eventOptions = eventEntries.map((entry) => {
+    const [name, metadata] = entry
     const count = hooksByEvent[name as HookEvent] || 0
     return {
       label:
@@ -54,34 +54,8 @@ export function SelectEventMode({
   return (
     <Dialog title={tSync('hooks.title')} subtitle={subtitle} onCancel={onCancel}>
       {
-        <Box flexDirection="column" gap={1}>
-          {restrictedByPolicy && (
-            <Box flexDirection="column">
-              <Text color="suggestion">
-                {figures.info} {tSync('hooks.restrictedByPolicy')}
-              </Text>
-              <Text dimColor={true}>{tSync('hooks.restrictedByPolicyDesc')}</Text>
-            </Box>
-          )}
-          {
-            <Box flexDirection="column">
-              <Text dimColor={true}>
-                {figures.info} {tSync('hooks.readOnlyMenu')}{' '}
-                <Link url="https://code.zy.com/docs/en/hooks">{tSync('hooks.learnMore')}</Link>
-              </Text>
-            </Box>
-          }
-          {
-            <Box flexDirection="column">
-              <Select
-                onChange={(value) => {
-                  onSelectEvent(value as HookEvent)
-                }}
-                onCancel={onCancel}
-                options={t6}
-              />
-            </Box>
-          }
+        <Box flexDirection="column">
+          <Select options={eventOptions} onChange={(value) => onSelectEvent(value as HookEvent)} />
         </Box>
       }
     </Dialog>

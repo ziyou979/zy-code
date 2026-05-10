@@ -94,15 +94,15 @@ export function useReplBridge(
     : false
   const replBridgeConnected = feature('BRIDGE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAppState((s_0) => s_0.replBridgeConnected)
+      useAppState((state) => state.replBridgeConnected)
     : false
   const replBridgeOutboundOnly = feature('BRIDGE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAppState((s_1) => s_1.replBridgeOutboundOnly)
+      useAppState((state) => state.replBridgeOutboundOnly)
     : false
   const replBridgeInitialName = feature('BRIDGE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAppState((s_2) => s_2.replBridgeInitialName)
+      useAppState((state) => state.replBridgeInitialName)
     : undefined
 
   // 当启用状态变化时，初始化/拆除 bridge。
@@ -239,26 +239,26 @@ export function useReplBridge(
           }
 
           // 状态变更回调——将 bridge 生命周期事件映射到 AppState。
-          function handleStateChange(state: BridgeState, detail_0?: string): void {
+          function handleStateChange(state: BridgeState, detail?: string): void {
             if (cancelled) return
             if (outboundOnly) {
               logForDebugging(
-                `[bridge:repl] Mirror state=${state}${detail_0 ? ` detail=${detail_0}` : ''}`,
+                `[bridge:repl] Mirror state=${state}${detail ? ` detail=${detail}` : ''}`,
               )
               // 同步 replBridgeConnected，使转发 effect 在传输层建立或断开时开始/停止写入。
               if (state === 'failed') {
-                setAppState((prev_3) => {
-                  if (!prev_3.replBridgeConnected) return prev_3
+                setAppState((prev) => {
+                  if (!prev.replBridgeConnected) return prev
                   return {
-                    ...prev_3,
+                    ...prev,
                     replBridgeConnected: false,
                   }
                 })
               } else if (state === 'ready' || state === 'connected') {
-                setAppState((prev_4) => {
-                  if (prev_4.replBridgeConnected) return prev_4
+                setAppState((prev) => {
+                  if (prev.replBridgeConnected) return prev
                   return {
-                    ...prev_4,
+                    ...prev,
                     replBridgeConnected: true,
                   }
                 })
@@ -268,29 +268,29 @@ export function useReplBridge(
             const handle = handleRef.current
             switch (state) {
               case 'ready':
-                setAppState((prev_9) => {
+                setAppState((prev) => {
                   const connectUrl =
                     handle && handle.environmentId !== ''
                       ? buildBridgeConnectUrl(handle.environmentId, handle.sessionIngressUrl)
-                      : prev_9.replBridgeConnectUrl
+                      : prev.replBridgeConnectUrl
                   const sessionUrl = handle
                     ? getRemoteSessionUrl(handle.bridgeSessionId, handle.sessionIngressUrl)
-                    : prev_9.replBridgeSessionUrl
+                    : prev.replBridgeSessionUrl
                   const envId = handle?.environmentId
                   const sessionId = handle?.bridgeSessionId
                   if (
-                    prev_9.replBridgeConnected &&
-                    !prev_9.replBridgeSessionActive &&
-                    !prev_9.replBridgeReconnecting &&
-                    prev_9.replBridgeConnectUrl === connectUrl &&
-                    prev_9.replBridgeSessionUrl === sessionUrl &&
-                    prev_9.replBridgeEnvironmentId === envId &&
-                    prev_9.replBridgeSessionId === sessionId
+                    prev.replBridgeConnected &&
+                    !prev.replBridgeSessionActive &&
+                    !prev.replBridgeReconnecting &&
+                    prev.replBridgeConnectUrl === connectUrl &&
+                    prev.replBridgeSessionUrl === sessionUrl &&
+                    prev.replBridgeEnvironmentId === envId &&
+                    prev.replBridgeSessionId === sessionId
                   ) {
-                    return prev_9
+                    return prev
                   }
                   return {
-                    ...prev_9,
+                    ...prev,
                     replBridgeConnected: true,
                     replBridgeSessionActive: false,
                     replBridgeReconnecting: false,
@@ -303,10 +303,10 @@ export function useReplBridge(
                 })
                 break
               case 'connected': {
-                setAppState((prev_8) => {
-                  if (prev_8.replBridgeSessionActive) return prev_8
+                setAppState((prev) => {
+                  if (prev.replBridgeSessionActive) return prev
                   return {
-                    ...prev_8,
+                    ...prev,
                     replBridgeConnected: true,
                     replBridgeSessionActive: true,
                     replBridgeReconnecting: false,
@@ -323,7 +323,7 @@ export function useReplBridge(
                     try {
                       const skills = await getSlashCommandToolSkills(getCwd())
                       if (cancelled) return
-                      const state_0 = store.getState()
+                      const currentState = store.getState()
                       handleRef.current?.writeSdkMessages([
                         buildSystemInitMessage({
                           // tools/mcpClients/plugins 对 REPL-bridge 进行了脱敏：
@@ -335,20 +335,20 @@ export function useReplBridge(
                           tools: [],
                           mcpClients: [],
                           model: mainLoopModelRef.current,
-                          permissionMode: state_0.toolPermissionContext.mode as PermissionMode,
+                          permissionMode: currentState.toolPermissionContext.mode as PermissionMode,
                           // TODO: 避免此类型转换
                           // 远程客户端只能调用 bridge-safe 命令——
                           // 广告不安全的命令（local-jsx、未允许的 local）
                           // 会让 mobile/web 尝试调用并遇到错误。
                           commands: commandsRef.current.filter(isBridgeSafeCommand),
-                          agents: state_0.agentDefinitions.activeAgents,
+                          agents: currentState.agentDefinitions.activeAgents,
                           skills,
                           plugins: [],
                         }),
                       ])
-                    } catch (err_0) {
+                    } catch (err) {
                       logForDebugging(
-                        `[bridge:repl] Failed to send system/init: ${errorMessage(err_0)}`,
+                        `[bridge:repl] Failed to send system/init: ${errorMessage(err)}`,
                         {
                           level: 'error',
                         },
@@ -359,10 +359,10 @@ export function useReplBridge(
                 break
               }
               case 'reconnecting':
-                setAppState((prev_7) => {
-                  if (prev_7.replBridgeReconnecting) return prev_7
+                setAppState((prevState) => {
+                  if (prevState.replBridgeReconnecting) return prevState
                   return {
-                    ...prev_7,
+                    ...prevState,
                     replBridgeReconnecting: true,
                     replBridgeSessionActive: false,
                   }
@@ -371,10 +371,10 @@ export function useReplBridge(
               case 'failed':
                 // 清除上一次的失败dismiss计时器
                 clearTimeout(failureTimeoutRef.current)
-                notifyBridgeFailed(detail_0)
-                setAppState((prev_5) => ({
-                  ...prev_5,
-                  replBridgeError: detail_0,
+                notifyBridgeFailed(detail)
+                setAppState((prev) => ({
+                  ...prev,
+                  replBridgeError: detail,
                   replBridgeReconnecting: false,
                   replBridgeSessionActive: false,
                   replBridgeConnected: false,
@@ -383,10 +383,10 @@ export function useReplBridge(
                 failureTimeoutRef.current = setTimeout(() => {
                   if (cancelled) return
                   failureTimeoutRef.current = undefined
-                  setAppState((prev_6) => {
-                    if (!prev_6.replBridgeError) return prev_6
+                  setAppState((prevState) => {
+                    if (!prevState.replBridgeError) return prevState
                     return {
-                      ...prev_6,
+                      ...prevState,
                       replBridgeEnabled: false,
                       replBridgeError: undefined,
                     }
@@ -404,8 +404,8 @@ export function useReplBridge(
           >()
 
           // 将收到的 control_response 消息分发给已注册的 handler
-          function handlePermissionResponse(msg_0: SDKControlResponse): void {
-            const requestId = msg_0.response?.request_id
+          function handlePermissionResponse(message: SDKControlResponse): void {
+            const requestId = message.response?.request_id
             if (!requestId) return
             const handler = pendingPermissionHandlers.get(requestId)
             if (!handler) {
@@ -416,7 +416,7 @@ export function useReplBridge(
             }
             pendingPermissionHandlers.delete(requestId)
             // 从 control_response 负载中提取权限决策
-            const inner = msg_0.response
+            const inner = message.response
             if (
               inner.subtype === 'success' &&
               inner.response &&
@@ -425,7 +425,7 @@ export function useReplBridge(
               handler(inner.response)
             }
           }
-          const handle_0 = await initReplBridge({
+          const bridgeHandle = await initReplBridge({
             outboundOnly,
             tags: outboundOnly ? ['ccr-mirror'] : undefined,
             onInboundMessage: handleInboundMessage,
@@ -436,20 +436,20 @@ export function useReplBridge(
             onSetModel(model) {
               const resolved = model === 'default' ? null : (model ?? null)
               setMainLoopModelOverride(resolved)
-              setAppState((prev_10) => {
-                if (prev_10.mainLoopModelForSession === resolved) return prev_10
+              setAppState((prevState) => {
+                if (prevState.mainLoopModelForSession === resolved) return prevState
                 return {
-                  ...prev_10,
+                  ...prevState,
                   mainLoopModelForSession: resolved,
                 }
               })
             },
             onSetMaxThinkingTokens(maxTokens) {
               const enabled = maxTokens !== null
-              setAppState((prev_11) => {
-                if (prev_11.thinkingEnabled === enabled) return prev_11
+              setAppState((prevState) => {
+                if (prevState.thinkingEnabled === enabled) return prevState
                 return {
-                  ...prev_11,
+                  ...prevState,
                   thinkingEnabled: enabled,
                 }
               })
@@ -492,12 +492,12 @@ export function useReplBridge(
               }
               // 守卫通过——通过集中式 transition 应用，
               // 使 prePlanMode 存储和 auto-mode 状态同步全部触发。
-              setAppState((prev_12) => {
-                const current = prev_12.toolPermissionContext.mode
-                if (current === mode) return prev_12
-                const next = transitionPermissionMode(current, mode, prev_12.toolPermissionContext)
+              setAppState((prevState) => {
+                const current = prevState.toolPermissionContext.mode
+                if (current === mode) return prevState
+                const next = transitionPermissionMode(current, mode, prevState.toolPermissionContext)
                 return {
-                  ...prev_12,
+                  ...prevState,
                   toolPermissionContext: {
                     ...next,
                     mode,
@@ -529,14 +529,14 @@ export function useReplBridge(
             // 拆除 handle 以避免泄漏资源（poll loop、
             // WebSocket、已注册的 environment、清理回调）。
             logForDebugging(
-              `[bridge:repl] Hook: init cancelled during flight, tearing down${handle_0 ? ` env=${handle_0.environmentId}` : ''}`,
+              `[bridge:repl] Hook: init cancelled during flight, tearing down${bridgeHandle ? ` env=${bridgeHandle.environmentId}` : ''}`,
             )
-            if (handle_0) {
-              void handle_0.teardown()
+            if (bridgeHandle) {
+              void bridgeHandle.teardown()
             }
             return
           }
-          if (!handle_0) {
+          if (!bridgeHandle) {
             // initReplBridge 返回 null——前置条件失败。对于大多数情况
             // （no_oauth、policy_denied 等），onStateChange('failed')
             // 已带着具体提示触发。GrowthBook-gate-off 的情况是故意静默的——
@@ -546,17 +546,17 @@ export function useReplBridge(
               `[bridge:repl] Init returned null (precondition or session creation failed); consecutive failures: ${consecutiveFailuresRef.current}`,
             )
             clearTimeout(failureTimeoutRef.current)
-            setAppState((prev_13) => ({
-              ...prev_13,
-              replBridgeError: prev_13.replBridgeError ?? 'check debug logs for details',
+            setAppState((prevState) => ({
+              ...prevState,
+              replBridgeError: prevState.replBridgeError ?? 'check debug logs for details',
             }))
             failureTimeoutRef.current = setTimeout(() => {
               if (cancelled) return
               failureTimeoutRef.current = undefined
-              setAppState((prev_14) => {
-                if (!prev_14.replBridgeError) return prev_14
+              setAppState((prevState) => {
+                if (!prevState.replBridgeError) return prevState
                 return {
-                  ...prev_14,
+                  ...prevState,
                   replBridgeEnabled: false,
                   replBridgeError: undefined,
                 }
@@ -564,35 +564,35 @@ export function useReplBridge(
             }, BRIDGE_FAILURE_DISMISS_MS)
             return
           }
-          handleRef.current = handle_0
-          setReplBridgeHandle(handle_0)
+          handleRef.current = bridgeHandle
+          setReplBridgeHandle(bridgeHandle)
           consecutiveFailuresRef.current = 0
           // 在转发 effect 中跳过初始消息——它们已在创建时
           // 作为 session events 加载。
           lastWrittenIndexRef.current = initialMessageCount
           if (outboundOnly) {
-            setAppState((prev_15) => {
+            setAppState((prevState) => {
               if (
-                prev_15.replBridgeConnected &&
-                prev_15.replBridgeSessionId === handle_0.bridgeSessionId
+                prevState.replBridgeConnected &&
+                prevState.replBridgeSessionId === bridgeHandle.bridgeSessionId
               )
-                return prev_15
+                return prevState
               return {
-                ...prev_15,
+                ...prevState,
                 replBridgeConnected: true,
-                replBridgeSessionId: handle_0.bridgeSessionId,
+                replBridgeSessionId: bridgeHandle.bridgeSessionId,
                 replBridgeSessionUrl: undefined,
                 replBridgeConnectUrl: undefined,
                 replBridgeError: undefined,
               }
             })
-            logForDebugging(`[bridge:repl] Mirror initialized, session=${handle_0.bridgeSessionId}`)
+            logForDebugging(`[bridge:repl] Mirror initialized, session=${bridgeHandle.bridgeSessionId}`)
           } else {
             // 构建 bridge 权限回调，使交互式权限 handler
             // 可以在 bridge 响应和本地用户交互之间进行竞态。
             const permissionCallbacks: BridgePermissionCallbacks = {
               sendRequest(
-                requestId_0,
+                requestId,
                 toolName,
                 input,
                 toolUseId,
@@ -600,9 +600,9 @@ export function useReplBridge(
                 permissionSuggestions,
                 blockedPath,
               ) {
-                handle_0.sendControlRequest({
+                bridgeHandle.sendControlRequest({
                   type: 'control_request',
-                  request_id: requestId_0,
+                  request_id: requestId,
                   request: {
                     subtype: 'can_use_tool',
                     tool_name: toolName,
@@ -622,51 +622,51 @@ export function useReplBridge(
                   },
                 })
               },
-              sendResponse(requestId_1, response) {
+              sendResponse(responseRequestId, response) {
                 const payload: Record<string, unknown> = {
                   ...response,
                 }
-                handle_0.sendControlResponse({
+                bridgeHandle.sendControlResponse({
                   type: 'control_response',
                   response: {
                     subtype: 'success',
-                    request_id: requestId_1,
+                    request_id: responseRequestId,
                     response: payload,
                   },
                 })
               },
-              cancelRequest(requestId_2) {
-                handle_0.sendControlCancelRequest(requestId_2)
+              cancelRequest(cancelRequestId) {
+                bridgeHandle.sendControlCancelRequest(cancelRequestId)
               },
-              onResponse(requestId_3, handler_0) {
-                pendingPermissionHandlers.set(requestId_3, handler_0)
+              onResponse(responseRequestId, responseHandler) {
+                pendingPermissionHandlers.set(responseRequestId, responseHandler)
                 return () => {
-                  pendingPermissionHandlers.delete(requestId_3)
+                  pendingPermissionHandlers.delete(responseRequestId)
                 }
               },
             }
-            setAppState((prev_16) => ({
-              ...prev_16,
+            setAppState((prevState) => ({
+              ...prevState,
               replBridgePermissionCallbacks: permissionCallbacks,
             }))
-            const url = getRemoteSessionUrl(handle_0.bridgeSessionId, handle_0.sessionIngressUrl)
+            const url = getRemoteSessionUrl(bridgeHandle.bridgeSessionId, bridgeHandle.sessionIngressUrl)
             // environmentId === '' 表示 v2 无 env 路径。buildBridgeConnectUrl
             // 构建特定于 env 的连接 URL，没有 env 时不存在。
-            const hasEnv = handle_0.environmentId !== ''
-            const connectUrl_0 = hasEnv
-              ? buildBridgeConnectUrl(handle_0.environmentId, handle_0.sessionIngressUrl)
+            const hasEnv = bridgeHandle.environmentId !== ''
+            const connectUrl = hasEnv
+              ? buildBridgeConnectUrl(bridgeHandle.environmentId, bridgeHandle.sessionIngressUrl)
               : undefined
-            setAppState((prev_17) => {
-              if (prev_17.replBridgeConnected && prev_17.replBridgeSessionUrl === url) {
-                return prev_17
+            setAppState((prevState) => {
+              if (prevState.replBridgeConnected && prevState.replBridgeSessionUrl === url) {
+                return prevState
               }
               return {
-                ...prev_17,
+                ...prevState,
                 replBridgeConnected: true,
                 replBridgeSessionUrl: url,
-                replBridgeConnectUrl: connectUrl_0 ?? prev_17.replBridgeConnectUrl,
-                replBridgeEnvironmentId: handle_0.environmentId,
-                replBridgeSessionId: handle_0.bridgeSessionId,
+                replBridgeConnectUrl: connectUrl ?? prevState.replBridgeConnectUrl,
+                replBridgeEnvironmentId: bridgeHandle.environmentId,
+                replBridgeSessionId: bridgeHandle.bridgeSessionId,
                 replBridgeError: undefined,
               }
             })
@@ -679,8 +679,8 @@ export function useReplBridge(
               ? await shouldShowAppUpgradeMessage().catch(() => false)
               : false
             if (cancelled) return
-            setMessages((prev_18) => [
-              ...prev_18,
+            setMessages((prevMessages) => [
+              ...prevMessages,
               createBridgeStatusMessage(
                 url,
                 upgradeNudge
@@ -688,7 +688,7 @@ export function useReplBridge(
                   : undefined,
               ),
             ])
-            logForDebugging(`[bridge:repl] Hook initialized, session=${handle_0.bridgeSessionId}`)
+            logForDebugging(`[bridge:repl] Hook initialized, session=${bridgeHandle.bridgeSessionId}`)
           }
         } catch (err) {
           // 绝不让 REPL 崩溃——在 UI 中暴露错误。
@@ -704,25 +704,25 @@ export function useReplBridge(
           )
           clearTimeout(failureTimeoutRef.current)
           notifyBridgeFailed(errMsg)
-          setAppState((prev_0) => ({
-            ...prev_0,
+          setAppState((prevState) => ({
+            ...prevState,
             replBridgeError: errMsg,
           }))
           failureTimeoutRef.current = setTimeout(() => {
             if (cancelled) return
             failureTimeoutRef.current = undefined
-            setAppState((prev_1) => {
-              if (!prev_1.replBridgeError) return prev_1
+            setAppState((prevState) => {
+              if (!prevState.replBridgeError) return prevState
               return {
-                ...prev_1,
+                ...prevState,
                 replBridgeEnabled: false,
                 replBridgeError: undefined,
               }
             })
           }, BRIDGE_FAILURE_DISMISS_MS)
           if (!outboundOnly) {
-            setMessages((prev_2) => [
-              ...prev_2,
+            setMessages((prevMessages) => [
+              ...prevMessages,
               createSystemMessage(`Remote Control failed to connect: ${errMsg}`, 'error'),
             ])
           }
@@ -740,16 +740,16 @@ export function useReplBridge(
           handleRef.current = null
           setReplBridgeHandle(null)
         }
-        setAppState((prev_19) => {
+        setAppState((prevState) => {
           if (
-            !prev_19.replBridgeConnected &&
-            !prev_19.replBridgeSessionActive &&
-            !prev_19.replBridgeError
+            !prevState.replBridgeConnected &&
+            !prevState.replBridgeSessionActive &&
+            !prevState.replBridgeError
           ) {
-            return prev_19
+            return prevState
           }
           return {
-            ...prev_19,
+            ...prevState,
             replBridgeConnected: false,
             replBridgeSessionActive: false,
             replBridgeReconnecting: false,
@@ -773,8 +773,8 @@ export function useReplBridge(
     // 正向 feature() 守卫——参见第一个 useEffect 注释
     if (feature('BRIDGE_MODE')) {
       if (!replBridgeConnected) return
-      const handle_1 = handleRef.current
-      if (!handle_1) return
+      const bridgeHandle = handleRef.current
+      if (!bridgeHandle) return
 
       // 如果消息被压缩（数组缩短），钳位索引。
       // 压缩后 ref 可能超过 messages.length，如果不钳位则不会转发新消息。
@@ -788,19 +788,19 @@ export function useReplBridge(
       // 收集上次写入以来的新消息
       const newMessages: Message[] = []
       for (let i = startIndex; i < messages.length; i++) {
-        const msg_1 = messages[i]
+        const message = messages[i]
         if (
-          msg_1 &&
-          (msg_1.type === 'user' ||
-            msg_1.type === 'assistant' ||
-            (msg_1.type === 'system' && msg_1.subtype === 'local_command'))
+          message &&
+          (message.type === 'user' ||
+            message.type === 'assistant' ||
+            (message.type === 'system' && message.subtype === 'local_command'))
         ) {
-          newMessages.push(msg_1)
+          newMessages.push(message)
         }
       }
       lastWrittenIndexRef.current = messages.length
       if (newMessages.length > 0) {
-        handle_1.writeMessages(newMessages)
+        bridgeHandle.writeMessages(newMessages)
       }
     }
   }, [messages, replBridgeConnected])

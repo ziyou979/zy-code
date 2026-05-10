@@ -54,7 +54,7 @@ export function SelectHookMode({
       </Dialog>
     )
   }
-  const t2 = hooksForSelectedMatcher.map((hook, index) => ({
+  const hookOptions = hooksForSelectedMatcher.map((hook, index) => ({
     label: `[${hook.config.type}] ${getHookDisplayText(hook.config)}`,
     value: index.toString(),
     description:
@@ -67,7 +67,7 @@ export function SelectHookMode({
       {
         <Box flexDirection="column">
           <Select
-            options={t2}
+            options={hookOptions}
             onChange={(value) => {
               const index_0 = parseInt(value, 10)
               const hook_0 = hooksForSelectedMatcher[index_0]

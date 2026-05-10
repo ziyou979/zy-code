@@ -177,19 +177,19 @@ export function DiscoverPlugins({
           setInstallCounts(counts)
           if (counts) {
             // Sort by install count (descending), then alphabetically
-            uninstalledPlugins.sort((a_0, b_0) => {
-              const countA = counts.get(a_0.pluginId) ?? 0
-              const countB = counts.get(b_0.pluginId) ?? 0
+            uninstalledPlugins.sort((pluginA, pluginB) => {
+              const countA = counts.get(pluginA.pluginId) ?? 0
+              const countB = counts.get(pluginB.pluginId) ?? 0
               if (countA !== countB) return countB - countA
-              return a_0.entry.name.localeCompare(b_0.entry.name)
+              return pluginA.entry.name.localeCompare(pluginB.entry.name)
             })
           } else {
             // No counts available - sort alphabetically
-            uninstalledPlugins.sort((a_1, b_1) => a_1.entry.name.localeCompare(b_1.entry.name))
+            uninstalledPlugins.sort((pluginA, pluginB) => pluginA.entry.name.localeCompare(pluginB.entry.name))
           }
-        } catch (error_0) {
+        } catch (error) {
           // Log the error, then gracefully degrade to alphabetical sort
-          logForDebugging(`Failed to fetch install counts: ${errorMessage(error_0)}`)
+          logForDebugging(`Failed to fetch install counts: ${errorMessage(error)}`)
           uninstalledPlugins.sort((a, b) => a.entry.name.localeCompare(b.entry.name))
         }
         setAvailablePlugins(uninstalledPlugins)

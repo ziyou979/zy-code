@@ -111,7 +111,7 @@ export function Logo() {
   const agentName = agent ?? agentNameFromSettings
   const modelDisplayName = truncate(fullModelDisplayName, LEFT_PANEL_MAX_WIDTH - 20)
   if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)) {
-    const t15 = isDebugMode() && (
+    const debugInfoSection = isDebugMode() && (
       <Box paddingLeft={2} flexDirection="column">
         <Text color="warning">{tSync('logo.debugModeEnabled')}</Text>
         <Text dimColor={true}>{tSync('logo.loggingTo', { path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath() })}</Text>
@@ -122,7 +122,7 @@ export function Logo() {
         {<CondensedLogo />}
         {<VoiceModeNotice />}
         {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
-        {t15}
+        {debugInfoSection}
         {<EmergencyTip />}
         {process.env.ZY_CODE_TMUX_SESSION && (
           <Box paddingLeft={2} flexDirection="column">
@@ -218,22 +218,19 @@ export function Logo() {
       </>
     )
   }
-  const welcomeMessage_0 = formatWelcomeMessage(username)
+  const welcomeMessage = formatWelcomeMessage(username)
   const modelLine =
     !process.env.IS_DEMO && config.oauthAccount?.organizationName
       ? `${modelDisplayName} · ${providerName} · ${config.oauthAccount.organizationName}`
       : `${modelDisplayName} · ${providerName}`
-  const cwdAvailableWidth_0 = agentName
+  const cwdAvailableWidth = agentName
     ? LEFT_PANEL_MAX_WIDTH - 1 - stringWidth(agentName) - 3
     : LEFT_PANEL_MAX_WIDTH
-  const truncatedCwd_0 = truncatePath(cwd, Math.max(cwdAvailableWidth_0, 10))
-  const cwdLine = agentName ? `@${agentName} · ${truncatedCwd_0}` : truncatedCwd_0
-  const optimalLeftWidth = calculateOptimalLeftWidth(welcomeMessage_0, cwdLine, modelLine)
+  const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10))
+  const cwdLine = agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd
+  const optimalLeftWidth = calculateOptimalLeftWidth(welcomeMessage, cwdLine, modelLine)
   const { leftWidth, rightWidth } = calculateLayoutDimensions(columns, layoutMode, optimalLeftWidth)
-  const T0 = OffscreenFreeze
-  const T1 = Box
-  const T2 = Box
-  const t32 = isDebugMode() && (
+  const debugInfoSection = isDebugMode() && (
     <Box paddingLeft={2} flexDirection="column">
       <Text color="warning">{tSync('logo.debugModeEnabled')}</Text>
       <Text dimColor={true}>{tSync('logo.loggingTo', { path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath() })}</Text>
@@ -242,9 +239,9 @@ export function Logo() {
   return (
     <>
       {
-        <T0>
+        <OffscreenFreeze>
           {
-            <T1
+            <Box
               flexDirection={'column'}
               borderStyle={'round'}
               borderColor={'zy'}
@@ -256,7 +253,7 @@ export function Logo() {
               }}
             >
               {
-                <T2
+                <Box
                   flexDirection={layoutMode === 'horizontal' ? 'row' : 'column'}
                   paddingX={1}
                   gap={1}
@@ -271,7 +268,7 @@ export function Logo() {
                     >
                       {
                         <Box marginTop={1}>
-                          <Text bold={true}>{welcomeMessage_0}</Text>
+                          <Text bold={true}>{welcomeMessage}</Text>
                         </Box>
                       }
                       {<Zy />}
@@ -307,15 +304,15 @@ export function Logo() {
                       maxWidth={rightWidth}
                     />
                   )}
-                </T2>
+                </Box>
               }
-            </T1>
+            </Box>
           }
-        </T0>
+        </OffscreenFreeze>
       }
       {<VoiceModeNotice />}
       {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
-      {t32}
+      {debugInfoSection}
       {<EmergencyTip />}
       {process.env.ZY_CODE_TMUX_SESSION && (
         <Box paddingLeft={2} flexDirection="column">

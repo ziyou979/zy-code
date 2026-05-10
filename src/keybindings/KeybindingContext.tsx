@@ -154,8 +154,8 @@ export function useOptionalKeybindingContext() {
  * }
  * ```
  */
-export function useRegisterKeybindingContext(context, t0) {
-  const isActive = t0 === undefined ? true : t0
+export function useRegisterKeybindingContext(context, isActiveArg) {
+  const isActive = isActiveArg === undefined ? true : isActiveArg
   const keybindingContext = useOptionalKeybindingContext()
   useLayoutEffect(() => {
     if (!keybindingContext || !isActive) {

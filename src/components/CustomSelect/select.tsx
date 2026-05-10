@@ -231,22 +231,22 @@ export function Select({
     })
     return initialMap
   })
-  const t8 = new Map()
-  const lastInitialValues = useRef(t8)
+  const emptyMap = new Map()
+  const lastInitialValues = useRef(emptyMap)
   useEffect(() => {
-    for (const option_0 of options) {
-      if (option_0.type === 'input' && option_0.initialValue !== undefined) {
-        const lastInitial = lastInitialValues.current.get(option_0.value) ?? ''
-        const currentValue = inputValues.get(option_0.value) ?? ''
-        const newInitial = option_0.initialValue
+    for (const option of options) {
+      if (option.type === 'input' && option.initialValue !== undefined) {
+        const lastInitial = lastInitialValues.current.get(option.value) ?? ''
+        const currentValue = inputValues.get(option.value) ?? ''
+        const newInitial = option.initialValue
         if (newInitial !== lastInitial && currentValue === lastInitial) {
           setInputValues((prev) => {
             const next = new Map(prev)
-            next.set(option_0.value, newInitial)
+            next.set(option.value, newInitial)
             return next
           })
         }
-        lastInitialValues.current.set(option_0.value, newInitial)
+        lastInitialValues.current.set(option.value, newInitial)
       }
     }
   }, [options, inputValues])
@@ -273,11 +273,11 @@ export function Select({
     onEnterImageSelection: () => {
       if (
         pastedContents &&
-        Object.values(pastedContents).some((c_0: any) => (c_0 as any).type === 'image')
+        Object.values(pastedContents).some((content: any) => (content as any).type === 'image')
       ) {
         const imageCount = count(
           Object.values(pastedContents),
-          (c: any) => (c as any).type === 'image',
+          (content: any) => (content as any).type === 'image',
         )
         setImagesSelected(true)
         setSelectedImageIndex(imageCount - 1)
@@ -304,22 +304,22 @@ export function Select({
     const maxIndexWidth = toStringResult.length
     earlyReturn = (
       <Box {...styles.container()}>
-        {state.visibleOptions.map((option_1, index) => {
-          const isFirstVisibleOption = option_1.index === state.visibleFromIndex
-          const isLastVisibleOption = option_1.index === state.visibleToIndex - 1
+        {state.visibleOptions.map((option, index) => {
+          const isFirstVisibleOption = option.index === state.visibleFromIndex
+          const isLastVisibleOption = option.index === state.visibleToIndex - 1
           const areMoreOptionsBelow = state.visibleToIndex < options.length
           const areMoreOptionsAbove = state.visibleFromIndex > 0
           const i = state.visibleFromIndex + index + 1
-          const isFocused = !isDisabled && state.focusedValue === option_1.value
-          const isSelected = state.value === option_1.value
-          if (option_1.type === 'input') {
-            const inputValue = inputValues.has(option_1.value)
-              ? inputValues.get(option_1.value)
-              : option_1.initialValue || ''
+          const isFocused = !isDisabled && state.focusedValue === option.value
+          const isSelected = state.value === option.value
+          if (option.type === 'input') {
+            const inputValue = inputValues.has(option.value)
+              ? inputValues.get(option.value)
+              : option.initialValue || ''
             return (
               <SelectInputOption
-                key={String(option_1.value)}
-                option={option_1}
+                key={String(option.value)}
+                option={option}
                 isFocused={isFocused}
                 isSelected={isSelected}
                 shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
@@ -328,18 +328,18 @@ export function Select({
                 index={i}
                 inputValue={inputValue}
                 onInputChange={(value) => {
-                  setInputValues((prev_0) => {
-                    const next_0 = new Map(prev_0)
-                    next_0.set(option_1.value, value)
-                    return next_0
+                  setInputValues((prev) => {
+                    const next = new Map(prev)
+                    next.set(option.value, value)
+                    return next
                   })
                 }}
-                onSubmit={(value_0) => {
+                onSubmit={(inputValue) => {
                   const hasImageAttachments =
                     pastedContents &&
-                    Object.values(pastedContents).some((c_1: any) => (c_1 as any).type === 'image')
-                  if (value_0.trim() || hasImageAttachments || option_1.allowEmptySubmitToCancel) {
-                    onChange?.(option_1.value)
+                    Object.values(pastedContents).some((content: any) => (content as any).type === 'image')
+                  if (inputValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
+                    onChange?.(option.value)
                   } else {
                     onCancel?.()
                   }
@@ -348,7 +348,7 @@ export function Select({
                 layout="expanded"
                 showLabel={inlineDescriptions}
                 onOpenEditor={onOpenEditor}
-                resetCursorOnUpdate={option_1.resetCursorOnUpdate}
+                resetCursorOnUpdate={option.resetCursorOnUpdate}
                 onImagePaste={onImagePaste}
                 pastedContents={pastedContents}
                 onRemoveImage={onRemoveImage}
@@ -359,23 +359,23 @@ export function Select({
               />
             )
           }
-          let label = option_1.label
+          let label = option.label
           if (
-            typeof option_1.label === 'string' &&
+            typeof option.label === 'string' &&
             highlightText &&
-            option_1.label.includes(highlightText)
+            option.label.includes(highlightText)
           ) {
-            const labelText = option_1.label
-            const index_0 = labelText.indexOf(highlightText)
+            const labelText = option.label
+            const displayIndex = labelText.indexOf(highlightText)
             label = (
               <>
-                {labelText.slice(0, index_0)}
+                {labelText.slice(0, displayIndex)}
                 <Text {...styles.highlightedText()}>{highlightText}</Text>
-                {labelText.slice(index_0 + highlightText.length)}
+                {labelText.slice(displayIndex + highlightText.length)}
               </>
             )
           }
-          const isOptionDisabled = option_1.disabled === true
+          const isOptionDisabled = option.disabled === true
           const optionColor = isOptionDisabled
             ? undefined
             : isSelected
@@ -384,7 +384,7 @@ export function Select({
                 ? 'suggestion'
                 : undefined
           return (
-            <Box key={String(option_1.value)} flexDirection="column" flexShrink={0}>
+            <Box key={String(option.value)} flexDirection="column" flexShrink={0}>
               <SelectOption
                 isFocused={isFocused}
                 isSelected={isSelected}
@@ -395,13 +395,13 @@ export function Select({
                   {label}
                 </Text>
               </SelectOption>
-              {option_1.description && (
+              {option.description && (
                 <Box paddingLeft={2}>
                   <Text
-                    dimColor={isOptionDisabled || option_1.dimDescription !== false}
+                    dimColor={isOptionDisabled || option.dimDescription !== false}
                     color={optionColor}
                   >
-                    <Ansi>{option_1.description}</Ansi>
+                    <Ansi>{option.description}</Ansi>
                   </Text>
                 </Box>
               )}
@@ -548,41 +548,41 @@ export function Select({
     const hasDescriptions =
       !inlineDescriptions &&
       !hasInputOptions &&
-      state.visibleOptions.some((opt_0) => opt_0.description)
-    const optionData = state.visibleOptions.map((option_3, index_3) => {
-      const isFirstVisibleOption_1 = option_3.index === state.visibleFromIndex
-      const isLastVisibleOption_1 = option_3.index === state.visibleToIndex - 1
-      const areMoreOptionsBelow_1 = state.visibleToIndex < options.length
-      const areMoreOptionsAbove_1 = state.visibleFromIndex > 0
-      const i_1 = state.visibleFromIndex + index_3 + 1
-      const isFocused_1 = !isDisabled && state.focusedValue === option_3.value
-      const isSelected_1 = state.value === option_3.value
-      const isOptionDisabled_1 = option_3.disabled === true
-      let label_1 = option_3.label
+      state.visibleOptions.some((opt) => opt.description)
+    const optionData = state.visibleOptions.map((option, index) => {
+      const isFirstVisibleOption = option.index === state.visibleFromIndex
+      const isLastVisibleOption = option.index === state.visibleToIndex - 1
+      const areMoreOptionsBelow = state.visibleToIndex < options.length
+      const areMoreOptionsAbove = state.visibleFromIndex > 0
+      const displayIndex = state.visibleFromIndex + index + 1
+      const isFocused = !isDisabled && state.focusedValue === option.value
+      const isSelected = state.value === option.value
+      const isOptionDisabled = option.disabled === true
+      let renderedLabel = option.label
       if (
-        typeof option_3.label === 'string' &&
+        typeof option.label === 'string' &&
         highlightText &&
-        option_3.label.includes(highlightText)
+        option.label.includes(highlightText)
       ) {
-        const labelText_1 = option_3.label
-        const idx = labelText_1.indexOf(highlightText)
-        label_1 = (
+        const labelText = option.label
+        const idx = labelText.indexOf(highlightText)
+        renderedLabel = (
           <>
-            {labelText_1.slice(0, idx)}
+            {labelText.slice(0, idx)}
             <Text {...styles.highlightedText()}>{highlightText}</Text>
-            {labelText_1.slice(idx + highlightText.length)}
+            {labelText.slice(idx + highlightText.length)}
           </>
         )
       }
       return {
-        option: option_3,
-        index: i_1,
-        label: label_1,
-        isFocused: isFocused_1,
-        isSelected: isSelected_1,
-        isOptionDisabled: isOptionDisabled_1,
-        shouldShowDownArrow: areMoreOptionsBelow_1 && isLastVisibleOption_1,
-        shouldShowUpArrow: areMoreOptionsAbove_1 && isFirstVisibleOption_1,
+        option: option,
+        index: displayIndex,
+        label: renderedLabel,
+        isFocused: isFocused,
+        isSelected: isSelected,
+        isOptionDisabled: isOptionDisabled,
+        shouldShowDownArrow: areMoreOptionsBelow && isLastVisibleOption,
+        shouldShowUpArrow: areMoreOptionsAbove && isFirstVisibleOption,
       }
     })
     if (hasDescriptions) {
@@ -599,63 +599,63 @@ export function Select({
       )
       earlyReturn = (
         <Box {...styles.container()}>
-          {optionData.map((data_0) => {
-            if (data_0.option.type === 'input') {
+          {optionData.map((data) => {
+            if (data.option.type === 'input') {
               return null
             }
-            const labelText_3 = getTextContent(data_0.option.label)
-            const indexWidth_0 = hideIndexes ? 0 : maxIndexWidth_1 + 2
-            const checkmarkWidth_0 = data_0.isSelected ? 2 : 0
-            const currentLabelWidth = 2 + indexWidth_0 + stringWidth(labelText_3) + checkmarkWidth_0
+            const labelText = getTextContent(data.option.label)
+            const indexWidth = hideIndexes ? 0 : maxIndexWidth_1 + 2
+            const checkmarkWidth = data.isSelected ? 2 : 0
+            const currentLabelWidth = 2 + indexWidth + stringWidth(labelText) + checkmarkWidth
             const padding = maxLabelWidth - currentLabelWidth
             return (
-              <TwoColumnRow key={String(data_0.option.value)} isFocused={data_0.isFocused}>
+              <TwoColumnRow key={String(data.option.value)} isFocused={data.isFocused}>
                 <Box flexDirection="row" flexShrink={0}>
-                  {data_0.isFocused ? (
+                  {data.isFocused ? (
                     <Text color="suggestion">{figures.pointer}</Text>
-                  ) : data_0.shouldShowDownArrow ? (
+                  ) : data.shouldShowDownArrow ? (
                     <Text dimColor={true}>{figures.arrowDown}</Text>
-                  ) : data_0.shouldShowUpArrow ? (
+                  ) : data.shouldShowUpArrow ? (
                     <Text dimColor={true}>{figures.arrowUp}</Text>
                   ) : (
                     <Text> </Text>
                   )}
                   <Text> </Text>
                   <Text
-                    dimColor={data_0.isOptionDisabled}
+                    dimColor={data.isOptionDisabled}
                     color={
-                      data_0.isOptionDisabled
+                      data.isOptionDisabled
                         ? undefined
-                        : data_0.isSelected
+                        : data.isSelected
                           ? 'success'
-                          : data_0.isFocused
+                          : data.isFocused
                             ? 'suggestion'
                             : undefined
                     }
                   >
                     {!hideIndexes && (
-                      <Text dimColor={true}>{`${data_0.index}.`.padEnd(maxIndexWidth_1 + 2)}</Text>
+                      <Text dimColor={true}>{`${data.index}.`.padEnd(maxIndexWidth_1 + 2)}</Text>
                     )}
-                    {data_0.label}
+                    {data.label}
                   </Text>
-                  {data_0.isSelected && <Text color="success"> {figures.tick}</Text>}
+                  {data.isSelected && <Text color="success"> {figures.tick}</Text>}
                   {padding > 0 && <Text>{' '.repeat(padding)}</Text>}
                 </Box>
                 <Box flexGrow={1} marginLeft={2}>
                   <Text
                     wrap="wrap"
-                    dimColor={data_0.isOptionDisabled || data_0.option.dimDescription !== false}
+                    dimColor={data.isOptionDisabled || data.option.dimDescription !== false}
                     color={
-                      data_0.isOptionDisabled
+                      data.isOptionDisabled
                         ? undefined
-                        : data_0.isSelected
+                        : data.isSelected
                           ? 'success'
-                          : data_0.isFocused
+                          : data.isFocused
                             ? 'suggestion'
                             : undefined
                     }
                   >
-                    <Ansi>{data_0.option.description || ' '}</Ansi>
+                    <Ansi>{data.option.description || ' '}</Ansi>
                   </Text>
                 </Box>
               </TwoColumnRow>
@@ -666,42 +666,42 @@ export function Select({
     } else {
       BoxComponent = Box
       containerResult = styles.container()
-      mappedItems = state.visibleOptions.map((option_4, index_4) => {
-        if (option_4.type === 'input') {
-          const inputValue_1 = inputValues.has(option_4.value)
-            ? inputValues.get(option_4.value)
-            : option_4.initialValue || ''
-          const isFirstVisibleOption_2 = option_4.index === state.visibleFromIndex
-          const isLastVisibleOption_2 = option_4.index === state.visibleToIndex - 1
-          const areMoreOptionsBelow_2 = state.visibleToIndex < options.length
-          const areMoreOptionsAbove_2 = state.visibleFromIndex > 0
-          const i_2 = state.visibleFromIndex + index_4 + 1
-          const isFocused_2 = !isDisabled && state.focusedValue === option_4.value
-          const isSelected_2 = state.value === option_4.value
+      mappedItems = state.visibleOptions.map((option, index) => {
+        if (option.type === 'input') {
+          const inputValue = inputValues.has(option.value)
+            ? inputValues.get(option.value)
+            : option.initialValue || ''
+          const isFirstVisibleOption = option.index === state.visibleFromIndex
+          const isLastVisibleOption = option.index === state.visibleToIndex - 1
+          const areMoreOptionsBelow = state.visibleToIndex < options.length
+          const areMoreOptionsAbove = state.visibleFromIndex > 0
+          const displayIndex = state.visibleFromIndex + index + 1
+          const isFocused = !isDisabled && state.focusedValue === option.value
+          const isSelected = state.value === option.value
           return (
             <SelectInputOption
-              key={String(option_4.value)}
-              option={option_4}
-              isFocused={isFocused_2}
-              isSelected={isSelected_2}
-              shouldShowDownArrow={areMoreOptionsBelow_2 && isLastVisibleOption_2}
-              shouldShowUpArrow={areMoreOptionsAbove_2 && isFirstVisibleOption_2}
+              key={String(option.value)}
+              option={option}
+              isFocused={isFocused}
+              isSelected={isSelected}
+              shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
+              shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
               maxIndexWidth={maxIndexWidth_1}
-              index={i_2}
-              inputValue={inputValue_1}
-              onInputChange={(value_3) => {
-                setInputValues((prev_2) => {
-                  const next_2 = new Map(prev_2)
-                  next_2.set(option_4.value, value_3)
-                  return next_2
+              index={displayIndex}
+              inputValue={inputValue}
+              onInputChange={(value) => {
+                setInputValues((prev) => {
+                  const next = new Map(prev)
+                  next.set(option.value, value)
+                  return next
                 })
               }}
-              onSubmit={(value_4) => {
-                const hasImageAttachments_1 =
+              onSubmit={(newValue) => {
+                const hasImageAttachments =
                   pastedContents &&
-                  Object.values(pastedContents).some((c_3: any) => (c_3 as any).type === 'image')
-                if (value_4.trim() || hasImageAttachments_1 || option_4.allowEmptySubmitToCancel) {
-                  onChange?.(option_4.value)
+                  Object.values(pastedContents).some((content: any) => (content as any).type === 'image')
+                if (newValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
+                  onChange?.(option.value)
                 } else {
                   onCancel?.()
                 }
@@ -710,7 +710,7 @@ export function Select({
               layout="compact"
               showLabel={inlineDescriptions}
               onOpenEditor={onOpenEditor}
-              resetCursorOnUpdate={option_4.resetCursorOnUpdate}
+              resetCursorOnUpdate={option.resetCursorOnUpdate}
               onImagePaste={onImagePaste}
               pastedContents={pastedContents}
               onRemoveImage={onRemoveImage}
@@ -721,77 +721,77 @@ export function Select({
             />
           )
         }
-        let label_2 = option_4.label
+        let renderedLabel = option.label
         if (
-          typeof option_4.label === 'string' &&
+          typeof option.label === 'string' &&
           highlightText &&
-          option_4.label.includes(highlightText)
+          option.label.includes(highlightText)
         ) {
-          const labelText_4 = option_4.label
-          const index_5 = labelText_4.indexOf(highlightText)
-          label_2 = (
+          const labelText = option.label
+          const displayIndex = labelText.indexOf(highlightText)
+          renderedLabel = (
             <>
-              {labelText_4.slice(0, index_5)}
+              {labelText.slice(0, displayIndex)}
               <Text {...styles.highlightedText()}>{highlightText}</Text>
-              {labelText_4.slice(index_5 + highlightText.length)}
+              {labelText.slice(displayIndex + highlightText.length)}
             </>
           )
         }
-        const isFirstVisibleOption_3 = option_4.index === state.visibleFromIndex
-        const isLastVisibleOption_3 = option_4.index === state.visibleToIndex - 1
-        const areMoreOptionsBelow_3 = state.visibleToIndex < options.length
-        const areMoreOptionsAbove_3 = state.visibleFromIndex > 0
-        const i_3 = state.visibleFromIndex + index_4 + 1
-        const isFocused_3 = !isDisabled && state.focusedValue === option_4.value
-        const isSelected_3 = state.value === option_4.value
-        const isOptionDisabled_2 = option_4.disabled === true
+        const isFirstVisibleOption = option.index === state.visibleFromIndex
+        const isLastVisibleOption = option.index === state.visibleToIndex - 1
+        const areMoreOptionsBelow = state.visibleToIndex < options.length
+        const areMoreOptionsAbove = state.visibleFromIndex > 0
+        const displayIndex = state.visibleFromIndex + index + 1
+        const isFocused = !isDisabled && state.focusedValue === option.value
+        const isSelected = state.value === option.value
+        const isOptionDisabled = option.disabled === true
         return (
           <SelectOption
-            key={String(option_4.value)}
-            isFocused={isFocused_3}
-            isSelected={isSelected_3}
-            shouldShowDownArrow={areMoreOptionsBelow_3 && isLastVisibleOption_3}
-            shouldShowUpArrow={areMoreOptionsAbove_3 && isFirstVisibleOption_3}
+            key={String(option.value)}
+            isFocused={isFocused}
+            isSelected={isSelected}
+            shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
+            shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
           >
             <Box flexDirection="row" flexShrink={0}>
-              {!hideIndexes && <Text dimColor={true}>{`${i_3}.`.padEnd(maxIndexWidth_1 + 2)}</Text>}
+              {!hideIndexes && <Text dimColor={true}>{`${displayIndex}.`.padEnd(maxIndexWidth_1 + 2)}</Text>}
               <Text
-                dimColor={isOptionDisabled_2}
+                dimColor={isOptionDisabled}
                 color={
-                  isOptionDisabled_2
+                  isOptionDisabled
                     ? undefined
-                    : isSelected_3
+                    : isSelected
                       ? 'success'
-                      : isFocused_3
+                      : isFocused
                         ? 'suggestion'
                         : undefined
                 }
               >
-                {label_2}
-                {inlineDescriptions && option_4.description && (
-                  <Text dimColor={isOptionDisabled_2 || option_4.dimDescription !== false}>
+                {renderedLabel}
+                {inlineDescriptions && option.description && (
+                  <Text dimColor={isOptionDisabled || option.dimDescription !== false}>
                     {' '}
-                    {option_4.description}
+                    {option.description}
                   </Text>
                 )}
               </Text>
             </Box>
-            {!inlineDescriptions && option_4.description && (
+            {!inlineDescriptions && option.description && (
               <Box flexShrink={99} marginLeft={2}>
                 <Text
                   wrap="wrap-trim"
-                  dimColor={isOptionDisabled_2 || option_4.dimDescription !== false}
+                  dimColor={isOptionDisabled || option.dimDescription !== false}
                   color={
-                    isOptionDisabled_2
+                    isOptionDisabled
                       ? undefined
-                      : isSelected_3
+                      : isSelected
                         ? 'success'
-                        : isFocused_3
+                        : isFocused
                           ? 'suggestion'
                           : undefined
                   }
                 >
-                  <Ansi>{option_4.description}</Ansi>
+                  <Ansi>{option.description}</Ansi>
                 </Text>
               </Box>
             )}

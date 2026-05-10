@@ -69,10 +69,10 @@ export function InProcessTeammateDetailDialog({
   const tokenCount = teammate.result?.totalTokens ?? teammate.progress?.tokenCount
   const toolUseCount = teammate.result?.totalToolUseCount ?? teammate.progress?.toolUseCount
   const displayPrompt = truncateToWidth(teammate.prompt, 300)
-  const t7 = toInkColor(teammate.identity.color)
+  const teammateColor = toInkColor(teammate.identity.color)
   const title = (
     <Text>
-      {<Text color={t7}>@{teammate.identity.agentName}</Text>}
+      {<Text color={teammateColor}>@{teammate.identity.agentName}</Text>}
       {activity && <Text dimColor={true}> ({activity})</Text>}
     </Text>
   )

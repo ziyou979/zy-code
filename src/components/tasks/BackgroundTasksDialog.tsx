@@ -953,8 +953,8 @@ function TeammateTaskGroups({ teammateTasks, currentSelectionId }) {
   const teamEntries = [...teams.entries()]
   return (
     <>
-      {teamEntries.map((t2) => {
-        const [teamName_0, items] = t2
+      {teamEntries.map((entry) => {
+        const [teamName_0, items] = entry
         const memberCount = items.length + leaderItems.length
         return (
           <Box key={teamName_0} flexDirection="column">

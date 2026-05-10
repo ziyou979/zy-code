@@ -28,8 +28,8 @@ const MAX_COMMAND_DISPLAY_CHARS = 160
 
 // 显示后台提示并处理 ctrl+b 的简单组件
 // 按下 ctrl+b 时，将所有运行中的前台命令置于后台
-export function BackgroundHint(t0) {
-  const { onBackground } = t0 === undefined ? {} : t0
+export function BackgroundHint(props) {
+  const { onBackground } = props === undefined ? {} : props
   const store = useAppStateStore()
   const setAppState = useSetAppState()
   const handleBackground = () => {

@@ -219,7 +219,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
   }
   switch (modeState.mode) {
     case 'select-event': {
-      const t21 = (event_2) => {
+      const handleSelectEvent = (event_2) => {
         if (getMatcherMetadata(event_2, combinedToolNames) !== undefined) {
           setModeState({
             mode: 'select-matcher',
@@ -233,58 +233,57 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
           })
         }
       }
-      let t22
-      t22 = (
+      let eventMode
+      eventMode = (
         <SelectEventMode
           hookEventMetadata={hookEventMetadata}
           hooksByEvent={hooksByEvent}
           totalHooksCount={totalHooksCount}
           restrictedByPolicy={restrictedByPolicy}
-          onSelectEvent={t21}
+          onSelectEvent={handleSelectEvent}
           onCancel={handleExit}
         />
       )
-      return t22
+      return eventMode
     }
     case 'select-matcher': {
-      const t21 = hookEventMetadata[modeState.event]
-      const t22 = (matcher) => {
+      const eventMetadata = hookEventMetadata[modeState.event]
+      const handleSelectMatcher = (matcher) => {
         setModeState({
           mode: 'select-hook',
           event: modeState.event,
           matcher,
         })
       }
-      const t23 = () => {
+      const handleBackToEvents = () => {
         setModeState({
           mode: 'select-event',
         })
       }
-      let pluralResult
-      pluralResult = (
+      let matcherMode
+      matcherMode = (
         <SelectMatcherMode
           selectedEvent={modeState.event}
+          eventDescription={eventMetadata.description}
           matchersForSelectedEvent={sortedMatchersForSelectedEvent}
           hooksByEventAndMatcher={hooksByEventAndMatcher}
-          eventDescription={t21.description}
-          onSelect={t22}
-          onCancel={t23}
+          onSelect={handleSelectMatcher}
+          onCancel={handleBackToEvents}
         />
       )
-      return pluralResult
+      return matcherMode
     }
     case 'select-hook': {
-      const t21 = hookEventMetadata[modeState.event]
-      let t22
-      t22 = (hook_1) => {
+      const eventMetadata_0 = hookEventMetadata[modeState.event]
+      const hooksForMatcher = getHooksForMatcher(hooksByEventAndMatcher, modeState.event, modeState.matcher)
+      const handleSelectHook = (hook) => {
         setModeState({
           mode: 'view-hook',
           event: modeState.event,
-          hook: hook_1,
+          hook,
         })
       }
-      let t23
-      t23 = () => {
+      const handleBackToMatchers = () => {
         if (getMatcherMetadata(modeState.event, combinedToolNames) !== undefined) {
           setModeState({
             mode: 'select-matcher',
@@ -296,38 +295,38 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
           })
         }
       }
-      let pluralResult
-      pluralResult = (
+      let hookMode
+      hookMode = (
         <SelectHookMode
           selectedEvent={modeState.event}
           selectedMatcher={modeState.matcher}
-          hooksForSelectedMatcher={hooksForSelectedMatcher}
-          hookEventMetadata={t21}
-          onSelect={t22}
-          onCancel={t23}
+          hooksForSelectedMatcher={hooksForMatcher}
+          hookEventMetadata={eventMetadata_0}
+          onSelect={handleSelectHook}
+          onCancel={handleBackToMatchers}
         />
       )
-      return pluralResult
+      return hookMode
     }
     case 'view-hook': {
-      const t21 = modeState.hook
-      let t22
-      t22 = getMatcherMetadata(modeState.event, combinedToolNames)
-      const t23 = t22 !== undefined
-      let pluralResult
-      pluralResult = () => {
-        const { event: event_1, hook: hook_0 } = modeState
+      const handleBackToHooks = () => {
         setModeState({
           mode: 'select-hook',
-          event: event_1,
-          matcher: hook_0.matcher || '',
+          event: modeState.hook.event,
+          matcher: modeState.hook.matcher || '',
         })
       }
-      let pluralResult2
-      pluralResult2 = (
-        <ViewHookMode selectedHook={t21} eventSupportsMatcher={t23} onCancel={pluralResult} />
+      let viewHookMode
+      viewHookMode = (
+        <ViewHookMode
+          selectedHook={modeState.hook}
+          eventSupportsMatcher={
+            getMatcherMetadata(modeState.hook.event, combinedToolNames) !== undefined
+          }
+          onCancel={handleBackToHooks}
+        />
       )
-      return pluralResult2
+      return viewHookMode
     }
   }
 }

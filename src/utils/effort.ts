@@ -153,19 +153,6 @@ export function getDisplayedEffortLevel(
   return convertEffortValueToLevel(resolved)
 }
 
-/**
- * 构建显示在 Logo/Spinner 中的 ` with {level} effort` 后缀。
- * 当用户未显式设置 effort 值时返回空字符串。
- * 委托给 resolveAppliedEffort()，以确保显示的级别与
- * API 实际接收的值一致（包括非 Opus 模型的 max→high 降级）。
- */
-export function getEffortSuffix(model: string, effortValue: EffortValue | undefined): string {
-  if (effortValue === undefined) return ''
-  const resolved = resolveAppliedEffort(model, effortValue)
-  if (resolved === undefined) return ''
-  return ` with ${convertEffortValueToLevel(resolved)} effort`
-}
-
 export function isValidNumericEffort(value: number): boolean {
   return Number.isInteger(value)
 }

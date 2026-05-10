@@ -17,7 +17,7 @@ function OrderedListComponent({ children }: OrderedListProps) {
     numberOfItems++
   }
   const maxMarkerWidth = String(numberOfItems).length
-  const t1 = React.Children.map(children, (child_0, index) => {
+  const mappedChildren = React.Children.map(children, (child_0, index) => {
     if (!isValidElement(child_0) || child_0.type !== OrderedListItem) {
       return child_0
     }
@@ -39,7 +39,7 @@ function OrderedListComponent({ children }: OrderedListProps) {
       </OrderedListContext.Provider>
     )
   })
-  return <Box flexDirection="column">{t1}</Box>
+  return <Box flexDirection="column">{mappedChildren}</Box>
 }
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects

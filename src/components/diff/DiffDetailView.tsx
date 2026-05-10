@@ -40,9 +40,9 @@ export function DiffDetailView({
   } else {
     const fullPath = resolve(getCwd(), filePath)
     const content = readFileSafe(fullPath)
-    const t2 = content?.split('\n')[0] ?? null
+    const firstLineContent = content?.split('\n')[0] ?? null
     config = {
-      firstLine: t2,
+      firstLine: firstLineContent,
       fileContent: content ?? undefined,
     }
   }

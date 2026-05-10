@@ -12,7 +12,7 @@ export function WarningsStep({ warnings, onContinue }: WarningsStepProps) {
   useKeybinding('confirm:yes', onContinue, {
     context: 'Confirmation',
   })
-  const t3 = warnings.map((warning, index) => (
+  const warningElements = warnings.map((warning, index) => (
     <Box key={index} flexDirection="column" marginBottom={1}>
       <Text color="warning" bold={true}>
         {warning.title}
@@ -38,7 +38,7 @@ export function WarningsStep({ warnings, onContinue }: WarningsStepProps) {
             <Text dimColor={true}>We found some potential issues, but you can continue anyway</Text>
           </Box>
         }
-        {t3}
+        {warningElements}
         {
           <Box marginTop={1}>
             <Text bold={true} color="permission">

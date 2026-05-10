@@ -43,8 +43,8 @@ export function CheckExistingSecretStep({
       isActive: !useExistingSecret,
     },
   )
-  const t11 = useExistingSecret ? color('success', theme)('> ') : '  '
-  const t13 = !useExistingSecret ? color('success', theme)('> ') : '  '
+  const existingPrefix = useExistingSecret ? color('success', theme)('> ') : '  '
+  const newPrefix = !useExistingSecret ? color('success', theme)('> ') : '  '
   return (
     <>
       {
@@ -67,12 +67,12 @@ export function CheckExistingSecretStep({
           }
           {
             <Box marginBottom={1}>
-              <Text>{t11}Use the existing API key</Text>
+              <Text>{existingPrefix}Use the existing API key</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text>{t13}Create a new secret with a different name</Text>
+              <Text>{newPrefix}Create a new secret with a different name</Text>
             </Box>
           }
           {!useExistingSecret && (

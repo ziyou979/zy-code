@@ -230,8 +230,8 @@ export function ResumeConversation({
           /* eslint-enable @typescript-eslint/no-require-imports */
           getAgentDefinitionsWithOverrides.cache.clear?.()
           const freshAgentDefs = await getAgentDefinitionsWithOverrides(getOriginalCwd())
-          setAppState((prev_0) => ({
-            ...prev_0,
+          setAppState((prevState) => ({
+            ...prevState,
             agentDefinitions: {
               ...freshAgentDefs,
               allAgents: freshAgentDefs.allAgents,
@@ -257,8 +257,8 @@ export function ResumeConversation({
         mainThreadAgentDefinition,
         agentDefinitions,
       )
-      setAppState((prev_1) => ({
-        ...prev_1,
+      setAppState((prevState) => ({
+        ...prevState,
         agent: resolvedAgentDef?.agentType,
       }))
       if (feature('COORDINATOR_MODE')) {
@@ -274,8 +274,8 @@ export function ResumeConversation({
         result_3.agentColor,
       )
       if (standaloneAgentContext) {
-        setAppState((prev_2) => ({
-          ...prev_2,
+        setAppState((prevState) => ({
+          ...prevState,
           standaloneAgentContext,
         }))
       }

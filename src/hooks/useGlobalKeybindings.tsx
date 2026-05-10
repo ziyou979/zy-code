@@ -94,7 +94,7 @@ export function GlobalKeybindingHandlers({
   const isBriefOnly =
     feature('KAIROS') || feature('KAIROS_BRIEF')
       ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-        useAppState((s_0) => s_0.isBriefOnly)
+        useAppState((state) => state.isBriefOnly)
       : false
   const handleToggleTranscript = useCallback(() => {
     if (feature('KAIROS') || feature('KAIROS_BRIEF')) {
@@ -108,10 +108,10 @@ export function GlobalKeybindingHandlers({
         require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
       if (!isBriefEnabled() && isBriefOnly && screen !== 'transcript') {
-        setAppState((prev_0) => {
-          if (!prev_0.isBriefOnly) return prev_0
+        setAppState((prev) => {
+          if (!prev.isBriefOnly) return prev
           return {
-            ...prev_0,
+            ...prev,
             isBriefOnly: false,
           }
         })
@@ -124,7 +124,7 @@ export function GlobalKeybindingHandlers({
       show_all: showAllInTranscript,
       message_count: messageCount,
     })
-    setScreen((s_1) => (s_1 === 'transcript' ? 'prompt' : 'transcript'))
+    setScreen((s) => (s === 'transcript' ? 'prompt' : 'transcript'))
     setShowAllInTranscript(false)
     if (isEnteringTranscript && onEnterTranscript) {
       onEnterTranscript()
@@ -150,7 +150,7 @@ export function GlobalKeybindingHandlers({
       is_expanding: !showAllInTranscript,
       message_count: messageCount,
     })
-    setShowAllInTranscript((prev_1) => !prev_1)
+    setShowAllInTranscript((prev) => !prev)
   }, [showAllInTranscript, setShowAllInTranscript, messageCount])
 
   // 退出转录模式 (ctrl+c 或 escape)
@@ -173,20 +173,20 @@ export function GlobalKeybindingHandlers({
   const handleToggleBrief = useCallback(() => {
     if (feature('KAIROS') || feature('KAIROS_BRIEF')) {
       /* eslint-disable @typescript-eslint/no-require-imports */
-      const { isBriefEnabled: isBriefEnabled_0 } =
+      const { isBriefEnabled: checkBriefEnabled } =
         require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
-      if (!isBriefEnabled_0() && !isBriefOnly) return
+      if (!checkBriefEnabled() && !isBriefOnly) return
       const next = !isBriefOnly
       logEvent('zy_brief_mode_toggled', {
         enabled: next,
         gated: false,
         source: 'keybinding' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-      setAppState((prev_2) => {
-        if (prev_2.isBriefOnly === next) return prev_2
+      setAppState((prev) => {
+        if (prev.isBriefOnly === next) return prev
         return {
-          ...prev_2,
+          ...prev,
           isBriefOnly: next,
         }
       })
@@ -211,9 +211,9 @@ export function GlobalKeybindingHandlers({
   useKeybinding(
     'app:toggleTeammatePreview',
     () => {
-      setAppState((prev_3) => ({
-        ...prev_3,
-        showTeammateMessagePreview: !prev_3.showTeammateMessagePreview,
+      setAppState((prevState) => ({
+        ...prevState,
+        showTeammateMessagePreview: !prevState.showTeammateMessagePreview,
       }))
     },
     {

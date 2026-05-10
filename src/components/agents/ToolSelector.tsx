@@ -237,8 +237,8 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }) {
       tools: toolsByBucket.other,
     },
   ]
-  bucketConfigs.forEach((t11) => {
-    const { id, name: name_1, tools: bucketTools_0 } = t11
+  bucketConfigs.forEach((bucketConfig) => {
+    const { id, name: name_1, tools: bucketTools_0 } = bucketConfig
     if (bucketTools_0.length === 0) {
       return
     }
@@ -273,8 +273,8 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }) {
         action: _temp6,
         isHeader: true,
       })
-      mcpServerBuckets.forEach((t13) => {
-        const { serverName, tools: serverTools } = t13
+      mcpServerBuckets.forEach((serverBucket) => {
+        const { serverName, tools: serverTools } = serverBucket
         const selected_1 = count(serverTools, (tool) => selectedSet.has(tool.name))
         const isFullySelected_0 = selected_1 === serverTools.length
         navigableItems.push({
@@ -343,8 +343,8 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }) {
       }
     }
   }
-  const t18 = navigableItems.slice(1)
-  const t19 = t18.map((item_0, index) => {
+  const visibleItems = navigableItems.slice(1)
+  const renderedItems = visibleItems.map((item_0, index) => {
     const isCurrentlyFocused = index + 1 === focusIndex
     const isToggleButton = item_0.isToggle
     const isHeader = item_0.isHeader
@@ -378,7 +378,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }) {
         </Text>
       }
       {<Divider width={40} />}
-      {t19}
+      {renderedItems}
       {
         <Box marginTop={1} flexDirection="column">
           <Text dimColor={true}>

@@ -217,7 +217,7 @@ export function SelectInputOption({
     }
   }, [isFocused, imagesSelected, onImagesSelectedChange])
   const descriptionPaddingLeft = layout === 'expanded' ? maxIndexWidth + 3 : maxIndexWidth + 4
-  const t30 = `${index}.`.padEnd(maxIndexWidth + 2)
+  const indexLabel = `${index}.`.padEnd(maxIndexWidth + 2)
   return (
     <Box flexDirection="column" flexShrink={0}>
       {
@@ -230,7 +230,7 @@ export function SelectInputOption({
         >
           {
             <Box flexDirection="row" flexShrink={layout === 'compact' ? 0 : undefined}>
-              {<Text dimColor={true}>{t30}</Text>}
+              {<Text dimColor={true}>{indexLabel}</Text>}
               {children}
               {showLabel ? (
                 <>

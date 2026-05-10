@@ -40,24 +40,23 @@ type Props = {
   onKill?: () => void
 }
 
-// Compact one-line summary: tool name + first meaningful string arg.
-// Lighter than tool.renderToolUseMessage (no registry lookup / schema parse).
-// Collapses whitespace so multi-line inputs (e.g. Bash command text)
-// render on one line.
+// 单行摘要：工具名 + 第一个有意义的字符串参数。
+// 比 tool.renderToolUseMessage 更轻量（无需注册表查找 / 模式解析）。
+// 折叠空白字符，使多行输入（如 Bash 命令文本）
+// 渲染为单行。
 export function formatToolUseSummary(name: string, input: unknown): string {
-  // plan_ready phase is only reached via ExitPlanMode tool
+  // plan_ready 阶段仅通过 ExitPlanMode 工具到达
   if (name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
     return tSync('backgroundTasks.reviewPlanOnWeb')
   }
   if (!input || typeof input !== 'object') return name
-  // AskUserQuestion: show the question text as a CTA, not the tool name.
-  // Input shape is {questions: [{question, header, options}]}.
+  // AskUserQuestion：将问题文本显示为 CTA，而非工具名。
+  // 输入格式为 {questions: [{question, header, options}]}。
   if (name === ASK_USER_QUESTION_TOOL_NAME && 'questions' in input) {
     const qs = input.questions
     if (Array.isArray(qs) && qs[0] && typeof qs[0] === 'object') {
-      // Prefer question (full text) over header (max-12-char tag). header
-      // is a required schema field so checking it first would make the
-      // question fallback dead code.
+      // 优先使用 question（完整文本）而非 header（最多 12 字符标签）。header
+      // 是必填的模式字段，因此先检查它会使 question 的 fallback 成为死代码。
       const q =
         'question' in qs[0] && typeof qs[0].question === 'string' && qs[0].question
           ? qs[0].question
@@ -86,7 +85,7 @@ const AGENT_VERB = {
   needs_input: tSync('backgroundTasks.waiting'),
   plan_ready: tSync('backgroundTasks.done'),
 } as const
-function UltraplanSessionDetail({ session, onDone, onBack, onKill }) {
+function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKill }) {
   const running = session.status === 'running' || session.status === 'pending'
   const phase = session.ultraplanPhase
   const statusText = running ? (phase ? PHASE_LABEL[phase] : 'running') : session.status
@@ -109,11 +108,11 @@ function UltraplanSessionDetail({ session, onDone, onBack, onKill }) {
       }
     }
   }
-  const t2 = lastBlock ? formatToolUseSummary(lastBlock.name, lastBlock.input) : null
+  const lastToolSummary = lastBlock ? formatToolUseSummary(lastBlock.name, lastBlock.input) : null
   const { agentsWorking, toolCalls, lastToolCall } = {
     agentsWorking: 1 + spawns,
     toolCalls: calls,
-    lastToolCall: t2,
+    lastToolCall: lastToolSummary,
   }
   const sessionUrl = getRemoteTaskSessionUrl(session.sessionId)
   const goBackOrClose =
@@ -156,8 +155,8 @@ function UltraplanSessionDetail({ session, onDone, onBack, onKill }) {
       </Dialog>
     )
   }
-  const t12 = plural(agentsWorking, 'agent')
-  const t14 = plural(toolCalls, 'call')
+  const agentLabel = plural(agentsWorking, 'agent')
+  const toolCallLabel = plural(toolCalls, 'call')
   return (
     <Dialog
       title={
@@ -186,8 +185,8 @@ function UltraplanSessionDetail({ session, onDone, onBack, onKill }) {
           {
             <Text>
               {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
-              {agentsWorking} {t12} {phase ? AGENT_VERB[phase] : tSync('backgroundTasks.working')} ·{' '}
-              {toolCalls} tool {t14}
+              {agentsWorking} {agentLabel} {phase ? AGENT_VERB[phase] : tSync('backgroundTasks.working')} ·{' '}
+              {toolCalls} tool {toolCallLabel}
             </Text>
           }
           {lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>}
@@ -212,8 +211,8 @@ function UltraplanSessionDetail({ session, onDone, onBack, onKill }) {
                   value: 'back' as const,
                 },
               ]}
-              onChange={(v_0) => {
-                switch (v_0) {
+              onChange={(selectedAction: any) => {
+                switch (selectedAction) {
                   case 'open': {
                     openBrowser(sessionUrl)
                     onDone()
@@ -243,23 +242,23 @@ const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
   synthesizing: tSync('backgroundTasks.stageDedupe'),
 }
 
-// Setup → Find → Verify → Dedupe pipeline. Current stage in cloud teal,
-// rest dim. When completed, all stages dim with a trailing green ✓. The
-// "Setup" label shows before the orchestrator writes its first progress
-// snapshot (container boot + repo clone), so the 0-found display doesn't
-// look like a hung finder.
+// Setup → Find → Verify → Dedupe 流水线。当前阶段显示为云青色，
+// 其余阶段变暗。完成后，所有阶段变暗并附加绿色 ✓。
+// "Setup" 标签在编排器写入第一个进度快照前显示
+//（容器启动 + 仓库克隆），这样 0 发现的显示不会
+// 看起来像卡住的查找器。
 function StagePipeline({ stage, completed, hasProgress }) {
   const currentIdx = stage ? STAGES.indexOf(stage) : -1
   const inSetup = !completed && !hasProgress
-  const t4 = STAGES.map((s, i) => {
-    const isCurrent = !completed && !inSetup && i === currentIdx
+  const stageElements = STAGES.map((stage, index) => {
+    const isCurrent = !completed && !inSetup && index === currentIdx
     return (
-      <React.Fragment key={s}>
-        {i > 0 && <Text dimColor={true}> → </Text>}
+      <React.Fragment key={stage}>
+        {index > 0 && <Text dimColor={true}> → </Text>}
         {isCurrent ? (
-          <Text color="background">{STAGE_LABELS[s]}</Text>
+          <Text color="background">{STAGE_LABELS[stage]}</Text>
         ) : (
-          <Text dimColor={true}>{STAGE_LABELS[s]}</Text>
+          <Text dimColor={true}>{STAGE_LABELS[stage]}</Text>
         )}
       </React.Fragment>
     )
@@ -272,19 +271,19 @@ function StagePipeline({ stage, completed, hasProgress }) {
         <Text dimColor={true}>{tSync('backgroundTasks.stageSetup')}</Text>
       )}
       {<Text dimColor={true}> → </Text>}
-      {t4}
+      {stageElements}
       {completed && <Text color="success"> ✓</Text>}
     </Text>
   )
 }
 
-// Stage-appropriate counts line. Running-state formatting delegates to
-// formatReviewStageCounts (shared with the pill) so the two views can't
-// drift; completed state is dialog-specific (findings summary).
+// 阶段相关的计数行。运行状态的格式化委托给
+// formatReviewStageCounts（与 pill 共享），这样两个视图不会
+// 漂移；完成状态是对话框特定的（发现摘要）。
 function reviewCountsLine(session: DeepImmutable<RemoteAgentTaskState>): string {
   const p = session.reviewProgress
-  // No progress data — the orchestrator never wrote a snapshot. Don't
-  // claim "0 findings" when completed; we just don't know.
+  // 没有进度数据 —— 编排器从未写入快照。完成时
+  // 不要声称"0 发现"；我们只是不知道。
   if (!p)
     return session.status === 'completed'
       ? tSync('backgroundTasks.done')
@@ -335,7 +334,7 @@ function ReviewSessionDetail({ session, onDone, onBack, onKill }) {
                 value: 'back' as const,
               },
             ]}
-            onChange={(v) => {
+            onChange={(v: string) => {
               if (v === 'stop') {
                 onKill?.()
                 goBackOrClose()
@@ -377,7 +376,7 @@ function ReviewSessionDetail({ session, onDone, onBack, onKill }) {
           value: 'back',
         },
       ]
-  const handleSelect = (action) => {
+  const handleSelect = (action: MenuAction) => {
     switch (action) {
       case 'open': {
         openBrowser(sessionUrl)
@@ -397,8 +396,8 @@ function ReviewSessionDetail({ session, onDone, onBack, onKill }) {
       }
     }
   }
-  const t10 = session.reviewProgress?.stage
-  const t13 = reviewCountsLine(session)
+  const reviewStage = session.reviewProgress?.stage
+  const reviewCounts = reviewCountsLine(session)
   return (
     <Dialog
       title={
@@ -432,14 +431,14 @@ function ReviewSessionDetail({ session, onDone, onBack, onKill }) {
         <Box flexDirection="column" gap={1}>
           {
             <StagePipeline
-              stage={t10}
+              stage={reviewStage}
               completed={completed}
               hasProgress={!!session.reviewProgress}
             />
           }
           {
             <Box flexDirection="column">
-              {<Text>{t13}</Text>}
+              {<Text>{reviewCounts}</Text>}
               {<Link url={sessionUrl}>{<Text dimColor={true}>{sessionUrl}</Text>}</Link>}
             </Box>
           }
@@ -459,11 +458,11 @@ export function RemoteSessionDetailDialog({
   const [isTeleporting, setIsTeleporting] = useState(false)
   const [teleportError, setTeleportError] = useState<string | null>(null)
 
-  // Get last few messages from remote session for display.
-  // Scan all messages (not just the last 3 raw entries) because the tail of
-  // the log is often thinking-only blocks that normalise to 'progress' type.
-  // Placed before the early returns so hook call order is stable (Rules of Hooks).
-  // Ultraplan/review sessions never read this — skip the normalize work for them.
+  // 获取远程会话的最后几条消息用于显示。
+  // 扫描所有消息（不仅是最后 3 条原始条目），因为日志尾部
+  // 通常只有思考块，会被归一化为 'progress' 类型。
+  // 放在提前返回之前，以确保 hook 调用顺序稳定（Hooks 规则）。
+  // Ultraplan/review 会话从不读取此数据 —— 跳过它们的归一化工作。
   const lastMessages = useMemo(() => {
     if (session.isUltraplan || session.isRemoteReview) return []
     return normalizeMessages(toInternalMessages(session.log as SDKMessage[]))
@@ -472,12 +471,12 @@ export function RemoteSessionDetailDialog({
   }, [session])
   if (session.isUltraplan) {
     return (
-      <UltraplanSessionDetail session={session} onDone={onDone} onBack={onBack} onKill={onKill} />
+      <UltraplanSessionDetail session={session} toolUseContext={toolUseContext} onDone={onDone} onBack={onBack} onKill={onKill} />
     )
   }
 
-  // Review sessions get the stage-pipeline view; everything else keeps the
-  // generic label/value + recent-messages dialog below.
+  // Review 会话获得阶段流水线视图；其他所有内容保留
+  // 通用标签/值 + 下方最近消息对话框。
   if (session.isRemoteReview) {
     return <ReviewSessionDetail session={session} onDone={onDone} onBack={onBack} onKill={onKill} />
   }
@@ -486,8 +485,8 @@ export function RemoteSessionDetailDialog({
       display: 'system',
     })
 
-  // Component-specific shortcuts shown in UI hints (t=teleport, space=dismiss,
-  // left=back). These are state-dependent actions, not standard dialog keybindings.
+  // 在 UI 提示中显示的组件特定快捷键（t=传送，空格=关闭，
+  // 左箭头=返回）。这些是状态相关的操作，不是标准对话框快捷键。
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === ' ') {
       e.preventDefault()
@@ -506,7 +505,7 @@ export function RemoteSessionDetailDialog({
     }
   }
 
-  // Handle teleporting to remote session
+  // 处理传送到远程会话
   async function handleTeleport(): Promise<void> {
     setIsTeleporting(true)
     setTeleportError(null)
@@ -519,10 +518,10 @@ export function RemoteSessionDetailDialog({
     }
   }
 
-  // Truncate title if too long (for display purposes)
+  // 如果标题太长则截断（用于显示）
   const displayTitle = truncateToWidth(session.title, 50)
 
-  // Map TaskStatus to display status (handle 'pending')
+  // 将 TaskStatus 映射到显示状态（处理 'pending'）
   const displayStatus =
     session.status === 'pending' ? tSync('backgroundTasks.starting') : session.status
   return (

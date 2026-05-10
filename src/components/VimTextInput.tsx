@@ -13,7 +13,7 @@ export default function VimTextInput(props) {
   const [theme] = useTheme()
   const isTerminalFocused = useTerminalFocus()
   useClipboardImageHint(isTerminalFocused, !!props.onImagePaste)
-  const t15 = color('text', theme)
+  const themeText = color('text', theme)
   const vimInputState = useVimInput({
     value: props.value,
     onChange: props.onChange,
@@ -30,7 +30,7 @@ export default function VimTextInput(props) {
     cursorChar: props.showCursor ? ' ' : '',
     highlightPastedText: props.highlightPastedText,
     invert: isTerminalFocused ? chalk.inverse : (text) => text,
-    themeText: t15,
+    themeText: themeText,
     columns: props.columns,
     maxVisibleLines: props.maxVisibleLines,
     onImagePaste: props.onImagePaste,

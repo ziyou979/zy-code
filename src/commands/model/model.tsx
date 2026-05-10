@@ -126,11 +126,11 @@ function SetModelAndClose({
 function isKnownAlias(model: string): boolean {
   return (MODEL_ALIASES as readonly string[]).includes(model.toLowerCase().trim())
 }
-function ShowModelAndClose(t0) {
-  const { onDone } = t0
-  const mainLoopModel = useAppState((s) => s.mainLoopModel)
-  const mainLoopModelForSession = useAppState((s_0) => s_0.mainLoopModelForSession)
-  const effortValue = useAppState((s_1) => s_1.effortValue)
+function ShowModelAndClose(props) {
+  const { onDone } = props
+  const mainLoopModel = useAppState((state) => state.mainLoopModel)
+  const mainLoopModelForSession = useAppState((state) => state.mainLoopModelForSession)
+  const effortValue = useAppState((state) => state.effortValue)
   const displayModel = renderModelLabel(mainLoopModel)
   const effortInfo = effortValue !== undefined ? ` (effort: ${effortValue})` : ''
   if (mainLoopModelForSession) {

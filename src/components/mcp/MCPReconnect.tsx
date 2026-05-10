@@ -79,12 +79,12 @@ export function MCPReconnect({ serverName, onComplete }: Props) {
     )
   }
   if (error) {
-    const t3 = color('error', theme)(figures.cross)
+    const errorIcon = color('error', theme)(figures.cross)
     return (
       <Box flexDirection="column" gap={1} padding={1}>
         {
           <Box>
-            {<Text>{t3} </Text>}
+            {<Text>{errorIcon} </Text>}
             {<Text color="error">{tSync('mcp.failedToReconnect', { serverName })}</Text>}
           </Box>
         }

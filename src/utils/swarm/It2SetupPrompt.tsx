@@ -211,9 +211,9 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
         </Text>
         <Box marginTop={1}>
           <Select
-            options={options_0}
-            onChange={(value_0) => {
-              switch (value_0) {
+            options={installOptions}
+            onChange={(selectedValue) => {
+              switch (selectedValue) {
                 case 'retry': {
                   handleInstall()
                   break
@@ -296,18 +296,18 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
         </Box>
         <Box marginTop={1}>
           <Select
-            options={options_1}
-            onChange={(value_1) => {
-              switch (value_1) {
+            options={enableOptions}
+            onChange={(selectedValue) => {
+              switch (selectedValue) {
                 case 'retry': {
                   setStep('verifying')
-                  verifyIt2Setup().then((result_1) => {
-                    if (result_1.success) {
+                  verifyIt2Setup().then((verificationResult) => {
+                    if (verificationResult.success) {
                       markIt2SetupComplete()
                       setStep('success')
                       setTimeout(onDone, 1500, 'installed' as const)
                     } else {
-                      setError(result_1.error || 'Verification failed')
+                      setError(verificationResult.error || 'Verification failed')
                       setStep('failed')
                     }
                   })

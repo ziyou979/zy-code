@@ -525,7 +525,7 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
     )
   }
   const T0 = Box
-  const t12 = rows.map((row_0, idx) => {
+  const rowElements = rows.map((row_0, idx) => {
     const isSelected = idx === clampedIndex
     return (
       <Box key={idx} marginLeft={1} flexDirection="column" marginBottom={1}>
@@ -551,7 +551,7 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
   })
   return (
     <T0 flexDirection={'column'}>
-      {t12}
+      {rowElements}
       {actionMessage && (
         <Box marginTop={1} marginLeft={1}>
           <Text color="zy">{actionMessage}</Text>
@@ -688,8 +688,8 @@ export function PluginSettings({ onComplete, args, showMcpRedirectMessage }) {
   const parsedCommand = parsePluginArgs(args)
   const initialViewState = getInitialViewState(parsedCommand)
   const [viewState, setViewState] = useState(initialViewState)
-  const t2 = getInitialTab(initialViewState)
-  const [activeTab, setActiveTab] = useState(t2)
+  const initialTab = getInitialTab(initialViewState)
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [inputValue, setInputValue] = useState(
     viewState.type === 'add-marketplace' ? viewState.initialValue || '' : '',
   )

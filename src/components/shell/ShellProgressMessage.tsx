@@ -48,13 +48,13 @@ export function ShellProgressMessage({
       lineStatus = `+${extraLines} ${tSync('shellProgress.lines')}`
     }
   }
-  const t3 = verbose ? undefined : Math.min(5, lines.length)
+  const visibleLineCount = verbose ? undefined : Math.min(5, lines.length)
   return (
     <MessageResponse>
       <OffscreenFreeze>
         <Box flexDirection="column">
           {
-            <Box height={t3} flexDirection="column" overflow="hidden">
+            <Box height={visibleLineCount} flexDirection="column" overflow="hidden">
               {<Text dimColor={true}>{displayLines}</Text>}
             </Box>
           }

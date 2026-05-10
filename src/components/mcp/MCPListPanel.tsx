@@ -96,12 +96,12 @@ function groupServersByScope(serverList: ServerInfo[]): Map<ConfigScope, ServerI
 }
 export function MCPListPanel({
   servers,
-  agentServers: t2 = [],
+  agentServers: agentServersArg = [],
   onSelectServer,
   onSelectAgentServer,
   onComplete,
 }) {
-  const agentServers = t2
+  const agentServers = agentServersArg
   const [theme] = useTheme()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const regularServers = servers.filter((s) => s.client.config.type !== 'zyai-proxy')
@@ -249,8 +249,8 @@ export function MCPListPanel({
     )
   }
   const totalServers = servers.length + agentServers.length
-  const t20 = plural(totalServers, 'server')
-  const t22 = SCOPE_ORDER.map((scope_0) => {
+  const serverCountLabel = plural(totalServers, 'server')
+  const scopeSections = SCOPE_ORDER.map((scope_0) => {
     const scopeServers_0 = serversByScope.get(scope_0)
     if (!scopeServers_0 || scopeServers_0.length === 0) {
       return null
@@ -272,13 +272,13 @@ export function MCPListPanel({
       {
         <Dialog
           title={tSync('mcp.manageServers')}
-          subtitle={`${totalServers} ${t20}`}
+          subtitle={`${totalServers} ${serverCountLabel}`}
           onCancel={handleCancel}
           hideInputGuide={true}
         >
           {
             <Box flexDirection="column">
-              {t22}
+              {scopeSections}
               {zyAiServers.length > 0 && (
                 <Box flexDirection="column" marginBottom={1}>
                   <Box paddingLeft={2}>

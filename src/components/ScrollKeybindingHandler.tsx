@@ -448,65 +448,65 @@ export function ScrollKeybindingHandler({
   useKeybindings(
     {
       'scroll:pageUp': () => {
-        const s_0 = scrollRef.current
-        if (!s_0) return
-        const d = -Math.max(1, Math.floor(s_0.getViewportHeight() / 2))
-        translateSelectionForJump(s_0, d)
-        const sticky = jumpBy(s_0, d)
-        onScroll?.(sticky, s_0)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const delta = -Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
+        translateSelectionForJump(scrollHandle, delta)
+        const sticky = jumpBy(scrollHandle, delta)
+        onScroll?.(sticky, scrollHandle)
       },
       'scroll:pageDown': () => {
-        const s_1 = scrollRef.current
-        if (!s_1) return
-        const d_0 = Math.max(1, Math.floor(s_1.getViewportHeight() / 2))
-        translateSelectionForJump(s_1, d_0)
-        const sticky_0 = jumpBy(s_1, d_0)
-        onScroll?.(sticky_0, s_1)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const delta = Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
+        translateSelectionForJump(scrollHandle, delta)
+        const sticky = jumpBy(scrollHandle, delta)
+        onScroll?.(sticky, scrollHandle)
       },
       'scroll:lineUp': () => {
         // 滚轮：scrollBy 累积到 pendingScrollDelta，由渲染器异步排放。
         // captureScrolledRows 无法在行离开前读取外出行
         //（排放是非确定性的）。暂时清除。
         selection.clearSelection()
-        const s_2 = scrollRef.current
+        const scrollHandle = scrollRef.current
         // Return false (not consumed) when the ScrollBox content fits —
         // scroll would be a no-op. Lets a child component's handler take
         // the wheel event instead (e.g. Settings Config's list navigation
         // inside the centered Modal, where the paginated slice always fits).
-        if (!s_2 || s_2.getScrollHeight() <= s_2.getViewportHeight()) return false
+        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight()) return false
         wheelAccel.current ??= initAndLogWheelAccel()
-        scrollUp(s_2, computeWheelStep(wheelAccel.current, -1, performance.now()))
-        onScroll?.(false, s_2)
+        scrollUp(scrollHandle, computeWheelStep(wheelAccel.current, -1, performance.now()))
+        onScroll?.(false, scrollHandle)
       },
       'scroll:lineDown': () => {
         selection.clearSelection()
-        const s_3 = scrollRef.current
-        if (!s_3 || s_3.getScrollHeight() <= s_3.getViewportHeight()) return false
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight()) return false
         wheelAccel.current ??= initAndLogWheelAccel()
         const step = computeWheelStep(wheelAccel.current, 1, performance.now())
-        const reachedBottom = scrollDown(s_3, step)
-        onScroll?.(reachedBottom, s_3)
+        const reachedBottom = scrollDown(scrollHandle, step)
+        onScroll?.(reachedBottom, scrollHandle)
       },
       'scroll:top': () => {
-        const s_4 = scrollRef.current
-        if (!s_4) return
-        translateSelectionForJump(s_4, -(s_4.getScrollTop() + s_4.getPendingDelta()))
-        s_4.scrollTo(0)
-        onScroll?.(false, s_4)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        translateSelectionForJump(scrollHandle, -(scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()))
+        scrollHandle.scrollTo(0)
+        onScroll?.(false, scrollHandle)
       },
       'scroll:bottom': () => {
-        const s_5 = scrollRef.current
-        if (!s_5) return
-        const max_0 = Math.max(0, s_5.getScrollHeight() - s_5.getViewportHeight())
-        translateSelectionForJump(s_5, max_0 - (s_5.getScrollTop() + s_5.getPendingDelta()))
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const maxScrollTop = Math.max(0, scrollHandle.getScrollHeight() - scrollHandle.getViewportHeight())
+        translateSelectionForJump(scrollHandle, maxScrollTop - (scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()))
         // scrollTo(max) eager-writes scrollTop so the render-phase sticky
         // follow computes followDelta=0. Without this, scrollToBottom()
         // alone leaves scrollTop stale → followDelta=max-stale →
         // shiftSelectionForFollow applies the SAME shift we already did
         // above, 2× offset. scrollToBottom() then re-enables sticky.
-        s_5.scrollTo(max_0)
-        s_5.scrollToBottom()
-        onScroll?.(true, s_5)
+        scrollHandle.scrollTo(maxScrollTop)
+        scrollHandle.scrollToBottom()
+        onScroll?.(true, scrollHandle)
       },
       'selection:copy': copyAndToast,
     },
@@ -523,36 +523,36 @@ export function ScrollKeybindingHandler({
   useKeybindings(
     {
       'scroll:halfPageUp': () => {
-        const s_6 = scrollRef.current
-        if (!s_6) return
-        const d_1 = -Math.max(1, Math.floor(s_6.getViewportHeight() / 2))
-        translateSelectionForJump(s_6, d_1)
-        const sticky_1 = jumpBy(s_6, d_1)
-        onScroll?.(sticky_1, s_6)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const delta = -Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
+        translateSelectionForJump(scrollHandle, delta)
+        const sticky = jumpBy(scrollHandle, delta)
+        onScroll?.(sticky, scrollHandle)
       },
       'scroll:halfPageDown': () => {
-        const s_7 = scrollRef.current
-        if (!s_7) return
-        const d_2 = Math.max(1, Math.floor(s_7.getViewportHeight() / 2))
-        translateSelectionForJump(s_7, d_2)
-        const sticky_2 = jumpBy(s_7, d_2)
-        onScroll?.(sticky_2, s_7)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const delta = Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
+        translateSelectionForJump(scrollHandle, delta)
+        const sticky = jumpBy(scrollHandle, delta)
+        onScroll?.(sticky, scrollHandle)
       },
       'scroll:fullPageUp': () => {
-        const s_8 = scrollRef.current
-        if (!s_8) return
-        const d_3 = -Math.max(1, s_8.getViewportHeight())
-        translateSelectionForJump(s_8, d_3)
-        const sticky_3 = jumpBy(s_8, d_3)
-        onScroll?.(sticky_3, s_8)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const delta = -Math.max(1, scrollHandle.getViewportHeight())
+        translateSelectionForJump(scrollHandle, delta)
+        const sticky = jumpBy(scrollHandle, delta)
+        onScroll?.(sticky, scrollHandle)
       },
       'scroll:fullPageDown': () => {
-        const s_9 = scrollRef.current
-        if (!s_9) return
-        const d_4 = Math.max(1, s_9.getViewportHeight())
-        translateSelectionForJump(s_9, d_4)
-        const sticky_4 = jumpBy(s_9, d_4)
-        onScroll?.(sticky_4, s_9)
+        const scrollHandle = scrollRef.current
+        if (!scrollHandle) return
+        const delta = Math.max(1, scrollHandle.getViewportHeight())
+        translateSelectionForJump(scrollHandle, delta)
+        const sticky = jumpBy(scrollHandle, delta)
+        onScroll?.(sticky, scrollHandle)
       },
     },
     {

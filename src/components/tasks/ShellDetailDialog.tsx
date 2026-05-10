@@ -96,8 +96,8 @@ export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }) {
   }
   const isMonitor = shell.kind === 'monitor'
   const displayCommand = truncateToWidth(shell.command, 280)
-  const t14 = shell.endTime ?? Date.now()
-  const t16 = formatDuration(t14 - shell.startTime)
+  const endTimestamp = shell.endTime ?? Date.now()
+  const runtimeDuration = formatDuration(endTimestamp - shell.startTime)
   return (
     <Box flexDirection="column" tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
       {
@@ -148,7 +148,7 @@ export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }) {
               }
               {
                 <Text>
-                  {<Text bold={true}>{tSync('backgroundTasks.runtime')}:</Text>} {t16}
+                  {<Text bold={true}>{tSync('backgroundTasks.runtime')}:</Text>} {runtimeDuration}
                 </Text>
               }
               {

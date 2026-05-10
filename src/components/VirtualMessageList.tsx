@@ -221,11 +221,11 @@ function VirtualItem({
   onLeaveK,
   renderItem,
 }: VirtualItemProps) {
-  const t1 = measureRef(k)
-  const t8 = renderItem(msg, idx)
+  const measureCallback = measureRef(k)
+  const renderedItem = renderItem(msg, idx)
   return (
     <Box
-      ref={t1}
+      ref={measureCallback}
       flexDirection="column"
       backgroundColor={expanded ? 'userMessageBackgroundHover' : undefined}
       paddingBottom={expanded ? 1 : undefined}
@@ -235,7 +235,7 @@ function VirtualItem({
     >
       {
         <TextHoverColorContext.Provider value={hovered && !expanded ? 'text' : undefined}>
-          {t8}
+          {renderedItem}
         </TextHoverColorContext.Provider>
       }
     </Box>
@@ -744,12 +744,12 @@ export function VirtualMessageList({
         const wallStart = performance.now()
         for (let i = 0; i < msgs.length; i += CHUNK) {
           await sleep(0)
-          const t0 = performance.now()
+          const chunkStart = performance.now()
           const end = Math.min(i + CHUNK, msgs.length)
           for (let j = i; j < end; j++) {
             extractSearchText(msgs[j]!)
           }
-          workMs += performance.now() - t0
+          workMs += performance.now() - chunkStart
         }
         const wallMs = Math.round(performance.now() - wallStart)
         logForDebugging(

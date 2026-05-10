@@ -15,7 +15,7 @@ type Props = {
 }
 export function FallbackToolUseErrorMessage({ result, verbose }: Props) {
   const transcriptShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
-  let error
+  let error: string
   if (typeof result !== 'string') {
     error = tSync('fallbackToolError.executionFailed')
   } else {
@@ -33,18 +33,18 @@ export function FallbackToolUseErrorMessage({ result, verbose }: Props) {
       }
     }
   }
-  const T0 = Text
-  const T1 = Box
-  const T2 = MessageResponse
+  const ErrorText = Text
+  const ErrorContainer = Box
+  const ErrorMessageResponse = MessageResponse
   const plusLines = countCharInString(error, '\n') + 1 - MAX_RENDERED_LINES
-  const t2 = stripUnderlineAnsi(
+  const displayError = stripUnderlineAnsi(
     verbose ? error : error.split('\n').slice(0, MAX_RENDERED_LINES).join('\n'),
   )
   return (
-    <T2>
+    <ErrorMessageResponse>
       {
-        <T1 flexDirection={'column'}>
-          {<T0 color={'error'}>{t2}</T0>}
+        <ErrorContainer flexDirection={'column'}>
+          {<ErrorText color={'error'}>{displayError}</ErrorText>}
           {!verbose && plusLines > 0 && (
             <Box>
               <Text dimColor={true}>
@@ -68,8 +68,8 @@ export function FallbackToolUseErrorMessage({ result, verbose }: Props) {
               </Text>
             </Box>
           )}
-        </T1>
+        </ErrorContainer>
       }
-    </T2>
+    </ErrorMessageResponse>
   )
 }

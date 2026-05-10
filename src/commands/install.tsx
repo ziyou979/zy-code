@@ -68,7 +68,7 @@ function SetupNotes({ messages }: { messages: string[] }) {
   if (messages.length === 0) {
     return null
   }
-  const t2 = messages.map((message, index) => (
+  const messageItems = messages.map((message, index) => (
     <Box key={index} marginLeft={2}>
       <Text dimColor={true}>• {message}</Text>
     </Box>
@@ -83,7 +83,7 @@ function SetupNotes({ messages }: { messages: string[] }) {
           </Text>
         </Box>
       }
-      {t2}
+      {messageItems}
     </Box>
   )
 }

@@ -14,24 +14,24 @@ function formatShortcut(shortcut: string): string {
 }
 export function PromptInputHelpMenu(props) {
   const { dimColor, fixedWidth, gap, paddingX } = props
-  const t0 = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
-  const transcriptShortcut = formatShortcut(t0)
-  const t2 = useShortcutDisplay('app:toggleTodos', 'Global', 'ctrl+t')
-  const todosShortcut = formatShortcut(t2)
-  const t4 = useShortcutDisplay('chat:undo', 'Chat', 'ctrl+_')
-  const undoShortcut = formatShortcut(t4)
-  const t6 = useShortcutDisplay('chat:stash', 'Chat', 'ctrl+s')
-  const stashShortcut = formatShortcut(t6)
-  const t8 = useShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')
-  const cycleModeShortcut = formatShortcut(t8)
-  const t10 = useShortcutDisplay('chat:modelPicker', 'Chat', 'alt+p')
-  const modelPickerShortcut = formatShortcut(t10)
-  const t14 = useShortcutDisplay('chat:externalEditor', 'Chat', 'ctrl+g')
-  const externalEditorShortcut = formatShortcut(t14)
-  const t16 = useShortcutDisplay('app:toggleTerminal', 'Global', 'meta+j')
-  const terminalShortcut = formatShortcut(t16)
-  const t18 = useShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v')
-  const imagePasteShortcut = formatShortcut(t18)
+  const transcriptShortcutRaw = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
+  const transcriptShortcut = formatShortcut(transcriptShortcutRaw)
+  const todosShortcutRaw = useShortcutDisplay('app:toggleTodos', 'Global', 'ctrl+t')
+  const todosShortcut = formatShortcut(todosShortcutRaw)
+  const undoShortcutRaw = useShortcutDisplay('chat:undo', 'Chat', 'ctrl+_')
+  const undoShortcut = formatShortcut(undoShortcutRaw)
+  const stashShortcutRaw = useShortcutDisplay('chat:stash', 'Chat', 'ctrl+s')
+  const stashShortcut = formatShortcut(stashShortcutRaw)
+  const cycleModeShortcutRaw = useShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')
+  const cycleModeShortcut = formatShortcut(cycleModeShortcutRaw)
+  const modelPickerShortcutRaw = useShortcutDisplay('chat:modelPicker', 'Chat', 'alt+p')
+  const modelPickerShortcut = formatShortcut(modelPickerShortcutRaw)
+  const externalEditorShortcutRaw = useShortcutDisplay('chat:externalEditor', 'Chat', 'ctrl+g')
+  const externalEditorShortcut = formatShortcut(externalEditorShortcutRaw)
+  const terminalShortcutRaw = useShortcutDisplay('app:toggleTerminal', 'Global', 'meta+j')
+  const terminalShortcut = formatShortcut(terminalShortcutRaw)
+  const imagePasteShortcutRaw = useShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v')
+  const imagePasteShortcut = formatShortcut(imagePasteShortcutRaw)
   const terminalShortcutElement = feature('TERMINAL_PANEL') ? (
     getFeatureValue_CACHED_MAY_BE_STALE('zy_terminal_panel', false) ? (
       <Box>
@@ -39,13 +39,13 @@ export function PromptInputHelpMenu(props) {
       </Box>
     ) : null
   ) : null
-  const t33 = getNewlineInstructions()
-  const t37 = getPlatform() !== 'windows' && (
+  const newlineInstructions = getNewlineInstructions()
+  const suspendElement = getPlatform() !== 'windows' && (
     <Box>
       <Text dimColor={dimColor}>{tSync('help.suspend')}</Text>
     </Box>
   )
-  const t43 = isKeybindingCustomizationEnabled() && (
+  const customizeKeybindingsElement = isKeybindingCustomizationEnabled() && (
     <Box>
       <Text dimColor={dimColor}>{tSync('help.customizeKeybindings')}</Text>
     </Box>
@@ -112,7 +112,7 @@ export function PromptInputHelpMenu(props) {
           {terminalShortcutElement}
           {
             <Box>
-              <Text dimColor={dimColor}>{t33}</Text>
+              <Text dimColor={dimColor}>{newlineInstructions}</Text>
             </Box>
           }
         </Box>
@@ -124,7 +124,7 @@ export function PromptInputHelpMenu(props) {
               <Text dimColor={dimColor}>{tSync('help.undo', { shortcut: undoShortcut })}</Text>
             </Box>
           }
-          {t37}
+          {suspendElement}
           {
             <Box>
               <Text dimColor={dimColor}>
@@ -153,7 +153,7 @@ export function PromptInputHelpMenu(props) {
               </Text>
             </Box>
           }
-          {t43}
+          {customizeKeybindingsElement}
         </Box>
       }
     </Box>

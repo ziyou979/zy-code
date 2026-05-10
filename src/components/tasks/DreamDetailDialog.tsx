@@ -49,11 +49,8 @@ export function DreamDetailDialog({ task, onDone, onBack, onKill }: Props) {
   const hidden = visibleTurns.length - shown.length
   const sessionsReviewingCount = task.sessionsReviewing
   const sessionsReviewingLabel = plural(task.sessionsReviewing, 'session')
-  const T2 = Box
-  const T1 = Dialog
-  const T0 = Box
   const dialogContent = (
-    <T0 flexDirection={'column'} gap={1}>
+    <Box flexDirection={'column'} gap={1}>
       {
         <Text>
           {<Text bold={true}>{tSync('backgroundTasks.status')}:</Text>}{' '}
@@ -91,12 +88,12 @@ export function DreamDetailDialog({ task, onDone, onBack, onKill }: Props) {
           ))}
         </>
       )}
-    </T0>
+    </Box>
   )
   return (
-    <T2 flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
+    <Box flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
       {
-        <T1
+        <Dialog
           title={tSync('backgroundTasks.memoryConsolidation')}
           subtitle={
             <Text dimColor={true}>
@@ -121,7 +118,7 @@ export function DreamDetailDialog({ task, onDone, onBack, onKill }: Props) {
               <Text>Press {exitState.keyName} again to exit</Text>
             ) : (
               <Byline>
-                {onBack && <KeyboardShortcutHint shortcut={'\u2190'} action="go back" />}
+                {onBack && <KeyboardShortcutHint shortcut={'←'} action="go back" />}
                 <KeyboardShortcutHint shortcut="Esc/Enter/Space" action="close" />
                 {task.status === 'running' && onKill && (
                   <KeyboardShortcutHint shortcut="x" action="stop" />
@@ -131,8 +128,8 @@ export function DreamDetailDialog({ task, onDone, onBack, onKill }: Props) {
           }
         >
           {dialogContent}
-        </T1>
+        </Dialog>
       }
-    </T2>
+    </Box>
   )
 }

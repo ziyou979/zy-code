@@ -15,7 +15,7 @@ import { getZyAIOAuthTokens } from '../../utils/auth.js'
 import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'
 import { getSettingsForSource } from '../../utils/settings/settings.js'
 export function ChannelsNotice() {
-  const [t0] = useState(() => {
+  const [noticeState] = useState(() => {
     const ch = getAllowedChannels()
     if (ch.length === 0) {
       return {
@@ -41,7 +41,7 @@ export function ChannelsNotice() {
       unmatched: findUnmatched(ch, allowlist),
     }
   })
-  const { channels, disabled, noAuth, policyBlocked, list, unmatched } = t0
+  const { channels, disabled, noAuth, policyBlocked, list, unmatched } = noticeState
   if (channels.length === 0) {
     return null
   }
@@ -81,7 +81,7 @@ export function ChannelsNotice() {
     )
   }
   if (policyBlocked) {
-    const t4 = unmatched.map((u) => (
+    const unmatchedElements = unmatched.map((u) => (
       <Text key={`${formatEntry(u.entry)}:${u.why}`} color="warning">
         {formatEntry(u.entry)} · {u.why}
       </Text>
@@ -99,11 +99,11 @@ export function ChannelsNotice() {
             Have an administrator set channelsEnabled: true in managed settings to enable
           </Text>
         }
-        {t4}
+        {unmatchedElements}
       </Box>
     )
   }
-  const t3 = unmatched.map((u_0) => (
+  const unmatchedElements = unmatched.map((u_0) => (
     <Text key={`${formatEntry(u_0.entry)}:${u_0.why}`} color="warning">
       {formatEntry(u_0.entry)} · {u_0.why}
     </Text>
@@ -117,7 +117,7 @@ export function ChannelsNotice() {
           injection risks. Restart ZY Code without {flag} to disable.
         </Text>
       }
-      {t3}
+      {unmatchedElements}
     </Box>
   )
 }

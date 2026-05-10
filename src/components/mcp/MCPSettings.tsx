@@ -125,107 +125,107 @@ export function MCPSettings({ onComplete }: Props) {
   }, [servers.length, filteredClients.length, agentMcpServers.length, onComplete])
   switch (viewState.type) {
     case 'list': {
-      let t10
-      let t9
-      t9 = (server) =>
+      let handleSelectAgentServer
+      let handleSelectServer
+      handleSelectServer = (server) =>
         setViewState({
           type: 'server-menu',
           server,
         } as any)
-      t10 = (agentServer) =>
+      handleSelectAgentServer = (agentServer) =>
         setViewState({
           type: 'agent-server-menu',
           agentServer,
         } as any)
-      let t11
-      t11 = (
+      let listPanel
+      listPanel = (
         <MCPListPanel
           servers={servers}
           agentServers={agentMcpServers}
-          onSelectServer={t9}
-          onSelectAgentServer={t10}
+          onSelectServer={handleSelectServer}
+          onSelectAgentServer={handleSelectAgentServer}
           onComplete={onComplete}
         />
       )
-      return t11
+      return listPanel
     }
     case 'server-menu': {
-      let t9
-      t9 = filterToolsByServer(mcp.tools, (viewState as any).server.name)
-      const serverTools_0 = t9
+      let serverToolsFiltered
+      serverToolsFiltered = filterToolsByServer(mcp.tools, (viewState as any).server.name)
+      const serverTools_0 = serverToolsFiltered
       const defaultTab = (viewState as any).server.transport === 'zyai-proxy' ? 'zy.ai' : 'ZY Code'
       if ((viewState as any).server.transport === 'stdio') {
-        let t10
-        t10 = () =>
+        let handleViewTools
+        handleViewTools = () =>
           setViewState({
             type: 'server-tools',
             server: (viewState as any).server,
           } as any)
-        let t11
-        t11 = () =>
+        let handleCancel
+        handleCancel = () =>
           setViewState({
             type: 'list',
             defaultTab,
           } as any)
-        let t12
-        t12 = (
+        let stdioMenu
+        stdioMenu = (
           <MCPStdioServerMenu
             server={(viewState as any).server}
             serverToolsCount={serverTools_0.length}
-            onViewTools={t10}
-            onCancel={t11}
+            onViewTools={handleViewTools}
+            onCancel={handleCancel}
             onComplete={onComplete}
           />
         )
-        return t12
+        return stdioMenu
       } else {
-        let t10
-        t10 = () =>
+        let handleViewTools
+        handleViewTools = () =>
           setViewState({
             type: 'server-tools',
             server: (viewState as any).server,
           } as any)
-        let t11
-        t11 = () =>
+        let handleCancel
+        handleCancel = () =>
           setViewState({
             type: 'list',
             defaultTab,
           } as any)
-        let t12
-        t12 = (
+        let remoteMenu
+        remoteMenu = (
           <MCPRemoteServerMenu
             server={(viewState as any).server}
             serverToolsCount={serverTools_0.length}
-            onViewTools={t10}
-            onCancel={t11}
+            onViewTools={handleViewTools}
+            onCancel={handleCancel}
             onComplete={onComplete}
           />
         )
-        return t12
+        return remoteMenu
       }
     }
     case 'server-tools': {
-      let t10
-      let t9
-      t9 = (_, index) =>
+      let handleSelectTool
+      let handleBack
+      handleBack = (_, index) =>
         setViewState({
           type: 'server-tool-detail',
           server: (viewState as any).server,
           toolIndex: index,
         } as any)
-      t10 = () =>
+      handleSelectTool = () =>
         setViewState({
           type: 'server-menu',
           server: (viewState as any).server,
         } as any)
-      let t11
-      t11 = <MCPToolListView server={(viewState as any).server} onSelectTool={t9} onBack={t10} />
-      return t11
+      let toolListView
+      toolListView = <MCPToolListView server={(viewState as any).server} onSelectTool={handleBack} onBack={handleSelectTool} />
+      return toolListView
     }
     case 'server-tool-detail': {
-      let t9
-      t9 = filterToolsByServer(mcp.tools, (viewState as any).server.name)
-      const serverTools = t9
+      let serverToolsFiltered
+      serverToolsFiltered = filterToolsByServer(mcp.tools, (viewState as any).server.name)
+      const serverTools = serverToolsFiltered
       const tool = serverTools[(viewState as any).toolIndex]
       if (!tool) {
         setViewState({
@@ -234,32 +234,32 @@ export function MCPSettings({ onComplete }: Props) {
         } as any)
         return null
       }
-      let t10
-      t10 = () =>
+      let handleBack
+      handleBack = () =>
         setViewState({
           type: 'server-tools',
           server: (viewState as any).server,
         } as any)
-      let t11
-      t11 = <MCPToolDetailView tool={tool} server={(viewState as any).server} onBack={t10} />
-      return t11
+      let toolDetailView
+      toolDetailView = <MCPToolDetailView tool={tool} server={(viewState as any).server} onBack={handleBack} />
+      return toolDetailView
     }
     case 'agent-server-menu': {
-      let t9
-      t9 = () =>
+      let handleCancel
+      handleCancel = () =>
         setViewState({
           type: 'list',
           defaultTab: 'Agents',
         } as any)
-      let t10
-      t10 = (
+      let agentServerMenu
+      agentServerMenu = (
         <MCPAgentServerMenu
           agentServer={(viewState as any).agentServer}
-          onCancel={t9}
+          onCancel={handleCancel}
           onComplete={onComplete}
         />
       )
-      return t10
+      return agentServerMenu
     }
   }
 }

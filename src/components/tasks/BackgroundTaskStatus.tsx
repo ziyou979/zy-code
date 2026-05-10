@@ -91,20 +91,20 @@ export function BackgroundTaskStatus({
       selectedIdx >= 0 ? selectedIdx : 0,
     )
     const visiblePills = allPills.slice(startIndex, endIndex)
-    const t13 = visiblePills.map((pill_1, i_1) => {
-      const needsSeparator = i_1 > 0
+    const pillElements = visiblePills.map((pill, pillIndex) => {
+      const needsSeparator = pillIndex > 0
       return (
-        <React.Fragment key={pill_1.name}>
+        <React.Fragment key={pill.name}>
           {needsSeparator && <Text> </Text>}
           <AgentPill
-            name={pill_1.name}
-            color={pill_1.color}
-            isSelected={selectedIdx === pill_1.idx}
-            isViewed={viewedIdx === pill_1.idx}
-            isIdle={pill_1.isIdle}
+            name={pill.name}
+            color={pill.color}
+            isSelected={selectedIdx === pill.idx}
+            isViewed={viewedIdx === pill.idx}
+            isIdle={pill.isIdle}
             onClick={() =>
-              pill_1.taskId
-                ? enterTeammateView(pill_1.taskId, setAppState)
+              pill.taskId
+                ? enterTeammateView(pill.taskId, setAppState)
                 : exitTeammateView(setAppState)
             }
           />
@@ -114,7 +114,7 @@ export function BackgroundTaskStatus({
     return (
       <>
         {showLeftArrow && <Text dimColor={true}>{figures.arrowLeft} </Text>}
-        {t13}
+        {pillElements}
         {showRightArrow && <Text dimColor={true}> {figures.arrowRight}</Text>}
         {
           <Text dimColor={true}>
@@ -131,8 +131,8 @@ export function BackgroundTaskStatus({
   if (runningTasks.length === 0) {
     return null
   }
-  const t8 = getPillLabel(runningTasks)
-  const t10 = pillNeedsCta(runningTasks) && (
+  const pillLabel = getPillLabel(runningTasks)
+  const ctaElement = pillNeedsCta(runningTasks) && (
     <Text dimColor={true}>
       {' '}
       · {figures.arrowDown} {tSync('backgroundTaskStatus.toView')}
@@ -142,10 +142,10 @@ export function BackgroundTaskStatus({
     <>
       {
         <SummaryPill selected={tasksSelected} onClick={onOpenDialog}>
-          {t8}
+          {pillLabel}
         </SummaryPill>
       }
-      {t10}
+      {ctaElement}
     </>
   )
 }

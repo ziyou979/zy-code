@@ -147,14 +147,14 @@ export function Tabs({
     },
   )
   const titleWidth = title ? stringWidth(title) + 1 : 0
-  const tabsWidth = tabs.reduce((sum, t0) => {
-    const [, tabTitle] = t0
+  const tabsWidth = tabs.reduce((sum, tab) => {
+    const [, tabTitle] = tab
     return sum + (tabTitle ? stringWidth(tabTitle) : 0) + 2 + 1
   }, 0)
   const usedWidth = titleWidth + tabsWidth
   const spacerWidth = useFullWidth ? Math.max(0, terminalWidth - usedWidth) : 0
   const contentWidth = useFullWidth ? terminalWidth : undefined
-  const T0 = Box
+  const ContainerBox = Box
   return (
     <TabsContext.Provider
       value={{
@@ -167,7 +167,7 @@ export function Tabs({
       }}
     >
       {
-        <T0
+        <ContainerBox
           flexDirection={'column'}
           tabIndex={0}
           autoFocus={true}
@@ -181,8 +181,8 @@ export function Tabs({
                   {title}
                 </Text>
               )}
-              {tabs.map((t16, i) => {
-                const [id, title_0] = t16
+              {tabs.map((tab, i) => {
+                const [id, title_0] = tab
                 const isCurrent = selectedTabIndex === i
                 const hasColorCursor = color && isCurrent && headerFocused
                 return (
@@ -223,7 +223,7 @@ export function Tabs({
               {children}
             </Box>
           )}
-        </T0>
+        </ContainerBox>
       }
     </TabsContext.Provider>
   )

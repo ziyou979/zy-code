@@ -180,7 +180,7 @@ export function PermissionPrompt<T extends string>({
     }))
     onCancel?.()
   }
-  const t11 =
+  const tabHintText =
     showTabHint &&
     tSync('permission.tabToAmend', {
       amend: tSync('permission.amend'),
@@ -221,7 +221,7 @@ export function PermissionPrompt<T extends string>({
             {tSync('permission.escToCancel', {
               cancel: tSync('permission.cancel'),
             })}
-            {t11}
+            {tabHintText}
           </Text>
         </Box>
       }

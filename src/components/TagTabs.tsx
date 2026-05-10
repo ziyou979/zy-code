@@ -120,7 +120,7 @@ export function TagTabs({
   const hiddenLeft = startIndex
   const hiddenRight = tabs.length - endIndex
   const visibleTabs = tabs.slice(startIndex, endIndex)
-  const visibleIndices = visibleTabs.map((_, i_0) => startIndex + i_0)
+  const visibleIndices = visibleTabs.map((_, index) => startIndex + index)
   return (
     <Box flexDirection="row" gap={1}>
       <Text color="suggestion">{resumeLabel}</Text>
@@ -130,16 +130,16 @@ export function TagTabs({
           {hiddenLeft}
         </Text>
       )}
-      {visibleTabs.map((tab_0, i_1) => {
-        const actualIndex = visibleIndices[i_1]!
+      {visibleTabs.map((tab, tabIndex) => {
+        const actualIndex = visibleIndices[tabIndex]!
         const isSelected = actualIndex === safeSelectedIndex
         const displayText =
-          tab_0 === ALL_TAB_LABEL
-            ? tab_0
-            : `#${truncateTag(tab_0, maxSingleTabWidth - TAB_PADDING)}`
+          tab === ALL_TAB_LABEL
+            ? tab
+            : `#${truncateTag(tab, maxSingleTabWidth - TAB_PADDING)}`
         return (
           <Text
-            key={tab_0}
+            key={tab}
             backgroundColor={isSelected ? 'suggestion' : undefined}
             color={isSelected ? 'inverseText' : undefined}
             bold={isSelected}

@@ -242,9 +242,9 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
   )
 }
 function DateRangeSelector({ dateRange, isLoading }: any) {
-  const t1 = DATE_RANGE_ORDER.map((range, i) => (
+  const dateRangeElements = DATE_RANGE_ORDER.map((range, index) => (
     <Text key={range}>
-      {i > 0 && <Text dimColor={true}> · </Text>}
+      {index > 0 && <Text dimColor={true}> · </Text>}
       {range === dateRange ? (
         <Text bold={true} color="zy">
           {DATE_RANGE_LABELS[range]}
@@ -256,7 +256,7 @@ function DateRangeSelector({ dateRange, isLoading }: any) {
   ))
   return (
     <Box marginBottom={1} gap={1}>
-      {<Box>{t1}</Box>}
+      {<Box>{dateRangeElements}</Box>}
       {isLoading && <Spinner />}
     </Box>
   )
@@ -686,9 +686,9 @@ function ModelsTab({ stats, dateRange, isLoading }) {
   const { headerFocused, focusHeader } = useTabHeaderFocus()
   const [scrollOffset, setScrollOffset] = useState(0)
   const { columns: terminalWidth } = useTerminalSize()
-  const modelEntries = Object.entries(stats.modelUsage).sort((t0, t1) => {
-    const [, a]: [string, any] = t0
-    const [, b]: [string, any] = t1
+  const modelEntries = Object.entries(stats.modelUsage).sort((entryA, entryB) => {
+    const [, a]: [string, any] = entryA
+    const [, b]: [string, any] = entryB
     return b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens)
   })
   useInput(
@@ -698,7 +698,7 @@ function ModelsTab({ stats, dateRange, isLoading }) {
       }
       if (key.upArrow) {
         if (scrollOffset > 0) {
-          setScrollOffset((prev_0) => Math.max(prev_0 - 2, 0))
+          setScrollOffset((previousOffset) => Math.max(previousOffset - 2, 0))
         } else {
           focusHeader()
         }
@@ -715,14 +715,14 @@ function ModelsTab({ stats, dateRange, isLoading }) {
       </Box>
     )
   }
-  const totalTokens = modelEntries.reduce((sum, t0) => {
-    const [, usage]: [string, any] = t0
+  const totalTokens = modelEntries.reduce((sum, entry) => {
+    const [, usage]: [string, any] = entry
     return sum + usage.inputTokens + usage.outputTokens
   }, 0)
   const chartOutput = generateTokenChart(
     stats.dailyModelTokens,
-    modelEntries.map((t0) => {
-      const [model] = t0
+    modelEntries.map((entry) => {
+      const [model] = entry
       return model
     }),
     terminalWidth,

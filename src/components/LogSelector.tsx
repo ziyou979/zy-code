@@ -182,8 +182,8 @@ export function LogSelector({
   const currentCwd = getOriginalCwd()
   const [renameValue, setRenameValue] = React.useState('')
   const [renameCursorOffset, setRenameCursorOffset] = React.useState(0)
-  const t7 = new Set()
-  const [expandedGroupSessionIds, setExpandedGroupSessionIds] = React.useState(t7)
+  const initialExpandedSet = new Set()
+  const [expandedGroupSessionIds, setExpandedGroupSessionIds] = React.useState(initialExpandedSet)
   const [focusedNode, setFocusedNode] = React.useState(null)
   const [focusedIndex, setFocusedIndex] = React.useState(1)
   const [viewMode, setViewMode] = React.useState('list')
@@ -380,8 +380,8 @@ export function LogSelector({
     treeNodes = []
   } else {
     const sessionGroups = groupLogsBySessionId(displayedLogs)
-    treeNodes = Array.from(sessionGroups.entries()).map((t31) => {
-      const [sessionId, groupLogs] = t31
+    treeNodes = Array.from(sessionGroups.entries()).map((entry) => {
+      const [sessionId, groupLogs] = entry
       const latestLog = groupLogs[0]
       const indexInFiltered = displayedLogs.indexOf(latestLog)
       const snippet_0 = snippets.get(latestLog)

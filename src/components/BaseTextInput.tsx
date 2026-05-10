@@ -16,7 +16,7 @@ type BaseTextInputComponentProps = BaseTextInputProps & {
 }
 
 /**
- * A base component for text inputs that handles rendering and basic input
+ * 文本输入的基础组件，负责渲染和基础输入处理
  */
 export function BaseTextInput({
   inputState,
@@ -27,11 +27,11 @@ export function BaseTextInput({
   ...props
 }: BaseTextInputComponentProps) {
   const { onInput, renderedValue, cursorLine, cursorColumn } = inputState
-  const t1 = Boolean(props.focus && props.showCursor && terminalFocus)
+  const hasActiveCursor = Boolean(props.focus && props.showCursor && terminalFocus)
   const cursorRef = useDeclaredCursor({
     line: cursorLine,
     column: cursorColumn,
-    active: t1,
+    active: hasActiveCursor,
   })
   const { wrappedOnInput, isPasting } = usePasteHandler({
     onPaste: props.onPaste,
@@ -77,11 +77,11 @@ export function BaseTextInput({
   const filteredHighlights =
     cursorFiltered && viewportCharOffset > 0
       ? cursorFiltered
-          .filter((h_0) => h_0.end > viewportCharOffset && h_0.start < viewportCharEnd)
-          .map((h_1) => ({
-            ...h_1,
-            start: Math.max(0, h_1.start - viewportCharOffset),
-            end: h_1.end - viewportCharOffset,
+          .filter((highlightItem) => highlightItem.end > viewportCharOffset && highlightItem.start < viewportCharEnd)
+          .map((mappedHighlight) => ({
+            ...mappedHighlight,
+            start: Math.max(0, mappedHighlight.start - viewportCharOffset),
+            end: mappedHighlight.end - viewportCharOffset,
           }))
       : cursorFiltered
   const hasHighlights = filteredHighlights && filteredHighlights.length > 0
@@ -99,12 +99,12 @@ export function BaseTextInput({
       </Box>
     )
   }
-  const T0 = Box
-  const T1 = Text
+  const ContainerBox = Box
+  const ContentText = Text
   return (
-    <T0 ref={cursorRef}>
+    <ContainerBox ref={cursorRef}>
       {
-        <T1 wrap={'truncate-end'} dimColor={props.dimColor}>
+        <ContentText wrap={'truncate-end'} dimColor={props.dimColor}>
           {showPlaceholder && props.placeholderElement ? (
             props.placeholderElement
           ) : showPlaceholder && renderedPlaceholder ? (
@@ -119,8 +119,8 @@ export function BaseTextInput({
             </Text>
           )}
           {children}
-        </T1>
+        </ContentText>
       }
-    </T0>
+    </ContainerBox>
   )
 }

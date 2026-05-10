@@ -53,20 +53,20 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
       return
     }
     const timeoutId = setTimeout(
-      (hasShownHintRef_0, addNotification_0) => {
+      (hasShownHintRefParam, addNotificationParam) => {
         detectIDEs(true).then((infos) => {
-          const ideName_0 = infos[0]?.name
-          if (ideName_0 && !hasShownHintRef_0.current) {
-            hasShownHintRef_0.current = true
+          const detectedIdeName = infos[0]?.name
+          if (detectedIdeName && !hasShownHintRefParam.current) {
+            hasShownHintRefParam.current = true
             saveGlobalConfig((current) => ({
               ...current,
               ideHintShownCount: (current.ideHintShownCount ?? 0) + 1,
             }))
-            addNotification_0({
+            addNotificationParam({
               key: 'ide-status-hint',
               jsx: (
                 <Text dimColor={true}>
-                  /ide for <Text color="ide">{ideName_0}</Text>
+                  /ide for <Text color="ide">{detectedIdeName}</Text>
                 </Text>
               ),
               priority: 'low',

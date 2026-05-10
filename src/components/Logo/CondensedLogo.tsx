@@ -27,11 +27,11 @@ export function CondensedLogo() {
   )
   const cwdAvailableWidth = agentName ? textWidth - 1 - stringWidth(agentName) - 3 : textWidth
   const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10))
-  const t4 = isFullscreenEnvEnabled() ? <AnimatedZy /> : <Zy />
+  const logoElement = isFullscreenEnvEnabled() ? <AnimatedZy /> : <Zy />
   return (
     <OffscreenFreeze>
       <Box flexDirection="row" gap={2} alignItems="center">
-        {t4}
+        {logoElement}
         <Box flexDirection="column">
           {
             <Text>

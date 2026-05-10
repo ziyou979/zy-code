@@ -648,8 +648,8 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
   const lastBlock = typeof content === 'string' ? null : content[content.length - 1]
   let TextComponent
   let BoxComponent
-  let t1
-  let t2
+  let textColor
+  let textDimColor
   let truncateResult
 
   let earlyReturn = Symbol.for('react.early_return_sentinel')
@@ -714,8 +714,8 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
     BoxComponent = Box
 
     TextComponent = Text
-    t1 = color
-    t2 = dimColor
+    textColor = color
+    textDimColor = dimColor
     truncateResult = paddingRight
       ? truncate(messageText, columns - paddingRight, true)
       : messageText.slice(0, 500).split('\n').slice(0, 4).join('\n')
@@ -726,7 +726,7 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
   return (
     <BoxComponent flexDirection={'row'} width={'100%'}>
       {
-        <TextComponent color={t1} dimColor={t2}>
+        <TextComponent color={textColor} dimColor={textDimColor}>
           {truncateResult}
         </TextComponent>
       }

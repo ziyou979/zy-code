@@ -19,8 +19,8 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
     } else {
       if (item.errorCount > 0) {
         statusIcon = color('error', theme)(figures.cross)
-        const t3 = plural(item.errorCount, 'error')
-        statusText = `${item.errorCount} ${t3}`
+        const errorLabel = plural(item.errorCount, 'error')
+        statusText = `${item.errorCount} ${errorLabel}`
       } else {
         if (!item.isEnabled) {
           statusIcon = color('inactive', theme)(figures.radioOff)
@@ -75,8 +75,8 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
   }
   if (item.type === 'failed-plugin') {
     const statusIcon_1 = color('error', theme)(figures.cross)
-    const t3 = plural(item.errorCount, 'error')
-    const statusText_0 = `failed to load · ${item.errorCount} ${t3}`
+    const errorLabel = plural(item.errorCount, 'error')
+    const statusText_0 = `failed to load · ${item.errorCount} ${errorLabel}`
     return (
       <Box>
         {

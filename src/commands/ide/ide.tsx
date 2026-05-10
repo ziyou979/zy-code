@@ -124,9 +124,9 @@ function IDEScreen({
               defaultValue={selectedValue}
               defaultFocusValue={selectedValue}
               options={options}
-              onChange={(value_0) => {
-                setSelectedValue(value_0)
-                handleSelectIDE(value_0)
+              onChange={(selectedValue) => {
+                setSelectedValue(selectedValue)
+                handleSelectIDE(selectedValue)
               }}
             />
           )}
@@ -201,9 +201,9 @@ function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelecti
           defaultValue={selectedValue}
           defaultFocusValue={selectedValue}
           options={options}
-          onChange={(value_0) => {
-            setSelectedValue(value_0)
-            handleSelectIDE(value_0)
+          onChange={(selectedValue) => {
+            setSelectedValue(selectedValue)
+            handleSelectIDE(selectedValue)
           }}
         />
       }

@@ -11,9 +11,9 @@ function McpConfigErrorSection({ scope, parsingErrors, warnings }) {
   if (!hasErrors && !hasWarnings) {
     return null
   }
-  const t2 = getScopeLabel(scope)
-  const t6 = describeMcpConfigFilePath(scope)
-  const t8 = parsingErrors.map((error, i) => {
+  const scopeLabel = getScopeLabel(scope)
+  const configFilePath = describeMcpConfigFilePath(scope)
+  const errorElements = parsingErrors.map((error, i) => {
     const serverName = error.mcpErrorMetadata?.serverName
     return (
       <Box key={`error-${i}`}>
@@ -30,7 +30,7 @@ function McpConfigErrorSection({ scope, parsingErrors, warnings }) {
       </Box>
     )
   })
-  const t9 = warnings.map((warning, i_0) => {
+  const warningElements = warnings.map((warning, i_0) => {
     const serverName_0 = warning.mcpErrorMetadata?.serverName
     return (
       <Box key={`warning-${i_0}`}>
@@ -56,19 +56,19 @@ function McpConfigErrorSection({ scope, parsingErrors, warnings }) {
               [{hasErrors ? tSync('mcp.failedToParse') : tSync('mcp.containsWarnings')}]{' '}
             </Text>
           )}
-          {<Text>{t2}</Text>}
+          {<Text>{scopeLabel}</Text>}
         </Box>
       }
       {
         <Box>
           {<Text dimColor={true}>{tSync('mcp.locationLabel')} </Text>}
-          <Text dimColor={true}>{t6}</Text>
+          <Text dimColor={true}>{configFilePath}</Text>
         </Box>
       }
       {
         <Box marginLeft={1} flexDirection="column">
-          {t8}
-          {t9}
+          {errorElements}
+          {warningElements}
         </Box>
       }
     </Box>
@@ -98,12 +98,12 @@ export function McpParsingWarnings() {
       errors: ValidationError[]
     }
   }>
-  const hasParsingErrors = scopes.some((t0) => {
-    const { config } = t0
+  const hasParsingErrors = scopes.some((scopeEntry) => {
+    const { config } = scopeEntry
     return filterErrors(config.errors, 'fatal').length > 0
   })
-  const hasWarnings = scopes.some((t0) => {
-    const { config: config_0 } = t0
+  const hasWarnings = scopes.some((scopeEntry) => {
+    const { config: config_0 } = scopeEntry
     return filterErrors(config_0.errors, 'warning').length > 0
   })
   if (!hasParsingErrors && !hasWarnings) {
@@ -118,8 +118,8 @@ export function McpParsingWarnings() {
           <Link url="https://code.zy.com/docs/en/mcp">https://code.zy.com/docs/en/mcp</Link>
         </Text>
       </Box>
-      {scopes.map((t0) => {
-        const { scope, config: config_1 } = t0
+      {scopes.map((scopeEntry) => {
+        const { scope, config: config_1 } = scopeEntry
         return (
           <McpConfigErrorSection
             key={scope}

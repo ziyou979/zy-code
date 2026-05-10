@@ -58,15 +58,15 @@ const POSES: Record<ZyPose, Segments> = {
   },
 }
 
-export function Zy(t0: Props | undefined) {
+export function Zy(props: Props | undefined) {
   let config
-  if (t0 === undefined) {
+  if (props === undefined) {
     config = {}
   } else {
-    config = t0
+    config = props
   }
-  const { pose: t2 } = config
-  const pose = t2 === undefined ? 'default' : t2
+  const { pose: poseProp } = config
+  const pose = poseProp === undefined ? 'default' : poseProp
   if (env.terminal === 'Apple_Terminal') {
     return <AppleTerminalZy pose={pose} />
   }
@@ -92,8 +92,8 @@ export function Zy(t0: Props | undefined) {
   )
 }
 
-function AppleTerminalZy(t0: { pose: ZyPose }) {
-  const { pose } = t0
+function AppleTerminalZy(props: { pose: ZyPose }) {
+  const { pose } = props
   const p = POSES[pose]
   return (
     <Box flexDirection="column" alignItems="center">

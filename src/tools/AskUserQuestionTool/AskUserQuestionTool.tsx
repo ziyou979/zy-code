@@ -165,8 +165,8 @@ function AskUserQuestionResultMessage({ answers }) {
       }
       <MessageResponse>
         <Box flexDirection="column">
-          {Object.entries(answers).map((t0) => {
-            const [questionText, answer] = t0
+          {Object.entries(answers).map((entry) => {
+            const [questionText, answer] = entry
             return (
               <Text key={questionText} color="inactive">
                 · {questionText} → {answer as any}

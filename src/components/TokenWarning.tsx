@@ -17,22 +17,22 @@ type Props = {
 }
 
 /**
- * Live collapse progress: "x / y summarized". Sub-component so
- * useSyncExternalStore can subscribe to store mutations unconditionally
- * (hooks-in-conditionals would violate React rules). The parent only
- * renders this when feature('CONTEXT_COLLAPSE') + isContextCollapseEnabled().
+ * 实时折叠进度："x / y 已总结"。作为子组件，以便
+ * useSyncExternalStore 可以无条件订阅 store 变更
+ * （在条件中调用 hooks 会违反 React 规则）。父组件仅在
+ * feature('CONTEXT_COLLAPSE') + isContextCollapseEnabled() 时渲染此组件。
  */
 function CollapseLabel(props: Props) {
   const { upgradeMessage } = props as any
-  const t1 = require('../services/contextCollapse/index.js')
-  const { getStats, subscribe } = t1 as typeof import('../services/contextCollapse/index.js')
+  const collapseModule = require('../services/contextCollapse/index.js')
+  const { getStats, subscribe } = collapseModule as typeof import('../services/contextCollapse/index.js')
   const snapshot = useSyncExternalStore(subscribe, () => {
-    const s = getStats()
-    const idleWarn = s.health.emptySpawnWarningEmitted ? 1 : 0
-    return `${s.collapsedSpans}|${s.stagedSpans}|${s.health.totalErrors}|${s.health.totalEmptySpawns}|${idleWarn}`
+    const stats = getStats()
+    const idleWarn = stats.health.emptySpawnWarningEmitted ? 1 : 0
+    return `${stats.collapsedSpans}|${stats.stagedSpans}|${stats.health.totalErrors}|${stats.health.totalEmptySpawns}|${idleWarn}`
   })
-  const t3 = snapshot.split('|').map(Number)
-  const [collapsed, staged, errors, emptySpawns, idleWarn_0] = t3 as [
+  const statsValues = snapshot.split('|').map(Number)
+  const [collapsed, staged, errors, emptySpawns, idleWarning] = statsValues as [
     number,
     number,
     number,
@@ -40,7 +40,7 @@ function CollapseLabel(props: Props) {
     number,
   ]
   const total = collapsed + staged
-  if (errors > 0 || idleWarn_0) {
+  if (errors > 0 || idleWarning) {
     const problem =
       errors > 0
         ? tSync('tokenWarning.collapseErrors', {

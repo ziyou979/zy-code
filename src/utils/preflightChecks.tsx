@@ -96,7 +96,7 @@ export function PreflightStep({ onSuccess }: PreflightStepProps) {
       }
     }
   }, [result, onSuccess])
-  const t5 =
+  const connectivityStatus =
     isChecking && showSpinner ? (
       <Box paddingLeft={1}>
         <Spinner />
@@ -127,7 +127,7 @@ export function PreflightStep({ onSuccess }: PreflightStepProps) {
     )
   return (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      {t5}
+      {connectivityStatus}
     </Box>
   )
 }

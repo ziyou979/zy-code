@@ -58,8 +58,8 @@ function Button({ onAction, tabIndex = 0, autoFocus, children, ref, ...style }: 
   const handleClick = (_e) => {
     onAction()
   }
-  const handleFocus = (_e_0) => setIsFocused(true)
-  const handleBlur = (_e_1) => setIsFocused(false)
+  const handleFocus = (_event) => setIsFocused(true)
+  const handleBlur = (_event) => setIsFocused(false)
   const handleMouseEnter = () => setIsHovered(true)
   const handleMouseLeave = () => setIsHovered(false)
   const state = {

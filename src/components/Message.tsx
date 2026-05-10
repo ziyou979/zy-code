@@ -1,10 +1,10 @@
-import { feature } from 'bun:bundle'
+import {feature} from 'bun:bundle'
 import * as React from 'react'
-import type { Command } from '../commands.js'
-import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { Box } from '../ink.js'
-import type { Tools } from '../Tool.js'
-import { isConnectorTextBlock } from '../types/connectorText.js'
+import type {Command} from '../commands.js'
+import {useTerminalSize} from '../hooks/useTerminalSize.js'
+import {Box} from '../ink.js'
+import type {Tools} from '../Tool.js'
+import {isConnectorTextBlock} from '../types/connectorText.js'
 import type {
   AssistantMessage,
   AttachmentMessage as AttachmentMessageType,
@@ -14,26 +14,28 @@ import type {
   ProgressMessage,
   SystemMessage,
 } from '../types/message.js'
-import { isAdvisorBlock } from '../utils/advisor.js'
-import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
-import { logError } from '../utils/log.js'
-import type { buildMessageLookups } from '../utils/messages.js'
-import { CompactSummary } from './CompactSummary.js'
-import { AdvisorMessage } from './messages/AdvisorMessage.js'
-import { AssistantRedactedThinkingMessage } from './messages/AssistantRedactedThinkingMessage.js'
-import { AssistantTextMessage } from './messages/AssistantTextMessage.js'
-import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js'
-import { AssistantToolUseMessage } from './messages/AssistantToolUseMessage.js'
-import { AttachmentMessage } from './messages/AttachmentMessage.js'
-import { CollapsedReadSearchContent } from './messages/CollapsedReadSearchContent.js'
-import { CompactBoundaryMessage } from './messages/CompactBoundaryMessage.js'
-import { GroupedToolUseContent } from './messages/GroupedToolUseContent.js'
-import { SystemTextMessage } from './messages/SystemTextMessage.js'
-import { UserImageMessage } from './messages/UserImageMessage.js'
-import { UserTextMessage } from './messages/UserTextMessage.js'
-import { UserToolResultMessage } from './messages/UserToolResultMessage/UserToolResultMessage.js'
-import { OffscreenFreeze } from './OffscreenFreeze.js'
-import { ExpandShellOutputProvider } from './shell/ExpandShellOutputContext.js'
+import {isAdvisorBlock} from '../utils/advisor.js'
+import {isFullscreenEnvEnabled} from '../utils/fullscreen.js'
+import {logError} from '../utils/log.js'
+import type {buildMessageLookups} from '../utils/messages.js'
+import {CompactSummary} from './CompactSummary.js'
+import {AdvisorMessage} from './messages/AdvisorMessage.js'
+import {AssistantRedactedThinkingMessage} from './messages/AssistantRedactedThinkingMessage.js'
+import {AssistantTextMessage} from './messages/AssistantTextMessage.js'
+import {AssistantThinkingMessage} from './messages/AssistantThinkingMessage.js'
+import {AssistantToolUseMessage} from './messages/AssistantToolUseMessage.js'
+import {AttachmentMessage} from './messages/AttachmentMessage.js'
+import {CollapsedReadSearchContent} from './messages/CollapsedReadSearchContent.js'
+import {CompactBoundaryMessage} from './messages/CompactBoundaryMessage.js'
+import {GroupedToolUseContent} from './messages/GroupedToolUseContent.js'
+import {SystemTextMessage} from './messages/SystemTextMessage.js'
+import {UserImageMessage} from './messages/UserImageMessage.js'
+import {UserTextMessage} from './messages/UserTextMessage.js'
+import {UserToolResultMessage} from './messages/UserToolResultMessage/UserToolResultMessage.js'
+import {OffscreenFreeze} from './OffscreenFreeze.js'
+import {ExpandShellOutputProvider} from './shell/ExpandShellOutputContext.js'
+import type {TextBlock} from "src/types/llm.ts";
+
 export type Props = {
   message:
     | NormalizedUserMessage
@@ -89,24 +91,20 @@ function MessageImpl({
 }: Props) {
   switch (message.type) {
     case 'attachment': {
-      let t2
-      t2 = (
-        <AttachmentMessage
-          addMargin={addMargin}
-          attachment={message.attachment as any}
-          verbose={verbose}
-          isTranscriptMode={isTranscriptMode}
-        />
+      return (
+          <AttachmentMessage
+              addMargin={addMargin}
+              attachment={message.attachment as any}
+              verbose={verbose}
+              isTranscriptMode={isTranscriptMode}
+          />
       )
-      return t2
     }
     case 'assistant': {
-      const t2 = containerWidth ?? '100%'
-      let t3
-      let t4
-      t4 = (_, index_0) => (
+      const assistantWidth = containerWidth ?? '100%'
+      let renderAssistantBlock = (_, index) => (
         <AssistantMessageBlock
-          key={index_0}
+          key={index}
           param={_ as any}
           addMargin={addMargin}
           tools={tools}
@@ -121,29 +119,23 @@ function MessageImpl({
           isTranscriptMode={isTranscriptMode}
           lookups={lookups}
           onOpenRateLimitOptions={onOpenRateLimitOptions}
-          thinkingBlockId={`${message.uuid}:${index_0}` as any}
+          thinkingBlockId={`${message.uuid}:${index}` as any}
           lastThinkingBlockId={lastThinkingBlockId as any}
           advisorModel={message.advisorModel}
         />
       )
-      t3 = message.message.content.map(t4)
-      let t5
-      t5 = (
-        <Box flexDirection="column" width={t2}>
-          {t3}
-        </Box>
+      return (
+          <Box flexDirection="column" width={assistantWidth}>
+            {message.message.content.map(renderAssistantBlock)}
+          </Box>
       )
-      return t5
     }
     case 'user': {
       if (message.isCompactSummary) {
-        const t2 = isTranscriptMode ? 'transcript' : 'prompt'
-        let t3
-        t3 = <CompactSummary message={message as any} screen={t2} />
-        return t3
+        const compactScreen = isTranscriptMode ? 'transcript' : 'prompt'
+        return <CompactSummary message={message as any} screen={compactScreen}/>
       }
-      let imageIndices
-      imageIndices = []
+      let imageIndices = []
       let imagePosition = 0
       for (const param of message.message.content) {
         if (param.type === 'image') {
@@ -155,9 +147,8 @@ function MessageImpl({
         }
       }
       const isLatestBashOutput = latestBashOutputUUID === message.uuid
-      const t2 = containerWidth ?? '100%'
-      let t3
-      t3 = message.message.content.map((param_0, index) => (
+      const userWidth = containerWidth ?? '100%'
+      let userContent = message.message.content.map((param_0, index) => (
         <UserMessage
           key={index}
           message={message as any}
@@ -173,29 +164,23 @@ function MessageImpl({
           isTranscriptMode={isTranscriptMode}
         />
       ))
-      let t4
-      t4 = (
-        <Box flexDirection="column" width={t2}>
-          {t3}
-        </Box>
+      const content = (
+          <Box flexDirection="column" width={userWidth}>
+            {userContent}
+          </Box>
       )
-      const content = t4
-      let t5
-      t5 = isLatestBashOutput ? (
-        <ExpandShellOutputProvider>{content}</ExpandShellOutputProvider>
+      return isLatestBashOutput ? (
+          <ExpandShellOutputProvider>{content}</ExpandShellOutputProvider>
       ) : (
-        content
+          content
       )
-      return t5
     }
     case 'system': {
       if (message.subtype === 'compact_boundary') {
         if (isFullscreenEnvEnabled()) {
           return null
         }
-        let t2
-        t2 = <CompactBoundaryMessage />
-        return t2
+        return <CompactBoundaryMessage/>
       }
       if (message.subtype === 'microcompact_boundary') {
         return null
@@ -206,75 +191,63 @@ function MessageImpl({
         const { isSnipMarkerMessage } =
           require('../services/compact/snipCompact.js') as typeof import('../services/compact/snipCompact.js')
         if (isSnipBoundaryMessage(message)) {
-          let t2
-          t2 = require('./messages/SnipBoundaryMessage.js')
-          const { SnipBoundaryMessage } = t2 as typeof import('./messages/SnipBoundaryMessage.js')
-          let t3
-          t3 = <SnipBoundaryMessage message={message} />
-          return t3
+          let snipModule = require('./messages/SnipBoundaryMessage.js')
+          const { SnipBoundaryMessage } = snipModule as typeof import('./messages/SnipBoundaryMessage.js')
+          return <SnipBoundaryMessage message={message}/>
         }
         if (isSnipMarkerMessage(message)) {
           return null
         }
       }
       if (message.subtype === 'local_command') {
-        let t2
-        t2 = {
+        let localCommandContent: TextBlock = {
           type: 'text',
           text: message.content,
         }
-        let t3
-        t3 = (
-          <UserTextMessage
-            addMargin={addMargin}
-            param={t2}
-            verbose={verbose}
-            isTranscriptMode={isTranscriptMode}
-          />
+        return (
+            <UserTextMessage
+                addMargin={addMargin}
+                param={localCommandContent}
+                verbose={verbose}
+                isTranscriptMode={isTranscriptMode}
+            />
         )
-        return t3
       }
-      let t2
-      t2 = (
-        <SystemTextMessage
-          message={message}
-          addMargin={addMargin}
-          verbose={verbose}
-          isTranscriptMode={isTranscriptMode}
-        />
+      return (
+          <SystemTextMessage
+              message={message}
+              addMargin={addMargin}
+              verbose={verbose}
+              isTranscriptMode={isTranscriptMode}
+          />
       )
-      return t2
     }
     case 'grouped_tool_use': {
-      let t2
-      t2 = (
-        <GroupedToolUseContent
-          message={message}
-          tools={tools}
-          lookups={lookups}
-          inProgressToolUseIDs={inProgressToolUseIDs}
-          shouldAnimate={shouldAnimate}
-        />
+      return (
+          <GroupedToolUseContent
+              message={message}
+              tools={tools}
+              lookups={lookups}
+              inProgressToolUseIDs={inProgressToolUseIDs}
+              shouldAnimate={shouldAnimate}
+          />
       )
-      return t2
     }
     case 'collapsed_read_search': {
-      const t2 = verbose || isTranscriptMode
-      let t3
-      t3 = (
-        <OffscreenFreeze>
-          <CollapsedReadSearchContent
-            message={message}
-            inProgressToolUseIDs={inProgressToolUseIDs}
-            shouldAnimate={shouldAnimate}
-            verbose={t2}
-            tools={tools}
-            lookups={lookups}
-            isActiveGroup={isActiveCollapsedGroup}
-          />
-        </OffscreenFreeze>
+      const shouldShowVerbose = verbose || isTranscriptMode
+      return (
+          <OffscreenFreeze>
+            <CollapsedReadSearchContent
+                message={message}
+                inProgressToolUseIDs={inProgressToolUseIDs}
+                shouldAnimate={shouldAnimate}
+                verbose={shouldShowVerbose}
+                tools={tools}
+                lookups={lookups}
+                isActiveGroup={isActiveCollapsedGroup}
+            />
+          </OffscreenFreeze>
       )
-      return t3
     }
   }
 }
@@ -294,42 +267,36 @@ function UserMessage({
   const { columns } = useTerminalSize()
   switch (param.type) {
     case 'text': {
-      let t1
-      t1 = (
-        <UserTextMessage
-          addMargin={addMargin}
-          param={param as any}
-          verbose={verbose}
-          planContent={message.planContent}
-          isTranscriptMode={isTranscriptMode}
-          timestamp={message.timestamp}
-        />
+      return (
+          <UserTextMessage
+              addMargin={addMargin}
+              param={param as any}
+              verbose={verbose}
+              planContent={message.planContent}
+              isTranscriptMode={isTranscriptMode}
+              timestamp={message.timestamp}
+          />
       )
-      return t1
     }
     case 'image': {
-      const t1 = addMargin && !isUserContinuation
-      let t2
-      t2 = <UserImageMessage imageId={imageIndex as any} addMargin={t1} />
-      return t2
+      const shouldAddMargin = addMargin && !isUserContinuation
+      return <UserImageMessage imageId={imageIndex as any} addMargin={shouldAddMargin}/>
     }
     case 'tool_result': {
-      const t1 = columns - 5
-      let t2
-      t2 = (
-        <UserToolResultMessage
-          param={param as any}
-          message={message as any}
-          lookups={lookups}
-          progressMessagesForMessage={progressMessagesForMessage}
-          style={style}
-          tools={tools}
-          verbose={verbose}
-          width={t1}
-          isTranscriptMode={isTranscriptMode}
-        />
+      const toolResultWidth = columns - 5
+      return (
+          <UserToolResultMessage
+              param={param as any}
+              message={message as any}
+              lookups={lookups}
+              progressMessagesForMessage={progressMessagesForMessage}
+              style={style}
+              tools={tools}
+              verbose={verbose}
+              width={toolResultWidth}
+              isTranscriptMode={isTranscriptMode}
+          />
       )
-      return t2
     }
     default: {
       return
@@ -374,82 +341,72 @@ function AssistantMessageBlock({
   }
   switch (param.type) {
     case 'tool_use': {
-      let t1
-      t1 = (
-        <AssistantToolUseMessage
-          param={param}
-          addMargin={addMargin}
-          tools={tools}
-          commands={commands}
-          verbose={verbose}
-          inProgressToolUseIDs={inProgressToolUseIDs}
-          progressMessagesForMessage={progressMessagesForMessage}
-          shouldAnimate={shouldAnimate}
-          shouldShowDot={shouldShowDot}
-          inProgressToolCallCount={inProgressToolCallCount}
-          lookups={lookups}
-          isTranscriptMode={isTranscriptMode}
-        />
+      return (
+          <AssistantToolUseMessage
+              param={param}
+              addMargin={addMargin}
+              tools={tools}
+              commands={commands}
+              verbose={verbose}
+              inProgressToolUseIDs={inProgressToolUseIDs}
+              progressMessagesForMessage={progressMessagesForMessage}
+              shouldAnimate={shouldAnimate}
+              shouldShowDot={shouldShowDot}
+              inProgressToolCallCount={inProgressToolCallCount}
+              lookups={lookups}
+              isTranscriptMode={isTranscriptMode}
+          />
       )
-      return t1
     }
     case 'text': {
-      let t1
-      t1 = (
-        <AssistantTextMessage
-          param={param}
-          addMargin={addMargin}
-          shouldShowDot={shouldShowDot}
-          verbose={verbose}
-          width={width}
-          onOpenRateLimitOptions={onOpenRateLimitOptions}
-        />
+      return (
+          <AssistantTextMessage
+              param={param}
+              addMargin={addMargin}
+              shouldShowDot={shouldShowDot}
+              verbose={verbose}
+              width={width}
+              onOpenRateLimitOptions={onOpenRateLimitOptions}
+          />
       )
-      return t1
     }
     case 'redacted_thinking': {
       if (!isTranscriptMode && !verbose) {
         return null
       }
-      let t1
-      t1 = <AssistantRedactedThinkingMessage addMargin={addMargin} />
-      return t1
+      return <AssistantRedactedThinkingMessage addMargin={addMargin}/>
     }
     case 'thinking': {
       if (!isTranscriptMode && !verbose) {
         return null
       }
       const isLastThinking = !lastThinkingBlockId || thinkingBlockId === lastThinkingBlockId
-      const t1 = isTranscriptMode && !isLastThinking
-      let t2
-      t2 = (
-        <AssistantThinkingMessage
-          addMargin={addMargin}
-          param={param}
-          isTranscriptMode={isTranscriptMode}
-          verbose={verbose}
-          hideInTranscript={t1}
-        />
+      const shouldHideThinking = isTranscriptMode && !isLastThinking
+      return (
+          <AssistantThinkingMessage
+              addMargin={addMargin}
+              param={param}
+              isTranscriptMode={isTranscriptMode}
+              verbose={verbose}
+              hideInTranscript={shouldHideThinking}
+          />
       )
-      return t2
     }
     case 'server_tool_use':
     case 'advisor_tool_result': {
       if (isAdvisorBlock(param)) {
-        const t1 = verbose || isTranscriptMode
-        let t2
-        t2 = (
-          <AdvisorMessage
-            block={param}
-            addMargin={addMargin}
-            resolvedToolUseIDs={lookups.resolvedToolUseIDs}
-            erroredToolUseIDs={lookups.erroredToolUseIDs}
-            shouldAnimate={shouldAnimate}
-            verbose={t1}
-            advisorModel={advisorModel}
-          />
+        const shouldShowAdvisorVerbose = verbose || isTranscriptMode
+        return (
+            <AdvisorMessage
+                block={param}
+                addMargin={addMargin}
+                resolvedToolUseIDs={lookups.resolvedToolUseIDs}
+                erroredToolUseIDs={lookups.erroredToolUseIDs}
+                shouldAnimate={shouldAnimate}
+                verbose={shouldShowAdvisorVerbose}
+                advisorModel={advisorModel}
+            />
         )
-        return t2
       }
       logError(new Error(`Unable to render server tool block: ${param.type}`))
       return null
@@ -494,7 +451,7 @@ export function areMessagePropsEqual(prev: Props, next: Props): boolean {
   // containerWidth 在无元数据路径中是一个绝对数值（跳过了包装 Box）。
   // 静态消息必须在终端缩放时重新渲染。
   if (prev.containerWidth !== next.containerWidth) return false
-  if (prev.isStatic && next.isStatic) return true
-  return false
+  return prev.isStatic && next.isStatic;
+
 }
 export const Message = React.memo(MessageImpl, areMessagePropsEqual)

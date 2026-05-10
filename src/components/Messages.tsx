@@ -459,16 +459,16 @@ const MessagesImpl = ({
   // 这样我们可以为最近的 bash 命令显示完整输出
   const latestBashOutputUUID = useMemo(() => {
     // 从后向前遍历，查找包含 bash output 的最后一条 user 消息
-    for (let i_0 = normalizedMessages.length - 1; i_0 >= 0; i_0--) {
-      const msg_0 = normalizedMessages[i_0]
-      if (msg_0?.type === 'user') {
-        const content_0 = msg_0.message.content
+    for (let index = normalizedMessages.length - 1; index >= 0; index--) {
+      const message = normalizedMessages[index]
+      if (message?.type === 'user') {
+        const content = message.message.content
         // 检查是否有任何文本内容是 bash output
-        for (const block_0 of content_0) {
-          if (block_0.type === 'text') {
-            const text = block_0.text
+        for (const block of content) {
+          if (block.type === 'text') {
+            const text = block.text
             if (text.startsWith('<bash-stdout') || text.startsWith('<bash-stderr')) {
-              return msg_0.uuid
+              return message.uuid
             }
           }
         }
@@ -533,10 +533,10 @@ const MessagesImpl = ({
   // 4 次过滤/map 传递 = 每次滚动约 50ms 分配 → GC 压力 →
   // 在 1GB 堆上出现 100-173ms 的 stop-the-world 暂停。
   const {
-    collapsed: collapsed_0,
-    lookups: lookups_0,
-    hasTruncatedMessages: hasTruncatedMessages_0,
-    hiddenMessageCount: hiddenMessageCount_0,
+    collapsed: collapsed,
+    lookups: lookups,
+    hasTruncatedMessages: hasTruncatedMessages,
+    hiddenMessageCount: hiddenMessageCount,
   } = useMemo(() => {
     // 在 fullscreen 模式下，alt buffer 没有原生 scrollback，所以
     // compact-boundary 过滤器只是隐藏了 ScrollBox 可以滚动到的历史。
@@ -555,14 +555,14 @@ const MessagesImpl = ({
     const messagesToShowNotTruncated = reorderMessagesInUI(
       compactAwareMessages
         .filter(
-          (msg_2): msg_2 is Exclude<NormalizedMessage, ProgressMessageType> =>
-            msg_2.type !== 'progress',
+          (msg): msg is Exclude<NormalizedMessage, ProgressMessageType> =>
+            msg.type !== 'progress',
         )
         // CC-724：丢弃 AttachmentMessage 渲染为 null 的 attachment 消息
         // （hook_success、hook_additional_context、hook_cancelled 等）
         // 在计数/切片之前执行，这样它们不会膨胀 ctrl-o 中的"N messages"
         // 计数，也不会占用 200 条消息渲染上限中的槽位。
-        .filter((msg_3) => !isNullRenderingAttachment(msg_3))
+        .filter((msg) => !isNullRenderingAttachment(msg))
         .filter((_) => shouldShowUserMessage(_, isTranscriptMode)),
       syntheticStreamingToolUseMessages,
     )
@@ -576,7 +576,7 @@ const MessagesImpl = ({
     // dropTextInBriefTurns 应仅在 SendUserMessage turn 时触发——
     // SendUserFile 传递文件而不替换文本，因此为纯文件 turn 丢弃
     // assistant 文本会让用户失去上下文。
-    const dropTextToolNames = [BRIEF_TOOL_NAME].filter((n_0): n_0 is string => n_0 !== null)
+    const dropTextToolNames = [BRIEF_TOOL_NAME].filter((name): name is string => name !== null)
     const briefFiltered =
       briefToolNames.length > 0 && !isTranscriptMode
         ? isBriefOnly
@@ -630,15 +630,15 @@ const MessagesImpl = ({
     // 这样每个 chunk 都能获得正确的 tool-call 分组。
     // Ctrl+E 展开全部时也跳过 200 条上限——用户显式要求查看完整历史。
     const capApplies = !virtualScrollRuntimeGate && !disableRenderCap && !showAllInTranscript
-    const sliceStart = capApplies ? computeSliceStart(collapsed_0, sliceAnchorRef) : 0
+    const sliceStart = capApplies ? computeSliceStart(collapsed, sliceAnchorRef) : 0
     return renderRange
-      ? collapsed_0.slice(renderRange[0], renderRange[1])
+      ? collapsed.slice(renderRange[0], renderRange[1])
       : sliceStart > 0
-        ? collapsed_0.slice(sliceStart)
-        : collapsed_0
-  }, [collapsed_0, renderRange, virtualScrollRuntimeGate, disableRenderCap])
+        ? collapsed.slice(sliceStart)
+        : collapsed
+  }, [collapsed, renderRange, virtualScrollRuntimeGate, disableRenderCap])
   const streamingToolUseIDs = useMemo(
-    () => new Set(streamingToolUses.map((__0) => __0.contentBlock.id)),
+    () => new Set(streamingToolUses.map((stu) => stu.contentBlock.id)),
     [streamingToolUses],
   )
 
@@ -651,7 +651,7 @@ const MessagesImpl = ({
   }, [unseenDivider, renderableMessages])
   const selectedIdx = useMemo(() => {
     if (!cursor) return -1
-    return renderableMessages.findIndex((m_0) => m_0.uuid === cursor.uuid)
+    return renderableMessages.findIndex((message) => message.uuid === cursor.uuid)
   }, [cursor, renderableMessages])
 
   // Fullscreen：点击消息可切换该消息的 verbose 渲染。使用
@@ -659,17 +659,17 @@ const MessagesImpl = ({
   // （分开的行）可以同时展开；对于 groups/thinking 回退到 uuid。
   // 过时的 key 是无害的——它们永远不会匹配 renderableMessages 中的任何内容。
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(() => new Set())
-  const onItemClick = useCallback((msg_4: RenderableMessage) => {
-    const k = expandKey(msg_4)
+  const onItemClick = useCallback((message: RenderableMessage) => {
+    const key = expandKey(message)
     setExpandedKeys((prev) => {
       const next = new Set(prev)
-      if (next.has(k)) next.delete(k)
-      else next.add(k)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
       return next
     })
   }, [])
   const isItemExpanded = useCallback(
-    (msg_5: RenderableMessage) => expandedKeys.size > 0 && expandedKeys.has(expandKey(msg_5)),
+    (message: RenderableMessage) => expandedKeys.size > 0 && expandedKeys.has(expandKey(message)),
     [expandedKeys],
   )
   // 仅在 verbose 切换能揭示更多内容的消息上启用 hover/click：
@@ -678,13 +678,13 @@ const MessagesImpl = ({
   // streaming 期间翻转，onMouseEnter 会在鼠标已经在内部之后才附加 →
   // hover 永远不会触发。tools 在会话期间稳定；lookups 通过 ref 读取，
   // 因此 callback 不会在每条新消息时都变化。
-  const lookupsRef = useRef(lookups_0)
-  lookupsRef.current = lookups_0
+  const lookupsRef = useRef(lookups)
+  lookupsRef.current = lookups
   const isItemClickable = useCallback(
-    (msg_6: RenderableMessage): boolean => {
-      if (msg_6.type === 'collapsed_read_search') return true
-      if (msg_6.type === 'assistant') {
-        const b = msg_6.message.content[0] as unknown as AdvisorBlock | undefined
+    (message: RenderableMessage): boolean => {
+      if (message.type === 'collapsed_read_search') return true
+      if (message.type === 'assistant') {
+        const b = message.message.content[0] as unknown as AdvisorBlock | undefined
         return (
           b != null &&
           isAdvisorBlock(b) &&
@@ -692,14 +692,14 @@ const MessagesImpl = ({
           b.content.type === 'advisor_result'
         )
       }
-      if (msg_6.type !== 'user') return false
-      const content = msg_6.message.content
+      if (message.type !== 'user') return false
+      const content = message.message.content
       if (!Array.isArray(content)) return false
-      const b_0 = content[0]
-      if (b_0?.type !== 'tool_result' || b_0.isError || !msg_6.toolUseResult) return false
-      const name = lookupsRef.current.toolUseByToolUseID.get(b_0.toolCallId)?.name
+      const block = content[0]
+      if (block?.type !== 'tool_result' || block.isError || !message.toolUseResult) return false
+      const name = lookupsRef.current.toolUseByToolUseID.get(block.toolCallId)?.name
       const tool = name ? findToolByName(tools, name) : undefined
-      return tool?.isResultTruncated?.(msg_6.toolUseResult as never) ?? false
+      return tool?.isResultTruncated?.(message.toolUseResult as never) ?? false
     },
     [tools],
   )
@@ -726,32 +726,32 @@ const MessagesImpl = ({
     return () => progress(null)
   }, [progress])
   const messageKey = useCallback(
-    (msg_7: RenderableMessage) => `${msg_7.uuid}-${conversationId}`,
+    (message: RenderableMessage) => `${message.uuid}-${conversationId}`,
     [conversationId],
   )
-  const renderMessageRow = (msg_8: RenderableMessage, index: number) => {
+  const renderMessageRow = (message: RenderableMessage, index: number) => {
     const prevType = index > 0 ? renderableMessages[index - 1]?.type : undefined
-    const isUserContinuation = msg_8.type === 'user' && prevType === 'user'
+    const isUserContinuation = message.type === 'user' && prevType === 'user'
     // hasContentAfter 仅用于 collapsed_read_search 组；
     // 跳过对其他所有内容的扫描。streamingText 在此 map 之后作为
     // 兄弟节点渲染，因此它永远不会在 renderableMessages 中——除非
     // 显式放入，这样组一旦开始 stream 文本就会切换为过去式，
     // 而不是等待块完成。
     const hasContentAfter =
-      msg_8.type === 'collapsed_read_search' &&
+      message.type === 'collapsed_read_search' &&
       (!!streamingText ||
         hasContentAfterIndex(renderableMessages, index, tools, streamingToolUseIDs))
-    const k_0 = messageKey(msg_8)
+    const key = messageKey(message)
     const row = (
       <MessageRow
-        key={k_0}
-        message={msg_8}
+        key={key}
+        message={message}
         isUserContinuation={isUserContinuation}
         hasContentAfter={hasContentAfter}
         tools={tools}
         commands={commands}
         verbose={
-          verbose || isItemExpanded(msg_8) || (cursor?.expanded === true && index === selectedIdx)
+          verbose || isItemExpanded(message) || (cursor?.expanded === true && index === selectedIdx)
         }
         inProgressToolUseIDs={inProgressToolUseIDs}
         streamingToolUseIDs={streamingToolUseIDs}
@@ -762,14 +762,14 @@ const MessagesImpl = ({
         latestBashOutputUUID={latestBashOutputUUID}
         columns={columns}
         isLoading={isLoading}
-        lookups={lookups_0}
+        lookups={lookups}
       />
     )
 
     // 每行的 Provider——选择变更时只有 2 行重新渲染。
     // 在 divider 分支之前包装，这样两个返回路径都能获取到它。
     const wrapped = (
-      <MessageActionsSelectedContext.Provider key={k_0} value={index === selectedIdx}>
+      <MessageActionsSelectedContext.Provider key={key} value={index === selectedIdx}>
         {row}
       </MessageActionsSelectedContext.Provider>
     )
@@ -800,22 +800,22 @@ const MessagesImpl = ({
   // 组件 hook 变更共享状态 → 主 root 累积更新）。
   const searchTextCache = useRef(new WeakMap<RenderableMessage, string>())
   const extractSearchText = useCallback(
-    (msg_9: RenderableMessage): string => {
-      const cached = searchTextCache.current.get(msg_9)
+    (message: RenderableMessage): string => {
+      const cached = searchTextCache.current.get(message)
       if (cached !== undefined) return cached
-      let text_0 = renderableSearchText(msg_9)
+      let text = renderableSearchText(message)
       // 如果这是 tool_result 消息且 tool 实现了
       // extractSearchText，优先使用它——比 renderableSearchText 的
       // 字段名启发式更精确（由 tool 拥有）。
-      if (msg_9.type === 'user' && msg_9.toolUseResult && Array.isArray(msg_9.message.content)) {
-        const tr = msg_9.message.content.find((b_1) => b_1.type === 'tool_result')
+      if (message.type === 'user' && message.toolUseResult && Array.isArray(message.message.content)) {
+        const tr = message.message.content.find((block) => block.type === 'tool_result')
         if (tr && 'tool_use_id' in tr) {
-          const tu = lookups_0.toolUseByToolUseID.get(tr.toolCallId)
-          const tool_0 = tu && findToolByName(tools, tu.name)
-          const extracted = tool_0?.extractSearchText?.(msg_9.toolUseResult as never)
+          const tu = lookups.toolUseByToolUseID.get(tr.toolCallId)
+          const tool = tu && findToolByName(tools, tu.name)
+          const extracted = tool?.extractSearchText?.(message.toolUseResult as never)
           // undefined = tool 未实现 → 保留启发式。空字符串 = tool
           // 说"没有可索引的内容" → 遵从它。
-          if (extracted !== undefined) text_0 = extracted
+          if (extracted !== undefined) text = extracted
         }
       }
       // 缓存小写形式：setSearchQuery 的热循环在每次击键时进行 indexOf。
@@ -823,11 +823,11 @@ const MessagesImpl = ({
       // 大致相同的稳态内存换取零每次击键分配。缓存会随消息在
       // 退出 transcript 时 GC。Tool 方法返回原始值；
       // renderableSearchText 已经小写（冗余但廉价）。
-      const lowered = text_0.toLowerCase()
-      searchTextCache.current.set(msg_9, lowered)
+      const lowered = text.toLowerCase()
+      searchTextCache.current.set(message, lowered)
       return lowered
     },
-    [tools, lookups_0],
+    [tools, lookups],
   )
   return (
     <>
@@ -837,9 +837,9 @@ const MessagesImpl = ({
       )}
 
       {/* 截断指示器 */}
-      {hasTruncatedMessages_0 && (
+      {hasTruncatedMessages && (
         <Divider
-          title={`${toggleShowAllShortcut} to show ${chalk.bold(hiddenMessageCount_0)} previous messages`}
+          title={`${toggleShowAllShortcut} to show ${chalk.bold(hiddenMessageCount)} previous messages`}
           width={columns}
         />
       )}
@@ -847,13 +847,13 @@ const MessagesImpl = ({
       {/* 显示全部指示器 */}
       {isTranscriptMode &&
         showAllInTranscript &&
-        hiddenMessageCount_0 > 0 &&
+        hiddenMessageCount > 0 &&
         // disableRenderCap（如 [ dump-to-scrollback）意味着我们作为一次性
         // 逃生通道不受上限限制，而不是切换——ctrl+e 无效，且实际上没有
         // 任何"隐藏"内容可恢复。
         !disableRenderCap && (
           <Divider
-            title={`${toggleShowAllShortcut} to hide ${chalk.bold(hiddenMessageCount_0)} previous messages`}
+            title={`${toggleShowAllShortcut} to hide ${chalk.bold(hiddenMessageCount)} previous messages`}
             width={columns}
           />
         )}

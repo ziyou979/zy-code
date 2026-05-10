@@ -76,7 +76,7 @@ export function ApiKeyStep({
       isActive: isTextInputVisible,
     },
   )
-  const t13 = selectedOption === 'new' ? color('success', theme)('> ') : '  '
+  const newOptionPrefix = selectedOption === 'new' ? color('success', theme)('> ') : '  '
   return (
     <>
       {
@@ -105,7 +105,7 @@ export function ApiKeyStep({
           )}
           {
             <Box marginBottom={1}>
-              <Text>{t13}Enter a new API key</Text>
+              <Text>{newOptionPrefix}Enter a new API key</Text>
             </Box>
           }
           {selectedOption === 'new' && (

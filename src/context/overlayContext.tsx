@@ -34,8 +34,8 @@ const NON_MODAL_OVERLAYS = new Set(['autocomplete'])
  *   // ...
  * }
  */
-export function useRegisterOverlay(id, t0) {
-  const enabled = t0 === undefined ? true : t0
+export function useRegisterOverlay(id, enabledParam) {
+  const enabled = enabledParam === undefined ? true : enabledParam
   const store = useContext(AppStoreContext)
   const setAppState = store?.setState
   useEffect(() => {
@@ -54,15 +54,15 @@ export function useRegisterOverlay(id, t0) {
       }
     })
     return () => {
-      setAppState((prev_0) => {
-        if (!prev_0.activeOverlays.has(id)) {
-          return prev_0
+      setAppState((prevState) => {
+        if (!prevState.activeOverlays.has(id)) {
+          return prevState
         }
-        const next_0 = new Set(prev_0.activeOverlays)
-        next_0.delete(id)
+        const nextOverlays = new Set(prevState.activeOverlays)
+        nextOverlays.delete(id)
         return {
-          ...prev_0,
-          activeOverlays: next_0,
+          ...prevState,
+          activeOverlays: nextOverlays,
         }
       })
     }

@@ -287,7 +287,7 @@ export function useMessageActions(
         }
         const selectedMessage = navRef.current?.getSelected()
         if (!selectedMessage) return
-        ;(matchedAction.run as (m: NavigableMessage, c_0: MessageActionCaps) => void)(selectedMessage, capsRef.current)
+        ;(matchedAction.run as (m: NavigableMessage, caps: MessageActionCaps) => void)(selectedMessage, capsRef.current)
         setCursor(null)
       }
     }

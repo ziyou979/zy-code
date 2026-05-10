@@ -56,8 +56,8 @@ export function HighlightedCodeFallback({ code, filePath, dim = false, skipColor
   )
 }
 function Highlighted({ codeWithSpaces, language }) {
-  const t1 = getCliHighlightPromise()
-  const hl = use(t1)
+  const highlightPromise = getCliHighlightPromise()
+  const hl = use(highlightPromise)
   let out
   if (!hl) {
     out = codeWithSpaces
@@ -79,8 +79,8 @@ function Highlighted({ codeWithSpaces, language }) {
         logForDebugging(
           `Language not supported while highlighting code, falling back to markdown: ${e}`,
         )
-        const t4 = cachedHighlight(hl, codeWithSpaces, 'markdown')
-        out = t4
+        const fallbackHighlight = cachedHighlight(hl, codeWithSpaces, 'markdown')
+        out = fallbackHighlight
       } else {
         out = codeWithSpaces
       }

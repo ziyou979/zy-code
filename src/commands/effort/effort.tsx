@@ -128,8 +128,8 @@ export function executeEffort(args: string): EffortCommandResult {
   }
   return setEffortValue(normalized)
 }
-function ShowCurrentEffort(t0) {
-  const { onDone } = t0
+function ShowCurrentEffort(props) {
+  const { onDone } = props
   const effortValue = useAppState((s) => s.effortValue)
   const model = useMainLoopModel()
   const { message } = showCurrentEffort(effortValue, model)

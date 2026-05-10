@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { toString as qrToString } from 'qrcode'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { getBridgeAccessToken } from '../../bridge/bridgeConfig.js'
@@ -12,6 +11,7 @@ import { checkEnvLessBridgeMinVersion } from '../../bridge/envLessBridgeConfig.j
 import { BRIDGE_LOGIN_INSTRUCTION, REMOTE_CONTROL_DISCONNECTED_MSG } from '../../bridge/types.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { ListItem } from '../../components/design-system/ListItem.js'
+import { QRCodeDisplay } from '../../components/QRCodeDisplay.js'
 import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import { Box, Text } from '../../ink.js'
@@ -30,22 +30,21 @@ type Props = {
 }
 
 /**
- * /remote-control command — manages the bidirectional bridge connection.
+ * /remote-control 命令 — 管理双向桥接连接
  *
- * When enabled, sets replBridgeEnabled in AppState, which triggers
- * useReplBridge in REPL.tsx to initialize the bridge connection.
- * The bridge registers an environment, creates a session with the current
- * conversation, polls for work, and connects an ingress WebSocket for
- * bidirectional messaging between the CLI and zy.ai.
+ * 启用时，在 AppState 中设置 replBridgeEnabled，触发
+ * REPL.tsx 中的 useReplBridge 初始化桥接连接。
+ * 桥接会注册环境、创建与当前对话的会话、轮询任务，
+ * 并连接入站 WebSocket，实现 CLI 与 zy.ai 之间的双向通信。
  *
- * Running /remote-control when already connected shows a dialog with the session
- * URL and options to disconnect or continue.
+ * 在已连接状态下再次运行 /remote-control 时，会显示一个对话框，
+ * 展示会话 URL 并提供断开或继续的选项。
  */
 function BridgeToggle({ onDone, name }: Props) {
   const setAppState = useSetAppState()
-  const replBridgeConnected = useAppState((s) => s.replBridgeConnected)
-  const replBridgeEnabled = useAppState((s_0) => s_0.replBridgeEnabled)
-  const replBridgeOutboundOnly = useAppState((s_1) => s_1.replBridgeOutboundOnly)
+  const replBridgeConnected = useAppState((state) => state.replBridgeConnected)
+  const replBridgeEnabled = useAppState((state) => state.replBridgeEnabled)
+  const replBridgeOutboundOnly = useAppState((state) => state.replBridgeOutboundOnly)
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
   useEffect(() => {
     if ((replBridgeConnected || replBridgeEnabled) && !replBridgeOutboundOnly) {
@@ -86,12 +85,12 @@ function BridgeToggle({ onDone, name }: Props) {
       logEvent('zy_bridge_command', {
         action: 'connect' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-      setAppState((prev_0) => {
-        if (prev_0.replBridgeEnabled && !prev_0.replBridgeOutboundOnly) {
-          return prev_0
+      setAppState((prev) => {
+        if (prev.replBridgeEnabled && !prev.replBridgeOutboundOnly) {
+          return prev
         }
         return {
-          ...prev_0,
+          ...prev,
           replBridgeEnabled: true,
           replBridgeExplicit: true,
           replBridgeOutboundOnly: false,
@@ -113,8 +112,8 @@ function BridgeToggle({ onDone, name }: Props) {
 }
 
 /**
- * Dialog shown when /remote-control is used while the bridge is already connected.
- * Shows the session URL and lets the user disconnect or continue.
+ * 在桥接已连接时使用 /remote-control 显示的对话框。
+ * 展示会话 URL，并允许用户断开连接或继续。
  */
 
 function BridgeDisconnectDialog({ onDone }: Props) {
@@ -122,26 +121,11 @@ function BridgeDisconnectDialog({ onDone }: Props) {
   useRegisterOverlay('bridge-disconnect-dialog')
   const setAppState = useSetAppState()
   const sessionUrl = useAppState((s) => s.replBridgeSessionUrl)
-  const connectUrl = useAppState((s_0) => s_0.replBridgeConnectUrl)
-  const sessionActive = useAppState((s_1) => s_1.replBridgeSessionActive)
+  const connectUrl = useAppState((state) => state.replBridgeConnectUrl)
+  const sessionActive = useAppState((state) => state.replBridgeSessionActive)
   const [focusIndex, setFocusIndex] = useState(2)
   const [showQR, setShowQR] = useState(false)
-  const [qrText, setQrText] = useState('')
   const displayUrl = sessionActive ? sessionUrl : connectUrl
-  useEffect(() => {
-    if (!showQR || !displayUrl) {
-      setQrText('')
-      return
-    }
-    // @ts-ignore
-    qrToString(displayUrl, {
-      type: 'utf8',
-      errorCorrectionLevel: 'L',
-      small: true,
-    })
-      .then(setQrText)
-      .catch(() => setQrText(''))
-  }, [showQR, displayUrl])
   const handleDisconnect = function handleDisconnect() {
     setAppState((prev) => {
       if (!prev.replBridgeEnabled) {
@@ -162,7 +146,7 @@ function BridgeDisconnectDialog({ onDone }: Props) {
     })
   }
   const handleShowQR = function handleShowQR() {
-    setShowQR((prev_0) => !prev_0)
+    setShowQR((prev) => !prev)
   }
   const handleContinue = function handleContinue() {
     onDone(undefined, {
@@ -171,8 +155,8 @@ function BridgeDisconnectDialog({ onDone }: Props) {
   }
   useKeybindings(
     {
-      'select:next': () => setFocusIndex((i) => (i + 1) % 3),
-      'select:previous': () => setFocusIndex((i_0) => (i_0 - 1 + 3) % 3),
+      'select:next': () => setFocusIndex((nextIndex) => (nextIndex + 1) % 3),
+      'select:previous': () => setFocusIndex((nextIndex) => (nextIndex - 1 + 3) % 3),
       'select:accept': () => {
         if (focusIndex === 0) {
           handleDisconnect()
@@ -189,27 +173,20 @@ function BridgeDisconnectDialog({ onDone }: Props) {
       context: 'Select',
     },
   )
-  const qrLines = qrText ? qrText.split('\n').filter((l) => l.length > 0) : []
-  const t17_text = displayUrl ? ` at ${displayUrl}` : ''
-  const T1 = Dialog
-  const T0 = Box
-  const t17_focus = focusIndex === 0
+  const displayUrlText = displayUrl ? ` at ${displayUrl}` : ''
+  const DialogComponent = Dialog
+  const ContainerBox = Box
+  const isFirstOptionFocused = focusIndex === 0
   return (
-    <T1 title={'Remote Control'} onCancel={handleContinue} hideInputGuide={true}>
+    <DialogComponent title={'Remote Control'} onCancel={handleContinue} hideInputGuide={true}>
       {
-        <T0 flexDirection={'column'} gap={1}>
-          {<Text>This session is available via Remote Control{t17_text as any}.</Text>}
-          {showQR && qrLines.length > 0 && (
-            <Box flexDirection="column">
-              {qrLines.map((line, i_1) => (
-                <Text key={i_1}>{line}</Text>
-              ))}
-            </Box>
-          )}
+        <ContainerBox flexDirection={'column'} gap={1}>
+          {<Text>This session is available via Remote Control{displayUrlText as any}.</Text>}
+          <QRCodeDisplay displayUrl={displayUrl} showQR={showQR} />
           {
             <Box flexDirection="column">
               {
-                <ListItem isFocused={t17_focus as any}>
+                <ListItem isFocused={isFirstOptionFocused as any}>
                   {<Text>Disconnect this session</Text>}
                 </ListItem>
               }
@@ -222,21 +199,21 @@ function BridgeDisconnectDialog({ onDone }: Props) {
             </Box>
           }
           {<Text dimColor={true}>Enter to select · Esc to continue</Text>}
-        </T0>
+        </ContainerBox>
       }
-    </T1>
+    </DialogComponent>
   )
 }
 
 /**
- * Check bridge prerequisites. Returns an error message if a precondition
- * fails, or null if all checks pass. Awaits GrowthBook init if the disk
- * cache is stale, so a user who just became entitled (e.g. upgraded to Max,
- * or the flag just launched) gets an accurate result on the first try.
+ * 检查桥接前置条件。如果前置条件失败则返回错误信息，
+ * 全部通过则返回 null。如果磁盘缓存已过期，会等待 GrowthBook 初始化，
+ * 确保刚获得权限的用户（例如升级到 Max，或功能标志刚发布）
+ * 在第一次尝试时就能获得准确的结果。
  */
 
 async function checkBridgePrerequisites(): Promise<string | null> {
-  // Check organization policy — remote control may be disabled
+  // 检查组织策略 — 远程控制可能被禁用
   const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
     '../../services/policyLimits/index.js'
   )
@@ -249,10 +226,9 @@ async function checkBridgePrerequisites(): Promise<string | null> {
     return disabledReason
   }
 
-  // Mirror the v1/v2 branching logic in initReplBridge: env-less (v2) is used
-  // only when the flag is on AND the session is not perpetual.  In assistant
-  // mode (KAIROS) useReplBridge sets perpetual=true, which forces
-  // initReplBridge onto the v1 path — so the prerequisite check must match.
+  // 镜像 initReplBridge 中的 v1/v2 分支逻辑：仅当功能标志开启且会话非永久时，
+  // 才使用无环境变量的 v2 版本。在助手模式（KAIROS）下，useReplBridge 设置 perpetual=true，
+  // 强制 initReplBridge 走 v1 路径 — 因此前置条件检查必须保持一致。
   let useV2 = isEnvLessBridgeEnabled()
   if (feature('KAIROS') && useV2) {
     const assistantModule = await import('../../assistant/index.js')

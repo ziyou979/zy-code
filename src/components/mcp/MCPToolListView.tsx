@@ -49,11 +49,11 @@ export function MCPToolListView({ server, onSelectTool, onBack }: Props) {
       descriptionColor: isDestructive ? 'error' : isReadOnly ? 'success' : undefined,
     }
   })
-  const t5 = plural(serverTools.length, 'tool')
+  const toolCountLabel = plural(serverTools.length, 'tool')
   return (
     <Dialog
       title={tSync('mcp.toolsFor', { serverName: server.name })}
-      subtitle={`${serverTools.length} ${t5}`}
+      subtitle={`${serverTools.length} ${toolCountLabel}`}
       onCancel={onBack}
       inputGuide={(exitState) =>
         exitState.pending ? (

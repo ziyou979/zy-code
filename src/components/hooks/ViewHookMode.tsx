@@ -18,9 +18,9 @@ type Props = {
   onCancel: () => void
 }
 export function ViewHookMode({ selectedHook, eventSupportsMatcher, onCancel }: Props) {
-  const t4 = hookSourceDescriptionDisplayString(selectedHook.source)
-  const t8 = getContentFieldLabel(selectedHook.config)
-  const t10 = getContentFieldValue(selectedHook.config)
+  const sourceDescription = hookSourceDescriptionDisplayString(selectedHook.source)
+  const contentFieldLabel = getContentFieldLabel(selectedHook.config)
+  const contentFieldValue = getContentFieldValue(selectedHook.config)
   return (
     <Dialog
       title={tSync('hooks.viewDetails')}
@@ -49,7 +49,7 @@ export function ViewHookMode({ selectedHook, eventSupportsMatcher, onCancel }: P
               }
               {
                 <Text>
-                  {tSync('hooks.sourceLabel')} <Text dimColor={true}>{t4}</Text>
+                  {tSync('hooks.sourceLabel')} <Text dimColor={true}>{sourceDescription}</Text>
                 </Text>
               }
               {selectedHook.pluginName && (
@@ -62,10 +62,10 @@ export function ViewHookMode({ selectedHook, eventSupportsMatcher, onCancel }: P
           }
           {
             <Box flexDirection="column">
-              {<Text dimColor={true}>{t8}:</Text>}
+              {<Text dimColor={true}>{contentFieldLabel}:</Text>}
               {
                 <Box borderStyle="round" borderDimColor={true} paddingLeft={1} paddingRight={1}>
-                  <Text>{t10}</Text>
+                  <Text>{contentFieldValue}</Text>
                 </Box>
               }
             </Box>

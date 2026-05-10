@@ -8,8 +8,8 @@ type Props = {
   addMargin: boolean
   param: TextBlock
 }
-export function UserCommandMessage({ addMargin, param: t1 }: Props) {
-  const { text } = t1
+export function UserCommandMessage({ addMargin, param: textBlock }: Props) {
+  const { text } = textBlock
   const commandMessage = extractTag(text, COMMAND_MESSAGE_TAG)
   const args = extractTag(text, 'command-args')
   const isSkillFormat = extractTag(text, 'skill-format') === 'true'
@@ -33,8 +33,8 @@ export function UserCommandMessage({ addMargin, param: t1 }: Props) {
       </Box>
     )
   }
-  const t4 = [commandMessage, args].filter(Boolean)
-  const content = `/${t4.join(' ')}`
+  const commandParts = [commandMessage, args].filter(Boolean)
+  const content = `/${commandParts.join(' ')}`
   return (
     <Box
       flexDirection="column"

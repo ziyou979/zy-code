@@ -127,14 +127,13 @@ export function ContextVisualization({ data }: Props) {
     model,
     memoryFiles,
     mcpTools,
-    deferredBuiltinTools: t1,
+    deferredBuiltinTools,
     systemTools,
     systemPromptSections,
     agents,
     skills,
     messageBreakdown,
   } = data
-  const deferredBuiltinTools = t1 === undefined ? [] : t1
   const visibleCategories = categories.filter(
     (cat) =>
       cat.tokens > 0 &&
@@ -143,10 +142,10 @@ export function ContextVisualization({ data }: Props) {
       !cat.isDeferred,
   )
   const hasDeferredMcpTools = categories.some(
-    (cat_0) => cat_0.isDeferred && cat_0.name.includes('MCP'),
+    (cat) => cat.isDeferred && cat.name.includes('MCP'),
   )
-  const hasDeferredBuiltinTools = deferredBuiltinTools.length > 0
-  const autocompactCategory = categories.find((cat_1) => cat_1.name === RESERVED_CATEGORY_NAME)
+  const hasDeferredBuiltinTools = (deferredBuiltinTools ?? []).length > 0
+  const autocompactCategory = categories.find((cat) => cat.name === RESERVED_CATEGORY_NAME)
   const gridRowElements = gridRows.map((row, rowIndex) => (
     <Box key={rowIndex} flexDirection="row" marginLeft={-1}>
       {row.map((square, colIndex) => {
@@ -186,17 +185,17 @@ export function ContextVisualization({ data }: Props) {
   )
   const collapseStatus = <CollapseStatus />
   const spacer = <Text> </Text>
-  const t20 = visibleCategories.map((cat_2, index) => {
-    const tokenDisplay = formatTokens(cat_2.tokens)
-    const percentDisplay = cat_2.isDeferred
+  const categoryItems = visibleCategories.map((cat, index) => {
+    const tokenDisplay = formatTokens(cat.tokens)
+    const percentDisplay = cat.isDeferred
       ? 'N/A'
-      : `${((cat_2.tokens / rawMaxTokens) * 100).toFixed(1)}%`
-    const isReserved = cat_2.name === RESERVED_CATEGORY_NAME
-    const displayName = cat_2.name
-    const symbol = cat_2.isDeferred ? ' ' : isReserved ? '\u26DD' : '\u26C1'
+      : `${((cat.tokens / rawMaxTokens) * 100).toFixed(1)}%`
+    const isReserved = cat.name === RESERVED_CATEGORY_NAME
+    const displayName = cat.name
+    const symbol = cat.isDeferred ? ' ' : isReserved ? '\u26DD' : '\u26C1'
     return (
       <Box key={index}>
-        <Text color={cat_2.color}>{symbol}</Text>
+        <Text color={cat.color}>{symbol}</Text>
         <Text> {displayName}: </Text>
         <Text dimColor={true}>
           {tokenDisplay} tokens ({percentDisplay})
@@ -204,38 +203,36 @@ export function ContextVisualization({ data }: Props) {
       </Box>
     )
   })
-  const t21 = (categories.find((c_1) => c_1.name === 'Free space')?.tokens ?? 0) > 0 && (
+  const freeSpaceItem = (categories.find((cat) => cat.name === 'Free space')?.tokens ?? 0) > 0 && (
     <Box>
       <Text dimColor={true}>⛶</Text>
       <Text> {tSync('contextVis.freeSpace')}: </Text>
       <Text dimColor={true}>
-        {formatTokens(categories.find((c) => c.name === 'Free space')?.tokens || 0)} (
+        {formatTokens(categories.find((cat) => cat.name === 'Free space')?.tokens || 0)} (
         {(
-          ((categories.find((c_0) => c_0.name === 'Free space')?.tokens || 0) / rawMaxTokens) *
+          ((categories.find((cat) => cat.name === 'Free space')?.tokens || 0) / rawMaxTokens) *
           100
         ).toFixed(1)}
         %)
       </Text>
     </Box>
   )
-  const T1 = Box
-  const T0 = Box
-  const t12 = memoryFiles.length > 0 && (
+  const memoryFilesSection = memoryFiles.length > 0 && (
     <Box flexDirection="column" marginTop={1}>
       <Box>
         <Text bold={true}>{tSync('contextVis.memoryFiles')}</Text>
         <Text dimColor={true}> · /memory</Text>
       </Box>
-      {memoryFiles.map((file, i_7) => (
-        <Box key={i_7}>
+      {memoryFiles.map((file, index) => (
+        <Box key={index}>
           <Text>└ {getDisplayPath(file.path)}: </Text>
           <Text dimColor={true}>{formatTokens(file.tokens)} tokens</Text>
         </Box>
       ))}
     </Box>
   )
-  const t15 = (
-    <T0 flexDirection={'column'} marginLeft={-1}>
+  const toolsSection = (
+    <Box flexDirection={'column'} marginLeft={-1}>
       {mcpTools.length > 0 && (
         <Box flexDirection="column" marginTop={1}>
           <Box>
@@ -245,36 +242,36 @@ export function ContextVisualization({ data }: Props) {
               · /mcp{hasDeferredMcpTools ? tSync('contextVis.mcpLoadedOnDemand') : ''}
             </Text>
           </Box>
-          {mcpTools.some((t_0) => t_0.isLoaded) && (
+          {mcpTools.some((tool) => tool.isLoaded) && (
             <Box flexDirection="column" marginTop={1}>
               <Text dimColor={true}>{tSync('contextVis.loaded')}</Text>
               {mcpTools
-                .filter((t) => t.isLoaded)
-                .map((tool, i) => (
-                  <Box key={i}>
+                .filter((tool) => tool.isLoaded)
+                .map((tool, index) => (
+                  <Box key={index}>
                     <Text>└ {tool.name}: </Text>
                     <Text dimColor={true}>{formatTokens(tool.tokens)} tokens</Text>
                   </Box>
                 ))}
             </Box>
           )}
-          {hasDeferredMcpTools && mcpTools.some((t_2) => !t_2.isLoaded) && (
+          {hasDeferredMcpTools && mcpTools.some((tool) => !tool.isLoaded) && (
             <Box flexDirection="column" marginTop={1}>
               <Text dimColor={true}>{tSync('contextVis.available')}</Text>
               {mcpTools
-                .filter((t_1) => !t_1.isLoaded)
-                .map((tool_0, i_0) => (
-                  <Box key={i_0}>
-                    <Text dimColor={true}>└ {tool_0.name}</Text>
+                .filter((tool) => !tool.isLoaded)
+                .map((tool, index) => (
+                  <Box key={index}>
+                    <Text dimColor={true}>└ {tool.name}</Text>
                   </Box>
                 ))}
             </Box>
           )}
           {!hasDeferredMcpTools &&
-            mcpTools.map((tool_1, i_1) => (
-              <Box key={i_1}>
-                <Text>└ {tool_1.name}: </Text>
-                <Text dimColor={true}>{formatTokens(tool_1.tokens)} tokens</Text>
+            mcpTools.map((tool, index) => (
+              <Box key={index}>
+                <Text>└ {tool.name}: </Text>
+                <Text dimColor={true}>{formatTokens(tool.tokens)} tokens</Text>
               </Box>
             ))}
         </Box>
@@ -287,29 +284,29 @@ export function ContextVisualization({ data }: Props) {
           </Box>
           <Box flexDirection="column" marginTop={1}>
             <Text dimColor={true}>Loaded</Text>
-            {systemTools?.map((tool_2, i_2) => (
-              <Box key={`sys-${i_2}`}>
-                <Text>└ {tool_2.name}: </Text>
-                <Text dimColor={true}>{formatTokens(tool_2.tokens)} tokens</Text>
+            {systemTools?.map((tool, index) => (
+              <Box key={`sys-${index}`}>
+                <Text>└ {tool.name}: </Text>
+                <Text dimColor={true}>{formatTokens(tool.tokens)} tokens</Text>
               </Box>
             ))}
             {deferredBuiltinTools
-              .filter((t_3) => t_3.isLoaded)
-              .map((tool_3, i_3) => (
-                <Box key={`def-${i_3}`}>
-                  <Text>└ {tool_3.name}: </Text>
-                  <Text dimColor={true}>{formatTokens(tool_3.tokens)} tokens</Text>
+              .filter((tool) => tool.isLoaded)
+              .map((tool, index) => (
+                <Box key={`def-${index}`}>
+                  <Text>└ {tool.name}: </Text>
+                  <Text dimColor={true}>{formatTokens(tool.tokens)} tokens</Text>
                 </Box>
               ))}
           </Box>
-          {hasDeferredBuiltinTools && deferredBuiltinTools.some((t_5) => !t_5.isLoaded) && (
+          {hasDeferredBuiltinTools && deferredBuiltinTools.some((tool) => !tool.isLoaded) && (
             <Box flexDirection="column" marginTop={1}>
               <Text dimColor={true}>Available</Text>
               {deferredBuiltinTools
-                .filter((t_4) => !t_4.isLoaded)
-                .map((tool_4, i_4) => (
-                  <Box key={i_4}>
-                    <Text dimColor={true}>└ {tool_4.name}</Text>
+                .filter((tool) => !tool.isLoaded)
+                .map((tool, index) => (
+                  <Box key={index}>
+                    <Text dimColor={true}>└ {tool.name}</Text>
                   </Box>
                 ))}
             </Box>
@@ -319,8 +316,8 @@ export function ContextVisualization({ data }: Props) {
       {systemPromptSections && systemPromptSections.length > 0 && false && (
         <Box flexDirection="column" marginTop={1}>
           <Text bold={true}>[INNER-ONLY] System prompt sections</Text>
-          {systemPromptSections.map((section, i_5) => (
-            <Box key={i_5}>
+          {systemPromptSections.map((section, index) => (
+            <Box key={index}>
               <Text>└ {section.name}: </Text>
               <Text dimColor={true}>{formatTokens(section.tokens)} tokens</Text>
             </Box>
@@ -333,13 +330,13 @@ export function ContextVisualization({ data }: Props) {
             <Text bold={true}>{tSync('contextVis.customAgents')}</Text>
             <Text dimColor={true}> · /agents</Text>
           </Box>
-          {Array.from(groupBySource(agents).entries()).map((t0) => {
-            const [sourceDisplay, sourceAgents] = t0
+          {Array.from(groupBySource(agents).entries()).map((groupEntry) => {
+            const [sourceDisplay, sourceAgents] = groupEntry
             return (
               <Box key={sourceDisplay} flexDirection="column" marginTop={1}>
                 <Text dimColor={true}>{sourceDisplay}</Text>
-                {sourceAgents.map((agent, i_6) => (
-                  <Box key={i_6}>
+                {sourceAgents.map((agent, index) => (
+                  <Box key={index}>
                     <Text>└ {agent.agentType}: </Text>
                     <Text dimColor={true}>{formatTokens(agent.tokens)} tokens</Text>
                   </Box>
@@ -349,20 +346,20 @@ export function ContextVisualization({ data }: Props) {
           })}
         </Box>
       )}
-      {t12}
+      {memoryFilesSection}
       {skills && skills.tokens > 0 && (
         <Box flexDirection="column" marginTop={1}>
           <Box>
             <Text bold={true}>{tSync('contextVis.skills')}</Text>
             <Text dimColor={true}> · /skills</Text>
           </Box>
-          {Array.from(groupBySource(skills.skillFrontmatter).entries()).map((t0) => {
-            const [sourceDisplay_0, sourceSkills] = t0
+          {Array.from(groupBySource(skills.skillFrontmatter).entries()).map((groupEntry) => {
+            const [sourceDisplay, sourceSkills] = groupEntry
             return (
-              <Box key={sourceDisplay_0} flexDirection="column" marginTop={1}>
-                <Text dimColor={true}>{sourceDisplay_0}</Text>
-                {sourceSkills.map((skill, i_8) => (
-                  <Box key={i_8}>
+              <Box key={sourceDisplay} flexDirection="column" marginTop={1}>
+                <Text dimColor={true}>{sourceDisplay}</Text>
+                {sourceSkills.map((skill, index) => (
+                  <Box key={index}>
                     <Text>└ {skill.name}: </Text>
                     <Text dimColor={true}>{formatTokens(skill.tokens)} tokens</Text>
                   </Box>
@@ -402,12 +399,12 @@ export function ContextVisualization({ data }: Props) {
           {messageBreakdown.toolCallsByType.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold={true}>[INNER-ONLY] Top tools</Text>
-              {messageBreakdown.toolCallsByType.slice(0, 5).map((tool_5, i_9) => (
-                <Box key={i_9} marginLeft={1}>
-                  <Text>└ {tool_5.name}: </Text>
+              {messageBreakdown.toolCallsByType.slice(0, 5).map((tool, index) => (
+                <Box key={index} marginLeft={1}>
+                  <Text>└ {tool.name}: </Text>
                   <Text dimColor={true}>
-                    calls {formatTokens(tool_5.callTokens)}, results{' '}
-                    {formatTokens(tool_5.resultTokens)}
+                    calls {formatTokens(tool.callTokens)}, results{' '}
+                    {formatTokens(tool.resultTokens)}
                   </Text>
                 </Box>
               ))}
@@ -416,8 +413,8 @@ export function ContextVisualization({ data }: Props) {
           {messageBreakdown.attachmentsByType.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold={true}>[INNER-ONLY] Top attachments</Text>
-              {messageBreakdown.attachmentsByType.slice(0, 5).map((attachment, i_10) => (
-                <Box key={i_10} marginLeft={1}>
+              {messageBreakdown.attachmentsByType.slice(0, 5).map((attachment, index) => (
+                <Box key={index} marginLeft={1}>
                   <Text>└ {attachment.name}: </Text>
                   <Text dimColor={true}>{formatTokens(attachment.tokens)} tokens</Text>
                 </Box>
@@ -426,12 +423,12 @@ export function ContextVisualization({ data }: Props) {
           )}
         </Box>
       )}
-    </T0>
+    </Box>
   )
   const contextSuggestions = generateContextSuggestions(data)
   const contextSuggestionsElement = <ContextSuggestions suggestions={contextSuggestions} />
   return (
-    <T1 flexDirection={'column'} paddingLeft={1}>
+    <Box flexDirection={'column'} paddingLeft={1}>
       {<Text bold={true}>{tSync('contextVis.title')}</Text>}
       {
         <Box flexDirection="row" gap={2}>
@@ -446,8 +443,8 @@ export function ContextVisualization({ data }: Props) {
                   {tSync('contextVis.estimatedUsage')}
                 </Text>
               }
-              {t20}
-              {t21}
+              {categoryItems}
+              {freeSpaceItem}
               {autocompactCategory && autocompactCategory.tokens > 0 && (
                 <Box>
                   <Text color={autocompactCategory.color}>⛝</Text>
@@ -462,8 +459,8 @@ export function ContextVisualization({ data }: Props) {
           }
         </Box>
       }
-      {t15}
+      {toolsSection}
       {contextSuggestionsElement}
-    </T1>
+    </Box>
   )
 }

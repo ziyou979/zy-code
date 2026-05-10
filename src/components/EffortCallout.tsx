@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Box, Text } from '../ink.js'
-import type { EffortLevel } from '../utils/effort.js'
+import {EffortLevel, EffortValue} from '../utils/effort.js'
 import {
   convertEffortValueToLevel,
   getDefaultEffortForModel,
@@ -33,7 +33,7 @@ export function EffortCallout({ model, onDone }: Props) {
   }, [handleCancel])
   const defaultEffort = getDefaultEffortForModel(model)
   const defaultLevel = defaultEffort ? convertEffortValueToLevel(defaultEffort) : 'high'
-  const handleSelect = (value) => {
+  const handleSelect = (value: EffortLevel) => {
     const effortLevel = value === defaultLevel ? undefined : value
     updateSettingsForSource('userSettings', {
       effortLevel: toPersistableEffort(effortLevel),
@@ -77,8 +77,8 @@ export function EffortCallout({ model, onDone }: Props) {
   )
 }
 function EffortIndicatorSymbol({ level }: { level: EffortLevel }) {
-  const t1 = effortLevelToSymbol(level)
-  return <Text color="suggestion">{t1}</Text>
+  const effortSymbol = effortLevelToSymbol(level)
+  return <Text color="suggestion">{effortSymbol}</Text>
 }
 function EffortOptionLabel({ level, text }: { level: EffortLevel; text: string }) {
   return (

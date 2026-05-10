@@ -66,22 +66,22 @@ export default function ErrorOverview({ error }: Props) {
 
       {origin && excerpt && (
         <Box marginTop={1} flexDirection="column">
-          {excerpt.map(({ line: line_0, value }) => (
-            <Box key={line_0}>
+          {excerpt.map(({ line: lineNumber, value }) => (
+            <Box key={lineNumber}>
               <Box width={lineWidth + 1}>
                 <Text
-                  dim={line_0 !== origin.line}
-                  backgroundColor={line_0 === origin.line ? 'ansi:red' : undefined}
-                  color={line_0 === origin.line ? 'ansi:white' : undefined}
+                  dim={lineNumber !== origin.line}
+                  backgroundColor={lineNumber === origin.line ? 'ansi:red' : undefined}
+                  color={lineNumber === origin.line ? 'ansi:white' : undefined}
                 >
-                  {String(line_0).padStart(lineWidth, ' ')}:
+                  {String(lineNumber).padStart(lineWidth, ' ')}:
                 </Text>
               </Box>
 
               <Text
-                key={line_0}
-                backgroundColor={line_0 === origin.line ? 'ansi:red' : undefined}
-                color={line_0 === origin.line ? 'ansi:white' : undefined}
+                key={lineNumber}
+                backgroundColor={lineNumber === origin.line ? 'ansi:red' : undefined}
+                color={lineNumber === origin.line ? 'ansi:white' : undefined}
               >
                 {' ' + value}
               </Text>
@@ -95,20 +95,20 @@ export default function ErrorOverview({ error }: Props) {
           {error.stack
             .split('\n')
             .slice(1)
-            .map((line_1) => {
-              const parsedLine = getStackUtils().parseLine(line_1)
+            .map((stackLine) => {
+              const parsedLine = getStackUtils().parseLine(stackLine)
 
               // 如果无法解析该行，则输出未解析的行。
               if (!parsedLine) {
                 return (
-                  <Box key={line_1}>
+                  <Box key={stackLine}>
                     <Text dim>- </Text>
-                    <Text bold>{line_1}</Text>
+                    <Text bold>{stackLine}</Text>
                   </Box>
                 )
               }
               return (
-                <Box key={line_1}>
+                <Box key={stackLine}>
                   <Text dim>- </Text>
                   <Text bold>{parsedLine.function}</Text>
                   <Text dim>

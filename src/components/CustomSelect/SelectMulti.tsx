@@ -64,7 +64,7 @@ export function SelectMulti({
   isDisabled = false,
   visibleOptionCount = 5,
   options,
-  defaultValue: t5 = [],
+  defaultValue: defaultValueProp = [],
   onCancel,
   onChange,
   onFocus,
@@ -80,7 +80,7 @@ export function SelectMulti({
   pastedContents,
   onRemoveImage,
 }: SelectMultiProps<any>) {
-  const defaultValue = t5
+  const defaultValue = defaultValueProp
   const state = useMultiSelectState({
     isDisabled,
     visibleOptionCount,
@@ -100,7 +100,7 @@ export function SelectMulti({
   const maxIndexWidth = options.length.toString().length
   const T0 = Box
   const T1 = Box
-  const t8 = state.visibleOptions.map((option, index) => {
+  const visibleOptionElements = state.visibleOptions.map((option, index) => {
     const isOptionFocused =
       !isDisabled && state.focusedValue === option.value && !state.isSubmitFocused
     const isSelected = state.selectedValues.includes(option.value)
@@ -162,7 +162,7 @@ export function SelectMulti({
   })
   return (
     <T1 flexDirection={'column'}>
-      {<T0 flexDirection={'column'}>{t8}</T0>}
+      {<T0 flexDirection={'column'}>{visibleOptionElements}</T0>}
       {submitButtonText && onSubmit && (
         <Box marginTop={0} gap={1}>
           {state.isSubmitFocused ? (

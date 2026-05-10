@@ -86,7 +86,7 @@ export async function buildDiagnostics(): Promise<Diagnostic[]> {
 }
 function PropertyValue({ value }) {
   if (Array.isArray(value)) {
-    const t1 = value.map((item, i) => (
+    const textItems = value.map((item, i) => (
       <Text key={i}>
         {item}
         {i < value.length - 1 ? ',' : ''}
@@ -94,7 +94,7 @@ function PropertyValue({ value }) {
     ))
     return (
       <Box flexWrap="wrap" columnGap={1} flexShrink={99}>
-        {t1}
+        {textItems}
       </Box>
     )
   }
@@ -105,23 +105,23 @@ function PropertyValue({ value }) {
 }
 export function Status({ context, diagnosticsPromise }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
-  const mcp = useAppState((s_0) => s_0.mcp)
+  const mcp = useAppState((state) => state.mcp)
   const [theme] = useTheme()
-  const t1 = buildPrimarySection()
-  const t2 = buildSecondarySection({
+  const primarySection = buildPrimarySection()
+  const secondarySection = buildSecondarySection({
     mainLoopModel,
     mcp,
     theme,
     context,
   })
-  const sections = [t1, t2]
+  const sections = [primarySection, secondarySection]
   const grow = useIsInsideModal() ? 1 : undefined
-  const t4 = sections.map(
+  const sectionElements = sections.map(
     (properties, i) =>
       properties.length > 0 && (
         <Box key={i} flexDirection="column">
-          {properties.map((t0, j) => {
-            const { label, value } = t0
+          {properties.map((property, j) => {
+            const { label, value } = property
             return (
               <Box key={j} flexDirection="row" gap={1} flexShrink={0}>
                 {label !== undefined && <Text bold={true}>{label}:</Text>}
@@ -136,7 +136,7 @@ export function Status({ context, diagnosticsPromise }) {
     <Box flexDirection="column" flexGrow={grow}>
       {
         <Box flexDirection="column" gap={1} flexGrow={grow}>
-          {t4}
+          {sectionElements}
           {
             <Suspense fallback={null}>
               <Diagnostics promise={diagnosticsPromise} />
@@ -162,7 +162,7 @@ function Diagnostics({ promise }) {
   if ((diagnostics as any).length === 0) {
     return null
   }
-  const t2 = (diagnostics as any).map((diagnostic: any, i: number) => (
+  const diagnosticElements = (diagnostics as any).map((diagnostic: any, i: number) => (
     <Box key={i} flexDirection="row" gap={1} paddingX={1}>
       <Text color="error">{figures.warning}</Text>
       {typeof diagnostic === 'string' ? <Text wrap="wrap">{diagnostic}</Text> : diagnostic}
@@ -171,7 +171,7 @@ function Diagnostics({ promise }) {
   return (
     <Box flexDirection="column" paddingBottom={1}>
       {<Text bold={true}>{tSync('status.diagnostics')}</Text>}
-      {t2}
+      {diagnosticElements}
     </Box>
   )
 }

@@ -227,17 +227,14 @@ function RulesTabContent(props) {
 
 // Composes the subtitle + search + Select for a single allow/ask/deny tab.
 function PermissionRulesTab({
-  tab: t5,
+  tab,
   getRulesOptions,
-  handleToolSelect: t6,
-  ...t7
+  handleToolSelect,
+  ...rulesProps
 }: RulesTabContentProps) {
-  const tab = t5
-  const handleToolSelect = t6
-  const rulesProps = t7
   const T1 = Box
   const T0 = RulesTabContent
-  const t1 = getRulesOptions(tab, rulesProps.searchQuery)
+  const rulesOptions = getRulesOptions(tab, rulesProps.searchQuery)
   return (
     <T1 flexDirection={'column'} flexShrink={tab === 'allow' ? 0 : undefined}>
       {
@@ -251,7 +248,7 @@ function PermissionRulesTab({
           }
         </Text>
       }
-      {<T0 options={t1.options} onSelect={(v) => handleToolSelect(v, tab)} {...rulesProps} />}
+      {<T0 options={rulesOptions.options} onSelect={(v) => handleToolSelect(v, tab)} {...rulesProps} />}
     </T1>
   )
 }

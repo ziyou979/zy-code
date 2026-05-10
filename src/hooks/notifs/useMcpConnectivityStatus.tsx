@@ -23,19 +23,19 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
         client.config.type !== 'zyai-proxy',
     )
     const failedZyAiClients = mcpClients.filter(
-      (client_0) =>
-        client_0.type === 'failed' &&
-        client_0.config.type === 'zyai-proxy' &&
-        hasZyAiMcpEverConnected(client_0.name),
+      (client) =>
+        client.type === 'failed' &&
+        client.config.type === 'zyai-proxy' &&
+        hasZyAiMcpEverConnected(client.name),
     )
     const needsAuthLocalServers = mcpClients.filter(
-      (client_1) => client_1.type === 'needs-auth' && client_1.config.type !== 'zyai-proxy',
+      (client) => client.type === 'needs-auth' && client.config.type !== 'zyai-proxy',
     )
     const needsAuthZyAiServers = mcpClients.filter(
-      (client_2) =>
-        client_2.type === 'needs-auth' &&
-        client_2.config.type === 'zyai-proxy' &&
-        hasZyAiMcpEverConnected(client_2.name),
+      (client) =>
+        client.type === 'needs-auth' &&
+        client.config.type === 'zyai-proxy' &&
+        hasZyAiMcpEverConnected(client.name),
     )
     if (
       failedLocalClients.length === 0 &&

@@ -18,162 +18,118 @@ export function BackgroundTask({ task, maxActivityWidth }: Props) {
   const activityLimit = maxActivityWidth ?? 40
   switch (task.type) {
     case 'local_bash': {
-      const t1 = task.kind === 'monitor' ? task.description : task.command
-      let t2
-      t2 = truncate(t1, activityLimit, true)
-      let t3
-      t3 = <ShellProgress shell={task} />
-      let t4
-      t4 = (
+      const description = task.kind === 'monitor' ? task.description : task.command
+      const truncatedDescription = truncate(description, activityLimit, true)
+      const progressElement = <ShellProgress shell={task} />
+      return (
         <Text>
-          {t2} {t3}
+          {truncatedDescription} {progressElement}
         </Text>
       )
-      return t4
     }
     case 'remote_agent': {
       if (task.isRemoteReview) {
-        let t1
-        t1 = (
+        return (
           <Text>
             <RemoteSessionProgress session={task} />
           </Text>
         )
-        return t1
       }
       const running = task.status === 'running' || task.status === 'pending'
-      const t1 = running ? DIAMOND_OPEN : DIAMOND_FILLED
-      let t2
-      t2 = <Text dimColor={true}>{t1} </Text>
-      let t3
-      t3 = truncate(task.title, activityLimit, true)
-      let t4
-      t4 = <Text dimColor={true}> · </Text>
-      let t5
-      t5 = <RemoteSessionProgress session={task} />
-      let t6
-      t6 = (
+      const statusIcon = running ? DIAMOND_OPEN : DIAMOND_FILLED
+      const iconElement = <Text dimColor={true}>{statusIcon} </Text>
+      const titleText = truncate(task.title, activityLimit, true)
+      const separator = <Text dimColor={true}> · </Text>
+      const progressElement = <RemoteSessionProgress session={task} />
+      return (
         <Text>
-          {t2}
-          {t3}
-          {t4}
-          {t5}
+          {iconElement}
+          {titleText}
+          {separator}
+          {progressElement}
         </Text>
       )
-      return t6
     }
     case 'local_agent': {
-      let t1
-      t1 = truncate(task.description, activityLimit, true)
-      const t2 = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
-      const t3 =
+      const truncatedDescription = truncate(task.description, activityLimit, true)
+      const doneLabel = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
+      const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      let t4
-      t4 = <TaskStatusText status={task.status} label={t2} suffix={t3} />
-      let t5
-      t5 = (
+      const statusElement = <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      return (
         <Text>
-          {t1} {t4}
+          {truncatedDescription} {statusElement}
         </Text>
       )
-      return t5
     }
     case 'in_process_teammate': {
-      let T0
-      let T1
-      let t1
-      let t2
-      let t3
-      let t4
       const activity = describeTeammateActivity(task)
-      T1 = Text
-      let t5
-      t5 = toInkColor(task.identity.color)
-      t4 = <Text color={t5}>@{task.identity.agentName}</Text>
-      T0 = Text
-      t1 = true
-      t2 = ': '
-      t3 = truncate(activity, activityLimit, true)
-      t5 = (
-        <T0 dimColor={t1}>
-          {t2}
-          {t3}
-        </T0>
+      const agentColor = toInkColor(task.identity.color)
+      const agentNameElement = <Text color={agentColor}>@{task.identity.agentName}</Text>
+      const truncatedActivity = truncate(activity, activityLimit, true)
+      const activityElement = (
+        <Text dimColor={true}>
+          {': '}
+          {truncatedActivity}
+        </Text>
       )
-      let t6
-      t6 = (
-        <T1>
-          {t4}
-          {t5}
-        </T1>
+      return (
+        <Text>
+          {agentNameElement}
+          {activityElement}
+        </Text>
       )
-      return t6
     }
     case 'local_workflow': {
-      const t1 = task.workflowName ?? task.summary ?? task.description
-      let t2
-      t2 = truncate(t1, activityLimit, true)
-      let t3
-      t3 =
+      const workflowTitle = task.workflowName ?? task.summary ?? task.description
+      const truncatedTitle = truncate(workflowTitle, activityLimit, true)
+      const statusLabel =
         task.status === 'running'
           ? `${task.agentCount} ${plural(task.agentCount, 'agent')}`
           : task.status === 'completed'
             ? tSync('backgroundTasks.done')
             : undefined
-      const t4 =
+      const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      let t5
-      t5 = <TaskStatusText status={task.status} label={t3} suffix={t4} />
-      let t6
-      t6 = (
+      const statusElement = <TaskStatusText status={task.status} label={statusLabel} suffix={unreadSuffix} />
+      return (
         <Text>
-          {t2} {t5}
+          {truncatedTitle} {statusElement}
         </Text>
       )
-      return t6
     }
     case 'monitor_mcp': {
-      let t1
-      t1 = truncate(task.description, activityLimit, true)
-      const t2 = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
-      const t3 =
+      const truncatedDescription = truncate(task.description, activityLimit, true)
+      const doneLabel = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
+      const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      let t4
-      t4 = <TaskStatusText status={task.status} label={t2} suffix={t3} />
-      let t5
-      t5 = (
+      const statusElement = <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      return (
         <Text>
-          {t1} {t4}
+          {truncatedDescription} {statusElement}
         </Text>
       )
-      return t5
     }
     case 'dream': {
       const n = task.filesTouched.length
-      let t1
-      t1 =
+      const detailText =
         task.phase === 'updating' && n > 0
           ? `${n} ${plural(n, 'file')}`
           : `${task.sessionsReviewing} ${plural(task.sessionsReviewing, 'session')}`
-      const detail = t1
-      let t2
-      t2 = (
+      const detailElement = (
         <Text dimColor={true}>
-          · {task.phase} · {detail}
+          · {task.phase} · {detailText}
         </Text>
       )
-      const t3 = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
-      const t4 =
+      const doneLabel = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
+      const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      let t5
-      t5 = <TaskStatusText status={task.status} label={t3} suffix={t4} />
-      let t6
-      t6 = (
+      const statusElement = <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      return (
         <Text>
-          {task.description} {t2} {t5}
+          {task.description} {detailElement} {statusElement}
         </Text>
       )
-      return t6
     }
   }
 }

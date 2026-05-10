@@ -15,7 +15,7 @@ import { tSync } from '../../i18n/index.js'
 const LOADING_MESSAGE = tSync('permission.loadingExplanation')
 function ShimmerLoadingText() {
   const [ref, glimmerIndex] = useShimmerAnimation('responding', LOADING_MESSAGE, false)
-  const t0 = LOADING_MESSAGE.split('').map((char, index) => (
+  const shimmerChars = LOADING_MESSAGE.split('').map((char, index) => (
     <ShimmerChar
       key={index}
       char={char}
@@ -25,7 +25,7 @@ function ShimmerLoadingText() {
       shimmerColor="text"
     />
   ))
-  return <Box ref={ref}>{<Text>{t0}</Text>}</Box>
+  return <Box ref={ref}>{<Text>{shimmerChars}</Text>}</Box>
 }
 function getRiskColor(riskLevel: RiskLevel): 'success' | 'warning' | 'error' {
   switch (riskLevel) {
@@ -121,8 +121,8 @@ function ExplanationResult({ promise }) {
       </Box>
     )
   }
-  const t3 = getRiskColor((explanation as any).riskLevel)
-  const t4 = getRiskLabel((explanation as any).riskLevel)
+  const riskColor = getRiskColor((explanation as any).riskLevel)
+  const riskLabel = getRiskLabel((explanation as any).riskLevel)
   return (
     <Box flexDirection="column" marginTop={1}>
       {<Text>{(explanation as any).explanation}</Text>}
@@ -134,7 +134,7 @@ function ExplanationResult({ promise }) {
       {
         <Box marginTop={1}>
           <Text>
-            {<Text color={t3}>{t4}:</Text>}
+            {<Text color={riskColor}>{riskLabel}:</Text>}
             {<Text> {(explanation as any).risk}</Text>}
           </Text>
         </Box>

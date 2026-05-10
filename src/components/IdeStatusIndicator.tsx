@@ -24,10 +24,10 @@ export function IdeStatusIndicator({ ideSelection, mcpClients }: IdeStatusIndica
     )
   }
   if (ideSelection.filePath) {
-    const t1 = basename(ideSelection.filePath)
+    const fileName = basename(ideSelection.filePath)
     return (
       <Text color="ide" key="selection-indicator" wrap="truncate">
-        ⧉ In {t1}
+        ⧉ In {fileName}
       </Text>
     )
   }

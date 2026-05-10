@@ -1,54 +1,57 @@
 import React from 'react'
-import { tSync } from 'src/i18n/index.js'
-import { Text } from 'src/ink.js'
-import type { TaskStatus } from 'src/Task.js'
+import {tSync} from 'src/i18n/index.js'
+import {Text} from 'src/ink.js'
+import type {TaskStatus} from 'src/Task.js'
+import type {Theme} from "src/utils/theme.ts";
+
 type TaskStatusTextProps = {
   status: TaskStatus
   label?: string
   suffix?: string
 }
-export function TaskStatusText({ status, label, suffix }: TaskStatusTextProps) {
+
+export function TaskStatusText({status, label, suffix}: TaskStatusTextProps) {
   const displayLabel = label ?? status
-  const color =
-    status === 'completed'
-      ? 'success'
-      : status === 'failed'
-        ? 'error'
-        : status === 'killed'
-          ? 'warning'
-          : undefined
+  let color: keyof Theme
+  switch (status) {
+    case 'completed':
+      color = 'success'
+      break
+    case 'failed':
+      color = 'error'
+      break
+    case 'killed':
+      color = 'warning'
+      break
+    default:
+      color = undefined
+  }
   return (
-    <Text color={color} dimColor={true}>
-      ({displayLabel}
-      {suffix})
-    </Text>
+      <Text color={color} dimColor={true}>
+        ({displayLabel}
+        {suffix})
+      </Text>
   )
 }
+
 type ShellProgressProps = {
   shell: { status: TaskStatus }
 }
-export function ShellProgress({ shell }: ShellProgressProps) {
+
+export function ShellProgress({shell}: ShellProgressProps) {
   switch (shell.status) {
     case 'completed': {
-      let t1
-      t1 = <TaskStatusText status="completed" label={tSync('shellProgress.done')} />
-      return t1
+      return <TaskStatusText status="completed" label={tSync('shellProgress.done')}/>
     }
     case 'failed': {
-      let t1
-      t1 = <TaskStatusText status="failed" label={tSync('shellProgress.error')} />
-      return t1
+      return<TaskStatusText status="failed" label={tSync('shellProgress.error')} />
     }
     case 'killed': {
-      let t1
-      t1 = <TaskStatusText status="killed" label={tSync('shellProgress.stopped')} />
-      return t1
+      return <TaskStatusText status="killed" label={tSync('shellProgress.stopped')} />
     }
     case 'running':
     case 'pending': {
-      let t1
-      t1 = <TaskStatusText status="running" />
-      return t1
+      return <TaskStatusText status="running" />
     }
   }
 }

@@ -59,10 +59,10 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
     agent.prompt.length > 300 ? agent.prompt.substring(0, 297) + '\u2026' : agent.prompt
   const tokenCount = agent.result?.totalTokens ?? agent.progress?.tokenCount
   const toolUseCount = agent.result?.totalToolUseCount ?? agent.progress?.toolUseCount
-  const t6 = agent.selectedAgent?.agentType ?? 'agent'
+  const agentType = agent.selectedAgent?.agentType ?? 'agent'
   const title = (
     <Text>
-      {t6} › {agent.description || tSync('backgroundTasks.asyncAgent')}
+      {agentType} › {agent.description || tSync('backgroundTasks.asyncAgent')}
     </Text>
   )
   const subtitle = (
@@ -95,7 +95,7 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
       }
     </Text>
   )
-  const t15 = agent.status === 'running' &&
+  const progressSection = agent.status === 'running' &&
     agent.progress?.recentActivities &&
     agent.progress.recentActivities.length > 0 && (
       <Box flexDirection="column">
@@ -138,7 +138,7 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
         >
           {
             <Box flexDirection="column">
-              {t15}
+              {progressSection}
               {planContent ? (
                 <Box marginTop={1}>
                   <UserPlanMessage addMargin={false} planContent={planContent} />

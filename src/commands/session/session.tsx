@@ -44,20 +44,20 @@ function SessionInfo({ onDone }: Props) {
   }
   const lines = qrCode.split('\n').filter((line) => line.length > 0)
   const isLoading = lines.length === 0
-  const T0 = Pane
-  const t5 = isLoading ? (
+  const ContainerPane = Pane
+  const qrContent = isLoading ? (
     <Text dimColor={true}>Generating QR code…</Text>
   ) : (
-    lines.map((line_0, i) => <Text key={i}>{line_0}</Text>)
+    lines.map((line, i) => <Text key={i}>{line}</Text>)
   )
   return (
-    <T0>
+    <ContainerPane>
       {
         <Box marginBottom={1}>
           <Text bold={true}>Remote session</Text>
         </Box>
       }
-      {t5}
+      {qrContent}
       {
         <Box marginTop={1}>
           {<Text dimColor={true}>Open in browser: </Text>}
@@ -69,7 +69,7 @@ function SessionInfo({ onDone }: Props) {
           <Text dimColor={true}>(press esc to close)</Text>
         </Box>
       }
-    </T0>
+    </ContainerPane>
   )
 }
 export const call: LocalJSXCommandCall = async (onDone) => {

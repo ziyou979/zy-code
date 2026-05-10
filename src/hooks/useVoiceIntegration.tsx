@@ -249,8 +249,8 @@ export function useVoiceIntegration({
   useEffect(() => {
     if (!feature('VOICE_MODE')) return
     if (voicePrefixRef.current === null) return
-    const prefix_0 = voicePrefixRef.current
-    const suffix_0 = voiceSuffixRef.current
+    const voicePrefix = voicePrefixRef.current
+    const voiceSuffix = voiceSuffixRef.current
     // Submit race: if the input isn't what this hook last set it to, the
     // user submitted (clearing it) or edited it. voicePrefixRef is only
     // cleared on voiceState→idle, so it's still set during the 'processing'
@@ -258,30 +258,30 @@ export function useVoiceIntegration({
     // TranscriptText arriving then and re-filling a cleared input.
     if (inputValueRef.current !== lastSetInputRef.current) return
     const needsSpace =
-      prefix_0.length > 0 && !/\s$/.test(prefix_0) && voiceInterimTranscript.length > 0
+      voicePrefix.length > 0 && !/\s$/.test(voicePrefix) && voiceInterimTranscript.length > 0
     // Don't gate on voiceInterimTranscript.length -- when interim clears to ''
     // after handleVoiceTranscript sets the final text, the trailing space
     // between prefix and suffix must still be preserved.
-    const needsTrailingSpace = suffix_0.length > 0 && !/^\s/.test(suffix_0)
+    const needsTrailingSpace = voiceSuffix.length > 0 && !/^\s/.test(voiceSuffix)
     const leadingSpace = needsSpace ? ' ' : ''
     const trailingSpace = needsTrailingSpace ? ' ' : ''
-    const newValue_0 = prefix_0 + leadingSpace + voiceInterimTranscript + trailingSpace + suffix_0
+    const newValue = voicePrefix + leadingSpace + voiceInterimTranscript + trailingSpace + voiceSuffix
     // Position cursor after the transcribed text (before suffix)
-    const cursorPos = prefix_0.length + leadingSpace.length + voiceInterimTranscript.length
+    const cursorPos = voicePrefix.length + leadingSpace.length + voiceInterimTranscript.length
     if (insertTextRef.current) {
-      insertTextRef.current.setInputWithCursor(newValue_0, cursorPos)
+      insertTextRef.current.setInputWithCursor(newValue, cursorPos)
     } else {
-      setInputValueRaw(newValue_0)
+      setInputValueRaw(newValue)
     }
-    lastSetInputRef.current = newValue_0
+    lastSetInputRef.current = newValue
   }, [voiceInterimTranscript, setInputValueRaw, inputValueRef, insertTextRef])
   const handleVoiceTranscript = useCallback(
     (text: string) => {
       if (!feature('VOICE_MODE')) return
-      const prefix_1 = voicePrefixRef.current
+      const finalPrefix = voicePrefixRef.current
       // No voice anchor — voice was reset (or never started). Nothing to do.
-      if (prefix_1 === null) return
-      const suffix_1 = voiceSuffixRef.current
+      if (finalPrefix === null) return
+      const finalSuffix = voiceSuffixRef.current
       // Submit race: finishRecording() → user presses Enter (input cleared)
       // → WebSocket close → this callback fires with stale prefix/suffix.
       // If the input isn't what this hook last set (via the interim effect
@@ -289,22 +289,22 @@ export function useVoiceIntegration({
       // against `text.length` would false-positive when the final is longer
       // than the interim (ASR routinely adds punctuation/corrections).
       if (inputValueRef.current !== lastSetInputRef.current) return
-      const needsSpace_0 = prefix_1.length > 0 && !/\s$/.test(prefix_1) && text.length > 0
-      const needsTrailingSpace_0 = suffix_1.length > 0 && !/^\s/.test(suffix_1) && text.length > 0
-      const leadingSpace_0 = needsSpace_0 ? ' ' : ''
-      const trailingSpace_0 = needsTrailingSpace_0 ? ' ' : ''
-      const newInput = prefix_1 + leadingSpace_0 + text + trailingSpace_0 + suffix_1
+      const needsSpace = finalPrefix.length > 0 && !/\s$/.test(finalPrefix) && text.length > 0
+      const needsTrailingSpace = finalSuffix.length > 0 && !/^\s/.test(finalSuffix) && text.length > 0
+      const leadingSpace = needsSpace ? ' ' : ''
+      const trailingSpace = needsTrailingSpace ? ' ' : ''
+      const newInput = finalPrefix + leadingSpace + text + trailingSpace + finalSuffix
       // Position cursor after the transcribed text (before suffix)
-      const cursorPos_0 = prefix_1.length + leadingSpace_0.length + text.length
+      const cursorPos = finalPrefix.length + leadingSpace.length + text.length
       if (insertTextRef.current) {
-        insertTextRef.current.setInputWithCursor(newInput, cursorPos_0)
+        insertTextRef.current.setInputWithCursor(newInput, cursorPos)
       } else {
         setInputValueRaw(newInput)
       }
       lastSetInputRef.current = newInput
       // Update the prefix to include this chunk so focus mode can continue
       // appending subsequent transcripts after it.
-      voicePrefixRef.current = prefix_1 + leadingSpace_0 + text
+      voicePrefixRef.current = finalPrefix + leadingSpace + text
     },
     [setInputValueRaw, inputValueRef, insertTextRef],
   )
@@ -568,10 +568,10 @@ export function useVoiceKeybindingHandler({
       }
       rapidCountRef.current = 0
       isHoldActiveRef.current = true
-      setVoiceState((prev_0) => {
-        if (!prev_0.voiceWarmingUp) return prev_0
+      setVoiceState((prevState) => {
+        if (!prevState.voiceWarmingUp) return prevState
         return {
-          ...prev_0,
+          ...prevState,
           voiceWarmingUp: false,
         }
       })
@@ -632,10 +632,10 @@ export function useVoiceKeybindingHandler({
 
     // Show warmup feedback once we detect a hold pattern
     if (rapidCountRef.current >= WARMUP_THRESHOLD) {
-      setVoiceState((prev_1) => {
-        if (prev_1.voiceWarmingUp) return prev_1
+      setVoiceState((prevState) => {
+        if (prevState.voiceWarmingUp) return prevState
         return {
-          ...prev_1,
+          ...prevState,
           voiceWarmingUp: true,
         }
       })
@@ -644,14 +644,14 @@ export function useVoiceKeybindingHandler({
       clearTimeout(resetTimerRef.current)
     }
     resetTimerRef.current = setTimeout(
-      (resetTimerRef_0, rapidCountRef_0, charsInInputRef_0, setVoiceState_0) => {
-        resetTimerRef_0.current = null
-        rapidCountRef_0.current = 0
-        charsInInputRef_0.current = 0
-        setVoiceState_0((prev_2) => {
-          if (!prev_2.voiceWarmingUp) return prev_2
+      (timerRef, countRef, charsRef, setVoiceStateRef) => {
+        timerRef.current = null
+        countRef.current = 0
+        charsRef.current = 0
+        setVoiceStateRef((prevState) => {
+          if (!prevState.voiceWarmingUp) return prevState
           return {
-            ...prev_2,
+            ...prevState,
             voiceWarmingUp: false,
           }
         })

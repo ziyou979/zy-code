@@ -14,10 +14,10 @@ type Props = {
 export function MCPToolDetailView({ tool, server, onBack }: Props) {
   const [toolDescription, setToolDescription] = React.useState('')
   let fullDisplayName
-  const t1 = extractMcpToolDisplayName(fullDisplayName as any)
+  const displayNameExtractor = extractMcpToolDisplayName(fullDisplayName as any)
   const toolName = getMcpDisplayName(tool.name, server.name)
   fullDisplayName = tool.userFacingName ? tool.userFacingName({}) : toolName
-  const displayName = t1
+  const displayName = displayNameExtractor
   const isReadOnly = tool.isReadOnly?.({}) ?? false
   const isDestructive = tool.isDestructive?.({}) ?? false
   const isOpenWorld = tool.isOpenWorld?.({}) ?? false
@@ -98,8 +98,8 @@ export function MCPToolDetailView({ tool, server, onBack }: Props) {
               <Box flexDirection="column" marginTop={1}>
                 <Text bold={true}>{tSync('mcp.parametersLabel')}</Text>
                 <Box marginLeft={2} flexDirection="column">
-                  {Object.entries(tool.inputJSONSchema.properties).map((t17) => {
-                    const [key, value] = t17
+                  {Object.entries(tool.inputJSONSchema.properties).map((entry) => {
+                    const [key, value] = entry
                     const required = tool.inputJSONSchema?.required as string[] | undefined
                     const isRequired = required?.includes(key)
                     return (

@@ -47,28 +47,28 @@ export function AgentsMenu({ tools, onExit }: Props) {
     source: 'all' as const,
   })
   const agentDefinitions = useAppState((s) => s.agentDefinitions)
-  const mcpTools = useAppState((s_0) => s_0.mcp.tools)
-  const toolPermissionContext = useAppState((s_1) => s_1.toolPermissionContext)
+  const mcpTools = useAppState((s) => s.mcp.tools)
+  const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const setAppState = useSetAppState()
   const { allAgents, activeAgents: agents } = agentDefinitions
   const [changes, setChanges] = useState([])
   const mergedTools = useMergedTools(tools, mcpTools, toolPermissionContext)
   useExitOnCtrlCDWithKeybindings()
-  const t3 = allAgents.filter((a) => a.source === 'built-in')
-  const t4 = allAgents.filter((a_0) => a_0.source === 'userSettings')
-  const t5 = allAgents.filter((a_1) => a_1.source === 'projectSettings')
-  const t6 = allAgents.filter((a_2) => a_2.source === 'policySettings')
-  const t7 = allAgents.filter((a_3) => a_3.source === 'localSettings')
-  const t8 = allAgents.filter((a_4) => a_4.source === 'flagSettings')
-  const t9 = allAgents.filter((a_5) => a_5.source === 'plugin')
+  const builtInAgents = allAgents.filter((agent) => agent.source === 'built-in')
+  const userSettingAgents = allAgents.filter((agent) => agent.source === 'userSettings')
+  const projectSettingAgents = allAgents.filter((agent) => agent.source === 'projectSettings')
+  const policySettingAgents = allAgents.filter((agent) => agent.source === 'policySettings')
+  const localSettingAgents = allAgents.filter((agent) => agent.source === 'localSettings')
+  const flagSettingAgents = allAgents.filter((agent) => agent.source === 'flagSettings')
+  const pluginAgents = allAgents.filter((agent) => agent.source === 'plugin')
   const agentsBySource = {
-    'built-in': t3,
-    userSettings: t4,
-    projectSettings: t5,
-    policySettings: t6,
-    localSettings: t7,
-    flagSettings: t8,
-    plugin: t9,
+    'built-in': builtInAgents,
+    userSettings: userSettingAgents,
+    projectSettings: projectSettingAgents,
+    policySettings: policySettingAgents,
+    localSettings: localSettingAgents,
+    flagSettings: flagSettingAgents,
+    plugin: pluginAgents,
     all: allAgents,
   }
   const handleAgentCreated = (message) => {
@@ -78,25 +78,25 @@ export function AgentsMenu({ tools, onExit }: Props) {
       source: 'all',
     })
   }
-  const handleAgentDeleted = async (agent) => {
+  const handleAgentDeleted = async (agentToDelete) => {
     try {
-      await deleteAgentFromFile(agent)
+      await deleteAgentFromFile(agentToDelete)
       setAppState((state) => {
-        const allAgents_0 = state.agentDefinitions.allAgents.filter(
-          (a_6) => !(a_6.agentType === agent.agentType && a_6.source === agent.source),
+        const filteredAgents = state.agentDefinitions.allAgents.filter(
+          (agent) => !(agent.agentType === agentToDelete.agentType && agent.source === agentToDelete.source),
         )
         return {
           ...state,
           agentDefinitions: {
             ...state.agentDefinitions,
-            allAgents: allAgents_0,
-            activeAgents: getActiveAgentsFromList(allAgents_0),
+            allAgents: filteredAgents,
+            activeAgents: getActiveAgentsFromList(filteredAgents),
           },
         }
       })
       setChanges((prev_0) => [
         ...prev_0,
-        tSync('agents.deletedAgent', { name: chalk.bold(agent.agentType) }),
+        tSync('agents.deletedAgent', { name: chalk.bold(agentToDelete.agentType) }),
       ])
       setModeState({
         mode: 'list-agents',
@@ -108,8 +108,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
   }
   switch (modeState.mode) {
     case 'list-agents': {
-      let t13
-      t13 =
+      const agentsToShow =
         modeState.source === 'all'
           ? [
               ...agentsBySource['built-in'],
@@ -121,89 +120,71 @@ export function AgentsMenu({ tools, onExit }: Props) {
               ...agentsBySource.plugin,
             ]
           : agentsBySource[modeState.source]
-      const agentsToShow = t13
-      let t14
-      t14 = resolveAgentOverrides(agentsToShow, agents)
-      const allResolved = t14
-      const resolvedAgents = allResolved
-      let t15
-      t15 = () => {
+      const resolvedAgents = resolveAgentOverrides(agentsToShow, agents)
+      const handleExit = () => {
         const exitMessage =
           changes.length > 0 ? tSync('agents.changes', { changes: changes.join('\n') }) : undefined
         onExit(exitMessage ?? tSync('agents.dialogDismissed'), {
           display: changes.length === 0 ? 'system' : undefined,
         })
       }
-      let t16
-      t16 = (agent_0) =>
+      const handleSelectAgent = (agent) =>
         setModeState({
           mode: 'agent-menu',
-          agent: agent_0,
+          agent,
           previousMode: modeState,
         })
-      let t17
-      t17 = () =>
+      const handleCreateNew = () =>
         setModeState({
           mode: 'create-agent',
         })
-      let t18
-      t18 = (
+      const agentList = (
         <AgentsList
           source={modeState.source}
           agents={resolvedAgents}
-          onBack={t15}
-          onSelect={t16}
-          onCreateNew={t17}
+          onBack={handleExit}
+          onSelect={handleSelectAgent}
+          onCreateNew={handleCreateNew}
           changes={changes}
         />
       )
-      let t19
-      t19 = <AgentNavigationFooter />
-      let t20
-      t20 = (
+      const footer = <AgentNavigationFooter />
+      return (
         <>
-          {t18}
-          {t19}
+          {agentList}
+          {footer}
         </>
       )
-      return t20
     }
     case 'create-agent': {
-      let t13
-      t13 = () =>
+      const handleCancel = () =>
         setModeState({
           mode: 'list-agents',
           source: 'all',
         })
-      let t14
-      t14 = (
+      return (
         <CreateAgentWizard
           tools={mergedTools}
           existingAgents={agents}
           onComplete={handleAgentCreated}
-          onCancel={t13}
+          onCancel={handleCancel}
         />
       )
-      return t14
     }
     case 'agent-menu': {
-      let t13
-      let t14
-      let t15
-      t14 = (a_9) =>
-        a_9.agentType === modeState.agent.agentType && a_9.source === modeState.agent.source
-      t13 = allAgents.find(t14)
-      const freshAgent_1 = t13
-      const agentToUse = freshAgent_1 || modeState.agent
+      const findAgent = (agent) =>
+        agent.agentType === modeState.agent.agentType && agent.source === modeState.agent.source
+      const freshAgent = allAgents.find(findAgent)
+      const agentToUse = freshAgent || modeState.agent
       const isEditable =
         agentToUse.source !== 'built-in' &&
         agentToUse.source !== 'plugin' &&
         agentToUse.source !== 'flagSettings'
-      t14 = {
+      const viewOption = {
         label: tSync('agents.viewAgent'),
         value: 'view',
       }
-      t15 = isEditable
+      const editOptions = isEditable
         ? [
             {
               label: tSync('agents.editAgent'),
@@ -215,17 +196,13 @@ export function AgentsMenu({ tools, onExit }: Props) {
             },
           ]
         : []
-      let t16
-      t16 = {
+      const backOption = {
         label: tSync('agents.back'),
         value: 'back',
       }
-      let t17
-      t17 = [t14, ...t15, t16]
-      const menuItems = t17
-      let t18
-      t18 = (value_0) => {
-        switch (value_0) {
+      const menuItems = [viewOption, ...editOptions, backOption]
+      const handleMenuSelect = (value) => {
+        switch (value) {
           case 'view': {
             setModeState({
               mode: 'view-agent',
@@ -255,93 +232,72 @@ export function AgentsMenu({ tools, onExit }: Props) {
           }
         }
       }
-      const handleMenuSelect = t18
-      let t19
-      t19 = () => setModeState(modeState.previousMode)
-      let t20
-      t20 = () => setModeState(modeState.previousMode)
-      let t21
-      t21 = <Select options={menuItems} onChange={handleMenuSelect} onCancel={t20} />
-      let t22
-      t22 = changes.length > 0 && (
+      const handleBack = () => setModeState(modeState.previousMode)
+      const selectComponent = <Select options={menuItems} onChange={handleMenuSelect} onCancel={handleBack} />
+      const changeNotice = changes.length > 0 && (
         <Box marginTop={1}>
           <Text dimColor={true}>{changes[changes.length - 1]}</Text>
         </Box>
       )
-      let t23
-      t23 = (
+      const menuContent = (
         <Box flexDirection="column">
-          {t21}
-          {t22}
+          {selectComponent}
+          {changeNotice}
         </Box>
       )
-      let t24
-      t24 = (
-        <Dialog title={modeState.agent.agentType} onCancel={t19} hideInputGuide={true}>
-          {t23}
+      const dialog = (
+        <Dialog title={modeState.agent.agentType} onCancel={handleBack} hideInputGuide={true}>
+          {menuContent}
         </Dialog>
       )
-      let t25
-      t25 = <AgentNavigationFooter />
-      let t26
-      t26 = (
+      const footer = <AgentNavigationFooter />
+      return (
         <>
-          {t24}
-          {t25}
+          {dialog}
+          {footer}
         </>
       )
-      return t26
     }
     case 'view-agent': {
-      let t13
-      let t14
-      let t15
-      t14 = (a_8) =>
-        a_8.agentType === modeState.agent.agentType && a_8.source === modeState.agent.source
-      t13 = allAgents.find(t14)
-      const freshAgent_0 = t13
-      const agentToDisplay = freshAgent_0 || modeState.agent
-      t14 = () =>
+      const findAgent = (agent) =>
+        agent.agentType === modeState.agent.agentType && agent.source === modeState.agent.source
+      const freshAgent = allAgents.find(findAgent)
+      const agentToDisplay = freshAgent || modeState.agent
+      const handleCancel = () =>
         setModeState({
           mode: 'agent-menu',
           agent: agentToDisplay,
           previousMode: modeState.previousMode,
         })
-      t15 = () =>
+      const handleBack = () =>
         setModeState({
           mode: 'agent-menu',
           agent: agentToDisplay,
           previousMode: modeState.previousMode,
         })
-      let t16
-      t16 = (
+      const agentDetail = (
         <AgentDetail
           agent={agentToDisplay}
           tools={mergedTools}
           allAgents={allAgents}
-          onBack={t15}
+          onBack={handleBack}
         />
       )
-      let t17
-      t17 = (
-        <Dialog title={agentToDisplay.agentType} onCancel={t14} hideInputGuide={true}>
-          {t16}
+      const dialog = (
+        <Dialog title={agentToDisplay.agentType} onCancel={handleCancel} hideInputGuide={true}>
+          {agentDetail}
         </Dialog>
       )
-      let t18
-      t18 = <AgentNavigationFooter instructions={tSync('agents.pressEnterEscBack')} />
-      let t19
-      t19 = (
+      const footer = <AgentNavigationFooter instructions={tSync('agents.pressEnterEscBack')} />
+      return (
         <>
-          {t17}
-          {t18}
+          {dialog}
+          {footer}
         </>
       )
-      return t19
     }
     case 'delete-confirm': {
-      let t13
-      t13 = [
+      const deleteOptions = [
         {
           label: tSync('agents.deleteYes'),
           value: 'yes',
@@ -351,102 +307,76 @@ export function AgentsMenu({ tools, onExit }: Props) {
           value: 'no',
         },
       ]
-      const deleteOptions = t13
-      let t14
-      t14 = () => {
+      const handleCancel = () => {
         if ('previousMode' in modeState) {
           setModeState(modeState.previousMode)
         }
       }
-      let t15
-      t15 = (
+      const confirmText = (
         <Text>{tSync('agents.deleteConfirmQuestion', { name: modeState.agent.agentType })}</Text>
       )
-      let t16
-      t16 = (
+      const sourceInfo = (
         <Box marginTop={1}>
           <Text dimColor={true}>
             {tSync('agents.editor.source', { source: modeState.agent.source })}
           </Text>
         </Box>
       )
-      let t17
-      t17 = (value) => {
-        if (value === 'yes') {
-          handleAgentDeleted(modeState.agent)
-        } else {
-          if ('previousMode' in modeState) {
+      const handleDeleteConfirm = (value) => {
+        switch (value) {
+          case 'yes': {
+            handleAgentDeleted(modeState.agent)
+            break
+          }
+          case 'no': {
             setModeState(modeState.previousMode)
           }
         }
       }
-      let t18
-      t18 = () => {
-        if ('previousMode' in modeState) {
-          setModeState(modeState.previousMode)
-        }
-      }
-      let t19
-      t19 = (
+      const selectComponent = (
         <Box marginTop={1}>
-          <Select options={deleteOptions} onChange={t17} onCancel={t18} />
+          <Select options={deleteOptions} onChange={handleDeleteConfirm} onCancel={handleCancel} />
         </Box>
       )
-      let t20
-      t20 = (
-        <Dialog title={tSync('agents.deleteConfirmTitle')} onCancel={t14} color="error">
-          {t15}
-          {t16}
-          {t19}
+      const dialog = (
+        <Dialog title={tSync('agents.deleteConfirmTitle')} onCancel={handleCancel} color="error">
+          {confirmText}
+          {sourceInfo}
+          {selectComponent}
         </Dialog>
       )
-      let t21
-      t21 = <AgentNavigationFooter instructions={tSync('agents.navInstructions')} />
-      let t22
-      t22 = (
+      const footer = <AgentNavigationFooter instructions={tSync('agents.navInstructions')} />
+      return (
         <>
-          {t20}
-          {t21}
+          {dialog}
+          {footer}
         </>
       )
-      return t22
     }
     case 'edit-agent': {
-      let t13
-      let t14
-      t14 = (a_7) =>
-        a_7.agentType === modeState.agent.agentType && a_7.source === modeState.agent.source
-      t13 = allAgents.find(t14)
-      const freshAgent = t13
+      const findAgent = (agent) =>
+        agent.agentType === modeState.agent.agentType && agent.source === modeState.agent.source
+      const freshAgent = allAgents.find(findAgent)
       const agentToEdit = freshAgent || modeState.agent
-      let t15
       const editTitle = tSync('agents.editAgentTitle', { name: agentToEdit.agentType })
-      t15 = () => setModeState(modeState.previousMode)
-      let t16
-      let t17
-      t16 = (message_0) => {
-        handleAgentCreated(message_0)
+      const handleBack = () => setModeState(modeState.previousMode)
+      const handleSaved = (message) => {
+        handleAgentCreated(message)
         setModeState(modeState.previousMode)
       }
-      t17 = () => setModeState(modeState.previousMode)
-      let t18
-      t18 = <AgentEditor agent={agentToEdit} tools={mergedTools} onSaved={t16} onBack={t17} />
-      let t19
-      t19 = (
-        <Dialog title={editTitle} onCancel={t15} hideInputGuide={true}>
-          {t18}
+      const editor = <AgentEditor agent={agentToEdit} tools={mergedTools} onSaved={handleSaved} onBack={handleBack} />
+      const dialog = (
+        <Dialog title={editTitle} onCancel={handleBack} hideInputGuide={true}>
+          {editor}
         </Dialog>
       )
-      let t20
-      t20 = <AgentNavigationFooter />
-      let t21
-      t21 = (
+      const footer = <AgentNavigationFooter />
+      return (
         <>
-          {t19}
-          {t20}
+          {dialog}
+          {footer}
         </>
       )
-      return t21
     }
     default: {
       return null

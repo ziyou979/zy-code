@@ -63,7 +63,7 @@ export function SelectMatcherMode({
       </Dialog>
     )
   }
-  const t3 = matchersWithSources.map((item) => {
+  const matcherOptions = matchersWithSources.map((item) => {
     const sourceText = item.sources.map(hookSourceInlineDisplayString).join(', ')
     const matcherLabel = item.matcher || '(all)'
     return {
@@ -81,7 +81,7 @@ export function SelectMatcherMode({
       {
         <Box flexDirection="column">
           <Select
-            options={t3}
+            options={matcherOptions}
             onChange={(value) => {
               onSelect(value)
             }}

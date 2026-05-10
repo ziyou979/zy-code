@@ -6,21 +6,21 @@ import { useSettingsChange } from '../useSettingsChange.js'
 const SETTINGS_ERRORS_NOTIFICATION_KEY = 'settings-errors'
 export function useSettingsErrors() {
   const { addNotification, removeNotification } = useNotifications()
-  const [errors_0, setErrors] = useState(() => {
+  const [settingsErrors, setErrors] = useState(() => {
     const { errors } = getSettingsWithAllErrors()
     return errors
   })
   const handleSettingsChange = () => {
-    const { errors: errors_1 } = getSettingsWithAllErrors()
-    setErrors(errors_1)
+    const { errors: currentErrors } = getSettingsWithAllErrors()
+    setErrors(currentErrors)
   }
   useSettingsChange(handleSettingsChange)
   useEffect(() => {
     if (getIsRemoteMode()) {
       return
     }
-    if (errors_0.length > 0) {
-      const message = `Found ${errors_0.length} settings ${errors_0.length === 1 ? 'issue' : 'issues'} · /doctor for details`
+    if (settingsErrors.length > 0) {
+      const message = `Found ${settingsErrors.length} settings ${settingsErrors.length === 1 ? 'issue' : 'issues'} · /doctor for details`
       addNotification({
         key: SETTINGS_ERRORS_NOTIFICATION_KEY,
         text: message,
@@ -31,6 +31,6 @@ export function useSettingsErrors() {
     } else {
       removeNotification(SETTINGS_ERRORS_NOTIFICATION_KEY)
     }
-  }, [errors_0, addNotification, removeNotification])
-  return errors_0
+  }, [settingsErrors, addNotification, removeNotification])
+  return settingsErrors
 }

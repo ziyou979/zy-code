@@ -63,34 +63,34 @@ export function ModelPicker({
   const initialValue = initial === null ? NO_PREFERENCE : initial
   const [focusedValue, setFocusedValue] = useState(initialValue)
   const [hasToggledEffort, setHasToggledEffort] = useState(false)
-  const effortValue = useAppState((s_0) => s_0.effortValue)
-  const t1 = effortValue !== undefined ? convertEffortValueToLevel(effortValue) : undefined
-  const [effort, setEffort] = useState(t1)
+  const effortValue = useAppState((s) => s.effortValue)
+  const initialEffort = effortValue !== undefined ? convertEffortValueToLevel(effortValue) : undefined
+  const [effort, setEffort] = useState(initialEffort)
   const modelOptions = getModelOptions()
   let optionsWithInitial
   if (initial !== null && !modelOptions.some((opt) => opt.value === initial)) {
-    const t5 = modelDisplayString(initial)
+    const initialModelDisplay = modelDisplayString(initial)
     optionsWithInitial = [
       ...modelOptions,
       {
         value: initial,
-        label: t5,
+        label: initialModelDisplay,
         description: 'Current model',
       },
     ]
   } else {
     optionsWithInitial = modelOptions
   }
-  const selectOptions = optionsWithInitial.map((opt_0) => ({
-    ...opt_0,
-    value: opt_0.value === null ? NO_PREFERENCE : opt_0.value,
+  const selectOptions = optionsWithInitial.map((option) => ({
+    ...option,
+    value: option.value === null ? NO_PREFERENCE : option.value,
   }))
   const initialFocusValue = selectOptions.some((_) => _.value === initialValue)
     ? initialValue
     : (selectOptions[0]?.value ?? undefined)
   const visibleCount = Math.min(10, selectOptions.length)
   const hiddenCount = Math.max(0, selectOptions.length - visibleCount)
-  const focusedModelName = selectOptions.find((opt_1) => opt_1.value === focusedValue)?.label
+  const focusedModelName = selectOptions.find((option) => option.value === focusedValue)?.label
   const focusedModel = resolveOptionModel(focusedValue)
   const focusedSupportsEffort = focusedModel ? modelSupportsEffort(focusedModel) : false
   const focusedSupportsMax = focusedModel ? modelSupportsMaxEffort(focusedModel) : false
@@ -120,14 +120,14 @@ export function ModelPicker({
       context: 'ModelPicker',
     },
   )
-  const handleSelect = function handleSelect(value_0) {
+  const handleSelect = function handleSelect(selectedValue) {
     logEvent('zy_model_command_menu_effort', {
       effort: effort as any,
     })
     if (!skipSettingsWrite) {
       const effortLevel = resolvePickerEffortPersistence(
         effort as any,
-        getDefaultEffortLevelForOption(value_0),
+        getDefaultEffortLevelForOption(selectedValue),
         getSettingsForSource('userSettings')?.effortLevel as any,
         hasToggledEffort,
       )
@@ -137,19 +137,19 @@ export function ModelPicker({
           effortLevel: persistable,
         })
       }
-      setAppState((prev_0) => ({
-        ...prev_0,
+      setAppState((prev) => ({
+        ...prev,
         effortValue: effortLevel,
       }))
     }
-    const selectedModel = resolveOptionModel(value_0)
+    const selectedModel = resolveOptionModel(selectedValue)
     const selectedEffort =
       hasToggledEffort && selectedModel && modelSupportsEffort(selectedModel) ? effort : undefined
-    if (value_0 === NO_PREFERENCE) {
+    if (selectedValue === NO_PREFERENCE) {
       onSelect(null, selectedEffort)
       return
     }
-    onSelect(value_0, selectedEffort)
+    onSelect(selectedValue, selectedEffort)
   }
   const content = (
     <Box flexDirection="column">
@@ -246,8 +246,8 @@ function resolveOptionModel(value?: string): string | undefined {
   return value === NO_PREFERENCE ? getDefaultMainLoopModel() : parseUserSpecifiedModel(value)
 }
 function EffortLevelIndicator({ effort }) {
-  const t3 = effortLevelToSymbol(effort ?? 'low')
-  return <Text color={effort ? 'zy' : 'subtle'}>{t3}</Text>
+  const effortSymbol = effortLevelToSymbol(effort ?? 'low')
+  return <Text color={effort ? 'zy' : 'subtle'}>{effortSymbol}</Text>
 }
 function cycleEffortLevel(
   current: EffortLevel,

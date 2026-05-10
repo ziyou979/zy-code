@@ -17,6 +17,6 @@ export function MessageModel({ message, isTranscriptMode }: Props) {
   if (!shouldShowModel) {
     return null
   }
-  const t1 = stringWidth(message.message.model as string) + 8
-  return <Box minWidth={t1}>{<Text dimColor={true}>{message.message.model as string}</Text>}</Box>
+  const modelNameWidth = stringWidth(message.message.model as string) + 8
+  return <Box minWidth={modelNameWidth}>{<Text dimColor={true}>{message.message.model as string}</Text>}</Box>
 }

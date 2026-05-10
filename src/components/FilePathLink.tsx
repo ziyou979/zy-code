@@ -15,8 +15,8 @@ type Props = {
  * even when they appear inside parentheses or other text.
  */
 export function FilePathLink({ filePath, children }: Props) {
-  const t1 = pathToFileURL(filePath)
-  return <Link url={t1.href}>{children ?? filePath}</Link>
+  const fileUrl = pathToFileURL(filePath)
+  return <Link url={fileUrl.href}>{children ?? filePath}</Link>
 }
 
 // 匹配文件路径 + 行号模式，如 src/foo.ts:123 或 /abs/path.go:10-20

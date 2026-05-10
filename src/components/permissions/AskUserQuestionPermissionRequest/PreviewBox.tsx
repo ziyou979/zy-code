@@ -83,10 +83,10 @@ function PreviewBoxBody({ content, maxLines, minHeight, minWidth = 40, maxWidth,
         return `${BOX_CHARS.teeLeft}${label}${BOX_CHARS.horizontal.repeat(fillWidth)}${BOX_CHARS.teeRight}`
       })()
     : null
-  const T0 = Box
-  const t5 = lines.map((line_0, index) => {
-    const lineWidth = stringWidth(line_0)
-    const displayLine = lineWidth > innerWidth ? sliceAnsi(line_0, 0, innerWidth) : line_0
+  const BoxComponent = Box
+  const lineElements = lines.map((line, index) => {
+    const lineWidth = stringWidth(line)
+    const displayLine = lineWidth > innerWidth ? sliceAnsi(line, 0, innerWidth) : line
     const padding = ' '.repeat(Math.max(0, innerWidth - stringWidth(displayLine)))
     return (
       <Box key={index} flexDirection="row">
@@ -99,9 +99,9 @@ function PreviewBoxBody({ content, maxLines, minHeight, minWidth = 40, maxWidth,
     )
   })
   return (
-    <T0 flexDirection={'column'}>
+    <BoxComponent flexDirection={'column'}>
       {<Text dimColor={true}>{topBorder}</Text>}
-      {t5}
+      {lineElements}
       {truncationBar && <Text color="warning">{truncationBar}</Text>}
       {<Text dimColor={true}>{bottomBorder}</Text>}
     </T0>

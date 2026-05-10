@@ -196,8 +196,8 @@ function MCPTextOutput({
           {unwrapped.extras.length > 0 && (
             <Text dimColor={true}>
               {unwrapped.extras
-                .map((t0) => {
-                  const [k, v] = t0
+                .map((extra) => {
+                  const [k, v] = extra
                   return `${k}: ${v}`
                 })
                 .join(' \xB7 ')}
@@ -215,17 +215,17 @@ function MCPTextOutput({
   const flat = tryFlattenJson(content)
   if (flat !== null) {
     const maxKeyWidth = Math.max(
-      ...flat.map((t0) => {
-        const [k_0] = t0
-        return stringWidth(k_0)
+      ...flat.map((entry) => {
+        const [key] = entry
+        return stringWidth(key)
       }),
     )
     earlyReturn2 = (
       <MessageResponse>
         {
           <Box flexDirection="column">
-            {flat.map((t4, i) => {
-              const [key, value] = t4
+            {flat.map((entry, i) => {
+              const [key, value] = entry
               return (
                 <Text key={i}>
                   <Text dimColor={true}>{key.padEnd(maxKeyWidth)}: </Text>

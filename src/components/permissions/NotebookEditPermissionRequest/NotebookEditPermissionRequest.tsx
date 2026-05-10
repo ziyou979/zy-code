@@ -21,11 +21,11 @@ export function NotebookEditPermissionRequest(props) {
     }
     return result.data
   }
-  const T0 = Text
-  const T1 = Text
-  const T2 = FilePermissionDialog
+  const TextComponent = Text
+  const FilenameText = Text
+  const DialogComponent = FilePermissionDialog
   const parsed = parseInput(props.toolUseConfirm.input)
-  const t1 = basename(parsed.notebook_path)
+  const filename = basename(parsed.notebook_path)
   const { edit_mode } = parsed
   const language = parsed.cell_type === 'markdown' ? 'markdown' : 'python'
   const notebook_path = parsed.notebook_path
@@ -36,7 +36,7 @@ export function NotebookEditPermissionRequest(props) {
         ? tSync('permission.deleteCellFrom')
         : tSync('permission.makeEditTo')
   return (
-    <T2
+    <DialogComponent
       toolUseConfirm={props.toolUseConfirm}
       toolUseContext={props.toolUseContext}
       onDone={props.onDone}
@@ -44,9 +44,9 @@ export function NotebookEditPermissionRequest(props) {
       workerBadge={props.workerBadge}
       title={tSync('permission.editNotebook')}
       question={
-        <T1>
-          {tSync('permission.doYouWantToNotebookAction', { action: editTypeText, filename: t1 })}
-        </T1>
+        <FilenameText>
+          {tSync('permission.doYouWantToNotebookAction', { action: editTypeText, filename })}
+        </FilenameText>
       }
       content={
         <NotebookEditToolDiff
