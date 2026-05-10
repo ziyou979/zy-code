@@ -16,10 +16,10 @@ const PLATFORMS: Record<
   }
 > = {
   ios: {
-    url: 'https://apps.apple.com/app/zy-by-anthropic/id6473753684',
+    url: 'todo',
   },
   android: {
-    url: 'https://play.google.com/store/apps/details?id=com.anthropic.zy',
+    url: 'todo',
   },
 }
 function MobileQRCode({ onDone }: Props) {
@@ -66,17 +66,15 @@ function MobileQRCode({ onDone }: Props) {
       setPlatform((prev) => (prev === 'ios' ? 'android' : 'ios'))
     }
   }
-  const lines = qrCode.split('\n').filter((line) => line.length > 0)
-  const T1 = Pane
-  const T0 = Box
-  const t13 = lines.map((line_0, i) => <Text key={i}>{line_0}</Text>)
+  const lines = qrCode.split('\n').filter((line: string | any[]) => line.length > 0)
+  const qrCodeLines = lines.map((line, i) => <Text key={i}>{line}</Text>)
   return (
-    <T1>
+    <Pane>
       {
-        <T0 flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
+        <Box flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
           {<Text> </Text>}
           {<Text> </Text>}
-          {t13}
+          {qrCodeLines}
           {<Text> </Text>}
           {<Text> </Text>}
           {
@@ -100,9 +98,9 @@ function MobileQRCode({ onDone }: Props) {
             </Box>
           }
           {<Text dimColor={true}>{url}</Text>}
-        </T0>
+        </Box>
       }
-    </T1>
+    </Pane>
   )
 }
 function _temp() {}

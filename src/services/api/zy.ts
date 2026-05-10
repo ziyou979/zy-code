@@ -1890,11 +1890,13 @@ async function* queryModel(
             break
           }
           case 'chunk_stop': {
+            const chunkStopEvent = part as import('../../types/llm.js').ChunkStopEvent
+            const streamExtras = chunkStopEvent.extras
             // Always overwrite with the latest value.
             if (isInternalBuild() && 'research' in part) {
               research = (part as { research: unknown }).research
             }
-            const contentBlock = contentBlocks[part.index]
+            const contentBlock = contentBlocks[chunkStopEvent.index]
             if (!contentBlock) {
               logEvent('zy_streaming_error', {
                 error_type:
@@ -1920,6 +1922,7 @@ async function* queryModel(
                   tools,
                   options.agentId,
                 ),
+                ...(streamExtras && { extras: streamExtras }),
               },
               requestId: streamRequestId ?? undefined,
               type: 'assistant',
@@ -1936,6 +1939,7 @@ async function* queryModel(
             // 标准格式：part.stopReason / part.usage（驼峰）
             const responseDelta = part as import('../../types/llm.js').ResponseDeltaEvent
             const stopReasonV2 = responseDelta.stopReason
+            const streamExtras = responseDelta.extras
             // 标准 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
             const rawUsage = responseDelta.usage
             const usageForUpdate = rawUsage
@@ -1978,6 +1982,9 @@ async function* queryModel(
             if (lastMsg) {
               lastMsg.message.usage = usage
               lastMsg.message.stopReason = stopReason
+              if (streamExtras) {
+                lastMsg.message.extras = streamExtras
+              }
             }
 
             // Update cost

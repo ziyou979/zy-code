@@ -1,4 +1,3 @@
-import chalk from 'chalk'
 import * as path from 'path'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -43,11 +42,11 @@ function IDEScreen({
   onClose,
   onSelect,
 }: IDEScreenProps) {
-  const t1 = selectedIDE?.port?.toString() ?? tSync('ide.none')
-  const [selectedValue, setSelectedValue] = useState(t1)
+  const selectedPortOrNone = selectedIDE?.port?.toString() ?? tSync('ide.none')
+  const [selectedValue, setSelectedValue] = useState(selectedPortOrNone)
   const [showAutoConnectDialog, setShowAutoConnectDialog] = useState(false)
   const [showDisableAutoConnectDialog, setShowDisableAutoConnectDialog] = useState(false)
-  const handleSelectIDE = (value) => {
+  const handleSelectIDE = (value: string) => {
     if (value !== tSync('ide.none') && shouldShowAutoConnectDialog()) {
       setShowAutoConnectDialog(true)
     } else {
@@ -58,18 +57,18 @@ function IDEScreen({
       }
     }
   }
-  const ideCounts = availableIDEs.reduce((acc, ide_0) => {
-    acc[ide_0.name] = (acc[ide_0.name] || 0) + 1
+  const ideCounts = availableIDEs.reduce((acc, ide) => {
+    acc[ide.name] = (acc[ide.name] || 0) + 1
     return acc
   }, {})
   const options = availableIDEs
-    .map((ide_1) => {
-      const hasMultipleInstances = (ideCounts[ide_1.name] || 0) > 1
-      const showWorkspace = hasMultipleInstances && ide_1.workspaceFolders.length > 0
+    .map((ide) => {
+      const hasMultipleInstances = (ideCounts[ide.name] || 0) > 1
+      const showWorkspace = hasMultipleInstances && ide.workspaceFolders.length > 0
       return {
-        label: ide_1.name,
-        value: ide_1.port.toString(),
-        description: showWorkspace ? formatWorkspaceFolders(ide_1.workspaceFolders) : undefined,
+        label: ide.name,
+        value: ide.port.toString(),
+        description: showWorkspace ? formatWorkspaceFolders(ide.workspaceFolders) : undefined,
       }
     })
     .concat([
@@ -91,15 +90,15 @@ function IDEScreen({
       />
     )
   }
-  const t7 = availableIDEs.length !== 0 &&
+  const vscodeWarning = availableIDEs.length !== 0 &&
     availableIDEs.some(
-      (ide_2) => ide_2.name === 'VS Code' || ide_2.name === 'Visual Studio Code',
+      (ide) => ide.name === 'VS Code:' || ide.name === 'Visual Studio Code:',
     ) && (
       <Box marginTop={1}>
         <Text color="warning">{tSync('ide.vscodeSingleInstance')}</Text>
       </Box>
     )
-  const t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && (
+  const autoConnectTip = availableIDEs.length !== 0 && !isSupportedTerminal() && (
     <Box marginTop={1}>
       <Text dimColor={true}>{tSync('ide.autoConnectTip')}</Text>
     </Box>
@@ -131,18 +130,18 @@ function IDEScreen({
               }}
             />
           )}
-          {t7}
-          {t8}
+          {vscodeWarning}
+          {autoConnectTip}
           {unavailableIDEs.length > 0 && (
             <Box marginTop={1} flexDirection="column">
               <Text dimColor={true}>
                 {tSync('ide.unavailableCount', { count: unavailableIDEs.length })}
               </Text>
               <Box marginTop={1} flexDirection="column">
-                {unavailableIDEs.map((ide_3, index) => (
+                {unavailableIDEs.map((ide, index) => (
                   <Box key={index} paddingLeft={3}>
                     <Text dimColor={true}>
-                      • {ide_3.name}: {formatWorkspaceFolders(ide_3.workspaceFolders)}
+                      • {ide.name}: {formatWorkspaceFolders(ide.workspaceFolders)}
                     </Text>
                   </Box>
                 ))}
@@ -180,15 +179,15 @@ type IDEOpenSelectionProps = {
   ) => void
 }
 function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelectionProps) {
-  const t1 = availableIDEs[0]?.port?.toString() ?? ''
-  const [selectedValue, setSelectedValue] = useState(t1)
+  const defaultPort = availableIDEs[0]?.port?.toString() ?? ''
+  const [selectedValue, setSelectedValue] = useState(defaultPort)
   const handleSelectIDE = (value) => {
     const selectedIDE = availableIDEs.find((ide) => ide.port === parseInt(value))
     onSelectIDE(selectedIDE)
   }
-  const options = availableIDEs.map((ide_0) => ({
-    label: ide_0.name,
-    value: ide_0.port.toString(),
+  const options = availableIDEs.map((ide) => ({
+    label: ide.name,
+    value: ide.port.toString(),
   }))
   const handleCancel = function handleCancel() {
     onDone(tSync('ide.selectionCancelled'), {

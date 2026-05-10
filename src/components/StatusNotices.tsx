@@ -5,35 +5,34 @@ import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js
 import { getMemoryFiles } from '../utils/zymd.js'
 import { getGlobalConfig } from '../utils/config.js'
 import { getActiveNotices } from '../utils/statusNoticeDefinitions.js'
+
 type Props = {
   agentDefinitions?: AgentDefinitionsResult
 }
 
 /**
- * StatusNotices contains the information displayed to users at startup. We have
- * moved neutral or positive status to src/components/Status.tsx instead, which
- * users can access through /status.
+ * StatusNotices 包含启动时向用户展示的信息。中性和正面状态已移至
+ * src/components/Status.tsx，用户可通过 /status 访问。
  */
-export function StatusNotices(t0) {
-  const { agentDefinitions } = t0 === undefined ? {} : t0
-  const t1 = getGlobalConfig()
-  const t2 = getMemoryFiles()
+export function StatusNotices(props: Props) {
+  const { agentDefinitions } = props === undefined ? {} : props
+  const globalConfig = getGlobalConfig()
+  const memoryFilesPromise = getMemoryFiles()
   const context = {
-    config: t1,
+    config: globalConfig,
     agentDefinitions,
-    memoryFiles: use(t2),
+    memoryFiles: use(memoryFilesPromise),
   }
   const activeNotices = getActiveNotices(context)
   if (activeNotices.length === 0) {
     return null
   }
-  const T0 = Box
-  const t5 = activeNotices.map((notice) => (
+  const noticeElements = activeNotices.map((notice) => (
     <React.Fragment key={notice.id}>{notice.render(context)}</React.Fragment>
   ))
   return (
-    <T0 flexDirection={'column'} paddingLeft={1}>
-      {t5}
-    </T0>
+    <Box flexDirection={'column'} paddingLeft={1}>
+      {noticeElements}
+    </Box>
   )
 }

@@ -543,6 +543,10 @@ export const en: TranslationResource = {
   // contains the unit (e.g. "2 local agents"), so do not add another noun here.
   'systemMessage.verbWithDuration': '{verb} for {duration}',
   'systemMessage.tasksStillRunning': ', {count} still running',
+  'systemMessage.hookSummary_one': 'Ran {count} {label} hook',
+  'systemMessage.hookSummary_other': 'Ran {count} {label} hooks',
+  'systemMessage.hookError': '{label} hook error: {error}',
+  'systemMessage.stopHookLabel': 'stop',
 
   // Attachment
   'attachment.completed': 'completed in background',
@@ -1313,6 +1317,13 @@ export const en: TranslationResource = {
   // Web fetch tool messages
   'webFetch.fetching': 'Fetching…',
   'webFetch.received': 'Received',
+  'webFetch.domainBlocked': 'ZY Code is unable to fetch from {domain}',
+  'webFetch.domainCheckFailed': 'Unable to verify if domain {domain} is safe to fetch. This may be due to network restrictions or enterprise security policies blocking zy.ai.',
+  'webFetch.egressBlocked': 'Access to {domain} is blocked by the network egress proxy.',
+  'webFetch.tooManyRedirects': 'Too many redirects (exceeded {maxRedirects})',
+  'webFetch.redirectMissingLocation': 'Redirect missing Location header',
+  'webFetch.invalidUrl': 'Invalid URL',
+  'webFetch.noResponseFromModel': 'No response from model',
 
   // Web search tool messages
   'webSearch.searching': 'Searching:',

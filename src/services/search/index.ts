@@ -1,19 +1,29 @@
 /**
- * 本地搜索服务 — 兜底方案。
+ * 本地搜索服务。
  *
- * 当 provider 没有原生 web_search 能力时（非 dashscope/openai），
- * 回退到 DuckDuckGo Lite HTML 抓取，零配置、无需 API Key。
+ * WebSearchTool 统一使用本地/外部搜索 provider 返回可验证链接，
+ * 不依赖模型 provider 的服务端联网搜索能力。
  */
-import type { SearchProvider, SearchOptions } from './types.js'
+import { getUiLanguage } from '../../i18n/index.js'
+import type { SearchProvider } from './types.js'
 import { DuckDuckGoProvider } from './DuckDuckGoProvider.js'
 
 export type { SearchProvider, SearchResult, SearchOptions } from './types.js'
 
+export function getDuckDuckGoRegionForUiLanguage(language = getUiLanguage()): string {
+  switch (language) {
+    case 'zh-CN':
+      return 'cn-zh'
+    default:
+      return 'us-en'
+  }
+}
+
 /**
- * 创建兜底 SearchProvider。
- * 目前只保留 DuckDuckGo 作为本地回退，
- * dashscope / openai 走各自的 API 原生搜索。
+ * 创建 SearchProvider。
+ * 目前使用 DuckDuckGo Lite HTML 抓取作为零配置搜索实现。
  */
 export function createFallbackSearchProvider(options?: { region?: string }): SearchProvider {
-  return new DuckDuckGoProvider({ region: options?.region })
+  const region = options?.region ?? getDuckDuckGoRegionForUiLanguage()
+  return new DuckDuckGoProvider({ region })
 }

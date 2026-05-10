@@ -23,7 +23,7 @@ import type {
   SystemMemorySavedMessage,
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
-import { formatDuration, formatNumber, formatSecondsShort } from '../../utils/format.js'
+import { formatDuration, formatSecondsShort } from '../../utils/format.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import Link from '../../ink/components/Link.js'
 import ThemedText from '../design-system/ThemedText.js'
@@ -100,12 +100,12 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
     )
   }
   if ('subtype' in message && message.subtype === 'permission_retry') {
-    const t4 = message.commands.join(', ')
+    const joinedCommands = message.commands.join(', ')
     return (
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
         {<Text dimColor={true}>{TEARDROP_ASTERISK} </Text>}
         {<Text>Allowed </Text>}
-        {<Text bold={true}>{t4}</Text>}
+        {<Text bold={true}>{joinedCommands}</Text>}
       </Box>
     )
   }
@@ -161,9 +161,9 @@ function StopHookSummaryMessage({
   if (hookErrors.length === 0 && !preventedContinuation && !message.hookLabel) {
     return null
   }
-  const totalStr = ''
+  const totalStr = totalDurationMs > 0 ? ` (${formatSecondsShort(totalDurationMs)})` : ''
   if (message.hookLabel) {
-    const t5 =
+    const transcriptHookItems =
       isTranscriptMode &&
       hookInfos.map((info, idx) => {
         const durationStr =
@@ -180,15 +180,20 @@ function StopHookSummaryMessage({
       <Box flexDirection="column" width="100%">
         {
           <Text dimColor={true}>
-            {'  \u23BF  '}Ran {hookCount} {message.hookLabel} {hookCount === 1 ? 'hook' : 'hooks'}
+            {'  \u23BF  '}
+            {tSync('systemMessage.hookSummary', {
+              count: hookCount,
+              label: message.hookLabel,
+              hookCount,
+            })}
             {totalStr}
           </Text>
         }
-        {t5}
+        {transcriptHookItems}
       </Box>
     )
   }
-  const t11 =
+  const verboseHookItems =
     verbose &&
     hookInfos.length > 0 &&
     hookInfos.map((info_0, idx_0) => {
@@ -203,12 +208,15 @@ function StopHookSummaryMessage({
         </Text>
       )
     })
-  const t13 =
+  const hookErrorItems =
     hookErrors.length > 0 &&
     hookErrors.map((err, idx_1) => (
       <Text key={idx_1}>
         <Text dimColor={true}>⎿ </Text>
-        {message.hookLabel ?? 'Stop'} hook error: {err}
+        {tSync('systemMessage.hookError', {
+          label: message.hookLabel ?? tSync('systemMessage.stopHookLabel'),
+          error: err,
+        })}
       </Text>
     ))
   return (
@@ -222,8 +230,11 @@ function StopHookSummaryMessage({
         <Box flexDirection="column" width={columns - 10}>
           {
             <Text>
-              Ran {<Text bold={true}>{hookCount}</Text>} {message.hookLabel ?? 'stop'}{' '}
-              {hookCount === 1 ? 'hook' : 'hooks'}
+              {tSync('systemMessage.hookSummary', {
+                count: hookCount,
+                label: message.hookLabel ?? tSync('systemMessage.stopHookLabel'),
+                hookCount,
+              })}
               {totalStr}
               {!verbose && hookInfos.length > 0 && (
                 <>
@@ -233,14 +244,14 @@ function StopHookSummaryMessage({
               )}
             </Text>
           }
-          {t11}
+          {verboseHookItems}
           {preventedContinuation && stopReason && (
             <Text>
               <Text dimColor={true}>⎿ </Text>
               {stopReason}
             </Text>
           )}
-          {t13}
+          {hookErrorItems}
         </Box>
       }
     </Box>
@@ -249,7 +260,7 @@ function StopHookSummaryMessage({
 function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: any) {
   const { columns } = useTerminalSize()
   const bg = useSelectedMessageBg()
-  const t4 = content.trim()
+  const trimmedContent = content.trim()
   return (
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
       {dot && (
@@ -263,7 +274,7 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
         <Box flexDirection="column" width={columns - 10}>
           {
             <Text color={color as any} dimColor={dimColor} wrap="wrap">
-              {t4}
+              {trimmedContent}
             </Text>
           }
         </Box>
@@ -289,13 +300,13 @@ function TurnDurationMessage({ message, addMargin }) {
   if (!hasBudget) {
     // ... existing code ...
   }
-  const t7 =
+  const verbWithDuration =
     showTurnDuration &&
     tSync('systemMessage.verbWithDuration', {
       verb,
       duration,
     })
-  const t8 =
+  const backgroundTaskText =
     backgroundTaskSummary &&
     tSync('systemMessage.tasksStillRunning', {
       count: backgroundTaskSummary,
@@ -309,9 +320,9 @@ function TurnDurationMessage({ message, addMargin }) {
       }
       {
         <Text dimColor={true}>
-          {t7}
+          {verbWithDuration}
           {budgetSuffix}
-          {t8}
+          {backgroundTaskText}
         </Text>
       }
     </Box>
@@ -328,13 +339,13 @@ function MemorySavedMessage({
   const { writtenPaths } = message
   const team = feature('TEAMMEM') ? teamMemSaved.teamMemSavedPart(message) : null
   const privateCount = writtenPaths.length - (team?.count ?? 0)
-  const t3 = team?.segment
+  const teamSegment = team?.segment
   const parts = [
     privateCount > 0 ? `${privateCount} ${privateCount === 1 ? 'memory' : 'memories'}` : null,
-    t3,
+    teamSegment,
   ].filter(Boolean)
-  const t8 = parts.join(' · ')
-  const t10 = writtenPaths.map((p) => <MemoryFileRow key={p} path={p} />)
+  const memorySummaryText = parts.join(' · ')
+  const fileRowElements = writtenPaths.map((p) => <MemoryFileRow key={p} path={p} />)
   return (
     <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any}>
       {
@@ -345,17 +356,17 @@ function MemorySavedMessage({
             </Box>
           }
           <Text>
-            {'Saved'} {t8}
+            {'Saved'} {memorySummaryText}
           </Text>
         </Box>
       }
-      {t10}
+      {fileRowElements}
     </Box>
   )
 }
 function MemoryFileRow({ path }) {
   const [hover, setHover] = useState(false)
-  const t5 = basename(path)
+  const fileName = basename(path)
   return (
     <MessageResponse>
       <Box
@@ -365,7 +376,7 @@ function MemoryFileRow({ path }) {
       >
         {
           <Text dimColor={!hover} underline={hover}>
-            {<FilePathLink filePath={path}>{t5}</FilePathLink>}
+            {<FilePathLink filePath={path}>{fileName}</FilePathLink>}
           </Text>
         }
       </Box>

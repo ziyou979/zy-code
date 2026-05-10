@@ -1,13 +1,6 @@
 import '../global.d.ts'
 import React, { type Ref } from 'react'
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'ink-box': any
-    }
-  }
-}
 import type { Except } from 'type-fest'
 import type { DOMElement } from '../dom.js'
 import type { ClickEvent } from '../events/click-event.js'
@@ -54,39 +47,25 @@ export type Props = Except<Styles, 'textWrap'> & {
  * `<Box>` 是构建布局的核心 Ink 组件。类似于浏览器中的 `<div style="display: flex">`。
  */
 function Box({
-  children: t1,
+  children,
   flexWrap = 'nowrap',
   flexDirection = 'row',
   flexGrow = 0,
   flexShrink = 1,
-  ref: t6,
-  tabIndex: t7,
-  autoFocus: t8,
-  onClick: t9,
-  onFocus: t10,
-  onFocusCapture: t11,
-  onBlur: t12,
-  onBlurCapture: t13,
-  onMouseEnter: t14,
-  onMouseLeave: t15,
-  onKeyDown: t16,
-  onKeyDownCapture: t17,
-  ...t18
+  ref,
+  tabIndex,
+  autoFocus,
+  onClick,
+  onFocus,
+  onFocusCapture,
+  onBlur,
+  onBlurCapture,
+  onMouseEnter,
+  onMouseLeave,
+  onKeyDown,
+  onKeyDownCapture,
+  ...style
 }: Props) {
-  const autoFocus = t8
-  const children = t1
-  const onBlur = t12
-  const onBlurCapture = t13
-  const onClick = t9
-  const onFocus = t10
-  const onFocusCapture = t11
-  const onKeyDown = t16
-  const onKeyDownCapture = t17
-  const onMouseEnter = t14
-  const onMouseLeave = t15
-  const ref = t6
-  const style = t18
-  const tabIndex = t7
   warn.ifNotInteger(style.margin, 'margin')
   warn.ifNotInteger(style.marginX, 'marginX')
   warn.ifNotInteger(style.marginY, 'marginY')
@@ -104,7 +83,7 @@ function Box({
   warn.ifNotInteger(style.gap, 'gap')
   warn.ifNotInteger(style.columnGap, 'columnGap')
   warn.ifNotInteger(style.rowGap, 'rowGap')
-  const InkBox = 'ink-box' as any
+  const InkBox = 'ink-box' as React.ElementType
   return (
     <InkBox
       ref={ref}

@@ -144,6 +144,22 @@ export type StreamEvent =
   | ResponseDeltaEvent
   | ResponseStopEvent
 
+export interface DashScopeSearchResult {
+  title?: string
+  url?: string
+  content?: string
+  [key: string]: unknown
+}
+
+export interface DashScopeSearchInfo {
+  search_results?: DashScopeSearchResult[]
+  [key: string]: unknown
+}
+
+export interface StreamEventExtras {
+  searchInfo?: DashScopeSearchInfo
+}
+
 /** 响应开始 — 流的第一个事件 */
 export interface ResponseStartEvent {
   type: 'response_start'
@@ -169,6 +185,7 @@ export interface ChunkDeltaEvent {
 export interface ChunkStopEvent {
   type: 'chunk_stop'
   index: number
+  extras?: StreamEventExtras
 }
 
 /** 响应增量 — 响应级别的增量更新 */
@@ -176,6 +193,7 @@ export interface ResponseDeltaEvent {
   type: 'response_delta'
   stopReason: StopReason
   usage?: DeltaUsage
+  extras?: StreamEventExtras
 }
 
 /** 响应结束 — 流的最后一个事件 */

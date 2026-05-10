@@ -1,4 +1,4 @@
-import type { ContentBlock } from '../../types/llm.js'
+import type { ContentBlock, DashScopeSearchInfo, DashScopeSearchResult } from '../../types/llm.js'
 import type {
   SearchOptions,
   SearchResult as ServiceSearchResult,
@@ -14,6 +14,7 @@ import { logError } from '../../utils/log.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getMainLoopModel } from '../../utils/model/model.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
+import { semanticNumber } from '../../utils/semanticNumber.js'
 import { queryModelWithStreaming } from '../../services/api/zy.js'
 import { createUserMessage } from '../../utils/messages.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
@@ -24,6 +25,15 @@ import {
   renderToolUseMessage,
   renderToolUseProgressMessage,
 } from './UI.js'
+
+const DEFAULT_MAX_RESULTS = 8
+const MAX_ALLOWED_RESULTS = 20
+
+function maxResultsSchema() {
+  return semanticNumber(
+    z.number().int().min(1).max(MAX_ALLOWED_RESULTS).optional(),
+  ).describe('Maximum number of search results to return')
+}
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
@@ -36,6 +46,8 @@ const inputSchema = lazySchema(() =>
       .array(z.string())
       .optional()
       .describe('Never include search results from these domains'),
+    max_results: maxResultsSchema(),
+    maxResults: maxResultsSchema(),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
@@ -45,7 +57,7 @@ type Input = z.infer<InputSchema>
 /** 搜索结果对象 — 与旧版格式兼容 */
 export interface SearchResult {
   toolCallId: string
-  content: Array<{ title: string; url: string }>
+  content: Array<{ title: string; url: string; snippet?: string }>
 }
 
 export type Output = {
@@ -58,6 +70,10 @@ export type Output = {
 export type { WebSearchProgress } from '../../types/tools.js'
 
 import type { WebSearchProgress } from '../../types/tools.js'
+
+function getMaxResults(input: Input): number {
+  return input.max_results ?? input.maxResults ?? DEFAULT_MAX_RESULTS
+}
 
 export const WebSearchTool = buildTool({
   name: WEB_SEARCH_TOOL_NAME,
@@ -134,9 +150,10 @@ export const WebSearchTool = buildTool({
     }
     return { result: true }
   },
-  async call(input, context, _canUseTool, _parentMessage, onProgress) {
+  async call(input, _context, _canUseTool, _parentMessage, onProgress) {
     const startTime = performance.now()
     const { query, allowed_domains, blocked_domains } = input
+    const maxResults = getMaxResults(input)
 
     // 发送进度：搜索开始
     if (onProgress) {
@@ -150,52 +167,19 @@ export const WebSearchTool = buildTool({
     }
 
     try {
-      // 根据 provider 选择搜索后端
       const provider = getAPIProvider()
       logForDebugging(`[WebSearch] provider=${provider}, query="${query}"`)
+      logForDebugging(
+        '[WebSearch] Using local DuckDuckGo fallback; model-provider web search is not used as tool result source',
+      )
 
-      let searchResults: ServiceSearchResult[]
-
-      if (provider === 'anthropic') {
-        logForDebugging('[WebSearch] Using Anthropic web_search_20260209')
-        // Anthropic：通过 web_search_20260209 beta tool 让服务端执行搜索
-        searchResults = await searchViaAnthropic(
-          query,
-          allowed_domains,
-          blocked_domains,
-          context,
-          onProgress,
-        )
-      } else if (provider === 'dashscope') {
-        logForDebugging('[WebSearch] Using DashScope enable_search')
-        // 百炼：通过 enable_search 参数让服务端执行搜索
-        searchResults = await searchViaDashScope(
-          query,
-          allowed_domains,
-          blocked_domains,
-          context,
-          onProgress,
-        )
-      } else if (provider === 'openai') {
-        logForDebugging('[WebSearch] Using OpenAI web_search_preview')
-        // OpenAI：通过 web_search_preview 内置工具让服务端执行搜索
-        searchResults = await searchViaOpenAI(
-          query,
-          allowed_domains,
-          blocked_domains,
-          context,
-          onProgress,
-        )
-      } else {
-        logForDebugging('[WebSearch] Using local DuckDuckGo fallback')
-        // 其他 provider：本地 DuckDuckGo 兜底
-        searchResults = await searchViaLocalProvider(
-          query,
-          allowed_domains,
-          blocked_domains,
-          onProgress,
-        )
-      }
+      const searchResults = await searchViaLocalProvider(
+        query,
+        allowed_domains,
+        blocked_domains,
+        maxResults,
+        onProgress,
+      )
 
       logForDebugging(
         `[WebSearch] Got ${searchResults.length} results in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,
@@ -210,7 +194,11 @@ export const WebSearchTool = buildTool({
       if (searchResults.length > 0) {
         results.push({
           toolCallId: `search-${Date.now()}`,
-          content: searchResults.map((r) => ({ title: r.title, url: r.url })),
+          content: searchResults.map((result) => ({
+            title: result.title,
+            url: result.url,
+            snippet: result.snippet,
+          })),
         })
       } else {
         results.push('No results found for this query.')
@@ -379,6 +367,17 @@ async function searchViaDashScope(
     }
   }
 
+  logForDebugging(
+    `[WebSearch:DashScope] Request params: ${jsonStringify({
+      model: context?.options?.mainLoopModel ?? getMainLoopModel(),
+      query,
+      enable_search: extraBodyParams.enable_search,
+      search_options: extraBodyParams.search_options,
+      allowed_domains_count: allowed_domains?.length ?? 0,
+      blocked_domains_count: blocked_domains?.length ?? 0,
+    })}`,
+  )
+
   const queryStream = queryModelWithStreaming({
     messages: [userMessage],
     systemPrompt: asSystemPrompt([
@@ -415,12 +414,14 @@ async function searchViaDashScope(
     if (event.type === 'assistant') {
       const contentArr = event.message.content
       allContentBlocks.push(...contentArr)
-      // 尝试从 assistant message 的 extras 中提取 search_info
-      const raw = event.message as any
-      if (raw?.extras?.searchInfo) {
-        searchInfoResults = parseSearchInfoFromExtras(raw.extras.searchInfo)
+      const searchInfo = getSearchInfoFromAssistantMessage(event.message)
+      if (searchInfo) {
+        searchInfoResults = parseSearchInfoFromExtras(searchInfo)
         logForDebugging(
-          `[WebSearch:DashScope] Found search_info in extras: ${searchInfoResults.length} results`,
+          `[WebSearch:DashScope] Found raw search_info in extras: ${jsonStringify(searchInfo)}`,
+        )
+        logForDebugging(
+          `[WebSearch:DashScope] Parsed ${searchInfoResults.length} results from search_info`,
         )
       }
       continue
@@ -450,16 +451,31 @@ async function searchViaDashScope(
   return parseResultsFromText(allContentBlocks, query, blocked_domains)
 }
 
+function getSearchInfoFromAssistantMessage(message: unknown): DashScopeSearchInfo | undefined {
+  if (!message || typeof message !== 'object' || !('extras' in message)) {
+    return undefined
+  }
+  const extras = message.extras
+  if (!extras || typeof extras !== 'object') {
+    return undefined
+  }
+  return (extras as { searchInfo?: DashScopeSearchInfo }).searchInfo
+}
+
+function hasSearchResultUrlAndTitle(
+  result: DashScopeSearchResult,
+): result is DashScopeSearchResult & { title: string; url: string } {
+  return typeof result.title === 'string' && typeof result.url === 'string'
+}
+
 /** 从百炼 API 的 search_info 附加字段中解析搜索结果 */
-function parseSearchInfoFromExtras(searchInfo: any): ServiceSearchResult[] {
-  const rawResults = searchInfo?.search_results ?? []
-  return rawResults
-    .filter((r: any) => r.title && r.url)
-    .map((r: any) => ({
-      title: r.title,
-      url: r.url,
-      snippet: r.content || undefined,
-    }))
+function parseSearchInfoFromExtras(searchInfo: DashScopeSearchInfo): ServiceSearchResult[] {
+  const rawResults = searchInfo.search_results ?? []
+  return rawResults.filter(hasSearchResultUrlAndTitle).map((result) => ({
+    title: result.title,
+    url: result.url,
+    snippet: typeof result.content === 'string' ? result.content : undefined,
+  }))
 }
 
 // ---------------------------------------------------------------------------
@@ -547,6 +563,7 @@ async function searchViaLocalProvider(
   query: string,
   allowed_domains?: string[],
   blocked_domains?: string[],
+  maxResults = DEFAULT_MAX_RESULTS,
   onProgress?: any,
 ): Promise<ServiceSearchResult[]> {
   logForDebugging('[WebSearch:Local] Using DuckDuckGo fallback')
@@ -554,7 +571,7 @@ async function searchViaLocalProvider(
   const provider = createFallbackSearchProvider()
 
   const searchOptions: SearchOptions = {
-    maxResults: 8,
+    maxResults,
     allowedDomains: allowed_domains,
     blockedDomains: blocked_domains,
   }

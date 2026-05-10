@@ -21,6 +21,7 @@ import type {
   AssistantContentBlock,
   ChunkDelta,
   CreateParams,
+  DashScopeSearchInfo,
   DeltaUsage,
   LLMMessage,
   LLMResponse,
@@ -43,6 +44,26 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
 import { getAPIProvider } from '../../../utils/model/providers.js'
 import { normalizeModelStringForAPI } from '../../../utils/model/model.js'
 import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
+import { logForDebugging } from '../../../utils/debug.js'
+import { jsonStringify } from '../../../utils/slowOperations.js'
+
+interface DashScopeChatCompletionChunk extends OpenAI.Chat.Completions.ChatCompletionChunk {
+  search_info?: DashScopeSearchInfo
+  searchInfo?: DashScopeSearchInfo
+}
+
+interface DashScopeChatCompletionDelta {
+  content?: string | null
+  reasoning_content?: string | null
+  tool_calls?: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall[]
+}
+
+function getDashScopeSearchInfo(
+  chunk: OpenAI.Chat.Completions.ChatCompletionChunk,
+): DashScopeSearchInfo | undefined {
+  const dashScopeChunk = chunk as DashScopeChatCompletionChunk
+  return dashScopeChunk.search_info ?? dashScopeChunk.searchInfo
+}
 
 // ============================================================================
 // 工具：tool_call.arguments 安全序列化
@@ -544,10 +565,18 @@ export async function* mapOpenAIStreamToStandard(
   // 最终 stop_reason 和 usage（usage 可能在独立的 usage-only chunk 中到达）
   let finalStopReason: StopReason | null = null
   let finalUsage: DeltaUsage | undefined = undefined
+  let dashScopeSearchInfo: DashScopeSearchInfo | undefined = undefined
 
   yield { type: 'response_start', responseId: messageId, model }
 
   for await (const chunk of stream) {
+    const chunkSearchInfo = getDashScopeSearchInfo(chunk)
+    if (chunkSearchInfo) {
+      dashScopeSearchInfo = chunkSearchInfo
+      logForDebugging(
+        `[OpenAI:DashScope] Received raw search_info: ${jsonStringify(chunkSearchInfo)}`,
+      )
+    }
     // 累积 usage（OpenAI stream_options.include_usage 下，usage 在独立 chunk 中，
     // choices 为空，因此必须在 choices 循环外捕获）
     if (chunk.usage) {
@@ -555,7 +584,7 @@ export async function* mapOpenAIStreamToStandard(
     }
 
     for (const choice of chunk.choices ?? []) {
-      const delta = choice.delta as any
+      const delta = choice.delta as DashScopeChatCompletionDelta
 
       // 思考过程
       if (delta.reasoning_content && delta.reasoning_content !== '') {
@@ -563,14 +592,14 @@ export async function* mapOpenAIStreamToStandard(
           yield {
             type: 'chunk_start',
             index: thinkingBlockIndex,
-            chunk: { type: 'thinking', thinking: '', signature: '' } as any,
+            chunk: { type: 'thinking', thinking: '', signature: '' },
           }
           thinkingBlockStarted = true
         }
         yield {
           type: 'chunk_delta',
           index: thinkingBlockIndex,
-          delta: { type: 'thinking_delta', thinking: delta.reasoning_content } as any,
+          delta: { type: 'thinking_delta', thinking: delta.reasoning_content },
         }
       }
 
@@ -630,14 +659,17 @@ export async function* mapOpenAIStreamToStandard(
       // 结束（捕获 stop_reason，发送 chunk_stop 事件）
       if (choice.finish_reason) {
         finalStopReason = openAIFinishReasonToStandard(choice.finish_reason)
+        const streamExtras = dashScopeSearchInfo
+          ? { searchInfo: dashScopeSearchInfo }
+          : undefined
         if (thinkingBlockStarted) {
-          yield { type: 'chunk_stop', index: thinkingBlockIndex }
+          yield { type: 'chunk_stop', index: thinkingBlockIndex, extras: streamExtras }
         }
         if (textBlockStarted) {
-          yield { type: 'chunk_stop', index: textBlockIndex }
+          yield { type: 'chunk_stop', index: textBlockIndex, extras: streamExtras }
         }
         for (const blockIndex of toolBlockIndices.values()) {
-          yield { type: 'chunk_stop', index: blockIndex }
+          yield { type: 'chunk_stop', index: blockIndex, extras: streamExtras }
         }
       }
     }
@@ -649,6 +681,7 @@ export async function* mapOpenAIStreamToStandard(
       type: 'response_delta',
       stopReason: finalStopReason,
       usage: finalUsage,
+      extras: dashScopeSearchInfo ? { searchInfo: dashScopeSearchInfo } : undefined,
     }
   }
 

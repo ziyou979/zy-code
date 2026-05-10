@@ -1,9 +1,8 @@
 /**
  * 搜索服务类型定义。
  *
- * 架构：
- * - dashscope / openai 走 API 原生搜索（enable_search / web_search_preview）
- * - 其他 provider 回退到 DuckDuckGo Lite 本地抓取（兜底）
+ * WebSearchTool 使用独立搜索 provider 返回可验证链接，
+ * 避免依赖模型 provider 的服务端联网搜索可观测性。
  */
 
 /** 单条搜索结果 */

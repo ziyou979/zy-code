@@ -9,18 +9,6 @@
  */
 import type { SearchProvider, SearchResult, SearchOptions } from './types.js'
 
-/** DuckDuckGo Lite 区域代码映射 */
-const REGION_MAP: Record<string, string> = {
-  'us-en': 'us-en',
-  'uk-en': 'uk-en',
-  'au-en': 'au-en',
-  'de-de': 'de-de',
-  'fr-fr': 'fr-fr',
-  'zh-cn': 'cn-zh',
-  'ja-jp': 'jp-jp',
-  'ko-kr': 'kr-kr',
-}
-
 export class DuckDuckGoProvider implements SearchProvider {
   readonly id = 'duckduckgo'
 
@@ -41,8 +29,7 @@ export class DuckDuckGoProvider implements SearchProvider {
 
     // 添加区域参数
     if (this.region) {
-      const ddgRegion = REGION_MAP[this.region] ?? this.region
-      url += `&kl=${ddgRegion}`
+      url += `&kl=${this.region}`
     }
 
     // 域过滤 — DuckDuckGo 不支持原生域过滤，但在查询中添加 site: 可以实现
@@ -50,7 +37,7 @@ export class DuckDuckGoProvider implements SearchProvider {
       const siteQueries = options.allowedDomains.map((d) => `site:${d}`)
       url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}+${siteQueries.join('+OR+')}`
       if (this.region) {
-        url += `&kl=${REGION_MAP[this.region] ?? this.region}`
+        url += `&kl=${this.region}`
       }
     }
 
@@ -85,101 +72,105 @@ function parseDuckDuckGoLiteHtml(
   blockedDomains?: string[],
 ): SearchResult[] {
   const results: SearchResult[] = []
+  const snippetTexts = extractSnippetTexts(html)
+  const resultLinkRegex = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi
 
-  // 匹配结果行中的链接和摘要
-  // DDG Lite 的结果结构：
-  // <a rel="nofollow" class="result-link" href="URL">Title</a>
-  // <td class="result-snippet">Snippet</td>
-  // <a class="result-url" href="URL">URL</a>
-
-  // 匹配结果条目 — 标题链接
-  const resultLinkRegex =
-    /<a[^>]*rel="nofollow"[^>]*class="result-link"[^>]*href="([^"]+)"[^>]*>([^<]*)/g
-  // 匹配摘要
-  const snippetRegex = /<td[^>]*class="result-snippet"[^>]*>([\s\S]*?)<\/td>/g
-  // 匹配实际 URL（DDG Lite 的 href 是 DDG 重定向链接，需要从后面的 result-url 获取真实 URL）
-  const urlRegex = /<a[^>]*class="result-url"[^>]*href="([^"]+)"/g
-
-  // 收集所有结果条目
-  const linkMatches = [...html.matchAll(resultLinkRegex)]
-  const snippetMatches = [...html.matchAll(snippetRegex)]
-  const urlMatches = [...html.matchAll(urlRegex)]
-
-  for (let i = 0; i < linkMatches.length && results.length < maxResults; i++) {
-    const title = decodeHTMLEntities(linkMatches[i]?.[2] ?? '').trim()
-    const ddgUrl = linkMatches[i]?.[1] ?? ''
-
-    // 从 DDG 重定向 URL 中提取真实 URL
-    // DDG Lite 的链接格式：/lite/?uddg=ENCODED_URL
-    let realUrl = ''
-    const uddgMatch = ddgUrl.match(/uddg=([^&"]+)/)
-    if (uddgMatch) {
-      try {
-        realUrl = decodeURIComponent(uddgMatch[1])
-      } catch {
-        realUrl = ddgUrl
-      }
-    } else {
-      // 尝试从 urlMatches 中获取
-      realUrl = urlMatches[i]?.[1] ?? ddgUrl
+  let linkMatch: RegExpExecArray | null
+  while ((linkMatch = resultLinkRegex.exec(html)) !== null && results.length < maxResults) {
+    const attributes = linkMatch[1] ?? ''
+    const className = extractHtmlAttribute(attributes, 'class')
+    if (!className.split(/\s+/).includes('result-link')) {
+      continue
     }
 
-    // 跳过广告
-    if (title.includes('Sponsored') || title.toLowerCase().includes('ad ')) continue
+    const title = decodeHTMLEntities(stripHtmlTags(linkMatch[2] ?? '')).trim()
+    const href = extractHtmlAttribute(attributes, 'href')
+    const url = extractDuckDuckGoTargetUrl(href)
 
-    // 跳过无效结果
-    if (!title || !realUrl) continue
-
-    // 检查域名阻止
-    if (blockedDomains && blockedDomains.length > 0) {
-      try {
-        const hostname = new URL(realUrl).hostname
-        if (blockedDomains.some((d) => hostname.includes(d))) continue
-      } catch {
-        // URL 解析失败，保留结果
-      }
+    if (isInvalidSearchResult(title, url, blockedDomains)) {
+      continue
     }
 
-    // 获取摘要
-    const snippet = snippetMatches[i]
-      ? decodeHTMLEntities(snippetMatches[i][1] ?? '')
-          .replace(/<[^>]*>/g, '')
-          .trim()
-      : ''
-
+    const snippet = snippetTexts[results.length] ?? ''
     results.push({
       title,
-      url: realUrl,
+      url,
       snippet: snippet || undefined,
     })
   }
 
-  // 如果正则匹配不到结果，尝试另一种解析方式（DDG Lite 的 HTML 结构可能变化）
-  if (results.length === 0) {
-    // 回退：使用更宽松的匹配
-    const fallbackRegex = /<a[^>]*href="[^"]*uddg=([^"&]+)"[^>]*>([^<]+)<\/a>/g
-    let match
-    while ((match = fallbackRegex.exec(html)) !== null && results.length < maxResults) {
-      try {
-        const url = decodeURIComponent(match[1])
-        const title = decodeHTMLEntities(match[2]).trim()
+  return results
+}
 
-        if (!title || !url || title.includes('Sponsored')) continue
+function extractSnippetTexts(html: string): string[] {
+  const snippetTexts: string[] = []
+  const tableCellRegex = /<td\b([^>]*)>([\s\S]*?)<\/td>/gi
 
-        // 检查域名阻止
-        if (blockedDomains && blockedDomains.length > 0) {
-          const hostname = new URL(url).hostname
-          if (blockedDomains.some((d) => hostname.includes(d))) continue
-        }
+  let tableCellMatch: RegExpExecArray | null
+  while ((tableCellMatch = tableCellRegex.exec(html)) !== null) {
+    const attributes = tableCellMatch[1] ?? ''
+    const className = extractHtmlAttribute(attributes, 'class')
+    if (!className.split(/\s+/).includes('result-snippet')) {
+      continue
+    }
 
-        results.push({ title, url })
-      } catch {
-        continue
-      }
+    snippetTexts.push(decodeHTMLEntities(stripHtmlTags(tableCellMatch[2] ?? '')).trim())
+  }
+
+  return snippetTexts
+}
+
+function extractHtmlAttribute(attributes: string, attributeName: string): string {
+  const attributeRegex = new RegExp(`${attributeName}\\s*=\\s*(["'])(.*?)\\1`, 'i')
+  const attributeMatch = attributes.match(attributeRegex)
+  return decodeHTMLEntities(attributeMatch?.[2] ?? '')
+}
+
+function extractDuckDuckGoTargetUrl(href: string): string {
+  if (!href) {
+    return ''
+  }
+
+  const decodedHref = decodeHTMLEntities(href)
+  const duckDuckGoTargetMatch = decodedHref.match(/[?&]uddg=([^&]+)/)
+  if (duckDuckGoTargetMatch) {
+    try {
+      return decodeURIComponent(duckDuckGoTargetMatch[1])
+    } catch {
+      return decodedHref
     }
   }
 
-  return results
+  if (decodedHref.startsWith('//')) {
+    return `https:${decodedHref}`
+  }
+
+  return decodedHref
+}
+
+function isInvalidSearchResult(
+  title: string,
+  url: string,
+  blockedDomains?: string[],
+): boolean {
+  if (!title || !url || title.includes('Sponsored') || title.toLowerCase().includes('ad ')) {
+    return true
+  }
+
+  if (!blockedDomains?.length) {
+    return false
+  }
+
+  try {
+    const hostname = new URL(url).hostname
+    return blockedDomains.some((blockedDomain) => hostname.includes(blockedDomain))
+  } catch {
+    return false
+  }
+}
+
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, '')
 }
 
 /** HTML 实体解码 */

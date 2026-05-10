@@ -19,7 +19,7 @@ import {
   finishChunk,
   chunksToStream,
 } from '../../_helpers/openaiStreamFixtures.js'
-import type { StreamEvent } from '../../../src/types/llm.js'
+import type { DashScopeSearchInfo, StreamEvent } from '../../../src/types/llm.js'
 
 async function collect(stream: AsyncIterable<StreamEvent>): Promise<StreamEvent[]> {
   const out: StreamEvent[] = []
@@ -260,5 +260,40 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     )
     const respDelta = events.find((e) => e.type === 'response_delta') as any
     expect(respDelta.usage.outputTokens).toBe(7)
+  })
+
+  test('DashScope search_info 透传到 chunk_stop 和 response_delta extras', async () => {
+    const searchInfo: DashScopeSearchInfo = {
+      search_results: [
+        {
+          title: '杭州天气',
+          url: 'https://example.com/weather',
+          content: '杭州明天天气示例',
+        },
+      ],
+    }
+    const searchInfoChunk = {
+      ...textChunk('hi', 'qwen-plus'),
+      search_info: searchInfo,
+    } as ReturnType<typeof textChunk> & { search_info: DashScopeSearchInfo }
+
+    const events = await collect(
+      mapOpenAIStreamToStandard(
+        chunksToStream([searchInfoChunk, finishChunk({ finishReason: 'stop', model: 'qwen-plus' })]),
+        'qwen-plus',
+      ),
+    )
+
+    const chunkStop = events.find(
+      (event): event is Extract<StreamEvent, { type: 'chunk_stop' }> =>
+        event.type === 'chunk_stop',
+    )
+    const responseDelta = events.find(
+      (event): event is Extract<StreamEvent, { type: 'response_delta' }> =>
+        event.type === 'response_delta',
+    )
+
+    expect(chunkStop?.extras?.searchInfo).toEqual(searchInfo)
+    expect(responseDelta?.extras?.searchInfo).toEqual(searchInfo)
   })
 })

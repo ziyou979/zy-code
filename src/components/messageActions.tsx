@@ -268,26 +268,26 @@ export function useMessageActions(
       // 意味着需要 3 次按键来中断（折叠→null→取消）。
       'messageActions:ctrlc': () => setCursor(null),
     }
-    for (const key of new Set(MESSAGE_ACTIONS.map((a_1) => a_1.key))) {
-      h[`messageActions:${key}`] = () => {
-        const c_0 = cursorRef.current
-        if (!c_0) return
-        const a_0 = MESSAGE_ACTIONS.find((a) => a.key === key && isApplicable(a, c_0))
-        if (!a_0) return
-        if (a_0.stays) {
-          setCursor((c_1) =>
-            c_1
+    for (const action of new Set(MESSAGE_ACTIONS.map((action) => action.key))) {
+      h[`messageActions:${action}`] = () => {
+        const currentCursor = cursorRef.current
+        if (!currentCursor) return
+        const matchedAction = MESSAGE_ACTIONS.find((a) => a.key === action && isApplicable(a, currentCursor))
+        if (!matchedAction) return
+        if (matchedAction.stays) {
+          setCursor((prevCursor) =>
+            prevCursor
               ? {
-                  ...c_1,
-                  expanded: !c_1.expanded,
+                  ...prevCursor,
+                  expanded: !prevCursor.expanded,
                 }
               : null,
           )
           return
         }
-        const m = navRef.current?.getSelected()
-        if (!m) return
-        ;(a_0.run as (m: NavigableMessage, c_0: MessageActionCaps) => void)(m, capsRef.current)
+        const selectedMessage = navRef.current?.getSelected()
+        if (!selectedMessage) return
+        ;(matchedAction.run as (m: NavigableMessage, c_0: MessageActionCaps) => void)(selectedMessage, capsRef.current)
         setCursor(null)
       }
     }
@@ -315,22 +315,20 @@ export function MessageActionsKeybindings({ handlers, isActive }) {
 // 仅 borderTop 的 Box 匹配 PromptInput 的 ─── 线，以保持稳定的页脚高度。
 export function MessageActionsBar({ cursor }) {
   const applicable = MESSAGE_ACTIONS.filter((a) => isApplicable(a, cursor))
-  const T1 = Box
-  const T0 = Box
-  const t3 = applicable.map((a_0, i) => {
-    const label = typeof a_0.label === 'function' ? a_0.label(cursor) : a_0.label
+  const actionItems = applicable.map((action, i) => {
+    const label = typeof action.label === 'function' ? action.label(cursor) : action.label
     return (
-      <React.Fragment key={a_0.key}>
+      <React.Fragment key={action.key}>
         {i > 0 && <Text dimColor={true}> · </Text>}
         <Text bold={true} dimColor={false}>
-          {a_0.key}
+          {action.key}
         </Text>
         <Text dimColor={true}> {label}</Text>
       </React.Fragment>
     )
   })
   return (
-    <T1 flexDirection={'column'} flexShrink={0} paddingY={1}>
+    <Box flexDirection={'column'} flexShrink={0} paddingY={1}>
       {
         <Box
           borderStyle="single"
@@ -342,8 +340,8 @@ export function MessageActionsBar({ cursor }) {
         />
       }
       {
-        <T0 paddingX={2} paddingY={1}>
-          {t3}
+        <Box paddingX={2} paddingY={1}>
+          {actionItems}
           {<Text dimColor={true}> · </Text>}
           {
             <Text bold={true} dimColor={false}>
@@ -358,20 +356,20 @@ export function MessageActionsBar({ cursor }) {
             </Text>
           }
           {<Text dimColor={true}> back</Text>}
-        </T0>
+        </Box>
       }
-    </T1>
+    </Box>
   )
 }
 export function stripSystemReminders(text: string): string {
   const CLOSE = '</system-reminder>'
-  let t = text.trimStart()
-  while (t.startsWith('<system-reminder>')) {
-    const end = t.indexOf(CLOSE)
+  let textWithoutReminders = text.trimStart()
+  while (textWithoutReminders.startsWith('<system-reminder>')) {
+    const end = textWithoutReminders.indexOf(CLOSE)
     if (end < 0) break
-    t = t.slice(end + CLOSE.length).trimStart()
+    textWithoutReminders = textWithoutReminders.slice(end + CLOSE.length).trimStart()
   }
-  return t
+  return textWithoutReminders
 }
 export function copyTextOf(msg: NavigableMessage): string {
   switch (msg.type) {

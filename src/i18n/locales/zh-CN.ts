@@ -758,6 +758,10 @@ export const zhCN: TranslationResource = {
   // "2 个本地 agent 个任务仍在运行" 的重复量词。
   'systemMessage.verbWithDuration': '{verb}，耗时 {duration}',
   'systemMessage.tasksStillRunning': '，{count} 仍在运行',
+  'systemMessage.hookSummary_one': '执行了 {count} 个 {label} 钩子函数',
+  'systemMessage.hookSummary_other': '执行了 {count} 个 {label} 钩子函数',
+  'systemMessage.hookError': '{label} 钩子函数错误：{error}',
+  'systemMessage.stopHookLabel': 'stop',
 
   // Attachment
   'attachment.completed': '后台已完成',
@@ -1355,6 +1359,13 @@ export const zhCN: TranslationResource = {
   // 网页获取工具消息
   'webFetch.fetching': '获取中…',
   'webFetch.received': '已接收',
+  'webFetch.domainBlocked': 'ZY Code 无法从 {domain} 获取内容',
+  'webFetch.domainCheckFailed': '无法验证域名 {domain} 是否安全可获取。这可能是由于网络限制或企业安全策略阻止了 zy.ai 的访问。',
+  'webFetch.egressBlocked': '网络出口代理阻止了对 {domain} 的访问。',
+  'webFetch.tooManyRedirects': '重定向次数过多（超过 {maxRedirects} 次）',
+  'webFetch.redirectMissingLocation': '重定向缺少 Location 头',
+  'webFetch.invalidUrl': '无效的 URL',
+  'webFetch.noResponseFromModel': '模型未返回响应',
 
   // 网页搜索工具消息
   'webSearch.searching': '搜索中：',

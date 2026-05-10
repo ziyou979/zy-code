@@ -56,6 +56,16 @@ export class OpenAIProviderAdapter implements LLMAdapter {
         (requestParams.messages as unknown[] | undefined)?.length ?? 0
       }`,
     )
+    logForDebugging(
+      `[OpenAI] Streaming request params summary: ${jsonStringify({
+        model: requestParams.model,
+        messagesCount: (requestParams.messages as unknown[] | undefined)?.length ?? 0,
+        toolsCount: (requestParams.tools as unknown[] | undefined)?.length ?? 0,
+        enable_search: requestParams.enable_search,
+        search_options: requestParams.search_options,
+        stream: true,
+      })}`,
+    )
 
     const stream = (await client.chat.completions.create(
       {
@@ -84,6 +94,16 @@ export class OpenAIProviderAdapter implements LLMAdapter {
       `[OpenAI] Non-streaming request: model=${params.model}, messages=${
         (requestParams.messages as unknown[] | undefined)?.length ?? 0
       }`,
+    )
+    logForDebugging(
+      `[OpenAI] Non-streaming request params summary: ${jsonStringify({
+        model: requestParams.model,
+        messagesCount: (requestParams.messages as unknown[] | undefined)?.length ?? 0,
+        toolsCount: (requestParams.tools as unknown[] | undefined)?.length ?? 0,
+        enable_search: requestParams.enable_search,
+        search_options: requestParams.search_options,
+        stream: false,
+      })}`,
     )
 
     const completion = await client.chat.completions.create(
