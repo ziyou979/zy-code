@@ -149,8 +149,8 @@ export function BackgroundTasksDialog({
   initialDetailTaskId,
 }: Props): React.ReactNode {
   const tasks = useAppState((s) => s.tasks)
-  const foregroundedTaskId = useAppState((s_0) => s_0.foregroundedTaskId)
-  const showSpinnerTree = useAppState((s_1) => s_1.expandedView) === 'teammates'
+  const foregroundedTaskId = useAppState((s) => s.foregroundedTaskId)
+  const showSpinnerTree = useAppState((s) => s.expandedView) === 'teammates'
   const setAppState = useSetAppState()
   const killAgentsShortcut = useShortcutDisplay('chat:killAgents', 'Chat', 'ctrl+x ctrl+k')
   const typedTasks = tasks as Record<string, TaskState> | undefined
@@ -193,13 +193,13 @@ export function BackgroundTasksDialog({
     teammateTasks,
     workflowTasks,
     mcpMonitors,
-    dreamTasks: dreamTasks_0,
+    dreamTasks: dreamTaskItems,
     allSelectableItems,
   } = useMemo(() => {
     // 过滤，仅显示运行中/等待中的后台任务，与状态栏计数保持一致
     const backgroundTasks = Object.values(typedTasks ?? {}).filter(isBackgroundTask)
-    const allItems_0 = backgroundTasks.map(toListItem)
-    const sorted = allItems_0.sort((a, b) => {
+    const allItems = backgroundTasks.map(toListItem)
+    const sorted = allItems.sort((a, b) => {
       const aStatus = a.status
       const bStatus = b.status
       if (aStatus === 'running' && bStatus !== 'running') return -1
@@ -209,18 +209,18 @@ export function BackgroundTasksDialog({
       return bTime - aTime
     })
     const bash = sorted.filter((item) => item.type === 'local_bash')
-    const remote = sorted.filter((item_0) => item_0.type === 'remote_agent')
+    const remote = sorted.filter((item) => item.type === 'remote_agent')
     // 排除已前置的任务——它正在主 UI 中查看，不是后台任务
     const agent = sorted.filter(
-      (item_1) => item_1.type === 'local_agent' && item_1.id !== foregroundedTaskId,
+      (item) => item.type === 'local_agent' && item.id !== foregroundedTaskId,
     )
-    const workflows = sorted.filter((item_2) => item_2.type === 'local_workflow')
-    const monitorMcp = sorted.filter((item_3) => item_3.type === 'monitor_mcp')
-    const dreamTasks = sorted.filter((item_4) => item_4.type === 'dream')
+    const workflows = sorted.filter((item) => item.type === 'local_workflow')
+    const monitorMcp = sorted.filter((item) => item.type === 'monitor_mcp')
+    const dreamTasks = sorted.filter((item) => item.type === 'dream')
     // 在 spinner-tree 模式下，从对话框中排除 teammate（它们出现在树中）
     const teammates = showSpinnerTree
       ? []
-      : sorted.filter((item_5) => item_5.type === 'in_process_teammate')
+      : sorted.filter((item) => item.type === 'in_process_teammate')
     // 当有 teammate 时添加 leader 条目，这样用户可以返回 foreground 到 leader
     const leaderItem: ListItem[] =
       teammates.length > 0
@@ -263,7 +263,7 @@ export function BackgroundTasksDialog({
     {
       'confirm:previous': () => setSelectedIndex((prev) => Math.max(0, prev - 1)),
       'confirm:next': () =>
-        setSelectedIndex((prev_0) => Math.min(allSelectableItems.length - 1, prev_0 + 1)),
+        setSelectedIndex((prev) => Math.min(allSelectableItems.length - 1, prev + 1)),
       'confirm:yes': () => {
         const current = allSelectableItems[selectedIndex]
         if (current) {
@@ -301,59 +301,59 @@ export function BackgroundTasksDialog({
     }
 
     // 计算按键时刻的当前选中项
-    const currentSelection_0 = allSelectableItems[selectedIndex]
-    if (!currentSelection_0) return // 以下内容都需要选中项
+    const currentSelection = allSelectableItems[selectedIndex]
+    if (!currentSelection) return // 以下内容都需要选中项
 
     if (e.key === 'x') {
       e.preventDefault()
-      if (currentSelection_0.type === 'local_bash' && currentSelection_0.status === 'running') {
-        void killShellTask(currentSelection_0.id)
+      if (currentSelection.type === 'local_bash' && currentSelection.status === 'running') {
+        void killShellTask(currentSelection.id)
       } else if (
-        currentSelection_0.type === 'local_agent' &&
-        currentSelection_0.status === 'running'
+        currentSelection.type === 'local_agent' &&
+        currentSelection.status === 'running'
       ) {
-        void killAgentTask(currentSelection_0.id)
+        void killAgentTask(currentSelection.id)
       } else if (
-        currentSelection_0.type === 'in_process_teammate' &&
-        currentSelection_0.status === 'running'
+        currentSelection.type === 'in_process_teammate' &&
+        currentSelection.status === 'running'
       ) {
-        void killTeammateTask(currentSelection_0.id)
+        void killTeammateTask(currentSelection.id)
       } else if (
-        currentSelection_0.type === 'local_workflow' &&
-        currentSelection_0.status === 'running' &&
+        currentSelection.type === 'local_workflow' &&
+        currentSelection.status === 'running' &&
         killWorkflowTask
       ) {
-        killWorkflowTask(currentSelection_0.id, setAppState)
+        killWorkflowTask(currentSelection.id, setAppState)
       } else if (
-        currentSelection_0.type === 'monitor_mcp' &&
-        currentSelection_0.status === 'running' &&
+        currentSelection.type === 'monitor_mcp' &&
+        currentSelection.status === 'running' &&
         killMonitorMcp
       ) {
-        killMonitorMcp(currentSelection_0.id, setAppState)
-      } else if (currentSelection_0.type === 'dream' && currentSelection_0.status === 'running') {
-        void killDreamTask(currentSelection_0.id)
+        killMonitorMcp(currentSelection.id, setAppState)
+      } else if (currentSelection.type === 'dream' && currentSelection.status === 'running') {
+        void killDreamTask(currentSelection.id)
       } else if (
-        currentSelection_0.type === 'remote_agent' &&
-        currentSelection_0.status === 'running'
+        currentSelection.type === 'remote_agent' &&
+        currentSelection.status === 'running'
       ) {
-        if (currentSelection_0.task.isUltraplan) {
-          void stopUltraplan(currentSelection_0.id, currentSelection_0.task.sessionId, setAppState)
+        if (currentSelection.task.isUltraplan) {
+          void stopUltraplan(currentSelection.id, currentSelection.task.sessionId, setAppState)
         } else {
-          void killRemoteAgentTask(currentSelection_0.id)
+          void killRemoteAgentTask(currentSelection.id)
         }
       }
     }
     if (e.key === 'f') {
       if (
-        currentSelection_0.type === 'in_process_teammate' &&
-        currentSelection_0.status === 'running'
+        currentSelection.type === 'in_process_teammate' &&
+        currentSelection.status === 'running'
       ) {
         e.preventDefault()
-        enterTeammateView(currentSelection_0.id, setAppState)
+        enterTeammateView(currentSelection.id, setAppState)
         onDone(tSync('backgroundTasks.dismissed'), {
           display: 'system',
         })
-      } else if (currentSelection_0.type === 'leader') {
+      } else if (currentSelection.type === 'leader') {
         e.preventDefault()
         exitTeammateView(setAppState)
         onDone(tSync('backgroundTasks.dismissed'), {
@@ -365,17 +365,17 @@ export function BackgroundTasksDialog({
   async function killShellTask(taskId: string): Promise<void> {
     await LocalShellTask.kill(taskId, setAppState)
   }
-  async function killAgentTask(taskId_0: string): Promise<void> {
-    await LocalAgentTask.kill(taskId_0, setAppState)
+  async function killAgentTask(taskId: string): Promise<void> {
+    await LocalAgentTask.kill(taskId, setAppState)
   }
-  async function killTeammateTask(taskId_1: string): Promise<void> {
-    await InProcessTeammateTask.kill(taskId_1, setAppState)
+  async function killTeammateTask(taskId: string): Promise<void> {
+    await InProcessTeammateTask.kill(taskId, setAppState)
   }
-  async function killDreamTask(taskId_2: string): Promise<void> {
-    await DreamTask.kill(taskId_2, setAppState)
+  async function killDreamTask(taskId: string): Promise<void> {
+    await DreamTask.kill(taskId, setAppState)
   }
-  async function killRemoteAgentTask(taskId_3: string): Promise<void> {
-    await RemoteAgentTask.kill(taskId_3, setAppState)
+  async function killRemoteAgentTask(taskId: string): Promise<void> {
+    await RemoteAgentTask.kill(taskId, setAppState)
   }
 
   // 用 useEffectEvent 包装 onDone，获得稳定引用，始终调用当前 onDone 回调，
@@ -424,132 +424,132 @@ export function BackgroundTasksDialog({
 
   // 如果选中了某项，显示相应的视图
   if (viewState.mode !== 'list' && typedTasks) {
-    const task_0 = typedTasks[viewState.itemId]
-    if (!task_0) {
+    const task = typedTasks[viewState.itemId]
+    if (!task) {
       return null
     }
 
     // 详情模式——显示相应的详情对话框
-    switch (task_0.type) {
+    switch (task.type) {
       case 'local_bash':
         return (
           <ShellDetailDialog
-            shell={task_0}
+            shell={task}
             onDone={onDone}
-            onKillShell={() => void killShellTask(task_0.id)}
+            onKillShell={() => void killShellTask(task.id)}
             onBack={goBackToList}
-            key={`shell-${task_0.id}`}
+            key={`shell-${task.id}`}
           />
         )
       case 'local_agent':
         return (
           <AsyncAgentDetailDialog
-            agent={task_0}
+            agent={task}
             onDone={onDone}
-            onKillAgent={() => void killAgentTask(task_0.id)}
+            onKillAgent={() => void killAgentTask(task.id)}
             onBack={goBackToList}
-            key={`agent-${task_0.id}`}
+            key={`agent-${task.id}`}
           />
         )
       case 'remote_agent':
         return (
           <RemoteSessionDetailDialog
-            session={task_0}
+            session={task}
             onDone={onDone}
             toolUseContext={toolUseContext}
             onBack={goBackToList}
             onKill={
-              task_0.status !== 'running'
+              task.status !== 'running'
                 ? undefined
-                : task_0.isUltraplan
-                  ? () => void stopUltraplan(task_0.id, task_0.sessionId, setAppState)
-                  : () => void killRemoteAgentTask(task_0.id)
+                : task.isUltraplan
+                  ? () => void stopUltraplan(task.id, task.sessionId, setAppState)
+                  : () => void killRemoteAgentTask(task.id)
             }
-            key={`session-${task_0.id}`}
+            key={`session-${task.id}`}
           />
         )
       case 'in_process_teammate':
         return (
           <InProcessTeammateDetailDialog
-            teammate={task_0}
+            teammate={task}
             onDone={onDone}
             onKill={
-              task_0.status === 'running' ? () => void killTeammateTask(task_0.id) : undefined
+              task.status === 'running' ? () => void killTeammateTask(task.id) : undefined
             }
             onBack={goBackToList}
             onForeground={
-              task_0.status === 'running'
+              task.status === 'running'
                 ? () => {
-                    enterTeammateView(task_0.id, setAppState)
+                    enterTeammateView(task.id, setAppState)
                     onDone(tSync('backgroundTasks.dismissed'), {
                       display: 'system',
                     })
                   }
                 : undefined
             }
-            key={`teammate-${task_0.id}`}
+            key={`teammate-${task.id}`}
           />
         )
       case 'local_workflow':
         if (!WorkflowDetailDialog) return null
         return (
           <WorkflowDetailDialog
-            workflow={task_0}
+            workflow={task}
             onDone={onDone}
             onKill={
-              task_0.status === 'running' && killWorkflowTask
-                ? () => killWorkflowTask(task_0.id, setAppState)
+              task.status === 'running' && killWorkflowTask
+                ? () => killWorkflowTask(task.id, setAppState)
                 : undefined
             }
             onSkipAgent={
-              task_0.status === 'running' && skipWorkflowAgent
-                ? () => skipWorkflowAgent(task_0.id, setAppState)
+              task.status === 'running' && skipWorkflowAgent
+                ? () => skipWorkflowAgent(task.id, setAppState)
                 : undefined
             }
             onRetryAgent={
-              task_0.status === 'running' && retryWorkflowAgent
-                ? () => retryWorkflowAgent(task_0.id, setAppState)
+              task.status === 'running' && retryWorkflowAgent
+                ? () => retryWorkflowAgent(task.id, setAppState)
                 : undefined
             }
             onBack={goBackToList}
-            key={`workflow-${task_0.id}`}
+            key={`workflow-${task.id}`}
           />
         )
       case 'monitor_mcp':
         if (!MonitorMcpDetailDialog) return null
         return (
           <MonitorMcpDetailDialog
-            task={task_0}
+            task={task}
             onKill={
-              task_0.status === 'running' && killMonitorMcp
-                ? () => killMonitorMcp(task_0.id, setAppState)
+              task.status === 'running' && killMonitorMcp
+                ? () => killMonitorMcp(task.id, setAppState)
                 : undefined
             }
             onBack={goBackToList}
-            key={`monitor-mcp-${task_0.id}`}
+            key={`monitor-mcp-${task.id}`}
           />
         )
       case 'dream':
         return (
           <DreamDetailDialog
-            task={task_0}
+            task={task}
             onDone={() =>
               onDone('Background tasks dialog dismissed', {
                 display: 'system',
               })
             }
             onBack={goBackToList}
-            onKill={task_0.status === 'running' ? () => void killDreamTask(task_0.id) : undefined}
-            key={`dream-${task_0.id}`}
+            onKill={task.status === 'running' ? () => void killDreamTask(task.id) : undefined}
+            key={`dream-${task.id}`}
           />
         )
     }
   }
   const runningBashCount = count(bashTasks, (_) => _.status === 'running')
   const runningAgentCount =
-    count(remoteSessions, (__0) => __0.status === 'running' || __0.status === 'pending') +
-    count(agentTasks, (__1) => __1.status === 'running')
-  const runningTeammateCount = count(teammateTasks, (__2) => __2.status === 'running')
+    count(remoteSessions, (session) => session.status === 'running' || session.status === 'pending') +
+    count(agentTasks, (agent) => agent.status === 'running')
+  const runningTeammateCount = count(teammateTasks, (teammate) => teammate.status === 'running')
   const subtitle = intersperse(
     [
       ...(runningTeammateCount > 0
@@ -699,11 +699,11 @@ export function BackgroundTasksDialog({
                   </Text>
                 )}
                 <Box flexDirection="column">
-                  {bashTasks.map((item_6) => (
+                  {bashTasks.map((item) => (
                     <Item
-                      key={item_6.id}
-                      item={item_6}
-                      isSelected={item_6.id === currentSelection?.id}
+                      key={item.id}
+                      item={item}
+                      isSelected={item.id === currentSelection?.id}
                     />
                   ))}
                 </Box>
@@ -723,11 +723,11 @@ export function BackgroundTasksDialog({
                   ({mcpMonitors.length})
                 </Text>
                 <Box flexDirection="column">
-                  {mcpMonitors.map((item_7) => (
+                  {mcpMonitors.map((item) => (
                     <Item
-                      key={item_7.id}
-                      item={item_7}
-                      isSelected={item_7.id === currentSelection?.id}
+                      key={item.id}
+                      item={item}
+                      isSelected={item.id === currentSelection?.id}
                     />
                   ))}
                 </Box>
@@ -749,11 +749,11 @@ export function BackgroundTasksDialog({
                   ({remoteSessions.length})
                 </Text>
                 <Box flexDirection="column">
-                  {remoteSessions.map((item_8) => (
+                  {remoteSessions.map((item) => (
                     <Item
-                      key={item_8.id}
-                      item={item_8}
-                      isSelected={item_8.id === currentSelection?.id}
+                      key={item.id}
+                      item={item}
+                      isSelected={item.id === currentSelection?.id}
                     />
                   ))}
                 </Box>
@@ -780,11 +780,11 @@ export function BackgroundTasksDialog({
                   ({agentTasks.length})
                 </Text>
                 <Box flexDirection="column">
-                  {agentTasks.map((item_9) => (
+                  {agentTasks.map((item) => (
                     <Item
-                      key={item_9.id}
-                      item={item_9}
-                      isSelected={item_9.id === currentSelection?.id}
+                      key={item.id}
+                      item={item}
+                      isSelected={item.id === currentSelection?.id}
                     />
                   ))}
                 </Box>
@@ -812,18 +812,18 @@ export function BackgroundTasksDialog({
                   ({workflowTasks.length})
                 </Text>
                 <Box flexDirection="column">
-                  {workflowTasks.map((item_10) => (
+                  {workflowTasks.map((item) => (
                     <Item
-                      key={item_10.id}
-                      item={item_10}
-                      isSelected={item_10.id === currentSelection?.id}
+                      key={item.id}
+                      item={item}
+                      isSelected={item.id === currentSelection?.id}
                     />
                   ))}
                 </Box>
               </Box>
             )}
 
-            {dreamTasks_0.length > 0 && (
+            {dreamTaskItems.length > 0 && (
               <Box
                 flexDirection="column"
                 marginTop={
@@ -838,11 +838,11 @@ export function BackgroundTasksDialog({
                 }
               >
                 <Box flexDirection="column">
-                  {dreamTasks_0.map((item_11) => (
+                  {dreamTaskItems.map((item) => (
                     <Item
-                      key={item_11.id}
-                      item={item_11}
-                      isSelected={item_11.id === currentSelection?.id}
+                      key={item.id}
+                      item={item}
+                      isSelected={item.id === currentSelection?.id}
                     />
                   ))}
                 </Box>
@@ -962,15 +962,15 @@ function TeammateTaskGroups({ teammateTasks, currentSelectionId }) {
               {'  '}
               {tSync('backgroundTasks.team')}: {teamName_0} ({memberCount})
             </Text>
-            {leaderItems.map((item_0) => (
+            {leaderItems.map((item) => (
               <Item
-                key={`${item_0.id}-${teamName_0}`}
-                item={item_0}
-                isSelected={item_0.id === currentSelectionId}
+                key={`${item.id}-${teamName_0}`}
+                item={item}
+                isSelected={item.id === currentSelectionId}
               />
             ))}
-            {items.map((item_1) => (
-              <Item key={item_1.id} item={item_1} isSelected={item_1.id === currentSelectionId} />
+            {items.map((item) => (
+              <Item key={item.id} item={item} isSelected={item.id === currentSelectionId} />
             ))}
           </Box>
         )

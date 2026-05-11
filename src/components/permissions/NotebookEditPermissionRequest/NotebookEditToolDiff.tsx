@@ -67,11 +67,11 @@ function NotebookEditToolDiffInner({
         oldSource = ''
       }
     } else {
-      const cell_0 = notebookData.cells.find((cell) => cell.id === cell_id)
-      if (!cell_0) {
+      const targetCell = notebookData.cells.find((cell) => cell.id === cell_id)
+      if (!targetCell) {
         oldSource = ''
       } else {
-        oldSource = Array.isArray(cell_0.source) ? cell_0.source.join('') : cell_0.source
+        oldSource = Array.isArray(targetCell.source) ? targetCell.source.join('') : targetCell.source
       }
     }
   }

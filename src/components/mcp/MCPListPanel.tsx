@@ -107,10 +107,10 @@ export function MCPListPanel({
   const regularServers = servers.filter((s) => s.client.config.type !== 'zyai-proxy')
   const serversByScope = groupServersByScope(regularServers)
   const zyAiServers = servers
-    .filter((s_0) => s_0.client.config.type === 'zyai-proxy')
+    .filter((s) => s.client.config.type === 'zyai-proxy')
     .sort((a, b) => a.name.localeCompare(b.name))
-  const dynamicServers = (serversByScope.get('dynamic') ?? []).sort((a_0, b_0) =>
-    a_0.name.localeCompare(b_0.name),
+  const dynamicServers = (serversByScope.get('dynamic') ?? []).sort((a, b) =>
+    a.name.localeCompare(b.name),
   )
   const dynamicHeading = getScopeHeading('dynamic')
   const items: SelectableItem[] = []
@@ -123,10 +123,10 @@ export function MCPListPanel({
       })
     }
   }
-  for (const server_0 of zyAiServers) {
+  for (const zyAiServer of zyAiServers) {
     items.push({
       type: 'server',
-      server: server_0,
+      server: zyAiServer,
     })
   }
   for (const agentServer of agentServers) {
@@ -135,10 +135,10 @@ export function MCPListPanel({
       agentServer,
     })
   }
-  for (const server_1 of dynamicServers) {
+  for (const dynamicServer of dynamicServers) {
     items.push({
       type: 'server',
-      server: server_1,
+      server: dynamicServer,
     })
   }
   const selectableItems = items
@@ -165,7 +165,7 @@ export function MCPListPanel({
       'confirm:previous': () =>
         setSelectedIndex((prev) => (prev === 0 ? selectableItems.length - 1 : prev - 1)),
       'confirm:next': () =>
-        setSelectedIndex((prev_0) => (prev_0 === selectableItems.length - 1 ? 0 : prev_0 + 1)),
+        setSelectedIndex((prev) => (prev === selectableItems.length - 1 ? 0 : prev + 1)),
       'confirm:yes': handleSelect,
       'confirm:no': handleCancel,
     },
@@ -173,33 +173,33 @@ export function MCPListPanel({
       context: 'Confirmation',
     },
   )
-  const getServerIndex = (server_2) =>
-    selectableItems.findIndex((item_0) => item_0.type === 'server' && item_0.server === server_2)
-  const getAgentServerIndex = (agentServer_0) =>
+  const getServerIndex = (targetServer) =>
+    selectableItems.findIndex((item) => item.type === 'server' && item.server === targetServer)
+  const getAgentServerIndex = (targetAgentServer) =>
     selectableItems.findIndex(
-      (item_1) => item_1.type === 'agent-server' && item_1.agentServer === agentServer_0,
+      (item) => item.type === 'agent-server' && item.agentServer === targetAgentServer,
     )
   const debugMode = isDebugMode()
-  const hasFailedClients = servers.some((s_1) => s_1.client.type === 'failed')
+  const hasFailedClients = servers.some((s) => s.client.type === 'failed')
   if (servers.length === 0 && agentServers.length === 0) {
     return null
   }
-  const renderServerItem = (server_3) => {
-    const index = getServerIndex(server_3)
+  const renderServerItem = (server) => {
+    const index = getServerIndex(server)
     const isSelected = selectedIndex === index
     let statusIcon
     let statusText
-    if (server_3.client.type === 'disabled') {
+    if (server.client.type === 'disabled') {
       statusIcon = color('inactive', theme)(figures.radioOff)
       statusText = tSync('mcp.disabled')
     } else {
-      if (server_3.client.type === 'connected') {
+      if (server.client.type === 'connected') {
         statusIcon = color('success', theme)(figures.tick)
         statusText = tSync('mcp.connected')
       } else {
-        if (server_3.client.type === 'pending') {
+        if (server.client.type === 'pending') {
           statusIcon = color('inactive', theme)(figures.radioOff)
-          const { reconnectAttempt, maxReconnectAttempts } = server_3.client
+          const { reconnectAttempt, maxReconnectAttempts } = server.client
           if (reconnectAttempt && maxReconnectAttempts) {
             statusText = tSync('mcp.reconnectingWithProgress', {
               current: reconnectAttempt,
@@ -209,7 +209,7 @@ export function MCPListPanel({
             statusText = tSync('mcp.connecting')
           }
         } else {
-          if (server_3.client.type === 'needs-auth') {
+          if (server.client.type === 'needs-auth') {
             statusIcon = color('warning', theme)(figures.triangleUpOutline)
             statusText = tSync('mcp.needsAuthentication')
           } else {
@@ -220,49 +220,49 @@ export function MCPListPanel({
       }
     }
     return (
-      <Box key={`${server_3.name}-${index}`}>
+      <Box key={`${server.name}-${index}`}>
         <Text color={isSelected ? 'suggestion' : undefined}>
           {isSelected ? `${figures.pointer} ` : '  '}
         </Text>
-        <Text color={isSelected ? 'suggestion' : undefined}>{server_3.name}</Text>
+        <Text color={isSelected ? 'suggestion' : undefined}>{server.name}</Text>
         <Text dimColor={!isSelected}> · {statusIcon} </Text>
         <Text dimColor={!isSelected}>{statusText}</Text>
       </Box>
     )
   }
-  const renderAgentServerItem = (agentServer_1) => {
-    const index_0 = getAgentServerIndex(agentServer_1)
-    const isSelected_0 = selectedIndex === index_0
-    const statusIcon_0 = agentServer_1.needsAuth
+  const renderAgentServerItem = (agentServer) => {
+    const index = getAgentServerIndex(agentServer)
+    const isSelected = selectedIndex === index
+    const statusIcon = agentServer.needsAuth
       ? color('warning', theme)(figures.triangleUpOutline)
       : color('inactive', theme)(figures.radioOff)
-    const statusText_0 = agentServer_1.needsAuth ? tSync('mcp.mayNeedAuth') : tSync('mcp.agentOnly')
+    const statusText = agentServer.needsAuth ? tSync('mcp.mayNeedAuth') : tSync('mcp.agentOnly')
     return (
-      <Box key={`agent-${agentServer_1.name}-${index_0}`}>
-        <Text color={isSelected_0 ? 'suggestion' : undefined}>
-          {isSelected_0 ? `${figures.pointer} ` : '  '}
+      <Box key={`agent-${agentServer.name}-${index}`}>
+        <Text color={isSelected ? 'suggestion' : undefined}>
+          {isSelected ? `${figures.pointer} ` : '  '}
         </Text>
-        <Text color={isSelected_0 ? 'suggestion' : undefined}>{agentServer_1.name}</Text>
-        <Text dimColor={!isSelected_0}> · {statusIcon_0} </Text>
-        <Text dimColor={!isSelected_0}>{statusText_0}</Text>
+        <Text color={isSelected ? 'suggestion' : undefined}>{agentServer.name}</Text>
+        <Text dimColor={!isSelected}> · {statusIcon} </Text>
+        <Text dimColor={!isSelected}>{statusText}</Text>
       </Box>
     )
   }
   const totalServers = servers.length + agentServers.length
   const serverCountLabel = plural(totalServers, 'server')
-  const scopeSections = SCOPE_ORDER.map((scope_0) => {
-    const scopeServers_0 = serversByScope.get(scope_0)
-    if (!scopeServers_0 || scopeServers_0.length === 0) {
+  const scopeSections = SCOPE_ORDER.map((scope) => {
+    const scopeServers = serversByScope.get(scope)
+    if (!scopeServers || scopeServers.length === 0) {
       return null
     }
-    const heading = getScopeHeading(scope_0)
+    const heading = getScopeHeading(scope)
     return (
-      <Box key={scope_0} flexDirection="column" marginBottom={1}>
+      <Box key={scope} flexDirection="column" marginBottom={1}>
         <Box paddingLeft={2}>
           <Text bold={true}>{heading.label}</Text>
           {heading.path && <Text dimColor={true}> ({heading.path})</Text>}
         </Box>
-        {scopeServers_0.map((server_4) => renderServerItem(server_4))}
+        {scopeServers.map((server) => renderServerItem(server))}
       </Box>
     )
   })
@@ -284,7 +284,7 @@ export function MCPListPanel({
                   <Box paddingLeft={2}>
                     <Text bold={true}>zy.ai</Text>
                   </Box>
-                  {zyAiServers.map((server_5) => renderServerItem(server_5))}
+                  {zyAiServers.map((server) => renderServerItem(server))}
                 </Box>
               )}
               {agentServers.length > 0 && (
@@ -292,15 +292,15 @@ export function MCPListPanel({
                   <Box paddingLeft={2}>
                     <Text bold={true}>{tSync('mcp.agentMCPs')}</Text>
                   </Box>
-                  {[...new Set(agentServers.flatMap((s_2) => s_2.sourceAgents))].map(
+                  {[...new Set(agentServers.flatMap((s) => s.sourceAgents))].map(
                     (agentName) => (
                       <Box key={agentName} flexDirection="column" marginTop={1}>
                         <Box paddingLeft={2}>
                           <Text dimColor={true}>@{agentName}</Text>
                         </Box>
                         {agentServers
-                          .filter((s_3) => s_3.sourceAgents.includes(agentName))
-                          .map((agentServer_2) => renderAgentServerItem(agentServer_2))}
+                          .filter((s) => s.sourceAgents.includes(agentName))
+                          .map((agentServer) => renderAgentServerItem(agentServer))}
                       </Box>
                     ),
                   )}
@@ -312,7 +312,7 @@ export function MCPListPanel({
                     <Text bold={true}>{dynamicHeading.label}</Text>
                     {dynamicHeading.path && <Text dimColor={true}> ({dynamicHeading.path})</Text>}
                   </Box>
-                  {dynamicServers.map((server_6) => renderServerItem(server_6))}
+                  {dynamicServers.map((server) => renderServerItem(server))}
                 </Box>
               )}
               {

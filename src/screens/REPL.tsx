@@ -729,7 +729,7 @@ function AnimatedTerminalTitle({ isAnimating, title, disabled, noPrefix }) {
       return
     }
     const interval = setInterval(
-      (setFrame_0) => setFrame_0((f) => (f + 1) % TITLE_ANIMATION_FRAMES.length),
+      (frameSetter) => frameSetter((f) => (f + 1) % TITLE_ANIMATION_FRAMES.length),
       TITLE_ANIMATION_INTERVAL_MS,
       setFrame,
     )

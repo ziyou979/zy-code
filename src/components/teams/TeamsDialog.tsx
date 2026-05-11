@@ -452,9 +452,9 @@ function TeammateDetailView({ teammate, teamName, onCancel }: TeammateDetailView
           {teammateTasks.length > 0 && (
             <Box flexDirection="column">
               <Text bold={true}>Tasks</Text>
-              {teammateTasks.map((task_0) => (
-                <Text key={task_0.id} color={task_0.status === 'completed' ? 'success' : undefined}>
-                  {task_0.status === 'completed' ? figures.tick : '\u25FC'} {task_0.subject}
+              {teammateTasks.map((task) => (
+                <Text key={task.id} color={task.status === 'completed' ? 'success' : undefined}>
+                  {task.status === 'completed' ? figures.tick : '\u25FC'} {task.subject}
                 </Text>
               ))}
             </Box>

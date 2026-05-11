@@ -264,13 +264,13 @@ function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAge
   const { lookups: agentLookups, inProgressToolUseIDs } = buildSubagentLookups(
     progressMessages
       .filter((pm): pm is ProgressMessage<AgentToolProgress> => hasProgressMessage(pm.data))
-      .map((pm_0) => pm_0.data),
+      .map((pm) => pm.data),
   )
-  const filteredMessages = progressMessages.filter((pm_1) => {
-    if (!hasProgressMessage(pm_1.data)) {
+  const filteredMessages = progressMessages.filter((pm) => {
+    if (!hasProgressMessage(pm.data)) {
       return false
     }
-    const msg = pm_1.data.message
+    const msg = pm.data.message
     if (msg.type === 'user' && msg.toolUseResult === undefined) {
       return false
     }

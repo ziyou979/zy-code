@@ -27,7 +27,7 @@ type Props = {
 }
 export function MCPSettings({ onComplete }: Props) {
   const mcp = useAppState((s) => s.mcp)
-  const agentDefinitions = useAppState((s_0) => s_0.agentDefinitions)
+  const agentDefinitions = useAppState((s) => s.agentDefinitions)
   const mcpClients = mcp.clients
   const [viewState, setViewState] = React.useState<{
     type: string
@@ -47,28 +47,28 @@ export function MCPSettings({ onComplete }: Props) {
     let cancelled = false
     const prepareServers = async function prepareServers() {
       const serverInfos = await Promise.all(
-        filteredClients.map(async (client_0) => {
-          const scope = client_0.config.scope
-          const isSSE = client_0.config.type === 'sse'
-          const isHTTP = client_0.config.type === 'http'
-          const isZyAIProxy = client_0.config.type === 'zyai-proxy'
+        filteredClients.map(async (client) => {
+          const scope = client.config.scope
+          const isSSE = client.config.type === 'sse'
+          const isHTTP = client.config.type === 'http'
+          const isZyAIProxy = client.config.type === 'zyai-proxy'
           let isAuthenticated = undefined
           if (isSSE || isHTTP) {
             const authProvider = new ZyAuthProvider(
-              client_0.name,
-              client_0.config as McpSSEServerConfig | McpHTTPServerConfig,
+              client.name,
+              client.config as McpSSEServerConfig | McpHTTPServerConfig,
             )
             const tokens = await authProvider.tokens()
             const hasSessionAuth =
-              getSessionIngressAuthToken() !== null && client_0.type === 'connected'
+              getSessionIngressAuthToken() !== null && client.type === 'connected'
             const hasToolsAndConnected =
-              client_0.type === 'connected' &&
-              filterToolsByServer(mcp.tools, client_0.name).length > 0
+              client.type === 'connected' &&
+              filterToolsByServer(mcp.tools, client.name).length > 0
             isAuthenticated = Boolean(tokens) || hasSessionAuth || hasToolsAndConnected
           }
           const baseInfo = {
-            name: client_0.name,
-            client: client_0,
+            name: client.name,
+            client: client,
             scope,
           }
           if (isZyAIProxy) {
@@ -76,7 +76,7 @@ export function MCPSettings({ onComplete }: Props) {
               ...baseInfo,
               transport: 'zyai-proxy' as const,
               isAuthenticated: false,
-              config: client_0.config as McpZyAIProxyServerConfig,
+              config: client.config as McpZyAIProxyServerConfig,
             }
           } else {
             if (isSSE) {
@@ -84,7 +84,7 @@ export function MCPSettings({ onComplete }: Props) {
                 ...baseInfo,
                 transport: 'sse' as const,
                 isAuthenticated,
-                config: client_0.config as McpSSEServerConfig,
+                config: client.config as McpSSEServerConfig,
               }
             } else {
               if (isHTTP) {
@@ -92,13 +92,13 @@ export function MCPSettings({ onComplete }: Props) {
                   ...baseInfo,
                   transport: 'http' as const,
                   isAuthenticated,
-                  config: client_0.config as McpHTTPServerConfig,
+                  config: client.config as McpHTTPServerConfig,
                 }
               } else {
                 return {
                   ...baseInfo,
                   transport: 'stdio' as const,
-                  config: client_0.config as McpStdioServerConfig,
+                  config: client.config as McpStdioServerConfig,
                 }
               }
             }
@@ -152,7 +152,7 @@ export function MCPSettings({ onComplete }: Props) {
     case 'server-menu': {
       let serverToolsFiltered
       serverToolsFiltered = filterToolsByServer(mcp.tools, (viewState as any).server.name)
-      const serverTools_0 = serverToolsFiltered
+      const serverTools = serverToolsFiltered
       const defaultTab = (viewState as any).server.transport === 'zyai-proxy' ? 'zy.ai' : 'ZY Code'
       if ((viewState as any).server.transport === 'stdio') {
         let handleViewTools
@@ -171,7 +171,7 @@ export function MCPSettings({ onComplete }: Props) {
         stdioMenu = (
           <MCPStdioServerMenu
             server={(viewState as any).server}
-            serverToolsCount={serverTools_0.length}
+            serverToolsCount={serverTools.length}
             onViewTools={handleViewTools}
             onCancel={handleCancel}
             onComplete={onComplete}
@@ -195,7 +195,7 @@ export function MCPSettings({ onComplete }: Props) {
         remoteMenu = (
           <MCPRemoteServerMenu
             server={(viewState as any).server}
-            serverToolsCount={serverTools_0.length}
+            serverToolsCount={serverTools.length}
             onViewTools={handleViewTools}
             onCancel={handleCancel}
             onComplete={onComplete}

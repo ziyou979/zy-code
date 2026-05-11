@@ -139,7 +139,7 @@ export function Doctor({ onDone }: Props) {
         ...result,
       }
     })
-    .filter((v_0) => v_0.status !== 'valid')
+    .filter((result) => result.status !== 'valid')
   useEffect(() => {
     getDoctorDiagnostic().then(setDiagnostic)
     ;(async () => {
@@ -231,8 +231,8 @@ export function Doctor({ onDone }: Props) {
       {versionLockInfo.locks.length === 0 ? (
         <Text dimColor={true}>└ {tSync('doctor.noActiveLocks')}</Text>
       ) : (
-        versionLockInfo.locks.map((lock, i_2) => (
-          <Text key={i_2}>
+        versionLockInfo.locks.map((lock, index) => (
+          <Text key={index}>
             └ {lock.version}: PID {lock.pid}{' '}
             {lock.isProcessRunning ? (
               <Text>（{tSync('doctor.running')}）</Text>

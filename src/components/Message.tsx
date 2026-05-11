@@ -148,14 +148,14 @@ function MessageImpl({
       }
       const isLatestBashOutput = latestBashOutputUUID === message.uuid
       const userWidth = containerWidth ?? '100%'
-      let userContent = message.message.content.map((param_0, index) => (
+      let userContent = message.message.content.map((contentBlock, index) => (
         <UserMessage
           key={index}
           message={message as any}
           addMargin={addMargin}
           tools={tools}
           progressMessagesForMessage={progressMessagesForMessage}
-          param={param_0 as any}
+          param={contentBlock as any}
           style={style}
           verbose={verbose}
           imageIndex={imageIndices[index] as any}

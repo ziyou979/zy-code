@@ -323,8 +323,8 @@ function PluginComponentsDisplay({
           for (const agentPath of agentPathList) {
             if (typeof agentPath === 'string') {
               // agentPath is already a full path
-              const baseNames_0 = await getBaseFileNames(agentPath)
-              agentList.push(...baseNames_0)
+              const baseNames = await getBaseFileNames(agentPath)
+              agentList.push(...baseNames)
             }
           }
 
@@ -506,6 +506,49 @@ export function filterManagedDisabledPlugins(plugins: LoadedPlugin[]): LoadedPlu
     return !isPluginBlockedByPolicy(`${plugin.name}@${marketplace}`)
   })
 }
+
+/** 根据 MCP 客户端连接构建 UI 层的 ServerInfo */
+function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
+  const configScope = mcpClient.config.scope
+  const configType = mcpClient.config.type
+  if (configType === 'stdio') {
+    return {
+      name: mcpClient.name,
+      client: mcpClient,
+      scope: configScope,
+      transport: 'stdio',
+      config: mcpClient.config as McpStdioServerConfig,
+    } as any
+  } else if (configType === 'sse') {
+    return {
+      name: mcpClient.name,
+      client: mcpClient,
+      scope: configScope,
+      transport: 'sse',
+      isAuthenticated: undefined,
+      config: mcpClient.config as McpSSEServerConfig,
+    } as any
+  } else if (configType === 'http') {
+    return {
+      name: mcpClient.name,
+      client: mcpClient,
+      scope: configScope,
+      transport: 'http',
+      isAuthenticated: undefined,
+      config: mcpClient.config as McpHTTPServerConfig,
+    } as any
+  } else {
+    return {
+      name: mcpClient.name,
+      client: mcpClient,
+      scope: configScope,
+      transport: 'zyai-proxy',
+      isAuthenticated: undefined,
+      config: mcpClient.config as McpZyAIProxyServerConfig,
+    } as any
+  }
+}
+
 export function ManagePlugins({
   setViewState: setParentViewState,
   setResult,
@@ -898,14 +941,14 @@ export function ManagePlugins({
       }
 
       // Sort plugin groups by the plugin name (first item in each group)
-      pluginGroups.sort((a_0, b_0) => a_0[0]!.name.localeCompare(b_0[0]!.name))
+      pluginGroups.sort((a, b) => a[0]!.name.localeCompare(b[0]!.name))
 
       // Sort standalone MCPs by name
-      standaloneMcpsInScope.sort((a_1, b_1) => a_1.name.localeCompare(b_1.name))
+      standaloneMcpsInScope.sort((a, b) => a.name.localeCompare(b.name))
 
       // Build final list: plugins (with their children) first, then standalone MCPs
-      for (const group_0 of pluginGroups) {
-        unified.push(...group_0)
+      for (const group of pluginGroups) {
+        unified.push(...group)
       }
       unified.push(...standaloneMcpsInScope)
     }
@@ -1212,11 +1255,11 @@ export function ManagePlugins({
             })
             return
           }
-          const result_0 = await uninstallPluginOp(selectedPluginId, pluginScope)
-          if (!result_0.success) {
-            throw new Error(result_0.message)
+          const uninstallResult = await uninstallPluginOp(selectedPluginId, pluginScope)
+          if (!uninstallResult.success) {
+            throw new Error(uninstallResult.message)
           }
-          reverseDependents = result_0.reverseDependents
+          reverseDependents = uninstallResult.reverseDependents
           break
         }
         case 'update': {
@@ -1285,11 +1328,11 @@ export function ManagePlugins({
       setParentViewState({
         type: 'menu',
       })
-    } catch (error_0) {
+    } catch (error) {
       setIsProcessing(false)
-      const errorMessage = error_0 instanceof Error ? error_0.message : String(error_0)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       setProcessError(`Failed to ${operation}: ${errorMessage}`)
-      logError(toError(error_0))
+      logError(toError(error))
     }
   }
 
@@ -1311,99 +1354,99 @@ export function ManagePlugins({
   // Handle toggle enable/disable
   const handleToggle = React.useCallback(() => {
     if (selectedIndex >= filteredItems.length) return
-    const item_7 = filteredItems[selectedIndex]
-    if (item_7?.type === 'flagged-plugin') return
-    if (item_7?.type === 'plugin') {
-      const pluginId_4 = `${item_7.plugin.name}@${item_7.marketplace}`
-      const mergedSettings_0 = getSettings_DEPRECATED()
-      const currentPending = pendingToggles.get(pluginId_4)
-      const isEnabled_0 = mergedSettings_0?.enabledPlugins?.[pluginId_4] !== false
-      const pluginScope_0 = item_7.scope
-      const isBuiltin_0 = pluginScope_0 === 'builtin'
-      if (isBuiltin_0 || isInstallableScope(pluginScope_0)) {
+    const selectedItem = filteredItems[selectedIndex]
+    if (selectedItem?.type === 'flagged-plugin') return
+    if (selectedItem?.type === 'plugin') {
+      const pluginId = `${selectedItem.plugin.name}@${selectedItem.marketplace}`
+      const mergedSettings = getSettings_DEPRECATED()
+      const currentPending = pendingToggles.get(pluginId)
+      const isEnabled = mergedSettings?.enabledPlugins?.[pluginId] !== false
+      const pluginScope = selectedItem.scope
+      const isBuiltin = pluginScope === 'builtin'
+      if (isBuiltin || isInstallableScope(pluginScope)) {
         const newPending = new Map(pendingToggles)
         // Omit scope — see handleSingleOperation's enable/disable comment.
         if (currentPending) {
           // Cancel: reverse the operation back to the original state
-          newPending.delete(pluginId_4)
+          newPending.delete(pluginId)
           void (async () => {
             try {
               if (currentPending === 'will-disable') {
-                await enablePluginOp(pluginId_4)
+                await enablePluginOp(pluginId)
               } else {
-                await disablePluginOp(pluginId_4)
+                await disablePluginOp(pluginId)
               }
               clearAllCaches()
-            } catch (err_0) {
-              logError(err_0)
+            } catch (err) {
+              logError(err)
             }
           })()
         } else {
-          newPending.set(pluginId_4, isEnabled_0 ? 'will-disable' : 'will-enable')
+          newPending.set(pluginId, isEnabled ? 'will-disable' : 'will-enable')
           void (async () => {
             try {
-              if (isEnabled_0) {
-                await disablePluginOp(pluginId_4)
+              if (isEnabled) {
+                await disablePluginOp(pluginId)
               } else {
-                await enablePluginOp(pluginId_4)
+                await enablePluginOp(pluginId)
               }
               clearAllCaches()
-            } catch (err_1) {
-              logError(err_1)
+            } catch (err) {
+              logError(err)
             }
           })()
         }
         setPendingToggles(newPending)
       }
-    } else if (item_7?.type === 'mcp') {
-      void toggleMcpServer(item_7.client.name)
+    } else if (selectedItem?.type === 'mcp') {
+      void toggleMcpServer(selectedItem.client.name)
     }
   }, [selectedIndex, filteredItems, pendingToggles, pluginStates, toggleMcpServer])
 
   // Handle accept (Enter) in plugin-list
   const handleAccept = React.useCallback(() => {
     if (selectedIndex >= filteredItems.length) return
-    const item_8 = filteredItems[selectedIndex]
-    if (item_8?.type === 'plugin') {
-      const state_0 = pluginStates.find(
-        (s_4) => s_4.plugin.name === item_8.plugin.name && s_4.marketplace === item_8.marketplace,
+    const selectedItem = filteredItems[selectedIndex]
+    if (selectedItem?.type === 'plugin') {
+      const pluginState = pluginStates.find(
+        (s) => s.plugin.name === selectedItem.plugin.name && s.marketplace === selectedItem.marketplace,
       )
-      if (state_0) {
-        setSelectedPlugin(state_0)
+      if (pluginState) {
+        setSelectedPlugin(pluginState)
         setViewState('plugin-details')
         setDetailsMenuIndex(0)
         setProcessError(null)
       }
-    } else if (item_8?.type === 'flagged-plugin') {
+    } else if (selectedItem?.type === 'flagged-plugin') {
       setViewState({
         type: 'flagged-detail',
         plugin: {
-          id: item_8.id,
-          name: item_8.name,
-          marketplace: item_8.marketplace,
-          reason: item_8.reason,
-          text: item_8.text,
-          flaggedAt: item_8.flaggedAt,
+          id: selectedItem.id,
+          name: selectedItem.name,
+          marketplace: selectedItem.marketplace,
+          reason: selectedItem.reason,
+          text: selectedItem.text,
+          flaggedAt: selectedItem.flaggedAt,
         },
       })
       setProcessError(null)
-    } else if (item_8?.type === 'failed-plugin') {
+    } else if (selectedItem?.type === 'failed-plugin') {
       setViewState({
         type: 'failed-plugin-details',
         plugin: {
-          id: item_8.id,
-          name: item_8.name,
-          marketplace: item_8.marketplace,
-          errors: item_8.errors,
-          scope: item_8.scope,
+          id: selectedItem.id,
+          name: selectedItem.name,
+          marketplace: selectedItem.marketplace,
+          errors: selectedItem.errors,
+          scope: selectedItem.scope,
         },
       })
       setDetailsMenuIndex(0)
       setProcessError(null)
-    } else if (item_8?.type === 'mcp') {
+    } else if (selectedItem?.type === 'mcp') {
       setViewState({
         type: 'mcp-detail',
-        client: item_8.client,
+        client: selectedItem.client,
       })
       setProcessError(null)
     }
@@ -1460,21 +1503,21 @@ export function ManagePlugins({
   // Build details menu items (needed for navigation)
   const detailsMenuItems = React.useMemo(() => {
     if (viewState !== 'plugin-details' || !selectedPlugin) return []
-    const mergedSettings_1 = getSettings_DEPRECATED()
-    const pluginId_5 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
-    const isEnabled_1 = mergedSettings_1?.enabledPlugins?.[pluginId_5] !== false
-    const isBuiltin_1 = selectedPlugin.marketplace === 'builtin'
+    const mergedSettings = getSettings_DEPRECATED()
+    const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+    const isEnabled = mergedSettings?.enabledPlugins?.[pluginId] !== false
+    const isBuiltin = selectedPlugin.marketplace === 'builtin'
     const menuItems: Array<{
       label: string
       action: () => void
     }> = []
     menuItems.push({
-      label: isEnabled_1 ? 'Disable plugin' : 'Enable plugin',
-      action: () => void handleSingleOperation(isEnabled_1 ? 'disable' : 'enable'),
+      label: isEnabled ? 'Disable plugin' : 'Enable plugin',
+      action: () => void handleSingleOperation(isEnabled ? 'disable' : 'enable'),
     })
 
     // Update/Uninstall options — not available for built-in plugins
-    if (!isBuiltin_1) {
+    if (!isBuiltin) {
       menuItems.push({
         label: selectedPlugin.pendingUpdate ? 'Unmark for update' : 'Mark for update',
         action: async () => {
@@ -1489,9 +1532,9 @@ export function ManagePlugins({
             }
             const newStates = [...pluginStates]
             const index = newStates.findIndex(
-              (s_5) =>
-                s_5.plugin.name === selectedPlugin.plugin.name &&
-                s_5.marketplace === selectedPlugin.marketplace,
+              (s) =>
+                s.plugin.name === selectedPlugin.plugin.name &&
+                s.marketplace === selectedPlugin.marketplace,
             )
             if (index !== -1) {
               newStates[index]!.pendingUpdate = !selectedPlugin.pendingUpdate
@@ -1501,10 +1544,10 @@ export function ManagePlugins({
                 pendingUpdate: !selectedPlugin.pendingUpdate,
               })
             }
-          } catch (error_1) {
+          } catch (error) {
             setProcessError(
-              error_1 instanceof Error
-                ? error_1.message
+              error instanceof Error
+                ? error.message
                 : 'Failed to check plugin update availability',
             )
           }
@@ -1516,14 +1559,14 @@ export function ManagePlugins({
           action: async () => {
             setIsLoadingConfig(true)
             try {
-              const mcpServersSpec_0 = selectedPlugin.plugin.manifest.mcpServers
+              const mcpServersSpec = selectedPlugin.plugin.manifest.mcpServers
               let mcpbPath: string | null = null
-              if (typeof mcpServersSpec_0 === 'string' && isMcpbSource(mcpServersSpec_0)) {
-                mcpbPath = mcpServersSpec_0
-              } else if (Array.isArray(mcpServersSpec_0)) {
-                for (const spec_0 of mcpServersSpec_0) {
-                  if (typeof spec_0 === 'string' && isMcpbSource(spec_0)) {
-                    mcpbPath = spec_0
+              if (typeof mcpServersSpec === 'string' && isMcpbSource(mcpServersSpec)) {
+                mcpbPath = mcpServersSpec
+              } else if (Array.isArray(mcpServersSpec)) {
+                for (const spec of mcpServersSpec) {
+                  if (typeof spec === 'string' && isMcpbSource(spec)) {
+                    mcpbPath = spec
                     break
                   }
                 }
@@ -1533,23 +1576,23 @@ export function ManagePlugins({
                 setIsLoadingConfig(false)
                 return
               }
-              const pluginId_6 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
-              const result_1 = await loadMcpbFile(
+              const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+              const configResult = await loadMcpbFile(
                 mcpbPath,
                 selectedPlugin.plugin.path,
-                pluginId_6,
+                pluginId,
                 undefined,
                 undefined,
                 true,
               )
-              if ('status' in result_1 && result_1.status === 'needs-config') {
-                setConfigNeeded(result_1)
+              if ('status' in configResult && configResult.status === 'needs-config') {
+                setConfigNeeded(configResult)
                 setViewState('configuring')
               } else {
                 setProcessError('Failed to load MCPB for configuration')
               }
-            } catch (err_2) {
-              const errorMsg = errorMessage(err_2)
+            } catch (err) {
+              const errorMsg = errorMessage(err)
               setProcessError(`Failed to load configuration: ${errorMsg}`)
             } finally {
               setIsLoadingConfig(false)
@@ -1639,8 +1682,8 @@ export function ManagePlugins({
           void (async () => {
             setIsProcessing(true)
             setProcessError(null)
-            const pluginId_7 = viewState.plugin.id
-            const pluginScope_1 = viewState.plugin.scope
+            const pluginId = viewState.plugin.id
+            const pluginScope = viewState.plugin.scope
             // Pass scope to uninstallPluginOp so it can find the correct V2
             // installation record and clean up on-disk files. Fall back to
             // default scope if not installable (e.g. 'managed', though that
@@ -1648,10 +1691,10 @@ export function ManagePlugins({
             // is a recovery path for a plugin that failed to load — it may
             // be reinstallable, so don't nuke ${CLAUDE_PLUGIN_DATA} silently.
             // The normal uninstall path prompts; this one preserves.
-            const result_2 = isInstallableScope(pluginScope_1)
-              ? await uninstallPluginOp(pluginId_7, pluginScope_1, false)
-              : await uninstallPluginOp(pluginId_7, 'user', false)
-            let success = result_2.success
+            const uninstallResult = isInstallableScope(pluginScope)
+              ? await uninstallPluginOp(pluginId, pluginScope, false)
+              : await uninstallPluginOp(pluginId, 'user', false)
+            let success = uninstallResult.success
             if (!success) {
               // Plugin was never installed (only in enabledPlugins settings).
               // Remove directly from all editable settings sources.
@@ -1662,11 +1705,11 @@ export function ManagePlugins({
               ]
               for (const source of editableSources) {
                 const settings = getSettingsForSource(source)
-                if (settings?.enabledPlugins?.[pluginId_7] !== undefined) {
+                if (settings?.enabledPlugins?.[pluginId] !== undefined) {
                   updateSettingsForSource(source, {
                     enabledPlugins: {
                       ...settings.enabledPlugins,
-                      [pluginId_7]: undefined,
+                      [pluginId]: undefined,
                     },
                   })
                   success = true
@@ -1684,7 +1727,7 @@ export function ManagePlugins({
               setViewState('plugin-list')
             } else {
               setIsProcessing(false)
-              setProcessError(result_2.message)
+              setProcessError(uninstallResult.message)
             }
           })()
         }
@@ -1706,19 +1749,19 @@ export function ManagePlugins({
         if (!selectedPlugin) return
         setIsProcessing(true)
         setProcessError(null)
-        const pluginId_8 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+        const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
         // Write `false` directly — disablePluginOp's cross-scope guard would
         // reject this (plugin isn't in localSettings yet; the override IS the
         // point).
-        const { error: error_2 } = updateSettingsForSource('localSettings', {
+        const { error: settingsError } = updateSettingsForSource('localSettings', {
           enabledPlugins: {
             ...getSettingsForSource('localSettings')?.enabledPlugins,
-            [pluginId_8]: false,
+            [pluginId]: false,
           },
         })
-        if (error_2) {
+        if (settingsError) {
           setIsProcessing(false)
-          setProcessError(`Failed to write settings: ${error_2.message}`)
+          setProcessError(`Failed to write settings: ${settingsError.message}`)
           return
         }
         clearAllCaches()
@@ -1752,28 +1795,28 @@ export function ManagePlugins({
   useInput(
     (input, key) => {
       if (!selectedPlugin) return
-      const pluginId_9 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
-      const pluginScope_2 = selectedPlugin.scope
+      const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+      const pluginScope = selectedPlugin.scope
       // Dialog is only reachable from the uninstall case (which guards on
       // isBuiltin), but TS can't track that across viewState transitions.
-      if (!pluginScope_2 || pluginScope_2 === 'builtin' || !isInstallableScope(pluginScope_2))
+      if (!pluginScope || pluginScope === 'builtin' || !isInstallableScope(pluginScope))
         return
       const doUninstall = async (deleteDataDir: boolean) => {
         setIsProcessing(true)
         setProcessError(null)
         try {
-          const result_3 = await uninstallPluginOp(pluginId_9, pluginScope_2, deleteDataDir)
-          if (!result_3.success) throw new Error(result_3.message)
+          const uninstallResult = await uninstallPluginOp(pluginId, pluginScope, deleteDataDir)
+          if (!uninstallResult.success) throw new Error(uninstallResult.message)
           clearAllCaches()
           const suffix = deleteDataDir ? '' : ' · data preserved'
-          setResult(`${figures.tick} ${result_3.message}${suffix}`)
+          setResult(`${figures.tick} ${uninstallResult.message}${suffix}`)
           if (onManageComplete) void onManageComplete()
           setParentViewState({
             type: 'menu',
           })
-        } catch (e_0) {
+        } catch (error) {
           setIsProcessing(false)
-          setProcessError(e_0 instanceof Error ? e_0.message : String(e_0))
+          setProcessError(error instanceof Error ? error.message : String(error))
         }
       }
       if (input === 'y' || input === 'Y') {
@@ -1802,28 +1845,28 @@ export function ManagePlugins({
   // Handle input for entering search mode (text input handled by useSearchInput hook)
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input
   useInput(
-    (input_0, key_0) => {
-      const keyIsNotCtrlOrMeta = !key_0.ctrl && !key_0.meta
+    (input, key) => {
+      const keyIsNotCtrlOrMeta = !key.ctrl && !key.meta
       if (isSearchMode) {
         // Text input is handled by useSearchInput hook
         return
       }
 
       // Enter search mode with '/' or any printable character (except navigation keys)
-      if (input_0 === '/' && keyIsNotCtrlOrMeta) {
+      if (input === '/' && keyIsNotCtrlOrMeta) {
         setIsSearchMode(true)
         setSearchQuery('')
         setSelectedIndex(0)
       } else if (
         keyIsNotCtrlOrMeta &&
-        input_0.length > 0 &&
-        !/^\s+$/.test(input_0) &&
-        input_0 !== 'j' &&
-        input_0 !== 'k' &&
-        input_0 !== ' '
+        input.length > 0 &&
+        !/^\s+$/.test(input) &&
+        input !== 'j' &&
+        input !== 'k' &&
+        input !== ' '
       ) {
         setIsSearchMode(true)
-        setSearchQuery(input_0)
+        setSearchQuery(input)
         setSelectedIndex(0)
       }
     },
@@ -1852,7 +1895,7 @@ export function ManagePlugins({
     )
   }
   if (typeof viewState === 'object' && viewState.type === 'plugin-options' && selectedPlugin) {
-    const pluginId_10 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+    const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
     function finish(msg: string): void {
       setResult(msg)
       // Plugin is enabled regardless of whether config was saved or
@@ -1868,7 +1911,7 @@ export function ManagePlugins({
     return (
       <PluginOptionsFlow
         plugin={selectedPlugin.plugin}
-        pluginId={pluginId_10}
+        pluginId={pluginId}
         onDone={(outcome, detail) => {
           switch (outcome) {
             case 'configured':
@@ -1890,20 +1933,20 @@ export function ManagePlugins({
 
   // Configure options (from the Manage menu)
   if (typeof viewState === 'object' && viewState.type === 'configuring-options' && selectedPlugin) {
-    const pluginId_11 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+    const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
     return (
       <PluginOptionsDialog
         title={`Configure ${selectedPlugin.plugin.name}`}
         subtitle="Plugin options"
         configSchema={viewState.schema}
-        initialValues={loadPluginOptions(pluginId_11)}
+        initialValues={loadPluginOptions(pluginId)}
         onSave={(values) => {
           try {
-            savePluginOptions(pluginId_11, values, viewState.schema)
+            savePluginOptions(pluginId, values, viewState.schema)
             clearAllCaches()
             setResult('Configuration saved. Run /reload-plugins for changes to take effect.')
-          } catch (err_3) {
-            setProcessError(`Failed to save configuration: ${errorMessage(err_3)}`)
+          } catch (err) {
+            setProcessError(`Failed to save configuration: ${errorMessage(err)}`)
           }
           setViewState('plugin-details')
         }}
@@ -2408,62 +2451,22 @@ export function ManagePlugins({
 
   // MCP tools view
   if (typeof viewState === 'object' && viewState.type === 'mcp-tools') {
-    const client_4 = viewState.client
-    const scope_6 = client_4.config.scope
-    const configType_0 = client_4.config.type
-
-    // Build ServerInfo for MCPToolListView
-    let server_3: ServerInfo
-    if (configType_0 === 'stdio') {
-      server_3 = {
-        name: client_4.name,
-        client: client_4,
-        scope: scope_6,
-        transport: 'stdio',
-        config: client_4.config as McpStdioServerConfig,
-      } as any
-    } else if (configType_0 === 'sse') {
-      server_3 = {
-        name: client_4.name,
-        client: client_4,
-        scope: scope_6,
-        transport: 'sse',
-        isAuthenticated: undefined,
-        config: client_4.config as McpSSEServerConfig,
-      } as any
-    } else if (configType_0 === 'http') {
-      server_3 = {
-        name: client_4.name,
-        client: client_4,
-        scope: scope_6,
-        transport: 'http',
-        isAuthenticated: undefined,
-        config: client_4.config as McpHTTPServerConfig,
-      } as any
-    } else {
-      server_3 = {
-        name: client_4.name,
-        client: client_4,
-        scope: scope_6,
-        transport: 'zyai-proxy',
-        isAuthenticated: undefined,
-        config: client_4.config as McpZyAIProxyServerConfig,
-      } as any
-    }
+    const mcpClient = viewState.client
+    const serverInfo = buildServerInfoFromClient(mcpClient)
     return (
       <MCPToolListView
-        server={server_3}
+        server={serverInfo}
         onSelectTool={(tool: Tool) => {
           setViewState({
             type: 'mcp-tool-detail',
-            client: client_4,
+            client: mcpClient,
             tool,
           })
         }}
         onBack={() =>
           setViewState({
             type: 'mcp-detail',
-            client: client_4,
+            client: mcpClient,
           })
         }
       />
@@ -2472,56 +2475,16 @@ export function ManagePlugins({
 
   // MCP tool detail view
   if (typeof viewState === 'object' && viewState.type === 'mcp-tool-detail') {
-    const { client: client_5, tool: tool_0 } = viewState
-    const scope_7 = client_5.config.scope
-    const configType_1 = client_5.config.type
-
-    // Build ServerInfo for MCPToolDetailView
-    let server_4: ServerInfo
-    if (configType_1 === 'stdio') {
-      server_4 = {
-        name: client_5.name,
-        client: client_5,
-        scope: scope_7,
-        transport: 'stdio',
-        config: client_5.config as McpStdioServerConfig,
-      } as any
-    } else if (configType_1 === 'sse') {
-      server_4 = {
-        name: client_5.name,
-        client: client_5,
-        scope: scope_7,
-        transport: 'sse',
-        isAuthenticated: undefined,
-        config: client_5.config as McpSSEServerConfig,
-      } as any
-    } else if (configType_1 === 'http') {
-      server_4 = {
-        name: client_5.name,
-        client: client_5,
-        scope: scope_7,
-        transport: 'http',
-        isAuthenticated: undefined,
-        config: client_5.config as McpHTTPServerConfig,
-      } as any
-    } else {
-      server_4 = {
-        name: client_5.name,
-        client: client_5,
-        scope: scope_7,
-        transport: 'zyai-proxy',
-        isAuthenticated: undefined,
-        config: client_5.config as McpZyAIProxyServerConfig,
-      } as any
-    }
+    const { client: mcpClient, tool: selectedTool } = viewState
+    const serverInfo = buildServerInfoFromClient(mcpClient)
     return (
       <MCPToolDetailView
-        tool={tool_0}
-        server={server_4}
+        tool={selectedTool}
+        server={serverInfo}
         onBack={() =>
           setViewState({
             type: 'mcp-tools',
-            client: client_5,
+            client: mcpClient,
           })
         }
       />

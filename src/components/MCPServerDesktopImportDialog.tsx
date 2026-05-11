@@ -21,8 +21,8 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
   const [existingServers, setExistingServers] = useState({})
   useEffect(() => {
     getAllMcpConfigs().then((existingConfigs) => {
-      const { servers: servers_0 } = existingConfigs
-      return setExistingServers(servers_0)
+      const { servers: existingServerConfigs } = existingConfigs
+      return setExistingServers(existingServerConfigs)
     })
   }, [])
   const collisions = serverNames.filter((name) => existingServers[name] !== undefined)
@@ -47,10 +47,10 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
   }
   const [theme] = useTheme()
   let done
-  done = (importedCount_0) => {
-    if (importedCount_0 > 0) {
+  done = (importedCount) => {
+    if (importedCount > 0) {
       writeToStdout(
-        `\n${color('success', theme)(tSync('mcp.importSuccess', { count: importedCount_0, unit: tSync(importedCount_0 === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other'), scope }))}\n`,
+        `\n${color('success', theme)(tSync('mcp.importSuccess', { count: importedCount, unit: tSync(importedCount === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other'), scope }))}\n`,
       )
     } else {
       writeToStdout(tSync('mcp.importNoneImported'))
@@ -66,7 +66,7 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
     label: `${server}${collisions.includes(server) ? tSync('mcp.importAlreadyExists') : ''}`,
     value: server,
   }))
-  const defaultSelectedServers = serverNames.filter((name_0) => !collisions.includes(name_0))
+  const defaultSelectedServers = serverNames.filter((name) => !collisions.includes(name))
   return (
     <>
       {

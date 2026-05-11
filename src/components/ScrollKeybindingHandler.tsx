@@ -402,8 +402,8 @@ export function ScrollKeybindingHandler({
     })
   }
   function copyAndToast(): void {
-    const text_0 = selection.copySelection()
-    if (text_0) showCopiedToast(text_0)
+    const text = selection.copySelection()
+    if (text) showCopiedToast(text)
   }
 
   // 转换选区以跟踪键盘页面跳转。选区坐标是
@@ -579,13 +579,13 @@ export function ScrollKeybindingHandler({
   // abandoned (❯ oscillation). See team memory scroll-copy-mode-design.md.
   useInput(
     (input, key, event) => {
-      const s_10 = scrollRef.current
-      if (!s_10) return
-      const sticky_5 = applyModalPagerAction(s_10, modalPagerAction(input, key), (d_5) =>
-        translateSelectionForJump(s_10, d_5),
+      const scrollState = scrollRef.current
+      if (!scrollState) return
+      const stickyResult = applyModalPagerAction(scrollState, modalPagerAction(input, key), (direction) =>
+        translateSelectionForJump(scrollState, direction),
       )
-      if (sticky_5 === null) return
-      onScroll?.(sticky_5, s_10)
+      if (stickyResult === null) return
+      onScroll?.(stickyResult, scrollState)
       event.stopImmediatePropagation()
     },
     {
@@ -603,25 +603,25 @@ export function ScrollKeybindingHandler({
   // selection:copy 快捷键（ctrl+shift+c / cmd+c）通过 useKeybindings
   // 在上方注册并在到达此处之前消费其事件。
   useInput(
-    (input_0, key_0, event_0) => {
+    (input, key, event) => {
       if (!selection.hasSelection()) return
-      if (key_0.escape) {
+      if (key.escape) {
         selection.clearSelection()
-        event_0.stopImmediatePropagation()
+        event.stopImmediatePropagation()
         return
       }
-      if (key_0.ctrl && !key_0.shift && !key_0.meta && input_0 === 'c') {
+      if (key.ctrl && !key.shift && !key.meta && input === 'c') {
         copyAndToast()
-        event_0.stopImmediatePropagation()
+        event.stopImmediatePropagation()
         return
       }
-      const move = selectionFocusMoveForKey(key_0)
+      const move = selectionFocusMoveForKey(key)
       if (move) {
         selection.moveFocus(move)
-        event_0.stopImmediatePropagation()
+        event.stopImmediatePropagation()
         return
       }
-      if (shouldClearSelectionOnKey(key_0)) {
+      if (shouldClearSelectionOnKey(key)) {
         selection.clearSelection()
       }
     },
@@ -727,28 +727,28 @@ function useDragToScroll(
         // 向下滚动：内容在视口中向上移动，所以 anchor 行 -N。
         // 钳位到实际滚动距离，使 anchor 在接近底部边界时保持同步
         //（渲染器在排放时将 scrollTop 钳位为 max）。
-        const actual_0 = Math.min(AUTOSCROLL_LINES, max - s.getScrollTop())
+        const actualScroll = Math.min(AUTOSCROLL_LINES, max - s.getScrollTop())
         // 捕获即将滚出顶部的行。
-        selection.captureScrolledRows(top, top + actual_0 - 1, 'above')
-        selection.shiftAnchor(-actual_0, top, bottom)
+        selection.captureScrolledRows(top, top + actualScroll - 1, 'above')
+        selection.shiftAnchor(-actualScroll, top, bottom)
         s.scrollBy(AUTOSCROLL_LINES)
       }
       onScrollRef.current?.(false, s)
     }
-    function start(dir_0: -1 | 1): void {
+    function start(dir: -1 | 1): void {
       // 在提前返回之前记录：check() 中的空累加器重置
       // 可能在预穿越阶段将此清零（累加器在 anchor 行进入捕获范围之前为空）。
       // 每次调用都重新记录，这样损坏可以立即修复。
-      lastScrolledDirRef.current = dir_0
-      if (dirRef.current === dir_0) return // already going this way
+      lastScrolledDirRef.current = dir
+      if (dirRef.current === dir) return // already going this way
       stop()
-      dirRef.current = dir_0
+      dirRef.current = dir
       ticksRef.current = 0
       tick()
       // tick() may have hit a scroll boundary and called stop() (dir reset to
       // 0). Only start the interval if we're still going — otherwise the
       // interval would run forever with dir === 0 doing nothing useful.
-      if (dirRef.current === dir_0) {
+      if (dirRef.current === dir) {
         timerRef.current = setInterval(tick, AUTOSCROLL_INTERVAL_MS)
       }
     }
@@ -760,14 +760,14 @@ function useDragToScroll(
     // 视图继续滚动，高亮随文本向上移动）。保持 sticky 也避免了
     // useVirtualScroll 的尾部遍历 → 向前遍历幻影增长。
     function check(): void {
-      const s_0 = scrollRef.current
-      if (!s_0) {
+      const scrollState = scrollRef.current
+      if (!scrollState) {
         stop()
         return
       }
-      const top_0 = s_0.getViewportTop()
-      const bottom_0 = top_0 + s_0.getViewportHeight() - 1
-      const sel_0 = selection.getState()
+      const top = scrollState.getViewportTop()
+      const bottom = top + scrollState.getViewportHeight() - 1
+      const sel = selection.getState()
       // 传递最后滚动方向（而非 dirRef），这样在 shiftAnchor 将 anchor
       // 钳位到第 0 行后绕过锚守卫。使用 lastScrolledDirRef（在 stop() 后仍然存活）
       // 使鼠标短暂进入视口后自动滚动可以恢复。仅同方向——鼠标
@@ -779,29 +779,29 @@ function useDragToScroll(
       // 安全：下方的 start() 在提前返回之前重新记录 lastScrolledDirRef，
       // 所以此处的中途重置会立即撤销。
       if (
-        !sel_0?.isDragging ||
-        (sel_0.scrolledOffAbove.length === 0 && sel_0.scrolledOffBelow.length === 0)
+        !sel?.isDragging ||
+        (sel.scrolledOffAbove.length === 0 && sel.scrolledOffBelow.length === 0)
       ) {
         lastScrolledDirRef.current = 0
       }
-      const dir_1 = dragScrollDirection(sel_0, top_0, bottom_0, lastScrolledDirRef.current)
-      if (dir_1 === 0) {
+      const scrollDir = dragScrollDirection(sel, top, bottom, lastScrolledDirRef.current)
+      if (scrollDir === 0) {
         // 被阻止的反转：焦点跳到对面边缘（窗外拖拽返回、快速轻扫）。
         // handleSelectionDrag 已将焦点移过锚点，翻转了 selectionBounds——
         // 累加器现在孤立了（持有错误一侧的行）。清除它使
         // getSelectedText 匹配可见高亮。
-        if (lastScrolledDirRef.current !== 0 && sel_0?.focus) {
-          const want = sel_0.focus.row < top_0 ? -1 : sel_0.focus.row > bottom_0 ? 1 : 0
+        if (lastScrolledDirRef.current !== 0 && sel?.focus) {
+          const want = sel.focus.row < top ? -1 : sel.focus.row > bottom ? 1 : 0
           if (want !== 0 && want !== lastScrolledDirRef.current) {
-            sel_0.scrolledOffAbove = []
-            sel_0.scrolledOffBelow = []
-            sel_0.scrolledOffAboveSW = []
-            sel_0.scrolledOffBelowSW = []
+            sel.scrolledOffAbove = []
+            sel.scrolledOffBelow = []
+            sel.scrolledOffAboveSW = []
+            sel.scrolledOffBelowSW = []
             lastScrolledDirRef.current = 0
           }
         }
         stop()
-      } else start(dir_1)
+      } else start(scrollDir)
     }
     const unsubscribe = selection.subscribe(check)
     return () => {

@@ -495,7 +495,7 @@ const MessagesImpl = ({
   const syntheticStreamingToolUseMessages = useMemo(
     () =>
       streamingToolUsesWithoutInProgress.flatMap((streamingToolUse) => {
-        const msg_1 = createAssistantMessage({
+        const syntheticMessage = createAssistantMessage({
           content: [streamingToolUse.contentBlock],
         })
         // 使用从 content block ID 派生的确定性值覆盖 randomUUID，
@@ -503,8 +503,8 @@ const MessagesImpl = ({
         // 与 normalizeMessages 中修复的同类 bug（commit 383326e613）：
         // 新的 randomUUID → 不稳定的 React key → 组件重新挂载 →
         // Ink 渲染损坏（来自过时 DOM 节点的重叠文本）。
-        msg_1.uuid = deriveUUID(streamingToolUse.contentBlock.id as UUID, 0)
-        return normalizeMessages([msg_1])
+        syntheticMessage.uuid = deriveUUID(streamingToolUse.contentBlock.id as UUID, 0)
+        return normalizeMessages([syntheticMessage])
       }),
     [streamingToolUsesWithoutInProgress],
   )

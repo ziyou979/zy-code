@@ -344,9 +344,9 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     })
     const lowerQuery = query.toLowerCase()
     for (const ruleKey of sortedRuleKeys) {
-      const rule_2 = rulesByKey.get(ruleKey)
-      if (rule_2) {
-        const ruleString = permissionRuleValueToString(rule_2.ruleValue)
+      const rule = rulesByKey.get(ruleKey)
+      if (rule) {
+        const ruleString = permissionRuleValueToString(rule.ruleValue)
         if (query && !ruleString.toLowerCase().includes(lowerQuery)) {
           continue
         }
@@ -408,16 +408,16 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       }
     }
   }
-  const handleToolSelect = (selectedValue, tab_0) => {
+  const handleToolSelect = (selectedValue, tab) => {
     const {
-      rulesByKey: rulesByKey_0,
+      rulesByKey,
       // @ts-ignore
-    } = getRulesOptions(tab_0)
+    } = getRulesOptions(tab)
     if (selectedValue === 'add-new-rule') {
-      setAddingRuleToTab(tab_0)
+      setAddingRuleToTab(tab)
       return
     } else {
-      setSelectedRule(rulesByKey_0.get(selectedValue))
+      setSelectedRule(rulesByKey.get(selectedValue))
       return
     }
   }
@@ -433,17 +433,17 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   }
   const handleAddRulesSuccess = (rules, unreachable) => {
     setValidatedRule(null)
-    for (const rule_3 of rules) {
+    for (const rule of rules) {
       setChanges((prev) => [
         ...prev,
-        `Added ${rule_3.ruleBehavior} rule ${chalk.bold(permissionRuleValueToString(rule_3.ruleValue))}`,
+        `Added ${rule.ruleBehavior} rule ${chalk.bold(permissionRuleValueToString(rule.ruleValue))}`,
       ])
     }
     if (unreachable && unreachable.length > 0) {
       for (const u of unreachable) {
         const severity = u.shadowType === 'deny' ? 'blocked' : 'shadowed'
-        setChanges((prev_0) => [
-          ...prev_0,
+        setChanges((prev) => [
+          ...prev,
           chalk.yellow(
             `${figures.warning} Warning: ${permissionRuleValueToString(u.rule.ruleValue)} is ${severity}`,
           ),
@@ -459,14 +459,14 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleRequestAddDirectory = () => setIsAddingWorkspaceDirectory(true)
   const handleRequestRemoveDirectory = (path) => setRemovingDirectory(path)
   const handleRulesCancel = () => {
-    const s_1 = denialStateRef.current
+    const denialState = denialStateRef.current
     const denialsFor = (set) =>
       Array.from(set)
-        .map((idx) => s_1.denials[idx as any])
+        .map((idx) => denialState.denials[idx as any])
         .filter((d) => d !== undefined)
-    const retryDenials = denialsFor(s_1.retry)
+    const retryDenials = denialsFor(denialState.retry)
     if (retryDenials.length > 0) {
-      const commands = retryDenials.map((d_0) => d_0.display)
+      const commands = retryDenials.map((denial) => denial.display)
       onRetryDenials?.(commands)
       onExit(undefined, {
         shouldQuery: true,
@@ -476,11 +476,11 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       })
       return
     }
-    const approvedDenials = denialsFor(s_1.approved)
+    const approvedDenials = denialsFor(denialState.approved)
     if (approvedDenials.length > 0 || changes.length > 0) {
       const approvedMsg =
         approvedDenials.length > 0
-          ? [`Approved ${approvedDenials.map((d_1) => chalk.bold(d_1.display)).join(', ')}`]
+          ? [`Approved ${approvedDenials.map((denial) => chalk.bold(denial.display)).join(', ')}`]
           : []
       onExit([...approvedMsg, ...changes].join('\n'))
     } else {
