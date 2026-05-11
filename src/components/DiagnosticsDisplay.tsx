@@ -24,7 +24,7 @@ export function DiagnosticsDisplay({ attachment, verbose }: DiagnosticsDisplayPr
   const totalIssues = attachment.files.reduce((sum, file) => sum + file.diagnostics.length, 0)
   const fileCount = attachment.files.length
   if (verbose) {
-    const t2 = attachment.files.map((file_0, fileIndex) => (
+    const diagnosticFileElements = attachment.files.map((file_0, fileIndex) => (
       <React.Fragment key={fileIndex}>
         <MessageResponse>
           <Text dimColor={true} wrap="wrap">
@@ -58,7 +58,7 @@ export function DiagnosticsDisplay({ attachment, verbose }: DiagnosticsDisplayPr
         ))}
       </React.Fragment>
     ))
-    return <Box flexDirection="column">{t2}</Box>
+    return <Box flexDirection="column">{diagnosticFileElements}</Box>
   } else {
     return (
       <MessageResponse>

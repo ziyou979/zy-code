@@ -19,7 +19,7 @@ import { isModelAllowed } from '../../utils/model/modelAllowlist.js'
 import { validateModel } from '../../utils/model/validateModel.js'
 function ModelPickerWrapper({ onDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
-  const mainLoopModelForSession = useAppState((s_0) => s_0.mainLoopModelForSession)
+  const mainLoopModelForSession = useAppState((state) => state.mainLoopModelForSession)
   const setAppState = useSetAppState()
   const handleCancel = function handleCancel() {
     logEvent('zy_model_command_menu', {

@@ -20,13 +20,13 @@ type Props = {
   hideInTranscript?: boolean
 }
 export function AssistantThinkingMessage({
-  param: t1,
+  param: thinkingBlock,
   addMargin = false,
   isTranscriptMode,
   verbose,
   hideInTranscript = false,
 }: Props) {
-  const { thinking } = t1
+  const { thinking } = thinkingBlock
   if (!thinking) {
     return null
   }

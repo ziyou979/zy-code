@@ -46,9 +46,9 @@ export function FileWritePermissionRequest(props) {
   const parseInput = (input) => FileWriteTool.inputSchema.parse(input)
   const parsed = parseInput(props.toolUseConfirm.input)
   const { file_path, content } = parsed
-  let t1
+  let fileInfo
   try {
-    t1 = {
+    fileInfo = {
       fileExists: true,
       oldContent: readFileSync(file_path),
     }
@@ -60,9 +60,9 @@ export function FileWritePermissionRequest(props) {
       fileExists: false,
       oldContent: '',
     }
-    t1 = config
+    fileInfo = config
   }
-  const { fileExists, oldContent } = t1
+  const { fileExists, oldContent } = fileInfo
   const actionText = fileExists
     ? tSync('permission.overwriteAction')
     : tSync('permission.createAction')

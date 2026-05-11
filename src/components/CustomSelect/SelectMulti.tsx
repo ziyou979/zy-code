@@ -98,8 +98,6 @@ export function SelectMulti({
     hideIndexes,
   })
   const maxIndexWidth = options.length.toString().length
-  const T0 = Box
-  const T1 = Box
   const visibleOptionElements = state.visibleOptions.map((option, index) => {
     const isOptionFocused =
       !isDisabled && state.focusedValue === option.value && !state.isSubmitFocused
@@ -125,7 +123,7 @@ export function SelectMulti({
             onInputChange={(value) => {
               state.updateInputValue(option.value, value)
             }}
-            onSubmit={_temp}
+            onSubmit={noop}
             onExit={() => {
               onCancel()
             }}
@@ -161,8 +159,8 @@ export function SelectMulti({
     )
   })
   return (
-    <T1 flexDirection={'column'}>
-      {<T0 flexDirection={'column'}>{visibleOptionElements}</T0>}
+    <Box flexDirection={'column'}>
+      {<Box flexDirection={'column'}>{visibleOptionElements}</Box>}
       {submitButtonText && onSubmit && (
         <Box marginTop={0} gap={1}>
           {state.isSubmitFocused ? (
@@ -177,7 +175,7 @@ export function SelectMulti({
           </Box>
         </Box>
       )}
-    </T1>
+    </Box>
   )
 }
-function _temp() {}
+function noop() {}

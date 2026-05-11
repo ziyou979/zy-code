@@ -86,8 +86,8 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
   const nonBuiltIn = sortedAgents.filter((a) => a.source !== 'built-in')
   if (source === 'all') {
     selectableAgentsInOrder = AGENT_SOURCE_GROUPS.filter((g) => g.source !== 'built-in').flatMap(
-      (t5) => {
-        const { source: groupSource } = t5
+      (group) => {
+        const { source: groupSource } = group
         return nonBuiltIn.filter((a_0) => a_0.source === groupSource)
       },
     )
@@ -153,11 +153,11 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       }
     }
   }
-  const renderBuiltInAgentsSection = (t9) => {
+  const renderBuiltInAgentsSection = (titleText) => {
     const title =
-      t9 === undefined
+      titleText === undefined
         ? tSync('agents.builtInAgents') + ' ' + tSync('agents.builtInAlwaysAvailable')
-        : t9
+        : titleText
     const builtInAgents = sortedAgents.filter((a_2) => a_2.source === 'built-in')
     return (
       <Box flexDirection="column" marginBottom={1} paddingLeft={2}>
@@ -227,10 +227,10 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
   }
 
   const DialogComponent = Dialog
-  const t17 = sourceTitle
+  const dialogTitle = sourceTitle
   const countResult = count(sortedAgents, (a_6) => !a_6.overriddenBy)
-  const t18 = tSync('agents.agentsCount', { count: countResult })
-  const t19 = onBack
+  const agentsCountText = tSync('agents.agentsCount', { count: countResult })
+  const handleBack = onBack
 
   const boxElement = changes && changes.length > 0 && (
     <Box marginTop={1}>
@@ -239,13 +239,13 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
   )
   const BoxComponent = Box
 
-  const t14 = handleKeyDown
+  const handleKeyDownCallback = handleKeyDown
   const boxElement2 = onCreateNew && <Box marginBottom={1}>{renderCreateNewOption()}</Box>
   const fragmentContent =
       source === 'all' ? (
         <>
-          {AGENT_SOURCE_GROUPS.filter((g_0) => g_0.source !== 'built-in').map((t24) => {
-            const { label, source: groupSource_0 } = t24
+          {AGENT_SOURCE_GROUPS.filter((g_0) => g_0.source !== 'built-in').map((groupConfig) => {
+            const { label, source: groupSource_0 } = groupConfig
             return (
               <React.Fragment key={groupSource_0}>
                 {renderAgentGroup(
@@ -291,10 +291,10 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
 
   // @ts-ignore
   return (
-    <DialogComponent title={t17} subtitle={t18} onCancel={t19} hideInputGuide={true}>
+    <DialogComponent title={dialogTitle} subtitle={agentsCountText} onCancel={handleBack} hideInputGuide={true}>
       {boxElement}
       {
-        <BoxComponent flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={t14}>
+        <BoxComponent flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDownCallback}>
           {boxElement2}
           {fragmentContent}
         </BoxComponent>

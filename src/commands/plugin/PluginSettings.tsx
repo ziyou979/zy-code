@@ -357,7 +357,7 @@ function removeExtraMarketplace(
 }
 function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
   const errors = useAppState((s) => s.plugins.errors)
-  const installationStatus = useAppState((s_0) => s_0.plugins.installationStatus)
+  const installationStatus = useAppState((state) => state.plugins.installationStatus)
   const setAppState = useSetAppState()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [actionMessage, setActionMessage] = useState(null)
@@ -372,7 +372,7 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
     })()
   }, [])
   const failedMarketplaces = installationStatus.marketplaces.filter((m) => m.status === 'failed')
-  const failedMarketplaceNames = new Set(failedMarketplaces.map((m_0) => m_0.name))
+  const failedMarketplaceNames = new Set(failedMarketplaces.map((marketplace) => marketplace.name))
   const transientErrors = errors.filter(isTransientError)
   const extraMarketplaceErrors = errors.filter(
     (e) =>
@@ -381,31 +381,31 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
         e.type === 'marketplace-blocked-by-policy') &&
       !failedMarketplaceNames.has(e.marketplace),
   )
-  const pluginLoadingErrors = errors.filter((e_0) => {
-    if (isTransientError(e_0)) {
+  const pluginLoadingErrors = errors.filter((error) => {
+    if (isTransientError(error)) {
       return false
     }
     if (
-      e_0.type === 'marketplace-not-found' ||
-      e_0.type === 'marketplace-load-failed' ||
-      e_0.type === 'marketplace-blocked-by-policy'
+      error.type === 'marketplace-not-found' ||
+      error.type === 'marketplace-load-failed' ||
+      error.type === 'marketplace-blocked-by-policy'
     ) {
       return false
     }
-    return getPluginNameFromError(e_0) !== undefined
+    return getPluginNameFromError(error) !== undefined
   })
-  const otherErrors = errors.filter((e_1) => {
-    if (isTransientError(e_1)) {
+  const otherErrors = errors.filter((error) => {
+    if (isTransientError(error)) {
       return false
     }
     if (
-      e_1.type === 'marketplace-not-found' ||
-      e_1.type === 'marketplace-load-failed' ||
-      e_1.type === 'marketplace-blocked-by-policy'
+      error.type === 'marketplace-not-found' ||
+      error.type === 'marketplace-load-failed' ||
+      error.type === 'marketplace-blocked-by-policy'
     ) {
       return false
     }
-    return getPluginNameFromError(e_1) === undefined
+    return getPluginNameFromError(error) === undefined
   })
   const pluginScopes = getPluginEditableScopes()
   const rows = buildErrorRows(
@@ -441,20 +441,20 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
         break
       }
       case 'remove-extra-marketplace': {
-        const scopes = action.sources.map((s_1) => s_1.scope).join(', ')
+        const scopes = action.sources.map((source) => source.scope).join(', ')
         removeExtraMarketplace(action.name, action.sources)
         clearAllCaches()
-        setAppState((prev_0) => ({
-          ...prev_0,
+        setAppState((prev) => ({
+          ...prev,
           plugins: {
-            ...prev_0.plugins,
-            errors: prev_0.plugins.errors.filter(
-              (e_2) => !('marketplace' in e_2 && e_2.marketplace === action.name),
+            ...prev.plugins,
+            errors: prev.plugins.errors.filter(
+              (error) => !('marketplace' in error && error.marketplace === action.name),
             ),
             installationStatus: {
-              ...prev_0.plugins.installationStatus,
-              marketplaces: prev_0.plugins.installationStatus.marketplaces.filter(
-                (m_1) => m_1.name !== action.name,
+              ...prev.plugins.installationStatus,
+              marketplaces: prev.plugins.installationStatus.marketplaces.filter(
+                (marketplace) => marketplace.name !== action.name,
               ),
             },
           },
@@ -487,8 +487,8 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
   }
   useKeybindings(
     {
-      'select:previous': () => setSelectedIndex((prev_1) => Math.max(0, prev_1 - 1)),
-      'select:next': () => setSelectedIndex((prev_2) => Math.min(rows.length - 1, prev_2 + 1)),
+      'select:previous': () => setSelectedIndex((prev) => Math.max(0, prev - 1)),
+      'select:next': () => setSelectedIndex((prev) => Math.min(rows.length - 1, prev + 1)),
       'select:accept': handleSelect,
     },
     {
@@ -524,8 +524,8 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
       </Box>
     )
   }
-  const T0 = Box
-  const rowElements = rows.map((row_0, idx) => {
+  const ContainerBox = Box
+  const rowElements = rows.map((row, idx) => {
     const isSelected = idx === clampedIndex
     return (
       <Box key={idx} marginLeft={1} flexDirection="column" marginBottom={1}>
@@ -533,16 +533,16 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
           <Text color={isSelected ? 'suggestion' : 'error'}>
             {isSelected ? figures.pointer : figures.cross}{' '}
           </Text>
-          <Text bold={isSelected}>{row_0.label}</Text>
-          {row_0.scope && <Text dimColor={true}> ({row_0.scope})</Text>}
+          <Text bold={isSelected}>{row.label}</Text>
+          {row.scope && <Text dimColor={true}> ({row.scope})</Text>}
         </Text>
         <Box marginLeft={3}>
-          <Text color="error">{row_0.message}</Text>
+          <Text color="error">{row.message}</Text>
         </Box>
-        {row_0.guidance && (
+        {row.guidance && (
           <Box marginLeft={3}>
             <Text dimColor={true} italic={true}>
-              {row_0.guidance}
+              {row.guidance}
             </Text>
           </Box>
         )}
@@ -550,7 +550,7 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
     )
   })
   return (
-    <T0 flexDirection={'column'}>
+    <ContainerBox flexDirection={'column'}>
       {rowElements}
       {actionMessage && (
         <Box marginTop={1} marginLeft={1}>
@@ -589,7 +589,7 @@ function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
           </Text>
         </Box>
       }
-    </T0>
+    </ContainerBox>
   )
 }
 function getInitialViewState(parsedCommand: ParsedCommand): ViewState {

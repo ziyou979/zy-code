@@ -39,45 +39,45 @@ export function HighlightedInput({ text, highlights }: Props) {
   if (hasShimmer) {
     let lo = Infinity
     let hi = -Infinity
-    for (const h_0 of highlights) {
-      if (h_0.shimmerColor) {
-        lo = Math.min(lo, h_0.start)
-        hi = Math.max(hi, h_0.end)
+    for (const highlight of highlights) {
+      if (highlight.shimmerColor) {
+        lo = Math.min(lo, highlight.start)
+        hi = Math.max(hi, highlight.end)
       }
     }
     sweepStart = lo - 10
     cycleLength = hi - lo + 20
   }
   const {
-    lines: lines_0,
-    hasShimmer: hasShimmer_0,
-    sweepStart: sweepStart_0,
-    cycleLength: cycleLength_0,
+    lines: lineSegments,
+    hasShimmer: hasShimmerEffect,
+    sweepStart: sweepStartPosition,
+    cycleLength: sweepCycleLength,
   } = {
     lines,
     hasShimmer,
     sweepStart,
     cycleLength,
   }
-  const [ref, time] = useAnimationFrame(hasShimmer_0 ? 50 : null)
-  const glimmerIndex = hasShimmer_0 ? sweepStart_0 + (Math.floor(time / 50) % cycleLength_0) : -100
-  const t3 = lines_0.map((lineParts, lineIndex) => (
+  const [ref, time] = useAnimationFrame(hasShimmerEffect ? 50 : null)
+  const glimmerIndex = hasShimmerEffect ? sweepStartPosition + (Math.floor(time / 50) % sweepCycleLength) : -100
+  const renderedLines = lineSegments.map((lineParts, lineIndex) => (
     <Box key={lineIndex}>
       {lineParts.length === 0 ? (
         <Text> </Text>
       ) : (
-        lineParts.map((part_0, partIndex) => {
-          if (part_0.highlight?.shimmerColor && part_0.highlight.color) {
+        lineParts.map((segmentPart, partIndex) => {
+          if (segmentPart.highlight?.shimmerColor && segmentPart.highlight.color) {
             return (
               <Text key={partIndex}>
-                {part_0.text.split('').map((char, charIndex) => (
+                {segmentPart.text.split('').map((char, charIndex) => (
                   <ShimmerChar
                     key={charIndex}
                     char={char}
-                    index={part_0.start + charIndex}
+                    index={segmentPart.start + charIndex}
                     glimmerIndex={glimmerIndex}
-                    messageColor={part_0.highlight.color}
-                    shimmerColor={part_0.highlight.shimmerColor}
+                    messageColor={segmentPart.highlight.color}
+                    shimmerColor={segmentPart.highlight.shimmerColor}
                   />
                 ))}
               </Text>
@@ -86,11 +86,11 @@ export function HighlightedInput({ text, highlights }: Props) {
           return (
             <Text
               key={partIndex}
-              color={part_0.highlight?.color}
-              dimColor={part_0.highlight?.dimColor}
-              inverse={part_0.highlight?.inverse}
+              color={segmentPart.highlight?.color}
+              dimColor={segmentPart.highlight?.dimColor}
+              inverse={segmentPart.highlight?.inverse}
             >
-              <Ansi>{part_0.text}</Ansi>
+              <Ansi>{segmentPart.text}</Ansi>
             </Text>
           )
         })
@@ -99,7 +99,7 @@ export function HighlightedInput({ text, highlights }: Props) {
   ))
   return (
     <Box ref={ref} flexDirection="column">
-      {t3}
+      {renderedLines}
     </Box>
   )
 }

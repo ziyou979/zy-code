@@ -32,8 +32,8 @@ export function WebFetchPermissionRequest({
   const { url } = toolUseConfirm.input as {
     url: string
   }
-  const t1 = new URL(url)
-  const hostname = t1.hostname
+  const parsedUrl = new URL(url)
+  const hostname = parsedUrl.hostname
   const unaryEvent = {
     completion_type: 'tool_use_single',
     language_name: 'none',
@@ -93,7 +93,7 @@ export function WebFetchPermissionRequest({
       }
     }
   }
-  const t6 = WebFetchTool.renderToolUseMessage(
+  const renderedWebFetchMessage = WebFetchTool.renderToolUseMessage(
     toolUseConfirm.input as {
       url: string
       prompt: string
@@ -107,7 +107,7 @@ export function WebFetchPermissionRequest({
     <PermissionDialog title={tSync('permission.fetch')} workerBadge={workerBadge}>
       {
         <Box flexDirection="column" paddingX={2} paddingY={1}>
-          {<Text>{t6}</Text>}
+          {<Text>{renderedWebFetchMessage}</Text>}
           {<Text dimColor={true}>{toolUseConfirm.description}</Text>}
         </Box>
       }

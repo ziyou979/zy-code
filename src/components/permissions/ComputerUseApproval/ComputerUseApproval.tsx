@@ -136,10 +136,11 @@ function ComputerUseAppListPanel({ request, onDone }) {
   )
   const ALL_FLAG_KEYS = ['clipboardRead', 'clipboardWrite', 'systemKeyCombos']
   const requestedFlagKeys = ALL_FLAG_KEYS.filter((k) => request.requestedFlags[k])
-  const t5 = plural(checked.size, 'app')
+  const checkedAppCount = checked.size
+  const appLabel = plural(checkedAppCount, 'app')
   const options = [
     {
-      label: tSync('computerUse.allowForThisSession', { count: checked.size, app: t5 }),
+      label: tSync('computerUse.allowForThisSession', { count: checkedAppCount, app: appLabel }),
       value: 'allow_all',
     },
     {
@@ -184,7 +185,7 @@ function ComputerUseAppListPanel({ request, onDone }) {
       flags,
     })
   }
-  const t13 = request.apps.map((a_3) => {
+  const appListElements = request.apps.map((a_3) => {
     const resolved = a_3.resolved
     if (!resolved) {
       return (
@@ -226,7 +227,7 @@ function ComputerUseAppListPanel({ request, onDone }) {
       {
         <Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>
           {request.reason ? <Text dimColor={true}>{request.reason}</Text> : null}
-          {<Box flexDirection="column">{t13}</Box>}
+          {<Box flexDirection="column">{appListElements}</Box>}
           {requestedFlagKeys.length > 0 ? (
             <Box flexDirection="column">
               <Text dimColor={true}>{tSync('computerUse.alsoRequested')}</Text>

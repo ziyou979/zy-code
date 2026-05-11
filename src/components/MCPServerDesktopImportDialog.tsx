@@ -20,8 +20,8 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
   const serverNames = Object.keys(servers)
   const [existingServers, setExistingServers] = useState({})
   useEffect(() => {
-    getAllMcpConfigs().then((t5) => {
-      const { servers: servers_0 } = t5
+    getAllMcpConfigs().then((existingConfigs) => {
+      const { servers: servers_0 } = existingConfigs
       return setExistingServers(servers_0)
     })
   }, [])
@@ -61,18 +61,18 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
   const handleEscCancel = () => {
     done(0)
   }
-  const t9 = tSync(serverNames.length === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other')
-  const t13 = serverNames.map((server) => ({
+  const serverUnitLabel = tSync(serverNames.length === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other')
+  const serverOptions = serverNames.map((server) => ({
     label: `${server}${collisions.includes(server) ? tSync('mcp.importAlreadyExists') : ''}`,
     value: server,
   }))
-  const t14 = serverNames.filter((name_0) => !collisions.includes(name_0))
+  const defaultSelectedServers = serverNames.filter((name_0) => !collisions.includes(name_0))
   return (
     <>
       {
         <Dialog
           title={tSync('mcp.importDesktopTitle')}
-          subtitle={tSync('mcp.importDesktopSubtitle', { count: serverNames.length, unit: t9 })}
+          subtitle={tSync('mcp.importDesktopSubtitle', { count: serverNames.length, unit: serverUnitLabel })}
           color="success"
           onCancel={handleEscCancel}
           hideInputGuide={true}
@@ -81,8 +81,8 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
           {<Text>{tSync('mcp.importSelectServers')}</Text>}
           {
             <SelectMulti
-              options={t13}
-              defaultValue={t14}
+              options={serverOptions}
+              defaultValue={defaultSelectedServers}
               onSubmit={onSubmit}
               onCancel={handleEscCancel}
               hideIndexes={true}

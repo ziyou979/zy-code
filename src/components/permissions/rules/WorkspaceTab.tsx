@@ -1,4 +1,3 @@
-import figures from 'figures'
 import * as React from 'react'
 import { useEffect } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -36,9 +35,8 @@ export function WorkspaceTab({
   useEffect(() => {
     onHeaderFocusChange?.(headerFocused)
   }, [headerFocused, onHeaderFocusChange])
-  // @ts-ignore
-  const additionalDirectories = (
-    Array.from(toolPermissionContext.additionalWorkingDirectories.keys()) as string[]
+  const additionalDirectories: DirectoryItem[] = (
+    Array.from(toolPermissionContext.additionalWorkingDirectories.keys())
   ).map((path) => ({
     path,
     isCurrent: false,
@@ -67,7 +65,7 @@ export function WorkspaceTab({
     value: 'add-directory',
   })
   const options = opts
-  const t7 = Math.min(10, options.length)
+  const visibleOptionCount = Math.min(10, options.length)
   return (
     <Box flexDirection="column" marginBottom={1}>
       {
@@ -80,7 +78,7 @@ export function WorkspaceTab({
         options={options}
         onChange={handleDirectorySelect}
         onCancel={handleCancel}
-        visibleOptionCount={t7}
+        visibleOptionCount={visibleOptionCount}
         onUpFromFirstItem={focusHeader}
         isDisabled={headerFocused}
       />

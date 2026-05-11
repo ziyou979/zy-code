@@ -99,8 +99,8 @@ export function TokenWarning({ tokenUsage, model }: Props) {
   }
   if (reactiveOnlyMode || collapseMode) {
     const effectiveWindow = getEffectiveContextWindowSize(model)
-    const t4 = Math.round(((effectiveWindow - tokenUsage) / effectiveWindow) * 100)
-    displayPercentLeft = Math.max(0, t4)
+    const remainingPercent = Math.round(((effectiveWindow - tokenUsage) / effectiveWindow) * 100)
+    displayPercentLeft = Math.max(0, remainingPercent)
   }
   if (collapseMode && feature('CONTEXT_COLLAPSE')) {
     // @ts-ignore

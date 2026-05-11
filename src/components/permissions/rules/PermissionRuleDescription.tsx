@@ -10,39 +10,30 @@ export function PermissionRuleDescription({ ruleValue }: RuleSubtitleProps) {
     case BashTool.name: {
       if (ruleValue.ruleContent) {
         if (ruleValue.ruleContent.endsWith(':*')) {
-          let t1
-          t1 = ruleValue.ruleContent.slice(0, -2)
-          let t2
-          t2 = (
+          const commandPrefix = ruleValue.ruleContent.slice(0, -2)
+          return (
             <Text dimColor={true}>
-              Any Bash command starting with <Text bold={true}>{t1}</Text>
+              Any Bash command starting with <Text bold={true}>{commandPrefix}</Text>
             </Text>
           )
-          return t2
         } else {
-          let t1
-          t1 = (
+          return (
             <Text dimColor={true}>
               The Bash command <Text bold={true}>{ruleValue.ruleContent}</Text>
             </Text>
           )
-          return t1
         }
       } else {
-        let t1
-        t1 = <Text dimColor={true}>Any Bash command</Text>
-        return t1
+        return <Text dimColor={true}>Any Bash command</Text>
       }
     }
     default: {
       if (!ruleValue.ruleContent) {
-        let t1
-        t1 = (
+        return (
           <Text dimColor={true}>
             Any use of the <Text bold={true}>{ruleValue.toolName}</Text> tool
           </Text>
         )
-        return t1
       } else {
         return null
       }

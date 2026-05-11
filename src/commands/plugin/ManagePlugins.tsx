@@ -516,8 +516,8 @@ export function ManagePlugins({
 }: Props): React.ReactNode {
   // App state for MCP access
   const mcpClients = useAppState((s) => s.mcp.clients)
-  const mcpTools = useAppState((s_0) => s_0.mcp.tools)
-  const pluginErrors = useAppState((s_1) => s_1.plugins.errors)
+  const mcpTools = useAppState((state) => state.mcp.tools)
+  const pluginErrors = useAppState((state) => state.plugins.errors)
   const flaggedPlugins = getFlaggedPlugins()
 
   // Search state
@@ -653,16 +653,16 @@ export function ManagePlugins({
         client: MCPServerConnection
       }>
     >()
-    for (const client_0 of mcpClients) {
-      if (client_0.name.startsWith('plugin:')) {
-        const parts = client_0.name.split(':')
+    for (const mcpClient of mcpClients) {
+      if (mcpClient.name.startsWith('plugin:')) {
+        const parts = mcpClient.name.split(':')
         if (parts.length >= 3) {
           const pluginName = parts[1]!
           const serverName = parts.slice(2).join(':')
           const existing = pluginMcpMap.get(pluginName) || []
           existing.push({
             displayName: serverName,
-            client: client_0,
+            client: mcpClient,
           })
           pluginMcpMap.set(pluginName, existing)
         }
@@ -716,7 +716,7 @@ export function ManagePlugins({
 
     // Find orphan errors (errors for plugins that failed to load entirely)
     const matchedPluginIds = new Set(pluginsWithChildren.map(({ item }) => item.id))
-    const matchedPluginNames = new Set(pluginsWithChildren.map(({ item: item_0 }) => item_0.name))
+    const matchedPluginNames = new Set(pluginsWithChildren.map(({ item: pluginItem }) => pluginItem.name))
     const orphanErrorsBySource = new Map<string, typeof pluginErrors>()
     for (const error of pluginErrors) {
       if (
@@ -727,47 +727,47 @@ export function ManagePlugins({
       ) {
         continue
       }
-      const existing_0 = orphanErrorsBySource.get(error.source) || []
-      existing_0.push(error)
-      orphanErrorsBySource.set(error.source, existing_0)
+      const existingErrors = orphanErrorsBySource.get(error.source) || []
+      existingErrors.push(error)
+      orphanErrorsBySource.set(error.source, existingErrors)
     }
     const pluginScopes = getPluginEditableScopes()
     const failedPluginItems: UnifiedInstalledItem[] = []
-    for (const [pluginId_0, errors_0] of orphanErrorsBySource) {
+    for (const [orphanPluginId, orphanErrors] of orphanErrorsBySource) {
       // Skip plugins that are already shown in the flagged section
-      if (pluginId_0 in flaggedPlugins) continue
-      const parsed = parsePluginIdentifier(pluginId_0)
-      const pluginName_0 = parsed.name || pluginId_0
+      if (orphanPluginId in flaggedPlugins) continue
+      const parsed = parsePluginIdentifier(orphanPluginId)
+      const orphanPluginName = parsed.name || orphanPluginId
       const marketplace = parsed.marketplace || 'unknown'
-      const rawScope = pluginScopes.get(pluginId_0)
+      const rawScope = pluginScopes.get(orphanPluginId)
       // 'flag' is session-only (from --plugin-dir / flagSettings) and undefined
       // means the plugin isn't in any settings source. Default both to 'user'
       // since UnifiedInstalledItem doesn't have a 'flag' scope variant.
       const scope = rawScope === 'flag' || rawScope === undefined ? 'user' : rawScope
       failedPluginItems.push({
         type: 'failed-plugin',
-        id: pluginId_0,
-        name: pluginName_0,
+        id: orphanPluginId,
+        name: orphanPluginName,
         marketplace,
         scope,
-        errorCount: errors_0.length,
-        errors: errors_0,
+        errorCount: orphanErrors.length,
+        errors: orphanErrors,
       })
     }
 
     // Build standalone MCP items
     const standaloneMcps: UnifiedInstalledItem[] = []
-    for (const client_1 of mcpClients) {
-      if (client_1.name === 'ide') continue
-      if (client_1.name.startsWith('plugin:')) continue
+    for (const mcpClient of mcpClients) {
+      if (mcpClient.name === 'ide') continue
+      if (mcpClient.name.startsWith('plugin:')) continue
       standaloneMcps.push({
         type: 'mcp',
-        id: `mcp:${client_1.name}`,
-        name: client_1.name,
+        id: `mcp:${mcpClient.name}`,
+        name: mcpClient.name,
         description: undefined,
-        scope: client_1.config.scope,
-        status: getMcpStatus(client_1),
-        client: client_1,
+        scope: mcpClient.config.scope,
+        status: getMcpStatus(mcpClient),
+        client: mcpClient,
       })
     }
 
@@ -791,27 +791,27 @@ export function ManagePlugins({
     const itemsByScope = new Map<string, UnifiedInstalledItem[]>()
 
     // Add plugins with their child MCPs
-    for (const { item: item_1, originalScope: originalScope_0, childMcps } of pluginsWithChildren) {
-      const scope_0 = item_1.scope
-      if (!itemsByScope.has(scope_0)) {
-        itemsByScope.set(scope_0, [])
+    for (const { item: pluginItem, originalScope: pluginOriginalScope, childMcps } of pluginsWithChildren) {
+      const itemScope = pluginItem.scope
+      if (!itemsByScope.has(itemScope)) {
+        itemsByScope.set(itemScope, [])
       }
-      itemsByScope.get(scope_0)!.push(item_1)
+      itemsByScope.get(itemScope)!.push(pluginItem)
       // Add child MCPs right after the plugin, indented (use original scope, not 'flagged').
       // Built-in plugins map to 'user' for display since MCP ConfigScope doesn't include 'builtin'.
-      for (const { displayName, client: client_2 } of childMcps) {
-        const displayScope = originalScope_0 === 'builtin' ? 'user' : originalScope_0
+      for (const { displayName, client: childClient } of childMcps) {
+        const displayScope = pluginOriginalScope === 'builtin' ? 'user' : pluginOriginalScope
         if (!itemsByScope.has(displayScope)) {
           itemsByScope.set(displayScope, [])
         }
         itemsByScope.get(displayScope)!.push({
           type: 'mcp',
-          id: `mcp:${client_2.name}`,
+          id: `mcp:${childClient.name}`,
           name: displayName,
           description: undefined,
           scope: displayScope,
-          status: getMcpStatus(client_2),
-          client: client_2,
+          status: getMcpStatus(childClient),
+          client: childClient,
           indented: true,
         })
       }
@@ -819,36 +819,36 @@ export function ManagePlugins({
 
     // Add standalone MCPs to their respective scope groups
     for (const mcp of standaloneMcps) {
-      const scope_1 = mcp.scope
-      if (!itemsByScope.has(scope_1)) {
-        itemsByScope.set(scope_1, [])
+      const mcpScope = mcp.scope
+      if (!itemsByScope.has(mcpScope)) {
+        itemsByScope.set(mcpScope, [])
       }
-      itemsByScope.get(scope_1)!.push(mcp)
+      itemsByScope.get(mcpScope)!.push(mcp)
     }
 
     // Add failed plugins to their respective scope groups
     for (const failedPlugin of failedPluginItems) {
-      const scope_2 = failedPlugin.scope
-      if (!itemsByScope.has(scope_2)) {
-        itemsByScope.set(scope_2, [])
+      const failedPluginScope = failedPlugin.scope
+      if (!itemsByScope.has(failedPluginScope)) {
+        itemsByScope.set(failedPluginScope, [])
       }
-      itemsByScope.get(scope_2)!.push(failedPlugin)
+      itemsByScope.get(failedPluginScope)!.push(failedPlugin)
     }
 
     // Add flagged (delisted) plugins from user settings.
     // Reason/text are looked up from the cached security messages file.
-    for (const [pluginId_1, entry] of Object.entries(flaggedPlugins)) {
-      const parsed_0 = parsePluginIdentifier(pluginId_1)
-      const pluginName_1 = parsed_0.name || pluginId_1
-      const marketplace_0 = parsed_0.marketplace || 'unknown'
+    for (const [flaggedPluginId, entry] of Object.entries(flaggedPlugins)) {
+      const parsedPlugin = parsePluginIdentifier(flaggedPluginId)
+      const flaggedPluginName = parsedPlugin.name || flaggedPluginId
+      const flaggedMarketplace = parsedPlugin.marketplace || 'unknown'
       if (!itemsByScope.has('flagged')) {
         itemsByScope.set('flagged', [])
       }
       itemsByScope.get('flagged')!.push({
         type: 'flagged-plugin',
-        id: pluginId_1,
-        name: pluginName_1,
-        marketplace: marketplace_0,
+        id: flaggedPluginId,
+        name: flaggedPluginName,
+        marketplace: flaggedMarketplace,
         scope: 'flagged',
         reason: 'delisted',
         text: 'Removed from marketplace',
@@ -860,8 +860,8 @@ export function ManagePlugins({
     const sortedScopes = [...itemsByScope.keys()].sort(
       (a, b) => (scopeOrder[a] ?? 99) - (scopeOrder[b] ?? 99),
     )
-    for (const scope_3 of sortedScopes) {
-      const items = itemsByScope.get(scope_3)!
+    for (const scopeKey of sortedScopes) {
+      const items = itemsByScope.get(scopeKey)!
 
       // Separate items into plugin groups (with their child MCPs) and standalone MCPs
       // This preserves parent-child relationships that would be broken by naive sorting
@@ -869,14 +869,14 @@ export function ManagePlugins({
       const standaloneMcpsInScope: UnifiedInstalledItem[] = []
       let i = 0
       while (i < items.length) {
-        const item_2 = items[i]!
+        const currentItem = items[i]!
         if (
-          item_2.type === 'plugin' ||
-          item_2.type === 'failed-plugin' ||
-          item_2.type === 'flagged-plugin'
+          currentItem.type === 'plugin' ||
+          currentItem.type === 'failed-plugin' ||
+          currentItem.type === 'flagged-plugin'
         ) {
           // Collect the plugin and its child MCPs as a group
-          const group: UnifiedInstalledItem[] = [item_2]
+          const group: UnifiedInstalledItem[] = [currentItem]
           i++
           // Look ahead for indented child MCPs
           let nextItem = items[i]
@@ -886,9 +886,9 @@ export function ManagePlugins({
             nextItem = items[i]
           }
           pluginGroups.push(group)
-        } else if (item_2.type === 'mcp' && !item_2.indented) {
+        } else if (currentItem.type === 'mcp' && !currentItem.indented) {
           // Standalone MCP (not a child of a plugin)
-          standaloneMcpsInScope.push(item_2)
+          standaloneMcpsInScope.push(currentItem)
           i++
         } else {
           // Skip orphaned indented MCPs (shouldn't happen)
@@ -915,7 +915,7 @@ export function ManagePlugins({
   // After 48 hours from seenAt, they auto-clear on next load.
   const flaggedIds = useMemo(
     () =>
-      unifiedItems.filter((item_3) => item_3.type === 'flagged-plugin').map((item_4) => item_4.id),
+      unifiedItems.filter((flaggedItem) => flaggedItem.type === 'flagged-plugin').map((flaggedItem) => flaggedItem.id),
     [unifiedItems],
   )
   useEffect(() => {
@@ -929,9 +929,9 @@ export function ManagePlugins({
     if (!searchQuery) return unifiedItems
     const lowerQuery = searchQuery.toLowerCase()
     return unifiedItems.filter(
-      (item_5) =>
-        item_5.name.toLowerCase().includes(lowerQuery) ||
-        ('description' in item_5 && item_5.description?.toLowerCase().includes(lowerQuery)),
+      (filteredItem) =>
+        filteredItem.name.toLowerCase().includes(lowerQuery) ||
+        ('description' in filteredItem && filteredItem.description?.toLowerCase().includes(lowerQuery)),
     )
   }, [unifiedItems, searchQuery])
 
@@ -970,7 +970,7 @@ export function ManagePlugins({
         hasMcpb =
           (typeof mcpServersSpec === 'string' && isMcpbSource(mcpServersSpec)) ||
           (Array.isArray(mcpServersSpec) &&
-            mcpServersSpec.some((s_2) => typeof s_2 === 'string' && isMcpbSource(s_2)))
+            mcpServersSpec.some((serverSpec) => typeof serverSpec === 'string' && isMcpbSource(serverSpec)))
       }
 
       // If not in manifest, read raw marketplace.json directly (bypassing schema validation)
@@ -980,16 +980,16 @@ export function ManagePlugins({
           const marketplaceDir = path.join(selectedPlugin!.plugin.path, '..')
           const marketplaceJsonPath = path.join(marketplaceDir, '.zy-plugin', 'marketplace.json')
           const content = await fs.readFile(marketplaceJsonPath, 'utf-8')
-          const marketplace_1 = jsonParse(content)
-          const entry_0 = marketplace_1.plugins?.find(
+          const marketplaceData = jsonParse(content)
+          const marketplaceEntry = marketplaceData.plugins?.find(
             (p: { name: string }) => p.name === selectedPlugin!.plugin.name,
           )
-          if (entry_0?.mcpServers) {
-            const spec = entry_0.mcpServers
+          if (marketplaceEntry?.mcpServers) {
+            const spec = marketplaceEntry.mcpServers
             hasMcpb =
               (typeof spec === 'string' && isMcpbSource(spec)) ||
               (Array.isArray(spec) &&
-                spec.some((s_3: unknown) => typeof s_3 === 'string' && isMcpbSource(s_3)))
+                spec.some((serverSpec: unknown) => typeof serverSpec === 'string' && isMcpbSource(serverSpec)))
           }
         } catch (err) {
           logForDebugging(`Failed to read raw marketplace.json: ${err}`)
@@ -1084,16 +1084,16 @@ export function ManagePlugins({
         : marketplaces
 
       // First check successfully loaded plugins
-      for (const marketplace_2 of marketplacesToSearch) {
-        const plugin = marketplace_2.installedPlugins.find((p_0) => p_0.name === targetName)
+      for (const marketplaceItem of marketplacesToSearch) {
+        const plugin = marketplaceItem.installedPlugins.find((installedPlugin) => installedPlugin.name === targetName)
         if (plugin) {
           // Get scope from V2 data for proper operation handling
-          const pluginId_2 = `${plugin.name}@${marketplace_2.name}`
-          const { scope: scope_4 } = getPluginInstallationFromV2(pluginId_2)
+          const targetPluginId = `${plugin.name}@${marketplaceItem.name}`
+          const { scope: pluginScope } = getPluginInstallationFromV2(targetPluginId)
           const pluginState: PluginState = {
             plugin,
-            marketplace: marketplace_2.name,
-            scope: scope_4,
+            marketplace: marketplaceItem.name,
+            scope: pluginScope,
             pendingEnable: undefined,
             pendingUpdate: false,
           }
@@ -1107,7 +1107,7 @@ export function ManagePlugins({
 
       // Fall back to failed plugins (those with errors but not loaded)
       const failedItem = unifiedItems.find(
-        (item_6) => item_6.type === 'failed-plugin' && item_6.name === targetName,
+        (unifiedItem) => unifiedItem.type === 'failed-plugin' && unifiedItem.name === targetName,
       )
       if (failedItem && failedItem.type === 'failed-plugin') {
         setViewState({
@@ -1158,7 +1158,7 @@ export function ManagePlugins({
     setIsProcessing(true)
     setProcessError(null)
     try {
-      const pluginId_3 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
+      const selectedPluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
       let reverseDependents: string[] | undefined
 
       // enable/disable omit scope — pluginScope is the install scope from
@@ -1167,14 +1167,14 @@ export function ManagePlugins({
       // the cross-scope guard. Auto-detect finds the right scope. #38084
       switch (operation) {
         case 'enable': {
-          const enableResult = await enablePluginOp(pluginId_3)
+          const enableResult = await enablePluginOp(selectedPluginId)
           if (!enableResult.success) {
             throw new Error(enableResult.message)
           }
           break
         }
         case 'disable': {
-          const disableResult = await disablePluginOp(pluginId_3)
+          const disableResult = await disablePluginOp(selectedPluginId)
           if (!disableResult.success) {
             throw new Error(disableResult.message)
           }
@@ -1190,7 +1190,7 @@ export function ManagePlugins({
           // `pluginScope` (from installed_plugins.json) can be 'user' even when
           // the plugin is ALSO project-enabled, and uninstalling the user-scope
           // install would leave the project enablement active.
-          if (isPluginEnabledAtProjectScope(pluginId_3)) {
+          if (isPluginEnabledAtProjectScope(selectedPluginId)) {
             setIsProcessing(false)
             setViewState('confirm-project-uninstall')
             return
@@ -1200,9 +1200,9 @@ export function ManagePlugins({
           // installs, the op's isLastScope check won't delete regardless of
           // the user's y/n — showing the dialog would mislead ("y" → nothing
           // happens). Length check mirrors pluginOperations.ts:513.
-          const installs = loadInstalledPluginsV2().plugins[pluginId_3]
+          const installs = loadInstalledPluginsV2().plugins[selectedPluginId]
           const isLastScope = !installs || installs.length <= 1
-          const dataSize = isLastScope ? await getPluginDataDirSize(pluginId_3) : null
+          const dataSize = isLastScope ? await getPluginDataDirSize(selectedPluginId) : null
           if (dataSize) {
             setIsProcessing(false)
             setViewState({
@@ -1211,7 +1211,7 @@ export function ManagePlugins({
             })
             return
           }
-          const result_0 = await uninstallPluginOp(pluginId_3, pluginScope)
+          const result_0 = await uninstallPluginOp(selectedPluginId, pluginScope)
           if (!result_0.success) {
             throw new Error(result_0.message)
           }
@@ -1220,7 +1220,7 @@ export function ManagePlugins({
         }
         case 'update': {
           if (isBuiltin) break // guarded above; narrows pluginScope
-          const result = await updatePluginOp(pluginId_3, pluginScope)
+          const result = await updatePluginOp(selectedPluginId, pluginScope)
           if (!result.success) {
             throw new Error(result.message)
           }

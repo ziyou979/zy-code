@@ -15,8 +15,8 @@ type Props = {
   onConfirm: (color: AgentColorName | undefined) => void
 }
 export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }: Props) {
-  const t2 = COLOR_OPTIONS.findIndex((opt) => opt === currentColor)
-  const [selectedIndex, setSelectedIndex] = useState(Math.max(0, t2))
+  const initialIndex = COLOR_OPTIONS.findIndex((opt) => opt === currentColor)
+  const [selectedIndex, setSelectedIndex] = useState(Math.max(0, initialIndex))
   const handleKeyDown = (e) => {
     if (e.key === 'up') {
       e.preventDefault()
@@ -35,7 +35,7 @@ export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }
     }
   }
   const selectedValue = COLOR_OPTIONS[selectedIndex]
-  const t4 = COLOR_OPTIONS.map((option, index) => {
+  const colorOptionElements = COLOR_OPTIONS.map((option, index) => {
     const isSelected = index === selectedIndex
     return (
       <Box key={option} flexDirection="row" gap={1}>
@@ -57,7 +57,7 @@ export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }
   })
   return (
     <Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
-      {<Box flexDirection="column">{t4}</Box>}
+      {<Box flexDirection="column">{colorOptionElements}</Box>}
       {
         <Box marginTop={1}>
           {<Text>Preview: </Text>}

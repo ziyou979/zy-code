@@ -33,7 +33,7 @@ export function SandboxViolationExpandedView() {
   if (totalCount === 0) {
     return null
   }
-  const t5 = violations.map((v, i) => (
+  const violationItems = violations.map((v, i) => (
     <Box key={`${v.timestamp.getTime()}-${i}`} paddingLeft={2}>
       <Text dimColor={true}>
         {formatTime(v.timestamp)}
@@ -41,7 +41,7 @@ export function SandboxViolationExpandedView() {
       </Text>
     </Box>
   ))
-  const t6 = Math.min(10, violations.length)
+  const shownCount = Math.min(10, violations.length)
   return (
     <Box flexDirection="column" marginTop={1}>
       {
@@ -59,11 +59,11 @@ export function SandboxViolationExpandedView() {
           </Text>
         </Box>
       }
-      {t5}
+      {violationItems}
       {
         <Box paddingLeft={2}>
           <Text dimColor={true}>
-            {tSync('sandboxViolation.showingLast', { shown: t6, total: totalCount })}
+            {tSync('sandboxViolation.showingLast', { shown: shownCount, total: totalCount })}
           </Text>
         </Box>
       }

@@ -2,7 +2,6 @@ import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { useSettings } from '../../hooks/useSettings.js'
 import { Box, Text, useAnimationFrame } from '../../ink.js'
-import { tSync } from '../../i18n/index.js'
 import { interpolateColor, toRGBColor } from '../Spinner/utils.js'
 type Props = {
   voiceState: 'idle' | 'recording' | 'processing'
@@ -21,7 +20,7 @@ const PROCESSING_BRIGHT = {
 }
 const PULSE_PERIOD_S = 2 // 2 second period for all pulsing animations
 
-export function VoiceIndicator(props) {
+export function VoiceIndicator(props: Props) {
   if (!feature('VOICE_MODE')) {
     return null
   }
@@ -30,14 +29,10 @@ export function VoiceIndicator(props) {
 function VoiceIndicatorImpl({ voiceState }) {
   switch (voiceState) {
     case 'recording': {
-      let t1
-      t1 = <Text dimColor={true}>listening…</Text>
-      return t1
+      return <Text dimColor={true}>listening…</Text>
     }
     case 'processing': {
-      let t1
-      t1 = <ProcessingShimmer />
-      return t1
+      return <ProcessingShimmer />
     }
     case 'idle': {
       return null

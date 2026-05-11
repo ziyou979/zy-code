@@ -79,9 +79,9 @@ export function SkillPermissionRequest(props) {
     },
   }
   const options = [...baseOptions, ...alwaysAllowOptions, noOption]
-  const t7 = sanitizeToolNameForAnalytics(toolUseConfirm.tool.name)
+  const sanitizedToolName = sanitizeToolNameForAnalytics(toolUseConfirm.tool.name)
   const toolAnalyticsContext = {
-    toolName: t7,
+    toolName: sanitizedToolName,
     isMcp: toolUseConfirm.tool.isMcp ?? false,
   }
   const handleSelect = (value, feedback) => {
@@ -136,15 +136,15 @@ export function SkillPermissionRequest(props) {
             platform: env.platform,
           },
         })
-        const spaceIndex_0 = skill.indexOf(' ')
-        const commandPrefix_0 = spaceIndex_0 > 0 ? skill.substring(0, spaceIndex_0) : skill
+        const spaceIndex = skill.indexOf(' ')
+        const commandPrefix = spaceIndex > 0 ? skill.substring(0, spaceIndex) : skill
         toolUseConfirm.onAllow(toolUseConfirm.input, [
           {
             type: 'addRules',
             rules: [
               {
                 toolName: SKILL_TOOL_NAME,
-                ruleContent: `${commandPrefix_0}:*`,
+                ruleContent: `${commandPrefix}:*`,
               },
             ],
             behavior: 'allow',
@@ -184,7 +184,7 @@ export function SkillPermissionRequest(props) {
     onReject()
     onDone()
   }
-  const t14 = commandObj?.description
+  const commandDescription = commandObj?.description
   return (
     <PermissionDialog
       title={tSync('skills.permission.useSkill', { skill })}
@@ -193,7 +193,7 @@ export function SkillPermissionRequest(props) {
       {<Text>{tSync('skills.permission.mayUse')}</Text>}
       {
         <Box flexDirection="column" paddingX={2} paddingY={1}>
-          <Text dimColor={true}>{t14}</Text>
+          <Text dimColor={true}>{commandDescription}</Text>
         </Box>
       }
       {

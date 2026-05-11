@@ -24,14 +24,14 @@ let audioNapiPromise: Promise<AudioNapi> | null = null
 
 function loadAudioNapi(): Promise<AudioNapi> {
   audioNapiPromise ??= (async () => {
-    const t0 = Date.now()
+    const startTime = Date.now()
     // @ts-ignore
     const mod = await import('audio-capture-napi')
     // vendor/audio-capture-src/index.ts defers require(...node) until the
     // first function call — trigger it here so timing reflects real cost.
     mod.isNativeAudioAvailable()
     audioNapi = mod
-    logForDebugging(`[voice] audio-capture-napi loaded in ${Date.now() - t0}ms`)
+    logForDebugging(`[voice] audio-capture-napi loaded in ${Date.now() - startTime}ms`)
     return mod
   })()
   return audioNapiPromise

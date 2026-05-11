@@ -132,12 +132,12 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
     toolName: sanitizedToolName,
     isMcp: toolUseConfirm.tool.isMcp ?? false,
   }
-  const t11 = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
+  const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
     theme,
     verbose: true,
   })
-  const t12 = originalUserFacingName.endsWith(' (MCP)') ? <Text dimColor={true}> (MCP)</Text> : ''
-  const t14 = truncateToLines(toolUseConfirm.description, 3)
+  const mcpSuffixElement = originalUserFacingName.endsWith(' (MCP)') ? <Text dimColor={true}> (MCP)</Text> : ''
+  const truncatedDescription = truncateToLines(toolUseConfirm.description, 3)
   // @ts-ignore
   return (
     <PermissionDialog title={tSync('permissionRules.toolUse')} workerBadge={workerBadge}>
@@ -145,10 +145,10 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
         <Box flexDirection="column" paddingX={2} paddingY={1}>
           {
             <Text>
-              {userFacingName}({t11}){t12}
+              {userFacingName}({renderedToolUseMessage}){mcpSuffixElement}
             </Text>
           }
-          {<Text dimColor={true}>{t14}</Text>}
+          {<Text dimColor={true}>{truncatedDescription}</Text>}
         </Box>
       }
       {

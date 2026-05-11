@@ -44,28 +44,28 @@ export function RecentDenialsTab({ onHeaderFocusChange, onStateChange }: Props) 
       return next
     })
   }
-  const handleFocus = (value_0) => {
-    setFocusedIdx(Number(value_0))
+  const handleFocus = (focusedValue) => {
+    setFocusedIdx(Number(focusedValue))
   }
   useInput(
     (input, _key) => {
       if (input === 'r') {
-        setRetry((prev_0) => {
-          const next_0 = new Set(prev_0)
-          if (next_0.has(focusedIdx)) {
-            next_0.delete(focusedIdx)
+        setRetry((prevRetrySet) => {
+          const nextRetrySet = new Set(prevRetrySet)
+          if (nextRetrySet.has(focusedIdx)) {
+            nextRetrySet.delete(focusedIdx)
           } else {
-            next_0.add(focusedIdx)
+            nextRetrySet.add(focusedIdx)
           }
-          return next_0
+          return nextRetrySet
         })
-        setApproved((prev_1) => {
-          if (prev_1.has(focusedIdx)) {
-            return prev_1
+        setApproved((prevApprovedSet) => {
+          if (prevApprovedSet.has(focusedIdx)) {
+            return prevApprovedSet
           }
-          const next_1 = new Set(prev_1)
-          next_1.add(focusedIdx)
-          return next_1
+          const nextApprovedSet = new Set(prevApprovedSet)
+          nextApprovedSet.add(focusedIdx)
+          return nextApprovedSet
         })
       }
     },
@@ -76,9 +76,9 @@ export function RecentDenialsTab({ onHeaderFocusChange, onStateChange }: Props) 
   if (denials.length === 0) {
     return <Text dimColor={true}>{tSync('permissionRules.noRecentDenials')}</Text>
   }
-  const options = denials.map((d, idx_0) => {
-    const isApproved = approved.has(idx_0)
-    const suffix = retry.has(idx_0) ? tSync('permissionRules.retrySuffix') : ''
+  const options = denials.map((d, denialIndex) => {
+    const isApproved = approved.has(denialIndex)
+    const suffix = retry.has(denialIndex) ? tSync('permissionRules.retrySuffix') : ''
     return {
       label: (
         <Text>
@@ -87,10 +87,10 @@ export function RecentDenialsTab({ onHeaderFocusChange, onStateChange }: Props) 
           <Text dimColor={true}>{suffix}</Text>
         </Text>
       ),
-      value: String(idx_0),
+      value: String(denialIndex),
     }
   })
-  const t12 = Math.min(10, options.length)
+  const visibleOptionCount = Math.min(10, options.length)
   return (
     <Box flexDirection="column">
       {<Text>{tSync('permissionRules.recentlyDeniedDescription')}</Text>}
@@ -99,7 +99,7 @@ export function RecentDenialsTab({ onHeaderFocusChange, onStateChange }: Props) 
           options={options}
           onChange={handleSelect}
           onFocus={handleFocus}
-          visibleOptionCount={t12}
+          visibleOptionCount={visibleOptionCount}
           isDisabled={headerFocused}
           onUpFromFirstItem={focusHeader}
         />

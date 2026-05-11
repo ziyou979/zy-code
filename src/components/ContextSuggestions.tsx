@@ -12,7 +12,7 @@ export function ContextSuggestions({ suggestions }: Props) {
   if (suggestions.length === 0) {
     return null
   }
-  const t2 = suggestions.map((suggestion, i) => (
+  const suggestionElements = suggestions.map((suggestion, i) => (
     <Box key={i} flexDirection="column" marginTop={i === 0 ? 0 : 1}>
       <Box>
         <StatusIcon status={suggestion.severity} withSpace={true} />
@@ -33,7 +33,7 @@ export function ContextSuggestions({ suggestions }: Props) {
   return (
     <Box flexDirection="column" marginTop={1}>
       {<Text bold={true}>{tSync('contextSuggestions.title')}</Text>}
-      {t2}
+      {suggestionElements}
     </Box>
   )
 }

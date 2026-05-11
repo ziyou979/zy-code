@@ -41,14 +41,14 @@ export function FilesystemPermissionRequest({
       />
     ) as any
   }
-  const t3 = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
+  const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
     theme,
     verbose,
   })
   const content = (
     <Box flexDirection="column" paddingX={2} paddingY={1}>
       <Text>
-        {userFacingName}({t3})
+        {userFacingName}({renderedToolUseMessage})
       </Text>
     </Box>
   )

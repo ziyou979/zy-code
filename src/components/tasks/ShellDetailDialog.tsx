@@ -208,9 +208,9 @@ function ShellOutputContent({ outputPromise, columns }: ShellOutputContentProps)
       rendered.push(line)
     }
   }
-  const t2 = rendered.map((line_0, i_1) => (
-    <Text key={i_1} wrap="truncate-end">
-      {line_0}
+  const outputLines = rendered.map((line, index) => (
+    <Text key={index} wrap="truncate-end">
+      {line}
     </Text>
   ))
   return (
@@ -223,7 +223,7 @@ function ShellOutputContent({ outputPromise, columns }: ShellOutputContentProps)
           height={12}
           maxWidth={columns - 6}
         >
-          {t2}
+          {outputLines}
         </Box>
       }
       {

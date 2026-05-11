@@ -40,10 +40,10 @@ export function ShowInIDEPrompt({
   yesInputMode,
   noInputMode,
 }: Props<any>) {
-  const t3 = isSupportedVSCodeTerminal() && (
+  const saveFileHint = isSupportedVSCodeTerminal() && (
     <Text dimColor={true}>{tSync('permission.saveFileToContinue')}</Text>
   )
-  const t4 = basename(filePath)
+  const fileName = basename(filePath)
   const symlinkWarningText =
     symlinkTarget &&
     (relative(getCwd(), symlinkTarget).startsWith('..')
@@ -58,10 +58,10 @@ export function ShowInIDEPrompt({
           </Text>
         }
         {symlinkWarningText && <Text color="warning">{symlinkWarningText}</Text>}
-        {t3}
+        {saveFileHint}
         {
           <Box flexDirection="column">
-            {<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: t4 })}</Text>}
+            {<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: fileName })}</Text>}
             {
               <Select
                 options={options}
@@ -90,7 +90,7 @@ export function ShowInIDEPrompt({
                     input,
                   )
                 }
-                onFocus={(value_0) => setFocusedOption(value_0)}
+                onFocus={(optionValue) => setFocusedOption(optionValue)}
                 onInputModeToggle={onInputModeToggle}
               />
             }

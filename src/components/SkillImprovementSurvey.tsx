@@ -68,7 +68,7 @@ function SkillImprovementSurveyView({
       }
     }
   }, [inputValue, onSelect, setInputValue])
-  const t5 = updates.map((u, i) => (
+  const updateItems = updates.map((u, i) => (
     <Text key={i} dimColor={true}>
       {BULLET_OPERATOR} {u.change}
     </Text>
@@ -83,7 +83,7 @@ function SkillImprovementSurveyView({
       }
       {
         <Box flexDirection="column" marginLeft={2}>
-          {t5}
+          {updateItems}
         </Box>
       }
       {

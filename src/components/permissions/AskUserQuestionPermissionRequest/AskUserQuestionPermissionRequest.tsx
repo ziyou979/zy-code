@@ -38,8 +38,8 @@ export function AskUserQuestionPermissionRequest(props) {
   )
 }
 function AskUserQuestionWithHighlight(props) {
-  const t0 = getCliHighlightPromise()
-  const highlight = use(t0)
+  const highlightPromise = getCliHighlightPromise()
+  const highlight = use(highlightPromise)
   return <AskUserQuestionPermissionRequestBody {...props} highlight={highlight} />
 }
 function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject, highlight }) {
@@ -78,11 +78,11 @@ function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject
       maxHeight = Math.max(maxHeight, q.options.length + 3 + 7)
     }
   }
-  const t3 = Math.min(Math.max(maxHeight, MIN_CONTENT_HEIGHT), maxAllowedHeight)
-  const t4 = Math.max(maxWidth, MIN_CONTENT_WIDTH)
+  const contentHeight = Math.min(Math.max(maxHeight, MIN_CONTENT_HEIGHT), maxAllowedHeight)
+  const contentWidth = Math.max(maxWidth, MIN_CONTENT_WIDTH)
   const { globalContentHeight, globalContentWidth } = {
-    globalContentHeight: t3,
-    globalContentWidth: t4,
+    globalContentHeight: contentHeight,
+    globalContentWidth: contentWidth,
   }
   const metadataSource = result.success ? result.data.metadata?.source : undefined
   const [pastedContentsByQuestion, setPastedContentsByQuestion] = useState({})
@@ -269,8 +269,8 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
       contentBlocks && contentBlocks.length > 0 ? contentBlocks : undefined,
     )
   }
-  const handleQuestionAnswer = (questionText_1, label, textInput, t17) => {
-    const shouldAdvance = t17 === undefined ? true : t17
+  const handleQuestionAnswer = (questionText_1, label, textInput, shouldAdvance) => {
+    const advanceToNext = shouldAdvance === undefined ? true : shouldAdvance
     let answer_2
     const isMultiSelect = Array.isArray(label)
     if (isMultiSelect) {

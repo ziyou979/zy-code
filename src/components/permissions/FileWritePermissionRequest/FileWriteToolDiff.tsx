@@ -30,7 +30,7 @@ export function FileWriteToolDiff({ file_path, content, fileExists, oldContent }
     })
   }
   const firstLine = content.split('\n')[0] ?? null
-  const t3 = hunks ? (
+  const diffContent = hunks ? (
     intersperse(
       hunks.map((_) => (
         <StructuredDiff
@@ -62,7 +62,7 @@ export function FileWriteToolDiff({ file_path, content, fileExists, oldContent }
         borderRight={false}
         paddingX={1}
       >
-        {t3}
+        {diffContent}
       </Box>
     </Box>
   )

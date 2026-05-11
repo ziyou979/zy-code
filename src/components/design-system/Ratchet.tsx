@@ -7,8 +7,8 @@ type Props = {
   lock?: 'always' | 'offscreen'
 }
 export function Ratchet({ children, lock = 'always' }: Props) {
-  const [viewportRef, t2] = useTerminalViewport()
-  const { isVisible } = t2
+  const [viewportRef, viewportState] = useTerminalViewport()
+  const { isVisible } = viewportState
   const { rows } = useTerminalSize()
   const innerRef = useRef(null)
   const maxHeight = useRef(0)

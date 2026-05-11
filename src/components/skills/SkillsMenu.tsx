@@ -149,26 +149,26 @@ export function SkillsMenu({ onExit, commands }: Props) {
       </Box>
     )
   }
-  const t5 = plural(skills.length, 'skill')
-  const t7 = renderSkillGroup('projectSettings')
-  const t8 = renderSkillGroup('userSettings')
-  const t9 = renderSkillGroup('policySettings')
-  const t10 = renderSkillGroup('plugin')
-  const t11 = renderSkillGroup('mcp')
+  const skillPlural = plural(skills.length, 'skill')
+  const projectSkillsSection = renderSkillGroup('projectSettings')
+  const userSkillsSection = renderSkillGroup('userSettings')
+  const policySkillsSection = renderSkillGroup('policySettings')
+  const pluginSkillsSection = renderSkillGroup('plugin')
+  const mcpSkillsSection = renderSkillGroup('mcp')
   return (
     <Dialog
       title={tSync('skills.menu.title')}
-      subtitle={tSync('skills.menu.subtitle', { count: skills.length, skill: t5 })}
+      subtitle={tSync('skills.menu.subtitle', { count: skills.length, skill: skillPlural })}
       onCancel={handleCancel}
       hideInputGuide={true}
     >
       {
         <Box flexDirection="column" gap={1}>
-          {t7}
-          {t8}
-          {t9}
-          {t10}
-          {t11}
+          {projectSkillsSection}
+          {userSkillsSection}
+          {policySkillsSection}
+          {pluginSkillsSection}
+          {mcpSkillsSection}
         </Box>
       }
       {

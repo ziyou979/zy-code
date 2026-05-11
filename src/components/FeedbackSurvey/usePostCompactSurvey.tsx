@@ -30,13 +30,13 @@ function hasMessageAfterBoundary(messages: Message[], boundaryUuid: string): boo
   }
   return false
 }
-export function usePostCompactSurvey(messages, isLoading, t0, t1) {
-  const hasActivePrompt = t0 === undefined ? false : t0
-  const { enabled: t3 } = t1 === undefined ? {} : t1
-  const enabled = t3 === undefined ? true : t3
+export function usePostCompactSurvey(messages, isLoading, hasActivePromptParam, surveyConfig) {
+  const hasActivePrompt = hasActivePromptParam === undefined ? false : hasActivePromptParam
+  const { enabled: surveyEnabled } = surveyConfig === undefined ? {} : surveyConfig
+  const enabled = surveyEnabled === undefined ? true : surveyEnabled
   const [gateEnabled, setGateEnabled] = useState(null)
-  const t4 = new Set()
-  const seenCompactBoundaries = useRef(t4)
+  const initialBoundarySet = new Set()
+  const seenCompactBoundaries = useRef(initialBoundarySet)
   const pendingCompactBoundaryUuid = useRef(null)
   const onOpen = (appearanceId) => {
     const smCompactionEnabled = shouldUseSessionMemoryCompaction()

@@ -26,22 +26,22 @@ const BLOCKS = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█']
 export function ProgressBar({ ratio: inputRatio, width, fillColor, emptyColor }: Props) {
   const ratio = Math.min(1, Math.max(0, inputRatio))
   const whole = Math.floor(ratio * width)
-  const t1 = BLOCKS[BLOCKS.length - 1].repeat(whole)
-  const segments = [t1]
+  const filledBlock = BLOCKS[BLOCKS.length - 1].repeat(whole)
+  const segments = [filledBlock]
   if (whole < width) {
     const remainder = ratio * width - whole
     const middle = Math.floor(remainder * BLOCKS.length)
     segments.push(BLOCKS[middle])
     const empty = width - whole - 1
     if (empty > 0) {
-      const t2 = BLOCKS[0].repeat(empty)
-      segments.push(t2)
+      const emptyBlock = BLOCKS[0].repeat(empty)
+      segments.push(emptyBlock)
     }
   }
-  const t2 = segments.join('')
+  const progressBar = segments.join('')
   return (
     <Text color={fillColor} backgroundColor={emptyColor}>
-      {t2}
+      {progressBar}
     </Text>
   )
 }

@@ -3,8 +3,8 @@ import { Box, Link, Text } from '../ink.js'
 import { AwsAuthStatusManager } from '../utils/awsAuthStatusManager.js'
 const URL_RE = /https?:\/\/\S+/
 export function AwsAuthStatusBox() {
-  const t0 = AwsAuthStatusManager.getInstance().getStatus()
-  const [status, setStatus] = useState(t0)
+  const initialStatus = AwsAuthStatusManager.getInstance().getStatus()
+  const [status, setStatus] = useState(initialStatus)
   useEffect(() => {
     const unsubscribe = AwsAuthStatusManager.getInstance().subscribe(setStatus)
     return unsubscribe

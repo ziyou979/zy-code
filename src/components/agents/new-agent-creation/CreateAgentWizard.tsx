@@ -22,7 +22,7 @@ type Props = {
   onCancel: () => void
 }
 export function CreateAgentWizard({ tools, existingAgents, onComplete, onCancel }: Props) {
-  const t3 = isAutoMemoryEnabled() ? [MemoryStep] : []
+  const memorySteps = isAutoMemoryEnabled() ? [MemoryStep] : []
   const steps = [
     LocationStep,
     MethodStep,
@@ -33,7 +33,7 @@ export function CreateAgentWizard({ tools, existingAgents, onComplete, onCancel 
     () => <ToolsStep tools={tools} />,
     ModelStep,
     ColorStep,
-    ...t3,
+    ...memorySteps,
     () => (
       <ConfirmStepWrapper tools={tools} existingAgents={existingAgents} onComplete={onComplete} />
     ),

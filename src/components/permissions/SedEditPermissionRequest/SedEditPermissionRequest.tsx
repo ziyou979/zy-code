@@ -81,8 +81,8 @@ function SedEditPermissionRequestInner({
       },
     }
   }
-  const t9 = relative(getCwd(), filePath)
-  const t10 = basename(filePath)
+  const relativePath = relative(getCwd(), filePath)
+  const baseFileName = basename(filePath)
   return (
     <FilePermissionDialog
       toolUseConfirm={props.toolUseConfirm}
@@ -90,8 +90,8 @@ function SedEditPermissionRequestInner({
       onDone={props.onDone}
       onReject={props.onReject}
       title={tSync('permission.editFile')}
-      subtitle={t9}
-      question={<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: t10 })}</Text>}
+      subtitle={relativePath}
+      question={<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: baseFileName })}</Text>}
       content={
         edits.length > 0 ? (
           <FileEditToolDiff file_path={filePath} edits={edits} />

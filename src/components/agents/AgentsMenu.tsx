@@ -279,7 +279,6 @@ export function AgentsMenu({ tools, onExit }: Props) {
         <AgentDetail
           agent={agentToDisplay}
           tools={mergedTools}
-          allAgents={allAgents}
           onBack={handleBack}
         />
       )

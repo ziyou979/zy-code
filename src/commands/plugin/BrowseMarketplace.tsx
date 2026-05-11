@@ -654,24 +654,24 @@ export function BrowseMarketplace({
             </Text>
           </Box>
         )}
-        {marketplaces.map((marketplace_3, index) => (
+        {marketplaces.map((marketplaceItem, index) => (
           <Box
-            key={marketplace_3.name}
+            key={marketplaceItem.name}
             flexDirection="column"
             marginBottom={index < marketplaces.length - 1 ? 1 : 0}
           >
             <Box>
               <Text color={selectedIndex === index ? 'suggestion' : undefined}>
-                {selectedIndex === index ? figures.pointer : ' '} {marketplace_3.name}
+                {selectedIndex === index ? figures.pointer : ' '} {marketplaceItem.name}
               </Text>
             </Box>
             <Box marginLeft={2}>
               <Text dimColor>
-                {marketplace_3.totalPlugins} {plural(marketplace_3.totalPlugins, 'plugin')}{' '}
+                {marketplaceItem.totalPlugins} {plural(marketplaceItem.totalPlugins, 'plugin')}{' '}
                 available
-                {marketplace_3.installedCount > 0 &&
-                  ` · ${marketplace_3.installedCount} already installed`}
-                {marketplace_3.source && ` · ${marketplace_3.source}`}
+                {marketplaceItem.installedCount > 0 &&
+                  ` · ${marketplaceItem.installedCount} already installed`}
+                {marketplaceItem.source && ` · ${marketplaceItem.source}`}
               </Text>
             </Box>
           </Box>
@@ -801,11 +801,11 @@ export function BrowseMarketplace({
 
         {/* Menu options */}
         <Box flexDirection="column">
-          {menuOptions.map((option, index_0) => (
+          {menuOptions.map((option, menuOptionIndex) => (
             <Box key={option.action}>
-              {detailsMenuIndex === index_0 && <Text>{'> '}</Text>}
-              {detailsMenuIndex !== index_0 && <Text>{'  '}</Text>}
-              <Text bold={detailsMenuIndex === index_0}>
+              {detailsMenuIndex === menuOptionIndex && <Text>{'> '}</Text>}
+              {detailsMenuIndex !== menuOptionIndex && <Text>{'  '}</Text>}
+              <Text bold={detailsMenuIndex === menuOptionIndex}>
                 {isInstalling && option.action === 'install' ? 'Installing…' : option.label}
               </Text>
             </Box>

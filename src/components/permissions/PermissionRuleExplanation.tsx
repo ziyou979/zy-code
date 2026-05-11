@@ -78,8 +78,8 @@ export function PermissionRuleExplanation({
   toolType,
 }: PermissionRuleExplanationProps) {
   const permissionMode = useAppState((s) => s.toolPermissionContext.mode)
-  const t1 = permissionResult?.decisionReason
-  const strings = stringsForDecisionReason(t1, toolType)
+  const decisionReason = permissionResult?.decisionReason
+  const strings = stringsForDecisionReason(decisionReason, toolType)
   if (!strings) {
     return null
   }

@@ -222,7 +222,7 @@ export function useVoiceIntegration({
     : ('idle' as const)
   const voiceInterimTranscript = feature('VOICE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useVoiceState((s_0) => s_0.voiceInterimTranscript)
+      useVoiceState((state) => state.voiceInterimTranscript)
     : ''
 
   // Set the voice anchor for focus mode (where recording starts via terminal

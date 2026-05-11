@@ -12,10 +12,10 @@ export type SandboxPermissionRequestProps = {
   onUserResponse: (response: { allow: boolean; persistToSettings: boolean }) => void
 }
 export function SandboxPermissionRequest({
-  hostPattern: t1,
+  hostPattern: networkHost,
   onUserResponse,
 }: SandboxPermissionRequestProps) {
-  const { host } = t1
+  const { host } = networkHost
   const onSelect = function onSelect(value) {
     switch (value) {
       case 'yes': {

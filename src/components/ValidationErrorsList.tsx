@@ -73,9 +73,8 @@ export function ValidationErrorsList({ errors }) {
     return acc
   }, {})
   const sortedFiles = Object.keys(errorsByFile).sort()
-  const T0 = Box
-  const t2 = sortedFiles.map((file_0) => {
-    const fileErrors = errorsByFile[file_0] || []
+  const fileErrorElements = sortedFiles.map((fileName) => {
+    const fileErrors = errorsByFile[fileName] || []
     fileErrors.sort((a, b) => {
       if (!a.path && b.path) {
         return -1
@@ -87,13 +86,13 @@ export function ValidationErrorsList({ errors }) {
     })
     const errorTree = buildNestedTree(fileErrors)
     const suggestionPairs = new Map()
-    fileErrors.forEach((error_0) => {
-      if (error_0.suggestion || error_0.docLink) {
-        const key = `${error_0.suggestion || ''}|${error_0.docLink || ''}`
+    fileErrors.forEach((fileError) => {
+      if (fileError.suggestion || fileError.docLink) {
+        const key = `${fileError.suggestion || ''}|${fileError.docLink || ''}`
         if (!suggestionPairs.has(key)) {
           suggestionPairs.set(key, {
-            suggestion: error_0.suggestion,
-            docLink: error_0.docLink,
+            suggestion: fileError.suggestion,
+            docLink: fileError.docLink,
           })
         }
       }
@@ -108,8 +107,8 @@ export function ValidationErrorsList({ errors }) {
       },
     })
     return (
-      <Box key={file_0} flexDirection="column">
-        <Text>{file_0}</Text>
+      <Box key={fileName} flexDirection="column">
+        <Text>{fileName}</Text>
         <Box marginLeft={1}>
           <Text dimColor={true}>{treeOutput}</Text>
         </Box>
@@ -134,5 +133,5 @@ export function ValidationErrorsList({ errors }) {
       </Box>
     )
   })
-  return <T0 flexDirection={'column'}>{t2}</T0>
+  return <Box flexDirection={'column'}>{fileErrorElements}</Box>
 }

@@ -47,8 +47,8 @@ export function PreviewBox(props) {
   )
 }
 function PreviewBoxWithHighlight(props) {
-  const t0 = getCliHighlightPromise()
-  const highlight = use(t0)
+  const highlightPromise = getCliHighlightPromise()
+  const highlight = use(highlightPromise)
   return <PreviewBoxBody {...props} highlight={highlight} />
 }
 function PreviewBoxBody({ content, maxLines, minHeight, minWidth = 40, maxWidth, highlight }) {
@@ -70,10 +70,10 @@ function PreviewBoxBody({ content, maxLines, minHeight, minWidth = 40, maxWidth,
   const contentWidth = Math.max(minWidth, ...lines.map((line) => stringWidth(line)))
   const boxWidth = Math.min(contentWidth + 4, effectiveMaxWidth)
   const innerWidth = boxWidth - 4
-  const t6 = BOX_CHARS.horizontal.repeat(boxWidth - 2)
-  const topBorder = `${BOX_CHARS.topLeft}${t6}${BOX_CHARS.topRight}`
-  const t7 = BOX_CHARS.horizontal.repeat(boxWidth - 2)
-  const bottomBorder = `${BOX_CHARS.bottomLeft}${t7}${BOX_CHARS.bottomRight}`
+  const horizontalLineChars = BOX_CHARS.horizontal.repeat(boxWidth - 2)
+  const topBorder = `${BOX_CHARS.topLeft}${horizontalLineChars}${BOX_CHARS.topRight}`
+  const bottomHorizontalLineChars = BOX_CHARS.horizontal.repeat(boxWidth - 2)
+  const bottomBorder = `${BOX_CHARS.bottomLeft}${bottomHorizontalLineChars}${BOX_CHARS.bottomRight}`
   const truncationBar = isTruncated
     ? (() => {
         const hiddenCount = contentLines.length - effectiveMaxLines
@@ -104,6 +104,6 @@ function PreviewBoxBody({ content, maxLines, minHeight, minWidth = 40, maxWidth,
       {lineElements}
       {truncationBar && <Text color="warning">{truncationBar}</Text>}
       {<Text dimColor={true}>{bottomBorder}</Text>}
-    </T0>
+    </BoxComponent>
   )
 }

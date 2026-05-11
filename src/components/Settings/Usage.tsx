@@ -216,8 +216,8 @@ export function Usage(): React.ReactNode {
       {limits.some(({ limit }) => limit) || <Text dimColor>{tSync('usage.subscriptionOnly')}</Text>}
 
       {limits.map(
-        ({ title, limit: limit_0 }) =>
-          limit_0 && <LimitBar key={title} title={title} limit={limit_0} maxWidth={maxWidth} />,
+        ({ title, limit: rateLimit }) =>
+          rateLimit && <LimitBar key={title} title={title} limit={rateLimit} maxWidth={maxWidth} />,
       )}
 
       {utilization.extra_usage && (
@@ -264,21 +264,21 @@ function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
   const formattedMonthlyLimit = formatCost(extraUsage.monthly_limit / 100, 2)
   const now = new Date()
   const oneMonthReset = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  const T0 = LimitBar
-  const t6 = oneMonthReset.toISOString()
-  const t9 = tSync('usage.spent', {
+  const LimitBarComponent = LimitBar
+  const resetIsoString = oneMonthReset.toISOString()
+  const spentText = tSync('usage.spent', {
     used: formattedUsedCredits,
     total: formattedMonthlyLimit,
   })
   return (
-    <T0
+    <LimitBarComponent
       title={EXTRA_USAGE_SECTION_TITLE}
       limit={{
         utilization: extraUsage.utilization,
-        resets_at: t6,
+        resets_at: resetIsoString,
       }}
       showTimeInReset={false}
-      extraSubtext={t9}
+      extraSubtext={spentText}
       maxWidth={maxWidth}
     />
   )

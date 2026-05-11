@@ -75,8 +75,8 @@ export function Notifications({
   const messagesForTokenCount = getMessagesAfterCompactBoundary(messages)
   const tokenUsage = tokenCountFromLastAPIResponse(messagesForTokenCount)
   const mainLoopModel = useMainLoopModel()
-  const t4 = calculateTokenWarningState(tokenUsage, mainLoopModel)
-  const isShowingCompactMessage = t4.isAboveWarningThreshold
+  const tokenWarningState = calculateTokenWarningState(tokenUsage, mainLoopModel)
+  const isShowingCompactMessage = tokenWarningState.isAboveWarningThreshold
   const { status: ideStatus } = useIdeConnectionStatus(mcpClients)
   const notifications = useAppState((s) => s.notifications)
   const { addNotification, removeNotification } = useNotifications()
@@ -228,12 +228,12 @@ function NotificationContent({
   const voiceEnabled = feature('VOICE_MODE') ? useVoiceEnabled() : false
   const voiceError = feature('VOICE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useVoiceState((s_0) => s_0.voiceError)
+      useVoiceState((voiceAppState) => voiceAppState.voiceError)
     : null
   const isBriefOnly =
     feature('KAIROS') || feature('KAIROS_BRIEF')
       ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-        useAppState((s_1) => s_1.isBriefOnly)
+        useAppState((appState) => appState.isBriefOnly)
       : false
 
   // When voice is actively recording or processing, replace all

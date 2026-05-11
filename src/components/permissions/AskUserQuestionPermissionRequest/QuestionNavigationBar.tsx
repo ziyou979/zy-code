@@ -52,7 +52,7 @@ export function QuestionNavigationBar({
     }
   }
   const hideArrows = questions.length === 1 && hideSubmitTab
-  const t4 = questions.map((q_1, index_2) => {
+  const tabElements = questions.map((q_1, index_2) => {
     const isSelected = index_2 === currentQuestionIndex
     const isAnswered = q_1?.question && !!answers[q_1.question]
     const checkbox = isAnswered ? figures.checkboxOn : figures.checkboxOff
@@ -76,7 +76,7 @@ export function QuestionNavigationBar({
   return (
     <Box flexDirection="row" marginBottom={1}>
       {!hideArrows && <Text color={currentQuestionIndex === 0 ? 'inactive' : undefined}>← </Text>}
-      {t4}
+      {tabElements}
       {!hideSubmitTab && (
         <Box key="submit">
           {currentQuestionIndex === questions.length ? (

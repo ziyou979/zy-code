@@ -36,9 +36,9 @@ export function useSurveyState({
   const showThanksThenClose = useCallback(() => {
     setState('thanks')
     setTimeout(
-      (setState_0, setLastResponse_0) => {
-        setState_0('closed')
-        setLastResponse_0(null)
+      (updateState, updateLastResponse) => {
+        updateState('closed')
+        updateLastResponse(null)
       },
       hideThanksAfterMs,
       setState,

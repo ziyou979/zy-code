@@ -26,10 +26,7 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
     }
     onAccept()
   }
-  const T0 = PermissionDialog
-  const T1 = Box
-  const T2 = Box
-  const t12 = settingsList.map((item, index) => (
+  const settingsListItems = settingsList.map((item, index) => (
     <Box key={index} paddingLeft={2}>
       <Text>
         <Text dimColor={true}>· </Text>
@@ -38,15 +35,15 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
     </Box>
   ))
   return (
-    <T0 color={'warning'} titleColor={'warning'} title={tSync('managedSettings.requireApproval')}>
+    <PermissionDialog color={'warning'} titleColor={'warning'} title={tSync('managedSettings.requireApproval')}>
       {
-        <T1 flexDirection={'column'} gap={1} paddingTop={1}>
+        <Box flexDirection={'column'} gap={1} paddingTop={1}>
           {<Text>{tSync('managedSettings.orgConfiguredWarning')}</Text>}
           {
-            <T2 flexDirection={'column'}>
+            <Box flexDirection={'column'}>
               {<Text dimColor={true}>{tSync('managedSettings.requiringApproval')}</Text>}
-              {t12}
-            </T2>
+              {settingsListItems}
+            </Box>
           }
           {<Text>{tSync('managedSettings.onlyAcceptIfTrust')}</Text>}
           {
@@ -61,7 +58,7 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
                   value: 'exit',
                 },
               ]}
-              onChange={(value_0) => onChange(value_0 as 'accept' | 'exit')}
+              onChange={(selectedValue) => onChange(selectedValue as 'accept' | 'exit')}
               onCancel={() => onChange('exit')}
             />
           }
@@ -74,8 +71,8 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
               )}
             </Text>
           }
-        </T1>
+        </Box>
       }
-    </T0>
+    </PermissionDialog>
   )
 }

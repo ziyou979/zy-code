@@ -148,13 +148,13 @@ export function QuestionView({
       )
     }
   }
-  const t10 = questionState?.textInputValue ?? ''
+  const initialTextInputValue = questionState?.textInputValue ?? ''
   const otherOption = {
     type: 'input' as const,
     value: '__other__',
     label: 'Other',
     placeholder: question.multiSelect ? 'Type something' : 'Type something.',
-    initialValue: t10,
+    initialValue: initialTextInputValue,
     onChange: (value_0) => {
       onUpdateQuestionState(
         questionText,

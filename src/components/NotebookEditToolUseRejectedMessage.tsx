@@ -25,7 +25,7 @@ export function NotebookEditToolUseRejectedMessage({
     edit_mode === 'delete'
       ? tSync('notebookEdit.rejectedDelete')
       : tSync('notebookEdit.rejectedEditCell', { mode: edit_mode })
-  const t3 = verbose ? notebook_path : relative(getCwd(), notebook_path)
+  const displayPath = verbose ? notebook_path : relative(getCwd(), notebook_path)
   return (
     <MessageResponse>
       <Box flexDirection="column">
@@ -34,7 +34,7 @@ export function NotebookEditToolUseRejectedMessage({
             {<Text color="subtle">{operation} </Text>}
             {
               <Text bold={true} color="subtle">
-                {t3}
+                {displayPath}
               </Text>
             }
             {<Text color="subtle"> {tSync('notebookEdit.atCell', { cellId: cell_id })}</Text>}

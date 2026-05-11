@@ -24,7 +24,7 @@ export function DevChannelsDialog({ channels, onAccept }: Props) {
   const handleEscape = () => {
     gracefulShutdownSync(0)
   }
-  const t4 = channels
+  const channelsDisplayText = channels
     .map((c) => (c.kind === 'plugin' ? `plugin:${c.name}@${c.marketplace}` : `server:${c.name}`))
     .join(', ')
   return (
@@ -33,7 +33,7 @@ export function DevChannelsDialog({ channels, onAccept }: Props) {
         <Box flexDirection="column" gap={1}>
           {<Text>{tSync('devChannels.description')}</Text>}
           {<Text>{tSync('devChannels.useChannels')}</Text>}
-          <Text dimColor={true}>Channels: {t4}</Text>
+          <Text dimColor={true}>Channels: {channelsDisplayText}</Text>
         </Box>
       }
       {

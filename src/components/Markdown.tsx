@@ -92,8 +92,8 @@ export function Markdown(props) {
   )
 }
 function MarkdownWithHighlight(props) {
-  const t0 = getCliHighlightPromise()
-  const highlight = use(t0)
+  const highlightPromise = getCliHighlightPromise()
+  const highlight = use(highlightPromise)
   return <MarkdownBody {...props} highlight={highlight} />
 }
 function MarkdownBody({ children, dimColor, highlight }) {

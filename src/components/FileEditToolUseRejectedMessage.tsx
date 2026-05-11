@@ -33,7 +33,7 @@ export function FileEditToolUseRejectedMessage({
   verbose,
 }: Props) {
   const { columns } = useTerminalSize()
-  const t2 = verbose ? file_path : relative(getCwd(), file_path)
+  const displayFilePath = verbose ? file_path : relative(getCwd(), file_path)
   const text = (
     <Box flexDirection="row">
       {
@@ -45,7 +45,7 @@ export function FileEditToolUseRejectedMessage({
       }
       {
         <Text bold={true} color="subtle">
-          {t2}
+          {displayFilePath}
         </Text>
       }
     </Box>

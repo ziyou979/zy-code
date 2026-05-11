@@ -83,8 +83,8 @@ function ToggleTagAndClose({ tagName, onDone }) {
         tagName={normalizedTag}
         onConfirm={async () => {
           logEvent('zy_tag_command_remove_confirmed', {})
-          const fullPath_0 = getTranscriptPath()
-          await saveTag(sessionId, '', fullPath_0)
+          const transcriptPath = getTranscriptPath()
+          await saveTag(sessionId, '', transcriptPath)
           onDone(tSync('tag.tagRemoved', { tagName: normalizedTag }), {
             display: 'system',
           })

@@ -8,7 +8,7 @@ type Props = {
   historyFailedMatch: boolean
 }
 function HistorySearchInput({ value, onChange, historyFailedMatch }: Props) {
-  const t3 = stringWidth(value) + 1
+  const inputWidth = stringWidth(value) + 1
   return (
     <Box gap={1}>
       {
@@ -21,8 +21,8 @@ function HistorySearchInput({ value, onChange, historyFailedMatch }: Props) {
           value={value}
           onChange={onChange}
           cursorOffset={value.length}
-          onChangeCursorOffset={_temp}
-          columns={t3}
+          onChangeCursorOffset={noopCursorHandler}
+          columns={inputWidth}
           focus={true}
           showCursor={true}
           multiline={false}
@@ -32,5 +32,5 @@ function HistorySearchInput({ value, onChange, historyFailedMatch }: Props) {
     </Box>
   )
 }
-function _temp() {}
+function noopCursorHandler() {}
 export default HistorySearchInput

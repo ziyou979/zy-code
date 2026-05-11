@@ -55,8 +55,8 @@ export const HighlightedCode = memo(function HighlightedCode({
     gutterWidth = 0
   } else {
     const lineCount = countCharInString(code, '\n') + 1
-    const t7 = lineCount.toString()
-    gutterWidth = t7.length + 2
+    const lineCountString = lineCount.toString()
+    gutterWidth = lineCountString.length + 2
   }
   return (
     <Box ref={ref}>

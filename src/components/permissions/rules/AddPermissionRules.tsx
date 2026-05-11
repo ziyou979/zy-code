@@ -110,22 +110,22 @@ export function AddPermissionRules({
       }
     }
   }
-  const t3 = plural(ruleValues.length, 'rule')
+  const ruleCountText = plural(ruleValues.length, 'rule')
   const title = tSync('permissionRules.addPermissionRuleTitle', {
     behavior: ruleBehavior,
-    ruleCount: t3,
+    ruleCount: ruleCountText,
   })
-  const t4 = ruleValues.map((ruleValue_0) => (
-    <Box flexDirection="column" key={permissionRuleValueToString(ruleValue_0)}>
-      <Text bold={true}>{permissionRuleValueToString(ruleValue_0)}</Text>
-      <PermissionRuleDescription ruleValue={ruleValue_0} />
+  const ruleDescriptions = ruleValues.map((ruleValue) => (
+    <Box flexDirection="column" key={permissionRuleValueToString(ruleValue)}>
+      <Text bold={true}>{permissionRuleValueToString(ruleValue)}</Text>
+      <PermissionRuleDescription ruleValue={ruleValue} />
     </Box>
   ))
   return (
     <Dialog title={title} onCancel={onCancel} color="permission">
       {
         <Box flexDirection="column" paddingX={2}>
-          {t4}
+          {ruleDescriptions}
         </Box>
       }
       {

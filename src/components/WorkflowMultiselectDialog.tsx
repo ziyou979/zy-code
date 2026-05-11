@@ -59,7 +59,7 @@ export function WorkflowMultiselectDialog({ onSubmit, defaultSelections }: Props
   const handleCancel = () => {
     setShowError(true)
   }
-  const t5 = WORKFLOWS.map((workflow) => ({
+  const workflowOptions = WORKFLOWS.map((workflow) => ({
     label: workflow.label,
     value: workflow.value,
   }))
@@ -82,7 +82,7 @@ export function WorkflowMultiselectDialog({ onSubmit, defaultSelections }: Props
       }
       {
         <SelectMulti
-          options={t5}
+          options={workflowOptions}
           defaultValue={defaultSelections}
           onSubmit={handleSubmit}
           onChange={handleChange}

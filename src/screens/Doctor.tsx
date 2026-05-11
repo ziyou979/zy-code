@@ -93,9 +93,9 @@ function DistTagsDisplay({ promise }: DistTagsDisplayProps) {
 }
 export function Doctor({ onDone }) {
   const agentDefinitions = useAppState((s) => s.agentDefinitions)
-  const mcpTools = useAppState((s_0) => s_0.mcp.tools)
-  const toolPermissionContext = useAppState((s_1) => s_1.toolPermissionContext)
-  const pluginsErrors = useAppState((s_2) => s_2.plugins.errors)
+  const mcpTools = useAppState((state) => state.mcp.tools)
+  const toolPermissionContext = useAppState((state) => state.toolPermissionContext)
+  const pluginsErrors = useAppState((state) => state.plugins.errors)
   useExitOnCtrlCDWithKeybindings()
   const tools = mcpTools || []
   const [diagnostic, setDiagnostic] = useState(null)

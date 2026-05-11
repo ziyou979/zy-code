@@ -55,8 +55,8 @@ export function SessionPreview({ log, onExit, onSelect }: Props) {
       </Box>
     )
   }
-  const t10 = new Set() as Set<string>
-  const t13 = formatRelativeTimeAgo(displayLog.modified)
+  const inProgressToolUseIds = new Set() as Set<string>
+  const relativeTimeText = formatRelativeTimeAgo(displayLog.modified)
   return (
     <Box flexDirection="column">
       {
@@ -67,7 +67,7 @@ export function SessionPreview({ log, onExit, onSelect }: Props) {
           verbose={true}
           toolJSX={null}
           toolUseConfirmQueue={[]}
-          inProgressToolUseIDs={t10}
+          inProgressToolUseIDs={inProgressToolUseIds}
           isMessageSelectorVisible={false}
           conversationId={conversationId}
           screen="transcript"
@@ -89,7 +89,7 @@ export function SessionPreview({ log, onExit, onSelect }: Props) {
         >
           {
             <Text>
-              {t13} · {tSync('sessionPreview.messages', { count: displayLog.messageCount })}
+              {relativeTimeText} · {tSync('sessionPreview.messages', { count: displayLog.messageCount })}
               {displayLog.gitBranch ? ` · ${displayLog.gitBranch}` : ''}
             </Text>
           }

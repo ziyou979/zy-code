@@ -178,7 +178,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
     )
   }
   function renderInstallFailed() {
-    const options_0 = [
+    const installOptions = [
       {
         label: 'Try again',
         value: 'retry',
@@ -186,13 +186,13 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
       },
     ]
     if (tmuxAvailable) {
-      options_0.push({
+      installOptions.push({
         label: 'Use tmux instead',
         value: 'tmux',
         description: 'Falls back to tmux for teammate panes',
       })
     }
-    options_0.push({
+    installOptions.push({
       label: 'Cancel',
       value: 'cancel',
       description: 'Skip teammate spawning for now',
@@ -266,7 +266,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
     )
   }
   function renderFailed() {
-    const options_1 = [
+    const enableOptions = [
       {
         label: 'Try again',
         value: 'retry',
@@ -274,13 +274,13 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
       },
     ]
     if (tmuxAvailable) {
-      options_1.push({
+      enableOptions.push({
         label: 'Use tmux instead',
         value: 'tmux',
         description: 'Falls back to tmux for teammate panes',
       })
     }
-    options_1.push({
+    enableOptions.push({
       label: 'Cancel',
       value: 'cancel',
       description: 'Skip teammate spawning for now',

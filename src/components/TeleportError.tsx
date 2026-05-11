@@ -69,27 +69,27 @@ export function TeleportError({
   }
   switch (currentError) {
     case 'needsGitStash': {
-      let t9
-      t9 = <TeleportStash onStashAndContinue={handleStashComplete} onCancel={onCancel} />
-      return t9
+      let stashDialogContent
+      stashDialogContent = <TeleportStash onStashAndContinue={handleStashComplete} onCancel={onCancel} />
+      return stashDialogContent
     }
     case 'needsLogin': {
       if (isLoggingIn) {
-        let t9
-        t9 = <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod="zyai" />
-        return t9
+        let loginFlowContent
+        loginFlowContent = <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod="zyai" />
+        return loginFlowContent
       }
-      let t9
-      t9 = (
+      let dialogContent
+      dialogContent = (
         <Box flexDirection="column">
           <Text dimColor={true}>{tSync('teleport.requiresAccount')}</Text>
           <Text dimColor={true}>{tSync('teleport.subscriptionInfo')}</Text>
         </Box>
       )
-      let t10
-      t10 = (
+      let loginDialog
+      loginDialog = (
         <Dialog title={tSync('teleport.loginTitle')} onCancel={onCancel}>
-          {t9}
+          {dialogContent}
           <Select
             options={[
               {
@@ -105,7 +105,7 @@ export function TeleportError({
           />
         </Dialog>
       )
-      return t10
+      return loginDialog
     }
   }
 }

@@ -30,8 +30,8 @@ type Props = {
 }
 export function TrustDialog({ onDone, commands }: Props) {
   const { servers: projectServers } = getMcpConfigsByScope('project')
-  const t2 = Object.keys(projectServers)
-  const hasMcpServers = t2.length > 0
+  const mcpServerKeys = Object.keys(projectServers)
+  const hasMcpServers = mcpServerKeys.length > 0
   const hooksSettingSources = getHooksSources()
   const hasHooks = hooksSettingSources.length > 0
   const bashSettingSources = getBashPermissionSources()

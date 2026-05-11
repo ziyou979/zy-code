@@ -81,10 +81,10 @@ const CHANGE_THRESHOLD = 0.4
 export function StructuredDiffFallback({ patch, dim, width }: Props) {
   const [theme] = useTheme()
   const diff = formatDiff(patch.lines, patch.oldStart, width, dim, theme)
-  const t2 = diff.map((node, i) => <Box key={i}>{node}</Box>)
+  const renderedLines = diff.map((node, i) => <Box key={i}>{node}</Box>)
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {t2}
+      {renderedLines}
     </Box>
   )
 }

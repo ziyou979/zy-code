@@ -89,7 +89,7 @@ export function PluginOptionsDialog({
         ...prev,
         [currentField]: currentInput,
       }))
-      setCurrentFieldIndex((prev_0) => prev_0 + 1)
+      setCurrentFieldIndex((previousIndex) => previousIndex + 1)
       const nextKey = fields[currentFieldIndex + 1]
       setCurrentInput(nextKey ? initialFor(nextKey) : '')
     }
@@ -106,9 +106,9 @@ export function PluginOptionsDialog({
       onSave(buildFinalValues(fields, newValues, configSchema, initialValues))
     } else {
       setValues(newValues)
-      setCurrentFieldIndex((prev_1) => prev_1 + 1)
-      const nextKey_0 = fields[currentFieldIndex + 1]
-      setCurrentInput(nextKey_0 ? initialFor(nextKey_0) : '')
+      setCurrentFieldIndex((previousIndex) => previousIndex + 1)
+      const nextFieldKey = fields[currentFieldIndex + 1]
+      setCurrentInput(nextFieldKey ? initialFor(nextFieldKey) : '')
     }
   }
   useKeybindings(
@@ -120,13 +120,13 @@ export function PluginOptionsDialog({
       context: 'Confirmation',
     },
   )
-  useInput((char, key_0) => {
-    if (key_0.backspace || key_0.delete) {
-      setCurrentInput((prev_2) => prev_2.slice(0, -1))
+  useInput((char, inputKey) => {
+    if (inputKey.backspace || inputKey.delete) {
+      setCurrentInput((previousInput) => previousInput.slice(0, -1))
       return
     }
-    if (char && !key_0.ctrl && !key_0.meta && !key_0.tab && !key_0.return) {
-      setCurrentInput((prev_3) => prev_3 + char)
+    if (char && !inputKey.ctrl && !inputKey.meta && !inputKey.tab && !inputKey.return) {
+      setCurrentInput((previousInput) => previousInput + char)
     }
   })
   if (!fieldSchema || !currentField) {

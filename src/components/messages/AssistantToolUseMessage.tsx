@@ -102,7 +102,7 @@ export function AssistantToolUseMessage({
     if (isQueued || isResolved) {
       return null
     }
-    const t4 = renderToolUseProgressMessage(
+    const progressMessageElement = renderToolUseProgressMessage(
       tool_0,
       tools,
       lookups,
@@ -117,7 +117,7 @@ export function AssistantToolUseMessage({
     )
     return (
       <Box flexDirection="column" width="100%" backgroundColor={bg as any}>
-        {t4}
+        {progressMessageElement}
       </Box>
     )
   }
@@ -134,9 +134,9 @@ export function AssistantToolUseMessage({
   if (renderedToolUseMessage === null) {
     return null
   }
-  const t6 = stringWidth(userFacingToolName) + (shouldShowDot ? 2 : 0)
-  const t11 = input_0.success && tool_0.renderToolUseTag && tool_0.renderToolUseTag(input_0.data)
-  const t13 =
+  const minBoxWidth = stringWidth(userFacingToolName) + (shouldShowDot ? 2 : 0)
+  const toolTagElement = input_0.success && tool_0.renderToolUseTag && tool_0.renderToolUseTag(input_0.data)
+  const progressOrStatusElement =
     !isResolved &&
     !isQueued &&
     (isClassifierChecking ? (
@@ -164,7 +164,7 @@ export function AssistantToolUseMessage({
         terminalSize,
       )
     ))
-  const t14 = !isResolved && isQueued && renderToolUseQueuedMessage(tool_0)
+  const queuedMessageElement = !isResolved && isQueued && renderToolUseQueuedMessage(tool_0)
   return (
     <Box
       flexDirection="row"
@@ -176,7 +176,7 @@ export function AssistantToolUseMessage({
       {
         <Box flexDirection="column">
           {
-            <Box flexDirection="row" flexWrap="nowrap" minWidth={t6}>
+            <Box flexDirection="row" flexWrap="nowrap" minWidth={minBoxWidth}>
               {shouldShowDot &&
                 (isQueued ? (
                   <Box minWidth={2}>
@@ -206,11 +206,11 @@ export function AssistantToolUseMessage({
                   <Text>({renderedToolUseMessage})</Text>
                 </Box>
               )}
-              {t11}
+              {toolTagElement}
             </Box>
           }
-          {t13}
-          {t14}
+          {progressOrStatusElement}
+          {queuedMessageElement}
         </Box>
       }
     </Box>

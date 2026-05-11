@@ -10,7 +10,7 @@ type Props = {
   verbose: boolean
 }
 export function BashModeProgress({ input, progress, verbose }: Props) {
-  const t3 = progress ? (
+  const progressContent = progress ? (
     <ShellProgressMessage
       fullOutput={progress.fullOutput}
       output={progress.output}
@@ -36,7 +36,7 @@ export function BashModeProgress({ input, progress, verbose }: Props) {
           }}
         />
       }
-      {t3}
+      {progressContent}
     </Box>
   )
 }

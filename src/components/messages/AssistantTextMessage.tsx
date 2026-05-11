@@ -80,11 +80,8 @@ export function AssistantTextMessage({
       return null
     }
     case PROMPT_TOO_LONG_ERROR_MESSAGE: {
-      let t2
-      t2 = getUpgradeMessage('warning')
-      const upgradeHint = t2
-      let t3
-      t3 = (
+      const upgradeHint = getUpgradeMessage('warning')
+      return (
         <MessageResponse height={1}>
           <Text color="error">
             Context limit reached · /compact or /clear to continue
@@ -92,41 +89,33 @@ export function AssistantTextMessage({
           </Text>
         </MessageResponse>
       )
-      return t3
     }
     case CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE: {
-      let t2
-      t2 = (
+      return (
         <MessageResponse height={1}>
           <Text color="error">
             Credit balance too low · Add funds: https://platform.zy.com/settings/billing
           </Text>
         </MessageResponse>
       )
-      return t2
     }
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY:
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH: {
-      let t2
-      t2 = (
+      return (
         <MessageResponse>
           <Text color="error">{text}</Text>
         </MessageResponse>
       )
-      return t2
     }
     case TOKEN_REVOKED_ERROR_MESSAGE: {
-      let t2
-      t2 = (
+      return (
         <MessageResponse height={1}>
           <Text color="error">{TOKEN_REVOKED_ERROR_MESSAGE}</Text>
         </MessageResponse>
       )
-      return t2
     }
     case API_TIMEOUT_ERROR_MESSAGE: {
-      let t2
-      t2 = (
+      return (
         <MessageResponse height={1}>
           <Text color="error">
             {API_TIMEOUT_ERROR_MESSAGE}
@@ -136,16 +125,13 @@ export function AssistantTextMessage({
           </Text>
         </MessageResponse>
       )
-      return t2
     }
     case CUSTOM_OFF_SWITCH_MESSAGE: {
-      let t2
-      t2 = <Text color="error">We are experiencing high demand for Opus 4.</Text>
-      let t3
-      t3 = (
+      const highDemandMessage = <Text color="error">We are experiencing high demand for Opus 4.</Text>
+      return (
         <MessageResponse>
           <Box flexDirection="column" gap={1}>
-            {t2}
+            {highDemandMessage}
             <Text>
               To continue immediately, use /model to switch to{' '}
               {renderModelName(getDefaultStandardModel())} and continue coding.
@@ -153,76 +139,64 @@ export function AssistantTextMessage({
           </Box>
         </MessageResponse>
       )
-      return t3
     }
     case ERROR_MESSAGE_USER_ABORT: {
-      let t2
-      t2 = (
+      return (
         <MessageResponse height={1}>
           <InterruptedByUser />
         </MessageResponse>
       )
-      return t2
     }
     default: {
       if (startsWithApiErrorPrefix(text)) {
         const truncated = !verbose && text.length > MAX_API_ERROR_CHARS
-        const t2 =
+        const errorMessage =
           text === API_ERROR_MESSAGE_PREFIX
             ? `${API_ERROR_MESSAGE_PREFIX}: Please wait a moment and try again.`
             : truncated
               ? text.slice(0, MAX_API_ERROR_CHARS) + '\u2026'
               : text
-        let t3
-        t3 = <Text color="error">{t2}</Text>
-        let t4
-        t4 = truncated && <CtrlOToExpand />
-        let t5
-        t5 = (
+        const errorTextElement = <Text color="error">{errorMessage}</Text>
+        const expandHint = truncated && <CtrlOToExpand />
+        return (
           <MessageResponse>
             <Box flexDirection="column">
-              {t3}
-              {t4}
+              {errorTextElement}
+              {expandHint}
             </Box>
           </MessageResponse>
         )
-        return t5
       }
-      const t2 = addMargin ? 1 : 0
-      const t3 = isSelected ? 'messageActionsBackground' : undefined
-      let t4
-      t4 = shouldShowDot && (
+      const marginTopValue = addMargin ? 1 : 0
+      const backgroundColorValue = isSelected ? 'messageActionsBackground' : undefined
+      const dotElement = shouldShowDot && (
         <NoSelect fromLeftEdge={true} minWidth={2}>
           <Text color={isSelected ? 'suggestion' : 'text'}>{BLACK_CIRCLE}</Text>
         </NoSelect>
       )
-      let t5
-      t5 = (
+      const messageContent = (
         <Box flexDirection="column">
           <Markdown>{text}</Markdown>
         </Box>
       )
-      let t6
-      t6 = (
+      const messageRow = (
         <Box flexDirection="row">
-          {t4}
-          {t5}
+          {dotElement}
+          {messageContent}
         </Box>
       )
-      let t7
-      t7 = (
+      return (
         <Box
           alignItems="flex-start"
           flexDirection="row"
           justifyContent="space-between"
-          marginTop={t2}
+          marginTop={marginTopValue}
           width="100%"
-          backgroundColor={t3}
+          backgroundColor={backgroundColorValue}
         >
-          {t6}
+          {messageRow}
         </Box>
       )
-      return t7
     }
   }
 }

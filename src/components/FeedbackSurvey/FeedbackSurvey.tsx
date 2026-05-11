@@ -100,12 +100,12 @@ function FeedbackSurveyThanks({
   onRequestFeedback,
 }: ThanksProps) {
   const showFollowUp = onRequestFeedback && (lastResponse as any) === 'good'
-  const t1 = Boolean(showFollowUp)
+  const followUpEnabled = Boolean(showFollowUp)
   useDebouncedDigitInput({
     inputValue,
     setInputValue,
     isValidDigit: isFollowUpDigit,
-    enabled: t1,
+    enabled: followUpEnabled,
     once: true,
     onDigit: () => {
       logEvent('zy_feedback_survey_event', {

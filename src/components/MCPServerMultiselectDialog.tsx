@@ -49,7 +49,7 @@ export function MCPServerMultiselectDialog({ serverNames, onDone }: Props) {
     })
     onDone()
   }
-  const t5 = serverNames.map((server_0) => ({
+  const serverOptions = serverNames.map((server_0) => ({
     label: server_0,
     value: server_0,
   }))
@@ -66,7 +66,7 @@ export function MCPServerMultiselectDialog({ serverNames, onDone }: Props) {
           {<MCPServerDialogCopy />}
           {
             <SelectMulti
-              options={t5}
+              options={serverOptions}
               defaultValue={serverNames}
               onSubmit={onSubmit}
               onCancel={handleEscRejectAll}

@@ -113,21 +113,21 @@ export function InProcessTeammateDetailDialog({
       }
     </Text>
   )
-  const t17 = teammate.status === 'running' &&
+  const progressSection = teammate.status === 'running' &&
     teammate.progress?.recentActivities &&
     teammate.progress.recentActivities.length > 0 && (
       <Box flexDirection="column">
         <Text bold={true} dimColor={true}>
           {tSync('backgroundTasks.progress')}
         </Text>
-        {teammate.progress.recentActivities.map((activity_0, i) => (
+        {teammate.progress.recentActivities.map((activity, index) => (
           <Text
-            key={i}
-            dimColor={i < teammate.progress.recentActivities.length - 1}
+            key={index}
+            dimColor={index < teammate.progress.recentActivities.length - 1}
             wrap="truncate-end"
           >
-            {i === teammate.progress.recentActivities.length - 1 ? '\u203A ' : '  '}
-            {renderToolActivity(activity_0, tools, theme)}
+            {index === teammate.progress.recentActivities.length - 1 ? '\u203A ' : '  '}
+            {renderToolActivity(activity, tools, theme)}
           </Text>
         ))}
       </Box>
@@ -157,7 +157,7 @@ export function InProcessTeammateDetailDialog({
             )
           }
         >
-          {t17}
+          {progressSection}
           {
             <Box flexDirection="column" marginTop={1}>
               {

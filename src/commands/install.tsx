@@ -171,19 +171,19 @@ function Install({ onDone, force, target }: InstallProps): React.ReactNode {
         }
 
         // Combine all warning/info messages (convert SetupMessage to string)
-        const allWarnings = [...warnings, ...aliasMessages.map((m_0) => m_0.message)]
+        const allWarnings = [...warnings, ...aliasMessages.map((aliasMessage) => aliasMessage.message)]
 
         // Check if there were any setup errors or notes
         if (setupMessages.length > 0) {
           setState({
             type: 'set-up',
-            messages: setupMessages.map((m_1) => m_1.message),
+            messages: setupMessages.map((setupMessage) => setupMessage.message),
           })
           // Still mark as success but show both setup messages and cleanup warnings
           setTimeout(setState, 2000, {
             type: 'success' as const,
             version: result.latestVersion || 'current',
-            setupMessages: [...setupMessages.map((m_2) => m_2.message), ...allWarnings],
+            setupMessages: [...setupMessages.map((setupMessage) => setupMessage.message), ...allWarnings],
           })
         } else {
           // No setup messages, go straight to success (but still show cleanup warnings if any)

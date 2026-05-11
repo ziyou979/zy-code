@@ -8,14 +8,13 @@ export const WizardContext = createContext<WizardContextValue<any> | null>(null)
 // @ts-ignore
 export function WizardProvider({
   steps,
-  initialData: t3 = {} as any,
+  initialData = {} as any,
   onComplete,
   onCancel,
   children,
   title,
   showStepCounter = true,
 }) {
-  const initialData = t3
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [wizardData, setWizardData] = useState(initialData)
   const [isCompleted, setIsCompleted] = useState(false)
@@ -32,7 +31,7 @@ export function WizardProvider({
       if (navigationHistory.length > 0) {
         setNavigationHistory((prev) => [...prev, currentStepIndex])
       }
-      setCurrentStepIndex((prev_0) => prev_0 + 1)
+      setCurrentStepIndex((prevIndex) => prevIndex + 1)
     } else {
       setIsCompleted(true)
     }
@@ -41,12 +40,12 @@ export function WizardProvider({
     if (navigationHistory.length > 0) {
       const previousStep = navigationHistory[navigationHistory.length - 1]
       if (previousStep !== undefined) {
-        setNavigationHistory((prev_1) => prev_1.slice(0, -1))
+        setNavigationHistory((prevHistory) => prevHistory.slice(0, -1))
         setCurrentStepIndex(previousStep)
       }
     } else {
       if (currentStepIndex > 0) {
-        setCurrentStepIndex((prev_2) => prev_2 - 1)
+        setCurrentStepIndex((prevIndex) => prevIndex - 1)
       } else {
         if (onCancel) {
           onCancel()

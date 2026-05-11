@@ -70,24 +70,24 @@ export function Divider({ width, color, char = '\u2500', padding = 0, title }: D
     const sideWidth = Math.max(0, effectiveWidth - titleWidth)
     const leftWidth = Math.floor(sideWidth / 2)
     const rightWidth = sideWidth - leftWidth
-    const t4 = char.repeat(leftWidth)
-    const t6 = char.repeat(rightWidth)
+    const leftDivider = char.repeat(leftWidth)
+    const rightDivider = char.repeat(rightWidth)
     return (
       <Text color={color} dimColor={!color}>
-        {t4}{' '}
+        {leftDivider}{' '}
         {
           <Text dimColor={true}>
             <Ansi>{title}</Ansi>
           </Text>
         }{' '}
-        {t6}
+        {rightDivider}
       </Text>
     )
   }
-  const t4 = char.repeat(effectiveWidth)
+  const fullDivider = char.repeat(effectiveWidth)
   return (
     <Text color={color} dimColor={!color}>
-      {t4}
+      {fullDivider}
     </Text>
   )
 }

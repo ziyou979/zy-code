@@ -42,7 +42,7 @@ export function TeleportProgress({ currentStep, sessionId }: Props) {
   const [ref, time] = useAnimationFrame(100)
   const frame = Math.floor(time / 100) % SPINNER_FRAMES.length
   const currentStepIndex = STEP_KEYS.findIndex((s) => s.key === currentStep)
-  const t5 = STEP_KEYS.map((step, index) => {
+  const progressSteps = STEP_KEYS.map((step, index) => {
     const isComplete = index < currentStepIndex
     const isCurrent = index === currentStepIndex
     const isPending = index > currentStepIndex
@@ -89,7 +89,7 @@ export function TeleportProgress({ currentStep, sessionId }: Props) {
       )}
       {
         <Box flexDirection="column" marginLeft={2}>
-          {t5}
+          {progressSteps}
         </Box>
       }
     </Box>

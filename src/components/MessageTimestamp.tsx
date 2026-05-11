@@ -15,12 +15,12 @@ export function MessageTimestamp({ message, isTranscriptMode }: Props) {
   if (!shouldShowTimestamp) {
     return null
   }
-  const T0 = Box
+  const TimestampBox = Box
   const formattedTimestamp = new Date(message.timestamp).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
   })
-  const t1 = stringWidth(formattedTimestamp)
-  return <T0 minWidth={t1}>{<Text dimColor={true}>{formattedTimestamp}</Text>}</T0>
+  const timestampWidth = stringWidth(formattedTimestamp)
+  return <TimestampBox minWidth={timestampWidth}>{<Text dimColor={true}>{formattedTimestamp}</Text>}</TimestampBox>
 }

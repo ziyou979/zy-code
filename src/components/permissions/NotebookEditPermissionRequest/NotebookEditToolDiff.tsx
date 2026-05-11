@@ -106,8 +106,8 @@ function NotebookEditToolDiffInner({
       editTypeDescription = 'Replace cell contents'
     }
   }
-  const t4 = verbose ? notebook_path : relative(getCwd(), notebook_path)
-  const t9 =
+  const displayPath = verbose ? notebook_path : relative(getCwd(), notebook_path)
+  const editContent =
     edit_mode === 'delete' ? (
       <Box flexDirection="column" paddingLeft={2}>
         <HighlightedCode code={oldSource} filePath={notebook_path} />
@@ -149,7 +149,7 @@ function NotebookEditToolDiffInner({
       <Box borderStyle="round" flexDirection="column" paddingX={1}>
         {
           <Box paddingBottom={1} flexDirection="column">
-            {<Text bold={true}>{t4}</Text>}
+            {<Text bold={true}>{displayPath}</Text>}
             {
               <Text dimColor={true}>
                 {editTypeDescription} for cell {cell_id}
@@ -158,7 +158,7 @@ function NotebookEditToolDiffInner({
             }
           </Box>
         }
-        {t9}
+        {editContent}
       </Box>
     </Box>
   )

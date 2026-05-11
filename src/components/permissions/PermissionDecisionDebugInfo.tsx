@@ -63,8 +63,8 @@ function PermissionDecisionInfoItem({ title, decisionReason }: PermissionDecisio
       case 'subcommandResults': {
         return (
           <Box flexDirection="column">
-            {Array.from(decisionReason.reasons.entries()).map((t2) => {
-              const [subcommand, result] = t2
+            {Array.from(decisionReason.reasons.entries()).map((subcommandEntry) => {
+              const [subcommand, result] = subcommandEntry
               const icon =
                 result.behavior === 'allow'
                   ? color('success', theme)(figures.tick)
@@ -233,8 +233,8 @@ function SuggestionDisplay({ suggestions, width }: Props) {
               <Text dimColor={true}> {tSync('permissionDebug.directories')} </Text>
             </Box>
             <Box flexDirection="column">
-              {directories.map((dir, index_0) => (
-                <Text key={index_0}>
+              {directories.map((dir, dirIndex) => (
+                <Text key={dirIndex}>
                   {figures.bullet} {dir}
                 </Text>
               ))}
@@ -277,7 +277,7 @@ export function PermissionDecisionDebugInfo({ permissionResult, toolName }) {
       ),
     )
   } else if (toolName) {
-    unreachableRules = all.filter((u_0) => u_0.rule.ruleValue.toolName === toolName)
+    unreachableRules = all.filter((unreachableRule) => unreachableRule.rule.ruleValue.toolName === toolName)
   } else {
     unreachableRules = all
   }
@@ -328,17 +328,17 @@ export function PermissionDecisionDebugInfo({ permissionResult, toolName }) {
             {figures.warning}{' '}
             {tSync('permissionDebug.unreachableRules', { count: unreachableRules.length })}
           </Text>
-          {unreachableRules.map((u_1, i) => (
+          {unreachableRules.map((unreachableRule, i) => (
             <Box key={i} flexDirection="column" marginLeft={2}>
-              <Text color="warning">{permissionRuleValueToString(u_1.rule.ruleValue)}</Text>
+              <Text color="warning">{permissionRuleValueToString(unreachableRule.rule.ruleValue)}</Text>
               <Text dimColor={true}>
                 {'  '}
-                {u_1.reason}
+                {unreachableRule.reason}
               </Text>
               <Text dimColor={true}>
                 {'  '}
                 {tSync('permissionDebug.fix')}
-                {u_1.fix}
+                {unreachableRule.fix}
               </Text>
             </Box>
           ))}

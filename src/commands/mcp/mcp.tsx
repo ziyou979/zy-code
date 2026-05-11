@@ -32,8 +32,8 @@ function MCPToggle({ action, target, onComplete }) {
       )
       return
     }
-    for (const s_0 of toToggle) {
-      toggleMcpServer(s_0.name)
+    for (const server of toToggle) {
+      toggleMcpServer(server.name)
     }
     onComplete(
       target === 'all'

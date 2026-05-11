@@ -47,8 +47,8 @@ type RuleSourceTextProps = {
   onCancel?: () => void
 }
 function RuleSourceText({ rule }: RuleSourceTextProps) {
-  const t1 = permissionRuleSourceDisplayString(rule.source)
-  return <Text dimColor={true}>{tSync('permissionRules.fromSource', { source: t1 })}</Text>
+  const sourceDisplay = permissionRuleSourceDisplayString(rule.source)
+  return <Text dimColor={true}>{tSync('permissionRules.fromSource', { source: sourceDisplay })}</Text>
 }
 
 // Helper function to get the appropriate label for rule behavior
@@ -69,10 +69,10 @@ function RuleDetails({ rule, onDelete, onCancel }: RuleSourceTextProps) {
   useKeybinding('confirm:no', onCancel, {
     context: 'Confirmation',
   })
-  const t2 = permissionRuleValueToString(rule.ruleValue)
+  const ruleValueString = permissionRuleValueToString(rule.ruleValue)
   const ruleDescription = (
     <Box flexDirection="column" marginX={2}>
-      {<Text bold={true}>{t2}</Text>}
+      {<Text bold={true}>{ruleValueString}</Text>}
       {<PermissionRuleDescription ruleValue={rule.ruleValue} />}
       {<RuleSourceText rule={rule} />}
     </Box>
@@ -111,7 +111,7 @@ function RuleDetails({ rule, onDelete, onCancel }: RuleSourceTextProps) {
       </>
     )
   }
-  const t8 = getRuleBehaviorLabel(rule.ruleBehavior)
+  const behaviorLabel = getRuleBehaviorLabel(rule.ruleBehavior)
   const deleteTitle =
     rule.ruleBehavior === 'allow'
       ? tSync('permission.deleteAllowedTool')
@@ -196,7 +196,7 @@ function RulesTabContent(props) {
   useEffect(() => {
     onHeaderFocusChange?.(headerFocused)
   }, [headerFocused, onHeaderFocusChange])
-  const t6 = Math.min(10, options.length)
+  const visibleOptionCount = Math.min(10, options.length)
   return (
     <Box flexDirection="column">
       {
@@ -215,7 +215,7 @@ function RulesTabContent(props) {
           options={options}
           onChange={onSelect}
           onCancel={onCancel}
-          visibleOptionCount={t6}
+          visibleOptionCount={visibleOptionCount}
           isDisabled={isSearchMode || headerFocused}
           defaultFocusValue={lastFocusedRuleKey}
           onUpFromFirstItem={focusHeader}
@@ -232,11 +232,11 @@ function PermissionRulesTab({
   handleToolSelect,
   ...rulesProps
 }: RulesTabContentProps) {
-  const T1 = Box
-  const T0 = RulesTabContent
+  const TabContainer = Box
+  const TabContentComponent = RulesTabContent
   const rulesOptions = getRulesOptions(tab, rulesProps.searchQuery)
   return (
-    <T1 flexDirection={'column'} flexShrink={tab === 'allow' ? 0 : undefined}>
+    <TabContainer flexDirection={'column'} flexShrink={tab === 'allow' ? 0 : undefined}>
       {
         <Text>
           {
@@ -248,8 +248,8 @@ function PermissionRulesTab({
           }
         </Text>
       }
-      {<T0 options={rulesOptions.options} onSelect={(v) => handleToolSelect(v, tab)} {...rulesProps} />}
-    </T1>
+      {<TabContentComponent options={rulesOptions.options} onSelect={(v) => handleToolSelect(v, tab)} {...rulesProps} />}
+    </TabContainer>
   )
 }
 type Props = {
@@ -265,8 +265,8 @@ type Props = {
   onRetryDenials?: (commands: string[]) => void
 }
 export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props) {
-  const t1 = getAutoModeDenials()
-  const hasDenials = t1.length > 0
+  const autoModeDenials = getAutoModeDenials()
+  const hasDenials = autoModeDenials.length > 0
   const defaultTab = initialTab ?? (hasDenials ? 'recent' : 'allow')
   const [changes, setChanges] = useState([])
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
@@ -277,8 +277,8 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     retry: new Set(),
     denials: [],
   })
-  const handleDenialStateChange = (s_0) => {
-    denialStateRef.current = s_0
+  const handleDenialStateChange = (newState) => {
+    denialStateRef.current = newState
   }
   const [selectedRule, setSelectedRule] = useState()
   const [lastFocusedRuleKey, setLastFocusedRuleKey] = useState()
@@ -291,23 +291,23 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleHeaderFocusChange = (focused) => {
     setHeaderFocused(focused)
   }
-  const map = new Map()
+  const allowRulesMap = new Map()
   getAllowRules(toolPermissionContext).forEach((rule) => {
-    map.set(jsonStringify(rule), rule)
+    allowRulesMap.set(jsonStringify(rule), rule)
   })
-  const allowRulesByKey = map
-  const map_0 = new Map()
-  getDenyRules(toolPermissionContext).forEach((rule_0) => {
-    map_0.set(jsonStringify(rule_0), rule_0)
+  const allowRulesByKey = allowRulesMap
+  const denyRulesMap = new Map()
+  getDenyRules(toolPermissionContext).forEach((denyRule) => {
+    denyRulesMap.set(jsonStringify(denyRule), denyRule)
   })
-  const denyRulesByKey = map_0
-  const map_1 = new Map()
-  getAskRules(toolPermissionContext).forEach((rule_1) => {
-    map_1.set(jsonStringify(rule_1), rule_1)
+  const denyRulesByKey = denyRulesMap
+  const askRulesMap = new Map()
+  getAskRules(toolPermissionContext).forEach((askRule) => {
+    askRulesMap.set(jsonStringify(askRule), askRule)
   })
-  const askRulesByKey = map_1
-  const getRulesOptions = (tab, t7) => {
-    const query = t7 === undefined ? '' : t7
+  const askRulesByKey = askRulesMap
+  const getRulesOptions = (tab, searchQueryParam) => {
+    const query = searchQueryParam === undefined ? '' : searchQueryParam
     const rulesByKey = (() => {
       switch (tab) {
         case 'allow': {

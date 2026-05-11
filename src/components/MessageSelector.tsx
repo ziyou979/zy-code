@@ -203,10 +203,10 @@ export function MessageSelector({
       await onRestoreMessage(message)
       setIsRestoring(false)
       onClose()
-    } catch (error_0) {
-      logError(error_0 as Error)
+    } catch (restoreError) {
+      logError(restoreError as Error)
       setIsRestoring(false)
-      setError(`Failed to restore the conversation:\n${error_0}`)
+      setError(`Failed to restore the conversation:\n${restoreError}`)
     }
   }
   async function handleSelect(message_0: UserMessage) {
@@ -259,12 +259,12 @@ export function MessageSelector({
         setRestoringOption(null)
         setMessageToRestore(undefined)
         onClose()
-      } catch (error_1) {
-        logError(error_1 as Error)
+      } catch (summarizeError) {
+        logError(summarizeError as Error)
         setIsRestoring(false)
         setRestoringOption(null)
         setMessageToRestore(undefined)
-        setError(`Failed to summarize:\n${error_1}`)
+        setError(`Failed to summarize:\n${summarizeError}`)
       }
       return
     }

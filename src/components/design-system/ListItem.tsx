@@ -146,12 +146,12 @@ export function ListItem({
     column: 0,
     active: isFocused && !disabled && declareCursor !== false,
   })
-  const t8 = renderIndicator()
+  const indicatorElement = renderIndicator()
   return (
     <Box ref={cursorRef} flexDirection="column">
       {
         <Box flexDirection="row" gap={1}>
-          {t8}
+          {indicatorElement}
           {styled ? (
             <Text color={textColor} dimColor={disabled}>
               {children}

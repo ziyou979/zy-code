@@ -205,9 +205,9 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
       onDone(tSync('copy.writeFailed', { error: e instanceof Error ? e.message : e }))
     }
   }
-  const handleKeyDown = function handleKeyDown(e_0) {
-    if (e_0.key === 'w') {
-      e_0.preventDefault()
+  const handleKeyDown = function handleKeyDown(keyboardEvent) {
+    if (keyboardEvent.key === 'w') {
+      keyboardEvent.preventDefault()
       handleWrite(focusedRef.current)
     }
   }

@@ -74,9 +74,9 @@ export function UserTextMessage({
   if (feature('KAIROS_GITHUB_WEBHOOKS')) {
     if (param.text.startsWith('<github-webhook-activity>')) {
       // @ts-ignore
-      const t1 = require('./UserGitHubWebhookMessage.js')
+      const githubWebhookModule = require('./UserGitHubWebhookMessage.js')
       // @ts-ignore
-      const { UserGitHubWebhookMessage } = t1
+      const { UserGitHubWebhookMessage } = githubWebhookModule
       return <UserGitHubWebhookMessage addMargin={addMargin} param={param} />
     }
   }
@@ -107,25 +107,25 @@ export function UserTextMessage({
   if (feature('FORK_SUBAGENT')) {
     if (param.text.includes('<fork-boilerplate>')) {
       // @ts-ignore
-      const t1 = require('./UserForkBoilerplateMessage.js')
+      const forkBoilerplateModule = require('./UserForkBoilerplateMessage.js')
       // @ts-ignore
-      const { UserForkBoilerplateMessage } = t1
+      const { UserForkBoilerplateMessage } = forkBoilerplateModule
       return <UserForkBoilerplateMessage addMargin={addMargin} param={param} />
     }
   }
   if (feature('UDS_INBOX')) {
     if (param.text.includes('<cross-session-message')) {
       // @ts-ignore
-      const t1 = require('./UserCrossSessionMessage.js')
+      const crossSessionModule = require('./UserCrossSessionMessage.js')
       // @ts-ignore
-      const { UserCrossSessionMessage } = t1
+      const { UserCrossSessionMessage } = crossSessionModule
       return <UserCrossSessionMessage addMargin={addMargin} param={param} />
     }
   }
   if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
     if (param.text.includes('<channel source="')) {
-      const t1 = require('./UserChannelMessage.js')
-      const { UserChannelMessage } = t1 as typeof import('./UserChannelMessage.js')
+      const channelModule = require('./UserChannelMessage.js')
+      const { UserChannelMessage } = channelModule as typeof import('./UserChannelMessage.js')
       return <UserChannelMessage addMargin={addMargin} param={param} />
     }
   }
