@@ -47,7 +47,7 @@ type UseLspPluginRecommendationResult = {
   recommendation: LspRecommendationState
   handleResponse: (response: 'yes' | 'no' | 'never' | 'disable') => void
 }
-export function useLspPluginRecommendation() {
+export function useLspPluginRecommendation(): UseLspPluginRecommendationResult {
   const trackedFiles = useAppState((s) => s.fileHistory.trackedFiles)
   const { addNotification } = useNotifications()
   const checkedFilesRef = React.useRef(new Set())

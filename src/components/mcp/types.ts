@@ -1,5 +1,7 @@
 // MCP Component Types
 
+import type { MCPServerConnection } from '../../services/mcp/types.js'
+
 export type ConfigScope =
   | 'user'
   | 'project'
@@ -16,11 +18,14 @@ export interface ServerInfo {
   scope: ConfigScope
   pluginSource?: string
   tools?: Array<{ name: string; description?: string }>
+  client: MCPServerConnection
 }
 
 export interface AgentMcpServerInfo extends ServerInfo {
   agentId: string
   agentName: string
+  sourceAgents: string[]
+  needsAuth?: boolean
 }
 
 export interface ZyAIServerInfo {

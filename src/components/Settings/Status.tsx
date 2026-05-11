@@ -103,7 +103,7 @@ function PropertyValue({ value }) {
   }
   return value
 }
-export function Status({ context, diagnosticsPromise }) {
+export function Status({ context, diagnosticsPromise }: Props) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
   const mcp = useAppState((state) => state.mcp)
   const [theme] = useTheme()

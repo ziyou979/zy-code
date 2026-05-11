@@ -2,6 +2,7 @@ import {marked, type Token, type Tokens} from 'marked'
 import React, {Suspense, use, useRef} from 'react'
 import {useSettings} from '../hooks/useSettings.js'
 import {Box, useTheme} from '../ink.js'
+import type {CliHighlight} from '../utils/cliHighlight.js'
 import {getCliHighlightPromise} from '../utils/cliHighlight.js'
 import {hashContent} from '../utils/hash.js'
 import {configureMarked, formatToken} from '../utils/markdown.js'
@@ -13,6 +14,10 @@ type Props = {
   children: string
   /** When true, render all text content as dim */
   dimColor?: boolean
+}
+
+type MarkdownBodyProps = Props & {
+  highlight: CliHighlight | null
 }
 
 // 模块级 token 缓存——marked.lexer 是虚拟滚动重新挂载时的热点成本
@@ -80,7 +85,7 @@ function cachedLexer(content: string): Token[] {
  * - Tables are rendered as React components with proper flexbox layout
  * - Other content is rendered as ANSI strings via formatToken
  */
-export function Markdown(props) {
+export function Markdown(props: Props) {
   const settings = useSettings()
   if (settings.syntaxHighlightingDisabled) {
     return <MarkdownBody {...props} highlight={null} />
@@ -91,12 +96,12 @@ export function Markdown(props) {
     </Suspense>
   )
 }
-function MarkdownWithHighlight(props) {
+function MarkdownWithHighlight(props: Props) {
   const highlightPromise = getCliHighlightPromise()
   const highlight = use(highlightPromise)
   return <MarkdownBody {...props} highlight={highlight} />
 }
-function MarkdownBody({ children, dimColor, highlight }) {
+function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
   const [theme] = useTheme()
   configureMarked()
   const tokens = cachedLexer(stripPromptXMLTags(children))

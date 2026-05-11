@@ -13,7 +13,7 @@ import { validateAgentType } from '../../validateAgent.js'
 type Props = {
   existingAgents: AgentDefinition[]
 }
-export function TypeStep(_props) {
+export function TypeStep(_props: Props) {
   const { goNext, goBack, updateWizardData, wizardData } = useWizard()
   const [agentType, setAgentType] = useState((wizardData.agentType as any) || '')
   const [error, setError] = useState(null)

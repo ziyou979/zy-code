@@ -100,7 +100,7 @@ export function MCPListPanel({
   onSelectServer,
   onSelectAgentServer,
   onComplete,
-}) {
+}: Props) {
   const agentServers = agentServersArg
   const [theme] = useTheme()
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -113,7 +113,7 @@ export function MCPListPanel({
     a_0.name.localeCompare(b_0.name),
   )
   const dynamicHeading = getScopeHeading('dynamic')
-  const items = []
+  const items: SelectableItem[] = []
   for (const scope of SCOPE_ORDER) {
     const scopeServers = serversByScope.get(scope) ?? []
     for (const server of scopeServers) {

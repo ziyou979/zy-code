@@ -89,7 +89,7 @@ export function AddWorkspaceDirectory({
   onCancel,
   permissionContext,
   directoryPath,
-}) {
+}: Props) {
   const [directoryInput, setDirectoryInput] = useState('')
   const [error, setError] = useState(null)
   const [suggestions, setSuggestions] = useState([])

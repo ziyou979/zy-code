@@ -36,7 +36,7 @@ const MAX_TOTAL_MATCHES = 500
  * Debounced ripgrep search across the workspace.
  */
 // @ts-ignore
-export function GlobalSearchDialog({ onDone, onInsert }) {
+export function GlobalSearchDialog({ onDone, onInsert }: Props) {
   // @ts-ignore
   useRegisterOverlay('global-search')
   const { columns, rows } = useTerminalSize()

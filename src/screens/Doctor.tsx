@@ -91,7 +91,7 @@ function DistTagsDisplay({ promise }: DistTagsDisplayProps) {
     </>
   )
 }
-export function Doctor({ onDone }) {
+export function Doctor({ onDone }: Props) {
   const agentDefinitions = useAppState((s) => s.agentDefinitions)
   const mcpTools = useAppState((state) => state.mcp.tools)
   const toolPermissionContext = useAppState((state) => state.toolPermissionContext)

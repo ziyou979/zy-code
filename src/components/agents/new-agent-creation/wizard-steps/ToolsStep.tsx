@@ -7,12 +7,13 @@ import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHin
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { ToolSelector } from '../../ToolSelector.js'
+import type { AgentWizardData } from '../types.js'
 type Props = {
   tools: Tools
 }
 export function ToolsStep({ tools }: Props) {
-  const { goNext, goBack, updateWizardData, wizardData } = useWizard()
-  const handleComplete = (selectedTools) => {
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard<AgentWizardData>()
+  const handleComplete = (selectedTools: string[] | undefined) => {
     updateWizardData({
       selectedTools,
     })

@@ -25,7 +25,7 @@ export function FeedbackSurveyView({
   inputValue,
   setInputValue,
   message = DEFAULT_MESSAGE,
-}) {
+}: Props) {
   useDebouncedDigitInput({
     inputValue,
     setInputValue,

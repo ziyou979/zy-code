@@ -59,7 +59,7 @@ function formatUri(uri: string): string {
   }
   return uri
 }
-export function UserResourceUpdateMessage({ addMargin, param }) {
+export function UserResourceUpdateMessage({ addMargin, param }: Props) {
   const { text } = param
   let BoxComponent
 

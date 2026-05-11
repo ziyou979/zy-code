@@ -127,7 +127,7 @@ export default class App extends PureComponent<Props, State> {
       error,
     }
   }
-  override state = {
+  override state: State = {
     error: undefined,
   }
 

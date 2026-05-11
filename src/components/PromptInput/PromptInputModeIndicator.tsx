@@ -58,7 +58,7 @@ export function PromptInputModeIndicator({
   isLoading,
   viewingAgentName,
   viewingAgentColor,
-}: any) {
+}: Props) {
   const teammateColor = getTeammateThemeColor()
   const viewedTeammateThemeColor = viewingAgentColor
     ? AGENT_COLOR_TO_THEME_COLOR[viewingAgentColor]

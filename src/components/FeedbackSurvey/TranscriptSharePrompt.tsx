@@ -18,7 +18,7 @@ const inputToResponse: Record<ResponseInput, TranscriptShareResponse> = {
 } as const
 const isValidResponseInput = (input: string): input is ResponseInput =>
   (RESPONSE_INPUTS as readonly string[]).includes(input)
-export function TranscriptSharePrompt({ onSelect, inputValue, setInputValue }) {
+export function TranscriptSharePrompt({ onSelect, inputValue, setInputValue }: Props) {
   useDebouncedDigitInput({
     inputValue,
     setInputValue,

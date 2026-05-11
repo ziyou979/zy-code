@@ -12,6 +12,7 @@ export interface AgentWizardData {
   color?: AgentColorName
   model?: string
   tools?: string[]
+  selectedTools?: string[]
   location?: SettingSource
   memoryEnabled?: boolean
   finalAgent?: CustomAgentDefinition

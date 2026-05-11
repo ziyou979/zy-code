@@ -15,6 +15,7 @@ import type {
   HTTPServerInfo,
   SSEServerInfo,
   StdioServerInfo,
+  ServerInfo,
 } from '../../components/mcp/types.js'
 import { SearchBox } from '../../components/SearchBox.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
@@ -2412,7 +2413,7 @@ export function ManagePlugins({
     const configType_0 = client_4.config.type
 
     // Build ServerInfo for MCPToolListView
-    let server_3: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ZyAIServerInfo
+    let server_3: ServerInfo
     if (configType_0 === 'stdio') {
       server_3 = {
         name: client_4.name,
@@ -2476,7 +2477,7 @@ export function ManagePlugins({
     const configType_1 = client_5.config.type
 
     // Build ServerInfo for MCPToolDetailView
-    let server_4: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ZyAIServerInfo
+    let server_4: ServerInfo
     if (configType_1 === 'stdio') {
       server_4 = {
         name: client_5.name,

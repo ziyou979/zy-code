@@ -60,7 +60,7 @@ function turnDiffToDiffData(turn: TurnDiff): DiffData {
     loading: false,
   }
 }
-export function DiffDialog({ messages, onDone }) {
+export function DiffDialog({ messages, onDone }: Props) {
   const gitDiffData = useDiffData()
   const turnDiffs = useTurnDiffs(messages)
   const [viewMode, setViewMode] = useState('list')

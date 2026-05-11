@@ -30,7 +30,7 @@ type InnerProps = {
   width: number
   promise: Promise<NotebookContent | null>
 }
-export function NotebookEditToolDiff(props) {
+export function NotebookEditToolDiff(props: Props) {
   const notebookDataPromise = getFsImplementation()
     .readFile(props.notebook_path, {
       encoding: 'utf-8',

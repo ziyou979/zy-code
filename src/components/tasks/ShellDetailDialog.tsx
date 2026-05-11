@@ -48,7 +48,7 @@ async function getTaskOutput(shell: DeepImmutable<LocalShellTaskState>): Promise
     }
   }
 }
-export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }) {
+export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }: Props) {
   const { columns } = useTerminalSize()
   const [outputPromise, setOutputPromise] = useState(() => getTaskOutput(shell))
   const deferredOutputPromise = useDeferredValue(outputPromise)

@@ -39,7 +39,7 @@ function cachedHighlight(
   hlCache.set(key, out)
   return out
 }
-export function HighlightedCodeFallback({ code, filePath, dim = false, skipColoring = false }) {
+export function HighlightedCodeFallback({ code, filePath, dim = false, skipColoring = false }: Props) {
   const codeWithSpaces = convertLeadingTabsToSpaces(code)
   if (skipColoring) {
     return <Text dimColor={dim}>{<Ansi>{codeWithSpaces}</Ansi>}</Text>

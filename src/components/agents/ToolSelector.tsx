@@ -25,7 +25,6 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { count } from '../../utils/array.js'
-import { plural } from '../../utils/stringUtils.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { Divider } from '../design-system/Divider.js'
 type Props = {
@@ -112,7 +111,7 @@ function getMcpServerBuckets(tools: Tools): Array<{
     }))
     .sort((a, b) => a.serverName.localeCompare(b.serverName))
 }
-export function ToolSelector({ tools, initialTools, onComplete, onCancel }) {
+export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Props) {
   const customAgentTools = filterToolsForAgent({
     tools,
     isBuiltIn: false,

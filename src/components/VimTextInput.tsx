@@ -9,7 +9,7 @@ import { BaseTextInput } from './BaseTextInput.js'
 export type Props = VimTextInputProps & {
   highlights?: TextHighlight[]
 }
-export default function VimTextInput(props) {
+export default function VimTextInput(props: Props) {
   const [theme] = useTheme()
   const isTerminalFocused = useTerminalFocus()
   useClipboardImageHint(isTerminalFocused, !!props.onImagePaste)

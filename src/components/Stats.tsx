@@ -92,7 +92,7 @@ function createAllTimeStatsPromise(): Promise<StatsResult> {
       }
     })
 }
-export function Stats({ onClose }) {
+export function Stats({ onClose }: Props) {
   const allTimePromise = createAllTimeStatsPromise()
   return (
     <Suspense
