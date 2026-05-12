@@ -52,8 +52,8 @@ describe('promptCacheBreakDetection', () => {
         '../../../src/services/api/promptCacheBreakDetection.js'
       )
       recordPromptState({
-        system: [{ type: 'text', text: 'You are helpful.' }],
-        toolSchemas: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' } }],
+        system: [{ type: 'text' as const, text: 'You are helpful.' }],
+        toolSchemas: [{ name: 'search', description: 'Search', inputSchema: { type: 'object', properties: {} } }],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       })
@@ -80,8 +80,8 @@ describe('promptCacheBreakDetection', () => {
         '../../../src/services/api/promptCacheBreakDetection.js'
       )
       const snapshot = {
-        system: [{ type: 'text', text: 'You are helpful.' }],
-        toolSchemas: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' } }],
+        system: [{ type: 'text' as const, text: 'You are helpful.' }],
+        toolSchemas: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' as const, properties: {} } }],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       }
@@ -95,7 +95,7 @@ describe('promptCacheBreakDetection', () => {
         'repl_main_thread' as any,
         1000, // cacheReadTokens
         200, // cacheCreationTokens
-        [{ type: 'user', content: 'hi' }],
+        [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] as any,
       )
 
       mock.restore()
@@ -120,8 +120,8 @@ describe('promptCacheBreakDetection', () => {
         '../../../src/services/api/promptCacheBreakDetection.js'
       )
       const baseSnapshot = {
-        system: [{ type: 'text', text: 'Original system prompt.' }],
-        toolSchemas: [],
+        system: [{ type: 'text' as const, text: 'Original system prompt.' }],
+        toolSchemas: [] as any[],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       }
@@ -134,7 +134,7 @@ describe('promptCacheBreakDetection', () => {
       // 变更 system prompt
       recordPromptState({
         ...baseSnapshot,
-        system: [{ type: 'text', text: 'Changed system prompt.' }],
+        system: [{ type: 'text' as const, text: 'Changed system prompt.' }],
       })
 
       // 第二次 checkResponse: 缓存读取下降 → 触发检测
@@ -142,7 +142,7 @@ describe('promptCacheBreakDetection', () => {
         'repl_main_thread' as any,
         500, // 从 2000 降到 500 (>5%)，触发检测
         100,
-        [{ type: 'user', content: 'hi' }],
+        [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] as any,
       )
 
       mock.restore()
@@ -167,8 +167,8 @@ describe('promptCacheBreakDetection', () => {
         '../../../src/services/api/promptCacheBreakDetection.js'
       )
       recordPromptState({
-        system: [{ type: 'text', text: 'prompt' }],
-        toolSchemas: [],
+        system: [{ type: 'text' as const, text: 'prompt' }],
+        toolSchemas: [] as any[],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3-opus',
       })
@@ -178,8 +178,8 @@ describe('promptCacheBreakDetection', () => {
 
       // 换模型
       recordPromptState({
-        system: [{ type: 'text', text: 'prompt' }],
-        toolSchemas: [],
+        system: [{ type: 'text' as const, text: 'prompt' }],
+        toolSchemas: [] as any[],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3-sonnet',
       })
@@ -208,8 +208,8 @@ describe('promptCacheBreakDetection', () => {
         '../../../src/services/api/promptCacheBreakDetection.js'
       )
       recordPromptState({
-        system: [{ type: 'text', text: 'prompt' }],
-        toolSchemas: [],
+        system: [{ type: 'text' as const, text: 'prompt' }],
+        toolSchemas: [] as any[],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       })

@@ -144,20 +144,8 @@ export type StreamEvent =
   | ResponseDeltaEvent
   | ResponseStopEvent
 
-export interface DashScopeSearchResult {
-  title?: string
-  url?: string
-  content?: string
-  [key: string]: unknown
-}
-
-export interface DashScopeSearchInfo {
-  search_results?: DashScopeSearchResult[]
-  [key: string]: unknown
-}
-
 export interface StreamEventExtras {
-  searchInfo?: DashScopeSearchInfo
+  [key: string]: unknown
 }
 
 /** 响应开始 — 流的第一个事件 */
@@ -238,7 +226,7 @@ export interface SignatureDelta {
 /** 连接文本增量 */
 export interface ConnectorTextDelta {
   type: 'connector_text_delta'
-  connector_text: string
+  connectorText: string
 }
 
 // ============================================================================
@@ -320,13 +308,13 @@ export interface ProviderExtras {
   anthropic?: {
     thinking?:
       | { type: 'disabled' }
-      | { type: 'enabled'; budget_tokens: number }
+      | { type: 'enabled'; budgetTokens: number }
       | { type: 'adaptive' }
     betas?: string[]
     contextManagement?: Record<string, unknown>
     outputConfig?: Record<string, unknown>
     /** Anthropic 原生工具 schema（如 web_search_20260209），直接透传到 tools 数组 */
-    _extraToolSchemas?: Record<string, unknown>[]
+    extraToolSchemas?: Record<string, unknown>[]
   }
   /** OpenAI 专属：structured outputs、parallel tool calls 等 */
   openai?: Record<string, unknown>

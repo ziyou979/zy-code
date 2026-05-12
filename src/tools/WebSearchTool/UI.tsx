@@ -90,16 +90,16 @@ export function renderToolUseProgressMessage(
   }
 }
 export function renderToolResultMessage(output: Output): React.ReactNode {
-  const { searchCount } = getSearchSummary(output.results ?? [])
+  const { totalResultCount } = getSearchSummary(output.results ?? [])
   const timeDisplay =
     output.durationSeconds >= 1
-      ? `${Math.round(output.durationSeconds)}s`
-      : `${Math.round(output.durationSeconds * 1000)}ms`
-  const unit = searchCount !== 1 ? tSync('webSearch.search_other') : tSync('webSearch.search_one')
+      ? tSync('webSearch.seconds', { count: Math.round(output.durationSeconds) })
+      : tSync('webSearch.milliseconds', { count: Math.round(output.durationSeconds * 1000) })
+  const unit = totalResultCount !== 1 ? tSync('webSearch.search_other') : tSync('webSearch.search_one')
   return (
     <Box justifyContent="space-between" width="100%">
       <MessageResponse height={1}>
-        <Text>{tSync('webSearch.search', { count: searchCount, unit, time: timeDisplay })}</Text>
+        <Text>{tSync('webSearch.search', { count: totalResultCount, unit, time: timeDisplay })}</Text>
       </MessageResponse>
     </Box>
   )

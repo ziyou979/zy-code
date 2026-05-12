@@ -328,7 +328,7 @@ function AssistantMessageBlock({
         <AssistantTextMessage
           param={{
             type: 'text',
-            text: param.connector_text,
+            text: param.connectorText,
           }}
           addMargin={addMargin}
           shouldShowDot={shouldShowDot}

@@ -454,7 +454,7 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   // 工具：v1 input_schema / v2 inputSchema 都支持
   const convertedTools = toolsToAnthropic(p.tools)
   // Anthropic 原生工具（如 web_search_20260209）— 直接透传 schema
-  const nativeTools = anthropicExtras?._extraToolSchemas ?? []
+  const nativeTools = anthropicExtras?.extraToolSchemas ?? []
   const allTools = [...nativeTools, ...(convertedTools ?? [])]
 
   const out: AnthropicCreateParams = {

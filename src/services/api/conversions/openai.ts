@@ -21,7 +21,6 @@ import type {
   AssistantContentBlock,
   ChunkDelta,
   CreateParams,
-  DashScopeSearchInfo,
   DeltaUsage,
   LLMMessage,
   LLMResponse,
@@ -47,22 +46,10 @@ import { localModelHasCapability } from '../../../utils/settings/localModelCapab
 import { logForDebugging } from '../../../utils/debug.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 
-interface DashScopeChatCompletionChunk extends OpenAI.Chat.Completions.ChatCompletionChunk {
-  search_info?: DashScopeSearchInfo
-  searchInfo?: DashScopeSearchInfo
-}
-
 interface DashScopeChatCompletionDelta {
   content?: string | null
   reasoning_content?: string | null
   tool_calls?: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall[]
-}
-
-function getDashScopeSearchInfo(
-  chunk: OpenAI.Chat.Completions.ChatCompletionChunk,
-): DashScopeSearchInfo | undefined {
-  const dashScopeChunk = chunk as DashScopeChatCompletionChunk
-  return dashScopeChunk.search_info ?? dashScopeChunk.searchInfo
 }
 
 // ============================================================================
@@ -359,7 +346,7 @@ export function toolChoiceToOpenAI(
  * - 通用 OpenAI 兼容平台（按模型名启发）: enable_thinking
  */
 export function convertThinkingForOpenAI(
-  thinking: { type: string; budget_tokens?: number } | undefined,
+  thinking: { type: string; budgetTokens?: number } | undefined,
   model: string,
   outputConfig?: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -565,18 +552,10 @@ export async function* mapOpenAIStreamToStandard(
   // 最终 stop_reason 和 usage（usage 可能在独立的 usage-only chunk 中到达）
   let finalStopReason: StopReason | null = null
   let finalUsage: DeltaUsage | undefined = undefined
-  let dashScopeSearchInfo: DashScopeSearchInfo | undefined = undefined
 
   yield { type: 'response_start', responseId: messageId, model }
 
   for await (const chunk of stream) {
-    const chunkSearchInfo = getDashScopeSearchInfo(chunk)
-    if (chunkSearchInfo) {
-      dashScopeSearchInfo = chunkSearchInfo
-      logForDebugging(
-        `[OpenAI:DashScope] Received raw search_info: ${jsonStringify(chunkSearchInfo)}`,
-      )
-    }
     // 累积 usage（OpenAI stream_options.include_usage 下，usage 在独立 chunk 中，
     // choices 为空，因此必须在 choices 循环外捕获）
     if (chunk.usage) {
@@ -659,17 +638,14 @@ export async function* mapOpenAIStreamToStandard(
       // 结束（捕获 stop_reason，发送 chunk_stop 事件）
       if (choice.finish_reason) {
         finalStopReason = openAIFinishReasonToStandard(choice.finish_reason)
-        const streamExtras = dashScopeSearchInfo
-          ? { searchInfo: dashScopeSearchInfo }
-          : undefined
         if (thinkingBlockStarted) {
-          yield { type: 'chunk_stop', index: thinkingBlockIndex, extras: streamExtras }
+          yield { type: 'chunk_stop', index: thinkingBlockIndex }
         }
         if (textBlockStarted) {
-          yield { type: 'chunk_stop', index: textBlockIndex, extras: streamExtras }
+          yield { type: 'chunk_stop', index: textBlockIndex }
         }
         for (const blockIndex of toolBlockIndices.values()) {
-          yield { type: 'chunk_stop', index: blockIndex, extras: streamExtras }
+          yield { type: 'chunk_stop', index: blockIndex }
         }
       }
     }
@@ -681,7 +657,6 @@ export async function* mapOpenAIStreamToStandard(
       type: 'response_delta',
       stopReason: finalStopReason,
       usage: finalUsage,
-      extras: dashScopeSearchInfo ? { searchInfo: dashScopeSearchInfo } : undefined,
     }
   }
 

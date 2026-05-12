@@ -108,7 +108,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       maxTokens: 100,
       messages: [{ role: 'user', content: 'hi' } as any],
       providerExtras: {
-        anthropic: { thinking: { type: 'enabled', budget_tokens: 1024 } as any },
+        anthropic: { thinking: { type: 'enabled', budgetTokens: 1024 } as any },
       },
       thinking: { type: 'disabled' },
     } as any)
@@ -175,6 +175,6 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       messages: [{ role: 'user', content: 'hi' } as any],
       extra_body: { custom_flag: true } as any,
     } as any)
-    expect(result.custom_flag).toBe(true)
+    expect((result as any).custom_flag).toBe(true)
   })
 })

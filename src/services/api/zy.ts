@@ -1792,7 +1792,7 @@ async function* queryModel(
                 })
                 throw new Error('Content block is not a connector_text block')
               }
-              contentBlock.connector_text += delta.connector_text
+              contentBlock.connectorText += delta.connectorText
             } else {
               switch (delta.type) {
                 case 'citations_delta':

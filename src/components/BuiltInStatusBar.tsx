@@ -174,11 +174,11 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
       const contextColor: SegmentColor =
         percentages.used >= 75 ? 'ansi:red' : percentages.used >= 50 ? 'ansi:yellow' : 'ansi:green'
       segments.push({
-        text: `📈 ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`,
+        text: `⛁ ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`,
         color: contextColor,
       })
     } else {
-      segments.push({ text: `📈 ${formatTokens(contextWindowSize)}`, color: 'ansi:green' })
+      segments.push({ text: `⛁ ${formatTokens(contextWindowSize)}`, color: 'ansi:green' })
     }
   }
 

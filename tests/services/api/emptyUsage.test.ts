@@ -18,28 +18,30 @@ describe('EMPTY_USAGE', () => {
   })
 
   test('server_tool_use 为零', () => {
-    expect(EMPTY_USAGE.server_tool_use.web_search_requests).toBe(0)
-    expect(EMPTY_USAGE.server_tool_use.web_fetch_requests).toBe(0)
+    const usage = EMPTY_USAGE as any
+    expect(usage.server_tool_use.web_search_requests).toBe(0)
+    expect(usage.server_tool_use.web_fetch_requests).toBe(0)
   })
 
   test('cache_creation 为零', () => {
-    expect(EMPTY_USAGE.cache_creation.ephemeral_1h_input_tokens).toBe(0)
-    expect(EMPTY_USAGE.cache_creation.ephemeral_5m_input_tokens).toBe(0)
+    const usage = EMPTY_USAGE as any
+    expect(usage.cache_creation.ephemeral_1h_input_tokens).toBe(0)
+    expect(usage.cache_creation.ephemeral_5m_input_tokens).toBe(0)
   })
 
   test('service_tier 为 standard', () => {
-    expect(EMPTY_USAGE.service_tier).toBe('standard')
+    expect((EMPTY_USAGE as any).service_tier).toBe('standard')
   })
 
   test('speed 为 standard', () => {
-    expect(EMPTY_USAGE.speed).toBe('standard')
+    expect((EMPTY_USAGE as any).speed).toBe('standard')
   })
 
   test('inference_geo 为空字符串', () => {
-    expect(EMPTY_USAGE.inference_geo).toBe('')
+    expect((EMPTY_USAGE as any).inference_geo).toBe('')
   })
 
   test('iterations 为空数组', () => {
-    expect(EMPTY_USAGE.iterations).toEqual([])
+    expect((EMPTY_USAGE as any).iterations).toEqual([])
   })
 })

@@ -1372,9 +1372,11 @@ export const zhCN: TranslationResource = {
   'webSearch.found': '找到',
   'webSearch.resultsFor': '条结果，关键词：',
   'webSearch.did': '执行了',
-  'webSearch.search': '{count} 次{unit}，用时 {time}',
-  'webSearch.search_one': '搜索',
-  'webSearch.search_other': '搜索',
+  'webSearch.search': '找到 {count} {unit}，用时 {time}',
+  'webSearch.search_one': '条结果',
+  'webSearch.search_other': '条结果',
+  'webSearch.seconds': '{count} 秒',
+  'webSearch.milliseconds': '{count} 毫秒',
   'webSearch.completed_search': '完成搜索',
 
   // 退出计划模式消息

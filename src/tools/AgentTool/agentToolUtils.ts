@@ -216,21 +216,21 @@ export const agentToolResultSchema = lazySchema(() =>
     totalDurationMs: z.number(),
     totalTokens: z.number(),
     usage: z.object({
-      input_tokens: z.number(),
-      output_tokens: z.number(),
-      cache_creation_input_tokens: z.number().nullable(),
-      cache_read_input_tokens: z.number().nullable(),
-      server_tool_use: z
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+      cacheCreationInputTokens: z.number().nullable(),
+      cacheReadInputTokens: z.number().nullable(),
+      serverToolUse: z
         .object({
-          web_search_requests: z.number(),
-          web_fetch_requests: z.number(),
+          webSearchRequests: z.number(),
+          webFetchRequests: z.number(),
         })
         .nullable(),
-      service_tier: z.enum(['standard', 'priority', 'batch']).nullable(),
-      cache_creation: z
+      serviceTier: z.enum(['standard', 'priority', 'batch']).nullable(),
+      cacheCreation: z
         .object({
-          ephemeral_1h_input_tokens: z.number(),
-          ephemeral_5m_input_tokens: z.number(),
+          ephemeral1hInputTokens: z.number(),
+          ephemeral5mInputTokens: z.number(),
         })
         .nullable(),
     }),
@@ -329,8 +329,8 @@ export function finalizeAgentTool(
     totalTokens,
     totalToolUseCount,
     usage: {
-      input_tokens: lastAssistantMessage.message.usage?.inputTokens ?? 0,
-      output_tokens: lastAssistantMessage.message.usage?.outputTokens ?? 0,
+      inputTokens: lastAssistantMessage.message.usage?.inputTokens ?? 0,
+      outputTokens: lastAssistantMessage.message.usage?.outputTokens ?? 0,
     },
   }
 }

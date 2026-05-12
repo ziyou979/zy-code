@@ -6,17 +6,45 @@
  */
 
 import { join, resolve } from 'path'
+import { readdirSync } from 'fs'
 
 const root = import.meta.dir
 const srcDir = join(root, 'src')
 const outDir = join(root, 'dist')
 const buildTime = new Date().toISOString()
 
+// 解析 --target 参数：cli | sdk | all（默认 all）
+const targetArg = Bun.argv.find(arg => arg.startsWith('--target'))
+const targetValue = targetArg?.includes('=')
+  ? targetArg.split('=')[1]
+  : Bun.argv[Bun.argv.indexOf('--target') + 1]
+const target = (targetValue === 'cli' || targetValue === 'sdk') ? targetValue : 'all'
+
+// 根据 target 确定入口文件
+function resolveEntrypoints(): string[] {
+  const entries: string[] = []
+  if (target === 'cli' || target === 'all') {
+    entries.push(join(srcDir, 'entrypoints/cli.tsx'))
+  }
+  if (target === 'sdk' || target === 'all') {
+    const sdkDir = join(srcDir, 'entrypoints/sdk')
+    const sdkFiles = readdirSync(sdkDir)
+      .filter(f => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+      .map(f => join(sdkDir, f))
+    entries.push(...sdkFiles)
+  }
+  return entries
+}
+
 // Resolve react-compiler-runtime package path
 const reactCompilerRuntime = resolve(root, 'node_modules/react-compiler-runtime/dist/index.js')
 
+console.log(`Building target: ${target}`)
+const entrypoints = resolveEntrypoints()
+console.log(`Entrypoints: ${entrypoints.map(e => e.replace(root + '/', '')).join(', ')}`)
+
 const result = await Bun.build({
-  entrypoints: [join(srcDir, 'entrypoints/cli.tsx')],
+  entrypoints,
   outdir: outDir,
   target: 'bun',
   format: 'esm',

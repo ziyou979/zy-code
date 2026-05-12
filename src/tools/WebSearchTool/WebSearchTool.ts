@@ -1,10 +1,10 @@
-import type { ContentBlock, DashScopeSearchInfo, DashScopeSearchResult } from '../../types/llm.js'
+import type { ContentBlock } from '../../types/llm.js'
 import type {
   SearchOptions,
   SearchResult as ServiceSearchResult,
 } from '../../services/search/index.js'
 import { createFallbackSearchProvider } from '../../services/search/index.js'
-import { getAPIProvider, modelHasCapability } from '../../utils/model/providers.js'
+import { modelHasCapability } from '../../utils/model/providers.js'
 
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { z } from 'zod/v4'
@@ -15,9 +15,6 @@ import { logForDebugging } from '../../utils/debug.js'
 import { getMainLoopModel } from '../../utils/model/model.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
-import { queryModelWithStreaming } from '../../services/api/zy.js'
-import { createUserMessage } from '../../utils/messages.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { getWebSearchPrompt, WEB_SEARCH_TOOL_NAME } from './prompt.js'
 import {
   getToolUseSummary,
@@ -167,8 +164,7 @@ export const WebSearchTool = buildTool({
     }
 
     try {
-      const provider = getAPIProvider()
-      logForDebugging(`[WebSearch] provider=${provider}, query="${query}"`)
+      logForDebugging(`[WebSearch] query="${query}"`)
       logForDebugging(
         '[WebSearch] Using local DuckDuckGo fallback; model-provider web search is not used as tool result source',
       )
@@ -263,297 +259,9 @@ export const WebSearchTool = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output, WebSearchProgress>)
 
-// ---------------------------------------------------------------------------
-// Anthropic 原生搜索：web_search_20260209 beta tool
-// ---------------------------------------------------------------------------
 
-async function searchViaAnthropic(
-  query: string,
-  allowed_domains?: string[],
-  blocked_domains?: string[],
-  context?: any,
-  onProgress?: any,
-): Promise<ServiceSearchResult[]> {
-  const userMessage = createUserMessage({
-    content: `Perform a web search for: ${query}. Return ONLY the search results without any commentary.`,
-  })
 
-  // 构建 Anthropic web_search_20260209 tool schema
-  const toolSchema: Record<string, unknown> = {
-    type: 'web_search_20260209',
-    name: 'web_search',
-    max_uses: 8,
-  }
-  if (allowed_domains && allowed_domains.length > 0) {
-    toolSchema.allowed_domains = allowed_domains
-  }
-  if (blocked_domains && blocked_domains.length > 0) {
-    toolSchema.blocked_domains = blocked_domains
-  }
 
-  logForDebugging(
-    `[WebSearch:Anthropic] Sending sub-query with beta=web_search_20260209, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`,
-  )
-
-  const queryStream = queryModelWithStreaming({
-    messages: [userMessage],
-    systemPrompt: asSystemPrompt([
-      'You are an assistant for performing a web search. Use the web search tool to find results and return them in a structured format with titles, URLs, and snippets.',
-    ]),
-    thinkingConfig: { type: 'disabled' },
-    tools: [],
-    signal: context?.abortController?.signal ?? new AbortController().signal,
-    options: {
-      getToolPermissionContext: async () => context?.getAppState?.()?.toolPermissionContext ?? {},
-      model: context?.options?.mainLoopModel ?? getMainLoopModel(),
-      isNonInteractiveSession: context?.options?.isNonInteractiveSession ?? false,
-      hasAppendSystemPrompt: !!context?.options?.appendSystemPrompt,
-      querySource: 'web_search_tool' as any,
-      agents: context?.options?.agentDefinitions?.activeAgents ?? [],
-      mcpTools: [],
-      agentId: context?.agentId,
-      // 通过 Anthropic 的 web_search_20260209 beta 注入搜索工具
-      providerExtras: {
-        anthropic: {
-          betas: ['web_search_20260209'],
-          _extraToolSchemas: [toolSchema],
-        },
-      },
-    },
-  })
-
-  const allContentBlocks: ContentBlock[] = []
-  let blockCount = 0
-
-  for await (const event of queryStream) {
-    if (event.type === 'assistant') {
-      const contentArr = event.message.content
-      allContentBlocks.push(...contentArr)
-      blockCount += contentArr.length
-    }
-  }
-
-  logForDebugging(`[WebSearch:Anthropic] Received ${blockCount} content blocks`)
-
-  // 从模型回复中解析搜索结果
-  return parseResultsFromText(allContentBlocks, query, blocked_domains)
-}
-
-// ---------------------------------------------------------------------------
-// 百炼 DashScope 原生搜索：enable_search + search_options
-// ---------------------------------------------------------------------------
-
-async function searchViaDashScope(
-  query: string,
-  allowed_domains?: string[],
-  blocked_domains?: string[],
-  context?: any,
-  onProgress?: any,
-): Promise<ServiceSearchResult[]> {
-  const userMessage = createUserMessage({
-    content: `Perform a web search for: ${query}. Return ONLY the search results without any commentary.`,
-  })
-
-  // 百炼的 enable_search 是非 OpenAI 标准参数，通过 extra_body 传入
-  // 参考：https://help.aliyun.com/zh/model-studio/web-search.md
-  const extraBodyParams: Record<string, unknown> = {
-    enable_search: true,
-  }
-
-  // 域名过滤 — 百炼支持 search_options.assigned_site_list
-  if (allowed_domains && allowed_domains.length > 0) {
-    extraBodyParams.search_options = {
-      assigned_site_list: allowed_domains.slice(0, 25), // 百炼最多 25 个域名
-    }
-  }
-
-  logForDebugging(
-    `[WebSearch:DashScope] Request params: ${jsonStringify({
-      model: context?.options?.mainLoopModel ?? getMainLoopModel(),
-      query,
-      enable_search: extraBodyParams.enable_search,
-      search_options: extraBodyParams.search_options,
-      allowed_domains_count: allowed_domains?.length ?? 0,
-      blocked_domains_count: blocked_domains?.length ?? 0,
-    })}`,
-  )
-
-  const queryStream = queryModelWithStreaming({
-    messages: [userMessage],
-    systemPrompt: asSystemPrompt([
-      'You are an assistant for performing a web search. Extract and return all search results from the API response.',
-    ]),
-    thinkingConfig: { type: 'disabled' },
-    tools: [],
-    signal: context?.abortController?.signal ?? new AbortController().signal,
-    options: {
-      getToolPermissionContext: async () => context?.getAppState?.()?.toolPermissionContext ?? {},
-      model: context?.options?.mainLoopModel ?? getMainLoopModel(),
-      isNonInteractiveSession: context?.options?.isNonInteractiveSession ?? false,
-      hasAppendSystemPrompt: !!context?.options?.appendSystemPrompt,
-      querySource: 'web_search_tool' as any,
-      agents: context?.options?.agentDefinitions?.activeAgents ?? [],
-      mcpTools: [],
-      agentId: context?.agentId,
-      // 通过 providerExtras 传入百炼的 enable_search
-      providerExtras: {
-        openai: extraBodyParams,
-      },
-    },
-  })
-
-  logForDebugging(
-    `[WebSearch:DashScope] Sending sub-query with enable_search=true, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`,
-  )
-
-  // 收集搜索结果 — 百炼在 response 的 search_info.search_results 中返回
-  const allContentBlocks: ContentBlock[] = []
-  let searchInfoResults: ServiceSearchResult[] = []
-
-  for await (const event of queryStream) {
-    if (event.type === 'assistant') {
-      const contentArr = event.message.content
-      allContentBlocks.push(...contentArr)
-      const searchInfo = getSearchInfoFromAssistantMessage(event.message)
-      if (searchInfo) {
-        searchInfoResults = parseSearchInfoFromExtras(searchInfo)
-        logForDebugging(
-          `[WebSearch:DashScope] Found raw search_info in extras: ${jsonStringify(searchInfo)}`,
-        )
-        logForDebugging(
-          `[WebSearch:DashScope] Parsed ${searchInfoResults.length} results from search_info`,
-        )
-      }
-      continue
-    }
-  }
-
-  logForDebugging(
-    `[WebSearch:DashScope] Got ${searchInfoResults.length} results from extras, ${allContentBlocks.length} content blocks`,
-  )
-
-  // 如果从 extras 中拿到搜索结果，直接使用
-  if (searchInfoResults.length > 0) {
-    if (onProgress) {
-      onProgress({
-        toolUseID: 'search-results',
-        data: {
-          type: 'search_results_received',
-          resultCount: searchInfoResults.length,
-          query,
-        },
-      })
-    }
-    return searchInfoResults
-  }
-
-  // 否则从模型的文本回复中解析搜索结果
-  return parseResultsFromText(allContentBlocks, query, blocked_domains)
-}
-
-function getSearchInfoFromAssistantMessage(message: unknown): DashScopeSearchInfo | undefined {
-  if (!message || typeof message !== 'object' || !('extras' in message)) {
-    return undefined
-  }
-  const extras = message.extras
-  if (!extras || typeof extras !== 'object') {
-    return undefined
-  }
-  return (extras as { searchInfo?: DashScopeSearchInfo }).searchInfo
-}
-
-function hasSearchResultUrlAndTitle(
-  result: DashScopeSearchResult,
-): result is DashScopeSearchResult & { title: string; url: string } {
-  return typeof result.title === 'string' && typeof result.url === 'string'
-}
-
-/** 从百炼 API 的 search_info 附加字段中解析搜索结果 */
-function parseSearchInfoFromExtras(searchInfo: DashScopeSearchInfo): ServiceSearchResult[] {
-  const rawResults = searchInfo.search_results ?? []
-  return rawResults.filter(hasSearchResultUrlAndTitle).map((result) => ({
-    title: result.title,
-    url: result.url,
-    snippet: typeof result.content === 'string' ? result.content : undefined,
-  }))
-}
-
-// ---------------------------------------------------------------------------
-// OpenAI 原生搜索：web_search_preview 内置工具
-// ---------------------------------------------------------------------------
-
-async function searchViaOpenAI(
-  query: string,
-  allowed_domains?: string[],
-  blocked_domains?: string[],
-  context?: any,
-  onProgress?: any,
-): Promise<ServiceSearchResult[]> {
-  const userMessage = createUserMessage({
-    content: `Search the web for: ${query}. Return ONLY the search results with titles, URLs, and snippets. Do not add any commentary.`,
-  })
-
-  // OpenAI 的 web_search_preview 通过 providerExtras 传入
-  // 格式参考：https://platform.openai.com/docs/guides/tools-web-search
-  const webSearchTool: Record<string, unknown> = {
-    type: 'web_search_preview',
-  }
-
-  // 域名过滤 — OpenAI 支持 allowed_domains
-  if (allowed_domains && allowed_domains.length > 0) {
-    webSearchTool.user_location = { type: 'approximate' }
-    // OpenAI Chat Completions 的 web_search 通过 search_context_size 控制
-    webSearchTool.search_context_size = 'medium'
-  }
-
-  logForDebugging(
-    `[WebSearch:OpenAI] Sending sub-query with web_search_preview tool, model=${context?.options?.mainLoopModel ?? getMainLoopModel()}`,
-  )
-
-  const queryStream = queryModelWithStreaming({
-    messages: [userMessage],
-    systemPrompt: asSystemPrompt([
-      'You are an assistant for performing a web search. Use the web search tool to find results and return them.',
-    ]),
-    thinkingConfig: { type: 'disabled' },
-    tools: [],
-    signal: context?.abortController?.signal ?? new AbortController().signal,
-    options: {
-      getToolPermissionContext: async () => context?.getAppState?.()?.toolPermissionContext ?? {},
-      model: context?.options?.mainLoopModel ?? getMainLoopModel(),
-      isNonInteractiveSession: context?.options?.isNonInteractiveSession ?? false,
-      hasAppendSystemPrompt: !!context?.options?.appendSystemPrompt,
-      querySource: 'web_search_tool' as any,
-      agents: context?.options?.agentDefinitions?.activeAgents ?? [],
-      mcpTools: [],
-      agentId: context?.agentId,
-      // 通过 providerExtras 传入 OpenAI 的 web_search 工具
-      providerExtras: {
-        openai: {
-          // 将 web_search 工具注入到 tools 数组中
-          _web_search_tool: webSearchTool,
-        },
-      },
-    },
-  })
-
-  const allContentBlocks: ContentBlock[] = []
-  let blockCount = 0
-
-  for await (const event of queryStream) {
-    if (event.type === 'assistant') {
-      const contentArr = event.message.content
-      allContentBlocks.push(...contentArr)
-      blockCount += contentArr.length
-      continue
-    }
-  }
-
-  logForDebugging(`[WebSearch:OpenAI] Received ${blockCount} content blocks`)
-
-  // 从模型回复中解析搜索结果
-  return parseResultsFromText(allContentBlocks, query, blocked_domains)
-}
 
 // ---------------------------------------------------------------------------
 // 本地 DuckDuckGo 兜底搜索

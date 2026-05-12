@@ -678,7 +678,7 @@ describe('toolsToAnthropic', () => {
 
   test('工具定义 → Anthropic 格式', () => {
     const result = toolsToAnthropic([
-      { name: 'search', description: 'Search', inputSchema: { type: 'object' } },
+      { name: 'search', description: 'Search', inputSchema: { type: 'object', properties: {} } },
     ])
     expect(result).toEqual([
       { name: 'search', description: 'Search', input_schema: { type: 'object' } },

@@ -133,7 +133,7 @@ describe('convertOutputFormatToResponseFormat', () => {
       convertOutputFormatToResponseFormat({
         format: { type: 'json_schema' },
       }),
-    ).toEqual({ type: 'json_schema' })
+    ).toEqual({ type: 'json_schema' } as any)
   })
 })
 
@@ -192,7 +192,7 @@ describe('openAIFinishReasonToStandard', () => {
 })
 
 describe('convertThinkingForOpenAI', () => {
-  const thinkingEnabled = { type: 'enabled' as const, budget_tokens: 1024 }
+  const thinkingEnabled = { type: 'enabled' as const, budgetTokens: 1024 }
 
   test('undefined thinking → {}', () => {
     const { convertThinkingForOpenAI } = require('../../../src/services/api/conversions/openai.js')

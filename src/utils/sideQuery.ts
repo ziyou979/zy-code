@@ -125,13 +125,13 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
     ...(Array.isArray(system) ? system : system ? [{ type: 'text' as const, text: system }] : []),
   ].filter((block): block is TextBlock => block !== null)
 
-  let thinkingConfig: { type: 'disabled' } | { type: 'enabled'; budget_tokens: number } | undefined
+  let thinkingConfig: { type: 'disabled' } | { type: 'enabled'; budgetTokens: number } | undefined
   if (thinking === false) {
     thinkingConfig = { type: 'disabled' }
   } else if (thinking !== undefined) {
     thinkingConfig = {
       type: 'enabled',
-      budget_tokens: Math.min(thinking, max_tokens - 1),
+      budgetTokens: Math.min(thinking, max_tokens - 1),
     }
   }
 

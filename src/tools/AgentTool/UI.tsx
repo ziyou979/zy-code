@@ -525,10 +525,10 @@ export function renderToolUseProgressMessage(
     if (latestAssistant?.data.message.type === 'assistant') {
       const usage = (latestAssistant.data.message as any).message.usage
       tokens =
-        (usage.cache_creation_input_tokens ?? 0) +
-        (usage.cache_read_input_tokens ?? 0) +
-        usage.input_tokens +
-        usage.output_tokens
+        (usage.cacheCreationInputTokens ?? 0) +
+        (usage.cacheReadInputTokens ?? 0) +
+        usage.inputTokens +
+        usage.outputTokens
     }
     return {
       toolUseCount,
@@ -759,10 +759,10 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
   if (latestAssistant?.data.message.type === 'assistant') {
     const usage = (latestAssistant.data.message as any).message.usage
     tokens =
-      (usage.cache_creation_input_tokens ?? 0) +
-      (usage.cache_read_input_tokens ?? 0) +
-      usage.input_tokens +
-      usage.output_tokens
+      (usage.cacheCreationInputTokens ?? 0) +
+      (usage.cacheReadInputTokens ?? 0) +
+      usage.inputTokens +
+      usage.outputTokens
   }
   return {
     toolUseCount,

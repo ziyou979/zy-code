@@ -1330,9 +1330,11 @@ export const en: TranslationResource = {
   'webSearch.found': 'Found',
   'webSearch.resultsFor': 'results for',
   'webSearch.did': 'Did',
-  'webSearch.search': '{count} {unit} in {time}',
-  'webSearch.search_one': 'search',
-  'webSearch.search_other': 'searches',
+  'webSearch.search': '{count} {unit} found in {time}',
+  'webSearch.search_one': 'result',
+  'webSearch.search_other': 'results',
+  'webSearch.seconds': '{count}s',
+  'webSearch.milliseconds': '{count}ms',
   'webSearch.completed_search': 'Completed search',
 
   // Exit plan mode messages

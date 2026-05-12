@@ -109,14 +109,14 @@ export function formatDurationZh(
 ): string {
   if (ms < 60000) {
     if (ms === 0) {
-      return '0秒'
+      return '0 秒'
     }
     if (ms < 1) {
       const s = (ms / 1000).toFixed(1)
-      return `${s}秒`
+      return `${s} 秒`
     }
     const s = Math.floor(ms / 1000).toString()
-    return `${s}秒`
+    return `${s} 秒`
   }
 
   let days = Math.floor(ms / 86400000)
@@ -140,27 +140,27 @@ export function formatDurationZh(
   const hide = options?.hideTrailingZeros
 
   if (options?.mostSignificantOnly) {
-    if (days > 0) return `${days}天`
-    if (hours > 0) return `${hours}小时`
-    if (minutes > 0) return `${minutes}分`
-    return `${seconds}秒`
+    if (days > 0) return `${days} 天`
+    if (hours > 0) return `${hours} 小时`
+    if (minutes > 0) return `${minutes} 分`
+    return `${seconds} 秒`
   }
 
   if (days > 0) {
-    if (hide && hours === 0 && minutes === 0) return `${days}天`
-    if (hide && minutes === 0) return `${days}天${hours}小时`
-    return `${days}天${hours}小时${minutes}分`
+    if (hide && hours === 0 && minutes === 0) return `${days} 天`
+    if (hide && minutes === 0) return `${days} 天 ${hours} 小时`
+    return `${days} 天 ${hours} 小时 ${minutes} 分`
   }
   if (hours > 0) {
-    if (hide && minutes === 0 && seconds === 0) return `${hours}小时`
-    if (hide && seconds === 0) return `${hours}小时${minutes}分`
-    return `${hours}小时${minutes}分${seconds}秒`
+    if (hide && minutes === 0 && seconds === 0) return `${hours} 小时`
+    if (hide && seconds === 0) return `${hours} 小时 ${minutes} 分`
+    return `${hours} 小时 ${minutes} 分 ${seconds} 秒`
   }
   if (minutes > 0) {
     if (hide && seconds === 0) return `${minutes}分`
-    return `${minutes}分${seconds}秒`
+    return `${minutes} 分 ${seconds} 秒`
   }
-  return `${seconds}秒`
+  return `${seconds} 秒`
 }
 
 /**
