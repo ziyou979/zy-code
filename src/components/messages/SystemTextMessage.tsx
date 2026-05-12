@@ -23,7 +23,7 @@ import type {
   SystemMemorySavedMessage,
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
-import { formatDuration, formatSecondsShort } from '../../utils/format.js'
+import { formatDuration, formatSecondsShort, getLocalizedDurationFormatter } from '../../utils/format.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import Link from '../../ink/components/Link.js'
 import ThemedText from '../design-system/ThemedText.js'
@@ -294,7 +294,8 @@ function TurnDurationMessage({ message, addMargin }) {
     return running.length > 0 ? getPillLabel(running) : null
   })
   const showTurnDuration = getGlobalConfig().showTurnDuration ?? true
-  const duration = formatDuration(message.durationMs)
+  const durationFormatter = getLocalizedDurationFormatter()
+  const duration = durationFormatter(message.durationMs)
   const hasBudget = message.budgetLimit !== undefined
   let budgetSuffix
   if (!hasBudget) {

@@ -2168,6 +2168,15 @@ export const en: TranslationResource = {
   'languagePicker.placeholder': 'e.g., Japanese, 日本語, Español{ellipsis}',
   'languagePicker.defaultHint': 'Leave empty for default (English)',
 
+	  // 语言自称（endonym），用于 prompt 中展示语言本地化名称，如 "Chinese（中文）"
+	  'languageName.English': 'English',
+	  'languageName.Chinese': '中文',
+	  'languageName.Japanese': '日本語',
+	  'languageName.Spanish': 'Español',
+	  'languageName.French': 'Français',
+	  'languageName.German': 'Deutsch',
+	  'languageName.Korean': '한국어',
+
   // Thinking toggle
   'thinkingToggle.title': 'Toggle thinking mode',
   'thinkingToggle.description': 'Enable or disable thinking for this session.',

@@ -7,6 +7,7 @@ import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getCurrentWorktreeSession } from '../utils/worktree.js'
 import { getSessionStartDate } from './common.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
+import { tSync } from '../i18n/index.js'
 import { AGENT_TOOL_NAME, VERIFICATION_AGENT_TYPE } from '../tools/AgentTool/constants.js'
 import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
 import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
@@ -102,11 +103,32 @@ function getSystemRemindersSection(): string {
 - The conversation has unlimited context through automatic summarization.`
 }
 
+const LANGUAGE_SELF_NAME_KEYS: Record<string, string> = {
+  English: 'languageName.English',
+  Chinese: 'languageName.Chinese',
+  Japanese: 'languageName.Japanese',
+  Spanish: 'languageName.Spanish',
+  French: 'languageName.French',
+  German: 'languageName.German',
+  Korean: 'languageName.Korean',
+}
+
+function getLanguageSelfName(languagePreference: string): string {
+  const key = LANGUAGE_SELF_NAME_KEYS[languagePreference]
+  if (!key) return ''
+  // tSync 对未知 key 会 fallback 到 key 本身，需要判断是否解析成功
+  const result = tSync(key)
+  return result !== key ? result : ''
+}
+
 export function getLanguageSection(languagePreference: string | undefined): string | null {
   if (!languagePreference) return null
 
+  const selfName = getLanguageSelfName(languagePreference)
+  const langDisplay = selfName ? `${languagePreference}（${selfName}）` : languagePreference
+
   return `# Language
-Think, reason, and respond in ${languagePreference} natively, not by translating. This includes all internal thinking, chain-of-thought reasoning, explanations, and tool-call narration. Keep code, identifiers, file paths, and quoted text unchanged.`
+Think, reason, and respond in ${langDisplay} natively, not by translating. This includes all internal thinking, chain-of-thought reasoning, explanations, and tool-call narration. Keep code, identifiers, file paths, and quoted text unchanged.`
 }
 
 function getOutputStyleSection(outputStyleConfig: OutputStyleConfig | null): string | null {

@@ -147,8 +147,8 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       <Box flexDirection="column" width={60} gap={1}>
         <Select
           options={[
-            { label: 'English', value: 'en', description: tSync('onboarding.language.english') },
-            { label: '中文', value: 'zh-CN', description: tSync('onboarding.language.chinese') },
+            { label: tSync('languageName.English'), value: 'en', description: tSync('onboarding.language.english') },
+            { label: tSync('languageName.Chinese'), value: 'zh-CN', description: tSync('onboarding.language.chinese') },
           ]}
           onChange={(value) => {
             void handleLanguageSelection(value as UiLanguage)

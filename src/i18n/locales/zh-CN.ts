@@ -2166,6 +2166,15 @@ export const zhCN: TranslationResource = {
   'languagePicker.placeholder': '例如：Japanese, 日本語, Español{ellipsis}',
   'languagePicker.defaultHint': '留空使用默认（英语）',
 
+	  // 语言自称（endonym），用于 prompt 中展示语言本地化名称，如 "Chinese（中文）"
+	  'languageName.English': 'English',
+	  'languageName.Chinese': '中文',
+	  'languageName.Japanese': '日本語',
+	  'languageName.Spanish': 'Español',
+	  'languageName.French': 'Français',
+	  'languageName.German': 'Deutsch',
+	  'languageName.Korean': '한국어',
+
   // 思考切换 Thinking toggle
   'thinkingToggle.title': '切换思考模式',
   'thinkingToggle.description': '为本次会话启用或禁用思考模式。',

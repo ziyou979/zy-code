@@ -6,7 +6,6 @@ import {
   EFFORT_LOW,
   EFFORT_MAX,
   EFFORT_MEDIUM,
-  FORK_GLYPH,
 } from '../constants/figures.js'
 import { getTotalCost, getTotalInputTokens, getTotalOutputTokens } from '../cost-tracker.js'
 import { tSync } from '../i18n/index.js'
@@ -126,31 +125,42 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     return () => clearInterval(id)
   }, [isLoading])
 
-  const parts: string[] = []
+  type SegmentColor = 'ansi:yellow' | 'ansi:blue' | 'ansi:cyan' | 'ansi:magenta' | 'ansi:green' | 'ansi:red' | 'inactive'
+  const segments: Array<{ text: string; color: SegmentColor }> = []
 
   // 强制引用 tick 以避免 unused variable 警告
   void tick
 
   const thinkingEnabled = useAppState((s) => s.thinkingEnabled)
 
-  // 1. 目录
-  parts.push(`◐ ${basename(getCwd())}`)
-
-  // 2. Git 分支 + 状态
-  if (branch) {
-    let gitStr = `${FORK_GLYPH} ${branch}`
-    if (gitClean === true) {
-      gitStr += ' ✓'
-    } else if (gitClean === false) {
-      gitStr += ' ●'
+  // 1. 目录 · Git 分支 → yellow
+  {
+    let dirStr = `📌 ${basename(getCwd())}`
+    if (branch) {
+      dirStr += ` · ${branch}`
+      if (gitClean === true) {
+        dirStr += ' ✓'
+      } else if (gitClean === false) {
+        dirStr += ' ●'
+      }
     }
-    parts.push(gitStr)
+    segments.push({ text: dirStr, color: 'ansi:yellow' })
   }
 
-  // 3. 模型名
-  parts.push(mainLoopModel)
+  // 2. 模型名 · Effort → cyan（核心智能）
+  {
+    const level = getDisplayedEffortLevel(mainLoopModel, effortValue)
+    const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
+    const levelName = tSync(i18nKey)
+    if (thinkingEnabled) {
+      segments.push({ text: `${mainLoopModel} · ↻ ${levelName}`, color: 'ansi:cyan' })
+    } else {
+      const icon = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
+      segments.push({ text: `${mainLoopModel} · ${icon} ${levelName}`, color: 'ansi:cyan' })
+    }
+  }
 
-  // 4. 上下文使用量
+  // 3. 上下文使用量 → 动态变色（<50%绿 / 50-75%黄 / ≥75%红）
   {
     const currentUsage = getCurrentUsage(messages)
     const contextWindowSize = getContextWindowForModel(mainLoopModel)
@@ -161,43 +171,35 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
         currentUsage.cacheCreationInputTokens +
         currentUsage.cacheReadInputTokens
       const bar = renderContextBar(percentages.used)
-      parts.push(`◐ ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`)
+      const contextColor: SegmentColor =
+        percentages.used >= 75 ? 'ansi:red' : percentages.used >= 50 ? 'ansi:yellow' : 'ansi:green'
+      segments.push({
+        text: `📈 ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`,
+        color: contextColor,
+      })
     } else {
-      parts.push(`◐ ${formatTokens(contextWindowSize)}`)
+      segments.push({ text: `📈 ${formatTokens(contextWindowSize)}`, color: 'ansi:green' })
     }
   }
 
-  // 5. Effort 级别 + 思考模式
-  {
-    const level = getDisplayedEffortLevel(mainLoopModel, effortValue)
-    const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
-    const levelName = tSync(i18nKey)
-    if (thinkingEnabled) {
-      parts.push(`↻ ${levelName}`)
-    } else {
-      const icon = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
-      parts.push(`${icon} ${levelName}`)
-    }
-  }
-
-  // 6. Token 使用量
+  // 4. Token 使用量 → blue（数据流）
   {
     const totalIn = getTotalInputTokens()
     const totalOut = getTotalOutputTokens()
     if (totalIn > 0 || totalOut > 0) {
-      parts.push(`↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`)
+      segments.push({ text: `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`, color: 'ansi:blue' })
     }
   }
 
-  // 7. 预估费用
+  // 5. 预估费用 → magenta（费用/金钱）
   {
     const cost = getTotalCost()
     if (cost > 0) {
-      parts.push(`￥ ${cost.toFixed(2)}`)
+      segments.push({ text: `💰 ￥${cost.toFixed(2)}`, color: 'ansi:magenta' })
     }
   }
 
-  // 8. 活跃子智能体
+  // 6. 活跃子智能体 → green
   {
     const visibleTasks = getVisibleAgentTasks(tasks)
     const runningTasks = visibleTasks.filter((t) => t.status === 'running')
@@ -205,22 +207,27 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     const failedTasks = visibleTasks.filter((t) => t.status === 'failed')
 
     if (runningTasks.length > 0 || completedTasks.length > 0) {
-      let taskInfo = `◎ ${runningTasks.length}`
+      let taskInfo = `🛰 ${runningTasks.length}`
       if (completedTasks.length > 0) taskInfo += ` ✓${completedTasks.length}`
       if (failedTasks.length > 0) taskInfo += ` ✗${failedTasks.length}`
-      parts.push(taskInfo)
+      segments.push({ text: taskInfo, color: 'ansi:green' })
     }
   }
 
-  // 9. 内存占用
+  // 7. 内存占用 → inactive（次要不突出）
   if (memoryRss > 0) {
-    parts.push(`⬡ ${formatMemory(memoryRss)}`)
+    segments.push({ text: `💾 ${formatMemory(memoryRss)}`, color: 'inactive' })
   }
 
   return (
     <Box gap={2}>
-      <Text dimColor wrap="truncate">
-        {parts.join(' │ ')}
+      <Text wrap="truncate">
+        {segments.map((seg, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <Text dimColor> │ </Text>}
+            <Text color={seg.color}>{seg.text}</Text>
+          </React.Fragment>
+        ))}
       </Text>
     </Box>
   )
