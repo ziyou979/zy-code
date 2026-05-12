@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { DEFAULT_POLL_CONFIG, type PollIntervalConfig } from './pollConfigDefaults.js'
 
@@ -87,10 +87,9 @@ const pollIntervalConfigSchema = lazySchema(() =>
  * can tune both poll rates fleet-wide with a single config push.
  */
 export function getPollIntervalConfig(): PollIntervalConfig {
-  const raw = getFeatureValue_CACHED_WITH_REFRESH<unknown>(
+  const raw = getFeatureValue_CACHED_MAY_BE_STALE<unknown>(
     'zy_bridge_poll_interval_config',
     DEFAULT_POLL_CONFIG,
-    5 * 60 * 1000,
   )
   const parsed = pollIntervalConfigSchema().safeParse(raw)
   return parsed.success ? parsed.data : DEFAULT_POLL_CONFIG

@@ -1,9 +1,7 @@
 import { feature } from 'bun:bundle'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { DEFAULT_CRON_JITTER_CONFIG } from '../../utils/cronTasks.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-
-const KAIROS_CRON_REFRESH_MS = 5 * 60 * 1000
 
 export const DEFAULT_MAX_AGE_DAYS =
   DEFAULT_CRON_JITTER_CONFIG.recurringMaxAgeMs / (24 * 60 * 60 * 1000)
@@ -36,7 +34,7 @@ export const DEFAULT_MAX_AGE_DAYS =
 export function isKairosCronEnabled(): boolean {
   return feature('AGENT_TRIGGERS')
     ? !isEnvTruthy(process.env.ZY_CODE_DISABLE_CRON) &&
-        getFeatureValue_CACHED_WITH_REFRESH('zy_kairos_cron', true, KAIROS_CRON_REFRESH_MS)
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_kairos_cron', true)
     : false
 }
 
@@ -50,7 +48,7 @@ export function isKairosCronEnabled(): boolean {
  * scheduler via isKairosCronEnabled).
  */
 export function isDurableCronEnabled(): boolean {
-  return getFeatureValue_CACHED_WITH_REFRESH('zy_kairos_cron_durable', true, KAIROS_CRON_REFRESH_MS)
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_kairos_cron_durable', true)
 }
 
 export const CRON_CREATE_TOOL_NAME = 'CronCreate'

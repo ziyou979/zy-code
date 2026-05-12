@@ -6,7 +6,7 @@ import { isProviderManagedEnvVar, SAFE_ENV_VARS } from './managedEnvConstants.js
 import { clearMTLSCache } from './mtls.js'
 import { clearProxyCache, configureGlobalAgents } from './proxy.js'
 import { isSettingSourceEnabled } from './settings/constants.js'
-import { getSettings_DEPRECATED, getSettingsForSource } from './settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
 
 /**
  * `zy ssh` remote: ANTHROPIC_UNIX_SOCKET routes auth through a -R forwarded
@@ -143,7 +143,7 @@ export function applySafeConfigEnvironmentVariables(): void {
   // unchanged (it has the highest merge priority in both loops) — except
   // provider-routing vars, which filterSettingsEnv strips from every source
   // when ZY_CODE_PROVIDER_MANAGED_BY_HOST is set.
-  const settingsEnv = filterSettingsEnv(getSettings_DEPRECATED()?.env)
+  const settingsEnv = filterSettingsEnv(getInitialSettings()?.env)
   for (const [key, value] of Object.entries(settingsEnv)) {
     if (SAFE_ENV_VARS.has(key.toUpperCase())) {
       process.env[key] = value
@@ -161,7 +161,7 @@ export function applySafeConfigEnvironmentVariables(): void {
 export function applyConfigEnvironmentVariables(): void {
   Object.assign(process.env, filterSettingsEnv(getGlobalConfig().env))
 
-  Object.assign(process.env, filterSettingsEnv(getSettings_DEPRECATED()?.env))
+  Object.assign(process.env, filterSettingsEnv(getInitialSettings()?.env))
 
   // Clear caches so agents are rebuilt with the new env vars
   clearCACertsCache()

@@ -1,4 +1,4 @@
-import { getSettings_DEPRECATED } from '../settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { isModelAlias, isModelFamilyAlias } from './aliases.js'
 import { parseUserSpecifiedModel } from './model.js'
 import { resolveOverriddenModel } from './modelStrings.js'
@@ -82,7 +82,7 @@ function familyHasSpecificEntries(family: string, allowlist: string[]): boolean 
  * 3. Full model IDs — exact match only
  */
 export function isModelAllowed(model: string): boolean {
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   const { availableModels } = settings
   if (!availableModels) {
     return true // No restrictions

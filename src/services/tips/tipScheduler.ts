@@ -1,4 +1,4 @@
-import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -30,7 +30,7 @@ export function selectTipWithLongestTimeSinceShown(availableTips: Tip[]): Tip | 
 
 export async function getTipToShowOnSpinner(context?: TipContext): Promise<Tip | undefined> {
   // Check if tips are disabled (default to true if not set)
-  if (getSettings_DEPRECATED().spinnerTipsEnabled === false) {
+  if (getInitialSettings().spinnerTipsEnabled === false) {
     return undefined
   }
 

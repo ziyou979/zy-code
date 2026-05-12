@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
@@ -62,8 +62,6 @@ const outputSchema = lazySchema(() =>
 type OutputSchema = ReturnType<typeof outputSchema>
 export type Output = z.infer<OutputSchema>
 
-const KAIROS_BRIEF_REFRESH_MS = 5 * 60 * 1000
-
 /**
  * Entitlement check — is the user ALLOWED to use Brief? Combines build-time
  * flags with runtime GB gate + assistant-mode passthrough. No opt-in check
@@ -89,7 +87,7 @@ export function isBriefEntitled(): boolean {
   return feature('KAIROS') || feature('KAIROS_BRIEF')
     ? getKairosActive() ||
         isEnvTruthy(process.env.ZY_CODE_BRIEF) ||
-        getFeatureValue_CACHED_WITH_REFRESH('zy_kairos_brief', false, KAIROS_BRIEF_REFRESH_MS)
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_kairos_brief', false)
     : false
 }
 

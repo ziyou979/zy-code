@@ -11,7 +11,7 @@ import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
 import { isBinaryContentType, persistBinaryContent } from '../../utils/mcpOutputStorage.js'
-import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { isPreapprovedHost } from './preapproved.js'
 import { makeSecondaryModelPrompt } from './prompt.js'
@@ -365,7 +365,7 @@ export async function getURLMarkdownContent(
     // 检查用户是否选择跳过黑名单检查
     // 这是为具有限制性安全策略的企业客户准备的，
     // 这些策略可能会阻止到 zy.ai 的出站连接
-    const settings = getSettings_DEPRECATED()
+    const settings = getInitialSettings()
     if (!settings.skipWebFetchPreflight) {
       const checkResult = await checkDomainBlocklist(hostname)
       switch (checkResult.status) {

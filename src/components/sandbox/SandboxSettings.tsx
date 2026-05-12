@@ -4,7 +4,7 @@ import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { CommandResultDisplay } from '../../types/command.js'
 import type { SandboxDependencyCheck } from '../../utils/sandbox/sandbox-adapter.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
-import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import { Select } from '../CustomSelect/select.js'
 import { Pane } from '../design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus } from '../design-system/Tabs.js'
@@ -32,7 +32,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
   const currentEnabled = SandboxManager.isSandboxingEnabled()
   const currentAutoAllow = SandboxManager.isAutoAllowBashIfSandboxedEnabled()
   const hasWarnings = depCheck.warnings.length > 0
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   const allowAllUnixSockets = settings.sandbox?.network?.allowAllUnixSockets
   const showSocketWarning = hasWarnings && !allowAllUnixSockets
   const getCurrentMode = () => {

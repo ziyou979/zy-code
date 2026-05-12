@@ -37,7 +37,7 @@ import {
 } from './hooks/hooksConfigSnapshot.js'
 import { getTranscriptPathForSession, getAgentTranscriptPath } from './sessionStorage.js'
 import type { AgentId } from '../types/ids.js'
-import { getSettings_DEPRECATED, getSettingsForSource } from './settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -4386,7 +4386,7 @@ export async function executeFileSuggestionCommand(
   if (shouldAllowManagedHooksOnly()) {
     fileSuggestion = getSettingsForSource('policySettings')?.fileSuggestion
   } else {
-    fileSuggestion = getSettings_DEPRECATED()?.fileSuggestion
+    fileSuggestion = getInitialSettings()?.fileSuggestion
   }
 
   if (!fileSuggestion || fileSuggestion.type !== 'command') {

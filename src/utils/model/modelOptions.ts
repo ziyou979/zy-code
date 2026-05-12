@@ -1,5 +1,5 @@
 import { getInitialMainLoopModel } from '../../bootstrap/state.js'
-import { getSettings_DEPRECATED } from '../settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { getLocalModelCapability } from '../settings/localModelCapabilities.js'
 import { getAPIProvider } from './providers.js'
 import { isModelAllowed } from './modelAllowlist.js'
@@ -33,7 +33,7 @@ export function getDefaultOptionForUser(): ModelOption {
  * label 从 model-capabilities.json 的 pattern 获取（或直接用模型 ID）。
  */
 function getTierOption(tier: string): ModelOption | undefined {
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   const tierModel = settings?.models?.[tier]
   if (!tierModel) return undefined
 
@@ -84,7 +84,7 @@ function getCompactOption(): ModelOption {
 
 function getModelOptionsBase(): ModelOption[] {
   // 自定义模型优先：完全替换内置 tier 选项
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModelOptions: ModelOption[] = settings.customModels.map((m) => ({
       value: m.alias,
@@ -163,7 +163,7 @@ export function getModelOptions(): ModelOption[] {
  * Always preserves the "Default" option (value: null).
  */
 function filterModelOptionsByAllowlist(options: ModelOption[]): ModelOption[] {
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   if (!settings.availableModels) {
     return options
   }

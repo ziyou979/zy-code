@@ -50,7 +50,7 @@ export function BackgroundHint(props) {
       <Text dimColor={true}>
         <KeyboardShortcutHint
           shortcut={shortcut}
-          action={tSync('bash.runInBackground')}
+          action="run in background"
           parens={true}
         />
       </Text>

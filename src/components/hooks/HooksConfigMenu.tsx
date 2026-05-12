@@ -27,7 +27,7 @@ import {
   groupHooksByEventAndMatcher,
 } from '../../utils/hooks/hooksConfigManager.js'
 import type { IndividualHookConfig } from '../../utils/hooks/hooksSettings.js'
-import { getSettings_DEPRECATED, getSettingsForSource } from '../../utils/settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from '../../utils/settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { SelectEventMode } from './SelectEventMode.js'
@@ -66,7 +66,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
     mode: 'select-event',
   })
   const [disabledByPolicy, setDisabledByPolicy] = useState(() => {
-    const settings = getSettings_DEPRECATED()
+    const settings = getInitialSettings()
     const hooksDisabled = settings?.disableAllHooks === true
     return hooksDisabled && getSettingsForSource('policySettings')?.disableAllHooks === true
   })
@@ -75,7 +75,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
   )
   useSettingsChange((source) => {
     if (source === 'policySettings') {
-      const settings_0 = getSettings_DEPRECATED()
+      const settings_0 = getInitialSettings()
       const hooksDisabled_0 = settings_0?.disableAllHooks === true
       setDisabledByPolicy(
         hooksDisabled_0 && getSettingsForSource('policySettings')?.disableAllHooks === true,
@@ -162,7 +162,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
     },
   )
   const hookEventMetadata = getHookEventMetadata(combinedToolNames)
-  const settings_1 = getSettings_DEPRECATED()
+  const settings_1 = getInitialSettings()
   const hooksDisabled_1 = settings_1?.disableAllHooks === true
   const byEvent = {}
   let total = 0

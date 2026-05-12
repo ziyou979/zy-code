@@ -2652,7 +2652,7 @@ async function run(): Promise<CommanderCommand> {
         // 拦截器）并选择插件贡献的 env 在插件
         // 初始化之后。项目设置已经在此加载：
         // init() 中的 applySafeConfigEnvironmentVariables 调用了
-        // managedEnv.ts:86 的 getSettings_DEPRECATED，它合并了所有启用的
+        // managedEnv.ts:86 的 getInitialSettings，它合并了所有启用的
         // 源，包括 projectSettings/localSettings。
         applyConfigEnvironmentVariables()
 

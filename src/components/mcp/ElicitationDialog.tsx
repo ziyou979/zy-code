@@ -1090,24 +1090,24 @@ function ElicitationFormDialog({
             />
             <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
             {currentField && (
-              <KeyboardShortcutHint shortcut="Backspace" action={tSync('elicitation.unset')} />
+              <KeyboardShortcutHint shortcut="Backspace" action="elicitation:unset" />
             )}
             {currentField && currentField.schema.type === 'boolean' && (
-              <KeyboardShortcutHint shortcut="Space" action={tSync('elicitation.toggle')} />
+              <KeyboardShortcutHint shortcut="Space" action="toggle" />
             )}
             {currentField &&
               isEnumSchema(currentField.schema) &&
               (expandedAccordion ? (
-                <KeyboardShortcutHint shortcut="Space" action={tSync('elicitation.select')} />
+                <KeyboardShortcutHint shortcut="Space" action="select" />
               ) : (
-                <KeyboardShortcutHint shortcut="→" action={tSync('elicitation.expand')} />
+                <KeyboardShortcutHint shortcut="→" action="expand" />
               ))}
             {currentField &&
               isMultiSelectEnumSchema(currentField.schema) &&
               (expandedAccordion ? (
-                <KeyboardShortcutHint shortcut="Space" action={tSync('elicitation.toggle')} />
+                <KeyboardShortcutHint shortcut="Space" action="toggle" />
               ) : (
-                <KeyboardShortcutHint shortcut="→" action={tSync('elicitation.expand')} />
+                <KeyboardShortcutHint shortcut="→" action="expand" />
               ))}
           </Byline>
         )
@@ -1269,7 +1269,7 @@ function ElicitationURLDialog({
                 fallback="Esc"
                 description={tSync('permissionRules.cancel')}
               />
-              <KeyboardShortcutHint shortcut="\u2190\u2192" action={tSync('elicitation.switch')} />
+              <KeyboardShortcutHint shortcut="\u2190\u2192" action="switch" />
             </Byline>
           )
         }
@@ -1343,7 +1343,7 @@ function ElicitationURLDialog({
               fallback="Esc"
               description={tSync('permissionRules.cancel')}
             />
-            <KeyboardShortcutHint shortcut="\u2190\u2192" action={tSync('elicitation.switch')} />
+            <KeyboardShortcutHint shortcut="\u2190\u2192" action="switch" />
           </Byline>
         )
       }

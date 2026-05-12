@@ -45,7 +45,7 @@ import { logError } from './log.js'
 import { createSystemMessage, createUserMessage } from './messages.js'
 import { getMainLoopModel } from './model/model.js'
 import { isTranscriptMessage } from './sessionStorage.js'
-import { getSettings_DEPRECATED } from './settings/settings.js'
+import { getInitialSettings } from './settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 import { asSystemPrompt } from './systemPromptType.js'
 import {
@@ -1235,7 +1235,7 @@ export async function teleportToRemote(options: {
     // Prefer anthropic_cloud environments over byoc: anthropic_cloud environments (e.g. "Default")
     // are the standard compute environments with full repo access, whereas byoc environments
     // (e.g. "monorepo") are user-owned compute that may not support the current repository.
-    const settings = getSettings_DEPRECATED()
+    const settings = getInitialSettings()
     const defaultEnvironmentId = options.useDefaultEnvironment
       ? undefined
       : settings?.remote?.defaultEnvironmentId

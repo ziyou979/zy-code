@@ -145,9 +145,7 @@ export function generateHeatmap(
 
   // Legend
   lines.push('')
-  lines.push(
-    '    Less ' + [ZyOrange('░'), ZyOrange('▒'), ZyOrange('▓'), ZyOrange('█')].join(' ') + ' More',
-  )
+  lines.push('    Less ' + [ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ') + ' More')
 
   return lines.join('\n')
 }
@@ -161,22 +159,22 @@ function getIntensity(messageCount: number, percentiles: Percentiles | null): nu
   return 1
 }
 
-// Zy orange color (hex #da7756)
-let ZyOrange
-ZyOrange = chalk.hex('#da7756')
+// Zy blue color (hex #5b9bd5)
+let ZyBlue
+ZyBlue = chalk.hex('#5b9bd5')
 
 function getHeatmapChar(intensity: number): string {
   switch (intensity) {
     case 0:
       return chalk.gray('·')
     case 1:
-      return ZyOrange('░')
+      return ZyBlue('░')
     case 2:
-      return ZyOrange('▒')
+      return ZyBlue('▒')
     case 3:
-      return ZyOrange('▓')
+      return ZyBlue('▓')
     case 4:
-      return ZyOrange('█')
+      return ZyBlue('█')
     default:
       return chalk.gray('·')
   }

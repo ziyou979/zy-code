@@ -28,10 +28,14 @@ import { getTheme, themeColorToAnsi } from '../utils/theme.js'
 import { Pane } from './design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus } from './design-system/Tabs.js'
 import { isInternalBuild } from '../utils/envUtils.js'
+import { getUiLanguage, tSync } from '../i18n/index.js'
 import { Spinner } from './Spinner.js'
+function getLocale(): string {
+  return getUiLanguage() === 'zh-CN' ? 'zh-CN' : 'en-US'
+}
 function formatPeakDay(dateStr: string): string {
   const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(getLocale(), {
     month: 'short',
     day: 'numeric',
   })
@@ -57,9 +61,9 @@ type StatsResult =
       type: 'empty'
     }
 const DATE_RANGE_LABELS: Record<StatsDateRange, string> = {
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  all: 'All time',
+  '7d': tSync('stats.last7Days'),
+  '30d': tSync('stats.last30Days'),
+  all: tSync('stats.allTime'),
 }
 const DATE_RANGE_ORDER: StatsDateRange[] = ['all', '7d', '30d']
 function getNextDateRange(current: StatsDateRange): StatsDateRange {
@@ -85,7 +89,8 @@ function createAllTimeStatsPromise(): Promise<StatsResult> {
       }
     })
     .catch((err): StatsResult => {
-      const message = err instanceof Error ? err.message : 'Failed to load stats'
+      const message =
+        err instanceof Error ? err.message : tSync('stats.loadError', { message: 'Unknown error' })
       return {
         type: 'error',
         message,
@@ -99,7 +104,7 @@ export function Stats({ onClose }: Props) {
       fallback={
         <Box marginTop={1}>
           <Spinner />
-          <Text> Loading your ZY Code stats…</Text>
+          <Text> {tSync('stats.loading')}</Text>
         </Box>
       }
     >
@@ -185,14 +190,14 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
   if (allTimeResult.type === 'error') {
     return (
       <Box marginTop={1}>
-        <Text color="error">Failed to load stats: {allTimeResult.message}</Text>
+        <Text color="error">{tSync('stats.loadError', { message: allTimeResult.message })}</Text>
       </Box>
     )
   }
   if (allTimeResult.type === 'empty') {
     return (
       <Box marginTop={1}>
-        <Text color="warning">No stats available yet. Start using ZY Code!</Text>
+        <Text color="warning">{tSync('stats.empty')}</Text>
       </Box>
     )
   }
@@ -200,7 +205,7 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
     return (
       <Box marginTop={1}>
         <Spinner />
-        <Text> Loading stats…</Text>
+        <Text> {tSync('stats.loadingFiltered')}</Text>
       </Box>
     )
   }
@@ -210,7 +215,7 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
         <Box flexDirection="row" gap={1} marginBottom={1}>
           <Tabs title="" color="zy" defaultTab="Overview">
             {
-              <Tab title="Overview">
+              <Tab id="Overview" title={tSync('stats.overview')}>
                 <OverviewTab
                   stats={displayStats}
                   allTimeStats={allTimeStats}
@@ -220,7 +225,7 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
               </Tab>
             }
             {
-              <Tab title="Models">
+              <Tab id="Models" title={tSync('stats.models')}>
                 <ModelsTab
                   stats={displayStats}
                   dateRange={dateRange as any}
@@ -234,7 +239,8 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
       {
         <Box paddingLeft={2}>
           <Text dimColor={true}>
-            Esc to cancel · r to cycle dates · ctrl+s to copy{copyStatus ? ` · ${copyStatus}` : ''}
+            {tSync('stats.footer')}
+            {copyStatus ? ` · ${copyStatus}` : ''}
           </Text>
         </Box>
       }
@@ -368,7 +374,7 @@ function OverviewTab({
         <Box flexDirection="column" width={28}>
           {favoriteModel && (
             <Text wrap="truncate">
-              Favorite model:{' '}
+              {tSync('stats.favoriteModel')}:{' '}
               <Text color="zy" bold>
                 {renderModelName(favoriteModel[0])}
               </Text>
@@ -377,7 +383,7 @@ function OverviewTab({
         </Box>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Total tokens: <Text color="zy">{formatNumber(totalTokens)}</Text>
+            {tSync('stats.totalTokens')}: <Text color="zy">{formatNumber(totalTokens)}</Text>
           </Text>
         </Box>
       </Box>
@@ -386,13 +392,13 @@ function OverviewTab({
       <Box flexDirection="row" gap={4}>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Sessions: <Text color="zy">{formatNumber(stats.totalSessions)}</Text>
+            {tSync('stats.sessions')}: <Text color="zy">{formatNumber(stats.totalSessions)}</Text>
           </Text>
         </Box>
         <Box flexDirection="column" width={28}>
           {stats.longestSession && (
             <Text wrap="truncate">
-              Longest session:{' '}
+              {tSync('stats.longestSession')}:{' '}
               <Text color="zy">{formatDuration(stats.longestSession.duration)}</Text>
             </Text>
           )}
@@ -403,17 +409,17 @@ function OverviewTab({
       <Box flexDirection="row" gap={4}>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Active days: <Text color="zy">{stats.activeDays}</Text>
+            {tSync('stats.activeDays')}: <Text color="zy">{stats.activeDays}</Text>
             <Text color="subtle">/{rangeDays}</Text>
           </Text>
         </Box>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Longest streak:{' '}
+            {tSync('stats.longestStreak')}:{' '}
             <Text color="zy" bold>
               {stats.streaks.longestStreak}
             </Text>{' '}
-            {stats.streaks.longestStreak === 1 ? 'day' : 'days'}
+            {stats.streaks.longestStreak === 1 ? tSync('stats.day') : tSync('stats.days')}
           </Text>
         </Box>
       </Box>
@@ -423,17 +429,18 @@ function OverviewTab({
         <Box flexDirection="column" width={28}>
           {stats.peakActivityDay && (
             <Text wrap="truncate">
-              Most active day: <Text color="zy">{formatPeakDay(stats.peakActivityDay)}</Text>
+              {tSync('stats.mostActiveDay')}:{' '}
+              <Text color="zy">{formatPeakDay(stats.peakActivityDay)}</Text>
             </Text>
           )}
         </Box>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Current streak:{' '}
+            {tSync('stats.currentStreak')}:{' '}
             <Text color="zy" bold>
               {allTimeStats.streaks.currentStreak}
             </Text>{' '}
-            {allTimeStats.streaks.currentStreak === 1 ? 'day' : 'days'}
+            {allTimeStats.streaks.currentStreak === 1 ? tSync('stats.day') : tSync('stats.days')}
           </Text>
         </Box>
       </Box>
@@ -443,7 +450,7 @@ function OverviewTab({
         <Box flexDirection="row" gap={4}>
           <Box flexDirection="column" width={28}>
             <Text wrap="truncate">
-              Speculation saved:{' '}
+              {tSync('stats.speculationSaved')}:{' '}
               <Text color="zy">{formatDuration(stats.totalSpeculationTimeSavedMs)}</Text>
             </Text>
           </Box>
@@ -454,7 +461,7 @@ function OverviewTab({
       {shotStatsData && (
         <>
           <Box marginTop={1}>
-            <Text>Shot distribution</Text>
+            <Text>{tSync('stats.shotDistribution')}</Text>
           </Box>
           <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
@@ -491,7 +498,7 @@ function OverviewTab({
           <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
               <Text wrap="truncate">
-                Avg/session: <Text color="zy">{shotStatsData.avgShots}</Text>
+                {tSync('stats.avgPerSession')}: <Text color="zy">{shotStatsData.avgShots}</Text>
               </Text>
             </Box>
           </Box>
@@ -659,9 +666,9 @@ function generateFunFactoid(stats: ZyCodeStats, totalTokens: number): string {
     for (const book of matchingBooks) {
       const times = totalTokens / book.tokens
       if (times >= 2) {
-        factoids.push(`You've used ~${Math.floor(times)}x more tokens than ${book.name}`)
+        factoids.push(tSync('stats.factTokensMore', { n: Math.floor(times), book: book.name }))
       } else {
-        factoids.push(`You've used the same number of tokens as ${book.name}`)
+        factoids.push(tSync('stats.factTokensSame', { book: book.name }))
       }
     }
   }
@@ -671,7 +678,7 @@ function generateFunFactoid(stats: ZyCodeStats, totalTokens: number): string {
       const ratio = sessionMinutes / comparison.minutes
       if (ratio >= 2) {
         factoids.push(
-          `Your longest session is ~${Math.floor(ratio)}x longer than ${comparison.name}`,
+          tSync('stats.factSessionLonger', { n: Math.floor(ratio), comparison: comparison.name }),
         )
       }
     }
@@ -711,7 +718,7 @@ function ModelsTab({ stats, dateRange, isLoading }) {
   if (modelEntries.length === 0) {
     return (
       <Box>
-        <Text color="subtle">No model usage data available</Text>
+        <Text color="subtle">{tSync('stats.noModelData')}</Text>
       </Box>
     )
   }
@@ -744,7 +751,7 @@ function ModelsTab({ stats, dateRange, isLoading }) {
     <Box flexDirection="column" marginTop={1}>
       {chartOutput && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold={true}>Tokens per Day</Text>
+          <Text bold={true}>{tSync('stats.tokensPerDay')}</Text>
           <Ansi>{chartOutput.chart}</Ansi>
           <Text color="subtle">{chartOutput.xAxisLabels}</Text>
           <Box>
@@ -766,10 +773,16 @@ function ModelsTab({ stats, dateRange, isLoading }) {
             const normalizedUsage = {
               inputTokens: (usage_0 as { inputTokens?: number }).inputTokens ?? 0,
               outputTokens: (usage_0 as { outputTokens?: number }).outputTokens ?? 0,
-              cacheReadInputTokens: (usage_0 as { cacheReadInputTokens?: number }).cacheReadInputTokens ?? 0,
+              cacheReadInputTokens:
+                (usage_0 as { cacheReadInputTokens?: number }).cacheReadInputTokens ?? 0,
             }
             return (
-              <ModelEntry key={model_0} model={model_0} usage={normalizedUsage} totalTokens={totalTokens} />
+              <ModelEntry
+                key={model_0}
+                model={model_0}
+                usage={normalizedUsage}
+                totalTokens={totalTokens}
+              />
             )
           })}
         </Box>
@@ -784,7 +797,7 @@ function ModelsTab({ stats, dateRange, isLoading }) {
           <Text color="subtle">
             {canScrollUp ? figures.arrowUp : ' '} {canScrollDown ? figures.arrowDown : ' '}{' '}
             {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{' '}
-            {modelEntries.length} models (↑↓ to scroll)
+            {modelEntries.length} {tSync('stats.modelScrollHint')}
           </Text>
         </Box>
       )}
@@ -816,7 +829,8 @@ function ModelEntry({ model, usage, totalTokens }: ModelEntryProps) {
       }
       {
         <Text color="subtle">
-          {'  '}In: {formattedInput} · Out: {formattedOutput}
+          {'  '}
+          {tSync('stats.inOut', { in: formattedInput, out: formattedOutput })}
         </Text>
       }
     </Box>
@@ -862,13 +876,8 @@ function generateTokenChart(
     }
   }
 
-  // Color palette for different models - use theme colors
-  const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
-  const colors = [
-    themeColorToAnsi(theme.suggestion),
-    themeColorToAnsi(theme.success),
-    themeColorToAnsi(theme.warning),
-  ]
+  // Color palette for different models - use blue shades
+  const colors = [chalk.cyan, chalk.blue, chalk.blueBright]
 
   // Prepare series data for each model
   const series: number[][] = []
@@ -883,11 +892,11 @@ function generateTokenChart(
     // Only include if there's actual data
     if (data.some((v) => v > 0)) {
       series.push(data)
-      // Use theme colors that match the chart
-      const bulletColors = [theme.suggestion, theme.success, theme.warning]
+      // Use blue colors that match the chart
+      const bulletColors: Color[] = ['ansi:cyan', 'ansi:blue', 'ansi:blueBright']
       legend.push({
         model: renderModelName(model),
-        coloredBullet: applyColor(figures.bullet, bulletColors[i % bulletColors.length] as Color),
+        coloredBullet: applyColor(figures.bullet, bulletColors[i % bulletColors.length]!),
       })
     }
   }
@@ -937,7 +946,7 @@ function generateXAxisLabels(
   for (let i = 0; i < numLabels; i++) {
     const idx = Math.min(i * step, data.length - 1)
     const date = new Date(data[idx]!.date)
-    const label = date.toLocaleDateString('en-US', {
+    const label = date.toLocaleDateString(getLocale(), {
       month: 'short',
       day: 'numeric',
     })
@@ -964,10 +973,10 @@ async function handleScreenshot(
   activeTab: 'Overview' | 'Models',
   setStatus: (status: string | null) => void,
 ): Promise<void> {
-  setStatus('copying…')
+  setStatus(tSync('stats.copying'))
   const ansiText = renderStatsToAnsi(stats, activeTab)
   const result = await copyAnsiToClipboard(ansiText)
-  setStatus(result.success ? 'copied!' : 'copy failed')
+  setStatus(result.success ? tSync('stats.copied') : tSync('stats.copyFailed'))
 
   // Clear status after 2 seconds
   setTimeout(setStatus, 2000, null)
@@ -1049,9 +1058,9 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
   if (favoriteModel) {
     lines.push(
       row(
-        'Favorite model',
+        tSync('stats.favoriteModel'),
         renderModelName(favoriteModel[0]),
-        'Total tokens',
+        tSync('stats.totalTokens'),
         formatNumber(totalTokens),
       ),
     )
@@ -1061,29 +1070,38 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
   // Row 2: Sessions | Longest session
   lines.push(
     row(
-      'Sessions',
+      tSync('stats.sessions'),
       formatNumber(stats.totalSessions),
-      'Longest session',
-      stats.longestSession ? formatDuration(stats.longestSession.duration) : 'N/A',
+      tSync('stats.longestSession'),
+      stats.longestSession
+        ? formatDuration(stats.longestSession.duration)
+        : tSync('stats.notAvailable'),
     ),
   )
 
   // Row 3: Current streak | Longest streak
-  const currentStreakVal = `${stats.streaks.currentStreak} ${stats.streaks.currentStreak === 1 ? 'day' : 'days'}`
-  const longestStreakVal = `${stats.streaks.longestStreak} ${stats.streaks.longestStreak === 1 ? 'day' : 'days'}`
-  lines.push(row('Current streak', currentStreakVal, 'Longest streak', longestStreakVal))
+  const currentStreakVal = `${stats.streaks.currentStreak} ${stats.streaks.currentStreak === 1 ? tSync('stats.day') : tSync('stats.days')}`
+  const longestStreakVal = `${stats.streaks.longestStreak} ${stats.streaks.longestStreak === 1 ? tSync('stats.day') : tSync('stats.days')}`
+  lines.push(
+    row(
+      tSync('stats.currentStreak'),
+      currentStreakVal,
+      tSync('stats.longestStreak'),
+      longestStreakVal,
+    ),
+  )
 
   // Row 4: Active days | Peak hour
   const activeDaysVal = `${stats.activeDays}/${stats.totalDays}`
   const peakHourVal =
     stats.peakActivityHour !== null
       ? `${stats.peakActivityHour}:00-${stats.peakActivityHour + 1}:00`
-      : 'N/A'
-  lines.push(row('Active days', activeDaysVal, 'Peak hour', peakHourVal))
+      : tSync('stats.notAvailable')
+  lines.push(row(tSync('stats.activeDays'), activeDaysVal, tSync('stats.peakHour'), peakHourVal))
 
   // Speculation time saved (ant-only)
   if (isInternalBuild() && stats.totalSpeculationTimeSavedMs > 0) {
-    const label = 'Speculation saved:'.padEnd(COL1_LABEL_WIDTH)
+    const label = (tSync('stats.speculationSaved') + ':').padEnd(COL1_LABEL_WIDTH)
     lines.push(label + h(formatDuration(stats.totalSpeculationTimeSavedMs)))
   }
 
@@ -1111,12 +1129,12 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
       const b6_10 = bucket(6, 10)
       const b11 = bucket(11)
       lines.push('')
-      lines.push('Shot distribution')
+      lines.push(tSync('stats.shotDistribution'))
       lines.push(row('1-shot', fmtBucket(b1, pct(b1)), '2\u20135 shot', fmtBucket(b2_5, pct(b2_5))))
       lines.push(
         row('6\u201310 shot', fmtBucket(b6_10, pct(b6_10)), '11+ shot', fmtBucket(b11, pct(b11))),
       )
-      lines.push(`${'Avg/session:'.padEnd(COL1_LABEL_WIDTH)}${h(avgShots)}`)
+      lines.push(`${(tSync('stats.avgPerSession') + ':').padEnd(COL1_LABEL_WIDTH)}${h(avgShots)}`)
     }
   }
   lines.push('')
@@ -1124,7 +1142,7 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
   // Fun factoid
   const factoid = generateFunFactoid(stats, totalTokens)
   lines.push(h(factoid))
-  lines.push(chalk.gray(`Stats from the last ${stats.totalDays} days`))
+  lines.push(chalk.gray(tSync('stats.screenshotDateRange', { n: stats.totalDays })))
   return lines
 }
 function renderModelsToAnsi(stats: ZyCodeStats): string[] {
@@ -1133,7 +1151,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
     ([, a], [, b]) => b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens),
   )
   if (modelEntries.length === 0) {
-    lines.push(chalk.gray('No model usage data available'))
+    lines.push(chalk.gray(tSync('stats.noModelData')))
     return lines
   }
   const favoriteModel = modelEntries[0]
@@ -1149,7 +1167,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
     80, // Fixed width for screenshot
   )
   if (chartOutput) {
-    lines.push(chalk.bold('Tokens per Day'))
+    lines.push(chalk.bold(tSync('stats.tokensPerDay')))
     lines.push(chartOutput.chart)
     lines.push(chalk.gray(chartOutput.xAxisLabels))
     // Legend - use pre-colored bullets from chart output
@@ -1162,7 +1180,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
 
   // Summary
   lines.push(
-    `${figures.star} Favorite: ${chalk.magenta.bold(renderModelName(favoriteModel?.[0] || ''))} · ${figures.circle} Total: ${chalk.magenta(formatNumber(totalTokens))} tokens`,
+    `${figures.star} ${tSync('stats.favoriteModel')}: ${chalk.cyan.bold(renderModelName(favoriteModel?.[0] || ''))} · ${figures.circle} ${tSync('stats.totalTokens')}: ${chalk.cyan(formatNumber(totalTokens))} tokens`,
   )
   lines.push('')
 
@@ -1176,7 +1194,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
     )
     lines.push(
       chalk.dim(
-        `  In: ${formatNumber(usage.inputTokens)} · Out: ${formatNumber(usage.outputTokens)}`,
+        `  ${tSync('stats.inOut', { in: formatNumber(usage.inputTokens), out: formatNumber(usage.outputTokens) })}`,
       ),
     )
   }

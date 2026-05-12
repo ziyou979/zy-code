@@ -2,7 +2,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/grow
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
-import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
   BINARY_HIJACK_VARS,
   bashPermissionRule,
@@ -51,7 +51,7 @@ function containsExcludedCommand(command: string): boolean {
   }
 
   // Check user-configured excluded commands from settings
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   const userExcludedCommands = settings.sandbox?.excludedCommands ?? []
 
   if (userExcludedCommands.length === 0) {

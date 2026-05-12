@@ -1,5 +1,5 @@
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
-import { getSettings_DEPRECATED } from '../settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import type { ModelAlias } from './aliases.js'
 
@@ -15,7 +15,7 @@ type ModelTier = 'advanced' | 'standard' | 'compact'
  * standard 也未配置则返回 undefined，由调用方处理（如引导用户进入 onboarding 配置）。
  */
 function getModelByTier(tier: ModelTier): ModelName | undefined {
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   const tierModel = settings.models?.[tier]
   if (tierModel) return tierModel
   // 其他层级未配置时使用 standard
@@ -41,7 +41,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
   if (modelOverride !== undefined) {
     specifiedModel = modelOverride
   } else {
-    const settings = getSettings_DEPRECATED() || {}
+    const settings = getInitialSettings() || {}
     specifiedModel = settings.model || undefined
   }
 
@@ -90,7 +90,7 @@ export function getDefaultCompactModel(): ModelName | undefined {
  * 再解析到实际模型。默认为 standard。
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias | undefined {
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   const tier = settings?.mainLoopModel ?? 'standard'
   return getModelByTier(tier)
 }
@@ -110,7 +110,7 @@ export function renderDefaultModelSetting(setting: ModelName | ModelAlias): stri
 }
 
 export function renderModelSetting(setting: ModelName | ModelAlias): string {
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
       (m) => m.alias === setting || m.model === setting,
@@ -128,7 +128,7 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
  */
 export function getPublicModelDisplayName(model: ModelName): string | null {
   // 优先检查自定义模型
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
       (m) => m.model === model || m.model + '[1m]' === model,
@@ -177,7 +177,7 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
   if (normalizedModel === 'compact') return getModelByTier('compact')
 
   // 从 settings 中解析自定义模型别名
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find((m) => m.alias.toLowerCase() === normalizedModel)
     if (customModel) {
@@ -208,7 +208,7 @@ export function modelDisplayString(model: ModelSetting): string {
 }
 
 export function getMarketingNameForModel(modelId: string): string | undefined {
-  const settings = getSettings_DEPRECATED() || {}
+  const settings = getInitialSettings() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
       (m) => m.model === modelId.replace(/\[1m\]$/i, ''),

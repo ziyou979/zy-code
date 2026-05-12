@@ -52,7 +52,7 @@ import {
   isValidImagePaste,
 } from 'src/types/textInputTypes.js'
 import { randomUUID, type UUID } from 'crypto'
-import { getSettings_DEPRECATED } from './settings/settings.js'
+import { getInitialSettings } from './settings/settings.js'
 import { getSnippetForTwoFileDiff } from 'src/tools/FileEditTool/utils.js'
 import type { ContentBlock, ImageBlock, ImageSource } from '../types/llm.js'
 import { maybeResizeAndDownsampleImageBlock } from './imageResizer.js'
@@ -1438,7 +1438,7 @@ function getCriticalSystemReminderAttachment(toolUseContext: ToolUseContext): At
   ]
 }
 function getOutputStyleAttachment(): Attachment[] {
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   const outputStyle = settings?.outputStyle || 'default'
 
   // 仅对非默认样式显示

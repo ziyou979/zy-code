@@ -9,16 +9,9 @@
 //   Daemon/SDK: omit getJitterConfig → DEFAULT_CRON_JITTER_CONFIG applies.
 
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { type CronJitterConfig, DEFAULT_CRON_JITTER_CONFIG } from './cronTasks.js'
 import { lazySchema } from './lazySchema.js'
-
-// How often to re-fetch zy_kairos_cron_config from GrowthBook. Short because
-// this is an incident lever — when we push a config change to shed :00 load,
-// we want the fleet to converge within a minute, not on the next process
-// restart. The underlying call is a synchronous cache read; the refresh just
-// clears the memoized entry so the next read triggers a background fetch.
-const JITTER_CONFIG_REFRESH_MS = 60 * 1000
 
 // Upper bounds here are defense-in-depth against fat-fingered GrowthBook
 // pushes. Like pollConfig.ts, Zod rejects the whole object on any violation
@@ -53,7 +46,7 @@ const cronJitterConfigSchema = lazySchema(() =>
  * Read `zy_kairos_cron_config` from GrowthBook, validate, fall back to
  * defaults on absent/malformed/out-of-bounds config. Called from check()
  * every tick via the `getJitterConfig` callback — cheap (synchronous cache
- * hit). Refresh window: JITTER_CONFIG_REFRESH_MS.
+ * hit).
  *
  * Exported so ops runbooks can point at a single function when documenting
  * the lever, and so tests can spy on it without mocking GrowthBook itself.
@@ -62,10 +55,9 @@ const cronJitterConfigSchema = lazySchema(() =>
  * contexts. Daemon/SDK callers omit getJitterConfig and get defaults.
  */
 export function getCronJitterConfig(): CronJitterConfig {
-  const raw = getFeatureValue_CACHED_WITH_REFRESH<unknown>(
+  const raw = getFeatureValue_CACHED_MAY_BE_STALE<unknown>(
     'zy_kairos_cron_config',
     DEFAULT_CRON_JITTER_CONFIG,
-    JITTER_CONFIG_REFRESH_MS,
   )
   const parsed = cronJitterConfigSchema().safeParse(raw)
   return parsed.success ? parsed.data : DEFAULT_CRON_JITTER_CONFIG

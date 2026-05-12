@@ -76,6 +76,19 @@ const actionKeyMap: Record<string, string> = {
   'attachments:previous': 'attachments.previous',
   'attachments:remove': 'attachments.remove',
   'attachments:exit': 'attachments.exit',
+  // LogSelector actions
+  'logSelector:save': 'logSelector.save',
+  'logSelector:search': 'logSelector.search',
+  'logSelector:skip': 'logSelector.skip',
+  'logSelector:showCurrentDir': 'logSelector.showCurrentDir',
+  'logSelector:showAllProjects': 'logSelector.showAllProjects',
+  'logSelector:toggleBranch': 'logSelector.toggleBranch',
+  'logSelector:showCurrentWorktree': 'logSelector.showCurrentWorktree',
+  'logSelector:showAllWorktrees': 'logSelector.showAllWorktrees',
+  'logSelector:preview': 'logSelector.preview',
+  'logSelector:rename': 'logSelector.rename',
+  // Elicitation actions
+  'elicitation:unset': 'elicitation.unset',
 }
 
 /**

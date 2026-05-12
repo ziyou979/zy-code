@@ -21,9 +21,9 @@ export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
  */
 function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
   try {
-    const { getSettings_DEPRECATED } =
+    const { getInitialSettings } =
       require('../settings/settings.js') as typeof import('../settings/settings.js')
-    const settings = getSettings_DEPRECATED()
+    const settings = getInitialSettings()
     return settings?.provider ?? null
   } catch {
     return null

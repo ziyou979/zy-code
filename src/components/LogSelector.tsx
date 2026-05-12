@@ -1018,7 +1018,7 @@ export function LogSelector({
           ) : viewMode === 'rename' ? (
             <Text dimColor={true}>
               <Byline>
-                <KeyboardShortcutHint shortcut="Enter" action={tSync('logSelector.save')} />
+                <KeyboardShortcutHint shortcut="Enter" action="logSelector:save" />
                 <ConfigurableShortcutHint
                   action="confirm:no"
                   context="Confirmation"
@@ -1042,8 +1042,8 @@ export function LogSelector({
           ) : isAgenticSearchOptionFocused ? (
             <Text dimColor={true}>
               <Byline>
-                <KeyboardShortcutHint shortcut="Enter" action={tSync('logSelector.search')} />
-                <KeyboardShortcutHint shortcut={'\u2193'} action={tSync('logSelector.skip')} />
+                <KeyboardShortcutHint shortcut="Enter" action="logSelector:search" />
+                <KeyboardShortcutHint shortcut={'\u2193'} action="logSelector:skip" />
                 <ConfigurableShortcutHint
                   action="confirm:no"
                   context="Confirmation"
@@ -1060,7 +1060,7 @@ export function LogSelector({
                     ? tSync('logSelector.searching')
                     : tSync('logSelector.typeToSearch')}
                 </Text>
-                <KeyboardShortcutHint shortcut="Enter" action={tSync('common.select')} />
+                <KeyboardShortcutHint shortcut="Enter" action="select" />
                 <ConfigurableShortcutHint
                   action="confirm:no"
                   context="Confirmation"
@@ -1077,15 +1077,15 @@ export function LogSelector({
                     shortcut="Ctrl+A"
                     action={
                       showAllProjects
-                        ? tSync('logSelector.showCurrentDir')
-                        : tSync('logSelector.showAllProjects')
+                        ? 'logSelector:showCurrentDir'
+                        : 'logSelector:showAllProjects'
                     }
                   />
                 )}
                 {currentBranch && (
                   <KeyboardShortcutHint
                     shortcut="Ctrl+B"
-                    action={tSync('logSelector.toggleBranch')}
+                    action="logSelector:toggleBranch"
                   />
                 )}
                 {hasMultipleWorktrees && (
@@ -1093,13 +1093,13 @@ export function LogSelector({
                     shortcut="Ctrl+W"
                     action={
                       showAllWorktrees
-                        ? tSync('logSelector.showCurrentWorktree')
-                        : tSync('logSelector.showAllWorktrees')
+                        ? 'logSelector:showCurrentWorktree'
+                        : 'logSelector:showAllWorktrees'
                     }
                   />
                 )}
-                <KeyboardShortcutHint shortcut="Ctrl+V" action={tSync('logSelector.preview')} />
-                <KeyboardShortcutHint shortcut="Ctrl+R" action={tSync('logSelector.rename')} />
+                <KeyboardShortcutHint shortcut="Ctrl+V" action="logSelector:preview" />
+                <KeyboardShortcutHint shortcut="Ctrl+R" action="logSelector:rename" />
                 <Text>{tSync('logSelector.typeToSearch')}</Text>
                 <ConfigurableShortcutHint
                   action="confirm:no"

@@ -18,7 +18,7 @@ import { hostname } from 'os'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
 import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getOrganizationUUID } from '../services/oauth/client.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
 import type { Message } from '../types/message.js'
@@ -351,10 +351,9 @@ export async function initReplBridge(
     return userMessageCount >= 3
   }
 
-  const initialHistoryCap = getFeatureValue_CACHED_WITH_REFRESH(
+  const initialHistoryCap = getFeatureValue_CACHED_MAY_BE_STALE(
     'zy_bridge_initial_history_cap',
     200,
-    5 * 60 * 1000,
   )
 
   // Fetch orgUUID before the v1/v2 branch — both paths need it. v1 for

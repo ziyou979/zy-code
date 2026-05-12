@@ -6,6 +6,7 @@ import {
   EFFORT_LOW,
   EFFORT_MAX,
   EFFORT_MEDIUM,
+  FORK_GLYPH,
 } from '../constants/figures.js'
 import { getTotalCost, getTotalInputTokens, getTotalOutputTokens } from '../cost-tracker.js'
 import { tSync } from '../i18n/index.js'
@@ -133,18 +134,18 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
 
   const thinkingEnabled = useAppState((s) => s.thinkingEnabled)
 
-  // 1. 目录 · Git 分支 → yellow
+  // 1. 目录 · Git 分支 → blue
   {
-    let dirStr = `📌 ${basename(getCwd())}`
+    let dirStr = `📂 ${basename(getCwd())}`
     if (branch) {
-      dirStr += ` · ${branch}`
+      dirStr += ` · ${FORK_GLYPH} ${branch}`
       if (gitClean === true) {
         dirStr += ' ✓'
       } else if (gitClean === false) {
         dirStr += ' ●'
       }
     }
-    segments.push({ text: dirStr, color: 'ansi:yellow' })
+    segments.push({ text: dirStr, color: 'ansi:blue' })
   }
 
   // 2. 模型名 · Effort → cyan（核心智能）
@@ -195,7 +196,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
   {
     const cost = getTotalCost()
     if (cost > 0) {
-      segments.push({ text: `💰 ￥${cost.toFixed(2)}`, color: 'ansi:magenta' })
+      segments.push({ text: `💰 ￥${cost.toFixed(2)}`, color: 'ansi:yellow' })
     }
   }
 

@@ -31,7 +31,7 @@ export function TeammateViewHeader() {
             {
               <Text dimColor={true}>
                 {' \xB7 '}
-                <KeyboardShortcutHint shortcut="esc" action={tSync('teammateView.return')} />
+                <KeyboardShortcutHint shortcut="esc" action="return" />
               </Text>
             }
           </Box>

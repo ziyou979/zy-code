@@ -734,11 +734,6 @@ export function getInitialSettings(): SettingsJson {
   return settings || {}
 }
 
-/**
- * @deprecated 请使用 getInitialSettings() 代替。此别名仅为向后兼容而存在。
- */
-export const getSettings_DEPRECATED = getInitialSettings
-
 export type SettingsWithSources = {
   effective: SettingsJson
   /** 按从低到高的优先级排序 - 后面的条目覆盖前面的。 */

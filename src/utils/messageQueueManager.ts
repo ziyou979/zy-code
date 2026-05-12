@@ -456,33 +456,7 @@ export function popAllEditable(
 // Backward-compatible aliases (deprecated — prefer new names)
 // ============================================================================
 
-/** @deprecated Use subscribeToCommandQueue */
-export const subscribeToPendingNotifications = subscribeToCommandQueue
 
-/** @deprecated Use getCommandQueueSnapshot */
-export function getPendingNotificationsSnapshot(): readonly QueuedCommand[] {
-  return snapshot
-}
-
-/** @deprecated Use hasCommandsInQueue */
-export const hasPendingNotifications = hasCommandsInQueue
-
-/** @deprecated Use getCommandQueueLength */
-export const getPendingNotificationsCount = getCommandQueueLength
-
-/** @deprecated Use recheckCommandQueue */
-export const recheckPendingNotifications = recheckCommandQueue
-
-/** @deprecated Use dequeue */
-export function dequeuePendingNotification(): QueuedCommand | undefined {
-  return dequeue()
-}
-
-/** @deprecated Use resetCommandQueue */
-export const resetPendingNotifications = resetCommandQueue
-
-/** @deprecated Use clearCommandQueue */
-export const clearPendingNotifications = clearCommandQueue
 
 /**
  * Get commands at or above a given priority level without removing them.

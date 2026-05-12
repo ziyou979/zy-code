@@ -4,7 +4,6 @@ import { logForDebugging } from 'src/utils/debug.js'
 import { fileHistoryEnabled } from 'src/utils/fileHistory.js'
 import {
   getInitialSettings,
-  getSettings_DEPRECATED,
   getSettingsForSource,
 } from 'src/utils/settings/settings.js'
 import { shouldOfferTerminalSetup } from '../../commands/terminalSetup/terminalSetup.js'
@@ -110,7 +109,7 @@ const externalTips: Tip[] = [
     isRelevant: async () => {
       try {
         const config = getGlobalConfig()
-        const settings = getSettings_DEPRECATED()
+        const settings = getInitialSettings()
         // Show if they've used plan mode but haven't set a default
         const hasUsedPlanMode = Boolean(config.lastPlanModeUse)
         const hasDefaultMode = Boolean(settings?.permissions?.defaultMode)
@@ -228,7 +227,7 @@ const externalTips: Tip[] = [
     content: async () =>
       'Use /statusline to toggle the built-in status bar showing effort, context usage, model, tokens, and git branch',
     cooldownSessions: 25,
-    isRelevant: async () => getSettings_DEPRECATED().builtInStatusBar === undefined,
+    isRelevant: async () => getInitialSettings().builtInStatusBar === undefined,
   },
   {
     id: 'prompt-queue',

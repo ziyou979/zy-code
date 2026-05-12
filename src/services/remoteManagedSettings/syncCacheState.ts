@@ -72,7 +72,7 @@ export function getRemoteManagedSettingsSyncFromCache(): SettingsJson | null {
   if (cachedSettings) {
     sessionCache = cachedSettings
     // 远程设置首次变为可用。在此之前缓存的任何合并的
-    // getSettings_DEPRECATED() 结果都缺少 policySettings 层
+    // getInitialSettings() 结果都缺少 policySettings 层
     // （上面的 `eligible !== true` 守卫返回了 null）。刷新以便
     // 下次合并读取时能看到此层。
     //
@@ -84,7 +84,7 @@ export function getRemoteManagedSettingsSyncFromCache(): SettingsJson | null {
     //
     // gh-23085: main.tsx Commander 定义时的 isBridgeEnabled()
     // （在 preAction → init() → isRemoteManagedSettingsEligible() 之前）
-    // 访问了 auth.ts:115 的 getSettings_DEPRECATED()。bridgeEnabled 中的
+    // 访问了 auth.ts:115 的 getInitialSettings()。bridgeEnabled 中的
     // try/catch 吞掉了后续 getGlobalConfig() 的抛出，但合并设置缓存
     // 已经被污染。参见 managedSettingsHeadless.int.test.ts。
     resetSettingsCache()

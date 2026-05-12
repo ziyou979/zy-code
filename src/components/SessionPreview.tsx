@@ -96,7 +96,7 @@ export function SessionPreview({ log, onExit, onSelect }: Props) {
           {
             <Text dimColor={true}>
               <Byline>
-                <KeyboardShortcutHint shortcut="Enter" action={tSync('sessionPreview.resume')} />
+                <KeyboardShortcutHint shortcut="Enter" action="resume" />
                 <ConfigurableShortcutHint
                   action="confirm:no"
                   context="Confirmation"

@@ -182,7 +182,7 @@ function MultipleEnvironmentsContent({
       {
         <Text dimColor={true}>
           <Byline>
-            <KeyboardShortcutHint shortcut="Enter" action={tSync('remoteEnv.select')} />
+            <KeyboardShortcutHint shortcut="Enter" action="select" />
             <ConfigurableShortcutHint
               action="confirm:no"
               context="Confirmation"

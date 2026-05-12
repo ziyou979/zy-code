@@ -62,7 +62,7 @@ import { getFsImplementation } from '../fsOperations.js'
 import { gitExe } from '../git.js'
 import { lazySchema } from '../lazySchema.js'
 import { logError } from '../log.js'
-import { getSettings_DEPRECATED } from '../settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import {
   clearPluginSettingsBase,
   getPluginSettingsBase,
@@ -1712,7 +1712,7 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
   plugins: LoadedPlugin[]
   errors: PluginError[]
 }> {
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   // 以最低优先级合并 --add-dir 插件；标准设置在冲突时胜出
   const enabledPlugins = {
     ...getAddDirEnabledPlugins(),

@@ -1,8 +1,8 @@
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
-import { getSettings_DEPRECATED, updateSettingsForSource } from '../../utils/settings/settings.js'
+import { getInitialSettings, updateSettingsForSource } from '../../utils/settings/settings.js'
 
 export async function call(onDone: LocalJSXCommandOnDone): Promise<null> {
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   const currentlyEnabled = settings.builtInStatusBar?.enabled !== false
   const newEnabled = !currentlyEnabled
 

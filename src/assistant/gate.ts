@@ -7,7 +7,7 @@
  * 3. 若 --assistant CLI 标志被设置，强制启用（走 markAssistantForced 路径）
  */
 
-import { getSettings_DEPRECATED } from '../utils/settings/settings.js'
+import { getInitialSettings } from '../utils/settings/settings.js'
 
 let _kairosEnabled: boolean | null = null
 let _initialized = false
@@ -28,7 +28,7 @@ export async function isKairosEnabled(): Promise<boolean> {
 
   // 读取设置文件
   try {
-    const settings = getSettings_DEPRECATED()
+    const settings = getInitialSettings()
     if (settings?.kairosEnabled !== undefined) {
       _kairosEnabled = settings.kairosEnabled === true
       return _kairosEnabled

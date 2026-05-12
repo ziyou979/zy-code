@@ -53,7 +53,7 @@ import {
   getMacOsKeychainStorageServiceName,
   getUsername,
 } from './secureStorage/macOsKeychainHelpers.js'
-import { getSettings_DEPRECATED, getSettingsForSource } from './settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
 import { sleep } from './sleep.js'
 import { jsonParse } from './slowOperations.js'
 import { clearToolSchemaCache } from './toolSchemaCache.js'
@@ -85,7 +85,7 @@ export function isZyAISubscriber(): boolean {
  */
 export function isAuthEnabled(): boolean {
   // 检查 settings.json (zy.json) 中配置的 API key
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   if (settings?.apiKey) {
     return true
   }
@@ -104,7 +104,7 @@ export function isAuthEnabled(): boolean {
 // 此代码与 isAuthEnabled 密切相关
 export function getAuthTokenSource() {
   // 检查 settings.json (zy.json) 中配置的 API key
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   if (settings?.apiKey) {
     return { source: 'settingsApiKey' as const, hasToken: true }
   }
@@ -170,7 +170,7 @@ export function getApiKeyWithSource(opts: { skipRetrievingKeyFromApiKeyHelper?: 
   source: ApiKeySource
 } {
   // 检查 settings.json (zy.json) 中配置的 API key
-  const settings = getSettings_DEPRECATED()
+  const settings = getInitialSettings()
   if (settings?.apiKey) {
     return { key: settings.apiKey, source: 'settingsApiKey' }
   }
@@ -241,7 +241,7 @@ export function getConfiguredApiKeyHelper(): string | undefined {
   if (isBareMode()) {
     return getSettingsForSource('flagSettings')?.apiKeyHelper
   }
-  const mergedSettings = getSettings_DEPRECATED() || {}
+  const mergedSettings = getInitialSettings() || {}
   return mergedSettings.apiKeyHelper
 }
 
@@ -265,7 +265,7 @@ function isApiKeyHelperFromProjectOrLocalSettings(): boolean {
  * 从 settings 中获取已配置的 awsAuthRefresh
  */
 function getConfiguredAwsAuthRefresh(): string | undefined {
-  const mergedSettings = getSettings_DEPRECATED() || {}
+  const mergedSettings = getInitialSettings() || {}
   return mergedSettings.awsAuthRefresh
 }
 
@@ -290,7 +290,7 @@ export function isAwsAuthRefreshFromProjectSettings(): boolean {
  * 从 settings 中获取已配置的 awsCredentialExport
  */
 function getConfiguredAwsCredentialExport(): string | undefined {
-  const mergedSettings = getSettings_DEPRECATED() || {}
+  const mergedSettings = getInitialSettings() || {}
   return mergedSettings.awsCredentialExport
 }
 
@@ -641,7 +641,7 @@ async function getAwsCredsFromCredentialExport(): Promise<{
  * 从 settings 中获取已配置的 gcpAuthRefresh
  */
 function getConfiguredGcpAuthRefresh(): string | undefined {
-  const mergedSettings = getSettings_DEPRECATED() || {}
+  const mergedSettings = getInitialSettings() || {}
   return mergedSettings.gcpAuthRefresh
 }
 
@@ -1241,7 +1241,7 @@ export function getSubscriptionName(): string {
  * 从 settings 中获取已配置的 otelHeadersHelper
  */
 function getConfiguredOtelHeadersHelper(): string | undefined {
-  const mergedSettings = getSettings_DEPRECATED() || {}
+  const mergedSettings = getInitialSettings() || {}
   return mergedSettings.otelHeadersHelper
 }
 

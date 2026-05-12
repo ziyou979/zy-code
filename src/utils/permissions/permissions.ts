@@ -65,7 +65,7 @@ import {
   getTotalInputTokens,
   getTotalOutputTokens,
 } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -92,8 +92,6 @@ import {
   shouldFallbackToPrompting,
 } from './denialTracking.js'
 import { classifyYoloAction, formatActionForClassifier } from './yoloClassifier.js'
-
-const CLASSIFIER_FAIL_CLOSED_REFRESH_MS = 30 * 60 * 1000 // 30 分钟
 
 const PERMISSION_RULE_SOURCES = [
   ...SETTING_SOURCES,
@@ -766,10 +764,9 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
         // zy_iron_gate_closed 门控。
         if (classifierResult.unavailable) {
           if (
-            getFeatureValue_CACHED_WITH_REFRESH(
+            getFeatureValue_CACHED_MAY_BE_STALE(
               'zy_iron_gate_closed',
               true,
-              CLASSIFIER_FAIL_CLOSED_REFRESH_MS,
             )
           ) {
             logForDebugging(

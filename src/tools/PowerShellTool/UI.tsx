@@ -131,7 +131,7 @@ export function renderToolResultMessage(
             {backgroundTaskId ? (
               <>
                 {tSync('powershell.runningInBackground')}{' '}
-                <KeyboardShortcutHint shortcut="↓" action={tSync('powershell.manage')} parens />
+                <KeyboardShortcutHint shortcut="↓" action="manage" parens />
               </>
             ) : interrupted ? (
               tSync('powershell.interrupted')

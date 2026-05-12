@@ -3,7 +3,7 @@ import React from 'react'
 import { tSync } from '../i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { Box, Text } from '../ink.js'
-import { getSettings_DEPRECATED, updateSettingsForSource } from '../utils/settings/settings.js'
+import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { SelectMulti } from './CustomSelect/SelectMulti.js'
 import { Byline } from './design-system/Byline.js'
@@ -16,7 +16,7 @@ type Props = {
 }
 export function MCPServerMultiselectDialog({ serverNames, onDone }: Props) {
   const onSubmit = function onSubmit(selectedServers) {
-    const currentSettings = getSettings_DEPRECATED() || {}
+    const currentSettings = getInitialSettings() || {}
     const enabledServers = currentSettings.enabledMcpjsonServers || []
     const disabledServers = currentSettings.disabledMcpjsonServers || []
     const [approvedServers, rejectedServers] = partition(serverNames, (server) =>
@@ -41,7 +41,7 @@ export function MCPServerMultiselectDialog({ serverNames, onDone }: Props) {
     onDone()
   }
   const handleEscRejectAll = () => {
-    const currentSettings_0 = getSettings_DEPRECATED() || {}
+    const currentSettings_0 = getInitialSettings() || {}
     const disabledServers_0 = currentSettings_0.disabledMcpjsonServers || []
     const newDisabledServers_0 = [...new Set([...disabledServers_0, ...serverNames])]
     updateSettingsForSource('localSettings', {
@@ -79,8 +79,8 @@ export function MCPServerMultiselectDialog({ serverNames, onDone }: Props) {
         <Box paddingX={1}>
           <Text dimColor={true} italic={true}>
             <Byline>
-              <KeyboardShortcutHint shortcut="Space" action={tSync('common.select')} />
-              <KeyboardShortcutHint shortcut="Enter" action={tSync('common.confirm')} />
+              <KeyboardShortcutHint shortcut="Space" action="select" />
+              <KeyboardShortcutHint shortcut="Enter" action="confirm" />
               <ConfigurableShortcutHint
                 action="confirm:no"
                 context="Confirmation"

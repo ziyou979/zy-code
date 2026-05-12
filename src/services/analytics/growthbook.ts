@@ -730,20 +730,6 @@ export function getFeatureValue_CACHED_MAY_BE_STALE<T>(feature: string, defaultV
 }
 
 /**
- * @deprecated Disk cache is now synced on every successful payload load
- * (init + 20min/6h periodic refresh). The per-feature TTL never fetched
- * fresh data from the server — it only re-wrote in-memory state to disk,
- * which is now redundant. Use getFeatureValue_CACHED_MAY_BE_STALE directly.
- */
-export function getFeatureValue_CACHED_WITH_REFRESH<T>(
-  feature: string,
-  defaultValue: T,
-  _refreshIntervalMs: number,
-): T {
-  return getFeatureValue_CACHED_MAY_BE_STALE(feature, defaultValue)
-}
-
-/**
  * Check a Statsig feature gate value via GrowthBook, with fallback to Statsig cache.
  *
  * **MIGRATION ONLY**: This function is for migrating existing Statsig gates to GrowthBook.
