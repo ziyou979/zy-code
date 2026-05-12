@@ -106,7 +106,7 @@ export function getLanguageSection(languagePreference: string | undefined): stri
   if (!languagePreference) return null
 
   return `# Language
-You MUST think, reason, and respond in ${languagePreference} natively, not by translating. All internal thinking, chain-of-thought reasoning, explanations, and tool-call narration must use ${languagePreference}. Prompt examples are in English for technical reasons only. Keep code, identifiers, file paths, and quoted text unchanged.`
+You MUST think, reason, and respond in ${languagePreference} natively, not by translating. All internal thinking, chain-of-thought reasoning, explanations, and tool-call narration must use ${languagePreference}. Prompt examples and tags like <reasoning> are in English for technical reasons only. Keep code, identifiers, file paths, and quoted text unchanged.`
 }
 
 function getOutputStyleSection(outputStyleConfig: OutputStyleConfig | null): string | null {
