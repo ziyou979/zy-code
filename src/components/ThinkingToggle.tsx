@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
@@ -20,13 +21,13 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
   const options = [
     {
       value: 'true',
-      label: 'Enabled',
-      description: 'Zy will think before responding',
+      label: tSync('thinkingToggle.enabled'),
+      description: tSync('thinkingToggle.enabledDesc'),
     },
     {
       value: 'false',
-      label: 'Disabled',
-      description: 'Zy will respond without extended thinking',
+      label: tSync('thinkingToggle.disabled'),
+      description: tSync('thinkingToggle.disabledDesc'),
     },
   ]
   useKeybinding(
@@ -69,18 +70,17 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
           {
             <Box marginBottom={1} flexDirection="column">
               <Text color="remember" bold={true}>
-                Toggle thinking mode
+                {tSync('thinkingToggle.title')}
               </Text>
-              <Text dimColor={true}>Enable or disable thinking for this session.</Text>
+              <Text dimColor={true}>{tSync('thinkingToggle.hint')}</Text>
             </Box>
           }
           {confirmationPending !== null ? (
             <Box flexDirection="column" marginBottom={1} gap={1}>
               <Text color="warning">
-                Changing thinking mode mid-conversation will increase latency and may reduce
-                quality. For best results, set this at the start of a session.
+                {tSync('thinkingToggle.midConversationWarning')}
               </Text>
-              <Text color="warning">Do you want to proceed?</Text>
+              <Text color="warning">{tSync('thinkingToggle.confirmProceed')}</Text>
             </Box>
           ) : (
             <Box flexDirection="column" marginBottom={1}>
@@ -99,7 +99,7 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
       {
         <Text dimColor={true} italic={true}>
           {exitState.pending ? (
-            <>Press {exitState.keyName} again to exit</>
+            <>{tSync('thinkingToggle.pressAgainToExit', { key: exitState.keyName })}</>
           ) : confirmationPending !== null ? (
             <Byline>
               <KeyboardShortcutHint shortcut="Enter" action="confirm" />

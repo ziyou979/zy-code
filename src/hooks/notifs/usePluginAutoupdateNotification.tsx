@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import { useNotifications } from '../../context/notifications.js'
+import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { onPluginsAutoUpdated } from '../../utils/plugins/pluginAutoupdate.js'
@@ -41,9 +42,14 @@ export function usePluginAutoupdateNotification() {
       jsx: (
         <>
           <Text color="success">
-            {pluginNames.length === 1 ? 'Plugin' : 'Plugins'} updated: {displayNames}
+            {tSync(
+              pluginNames.length === 1
+                ? 'notif.pluginUpdatedSingular'
+                : 'notif.pluginUpdatedPlural',
+              { names: displayNames },
+            )}
           </Text>
-          <Text dimColor={true}> · Run /reload-plugins to apply</Text>
+          <Text dimColor={true}>{tSync('notif.reloadPlugins')}</Text>
         </>
       ),
       priority: 'low',

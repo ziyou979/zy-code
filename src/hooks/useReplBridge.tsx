@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import React, { useCallback, useEffect, useRef } from 'react'
+import { tSync } from '../i18n/index.js'
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
 import {
   type BridgePermissionCallbacks,
@@ -120,7 +121,7 @@ export function useReplBridge(
           key: 'bridge-failed',
           jsx: (
             <>
-              <Text color="error">Remote Control failed</Text>
+              <Text color="error">{tSync('notif.remoteControlFailed')}</Text>
               {detail && <Text dimColor> · {detail}</Text>}
             </>
           ),

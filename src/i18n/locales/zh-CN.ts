@@ -554,6 +554,36 @@ export const zhCN: TranslationResource = {
   'backgroundTasks.action.stopAll': '停止所有 Agent',
   'backgroundTasks.action.close': '关闭',
 
+  // Thinking toggle
+  'thinkingToggle.title': '切换思考模式',
+  'thinkingToggle.hint': '为当前会话启用或禁用思考模式。',
+  'thinkingToggle.enabled': '启用',
+  'thinkingToggle.enabledDesc': 'Zy 将在回复前进行思考',
+  'thinkingToggle.disabled': '禁用',
+  'thinkingToggle.disabledDesc': 'Zy 将不进行扩展思考直接回复',
+  'thinkingToggle.midConversationWarning':
+    '在对话中途切换思考模式会增加延迟并可能降低质量。为获得最佳效果，请在会话开始时设置。',
+  'thinkingToggle.confirmProceed': '是否继续？',
+  'thinkingToggle.pressAgainToExit': '再按一次 {key} 退出',
+
+  // Notifications
+  'notif.pluginUpdatedSingular': '插件已更新：{names}',
+  'notif.pluginUpdatedPlural': '插件已更新：{names}',
+  'notif.reloadPlugins': ' · 运行 /reload-plugins 应用更新',
+  'notif.mcpServerFailed': '{count} 个 MCP 服务器连接失败',
+  'notif.mcpServersFailed': '{count} 个 MCP 服务器连接失败',
+  'notif.zyaiConnectorUnavailable': '{count} 个 zy.ai 连接器不可用',
+  'notif.zyaiConnectorsUnavailable': '{count} 个 zy.ai 连接器不可用',
+  'notif.mcpServerNeedsAuth': '{count} 个 MCP 服务器需要认证',
+  'notif.mcpServersNeedAuth': '{count} 个 MCP 服务器需要认证',
+  'notif.zyaiConnectorNeedsAuth': '{count} 个 zy.ai 连接器需要认证',
+  'notif.zyaiConnectorsNeedAuth': '{count} 个 zy.ai 连接器需要认证',
+  'notif.chromeNotDetected': '未检测到 Chrome 扩展 · https://zy.ai/chrome 安装',
+  'notif.chromeEnabled': 'Chrome 中的 Claude 已启用 · /chrome',
+  'notif.npmDeprecation': 'ZY Code 已切换到原生安装器。运行 `zy install` 了解更多选项。',
+  'notif.deniedByAutoMode': '{tool} 被自动模式拒绝',
+  'notif.remoteControlFailed': '远程控制失败',
+
   // Tag tabs
   'tagTabs.all': '全部',
   'tagTabs.resume': '恢复',
@@ -2176,18 +2206,6 @@ export const zhCN: TranslationResource = {
 	  'languageName.French': 'Français',
 	  'languageName.German': 'Deutsch',
 	  'languageName.Korean': '한국어',
-
-  // 思考切换 Thinking toggle
-  'thinkingToggle.title': '切换思考模式',
-  'thinkingToggle.description': '为本次会话启用或禁用思考模式。',
-  'thinkingToggle.enabled': '已启用',
-  'thinkingToggle.enabledDesc': 'Zy 将在回复前进行思考',
-  'thinkingToggle.disabled': '已禁用',
-  'thinkingToggle.disabledDesc': 'Zy 将直接回复，不进行深度思考',
-  'thinkingToggle.midConversationWarning':
-    '在对话中途更改思考模式会增加延迟并可能降低质量。为获得最佳效果，请在会话开始时设置。',
-  'thinkingToggle.proceedQuestion': '是否继续？',
-  'thinkingToggle.pressAgainToExit': '再按一次 {key} 退出',
 
   // 内存指示器 Memory usage
   'memory.highUsage': '内存使用量高（{size}）· /heapdump',

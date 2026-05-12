@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useEffect } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
 import { hasZyAiMcpEverConnected } from '../../services/mcp/zyai.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
@@ -51,8 +52,12 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
         jsx: (
           <>
             <Text color="error">
-              {failedLocalClients.length} MCP{' '}
-              {failedLocalClients.length === 1 ? 'server' : 'servers'} failed
+              {tSync(
+                failedLocalClients.length === 1
+                  ? 'notif.mcpServerFailed'
+                  : 'notif.mcpServersFailed',
+                { count: failedLocalClients.length },
+              )}
             </Text>
             <Text dimColor={true}> · /mcp</Text>
           </>
@@ -66,8 +71,12 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
         jsx: (
           <>
             <Text color="error">
-              {failedZyAiClients.length} zy.ai{' '}
-              {failedZyAiClients.length === 1 ? 'connector' : 'connectors'} unavailable
+              {tSync(
+                failedZyAiClients.length === 1
+                  ? 'notif.zyaiConnectorUnavailable'
+                  : 'notif.zyaiConnectorsUnavailable',
+                { count: failedZyAiClients.length },
+              )}
             </Text>
             <Text dimColor={true}> · /mcp</Text>
           </>
@@ -81,8 +90,12 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
         jsx: (
           <>
             <Text color="warning">
-              {needsAuthLocalServers.length} MCP{' '}
-              {needsAuthLocalServers.length === 1 ? 'server needs' : 'servers need'} auth
+              {tSync(
+                needsAuthLocalServers.length === 1
+                  ? 'notif.mcpServerNeedsAuth'
+                  : 'notif.mcpServersNeedAuth',
+                { count: needsAuthLocalServers.length },
+              )}
             </Text>
             <Text dimColor={true}> · /mcp</Text>
           </>
@@ -96,8 +109,12 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
         jsx: (
           <>
             <Text color="warning">
-              {needsAuthZyAiServers.length} zy.ai{' '}
-              {needsAuthZyAiServers.length === 1 ? 'connector needs' : 'connectors need'} auth
+              {tSync(
+                needsAuthZyAiServers.length === 1
+                  ? 'notif.zyaiConnectorNeedsAuth'
+                  : 'notif.zyaiConnectorsNeedAuth',
+                { count: needsAuthZyAiServers.length },
+              )}
             </Text>
             <Text dimColor={true}> · /mcp</Text>
           </>

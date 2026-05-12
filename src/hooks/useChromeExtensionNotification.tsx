@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import {
   isChromeExtensionInstalled,
@@ -29,7 +30,7 @@ async function _temp() {
     return {
       key: 'chrome-extension-not-detected',
       jsx: (
-        <Text color="warning">Chrome extension not detected · https://zy.ai/chrome to install</Text>
+        <Text color="warning">{tSync('notif.chromeNotDetected')}</Text>
       ),
       priority: 'immediate',
       timeoutMs: 3000,
@@ -38,7 +39,7 @@ async function _temp() {
   if (chromeFlag === undefined) {
     return {
       key: 'claude-in-chrome-default-enabled',
-      text: 'Claude in Chrome enabled \xB7 /chrome',
+      text: tSync('notif.chromeEnabled'),
       priority: 'low',
     }
   }

@@ -1,9 +1,8 @@
 import { isInBundledMode } from 'src/utils/bundledMode.js'
 import { getCurrentInstallationType } from 'src/utils/doctorDiagnostic.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
+import { tSync } from '../../i18n/index.js'
 import { useStartupNotification } from './useStartupNotification.js'
-const NPM_DEPRECATION_MESSAGE =
-  'ZY Code has switched from npm to native installer. Run `zy install` for more options.'
 export function useNpmDeprecationNotification() {
   useStartupNotification(_temp as any)
 }
@@ -18,7 +17,7 @@ async function _temp() {
   return {
     timeoutMs: 15000,
     key: 'npm-deprecation-warning',
-    text: NPM_DEPRECATION_MESSAGE,
+    text: tSync('notif.npmDeprecation'),
     color: 'warning',
     priority: 'high',
   }

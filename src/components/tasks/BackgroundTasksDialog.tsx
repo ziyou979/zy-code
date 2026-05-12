@@ -390,7 +390,7 @@ export function BackgroundTasksDialog({
         // 任务已被移除或不再是后台任务（例如被终止）。
         // 如果挂载时跳过了列表，则完全关闭对话框。
         if (skippedListOnMount.current) {
-          onDoneEvent('Background tasks dialog dismissed', {
+          onDoneEvent(tSync('backgroundTasks.dismissed'), {
             display: 'system',
           })
         } else {
@@ -534,7 +534,7 @@ export function BackgroundTasksDialog({
           <DreamDetailDialog
             task={task}
             onDone={() =>
-              onDone('Background tasks dialog dismissed', {
+              onDone(tSync('backgroundTasks.dismissed'), {
                 display: 'system',
               })
             }
@@ -589,19 +589,19 @@ export function BackgroundTasksDialog({
     <KeyboardShortcutHint
       key="upDown"
       shortcut="↑/↓"
-      action={tSync('backgroundTasks.action.select')}
+      action="select"
     />,
     <KeyboardShortcutHint
       key="enter"
       shortcut="Enter"
-      action={tSync('backgroundTasks.action.view')}
+      action="view"
     />,
     ...(currentSelection?.type === 'in_process_teammate' && currentSelection.status === 'running'
       ? [
           <KeyboardShortcutHint
             key="foreground"
             shortcut="f"
-            action={tSync('backgroundTasks.action.foreground')}
+            action="foreground"
           />,
         ]
       : []),
@@ -617,7 +617,7 @@ export function BackgroundTasksDialog({
           <KeyboardShortcutHint
             key="kill"
             shortcut="x"
-            action={tSync('backgroundTasks.action.stop')}
+            action="stop"
           />,
         ]
       : []),
@@ -626,18 +626,18 @@ export function BackgroundTasksDialog({
           <KeyboardShortcutHint
             key="kill-all"
             shortcut={killAgentsShortcut}
-            action={tSync('backgroundTasks.action.stopAll')}
+            action="stop agents"
           />,
         ]
       : []),
     <KeyboardShortcutHint
       key="esc"
       shortcut="←/Esc"
-      action={tSync('backgroundTasks.action.close')}
+      action="close"
     />,
   ]
   const handleCancel = () =>
-    onDone('Background tasks dialog dismissed', {
+    onDone(tSync('backgroundTasks.dismissed'), {
       display: 'system',
     })
   function renderInputGuide(exitState: ExitState): React.ReactNode {

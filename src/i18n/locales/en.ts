@@ -1468,6 +1468,31 @@ export const en: TranslationResource = {
     'Please specify a plugin name or use --all to disable all plugins',
   'plugins.disable.scopeWithAll': 'Cannot use --scope with --all',
 
+  // Background tasks list dialog
+  'backgroundTasks.title': 'Background Tasks',
+  'backgroundTasks.noTasks': 'No running tasks',
+  'backgroundTasks.dismissed': 'Background tasks dialog dismissed',
+  'backgroundTasks.agents': 'Agents',
+  'backgroundTasks.shells': 'Shells',
+  'backgroundTasks.monitors': 'Monitors',
+  'backgroundTasks.remoteAgents': 'Remote Agents',
+  'backgroundTasks.localAgents': 'Local Agents',
+  'backgroundTasks.workflows': 'Workflows',
+  'backgroundTasks.team': 'Team',
+  'backgroundTasks.activeShells': 'Active Shells',
+  'backgroundTasks.activeAgents': 'Active Agents',
+  'backgroundTasks.activeShell': 'Active Shell',
+  'backgroundTasks.activeAgent': 'Active Agent',
+  'backgroundTasks.agent': 'agent(s)',
+  'backgroundTasks.agentSingular': 'agent',
+  'backgroundTasks.pressAgainToExit': 'Press {key} again to exit',
+  'backgroundTasks.action.select': 'Select',
+  'backgroundTasks.action.view': 'View',
+  'backgroundTasks.action.foreground': 'Foreground',
+  'backgroundTasks.action.stop': 'Stop',
+  'backgroundTasks.action.stopAll': 'Stop all agents',
+  'backgroundTasks.action.close': 'Close',
+
   // Background tasks detail dialogs
   'backgroundTasks.monitorDetails': 'Monitor details',
   'backgroundTasks.shellDetails': 'Shell details',
@@ -1529,6 +1554,37 @@ export const en: TranslationResource = {
   'backgroundTasks.teleportFailed': 'Teleport failed: {error}',
   'backgroundTasks.teleporting': 'Teleporting to session…',
   'backgroundTasks.unread': ', unread',
+
+  // Thinking toggle
+  'thinkingToggle.title': 'Toggle thinking mode',
+  'thinkingToggle.hint': 'Enable or disable thinking for this session.',
+  'thinkingToggle.enabled': 'Enabled',
+  'thinkingToggle.enabledDesc': 'Zy will think before responding',
+  'thinkingToggle.disabled': 'Disabled',
+  'thinkingToggle.disabledDesc': 'Zy will respond without extended thinking',
+  'thinkingToggle.midConversationWarning':
+    'Changing thinking mode mid-conversation will increase latency and may reduce quality. For best results, set this at the start of a session.',
+  'thinkingToggle.confirmProceed': 'Do you want to proceed?',
+  'thinkingToggle.pressAgainToExit': 'Press {key} again to exit',
+
+  // Notifications
+  'notif.pluginUpdatedSingular': 'Plugin updated: {names}',
+  'notif.pluginUpdatedPlural': 'Plugins updated: {names}',
+  'notif.reloadPlugins': ' · Run /reload-plugins to apply',
+  'notif.mcpServerFailed': '{count} MCP server failed',
+  'notif.mcpServersFailed': '{count} MCP servers failed',
+  'notif.zyaiConnectorUnavailable': '{count} zy.ai connector unavailable',
+  'notif.zyaiConnectorsUnavailable': '{count} zy.ai connectors unavailable',
+  'notif.mcpServerNeedsAuth': '{count} MCP server needs auth',
+  'notif.mcpServersNeedAuth': '{count} MCP servers need auth',
+  'notif.zyaiConnectorNeedsAuth': '{count} zy.ai connector needs auth',
+  'notif.zyaiConnectorsNeedAuth': '{count} zy.ai connectors need auth',
+  'notif.chromeNotDetected': 'Chrome extension not detected · https://zy.ai/chrome to install',
+  'notif.chromeEnabled': 'Claude in Chrome enabled · /chrome',
+  'notif.npmDeprecation':
+    'ZY Code has switched from npm to native installer. Run `zy install` for more options.',
+  'notif.deniedByAutoMode': '{tool} denied by auto mode',
+  'notif.remoteControlFailed': 'Remote Control failed',
 
   // Output style picker
   'outputStyle.title': 'Preferred output style',
@@ -2178,18 +2234,6 @@ export const en: TranslationResource = {
 	  'languageName.French': 'Français',
 	  'languageName.German': 'Deutsch',
 	  'languageName.Korean': '한국어',
-
-  // Thinking toggle
-  'thinkingToggle.title': 'Toggle thinking mode',
-  'thinkingToggle.description': 'Enable or disable thinking for this session.',
-  'thinkingToggle.enabled': 'Enabled',
-  'thinkingToggle.enabledDesc': 'Zy will think before responding',
-  'thinkingToggle.disabled': 'Disabled',
-  'thinkingToggle.disabledDesc': 'Zy will respond without extended thinking',
-  'thinkingToggle.midConversationWarning':
-    'Changing thinking mode mid-conversation will increase latency and may reduce quality. For best results, set this at the start of a session.',
-  'thinkingToggle.proceedQuestion': 'Do you want to proceed?',
-  'thinkingToggle.pressAgainToExit': 'Press {key} again to exit',
 
   // Memory usage
   'memory.highUsage': 'High memory usage ({size}) · /heapdump',

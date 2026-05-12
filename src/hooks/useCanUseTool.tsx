@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import { LLMAbortError } from '../types/llm.js'
 import * as React from 'react'
+import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import type { Tool as ToolType, ToolUseContext } from '../Tool.js'
 import {
@@ -120,7 +121,7 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                   jsx: (
                     <>
                       <Text color="error">
-                        {tool.userFacingName(input).toLowerCase()} denied by auto mode
+                        {tSync('notif.deniedByAutoMode', { tool: tool.userFacingName(input).toLowerCase() })}
                       </Text>
                       <Text dimColor={true}> · /permissions</Text>
                     </>
