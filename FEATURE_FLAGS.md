@@ -91,7 +91,7 @@
 |------|--------|------|------|
 | `zy_log_datadog_events` | N/A | 控制是否向 Datadog 发送事件 | `src/services/analytics/sink.ts` |
 | `zy_event_sampling_config` | N/A | 事件采样率配置 | `src/services/analytics/sink.ts` |
-| `enhanced_telemetry_beta` | `false` | 增强遥测 beta（仅内部构建） | `src/utils/telemetry/sessionTracing.ts` |
+| `enhanced_telemetry_beta` | `false` | 增强遥测 beta（仅内部构建）。**例外**：此 flag 为外部兼容遗留名称，不遵循 `zy_` 前缀约定 | `src/utils/telemetry/sessionTracing.ts` |
 
 ---
 

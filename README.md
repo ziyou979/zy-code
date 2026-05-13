@@ -90,11 +90,11 @@ TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目
 
 ## External 依赖
 
-以下包在运行时动态加载，不打包进产物：
+以下包在运行时动态加载，不打包进产物（完整列表以 `build.ts` 中 `external` 数组为准）：
 
-- `@anthropic-ai/bedrock-sdk` / `vertex-sdk` / `foundry-sdk` — 云厂商 SDK
-- `@ant/computer-use-*` — 原生二进制模块
-- `@aws-sdk/*`、`sharp`、`yaml` 等懒加载包
+- 原生二进制模块（`@ant/computer-use-*`、`modifiers-napi` 等）
+- 懒加载包（`sharp`、`yaml`、`turndown`、`fflate` 等）
+- OpenTelemetry 导出器（按用户配置动态加载）
 
 如需使用这些功能，确保对应包已安装。
 

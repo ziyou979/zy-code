@@ -13,6 +13,10 @@ const srcDir = join(root, 'src')
 const outDir = join(root, 'dist')
 const buildTime = new Date().toISOString()
 
+// 从 package.json 读取版本号，避免硬编码
+const packageJson = await Bun.file(join(root, 'package.json')).json()
+const version: string = packageJson.version
+
 // 解析 --target 参数：cli | sdk | all（默认 all）
 const targetArg = Bun.argv.find(arg => arg.startsWith('--target'))
 const targetValue = targetArg?.includes('=')
@@ -67,7 +71,7 @@ const result = await Bun.build({
     // Treat as external build (notinternal)
     'process.env.USER_TYPE': '"external"',
     // Build-time macros (replace MACRO.* at bundle time)
-    'MACRO.VERSION': '"1.0.0"',
+    'MACRO.VERSION': JSON.stringify(version),
     'MACRO.BUILD_TIME': `"${buildTime}"`,
     'MACRO.PACKAGE_URL': '"@zy-ai/zy-code"',
     'MACRO.NATIVE_PACKAGE_URL': 'null',
